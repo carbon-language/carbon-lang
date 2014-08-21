@@ -757,28 +757,6 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
   return DAG.getNode(ISD::MERGE_VALUES, dl, DAG.getVTList(ValueVTs), Values);
 }
 
-static ISD::NodeType getPreferredExtendForValue(const Value *V) {
-  // For the users of the source value being used for compare instruction, if
-  // the number of signed predicate is greater than unsigned predicate, we
-  // prefer to use SIGN_EXTEND.
-  //
-  // With this optimization, we would be able to reduce some redundant sign or
-  // zero extension instruction, and eventually more machine CSE opportunities
-  // can be exposed.
-  ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
-  unsigned int NumOfSigned = 0, NumOfUnsigned = 0;
-  for (const User *U : V->users()) {
-    if (const CmpInst *CI = dyn_cast<CmpInst>(U)) {
-      NumOfSigned += CI->isSigned();
-      NumOfUnsigned += CI->isUnsigned();
-    }
-  }
-  if (NumOfSigned > NumOfUnsigned)
-    ExtendKind = ISD::SIGN_EXTEND;
-
-  return ExtendKind;
-}
-
 /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
 /// specified value into the registers specified by this object.  This uses
 /// Chain/Flag as the input and updates them for the output Chain/Flag.
@@ -787,7 +765,6 @@ void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, SDLoc dl,
                                  SDValue &Chain, SDValue *Flag,
                                  const Value *V) const {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  ISD::NodeType ExtendKind = getPreferredExtendForValue(V);
 
   // Get the list of the values's legal parts.
   unsigned NumRegs = Regs.size();
@@ -796,9 +773,8 @@ void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, SDLoc dl,
     EVT ValueVT = ValueVTs[Value];
     unsigned NumParts = TLI.getNumRegisters(*DAG.getContext(), ValueVT);
     MVT RegisterVT = RegVTs[Value];
-
-    if (ExtendKind == ISD::ANY_EXTEND && TLI.isZExtFree(Val, RegisterVT))
-      ExtendKind = ISD::ZERO_EXTEND;
+    ISD::NodeType ExtendKind =
+      TLI.isZExtFree(Val, RegisterVT)? ISD::ZERO_EXTEND: ISD::ANY_EXTEND;
 
     getCopyToParts(DAG, dl, Val.getValue(Val.getResNo() + Value),
                    &Parts[Part], NumParts, RegisterVT, V, ExtendKind);
