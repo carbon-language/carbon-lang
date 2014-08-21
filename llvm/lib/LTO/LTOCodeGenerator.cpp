@@ -474,9 +474,11 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   // Enabling internalize here would use its AllButMain variant. It
   // keeps only main if it exists and does nothing for libraries. Instead
   // we create the pass ourselves with the symbol list provided by the linker.
-  if (!DisableOpt)
-    PassManagerBuilder().populateLTOPassManager(passes, !DisableInline,
-                                                DisableGVNLoadPRE);
+  if (!DisableOpt) {
+    PassManagerBuilder PMB;
+    PMB.DisableGVNLoadPRE = DisableGVNLoadPRE;
+    PMB.populateLTOPassManager(passes, !DisableInline);
+  }
 
   // Make sure everything is still good.
   passes.add(createVerifierPass());

@@ -118,6 +118,7 @@ public:
   bool LoopVectorize;
   bool RerollLoops;
   bool LoadCombine;
+  bool DisableGVNLoadPRE;
 
 private:
   /// ExtensionList - This is list of all of the extensions that are registered.
@@ -144,8 +145,7 @@ public:
 
   /// populateModulePassManager - This sets up the primary pass manager.
   void populateModulePassManager(PassManagerBase &MPM);
-  void populateLTOPassManager(PassManagerBase &PM, bool RunInliner,
-                              bool DisableGVNLoadPRE);
+  void populateLTOPassManager(PassManagerBase &PM, bool RunInliner);
 };
 
 /// Registers a function for adding a standard set of passes.  This should be
