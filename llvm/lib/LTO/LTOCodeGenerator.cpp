@@ -466,11 +466,9 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   mergedModule->setDataLayout(TargetMach->getSubtargetImpl()->getDataLayout());
   passes.add(new DataLayoutPass(mergedModule));
 
-  // Add appropriate TargetLibraryInfo for this module.
-  passes.add(new TargetLibraryInfo(Triple(TargetMach->getTargetTriple())));
-
   TargetMach->addAnalysisPasses(passes);
 
+  Triple TargetTriple(TargetMach->getTargetTriple());
   // Enabling internalize here would use its AllButMain variant. It
   // keeps only main if it exists and does nothing for libraries. Instead
   // we create the pass ourselves with the symbol list provided by the linker.
@@ -479,6 +477,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
     PMB.DisableGVNLoadPRE = DisableGVNLoadPRE;
     if (!DisableInline)
       PMB.Inliner = createFunctionInliningPass();
+    PMB.LibraryInfo = new TargetLibraryInfo(TargetTriple);
     PMB.populateLTOPassManager(passes);
   }
 

@@ -314,6 +314,10 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
 }
 
 void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM) {
+  // Add LibraryInfo if we have some.
+  if (LibraryInfo)
+    PM.add(new TargetLibraryInfo(*LibraryInfo));
+
   // Provide AliasAnalysis services for optimizations.
   addInitialAliasAnalysisPasses(PM);
 
