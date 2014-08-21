@@ -956,6 +956,26 @@ public:
     llvm_unreachable("Store conditional unimplemented on this target");
   }
 
+  /// Inserts in the IR a target-specific intrinsic specifying a fence.
+  /// It is called by AtomicExpandPass before expanding an
+  ///   AtomicRMW/AtomicCmpXchg/AtomicStore/AtomicLoad.
+  /// RMW and CmpXchg set both IsStore and IsLoad to true.
+  /// Backends with !getInsertFencesForAtomic() should keep a no-op here
+  virtual void emitLeadingFence(IRBuilder<> &Builder, AtomicOrdering Ord,
+          bool IsStore, bool IsLoad) const {
+    assert(!getInsertFencesForAtomic());
+  }
+
+  /// Inserts in the IR a target-specific intrinsic specifying a fence.
+  /// It is called by AtomicExpandPass after expanding an
+  ///   AtomicRMW/AtomicCmpXchg/AtomicStore/AtomicLoad.
+  /// RMW and CmpXchg set both IsStore and IsLoad to true.
+  /// Backends with !getInsertFencesForAtomic() should keep a no-op here
+  virtual void emitTrailingFence(IRBuilder<> &Builder, AtomicOrdering Ord,
+          bool IsStore, bool IsLoad) const {
+    assert(!getInsertFencesForAtomic());
+  }
+
   /// Return true if the given (atomic) instruction should be expanded by the
   /// IR-level AtomicExpand pass into a loop involving
   /// load-linked/store-conditional pairs. Atomic stores will be expanded in the
