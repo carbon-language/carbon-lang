@@ -186,6 +186,7 @@ private:
                        unsigned RHSReg, bool RHSIsKill,
                        AArch64_AM::ShiftExtendType ShiftType, uint64_t ShiftImm,
                        bool WantResult = true);
+  unsigned emitAND_ri(MVT RetVT, unsigned LHSReg, bool LHSIsKill, uint64_t Imm);
   unsigned Emit_MUL_rr(MVT RetVT, unsigned Op0, bool Op0IsKill,
                        unsigned Op1, bool Op1IsKill);
   unsigned Emit_SMULL_rr(MVT RetVT, unsigned Op0, bool Op0IsKill,
@@ -1101,6 +1102,34 @@ unsigned AArch64FastISel::emitSubs_rs(MVT RetVT, unsigned LHSReg,
                          ShiftType, ShiftImm, WantResult);
 }
 
+// FIXME: This should be eventually generated automatically by tblgen.
+unsigned AArch64FastISel::emitAND_ri(MVT RetVT, unsigned LHSReg, bool LHSIsKill,
+                                     uint64_t Imm) {
+  const TargetRegisterClass *RC = nullptr;
+  unsigned Opc = 0;
+  unsigned RegSize = 0;
+  switch (RetVT.SimpleTy) {
+  default:
+    return 0;
+  case MVT::i32:
+    Opc = AArch64::ANDWri;
+    RC = &AArch64::GPR32spRegClass;
+    RegSize = 32;
+    break;
+  case MVT::i64:
+    Opc = AArch64::ANDXri;
+    RC = &AArch64::GPR64spRegClass;
+    RegSize = 64;
+    break;
+  }
+
+  if (!AArch64_AM::isLogicalImmediate(Imm, RegSize))
+    return 0;
+
+  return FastEmitInst_ri(Opc, RC, LHSReg, LHSIsKill,
+                         AArch64_AM::encodeLogicalImmediate(Imm, RegSize));
+}
+
 bool AArch64FastISel::EmitLoad(MVT VT, unsigned &ResultReg, Address Addr,
                                MachineMemOperand *MMO) {
   // Simplify this down to something we can handle.
@@ -1167,12 +1196,8 @@ bool AArch64FastISel::EmitLoad(MVT VT, unsigned &ResultReg, Address Addr,
 
   // Loading an i1 requires special handling.
   if (VTIsi1) {
-    MRI.constrainRegClass(ResultReg, &AArch64::GPR32RegClass);
-    unsigned ANDReg = createResultReg(&AArch64::GPR32spRegClass);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ANDWri),
-            ANDReg)
-      .addReg(ResultReg)
-      .addImm(AArch64_AM::encodeLogicalImmediate(1, 32));
+    unsigned ANDReg = emitAND_ri(MVT::i32, ResultReg, /*IsKill=*/true, 1);
+    assert(ANDReg && "Unexpected AND instruction emission failure.");
     ResultReg = ANDReg;
   }
   return true;
@@ -1260,12 +1285,8 @@ bool AArch64FastISel::EmitStore(MVT VT, unsigned SrcReg, Address Addr,
 
   // Storing an i1 requires special handling.
   if (VTIsi1) {
-    MRI.constrainRegClass(SrcReg, &AArch64::GPR32RegClass);
-    unsigned ANDReg = createResultReg(&AArch64::GPR32spRegClass);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ANDWri),
-            ANDReg)
-      .addReg(SrcReg)
-      .addImm(AArch64_AM::encodeLogicalImmediate(1, 32));
+    unsigned ANDReg = emitAND_ri(MVT::i32, SrcReg, /*TODO:IsKill=*/false, 1);
+    assert(ANDReg && "Unexpected AND instruction emission failure.");
     SrcReg = ANDReg;
   }
   // Create the base instruction, then add the operands.
@@ -1385,20 +1406,19 @@ bool AArch64FastISel::SelectBranch(const Instruction *I) {
     if (TI->hasOneUse() && TI->getParent() == I->getParent() &&
         (isLoadStoreTypeLegal(TI->getOperand(0)->getType(), SrcVT))) {
       unsigned CondReg = getRegForValue(TI->getOperand(0));
-      if (CondReg == 0)
+      if (!CondReg)
         return false;
+      bool CondIsKill = hasTrivialKill(TI->getOperand(0));
 
       // Issue an extract_subreg to get the lower 32-bits.
-      if (SrcVT == MVT::i64)
-        CondReg = FastEmitInst_extractsubreg(MVT::i32, CondReg, /*Kill=*/true,
+      if (SrcVT == MVT::i64) {
+        CondReg = FastEmitInst_extractsubreg(MVT::i32, CondReg, CondIsKill,
                                              AArch64::sub_32);
+        CondIsKill = true;
+      }
 
-      MRI.constrainRegClass(CondReg, &AArch64::GPR32RegClass);
-      unsigned ANDReg = createResultReg(&AArch64::GPR32spRegClass);
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-              TII.get(AArch64::ANDWri), ANDReg)
-          .addReg(CondReg)
-          .addImm(AArch64_AM::encodeLogicalImmediate(1, 32));
+      unsigned ANDReg = emitAND_ri(MVT::i32, CondReg, CondIsKill, 1);
+      assert(ANDReg && "Unexpected AND instruction emission failure.");
       emitICmp_ri(MVT::i32, ANDReg, /*IsKill=*/true, 0);
 
       if (FuncInfo.MBB->isLayoutSuccessor(TBB)) {
@@ -1565,13 +1585,9 @@ bool AArch64FastISel::SelectSelect(const Instruction *I) {
   bool CondIsKill = hasTrivialKill(Cond);
 
   if (NeedTest) {
-    MRI.constrainRegClass(CondReg, &AArch64::GPR32RegClass);
-    unsigned ANDReg = createResultReg(&AArch64::GPR32spRegClass);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ANDWri),
-            ANDReg)
-      .addReg(CondReg, getKillRegState(CondIsKill))
-      .addImm(AArch64_AM::encodeLogicalImmediate(1, 32));
-    emitICmp_ri(MVT::i32, ANDReg, true, 0);
+    unsigned ANDReg = emitAND_ri(MVT::i32, CondReg, CondIsKill, 1);
+    assert(ANDReg && "Unexpected AND instruction emission failure.");
+    emitICmp_ri(MVT::i32, ANDReg, /*IsKill=*/true, 0);
   }
 
   unsigned TrueReg = getRegForValue(SI->getTrueValue());
@@ -2508,6 +2524,7 @@ bool AArch64FastISel::SelectTrunc(const Instruction *I) {
   unsigned SrcReg = getRegForValue(Op);
   if (!SrcReg)
     return false;
+  bool SrcIsKill = hasTrivialKill(Op);
 
   // If we're truncating from i64 to a smaller non-legal type then generate an
   // AND.  Otherwise, we know the high bits are undefined and a truncate doesn't
@@ -2529,15 +2546,11 @@ bool AArch64FastISel::SelectTrunc(const Instruction *I) {
       break;
     }
     // Issue an extract_subreg to get the lower 32-bits.
-    unsigned Reg32 = FastEmitInst_extractsubreg(MVT::i32, SrcReg, /*Kill=*/true,
+    unsigned Reg32 = FastEmitInst_extractsubreg(MVT::i32, SrcReg, SrcIsKill,
                                                 AArch64::sub_32);
-    MRI.constrainRegClass(Reg32, &AArch64::GPR32RegClass);
     // Create the AND instruction which performs the actual truncation.
-    unsigned ANDReg = createResultReg(&AArch64::GPR32spRegClass);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ANDWri),
-            ANDReg)
-        .addReg(Reg32)
-        .addImm(AArch64_AM::encodeLogicalImmediate(Mask, 32));
+    unsigned ANDReg = emitAND_ri(MVT::i32, Reg32, /*IsKill=*/true, Mask);
+    assert(ANDReg && "Unexpected AND instruction emission failure.");
     SrcReg = ANDReg;
   }
 
@@ -2554,13 +2567,8 @@ unsigned AArch64FastISel::Emiti1Ext(unsigned SrcReg, MVT DestVT, bool isZExt) {
     DestVT = MVT::i32;
 
   if (isZExt) {
-    MRI.constrainRegClass(SrcReg, &AArch64::GPR32RegClass);
-    unsigned ResultReg = createResultReg(&AArch64::GPR32spRegClass);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ANDWri),
-            ResultReg)
-        .addReg(SrcReg)
-        .addImm(AArch64_AM::encodeLogicalImmediate(1, 32));
-
+    unsigned ResultReg = emitAND_ri(MVT::i32, SrcReg, /*TODO:IsKill=*/false, 1);
+    assert(ResultReg && "Unexpected AND instruction emission failure.");
     if (DestVT == MVT::i64) {
       // We're ZExt i1 to i64.  The ANDWri Wd, Ws, #1 implicitly clears the
       // upper 32 bits.  Emit a SUBREG_TO_REG to extend from Wd to Xd.
