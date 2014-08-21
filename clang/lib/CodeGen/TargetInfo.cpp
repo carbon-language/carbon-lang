@@ -6415,26 +6415,25 @@ static bool extractFieldType(SmallVectorImpl<FieldEncoding> &FE,
                              const RecordDecl *RD,
                              const CodeGen::CodeGenModule &CGM,
                              TypeStringCache &TSC) {
-  for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
-       I != E; ++I) {
+  for (const auto *Field : RD->fields()) {
     SmallStringEnc Enc;
     Enc += "m(";
-    Enc += I->getName();
+    Enc += Field->getName();
     Enc += "){";
-    if (I->isBitField()) {
+    if (Field->isBitField()) {
       Enc += "b(";
       llvm::raw_svector_ostream OS(Enc);
       OS.resync();
-      OS << I->getBitWidthValue(CGM.getContext());
+      OS << Field->getBitWidthValue(CGM.getContext());
       OS.flush();
       Enc += ':';
     }
-    if (!appendType(Enc, I->getType(), CGM, TSC))
+    if (!appendType(Enc, Field->getType(), CGM, TSC))
       return false;
-    if (I->isBitField())
+    if (Field->isBitField())
       Enc += ')';
     Enc += '}';
-    FE.push_back(FieldEncoding(!I->getName().empty(), Enc));
+    FE.push_back(FieldEncoding(!Field->getName().empty(), Enc));
   }
   return true;
 }

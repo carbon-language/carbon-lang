@@ -3277,9 +3277,10 @@ unsigned FieldDecl::getFieldIndex() const {
   unsigned Index = 0;
   const RecordDecl *RD = getParent();
 
-  for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
-       I != E; ++I, ++Index)
-    I->getCanonicalDecl()->CachedFieldIndex = Index + 1;
+  for (auto *Field : RD->fields()) {
+    Field->getCanonicalDecl()->CachedFieldIndex = Index + 1;
+    ++Index;
+  }
 
   assert(CachedFieldIndex && "failed to find field in parent");
   return CachedFieldIndex - 1;

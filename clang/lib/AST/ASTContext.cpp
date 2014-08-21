@@ -5617,12 +5617,11 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
   }
   
   unsigned i = 0;
-  for (RecordDecl::field_iterator Field = RDecl->field_begin(),
-                               FieldEnd = RDecl->field_end();
-       Field != FieldEnd; ++Field, ++i) {
+  for (auto *Field : RDecl->fields()) {
     uint64_t offs = layout.getFieldOffset(i);
     FieldOrBaseOffsets.insert(FieldOrBaseOffsets.upper_bound(offs),
-                              std::make_pair(offs, *Field));
+                              std::make_pair(offs, Field));
+    ++i;
   }
 
   if (CXXRec && includeVBases) {
