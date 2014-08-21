@@ -509,11 +509,9 @@ USEVAR(T::b)
 int T::c;
 
 template <typename T> struct __declspec(dllexport) U { void foo() {} };
-// The U<int> specialization below must cause the following to be emitted:
-// M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?foo@?$U@H@@QAEXXZ"
-// M32-DAG: define weak_odr dllexport x86_thiscallcc dereferenceable({{[0-9]+}}) %struct.U* @"\01??4?$U@H@@QAEAAU0@ABU0@@Z"
 struct __declspec(dllexport) V : public U<int> { };
-
+// U<int>'s assignment operator is emitted.
+// M32-DAG: define weak_odr dllexport x86_thiscallcc dereferenceable({{[0-9]+}}) %struct.U* @"\01??4?$U@H@@QAEAAU0@ABU0@@Z"
 
 struct __declspec(dllexport) W { virtual void foo() {} };
 // Default ctor:
@@ -618,6 +616,7 @@ USEMEMFUNC(DerivedFromTemplate, func)
 
 // ExportedTemplate is explicitly exported.
 struct __declspec(dllexport) DerivedFromExportedTemplate : public ExportedClassTemplate<int> {};
+USEMEMFUNC(DerivedFromExportedTemplate, func)
 // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?func@?$ExportedClassTemplate@H@@QAEXXZ"
 // G32-DAG: define weak_odr dllexport x86_thiscallcc void @_ZN21ExportedClassTemplateIiE4funcEv
 

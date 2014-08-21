@@ -4432,6 +4432,9 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
   // FIXME: MSVC's docs say all bases must be exportable, but this doesn't
   // seem to be true in practice?
 
+  TemplateSpecializationKind TSK =
+    Class->getTemplateSpecializationKind();
+
   for (Decl *Member : Class->decls()) {
     VarDecl *VD = dyn_cast<VarDecl>(Member);
     CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member);
@@ -4471,7 +4474,14 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member)) {
       if (ClassExported) {
         if (MD->isUserProvided()) {
-          // Instantiate non-default methods.
+          // Instantiate non-default methods..
+
+          // .. except for certain kinds of template specializations.
+          if (TSK == TSK_ExplicitInstantiationDeclaration)
+            continue;
+          if (TSK == TSK_ImplicitInstantiation && !ClassAttr->isInherited())
+            continue;
+
           S.MarkFunctionReferenced(Class->getLocation(), MD);
         } else if (!MD->isTrivial() || MD->isExplicitlyDefaulted() ||
                    MD->isCopyAssignmentOperator() ||
