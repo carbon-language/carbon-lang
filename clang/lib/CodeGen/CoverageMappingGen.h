@@ -69,6 +69,7 @@ public:
   /// function mapping records.
   void addFunctionMappingRecord(llvm::GlobalVariable *FunctionName,
                                 StringRef FunctionNameValue,
+                                uint64_t FunctionHash,
                                 const std::string &CoverageMapping);
 
   /// \brief Emit the coverage mapping data for a translation unit.

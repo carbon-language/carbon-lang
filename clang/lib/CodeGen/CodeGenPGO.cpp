@@ -168,8 +168,8 @@ llvm::GlobalVariable *CodeGenPGO::buildDataVar() {
 
   // Create coverage mapping data variable.
   if (!CoverageMapping.empty())
-    CGM.getCoverageMapping()->addFunctionMappingRecord(Name,
-                                                       getFuncName(),
+    CGM.getCoverageMapping()->addFunctionMappingRecord(Name, getFuncName(),
+                                                       FunctionHash,
                                                        CoverageMapping);
 
   // Hide all these symbols so that we correctly get a copy for each
