@@ -1255,7 +1255,7 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
     const char *xpc_service  = nil;
     bool send_auth = false;
     AuthorizationExternalForm extForm;
-    if ((requested_uid == UINT32_MAX) || (requested_uid == Host::GetEffectiveUserID()))
+    if ((requested_uid == UINT32_MAX) || (requested_uid == HostInfo::GetEffectiveUserID()))
     {
         xpc_service = "com.apple.lldb.launcherXPCService";
     }
@@ -1392,7 +1392,7 @@ ShouldLaunchUsingXPC(ProcessLaunchInfo &launch_info)
 
 #if !NO_XPC_SERVICES    
     bool launchingAsRoot = launch_info.GetUserID() == 0;
-    bool currentUserIsRoot = Host::GetEffectiveUserID() == 0;
+    bool currentUserIsRoot = HostInfo::GetEffectiveUserID() == 0;
     
     if (launchingAsRoot && !currentUserIsRoot)
     {

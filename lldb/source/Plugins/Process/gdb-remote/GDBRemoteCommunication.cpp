@@ -687,7 +687,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
         // directory.
         if (HostInfo::GetLLDBPath(ePathTypeSupportExecutableDir, debugserver_file_spec))
         {
-            debugserver_file_spec.GetFilename().SetCString(DEBUGSERVER_BASENAME);
+            debugserver_file_spec.AppendPathComponent (DEBUGSERVER_BASENAME);
             debugserver_exists = debugserver_file_spec.Exists();
             if (debugserver_exists)
             {
