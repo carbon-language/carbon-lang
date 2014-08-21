@@ -967,7 +967,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I,
 static Constant *
 ConstantFoldConstantExpressionImpl(const ConstantExpr *CE, const DataLayout *TD,
                                    const TargetLibraryInfo *TLI,
-                                   SmallPtrSet<ConstantExpr *, 4> &FoldedOps) {
+                                   SmallPtrSetImpl<ConstantExpr *> &FoldedOps) {
   SmallVector<Constant *, 8> Ops;
   for (User::const_op_iterator i = CE->op_begin(), e = CE->op_end(); i != e;
        ++i) {

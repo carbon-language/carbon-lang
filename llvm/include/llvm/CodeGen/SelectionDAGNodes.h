@@ -594,7 +594,7 @@ public:
   /// changes.
   /// NOTE: This is still very expensive. Use carefully.
   bool hasPredecessorHelper(const SDNode *N,
-                            SmallPtrSet<const SDNode *, 32> &Visited,
+                            SmallPtrSetImpl<const SDNode *> &Visited,
                             SmallVectorImpl<const SDNode *> &Worklist) const;
 
   /// getNumOperands - Return the number of values used by this operation.

@@ -45,7 +45,7 @@ bool llvm::isSafeToDestroyConstant(const Constant *C) {
 }
 
 static bool analyzeGlobalAux(const Value *V, GlobalStatus &GS,
-                             SmallPtrSet<const PHINode *, 16> &PhiUsers) {
+                             SmallPtrSetImpl<const PHINode *> &PhiUsers) {
   for (const Use &U : V->uses()) {
     const User *UR = U.getUser();
     if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(UR)) {

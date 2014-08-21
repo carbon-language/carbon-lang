@@ -124,7 +124,7 @@ private:
   void applyScopeRestrictions();
   void applyRestriction(GlobalValue &GV, const ArrayRef<StringRef> &Libcalls,
                         std::vector<const char *> &MustPreserveList,
-                        SmallPtrSet<GlobalValue *, 8> &AsmUsed,
+                        SmallPtrSetImpl<GlobalValue *> &AsmUsed,
                         Mangler &Mangler);
   bool determineTarget(std::string &errMsg);
 

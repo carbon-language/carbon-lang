@@ -6395,7 +6395,7 @@ bool SDNode::hasPredecessor(const SDNode *N) const {
 
 bool
 SDNode::hasPredecessorHelper(const SDNode *N,
-                             SmallPtrSet<const SDNode *, 32> &Visited,
+                             SmallPtrSetImpl<const SDNode *> &Visited,
                              SmallVectorImpl<const SDNode *> &Worklist) const {
   if (Visited.empty()) {
     Worklist.push_back(this);
@@ -6773,8 +6773,8 @@ bool ShuffleVectorSDNode::isSplatMask(const int *Mask, EVT VT) {
 
 #ifndef NDEBUG
 static void checkForCyclesHelper(const SDNode *N,
-                                 SmallPtrSet<const SDNode*, 32> &Visited,
-                                 SmallPtrSet<const SDNode*, 32> &Checked,
+                                 SmallPtrSetImpl<const SDNode*> &Visited,
+                                 SmallPtrSetImpl<const SDNode*> &Checked,
                                  const llvm::SelectionDAG *DAG) {
   // If this node has already been checked, don't check it again.
   if (Checked.count(N))

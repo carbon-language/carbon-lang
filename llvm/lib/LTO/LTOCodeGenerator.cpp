@@ -314,7 +314,7 @@ void LTOCodeGenerator::
 applyRestriction(GlobalValue &GV,
                  const ArrayRef<StringRef> &Libcalls,
                  std::vector<const char*> &MustPreserveList,
-                 SmallPtrSet<GlobalValue*, 8> &AsmUsed,
+                 SmallPtrSetImpl<GlobalValue*> &AsmUsed,
                  Mangler &Mangler) {
   // There are no restrictions to apply to declarations.
   if (GV.isDeclaration())
@@ -343,7 +343,7 @@ applyRestriction(GlobalValue &GV,
 }
 
 static void findUsedValues(GlobalVariable *LLVMUsed,
-                           SmallPtrSet<GlobalValue*, 8> &UsedValues) {
+                           SmallPtrSetImpl<GlobalValue*> &UsedValues) {
   if (!LLVMUsed) return;
 
   ConstantArray *Inits = cast<ConstantArray>(LLVMUsed->getInitializer());

@@ -612,7 +612,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
 /// value will trap if the value is dynamically null.  PHIs keeps track of any
 /// phi nodes we've seen to avoid reprocessing them.
 static bool AllUsesOfValueWillTrapIfNull(const Value *V,
-                                         SmallPtrSet<const PHINode*, 8> &PHIs) {
+                                        SmallPtrSetImpl<const PHINode*> &PHIs) {
   for (const User *U : V->users())
     if (isa<LoadInst>(U)) {
       // Will trap.
@@ -957,7 +957,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 /// it is to the specified global.
 static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(const Instruction *V,
                                                       const GlobalVariable *GV,
-                                         SmallPtrSet<const PHINode*, 8> &PHIs) {
+                                        SmallPtrSetImpl<const PHINode*> &PHIs) {
   for (const User *U : V->users()) {
     const Instruction *Inst = cast<Instruction>(U);
 
@@ -1047,8 +1047,8 @@ static void ReplaceUsesOfMallocWithGlobal(Instruction *Alloc,
 /// of a load) are simple enough to perform heap SRA on.  This permits GEP's
 /// that index through the array and struct field, icmps of null, and PHIs.
 static bool LoadUsesSimpleEnoughForHeapSRA(const Value *V,
-                        SmallPtrSet<const PHINode*, 32> &LoadUsingPHIs,
-                        SmallPtrSet<const PHINode*, 32> &LoadUsingPHIsPerLoad) {
+                        SmallPtrSetImpl<const PHINode*> &LoadUsingPHIs,
+                        SmallPtrSetImpl<const PHINode*> &LoadUsingPHIsPerLoad) {
   // We permit two users of the load: setcc comparing against the null
   // pointer, and a getelementptr of a specific form.
   for (const User *U : V->users()) {
@@ -1975,7 +1975,7 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
 
 static inline bool
 isSimpleEnoughValueToCommit(Constant *C,
-                            SmallPtrSet<Constant*, 8> &SimpleConstants,
+                            SmallPtrSetImpl<Constant*> &SimpleConstants,
                             const DataLayout *DL);
 
 
@@ -1988,7 +1988,7 @@ isSimpleEnoughValueToCommit(Constant *C,
 /// in SimpleConstants to avoid having to rescan the same constants all the
 /// time.
 static bool isSimpleEnoughValueToCommitHelper(Constant *C,
-                                   SmallPtrSet<Constant*, 8> &SimpleConstants,
+                                   SmallPtrSetImpl<Constant*> &SimpleConstants,
                                    const DataLayout *DL) {
   // Simple global addresses are supported, do not allow dllimport or
   // thread-local globals.
@@ -2046,7 +2046,7 @@ static bool isSimpleEnoughValueToCommitHelper(Constant *C,
 
 static inline bool
 isSimpleEnoughValueToCommit(Constant *C,
-                            SmallPtrSet<Constant*, 8> &SimpleConstants,
+                            SmallPtrSetImpl<Constant*> &SimpleConstants,
                             const DataLayout *DL) {
   // If we already checked this constant, we win.
   if (!SimpleConstants.insert(C)) return true;
@@ -2217,7 +2217,7 @@ public:
     return MutatedMemory;
   }
 
-  const SmallPtrSet<GlobalVariable*, 8> &getInvariants() const {
+  const SmallPtrSetImpl<GlobalVariable*> &getInvariants() const {
     return Invariants;
   }
 
@@ -2735,10 +2735,9 @@ static void setUsedInitializer(GlobalVariable &V,
   PointerType *Int8PtrTy = Type::getInt8PtrTy(V.getContext(), 0);
 
   SmallVector<llvm::Constant *, 8> UsedArray;
-  for (SmallPtrSet<GlobalValue *, 8>::iterator I = Init.begin(), E = Init.end();
-       I != E; ++I) {
+  for (GlobalValue *GV : Init) {
     Constant *Cast
-      = ConstantExpr::getPointerBitCastOrAddrSpaceCast(*I, Int8PtrTy);
+      = ConstantExpr::getPointerBitCastOrAddrSpaceCast(GV, Int8PtrTy);
     UsedArray.push_back(Cast);
   }
   // Sort to get deterministic order.
@@ -2825,7 +2824,8 @@ static bool mayHaveOtherReferences(GlobalAlias &GA, const LLVMUsed &U) {
   return U.usedCount(&GA) || U.compilerUsedCount(&GA);
 }
 
-static bool hasUsesToReplace(GlobalAlias &GA, const LLVMUsed &U,bool &RenameTarget) {
+static bool hasUsesToReplace(GlobalAlias &GA, const LLVMUsed &U,
+                             bool &RenameTarget) {
   RenameTarget = false;
   bool Ret = false;
   if (hasUseOtherThanLLVMUsed(GA, U))
@@ -2860,9 +2860,7 @@ bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
   bool Changed = false;
   LLVMUsed Used(M);
 
-  for (SmallPtrSet<GlobalValue *, 8>::iterator I = Used.usedBegin(),
-                                               E = Used.usedEnd();
-       I != E; ++I)
+  for (LLVMUsed::iterator I = Used.usedBegin(), E = Used.usedEnd(); I != E; ++I)
     Used.compilerUsedErase(*I);
 
   for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end();

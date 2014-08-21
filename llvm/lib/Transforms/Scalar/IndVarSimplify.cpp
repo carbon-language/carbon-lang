@@ -1200,7 +1200,7 @@ void IndVarSimplify::SimplifyAndExtend(Loop *L,
 /// BackedgeTakenInfo. If these expressions have not been reduced, then
 /// expanding them may incur additional cost (albeit in the loop preheader).
 static bool isHighCostExpansion(const SCEV *S, BranchInst *BI,
-                                SmallPtrSet<const SCEV*, 8> &Processed,
+                                SmallPtrSetImpl<const SCEV*> &Processed,
                                 ScalarEvolution *SE) {
   if (!Processed.insert(S))
     return false;
@@ -1373,7 +1373,7 @@ static bool needsLFTR(Loop *L, DominatorTree *DT) {
 /// Recursive helper for hasConcreteDef(). Unfortunately, this currently boils
 /// down to checking that all operands are constant and listing instructions
 /// that may hide undef.
-static bool hasConcreteDefImpl(Value *V, SmallPtrSet<Value*, 8> &Visited,
+static bool hasConcreteDefImpl(Value *V, SmallPtrSetImpl<Value*> &Visited,
                                unsigned Depth) {
   if (isa<Constant>(V))
     return !isa<UndefValue>(V);

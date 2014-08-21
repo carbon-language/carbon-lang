@@ -257,7 +257,7 @@ static unsigned ComputeSpeculationCost(const User *I, const DataLayout *DL) {
 /// V plus its non-dominating operands.  If that cost is greater than
 /// CostRemaining, false is returned and CostRemaining is undefined.
 static bool DominatesMergePoint(Value *V, BasicBlock *BB,
-                                SmallPtrSet<Instruction*, 4> *AggressiveInsts,
+                                SmallPtrSetImpl<Instruction*> *AggressiveInsts,
                                 unsigned &CostRemaining,
                                 const DataLayout *DL) {
   Instruction *I = dyn_cast<Instruction>(V);

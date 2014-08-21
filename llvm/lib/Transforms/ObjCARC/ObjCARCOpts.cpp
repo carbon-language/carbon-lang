@@ -2850,8 +2850,8 @@ bool ObjCARCOpt::OptimizeSequences(Function &F) {
 /// shared pointer argument. Note that Retain need not be in BB.
 static bool
 HasSafePathToPredecessorCall(const Value *Arg, Instruction *Retain,
-                             SmallPtrSet<Instruction *, 4> &DepInsts,
-                             SmallPtrSet<const BasicBlock *, 4> &Visited,
+                             SmallPtrSetImpl<Instruction *> &DepInsts,
+                             SmallPtrSetImpl<const BasicBlock *> &Visited,
                              ProvenanceAnalysis &PA) {
   FindDependencies(CanChangeRetainCount, Arg, Retain->getParent(), Retain,
                    DepInsts, Visited, PA);
@@ -2879,8 +2879,8 @@ HasSafePathToPredecessorCall(const Value *Arg, Instruction *Retain,
 static CallInst *
 FindPredecessorRetainWithSafePath(const Value *Arg, BasicBlock *BB,
                                   Instruction *Autorelease,
-                                  SmallPtrSet<Instruction *, 4> &DepInsts,
-                                  SmallPtrSet<const BasicBlock *, 4> &Visited,
+                                  SmallPtrSetImpl<Instruction *> &DepInsts,
+                                  SmallPtrSetImpl<const BasicBlock *> &Visited,
                                   ProvenanceAnalysis &PA) {
   FindDependencies(CanChangeRetainCount, Arg,
                    BB, Autorelease, DepInsts, Visited, PA);
@@ -2906,8 +2906,8 @@ FindPredecessorRetainWithSafePath(const Value *Arg, BasicBlock *BB,
 static CallInst *
 FindPredecessorAutoreleaseWithSafePath(const Value *Arg, BasicBlock *BB,
                                        ReturnInst *Ret,
-                                       SmallPtrSet<Instruction *, 4> &DepInsts,
-                                       SmallPtrSet<const BasicBlock *, 4> &V,
+                                       SmallPtrSetImpl<Instruction *> &DepInsts,
+                                       SmallPtrSetImpl<const BasicBlock *> &V,
                                        ProvenanceAnalysis &PA) {
   FindDependencies(NeedsPositiveRetainCount, Arg,
                    BB, Ret, DepInsts, V, PA);

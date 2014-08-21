@@ -66,7 +66,7 @@ ModulePass *llvm::createConstantMergePass() { return new ConstantMerge(); }
 
 /// Find values that are marked as llvm.used.
 static void FindUsedValues(GlobalVariable *LLVMUsed,
-                           SmallPtrSet<const GlobalValue*, 8> &UsedValues) {
+                           SmallPtrSetImpl<const GlobalValue*> &UsedValues) {
   if (!LLVMUsed) return;
   ConstantArray *Inits = cast<ConstantArray>(LLVMUsed->getInitializer());
 
