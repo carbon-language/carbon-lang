@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Atoms.h"
-#include "ReaderImportHeader.h"
 #include "lld/Core/Alias.h"
 #include "lld/Core/File.h"
 #include "lld/Driver/Driver.h"

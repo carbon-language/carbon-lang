@@ -310,30 +310,6 @@ public:
 
 } // end anonymous namespace
 
-namespace pecoff {
-
-std::error_code
-parseCOFFImportLibrary(const LinkingContext &targetInfo,
-                       std::unique_ptr<MemoryBuffer> &mb,
-                       std::vector<std::unique_ptr<File>> &result) {
-  // Check the file magic.
-  const char *buf = mb->getBufferStart();
-  const char *end = mb->getBufferEnd();
-  // Error if the file is too small or does not start with the magic.
-  if (end - buf < static_cast<ptrdiff_t>(sizeof(COFF::ImportHeader)) ||
-      memcmp(buf, "\0\0\xFF\xFF", 4))
-    return make_error_code(NativeReaderError::unknown_file_format);
-
-  std::error_code ec;
-  auto file = std::unique_ptr<File>(new FileImportLibrary(std::move(mb), ec));
-  if (ec)
-    return ec;
-  result.push_back(std::move(file));
-  return std::error_code();
-}
-
-} // end namespace pecoff
-
 void Registry::addSupportCOFFImportLibraries() {
   add(std::unique_ptr<Reader>(new COFFImportLibraryReader()));
 }
