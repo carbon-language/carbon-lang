@@ -1575,6 +1575,7 @@ public:
       .Case("pitcairn", GK_SOUTHERN_ISLANDS)
       .Case("verde",    GK_SOUTHERN_ISLANDS)
       .Case("oland",    GK_SOUTHERN_ISLANDS)
+      .Case("hainan",   GK_SOUTHERN_ISLANDS)
       .Case("bonaire",  GK_SEA_ISLANDS)
       .Case("kabini",   GK_SEA_ISLANDS)
       .Case("kaveri",   GK_SEA_ISLANDS)
