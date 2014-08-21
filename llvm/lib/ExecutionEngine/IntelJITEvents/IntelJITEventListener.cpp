@@ -190,7 +190,7 @@ void IntelJITEventListener::NotifyFreeingMachineCode(void *FnStart) {
 void IntelJITEventListener::NotifyObjectEmitted(const ObjectImage &Obj) {
   // Get the address of the object image for use as a unique identifier
   const void* ObjData = Obj.getData().data();
-  DIContext* Context = DIContext::getDWARFContext(Obj.getObjectFile());
+  DIContext* Context = DIContext::getDWARFContext(*Obj.getObjectFile());
   MethodAddressVector Functions;
 
   // Use symbol info to iterate functions in the object.

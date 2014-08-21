@@ -113,7 +113,7 @@ protected:
 
     // Parse the bitcode...
     SMDiagnostic Err;
-    TheModule = ParseIRFile(IRFile, Err, Context);
+    std::unique_ptr<Module> TheModule(ParseIRFile(IRFile, Err, Context));
     if (!TheModule) {
       errs() << Err.getMessage();
       return;
@@ -145,7 +145,7 @@ protected:
 
     // Compile the IR
     std::string Error;
-    TheJIT.reset(EngineBuilder(TheModule)
+    TheJIT.reset(EngineBuilder(std::move(TheModule))
       .setEngineKind(EngineKind::JIT)
       .setErrorStr(&Error)
       .setJITMemoryManager(MemMgr)
@@ -160,7 +160,6 @@ protected:
   }
 
   LLVMContext Context; // Global ownership
-  Module *TheModule; // Owned by ExecutionEngine.
   JITMemoryManager *JMM; // Owned by ExecutionEngine.
   std::unique_ptr<ExecutionEngine> TheJIT;
 

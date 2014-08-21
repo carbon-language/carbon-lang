@@ -66,7 +66,7 @@ public:
   JITEventListenerTestBase(WrapperT* w)
   : MockWrapper(w)
   , M(new llvm::Module("module", llvm::getGlobalContext()))
-  , EE(llvm::EngineBuilder(M)
+  , EE(llvm::EngineBuilder(std::unique_ptr<llvm::Module>(M))
     .setEngineKind(llvm::EngineKind::JIT)
     .setOptLevel(llvm::CodeGenOpt::None)
     .create())
