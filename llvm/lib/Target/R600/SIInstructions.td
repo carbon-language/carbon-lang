@@ -1729,14 +1729,14 @@ def V_SUB_F64 : InstSI <
 multiclass SI_SPILL_SGPR <RegisterClass sgpr_class> {
 
   def _SAVE : InstSI <
-    (outs VReg_32:$dst),
+    (outs),
     (ins sgpr_class:$src, i32imm:$frame_idx),
     "", []
   >;
 
   def _RESTORE : InstSI <
     (outs sgpr_class:$dst),
-    (ins VReg_32:$src, i32imm:$frame_idx),
+    (ins i32imm:$frame_idx),
     "", []
   >;
 

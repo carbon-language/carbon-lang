@@ -57,9 +57,12 @@ public:
   // SIMachineFunctionInfo definition
 
   SIMachineFunctionInfo(const MachineFunction &MF);
+  SpilledReg getSpilledReg(MachineFunction *MF, unsigned FrameIndex,
+                           unsigned SubIdx);
   unsigned PSInputAddr;
   struct RegSpillTracker SpillTracker;
   unsigned NumUserSGPRs;
+  std::map<unsigned, unsigned> LaneVGPRs;
 };
 
 } // End namespace llvm
