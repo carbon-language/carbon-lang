@@ -869,14 +869,19 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFScratch(SDValue Addr, SDValue &Rsrc,
   const SIRegisterInfo *TRI =
       static_cast<const SIRegisterInfo *>(MF.getSubtarget().getRegisterInfo());
   MachineRegisterInfo &MRI = MF.getRegInfo();
-
+  const SITargetLowering& Lowering =
+    *static_cast<const SITargetLowering*>(getTargetLowering());
 
   unsigned ScratchPtrReg =
       TRI->getPreloadedValue(MF, SIRegisterInfo::SCRATCH_PTR);
   unsigned ScratchOffsetReg =
       TRI->getPreloadedValue(MF, SIRegisterInfo::SCRATCH_WAVE_OFFSET);
+  Lowering.CreateLiveInRegister(*CurDAG, &AMDGPU::SReg_32RegClass,
+                                ScratchOffsetReg, MVT::i32);
 
-  Rsrc = buildScratchRSRC(CurDAG, DL, CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL, MRI.getLiveInVirtReg(ScratchPtrReg), MVT::i64));
+  Rsrc = buildScratchRSRC(CurDAG, DL,
+      CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL,
+                             MRI.getLiveInVirtReg(ScratchPtrReg), MVT::i64));
   SOffset = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL,
       MRI.getLiveInVirtReg(ScratchOffsetReg), MVT::i32);
 

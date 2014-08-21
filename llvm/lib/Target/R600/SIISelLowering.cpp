@@ -743,15 +743,8 @@ static SDNode *findUser(SDValue Value, unsigned Opcode) {
 
 SDValue SITargetLowering::LowerFrameIndex(SDValue Op, SelectionDAG &DAG) const {
 
-  MachineFunction &MF = DAG.getMachineFunction();
-  const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
-      getTargetMachine().getSubtargetImpl()->getInstrInfo());
-  const SIRegisterInfo &TRI = TII->getRegisterInfo();
   FrameIndexSDNode *FINode = cast<FrameIndexSDNode>(Op);
   unsigned FrameIndex = FINode->getIndex();
-
-  CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
-    TRI.getPreloadedValue(MF, SIRegisterInfo::SCRATCH_WAVE_OFFSET), MVT::i32);
 
   return DAG.getTargetFrameIndex(FrameIndex, MVT::i32);
 }
