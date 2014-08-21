@@ -141,7 +141,7 @@ TargetTriple("mtriple", cl::desc("Override target triple for module"));
 
 static cl::opt<bool>
 UnitAtATime("funit-at-a-time",
-            cl::desc("Enable IPO. This is same as llvm-gcc's -funit-at-a-time"),
+            cl::desc("Enable IPO. This corresponds to gcc's -funit-at-a-time"),
             cl::init(true));
 
 static cl::opt<bool>
@@ -194,9 +194,8 @@ static inline void addPass(PassManagerBase &PM, Pass *P) {
   }
 }
 
-/// AddOptimizationPasses - This routine adds optimization passes
-/// based on selected optimization level, OptLevel. This routine
-/// duplicates llvm-gcc behaviour.
+/// This routine adds optimization passes based on selected optimization level,
+/// OptLevel.
 ///
 /// OptLevel - Optimization Level
 static void AddOptimizationPasses(PassManagerBase &MPM,FunctionPassManager &FPM,
