@@ -315,14 +315,6 @@ executed, two important global variables are predefined:
  **root** The root configuration.  This is the top-most :program:`lit` configuration in
  the project.
 
- **on_clone** The config is actually cloned for every subdirectory inside a test
- suite, to allow local configuration on a per-directory basis.  The *on_clone*
- variable can be set to a Python function which will be called whenever a
- configuration is cloned (for a subdirectory).  The function should takes three
- arguments: (1) the parent configuration, (2) the new configuration (which the
- *on_clone* function will generally modify), and (3) the test path to the new
- directory being scanned.
-
  **pipefail** Normally a test using a shell pipe fails if any of the commands
  on the pipe fail. If this is not desired, setting this variable to false
  makes the test fail only if the last command in the pipe fails.
