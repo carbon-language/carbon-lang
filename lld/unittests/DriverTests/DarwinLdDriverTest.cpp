@@ -79,17 +79,18 @@ TEST_F(DarwinLdParserTest, OutputPath) {
 }
 
 TEST_F(DarwinLdParserTest, DeadStrip) {
-  EXPECT_TRUE(parse("ld", "-dead_strip", "foo.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-arch", "x86_64", "-dead_strip", "foo.o", nullptr));
   EXPECT_TRUE(_context.deadStrip());
 }
 
 TEST_F(DarwinLdParserTest, DeadStripRootsExe) {
-  EXPECT_TRUE(parse("ld", "-dead_strip", "foo.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-arch", "x86_64", "-dead_strip", "foo.o", nullptr));
   EXPECT_FALSE(_context.globalsAreDeadStripRoots());
 }
 
 TEST_F(DarwinLdParserTest, DeadStripRootsDylib) {
-  EXPECT_TRUE(parse("ld", "-dylib", "-dead_strip", "foo.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-arch", "x86_64", "-dylib", "-dead_strip", "foo.o",
+                    nullptr));
   EXPECT_TRUE(_context.globalsAreDeadStripRoots());
 }
 

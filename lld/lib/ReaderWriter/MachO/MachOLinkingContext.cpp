@@ -455,6 +455,22 @@ bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
       addInitialUndefinedSymbol(symbol.getKey());
   }
 
+  // If -dead_strip, set up initial live symbols.
+  if (deadStrip()) {
+    // Entry point is live.
+    if (outputTypeHasEntry())
+      addDeadStripRoot(entrySymbolName());
+    // Lazy binding helper is live.
+    if (needsStubsPass())
+      addDeadStripRoot(binderSymbolName());
+    // If using -exported_symbols_list, make all exported symbols live.
+    if (_exportMode == ExportMode::whiteList) {
+      _globalsAreDeadStripRoots = false;
+      for (const auto &symbol : _exportedSymbols)
+        addDeadStripRoot(symbol.getKey());
+    }
+  }
+
   return true;
 }
 

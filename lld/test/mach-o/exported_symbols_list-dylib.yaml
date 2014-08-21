@@ -13,6 +13,11 @@
 # RUN:      -unexported_symbol _bar -unexported_symbol _a  && \
 # RUN: llvm-nm -m %t3 | FileCheck %s
 #
+# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 -dylib \
+# RUN:      %s %p/Inputs/libSystem.yaml -dead_strip -o %t \
+# RUN:      -exported_symbols_list %p/Inputs/exported_symbols_list.exp && \
+# RUN: llvm-nm -m %t | FileCheck -check-prefix=CHECK_DEAD %s
+#
 # Test -exported_symbols_list and -exported_symbol properly changes visibility.
 #
 
@@ -65,3 +70,8 @@ global-symbols:
 # CHECK: (__DATA,__data) external _b
 # CHECK: (__TEXT,__text) non-external (was a private external) _bar
 # CHECK: (__TEXT,__text) external _foo
+
+# CHECK_DEAD-NOT:  (__DATA,__data) non-external (was a private external) _a
+# CHECK_DEAD:      (__DATA,__data) external _b
+# CHECK_DEAD-NOT:  (__TEXT,__text) non-external (was a private external) _bar
+# CHECK_DEAD:      (__TEXT,__text) external _foo
