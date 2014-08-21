@@ -20,6 +20,7 @@
 namespace llvm {
 class Pass;
 class TargetLibraryInfo;
+class TargetMachine;
 
 // The old pass manager infrastructure is hidden in a legacy namespace now.
 namespace legacy {
@@ -119,6 +120,9 @@ public:
   bool RerollLoops;
   bool LoadCombine;
   bool DisableGVNLoadPRE;
+  bool VerifyInput;
+  bool VerifyOutput;
+  bool StripDebug;
 
 private:
   /// ExtensionList - This is list of all of the extensions that are registered.
@@ -136,6 +140,7 @@ public:
 private:
   void addExtensionsToPM(ExtensionPointTy ETy, PassManagerBase &PM) const;
   void addInitialAliasAnalysisPasses(PassManagerBase &PM) const;
+  void addLTOOptimizationPasses(PassManagerBase &PM);
 
 public:
   /// populateFunctionPassManager - This fills in the function pass manager,
@@ -145,7 +150,7 @@ public:
 
   /// populateModulePassManager - This sets up the primary pass manager.
   void populateModulePassManager(PassManagerBase &MPM);
-  void populateLTOPassManager(PassManagerBase &PM);
+  void populateLTOPassManager(PassManagerBase &PM, TargetMachine *TM = nullptr);
 };
 
 /// Registers a function for adding a standard set of passes.  This should be

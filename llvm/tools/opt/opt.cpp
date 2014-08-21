@@ -254,18 +254,12 @@ static void AddStandardCompilePasses(PassManagerBase &PM) {
 }
 
 static void AddStandardLinkPasses(PassManagerBase &PM) {
-  PM.add(createVerifierPass());                  // Verify that input is correct
-
-  // If the -strip-debug command line option was specified, do it.
-  if (StripDebug)
-    addPass(PM, createStripSymbolsPass(true));
-
-  // Verify debug info only after it's (possibly) stripped.
-  PM.add(createDebugInfoVerifierPass());
-
-  if (DisableOptimizations) return;
-
   PassManagerBuilder Builder;
+  Builder.VerifyInput = true;
+  Builder.StripDebug = StripDebug;
+  if (DisableOptimizations)
+    Builder.OptLevel = 0;
+
   if (!DisableInline)
     Builder.Inliner = createFunctionInliningPass();
   Builder.populateLTOPassManager(PM);

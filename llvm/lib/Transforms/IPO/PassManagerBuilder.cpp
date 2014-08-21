@@ -17,11 +17,14 @@
 #include "llvm-c/Transforms/PassManagerBuilder.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/Passes.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Target/TargetLibraryInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Vectorize.h"
@@ -78,6 +81,9 @@ PassManagerBuilder::PassManagerBuilder() {
     RerollLoops = RunLoopRerolling;
     LoadCombine = RunLoadCombine;
     DisableGVNLoadPRE = false;
+    VerifyInput = false;
+    VerifyOutput = false;
+    StripDebug = false;
 }
 
 PassManagerBuilder::~PassManagerBuilder() {
@@ -313,11 +319,7 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   addExtensionsToPM(EP_OptimizerLast, MPM);
 }
 
-void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM) {
-  // Add LibraryInfo if we have some.
-  if (LibraryInfo)
-    PM.add(new TargetLibraryInfo(*LibraryInfo));
-
+void PassManagerBuilder::addLTOOptimizationPasses(PassManagerBase &PM) {
   // Provide AliasAnalysis services for optimizations.
   addInitialAliasAnalysisPasses(PM);
 
@@ -406,6 +408,35 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM) {
 
   // Now that we have optimized the program, discard unreachable functions.
   PM.add(createGlobalDCEPass());
+}
+
+void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
+                                                TargetMachine *TM) {
+  if (TM) {
+    const DataLayout *DL = TM->getSubtargetImpl()->getDataLayout();
+    PM.add(new DataLayoutPass(*DL));
+    TM->addAnalysisPasses(PM);
+  }
+
+  if (LibraryInfo)
+    PM.add(new TargetLibraryInfo(*LibraryInfo));
+
+  if (VerifyInput)
+    PM.add(createVerifierPass());
+
+  if (StripDebug)
+    PM.add(createStripSymbolsPass(true));
+
+  if (VerifyInput)
+    PM.add(createDebugInfoVerifierPass());
+
+  if (OptLevel != 0)
+    addLTOOptimizationPasses(PM);
+
+  if (VerifyOutput) {
+    PM.add(createVerifierPass());
+    PM.add(createDebugInfoVerifierPass());
+  }
 }
 
 inline PassManagerBuilder *unwrap(LLVMPassManagerBuilderRef P) {
