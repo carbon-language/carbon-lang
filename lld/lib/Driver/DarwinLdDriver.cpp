@@ -517,6 +517,19 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     ctx.addExportSymbol(symbol->getValue());
   }
 
+  // Handle obosolete -multi_module and -single_module
+  if (llvm::opt::Arg *mod = parsedArgs->getLastArg(OPT_multi_module,
+                                                   OPT_single_module)) {
+    if (mod->getOption().getID() == OPT_multi_module) {
+      diagnostics << "warning: -multi_module is obsolete and being ignored\n";
+    }
+    else {
+      if (ctx.outputMachOType() != llvm::MachO::MH_DYLIB)
+        diagnostics << "-single_module only used when creating a dylib\n";
+        return false;
+    }
+  }
+
   // Handle input files
   for (auto &arg : *parsedArgs) {
     ErrorOr<StringRef> resolvedPath = StringRef();

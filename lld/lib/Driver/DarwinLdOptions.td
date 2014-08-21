@@ -140,3 +140,10 @@ def t : Flag<["-"], "t">,
      HelpText<"Print the names of the input files as ld processes them">;
 def v : Flag<["-"], "v">,
      HelpText<"Print linker information">;
+
+// Obsolete options
+def grp_obsolete : OptionGroup<"obsolete">, HelpText<"OBSOLETE OPTIONS">;
+def single_module : Flag<["-"], "single_module">,
+     HelpText<"Default for dylibs">, Group<grp_obsolete>;
+def multi_module : Flag<["-"], "multi_module">,
+     HelpText<"Unsupported way to build dylibs">, Group<grp_obsolete>;
