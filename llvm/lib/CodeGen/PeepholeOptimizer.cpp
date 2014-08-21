@@ -161,9 +161,10 @@ namespace {
     /// \brief Check whether \p MI is a copy like instruction that is
     /// not recognized by the register coalescer.
     bool isUncoalescableCopy(const MachineInstr &MI) {
-      return MI.isBitcast() || (!DisableAdvCopyOpt &&
-                                (MI.isRegSequenceLike() ||
-                                 MI.isExtractSubregLike()));
+      return MI.isBitcast() ||
+             (!DisableAdvCopyOpt &&
+              (MI.isRegSequenceLike() || MI.isInsertSubregLike() ||
+               MI.isExtractSubregLike()));
     }
   };
 
@@ -1271,44 +1272,26 @@ bool ValueTracker::getNextSourceFromRegSequence(unsigned &SrcReg,
   return false;
 }
 
-/// Extract the inputs from INSERT_SUBREG.
-/// INSERT_SUBREG vreg0:sub0, vreg1:sub1, sub3 would produce:
-/// - BaseReg: vreg0:sub0
-/// - InsertedReg: vreg1:sub1, sub3
-static void
-getInsertSubregInputs(const MachineInstr &MI,
-                      TargetInstrInfo::RegSubRegPair &BaseReg,
-                      TargetInstrInfo::RegSubRegPairAndIdx &InsertedReg) {
-  assert(MI.isInsertSubreg() && "Instruction do not have the proper type");
-
-  // We are looking at:
-  // Def = INSERT_SUBREG v0, v1, sub0.
-  const MachineOperand &MOBaseReg = MI.getOperand(1);
-  const MachineOperand &MOInsertedReg = MI.getOperand(2);
-  const MachineOperand &MOSubIdx = MI.getOperand(3);
-  assert(MOSubIdx.isImm() &&
-         "One of the subindex of the reg_sequence is not an immediate");
-  BaseReg.Reg = MOBaseReg.getReg();
-  BaseReg.SubReg = MOBaseReg.getSubReg();
-
-  InsertedReg.Reg = MOInsertedReg.getReg();
-  InsertedReg.SubReg = MOInsertedReg.getSubReg();
-  InsertedReg.SubIdx = (unsigned)MOSubIdx.getImm();
-}
-
 bool ValueTracker::getNextSourceFromInsertSubreg(unsigned &SrcReg,
                                                  unsigned &SrcSubReg) {
-  assert(Def->isInsertSubreg() && "Invalid definition");
+  assert((Def->isInsertSubreg() || Def->isInsertSubregLike()) &&
+         "Invalid definition");
+
   if (Def->getOperand(DefIdx).getSubReg())
     // If we are composing subreg, bails out.
     // Same remark as getNextSourceFromRegSequence.
     // I.e., this may be turned into an assert.
     return false;
 
+  if (!TII)
+    // We could handle the REG_SEQUENCE here, but we do not want to
+    // duplicate the code from the generic TII.
+    return false;
+
   TargetInstrInfo::RegSubRegPair BaseReg;
   TargetInstrInfo::RegSubRegPairAndIdx InsertedReg;
-  assert(DefIdx == 0 && "Invalid definition");
-  getInsertSubregInputs(*Def, BaseReg, InsertedReg);
+  if (!TII->getInsertSubregInputs(*Def, DefIdx, BaseReg, InsertedReg))
+    return false;
 
   // We are looking at:
   // Def = INSERT_SUBREG v0, v1, sub1
@@ -1416,7 +1399,7 @@ bool ValueTracker::getNextSourceImpl(unsigned &SrcReg, unsigned &SrcSubReg) {
     return false;
   if (Def->isRegSequence() || Def->isRegSequenceLike())
     return getNextSourceFromRegSequence(SrcReg, SrcSubReg);
-  if (Def->isInsertSubreg())
+  if (Def->isInsertSubreg() || Def->isInsertSubregLike())
     return getNextSourceFromInsertSubreg(SrcReg, SrcSubReg);
   if (Def->isExtractSubreg() || Def->isExtractSubregLike())
     return getNextSourceFromExtractSubreg(SrcReg, SrcSubReg);

@@ -26,11 +26,8 @@
 ; NOOPT-NEXT: bx	lr
 ;
 ; OPT-NOT: vmov
-; OPT: 	udiv	[[RES_LOW:r[0-9]+]], r0, r2
-; OPT-NEXT: udiv	[[RES_HIGH:r[0-9]+]], r1, r3
-; OPT-NEXT: vmov.32	[[RES:d[0-9]+]][0], [[RES_LOW]]
-; OPT-NEXT: vmov.32	[[RES]][1], [[RES_HIGH]]
-; OPT-NEXT: vmov	r0, r1, [[RES]]
+; OPT: 	udiv	r0, r0, r2
+; OPT-NEXT: udiv	r1, r1, r3
 ; OPT-NEXT: bx	lr
 define <2 x i32> @simpleVectorDiv(<2 x i32> %A, <2 x i32> %B) nounwind {
 entry:
