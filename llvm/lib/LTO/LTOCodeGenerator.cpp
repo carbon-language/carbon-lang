@@ -477,7 +477,9 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   if (!DisableOpt) {
     PassManagerBuilder PMB;
     PMB.DisableGVNLoadPRE = DisableGVNLoadPRE;
-    PMB.populateLTOPassManager(passes, !DisableInline);
+    if (!DisableInline)
+      PMB.Inliner = createFunctionInliningPass();
+    PMB.populateLTOPassManager(passes);
   }
 
   // Make sure everything is still good.

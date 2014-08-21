@@ -313,8 +313,7 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   addExtensionsToPM(EP_OptimizerLast, MPM);
 }
 
-void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
-                                                bool RunInliner) {
+void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM) {
   // Provide AliasAnalysis services for optimizations.
   addInitialAliasAnalysisPasses(PM);
 
@@ -341,8 +340,11 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
   addExtensionsToPM(EP_Peephole, PM);
 
   // Inline small functions
-  if (RunInliner)
-    PM.add(createFunctionInliningPass());
+  bool RunInliner = Inliner;
+  if (RunInliner) {
+    PM.add(Inliner);
+    Inliner = nullptr;
+  }
 
   PM.add(createPruneEHPass());   // Remove dead EH info.
 
@@ -483,5 +485,11 @@ void LLVMPassManagerBuilderPopulateLTOPassManager(LLVMPassManagerBuilderRef PMB,
                                                   LLVMBool RunInliner) {
   PassManagerBuilder *Builder = unwrap(PMB);
   PassManagerBase *LPM = unwrap(PM);
-  Builder->populateLTOPassManager(*LPM, RunInliner != 0);
+
+  // A small backwards compatibility hack. populateLTOPassManager used to take
+  // an RunInliner option.
+  if (RunInliner && !Builder->Inliner)
+    Builder->Inliner = createFunctionInliningPass();
+
+  Builder->populateLTOPassManager(*LPM);
 }

@@ -267,7 +267,9 @@ static void AddStandardLinkPasses(PassManagerBase &PM) {
   if (DisableOptimizations) return;
 
   PassManagerBuilder Builder;
-  Builder.populateLTOPassManager(PM, /*RunInliner=*/!DisableInline);
+  if (!DisableInline)
+    Builder.Inliner = createFunctionInliningPass();
+  Builder.populateLTOPassManager(PM);
 }
 
 //===----------------------------------------------------------------------===//
