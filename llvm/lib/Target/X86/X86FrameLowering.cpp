@@ -502,6 +502,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     X86FI->setCalleeSavedFrameSize(
       X86FI->getCalleeSavedFrameSize() - TailCallReturnAddrDelta);
 
+  bool UseStackProbe = (STI.isOSWindows() && !STI.isTargetMacho());
+  
   // If this is x86-64 and the Red Zone is not disabled, if we are a leaf
   // function, and use up to 128 bytes of stack space, don't have a frame
   // pointer, calls, or dynamic alloca then we do not need to adjust the
@@ -675,6 +677,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // Adjust stack pointer: ESP -= numbytes.
 
+  static const size_t PageSize = 4096;
+
   // Windows and cygwin/mingw require a prologue helper routine when allocating
   // more than 4K bytes on the stack.  Windows uses __chkstk and cygwin/mingw
   // uses __alloca.  __alloca and the 32-bit version of __chkstk will probe the
@@ -683,7 +687,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   // responsible for adjusting the stack pointer.  Touching the stack at 4K
   // increments is necessary to ensure that the guard pages used by the OS
   // virtual memory manager are allocated in correct sequence.
-  if (NumBytes >= 4096 && STI.isOSWindows() && !STI.isTargetMacho()) {
+  if (NumBytes >= PageSize && UseStackProbe) {
     const char *StackProbeSymbol;
     unsigned CallOp;
 
