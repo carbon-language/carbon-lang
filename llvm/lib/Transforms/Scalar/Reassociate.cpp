@@ -193,6 +193,8 @@ namespace {
     Value *OptimizeMul(BinaryOperator *I, SmallVectorImpl<ValueEntry> &Ops);
     Value *RemoveFactorFromExpression(Value *V, Value *Factor);
     void EraseInst(Instruction *I);
+    void optimizeFAddNegExpr(ConstantFP *ConstOperand, Instruction *I,
+                             int OperandNr);
     void OptimizeInst(Instruction *I);
   };
 }
@@ -1914,6 +1916,33 @@ void Reassociate::EraseInst(Instruction *I) {
     }
 }
 
+void Reassociate::optimizeFAddNegExpr(ConstantFP *ConstOperand, Instruction *I,
+                                      int OperandNr) {
+  // Change the sign of the constant.
+  APFloat Val = ConstOperand->getValueAPF();
+  Val.changeSign();
+  I->setOperand(0, ConstantFP::get(ConstOperand->getContext(), Val));
+
+  assert(I->hasOneUse() && "Only a single use can be replaced.");
+  Instruction *Parent = I->user_back();
+
+  Value *OtherOperand = Parent->getOperand(1 - OperandNr);
+
+  unsigned Opcode = Parent->getOpcode();
+  assert(Opcode == Instruction::FAdd ||
+         (Opcode == Instruction::FSub && Parent->getOperand(1) == I));
+
+  BinaryOperator *NI = Opcode == Instruction::FAdd
+                           ? BinaryOperator::CreateFSub(OtherOperand, I)
+                           : BinaryOperator::CreateFAdd(OtherOperand, I);
+  NI->setFastMathFlags(cast<FPMathOperator>(Parent)->getFastMathFlags());
+  NI->insertBefore(Parent);
+  NI->setName(Parent->getName() + ".repl");
+  Parent->replaceAllUsesWith(NI);
+  NI->setDebugLoc(I->getDebugLoc());
+  MadeChange = true;
+}
+
 /// OptimizeInst - Inspect and optimize the given instruction. Note that erasing
 /// instructions is not allowed.
 void Reassociate::OptimizeInst(Instruction *I) {
@@ -1940,8 +1969,8 @@ void Reassociate::OptimizeInst(Instruction *I) {
   if (I->getType()->isFloatingPointTy() || I->getType()->isVectorTy()) {
 
     // FAdd and FMul can be commuted.
-    if (I->getOpcode() == Instruction::FMul ||
-        I->getOpcode() == Instruction::FAdd) {
+    unsigned Opcode = I->getOpcode();
+    if (Opcode == Instruction::FMul || Opcode == Instruction::FAdd) {
       Value *LHS = I->getOperand(0);
       Value *RHS = I->getOperand(1);
       unsigned LHSRank = getRank(LHS);
@@ -1951,6 +1980,24 @@ void Reassociate::OptimizeInst(Instruction *I) {
       if (RHSRank < LHSRank) {
         I->setOperand(0, RHS);
         I->setOperand(1, LHS);
+      }
+    }
+
+    // Reassociate: x + -ConstantFP * y -> x - ConstantFP * y
+    // The FMul can also be an FDiv, and FAdd can be a FSub.
+    if (Opcode == Instruction::FMul || Opcode == Instruction::FDiv) {
+      if (ConstantFP *LHSConst = dyn_cast<ConstantFP>(I->getOperand(0))) {
+        if (LHSConst->isNegative() && I->hasOneUse()) {
+          Instruction *Parent = I->user_back();
+          if (Parent->getOpcode() == Instruction::FAdd) {
+            if (Parent->getOperand(0) == I)
+              optimizeFAddNegExpr(LHSConst, I, 0);
+            else if (Parent->getOperand(1) == I)
+              optimizeFAddNegExpr(LHSConst, I, 1);
+          } else if (Parent->getOpcode() == Instruction::FSub)
+            if (Parent->getOperand(1) == I)
+              optimizeFAddNegExpr(LHSConst, I, 1);
+        }
       }
     }
 

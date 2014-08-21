@@ -193,7 +193,7 @@ define float @test13(float %X1, float %X2, float %X3) {
 define float @test14(float %X1, float %X2) {
 ; CHECK-LABEL: @test14
 ; CHECK-NEXT: fsub fast float %X1, %X2
-; CHECK-NEXT: fmul fast float %tmp, 4.700000e+01
+; CHECK-NEXT: fmul fast float %1, 4.700000e+01
 ; CHECK-NEXT: ret float
 
   %B = fmul fast float %X1, 47.   ; X1*47
