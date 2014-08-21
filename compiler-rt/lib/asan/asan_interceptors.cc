@@ -829,7 +829,7 @@ void InitializeAsanInterceptors() {
 
   // Intercept exception handling functions.
 #if ASAN_INTERCEPT___CXA_THROW
-  INTERCEPT_FUNCTION(__cxa_throw);
+  ASAN_INTERCEPT_FUNC(__cxa_throw);
 #endif
 
   // Intercept threading-related functions
