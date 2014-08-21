@@ -50,6 +50,13 @@ namespace llvm {
     };
   }
 
+  namespace ThreadModel {
+    enum Model {
+      POSIX,  // POSIX Threads
+      Single  // Single Threaded Environment
+    };
+  }
+
   class TargetOptions {
   public:
     TargetOptions()
@@ -219,6 +226,10 @@ namespace llvm {
     /// JTType - This flag specifies the type of jump-instruction table to
     /// create for functions that have the jumptable attribute.
     JumpTable::JumpTableType JTType;
+
+    /// ThreadModel - This flag specifies the type of threading model to assume
+    /// for things like atomics
+    ThreadModel::Model ThreadModel;
 
     /// Machine level options.
     MCTargetOptions MCOptions;

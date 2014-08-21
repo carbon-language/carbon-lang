@@ -781,8 +781,12 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
 
   // ARMv6 Thumb1 (except for CPUs that support dmb / dsb) and earlier use
-  // the default expansion.
-  if (Subtarget->hasAnyDataBarrier() && !Subtarget->isThumb1Only()) {
+  // the default expansion. If we are targeting a single threaded system,
+  // then set them all for expand so we can lower them later into their
+  // non-atomic form.
+  if (TM.Options.ThreadModel == ThreadModel::Single)
+    setOperationAction(ISD::ATOMIC_FENCE,   MVT::Other, Expand);
+  else if (Subtarget->hasAnyDataBarrier() && !Subtarget->isThumb1Only()) {
     // ATOMIC_FENCE needs custom lowering; the others should have been expanded
     // to ldrex/strex loops already.
     setOperationAction(ISD::ATOMIC_FENCE,     MVT::Other, Custom);

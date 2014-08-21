@@ -158,7 +158,10 @@ TargetPassConfig *ARMBaseTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 void ARMPassConfig::addIRPasses() {
-  addPass(createAtomicExpandLoadLinkedPass(TM));
+  if (TM->Options.ThreadModel == ThreadModel::Single)
+    addPass(createLowerAtomicPass());
+  else
+    addPass(createAtomicExpandLoadLinkedPass(TM));
 
   // Cmpxchg instructions are often used with a subsequent comparison to
   // determine whether it succeeded. We can exploit existing control-flow in

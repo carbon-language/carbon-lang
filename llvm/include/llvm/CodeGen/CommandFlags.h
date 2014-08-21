@@ -54,6 +54,16 @@ RelocModel("relocation-model",
                       "Relocatable external references, non-relocatable code"),
               clEnumValEnd));
 
+cl::opt<ThreadModel::Model>
+TMModel("thread-model",
+        cl::desc("Choose threading model"),
+        cl::init(ThreadModel::POSIX),
+        cl::values(clEnumValN(ThreadModel::POSIX, "posix",
+                              "POSIX thread model"),
+                   clEnumValN(ThreadModel::Single, "single",
+                              "Single thread model"),
+                   clEnumValEnd));
+
 cl::opt<llvm::CodeModel::Model>
 CMModel("code-model",
         cl::desc("Choose code model"),
@@ -244,6 +254,8 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
 
   Options.MCOptions = InitMCTargetOptionsFromFlags();
   Options.JTType = JTableType;
+
+  Options.ThreadModel = TMModel;
 
   return Options;
 }
