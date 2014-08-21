@@ -312,7 +312,7 @@ ClangExpressionParser::Parse (Stream &stream)
         FileSpec tmpdir_file_spec;
         if (HostInfo::GetLLDBPath(lldb::ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
         {
-            tmpdir_file_spec.GetFilename().SetCString("expr.XXXXXX");
+            tmpdir_file_spec.AppendPathComponent("expr.XXXXXX");
             temp_source_path = std::move(tmpdir_file_spec.GetPath());
         }
         else

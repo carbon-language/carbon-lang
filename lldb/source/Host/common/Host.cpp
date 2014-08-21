@@ -921,7 +921,7 @@ Host::RunShellCommand (const char *command,
         FileSpec tmpdir_file_spec;
         if (HostInfo::GetLLDBPath(ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
         {
-            tmpdir_file_spec.GetFilename().SetCString("lldb-shell-output.XXXXXX");
+            tmpdir_file_spec.AppendPathComponent("lldb-shell-output.XXXXXX");
             strncpy(output_file_path_buffer, tmpdir_file_spec.GetPath().c_str(), sizeof(output_file_path_buffer));
         }
         else

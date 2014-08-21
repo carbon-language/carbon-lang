@@ -753,7 +753,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
                 FileSpec tmpdir_file_spec;
                 if (HostInfo::GetLLDBPath(ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
                 {
-                    tmpdir_file_spec.GetFilename().SetCString("debugserver-named-pipe.XXXXXX");
+                    tmpdir_file_spec.AppendPathComponent("debugserver-named-pipe.XXXXXX");
                     strncpy(named_pipe_path, tmpdir_file_spec.GetPath().c_str(), sizeof(named_pipe_path));
                 }
                 else
