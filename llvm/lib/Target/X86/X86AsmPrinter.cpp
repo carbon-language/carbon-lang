@@ -561,12 +561,13 @@ MCSymbol *X86AsmPrinter::GetCPISymbol(unsigned CPID) const {
       SectionKind Kind =
           CPE.getSectionKind(TM.getSubtargetImpl()->getDataLayout());
       const Constant *C = CPE.Val.ConstVal;
-      const MCSectionCOFF *S = cast<MCSectionCOFF>(
-          getObjFileLowering().getSectionForConstant(Kind, C));
-      if (MCSymbol *Sym = S->getCOMDATSymbol()) {
-        if (Sym->isUndefined())
-          OutStreamer.EmitSymbolAttribute(Sym, MCSA_Global);
-        return Sym;
+      if (const MCSectionCOFF *S = dyn_cast<MCSectionCOFF>(
+            getObjFileLowering().getSectionForConstant(Kind, C))) {
+        if (MCSymbol *Sym = S->getCOMDATSymbol()) {
+          if (Sym->isUndefined())
+            OutStreamer.EmitSymbolAttribute(Sym, MCSA_Global);
+          return Sym;
+        }
       }
     }
   }
