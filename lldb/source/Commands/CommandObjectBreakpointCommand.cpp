@@ -808,7 +808,7 @@ protected:
 CommandObjectBreakpointCommand::CommandObjectBreakpointCommand (CommandInterpreter &interpreter) :
     CommandObjectMultiword (interpreter,
                             "command",
-                            "A set of commands for adding, removing and examining bits of code to be executed when the breakpoint is hit (breakpoint 'commmands').",
+                            "A set of commands for adding, removing and examining bits of code to be executed when the breakpoint is hit (breakpoint 'commands').",
                             "command <sub-command> [<sub-command-options>] <breakpoint-id>")
 {
     CommandObjectSP add_command_object (new CommandObjectBreakpointCommandAdd (interpreter));
