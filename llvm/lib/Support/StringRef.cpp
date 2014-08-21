@@ -50,7 +50,7 @@ static int ascii_strncasecmp(const char *LHS, const char *RHS, size_t Length) {
 
 /// compare_lower - Compare strings, ignoring case.
 int StringRef::compare_lower(StringRef RHS) const {
-  if (int Res = ascii_strncasecmp(Data, RHS.Data, min(Length, RHS.Length)))
+  if (int Res = ascii_strncasecmp(Data, RHS.Data, std::min(Length, RHS.Length)))
     return Res;
   if (Length == RHS.Length)
     return 0;
@@ -71,7 +71,7 @@ bool StringRef::endswith_lower(StringRef Suffix) const {
 
 /// compare_numeric - Compare strings, handle embedded numbers.
 int StringRef::compare_numeric(StringRef RHS) const {
-  for (size_t I = 0, E = min(Length, RHS.Length); I != E; ++I) {
+  for (size_t I = 0, E = std::min(Length, RHS.Length); I != E; ++I) {
     // Check for sequences of digits.
     if (ascii_isdigit(Data[I]) && ascii_isdigit(RHS.Data[I])) {
       // The longer sequence of numbers is considered larger.
@@ -146,7 +146,7 @@ size_t StringRef::find(StringRef Str, size_t From) const {
 
   // For short haystacks or unsupported needles fall back to the naive algorithm
   if (Length < 16 || N > 255 || N == 0) {
-    for (size_t e = Length - N + 1, i = min(From, e); i != e; ++i)
+    for (size_t e = Length - N + 1, i = std::min(From, e); i != e; ++i)
       if (substr(i, N).equals(Str))
         return i;
     return npos;
@@ -201,7 +201,7 @@ StringRef::size_type StringRef::find_first_of(StringRef Chars,
   for (size_type i = 0; i != Chars.size(); ++i)
     CharBits.set((unsigned char)Chars[i]);
 
-  for (size_type i = min(From, Length), e = Length; i != e; ++i)
+  for (size_type i = std::min(From, Length), e = Length; i != e; ++i)
     if (CharBits.test((unsigned char)Data[i]))
       return i;
   return npos;
@@ -210,7 +210,7 @@ StringRef::size_type StringRef::find_first_of(StringRef Chars,
 /// find_first_not_of - Find the first character in the string that is not
 /// \arg C or npos if not found.
 StringRef::size_type StringRef::find_first_not_of(char C, size_t From) const {
-  for (size_type i = min(From, Length), e = Length; i != e; ++i)
+  for (size_type i = std::min(From, Length), e = Length; i != e; ++i)
     if (Data[i] != C)
       return i;
   return npos;
@@ -226,7 +226,7 @@ StringRef::size_type StringRef::find_first_not_of(StringRef Chars,
   for (size_type i = 0; i != Chars.size(); ++i)
     CharBits.set((unsigned char)Chars[i]);
 
-  for (size_type i = min(From, Length), e = Length; i != e; ++i)
+  for (size_type i = std::min(From, Length), e = Length; i != e; ++i)
     if (!CharBits.test((unsigned char)Data[i]))
       return i;
   return npos;
@@ -242,7 +242,7 @@ StringRef::size_type StringRef::find_last_of(StringRef Chars,
   for (size_type i = 0; i != Chars.size(); ++i)
     CharBits.set((unsigned char)Chars[i]);
 
-  for (size_type i = min(From, Length) - 1, e = -1; i != e; --i)
+  for (size_type i = std::min(From, Length) - 1, e = -1; i != e; --i)
     if (CharBits.test((unsigned char)Data[i]))
       return i;
   return npos;
@@ -251,7 +251,7 @@ StringRef::size_type StringRef::find_last_of(StringRef Chars,
 /// find_last_not_of - Find the last character in the string that is not
 /// \arg C, or npos if not found.
 StringRef::size_type StringRef::find_last_not_of(char C, size_t From) const {
-  for (size_type i = min(From, Length) - 1, e = -1; i != e; --i)
+  for (size_type i = std::min(From, Length) - 1, e = -1; i != e; --i)
     if (Data[i] != C)
       return i;
   return npos;
@@ -267,7 +267,7 @@ StringRef::size_type StringRef::find_last_not_of(StringRef Chars,
   for (size_type i = 0, e = Chars.size(); i != e; ++i)
     CharBits.set((unsigned char)Chars[i]);
 
-  for (size_type i = min(From, Length) - 1, e = -1; i != e; --i)
+  for (size_type i = std::min(From, Length) - 1, e = -1; i != e; --i)
     if (!CharBits.test((unsigned char)Data[i]))
       return i;
   return npos;
