@@ -380,13 +380,24 @@ Communication::ReadThread (lldb::thread_arg_t p)
             if (comm->GetCloseOnEOF())
                  done = true;
              break;
+        case eConnectionStatusError:            // Check GetError() for details
+            if (error.GetType() == eErrorTypePOSIX && error.GetError() == EIO)
+            {
+                // EIO on a pipe is usually caused by remote shutdown
+                comm->Disconnect ();
+                done = true;
+            }
+            if (log)
+                error.LogIfError (log,
+                                  "%p Communication::ReadFromConnection () => status = %s",
+                                  p,
+                                  Communication::ConnectionStatusAsCString (status));
+            break;
         case eConnectionStatusNoConnection:     // No connection
         case eConnectionStatusLostConnection:   // Lost connection while connected to a valid connection
         case eConnectionStatusInterrupted:      // Interrupted
-
             done = true;
             // Fall through...
-        case eConnectionStatusError:            // Check GetError() for details
         case eConnectionStatusTimedOut:         // Request timed out
             if (log)
                 error.LogIfError (log,
