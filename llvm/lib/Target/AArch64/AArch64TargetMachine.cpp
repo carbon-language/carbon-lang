@@ -195,8 +195,12 @@ bool AArch64PassConfig::addILPOpts() {
 
 bool AArch64PassConfig::addPreRegAlloc() {
   // Use AdvSIMD scalar instructions whenever profitable.
-  if (TM->getOptLevel() != CodeGenOpt::None && EnableAdvSIMDScalar)
+  if (TM->getOptLevel() != CodeGenOpt::None && EnableAdvSIMDScalar) {
     addPass(createAArch64AdvSIMDScalar());
+    // The AdvSIMD pass may produce copies that can be rewritten to
+    // be register coaleascer friendly.
+    addPass(&PeepholeOptimizerID);
+  }
   return true;
 }
 
