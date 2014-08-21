@@ -13634,5 +13634,6 @@ AvailabilityResult Sema::getCurContextAvailability() const {
             dyn_cast<ObjCImplementationDecl>(D)) {
     D = ID->getClassInterface();
   }
-  return D->getAvailability();
+  // Recover from user error.
+  return D ? D->getAvailability() : AR_Available;
 }

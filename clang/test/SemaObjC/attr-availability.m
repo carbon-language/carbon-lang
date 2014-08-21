@@ -60,3 +60,30 @@ void f(A *a, B *b) {
 }
 @end
 
+// rdar://18059669
+@class NSMutableArray;
+
+@interface NSDictionary
++ (instancetype)dictionaryWithObjectsAndKeys:(id)firstObject, ... __attribute__((sentinel(0,1)));
+@end
+
+@class NSString;
+
+extern NSString *NSNibTopLevelObjects __attribute__((availability(macosx,introduced=10.0 ,deprecated=10.8,message="" )));
+id NSNibOwner, topNibObjects;
+
+@interface AppDelegate (SIEImport) // expected-error {{cannot find interface declaration for 'AppDelegate'}}
+
+-(void)__attribute__((ibaction))importFromSIE:(id)sender;
+
+@end
+
+@implementation AppDelegate (SIEImport) // expected-error {{cannot find interface declaration for 'AppDelegate'}}
+
+-(void)__attribute__((ibaction))importFromSIE:(id)sender {
+
+ NSMutableArray *topNibObjects;
+ NSDictionary *nibLoadDict = [NSDictionary dictionaryWithObjectsAndKeys:self, NSNibOwner, topNibObjects, NSNibTopLevelObjects, ((void *)0)];
+}
+
+@end
