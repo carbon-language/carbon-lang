@@ -9,6 +9,12 @@
 //
 // XFAIL: apple-darwin
 
+// Failure related to GLIBC's use of U00A0 as mon_thousands_sep
+// and U002E as mon_decimal_point.
+// TODO: U00A0 should be investigated.
+// Possibly related to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=16006
+// XFAIL: linux
+
 // REQUIRES: locale.ru_RU.UTF-8
 
 // <locale>
