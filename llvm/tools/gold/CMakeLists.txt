@@ -16,7 +16,9 @@ else()
 
   set(LLVM_LINK_COMPONENTS
      ${LLVM_TARGETS_TO_BUILD}
-     LTO
+     Linker
+     BitWriter
+     IPO
      )
 
   add_llvm_loadable_module(LLVMgold

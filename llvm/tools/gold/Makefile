@@ -20,7 +20,7 @@ EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/gold.exports
 # early so we can set up LINK_COMPONENTS before including Makefile.rules
 include $(LEVEL)/Makefile.config
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) LTO
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) Linker BitWriter IPO
 
 # Because off_t is used in the public API, the largefile parts are required for
 # ABI compatibility.
