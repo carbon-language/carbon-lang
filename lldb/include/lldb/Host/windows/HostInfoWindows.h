@@ -17,6 +17,8 @@ namespace lldb_private
 
 class HostInfoWindows : public HostInfoBase
 {
+    friend class HostInfoBase;
+
   private:
     // Static class, unconstructable.
     HostInfoWindows();
@@ -29,6 +31,9 @@ class HostInfoWindows : public HostInfoBase
     static bool GetOSBuildString(std::string &s);
     static bool GetOSKernelDescription(std::string &s);
     static bool GetHostname(std::string &s);
+
+  protected:
+    static bool ComputePythonDirectory(FileSpec &file_spec);
 };
 }
 

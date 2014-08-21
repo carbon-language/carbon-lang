@@ -11,6 +11,8 @@
 #define lldb_Host_HostInfoBase_h_
 
 #include "lldb/Core/ArchSpec.h"
+#include "lldb/Host/FileSpec.h"
+#include "lldb/lldb-enumerations.h"
 
 #include "llvm/ADT/StringRef.h"
 
@@ -20,6 +22,8 @@
 
 namespace lldb_private
 {
+
+class FileSpec;
 
 class HostInfoBase
 {
@@ -78,7 +82,34 @@ class HostInfoBase
 
     static const ArchSpec &GetArchitecture(ArchitectureKind arch_kind = eArchKindDefault);
 
+    //------------------------------------------------------------------
+    /// Find a resource files that are related to LLDB.
+    ///
+    /// Operating systems have different ways of storing shared
+    /// libraries and related resources. This function abstracts the
+    /// access to these paths.
+    ///
+    /// @param[in] path_type
+    ///     The type of LLDB resource path you are looking for. If the
+    ///     enumeration ends with "Dir", then only the \a file_spec's
+    ///     directory member gets filled in.
+    ///
+    /// @param[in] file_spec
+    ///     A file spec that gets filled in with the appropriate path.
+    ///
+    /// @return
+    ///     \b true if \a resource_path was resolved, \a false otherwise.
+    //------------------------------------------------------------------
+    static bool GetLLDBPath(lldb::PathType type, FileSpec &file_spec);
+
   protected:
+    static bool ComputeSharedLibraryDirectory(FileSpec &file_spec);
+    static bool ComputeSupportExeDirectory(FileSpec &file_spec);
+    static bool ComputeTempFileDirectory(FileSpec &file_spec);
+    static bool ComputeHeaderDirectory(FileSpec &file_spec);
+    static bool ComputeSystemPluginsDirectory(FileSpec &file_spec);
+    static bool ComputeUserPluginsDirectory(FileSpec &file_spec);
+
     static void ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_64);
 
     static uint32_t m_number_cpus;
@@ -88,6 +119,14 @@ class HostInfoBase
 
     static ArchSpec m_host_arch_32;
     static ArchSpec m_host_arch_64;
+
+    static FileSpec m_lldb_so_dir;
+    static FileSpec m_lldb_support_exe_dir;
+    static FileSpec m_lldb_headers_dir;
+    static FileSpec m_lldb_python_dir;
+    static FileSpec m_lldb_system_plugin_dir;
+    static FileSpec m_lldb_user_plugin_dir;
+    static FileSpec m_lldb_tmp_dir;
 };
 }
 

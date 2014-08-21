@@ -17,9 +17,16 @@ namespace lldb_private
 
 class HostInfoPosix : public HostInfoBase
 {
+    friend class HostInfoBase;
+
   public:
     static size_t GetPageSize();
     static bool GetHostname(std::string &s);
+
+  protected:
+    static bool ComputeSupportExeDirectory(FileSpec &file_spec);
+    static bool ComputeHeaderDirectory(FileSpec &file_spec);
+    static bool ComputePythonDirectory(FileSpec &file_spec);
 };
 }
 

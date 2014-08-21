@@ -47,6 +47,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Utility/CleanUp.h"
@@ -366,19 +367,19 @@ WaitForProcessToSIGSTOP (const lldb::pid_t pid, const int timeout_in_seconds)
 //        return LLDB_INVALID_PROCESS_ID;
 //    
 //    FileSpec darwin_debug_file_spec;
-//    if (!Host::GetLLDBPath (ePathTypeSupportExecutableDir, darwin_debug_file_spec))
+//    if (!HostInfo::GetLLDBPath (ePathTypeSupportExecutableDir, darwin_debug_file_spec))
 //        return LLDB_INVALID_PROCESS_ID;
 //    darwin_debug_file_spec.GetFilename().SetCString("darwin-debug");
-//        
+//
 //    if (!darwin_debug_file_spec.Exists())
 //        return LLDB_INVALID_PROCESS_ID;
-//    
+//
 //    char launcher_path[PATH_MAX];
 //    darwin_debug_file_spec.GetPath(launcher_path, sizeof(launcher_path));
 //    command_file.Printf("\"%s\" ", launcher_path);
-//    
+//
 //    command_file.Printf("--unix-socket=%s ", unix_socket_name.c_str());
-//    
+//
 //    if (arch_spec && arch_spec->IsValid())
 //    {
 //        command_file.Printf("--arch=%s ", arch_spec->GetArchitectureName());
@@ -388,7 +389,7 @@ WaitForProcessToSIGSTOP (const lldb::pid_t pid, const int timeout_in_seconds)
 //    {
 //        command_file.PutCString("--disable-aslr ");
 //    }
-//        
+//
 //    command_file.PutCString("-- ");
 //
 //    if (argv)
@@ -402,15 +403,15 @@ WaitForProcessToSIGSTOP (const lldb::pid_t pid, const int timeout_in_seconds)
 //    command_file.GetFile().Close();
 //    if (::chmod (temp_file_path, S_IRWXU | S_IRWXG) != 0)
 //        return LLDB_INVALID_PROCESS_ID;
-//            
+//
 //    CFCMutableDictionary cf_env_dict;
-//    
+//
 //    const bool can_create = true;
 //    if (envp)
 //    {
 //        for (size_t i=0; envp[i] != NULL; ++i)
 //        {
-//            const char *env_entry = envp[i];            
+//            const char *env_entry = envp[i];
 //            const char *equal_pos = strchr(env_entry, '=');
 //            if (equal_pos)
 //            {
@@ -422,20 +423,20 @@ WaitForProcessToSIGSTOP (const lldb::pid_t pid, const int timeout_in_seconds)
 //            }
 //        }
 //    }
-//    
+//
 //    LSApplicationParameters app_params;
 //    ::memset (&app_params, 0, sizeof (app_params));
 //    app_params.flags = kLSLaunchDontAddToRecents | kLSLaunchAsync;
 //    app_params.argv = NULL;
 //    app_params.environment = (CFDictionaryRef)cf_env_dict.get();
 //
-//    CFCReleaser<CFURLRef> command_file_url (::CFURLCreateFromFileSystemRepresentation (NULL, 
-//                                                                                       (const UInt8 *)temp_file_path, 
+//    CFCReleaser<CFURLRef> command_file_url (::CFURLCreateFromFileSystemRepresentation (NULL,
+//                                                                                       (const UInt8 *)temp_file_path,
 //                                                                                       strlen(temp_file_path),
 //                                                                                       false));
-//    
+//
 //    CFCMutableArray urls;
-//    
+//
 //    // Terminal.app will open the ".command" file we have created
 //    // and run our process inside it which will wait at the entry point
 //    // for us to attach.
@@ -455,7 +456,7 @@ WaitForProcessToSIGSTOP (const lldb::pid_t pid, const int timeout_in_seconds)
 //                                                       AcceptPIDFromInferior,
 //                                                       connect_url,
 //                                                       &lldb_error);
-//    
+//
 //    ProcessSerialNumber psn;
 //    error = LSOpenURLsWithRole(urls.get(), kLSRolesShell, NULL, &app_params, &psn, 1);
 //    if (error == noErr)
@@ -466,7 +467,7 @@ WaitForProcessToSIGSTOP (const lldb::pid_t pid, const int timeout_in_seconds)
 //            if (accept_thread_result)
 //            {
 //                pid = (intptr_t)accept_thread_result;
-//            
+//
 //                // Wait for process to be stopped the the entry point by watching
 //                // for the process status to be set to SSTOP which indicates it it
 //                // SIGSTOP'ed at the entry point
@@ -521,7 +522,7 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &lau
     
     StreamString command;
     FileSpec darwin_debug_file_spec;
-    if (!Host::GetLLDBPath (ePathTypeSupportExecutableDir, darwin_debug_file_spec))
+    if (!HostInfo::GetLLDBPath(ePathTypeSupportExecutableDir, darwin_debug_file_spec))
     {
         error.SetErrorString ("can't locate the 'darwin-debug' executable");
         return error;

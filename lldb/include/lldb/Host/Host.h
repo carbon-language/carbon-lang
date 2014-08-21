@@ -341,28 +341,6 @@ public:
     ResolveExecutableInBundle (FileSpec &file);
 
     //------------------------------------------------------------------
-    /// Find a resource files that are related to LLDB.
-    ///
-    /// Operating systems have different ways of storing shared 
-    /// libraries and related resources. This function abstracts the
-    /// access to these paths.
-    ///
-    /// @param[in] path_type
-    ///     The type of LLDB resource path you are looking for. If the
-    ///     enumeration ends with "Dir", then only the \a file_spec's 
-    ///     directory member gets filled in.
-    ///
-    /// @param[in] file_spec
-    ///     A file spec that gets filled in with the appropriate path.
-    ///
-    /// @return
-    ///     \b true if \a resource_path was resolved, \a false otherwise.
-    //------------------------------------------------------------------
-    static bool
-    GetLLDBPath (lldb::PathType path_type,
-                 FileSpec &file_spec);
-
-    //------------------------------------------------------------------
     /// Set a string that can be displayed if host application crashes.
     ///
     /// Some operating systems have the ability to print a description

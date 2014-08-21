@@ -1069,7 +1069,7 @@ PlatformDarwin::GetDeveloperDirectory()
         bool developer_dir_path_valid = false;
         char developer_dir_path[PATH_MAX];
         FileSpec temp_file_spec;
-        if (Host::GetLLDBPath (ePathTypeLLDBShlibDir, temp_file_spec))
+        if (HostInfo::GetLLDBPath(ePathTypeLLDBShlibDir, temp_file_spec))
         {
             if (temp_file_spec.GetPath (developer_dir_path, sizeof(developer_dir_path)))
             {

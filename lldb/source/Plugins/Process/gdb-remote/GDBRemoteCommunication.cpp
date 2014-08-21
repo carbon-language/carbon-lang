@@ -24,6 +24,7 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/Socket.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Target/Process.h"
@@ -683,8 +684,8 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
     if (!debugserver_exists)
     {
         // The debugserver binary is in the LLDB.framework/Resources
-        // directory. 
-        if (Host::GetLLDBPath (ePathTypeSupportExecutableDir, debugserver_file_spec))
+        // directory.
+        if (HostInfo::GetLLDBPath(ePathTypeSupportExecutableDir, debugserver_file_spec))
         {
             debugserver_file_spec.GetFilename().SetCString(DEBUGSERVER_BASENAME);
             debugserver_exists = debugserver_file_spec.Exists();
@@ -750,7 +751,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
                 // Binding to port zero, we need to figure out what port it ends up
                 // using using a named pipe...
                 FileSpec tmpdir_file_spec;
-                if (Host::GetLLDBPath (ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
+                if (HostInfo::GetLLDBPath(ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
                 {
                     tmpdir_file_spec.GetFilename().SetCString("debugserver-named-pipe.XXXXXX");
                     strncpy(named_pipe_path, tmpdir_file_spec.GetPath().c_str(), sizeof(named_pipe_path));

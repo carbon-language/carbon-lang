@@ -12,6 +12,7 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -31,7 +32,7 @@ SBHostOS::GetLLDBPythonPath ()
 {
     SBFileSpec sb_lldb_python_filespec;
     FileSpec lldb_python_spec;
-    if (Host::GetLLDBPath (ePathTypePythonDir, lldb_python_spec))
+    if (HostInfo::GetLLDBPath(ePathTypePythonDir, lldb_python_spec))
     {
         sb_lldb_python_filespec.SetFileSpec (lldb_python_spec);
     }
@@ -44,7 +45,7 @@ SBHostOS::GetLLDBPath (lldb::PathType path_type)
 {
     SBFileSpec sb_fspec;
     FileSpec fspec;
-    if (Host::GetLLDBPath (path_type, fspec))
+    if (HostInfo::GetLLDBPath(path_type, fspec))
         sb_fspec.SetFileSpec (fspec);
     return sb_fspec;
 }

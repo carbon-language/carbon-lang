@@ -26,6 +26,7 @@
 #include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Expression/IRInterpreter.h"
 #include "lldb/Host/File.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
@@ -309,7 +310,7 @@ ClangExpressionParser::Parse (Stream &stream)
         std::string temp_source_path;
 
         FileSpec tmpdir_file_spec;
-        if (Host::GetLLDBPath (lldb::ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
+        if (HostInfo::GetLLDBPath(lldb::ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
         {
             tmpdir_file_spec.GetFilename().SetCString("expr.XXXXXX");
             temp_source_path = std::move(tmpdir_file_spec.GetPath());

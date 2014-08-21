@@ -148,6 +148,33 @@ HostInfoLinux::GetDistributionId()
     return m_distribution_id.c_str();
 }
 
+bool
+HostInfoLinux::ComputeSystemPluginsDirectory(FileSpec &file_spec)
+{
+    file_spec.SetFile("/usr/lib/lldb", true);
+    return true;
+}
+
+bool
+HostInfoLinux::ComputeUserPluginsDirectory(FileSpec &file_spec)
+{
+    // XDG Base Directory Specification
+    // http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+    // If XDG_DATA_HOME exists, use that, otherwise use ~/.local/share/lldb.
+    FileSpec lldb_file_spec;
+    const char *xdg_data_home = getenv("XDG_DATA_HOME");
+    if (xdg_data_home && xdg_data_home[0])
+    {
+        std::string user_plugin_dir(xdg_data_home);
+        user_plugin_dir += "/lldb";
+        lldb_file_spec.SetFile(user_plugin_dir.c_str(), true);
+    }
+    else
+        lldb_file_spec.SetFile("~/.local/share/lldb", true);
+
+    return true;
+}
+
 void
 HostInfoLinux::ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_64)
 {

@@ -32,6 +32,8 @@ class HostInfoLinux : public HostInfoPosix
     static llvm::StringRef GetDistributionId();
 
   protected:
+    static bool ComputeSystemPluginsDirectory(FileSpec &file_spec);
+    static bool ComputeUserPluginsDirectory(FileSpec &file_spec);
     static void ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_64);
 
     static std::string m_distribution_id;

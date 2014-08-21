@@ -35,6 +35,7 @@
 #include "lldb/DataFormatters/FormatManager.h"
 #include "lldb/DataFormatters/TypeSummary.h"
 #include "lldb/Host/DynamicLibrary.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/Terminal.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/OptionValueSInt64.h"
@@ -492,7 +493,7 @@ Debugger::InstanceInitialize ()
     const bool find_files = true;
     const bool find_other = true;
     char dir_path[PATH_MAX];
-    if (Host::GetLLDBPath (ePathTypeLLDBSystemPlugins, dir_spec))
+    if (HostInfo::GetLLDBPath(ePathTypeLLDBSystemPlugins, dir_spec))
     {
         if (dir_spec.Exists() && dir_spec.GetPath(dir_path, sizeof(dir_path)))
         {
@@ -504,8 +505,8 @@ Debugger::InstanceInitialize ()
                                           this);
         }
     }
-    
-    if (Host::GetLLDBPath (ePathTypeLLDBUserPlugins, dir_spec))
+
+    if (HostInfo::GetLLDBPath(ePathTypeLLDBUserPlugins, dir_spec))
     {
         if (dir_spec.Exists() && dir_spec.GetPath(dir_path, sizeof(dir_path)))
         {

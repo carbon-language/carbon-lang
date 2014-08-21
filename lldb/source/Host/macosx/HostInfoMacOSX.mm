@@ -7,10 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/lldb-python.h"
+
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/macosx/HostInfoMacOSX.h"
 #include "lldb/Interpreter/Args.h"
-
 #include "lldb/Utility/SafeMachO.h"
+
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 
 // C++ Includes
 #include <string>
@@ -84,6 +89,107 @@ HostInfoMacOSX::GetOSVersion(uint32_t &major, uint32_t &minor, uint32_t &update)
         return true;
     }
     return false;
+}
+
+bool
+HostInfoMacOSX::ComputeSupportExeDirectory(FileSpec &file_spec)
+{
+    FileSpec lldb_file_spec;
+    if (!GetLLDBPath(lldb::ePathTypeLLDBShlibDir, lldb_file_spec))
+        return false;
+    char raw_path[PATH_MAX];
+    lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
+
+    char *framework_pos = ::strstr(raw_path, "LLDB.framework");
+    if (framework_pos)
+    {
+        framework_pos += strlen("LLDB.framework");
+#if defined(__arm__) || defined(__arm64__) || defined(__aarch64__)
+        // Shallow bundle
+        *framework_pos = '\0';
+#else
+        // Normal bundle
+        ::strncpy(framework_pos, "/Resources", PATH_MAX - (framework_pos - raw_path));
+#endif
+    }
+    file_spec.SetFile(raw_path, true);
+    return (bool)file_spec.GetDirectory();
+}
+
+bool
+HostInfoMacOSX::ComputeHeaderDirectory(FileSpec &file_spec)
+{
+    FileSpec lldb_file_spec;
+    if (!HostInfo::GetLLDBPath(lldb::ePathTypeLLDBShlibDir, lldb_file_spec))
+        return false;
+
+    char raw_path[PATH_MAX];
+    lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
+
+    char *framework_pos = ::strstr(raw_path, "LLDB.framework");
+    if (framework_pos)
+    {
+        framework_pos += strlen("LLDB.framework");
+        ::strncpy(framework_pos, "/Headers", PATH_MAX - (framework_pos - raw_path));
+    }
+    file_spec.SetFile(raw_path, true);
+    return true;
+}
+
+bool
+HostInfoMacOSX::ComputePythonDirectory(FileSpec &file_spec)
+{
+    FileSpec lldb_file_spec;
+    if (!GetLLDBPath(lldb::ePathTypeLLDBShlibDir, lldb_file_spec))
+        return false;
+
+    char raw_path[PATH_MAX];
+    lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
+
+    char *framework_pos = ::strstr(raw_path, "LLDB.framework");
+    if (framework_pos)
+    {
+        framework_pos += strlen("LLDB.framework");
+        ::strncpy(framework_pos, "/Resources/Python", PATH_MAX - (framework_pos - raw_path));
+    }
+    else
+    {
+        llvm::SmallString<256> python_version_dir;
+        llvm::raw_svector_ostream os(python_version_dir);
+        os << "/python" << PY_MAJOR_VERSION << '.' << PY_MINOR_VERSION << "/site-packages";
+        os.flush();
+
+        // We may get our string truncated. Should we protect this with an assert?
+        ::strncat(raw_path, python_version_dir.c_str(), sizeof(raw_path) - strlen(raw_path) - 1);
+    }
+    file_spec.SetFile(raw_path, true);
+    return true;
+}
+
+bool
+HostInfoMacOSX::ComputeSystemPluginsDirectory(FileSpec &file_spec)
+{
+    FileSpec lldb_file_spec;
+    if (!GetLLDBPath(lldb::ePathTypeLLDBShlibDir, lldb_file_spec))
+        return false;
+    char raw_path[PATH_MAX];
+    lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
+
+    char *framework_pos = ::strstr(raw_path, "LLDB.framework");
+    if (!framework_pos)
+        return false;
+
+    framework_pos += strlen("LLDB.framework");
+    ::strncpy(framework_pos, "/Resources/PlugIns", PATH_MAX - (framework_pos - raw_path));
+    file_spec.SetFile(raw_path, true);
+    return true;
+}
+
+bool
+HostInfoMacOSX::ComputeUserPluginsDirectory(FileSpec &file_spec)
+{
+    file_spec.SetFile("~/Library/Application Support/LLDB/PlugIns", true);
+    return true;
 }
 
 void

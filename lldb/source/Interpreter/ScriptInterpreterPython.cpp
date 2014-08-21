@@ -31,7 +31,7 @@
 #include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Timer.h"
-#include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/Pipe.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -2601,7 +2601,7 @@ ScriptInterpreterPython::InitializePrivate ()
 
     FileSpec file_spec;
     char python_dir_path[PATH_MAX];
-    if (Host::GetLLDBPath (ePathTypePythonDir, file_spec))
+    if (HostInfo::GetLLDBPath(ePathTypePythonDir, file_spec))
     {
         std::string python_path("sys.path.insert(0,\"");
         size_t orig_len = python_path.length();
@@ -2612,8 +2612,8 @@ ScriptInterpreterPython::InitializePrivate ()
             PyRun_SimpleString (python_path.c_str());
             python_path.resize (orig_len);
         }
-        
-        if (Host::GetLLDBPath (ePathTypeLLDBShlibDir, file_spec))
+
+        if (HostInfo::GetLLDBPath(ePathTypeLLDBShlibDir, file_spec))
         {
             if (file_spec.GetPath(python_dir_path, sizeof (python_dir_path)))
             {

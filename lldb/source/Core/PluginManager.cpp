@@ -20,6 +20,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Interpreter/OptionValueProperties.h"
 
@@ -185,7 +186,7 @@ PluginManager::Initialize ()
     const bool find_files = true;
     const bool find_other = true;
     char dir_path[PATH_MAX];
-    if (Host::GetLLDBPath (ePathTypeLLDBSystemPlugins, dir_spec))
+    if (HostInfo::GetLLDBPath(ePathTypeLLDBSystemPlugins, dir_spec))
     {
         if (dir_spec.Exists() && dir_spec.GetPath(dir_path, sizeof(dir_path)))
         {
@@ -198,7 +199,7 @@ PluginManager::Initialize ()
         }
     }
 
-    if (Host::GetLLDBPath (ePathTypeLLDBUserPlugins, dir_spec))
+    if (HostInfo::GetLLDBPath(ePathTypeLLDBUserPlugins, dir_spec))
     {
         if (dir_spec.Exists() && dir_spec.GetPath(dir_path, sizeof(dir_path)))
         {

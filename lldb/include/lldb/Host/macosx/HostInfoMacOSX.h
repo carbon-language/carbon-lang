@@ -32,7 +32,12 @@ class HostInfoMacOSX : public HostInfoPosix
     static bool GetOSKernelDescription(std::string &s);
 
   protected:
+    static bool ComputeSupportExeDirectory(FileSpec &file_spec);
     static void ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_64);
+    static bool ComputeHeaderDirectory(FileSpec &file_spec);
+    static bool ComputePythonDirectory(FileSpec &file_spec);
+    static bool ComputeSystemPluginsDirectory(FileSpec &file_spec);
+    static bool ComputeUserPluginsDirectory(FileSpec &file_spec);
 };
 }
 

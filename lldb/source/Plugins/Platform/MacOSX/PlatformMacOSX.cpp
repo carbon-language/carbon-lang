@@ -178,7 +178,7 @@ PlatformMacOSX::GetSDKDirectory (lldb_private::Target &target)
             uint32_t versions[2];
             if (objfile->GetSDKVersion(versions, sizeof(versions)))
             {
-                if (Host::GetLLDBPath (ePathTypeLLDBShlibDir, fspec))
+                if (HostInfo::GetLLDBPath(ePathTypeLLDBShlibDir, fspec))
                 {
                     std::string path;
                     xcode_contents_path = fspec.GetPath();
