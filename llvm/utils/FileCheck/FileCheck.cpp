@@ -636,8 +636,9 @@ struct CheckString {
 ///
 /// \param PreserveHorizontal Don't squash consecutive horizontal whitespace
 /// characters to a single space.
-static MemoryBuffer *CanonicalizeInputFile(std::unique_ptr<MemoryBuffer> MB,
-                                           bool PreserveHorizontal) {
+static std::unique_ptr<MemoryBuffer>
+CanonicalizeInputFile(std::unique_ptr<MemoryBuffer> MB,
+                      bool PreserveHorizontal) {
   SmallString<128> NewFile;
   NewFile.reserve(MB->getBufferSize());
 
@@ -662,8 +663,8 @@ static MemoryBuffer *CanonicalizeInputFile(std::unique_ptr<MemoryBuffer> MB,
       ++Ptr;
   }
 
-  return MemoryBuffer::getMemBufferCopy(NewFile.str(),
-                                        MB->getBufferIdentifier());
+  return std::unique_ptr<MemoryBuffer>(
+      MemoryBuffer::getMemBufferCopy(NewFile.str(), MB->getBufferIdentifier()));
 }
 
 static bool IsPartOfWord(char c) {
@@ -838,13 +839,13 @@ static bool ReadCheckFile(SourceMgr &SM,
 
   // If we want to canonicalize whitespace, strip excess whitespace from the
   // buffer containing the CHECK lines. Remove DOS style line endings.
-  MemoryBuffer *F = CanonicalizeInputFile(std::move(FileOrErr.get()),
-                                          NoCanonicalizeWhiteSpace);
-
-  SM.AddNewSourceBuffer(F, SMLoc());
+  std::unique_ptr<MemoryBuffer> F =
+      CanonicalizeInputFile(std::move(*FileOrErr), NoCanonicalizeWhiteSpace);
 
   // Find all instances of CheckPrefix followed by : in the file.
   StringRef Buffer = F->getBuffer();
+
+  SM.AddNewSourceBuffer(std::move(F), SMLoc());
 
   std::vector<Pattern> ImplicitNegativeChecks;
   for (const auto &PatternString : ImplicitCheckNot) {
@@ -852,11 +853,11 @@ static bool ReadCheckFile(SourceMgr &SM,
     // command line option responsible for the specific implicit CHECK-NOT.
     std::string Prefix = std::string("-") + ImplicitCheckNot.ArgStr + "='";
     std::string Suffix = "'";
-    MemoryBuffer *CmdLine = MemoryBuffer::getMemBufferCopy(
-        Prefix + PatternString + Suffix, "command line");
+    std::unique_ptr<MemoryBuffer> CmdLine(MemoryBuffer::getMemBufferCopy(
+        Prefix + PatternString + Suffix, "command line"));
     StringRef PatternInBuffer =
         CmdLine->getBuffer().substr(Prefix.size(), PatternString.size());
-    SM.AddNewSourceBuffer(CmdLine, SMLoc());
+    SM.AddNewSourceBuffer(std::move(CmdLine), SMLoc());
 
     ImplicitNegativeChecks.push_back(Pattern(Check::CheckNot));
     ImplicitNegativeChecks.back().ParsePattern(PatternInBuffer,
@@ -1272,17 +1273,17 @@ int main(int argc, char **argv) {
 
   // Remove duplicate spaces in the input file if requested.
   // Remove DOS style line endings.
-  MemoryBuffer *F =
-    CanonicalizeInputFile(std::move(File), NoCanonicalizeWhiteSpace);
-
-  SM.AddNewSourceBuffer(F, SMLoc());
-
-  /// VariableTable - This holds all the current filecheck variables.
-  StringMap<StringRef> VariableTable;
+  std::unique_ptr<MemoryBuffer> F =
+      CanonicalizeInputFile(std::move(File), NoCanonicalizeWhiteSpace);
 
   // Check that we have all of the expected strings, in order, in the input
   // file.
   StringRef Buffer = F->getBuffer();
+
+  SM.AddNewSourceBuffer(std::move(F), SMLoc());
+
+  /// VariableTable - This holds all the current filecheck variables.
+  StringMap<StringRef> VariableTable;
 
   bool hasError = false;
 

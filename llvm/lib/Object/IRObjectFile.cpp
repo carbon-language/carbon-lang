@@ -75,7 +75,7 @@ IRObjectFile::IRObjectFile(MemoryBufferRef Object, std::unique_ptr<Module> Mod)
 
   std::unique_ptr<MemoryBuffer> Buffer(MemoryBuffer::getMemBuffer(InlineAsm));
   SourceMgr SrcMgr;
-  SrcMgr.AddNewSourceBuffer(Buffer.release(), SMLoc());
+  SrcMgr.AddNewSourceBuffer(std::move(Buffer), SMLoc());
   std::unique_ptr<MCAsmParser> Parser(
       createMCAsmParser(SrcMgr, MCCtx, *Streamer, *MAI));
 

@@ -373,12 +373,12 @@ int main(int argc, char **argv) {
     errs() << ProgName << ": " << EC.message() << '\n';
     return 1;
   }
-  MemoryBuffer *Buffer = BufferPtr->release();
+  MemoryBuffer *Buffer = BufferPtr->get();
 
   SourceMgr SrcMgr;
 
   // Tell SrcMgr about this buffer, which is what the parser will pick up.
-  SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
+  SrcMgr.AddNewSourceBuffer(std::move(*BufferPtr), SMLoc());
 
   // Record the location of the include directories so that the lexer can find
   // it later.

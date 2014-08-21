@@ -708,8 +708,10 @@ Scanner::Scanner(StringRef Input, SourceMgr &sm)
   , IsStartOfStream(true)
   , IsSimpleKeyAllowed(true)
   , Failed(false) {
-  InputBuffer = MemoryBuffer::getMemBuffer(Input, "YAML");
-  SM.AddNewSourceBuffer(InputBuffer, SMLoc());
+  std::unique_ptr<MemoryBuffer> InputBufferOwner(
+      MemoryBuffer::getMemBuffer(Input, "YAML"));
+  InputBuffer = InputBufferOwner.get();
+  SM.AddNewSourceBuffer(std::move(InputBufferOwner), SMLoc());
   Current = InputBuffer->getBufferStart();
   End = InputBuffer->getBufferEnd();
 }
@@ -719,7 +721,7 @@ Scanner::Scanner(std::unique_ptr<MemoryBuffer> Buffer, SourceMgr &SM_)
       Current(InputBuffer->getBufferStart()), End(InputBuffer->getBufferEnd()),
       Indent(-1), Column(0), Line(0), FlowLevel(0), IsStartOfStream(true),
       IsSimpleKeyAllowed(true), Failed(false) {
-  SM.AddNewSourceBuffer(Buffer.release(), SMLoc());
+  SM.AddNewSourceBuffer(std::move(Buffer), SMLoc());
 }
 
 Token &Scanner::peekNext() {

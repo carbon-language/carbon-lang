@@ -25,7 +25,7 @@ bool llvm::parseAssemblyInto(std::unique_ptr<MemoryBuffer> F, Module &M,
                              SMDiagnostic &Err) {
   SourceMgr SM;
   StringRef Buf = F->getBuffer();
-  SM.AddNewSourceBuffer(F.release(), SMLoc());
+  SM.AddNewSourceBuffer(std::move(F), SMLoc());
 
   return LLParser(Buf, SM, Err, &M).Run();
 }

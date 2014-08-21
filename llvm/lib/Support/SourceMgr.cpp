@@ -42,11 +42,6 @@ SourceMgr::~SourceMgr() {
   // Delete the line # cache if allocated.
   if (LineNoCacheTy *Cache = getCache(LineNoCache))
     delete Cache;
-
-  while (!Buffers.empty()) {
-    delete Buffers.back().Buffer;
-    Buffers.pop_back();
-  }
 }
 
 unsigned SourceMgr::AddIncludeFile(const std::string &Filename,
@@ -67,7 +62,7 @@ unsigned SourceMgr::AddIncludeFile(const std::string &Filename,
   if (!NewBufOrErr)
     return 0;
 
-  return AddNewSourceBuffer(NewBufOrErr.get().release(), IncludeLoc);
+  return AddNewSourceBuffer(std::move(*NewBufOrErr), IncludeLoc);
 }
 
 unsigned SourceMgr::FindBufferContainingLoc(SMLoc Loc) const {

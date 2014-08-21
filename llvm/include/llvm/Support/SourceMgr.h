@@ -19,11 +19,11 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SMLoc.h"
 #include <string>
 
 namespace llvm {
-  class MemoryBuffer;
   class SourceMgr;
   class SMDiagnostic;
   class SMFixIt;
@@ -47,7 +47,7 @@ public:
 private:
   struct SrcBuffer {
     /// The memory buffer for the file.
-    MemoryBuffer *Buffer;
+    std::unique_ptr<MemoryBuffer> Buffer;
 
     /// This is the location of the parent include, or null if at the top level.
     SMLoc IncludeLoc;
@@ -96,7 +96,7 @@ public:
 
   const MemoryBuffer *getMemoryBuffer(unsigned i) const {
     assert(isValidBufferID(i));
-    return Buffers[i - 1].Buffer;
+    return Buffers[i - 1].Buffer.get();
   }
 
   unsigned getNumBuffers() const {
@@ -115,11 +115,12 @@ public:
 
   /// Add a new source buffer to this source manager. This takes ownership of
   /// the memory buffer.
-  unsigned AddNewSourceBuffer(MemoryBuffer *F, SMLoc IncludeLoc) {
+  unsigned AddNewSourceBuffer(std::unique_ptr<MemoryBuffer> F,
+                              SMLoc IncludeLoc) {
     SrcBuffer NB;
-    NB.Buffer = F;
+    NB.Buffer = std::move(F);
     NB.IncludeLoc = IncludeLoc;
-    Buffers.push_back(NB);
+    Buffers.push_back(std::move(NB));
     return Buffers.size();
   }
 

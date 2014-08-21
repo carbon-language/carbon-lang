@@ -23,8 +23,9 @@ public:
   std::string Output;
 
   void setMainBuffer(StringRef Text, StringRef BufferName) {
-    MemoryBuffer *MainBuffer = MemoryBuffer::getMemBuffer(Text, BufferName);
-    MainBufferID = SM.AddNewSourceBuffer(MainBuffer, llvm::SMLoc());
+    std::unique_ptr<MemoryBuffer> MainBuffer(
+        MemoryBuffer::getMemBuffer(Text, BufferName));
+    MainBufferID = SM.AddNewSourceBuffer(std::move(MainBuffer), llvm::SMLoc());
   }
 
   SMLoc getLoc(unsigned Offset) {

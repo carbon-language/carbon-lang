@@ -88,10 +88,9 @@ int TableGenMain(char *argv0, TableGenMainFn *MainFn) {
            << "': " << EC.message() << "\n";
     return 1;
   }
-  MemoryBuffer *F = FileOrErr.get().release();
 
   // Tell SrcMgr about this buffer, which is what TGParser will pick up.
-  SrcMgr.AddNewSourceBuffer(F, SMLoc());
+  SrcMgr.AddNewSourceBuffer(std::move(*FileOrErr), SMLoc());
 
   // Record the location of the include directory so that the lexer can find
   // it later.

@@ -2123,8 +2123,8 @@ bool AsmParser::handleMacroEntry(const MCAsmMacro *M, SMLoc NameLoc) {
   // instantiation.
   OS << ".endmacro\n";
 
-  MemoryBuffer *Instantiation =
-      MemoryBuffer::getMemBufferCopy(OS.str(), "<instantiation>");
+  std::unique_ptr<MemoryBuffer> Instantiation(
+      MemoryBuffer::getMemBufferCopy(OS.str(), "<instantiation>"));
 
   // Create the macro instantiation object and add to the current macro
   // instantiation stack.
@@ -2134,7 +2134,7 @@ bool AsmParser::handleMacroEntry(const MCAsmMacro *M, SMLoc NameLoc) {
   ActiveMacros.push_back(MI);
 
   // Jump to the macro instantiation and prime the lexer.
-  CurBuffer = SrcMgr.AddNewSourceBuffer(Instantiation, SMLoc());
+  CurBuffer = SrcMgr.AddNewSourceBuffer(std::move(Instantiation), SMLoc());
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer)->getBuffer());
   Lex();
 
@@ -4310,8 +4310,8 @@ void AsmParser::instantiateMacroLikeBody(MCAsmMacro *M, SMLoc DirectiveLoc,
                                          raw_svector_ostream &OS) {
   OS << ".endr\n";
 
-  MemoryBuffer *Instantiation =
-      MemoryBuffer::getMemBufferCopy(OS.str(), "<instantiation>");
+  std::unique_ptr<MemoryBuffer> Instantiation(
+      MemoryBuffer::getMemBufferCopy(OS.str(), "<instantiation>"));
 
   // Create the macro instantiation object and add to the current macro
   // instantiation stack.
@@ -4321,7 +4321,7 @@ void AsmParser::instantiateMacroLikeBody(MCAsmMacro *M, SMLoc DirectiveLoc,
   ActiveMacros.push_back(MI);
 
   // Jump to the macro instantiation and prime the lexer.
-  CurBuffer = SrcMgr.AddNewSourceBuffer(Instantiation, SMLoc());
+  CurBuffer = SrcMgr.AddNewSourceBuffer(std::move(Instantiation), SMLoc());
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer)->getBuffer());
   Lex();
 }

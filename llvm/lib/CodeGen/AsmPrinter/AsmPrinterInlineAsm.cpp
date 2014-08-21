@@ -110,14 +110,12 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
     HasDiagHandler = true;
   }
 
-  MemoryBuffer *Buffer;
-  if (isNullTerminated)
-    Buffer = MemoryBuffer::getMemBuffer(Str, "<inline asm>");
-  else
-    Buffer = MemoryBuffer::getMemBufferCopy(Str, "<inline asm>");
+  std::unique_ptr<MemoryBuffer> Buffer(
+      isNullTerminated ? MemoryBuffer::getMemBuffer(Str, "<inline asm>")
+                       : MemoryBuffer::getMemBufferCopy(Str, "<inline asm>"));
 
   // Tell SrcMgr about this buffer, it takes ownership of the buffer.
-  SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
+  SrcMgr.AddNewSourceBuffer(std::move(Buffer), SMLoc());
 
   std::unique_ptr<MCAsmParser> Parser(
       createMCAsmParser(SrcMgr, OutContext, OutStreamer, *MAI));

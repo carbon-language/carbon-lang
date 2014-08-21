@@ -141,14 +141,15 @@ static void parseMCMarkup(StringRef Filename) {
     errs() << ToolName << ": " << EC.message() << '\n';
     return;
   }
-  MemoryBuffer *Buffer = BufferPtr->release();
+  std::unique_ptr<MemoryBuffer> &Buffer = BufferPtr.get();
 
   SourceMgr SrcMgr;
 
-  // Tell SrcMgr about this buffer, which is what the parser will pick up.
-  SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
-
   StringRef InputSource = Buffer->getBuffer();
+
+  // Tell SrcMgr about this buffer, which is what the parser will pick up.
+  SrcMgr.AddNewSourceBuffer(std::move(Buffer), SMLoc());
+
   MarkupLexer Lex(InputSource);
   MarkupParser Parser(Lex, SrcMgr);
 
