@@ -656,6 +656,11 @@ uint16_t Util::descBits(const DefinedAtom* atom) {
     desc |= N_SYMBOL_RESOLVER;
   if (_archHandler.isThumbFunction(*atom))
     desc |= N_ARM_THUMB_DEF;
+  if (atom->deadStrip() == DefinedAtom::deadStripNever) {
+    if ((atom->contentType() != DefinedAtom::typeInitializerPtr)
+     && (atom->contentType() != DefinedAtom::typeTerminatorPtr))
+    desc |= N_NO_DEAD_STRIP;
+  }
   return desc;
 }
 

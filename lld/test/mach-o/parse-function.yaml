@@ -19,7 +19,7 @@ sections:
     address:         0x0000000000000000
     content:         [ 0xCC, 0xC3, 0x90, 0xC3, 0x90, 0x90, 0xC3, 0x90, 
                        0x90, 0x90, 0xC3, 0x90, 0x90, 0x90, 0x90, 0xC3,
-                       0x31, 0xC0, 0xC3 ]
+                       0xCC, 0x31, 0xC0, 0xC3 ]
 local-symbols:
   - name:            _myStatic
     type:            N_SECT
@@ -48,12 +48,18 @@ global-symbols:
     sect:            1
     desc:            [ N_WEAK_DEF ]
     value:           0x0000000000000007
+  - name:            _myStripNot
+    type:            N_SECT
+    scope:           [ N_EXT ]
+    sect:            1
+    desc:            [ N_NO_DEAD_STRIP ]
+    value:           0x0000000000000010
   - name:            _myResolver
     type:            N_SECT
     scope:           [ N_EXT ]
     sect:            1
     desc:            [ N_SYMBOL_RESOLVER ]
-    value:           0x0000000000000010
+    value:           0x0000000000000011
 ...
 
 # CHECK-NOT:  name:  
@@ -81,6 +87,11 @@ global-symbols:
 # CHECK-NOT:	scope:  global
 # CHECK-NOT:	scope:  hidden
 # CHECK:      content:         [ 90, 90, 90, 90, C3 ]
+
+# CHECK:      name:    _myStripNot
+# CHECK:      scope:   global
+# CHECK:      content:         [ CC ]
+# CHECK:      dead-strip:  never
 
 # CHECK:      name:    _myResolver
 # CHECK:      scope:   global

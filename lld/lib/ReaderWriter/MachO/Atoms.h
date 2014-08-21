@@ -17,18 +17,20 @@ namespace mach_o {
 class MachODefinedAtom : public SimpleDefinedAtom {
 public:
   MachODefinedAtom(const File &f, const StringRef name, Scope scope,
-                   ContentType type, Merge merge, bool thumb,
+                   ContentType type, Merge merge, bool thumb, bool noDeadStrip,
                    const ArrayRef<uint8_t> content)
       : SimpleDefinedAtom(f), _name(name), _content(content),
-        _contentType(type), _scope(scope), _merge(merge), _thumb(thumb) {}
+        _contentType(type), _scope(scope), _merge(merge), _thumb(thumb),
+        _noDeadStrip(noDeadStrip) {}
 
   // Constructor for zero-fill content
   MachODefinedAtom(const File &f, const StringRef name, Scope scope,
-                   uint64_t size)
+                   uint64_t size, bool noDeadStrip)
       : SimpleDefinedAtom(f), _name(name),
         _content(ArrayRef<uint8_t>(nullptr, size)),
         _contentType(DefinedAtom::typeZeroFill),
-        _scope(scope), _merge(mergeNo), _thumb(false) {}
+        _scope(scope), _merge(mergeNo), _thumb(false),
+        _noDeadStrip(noDeadStrip) {}
 
   uint64_t size() const override { return _content.size(); }
 
@@ -45,6 +47,8 @@ public:
       return deadStripNever;
     if (_contentType == DefinedAtom::typeTerminatorPtr)
       return deadStripNever;
+    if (_noDeadStrip)
+      return deadStripNever;
     return deadStripNormal;
   }
 
@@ -55,13 +59,15 @@ public:
 
   bool isThumb() const { return _thumb; }
 
-  void addReference(uint32_t offsetInAtom, uint16_t relocType, 
-               const Atom *target, Reference::Addend addend, 
-               Reference::KindArch arch = Reference::KindArch::x86_64,
-               Reference::KindNamespace ns = Reference::KindNamespace::mach_o) {
-    SimpleDefinedAtom::addReference(ns, arch, relocType, offsetInAtom, target, addend);
+  void addReference(uint32_t offsetInAtom, uint16_t relocType,
+                    const Atom *target, Reference::Addend addend,
+                    Reference::KindArch arch = Reference::KindArch::x86_64,
+                    Reference::KindNamespace ns
+                     = Reference::KindNamespace::mach_o) {
+    SimpleDefinedAtom::addReference(ns, arch, relocType, offsetInAtom, target,
+                                    addend);
   }
-  
+
 private:
   const StringRef _name;
   const ArrayRef<uint8_t> _content;
@@ -69,25 +75,28 @@ private:
   const Scope _scope;
   const Merge _merge;
   const bool _thumb;
+  const bool _noDeadStrip;
 };
 
 class MachODefinedCustomSectionAtom : public MachODefinedAtom {
 public:
-  MachODefinedCustomSectionAtom(const File &f, const StringRef name, 
+  MachODefinedCustomSectionAtom(const File &f, const StringRef name,
                                 Scope scope, ContentType type, Merge merge,
-                                bool thumb, const ArrayRef<uint8_t> content,
+                                bool thumb, bool noDeadStrip,
+                                const ArrayRef<uint8_t> content,
                                 StringRef sectionName)
-      : MachODefinedAtom(f, name, scope, type, merge, thumb, content), 
+      : MachODefinedAtom(f, name, scope, type, merge, thumb, noDeadStrip,
+                         content),
         _sectionName(sectionName) {}
 
   SectionChoice sectionChoice() const override {
     return DefinedAtom::sectionCustomRequired;
   }
-  
+
   StringRef customSectionName() const override {
     return _sectionName;
   }
-private:  
+private:
   StringRef _sectionName;
 };
 

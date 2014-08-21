@@ -32,9 +32,10 @@ public:
   void addDefinedAtom(StringRef name, Atom::Scope scope,
                       DefinedAtom::ContentType type, DefinedAtom::Merge merge,
                       uint64_t sectionOffset, uint64_t contentSize, bool thumb,
-                      bool copyRefs, const Section *inSection) {
+                      bool noDeadStrip, bool copyRefs,
+                      const Section *inSection) {
     assert(sectionOffset+contentSize <= inSection->content.size());
-    ArrayRef<uint8_t> content = inSection->content.slice(sectionOffset, 
+    ArrayRef<uint8_t> content = inSection->content.slice(sectionOffset,
                                                         contentSize);
     if (copyRefs) {
       // Make a copy of the atom's name and content that is owned by this file.
@@ -42,18 +43,18 @@ public:
       content = content.copy(_allocator);
     }
     MachODefinedAtom *atom =
-        new (_allocator) MachODefinedAtom(*this, name, scope, type, merge, 
-                                          thumb, content);
+        new (_allocator) MachODefinedAtom(*this, name, scope, type, merge,
+                                          thumb, noDeadStrip, content);
     addAtomForSection(inSection, atom, sectionOffset);
   }
 
   void addDefinedAtomInCustomSection(StringRef name, Atom::Scope scope,
                       DefinedAtom::ContentType type, DefinedAtom::Merge merge,
-                      bool thumb, uint64_t sectionOffset, uint64_t contentSize,
-                      StringRef sectionName, bool copyRefs, 
-                      const Section *inSection) {
+                      bool thumb, bool noDeadStrip, uint64_t sectionOffset,
+                      uint64_t contentSize, StringRef sectionName,
+                      bool copyRefs, const Section *inSection) {
     assert(sectionOffset+contentSize <= inSection->content.size());
-    ArrayRef<uint8_t> content = inSection->content.slice(sectionOffset, 
+    ArrayRef<uint8_t> content = inSection->content.slice(sectionOffset,
                                                         contentSize);
    if (copyRefs) {
       // Make a copy of the atom's name and content that is owned by this file.
@@ -63,20 +64,22 @@ public:
     }
     MachODefinedCustomSectionAtom *atom =
         new (_allocator) MachODefinedCustomSectionAtom(*this, name, scope, type,
-                                                        merge, thumb, content,
+                                                        merge, thumb,
+                                                        noDeadStrip, content,
                                                         sectionName);
     addAtomForSection(inSection, atom, sectionOffset);
   }
 
   void addZeroFillDefinedAtom(StringRef name, Atom::Scope scope,
                               uint64_t sectionOffset, uint64_t size,
-                              bool copyRefs, const Section *inSection) {
+                              bool noDeadStrip, bool copyRefs,
+                              const Section *inSection) {
     if (copyRefs) {
       // Make a copy of the atom's name and content that is owned by this file.
       name = name.copy(_allocator);
     }
     MachODefinedAtom *atom =
-        new (_allocator) MachODefinedAtom(*this, name, scope, size);
+       new (_allocator) MachODefinedAtom(*this, name, scope, size, noDeadStrip);
     addAtomForSection(inSection, atom, sectionOffset);
   }
 

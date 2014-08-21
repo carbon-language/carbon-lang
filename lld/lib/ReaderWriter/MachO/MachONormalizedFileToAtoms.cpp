@@ -225,9 +225,10 @@ void atomFromSymbol(DefinedAtom::ContentType atomType, const Section &section,
   // difference between this and the next symbol.
   uint64_t size = nextSymbolAddr - symbolAddr;
   uint64_t offset = symbolAddr - section.address;
+  bool noDeadStrip = (symbolDescFlags & N_NO_DEAD_STRIP);
   if (section.type == llvm::MachO::S_ZEROFILL) {
-    file.addZeroFillDefinedAtom(symbolName, symbolScope, offset, size, copyRefs, 
-                                &section);
+    file.addZeroFillDefinedAtom(symbolName, symbolScope, offset, size,
+                                noDeadStrip, copyRefs, &section);
   } else {
     DefinedAtom::Merge merge = (symbolDescFlags & N_WEAK_DEF)
                               ? DefinedAtom::mergeAsWeak : DefinedAtom::mergeNo;
@@ -239,15 +240,15 @@ void atomFromSymbol(DefinedAtom::ContentType atomType, const Section &section,
       std::string segSectName = section.segmentName.str()
                                 + "/" + section.sectionName.str();
       file.addDefinedAtomInCustomSection(symbolName, symbolScope, atomType,
-                                         merge, thumb,offset, size, segSectName, 
-                                         true, &section);
+                                         merge, thumb, noDeadStrip, offset,
+                                         size, segSectName, true, &section);
     } else {
       if ((atomType == lld::DefinedAtom::typeCode) &&
           (symbolDescFlags & N_SYMBOL_RESOLVER)) {
         atomType = lld::DefinedAtom::typeResolver;
       }
       file.addDefinedAtom(symbolName, symbolScope, atomType, merge,
-                          offset, size, thumb, copyRefs, &section);
+                          offset, size, thumb, noDeadStrip, copyRefs, &section);
     }
   }
 }
@@ -419,7 +420,7 @@ std::error_code processSection(DefinedAtom::ContentType atomType,
                                      "not zero terminated.");
       }
       file.addDefinedAtom(StringRef(), scope, atomType, merge, offset, size,
-                          false, copyRefs, &section);
+                          false, false, copyRefs, &section);
       offset += size;
     }
   }
