@@ -148,6 +148,17 @@ const TargetRegisterClass *SIRegisterInfo::getSubRegClass(
 unsigned SIRegisterInfo::getPhysRegSubReg(unsigned Reg,
                                           const TargetRegisterClass *SubRC,
                                           unsigned Channel) const {
+
+  switch (Reg) {
+    case AMDGPU::VCC:
+      switch(Channel) {
+        case 0: return AMDGPU::VCC_LO;
+        case 1: return AMDGPU::VCC_HI;
+        default: llvm_unreachable("Invalid SubIdx for VCC");
+      }
+      break;
+  }
+
   unsigned Index = getHWRegIndex(Reg);
   return SubRC->getRegister(Index + Channel);
 }
