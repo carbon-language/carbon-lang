@@ -104,7 +104,7 @@ std::vector<ImportTableEntryAtom *> ImportDirectoryAtom::createImportTableAtoms(
       entry = new (_alloc) ImportTableEntryAtom(context, 0, sectionName);
       HintNameAtom *hintName =
           new (_alloc) HintNameAtom(context, atom->hint(), atom->importName());
-      addDir32NBReloc(entry, hintName);
+      addDir32NBReloc(entry, hintName, 0);
     }
     ret.push_back(entry);
     if (shouldAddReference)

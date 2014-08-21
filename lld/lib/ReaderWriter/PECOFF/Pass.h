@@ -16,10 +16,10 @@ namespace lld {
 namespace pecoff {
 
 void addDir32Reloc(COFFBaseDefinedAtom *atom, const Atom *target,
-                   size_t offsetInAtom = 0);
+                   size_t offsetInAtom);
 
 void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target,
-                     size_t offsetInAtom = 0);
+                     size_t offsetInAtom);
 
 } // namespace pecoff
 } // namespace lld
