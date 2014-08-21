@@ -1517,19 +1517,14 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
 /// \param arrayBegin an arrayType*
 /// \param zeroInitialize true if each element should be
 ///   zero-initialized before it is constructed
-void
-CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,
-                                            const ConstantArrayType *arrayType,
-                                            llvm::Value *arrayBegin,
-                                          CallExpr::const_arg_iterator argBegin,
-                                            CallExpr::const_arg_iterator argEnd,
-                                            bool zeroInitialize) {
+void CodeGenFunction::EmitCXXAggrConstructorCall(
+    const CXXConstructorDecl *ctor, const ConstantArrayType *arrayType,
+    llvm::Value *arrayBegin, const CXXConstructExpr *E, bool zeroInitialize) {
   QualType elementType;
   llvm::Value *numElements =
     emitArrayLength(arrayType, elementType, arrayBegin);
 
-  EmitCXXAggrConstructorCall(ctor, numElements, arrayBegin,
-                             argBegin, argEnd, zeroInitialize);
+  EmitCXXAggrConstructorCall(ctor, numElements, arrayBegin, E, zeroInitialize);
 }
 
 /// EmitCXXAggrConstructorCall - Emit a loop to call a particular
@@ -1541,13 +1536,11 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,
 /// \param arrayBegin a T*, where T is the type constructed by ctor
 /// \param zeroInitialize true if each element should be
 ///   zero-initialized before it is constructed
-void
-CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,
-                                            llvm::Value *numElements,
-                                            llvm::Value *arrayBegin,
-                                         CallExpr::const_arg_iterator argBegin,
-                                           CallExpr::const_arg_iterator argEnd,
-                                            bool zeroInitialize) {
+void CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,
+                                                 llvm::Value *numElements,
+                                                 llvm::Value *arrayBegin,
+                                                 const CXXConstructExpr *E,
+                                                 bool zeroInitialize) {
 
   // It's legal for numElements to be zero.  This can happen both
   // dynamically, because x can be zero in 'new A[x]', and statically,
@@ -1610,8 +1603,8 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,
       pushRegularPartialArrayCleanup(arrayBegin, cur, type, *destroyer);
     }
 
-    EmitCXXConstructorCall(ctor, Ctor_Complete, /*ForVirtualBase=*/ false,
-                           /*Delegating=*/false, cur, argBegin, argEnd);
+    EmitCXXConstructorCall(ctor, Ctor_Complete, /*ForVirtualBase=*/false,
+                           /*Delegating=*/false, cur, E);
   }
 
   // Go to the next element.
@@ -1642,29 +1635,27 @@ void CodeGenFunction::destroyCXXObject(CodeGenFunction &CGF,
                             /*Delegating=*/false, addr);
 }
 
-void
-CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
-                                        CXXCtorType Type, bool ForVirtualBase,
-                                        bool Delegating,
-                                        llvm::Value *This,
-                                        CallExpr::const_arg_iterator ArgBeg,
-                                        CallExpr::const_arg_iterator ArgEnd) {
+void CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
+                                             CXXCtorType Type,
+                                             bool ForVirtualBase,
+                                             bool Delegating, llvm::Value *This,
+                                             const CXXConstructExpr *E) {
   // If this is a trivial constructor, just emit what's needed.
   if (D->isTrivial()) {
-    if (ArgBeg == ArgEnd) {
+    if (E->getNumArgs() == 0) {
       // Trivial default constructor, no codegen required.
       assert(D->isDefaultConstructor() &&
              "trivial 0-arg ctor not a default ctor");
       return;
     }
 
-    assert(ArgBeg + 1 == ArgEnd && "unexpected argcount for trivial ctor");
+    assert(E->getNumArgs() == 1 && "unexpected argcount for trivial ctor");
     assert(D->isCopyOrMoveConstructor() &&
            "trivial 1-arg ctor not a copy/move ctor");
 
-    const Expr *E = (*ArgBeg);
-    QualType Ty = E->getType();
-    llvm::Value *Src = EmitLValue(E).getAddress();
+    const Expr *Arg = E->getArg(0);
+    QualType Ty = Arg->getType();
+    llvm::Value *Src = EmitLValue(Arg).getAddress();
     EmitAggregateCopy(This, Src, Ty);
     return;
   }
@@ -1683,7 +1674,7 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
 
   // Add the rest of the user-supplied arguments.
   const FunctionProtoType *FPT = D->getType()->castAs<FunctionProtoType>();
-  EmitCallArgs(Args, FPT, ArgBeg, ArgEnd);
+  EmitCallArgs(Args, FPT, E->arg_begin(), E->arg_end());
 
   // Insert any ABI-specific implicit constructor arguments.
   unsigned ExtraArgs = CGM.getCXXABI().addImplicitConstructorArgs(

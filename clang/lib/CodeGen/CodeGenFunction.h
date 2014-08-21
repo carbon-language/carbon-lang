@@ -1649,10 +1649,8 @@ public:
                                         const FunctionArgList &Args);
   void EmitCXXConstructorCall(const CXXConstructorDecl *D, CXXCtorType Type,
                               bool ForVirtualBase, bool Delegating,
-                              llvm::Value *This,
-                              CallExpr::const_arg_iterator ArgBeg,
-                              CallExpr::const_arg_iterator ArgEnd);
-  
+                              llvm::Value *This, const CXXConstructExpr *E);
+
   void EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
                               llvm::Value *This, llvm::Value *Src,
                               CallExpr::const_arg_iterator ArgBeg,
@@ -1661,15 +1659,13 @@ public:
   void EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
                                   const ConstantArrayType *ArrayTy,
                                   llvm::Value *ArrayPtr,
-                                  CallExpr::const_arg_iterator ArgBeg,
-                                  CallExpr::const_arg_iterator ArgEnd,
+                                  const CXXConstructExpr *E,
                                   bool ZeroInitialization = false);
 
   void EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
                                   llvm::Value *NumElements,
                                   llvm::Value *ArrayPtr,
-                                  CallExpr::const_arg_iterator ArgBeg,
-                                  CallExpr::const_arg_iterator ArgEnd,
+                                  const CXXConstructExpr *E,
                                   bool ZeroInitialization = false);
 
   static Destroyer destroyCXXObject;
@@ -2182,11 +2178,8 @@ public:
                   const Decl *TargetDecl = nullptr,
                   llvm::Instruction **callOrInvoke = nullptr);
 
-  RValue EmitCall(QualType FnType, llvm::Value *Callee,
-                  SourceLocation CallLoc,
+  RValue EmitCall(QualType FnType, llvm::Value *Callee, const CallExpr *E,
                   ReturnValueSlot ReturnValue,
-                  CallExpr::const_arg_iterator ArgBeg,
-                  CallExpr::const_arg_iterator ArgEnd,
                   const Decl *TargetDecl = nullptr);
   RValue EmitCallExpr(const CallExpr *E,
                       ReturnValueSlot ReturnValue = ReturnValueSlot());

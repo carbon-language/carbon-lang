@@ -86,9 +86,8 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   if (MD->isStatic()) {
     // The method is static, emit it as we would a regular call.
     llvm::Value *Callee = CGM.GetAddrOfFunction(MD);
-    return EmitCall(getContext().getPointerType(MD->getType()), Callee,
-                    CE->getLocStart(), ReturnValue, CE->arg_begin(),
-                    CE->arg_end());
+    return EmitCall(getContext().getPointerType(MD->getType()), Callee, CE,
+                    ReturnValue);
   }
 
   // Compute the object pointer.
@@ -392,8 +391,7 @@ CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
   
   if (const ConstantArrayType *arrayType 
         = getContext().getAsConstantArrayType(E->getType())) {
-    EmitCXXAggrConstructorCall(CD, arrayType, Dest.getAddr(), 
-                               E->arg_begin(), E->arg_end());
+    EmitCXXAggrConstructorCall(CD, arrayType, Dest.getAddr(), E);
   } else {
     CXXCtorType Type = Ctor_Complete;
     bool ForVirtualBase = false;
@@ -420,7 +418,7 @@ CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
     
     // Call the constructor.
     EmitCXXConstructorCall(CD, Type, ForVirtualBase, Delegating, Dest.getAddr(),
-                           E->arg_begin(), E->arg_end());
+                           E);
   }
 }
 
@@ -895,8 +893,7 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
       NumElements = Builder.CreateSub(
           NumElements,
           llvm::ConstantInt::get(NumElements->getType(), InitListElements));
-    EmitCXXAggrConstructorCall(Ctor, NumElements, CurPtr,
-                               CCE->arg_begin(), CCE->arg_end(),
+    EmitCXXAggrConstructorCall(Ctor, NumElements, CurPtr, CCE,
                                CCE->requiresZeroInitialization());
     return;
   }

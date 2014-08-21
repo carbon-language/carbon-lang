@@ -166,8 +166,8 @@ static Value *EmitFAbs(CodeGenFunction &CGF, Value *V, QualType ValTy) {
 
 static RValue emitLibraryCall(CodeGenFunction &CGF, const FunctionDecl *Fn,
                               const CallExpr *E, llvm::Value *calleeValue) {
-  return CGF.EmitCall(E->getCallee()->getType(), calleeValue, E->getLocStart(),
-                      ReturnValueSlot(), E->arg_begin(), E->arg_end(), Fn);
+  return CGF.EmitCall(E->getCallee()->getType(), calleeValue, E,
+                      ReturnValueSlot(), Fn);
 }
 
 /// \brief Emit a call to llvm.{sadd,uadd,ssub,usub,smul,umul}.with.overflow.*

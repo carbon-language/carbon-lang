@@ -3078,8 +3078,8 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
   }
 
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
-  return EmitCall(E->getCallee()->getType(), Callee, E->getLocStart(),
-                  ReturnValue, E->arg_begin(), E->arg_end(), TargetDecl);
+  return EmitCall(E->getCallee()->getType(), Callee, E, ReturnValue,
+                  TargetDecl);
 }
 
 LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
@@ -3250,10 +3250,7 @@ LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
 }
 
 RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
-                                 SourceLocation CallLoc,
-                                 ReturnValueSlot ReturnValue,
-                                 CallExpr::const_arg_iterator ArgBeg,
-                                 CallExpr::const_arg_iterator ArgEnd,
+                                 const CallExpr *E, ReturnValueSlot ReturnValue,
                                  const Decl *TargetDecl) {
   // Get the actual function type. The callee type will always be a pointer to
   // function type or a block pointer type.
@@ -3307,7 +3304,7 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
       llvm::Value *CalleeRTTIMatch =
           Builder.CreateICmpEQ(CalleeRTTI, FTRTTIConst);
       llvm::Constant *StaticData[] = {
-        EmitCheckSourceLocation(CallLoc),
+        EmitCheckSourceLocation(E->getLocStart()),
         EmitCheckTypeDescriptor(CalleeType)
       };
       EmitCheck(CalleeRTTIMatch,
@@ -3322,8 +3319,8 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
   }
 
   CallArgList Args;
-  EmitCallArgs(Args, dyn_cast<FunctionProtoType>(FnType), ArgBeg, ArgEnd,
-               ForceColumnInfo);
+  EmitCallArgs(Args, dyn_cast<FunctionProtoType>(FnType), E->arg_begin(),
+               E->arg_end(), ForceColumnInfo);
 
   const CGFunctionInfo &FnInfo =
     CGM.getTypes().arrangeFreeFunctionCall(Args, FnType);
