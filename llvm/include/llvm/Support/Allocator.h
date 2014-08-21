@@ -90,7 +90,10 @@ class MallocAllocator : public AllocatorBase<MallocAllocator> {
 public:
   void Reset() {}
 
-  void *Allocate(size_t Size, size_t /*Alignment*/) { return malloc(Size); }
+  LLVM_ATTRIBUTE_RETURNS_NONNULL void *Allocate(size_t Size,
+                                                size_t /*Alignment*/) {
+    return malloc(Size);
+  }
 
   // Pull in base class overloads.
   using AllocatorBase<MallocAllocator>::Allocate;
@@ -200,7 +203,7 @@ public:
   }
 
   /// \brief Allocate space at the specified alignment.
-  void *Allocate(size_t Size, size_t Alignment) {
+  LLVM_ATTRIBUTE_RETURNS_NONNULL void *Allocate(size_t Size, size_t Alignment) {
     assert(Alignment > 0 && "0-byte alignnment is not allowed. Use 1 instead.");
 
     // Keep track of how many bytes we've allocated.
