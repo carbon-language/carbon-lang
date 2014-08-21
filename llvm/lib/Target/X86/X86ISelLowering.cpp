@@ -15455,6 +15455,14 @@ static void InitIntinsicsMap() {
                                 IntrinsicData(ADX,    X86ISD::ADC, 0)));
   IntrMap.insert(std::make_pair(Intrinsic::x86_addcarryx_u64,
                                 IntrinsicData(ADX,    X86ISD::ADC, 0)));
+  IntrMap.insert(std::make_pair(Intrinsic::x86_addcarry_u32,
+                                IntrinsicData(ADX,    X86ISD::ADC, 0)));
+  IntrMap.insert(std::make_pair(Intrinsic::x86_addcarry_u64,
+                                IntrinsicData(ADX,    X86ISD::ADC, 0)));
+  IntrMap.insert(std::make_pair(Intrinsic::x86_subborrow_u32,
+                                IntrinsicData(ADX,    X86ISD::SBB, 0)));
+  IntrMap.insert(std::make_pair(Intrinsic::x86_subborrow_u64,
+                                IntrinsicData(ADX,    X86ISD::SBB, 0)));
   Initialized = true;
 }
 
@@ -15547,7 +15555,7 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
     return DAG.getNode(ISD::MERGE_VALUES, dl, Op->getVTList(),
                        Ret, SDValue(InTrans.getNode(), 1));
   }
-  // ADC/ADCX
+  // ADC/ADCX/SBB
   case ADX: {
     SmallVector<SDValue, 2> Results;
     SDVTList CFVTs = DAG.getVTList(Op->getValueType(0), MVT::Other);
