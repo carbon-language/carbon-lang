@@ -846,7 +846,6 @@ const SCEV *WidenIV::GetSCEVByOpCode(const SCEV *LHS, const SCEV *RHS,
     return SE->getMulExpr(LHS, RHS);
 
   llvm_unreachable("Unsupported opcode.");
-  return nullptr;
 }
 
 /// No-wrap operations can transfer sign extension of their result to their
