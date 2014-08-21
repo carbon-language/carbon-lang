@@ -68,6 +68,23 @@ public:
   bool getExtractSubregLikeInputs(const MachineInstr &MI, unsigned DefIdx,
                                   RegSubRegPairAndIdx &InputReg) const override;
 
+  /// Build the equivalent inputs of a INSERT_SUBREG for the given \p MI
+  /// and \p DefIdx.
+  /// \p [out] BaseReg and \p [out] InsertedReg contain
+  /// the equivalent inputs of INSERT_SUBREG.
+  /// E.g., INSERT_SUBREG vreg0:sub0, vreg1:sub1, sub3 would produce:
+  /// - BaseReg: vreg0:sub0
+  /// - InsertedReg: vreg1:sub1, sub3
+  ///
+  /// \returns true if it is possible to build such an input sequence
+  /// with the pair \p MI, \p DefIdx. False otherwise.
+  ///
+  /// \pre MI.isInsertSubregLike().
+  bool
+  getInsertSubregLikeInputs(const MachineInstr &MI, unsigned DefIdx,
+                            RegSubRegPair &BaseReg,
+                            RegSubRegPairAndIdx &InsertedReg) const override;
+
 private:
   void expandLoadStackGuard(MachineBasicBlock::iterator MI,
                             Reloc::Model RM) const override;
