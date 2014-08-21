@@ -10,6 +10,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Host/linux/HostInfoLinux.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/utsname.h>

@@ -47,7 +47,7 @@ HostInfoPosix::GetHostname(std::string &s)
     return false;
 }
 
-bool
+const char *
 HostInfoPosix::LookupUserName(uint32_t uid, std::string &user_name)
 {
     struct passwd user_info;
@@ -66,7 +66,7 @@ HostInfoPosix::LookupUserName(uint32_t uid, std::string &user_name)
     return NULL;
 }
 
-bool
+const char *
 HostInfoPosix::LookupGroupName(uint32_t gid, std::string &group_name)
 {
     char group_buffer[PATH_MAX];
