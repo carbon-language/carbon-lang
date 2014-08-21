@@ -1843,9 +1843,7 @@ X86TargetLowering::findRepresentativeClass(MVT VT) const{
   default:
     return TargetLowering::findRepresentativeClass(VT);
   case MVT::i8: case MVT::i16: case MVT::i32: case MVT::i64:
-    RRC = Subtarget->is64Bit() ?
-      (const TargetRegisterClass*)&X86::GR64RegClass :
-      (const TargetRegisterClass*)&X86::GR32RegClass;
+    RRC = Subtarget->is64Bit() ? &X86::GR64RegClass : &X86::GR32RegClass;
     break;
   case MVT::x86mmx:
     RRC = &X86::VR64RegClass;
@@ -10669,12 +10667,12 @@ static SDValue LowerINSERT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG) {
   if ((EltVT.getSizeInBits() == 8 || EltVT.getSizeInBits() == 16) &&
       isa<ConstantSDNode>(N2)) {
     unsigned Opc;
-    if (VT == MVT::v8i16)
+    if (VT == MVT::v8i16) {
       Opc = X86ISD::PINSRW;
-    else if (VT == MVT::v16i8)
+    } else {
+      assert(VT == MVT::v16i8);
       Opc = X86ISD::PINSRB;
-    else
-      Opc = X86ISD::PINSRB;
+    }
 
     // Transform it so it match pinsr{b,w} which expects a GR32 as its second
     // argument.
