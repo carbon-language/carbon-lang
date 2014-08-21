@@ -428,15 +428,8 @@ DiagnosticIDs::getDiagnosticSeverity(unsigned DiagID, SourceLocation Loc,
 
   // Upgrade ignored diagnostics if -Weverything is enabled.
   if (Diag.EnableAllWarnings && Result == diag::Severity::Ignored &&
-      !Mapping.isUser())
+      !Mapping.isUser() && getBuiltinDiagClass(DiagID) != CLASS_REMARK)
     Result = diag::Severity::Warning;
-
-  // Diagnostics of class REMARK are either printed as remarks or in case they
-  // have been added to -Werror they are printed as errors.
-  // FIXME: Disregarding user-requested remark mappings like this is bogus.
-  if (Result == diag::Severity::Warning &&
-      getBuiltinDiagClass(DiagID) == CLASS_REMARK)
-    Result = diag::Severity::Remark;
 
   // Ignore -pedantic diagnostics inside __extension__ blocks.
   // (The diagnostics controlled by -pedantic are the extension diagnostics
