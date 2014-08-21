@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=arm64-apple-ios7.0                             < %s | FileCheck %s
-; RUN: llc -mtriple=arm64-apple-ios7.0 -fast-isel -fast-isel-abort < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-apple-darwin                             -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel -fast-isel-abort -verify-machineinstrs < %s | FileCheck %s
 
 define i8* @test_frameaddress0() nounwind {
 entry:

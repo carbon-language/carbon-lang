@@ -1,10 +1,10 @@
-; RUN: llc < %s -O0 -fast-isel-abort -mtriple=arm64-apple-darwin | FileCheck %s
+; RUN: llc -O0 -fast-isel-abort -verify-machineinstrs -mtriple=arm64-apple-darwin < %s | FileCheck %s
 
 @fn.table = internal global [2 x i8*] [i8* blockaddress(@fn, %ZERO), i8* blockaddress(@fn, %ONE)], align 8
 
 define i32 @fn(i32 %target) nounwind {
 entry:
-; CHECK: @fn
+; CHECK-LABEL: fn
   %retval = alloca i32, align 4
   %target.addr = alloca i32, align 4
   store i32 %target, i32* %target.addr, align 4
@@ -29,8 +29,8 @@ return:                                           ; preds = %ONE, %ZERO
   ret i32 %2
 
 indirectgoto:                                     ; preds = %entry
-; CHECK: ldr x0, [sp]
-; CHECK: br x0
+; CHECK:      ldr [[REG:x[0-9]+]], [sp]
+; CHECK-NEXT: br [[REG]]
   %indirect.goto.dest = phi i8* [ %1, %entry ]
   indirectbr i8* %indirect.goto.dest, [label %ZERO, label %ONE]
 }

@@ -1,4 +1,4 @@
-; RUN: llc < %s -O0 -march=arm64 -aarch64-neon-syntax=apple | FileCheck %s
+; RUN: llc -O0 -march=arm64 -aarch64-neon-syntax=apple -verify-machineinstrs < %s | FileCheck %s
 
 ; The following 2 test cases test shufflevector with beginning UNDEF mask.
 define <8 x i16> @test_vext_undef_traverse(<8 x i16> %in) {

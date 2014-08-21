@@ -1,4 +1,4 @@
-; RUN: llc < %s -O0 -fast-isel-abort -mtriple=arm64-apple-darwin | FileCheck %s
+; RUN: llc -O0 -fast-isel-abort -mtriple=arm64-apple-darwin -verify-machineinstrs < %s | FileCheck %s
 
 define i32 @t1(i32 %c) nounwind readnone {
 entry:

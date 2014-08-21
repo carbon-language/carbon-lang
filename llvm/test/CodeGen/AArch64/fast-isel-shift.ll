@@ -1,4 +1,4 @@
-; RUN: llc -fast-isel -fast-isel-abort -mtriple=arm64-apple-darwin < %s | FileCheck %s
+; RUN: llc -fast-isel -fast-isel-abort -mtriple=arm64-apple-darwin -verify-machineinstrs < %s | FileCheck %s
 
 ; CHECK-LABEL: lsl_i8
 ; CHECK: ubfiz {{w[0-9]*}}, {{w[0-9]*}}, #4, #4

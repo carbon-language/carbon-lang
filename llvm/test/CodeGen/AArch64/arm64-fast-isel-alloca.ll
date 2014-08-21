@@ -1,5 +1,5 @@
 ; This test should cause the TargetMaterializeAlloca to be invoked
-; RUN: llc < %s -O0 -fast-isel-abort -mtriple=arm64-apple-darwin | FileCheck %s
+; RUN: llc -O0 -fast-isel-abort -verify-machineinstrs -mtriple=arm64-apple-darwin < %s | FileCheck %s
 
 %struct.S1Ty = type { i64 }
 %struct.S2Ty = type { %struct.S1Ty, %struct.S1Ty }

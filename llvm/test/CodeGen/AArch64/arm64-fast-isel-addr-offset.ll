@@ -1,4 +1,4 @@
-; RUN: llc < %s -O0 -fast-isel-abort -mtriple=arm64-apple-darwin | FileCheck %s
+; RUN: llc -O0 -fast-isel-abort -verify-machineinstrs -mtriple=arm64-apple-darwin < %s | FileCheck %s
 
 @sortlist = common global [5001 x i32] zeroinitializer, align 16
 @sortlist2 = common global [5001 x i64] zeroinitializer, align 16
