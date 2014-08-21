@@ -33,6 +33,10 @@ E: mclow.lists@gmail.com
 E: marshall@idio.com
 D: C++14 support, patches and bug fixes.
 
+N: Eric Fiselier
+E: eric@efcs.ca
+D: LFTS support, patches and bug fixes.
+
 N: Bill Fisher
 E: william.w.fisher@gmail.com
 D: Regex bug fixes.
