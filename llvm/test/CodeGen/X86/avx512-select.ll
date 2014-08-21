@@ -39,3 +39,12 @@ define double @select03(double %a, double %b, double %c, double %eps) {
   %cond = select i1 %cmp, double %c, double %b
   ret double %cond
 }
+
+; CHECK-LABEL: @select04
+; CHECK: vmovaps %zmm3, %zmm1
+; CHECK-NEXT: ret
+; PR20677
+define <16 x double> @select04(<16 x double> %a, <16 x double> %b) {
+  %sel = select <16 x i1> <i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false>, <16 x double> %a, <16 x double> %b
+  ret <16 x double> %sel
+}

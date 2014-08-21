@@ -4689,11 +4689,16 @@ static SDValue ConvertSelectToConcatVector(SDNode *N, SelectionDAG &DAG) {
   SDValue Cond = N->getOperand(0);
   SDValue LHS = N->getOperand(1);
   SDValue RHS = N->getOperand(2);
-  MVT VT = N->getSimpleValueType(0);
+  EVT VT = N->getValueType(0);
   int NumElems = VT.getVectorNumElements();
   assert(LHS.getOpcode() == ISD::CONCAT_VECTORS &&
          RHS.getOpcode() == ISD::CONCAT_VECTORS &&
          Cond.getOpcode() == ISD::BUILD_VECTOR);
+
+  // CONCAT_VECTOR can take an arbitrary number of arguments. We only care about
+  // binary ones here.
+  if (LHS->getNumOperands() != 2 || RHS->getNumOperands() != 2)
+    return SDValue();
 
   // We're sure we have an even number of elements due to the
   // concat_vectors we have as arguments to vselect.

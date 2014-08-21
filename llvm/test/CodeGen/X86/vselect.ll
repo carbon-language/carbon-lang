@@ -276,3 +276,12 @@ define <4 x float> @select_of_shuffles_0(<2 x float> %a0, <2 x float> %b0, <2 x 
   %7 = fsub <4 x float> %3, %6
   ret <4 x float> %7
 }
+
+; CHECK-LABEL: @select_illegal
+; CHECK: mov
+; CHECK: ret
+; PR20677
+define <16 x double> @select_illegal(<16 x double> %a, <16 x double> %b) {
+  %sel = select <16 x i1> <i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false>, <16 x double> %a, <16 x double> %b
+  ret <16 x double> %sel
+}
