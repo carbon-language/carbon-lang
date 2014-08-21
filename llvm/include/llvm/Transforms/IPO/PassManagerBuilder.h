@@ -18,16 +18,16 @@
 #include <vector>
 
 namespace llvm {
-class TargetLibraryInfo;
 class Pass;
+class TargetLibraryInfo;
 
 // The old pass manager infrastructure is hidden in a legacy namespace now.
 namespace legacy {
-class PassManagerBase;
 class FunctionPassManager;
+class PassManagerBase;
 }
-using legacy::PassManagerBase;
 using legacy::FunctionPassManager;
+using legacy::PassManagerBase;
 
 /// PassManagerBuilder - This class is used to set up a standard optimization
 /// sequence for languages like C and C++, allowing some APIs to customize the
