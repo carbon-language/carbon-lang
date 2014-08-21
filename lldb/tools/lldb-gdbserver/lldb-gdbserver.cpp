@@ -32,6 +32,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Host/Socket.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -152,6 +153,7 @@ dump_available_platforms (FILE *output_file)
 static void
 initialize_lldb_gdbserver ()
 {
+    HostInfo::Initialize ();
     PluginManager::Initialize ();
     Debugger::Initialize (NULL);
 }
@@ -159,7 +161,7 @@ initialize_lldb_gdbserver ()
 static void
 terminate_lldb_gdbserver ()
 {
-    Debugger::Terminate();
+    Debugger::Terminate ();
     PluginManager::Terminate ();
 }
 
