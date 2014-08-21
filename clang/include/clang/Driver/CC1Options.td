@@ -574,6 +574,8 @@ def cl_mad_enable : Flag<["-"], "cl-mad-enable">,
   HelpText<"OpenCL only. Enable less precise MAD instructions to be generated.">;
 def cl_std_EQ : Joined<["-"], "cl-std=">,
   HelpText<"OpenCL language standard to compile for">;
+def cl_denorms_are_zero : Flag<["-"], "cl-denorms-are-zero">,
+  HelpText<"OpenCL only. Allow denormals to be flushed to zero">;
 
 //===----------------------------------------------------------------------===//
 // CUDA Options
