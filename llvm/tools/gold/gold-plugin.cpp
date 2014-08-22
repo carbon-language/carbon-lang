@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h" // plugin-api.h requires HAVE_STDINT_H
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/Analysis.h"
@@ -34,6 +35,7 @@
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
 #include <list>
 #include <plugin-api.h>
 #include <system_error>
@@ -255,6 +257,12 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
   return LDPS_OK;
 }
 
+static const GlobalObject *getBaseObject(const GlobalValue &GV) {
+  if (auto *GA = dyn_cast<GlobalAlias>(&GV))
+    return GA->getBaseObject();
+  return cast<GlobalObject>(&GV);
+}
+
 /// Called by gold to see whether this file is one that our plugin can handle.
 /// We'll try to open it and register all the symbols with add_symbol if
 /// possible.
@@ -362,8 +370,16 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
 
     sym.size = 0;
     sym.comdat_key = nullptr;
-    if (GV && (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()))
-      sym.comdat_key = sym.name;
+    if (GV) {
+      const GlobalObject *Base = getBaseObject(*GV);
+      if (!Base)
+        message(LDPL_FATAL, "Unable to determine comdat of alias!");
+      const Comdat *C = Base->getComdat();
+      if (C)
+        sym.comdat_key = strdup(C->getName().str().c_str());
+      else if (Base->hasWeakLinkage() || Base->hasLinkOnceLinkage())
+        sym.comdat_key = strdup(sym.name);
+    }
 
     sym.resolution = LDPR_UNKNOWN;
   }
@@ -378,8 +394,12 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   return LDPS_OK;
 }
 
-static void keepGlobalValue(GlobalValue &GV) {
+static void keepGlobalValue(GlobalValue &GV,
+                            std::vector<GlobalAlias *> &KeptAliases) {
   assert(!GV.hasLocalLinkage());
+
+  if (auto *GA = dyn_cast<GlobalAlias>(&GV))
+    KeptAliases.push_back(GA);
 
   switch (GV.getLinkage()) {
   default:
@@ -415,12 +435,15 @@ static void internalize(GlobalValue &GV) {
 static void drop(GlobalValue &GV) {
   if (auto *F = dyn_cast<Function>(&GV)) {
     F->deleteBody();
+    F->setComdat(nullptr); // Should deleteBody do this?
     return;
   }
 
   if (auto *Var = dyn_cast<GlobalVariable>(&GV)) {
     Var->setInitializer(nullptr);
-    Var->setLinkage(GlobalValue::ExternalLinkage);
+    Var->setLinkage(
+        GlobalValue::ExternalLinkage); // Should setInitializer do this?
+    Var->setComdat(nullptr); // and this?
     return;
   }
 
@@ -460,6 +483,55 @@ static const char *getResolutionName(ld_plugin_symbol_resolution R) {
   }
 }
 
+static GlobalObject *makeInternalReplacement(GlobalObject *GO) {
+  Module *M = GO->getParent();
+  GlobalObject *Ret;
+  if (auto *F = dyn_cast<Function>(GO)) {
+    auto *NewF = Function::Create(
+        F->getFunctionType(), GlobalValue::InternalLinkage, F->getName(), M);
+    NewF->getBasicBlockList().splice(NewF->end(), F->getBasicBlockList());
+    Ret = NewF;
+    F->deleteBody();
+  } else {
+    auto *Var = cast<GlobalVariable>(GO);
+    Ret = new GlobalVariable(
+        *M, Var->getType()->getElementType(), Var->isConstant(),
+        GlobalValue::InternalLinkage, Var->getInitializer(), Var->getName(),
+        nullptr, Var->getThreadLocalMode(), Var->getType()->getAddressSpace(),
+        Var->isExternallyInitialized());
+    Var->setInitializer(nullptr);
+  }
+  Ret->copyAttributesFrom(GO);
+  Ret->setComdat(GO->getComdat());
+
+  return Ret;
+}
+
+namespace {
+class LocalValueMaterializer : public ValueMaterializer {
+  DenseSet<GlobalValue *> &Dropped;
+
+public:
+  LocalValueMaterializer(DenseSet<GlobalValue *> &Dropped) : Dropped(Dropped) {}
+  Value *materializeValueFor(Value *V) override;
+};
+}
+
+Value *LocalValueMaterializer::materializeValueFor(Value *V) {
+  auto *GV = dyn_cast<GlobalValue>(V);
+  if (!GV)
+    return nullptr;
+  if (!Dropped.count(GV))
+    return nullptr;
+  assert(!isa<GlobalAlias>(GV) && "Found alias point to weak alias.");
+  return makeInternalReplacement(cast<GlobalObject>(GV));
+}
+
+static Constant *mapConstantToLocalCopy(Constant *C, ValueToValueMapTy &VM,
+                                        LocalValueMaterializer *Materializer) {
+  return MapValue(C, VM, RF_IgnoreMissingEntries, nullptr, Materializer);
+}
+
 static std::unique_ptr<Module>
 getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
                  StringSet<> &Internalize, StringSet<> &Maybe) {
@@ -492,7 +564,8 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
   SmallPtrSet<GlobalValue *, 8> Used;
   collectUsedGlobalVariables(*M, Used, /*CompilerUsed*/ false);
 
-  std::vector<GlobalValue *> Drop;
+  DenseSet<GlobalValue *> Drop;
+  std::vector<GlobalAlias *> KeptAliases;
   for (ld_plugin_symbol &Sym : F.syms) {
     ld_plugin_symbol_resolution Resolution =
         (ld_plugin_symbol_resolution)Sym.resolution;
@@ -516,23 +589,23 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
       break;
 
     case LDPR_PREVAILING_DEF_IRONLY: {
+      keepGlobalValue(*GV, KeptAliases);
       if (!Used.count(GV)) {
         // Since we use the regular lib/Linker, we cannot just internalize GV
         // now or it will not be copied to the merged module. Instead we force
         // it to be copied and then internalize it.
-        keepGlobalValue(*GV);
         Internalize.insert(Sym.name);
       }
       break;
     }
 
     case LDPR_PREVAILING_DEF:
-      keepGlobalValue(*GV);
+      keepGlobalValue(*GV, KeptAliases);
       break;
 
     case LDPR_PREEMPTED_REG:
     case LDPR_PREEMPTED_IR:
-      Drop.push_back(GV);
+      Drop.insert(GV);
       break;
 
     case LDPR_PREVAILING_DEF_IRONLY_EXP: {
@@ -542,24 +615,36 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
       // copy will be LDPR_PREEMPTED_IR.
       if (GV->hasLinkOnceODRLinkage())
         Maybe.insert(Sym.name);
-      keepGlobalValue(*GV);
+      keepGlobalValue(*GV, KeptAliases);
       break;
     }
     }
 
     free(Sym.name);
+    free(Sym.comdat_key);
     Sym.name = nullptr;
     Sym.comdat_key = nullptr;
   }
 
-  if (!Drop.empty()) {
+  if (!Drop.empty())
     // This is horrible. Given how lazy loading is implemented, dropping
     // the body while there is a materializer present doesn't work, the
     // linker will just read the body back.
     M->materializeAllPermanently();
-    for (auto *GV : Drop)
-      drop(*GV);
+
+  ValueToValueMapTy VM;
+  LocalValueMaterializer Materializer(Drop);
+  for (GlobalAlias *GA : KeptAliases) {
+    // Gold told us to keep GA. It is possible that a GV usied in the aliasee
+    // expression is being dropped. If that is the case, that GV must be copied.
+    Constant *Aliasee = GA->getAliasee();
+    Constant *Replacement = mapConstantToLocalCopy(Aliasee, VM, &Materializer);
+    if (Aliasee != Replacement)
+      GA->setAliasee(Replacement);
   }
+
+  for (auto *GV : Drop)
+    drop(*GV);
 
   return M;
 }
