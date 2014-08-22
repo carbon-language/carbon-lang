@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -g -emit-llvm %s -o -| FileCheck %s
+// RUN: %clang_cc1 -g -std=c++11 -emit-llvm %s -o -| FileCheck %s
 //
 // Two variables with the same name in subsequent if staments need to be in separate scopes.
 //
@@ -43,5 +43,13 @@ void func() {
   // CHECK: = metadata !{i32 786688, metadata [[FOR_COMPOUND:![0-9]*]], {{.*}} ; [ DW_TAG_auto_variable ] [b] [line [[@LINE+2]]]
   // CHECK: [[FOR_COMPOUND]] = metadata !{i32 {{.*}}, metadata [[FOR_BODY]], i32 [[@LINE-6]], {{.*}}} ; [ DW_TAG_lexical_block ]
     bool b = i % 2;
+  }
+
+  int x[] = {1, 2};
+  // CHECK: = metadata !{i32 786688, metadata [[RANGE_FOR:![0-9]*]], {{.*}} ; [ DW_TAG_auto_variable ] [__range] [line 0]
+  // CHECK: [[RANGE_FOR]] = metadata !{i32 {{.*}}, metadata !{{.*}}, i32 [[@LINE+1]], {{.*}}} ; [ DW_TAG_lexical_block ]
+  for (int i : x) {
+  // CHECK: = metadata !{i32 786688, metadata [[RANGE_FOR_BODY:![0-9]*]], {{.*}} ; [ DW_TAG_auto_variable ] [i] [line [[@LINE-1]]]
+  // CHECK: [[RANGE_FOR_BODY]] = metadata !{i32 {{.*}}, metadata [[RANGE_FOR]], i32 [[@LINE-2]], {{.*}}} ; [ DW_TAG_lexical_block ]
   }
 }
