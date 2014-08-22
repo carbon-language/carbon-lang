@@ -96,6 +96,7 @@ static size_t RoundUpToInstrBoundary(size_t size, char *code) {
       case 0x458B:  // 8B 45 XX = mov eax, dword ptr [ebp+XXh]
       case 0x5D8B:  // 8B 5D XX = mov ebx, dword ptr [ebp+XXh]
       case 0xEC83:  // 83 EC XX = sub esp, XX
+      case 0x75FF:  // FF 75 XX = push dword ptr [ebp+XXh]
         cursor += 3;
         continue;
       case 0xC1F7:  // F7 C1 XX YY ZZ WW = test ecx, WWZZYYXX

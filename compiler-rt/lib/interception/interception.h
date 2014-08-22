@@ -122,15 +122,9 @@ const interpose_substitution substitution_##func_name[] \
 # define DECLARE_WRAPPER(ret_type, func, ...)
 
 #elif defined(_WIN32)
-# if defined(_DLL)  // DLL CRT
-#  define WRAP(x) x
-#  define WRAPPER_NAME(x) #x
-#  define INTERCEPTOR_ATTRIBUTE
-# else  // Static CRT
-#  define WRAP(x) __asan_wrap_##x
-#  define WRAPPER_NAME(x) "__asan_wrap_"#x
-#  define INTERCEPTOR_ATTRIBUTE __declspec(dllexport)
-# endif
+# define WRAP(x) __asan_wrap_##x
+# define WRAPPER_NAME(x) "__asan_wrap_"#x
+# define INTERCEPTOR_ATTRIBUTE __declspec(dllexport)
 # define DECLARE_WRAPPER(ret_type, func, ...) \
     extern "C" ret_type func(__VA_ARGS__);
 # define DECLARE_WRAPPER_WINAPI(ret_type, func, ...) \

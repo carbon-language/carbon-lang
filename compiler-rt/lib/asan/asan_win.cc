@@ -71,7 +71,7 @@ void *AsanDoesNotSupportStaticLinkage() {
   return 0;
 }
 
-void AsanCheckDynamicRTPrereqs() { UNIMPLEMENTED(); }
+void AsanCheckDynamicRTPrereqs() {}
 
 void AsanCheckIncompatibleRT() {}
 

@@ -309,6 +309,10 @@ INTERCEPTOR(int, _except_handler3, void *a, void *b, void *c, void *d) {
   return REAL(_except_handler3)(a, b, c, d);
 }
 
+#if ASAN_DYNAMIC
+// This handler is named differently in -MT and -MD CRTs.
+#define _except_handler4 _except_handler4_common
+#endif
 INTERCEPTOR(int, _except_handler4, void *a, void *b, void *c, void *d) {
   CHECK(REAL(_except_handler4));
   __asan_handle_no_return();
