@@ -299,11 +299,7 @@ set_target_properties(liblldb
 endif()
 
 if (LLDB_WRAP_PYTHON OR LLDB_VERS_GENERATED_FILE)
-  add_dependencies(liblldb
-    swig_wrapper
-    ${LLDB_WRAP_PYTHON}
-    ${LLDB_VERS_GENERATED_FILE}
-    )
+  add_dependencies(liblldb swig_wrapper)
 endif()
 target_link_libraries(liblldb ${cmake_2_8_12_PRIVATE} ${LLDB_SYSTEM_LIBS})
 
