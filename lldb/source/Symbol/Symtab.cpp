@@ -78,6 +78,13 @@ Symtab::GetNumSymbols() const
 }
 
 void
+Symtab::SectionFileAddressesChanged ()
+{
+    m_name_to_index.Clear();
+    m_file_addr_to_index_computed = false;
+}
+
+void
 Symtab::Dump (Stream *s, Target *target, SortOrder sort_order)
 {
     Mutex::Locker locker (m_mutex);

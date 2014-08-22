@@ -1327,6 +1327,17 @@ Module::GetSectionList()
     return m_sections_ap.get();
 }
 
+void
+Module::SectionFileAddressesChanged ()
+{
+    ObjectFile *obj_file = GetObjectFile ();
+    if (obj_file)
+        obj_file->SectionFileAddressesChanged ();
+    SymbolVendor* sym_vendor = GetSymbolVendor();
+    if (sym_vendor)
+        sym_vendor->SectionFileAddressesChanged ();
+}
+
 SectionList *
 Module::GetUnifiedSectionList()
 {

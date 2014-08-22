@@ -374,6 +374,16 @@ public:
     virtual void
     CreateSections (SectionList &unified_section_list) = 0;
 
+
+    //------------------------------------------------------------------
+    /// Notify the ObjectFile that the file addresses in the Sections
+    /// for this module have been changed.
+    //------------------------------------------------------------------
+    virtual void
+    SectionFileAddressesChanged ()
+    {
+    }
+
     //------------------------------------------------------------------
     /// Gets the symbol table for the currently selected architecture
     /// (and object for archives).

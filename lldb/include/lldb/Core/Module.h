@@ -704,6 +704,18 @@ public:
     virtual SectionList *
     GetSectionList ();
 
+    //------------------------------------------------------------------
+    /// Notify the module that the file addresses for the Sections have
+    /// been updated.
+    ///
+    /// If the Section file addresses for a module are updated, this
+    /// method should be called.  Any parts of the module, object file,
+    /// or symbol file that has cached those file addresses must invalidate
+    /// or update its cache.
+    //------------------------------------------------------------------
+    virtual void
+    SectionFileAddressesChanged ();
+
     uint32_t
     GetVersion (uint32_t *versions, uint32_t num_versions);
 

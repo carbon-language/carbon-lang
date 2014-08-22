@@ -152,6 +152,16 @@ public:
 
     ObjectFile*             GetObjectFile() { return m_obj_file; }
     const ObjectFile*       GetObjectFile() const { return m_obj_file; }
+
+    //------------------------------------------------------------------
+    /// Notify the SymbolFile that the file addresses in the Sections
+    /// for this module have been changed.
+    //------------------------------------------------------------------
+    virtual void
+    SectionFileAddressesChanged () 
+    { 
+    }
+
     
 protected:
     ObjectFile*             m_obj_file; // The object file that symbols can be extracted from.

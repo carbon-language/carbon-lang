@@ -173,6 +173,13 @@ public:
     ClearSymtab ();
 
     //------------------------------------------------------------------
+    /// Notify the SymbolVendor that the file addresses in the Sections
+    /// for this module have been changed.
+    //------------------------------------------------------------------
+    virtual void
+    SectionFileAddressesChanged ();
+
+    //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
     virtual ConstString

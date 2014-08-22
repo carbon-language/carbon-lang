@@ -1249,6 +1249,8 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
             offset = load_cmd_offset + encryption_cmd.cmdsize;
         }
 
+        bool section_file_addresses_changed = false;
+
         offset = MachHeaderSizeFromMagic(m_header.magic);
 
         struct segment_command_64 load_cmd;
@@ -1377,6 +1379,10 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                                     // where this code path will be taken will not have eh_frame sections.
 
                                     unified_section_sp->SetFileAddress(load_cmd.vmaddr);
+
+                                    // Notify the module that the section addresses have been changed once
+                                    // we're done so any file-address caches can be updated.
+                                    section_file_addresses_changed = true;
                                 }
                             }
                             m_sections_ap->AddSection(unified_section_sp);
@@ -1668,6 +1674,12 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
             }
 
             offset = load_cmd_offset + load_cmd.cmdsize;
+        }
+
+
+        if (section_file_addresses_changed && module_sp.get())
+        {
+            module_sp->SectionFileAddressesChanged();
         }
     }
 }
