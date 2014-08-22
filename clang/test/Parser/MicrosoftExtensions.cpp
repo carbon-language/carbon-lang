@@ -226,6 +226,11 @@ void interface_test() {
 }
 
 __int64 x7 = __int64(0);
+_int64 x8 = _int64(0);
+static_assert(sizeof(_int64) == 8, "");
+static_assert(sizeof(_int32) == 4, "");
+static_assert(sizeof(_int16) == 2, "");
+static_assert(sizeof(_int8) == 1, "");
 
 int __identifier(generic) = 3;
 int __identifier(int) = 4;
