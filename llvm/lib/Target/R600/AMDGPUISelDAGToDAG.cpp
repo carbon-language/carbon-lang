@@ -88,6 +88,9 @@ private:
                                        SDValue& Offset);
   bool SelectADDRVTX_READ(SDValue Addr, SDValue &Base, SDValue &Offset);
   bool SelectADDRIndirect(SDValue Addr, SDValue &Base, SDValue &Offset);
+  bool isDSOffsetLegal(const SDValue &Base, unsigned Offset,
+                       unsigned OffsetBits) const;
+  bool SelectDS1Addr1Offset(SDValue Ptr, SDValue &Base, SDValue &Offset) const;
   void SelectMUBUF(SDValue Addr, SDValue &SRsrc, SDValue &VAddr,
                    SDValue &SOffset, SDValue &Offset, SDValue &Offen,
                    SDValue &Idxen, SDValue &Addr64, SDValue &GLC, SDValue &SLC,
@@ -742,6 +745,41 @@ SDNode *AMDGPUDAGToDAGISel::SelectDIV_SCALE(SDNode *N) {
   };
 
   return CurDAG->SelectNodeTo(N, Opc, VT, MVT::i1, Ops);
+}
+
+bool AMDGPUDAGToDAGISel::isDSOffsetLegal(const SDValue &Base, unsigned Offset,
+                                         unsigned OffsetBits) const {
+  const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
+  if ((OffsetBits == 16 && !isUInt<16>(Offset)) ||
+      (OffsetBits == 8 && !isUInt<8>(Offset)))
+    return false;
+
+  if (ST.getGeneration() >= AMDGPUSubtarget::SEA_ISLANDS)
+    return true;
+
+  // On Southern Islands instruction with a negative base value and an offset
+  // don't seem to work.
+  return CurDAG->SignBitIsZero(Base);
+}
+
+bool AMDGPUDAGToDAGISel::SelectDS1Addr1Offset(SDValue Addr, SDValue &Base,
+                                              SDValue &Offset) const {
+  if (CurDAG->isBaseWithConstantOffset(Addr)) {
+    SDValue N0 = Addr.getOperand(0);
+    SDValue N1 = Addr.getOperand(1);
+    ConstantSDNode *C1 = cast<ConstantSDNode>(N1);
+    if (isDSOffsetLegal(N0, C1->getSExtValue(), 16)) {
+      // (add n0, c0)
+      Base = N0;
+      Offset = N1;
+      return true;
+    }
+  }
+
+  // default case
+  Base = Addr;
+  Offset = CurDAG->getTargetConstant(0, MVT::i16);
+  return true;
 }
 
 static SDValue wrapAddr64Rsrc(SelectionDAG *DAG, SDLoc DL, SDValue Ptr) {

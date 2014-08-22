@@ -2520,41 +2520,27 @@ def : ROTRPattern <V_ALIGNBIT_B32>;
 /**********   Load/Store Patterns   **********/
 /********** ======================= **********/
 
-multiclass DSReadPat <DS inst, ValueType vt, PatFrag frag> {
-  def : Pat <
-    (vt (frag (add i32:$ptr, (i32 IMM16bit:$offset)))),
-    (inst (i1 0), $ptr, (as_i16imm $offset))
-  >;
+class DSReadPat <DS inst, ValueType vt, PatFrag frag> : Pat <
+  (vt (frag (DS1Addr1Offset i32:$ptr, i32:$offset))),
+  (inst (i1 0), $ptr, (as_i16imm $offset))
+>;
 
-  def : Pat <
-    (frag i32:$src0),
-    (vt (inst 0, $src0, 0))
-  >;
-}
+def : DSReadPat <DS_READ_I8,  i32, sextloadi8_local>;
+def : DSReadPat <DS_READ_U8,  i32, az_extloadi8_local>;
+def : DSReadPat <DS_READ_I16, i32, sextloadi16_local>;
+def : DSReadPat <DS_READ_U16, i32, az_extloadi16_local>;
+def : DSReadPat <DS_READ_B32, i32, local_load>;
+def : DSReadPat <DS_READ_B64, v2i32, local_load>;
 
-defm : DSReadPat <DS_READ_I8,  i32, sextloadi8_local>;
-defm : DSReadPat <DS_READ_U8,  i32, az_extloadi8_local>;
-defm : DSReadPat <DS_READ_I16, i32, sextloadi16_local>;
-defm : DSReadPat <DS_READ_U16, i32, az_extloadi16_local>;
-defm : DSReadPat <DS_READ_B32, i32, local_load>;
-defm : DSReadPat <DS_READ_B64, v2i32, local_load>;
+class DSWritePat <DS inst, ValueType vt, PatFrag frag> : Pat <
+  (frag vt:$value, (DS1Addr1Offset i32:$ptr, i32:$offset)),
+  (inst (i1 0), $ptr, $value, (as_i16imm $offset))
+>;
 
-multiclass DSWritePat <DS inst, ValueType vt, PatFrag frag> {
-  def : Pat <
-    (frag vt:$value, (add i32:$ptr, (i32 IMM16bit:$offset))),
-    (inst (i1 0), $ptr, $value, (as_i16imm $offset))
-  >;
-
-  def : Pat <
-    (frag vt:$val, i32:$ptr),
-    (inst 0, $ptr, $val, 0)
-  >;
-}
-
-defm : DSWritePat <DS_WRITE_B8, i32, truncstorei8_local>;
-defm : DSWritePat <DS_WRITE_B16, i32, truncstorei16_local>;
-defm : DSWritePat <DS_WRITE_B32, i32, local_store>;
-defm : DSWritePat <DS_WRITE_B64, v2i32, local_store>;
+def : DSWritePat <DS_WRITE_B8, i32, truncstorei8_local>;
+def : DSWritePat <DS_WRITE_B16, i32, truncstorei16_local>;
+def : DSWritePat <DS_WRITE_B32, i32, local_store>;
+def : DSWritePat <DS_WRITE_B64, v2i32, local_store>;
 
 multiclass DSAtomicRetPat<DS inst, ValueType vt, PatFrag frag> {
   def : Pat <

@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK %s
-; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK %s
+; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK --check-prefix=SI %s
+; RUN: llc < %s -march=r600 -mcpu=bonaire -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK --check-prefix=CI %s
 
 @local_memory_two_objects.local_mem0 = internal unnamed_addr addrspace(3) global [4 x i32] zeroinitializer, align 4
 @local_memory_two_objects.local_mem1 = internal unnamed_addr addrspace(3) global [4 x i32] zeroinitializer, align 4
@@ -28,8 +29,10 @@
 ; constant offsets.
 ; EG-CHECK: LDS_READ_RET {{[*]*}} OQAP, {{PV|T}}[[ADDRR:[0-9]*\.[XYZW]]]
 ; EG-CHECK-NOT: LDS_READ_RET {{[*]*}} OQAP, T[[ADDRR]]
-; SI-CHECK: DS_READ_B32 {{v[0-9]+}}, [[ADDRR:v[0-9]+]], 0x10
-; SI-CHECK: DS_READ_B32 {{v[0-9]+}}, [[ADDRR]], 0x0,
+; SI: V_ADD_I32_e32 [[SIPTR:v[0-9]+]], 16, v{{[0-9]+}}
+; SI: DS_READ_B32 {{v[0-9]+}}, [[SIPTR]], 0x0
+; CI: DS_READ_B32 {{v[0-9]+}}, [[ADDRR:v[0-9]+]], 0x10
+; CI: DS_READ_B32 {{v[0-9]+}}, [[ADDRR]], 0x0,
 
 define void @local_memory_two_objects(i32 addrspace(1)* %out) {
 entry:

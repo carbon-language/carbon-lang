@@ -191,6 +191,8 @@ def tfe : Operand <i1> {
 // Complex patterns
 //===----------------------------------------------------------------------===//
 
+def DS1Addr1Offset : ComplexPattern<i32, 2, "SelectDS1Addr1Offset">;
+
 def MUBUFAddr32 : ComplexPattern<i64, 9, "SelectMUBUFAddr32">;
 def MUBUFAddr64 : ComplexPattern<i64, 3, "SelectMUBUFAddr64">;
 def MUBUFScratch : ComplexPattern<i64, 4, "SelectMUBUFScratch">;
