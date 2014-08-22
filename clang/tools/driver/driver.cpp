@@ -116,6 +116,9 @@ static void ApplyOneQAOverride(raw_ostream &OS,
     ReplPattern = ReplPattern.slice(0, ReplPattern.size()-1);
 
     for (unsigned i = 1, e = Args.size(); i != e; ++i) {
+      // Ignore end-of-line response file markers
+      if (Args[i] == nullptr)
+        continue;
       std::string Repl = llvm::Regex(MatchPattern).sub(ReplPattern, Args[i]);
 
       if (Repl != Args[i]) {
@@ -142,6 +145,9 @@ static void ApplyOneQAOverride(raw_ostream &OS,
   } else if (Edit[0] == 'O') {
     for (unsigned i = 1; i < Args.size();) {
       const char *A = Args[i];
+      // Ignore end-of-line response file markers
+      if (A == nullptr)
+        continue;
       if (A[0] == '-' && A[1] == 'O' &&
           (A[2] == '\0' ||
            (A[3] == '\0' && (A[2] == 's' || A[2] == 'z' ||
@@ -384,14 +390,33 @@ int main(int argc_, const char **argv_) {
 
   std::set<std::string> SavedStrings;
   StringSetSaver Saver(SavedStrings);
-  llvm::cl::ExpandResponseFiles(Saver, llvm::cl::TokenizeGNUCommandLine, argv);
 
-  // Handle -cc1 integrated tools.
+  // Determines whether we want nullptr markers in argv to indicate response
+  // files end-of-lines. We only use this for the /LINK driver argument.
+  bool MarkEOLs = true;
   if (argv.size() > 1 && StringRef(argv[1]).startswith("-cc1"))
+    MarkEOLs = false;
+  llvm::cl::ExpandResponseFiles(Saver, llvm::cl::TokenizeGNUCommandLine, argv,
+                                MarkEOLs);
+
+  // Handle -cc1 integrated tools, even if -cc1 was expanded from a response
+  // file.
+  auto FirstArg = std::find_if(argv.begin() + 1, argv.end(),
+                               [](const char *A) { return A != nullptr; });
+  if (FirstArg != argv.end() && StringRef(*FirstArg).startswith("-cc1")) {
+    // If -cc1 came from a response file, remove the EOL sentinels.
+    if (MarkEOLs) {
+      auto newEnd = std::remove(argv.begin(), argv.end(), nullptr);
+      argv.resize(newEnd - argv.begin());
+    }
     return ExecuteCC1Tool(argv, argv[1] + 4);
+  }
 
   bool CanonicalPrefixes = true;
   for (int i = 1, size = argv.size(); i < size; ++i) {
+    // Skip end-of-line response file markers
+    if (argv[i] == nullptr)
+      continue;
     if (StringRef(argv[i]) == "-no-canonical-prefixes") {
       CanonicalPrefixes = false;
       break;

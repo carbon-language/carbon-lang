@@ -83,6 +83,9 @@ void Driver::ParseDriverMode(ArrayRef<const char *> Args) {
     getOpts().getOption(options::OPT_driver_mode).getPrefixedName();
 
   for (size_t I = 0, E = Args.size(); I != E; ++I) {
+    // Ingore nullptrs, they are response file's EOL markers
+    if (Args[I] == nullptr)
+      continue;
     const StringRef Arg = Args[I];
     if (!Arg.startswith(OptName))
       continue;
@@ -102,7 +105,7 @@ void Driver::ParseDriverMode(ArrayRef<const char *> Args) {
   }
 }
 
-InputArgList *Driver::ParseArgStrings(ArrayRef<const char *> ArgList) {
+InputArgList *Driver::ParseArgStrings(ArrayRef<const char *> ArgStrings) {
   llvm::PrettyStackTraceString CrashInfo("Command line argument parsing");
 
   unsigned IncludedFlagsBitmask;
@@ -111,7 +114,7 @@ InputArgList *Driver::ParseArgStrings(ArrayRef<const char *> ArgList) {
     getIncludeExcludeOptionFlagMasks();
 
   unsigned MissingArgIndex, MissingArgCount;
-  InputArgList *Args = getOpts().ParseArgs(ArgList.begin(), ArgList.end(),
+  InputArgList *Args = getOpts().ParseArgs(ArgStrings.begin(), ArgStrings.end(),
                                            MissingArgIndex, MissingArgCount,
                                            IncludedFlagsBitmask,
                                            ExcludedFlagsBitmask);
