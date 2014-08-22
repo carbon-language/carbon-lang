@@ -257,11 +257,22 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
       continue;
 
     unsigned Size = Context.getTypeSize(Ty);
-    if (!Context.getTargetInfo()
-          .validateConstraintModifier(Literal->getString(), Piece.getModifier(),
-                                      Size))
+    std::string SuggestedModifier;
+    if (!Context.getTargetInfo().validateConstraintModifier(
+            Literal->getString(), Piece.getModifier(), Size,
+            SuggestedModifier)) {
       Diag(Exprs[ConstraintIdx]->getLocStart(),
            diag::warn_asm_mismatched_size_modifier);
+
+      if (!SuggestedModifier.empty()) {
+        auto B = Diag(Piece.getRange().getBegin(),
+                      diag::note_asm_missing_constraint_modifier)
+                 << SuggestedModifier;
+        SuggestedModifier = "%" + SuggestedModifier + Piece.getString();
+        B.AddFixItHint(FixItHint::CreateReplacement(Piece.getRange(),
+                                                    SuggestedModifier));
+      }
+    }
   }
 
   // Validate tied input operands for type mismatches.

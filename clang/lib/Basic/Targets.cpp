@@ -4145,8 +4145,10 @@ public:
     }
     return R;
   }
-  bool validateConstraintModifier(StringRef Constraint, const char Modifier,
-                                  unsigned Size) const override {
+  bool
+  validateConstraintModifier(StringRef Constraint, const char Modifier,
+                             unsigned Size,
+                             std::string &SuggestedModifier) const override {
     bool isOutput = (Constraint[0] == '=');
     bool isInOut = (Constraint[0] == '+');
 
@@ -4592,9 +4594,10 @@ public:
     return false;
   }
 
-  virtual bool validateConstraintModifier(StringRef Constraint,
-                                          const char Modifier,
-                                          unsigned Size) const {
+  bool
+  validateConstraintModifier(StringRef Constraint, const char Modifier,
+                             unsigned Size,
+                             std::string &SuggestedModifier) const override {
     // Strip off constraint modifiers.
     while (Constraint[0] == '=' || Constraint[0] == '+' || Constraint[0] == '&')
       Constraint = Constraint.substr(1);
@@ -4613,7 +4616,11 @@ public:
       default:
         // By default an 'r' constraint will be in the 'x'
         // registers.
-        return Size == 64;
+        if (Size == 64)
+          return true;
+
+        SuggestedModifier = "w";
+        return false;
       }
     }
     }

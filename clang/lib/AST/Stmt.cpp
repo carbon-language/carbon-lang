@@ -357,6 +357,11 @@ unsigned AsmStmt::getNumPlusOperands() const {
   return Res;
 }
 
+char GCCAsmStmt::AsmStringPiece::getModifier() const {
+  assert(isOperand() && "Only Operands can have modifiers.");
+  return isLetter(Str[0]) ? Str[0] : '\0';
+}
+
 StringRef GCCAsmStmt::getClobber(unsigned i) const {
   return getClobberStringLiteral(i)->getString();
 }
@@ -517,17 +522,25 @@ unsigned GCCAsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
       CurStringPiece.clear();
     }
 
-    // Handle %x4 and %x[foo] by capturing x as the modifier character.
-    char Modifier = '\0';
+    // Handle operands that have asmSymbolicName (e.g., %x[foo]) and those that
+    // don't (e.g., %x4). 'x' following the '%' is the constraint modifier.
+
+    const char *Begin = CurPtr - 1; // Points to the character following '%'.
+    const char *Percent = Begin - 1; // Points to '%'.
+
     if (isLetter(EscapedChar)) {
       if (CurPtr == StrEnd) { // Premature end.
         DiagOffs = CurPtr-StrStart-1;
         return diag::err_asm_invalid_escape;
       }
-      Modifier = EscapedChar;
       EscapedChar = *CurPtr++;
     }
 
+    const TargetInfo &TI = C.getTargetInfo();
+    const SourceManager &SM = C.getSourceManager();
+    const LangOptions &LO = C.getLangOpts();
+
+    // Handle operands that don't have asmSymbolicName (e.g., %x4).
     if (isDigit(EscapedChar)) {
       // %n - Assembler operand n
       unsigned N = 0;
@@ -543,11 +556,21 @@ unsigned GCCAsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
         return diag::err_asm_invalid_operand_number;
       }
 
-      Pieces.push_back(AsmStringPiece(N, Modifier));
+      // Str contains "x4" (Operand without the leading %).
+      std::string Str(Begin, CurPtr - Begin);
+
+      // (BeginLoc, EndLoc) represents the range of the operand we are currently
+      // processing. Unlike Str, the range includes the leading '%'.
+      SourceLocation BeginLoc =
+          getAsmString()->getLocationOfByte(Percent - StrStart, SM, LO, TI);
+      SourceLocation EndLoc =
+          getAsmString()->getLocationOfByte(CurPtr - StrStart, SM, LO, TI);
+
+      Pieces.push_back(AsmStringPiece(N, Str, BeginLoc, EndLoc));
       continue;
     }
 
-    // Handle %[foo], a symbolic operand reference.
+    // Handle operands that have asmSymbolicName (e.g., %x[foo]).
     if (EscapedChar == '[') {
       DiagOffs = CurPtr-StrStart-1;
 
@@ -566,7 +589,18 @@ unsigned GCCAsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
         DiagOffs = CurPtr-StrStart;
         return diag::err_asm_unknown_symbolic_operand_name;
       }
-      Pieces.push_back(AsmStringPiece(N, Modifier));
+
+      // Str contains "x[foo]" (Operand without the leading %).
+      std::string Str(Begin, NameEnd + 1 - Begin);
+
+      // (BeginLoc, EndLoc) represents the range of the operand we are currently
+      // processing. Unlike Str, the range includes the leading '%'.
+      SourceLocation BeginLoc =
+          getAsmString()->getLocationOfByte(Percent - StrStart, SM, LO, TI);
+      SourceLocation EndLoc =
+          getAsmString()->getLocationOfByte(NameEnd + 1 - StrStart, SM, LO, TI);
+
+      Pieces.push_back(AsmStringPiece(N, Str, BeginLoc, EndLoc));
 
       CurPtr = NameEnd+1;
       continue;
