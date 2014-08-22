@@ -4146,8 +4146,7 @@ public:
     return R;
   }
   bool
-  validateConstraintModifier(StringRef Constraint, const char Modifier,
-                             unsigned Size,
+  validateConstraintModifier(StringRef Constraint, char Modifier, unsigned Size,
                              std::string &SuggestedModifier) const override {
     bool isOutput = (Constraint[0] == '=');
     bool isInOut = (Constraint[0] == '+');
@@ -4595,8 +4594,7 @@ public:
   }
 
   bool
-  validateConstraintModifier(StringRef Constraint, const char Modifier,
-                             unsigned Size,
+  validateConstraintModifier(StringRef Constraint, char Modifier, unsigned Size,
                              std::string &SuggestedModifier) const override {
     // Strip off constraint modifiers.
     while (Constraint[0] == '=' || Constraint[0] == '+' || Constraint[0] == '&')
