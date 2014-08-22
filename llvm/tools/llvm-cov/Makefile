@@ -9,7 +9,7 @@
 
 LEVEL := ../..
 TOOLNAME := llvm-cov
-LINK_COMPONENTS := core support
+LINK_COMPONENTS := core support profiledata object
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS := 1

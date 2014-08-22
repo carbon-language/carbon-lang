@@ -289,18 +289,6 @@ ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
     Object = std::move(File.get());
 }
 
-ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
-    std::unique_ptr<MemoryBuffer> &ObjectBuffer, sys::fs::file_magic Type)
-    : CurrentRecord(0) {
-  auto File = object::ObjectFile::createObjectFile(
-      ObjectBuffer->getMemBufferRef(), Type);
-  if (!File)
-    error(File.getError());
-  else
-    Object = OwningBinary<ObjectFile>(std::move(File.get()),
-                                      std::move(ObjectBuffer));
-}
-
 namespace {
 /// \brief The coverage mapping data for a single function.
 /// It points to the function's name.
@@ -347,18 +335,10 @@ struct SectionData {
 
 template <typename T>
 std::error_code readCoverageMappingData(
-    SectionRef &ProfileNames, SectionRef &CoverageMapping,
+    SectionData &ProfileNames, StringRef Data,
     std::vector<ObjectFileCoverageMappingReader::ProfileMappingRecord> &Records,
     std::vector<StringRef> &Filenames) {
   llvm::DenseSet<T> UniqueFunctionMappingData;
-
-  // Get the contents of the given sections.
-  StringRef Data;
-  if (auto Err = CoverageMapping.getContents(Data))
-    return Err;
-  SectionData ProfileNamesData;
-  if (auto Err = ProfileNamesData.load(ProfileNames))
-    return Err;
 
   // Read the records in the coverage data section.
   while (!Data.empty()) {
@@ -418,9 +398,9 @@ std::error_code readCoverageMappingData(
         continue;
       UniqueFunctionMappingData.insert(MappingRecord.FunctionNamePtr);
       StringRef FunctionName;
-      if (auto Err = ProfileNamesData.get(MappingRecord.FunctionNamePtr,
-                                          MappingRecord.FunctionNameSize,
-                                          FunctionName))
+      if (auto Err =
+              ProfileNames.get(MappingRecord.FunctionNamePtr,
+                               MappingRecord.FunctionNameSize, FunctionName))
         return Err;
       Records.push_back(ObjectFileCoverageMappingReader::ProfileMappingRecord(
           Version, FunctionName, MappingRecord.FunctionHash, Mapping,
@@ -429,6 +409,63 @@ std::error_code readCoverageMappingData(
   }
 
   return instrprof_error::success;
+}
+
+static const char *TestingFormatMagic = "llvmcovmtestdata";
+
+static std::error_code decodeTestingFormat(StringRef Data,
+                                           SectionData &ProfileNames,
+                                           StringRef &CoverageMapping) {
+  Data = Data.substr(StringRef(TestingFormatMagic).size());
+  if (Data.size() < 1)
+    return instrprof_error::truncated;
+  unsigned N = 0;
+  auto ProfileNamesSize =
+      decodeULEB128(reinterpret_cast<const uint8_t *>(Data.data()), &N);
+  if (N > Data.size())
+    return instrprof_error::malformed;
+  Data = Data.substr(N);
+  if (Data.size() < 1)
+    return instrprof_error::truncated;
+  N = 0;
+  ProfileNames.Address =
+      decodeULEB128(reinterpret_cast<const uint8_t *>(Data.data()), &N);
+  if (N > Data.size())
+    return instrprof_error::malformed;
+  Data = Data.substr(N);
+  if (Data.size() < ProfileNamesSize)
+    return instrprof_error::malformed;
+  ProfileNames.Data = Data.substr(0, ProfileNamesSize);
+  CoverageMapping = Data.substr(ProfileNamesSize);
+  return instrprof_error::success;
+}
+
+ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
+    std::unique_ptr<MemoryBuffer> &ObjectBuffer, sys::fs::file_magic Type)
+    : CurrentRecord(0) {
+  if (ObjectBuffer->getBuffer().startswith(TestingFormatMagic)) {
+    // This is a special format used for testing.
+    SectionData ProfileNames;
+    StringRef CoverageMapping;
+    if (auto Err = decodeTestingFormat(ObjectBuffer->getBuffer(), ProfileNames,
+                                       CoverageMapping)) {
+      error(Err);
+      return;
+    }
+    error(readCoverageMappingData<uint64_t>(ProfileNames, CoverageMapping,
+                                            MappingRecords, Filenames));
+    Object = OwningBinary<ObjectFile>(std::unique_ptr<ObjectFile>(),
+                                      std::move(ObjectBuffer));
+    return;
+  }
+
+  auto File = object::ObjectFile::createObjectFile(
+      ObjectBuffer->getMemBufferRef(), Type);
+  if (!File)
+    error(File.getError());
+  else
+    Object = OwningBinary<ObjectFile>(std::move(File.get()),
+                                      std::move(ObjectBuffer));
 }
 
 std::error_code ObjectFileCoverageMappingReader::readHeader() {
@@ -457,13 +494,21 @@ std::error_code ObjectFileCoverageMappingReader::readHeader() {
   if (FoundSectionCount != 2)
     return error(instrprof_error::bad_header);
 
+  // Get the contents of the given sections.
+  StringRef Data;
+  if (auto Err = CoverageMapping.getContents(Data))
+    return Err;
+  SectionData ProfileNamesData;
+  if (auto Err = ProfileNamesData.load(ProfileNames))
+    return Err;
+
   // Load the data from the found sections.
   std::error_code Err;
   if (BytesInAddress == 4)
-    Err = readCoverageMappingData<uint32_t>(ProfileNames, CoverageMapping,
+    Err = readCoverageMappingData<uint32_t>(ProfileNamesData, Data,
                                             MappingRecords, Filenames);
   else
-    Err = readCoverageMappingData<uint64_t>(ProfileNames, CoverageMapping,
+    Err = readCoverageMappingData<uint64_t>(ProfileNamesData, Data,
                                             MappingRecords, Filenames);
   if (Err)
     return error(Err);
