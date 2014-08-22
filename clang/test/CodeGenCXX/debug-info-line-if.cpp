@@ -26,6 +26,18 @@ int main() {
 
   // CHECK: br label
   // CHECK: br label {{.*}}, !dbg [[DBG2:!.*]]
+
+#line 300
+  for (; a; )
+    if (b)
+      ++b; // CHECK: add nsw{{.*}}, 1
+    else
+      ++a; // CHECK: add nsw{{.*}}, 1
+
+  // CHECK: br label
+  // CHECK: br label {{.*}}, !dbg [[DBG3:!.*]]
+
   // CHECK: [[DBG1]] = metadata !{i32 100, i32 0, metadata !{{.*}}, null}
   // CHECK: [[DBG2]] = metadata !{i32 200, i32 0, metadata !{{.*}}, null}
+  // CHECK: [[DBG3]] = metadata !{i32 300, i32 0, metadata !{{.*}}, null}
 }
