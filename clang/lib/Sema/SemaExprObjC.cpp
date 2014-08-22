@@ -995,7 +995,11 @@ ExprResult Sema::BuildObjCEncodeExpression(SourceLocation AtLoc,
         return ExprError();
 
     std::string Str;
-    Context.getObjCEncodingForType(EncodedType, Str);
+    QualType NotEncodedT;
+    Context.getObjCEncodingForType(EncodedType, Str, nullptr, &NotEncodedT);
+    if (!NotEncodedT.isNull())
+      Diag(AtLoc, diag::warn_incomplete_encoded_type)
+        << EncodedType << NotEncodedT;
 
     // The type of @encode is the same as the type of the corresponding string,
     // which is an array type.

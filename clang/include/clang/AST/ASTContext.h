@@ -1379,7 +1379,8 @@ public:
   ///
   /// If \p Field is specified then record field names are also encoded.
   void getObjCEncodingForType(QualType T, std::string &S,
-                              const FieldDecl *Field=nullptr) const;
+                              const FieldDecl *Field=nullptr,
+                              QualType *NotEncodedT=nullptr) const;
 
   /// \brief Emit the Objective-C property type encoding for the given
   /// type \p T into \p S.
@@ -2275,12 +2276,14 @@ private:
                                   bool StructField = false,
                                   bool EncodeBlockParameters = false,
                                   bool EncodeClassNames = false,
-                                  bool EncodePointerToObjCTypedef = false) const;
+                                  bool EncodePointerToObjCTypedef = false,
+                                  QualType *NotEncodedT=nullptr) const;
 
   // Adds the encoding of the structure's members.
   void getObjCEncodingForStructureImpl(RecordDecl *RD, std::string &S,
                                        const FieldDecl *Field,
-                                       bool includeVBases = true) const;
+                                       bool includeVBases = true,
+                                       QualType *NotEncodedT=nullptr) const;
 public:
   // Adds the encoding of a method parameter or return type.
   void getObjCEncodingForMethodParameter(Decl::ObjCDeclQualifier QT,

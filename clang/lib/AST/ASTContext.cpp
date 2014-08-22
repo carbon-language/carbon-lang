@@ -5097,13 +5097,15 @@ void ASTContext::getLegacyIntegralTypeEncoding (QualType &PointeeTy) const {
 }
 
 void ASTContext::getObjCEncodingForType(QualType T, std::string& S,
-                                        const FieldDecl *Field) const {
+                                        const FieldDecl *Field,
+                                        QualType *NotEncodedT) const {
   // We follow the behavior of gcc, expanding structures which are
   // directly pointed to, and expanding embedded structures. Note that
   // these rules are sufficient to prevent recursive encoding of the
   // same type.
   getObjCEncodingForTypeImpl(T, S, true, true, Field,
-                             true /* outermost type */);
+                             true /* outermost type */, false, false,
+                             false, false, false, NotEncodedT);
 }
 
 void ASTContext::getObjCEncodingForPropertyType(QualType T,
@@ -5229,7 +5231,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             bool StructField,
                                             bool EncodeBlockParameters,
                                             bool EncodeClassNames,
-                                            bool EncodePointerToObjCTypedef) const {
+                                            bool EncodePointerToObjCTypedef,
+                                            QualType *NotEncodedT) const {
   CanQualType CT = getCanonicalType(T);
   switch (CT->getTypeClass()) {
   case Type::Builtin:
@@ -5245,16 +5248,14 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
   case Type::Complex: {
     const ComplexType *CT = T->castAs<ComplexType>();
     S += 'j';
-    getObjCEncodingForTypeImpl(CT->getElementType(), S, false, false, nullptr,
-                               false, false);
+    getObjCEncodingForTypeImpl(CT->getElementType(), S, false, false, nullptr);
     return;
   }
 
   case Type::Atomic: {
     const AtomicType *AT = T->castAs<AtomicType>();
     S += 'A';
-    getObjCEncodingForTypeImpl(AT->getValueType(), S, false, false, nullptr,
-                               false, false);
+    getObjCEncodingForTypeImpl(AT->getValueType(), S, false, false, nullptr);
     return;
   }
 
@@ -5325,7 +5326,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     getLegacyIntegralTypeEncoding(PointeeTy);
 
     getObjCEncodingForTypeImpl(PointeeTy, S, false, ExpandPointedToStructures,
-                               nullptr);
+                               nullptr, false, false, false, false, false, false,
+                               NotEncodedT);
     return;
   }
 
@@ -5353,7 +5355,9 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       }
 
       getObjCEncodingForTypeImpl(AT->getElementType(), S,
-                                 false, ExpandStructures, FD);
+                                 false, ExpandStructures, FD,
+                                 false, false, false, false, false, false,
+                                 NotEncodedT);
       S += ']';
     }
     return;
@@ -5385,7 +5389,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     if (ExpandStructures) {
       S += '=';
       if (!RDecl->isUnion()) {
-        getObjCEncodingForStructureImpl(RDecl, S, FD);
+        getObjCEncodingForStructureImpl(RDecl, S, FD, true, NotEncodedT);
       } else {
         for (const auto *Field : RDecl->fields()) {
           if (FD) {
@@ -5404,7 +5408,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
             getObjCEncodingForTypeImpl(qt, S, false, true,
                                        FD, /*OutermostType*/false,
                                        /*EncodingProperty*/false,
-                                       /*StructField*/true);
+                                       /*StructField*/true,
+                                       false, false, false, NotEncodedT);
           }
         }
       }
@@ -5424,7 +5429,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       getObjCEncodingForTypeImpl(
           FT->getReturnType(), S, ExpandPointedToStructures, ExpandStructures,
           FD, false /* OutermostType */, EncodingProperty,
-          false /* StructField */, EncodeBlockParameters, EncodeClassNames);
+          false /* StructField */, EncodeBlockParameters, EncodeClassNames, false,
+                                 NotEncodedT);
       // Block self
       S += "@?";
       // Block parameters
@@ -5433,7 +5439,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
           getObjCEncodingForTypeImpl(
               I, S, ExpandPointedToStructures, ExpandStructures, FD,
               false /* OutermostType */, EncodingProperty,
-              false /* StructField */, EncodeBlockParameters, EncodeClassNames);
+              false /* StructField */, EncodeBlockParameters, EncodeClassNames,
+                                     false, NotEncodedT);
       }
       S += '>';
     }
@@ -5475,7 +5482,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       else
         getObjCEncodingForTypeImpl(Field->getType(), S, false, true, FD,
                                    false, false, false, false, false,
-                                   EncodePointerToObjCTypedef);
+                                   EncodePointerToObjCTypedef,
+                                   NotEncodedT);
     }
     S += '}';
     return;
@@ -5562,19 +5570,21 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
   // gcc just blithely ignores member pointers.
   // FIXME: we shoul do better than that.  'M' is available.
   case Type::MemberPointer:
-    return;
-  
+  // This matches gcc's encoding, even though technically it is insufficient.
+  //FIXME. We should do a better job than gcc.
   case Type::Vector:
   case Type::ExtVector:
-    // This matches gcc's encoding, even though technically it is
-    // insufficient.
-    // FIXME. We should do a better job than gcc.
-    return;
-
+  // Until we have a coherent encoding of these three types, issue warning.
+    { if (NotEncodedT)
+        *NotEncodedT = T;
+      return;
+    }
+      
+  // We could see an undeduced auto type here during error recovery.
+  // Just ignore it.
   case Type::Auto:
-    // We could see an undeduced auto type here during error recovery.
-    // Just ignore it.
     return;
+  
 
 #define ABSTRACT_TYPE(KIND, BASE)
 #define TYPE(KIND, BASE)
@@ -5593,7 +5603,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
 void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
                                                  std::string &S,
                                                  const FieldDecl *FD,
-                                                 bool includeVBases) const {
+                                                 bool includeVBases,
+                                                 QualType *NotEncodedT) const {
   assert(RDecl && "Expected non-null RecordDecl");
   assert(!RDecl->isUnion() && "Should not be called for unions");
   if (!RDecl->getDefinition())
@@ -5697,7 +5708,8 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
       // in the initial structure. Note that this differs from gcc which
       // expands virtual bases each time one is encountered in the hierarchy,
       // making the encoding type bigger than it really is.
-      getObjCEncodingForStructureImpl(base, S, FD, /*includeVBases*/false);
+      getObjCEncodingForStructureImpl(base, S, FD, /*includeVBases*/false,
+                                      NotEncodedT);
       assert(!base->isEmpty());
 #ifndef NDEBUG
       CurOffs += toBits(getASTRecordLayout(base).getNonVirtualSize());
@@ -5721,7 +5733,8 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
         getObjCEncodingForTypeImpl(qt, S, false, true, FD,
                                    /*OutermostType*/false,
                                    /*EncodingProperty*/false,
-                                   /*StructField*/true);
+                                   /*StructField*/true,
+                                   false, false, false, NotEncodedT);
 #ifndef NDEBUG
         CurOffs += getTypeSize(field->getType());
 #endif
