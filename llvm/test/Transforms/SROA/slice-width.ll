@@ -70,3 +70,37 @@ define void @memset_fp80_padding() {
 ; CHECK: alloca x86_fp80
 ; CHECK: call void @llvm.memset.p0i8.i32(i8* %{{.*}}, i8 -1, i32 16, i32 16, i1 false)
 ; CHECK: store i64 -1, i64* @i64_sink
+
+%S.vec3float = type { float, float, float }
+%U.vec3float = type { <4 x float> }
+
+declare i32 @memcpy_vec3float_helper(%S.vec3float*)
+
+define i32 @memcpy_vec3float_widening(%S.vec3float* %x) {
+; CHECK-LABEL: @memcpy_vec3float_widening(
+; PR18726: Check that SROA does not rewrite a 12-byte memcpy into a 16-byte
+; vector store, hence accidentally putting gibberish onto the stack.
+entry:
+  ; Create a temporary variable %tmp1 and copy %x[0] into it
+  %tmp1 = alloca %S.vec3float, align 4
+  %0 = bitcast %S.vec3float* %tmp1 to i8*
+  %1 = bitcast %S.vec3float* %x to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %0, i8* %1, i32 12, i32 4, i1 false)
+
+  ; The following block does nothing; but appears to confuse SROA
+  %unused1 = bitcast %S.vec3float* %tmp1 to %U.vec3float*
+  %unused2 = getelementptr inbounds %U.vec3float* %unused1, i32 0, i32 0
+  %unused3 = load <4 x float>* %unused2, align 1
+
+  ; Create a second temporary and copy %tmp1 into it
+  %tmp2 = alloca %S.vec3float, align 4
+  %2 = bitcast %S.vec3float* %tmp2 to i8*
+  %3 = bitcast %S.vec3float* %tmp1 to i8*
+; CHECK: alloca
+; CHECK-NOT: store <4 x float>
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %2, i8* %3, i32 12, i32 4, i1 false)
+
+  %result = call i32 @memcpy_vec3float_helper(%S.vec3float* %tmp2)
+  ret i32 %result
+; CHECK: ret i32 %result
+}
