@@ -2232,8 +2232,9 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
                           diag::err_illegal_message_expr_incomplete_type))
     return ExprError();
   
-  // Warn about explicit call of +initialize on its own class.
-  if (Method && Method->getMethodFamily() == OMF_initialize) {
+  // Warn about explicit call of +initialize on its own class. But not on 'super'.
+  if (Method && Method->getMethodFamily() == OMF_initialize &&
+      !SuperLoc.isValid()) {
     const ObjCInterfaceDecl *ID =
       dyn_cast<ObjCInterfaceDecl>(Method->getDeclContext());
     if (ID == Class) {

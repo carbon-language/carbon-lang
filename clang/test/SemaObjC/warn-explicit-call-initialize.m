@@ -14,6 +14,8 @@
   [I initialize];     // expected-warning {{explicit call to +initialize results in duplicate call to +initialize}} 
   [NSObject initialize]; // expected-warning {{explicit call to +initialize results in duplicate call to +initialize}}
 }
-+ (void)initialize {}
++ (void)initialize {
+  [super initialize];
+}
 @end
 
