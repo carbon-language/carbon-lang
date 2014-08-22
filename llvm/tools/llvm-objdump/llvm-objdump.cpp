@@ -834,6 +834,8 @@ static void printPrivateFileHeader(const ObjectFile *o) {
     printELFFileHeader(o);
   } else if (o->isCOFF()) {
     printCOFFFileHeader(o);
+  } else if (o->isMachO()) {
+    printMachOFileHeader(o);
   }
 }
 

@@ -1002,3 +1002,297 @@ void llvm::printMachOUnwindInfo(const MachOObjectFile *Obj) {
 
   }
 }
+
+static void PrintMachHeader(uint32_t magic, uint32_t cputype,
+                            uint32_t cpusubtype, uint32_t filetype,
+                            uint32_t ncmds, uint32_t sizeofcmds, uint32_t flags,
+                            bool verbose) {
+  outs() << "Mach header\n";
+  outs() << "      magic cputype cpusubtype  caps    filetype ncmds "
+            "sizeofcmds      flags\n";
+  if (verbose) {
+    if (magic == MachO::MH_MAGIC)
+      outs() << "   MH_MAGIC";
+    else if (magic == MachO::MH_MAGIC_64)
+      outs() << "MH_MAGIC_64";
+    else
+      outs() << format(" 0x%08" PRIx32, magic);
+    switch (cputype) {
+    case MachO::CPU_TYPE_I386:
+      outs() << "    I386";
+      switch (cpusubtype & ~MachO::CPU_SUBTYPE_MASK) {
+      case MachO::CPU_SUBTYPE_I386_ALL:
+        outs() << "        ALL";
+        break;
+      default:
+        outs() << format(" %10d", cpusubtype & ~MachO::CPU_SUBTYPE_MASK);
+        break;
+      }
+      break;
+    case MachO::CPU_TYPE_X86_64:
+      outs() << "  X86_64";
+    case MachO::CPU_SUBTYPE_X86_64_ALL:
+      outs() << "        ALL";
+      break;
+    case MachO::CPU_SUBTYPE_X86_64_H:
+      outs() << "    Haswell";
+      break;
+      switch (cpusubtype & ~MachO::CPU_SUBTYPE_MASK) {
+      default:
+        outs() << format(" %10d", cpusubtype & ~MachO::CPU_SUBTYPE_MASK);
+        break;
+      }
+      break;
+    case MachO::CPU_TYPE_ARM:
+      outs() << "     ARM";
+      switch (cpusubtype & ~MachO::CPU_SUBTYPE_MASK) {
+      case MachO::CPU_SUBTYPE_ARM_ALL:
+        outs() << "        ALL";
+        break;
+      case MachO::CPU_SUBTYPE_ARM_V4T:
+        outs() << "        V4T";
+        break;
+      case MachO::CPU_SUBTYPE_ARM_V5TEJ:
+        outs() << "      V5TEJ";
+        break;
+      case MachO::CPU_SUBTYPE_ARM_XSCALE:
+        outs() << "     XSCALE";
+        break;
+      case MachO::CPU_SUBTYPE_ARM_V6:
+        outs() << "         V6";
+        break;
+      case MachO::CPU_SUBTYPE_ARM_V6M:
+        outs() << "        V6M";
+        break;
+      case MachO::CPU_SUBTYPE_ARM_V7:
+        outs() << "         V7";
+        break;
+      case MachO::CPU_SUBTYPE_ARM_V7EM:
+        outs() << "       V7EM";
+        break;
+      case MachO::CPU_SUBTYPE_ARM_V7K:
+        outs() << "        V7K";
+        break;
+      case MachO::CPU_SUBTYPE_ARM_V7M:
+        outs() << "        V7M";
+        break;
+      case MachO::CPU_SUBTYPE_ARM_V7S:
+        outs() << "        V7S";
+        break;
+      default:
+        outs() << format(" %10d", cpusubtype & ~MachO::CPU_SUBTYPE_MASK);
+        break;
+      }
+      break;
+    case MachO::CPU_TYPE_ARM64:
+      outs() << "   ARM64";
+      switch (cpusubtype & ~MachO::CPU_SUBTYPE_MASK) {
+      case MachO::CPU_SUBTYPE_ARM64_ALL:
+        outs() << "        ALL";
+        break;
+      default:
+        outs() << format(" %10d", cpusubtype & ~MachO::CPU_SUBTYPE_MASK);
+        break;
+      }
+      break;
+    case MachO::CPU_TYPE_POWERPC:
+      outs() << "     PPC";
+      switch (cpusubtype & ~MachO::CPU_SUBTYPE_MASK) {
+      case MachO::CPU_SUBTYPE_POWERPC_ALL:
+        outs() << "        ALL";
+        break;
+      default:
+        outs() << format(" %10d", cpusubtype & ~MachO::CPU_SUBTYPE_MASK);
+        break;
+      }
+      break;
+    case MachO::CPU_TYPE_POWERPC64:
+      outs() << "   PPC64";
+      switch (cpusubtype & ~MachO::CPU_SUBTYPE_MASK) {
+      case MachO::CPU_SUBTYPE_POWERPC_ALL:
+        outs() << "        ALL";
+        break;
+      default:
+        outs() << format(" %10d", cpusubtype & ~MachO::CPU_SUBTYPE_MASK);
+        break;
+      }
+      break;
+    }
+    if ((cpusubtype & MachO::CPU_SUBTYPE_MASK) == MachO::CPU_SUBTYPE_LIB64) {
+      outs() << " LIB64 ";
+    } else {
+      outs() << format("  0x%02" PRIx32,
+                       (cpusubtype & MachO::CPU_SUBTYPE_MASK) >> 24);
+    }
+    switch (filetype) {
+    case MachO::MH_OBJECT:
+      outs() << "      OBJECT";
+      break;
+    case MachO::MH_EXECUTE:
+      outs() << "     EXECUTE";
+      break;
+    case MachO::MH_FVMLIB:
+      outs() << "      FVMLIB";
+      break;
+    case MachO::MH_CORE:
+      outs() << "        CORE";
+      break;
+    case MachO::MH_PRELOAD:
+      outs() << "     PRELOAD";
+      break;
+    case MachO::MH_DYLIB:
+      outs() << "       DYLIB";
+      break;
+    case MachO::MH_DYLIB_STUB:
+      outs() << "  DYLIB_STUB";
+      break;
+    case MachO::MH_DYLINKER:
+      outs() << "    DYLINKER";
+      break;
+    case MachO::MH_BUNDLE:
+      outs() << "      BUNDLE";
+      break;
+    case MachO::MH_DSYM:
+      outs() << "        DSYM";
+      break;
+    case MachO::MH_KEXT_BUNDLE:
+      outs() << "  KEXTBUNDLE";
+      break;
+    default:
+      outs() << format("  %10u", filetype);
+      break;
+    }
+    outs() << format(" %5u", ncmds);
+    outs() << format(" %10u", sizeofcmds);
+    uint32_t f = flags;
+    if (f & MachO::MH_NOUNDEFS) {
+      outs() << "   NOUNDEFS";
+      f &= ~MachO::MH_NOUNDEFS;
+    }
+    if (f & MachO::MH_INCRLINK) {
+      outs() << " INCRLINK";
+      f &= ~MachO::MH_INCRLINK;
+    }
+    if (f & MachO::MH_DYLDLINK) {
+      outs() << " DYLDLINK";
+      f &= ~MachO::MH_DYLDLINK;
+    }
+    if (f & MachO::MH_BINDATLOAD) {
+      outs() << " BINDATLOAD";
+      f &= ~MachO::MH_BINDATLOAD;
+    }
+    if (f & MachO::MH_PREBOUND) {
+      outs() << " PREBOUND";
+      f &= ~MachO::MH_PREBOUND;
+    }
+    if (f & MachO::MH_SPLIT_SEGS) {
+      outs() << " SPLIT_SEGS";
+      f &= ~MachO::MH_SPLIT_SEGS;
+    }
+    if (f & MachO::MH_LAZY_INIT) {
+      outs() << " LAZY_INIT";
+      f &= ~MachO::MH_LAZY_INIT;
+    }
+    if (f & MachO::MH_TWOLEVEL) {
+      outs() << " TWOLEVEL";
+      f &= ~MachO::MH_TWOLEVEL;
+    }
+    if (f & MachO::MH_FORCE_FLAT) {
+      outs() << " FORCE_FLAT";
+      f &= ~MachO::MH_FORCE_FLAT;
+    }
+    if (f & MachO::MH_NOMULTIDEFS) {
+      outs() << " NOMULTIDEFS";
+      f &= ~MachO::MH_NOMULTIDEFS;
+    }
+    if (f & MachO::MH_NOFIXPREBINDING) {
+      outs() << " NOFIXPREBINDING";
+      f &= ~MachO::MH_NOFIXPREBINDING;
+    }
+    if (f & MachO::MH_PREBINDABLE) {
+      outs() << " PREBINDABLE";
+      f &= ~MachO::MH_PREBINDABLE;
+    }
+    if (f & MachO::MH_ALLMODSBOUND) {
+      outs() << " ALLMODSBOUND";
+      f &= ~MachO::MH_ALLMODSBOUND;
+    }
+    if (f & MachO::MH_SUBSECTIONS_VIA_SYMBOLS) {
+      outs() << " SUBSECTIONS_VIA_SYMBOLS";
+      f &= ~MachO::MH_SUBSECTIONS_VIA_SYMBOLS;
+    }
+    if (f & MachO::MH_CANONICAL) {
+      outs() << " CANONICAL";
+      f &= ~MachO::MH_CANONICAL;
+    }
+    if (f & MachO::MH_WEAK_DEFINES) {
+      outs() << " WEAK_DEFINES";
+      f &= ~MachO::MH_WEAK_DEFINES;
+    }
+    if (f & MachO::MH_BINDS_TO_WEAK) {
+      outs() << " BINDS_TO_WEAK";
+      f &= ~MachO::MH_BINDS_TO_WEAK;
+    }
+    if (f & MachO::MH_ALLOW_STACK_EXECUTION) {
+      outs() << " ALLOW_STACK_EXECUTION";
+      f &= ~MachO::MH_ALLOW_STACK_EXECUTION;
+    }
+    if (f & MachO::MH_DEAD_STRIPPABLE_DYLIB) {
+      outs() << " DEAD_STRIPPABLE_DYLIB";
+      f &= ~MachO::MH_DEAD_STRIPPABLE_DYLIB;
+    }
+    if (f & MachO::MH_PIE) {
+      outs() << " PIE";
+      f &= ~MachO::MH_PIE;
+    }
+    if (f & MachO::MH_NO_REEXPORTED_DYLIBS) {
+      outs() << " NO_REEXPORTED_DYLIBS";
+      f &= ~MachO::MH_NO_REEXPORTED_DYLIBS;
+    }
+    if (f & MachO::MH_HAS_TLV_DESCRIPTORS) {
+      outs() << " MH_HAS_TLV_DESCRIPTORS";
+      f &= ~MachO::MH_HAS_TLV_DESCRIPTORS;
+    }
+    if (f & MachO::MH_NO_HEAP_EXECUTION) {
+      outs() << " MH_NO_HEAP_EXECUTION";
+      f &= ~MachO::MH_NO_HEAP_EXECUTION;
+    }
+    if (f & MachO::MH_APP_EXTENSION_SAFE) {
+      outs() << " APP_EXTENSION_SAFE";
+      f &= ~MachO::MH_APP_EXTENSION_SAFE;
+    }
+    if (f != 0 || flags == 0)
+      outs() << format(" 0x%08" PRIx32, f);
+  } else {
+    outs() << format(" 0x%08" PRIx32, magic);
+    outs() << format(" %7d", cputype);
+    outs() << format(" %10d", cpusubtype & ~MachO::CPU_SUBTYPE_MASK);
+    outs() << format("  0x%02" PRIx32,
+                     (cpusubtype & MachO::CPU_SUBTYPE_MASK) >> 24);
+    outs() << format("  %10u", filetype);
+    outs() << format(" %5u", ncmds);
+    outs() << format(" %10u", sizeofcmds);
+    outs() << format(" 0x%08" PRIx32, flags);
+  }
+  outs() << "\n";
+}
+
+static void getAndPrintMachHeader(const MachOObjectFile *Obj, bool verbose) {
+  if (Obj->is64Bit()) {
+    MachO::mach_header_64 H_64;
+    H_64 = Obj->getHeader64();
+    PrintMachHeader(H_64.magic, H_64.cputype, H_64.cpusubtype, H_64.filetype,
+                    H_64.ncmds, H_64.sizeofcmds, H_64.flags, verbose);
+  } else {
+    MachO::mach_header H;
+    H = Obj->getHeader();
+    PrintMachHeader(H.magic, H.cputype, H.cpusubtype, H.filetype, H.ncmds,
+                    H.sizeofcmds, H.flags, verbose);
+  }
+}
+
+void llvm::printMachOFileHeader(const object::ObjectFile *Obj) {
+  const MachOObjectFile *file = dyn_cast<const MachOObjectFile>(Obj);
+  getAndPrintMachHeader(file, true);
+  // TODO: next get and print the load commands.
+}

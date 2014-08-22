@@ -38,6 +38,7 @@ void printMachOUnwindInfo(const object::MachOObjectFile* o);
 
 void printELFFileHeader(const object::ObjectFile *o);
 void printCOFFFileHeader(const object::ObjectFile *o);
+void printMachOFileHeader(const object::ObjectFile *o);
 
 } // end namespace llvm
 
