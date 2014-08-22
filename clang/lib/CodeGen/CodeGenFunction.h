@@ -535,7 +535,7 @@ public:
     }
   };
 
-  class LexicalScope: protected RunCleanupsScope {
+  class LexicalScope : public RunCleanupsScope {
     SourceRange Range;
     SmallVector<const LabelDecl*, 4> Labels;
     LexicalScope *ParentScope;
