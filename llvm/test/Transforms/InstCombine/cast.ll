@@ -1038,3 +1038,15 @@ define i8 @test84(i32 %a) {
 ; CHECK: [[SHR:%.*]] = lshr exact i32 [[ADD]], 23
 ; CHECK: [[CST:%.*]] = trunc i32 [[SHR]] to i8
 }
+
+define i8 @test85(i32 %a) {
+  %add = add nuw i32 %a, -16777216
+  %shr = lshr exact i32 %add, 23
+  %trunc = trunc i32 %shr to i8
+  ret i8 %trunc
+
+; CHECK-LABEL: @test85(
+; CHECK: [[ADD:%.*]] = add i32 %a, 2130706432
+; CHECK: [[SHR:%.*]] = lshr exact i32 [[ADD]], 23
+; CHECK: [[CST:%.*]] = trunc i32 [[SHR]] to i8
+}

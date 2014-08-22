@@ -44,12 +44,18 @@ static bool ShrinkDemandedConstant(Instruction *I, unsigned OpNo,
   Demanded &= OpC->getValue();
   I->setOperand(OpNo, ConstantInt::get(OpC->getType(), Demanded));
 
-  // If 'nsw' is set and the constant is negative, removing *any* bits from the
-  // constant could make overflow occur.  Remove 'nsw' from the instruction in
-  // this case.
-  if (auto *OBO = dyn_cast<OverflowingBinaryOperator>(I))
-    if (OBO->hasNoSignedWrap() && OpC->getValue().isNegative())
-      cast<BinaryOperator>(OBO)->setHasNoSignedWrap(false);
+  // If either 'nsw' or 'nuw' is set and the constant is negative,
+  // removing *any* bits from the constant could make overflow occur.
+  // Remove 'nsw' and 'nuw' from the instruction in this case.
+  if (auto *OBO = dyn_cast<OverflowingBinaryOperator>(I)) {
+    assert(OBO->getOpcode() == Instruction::Add);
+    if (OBO->hasNoSignedWrap() || OBO->hasNoUnsignedWrap()) {
+      if (OpC->getValue().isNegative()) {
+        cast<BinaryOperator>(OBO)->setHasNoSignedWrap(false);
+        cast<BinaryOperator>(OBO)->setHasNoUnsignedWrap(false);
+      }
+    }
+  }
 
   return true;
 }
