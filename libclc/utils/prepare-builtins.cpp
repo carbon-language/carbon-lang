@@ -10,7 +10,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/ToolOutputFile.h"
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 
 #define LLVM_350_AND_NEWER \
   (LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5))
