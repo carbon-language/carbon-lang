@@ -976,6 +976,14 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
   Instruction *VL0 = cast<Instruction>(VL[0]);
   BasicBlock *BB = cast<Instruction>(VL0)->getParent();
 
+  if (!DT->isReachableFromEntry(BB)) {
+    // Don't go into unreachable blocks. They may contain instructions with
+    // dependency cycles which confuse the final scheduling.
+    DEBUG(dbgs() << "SLP: bundle in unreachable block.\n");
+    newTreeEntry(VL, false);
+    return;
+  }
+  
   // Check that every instructions appears once in this bundle.
   for (unsigned i = 0, e = VL.size(); i < e; ++i)
     for (unsigned j = i+1; j < e; ++j)
