@@ -73,7 +73,10 @@ namespace llvm {
       MH_SETUID_SAFE             = 0x00080000u,
       MH_NO_REEXPORTED_DYLIBS    = 0x00100000u,
       MH_PIE                     = 0x00200000u,
-      MH_DEAD_STRIPPABLE_DYLIB   = 0x00400000u
+      MH_DEAD_STRIPPABLE_DYLIB   = 0x00400000u,
+      MH_HAS_TLV_DESCRIPTORS     = 0x00800000u,
+      MH_NO_HEAP_EXECUTION       = 0x01000000u,
+      MH_APP_EXTENSION_SAFE      = 0x02000000u
     };
 
     enum : uint32_t {
