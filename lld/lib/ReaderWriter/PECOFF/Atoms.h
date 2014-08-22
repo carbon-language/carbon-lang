@@ -28,8 +28,8 @@ class COFFDefinedAtom;
 class COFFReference final : public Reference {
 public:
   COFFReference(const Atom *target, uint32_t offsetInAtom, uint16_t relocType,
-                Reference::KindNamespace ns = Reference::KindNamespace::COFF,
-                Reference::KindArch arch = Reference::KindArch::x86)
+                Reference::KindArch arch,
+                Reference::KindNamespace ns = Reference::KindNamespace::COFF)
       : Reference(ns, arch, relocType), _target(target),
         _offsetInAtom(offsetInAtom) {}
 
@@ -168,8 +168,8 @@ public:
 
   void addAssociate(const DefinedAtom *other) {
     auto *ref = new COFFReference(other, 0, lld::Reference::kindAssociate,
-                                  Reference::KindNamespace::all,
-                                  Reference::KindArch::all);
+                                  Reference::KindArch::all,
+                                  Reference::KindNamespace::all);
     addReference(std::unique_ptr<COFFReference>(ref));
   }
 
@@ -347,8 +347,8 @@ private:
 
 template <typename T, typename U>
 void addLayoutEdge(T *a, U *b, uint32_t which) {
-  auto ref = new COFFReference(nullptr, 0, which, Reference::KindNamespace::all,
-                               Reference::KindArch::all);
+  auto ref = new COFFReference(nullptr, 0, which, Reference::KindArch::all,
+                               Reference::KindNamespace::all);
   ref->setTarget(b);
   a->addReference(std::unique_ptr<COFFReference>(ref));
 }

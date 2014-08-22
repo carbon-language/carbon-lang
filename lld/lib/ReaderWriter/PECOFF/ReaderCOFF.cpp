@@ -794,8 +794,7 @@ std::error_code FileCOFF::addRelocationReference(
   if (std::error_code ec = findAtomAt(section, itemAddress, atom, offsetInAtom))
     return ec;
   atom->addReference(std::unique_ptr<COFFReference>(
-      new COFFReference(targetAtom, offsetInAtom, rel->Type,
-                        Reference::KindNamespace::COFF, _referenceArch)));
+      new COFFReference(targetAtom, offsetInAtom, rel->Type, _referenceArch)));
   return std::error_code();
 }
 
@@ -901,7 +900,7 @@ std::error_code FileCOFF::maybeCreateSXDataAtoms() {
     atom->addReference(std::unique_ptr<COFFReference>(new COFFReference(
         handlerFunc, offsetInAtom, _is64 ? llvm::COFF::IMAGE_REL_AMD64_ADDR32
                                          : llvm::COFF::IMAGE_REL_I386_DIR32,
-        Reference::KindNamespace::COFF, _referenceArch)));
+        _referenceArch)));
   }
 
   _definedAtoms._atoms.push_back(atom);

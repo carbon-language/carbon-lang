@@ -245,11 +245,9 @@ private:
     COFFReference *ref;
     if (_is64) {
       ref = new COFFReference(dataAtom, 2, llvm::COFF::IMAGE_REL_AMD64_REL32,
-                              Reference::KindNamespace::COFF,
                               Reference::KindArch::x86_64);
     } else {
       ref = new COFFReference(dataAtom, 2, llvm::COFF::IMAGE_REL_I386_DIR32,
-                              Reference::KindNamespace::COFF,
                               Reference::KindArch::x86);
     }
     atom->addReference(std::unique_ptr<COFFReference>(ref));

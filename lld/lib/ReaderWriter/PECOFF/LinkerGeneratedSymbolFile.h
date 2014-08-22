@@ -48,9 +48,11 @@ public:
       : SimpleFile(defsym), _undefined(*this, undefsym),
         _defined(*this, defsym, ordinal) {
     auto *ref = is64 ? new COFFReference(&_undefined, 0,
-                                         llvm::COFF::IMAGE_REL_AMD64_ADDR32)
+                                         llvm::COFF::IMAGE_REL_AMD64_ADDR32,
+                                         Reference::KindArch::x86_64)
                      : new COFFReference(&_undefined, 0,
-                                         llvm::COFF::IMAGE_REL_I386_DIR32);
+                                         llvm::COFF::IMAGE_REL_I386_DIR32,
+                                         Reference::KindArch::x86);
     _defined.addReference(std::unique_ptr<COFFReference>(ref));
     addAtom(_defined);
     addAtom(_undefined);
