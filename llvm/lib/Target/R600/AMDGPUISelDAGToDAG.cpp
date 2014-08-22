@@ -91,6 +91,8 @@ private:
   bool isDSOffsetLegal(const SDValue &Base, unsigned Offset,
                        unsigned OffsetBits) const;
   bool SelectDS1Addr1Offset(SDValue Ptr, SDValue &Base, SDValue &Offset) const;
+  bool SelectDS64Bit4ByteAligned(SDValue Ptr, SDValue &Base, SDValue &Offset0,
+                                 SDValue &Offset1) const;
   void SelectMUBUF(SDValue Addr, SDValue &SRsrc, SDValue &VAddr,
                    SDValue &SOffset, SDValue &Offset, SDValue &Offen,
                    SDValue &Idxen, SDValue &Addr64, SDValue &GLC, SDValue &SLC,
@@ -779,6 +781,31 @@ bool AMDGPUDAGToDAGISel::SelectDS1Addr1Offset(SDValue Addr, SDValue &Base,
   // default case
   Base = Addr;
   Offset = CurDAG->getTargetConstant(0, MVT::i16);
+  return true;
+}
+
+bool AMDGPUDAGToDAGISel::SelectDS64Bit4ByteAligned(SDValue Addr, SDValue &Base,
+                                                   SDValue &Offset0,
+                                                   SDValue &Offset1) const {
+  if (CurDAG->isBaseWithConstantOffset(Addr)) {
+    SDValue N0 = Addr.getOperand(0);
+    SDValue N1 = Addr.getOperand(1);
+    ConstantSDNode *C1 = cast<ConstantSDNode>(N1);
+    unsigned DWordOffset0 = C1->getZExtValue() / 4;
+    unsigned DWordOffset1 = DWordOffset0 + 1;
+    // (add n0, c0)
+    if (isDSOffsetLegal(N0, DWordOffset1, 8)) {
+      Base = N0;
+      Offset0 = CurDAG->getTargetConstant(DWordOffset0, MVT::i8);
+      Offset1 = CurDAG->getTargetConstant(DWordOffset1, MVT::i8);
+      return true;
+    }
+  }
+
+  // default case
+  Base = Addr;
+  Offset0 = CurDAG->getTargetConstant(0, MVT::i8);
+  Offset1 = CurDAG->getTargetConstant(1, MVT::i8);
   return true;
 }
 

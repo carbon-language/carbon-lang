@@ -282,6 +282,17 @@ def local_load : PatFrag<(ops node:$ptr), (load node:$ptr), [{
     return isLocalLoad(dyn_cast<LoadSDNode>(N));
 }]>;
 
+class Aligned8Bytes <dag ops, dag frag> : PatFrag <ops, frag, [{
+    return cast<MemSDNode>(N)->getAlignment() % 8 == 0;
+}]>;
+
+def local_load_aligned8bytes : Aligned8Bytes <
+  (ops node:$ptr), (local_load node:$ptr)
+>;
+
+def local_store_aligned8bytes : Aligned8Bytes <
+  (ops node:$val, node:$ptr), (local_store node:$val, node:$ptr)
+>;
 
 class local_binary_atomic_op<SDNode atomic_op> :
   PatFrag<(ops node:$ptr, node:$value),

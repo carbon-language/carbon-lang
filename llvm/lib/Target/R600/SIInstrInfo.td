@@ -192,6 +192,7 @@ def tfe : Operand <i1> {
 //===----------------------------------------------------------------------===//
 
 def DS1Addr1Offset : ComplexPattern<i32, 2, "SelectDS1Addr1Offset">;
+def DS64Bit4ByteAligned : ComplexPattern<i32, 3, "SelectDS64Bit4ByteAligned">;
 
 def MUBUFAddr32 : ComplexPattern<i64, 9, "SelectMUBUFAddr32">;
 def MUBUFAddr64 : ComplexPattern<i64, 3, "SelectMUBUFAddr64">;
