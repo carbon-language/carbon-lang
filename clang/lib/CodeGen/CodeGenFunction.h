@@ -2598,18 +2598,15 @@ private:
   /// from function arguments into \arg Dst. See ABIArgInfo::Expand.
   ///
   /// \param AI - The first function argument of the expansion.
-  /// \return The argument following the last expanded function
-  /// argument.
-  llvm::Function::arg_iterator
-  ExpandTypeFromArgs(QualType Ty, LValue Dst,
-                     llvm::Function::arg_iterator AI);
+  void ExpandTypeFromArgs(QualType Ty, LValue Dst,
+                          SmallVectorImpl<llvm::Argument *>::iterator &AI);
 
-  /// ExpandTypeToArgs - Expand an RValue \arg Src, with the LLVM type for \arg
-  /// Ty, into individual arguments on the provided vector \arg Args. See
-  /// ABIArgInfo::Expand.
-  void ExpandTypeToArgs(QualType Ty, RValue Src,
-                        SmallVectorImpl<llvm::Value *> &Args,
-                        llvm::FunctionType *IRFuncTy);
+  /// ExpandTypeToArgs - Expand an RValue \arg RV, with the LLVM type for \arg
+  /// Ty, into individual arguments on the provided vector \arg IRCallArgs,
+  /// starting at index \arg IRCallArgPos. See ABIArgInfo::Expand.
+  void ExpandTypeToArgs(QualType Ty, RValue RV, llvm::FunctionType *IRFuncTy,
+                        SmallVectorImpl<llvm::Value *> &IRCallArgs,
+                        unsigned &IRCallArgPos);
 
   llvm::Value* EmitAsmInput(const TargetInfo::ConstraintInfo &Info,
                             const Expr *InputExpr, std::string &ConstraintStr);
