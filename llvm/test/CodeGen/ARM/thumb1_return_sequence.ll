@@ -46,6 +46,7 @@ entry:
   store <4 x i32> <i32 42, i32 42, i32 42, i32 42>, <4 x i32>* %b, align 16
   store <4 x i32> <i32 0, i32 1, i32 2, i32 3>, <4 x i32>* %a, align 16
   %0 = load <4 x i32>* %a, align 16
+  call void @llvm.va_start(i8* null)
   ret <4 x i32> %0
 
 ; Epilogue
@@ -154,6 +155,7 @@ entry:
   %7 = load i32* %d, align 4
   %add5 = add nsw i32 %add4, %7
   %add6 = add nsw i32 %add5, %i
+  call void @llvm.va_start(i8* null)
   ret i32 %add6
 
 ; Epilogue
@@ -198,7 +200,8 @@ entry:
 ; CHECK-V5T:    sub sp,
 ; CHECK-V5T:    push {[[SAVED:(r[4567](, )?)+]], lr}
 
-    ret i32 %i;
+  call void @llvm.va_start(i8* null)
+  ret i32 %i;
 ; Epilogue
 ; --------
 ; CHECK-V4T:         pop {[[SAVED]]}
@@ -210,3 +213,5 @@ entry:
 ; CHECK-V5T-NEXT:    add sp,
 ; CHECK-V5T-NEXT:    bx r3
 }
+
+declare void @llvm.va_start(i8*) nounwind

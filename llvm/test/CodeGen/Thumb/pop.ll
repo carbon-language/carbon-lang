@@ -7,7 +7,9 @@ define void @t(i8* %a, ...) nounwind {
 ; CHECK-NEXT: add sp, #12
 ; CHECK-NEXT: bx r3
 entry:
-  %a.addr = alloca i8*
-  store i8* %a, i8** %a.addr
+  %a.addr = alloca i8, i32 4
+  call void @llvm.va_start(i8* %a.addr)
   ret void
 }
+
+declare void @llvm.va_start(i8*) nounwind

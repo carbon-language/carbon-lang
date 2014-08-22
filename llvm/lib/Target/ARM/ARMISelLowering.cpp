@@ -3080,7 +3080,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
   }
   CCInfo.rewindByValRegsInfo();
   lastInsIndex = -1;
-  if (isVarArg) {
+  if (isVarArg && MFI->hasVAStart()) {
     unsigned ExtraArgRegsSize;
     unsigned ExtraArgRegsSaveSize;
     computeRegArea(CCInfo, MF, CCInfo.getInRegsParamsCount(), 0,
@@ -3222,7 +3222,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
   }
 
   // varargs
-  if (isVarArg)
+  if (isVarArg && MFI->hasVAStart())
     VarArgStyleRegisters(CCInfo, DAG, dl, Chain,
                          CCInfo.getNextStackOffset(),
                          TotalArgRegsSaveSize);

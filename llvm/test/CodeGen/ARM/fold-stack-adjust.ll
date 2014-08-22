@@ -183,6 +183,7 @@ define void @test_varsize(...) minsize {
 ; CHECK: bx	lr
 
   %var = alloca i8, i32 8
+  call void @llvm.va_start(i8* %var)
   call void @bar(i8* %var)
   ret void
 }
@@ -216,3 +217,5 @@ if.then:                                          ; preds = %entry
 exit:                                             ; preds = %if.then, %entry
   ret float %call1
 }
+
+declare void @llvm.va_start(i8*) nounwind
