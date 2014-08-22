@@ -28,27 +28,6 @@
 using namespace clang;
 using namespace ento;
 
-static bool scan_dealloc(Stmt *S, Selector Dealloc) {
-
-  if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S))
-    if (ME->getSelector() == Dealloc) {
-      switch (ME->getReceiverKind()) {
-      case ObjCMessageExpr::Instance: return false;
-      case ObjCMessageExpr::SuperInstance: return true;
-      case ObjCMessageExpr::Class: break;
-      case ObjCMessageExpr::SuperClass: break;
-      }
-    }
-
-  // Recurse to children.
-
-  for (Stmt::child_iterator I = S->child_begin(), E= S->child_end(); I!=E; ++I)
-    if (*I && scan_dealloc(*I, Dealloc))
-      return true;
-
-  return false;
-}
-
 static bool scan_ivar_release(Stmt *S, ObjCIvarDecl *ID,
                               const ObjCPropertyDecl *PD,
                               Selector Release,
@@ -177,24 +156,6 @@ static void checkObjCDealloc(const CheckerBase *Checker,
     os << "Objective-C class '" << *D << "' lacks a 'dealloc' instance method";
 
     BR.EmitBasicReport(D, Checker, name, categories::CoreFoundationObjectiveC,
-                       os.str(), DLoc);
-    return;
-  }
-
-  // dealloc found.  Scan for missing [super dealloc].
-  if (MD->getBody() && !scan_dealloc(MD->getBody(), S)) {
-
-    const char* name = LOpts.getGC() == LangOptions::NonGC
-                       ? "missing [super dealloc]"
-                       : "missing [super dealloc] (Hybrid MM, non-GC)";
-
-    std::string buf;
-    llvm::raw_string_ostream os(buf);
-    os << "The 'dealloc' instance method in Objective-C class '" << *D
-       << "' does not send a 'dealloc' message to its super class"
-           " (missing [super dealloc])";
-
-    BR.EmitBasicReport(MD, Checker, name, categories::CoreFoundationObjectiveC,
                        os.str(), DLoc);
     return;
   }
