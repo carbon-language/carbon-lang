@@ -842,7 +842,7 @@ class DS_Store_Helper <bits<8> op, string asm, RegisterClass regClass> : DS_1A <
   let vdst = 0;
 }
 
-class DS_Store2_Helper <bits<8> op, string asm, RegisterClass regClass> : DS_1A <
+class DS_Store2_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
   op,
   (outs),
   (ins i1imm:$gds, VReg_32:$addr, regClass:$data0, regClass:$data1,
