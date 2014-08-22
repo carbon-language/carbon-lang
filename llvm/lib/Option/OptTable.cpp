@@ -264,6 +264,11 @@ InputArgList *OptTable::ParseArgs(const char *const *ArgBegin,
   MissingArgIndex = MissingArgCount = 0;
   unsigned Index = 0, End = ArgEnd - ArgBegin;
   while (Index < End) {
+    // Ingore nullptrs, they are response file's EOL markers
+    if (Args->getArgString(Index) == nullptr) {
+      ++Index;
+      continue;
+    }
     // Ignore empty arguments (other things may still take them as arguments).
     StringRef Str = Args->getArgString(Index);
     if (Str == "") {

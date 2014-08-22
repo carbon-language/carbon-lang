@@ -169,7 +169,8 @@ Arg *Option::accept(const ArgList &Args,
       return nullptr;
 
     Index += 2;
-    if (Index > Args.getNumInputArgStrings())
+    if (Index > Args.getNumInputArgStrings() ||
+        Args.getArgString(Index - 1) == nullptr)
       return nullptr;
 
     return new Arg(UnaliasedOption, Spelling,
@@ -200,7 +201,8 @@ Arg *Option::accept(const ArgList &Args,
 
     // Otherwise it must be separate.
     Index += 2;
-    if (Index > Args.getNumInputArgStrings())
+    if (Index > Args.getNumInputArgStrings() ||
+        Args.getArgString(Index - 1) == nullptr)
       return nullptr;
 
     return new Arg(UnaliasedOption, Spelling,
@@ -209,7 +211,8 @@ Arg *Option::accept(const ArgList &Args,
   case JoinedAndSeparateClass:
     // Always matches.
     Index += 2;
-    if (Index > Args.getNumInputArgStrings())
+    if (Index > Args.getNumInputArgStrings() ||
+        Args.getArgString(Index - 1) == nullptr)
       return nullptr;
 
     return new Arg(UnaliasedOption, Spelling, Index - 2,
@@ -221,7 +224,8 @@ Arg *Option::accept(const ArgList &Args,
     if (ArgSize != strlen(Args.getArgString(Index)))
       return nullptr;
     Arg *A = new Arg(UnaliasedOption, Spelling, Index++);
-    while (Index < Args.getNumInputArgStrings())
+    while (Index < Args.getNumInputArgStrings() &&
+           Args.getArgString(Index) != nullptr)
       A->getValues().push_back(Args.getArgString(Index++));
     return A;
   }

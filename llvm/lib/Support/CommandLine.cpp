@@ -474,13 +474,18 @@ static bool isGNUSpecial(char C) {
 }
 
 void cl::TokenizeGNUCommandLine(StringRef Src, StringSaver &Saver,
-                                SmallVectorImpl<const char *> &NewArgv) {
+                                SmallVectorImpl<const char *> &NewArgv,
+                                bool MarkEOLs) {
   SmallString<128> Token;
   for (size_t I = 0, E = Src.size(); I != E; ++I) {
     // Consume runs of whitespace.
     if (Token.empty()) {
-      while (I != E && isWhitespace(Src[I]))
+      while (I != E && isWhitespace(Src[I])) {
+        // Mark the end of lines in response files
+        if (MarkEOLs && Src[I] == '\n')
+          NewArgv.push_back(nullptr);
         ++I;
+      }
       if (I == E) break;
     }
 
@@ -521,6 +526,9 @@ void cl::TokenizeGNUCommandLine(StringRef Src, StringSaver &Saver,
   // Append the last token after hitting EOF with no whitespace.
   if (!Token.empty())
     NewArgv.push_back(Saver.SaveString(Token.c_str()));
+  // Mark the end of response files
+  if (MarkEOLs)
+    NewArgv.push_back(nullptr);
 }
 
 /// Backslashes are interpreted in a rather complicated way in the Windows-style
@@ -562,7 +570,8 @@ static size_t parseBackslash(StringRef Src, size_t I, SmallString<128> &Token) {
 }
 
 void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
-                                    SmallVectorImpl<const char *> &NewArgv) {
+                                    SmallVectorImpl<const char *> &NewArgv,
+                                    bool MarkEOLs) {
   SmallString<128> Token;
 
   // This is a small state machine to consume characters until it reaches the
@@ -572,8 +581,12 @@ void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
     // INIT state indicates that the current input index is at the start of
     // the string or between tokens.
     if (State == INIT) {
-      if (isWhitespace(Src[I]))
+      if (isWhitespace(Src[I])) {
+        // Mark the end of lines in response files
+        if (MarkEOLs && Src[I] == '\n')
+          NewArgv.push_back(nullptr);
         continue;
+      }
       if (Src[I] == '"') {
         State = QUOTED;
         continue;
@@ -596,6 +609,9 @@ void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
         NewArgv.push_back(Saver.SaveString(Token.c_str()));
         Token.clear();
         State = INIT;
+        // Mark the end of lines in response files
+        if (MarkEOLs && Src[I] == '\n')
+          NewArgv.push_back(nullptr);
         continue;
       }
       if (Src[I] == '"') {
@@ -626,11 +642,15 @@ void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
   // Append the last token after hitting EOF with no whitespace.
   if (!Token.empty())
     NewArgv.push_back(Saver.SaveString(Token.c_str()));
+  // Mark the end of response files
+  if (MarkEOLs)
+    NewArgv.push_back(nullptr);
 }
 
 static bool ExpandResponseFile(const char *FName, StringSaver &Saver,
                                TokenizerCallback Tokenizer,
-                               SmallVectorImpl<const char *> &NewArgv) {
+                               SmallVectorImpl<const char *> &NewArgv,
+                               bool MarkEOLs = false) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> MemBufOrErr =
       MemoryBuffer::getFile(FName);
   if (!MemBufOrErr)
@@ -648,7 +668,7 @@ static bool ExpandResponseFile(const char *FName, StringSaver &Saver,
   }
 
   // Tokenize the contents into NewArgv.
-  Tokenizer(Str, Saver, NewArgv);
+  Tokenizer(Str, Saver, NewArgv, MarkEOLs);
 
   return true;
 }
@@ -656,13 +676,19 @@ static bool ExpandResponseFile(const char *FName, StringSaver &Saver,
 /// \brief Expand response files on a command line recursively using the given
 /// StringSaver and tokenization strategy.
 bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
-                             SmallVectorImpl<const char *> &Argv) {
+                             SmallVectorImpl<const char *> &Argv,
+                             bool MarkEOLs) {
   unsigned RspFiles = 0;
   bool AllExpanded = true;
 
   // Don't cache Argv.size() because it can change.
   for (unsigned I = 0; I != Argv.size(); ) {
     const char *Arg = Argv[I];
+    // Check if it is an EOL marker
+    if (Arg == nullptr) {
+      ++I;
+      continue;
+    }
     if (Arg[0] != '@') {
       ++I;
       continue;
@@ -678,7 +704,8 @@ bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
     // FIXME: If a nested response file uses a relative path, is it relative to
     // the cwd of the process or the response file?
     SmallVector<const char *, 0> ExpandedArgv;
-    if (!ExpandResponseFile(Arg + 1, Saver, Tokenizer, ExpandedArgv)) {
+    if (!ExpandResponseFile(Arg + 1, Saver, Tokenizer, ExpandedArgv,
+                            MarkEOLs)) {
       // We couldn't read this file, so we leave it in the argument stream and
       // move on.
       AllExpanded = false;

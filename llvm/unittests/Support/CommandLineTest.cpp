@@ -153,14 +153,14 @@ class StrDupSaver : public cl::StringSaver {
 };
 
 typedef void ParserFunction(StringRef Source, llvm::cl::StringSaver &Saver,
-                            SmallVectorImpl<const char *> &NewArgv);
-
+                            SmallVectorImpl<const char *> &NewArgv,
+                            bool MarkEOLs);
 
 void testCommandLineTokenizer(ParserFunction *parse, const char *Input,
                               const char *const Output[], size_t OutputSize) {
   SmallVector<const char *, 0> Actual;
   StrDupSaver Saver;
-  parse(Input, Saver, Actual);
+  parse(Input, Saver, Actual, /*MarkEOLs=*/false);
   EXPECT_EQ(OutputSize, Actual.size());
   for (unsigned I = 0, E = Actual.size(); I != E; ++I) {
     if (I < OutputSize)

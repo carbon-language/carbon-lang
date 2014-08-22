@@ -1790,9 +1790,12 @@ public:
 ///
 /// \param [in] Source The string to be split on whitespace with quotes.
 /// \param [in] Saver Delegates back to the caller for saving parsed strings.
+/// \param [in] MarkEOLs true if tokenizing a response file and you want end of
+/// lines and end of the response file to be marked with a nullptr string.
 /// \param [out] NewArgv All parsed strings are appended to NewArgv.
 void TokenizeGNUCommandLine(StringRef Source, StringSaver &Saver,
-                            SmallVectorImpl<const char *> &NewArgv);
+                            SmallVectorImpl<const char *> &NewArgv,
+                            bool MarkEOLs = false);
 
 /// \brief Tokenizes a Windows command line which may contain quotes and escaped
 /// quotes.
@@ -1802,25 +1805,36 @@ void TokenizeGNUCommandLine(StringRef Source, StringSaver &Saver,
 ///
 /// \param [in] Source The string to be split on whitespace with quotes.
 /// \param [in] Saver Delegates back to the caller for saving parsed strings.
+/// \param [in] MarkEOLs true if tokenizing a response file and you want end of
+/// lines and end of the response file to be marked with a nullptr string.
 /// \param [out] NewArgv All parsed strings are appended to NewArgv.
 void TokenizeWindowsCommandLine(StringRef Source, StringSaver &Saver,
-                                SmallVectorImpl<const char *> &NewArgv);
+                                SmallVectorImpl<const char *> &NewArgv,
+                                bool MarkEOLs = false);
 
 /// \brief String tokenization function type.  Should be compatible with either
 /// Windows or Unix command line tokenizers.
 typedef void (*TokenizerCallback)(StringRef Source, StringSaver &Saver,
-                                  SmallVectorImpl<const char *> &NewArgv);
+                                  SmallVectorImpl<const char *> &NewArgv,
+                                  bool MarkEOLs);
 
 /// \brief Expand response files on a command line recursively using the given
 /// StringSaver and tokenization strategy.  Argv should contain the command line
-/// before expansion and will be modified in place.
+/// before expansion and will be modified in place. If requested, Argv will
+/// also be populated with nullptrs indicating where each response file line
+/// ends, which is useful for the "/link" argument that needs to consume all
+/// remaining arguments only until the next end of line, when in a response
+/// file.
 ///
 /// \param [in] Saver Delegates back to the caller for saving parsed strings.
 /// \param [in] Tokenizer Tokenization strategy. Typically Unix or Windows.
 /// \param [in,out] Argv Command line into which to expand response files.
+/// \param [in] MarkEOLs Mark end of lines and the end of the response file
+/// with nullptrs in the Argv vector.
 /// \return true if all @files were expanded successfully or there were none.
 bool ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
-                         SmallVectorImpl<const char *> &Argv);
+                         SmallVectorImpl<const char *> &Argv,
+                         bool MarkEOLs = false);
 
 } // End namespace cl
 
