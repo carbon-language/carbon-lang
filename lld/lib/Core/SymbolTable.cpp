@@ -398,12 +398,9 @@ std::vector<const UndefinedAtom *> SymbolTable::undefines() {
   for (auto it : _nameTable) {
     const Atom *atom = it.second;
     assert(atom != nullptr);
-    if (const auto undef = dyn_cast<const UndefinedAtom>(atom)) {
-      AtomToAtom::iterator pos = _replacedAtoms.find(undef);
-      if (pos != _replacedAtoms.end())
-        continue;
-      ret.push_back(undef);
-    }
+    if (const auto *undef = dyn_cast<const UndefinedAtom>(atom))
+      if (_replacedAtoms.count(undef) == 0)
+        ret.push_back(undef);
   }
   return ret;
 }
