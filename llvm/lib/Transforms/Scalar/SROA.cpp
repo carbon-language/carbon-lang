@@ -324,6 +324,15 @@ static Value *foldSelectInst(SelectInst &SI) {
   return nullptr;
 }
 
+/// \brief A helper that folds a PHI node or a select.
+static Value *foldPHINodeOrSelectInst(Instruction &I) {
+  if (PHINode *PN = dyn_cast<PHINode>(&I)) {
+    // If PN merges together the same value, return that value.
+    return PN->hasConstantValue();
+  }
+  return foldSelectInst(cast<SelectInst>(I));
+}
+
 /// \brief Builder for the alloca slices.
 ///
 /// This class builds a set of alloca slices by recursively visiting the uses
@@ -646,57 +655,40 @@ private:
     return nullptr;
   }
 
-  void visitPHINode(PHINode &PN) {
-    if (PN.use_empty())
-      return markAsDead(PN);
-    if (!IsOffsetKnown)
-      return PI.setAborted(&PN);
+  void visitPHINodeOrSelectInst(Instruction &I) {
+    assert(isa<PHINode>(I) || isa<SelectInst>(I));
+    if (I.use_empty())
+      return markAsDead(I);
 
-    // See if we already have computed info on this node.
-    uint64_t &PHISize = PHIOrSelectSizes[&PN];
-    if (!PHISize) {
-      // This is a new PHI node, check for an unsafe use of the PHI node.
-      if (Instruction *UnsafeI = hasUnsafePHIOrSelectUse(&PN, PHISize))
-        return PI.setAborted(UnsafeI);
-    }
-
-    // For PHI and select operands outside the alloca, we can't nuke the entire
-    // phi or select -- the other side might still be relevant, so we special
-    // case them here and use a separate structure to track the operands
-    // themselves which should be replaced with undef.
-    // FIXME: This should instead be escaped in the event we're instrumenting
-    // for address sanitization.
-    if (Offset.uge(AllocSize)) {
-      S.DeadOperands.push_back(U);
-      return;
-    }
-
-    insertUse(PN, Offset, PHISize);
-  }
-
-  void visitSelectInst(SelectInst &SI) {
-    if (SI.use_empty())
-      return markAsDead(SI);
-    if (Value *Result = foldSelectInst(SI)) {
+    // TODO: We could use SimplifyInstruction here to fold PHINodes and
+    // SelectInsts. However, doing so requires to change the current
+    // dead-operand-tracking mechanism. For instance, suppose neither loading
+    // from %U nor %other traps. Then "load (select undef, %U, %other)" does not
+    // trap either.  However, if we simply replace %U with undef using the
+    // current dead-operand-tracking mechanism, "load (select undef, undef,
+    // %other)" may trap because the select may return the first operand
+    // "undef".
+    if (Value *Result = foldPHINodeOrSelectInst(I)) {
       if (Result == *U)
         // If the result of the constant fold will be the pointer, recurse
-        // through the select as if we had RAUW'ed it.
-        enqueueUsers(SI);
+        // through the PHI/select as if we had RAUW'ed it.
+        enqueueUsers(I);
       else
-        // Otherwise the operand to the select is dead, and we can replace it
-        // with undef.
+        // Otherwise the operand to the PHI/select is dead, and we can replace
+        // it with undef.
         S.DeadOperands.push_back(U);
 
       return;
     }
+
     if (!IsOffsetKnown)
-      return PI.setAborted(&SI);
+      return PI.setAborted(&I);
 
     // See if we already have computed info on this node.
-    uint64_t &SelectSize = PHIOrSelectSizes[&SI];
-    if (!SelectSize) {
-      // This is a new Select, check for an unsafe use of it.
-      if (Instruction *UnsafeI = hasUnsafePHIOrSelectUse(&SI, SelectSize))
+    uint64_t &Size = PHIOrSelectSizes[&I];
+    if (!Size) {
+      // This is a new PHI/Select, check for an unsafe use of it.
+      if (Instruction *UnsafeI = hasUnsafePHIOrSelectUse(&I, Size))
         return PI.setAborted(UnsafeI);
     }
 
@@ -711,7 +703,15 @@ private:
       return;
     }
 
-    insertUse(SI, Offset, SelectSize);
+    insertUse(I, Offset, Size);
+  }
+
+  void visitPHINode(PHINode &PN) {
+    visitPHINodeOrSelectInst(PN);
+  }
+
+  void visitSelectInst(SelectInst &SI) {
+    visitPHINodeOrSelectInst(SI);
   }
 
   /// \brief Disable SROA entirely if there are unhandled users of the alloca.
