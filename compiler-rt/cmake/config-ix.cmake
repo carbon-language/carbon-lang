@@ -45,9 +45,11 @@ check_cxx_compiler_flag(/wd4722 COMPILER_RT_HAS_WD4722_FLAG)
 check_symbol_exists(__func__ "" COMPILER_RT_HAS_FUNC_SYMBOL)
 
 # Libraries.
-check_library_exists(m pow "" COMPILER_RT_HAS_LIBM)
+check_library_exists(c printf "" COMPILER_RT_HAS_LIBC)
 check_library_exists(dl dlopen "" COMPILER_RT_HAS_LIBDL)
+check_library_exists(m pow "" COMPILER_RT_HAS_LIBM)
 check_library_exists(pthread pthread_create "" COMPILER_RT_HAS_LIBPTHREAD)
+check_library_exists(stdc++ __cxa_throw "" COMPILER_RT_HAS_LIBSTDCXX)
 
 # Architectures.
 
