@@ -69,6 +69,9 @@ public:
   /// Return true if the value is negative zero or null value.
   bool isZeroValue() const;
 
+  /// \brief Return true if the value is not the smallest signed value.
+  bool isNotMinSignedValue() const;
+
   /// \brief Return true if the value is the smallest signed value.
   bool isMinSignedValue() const;
 

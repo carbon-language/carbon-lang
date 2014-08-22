@@ -521,3 +521,11 @@ define i4 @test43(i4 %x, i4 %y) {
 ; CHECK-NEXT: [[RET:%.*]] = sub nuw i4 [[OR]], [[AND]]
 ; CHECK: ret i4 [[RET]]
 }
+
+define i32 @test44(i32 %x) {
+  %sub = sub nsw i32 %x, 32768
+  ret i32 %sub
+; CHECK-LABEL: @test44(
+; CHECK-NEXT: [[ADD:%.*]] = add nsw i32 %x, -32768
+; CHECK: ret i32 [[ADD]]
+}

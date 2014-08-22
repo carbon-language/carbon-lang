@@ -1539,6 +1539,9 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
              "Expected a subtraction operator!");
       if (BO->hasNoSignedWrap() && I.hasNoSignedWrap())
         Res->setHasNoSignedWrap(true);
+    } else {
+      if (cast<Constant>(Op1)->isNotMinSignedValue() && I.hasNoSignedWrap())
+        Res->setHasNoSignedWrap(true);
     }
 
     return Res;
@@ -1629,7 +1632,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
     // 0 - (X sdiv C)  -> (X sdiv -C)  provided the negation doesn't overflow.
     if (match(Op1, m_SDiv(m_Value(X), m_Constant(C))) && match(Op0, m_Zero()) &&
-        !C->isMinSignedValue() && !C->isOneValue())
+        C->isNotMinSignedValue() && !C->isOneValue())
       return BinaryOperator::CreateSDiv(X, ConstantExpr::getNeg(C));
 
     // 0 - (X << Y)  -> (-X << Y)   when X is freely negatable.
