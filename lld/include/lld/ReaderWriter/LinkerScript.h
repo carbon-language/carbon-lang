@@ -58,7 +58,7 @@ class Lexer {
 public:
   explicit Lexer(std::unique_ptr<MemoryBuffer> mb)
       : _buffer(mb->getBuffer()) {
-    _sourceManager.AddNewSourceBuffer(mb.release(), llvm::SMLoc());
+    _sourceManager.AddNewSourceBuffer(std::move(mb), llvm::SMLoc());
   }
 
   void lex(Token &tok);
