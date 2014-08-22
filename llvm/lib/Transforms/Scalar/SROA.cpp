@@ -2422,6 +2422,7 @@ private:
     if (!VecTy && !IntTy &&
         (BeginOffset > NewAllocaBeginOffset ||
          EndOffset < NewAllocaEndOffset ||
+         SliceSize != DL.getTypeStoreSize(AllocaTy) ||
          !AllocaTy->isSingleValueType() ||
          !DL.isLegalInteger(DL.getTypeSizeInBits(ScalarTy)) ||
          DL.getTypeSizeInBits(ScalarTy)%8 != 0)) {
@@ -2544,10 +2545,11 @@ private:
 
     // If this doesn't map cleanly onto the alloca type, and that type isn't
     // a single value type, just emit a memcpy.
-    bool EmitMemCpy
-      = !VecTy && !IntTy && (BeginOffset > NewAllocaBeginOffset ||
-                             EndOffset < NewAllocaEndOffset ||
-                             !NewAI.getAllocatedType()->isSingleValueType());
+    bool EmitMemCpy =
+        !VecTy && !IntTy &&
+        (BeginOffset > NewAllocaBeginOffset || EndOffset < NewAllocaEndOffset ||
+         SliceSize != DL.getTypeStoreSize(NewAI.getAllocatedType()) ||
+         !NewAI.getAllocatedType()->isSingleValueType());
 
     // If we're just going to emit a memcpy, the alloca hasn't changed, and the
     // size hasn't been shrunk based on analysis of the viable range, this is
