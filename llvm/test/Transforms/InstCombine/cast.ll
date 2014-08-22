@@ -1022,7 +1022,19 @@ define i64 @test83(i16 %a, i64 %k) {
   ret i64 %sh_prom1
 
 ; CHECK-LABEL: @test83(
-; CHECK: %sub = add nsw i64 %k, 4294967295
+; CHECK: %sub = add i64 %k, 4294967295
 ; CHECK: %sh_prom = trunc i64 %sub to i32
 ; CHECK: %shl = shl i32 %conv, %sh_prom
+}
+
+define i8 @test84(i32 %a) {
+  %add = add nsw i32 %a, -16777216
+  %shr = lshr exact i32 %add, 23
+  %trunc = trunc i32 %shr to i8
+  ret i8 %trunc
+
+; CHECK-LABEL: @test84(
+; CHECK: [[ADD:%.*]] = add i32 %a, 2130706432
+; CHECK: [[SHR:%.*]] = lshr exact i32 [[ADD]], 23
+; CHECK: [[CST:%.*]] = trunc i32 [[SHR]] to i8
 }
