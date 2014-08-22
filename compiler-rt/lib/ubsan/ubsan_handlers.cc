@@ -27,13 +27,13 @@ namespace __ubsan {
 }
 
 static void handleTypeMismatchImpl(TypeMismatchData *Data, ValueHandle Pointer,
-                                   Location FallbackLoc, bool Abort) {
+                                   Location FallbackLoc, ReportOptions Opts) {
   Location Loc = Data->Loc.acquire();
   // Use the SourceLocation from Data to track deduplication, even if 'invalid'
   if (Loc.getSourceLocation().isDisabled())
     return;
 
-  ScopedReport R(Abort);
+  ScopedReport R(Opts);
 
   if (Data->Loc.isInvalid())
     Loc = FallbackLoc;
@@ -56,22 +56,25 @@ static void handleTypeMismatchImpl(TypeMismatchData *Data, ValueHandle Pointer,
 
 void __ubsan::__ubsan_handle_type_mismatch(TypeMismatchData *Data,
                                            ValueHandle Pointer) {
-  handleTypeMismatchImpl(Data, Pointer, getCallerLocation(), false);
+  GET_REPORT_OPTIONS(false);
+  handleTypeMismatchImpl(Data, Pointer, getCallerLocation(), Opts);
 }
 void __ubsan::__ubsan_handle_type_mismatch_abort(TypeMismatchData *Data,
                                                  ValueHandle Pointer) {
-  handleTypeMismatchImpl(Data, Pointer, getCallerLocation(), true);
+  GET_REPORT_OPTIONS(true);
+  handleTypeMismatchImpl(Data, Pointer, getCallerLocation(), Opts);
 }
 
 /// \brief Common diagnostic emission for various forms of integer overflow.
 template <typename T>
 static void handleIntegerOverflowImpl(OverflowData *Data, ValueHandle LHS,
-                                      const char *Operator, T RHS, bool Abort) {
+                                      const char *Operator, T RHS,
+                                      ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
   if (Loc.isDisabled())
     return;
 
-  ScopedReport R(Abort);
+  ScopedReport R(Opts);
 
   Diag(Loc, DL_Error, "%0 integer overflow: "
                       "%1 %2 %3 cannot be represented in type %4")
@@ -82,7 +85,8 @@ static void handleIntegerOverflowImpl(OverflowData *Data, ValueHandle LHS,
 #define UBSAN_OVERFLOW_HANDLER(handler_name, op, abort)                        \
   void __ubsan::handler_name(OverflowData *Data, ValueHandle LHS,              \
                              ValueHandle RHS) {                                \
-    handleIntegerOverflowImpl(Data, LHS, op, Value(Data->Type, RHS), abort);   \
+    GET_REPORT_OPTIONS(abort);                                                 \
+    handleIntegerOverflowImpl(Data, LHS, op, Value(Data->Type, RHS), Opts);    \
   }
 
 UBSAN_OVERFLOW_HANDLER(__ubsan_handle_add_overflow, "+", false)
@@ -93,12 +97,12 @@ UBSAN_OVERFLOW_HANDLER(__ubsan_handle_mul_overflow, "*", false)
 UBSAN_OVERFLOW_HANDLER(__ubsan_handle_mul_overflow_abort, "*", true)
 
 static void handleNegateOverflowImpl(OverflowData *Data, ValueHandle OldVal,
-                                     bool Abort) {
+                                     ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
   if (Loc.isDisabled())
     return;
 
-  ScopedReport R(Abort);
+  ScopedReport R(Opts);
 
   if (Data->Type.isSignedIntegerTy())
     Diag(Loc, DL_Error,
@@ -113,20 +117,22 @@ static void handleNegateOverflowImpl(OverflowData *Data, ValueHandle OldVal,
 
 void __ubsan::__ubsan_handle_negate_overflow(OverflowData *Data,
                                              ValueHandle OldVal) {
-  handleNegateOverflowImpl(Data, OldVal, false);
+  GET_REPORT_OPTIONS(false);
+  handleNegateOverflowImpl(Data, OldVal, Opts);
 }
 void __ubsan::__ubsan_handle_negate_overflow_abort(OverflowData *Data,
                                                     ValueHandle OldVal) {
-  handleNegateOverflowImpl(Data, OldVal, true);
+  GET_REPORT_OPTIONS(true);
+  handleNegateOverflowImpl(Data, OldVal, Opts);
 }
 
 static void handleDivremOverflowImpl(OverflowData *Data, ValueHandle LHS,
-                                     ValueHandle RHS, bool Abort) {
+                                     ValueHandle RHS, ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
   if (Loc.isDisabled())
     return;
 
-  ScopedReport R(Abort);
+  ScopedReport R(Opts);
 
   Value LHSVal(Data->Type, LHS);
   Value RHSVal(Data->Type, RHS);
@@ -140,22 +146,24 @@ static void handleDivremOverflowImpl(OverflowData *Data, ValueHandle LHS,
 
 void __ubsan::__ubsan_handle_divrem_overflow(OverflowData *Data,
                                              ValueHandle LHS, ValueHandle RHS) {
-  handleDivremOverflowImpl(Data, LHS, RHS, false);
+  GET_REPORT_OPTIONS(false);
+  handleDivremOverflowImpl(Data, LHS, RHS, Opts);
 }
 void __ubsan::__ubsan_handle_divrem_overflow_abort(OverflowData *Data,
                                                     ValueHandle LHS,
                                                     ValueHandle RHS) {
-  handleDivremOverflowImpl(Data, LHS, RHS, true);
+  GET_REPORT_OPTIONS(true);
+  handleDivremOverflowImpl(Data, LHS, RHS, Opts);
 }
 
 static void handleShiftOutOfBoundsImpl(ShiftOutOfBoundsData *Data,
                                        ValueHandle LHS, ValueHandle RHS,
-                                       bool Abort) {
+                                       ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
   if (Loc.isDisabled())
     return;
 
-  ScopedReport R(Abort);
+  ScopedReport R(Opts);
 
   Value LHSVal(Data->LHSType, LHS);
   Value RHSVal(Data->RHSType, RHS);
@@ -176,22 +184,24 @@ static void handleShiftOutOfBoundsImpl(ShiftOutOfBoundsData *Data,
 void __ubsan::__ubsan_handle_shift_out_of_bounds(ShiftOutOfBoundsData *Data,
                                                  ValueHandle LHS,
                                                  ValueHandle RHS) {
-  handleShiftOutOfBoundsImpl(Data, LHS, RHS, false);
+  GET_REPORT_OPTIONS(false);
+  handleShiftOutOfBoundsImpl(Data, LHS, RHS, Opts);
 }
 void __ubsan::__ubsan_handle_shift_out_of_bounds_abort(
                                                      ShiftOutOfBoundsData *Data,
                                                      ValueHandle LHS,
                                                      ValueHandle RHS) {
-  handleShiftOutOfBoundsImpl(Data, LHS, RHS, true);
+  GET_REPORT_OPTIONS(true);
+  handleShiftOutOfBoundsImpl(Data, LHS, RHS, Opts);
 }
 
 static void handleOutOfBoundsImpl(OutOfBoundsData *Data, ValueHandle Index,
-                                  bool Abort) {
+                                  ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
   if (Loc.isDisabled())
     return;
 
-  ScopedReport R(Abort);
+  ScopedReport R(Opts);
 
   Value IndexVal(Data->IndexType, Index);
   Diag(Loc, DL_Error, "index %0 out of bounds for type %1")
@@ -200,32 +210,36 @@ static void handleOutOfBoundsImpl(OutOfBoundsData *Data, ValueHandle Index,
 
 void __ubsan::__ubsan_handle_out_of_bounds(OutOfBoundsData *Data,
                                            ValueHandle Index) {
-  handleOutOfBoundsImpl(Data, Index, false);
+  GET_REPORT_OPTIONS(false);
+  handleOutOfBoundsImpl(Data, Index, Opts);
 }
 void __ubsan::__ubsan_handle_out_of_bounds_abort(OutOfBoundsData *Data,
                                                  ValueHandle Index) {
-  handleOutOfBoundsImpl(Data, Index, true);
+  GET_REPORT_OPTIONS(true);
+  handleOutOfBoundsImpl(Data, Index, Opts);
 }
 
 void __ubsan::__ubsan_handle_builtin_unreachable(UnreachableData *Data) {
-  ScopedReport R(true);
+  GET_REPORT_OPTIONS(true);
+  ScopedReport R(Opts);
   Diag(Data->Loc, DL_Error, "execution reached a __builtin_unreachable() call");
 }
 
 void __ubsan::__ubsan_handle_missing_return(UnreachableData *Data) {
-  ScopedReport R(true);
+  GET_REPORT_OPTIONS(true);
+  ScopedReport R(Opts);
   Diag(Data->Loc, DL_Error,
        "execution reached the end of a value-returning function "
        "without returning a value");
 }
 
 static void handleVLABoundNotPositive(VLABoundData *Data, ValueHandle Bound,
-                                      bool Abort) {
+                                      ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
   if (Loc.isDisabled())
     return;
 
-  ScopedReport R(Abort);
+  ScopedReport R(Opts);
 
   Diag(Loc, DL_Error, "variable length array bound evaluates to "
                       "non-positive value %0")
@@ -234,18 +248,19 @@ static void handleVLABoundNotPositive(VLABoundData *Data, ValueHandle Bound,
 
 void __ubsan::__ubsan_handle_vla_bound_not_positive(VLABoundData *Data,
                                                     ValueHandle Bound) {
-  handleVLABoundNotPositive(Data, Bound, false);
+  GET_REPORT_OPTIONS(false);
+  handleVLABoundNotPositive(Data, Bound, Opts);
 }
 void __ubsan::__ubsan_handle_vla_bound_not_positive_abort(VLABoundData *Data,
                                                           ValueHandle Bound) {
-  handleVLABoundNotPositive(Data, Bound, true);
+  GET_REPORT_OPTIONS(true);
+  handleVLABoundNotPositive(Data, Bound, Opts);
 }
 
-
-static void handleFloatCastOverflow(FloatCastOverflowData *Data, ValueHandle From,
-                                    bool Abort) {
+static void handleFloatCastOverflow(FloatCastOverflowData *Data,
+                                    ValueHandle From, ReportOptions Opts) {
   // TODO: Add deduplication once a SourceLocation is generated for this check.
-  ScopedReport R(Abort);
+  ScopedReport R(Opts);
 
   Diag(getCallerLocation(), DL_Error,
        "value %0 is outside the range of representable values of type %2")
@@ -254,21 +269,23 @@ static void handleFloatCastOverflow(FloatCastOverflowData *Data, ValueHandle Fro
 
 void __ubsan::__ubsan_handle_float_cast_overflow(FloatCastOverflowData *Data,
                                                  ValueHandle From) {
-  handleFloatCastOverflow(Data, From, false);
+  GET_REPORT_OPTIONS(false);
+  handleFloatCastOverflow(Data, From, Opts);
 }
 void
 __ubsan::__ubsan_handle_float_cast_overflow_abort(FloatCastOverflowData *Data,
                                                   ValueHandle From) {
-  handleFloatCastOverflow(Data, From, true);
+  GET_REPORT_OPTIONS(true);
+  handleFloatCastOverflow(Data, From, Opts);
 }
 
 static void handleLoadInvalidValue(InvalidValueData *Data, ValueHandle Val,
-                                   bool Abort) {
+                                   ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
   if (Loc.isDisabled())
     return;
 
-  ScopedReport R(Abort);
+  ScopedReport R(Opts);
 
   Diag(Loc, DL_Error,
        "load of value %0, which is not a valid value for type %1")
@@ -277,20 +294,23 @@ static void handleLoadInvalidValue(InvalidValueData *Data, ValueHandle Val,
 
 void __ubsan::__ubsan_handle_load_invalid_value(InvalidValueData *Data,
                                                 ValueHandle Val) {
-  handleLoadInvalidValue(Data, Val, false);
+  GET_REPORT_OPTIONS(false);
+  handleLoadInvalidValue(Data, Val, Opts);
 }
 void __ubsan::__ubsan_handle_load_invalid_value_abort(InvalidValueData *Data,
                                                       ValueHandle Val) {
-  handleLoadInvalidValue(Data, Val, true);
+  GET_REPORT_OPTIONS(true);
+  handleLoadInvalidValue(Data, Val, Opts);
 }
 
 static void handleFunctionTypeMismatch(FunctionTypeMismatchData *Data,
-    ValueHandle Function, bool Abort) {
+                                       ValueHandle Function,
+                                       ReportOptions Opts) {
   const char *FName = "(unknown)";
 
   Location Loc = getFunctionLocation(Function, &FName);
 
-  ScopedReport R(Abort);
+  ScopedReport R(Opts);
 
   Diag(Data->Loc, DL_Error,
        "call to function %0 through pointer to incorrect function type %1")
@@ -301,29 +321,33 @@ static void handleFunctionTypeMismatch(FunctionTypeMismatchData *Data,
 void
 __ubsan::__ubsan_handle_function_type_mismatch(FunctionTypeMismatchData *Data,
                                                ValueHandle Function) {
-  handleFunctionTypeMismatch(Data, Function, false);
+  GET_REPORT_OPTIONS(false);
+  handleFunctionTypeMismatch(Data, Function, Opts);
 }
 
 void __ubsan::__ubsan_handle_function_type_mismatch_abort(
     FunctionTypeMismatchData *Data, ValueHandle Function) {
-  handleFunctionTypeMismatch(Data, Function, true);
+  GET_REPORT_OPTIONS(true);
+  handleFunctionTypeMismatch(Data, Function, Opts);
 }
 
-static void handleNonnullReturn(NonNullReturnData *Data, bool Abort) {
+static void handleNonnullReturn(NonNullReturnData *Data, ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
   if (Loc.isDisabled())
     return;
 
-  ScopedReport R(Abort);
+  ScopedReport R(Opts);
 
   Diag(Loc, DL_Error, "null pointer returned from function declared to never "
                       "return null");
 }
 
 void __ubsan::__ubsan_handle_nonnull_return(NonNullReturnData *Data) {
-  handleNonnullReturn(Data, false);
+  GET_REPORT_OPTIONS(false);
+  handleNonnullReturn(Data, Opts);
 }
 
 void __ubsan::__ubsan_handle_nonnull_return_abort(NonNullReturnData *Data) {
-  handleNonnullReturn(Data, true);
+  GET_REPORT_OPTIONS(true);
+  handleNonnullReturn(Data, Opts);
 }

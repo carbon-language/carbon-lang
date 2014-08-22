@@ -24,6 +24,10 @@ struct TypeMismatchData {
   unsigned char TypeCheckKind;
 };
 
+#define UNRECOVERABLE(checkname, ...) \
+  extern "C" SANITIZER_INTERFACE_ATTRIBUTE \
+    void __ubsan_handle_ ## checkname( __VA_ARGS__ );
+
 #define RECOVERABLE(checkname, ...) \
   extern "C" SANITIZER_INTERFACE_ATTRIBUTE \
     void __ubsan_handle_ ## checkname( __VA_ARGS__ ); \
@@ -81,11 +85,9 @@ struct UnreachableData {
 };
 
 /// \brief Handle a __builtin_unreachable which is reached.
-extern "C" SANITIZER_INTERFACE_ATTRIBUTE
-void __ubsan_handle_builtin_unreachable(UnreachableData *Data);
+UNRECOVERABLE(builtin_unreachable, UnreachableData *Data)
 /// \brief Handle reaching the end of a value-returning function.
-extern "C" SANITIZER_INTERFACE_ATTRIBUTE
-void __ubsan_handle_missing_return(UnreachableData *Data);
+UNRECOVERABLE(missing_return, UnreachableData *Data)
 
 struct VLABoundData {
   SourceLocation Loc;

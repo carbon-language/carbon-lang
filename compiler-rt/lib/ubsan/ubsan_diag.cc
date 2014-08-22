@@ -21,7 +21,7 @@
 
 using namespace __ubsan;
 
-void __ubsan::MaybePrintStackTrace(uptr pc, uptr bp) {
+static void MaybePrintStackTrace(uptr pc, uptr bp) {
   // We assume that flags are already parsed: InitIfNecessary
   // will definitely be called when we print the first diagnostics message.
   if (!flags()->print_stacktrace)
@@ -301,15 +301,15 @@ Diag::~Diag() {
                         NumRanges, Args);
 }
 
-ScopedReport::ScopedReport(bool DieAfterReport)
-    : DieAfterReport(DieAfterReport) {
+ScopedReport::ScopedReport(ReportOptions Opts) : Opts(Opts) {
   InitIfNecessary();
   CommonSanitizerReportMutex.Lock();
 }
 
 ScopedReport::~ScopedReport() {
+  MaybePrintStackTrace(Opts.pc, Opts.bp);
   CommonSanitizerReportMutex.Unlock();
-  if (DieAfterReport)
+  if (Opts.DieAfterReport)
     Die();
 }
 

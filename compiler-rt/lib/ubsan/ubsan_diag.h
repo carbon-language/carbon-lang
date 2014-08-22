@@ -205,17 +205,27 @@ public:
   Diag &operator<<(const Range &R) { return AddRange(R); }
 };
 
-void MaybePrintStackTrace(uptr pc, uptr bp);
+struct ReportOptions {
+  /// If DieAfterReport is specified, UBSan will terminate the program after the
+  /// report is printed.
+  bool DieAfterReport;
+  /// pc/bp are used to unwind the stack trace.
+  uptr pc;
+  uptr bp;
+};
+
+#define GET_REPORT_OPTIONS(die_after_report) \
+    GET_CALLER_PC_BP; \
+    ReportOptions Opts = {die_after_report, pc, bp}
 
 /// \brief Instantiate this class before printing diagnostics in the error
 /// report. This class ensures that reports from different threads and from
-/// different sanitizers won't be mixed. If DieAfterReport is specified, it
-/// will terminate the program in the destructor.
+/// different sanitizers won't be mixed.
 class ScopedReport {
-  bool DieAfterReport;
+  ReportOptions Opts;
 
 public:
-  ScopedReport(bool DieAfterReport);
+  ScopedReport(ReportOptions Opts);
   ~ScopedReport();
 };
 
