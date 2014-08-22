@@ -50,81 +50,53 @@ static void computeKnownBitsAddSub(bool Add, Value *Op0, Value *Op1, bool NSW,
                                    APInt &KnownZero, APInt &KnownOne,
                                    APInt &KnownZero2, APInt &KnownOne2,
                                    const DataLayout *TD, unsigned Depth) {
-  if (!Add) {
-    if (ConstantInt *CLHS = dyn_cast<ConstantInt>(Op0)) {
-      // We know that the top bits of C-X are clear if X contains less bits
-      // than C (i.e. no wrap-around can happen).  For example, 20-X is
-      // positive if we can prove that X is >= 0 and < 16.
-      if (!CLHS->getValue().isNegative()) {
-        unsigned BitWidth = KnownZero.getBitWidth();
-        unsigned NLZ = (CLHS->getValue()+1).countLeadingZeros();
-        // NLZ can't be BitWidth with no sign bit
-        APInt MaskV = APInt::getHighBitsSet(BitWidth, NLZ+1);
-        llvm::computeKnownBits(Op1, KnownZero2, KnownOne2, TD, Depth+1);
-
-        // If all of the MaskV bits are known to be zero, then we know the
-        // output top bits are zero, because we now know that the output is
-        // from [0-C].
-        if ((KnownZero2 & MaskV) == MaskV) {
-          unsigned NLZ2 = CLHS->getValue().countLeadingZeros();
-          // Top bits known zero.
-          KnownZero = APInt::getHighBitsSet(BitWidth, NLZ2);
-        }
-      }
-    }
-  }
-
   unsigned BitWidth = KnownZero.getBitWidth();
 
-  // If one of the operands has trailing zeros, then the bits that the
-  // other operand has in those bit positions will be preserved in the
-  // result. For an add, this works with either operand. For a subtract,
-  // this only works if the known zeros are in the right operand.
+  // If an initial sequence of bits in the result is not needed, the
+  // corresponding bits in the operands are not needed.
   APInt LHSKnownZero(BitWidth, 0), LHSKnownOne(BitWidth, 0);
   llvm::computeKnownBits(Op0, LHSKnownZero, LHSKnownOne, TD, Depth+1);
-  unsigned LHSKnownZeroOut = LHSKnownZero.countTrailingOnes();
-
   llvm::computeKnownBits(Op1, KnownZero2, KnownOne2, TD, Depth+1);
-  unsigned RHSKnownZeroOut = KnownZero2.countTrailingOnes();
 
-  // Determine which operand has more trailing zeros, and use that
-  // many bits from the other operand.
-  if (LHSKnownZeroOut > RHSKnownZeroOut) {
-    if (Add) {
-      APInt Mask = APInt::getLowBitsSet(BitWidth, LHSKnownZeroOut);
-      KnownZero |= KnownZero2 & Mask;
-      KnownOne  |= KnownOne2 & Mask;
-    } else {
-      // If the known zeros are in the left operand for a subtract,
-      // fall back to the minimum known zeros in both operands.
-      KnownZero |= APInt::getLowBitsSet(BitWidth,
-                                        std::min(LHSKnownZeroOut,
-                                                 RHSKnownZeroOut));
-    }
-  } else if (RHSKnownZeroOut >= LHSKnownZeroOut) {
-    APInt Mask = APInt::getLowBitsSet(BitWidth, RHSKnownZeroOut);
-    KnownZero |= LHSKnownZero & Mask;
-    KnownOne  |= LHSKnownOne & Mask;
+  // Carry in a 1 for a subtract, rather than a 0.
+  APInt CarryIn(BitWidth, 0);
+  if (!Add) {
+    // Sum = LHS + ~RHS + 1
+    std::swap(KnownZero2, KnownOne2);
+    CarryIn.setBit(0);
   }
 
+  APInt PossibleSumZero = ~LHSKnownZero + ~KnownZero2 + CarryIn;
+  APInt PossibleSumOne = LHSKnownOne + KnownOne2 + CarryIn;
+
+  // Compute known bits of the carry.
+  APInt CarryKnownZero = ~(PossibleSumZero ^ LHSKnownZero ^ KnownZero2);
+  APInt CarryKnownOne = PossibleSumOne ^ LHSKnownOne ^ KnownOne2;
+
+  // Compute set of known bits (where all three relevant bits are known).
+  APInt LHSKnown = LHSKnownZero | LHSKnownOne;
+  APInt RHSKnown = KnownZero2 | KnownOne2;
+  APInt CarryKnown = CarryKnownZero | CarryKnownOne;
+  APInt Known = LHSKnown & RHSKnown & CarryKnown;
+
+  assert((PossibleSumZero & Known) == (PossibleSumOne & Known) &&
+         "known bits of sum differ");
+
+  // Compute known bits of the result.
+  KnownZero = ~PossibleSumOne & Known;
+  KnownOne = PossibleSumOne & Known;
+
   // Are we still trying to solve for the sign bit?
-  if (!KnownZero.isNegative() && !KnownOne.isNegative()) {
+  if (!Known.isNegative()) {
     if (NSW) {
-      if (Add) {
-        // Adding two positive numbers can't wrap into negative
-        if (LHSKnownZero.isNegative() && KnownZero2.isNegative())
-          KnownZero |= APInt::getSignBit(BitWidth);
-        // and adding two negative numbers can't wrap into positive.
-        else if (LHSKnownOne.isNegative() && KnownOne2.isNegative())
-          KnownOne |= APInt::getSignBit(BitWidth);
-      } else {
-        // Subtracting a negative number from a positive one can't wrap
-        if (LHSKnownZero.isNegative() && KnownOne2.isNegative())
-          KnownZero |= APInt::getSignBit(BitWidth);
-        // neither can subtracting a positive number from a negative one.
-        else if (LHSKnownOne.isNegative() && KnownZero2.isNegative())
-          KnownOne |= APInt::getSignBit(BitWidth);
-      }
+      // Adding two non-negative numbers, or subtracting a negative number from
+      // a non-negative one, can't wrap into negative.
+      if (LHSKnownZero.isNegative() && KnownZero2.isNegative())
+        KnownZero |= APInt::getSignBit(BitWidth);
+      // Adding two negative numbers, or subtracting a non-negative number from
+      // a negative one, can't wrap into non-negative.
+      else if (LHSKnownOne.isNegative() && KnownOne2.isNegative())
+        KnownOne |= APInt::getSignBit(BitWidth);
     }
   }
 }

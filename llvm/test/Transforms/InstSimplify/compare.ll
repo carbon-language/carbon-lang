@@ -969,3 +969,16 @@ define i1 @icmp_sdiv_neg1(i64 %a) {
 ; CHECK-NEXT: [[CMP:%.*]] = icmp ne i64 [[DIV]], 1073741824
 ; CHECK-NEXT: ret i1 [[CMP]]
 }
+
+define i1 @icmp_known_bits(i4 %x, i4 %y) {
+  %and1 = and i4 %y, -7
+  %and2 = and i4 %x, -7
+  %or1 = or i4 %and1, 2
+  %or2 = or i4 %and2, 2
+  %add = add i4 %or1, %or2
+  %cmp = icmp eq i4 %add, 0
+  ret i1 %cmp
+
+; CHECK-LABEL: @icmp_known_bits
+; CHECK-NEXT: ret i1 false
+}
