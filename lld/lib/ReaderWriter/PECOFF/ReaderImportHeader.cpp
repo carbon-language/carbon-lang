@@ -171,8 +171,9 @@ public:
 
 class FileImportLibrary : public File {
 public:
-  FileImportLibrary(std::unique_ptr<MemoryBuffer> mb, std::error_code &ec)
-      : File(mb->getBufferIdentifier(), kindSharedLibrary) {
+  FileImportLibrary(std::unique_ptr<MemoryBuffer> mb, std::error_code &ec,
+                    bool is64)
+      : File(mb->getBufferIdentifier(), kindSharedLibrary), _is64(is64) {
     const char *buf = mb->getBufferStart();
     const char *end = mb->getBufferEnd();
 
@@ -241,10 +242,17 @@ private:
   void addDefinedAtom(StringRef symbolName, StringRef dllName,
                       const COFFSharedLibraryAtom *dataAtom) {
     auto *atom = new (_alloc) FuncAtom(*this, symbolName);
-
-    // The first two byte of the atom is JMP instruction.
-    atom->addReference(std::unique_ptr<COFFReference>(
-        new COFFReference(dataAtom, 2, llvm::COFF::IMAGE_REL_I386_DIR32)));
+    COFFReference *ref;
+    if (_is64) {
+      ref = new COFFReference(dataAtom, 2, llvm::COFF::IMAGE_REL_AMD64_REL32,
+                              Reference::KindNamespace::COFF,
+                              Reference::KindArch::x86_64);
+    } else {
+      ref = new COFFReference(dataAtom, 2, llvm::COFF::IMAGE_REL_I386_DIR32,
+                              Reference::KindNamespace::COFF,
+                              Reference::KindArch::x86);
+    }
+    atom->addReference(std::unique_ptr<COFFReference>(ref));
     _definedAtoms._atoms.push_back(atom);
   }
 
@@ -285,10 +293,14 @@ private:
     std::string *str = new (_alloc) std::string(ret);
     return *str;
   }
+
+  bool _is64;
 };
 
 class COFFImportLibraryReader : public Reader {
 public:
+  COFFImportLibraryReader(bool is64) : _is64(is64) {}
+
   bool canParse(file_magic magic, StringRef,
                 const MemoryBuffer &mb) const override {
     if (mb.getBufferSize() < sizeof(COFF::ImportHeader))
@@ -300,18 +312,22 @@ public:
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
             std::vector<std::unique_ptr<File> > &result) const override {
     std::error_code ec;
-    auto file = std::unique_ptr<File>(new FileImportLibrary(std::move(mb), ec));
+    auto file =
+        std::unique_ptr<File>(new FileImportLibrary(std::move(mb), ec, _is64));
     if (ec)
       return ec;
     result.push_back(std::move(file));
     return std::error_code();
   }
+
+private:
+  bool _is64;
 };
 
 } // end anonymous namespace
 
-void Registry::addSupportCOFFImportLibraries() {
-  add(std::unique_ptr<Reader>(new COFFImportLibraryReader()));
+void Registry::addSupportCOFFImportLibraries(PECOFFLinkingContext &ctx) {
+  add(std::unique_ptr<Reader>(new COFFImportLibraryReader(ctx.is64Bit())));
 }
 
 } // end namespace lld

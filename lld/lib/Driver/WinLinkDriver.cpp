@@ -801,7 +801,7 @@ bool WinLinkDriver::linkPECOFF(int argc, const char **argv, raw_ostream &diag) {
 
   // Register possible input file parsers.
   ctx.registry().addSupportCOFFObjects(ctx);
-  ctx.registry().addSupportCOFFImportLibraries();
+  ctx.registry().addSupportCOFFImportLibraries(ctx);
   ctx.registry().addSupportArchives(ctx.logInputFiles());
   ctx.registry().addSupportNativeObjects();
   ctx.registry().addSupportYamlFiles();

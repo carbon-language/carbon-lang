@@ -59,6 +59,7 @@ public:
 
 protected:
   IdataAtom(Context &context, std::vector<uint8_t> data);
+  bool _is64;
 };
 
 /// A HintNameAtom represents a symbol that will be imported from a DLL at

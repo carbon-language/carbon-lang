@@ -122,7 +122,7 @@ public:
   void addSupportYamlFiles();
   void addSupportNativeObjects();
   void addSupportCOFFObjects(PECOFFLinkingContext &);
-  void addSupportCOFFImportLibraries();
+  void addSupportCOFFImportLibraries(PECOFFLinkingContext &);
   void addSupportMachOObjects(MachOLinkingContext &);
   void addSupportELFObjects(bool atomizeStrings, TargetHandlerBase *handler);
   void addSupportELFDynamicSharedObjects(bool useShlibUndefines,

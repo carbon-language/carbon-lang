@@ -66,7 +66,7 @@ public:
 class EdataPass : public lld::Pass {
 public:
   EdataPass(PECOFFLinkingContext &ctx)
-      : _ctx(ctx), _file(ctx), _stringOrdinal(1024) {}
+      : _ctx(ctx), _file(ctx), _is64(ctx.is64Bit()), _stringOrdinal(1024) {}
 
   void perform(std::unique_ptr<MutableFile> &file) override;
 
@@ -90,6 +90,7 @@ private:
 
   PECOFFLinkingContext &_ctx;
   VirtualFile _file;
+  bool _is64;
   int _stringOrdinal;
   mutable llvm::BumpPtrAllocator _alloc;
 };

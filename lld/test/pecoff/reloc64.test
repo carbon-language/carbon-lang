@@ -7,4 +7,4 @@
 
 CHECK:      Disassembly of section .text:
 CHECK-NEXT: .text:
-CHECK-NEXT:   1000:  e8 15 00 00 00   callq 21
+CHECK-NEXT:   1000:  e8 0b 00 00 00   callq 11

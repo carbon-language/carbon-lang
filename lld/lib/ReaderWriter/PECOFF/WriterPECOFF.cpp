@@ -579,28 +579,29 @@ void AtomChunk::applyRelocations64(uint8_t *buffer,
         *relocSite32 = targetAddr;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_REL32:
-        *relocSite32 = targetAddr - atomRva[atom] + ref->offsetInAtom() + 4;
+        *relocSite32 = targetAddr - atomRva[atom] - ref->offsetInAtom() - 4;
         break;
-
-#define REL32(x)                                                             \
-      case llvm::COFF::IMAGE_REL_AMD64_REL32_ ## x: {                        \
-        uint32_t off = targetAddr - atomRva[atom] + ref->offsetInAtom() + 4; \
-        *relocSite32 = off + x;                                              \
-      }
-      REL32(1);
-      REL32(2);
-      REL32(3);
-      REL32(4);
-      REL32(5);
-#undef CASE
-
+      case llvm::COFF::IMAGE_REL_AMD64_REL32_1:
+        *relocSite32 = targetAddr - atomRva[atom] - ref->offsetInAtom() - 3;
+        break;
+      case llvm::COFF::IMAGE_REL_AMD64_REL32_2:
+        *relocSite32 = targetAddr - atomRva[atom] - ref->offsetInAtom() - 2;
+        break;
+      case llvm::COFF::IMAGE_REL_AMD64_REL32_3:
+        *relocSite32 = targetAddr - atomRva[atom] - ref->offsetInAtom() - 1;
+        break;
+      case llvm::COFF::IMAGE_REL_AMD64_REL32_4:
+        *relocSite32 = targetAddr - atomRva[atom] - ref->offsetInAtom();
+        break;
+      case llvm::COFF::IMAGE_REL_AMD64_REL32_5:
+        *relocSite32 = targetAddr - atomRva[atom] - ref->offsetInAtom() + 1;
+        break;
       case llvm::COFF::IMAGE_REL_AMD64_SECTION:
         *relocSite16 = getSectionIndex(targetAddr, sectionRva);
         break;
       case llvm::COFF::IMAGE_REL_AMD64_SECREL:
         *relocSite32 = targetAddr - getSectionStartAddr(targetAddr, sectionRva);
         break;
-
       default:
         llvm::errs() << "Kind: " << (int)ref->kindValue() << "\n";
         llvm_unreachable("Unsupported relocation kind");

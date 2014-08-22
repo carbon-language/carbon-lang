@@ -1,0 +1,20 @@
+# RUN: yaml2obj %p/Inputs/hello64.obj.yaml > %t.obj
+
+# RUN: lld -flavor link /out:%t.exe /subsystem:windows /machine:x64 \
+# RUN:   /entry:main -- %t.obj %p/Inputs/hello64lib.lib
+# RUN: llvm-objdump -disassemble %t.exe | FileCheck %s
+
+CHECK: 6000: 48 83 ec 28             subq    $40, %rsp
+CHECK: 6004: 48 c7 c1 00 00 00 00    movq    $0, %rcx
+CHECK: 600b: 48 8d 15 f4 af ff ff    leaq    -20492(%rip), %rdx
+CHECK: 6012: 4c 8d 05 e7 af ff ff    leaq    -20505(%rip), %r8
+CHECK: 6019: 41 b9 00 00 00 00       movl    $0, %r9d
+CHECK: 601f: e8 0a 00 00 00          callq   10
+CHECK: 6024: b9 00 00 00 00          movl    $0, %ecx
+CHECK: 6029: e8 08 00 00 00          callq   8
+CHECK: 602e: ff 25 d4 cf ff ff       jmpq    *-12332(%rip)
+CHECK: 6034: cc                      int3
+CHECK: 6035: cc                      int3
+CHECK: 6036: ff 25 c4 cf ff ff       jmpq    *-12348(%rip)
+CHECK: 603c: cc                      int3
+CHECK: 603d: cc                      int3

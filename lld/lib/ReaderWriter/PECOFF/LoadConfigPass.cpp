@@ -42,8 +42,9 @@ LoadConfigAtom::LoadConfigAtom(VirtualFile &file, const DefinedAtom *sxdata,
     : COFFLinkerInternalAtom(
           file, file.getNextOrdinal(),
           std::vector<uint8_t>(sizeof(coff_load_configuration32))) {
-  addDir32Reloc(this, sxdata, offsetof(llvm::object::coff_load_configuration32,
-                                       SEHandlerTable));
+  addDir32Reloc(
+      this, sxdata, false,
+      offsetof(llvm::object::coff_load_configuration32, SEHandlerTable));
   auto *data = getContents<llvm::object::coff_load_configuration32>();
   data->SEHandlerCount = count;
 }

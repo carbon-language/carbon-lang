@@ -28,7 +28,8 @@ namespace idata {
 
 IdataAtom::IdataAtom(Context &context, std::vector<uint8_t> data)
     : COFFLinkerInternalAtom(context.dummyFile,
-                             context.dummyFile.getNextOrdinal(), data) {
+                             context.dummyFile.getNextOrdinal(), data),
+      _is64(context.is64) {
   context.file.addAtom(*this);
 }
 
@@ -78,15 +79,16 @@ void ImportDirectoryAtom::addRelocations(
   std::vector<ImportTableEntryAtom *> importAddressTables =
       createImportTableAtoms(context, sharedAtoms, true, ".idata.a");
 
-  addDir32NBReloc(this, importLookupTables[0],
+  addDir32NBReloc(this, importLookupTables[0], _is64,
                   offsetof(ImportDirectoryTableEntry, ImportLookupTableRVA));
-  addDir32NBReloc(this, importAddressTables[0],
+  addDir32NBReloc(this, importAddressTables[0], _is64,
                   offsetof(ImportDirectoryTableEntry, ImportAddressTableRVA));
   auto *atom = new (_alloc)
       COFFStringAtom(context.dummyFile, context.dummyFile.getNextOrdinal(),
                      ".idata", loadName);
   context.file.addAtom(*atom);
-  addDir32NBReloc(this, atom, offsetof(ImportDirectoryTableEntry, NameRVA));
+  addDir32NBReloc(this, atom, _is64,
+                  offsetof(ImportDirectoryTableEntry, NameRVA));
 }
 
 std::vector<ImportTableEntryAtom *> ImportDirectoryAtom::createImportTableAtoms(
@@ -104,7 +106,7 @@ std::vector<ImportTableEntryAtom *> ImportDirectoryAtom::createImportTableAtoms(
       entry = new (_alloc) ImportTableEntryAtom(context, 0, sectionName);
       HintNameAtom *hintName =
           new (_alloc) HintNameAtom(context, atom->hint(), atom->importName());
-      addDir32NBReloc(entry, hintName, 0);
+      addDir32NBReloc(entry, hintName, _is64, 0);
     }
     ret.push_back(entry);
     if (shouldAddReference)

@@ -43,11 +43,15 @@ private:
 
 class ImpSymbolFile : public SimpleFile {
 public:
-  ImpSymbolFile(StringRef defsym, StringRef undefsym, uint64_t ordinal)
+  ImpSymbolFile(StringRef defsym, StringRef undefsym, uint64_t ordinal,
+                bool is64)
       : SimpleFile(defsym), _undefined(*this, undefsym),
         _defined(*this, defsym, ordinal) {
-    _defined.addReference(std::unique_ptr<COFFReference>(
-        new COFFReference(&_undefined, 0, llvm::COFF::IMAGE_REL_I386_DIR32)));
+    auto *ref = is64 ? new COFFReference(&_undefined, 0,
+                                         llvm::COFF::IMAGE_REL_AMD64_ADDR32)
+                     : new COFFReference(&_undefined, 0,
+                                         llvm::COFF::IMAGE_REL_I386_DIR32);
+    _defined.addReference(std::unique_ptr<COFFReference>(ref));
     addAtom(_defined);
     addAtom(_undefined);
   };
@@ -148,17 +152,19 @@ class LocallyImportedSymbolFile : public impl::VirtualArchiveLibraryFile {
 public:
   LocallyImportedSymbolFile(const PECOFFLinkingContext &ctx)
       : VirtualArchiveLibraryFile("__imp_"),
-        _prefix(ctx.decorateSymbol("_imp_")), _ordinal(0) {}
+        _prefix(ctx.decorateSymbol("_imp_")), _is64(ctx.is64Bit()),
+        _ordinal(0) {}
 
   const File *find(StringRef sym, bool dataSymbolOnly) const override {
     if (!sym.startswith(_prefix))
       return nullptr;
     StringRef undef = sym.substr(_prefix.size());
-    return new (_alloc) impl::ImpSymbolFile(sym, undef, _ordinal++);
+    return new (_alloc) impl::ImpSymbolFile(sym, undef, _ordinal++, _is64);
   }
 
 private:
   std::string _prefix;
+  bool _is64;
   mutable uint64_t _ordinal;
   mutable llvm::BumpPtrAllocator _alloc;
 };

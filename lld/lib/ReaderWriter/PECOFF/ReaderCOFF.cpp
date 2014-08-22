@@ -138,6 +138,7 @@ private:
   std::error_code getSectionContents(StringRef sectionName,
                                      ArrayRef<uint8_t> &result);
   std::error_code getReferenceArch(Reference::KindArch &result);
+  std::error_code is64(bool &result);
   std::error_code addRelocationReferenceToAtoms();
   std::error_code findSection(StringRef name, const coff_section *&result);
   StringRef ArrayRefToString(ArrayRef<uint8_t> array);
@@ -188,6 +189,7 @@ private:
   _definedAtomLocations;
 
   uint64_t _ordinal;
+  bool _is64;
 };
 
 class BumpPtrStringSaver : public llvm::cl::StringSaver {
@@ -311,6 +313,8 @@ FileCOFF::FileCOFF(std::unique_ptr<MemoryBuffer> mb, std::error_code &ec)
 
 std::error_code FileCOFF::parse() {
   if (std::error_code ec = getReferenceArch(_referenceArch))
+    return ec;
+  if (std::error_code ec = is64(_is64))
     return ec;
 
   // Read the symbol table and atomize them if possible. Defined atoms
@@ -828,6 +832,14 @@ std::error_code FileCOFF::getReferenceArch(Reference::KindArch &result) {
   return llvm::object::object_error::parse_failed;
 }
 
+std::error_code FileCOFF::is64(bool &result) {
+  const llvm::object::coff_file_header *header = nullptr;
+  if (std::error_code ec = _obj->getHeader(header))
+    return ec;
+  result = (header->Machine == llvm::COFF::IMAGE_FILE_MACHINE_AMD64);
+  return std::error_code();
+}
+
 /// Add relocation information to atoms.
 std::error_code FileCOFF::addRelocationReferenceToAtoms() {
   // Relocation entries are defined for each section.
@@ -887,7 +899,8 @@ std::error_code FileCOFF::maybeCreateSXDataAtoms() {
       return ec;
     int offsetInAtom = i * sizeof(uint32_t);
     atom->addReference(std::unique_ptr<COFFReference>(new COFFReference(
-        handlerFunc, offsetInAtom, llvm::COFF::IMAGE_REL_I386_DIR32,
+        handlerFunc, offsetInAtom, _is64 ? llvm::COFF::IMAGE_REL_AMD64_ADDR32
+                                         : llvm::COFF::IMAGE_REL_I386_DIR32,
         Reference::KindNamespace::COFF, _referenceArch)));
   }
 
