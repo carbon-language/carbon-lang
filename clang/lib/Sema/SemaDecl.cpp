@@ -9300,7 +9300,7 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
   // Static locals inherit dll attributes from their function.
   if (VD->isStaticLocal()) {
     if (FunctionDecl *FD =
-            dyn_cast<FunctionDecl>(VD->getParentFunctionOrMethod())) {
+            dyn_cast_or_null<FunctionDecl>(VD->getParentFunctionOrMethod())) {
       if (Attr *A = getDLLAttr(FD)) {
         auto *NewAttr = cast<InheritableAttr>(A->clone(getASTContext()));
         NewAttr->setInherited(true);
