@@ -82,7 +82,7 @@ inline uint64_t decodeULEB128(const uint8_t *p, unsigned *n = nullptr) {
   uint64_t Value = 0;
   unsigned Shift = 0;
   do {
-    Value += (*p & 0x7f) << Shift;
+    Value += uint64_t(*p & 0x7f) << Shift;
     Shift += 7;
   } while (*p++ >= 128);
   if (n)
