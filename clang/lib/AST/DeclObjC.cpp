@@ -849,6 +849,11 @@ ObjCMethodFamily ObjCMethodDecl::getMethodFamily() const {
       family = OMF_None;
     break;
       
+  case OMF_initialize:
+    if (isInstanceMethod() || !getReturnType()->isVoidType())
+      family = OMF_None;
+    break;
+      
   case OMF_performSelector:
     if (!isInstanceMethod() || !getReturnType()->isObjCIdType())
       family = OMF_None;

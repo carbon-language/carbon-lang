@@ -1137,6 +1137,7 @@ ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
     case OMF_mutableCopy:
     case OMF_new:
     case OMF_self:
+    case OMF_initialize:
     case OMF_performSelector:
       break;
     }
@@ -2230,6 +2231,17 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
       RequireCompleteType(LBracLoc, Method->getReturnType(),
                           diag::err_illegal_message_expr_incomplete_type))
     return ExprError();
+  
+  // Warn about explicit call of +initialize on its own class.
+  if (Method && Method->getMethodFamily() == OMF_initialize) {
+    const ObjCInterfaceDecl *ID =
+      dyn_cast<ObjCInterfaceDecl>(Method->getDeclContext());
+    if (ID == Class) {
+      Diag(Loc, diag::warn_direct_initialize_call);
+      Diag(Method->getLocation(), diag::note_method_declared_at)
+      << Method->getDeclName();
+    }
+  }
 
   // Construct the appropriate ObjCMessageExpr.
   ObjCMessageExpr *Result;
@@ -2652,6 +2664,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     case OMF_mutableCopy:
     case OMF_new:
     case OMF_self:
+    case OMF_initialize:
       break;
 
     case OMF_dealloc:

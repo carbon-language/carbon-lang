@@ -428,6 +428,7 @@ ObjCMethodFamily Selector::getMethodFamilyImpl(Selector sel) {
     if (name == "retain") return OMF_retain;
     if (name == "retainCount") return OMF_retainCount;
     if (name == "self") return OMF_self;
+    if (name == "initialize") return OMF_initialize;
   }
  
   if (name == "performSelector") return OMF_performSelector;

@@ -563,6 +563,7 @@ enum ObjCMethodFamily {
   OMF_retain,
   OMF_retainCount,
   OMF_self,
+  OMF_initialize,
 
   // performSelector families
   OMF_performSelector
