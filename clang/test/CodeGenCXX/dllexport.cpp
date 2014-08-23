@@ -591,7 +591,7 @@ template <typename T> struct __declspec(dllexport) PartiallySpecializedExportedC
 template <typename T> struct PartiallySpecializedExportedClassTemplate<T*> { void f() {} };
 USEMEMFUNC(PartiallySpecializedExportedClassTemplate<void*>, f);
 // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?f@?$PartiallySpecializedExportedClassTemplate@PAX@@QAEXXZ"
-// G32-DAG: define linkonce_odr x86_thiscallcc @_ZN41PartiallySpecializedExportedClassTemplateIPvE1fEv
+// G32-DAG: define linkonce_odr x86_thiscallcc void @_ZN41PartiallySpecializedExportedClassTemplateIPvE1fEv
 
 //===----------------------------------------------------------------------===//
 // Classes with template base classes
