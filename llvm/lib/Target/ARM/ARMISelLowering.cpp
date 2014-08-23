@@ -267,14 +267,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
       { RTLIB::ADD_F64, "__aeabi_dadd", CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
       { RTLIB::DIV_F64, "__aeabi_ddiv", CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
       { RTLIB::MUL_F64, "__aeabi_dmul", CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
-      // FIXME: double __aeabi_drsub(double x, double y) (rsub)
       { RTLIB::SUB_F64, "__aeabi_dsub", CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
 
       // Double-precision floating-point comparison helper functions
       // RTABI chapter 4.1.2, Table 3
-      // FIXME: void __aeabi_cdcmpeq(double, double)
-      // FIXME: void __aeabi_cdcmple(double, double)
-      // FIXME: void __aeabi_cdrcmple(double, double)
       { RTLIB::OEQ_F64, "__aeabi_dcmpeq", CallingConv::ARM_AAPCS, ISD::SETNE },
       { RTLIB::UNE_F64, "__aeabi_dcmpeq", CallingConv::ARM_AAPCS, ISD::SETEQ },
       { RTLIB::OLT_F64, "__aeabi_dcmplt", CallingConv::ARM_AAPCS, ISD::SETNE },
@@ -289,14 +285,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
       { RTLIB::ADD_F32, "__aeabi_fadd", CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
       { RTLIB::DIV_F32, "__aeabi_fdiv", CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
       { RTLIB::MUL_F32, "__aeabi_fmul", CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
-      // FIXME: void __aeabi_frsub(float x, float y)
       { RTLIB::SUB_F32, "__aeabi_fsub", CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
 
       // Single-precision floating-point comparison helper functions
       // RTABI chapter 4.1.2, Table 5
-      // FIXME: void __aeabi_cfcmpeq(float, float)
-      // FIXME: void __aeabi_cfcmple(float, float)
-      // FIXME: void __aeabi_cfrcmple(float, float)
       { RTLIB::OEQ_F32, "__aeabi_fcmpeq", CallingConv::ARM_AAPCS, ISD::SETNE },
       { RTLIB::UNE_F32, "__aeabi_fcmpeq", CallingConv::ARM_AAPCS, ISD::SETEQ },
       { RTLIB::OLT_F32, "__aeabi_fcmplt", CallingConv::ARM_AAPCS, ISD::SETNE },
@@ -321,12 +313,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
       // RTABI chapter 4.1.2, Table 7
       { RTLIB::FPROUND_F64_F32, "__aeabi_d2f", CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
       { RTLIB::FPEXT_F32_F64,   "__aeabi_f2d", CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
-      // FIXME: float __aeabi_f2f(short)
-      // FIXME: float __aeabi_h2f_alt(short)
-      // FIXME: short __aeabi_f2h(float)
-      // FIXME: short __aeabi_f2h_alt(float)
       { RTLIB::FPROUND_F64_F16, "__aeabi_d2h", CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
-      // FIXME: short __aeabi_d2h_alt(double)
 
       // Integer to floating-point conversions.
       // RTABI chapter 4.1.2, Table 8
@@ -351,8 +338,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
       { RTLIB::SHL_I64,     "__aeabi_llsl",     CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
       { RTLIB::SRL_I64,     "__aeabi_llsr",     CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
       { RTLIB::SRA_I64,     "__aeabi_lasr",     CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
-      // FIXME: int __aeabi_lcmp(long long, long long)
-      // FIXME: int __aeabi_ulcmp(unsigned long long, unsigned long long)
 
       // Integer division functions
       // RTABI chapter 4.3.1
@@ -371,18 +356,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
       // Memory operations
       // RTABI chapter 4.3.4
-      // FIXME: void __aeabi_memcpy8(void *, const void *, size_t)
-      // FIXME: void __aeabi_memcpy4(void *, const void *, size_t)
       { RTLIB::MEMCPY,  "__aeabi_memcpy",  CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
-      // FIXME: void __aeabi_memmove8(void *, const void *, size_t)
-      // FIXME: void __aeabi_memmove4(void *, const void *, size_t)
       { RTLIB::MEMMOVE, "__aeabi_memmove", CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
-      // FIXME: void __aeabi_memset8(void *, size_t, int)
-      // FIXME: void __aeabi_memset4(void *, size_t, int)
       { RTLIB::MEMSET,  "__aeabi_memset",  CallingConv::ARM_AAPCS, ISD::SETCC_INVALID },
-      // FIXME: void __aeabi_memclr8(void *, size_t)
-      // FIXME: void __aeabi_memclr4(void *, size_t)
-      // FIXME: void __aeabi_memclr(void *, size_t)
     };
 
     for (const auto &LC : LibraryCalls) {
