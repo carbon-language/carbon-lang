@@ -6,6 +6,10 @@
 #include __CLC_BODY
 #undef __CLC_GENTYPE
 
+#define __CLC_GENTYPE int3
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+
 #define __CLC_GENTYPE int4
 #include __CLC_BODY
 #undef __CLC_GENTYPE
@@ -23,6 +27,10 @@
 #undef __CLC_GENTYPE
 
 #define __CLC_GENTYPE uint2
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+
+#define __CLC_GENTYPE uint3
 #include __CLC_BODY
 #undef __CLC_GENTYPE
 
