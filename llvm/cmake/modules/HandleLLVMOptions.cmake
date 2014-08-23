@@ -306,7 +306,7 @@ elseif( LLVM_COMPILER_IS_GCC_COMPATIBLE )
     # Check if -Wcomment is OK with an // comment ending with '\' if the next
     # line is also a // comment.
     set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-    set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} -Werror -Wcomment)
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Werror -Wcomment")
     CHECK_C_SOURCE_COMPILES("// \\\\\\n//\\nint main() {return 0;}"
                             C_WCOMMENT_ALLOWS_LINE_WRAP)
     set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
