@@ -422,7 +422,7 @@ to specify the debug type for the entire module (if you do this before you
 because there is no system in place to ensure that names do not conflict.  If
 two different modules use the same string, they will all be turned on when the
 name is specified.  This allows, for example, all debug information for
-instruction scheduling to be enabled with ``-debug-type=InstrSched``, even if
+instruction scheduling to be enabled with ``-debug-only=InstrSched``, even if
 the source lives in multiple files.
 
 The ``DEBUG_WITH_TYPE`` macro is also available for situations where you would
