@@ -30,6 +30,16 @@
 #include <mach-o/dyld.h>
 #include <objc/objc-auto.h>
 
+// These are needed when compiling on systems
+// that do not yet have these definitions
+#include <AvailabilityMacros.h>
+#ifndef CPU_SUBTYPE_X86_64_H
+#define CPU_SUBTYPE_X86_64_H ((cpu_subtype_t)8)
+#endif
+#ifndef CPU_TYPE_ARM64
+#define CPU_TYPE_ARM64 (CPU_TYPE_ARM|CPU_ARCH_ABI64)
+#endif
+
 using namespace lldb_private;
 
 bool
