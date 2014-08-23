@@ -53,12 +53,12 @@ int main()
         testbuf<char> sb(" 123456789");
         std::istream is(&sb);
         assert(is.sync() == 0);
-        assert(sync_called = 1);
+        assert(sync_called == 1);
     }
     {
         testbuf<wchar_t> sb(L" 123456789");
         std::wistream is(&sb);
         assert(is.sync() == 0);
-        assert(sync_called = 2);
+        assert(sync_called == 2);
     }
 }

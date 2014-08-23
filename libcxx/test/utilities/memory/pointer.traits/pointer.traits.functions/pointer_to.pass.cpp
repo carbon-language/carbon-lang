@@ -40,7 +40,7 @@ int main()
     {
         int i = 0;
         A<int> a = std::pointer_traits<A<int> >::pointer_to(i);
-        assert(a.t_ = &i);
+        assert(a.t_ == &i);
     }
     {
         (std::pointer_traits<A<void> >::element_type)0;
