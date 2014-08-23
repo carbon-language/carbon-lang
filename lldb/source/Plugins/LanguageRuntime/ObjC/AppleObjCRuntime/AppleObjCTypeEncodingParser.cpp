@@ -37,7 +37,7 @@ AppleObjCTypeEncodingParser::ReadStructName(lldb_utility::StringLexer& type)
 }
 
 std::string
-AppleObjCTypeEncodingParser::ReadStructElementName(lldb_utility::StringLexer& type)
+AppleObjCTypeEncodingParser::ReadQuotedString(lldb_utility::StringLexer& type)
 {
     StreamString buffer;
     while (type.HasAtLeast(1) && type.Peek() != '"')
@@ -68,7 +68,7 @@ AppleObjCTypeEncodingParser::ReadStructElement (clang::ASTContext &ast_ctx, lldb
 {
     StructElement retval;
     if (type.NextIf('"'))
-        retval.name = ReadStructElementName(type);
+        retval.name = ReadQuotedString(type);
     if (!type.NextIf('"'))
         return retval;
     uint32_t bitfield_size = 0;
@@ -159,6 +159,20 @@ AppleObjCTypeEncodingParser::BuildArray (clang::ASTContext &ast_ctx, lldb_utilit
     return array_type.GetQualType();
 }
 
+// the runtime can emit these in the form of @"SomeType", giving more specifics
+// this would be interesting for expression parser interop, but since we actually try
+// to avoid exposing the ivar info to the expression evaluator, consume but ignore the type info
+// and always return an 'id'; if anything, dynamic typing will resolve things for us anyway
+clang::QualType
+AppleObjCTypeEncodingParser::BuildObjCObjectType (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype)
+{
+    if (!type.NextIf('@'))
+        return clang::QualType();
+    if (type.NextIf('"'))
+        ReadQuotedString(type);
+    return ast_ctx.getObjCIdType();;
+}
+
 clang::QualType
 AppleObjCTypeEncodingParser::BuildType (clang::ASTContext &ast_ctx, StringLexer& type, bool allow_unknownanytype, uint32_t *bitfield_bit_size)
 {
@@ -205,8 +219,6 @@ AppleObjCTypeEncodingParser::BuildType (clang::ASTContext &ast_ctx, StringLexer&
         return ast_ctx.VoidTy;
     if (type.NextIf('*'))
         return ast_ctx.getPointerType(ast_ctx.CharTy);
-    if (type.NextIf('@'))
-        return ast_ctx.getObjCIdType();
     if (type.NextIf('#'))
         return ast_ctx.getObjCClassType();
     if (type.NextIf(':'))
@@ -257,6 +269,9 @@ AppleObjCTypeEncodingParser::BuildType (clang::ASTContext &ast_ctx, StringLexer&
     
     if (type.Peek() == '(')
         return BuildUnion(ast_ctx, type, allow_unknownanytype);
+    
+    if (type.Peek() == '@')
+        return BuildObjCObjectType(ast_ctx, type, allow_unknownanytype);
     
     return clang::QualType();
 }

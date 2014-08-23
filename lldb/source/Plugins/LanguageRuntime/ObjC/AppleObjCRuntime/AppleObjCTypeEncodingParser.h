@@ -65,12 +65,14 @@ namespace lldb_private {
         StructElement
         ReadStructElement (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype);
         
-        std::string
-        ReadStructElementName(lldb_utility::StringLexer& type);
+        clang::QualType
+        BuildObjCObjectType (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype);
         
         uint32_t
         ReadNumber (lldb_utility::StringLexer& type);
-
+        
+        std::string
+        ReadQuotedString(lldb_utility::StringLexer& type);
     };
     
 } // namespace lldb_private
