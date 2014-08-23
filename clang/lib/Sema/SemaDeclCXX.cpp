@@ -4421,6 +4421,19 @@ static void CheckAbstractClassUsage(AbstractUsageInfo &Info,
 /// \brief Check class-level dllimport/dllexport attribute.
 static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
   Attr *ClassAttr = getDLLAttr(Class);
+
+  // MSVC inherits DLL attributes to partial class template specializations.
+  if (S.Context.getTargetInfo().getCXXABI().isMicrosoft() && !ClassAttr) {
+    if (auto *Spec = dyn_cast<ClassTemplatePartialSpecializationDecl>(Class)) {
+      if (Attr *TemplateAttr =
+              getDLLAttr(Spec->getSpecializedTemplate()->getTemplatedDecl())) {
+        auto *A = cast<InheritableAttr>(TemplateAttr->clone(S.getASTContext()));
+        A->setInherited(true);
+        ClassAttr = A;
+      }
+    }
+  }
+
   if (!ClassAttr)
     return;
 
