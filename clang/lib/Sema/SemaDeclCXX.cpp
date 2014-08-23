@@ -4471,29 +4471,27 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
       Member->addAttr(NewAttr);
     }
 
-    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member)) {
-      if (ClassExported) {
-        if (MD->isUserProvided()) {
-          // Instantiate non-default methods..
+    if (MD && ClassExported) {
+      if (MD->isUserProvided()) {
+        // Instantiate non-default methods..
 
-          // .. except for certain kinds of template specializations.
-          if (TSK == TSK_ExplicitInstantiationDeclaration)
-            continue;
-          if (TSK == TSK_ImplicitInstantiation && !ClassAttr->isInherited())
-            continue;
+        // .. except for certain kinds of template specializations.
+        if (TSK == TSK_ExplicitInstantiationDeclaration)
+          continue;
+        if (TSK == TSK_ImplicitInstantiation && !ClassAttr->isInherited())
+          continue;
 
-          S.MarkFunctionReferenced(Class->getLocation(), MD);
-        } else if (!MD->isTrivial() || MD->isExplicitlyDefaulted() ||
-                   MD->isCopyAssignmentOperator() ||
-                   MD->isMoveAssignmentOperator()) {
-          // Instantiate non-trivial or explicitly defaulted methods, and the
-          // copy assignment / move assignment operators.
-          S.MarkFunctionReferenced(Class->getLocation(), MD);
-          // Resolve its exception specification; CodeGen needs it.
-          auto *FPT = MD->getType()->getAs<FunctionProtoType>();
-          S.ResolveExceptionSpec(Class->getLocation(), FPT);
-          S.ActOnFinishInlineMethodDef(MD);
-        }
+        S.MarkFunctionReferenced(Class->getLocation(), MD);
+      } else if (!MD->isTrivial() || MD->isExplicitlyDefaulted() ||
+                 MD->isCopyAssignmentOperator() ||
+                 MD->isMoveAssignmentOperator()) {
+        // Instantiate non-trivial or explicitly defaulted methods, and the
+        // copy assignment / move assignment operators.
+        S.MarkFunctionReferenced(Class->getLocation(), MD);
+        // Resolve its exception specification; CodeGen needs it.
+        auto *FPT = MD->getType()->getAs<FunctionProtoType>();
+        S.ResolveExceptionSpec(Class->getLocation(), FPT);
+        S.ActOnFinishInlineMethodDef(MD);
       }
     }
   }
