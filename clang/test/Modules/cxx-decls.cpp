@@ -30,7 +30,13 @@ void use_implicit_new_again() { operator new[](3); }
 
 int importMergeUsedFlag = getMergeUsedFlag();
 
+int use_name_for_linkage(NameForLinkage &nfl) {
+  return nfl.n + nfl.m;
+}
+
 @import cxx_decls_merged;
+
+int name_for_linkage_test = use_name_for_linkage(name_for_linkage);
 
 // CHECK: VarDecl [[mergeUsedFlag:0x[0-9a-f]*]] {{.*}} in cxx_decls.imported used mergeUsedFlag
 // CHECK: VarDecl {{0x[0-9a-f]*}} prev [[mergeUsedFlag]] {{.*}} in cxx_decls_merged used mergeUsedFlag

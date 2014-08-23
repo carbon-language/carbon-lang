@@ -438,6 +438,11 @@ private:
   /// \brief Declarations that have been replaced in a later file in the chain.
   DeclReplacementMap ReplacedDecls;
 
+  /// \brief Declarations that have been imported and have typedef names for
+  /// linkage purposes.
+  llvm::DenseMap<std::pair<DeclContext*, IdentifierInfo*>, NamedDecl*>
+      ImportedTypedefNamesForLinkage;
+
   struct FileDeclsInfo {
     ModuleFile *Mod;
     ArrayRef<serialization::LocalDeclID> Decls;

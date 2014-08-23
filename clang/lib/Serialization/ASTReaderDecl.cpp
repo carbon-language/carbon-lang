@@ -2412,13 +2412,38 @@ static DeclContext *getPrimaryContextForMerging(DeclContext *DC) {
   return nullptr;
 }
 
+static DeclarationName
+getNameForMerging(NamedDecl *D, bool &IsTypedefNameForLinkage) {
+  DeclarationName Name = D->getDeclName();
+
+  if (!Name) {
+    // If this declaration has a typedef name for linkage purposes,
+    // look that name up when merging. We may be able to find another
+    // typedef that names a matching TagDecl.
+    if (auto *TD = dyn_cast<TagDecl>(D)) {
+      if (auto *Typedef = TD->getTypedefNameForAnonDecl()) {
+        Name = Typedef->getDeclName();
+        IsTypedefNameForLinkage = true;
+      }
+    }
+  }
+
+  return Name;
+}
+
 ASTDeclReader::FindExistingResult::~FindExistingResult() {
   if (!AddResult || Existing)
     return;
 
+  bool IsTypedefNameForLinkage = false;
+  DeclarationName Name = getNameForMerging(New, IsTypedefNameForLinkage);
+
   DeclContext *DC = New->getDeclContext()->getRedeclContext();
-  if (DC->isTranslationUnit() && Reader.SemaObj) {
-    Reader.SemaObj->IdResolver.tryAddTopLevelDecl(New, New->getDeclName());
+  if (IsTypedefNameForLinkage) {
+    Reader.ImportedTypedefNamesForLinkage.insert(
+        std::make_pair(std::make_pair(DC, Name.getAsIdentifierInfo()), New));
+  } else if (DC->isTranslationUnit() && Reader.SemaObj) {
+    Reader.SemaObj->IdResolver.tryAddTopLevelDecl(New, Name);
   } else if (DeclContext *MergeDC = getPrimaryContextForMerging(DC)) {
     // Add the declaration to its redeclaration context so later merging
     // lookups will find it.
@@ -2426,8 +2451,31 @@ ASTDeclReader::FindExistingResult::~FindExistingResult() {
   }
 }
 
+/// Find the declaration that should be merged into, given the declaration found
+/// by name lookup. If we're merging an anonymous declaration within a typedef,
+/// we need a matching typedef, and we merge with the type inside it.
+static NamedDecl *getDeclForMerging(NamedDecl *Found,
+                                    bool IsTypedefNameForLinkage) {
+  if (!IsTypedefNameForLinkage)
+    return Found;
+
+  // If we found a typedef declaration that gives a name to some other
+  // declaration, then we want that inner declaration. Declarations from
+  // AST files are handled via ImportedTypedefNamesForLinkage.
+  if (Found->isFromASTFile()) return 0;
+  if (auto *TND = dyn_cast<TypedefNameDecl>(Found)) {
+    if (auto *TT = TND->getTypeSourceInfo()->getType()->getAs<TagType>())
+      if (TT->getDecl()->getTypedefNameForAnonDecl() == TND)
+        return TT->getDecl();
+  }
+
+  return 0;
+}
+
 ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
-  DeclarationName Name = D->getDeclName();
+  bool IsTypedefNameForLinkage = false;
+  DeclarationName Name = getNameForMerging(D, IsTypedefNameForLinkage);
+
   if (!Name) {
     // Don't bother trying to find unnamed declarations.
     FindExistingResult Result(Reader, D, /*Existing=*/nullptr);
@@ -2441,6 +2489,15 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
   // necessary merging already.
 
   DeclContext *DC = D->getDeclContext()->getRedeclContext();
+  if (IsTypedefNameForLinkage) {
+    auto It = Reader.ImportedTypedefNamesForLinkage.find(
+        std::make_pair(DC, Name.getAsIdentifierInfo()));
+    if (It != Reader.ImportedTypedefNamesForLinkage.end())
+      if (isSameEntity(It->second, D))
+        return FindExistingResult(Reader, D, It->second);
+    // Go on to check in other places in case an existing typedef name
+    // was not imported.
+  }
   if (DC->isTranslationUnit() && Reader.SemaObj) {
     IdentifierResolver &IdResolver = Reader.SemaObj->IdResolver;
 
@@ -2470,14 +2527,16 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
     for (IdentifierResolver::iterator I = IdResolver.begin(Name), 
                                    IEnd = IdResolver.end();
          I != IEnd; ++I) {
-      if (isSameEntity(*I, D))
-        return FindExistingResult(Reader, D, *I);
+      if (NamedDecl *Existing = getDeclForMerging(*I, IsTypedefNameForLinkage))
+        if (isSameEntity(*I, D))
+          return FindExistingResult(Reader, D, Existing);
     }
   } else if (DeclContext *MergeDC = getPrimaryContextForMerging(DC)) {
     DeclContext::lookup_result R = MergeDC->noload_lookup(Name);
     for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E; ++I) {
-      if (isSameEntity(*I, D))
-        return FindExistingResult(Reader, D, *I);
+      if (NamedDecl *Existing = getDeclForMerging(*I, IsTypedefNameForLinkage))
+        if (isSameEntity(Existing, D))
+          return FindExistingResult(Reader, D, Existing);
     }
   } else {
     // Not in a mergeable context.
