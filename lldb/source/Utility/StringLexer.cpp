@@ -9,6 +9,8 @@
 
 #include "lldb/Utility/StringLexer.h"
 
+#include <algorithm>
+
 using namespace lldb_utility;
 
 StringLexer::StringLexer (std::string s) :
