@@ -43,3 +43,6 @@ int main() {
   func2(9);
   return 0;
 }
+
+// llvm-cov doesn't work on big endian yet
+// XFAIL: powerpc64-, s390x, mips-, mips64-, sparc

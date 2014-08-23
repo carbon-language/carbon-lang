@@ -20,3 +20,6 @@ int main() {                             // CHECK:   1| [[@LINE]]|int main(
                                          // CHECK:   1| [[@LINE]]|
   return 0;                              // CHECK:   1| [[@LINE]]|  return
 }                                        // CHECK:   1| [[@LINE]]|}
+
+// llvm-cov doesn't work on big endian yet
+// XFAIL: powerpc64-, s390x, mips-, mips64-, sparc
