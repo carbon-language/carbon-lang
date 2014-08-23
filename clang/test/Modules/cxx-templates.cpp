@@ -3,6 +3,11 @@
 // RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump-lookups -ast-dump-filter N | FileCheck %s --check-prefix=CHECK-NAMESPACE-N
 // RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump | FileCheck %s --check-prefix=CHECK-DUMP
 // RUN: %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11
+// RUN: %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11 -DEARLY_IMPORT
+
+#ifdef EARLY_IMPORT
+#include "cxx-templates-textual.h"
+#endif
 
 @import cxx_templates_a;
 @import cxx_templates_b;
@@ -22,8 +27,14 @@ void g() {
   f<double>(1.0);
   f<int>();
   f(); // expected-error {{no matching function}}
+#ifdef EARLY_IMPORT
+  // FIXME: The textual inclusion above shouldn't affect this!
+  // expected-note@Inputs/cxx-templates-a.h:3 {{couldn't infer template argument}}
+  // expected-note@Inputs/cxx-templates-a.h:4 {{requires 1 argument}}
+#else
   // expected-note@Inputs/cxx-templates-b.h:3 {{couldn't infer template argument}}
   // expected-note@Inputs/cxx-templates-b.h:4 {{requires single argument}}
+#endif
 
   N::f(0);
   N::f<double>(1.0);
@@ -108,11 +119,15 @@ void g() {
   int *r = PartiallyInstantiatePartialSpec<int*>::bar();
 
   (void)&WithImplicitSpecialMembers<int>::n;
+
+  MergeClassTemplateSpecializations_string s;
 }
 
 static_assert(Outer<int>::Inner<int>::f() == 1, "");
 static_assert(Outer<int>::Inner<int>::g() == 2, "");
 
+#ifndef EARLY_IMPORT
+// FIXME: The textual inclusion above shouldn't cause this to fail!
 static_assert(MergeTemplateDefinitions<int>::f() == 1, "");
 static_assert(MergeTemplateDefinitions<int>::g() == 2, "");
 
@@ -126,6 +141,7 @@ MergeSpecializations<int[]>::partially_specialized_in_c spec_in_c_1;
 MergeSpecializations<char>::explicitly_specialized_in_a spec_in_a_2;
 MergeSpecializations<double>::explicitly_specialized_in_b spec_in_b_2;
 MergeSpecializations<bool>::explicitly_specialized_in_c spec_in_c_2;
+#endif
 
 @import cxx_templates_common;
 
