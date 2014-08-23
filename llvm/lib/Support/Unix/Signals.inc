@@ -196,37 +196,37 @@ static RETSIGTYPE SignalHandler(int Sig) {
 }
 
 void llvm::sys::RunInterruptHandlers() {
-  SignalsMutex.acquire();
+  sys::SmartScopedLock<true> Guard(SignalsMutex);
   RemoveFilesToRemove();
-  SignalsMutex.release();
 }
 
 void llvm::sys::SetInterruptFunction(void (*IF)()) {
-  SignalsMutex.acquire();
-  InterruptFunction = IF;
-  SignalsMutex.release();
+  {
+    sys::SmartScopedLock<true> Guard(SignalsMutex);
+    InterruptFunction = IF;
+  }
   RegisterHandlers();
 }
 
 // RemoveFileOnSignal - The public API
 bool llvm::sys::RemoveFileOnSignal(StringRef Filename,
                                    std::string* ErrMsg) {
-  SignalsMutex.acquire();
-  std::string *OldPtr = FilesToRemove.empty() ? nullptr : &FilesToRemove[0];
-  FilesToRemove.push_back(Filename);
+  {
+    sys::SmartScopedLock<true> Guard(SignalsMutex);
+    std::string *OldPtr = FilesToRemove.empty() ? nullptr : &FilesToRemove[0];
+    FilesToRemove.push_back(Filename);
 
-  // We want to call 'c_str()' on every std::string in this vector so that if
-  // the underlying implementation requires a re-allocation, it happens here
-  // rather than inside of the signal handler. If we see the vector grow, we
-  // have to call it on every entry. If it remains in place, we only need to
-  // call it on the latest one.
-  if (OldPtr == &FilesToRemove[0])
-    FilesToRemove.back().c_str();
-  else
-    for (unsigned i = 0, e = FilesToRemove.size(); i != e; ++i)
-      FilesToRemove[i].c_str();
-
-  SignalsMutex.release();
+    // We want to call 'c_str()' on every std::string in this vector so that if
+    // the underlying implementation requires a re-allocation, it happens here
+    // rather than inside of the signal handler. If we see the vector grow, we
+    // have to call it on every entry. If it remains in place, we only need to
+    // call it on the latest one.
+    if (OldPtr == &FilesToRemove[0])
+      FilesToRemove.back().c_str();
+    else
+      for (unsigned i = 0, e = FilesToRemove.size(); i != e; ++i)
+        FilesToRemove[i].c_str();
+  }
 
   RegisterHandlers();
   return false;
@@ -234,7 +234,7 @@ bool llvm::sys::RemoveFileOnSignal(StringRef Filename,
 
 // DontRemoveFileOnSignal - The public API
 void llvm::sys::DontRemoveFileOnSignal(StringRef Filename) {
-  SignalsMutex.acquire();
+  sys::SmartScopedLock<true> Guard(SignalsMutex);
   std::vector<std::string>::reverse_iterator RI =
     std::find(FilesToRemove.rbegin(), FilesToRemove.rend(), Filename);
   std::vector<std::string>::iterator I = FilesToRemove.end();
@@ -247,8 +247,6 @@ void llvm::sys::DontRemoveFileOnSignal(StringRef Filename) {
   // made on insertion become invalid by being copied down an element.
   for (std::vector<std::string>::iterator E = FilesToRemove.end(); I != E; ++I)
     I->c_str();
-
-  SignalsMutex.release();
 }
 
 /// AddSignalHandler - Add a function to be called when a signal is delivered
