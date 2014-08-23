@@ -29,8 +29,8 @@ namespace llvm {
     MutexGuard(const MutexGuard &) LLVM_DELETED_FUNCTION;
     void operator=(const MutexGuard &) LLVM_DELETED_FUNCTION;
   public:
-    MutexGuard(sys::Mutex &m) : M(m) { M.acquire(); }
-    ~MutexGuard() { M.release(); }
+    MutexGuard(sys::Mutex &m) : M(m) { M.lock(); }
+    ~MutexGuard() { M.unlock(); }
     /// holds - Returns true if this locker instance holds the specified lock.
     /// This is mostly used in assertions to validate that the correct mutex
     /// is held.

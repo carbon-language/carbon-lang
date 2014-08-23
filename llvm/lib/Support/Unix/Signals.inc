@@ -162,24 +162,24 @@ static RETSIGTYPE SignalHandler(int Sig) {
   sigfillset(&SigMask);
   sigprocmask(SIG_UNBLOCK, &SigMask, nullptr);
 
-  SignalsMutex.acquire();
+  SignalsMutex.lock();
   RemoveFilesToRemove();
 
   if (std::find(IntSigs, IntSigsEnd, Sig) != IntSigsEnd) {
     if (InterruptFunction) {
       void (*IF)() = InterruptFunction;
-      SignalsMutex.release();
+      SignalsMutex.unlock();
       InterruptFunction = nullptr;
       IF();        // run the interrupt function.
       return;
     }
 
-    SignalsMutex.release();
+    SignalsMutex.unlock();
     raise(Sig);   // Execute the default handler.
     return;
   }
 
-  SignalsMutex.release();
+  SignalsMutex.unlock();
 
   // Otherwise if it is a fault (like SEGV) run any handler.
   for (unsigned i = 0, e = CallBacksToRun.size(); i != e; ++i)

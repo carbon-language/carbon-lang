@@ -217,11 +217,11 @@ public:
     ValueMapCallbackVH Copy(*this);
     typename Config::mutex_type *M = Config::getMutex(Copy.Map->Data);
     if (M)
-      M->acquire();
+      M->lock();
     Config::onDelete(Copy.Map->Data, Copy.Unwrap());  // May destroy *this.
     Copy.Map->Map.erase(Copy);  // Definitely destroys *this.
     if (M)
-      M->release();
+      M->unlock();
   }
   void allUsesReplacedWith(Value *new_key) override {
     assert(isa<KeySansPointerT>(new_key) &&
@@ -230,7 +230,7 @@ public:
     ValueMapCallbackVH Copy(*this);
     typename Config::mutex_type *M = Config::getMutex(Copy.Map->Data);
     if (M)
-      M->acquire();
+      M->lock();
 
     KeyT typed_new_key = cast<KeySansPointerT>(new_key);
     // Can destroy *this:
@@ -246,7 +246,7 @@ public:
       }
     }
     if (M)
-      M->release();
+      M->unlock();
   }
 };
 

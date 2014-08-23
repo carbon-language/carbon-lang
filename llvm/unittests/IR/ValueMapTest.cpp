@@ -186,11 +186,11 @@ struct LockMutex : ValueMapConfig<KeyT, MutexT> {
   };
   static void onRAUW(const ExtraData &Data, KeyT Old, KeyT New) {
     *Data.CalledRAUW = true;
-    EXPECT_FALSE(Data.M->tryacquire()) << "Mutex should already be locked.";
+    EXPECT_FALSE(Data.M->try_lock()) << "Mutex should already be locked.";
   }
   static void onDelete(const ExtraData &Data, KeyT Old) {
     *Data.CalledDeleted = true;
-    EXPECT_FALSE(Data.M->tryacquire()) << "Mutex should already be locked.";
+    EXPECT_FALSE(Data.M->try_lock()) << "Mutex should already be locked.";
   }
   static MutexT *getMutex(const ExtraData &Data) { return Data.M; }
 };
