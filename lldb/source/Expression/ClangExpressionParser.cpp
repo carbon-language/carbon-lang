@@ -103,16 +103,6 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     m_compiler (),
     m_code_generator ()
 {
-    // Initialize targets first, so that --version shows registered targets.
-    static struct InitializeLLVM {
-        InitializeLLVM() {
-            llvm::InitializeAllTargets();
-            llvm::InitializeAllAsmPrinters();
-            llvm::InitializeAllTargetMCs();
-            llvm::InitializeAllDisassemblers();
-        }
-    } InitializeLLVM;
-
     // 1. Create a new compiler instance.
     m_compiler.reset(new CompilerInstance());
 

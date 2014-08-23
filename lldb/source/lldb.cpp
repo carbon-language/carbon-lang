@@ -25,6 +25,7 @@
 #include "lldb/Target/Thread.h"
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/TargetSelect.h"
 
 #include "Plugins/ABI/MacOSX-i386/ABIMacOSX_i386.h"
 #include "Plugins/ABI/MacOSX-arm/ABIMacOSX_arm.h"
@@ -95,6 +96,12 @@
 using namespace lldb;
 using namespace lldb_private;
 
+static void fatal_error_handler(void *user_data, const std::string& reason,
+                                bool gen_crash_diag) {
+    Host::SetCrashDescription(reason.c_str());
+    ::abort();
+}
+
 void
 lldb_private::Initialize ()
 {
@@ -110,7 +117,15 @@ lldb_private::Initialize ()
         HostInfo::Initialize();
         Timer::Initialize ();
         Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
-        
+
+        // Initialize LLVM and Clang
+        llvm::InitializeAllTargets();
+        llvm::InitializeAllAsmPrinters();
+        llvm::InitializeAllTargetMCs();
+        llvm::InitializeAllDisassemblers();
+        llvm::install_fatal_error_handler(fatal_error_handler, 0);
+
+        // Initialize plug-ins
         ABIMacOSX_i386::Initialize();
         ABIMacOSX_arm::Initialize();
         ABIMacOSX_arm64::Initialize();
