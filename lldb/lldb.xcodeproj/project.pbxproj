@@ -67,7 +67,7 @@
 		232CB61E191E00CD00EF39FC /* SoftwareBreakpoint.h in Headers */ = {isa = PBXBuildFile; fileRef = 232CB614191E00CD00EF39FC /* SoftwareBreakpoint.h */; };
 		233B007D1960C9F90090E598 /* ProcessInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B007B1960C9E60090E598 /* ProcessInfo.cpp */; };
 		233B007F1960CB280090E598 /* ProcessLaunchInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B007E1960CB280090E598 /* ProcessLaunchInfo.cpp */; };
-		236124A41986B4E2004EFC37 /* IoObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 236124A21986B4E2004EFC37 /* IoObject.cpp */; };
+		236124A41986B4E2004EFC37 /* IOObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 236124A21986B4E2004EFC37 /* IOObject.cpp */; };
 		236124A51986B4E2004EFC37 /* Socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 236124A31986B4E2004EFC37 /* Socket.cpp */; };
 		23DDF226196C3EE600BB8417 /* CommandOptionValidators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23DDF224196C3EE600BB8417 /* CommandOptionValidators.cpp */; };
 		23EDE33319269E7C00F6A132 /* NativeRegisterContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23EDE3301926839700F6A132 /* NativeRegisterContext.cpp */; };
@@ -954,9 +954,9 @@
 		233B00A919622F3F0090E598 /* NativeRegisterContextLinux_x86_64.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NativeRegisterContextLinux_x86_64.cpp; sourceTree = "<group>"; };
 		233B00AA19622F3F0090E598 /* NativeRegisterContextLinux_x86_64.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NativeRegisterContextLinux_x86_64.h; sourceTree = "<group>"; };
 		2360092C193FB21500189DB1 /* MemoryRegionInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MemoryRegionInfo.h; path = include/lldb/Target/MemoryRegionInfo.h; sourceTree = "<group>"; };
-		236124A21986B4E2004EFC37 /* IoObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IoObject.cpp; sourceTree = "<group>"; };
+		236124A21986B4E2004EFC37 /* IOObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IOObject.cpp; sourceTree = "<group>"; };
 		236124A31986B4E2004EFC37 /* Socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Socket.cpp; sourceTree = "<group>"; };
-		236124A61986B50E004EFC37 /* IoObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = IoObject.h; path = include/lldb/Host/IoObject.h; sourceTree = "<group>"; };
+		236124A61986B50E004EFC37 /* IOObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = IOObject.h; path = include/lldb/Host/IOObject.h; sourceTree = "<group>"; };
 		236124A71986B50E004EFC37 /* Socket.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Socket.h; path = include/lldb/Host/Socket.h; sourceTree = "<group>"; };
 		23AB052D199FF639003B8084 /* FreeBSDThread.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = FreeBSDThread.cpp; sourceTree = "<group>"; };
 		23AB052E199FF639003B8084 /* FreeBSDThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FreeBSDThread.h; sourceTree = "<group>"; };
@@ -3517,7 +3517,7 @@
 				26BC7DD410F1B7D500F91463 /* Host.h */,
 				3FDFE53719A2936B009756A7 /* HostInfo.h */,
 				3FDFE53819A2936B009756A7 /* HostInfoBase.h */,
-				236124A61986B50E004EFC37 /* IoObject.h */,
+				236124A61986B50E004EFC37 /* IOObject.h */,
 				26BC7DD510F1B7D500F91463 /* Mutex.h */,
 				232CB60B191E00CC00EF39FC /* NativeBreakpoint.cpp */,
 				232CB60C191E00CC00EF39FC /* NativeBreakpoint.h */,
@@ -4103,7 +4103,7 @@
 				69A01E1B1236C5D400C660B5 /* Condition.cpp */,
 				69A01E1C1236C5D400C660B5 /* Host.cpp */,
 				3FDFE53419A29327009756A7 /* HostInfoBase.cpp */,
-				236124A21986B4E2004EFC37 /* IoObject.cpp */,
+				236124A21986B4E2004EFC37 /* IOObject.cpp */,
 				69A01E1E1236C5D400C660B5 /* Mutex.cpp */,
 				A36FF33B17D8E94600244D40 /* OptionParser.cpp */,
 				260A39A719647A4E004B4130 /* Pipe.cpp */,
@@ -4847,7 +4847,7 @@
 				2689002913353DDE00698AC0 /* CommandObjectVersion.cpp in Sources */,
 				2689002A13353E0400698AC0 /* Address.cpp in Sources */,
 				2689002B13353E0400698AC0 /* AddressRange.cpp in Sources */,
-				236124A41986B4E2004EFC37 /* IoObject.cpp in Sources */,
+				236124A41986B4E2004EFC37 /* IOObject.cpp in Sources */,
 				2689002C13353E0400698AC0 /* AddressResolver.cpp in Sources */,
 				2689002D13353E0400698AC0 /* AddressResolverFileLine.cpp in Sources */,
 				2689002E13353E0400698AC0 /* AddressResolverName.cpp in Sources */,
