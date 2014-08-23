@@ -29,6 +29,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/Mutex.h"
+#include "llvm/Support/UniqueLock.h"
 #include "llvm/Support/type_traits.h"
 #include <iterator>
 
@@ -216,12 +217,11 @@ public:
     // Make a copy that won't get changed even when *this is destroyed.
     ValueMapCallbackVH Copy(*this);
     typename Config::mutex_type *M = Config::getMutex(Copy.Map->Data);
+    unique_lock<typename Config::mutex_type> Guard;
     if (M)
-      M->lock();
+      Guard = unique_lock<typename Config::mutex_type>(*M);
     Config::onDelete(Copy.Map->Data, Copy.Unwrap());  // May destroy *this.
     Copy.Map->Map.erase(Copy);  // Definitely destroys *this.
-    if (M)
-      M->unlock();
   }
   void allUsesReplacedWith(Value *new_key) override {
     assert(isa<KeySansPointerT>(new_key) &&
@@ -229,8 +229,9 @@ public:
     // Make a copy that won't get changed even when *this is destroyed.
     ValueMapCallbackVH Copy(*this);
     typename Config::mutex_type *M = Config::getMutex(Copy.Map->Data);
+    unique_lock<typename Config::mutex_type> Guard;
     if (M)
-      M->lock();
+      Guard = unique_lock<typename Config::mutex_type>(*M);
 
     KeyT typed_new_key = cast<KeySansPointerT>(new_key);
     // Can destroy *this:
@@ -245,8 +246,6 @@ public:
         Copy.Map->insert(std::make_pair(typed_new_key, Target));
       }
     }
-    if (M)
-      M->unlock();
   }
 };
 

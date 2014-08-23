@@ -15,6 +15,7 @@
 #include "Unix.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Mutex.h"
+#include "llvm/Support/UniqueLock.h"
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -162,24 +163,24 @@ static RETSIGTYPE SignalHandler(int Sig) {
   sigfillset(&SigMask);
   sigprocmask(SIG_UNBLOCK, &SigMask, nullptr);
 
-  SignalsMutex.lock();
-  RemoveFilesToRemove();
+  {
+    unique_lock<SmartMutex<true>> Guard(SignalsMutex);
+    RemoveFilesToRemove();
 
-  if (std::find(IntSigs, IntSigsEnd, Sig) != IntSigsEnd) {
-    if (InterruptFunction) {
-      void (*IF)() = InterruptFunction;
-      SignalsMutex.unlock();
-      InterruptFunction = nullptr;
-      IF();        // run the interrupt function.
+    if (std::find(IntSigs, IntSigsEnd, Sig) != IntSigsEnd) {
+      if (InterruptFunction) {
+        void (*IF)() = InterruptFunction;
+        Guard.unlock();
+        InterruptFunction = nullptr;
+        IF();        // run the interrupt function.
+        return;
+      }
+
+      Guard.unlock();
+      raise(Sig);   // Execute the default handler.
       return;
-    }
-
-    SignalsMutex.unlock();
-    raise(Sig);   // Execute the default handler.
-    return;
+   }
   }
-
-  SignalsMutex.unlock();
 
   // Otherwise if it is a fault (like SEGV) run any handler.
   for (unsigned i = 0, e = CallBacksToRun.size(); i != e; ++i)
