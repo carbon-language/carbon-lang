@@ -25,7 +25,7 @@ class Deleter
 public:
 
     Deleter(Deleter&) {}
-    Deleter& operator=(Deleter&) {}
+    Deleter& operator=(Deleter&) { return *this; }
 
     void operator()(void*) const {}
 };
