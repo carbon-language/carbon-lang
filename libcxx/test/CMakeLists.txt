@@ -14,7 +14,7 @@ if(PYTHONINTERP_FOUND)
     set(LIT_EXECUTABLE "${CMAKE_SOURCE_DIR}/utils/lit/lit.py")
   endif()
 
-  set(LIT_ARGS_DEFAULT "-sv")
+  set(LIT_ARGS_DEFAULT "-sv --show-unsupported --show-xfail")
   if (MSVC OR XCODE)
     set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
   endif()
