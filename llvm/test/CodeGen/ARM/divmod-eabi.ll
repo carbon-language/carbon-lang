@@ -17,7 +17,10 @@ entry:
 ; EABI: __aeabi_idivmod
 ; EABI: mov [[div:r[0-9]+]], r0
 ; EABI: mov [[rem:r[0-9]+]], r1
-; GNU: __aeabi_idivmod
+; GNU: __aeabi_idiv
+; GNU: mov [[sum:r[0-9]+]], r0
+; GNU: __modsi3
+; GNU: add [[sum]]{{.*}}r0
 ; DARWIN: ___divsi3
 ; DARWIN: mov [[sum:r[0-9]+]], r0
 ; DARWIN: __modsi3
@@ -31,7 +34,7 @@ entry:
   %conv14 = trunc i32 %add13 to i16
 ; EABI: add r0{{.*}}r1
 ; EABI: sxth r0, r0
-; GNU: add r0{{.*}}
+; GNU: add r0{{.*}}[[sum]]
 ; GNU: sxth r0, r0
 ; DARWIN: add r0{{.*}}[[sum]]
 ; DARWIN: sxth r0, r0
@@ -48,7 +51,10 @@ entry:
 ; EABI: __aeabi_idivmod
 ; EABI: mov [[div:r[0-9]+]], r0
 ; EABI: mov [[rem:r[0-9]+]], r1
-; GNU: __aeabi_idivmod
+; GNU: __aeabi_idiv
+; GNU: mov [[sum:r[0-9]+]], r0
+; GNU: __modsi3
+; GNU: add [[sum]]{{.*}}r0
 ; DARWIN: ___divsi3
 ; DARWIN: mov [[sum:r[0-9]+]], r0
 ; DARWIN: __modsi3
@@ -60,7 +66,7 @@ entry:
   %add = add nsw i32 %rem, %div
   %add2 = add nsw i32 %add, %rem1
 ; EABI: add r0{{.*}}r1
-; GNU: add r0{{.*}}
+; GNU: add r0{{.*}}[[sum]]
 ; DARWIN: add r0{{.*}}[[sum]]
   ret i32 %add2
 }
@@ -73,7 +79,10 @@ entry:
   %div = udiv i32 %a, %b
   %rem = urem i32 %a, %b
 ; EABI: __aeabi_uidivmod
-; GNU: __aeabi_uidivmod
+; GNU: __aeabi_uidiv
+; GNU: mov [[sum:r[0-9]+]], r0
+; GNU: __umodsi3
+; GNU: add [[sum]]{{.*}}r0
 ; DARWIN: ___udivsi3
 ; DARWIN: mov [[sum:r[0-9]+]], r0
 ; DARWIN: __umodsi3
@@ -85,7 +94,7 @@ entry:
   %add = add nuw i32 %rem, %div
   %add2 = add nuw i32 %add, %rem1
 ; EABI: add r0{{.*}}r1
-; GNU: add r0{{.*}}
+; GNU: add r0{{.*}}[[sum]]
 ; DARWIN: add r0{{.*}}[[sum]]
   ret i32 %add2
 }
@@ -122,13 +131,15 @@ entry:
   %div = sdiv i32 %a, %b
   %rem = srem i32 %a, %b
 ; EABI: __aeabi_idivmod
-; GNU: __aeabi_idivmod
+; GNU: __aeabi_idiv
+; GNU: mov [[sum:r[0-9]+]], r0
+; GNU: __modsi3
 ; DARWIN: ___divsi3
 ; DARWIN: mov [[sum:r[0-9]+]], r0
 ; DARWIN: __modsi3
   %add = add nsw i32 %rem, %div
-; EABI:	add r0{{.*}}r1
-; GNU: add r0{{.*}}r1
+; EABI:	add	r0{{.*}}r1
+; GNU: add r0{{.*}}[[sum]]
 ; DARWIN: add r0{{.*}}[[sum]]
   ret i32 %add
 }
