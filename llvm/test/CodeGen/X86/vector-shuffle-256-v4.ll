@@ -363,3 +363,21 @@ define <4 x i64> @shuffle_v4i64_4015(<4 x i64> %a, <4 x i64> %b) {
   %shuffle = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 4, i32 0, i32 1, i32 5>
   ret <4 x i64> %shuffle
 }
+
+define <4 x i64> @stress_test1(<4 x i64> %a, <4 x i64> %b) {
+; AVX1-LABEL: @stress_test1
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm0
+; AVX1-NEXT:    vpunpckhqdq {{.*}} # xmm0 = xmm0[1,1]
+; AVX1-NEXT:    vpshufd {{.*}} # xmm0 = xmm0[2,3,0,1]
+; AVX1-NEXT:    vshufpd {{.*}} # xmm0 = xmm0[0],xmm1[1]
+; AVX1-NEXT:    vpshufd {{.*}} # xmm1 = xmm1[2,3,0,1]
+; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVX1-NEXT:    retq
+  %c = shufflevector <4 x i64> %b, <4 x i64> undef, <4 x i32> <i32 3, i32 1, i32 1, i32 0>
+  %d = shufflevector <4 x i64> %c, <4 x i64> undef, <4 x i32> <i32 3, i32 undef, i32 2, i32 undef>
+  %e = shufflevector <4 x i64> %b, <4 x i64> undef, <4 x i32> <i32 3, i32 3, i32 1, i32 undef>
+  %f = shufflevector <4 x i64> %d, <4 x i64> %e, <4 x i32> <i32 5, i32 1, i32 1, i32 0>
+
+  ret <4 x i64> %f
+}

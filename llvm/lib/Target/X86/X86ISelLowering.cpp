@@ -19764,19 +19764,23 @@ static SmallVector<int, 4> getPSHUFShuffleMask(SDValue N) {
 /// We walk up the chain and look for a combinable shuffle, skipping over
 /// shuffles that we could hoist this shuffle's transformation past without
 /// altering anything.
-static bool combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
-                                         SelectionDAG &DAG,
-                                         TargetLowering::DAGCombinerInfo &DCI) {
+static SDValue
+combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
+                             SelectionDAG &DAG,
+                             TargetLowering::DAGCombinerInfo &DCI) {
   assert(N.getOpcode() == X86ISD::PSHUFD &&
          "Called with something other than an x86 128-bit half shuffle!");
   SDLoc DL(N);
 
-  // Walk up a single-use chain looking for a combinable shuffle.
+  // Walk up a single-use chain looking for a combinable shuffle. Keep a stack
+  // of the shuffles in the chain so that we can form a fresh chain to replace
+  // this one.
+  SmallVector<SDValue, 8> Chain;
   SDValue V = N.getOperand(0);
   for (; V.hasOneUse(); V = V.getOperand(0)) {
     switch (V.getOpcode()) {
     default:
-      return false; // Nothing combined!
+      return SDValue(); // Nothing combined!
 
     case ISD::BITCAST:
       // Skip bitcasts as we always know the type for the target specific
@@ -19792,8 +19796,9 @@ static bool combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
       // dword shuffle, and the high words are self-contained.
       if (Mask[0] != 0 || Mask[1] != 1 ||
           !(Mask[2] >= 2 && Mask[2] < 4 && Mask[3] >= 2 && Mask[3] < 4))
-        return false;
+        return SDValue();
 
+      Chain.push_back(V);
       continue;
 
     case X86ISD::PSHUFHW:
@@ -19801,8 +19806,9 @@ static bool combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
       // dword shuffle, and the low words are self-contained.
       if (Mask[2] != 2 || Mask[3] != 3 ||
           !(Mask[0] >= 0 && Mask[0] < 2 && Mask[1] >= 0 && Mask[1] < 2))
-        return false;
+        return SDValue();
 
+      Chain.push_back(V);
       continue;
 
     case X86ISD::UNPCKL:
@@ -19810,24 +19816,27 @@ static bool combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
       // For either i8 -> i16 or i16 -> i32 unpacks, we can combine a dword
       // shuffle into a preceding word shuffle.
       if (V.getValueType() != MVT::v16i8 && V.getValueType() != MVT::v8i16)
-        return false;
+        return SDValue();
 
       // Search for a half-shuffle which we can combine with.
       unsigned CombineOp =
           V.getOpcode() == X86ISD::UNPCKL ? X86ISD::PSHUFLW : X86ISD::PSHUFHW;
       if (V.getOperand(0) != V.getOperand(1) ||
           !V->isOnlyUserOf(V.getOperand(0).getNode()))
-        return false;
+        return SDValue();
+      Chain.push_back(V);
       V = V.getOperand(0);
       do {
         switch (V.getOpcode()) {
         default:
-          return false; // Nothing to combine.
+          return SDValue(); // Nothing to combine.
 
         case X86ISD::PSHUFLW:
         case X86ISD::PSHUFHW:
           if (V.getOpcode() == CombineOp)
             break;
+
+          Chain.push_back(V);
 
           // Fallthrough!
         case ISD::BITCAST:
@@ -19844,10 +19853,7 @@ static bool combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
 
   if (!V.hasOneUse())
     // We fell out of the loop without finding a viable combining instruction.
-    return false;
-
-  // Record the old value to use in RAUW-ing.
-  SDValue Old = V;
+    return SDValue();
 
   // Merge this node's mask and our incoming mask.
   SmallVector<int, 4> VMask = getPSHUFShuffleMask(V);
@@ -19856,20 +19862,32 @@ static bool combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
   V = DAG.getNode(V.getOpcode(), DL, V.getValueType(), V.getOperand(0),
                   getV4X86ShuffleImm8ForMask(Mask, DAG));
 
-  // It is possible that one of the combinable shuffles was completely absorbed
-  // by the other, just replace it and revisit all users in that case.
-  if (Old.getNode() == V.getNode()) {
-    DCI.CombineTo(N.getNode(), N.getOperand(0), /*AddTo=*/true);
-    return true;
+  // Rebuild the chain around this new shuffle.
+  while (!Chain.empty()) {
+    SDValue W = Chain.pop_back_val();
+
+    if (V.getValueType() != W.getOperand(0).getValueType())
+      V = DAG.getNode(ISD::BITCAST, DL, W.getOperand(0).getValueType(), V);
+
+    switch (W.getOpcode()) {
+    default:
+      llvm_unreachable("Only PSHUF and UNPCK instructions get here!");
+
+    case X86ISD::UNPCKL:
+    case X86ISD::UNPCKH:
+      V = DAG.getNode(W.getOpcode(), DL, W.getValueType(), V, V);
+
+    case X86ISD::PSHUFD:
+    case X86ISD::PSHUFLW:
+    case X86ISD::PSHUFHW:
+      V = DAG.getNode(W.getOpcode(), DL, W.getValueType(), V, W.getOperand(1));
+    }
   }
+  if (V.getValueType() != N.getValueType())
+    V = DAG.getNode(ISD::BITCAST, DL, N.getValueType(), V);
 
-  // Replace N with its operand as we're going to combine that shuffle away.
-  DAG.ReplaceAllUsesWith(N, N.getOperand(0));
-
-  // Replace the combinable shuffle with the combined one, updating all users
-  // so that we re-evaluate the chain here.
-  DCI.CombineTo(Old.getNode(), V, /*AddTo*/ true);
-  return true;
+  // Return the new chain to replace N.
+  return V;
 }
 
 /// \brief Search for a combinable shuffle across a chain ending in pshuflw or pshufhw.
@@ -20034,8 +20052,8 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
     break;
 
   case X86ISD::PSHUFD:
-    if (combineRedundantDWordShuffle(N, Mask, DAG, DCI))
-      return SDValue(); // We combined away this shuffle.
+    if (SDValue NewN = combineRedundantDWordShuffle(N, Mask, DAG, DCI))
+      return NewN;
 
     break;
   }
