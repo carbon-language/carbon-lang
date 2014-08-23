@@ -8,6 +8,10 @@
 # CHECK-LE: icbi 2, 3                       # encoding: [0xac,0x1f,0x02,0x7c]
             icbi 2, 3
 
+# CHECK-BE: icbt 0, 5, 31                   # encoding: [0x7c,0x05,0xf8,0x2c]
+# CHECK-LE: icbt 0, 5, 31                   # encoding: [0x2c,0xf8,0x05,0x7c]
+            icbt 0, 5, 31
+
 # FIXME:    dcbt 2, 3, 10
 # CHECK-BE: dcbt 2, 3                       # encoding: [0x7c,0x02,0x1a,0x2c]
 # CHECK-LE: dcbt 2, 3                       # encoding: [0x2c,0x1a,0x02,0x7c]

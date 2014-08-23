@@ -1303,8 +1303,15 @@ def DCBZL  : DCB_Form<1014, 1, (outs), (ins memrr:$dst), "dcbzl $dst",
                       IIC_LdStDCBF, [(int_ppc_dcbzl xoaddr:$dst)]>,
                       PPC970_DGroup_Single;
 
+def ICBT  : XForm_icbt<31, 22, (outs), (ins u4imm:$CT, memrr:$src),
+                       "icbt $CT, $src", IIC_LdStLoad>, Requires<[IsBookE]>;
+
 def : Pat<(prefetch xoaddr:$dst, (i32 0), imm, (i32 1)),
-          (DCBT xoaddr:$dst)>;
+          (DCBT xoaddr:$dst)>;   // data prefetch for loads
+def : Pat<(prefetch xoaddr:$dst, (i32 1), imm, (i32 1)),
+          (DCBTST xoaddr:$dst)>; // data prefetch for stores
+def : Pat<(prefetch xoaddr:$dst, (i32 0), imm, (i32 0)),
+          (ICBT 0, xoaddr:$dst)>; // inst prefetch (for read)
 
 // Atomic operations
 let usesCustomInserter = 1 in {

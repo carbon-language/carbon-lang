@@ -478,6 +478,21 @@ class XForm_16<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
   let Inst{31}    = 0;
 }
 
+class XForm_icbt<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
+                 InstrItinClass itin>
+         : I<opcode, OOL, IOL, asmstr, itin> {
+  bits<4> CT;
+  bits<5> RA;
+  bits<5> RB;
+
+  let Inst{6} = 0;
+  let Inst{7-10} = CT;
+  let Inst{11-15} = RA;
+  let Inst{16-20} = RB;
+  let Inst{21-30} = xo;
+  let Inst{31} = 0;
+}
+
 class XForm_sr<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
                 InstrItinClass itin>
          : I<opcode, OOL, IOL, asmstr, itin> {
