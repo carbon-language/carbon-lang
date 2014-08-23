@@ -593,6 +593,14 @@ USEMEMFUNC(PartiallySpecializedExportedClassTemplate<void*>, f);
 // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?f@?$PartiallySpecializedExportedClassTemplate@PAX@@QAEXXZ"
 // G32-DAG: define linkonce_odr x86_thiscallcc void @_ZN41PartiallySpecializedExportedClassTemplateIPvE1fEv
 
+// MS ignores DLL attributes on partial specializations; inheritance still works though.
+template <typename T> struct __declspec(dllexport) PartiallySpecializedExportedClassTemplate2 {};
+template <typename T> struct __declspec(dllimport) PartiallySpecializedExportedClassTemplate2<T*> { void f() {} };
+USEMEMFUNC(PartiallySpecializedExportedClassTemplate2<void*>, f);
+// M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?f@?$PartiallySpecializedExportedClassTemplate2@PAX@@QAEXXZ"
+// G32-DAG: declare dllimport x86_thiscallcc void @_ZN42PartiallySpecializedExportedClassTemplate2IPvE1fEv
+
+
 //===----------------------------------------------------------------------===//
 // Classes with template base classes
 //===----------------------------------------------------------------------===//
