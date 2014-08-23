@@ -1932,7 +1932,15 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       }
     }
 
-    unsigned FieldIndex = KnownField->getFieldIndex();
+    unsigned FieldIndex = 0;
+    for (auto *FI : RT->getDecl()->fields()) {
+      if (FI->isUnnamedBitfield())
+        continue;
+      if (KnownField == FI)
+        break;
+      ++FieldIndex;
+    }
+
     RecordDecl::field_iterator Field =
         RecordDecl::field_iterator(DeclContext::decl_iterator(KnownField));
 

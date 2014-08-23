@@ -139,6 +139,9 @@ union_16644_t union_16644_instance_4[2] =
   [1].b[1] = 4
 };
 
+// CHECK: @lab = global { [4 x i8], i32 } { [4 x i8] undef, i32 123 }
+struct leading_anon_bitfield { int : 32; int n; } lab = { .n = 123 };
+
 void test1(int argc, char **argv)
 {
   // CHECK: internal global %struct.foo { i8* null, i32 1024 }
