@@ -105,7 +105,8 @@ static llvm::sys::SmartMutex<false> &getOnDiskMutex() {
 
 static void cleanupOnDiskMapAtExit();
 
-typedef llvm::DenseMap<const ASTUnit *, OnDiskData *> OnDiskDataMap;
+typedef llvm::DenseMap<const ASTUnit *,
+                       std::unique_ptr<OnDiskData>> OnDiskDataMap;
 static OnDiskDataMap &getOnDiskDataMap() {
   static OnDiskDataMap M;
   static bool hasRegisteredAtExit = false;
@@ -132,9 +133,9 @@ static OnDiskData &getOnDiskData(const ASTUnit *AU) {
   // DenseMap.
   llvm::MutexGuard Guard(getOnDiskMutex());
   OnDiskDataMap &M = getOnDiskDataMap();
-  OnDiskData *&D = M[AU];
+  auto &D = M[AU];
   if (!D)
-    D = new OnDiskData();
+    D = llvm::make_unique<OnDiskData>();
   return *D;
 }
 
@@ -150,7 +151,6 @@ static void removeOnDiskEntry(const ASTUnit *AU) {
   OnDiskDataMap::iterator I = M.find(AU);
   if (I != M.end()) {
     I->second->Cleanup();
-    delete I->second;
     M.erase(AU);
   }
 }
