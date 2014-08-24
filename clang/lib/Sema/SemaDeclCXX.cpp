@@ -4437,6 +4437,28 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
   if (!ClassAttr)
     return;
 
+  if (S.Context.getTargetInfo().getCXXABI().isMicrosoft() &&
+      !ClassAttr->isInherited()) {
+    // Diagnose dll attributes on members of class with dll attribute.
+    for (Decl *Member : Class->decls()) {
+      if (!isa<VarDecl>(Member) && !isa<CXXMethodDecl>(Member))
+        continue;
+      InheritableAttr *MemberAttr = getDLLAttr(Member);
+      if (!MemberAttr || MemberAttr->isInherited() || Member->isInvalidDecl())
+        continue;
+
+      S.Diag(MemberAttr->getLocation(),
+             diag::err_attribute_dll_member_of_dll_class)
+          << MemberAttr << ClassAttr;
+      S.Diag(ClassAttr->getLocation(), diag::note_previous_attribute);
+      Member->setInvalidDecl();
+    }
+  }
+
+  if (Class->getDescribedClassTemplate())
+    // Don't inherit dll attribute until the template is instantiated.
+    return;
+
   bool ClassExported = ClassAttr->getKind() == attr::DLLExport;
 
   // Force declaration of implicit members so they can inherit the attribute.
@@ -4467,17 +4489,7 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
       continue;
     }
 
-    if (InheritableAttr *MemberAttr = getDLLAttr(Member)) {
-      if (S.Context.getTargetInfo().getCXXABI().isMicrosoft() &&
-          !MemberAttr->isInherited() && !ClassAttr->isInherited()) {
-        S.Diag(MemberAttr->getLocation(),
-               diag::err_attribute_dll_member_of_dll_class)
-            << MemberAttr << ClassAttr;
-        S.Diag(ClassAttr->getLocation(), diag::note_previous_attribute);
-        Member->setInvalidDecl();
-        continue;
-      }
-    } else {
+    if (!getDLLAttr(Member)) {
       auto *NewAttr =
           cast<InheritableAttr>(ClassAttr->clone(S.getASTContext()));
       NewAttr->setInherited(true);

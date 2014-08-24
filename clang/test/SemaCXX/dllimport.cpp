@@ -981,7 +981,7 @@ class __declspec(dllimport) ImportClassWithDllMember {
 // expected-error@+4{{attribute 'dllimport' cannot be applied to member of 'dllexport' class}}
 // expected-error@+4{{attribute 'dllexport' cannot be applied to member of 'dllexport' class}}
 #endif
-class __declspec(dllexport) ExportClassWithDllMember {
+template <typename T> class __declspec(dllexport) ExportClassWithDllMember {
   void __declspec(dllimport) foo();
   void __declspec(dllexport) bar();
 };

@@ -693,6 +693,12 @@ USEMEMFUNC(PartiallySpecializedImportedClassTemplate<void*>, f);
 // M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc void @"\01?f@?$PartiallySpecializedImportedClassTemplate@PAX@@QAEXXZ"
 // G32-DAG: define linkonce_odr x86_thiscallcc void @_ZN41PartiallySpecializedImportedClassTemplateIPvE1fEv
 
+// Attributes on the instantiation take precedence over attributes on the template.
+template <typename T> struct __declspec(dllexport) ExplicitlyInstantiatedWithDifferentAttr { void f() {} };
+template struct __declspec(dllimport) ExplicitlyInstantiatedWithDifferentAttr<int>;
+USEMEMFUNC(ExplicitlyInstantiatedWithDifferentAttr<int>, f);
+// M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc void @"\01?f@?$ExplicitlyInstantiatedWithDifferentAttr@H@@QAEXXZ"
+
 
 //===----------------------------------------------------------------------===//
 // Classes with template base classes
