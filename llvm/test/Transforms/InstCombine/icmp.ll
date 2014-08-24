@@ -1424,3 +1424,29 @@ define i1 @icmp_neg_cst_slt(i32 %a) {
   %2 = icmp slt i32 %1, -10
   ret i1 %2
 }
+
+; CHECK-LABEL: @icmp_and_or_lshr
+; CHECK-NEXT: [[SHL:%[a-z0-9]+]] = shl nuw i32 1, %y
+; CHECK-NEXT: [[OR:%[a-z0-9]+]] = or i32 [[SHL]], 1
+; CHECK-NEXT: [[AND:%[a-z0-9]+]] = and i32 [[OR]], %x
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ne i32 [[AND]], 0
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_and_or_lshr(i32 %x, i32 %y) {
+  %shf = lshr i32 %x, %y
+  %or = or i32 %shf, %x
+  %and = and i32 %or, 1
+  %ret = icmp ne i32 %and, 0
+  ret i1 %ret
+}
+
+; CHECK-LABEL: @icmp_and_or_lshr_cst
+; CHECK-NEXT: [[AND:%[a-z0-9]+]] = and i32 %x, 3
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ne i32 [[AND]], 0
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_and_or_lshr_cst(i32 %x) {
+  %shf = lshr i32 %x, 1
+  %or = or i32 %shf, %x
+  %and = and i32 %or, 1
+  %ret = icmp ne i32 %and, 0
+  ret i1 %ret
+}
