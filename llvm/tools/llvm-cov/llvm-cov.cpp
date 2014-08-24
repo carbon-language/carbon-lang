@@ -50,7 +50,7 @@ int main(int argc, const char **argv) {
       func = gcov_main;
 
     if (func) {
-      std::string Invocation(std::string(argv[0]) + " " + argv[1]);
+      std::string Invocation(std::string() + argv[0] + " " + argv[1]);
       argv[1] = Invocation.c_str();
       return func(argc - 1, argv + 1);
     }
