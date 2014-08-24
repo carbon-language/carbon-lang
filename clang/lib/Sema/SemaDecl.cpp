@@ -152,7 +152,10 @@ static ParsedType recoverFromTypeInKnownDependentBase(Sema &S,
     auto *TD = TST->getTemplateName().getAsTemplateDecl();
     if (!TD)
       continue;
-    auto *BasePrimaryTemplate = cast<CXXRecordDecl>(TD->getTemplatedDecl());
+    auto *BasePrimaryTemplate =
+        dyn_cast_or_null<CXXRecordDecl>(TD->getTemplatedDecl());
+    if (!BasePrimaryTemplate)
+      continue;
     // FIXME: Allow lookup into non-dependent bases of dependent bases, possibly
     // by calling or integrating with the main LookupQualifiedName mechanism.
     for (NamedDecl *ND : BasePrimaryTemplate->lookup(&II)) {

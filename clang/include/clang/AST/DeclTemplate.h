@@ -236,7 +236,7 @@ protected:
       TemplateParams(nullptr) {}
 
   // Construct a template decl with the given name and parameters.
-  // Used when there is not templated element (tt-params, alias?).
+  // Used when there is not templated element (tt-params).
   TemplateDecl(Kind DK, DeclContext *DC, SourceLocation L,
                DeclarationName Name, TemplateParameterList *Params)
     : NamedDecl(DK, DC, L, Name), TemplatedDecl(nullptr),

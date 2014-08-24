@@ -470,3 +470,23 @@ void f() {
   UndefVar.method(); // expected-error {{use of undeclared identifier 'UndefVar'}}
 }
 }
+
+namespace PR20716 {
+template <template <typename T> class A>
+struct B : A<int>
+{
+  XXX x; // expected-error {{unknown type name}}
+};
+
+template <typename T>
+struct C {};
+
+template <typename T>
+using D = C<T>;
+
+template <typename T>
+struct E : D<T>
+{
+  XXX x; // expected-error {{unknown type name}}
+};
+}
