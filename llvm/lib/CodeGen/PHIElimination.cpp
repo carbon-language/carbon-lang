@@ -151,9 +151,7 @@ bool PHIElimination::runOnMachineFunction(MachineFunction &MF) {
     Changed |= EliminatePHINodes(MF, *I);
 
   // Remove dead IMPLICIT_DEF instructions.
-  for (SmallPtrSet<MachineInstr*, 4>::iterator I = ImpDefs.begin(),
-         E = ImpDefs.end(); I != E; ++I) {
-    MachineInstr *DefMI = *I;
+  for (MachineInstr *DefMI : ImpDefs) {
     unsigned DefReg = DefMI->getOperand(0).getReg();
     if (MRI->use_nodbg_empty(DefReg)) {
       if (LIS)

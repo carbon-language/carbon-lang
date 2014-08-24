@@ -857,10 +857,8 @@ void PromoteMem2Reg::DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
                               less_second> IDFPriorityQueue;
   IDFPriorityQueue PQ;
 
-  for (SmallPtrSet<BasicBlock *, 32>::const_iterator I = DefBlocks.begin(),
-                                                     E = DefBlocks.end();
-       I != E; ++I) {
-    if (DomTreeNode *Node = DT.getNode(*I))
+  for (BasicBlock *BB : DefBlocks) {
+    if (DomTreeNode *Node = DT.getNode(BB))
       PQ.push(std::make_pair(Node, DomLevels[Node]));
   }
 

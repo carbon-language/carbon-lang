@@ -508,9 +508,8 @@ bool ObjCARCContract::runOnFunction(Function &F) {
   // If this function has no escaping allocas or suspicious vararg usage,
   // objc_storeStrong calls can be marked with the "tail" keyword.
   if (TailOkForStoreStrongs)
-    for (SmallPtrSet<CallInst *, 8>::iterator I = StoreStrongCalls.begin(),
-         E = StoreStrongCalls.end(); I != E; ++I)
-      (*I)->setTailCall();
+    for (CallInst *CI : StoreStrongCalls)
+      CI->setTailCall();
   StoreStrongCalls.clear();
 
   return Changed;

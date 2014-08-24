@@ -351,10 +351,8 @@ void SjLjEHPrepare::lowerAcrossUnwindEdges(Function &F,
       continue;
 
     // Demote the PHIs to the stack.
-    for (SmallPtrSet<PHINode *, 8>::iterator I = PHIsToDemote.begin(),
-                                             E = PHIsToDemote.end();
-         I != E; ++I)
-      DemotePHIToStack(*I);
+    for (PHINode *PN : PHIsToDemote)
+      DemotePHIToStack(PN);
 
     // Move the landingpad instruction back to the top of the landing pad block.
     LPI->moveBefore(UnwindBlock->begin());

@@ -148,9 +148,7 @@ bool InternalizePass::runOnModule(Module &M) {
   // we don't see references from function local inline assembly. To be
   // conservative, we internalize symbols in llvm.compiler.used, but we
   // keep llvm.compiler.used so that the symbol is not deleted by llvm.
-  for (SmallPtrSet<GlobalValue *, 8>::iterator I = Used.begin(), E = Used.end();
-       I != E; ++I) {
-    GlobalValue *V = *I;
+  for (GlobalValue *V : Used) {
     ExternalNames.insert(V->getName());
   }
 

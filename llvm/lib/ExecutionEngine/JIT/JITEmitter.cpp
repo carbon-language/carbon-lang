@@ -462,10 +462,9 @@ void JITResolverState::EraseAllCallSitesForPrelocked(Function *F) {
   if (F2C == FunctionToCallSitesMap.end())
     return;
   StubToResolverMapTy &S2RMap = *StubToResolverMap;
-  for (SmallPtrSet<void*, 1>::const_iterator I = F2C->second.begin(),
-         E = F2C->second.end(); I != E; ++I) {
-    S2RMap.UnregisterStubResolver(*I);
-    bool Erased = CallSiteToFunctionMap.erase(*I);
+  for (void *C : F2C->second) {
+    S2RMap.UnregisterStubResolver(C);
+    bool Erased = CallSiteToFunctionMap.erase(C);
     (void)Erased;
     assert(Erased && "Missing call site->function mapping");
   }

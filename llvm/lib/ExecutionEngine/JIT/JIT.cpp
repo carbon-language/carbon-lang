@@ -110,11 +110,9 @@ public:
     MutexGuard guard(Lock);
     assert(JITs.size() != 0 && "No Jit registered");
     //search function in every instance of JIT
-    for (SmallPtrSet<JIT*, 1>::const_iterator Jit = JITs.begin(),
-           end = JITs.end();
-         Jit != end; ++Jit) {
-      if (Function *F = (*Jit)->FindFunctionNamed(Name))
-        return (*Jit)->getPointerToFunction(F);
+    for (JIT *Jit : JITs) {
+      if (Function *F = Jit->FindFunctionNamed(Name))
+        return Jit->getPointerToFunction(F);
     }
     // The function is not available : fallback on the first created (will
     // search in symbol of the current program/library)

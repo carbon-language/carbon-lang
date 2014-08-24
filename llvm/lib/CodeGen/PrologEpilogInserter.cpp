@@ -711,8 +711,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   SmallPtrSet<MachineBasicBlock*, 8> Reachable;
 
   // Iterate over the reachable blocks in DFS order.
-  for (df_ext_iterator<MachineFunction*, SmallPtrSet<MachineBasicBlock*, 8> >
-       DFI = df_ext_begin(&Fn, Reachable), DFE = df_ext_end(&Fn, Reachable);
+  for (auto DFI = df_ext_begin(&Fn, Reachable), DFE = df_ext_end(&Fn, Reachable);
        DFI != DFE; ++DFI) {
     int SPAdj = 0;
     // Check the exit state of the DFS stack predecessor.

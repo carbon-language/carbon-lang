@@ -1411,14 +1411,11 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
 
   ReverseDepMapType::iterator ReverseDepIt = ReverseLocalDeps.find(RemInst);
   if (ReverseDepIt != ReverseLocalDeps.end()) {
-    SmallPtrSet<Instruction*, 4> &ReverseDeps = ReverseDepIt->second;
     // RemInst can't be the terminator if it has local stuff depending on it.
-    assert(!ReverseDeps.empty() && !isa<TerminatorInst>(RemInst) &&
+    assert(!ReverseDepIt->second.empty() && !isa<TerminatorInst>(RemInst) &&
            "Nothing can locally depend on a terminator");
 
-    for (SmallPtrSet<Instruction*, 4>::iterator I = ReverseDeps.begin(),
-         E = ReverseDeps.end(); I != E; ++I) {
-      Instruction *InstDependingOnRemInst = *I;
+    for (Instruction *InstDependingOnRemInst : ReverseDepIt->second) {
       assert(InstDependingOnRemInst != RemInst &&
              "Already removed our local dep info");
 
@@ -1444,12 +1441,10 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
 
   ReverseDepIt = ReverseNonLocalDeps.find(RemInst);
   if (ReverseDepIt != ReverseNonLocalDeps.end()) {
-    SmallPtrSet<Instruction*, 4> &Set = ReverseDepIt->second;
-    for (SmallPtrSet<Instruction*, 4>::iterator I = Set.begin(), E = Set.end();
-         I != E; ++I) {
-      assert(*I != RemInst && "Already removed NonLocalDep info for RemInst");
+    for (Instruction *I : ReverseDepIt->second) {
+      assert(I != RemInst && "Already removed NonLocalDep info for RemInst");
 
-      PerInstNLInfo &INLD = NonLocalDeps[*I];
+      PerInstNLInfo &INLD = NonLocalDeps[I];
       // The information is now dirty!
       INLD.second = true;
 
@@ -1461,7 +1456,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
         DI->setResult(NewDirtyVal);
 
         if (Instruction *NextI = NewDirtyVal.getInst())
-          ReverseDepsToAdd.push_back(std::make_pair(NextI, *I));
+          ReverseDepsToAdd.push_back(std::make_pair(NextI, I));
       }
     }
 
@@ -1480,12 +1475,9 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   ReverseNonLocalPtrDepTy::iterator ReversePtrDepIt =
     ReverseNonLocalPtrDeps.find(RemInst);
   if (ReversePtrDepIt != ReverseNonLocalPtrDeps.end()) {
-    SmallPtrSet<ValueIsLoadPair, 4> &Set = ReversePtrDepIt->second;
     SmallVector<std::pair<Instruction*, ValueIsLoadPair>,8> ReversePtrDepsToAdd;
 
-    for (SmallPtrSet<ValueIsLoadPair, 4>::iterator I = Set.begin(),
-         E = Set.end(); I != E; ++I) {
-      ValueIsLoadPair P = *I;
+    for (ValueIsLoadPair P : ReversePtrDepIt->second) {
       assert(P.getPointer() != RemInst &&
              "Already removed NonLocalPointerDeps info for RemInst");
 
@@ -1526,8 +1518,10 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   DEBUG(verifyRemoved(RemInst));
 }
 /// verifyRemoved - Verify that the specified instruction does not occur
-/// in our internal data structures.
+/// in our internal data structures. This function verifies by asserting in
+/// debug builds.
 void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
+#ifndef NDEBUG
   for (LocalDepMapType::const_iterator I = LocalDeps.begin(),
        E = LocalDeps.end(); I != E; ++I) {
     assert(I->first != D && "Inst occurs in data structures");
@@ -1556,18 +1550,16 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
   for (ReverseDepMapType::const_iterator I = ReverseLocalDeps.begin(),
        E = ReverseLocalDeps.end(); I != E; ++I) {
     assert(I->first != D && "Inst occurs in data structures");
-    for (SmallPtrSet<Instruction*, 4>::const_iterator II = I->second.begin(),
-         EE = I->second.end(); II != EE; ++II)
-      assert(*II != D && "Inst occurs in data structures");
+    for (Instruction *Inst : I->second)
+      assert(Inst != D && "Inst occurs in data structures");
   }
 
   for (ReverseDepMapType::const_iterator I = ReverseNonLocalDeps.begin(),
        E = ReverseNonLocalDeps.end();
        I != E; ++I) {
     assert(I->first != D && "Inst occurs in data structures");
-    for (SmallPtrSet<Instruction*, 4>::const_iterator II = I->second.begin(),
-         EE = I->second.end(); II != EE; ++II)
-      assert(*II != D && "Inst occurs in data structures");
+    for (Instruction *Inst : I->second)
+      assert(Inst != D && "Inst occurs in data structures");
   }
 
   for (ReverseNonLocalPtrDepTy::const_iterator
@@ -1575,11 +1567,10 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
        E = ReverseNonLocalPtrDeps.end(); I != E; ++I) {
     assert(I->first != D && "Inst occurs in rev NLPD map");
 
-    for (SmallPtrSet<ValueIsLoadPair, 4>::const_iterator II = I->second.begin(),
-         E = I->second.end(); II != E; ++II)
-      assert(*II != ValueIsLoadPair(D, false) &&
-             *II != ValueIsLoadPair(D, true) &&
+    for (ValueIsLoadPair P : I->second)
+      assert(P != ValueIsLoadPair(D, false) &&
+             P != ValueIsLoadPair(D, true) &&
              "Inst occurs in ReverseNonLocalPtrDeps map");
   }
-
+#endif
 }

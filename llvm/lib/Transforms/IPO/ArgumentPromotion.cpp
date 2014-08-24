@@ -477,10 +477,8 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg,
     // loading block.
     for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
       BasicBlock *P = *PI;
-      for (idf_ext_iterator<BasicBlock*, SmallPtrSet<BasicBlock*, 16> >
-             I = idf_ext_begin(P, TranspBlocks),
-             E = idf_ext_end(P, TranspBlocks); I != E; ++I)
-        if (AA.canBasicBlockModify(**I, Loc))
+      for (BasicBlock *TranspBB : inverse_depth_first_ext(P, TranspBlocks))
+        if (AA.canBasicBlockModify(*TranspBB, Loc))
           return false;
     }
   }

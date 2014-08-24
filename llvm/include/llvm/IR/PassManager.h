@@ -107,11 +107,9 @@ public:
       PreservedPassIDs = Arg.PreservedPassIDs;
       return;
     }
-    for (SmallPtrSet<void *, 2>::const_iterator I = PreservedPassIDs.begin(),
-                                                E = PreservedPassIDs.end();
-         I != E; ++I)
-      if (!Arg.PreservedPassIDs.count(*I))
-        PreservedPassIDs.erase(*I);
+    for (void *P : PreservedPassIDs)
+      if (!Arg.PreservedPassIDs.count(P))
+        PreservedPassIDs.erase(P);
   }
 
   /// \brief Intersect this set with a temporary other set in place.
@@ -125,11 +123,9 @@ public:
       PreservedPassIDs = std::move(Arg.PreservedPassIDs);
       return;
     }
-    for (SmallPtrSet<void *, 2>::const_iterator I = PreservedPassIDs.begin(),
-                                                E = PreservedPassIDs.end();
-         I != E; ++I)
-      if (!Arg.PreservedPassIDs.count(*I))
-        PreservedPassIDs.erase(*I);
+    for (void *P : PreservedPassIDs)
+      if (!Arg.PreservedPassIDs.count(P))
+        PreservedPassIDs.erase(P);
   }
 
   /// \brief Query whether a pass is marked as preserved by this set.

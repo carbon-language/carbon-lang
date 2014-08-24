@@ -5554,10 +5554,9 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
   // new operands.
   if (!DeadNodeSet.empty()) {
     SmallVector<SDNode *, 16> DeadNodes;
-    for (SmallPtrSet<SDNode *, 16>::iterator I = DeadNodeSet.begin(),
-         E = DeadNodeSet.end(); I != E; ++I)
-      if ((*I)->use_empty())
-        DeadNodes.push_back(*I);
+    for (SDNode *N : DeadNodeSet)
+      if (N->use_empty())
+        DeadNodes.push_back(N);
     RemoveDeadNodes(DeadNodes);
   }
 

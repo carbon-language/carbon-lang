@@ -496,20 +496,19 @@ ReprocessLoop:
     }
 
     // Delete each unique out-of-loop (and thus dead) predecessor.
-    for (SmallPtrSet<BasicBlock*, 4>::iterator I = BadPreds.begin(),
-         E = BadPreds.end(); I != E; ++I) {
+    for (BasicBlock *P : BadPreds) {
 
       DEBUG(dbgs() << "LoopSimplify: Deleting edge from dead predecessor "
-                   << (*I)->getName() << "\n");
+                   << P->getName() << "\n");
 
       // Inform each successor of each dead pred.
-      for (succ_iterator SI = succ_begin(*I), SE = succ_end(*I); SI != SE; ++SI)
-        (*SI)->removePredecessor(*I);
+      for (succ_iterator SI = succ_begin(P), SE = succ_end(P); SI != SE; ++SI)
+        (*SI)->removePredecessor(P);
       // Zap the dead pred's terminator and replace it with unreachable.
-      TerminatorInst *TI = (*I)->getTerminator();
+      TerminatorInst *TI = P->getTerminator();
        TI->replaceAllUsesWith(UndefValue::get(TI->getType()));
-      (*I)->getTerminator()->eraseFromParent();
-      new UnreachableInst((*I)->getContext(), *I);
+      P->getTerminator()->eraseFromParent();
+      new UnreachableInst(P->getContext(), P);
       Changed = true;
     }
   }

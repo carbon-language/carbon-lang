@@ -247,9 +247,7 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
   // Append the clauses from the outer landing pad instruction into the inlined
   // landing pad instructions.
   LandingPadInst *OuterLPad = Invoke.getLandingPadInst();
-  for (SmallPtrSet<LandingPadInst*, 16>::iterator I = InlinedLPads.begin(),
-         E = InlinedLPads.end(); I != E; ++I) {
-    LandingPadInst *InlinedLPad = *I;
+  for (LandingPadInst *InlinedLPad : InlinedLPads) {
     unsigned OuterNum = OuterLPad->getNumClauses();
     InlinedLPad->reserveClauses(OuterNum);
     for (unsigned OuterIdx = 0; OuterIdx != OuterNum; ++OuterIdx)

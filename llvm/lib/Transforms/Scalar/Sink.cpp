@@ -166,9 +166,8 @@ static bool isSafeToMove(Instruction *Inst, AliasAnalysis *AA,
 
   if (LoadInst *L = dyn_cast<LoadInst>(Inst)) {
     AliasAnalysis::Location Loc = AA->getLocation(L);
-    for (SmallPtrSet<Instruction *, 8>::iterator I = Stores.begin(),
-         E = Stores.end(); I != E; ++I)
-      if (AA->getModRefInfo(*I, Loc) & AliasAnalysis::Mod)
+    for (Instruction *S : Stores)
+      if (AA->getModRefInfo(S, Loc) & AliasAnalysis::Mod)
         return false;
   }
 

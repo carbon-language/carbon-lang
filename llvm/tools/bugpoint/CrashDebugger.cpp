@@ -312,10 +312,9 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
   // have to take.
   std::vector<std::pair<std::string, std::string> > BlockInfo;
 
-  for (SmallPtrSet<BasicBlock*, 8>::iterator I = Blocks.begin(),
-         E = Blocks.end(); I != E; ++I)
-    BlockInfo.push_back(std::make_pair((*I)->getParent()->getName(),
-                                       (*I)->getName()));
+  for (BasicBlock *BB : Blocks)
+    BlockInfo.push_back(std::make_pair(BB->getParent()->getName(),
+                                       BB->getName()));
 
   // Now run the CFG simplify pass on the function...
   std::vector<std::string> Passes;
@@ -420,9 +419,8 @@ bool ReduceCrashingInstructions::TestInsts(std::vector<const Instruction*>
     // Make sure to use instruction pointers that point into the now-current
     // module, and that they don't include any deleted blocks.
     Insts.clear();
-    for (SmallPtrSet<Instruction*, 64>::const_iterator I = Instructions.begin(),
-             E = Instructions.end(); I != E; ++I)
-      Insts.push_back(*I);
+    for (Instruction *Inst : Instructions)
+      Insts.push_back(Inst);
     return true;
   }
   delete M;  // It didn't crash, try something else.

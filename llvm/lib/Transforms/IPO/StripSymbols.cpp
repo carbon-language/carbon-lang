@@ -154,9 +154,8 @@ static void RemoveDeadConstant(Constant *C) {
       C->destroyConstant();
 
   // If the constant referenced anything, see if we can delete it as well.
-  for (SmallPtrSet<Constant*, 4>::iterator OI = Operands.begin(),
-         OE = Operands.end(); OI != OE; ++OI)
-    RemoveDeadConstant(*OI);
+  for (Constant *O : Operands)
+    RemoveDeadConstant(O);
 }
 
 // Strip the symbol table of its names.

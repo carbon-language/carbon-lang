@@ -1362,10 +1362,8 @@ bool BasicAliasAnalysis::isValueEqualInPotentialCycles(const Value *V,
   // Make sure that the visited phis cannot reach the Value. This ensures that
   // the Values cannot come from different iterations of a potential cycle the
   // phi nodes could be involved in.
-  for (SmallPtrSet<const BasicBlock *, 8>::iterator PI = VisitedPhiBBs.begin(),
-                                                    PE = VisitedPhiBBs.end();
-       PI != PE; ++PI)
-    if (isPotentiallyReachable((*PI)->begin(), Inst, DT, LI))
+  for (auto *P : VisitedPhiBBs)
+    if (isPotentiallyReachable(P->begin(), Inst, DT, LI))
       return false;
 
   return true;

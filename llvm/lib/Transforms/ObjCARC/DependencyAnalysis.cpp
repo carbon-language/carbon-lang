@@ -246,9 +246,7 @@ llvm::objcarc::FindDependencies(DependenceKind Flavor,
   // Determine whether the original StartBB post-dominates all of the blocks we
   // visited. If not, insert a sentinal indicating that most optimizations are
   // not safe.
-  for (SmallPtrSet<const BasicBlock *, 4>::const_iterator I = Visited.begin(),
-       E = Visited.end(); I != E; ++I) {
-    const BasicBlock *BB = *I;
+  for (const BasicBlock *BB : Visited) {
     if (BB == StartBB)
       continue;
     const TerminatorInst *TI = cast<TerminatorInst>(&BB->back());

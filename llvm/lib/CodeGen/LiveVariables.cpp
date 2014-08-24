@@ -525,11 +525,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   MachineBasicBlock *Entry = MF->begin();
   SmallPtrSet<MachineBasicBlock*,16> Visited;
 
-  for (df_ext_iterator<MachineBasicBlock*, SmallPtrSet<MachineBasicBlock*,16> >
-         DFI = df_ext_begin(Entry, Visited), E = df_ext_end(Entry, Visited);
-       DFI != E; ++DFI) {
-    MachineBasicBlock *MBB = *DFI;
-
+  for (MachineBasicBlock *MBB : depth_first_ext(Entry, Visited)) {
     // Mark live-in registers as live-in.
     SmallVector<unsigned, 4> Defs;
     for (MachineBasicBlock::livein_iterator II = MBB->livein_begin(),

@@ -11930,10 +11930,9 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDValue OriginalChain,
   // like register copies will interfere with trivial cases).
 
   SmallVector<const SDNode *, 16> Worklist;
-  for (SmallPtrSet<SDNode *, 16>::iterator I = Visited.begin(),
-       IE = Visited.end(); I != IE; ++I)
-    if (*I != OriginalChain.getNode())
-      Worklist.push_back(*I);
+  for (const SDNode *N : Visited)
+    if (N != OriginalChain.getNode())
+      Worklist.push_back(N);
 
   while (!Worklist.empty()) {
     const SDNode *M = Worklist.pop_back_val();

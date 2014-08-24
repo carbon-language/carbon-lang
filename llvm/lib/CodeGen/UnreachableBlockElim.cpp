@@ -64,9 +64,8 @@ bool UnreachableBlockElim::runOnFunction(Function &F) {
   SmallPtrSet<BasicBlock*, 8> Reachable;
 
   // Mark all reachable blocks.
-  for (df_ext_iterator<Function*, SmallPtrSet<BasicBlock*, 8> > I =
-       df_ext_begin(&F, Reachable), E = df_ext_end(&F, Reachable); I != E; ++I)
-    /* Mark all reachable blocks */;
+  for (BasicBlock *BB : depth_first_ext(&F, Reachable))
+    (void)BB/* Mark all reachable blocks */;
 
   // Loop over all dead blocks, remembering them and deleting all instructions
   // in them.
@@ -125,10 +124,8 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
   MachineLoopInfo *MLI = getAnalysisIfAvailable<MachineLoopInfo>();
 
   // Mark all reachable blocks.
-  for (df_ext_iterator<MachineFunction*, SmallPtrSet<MachineBasicBlock*, 8> >
-       I = df_ext_begin(&F, Reachable), E = df_ext_end(&F, Reachable);
-       I != E; ++I)
-    /* Mark all reachable blocks */;
+  for (MachineBasicBlock *BB : depth_first_ext(&F, Reachable))
+    (void)BB/* Mark all reachable blocks */;
 
   // Loop over all dead blocks, remembering them and deleting all instructions
   // in them.

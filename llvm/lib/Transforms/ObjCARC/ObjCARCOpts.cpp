@@ -411,10 +411,8 @@ bool RRInfo::Merge(const RRInfo &Other) {
     // Merge the insert point sets. If there are any differences,
     // that makes this a partial merge.
     bool Partial = ReverseInsertPts.size() != Other.ReverseInsertPts.size();
-    for (SmallPtrSet<Instruction *, 2>::const_iterator
-         I = Other.ReverseInsertPts.begin(),
-         E = Other.ReverseInsertPts.end(); I != E; ++I)
-      Partial |= ReverseInsertPts.insert(*I);
+    for (Instruction *Inst : Other.ReverseInsertPts)
+      Partial |= ReverseInsertPts.insert(Inst);
     return Partial;
 }
 
@@ -2299,10 +2297,7 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
   DEBUG(dbgs() << "== ObjCARCOpt::MoveCalls ==\n");
 
   // Insert the new retain and release calls.
-  for (SmallPtrSet<Instruction *, 2>::const_iterator
-       PI = ReleasesToMove.ReverseInsertPts.begin(),
-       PE = ReleasesToMove.ReverseInsertPts.end(); PI != PE; ++PI) {
-    Instruction *InsertPt = *PI;
+  for (Instruction *InsertPt : ReleasesToMove.ReverseInsertPts) {
     Value *MyArg = ArgTy == ParamTy ? Arg :
                    new BitCastInst(Arg, ParamTy, "", InsertPt);
     Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_Retain);
@@ -2313,10 +2308,7 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
     DEBUG(dbgs() << "Inserting new Retain: " << *Call << "\n"
                     "At insertion point: " << *InsertPt << "\n");
   }
-  for (SmallPtrSet<Instruction *, 2>::const_iterator
-       PI = RetainsToMove.ReverseInsertPts.begin(),
-       PE = RetainsToMove.ReverseInsertPts.end(); PI != PE; ++PI) {
-    Instruction *InsertPt = *PI;
+  for (Instruction *InsertPt : RetainsToMove.ReverseInsertPts) {
     Value *MyArg = ArgTy == ParamTy ? Arg :
                    new BitCastInst(Arg, ParamTy, "", InsertPt);
     Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_Release);
@@ -2333,18 +2325,12 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
   }
 
   // Delete the original retain and release calls.
-  for (SmallPtrSet<Instruction *, 2>::const_iterator
-       AI = RetainsToMove.Calls.begin(),
-       AE = RetainsToMove.Calls.end(); AI != AE; ++AI) {
-    Instruction *OrigRetain = *AI;
+  for (Instruction *OrigRetain : RetainsToMove.Calls) {
     Retains.blot(OrigRetain);
     DeadInsts.push_back(OrigRetain);
     DEBUG(dbgs() << "Deleting retain: " << *OrigRetain << "\n");
   }
-  for (SmallPtrSet<Instruction *, 2>::const_iterator
-       AI = ReleasesToMove.Calls.begin(),
-       AE = ReleasesToMove.Calls.end(); AI != AE; ++AI) {
-    Instruction *OrigRelease = *AI;
+  for (Instruction *OrigRelease : ReleasesToMove.Calls) {
     Releases.erase(OrigRelease);
     DeadInsts.push_back(OrigRelease);
     DEBUG(dbgs() << "Deleting release: " << *OrigRelease << "\n");
@@ -2392,10 +2378,7 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
       KnownSafeTD &= NewRetainRRI.KnownSafe;
       MultipleOwners =
         MultipleOwners || MultiOwnersSet.count(GetObjCArg(NewRetain));
-      for (SmallPtrSet<Instruction *, 2>::const_iterator
-             LI = NewRetainRRI.Calls.begin(),
-             LE = NewRetainRRI.Calls.end(); LI != LE; ++LI) {
-        Instruction *NewRetainRelease = *LI;
+      for (Instruction *NewRetainRelease : NewRetainRRI.Calls) {
         DenseMap<Value *, RRInfo>::const_iterator Jt =
           Releases.find(NewRetainRelease);
         if (Jt == Releases.end())
@@ -2441,11 +2424,7 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
 
           // Collect the optimal insertion points.
           if (!KnownSafe)
-            for (SmallPtrSet<Instruction *, 2>::const_iterator
-                   RI = NewRetainReleaseRRI.ReverseInsertPts.begin(),
-                   RE = NewRetainReleaseRRI.ReverseInsertPts.end();
-                 RI != RE; ++RI) {
-              Instruction *RIP = *RI;
+            for (Instruction *RIP : NewRetainReleaseRRI.ReverseInsertPts) {
               if (ReleasesToMove.ReverseInsertPts.insert(RIP)) {
                 // If we overflow when we compute the path count, don't
                 // remove/move anything.
@@ -2476,10 +2455,7 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
       const RRInfo &NewReleaseRRI = It->second;
       KnownSafeBU &= NewReleaseRRI.KnownSafe;
       CFGHazardAfflicted |= NewReleaseRRI.CFGHazardAfflicted;
-      for (SmallPtrSet<Instruction *, 2>::const_iterator
-             LI = NewReleaseRRI.Calls.begin(),
-             LE = NewReleaseRRI.Calls.end(); LI != LE; ++LI) {
-        Instruction *NewReleaseRetain = *LI;
+      for (Instruction *NewReleaseRetain : NewReleaseRRI.Calls) {
         MapVector<Value *, RRInfo>::const_iterator Jt =
           Retains.find(NewReleaseRetain);
         if (Jt == Retains.end())
@@ -2509,11 +2485,7 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
 
           // Collect the optimal insertion points.
           if (!KnownSafe)
-            for (SmallPtrSet<Instruction *, 2>::const_iterator
-                   RI = NewReleaseRetainRRI.ReverseInsertPts.begin(),
-                   RE = NewReleaseRetainRRI.ReverseInsertPts.end();
-                 RI != RE; ++RI) {
-              Instruction *RIP = *RI;
+            for (Instruction *RIP : NewReleaseRetainRRI.ReverseInsertPts) {
               if (RetainsToMove.ReverseInsertPts.insert(RIP)) {
                 // If we overflow when we compute the path count, don't
                 // remove/move anything.

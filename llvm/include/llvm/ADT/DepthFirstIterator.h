@@ -231,6 +231,13 @@ df_ext_iterator<T, SetTy> df_ext_end(const T& G, SetTy &S) {
   return df_ext_iterator<T, SetTy>::end(G, S);
 }
 
+template <class T, class SetTy>
+iterator_range<df_ext_iterator<T, SetTy>> depth_first_ext(const T& G,
+                                                          SetTy &S) {
+  return iterator_range<df_ext_iterator<T, SetTy>>(df_ext_begin(G, S),
+                                                   df_ext_end(G, S));
+}
+
 
 // Provide global definitions of inverse depth first iterators...
 template <class T,
@@ -274,6 +281,13 @@ idf_ext_iterator<T, SetTy> idf_ext_begin(const T& G, SetTy &S) {
 template <class T, class SetTy>
 idf_ext_iterator<T, SetTy> idf_ext_end(const T& G, SetTy &S) {
   return idf_ext_iterator<T, SetTy>::end(Inverse<T>(G), S);
+}
+
+template <class T, class SetTy>
+iterator_range<idf_ext_iterator<T, SetTy>> inverse_depth_first_ext(const T& G,
+                                                                   SetTy &S) {
+  return iterator_range<idf_ext_iterator<T, SetTy>>(idf_ext_begin(G, S),
+                                                    idf_ext_end(G, S));
 }
 
 } // End llvm namespace
