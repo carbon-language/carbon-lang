@@ -1347,11 +1347,17 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 
     Value *Arg = EmitScalarExpr(E->getArg(0));
     llvm::Type *ArgTy = Arg->getType();
-    if (ArgTy->isPPC_FP128Ty())
-      break; // FIXME: I'm not sure what the right implementation is here.
     int ArgWidth = ArgTy->getPrimitiveSizeInBits();
     llvm::Type *ArgIntTy = llvm::IntegerType::get(C, ArgWidth);
     Value *BCArg = Builder.CreateBitCast(Arg, ArgIntTy);
+    if (ArgTy->isPPC_FP128Ty()) {
+      // The higher-order double comes first, and so we need to truncate the
+      // pair to extract the overall sign. The order of the pair is the same
+      // in both little- and big-Endian modes.
+      ArgWidth >>= 1;
+      ArgIntTy = llvm::IntegerType::get(C, ArgWidth);
+      BCArg = Builder.CreateTrunc(BCArg, ArgIntTy);
+    }
     Value *ZeroCmp = llvm::Constant::getNullValue(ArgIntTy);
     Value *Result = Builder.CreateICmpSLT(BCArg, ZeroCmp);
     return RValue::get(Builder.CreateZExt(Result, ConvertType(E->getType())));
