@@ -1650,36 +1650,32 @@ struct MultiClass {
 };
 
 class RecordKeeper {
-  std::map<std::string, Record*> Classes, Defs;
+  typedef std::map<std::string, std::unique_ptr<Record>> RecordMap;
+  RecordMap Classes, Defs;
 
 public:
-  ~RecordKeeper() {
-    for (std::map<std::string, Record*>::iterator I = Classes.begin(),
-           E = Classes.end(); I != E; ++I)
-      delete I->second;
-    for (std::map<std::string, Record*>::iterator I = Defs.begin(),
-           E = Defs.end(); I != E; ++I)
-      delete I->second;
-  }
-
-  const std::map<std::string, Record*> &getClasses() const { return Classes; }
-  const std::map<std::string, Record*> &getDefs() const { return Defs; }
+  const RecordMap &getClasses() const { return Classes; }
+  const RecordMap &getDefs() const { return Defs; }
 
   Record *getClass(const std::string &Name) const {
-    std::map<std::string, Record*>::const_iterator I = Classes.find(Name);
-    return I == Classes.end() ? nullptr : I->second;
+    auto I = Classes.find(Name);
+    return I == Classes.end() ? nullptr : I->second.get();
   }
   Record *getDef(const std::string &Name) const {
-    std::map<std::string, Record*>::const_iterator I = Defs.find(Name);
-    return I == Defs.end() ? nullptr : I->second;
+    auto I = Defs.find(Name);
+    return I == Defs.end() ? nullptr : I->second.get();
   }
-  void addClass(Record *R) {
-    bool Ins = Classes.insert(std::make_pair(R->getName(), R)).second;
+  void addClass(Record *_R) {
+    std::unique_ptr<Record> R(_R);
+    bool Ins = Classes.insert(std::make_pair(R->getName(),
+                                             std::move(R))).second;
     (void)Ins;
     assert(Ins && "Class already exists");
   }
-  void addDef(Record *R) {
-    bool Ins = Defs.insert(std::make_pair(R->getName(), R)).second;
+  void addDef(Record *_R) {
+    std::unique_ptr<Record> R(_R);
+    bool Ins = Defs.insert(std::make_pair(R->getName(),
+                                          std::move(R))).second;
     (void)Ins;
     assert(Ins && "Record already exists");
   }

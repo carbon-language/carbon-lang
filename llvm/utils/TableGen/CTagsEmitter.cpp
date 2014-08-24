@@ -75,9 +75,9 @@ void CTagsEmitter::run(raw_ostream &OS) {
   // Collect tags.
   Tags.reserve(Classes.size() + Defs.size());
   for (const auto &C : Classes)
-    Tags.push_back(Tag(C.first, locate(C.second)));
+    Tags.push_back(Tag(C.first, locate(C.second.get())));
   for (const auto &D : Defs)
-    Tags.push_back(Tag(D.first, locate(D.second)));
+    Tags.push_back(Tag(D.first, locate(D.second.get())));
   // Emit tags.
   std::sort(Tags.begin(), Tags.end());
   OS << "!_TAG_FILE_FORMAT\t1\t/original ctags format/\n";

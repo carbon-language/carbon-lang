@@ -280,7 +280,7 @@ void PseudoLoweringEmitter::run(raw_ostream &o) {
   for (const auto &D : Records.getDefs()) {
     if (D.second->isSubClassOf(ExpansionClass) &&
         D.second->isSubClassOf(InstructionClass))
-      Insts.push_back(D.second);
+      Insts.push_back(D.second.get());
   }
 
   // Process the pseudo expansion definitions, validating them as we do so.

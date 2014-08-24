@@ -2031,7 +2031,7 @@ RecordKeeper::getAllDerivedDefinitions(const std::string &ClassName) const {
   std::vector<Record*> Defs;
   for (const auto &D : getDefs())
     if (D.second->isSubClassOf(Class))
-      Defs.push_back(D.second);
+      Defs.push_back(D.second.get());
 
   return Defs;
 }
