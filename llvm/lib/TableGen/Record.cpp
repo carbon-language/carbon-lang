@@ -2014,16 +2014,14 @@ void RecordKeeper::dump() const { errs() << *this; }
 
 raw_ostream &llvm::operator<<(raw_ostream &OS, const RecordKeeper &RK) {
   OS << "------------- Classes -----------------\n";
-  const std::map<std::string, Record*> &Classes = RK.getClasses();
-  for (std::map<std::string, Record*>::const_iterator I = Classes.begin(),
-         E = Classes.end(); I != E; ++I)
-    OS << "class " << *I->second;
+  const auto &Classes = RK.getClasses();
+  for (const auto &C : Classes)
+    OS << "class " << *C.second;
 
   OS << "------------- Defs -----------------\n";
-  const std::map<std::string, Record*> &Defs = RK.getDefs();
-  for (std::map<std::string, Record*>::const_iterator I = Defs.begin(),
-         E = Defs.end(); I != E; ++I)
-    OS << "def " << *I->second;
+  const auto &Defs = RK.getDefs();
+  for (const auto &D : Defs)
+    OS << "def " << *D.second;
   return OS;
 }
 
@@ -2038,10 +2036,9 @@ RecordKeeper::getAllDerivedDefinitions(const std::string &ClassName) const {
     PrintFatalError("ERROR: Couldn't find the `" + ClassName + "' class!\n");
 
   std::vector<Record*> Defs;
-  for (std::map<std::string, Record*>::const_iterator I = getDefs().begin(),
-         E = getDefs().end(); I != E; ++I)
-    if (I->second->isSubClassOf(Class))
-      Defs.push_back(I->second);
+  for (const auto &D : getDefs())
+    if (D.second->isSubClassOf(Class))
+      Defs.push_back(D.second);
 
   return Defs;
 }

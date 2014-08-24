@@ -277,11 +277,10 @@ void PseudoLoweringEmitter::run(raw_ostream &o) {
   assert(InstructionClass && "Instruction class definition missing!");
 
   std::vector<Record*> Insts;
-  for (std::map<std::string, Record*>::const_iterator I =
-         Records.getDefs().begin(), E = Records.getDefs().end(); I != E; ++I) {
-    if (I->second->isSubClassOf(ExpansionClass) &&
-        I->second->isSubClassOf(InstructionClass))
-      Insts.push_back(I->second);
+  for (const auto &D : Records.getDefs()) {
+    if (D.second->isSubClassOf(ExpansionClass) &&
+        D.second->isSubClassOf(InstructionClass))
+      Insts.push_back(D.second);
   }
 
   // Process the pseudo expansion definitions, validating them as we do so.
