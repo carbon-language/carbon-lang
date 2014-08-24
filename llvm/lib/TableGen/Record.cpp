@@ -1708,13 +1708,6 @@ const std::string &Record::getName() const {
 }
 
 void Record::setName(Init *NewName) {
-  if (TrackedRecords.getDef(Name->getAsUnquotedString()) == this) {
-    TrackedRecords.removeDef(Name->getAsUnquotedString());
-    TrackedRecords.addDef(this);
-  } else if (TrackedRecords.getClass(Name->getAsUnquotedString()) == this) {
-    TrackedRecords.removeClass(Name->getAsUnquotedString());
-    TrackedRecords.addClass(this);
-  }  // Otherwise this isn't yet registered.
   Name = NewName;
   checkName();
   // DO NOT resolve record values to the name at this point because

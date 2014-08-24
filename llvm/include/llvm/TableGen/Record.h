@@ -1684,19 +1684,6 @@ public:
     assert(Ins && "Record already exists");
   }
 
-  /// removeClass - Remove, but do not delete, the specified record.
-  ///
-  void removeClass(const std::string &Name) {
-    assert(Classes.count(Name) && "Class does not exist!");
-    Classes.erase(Name);
-  }
-  /// removeDef - Remove, but do not delete, the specified record.
-  ///
-  void removeDef(const std::string &Name) {
-    assert(Defs.count(Name) && "Def does not exist!");
-    Defs.erase(Name);
-  }
-
   //===--------------------------------------------------------------------===//
   // High-level helper methods, useful for tablegen backends...
 
