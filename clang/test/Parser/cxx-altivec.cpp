@@ -78,6 +78,11 @@ vector bool unsigned int v_bsc2;      // expected-error {{cannot use 'unsigned' 
 vector bool long v_bl;               // expected-error {{cannot use 'long' with '__vector bool'}}
 vector bool long long v_bll;         // expected-error {{cannot use 'long long' with '__vector bool'}}
 
+// vector long is deprecated, but vector long long is not.
+vector long long v_ll;
+vector signed long long v_sll;
+vector unsigned long long v_ull;
+
 void f() {
   __vector unsigned int v = {0,0,0,0};
   __vector int v__cast = (__vector int)v;

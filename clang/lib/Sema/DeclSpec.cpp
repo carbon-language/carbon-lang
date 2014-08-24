@@ -553,12 +553,6 @@ bool DeclSpec::SetTypeSpecWidth(TSW W, SourceLocation Loc,
   else if (W != TSW_longlong || TypeSpecWidth != TSW_long)
     return BadSpecifier(W, (TSW)TypeSpecWidth, PrevSpec, DiagID);
   TypeSpecWidth = W;
-  if (TypeAltiVecVector && !TypeAltiVecBool &&
-      ((TypeSpecWidth == TSW_long) || (TypeSpecWidth == TSW_longlong))) {
-    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType, Policy);
-    DiagID = diag::warn_vector_long_decl_spec_combination;
-    return true;
-  }
   return false;
 }
 
@@ -978,6 +972,9 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP, const PrintingPoli
       if ((TypeSpecType == TST_char) || (TypeSpecType == TST_int) ||
           (TypeSpecWidth != TSW_unspecified))
         TypeSpecSign = TSS_unsigned;
+    } else if (TypeSpecWidth == TSW_long) {
+      Diag(D, TSWLoc, diag::warn_vector_long_decl_spec_combination)
+        << getSpecifierName((TST)TypeSpecType, Policy);
     }
 
     if (TypeAltiVecPixel) {
