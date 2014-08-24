@@ -49,6 +49,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
+#include "X86IntrinsicsInfo.h"
 #include <bitset>
 #include <numeric>
 #include <cctype>
@@ -1642,6 +1643,8 @@ void X86TargetLowering::resetOperationActions() {
   PredictableSelectIsExpensive = !Subtarget->isAtom();
 
   setPrefFunctionAlignment(4); // 2^4 bytes.
+
+  InitIntrinsicTables();
 }
 
 // This has so far only been implemented for 64-bit MachO.
@@ -14488,108 +14491,39 @@ static unsigned getOpcodeForFMAIntrinsic(unsigned IntNo) {
 static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   SDLoc dl(Op);
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
-  switch (IntNo) {
-  default: return SDValue();    // Don't custom lower most intrinsics.
-  // Comparison intrinsics.
-  case Intrinsic::x86_sse_comieq_ss:
-  case Intrinsic::x86_sse_comilt_ss:
-  case Intrinsic::x86_sse_comile_ss:
-  case Intrinsic::x86_sse_comigt_ss:
-  case Intrinsic::x86_sse_comige_ss:
-  case Intrinsic::x86_sse_comineq_ss:
-  case Intrinsic::x86_sse_ucomieq_ss:
-  case Intrinsic::x86_sse_ucomilt_ss:
-  case Intrinsic::x86_sse_ucomile_ss:
-  case Intrinsic::x86_sse_ucomigt_ss:
-  case Intrinsic::x86_sse_ucomige_ss:
-  case Intrinsic::x86_sse_ucomineq_ss:
-  case Intrinsic::x86_sse2_comieq_sd:
-  case Intrinsic::x86_sse2_comilt_sd:
-  case Intrinsic::x86_sse2_comile_sd:
-  case Intrinsic::x86_sse2_comigt_sd:
-  case Intrinsic::x86_sse2_comige_sd:
-  case Intrinsic::x86_sse2_comineq_sd:
-  case Intrinsic::x86_sse2_ucomieq_sd:
-  case Intrinsic::x86_sse2_ucomilt_sd:
-  case Intrinsic::x86_sse2_ucomile_sd:
-  case Intrinsic::x86_sse2_ucomigt_sd:
-  case Intrinsic::x86_sse2_ucomige_sd:
-  case Intrinsic::x86_sse2_ucomineq_sd: {
-    unsigned Opc;
-    ISD::CondCode CC;
-    switch (IntNo) {
-    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
-    case Intrinsic::x86_sse_comieq_ss:
-    case Intrinsic::x86_sse2_comieq_sd:
-      Opc = X86ISD::COMI;
-      CC = ISD::SETEQ;
-      break;
-    case Intrinsic::x86_sse_comilt_ss:
-    case Intrinsic::x86_sse2_comilt_sd:
-      Opc = X86ISD::COMI;
-      CC = ISD::SETLT;
-      break;
-    case Intrinsic::x86_sse_comile_ss:
-    case Intrinsic::x86_sse2_comile_sd:
-      Opc = X86ISD::COMI;
-      CC = ISD::SETLE;
-      break;
-    case Intrinsic::x86_sse_comigt_ss:
-    case Intrinsic::x86_sse2_comigt_sd:
-      Opc = X86ISD::COMI;
-      CC = ISD::SETGT;
-      break;
-    case Intrinsic::x86_sse_comige_ss:
-    case Intrinsic::x86_sse2_comige_sd:
-      Opc = X86ISD::COMI;
-      CC = ISD::SETGE;
-      break;
-    case Intrinsic::x86_sse_comineq_ss:
-    case Intrinsic::x86_sse2_comineq_sd:
-      Opc = X86ISD::COMI;
-      CC = ISD::SETNE;
-      break;
-    case Intrinsic::x86_sse_ucomieq_ss:
-    case Intrinsic::x86_sse2_ucomieq_sd:
-      Opc = X86ISD::UCOMI;
-      CC = ISD::SETEQ;
-      break;
-    case Intrinsic::x86_sse_ucomilt_ss:
-    case Intrinsic::x86_sse2_ucomilt_sd:
-      Opc = X86ISD::UCOMI;
-      CC = ISD::SETLT;
-      break;
-    case Intrinsic::x86_sse_ucomile_ss:
-    case Intrinsic::x86_sse2_ucomile_sd:
-      Opc = X86ISD::UCOMI;
-      CC = ISD::SETLE;
-      break;
-    case Intrinsic::x86_sse_ucomigt_ss:
-    case Intrinsic::x86_sse2_ucomigt_sd:
-      Opc = X86ISD::UCOMI;
-      CC = ISD::SETGT;
-      break;
-    case Intrinsic::x86_sse_ucomige_ss:
-    case Intrinsic::x86_sse2_ucomige_sd:
-      Opc = X86ISD::UCOMI;
-      CC = ISD::SETGE;
-      break;
-    case Intrinsic::x86_sse_ucomineq_ss:
-    case Intrinsic::x86_sse2_ucomineq_sd:
-      Opc = X86ISD::UCOMI;
-      CC = ISD::SETNE;
+
+  const IntrinsicData* IntrData = GetIntrinsicWithoutChain(IntNo);
+  if (IntrData) {
+    switch(IntrData->Type) {
+    case INTR_TYPE_1OP:
+      return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(), Op.getOperand(1));
+    case INTR_TYPE_2OP:
+      return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(), Op.getOperand(1),
+        Op.getOperand(2));
+    case INTR_TYPE_3OP:
+      return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(), Op.getOperand(1),
+        Op.getOperand(2), Op.getOperand(3));
+    case COMI: { // Comparison intrinsics
+      ISD::CondCode CC = (ISD::CondCode)IntrData->Opc1;
+      SDValue LHS = Op.getOperand(1);
+      SDValue RHS = Op.getOperand(2);
+      unsigned X86CC = TranslateX86CC(CC, true, LHS, RHS, DAG);
+      assert(X86CC != X86::COND_INVALID && "Unexpected illegal condition!");
+      SDValue Cond = DAG.getNode(IntrData->Opc0, dl, MVT::i32, LHS, RHS);
+      SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
+                                  DAG.getConstant(X86CC, MVT::i8), Cond);
+      return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
+    }
+    case VSHIFT:
+      return getTargetVShiftNode(IntrData->Opc0, dl, Op.getSimpleValueType(),
+                                 Op.getOperand(1), Op.getOperand(2), DAG);
+    default:
       break;
     }
-
-    SDValue LHS = Op.getOperand(1);
-    SDValue RHS = Op.getOperand(2);
-    unsigned X86CC = TranslateX86CC(CC, true, LHS, RHS, DAG);
-    assert(X86CC != X86::COND_INVALID && "Unexpected illegal condition!");
-    SDValue Cond = DAG.getNode(Opc, dl, MVT::i32, LHS, RHS);
-    SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
-                                DAG.getConstant(X86CC, MVT::i8), Cond);
-    return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
   }
+
+  switch (IntNo) {
+  default: return SDValue();    // Don't custom lower most intrinsics.
 
   // Arithmetic intrinsics.
   case Intrinsic::x86_sse2_pmulu_dq:
@@ -14611,128 +14545,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   case Intrinsic::x86_avx2_pmulh_w:
     return DAG.getNode(ISD::MULHS, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
-
-  // SSE2/AVX2 sub with unsigned saturation intrinsics
-  case Intrinsic::x86_sse2_psubus_b:
-  case Intrinsic::x86_sse2_psubus_w:
-  case Intrinsic::x86_avx2_psubus_b:
-  case Intrinsic::x86_avx2_psubus_w:
-    return DAG.getNode(X86ISD::SUBUS, dl, Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2));
-
-  // SSE3/AVX horizontal add/sub intrinsics
-  case Intrinsic::x86_sse3_hadd_ps:
-  case Intrinsic::x86_sse3_hadd_pd:
-  case Intrinsic::x86_avx_hadd_ps_256:
-  case Intrinsic::x86_avx_hadd_pd_256:
-  case Intrinsic::x86_sse3_hsub_ps:
-  case Intrinsic::x86_sse3_hsub_pd:
-  case Intrinsic::x86_avx_hsub_ps_256:
-  case Intrinsic::x86_avx_hsub_pd_256:
-  case Intrinsic::x86_ssse3_phadd_w_128:
-  case Intrinsic::x86_ssse3_phadd_d_128:
-  case Intrinsic::x86_avx2_phadd_w:
-  case Intrinsic::x86_avx2_phadd_d:
-  case Intrinsic::x86_ssse3_phsub_w_128:
-  case Intrinsic::x86_ssse3_phsub_d_128:
-  case Intrinsic::x86_avx2_phsub_w:
-  case Intrinsic::x86_avx2_phsub_d: {
-    unsigned Opcode;
-    switch (IntNo) {
-    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
-    case Intrinsic::x86_sse3_hadd_ps:
-    case Intrinsic::x86_sse3_hadd_pd:
-    case Intrinsic::x86_avx_hadd_ps_256:
-    case Intrinsic::x86_avx_hadd_pd_256:
-      Opcode = X86ISD::FHADD;
-      break;
-    case Intrinsic::x86_sse3_hsub_ps:
-    case Intrinsic::x86_sse3_hsub_pd:
-    case Intrinsic::x86_avx_hsub_ps_256:
-    case Intrinsic::x86_avx_hsub_pd_256:
-      Opcode = X86ISD::FHSUB;
-      break;
-    case Intrinsic::x86_ssse3_phadd_w_128:
-    case Intrinsic::x86_ssse3_phadd_d_128:
-    case Intrinsic::x86_avx2_phadd_w:
-    case Intrinsic::x86_avx2_phadd_d:
-      Opcode = X86ISD::HADD;
-      break;
-    case Intrinsic::x86_ssse3_phsub_w_128:
-    case Intrinsic::x86_ssse3_phsub_d_128:
-    case Intrinsic::x86_avx2_phsub_w:
-    case Intrinsic::x86_avx2_phsub_d:
-      Opcode = X86ISD::HSUB;
-      break;
-    }
-    return DAG.getNode(Opcode, dl, Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2));
-  }
-
-  // SSE2/SSE41/AVX2 integer max/min intrinsics.
-  case Intrinsic::x86_sse2_pmaxu_b:
-  case Intrinsic::x86_sse41_pmaxuw:
-  case Intrinsic::x86_sse41_pmaxud:
-  case Intrinsic::x86_avx2_pmaxu_b:
-  case Intrinsic::x86_avx2_pmaxu_w:
-  case Intrinsic::x86_avx2_pmaxu_d:
-  case Intrinsic::x86_sse2_pminu_b:
-  case Intrinsic::x86_sse41_pminuw:
-  case Intrinsic::x86_sse41_pminud:
-  case Intrinsic::x86_avx2_pminu_b:
-  case Intrinsic::x86_avx2_pminu_w:
-  case Intrinsic::x86_avx2_pminu_d:
-  case Intrinsic::x86_sse41_pmaxsb:
-  case Intrinsic::x86_sse2_pmaxs_w:
-  case Intrinsic::x86_sse41_pmaxsd:
-  case Intrinsic::x86_avx2_pmaxs_b:
-  case Intrinsic::x86_avx2_pmaxs_w:
-  case Intrinsic::x86_avx2_pmaxs_d:
-  case Intrinsic::x86_sse41_pminsb:
-  case Intrinsic::x86_sse2_pmins_w:
-  case Intrinsic::x86_sse41_pminsd:
-  case Intrinsic::x86_avx2_pmins_b:
-  case Intrinsic::x86_avx2_pmins_w:
-  case Intrinsic::x86_avx2_pmins_d: {
-    unsigned Opcode;
-    switch (IntNo) {
-    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
-    case Intrinsic::x86_sse2_pmaxu_b:
-    case Intrinsic::x86_sse41_pmaxuw:
-    case Intrinsic::x86_sse41_pmaxud:
-    case Intrinsic::x86_avx2_pmaxu_b:
-    case Intrinsic::x86_avx2_pmaxu_w:
-    case Intrinsic::x86_avx2_pmaxu_d:
-      Opcode = X86ISD::UMAX;
-      break;
-    case Intrinsic::x86_sse2_pminu_b:
-    case Intrinsic::x86_sse41_pminuw:
-    case Intrinsic::x86_sse41_pminud:
-    case Intrinsic::x86_avx2_pminu_b:
-    case Intrinsic::x86_avx2_pminu_w:
-    case Intrinsic::x86_avx2_pminu_d:
-      Opcode = X86ISD::UMIN;
-      break;
-    case Intrinsic::x86_sse41_pmaxsb:
-    case Intrinsic::x86_sse2_pmaxs_w:
-    case Intrinsic::x86_sse41_pmaxsd:
-    case Intrinsic::x86_avx2_pmaxs_b:
-    case Intrinsic::x86_avx2_pmaxs_w:
-    case Intrinsic::x86_avx2_pmaxs_d:
-      Opcode = X86ISD::SMAX;
-      break;
-    case Intrinsic::x86_sse41_pminsb:
-    case Intrinsic::x86_sse2_pmins_w:
-    case Intrinsic::x86_sse41_pminsd:
-    case Intrinsic::x86_avx2_pmins_b:
-    case Intrinsic::x86_avx2_pmins_w:
-    case Intrinsic::x86_avx2_pmins_d:
-      Opcode = X86ISD::SMIN;
-      break;
-    }
-    return DAG.getNode(Opcode, dl, Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2));
-  }
 
   // SSE/SSE2/AVX floating point max/min intrinsics.
   case Intrinsic::x86_sse_max_ps:
@@ -14838,29 +14650,12 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(X86ISD::PSIGN, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
 
-  case Intrinsic::x86_sse41_insertps:
-    return DAG.getNode(X86ISD::INSERTPS, dl, Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
-
-  case Intrinsic::x86_avx_vperm2f128_ps_256:
-  case Intrinsic::x86_avx_vperm2f128_pd_256:
-  case Intrinsic::x86_avx_vperm2f128_si_256:
-  case Intrinsic::x86_avx2_vperm2i128:
-    return DAG.getNode(X86ISD::VPERM2X128, dl, Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
-
   case Intrinsic::x86_avx2_permd:
   case Intrinsic::x86_avx2_permps:
     // Operands intentionally swapped. Mask is last operand to intrinsic,
     // but second operand for node/instruction.
     return DAG.getNode(X86ISD::VPERMV, dl, Op.getValueType(),
                        Op.getOperand(2), Op.getOperand(1));
-
-  case Intrinsic::x86_sse_sqrt_ps:
-  case Intrinsic::x86_sse2_sqrt_pd:
-  case Intrinsic::x86_avx_sqrt_ps_256:
-  case Intrinsic::x86_avx_sqrt_pd_256:
-    return DAG.getNode(ISD::FSQRT, dl, Op.getValueType(), Op.getOperand(1));
 
   case Intrinsic::x86_avx512_mask_valign_q_512:
   case Intrinsic::x86_avx512_mask_valign_d_512:
@@ -14945,100 +14740,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     SDValue Test = DAG.getNode(X86ISD::KORTEST, dl, MVT::i32, LHS, RHS);
     SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i1, CC, Test);
     return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
-  }
-
-  // SSE/AVX shift intrinsics
-  case Intrinsic::x86_sse2_psll_w:
-  case Intrinsic::x86_sse2_psll_d:
-  case Intrinsic::x86_sse2_psll_q:
-  case Intrinsic::x86_avx2_psll_w:
-  case Intrinsic::x86_avx2_psll_d:
-  case Intrinsic::x86_avx2_psll_q:
-  case Intrinsic::x86_sse2_psrl_w:
-  case Intrinsic::x86_sse2_psrl_d:
-  case Intrinsic::x86_sse2_psrl_q:
-  case Intrinsic::x86_avx2_psrl_w:
-  case Intrinsic::x86_avx2_psrl_d:
-  case Intrinsic::x86_avx2_psrl_q:
-  case Intrinsic::x86_sse2_psra_w:
-  case Intrinsic::x86_sse2_psra_d:
-  case Intrinsic::x86_avx2_psra_w:
-  case Intrinsic::x86_avx2_psra_d: {
-    unsigned Opcode;
-    switch (IntNo) {
-    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
-    case Intrinsic::x86_sse2_psll_w:
-    case Intrinsic::x86_sse2_psll_d:
-    case Intrinsic::x86_sse2_psll_q:
-    case Intrinsic::x86_avx2_psll_w:
-    case Intrinsic::x86_avx2_psll_d:
-    case Intrinsic::x86_avx2_psll_q:
-      Opcode = X86ISD::VSHL;
-      break;
-    case Intrinsic::x86_sse2_psrl_w:
-    case Intrinsic::x86_sse2_psrl_d:
-    case Intrinsic::x86_sse2_psrl_q:
-    case Intrinsic::x86_avx2_psrl_w:
-    case Intrinsic::x86_avx2_psrl_d:
-    case Intrinsic::x86_avx2_psrl_q:
-      Opcode = X86ISD::VSRL;
-      break;
-    case Intrinsic::x86_sse2_psra_w:
-    case Intrinsic::x86_sse2_psra_d:
-    case Intrinsic::x86_avx2_psra_w:
-    case Intrinsic::x86_avx2_psra_d:
-      Opcode = X86ISD::VSRA;
-      break;
-    }
-    return DAG.getNode(Opcode, dl, Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2));
-  }
-
-  // SSE/AVX immediate shift intrinsics
-  case Intrinsic::x86_sse2_pslli_w:
-  case Intrinsic::x86_sse2_pslli_d:
-  case Intrinsic::x86_sse2_pslli_q:
-  case Intrinsic::x86_avx2_pslli_w:
-  case Intrinsic::x86_avx2_pslli_d:
-  case Intrinsic::x86_avx2_pslli_q:
-  case Intrinsic::x86_sse2_psrli_w:
-  case Intrinsic::x86_sse2_psrli_d:
-  case Intrinsic::x86_sse2_psrli_q:
-  case Intrinsic::x86_avx2_psrli_w:
-  case Intrinsic::x86_avx2_psrli_d:
-  case Intrinsic::x86_avx2_psrli_q:
-  case Intrinsic::x86_sse2_psrai_w:
-  case Intrinsic::x86_sse2_psrai_d:
-  case Intrinsic::x86_avx2_psrai_w:
-  case Intrinsic::x86_avx2_psrai_d: {
-    unsigned Opcode;
-    switch (IntNo) {
-    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
-    case Intrinsic::x86_sse2_pslli_w:
-    case Intrinsic::x86_sse2_pslli_d:
-    case Intrinsic::x86_sse2_pslli_q:
-    case Intrinsic::x86_avx2_pslli_w:
-    case Intrinsic::x86_avx2_pslli_d:
-    case Intrinsic::x86_avx2_pslli_q:
-      Opcode = X86ISD::VSHLI;
-      break;
-    case Intrinsic::x86_sse2_psrli_w:
-    case Intrinsic::x86_sse2_psrli_d:
-    case Intrinsic::x86_sse2_psrli_q:
-    case Intrinsic::x86_avx2_psrli_w:
-    case Intrinsic::x86_avx2_psrli_d:
-    case Intrinsic::x86_avx2_psrli_q:
-      Opcode = X86ISD::VSRLI;
-      break;
-    case Intrinsic::x86_sse2_psrai_w:
-    case Intrinsic::x86_sse2_psrai_d:
-    case Intrinsic::x86_avx2_psrai_w:
-    case Intrinsic::x86_avx2_psrai_d:
-      Opcode = X86ISD::VSRAI;
-      break;
-    }
-    return getTargetVShiftNode(Opcode, dl, Op.getSimpleValueType(),
-                               Op.getOperand(1), Op.getOperand(2), DAG);
   }
 
   case Intrinsic::x86_sse42_pcmpistria128:
@@ -15352,134 +15053,25 @@ static SDValue LowerREADCYCLECOUNTER(SDValue Op, const X86Subtarget *Subtarget,
   return DAG.getMergeValues(Results, DL);
 }
 
-enum IntrinsicType {
-  GATHER, SCATTER, PREFETCH, RDSEED, RDRAND, RDPMC, RDTSC, XTEST, ADX
-};
-
-struct IntrinsicData {
-  IntrinsicData(IntrinsicType IType, unsigned IOpc0, unsigned IOpc1)
-    :Type(IType), Opc0(IOpc0), Opc1(IOpc1) {}
-  IntrinsicType Type;
-  unsigned      Opc0;
-  unsigned      Opc1;
-};
-
-std::map < unsigned, IntrinsicData> IntrMap;
-static void InitIntinsicsMap() {
-  static bool Initialized = false;
-  if (Initialized) 
-    return;
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_gather_qps_512,
-                                IntrinsicData(GATHER, X86::VGATHERQPSZrm, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_gather_qps_512,
-                                IntrinsicData(GATHER, X86::VGATHERQPSZrm, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_gather_qpd_512,
-                                IntrinsicData(GATHER, X86::VGATHERQPDZrm, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_gather_dpd_512,
-                                IntrinsicData(GATHER, X86::VGATHERDPDZrm, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_gather_dps_512,
-                                IntrinsicData(GATHER, X86::VGATHERDPSZrm, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_gather_qpi_512, 
-                                IntrinsicData(GATHER, X86::VPGATHERQDZrm, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_gather_qpq_512, 
-                                IntrinsicData(GATHER, X86::VPGATHERQQZrm, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_gather_dpi_512, 
-                                IntrinsicData(GATHER, X86::VPGATHERDDZrm, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_gather_dpq_512, 
-                                IntrinsicData(GATHER, X86::VPGATHERDQZrm, 0)));
-
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_scatter_qps_512,
-                                IntrinsicData(SCATTER, X86::VSCATTERQPSZmr, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_scatter_qpd_512, 
-                                IntrinsicData(SCATTER, X86::VSCATTERQPDZmr, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_scatter_dpd_512, 
-                                IntrinsicData(SCATTER, X86::VSCATTERDPDZmr, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_scatter_dps_512, 
-                                IntrinsicData(SCATTER, X86::VSCATTERDPSZmr, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_scatter_qpi_512, 
-                                IntrinsicData(SCATTER, X86::VPSCATTERQDZmr, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_scatter_qpq_512, 
-                                IntrinsicData(SCATTER, X86::VPSCATTERQQZmr, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_scatter_dpi_512, 
-                                IntrinsicData(SCATTER, X86::VPSCATTERDDZmr, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_scatter_dpq_512, 
-                                IntrinsicData(SCATTER, X86::VPSCATTERDQZmr, 0)));
-   
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_gatherpf_qps_512, 
-                                IntrinsicData(PREFETCH, X86::VGATHERPF0QPSm,
-                                                        X86::VGATHERPF1QPSm)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_gatherpf_qpd_512, 
-                                IntrinsicData(PREFETCH, X86::VGATHERPF0QPDm,
-                                                        X86::VGATHERPF1QPDm)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_gatherpf_dpd_512, 
-                                IntrinsicData(PREFETCH, X86::VGATHERPF0DPDm,
-                                                        X86::VGATHERPF1DPDm)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_gatherpf_dps_512, 
-                                IntrinsicData(PREFETCH, X86::VGATHERPF0DPSm,
-                                                        X86::VGATHERPF1DPSm)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_scatterpf_qps_512, 
-                                IntrinsicData(PREFETCH, X86::VSCATTERPF0QPSm,
-                                                        X86::VSCATTERPF1QPSm)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_scatterpf_qpd_512, 
-                                IntrinsicData(PREFETCH, X86::VSCATTERPF0QPDm,
-                                                        X86::VSCATTERPF1QPDm)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_scatterpf_dpd_512, 
-                                IntrinsicData(PREFETCH, X86::VSCATTERPF0DPDm,
-                                                        X86::VSCATTERPF1DPDm)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_avx512_scatterpf_dps_512, 
-                                IntrinsicData(PREFETCH, X86::VSCATTERPF0DPSm,
-                                                        X86::VSCATTERPF1DPSm)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_rdrand_16,
-                                IntrinsicData(RDRAND, X86ISD::RDRAND, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_rdrand_32,
-                                IntrinsicData(RDRAND, X86ISD::RDRAND, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_rdrand_64,
-                                IntrinsicData(RDRAND, X86ISD::RDRAND, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_rdseed_16,
-                                IntrinsicData(RDSEED, X86ISD::RDSEED, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_rdseed_32,
-                                IntrinsicData(RDSEED, X86ISD::RDSEED, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_rdseed_64,
-                                IntrinsicData(RDSEED, X86ISD::RDSEED, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_xtest,
-                                IntrinsicData(XTEST,  X86ISD::XTEST,  0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_rdtsc,
-                                IntrinsicData(RDTSC,  X86ISD::RDTSC_DAG, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_rdtscp,
-                                IntrinsicData(RDTSC,  X86ISD::RDTSCP_DAG, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_rdpmc,
-                                IntrinsicData(RDPMC,  X86ISD::RDPMC_DAG, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_addcarryx_u32,
-                                IntrinsicData(ADX,    X86ISD::ADC, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_addcarryx_u64,
-                                IntrinsicData(ADX,    X86ISD::ADC, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_addcarry_u32,
-                                IntrinsicData(ADX,    X86ISD::ADC, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_addcarry_u64,
-                                IntrinsicData(ADX,    X86ISD::ADC, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_subborrow_u32,
-                                IntrinsicData(ADX,    X86ISD::SBB, 0)));
-  IntrMap.insert(std::make_pair(Intrinsic::x86_subborrow_u64,
-                                IntrinsicData(ADX,    X86ISD::SBB, 0)));
-  Initialized = true;
-}
 
 static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
                                       SelectionDAG &DAG) {
-  InitIntinsicsMap();
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
-  std::map < unsigned, IntrinsicData>::const_iterator itr = IntrMap.find(IntNo);
-  if (itr == IntrMap.end())
+
+  const IntrinsicData* IntrData = GetIntrinsicWithChain(IntNo);
+  if (!IntrData)
     return SDValue();
 
   SDLoc dl(Op);
-  IntrinsicData Intr = itr->second;
-  switch(Intr.Type) {
+  switch(IntrData->Type) {
+  default:
+    llvm_unreachable("Unknown Intrinsic Type");
+    break;    
   case RDSEED:
   case RDRAND: {
     // Emit the node with the right value type.
     SDVTList VTs = DAG.getVTList(Op->getValueType(0), MVT::Glue, MVT::Other);
-    SDValue Result = DAG.getNode(Intr.Opc0, dl, VTs, Op.getOperand(0));
+    SDValue Result = DAG.getNode(IntrData->Opc0, dl, VTs, Op.getOperand(0));
 
     // If the value returned by RDRAND/RDSEED was valid (CF=1), return 1.
     // Otherwise return the value from Rand, which is always 0, casted to i32.
@@ -15503,7 +15095,7 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
     SDValue Index = Op.getOperand(4);
     SDValue Mask  = Op.getOperand(5);
     SDValue Scale = Op.getOperand(6);
-    return getGatherNode(Intr.Opc0, Op, DAG, Src, Mask, Base, Index, Scale, Chain,
+    return getGatherNode(IntrData->Opc0, Op, DAG, Src, Mask, Base, Index, Scale, Chain,
                           Subtarget);
   }
   case SCATTER: {
@@ -15514,7 +15106,7 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
     SDValue Index = Op.getOperand(4);
     SDValue Src   = Op.getOperand(5);
     SDValue Scale = Op.getOperand(6);
-    return getScatterNode(Intr.Opc0, Op, DAG, Src, Mask, Base, Index, Scale, Chain);
+    return getScatterNode(IntrData->Opc0, Op, DAG, Src, Mask, Base, Index, Scale, Chain);
   }
   case PREFETCH: {
     SDValue Hint = Op.getOperand(6);
@@ -15522,7 +15114,7 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
     if (dyn_cast<ConstantSDNode> (Hint) == nullptr ||
         (HintVal = dyn_cast<ConstantSDNode> (Hint)->getZExtValue()) > 1)
       llvm_unreachable("Wrong prefetch hint in intrinsic: should be 0 or 1");
-    unsigned Opcode = (HintVal ? Intr.Opc1 : Intr.Opc0);
+    unsigned Opcode = (HintVal ? IntrData->Opc1 : IntrData->Opc0);
     SDValue Chain = Op.getOperand(0);
     SDValue Mask  = Op.getOperand(2);
     SDValue Index = Op.getOperand(3);
@@ -15533,7 +15125,7 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
   // Read Time Stamp Counter (RDTSC) and Processor ID (RDTSCP).
   case RDTSC: {
     SmallVector<SDValue, 2> Results;
-    getReadTimeStampCounter(Op.getNode(), dl, Intr.Opc0, DAG, Subtarget, Results);
+    getReadTimeStampCounter(Op.getNode(), dl, IntrData->Opc0, DAG, Subtarget, Results);
     return DAG.getMergeValues(Results, dl);
   }
   // Read Performance Monitoring Counters.
@@ -15545,7 +15137,7 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
   // XTEST intrinsics.
   case XTEST: {
     SDVTList VTs = DAG.getVTList(Op->getValueType(0), MVT::Other);
-    SDValue InTrans = DAG.getNode(X86ISD::XTEST, dl, VTs, Op.getOperand(0));
+    SDValue InTrans = DAG.getNode(IntrData->Opc0, dl, VTs, Op.getOperand(0));
     SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
                                 DAG.getConstant(X86::COND_NE, MVT::i8),
                                 InTrans);
@@ -15560,7 +15152,7 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
     SDVTList VTs = DAG.getVTList(Op.getOperand(3)->getValueType(0), MVT::Other);
     SDValue GenCF = DAG.getNode(X86ISD::ADD, dl, CFVTs, Op.getOperand(2),
                                 DAG.getConstant(-1, MVT::i8));
-    SDValue Res = DAG.getNode(Intr.Opc0, dl, VTs, Op.getOperand(3),
+    SDValue Res = DAG.getNode(IntrData->Opc0, dl, VTs, Op.getOperand(3),
                               Op.getOperand(4), GenCF.getValue(1));
     SDValue Store = DAG.getStore(Op.getOperand(0), dl, Res.getValue(0),
                                  Op.getOperand(5), MachinePointerInfo(),
@@ -15573,7 +15165,6 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
     return DAG.getMergeValues(Results, dl);
   }
   }
-  llvm_unreachable("Unknown Intrinsic Type");
 }
 
 SDValue X86TargetLowering::LowerRETURNADDR(SDValue Op,
