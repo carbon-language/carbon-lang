@@ -1036,12 +1036,7 @@ static void PrintMachHeader(uint32_t magic, uint32_t cputype,
       break;
     case MachO::CPU_SUBTYPE_X86_64_H:
       outs() << "    Haswell";
-      break;
-      switch (cpusubtype & ~MachO::CPU_SUBTYPE_MASK) {
-      default:
-        outs() << format(" %10d", cpusubtype & ~MachO::CPU_SUBTYPE_MASK);
-        break;
-      }
+      outs() << format(" %10d", cpusubtype & ~MachO::CPU_SUBTYPE_MASK);
       break;
     case MachO::CPU_TYPE_ARM:
       outs() << "     ARM";
