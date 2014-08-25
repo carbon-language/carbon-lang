@@ -72,11 +72,10 @@ bool ReplacementHandling::serializeReplacements(
       continue;
     }
 
-    std::string ErrorInfo;
-    raw_fd_ostream ReplacementsFile(ReplacementsFileName.c_str(), ErrorInfo,
-                                    fs::F_None);
-    if (!ErrorInfo.empty()) {
-      errs() << "Error opening file: " << ErrorInfo << "\n";
+    std::error_code EC;
+    raw_fd_ostream ReplacementsFile(ReplacementsFileName, EC, fs::F_None);
+    if (EC) {
+      errs() << "Error opening file: " << EC.message() << "\n";
       Errors = true;
       continue;
     }

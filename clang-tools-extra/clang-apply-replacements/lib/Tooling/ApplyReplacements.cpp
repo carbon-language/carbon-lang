@@ -245,11 +245,10 @@ bool writeFiles(const clang::Rewriter &Rewrites) {
     const char *FileName =
         Rewrites.getSourceMgr().getFileEntryForID(BufferI->first)->getName();
 
-    std::string ErrorInfo;
-
-    llvm::raw_fd_ostream FileStream(FileName, ErrorInfo, llvm::sys::fs::F_Text);
-    if (!ErrorInfo.empty()) {
-      errs() << "Warning: Could not write to " << FileName << "\n";
+    std::error_code EC;
+    llvm::raw_fd_ostream FileStream(FileName, EC, llvm::sys::fs::F_Text);
+    if (EC) {
+      errs() << "Warning: Could not write to " << EC.message() << "\n";
       continue;
     }
     BufferI->second.write(FileStream);

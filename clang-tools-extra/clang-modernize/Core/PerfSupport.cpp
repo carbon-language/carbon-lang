@@ -50,9 +50,8 @@ void writePerfDataJSON(
   SS << DirectoryName << "/" << static_cast<int>(T.getWallTime()) << "_" << Pid
      << ".json";
 
-  std::string ErrorInfo;
-  llvm::raw_fd_ostream FileStream(SS.str().c_str(), ErrorInfo,
-                                  llvm::sys::fs::F_Text);
+  std::error_code EC;
+  llvm::raw_fd_ostream FileStream(SS.str(), EC, llvm::sys::fs::F_Text);
   FileStream << "{\n";
   FileStream << "  \"Sources\" : [\n";
   for (SourcePerfData::const_iterator I = TimingResults.begin(),
