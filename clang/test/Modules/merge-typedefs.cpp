@@ -7,3 +7,4 @@
 
 // expected-no-diagnostics
 llvm::MachineDomTreeNode *p;
+foo2_t f2t;

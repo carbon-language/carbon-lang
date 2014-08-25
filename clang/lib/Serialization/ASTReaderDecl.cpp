@@ -2528,7 +2528,7 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
                                    IEnd = IdResolver.end();
          I != IEnd; ++I) {
       if (NamedDecl *Existing = getDeclForMerging(*I, IsTypedefNameForLinkage))
-        if (isSameEntity(*I, D))
+        if (isSameEntity(Existing, D))
           return FindExistingResult(Reader, D, Existing);
     }
   } else if (DeclContext *MergeDC = getPrimaryContextForMerging(DC)) {
