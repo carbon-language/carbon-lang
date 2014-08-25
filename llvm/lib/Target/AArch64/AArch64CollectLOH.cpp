@@ -1071,7 +1071,8 @@ bool AArch64CollectLOH::runOnMachineFunction(MachineFunction &MF) {
   bool Modified = false;
 
   // Start with ADRP.
-  InstrToInstrs *ColorOpToReachedUses = new InstrToInstrs[NbReg];
+  std::vector<InstrToInstrs> COTRUVector(NbReg);
+  auto ColorOpToReachedUses = COTRUVector.data();
 
   // Compute the reaching def in ADRP mode, meaning ADRP definitions
   // are first considered as uses.
@@ -1086,10 +1087,9 @@ bool AArch64CollectLOH::runOnMachineFunction(MachineFunction &MF) {
 
   // Compute LOH for ADRP.
   computeADRP(ADRPToReachingDefs, *AArch64FI, MDT);
-  delete[] ColorOpToReachedUses;
-
   // Continue with general ADRP -> ADD/LDR -> LDR/STR pattern.
-  ColorOpToReachedUses = new InstrToInstrs[NbReg];
+  COTRUVector.clear();
+  COTRUVector.resize(NbReg);
 
   // first perform a regular reaching def analysis.
   reachingDef(MF, ColorOpToReachedUses, RegToId, false, DummyOp);
@@ -1103,7 +1103,6 @@ bool AArch64CollectLOH::runOnMachineFunction(MachineFunction &MF) {
   // Compute other than AdrpAdrp LOH.
   computeOthers(UsesToReachingDefs, ColorOpToReachedUses, *AArch64FI, RegToId,
                 MDT);
-  delete[] ColorOpToReachedUses;
 
   if (BasicBlockScopeOnly)
     MF.DeleteMachineInstr(DummyOp);
