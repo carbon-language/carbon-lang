@@ -342,7 +342,7 @@ private:
   /// be checked with the same way. If we get Res != 0 on some stage, return it.
   /// Otherwise return 0.
   /// 6. For all other cases put llvm_unreachable.
-  int cmpType(Type *TyL, Type *TyR) const;
+  int cmpTypes(Type *TyL, Type *TyR) const;
 
   int cmpNumbers(uint64_t L, uint64_t R) const;
 
@@ -474,7 +474,7 @@ int FunctionComparator::cmpConstants(const Constant *L, const Constant *R) {
   // Check whether types are bitcastable. This part is just re-factored
   // Type::canLosslesslyBitCastTo method, but instead of returning true/false,
   // we also pack into result which type is "less" for us.
-  int TypesRes = cmpType(TyL, TyR);
+  int TypesRes = cmpTypes(TyL, TyR);
   if (TypesRes != 0) {
     // Types are different, but check whether we can bitcast them.
     if (!TyL->isFirstClassType()) {
@@ -615,7 +615,7 @@ int FunctionComparator::cmpConstants(const Constant *L, const Constant *R) {
 /// cmpType - compares two types,
 /// defines total ordering among the types set.
 /// See method declaration comments for more details.
-int FunctionComparator::cmpType(Type *TyL, Type *TyR) const {
+int FunctionComparator::cmpTypes(Type *TyL, Type *TyR) const {
 
   PointerType *PTyL = dyn_cast<PointerType>(TyL);
   PointerType *PTyR = dyn_cast<PointerType>(TyR);
@@ -665,8 +665,7 @@ int FunctionComparator::cmpType(Type *TyL, Type *TyR) const {
       return cmpNumbers(STyL->isPacked(), STyR->isPacked());
 
     for (unsigned i = 0, e = STyL->getNumElements(); i != e; ++i) {
-      if (int Res = cmpType(STyL->getElementType(i),
-                            STyR->getElementType(i)))
+      if (int Res = cmpTypes(STyL->getElementType(i), STyR->getElementType(i)))
         return Res;
     }
     return 0;
@@ -681,11 +680,11 @@ int FunctionComparator::cmpType(Type *TyL, Type *TyR) const {
     if (FTyL->isVarArg() != FTyR->isVarArg())
       return cmpNumbers(FTyL->isVarArg(), FTyR->isVarArg());
 
-    if (int Res = cmpType(FTyL->getReturnType(), FTyR->getReturnType()))
+    if (int Res = cmpTypes(FTyL->getReturnType(), FTyR->getReturnType()))
       return Res;
 
     for (unsigned i = 0, e = FTyL->getNumParams(); i != e; ++i) {
-      if (int Res = cmpType(FTyL->getParamType(i), FTyR->getParamType(i)))
+      if (int Res = cmpTypes(FTyL->getParamType(i), FTyR->getParamType(i)))
         return Res;
     }
     return 0;
@@ -696,7 +695,7 @@ int FunctionComparator::cmpType(Type *TyL, Type *TyR) const {
     ArrayType *ATyR = cast<ArrayType>(TyR);
     if (ATyL->getNumElements() != ATyR->getNumElements())
       return cmpNumbers(ATyL->getNumElements(), ATyR->getNumElements());
-    return cmpType(ATyL->getElementType(), ATyR->getElementType());
+    return cmpTypes(ATyL->getElementType(), ATyR->getElementType());
   }
   }
 }
@@ -717,7 +716,7 @@ int FunctionComparator::cmpOperations(const Instruction *L,
   if (int Res = cmpNumbers(L->getNumOperands(), R->getNumOperands()))
     return Res;
 
-  if (int Res = cmpType(L->getType(), R->getType()))
+  if (int Res = cmpTypes(L->getType(), R->getType()))
     return Res;
 
   if (int Res = cmpNumbers(L->getRawSubclassOptionalData(),
@@ -728,7 +727,7 @@ int FunctionComparator::cmpOperations(const Instruction *L,
   // if all operands are the same type
   for (unsigned i = 0, e = L->getNumOperands(); i != e; ++i) {
     if (int Res =
-            cmpType(L->getOperand(i)->getType(), R->getOperand(i)->getType()))
+            cmpTypes(L->getOperand(i)->getType(), R->getOperand(i)->getType()))
       return Res;
   }
 
@@ -960,7 +959,7 @@ int FunctionComparator::compare(const BasicBlock *BBL, const BasicBlock *BBR) {
         if (int Res = cmpNumbers(OpL->getValueID(), OpR->getValueID()))
           return Res;
         // TODO: Already checked in cmpOperation
-        if (int Res = cmpType(OpL->getType(), OpR->getType()))
+        if (int Res = cmpTypes(OpL->getType(), OpR->getType()))
           return Res;
       }
     }
@@ -1008,7 +1007,7 @@ int FunctionComparator::compare() {
   if (int Res = cmpNumbers(FnL->getCallingConv(), FnR->getCallingConv()))
     return Res;
 
-  if (int Res = cmpType(FnL->getFunctionType(), FnR->getFunctionType()))
+  if (int Res = cmpTypes(FnL->getFunctionType(), FnR->getFunctionType()))
     return Res;
 
   assert(FnL->arg_size() == FnR->arg_size() &&
