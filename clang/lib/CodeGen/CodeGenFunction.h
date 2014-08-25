@@ -2216,15 +2216,11 @@ public:
                                                    CXXDtorType Type, 
                                                    const CXXRecordDecl *RD);
 
-  RValue EmitCXXMemberCall(const CXXMethodDecl *MD,
-                           SourceLocation CallLoc,
-                           llvm::Value *Callee,
-                           ReturnValueSlot ReturnValue,
-                           llvm::Value *This,
-                           llvm::Value *ImplicitParam,
-                           QualType ImplicitParamTy,
-                           CallExpr::const_arg_iterator ArgBeg,
-                           CallExpr::const_arg_iterator ArgEnd);
+  RValue
+  EmitCXXMemberOrOperatorCall(const CXXMethodDecl *MD, llvm::Value *Callee,
+                              ReturnValueSlot ReturnValue, llvm::Value *This,
+                              llvm::Value *ImplicitParam,
+                              QualType ImplicitParamTy, const CallExpr *E);
   RValue EmitCXXMemberCallExpr(const CXXMemberCallExpr *E,
                                ReturnValueSlot ReturnValue);
   RValue EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,

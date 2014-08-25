@@ -376,8 +376,8 @@ public:
   virtual void EmitVirtualDestructorCall(CodeGenFunction &CGF,
                                          const CXXDestructorDecl *Dtor,
                                          CXXDtorType DtorType,
-                                         SourceLocation CallLoc,
-                                         llvm::Value *This) = 0;
+                                         llvm::Value *This,
+                                         const CXXMemberCallExpr *CE) = 0;
 
   virtual void adjustCallArgsForDestructorThunk(CodeGenFunction &CGF,
                                                 GlobalDecl GD,

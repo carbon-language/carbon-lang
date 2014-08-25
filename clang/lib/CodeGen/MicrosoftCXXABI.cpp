@@ -209,8 +209,8 @@ public:
 
   void EmitVirtualDestructorCall(CodeGenFunction &CGF,
                                  const CXXDestructorDecl *Dtor,
-                                 CXXDtorType DtorType, SourceLocation CallLoc,
-                                 llvm::Value *This) override;
+                                 CXXDtorType DtorType, llvm::Value *This,
+                                 const CXXMemberCallExpr *CE) override;
 
   void adjustCallArgsForDestructorThunk(CodeGenFunction &CGF, GlobalDecl GD,
                                         CallArgList &CallArgs) override {
@@ -1168,10 +1168,9 @@ void MicrosoftCXXABI::EmitDestructorCall(CodeGenFunction &CGF,
                                                     This, false);
   }
 
-  // FIXME: Provide a source location here.
-  CGF.EmitCXXMemberCall(DD, SourceLocation(), Callee, ReturnValueSlot(), This,
-                        /*ImplicitParam=*/nullptr,
-                        /*ImplicitParamTy=*/QualType(), nullptr, nullptr);
+  CGF.EmitCXXMemberOrOperatorCall(DD, Callee, ReturnValueSlot(), This,
+                                  /*ImplicitParam=*/nullptr,
+                                  /*ImplicitParamTy=*/QualType(), nullptr);
 }
 
 void MicrosoftCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
@@ -1382,8 +1381,9 @@ llvm::Value *MicrosoftCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
 void MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
                                                 const CXXDestructorDecl *Dtor,
                                                 CXXDtorType DtorType,
-                                                SourceLocation CallLoc,
-                                                llvm::Value *This) {
+                                                llvm::Value *This,
+                                                const CXXMemberCallExpr *CE) {
+  assert(CE == nullptr || CE->arg_begin() == CE->arg_end());
   assert(DtorType == Dtor_Deleting || DtorType == Dtor_Complete);
 
   // We have only one destructor in the vftable but can get both behaviors
@@ -1400,8 +1400,8 @@ void MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
                              DtorType == Dtor_Deleting);
 
   This = adjustThisArgumentForVirtualFunctionCall(CGF, GD, This, true);
-  CGF.EmitCXXMemberCall(Dtor, CallLoc, Callee, ReturnValueSlot(), This,
-                        ImplicitParam, Context.IntTy, nullptr, nullptr);
+  CGF.EmitCXXMemberOrOperatorCall(Dtor, Callee, ReturnValueSlot(), This,
+                                  ImplicitParam, Context.IntTy, CE);
 }
 
 const VBTableGlobals &
