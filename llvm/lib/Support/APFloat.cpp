@@ -1722,7 +1722,8 @@ APFloat::remainder(const APFloat &rhs)
     return fs;
 
   int parts = partCount();
-  integerPart *x = new integerPart[parts];
+  auto XOwner = make_unique<integerPart[]>(parts);
+  auto x = XOwner.get();
   bool ignored;
   fs = V.convertToInteger(x, parts * integerPartWidth, true,
                           rmNearestTiesToEven, &ignored);
@@ -1741,7 +1742,6 @@ APFloat::remainder(const APFloat &rhs)
 
   if (isZero())
     sign = origSign;    // IEEE754 requires this
-  delete[] x;
   return fs;
 }
 
@@ -1762,7 +1762,8 @@ APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
       return fs;
 
     int parts = partCount();
-    integerPart *x = new integerPart[parts];
+    auto XOwner = make_unique<integerPart[]>(parts);
+    auto x = XOwner.get();
     bool ignored;
     fs = V.convertToInteger(x, parts * integerPartWidth, true,
                             rmTowardZero, &ignored);
@@ -1781,7 +1782,6 @@ APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
 
     if (isZero())
       sign = origSign;    // IEEE754 requires this
-    delete[] x;
   }
   return fs;
 }
@@ -2284,15 +2284,14 @@ APFloat::convertFromSignExtendedInteger(const integerPart *src,
 
   if (isSigned &&
       APInt::tcExtractBit(src, srcCount * integerPartWidth - 1)) {
-    integerPart *copy;
+    auto C = make_unique<integerPart[]>(srcCount);
+    auto copy = C.get();
 
     /* If we're signed and negative negate a copy.  */
     sign = true;
-    copy = new integerPart[srcCount];
     APInt::tcAssign(copy, src, srcCount);
     APInt::tcNegate(copy, srcCount);
     status = convertFromUnsignedParts(copy, srcCount, rounding_mode);
-    delete [] copy;
   } else {
     sign = false;
     status = convertFromUnsignedParts(src, srcCount, rounding_mode);
@@ -2545,7 +2544,6 @@ APFloat::convertFromDecimalString(StringRef str, roundingMode rounding_mode)
     /* Overflow and round.  */
     fs = handleOverflow(rounding_mode);
   } else {
-    integerPart *decSignificand;
     unsigned int partCount;
 
     /* A tight upper bound on number of bits required to hold an
@@ -2554,7 +2552,8 @@ APFloat::convertFromDecimalString(StringRef str, roundingMode rounding_mode)
        tcMultiplyPart.  */
     partCount = static_cast<unsigned int>(D.lastSigDigit - D.firstSigDigit) + 1;
     partCount = partCountForBits(1 + 196 * partCount / 59);
-    decSignificand = new integerPart[partCount + 1];
+    auto DecSignificandOwner = make_unique<integerPart[]>(partCount + 1);
+    auto decSignificand = DecSignificandOwner.get();
     partCount = 0;
 
     /* Convert to binary efficiently - we do almost all multiplication
@@ -2595,8 +2594,6 @@ APFloat::convertFromDecimalString(StringRef str, roundingMode rounding_mode)
     category = fcNormal;
     fs = roundSignificandWithExponent(decSignificand, partCount,
                                       D.exponent, rounding_mode);
-
-    delete [] decSignificand;
   }
 
   return fs;
