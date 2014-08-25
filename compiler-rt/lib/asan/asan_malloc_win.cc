@@ -23,18 +23,18 @@
 
 #include <stddef.h>
 
-// ---------------------- Replacement functions ---------------- {{{1
 using namespace __asan;  // NOLINT
 
-// FIXME: Simply defining functions with the same signature in *.obj
-// files overrides the standard functions in *.lib
-// This works well for simple helloworld-like tests but might need to be
-// revisited in the future.
+// MT: Simply defining functions with the same signature in *.obj
+// files overrides the standard functions in the CRT.
+// MD: Memory allocation functions are defined in the CRT .dll,
+// so we have to intercept them before they are called for the first time.
 
-// The function attributes will be different for -MD CRT.
-// Just introduce an extra macro for now, it will get a different value under
-// ASAN_DYNAMIC soon.
-#define ALLOCATION_FUNCTION_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+#if ASAN_DYNAMIC
+# define ALLOCATION_FUNCTION_ATTRIBUTE
+#else
+# define ALLOCATION_FUNCTION_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+#endif
 
 extern "C" {
 ALLOCATION_FUNCTION_ATTRIBUTE
@@ -141,8 +141,36 @@ int _CrtSetReportMode(int, int) {
 
 namespace __asan {
 void ReplaceSystemMalloc() {
-#if defined(_DLL)
-# error MD CRT is not yet supported, see PR20214.
+#if defined(ASAN_DYNAMIC)
+  // We don't check the result because CRT might not be used in the process.
+  __interception::OverrideFunction("free", (uptr)free);
+  __interception::OverrideFunction("malloc", (uptr)malloc);
+  __interception::OverrideFunction("_malloc_crt", (uptr)malloc);
+  __interception::OverrideFunction("calloc", (uptr)calloc);
+  __interception::OverrideFunction("_calloc_crt", (uptr)calloc);
+  __interception::OverrideFunction("realloc", (uptr)realloc);
+  __interception::OverrideFunction("_realloc_crt", (uptr)realloc);
+  __interception::OverrideFunction("_recalloc", (uptr)_recalloc);
+  __interception::OverrideFunction("_recalloc_crt", (uptr)_recalloc);
+  __interception::OverrideFunction("_msize", (uptr)_msize);
+  __interception::OverrideFunction("_expand", (uptr)_expand);
+
+  // Override different versions of 'operator new' and 'operator delete'.
+  // No need to override the nothrow versions as they just wrap the throw
+  // versions.
+  // FIXME: Unfortunately, MSVC miscompiles the statements that take the
+  // addresses of the array versions of these operators,
+  // see https://connect.microsoft.com/VisualStudio/feedbackdetail/view/946992
+  // We might want to try to work around this by [inline] assembly or compiling
+  // parts of the RTL with Clang.
+  void *(*op_new)(size_t sz) = operator new;
+  void (*op_delete)(void *p) = operator delete;
+  void *(*op_array_new)(size_t sz) = operator new[];
+  void (*op_array_delete)(void *p) = operator delete[];
+  __interception::OverrideFunction("??2@YAPAXI@Z", (uptr)op_new);
+  __interception::OverrideFunction("??3@YAXPAX@Z", (uptr)op_delete);
+  __interception::OverrideFunction("??_U@YAPAXI@Z", (uptr)op_array_new);
+  __interception::OverrideFunction("??_V@YAXPAX@Z", (uptr)op_array_delete);
 #endif
 }
 }  // namespace __asan

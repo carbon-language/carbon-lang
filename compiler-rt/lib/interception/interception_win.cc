@@ -181,6 +181,33 @@ bool OverrideFunction(uptr old_func, uptr new_func, uptr *orig_old_func) {
   return true;
 }
 
+static const void **InterestingDLLsAvailable() {
+  const char *InterestingDLLs[] = { "kernel32.dll", "msvcr120.dll", NULL };
+  static void *result[ARRAY_SIZE(InterestingDLLs)] = { 0 };
+  if (!result[0]) {
+    for (size_t i = 0, j = 0; InterestingDLLs[i]; ++i) {
+      if (HMODULE h = GetModuleHandleA(InterestingDLLs[i]))
+        result[j++] = (void *)h;
+    }
+  }
+  return (const void **)&result[0];
+}
+
+static bool GetFunctionAddressInDLLs(const char *func_name, uptr *func_addr) {
+  *func_addr = 0;
+  const void **DLLs = InterestingDLLsAvailable();
+  for (size_t i = 0; *func_addr == 0 && DLLs[i]; ++i)
+    *func_addr = (uptr)GetProcAddress((HMODULE)DLLs[i], func_name);
+  return (*func_addr != 0);
+}
+
+bool OverrideFunction(const char *name, uptr new_func, uptr *orig_old_func) {
+  uptr orig_func;
+  if (!GetFunctionAddressInDLLs(name, &orig_func))
+    return false;
+  return OverrideFunction(orig_func, new_func, orig_old_func);
+}
+
 }  // namespace __interception
 
 #endif  // _WIN32
