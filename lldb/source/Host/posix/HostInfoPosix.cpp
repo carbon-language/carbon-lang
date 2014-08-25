@@ -158,14 +158,15 @@ HostInfoPosix::ComputeSupportExeDirectory(FileSpec &file_spec)
             log->Printf("Host::%s() failed to find /lib/liblldb within the shared lib path, bailing on bin path construction",
                         __FUNCTION__);
     }
-    file_spec.SetFile(raw_path, true);
+    file_spec.GetDirectory().SetCString(raw_path);
     return (bool)file_spec.GetDirectory();
 }
 
 bool
 HostInfoPosix::ComputeHeaderDirectory(FileSpec &file_spec)
 {
-    file_spec.SetFile("/opt/local/include/lldb", false);
+    FileSpec temp_file("/opt/local/include/lldb", false);
+    file_spec.GetDirectory().SetCString(temp_file.GetPath().c_str());
     return true;
 }
 
@@ -187,6 +188,6 @@ HostInfoPosix::ComputePythonDirectory(FileSpec &file_spec)
     // We may get our string truncated. Should we protect this with an assert?
     ::strncat(raw_path, python_version_dir.c_str(), sizeof(raw_path) - strlen(raw_path) - 1);
 
-    file_spec.SetFile(raw_path, true);
+    file_spec.GetDirectory().SetCString(raw_path);
     return true;
 }

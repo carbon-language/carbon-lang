@@ -107,6 +107,6 @@ HostInfoWindows::ComputePythonDirectory(FileSpec &file_spec)
     lldb_file_spec.AppendPathComponent("../lib/site-packages");
     lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
 
-    file_spec.SetFile(raw_path, true);
+    file_spec.GetDirectory().SetCString(raw_path);
     return true;
 }
