@@ -195,12 +195,14 @@ typedef SetVector<const MachineInstr *> SetOfMachineInstr;
 /// Map a basic block to a set of instructions per register.
 /// This is used to represent the exposed uses of a basic block
 /// per register.
-typedef MapVector<const MachineBasicBlock *, SetOfMachineInstr *>
+typedef MapVector<const MachineBasicBlock *,
+                  std::unique_ptr<SetOfMachineInstr[]>>
 BlockToSetOfInstrsPerColor;
 /// Map a basic block to an instruction per register.
 /// This is used to represent the live-out definitions of a basic block
 /// per register.
-typedef MapVector<const MachineBasicBlock *, const MachineInstr **>
+typedef MapVector<const MachineBasicBlock *,
+                  std::unique_ptr<const MachineInstr *[]>>
 BlockToInstrPerColor;
 /// Map an instruction to a set of instructions. Used to represent the
 /// mapping def to reachable uses or use to definitions.
@@ -237,9 +239,9 @@ static SetOfMachineInstr &getSet(BlockToSetOfInstrsPerColor &sets,
   SetOfMachineInstr *result;
   BlockToSetOfInstrsPerColor::iterator it = sets.find(&MBB);
   if (it != sets.end())
-    result = it->second;
+    result = it->second.get();
   else
-    result = sets[&MBB] = new SetOfMachineInstr[nbRegs];
+    result = (sets[&MBB] = make_unique<SetOfMachineInstr[]>(nbRegs)).get();
 
   return result[reg];
 }
@@ -289,9 +291,9 @@ static void initReachingDef(MachineFunction &MF,
   unsigned NbReg = RegToId.size();
 
   for (MachineBasicBlock &MBB : MF) {
-    const MachineInstr **&BBGen = Gen[&MBB];
-    BBGen = new const MachineInstr *[NbReg];
-    memset(BBGen, 0, sizeof(const MachineInstr *) * NbReg);
+    auto &BBGen = Gen[&MBB];
+    BBGen = make_unique<const MachineInstr *[]>(NbReg);
+    memset(BBGen.get(), 0, sizeof(const MachineInstr *) * NbReg);
 
     BitVector &BBKillSet = Kill[&MBB];
     BBKillSet.resize(NbReg);
@@ -422,22 +424,6 @@ static void reachingDefAlgorithm(MachineFunction &MF,
   } while (HasChanged);
 }
 
-/// Release all memory dynamically allocated during the reaching
-/// definition algorithm.
-static void finitReachingDef(BlockToSetOfInstrsPerColor &In,
-                             BlockToSetOfInstrsPerColor &Out,
-                             BlockToInstrPerColor &Gen,
-                             BlockToSetOfInstrsPerColor &ReachableUses) {
-  for (auto &IT : Out)
-    delete[] IT.second;
-  for (auto &IT : In)
-    delete[] IT.second;
-  for (auto &IT : ReachableUses)
-    delete[] IT.second;
-  for (auto &IT : Gen)
-    delete[] IT.second;
-}
-
 /// Reaching definition algorithm.
 /// \param MF function on which the algorithm will operate.
 /// \param[out] ColorOpToReachedUses will contain the result of the reaching
@@ -474,9 +460,6 @@ static void reachingDef(MachineFunction &MF,
   if (!DummyOp)
     reachingDefAlgorithm(MF, ColorOpToReachedUses, In, Out, Gen, Kill,
                          ReachableUses, RegToId.size());
-
-  // finit.
-  finitReachingDef(In, Out, Gen, ReachableUses);
 }
 
 #ifndef NDEBUG
