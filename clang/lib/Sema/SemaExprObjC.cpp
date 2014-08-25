@@ -2237,14 +2237,25 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
     return ExprError();
   
   // Warn about explicit call of +initialize on its own class. But not on 'super'.
-  if (Method && Method->getMethodFamily() == OMF_initialize &&
-      !SuperLoc.isValid()) {
-    const ObjCInterfaceDecl *ID =
-      dyn_cast<ObjCInterfaceDecl>(Method->getDeclContext());
-    if (ID == Class) {
-      Diag(Loc, diag::warn_direct_initialize_call);
-      Diag(Method->getLocation(), diag::note_method_declared_at)
-      << Method->getDeclName();
+  if (Method && Method->getMethodFamily() == OMF_initialize) {
+    if (!SuperLoc.isValid()) {
+      const ObjCInterfaceDecl *ID =
+        dyn_cast<ObjCInterfaceDecl>(Method->getDeclContext());
+      if (ID == Class) {
+        Diag(Loc, diag::warn_direct_initialize_call);
+        Diag(Method->getLocation(), diag::note_method_declared_at)
+          << Method->getDeclName();
+      }
+    }
+    else if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
+      // [super initialize] is allowed only within an +initialize implementation
+      if (CurMeth->getMethodFamily() != OMF_initialize) {
+        Diag(Loc, diag::warn_direct_super_initialize_call);
+        Diag(Method->getLocation(), diag::note_method_declared_at)
+          << Method->getDeclName();
+        Diag(CurMeth->getLocation(), diag::note_method_declared_at)
+        << CurMeth->getDeclName();
+      }
     }
   }
 

@@ -6879,7 +6879,11 @@ def warn_ivar_use_hidden : Warning<
    InGroup<DiagGroup<"shadow-ivar">>;
 def warn_direct_initialize_call : Warning<
   "explicit call to +initialize results in duplicate call to +initialize">,
-   InGroup<DiagGroup<"explicit-initialize-call">>;
+   InGroup<ExplicitInitializeCall>;
+def warn_direct_super_initialize_call : Warning<
+  "explicit call to [super initialize] should only be in implementation "
+  "of +initialize">,
+   InGroup<ExplicitInitializeCall>;
 def error_ivar_use_in_class_method : Error<
   "instance variable %0 accessed in class method">;
 def error_implicit_ivar_access : Error<

@@ -2,11 +2,12 @@
 // rdar://16628028
 
 @interface NSObject
-+ (void)initialize; // expected-note {{method 'initialize' declared here}}
++ (void)initialize; // expected-note 2 {{method 'initialize' declared here}}
 @end
 
 @interface I : NSObject 
 + (void)initialize; // expected-note {{method 'initialize' declared here}}
++ (void)SomeRandomMethod;
 @end
 
 @implementation I
@@ -16,6 +17,9 @@
 }
 + (void)initialize {
   [super initialize];
+}
++ (void)SomeRandomMethod { // expected-note {{method 'SomeRandomMethod' declared here}}
+  [super initialize]; // expected-warning {{explicit call to [super initialize] should only be in implementation of +initialize}}
 }
 @end
 
