@@ -70,7 +70,7 @@ private:
 
   /// PhysRegUseDefLists - This is an array of the head of the use/def list for
   /// physical registers.
-  MachineOperand **PhysRegUseDefLists;
+  std::vector<MachineOperand *> PhysRegUseDefLists;
 
   /// getRegUseDefListHead - Return the head pointer for the register use/def
   /// list for the specified virtual or physical register.
@@ -124,7 +124,6 @@ private:
   void operator=(const MachineRegisterInfo&) LLVM_DELETED_FUNCTION;
 public:
   explicit MachineRegisterInfo(const MachineFunction *MF);
-  ~MachineRegisterInfo();
 
   const TargetRegisterInfo *getTargetRegisterInfo() const {
     return MF->getSubtarget().getRegisterInfo();

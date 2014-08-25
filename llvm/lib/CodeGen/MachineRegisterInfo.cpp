@@ -31,14 +31,7 @@ MachineRegisterInfo::MachineRegisterInfo(const MachineFunction *MF)
   UsedPhysRegMask.resize(getTargetRegisterInfo()->getNumRegs());
 
   // Create the physreg use/def lists.
-  PhysRegUseDefLists =
-    new MachineOperand*[getTargetRegisterInfo()->getNumRegs()];
-  memset(PhysRegUseDefLists, 0,
-         sizeof(MachineOperand*)*getTargetRegisterInfo()->getNumRegs());
-}
-
-MachineRegisterInfo::~MachineRegisterInfo() {
-  delete [] PhysRegUseDefLists;
+  PhysRegUseDefLists.resize(getTargetRegisterInfo()->getNumRegs(), nullptr);
 }
 
 /// setRegClass - Set the register class of the specified virtual register.
