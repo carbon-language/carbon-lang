@@ -406,6 +406,8 @@ PEHeaderChunk<PEHeader>::PEHeaderChunk(const PECOFFLinkingContext &ctx)
     dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NO_BIND;
   if (!ctx.getAllowIsolation())
     dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NO_ISOLATION;
+  if (ctx.getHighEntropyVA() && ctx.is64Bit())
+    dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA;
   _peHeader.DLLCharacteristics = dllCharacteristics;
 
   _peHeader.SizeOfStackReserve = ctx.getStackReserve();

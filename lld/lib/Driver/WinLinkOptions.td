@@ -78,6 +78,7 @@ defm allowisolation : B<"allowisolation", "Set NO_ISOLATION bit">;
 defm dynamicbase : B<"dynamicbase",
      "Disable address space layout randomization">;
 defm safeseh : B<"safeseh", "Produce an image with Safe Exception Handler">;
+defm highentropyva : B<"highentropyva", "Set HIGH_ENTROPY_VA bit">;
 
 def help : F<"help">;
 def help_q : Flag<["/?", "-?"], "">, Alias<help>;

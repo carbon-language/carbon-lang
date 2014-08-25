@@ -26,3 +26,13 @@ RUNCD: IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP
 # RUN:   /subsystem:console -- %t.obj
 # RUN: llvm-readobj -file-headers %t5.exe | FileCheck -check-prefix=RUNNET %s
 RUNNET: IMAGE_FILE_NET_RUN_FROM_SWAP
+
+# RUN: lld -flavor link /machine:x64 /force /highentropyva /out:%t6.exe \
+# RUN:   /entry:start /subsystem:console -- %t.obj
+# RUN: llvm-readobj -file-headers %t6.exe | FileCheck -check-prefix=ENT %s
+ENT: IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA
+
+# RUN: lld -flavor link /machine:x64 /force /highentropyva:no /out:%t7.exe \
+# RUN:   /entry:start /subsystem:console -- %t.obj
+# RUN: llvm-readobj -file-headers %t7.exe | FileCheck -check-prefix=NOENT %s
+NOENT-NOT: IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA

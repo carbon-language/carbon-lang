@@ -36,10 +36,10 @@ class Group;
 class PECOFFLinkingContext : public LinkingContext {
 public:
   PECOFFLinkingContext()
-      : _mutex(), _allocMutex(), _hasEntry(true), _baseAddress(invalidBaseAddress),
-        _stackReserve(1024 * 1024), _stackCommit(4096),
-        _heapReserve(1024 * 1024), _heapCommit(4096), _noDefaultLibAll(false),
-        _sectionDefaultAlignment(4096),
+      : _mutex(), _allocMutex(), _hasEntry(true),
+        _baseAddress(invalidBaseAddress), _stackReserve(1024 * 1024),
+        _stackCommit(4096), _heapReserve(1024 * 1024), _heapCommit(4096),
+        _noDefaultLibAll(false), _sectionDefaultAlignment(4096),
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN),
         _machineType(llvm::COFF::IMAGE_FILE_MACHINE_I386), _imageVersion(0, 0),
         _minOSVersion(6, 0), _nxCompat(true), _largeAddressAware(false),
@@ -48,8 +48,8 @@ public:
         _terminalServerAware(true), _dynamicBaseEnabled(true),
         _createManifest(true), _embedManifest(false), _manifestId(1),
         _manifestUAC(true), _manifestLevel("'asInvoker'"),
-        _manifestUiAccess("'false'"), _isDll(false), _requireSEH(false),
-        _noSEH(false), _implib(""),
+        _manifestUiAccess("'false'"), _isDll(false), _highEntropyVA(true),
+        _requireSEH(false), _noSEH(false), _implib(""),
         _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)) {
     setDeadStripping(true);
   }
@@ -218,6 +218,9 @@ public:
   bool requireSEH() const { return _requireSEH; }
   bool noSEH() const { return _noSEH; }
 
+  void setHighEntropyVA(bool val) { _highEntropyVA = val; }
+  bool getHighEntropyVA() const { return _highEntropyVA; }
+
   void setOutputImportLibraryPath(const std::string &val) { _implib = val; }
   std::string getOutputImportLibraryPath() const;
 
@@ -346,6 +349,7 @@ private:
   std::string _manifestUiAccess;
   std::string _manifestDependency;
   bool _isDll;
+  bool _highEntropyVA;
 
   // True if /SAFESEH option is specified. Valid only for x86. If true, LLD will
   // produce an image with SEH table. If any modules were not compatible with
