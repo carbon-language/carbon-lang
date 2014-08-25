@@ -218,6 +218,7 @@ public:
   // Backend specific FastISel code.
   unsigned TargetMaterializeAlloca(const AllocaInst *AI) override;
   unsigned TargetMaterializeConstant(const Constant *C) override;
+  unsigned TargetMaterializeFloatZero(const ConstantFP* CF) override;
 
   explicit AArch64FastISel(FunctionLoweringInfo &funcInfo,
                          const TargetLibraryInfo *libInfo)
@@ -283,31 +284,24 @@ unsigned AArch64FastISel::AArch64MaterializeInt(const ConstantInt *CI, MVT VT) {
 }
 
 unsigned AArch64FastISel::AArch64MaterializeFP(const ConstantFP *CFP, MVT VT) {
+  // Positive zero (+0.0) has to be materialized with a fmov from the zero
+  // register, because the immediate version of fmov cannot encode zero.
+  if (CFP->isNullValue())
+    return TargetMaterializeFloatZero(CFP);
+
   if (VT != MVT::f32 && VT != MVT::f64)
     return 0;
 
   const APFloat Val = CFP->getValueAPF();
   bool Is64Bit = (VT == MVT::f64);
-
   // This checks to see if we can use FMOV instructions to materialize
   // a constant, otherwise we have to materialize via the constant pool.
   if (TLI.isFPImmLegal(Val, VT)) {
-    unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
-    // Positive zero (+0.0) has to be materialized with a fmov from the zero
-    // register, because the immediate version of fmov cannot encode zero.
-    if (Val.isPosZero()) {
-      unsigned ZReg = Is64Bit ? AArch64::XZR : AArch64::WZR;
-      unsigned Opc = Is64Bit ? AArch64::FMOVXDr : AArch64::FMOVWSr;
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
-        .addReg(ZReg, getKillRegState(true));
-      return ResultReg;
-    }
-    int Imm = Is64Bit ? AArch64_AM::getFP64Imm(Val)
-                      : AArch64_AM::getFP32Imm(Val);
+    int Imm =
+        Is64Bit ? AArch64_AM::getFP64Imm(Val) : AArch64_AM::getFP32Imm(Val);
+    assert((Imm != -1) && "Cannot encode floating-point constant.");
     unsigned Opc = Is64Bit ? AArch64::FMOVDi : AArch64::FMOVSi;
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
-      .addImm(Imm);
-    return ResultReg;
+    return FastEmitInst_i(Opc, TLI.getRegClassFor(VT), Imm);
   }
 
   // Materialize via constant pool.  MachineConstantPool wants an explicit
@@ -319,14 +313,13 @@ unsigned AArch64FastISel::AArch64MaterializeFP(const ConstantFP *CFP, MVT VT) {
   unsigned CPI = MCP.getConstantPoolIndex(cast<Constant>(CFP), Align);
   unsigned ADRPReg = createResultReg(&AArch64::GPR64commonRegClass);
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ADRP),
-          ADRPReg)
-    .addConstantPoolIndex(CPI, 0, AArch64II::MO_PAGE);
+          ADRPReg).addConstantPoolIndex(CPI, 0, AArch64II::MO_PAGE);
 
   unsigned Opc = Is64Bit ? AArch64::LDRDui : AArch64::LDRSui;
   unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
-    .addReg(ADRPReg)
-    .addConstantPoolIndex(CPI, 0, AArch64II::MO_PAGEOFF | AArch64II::MO_NC);
+      .addReg(ADRPReg)
+      .addConstantPoolIndex(CPI, 0, AArch64II::MO_PAGEOFF | AArch64II::MO_NC);
   return ResultReg;
 }
 
@@ -393,6 +386,22 @@ unsigned AArch64FastISel::TargetMaterializeConstant(const Constant *C) {
     return AArch64MaterializeGV(GV);
 
   return 0;
+}
+
+unsigned AArch64FastISel::TargetMaterializeFloatZero(const ConstantFP* CFP) {
+  assert(CFP->isNullValue() &&
+         "Floating-point constant is not a positive zero.");
+  MVT VT;
+  if (!isTypeLegal(CFP->getType(), VT))
+    return 0;
+
+  if (VT != MVT::f32 && VT != MVT::f64)
+    return 0;
+
+  bool Is64Bit = (VT == MVT::f64);
+  unsigned ZReg = Is64Bit ? AArch64::XZR : AArch64::WZR;
+  unsigned Opc = Is64Bit ? AArch64::FMOVXDr : AArch64::FMOVWSr;
+  return FastEmitInst_r(Opc, TLI.getRegClassFor(VT), ZReg, /*IsKill=*/true);
 }
 
 // Computes the address to get to an object.
