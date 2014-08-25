@@ -104,8 +104,8 @@ void RuntimeDyldMachO::dumpRelocationToResolve(const RelocationEntry &RE,
 
   dbgs() << "resolveRelocation Section: " << RE.SectionID
          << " LocalAddress: " << format("%p", LocalAddress)
-         << " FinalAddress: " << format("%p", FinalAddress)
-         << " Value: " << format("%p", Value) << " Addend: " << RE.Addend
+         << " FinalAddress: " << format("0x%x", FinalAddress)
+         << " Value: " << format("0x%x", Value) << " Addend: " << RE.Addend
          << " isPCRel: " << RE.IsPCRel << " MachoType: " << RE.RelType
          << " Size: " << (1 << RE.Size) << "\n";
 }
