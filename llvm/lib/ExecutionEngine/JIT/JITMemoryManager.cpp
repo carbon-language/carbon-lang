@@ -324,7 +324,7 @@ namespace {
     // When emitting code into a memory block, this is the block.
     MemoryRangeHeader *CurBlock;
 
-    uint8_t *GOTBase;     // Target Specific reserved memory
+    std::unique_ptr<uint8_t[]> GOTBase; // Target Specific reserved memory
   public:
     DefaultJITMemoryManager();
     ~DefaultJITMemoryManager();
@@ -525,7 +525,7 @@ namespace {
     }
 
     uint8_t *getGOTBase() const override {
-      return GOTBase;
+      return GOTBase.get();
     }
 
     void deallocateBlock(void *Block) {
@@ -638,21 +638,17 @@ DefaultJITMemoryManager::DefaultJITMemoryManager()
 
   // Start out with the freelist pointing to Mem0.
   FreeMemoryList = Mem0;
-
-  GOTBase = nullptr;
 }
 
 void DefaultJITMemoryManager::AllocateGOT() {
   assert(!GOTBase && "Cannot allocate the got multiple times");
-  GOTBase = new uint8_t[sizeof(void*) * 8192];
+  GOTBase = make_unique<uint8_t[]>(sizeof(void*) * 8192);
   HasGOT = true;
 }
 
 DefaultJITMemoryManager::~DefaultJITMemoryManager() {
   for (unsigned i = 0, e = CodeSlabs.size(); i != e; ++i)
     sys::Memory::ReleaseRWX(CodeSlabs[i]);
-
-  delete[] GOTBase;
 }
 
 sys::MemoryBlock DefaultJITMemoryManager::allocateNewSlab(size_t size) {
