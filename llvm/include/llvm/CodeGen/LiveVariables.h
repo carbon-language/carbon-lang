@@ -175,6 +175,10 @@ private:   // Intermediate data structures
   /// register which is used in a PHI node. We map that to the BB the vreg
   /// is coming from.
   void analyzePHINodes(const MachineFunction& Fn);
+
+  void runOnInstr(MachineInstr *MI, SmallVectorImpl<unsigned> &Defs);
+
+  void runOnBlock(MachineBasicBlock *MBB, unsigned NumRegs);
 public:
 
   bool runOnMachineFunction(MachineFunction &MF) override;
