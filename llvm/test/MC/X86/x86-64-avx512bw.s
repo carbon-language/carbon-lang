@@ -1,5 +1,133 @@
 // RUN: llvm-mc -triple x86_64-unknown-unknown -mcpu=skx  --show-encoding %s | FileCheck %s
 
+// CHECK: vpcmpeqb %zmm26, %zmm26, %k4
+// CHECK:  encoding: [0x62,0x91,0x2d,0x40,0x74,0xe2]
+          vpcmpeqb %zmm26, %zmm26, %k4
+
+// CHECK: vpcmpeqb %zmm26, %zmm26, %k4 {%k6}
+// CHECK:  encoding: [0x62,0x91,0x2d,0x46,0x74,0xe2]
+          vpcmpeqb %zmm26, %zmm26, %k4 {%k6}
+
+// CHECK: vpcmpeqb (%rcx), %zmm26, %k4
+// CHECK:  encoding: [0x62,0xf1,0x2d,0x40,0x74,0x21]
+          vpcmpeqb (%rcx), %zmm26, %k4
+
+// CHECK: vpcmpeqb 291(%rax,%r14,8), %zmm26, %k4
+// CHECK:  encoding: [0x62,0xb1,0x2d,0x40,0x74,0xa4,0xf0,0x23,0x01,0x00,0x00]
+          vpcmpeqb 291(%rax,%r14,8), %zmm26, %k4
+
+// CHECK: vpcmpeqb 8128(%rdx), %zmm26, %k4
+// CHECK:  encoding: [0x62,0xf1,0x2d,0x40,0x74,0x62,0x7f]
+          vpcmpeqb 8128(%rdx), %zmm26, %k4
+
+// CHECK: vpcmpeqb 8192(%rdx), %zmm26, %k4
+// CHECK:  encoding: [0x62,0xf1,0x2d,0x40,0x74,0xa2,0x00,0x20,0x00,0x00]
+          vpcmpeqb 8192(%rdx), %zmm26, %k4
+
+// CHECK: vpcmpeqb -8192(%rdx), %zmm26, %k4
+// CHECK:  encoding: [0x62,0xf1,0x2d,0x40,0x74,0x62,0x80]
+          vpcmpeqb -8192(%rdx), %zmm26, %k4
+
+// CHECK: vpcmpeqb -8256(%rdx), %zmm26, %k4
+// CHECK:  encoding: [0x62,0xf1,0x2d,0x40,0x74,0xa2,0xc0,0xdf,0xff,0xff]
+          vpcmpeqb -8256(%rdx), %zmm26, %k4
+
+// CHECK: vpcmpeqw %zmm19, %zmm23, %k5
+// CHECK:  encoding: [0x62,0xb1,0x45,0x40,0x75,0xeb]
+          vpcmpeqw %zmm19, %zmm23, %k5
+
+// CHECK: vpcmpeqw %zmm19, %zmm23, %k5 {%k7}
+// CHECK:  encoding: [0x62,0xb1,0x45,0x47,0x75,0xeb]
+          vpcmpeqw %zmm19, %zmm23, %k5 {%k7}
+
+// CHECK: vpcmpeqw (%rcx), %zmm23, %k5
+// CHECK:  encoding: [0x62,0xf1,0x45,0x40,0x75,0x29]
+          vpcmpeqw (%rcx), %zmm23, %k5
+
+// CHECK: vpcmpeqw 291(%rax,%r14,8), %zmm23, %k5
+// CHECK:  encoding: [0x62,0xb1,0x45,0x40,0x75,0xac,0xf0,0x23,0x01,0x00,0x00]
+          vpcmpeqw 291(%rax,%r14,8), %zmm23, %k5
+
+// CHECK: vpcmpeqw 8128(%rdx), %zmm23, %k5
+// CHECK:  encoding: [0x62,0xf1,0x45,0x40,0x75,0x6a,0x7f]
+          vpcmpeqw 8128(%rdx), %zmm23, %k5
+
+// CHECK: vpcmpeqw 8192(%rdx), %zmm23, %k5
+// CHECK:  encoding: [0x62,0xf1,0x45,0x40,0x75,0xaa,0x00,0x20,0x00,0x00]
+          vpcmpeqw 8192(%rdx), %zmm23, %k5
+
+// CHECK: vpcmpeqw -8192(%rdx), %zmm23, %k5
+// CHECK:  encoding: [0x62,0xf1,0x45,0x40,0x75,0x6a,0x80]
+          vpcmpeqw -8192(%rdx), %zmm23, %k5
+
+// CHECK: vpcmpeqw -8256(%rdx), %zmm23, %k5
+// CHECK:  encoding: [0x62,0xf1,0x45,0x40,0x75,0xaa,0xc0,0xdf,0xff,0xff]
+          vpcmpeqw -8256(%rdx), %zmm23, %k5
+
+// CHECK: vpcmpgtb %zmm20, %zmm30, %k4
+// CHECK:  encoding: [0x62,0xb1,0x0d,0x40,0x64,0xe4]
+          vpcmpgtb %zmm20, %zmm30, %k4
+
+// CHECK: vpcmpgtb %zmm20, %zmm30, %k4 {%k1}
+// CHECK:  encoding: [0x62,0xb1,0x0d,0x41,0x64,0xe4]
+          vpcmpgtb %zmm20, %zmm30, %k4 {%k1}
+
+// CHECK: vpcmpgtb (%rcx), %zmm30, %k4
+// CHECK:  encoding: [0x62,0xf1,0x0d,0x40,0x64,0x21]
+          vpcmpgtb (%rcx), %zmm30, %k4
+
+// CHECK: vpcmpgtb 291(%rax,%r14,8), %zmm30, %k4
+// CHECK:  encoding: [0x62,0xb1,0x0d,0x40,0x64,0xa4,0xf0,0x23,0x01,0x00,0x00]
+          vpcmpgtb 291(%rax,%r14,8), %zmm30, %k4
+
+// CHECK: vpcmpgtb 8128(%rdx), %zmm30, %k4
+// CHECK:  encoding: [0x62,0xf1,0x0d,0x40,0x64,0x62,0x7f]
+          vpcmpgtb 8128(%rdx), %zmm30, %k4
+
+// CHECK: vpcmpgtb 8192(%rdx), %zmm30, %k4
+// CHECK:  encoding: [0x62,0xf1,0x0d,0x40,0x64,0xa2,0x00,0x20,0x00,0x00]
+          vpcmpgtb 8192(%rdx), %zmm30, %k4
+
+// CHECK: vpcmpgtb -8192(%rdx), %zmm30, %k4
+// CHECK:  encoding: [0x62,0xf1,0x0d,0x40,0x64,0x62,0x80]
+          vpcmpgtb -8192(%rdx), %zmm30, %k4
+
+// CHECK: vpcmpgtb -8256(%rdx), %zmm30, %k4
+// CHECK:  encoding: [0x62,0xf1,0x0d,0x40,0x64,0xa2,0xc0,0xdf,0xff,0xff]
+          vpcmpgtb -8256(%rdx), %zmm30, %k4
+
+// CHECK: vpcmpgtw %zmm21, %zmm23, %k5
+// CHECK:  encoding: [0x62,0xb1,0x45,0x40,0x65,0xed]
+          vpcmpgtw %zmm21, %zmm23, %k5
+
+// CHECK: vpcmpgtw %zmm21, %zmm23, %k5 {%k7}
+// CHECK:  encoding: [0x62,0xb1,0x45,0x47,0x65,0xed]
+          vpcmpgtw %zmm21, %zmm23, %k5 {%k7}
+
+// CHECK: vpcmpgtw (%rcx), %zmm23, %k5
+// CHECK:  encoding: [0x62,0xf1,0x45,0x40,0x65,0x29]
+          vpcmpgtw (%rcx), %zmm23, %k5
+
+// CHECK: vpcmpgtw 291(%rax,%r14,8), %zmm23, %k5
+// CHECK:  encoding: [0x62,0xb1,0x45,0x40,0x65,0xac,0xf0,0x23,0x01,0x00,0x00]
+          vpcmpgtw 291(%rax,%r14,8), %zmm23, %k5
+
+// CHECK: vpcmpgtw 8128(%rdx), %zmm23, %k5
+// CHECK:  encoding: [0x62,0xf1,0x45,0x40,0x65,0x6a,0x7f]
+          vpcmpgtw 8128(%rdx), %zmm23, %k5
+
+// CHECK: vpcmpgtw 8192(%rdx), %zmm23, %k5
+// CHECK:  encoding: [0x62,0xf1,0x45,0x40,0x65,0xaa,0x00,0x20,0x00,0x00]
+          vpcmpgtw 8192(%rdx), %zmm23, %k5
+
+// CHECK: vpcmpgtw -8192(%rdx), %zmm23, %k5
+// CHECK:  encoding: [0x62,0xf1,0x45,0x40,0x65,0x6a,0x80]
+          vpcmpgtw -8192(%rdx), %zmm23, %k5
+
+// CHECK: vpcmpgtw -8256(%rdx), %zmm23, %k5
+// CHECK:  encoding: [0x62,0xf1,0x45,0x40,0x65,0xaa,0xc0,0xdf,0xff,0xff]
+          vpcmpgtw -8256(%rdx), %zmm23, %k5
+
 // CHECK: vmovdqu8 %zmm19, %zmm29
 // CHECK:  encoding: [0x62,0x21,0x7f,0x48,0x6f,0xeb]
           vmovdqu8 %zmm19, %zmm29

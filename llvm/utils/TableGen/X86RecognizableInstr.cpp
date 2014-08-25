@@ -1090,6 +1090,8 @@ RecognizableInstr::roRegisterEncodingFromString(const std::string &s,
   ENCODING("FR32X",           ENCODING_REG)
   ENCODING("VR512",           ENCODING_REG)
   ENCODING("VK1",             ENCODING_REG)
+  ENCODING("VK2",             ENCODING_REG)
+  ENCODING("VK4",             ENCODING_REG)
   ENCODING("VK8",             ENCODING_REG)
   ENCODING("VK16",            ENCODING_REG)
   ENCODING("VK32",            ENCODING_REG)
