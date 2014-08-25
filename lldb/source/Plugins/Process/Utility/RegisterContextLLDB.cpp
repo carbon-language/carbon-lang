@@ -794,7 +794,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     // Typically the NonCallSite UnwindPlan is the unwind created by inspecting the assembly language instructions
     if (behaves_like_zeroth_frame)
     {
-        unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtNonCallSite (m_thread);
+        unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtNonCallSite (process->GetTarget(), m_thread, m_current_offset_backed_up_one);
         if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc))
         {
             if (unwind_plan_sp->GetSourcedFromCompiler() == eLazyBoolNo)
@@ -822,7 +822,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
 
     // We'd prefer to use an UnwindPlan intended for call sites when we're at a call site but if we've
     // struck out on that, fall back to using the non-call-site assembly inspection UnwindPlan if possible.
-    unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtNonCallSite (m_thread);
+    unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtNonCallSite (process->GetTarget(), m_thread, m_current_offset_backed_up_one);
     if (unwind_plan_sp && unwind_plan_sp->GetSourcedFromCompiler() == eLazyBoolNo)
     {
         // We probably have an UnwindPlan created by inspecting assembly instructions, and we probably

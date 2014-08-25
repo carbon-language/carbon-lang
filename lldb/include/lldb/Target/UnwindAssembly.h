@@ -33,6 +33,11 @@ public:
                                           UnwindPlan& unwind_plan) = 0;
 
     virtual bool
+    AugmentUnwindPlanFromCallSite (AddressRange& func,
+                                   Thread& thread,
+                                   UnwindPlan& unwind_plan) = 0;
+
+    virtual bool
     GetFastUnwindPlan (AddressRange& func, 
                        Thread& thread, 
                        UnwindPlan &unwind_plan) = 0;

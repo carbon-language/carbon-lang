@@ -32,7 +32,7 @@ FuncUnwinders::FuncUnwinders
 ) : 
     m_unwind_table(unwind_table), 
     m_range(range), 
-    m_mutex (Mutex::eMutexTypeNormal),
+    m_mutex (Mutex::eMutexTypeRecursive),
     m_unwind_plan_call_site_sp (), 
     m_unwind_plan_non_call_site_sp (), 
     m_unwind_plan_fast_sp (), 
@@ -94,7 +94,7 @@ FuncUnwinders::GetUnwindPlanAtCallSite (int current_offset)
 }
 
 UnwindPlanSP
-FuncUnwinders::GetUnwindPlanAtNonCallSite (Thread& thread)
+FuncUnwinders::GetUnwindPlanAtNonCallSite (Target& target, Thread& thread, int current_offset)
 {
     // Lock the mutex to ensure we can always give out the most appropriate
     // information. We want to make sure if someone requests an unwind
@@ -114,6 +114,17 @@ FuncUnwinders::GetUnwindPlanAtNonCallSite (Thread& thread)
         UnwindAssemblySP assembly_profiler_sp (GetUnwindAssemblyProfiler());
         if (assembly_profiler_sp)
         {
+            if (target.GetArchitecture().GetCore() == ArchSpec::eCore_x86_32_i386
+                || target.GetArchitecture().GetCore() == ArchSpec::eCore_x86_64_x86_64)
+            {
+                // For 0th frame on i386 & x86_64, we fetch eh_frame and try using assembly profiler
+                // to augment it into asynchronous unwind table.
+                GetUnwindPlanAtCallSite(current_offset);
+                if (m_unwind_plan_call_site_sp
+                    && assembly_profiler_sp->AugmentUnwindPlanFromCallSite(m_range, thread, *m_unwind_plan_call_site_sp))
+                    return m_unwind_plan_call_site_sp;
+            }
+
             m_unwind_plan_non_call_site_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
             if (!assembly_profiler_sp->GetNonCallSiteUnwindPlanFromAssembly (m_range, thread, *m_unwind_plan_non_call_site_sp))
                 m_unwind_plan_non_call_site_sp.reset();

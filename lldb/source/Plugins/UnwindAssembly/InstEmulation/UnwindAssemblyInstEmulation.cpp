@@ -285,6 +285,14 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
 }
 
 bool
+UnwindAssemblyInstEmulation::AugmentUnwindPlanFromCallSite (AddressRange& func,
+                                                            Thread& thread,
+                                                            UnwindPlan& unwind_plan)
+{
+    return false;
+}
+
+bool
 UnwindAssemblyInstEmulation::GetFastUnwindPlan (AddressRange& func, 
                                                 Thread& thread, 
                                                 UnwindPlan &unwind_plan)

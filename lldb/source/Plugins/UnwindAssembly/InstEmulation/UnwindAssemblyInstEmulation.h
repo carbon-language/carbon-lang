@@ -31,6 +31,11 @@ public:
                                           lldb_private::UnwindPlan& unwind_plan);
 
     virtual bool
+    AugmentUnwindPlanFromCallSite (lldb_private::AddressRange& func,
+                                   lldb_private::Thread& thread,
+                                   lldb_private::UnwindPlan& unwind_plan);
+
+    virtual bool
     GetFastUnwindPlan (lldb_private::AddressRange& func, 
                        lldb_private::Thread& thread, 
                        lldb_private::UnwindPlan &unwind_plan);

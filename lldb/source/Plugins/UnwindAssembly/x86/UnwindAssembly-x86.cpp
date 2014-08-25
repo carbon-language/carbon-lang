@@ -123,6 +123,8 @@ public:
 
     bool get_non_call_site_unwind_plan (UnwindPlan &unwind_plan);
 
+    bool augment_unwind_plan_from_call_site (AddressRange& func, UnwindPlan &unwind_plan);
+
     bool get_fast_unwind_plan (AddressRange& func, UnwindPlan &unwind_plan);
 
     bool find_first_non_prologue_insn (Address &address);
@@ -135,9 +137,14 @@ private:
     bool push_0_pattern_p ();
     bool mov_rsp_rbp_pattern_p ();
     bool sub_rsp_pattern_p (int& amount);
+    bool add_rsp_pattern_p (int& amount);
     bool push_reg_p (int& regno);
+    bool pop_reg_p (int& regno);
+    bool push_imm_pattern_p ();
     bool mov_reg_to_local_stack_frame_p (int& regno, int& fp_offset);
     bool ret_pattern_p ();
+    bool pop_rbp_pattern_p ();
+    bool call_next_insn_pattern_p();
     uint32_t extract_4 (uint8_t *b);
     bool machine_regno_to_lldb_regno (int machine_regno, uint32_t& lldb_regno);
     bool instruction_length (Address addr, int &length);
@@ -149,13 +156,13 @@ private:
     Address m_cur_insn;
     uint8_t m_cur_insn_bytes[kMaxInstructionByteSize];
 
-    int m_machine_ip_regnum;
-    int m_machine_sp_regnum;
-    int m_machine_fp_regnum;
+    uint32_t m_machine_ip_regnum;
+    uint32_t m_machine_sp_regnum;
+    uint32_t m_machine_fp_regnum;
 
-    int m_lldb_ip_regnum;
-    int m_lldb_sp_regnum;
-    int m_lldb_fp_regnum;
+    uint32_t m_lldb_ip_regnum;
+    uint32_t m_lldb_sp_regnum;
+    uint32_t m_lldb_fp_regnum;
 
     int m_wordsize;
     int m_cpu;
@@ -318,6 +325,15 @@ bool AssemblyParse_x86::push_0_pattern_p ()
     return false;
 }
 
+// pushq $0
+// pushl $0
+bool AssemblyParse_x86::push_imm_pattern_p () {
+    uint8_t *p = m_cur_insn_bytes;
+    if (*p == 0x68 || *p == 0x6a)
+        return true;
+    return false;
+}
+
 // movq %rsp, %rbp [0x48 0x8b 0xec] or [0x48 0x89 0xe5]
 // movl %esp, %ebp [0x8b 0xec] or [0x89 0xe5]
 bool AssemblyParse_x86::mov_rsp_rbp_pattern_p () {
@@ -346,13 +362,29 @@ bool AssemblyParse_x86::sub_rsp_pattern_p (int& amount) {
         amount = (int32_t) extract_4 (p + 2);
         return true;
     }
-    // Not handled:  [0x83 0xc4] for imm8 with neg values
-    // [0x81 0xc4] for imm32 with neg values
+    return false;
+}
+
+// addq $0x20, %rsp 
+bool AssemblyParse_x86::add_rsp_pattern_p (int& amount) {
+    uint8_t *p = m_cur_insn_bytes;
+    if (m_wordsize == 8 && *p == 0x48)
+      p++;
+    // 8-bit immediate operand
+    if (*p == 0x83 && *(p + 1) == 0xc4) {
+        amount = (int8_t) *(p + 2);
+        return true;
+    }
+    // 32-bit immediate operand
+    if (*p == 0x81 && *(p + 1) == 0xc4) {
+        amount = (int32_t) extract_4 (p + 2);
+        return true;
+    }
     return false;
 }
 
 // pushq %rbx
-// pushl $ebx
+// pushl %ebx
 bool AssemblyParse_x86::push_reg_p (int& regno) {
     uint8_t *p = m_cur_insn_bytes;
     int regno_prefix_bit = 0;
@@ -366,6 +398,37 @@ bool AssemblyParse_x86::push_reg_p (int& regno) {
         return true;
     }
     return false;
+}
+
+// popq %rbx
+// popl %ebx
+bool AssemblyParse_x86::pop_reg_p (int& regno) {
+    uint8_t *p = m_cur_insn_bytes;
+    int regno_prefix_bit = 0;
+    // If we have a rex prefix byte, check to see if a B bit is set
+    if (m_wordsize == 8 && *p == 0x41) {
+        regno_prefix_bit = 1 << 3;
+        p++;
+    }
+    if (*p >= 0x58 && *p <= 0x5f) {
+        regno = (*p - 0x58) | regno_prefix_bit;
+        return true;
+    }
+    return false;
+}
+
+// popq %rbp [0x5d]
+// popl %ebp [0x5d]
+bool AssemblyParse_x86::pop_rbp_pattern_p () {
+    uint8_t *p = m_cur_insn_bytes;
+    return (*p == 0x5d);
+}
+
+// call $0 [0xe8 0x0 0x0 0x0 0x0]
+bool AssemblyParse_x86::call_next_insn_pattern_p () {
+    uint8_t *p = m_cur_insn_bytes;
+    return (*p == 0xe8) && (*(p+1) == 0x0) && (*(p+2) == 0x0)
+                        && (*(p+3) == 0x0) && (*(p+4) == 0x0);
 }
 
 // Look for an instruction sequence storing a nonvolatile register
@@ -608,7 +671,7 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
             bool need_to_push_row = false;
             // the PUSH instruction has moved the stack pointer - if the CFA is set in terms of the stack pointer,
             // we need to add a new row of instructions.
-            if (row->GetCFARegister() == static_cast<uint32_t>(m_lldb_sp_regnum))
+            if (row->GetCFARegister() == m_lldb_sp_regnum)
             {
                 need_to_push_row = true;
                 row->SetCFAOffset (current_sp_bytes_offset_from_cfa);
@@ -659,7 +722,7 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
         if (sub_rsp_pattern_p (stack_offset))
         {
             current_sp_bytes_offset_from_cfa += stack_offset;
-            if (row->GetCFARegister() == static_cast<uint32_t>(m_lldb_sp_regnum))
+            if (row->GetCFARegister() == m_lldb_sp_regnum)
             {
                 row->SetOffset (current_func_text_offset + insn_len);
                 row->SetCFAOffset (current_sp_bytes_offset_from_cfa);
@@ -784,6 +847,183 @@ loopnext:
     unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
     unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolYes);
 
+    return true;
+}
+
+bool
+AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, UnwindPlan &unwind_plan)
+{
+    // Is func address valid?
+    Address addr_start = func.GetBaseAddress();
+    if (!addr_start.IsValid())
+        return false;
+
+    // Is original unwind_plan valid?
+    // unwind_plan should have at least one row which is ABI-default (CFA register is sp),
+    // and another row in mid-function.
+    if (unwind_plan.GetRowCount() < 2)
+        return false;
+    UnwindPlan::RowSP first_row = unwind_plan.GetRowAtIndex (0);
+    if (first_row->GetOffset() != 0)
+        return false;
+    uint32_t cfa_reg = m_exe_ctx.GetThreadPtr()->GetRegisterContext()
+                       ->ConvertRegisterKindToRegisterNumber (unwind_plan.GetRegisterKind(),
+                                                              first_row->GetCFARegister());
+    if (cfa_reg != m_lldb_sp_regnum || first_row->GetCFAOffset() != m_wordsize)
+        return false;
+
+    Target *target = m_exe_ctx.GetTargetPtr();
+    m_cur_insn = func.GetBaseAddress();
+    uint64_t offset = 0;
+    int row_id = 1;
+    UnwindPlan::RowSP row(new UnwindPlan::Row(*first_row));
+    while (func.ContainsFileAddress (m_cur_insn))
+    {
+        int insn_len;
+        if (!instruction_length (m_cur_insn, insn_len)
+            || insn_len == 0 || insn_len > kMaxInstructionByteSize)
+        {
+            // An unrecognized/junk instruction.
+            break;
+        }
+        const bool prefer_file_cache = true;
+        Error error;
+        if (target->ReadMemory (m_cur_insn, prefer_file_cache, m_cur_insn_bytes,
+                                insn_len, error) == static_cast<size_t>(-1))
+        {
+           // Error reading the instruction out of the file, stop scanning.
+           break;
+        }
+
+        // Advance offsets.
+        offset += insn_len;
+        m_cur_insn.SetOffset(m_cur_insn.GetOffset() + insn_len);
+
+        // If we already have one row for this instruction, we can continue.
+        while (row_id < unwind_plan.GetRowCount()
+               && unwind_plan.GetRowAtIndex (row_id)->GetOffset() <= offset)
+            row_id++;
+        UnwindPlan::RowSP original_row = unwind_plan.GetRowAtIndex (row_id - 1);
+        if (original_row->GetOffset() == offset)
+        {
+            *row = *original_row;
+            continue;
+        }
+
+        if (row_id == 0) {
+            // If we are here, compiler didn't generate CFI for prologue.
+            // This won't happen to GCC or clang.
+            // In this case, bail out directly.
+            return false;
+        }
+
+        // Inspect the instruction to check if we need a new row for it.
+        cfa_reg = m_exe_ctx.GetThreadPtr()->GetRegisterContext()
+                  ->ConvertRegisterKindToRegisterNumber (unwind_plan.GetRegisterKind(),
+                                                         row->GetCFARegister());
+        if (cfa_reg == m_lldb_sp_regnum)
+        {
+            // CFA register is sp.
+
+            // call next instruction
+            //     call 0
+            //  => pop  %ebx
+            if (call_next_insn_pattern_p ())
+            {
+                row->SetOffset (offset);
+                row->SetCFAOffset (m_wordsize + row->GetCFAOffset());
+
+                UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
+                unwind_plan.InsertRow (new_row);
+                continue;
+            }
+
+            // push/pop register
+            int regno;
+            if (push_reg_p (regno)) {
+                row->SetOffset (offset);
+                row->SetCFAOffset (m_wordsize + row->GetCFAOffset());
+
+                UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
+                unwind_plan.InsertRow (new_row);
+                continue;
+            }
+            if (pop_reg_p (regno)) {
+                // Technically, this might be a nonvolatile register recover in epilogue.
+                // We should reset RegisterInfo for the register.
+                // But in practice, previous rule for the register is still valid...
+                // So we ignore this case.
+
+                row->SetOffset (offset);
+                row->SetCFAOffset (-m_wordsize + row->GetCFAOffset());
+
+                UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
+                unwind_plan.InsertRow (new_row);
+                continue;
+            }
+
+            // push imm
+            if (push_imm_pattern_p ()) {
+                row->SetOffset (offset);
+                row->SetCFAOffset (m_wordsize + row->GetCFAOffset());
+                UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
+                unwind_plan.InsertRow (new_row);
+                continue;
+            }
+
+            // add/sub %rsp/%esp
+            int amount;
+            if (add_rsp_pattern_p (amount)) {
+                row->SetOffset (offset);
+                row->SetCFAOffset (-amount + row->GetCFAOffset());
+
+                UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
+                unwind_plan.InsertRow (new_row);
+                continue;
+            }
+            if (sub_rsp_pattern_p (amount)) {
+                row->SetOffset (offset);
+                row->SetCFAOffset (amount + row->GetCFAOffset());
+
+                UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
+                unwind_plan.InsertRow (new_row);
+                continue;
+            }
+        }
+        else if (cfa_reg == m_lldb_fp_regnum)
+        {
+            // CFA register is fp.
+
+            // The only case we care about is epilogue:
+            //     [0x5d] pop %rbp/%ebp
+            //  => [0xc3] ret
+            if (pop_rbp_pattern_p ())
+            {
+                if (target->ReadMemory (m_cur_insn, prefer_file_cache, m_cur_insn_bytes,
+                                        1, error) != static_cast<size_t>(-1)
+                    && ret_pattern_p ())
+                {
+                    row->SetOffset (offset);
+                    row->SetCFARegister (first_row->GetCFARegister());
+                    row->SetCFAOffset (m_wordsize);
+
+                    UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
+                    unwind_plan.InsertRow (new_row);
+                    continue;
+                }
+            }
+        }
+        else
+        {
+            // CFA register is not sp or fp.
+
+            // This must be hand-written assembly.
+            // Just trust eh_frame and assume we have finished.
+            break;
+        }
+    }
+
+    unwind_plan.SetPlanValidAddressRange (func);
     return true;
 }
 
@@ -943,6 +1183,14 @@ UnwindAssembly_x86::GetNonCallSiteUnwindPlanFromAssembly (AddressRange& func, Th
     ExecutionContext exe_ctx (thread.shared_from_this());
     AssemblyParse_x86 asm_parse(exe_ctx, m_cpu, m_arch, func);
     return asm_parse.get_non_call_site_unwind_plan (unwind_plan);
+}
+
+bool
+UnwindAssembly_x86::AugmentUnwindPlanFromCallSite (AddressRange& func, Thread& thread, UnwindPlan& unwind_plan)
+{
+    ExecutionContext exe_ctx (thread.shared_from_this());
+    AssemblyParse_x86 asm_parse(exe_ctx, m_cpu, m_arch, func);
+    return asm_parse.augment_unwind_plan_from_call_site (func, unwind_plan);
 }
 
 bool

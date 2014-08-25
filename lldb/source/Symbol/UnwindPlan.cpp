@@ -313,6 +313,19 @@ UnwindPlan::AppendRow (const UnwindPlan::RowSP &row_sp)
         m_row_list.back() = row_sp;
 }
 
+void
+UnwindPlan::InsertRow (const UnwindPlan::RowSP &row_sp)
+{
+    collection::iterator it = m_row_list.begin();
+    while (it != m_row_list.end()) {
+        RowSP row = *it;
+        if (row->GetOffset() > row_sp->GetOffset())
+            break;
+        it++;
+    }
+    m_row_list.insert(it, row_sp);
+}
+
 UnwindPlan::RowSP
 UnwindPlan::GetRowForFunctionOffset (int offset) const
 {

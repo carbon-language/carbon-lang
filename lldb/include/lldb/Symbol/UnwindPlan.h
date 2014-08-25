@@ -365,6 +365,9 @@ public:
     void 
     AppendRow (const RowSP& row_sp);
 
+    void
+    InsertRow (const RowSP& row_sp);
+
     // Returns a pointer to the best row for the given offset into the function's instructions.
     // If offset is -1 it indicates that the function start is unknown - the final row in the UnwindPlan is returned.
     // In practice, the UnwindPlan for a function with no known start address will be the architectural default

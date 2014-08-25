@@ -44,7 +44,7 @@ public:
     GetUnwindPlanAtCallSite (int current_offset);
 
     lldb::UnwindPlanSP
-    GetUnwindPlanAtNonCallSite (lldb_private::Thread& thread);
+    GetUnwindPlanAtNonCallSite (Target& target, lldb_private::Thread& thread, int current_offset);
 
     lldb::UnwindPlanSP
     GetUnwindPlanFastUnwind (lldb_private::Thread& Thread);
