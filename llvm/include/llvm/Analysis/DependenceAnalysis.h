@@ -331,7 +331,7 @@ namespace llvm {
     ///
     /// breaks the dependence and allows us to vectorize/parallelize
     /// both loops.
-    const SCEV *getSplitIteration(const Dependence *Dep, unsigned Level);
+    const SCEV *getSplitIteration(const Dependence &Dep, unsigned Level);
 
   private:
     AliasAnalysis *AA;
