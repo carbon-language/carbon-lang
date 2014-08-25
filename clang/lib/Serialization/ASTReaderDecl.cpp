@@ -2548,7 +2548,9 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
   //
   // FIXME: We should do something similar if we merge two definitions of the
   // same template specialization into the same CXXRecordDecl.
-  if (Reader.MergedDeclContexts.count(D->getLexicalDeclContext()))
+  auto MergedDCIt = Reader.MergedDeclContexts.find(D->getLexicalDeclContext());
+  if (MergedDCIt != Reader.MergedDeclContexts.end() &&
+      MergedDCIt->second == D->getDeclContext())
     Reader.PendingOdrMergeChecks.push_back(D);
 
   return FindExistingResult(Reader, D, /*Existing=*/nullptr);

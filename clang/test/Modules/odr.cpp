@@ -6,6 +6,9 @@ struct X { // expected-note {{definition has no member 'n'}}
 };
 
 @import a;
+
+bool b = F<int>{0} == F<int>{1};
+
 @import b;
 
 // Trigger the declarations from a and b to be imported.
