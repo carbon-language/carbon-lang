@@ -16,8 +16,8 @@
 #include "llvm/Support/Signals.h"
 using namespace llvm;
 
-tool_output_file::CleanupInstaller::CleanupInstaller(const char *filename)
-  : Filename(filename), Keep(false) {
+tool_output_file::CleanupInstaller::CleanupInstaller(StringRef Filename)
+    : Filename(Filename), Keep(false) {
   // Arrange for the file to be deleted if the process is killed.
   if (Filename != "-")
     sys::RemoveFileOnSignal(Filename);
@@ -34,14 +34,13 @@ tool_output_file::CleanupInstaller::~CleanupInstaller() {
     sys::DontRemoveFileOnSignal(Filename);
 }
 
-tool_output_file::tool_output_file(const char *filename, std::string &ErrorInfo,
+tool_output_file::tool_output_file(StringRef Filename, std::error_code &EC,
                                    sys::fs::OpenFlags Flags)
-    : Installer(filename), OS(filename, ErrorInfo, Flags) {
+    : Installer(Filename), OS(Filename, EC, Flags) {
   // If open fails, no cleanup is needed.
-  if (!ErrorInfo.empty())
+  if (EC)
     Installer.Keep = true;
 }
 
-tool_output_file::tool_output_file(const char *Filename, int FD)
-    : Installer(Filename), OS(FD, true) {
-}
+tool_output_file::tool_output_file(StringRef Filename, int FD)
+    : Installer(Filename), OS(FD, true) {}

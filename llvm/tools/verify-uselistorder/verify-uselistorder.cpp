@@ -123,10 +123,10 @@ bool TempFile::init(const std::string &Ext) {
 
 bool TempFile::writeBitcode(const Module &M) const {
   DEBUG(dbgs() << " - write bitcode\n");
-  std::string ErrorInfo;
-  raw_fd_ostream OS(Filename.c_str(), ErrorInfo, sys::fs::F_None);
-  if (!ErrorInfo.empty()) {
-    DEBUG(dbgs() << "error: " << ErrorInfo << "\n");
+  std::error_code EC;
+  raw_fd_ostream OS(Filename, EC, sys::fs::F_None);
+  if (EC) {
+    DEBUG(dbgs() << "error: " << EC.message() << "\n");
     return true;
   }
 
@@ -136,10 +136,10 @@ bool TempFile::writeBitcode(const Module &M) const {
 
 bool TempFile::writeAssembly(const Module &M) const {
   DEBUG(dbgs() << " - write assembly\n");
-  std::string ErrorInfo;
-  raw_fd_ostream OS(Filename.c_str(), ErrorInfo, sys::fs::F_Text);
-  if (!ErrorInfo.empty()) {
-    DEBUG(dbgs() << "error: " << ErrorInfo << "\n");
+  std::error_code EC;
+  raw_fd_ostream OS(Filename, EC, sys::fs::F_Text);
+  if (EC) {
+    DEBUG(dbgs() << "error: " << EC.message() << "\n");
     return true;
   }
 

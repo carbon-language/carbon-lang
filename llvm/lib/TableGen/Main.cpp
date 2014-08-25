@@ -56,11 +56,11 @@ static int createDependencyFile(const TGParser &Parser, const char *argv0) {
     errs() << argv0 << ": the option -d must be used together with -o\n";
     return 1;
   }
-  std::string Error;
-  tool_output_file DepOut(DependFilename.c_str(), Error, sys::fs::F_Text);
-  if (!Error.empty()) {
-    errs() << argv0 << ": error opening " << DependFilename
-      << ":" << Error << "\n";
+  std::error_code EC;
+  tool_output_file DepOut(DependFilename, EC, sys::fs::F_Text);
+  if (EC) {
+    errs() << argv0 << ": error opening " << DependFilename << ":"
+           << EC.message() << "\n";
     return 1;
   }
   DepOut.os() << OutputFilename << ":";
@@ -101,11 +101,11 @@ int TableGenMain(char *argv0, TableGenMainFn *MainFn) {
   if (Parser.ParseFile())
     return 1;
 
-  std::string Error;
-  tool_output_file Out(OutputFilename.c_str(), Error, sys::fs::F_Text);
-  if (!Error.empty()) {
-    errs() << argv0 << ": error opening " << OutputFilename
-      << ":" << Error << "\n";
+  std::error_code EC;
+  tool_output_file Out(OutputFilename, EC, sys::fs::F_Text);
+  if (EC) {
+    errs() << argv0 << ": error opening " << OutputFilename << ":"
+           << EC.message() << "\n";
     return 1;
   }
   if (!DependFilename.empty()) {

@@ -535,8 +535,8 @@ TEST_F(FileSystemTest, Magic) {
                                                                      ++i) {
     SmallString<128> file_pathname(TestDirectory);
     path::append(file_pathname, i->filename);
-    std::string ErrMsg;
-    raw_fd_ostream file(file_pathname.c_str(), ErrMsg, sys::fs::F_None);
+    std::error_code EC;
+    raw_fd_ostream file(file_pathname, EC, sys::fs::F_None);
     ASSERT_FALSE(file.has_error());
     StringRef magic(i->magic_str, i->magic_str_len);
     file << magic;
@@ -553,23 +553,23 @@ TEST_F(FileSystemTest, CarriageReturn) {
   path::append(FilePathname, "test");
 
   {
-    raw_fd_ostream File(FilePathname.c_str(), ErrMsg, sys::fs::F_Text);
+    raw_fd_ostream File(FilePathname, ErrMsg, sys::fs::F_Text);
     EXPECT_EQ(ErrMsg, "");
     File << '\n';
   }
   {
-    auto Buf = MemoryBuffer::getFile(FilePathname.c_str());
+    auto Buf = MemoryBuffer::getFile(FilePathname);
     EXPECT_TRUE((bool)Buf);
     EXPECT_EQ(Buf.get()->getBuffer(), "\r\n");
   }
 
   {
-    raw_fd_ostream File(FilePathname.c_str(), ErrMsg, sys::fs::F_None);
+    raw_fd_ostream File(FilePathname, ErrMsg, sys::fs::F_None);
     EXPECT_EQ(ErrMsg, "");
     File << '\n';
   }
   {
-    auto Buf = MemoryBuffer::getFile(FilePathname.c_str());
+    auto Buf = MemoryBuffer::getFile(FilePathname);
     EXPECT_TRUE((bool)Buf);
     EXPECT_EQ(Buf.get()->getBuffer(), "\n");
   }

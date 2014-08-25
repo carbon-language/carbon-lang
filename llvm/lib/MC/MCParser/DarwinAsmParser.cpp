@@ -638,13 +638,13 @@ bool DarwinAsmParser::parseDirectiveSecureLogUnique(StringRef, SMLoc IDLoc) {
   // Open the secure log file if we haven't already.
   raw_ostream *OS = getContext().getSecureLog();
   if (!OS) {
-    std::string Err;
-    OS = new raw_fd_ostream(SecureLogFile, Err,
+    std::error_code EC;
+    OS = new raw_fd_ostream(SecureLogFile, EC,
                             sys::fs::F_Append | sys::fs::F_Text);
-    if (!Err.empty()) {
+    if (EC) {
        delete OS;
        return Error(IDLoc, Twine("can't open secure log file: ") +
-                    SecureLogFile + " (" + Err + ")");
+                               SecureLogFile + " (" + EC.message() + ")");
     }
     getContext().setSecureLog(OS);
   }

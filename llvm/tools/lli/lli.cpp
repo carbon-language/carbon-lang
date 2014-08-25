@@ -268,13 +268,13 @@ public:
     std::string CacheName;
     if (!getCacheFilename(ModuleID, CacheName))
       return;
-    std::string errStr;
     if (!CacheDir.empty()) { // Create user-defined cache dir.
       SmallString<128> dir(CacheName);
       sys::path::remove_filename(dir);
       sys::fs::create_directories(Twine(dir));
     }
-    raw_fd_ostream outfile(CacheName.c_str(), errStr, sys::fs::F_None);
+    std::error_code EC;
+    raw_fd_ostream outfile(CacheName, EC, sys::fs::F_None);
     outfile.write(Obj.getBufferStart(), Obj.getBufferSize());
     outfile.close();
   }

@@ -66,15 +66,15 @@ public:
   bool runOnFunction(Function &F) override {
     GraphT Graph = AnalysisGraphTraitsT::getGraph(&getAnalysis<AnalysisT>());
     std::string Filename = Name + "." + F.getName().str() + ".dot";
-    std::string ErrorInfo;
+    std::error_code EC;
 
     errs() << "Writing '" << Filename << "'...";
 
-    raw_fd_ostream File(Filename.c_str(), ErrorInfo, sys::fs::F_Text);
+    raw_fd_ostream File(Filename, EC, sys::fs::F_Text);
     std::string GraphName = DOTGraphTraits<GraphT>::getGraphName(Graph);
     std::string Title = GraphName + " for '" + F.getName().str() + "' function";
 
-    if (ErrorInfo.empty())
+    if (!EC)
       WriteGraph(File, Graph, IsSimple, Title);
     else
       errs() << "  error opening file for writing!";
@@ -129,14 +129,14 @@ public:
   bool runOnModule(Module &M) override {
     GraphT Graph = AnalysisGraphTraitsT::getGraph(&getAnalysis<AnalysisT>());
     std::string Filename = Name + ".dot";
-    std::string ErrorInfo;
+    std::error_code EC;
 
     errs() << "Writing '" << Filename << "'...";
 
-    raw_fd_ostream File(Filename.c_str(), ErrorInfo, sys::fs::F_Text);
+    raw_fd_ostream File(Filename, EC, sys::fs::F_Text);
     std::string Title = DOTGraphTraits<GraphT>::getGraphName(Graph);
 
-    if (ErrorInfo.empty())
+    if (!EC)
       WriteGraph(File, Graph, IsSimple, Title);
     else
       errs() << "  error opening file for writing!";

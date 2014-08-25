@@ -48,10 +48,10 @@ int merge_main(int argc, const char *argv[]) {
   if (OutputFilename.compare("-") == 0)
     exitWithError("Cannot write indexed profdata format to stdout.");
 
-  std::string ErrorInfo;
-  raw_fd_ostream Output(OutputFilename.data(), ErrorInfo, sys::fs::F_None);
-  if (!ErrorInfo.empty())
-    exitWithError(ErrorInfo, OutputFilename);
+  std::error_code EC;
+  raw_fd_ostream Output(OutputFilename.data(), EC, sys::fs::F_None);
+  if (EC)
+    exitWithError(EC.message(), OutputFilename);
 
   InstrProfWriter Writer;
   for (const auto &Filename : Inputs) {
@@ -97,10 +97,10 @@ int show_main(int argc, const char *argv[]) {
   if (OutputFilename.empty())
     OutputFilename = "-";
 
-  std::string ErrorInfo;
-  raw_fd_ostream OS(OutputFilename.data(), ErrorInfo, sys::fs::F_Text);
-  if (!ErrorInfo.empty())
-    exitWithError(ErrorInfo, OutputFilename);
+  std::error_code EC;
+  raw_fd_ostream OS(OutputFilename.data(), EC, sys::fs::F_Text);
+  if (EC)
+    exitWithError(EC.message(), OutputFilename);
 
   if (ShowAllFunctions && !ShowFunction.empty())
     errs() << "warning: -function argument ignored: showing all functions\n";

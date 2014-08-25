@@ -29,13 +29,13 @@ class tool_output_file {
   /// destructed after the raw_fd_ostream is destructed. It installs
   /// cleanups in its constructor and uninstalls them in its destructor.
   class CleanupInstaller {
-    /// Filename - The name of the file.
+    /// The name of the file.
     std::string Filename;
   public:
-    /// Keep - The flag which indicates whether we should not delete the file.
+    /// The flag which indicates whether we should not delete the file.
     bool Keep;
 
-    explicit CleanupInstaller(const char *filename);
+    explicit CleanupInstaller(StringRef ilename);
     ~CleanupInstaller();
   } Installer;
 
@@ -44,12 +44,12 @@ class tool_output_file {
   raw_fd_ostream OS;
 
 public:
-  /// tool_output_file - This constructor's arguments are passed to
-  /// to raw_fd_ostream's constructor.
-  tool_output_file(const char *filename, std::string &ErrorInfo,
+  /// This constructor's arguments are passed to to raw_fd_ostream's
+  /// constructor.
+  tool_output_file(StringRef Filename, std::error_code &EC,
                    sys::fs::OpenFlags Flags);
 
-  tool_output_file(const char *Filename, int FD);
+  tool_output_file(StringRef Filename, int FD);
 
   /// os - Return the contained raw_fd_ostream.
   raw_fd_ostream &os() { return OS; }

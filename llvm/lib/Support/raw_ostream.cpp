@@ -426,20 +426,14 @@ void format_object_base::home() {
 //  raw_fd_ostream
 //===----------------------------------------------------------------------===//
 
-/// raw_fd_ostream - Open the specified file for writing. If an error
-/// occurs, information about the error is put into ErrorInfo, and the
-/// stream should be immediately destroyed; the string will be empty
-/// if no error occurred.
-raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
+raw_fd_ostream::raw_fd_ostream(StringRef Filename, std::error_code &EC,
                                sys::fs::OpenFlags Flags)
     : Error(false), UseAtomicWrites(false), pos(0) {
-  assert(Filename && "Filename is null");
-  ErrorInfo.clear();
-
+  EC = std::error_code();
   // Handle "-" as stdout. Note that when we do this, we consider ourself
   // the owner of stdout. This means that we can do things like close the
   // file descriptor when we're done and set the "binary" flag globally.
-  if (Filename[0] == '-' && Filename[1] == 0) {
+  if (Filename == "-") {
     FD = STDOUT_FILENO;
     // If user requested binary then put stdout into binary mode if
     // possible.
@@ -450,11 +444,9 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
     return;
   }
 
-  std::error_code EC = sys::fs::openFileForWrite(Filename, FD, Flags);
+  EC = sys::fs::openFileForWrite(Filename, FD, Flags);
 
   if (EC) {
-    ErrorInfo = "Error opening output file '" + std::string(Filename) + "': " +
-                EC.message();
     ShouldClose = false;
     return;
   }

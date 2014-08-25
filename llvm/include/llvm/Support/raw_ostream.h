@@ -17,6 +17,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
+#include <system_error>
 
 namespace llvm {
   class format_object_base;
@@ -341,17 +342,17 @@ class raw_fd_ostream : public raw_ostream {
   void error_detected() { Error = true; }
 
 public:
-  /// raw_fd_ostream - Open the specified file for writing. If an error occurs,
-  /// information about the error is put into ErrorInfo, and the stream should
-  /// be immediately destroyed; the string will be empty if no error occurred.
-  /// This allows optional flags to control how the file will be opened.
+  /// Open the specified file for writing. If an error occurs, information
+  /// about the error is put into EC, and the stream should be immediately
+  /// destroyed;
+  /// \p Flags allows optional flags to control how the file will be opened.
   ///
   /// As a special case, if Filename is "-", then the stream will use
   /// STDOUT_FILENO instead of opening a file. Note that it will still consider
   /// itself to own the file descriptor. In particular, it will close the
   /// file descriptor when it is done (this is necessary to detect
   /// output errors).
-  raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
+  raw_fd_ostream(StringRef Filename, std::error_code &EC,
                  sys::fs::OpenFlags Flags);
 
   /// raw_fd_ostream ctor - FD is the file descriptor that this writes to.  If

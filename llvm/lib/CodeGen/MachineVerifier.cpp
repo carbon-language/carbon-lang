@@ -276,11 +276,12 @@ void MachineFunction::verify(Pass *p, const char *Banner) const {
 bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
   raw_ostream *OutFile = nullptr;
   if (OutFileName) {
-    std::string ErrorInfo;
-    OutFile = new raw_fd_ostream(OutFileName, ErrorInfo,
+    std::error_code EC;
+    OutFile = new raw_fd_ostream(OutFileName, EC,
                                  sys::fs::F_Append | sys::fs::F_Text);
-    if (!ErrorInfo.empty()) {
-      errs() << "Error opening '" << OutFileName << "': " << ErrorInfo << '\n';
+    if (EC) {
+      errs() << "Error opening '" << OutFileName << "': " << EC.message()
+             << '\n';
       exit(1);
     }
 

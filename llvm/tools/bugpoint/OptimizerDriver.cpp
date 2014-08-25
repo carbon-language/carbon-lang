@@ -66,15 +66,15 @@ static bool writeProgramToFileAux(tool_output_file &Out, const Module *M) {
 
 bool BugDriver::writeProgramToFile(const std::string &Filename, int FD,
                                    const Module *M) const {
-  tool_output_file Out(Filename.c_str(), FD);
+  tool_output_file Out(Filename, FD);
   return writeProgramToFileAux(Out, M);
 }
 
 bool BugDriver::writeProgramToFile(const std::string &Filename,
                                    const Module *M) const {
-  std::string ErrInfo;
-  tool_output_file Out(Filename.c_str(), ErrInfo, sys::fs::F_None);
-  if (ErrInfo.empty())
+  std::error_code EC;
+  tool_output_file Out(Filename, EC, sys::fs::F_None);
+  if (!EC)
     return writeProgramToFileAux(Out, M);
   return true;
 }
@@ -149,7 +149,7 @@ bool BugDriver::runPasses(Module *Program,
     return 1;
   }
 
-  tool_output_file InFile(InputFilename.c_str(), InputFD);
+  tool_output_file InFile(InputFilename, InputFD);
 
   WriteBitcodeToFile(Program, InFile.os());
   InFile.os().close();

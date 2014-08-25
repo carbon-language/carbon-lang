@@ -18,10 +18,10 @@ using namespace llvm;
 /*===-- Operations on modules ---------------------------------------------===*/
 
 int LLVMWriteBitcodeToFile(LLVMModuleRef M, const char *Path) {
-  std::string ErrorInfo;
-  raw_fd_ostream OS(Path, ErrorInfo, sys::fs::F_None);
+  std::error_code EC;
+  raw_fd_ostream OS(Path, EC, sys::fs::F_None);
 
-  if (!ErrorInfo.empty())
+  if (EC)
     return -1;
 
   WriteBitcodeToFile(unwrap(M), OS);

@@ -385,11 +385,10 @@ int main(int argc, char **argv) {
     if (OutputFilename.empty())
       OutputFilename = "-";
 
-    std::string ErrorInfo;
-    Out.reset(new tool_output_file(OutputFilename.c_str(), ErrorInfo,
-                                   sys::fs::F_None));
-    if (!ErrorInfo.empty()) {
-      errs() << ErrorInfo << '\n';
+    std::error_code EC;
+    Out.reset(new tool_output_file(OutputFilename, EC, sys::fs::F_None));
+    if (EC) {
+      errs() << EC.message() << '\n';
       return 1;
     }
   }
@@ -470,11 +469,10 @@ int main(int argc, char **argv) {
       if (OutputFilename.empty())
         OutputFilename = "-";
 
-      std::string ErrorInfo;
-      Out.reset(new tool_output_file(OutputFilename.c_str(), ErrorInfo,
-                                     sys::fs::F_None));
-      if (!ErrorInfo.empty()) {
-        errs() << ErrorInfo << '\n';
+      std::error_code EC;
+      Out.reset(new tool_output_file(OutputFilename, EC, sys::fs::F_None));
+      if (EC) {
+        errs() << EC.message() << '\n';
         return 1;
       }
     }

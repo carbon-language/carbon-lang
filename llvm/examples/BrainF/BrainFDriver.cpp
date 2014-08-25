@@ -107,9 +107,8 @@ int main(int argc, char **argv) {
       OutputFilename = base+".bc";
     }
     if (OutputFilename != "-") {
-      std::string ErrInfo;
-      out = new raw_fd_ostream(OutputFilename.c_str(), ErrInfo,
-                               sys::fs::F_None);
+      std::error_code EC;
+      out = new raw_fd_ostream(OutputFilename, EC, sys::fs::F_None);
     }
   }
 

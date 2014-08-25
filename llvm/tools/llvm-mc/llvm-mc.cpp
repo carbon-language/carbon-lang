@@ -208,11 +208,11 @@ static tool_output_file *GetOutputStream() {
   if (OutputFilename == "")
     OutputFilename = "-";
 
-  std::string Err;
+  std::error_code EC;
   tool_output_file *Out =
-      new tool_output_file(OutputFilename.c_str(), Err, sys::fs::F_None);
-  if (!Err.empty()) {
-    errs() << Err << '\n';
+      new tool_output_file(OutputFilename, EC, sys::fs::F_None);
+  if (EC) {
+    errs() << EC.message() << '\n';
     delete Out;
     return nullptr;
   }

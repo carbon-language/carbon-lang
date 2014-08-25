@@ -165,11 +165,11 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    raw_fd_ostream FileStream(OutputFilename.c_str(), ErrorInfo,
-                              sys::fs::F_None);
-    if (!ErrorInfo.empty()) {
+    std::error_code EC;
+    raw_fd_ostream FileStream(OutputFilename, EC, sys::fs::F_None);
+    if (EC) {
       errs() << argv[0] << ": error opening the file '" << OutputFilename
-             << "': " << ErrorInfo << "\n";
+             << "': " << EC.message() << "\n";
       return 1;
     }
 

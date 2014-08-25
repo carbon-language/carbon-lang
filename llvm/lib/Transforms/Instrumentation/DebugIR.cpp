@@ -525,11 +525,11 @@ std::string DebugIR::getPath() {
 
 void DebugIR::writeDebugBitcode(const Module *M, int *fd) {
   std::unique_ptr<raw_fd_ostream> Out;
-  std::string error;
+  std::error_code EC;
 
   if (!fd) {
     std::string Path = getPath();
-    Out.reset(new raw_fd_ostream(Path.c_str(), error, sys::fs::F_Text));
+    Out.reset(new raw_fd_ostream(Path, EC, sys::fs::F_Text));
     DEBUG(dbgs() << "WRITING debug bitcode from Module " << M << " to file "
                  << Path << "\n");
   } else {
