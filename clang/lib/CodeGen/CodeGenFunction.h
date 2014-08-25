@@ -1653,8 +1653,7 @@ public:
 
   void EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
                               llvm::Value *This, llvm::Value *Src,
-                              CallExpr::const_arg_iterator ArgBeg,
-                              CallExpr::const_arg_iterator ArgEnd);
+                              const CXXConstructExpr *E);
 
   void EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
                                   const ConstantArrayType *ArrayTy,

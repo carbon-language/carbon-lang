@@ -1690,13 +1690,12 @@ void CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
 void
 CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
                                         llvm::Value *This, llvm::Value *Src,
-                                        CallExpr::const_arg_iterator ArgBeg,
-                                        CallExpr::const_arg_iterator ArgEnd) {
+                                        const CXXConstructExpr *E) {
   if (D->isTrivial()) {
-    assert(ArgBeg + 1 == ArgEnd && "unexpected argcount for trivial ctor");
+    assert(E->getNumArgs() && "unexpected argcount for trivial ctor");
     assert(D->isCopyOrMoveConstructor() &&
            "trivial 1-arg ctor not a copy/move ctor");
-    EmitAggregateCopy(This, Src, (*ArgBeg)->getType());
+    EmitAggregateCopy(This, Src, E->arg_begin()->getType());
     return;
   }
   llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, clang::Ctor_Complete);
@@ -1718,7 +1717,7 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
 
   // Skip over first argument (Src).
   EmitCallArgs(Args, FPT->isVariadic(), FPT->param_type_begin() + 1,
-               FPT->param_type_end(), ArgBeg + 1, ArgEnd);
+               FPT->param_type_end(), E->arg_begin() + 1, E->arg_end());
 
   EmitCall(CGM.getTypes().arrangeCXXMethodCall(Args, FPT, RequiredArgs::All),
            Callee, ReturnValueSlot(), Args, D);

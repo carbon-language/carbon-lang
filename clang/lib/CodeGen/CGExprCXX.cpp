@@ -154,13 +154,13 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
       EmitAggregateAssign(This, RHS, CE->getType());
       return RValue::get(This);
     }
-    
-    if (isa<CXXConstructorDecl>(MD) && 
+
+    if (isa<CXXConstructorDecl>(MD) &&
         cast<CXXConstructorDecl>(MD)->isCopyOrMoveConstructor()) {
       // Trivial move and copy ctor are the same.
+      assert(CE->getNumArgs() == 1 && "unexpected argcount for trivial ctor");
       llvm::Value *RHS = EmitLValue(*CE->arg_begin()).getAddress();
-      EmitSynthesizedCXXCopyCtorCall(cast<CXXConstructorDecl>(MD), This, RHS,
-                                     CE->arg_begin(), CE->arg_end());
+      EmitAggregateCopy(This, RHS, CE->arg_begin()->getType());
       return RValue::get(This);
     }
     llvm_unreachable("unknown trivial member function");
@@ -452,7 +452,7 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtor(llvm::Value *Dest,
   
   assert(!getContext().getAsConstantArrayType(E->getType())
          && "EmitSynthesizedCXXCopyCtor - Copied-in Array");
-  EmitSynthesizedCXXCopyCtorCall(CD, Dest, Src, E->arg_begin(), E->arg_end());
+  EmitSynthesizedCXXCopyCtorCall(CD, Dest, Src, E);
 }
 
 static CharUnits CalculateCookiePadding(CodeGenFunction &CGF,
