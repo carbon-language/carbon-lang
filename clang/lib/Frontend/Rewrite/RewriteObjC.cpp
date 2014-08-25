@@ -3382,14 +3382,12 @@ std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
   S += "(" + StructRef;
   S += "*dst, " + StructRef;
   S += "*src) {";
-  for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(),
-      E = ImportedBlockDecls.end(); I != E; ++I) {
-    ValueDecl *VD = (*I);
+  for (ValueDecl *VD : ImportedBlockDecls) {
     S += "_Block_object_assign((void*)&dst->";
-    S += (*I)->getNameAsString();
+    S += VD->getNameAsString();
     S += ", (void*)src->";
-    S += (*I)->getNameAsString();
-    if (BlockByRefDeclsPtrSet.count((*I)))
+    S += VD->getNameAsString();
+    if (BlockByRefDeclsPtrSet.count(VD))
       S += ", " + utostr(BLOCK_FIELD_IS_BYREF) + "/*BLOCK_FIELD_IS_BYREF*/);";
     else if (VD->getType()->isBlockPointerType())
       S += ", " + utostr(BLOCK_FIELD_IS_BLOCK) + "/*BLOCK_FIELD_IS_BLOCK*/);";
@@ -3403,12 +3401,10 @@ std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
   S += "_block_dispose_" + utostr(i);
   S += "(" + StructRef;
   S += "*src) {";
-  for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(),
-      E = ImportedBlockDecls.end(); I != E; ++I) {
-    ValueDecl *VD = (*I);
+  for (ValueDecl *VD : ImportedBlockDecls) {
     S += "_Block_object_dispose((void*)src->";
-    S += (*I)->getNameAsString();
-    if (BlockByRefDeclsPtrSet.count((*I)))
+    S += VD->getNameAsString();
+    if (BlockByRefDeclsPtrSet.count(VD))
       S += ", " + utostr(BLOCK_FIELD_IS_BYREF) + "/*BLOCK_FIELD_IS_BYREF*/);";
     else if (VD->getType()->isBlockPointerType())
       S += ", " + utostr(BLOCK_FIELD_IS_BLOCK) + "/*BLOCK_FIELD_IS_BLOCK*/);";
@@ -4967,9 +4963,8 @@ void RewriteObjC::HandleTranslationUnit(ASTContext &C) {
 
   // Here's a great place to add any extra declarations that may be needed.
   // Write out meta data for each @protocol(<expr>).
-  for (llvm::SmallPtrSet<ObjCProtocolDecl *,8>::iterator I = ProtocolExprDecls.begin(),
-       E = ProtocolExprDecls.end(); I != E; ++I)
-    RewriteObjCProtocolMetaData(*I, "", "", Preamble);
+  for (ObjCProtocolDecl *ProtDecl : ProtocolExprDecls)
+    RewriteObjCProtocolMetaData(ProtDecl, "", "", Preamble);
 
   InsertText(SM->getLocForStartOfFile(MainFileID), Preamble, false);
   if (ClassImplementation.size() || CategoryImplementation.size())
@@ -5657,12 +5652,11 @@ void RewriteObjCFragileABI::RewriteMetaDataIntoBuffer(std::string &Result) {
     if (ProtocolExprDecls.size()) {
       Result += "#pragma section(\".objc_protocol$B\",long,read,write)\n";
       Result += "#pragma data_seg(push, \".objc_protocol$B\")\n";
-      for (llvm::SmallPtrSet<ObjCProtocolDecl *,8>::iterator I = ProtocolExprDecls.begin(),
-           E = ProtocolExprDecls.end(); I != E; ++I) {
+      for (ObjCProtocolDecl *ProtDecl : ProtocolExprDecls) {
         Result += "static struct _objc_protocol *_POINTER_OBJC_PROTOCOL_";
-        Result += (*I)->getNameAsString();
+        Result += ProtDecl->getNameAsString();
         Result += " = &_OBJC_PROTOCOL_";
-        Result += (*I)->getNameAsString();
+        Result += ProtDecl->getNameAsString();
         Result += ";\n";
       }
       Result += "#pragma data_seg(pop)\n\n";

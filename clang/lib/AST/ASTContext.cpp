@@ -6673,11 +6673,9 @@ void getIntersectionOfProtocols(ASTContext &Context,
     llvm::SmallPtrSet<ObjCProtocolDecl *, 8> RHSInheritedProtocols;
     Context.CollectInheritedProtocols(RHS->getInterface(),
                                       RHSInheritedProtocols);
-    for (llvm::SmallPtrSet<ObjCProtocolDecl*,8>::iterator I = 
-         RHSInheritedProtocols.begin(),
-         E = RHSInheritedProtocols.end(); I != E; ++I) 
-      if (InheritedProtocolSet.count((*I)))
-        IntersectionOfProtocols.push_back((*I));
+    for (ObjCProtocolDecl *ProtDecl : RHSInheritedProtocols)
+      if (InheritedProtocolSet.count(ProtDecl))
+        IntersectionOfProtocols.push_back(ProtDecl);
   }
 }
 

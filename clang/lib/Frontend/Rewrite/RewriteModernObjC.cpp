@@ -4067,9 +4067,7 @@ void RewriteModernObjC::RewriteIvarOffsetSymbols(ObjCInterfaceDecl *CDecl,
     return;
   
   llvm::DenseSet<std::pair<const ObjCInterfaceDecl*, unsigned> > GroupSymbolOutput;
-  for (llvm::SmallPtrSet<ObjCIvarDecl *, 8>::iterator i = Ivars.begin(),
-       e = Ivars.end(); i != e; i++) {
-    ObjCIvarDecl *IvarDecl = (*i);
+  for (ObjCIvarDecl *IvarDecl : Ivars) {
     const ObjCInterfaceDecl *IDecl = IvarDecl->getContainingInterface();
     unsigned GroupNo = 0;
     if (IvarDecl->isBitField()) {
@@ -4253,14 +4251,12 @@ std::string RewriteModernObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
   S += "(" + StructRef;
   S += "*dst, " + StructRef;
   S += "*src) {";
-  for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(),
-      E = ImportedBlockDecls.end(); I != E; ++I) {
-    ValueDecl *VD = (*I);
+  for (ValueDecl *VD : ImportedBlockDecls) {
     S += "_Block_object_assign((void*)&dst->";
-    S += (*I)->getNameAsString();
+    S += VD->getNameAsString();
     S += ", (void*)src->";
-    S += (*I)->getNameAsString();
-    if (BlockByRefDeclsPtrSet.count((*I)))
+    S += VD->getNameAsString();
+    if (BlockByRefDeclsPtrSet.count(VD))
       S += ", " + utostr(BLOCK_FIELD_IS_BYREF) + "/*BLOCK_FIELD_IS_BYREF*/);";
     else if (VD->getType()->isBlockPointerType())
       S += ", " + utostr(BLOCK_FIELD_IS_BLOCK) + "/*BLOCK_FIELD_IS_BLOCK*/);";
@@ -4274,12 +4270,10 @@ std::string RewriteModernObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
   S += "_block_dispose_" + utostr(i);
   S += "(" + StructRef;
   S += "*src) {";
-  for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = ImportedBlockDecls.begin(),
-      E = ImportedBlockDecls.end(); I != E; ++I) {
-    ValueDecl *VD = (*I);
+  for (ValueDecl *VD : ImportedBlockDecls) {
     S += "_Block_object_dispose((void*)src->";
-    S += (*I)->getNameAsString();
-    if (BlockByRefDeclsPtrSet.count((*I)))
+    S += VD->getNameAsString();
+    if (BlockByRefDeclsPtrSet.count(VD))
       S += ", " + utostr(BLOCK_FIELD_IS_BYREF) + "/*BLOCK_FIELD_IS_BYREF*/);";
     else if (VD->getType()->isBlockPointerType())
       S += ", " + utostr(BLOCK_FIELD_IS_BLOCK) + "/*BLOCK_FIELD_IS_BLOCK*/);";
@@ -5975,10 +5969,9 @@ void RewriteModernObjC::HandleTranslationUnit(ASTContext &C) {
 
   // Here's a great place to add any extra declarations that may be needed.
   // Write out meta data for each @protocol(<expr>).
-  for (llvm::SmallPtrSet<ObjCProtocolDecl *,8>::iterator I = ProtocolExprDecls.begin(),
-       E = ProtocolExprDecls.end(); I != E; ++I) {
-    RewriteObjCProtocolMetaData(*I, Preamble);
-    Write_ProtocolExprReferencedMetadata(Context, (*I), Preamble);
+  for (ObjCProtocolDecl *ProtDecl : ProtocolExprDecls) {
+    RewriteObjCProtocolMetaData(ProtDecl, Preamble);
+    Write_ProtocolExprReferencedMetadata(Context, ProtDecl, Preamble);
   }
 
   InsertText(SM->getLocForStartOfFile(MainFileID), Preamble, false);

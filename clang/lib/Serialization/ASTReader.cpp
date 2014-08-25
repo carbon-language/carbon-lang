@@ -8209,16 +8209,14 @@ void ASTReader::finishPendingActions() {
   // Objective-C protocol definitions, or any redeclarable templates, make sure
   // that all redeclarations point to the definitions. Note that this can only 
   // happen now, after the redeclaration chains have been fully wired.
-  for (llvm::SmallPtrSet<Decl *, 4>::iterator D = PendingDefinitions.begin(),
-                                           DEnd = PendingDefinitions.end();
-       D != DEnd; ++D) {
-    if (TagDecl *TD = dyn_cast<TagDecl>(*D)) {
+  for (Decl *D : PendingDefinitions) {
+    if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
       if (const TagType *TagT = dyn_cast<TagType>(TD->getTypeForDecl())) {
         // Make sure that the TagType points at the definition.
         const_cast<TagType*>(TagT)->decl = TD;
       }
       
-      if (auto RD = dyn_cast<CXXRecordDecl>(*D)) {
+      if (auto RD = dyn_cast<CXXRecordDecl>(D)) {
         for (auto R : RD->redecls())
           cast<CXXRecordDecl>(R)->DefinitionData = RD->DefinitionData;
       }
@@ -8226,7 +8224,7 @@ void ASTReader::finishPendingActions() {
       continue;
     }
     
-    if (auto ID = dyn_cast<ObjCInterfaceDecl>(*D)) {
+    if (auto ID = dyn_cast<ObjCInterfaceDecl>(D)) {
       // Make sure that the ObjCInterfaceType points at the definition.
       const_cast<ObjCInterfaceType *>(cast<ObjCInterfaceType>(ID->TypeForDecl))
         ->Decl = ID;
@@ -8237,14 +8235,14 @@ void ASTReader::finishPendingActions() {
       continue;
     }
     
-    if (auto PD = dyn_cast<ObjCProtocolDecl>(*D)) {
+    if (auto PD = dyn_cast<ObjCProtocolDecl>(D)) {
       for (auto R : PD->redecls())
         R->Data = PD->Data;
       
       continue;
     }
     
-    auto RTD = cast<RedeclarableTemplateDecl>(*D)->getCanonicalDecl();
+    auto RTD = cast<RedeclarableTemplateDecl>(D)->getCanonicalDecl();
     for (auto R : RTD->redecls())
       R->Common = RTD->Common;
   }
