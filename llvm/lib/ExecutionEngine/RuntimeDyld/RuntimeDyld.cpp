@@ -41,8 +41,10 @@ void RuntimeDyldImpl::registerEHFrames() {}
 
 void RuntimeDyldImpl::deregisterEHFrames() {}
 
-static void dumpSectionMemory(const SectionEntry &S) {
-  dbgs() << "----- Contents of section " << S.Name << " -----";
+static void dumpSectionMemory(const SectionEntry &S, StringRef State) {
+  dbgs() << "----- Contents of section " << S.Name << " " << State << " -----";
+
+  const unsigned ColsPerRow = 16;
 
   uint8_t *DataAddr = S.Address;
   uint64_t LoadAddr = S.LoadAddress;
@@ -51,13 +53,13 @@ static void dumpSectionMemory(const SectionEntry &S) {
   unsigned BytesRemaining = S.Size;
 
   if (StartPadding) {
-    dbgs() << "\n" << format("0x%08x", LoadAddr & ~7) << ":";
+    dbgs() << "\n" << format("0x%08x", LoadAddr & ~(ColsPerRow - 1)) << ":";
     while (StartPadding--)
       dbgs() << "   ";
   }
 
   while (BytesRemaining > 0) {
-    if ((LoadAddr & 7) == 0)
+    if ((LoadAddr & (ColsPerRow - 1)) == 0)
       dbgs() << "\n" << format("0x%08x", LoadAddr) << ":";
 
     dbgs() << " " << format("%02x", *DataAddr);
@@ -86,8 +88,9 @@ void RuntimeDyldImpl::resolveRelocations() {
     uint64_t Addr = Sections[i].LoadAddress;
     DEBUG(dbgs() << "Resolving relocations Section #" << i << "\t"
                  << format("0x%x", Addr) << "\n");
-    DEBUG(dumpSectionMemory(Sections[i]));
+    DEBUG(dumpSectionMemory(Sections[i], "before relocations"));
     resolveRelocationList(Relocations[i], Addr);
+    DEBUG(dumpSectionMemory(Sections[i], "after relocations"));
     Relocations.erase(i);
   }
 }
