@@ -86,17 +86,16 @@ bool FixItRewriter::WriteFixedFiles(
     const FileEntry *Entry = Rewrite.getSourceMgr().getFileEntryForID(I->first);
     int fd;
     std::string Filename = FixItOpts->RewriteFilename(Entry->getName(), fd);
-    std::string Err;
+    std::error_code EC;
     std::unique_ptr<llvm::raw_fd_ostream> OS;
     if (fd != -1) {
       OS.reset(new llvm::raw_fd_ostream(fd, /*shouldClose=*/true));
     } else {
-      OS.reset(new llvm::raw_fd_ostream(Filename.c_str(), Err,
-                                        llvm::sys::fs::F_None));
+      OS.reset(new llvm::raw_fd_ostream(Filename, EC, llvm::sys::fs::F_None));
     }
-    if (!Err.empty()) {
-      Diags.Report(clang::diag::err_fe_unable_to_open_output)
-          << Filename << Err;
+    if (EC) {
+      Diags.Report(clang::diag::err_fe_unable_to_open_output) << Filename
+                                                              << EC.message();
       continue;
     }
     RewriteBuffer &RewriteBuf = I->second;

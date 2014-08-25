@@ -3521,10 +3521,9 @@ bool ASTReader::isGlobalIndexUnavailable() const {
 static void updateModuleTimestamp(ModuleFile &MF) {
   // Overwrite the timestamp file contents so that file's mtime changes.
   std::string TimestampFilename = MF.getTimestampFilename();
-  std::string ErrorInfo;
-  llvm::raw_fd_ostream OS(TimestampFilename.c_str(), ErrorInfo,
-                          llvm::sys::fs::F_Text);
-  if (!ErrorInfo.empty())
+  std::error_code EC;
+  llvm::raw_fd_ostream OS(TimestampFilename, EC, llvm::sys::fs::F_Text);
+  if (EC)
     return;
   OS << "Timestamp file\n";
 }

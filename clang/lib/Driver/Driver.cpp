@@ -533,12 +533,12 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
         llvm::sys::path::append(VFS, "vfs", "vfs.yaml");
       }
 
-      std::string Err;
+      std::error_code EC;
       Script += ".sh";
-      llvm::raw_fd_ostream ScriptOS(Script.c_str(), Err, llvm::sys::fs::F_Excl);
-      if (!Err.empty()) {
+      llvm::raw_fd_ostream ScriptOS(Script, EC, llvm::sys::fs::F_Excl);
+      if (EC) {
         Diag(clang::diag::note_drv_command_failed_diag_msg)
-          << "Error generating run script: " + Script + " " + Err;
+            << "Error generating run script: " + Script + " " + EC.message();
       } else {
         // Replace the original filename with the preprocessed one.
         size_t I, E;

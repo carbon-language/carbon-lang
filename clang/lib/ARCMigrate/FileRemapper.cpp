@@ -122,11 +122,11 @@ bool FileRemapper::flushToDisk(StringRef outputDir, DiagnosticsEngine &Diag) {
 bool FileRemapper::flushToFile(StringRef outputPath, DiagnosticsEngine &Diag) {
   using namespace llvm::sys;
 
-  std::string errMsg;
+  std::error_code EC;
   std::string infoFile = outputPath;
-  llvm::raw_fd_ostream infoOut(infoFile.c_str(), errMsg, llvm::sys::fs::F_None);
-  if (!errMsg.empty())
-    return report(errMsg, Diag);
+  llvm::raw_fd_ostream infoOut(infoFile, EC, llvm::sys::fs::F_None);
+  if (EC)
+    return report(EC.message(), Diag);
 
   for (MappingsTy::iterator
          I = FromToMappings.begin(), E = FromToMappings.end(); I != E; ++I) {
@@ -179,10 +179,10 @@ bool FileRemapper::overwriteOriginal(DiagnosticsEngine &Diag,
       return report(StringRef("File does not exist: ") + origFE->getName(),
                     Diag);
 
-    std::string errMsg;
-    llvm::raw_fd_ostream Out(origFE->getName(), errMsg, llvm::sys::fs::F_None);
-    if (!errMsg.empty())
-      return report(errMsg, Diag);
+    std::error_code EC;
+    llvm::raw_fd_ostream Out(origFE->getName(), EC, llvm::sys::fs::F_None);
+    if (EC)
+      return report(EC.message(), Diag);
 
     llvm::MemoryBuffer *mem = I->second.get<llvm::MemoryBuffer *>();
     Out.write(mem->getBufferStart(), mem->getBufferSize());
