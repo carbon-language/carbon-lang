@@ -346,7 +346,7 @@ private:
 
   int cmpNumbers(uint64_t L, uint64_t R) const;
 
-  int cmpAPInt(const APInt &L, const APInt &R) const;
+  int cmpAPInts(const APInt &L, const APInt &R) const;
   int cmpAPFloat(const APFloat &L, const APFloat &R) const;
   int cmpStrings(StringRef L, StringRef R) const;
   int cmpAttrs(const AttributeSet L, const AttributeSet R) const;
@@ -412,7 +412,7 @@ int FunctionComparator::cmpNumbers(uint64_t L, uint64_t R) const {
   return 0;
 }
 
-int FunctionComparator::cmpAPInt(const APInt &L, const APInt &R) const {
+int FunctionComparator::cmpAPInts(const APInt &L, const APInt &R) const {
   if (int Res = cmpNumbers(L.getBitWidth(), R.getBitWidth()))
     return Res;
   if (L.ugt(R)) return 1;
@@ -424,7 +424,7 @@ int FunctionComparator::cmpAPFloat(const APFloat &L, const APFloat &R) const {
   if (int Res = cmpNumbers((uint64_t)&L.getSemantics(),
                            (uint64_t)&R.getSemantics()))
     return Res;
-  return cmpAPInt(L.bitcastToAPInt(), R.bitcastToAPInt());
+  return cmpAPInts(L.bitcastToAPInt(), R.bitcastToAPInt());
 }
 
 int FunctionComparator::cmpStrings(StringRef L, StringRef R) const {
@@ -541,7 +541,7 @@ int FunctionComparator::cmpConstants(const Constant *L, const Constant *R) {
   case Value::ConstantIntVal: {
     const APInt &LInt = cast<ConstantInt>(L)->getValue();
     const APInt &RInt = cast<ConstantInt>(R)->getValue();
-    return cmpAPInt(LInt, RInt);
+    return cmpAPInts(LInt, RInt);
   }
   case Value::ConstantFPVal: {
     const APFloat &LAPF = cast<ConstantFP>(L)->getValueAPF();
@@ -860,7 +860,7 @@ int FunctionComparator::cmpGEPs(const GEPOperator *GEPL,
     APInt OffsetL(BitWidth, 0), OffsetR(BitWidth, 0);
     if (GEPL->accumulateConstantOffset(*DL, OffsetL) &&
         GEPR->accumulateConstantOffset(*DL, OffsetR))
-      return cmpAPInt(OffsetL, OffsetR);
+      return cmpAPInts(OffsetL, OffsetR);
   }
 
   if (int Res = cmpNumbers((uint64_t)GEPL->getPointerOperand()->getType(),
