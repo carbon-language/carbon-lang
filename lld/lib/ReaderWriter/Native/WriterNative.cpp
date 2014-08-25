@@ -66,11 +66,10 @@ public:
     // construct file header based on atom information accumulated
     this->makeHeader();
 
-    std::string errorInfo;
-    llvm::raw_fd_ostream out(outPath.data(), errorInfo,
-                             llvm::sys::fs::F_None);
-    if (!errorInfo.empty())
-      return std::error_code(); // FIXME
+    std::error_code ec;
+    llvm::raw_fd_ostream out(outPath.data(), ec, llvm::sys::fs::F_None);
+    if (ec)
+      return ec;
 
     this->write(out);
 

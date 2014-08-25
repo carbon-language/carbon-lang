@@ -496,12 +496,11 @@ static bool createManifestResourceFile(PECOFFLinkingContext &ctx,
   llvm::FileRemover rcFileRemover((Twine(rcFile)));
 
   // Open the temporary file for writing.
-  std::string errorInfo;
-  llvm::raw_fd_ostream out(rcFileSmallString.c_str(), errorInfo,
-                           llvm::sys::fs::F_Text);
-  if (!errorInfo.empty()) {
+  std::error_code EC;
+  llvm::raw_fd_ostream out(rcFileSmallString, EC, llvm::sys::fs::F_Text);
+  if (EC) {
     diag << "Failed to open " << ctx.getManifestOutputPath() << ": "
-         << errorInfo << "\n";
+         << EC.message() << "\n";
     return false;
   }
 
@@ -571,10 +570,10 @@ static bool createSideBySideManifestFile(PECOFFLinkingContext &ctx,
     path.append(".manifest");
   }
 
-  std::string errorInfo;
-  llvm::raw_fd_ostream out(path.c_str(), errorInfo, llvm::sys::fs::F_Text);
-  if (!errorInfo.empty()) {
-    diag << errorInfo << "\n";
+  std::error_code EC;
+  llvm::raw_fd_ostream out(path, EC, llvm::sys::fs::F_Text);
+  if (EC) {
+    diag << EC.message() << "\n";
     return false;
   }
   out << createManifestXml(ctx);
