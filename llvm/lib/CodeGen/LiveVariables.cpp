@@ -502,12 +502,12 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   MRI = &mf.getRegInfo();
   TRI = MF->getSubtarget().getRegisterInfo();
 
-  unsigned NumRegs = TRI->getNumRegs();
-  PhysRegDef  = new MachineInstr*[NumRegs];
-  PhysRegUse  = new MachineInstr*[NumRegs];
-  PHIVarInfo = new SmallVector<unsigned, 4>[MF->getNumBlockIDs()];
-  std::fill(PhysRegDef,  PhysRegDef  + NumRegs, nullptr);
-  std::fill(PhysRegUse,  PhysRegUse  + NumRegs, nullptr);
+  const unsigned NumRegs = TRI->getNumRegs();
+  PhysRegDef.clear();
+  PhysRegUse.clear();
+  PhysRegDef.resize(NumRegs, nullptr);
+  PhysRegUse.resize(NumRegs, nullptr);
+  PHIVarInfo.resize(MF->getNumBlockIDs());
   PHIJoins.clear();
 
   // FIXME: LiveIntervals will be updated to remove its dependence on
@@ -637,8 +637,10 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
       if ((PhysRegDef[i] || PhysRegUse[i]) && !LiveOuts.count(i))
         HandlePhysRegDef(i, nullptr, Defs);
 
-    std::fill(PhysRegDef,  PhysRegDef  + NumRegs, nullptr);
-    std::fill(PhysRegUse,  PhysRegUse  + NumRegs, nullptr);
+    PhysRegDef.clear();
+    PhysRegUse.clear();
+    PhysRegDef.resize(NumRegs, nullptr);
+    PhysRegUse.resize(NumRegs, nullptr);
   }
 
   // Convert and transfer the dead / killed information we have gathered into
@@ -660,9 +662,9 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
     assert(Visited.count(&*i) != 0 && "unreachable basic block found");
 #endif
 
-  delete[] PhysRegDef;
-  delete[] PhysRegUse;
-  delete[] PHIVarInfo;
+  PhysRegDef.clear();
+  PhysRegUse.clear();
+  PHIVarInfo.clear();
 
   return false;
 }
