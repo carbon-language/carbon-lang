@@ -16,8 +16,11 @@ if ( LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION )
 		DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/LLDBWrapPython.cpp
 		)
 
-	# Install the LLDB python module on all operating systems
-	install(SCRIPT lldb_python_module.cmake -DCMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\" -DCMAKE_BUILD_DIR=\"${CMAKE_BUILD_DIR}\")
+	# Install the LLDB python module on all operating systems (except Windows)
+	if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+	  install(DIRECTORY ${CMAKE_BINARY_DIR}/lib${LLVM_LIBDIR_SUFFIX}/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}
+		DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+	endif()
 else ()
 	add_custom_command(
 	  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/LLDBWrapPython.cpp
