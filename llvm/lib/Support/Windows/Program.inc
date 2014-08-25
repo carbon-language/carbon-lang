@@ -166,19 +166,7 @@ static unsigned int ArgLenWithQuotes(const char *Str) {
 
 }
 
-static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
-                    const char **envp, const StringRef **redirects,
-                    unsigned memoryLimit, std::string *ErrMsg) {
-  if (!sys::fs::can_execute(Program)) {
-    if (ErrMsg)
-      *ErrMsg = "program not executable";
-    return false;
-  }
-
-  // Windows wants a command line, not an array of args, to pass to the new
-  // process.  We have to concatenate them all, while quoting the args that
-  // have embedded spaces (or are empty).
-
+static std::unique_ptr<char[]> flattenArgs(const char **args) {
   // First, determine the length of the command line.
   unsigned len = 0;
   for (unsigned i = 0; args[i]; i++) {
@@ -216,6 +204,22 @@ static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
   }
 
   *p = 0;
+  return command;
+}
+
+static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
+                    const char **envp, const StringRef **redirects,
+                    unsigned memoryLimit, std::string *ErrMsg) {
+  if (!sys::fs::can_execute(Program)) {
+    if (ErrMsg)
+      *ErrMsg = "program not executable";
+    return false;
+  }
+
+  // Windows wants a command line, not an array of args, to pass to the new
+  // process.  We have to concatenate them all, while quoting the args that
+  // have embedded spaces (or are empty).
+  std::unique_ptr<char[]> command = flattenArgs(args);
 
   // The pointer to the environment block for the new process.
   std::vector<wchar_t> EnvBlock;
