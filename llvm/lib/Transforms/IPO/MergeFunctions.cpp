@@ -347,7 +347,7 @@ private:
   int cmpNumbers(uint64_t L, uint64_t R) const;
 
   int cmpAPInts(const APInt &L, const APInt &R) const;
-  int cmpAPFloat(const APFloat &L, const APFloat &R) const;
+  int cmpAPFloats(const APFloat &L, const APFloat &R) const;
   int cmpStrings(StringRef L, StringRef R) const;
   int cmpAttrs(const AttributeSet L, const AttributeSet R) const;
 
@@ -420,7 +420,7 @@ int FunctionComparator::cmpAPInts(const APInt &L, const APInt &R) const {
   return 0;
 }
 
-int FunctionComparator::cmpAPFloat(const APFloat &L, const APFloat &R) const {
+int FunctionComparator::cmpAPFloats(const APFloat &L, const APFloat &R) const {
   if (int Res = cmpNumbers((uint64_t)&L.getSemantics(),
                            (uint64_t)&R.getSemantics()))
     return Res;
@@ -546,7 +546,7 @@ int FunctionComparator::cmpConstants(const Constant *L, const Constant *R) {
   case Value::ConstantFPVal: {
     const APFloat &LAPF = cast<ConstantFP>(L)->getValueAPF();
     const APFloat &RAPF = cast<ConstantFP>(R)->getValueAPF();
-    return cmpAPFloat(LAPF, RAPF);
+    return cmpAPFloats(LAPF, RAPF);
   }
   case Value::ConstantArrayVal: {
     const ConstantArray *LA = cast<ConstantArray>(L);
