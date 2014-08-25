@@ -297,9 +297,9 @@ private:
   /// 3. Pointer operand type (using cmpType method).
   /// 4. Number of operands.
   /// 5. Compare operands, using cmpValues method.
-  int cmpGEP(const GEPOperator *GEPL, const GEPOperator *GEPR);
-  int cmpGEP(const GetElementPtrInst *GEPL, const GetElementPtrInst *GEPR) {
-    return cmpGEP(cast<GEPOperator>(GEPL), cast<GEPOperator>(GEPR));
+  int cmpGEPs(const GEPOperator *GEPL, const GEPOperator *GEPR);
+  int cmpGEPs(const GetElementPtrInst *GEPL, const GetElementPtrInst *GEPR) {
+    return cmpGEPs(cast<GEPOperator>(GEPL), cast<GEPOperator>(GEPR));
   }
 
   /// cmpType - compares two types,
@@ -845,7 +845,7 @@ int FunctionComparator::cmpOperations(const Instruction *L,
 
 // Determine whether two GEP operations perform the same underlying arithmetic.
 // Read method declaration comments for more details.
-int FunctionComparator::cmpGEP(const GEPOperator *GEPL,
+int FunctionComparator::cmpGEPs(const GEPOperator *GEPL,
                                const GEPOperator *GEPR) {
 
   unsigned int ASL = GEPL->getPointerAddressSpace();
@@ -945,7 +945,7 @@ int FunctionComparator::compare(const BasicBlock *BBL, const BasicBlock *BBR) {
       if (int Res =
               cmpValues(GEPL->getPointerOperand(), GEPR->getPointerOperand()))
         return Res;
-      if (int Res = cmpGEP(GEPL, GEPR))
+      if (int Res = cmpGEPs(GEPL, GEPR))
         return Res;
     } else {
       if (int Res = cmpOperations(InstL, InstR))
