@@ -448,13 +448,13 @@ bool llvm::sys::argumentsFitWithinSystemLimits(ArrayRef<const char*> Args) {
     return true;
 
   // Conservatively account for space required by environment variables.
-  ArgMax /= 2;
+  long HalfArgMax = ArgMax / 2;
 
   size_t ArgLength = 0;
   for (ArrayRef<const char*>::iterator I = Args.begin(), E = Args.end();
        I != E; ++I) {
     ArgLength += strlen(*I) + 1;
-    if (ArgLength > size_t(ArgMax)) {
+    if (ArgLength > size_t(HalfArgMax)) {
       return false;
     }
   }
