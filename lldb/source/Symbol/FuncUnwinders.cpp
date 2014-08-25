@@ -115,7 +115,8 @@ FuncUnwinders::GetUnwindPlanAtNonCallSite (Target& target, Thread& thread, int c
         if (assembly_profiler_sp)
         {
             if (target.GetArchitecture().GetCore() == ArchSpec::eCore_x86_32_i386
-                || target.GetArchitecture().GetCore() == ArchSpec::eCore_x86_64_x86_64)
+                || target.GetArchitecture().GetCore() == ArchSpec::eCore_x86_64_x86_64
+                || target.GetArchitecture().GetCore() == ArchSpec::eCore_x86_64_x86_64h)
             {
                 // For 0th frame on i386 & x86_64, we fetch eh_frame and try using assembly profiler
                 // to augment it into asynchronous unwind table.

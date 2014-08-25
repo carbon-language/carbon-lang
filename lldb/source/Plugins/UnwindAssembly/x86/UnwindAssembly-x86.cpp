@@ -876,6 +876,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
     m_cur_insn = func.GetBaseAddress();
     uint64_t offset = 0;
     int row_id = 1;
+    bool unwind_plan_updated = false;
     UnwindPlan::RowSP row(new UnwindPlan::Row(*first_row));
     while (func.ContainsFileAddress (m_cur_insn))
     {
@@ -935,6 +936,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
 
                 UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
                 unwind_plan.InsertRow (new_row);
+                unwind_plan_updated = true;
                 continue;
             }
 
@@ -946,6 +948,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
 
                 UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
                 unwind_plan.InsertRow (new_row);
+                unwind_plan_updated = true;
                 continue;
             }
             if (pop_reg_p (regno)) {
@@ -959,6 +962,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
 
                 UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
                 unwind_plan.InsertRow (new_row);
+                unwind_plan_updated = true;
                 continue;
             }
 
@@ -968,6 +972,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
                 row->SetCFAOffset (m_wordsize + row->GetCFAOffset());
                 UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
                 unwind_plan.InsertRow (new_row);
+                unwind_plan_updated = true;
                 continue;
             }
 
@@ -979,6 +984,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
 
                 UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
                 unwind_plan.InsertRow (new_row);
+                unwind_plan_updated = true;
                 continue;
             }
             if (sub_rsp_pattern_p (amount)) {
@@ -987,6 +993,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
 
                 UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
                 unwind_plan.InsertRow (new_row);
+                unwind_plan_updated = true;
                 continue;
             }
         }
@@ -1009,6 +1016,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
 
                     UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
                     unwind_plan.InsertRow (new_row);
+                    unwind_plan_updated = true;
                     continue;
                 }
             }
@@ -1024,6 +1032,13 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
     }
 
     unwind_plan.SetPlanValidAddressRange (func);
+    if (unwind_plan_updated)
+    {
+        std::string unwind_plan_source (unwind_plan.GetSourceName().AsCString());
+        unwind_plan_source += " plus augmentation from assembly parsing";
+        unwind_plan.SetSourceName (unwind_plan_source.c_str());
+        unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
+    }
     return true;
 }
 
