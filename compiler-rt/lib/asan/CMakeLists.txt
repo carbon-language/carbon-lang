@@ -162,7 +162,7 @@ else()
       add_dependencies(asan clang_rt.asan-preinit-${arch})
 
       add_compiler_rt_runtime(clang_rt.asan-dynamic-${arch} ${arch} SHARED
-        OUTPUT_NAME clang_rt.asan-${arch}
+        OUTPUT_NAME clang_rt.asan_dynamic-${arch}
         SOURCES $<TARGET_OBJECTS:RTAsan_dynamic.${arch}>
                 ${ASAN_COMMON_RUNTIME_OBJECTS}
         CFLAGS ${ASAN_DYNAMIC_CFLAGS}
