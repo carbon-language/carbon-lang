@@ -19467,11 +19467,13 @@ combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
     case X86ISD::UNPCKL:
     case X86ISD::UNPCKH:
       V = DAG.getNode(W.getOpcode(), DL, W.getValueType(), V, V);
+      break;
 
     case X86ISD::PSHUFD:
     case X86ISD::PSHUFLW:
     case X86ISD::PSHUFHW:
       V = DAG.getNode(W.getOpcode(), DL, W.getValueType(), V, W.getOperand(1));
+      break;
     }
   }
   if (V.getValueType() != N.getValueType())
