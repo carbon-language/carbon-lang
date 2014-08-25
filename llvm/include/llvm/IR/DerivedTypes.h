@@ -204,9 +204,6 @@ class StructType : public CompositeType {
   /// 
   void *SymbolTableEntry;
 public:
-  ~StructType() {
-    delete [] ContainedTys; // Delete the body.
-  }
 
   /// StructType::create - This creates an identified struct.
   static StructType *create(LLVMContext &Context, StringRef Name);
