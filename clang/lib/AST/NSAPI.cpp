@@ -46,6 +46,10 @@ Selector NSAPI::getNSStringSelector(NSStringMethodKind MK) const {
       Sel = Ctx.Selectors.getUnarySelector(
                                        &Ctx.Idents.get("stringWithUTF8String"));
       break;
+    case NSStr_initWithUTF8String:
+      Sel = Ctx.Selectors.getUnarySelector(
+                                       &Ctx.Idents.get("initWithUTF8String"));
+      break;
     case NSStr_stringWithCStringEncoding: {
       IdentifierInfo *KeyIdents[] = {
         &Ctx.Idents.get("stringWithCString"),

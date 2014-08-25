@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -objcmt-migrate-literals -objcmt-migrate-subscripting -mt-migrate-directory %t %s -x objective-c++ -verify
+// RUN: %clang_cc1 -fobjc-arc -objcmt-migrate-literals -objcmt-migrate-subscripting -mt-migrate-directory %t %s -x objective-c++ -verify
 // RUN: c-arcmt-test -mt-migrate-directory %t | arcmt-test -verify-transformed-files %s.result
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only -x objective-c++ %s.result
 
@@ -68,6 +68,7 @@ typedef NSUInteger NSStringEncoding;
 + (id)stringWithUTF8String:(const char *)nullTerminatedCString;
 + (id)stringWithCString:(const char *)cString encoding:(NSStringEncoding)enc;
 + (id)stringWithCString:(const char *)bytes;
+- (instancetype)initWithUTF8String:(const char *)nullTerminatedCString;
 @end
 
 enum MyEnm {
@@ -99,4 +100,8 @@ void boxString() {
 
   static const char strarr[] = "coolbox";
   s = @(strarr);
+  // rdar://18080352
+  const char *utf8Bytes = "blah";
+  NSString *string1 = @(utf8Bytes);
+  NSString *string2 = @(utf8Bytes);
 }

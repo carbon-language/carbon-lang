@@ -42,7 +42,8 @@ public:
     NSStr_stringWithUTF8String,
     NSStr_stringWithCStringEncoding,
     NSStr_stringWithCString,
-    NSStr_initWithString
+    NSStr_initWithString,
+    NSStr_initWithUTF8String
   };
   static const unsigned NumNSStringMethods = 5;
 
