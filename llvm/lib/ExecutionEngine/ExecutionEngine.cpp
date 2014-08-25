@@ -256,19 +256,9 @@ const GlobalValue *ExecutionEngine::getGlobalValueAtAddress(void *Addr) {
 
 namespace {
 class ArgvArray {
-  char *Array;
-  std::vector<char*> Values;
+  std::unique_ptr<char[]> Array;
+  std::vector<std::unique_ptr<char[]>> Values;
 public:
-  ArgvArray() : Array(nullptr) {}
-  ~ArgvArray() { clear(); }
-  void clear() {
-    delete[] Array;
-    Array = nullptr;
-    for (size_t I = 0, E = Values.size(); I != E; ++I) {
-      delete[] Values[I];
-    }
-    Values.clear();
-  }
   /// Turn a vector of strings into a nice argv style array of pointers to null
   /// terminated strings.
   void *reset(LLVMContext &C, ExecutionEngine *EE,
@@ -277,32 +267,34 @@ public:
 }  // anonymous namespace
 void *ArgvArray::reset(LLVMContext &C, ExecutionEngine *EE,
                        const std::vector<std::string> &InputArgv) {
-  clear();  // Free the old contents.
+  Values.clear();  // Free the old contents.
+  Values.reserve(InputArgv.size());
   unsigned PtrSize = EE->getDataLayout()->getPointerSize();
-  Array = new char[(InputArgv.size()+1)*PtrSize];
+  Array = make_unique<char[]>((InputArgv.size()+1)*PtrSize);
 
-  DEBUG(dbgs() << "JIT: ARGV = " << (void*)Array << "\n");
+  DEBUG(dbgs() << "JIT: ARGV = " << (void*)Array.get() << "\n");
   Type *SBytePtr = Type::getInt8PtrTy(C);
 
   for (unsigned i = 0; i != InputArgv.size(); ++i) {
     unsigned Size = InputArgv[i].size()+1;
-    char *Dest = new char[Size];
-    Values.push_back(Dest);
+    auto DestOwner = make_unique<char[]>(Size);
+    char *Dest = DestOwner.get();
+    Values.push_back(std::move(DestOwner));
     DEBUG(dbgs() << "JIT: ARGV[" << i << "] = " << (void*)Dest << "\n");
 
     std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
     Dest[Size-1] = 0;
 
     // Endian safe: Array[i] = (PointerTy)Dest;
-    EE->StoreValueToMemory(PTOGV(Dest), (GenericValue*)(Array+i*PtrSize),
+    EE->StoreValueToMemory(PTOGV(Dest), (GenericValue*)(&Array[i*PtrSize]),
                            SBytePtr);
   }
 
   // Null terminate it
   EE->StoreValueToMemory(PTOGV(nullptr),
-                         (GenericValue*)(Array+InputArgv.size()*PtrSize),
+                         (GenericValue*)(&Array[InputArgv.size()*PtrSize]),
                          SBytePtr);
-  return Array;
+  return Array.get();
 }
 
 void ExecutionEngine::runStaticConstructorsDestructors(Module &module,
