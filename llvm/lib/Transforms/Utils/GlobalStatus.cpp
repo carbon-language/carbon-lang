@@ -35,6 +35,9 @@ bool llvm::isSafeToDestroyConstant(const Constant *C) {
   if (isa<GlobalValue>(C))
     return false;
 
+  if (isa<ConstantInt>(C) || isa<ConstantFP>(C))
+    return false;
+
   for (const User *U : C->users())
     if (const Constant *CU = dyn_cast<Constant>(U)) {
       if (!isSafeToDestroyConstant(CU))

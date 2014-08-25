@@ -22,6 +22,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/CtorUtils.h"
+#include "llvm/Transforms/Utils/GlobalStatus.h"
 #include "llvm/Pass.h"
 using namespace llvm;
 
@@ -141,7 +142,12 @@ bool GlobalDCE::runOnModule(Module &M) {
        I != E; ++I)
     if (!AliveGlobals.count(I)) {
       DeadGlobalVars.push_back(I);         // Keep track of dead globals
-      I->setInitializer(nullptr);
+      if (I->hasInitializer()) {
+        Constant *Init = I->getInitializer();
+        I->setInitializer(nullptr);
+        if (isSafeToDestroyConstant(Init))
+          Init->destroyConstant();
+      }
     }
 
   // The second pass drops the bodies of functions which are dead...
