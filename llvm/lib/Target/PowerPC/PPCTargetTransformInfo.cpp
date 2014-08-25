@@ -92,9 +92,10 @@ public:
   virtual unsigned getNumberOfRegisters(bool Vector) const override;
   virtual unsigned getRegisterBitWidth(bool Vector) const override;
   virtual unsigned getMaximumUnrollFactor() const override;
-  virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty,
-                                          OperandValueKind,
-                                          OperandValueKind) const override;
+  virtual unsigned
+  getArithmeticInstrCost(unsigned Opcode, Type *Ty, OperandValueKind,
+                         OperandValueKind, OperandValueProperties,
+                         OperandValueProperties) const override;
   virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
                                   int Index, Type *SubTp) const override;
   virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
@@ -318,14 +319,15 @@ unsigned PPCTTI::getMaximumUnrollFactor() const {
   return 2;
 }
 
-unsigned PPCTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
-                                        OperandValueKind Op1Info,
-                                        OperandValueKind Op2Info) const {
+unsigned PPCTTI::getArithmeticInstrCost(
+    unsigned Opcode, Type *Ty, OperandValueKind Op1Info,
+    OperandValueKind Op2Info, OperandValueProperties Opd1PropInfo,
+    OperandValueProperties Opd2PropInfo) const {
   assert(TLI->InstructionOpcodeToISD(Opcode) && "Invalid opcode");
 
   // Fallback to the default implementation.
-  return TargetTransformInfo::getArithmeticInstrCost(Opcode, Ty, Op1Info,
-                                                     Op2Info);
+  return TargetTransformInfo::getArithmeticInstrCost(
+      Opcode, Ty, Op1Info, Op2Info, Opd1PropInfo, Opd2PropInfo);
 }
 
 unsigned PPCTTI::getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,

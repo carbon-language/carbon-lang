@@ -126,10 +126,11 @@ public:
   unsigned getAddressComputationCost(Type *Val,
                                      bool IsComplex) const override;
 
-  unsigned
-  getArithmeticInstrCost(unsigned Opcode, Type *Ty,
-                         OperandValueKind Op1Info = OK_AnyValue,
-                         OperandValueKind Op2Info = OK_AnyValue) const override;
+  unsigned getArithmeticInstrCost(
+      unsigned Opcode, Type *Ty, OperandValueKind Op1Info = OK_AnyValue,
+      OperandValueKind Op2Info = OK_AnyValue,
+      OperandValueProperties Opd1PropInfo = OP_None,
+      OperandValueProperties Opd2PropInfo = OP_None) const override;
 
   unsigned getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
                            unsigned AddressSpace) const override;
@@ -497,9 +498,10 @@ unsigned ARMTTI::getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
   return TargetTransformInfo::getShuffleCost(Kind, Tp, Index, SubTp);
 }
 
-unsigned ARMTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
-                                        OperandValueKind Op1Info,
-                                        OperandValueKind Op2Info) const {
+unsigned ARMTTI::getArithmeticInstrCost(
+    unsigned Opcode, Type *Ty, OperandValueKind Op1Info,
+    OperandValueKind Op2Info, OperandValueProperties Opd1PropInfo,
+    OperandValueProperties Opd2PropInfo) const {
 
   int ISDOpcode = TLI->InstructionOpcodeToISD(Opcode);
   std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Ty);
@@ -555,8 +557,8 @@ unsigned ARMTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
   if (Idx != -1)
     return LT.first * CostTbl[Idx].Cost;
 
-  unsigned Cost =
-      TargetTransformInfo::getArithmeticInstrCost(Opcode, Ty, Op1Info, Op2Info);
+  unsigned Cost = TargetTransformInfo::getArithmeticInstrCost(
+      Opcode, Ty, Op1Info, Op2Info, Opd1PropInfo, Opd2PropInfo);
 
   // This is somewhat of a hack. The problem that we are facing is that SROA
   // creates a sequence of shift, and, or instructions to construct values.

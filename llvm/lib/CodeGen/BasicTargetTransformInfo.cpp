@@ -104,7 +104,8 @@ public:
   unsigned getMaximumUnrollFactor() const override;
   unsigned getRegisterBitWidth(bool Vector) const override;
   unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty, OperandValueKind,
-                                  OperandValueKind) const override;
+                                  OperandValueKind, OperandValueProperties,
+                                  OperandValueProperties) const override;
   unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
                           int Index, Type *SubTp) const override;
   unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
@@ -289,8 +290,9 @@ unsigned BasicTTI::getMaximumUnrollFactor() const {
 }
 
 unsigned BasicTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
-                                          OperandValueKind,
-                                          OperandValueKind) const {
+                                          OperandValueKind, OperandValueKind,
+                                          OperandValueProperties,
+                                          OperandValueProperties) const {
   // Check if any of the operands are vector operands.
   const TargetLoweringBase *TLI = getTLI();
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
