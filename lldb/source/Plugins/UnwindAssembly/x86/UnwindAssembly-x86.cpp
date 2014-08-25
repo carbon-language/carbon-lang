@@ -27,13 +27,13 @@
 using namespace lldb;
 using namespace lldb_private;
 
-enum CPU 
+enum CPU
 {
     k_i386,
     k_x86_64
 };
 
-enum i386_register_numbers 
+enum i386_register_numbers
 {
     k_machine_eax = 0,
     k_machine_ecx = 1,
@@ -46,7 +46,7 @@ enum i386_register_numbers
     k_machine_eip = 8
 };
 
-enum x86_64_register_numbers 
+enum x86_64_register_numbers
 {
     k_machine_rax = 0,
     k_machine_rcx = 1,
@@ -67,14 +67,14 @@ enum x86_64_register_numbers
     k_machine_rip = 16
 };
 
-struct regmap_ent 
+struct regmap_ent
 {
     const char *name;
     int machine_regno;
     int lldb_regno;
 };
 
-static struct regmap_ent i386_register_map[] = 
+static struct regmap_ent i386_register_map[] =
 {
     {"eax", k_machine_eax, -1},
     {"ecx", k_machine_ecx, -1},
@@ -91,7 +91,7 @@ const int size_of_i386_register_map = llvm::array_lengthof (i386_register_map);
 
 static int i386_register_map_initialized = 0;
 
-static struct regmap_ent x86_64_register_map[] = 
+static struct regmap_ent x86_64_register_map[] =
 {
     {"rax", k_machine_rax, -1},
     {"rcx", k_machine_rcx, -1},
@@ -120,7 +120,7 @@ static int x86_64_register_map_initialized = 0;
 //  AssemblyParse_x86 local-file class definition & implementation functions
 //-----------------------------------------------------------------------------------------------
 
-class AssemblyParse_x86 
+class AssemblyParse_x86
 {
 public:
 
@@ -180,16 +180,16 @@ private:
 };
 
 AssemblyParse_x86::AssemblyParse_x86 (const ExecutionContext &exe_ctx, int cpu, ArchSpec &arch, AddressRange func) :
-    m_exe_ctx (exe_ctx), 
-    m_func_bounds(func), 
+    m_exe_ctx (exe_ctx),
+    m_func_bounds(func),
     m_cur_insn (),
     m_machine_ip_regnum (LLDB_INVALID_REGNUM),
     m_machine_sp_regnum (LLDB_INVALID_REGNUM),
     m_machine_fp_regnum (LLDB_INVALID_REGNUM),
-    m_lldb_ip_regnum (LLDB_INVALID_REGNUM), 
+    m_lldb_ip_regnum (LLDB_INVALID_REGNUM),
     m_lldb_sp_regnum (LLDB_INVALID_REGNUM),
     m_lldb_fp_regnum (LLDB_INVALID_REGNUM),
-    m_wordsize (-1), 
+    m_wordsize (-1),
     m_cpu(cpu),
     m_arch(arch)
 {
@@ -256,8 +256,8 @@ AssemblyParse_x86::AssemblyParse_x86 (const ExecutionContext &exe_ctx, int cpu, 
            m_lldb_ip_regnum = lldb_regno;
    }
 
-   m_disasm_context = ::LLVMCreateDisasm(m_arch.GetTriple().getTriple().c_str(), 
-                                          (void*)this, 
+   m_disasm_context = ::LLVMCreateDisasm(m_arch.GetTriple().getTriple().c_str(),
+                                          (void*)this,
                                           /*TagType=*/1,
                                           NULL,
                                           NULL);
@@ -268,7 +268,7 @@ AssemblyParse_x86::~AssemblyParse_x86 ()
     ::LLVMDisasmDispose(m_disasm_context);
 }
 
-// This function expects an x86 native register number (i.e. the bits stripped out of the 
+// This function expects an x86 native register number (i.e. the bits stripped out of the
 // actual instruction), not an lldb register number.
 
 bool
@@ -276,7 +276,7 @@ AssemblyParse_x86::nonvolatile_reg_p (int machine_regno)
 {
     if (m_cpu == k_i386)
     {
-          switch (machine_regno) 
+          switch (machine_regno)
           {
               case k_machine_ebx:
               case k_machine_ebp:  // not actually a nonvolatile but often treated as such by convention
@@ -290,7 +290,7 @@ AssemblyParse_x86::nonvolatile_reg_p (int machine_regno)
     }
     if (m_cpu == k_x86_64)
     {
-          switch (machine_regno) 
+          switch (machine_regno)
           {
               case k_machine_rbx:
               case k_machine_rsp:
@@ -308,7 +308,7 @@ AssemblyParse_x86::nonvolatile_reg_p (int machine_regno)
 }
 
 
-// Macro to detect if this is a REX mode prefix byte. 
+// Macro to detect if this is a REX mode prefix byte.
 #define REX_W_PREFIX_P(opcode) (((opcode) & (~0x5)) == 0x48)
 
 // The high bit which should be added to the source register number (the "R" bit)
@@ -318,7 +318,7 @@ AssemblyParse_x86::nonvolatile_reg_p (int machine_regno)
 #define REX_W_DSTREG(opcode) ((opcode) & 0x1)
 
 // pushq %rbp [0x55]
-bool AssemblyParse_x86::push_rbp_pattern_p () 
+bool AssemblyParse_x86::push_rbp_pattern_p ()
 {
     uint8_t *p = m_cur_insn_bytes;
     if (*p == 0x55)
@@ -337,7 +337,7 @@ bool AssemblyParse_x86::push_0_pattern_p ()
 
 // pushq $0
 // pushl $0
-bool AssemblyParse_x86::push_imm_pattern_p () 
+bool AssemblyParse_x86::push_imm_pattern_p ()
 {
     uint8_t *p = m_cur_insn_bytes;
     if (*p == 0x68 || *p == 0x6a)
@@ -347,7 +347,7 @@ bool AssemblyParse_x86::push_imm_pattern_p ()
 
 // movq %rsp, %rbp [0x48 0x8b 0xec] or [0x48 0x89 0xe5]
 // movl %esp, %ebp [0x8b 0xec] or [0x89 0xe5]
-bool AssemblyParse_x86::mov_rsp_rbp_pattern_p () 
+bool AssemblyParse_x86::mov_rsp_rbp_pattern_p ()
 {
     uint8_t *p = m_cur_insn_bytes;
     if (m_wordsize == 8 && *p == 0x48)
@@ -359,20 +359,20 @@ bool AssemblyParse_x86::mov_rsp_rbp_pattern_p ()
     return false;
 }
 
-// subq $0x20, %rsp 
-bool AssemblyParse_x86::sub_rsp_pattern_p (int& amount) 
+// subq $0x20, %rsp
+bool AssemblyParse_x86::sub_rsp_pattern_p (int& amount)
 {
     uint8_t *p = m_cur_insn_bytes;
     if (m_wordsize == 8 && *p == 0x48)
       p++;
     // 8-bit immediate operand
-    if (*p == 0x83 && *(p + 1) == 0xec) 
+    if (*p == 0x83 && *(p + 1) == 0xec)
     {
         amount = (int8_t) *(p + 2);
         return true;
     }
     // 32-bit immediate operand
-    if (*p == 0x81 && *(p + 1) == 0xec) 
+    if (*p == 0x81 && *(p + 1) == 0xec)
     {
         amount = (int32_t) extract_4 (p + 2);
         return true;
@@ -380,20 +380,20 @@ bool AssemblyParse_x86::sub_rsp_pattern_p (int& amount)
     return false;
 }
 
-// addq $0x20, %rsp 
-bool AssemblyParse_x86::add_rsp_pattern_p (int& amount) 
+// addq $0x20, %rsp
+bool AssemblyParse_x86::add_rsp_pattern_p (int& amount)
 {
     uint8_t *p = m_cur_insn_bytes;
     if (m_wordsize == 8 && *p == 0x48)
       p++;
     // 8-bit immediate operand
-    if (*p == 0x83 && *(p + 1) == 0xc4) 
+    if (*p == 0x83 && *(p + 1) == 0xc4)
     {
         amount = (int8_t) *(p + 2);
         return true;
     }
     // 32-bit immediate operand
-    if (*p == 0x81 && *(p + 1) == 0xc4) 
+    if (*p == 0x81 && *(p + 1) == 0xc4)
     {
         amount = (int32_t) extract_4 (p + 2);
         return true;
@@ -403,17 +403,17 @@ bool AssemblyParse_x86::add_rsp_pattern_p (int& amount)
 
 // pushq %rbx
 // pushl %ebx
-bool AssemblyParse_x86::push_reg_p (int& regno) 
+bool AssemblyParse_x86::push_reg_p (int& regno)
 {
     uint8_t *p = m_cur_insn_bytes;
     int regno_prefix_bit = 0;
     // If we have a rex prefix byte, check to see if a B bit is set
-    if (m_wordsize == 8 && *p == 0x41) 
+    if (m_wordsize == 8 && *p == 0x41)
     {
         regno_prefix_bit = 1 << 3;
         p++;
     }
-    if (*p >= 0x50 && *p <= 0x57) 
+    if (*p >= 0x50 && *p <= 0x57)
     {
         regno = (*p - 0x50) | regno_prefix_bit;
         return true;
@@ -423,17 +423,17 @@ bool AssemblyParse_x86::push_reg_p (int& regno)
 
 // popq %rbx
 // popl %ebx
-bool AssemblyParse_x86::pop_reg_p (int& regno) 
+bool AssemblyParse_x86::pop_reg_p (int& regno)
 {
     uint8_t *p = m_cur_insn_bytes;
     int regno_prefix_bit = 0;
     // If we have a rex prefix byte, check to see if a B bit is set
-    if (m_wordsize == 8 && *p == 0x41) 
+    if (m_wordsize == 8 && *p == 0x41)
     {
         regno_prefix_bit = 1 << 3;
         p++;
     }
-    if (*p >= 0x58 && *p <= 0x5f) 
+    if (*p >= 0x58 && *p <= 0x5f)
     {
         regno = (*p - 0x58) | regno_prefix_bit;
         return true;
@@ -443,14 +443,14 @@ bool AssemblyParse_x86::pop_reg_p (int& regno)
 
 // popq %rbp [0x5d]
 // popl %ebp [0x5d]
-bool AssemblyParse_x86::pop_rbp_pattern_p () 
+bool AssemblyParse_x86::pop_rbp_pattern_p ()
 {
     uint8_t *p = m_cur_insn_bytes;
     return (*p == 0x5d);
 }
 
 // call $0 [0xe8 0x0 0x0 0x0 0x0]
-bool AssemblyParse_x86::call_next_insn_pattern_p () 
+bool AssemblyParse_x86::call_next_insn_pattern_p ()
 {
     uint8_t *p = m_cur_insn_bytes;
     return (*p == 0xe8) && (*(p+1) == 0x0) && (*(p+2) == 0x0)
@@ -463,22 +463,22 @@ bool AssemblyParse_x86::call_next_insn_pattern_p ()
 //  movq %rax, -0x10(%rbp) [0x48 0x89 0x45 0xf0]
 //  movl %eax, -0xc(%ebp)  [0x89 0x45 0xf4]
 
-// The offset value returned in rbp_offset will be positive -- 
+// The offset value returned in rbp_offset will be positive --
 // but it must be subtraced from the frame base register to get
 // the actual location.  The positive value returned for the offset
 // is a convention used elsewhere for CFA offsets et al.
 
-bool AssemblyParse_x86::mov_reg_to_local_stack_frame_p (int& regno, int& rbp_offset) 
+bool AssemblyParse_x86::mov_reg_to_local_stack_frame_p (int& regno, int& rbp_offset)
 {
     uint8_t *p = m_cur_insn_bytes;
     int src_reg_prefix_bit = 0;
     int target_reg_prefix_bit = 0;
 
-    if (m_wordsize == 8 && REX_W_PREFIX_P (*p)) 
+    if (m_wordsize == 8 && REX_W_PREFIX_P (*p))
     {
         src_reg_prefix_bit = REX_W_SRCREG (*p) << 3;
         target_reg_prefix_bit = REX_W_DSTREG (*p) << 3;
-        if (target_reg_prefix_bit == 1) 
+        if (target_reg_prefix_bit == 1)
         {
             // rbp/ebp don't need a prefix bit - we know this isn't the
             // reg we care about.
@@ -487,13 +487,13 @@ bool AssemblyParse_x86::mov_reg_to_local_stack_frame_p (int& regno, int& rbp_off
         p++;
     }
 
-    if (*p == 0x89) 
+    if (*p == 0x89)
     {
         /* Mask off the 3-5 bits which indicate the destination register
            if this is a ModR/M byte.  */
         int opcode_destreg_masked_out = *(p + 1) & (~0x38);
 
-        /* Is this a ModR/M byte with Mod bits 01 and R/M bits 101 
+        /* Is this a ModR/M byte with Mod bits 01 and R/M bits 101
            and three bits between them, e.g. 01nnn101
            We're looking for a destination of ebp-disp8 or ebp-disp32.   */
         int immsize;
@@ -520,8 +520,8 @@ bool AssemblyParse_x86::mov_reg_to_local_stack_frame_p (int& regno, int& rbp_off
 }
 
 // ret [0xc9] or [0xc2 imm8] or [0xca imm8]
-bool 
-AssemblyParse_x86::ret_pattern_p () 
+bool
+AssemblyParse_x86::ret_pattern_p ()
 {
     uint8_t *p = m_cur_insn_bytes;
     if (*p == 0xc9 || *p == 0xc2 || *p == 0xca || *p == 0xc3)
@@ -538,7 +538,7 @@ AssemblyParse_x86::extract_4 (uint8_t *b)
     return v;
 }
 
-bool 
+bool
 AssemblyParse_x86::machine_regno_to_lldb_regno (int machine_regno, uint32_t &lldb_regno)
 {
     struct regmap_ent *ent;
@@ -583,7 +583,7 @@ AssemblyParse_x86::instruction_length (Address addr, int &length)
     {
         return false;
     }
-   
+
     char out_string[512];
     const addr_t pc = addr.GetFileAddress();
     const size_t inst_size = ::LLVMDisasmInstruction (m_disasm_context,
@@ -598,7 +598,7 @@ AssemblyParse_x86::instruction_length (Address addr, int &length)
 }
 
 
-bool 
+bool
 AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
 {
     UnwindPlan::RowSP row(new UnwindPlan::Row);
@@ -786,7 +786,7 @@ loopnext:
         m_cur_insn.SetOffset (m_cur_insn.GetOffset() + insn_len);
         current_func_text_offset += insn_len;
     }
-    
+
     // Now look at the byte at the end of the AddressRange for a limited attempt at describing the
     // epilogue.  We're looking for the sequence
 
@@ -861,7 +861,7 @@ loopnext:
         epi_row->SetOffset (ret_insn_offset);
         epi_row->SetCFARegister (m_lldb_sp_regnum);
         epi_row->SetCFAOffset (m_wordsize);
-       
+
         // caller's stack pointer value before the call insn is the CFA address
         epi_regloc.SetIsCFAPlusOffset (0);
         epi_row->SetRegisterInfo (m_lldb_sp_regnum, epi_regloc);
@@ -872,7 +872,7 @@ loopnext:
 
         unwind_plan.AppendRow (epi_row);
     }
-    
+
     unwind_plan.SetSourceName ("assembly insn profiling");
     unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
     unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolYes);
@@ -941,7 +941,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
             continue;
         }
 
-        if (row_id == 0) 
+        if (row_id == 0)
         {
             // If we are here, compiler didn't generate CFI for prologue.
             // This won't happen to GCC or clang.
@@ -973,7 +973,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
 
             // push/pop register
             int regno;
-            if (push_reg_p (regno)) 
+            if (push_reg_p (regno))
             {
                 row->SetOffset (offset);
                 row->SetCFAOffset (m_wordsize + row->GetCFAOffset());
@@ -983,7 +983,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
                 unwind_plan_updated = true;
                 continue;
             }
-            if (pop_reg_p (regno)) 
+            if (pop_reg_p (regno))
             {
                 // Technically, this might be a nonvolatile register recover in epilogue.
                 // We should reset RegisterInfo for the register.
@@ -1000,7 +1000,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
             }
 
             // push imm
-            if (push_imm_pattern_p ()) 
+            if (push_imm_pattern_p ())
             {
                 row->SetOffset (offset);
                 row->SetCFAOffset (m_wordsize + row->GetCFAOffset());
@@ -1012,7 +1012,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
 
             // add/sub %rsp/%esp
             int amount;
-            if (add_rsp_pattern_p (amount)) 
+            if (add_rsp_pattern_p (amount))
             {
                 row->SetOffset (offset);
                 row->SetCFAOffset (-amount + row->GetCFAOffset());
@@ -1022,7 +1022,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
                 unwind_plan_updated = true;
                 continue;
             }
-            if (sub_rsp_pattern_p (amount)) 
+            if (sub_rsp_pattern_p (amount))
             {
                 row->SetOffset (offset);
                 row->SetCFAOffset (amount + row->GetCFAOffset());
@@ -1078,13 +1078,13 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
     return true;
 }
 
-/* The "fast unwind plan" is valid for functions that follow the usual convention of 
+/* The "fast unwind plan" is valid for functions that follow the usual convention of
    using the frame pointer register (ebp, rbp), i.e. the function prologue looks like
      push   %rbp      [0x55]
      mov    %rsp,%rbp [0x48 0x89 0xe5]   (this is a 2-byte insn seq on i386)
 */
 
-bool 
+bool
 AssemblyParse_x86::get_fast_unwind_plan (AddressRange& func, UnwindPlan &unwind_plan)
 {
     UnwindPlan::RowSP row(new UnwindPlan::Row);
@@ -1147,7 +1147,7 @@ AssemblyParse_x86::get_fast_unwind_plan (AddressRange& func, UnwindPlan &unwind_
     newrow = new UnwindPlan::Row;
     *newrow = *row.get();
     row.reset(newrow);
-    
+
     // mov %rsp, %rbp has executed
     row->SetCFARegister (m_lldb_fp_regnum);
     row->SetCFAOffset (2 * m_wordsize);
@@ -1165,7 +1165,7 @@ AssemblyParse_x86::get_fast_unwind_plan (AddressRange& func, UnwindPlan &unwind_
     return true;
 }
 
-bool 
+bool
 AssemblyParse_x86::find_first_non_prologue_insn (Address &address)
 {
     m_cur_insn = m_func_bounds.GetBaseAddress ();
@@ -1213,11 +1213,11 @@ AssemblyParse_x86::find_first_non_prologue_insn (Address &address)
 
 
 //-----------------------------------------------------------------------------------------------
-//  UnwindAssemblyParser_x86 method definitions 
+//  UnwindAssemblyParser_x86 method definitions
 //-----------------------------------------------------------------------------------------------
 
-UnwindAssembly_x86::UnwindAssembly_x86 (const ArchSpec &arch, int cpu) : 
-    lldb_private::UnwindAssembly(arch), 
+UnwindAssembly_x86::UnwindAssembly_x86 (const ArchSpec &arch, int cpu) :
+    lldb_private::UnwindAssembly(arch),
     m_cpu(cpu),
     m_arch(arch)
 {
