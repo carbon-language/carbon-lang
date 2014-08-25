@@ -157,13 +157,16 @@ namespace lldb {
 
     //----------------------------------------------------------------------
     // Register numbering types
+    // See RegisterContext::ConvertRegisterKindToRegisterNumber to convert
+    // any of these to the lldb internal register numbering scheme 
+    // (eRegisterKindLLDB).
     //----------------------------------------------------------------------
     typedef enum RegisterKind
     {
         eRegisterKindGCC = 0,    // the register numbers seen in eh_frame
         eRegisterKindDWARF,      // the register numbers seen DWARF
         eRegisterKindGeneric,    // insn ptr reg, stack ptr reg, etc not specific to any particular target
-        eRegisterKindGDB,        // the register numbers gdb uses (matches stabs numbers?)
+        eRegisterKindGDB,        // the register numbers gdb uses (matches stabs numbers)
         eRegisterKindLLDB,       // lldb's internal register numbers
         kNumRegisterKinds
     } RegisterKind;

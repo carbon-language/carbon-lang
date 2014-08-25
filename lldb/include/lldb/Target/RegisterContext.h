@@ -86,7 +86,42 @@ public:
     
     bool
     CopyFromRegisterContext (lldb::RegisterContextSP context);
-    
+
+    //------------------------------------------------------------------
+    /// Convert from a given register numbering scheme to the lldb register 
+    /// numbering scheme
+    ///
+    /// There may be multiple ways to enumerate the registers for a given
+    /// architecture.  ABI references will specify one to be used with
+    /// DWARF, the register numberings from stabs (aka "gcc"), there may
+    /// be a variation used for eh_frame unwind instructions (e.g. on Darwin),
+    /// and so on.  Register 5 by itself is meaningless - RegisterKind
+    /// enumeration tells you what context that number should be translated as.
+    ///
+    /// Inside lldb, register numbers are in the eRegisterKindLLDB scheme;
+    /// arguments which take a register number should take one in that
+    /// scheme.
+    ///
+    /// eRegisterKindGeneric is a special numbering scheme which gives us 
+    /// constant values for the pc, frame register, stack register, etc., for
+    /// use within lldb.  They may not be defined for all architectures but
+    /// it allows generic code to translate these common registers into the
+    /// lldb numbering scheme.
+    ///
+    /// This method translates a given register kind + register number into
+    /// the eRegisterKindLLDB register numbering.
+    ///
+    /// @param [in] kind
+    ///     The register numbering scheme (RegisterKind) that the following
+    ///     register number is in.
+    ///
+    /// @param [in] num
+    ///     A register number in the 'kind' register numbering scheme.
+    ///
+    /// @return
+    ///     The equivalent register number in the eRegisterKindLLDB
+    ///     numbering scheme, if possible, else LLDB_INVALID_REGNUM.
+    //------------------------------------------------------------------
     virtual uint32_t
     ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num) = 0;
 
