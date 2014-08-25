@@ -1905,35 +1905,6 @@ TSAN_INTERCEPTOR(int, getaddrinfo, void *node, void *service,
   return res;
 }
 
-// Linux kernel has a bug that leads to kernel deadlock if a process
-// maps TBs of memory and then calls mlock().
-static void MlockIsUnsupported() {
-  static atomic_uint8_t printed;
-  if (atomic_exchange(&printed, 1, memory_order_relaxed))
-    return;
-  VPrintf(1, "INFO: ThreadSanitizer ignores mlock/munlock[all]\n");
-}
-
-TSAN_INTERCEPTOR(int, mlock, const void *addr, uptr len) {
-  MlockIsUnsupported();
-  return 0;
-}
-
-TSAN_INTERCEPTOR(int, munlock, const void *addr, uptr len) {
-  MlockIsUnsupported();
-  return 0;
-}
-
-TSAN_INTERCEPTOR(int, mlockall, int flags) {
-  MlockIsUnsupported();
-  return 0;
-}
-
-TSAN_INTERCEPTOR(int, munlockall, void) {
-  MlockIsUnsupported();
-  return 0;
-}
-
 TSAN_INTERCEPTOR(int, fork, int fake) {
   if (cur_thread()->in_symbolizer)
     return REAL(fork)(fake);
@@ -2372,11 +2343,6 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(nanosleep);
   TSAN_INTERCEPT(gettimeofday);
   TSAN_INTERCEPT(getaddrinfo);
-
-  TSAN_INTERCEPT(mlock);
-  TSAN_INTERCEPT(munlock);
-  TSAN_INTERCEPT(mlockall);
-  TSAN_INTERCEPT(munlockall);
 
   TSAN_INTERCEPT(fork);
   TSAN_INTERCEPT(vfork);

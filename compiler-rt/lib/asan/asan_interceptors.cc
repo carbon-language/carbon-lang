@@ -320,40 +320,6 @@ INTERCEPTOR(int, _except_handler4, void *a, void *b, void *c, void *d) {
 }
 #endif
 
-#if ASAN_INTERCEPT_MLOCKX
-// intercept mlock and friends.
-// Since asan maps 16T of RAM, mlock is completely unfriendly to asan.
-// All functions return 0 (success).
-static void MlockIsUnsupported() {
-  static bool printed = false;
-  if (printed) return;
-  printed = true;
-  VPrintf(1,
-          "INFO: AddressSanitizer ignores "
-          "mlock/mlockall/munlock/munlockall\n");
-}
-
-INTERCEPTOR(int, mlock, const void *addr, uptr len) {
-  MlockIsUnsupported();
-  return 0;
-}
-
-INTERCEPTOR(int, munlock, const void *addr, uptr len) {
-  MlockIsUnsupported();
-  return 0;
-}
-
-INTERCEPTOR(int, mlockall, int flags) {
-  MlockIsUnsupported();
-  return 0;
-}
-
-INTERCEPTOR(int, munlockall, void) {
-  MlockIsUnsupported();
-  return 0;
-}
-#endif
-
 static inline int CharCmp(unsigned char c1, unsigned char c2) {
   return (c1 == c2) ? 0 : (c1 < c2) ? -1 : 1;
 }
@@ -801,14 +767,6 @@ void InitializeAsanInterceptors() {
 #if ASAN_INTERCEPT_ATOLL_AND_STRTOLL
   ASAN_INTERCEPT_FUNC(atoll);
   ASAN_INTERCEPT_FUNC(strtoll);
-#endif
-
-#if ASAN_INTERCEPT_MLOCKX
-  // Intercept mlock/munlock.
-  ASAN_INTERCEPT_FUNC(mlock);
-  ASAN_INTERCEPT_FUNC(munlock);
-  ASAN_INTERCEPT_FUNC(mlockall);
-  ASAN_INTERCEPT_FUNC(munlockall);
 #endif
 
   // Intecept signal- and jump-related functions.
