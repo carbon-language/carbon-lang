@@ -627,27 +627,30 @@ def : Pat<(f16_to_fp GPR:$a),
 def : Pat<(f64 (f16_to_fp GPR:$a)),
           (VCVTBHD (COPY_TO_REGCLASS GPR:$a, SPR))>;
 
-
-multiclass vcvt_inst<string opc, bits<2> rm> {
+multiclass vcvt_inst<string opc, bits<2> rm,
+                     SDPatternOperator node = null_frag> {
   let PostEncoderMethod = "", DecoderNamespace = "VFPV8" in {
     def SS : ASuInp<0b11101, 0b11, 0b1100, 0b11, 0,
                     (outs SPR:$Sd), (ins SPR:$Sm),
                     NoItinerary, !strconcat("vcvt", opc, ".s32.f32\t$Sd, $Sm"),
-                    []>, Requires<[HasFPARMv8]> {
+                    [(set SPR:$Sd, (arm_ftosi (node SPR:$Sm)))]>,
+                    Requires<[HasFPARMv8]> {
       let Inst{17-16} = rm;
     }
 
     def US : ASuInp<0b11101, 0b11, 0b1100, 0b01, 0,
                     (outs SPR:$Sd), (ins SPR:$Sm),
                     NoItinerary, !strconcat("vcvt", opc, ".u32.f32\t$Sd, $Sm"),
-                    []>, Requires<[HasFPARMv8]> {
+                    [(set SPR:$Sd, (arm_ftoui (node SPR:$Sm)))]>,
+                    Requires<[HasFPARMv8]> {
       let Inst{17-16} = rm;
     }
 
     def SD : ASuInp<0b11101, 0b11, 0b1100, 0b11, 0,
                     (outs SPR:$Sd), (ins DPR:$Dm),
                     NoItinerary, !strconcat("vcvt", opc, ".s32.f64\t$Sd, $Dm"),
-                    []>, Requires<[HasFPARMv8, HasDPVFP]> {
+                    [(set SPR:$Sd, (arm_ftosi (f64 (node (f64 DPR:$Dm)))))]>,
+                    Requires<[HasFPARMv8, HasDPVFP]> {
       bits<5> Dm;
 
       let Inst{17-16} = rm;
@@ -661,7 +664,8 @@ multiclass vcvt_inst<string opc, bits<2> rm> {
     def UD : ASuInp<0b11101, 0b11, 0b1100, 0b01, 0,
                     (outs SPR:$Sd), (ins DPR:$Dm),
                     NoItinerary, !strconcat("vcvt", opc, ".u32.f64\t$Sd, $Dm"),
-                    []>, Requires<[HasFPARMv8, HasDPVFP]> {
+                    [(set SPR:$Sd, (arm_ftoui (f64 (node (f64 DPR:$Dm)))))]>,
+                    Requires<[HasFPARMv8, HasDPVFP]> {
       bits<5> Dm;
 
       let Inst{17-16} = rm;
@@ -674,10 +678,10 @@ multiclass vcvt_inst<string opc, bits<2> rm> {
   }
 }
 
-defm VCVTA : vcvt_inst<"a", 0b00>;
+defm VCVTA : vcvt_inst<"a", 0b00, frnd>;
 defm VCVTN : vcvt_inst<"n", 0b01>;
-defm VCVTP : vcvt_inst<"p", 0b10>;
-defm VCVTM : vcvt_inst<"m", 0b11>;
+defm VCVTP : vcvt_inst<"p", 0b10, fceil>;
+defm VCVTM : vcvt_inst<"m", 0b11, ffloor>;
 
 def VNEGD  : ADuI<0b11101, 0b11, 0b0001, 0b01, 0,
                   (outs DPR:$Dd), (ins DPR:$Dm),
