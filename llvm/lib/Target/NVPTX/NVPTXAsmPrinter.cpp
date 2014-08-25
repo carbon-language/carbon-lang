@@ -1063,7 +1063,7 @@ bool NVPTXAsmPrinter::doFinalization(Module &M) {
 
   Module::GlobalListType &global_list = M.getGlobalList();
   int i, n = global_list.size();
-  GlobalVariable **gv_array = new GlobalVariable *[n];
+  std::vector<GlobalVariable *> gv_array(n);
 
   // first, back-up GlobalVariable in gv_array
   i = 0;
@@ -1083,8 +1083,6 @@ bool NVPTXAsmPrinter::doFinalization(Module &M) {
     global_list.insert(global_list.end(), gv_array[i]);
 
   clearAnnotationCache(&M);
-
-  delete[] gv_array;
   return ret;
 
   //bool Result = AsmPrinter::doFinalization(M);
