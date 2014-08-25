@@ -3658,6 +3658,22 @@ AST_MATCHER_P(CaseStmt, hasCaseConstant, internal::Matcher<Expr>,
   return InnerMatcher.matches(*Node.getLHS(), Finder, Builder);
 }
 
+/// \brief Matches declaration that has a given attribute.
+///
+/// Given
+/// \code
+///   __attribute__((device)) void f() { ... }
+/// \endcode
+/// decl(hasAttr(clang::attr::CUDADevice)) matches the function declaration of
+/// f.
+AST_MATCHER_P(Decl, hasAttr, attr::Kind, AttrKind) {
+  for (const auto *Attr : Node.attrs()) {
+    if (Attr->getKind() == AttrKind)
+      return true;
+  }
+  return false;
+}
+
 /// \brief Matches CUDA kernel call expression.
 ///
 /// Example matches,
@@ -3666,39 +3682,6 @@ AST_MATCHER_P(CaseStmt, hasCaseConstant, internal::Matcher<Expr>,
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<Stmt, CUDAKernelCallExpr>
     CUDAKernelCallExpr;
-
-/// \brief Matches declaration that has CUDA device attribute.
-///
-/// Given
-/// \code
-///   __attribute__((device)) void f() { ... }
-/// \endcode
-/// matches the function declaration of f.
-AST_MATCHER(Decl, hasCudaDeviceAttr) {
-  return Node.hasAttr<clang::CUDADeviceAttr>();
-}
-
-/// \brief Matches declaration that has CUDA host attribute.
-///
-/// Given
-/// \code
-///   __attribute__((host)) void f() { ... }
-/// \endcode
-/// matches the function declaration of f.
-AST_MATCHER(Decl, hasCudaHostAttr) {
-  return Node.hasAttr<clang::CUDAHostAttr>();
-}
-
-/// \brief  Matches declaration that has CUDA global attribute.
-///
-/// Given
-/// \code
-///   __attribute__((global)) void f() { ... }
-/// \endcode
-/// matches the function declaration of f.
-AST_MATCHER(Decl, hasCudaGlobalAttr) {
-  return Node.hasAttr<clang::CUDAGlobalAttr>();
-}
 
 } // end namespace ast_matchers
 } // end namespace clang

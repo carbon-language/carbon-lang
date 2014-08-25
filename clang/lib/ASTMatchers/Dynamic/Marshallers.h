@@ -76,6 +76,27 @@ template <> struct ArgTypeTraits<unsigned> {
   }
 };
 
+template <> struct ArgTypeTraits<attr::Kind> {
+private:
+  static attr::Kind getAttrKind(llvm::StringRef AttrKind) {
+    return llvm::StringSwitch<attr::Kind>(AttrKind)
+#define ATTR(X) .Case("attr::" #X, attr:: X)
+#include "clang/Basic/AttrList.inc"
+        .Default(attr::Kind(-1));
+  }
+public:
+  static bool is(const VariantValue &Value) {
+    return Value.isString() &&
+        getAttrKind(Value.getString()) != attr::Kind(-1);
+  }
+  static attr::Kind get(const VariantValue &Value) {
+    return getAttrKind(Value.getString());
+  }
+  static ArgKind getKind() {
+    return ArgKind(ArgKind::AK_String);
+  }
+};
+
 /// \brief Matcher descriptor interface.
 ///
 /// Provides a \c create() method that constructs the matcher from the provided

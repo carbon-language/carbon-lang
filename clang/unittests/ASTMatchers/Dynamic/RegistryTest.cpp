@@ -472,6 +472,14 @@ TEST_F(RegistryTest, Completion) {
                             "Matcher<NamedDecl> hasName(string)"));
 }
 
+TEST_F(RegistryTest, HasArgs) {
+  Matcher<Decl> Value = constructMatcher(
+      "decl", constructMatcher("hasAttr", std::string("attr::WarnUnused")))
+      .getTypedMatcher<Decl>();
+  EXPECT_TRUE(matches("struct __attribute__((warn_unused)) X {};", Value));
+  EXPECT_FALSE(matches("struct X {};", Value));
+}
+
 } // end anonymous namespace
 } // end namespace dynamic
 } // end namespace ast_matchers

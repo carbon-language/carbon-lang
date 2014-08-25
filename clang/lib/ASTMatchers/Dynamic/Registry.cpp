@@ -176,15 +176,13 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(hasAnyUsingShadowDecl);
   REGISTER_MATCHER(hasArgument);
   REGISTER_MATCHER(hasArgumentOfType);
+  REGISTER_MATCHER(hasAttr);
   REGISTER_MATCHER(hasBase);
   REGISTER_MATCHER(hasBody);
   REGISTER_MATCHER(hasCanonicalType);
   REGISTER_MATCHER(hasCaseConstant);
   REGISTER_MATCHER(hasCondition);
   REGISTER_MATCHER(hasConditionVariableStatement);
-  REGISTER_MATCHER(hasCudaDeviceAttr);
-  REGISTER_MATCHER(hasCudaGlobalAttr);
-  REGISTER_MATCHER(hasCudaHostAttr);
   REGISTER_MATCHER(hasDeclContext);
   REGISTER_MATCHER(hasDeclaration);
   REGISTER_MATCHER(hasDeducedType);

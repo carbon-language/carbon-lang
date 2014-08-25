@@ -1612,30 +1612,13 @@ and reference to that variable declaration within a compound statement.
 </pre></td></tr>
 
 
-<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('hasCudaDeviceAttr0')"><a name="hasCudaDeviceAttr0Anchor">hasCudaDeviceAttr</a></td><td></td></tr>
-<tr><td colspan="4" class="doc" id="hasCudaDeviceAttr0"><pre>Matches declaration that has CUDA device attribute.
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('hasAttr0')"><a name="hasAttr0Anchor">hasAttr</a></td><td>attr::Kind AttrKind</td></tr>
+<tr><td colspan="4" class="doc" id="hasAttr0"><pre>Matches declaration that has a given attribute.
 
 Given
   __attribute__((device)) void f() { ... }
-matches the function declaration of f.
-</pre></td></tr>
-
-
-<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('hasCudaGlobalAttr0')"><a name="hasCudaGlobalAttr0Anchor">hasCudaGlobalAttr</a></td><td></td></tr>
-<tr><td colspan="4" class="doc" id="hasCudaGlobalAttr0"><pre>Matches declaration that has CUDA global attribute.
-
-Given
-  __attribute__((global)) void f() { ... }
-matches the function declaration of f.
-</pre></td></tr>
-
-
-<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('hasCudaHostAttr0')"><a name="hasCudaHostAttr0Anchor">hasCudaHostAttr</a></td><td></td></tr>
-<tr><td colspan="4" class="doc" id="hasCudaHostAttr0"><pre>Matches declaration that has CUDA host attribute.
-
-Given
-  __attribute__((host)) void f() { ... }
-matches the function declaration of f.
+decl(hasAttr(clang::attr::CUDADevice)) matches the function declaration of
+f.
 </pre></td></tr>
 
 

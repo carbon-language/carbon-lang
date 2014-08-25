@@ -649,22 +649,23 @@ TEST(DeclarationMatcher, HasDescendantMemoization) {
   EXPECT_TRUE(matches("void f() { int i; }", CannotMemoize));
 }
 
+TEST(DeclarationMatcher, HasAttr) {
+  EXPECT_TRUE(matches("struct __attribute__((warn_unused)) X {};",
+                      decl(hasAttr(clang::attr::WarnUnused))));
+  EXPECT_FALSE(matches("struct X {};",
+                       decl(hasAttr(clang::attr::WarnUnused))));
+}
+
 TEST(DeclarationMatcher, MatchCudaDecl) {
   EXPECT_TRUE(matchesWithCuda("__global__ void f() { }"
                               "void g() { f<<<1, 2>>>(); }",
                               CUDAKernelCallExpr()));
   EXPECT_TRUE(matchesWithCuda("__attribute__((device)) void f() {}",
-                              hasCudaDeviceAttr()));
-  EXPECT_TRUE(matchesWithCuda("__attribute__((host)) void f() {}",
-                              hasCudaHostAttr()));
-  EXPECT_TRUE(matchesWithCuda("__attribute__((global)) void f() {}",
-                              hasCudaGlobalAttr()));
-  EXPECT_FALSE(matchesWithCuda("void f() {}",
-                               hasCudaGlobalAttr()));
+                              hasAttr(clang::attr::CUDADevice)));
   EXPECT_TRUE(notMatchesWithCuda("void f() {}",
-                                 hasCudaGlobalAttr()));
+                                 CUDAKernelCallExpr()));
   EXPECT_FALSE(notMatchesWithCuda("__attribute__((global)) void f() {}",
-                                  hasCudaGlobalAttr()));
+                                  hasAttr(clang::attr::CUDAGlobal)));
 }
 
 // Implements a run method that returns whether BoundNodes contains a
