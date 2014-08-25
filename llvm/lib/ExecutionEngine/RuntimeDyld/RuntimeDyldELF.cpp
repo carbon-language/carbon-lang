@@ -1317,7 +1317,7 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
       Stubs[Value] = StubOffset;
       createStubFunction((uint8_t *)StubAddress);
       RelocationEntry RE(SectionID, StubOffset + 8, ELF::R_390_64,
-                         Value.Addend - Addend);
+                         Value.Offset);
       if (Value.SymbolName)
         addRelocationForSymbol(RE, Value.SymbolName);
       else
