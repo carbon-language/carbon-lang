@@ -121,9 +121,13 @@ FuncUnwinders::GetUnwindPlanAtNonCallSite (Target& target, Thread& thread, int c
                 // For 0th frame on i386 & x86_64, we fetch eh_frame and try using assembly profiler
                 // to augment it into asynchronous unwind table.
                 GetUnwindPlanAtCallSite(current_offset);
-                if (m_unwind_plan_call_site_sp
-                    && assembly_profiler_sp->AugmentUnwindPlanFromCallSite(m_range, thread, *m_unwind_plan_call_site_sp))
-                    return m_unwind_plan_call_site_sp;
+                if (m_unwind_plan_call_site_sp) {
+                    UnwindPlan* plan = new UnwindPlan (*m_unwind_plan_call_site_sp);
+                    if (assembly_profiler_sp->AugmentUnwindPlanFromCallSite (m_range, thread, *plan)) {
+                        m_unwind_plan_non_call_site_sp.reset (plan);
+                        return m_unwind_plan_non_call_site_sp;
+                    }
+                }
             }
 
             m_unwind_plan_non_call_site_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
