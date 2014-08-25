@@ -854,9 +854,10 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
             getColumnLimit(State))
       BreakBeforeParameter = true;
   }
-  bool NoLineBreak = State.Stack.back().NoLineBreak ||
-                     (Current.Type == TT_TemplateOpener &&
-                      State.Stack.back().ContainsUnwrappedBuilder);
+  bool NoLineBreak =
+      State.Stack.back().NoLineBreak ||
+      ((Current.NestingLevel != 0 || Current.Type == TT_TemplateOpener) &&
+       State.Stack.back().ContainsUnwrappedBuilder);
   State.Stack.push_back(ParenState(NewIndent, NewIndentLevel,
                                    State.Stack.back().LastSpace,
                                    AvoidBinPacking, NoLineBreak));
