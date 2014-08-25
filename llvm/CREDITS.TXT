@@ -285,8 +285,11 @@ D: Backend for Qualcomm's Hexagon VLIW processor.
 
 N: Bruno Cardoso Lopes
 E: bruno.cardoso@gmail.com
-W: http://www.brunocardoso.org
-D: The Mips backend
+I: bruno
+W: http://brunocardoso.cc
+D: Mips backend
+D: Random ARM integrated assembler and assembly parser improvements
+D: General X86 AVX1 support
 
 N: Duraid Madina
 E: duraid@octopus.com.au
