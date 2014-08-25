@@ -130,14 +130,14 @@ bool JSONExporter::runOnScop(Scop &scop) {
   std::string fileContent = writer.write(jscop);
 
   // Write to file.
-  std::string ErrInfo;
-  tool_output_file F(FileName.c_str(), ErrInfo, llvm::sys::fs::F_Text);
+  std::error_code EC;
+  tool_output_file F(FileName, EC, llvm::sys::fs::F_Text);
 
   std::string FunctionName = R.getEntry()->getParent()->getName();
   errs() << "Writing JScop '" << R.getNameStr() << "' in function '"
          << FunctionName << "' to '" << FileName << "'.\n";
 
-  if (ErrInfo.empty()) {
+  if (!EC) {
     F.os() << fileContent;
     F.os().close();
     if (!F.os().has_error()) {
