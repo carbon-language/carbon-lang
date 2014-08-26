@@ -362,8 +362,7 @@ int main(int argc, char **argv) {
   SMDiagnostic Err;
 
   // Load the input module...
-  std::unique_ptr<Module> M;
-  M.reset(ParseIRFile(InputFilename, Err, Context));
+  std::unique_ptr<Module> M = parseIRFile(InputFilename, Err, Context);
 
   if (!M.get()) {
     Err.print(argv[0], errs());

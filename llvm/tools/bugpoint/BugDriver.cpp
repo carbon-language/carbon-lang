@@ -85,7 +85,7 @@ BugDriver::~BugDriver() {
 std::unique_ptr<Module> llvm::parseInputFile(StringRef Filename,
                                              LLVMContext &Ctxt) {
   SMDiagnostic Err;
-  std::unique_ptr<Module> Result (ParseIRFile(Filename, Err, Ctxt));
+  std::unique_ptr<Module> Result = parseIRFile(Filename, Err, Ctxt);
   if (!Result)
     Err.print("bugpoint", errs());
 

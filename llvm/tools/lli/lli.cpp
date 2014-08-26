@@ -399,7 +399,7 @@ int main(int argc, char **argv, char * const *envp) {
 
   // Load the bitcode...
   SMDiagnostic Err;
-  std::unique_ptr<Module> Owner(ParseIRFile(InputFile, Err, Context));
+  std::unique_ptr<Module> Owner = parseIRFile(InputFile, Err, Context);
   Module *Mod = Owner.get();
   if (!Mod) {
     Err.print(argv[0], errs());
@@ -513,7 +513,7 @@ int main(int argc, char **argv, char * const *envp) {
 
   // Load any additional modules specified on the command line.
   for (unsigned i = 0, e = ExtraModules.size(); i != e; ++i) {
-    std::unique_ptr<Module> XMod(ParseIRFile(ExtraModules[i], Err, Context));
+    std::unique_ptr<Module> XMod = parseIRFile(ExtraModules[i], Err, Context);
     if (!XMod) {
       Err.print(argv[0], errs());
       return 1;

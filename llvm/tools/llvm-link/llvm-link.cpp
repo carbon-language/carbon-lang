@@ -55,17 +55,16 @@ static cl::opt<bool>
 SuppressWarnings("suppress-warnings", cl::desc("Suppress all linking warnings"),
                  cl::init(false));
 
-// LoadFile - Read the specified bitcode file in and return it.  This routine
-// searches the link path for the specified file to try to find it...
+// Read the specified bitcode file in and return it. This routine searches the
+// link path for the specified file to try to find it...
 //
-static inline Module *LoadFile(const char *argv0, const std::string &FN,
-                               LLVMContext& Context) {
+static std::unique_ptr<Module>
+loadFile(const char *argv0, const std::string &FN, LLVMContext &Context) {
   SMDiagnostic Err;
   if (Verbose) errs() << "Loading '" << FN << "'\n";
-  Module* Result = nullptr;
-
-  Result = ParseIRFile(FN, Err, Context);
-  if (Result) return Result;   // Load successful!
+  std::unique_ptr<Module> Result = parseIRFile(FN, Err, Context);
+  if (Result)
+    return Result;
 
   Err.print(argv0, errs());
   return nullptr;
@@ -83,8 +82,8 @@ int main(int argc, char **argv) {
   unsigned BaseArg = 0;
   std::string ErrorMessage;
 
-  std::unique_ptr<Module> Composite(
-      LoadFile(argv[0], InputFilenames[BaseArg], Context));
+  std::unique_ptr<Module> Composite =
+      loadFile(argv[0], InputFilenames[BaseArg], Context);
   if (!Composite.get()) {
     errs() << argv[0] << ": error loading file '"
            << InputFilenames[BaseArg] << "'\n";
@@ -93,7 +92,7 @@ int main(int argc, char **argv) {
 
   Linker L(Composite.get(), SuppressWarnings);
   for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
-    std::unique_ptr<Module> M(LoadFile(argv[0], InputFilenames[i], Context));
+    std::unique_ptr<Module> M = loadFile(argv[0], InputFilenames[i], Context);
     if (!M.get()) {
       errs() << argv[0] << ": error loading file '" <<InputFilenames[i]<< "'\n";
       return 1;

@@ -32,21 +32,22 @@ using namespace llvm;
 
 /// Reads a module from a file.  On error, messages are written to stderr
 /// and null is returned.
-static Module *ReadModule(LLVMContext &Context, StringRef Name) {
+static std::unique_ptr<Module> readModule(LLVMContext &Context,
+                                          StringRef Name) {
   SMDiagnostic Diag;
-  Module *M = ParseIRFile(Name, Diag, Context);
+  std::unique_ptr<Module> M = parseIRFile(Name, Diag, Context);
   if (!M)
     Diag.print("llvm-diff", errs());
   return M;
 }
 
-static void diffGlobal(DifferenceEngine &Engine, Module *L, Module *R,
+static void diffGlobal(DifferenceEngine &Engine, Module &L, Module &R,
                        StringRef Name) {
   // Drop leading sigils from the global name.
   if (Name.startswith("@")) Name = Name.substr(1);
 
-  Function *LFn = L->getFunction(Name);
-  Function *RFn = R->getFunction(Name);
+  Function *LFn = L.getFunction(Name);
+  Function *RFn = R.getFunction(Name);
   if (LFn && RFn)
     Engine.diff(LFn, RFn);
   else if (!LFn && !RFn)
@@ -72,8 +73,8 @@ int main(int argc, char **argv) {
   LLVMContext Context;
 
   // Load both modules.  Die if that fails.
-  Module *LModule = ReadModule(Context, LeftFilename);
-  Module *RModule = ReadModule(Context, RightFilename);
+  std::unique_ptr<Module> LModule = readModule(Context, LeftFilename);
+  std::unique_ptr<Module> RModule = readModule(Context, RightFilename);
   if (!LModule || !RModule) return 1;
 
   DiffConsumer Consumer;
@@ -82,15 +83,12 @@ int main(int argc, char **argv) {
   // If any global names were given, just diff those.
   if (!GlobalsToCompare.empty()) {
     for (unsigned I = 0, E = GlobalsToCompare.size(); I != E; ++I)
-      diffGlobal(Engine, LModule, RModule, GlobalsToCompare[I]);
+      diffGlobal(Engine, *LModule, *RModule, GlobalsToCompare[I]);
 
   // Otherwise, diff everything in the module.
   } else {
-    Engine.diff(LModule, RModule);
+    Engine.diff(LModule.get(), RModule.get());
   }
-
-  delete LModule;
-  delete RModule;
 
   return Consumer.hadDifferences();
 }

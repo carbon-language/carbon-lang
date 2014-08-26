@@ -231,7 +231,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
 
   // If user just wants to list available options, skip module loading
   if (!SkipModule) {
-    M.reset(ParseIRFile(InputFilename, Err, Context));
+    M = parseIRFile(InputFilename, Err, Context);
     mod = M.get();
     if (mod == nullptr) {
       Err.print(argv[0], errs());
