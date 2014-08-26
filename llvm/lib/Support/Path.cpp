@@ -164,9 +164,6 @@ enum FSEntity {
   FS_Name
 };
 
-// Implemented in Unix/Path.inc and Windows/Path.inc.
-static std::error_code TempDir(SmallVectorImpl<char> &result);
-
 static std::error_code createUniqueEntity(const Twine &Model, int &ResultFD,
                                           SmallVectorImpl<char> &ResultPath,
                                           bool MakeAbsolute, unsigned Mode,
@@ -178,8 +175,7 @@ static std::error_code createUniqueEntity(const Twine &Model, int &ResultFD,
     // Make model absolute by prepending a temp directory if it's not already.
     if (!sys::path::is_absolute(Twine(ModelStorage))) {
       SmallString<128> TDir;
-      if (std::error_code EC = TempDir(TDir))
-        return EC;
+      sys::path::system_temp_directory(true, TDir);
       sys::path::append(TDir, Twine(ModelStorage));
       ModelStorage.swap(TDir);
     }
@@ -600,58 +596,6 @@ static const char preferred_separator_string[] = { preferred_separator, '\0' };
 
 const StringRef get_separator() {
   return preferred_separator_string;
-}
-
-void system_temp_directory(bool erasedOnReboot, SmallVectorImpl<char> &result) {
-  result.clear();
-
-#if defined(_CS_DARWIN_USER_TEMP_DIR) && defined(_CS_DARWIN_USER_CACHE_DIR)
-  // On Darwin, use DARWIN_USER_TEMP_DIR or DARWIN_USER_CACHE_DIR.
-  // macros defined in <unistd.h> on darwin >= 9
-  int ConfName = erasedOnReboot? _CS_DARWIN_USER_TEMP_DIR
-                               : _CS_DARWIN_USER_CACHE_DIR;
-  size_t ConfLen = confstr(ConfName, nullptr, 0);
-  if (ConfLen > 0) {
-    do {
-      result.resize(ConfLen);
-      ConfLen = confstr(ConfName, result.data(), result.size());
-    } while (ConfLen > 0 && ConfLen != result.size());
-
-    if (ConfLen > 0) {
-      assert(result.back() == 0);
-      result.pop_back();
-      return;
-    }
-
-    result.clear();
-  }
-#endif
-
-  // Check whether the temporary directory is specified by an environment
-  // variable.
-  const char *EnvironmentVariable;
-#ifdef LLVM_ON_WIN32
-  EnvironmentVariable = "TEMP";
-#else
-  EnvironmentVariable = "TMPDIR";
-#endif
-  if (char *RequestedDir = getenv(EnvironmentVariable)) {
-    result.append(RequestedDir, RequestedDir + strlen(RequestedDir));
-    return;
-  }
-
-  // Fall back to a system default.
-  const char *DefaultResult;
-#ifdef LLVM_ON_WIN32
-  (void)erasedOnReboot;
-  DefaultResult = "C:\\TEMP";
-#else
-  if (erasedOnReboot)
-    DefaultResult = "/tmp";
-  else
-    DefaultResult = "/var/tmp";
-#endif
-  result.append(DefaultResult, DefaultResult + strlen(DefaultResult));
 }
 
 bool has_root_name(const Twine &path) {
