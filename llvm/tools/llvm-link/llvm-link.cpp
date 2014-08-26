@@ -63,11 +63,10 @@ loadFile(const char *argv0, const std::string &FN, LLVMContext &Context) {
   SMDiagnostic Err;
   if (Verbose) errs() << "Loading '" << FN << "'\n";
   std::unique_ptr<Module> Result = parseIRFile(FN, Err, Context);
-  if (Result)
-    return Result;
+  if (!Result)
+    Err.print(argv0, errs());
 
-  Err.print(argv0, errs());
-  return nullptr;
+  return Result;
 }
 
 int main(int argc, char **argv) {
