@@ -277,17 +277,16 @@ void *ArgvArray::reset(LLVMContext &C, ExecutionEngine *EE,
 
   for (unsigned i = 0; i != InputArgv.size(); ++i) {
     unsigned Size = InputArgv[i].size()+1;
-    auto DestOwner = make_unique<char[]>(Size);
-    char *Dest = DestOwner.get();
-    Values.push_back(std::move(DestOwner));
-    DEBUG(dbgs() << "JIT: ARGV[" << i << "] = " << (void*)Dest << "\n");
+    auto Dest = make_unique<char[]>(Size);
+    DEBUG(dbgs() << "JIT: ARGV[" << i << "] = " << (void*)Dest.get() << "\n");
 
-    std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
+    std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest.get());
     Dest[Size-1] = 0;
 
     // Endian safe: Array[i] = (PointerTy)Dest;
-    EE->StoreValueToMemory(PTOGV(Dest), (GenericValue*)(&Array[i*PtrSize]),
-                           SBytePtr);
+    EE->StoreValueToMemory(PTOGV(Dest.get()),
+                           (GenericValue*)(&Array[i*PtrSize]), SBytePtr);
+    Values.push_back(std::move(Dest));
   }
 
   // Null terminate it
