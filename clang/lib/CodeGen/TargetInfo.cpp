@@ -2773,9 +2773,6 @@ ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty, bool IsReturnType) const {
     return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(), Size));
   }
 
-  if (Ty->isPromotableIntegerType())
-    return ABIArgInfo::getExtend();
-
   return ABIArgInfo::getDirect();
 }
 
