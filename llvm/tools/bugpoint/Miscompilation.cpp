@@ -128,8 +128,8 @@ ReduceMiscompilingPasses::doTest(std::vector<std::string> &Prefix,
   // Ok, so now we know that the prefix passes work, try running the suffix
   // passes on the result of the prefix passes.
   //
-  std::unique_ptr<Module> PrefixOutput(
-      ParseInputFile(BitcodeResult, BD.getContext()));
+  std::unique_ptr<Module> PrefixOutput =
+      parseInputFile(BitcodeResult, BD.getContext());
   if (!PrefixOutput) {
     errs() << BD.getToolName() << ": Error reading bitcode file '"
            << BitcodeResult << "'!\n";
@@ -316,7 +316,7 @@ static bool ExtractLoops(BugDriver &BD,
     Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
                                                    MiscompiledFunctions,
                                                    VMap);
-    Module *ToOptimizeLoopExtracted = BD.ExtractLoop(ToOptimize);
+    Module *ToOptimizeLoopExtracted = BD.extractLoop(ToOptimize).release();
     if (!ToOptimizeLoopExtracted) {
       // If the loop extractor crashed or if there were no extractible loops,
       // then this chapter of our odyssey is over with.
@@ -334,8 +334,8 @@ static bool ExtractLoops(BugDriver &BD,
     // extraction.
     AbstractInterpreter *AI = BD.switchToSafeInterpreter();
     bool Failure;
-    Module *New = TestMergedProgram(BD, ToOptimizeLoopExtracted, ToNotOptimize,
-                                    false, Error, Failure);
+    Module *New = TestMergedProgram(BD, ToOptimizeLoopExtracted,
+                                    ToNotOptimize, false, Error, Failure);
     if (!New)
       return false;
 
@@ -364,7 +364,6 @@ static bool ExtractLoops(BugDriver &BD,
              << OutputPrefix << "-loop-extract-fail-*.bc files.\n";
       delete ToOptimize;
       delete ToNotOptimize;
-      delete ToOptimizeLoopExtracted;
       return MadeChange;
     }
     delete ToOptimize;
@@ -533,11 +532,12 @@ bool ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock*> &BBs,
 
   // Try the extraction.  If it doesn't work, then the block extractor crashed
   // or something, in which case bugpoint can't chase down this possibility.
-  if (Module *New = BD.ExtractMappedBlocksFromModule(BBsOnClone, ToOptimize)) {
+  if (std::unique_ptr<Module> New =
+          BD.extractMappedBlocksFromModule(BBsOnClone, ToOptimize)) {
     delete ToOptimize;
     // Run the predicate,
     // note that the predicate will delete both input modules.
-    bool Ret = TestFn(BD, New, ToNotOptimize, Error);
+    bool Ret = TestFn(BD, New.get(), ToNotOptimize, Error);
     delete BD.swapProgramIn(Orig);
     return Ret;
   }
@@ -591,7 +591,8 @@ static bool ExtractBlocks(BugDriver &BD,
   Module *ToExtract = SplitFunctionsOutOfModule(ProgClone,
                                                 MiscompiledFunctions,
                                                 VMap);
-  Module *Extracted = BD.ExtractMappedBlocksFromModule(Blocks, ToExtract);
+  std::unique_ptr<Module> Extracted =
+      BD.extractMappedBlocksFromModule(Blocks, ToExtract);
   if (!Extracted) {
     // Weird, extraction should have worked.
     errs() << "Nondeterministic problem extracting blocks??\n";
@@ -612,13 +613,12 @@ static bool ExtractBlocks(BugDriver &BD,
                                                 I->getFunctionType()));
 
   std::string ErrorMsg;
-  if (Linker::LinkModules(ProgClone, Extracted, Linker::DestroySource, 
+  if (Linker::LinkModules(ProgClone, Extracted.get(), Linker::DestroySource, 
                           &ErrorMsg)) {
     errs() << BD.getToolName() << ": Error linking modules together:"
            << ErrorMsg << '\n';
     exit(1);
   }
-  delete Extracted;
 
   // Set the new program and delete the old one.
   BD.setNewProgram(ProgClone);
@@ -730,14 +730,15 @@ static bool TestOptimizer(BugDriver &BD, Module *Test, Module *Safe,
   // Run the optimization passes on ToOptimize, producing a transformed version
   // of the functions being tested.
   outs() << "  Optimizing functions being tested: ";
-  Module *Optimized = BD.runPassesOn(Test, BD.getPassesToRun(),
-                                     /*AutoDebugCrashes*/true);
+  std::unique_ptr<Module> Optimized = BD.runPassesOn(Test, BD.getPassesToRun(),
+                                                     /*AutoDebugCrashes*/ true);
   outs() << "done.\n";
   delete Test;
 
   outs() << "  Checking to see if the merged program executes correctly: ";
   bool Broken;
-  Module *New = TestMergedProgram(BD, Optimized, Safe, true, Error, Broken);
+  Module *New =
+      TestMergedProgram(BD, Optimized.get(), Safe, true, Error, Broken);
   if (New) {
     outs() << (Broken ? " nope.\n" : " yup.\n");
     // Delete the original and set the new program.
@@ -796,7 +797,7 @@ void BugDriver::debugMiscompilation(std::string *Error) {
 static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
                                      Module *Safe) {
   // Clean up the modules, removing extra cruft that we don't need anymore...
-  Test = BD.performFinalCleanups(Test);
+  Test = BD.performFinalCleanups(Test).release();
 
   // If we are executing the JIT, we have several nasty issues to take care of.
   if (!BD.isExecutingJIT()) return;

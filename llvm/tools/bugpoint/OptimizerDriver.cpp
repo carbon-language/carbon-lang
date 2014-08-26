@@ -247,13 +247,10 @@ bool BugDriver::runPasses(Module *Program,
 }
 
 
-/// runPassesOn - Carefully run the specified set of pass on the specified
-/// module, returning the transformed module on success, or a null pointer on
-/// failure.
-Module *BugDriver::runPassesOn(Module *M,
-                               const std::vector<std::string> &Passes,
-                               bool AutoDebugCrashes, unsigned NumExtraArgs,
-                               const char * const *ExtraArgs) {
+std::unique_ptr<Module>
+BugDriver::runPassesOn(Module *M, const std::vector<std::string> &Passes,
+                       bool AutoDebugCrashes, unsigned NumExtraArgs,
+                       const char *const *ExtraArgs) {
   std::string BitcodeResult;
   if (runPasses(M, Passes, BitcodeResult, false/*delete*/, true/*quiet*/,
                 NumExtraArgs, ExtraArgs)) {
@@ -267,7 +264,7 @@ Module *BugDriver::runPassesOn(Module *M,
     return nullptr;
   }
 
-  Module *Ret = ParseInputFile(BitcodeResult, Context);
+  std::unique_ptr<Module> Ret = parseInputFile(BitcodeResult, Context);
   if (!Ret) {
     errs() << getToolName() << ": Error reading bitcode file '"
            << BitcodeResult << "'!\n";

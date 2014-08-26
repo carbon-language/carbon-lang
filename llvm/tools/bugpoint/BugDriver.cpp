@@ -82,14 +82,10 @@ BugDriver::~BugDriver() {
   delete gcc;
 }
 
-
-/// ParseInputFile - Given a bitcode or assembly input filename, parse and
-/// return it, or return null if not possible.
-///
-Module *llvm::ParseInputFile(const std::string &Filename,
-                             LLVMContext& Ctxt) {
+std::unique_ptr<Module> llvm::parseInputFile(StringRef Filename,
+                                             LLVMContext &Ctxt) {
   SMDiagnostic Err;
-  Module *Result = ParseIRFile(Filename, Err, Ctxt);
+  std::unique_ptr<Module> Result (ParseIRFile(Filename, Err, Ctxt));
   if (!Result)
     Err.print("bugpoint", errs());
 
@@ -120,13 +116,13 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
   assert(!Filenames.empty() && "Must specify at least on input filename!");
 
   // Load the first input file.
-  Program = ParseInputFile(Filenames[0], Context);
+  Program = parseInputFile(Filenames[0], Context).release();
   if (!Program) return true;
 
   outs() << "Read input file      : '" << Filenames[0] << "'\n";
 
   for (unsigned i = 1, e = Filenames.size(); i != e; ++i) {
-    std::unique_ptr<Module> M(ParseInputFile(Filenames[i], Context));
+    std::unique_ptr<Module> M = parseInputFile(Filenames[i], Context);
     if (!M.get()) return true;
 
     outs() << "Linking in input file: '" << Filenames[i] << "'\n";

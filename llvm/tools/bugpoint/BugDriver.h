@@ -18,6 +18,7 @@
 
 #include "llvm/IR/ValueMap.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -210,41 +211,46 @@ public:
   void EmitProgressBitcode(const Module *M, const std::string &ID,
                            bool NoFlyer = false) const;
 
-  /// deleteInstructionFromProgram - This method clones the current Program and
-  /// deletes the specified instruction from the cloned module.  It then runs a
-  /// series of cleanup passes (ADCE and SimplifyCFG) to eliminate any code
-  /// which depends on the value.  The modified module is then returned.
+  /// This method clones the current Program and deletes the specified
+  /// instruction from the cloned module.  It then runs a series of cleanup
+  /// passes (ADCE and SimplifyCFG) to eliminate any code which depends on the
+  /// value. The modified module is then returned.
   ///
-  Module *deleteInstructionFromProgram(const Instruction *I, unsigned Simp);
+  std::unique_ptr<Module> deleteInstructionFromProgram(const Instruction *I,
+                                                       unsigned Simp);
 
-  /// performFinalCleanups - This method clones the current Program and performs
-  /// a series of cleanups intended to get rid of extra cruft on the module.  If
-  /// the MayModifySemantics argument is true, then the cleanups is allowed to
+  /// This method clones the current Program and performs a series of cleanups
+  /// intended to get rid of extra cruft on the module. If the
+  /// MayModifySemantics argument is true, then the cleanups is allowed to
   /// modify how the code behaves.
   ///
-  Module *performFinalCleanups(Module *M, bool MayModifySemantics = false);
+  std::unique_ptr<Module> performFinalCleanups(Module *M,
+                                               bool MayModifySemantics = false);
 
-  /// ExtractLoop - Given a module, extract up to one loop from it into a new
-  /// function.  This returns null if there are no extractable loops in the
-  /// program or if the loop extractor crashes.
-  Module *ExtractLoop(Module *M);
+  /// Given a module, extract up to one loop from it into a new function. This
+  /// returns null if there are no extractable loops in the program or if the
+  /// loop extractor crashes.
+  std::unique_ptr<Module> extractLoop(Module *M);
 
-  /// ExtractMappedBlocksFromModule - Extract all but the specified basic blocks
-  /// into their own functions.  The only detail is that M is actually a module
-  /// cloned from the one the BBs are in, so some mapping needs to be performed.
-  /// If this operation fails for some reason (ie the implementation is buggy),
-  /// this function should return null, otherwise it returns a new Module.
-  Module *ExtractMappedBlocksFromModule(const std::vector<BasicBlock*> &BBs,
-                                        Module *M);
+  /// Extract all but the specified basic blocks into their own functions. The
+  /// only detail is that M is actually a module cloned from the one the BBs are
+  /// in, so some mapping needs to be performed. If this operation fails for
+  /// some reason (ie the implementation is buggy), this function should return
+  /// null, otherwise it returns a new Module.
+  std::unique_ptr<Module>
+  extractMappedBlocksFromModule(const std::vector<BasicBlock *> &BBs,
+                                Module *M);
 
-  /// runPassesOn - Carefully run the specified set of pass on the specified
-  /// module, returning the transformed module on success, or a null pointer on
-  /// failure.  If AutoDebugCrashes is set to true, then bugpoint will
-  /// automatically attempt to track down a crashing pass if one exists, and
-  /// this method will never return null.
-  Module *runPassesOn(Module *M, const std::vector<std::string> &Passes,
-                      bool AutoDebugCrashes = false, unsigned NumExtraArgs = 0,
-                      const char * const *ExtraArgs = nullptr);
+  /// Carefully run the specified set of pass on the specified/ module,
+  /// returning the transformed module on success, or a null pointer on failure.
+  /// If AutoDebugCrashes is set to true, then bugpoint will automatically
+  /// attempt to track down a crashing pass if one exists, and this method will
+  /// never return null.
+  std::unique_ptr<Module> runPassesOn(Module *M,
+                                      const std::vector<std::string> &Passes,
+                                      bool AutoDebugCrashes = false,
+                                      unsigned NumExtraArgs = 0,
+                                      const char *const *ExtraArgs = nullptr);
 
   /// runPasses - Run the specified passes on Program, outputting a bitcode
   /// file and writting the filename into OutputFile if successful.  If the
@@ -296,12 +302,11 @@ private:
   bool initializeExecutionEnvironment();
 };
 
-/// ParseInputFile - Given a bitcode or assembly input filename, parse and
-/// return it, or return null if not possible.
+///  Given a bitcode or assembly input filename, parse and return it, or return
+///  null if not possible.
 ///
-Module *ParseInputFile(const std::string &InputFilename,
-                       LLVMContext& ctxt);
-
+std::unique_ptr<Module> parseInputFile(StringRef InputFilename,
+                                       LLVMContext &ctxt);
 
 /// getPassesString - Turn a list of passes into a string which indicates the
 /// command line options that must be passed to add the passes.
