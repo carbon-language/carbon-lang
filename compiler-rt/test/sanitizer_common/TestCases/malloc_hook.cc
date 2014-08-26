@@ -1,7 +1,7 @@
 // RUN: %clangxx -O2 %s -o %t && %run %t 2>&1 | FileCheck %s
 
-// Malloc/free hooks are not supported on Windows and doesn't work in LSan.
-// XFAIL: win32, lsan
+// Malloc/free hooks are not supported on Windows.
+// XFAIL: win32
 
 #include <stdlib.h>
 #include <unistd.h>

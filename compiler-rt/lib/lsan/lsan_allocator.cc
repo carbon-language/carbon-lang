@@ -15,6 +15,7 @@
 #include "lsan_allocator.h"
 
 #include "sanitizer_common/sanitizer_allocator.h"
+#include "sanitizer_common/sanitizer_allocator_interface.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
@@ -53,7 +54,7 @@ void AllocatorThreadFinish() {
   allocator.SwallowCache(&cache);
 }
 
-static ChunkMetadata *Metadata(void *p) {
+static ChunkMetadata *Metadata(const void *p) {
   return reinterpret_cast<ChunkMetadata *>(allocator.GetMetaData(p));
 }
 
@@ -87,10 +88,12 @@ void *Allocate(const StackTrace &stack, uptr size, uptr alignment,
   if (cleared && allocator.FromPrimary(p))
     memset(p, 0, size);
   RegisterAllocation(stack, p, size);
+  if (&__sanitizer_malloc_hook) __sanitizer_malloc_hook(p, size);
   return p;
 }
 
 void Deallocate(void *p) {
+  if (&__sanitizer_free_hook) __sanitizer_free_hook(p);
   RegisterDeallocation(p);
   allocator.Deallocate(&cache, p);
 }
@@ -113,7 +116,7 @@ void GetAllocatorCacheRange(uptr *begin, uptr *end) {
   *end = *begin + sizeof(cache);
 }
 
-uptr GetMallocUsableSize(void *p) {
+uptr GetMallocUsableSize(const void *p) {
   ChunkMetadata *m = Metadata(p);
   if (!m) return 0;
   return m->requested_size;
@@ -200,3 +203,38 @@ IgnoreObjectResult IgnoreObjectLocked(const void *p) {
   }
 }
 }  // namespace __lsan
+
+using namespace __lsan;
+
+extern "C" {
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __sanitizer_get_current_allocated_bytes() {
+  uptr stats[AllocatorStatCount];
+  allocator.GetStats(stats);
+  return stats[AllocatorStatAllocated];
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __sanitizer_get_heap_size() {
+  uptr stats[AllocatorStatCount];
+  allocator.GetStats(stats);
+  return stats[AllocatorStatMapped];
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __sanitizer_get_free_bytes() { return 0; }
+
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __sanitizer_get_unmapped_bytes() { return 0; }
+
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __sanitizer_get_estimated_allocated_size(uptr size) { return size; }
+
+SANITIZER_INTERFACE_ATTRIBUTE
+int __sanitizer_get_ownership(const void *p) { return Metadata(p) != 0; }
+
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __sanitizer_get_allocated_size(const void *p) {
+  return GetMallocUsableSize(p);
+}
+}  // extern "C"
