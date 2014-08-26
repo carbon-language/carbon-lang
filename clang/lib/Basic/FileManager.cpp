@@ -386,9 +386,9 @@ void FileManager::FixupRelativePath(SmallVectorImpl<char> &path) const {
   path = NewPath;
 }
 
-llvm::MemoryBuffer *FileManager::
-getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
-                 bool isVolatile, bool ShouldCloseOpenFile) {
+std::unique_ptr<llvm::MemoryBuffer>
+FileManager::getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
+                              bool isVolatile, bool ShouldCloseOpenFile) {
   std::unique_ptr<llvm::MemoryBuffer> Result;
   std::error_code ec;
 
@@ -409,7 +409,7 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
     // FileEntry is open or not.
     if (ShouldCloseOpenFile)
       Entry->closeFile();
-    return Result.release();
+    return Result;
   }
 
   // Otherwise, open the file.
@@ -419,7 +419,7 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
                               /*RequiresNullTerminator=*/true, isVolatile);
     if (ec && ErrorStr)
       *ErrorStr = ec.message();
-    return Result.release();
+    return Result;
   }
 
   SmallString<128> FilePath(Entry->getName());
@@ -428,18 +428,18 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
                             /*RequiresNullTerminator=*/true, isVolatile);
   if (ec && ErrorStr)
     *ErrorStr = ec.message();
-  return Result.release();
+  return Result;
 }
 
-llvm::MemoryBuffer *FileManager::
-getBufferForFile(StringRef Filename, std::string *ErrorStr) {
+std::unique_ptr<llvm::MemoryBuffer>
+FileManager::getBufferForFile(StringRef Filename, std::string *ErrorStr) {
   std::unique_ptr<llvm::MemoryBuffer> Result;
   std::error_code ec;
   if (FileSystemOpts.WorkingDir.empty()) {
     ec = FS->getBufferForFile(Filename, Result);
     if (ec && ErrorStr)
       *ErrorStr = ec.message();
-    return Result.release();
+    return Result;
   }
 
   SmallString<128> FilePath(Filename);
@@ -447,7 +447,7 @@ getBufferForFile(StringRef Filename, std::string *ErrorStr) {
   ec = FS->getBufferForFile(FilePath.c_str(), Result);
   if (ec && ErrorStr)
     *ErrorStr = ec.message();
-  return Result.release();
+  return Result;
 }
 
 /// getStatValue - Get the 'stat' information for the specified path,

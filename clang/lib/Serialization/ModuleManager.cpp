@@ -118,9 +118,9 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
         // ModuleManager it must be the same underlying file.
         // FIXME: Because FileManager::getFile() doesn't guarantee that it will
         // give us an open file, this may not be 100% reliable.
-        New->Buffer.reset(FileMgr.getBufferForFile(New->File, &ErrorStr,
-                                                   /*IsVolatile*/false,
-                                                   /*ShouldClose*/false));
+        New->Buffer = FileMgr.getBufferForFile(New->File, &ErrorStr,
+                                               /*IsVolatile*/ false,
+                                               /*ShouldClose*/ false);
       }
       
       if (!New->Buffer)

@@ -681,14 +681,13 @@ void PrintPreambleAction::ExecuteAction() {
     // We can't do anything with these.
     return;
   }
-  
+
   CompilerInstance &CI = getCompilerInstance();
-  llvm::MemoryBuffer *Buffer
+  std::unique_ptr<llvm::MemoryBuffer> Buffer
       = CI.getFileManager().getBufferForFile(getCurrentFile());
   if (Buffer) {
     unsigned Preamble =
         Lexer::ComputePreamble(Buffer->getBuffer(), CI.getLangOpts()).first;
     llvm::outs().write(Buffer->getBufferStart(), Preamble);
-    delete Buffer;
   }
 }

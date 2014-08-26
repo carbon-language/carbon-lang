@@ -723,11 +723,11 @@ bool CompilerInstance::InitializeSourceManager(const FrontendInputFile &Input,
     // STDIN.
     if (File->isNamedPipe()) {
       std::string ErrorStr;
-      if (llvm::MemoryBuffer *MB =
+      if (std::unique_ptr<llvm::MemoryBuffer> MB =
               FileMgr.getBufferForFile(File, &ErrorStr, /*isVolatile=*/true)) {
         // Create a new virtual file that will have the correct size.
         File = FileMgr.getVirtualFile(InputFile, MB->getBufferSize(), 0);
-        SourceMgr.overrideFileContents(File, MB);
+        SourceMgr.overrideFileContents(File, MB.release());
       } else {
         Diags.Report(diag::err_cannot_open_file) << InputFile << ErrorStr;
         return false;

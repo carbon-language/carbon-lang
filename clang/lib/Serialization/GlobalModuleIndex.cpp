@@ -493,9 +493,10 @@ namespace {
 
 bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
   // Open the module file.
-  std::unique_ptr<llvm::MemoryBuffer> Buffer;
+
   std::string ErrorStr;
-  Buffer.reset(FileMgr.getBufferForFile(File, &ErrorStr, /*isVolatile=*/true));
+  std::unique_ptr<llvm::MemoryBuffer> Buffer =
+      FileMgr.getBufferForFile(File, &ErrorStr, /*isVolatile=*/true);
   if (!Buffer) {
     return true;
   }

@@ -638,7 +638,7 @@ ASTDeserializationListener *ASTUnit::getDeserializationListener() {
 llvm::MemoryBuffer *ASTUnit::getBufferForFile(StringRef Filename,
                                               std::string *ErrorStr) {
   assert(FileMgr);
-  return FileMgr->getBufferForFile(Filename, ErrorStr);
+  return FileMgr->getBufferForFile(Filename, ErrorStr).release();
 }
 
 /// \brief Configure the diagnostics object for use with ASTUnit.

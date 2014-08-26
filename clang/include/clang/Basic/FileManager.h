@@ -241,12 +241,11 @@ public:
 
   /// \brief Open the specified file as a MemoryBuffer, returning a new
   /// MemoryBuffer if successful, otherwise returning null.
-  llvm::MemoryBuffer *getBufferForFile(const FileEntry *Entry,
-                                       std::string *ErrorStr = nullptr,
-                                       bool isVolatile = false,
-                                       bool ShouldCloseOpenFile = true);
-  llvm::MemoryBuffer *getBufferForFile(StringRef Filename,
-                                       std::string *ErrorStr = nullptr);
+  std::unique_ptr<llvm::MemoryBuffer>
+  getBufferForFile(const FileEntry *Entry, std::string *ErrorStr = nullptr,
+                   bool isVolatile = false, bool ShouldCloseOpenFile = true);
+  std::unique_ptr<llvm::MemoryBuffer>
+  getBufferForFile(StringRef Filename, std::string *ErrorStr = nullptr);
 
   /// \brief Get the 'stat' information for the given \p Path.
   ///
