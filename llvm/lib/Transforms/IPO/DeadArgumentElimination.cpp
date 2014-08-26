@@ -199,10 +199,15 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
     return false;
 
   // Okay, we know we can transform this function if safe.  Scan its body
-  // looking for calls to llvm.vastart.
+  // looking for calls marked musttail or calls to llvm.vastart.
   for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
+      CallInst *CI = dyn_cast<CallInst>(I);
+      if (!CI)
+        continue;
+      if (CI->isMustTailCall())
+        return false;
+      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI)) {
         if (II->getIntrinsicID() == Intrinsic::vastart)
           return false;
       }
