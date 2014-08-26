@@ -1472,10 +1472,19 @@ llvm::Value *ItaniumCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
                                                  CookieOffset.getQuantity());
 
   // Write the number of elements into the appropriate slot.
-  llvm::Value *NumElementsPtr
-    = CGF.Builder.CreateBitCast(CookiePtr,
-                                CGF.ConvertType(SizeTy)->getPointerTo(AS));
-  CGF.Builder.CreateStore(NumElements, NumElementsPtr);
+  llvm::Type *NumElementsTy = CGF.ConvertType(SizeTy)->getPointerTo(AS);
+  llvm::Value *NumElementsPtr =
+      CGF.Builder.CreateBitCast(CookiePtr, NumElementsTy);
+  llvm::Instruction *SI = CGF.Builder.CreateStore(NumElements, NumElementsPtr);
+  if (CGM.getLangOpts().Sanitize.Address &&
+      expr->getOperatorNew()->isReplaceableGlobalAllocationFunction()) {
+    CGM.getSanitizerMetadata()->disableSanitizerForInstruction(SI);
+    llvm::FunctionType *FTy =
+        llvm::FunctionType::get(CGM.VoidTy, NumElementsTy, false);
+    llvm::Constant *F =
+        CGM.CreateRuntimeFunction(FTy, "__asan_poison_cxx_array_cookie");
+    CGF.Builder.CreateCall(F, NumElementsPtr);
+  }
 
   // Finally, compute a pointer to the actual data buffer by skipping
   // over the cookie completely.
@@ -1498,7 +1507,10 @@ llvm::Value *ItaniumCXXABI::readArrayCookieImpl(CodeGenFunction &CGF,
   unsigned AS = allocPtr->getType()->getPointerAddressSpace();
   numElementsPtr = 
     CGF.Builder.CreateBitCast(numElementsPtr, CGF.SizeTy->getPointerTo(AS));
-  return CGF.Builder.CreateLoad(numElementsPtr);
+  llvm::Instruction *LI = CGF.Builder.CreateLoad(numElementsPtr);
+  if (CGM.getLangOpts().Sanitize.Address)
+    CGM.getSanitizerMetadata()->disableSanitizerForInstruction(LI);
+  return LI;
 }
 
 CharUnits ARMCXXABI::getArrayCookieSizeImpl(QualType elementType) {

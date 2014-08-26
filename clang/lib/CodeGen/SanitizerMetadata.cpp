@@ -67,6 +67,12 @@ void SanitizerMetadata::disableSanitizerForGlobal(llvm::GlobalVariable *GV) {
     reportGlobalToASan(GV, SourceLocation(), "", false, true);
 }
 
+void SanitizerMetadata::disableSanitizerForInstruction(llvm::Instruction *I) {
+  I->setMetadata(
+      CGM.getModule().getMDKindID("nosanitize"),
+      llvm::MDNode::get(CGM.getLLVMContext(), ArrayRef<llvm::Value *>()));
+}
+
 llvm::MDNode *SanitizerMetadata::getLocationMetadata(SourceLocation Loc) {
   PresumedLoc PLoc = CGM.getContext().getSourceManager().getPresumedLoc(Loc);
   if (!PLoc.isValid())

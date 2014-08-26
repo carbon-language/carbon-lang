@@ -1683,11 +1683,8 @@ void CodeGenFunction::InsertHelper(llvm::Instruction *I,
                                    llvm::BasicBlock *BB,
                                    llvm::BasicBlock::iterator InsertPt) const {
   LoopStack.InsertHelper(I);
-  if (IsSanitizerScope) {
-    I->setMetadata(
-        CGM.getModule().getMDKindID("nosanitize"),
-        llvm::MDNode::get(CGM.getLLVMContext(), ArrayRef<llvm::Value *>()));
-  }
+  if (IsSanitizerScope)
+    CGM.getSanitizerMetadata()->disableSanitizerForInstruction(I);
 }
 
 template <bool PreserveNames>
