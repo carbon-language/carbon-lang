@@ -119,8 +119,7 @@ LTOModule *LTOModule::makeLTOModule(MemoryBufferRef Buffer,
   if (!MemBuf)
     return nullptr;
 
-  ErrorOr<Module *> MOrErr =
-      getLazyBitcodeModule(MemBuf.get(), getGlobalContext());
+  ErrorOr<Module *> MOrErr = parseBitcodeFile(MemBuf.get(), getGlobalContext());
   if (std::error_code EC = MOrErr.getError()) {
     errMsg = EC.message();
     return nullptr;
@@ -154,7 +153,6 @@ LTOModule *LTOModule::makeLTOModule(MemoryBufferRef Buffer,
 
   TargetMachine *target = march->createTargetMachine(TripleStr, CPU, FeatureStr,
                                                      options);
-  M->materializeAllPermanently(true);
   M->setDataLayout(target->getSubtargetImpl()->getDataLayout());
 
   std::unique_ptr<object::IRObjectFile> IRObj(
