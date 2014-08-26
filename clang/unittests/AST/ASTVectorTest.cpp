@@ -18,8 +18,6 @@
 
 #include "gtest/gtest.h"
 
-#include <vector>
-
 using namespace clang;
 
 namespace clang {
@@ -73,7 +71,7 @@ TEST_F(ASTVectorTest, InsertEmpty) {
 
   // Ensure no pointer overflow when inserting empty range
   int Values[] = { 0, 1, 2, 3 };
-  std::vector<int> IntVec(Values, Values + 4);
+  ArrayRef<int> IntVec(Values);
   auto I = V.insert(Ctxt, V.begin(), IntVec.begin(), IntVec.begin());
   ASSERT_EQ(V.begin(), I);
   ASSERT_TRUE(V.empty());
