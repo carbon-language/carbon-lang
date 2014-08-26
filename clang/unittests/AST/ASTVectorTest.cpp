@@ -72,7 +72,8 @@ TEST_F(ASTVectorTest, InsertEmpty) {
   ASTVector<double> V;
 
   // Ensure no pointer overflow when inserting empty range
-  std::vector<int> IntVec{0, 1, 2, 3};
+  int Values[] = { 0, 1, 2, 3 };
+  std::vector<int> IntVec(Values, Values + 4);
   auto I = V.insert(Ctxt, V.begin(), IntVec.begin(), IntVec.begin());
   ASSERT_EQ(V.begin(), I);
   ASSERT_TRUE(V.empty());
