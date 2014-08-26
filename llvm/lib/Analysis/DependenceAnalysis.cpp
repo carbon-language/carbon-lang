@@ -3674,10 +3674,9 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
       return nullptr;
   }
 
-  std::unique_ptr<Dependence> Final;
-  Final.reset(new FullDependence(Result));
+  auto Final = make_unique<FullDependence>(Result);
   Result.DV = nullptr;
-  return Final;
+  return std::move(Final);
 }
 
 
