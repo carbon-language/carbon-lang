@@ -15,14 +15,12 @@
 #ifndef LLVM_IRREADER_IRREADER_H
 #define LLVM_IRREADER_IRREADER_H
 
-#include "llvm/ADT/StringRef.h"
-#include <memory>
+#include "llvm/Support/MemoryBuffer.h"
 #include <string>
 
 namespace llvm {
 
 class Module;
-class MemoryBuffer;
 class SMDiagnostic;
 class LLVMContext;
 
@@ -36,8 +34,8 @@ std::unique_ptr<Module> getLazyIRFileModule(StringRef Filename,
 
 /// If the given MemoryBuffer holds a bitcode image, return a Module
 /// for it.  Otherwise, attempt to parse it as LLVM Assembly and return
-/// a Module for it. This function *never* takes ownership of Buffer.
-std::unique_ptr<Module> parseIR(MemoryBuffer *Buffer, SMDiagnostic &Err,
+/// a Module for it.
+std::unique_ptr<Module> parseIR(MemoryBufferRef Buffer, SMDiagnostic &Err,
                                 LLVMContext &Context);
 
 /// If the given file holds a bitcode image, return a Module for it.

@@ -3564,15 +3564,17 @@ Module *llvm::getStreamedBitcodeModule(const std::string &name,
   return M;
 }
 
-ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBuffer *Buffer,
+ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBufferRef Buffer,
                                          LLVMContext &Context) {
+  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Buffer, false);
   ErrorOr<Module *> ModuleOrErr =
-      getLazyBitcodeModuleImpl(Buffer, Context, true);
+      getLazyBitcodeModuleImpl(Buf.get(), Context, true);
   if (!ModuleOrErr)
     return ModuleOrErr;
+  Buf.release(); // The BitcodeReader owns it now.
   Module *M = ModuleOrErr.get();
   // Read in the entire module, and destroy the BitcodeReader.
-  if (std::error_code EC = M->materializeAllPermanently(true)) {
+  if (std::error_code EC = M->materializeAllPermanently()) {
     delete M;
     return EC;
   }
@@ -3583,12 +3585,11 @@ ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBuffer *Buffer,
   return M;
 }
 
-std::string llvm::getBitcodeTargetTriple(MemoryBuffer *Buffer,
+std::string llvm::getBitcodeTargetTriple(MemoryBufferRef Buffer,
                                          LLVMContext &Context) {
-  BitcodeReader *R = new BitcodeReader(Buffer, Context);
+  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Buffer, false);
+  auto R = llvm::make_unique<BitcodeReader>(Buf.get(), Context);
   ErrorOr<std::string> Triple = R->parseTriple();
-  R->releaseBuffer();
-  delete R;
   if (Triple.getError())
     return "";
   return Triple.get();

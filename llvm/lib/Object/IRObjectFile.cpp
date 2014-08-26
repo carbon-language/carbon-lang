@@ -268,10 +268,7 @@ ErrorOr<IRObjectFile *>
 llvm::object::IRObjectFile::createIRObjectFile(MemoryBufferRef Object,
                                                LLVMContext &Context) {
 
-  StringRef Data = Object.getBuffer();
-  StringRef FileName = Object.getBufferIdentifier();
-  std::unique_ptr<MemoryBuffer> Buff(
-      MemoryBuffer::getMemBuffer(Data, FileName, false));
+  std::unique_ptr<MemoryBuffer> Buff(MemoryBuffer::getMemBuffer(Object, false));
 
   ErrorOr<Module *> MOrErr = getLazyBitcodeModule(Buff.get(), Context);
   if (std::error_code EC = MOrErr.getError())

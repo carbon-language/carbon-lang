@@ -221,7 +221,7 @@ public:
 
   void FreeState();
 
-  void releaseBuffer() override;
+  void releaseBuffer();
 
   bool isMaterializable(const GlobalValue *GV) const override;
   bool isDematerializable(const GlobalValue *GV) const override;

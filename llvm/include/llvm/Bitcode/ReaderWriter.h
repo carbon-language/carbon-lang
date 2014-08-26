@@ -15,11 +15,11 @@
 #define LLVM_BITCODE_READERWRITER_H
 
 #include "llvm/Support/ErrorOr.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include <string>
 
 namespace llvm {
   class BitstreamWriter;
-  class MemoryBuffer;
   class DataStreamer;
   class LLVMContext;
   class Module;
@@ -42,14 +42,13 @@ namespace llvm {
                                    std::string *ErrMsg = nullptr);
 
   /// Read the header of the specified bitcode buffer and extract just the
-  /// triple information. If successful, this returns a string and *does not*
-  /// take ownership of 'buffer'. On error, this returns "".
-  std::string getBitcodeTargetTriple(MemoryBuffer *Buffer,
+  /// triple information. If successful, this returns a string. On error, this
+  /// returns "".
+  std::string getBitcodeTargetTriple(MemoryBufferRef Buffer,
                                      LLVMContext &Context);
 
   /// Read the specified bitcode file, returning the module.
-  /// This method *never* takes ownership of Buffer.
-  ErrorOr<Module *> parseBitcodeFile(MemoryBuffer *Buffer,
+  ErrorOr<Module *> parseBitcodeFile(MemoryBufferRef Buffer,
                                      LLVMContext &Context);
 
   /// WriteBitcodeToFile - Write the specified module to the specified

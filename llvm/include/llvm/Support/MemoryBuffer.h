@@ -102,6 +102,9 @@ public:
                                     StringRef BufferName = "",
                                     bool RequiresNullTerminator = true);
 
+  static std::unique_ptr<MemoryBuffer>
+  getMemBuffer(MemoryBufferRef Ref, bool RequiresNullTerminator = true);
+
   /// Open the specified memory range as a MemoryBuffer, copying the contents
   /// and taking ownership of it. InputData does not have to be null terminated.
   static MemoryBuffer *getMemBufferCopy(StringRef InputData,

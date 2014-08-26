@@ -103,6 +103,12 @@ MemoryBuffer *MemoryBuffer::getMemBuffer(StringRef InputData,
       MemoryBufferMem(InputData, RequiresNullTerminator);
 }
 
+std::unique_ptr<MemoryBuffer>
+MemoryBuffer::getMemBuffer(MemoryBufferRef Ref, bool RequiresNullTerminator) {
+  return std::unique_ptr<MemoryBuffer>(getMemBuffer(
+      Ref.getBuffer(), Ref.getBufferIdentifier(), RequiresNullTerminator));
+}
+
 /// getMemBufferCopy - Open the specified memory range as a MemoryBuffer,
 /// copying the contents and taking ownership of it.  This has no requirements
 /// on EndPtr[0].

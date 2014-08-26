@@ -14,13 +14,11 @@
 #ifndef LLVM_ASMPARSER_PARSER_H
 #define LLVM_ASMPARSER_PARSER_H
 
-#include "llvm/ADT/StringRef.h"
-#include <memory>
+#include "llvm/Support/MemoryBuffer.h"
 
 namespace llvm {
 
 class Module;
-class MemoryBuffer;
 class SMDiagnostic;
 class LLVMContext;
 
@@ -55,8 +53,8 @@ std::unique_ptr<Module> parseAssemblyString(StringRef AsmString,
 /// @param F The MemoryBuffer containing assembly
 /// @param Err Error result info.
 /// @param Context Context in which to allocate globals info.
-std::unique_ptr<Module> parseAssembly(std::unique_ptr<MemoryBuffer> F,
-                                      SMDiagnostic &Err, LLVMContext &Context);
+std::unique_ptr<Module> parseAssembly(MemoryBufferRef F, SMDiagnostic &Err,
+                                      LLVMContext &Context);
 
 /// This function is the low-level interface to the LLVM Assembly Parser.
 /// This is kept as an independent function instead of being inlined into
@@ -67,8 +65,7 @@ std::unique_ptr<Module> parseAssembly(std::unique_ptr<MemoryBuffer> F,
 /// @param M The module to add data to.
 /// @param Err Error result info.
 /// @return true on error.
-bool parseAssemblyInto(std::unique_ptr<MemoryBuffer> F, Module &M,
-                       SMDiagnostic &Err);
+bool parseAssemblyInto(MemoryBufferRef F, Module &M, SMDiagnostic &Err);
 
 } // End llvm namespace
 

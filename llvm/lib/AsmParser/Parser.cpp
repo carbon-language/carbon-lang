@@ -21,22 +21,21 @@
 #include <system_error>
 using namespace llvm;
 
-bool llvm::parseAssemblyInto(std::unique_ptr<MemoryBuffer> F, Module &M,
-                             SMDiagnostic &Err) {
+bool llvm::parseAssemblyInto(MemoryBufferRef F, Module &M, SMDiagnostic &Err) {
   SourceMgr SM;
-  StringRef Buf = F->getBuffer();
-  SM.AddNewSourceBuffer(std::move(F), SMLoc());
+  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(F, false);
+  SM.AddNewSourceBuffer(std::move(Buf), SMLoc());
 
-  return LLParser(Buf, SM, Err, &M).Run();
+  return LLParser(F.getBuffer(), SM, Err, &M).Run();
 }
 
-std::unique_ptr<Module> llvm::parseAssembly(std::unique_ptr<MemoryBuffer> F,
+std::unique_ptr<Module> llvm::parseAssembly(MemoryBufferRef F,
                                             SMDiagnostic &Err,
                                             LLVMContext &Context) {
   std::unique_ptr<Module> M =
-      make_unique<Module>(F->getBufferIdentifier(), Context);
+      make_unique<Module>(F.getBufferIdentifier(), Context);
 
-  if (parseAssemblyInto(std::move(F), *M, Err))
+  if (parseAssemblyInto(F, *M, Err))
     return nullptr;
 
   return std::move(M);
@@ -53,14 +52,12 @@ std::unique_ptr<Module> llvm::parseAssemblyFile(StringRef Filename,
     return nullptr;
   }
 
-  return parseAssembly(std::move(FileOrErr.get()), Err, Context);
+  return parseAssembly(FileOrErr.get()->getMemBufferRef(), Err, Context);
 }
 
 std::unique_ptr<Module> llvm::parseAssemblyString(StringRef AsmString,
                                                   SMDiagnostic &Err,
                                                   LLVMContext &Context) {
-  std::unique_ptr<MemoryBuffer> F(
-      MemoryBuffer::getMemBuffer(AsmString, "<string>"));
-
-  return parseAssembly(std::move(F), Err, Context);
+  MemoryBufferRef F(AsmString, "<string>");
+  return parseAssembly(F, Err, Context);
 }

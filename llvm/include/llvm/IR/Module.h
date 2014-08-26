@@ -483,7 +483,7 @@ public:
   /// Make sure all GlobalValues in this Module are fully read and clear the
   /// Materializer. If the module is corrupt, this DOES NOT clear the old
   /// Materializer.
-  std::error_code materializeAllPermanently(bool ReleaseBuffer = false);
+  std::error_code materializeAllPermanently();
 
 /// @}
 /// @name Direct access to the globals list, functions list, and symbol table
