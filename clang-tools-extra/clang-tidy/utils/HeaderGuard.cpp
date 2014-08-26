@@ -113,13 +113,12 @@ public:
       // #ifndef and #define.
       StringRef CurHeaderGuard =
           MacroEntry.first.getIdentifierInfo()->getName();
-      std::string NewGuard =
-          checkHeaderGuardDefinition(Ifndef, Define, FileName, CurHeaderGuard);
+      std::string NewGuard = checkHeaderGuardDefinition(
+          Ifndef, Define, EndIf, FileName, CurHeaderGuard);
 
       // Now look at the #endif. We want a comment with the header guard. Fix it
       // at the slightest deviation.
-      if (Check->shouldSuggestEndifComment(FileName))
-        checkEndifComment(EndIf, NewGuard);
+      checkEndifComment(FileName, EndIf, NewGuard);
     }
 
     // Emit warnings for headers that are missing guards.
@@ -132,17 +131,38 @@ public:
     EndIfs.clear();
   }
 
+  bool wouldFixEndifComment(StringRef FileName, SourceLocation EndIf,
+                            StringRef HeaderGuard,
+                            size_t *EndIfLenPtr = nullptr) {
+    if (!Check->shouldSuggestEndifComment(FileName))
+      return false;
+
+    const char *EndIfData = PP->getSourceManager().getCharacterData(EndIf);
+    size_t EndIfLen = std::strcspn(EndIfData, "\r\n");
+    if (EndIfLenPtr)
+      *EndIfLenPtr = EndIfLen;
+
+    StringRef EndIfStr(EndIfData, EndIfLen);
+    return (EndIf.isValid() && !EndIfStr.endswith("// " + HeaderGuard.str()) &&
+            !EndIfStr.endswith("/* " + HeaderGuard.str() + " */"));
+  }
+
   /// \brief Look for header guards that don't match the preferred style. Emit
   /// fix-its and return the suggested header guard (or the original if no
   /// change was made.
   std::string checkHeaderGuardDefinition(SourceLocation Ifndef,
                                          SourceLocation Define,
+                                         SourceLocation EndIf,
                                          StringRef FileName,
                                          StringRef CurHeaderGuard) {
     std::string CPPVar = Check->getHeaderGuard(FileName, CurHeaderGuard);
-    std::string CPPVarUnder = CPPVar + '_'; // Allow a trailing underscore.
+    std::string CPPVarUnder = CPPVar + '_';
+
+    // Allow a trailing underscore iff we don't have to change the endif comment
+    // too.
     if (Ifndef.isValid() && CurHeaderGuard != CPPVar &&
-        CurHeaderGuard != CPPVarUnder) {
+        (CurHeaderGuard != CPPVarUnder ||
+         wouldFixEndifComment(FileName, EndIf, CurHeaderGuard))) {
       Check->diag(Ifndef, "header guard does not follow preferred style")
           << FixItHint::CreateReplacement(
                  CharSourceRange::getTokenRange(
@@ -159,13 +179,10 @@ public:
 
   /// \brief Checks the comment after the #endif of a header guard and fixes it
   /// if it doesn't match \c HeaderGuard.
-  void checkEndifComment(SourceLocation EndIf, StringRef HeaderGuard) {
-    const char *EndIfData = PP->getSourceManager().getCharacterData(EndIf);
-    size_t EndIfLen = std::strcspn(EndIfData, "\r\n");
-
-    StringRef EndIfStr(EndIfData, EndIfLen);
-    if (EndIf.isValid() && !EndIfStr.endswith("// " + HeaderGuard.str()) &&
-        !EndIfStr.endswith("/* " + HeaderGuard.str() + " */")) {
+  void checkEndifComment(StringRef FileName, SourceLocation EndIf,
+                         StringRef HeaderGuard) {
+    size_t EndIfLen;
+    if (wouldFixEndifComment(FileName, EndIf, HeaderGuard, &EndIfLen)) {
       std::string Correct = "endif  // " + HeaderGuard.str();
       Check->diag(EndIf, "#endif for a header guard should reference the "
                          "guard macro in a comment")

@@ -156,6 +156,20 @@ TEST(LLVMHeaderGuardCheckTest, FixHeaderGuards) {
                                          "LLVM_ADT_FOO_H\n"
                                          "#endif /* LLVM_ADT_FOO_H */\n",
                                          "include/llvm/ADT/foo.h"));
+
+  EXPECT_EQ("#ifndef LLVM_ADT_FOO_H_\n#define LLVM_ADT_FOO_H_\n#endif "
+            "// LLVM_ADT_FOO_H_\n",
+            runHeaderGuardCheckWithEndif(
+                "#ifndef LLVM_ADT_FOO_H_\n#define "
+                "LLVM_ADT_FOO_H_\n#endif // LLVM_ADT_FOO_H_\n",
+                "include/llvm/ADT/foo.h"));
+
+  EXPECT_EQ(
+      "#ifndef LLVM_ADT_FOO_H\n#define LLVM_ADT_FOO_H\n#endif  // "
+      "LLVM_ADT_FOO_H\n",
+      runHeaderGuardCheckWithEndif(
+          "#ifndef LLVM_ADT_FOO_H_\n#define LLVM_ADT_FOO_H_\n#endif // LLVM\n",
+          "include/llvm/ADT/foo.h"));
 }
 #endif
 
