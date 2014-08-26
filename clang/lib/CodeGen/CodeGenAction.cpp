@@ -633,13 +633,12 @@ CodeGenAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
     }
 
     ErrorOr<llvm::Module *> ModuleOrErr =
-        getLazyBitcodeModule(BCBuf.get(), *VMContext);
+        getLazyBitcodeModule(BCBuf, *VMContext);
     if (std::error_code EC = ModuleOrErr.getError()) {
       CI.getDiagnostics().Report(diag::err_cannot_open_file)
         << LinkBCFile << EC.message();
       return nullptr;
     }
-    BCBuf.release(); // Owned by the module now.
     LinkModuleToUse = ModuleOrErr.get();
   }
 
