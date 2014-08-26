@@ -293,7 +293,7 @@ static void initReachingDef(MachineFunction &MF,
   for (MachineBasicBlock &MBB : MF) {
     auto &BBGen = Gen[&MBB];
     BBGen = make_unique<const MachineInstr *[]>(NbReg);
-    memset(BBGen.get(), 0, sizeof(const MachineInstr *) * NbReg);
+    std::fill(BBGen.get(), BBGen.get() + NbReg, nullptr);
 
     BitVector &BBKillSet = Kill[&MBB];
     BBKillSet.resize(NbReg);
