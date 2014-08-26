@@ -37,3 +37,12 @@ int32_t test_usat_const_diag(int32_t t, const int32_t v) {
 void test_pldx_const_diag(int32_t i) {
   __pldx(i, 0, 0, 0);  // expected-error-re {{argument to {{.*}} must be a constant integer}}
 }
+
+/*
+ * DBG intrinsic
+ * First argument for DBG intrinsic must be compile-time constant,
+ * otherwise an error should be raised.
+ */
+void test_dbg_const_diag(unsigned int t) {
+  __dbg(t);  // expected-error-re {{argument to {{.*}} must be a constant integer}}
+}
