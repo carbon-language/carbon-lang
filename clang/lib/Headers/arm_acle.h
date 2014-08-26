@@ -66,6 +66,14 @@ static __inline__ void __attribute__((always_inline, nodebug)) __yield(void) {
 }
 #endif
 
+/* 8.5 Swap */
+static __inline__ uint32_t __attribute__((always_inline, nodebug))
+  __swp(uint32_t x, volatile uint32_t *p) {
+  uint32_t v;
+  do v = __builtin_arm_ldrex(p); while (__builtin_arm_strex(x, p));
+  return v;
+}
+
 /* 8.6 Memory prefetch intrinsics */
 /* 8.6.1 Data prefetch */
 #define __pld(addr) __pldx(0, 0, 0, addr)
