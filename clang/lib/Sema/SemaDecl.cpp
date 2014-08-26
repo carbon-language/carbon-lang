@@ -8288,6 +8288,21 @@ namespace {
       Inherited::VisitCXXConstructExpr(E);
     }
 
+    void VisitCallExpr(CallExpr *E) {
+      // Treat std::move as a use.
+      if (E->getNumArgs() == 1) {
+        if (FunctionDecl *FD = E->getDirectCallee()) {
+          if (FD->getIdentifier() && FD->getIdentifier()->isStr("move")) {
+            if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E->getArg(0))) {
+              HandleDeclRefExpr(DRE);
+            }
+          }
+        }
+      }
+
+      Inherited::VisitCallExpr(E);
+    }
+
     void HandleDeclRefExpr(DeclRefExpr *DRE) {
       Decl* ReferenceDecl = DRE->getDecl();
       if (OrigDecl != ReferenceDecl) return;

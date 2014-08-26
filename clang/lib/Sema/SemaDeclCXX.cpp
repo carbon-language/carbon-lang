@@ -2337,6 +2337,21 @@ namespace {
       Inherited::VisitCXXMemberCallExpr(E);
     }
 
+    void VisitCallExpr(CallExpr *E) {
+      // Treat std::move as a use.
+      if (E->getNumArgs() == 1) {
+        if (FunctionDecl *FD = E->getDirectCallee()) {
+          if (FD->getIdentifier() && FD->getIdentifier()->isStr("move")) {
+            if (MemberExpr *ME = dyn_cast<MemberExpr>(E->getArg(0))) {
+              HandleMemberExpr(ME, false /*CheckReferenceOnly*/);
+            }
+          }
+        }
+      }
+
+      Inherited::VisitCallExpr(E);
+    }
+
     void VisitBinaryOperator(BinaryOperator *E) {
       // If a field assignment is detected, remove the field from the
       // uninitiailized field set.

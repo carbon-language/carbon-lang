@@ -341,6 +341,16 @@ void ClassifyRefs::VisitUnaryOperator(UnaryOperator *UO) {
 }
 
 void ClassifyRefs::VisitCallExpr(CallExpr *CE) {
+  // Classify arguments to std::move as used.
+  if (CE->getNumArgs() == 1) {
+    if (FunctionDecl *FD = CE->getDirectCallee()) {
+      if (FD->getIdentifier() && FD->getIdentifier()->isStr("move")) {
+        classify(CE->getArg(0), Use);
+        return;
+      }
+    }
+  }
+
   // If a value is passed by const reference to a function, we should not assume
   // that it is initialized by the call, and we conservatively do not assume
   // that it is used.
