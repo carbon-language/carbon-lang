@@ -8,11 +8,11 @@
 // RUN: dumpbin /EXPORTS %t | grep -o "__asan_wrap[^ ]*" | grep -v @ | sort | uniq > %t.exported_wrappers
 //
 // Get the list of ASan wrappers imported by the DLL RTL:
-// RUN: grep INTERCEPT_LIBRARY_FUNCTION %p/../../../../lib/asan/asan_dll_thunk.cc | grep -v define | sed "s/.*(\(.*\)).*/__asan_wrap_\1/" | sort | uniq > %t.dll_imports
+// RUN: grep INTERCEPT_LIBRARY_FUNCTION %p/../../../../lib/asan/asan_win_dll_thunk.cc | grep -v define | sed "s/.*(\(.*\)).*/__asan_wrap_\1/" | sort | uniq > %t.dll_imports
 //
 // Now make sure the DLL thunk imports everything:
 // RUN: echo
-// RUN: echo "=== NOTE === If you see a mismatch below, please update asan_dll_thunk.cc"
+// RUN: echo "=== NOTE === If you see a mismatch below, please update asan_win_dll_thunk.cc"
 // RUN: diff %t.dll_imports %t.exported_wrappers
 // REQUIRES: asan-static-runtime
 

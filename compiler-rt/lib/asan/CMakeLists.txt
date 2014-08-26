@@ -182,7 +182,7 @@ else()
 
     if (WIN32)
       add_compiler_rt_runtime(clang_rt.asan_dll_thunk-${arch} ${arch} STATIC
-        SOURCES asan_dll_thunk.cc
+        SOURCES asan_win_dll_thunk.cc
                 $<TARGET_OBJECTS:RTInterception.${arch}>
         CFLAGS ${ASAN_CFLAGS} -DASAN_DLL_THUNK
         DEFS ${ASAN_COMMON_DEFINITIONS})
