@@ -66,6 +66,9 @@
 
 #include <map>
 
+#include <ctype.h>
+#include <string.h>
+
 //#define ENABLE_DEBUG_PRINTF // COMMENT OUT THIS LINE PRIOR TO CHECKIN
 
 #ifdef ENABLE_DEBUG_PRINTF
@@ -108,6 +111,34 @@ DW_ACCESS_to_AccessType (uint32_t dwarf_accessibility)
         default:                    break;
     }
     return eAccessNone;
+}
+
+static const char*
+removeHostnameFromPathname(const char* path_from_dwarf)
+{
+    if (!path_from_dwarf || !path_from_dwarf[0])
+    {
+        return path_from_dwarf;
+    }
+
+    const char *colon_pos = strchr(path_from_dwarf, ':');
+    if (!colon_pos)
+    {
+        return path_from_dwarf;
+    }
+    
+    // check whether we have a windows path, and so the first character
+    // is a drive-letter not a hostname.
+    if (
+        colon_pos == path_from_dwarf + 1 &&
+        isalpha(*path_from_dwarf) &&
+        strlen(path_from_dwarf) > 2 &&
+        '\\' == path_from_dwarf[2])
+    {
+        return path_from_dwarf;
+    }
+
+    return colon_pos + 1;
 }
 
 #if defined(LLDB_CONFIGURATION_DEBUG) || defined(LLDB_CONFIGURATION_RELEASE)
@@ -945,7 +976,11 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* dwarf_cu, uint32_t cu_idx)
                             }
                             else
                             {
+                                // DWARF2/3 suggests the form hostname:pathname for compilation directory.
+                                // Remove the host part if present.
+                                cu_comp_dir = removeHostnameFromPathname(cu_comp_dir);
                                 std::string fullpath(cu_comp_dir);
+
                                 if (*fullpath.rbegin() != '/')
                                     fullpath += '/';
                                 fullpath += cu_die_name;
@@ -1172,6 +1207,11 @@ SymbolFileDWARF::ParseCompileUnitSupportFiles (const SymbolContext& sc, FileSpec
         if (cu_die)
         {
             const char * cu_comp_dir = cu_die->GetAttributeValueAsString(this, dwarf_cu, DW_AT_comp_dir, NULL);
+
+            // DWARF2/3 suggests the form hostname:pathname for compilation directory.
+            // Remove the host part if present.
+            cu_comp_dir = removeHostnameFromPathname(cu_comp_dir);
+
             dw_offset_t stmt_list = cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_stmt_list, DW_INVALID_OFFSET);
 
             // All file indexes in DWARF are one based and a file of index zero is
