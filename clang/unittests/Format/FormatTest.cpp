@@ -2070,6 +2070,21 @@ TEST_F(FormatTest, FormatsInlineASM) {
       "    \"xchgq\\t%%rbx, %%rsi\\n\\t\"\n"
       "    : \"=a\"(*rEAX), \"=S\"(*rEBX), \"=c\"(*rECX), \"=d\"(*rEDX)\n"
       "    : \"a\"(value));");
+  EXPECT_EQ(
+      "void NS_InvokeByIndex(void *that, unsigned int methodIndex) {\n"
+      "    __asm {\n"
+      "        mov     edx,[that] // vtable in edx\n"
+      "        mov     eax,methodIndex\n"
+      "        call    [edx][eax*4] // stdcall\n"
+      "    }\n"
+      "}",
+      format("void NS_InvokeByIndex(void *that,   unsigned int methodIndex) {\n"
+             "    __asm {\n"
+             "        mov     edx,[that] // vtable in edx\n"
+             "        mov     eax,methodIndex\n"
+             "        call    [edx][eax*4] // stdcall\n"
+             "    }\n"
+             "}"));
 }
 
 TEST_F(FormatTest, FormatTryCatch) {
