@@ -217,6 +217,7 @@ class MCJIT : public ExecutionEngine {
   OwningModuleContainer OwnedModules;
 
   SmallVector<object::OwningBinary<object::Archive>, 2> Archives;
+  SmallVector<std::unique_ptr<MemoryBuffer>, 2> Buffers;
 
   typedef SmallVector<ObjectImage *, 2> LoadedObjectList;
   LoadedObjectList  LoadedObjects;
@@ -240,6 +241,7 @@ public:
   /// @{
   void addModule(std::unique_ptr<Module> M) override;
   void addObjectFile(std::unique_ptr<object::ObjectFile> O) override;
+  void addObjectFile(object::OwningBinary<object::ObjectFile> O) override;
   void addArchive(object::OwningBinary<object::Archive> O) override;
   bool removeModule(Module *M) override;
 

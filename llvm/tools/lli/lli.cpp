@@ -529,7 +529,6 @@ int main(int argc, char **argv, char * const *envp) {
     EE->addModule(std::move(XMod));
   }
 
-  std::vector<std::unique_ptr<MemoryBuffer>> Buffers;
   for (unsigned i = 0, e = ExtraObjects.size(); i != e; ++i) {
     ErrorOr<object::OwningBinary<object::ObjectFile>> Obj =
         object::ObjectFile::createObjectFile(ExtraObjects[i]);
@@ -538,8 +537,7 @@ int main(int argc, char **argv, char * const *envp) {
       return 1;
     }
     object::OwningBinary<object::ObjectFile> &O = Obj.get();
-    EE->addObjectFile(std::move(O.getBinary()));
-    Buffers.push_back(std::move(O.getBuffer()));
+    EE->addObjectFile(std::move(O));
   }
 
   for (unsigned i = 0, e = ExtraArchives.size(); i != e; ++i) {

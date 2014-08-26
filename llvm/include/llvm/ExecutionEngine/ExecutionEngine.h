@@ -189,6 +189,7 @@ public:
   ///
   /// MCJIT will take ownership of the ObjectFile.
   virtual void addObjectFile(std::unique_ptr<object::ObjectFile> O);
+  virtual void addObjectFile(object::OwningBinary<object::ObjectFile> O);
 
   /// addArchive - Add an Archive to the execution engine.
   ///

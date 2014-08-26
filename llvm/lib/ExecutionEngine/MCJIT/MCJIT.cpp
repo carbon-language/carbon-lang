@@ -107,8 +107,6 @@ bool MCJIT::removeModule(Module *M) {
   return OwnedModules.removeModule(M);
 }
 
-
-
 void MCJIT::addObjectFile(std::unique_ptr<object::ObjectFile> Obj) {
   ObjectImage *LoadedObject = Dyld.loadObject(std::move(Obj));
   if (!LoadedObject || Dyld.hasError())
@@ -119,10 +117,14 @@ void MCJIT::addObjectFile(std::unique_ptr<object::ObjectFile> Obj) {
   NotifyObjectEmitted(*LoadedObject);
 }
 
+void MCJIT::addObjectFile(object::OwningBinary<object::ObjectFile> Obj) {
+  addObjectFile(std::move(Obj.getBinary()));
+  Buffers.push_back(std::move(Obj.getBuffer()));
+}
+
 void MCJIT::addArchive(object::OwningBinary<object::Archive> A) {
   Archives.push_back(std::move(A));
 }
-
 
 void MCJIT::setObjectCache(ObjectCache* NewCache) {
   MutexGuard locked(lock);
