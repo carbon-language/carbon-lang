@@ -65,6 +65,73 @@ template<> void TC<char>::init();
 #define EXTERN_TEMPLATE(...) extern template __VA_ARGS__;
 EXTERN_TEMPLATE(class TC<char>)
 
+class A {
+  A();
+  virtual ~A();
+
+  // Assignment operators
+  A& operator=(const A&);
+  A& operator=(A&&) noexcept;
+
+  // Unary operators
+  A    operator+() const;
+  A    operator-() const;
+  A    operator~() const;
+  A    operator*() const;
+  A    operator&() const;
+  bool operator!() const;
+
+  // (pre-|post-) increment and decrement
+  A& operator++();
+  A& operator--();
+  A  operator++(int);
+  A  operator--(int);
+
+  // Arithmetic operators
+  A operator+(const A&) const;
+  A operator-(const A&) const;
+  A operator*(const A&) const;
+  A operator/(const A&) const;
+  A operator%(const A&) const;
+  A operator&(const A&) const;
+  A operator|(const A&) const;
+  A operator^(const A&) const;
+
+  A operator<<(const A&) const;
+  A operator>>(const A&) const;
+
+  // Arithmetic-assignment operators
+  A& operator+=(const A&);
+  A& operator-=(const A&);
+  A& operator*=(const A&);
+  A& operator/=(const A&);
+  A& operator%=(const A&);
+  A& operator&=(const A&);
+  A& operator|=(const A&);
+  A& operator^=(const A&);
+
+  A& operator<<=(const A&);
+  A& operator>>=(const A&);
+
+  // Logical operators
+  bool operator<(const A&) const;
+  bool operator>(const A&) const;
+
+  bool operator&&(const A&) const;
+  bool operator||(const A&) const;
+  bool operator<=(const A&) const;
+  bool operator>=(const A&) const;
+  bool operator!=(const A&) const;
+  bool operator==(const A&) const;
+
+  // Special operators
+  A& operator[](unsigned long long);
+  A* operator->();
+  A  operator()(unsigned, int) const;
+
+  explicit operator bool() const;
+};
+
 // RUN: c-index-test -cursor-at=%s:6:4 %s | FileCheck -check-prefix=CHECK-COMPLETION-1 %s
 // CHECK-COMPLETION-1: CXXConstructor=X:6:3
 // CHECK-COMPLETION-1-NEXT: Completion string: {TypedText X}{LeftParen (}{Placeholder int}{Comma , }{Placeholder int}{RightParen )}
@@ -128,3 +195,51 @@ EXTERN_TEMPLATE(class TC<char>)
 
 // RUN: c-index-test -cursor-at=%s:66:23 %s | FileCheck -check-prefix=CHECK-TEMPLSPEC %s
 // CHECK-TEMPLSPEC: 66:23 ClassDecl=TC:66:23 (Definition) [Specialization of TC:59:7] Extent=[66:1 - 66:31] Spelling=TC ([66:23 - 66:25])
+
+// RUN: c-index-test -cursor-at=%s:69:3 -cursor-at=%s:70:11 -cursor-at=%s:73:6 -cursor-at=%s:74:6 -cursor-at=%s:77:8 -cursor-at=%s:78:8 -cursor-at=%s:79:8 -cursor-at=%s:80:8 -cursor-at=%s:81:8 -cursor-at=%s:82:8 -cursor-at=%s:85:6 -cursor-at=%s:86:6 -cursor-at=%s:87:6 -cursor-at=%s:88:6 -cursor-at=%s:91:5 -cursor-at=%s:92:5 -cursor-at=%s:93:5 -cursor-at=%s:94:5 -cursor-at=%s:95:5 -cursor-at=%s:96:5 -cursor-at=%s:97:5 -cursor-at=%s:98:5 -cursor-at=%s:100:5 -cursor-at=%s:101:5 -cursor-at=%s:104:6 -cursor-at=%s:105:6 -cursor-at=%s:106:6 -cursor-at=%s:107:6 -cursor-at=%s:108:6 -cursor-at=%s:109:6 -cursor-at=%s:110:6 -cursor-at=%s:111:6 -cursor-at=%s:113:6 -cursor-at=%s:114:6 -cursor-at=%s:117:8 -cursor-at=%s:118:8 -cursor-at=%s:120:8 -cursor-at=%s:121:8 -cursor-at=%s:122:8 -cursor-at=%s:123:8 -cursor-at=%s:124:8 -cursor-at=%s:125:8 -cursor-at=%s:128:6 -cursor-at=%s:129:6 -cursor-at=%s:130:6 -cursor-at=%s:132:3 -std=c++11 %s | FileCheck -check-prefix=CHECK-SPELLING %s
+// CHECK-SPELLING: 69:3 CXXConstructor=A:69:3 Extent=[69:3 - 69:6] Spelling=A ([69:3 - 69:4])
+// CHECK-SPELLING: 70:11 CXXDestructor=~A:70:11 (virtual) Extent=[70:3 - 70:15] Spelling=~A ([70:11 - 70:13])
+// CHECK-SPELLING: 73:6 CXXMethod=operator=:73:6 Extent=[73:3 - 73:25] Spelling=operator= ([73:6 - 73:15])
+// CHECK-SPELLING: 74:6 CXXMethod=operator=:74:6 Extent=[74:3 - 74:29] Spelling=operator= ([74:6 - 74:15])
+// CHECK-SPELLING: 77:8 CXXMethod=operator+:77:8 (const) Extent=[77:3 - 77:25] Spelling=operator+ ([77:8 - 77:17])
+// CHECK-SPELLING: 78:8 CXXMethod=operator-:78:8 (const) Extent=[78:3 - 78:25] Spelling=operator- ([78:8 - 78:17])
+// CHECK-SPELLING: 79:8 CXXMethod=operator~:79:8 (const) Extent=[79:3 - 79:25] Spelling=operator~ ([79:8 - 79:17])
+// CHECK-SPELLING: 80:8 CXXMethod=operator*:80:8 (const) Extent=[80:3 - 80:25] Spelling=operator* ([80:8 - 80:17])
+// CHECK-SPELLING: 81:8 CXXMethod=operator&:81:8 (const) Extent=[81:3 - 81:25] Spelling=operator& ([81:8 - 81:17])
+// CHECK-SPELLING: 82:8 CXXMethod=operator!:82:8 (const) Extent=[82:3 - 82:25] Spelling=operator! ([82:8 - 82:17])
+// CHECK-SPELLING: 85:6 CXXMethod=operator++:85:6 Extent=[85:3 - 85:18] Spelling=operator++ ([85:6 - 85:16])
+// CHECK-SPELLING: 86:6 CXXMethod=operator--:86:6 Extent=[86:3 - 86:18] Spelling=operator-- ([86:6 - 86:16])
+// CHECK-SPELLING: 87:6 CXXMethod=operator++:87:6 Extent=[87:3 - 87:21] Spelling=operator++ ([87:6 - 87:16])
+// CHECK-SPELLING: 88:6 CXXMethod=operator--:88:6 Extent=[88:3 - 88:21] Spelling=operator-- ([88:6 - 88:16])
+// CHECK-SPELLING: 91:5 CXXMethod=operator+:91:5 (const) Extent=[91:3 - 91:30] Spelling=operator+ ([91:5 - 91:14])
+// CHECK-SPELLING: 92:5 CXXMethod=operator-:92:5 (const) Extent=[92:3 - 92:30] Spelling=operator- ([92:5 - 92:14])
+// CHECK-SPELLING: 93:5 CXXMethod=operator*:93:5 (const) Extent=[93:3 - 93:30] Spelling=operator* ([93:5 - 93:14])
+// CHECK-SPELLING: 94:5 CXXMethod=operator/:94:5 (const) Extent=[94:3 - 94:30] Spelling=operator/ ([94:5 - 94:14])
+// CHECK-SPELLING: 95:5 CXXMethod=operator%:95:5 (const) Extent=[95:3 - 95:30] Spelling=operator% ([95:5 - 95:14])
+// CHECK-SPELLING: 96:5 CXXMethod=operator&:96:5 (const) Extent=[96:3 - 96:30] Spelling=operator& ([96:5 - 96:14])
+// CHECK-SPELLING: 97:5 CXXMethod=operator|:97:5 (const) Extent=[97:3 - 97:30] Spelling=operator| ([97:5 - 97:14])
+// CHECK-SPELLING: 98:5 CXXMethod=operator^:98:5 (const) Extent=[98:3 - 98:30] Spelling=operator^ ([98:5 - 98:14])
+// CHECK-SPELLING: 100:5 CXXMethod=operator<<:100:5 (const) Extent=[100:3 - 100:31] Spelling=operator<< ([100:5 - 100:15])
+// CHECK-SPELLING: 101:5 CXXMethod=operator>>:101:5 (const) Extent=[101:3 - 101:31] Spelling=operator>> ([101:5 - 101:15])
+// CHECK-SPELLING: 104:6 CXXMethod=operator+=:104:6 Extent=[104:3 - 104:26] Spelling=operator+= ([104:6 - 104:16])
+// CHECK-SPELLING: 105:6 CXXMethod=operator-=:105:6 Extent=[105:3 - 105:26] Spelling=operator-= ([105:6 - 105:16])
+// CHECK-SPELLING: 106:6 CXXMethod=operator*=:106:6 Extent=[106:3 - 106:26] Spelling=operator*= ([106:6 - 106:16])
+// CHECK-SPELLING: 107:6 CXXMethod=operator/=:107:6 Extent=[107:3 - 107:26] Spelling=operator/= ([107:6 - 107:16])
+// CHECK-SPELLING: 108:6 CXXMethod=operator%=:108:6 Extent=[108:3 - 108:26] Spelling=operator%= ([108:6 - 108:16])
+// CHECK-SPELLING: 109:6 CXXMethod=operator&=:109:6 Extent=[109:3 - 109:26] Spelling=operator&= ([109:6 - 109:16])
+// CHECK-SPELLING: 110:6 CXXMethod=operator|=:110:6 Extent=[110:3 - 110:26] Spelling=operator|= ([110:6 - 110:16])
+// CHECK-SPELLING: 111:6 CXXMethod=operator^=:111:6 Extent=[111:3 - 111:26] Spelling=operator^= ([111:6 - 111:16])
+// CHECK-SPELLING: 113:6 CXXMethod=operator<<=:113:6 Extent=[113:3 - 113:27] Spelling=operator<<= ([113:6 - 113:17])
+// CHECK-SPELLING: 114:6 CXXMethod=operator>>=:114:6 Extent=[114:3 - 114:27] Spelling=operator>>= ([114:6 - 114:17])
+// CHECK-SPELLING: 117:8 CXXMethod=operator<:117:8 (const) Extent=[117:3 - 117:33] Spelling=operator< ([117:8 - 117:17])
+// CHECK-SPELLING: 118:8 CXXMethod=operator>:118:8 (const) Extent=[118:3 - 118:33] Spelling=operator> ([118:8 - 118:17])
+// CHECK-SPELLING: 120:8 CXXMethod=operator&&:120:8 (const) Extent=[120:3 - 120:34] Spelling=operator&& ([120:8 - 120:18])
+// CHECK-SPELLING: 121:8 CXXMethod=operator||:121:8 (const) Extent=[121:3 - 121:34] Spelling=operator|| ([121:8 - 121:18])
+// CHECK-SPELLING: 122:8 CXXMethod=operator<=:122:8 (const) Extent=[122:3 - 122:34] Spelling=operator<= ([122:8 - 122:18])
+// CHECK-SPELLING: 123:8 CXXMethod=operator>=:123:8 (const) Extent=[123:3 - 123:34] Spelling=operator>= ([123:8 - 123:18])
+// CHECK-SPELLING: 124:8 CXXMethod=operator!=:124:8 (const) Extent=[124:3 - 124:34] Spelling=operator!= ([124:8 - 124:18])
+// CHECK-SPELLING: 125:8 CXXMethod=operator==:125:8 (const) Extent=[125:3 - 125:34] Spelling=operator== ([125:8 - 125:18])
+// CHECK-SPELLING: 128:6 CXXMethod=operator[]:128:6 Extent=[128:3 - 128:36] Spelling=operator[] ([128:6 - 128:16])
+// CHECK-SPELLING: 129:6 CXXMethod=operator->:129:6 Extent=[129:3 - 129:18] Spelling=operator-> ([129:6 - 129:16])
+// CHECK-SPELLING: 130:6 CXXMethod=operator():130:6 (const) Extent=[130:3 - 130:37] Spelling=operator() ([130:6 - 130:16])
+// CHECK-SPELLING: 132:12 CXXConversion=operator bool:132:12 (const) Extent=[132:3 - 132:33] Spelling=operator bool ([132:12 - 132:25])
