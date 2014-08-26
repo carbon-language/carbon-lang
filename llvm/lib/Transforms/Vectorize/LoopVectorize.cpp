@@ -5436,13 +5436,13 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   // -- The unroll heuristics --
   // We unroll the loop in order to expose ILP and reduce the loop overhead.
   // There are many micro-architectural considerations that we can't predict
-  // at this level. For example frontend pressure (on decode or fetch) due to
+  // at this level. For example, frontend pressure (on decode or fetch) due to
   // code size, or the number and capabilities of the execution ports.
   //
   // We use the following heuristics to select the unroll factor:
-  // 1. If the code has reductions the we unroll in order to break the cross
+  // 1. If the code has reductions, then we unroll in order to break the cross
   // iteration dependency.
-  // 2. If the loop is really small then we unroll in order to reduce the loop
+  // 2. If the loop is really small, then we unroll in order to reduce the loop
   // overhead.
   // 3. We don't unroll if we think that we will spill registers to memory due
   // to the increased register pressure.
@@ -5452,7 +5452,7 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   if (UserUF != 0)
     return UserUF;
 
-  // When we optimize for size we don't unroll.
+  // When we optimize for size, we don't unroll.
   if (OptForSize)
     return 1;
 
