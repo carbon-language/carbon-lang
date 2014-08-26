@@ -635,10 +635,10 @@ ASTDeserializationListener *ASTUnit::getDeserializationListener() {
   return nullptr;
 }
 
-llvm::MemoryBuffer *ASTUnit::getBufferForFile(StringRef Filename,
-                                              std::string *ErrorStr) {
+std::unique_ptr<llvm::MemoryBuffer>
+ASTUnit::getBufferForFile(StringRef Filename, std::string *ErrorStr) {
   assert(FileMgr);
-  return FileMgr->getBufferForFile(Filename, ErrorStr).release();
+  return FileMgr->getBufferForFile(Filename, ErrorStr);
 }
 
 /// \brief Configure the diagnostics object for use with ASTUnit.
@@ -1205,7 +1205,7 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
             CreatedBuffer = false;
           }
 
-          Buffer = getBufferForFile(RF.second);
+          Buffer = getBufferForFile(RF.second).release();
           if (!Buffer)
             return std::make_pair(nullptr, std::make_pair(0, true));
           CreatedBuffer = true;
@@ -1234,7 +1234,7 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
   
   // If the main source file was not remapped, load it now.
   if (!Buffer) {
-    Buffer = getBufferForFile(FrontendOpts.Inputs[0].getFile());
+    Buffer = getBufferForFile(FrontendOpts.Inputs[0].getFile()).release();
     if (!Buffer)
       return std::make_pair(nullptr, std::make_pair(0, true));
 
