@@ -632,12 +632,11 @@ std::string AssembleToBitcode(LLVMContext &Context, const char *Assembly) {
 ExecutionEngine *getJITFromBitcode(
   LLVMContext &Context, const std::string &Bitcode, Module *&M) {
   // c_str() is null-terminated like MemoryBuffer::getMemBuffer requires.
-  MemoryBuffer *BitcodeBuffer =
-    MemoryBuffer::getMemBuffer(Bitcode, "Bitcode for test");
+  std::unique_ptr<MemoryBuffer> BitcodeBuffer(
+      MemoryBuffer::getMemBuffer(Bitcode, "Bitcode for test"));
   ErrorOr<Module*> ModuleOrErr = getLazyBitcodeModule(BitcodeBuffer, Context);
   if (std::error_code EC = ModuleOrErr.getError()) {
     ADD_FAILURE() << EC.message();
-    delete BitcodeBuffer;
     return nullptr;
   }
   std::unique_ptr<Module> Owner(ModuleOrErr.get());

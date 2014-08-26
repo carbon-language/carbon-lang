@@ -35,14 +35,12 @@ getLazyIRModule(std::unique_ptr<MemoryBuffer> Buffer, SMDiagnostic &Err,
   if (isBitcode((const unsigned char *)Buffer->getBufferStart(),
                 (const unsigned char *)Buffer->getBufferEnd())) {
     std::string ErrMsg;
-    ErrorOr<Module *> ModuleOrErr = getLazyBitcodeModule(Buffer.get(), Context);
+    ErrorOr<Module *> ModuleOrErr = getLazyBitcodeModule(Buffer, Context);
     if (std::error_code EC = ModuleOrErr.getError()) {
       Err = SMDiagnostic(Buffer->getBufferIdentifier(), SourceMgr::DK_Error,
                          EC.message());
       return nullptr;
     }
-    // getLazyBitcodeModule takes ownership of the Buffer when successful.
-    Buffer.release();
     return std::unique_ptr<Module>(ModuleOrErr.get());
   }
 

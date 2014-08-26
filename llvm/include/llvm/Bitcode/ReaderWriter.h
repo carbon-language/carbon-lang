@@ -16,6 +16,7 @@
 
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include <memory>
 #include <string>
 
 namespace llvm {
@@ -29,7 +30,7 @@ namespace llvm {
   /// Read the header of the specified bitcode buffer and prepare for lazy
   /// deserialization of function bodies.  If successful, this takes ownership
   /// of 'buffer. On error, this *does not* take ownership of Buffer.
-  ErrorOr<Module *> getLazyBitcodeModule(MemoryBuffer *Buffer,
+  ErrorOr<Module *> getLazyBitcodeModule(std::unique_ptr<MemoryBuffer> &Buffer,
                                          LLVMContext &Context);
 
   /// getStreamedBitcodeModule - Read the header of the specified stream
