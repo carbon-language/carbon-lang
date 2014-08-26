@@ -113,7 +113,6 @@ enum E1 { e1 }: // expected-error {{expected ';'}}
 struct EnumBitfield { // expected-warning {{struct without named members is a GNU extension}}
   enum E2 { e2 } : 4; // ok
   struct S { int n; }: // expected-error {{expected ';'}}
-                       // expected-warning@-1 {{declaration does not declare anything}}
 
 };
 
