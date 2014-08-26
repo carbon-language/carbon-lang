@@ -1504,12 +1504,19 @@ ASTDeclReader::VisitCXXRecordDeclImpl(CXXRecordDecl *D) {
 
 void ASTDeclReader::VisitCXXMethodDecl(CXXMethodDecl *D) {
   VisitFunctionDecl(D);
+
   unsigned NumOverridenMethods = Record[Idx++];
-  while (NumOverridenMethods--) {
-    // Avoid invariant checking of CXXMethodDecl::addOverriddenMethod,
-    // MD may be initializing.
-    if (CXXMethodDecl *MD = ReadDeclAs<CXXMethodDecl>(Record, Idx))
-      Reader.getContext().addOverriddenMethod(D, MD);
+  if (D->isCanonicalDecl()) {
+    while (NumOverridenMethods--) {
+      // Avoid invariant checking of CXXMethodDecl::addOverriddenMethod,
+      // MD may be initializing.
+      if (CXXMethodDecl *MD = ReadDeclAs<CXXMethodDecl>(Record, Idx))
+        Reader.getContext().addOverriddenMethod(D, MD->getCanonicalDecl());
+    }
+  } else {
+    // We don't care about which declarations this used to override; we get
+    // the relevant information from the canonical declaration.
+    Idx += NumOverridenMethods;
   }
 }
 

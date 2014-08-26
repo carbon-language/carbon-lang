@@ -33,10 +33,13 @@ int importMergeUsedFlag = getMergeUsedFlag();
 int use_name_for_linkage(NameForLinkage &nfl) {
   return nfl.n + nfl.m;
 }
+int use_overrides_virtual_functions(OverridesVirtualFunctions ovf) { return 0; }
 
 @import cxx_decls_merged;
 
 int name_for_linkage_test = use_name_for_linkage(name_for_linkage);
+int overrides_virtual_functions_test =
+    use_overrides_virtual_functions(overrides_virtual_functions);
 
 // CHECK: VarDecl [[mergeUsedFlag:0x[0-9a-f]*]] {{.*}} in cxx_decls.imported used mergeUsedFlag
 // CHECK: VarDecl {{0x[0-9a-f]*}} prev [[mergeUsedFlag]] {{.*}} in cxx_decls_merged used mergeUsedFlag
