@@ -128,6 +128,26 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         self.assertEquals(missing_key_set, set(), "the listed keys are missing in the qProcessInfo result")
 
+    def qProcessInfo_does_not_contain_keys(self, absent_key_set):
+        procs = self.prep_debug_monitor_and_inferior()
+        self.add_process_info_collection_packets()
+
+        # Run the stream
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Gather process info response
+        process_info = self.parse_process_info_response(context)
+        self.assertIsNotNone(process_info)
+
+        # Ensure the unexpected keys are not present
+        unexpected_key_set = set()
+        for unexpected_key in absent_key_set:
+            if unexpected_key in process_info:
+                unexpected_key_set.add(unexpected_key)
+
+        self.assertEquals(unexpected_key_set, set(), "the listed keys were present but unexpected in qProcessInfo result")
+
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @debugserver_test
     @dsym_test
@@ -143,6 +163,25 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.init_llgs_test()
         self.buildDwarf()
         self.qProcessInfo_contains_keys(set(['triple']))
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @debugserver_test
+    @dsym_test
+    def test_qProcessInfo_does_not_contain_triple_debugserver_darwin(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        # We don't expect to see triple on darwin.  If we do, we'll prefer triple
+        # to cputype/cpusubtype and skip some darwin-based ProcessGDBRemote ArchSpec setup
+        # for the remote Host and Process.
+        self.qProcessInfo_does_not_contain_keys(set(['triple']))
+
+    @unittest2.skipUnless(sys.platform.startswith("linux"), "requires Linux")
+    @llgs_test
+    @dwarf_test
+    def test_qProcessInfo_does_not_contain_cputype_cpusubtype_llgs_linux(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.qProcessInfo_does_not_contain_keys(set(['cputype', 'cpusubtype']))
 
 
 if __name__ == '__main__':
