@@ -1692,7 +1692,7 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
                                         llvm::Value *This, llvm::Value *Src,
                                         const CXXConstructExpr *E) {
   if (D->isTrivial()) {
-    assert(E->getNumArgs() && "unexpected argcount for trivial ctor");
+    assert(E->getNumArgs() == 1 && "unexpected argcount for trivial ctor");
     assert(D->isCopyOrMoveConstructor() &&
            "trivial 1-arg ctor not a copy/move ctor");
     EmitAggregateCopy(This, Src, E->arg_begin()->getType());
