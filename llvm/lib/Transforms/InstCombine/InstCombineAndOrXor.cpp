@@ -1351,20 +1351,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       }
     }
 
-  // (X >> Z) & (Y >> Z)  -> (X&Y) >> Z  for all shifts.
-  if (BinaryOperator *SI1 = dyn_cast<BinaryOperator>(Op1)) {
-    if (BinaryOperator *SI0 = dyn_cast<BinaryOperator>(Op0))
-      if (SI0->isShift() && SI0->getOpcode() == SI1->getOpcode() &&
-          SI0->getOperand(1) == SI1->getOperand(1) &&
-          (SI0->hasOneUse() || SI1->hasOneUse())) {
-        Value *NewOp =
-          Builder->CreateAnd(SI0->getOperand(0), SI1->getOperand(0),
-                             SI0->getName());
-        return BinaryOperator::Create(SI1->getOpcode(), NewOp,
-                                      SI1->getOperand(1));
-      }
-  }
-
   {
     Value *X = nullptr;
     bool OpsSwapped = false;
@@ -2227,19 +2213,6 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (match(Op0, m_And(m_Or(m_Specific(Op1), m_Value(C)), m_Value(A))))
     return BinaryOperator::CreateOr(Op1, Builder->CreateAnd(A, C));
 
-  // (X >> Z) | (Y >> Z)  -> (X|Y) >> Z  for all shifts.
-  if (BinaryOperator *SI1 = dyn_cast<BinaryOperator>(Op1)) {
-    if (BinaryOperator *SI0 = dyn_cast<BinaryOperator>(Op0))
-      if (SI0->isShift() && SI0->getOpcode() == SI1->getOpcode() &&
-          SI0->getOperand(1) == SI1->getOperand(1) &&
-          (SI0->hasOneUse() || SI1->hasOneUse())) {
-        Value *NewOp = Builder->CreateOr(SI0->getOperand(0), SI1->getOperand(0),
-                                         SI0->getName());
-        return BinaryOperator::Create(SI1->getOpcode(), NewOp,
-                                      SI1->getOperand(1));
-      }
-  }
-
   // (~A | ~B) == (~(A & B)) - De Morgan's Law
   if (Value *Op0NotVal = dyn_castNotVal(Op0))
     if (Value *Op1NotVal = dyn_castNotVal(Op1))
@@ -2583,18 +2556,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         return BinaryOperator::CreateAnd(Builder->CreateNot(A), Op1);
       }
     }
-  }
-
-  // (X >> Z) ^ (Y >> Z)  -> (X^Y) >> Z  for all shifts.
-  if (Op0I && Op1I && Op0I->isShift() &&
-      Op0I->getOpcode() == Op1I->getOpcode() &&
-      Op0I->getOperand(1) == Op1I->getOperand(1) &&
-      (Op0I->hasOneUse() || Op1I->hasOneUse())) {
-    Value *NewOp =
-      Builder->CreateXor(Op0I->getOperand(0), Op1I->getOperand(0),
-                         Op0I->getName());
-    return BinaryOperator::Create(Op1I->getOpcode(), NewOp,
-                                  Op1I->getOperand(1));
   }
 
   if (Op0I && Op1I) {
