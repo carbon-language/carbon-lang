@@ -74,6 +74,7 @@ BUILTIN(__builtin_arm_wfe, "v", "")
 BUILTIN(__builtin_arm_wfi, "v", "")
 BUILTIN(__builtin_arm_sev, "v", "")
 BUILTIN(__builtin_arm_sevl, "v", "")
+BUILTIN(__builtin_arm_dbg, "vUi", "")
 
 // Data barrier
 BUILTIN(__builtin_arm_dmb, "vUi", "nc")

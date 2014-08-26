@@ -643,7 +643,8 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case ARM::BI__builtin_arm_vcvtr_d: i = 1; u = 1; break;
   case ARM::BI__builtin_arm_dmb:
   case ARM::BI__builtin_arm_dsb:
-  case ARM::BI__builtin_arm_isb: l = 0; u = 15; break;
+  case ARM::BI__builtin_arm_isb:
+  case ARM::BI__builtin_arm_dbg: l = 0; u = 15; break;
   }
 
   // FIXME: VFP Intrinsics should error if VFP not present.
@@ -681,7 +682,6 @@ bool Sema::CheckAArch64BuiltinFunctionCall(unsigned BuiltinID,
   case AArch64::BI__builtin_arm_isb: l = 0; u = 15; break;
   }
 
-  // FIXME: VFP Intrinsics should error if VFP not present.
   return SemaBuiltinConstantArgRange(TheCall, i, l, u + l);
 }
 
