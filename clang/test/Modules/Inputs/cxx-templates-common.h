@@ -41,4 +41,8 @@ typedef WithExplicitSpecialization<int> WithExplicitSpecializationUse;
 
 template<typename T> struct WithImplicitSpecialMembers { int n; };
 
+template<typename T> struct WithAliasTemplate {
+  template<typename> using X = T;
+};
+
 #include "cxx-templates-textual.h"

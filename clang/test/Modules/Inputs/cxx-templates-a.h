@@ -85,3 +85,5 @@ template<typename T> struct PartiallyInstantiatePartialSpec<T*> {
   static T *bar() { return reinterpret_cast<T*>(0); }
 };
 typedef PartiallyInstantiatePartialSpec<int*> PartiallyInstantiatePartialSpecHelper;
+
+void InstantiateWithAliasTemplate(WithAliasTemplate<int>::X<char>);

@@ -143,6 +143,8 @@ MergeSpecializations<double>::explicitly_specialized_in_b spec_in_b_2;
 MergeSpecializations<bool>::explicitly_specialized_in_c spec_in_c_2;
 #endif
 
+using AliasTemplateMergingTest = WithAliasTemplate<int>::X<char>;
+
 @import cxx_templates_common;
 
 typedef SomeTemplate<int*> SomeTemplateIntPtr;

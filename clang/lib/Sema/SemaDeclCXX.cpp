@@ -8207,6 +8207,7 @@ Decl *Sema::ActOnAliasDeclaration(Scope *S,
       TypeAliasTemplateDecl::Create(Context, CurContext, UsingLoc,
                                     Name.Identifier, TemplateParams,
                                     NewTD);
+    NewTD->setDescribedAliasTemplate(NewDecl);
 
     NewDecl->setAccess(AS);
 
