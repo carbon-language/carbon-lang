@@ -7820,7 +7820,10 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString("-debug"));
     CmdArgs.push_back(Args.MakeArgString("-incremental:no"));
     // FIXME: Handle 64-bit.
-    if (DLL) {
+    if (Args.hasArg(options::OPT__SLASH_MD, options::OPT__SLASH_MDd)) {
+      addSanitizerRTWindows(getToolChain(), Args, CmdArgs, "asan_dynamic-i386");
+      addSanitizerRTWindows(getToolChain(), Args, CmdArgs, "asan_uar_thunk-i386");
+    } else if (DLL) {
       addSanitizerRTWindows(getToolChain(), Args, CmdArgs,
                             "asan_dll_thunk-i386");
     } else {
