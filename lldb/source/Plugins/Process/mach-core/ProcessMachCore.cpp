@@ -95,7 +95,11 @@ ProcessMachCore::CanDebug(Target &target, bool plugin_specified_by_name)
     // For now we are just making sure the file exists for a given module
     if (!m_core_module_sp && m_core_file.Exists())
     {
-        ModuleSpec core_module_spec(m_core_file, target.GetArchitecture());
+        // Don't add the Target's architecture to the ModuleSpec - we may be working
+        // with a core file that doesn't have the correct cpusubtype in the header
+        // but we should still try to use it - ModuleSpecList::FindMatchingModuleSpec
+        // enforces a strict arch mach.
+        ModuleSpec core_module_spec(m_core_file);
         Error error (ModuleList::GetSharedModule (core_module_spec, 
                                                   m_core_module_sp, 
                                                   NULL,
