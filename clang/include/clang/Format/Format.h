@@ -311,6 +311,9 @@ struct FormatStyle {
   /// template argument lists
   bool SpacesInAngles;
 
+  /// \brief If \c true, spaces will be inserted after '[' and before ']'.
+  bool SpacesInSquareBrackets;
+
   /// \brief If \c true, spaces may be inserted into '()'.
   bool SpaceInEmptyParentheses;
 
@@ -414,6 +417,7 @@ struct FormatStyle {
            Cpp11BracedListStyle == R.Cpp11BracedListStyle &&
            Standard == R.Standard && TabWidth == R.TabWidth &&
            UseTab == R.UseTab && SpacesInParentheses == R.SpacesInParentheses &&
+           SpacesInSquareBrackets == R.SpacesInSquareBrackets &&
            SpacesInAngles == R.SpacesInAngles &&
            SpaceInEmptyParentheses == R.SpaceInEmptyParentheses &&
            SpacesInContainerLiterals == R.SpacesInContainerLiterals &&

@@ -418,6 +418,10 @@ the configuration (without a prefix: ``Auto``).
 **SpacesInParentheses** (``bool``)
   If ``true``, spaces will be inserted after '(' and before ')'.
 
+**SpacesInSquareBrackets** (``bool``)
+  If ``true``, spaces will be inserted after '[' and before ']' in array
+  declarations and element access expressions, but not in lambdas.
+
 **Standard** (``LanguageStandard``)
   Format compatible with this standard, e.g. use
   ``A<A<int> >`` instead of ``A<A<int>>`` for LS_Cpp03.

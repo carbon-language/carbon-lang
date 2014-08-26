@@ -1550,11 +1550,16 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Right.is(tok::star) && Left.is(tok::l_paren))
     return false;
   if (Left.is(tok::l_square))
-    return Left.Type == TT_ArrayInitializerLSquare &&
-           Style.SpacesInContainerLiterals && Right.isNot(tok::r_square);
+    return (Left.Type == TT_ArrayInitializerLSquare &&
+            Style.SpacesInContainerLiterals && Right.isNot(tok::r_square)) ||
+           (Left.Type == TT_ArraySubscriptLSquare &&
+            Style.SpacesInSquareBrackets && Right.isNot(tok::r_square));
   if (Right.is(tok::r_square))
-    return Right.MatchingParen && Style.SpacesInContainerLiterals &&
-           Right.MatchingParen->Type == TT_ArrayInitializerLSquare;
+    return Right.MatchingParen &&
+           ((Style.SpacesInContainerLiterals &&
+             Right.MatchingParen->Type == TT_ArrayInitializerLSquare) ||
+            (Style.SpacesInSquareBrackets &&
+             Right.MatchingParen->Type == TT_ArraySubscriptLSquare));
   if (Right.is(tok::l_square) && Right.Type != TT_ObjCMethodExpr &&
       Right.Type != TT_LambdaLSquare && Left.isNot(tok::numeric_constant) &&
       Left.Type != TT_DictLiteral)
