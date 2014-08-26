@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c11 -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 struct X {
   union {
     float f3;

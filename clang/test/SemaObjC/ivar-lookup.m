@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c11 -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
 
 @interface Test {
    int x;
