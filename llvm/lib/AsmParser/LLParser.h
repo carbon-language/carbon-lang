@@ -372,7 +372,9 @@ namespace llvm {
         : Loc(loc), V(v), Attrs(attrs) {}
     };
     bool ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
-                            PerFunctionState &PFS);
+                            PerFunctionState &PFS,
+                            bool IsMustTailCall = false,
+                            bool InVarArgsFunc = false);
 
     // Constant Parsing.
     bool ParseValID(ValID &ID, PerFunctionState *PFS = nullptr);

@@ -6591,6 +6591,9 @@ This instruction requires several arguments:
    - The calling conventions of the caller and callee must match.
    - All ABI-impacting function attributes, such as sret, byval, inreg,
      returned, and inalloca, must match.
+   - The callee must be varargs iff the caller is varargs. Bitcasting a
+     non-varargs function to the appropriate varargs type is legal so
+     long as the non-varargs prefixes obey the other rules.
 
    Tail call optimization for calls marked ``tail`` is guaranteed to occur if
    the following conditions are met:

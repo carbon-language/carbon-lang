@@ -2174,6 +2174,14 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
         Out << ", ";
       writeParamOperand(CI->getArgOperand(op), PAL, op + 1);
     }
+
+    // Emit an ellipsis if this is a musttail call in a vararg function.  This
+    // is only to aid readability, musttail calls forward varargs by default.
+    if (CI->isMustTailCall() && CI->getParent() &&
+        CI->getParent()->getParent() &&
+        CI->getParent()->getParent()->isVarArg())
+      Out << ", ...";
+
     Out << ')';
     if (PAL.hasAttributes(AttributeSet::FunctionIndex))
       Out << " #" << Machine.getAttributeGroupSlot(PAL.getFnAttributes());
