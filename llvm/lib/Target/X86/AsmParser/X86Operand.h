@@ -205,6 +205,9 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   bool isMem() const override { return Kind == Memory; }
+  bool isMemUnsized() const {
+    return Kind == Memory && Mem.Size == 0;
+  }
   bool isMem8() const {
     return Kind == Memory && (!Mem.Size || Mem.Size == 8);
   }
