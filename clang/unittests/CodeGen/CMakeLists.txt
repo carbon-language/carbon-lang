@@ -1,12 +1,13 @@
 set(LLVM_LINK_COMPONENTS
   Support
+  ProfileData
   )
 
-add_clang_unittest(CodeGenTests
+add_clang_unittest(ClangCodeGenTests
   BufferSourceTest.cpp
   )
 
-target_link_libraries(CodeGenTests
+target_link_libraries(ClangCodeGenTests
   clangAST
   clangBasic
   clangFrontend
