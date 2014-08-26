@@ -2216,7 +2216,7 @@ ValueObject::GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type
 }
 
 ValueObjectSP
-ValueObject::GetSyntheticBase (const ClangASTType& type, bool can_create)
+ValueObject::GetSyntheticBase (uint32_t offset, const ClangASTType& type, bool can_create)
 {
     ValueObjectSP synthetic_child_sp;
     
@@ -2234,7 +2234,6 @@ ValueObject::GetSyntheticBase (const ClangASTType& type, bool can_create)
     if (!can_create)
         return ValueObjectSP();
     
-    const uint32_t offset = 0;
     const bool is_base_class = true;
     
     ValueObjectChild *synthetic_child = new ValueObjectChild(*this,
