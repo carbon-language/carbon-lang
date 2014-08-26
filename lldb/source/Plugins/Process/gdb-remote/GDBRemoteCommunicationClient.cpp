@@ -2442,6 +2442,11 @@ GDBRemoteCommunicationClient::GetCurrentProcessInfo ()
                     if (sub != 0)
                         ++num_keys_decoded;
                 }
+                else if (name.compare("triple") == 0)
+                {
+                    triple = value;
+                    ++num_keys_decoded;
+                }
                 else if (name.compare("ostype") == 0)
                 {
                     os_name.swap (value);
@@ -2479,7 +2484,17 @@ GDBRemoteCommunicationClient::GetCurrentProcessInfo ()
                 m_curr_pid_is_valid = eLazyBoolYes;
                 m_curr_pid = pid;
             }
-            if (cpu != LLDB_INVALID_CPUTYPE && !os_name.empty() && !vendor_name.empty())
+
+            // Set the ArchSpec from the triple if we have it.
+            if (!triple.empty ())
+            {
+                m_process_arch.SetTriple (triple.c_str ());
+                if (pointer_byte_size)
+                {
+                    assert (pointer_byte_size == m_process_arch.GetAddressByteSize());
+                }
+            }
+            else if (cpu != LLDB_INVALID_CPUTYPE && !os_name.empty() && !vendor_name.empty())
             {
                 m_process_arch.SetArchitecture (eArchTypeMachO, cpu, sub);
                 if (pointer_byte_size)

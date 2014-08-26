@@ -1328,6 +1328,9 @@ CreateProcessInfoResponse_DebugServerStyle (const ProcessInstanceInfo &proc_info
     const ArchSpec &proc_arch = proc_info.GetArchitecture();
     if (proc_arch.IsValid())
     {
+        const llvm::Triple &proc_triple = proc_arch.GetTriple();
+#if defined(__APPLE__)
+        // We'll send cputype/cpusubtype.
         const uint32_t cpu_type = proc_arch.GetMachOCPUType();
         if (cpu_type != 0)
             response.Printf ("cputype:%" PRIx32 ";", cpu_type);
@@ -1335,12 +1338,15 @@ CreateProcessInfoResponse_DebugServerStyle (const ProcessInstanceInfo &proc_info
         const uint32_t cpu_subtype = proc_arch.GetMachOCPUSubType();
         if (cpu_subtype != 0)
             response.Printf ("cpusubtype:%" PRIx32 ";", cpu_subtype);
+
         
-        const llvm::Triple &proc_triple = proc_arch.GetTriple();
         const std::string vendor = proc_triple.getVendorName ();
         if (!vendor.empty ())
             response.Printf ("vendor:%s;", vendor.c_str ());
-
+#else
+        // We'll send the triple.
+        response.Printf ("triple:%s;", proc_triple.getTriple().c_str ());
+#endif
         std::string ostype = proc_triple.getOSName ();
         // Adjust so ostype reports ios for Apple/ARM and Apple/ARM64.
         if (proc_triple.getVendor () == llvm::Triple::Apple)

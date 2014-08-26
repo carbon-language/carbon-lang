@@ -428,6 +428,7 @@ class GdbRemoteTestCaseBase(TestBase):
         "cputype",
         "cpusubtype",
         "ostype",
+        "triple",
         "vendor",
         "endian",
         "ptrsize"

@@ -1,7 +1,7 @@
-import unittest2
-
 import gdbremote_testcase
 import lldbgdbserverutils
+import sys
+import unittest2
 
 from lldbtest import *
 
@@ -107,6 +107,42 @@ class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.init_llgs_test()
         self.buildDwarf()
         self.qProcessInfo_reports_valid_endian()
+
+    def qProcessInfo_contains_keys(self, expected_key_set):
+        procs = self.prep_debug_monitor_and_inferior()
+        self.add_process_info_collection_packets()
+
+        # Run the stream
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Gather process info response
+        process_info = self.parse_process_info_response(context)
+        self.assertIsNotNone(process_info)
+
+        # Ensure the expected keys are present and non-None within the process info.
+        missing_key_set = set()
+        for expected_key in expected_key_set:
+            if expected_key not in process_info:
+                missing_key_set.add(expected_key)
+
+        self.assertEquals(missing_key_set, set(), "the listed keys are missing in the qProcessInfo result")
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @debugserver_test
+    @dsym_test
+    def test_qProcessInfo_contains_cputype_cpusubtype_debugserver_darwin(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.qProcessInfo_contains_keys(set(['cputype', 'cpusubtype']))
+
+    @unittest2.skipUnless(sys.platform.startswith("linux"), "requires Linux")
+    @llgs_test
+    @dwarf_test
+    def test_qProcessInfo_contains_triple_llgs_linux(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.qProcessInfo_contains_keys(set(['triple']))
 
 
 if __name__ == '__main__':
