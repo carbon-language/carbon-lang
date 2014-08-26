@@ -56,8 +56,6 @@ class DataFormatterRdar12437442TestCase(TestBase):
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.runCmd("log enable lldb types -f types.log")
-
         # Now run the bulk of the test
         id_x = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("x")
         id_x.SetPreferDynamicValue(lldb.eDynamicCanRunTarget)
