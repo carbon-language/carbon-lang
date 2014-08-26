@@ -13,8 +13,8 @@ namespace llvm {
 
 MCTargetOptions::MCTargetOptions()
     : SanitizeAddress(false), MCRelaxAll(false), MCNoExecStack(false),
-      MCSaveTempLabels(false), MCUseDwarfDirectory(false),
-      ShowMCEncoding(false), ShowMCInst(false), AsmVerbose(false),
-      DwarfVersion(0) {}
+      MCFatalWarnings(false), MCSaveTempLabels(false),
+      MCUseDwarfDirectory(false), ShowMCEncoding(false), ShowMCInst(false),
+      AsmVerbose(false), DwarfVersion(0) {}
 
 } // end namespace llvm

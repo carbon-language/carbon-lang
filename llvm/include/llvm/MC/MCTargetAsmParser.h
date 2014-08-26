@@ -114,6 +114,8 @@ public:
   bool isParsingInlineAsm () { return ParsingInlineAsm; }
   void setParsingInlineAsm (bool Value) { ParsingInlineAsm = Value; }
 
+  MCTargetOptions getTargetOptions() const { return MCOptions; }
+
   void setSemaCallback(MCAsmParserSemaCallback *Callback) {
     SemaCallback = Callback;
   }

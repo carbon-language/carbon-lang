@@ -45,10 +45,6 @@
 #include <vector>
 using namespace llvm;
 
-static cl::opt<bool>
-FatalAssemblerWarnings("fatal-assembler-warnings",
-                       cl::desc("Consider warnings as error"));
-
 MCAsmParserSemaCallback::~MCAsmParserSemaCallback() {}
 
 namespace {
@@ -552,7 +548,7 @@ void AsmParser::Note(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges) {
 }
 
 bool AsmParser::Warning(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges) {
-  if (FatalAssemblerWarnings)
+  if (getTargetParser().getTargetOptions().MCFatalWarnings)
     return Error(L, Msg, Ranges);
   printMessage(L, SourceMgr::DK_Warning, Msg, Ranges);
   printMacroInstantiations();
