@@ -881,8 +881,7 @@ std::error_code copy_file(const Twine &From, const Twine &To) {
   }
 
   const size_t BufSize = 4096;
-  std::vector<char> Buffer(BufSize);
-  char *Buf = Buffer.data();
+  char *Buf = new char[BufSize];
   int BytesRead = 0, BytesWritten = 0;
   for (;;) {
     BytesRead = read(ReadFD, Buf, BufSize);
@@ -899,6 +898,7 @@ std::error_code copy_file(const Twine &From, const Twine &To) {
   }
   close(ReadFD);
   close(WriteFD);
+  delete[] Buf;
 
   if (BytesRead < 0 || BytesWritten < 0)
     return std::error_code(errno, std::generic_category());
