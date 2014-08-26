@@ -549,27 +549,27 @@ TEST_F(FileSystemTest, Magic) {
 #ifdef LLVM_ON_WIN32
 TEST_F(FileSystemTest, CarriageReturn) {
   SmallString<128> FilePathname(TestDirectory);
-  std::string ErrMsg;
+  std::error_code EC;
   path::append(FilePathname, "test");
 
   {
-    raw_fd_ostream File(FilePathname, ErrMsg, sys::fs::F_Text);
-    EXPECT_EQ(ErrMsg, "");
+    raw_fd_ostream File(FilePathname, EC, sys::fs::F_Text);
+    ASSERT_NO_ERROR(EC);
     File << '\n';
   }
   {
-    auto Buf = MemoryBuffer::getFile(FilePathname);
+    auto Buf = MemoryBuffer::getFile(FilePathname.str());
     EXPECT_TRUE((bool)Buf);
     EXPECT_EQ(Buf.get()->getBuffer(), "\r\n");
   }
 
   {
-    raw_fd_ostream File(FilePathname, ErrMsg, sys::fs::F_None);
-    EXPECT_EQ(ErrMsg, "");
+    raw_fd_ostream File(FilePathname, EC, sys::fs::F_None);
+    ASSERT_NO_ERROR(EC);
     File << '\n';
   }
   {
-    auto Buf = MemoryBuffer::getFile(FilePathname);
+    auto Buf = MemoryBuffer::getFile(FilePathname.str());
     EXPECT_TRUE((bool)Buf);
     EXPECT_EQ(Buf.get()->getBuffer(), "\n");
   }
