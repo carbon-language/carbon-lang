@@ -123,6 +123,7 @@ struct AssemblerInvocation {
 
   unsigned RelaxAll : 1;
   unsigned NoExecStack : 1;
+  unsigned FatalWarnings : 1;
 
   /// @}
 
@@ -138,6 +139,7 @@ public:
     ShowEncoding = 0;
     RelaxAll = 0;
     NoExecStack = 0;
+    FatalWarnings = 0;
     DwarfVersion = 3;
   }
 
@@ -246,7 +248,8 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
 
   // Assemble Options
   Opts.RelaxAll = Args->hasArg(OPT_mrelax_all);
-  Opts.NoExecStack =  Args->hasArg(OPT_mno_exec_stack);
+  Opts.NoExecStack = Args->hasArg(OPT_mno_exec_stack);
+  Opts.FatalWarnings =  Args->hasArg(OPT_massembler_fatal_warnings);
 
   return Success;
 }
