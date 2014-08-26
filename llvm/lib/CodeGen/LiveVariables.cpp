@@ -623,10 +623,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   TRI = MF->getSubtarget().getRegisterInfo();
 
   const unsigned NumRegs = TRI->getNumRegs();
-  PhysRegDef.clear();
-  PhysRegUse.clear();
-  PhysRegDef.resize(NumRegs, nullptr);
-  PhysRegUse.resize(NumRegs, nullptr);
+  PhysRegDef.assign(NumRegs, nullptr);
+  PhysRegUse.assign(NumRegs, nullptr);
   PHIVarInfo.resize(MF->getNumBlockIDs());
   PHIJoins.clear();
 
@@ -648,10 +646,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   for (MachineBasicBlock *MBB : depth_first_ext(Entry, Visited)) {
     runOnBlock(MBB, NumRegs);
 
-    PhysRegDef.clear();
-    PhysRegUse.clear();
-    PhysRegDef.resize(NumRegs, nullptr);
-    PhysRegUse.resize(NumRegs, nullptr);
+    PhysRegDef.assign(NumRegs, nullptr);
+    PhysRegUse.assign(NumRegs, nullptr);
   }
 
   // Convert and transfer the dead / killed information we have gathered into
