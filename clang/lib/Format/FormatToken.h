@@ -350,7 +350,8 @@ struct FormatToken {
   }
 
   bool isTrailingComment() const {
-    return is(tok::comment) && (!Next || Next->NewlinesBefore > 0);
+    return is(tok::comment) &&
+           (Type == TT_LineComment || !Next || Next->NewlinesBefore > 0);
   }
 
   /// \brief Returns \c true if this is a keyword that can be used

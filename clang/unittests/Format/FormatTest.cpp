@@ -5450,6 +5450,7 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
   verifyFormat("int foo(int i) { return fo1{}(i); }");
   verifyFormat("int foo(int i) { return fo1{}(i); }");
   verifyFormat("auto i = decltype(x){};");
+  verifyFormat("std::vector<int> v = {1, 0 /* comment */};");
 
   // In combination with BinPackParameters = false.
   FormatStyle NoBinPacking = getLLVMStyle();
@@ -5545,10 +5546,7 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
       "                                 bbbbbbbbbbbbbbbbbbbb, bbbbb };",
       ExtraSpaces);
   verifyFormat("DoSomethingWithVector({} /* No data */);", ExtraSpaces);
-  verifyFormat("DoSomethingWithVector({\n"
-               "                        {} /* No data */\n"
-               "                      },\n"
-               "                      { { 1, 2 } });",
+  verifyFormat("DoSomethingWithVector({ {} /* No data */ }, { { 1, 2 } });",
                ExtraSpaces);
   verifyFormat(
       "someFunction(OtherParam,\n"
@@ -5618,10 +5616,9 @@ TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
                "    1, 1, 1, 1, 1, 1, 1, 1, //\n"
                "};",
                getLLVMStyleWithColumns(39));
-  verifyFormat("vector<int> x = {\n"
-               "    1, 1, 1, 1, 1, 1, 1, 1,\n"
-               "    /**/ /**/\n"
-               "};",
+  verifyFormat("vector<int> x = {1, 1, 1, 1,\n"
+               "                 1, 1, 1, 1,\n"
+               "                 /**/ /**/};",
                getLLVMStyleWithColumns(39));
   verifyFormat("return {{aaaaaaaaaaaaaaaaaaaaa},\n"
                "        {aaaaaaaaaaaaaaaaaaa},\n"
