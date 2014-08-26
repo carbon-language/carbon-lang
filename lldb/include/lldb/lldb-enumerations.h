@@ -382,6 +382,9 @@ namespace lldb {
         eLanguageTypeOCaml           = 0x001b,   ///< OCaml.
         eLanguageTypeRust            = 0x001c,   ///< Rust.
         eLanguageTypeC11             = 0x001d,   ///< ISO C:2011.
+        eLanguageTypeSwift           = 0x001e,   ///< Swift.
+        eLanguageTypeJulia           = 0x001f,   ///< Julia.
+        eLanguageTypeDylan           = 0x0020,   ///< Dylan.
         eNumLanguageTypes
     } LanguageType;
 

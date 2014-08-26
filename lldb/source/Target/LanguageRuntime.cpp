@@ -316,6 +316,9 @@ struct language_name_pair language_names[] =
     {   "ocaml",            eLanguageTypeOCaml          },
     {   "rust",             eLanguageTypeRust           },
     {   "c11",              eLanguageTypeC11            },
+    {   "swift",            eLanguageTypeSwift          },
+    {   "julia",            eLanguageTypeJulia          },
+    {   "dylan",            eLanguageTypeDylan          },
     // Now synonyms, in arbitrary order
     {   "objc",             eLanguageTypeObjC           },
     {   "objc++",           eLanguageTypeObjC_plus_plus }
