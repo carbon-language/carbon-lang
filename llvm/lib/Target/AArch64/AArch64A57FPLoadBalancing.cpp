@@ -234,7 +234,7 @@ public:
   MachineInstr *getKill() const { return KillInst; }
   /// Return an instruction that can be used as an iterator for the end
   /// of the chain. This is the maximum of KillInst (if set) and LastInst.
-  MachineInstr *getEnd() const {
+  MachineBasicBlock::iterator getEnd() const {
     return ++MachineBasicBlock::iterator(KillInst ? KillInst : LastInst);
   }
 
