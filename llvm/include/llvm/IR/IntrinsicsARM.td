@@ -132,6 +132,7 @@ def int_arm_crc32cw : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],
 // HINT
 
 def int_arm_hint : Intrinsic<[], [llvm_i32_ty]>;
+def int_arm_dbg : Intrinsic<[], [llvm_i32_ty]>;
 
 //===----------------------------------------------------------------------===//
 // RBIT

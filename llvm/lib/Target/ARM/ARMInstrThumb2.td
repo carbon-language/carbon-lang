@@ -3720,7 +3720,8 @@ def : t2InstAlias<"sevl$p.w", (t2HINT 5, pred:$p)> {
   let Predicates = [IsThumb2, HasV8];
 }
 
-def t2DBG : T2I<(outs), (ins imm0_15:$opt), NoItinerary, "dbg", "\t$opt", []> {
+def t2DBG : T2I<(outs), (ins imm0_15:$opt), NoItinerary, "dbg", "\t$opt",
+                [(int_arm_dbg imm0_15:$opt)]> {
   bits<4> opt;
   let Inst{31-20} = 0b111100111010;
   let Inst{19-16} = 0b1111;
