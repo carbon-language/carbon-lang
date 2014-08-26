@@ -673,7 +673,7 @@ void CodeGenAction::ExecuteAction() {
       return;
 
     llvm::SMDiagnostic Err;
-    TheModule.reset(ParseIR(MainFile, Err, *VMContext));
+    TheModule = parseIR(MainFile, Err, *VMContext);
     if (!TheModule) {
       // Translate from the diagnostic info to the SourceManager location if
       // available.
