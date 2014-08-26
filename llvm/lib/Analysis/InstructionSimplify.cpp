@@ -2789,14 +2789,14 @@ static Value *SimplifyGEPInst(ArrayRef<Value *> Ops, const Query &Q, unsigned) {
   if (Ops.size() == 1)
     return Ops[0];
 
-  if (isa<UndefValue>(Ops[0])) {
-    // Compute the (pointer) type returned by the GEP instruction.
-    Type *LastType = GetElementPtrInst::getIndexedType(PtrTy, Ops.slice(1));
-    Type *GEPTy = PointerType::get(LastType, AS);
-    if (VectorType *VT = dyn_cast<VectorType>(Ops[0]->getType()))
-      GEPTy = VectorType::get(GEPTy, VT->getNumElements());
+  // Compute the (pointer) type returned by the GEP instruction.
+  Type *LastType = GetElementPtrInst::getIndexedType(PtrTy, Ops.slice(1));
+  Type *GEPTy = PointerType::get(LastType, AS);
+  if (VectorType *VT = dyn_cast<VectorType>(Ops[0]->getType()))
+    GEPTy = VectorType::get(GEPTy, VT->getNumElements());
+
+  if (isa<UndefValue>(Ops[0]))
     return UndefValue::get(GEPTy);
-  }
 
   if (Ops.size() == 2) {
     // getelementptr P, 0 -> P.
@@ -2816,26 +2816,37 @@ static Value *SimplifyGEPInst(ArrayRef<Value *> Ops, const Query &Q, unsigned) {
       // doesn't truncate the pointers.
       if (Ops[1]->getType()->getScalarSizeInBits() ==
           Q.DL->getPointerSizeInBits(AS)) {
-        // getelementptr P, (sub Q, P) -> Q if P points to a type of size 1.
+        auto PtrToIntOrZero = [GEPTy](Value *P) -> Value * {
+          if (match(P, m_Zero()))
+            return Constant::getNullValue(GEPTy);
+          Value *Temp;
+          if (match(P, m_PtrToInt(m_Value(Temp))))
+            return Temp;
+          return nullptr;
+        };
+
+        // getelementptr V, (sub P, V) -> P if P points to a type of size 1.
         if (TyAllocSize == 1 &&
-            match(Ops[1], m_Sub(m_PtrToInt(m_Value(P)),
-                                m_PtrToInt(m_Specific(Ops[0])))))
-          return P;
+            match(Ops[1], m_Sub(m_Value(P), m_PtrToInt(m_Specific(Ops[0])))))
+          if (Value *R = PtrToIntOrZero(P))
+            return R;
 
-        // getelementptr P, (ashr (sub Q, P), C) -> Q
+        // getelementptr V, (ashr (sub P, V), C) -> Q
         // if P points to a type of size 1 << C.
-        if (match(Ops[1], m_AShr(m_Sub(m_PtrToInt(m_Value(P)),
-                                       m_PtrToInt(m_Specific(Ops[0]))),
-                                 m_ConstantInt(C))) &&
+        if (match(Ops[1],
+                  m_AShr(m_Sub(m_Value(P), m_PtrToInt(m_Specific(Ops[0]))),
+                         m_ConstantInt(C))) &&
             TyAllocSize == 1ULL << C)
-          return P;
+          if (Value *R = PtrToIntOrZero(P))
+            return R;
 
-        // getelementptr P, (sdiv (sub Q, P), C) -> Q
+        // getelementptr V, (sdiv (sub P, V), C) -> Q
         // if P points to a type of size C.
-        if (match(Ops[1], m_SDiv(m_Sub(m_PtrToInt(m_Value(P)),
-                                       m_PtrToInt(m_Specific(Ops[0]))),
-                                 m_SpecificInt(TyAllocSize))))
-          return P;
+        if (match(Ops[1],
+                  m_SDiv(m_Sub(m_Value(P), m_PtrToInt(m_Specific(Ops[0]))),
+                         m_SpecificInt(TyAllocSize))))
+          if (Value *R = PtrToIntOrZero(P))
+            return R;
       }
     }
   }
