@@ -58,3 +58,8 @@ extern "C" void __lsan_init() {
   lsan_init_is_running = false;
 }
 
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_print_stack_trace() {
+  GET_STACK_TRACE_FATAL;
+  stack.Print();
+}

@@ -34,21 +34,6 @@ int pthread_key_create(unsigned *key, void (*destructor)(void* v));
 int pthread_setspecific(unsigned key, const void *v);
 }
 
-#define GET_STACK_TRACE                                              \
-  StackTrace stack;                                                  \
-  {                                                                  \
-    uptr stack_top = 0, stack_bottom = 0;                            \
-    ThreadContext *t;                                                \
-    bool fast = common_flags()->fast_unwind_on_malloc;               \
-    if (fast && (t = CurrentThreadContext())) {                      \
-      stack_top = t->stack_end();                                    \
-      stack_bottom = t->stack_begin();                               \
-    }                                                                \
-    stack.Unwind(__sanitizer::common_flags()->malloc_context_size,   \
-                 StackTrace::GetCurrentPc(), GET_CURRENT_FRAME(), 0, \
-                 stack_top, stack_bottom, fast);                     \
-  }
-
 #define ENSURE_LSAN_INITED do {   \
   CHECK(!lsan_init_is_running);   \
   if (!lsan_inited)               \
@@ -65,7 +50,7 @@ namespace std {
 
 INTERCEPTOR(void*, malloc, uptr size) {
   ENSURE_LSAN_INITED;
-  GET_STACK_TRACE;
+  GET_STACK_TRACE_MALLOC;
   return Allocate(stack, size, 1, kAlwaysClearMemory);
 }
 
@@ -88,32 +73,32 @@ INTERCEPTOR(void*, calloc, uptr nmemb, uptr size) {
   }
   if (CallocShouldReturnNullDueToOverflow(size, nmemb)) return 0;
   ENSURE_LSAN_INITED;
-  GET_STACK_TRACE;
+  GET_STACK_TRACE_MALLOC;
   size *= nmemb;
   return Allocate(stack, size, 1, true);
 }
 
 INTERCEPTOR(void*, realloc, void *q, uptr size) {
   ENSURE_LSAN_INITED;
-  GET_STACK_TRACE;
+  GET_STACK_TRACE_MALLOC;
   return Reallocate(stack, q, size, 1);
 }
 
 INTERCEPTOR(void*, memalign, uptr alignment, uptr size) {
   ENSURE_LSAN_INITED;
-  GET_STACK_TRACE;
+  GET_STACK_TRACE_MALLOC;
   return Allocate(stack, size, alignment, kAlwaysClearMemory);
 }
 
 INTERCEPTOR(void*, aligned_alloc, uptr alignment, uptr size) {
   ENSURE_LSAN_INITED;
-  GET_STACK_TRACE;
+  GET_STACK_TRACE_MALLOC;
   return Allocate(stack, size, alignment, kAlwaysClearMemory);
 }
 
 INTERCEPTOR(int, posix_memalign, void **memptr, uptr alignment, uptr size) {
   ENSURE_LSAN_INITED;
-  GET_STACK_TRACE;
+  GET_STACK_TRACE_MALLOC;
   *memptr = Allocate(stack, size, alignment, kAlwaysClearMemory);
   // FIXME: Return ENOMEM if user requested more than max alloc size.
   return 0;
@@ -121,7 +106,7 @@ INTERCEPTOR(int, posix_memalign, void **memptr, uptr alignment, uptr size) {
 
 INTERCEPTOR(void*, valloc, uptr size) {
   ENSURE_LSAN_INITED;
-  GET_STACK_TRACE;
+  GET_STACK_TRACE_MALLOC;
   if (size == 0)
     size = GetPageSizeCached();
   return Allocate(stack, size, GetPageSizeCached(), kAlwaysClearMemory);
@@ -148,7 +133,7 @@ INTERCEPTOR(int, mallopt, int cmd, int value) {
 
 INTERCEPTOR(void*, pvalloc, uptr size) {
   ENSURE_LSAN_INITED;
-  GET_STACK_TRACE;
+  GET_STACK_TRACE_MALLOC;
   uptr PageSize = GetPageSizeCached();
   size = RoundUpTo(size, PageSize);
   if (size == 0) {
@@ -162,7 +147,7 @@ INTERCEPTOR(void, cfree, void *p) ALIAS(WRAPPER_NAME(free));
 
 #define OPERATOR_NEW_BODY                              \
   ENSURE_LSAN_INITED;                                  \
-  GET_STACK_TRACE;                                     \
+  GET_STACK_TRACE_MALLOC;                              \
   return Allocate(stack, size, 1, kAlwaysClearMemory);
 
 INTERCEPTOR_ATTRIBUTE
