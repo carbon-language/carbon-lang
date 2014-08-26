@@ -41,6 +41,7 @@ void RuntimeDyldImpl::registerEHFrames() {}
 
 void RuntimeDyldImpl::deregisterEHFrames() {}
 
+#ifndef NDEBUG
 static void dumpSectionMemory(const SectionEntry &S, StringRef State) {
   dbgs() << "----- Contents of section " << S.Name << " " << State << " -----";
 
@@ -71,6 +72,7 @@ static void dumpSectionMemory(const SectionEntry &S, StringRef State) {
 
   dbgs() << "\n";
 }
+#endif
 
 // Resolve the relocations for all symbols we currently know about.
 void RuntimeDyldImpl::resolveRelocations() {
