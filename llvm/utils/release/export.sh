@@ -44,7 +44,7 @@ function export_sources() {
             $proj-$release$rc.src
 
         echo "Creating tarball ..."
-        tar cfz $proj-$release$rc.src.tar.gz $proj-$release$rc.src
+        tar cfJ $proj-$release$rc.src.tar.xz $proj-$release$rc.src
     done
 }
 
