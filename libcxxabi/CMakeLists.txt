@@ -10,12 +10,15 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   # Rely on llvm-config.
   set(CONFIG_OUTPUT)
   find_program(LLVM_CONFIG "llvm-config")
-  if(LLVM_CONFIG)
+  if(DEFINED LLVM_PATH)
+    set(LLVM_INCLUDE_DIR ${LLVM_INCLUDE_DIR} CACHE PATH "Path to llvm/include")
+    set(LLVM_PATH ${LLVM_PATH} CACHE PATH "Path to LLVM source tree")
+    set(LLVM_MAIN_SRC_DIR ${LLVM_PATH})
+    set(LLVM_CMAKE_PATH "${LLVM_PATH}/cmake/modules")
+  elseif(LLVM_CONFIG)
     message(STATUS "Found LLVM_CONFIG as ${LLVM_CONFIG}")
     set(CONFIG_COMMAND ${LLVM_CONFIG}
-      "--bindir"
       "--includedir"
-      "--libdir"
       "--prefix"
       "--src-root")
     execute_process(
@@ -32,35 +35,30 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
       message(STATUS "${CONFIG_COMMAND_STR}")
       message(FATAL_ERROR "llvm-config failed with status ${HAD_ERROR}")
     endif()
+
+    list(GET CONFIG_OUTPUT 0 INCLUDE_DIR)
+    list(GET CONFIG_OUTPUT 1 LLVM_OBJ_ROOT)
+    list(GET CONFIG_OUTPUT 2 MAIN_SRC_DIR)
+
+    set(LLVM_INCLUDE_DIR ${INCLUDE_DIR} CACHE PATH "Path to llvm/include")
+    set(LLVM_BINARY_DIR ${LLVM_OBJ_ROOT} CACHE PATH "Path to LLVM build tree")
+    set(LLVM_MAIN_SRC_DIR ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
+    set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/share/llvm/cmake")
+    set(LLVM_LIT_PATH "${LLVM_PATH}/utils/lit/lit.py")
   else()
-    message(FATAL_ERROR "llvm-config not found -- ${LLVM_CONFIG}")
+    message(FATAL_ERROR "llvm-config not found and LLVM_MAIN_SRC_DIR not defined")
   endif()
 
-  list(GET CONFIG_OUTPUT 0 TOOLS_BINARY_DIR)
-  list(GET CONFIG_OUTPUT 1 INCLUDE_DIR)
-  list(GET CONFIG_OUTPUT 2 LIBRARY_DIR)
-  list(GET CONFIG_OUTPUT 3 LLVM_OBJ_ROOT)
-  list(GET CONFIG_OUTPUT 4 MAIN_SRC_DIR)
-
-  set(LLVM_TOOLS_BINARY_DIR ${TOOLS_BINARY_DIR} CACHE PATH "Path to llvm/bin")
-  set(LLVM_INCLUDE_DIR ${INCLUDE_DIR} CACHE PATH "Path to llvm/include")
-  set(LLVM_LIBRARY_DIR ${LIBRARY_DIR} CACHE PATH "Path to llvm/lib")
-  set(LLVM_BINARY_DIR ${LLVM_OBJ_ROOT} CACHE PATH "Path to LLVM build tree")
-  set(LLVM_MAIN_SRC_DIR ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
-
-  set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/share/llvm/cmake")
-  set(LLVMCONFIG_FILE "${LLVM_CMAKE_PATH}/LLVMConfig.cmake")
-  if(EXISTS ${LLVMCONFIG_FILE})
+  if(EXISTS ${LLVM_CMAKE_PATH})
     list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_PATH}")
-    include(${LLVMCONFIG_FILE})
     include("${LLVM_CMAKE_PATH}/AddLLVM.cmake")
     include("${LLVM_CMAKE_PATH}/HandleLLVMOptions.cmake")
   else()
-    message(FATAL_ERROR "Not found: ${LLVMCONFIG_FILE}")
+    message(FATAL_ERROR "Not found: ${LLVM_CMAKE_PATH}")
   endif()
 
   set(PACKAGE_NAME libcxxabi)
-  set(PACKAGE_VERSION "${LLVM_PACKAGE_VERSION}")
+  set(PACKAGE_VERSION 3.6.0svn)
   set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
   set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
 
