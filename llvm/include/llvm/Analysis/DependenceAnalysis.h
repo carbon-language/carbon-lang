@@ -766,10 +766,9 @@ namespace llvm {
     /// collectCoefficientInfo - Walks through the subscript,
     /// collecting each coefficient, the associated loop bounds,
     /// and recording its positive and negative parts for later use.
-    std::unique_ptr<CoefficientInfo[]>
-    collectCoeffInfo(const SCEV *Subscript,
-                     bool SrcFlag,
-                     const SCEV *&Constant) const;
+    CoefficientInfo *collectCoeffInfo(const SCEV *Subscript,
+                                      bool SrcFlag,
+                                      const SCEV *&Constant) const;
 
     /// getPositivePart - X^+ = max(X, 0).
     ///

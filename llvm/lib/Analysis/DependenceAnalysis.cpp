@@ -2437,14 +2437,11 @@ bool DependenceAnalysis::banerjeeMIVtest(const SCEV *Src,
   ++BanerjeeApplications;
   DEBUG(dbgs() << "    Src = " << *Src << '\n');
   const SCEV *A0;
-  auto AOwner = collectCoeffInfo(Src, true, A0);
-  auto A = AOwner.get();
+  CoefficientInfo *A = collectCoeffInfo(Src, true, A0);
   DEBUG(dbgs() << "    Dst = " << *Dst << '\n');
   const SCEV *B0;
-  auto BOwner = collectCoeffInfo(Dst, false, B0);
-  auto B = BOwner.get();
-  auto BoundOwner = make_unique<BoundInfo[]>(MaxLevels + 1);
-  auto Bound = BoundOwner.get();
+  CoefficientInfo *B = collectCoeffInfo(Dst, false, B0);
+  BoundInfo *Bound = new BoundInfo[MaxLevels + 1];
   const SCEV *Delta = SE->getMinusSCEV(B0, A0);
   DEBUG(dbgs() << "\tDelta = " << *Delta << '\n');
 
@@ -2501,6 +2498,9 @@ bool DependenceAnalysis::banerjeeMIVtest(const SCEV *Src,
     ++BanerjeeIndependence;
     Disproved = true;
   }
+  delete [] Bound;
+  delete [] A;
+  delete [] B;
   return Disproved;
 }
 
@@ -2818,12 +2818,12 @@ const SCEV *DependenceAnalysis::getNegativePart(const SCEV *X) const {
 // Walks through the subscript,
 // collecting each coefficient, the associated loop bounds,
 // and recording its positive and negative parts for later use.
-std::unique_ptr<DependenceAnalysis::CoefficientInfo[]>
+DependenceAnalysis::CoefficientInfo *
 DependenceAnalysis::collectCoeffInfo(const SCEV *Subscript,
                                      bool SrcFlag,
                                      const SCEV *&Constant) const {
   const SCEV *Zero = SE->getConstant(Subscript->getType(), 0);
-  auto CI = make_unique<CoefficientInfo[]>(MaxLevels + 1);
+  CoefficientInfo *CI = new CoefficientInfo[MaxLevels + 1];
   for (unsigned K = 1; K <= MaxLevels; ++K) {
     CI[K].Coeff = Zero;
     CI[K].PosPart = Zero;
