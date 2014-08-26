@@ -2215,6 +2215,48 @@ ValueObject::GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type
     return synthetic_child_sp;
 }
 
+ValueObjectSP
+ValueObject::GetSyntheticBase (const ClangASTType& type, bool can_create)
+{
+    ValueObjectSP synthetic_child_sp;
+    
+    char name_str[64];
+    snprintf(name_str, sizeof(name_str), "%s", type.GetTypeName().AsCString("<unknown>"));
+    ConstString name_const_str(name_str);
+    
+    // Check if we have already created a synthetic array member in this
+    // valid object. If we have we will re-use it.
+    synthetic_child_sp = GetSyntheticChild (name_const_str);
+    
+    if (synthetic_child_sp.get())
+        return synthetic_child_sp;
+    
+    if (!can_create)
+        return ValueObjectSP();
+    
+    const uint32_t offset = 0;
+    const bool is_base_class = true;
+    
+    ValueObjectChild *synthetic_child = new ValueObjectChild(*this,
+                                                             type,
+                                                             name_const_str,
+                                                             type.GetByteSize(),
+                                                             offset,
+                                                             0,
+                                                             0,
+                                                             is_base_class,
+                                                             false,
+                                                             eAddressTypeInvalid);
+    if (synthetic_child)
+    {
+        AddSyntheticChild(name_const_str, synthetic_child);
+        synthetic_child_sp = synthetic_child->GetSP();
+        synthetic_child_sp->SetName(name_const_str);
+    }
+    return synthetic_child_sp;
+}
+
+
 // your expression path needs to have a leading . or ->
 // (unless it somehow "looks like" an array, in which case it has
 // a leading [ symbol). while the [ is meaningful and should be shown
