@@ -4169,6 +4169,9 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
   // unallocated are marked as unavailable. 
   resetAllocatedRegs();
 
+  const bool isAAPCS_VFP =
+      getABIKind() == ARMABIInfo::AAPCS_VFP && !FI.isVariadic();
+
   if (getCXXABI().classifyReturnType(FI)) {
     if (FI.getReturnInfo().isIndirect())
       markAllocatedGPRs(1, 1);
@@ -4199,10 +4202,10 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
           llvm::Type::getInt32Ty(getVMContext()), NumGPRs - PreAllocationGPRs);
       if (I.info.canHaveCoerceToType()) {
         I.info = ABIArgInfo::getDirect(I.info.getCoerceToType() /* type */, 0 /* offset */,
-                                       PaddingTy);
+                                       PaddingTy, !isAAPCS_VFP);
       } else {
         I.info = ABIArgInfo::getDirect(nullptr /* type */, 0 /* offset */,
-                                       PaddingTy);
+                                       PaddingTy, !isAAPCS_VFP);
       }
     }
   }
@@ -4398,6 +4401,9 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, bool isVariadic,
   //   64-bit containerized vectors or 128-bit containerized vectors with one
   //   to four Elements.
 
+  const bool isAAPCS_VFP =
+      getABIKind() == ARMABIInfo::AAPCS_VFP && !isVariadic;
+
   // Handle illegal vector types here.
   if (isIllegalVectorType(Ty)) {
     uint64_t Size = getContext().getTypeSize(Ty);
@@ -4405,7 +4411,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, bool isVariadic,
       llvm::Type *ResType =
           llvm::Type::getInt32Ty(getVMContext());
       markAllocatedGPRs(1, 1);
-      return ABIArgInfo::getDirect(ResType);
+      return ABIArgInfo::getDirect(ResType, 0, nullptr, !isAAPCS_VFP);
     }
     if (Size == 64) {
       llvm::Type *ResType = llvm::VectorType::get(
@@ -4416,7 +4422,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, bool isVariadic,
         markAllocatedVFPs(2, 2);
         IsCPRC = true;
       }
-      return ABIArgInfo::getDirect(ResType);
+      return ABIArgInfo::getDirect(ResType, 0, nullptr, !isAAPCS_VFP);
     }
     if (Size == 128) {
       llvm::Type *ResType = llvm::VectorType::get(
@@ -4427,7 +4433,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, bool isVariadic,
         markAllocatedVFPs(4, 4);
         IsCPRC = true;
       }
-      return ABIArgInfo::getDirect(ResType);
+      return ABIArgInfo::getDirect(ResType, 0, nullptr, !isAAPCS_VFP);
     }
     markAllocatedGPRs(1, 1);
     return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
@@ -4466,8 +4472,9 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, bool isVariadic,
     unsigned Size = getContext().getTypeSize(Ty);
     if (!IsCPRC)
       markAllocatedGPRs(Size > 32 ? 2 : 1, (Size + 31) / 32);
-    return (Ty->isPromotableIntegerType() ?
-            ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+    return (Ty->isPromotableIntegerType()
+                ? ABIArgInfo::getExtend()
+                : ABIArgInfo::getDirect(nullptr, 0, nullptr, !isAAPCS_VFP));
   }
 
   if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI())) {
@@ -4479,7 +4486,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, bool isVariadic,
   if (isEmptyRecord(getContext(), Ty, true))
     return ABIArgInfo::getIgnore();
 
-  if (getABIKind() == ARMABIInfo::AAPCS_VFP && !isVariadic) {
+  if (isAAPCS_VFP) {
     // Homogeneous Aggregates need to be expanded when we can fit the aggregate
     // into VFP registers.
     const Type *Base = nullptr;
@@ -4500,7 +4507,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, bool isVariadic,
         markAllocatedVFPs(2, Members * 2);
       }
       IsCPRC = true;
-      return ABIArgInfo::getDirect();
+      return ABIArgInfo::getDirect(nullptr, 0, nullptr, !isAAPCS_VFP);
     }
   }
 
@@ -4540,7 +4547,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, bool isVariadic,
 
   llvm::Type *STy =
     llvm::StructType::get(llvm::ArrayType::get(ElemTy, SizeRegs), NULL);
-  return ABIArgInfo::getDirect(STy);
+  return ABIArgInfo::getDirect(STy, 0, nullptr, !isAAPCS_VFP);
 }
 
 static bool isIntegerLikeType(QualType Ty, ASTContext &Context,
@@ -4630,6 +4637,9 @@ static bool isIntegerLikeType(QualType Ty, ASTContext &Context,
 
 ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
                                           bool isVariadic) const {
+  const bool isAAPCS_VFP =
+      getABIKind() == ARMABIInfo::AAPCS_VFP && !isVariadic;
+
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
@@ -4644,8 +4654,9 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
     if (const EnumType *EnumTy = RetTy->getAs<EnumType>())
       RetTy = EnumTy->getDecl()->getIntegerType();
 
-    return (RetTy->isPromotableIntegerType() ?
-            ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+    return (RetTy->isPromotableIntegerType()
+                ? ABIArgInfo::getExtend()
+                : ABIArgInfo::getDirect(nullptr, 0, nullptr, !isAAPCS_VFP));
   }
 
   // Are we following APCS?
@@ -4658,8 +4669,8 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
     // FIXME: Consider using 2 x vector types if the back end handles them
     // correctly.
     if (RetTy->isAnyComplexType())
-      return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
-                                              getContext().getTypeSize(RetTy)));
+      return ABIArgInfo::getDirect(llvm::IntegerType::get(
+          getVMContext(), getContext().getTypeSize(RetTy)));
 
     // Integer like structures are returned in r0.
     if (isIntegerLikeType(RetTy, getContext(), getVMContext())) {
@@ -4688,7 +4699,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
     if (isHomogeneousAggregate(RetTy, Base, getContext())) {
       assert(Base && "Base class should be set for homogeneous aggregate");
       // Homogeneous Aggregates are returned directly.
-      return ABIArgInfo::getDirect();
+      return ABIArgInfo::getDirect(nullptr, 0, nullptr, !isAAPCS_VFP);
     }
   }
 
@@ -4698,14 +4709,18 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
   if (Size <= 32) {
     if (getDataLayout().isBigEndian())
       // Return in 32 bit integer integer type (as if loaded by LDR, AAPCS 5.4)
-      return ABIArgInfo::getDirect(llvm::Type::getInt32Ty(getVMContext()));
+      return ABIArgInfo::getDirect(llvm::Type::getInt32Ty(getVMContext()), 0,
+                                   nullptr, !isAAPCS_VFP);
 
     // Return in the smallest viable integer type.
     if (Size <= 8)
-      return ABIArgInfo::getDirect(llvm::Type::getInt8Ty(getVMContext()));
+      return ABIArgInfo::getDirect(llvm::Type::getInt8Ty(getVMContext()), 0,
+                                   nullptr, !isAAPCS_VFP);
     if (Size <= 16)
-      return ABIArgInfo::getDirect(llvm::Type::getInt16Ty(getVMContext()));
-    return ABIArgInfo::getDirect(llvm::Type::getInt32Ty(getVMContext()));
+      return ABIArgInfo::getDirect(llvm::Type::getInt16Ty(getVMContext()), 0,
+                                   nullptr, !isAAPCS_VFP);
+    return ABIArgInfo::getDirect(llvm::Type::getInt32Ty(getVMContext()), 0,
+                                 nullptr, !isAAPCS_VFP);
   }
 
   markAllocatedGPRs(1, 1);

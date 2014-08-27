@@ -139,23 +139,6 @@ static CallingConv getCallingConventionForDecl(const Decl *D, bool IsWindows) {
   return CC_C;
 }
 
-static bool isAAPCSVFP(const CGFunctionInfo &FI, const TargetInfo &Target) {
-  switch (FI.getEffectiveCallingConvention()) {
-  case llvm::CallingConv::C:
-    switch (Target.getTriple().getEnvironment()) {
-    case llvm::Triple::EABIHF:
-    case llvm::Triple::GNUEABIHF:
-      return true;
-    default:
-      return false;
-    }
-  case llvm::CallingConv::ARM_AAPCS_VFP:
-    return true;
-  default:
-    return false;
-  }
-}
-
 /// Arrange the argument and result information for a call to an
 /// unknown C++ non-static member function of the given abstract type.
 /// (Zero value of RD means we don't have any meaningful "this" argument type,
@@ -989,14 +972,11 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
 
     case ABIArgInfo::Extend:
     case ABIArgInfo::Direct: {
-      // If the coerce-to type is a first class aggregate, flatten it.  Either
-      // way is semantically identical, but fast-isel and the optimizer
-      // generally likes scalar values better than FCAs.
-      // We cannot do this for functions using the AAPCS calling convention,
-      // as structures are treated differently by that calling convention.
+      // Fast-isel and the optimizer generally like scalar values better than
+      // FCAs, so we flatten them if this is safe to do for this argument.
       llvm::Type *argType = argAI.getCoerceToType();
       llvm::StructType *st = dyn_cast<llvm::StructType>(argType);
-      if (st && !isAAPCSVFP(FI, getTarget())) {
+      if (st && argAI.isDirect() && argAI.getCanBeFlattened()) {
         for (unsigned i = 0, e = st->getNumElements(); i != e; ++i)
           argTypes.push_back(st->getElementType(i));
       } else {
@@ -1134,7 +1114,7 @@ void ClangToLLVMArgMapping::construct(CodeGenModule &CGM,
     case ABIArgInfo::Direct: {
       // FIXME: handle sseregparm someday...
       llvm::StructType *STy = dyn_cast<llvm::StructType>(AI.getCoerceToType());
-      if (!isAAPCSVFP(FI, CGM.getTarget()) && STy) {
+      if (AI.isDirect() && AI.getCanBeFlattened() && STy) {
         IRArgs.NumberOfArgs = STy->getNumElements();
       } else {
         IRArgs.NumberOfArgs = 1;
@@ -1671,13 +1651,11 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
                           llvm::PointerType::getUnqual(ArgI.getCoerceToType()));
       }
 
-      // If the coerce-to type is a first class aggregate, we flatten it and
-      // pass the elements. Either way is semantically identical, but fast-isel
-      // and the optimizer generally likes scalar values better than FCAs.
-      // We cannot do this for functions using the AAPCS calling convention,
-      // as structures are treated differently by that calling convention.
+      // Fast-isel and the optimizer generally like scalar values better than
+      // FCAs, so we flatten them if this is safe to do for this argument.
       llvm::StructType *STy = dyn_cast<llvm::StructType>(ArgI.getCoerceToType());
-      if (!isAAPCSVFP(FI, getTarget()) && STy && STy->getNumElements() > 1) {
+      if (ArgI.isDirect() && ArgI.getCanBeFlattened() && STy &&
+          STy->getNumElements() > 1) {
         uint64_t SrcSize = CGM.getDataLayout().getTypeAllocSize(STy);
         llvm::Type *DstTy =
           cast<llvm::PointerType>(Ptr->getType())->getElementType();
@@ -2928,14 +2906,11 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
       }
 
-      // If the coerce-to type is a first class aggregate, we flatten it and
-      // pass the elements. Either way is semantically identical, but fast-isel
-      // and the optimizer generally likes scalar values better than FCAs.
-      // We cannot do this for functions using the AAPCS calling convention,
-      // as structures are treated differently by that calling convention.
+      // Fast-isel and the optimizer generally like scalar values better than
+      // FCAs, so we flatten them if this is safe to do for this argument.
       llvm::StructType *STy =
             dyn_cast<llvm::StructType>(ArgInfo.getCoerceToType());
-      if (STy && !isAAPCSVFP(CallInfo, getTarget())) {
+      if (STy && ArgInfo.isDirect() && ArgInfo.getCanBeFlattened()) {
         llvm::Type *SrcTy =
           cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
         uint64_t SrcSize = CGM.getDataLayout().getTypeAllocSize(SrcTy);
