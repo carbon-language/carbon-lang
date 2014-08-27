@@ -50,7 +50,7 @@ bool testExternalASTSource(ExternalASTSource *Source,
 
   CompilerInvocation *Invocation = new CompilerInvocation;
   Invocation->getPreprocessorOpts().addRemappedFile(
-    "test.cc", MemoryBuffer::getMemBuffer(FileContents));
+      "test.cc", MemoryBuffer::getMemBuffer(FileContents).release());
   const char *Args[] = { "test.cc" };
   CompilerInvocation::CreateFromArgs(*Invocation, Args,
                                      Args + array_lengthof(Args),

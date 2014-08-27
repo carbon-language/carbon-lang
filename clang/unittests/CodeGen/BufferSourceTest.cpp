@@ -69,8 +69,9 @@ TEST(BufferSourceTest, EmitCXXGlobalInitFunc) {
     compiler.createSema(clang::TU_Prefix,NULL);
 
     clang::SourceManager &sm = compiler.getSourceManager();
-    sm.setMainFileID(sm.createFileID(
-        llvm::MemoryBuffer::getMemBuffer(TestProgram), clang::SrcMgr::C_User));
+    sm.setMainFileID(
+        sm.createFileID(llvm::MemoryBuffer::getMemBuffer(TestProgram).release(),
+                        clang::SrcMgr::C_User));
 
     clang::ParseAST(compiler.getSema(), false, false);
 }

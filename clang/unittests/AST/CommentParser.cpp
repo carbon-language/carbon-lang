@@ -54,8 +54,8 @@ protected:
 };
 
 FullComment *CommentParserTest::parseString(const char *Source) {
-  MemoryBuffer *Buf = MemoryBuffer::getMemBuffer(Source);
-  FileID File = SourceMgr.createFileID(Buf);
+  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Source);
+  FileID File = SourceMgr.createFileID(Buf.release());
   SourceLocation Begin = SourceMgr.getLocForStartOfFile(File);
 
   Lexer L(Allocator, Diags, Traits, Begin, Source, Source + strlen(Source));

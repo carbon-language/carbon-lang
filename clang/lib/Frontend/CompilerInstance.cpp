@@ -947,11 +947,11 @@ static bool compileModuleImpl(CompilerInstance &ImportingInstance,
     FrontendOpts.Inputs.push_back(
         FrontendInputFile("__inferred_module.map", IK));
 
-    llvm::MemoryBuffer *ModuleMapBuffer =
+    std::unique_ptr<llvm::MemoryBuffer> ModuleMapBuffer =
         llvm::MemoryBuffer::getMemBuffer(InferredModuleMapContent);
     ModuleMapFile = Instance.getFileManager().getVirtualFile(
         "__inferred_module.map", InferredModuleMapContent.size(), 0);
-    SourceMgr.overrideFileContents(ModuleMapFile, ModuleMapBuffer);
+    SourceMgr.overrideFileContents(ModuleMapFile, ModuleMapBuffer.release());
   }
 
   // Construct a module-generating action. Passing through the module map is

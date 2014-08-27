@@ -4919,10 +4919,11 @@ FileID ASTImporter::Import(FileID FromID) {
     // FIXME: We want to re-use the existing MemoryBuffer!
     const llvm::MemoryBuffer *
         FromBuf = Cache->getBuffer(FromContext.getDiagnostics(), FromSM);
-    llvm::MemoryBuffer *ToBuf
+    std::unique_ptr<llvm::MemoryBuffer> ToBuf
       = llvm::MemoryBuffer::getMemBufferCopy(FromBuf->getBuffer(),
                                              FromBuf->getBufferIdentifier());
-    ToID = ToSM.createFileID(ToBuf, FromSLoc.getFile().getFileCharacteristic());
+    ToID = ToSM.createFileID(ToBuf.release(),
+                             FromSLoc.getFile().getFileCharacteristic());
   }
   
   

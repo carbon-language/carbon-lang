@@ -60,8 +60,8 @@ protected:
 
 void CommentLexerTest::lexString(const char *Source,
                                  std::vector<Token> &Toks) {
-  MemoryBuffer *Buf = MemoryBuffer::getMemBuffer(Source);
-  FileID File = SourceMgr.createFileID(Buf);
+  std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Source);
+  FileID File = SourceMgr.createFileID(Buf.release());
   SourceLocation Begin = SourceMgr.getLocForStartOfFile(File);
 
   Lexer L(Allocator, Diags, Traits, Begin, Source, Source + strlen(Source));

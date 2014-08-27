@@ -65,7 +65,8 @@ private:
 TEST(ASTFrontendAction, Sanity) {
   CompilerInvocation *invocation = new CompilerInvocation;
   invocation->getPreprocessorOpts().addRemappedFile(
-    "test.cc", MemoryBuffer::getMemBuffer("int main() { float x; }"));
+      "test.cc",
+      MemoryBuffer::getMemBuffer("int main() { float x; }").release());
   invocation->getFrontendOpts().Inputs.push_back(FrontendInputFile("test.cc",
                                                                    IK_CXX));
   invocation->getFrontendOpts().ProgramAction = frontend::ParseSyntaxOnly;
@@ -84,7 +85,8 @@ TEST(ASTFrontendAction, Sanity) {
 TEST(ASTFrontendAction, IncrementalParsing) {
   CompilerInvocation *invocation = new CompilerInvocation;
   invocation->getPreprocessorOpts().addRemappedFile(
-    "test.cc", MemoryBuffer::getMemBuffer("int main() { float x; }"));
+      "test.cc",
+      MemoryBuffer::getMemBuffer("int main() { float x; }").release());
   invocation->getFrontendOpts().Inputs.push_back(FrontendInputFile("test.cc",
                                                                    IK_CXX));
   invocation->getFrontendOpts().ProgramAction = frontend::ParseSyntaxOnly;
@@ -128,7 +130,8 @@ public:
 TEST(PreprocessorFrontendAction, EndSourceFile) {
   CompilerInvocation *Invocation = new CompilerInvocation;
   Invocation->getPreprocessorOpts().addRemappedFile(
-      "test.cc", MemoryBuffer::getMemBuffer("int main() { float x; }"));
+      "test.cc",
+      MemoryBuffer::getMemBuffer("int main() { float x; }").release());
   Invocation->getFrontendOpts().Inputs.push_back(
       FrontendInputFile("test.cc", IK_CXX));
   Invocation->getFrontendOpts().ProgramAction = frontend::ParseSyntaxOnly;

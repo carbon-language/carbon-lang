@@ -223,8 +223,10 @@ bool ToolInvocation::run() {
       newInvocation(&Diagnostics, *CC1Args));
   for (const auto &It : MappedFileContents) {
     // Inject the code as the given file name into the preprocessor options.
-    auto *Input = llvm::MemoryBuffer::getMemBuffer(It.getValue());
-    Invocation->getPreprocessorOpts().addRemappedFile(It.getKey(), Input);
+    std::unique_ptr<llvm::MemoryBuffer> Input =
+        llvm::MemoryBuffer::getMemBuffer(It.getValue());
+    Invocation->getPreprocessorOpts().addRemappedFile(It.getKey(),
+                                                      Input.release());
   }
   return runInvocation(BinaryName, Compilation.get(), Invocation.release());
 }

@@ -182,10 +182,11 @@ std::string applyAllReplacements(StringRef Code, const Replacements &Replaces) {
       llvm::outs(), &Diagnostics.getDiagnosticOptions()));
   SourceManager SourceMgr(Diagnostics, Files);
   Rewriter Rewrite(SourceMgr, LangOptions());
-  llvm::MemoryBuffer *Buf = llvm::MemoryBuffer::getMemBuffer(Code, "<stdin>");
+  std::unique_ptr<llvm::MemoryBuffer> Buf =
+      llvm::MemoryBuffer::getMemBuffer(Code, "<stdin>");
   const clang::FileEntry *Entry =
       Files.getVirtualFile("<stdin>", Buf->getBufferSize(), 0);
-  SourceMgr.overrideFileContents(Entry, Buf);
+  SourceMgr.overrideFileContents(Entry, Buf.release());
   FileID ID =
       SourceMgr.createFileID(Entry, SourceLocation(), clang::SrcMgr::C_User);
   for (Replacements::const_iterator I = Replaces.begin(), E = Replaces.end();

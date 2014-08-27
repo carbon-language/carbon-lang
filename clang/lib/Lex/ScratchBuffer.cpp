@@ -64,11 +64,12 @@ void ScratchBuffer::AllocScratchBuffer(unsigned RequestLen) {
   if (RequestLen < ScratchBufSize)
     RequestLen = ScratchBufSize;
 
-  llvm::MemoryBuffer *Buf =
-    llvm::MemoryBuffer::getNewMemBuffer(RequestLen, "<scratch space>");
-  FileID FID = SourceMgr.createFileID(Buf);
+  std::unique_ptr<llvm::MemoryBuffer> OwnBuf =
+      llvm::MemoryBuffer::getNewMemBuffer(RequestLen, "<scratch space>");
+  llvm::MemoryBuffer &Buf = *OwnBuf;
+  FileID FID = SourceMgr.createFileID(OwnBuf.release());
   BufferStartLoc = SourceMgr.getLocForStartOfFile(FID);
-  CurBuffer = const_cast<char*>(Buf->getBufferStart());
+  CurBuffer = const_cast<char*>(Buf.getBufferStart());
   BytesUsed = 1;
   CurBuffer[0] = '0';  // Start out with a \0 for cleanliness.
 }

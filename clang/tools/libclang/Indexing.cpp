@@ -575,10 +575,10 @@ static void clang_indexSourceFile_Impl(void *UserData) {
       BufOwner.get());
 
   for (auto &UF : ITUI->unsaved_files) {
-    llvm::MemoryBuffer *MB =
+    std::unique_ptr<llvm::MemoryBuffer> MB =
         llvm::MemoryBuffer::getMemBufferCopy(getContents(UF), UF.Filename);
-    BufOwner->push_back(std::unique_ptr<llvm::MemoryBuffer>(MB));
-    CInvok->getPreprocessorOpts().addRemappedFile(UF.Filename, MB);
+    CInvok->getPreprocessorOpts().addRemappedFile(UF.Filename, MB.get());
+    BufOwner->push_back(std::move(MB));
   }
 
   // Since libclang is primarily used by batch tools dealing with

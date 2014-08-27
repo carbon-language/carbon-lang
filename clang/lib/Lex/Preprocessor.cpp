@@ -399,14 +399,14 @@ bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
     CodeCompletionFile = File;
     CodeCompletionOffset = Position - Buffer->getBufferStart();
 
-    MemoryBuffer *NewBuffer =
+    std::unique_ptr<MemoryBuffer> NewBuffer =
         MemoryBuffer::getNewUninitMemBuffer(Buffer->getBufferSize() + 1,
                                             Buffer->getBufferIdentifier());
     char *NewBuf = const_cast<char*>(NewBuffer->getBufferStart());
     char *NewPos = std::copy(Buffer->getBufferStart(), Position, NewBuf);
     *NewPos = '\0';
     std::copy(Position, Buffer->getBufferEnd(), NewPos+1);
-    SourceMgr.overrideFileContents(File, NewBuffer);
+    SourceMgr.overrideFileContents(File, NewBuffer.release());
   }
 
   return false;
@@ -503,10 +503,10 @@ void Preprocessor::EnterMainSourceFile() {
   }
 
   // Preprocess Predefines to populate the initial preprocessor state.
-  llvm::MemoryBuffer *SB =
+  std::unique_ptr<llvm::MemoryBuffer> SB =
     llvm::MemoryBuffer::getMemBufferCopy(Predefines, "<built-in>");
   assert(SB && "Cannot create predefined source buffer");
-  FileID FID = SourceMgr.createFileID(SB);
+  FileID FID = SourceMgr.createFileID(SB.release());
   assert(!FID.isInvalid() && "Could not create FileID for predefines?");
   setPredefinesFileID(FID);
 

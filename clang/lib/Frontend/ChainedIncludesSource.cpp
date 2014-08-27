@@ -176,8 +176,7 @@ IntrusiveRefCntPtr<ExternalSemaSource> clang::createChainedIncludesSource(
       // TODO: Pass through the existing MemoryBuffer instances instead of
       // allocating new ones.
       for (auto &SB : SerialBufs)
-        Bufs.push_back(std::unique_ptr<llvm::MemoryBuffer>(
-            llvm::MemoryBuffer::getMemBuffer(SB->getBuffer())));
+        Bufs.push_back(llvm::MemoryBuffer::getMemBuffer(SB->getBuffer()));
       std::string pchName = includes[i-1];
       llvm::raw_string_ostream os(pchName);
       os << ".pch" << i-1;
@@ -198,8 +197,7 @@ IntrusiveRefCntPtr<ExternalSemaSource> clang::createChainedIncludesSource(
 
     ParseAST(Clang->getSema());
     Clang->getDiagnosticClient().EndSourceFile();
-    SerialBufs.push_back(std::unique_ptr<llvm::MemoryBuffer>(
-        llvm::MemoryBuffer::getMemBufferCopy(OS.str())));
+    SerialBufs.push_back(llvm::MemoryBuffer::getMemBufferCopy(OS.str()));
     source->CIs.push_back(Clang.release());
   }
 
