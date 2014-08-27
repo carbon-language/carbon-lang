@@ -99,7 +99,7 @@ public:
   // implicit conversion operator to ArrayRef.
   operator ArrayRef<EltTy>() const {
     if (Val.isNull())
-      return ArrayRef<EltTy>();
+      return None;
     if (Val.template is<EltTy>())
       return *Val.getAddrOfPtr1();
     return *Val.template get<VecTy*>();

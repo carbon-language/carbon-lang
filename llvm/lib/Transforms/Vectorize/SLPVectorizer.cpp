@@ -3225,8 +3225,7 @@ public:
     unsigned i = 0;
 
     for (; i < NumReducedVals - ReduxWidth + 1; i += ReduxWidth) {
-      ArrayRef<Value *> ValsToReduce(&ReducedVals[i], ReduxWidth);
-      V.buildTree(ValsToReduce, ReductionOps);
+      V.buildTree(makeArrayRef(&ReducedVals[i], ReduxWidth), ReductionOps);
 
       // Estimate cost.
       int Cost = V.getTreeCost() + getReductionCost(TTI, ReducedVals[i]);
@@ -3418,8 +3417,7 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
       // Try to vectorize them.
       unsigned NumElts = (SameTypeIt - IncIt);
       DEBUG(errs() << "SLP: Trying to vectorize starting at PHIs (" << NumElts << ")\n");
-      if (NumElts > 1 &&
-          tryToVectorizeList(ArrayRef<Value *>(IncIt, NumElts), R)) {
+      if (NumElts > 1 && tryToVectorizeList(makeArrayRef(IncIt, NumElts), R)) {
         // Success start over because instructions might have been changed.
         HaveVectorizedPhiNodes = true;
         Changed = true;
@@ -3561,8 +3559,8 @@ bool SLPVectorizer::vectorizeStoreChains(BoUpSLP &R) {
     // Process the stores in chunks of 16.
     for (unsigned CI = 0, CE = it->second.size(); CI < CE; CI+=16) {
       unsigned Len = std::min<unsigned>(CE - CI, 16);
-      ArrayRef<StoreInst *> Chunk(&it->second[CI], Len);
-      Changed |= vectorizeStores(Chunk, -SLPCostThreshold, R);
+      Changed |= vectorizeStores(makeArrayRef(&it->second[CI], Len),
+                                 -SLPCostThreshold, R);
     }
   }
   return Changed;

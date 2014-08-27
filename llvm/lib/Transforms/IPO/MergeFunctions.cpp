@@ -1300,11 +1300,11 @@ static Value *createCast(IRBuilder<false> &Builder, Value *V, Type *DestTy) {
     Value *Result = UndefValue::get(DestTy);
     for (unsigned int I = 0, E = SrcTy->getStructNumElements(); I < E; ++I) {
       Value *Element = createCast(
-          Builder, Builder.CreateExtractValue(V, ArrayRef<unsigned int>(I)),
+          Builder, Builder.CreateExtractValue(V, makeArrayRef(I)),
           DestTy->getStructElementType(I));
 
       Result =
-          Builder.CreateInsertValue(Result, Element, ArrayRef<unsigned int>(I));
+          Builder.CreateInsertValue(Result, Element, makeArrayRef(I));
     }
     return Result;
   }

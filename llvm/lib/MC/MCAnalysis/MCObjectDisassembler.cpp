@@ -52,11 +52,11 @@ uint64_t MCObjectDisassembler::getEntrypoint() {
 }
 
 ArrayRef<uint64_t> MCObjectDisassembler::getStaticInitFunctions() {
-  return ArrayRef<uint64_t>();
+  return None;
 }
 
 ArrayRef<uint64_t> MCObjectDisassembler::getStaticExitFunctions() {
-  return ArrayRef<uint64_t>();
+  return None;
 }
 
 MemoryObject *MCObjectDisassembler::getRegionFor(uint64_t Addr) {
@@ -559,7 +559,7 @@ ArrayRef<uint64_t> MCMachOObjectDisassembler::getStaticInitFunctions() {
 
   size_t EntrySize = 8;
   size_t EntryCount = ModInitContents.size() / EntrySize;
-  return ArrayRef<uint64_t>(
+  return makeArrayRef(
       reinterpret_cast<const uint64_t *>(ModInitContents.data()), EntryCount);
 }
 
@@ -569,6 +569,6 @@ ArrayRef<uint64_t> MCMachOObjectDisassembler::getStaticExitFunctions() {
 
   size_t EntrySize = 8;
   size_t EntryCount = ModExitContents.size() / EntrySize;
-  return ArrayRef<uint64_t>(
+  return makeArrayRef(
       reinterpret_cast<const uint64_t *>(ModExitContents.data()), EntryCount);
 }

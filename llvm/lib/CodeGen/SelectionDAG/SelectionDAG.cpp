@@ -5102,7 +5102,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, SDVTList VTList,
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, SDVTList VTList) {
-  return getNode(Opcode, DL, VTList, ArrayRef<SDValue>());
+  return getNode(Opcode, DL, VTList, None);
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, SDVTList VTList,

@@ -435,7 +435,7 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
   DFSanSetLabelFnTy = FunctionType::get(Type::getVoidTy(*Ctx),
                                         DFSanSetLabelArgs, /*isVarArg=*/false);
   DFSanNonzeroLabelFnTy = FunctionType::get(
-      Type::getVoidTy(*Ctx), ArrayRef<Type *>(), /*isVarArg=*/false);
+      Type::getVoidTy(*Ctx), None, /*isVarArg=*/false);
 
   if (GetArgTLSPtr) {
     Type *ArgTLSTy = ArrayType::get(ShadowTy, 64);

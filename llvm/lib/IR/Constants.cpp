@@ -2541,7 +2541,7 @@ Constant *ConstantDataArray::getString(LLVMContext &Context,
                                        StringRef Str, bool AddNull) {
   if (!AddNull) {
     const uint8_t *Data = reinterpret_cast<const uint8_t *>(Str.data());
-    return get(Context, ArrayRef<uint8_t>(const_cast<uint8_t *>(Data),
+    return get(Context, makeArrayRef(const_cast<uint8_t *>(Data),
                Str.size()));
   }
 

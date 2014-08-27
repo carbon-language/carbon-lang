@@ -481,8 +481,7 @@ bool ThreadSanitizer::instrumentAtomic(Instruction *I) {
     Type *PtrTy = Ty->getPointerTo();
     Value *Args[] = {IRB.CreatePointerCast(Addr, PtrTy),
                      createOrdering(&IRB, LI->getOrdering())};
-    CallInst *C = CallInst::Create(TsanAtomicLoad[Idx],
-                                   ArrayRef<Value*>(Args));
+    CallInst *C = CallInst::Create(TsanAtomicLoad[Idx], Args);
     ReplaceInstWithInst(I, C);
 
   } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
@@ -497,8 +496,7 @@ bool ThreadSanitizer::instrumentAtomic(Instruction *I) {
     Value *Args[] = {IRB.CreatePointerCast(Addr, PtrTy),
                      IRB.CreateIntCast(SI->getValueOperand(), Ty, false),
                      createOrdering(&IRB, SI->getOrdering())};
-    CallInst *C = CallInst::Create(TsanAtomicStore[Idx],
-                                   ArrayRef<Value*>(Args));
+    CallInst *C = CallInst::Create(TsanAtomicStore[Idx], Args);
     ReplaceInstWithInst(I, C);
   } else if (AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(I)) {
     Value *Addr = RMWI->getPointerOperand();
@@ -515,7 +513,7 @@ bool ThreadSanitizer::instrumentAtomic(Instruction *I) {
     Value *Args[] = {IRB.CreatePointerCast(Addr, PtrTy),
                      IRB.CreateIntCast(RMWI->getValOperand(), Ty, false),
                      createOrdering(&IRB, RMWI->getOrdering())};
-    CallInst *C = CallInst::Create(F, ArrayRef<Value*>(Args));
+    CallInst *C = CallInst::Create(F, Args);
     ReplaceInstWithInst(I, C);
   } else if (AtomicCmpXchgInst *CASI = dyn_cast<AtomicCmpXchgInst>(I)) {
     Value *Addr = CASI->getPointerOperand();
@@ -543,7 +541,7 @@ bool ThreadSanitizer::instrumentAtomic(Instruction *I) {
     Value *Args[] = {createOrdering(&IRB, FI->getOrdering())};
     Function *F = FI->getSynchScope() == SingleThread ?
         TsanAtomicSignalFence : TsanAtomicThreadFence;
-    CallInst *C = CallInst::Create(F, ArrayRef<Value*>(Args));
+    CallInst *C = CallInst::Create(F, Args);
     ReplaceInstWithInst(I, C);
   }
   return true;

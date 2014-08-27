@@ -208,11 +208,11 @@ void MD5::update(ArrayRef<uint8_t> Data) {
     memcpy(&buffer[used], Ptr, free);
     Ptr = Ptr + free;
     Size -= free;
-    body(ArrayRef<uint8_t>(buffer, 64));
+    body(makeArrayRef(buffer, 64));
   }
 
   if (Size >= 64) {
-    Ptr = body(ArrayRef<uint8_t>(Ptr, Size & ~(unsigned long) 0x3f));
+    Ptr = body(makeArrayRef(Ptr, Size & ~(unsigned long) 0x3f));
     Size &= 0x3f;
   }
 
@@ -240,7 +240,7 @@ void MD5::final(MD5Result &result) {
 
   if (free < 8) {
     memset(&buffer[used], 0, free);
-    body(ArrayRef<uint8_t>(buffer, 64));
+    body(makeArrayRef(buffer, 64));
     used = 0;
     free = 64;
   }
@@ -257,7 +257,7 @@ void MD5::final(MD5Result &result) {
   buffer[62] = hi >> 16;
   buffer[63] = hi >> 24;
 
-  body(ArrayRef<uint8_t>(buffer, 64));
+  body(makeArrayRef(buffer, 64));
 
   result[0] = a;
   result[1] = a >> 8;

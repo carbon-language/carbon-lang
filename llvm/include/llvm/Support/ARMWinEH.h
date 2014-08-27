@@ -350,7 +350,7 @@ struct ExceptionDataRecord {
   ArrayRef<support::ulittle32_t> EpilogueScopes() const {
     assert(E() == 0 && "epilogue scopes are only present when the E bit is 0");
     size_t Offset = HeaderWords(*this);
-    return ArrayRef<support::ulittle32_t>(&Data[Offset], EpilogueCount());
+    return makeArrayRef(&Data[Offset], EpilogueCount());
   }
 
   ArrayRef<support::ulittle8_t> UnwindByteCode() const {
@@ -358,8 +358,7 @@ struct ExceptionDataRecord {
                         + (E() ? 0 :  EpilogueCount());
     const support::ulittle8_t *ByteCode =
       reinterpret_cast<const support::ulittle8_t *>(&Data[Offset]);
-    return ArrayRef<support::ulittle8_t>(ByteCode,
-                                         CodeWords() * sizeof(uint32_t));
+    return makeArrayRef(ByteCode, CodeWords() * sizeof(uint32_t));
   }
 
   uint32_t ExceptionHandlerRVA() const {

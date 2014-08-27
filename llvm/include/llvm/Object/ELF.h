@@ -540,7 +540,7 @@ ELFFile<ELFT>::getSectionContents(const Elf_Shdr *Sec) const {
   if (Sec->sh_offset + Sec->sh_size > Buf.size())
     return object_error::parse_failed;
   const uint8_t *Start = base() + Sec->sh_offset;
-  return ArrayRef<uint8_t>(Start, Sec->sh_size);
+  return makeArrayRef(Start, Sec->sh_size);
 }
 
 template <class ELFT>

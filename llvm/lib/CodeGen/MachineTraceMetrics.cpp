@@ -135,8 +135,7 @@ MachineTraceMetrics::getProcResourceCycles(unsigned MBBNum) const {
          "getResources() must be called before getProcResourceCycles()");
   unsigned PRKinds = SchedModel.getNumProcResourceKinds();
   assert((MBBNum+1) * PRKinds <= ProcResourceCycles.size());
-  return ArrayRef<unsigned>(ProcResourceCycles.data() + MBBNum * PRKinds,
-                            PRKinds);
+  return makeArrayRef(ProcResourceCycles.data() + MBBNum * PRKinds, PRKinds);
 }
 
 
@@ -256,8 +255,7 @@ MachineTraceMetrics::Ensemble::
 getProcResourceDepths(unsigned MBBNum) const {
   unsigned PRKinds = MTM.SchedModel.getNumProcResourceKinds();
   assert((MBBNum+1) * PRKinds <= ProcResourceDepths.size());
-  return ArrayRef<unsigned>(ProcResourceDepths.data() + MBBNum * PRKinds,
-                            PRKinds);
+  return makeArrayRef(ProcResourceDepths.data() + MBBNum * PRKinds, PRKinds);
 }
 
 /// Get an array of processor resource heights for MBB. Indexed by processor
@@ -270,8 +268,7 @@ MachineTraceMetrics::Ensemble::
 getProcResourceHeights(unsigned MBBNum) const {
   unsigned PRKinds = MTM.SchedModel.getNumProcResourceKinds();
   assert((MBBNum+1) * PRKinds <= ProcResourceHeights.size());
-  return ArrayRef<unsigned>(ProcResourceHeights.data() + MBBNum * PRKinds,
-                            PRKinds);
+  return makeArrayRef(ProcResourceHeights.data() + MBBNum * PRKinds, PRKinds);
 }
 
 //===----------------------------------------------------------------------===//

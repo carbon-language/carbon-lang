@@ -587,8 +587,7 @@ public:
 
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
                            BasicBlock *UnwindDest, const Twine &Name = "") {
-    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest,
-                                     ArrayRef<Value *>()),
+    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest, None),
                   Name);
   }
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,

@@ -680,7 +680,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
               CI,
               Builder->CreateShuffleVector(
                   Vec, Undef, ConstantDataVector::get(
-                                  II->getContext(), ArrayRef<uint32_t>(Mask))));
+                                  II->getContext(), makeArrayRef(Mask))));
 
         } else if (auto Source =
                        dyn_cast<IntrinsicInst>(II->getArgOperand(0))) {

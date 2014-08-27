@@ -885,8 +885,7 @@ static void AppendMDNodeToInstForPtr(unsigned NodeId,
                                       OldSeq),
                    SequenceToMDString(Inst->getContext(),
                                       NewSeq)};
-  Node = MDNode::get(Inst->getContext(),
-                     ArrayRef<Value*>(tmp, 3));
+  Node = MDNode::get(Inst->getContext(), tmp);
 
   Inst->setMetadata(NodeId, Node);
 }
@@ -906,8 +905,7 @@ static void GenerateARCBBEntranceAnnotation(const char *Name, BasicBlock *BB,
   Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
   Type *I8XX = PointerType::getUnqual(I8X);
   Type *Params[] = {I8XX, I8XX};
-  FunctionType *FTy = FunctionType::get(Type::getVoidTy(C),
-                                        ArrayRef<Type*>(Params, 2),
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(C), Params,
                                         /*isVarArg=*/false);
   Constant *Callee = M->getOrInsertFunction(Name, FTy);
 
@@ -949,8 +947,7 @@ static void GenerateARCBBTerminatorAnnotation(const char *Name, BasicBlock *BB,
   Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
   Type *I8XX = PointerType::getUnqual(I8X);
   Type *Params[] = {I8XX, I8XX};
-  FunctionType *FTy = FunctionType::get(Type::getVoidTy(C),
-                                        ArrayRef<Type*>(Params, 2),
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(C), Params,
                                         /*isVarArg=*/false);
   Constant *Callee = M->getOrInsertFunction(Name, FTy);
 

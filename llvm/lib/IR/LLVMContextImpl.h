@@ -150,7 +150,7 @@ struct FunctionTypeKeyInfo {
       ReturnType(R), Params(P), isVarArg(V) {}
     KeyTy(const FunctionType* FT) :
       ReturnType(FT->getReturnType()),
-      Params(ArrayRef<Type*>(FT->param_begin(), FT->param_end())),
+      Params(makeArrayRef(FT->param_begin(), FT->param_end())),
       isVarArg(FT->isVarArg()) {}
     bool operator==(const KeyTy& that) const {
       if (ReturnType != that.ReturnType)

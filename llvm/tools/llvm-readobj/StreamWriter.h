@@ -214,8 +214,8 @@ public:
   }
 
   void printBinary(StringRef Label, StringRef Str, ArrayRef<char> Value) {
-    ArrayRef<uint8_t> V(reinterpret_cast<const uint8_t*>(Value.data()),
-                        Value.size());
+    auto V = makeArrayRef(reinterpret_cast<const uint8_t*>(Value.data()),
+                          Value.size());
     printBinaryImpl(Label, Str, V, false);
   }
 
@@ -224,20 +224,20 @@ public:
   }
 
   void printBinary(StringRef Label, ArrayRef<char> Value) {
-    ArrayRef<uint8_t> V(reinterpret_cast<const uint8_t*>(Value.data()),
-                        Value.size());
+    auto V = makeArrayRef(reinterpret_cast<const uint8_t*>(Value.data()),
+                          Value.size());
     printBinaryImpl(Label, StringRef(), V, false);
   }
 
   void printBinary(StringRef Label, StringRef Value) {
-    ArrayRef<uint8_t> V(reinterpret_cast<const uint8_t*>(Value.data()),
-                        Value.size());
+    auto V = makeArrayRef(reinterpret_cast<const uint8_t*>(Value.data()),
+                          Value.size());
     printBinaryImpl(Label, StringRef(), V, false);
   }
 
   void printBinaryBlock(StringRef Label, StringRef Value) {
-    ArrayRef<uint8_t> V(reinterpret_cast<const uint8_t*>(Value.data()),
-                        Value.size());
+    auto V = makeArrayRef(reinterpret_cast<const uint8_t*>(Value.data()),
+                          Value.size());
     printBinaryImpl(Label, StringRef(), V, true);
   }
 

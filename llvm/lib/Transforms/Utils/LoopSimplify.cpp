@@ -173,8 +173,7 @@ static BasicBlock *rewriteLoopExitBlock(Loop *L, BasicBlock *Exit, Pass *PP) {
 
   if (Exit->isLandingPad()) {
     SmallVector<BasicBlock*, 2> NewBBs;
-    SplitLandingPadPredecessors(Exit, ArrayRef<BasicBlock*>(&LoopBlocks[0],
-                                                            LoopBlocks.size()),
+    SplitLandingPadPredecessors(Exit, LoopBlocks,
                                 ".loopexit", ".nonloopexit",
                                 PP, NewBBs);
     NewExitBB = NewBBs[0];

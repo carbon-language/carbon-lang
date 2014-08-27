@@ -42,8 +42,7 @@ Value *llvm::EmitStrLen(Value *Ptr, IRBuilder<> &B, const DataLayout *TD,
   AttributeSet AS[2];
   AS[0] = AttributeSet::get(M->getContext(), 1, Attribute::NoCapture);
   Attribute::AttrKind AVs[2] = { Attribute::ReadOnly, Attribute::NoUnwind };
-  AS[1] = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex,
-                            ArrayRef<Attribute::AttrKind>(AVs, 2));
+  AS[1] = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex, AVs);
 
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   Constant *StrLen = M->getOrInsertFunction("strlen",
@@ -71,8 +70,7 @@ Value *llvm::EmitStrNLen(Value *Ptr, Value *MaxLen, IRBuilder<> &B,
   AttributeSet AS[2];
   AS[0] = AttributeSet::get(M->getContext(), 1, Attribute::NoCapture);
   Attribute::AttrKind AVs[2] = { Attribute::ReadOnly, Attribute::NoUnwind };
-  AS[1] = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex,
-                            ArrayRef<Attribute::AttrKind>(AVs, 2));
+  AS[1] = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex, AVs);
 
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   Constant *StrNLen = M->getOrInsertFunction("strnlen",
@@ -100,8 +98,7 @@ Value *llvm::EmitStrChr(Value *Ptr, char C, IRBuilder<> &B,
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   Attribute::AttrKind AVs[2] = { Attribute::ReadOnly, Attribute::NoUnwind };
   AttributeSet AS =
-    AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex,
-                      ArrayRef<Attribute::AttrKind>(AVs, 2));
+    AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex, AVs);
 
   Type *I8Ptr = B.getInt8PtrTy();
   Type *I32Ty = B.getInt32Ty();
@@ -128,8 +125,7 @@ Value *llvm::EmitStrNCmp(Value *Ptr1, Value *Ptr2, Value *Len,
   AS[0] = AttributeSet::get(M->getContext(), 1, Attribute::NoCapture);
   AS[1] = AttributeSet::get(M->getContext(), 2, Attribute::NoCapture);
   Attribute::AttrKind AVs[2] = { Attribute::ReadOnly, Attribute::NoUnwind };
-  AS[2] = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex,
-                            ArrayRef<Attribute::AttrKind>(AVs, 2));
+  AS[2] = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex, AVs);
 
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   Value *StrNCmp = M->getOrInsertFunction("strncmp",
@@ -238,8 +234,7 @@ Value *llvm::EmitMemChr(Value *Ptr, Value *Val,
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS;
   Attribute::AttrKind AVs[2] = { Attribute::ReadOnly, Attribute::NoUnwind };
-  AS = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex,
-                         ArrayRef<Attribute::AttrKind>(AVs, 2));
+  AS = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex, AVs);
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   Value *MemChr = M->getOrInsertFunction("memchr",
                                          AttributeSet::get(M->getContext(), AS),
@@ -268,8 +263,7 @@ Value *llvm::EmitMemCmp(Value *Ptr1, Value *Ptr2,
   AS[0] = AttributeSet::get(M->getContext(), 1, Attribute::NoCapture);
   AS[1] = AttributeSet::get(M->getContext(), 2, Attribute::NoCapture);
   Attribute::AttrKind AVs[2] = { Attribute::ReadOnly, Attribute::NoUnwind };
-  AS[2] = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex,
-                            ArrayRef<Attribute::AttrKind>(AVs, 2));
+  AS[2] = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex, AVs);
 
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   Value *MemCmp = M->getOrInsertFunction("memcmp",

@@ -317,8 +317,7 @@ static void CloneAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap) {
   DenseMap<const MDNode *, TrackingVH<MDNode> > MDMap;
   for (SetVector<const MDNode *>::iterator I = MD.begin(), IE = MD.end();
        I != IE; ++I) {
-    MDNode *Dummy = MDNode::getTemporary(CalledFunc->getContext(),
-                                         ArrayRef<Value*>());
+    MDNode *Dummy = MDNode::getTemporary(CalledFunc->getContext(), None);
     DummyNodes.push_back(Dummy);
     MDMap[*I] = Dummy;
   }

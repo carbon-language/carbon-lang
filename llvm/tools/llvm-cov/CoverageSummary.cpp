@@ -88,5 +88,5 @@ FileCoverageSummary CoverageSummary::getCombinedFileSummaries() {
       "TOTAL", RegionCoverageInfo(CoveredRegions, NumRegions),
       LineCoverageInfo(CoveredLines, NonCodeLines, NumLines),
       FunctionCoverageInfo(NumFunctionsCovered, NumFunctions),
-      ArrayRef<FunctionCoverageSummary>());
+      None);
 }

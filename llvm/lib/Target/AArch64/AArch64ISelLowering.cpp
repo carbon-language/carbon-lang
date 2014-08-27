@@ -7626,7 +7626,7 @@ static SDValue performPostLD1Combine(SDNode *N,
     Ops.push_back(Inc);
 
     EVT Tys[3] = { VT, MVT::i64, MVT::Other };
-    SDVTList SDTys = DAG.getVTList(ArrayRef<EVT>(Tys, 3));
+    SDVTList SDTys = DAG.getVTList(Tys);
     unsigned NewOp = IsLaneOp ? AArch64ISD::LD1LANEpost : AArch64ISD::LD1DUPpost;
     SDValue UpdN = DAG.getMemIntrinsicNode(NewOp, SDLoc(N), SDTys, Ops,
                                            MemVT,
@@ -7756,7 +7756,7 @@ static SDValue performNEONPostLDSTCombine(SDNode *N,
       Tys[n] = VecTy;
     Tys[n++] = MVT::i64;  // Type of write back register
     Tys[n] = MVT::Other;  // Type of the chain
-    SDVTList SDTys = DAG.getVTList(ArrayRef<EVT>(Tys, NumResultVecs + 2));
+    SDVTList SDTys = DAG.getVTList(makeArrayRef(Tys, NumResultVecs + 2));
 
     MemIntrinsicSDNode *MemInt = cast<MemIntrinsicSDNode>(N);
     SDValue UpdN = DAG.getMemIntrinsicNode(NewOpc, SDLoc(N), SDTys, Ops,

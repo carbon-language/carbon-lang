@@ -85,8 +85,7 @@ bool AArch64StorePairSuppress::shouldAddSTPToBlock(const MachineBasicBlock *BB) 
 
   // If a subtarget does not define resources for STPQi, bail here.
   if (SCDesc->isValid() && !SCDesc->isVariant()) {
-    unsigned ResLenWithSTP = BBTrace.getResourceLength(
-        ArrayRef<const MachineBasicBlock *>(), SCDesc);
+    unsigned ResLenWithSTP = BBTrace.getResourceLength(None, SCDesc);
     if (ResLenWithSTP > ResLength) {
       DEBUG(dbgs() << "  Suppress STP in BB: " << BB->getNumber()
                    << " resources " << ResLength << " -> " << ResLenWithSTP

@@ -967,14 +967,12 @@ void RAGreedy::addThroughConstraints(InterferenceCache::Cursor Intf,
       BCS[B].Exit = SpillPlacement::PrefSpill;
 
     if (++B == GroupSize) {
-      ArrayRef<SpillPlacement::BlockConstraint> Array(BCS, B);
-      SpillPlacer->addConstraints(Array);
+      SpillPlacer->addConstraints(makeArrayRef(BCS, B));
       B = 0;
     }
   }
 
-  ArrayRef<SpillPlacement::BlockConstraint> Array(BCS, B);
-  SpillPlacer->addConstraints(Array);
+  SpillPlacer->addConstraints(makeArrayRef(BCS, B));
   SpillPlacer->addLinks(makeArrayRef(TBS, T));
 }
 
@@ -1013,7 +1011,7 @@ void RAGreedy::growRegion(GlobalSplitCandidate &Cand) {
 
     // Compute through constraints from the interference, or assume that all
     // through blocks prefer spilling when forming compact regions.
-    ArrayRef<unsigned> NewBlocks = makeArrayRef(ActiveBlocks).slice(AddedTo);
+    auto NewBlocks = makeArrayRef(ActiveBlocks).slice(AddedTo);
     if (Cand.PhysReg)
       addThroughConstraints(Cand.Intf, NewBlocks);
     else

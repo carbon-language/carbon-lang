@@ -105,8 +105,8 @@ unsigned StringRef::edit_distance(llvm::StringRef Other,
                                   bool AllowReplacements,
                                   unsigned MaxEditDistance) const {
   return llvm::ComputeEditDistance(
-      llvm::ArrayRef<char>(data(), size()),
-      llvm::ArrayRef<char>(Other.data(), Other.size()),
+      makeArrayRef(data(), size()),
+      makeArrayRef(Other.data(), Other.size()),
       AllowReplacements, MaxEditDistance);
 }
 

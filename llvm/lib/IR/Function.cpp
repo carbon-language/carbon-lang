@@ -692,7 +692,7 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
     assert(D.Struct_NumElements <= 5 && "Can't handle this yet");
     for (unsigned i = 0, e = D.Struct_NumElements; i != e; ++i)
       Elts[i] = DecodeFixedType(Infos, Tys, Context);
-    return StructType::get(Context, ArrayRef<Type*>(Elts,D.Struct_NumElements));
+    return StructType::get(Context, makeArrayRef(Elts,D.Struct_NumElements));
   }
 
   case IITDescriptor::Argument:

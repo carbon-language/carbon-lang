@@ -737,11 +737,11 @@ GlobalVariable *GCOVProfiler::buildEdgeLookupTable(
     Edge += Successors;
   }
 
-  ArrayRef<Constant*> V(&EdgeTable[0], TableSize);
   GlobalVariable *EdgeTableGV =
       new GlobalVariable(
           *M, EdgeTableTy, true, GlobalValue::InternalLinkage,
-          ConstantArray::get(EdgeTableTy, V),
+          ConstantArray::get(EdgeTableTy,
+                             makeArrayRef(&EdgeTable[0],TableSize)),
           "__llvm_gcda_edge_table");
   EdgeTableGV->setUnnamedAddr(true);
   return EdgeTableGV;

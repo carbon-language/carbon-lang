@@ -185,7 +185,7 @@ public:
   /// convenience method for passes to do so.
   void dropUnknownMetadata(ArrayRef<unsigned> KnownIDs);
   void dropUnknownMetadata() {
-    return dropUnknownMetadata(ArrayRef<unsigned>());
+    return dropUnknownMetadata(None);
   }
   void dropUnknownMetadata(unsigned ID1) {
     return dropUnknownMetadata(makeArrayRef(ID1));

@@ -1010,7 +1010,7 @@ void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
   }
 
   Constant *Ptr = Operands[0];
-  ArrayRef<Constant *> Indices(Operands.begin() + 1, Operands.end());
+  auto Indices = makeArrayRef(Operands.begin() + 1, Operands.end());
   markConstant(&I, ConstantExpr::getGetElementPtr(Ptr, Indices));
 }
 

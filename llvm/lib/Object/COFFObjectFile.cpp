@@ -783,8 +783,7 @@ ArrayRef<uint8_t> COFFObjectFile::getSymbolAuxData(
          == 0 && "Aux Symbol data did not point to the beginning of a symbol");
 # endif
   }
-  return ArrayRef<uint8_t>(Aux,
-                           Symbol->NumberOfAuxSymbols * sizeof(coff_symbol));
+  return makeArrayRef(Aux, Symbol->NumberOfAuxSymbols * sizeof(coff_symbol));
 }
 
 std::error_code COFFObjectFile::getSectionName(const coff_section *Sec,
@@ -825,8 +824,8 @@ COFFObjectFile::getSectionContents(const coff_section *Sec,
   uintptr_t ConEnd = ConStart + Sec->SizeOfRawData;
   if (ConEnd > uintptr_t(Data.getBufferEnd()))
     return object_error::parse_failed;
-  Res = ArrayRef<uint8_t>(reinterpret_cast<const unsigned char*>(ConStart),
-                          Sec->SizeOfRawData);
+  Res = makeArrayRef(reinterpret_cast<const uint8_t*>(ConStart),
+                     Sec->SizeOfRawData);
   return object_error::success;
 }
 

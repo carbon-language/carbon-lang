@@ -614,7 +614,7 @@ TEST(APIntTest, arrayAccess) {
     0x7E7FFA5EADD8846ULL,
     0x305F341CA00B613DULL
   };
-  APInt A2(integerPartWidth*4, ArrayRef<integerPart>(E2, 4));
+  APInt A2(integerPartWidth*4, E2);
   for (unsigned i = 0; i < 4; ++i) {
     for (unsigned j = 0; j < integerPartWidth; ++j) {
       EXPECT_EQ(bool(E2[i] & (1ULL << j)),
@@ -653,17 +653,17 @@ TEST(APIntTest, nearestLogBase2) {
 
   // Test round up.
   integerPart I4[4] = {0x0, 0xF, 0x18, 0x0};
-  APInt A4(integerPartWidth*4, ArrayRef<integerPart>(I4, 4));
+  APInt A4(integerPartWidth*4, I4);
   EXPECT_EQ(A4.nearestLogBase2(), A4.ceilLogBase2());
 
   // Test round down.
   integerPart I5[4] = {0x0, 0xF, 0x10, 0x0};
-  APInt A5(integerPartWidth*4, ArrayRef<integerPart>(I5, 4));
+  APInt A5(integerPartWidth*4, I5);
   EXPECT_EQ(A5.nearestLogBase2(), A5.logBase2());
 
   // Test ties round up.
   uint64_t I6[4] = {0x0, 0x0, 0x0, 0x18};
-  APInt A6(integerPartWidth*4, ArrayRef<integerPart>(I6, 4));
+  APInt A6(integerPartWidth*4, I6);
   EXPECT_EQ(A6.nearestLogBase2(), A6.ceilLogBase2());
 
   // Test BitWidth == 1 special cases.

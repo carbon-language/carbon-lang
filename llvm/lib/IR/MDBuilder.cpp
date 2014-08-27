@@ -62,7 +62,7 @@ MDNode *MDBuilder::createRange(const APInt &Lo, const APInt &Hi) {
 
 MDNode *MDBuilder::createAnonymousAARoot(StringRef Name, MDNode *Extra) {
   // To ensure uniqueness the root node is self-referential.
-  MDNode *Dummy = MDNode::getTemporary(Context, ArrayRef<Value*>());
+  MDNode *Dummy = MDNode::getTemporary(Context, None);
 
   SmallVector<Value *, 3> Args(1, Dummy);
   if (Extra)

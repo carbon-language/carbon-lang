@@ -1515,14 +1515,14 @@ ArrayRef<char>
 MachOObjectFile::getSectionRawName(DataRefImpl Sec) const {
   const section_base *Base =
     reinterpret_cast<const section_base *>(Sections[Sec.d.a]);
-  return ArrayRef<char>(Base->sectname);
+  return makeArrayRef(Base->sectname);
 }
 
 ArrayRef<char>
 MachOObjectFile::getSectionRawFinalSegmentName(DataRefImpl Sec) const {
   const section_base *Base =
     reinterpret_cast<const section_base *>(Sections[Sec.d.a]);
-  return ArrayRef<char>(Base->segname);
+  return makeArrayRef(Base->segname);
 }
 
 bool

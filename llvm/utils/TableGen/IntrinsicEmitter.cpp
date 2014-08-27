@@ -680,8 +680,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
 
   OS << "    }\n";
   OS << "  }\n";
-  OS << "  return AttributeSet::get(C, ArrayRef<AttributeSet>(AS, "
-             "NumAttrs));\n";
+  OS << "  return AttributeSet::get(C, makeArrayRef(AS, NumAttrs));\n";
   OS << "}\n";
   OS << "#endif // GET_INTRINSIC_ATTRIBUTES\n\n";
 }
