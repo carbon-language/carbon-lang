@@ -56,5 +56,5 @@ attributes #1 = { nounwind readnone }
 !15 = metadata !{i32 1, i32 0, metadata !4, null}
 !16 = metadata !{i32 2, i32 0, metadata !4, null}
 !17 = metadata !{i32 3, i32 0, metadata !18, null}
-!18 = metadata !{i32 786443, metadata !11, metadata !10} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/blaikie/dev/scratch/list0.c]
+!18 = metadata !{i32 786443, metadata !11, metadata !10, i32 0} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/blaikie/dev/scratch/list0.c]
 !19 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
