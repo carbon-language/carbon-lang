@@ -32,7 +32,6 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamFile.h"
-#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Host/Socket.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -148,21 +147,6 @@ dump_available_platforms (FILE *output_file)
         // registered platform plugin even though it's the default).
         fprintf (output_file, "%s\tDefault platform for this host.\n", Platform::GetDefaultPlatform ()->GetPluginName ().AsCString ());
     }
-}
-
-static void
-initialize_lldb_gdbserver ()
-{
-    HostInfo::Initialize ();
-    PluginManager::Initialize ();
-    Debugger::Initialize (NULL);
-}
-
-static void
-terminate_lldb_gdbserver ()
-{
-    Debugger::Terminate ();
-    PluginManager::Terminate ();
 }
 
 static void
@@ -510,7 +494,7 @@ main (int argc, char *argv[])
     std::string named_pipe_path;
     bool reverse_connect = false;
 
-    initialize_lldb_gdbserver ();
+    Debugger::Initialize (NULL);
 
     lldb::DebuggerSP debugger_sp = Debugger::CreateInstance ();
 
@@ -684,7 +668,7 @@ main (int argc, char *argv[])
 
     ConnectToRemote (gdb_server, reverse_connect, host_and_port, progname, named_pipe_path.c_str ());
 
-    terminate_lldb_gdbserver ();
+    Debugger::Terminate ();
 
     fprintf(stderr, "lldb-gdbserver exiting...\n");
 
