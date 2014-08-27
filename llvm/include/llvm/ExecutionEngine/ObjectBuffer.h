@@ -62,9 +62,8 @@ public:
     OS.flush();
 
     // Make the data accessible via the ObjectBuffer::Buffer
-    Buffer.reset(MemoryBuffer::getMemBuffer(StringRef(SV.data(), SV.size()),
-                                            "",
-                                            false));
+    Buffer =
+        MemoryBuffer::getMemBuffer(StringRef(SV.data(), SV.size()), "", false);
   }
 
 protected:

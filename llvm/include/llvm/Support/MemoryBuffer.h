@@ -98,28 +98,29 @@ public:
 
   /// Open the specified memory range as a MemoryBuffer. Note that InputData
   /// must be null terminated if RequiresNullTerminator is true.
-  static MemoryBuffer *getMemBuffer(StringRef InputData,
-                                    StringRef BufferName = "",
-                                    bool RequiresNullTerminator = true);
+  static std::unique_ptr<MemoryBuffer>
+  getMemBuffer(StringRef InputData, StringRef BufferName = "",
+               bool RequiresNullTerminator = true);
 
   static std::unique_ptr<MemoryBuffer>
   getMemBuffer(MemoryBufferRef Ref, bool RequiresNullTerminator = true);
 
   /// Open the specified memory range as a MemoryBuffer, copying the contents
   /// and taking ownership of it. InputData does not have to be null terminated.
-  static MemoryBuffer *getMemBufferCopy(StringRef InputData,
-                                        StringRef BufferName = "");
+  static std::unique_ptr<MemoryBuffer>
+  getMemBufferCopy(StringRef InputData, StringRef BufferName = "");
 
   /// Allocate a new zero-initialized MemoryBuffer of the specified size. Note
   /// that the caller need not initialize the memory allocated by this method.
   /// The memory is owned by the MemoryBuffer object.
-  static MemoryBuffer *getNewMemBuffer(size_t Size, StringRef BufferName = "");
+  static std::unique_ptr<MemoryBuffer>
+  getNewMemBuffer(size_t Size, StringRef BufferName = "");
 
   /// Allocate a new MemoryBuffer of the specified size that is not initialized.
   /// Note that the caller should initialize the memory allocated by this
   /// method. The memory is owned by the MemoryBuffer object.
-  static MemoryBuffer *getNewUninitMemBuffer(size_t Size,
-                                             StringRef BufferName = "");
+  static std::unique_ptr<MemoryBuffer>
+  getNewUninitMemBuffer(size_t Size, StringRef BufferName = "");
 
   /// Read all of stdin into a file buffer, and return it.
   static ErrorOr<std::unique_ptr<MemoryBuffer>> getSTDIN();

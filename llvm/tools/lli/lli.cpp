@@ -294,8 +294,7 @@ public:
     // because the file has probably just been mmapped.  Instead we make
     // a copy.  The filed-based buffer will be released when it goes
     // out of scope.
-    return std::unique_ptr<MemoryBuffer>(
-        MemoryBuffer::getMemBufferCopy(IRObjectBuffer.get()->getBuffer()));
+    return MemoryBuffer::getMemBufferCopy(IRObjectBuffer.get()->getBuffer());
   }
 
 private:

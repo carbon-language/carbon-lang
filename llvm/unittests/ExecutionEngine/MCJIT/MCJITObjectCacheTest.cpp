@@ -41,8 +41,7 @@ public:
       return nullptr;
     // Our test cache wants to maintain ownership of its object buffers
     // so we make a copy here for the execution engine.
-    return std::unique_ptr<MemoryBuffer>(
-        MemoryBuffer::getMemBufferCopy(BufferFound->getBuffer()));
+    return MemoryBuffer::getMemBufferCopy(BufferFound->getBuffer());
   }
 
   // Test-harness-specific functions
@@ -65,8 +64,8 @@ public:
 private:
   MemoryBuffer *copyBuffer(MemoryBufferRef Buf) {
     // Create a local copy of the buffer.
-    std::unique_ptr<MemoryBuffer> NewBuffer(
-        MemoryBuffer::getMemBufferCopy(Buf.getBuffer()));
+    std::unique_ptr<MemoryBuffer> NewBuffer =
+        MemoryBuffer::getMemBufferCopy(Buf.getBuffer());
     MemoryBuffer *Ret = NewBuffer.get();
     AllocatedBuffers.push_back(std::move(NewBuffer));
     return Ret;

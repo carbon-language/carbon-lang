@@ -839,8 +839,8 @@ static bool ReadCheckFile(SourceMgr &SM,
 
   // If we want to canonicalize whitespace, strip excess whitespace from the
   // buffer containing the CHECK lines. Remove DOS style line endings.
-  std::unique_ptr<MemoryBuffer> F =
-      CanonicalizeInputFile(std::move(*FileOrErr), NoCanonicalizeWhiteSpace);
+  std::unique_ptr<MemoryBuffer> F = CanonicalizeInputFile(
+      std::move(FileOrErr.get()), NoCanonicalizeWhiteSpace);
 
   // Find all instances of CheckPrefix followed by : in the file.
   StringRef Buffer = F->getBuffer();
@@ -853,8 +853,9 @@ static bool ReadCheckFile(SourceMgr &SM,
     // command line option responsible for the specific implicit CHECK-NOT.
     std::string Prefix = std::string("-") + ImplicitCheckNot.ArgStr + "='";
     std::string Suffix = "'";
-    std::unique_ptr<MemoryBuffer> CmdLine(MemoryBuffer::getMemBufferCopy(
-        Prefix + PatternString + Suffix, "command line"));
+    std::unique_ptr<MemoryBuffer> CmdLine = MemoryBuffer::getMemBufferCopy(
+        Prefix + PatternString + Suffix, "command line");
+
     StringRef PatternInBuffer =
         CmdLine->getBuffer().substr(Prefix.size(), PatternString.size());
     SM.AddNewSourceBuffer(std::move(CmdLine), SMLoc());

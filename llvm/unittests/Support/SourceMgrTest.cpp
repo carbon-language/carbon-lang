@@ -23,8 +23,8 @@ public:
   std::string Output;
 
   void setMainBuffer(StringRef Text, StringRef BufferName) {
-    std::unique_ptr<MemoryBuffer> MainBuffer(
-        MemoryBuffer::getMemBuffer(Text, BufferName));
+    std::unique_ptr<MemoryBuffer> MainBuffer =
+        MemoryBuffer::getMemBuffer(Text, BufferName);
     MainBufferID = SM.AddNewSourceBuffer(std::move(MainBuffer), llvm::SMLoc());
   }
 

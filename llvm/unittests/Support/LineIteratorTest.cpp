@@ -95,19 +95,19 @@ TEST(LineIteratorTest, EmptyBuffers) {
   EXPECT_TRUE(line_iterator(*Buffer).is_at_eof());
   EXPECT_EQ(line_iterator(), line_iterator(*Buffer));
 
-  Buffer.reset(MemoryBuffer::getMemBuffer("\n\n\n"));
+  Buffer = MemoryBuffer::getMemBuffer("\n\n\n");
   EXPECT_TRUE(line_iterator(*Buffer).is_at_eof());
   EXPECT_EQ(line_iterator(), line_iterator(*Buffer));
 
-  Buffer.reset(MemoryBuffer::getMemBuffer("# foo\n"
-                                          "\n"
-                                          "# bar"));
+  Buffer = MemoryBuffer::getMemBuffer("# foo\n"
+                                      "\n"
+                                      "# bar");
   EXPECT_TRUE(line_iterator(*Buffer, '#').is_at_eof());
   EXPECT_EQ(line_iterator(), line_iterator(*Buffer, '#'));
 
-  Buffer.reset(MemoryBuffer::getMemBuffer("\n"
-                                          "# baz\n"
-                                          "\n"));
+  Buffer = MemoryBuffer::getMemBuffer("\n"
+                                      "# baz\n"
+                                      "\n");
   EXPECT_TRUE(line_iterator(*Buffer, '#').is_at_eof());
   EXPECT_EQ(line_iterator(), line_iterator(*Buffer, '#'));
 }

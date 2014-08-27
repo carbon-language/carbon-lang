@@ -2655,10 +2655,9 @@ LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRange(
     const char *BufferName,
     LLVMBool RequiresNullTerminator) {
 
-  return wrap(MemoryBuffer::getMemBuffer(
-      StringRef(InputData, InputDataLength),
-      StringRef(BufferName),
-      RequiresNullTerminator));
+  return wrap(MemoryBuffer::getMemBuffer(StringRef(InputData, InputDataLength),
+                                         StringRef(BufferName),
+                                         RequiresNullTerminator).release());
 }
 
 LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRangeCopy(
@@ -2666,9 +2665,9 @@ LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRangeCopy(
     size_t InputDataLength,
     const char *BufferName) {
 
-  return wrap(MemoryBuffer::getMemBufferCopy(
-      StringRef(InputData, InputDataLength),
-      StringRef(BufferName)));
+  return wrap(
+      MemoryBuffer::getMemBufferCopy(StringRef(InputData, InputDataLength),
+                                     StringRef(BufferName)).release());
 }
 
 const char *LLVMGetBufferStart(LLVMMemoryBufferRef MemBuf) {

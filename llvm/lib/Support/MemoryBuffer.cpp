@@ -94,13 +94,12 @@ public:
 };
 }
 
-/// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
-/// that InputData must be a null terminated if RequiresNullTerminator is true!
-MemoryBuffer *MemoryBuffer::getMemBuffer(StringRef InputData,
-                                         StringRef BufferName,
-                                         bool RequiresNullTerminator) {
-  return new (NamedBufferAlloc(BufferName))
+std::unique_ptr<MemoryBuffer>
+MemoryBuffer::getMemBuffer(StringRef InputData, StringRef BufferName,
+                           bool RequiresNullTerminator) {
+  auto *Ret = new (NamedBufferAlloc(BufferName))
       MemoryBufferMem(InputData, RequiresNullTerminator);
+  return std::unique_ptr<MemoryBuffer>(Ret);
 }
 
 std::unique_ptr<MemoryBuffer>
@@ -109,24 +108,19 @@ MemoryBuffer::getMemBuffer(MemoryBufferRef Ref, bool RequiresNullTerminator) {
       Ref.getBuffer(), Ref.getBufferIdentifier(), RequiresNullTerminator));
 }
 
-/// getMemBufferCopy - Open the specified memory range as a MemoryBuffer,
-/// copying the contents and taking ownership of it.  This has no requirements
-/// on EndPtr[0].
-MemoryBuffer *MemoryBuffer::getMemBufferCopy(StringRef InputData,
-                                             StringRef BufferName) {
-  MemoryBuffer *Buf = getNewUninitMemBuffer(InputData.size(), BufferName);
-  if (!Buf) return nullptr;
+std::unique_ptr<MemoryBuffer>
+MemoryBuffer::getMemBufferCopy(StringRef InputData, StringRef BufferName) {
+  std::unique_ptr<MemoryBuffer> Buf =
+      getNewUninitMemBuffer(InputData.size(), BufferName);
+  if (!Buf)
+    return nullptr;
   memcpy(const_cast<char*>(Buf->getBufferStart()), InputData.data(),
          InputData.size());
   return Buf;
 }
 
-/// getNewUninitMemBuffer - Allocate a new MemoryBuffer of the specified size
-/// that is not initialized.  Note that the caller should initialize the
-/// memory allocated by this method.  The memory is owned by the MemoryBuffer
-/// object.
-MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
-                                                  StringRef BufferName) {
+std::unique_ptr<MemoryBuffer>
+MemoryBuffer::getNewUninitMemBuffer(size_t Size, StringRef BufferName) {
   // Allocate space for the MemoryBuffer, the data and the name. It is important
   // that MemoryBuffer and data are aligned so PointerIntPair works with them.
   // TODO: Is 16-byte alignment enough?  We copy small object files with large
@@ -135,7 +129,8 @@ MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
       RoundUpToAlignment(sizeof(MemoryBufferMem) + BufferName.size() + 1, 16);
   size_t RealLen = AlignedStringLen + Size + 1;
   char *Mem = static_cast<char*>(operator new(RealLen, std::nothrow));
-  if (!Mem) return nullptr;
+  if (!Mem)
+    return nullptr;
 
   // The name is stored after the class itself.
   CopyStringRef(Mem + sizeof(MemoryBufferMem), BufferName);
@@ -144,15 +139,15 @@ MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
   char *Buf = Mem + AlignedStringLen;
   Buf[Size] = 0; // Null terminate buffer.
 
-  return new (Mem) MemoryBufferMem(StringRef(Buf, Size), true);
+  auto *Ret = new (Mem) MemoryBufferMem(StringRef(Buf, Size), true);
+  return std::unique_ptr<MemoryBuffer>(Ret);
 }
 
-/// getNewMemBuffer - Allocate a new zero-initialized MemoryBuffer of the
-/// specified size. Note that the caller need not initialize the memory
-/// allocated by this method.  The memory is owned by the MemoryBuffer object.
-MemoryBuffer *MemoryBuffer::getNewMemBuffer(size_t Size, StringRef BufferName) {
-  MemoryBuffer *SB = getNewUninitMemBuffer(Size, BufferName);
-  if (!SB) return nullptr;
+std::unique_ptr<MemoryBuffer>
+MemoryBuffer::getNewMemBuffer(size_t Size, StringRef BufferName) {
+  std::unique_ptr<MemoryBuffer> SB = getNewUninitMemBuffer(Size, BufferName);
+  if (!SB)
+    return nullptr;
   memset(const_cast<char*>(SB->getBufferStart()), 0, Size);
   return SB;
 }
@@ -226,9 +221,7 @@ getMemoryBufferForStream(int FD, StringRef BufferName) {
     Buffer.set_size(Buffer.size() + ReadBytes);
   } while (ReadBytes != 0);
 
-  std::unique_ptr<MemoryBuffer> Ret(
-      MemoryBuffer::getMemBufferCopy(Buffer, BufferName));
-  return std::move(Ret);
+  return MemoryBuffer::getMemBufferCopy(Buffer, BufferName);
 }
 
 static ErrorOr<std::unique_ptr<MemoryBuffer>>
@@ -360,15 +353,15 @@ getOpenFileImpl(int FD, const char *Filename, uint64_t FileSize,
       return std::move(Result);
   }
 
-  MemoryBuffer *Buf = MemoryBuffer::getNewUninitMemBuffer(MapSize, Filename);
+  std::unique_ptr<MemoryBuffer> Buf =
+      MemoryBuffer::getNewUninitMemBuffer(MapSize, Filename);
   if (!Buf) {
     // Failed to create a buffer. The only way it can fail is if
     // new(std::nothrow) returns 0.
     return make_error_code(errc::not_enough_memory);
   }
 
-  std::unique_ptr<MemoryBuffer> SB(Buf);
-  char *BufPtr = const_cast<char*>(SB->getBufferStart());
+  char *BufPtr = const_cast<char *>(Buf->getBufferStart());
 
   size_t BytesLeft = MapSize;
 #ifndef HAVE_PREAD
@@ -396,7 +389,7 @@ getOpenFileImpl(int FD, const char *Filename, uint64_t FileSize,
     BufPtr += NumRead;
   }
 
-  return std::move(SB);
+  return std::move(Buf);
 }
 
 ErrorOr<std::unique_ptr<MemoryBuffer>>
