@@ -1623,7 +1623,7 @@ multiclass BooleanFFlag<string name> {
   def _fno : Flag<["-"], "fno-"#name>;
 }
 
-defm : BooleanFFlag<"no-keep-inline-functions">, Group<clang_ignored_gcc_optimization_f_Group>;
+defm : BooleanFFlag<"keep-inline-functions">, Group<clang_ignored_gcc_optimization_f_Group>;
 
 def fprofile_dir : Joined<["-"], "fprofile-dir=">, Group<clang_ignored_gcc_optimization_f_Group>;
 
