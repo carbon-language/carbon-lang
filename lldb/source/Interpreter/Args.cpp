@@ -1644,8 +1644,10 @@ Args::ParseArgsForCompletion
     // Finally we have to handle the case where the cursor index points at a single "-".  We want to mark that in
     // the option_element_vector, but only if it is not after the "--".  But it turns out that OptionParser::Parse just ignores
     // an isolated "-".  So we have to look it up by hand here.  We only care if it is AT the cursor position.
+    // Note, a single quoted dash is not the same as a single dash...
     
     if ((static_cast<int32_t>(dash_dash_pos) == -1 || cursor_index < dash_dash_pos)
+         && m_args_quote_char[cursor_index] == '\0'
          && strcmp (GetArgumentAtIndex(cursor_index), "-") == 0)
     {
         option_element_vector.push_back (OptionArgElement (OptionArgElement::eBareDash, cursor_index, 
