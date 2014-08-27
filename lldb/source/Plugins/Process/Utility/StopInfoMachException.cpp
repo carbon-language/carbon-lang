@@ -468,6 +468,7 @@ StopInfoMachException::CreateStopReasonWithMachException
                     // It looks like exc_sub_code has the 4 bytes of the instruction that triggered the 
                     // exception, i.e. our breakpoint opcode
                     is_actual_breakpoint = exc_code == 1;
+                    break;
                 }
 
                 default:
