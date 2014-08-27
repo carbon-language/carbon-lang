@@ -96,7 +96,6 @@ NativeThreadLinux::GetStopReason (ThreadStopInfo &stop_info)
     case eStateRunning:
     case eStateStepping:
     case eStateDetached:
-    default:
         if (log)
         {
             log->Printf ("NativeThreadLinux::%s tid %" PRIu64 " in state %s cannot answer stop reason",
@@ -324,39 +323,28 @@ NativeThreadLinux::MaybeLogStateChange (lldb::StateType new_state)
     log->Printf ("NativeThreadLinux: thread (pid=%" PRIu64 ", tid=%" PRIu64 ") changing from state %s to %s", pid, GetID (), StateAsCString (old_state), StateAsCString (new_state));
 }
 
-static
-uint32_t MaybeTranslateHostSignoToGdbSigno (uint32_t host_signo)
-{
-    switch (host_signo)
-    {
-        case SIGSEGV: return eGdbSignalBadAccess;
-        case SIGILL:  return eGdbSignalBadInstruction;
-        case SIGFPE:  return eGdbSignalArithmetic;
-        // NOTE: debugserver sends SIGTRAP through unmodified.  Do the same here.
-        // case SIGTRAP: return eGdbSignalBreakpoint;
-
-        // Nothing for eGdbSignalSoftware (0x95).
-        // Nothing for eGdbSignalEmulation (0x94).
-
-        default:
-            // No translations.
-            return host_signo;
-    }
-}
-
 uint32_t
 NativeThreadLinux::TranslateStopInfoToGdbSignal (const ThreadStopInfo &stop_info) const
 {
     switch (stop_info.reason)
     {
         case eStopReasonSignal:
-            return MaybeTranslateHostSignoToGdbSigno (stop_info.details.signal.signo);
-            break;
+            // No translation.
+            return stop_info.details.signal.signo;
 
         case eStopReasonException:
-            // FIXME verify how we handle exception type.
-            return MaybeTranslateHostSignoToGdbSigno (static_cast<uint32_t> (stop_info.details.exception.type));
-            break;
+            {
+                Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
+                // FIXME I think the eStopReasonException is a xnu/Mach exception, which we
+                // shouldn't see on Linux.
+                // No translation.
+                if (log)
+                    log->Printf ("NativeThreadLinux::%s saw an exception stop type (signo %"
+                                 PRIu64 "), not expecting to see exceptions on Linux",
+                                 __FUNCTION__,
+                                 stop_info.details.exception.type);
+                return static_cast<uint32_t> (stop_info.details.exception.type);
+            }
 
         default:
             assert (0 && "unexpected stop_info.reason found");
