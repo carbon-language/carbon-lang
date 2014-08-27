@@ -1,6 +1,6 @@
 set(LLVM_LINK_COMPONENTS
-  Support
   ProfileData
+  Support
   )
 
 add_clang_unittest(ClangCodeGenTests
@@ -10,9 +10,9 @@ add_clang_unittest(ClangCodeGenTests
 target_link_libraries(ClangCodeGenTests
   clangAST
   clangBasic
+  clangCodeGen
   clangFrontend
   clangParse
   clangSema
   clangTooling
-  clangCodeGen
   )
