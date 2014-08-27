@@ -63,7 +63,7 @@ public:
           llvm::MemoryBuffer::getMemBuffer(I->Code);
       const FileEntry *Entry = SM.getFileManager().getVirtualFile(
           I->FileName, Buf->getBufferSize(), /*ModificationTime=*/0);
-      SM.overrideFileContents(Entry, Buf.release());
+      SM.overrideFileContents(Entry, std::move(Buf));
     }
   }
 
