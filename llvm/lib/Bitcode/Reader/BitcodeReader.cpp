@@ -3588,7 +3588,7 @@ ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBufferRef Buffer,
 std::string llvm::getBitcodeTargetTriple(MemoryBufferRef Buffer,
                                          LLVMContext &Context) {
   std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Buffer, false);
-  auto R = llvm::make_unique<BitcodeReader>(Buf.get(), Context);
+  auto R = llvm::make_unique<BitcodeReader>(Buf.release(), Context);
   ErrorOr<std::string> Triple = R->parseTriple();
   if (Triple.getError())
     return "";
