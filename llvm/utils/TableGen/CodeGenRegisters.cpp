@@ -1532,7 +1532,7 @@ void CodeGenRegBank::computeRegUnitSets() {
   assert(RegUnitSets.empty() && "dirty RegUnitSets");
 
   // Compute a unique RegUnitSet for each RegClass.
-  const ArrayRef<CodeGenRegisterClass*> &RegClasses = getRegClasses();
+  ArrayRef<CodeGenRegisterClass*> RegClasses = getRegClasses();
   unsigned NumRegClasses = RegClasses.size();
   for (unsigned RCIdx = 0, RCEnd = NumRegClasses; RCIdx != RCEnd; ++RCIdx) {
     if (!RegClasses[RCIdx]->Allocatable)

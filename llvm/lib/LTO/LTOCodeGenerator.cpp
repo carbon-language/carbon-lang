@@ -312,7 +312,7 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
 
 void LTOCodeGenerator::
 applyRestriction(GlobalValue &GV,
-                 const ArrayRef<StringRef> &Libcalls,
+                 ArrayRef<StringRef> Libcalls,
                  std::vector<const char*> &MustPreserveList,
                  SmallPtrSetImpl<GlobalValue*> &AsmUsed,
                  Mangler &Mangler) {

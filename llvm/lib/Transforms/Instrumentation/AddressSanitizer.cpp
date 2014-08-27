@@ -378,7 +378,7 @@ struct AddressSanitizer : public FunctionPass {
 
   bool LooksLikeCodeInBug11395(Instruction *I);
   bool GlobalIsLinkerInitialized(GlobalVariable *G);
-  bool InjectCoverage(Function &F, const ArrayRef<BasicBlock*> AllBlocks);
+  bool InjectCoverage(Function &F, ArrayRef<BasicBlock*> AllBlocks);
   void InjectCoverageAtBlock(Function &F, BasicBlock &BB);
 
   LLVMContext *C;
@@ -562,7 +562,7 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   }
   /// Finds alloca where the value comes from.
   AllocaInst *findAllocaForValue(Value *V);
-  void poisonRedZones(const ArrayRef<uint8_t> ShadowBytes, IRBuilder<> &IRB,
+  void poisonRedZones(ArrayRef<uint8_t> ShadowBytes, IRBuilder<> &IRB,
                       Value *ShadowBase, bool DoPoison);
   void poisonAlloca(Value *V, uint64_t Size, IRBuilder<> &IRB, bool DoPoison);
 
@@ -1352,7 +1352,7 @@ void AddressSanitizer::InjectCoverageAtBlock(Function &F, BasicBlock &BB) {
 //  a) get the functionality to users earlier and
 //  b) collect usage statistics to help improve Clang coverage design.
 bool AddressSanitizer::InjectCoverage(Function &F,
-                                      const ArrayRef<BasicBlock *> AllBlocks) {
+                                      ArrayRef<BasicBlock *> AllBlocks) {
   if (!ClCoverage) return false;
 
   if (ClCoverage == 1 ||
@@ -1527,7 +1527,7 @@ void FunctionStackPoisoner::initializeCallbacks(Module &M) {
 }
 
 void
-FunctionStackPoisoner::poisonRedZones(const ArrayRef<uint8_t> ShadowBytes,
+FunctionStackPoisoner::poisonRedZones(ArrayRef<uint8_t> ShadowBytes,
                                       IRBuilder<> &IRB, Value *ShadowBase,
                                       bool DoPoison) {
   size_t n = ShadowBytes.size();

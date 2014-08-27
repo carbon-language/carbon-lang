@@ -118,7 +118,7 @@ public:
 
   const MCSymbol *getBeginSym() const { return Begin; }
   const MCSymbol *getEndSym() const { return End; }
-  const ArrayRef<Value> getValues() const { return Values; }
+  ArrayRef<Value> getValues() const { return Values; }
   void addValues(ArrayRef<DebugLocEntry::Value> Vals) {
     Values.append(Vals.begin(), Vals.end());
     sortUniqueValues();
