@@ -19787,7 +19787,6 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
 
   EVT VT = InVec.getValueType();
 
-  bool HasShuffleIntoBitcast = false;
   if (InVec.getOpcode() == ISD::BITCAST) {
     // Don't duplicate a load with other uses.
     if (!InVec.hasOneUse())
@@ -19796,7 +19795,6 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
     if (BCVT.getVectorNumElements() != VT.getVectorNumElements())
       return SDValue();
     InVec = InVec.getOperand(0);
-    HasShuffleIntoBitcast = true;
   }
 
   if (!isTargetShuffle(InVec.getOpcode()))
@@ -19839,17 +19837,16 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
   if (!LN0 ||!LN0->hasNUsesOfValue(AllowedUses, 0) || LN0->isVolatile())
     return SDValue();
 
-  if (HasShuffleIntoBitcast) {
-    // If there's a bitcast before the shuffle, check if the load type and
-    // alignment is valid.
-    unsigned Align = LN0->getAlignment();
-    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-    unsigned NewAlign = TLI.getDataLayout()->
-      getABITypeAlignment(VT.getTypeForEVT(*DAG.getContext()));
+  EVT EltVT = N->getValueType(0);
+  // If there's a bitcast before the shuffle, check if the load type and
+  // alignment is valid.
+  unsigned Align = LN0->getAlignment();
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  unsigned NewAlign = TLI.getDataLayout()->getABITypeAlignment(
+      EltVT.getTypeForEVT(*DAG.getContext()));
 
-    if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, VT))
-      return SDValue();
-  }
+  if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, EltVT))
+    return SDValue();
 
   // All checks match so transform back to vector_shuffle so that DAG combiner
   // can finish the job

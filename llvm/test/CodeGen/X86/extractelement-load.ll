@@ -1,6 +1,8 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse2 -mcpu=yonah | FileCheck %s
 ; RUN: llc < %s -march=x86-64 -mattr=+sse2 -mcpu=core2 | FileCheck %s
 
+target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
+
 define i32 @t(<2 x i64>* %val) nounwind  {
 ; CHECK-LABEL: t:
 ; CHECK-NOT: movd
@@ -22,4 +24,23 @@ define i32 @t2(<8 x i32>* %xp) {
 undef, i32 7, i32 9, i32 undef, i32 13, i32 15, i32 1, i32 3>
   %y = extractelement <8 x i32> %Shuff68, i32 0
   ret i32 %y
+}
+
+; This case could easily end up inf-looping in the DAG combiner due to an
+; low alignment load of the vector which prevents us from reliably forming a
+; narrow load.
+; FIXME: It would be nice to detect whether the target has fast and legal
+; unaligned loads and use them here.
+define void @t3() {
+; CHECK-LABEL: t3:
+;
+; This movs the entire vector, shuffling the high double down. If we fixed the
+; FIXME above it would just move the high double directly.
+; CHECK: movhpd %xmm
+
+bb:
+  %tmp13 = load <2 x double>* undef, align 1
+  %.sroa.3.24.vec.extract = extractelement <2 x double> %tmp13, i32 1
+  store double %.sroa.3.24.vec.extract, double* undef, align 8
+  unreachable
 }
