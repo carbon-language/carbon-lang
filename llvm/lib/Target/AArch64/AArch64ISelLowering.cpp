@@ -108,6 +108,7 @@ AArch64TargetLowering::AArch64TargetLowering(TargetMachine &TM)
     addDRTypeForNEON(MVT::v2i32);
     addDRTypeForNEON(MVT::v1i64);
     addDRTypeForNEON(MVT::v1f64);
+    addDRTypeForNEON(MVT::v4f16);
 
     addQRTypeForNEON(MVT::v4f32);
     addQRTypeForNEON(MVT::v2f64);
@@ -115,6 +116,7 @@ AArch64TargetLowering::AArch64TargetLowering(TargetMachine &TM)
     addQRTypeForNEON(MVT::v8i16);
     addQRTypeForNEON(MVT::v4i32);
     addQRTypeForNEON(MVT::v2i64);
+    addQRTypeForNEON(MVT::v8f16);
   }
 
   // Compute derived properties from the register classes
@@ -288,6 +290,85 @@ AArch64TargetLowering::AArch64TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FDIV, MVT::f16, Promote);
   setOperationAction(ISD::FMUL, MVT::f16, Promote);
   setOperationAction(ISD::FSUB, MVT::f16, Promote);
+
+  // v4f16 is also a storage-only type, so promote it to v4f32 when that is
+  // known to be safe.
+  setOperationAction(ISD::FADD, MVT::v4f16, Promote);
+  setOperationAction(ISD::FSUB, MVT::v4f16, Promote);
+  setOperationAction(ISD::FMUL, MVT::v4f16, Promote);
+  setOperationAction(ISD::FDIV, MVT::v4f16, Promote);
+  setOperationAction(ISD::FP_EXTEND, MVT::v4f16, Promote);
+  setOperationAction(ISD::FP_ROUND, MVT::v4f16, Promote);
+  AddPromotedToType(ISD::FADD, MVT::v4f16, MVT::v4f32);
+  AddPromotedToType(ISD::FSUB, MVT::v4f16, MVT::v4f32);
+  AddPromotedToType(ISD::FMUL, MVT::v4f16, MVT::v4f32);
+  AddPromotedToType(ISD::FDIV, MVT::v4f16, MVT::v4f32);
+  AddPromotedToType(ISD::FP_EXTEND, MVT::v4f16, MVT::v4f32);
+  AddPromotedToType(ISD::FP_ROUND, MVT::v4f16, MVT::v4f32);
+
+  // Expand all other v4f16 operations.
+  // FIXME: We could generate better code by promoting some operations to
+  // a pair of v4f32s
+  setOperationAction(ISD::FABS, MVT::v4f16, Expand);
+  setOperationAction(ISD::FCEIL, MVT::v4f16, Expand);
+  setOperationAction(ISD::FCOPYSIGN, MVT::v4f16, Expand);
+  setOperationAction(ISD::FCOS, MVT::v4f16, Expand);
+  setOperationAction(ISD::FFLOOR, MVT::v4f16, Expand);
+  setOperationAction(ISD::FMA, MVT::v4f16, Expand);
+  setOperationAction(ISD::FNEARBYINT, MVT::v4f16, Expand);
+  setOperationAction(ISD::FNEG, MVT::v4f16, Expand);
+  setOperationAction(ISD::FPOW, MVT::v4f16, Expand);
+  setOperationAction(ISD::FPOWI, MVT::v4f16, Expand);
+  setOperationAction(ISD::FREM, MVT::v4f16, Expand);
+  setOperationAction(ISD::FROUND, MVT::v4f16, Expand);
+  setOperationAction(ISD::FRINT, MVT::v4f16, Expand);
+  setOperationAction(ISD::FSIN, MVT::v4f16, Expand);
+  setOperationAction(ISD::FSINCOS, MVT::v4f16, Expand);
+  setOperationAction(ISD::FSQRT, MVT::v4f16, Expand);
+  setOperationAction(ISD::FTRUNC, MVT::v4f16, Expand);
+  setOperationAction(ISD::SETCC, MVT::v4f16, Expand);
+  setOperationAction(ISD::BR_CC, MVT::v4f16, Expand);
+  setOperationAction(ISD::SELECT, MVT::v4f16, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::v4f16, Expand);
+  setOperationAction(ISD::FEXP, MVT::v4f16, Expand);
+  setOperationAction(ISD::FEXP2, MVT::v4f16, Expand);
+  setOperationAction(ISD::FLOG, MVT::v4f16, Expand);
+  setOperationAction(ISD::FLOG2, MVT::v4f16, Expand);
+  setOperationAction(ISD::FLOG10, MVT::v4f16, Expand);
+
+
+  // v8f16 is also a storage-only type, so expand it.
+  setOperationAction(ISD::FABS, MVT::v8f16, Expand);
+  setOperationAction(ISD::FADD, MVT::v8f16, Expand);
+  setOperationAction(ISD::FCEIL, MVT::v8f16, Expand);
+  setOperationAction(ISD::FCOPYSIGN, MVT::v8f16, Expand);
+  setOperationAction(ISD::FCOS, MVT::v8f16, Expand);
+  setOperationAction(ISD::FDIV, MVT::v8f16, Expand);
+  setOperationAction(ISD::FFLOOR, MVT::v8f16, Expand);
+  setOperationAction(ISD::FMA, MVT::v8f16, Expand);
+  setOperationAction(ISD::FMUL, MVT::v8f16, Expand);
+  setOperationAction(ISD::FNEARBYINT, MVT::v8f16, Expand);
+  setOperationAction(ISD::FNEG, MVT::v8f16, Expand);
+  setOperationAction(ISD::FPOW, MVT::v8f16, Expand);
+  setOperationAction(ISD::FPOWI, MVT::v8f16, Expand);
+  setOperationAction(ISD::FREM, MVT::v8f16, Expand);
+  setOperationAction(ISD::FROUND, MVT::v8f16, Expand);
+  setOperationAction(ISD::FRINT, MVT::v8f16, Expand);
+  setOperationAction(ISD::FSIN, MVT::v8f16, Expand);
+  setOperationAction(ISD::FSINCOS, MVT::v8f16, Expand);
+  setOperationAction(ISD::FSQRT, MVT::v8f16, Expand);
+  setOperationAction(ISD::FSUB, MVT::v8f16, Expand);
+  setOperationAction(ISD::FTRUNC, MVT::v8f16, Expand);
+  setOperationAction(ISD::SETCC, MVT::v8f16, Expand);
+  setOperationAction(ISD::BR_CC, MVT::v8f16, Expand);
+  setOperationAction(ISD::SELECT, MVT::v8f16, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::v8f16, Expand);
+  setOperationAction(ISD::FP_EXTEND, MVT::v8f16, Expand);
+  setOperationAction(ISD::FEXP, MVT::v8f16, Expand);
+  setOperationAction(ISD::FEXP2, MVT::v8f16, Expand);
+  setOperationAction(ISD::FLOG, MVT::v8f16, Expand);
+  setOperationAction(ISD::FLOG2, MVT::v8f16, Expand);
+  setOperationAction(ISD::FLOG10, MVT::v8f16, Expand);
 
   // AArch64 has implementations of a lot of rounding-like FP operations.
   static MVT RoundingTypes[] = { MVT::f32, MVT::f64};
@@ -1416,7 +1497,10 @@ static SDValue LowerVectorFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
 
   if (VT.getSizeInBits() > InVT.getSizeInBits()) {
     SDLoc dl(Op);
-    SDValue Ext = DAG.getNode(ISD::FP_EXTEND, dl, MVT::v2f64, Op.getOperand(0));
+    MVT ExtVT =
+        MVT::getVectorVT(MVT::getFloatingPointVT(VT.getScalarSizeInBits()),
+                         VT.getVectorNumElements());
+    SDValue Ext = DAG.getNode(ISD::FP_EXTEND, dl, ExtVT, Op.getOperand(0));
     return DAG.getNode(Op.getOpcode(), dl, VT, Ext);
   }
 
@@ -4687,7 +4771,8 @@ static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
         VT.getVectorElementType() == MVT::f32)
       return DAG.getNode(AArch64ISD::REV64, dl, VT, OpLHS);
     // vrev <4 x i16> -> REV32
-    if (VT.getVectorElementType() == MVT::i16)
+    if (VT.getVectorElementType() == MVT::i16 ||
+        VT.getVectorElementType() == MVT::f16)
       return DAG.getNode(AArch64ISD::REV32, dl, VT, OpLHS);
     // vrev <4 x i8> -> REV16
     assert(VT.getVectorElementType() == MVT::i8);
@@ -4807,7 +4892,7 @@ static SDValue GenerateTBL(SDValue Op, ArrayRef<int> ShuffleMask,
 static unsigned getDUPLANEOp(EVT EltType) {
   if (EltType == MVT::i8)
     return AArch64ISD::DUPLANE8;
-  if (EltType == MVT::i16)
+  if (EltType == MVT::i16 || EltType == MVT::f16)
     return AArch64ISD::DUPLANE16;
   if (EltType == MVT::i32 || EltType == MVT::f32)
     return AArch64ISD::DUPLANE32;
@@ -4937,7 +5022,8 @@ SDValue AArch64TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
     SDValue SrcLaneV = DAG.getConstant(SrcLane, MVT::i64);
 
     EVT ScalarVT = VT.getVectorElementType();
-    if (ScalarVT.getSizeInBits() < 32)
+
+    if (ScalarVT.getSizeInBits() < 32 && ScalarVT.isInteger())
       ScalarVT = MVT::i32;
 
     return DAG.getNode(
@@ -5696,11 +5782,12 @@ SDValue AArch64TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op,
 
   // Insertion/extraction are legal for V128 types.
   if (VT == MVT::v16i8 || VT == MVT::v8i16 || VT == MVT::v4i32 ||
-      VT == MVT::v2i64 || VT == MVT::v4f32 || VT == MVT::v2f64)
+      VT == MVT::v2i64 || VT == MVT::v4f32 || VT == MVT::v2f64 ||
+      VT == MVT::v8f16)
     return Op;
 
   if (VT != MVT::v8i8 && VT != MVT::v4i16 && VT != MVT::v2i32 &&
-      VT != MVT::v1i64 && VT != MVT::v2f32)
+      VT != MVT::v1i64 && VT != MVT::v2f32 && VT != MVT::v4f16)
     return SDValue();
 
   // For V64 types, we perform insertion by expanding the value
@@ -5729,11 +5816,12 @@ AArch64TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
 
   // Insertion/extraction are legal for V128 types.
   if (VT == MVT::v16i8 || VT == MVT::v8i16 || VT == MVT::v4i32 ||
-      VT == MVT::v2i64 || VT == MVT::v4f32 || VT == MVT::v2f64)
+      VT == MVT::v2i64 || VT == MVT::v4f32 || VT == MVT::v2f64 ||
+      VT == MVT::v8f16)
     return Op;
 
   if (VT != MVT::v8i8 && VT != MVT::v4i16 && VT != MVT::v2i32 &&
-      VT != MVT::v1i64 && VT != MVT::v2f32)
+      VT != MVT::v1i64 && VT != MVT::v2f32 && VT != MVT::v4f16)
     return SDValue();
 
   // For V64 types, we perform extraction by expanding the value

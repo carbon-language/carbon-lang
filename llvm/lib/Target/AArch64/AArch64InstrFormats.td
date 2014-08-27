@@ -5262,6 +5262,10 @@ multiclass SIMDZipVector<bits<3>opc, string asm,
   def v2i64  : BaseSIMDZipVector<0b111, opc, V128,
       asm, ".2d", OpNode, v2i64>;
 
+  def : Pat<(v4f16 (OpNode V64:$Rn, V64:$Rm)),
+        (!cast<Instruction>(NAME#"v4i16") V64:$Rn, V64:$Rm)>;
+  def : Pat<(v8f16 (OpNode V128:$Rn, V128:$Rm)),
+        (!cast<Instruction>(NAME#"v8i16") V128:$Rn, V128:$Rm)>;
   def : Pat<(v2f32 (OpNode V64:$Rn, V64:$Rm)),
         (!cast<Instruction>(NAME#"v2i32") V64:$Rn, V64:$Rm)>;
   def : Pat<(v4f32 (OpNode V128:$Rn, V128:$Rm)),

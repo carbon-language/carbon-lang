@@ -113,7 +113,7 @@ entry:
 ; Check that f16 can be passed and returned (ACLE 2.0 extension)
 define half @test_half(float, half %arg) {
 ; CHECK-LABEL: test_half:
-; CHECK: mov v0.16b, v{{[0-9]+}}.16b
+; CHECK: mov v0.16b, v1.16b
   ret half %arg;
 }
 
@@ -122,4 +122,32 @@ define half @test_half_const() {
 ; CHECK-LABEL: test_half_const:
 ; CHECK: ldr h0, [x{{[0-9]+}}, :lo12:{{.*}}]
   ret half 0xH4248
+}
+
+; Check that v4f16 can be passed and returned in registers
+define <4 x half> @test_v4_half_register(float, <4 x half> %arg) {
+; CHECK-LABEL: test_v4_half_register:
+; CHECK: mov v0.16b, v1.16b
+  ret <4 x half> %arg;
+}
+
+; Check that v8f16 can be passed and returned in registers
+define <8 x half> @test_v8_half_register(float, <8 x half> %arg) {
+; CHECK-LABEL: test_v8_half_register:
+; CHECK: mov v0.16b, v1.16b
+  ret <8 x half> %arg;
+}
+
+; Check that v4f16 can be passed and returned on the stack
+define <4 x half> @test_v4_half_stack([8 x <2 x double>], <4 x half> %arg) {
+; CHECK-LABEL: test_v4_half_stack:
+; CHECK: ldr d0, [sp]
+  ret <4 x half> %arg;
+}
+
+; Check that v8f16 can be passed and returned on the stack
+define <8 x half> @test_v8_half_stack([8 x <2 x double>], <8 x half> %arg) {
+; CHECK-LABEL: test_v8_half_stack:
+; CHECK: ldr q0, [sp]
+  ret <8 x half> %arg;
 }

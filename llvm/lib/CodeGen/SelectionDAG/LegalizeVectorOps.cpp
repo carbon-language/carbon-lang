@@ -370,9 +370,11 @@ SDValue VectorLegalizer::Promote(SDValue Op) {
     return PromoteFP_TO_INT(Op, Op->getOpcode() == ISD::FP_TO_SINT);
   }
 
-  // The rest of the time, vector "promotion" is basically just bitcasting and
-  // doing the operation in a different type.  For example, x86 promotes
-  // ISD::AND on v2i32 to v1i64.
+  // There are currently two cases of vector promotion:
+  // 1) Bitcasting a vector of integers to a different type to a vector of the
+  //    same overall length. For example, x86 promotes ISD::AND on v2i32 to v1i64.
+  // 2) Extending a vector of floats to a vector of the same number oflarger
+  //    floats. For example, AArch64 promotes ISD::FADD on v4f16 to v4f32.
   MVT VT = Op.getSimpleValueType();
   assert(Op.getNode()->getNumValues() == 1 &&
          "Can't promote a vector with multiple results!");
@@ -382,14 +384,23 @@ SDValue VectorLegalizer::Promote(SDValue Op) {
 
   for (unsigned j = 0; j != Op.getNumOperands(); ++j) {
     if (Op.getOperand(j).getValueType().isVector())
-      Operands[j] = DAG.getNode(ISD::BITCAST, dl, NVT, Op.getOperand(j));
+      if (Op.getOperand(j)
+              .getValueType()
+              .getVectorElementType()
+              .isFloatingPoint())
+        Operands[j] = DAG.getNode(ISD::FP_EXTEND, dl, NVT, Op.getOperand(j));
+      else
+        Operands[j] = DAG.getNode(ISD::BITCAST, dl, NVT, Op.getOperand(j));
     else
       Operands[j] = Op.getOperand(j);
   }
 
   Op = DAG.getNode(Op.getOpcode(), dl, NVT, Operands);
-
-  return DAG.getNode(ISD::BITCAST, dl, VT, Op);
+  if (VT.isFloatingPoint() ||
+      (VT.isVector() && VT.getVectorElementType().isFloatingPoint()))
+    return DAG.getNode(ISD::FP_ROUND, dl, VT, Op, DAG.getIntPtrConstant(0));
+  else
+    return DAG.getNode(ISD::BITCAST, dl, VT, Op);
 }
 
 SDValue VectorLegalizer::PromoteINT_TO_FP(SDValue Op) {

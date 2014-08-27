@@ -2116,7 +2116,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     case 32:
       SubReg = AArch64::ssub;
       break;
-    case 16: // FALLTHROUGH
+    case 16:
+      SubReg = AArch64::hsub;
+      break;
     case 8:
       llvm_unreachable("unexpected zext-requiring extract element!");
     }
@@ -2204,9 +2206,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectLoad(Node, 2, AArch64::LD1Twov8b, AArch64::dsub0);
       else if (VT == MVT::v16i8)
         return SelectLoad(Node, 2, AArch64::LD1Twov16b, AArch64::qsub0);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectLoad(Node, 2, AArch64::LD1Twov4h, AArch64::dsub0);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v8f16)
         return SelectLoad(Node, 2, AArch64::LD1Twov8h, AArch64::qsub0);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectLoad(Node, 2, AArch64::LD1Twov2s, AArch64::dsub0);
@@ -2222,9 +2224,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectLoad(Node, 3, AArch64::LD1Threev8b, AArch64::dsub0);
       else if (VT == MVT::v16i8)
         return SelectLoad(Node, 3, AArch64::LD1Threev16b, AArch64::qsub0);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectLoad(Node, 3, AArch64::LD1Threev4h, AArch64::dsub0);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v8f16)
         return SelectLoad(Node, 3, AArch64::LD1Threev8h, AArch64::qsub0);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectLoad(Node, 3, AArch64::LD1Threev2s, AArch64::dsub0);
@@ -2240,9 +2242,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectLoad(Node, 4, AArch64::LD1Fourv8b, AArch64::dsub0);
       else if (VT == MVT::v16i8)
         return SelectLoad(Node, 4, AArch64::LD1Fourv16b, AArch64::qsub0);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectLoad(Node, 4, AArch64::LD1Fourv4h, AArch64::dsub0);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v8f16)
         return SelectLoad(Node, 4, AArch64::LD1Fourv8h, AArch64::qsub0);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectLoad(Node, 4, AArch64::LD1Fourv2s, AArch64::dsub0);
@@ -2258,9 +2260,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectLoad(Node, 2, AArch64::LD2Twov8b, AArch64::dsub0);
       else if (VT == MVT::v16i8)
         return SelectLoad(Node, 2, AArch64::LD2Twov16b, AArch64::qsub0);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectLoad(Node, 2, AArch64::LD2Twov4h, AArch64::dsub0);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v8f16)
         return SelectLoad(Node, 2, AArch64::LD2Twov8h, AArch64::qsub0);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectLoad(Node, 2, AArch64::LD2Twov2s, AArch64::dsub0);
@@ -2276,9 +2278,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectLoad(Node, 3, AArch64::LD3Threev8b, AArch64::dsub0);
       else if (VT == MVT::v16i8)
         return SelectLoad(Node, 3, AArch64::LD3Threev16b, AArch64::qsub0);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectLoad(Node, 3, AArch64::LD3Threev4h, AArch64::dsub0);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v8f16)
         return SelectLoad(Node, 3, AArch64::LD3Threev8h, AArch64::qsub0);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectLoad(Node, 3, AArch64::LD3Threev2s, AArch64::dsub0);
@@ -2294,9 +2296,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectLoad(Node, 4, AArch64::LD4Fourv8b, AArch64::dsub0);
       else if (VT == MVT::v16i8)
         return SelectLoad(Node, 4, AArch64::LD4Fourv16b, AArch64::qsub0);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectLoad(Node, 4, AArch64::LD4Fourv4h, AArch64::dsub0);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16  || VT == MVT::v8f16)
         return SelectLoad(Node, 4, AArch64::LD4Fourv8h, AArch64::qsub0);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectLoad(Node, 4, AArch64::LD4Fourv2s, AArch64::dsub0);
@@ -2312,9 +2314,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectLoad(Node, 2, AArch64::LD2Rv8b, AArch64::dsub0);
       else if (VT == MVT::v16i8)
         return SelectLoad(Node, 2, AArch64::LD2Rv16b, AArch64::qsub0);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectLoad(Node, 2, AArch64::LD2Rv4h, AArch64::dsub0);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v8f16)
         return SelectLoad(Node, 2, AArch64::LD2Rv8h, AArch64::qsub0);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectLoad(Node, 2, AArch64::LD2Rv2s, AArch64::dsub0);
@@ -2330,9 +2332,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectLoad(Node, 3, AArch64::LD3Rv8b, AArch64::dsub0);
       else if (VT == MVT::v16i8)
         return SelectLoad(Node, 3, AArch64::LD3Rv16b, AArch64::qsub0);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectLoad(Node, 3, AArch64::LD3Rv4h, AArch64::dsub0);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v8f16)
         return SelectLoad(Node, 3, AArch64::LD3Rv8h, AArch64::qsub0);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectLoad(Node, 3, AArch64::LD3Rv2s, AArch64::dsub0);
@@ -2348,9 +2350,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectLoad(Node, 4, AArch64::LD4Rv8b, AArch64::dsub0);
       else if (VT == MVT::v16i8)
         return SelectLoad(Node, 4, AArch64::LD4Rv16b, AArch64::qsub0);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectLoad(Node, 4, AArch64::LD4Rv4h, AArch64::dsub0);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v8f16)
         return SelectLoad(Node, 4, AArch64::LD4Rv8h, AArch64::qsub0);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectLoad(Node, 4, AArch64::LD4Rv2s, AArch64::dsub0);
@@ -2364,7 +2366,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     case Intrinsic::aarch64_neon_ld2lane:
       if (VT == MVT::v16i8 || VT == MVT::v8i8)
         return SelectLoadLane(Node, 2, AArch64::LD2i8);
-      else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
+               VT == MVT::v8f16)
         return SelectLoadLane(Node, 2, AArch64::LD2i16);
       else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
                VT == MVT::v2f32)
@@ -2376,7 +2379,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     case Intrinsic::aarch64_neon_ld3lane:
       if (VT == MVT::v16i8 || VT == MVT::v8i8)
         return SelectLoadLane(Node, 3, AArch64::LD3i8);
-      else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
+               VT == MVT::v8f16)
         return SelectLoadLane(Node, 3, AArch64::LD3i16);
       else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
                VT == MVT::v2f32)
@@ -2388,7 +2392,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     case Intrinsic::aarch64_neon_ld4lane:
       if (VT == MVT::v16i8 || VT == MVT::v8i8)
         return SelectLoadLane(Node, 4, AArch64::LD4i8);
-      else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
+               VT == MVT::v8f16)
         return SelectLoadLane(Node, 4, AArch64::LD4i16);
       else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
                VT == MVT::v2f32)
@@ -2448,9 +2453,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectStore(Node, 2, AArch64::ST1Twov8b);
       else if (VT == MVT::v16i8)
         return SelectStore(Node, 2, AArch64::ST1Twov16b);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectStore(Node, 2, AArch64::ST1Twov4h);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v8f16)
         return SelectStore(Node, 2, AArch64::ST1Twov8h);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectStore(Node, 2, AArch64::ST1Twov2s);
@@ -2467,9 +2472,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectStore(Node, 3, AArch64::ST1Threev8b);
       else if (VT == MVT::v16i8)
         return SelectStore(Node, 3, AArch64::ST1Threev16b);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectStore(Node, 3, AArch64::ST1Threev4h);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v8f16)
         return SelectStore(Node, 3, AArch64::ST1Threev8h);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectStore(Node, 3, AArch64::ST1Threev2s);
@@ -2486,9 +2491,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectStore(Node, 4, AArch64::ST1Fourv8b);
       else if (VT == MVT::v16i8)
         return SelectStore(Node, 4, AArch64::ST1Fourv16b);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectStore(Node, 4, AArch64::ST1Fourv4h);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v8f16)
         return SelectStore(Node, 4, AArch64::ST1Fourv8h);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectStore(Node, 4, AArch64::ST1Fourv2s);
@@ -2505,9 +2510,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectStore(Node, 2, AArch64::ST2Twov8b);
       else if (VT == MVT::v16i8)
         return SelectStore(Node, 2, AArch64::ST2Twov16b);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectStore(Node, 2, AArch64::ST2Twov4h);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v8f16)
         return SelectStore(Node, 2, AArch64::ST2Twov8h);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectStore(Node, 2, AArch64::ST2Twov2s);
@@ -2524,9 +2529,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectStore(Node, 3, AArch64::ST3Threev8b);
       else if (VT == MVT::v16i8)
         return SelectStore(Node, 3, AArch64::ST3Threev16b);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectStore(Node, 3, AArch64::ST3Threev4h);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v8f16)
         return SelectStore(Node, 3, AArch64::ST3Threev8h);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectStore(Node, 3, AArch64::ST3Threev2s);
@@ -2543,9 +2548,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
         return SelectStore(Node, 4, AArch64::ST4Fourv8b);
       else if (VT == MVT::v16i8)
         return SelectStore(Node, 4, AArch64::ST4Fourv16b);
-      else if (VT == MVT::v4i16)
+      else if (VT == MVT::v4i16 || VT == MVT::v4f16)
         return SelectStore(Node, 4, AArch64::ST4Fourv4h);
-      else if (VT == MVT::v8i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v8f16)
         return SelectStore(Node, 4, AArch64::ST4Fourv8h);
       else if (VT == MVT::v2i32 || VT == MVT::v2f32)
         return SelectStore(Node, 4, AArch64::ST4Fourv2s);
@@ -2560,7 +2565,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     case Intrinsic::aarch64_neon_st2lane: {
       if (VT == MVT::v16i8 || VT == MVT::v8i8)
         return SelectStoreLane(Node, 2, AArch64::ST2i8);
-      else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
+               VT == MVT::v8f16)
         return SelectStoreLane(Node, 2, AArch64::ST2i16);
       else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
                VT == MVT::v2f32)
@@ -2573,7 +2579,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     case Intrinsic::aarch64_neon_st3lane: {
       if (VT == MVT::v16i8 || VT == MVT::v8i8)
         return SelectStoreLane(Node, 3, AArch64::ST3i8);
-      else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
+               VT == MVT::v8f16)
         return SelectStoreLane(Node, 3, AArch64::ST3i16);
       else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
                VT == MVT::v2f32)
@@ -2586,7 +2593,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     case Intrinsic::aarch64_neon_st4lane: {
       if (VT == MVT::v16i8 || VT == MVT::v8i8)
         return SelectStoreLane(Node, 4, AArch64::ST4i8);
-      else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+      else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
+               VT == MVT::v8f16)
         return SelectStoreLane(Node, 4, AArch64::ST4i16);
       else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
                VT == MVT::v2f32)
@@ -2603,9 +2611,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostLoad(Node, 2, AArch64::LD2Twov8b_POST, AArch64::dsub0);
     else if (VT == MVT::v16i8)
       return SelectPostLoad(Node, 2, AArch64::LD2Twov16b_POST, AArch64::qsub0);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostLoad(Node, 2, AArch64::LD2Twov4h_POST, AArch64::dsub0);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostLoad(Node, 2, AArch64::LD2Twov8h_POST, AArch64::qsub0);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostLoad(Node, 2, AArch64::LD2Twov2s_POST, AArch64::dsub0);
@@ -2622,9 +2630,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostLoad(Node, 3, AArch64::LD3Threev8b_POST, AArch64::dsub0);
     else if (VT == MVT::v16i8)
       return SelectPostLoad(Node, 3, AArch64::LD3Threev16b_POST, AArch64::qsub0);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostLoad(Node, 3, AArch64::LD3Threev4h_POST, AArch64::dsub0);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostLoad(Node, 3, AArch64::LD3Threev8h_POST, AArch64::qsub0);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostLoad(Node, 3, AArch64::LD3Threev2s_POST, AArch64::dsub0);
@@ -2641,9 +2649,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostLoad(Node, 4, AArch64::LD4Fourv8b_POST, AArch64::dsub0);
     else if (VT == MVT::v16i8)
       return SelectPostLoad(Node, 4, AArch64::LD4Fourv16b_POST, AArch64::qsub0);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostLoad(Node, 4, AArch64::LD4Fourv4h_POST, AArch64::dsub0);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostLoad(Node, 4, AArch64::LD4Fourv8h_POST, AArch64::qsub0);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostLoad(Node, 4, AArch64::LD4Fourv2s_POST, AArch64::dsub0);
@@ -2660,9 +2668,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostLoad(Node, 2, AArch64::LD1Twov8b_POST, AArch64::dsub0);
     else if (VT == MVT::v16i8)
       return SelectPostLoad(Node, 2, AArch64::LD1Twov16b_POST, AArch64::qsub0);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostLoad(Node, 2, AArch64::LD1Twov4h_POST, AArch64::dsub0);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostLoad(Node, 2, AArch64::LD1Twov8h_POST, AArch64::qsub0);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostLoad(Node, 2, AArch64::LD1Twov2s_POST, AArch64::dsub0);
@@ -2679,9 +2687,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostLoad(Node, 3, AArch64::LD1Threev8b_POST, AArch64::dsub0);
     else if (VT == MVT::v16i8)
       return SelectPostLoad(Node, 3, AArch64::LD1Threev16b_POST, AArch64::qsub0);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostLoad(Node, 3, AArch64::LD1Threev4h_POST, AArch64::dsub0);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostLoad(Node, 3, AArch64::LD1Threev8h_POST, AArch64::qsub0);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostLoad(Node, 3, AArch64::LD1Threev2s_POST, AArch64::dsub0);
@@ -2698,9 +2706,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostLoad(Node, 4, AArch64::LD1Fourv8b_POST, AArch64::dsub0);
     else if (VT == MVT::v16i8)
       return SelectPostLoad(Node, 4, AArch64::LD1Fourv16b_POST, AArch64::qsub0);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostLoad(Node, 4, AArch64::LD1Fourv4h_POST, AArch64::dsub0);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostLoad(Node, 4, AArch64::LD1Fourv8h_POST, AArch64::qsub0);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostLoad(Node, 4, AArch64::LD1Fourv2s_POST, AArch64::dsub0);
@@ -2717,9 +2725,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostLoad(Node, 1, AArch64::LD1Rv8b_POST, AArch64::dsub0);
     else if (VT == MVT::v16i8)
       return SelectPostLoad(Node, 1, AArch64::LD1Rv16b_POST, AArch64::qsub0);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostLoad(Node, 1, AArch64::LD1Rv4h_POST, AArch64::dsub0);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostLoad(Node, 1, AArch64::LD1Rv8h_POST, AArch64::qsub0);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostLoad(Node, 1, AArch64::LD1Rv2s_POST, AArch64::dsub0);
@@ -2736,9 +2744,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostLoad(Node, 2, AArch64::LD2Rv8b_POST, AArch64::dsub0);
     else if (VT == MVT::v16i8)
       return SelectPostLoad(Node, 2, AArch64::LD2Rv16b_POST, AArch64::qsub0);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostLoad(Node, 2, AArch64::LD2Rv4h_POST, AArch64::dsub0);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostLoad(Node, 2, AArch64::LD2Rv8h_POST, AArch64::qsub0);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostLoad(Node, 2, AArch64::LD2Rv2s_POST, AArch64::dsub0);
@@ -2755,9 +2763,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostLoad(Node, 3, AArch64::LD3Rv8b_POST, AArch64::dsub0);
     else if (VT == MVT::v16i8)
       return SelectPostLoad(Node, 3, AArch64::LD3Rv16b_POST, AArch64::qsub0);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostLoad(Node, 3, AArch64::LD3Rv4h_POST, AArch64::dsub0);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostLoad(Node, 3, AArch64::LD3Rv8h_POST, AArch64::qsub0);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostLoad(Node, 3, AArch64::LD3Rv2s_POST, AArch64::dsub0);
@@ -2774,9 +2782,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostLoad(Node, 4, AArch64::LD4Rv8b_POST, AArch64::dsub0);
     else if (VT == MVT::v16i8)
       return SelectPostLoad(Node, 4, AArch64::LD4Rv16b_POST, AArch64::qsub0);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostLoad(Node, 4, AArch64::LD4Rv4h_POST, AArch64::dsub0);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostLoad(Node, 4, AArch64::LD4Rv8h_POST, AArch64::qsub0);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostLoad(Node, 4, AArch64::LD4Rv2s_POST, AArch64::dsub0);
@@ -2791,7 +2799,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   case AArch64ISD::LD1LANEpost: {
     if (VT == MVT::v16i8 || VT == MVT::v8i8)
       return SelectPostLoadLane(Node, 1, AArch64::LD1i8_POST);
-    else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
+             VT == MVT::v8f16)
       return SelectPostLoadLane(Node, 1, AArch64::LD1i16_POST);
     else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
              VT == MVT::v2f32)
@@ -2804,7 +2813,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   case AArch64ISD::LD2LANEpost: {
     if (VT == MVT::v16i8 || VT == MVT::v8i8)
       return SelectPostLoadLane(Node, 2, AArch64::LD2i8_POST);
-    else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
+             VT == MVT::v8f16)
       return SelectPostLoadLane(Node, 2, AArch64::LD2i16_POST);
     else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
              VT == MVT::v2f32)
@@ -2817,7 +2827,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   case AArch64ISD::LD3LANEpost: {
     if (VT == MVT::v16i8 || VT == MVT::v8i8)
       return SelectPostLoadLane(Node, 3, AArch64::LD3i8_POST);
-    else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
+             VT == MVT::v8f16)
       return SelectPostLoadLane(Node, 3, AArch64::LD3i16_POST);
     else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
              VT == MVT::v2f32)
@@ -2830,7 +2841,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   case AArch64ISD::LD4LANEpost: {
     if (VT == MVT::v16i8 || VT == MVT::v8i8)
       return SelectPostLoadLane(Node, 4, AArch64::LD4i8_POST);
-    else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
+             VT == MVT::v8f16)
       return SelectPostLoadLane(Node, 4, AArch64::LD4i16_POST);
     else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
              VT == MVT::v2f32)
@@ -2846,9 +2858,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostStore(Node, 2, AArch64::ST2Twov8b_POST);
     else if (VT == MVT::v16i8)
       return SelectPostStore(Node, 2, AArch64::ST2Twov16b_POST);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostStore(Node, 2, AArch64::ST2Twov4h_POST);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostStore(Node, 2, AArch64::ST2Twov8h_POST);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostStore(Node, 2, AArch64::ST2Twov2s_POST);
@@ -2866,9 +2878,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostStore(Node, 3, AArch64::ST3Threev8b_POST);
     else if (VT == MVT::v16i8)
       return SelectPostStore(Node, 3, AArch64::ST3Threev16b_POST);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostStore(Node, 3, AArch64::ST3Threev4h_POST);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostStore(Node, 3, AArch64::ST3Threev8h_POST);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostStore(Node, 3, AArch64::ST3Threev2s_POST);
@@ -2886,9 +2898,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostStore(Node, 4, AArch64::ST4Fourv8b_POST);
     else if (VT == MVT::v16i8)
       return SelectPostStore(Node, 4, AArch64::ST4Fourv16b_POST);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostStore(Node, 4, AArch64::ST4Fourv4h_POST);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostStore(Node, 4, AArch64::ST4Fourv8h_POST);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostStore(Node, 4, AArch64::ST4Fourv2s_POST);
@@ -2906,9 +2918,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostStore(Node, 2, AArch64::ST1Twov8b_POST);
     else if (VT == MVT::v16i8)
       return SelectPostStore(Node, 2, AArch64::ST1Twov16b_POST);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostStore(Node, 2, AArch64::ST1Twov4h_POST);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostStore(Node, 2, AArch64::ST1Twov8h_POST);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostStore(Node, 2, AArch64::ST1Twov2s_POST);
@@ -2926,9 +2938,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostStore(Node, 3, AArch64::ST1Threev8b_POST);
     else if (VT == MVT::v16i8)
       return SelectPostStore(Node, 3, AArch64::ST1Threev16b_POST);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostStore(Node, 3, AArch64::ST1Threev4h_POST);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostStore(Node, 3, AArch64::ST1Threev8h_POST);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostStore(Node, 3, AArch64::ST1Threev2s_POST);
@@ -2946,9 +2958,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       return SelectPostStore(Node, 4, AArch64::ST1Fourv8b_POST);
     else if (VT == MVT::v16i8)
       return SelectPostStore(Node, 4, AArch64::ST1Fourv16b_POST);
-    else if (VT == MVT::v4i16)
+    else if (VT == MVT::v4i16 || VT == MVT::v4f16)
       return SelectPostStore(Node, 4, AArch64::ST1Fourv4h_POST);
-    else if (VT == MVT::v8i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v8f16)
       return SelectPostStore(Node, 4, AArch64::ST1Fourv8h_POST);
     else if (VT == MVT::v2i32 || VT == MVT::v2f32)
       return SelectPostStore(Node, 4, AArch64::ST1Fourv2s_POST);
@@ -2964,7 +2976,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     VT = Node->getOperand(1).getValueType();
     if (VT == MVT::v16i8 || VT == MVT::v8i8)
       return SelectPostStoreLane(Node, 2, AArch64::ST2i8_POST);
-    else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
+             VT == MVT::v8f16)
       return SelectPostStoreLane(Node, 2, AArch64::ST2i16_POST);
     else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
              VT == MVT::v2f32)
@@ -2978,7 +2991,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     VT = Node->getOperand(1).getValueType();
     if (VT == MVT::v16i8 || VT == MVT::v8i8)
       return SelectPostStoreLane(Node, 3, AArch64::ST3i8_POST);
-    else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
+             VT == MVT::v8f16)
       return SelectPostStoreLane(Node, 3, AArch64::ST3i16_POST);
     else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
              VT == MVT::v2f32)
@@ -2992,7 +3006,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     VT = Node->getOperand(1).getValueType();
     if (VT == MVT::v16i8 || VT == MVT::v8i8)
       return SelectPostStoreLane(Node, 4, AArch64::ST4i8_POST);
-    else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+    else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
+             VT == MVT::v8f16)
       return SelectPostStoreLane(Node, 4, AArch64::ST4i16_POST);
     else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
              VT == MVT::v2f32)
