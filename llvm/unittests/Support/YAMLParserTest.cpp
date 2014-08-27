@@ -212,7 +212,7 @@ TEST(YAMLParser, DiagnosticFilenameFromBufferID) {
   // we get its ID as filename in diagnostics.
   std::unique_ptr<MemoryBuffer> Buffer(
       MemoryBuffer::getMemBuffer("[]", "buffername.yaml"));
-  yaml::Stream Stream(std::move(Buffer), SM);
+  yaml::Stream Stream(Buffer->getMemBufferRef(), SM);
   Stream.printError(Stream.begin()->getRoot(), "Hello, World!");
   EXPECT_EQ("buffername.yaml", GeneratedDiag.getFilename());
 }
