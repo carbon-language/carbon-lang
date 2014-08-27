@@ -80,7 +80,7 @@ struct A
 {
     int i;
 
-    explicit A(int d = 0) : i(d) {}
+    explicit A(int d = 0) noexcept {i=d;}
     A(const A& a) : i(a.i) {}
     A(const volatile A& a) : i(a.i) {}
 
