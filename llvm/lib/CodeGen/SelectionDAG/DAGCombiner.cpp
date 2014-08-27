@@ -6773,29 +6773,32 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
   // fold (fsub c1, c2) -> c1-c2
   if (N0CFP && N1CFP)
     return DAG.getNode(ISD::FSUB, SDLoc(N), VT, N0, N1);
-  // fold (fsub A, 0) -> A
-  if (Options->UnsafeFPMath && N1CFP && N1CFP->getValueAPF().isZero())
-    return N0;
-  // fold (fsub 0, B) -> -B
-  if (Options->UnsafeFPMath && N0CFP && N0CFP->getValueAPF().isZero()) {
-    if (isNegatibleForFree(N1, LegalOperations, TLI, Options))
-      return GetNegatedExpression(N1, DAG, LegalOperations);
-    if (!LegalOperations || TLI.isOperationLegal(ISD::FNEG, VT))
-      return DAG.getNode(ISD::FNEG, dl, VT, N1);
-  }
+
   // fold (fsub A, (fneg B)) -> (fadd A, B)
   if (isNegatibleForFree(N1, LegalOperations, TLI, Options))
     return DAG.getNode(ISD::FADD, dl, VT, N0,
                        GetNegatedExpression(N1, DAG, LegalOperations));
 
-  // If 'unsafe math' is enabled, fold
-  //    (fsub x, x) -> 0.0 &
-  //    (fsub x, (fadd x, y)) -> (fneg y) &
-  //    (fsub x, (fadd y, x)) -> (fneg y)
+  // If 'unsafe math' is enabled, fold lots of things.
   if (Options->UnsafeFPMath) {
+    // (fsub A, 0) -> A
+    if (N1CFP && N1CFP->getValueAPF().isZero())
+      return N0;
+
+    // (fsub 0, B) -> -B
+    if (N0CFP && N0CFP->getValueAPF().isZero()) {
+      if (isNegatibleForFree(N1, LegalOperations, TLI, Options))
+        return GetNegatedExpression(N1, DAG, LegalOperations);
+      if (!LegalOperations || TLI.isOperationLegal(ISD::FNEG, VT))
+        return DAG.getNode(ISD::FNEG, dl, VT, N1);
+    }
+
+    // (fsub x, x) -> 0.0
     if (N0 == N1)
       return DAG.getConstantFP(0.0f, VT);
 
+    // (fsub x, (fadd x, y)) -> (fneg y)
+    // (fsub x, (fadd y, x)) -> (fneg y)
     if (N1.getOpcode() == ISD::FADD) {
       SDValue N10 = N1->getOperand(0);
       SDValue N11 = N1->getOperand(1);
