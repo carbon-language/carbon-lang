@@ -40,3 +40,24 @@
 void func( Class c, float g ) {
     [c clsMethod: &g];
 }
+
+// rdar://18095772
+@protocol NSKeyedArchiverDelegate @end
+
+@interface NSKeyedArchiver
+@property (assign) id <NSKeyedArchiverDelegate> delegate;
+@end
+
+@interface NSConnection
+@property (assign) id delegate;
+@end
+
+extern id NSApp;
+
+@interface AppDelegate
+@end
+
+AppDelegate* GetDelegate()
+{
+    return [NSApp delegate];
+}
