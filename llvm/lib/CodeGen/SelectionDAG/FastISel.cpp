@@ -1816,8 +1816,7 @@ unsigned FastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
   const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   unsigned ResultReg = createResultReg(RC);
-  RC = TII.getRegClass(II, II.getNumDefs(), &TRI, *FuncInfo.MF);
-  MRI.constrainRegClass(Op0, RC);
+  Op0 = constrainOperandRegClass(II, Op0, II.getNumDefs());
 
   if (II.getNumDefs() >= 1)
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II, ResultReg)
