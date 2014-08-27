@@ -42,3 +42,6 @@ add byte ptr [eax], eax
 
 add rax, 3
 // CHECK: error: register %rax is only available in 64-bit mode
+
+fadd   "?half@?0??bar@@YAXXZ@4NA"
+// CHECK: error: ambiguous operand size for instruction 'fadd'

@@ -603,8 +603,8 @@ mov rcx, qword ptr [_g0 + 8]
 "?half@?0??bar@@YAXXZ@4NA":
 	.quad   4602678819172646912
 
-fadd   "?half@?0??bar@@YAXXZ@4NA"
-fadd   "?half@?0??bar@@YAXXZ@4NA"@IMGREL
+fadd   dword ptr "?half@?0??bar@@YAXXZ@4NA"
+fadd   dword ptr "?half@?0??bar@@YAXXZ@4NA"@IMGREL
 // CHECK: fadds   "?half@?0??bar@@YAXXZ@4NA"
 // CHECK: fadds   "?half@?0??bar@@YAXXZ@4NA"@IMGREL32
 
@@ -641,3 +641,24 @@ fstp dword ptr [rax]
 // CHECK: fstpt (%rax)
 // CHECK: fstpl (%rax)
 // CHECK: fstps (%rax)
+
+fxsave [eax]
+fsave [eax]
+fxrstor [eax]
+frstor [eax]
+// CHECK: fxsave (%eax)
+// CHECK: wait
+// CHECK: fnsave (%eax)
+// CHECK: fxrstor (%eax)
+// CHECK: frstor (%eax)
+
+// FIXME: Should we accept this?  Masm accepts it, but gas does not.
+fxsave dword ptr [eax]
+fsave dword ptr [eax]
+fxrstor dword ptr [eax]
+frstor dword ptr [eax]
+// CHECK: fxsave (%eax)
+// CHECK: wait
+// CHECK: fnsave (%eax)
+// CHECK: fxrstor (%eax)
+// CHECK: frstor (%eax)

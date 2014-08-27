@@ -2573,10 +2573,7 @@ bool X86AsmParser::MatchAndEmitIntelInstruction(SMLoc IDLoc, unsigned &Opcode,
   X86Operand *UnsizedMemOp = nullptr;
   for (const auto &Op : Operands) {
     X86Operand *X86Op = static_cast<X86Operand *>(Op.get());
-    // FIXME: Remove this exception for absolute memory references. Currently it
-    // allows us to assemble 'call foo', because foo is represented as a memory
-    // operand.
-    if (X86Op->isMemUnsized() && !X86Op->isAbsMem())
+    if (X86Op->isMemUnsized())
       UnsizedMemOp = X86Op;
   }
 
@@ -2602,14 +2599,27 @@ bool X86AsmParser::MatchAndEmitIntelInstruction(SMLoc IDLoc, unsigned &Opcode,
     for (unsigned Size : MopSizes) {
       UnsizedMemOp->Mem.Size = Size;
       uint64_t ErrorInfoIgnore;
-      Match.push_back(MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
-                                           MatchingInlineAsm,
-                                           isParsingIntelSyntax()));
+      unsigned LastOpcode = Inst.getOpcode();
+      unsigned M =
+          MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
+                               MatchingInlineAsm, isParsingIntelSyntax());
+      if (Match.empty() || LastOpcode != Inst.getOpcode())
+        Match.push_back(M);
+
       // If this returned as a missing feature failure, remember that.
       if (Match.back() == Match_MissingFeature)
         ErrorInfoMissingFeature = ErrorInfoIgnore;
     }
-  } else {
+
+    // Restore the size of the unsized memory operand if we modified it.
+    if (UnsizedMemOp)
+      UnsizedMemOp->Mem.Size = 0;
+  }
+
+  // If we haven't matched anything yet, this is not a basic integer or FPU
+  // operation.  There shouldn't be any ambiguity in our mneumonic table, so try
+  // matching with the unsized operand.
+  if (Match.empty()) {
     Match.push_back(MatchInstructionImpl(Operands, Inst, ErrorInfo,
                                          MatchingInlineAsm,
                                          isParsingIntelSyntax()));
