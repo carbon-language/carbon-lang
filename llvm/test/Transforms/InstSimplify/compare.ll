@@ -982,3 +982,30 @@ define i1 @icmp_known_bits(i4 %x, i4 %y) {
 ; CHECK-LABEL: @icmp_known_bits
 ; CHECK-NEXT: ret i1 false
 }
+
+define i1 @icmp_shl_nuw_1(i64 %a) {
+ %shl = shl nuw i64 1, %a
+ %cmp = icmp ne i64 %shl, 0
+ ret i1 %cmp
+
+; CHECK-LABEL: @icmp_shl_nuw_1
+; CHECK-NEXT: ret i1 true
+}
+
+define i1 @icmp_shl_nsw_neg1(i64 %a) {
+ %shl = shl nsw i64 -1, %a
+ %cmp = icmp sge i64 %shl, 3
+ ret i1 %cmp
+
+; CHECK-LABEL: @icmp_shl_nsw_neg1
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @icmp_shl_nsw_1(i64 %a) {
+ %shl = shl nsw i64 1, %a
+ %cmp = icmp sge i64 %shl, 0
+ ret i1 %cmp
+
+; CHECK-LABEL: @icmp_shl_nsw_1
+; CHECK-NEXT: ret i1 true
+}

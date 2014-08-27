@@ -1993,6 +1993,22 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
         Upper = Upper + 1;
         assert(Upper != Lower && "Upper part of range has wrapped!");
       }
+    } else if (match(LHS, m_NUWShl(m_ConstantInt(CI2), m_Value()))) {
+      // 'shl nuw CI2, x' produces [CI2, CI2 << CLZ(CI2)]
+      Lower = CI2->getValue();
+      Upper = Lower.shl(Lower.countLeadingZeros()) + 1;
+    } else if (match(LHS, m_NSWShl(m_ConstantInt(CI2), m_Value()))) {
+      if (CI2->isNegative()) {
+        // 'shl nsw CI2, x' produces [CI2 << CLO(CI2)-1, CI2]
+        unsigned ShiftAmount = CI2->getValue().countLeadingOnes() - 1;
+        Lower = CI2->getValue().shl(ShiftAmount);
+        Upper = CI2->getValue() + 1;
+      } else {
+        // 'shl nsw CI2, x' produces [CI2, CI2 << CLZ(CI2)-1]
+        unsigned ShiftAmount = CI2->getValue().countLeadingZeros() - 1;
+        Lower = CI2->getValue();
+        Upper = CI2->getValue().shl(ShiftAmount) + 1;
+      }
     } else if (match(LHS, m_LShr(m_Value(), m_ConstantInt(CI2)))) {
       // 'lshr x, CI2' produces [0, UINT_MAX >> CI2].
       APInt NegOne = APInt::getAllOnesValue(Width);
