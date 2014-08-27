@@ -245,7 +245,8 @@ void ASTDeclWriter::VisitTagDecl(TagDecl *D) {
   VisitTypeDecl(D);
   Record.push_back(D->getIdentifierNamespace());
   Record.push_back((unsigned)D->getTagKind()); // FIXME: stable encoding
-  Record.push_back(D->isCompleteDefinition());
+  if (!isa<CXXRecordDecl>(D))
+    Record.push_back(D->isCompleteDefinition());
   Record.push_back(D->isEmbeddedInDeclarator());
   Record.push_back(D->isFreeStanding());
   Record.push_back(D->isCompleteDefinitionRequired());

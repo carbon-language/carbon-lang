@@ -8216,8 +8216,11 @@ void ASTReader::finishPendingActions() {
       }
       
       if (auto RD = dyn_cast<CXXRecordDecl>(D)) {
-        for (auto R : RD->redecls())
+        for (auto R : RD->redecls()) {
+          assert((R == D) == R->isThisDeclarationADefinition() &&
+                 "declaration thinks it's the definition but it isn't");
           cast<CXXRecordDecl>(R)->DefinitionData = RD->DefinitionData;
+        }
       }
 
       continue;

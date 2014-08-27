@@ -489,7 +489,8 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitTagDecl(TagDecl *TD) {
   
   TD->IdentifierNamespace = Record[Idx++];
   TD->setTagKind((TagDecl::TagKind)Record[Idx++]);
-  TD->setCompleteDefinition(Record[Idx++]);
+  if (!isa<CXXRecordDecl>(TD))
+    TD->setCompleteDefinition(Record[Idx++]);
   TD->setEmbeddedInDeclarator(Record[Idx++]);
   TD->setFreeStanding(Record[Idx++]);
   TD->setCompleteDefinitionRequired(Record[Idx++]);
@@ -3426,6 +3427,7 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
         Reader.ReadDeclContextStorage(ModuleFile, ModuleFile.DeclsCursor,
                                           std::make_pair(LexicalOffset, 0),
                                           ModuleFile.DeclContextInfos[RD]);
+        Reader.PendingDefinitions.insert(RD);
       }
 
       auto TSK = (TemplateSpecializationKind)Record[Idx++];
