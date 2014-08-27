@@ -20,7 +20,6 @@
 #include "clang/Analysis/CodeInjector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Allocator.h"
 #include <memory>
 
@@ -411,7 +410,7 @@ class AnalysisDeclContextManager {
 
   /// Pointer to an interface that can provide function bodies for
   /// declarations from external source.
-  llvm::OwningPtr<CodeInjector> Injector;
+  std::unique_ptr<CodeInjector> Injector;
   
   /// Flag to indicate whether or not bodies should be synthesized
   /// for well-known functions.
