@@ -1508,19 +1508,37 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         GetElementPtrInst::Create(Src->getOperand(0), Indices, GEP.getName());
   }
 
-  // Canonicalize (gep i8* X, -(ptrtoint Y)) to (sub (ptrtoint X), (ptrtoint Y))
-  // The GEP pattern is emitted by the SCEV expander for certain kinds of
-  // pointer arithmetic.
-  if (DL && GEP.getNumIndices() == 1 &&
-      match(GEP.getOperand(1), m_Neg(m_PtrToInt(m_Value())))) {
+  if (DL && GEP.getNumIndices() == 1) {
     unsigned AS = GEP.getPointerAddressSpace();
-    if (GEP.getType() == Builder->getInt8PtrTy(AS) &&
-        GEP.getOperand(1)->getType()->getScalarSizeInBits() ==
+    if (GEP.getOperand(1)->getType()->getScalarSizeInBits() ==
         DL->getPointerSizeInBits(AS)) {
-      Operator *Index = cast<Operator>(GEP.getOperand(1));
-      Value *PtrToInt = Builder->CreatePtrToInt(PtrOp, Index->getType());
-      Value *NewSub = Builder->CreateSub(PtrToInt, Index->getOperand(1));
-      return CastInst::Create(Instruction::IntToPtr, NewSub, GEP.getType());
+      Type *PtrTy = GEP.getPointerOperandType();
+      Type *Ty = PtrTy->getPointerElementType();
+      uint64_t TyAllocSize = DL->getTypeAllocSize(Ty);
+
+      // Canonicalize (gep i8* X, -(ptrtoint Y)) to (sub (ptrtoint X), (ptrtoint Y))
+      // The GEP pattern is emitted by the SCEV expander for certain kinds of
+      // pointer arithmetic.
+      uint64_t C;
+      Value *NegPtrToInt = nullptr;
+      if (TyAllocSize == 1) {
+          NegPtrToInt = GEP.getOperand(1);
+      } else if (match(GEP.getOperand(1),
+                       m_AShr(m_Value(NegPtrToInt), m_ConstantInt(C)))) {
+        if (TyAllocSize != 1ULL << C)
+          NegPtrToInt = nullptr;
+      } else if (match(GEP.getOperand(1),
+                       m_SDiv(m_Value(NegPtrToInt), m_ConstantInt(C)))) {
+        if (TyAllocSize != C)
+          NegPtrToInt = nullptr;
+      }
+
+      if (NegPtrToInt && match(NegPtrToInt, m_Neg(m_PtrToInt(m_Value())))) {
+        Operator *Index = cast<Operator>(NegPtrToInt);
+        Value *PtrToInt = Builder->CreatePtrToInt(PtrOp, Index->getType());
+        Value *NewSub = Builder->CreateSub(PtrToInt, Index->getOperand(1));
+        return CastInst::Create(Instruction::IntToPtr, NewSub, GEP.getType());
+      }
     }
   }
 

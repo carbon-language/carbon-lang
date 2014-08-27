@@ -6,6 +6,7 @@ target datalayout = "e-p:64:64-p1:16:16-p2:32:32:32-p3:64:64:64"
 %pair = type { i32, i32 }
 %struct.B = type { double }
 %struct.A = type { %struct.B, i32, i32 }
+%struct.C = type { [7 x i8] }
 
 
 @Global = constant [10 x i8] c"helloworld"
@@ -811,6 +812,50 @@ define i16 @test41([3 x i32] addrspace(1)* %array) {
 
 ; CHECK-LABEL: @test41(
 ; CHECK-NEXT: ret i16 8
+}
+
+define i8* @test42(i8* %c1, i8* %c2) {
+  %ptrtoint = ptrtoint i8* %c1 to i64
+  %sub = sub i64 0, %ptrtoint
+  %gep = getelementptr inbounds i8* %c2, i64 %sub
+  ret i8* %gep
+
+; CHECK-LABEL: @test42(
+; CHECK-NEXT:  [[PTRTOINT1:%.*]] = ptrtoint i8* %c1 to i64
+; CHECK-NEXT:  [[PTRTOINT2:%.*]] = ptrtoint i8* %c2 to i64
+; CHECK-NEXT:  [[SUB:%.*]] = sub i64 [[PTRTOINT2]], [[PTRTOINT1]]
+; CHECK-NEXT:  [[INTTOPTR:%.*]] = inttoptr i64 [[SUB]] to i8*
+; CHECK-NEXT:  ret i8* [[INTTOPTR]]
+}
+
+define i16* @test43(i16* %c1, i16* %c2) {
+  %ptrtoint = ptrtoint i16* %c1 to i64
+  %sub = sub i64 0, %ptrtoint
+  %shr = ashr i64 %sub, 1
+  %gep = getelementptr inbounds i16* %c2, i64 %shr
+  ret i16* %gep
+
+; CHECK-LABEL: @test43(
+; CHECK-NEXT:  [[PTRTOINT1:%.*]] = ptrtoint i16* %c1 to i64
+; CHECK-NEXT:  [[PTRTOINT2:%.*]] = ptrtoint i16* %c2 to i64
+; CHECK-NEXT:  [[SUB:%.*]] = sub i64 [[PTRTOINT2]], [[PTRTOINT1]]
+; CHECK-NEXT:  [[INTTOPTR:%.*]] = inttoptr i64 [[SUB]] to i16*
+; CHECK-NEXT:  ret i16* [[INTTOPTR]]
+}
+
+define %struct.C* @test44(%struct.C* %c1, %struct.C* %c2) {
+  %ptrtoint = ptrtoint %struct.C* %c1 to i64
+  %sub = sub i64 0, %ptrtoint
+  %shr = sdiv i64 %sub, 7
+  %gep = getelementptr inbounds %struct.C* %c2, i64 %shr
+  ret %struct.C* %gep
+
+; CHECK-LABEL: @test44(
+; CHECK-NEXT:  [[PTRTOINT1:%.*]] = ptrtoint %struct.C* %c1 to i64
+; CHECK-NEXT:  [[PTRTOINT2:%.*]] = ptrtoint %struct.C* %c2 to i64
+; CHECK-NEXT:  [[SUB:%.*]] = sub i64 [[PTRTOINT2]], [[PTRTOINT1]]
+; CHECK-NEXT:  [[INTTOPTR:%.*]] = inttoptr i64 [[SUB]] to %struct.C*
+; CHECK-NEXT:  ret %struct.C* [[INTTOPTR]]
 }
 
 define i32 addrspace(1)* @ascast_0_gep(i32* %p) nounwind {
