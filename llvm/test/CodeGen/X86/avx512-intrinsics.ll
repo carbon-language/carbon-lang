@@ -636,3 +636,12 @@ define <16 x i32> @test_maskz_valign_d(<16 x i32> %a, <16 x i32> %b, i16 %mask) 
 }
 
 declare <16 x i32> @llvm.x86.avx512.mask.valign.d.512(<16 x i32>, <16 x i32>, i8, <16 x i32>, i16)
+
+define void @test_mask_store_ss(i8* %ptr, <4 x float> %data, i8 %mask) {
+ ; CHECK-LABEL: test_mask_store_ss
+ ; CHECK: vmovss %xmm0, (%rdi) {%k1}     ## encoding: [0x62,0xf1,0x7e,0x09,0x11,0x07]
+ call void @llvm.x86.avx512.mask.store.ss(i8* %ptr, <4 x float> %data, i8 %mask)
+ ret void
+}
+
+declare void @llvm.x86.avx512.mask.store.ss(i8*, <4 x float>, i8 )

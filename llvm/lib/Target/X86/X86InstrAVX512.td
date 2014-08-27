@@ -2088,10 +2088,16 @@ multiclass avx512_move_scalar <string asm, RegisterClass RC,
               !strconcat(asm, " \t{$src, $dst|$dst, $src}"),
               [(set RC:$dst, (mem_pat addr:$src))], IIC_SSE_MOV_S_RM>,
               EVEX, VEX_LIG;
+  let mayStore = 1 in {
   def mr: SI<0x11, MRMDestMem, (outs), (ins x86memop:$dst, RC:$src),
              !strconcat(asm, " \t{$src, $dst|$dst, $src}"),
              [(store RC:$src, addr:$dst)], IIC_SSE_MOV_S_MR>,
              EVEX, VEX_LIG;
+  def mrk: SI<0x11, MRMDestMem, (outs), (ins x86memop:$dst, VK1WM:$mask, RC:$src),
+             !strconcat(asm, " \t{$src, $dst {${mask}}|$dst {${mask}}, $src}"),
+             [], IIC_SSE_MOV_S_MR>,
+             EVEX, VEX_LIG, EVEX_K;
+  } // mayStore
   } //hasSideEffects = 0
 }
 
@@ -2110,6 +2116,10 @@ def : Pat<(f32 (X86select VK1WM:$mask, (f32 FR32X:$src1), (f32 FR32X:$src2))),
 def : Pat<(f64 (X86select VK1WM:$mask, (f64 FR64X:$src1), (f64 FR64X:$src2))),
           (COPY_TO_REGCLASS (VMOVSDZrrk (COPY_TO_REGCLASS FR64X:$src2, VR128X),
            VK1WM:$mask, (f64 (IMPLICIT_DEF)), FR64X:$src1), FR64X)>;
+
+def : Pat<(int_x86_avx512_mask_store_ss addr:$dst, VR128X:$src, GR8:$mask),
+          (VMOVSSZmrk addr:$dst, (i1 (COPY_TO_REGCLASS GR8:$mask, VK1WM)),
+           (COPY_TO_REGCLASS VR128X:$src, FR32X))>;
 
 // For the disassembler
 let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0 in {
