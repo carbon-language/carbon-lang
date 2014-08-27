@@ -59,10 +59,11 @@ public:
              I = VirtualFiles.begin(),
              E = VirtualFiles.end();
          I != E; ++I) {
-      llvm::MemoryBuffer *Buf = llvm::MemoryBuffer::getMemBuffer(I->Code);
+      std::unique_ptr<llvm::MemoryBuffer> Buf =
+          llvm::MemoryBuffer::getMemBuffer(I->Code);
       const FileEntry *Entry = SM.getFileManager().getVirtualFile(
           I->FileName, Buf->getBufferSize(), /*ModificationTime=*/0);
-      SM.overrideFileContents(Entry, Buf);
+      SM.overrideFileContents(Entry, Buf.release());
     }
   }
 

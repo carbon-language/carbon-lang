@@ -188,8 +188,9 @@ bool applyFormatting(const std::vector<tooling::Replacement> &Replacements,
 
   FileManager Files((FileSystemOptions()));
   SourceManager SM(Diagnostics, Files);
-  SM.overrideFileContents(Files.getFile(FileName),
-                          llvm::MemoryBuffer::getMemBufferCopy(FileData));
+  SM.overrideFileContents(
+      Files.getFile(FileName),
+      llvm::MemoryBuffer::getMemBufferCopy(FileData).release());
   Rewriter Rewrites(SM, LangOptions());
 
   return getRewrittenData(FormattingReplacements, Rewrites, FormattedFileData);
