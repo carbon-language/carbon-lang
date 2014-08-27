@@ -2962,13 +2962,9 @@ protected:
     class AttachCompletionHandler : public NextEventAction
     {
     public:
-        AttachCompletionHandler (Process *process, uint32_t exec_count) :
-            NextEventAction (process),
-            m_exec_count (exec_count)
-        {
-        }
+        AttachCompletionHandler (Process *process, uint32_t exec_count);
 
-        virtual 
+        virtual
         ~AttachCompletionHandler() 
         {
         }
