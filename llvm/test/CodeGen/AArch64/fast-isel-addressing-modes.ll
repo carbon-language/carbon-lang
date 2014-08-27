@@ -423,3 +423,30 @@ define i32 @load_breg_sext_shift_offreg_2(i32 %a, i64 %b) {
   ret i32 %5
 }
 
+; Load Scaled Register Offset + Immediate Offset + Sign/Zero extension
+define i64 @load_sext_shift_offreg_imm1(i32 %a) {
+; CHECK-LABEL: load_sext_shift_offreg_imm1
+; CHECK:       sbfiz [[REG:x[0-9]+]], x0, #3, #32
+; CHECK-NEXT:  ldr {{x[0-9]+}}, {{\[}}[[REG]], #8{{\]}}
+  %1 = sext i32 %a to i64
+  %2 = shl i64 %1, 3
+  %3 = add i64 %2, 8
+  %4 = inttoptr i64 %3 to i64*
+  %5 = load i64* %4
+  ret i64 %5
+}
+
+; Load Base Register + Scaled Register Offset + Immediate Offset + Sign/Zero extension
+define i64 @load_breg_sext_shift_offreg_imm1(i32 %a, i64 %b) {
+; CHECK-LABEL: load_breg_sext_shift_offreg_imm1
+; CHECK:       add [[REG:x[0-9]+]], x1, w0, sxtw #3
+; CHECK-NEXT:  ldr {{x[0-9]+}}, {{\[}}[[REG]], #8{{\]}}
+  %1 = sext i32 %a to i64
+  %2 = shl i64 %1, 3
+  %3 = add i64 %b, %2
+  %4 = add i64 %3, 8
+  %5 = inttoptr i64 %4 to i64*
+  %6 = load i64* %5
+  ret i64 %6
+}
+

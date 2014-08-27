@@ -156,10 +156,19 @@ private:
   unsigned emitAddsSubs_ri(bool UseAdds, MVT RetVT, unsigned LHSReg,
                            bool LHSIsKill, uint64_t Imm,
                            bool WantResult = true);
+  unsigned emitAddSub_rs(bool UseAdd, MVT RetVT, unsigned LHSReg,
+                         bool LHSIsKill, unsigned RHSReg, bool RHSIsKill,
+                         AArch64_AM::ShiftExtendType ShiftType,
+                         uint64_t ShiftImm, bool WantResult = true);
   unsigned emitAddsSubs_rs(bool UseAdds, MVT RetVT, unsigned LHSReg,
                            bool LHSIsKill, unsigned RHSReg, bool RHSIsKill,
                            AArch64_AM::ShiftExtendType ShiftType,
                            uint64_t ShiftImm, bool WantResult = true);
+  unsigned emitAddSub_rx(bool UseAdd, MVT RetVT, unsigned LHSReg,
+                         bool LHSIsKill, unsigned RHSReg, bool RHSIsKill,
+                          AArch64_AM::ShiftExtendType ExtType,
+                          uint64_t ShiftImm, bool WantResult = true);
+
   unsigned emitAddsSubs_rx(bool UseAdds, MVT RetVT, unsigned LHSReg,
                            bool LHSIsKill, unsigned RHSReg, bool RHSIsKill,
                            AArch64_AM::ShiftExtendType ExtType,
@@ -715,20 +724,38 @@ bool AArch64FastISel::SimplifyAddress(Address &Addr, MVT VT) {
 
   if (RegisterOffsetNeedsLowering) {
     unsigned ResultReg = 0;
-    if (Addr.getReg())
-      ResultReg = FastEmitInst_rri(AArch64::ADDXrs, &AArch64::GPR64RegClass,
-                                   Addr.getReg(), /*TODO:IsKill=*/false,
-                                   Addr.getOffsetReg(), /*TODO:IsKill=*/false,
-                                   Addr.getShift());
-    else
-      ResultReg = emitLSL_ri(MVT::i64, MVT::i64, Addr.getOffsetReg(),
-                             /*Op0IsKill=*/false, Addr.getShift());
+    if (Addr.getReg()) {
+      if (Addr.getExtendType() == AArch64_AM::SXTW ||
+          Addr.getExtendType() == AArch64_AM::UXTW   )
+        ResultReg = emitAddSub_rx(/*UseAdd=*/true, MVT::i64, Addr.getReg(),
+                                  /*TODO:IsKill=*/false, Addr.getOffsetReg(),
+                                  /*TODO:IsKill=*/false, Addr.getExtendType(),
+                                  Addr.getShift());
+      else
+        ResultReg = emitAddSub_rs(/*UseAdd=*/true, MVT::i64, Addr.getReg(),
+                                  /*TODO:IsKill=*/false, Addr.getOffsetReg(),
+                                  /*TODO:IsKill=*/false, AArch64_AM::LSL,
+                                  Addr.getShift());
+    } else {
+      if (Addr.getExtendType() == AArch64_AM::UXTW)
+        ResultReg = emitLSL_ri(MVT::i64, MVT::i32, Addr.getOffsetReg(),
+                               /*Op0IsKill=*/false, Addr.getShift(),
+                               /*IsZExt=*/true);
+      else if (Addr.getExtendType() == AArch64_AM::SXTW)
+        ResultReg = emitLSL_ri(MVT::i64, MVT::i32, Addr.getOffsetReg(),
+                               /*Op0IsKill=*/false, Addr.getShift(),
+                               /*IsZExt=*/false);
+      else
+        ResultReg = emitLSL_ri(MVT::i64, MVT::i64, Addr.getOffsetReg(),
+                               /*Op0IsKill=*/false, Addr.getShift());
+    }
     if (!ResultReg)
       return false;
 
     Addr.setReg(ResultReg);
     Addr.setOffsetReg(0);
     Addr.setShift(0);
+    Addr.setExtendType(AArch64_AM::InvalidShiftExtend);
   }
 
   // Since the offset is too large for the load/store instruction get the
@@ -978,6 +1005,40 @@ unsigned AArch64FastISel::emitAddsSubs_ri(bool UseAdds, MVT RetVT,
   return ResultReg;
 }
 
+unsigned AArch64FastISel::emitAddSub_rs(bool UseAdd, MVT RetVT,
+                                        unsigned LHSReg, bool LHSIsKill,
+                                        unsigned RHSReg, bool RHSIsKill,
+                                        AArch64_AM::ShiftExtendType ShiftType,
+                                        uint64_t ShiftImm, bool WantResult) {
+  assert(LHSReg && RHSReg && "Invalid register number.");
+
+  if (RetVT != MVT::i32 && RetVT != MVT::i64)
+    return 0;
+
+  static const unsigned OpcTable[2][2] = {
+    { AArch64::ADDWrs, AArch64::ADDXrs },
+    { AArch64::SUBWrs, AArch64::SUBXrs }
+  };
+  unsigned Opc = OpcTable[!UseAdd][(RetVT == MVT::i64)];
+  unsigned ResultReg;
+  if (WantResult) {
+    const TargetRegisterClass *RC =
+        (RetVT == MVT::i64) ? &AArch64::GPR64RegClass : &AArch64::GPR32RegClass;
+    ResultReg = createResultReg(RC);
+  } else
+    ResultReg = (RetVT == MVT::i64) ? AArch64::XZR : AArch64::WZR;
+
+  const MCInstrDesc &II = TII.get(Opc);
+  LHSReg = constrainOperandRegClass(II, LHSReg, II.getNumDefs());
+  RHSReg = constrainOperandRegClass(II, RHSReg, II.getNumDefs() + 1);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II, ResultReg)
+      .addReg(LHSReg, getKillRegState(LHSIsKill))
+      .addReg(RHSReg, getKillRegState(RHSIsKill))
+      .addImm(getShifterImm(ShiftType, ShiftImm));
+  
+  return ResultReg;
+}
+
 unsigned AArch64FastISel::emitAddsSubs_rs(bool UseAdds, MVT RetVT,
                                           unsigned LHSReg, bool LHSIsKill,
                                           unsigned RHSReg, bool RHSIsKill,
@@ -1008,6 +1069,40 @@ unsigned AArch64FastISel::emitAddsSubs_rs(bool UseAdds, MVT RetVT,
       .addReg(LHSReg, getKillRegState(LHSIsKill))
       .addReg(RHSReg, getKillRegState(RHSIsKill))
       .addImm(getShifterImm(ShiftType, ShiftImm));
+
+  return ResultReg;
+}
+
+unsigned AArch64FastISel::emitAddSub_rx(bool UseAdd, MVT RetVT,
+                                        unsigned LHSReg, bool LHSIsKill,
+                                        unsigned RHSReg, bool RHSIsKill,
+                                        AArch64_AM::ShiftExtendType ExtType,
+                                        uint64_t ShiftImm, bool WantResult) {
+  assert(LHSReg && RHSReg && "Invalid register number.");
+
+  if (RetVT != MVT::i32 && RetVT != MVT::i64)
+    return 0;
+
+  static const unsigned OpcTable[2][2] = {
+    { AArch64::ADDWrx, AArch64::ADDXrx },
+    { AArch64::SUBWrx, AArch64::SUBXrx }
+  };
+  unsigned Opc = OpcTable[!UseAdd][(RetVT == MVT::i64)];
+  unsigned ResultReg;
+  if (WantResult) {
+    const TargetRegisterClass *RC =
+        (RetVT == MVT::i64) ? &AArch64::GPR64RegClass : &AArch64::GPR32RegClass;
+    ResultReg = createResultReg(RC);
+  } else
+    ResultReg = (RetVT == MVT::i64) ? AArch64::XZR : AArch64::WZR;
+
+  const MCInstrDesc &II = TII.get(Opc);
+  LHSReg = constrainOperandRegClass(II, LHSReg, II.getNumDefs());
+  RHSReg = constrainOperandRegClass(II, RHSReg, II.getNumDefs() + 1);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II, ResultReg)
+      .addReg(LHSReg, getKillRegState(LHSIsKill))
+      .addReg(RHSReg, getKillRegState(RHSIsKill))
+      .addImm(getArithExtendImm(ExtType, ShiftImm));
 
   return ResultReg;
 }
