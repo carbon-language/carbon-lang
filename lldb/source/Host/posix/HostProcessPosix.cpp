@@ -16,6 +16,8 @@
 
 using namespace lldb_private;
 
+const lldb::pid_t HostProcessPosix::kInvalidProcessId = 0;
+
 HostProcessPosix::HostProcessPosix()
 : m_pid(kInvalidProcessId)
 {
