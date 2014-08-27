@@ -976,10 +976,10 @@ class TemplateDiff {
         bool TemplateArgumentIsPointerType =
             DefaultNTTPD->getType()->isPointerType();
         if (FromExpr && TemplateArgumentIsPointerType) {
-          FromNullPtr = CheckForNullPtr(FromExpr);
+          FromNullPtr = CheckForNullPtr(Context, FromExpr);
         }
         if (ToExpr && TemplateArgumentIsPointerType) {
-          ToNullPtr = CheckForNullPtr(ToExpr);
+          ToNullPtr = CheckForNullPtr(Context, ToExpr);
         }
 
         if (!HasFromInt && !HasToInt && !HasFromValueDecl && !HasToValueDecl) {
@@ -988,9 +988,9 @@ class TemplateDiff {
                           ToIter.isEnd() && ToExpr);
           if (DefaultNTTPD->getType()->isIntegralOrEnumerationType()) {
             if (FromExpr)
-              HasFromInt = GetInt(FromIter, FromExpr, FromInt);
+              HasFromInt = GetInt(Context, FromIter, FromExpr, FromInt);
             if (ToExpr)
-              HasToInt = GetInt(ToIter, ToExpr, ToInt);
+              HasToInt = GetInt(Context, ToIter, ToExpr, ToInt);
           }
           if (HasFromInt && HasToInt) {
             Tree.SetNode(FromInt, ToInt, HasFromInt, HasToInt);
@@ -1008,9 +1008,9 @@ class TemplateDiff {
           }
         } else if (HasFromInt || HasToInt) {
           if (!HasFromInt && FromExpr)
-            HasFromInt = GetInt(FromIter, FromExpr, FromInt);
+            HasFromInt = GetInt(Context, FromIter, FromExpr, FromInt);
           if (!HasToInt && ToExpr)
-            HasToInt = GetInt(ToIter, ToExpr, ToInt);
+            HasToInt = GetInt(Context, ToIter, ToExpr, ToInt);
           Tree.SetNode(FromInt, ToInt, HasFromInt, HasToInt);
           Tree.SetSame(IsSameConvertedInt(ParamWidth, FromInt, ToInt));
           Tree.SetDefault(FromIter.isEnd() && HasFromInt,
@@ -1143,7 +1143,8 @@ class TemplateDiff {
 
   /// GetType - Retrieves the template type arguments, including default
   /// arguments.
-  QualType GetType(const TSTiterator &Iter, TemplateTypeParmDecl *DefaultTTPD) {
+  static QualType GetType(const TSTiterator &Iter,
+                          TemplateTypeParmDecl *DefaultTTPD) {
     bool isVariadic = DefaultTTPD->isParameterPack();
 
     if (!Iter.isEnd())
@@ -1160,7 +1161,8 @@ class TemplateDiff {
 
   /// GetExpr - Retrieves the template expression argument, including default
   /// arguments.
-  Expr *GetExpr(const TSTiterator &Iter, NonTypeTemplateParmDecl *DefaultNTTPD) {
+  static Expr *GetExpr(const TSTiterator &Iter,
+                       NonTypeTemplateParmDecl *DefaultNTTPD) {
     Expr *ArgExpr = nullptr;
     bool isVariadic = DefaultNTTPD->isParameterPack();
 
@@ -1179,7 +1181,8 @@ class TemplateDiff {
 
   /// GetInt - Retrieves the template integer argument, including evaluating
   /// default arguments.
-  bool GetInt(const TSTiterator &Iter, Expr *ArgExpr, llvm::APInt &Int) {
+  static bool GetInt(ASTContext &Context, const TSTiterator &Iter,
+                     Expr *ArgExpr, llvm::APInt &Int) {
     // Default, value-depenedent expressions require fetching
     // from the desugared TemplateArgument, otherwise expression needs to
     // be evaluatable.
@@ -1205,7 +1208,7 @@ class TemplateDiff {
 
   /// GetValueDecl - Retrieves the template Decl argument, including
   /// default expression argument.
-  ValueDecl *GetValueDecl(const TSTiterator &Iter, Expr *ArgExpr) {
+  static ValueDecl *GetValueDecl(const TSTiterator &Iter, Expr *ArgExpr) {
     // Default, value-depenedent expressions require fetching
     // from the desugared TemplateArgument
     if (Iter.isEnd() && ArgExpr->isValueDependent())
@@ -1231,7 +1234,7 @@ class TemplateDiff {
 
   /// CheckForNullPtr - returns true if the expression can be evaluated as
   /// a null pointer
-  bool CheckForNullPtr(Expr *E) {
+  static bool CheckForNullPtr(ASTContext &Context, Expr *E) {
     assert(E && "Expected expression");
 
     E = E->IgnoreParenCasts();
@@ -1252,7 +1255,7 @@ class TemplateDiff {
 
   /// GetTemplateDecl - Retrieves the template template arguments, including
   /// default arguments.
-  TemplateDecl *GetTemplateDecl(const TSTiterator &Iter,
+  static TemplateDecl *GetTemplateDecl(const TSTiterator &Iter,
                                 TemplateTemplateParmDecl *DefaultTTPD) {
     bool isVariadic = DefaultTTPD->isParameterPack();
 
