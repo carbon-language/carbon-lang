@@ -631,7 +631,6 @@
 		9443B123140C26AB0013457C /* SBData.h in Headers */ = {isa = PBXBuildFile; fileRef = 9443B120140C18A90013457C /* SBData.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		945215DF17F639EE00521C0B /* ValueObjectPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945215DE17F639EE00521C0B /* ValueObjectPrinter.cpp */; };
 		9452573A16262D0200325455 /* SBDeclaration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9452573916262D0200325455 /* SBDeclaration.cpp */; };
-		9456F2241616671900656F91 /* DynamicLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9456F2211616644B00656F91 /* DynamicLibrary.cpp */; };
 		945759671534941F005A9070 /* PlatformPOSIX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945759651534941F005A9070 /* PlatformPOSIX.cpp */; };
 		945759681534941F005A9070 /* PlatformPOSIX.h in Headers */ = {isa = PBXBuildFile; fileRef = 945759661534941F005A9070 /* PlatformPOSIX.h */; };
 		945E8D80152F6AB40019BCCD /* StreamGDBRemote.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945E8D7F152F6AB40019BCCD /* StreamGDBRemote.cpp */; };
@@ -1912,8 +1911,6 @@
 		9452573616262CD000325455 /* SBDeclaration.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBDeclaration.i; sourceTree = "<group>"; };
 		9452573816262CEF00325455 /* SBDeclaration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBDeclaration.h; path = include/lldb/API/SBDeclaration.h; sourceTree = "<group>"; };
 		9452573916262D0200325455 /* SBDeclaration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBDeclaration.cpp; path = source/API/SBDeclaration.cpp; sourceTree = "<group>"; };
-		9456F2211616644B00656F91 /* DynamicLibrary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLibrary.cpp; sourceTree = "<group>"; };
-		9456F2231616645A00656F91 /* DynamicLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DynamicLibrary.h; path = include/lldb/Host/DynamicLibrary.h; sourceTree = "<group>"; };
 		945759651534941F005A9070 /* PlatformPOSIX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PlatformPOSIX.cpp; path = POSIX/PlatformPOSIX.cpp; sourceTree = "<group>"; };
 		945759661534941F005A9070 /* PlatformPOSIX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PlatformPOSIX.h; path = POSIX/PlatformPOSIX.h; sourceTree = "<group>"; };
 		945E8D7D152F6AA80019BCCD /* StreamGDBRemote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StreamGDBRemote.h; path = include/lldb/Core/StreamGDBRemote.h; sourceTree = "<group>"; };
@@ -3506,7 +3503,6 @@
 				3FDFE53E19A2940E009756A7 /* windows */,
 				26BC7DD210F1B7D500F91463 /* Condition.h */,
 				266F5CBB12FC846200DFCE33 /* Config.h */,
-				9456F2231616645A00656F91 /* DynamicLibrary.h */,
 				26CFDCA01861638D000E63E5 /* Editline.h */,
 				26BC7DD310F1B7D500F91463 /* Endian.h */,
 				260C6EA013011578005E16B0 /* File.h */,
@@ -4096,7 +4092,6 @@
 		69A01E1A1236C5D400C660B5 /* common */ = {
 			isa = PBXGroup;
 			children = (
-				9456F2211616644B00656F91 /* DynamicLibrary.cpp */,
 				26CFDCA2186163A4000E63E5 /* Editline.cpp */,
 				260C6EA213011581005E16B0 /* File.cpp */,
 				26FA43171301048600E71120 /* FileSpec.cpp */,
@@ -4785,7 +4780,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9456F2241616671900656F91 /* DynamicLibrary.cpp in Sources */,
 				26D1804216CEDF0700EDFB5B /* TimeSpecTimeout.cpp in Sources */,
 				2689FFDA13353D9D00698AC0 /* lldb.cpp in Sources */,
 				2689FFDB13353DA300698AC0 /* lldb-log.cpp in Sources */,

@@ -25,6 +25,7 @@
 #include "lldb/Interpreter/OptionValueProperties.h"
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/DynamicLibrary.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -42,7 +43,12 @@ typedef void (*PluginTermCallback) (void);
 
 struct PluginInfo
 {
-    void *plugin_handle;
+    PluginInfo()
+        : plugin_init_callback(nullptr), plugin_term_callback(nullptr)
+    {
+    }
+
+    llvm::sys::DynamicLibrary library;
     PluginInitCallback plugin_init_callback;
     PluginTermCallback plugin_term_callback;
 };
@@ -113,20 +119,15 @@ LoadPluginCallback
             return FileSpec::eEnumerateDirectoryResultNext;
         else
         {
-            PluginInfo plugin_info = { NULL, NULL, NULL };
-            uint32_t flags = Host::eDynamicLibraryOpenOptionLazy |
-                             Host::eDynamicLibraryOpenOptionLocal |
-                             Host::eDynamicLibraryOpenOptionLimitGetSymbol;
+            PluginInfo plugin_info;
 
-            plugin_info.plugin_handle = Host::DynamicLibraryOpen (plugin_file_spec, flags, error);
-            if (plugin_info.plugin_handle)
+            std::string pluginLoadError;
+            plugin_info.library = llvm::sys::DynamicLibrary::getPermanentLibrary (plugin_file_spec.GetPath().c_str(), &pluginLoadError);
+            if (plugin_info.library.isValid())
             {
                 bool success = false;
                 plugin_info.plugin_init_callback =
-                    CastToFPtr<PluginInitCallback>(
-                        Host::DynamicLibraryGetSymbol(plugin_info.plugin_handle,
-                                                      "LLDBPluginInitialize",
-                                                      error));
+                    CastToFPtr<PluginInitCallback>(plugin_info.library.getAddressOfSymbol("LLDBPluginInitialize"));
                 if (plugin_info.plugin_init_callback)
                 {
                     // Call the plug-in "bool LLDBPluginInitialize(void)" function
@@ -137,19 +138,14 @@ LoadPluginCallback
                 {
                     // It is ok for the "LLDBPluginTerminate" symbol to be NULL
                     plugin_info.plugin_term_callback =
-                        CastToFPtr<PluginTermCallback>(
-                            Host::DynamicLibraryGetSymbol(
-                                plugin_info.plugin_handle, "LLDBPluginTerminate",
-                                error));
+                        CastToFPtr<PluginTermCallback>(plugin_info.library.getAddressOfSymbol("LLDBPluginTerminate"));
                 }
                 else 
                 {
-                    // The initialize function returned FALSE which means the
-                    // plug-in might not be compatible, or might be too new or
-                    // too old, or might not want to run on this machine.
-                    Host::DynamicLibraryClose (plugin_info.plugin_handle);
-                    plugin_info.plugin_handle = NULL;
-                    plugin_info.plugin_init_callback = NULL;
+                    // The initialize function returned FALSE which means the plug-in might not be
+                    // compatible, or might be too new or too old, or might not want to run on this
+                    // machine.  Set it to a default-constructed instance to invalidate it.
+                    plugin_info = PluginInfo();
                 }
 
                 // Regardless of success or failure, cache the plug-in load
@@ -225,11 +221,10 @@ PluginManager::Terminate ()
     {
         // Call the plug-in "void LLDBPluginTerminate (void)" function if there
         // is one (if the symbol was not NULL).
-        if (pos->second.plugin_handle)
+        if (pos->second.library.isValid())
         {
             if (pos->second.plugin_term_callback)
                 pos->second.plugin_term_callback();
-            Host::DynamicLibraryClose (pos->second.plugin_handle);
         }
     }
     plugin_map.clear();

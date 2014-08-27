@@ -31,6 +31,14 @@
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/TargetList.h"
 
+namespace llvm
+{
+namespace sys
+{
+class DynamicLibrary;
+}
+}
+
 namespace lldb_private {
 
 //----------------------------------------------------------------------
@@ -51,9 +59,9 @@ friend class SourceManager;  // For GetSourceFileCache.
 
 public:
 
-    typedef lldb::DynamicLibrarySP (*LoadPluginCallbackType) (const lldb::DebuggerSP &debugger_sp,
-                                                              const FileSpec& spec,
-                                                              Error& error);
+    typedef llvm::sys::DynamicLibrary (*LoadPluginCallbackType) (const lldb::DebuggerSP &debugger_sp,
+                                                                 const FileSpec& spec,
+                                                                 Error& error);
 
     static lldb::DebuggerSP
     CreateInstance (lldb::LogOutputCallback log_callback = NULL, void *baton = NULL);
@@ -422,7 +430,7 @@ protected:
     lldb::StreamSP m_log_callback_stream_sp;
     ConstString m_instance_name;
     static LoadPluginCallbackType g_load_plugin_callback;
-    typedef std::vector<lldb::DynamicLibrarySP> LoadedPluginsList;
+    typedef std::vector<llvm::sys::DynamicLibrary> LoadedPluginsList;
     LoadedPluginsList m_loaded_plugins;
     lldb::thread_t m_event_handler_thread;
     lldb::thread_t m_io_handler_thread;

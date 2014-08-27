@@ -34,7 +34,6 @@
 #include "lldb/DataFormatters/DataVisualization.h"
 #include "lldb/DataFormatters/FormatManager.h"
 #include "lldb/DataFormatters/TypeSummary.h"
-#include "lldb/Host/DynamicLibrary.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/Terminal.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -53,6 +52,8 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Utility/AnsiTerminal.h"
+
+#include "llvm/Support/DynamicLibrary.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -413,10 +414,10 @@ Debugger::LoadPlugin (const FileSpec& spec, Error& error)
 {
     if (g_load_plugin_callback)
     {
-        lldb::DynamicLibrarySP dynlib_sp = g_load_plugin_callback (shared_from_this(), spec, error);
-        if (dynlib_sp)
+        llvm::sys::DynamicLibrary dynlib = g_load_plugin_callback (shared_from_this(), spec, error);
+        if (dynlib.isValid())
         {
-            m_loaded_plugins.push_back(dynlib_sp);
+            m_loaded_plugins.push_back(dynlib);
             return true;
         }
     }

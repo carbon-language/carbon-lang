@@ -80,7 +80,6 @@ class   Debugger;
 class   Declaration;
 class   Disassembler;
 struct  DumpValueObjectOptions;
-class   DynamicLibrary;
 class   DynamicLoader;
 class   Editline;
 class   EmulateInstruction;
@@ -301,7 +300,6 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::Debugger> DebuggerSP;
     typedef std::weak_ptr<lldb_private::Debugger> DebuggerWP;
     typedef std::shared_ptr<lldb_private::Disassembler> DisassemblerSP;
-    typedef std::shared_ptr<lldb_private::DynamicLibrary> DynamicLibrarySP;
     typedef std::shared_ptr<lldb_private::DynamicLoader> DynamicLoaderSP;
     typedef std::shared_ptr<lldb_private::Event> EventSP;
     typedef std::shared_ptr<lldb_private::ExecutionContextRef> ExecutionContextRefSP;

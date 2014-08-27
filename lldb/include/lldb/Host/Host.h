@@ -371,25 +371,6 @@ public:
     
     static size_t
     GetEnvironment (StringList &env);
-
-    enum DynamicLibraryOpenOptions 
-    {
-        eDynamicLibraryOpenOptionLazy           = (1u << 0),  // Lazily resolve symbols in this dynamic library
-        eDynamicLibraryOpenOptionLocal          = (1u << 1),  // Only open a shared library with local access (hide it from the global symbol namespace)
-        eDynamicLibraryOpenOptionLimitGetSymbol = (1u << 2)   // DynamicLibraryGetSymbol calls on this handle will only return matches from this shared library
-    };
-    static void *
-    DynamicLibraryOpen (const FileSpec &file_spec, 
-                        uint32_t options,
-                        Error &error);
-
-    static Error
-    DynamicLibraryClose (void *dynamic_library_handle);
-
-    static void *
-    DynamicLibraryGetSymbol (void *dynamic_library_handle, 
-                             const char *symbol_name, 
-                             Error &error);
 };
 
 } // namespace lldb_private

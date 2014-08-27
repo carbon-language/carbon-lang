@@ -213,28 +213,6 @@ Host::GetModuleFileSpecForHostAddress (const void *host_addr)
     return module_filespec;
 }
 
-void *
-Host::DynamicLibraryOpen(const FileSpec &file_spec, uint32_t options, Error &error)
-{
-    error.SetErrorString("not implemented");
-    return NULL;
-}
-
-Error
-Host::DynamicLibraryClose (void *opaque)
-{
-    Error error;
-    error.SetErrorString("not implemented");
-    return error;
-}
-
-void *
-Host::DynamicLibraryGetSymbol(void *opaque, const char *symbol_name, Error &error)
-{
-    error.SetErrorString("not implemented");
-    return NULL;
-}
-
 uint32_t
 Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstanceInfoList &process_infos)
 {

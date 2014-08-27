@@ -38,12 +38,13 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/DataFormatters/DataVisualization.h"
-#include "lldb/Host/DynamicLibrary.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/OptionGroupPlatform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/TargetList.h"
+
+#include "llvm/Support/DynamicLibrary.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -72,22 +73,22 @@ SBInputReader::IsActive() const
     return false;
 }
 
-static lldb::DynamicLibrarySP
+static llvm::sys::DynamicLibrary
 LoadPlugin (const lldb::DebuggerSP &debugger_sp, const FileSpec& spec, Error& error)
 {
-    lldb::DynamicLibrarySP dynlib_sp(new lldb_private::DynamicLibrary(spec));
-    if (dynlib_sp && dynlib_sp->IsValid())
+    llvm::sys::DynamicLibrary dynlib = llvm::sys::DynamicLibrary::getPermanentLibrary(spec.GetPath().c_str());
+    if (dynlib.isValid())
     {
         typedef bool (*LLDBCommandPluginInit) (lldb::SBDebugger& debugger);
         
         lldb::SBDebugger debugger_sb(debugger_sp);
         // This calls the bool lldb::PluginInitialize(lldb::SBDebugger debugger) function.
         // TODO: mangle this differently for your system - on OSX, the first underscore needs to be removed and the second one stays
-        LLDBCommandPluginInit init_func = dynlib_sp->GetSymbol<LLDBCommandPluginInit>("_ZN4lldb16PluginInitializeENS_10SBDebuggerE");
+        LLDBCommandPluginInit init_func = (LLDBCommandPluginInit)dynlib.getAddressOfSymbol("_ZN4lldb16PluginInitializeENS_10SBDebuggerE");
         if (init_func)
         {
             if (init_func(debugger_sb))
-                return dynlib_sp;
+                return dynlib;
             else
                 error.SetErrorString("plug-in refused to load (lldb::PluginInitialize(lldb::SBDebugger) returned false)");
         }
@@ -103,7 +104,7 @@ LoadPlugin (const lldb::DebuggerSP &debugger_sp, const FileSpec& spec, Error& er
         else
             error.SetErrorString("no such file");
     }
-    return lldb::DynamicLibrarySP();
+    return llvm::sys::DynamicLibrary();
 }
 
 void

@@ -5,7 +5,6 @@ endmacro()
 
 add_host_subdirectory(common
   common/Condition.cpp
-  common/DynamicLibrary.cpp
   common/Editline.cpp
   common/File.cpp
   common/FileCache.cpp
