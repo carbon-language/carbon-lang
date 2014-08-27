@@ -642,6 +642,7 @@ ProcessPOSIX::DoDeallocateMemory(lldb::addr_t addr)
 size_t
 ProcessPOSIX::GetSoftwareBreakpointTrapOpcode(BreakpointSite* bp_site)
 {
+    static const uint8_t g_aarch64_opcode[] = { 0x00, 0x00, 0x20, 0xD4 };
     static const uint8_t g_i386_opcode[] = { 0xCC };
 
     ArchSpec arch = GetTarget().GetArchitecture();
@@ -652,6 +653,11 @@ ProcessPOSIX::GetSoftwareBreakpointTrapOpcode(BreakpointSite* bp_site)
     {
     default:
         assert(false && "CPU type not supported!");
+        break;
+
+    case llvm::Triple::aarch64:
+        opcode = g_aarch64_opcode;
+        opcode_size = sizeof(g_aarch64_opcode);
         break;
 
     case llvm::Triple::x86:
