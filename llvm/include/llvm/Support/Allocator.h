@@ -318,8 +318,10 @@ private:
 #ifndef NDEBUG
       // Poison the memory so stale pointers crash sooner.  Note we must
       // preserve the Size and NextPtr fields at the beginning.
-      sys::Memory::setRangeWritable(*I, AllocatedSlabSize);
-      memset(*I, 0xCD, AllocatedSlabSize);
+      if (AllocatedSlabSize != 0) {
+        sys::Memory::setRangeWritable(*I, AllocatedSlabSize);
+        memset(*I, 0xCD, AllocatedSlabSize);
+      }
 #endif
       Allocator.Deallocate(*I, AllocatedSlabSize);
     }
