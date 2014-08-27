@@ -15,7 +15,7 @@ __attribute__((nonnull(1))) void Class_init(Instance this, char *str) {
 
 int main(void) {
 	Class *obj;
-	Class_init(0, "Hello World"); // expected-warning {{null passed to a callee which requires a non-null argument}}
+	Class_init(0, "Hello World"); // expected-warning {{null passed to a callee that requires a non-null argument}}
 	Class_init(obj, "Hello World");
 }
 
@@ -27,7 +27,7 @@ void baz2(__attribute__((nonnull(1))) const char *str); // expected-warning {{'n
 void baz3(__attribute__((nonnull)) int x); // expected-warning {{'nonnull' attribute only applies to pointer arguments}}
 
 void test_baz() {
-  baz(0); // expected-warning {{null passed to a callee which requires a non-null argument}}
+  baz(0); // expected-warning {{null passed to a callee that requires a non-null argument}}
   baz2(0); // no-warning
   baz3(0); // no-warning
 }
@@ -47,10 +47,39 @@ void *test_bad_returns_null(void) {
 }
 
 void PR18795(int (*g)(const char *h, ...) __attribute__((nonnull(1))) __attribute__((nonnull))) {
-  g(0); // expected-warning{{null passed to a callee which requires a non-null argument}}
+  g(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
 }
 void PR18795_helper() {
-  PR18795(0); // expected-warning{{null passed to a callee which requires a non-null argument}}
+  PR18795(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
 }
 
+void vararg1(int n, ...) __attribute__((nonnull(2)));
+void vararg1_test() {
+  vararg1(0);
+  vararg1(1, (void*)0); // expected-warning{{null passed}}
+  vararg1(2, (void*)0, (void*)0); // expected-warning{{null passed}}
+  vararg1(2, (void*)&vararg1, (void*)0);
+}
 
+void vararg2(int n, ...) __attribute__((nonnull, nonnull, nonnull));
+void vararg2_test() {
+  vararg2(0);
+  vararg2(1, (void*)0); // expected-warning{{null passed}}
+  vararg2(2, (void*)0, (void*)0); // expected-warning 2{{null passed}}
+}
+
+void vararg3(int n, ...) __attribute__((nonnull, nonnull(2), nonnull(3)));
+void vararg3_test() {
+  vararg3(0);
+  vararg3(1, (void*)0); // expected-warning{{null passed}}
+  vararg3(2, (void*)0, (void*)0); // expected-warning 2{{null passed}}
+}
+
+void redecl(void *, void *);
+void redecl(void *, void *) __attribute__((nonnull(1)));
+void redecl(void *, void *) __attribute__((nonnull(2)));
+void redecl(void *, void *);
+void redecl_test(void *p) {
+  redecl(p, 0); // expected-warning{{null passed}}
+  redecl(0, p); // expected-warning{{null passed}}
+}

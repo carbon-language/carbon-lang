@@ -49,6 +49,8 @@ void NonNullParamChecker::checkPreCall(const CallEvent &Call,
   if (!FD)
     return;
 
+  // FIXME: This is wrong; there can be multiple attributes with different sets
+  // of non-null parameter indices.
   const NonNullAttr *Att = FD->getAttr<NonNullAttr>();
 
   ProgramStateRef state = C.getState();

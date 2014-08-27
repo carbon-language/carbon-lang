@@ -764,12 +764,26 @@ static void CheckNonNullArgument(Sema &S,
 
 static void CheckNonNullArguments(Sema &S,
                                   const NamedDecl *FDecl,
-                                  const Expr * const *ExprArgs,
+                                  ArrayRef<const Expr *> Args,
                                   SourceLocation CallSiteLoc) {
   // Check the attributes attached to the method/function itself.
+  llvm::SmallBitVector NonNullArgs;
   for (const auto *NonNull : FDecl->specific_attrs<NonNullAttr>()) {
-    for (const auto &Val : NonNull->args())
-      CheckNonNullArgument(S, ExprArgs[Val], CallSiteLoc);
+    if (!NonNull->args_size()) {
+      // Easy case: all pointer arguments are nonnull.
+      for (const auto *Arg : Args)
+        if (S.isValidNonNullAttrType(Arg->getType()))
+          CheckNonNullArgument(S, Arg, CallSiteLoc);
+      return;
+    }
+
+    for (unsigned Val : NonNull->args()) {
+      if (Val >= Args.size())
+        continue;
+      if (NonNullArgs.empty())
+        NonNullArgs.resize(Args.size());
+      NonNullArgs.set(Val);
+    }
   }
 
   // Check the attributes on the parameters.
@@ -779,13 +793,19 @@ static void CheckNonNullArguments(Sema &S,
   else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(FDecl))
     parms = MD->parameters();
 
-  unsigned argIndex = 0;
+  unsigned ArgIndex = 0;
   for (ArrayRef<ParmVarDecl*>::iterator I = parms.begin(), E = parms.end();
-       I != E; ++I, ++argIndex) {
+       I != E; ++I, ++ArgIndex) {
     const ParmVarDecl *PVD = *I;
-    if (PVD->hasAttr<NonNullAttr>())
-      CheckNonNullArgument(S, ExprArgs[argIndex], CallSiteLoc);
+    if (PVD->hasAttr<NonNullAttr>() ||
+        (ArgIndex < NonNullArgs.size() && NonNullArgs[ArgIndex]))
+      CheckNonNullArgument(S, Args[ArgIndex], CallSiteLoc);
   }
+
+  // In case this is a variadic call, check any remaining arguments.
+  for (/**/; ArgIndex < NonNullArgs.size(); ++ArgIndex)
+    if (NonNullArgs[ArgIndex])
+      CheckNonNullArgument(S, Args[ArgIndex], CallSiteLoc);
 }
 
 /// Handles the checks for format strings, non-POD arguments to vararg
@@ -823,7 +843,7 @@ void Sema::checkCall(NamedDecl *FDecl, ArrayRef<const Expr *> Args,
   }
 
   if (FDecl) {
-    CheckNonNullArguments(*this, FDecl, Args.data(), Loc);
+    CheckNonNullArguments(*this, FDecl, Args, Loc);
 
     // Type safety checking.
     for (const auto *I : FDecl->specific_attrs<ArgumentWithTypeTagAttr>())

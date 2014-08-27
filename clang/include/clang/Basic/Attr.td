@@ -845,11 +845,15 @@ def NonNull : InheritableAttr {
   let Args = [VariadicUnsignedArgument<"Args">];
   let AdditionalMembers =
 [{bool isNonNull(unsigned idx) const {
+    if (!args_size())
+      return true;
     for (const auto &V : args())
       if (V == idx)
         return true;
     return false;
   } }];
+  // FIXME: We should merge duplicates into a single nonnull attribute.
+  let DuplicatesAllowedWhileMerging = 1;
   let Documentation = [Undocumented];
 }
 

@@ -11,13 +11,13 @@ void f(int *p) {
 
   cat0(0);
 
-  cat(0); // expected-warning {{null passed to a callee which requires a non-null argument}}
+  cat(0); // expected-warning {{null passed to a callee that requires a non-null argument}}
   cat(a); // expected-warning {{array argument is too small; contains 2 elements, callee requires at least 3}}
   cat(b);
   cat(c);
   cat(p);
 
-  vat(1, 0); // expected-warning {{null passed to a callee which requires a non-null argument}}
+  vat(1, 0); // expected-warning {{null passed to a callee that requires a non-null argument}}
   vat(3, b);
 }
 

@@ -1125,28 +1125,30 @@ static void handleIBOutletCollection(Sema &S, Decl *D,
                                     Attr.getAttributeSpellingListIndex()));
 }
 
-static void possibleTransparentUnionPointerType(QualType &T) {
-  if (const RecordType *UT = T->getAsUnionType())
+bool Sema::isValidNonNullAttrType(QualType T) {
+  T = T.getNonReferenceType();
+
+  // The nonnull attribute can be applied to a transparent union that
+  // contains a pointer type.
+  if (const RecordType *UT = T->getAsUnionType()) {
     if (UT && UT->getDecl()->hasAttr<TransparentUnionAttr>()) {
       RecordDecl *UD = UT->getDecl();
       for (const auto *I : UD->fields()) {
         QualType QT = I->getType();
-        if (QT->isAnyPointerType() || QT->isBlockPointerType()) {
-          T = QT;
-          return;
-        }
+        if (QT->isAnyPointerType() || QT->isBlockPointerType())
+          return true;
       }
     }
+  }
+
+  return T->isAnyPointerType() || T->isBlockPointerType();
 }
 
 static bool attrNonNullArgCheck(Sema &S, QualType T, const AttributeList &Attr,
                                 SourceRange AttrParmRange,
                                 SourceRange NonNullTypeRange,
                                 bool isReturnValue = false) {
-  T = T.getNonReferenceType();
-  possibleTransparentUnionPointerType(T);
-
-  if (!T->isAnyPointerType() && !T->isBlockPointerType()) {
+  if (!S.isValidNonNullAttrType(T)) {
     S.Diag(Attr.getLoc(), isReturnValue
                               ? diag::warn_attribute_return_pointers_only
                               : diag::warn_attribute_pointers_only)
@@ -1158,14 +1160,15 @@ static bool attrNonNullArgCheck(Sema &S, QualType T, const AttributeList &Attr,
 
 static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   SmallVector<unsigned, 8> NonNullArgs;
-  for (unsigned i = 0; i < Attr.getNumArgs(); ++i) {
-    Expr *Ex = Attr.getArgAsExpr(i);
+  for (unsigned I = 0; I < Attr.getNumArgs(); ++I) {
+    Expr *Ex = Attr.getArgAsExpr(I);
     uint64_t Idx;
-    if (!checkFunctionOrMethodParameterIndex(S, D, Attr, i + 1, Ex, Idx))
+    if (!checkFunctionOrMethodParameterIndex(S, D, Attr, I + 1, Ex, Idx))
       return;
 
     // Is the function argument a pointer type?
-    if (!attrNonNullArgCheck(S, getFunctionOrMethodParamType(D, Idx), Attr,
+    if (Idx < getFunctionOrMethodNumParams(D) &&
+        !attrNonNullArgCheck(S, getFunctionOrMethodParamType(D, Idx), Attr,
                              Ex->getSourceRange(),
                              getFunctionOrMethodParamRange(D, Idx)))
       continue;
@@ -1174,30 +1177,28 @@ static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   // If no arguments were specified to __attribute__((nonnull)) then all pointer
-  // arguments have a nonnull attribute.
-  if (NonNullArgs.empty()) {
-    for (unsigned i = 0, e = getFunctionOrMethodNumParams(D); i != e; ++i) {
-      QualType T = getFunctionOrMethodParamType(D, i).getNonReferenceType();
-      possibleTransparentUnionPointerType(T);
-      if (T->isAnyPointerType() || T->isBlockPointerType())
-        NonNullArgs.push_back(i);
+  // arguments have a nonnull attribute; warn if there aren't any. Skip this
+  // check if the attribute came from a macro expansion or a template
+  // instantiation.
+  if (NonNullArgs.empty() && Attr.getLoc().isFileID() &&
+      S.ActiveTemplateInstantiations.empty()) {
+    bool AnyPointers = isFunctionOrMethodVariadic(D);
+    for (unsigned I = 0, E = getFunctionOrMethodNumParams(D);
+         I != E && !AnyPointers; ++I) {
+      QualType T = getFunctionOrMethodParamType(D, I);
+      if (T->isDependentType() || S.isValidNonNullAttrType(T))
+        AnyPointers = true;
     }
 
-    // No pointer arguments?
-    if (NonNullArgs.empty()) {
-      // Warn the trivial case only if attribute is not coming from a
-      // macro instantiation.
-      if (Attr.getLoc().isFileID())
-        S.Diag(Attr.getLoc(), diag::warn_attribute_nonnull_no_pointers);
-      return;
-    }
+    if (!AnyPointers)
+      S.Diag(Attr.getLoc(), diag::warn_attribute_nonnull_no_pointers);
   }
 
-  unsigned *start = &NonNullArgs[0];
-  unsigned size = NonNullArgs.size();
-  llvm::array_pod_sort(start, start + size);
+  unsigned *Start = NonNullArgs.data();
+  unsigned Size = NonNullArgs.size();
+  llvm::array_pod_sort(Start, Start + Size);
   D->addAttr(::new (S.Context)
-             NonNullAttr(Attr.getRange(), S.Context, start, size,
+             NonNullAttr(Attr.getRange(), S.Context, Start, Size,
                          Attr.getAttributeSpellingListIndex()));
 }
 

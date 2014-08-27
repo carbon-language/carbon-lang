@@ -13,3 +13,8 @@ struct TS {
   }
 };
 
+namespace Template {
+  template<typename T> __attribute__((nonnull)) void f(T t);
+  void g() { f((void*)0); } // expected-warning {{null passed to a callee that requires a non-null argument}}
+  void h() { f(0); }
+}

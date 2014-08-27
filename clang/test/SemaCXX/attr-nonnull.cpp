@@ -27,8 +27,8 @@ namespace rdar8769025 {
   __attribute__((nonnull(2))) void f2(int i, int * const &p);
 
   void test_f1() {
-    f1(0); // expected-warning{{null passed to a callee which requires a non-null argument}}
-    f2(0, 0); // expected-warning{{null passed to a callee which requires a non-null argument}}
+    f1(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
+    f2(0, 0); // expected-warning{{null passed to a callee that requires a non-null argument}}
   }
 }
 
