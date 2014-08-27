@@ -333,8 +333,8 @@ ClangExpressionParser::Parse (Stream &stream)
 
     if (!created_main_file)
     {
-        MemoryBuffer *memory_buffer = MemoryBuffer::getMemBufferCopy(expr_text, __FUNCTION__);
-        SourceMgr.setMainFileID(SourceMgr.createFileID(memory_buffer));
+        std::unique_ptr<MemoryBuffer> memory_buffer = MemoryBuffer::getMemBufferCopy(expr_text, __FUNCTION__);
+        SourceMgr.setMainFileID(SourceMgr.createFileID(memory_buffer.release()));
     }
 
     diag_buf->BeginSourceFile(m_compiler->getLangOpts(), &m_compiler->getPreprocessor());
