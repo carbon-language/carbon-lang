@@ -33,6 +33,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     windows/FileSystem.cpp
     windows/Host.cpp
     windows/HostInfoWindows.cpp
+    windows/HostProcessWindows.cpp
     windows/ProcessRunLock.cpp
     windows/Mutex.cpp
     windows/Condition.cpp
@@ -43,6 +44,7 @@ else()
   add_host_subdirectory(posix
     posix/FileSystem.cpp
     posix/HostInfoPosix.cpp
+    posix/HostProcessPosix.cpp
     )
 
   if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
