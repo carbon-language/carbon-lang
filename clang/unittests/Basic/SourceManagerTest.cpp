@@ -193,7 +193,7 @@ TEST_F(SourceManagerTest, getMacroArgExpandedLocation) {
 
   const FileEntry *headerFile = FileMgr.getVirtualFile("/test-header.h",
                                                  HeaderBuf->getBufferSize(), 0);
-  SourceMgr.overrideFileContents(headerFile, HeaderBuf.release());
+  SourceMgr.overrideFileContents(headerFile, std::move(HeaderBuf));
 
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts, 
@@ -291,7 +291,7 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnitWithMacroInInclude) {
 
   const FileEntry *headerFile = FileMgr.getVirtualFile("/test-header.h",
                                                  HeaderBuf->getBufferSize(), 0);
-  SourceMgr.overrideFileContents(headerFile, HeaderBuf.release());
+  SourceMgr.overrideFileContents(headerFile, std::move(HeaderBuf));
 
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts, 

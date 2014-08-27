@@ -52,7 +52,7 @@ class RewriterTestContext {
         llvm::MemoryBuffer::getMemBuffer(Content);
     const FileEntry *Entry =
       Files.getVirtualFile(Name, Source->getBufferSize(), 0);
-    Sources.overrideFileContents(Entry, Source.release());
+    Sources.overrideFileContents(Entry, std::move(Source));
     assert(Entry != nullptr);
     return Sources.createFileID(Entry, SourceLocation(), SrcMgr::C_User);
   }

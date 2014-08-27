@@ -1226,7 +1226,7 @@ bool ASTReader::ReadSLocEntry(int ID) {
       
       std::unique_ptr<llvm::MemoryBuffer> Buffer
         = llvm::MemoryBuffer::getMemBuffer(Blob.drop_back(1), File->getName());
-      SourceMgr.overrideFileContents(File, Buffer.release());
+      SourceMgr.overrideFileContents(File, std::move(Buffer));
     }
 
     break;

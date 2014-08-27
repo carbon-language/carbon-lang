@@ -406,7 +406,7 @@ bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
     char *NewPos = std::copy(Buffer->getBufferStart(), Position, NewBuf);
     *NewPos = '\0';
     std::copy(Position, Buffer->getBufferEnd(), NewPos+1);
-    SourceMgr.overrideFileContents(File, NewBuffer.release());
+    SourceMgr.overrideFileContents(File, std::move(NewBuffer));
   }
 
   return false;

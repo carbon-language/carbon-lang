@@ -1996,7 +1996,7 @@ tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
       llvm::MemoryBuffer::getMemBuffer(Code, FileName);
   const clang::FileEntry *Entry =
       Files.getVirtualFile(FileName, Buf->getBufferSize(), 0);
-  SourceMgr.overrideFileContents(Entry, Buf.release());
+  SourceMgr.overrideFileContents(Entry, std::move(Buf));
   FileID ID =
       SourceMgr.createFileID(Entry, SourceLocation(), clang::SrcMgr::C_User);
   Lexer Lex(ID, SourceMgr.getBuffer(ID), SourceMgr,

@@ -727,7 +727,7 @@ bool CompilerInstance::InitializeSourceManager(const FrontendInputFile &Input,
               FileMgr.getBufferForFile(File, &ErrorStr, /*isVolatile=*/true)) {
         // Create a new virtual file that will have the correct size.
         File = FileMgr.getVirtualFile(InputFile, MB->getBufferSize(), 0);
-        SourceMgr.overrideFileContents(File, MB.release());
+        SourceMgr.overrideFileContents(File, std::move(MB));
       } else {
         Diags.Report(diag::err_cannot_open_file) << InputFile << ErrorStr;
         return false;
@@ -749,7 +749,7 @@ bool CompilerInstance::InitializeSourceManager(const FrontendInputFile &Input,
                                                    SB->getBufferSize(), 0);
     SourceMgr.setMainFileID(
         SourceMgr.createFileID(File, SourceLocation(), Kind));
-    SourceMgr.overrideFileContents(File, SB.release());
+    SourceMgr.overrideFileContents(File, std::move(SB));
   }
 
   assert(!SourceMgr.getMainFileID().isInvalid() &&
@@ -951,7 +951,7 @@ static bool compileModuleImpl(CompilerInstance &ImportingInstance,
         llvm::MemoryBuffer::getMemBuffer(InferredModuleMapContent);
     ModuleMapFile = Instance.getFileManager().getVirtualFile(
         "__inferred_module.map", InferredModuleMapContent.size(), 0);
-    SourceMgr.overrideFileContents(ModuleMapFile, ModuleMapBuffer.release());
+    SourceMgr.overrideFileContents(ModuleMapFile, std::move(ModuleMapBuffer));
   }
 
   // Construct a module-generating action. Passing through the module map is

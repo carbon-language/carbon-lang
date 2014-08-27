@@ -186,7 +186,7 @@ std::string applyAllReplacements(StringRef Code, const Replacements &Replaces) {
       llvm::MemoryBuffer::getMemBuffer(Code, "<stdin>");
   const clang::FileEntry *Entry =
       Files.getVirtualFile("<stdin>", Buf->getBufferSize(), 0);
-  SourceMgr.overrideFileContents(Entry, Buf.release());
+  SourceMgr.overrideFileContents(Entry, std::move(Buf));
   FileID ID =
       SourceMgr.createFileID(Entry, SourceLocation(), clang::SrcMgr::C_User);
   for (Replacements::const_iterator I = Replaces.begin(), E = Replaces.end();
