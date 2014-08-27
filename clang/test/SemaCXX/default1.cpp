@@ -65,3 +65,9 @@ int i2() {
 
 int pr20055_f(int x = 0, int y = UNDEFINED); // expected-error{{use of undeclared identifier}}
 int pr20055_v = pr20055_f(0);
+
+void PR20769() { void PR20769(int = 1); }
+void PR20769(int = 2);
+
+void PR20769_b(int = 1);
+void PR20769_b() { void PR20769_b(int = 2); }

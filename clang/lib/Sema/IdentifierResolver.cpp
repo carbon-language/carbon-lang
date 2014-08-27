@@ -130,6 +130,9 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S,
     return false;
   }
 
+  // FIXME: If D is a local extern declaration, this check doesn't make sense;
+  // we should be checking its lexical context instead in that case, because
+  // that is its scope.
   DeclContext *DCtx = D->getDeclContext()->getRedeclContext();
   return AllowInlineNamespace ? Ctx->InEnclosingNamespaceSetOf(DCtx)
                               : Ctx->Equals(DCtx);

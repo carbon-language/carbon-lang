@@ -446,19 +446,23 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old,
     bool OldParamHasDfl = OldParam->hasDefaultArg();
     bool NewParamHasDfl = NewParam->hasDefaultArg();
 
-    NamedDecl *ND = Old;
-
     // The declaration context corresponding to the scope is the semantic
     // parent, unless this is a local function declaration, in which case
     // it is that surrounding function.
-    DeclContext *ScopeDC = New->getLexicalDeclContext();
-    if (!ScopeDC->isFunctionOrMethod())
-      ScopeDC = New->getDeclContext();
-    if (S && !isDeclInScope(ND, ScopeDC, S) &&
+    DeclContext *ScopeDC = New->isLocalExternDecl()
+                               ? New->getLexicalDeclContext()
+                               : New->getDeclContext();
+    if (S && !isDeclInScope(Old, ScopeDC, S) &&
         !New->getDeclContext()->isRecord())
       // Ignore default parameters of old decl if they are not in
       // the same scope and this is not an out-of-line definition of
       // a member function.
+      OldParamHasDfl = false;
+    if (New->isLocalExternDecl() != Old->isLocalExternDecl())
+      // If only one of these is a local function declaration, then they are
+      // declared in different scopes, even though isDeclInScope may think
+      // they're in the same scope. (If both are local, the scope check is
+      // sufficent, and if neither is local, then they are in the same scope.)
       OldParamHasDfl = false;
 
     if (OldParamHasDfl && NewParamHasDfl) {
