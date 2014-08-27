@@ -15,6 +15,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <elf.h>
 #include <sys/personality.h>
 #include <sys/ptrace.h>
 #include <sys/uio.h>
@@ -23,11 +24,6 @@
 #include <sys/types.h>
 #include <sys/user.h>
 #include <sys/wait.h>
-
-#if defined (__arm64__) || defined (__aarch64__)
-// NT_PRSTATUS and NT_FPREGSET definition
-#include <elf.h>
-#endif
 
 // C++ Includes
 // Other libraries and framework includes
@@ -802,6 +798,19 @@ ReadThreadPointerOperation::Execute(ProcessMonitor *monitor)
     const ArchSpec& arch = monitor->GetProcess().GetTarget().GetArchitecture();
     switch(arch.GetMachine())
     {
+    case llvm::Triple::aarch64:
+    {
+         int regset = NT_ARM_TLS;
+         struct iovec ioVec;
+
+         ioVec.iov_base = m_addr;
+         ioVec.iov_len = sizeof(lldb::addr_t);
+         if (PTRACE(PTRACE_GETREGSET, m_tid, &regset, &ioVec, ioVec.iov_len) < 0)
+           m_result = false;
+         else
+           m_result = true;
+         break;
+    }
 #if defined(__i386__) || defined(__x86_64__)
     // Note that struct user below has a field named i387 which is x86-specific.
     // Therefore, this case should be compiled only for x86-based systems.
