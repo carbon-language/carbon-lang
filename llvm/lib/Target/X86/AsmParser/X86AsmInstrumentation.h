@@ -26,12 +26,12 @@ class MCTargetOptions;
 
 class X86AsmInstrumentation;
 
-X86AsmInstrumentation *CreateX86AsmInstrumentation(
-    const MCTargetOptions &MCOptions, const MCContext &Ctx,
-    const MCSubtargetInfo &STI);
+X86AsmInstrumentation *
+CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions,
+                            const MCContext &Ctx, const MCSubtargetInfo &STI);
 
 class X86AsmInstrumentation {
- public:
+public:
   virtual ~X86AsmInstrumentation();
 
   // Tries to instrument and emit instruction.
@@ -40,10 +40,10 @@ class X86AsmInstrumentation {
       SmallVectorImpl<std::unique_ptr<MCParsedAsmOperand>> &Operands,
       MCContext &Ctx, const MCInstrInfo &MII, MCStreamer &Out);
 
- protected:
-  friend X86AsmInstrumentation *CreateX86AsmInstrumentation(
-      const MCTargetOptions &MCOptions, const MCContext &Ctx,
-      const MCSubtargetInfo &STI);
+protected:
+  friend X86AsmInstrumentation *
+  CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions,
+                              const MCContext &Ctx, const MCSubtargetInfo &STI);
 
   X86AsmInstrumentation(const MCSubtargetInfo &STI);
 
@@ -52,6 +52,6 @@ class X86AsmInstrumentation {
   const MCSubtargetInfo &STI;
 };
 
-}  // End llvm namespace
+} // End llvm namespace
 
 #endif

@@ -42,7 +42,7 @@ std::string FuncName(unsigned AccessSize, bool IsWrite) {
 }
 
 class X86AddressSanitizer : public X86AsmInstrumentation {
- public:
+public:
   X86AddressSanitizer(const MCSubtargetInfo &STI)
       : X86AsmInstrumentation(STI), RepPrefix(false) {}
   virtual ~X86AddressSanitizer() {}
@@ -54,12 +54,14 @@ class X86AddressSanitizer : public X86AsmInstrumentation {
                                             const MCInstrInfo &MII,
                                             MCStreamer &Out) override {
     InstrumentMOVS(Inst, Operands, Ctx, MII, Out);
-    if (RepPrefix) EmitInstruction(Out, MCInstBuilder(X86::REP_PREFIX));
+    if (RepPrefix)
+      EmitInstruction(Out, MCInstBuilder(X86::REP_PREFIX));
 
     InstrumentMOV(Inst, Operands, Ctx, MII, Out);
 
     RepPrefix = (Inst.getOpcode() == X86::REP_PREFIX);
-    if (!RepPrefix) EmitInstruction(Out, Inst);
+    if (!RepPrefix)
+      EmitInstruction(Out, Inst);
   }
 
   // Should be implemented differently in x86_32 and x86_64 subclasses.
@@ -85,7 +87,7 @@ class X86AddressSanitizer : public X86AsmInstrumentation {
 
   void EmitLabel(MCStreamer &Out, MCSymbol *Label) { Out.EmitLabel(Label); }
 
- protected:
+protected:
   // True when previous instruction was actually REP prefix.
   bool RepPrefix;
 };
@@ -161,20 +163,20 @@ void X86AddressSanitizer::InstrumentMOVS(const MCInst &Inst,
   unsigned AccessSize = 0;
 
   switch (Inst.getOpcode()) {
-    case X86::MOVSB:
-      AccessSize = 1;
-      break;
-    case X86::MOVSW:
-      AccessSize = 2;
-      break;
-    case X86::MOVSL:
-      AccessSize = 4;
-      break;
-    case X86::MOVSQ:
-      AccessSize = 8;
-      break;
-    default:
-      return;
+  case X86::MOVSB:
+    AccessSize = 1;
+    break;
+  case X86::MOVSW:
+    AccessSize = 2;
+    break;
+  case X86::MOVSL:
+    AccessSize = 4;
+    break;
+  case X86::MOVSQ:
+    AccessSize = 8;
+    break;
+  default:
+    return;
   }
 
   InstrumentMOVSImpl(AccessSize, Ctx, Out);
@@ -188,46 +190,47 @@ void X86AddressSanitizer::InstrumentMOV(const MCInst &Inst,
   unsigned AccessSize = 0;
 
   switch (Inst.getOpcode()) {
-    case X86::MOV8mi:
-    case X86::MOV8mr:
-    case X86::MOV8rm:
-      AccessSize = 1;
-      break;
-    case X86::MOV16mi:
-    case X86::MOV16mr:
-    case X86::MOV16rm:
-      AccessSize = 2;
-      break;
-    case X86::MOV32mi:
-    case X86::MOV32mr:
-    case X86::MOV32rm:
-      AccessSize = 4;
-      break;
-    case X86::MOV64mi32:
-    case X86::MOV64mr:
-    case X86::MOV64rm:
-      AccessSize = 8;
-      break;
-    case X86::MOVAPDmr:
-    case X86::MOVAPSmr:
-    case X86::MOVAPDrm:
-    case X86::MOVAPSrm:
-      AccessSize = 16;
-      break;
-    default:
-      return;
+  case X86::MOV8mi:
+  case X86::MOV8mr:
+  case X86::MOV8rm:
+    AccessSize = 1;
+    break;
+  case X86::MOV16mi:
+  case X86::MOV16mr:
+  case X86::MOV16rm:
+    AccessSize = 2;
+    break;
+  case X86::MOV32mi:
+  case X86::MOV32mr:
+  case X86::MOV32rm:
+    AccessSize = 4;
+    break;
+  case X86::MOV64mi32:
+  case X86::MOV64mr:
+  case X86::MOV64rm:
+    AccessSize = 8;
+    break;
+  case X86::MOVAPDmr:
+  case X86::MOVAPSmr:
+  case X86::MOVAPDrm:
+  case X86::MOVAPSrm:
+    AccessSize = 16;
+    break;
+  default:
+    return;
   }
 
   const bool IsWrite = MII.get(Inst.getOpcode()).mayStore();
   for (unsigned Ix = 0; Ix < Operands.size(); ++Ix) {
     assert(Operands[Ix]);
     MCParsedAsmOperand &Op = *Operands[Ix];
-    if (Op.isMem()) InstrumentMemOperand(Op, AccessSize, IsWrite, Ctx, Out);
+    if (Op.isMem())
+      InstrumentMemOperand(Op, AccessSize, IsWrite, Ctx, Out);
   }
 }
 
 class X86AddressSanitizer32 : public X86AddressSanitizer {
- public:
+public:
   static const long kShadowOffset = 0x20000000;
 
   X86AddressSanitizer32(const MCSubtargetInfo &STI)
@@ -245,7 +248,7 @@ class X86AddressSanitizer32 : public X86AddressSanitizer {
   virtual void InstrumentMOVSImpl(unsigned AccessSize, MCContext &Ctx,
                                   MCStreamer &Out) override;
 
- private:
+private:
   void EmitCallAsanReport(MCContext &Ctx, MCStreamer &Out, unsigned AccessSize,
                           bool IsWrite, unsigned AddressReg) {
     EmitInstruction(Out, MCInstBuilder(X86::CLD));
@@ -313,29 +316,29 @@ void X86AddressSanitizer32::InstrumentMemOperandSmallImpl(X86Operand &Op,
       MCInstBuilder(X86::AND32ri).addReg(X86::EDX).addReg(X86::EDX).addImm(7));
 
   switch (AccessSize) {
-    case 1:
-      break;
-    case 2: {
-      MCInst Inst;
-      Inst.setOpcode(X86::LEA32r);
-      Inst.addOperand(MCOperand::CreateReg(X86::EDX));
+  case 1:
+    break;
+  case 2: {
+    MCInst Inst;
+    Inst.setOpcode(X86::LEA32r);
+    Inst.addOperand(MCOperand::CreateReg(X86::EDX));
 
-      const MCExpr *Disp = MCConstantExpr::Create(1, Ctx);
-      std::unique_ptr<X86Operand> Op(
-          X86Operand::CreateMem(0, Disp, X86::EDX, 0, 1, SMLoc(), SMLoc()));
-      Op->addMemOperands(Inst, 5);
-      EmitInstruction(Out, Inst);
-      break;
-    }
-    case 4:
-      EmitInstruction(Out, MCInstBuilder(X86::ADD32ri8)
-                               .addReg(X86::EDX)
-                               .addReg(X86::EDX)
-                               .addImm(3));
-      break;
-    default:
-      assert(false && "Incorrect access size");
-      break;
+    const MCExpr *Disp = MCConstantExpr::Create(1, Ctx);
+    std::unique_ptr<X86Operand> Op(
+        X86Operand::CreateMem(0, Disp, X86::EDX, 0, 1, SMLoc(), SMLoc()));
+    Op->addMemOperands(Inst, 5);
+    EmitInstruction(Out, Inst);
+    break;
+  }
+  case 4:
+    EmitInstruction(Out, MCInstBuilder(X86::ADD32ri8)
+                             .addReg(X86::EDX)
+                             .addReg(X86::EDX)
+                             .addImm(3));
+    break;
+  default:
+    assert(false && "Incorrect access size");
+    break;
   }
 
   EmitInstruction(
@@ -377,15 +380,15 @@ void X86AddressSanitizer32::InstrumentMemOperandLargeImpl(X86Operand &Op,
   {
     MCInst Inst;
     switch (AccessSize) {
-      case 8:
-        Inst.setOpcode(X86::CMP8mi);
-        break;
-      case 16:
-        Inst.setOpcode(X86::CMP16mi);
-        break;
-      default:
-        assert(false && "Incorrect access size");
-        break;
+    case 8:
+      Inst.setOpcode(X86::CMP8mi);
+      break;
+    case 16:
+      Inst.setOpcode(X86::CMP16mi);
+      break;
+    default:
+      assert(false && "Incorrect access size");
+      break;
     }
     const MCExpr *Disp = MCConstantExpr::Create(kShadowOffset, Ctx);
     std::unique_ptr<X86Operand> Op(
@@ -427,7 +430,7 @@ void X86AddressSanitizer32::InstrumentMOVSImpl(unsigned AccessSize,
 }
 
 class X86AddressSanitizer64 : public X86AddressSanitizer {
- public:
+public:
   static const long kShadowOffset = 0x7fff8000;
 
   X86AddressSanitizer64(const MCSubtargetInfo &STI)
@@ -445,7 +448,7 @@ class X86AddressSanitizer64 : public X86AddressSanitizer {
   virtual void InstrumentMOVSImpl(unsigned AccessSize, MCContext &Ctx,
                                   MCStreamer &Out) override;
 
- private:
+private:
   void EmitAdjustRSP(MCContext &Ctx, MCStreamer &Out, long Offset) {
     MCInst Inst;
     Inst.setOpcode(X86::LEA64r);
@@ -522,29 +525,29 @@ void X86AddressSanitizer64::InstrumentMemOperandSmallImpl(X86Operand &Op,
       MCInstBuilder(X86::AND32ri).addReg(X86::ECX).addReg(X86::ECX).addImm(7));
 
   switch (AccessSize) {
-    case 1:
-      break;
-    case 2: {
-      MCInst Inst;
-      Inst.setOpcode(X86::LEA32r);
-      Inst.addOperand(MCOperand::CreateReg(X86::ECX));
+  case 1:
+    break;
+  case 2: {
+    MCInst Inst;
+    Inst.setOpcode(X86::LEA32r);
+    Inst.addOperand(MCOperand::CreateReg(X86::ECX));
 
-      const MCExpr *Disp = MCConstantExpr::Create(1, Ctx);
-      std::unique_ptr<X86Operand> Op(
-          X86Operand::CreateMem(0, Disp, X86::ECX, 0, 1, SMLoc(), SMLoc()));
-      Op->addMemOperands(Inst, 5);
-      EmitInstruction(Out, Inst);
-      break;
-    }
-    case 4:
-      EmitInstruction(Out, MCInstBuilder(X86::ADD32ri8)
-                               .addReg(X86::ECX)
-                               .addReg(X86::ECX)
-                               .addImm(3));
-      break;
-    default:
-      assert(false && "Incorrect access size");
-      break;
+    const MCExpr *Disp = MCConstantExpr::Create(1, Ctx);
+    std::unique_ptr<X86Operand> Op(
+        X86Operand::CreateMem(0, Disp, X86::ECX, 0, 1, SMLoc(), SMLoc()));
+    Op->addMemOperands(Inst, 5);
+    EmitInstruction(Out, Inst);
+    break;
+  }
+  case 4:
+    EmitInstruction(Out, MCInstBuilder(X86::ADD32ri8)
+                             .addReg(X86::ECX)
+                             .addReg(X86::ECX)
+                             .addImm(3));
+    break;
+  default:
+    assert(false && "Incorrect access size");
+    break;
   }
 
   EmitInstruction(
@@ -585,15 +588,15 @@ void X86AddressSanitizer64::InstrumentMemOperandLargeImpl(X86Operand &Op,
   {
     MCInst Inst;
     switch (AccessSize) {
-      case 8:
-        Inst.setOpcode(X86::CMP8mi);
-        break;
-      case 16:
-        Inst.setOpcode(X86::CMP16mi);
-        break;
-      default:
-        assert(false && "Incorrect access size");
-        break;
+    case 8:
+      Inst.setOpcode(X86::CMP8mi);
+      break;
+    case 16:
+      Inst.setOpcode(X86::CMP16mi);
+      break;
+    default:
+      assert(false && "Incorrect access size");
+      break;
     }
     const MCExpr *Disp = MCConstantExpr::Create(kShadowOffset, Ctx);
     std::unique_ptr<X86Operand> Op(
@@ -635,7 +638,7 @@ void X86AddressSanitizer64::InstrumentMOVSImpl(unsigned AccessSize,
   EmitInstruction(Out, MCInstBuilder(X86::POPF64));
 }
 
-}  // End anonymous namespace
+} // End anonymous namespace
 
 X86AsmInstrumentation::X86AsmInstrumentation(const MCSubtargetInfo &STI)
     : STI(STI) {}
@@ -653,9 +656,9 @@ void X86AsmInstrumentation::EmitInstruction(MCStreamer &Out,
   Out.EmitInstruction(Inst, STI);
 }
 
-X86AsmInstrumentation *CreateX86AsmInstrumentation(
-    const MCTargetOptions &MCOptions, const MCContext &Ctx,
-    const MCSubtargetInfo &STI) {
+X86AsmInstrumentation *
+CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions,
+                            const MCContext &Ctx, const MCSubtargetInfo &STI) {
   Triple T(STI.getTargetTriple());
   const bool hasCompilerRTSupport = T.isOSLinux();
   if (ClAsanInstrumentAssembly && hasCompilerRTSupport &&
@@ -668,4 +671,4 @@ X86AsmInstrumentation *CreateX86AsmInstrumentation(
   return new X86AsmInstrumentation(STI);
 }
 
-}  // End llvm namespace
+} // End llvm namespace
