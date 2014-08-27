@@ -75,3 +75,23 @@ int rdar16153464(union rdar16153464_full_ctx_t inner)
   rdar16153464_check(inner); // no-warning
   rdar16153464_check(0); // expected-warning{{nonnull}}
 }
+
+void testVararg(int k, void *p) {
+  extern void testVararg_check(int, ...) __attribute__((nonnull));
+  void *n = 0;
+  testVararg_check(0);
+  testVararg_check(1, p);
+  if (k == 1)
+    testVararg_check(1, n); // expected-warning{{nonnull}}
+  testVararg_check(2, p, p);
+  if (k == 2)
+    testVararg_check(2, n, p); // expected-warning{{nonnull}}
+  if (k == 3)
+    testVararg_check(2, p, n); // expected-warning{{nonnull}}
+}
+
+void testNotPtr() {
+  struct S { int a; int b; int c; } s = {};
+  extern void testNotPtr_check(struct S, int) __attribute__((nonnull(1, 2)));
+  testNotPtr_check(s, 0);
+}
