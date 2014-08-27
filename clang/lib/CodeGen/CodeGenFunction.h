@@ -1893,12 +1893,12 @@ public:
   void EmitIfStmt(const IfStmt &S);
 
   void EmitCondBrHints(llvm::LLVMContext &Context, llvm::BranchInst *CondBr,
-                       const ArrayRef<const Attr *> &Attrs);
+                       ArrayRef<const Attr *> Attrs);
   void EmitWhileStmt(const WhileStmt &S,
-                     const ArrayRef<const Attr *> &Attrs = None);
-  void EmitDoStmt(const DoStmt &S, const ArrayRef<const Attr *> &Attrs = None);
+                     ArrayRef<const Attr *> Attrs = None);
+  void EmitDoStmt(const DoStmt &S, ArrayRef<const Attr *> Attrs = None);
   void EmitForStmt(const ForStmt &S,
-                   const ArrayRef<const Attr *> &Attrs = None);
+                   ArrayRef<const Attr *> Attrs = None);
   void EmitReturnStmt(const ReturnStmt &S);
   void EmitDeclStmt(const DeclStmt &S);
   void EmitBreakStmt(const BreakStmt &S);
@@ -1922,7 +1922,7 @@ public:
   void EmitSEHTryStmt(const SEHTryStmt &S);
   void EmitSEHLeaveStmt(const SEHLeaveStmt &S);
   void EmitCXXForRangeStmt(const CXXForRangeStmt &S,
-                           const ArrayRef<const Attr *> &Attrs = None);
+                           ArrayRef<const Attr *> Attrs = None);
 
   llvm::Function *EmitCapturedStmt(const CapturedStmt &S, CapturedRegionKind K);
   llvm::Function *GenerateCapturedStmtFunction(const CapturedStmt &S);

@@ -573,7 +573,7 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
 
 void CodeGenFunction::EmitCondBrHints(llvm::LLVMContext &Context,
                                       llvm::BranchInst *CondBr,
-                                      const ArrayRef<const Attr *> &Attrs) {
+                                      ArrayRef<const Attr *> Attrs) {
   // Return if there are no hints.
   if (Attrs.empty())
     return;
@@ -656,7 +656,7 @@ void CodeGenFunction::EmitCondBrHints(llvm::LLVMContext &Context,
 }
 
 void CodeGenFunction::EmitWhileStmt(const WhileStmt &S,
-                                    const ArrayRef<const Attr *> &WhileAttrs) {
+                                    ArrayRef<const Attr *> WhileAttrs) {
   RegionCounter Cnt = getPGORegionCounter(&S);
 
   // Emit the header for the loop, which will also become
@@ -746,7 +746,7 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S,
 }
 
 void CodeGenFunction::EmitDoStmt(const DoStmt &S,
-                                 const ArrayRef<const Attr *> &DoAttrs) {
+                                 ArrayRef<const Attr *> DoAttrs) {
   JumpDest LoopExit = getJumpDestInCurrentScope("do.end");
   JumpDest LoopCond = getJumpDestInCurrentScope("do.cond");
 
@@ -807,7 +807,7 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S,
 }
 
 void CodeGenFunction::EmitForStmt(const ForStmt &S,
-                                  const ArrayRef<const Attr *> &ForAttrs) {
+                                  ArrayRef<const Attr *> ForAttrs) {
   JumpDest LoopExit = getJumpDestInCurrentScope("for.end");
 
   LexicalScope ForScope(*this, S.getSourceRange());
@@ -908,7 +908,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S,
 
 void
 CodeGenFunction::EmitCXXForRangeStmt(const CXXForRangeStmt &S,
-                                     const ArrayRef<const Attr *> &ForAttrs) {
+                                     ArrayRef<const Attr *> ForAttrs) {
   JumpDest LoopExit = getJumpDestInCurrentScope("for.end");
 
   LexicalScope ForScope(*this, S.getSourceRange());

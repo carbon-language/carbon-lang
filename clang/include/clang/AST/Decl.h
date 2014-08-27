@@ -1881,7 +1881,7 @@ public:
     return llvm::makeArrayRef(ParamInfo, getNumParams());
   }
 
-  const ArrayRef<NamedDecl *> &getDeclsInPrototypeScope() const {
+  ArrayRef<NamedDecl *> getDeclsInPrototypeScope() const {
     return DeclsInPrototypeScope;
   }
   void setDeclsInPrototypeScope(ArrayRef<NamedDecl *> NewDecls);
