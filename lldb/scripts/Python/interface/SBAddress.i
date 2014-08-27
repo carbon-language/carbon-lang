@@ -192,7 +192,7 @@ public:
 
         __swig_getmethods__["load_addr"] = __get_load_addr_property__
         __swig_setmethods__["load_addr"] = __set_load_addr_property__
-        if _newclass: load_addr = property(__get_load_addr_property__, __set_load_addr_property__, doc='''A read/write property that gets/sets the SBAddress using load address. The setter resolves SBAddress using the SBTarget from lldb.target.''')
+        if _newclass: load_addr = property(__get_load_addr_property__, __set_load_addr_property__, doc='''A read/write property that gets/sets the SBAddress using load address. The setter resolves SBAddress using the SBTarget from lldb.target so this property can ONLY be used in the interactive script interpreter (i.e. under the lldb script command) and not in Python based commands, or breakpoint commands.''')
 
     %}
 
