@@ -662,8 +662,7 @@ void UnwrappedLineParser::parseStructuralElement() {
     FormatTok->Finalized = true;
     nextToken();
     if (FormatTok->is(tok::l_brace)) {
-      FormatTok->Finalized = true;
-      while (FormatTok) {
+      while (FormatTok && FormatTok->isNot(tok::eof)) {
         FormatTok->Finalized = true;
         if (FormatTok->is(tok::r_brace)) {
           nextToken();
