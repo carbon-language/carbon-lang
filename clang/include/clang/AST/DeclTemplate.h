@@ -87,7 +87,7 @@ public:
   unsigned size() const { return NumParams; }
 
   ArrayRef<NamedDecl*> asArray() {
-    return ArrayRef<NamedDecl*>(begin(), size());
+    return llvm::makeArrayRef(begin(), end());
   }
   ArrayRef<const NamedDecl*> asArray() const {
     return ArrayRef<const NamedDecl*>(begin(), size());
@@ -204,7 +204,7 @@ public:
 
   /// \brief Produce this as an array ref.
   ArrayRef<TemplateArgument> asArray() const {
-    return ArrayRef<TemplateArgument>(data(), size());
+    return llvm::makeArrayRef(data(), size());
   }
 
   /// \brief Retrieve the number of template arguments in this

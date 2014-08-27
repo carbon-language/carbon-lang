@@ -344,7 +344,7 @@ public:
   /// \brief Return the array of arguments in this template argument pack.
   ArrayRef<TemplateArgument> getPackAsArray() const {
     assert(getKind() == Pack);
-    return ArrayRef<TemplateArgument>(Args.Args, Args.NumArgs);
+    return llvm::makeArrayRef(Args.Args, Args.NumArgs);
   }
 
   /// \brief Determines whether two template arguments are superficially the

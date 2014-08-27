@@ -1769,7 +1769,7 @@ void CodeGenFunction::EmitARCIntrinsicUse(ArrayRef<llvm::Value*> values) {
   llvm::Constant *&fn = CGM.getARCEntrypoints().clang_arc_use;
   if (!fn) {
     llvm::FunctionType *fnType =
-      llvm::FunctionType::get(CGM.VoidTy, ArrayRef<llvm::Type*>(), true);
+      llvm::FunctionType::get(CGM.VoidTy, None, true);
     fn = CGM.CreateRuntimeFunction(fnType, "clang.arc.use");
   }
 

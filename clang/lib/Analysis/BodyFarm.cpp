@@ -223,10 +223,8 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
        PredicateTy);
   
   // (3) Create the compound statement.
-  Stmt *Stmts[2];
-  Stmts[0] = B;
-  Stmts[1] = CE;
-  CompoundStmt *CS = M.makeCompound(ArrayRef<Stmt*>(Stmts, 2));
+  Stmt *Stmts[] = { B, CE };
+  CompoundStmt *CS = M.makeCompound(Stmts);
   
   // (4) Create the 'if' condition.
   ImplicitCastExpr *LValToRval =
@@ -337,7 +335,7 @@ static Stmt *create_OSAtomicCompareAndSwap(ASTContext &C, const FunctionDecl *D)
   Expr *RetVal = isBoolean ? M.makeIntegralCastToBoolean(BoolVal)
                            : M.makeIntegralCast(BoolVal, ResultTy);
   Stmts[1] = M.makeReturn(RetVal);
-  CompoundStmt *Body = M.makeCompound(ArrayRef<Stmt*>(Stmts, 2));
+  CompoundStmt *Body = M.makeCompound(Stmts);
   
   // Construct the else clause.
   BoolVal = M.makeObjCBool(false);

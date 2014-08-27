@@ -607,7 +607,7 @@ RuntimeDefinition CXXDestructorCall::getRuntimeDefinition() const {
 ArrayRef<ParmVarDecl*> ObjCMethodCall::parameters() const {
   const ObjCMethodDecl *D = getDecl();
   if (!D)
-    return ArrayRef<ParmVarDecl*>();
+    return None;
   return D->parameters();
 }
 

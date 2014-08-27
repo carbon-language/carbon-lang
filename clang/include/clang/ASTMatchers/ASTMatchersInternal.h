@@ -1647,7 +1647,7 @@ getTemplateSpecializationArgs(const ClassTemplateSpecializationDecl &D) {
 
 inline ArrayRef<TemplateArgument>
 getTemplateSpecializationArgs(const TemplateSpecializationType &T) {
-  return ArrayRef<TemplateArgument>(T.getArgs(), T.getNumArgs());
+  return llvm::makeArrayRef(T.getArgs(), T.getNumArgs());
 }
 
 struct NotEqualsBoundNodePredicate {

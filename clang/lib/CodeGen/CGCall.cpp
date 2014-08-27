@@ -2093,8 +2093,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
       llvm::Constant *StaticData[] = {
         EmitCheckSourceLocation(EndLoc)
       };
-      EmitCheck(Cond, "nonnull_return", StaticData, ArrayRef<llvm::Value *>(),
-                CRK_Recoverable);
+      EmitCheck(Cond, "nonnull_return", StaticData, None, CRK_Recoverable);
     }
     Ret = Builder.CreateRet(RV);
   } else {
@@ -2562,7 +2561,7 @@ CodeGenFunction::AddObjCARCExceptionMetadata(llvm::Instruction *Inst) {
 llvm::CallInst *
 CodeGenFunction::EmitNounwindRuntimeCall(llvm::Value *callee,
                                          const llvm::Twine &name) {
-  return EmitNounwindRuntimeCall(callee, ArrayRef<llvm::Value*>(), name);
+  return EmitNounwindRuntimeCall(callee, None, name);
 }
 
 /// Emits a call to the given nounwind runtime function.
@@ -2580,7 +2579,7 @@ CodeGenFunction::EmitNounwindRuntimeCall(llvm::Value *callee,
 llvm::CallInst *
 CodeGenFunction::EmitRuntimeCall(llvm::Value *callee,
                                  const llvm::Twine &name) {
-  return EmitRuntimeCall(callee, ArrayRef<llvm::Value*>(), name);
+  return EmitRuntimeCall(callee, None, name);
 }
 
 /// Emits a simple call (never an invoke) to the given runtime
@@ -2619,7 +2618,7 @@ void CodeGenFunction::EmitNoreturnRuntimeCallOrInvoke(llvm::Value *callee,
 llvm::CallSite
 CodeGenFunction::EmitRuntimeCallOrInvoke(llvm::Value *callee,
                                          const Twine &name) {
-  return EmitRuntimeCallOrInvoke(callee, ArrayRef<llvm::Value*>(), name);
+  return EmitRuntimeCallOrInvoke(callee, None, name);
 }
 
 /// Emits a call or invoke instruction to the given runtime function.
@@ -2635,7 +2634,7 @@ CodeGenFunction::EmitRuntimeCallOrInvoke(llvm::Value *callee,
 llvm::CallSite
 CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
                                   const Twine &Name) {
-  return EmitCallOrInvoke(Callee, ArrayRef<llvm::Value *>(), Name);
+  return EmitCallOrInvoke(Callee, None, Name);
 }
 
 /// Emits a call or invoke instruction to the given function, depending

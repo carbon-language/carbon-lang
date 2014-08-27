@@ -1785,14 +1785,14 @@ public:
   //===--- Other ---===//
 
   ArrayRef<StringRef> getAllConstraints() const {
-    return ArrayRef<StringRef>(Constraints, NumInputs + NumOutputs);
+    return llvm::makeArrayRef(Constraints, NumInputs + NumOutputs);
   }
   ArrayRef<StringRef> getClobbers() const {
-    return ArrayRef<StringRef>(Clobbers, NumClobbers);
+    return llvm::makeArrayRef(Clobbers, NumClobbers);
   }
   ArrayRef<Expr*> getAllExprs() const {
-    return ArrayRef<Expr*>(reinterpret_cast<Expr**>(Exprs),
-                           NumInputs + NumOutputs);
+    return llvm::makeArrayRef(reinterpret_cast<Expr**>(Exprs),
+                              NumInputs + NumOutputs);
   }
 
   StringRef getClobber(unsigned i) const { return getClobbers()[i]; }

@@ -2609,7 +2609,7 @@ void FunctionDecl::setDeclsInPrototypeScope(ArrayRef<NamedDecl *> NewDecls) {
   if (!NewDecls.empty()) {
     NamedDecl **A = new (getASTContext()) NamedDecl*[NewDecls.size()];
     std::copy(NewDecls.begin(), NewDecls.end(), A);
-    DeclsInPrototypeScope = ArrayRef<NamedDecl *>(A, NewDecls.size());
+    DeclsInPrototypeScope = llvm::makeArrayRef(A, NewDecls.size());
     // Move declarations introduced in prototype to the function context.
     for (auto I : NewDecls) {
       DeclContext *DC = I->getDeclContext();
@@ -3895,8 +3895,8 @@ ArrayRef<SourceLocation> ImportDecl::getIdentifierLocs() const {
 
   const SourceLocation *StoredLocs
     = reinterpret_cast<const SourceLocation *>(this + 1);
-  return ArrayRef<SourceLocation>(StoredLocs, 
-                                  getNumModuleIdentifiers(getImportedModule()));
+  return llvm::makeArrayRef(StoredLocs,
+                            getNumModuleIdentifiers(getImportedModule()));
 }
 
 SourceRange ImportDecl::getSourceRange() const {

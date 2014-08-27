@@ -85,7 +85,7 @@ public:
       std::uninitialized_copy(Source.begin(), Source.end(), Mem);
       return llvm::makeArrayRef(Mem, Size);
     }
-    return ArrayRef<T>();
+    return None;
   }
 
   ParagraphComment *actOnParagraphComment(

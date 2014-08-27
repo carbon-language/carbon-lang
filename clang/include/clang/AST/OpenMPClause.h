@@ -135,7 +135,7 @@ public:
 
   /// \brief Fetches list of all variables in the clause.
   ArrayRef<const Expr *> getVarRefs() const {
-    return ArrayRef<const Expr *>(
+    return llvm::makeArrayRef(
         reinterpret_cast<const Expr *const *>(
             reinterpret_cast<const char *>(this) +
             llvm::RoundUpToAlignment(sizeof(T), llvm::alignOf<Expr *>())),

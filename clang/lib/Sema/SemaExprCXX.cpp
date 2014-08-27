@@ -2083,7 +2083,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   QualType Params[] = { Param1, Param2 };
 
   QualType FnType = Context.getFunctionType(
-      Return, ArrayRef<QualType>(Params, NumParams), EPI);
+      Return, llvm::makeArrayRef(Params, NumParams), EPI);
   FunctionDecl *Alloc =
     FunctionDecl::Create(Context, GlobalCtx, SourceLocation(),
                          SourceLocation(), Name,
@@ -2101,7 +2101,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
                                         SC_None, nullptr);
     ParamDecls[I]->setImplicit();
   }
-  Alloc->setParams(ArrayRef<ParmVarDecl*>(ParamDecls, NumParams));
+  Alloc->setParams(llvm::makeArrayRef(ParamDecls, NumParams));
 
   Context.getTranslationUnitDecl()->addDecl(Alloc);
   IdResolver.tryAddTopLevelDecl(Alloc, Name);
@@ -5001,9 +5001,8 @@ Expr *Sema::MaybeCreateExprWithCleanups(Expr *SubExpr) {
   if (!ExprNeedsCleanups)
     return SubExpr;
 
-  ArrayRef<ExprWithCleanups::CleanupObject> Cleanups
-    = llvm::makeArrayRef(ExprCleanupObjects.begin() + FirstCleanup,
-                         ExprCleanupObjects.size() - FirstCleanup);
+  auto Cleanups = llvm::makeArrayRef(ExprCleanupObjects.begin() + FirstCleanup,
+                                     ExprCleanupObjects.size() - FirstCleanup);
 
   Expr *E = ExprWithCleanups::Create(Context, SubExpr, Cleanups);
   DiscardCleanupsInEvaluationContext();

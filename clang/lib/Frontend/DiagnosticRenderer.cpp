@@ -193,7 +193,7 @@ void DiagnosticRenderer::emitStoredDiagnostic(StoredDiagnostic &Diag) {
 void DiagnosticRenderer::emitBasicNote(StringRef Message) {
   emitDiagnosticMessage(
       SourceLocation(), PresumedLoc(), DiagnosticsEngine::Note, Message,
-      ArrayRef<CharSourceRange>(), nullptr, DiagOrStoredDiag());
+      None, nullptr, DiagOrStoredDiag());
 }
 
 /// \brief Prints an include stack when appropriate for a particular

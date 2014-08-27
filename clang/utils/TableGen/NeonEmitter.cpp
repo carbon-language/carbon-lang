@@ -1646,7 +1646,7 @@ std::pair<Type, std::string> Intrinsic::DagEmitter::emitDagShuffle(DagInit *DI){
   ST.addOperator("highhalf", &HH);
   ST.addOperator("rev", &R);
   ST.addExpander("MaskExpand", &ME);
-  ST.evaluate(DI->getArg(2), Elts, ArrayRef<SMLoc>());
+  ST.evaluate(DI->getArg(2), Elts, None);
 
   std::string S = "__builtin_shufflevector(" + Arg1.second + ", " + Arg2.second;
   for (auto &E : Elts) {

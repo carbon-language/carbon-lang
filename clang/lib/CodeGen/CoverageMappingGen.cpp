@@ -430,8 +430,7 @@ struct EmptyCoverageMappingBuilder : public CoverageMappingBuilder {
     SmallVector<unsigned, 16> FileIDMapping;
     createFileIDMapping(FileIDMapping);
 
-    CoverageMappingWriter Writer(
-        FileIDMapping, ArrayRef<CounterExpression>(), MappingRegions);
+    CoverageMappingWriter Writer(FileIDMapping, None, MappingRegions);
     Writer.write(OS);
   }
 };

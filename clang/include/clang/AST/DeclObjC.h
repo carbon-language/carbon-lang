@@ -379,8 +379,7 @@ public:
   /// ignored.
   void setMethodParams(ASTContext &C,
                        ArrayRef<ParmVarDecl*> Params,
-                       ArrayRef<SourceLocation> SelLocs =
-                           ArrayRef<SourceLocation>());
+                       ArrayRef<SourceLocation> SelLocs = llvm::None);
 
   // Iterator access to parameter types.
   typedef std::const_mem_fun_t<QualType, ParmVarDecl> deref_fun;

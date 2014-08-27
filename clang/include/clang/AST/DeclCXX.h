@@ -2104,8 +2104,8 @@ public:
   }
   ArrayRef<VarDecl *> getArrayIndexes() {
     assert(getNumArrayIndices() != 0 && "Getting indexes for non-array init");
-    return ArrayRef<VarDecl *>(reinterpret_cast<VarDecl **>(this + 1),
-                               getNumArrayIndices());
+    return llvm::makeArrayRef(reinterpret_cast<VarDecl **>(this + 1),
+                              getNumArrayIndices());
   }
 
   /// \brief Get the initializer.

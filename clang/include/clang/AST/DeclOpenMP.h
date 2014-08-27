@@ -42,9 +42,8 @@ class OMPThreadPrivateDecl : public Decl {
     Decl(DK, DC, L), NumVars(0) { }
 
   ArrayRef<const Expr *> getVars() const {
-    return ArrayRef<const Expr *>(
-                   reinterpret_cast<const Expr * const *>(this + 1),
-                   NumVars);
+    return llvm::makeArrayRef(reinterpret_cast<const Expr * const *>(this + 1),
+                              NumVars);
   }
 
   MutableArrayRef<Expr *> getVars() {

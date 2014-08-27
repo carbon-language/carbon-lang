@@ -194,7 +194,7 @@ ObjCMigrateAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
   Consumers.push_back(WrapperFrontendAction::CreateASTConsumer(CI, InFile));
   Consumers.push_back(llvm::make_unique<ObjCMigrateASTConsumer>(
       MigrateDir, ObjCMigAction, Remapper, CompInst->getFileManager(), PPRec,
-      CompInst->getPreprocessor(), false, ArrayRef<std::string>()));
+      CompInst->getPreprocessor(), false, None));
   return llvm::make_unique<MultiplexConsumer>(std::move(Consumers));
 }
 

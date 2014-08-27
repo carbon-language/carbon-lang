@@ -2081,7 +2081,7 @@ static LValue InitCapturedStruct(CodeGenFunction &CGF, const CapturedStmt &S) {
                                            E = S.capture_init_end();
        I != E; ++I, ++CurField) {
     LValue LV = CGF.EmitLValueForFieldInitialization(SlotLV, *CurField);
-    CGF.EmitInitializerForField(*CurField, LV, *I, ArrayRef<VarDecl *>());
+    CGF.EmitInitializerForField(*CurField, LV, *I, None);
   }
 
   return SlotLV;

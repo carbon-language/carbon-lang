@@ -1208,7 +1208,7 @@ public:
   }
 
   ArrayRef<ParmVarDecl *> getParams() const {
-    return ArrayRef<ParmVarDecl *>(getParmArray(), getNumParams());
+    return llvm::makeArrayRef(getParmArray(), getNumParams());
   }
 
   // ParmVarDecls* are stored after Info, one for each parameter.

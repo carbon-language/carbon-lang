@@ -409,8 +409,7 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E,
   }
 
   if (!E->getSubExpr()) {
-    EmitNoreturnRuntimeCallOrInvoke(getReThrowFn(CGM),
-                                    ArrayRef<llvm::Value*>());
+    EmitNoreturnRuntimeCallOrInvoke(getReThrowFn(CGM), None);
 
     // throw is an expression, and the expression emitters expect us
     // to leave ourselves at a valid insertion point.

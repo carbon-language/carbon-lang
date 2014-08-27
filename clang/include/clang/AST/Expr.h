@@ -2256,8 +2256,8 @@ public:
   /// interface.  This provides efficient reverse iteration of the
   /// subexpressions.  This is currently used for CFG construction.
   ArrayRef<Stmt*> getRawSubExprs() {
-    return ArrayRef<Stmt*>(SubExprs,
-                           getNumPreArgs() + PREARGS_START + getNumArgs());
+    return llvm::makeArrayRef(SubExprs,
+                              getNumPreArgs() + PREARGS_START + getNumArgs());
   }
 
   /// getNumCommas - Return the number of commas that must have been present in

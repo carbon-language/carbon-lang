@@ -5048,7 +5048,7 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
     EPI.ExceptionSpec.Type = EST_Unevaluated;
     EPI.ExceptionSpec.SourceDecl = MD;
     MD->setType(Context.getFunctionType(ReturnType,
-                                        ArrayRef<QualType>(&ArgType,
+                                        llvm::makeArrayRef(&ArgType,
                                                            ExpectedParams),
                                         EPI));
   }
@@ -8656,7 +8656,7 @@ private:
   void inherit(const CXXConstructorDecl *Ctor) {
     const FunctionProtoType *CtorType =
         Ctor->getType()->castAs<FunctionProtoType>();
-    ArrayRef<QualType> ArgTypes(CtorType->getParamTypes());
+    ArrayRef<QualType> ArgTypes = CtorType->getParamTypes();
     FunctionProtoType::ExtProtoInfo EPI = CtorType->getExtProtoInfo();
 
     SourceLocation UsingLoc = getUsingLoc(Ctor->getParent());
@@ -12993,27 +12993,27 @@ bool Sema::checkThisInStaticMemberFunctionAttributes(CXXMethodDecl *Method) {
     else if (const auto *G = dyn_cast<PtGuardedByAttr>(A))
       Arg = G->getArg();
     else if (const auto *AA = dyn_cast<AcquiredAfterAttr>(A))
-      Args = ArrayRef<Expr *>(AA->args_begin(), AA->args_size());
+      Args = llvm::makeArrayRef(AA->args_begin(), AA->args_size());
     else if (const auto *AB = dyn_cast<AcquiredBeforeAttr>(A))
-      Args = ArrayRef<Expr *>(AB->args_begin(), AB->args_size());
+      Args = llvm::makeArrayRef(AB->args_begin(), AB->args_size());
     else if (const auto *ETLF = dyn_cast<ExclusiveTrylockFunctionAttr>(A)) {
       Arg = ETLF->getSuccessValue();
-      Args = ArrayRef<Expr *>(ETLF->args_begin(), ETLF->args_size());
+      Args = llvm::makeArrayRef(ETLF->args_begin(), ETLF->args_size());
     } else if (const auto *STLF = dyn_cast<SharedTrylockFunctionAttr>(A)) {
       Arg = STLF->getSuccessValue();
-      Args = ArrayRef<Expr *>(STLF->args_begin(), STLF->args_size());
+      Args = llvm::makeArrayRef(STLF->args_begin(), STLF->args_size());
     } else if (const auto *LR = dyn_cast<LockReturnedAttr>(A))
       Arg = LR->getArg();
     else if (const auto *LE = dyn_cast<LocksExcludedAttr>(A))
-      Args = ArrayRef<Expr *>(LE->args_begin(), LE->args_size());
+      Args = llvm::makeArrayRef(LE->args_begin(), LE->args_size());
     else if (const auto *RC = dyn_cast<RequiresCapabilityAttr>(A))
-      Args = ArrayRef<Expr *>(RC->args_begin(), RC->args_size());
+      Args = llvm::makeArrayRef(RC->args_begin(), RC->args_size());
     else if (const auto *AC = dyn_cast<AcquireCapabilityAttr>(A))
-      Args = ArrayRef<Expr *>(AC->args_begin(), AC->args_size());
+      Args = llvm::makeArrayRef(AC->args_begin(), AC->args_size());
     else if (const auto *AC = dyn_cast<TryAcquireCapabilityAttr>(A))
-      Args = ArrayRef<Expr *>(AC->args_begin(), AC->args_size());
+      Args = llvm::makeArrayRef(AC->args_begin(), AC->args_size());
     else if (const auto *RC = dyn_cast<ReleaseCapabilityAttr>(A))
-      Args = ArrayRef<Expr *>(RC->args_begin(), RC->args_size());
+      Args = llvm::makeArrayRef(RC->args_begin(), RC->args_size());
 
     if (Arg && !Finder.TraverseStmt(Arg))
       return true;

@@ -1073,8 +1073,8 @@ LambdaExpr::getCaptureInitIndexVars(capture_init_iterator Iter) const {
          "Capture index out-of-range");
   VarDecl **IndexVars = getArrayIndexVars();
   unsigned *IndexStarts = getArrayIndexStarts();
-  return ArrayRef<VarDecl *>(IndexVars + IndexStarts[Index],
-                             IndexVars + IndexStarts[Index + 1]);
+  return llvm::makeArrayRef(IndexVars + IndexStarts[Index],
+                            IndexVars + IndexStarts[Index + 1]);
 }
 
 CXXRecordDecl *LambdaExpr::getLambdaClass() const {
