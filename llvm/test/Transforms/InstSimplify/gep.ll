@@ -64,3 +64,17 @@ define i64* @test6(i64* %b) {
 ; CHECK-LABEL: @test6
 ; CHECK-NEXT: ret i64* null
 }
+
+define i8* @test7(i8* %b, i8** %e) {
+  %e_ptr = ptrtoint i8** %e to i64
+  %b_ptr = ptrtoint i8* %b to i64
+  %sub = sub i64 %e_ptr, %b_ptr
+  %gep = getelementptr inbounds i8* %b, i64 %sub
+  ret i8* %gep
+; CHECK-LABEL: @test7
+; CHECK-NEXT: ptrtoint
+; CHECK-NEXT: ptrtoint
+; CHECK-NEXT: sub
+; CHECK-NEXT: getelementptr
+; CHECK-NEXT: ret
+}

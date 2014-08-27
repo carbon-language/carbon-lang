@@ -2837,7 +2837,8 @@ static Value *SimplifyGEPInst(ArrayRef<Value *> Ops, const Query &Q, unsigned) {
             return Constant::getNullValue(GEPTy);
           Value *Temp;
           if (match(P, m_PtrToInt(m_Value(Temp))))
-            return Temp;
+            if (Temp->getType() == GEPTy)
+              return Temp;
           return nullptr;
         };
 
