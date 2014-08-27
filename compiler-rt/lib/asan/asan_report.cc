@@ -564,7 +564,7 @@ class ScopedInErrorReport {
       // Do not print more than one report, otherwise they will mix up.
       // Error reporting functions shouldn't return at this situation, as
       // they are defined as no-return.
-      Report("AddressSanitizer: while reporting a bug found another one."
+      Report("AddressSanitizer: while reporting a bug found another one. "
                  "Ignoring.\n");
       u32 current_tid = GetCurrentTidOrInvalid();
       if (current_tid != reporting_thread_tid) {
