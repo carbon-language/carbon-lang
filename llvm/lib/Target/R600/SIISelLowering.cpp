@@ -25,6 +25,7 @@
 #include "SIInstrInfo.h"
 #include "SIMachineFunctionInfo.h"
 #include "SIRegisterInfo.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -411,7 +412,7 @@ SDValue SITargetLowering::LowerFormalArguments(
   assert(CallConv == CallingConv::C);
 
   SmallVector<ISD::InputArg, 16> Splits;
-  uint32_t Skipped = 0;
+  BitVector Skipped(Ins.size());
 
   for (unsigned i = 0, e = Ins.size(), PSInputNum = 0; i != e; ++i) {
     const ISD::InputArg &Arg = Ins[i];
@@ -424,7 +425,7 @@ SDValue SITargetLowering::LowerFormalArguments(
 
       if (!Arg.Used) {
         // We can savely skip PS inputs
-        Skipped |= 1 << i;
+        Skipped.set(i);
         ++PSInputNum;
         continue;
       }
@@ -488,7 +489,7 @@ SDValue SITargetLowering::LowerFormalArguments(
   for (unsigned i = 0, e = Ins.size(), ArgIdx = 0; i != e; ++i) {
 
     const ISD::InputArg &Arg = Ins[i];
-    if (Skipped & (1 << i)) {
+    if (Skipped[i]) {
       InVals.push_back(DAG.getUNDEF(Arg.VT));
       continue;
     }
