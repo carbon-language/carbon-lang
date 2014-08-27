@@ -1557,8 +1557,17 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         llvm::Value *V = AI;
 
         if (const ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(Arg)) {
-          if ((NNAtt && NNAtt->isNonNull(PVD->getFunctionScopeIndex())) ||
-              PVD->hasAttr<NonNullAttr>())
+          // FIXME: __attribute__((nonnull)) can also be applied to:
+          //   - references to pointers, where the pointee is known to be
+          //     nonnull (apparently a Clang extension)
+          //   - transparent unions containing pointers
+          // In the former case, LLVM IR cannot represent the constraint. In
+          // the latter case, we have no guarantee that the transparent union
+          // is in fact passed as a pointer.
+          if (((NNAtt && NNAtt->isNonNull(PVD->getFunctionScopeIndex())) ||
+               PVD->hasAttr<NonNullAttr>()) &&
+              (PVD->getType()->isAnyPointerType() ||
+               PVD->getType()->isBlockPointerType()))
             AI->addAttr(llvm::AttributeSet::get(getLLVMContext(),
                                                 AI->getArgNo() + 1,
                                                 llvm::Attribute::NonNull));
