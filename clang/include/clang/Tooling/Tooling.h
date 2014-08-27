@@ -293,8 +293,8 @@ class ClangTool {
   FileManager &getFiles() { return *Files; }
 
  private:
-  // We store compile commands as pair (file name, compile command).
-  std::vector< std::pair<std::string, CompileCommand> > CompileCommands;
+  const CompilationDatabase &Compilations;
+  std::vector<std::string> SourcePaths;
 
   llvm::IntrusiveRefCntPtr<FileManager> Files;
   // Contains a list of pairs (<file name>, <file content>).

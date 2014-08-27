@@ -273,28 +273,10 @@ bool FrontendActionFactory::runInvocation(CompilerInvocation *Invocation,
 
 ClangTool::ClangTool(const CompilationDatabase &Compilations,
                      ArrayRef<std::string> SourcePaths)
-    : Files(new FileManager(FileSystemOptions())), DiagConsumer(nullptr) {
+    : Compilations(Compilations), SourcePaths(SourcePaths),
+      Files(new FileManager(FileSystemOptions())), DiagConsumer(nullptr) {
   ArgsAdjusters.push_back(new ClangStripOutputAdjuster());
   ArgsAdjusters.push_back(new ClangSyntaxOnlyAdjuster());
-  for (const auto &SourcePath : SourcePaths) {
-    std::string File(getAbsolutePath(SourcePath));
-
-    std::vector<CompileCommand> CompileCommandsForFile =
-      Compilations.getCompileCommands(File);
-    if (!CompileCommandsForFile.empty()) {
-      for (CompileCommand &CompileCommand : CompileCommandsForFile) {
-        CompileCommands.push_back(
-            std::make_pair(File, std::move(CompileCommand)));
-      }
-    } else {
-      // FIXME: There are two use cases here: doing a fuzzy
-      // "find . -name '*.cc' |xargs tool" match, where as a user I don't care
-      // about the .cc files that were not found, and the use case where I
-      // specify all files I want to run over explicitly, where this should
-      // be an error. We'll want to add an option for this.
-      llvm::errs() << "Skipping " << File << ". Compile command not found.\n";
-    }
-  }
 }
 
 void ClangTool::setDiagnosticConsumer(DiagnosticConsumer *D) {
@@ -333,36 +315,49 @@ int ClangTool::run(ToolAction *Action) {
       llvm::sys::fs::getMainExecutable("clang_tool", &StaticSymbol);
 
   bool ProcessingFailed = false;
-  for (const auto &Command : CompileCommands) {
-    // FIXME: chdir is thread hostile; on the other hand, creating the same
-    // behavior as chdir is complex: chdir resolves the path once, thus
-    // guaranteeing that all subsequent relative path operations work
-    // on the same path the original chdir resulted in. This makes a difference
-    // for example on network filesystems, where symlinks might be switched
-    // during runtime of the tool. Fixing this depends on having a file system
-    // abstraction that allows openat() style interactions.
-    if (chdir(Command.second.Directory.c_str()))
-      llvm::report_fatal_error("Cannot chdir into \"" +
-                               Twine(Command.second.Directory) + "\n!");
-    std::vector<std::string> CommandLine = Command.second.CommandLine;
-    for (ArgumentsAdjuster *Adjuster : ArgsAdjusters)
-      CommandLine = Adjuster->Adjust(CommandLine);
-    assert(!CommandLine.empty());
-    CommandLine[0] = MainExecutable;
-    // FIXME: We need a callback mechanism for the tool writer to output a
-    // customized message for each file.
-    DEBUG({
-      llvm::dbgs() << "Processing: " << Command.first << ".\n";
-    });
-    ToolInvocation Invocation(std::move(CommandLine), Action, Files.get());
-    Invocation.setDiagnosticConsumer(DiagConsumer);
-    for (const auto &MappedFile : MappedFileContents) {
-      Invocation.mapVirtualFile(MappedFile.first, MappedFile.second);
+  for (const auto &SourcePath : SourcePaths) {
+    std::string File(getAbsolutePath(SourcePath));
+
+    std::vector<CompileCommand> CompileCommandsForFile =
+        Compilations.getCompileCommands(File);
+    if (CompileCommandsForFile.empty()) {
+      // FIXME: There are two use cases here: doing a fuzzy
+      // "find . -name '*.cc' |xargs tool" match, where as a user I don't care
+      // about the .cc files that were not found, and the use case where I
+      // specify all files I want to run over explicitly, where this should
+      // be an error. We'll want to add an option for this.
+      llvm::errs() << "Skipping " << File << ". Compile command not found.\n";
+      continue;
     }
-    if (!Invocation.run()) {
-      // FIXME: Diagnostics should be used instead.
-      llvm::errs() << "Error while processing " << Command.first << ".\n";
-      ProcessingFailed = true;
+    for (CompileCommand &CompileCommand : CompileCommandsForFile) {
+      // FIXME: chdir is thread hostile; on the other hand, creating the same
+      // behavior as chdir is complex: chdir resolves the path once, thus
+      // guaranteeing that all subsequent relative path operations work
+      // on the same path the original chdir resulted in. This makes a
+      // difference for example on network filesystems, where symlinks might be
+      // switched during runtime of the tool. Fixing this depends on having a
+      // file system abstraction that allows openat() style interactions.
+      if (chdir(CompileCommand.Directory.c_str()))
+        llvm::report_fatal_error("Cannot chdir into \"" +
+                                 Twine(CompileCommand.Directory) + "\n!");
+      std::vector<std::string> CommandLine = CompileCommand.CommandLine;
+      for (ArgumentsAdjuster *Adjuster : ArgsAdjusters)
+        CommandLine = Adjuster->Adjust(CommandLine);
+      assert(!CommandLine.empty());
+      CommandLine[0] = MainExecutable;
+      // FIXME: We need a callback mechanism for the tool writer to output a
+      // customized message for each file.
+      DEBUG({ llvm::dbgs() << "Processing: " << File << ".\n"; });
+      ToolInvocation Invocation(std::move(CommandLine), Action, Files.get());
+      Invocation.setDiagnosticConsumer(DiagConsumer);
+      for (const auto &MappedFile : MappedFileContents) {
+        Invocation.mapVirtualFile(MappedFile.first, MappedFile.second);
+      }
+      if (!Invocation.run()) {
+        // FIXME: Diagnostics should be used instead.
+        llvm::errs() << "Error while processing " << File << ".\n";
+        ProcessingFailed = true;
+      }
     }
   }
   return ProcessingFailed ? 1 : 0;
