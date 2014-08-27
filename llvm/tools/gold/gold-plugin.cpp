@@ -546,8 +546,8 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
   if (get_view(F.handle, &View) != LDPS_OK)
     message(LDPL_FATAL, "Failed to get a view of file");
 
-  std::unique_ptr<MemoryBuffer> Buffer(MemoryBuffer::getMemBuffer(
-      StringRef((char *)View, File.filesize), "", false));
+  std::unique_ptr<MemoryBuffer> Buffer = MemoryBuffer::getMemBuffer(
+      StringRef((char *)View, File.filesize), "", false);
 
   if (release_input_file(F.handle) != LDPS_OK)
     message(LDPL_FATAL, "Failed to release file information");

@@ -18,7 +18,7 @@ namespace {
 class SpecialCaseListTest : public ::testing::Test {
 protected:
   SpecialCaseList *makeSpecialCaseList(StringRef List, std::string &Error) {
-    std::unique_ptr<MemoryBuffer> MB(MemoryBuffer::getMemBuffer(List));
+    std::unique_ptr<MemoryBuffer> MB = MemoryBuffer::getMemBuffer(List);
     return SpecialCaseList::create(MB.get(), Error);
   }
 
