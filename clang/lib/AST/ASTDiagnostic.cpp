@@ -342,26 +342,22 @@ void clang::FormatASTNodeDiagnosticArgument(
       assert(DC && "Should never have a null declaration context");
       NeedQuotes = false;
 
+      // FIXME: Get the strings for DeclContext from some localized place
       if (DC->isTranslationUnit()) {
-        // FIXME: Get these strings from some localized place
         if (Context.getLangOpts().CPlusPlus)
           OS << "the global namespace";
         else
           OS << "the global scope";
+      } else if (DC->isClosure()) {
+        OS << "block literal";
+      } else if (isLambdaCallOperator(DC)) {
+        OS << "lambda expression";
       } else if (TypeDecl *Type = dyn_cast<TypeDecl>(DC)) {
         OS << ConvertTypeToDiagnosticString(Context,
                                             Context.getTypeDeclType(Type),
                                             PrevArgs, QualTypeVals);
       } else {
-        // FIXME: Get these strings from some localized place
-        if (isa<BlockDecl>(DC)) {
-          OS << "block literal";
-          break;
-        }
-        if (isLambdaCallOperator(DC)) {
-          OS << "lambda expression";
-          break;
-        }
+        assert(isa<NamedDecl>(DC) && "Expected a NamedDecl");
         NamedDecl *ND = cast<NamedDecl>(DC);
         if (isa<NamespaceDecl>(ND))
           OS << "namespace ";
