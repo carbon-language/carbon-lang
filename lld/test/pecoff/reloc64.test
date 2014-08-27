@@ -8,3 +8,4 @@
 CHECK:      Disassembly of section .text:
 CHECK-NEXT: .text:
 CHECK-NEXT:   1000:  e8 0b 00 00 00   callq 11
+CHECK-NEXT:   1005:  48 b8 10 10 00 40 01 00 00 00 movabsq $5368713232, %rax

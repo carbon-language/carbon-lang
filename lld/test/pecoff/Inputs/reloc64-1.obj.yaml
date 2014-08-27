@@ -6,11 +6,14 @@ sections:
   - Name:            .text
     Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
     Alignment:       16
-    SectionData:     E800000000C3
+    SectionData:     E80000000048b80000000000000000
     Relocations:
       - VirtualAddress:  1
         SymbolName:      fn2
         Type:            IMAGE_REL_AMD64_REL32
+      - VirtualAddress:  7
+        SymbolName:      fn2
+        Type:            IMAGE_REL_AMD64_ADDR64
   - Name:            .data
     Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE ]
     Alignment:       16

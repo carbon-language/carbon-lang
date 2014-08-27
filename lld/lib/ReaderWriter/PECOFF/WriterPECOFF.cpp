@@ -572,7 +572,7 @@ void AtomChunk::applyRelocations64(uint8_t *buffer,
 
       switch (ref->kindValue()) {
       case llvm::COFF::IMAGE_REL_AMD64_ADDR64:
-        *relocSite64 = targetAddr;
+        *relocSite64 = targetAddr + imageBase;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_ADDR32:
         *relocSite32 = targetAddr + imageBase;
