@@ -96,7 +96,24 @@ struct packed_endian_specific_integral {
 private:
   AlignedCharArray<PickAlignment<value_type, alignment>::value,
                    sizeof(value_type)> Value;
+
+public:
+  struct ref {
+    explicit ref(void *Ptr) : Ptr(Ptr) {}
+
+    operator value_type() const {
+      return endian::read<value_type, endian, alignment>(Ptr);
+    }
+
+    void operator=(value_type NewValue) {
+      endian::write<value_type, endian, alignment>(Ptr, NewValue);
+    }
+
+  private:
+    void *Ptr;
+  };
 };
+
 } // end namespace detail
 
 typedef detail::packed_endian_specific_integral

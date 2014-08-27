@@ -17,6 +17,7 @@
 #include "X86TargetMachine.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Valgrind.h"
 #include <cstdlib>
@@ -32,13 +33,24 @@ using namespace llvm;
 # define X86_32_JIT
 #endif
 
+// x86 is little-endian, and we can do unaligned memory accesses.
+template<typename value_type>
+static value_type read_x86(const void *memory) {
+  return support::endian::read<value_type, support::little, 1>(memory);
+}
+
+template<typename value_type>
+static void write_x86(void *memory, value_type value) {
+  support::endian::write<value_type, support::little, 1>(memory, value);
+}
+
 void X86JITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
-  unsigned char *OldByte = (unsigned char *)Old;
-  *OldByte++ = 0xE9;                // Emit JMP opcode.
-  unsigned *OldWord = (unsigned *)OldByte;
+  unsigned char *OldPtr = static_cast<unsigned char*>(Old);
+  write_x86<unsigned char>(OldPtr++, 0xE9); // Emit JMP opcode.
   unsigned NewAddr = (intptr_t)New;
-  unsigned OldAddr = (intptr_t)OldWord;
-  *OldWord = NewAddr - OldAddr - 4; // Emit PC-relative addr of New code.
+  unsigned OldAddr = (intptr_t)OldPtr;
+  write_x86<unsigned>(
+      OldPtr, NewAddr - OldAddr - 4); // Emit PC-relative addr of New code.
 
   // X86 doesn't need to invalidate the processor cache, so just invalidate
   // Valgrind's cache directly.
@@ -351,31 +363,35 @@ LLVM_LIBRARY_VISIBILITY void LLVMX86CompilationCallback2(intptr_t *StackPtr,
          "Could not find return address on the stack!");
 
   // It's a stub if there is an interrupt marker after the call.
-  bool isStub = ((unsigned char*)RetAddr)[0] == 0xCE;
+  unsigned char *RetAddrPtr = (unsigned char*)RetAddr;
+  bool isStub = read_x86<unsigned char>(RetAddrPtr) == 0xCE;
 
   // The call instruction should have pushed the return value onto the stack...
 #if defined (X86_64_JIT)
-  RetAddr--;     // Backtrack to the reference itself...
+  RetAddrPtr--;  // Backtrack to the reference itself...
 #else
-  RetAddr -= 4;  // Backtrack to the reference itself...
+  RetAddrPtr -= 4;  // Backtrack to the reference itself...
 #endif
 
 #if 0
-  DEBUG(dbgs() << "In callback! Addr=" << (void*)RetAddr
+  DEBUG(dbgs() << "In callback! Addr=" << RetAddrPtr
                << " ESP=" << (void*)StackPtr
                << ": Resolving call to function: "
-               << TheVM->getFunctionReferencedName((void*)RetAddr) << "\n");
+               << TheVM->getFunctionReferencedName(RetAddrPtr) << "\n");
 #endif
 
   // Sanity check to make sure this really is a call instruction.
 #if defined (X86_64_JIT)
-  assert(((unsigned char*)RetAddr)[-2] == 0x41 &&"Not a call instr!");
-  assert(((unsigned char*)RetAddr)[-1] == 0xFF &&"Not a call instr!");
+  assert(read_x86<unsigned char>(RetAddrPtr - 2) == 0x41 &&
+         "Not a call instr!");
+  assert(read_x86<unsigned char>(RetAddrPtr - 1) == 0xFF &&
+         "Not a call instr!");
 #else
-  assert(((unsigned char*)RetAddr)[-1] == 0xE8 &&"Not a call instr!");
+  assert(read_x86<unsigned char>(RetAddrPtr - 1) == 0xE8 &&
+         "Not a call instr!");
 #endif
 
-  intptr_t NewVal = (intptr_t)JITCompilerFunction((void*)RetAddr);
+  intptr_t NewVal = (intptr_t)JITCompilerFunction(RetAddrPtr);
 
   // Rewrite the call target... so that we don't end up here every time we
   // execute the call.
@@ -384,7 +400,7 @@ LLVM_LIBRARY_VISIBILITY void LLVMX86CompilationCallback2(intptr_t *StackPtr,
          "X86-64 doesn't support rewriting non-stub lazy compilation calls:"
          " the call instruction varies too much.");
 #else
-  *(intptr_t *)RetAddr = (intptr_t)(NewVal-RetAddr-4);
+  write_x86<intptr_t>(RetAddrPtr, NewVal - (intptr_t)RetAddrPtr - 4);
 #endif
 
   if (isStub) {
@@ -397,18 +413,18 @@ LLVM_LIBRARY_VISIBILITY void LLVMX86CompilationCallback2(intptr_t *StackPtr,
     // PC-relative branch instead of loading the actual address.  (This is
     // considerably shorter than the 64-bit immediate load already there.)
     // We assume here intptr_t is 64 bits.
-    intptr_t diff = NewVal-RetAddr+7;
+    intptr_t diff = NewVal - (intptr_t)RetAddrPtr + 7;
     if (diff >= -2147483648LL && diff <= 2147483647LL) {
-      *(unsigned char*)(RetAddr-0xc) = 0xE9;
-      *(intptr_t *)(RetAddr-0xb) = diff & 0xffffffff;
+      write_x86<unsigned char>(RetAddrPtr - 0xC, 0xE9);
+      write_x86<intptr_t>(RetAddrPtr - 0xB, diff & 0xffffffff);
     } else {
-      *(intptr_t *)(RetAddr - 0xa) = NewVal;
-      ((unsigned char*)RetAddr)[0] = (2 | (4 << 3) | (3 << 6));
+      write_x86<intptr_t>(RetAddrPtr - 0xA, NewVal);
+      write_x86<unsigned char>(RetAddrPtr, (2 | (4 << 3) | (3 << 6)));
     }
-    sys::ValgrindDiscardTranslations((void*)(RetAddr-0xc), 0xd);
+    sys::ValgrindDiscardTranslations(RetAddrPtr - 0xC, 0xd);
 #else
-    ((unsigned char*)RetAddr)[-1] = 0xE9;
-    sys::ValgrindDiscardTranslations((void*)(RetAddr-1), 5);
+    write_x86<unsigned char>(RetAddrPtr - 1, 0xE9);
+    sys::ValgrindDiscardTranslations(RetAddrPtr - 1, 5);
 #endif
   }
 
