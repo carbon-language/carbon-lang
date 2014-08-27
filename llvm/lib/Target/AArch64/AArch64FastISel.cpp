@@ -1449,7 +1449,7 @@ bool AArch64FastISel::SelectStore(const Instruction *I) {
     return false;
 
   // Get the value to be stored into a register. Use the zero register directly
-  // when possible to avoid an unnecessary copy and a wasted register at -O0.
+  // when possible to avoid an unnecessary copy and a wasted register.
   unsigned SrcReg = 0;
   if (const auto *CI = dyn_cast<ConstantInt>(Op0)) {
     if (CI->isZero())
