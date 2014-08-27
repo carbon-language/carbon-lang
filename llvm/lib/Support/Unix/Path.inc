@@ -663,7 +663,7 @@ static const char *getEnvTempDir() {
 
 static const char *getDefaultTempDir(bool ErasedOnReboot) {
 #ifdef P_tmpdir
-  if (P_tmpdir)
+  if ((bool)P_tmpdir)
     return P_tmpdir;
 #endif
 
