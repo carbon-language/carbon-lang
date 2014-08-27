@@ -708,6 +708,10 @@ bool AArch64FastISel::SimplifyAddress(Address &Addr, MVT VT) {
       Addr.getOffsetReg())
     RegisterOffsetNeedsLowering = true;
 
+  // Cannot encode zero register as base.
+  if (Addr.isRegBase() && Addr.getOffsetReg() && !Addr.getReg())
+    RegisterOffsetNeedsLowering = true;
+
   // If this is a stack pointer and the offset needs to be simplified then put
   // the alloca address into a register, set the base type back to register and
   // continue. This should almost never happen.

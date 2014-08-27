@@ -107,6 +107,16 @@ define void @store_breg_f64(double* %a) {
   ret void
 }
 
+; Load Immediate
+define i32 @load_immoff_1() {
+; CHECK-LABEL: load_immoff_1
+; CHECK:       orr {{w|x}}[[REG:[0-9]+]], {{wzr|xzr}}, #0x80
+; CHECK:       ldr {{w[0-9]+}}, {{\[}}x[[REG]]{{\]}}
+  %1 = inttoptr i64 128 to i32*
+  %2 = load i32* %1
+  ret i32 %2
+}
+
 ; Load / Store Base Register + Immediate Offset
 ; Max supported negative offset
 define i32 @load_breg_immoff_1(i64 %a) {
@@ -316,6 +326,17 @@ define i64 @load_breg_offreg_immoff_2(i64 %a, i64 %b) {
   %3 = inttoptr i64 %2 to i64*
   %4 = load i64* %3
   ret i64 %4
+}
+
+; Load Scaled Register Offset
+define i32 @load_shift_offreg_1(i64 %a) {
+; CHECK-LABEL: load_shift_offreg_1
+; CHECK:       lsl [[REG:x[0-9]+]], x0, #2
+; CHECK:       ldr {{w[0-9]+}}, {{\[}}[[REG]]{{\]}}
+  %1 = shl i64 %a, 2
+  %2 = inttoptr i64 %1 to i32*
+  %3 = load i32* %2
+  ret i32 %3
 }
 
 ; Load Base Register + Scaled Register Offset
