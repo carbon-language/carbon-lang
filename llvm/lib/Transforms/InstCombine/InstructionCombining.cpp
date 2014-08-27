@@ -1516,28 +1516,39 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       Type *Ty = PtrTy->getPointerElementType();
       uint64_t TyAllocSize = DL->getTypeAllocSize(Ty);
 
-      // Canonicalize (gep i8* X, -(ptrtoint Y)) to (sub (ptrtoint X), (ptrtoint Y))
-      // The GEP pattern is emitted by the SCEV expander for certain kinds of
-      // pointer arithmetic.
       uint64_t C;
-      Value *NegPtrToInt = nullptr;
+      Value *V = nullptr;
       if (TyAllocSize == 1) {
-          NegPtrToInt = GEP.getOperand(1);
+          V = GEP.getOperand(1);
       } else if (match(GEP.getOperand(1),
-                       m_AShr(m_Value(NegPtrToInt), m_ConstantInt(C)))) {
+                       m_AShr(m_Value(V), m_ConstantInt(C)))) {
         if (TyAllocSize != 1ULL << C)
-          NegPtrToInt = nullptr;
+          V = nullptr;
       } else if (match(GEP.getOperand(1),
-                       m_SDiv(m_Value(NegPtrToInt), m_ConstantInt(C)))) {
+                       m_SDiv(m_Value(V), m_ConstantInt(C)))) {
         if (TyAllocSize != C)
-          NegPtrToInt = nullptr;
+          V = nullptr;
       }
 
-      if (NegPtrToInt && match(NegPtrToInt, m_Neg(m_PtrToInt(m_Value())))) {
-        Operator *Index = cast<Operator>(NegPtrToInt);
-        Value *PtrToInt = Builder->CreatePtrToInt(PtrOp, Index->getType());
-        Value *NewSub = Builder->CreateSub(PtrToInt, Index->getOperand(1));
-        return CastInst::Create(Instruction::IntToPtr, NewSub, GEP.getType());
+      if (V) {
+        // Canonicalize (gep i8* X, -(ptrtoint Y))
+        // to (inttoptr (sub (ptrtoint X), (ptrtoint Y)))
+        // The GEP pattern is emitted by the SCEV expander for certain kinds of
+        // pointer arithmetic.
+        if (match(V, m_Neg(m_PtrToInt(m_Value())))) {
+          Operator *Index = cast<Operator>(V);
+          Value *PtrToInt = Builder->CreatePtrToInt(PtrOp, Index->getType());
+          Value *NewSub = Builder->CreateSub(PtrToInt, Index->getOperand(1));
+          return CastInst::Create(Instruction::IntToPtr, NewSub, GEP.getType());
+        }
+        // Canonicalize (gep i8* X, (ptrtoint Y)-(ptrtoint X))
+        // to (bitcast Y)
+        Value *Y;
+        if (match(V, m_Sub(m_PtrToInt(m_Value(Y)),
+                           m_PtrToInt(m_Specific(GEP.getOperand(0)))))) {
+          return CastInst::CreatePointerBitCastOrAddrSpaceCast(Y,
+                                                               GEP.getType());
+        }
       }
     }
   }
