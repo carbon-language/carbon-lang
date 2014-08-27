@@ -2481,24 +2481,6 @@ DwarfCompileUnit &DwarfDebug::constructSkeletonCU(const DwarfCompileUnit &CU) {
   return NewCU;
 }
 
-// This DIE has the following attributes: DW_AT_comp_dir, DW_AT_dwo_name,
-// DW_AT_addr_base.
-DwarfTypeUnit &DwarfDebug::constructSkeletonTU(DwarfTypeUnit &TU) {
-  DwarfCompileUnit &CU = static_cast<DwarfCompileUnit &>(
-      *SkeletonHolder.getUnits()[TU.getCU().getUniqueID()]);
-
-  auto OwnedUnit = make_unique<DwarfTypeUnit>(TU.getUniqueID(), CU, Asm, this,
-                                              &SkeletonHolder);
-  DwarfTypeUnit &NewTU = *OwnedUnit;
-  NewTU.setTypeSignature(TU.getTypeSignature());
-  NewTU.setType(nullptr);
-  NewTU.initSection(
-      Asm->getObjFileLowering().getDwarfTypesSection(TU.getTypeSignature()));
-
-  initSkeletonUnit(TU, NewTU.getUnitDie(), std::move(OwnedUnit));
-  return NewTU;
-}
-
 // Emit the .debug_info.dwo section for separated dwarf. This contains the
 // compile units that would normally be in debug_info.
 void DwarfDebug::emitDebugInfoDWO() {
@@ -2621,11 +2603,8 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
 
     // If the type wasn't dependent on fission addresses, finish adding the type
     // and all its dependent types.
-    for (auto &TU : TypeUnitsToAdd) {
-      if (useSplitDwarf())
-        TU.first->setSkeleton(constructSkeletonTU(*TU.first));
+    for (auto &TU : TypeUnitsToAdd)
       InfoHolder.addUnit(std::move(TU.first));
-    }
   }
   CU.addDIETypeSignature(RefDie, NewTU);
 }

@@ -2,11 +2,11 @@
 
 ; RUN: llc < %s -o %t -filetype=obj -O0 -generate-type-units -mtriple=x86_64-unknown-linux-gnu
 ; RUN: llvm-dwarfdump %t | FileCheck --check-prefix=CHECK --check-prefix=SINGLE %s
-; RUN: llvm-readobj -s -t %t | FileCheck --check-prefix=OBJ_COMMON %s
+; RUN: llvm-readobj -s -t %t | FileCheck --check-prefix=OBJ_SINGLE %s
 
 ; RUN: llc < %s -split-dwarf=Enable -o %t -filetype=obj -O0 -generate-type-units -mtriple=x86_64-unknown-linux-gnu
 ; RUN: llvm-dwarfdump %t | FileCheck --check-prefix=CHECK --check-prefix=FISSION %s
-; RUN: llvm-readobj -s -t %t | FileCheck --check-prefix=OBJ_COMMON --check-prefix=OBJ_FISSION %s
+; RUN: llvm-readobj -s -t %t | FileCheck --check-prefix=OBJ_FISSION %s
 
 ; Generated from bar.cpp:
 
@@ -74,20 +74,8 @@
 ; CHECK-NEXT: DW_AT_declaration
 ; CHECK-NEXT: DW_AT_signature {{.*}} (0xfd756cee88f8a118)
 
-; FISSION-LABEL: .debug_types contents:
-; FISSION-NOT: type_signature
-; FISSION-LABEL: type_signature = 0x1d02f3be30cc5688
-; FISSION: DW_TAG_type_unit
-; FISSION-NEXT: DW_AT_GNU_dwo_name{{.*}}"bar.dwo"
-; FISSION-NEXT: DW_AT_comp_dir{{.*}}"/tmp/dbginfo"
-; FISSION-NOT: type_signature
-; FISSION-LABEL: type_signature = 0xb04af47397402e77
-; FISSION-NOT: type_signature
-; FISSION-LABEL: type_signature = 0xfd756cee88f8a118
-; FISSION-NOT: type_signature
-; FISSION-LABEL: type_signature = 0xe94f6d3843e62d6b
-
 ; SINGLE-LABEL: .debug_types contents:
+; FISSION-NOT: .debug_types contents:
 ; FISSION-LABEL: .debug_types.dwo contents:
 
 ; Check that we generate a hash for bar and the value.
@@ -166,9 +154,9 @@
 ; Make sure debug_types are in comdat groups. This could be more rigid to check
 ; that they're the right comdat groups (each type in a separate comdat group,
 ; etc)
-; OBJ_COMMON: Name: .debug_types (
-; OBJ_COMMON-NOT: }
-; OBJ_COMMON: SHF_GROUP
+; OBJ_SINGLE: Name: .debug_types (
+; OBJ_SINGLE-NOT: }
+; OBJ_SINGLE: SHF_GROUP
 
 ; Fission type units don't go in comdat groups, since their linker is debug
 ; aware it's handled using the debug info semantics rather than raw ELF object
