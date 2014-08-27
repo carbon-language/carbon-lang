@@ -134,7 +134,11 @@ private:
   // Utility helper routines.
   bool isTypeLegal(Type *Ty, MVT &VT);
   bool isLoadStoreTypeLegal(Type *Ty, MVT &VT);
-  bool ComputeAddress(const Value *Obj, Address &Addr, Type *Ty = nullptr);
+  bool isLegalToFoldAddress(const Value *Obj);
+  bool computeAddress(const Value *Obj, Address &Addr, Type *Ty = nullptr);
+  bool computeAddressRecursively(const Value *Obj, Address &Addr, Type *Ty);
+  bool computeAddressBase(const Value *Obj, Address &Addr);
+
   bool ComputeCallAddress(const Value *V, Address &Addr);
   bool SimplifyAddress(Address &Addr, MVT VT);
   void AddLoadStoreOperands(Address &Addr, const MachineInstrBuilder &MIB,
@@ -416,9 +420,68 @@ unsigned AArch64FastISel::TargetMaterializeFloatZero(const ConstantFP* CFP) {
   return FastEmitInst_r(Opc, TLI.getRegClassFor(VT), ZReg, /*IsKill=*/true);
 }
 
+bool AArch64FastISel::isLegalToFoldAddress(const Value *Obj) {
+  // Look through BitCast, IntToPtr, and PtrToInt.
+  const User *U = nullptr;
+  unsigned Opcode = Instruction::UserOp1;
+  if (const auto *I = dyn_cast<Instruction>(Obj)) {
+    // Bail out if the result is used in a different basic block.
+    if (FuncInfo.isExportedInst(I))
+      return false;
+
+    Opcode = I->getOpcode();
+    U = I;
+  } else if (const auto *CE = dyn_cast<ConstantExpr>(Obj)) {
+    Opcode = CE->getOpcode();
+    U = CE;
+  }
+
+  switch (Opcode) {
+  default:
+    break;
+  case Instruction::BitCast:
+    return isLegalToFoldAddress(U->getOperand(0));
+  case Instruction::IntToPtr:
+    if (TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
+      return isLegalToFoldAddress(U->getOperand(0));
+    break;
+  case Instruction::PtrToInt:
+    if (TLI.getValueType(U->getType()) == TLI.getPointerTy())
+      return isLegalToFoldAddress(U->getOperand(0));
+    break;
+  }
+
+  // Allocas never kill their operands, so it is safe to fold it.
+  if (isa<AllocaInst>(Obj) || !isa<Instruction>(Obj))
+    return true;
+
+  const auto *I = cast<Instruction>(Obj);
+  // Trivial case - the memory instruction is the only user.
+  if (I->hasOneUse())
+    return true;
+
+  // Check all users - if all of them are memory instructions that FastISel
+  // can handle, then it is safe to fold the instruction.
+  for (auto *U : I->users())
+    if (!isa<LoadInst>(U) && !isa<StoreInst>(U))
+      return false;
+
+  return true;
+}
+
 // Computes the address to get to an object.
-bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr, Type *Ty)
-{
+bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr,
+                                     Type *Ty) {
+  // Don't fold instructions into the memory operation if their result is
+  // exported to another basic block or has more than one use - except if all
+  // uses are memory operations.
+  if (isLegalToFoldAddress(Obj))
+    return computeAddressRecursively(Obj, Addr, Ty);
+  return computeAddressBase(Obj, Addr);
+}
+
+bool AArch64FastISel::computeAddressRecursively(const Value *Obj, Address &Addr,
+                                                Type *Ty) {
   const User *U = nullptr;
   unsigned Opcode = Instruction::UserOp1;
   if (const Instruction *I = dyn_cast<Instruction>(Obj)) {
@@ -445,18 +508,18 @@ bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr, Type *Ty)
     break;
   case Instruction::BitCast: {
     // Look through bitcasts.
-    return ComputeAddress(U->getOperand(0), Addr, Ty);
+    return computeAddressRecursively(U->getOperand(0), Addr, Ty);
   }
   case Instruction::IntToPtr: {
     // Look past no-op inttoptrs.
     if (TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
-      return ComputeAddress(U->getOperand(0), Addr, Ty);
+      return computeAddressRecursively(U->getOperand(0), Addr, Ty);
     break;
   }
   case Instruction::PtrToInt: {
-    // Look past no-op ptrtoints.
+    // Look past no-op ptrtoints. Don't increment recursion level.
     if (TLI.getValueType(U->getType()) == TLI.getPointerTy())
-      return ComputeAddress(U->getOperand(0), Addr, Ty);
+      return computeAddressRecursively(U->getOperand(0), Addr, Ty);
     break;
   }
   case Instruction::GetElementPtr: {
@@ -498,7 +561,7 @@ bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr, Type *Ty)
 
     // Try to grab the base operand now.
     Addr.setOffset(TmpOffset);
-    if (ComputeAddress(U->getOperand(0), Addr, Ty))
+    if (computeAddressRecursively(U->getOperand(0), Addr, Ty))
       return true;
 
     // We failed, restore everything and try the other options.
@@ -519,6 +582,9 @@ bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr, Type *Ty)
     break;
   }
   case Instruction::Add: {
+    if (!U->hasOneUse())
+      break;
+
     // Adds of constants are common and easy enough.
     const Value *LHS = U->getOperand(0);
     const Value *RHS = U->getOperand(1);
@@ -528,17 +594,21 @@ bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr, Type *Ty)
 
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(RHS)) {
       Addr.setOffset(Addr.getOffset() + (uint64_t)CI->getSExtValue());
-      return ComputeAddress(LHS, Addr, Ty);
+      return computeAddressRecursively(LHS, Addr, Ty);
     }
 
     Address Backup = Addr;
-    if (ComputeAddress(LHS, Addr, Ty) && ComputeAddress(RHS, Addr, Ty))
+    if (computeAddressRecursively(LHS, Addr, Ty) &&
+        computeAddressRecursively(RHS, Addr, Ty))
       return true;
     Addr = Backup;
 
     break;
   }
   case Instruction::Shl:
+    if (!U->hasOneUse())
+      break;
+
     if (Addr.getOffsetReg())
       break;
 
@@ -561,8 +631,10 @@ bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr, Type *Ty)
       Addr.setShift(Val);
       Addr.setExtendType(AArch64_AM::LSL);
 
+      // Only try to fold the operand if it has one use.
       if (const auto *I = dyn_cast<Instruction>(U->getOperand(0)))
-        if (FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB)
+        if (I->hasOneUse() &&
+            (FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB))
           U = I;
 
       if (const auto *ZE = dyn_cast<ZExtInst>(U))
@@ -582,6 +654,10 @@ bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr, Type *Ty)
     break;
   }
 
+  return computeAddressBase(Obj, Addr);
+}
+
+bool AArch64FastISel::computeAddressBase(const Value *Obj, Address &Addr) {
   if (Addr.getReg()) {
     if (!Addr.getOffsetReg()) {
       unsigned Reg = getRegForValue(Obj);
@@ -1352,7 +1428,7 @@ bool AArch64FastISel::SelectLoad(const Instruction *I) {
 
   // See if we can handle this address.
   Address Addr;
-  if (!ComputeAddress(I->getOperand(0), Addr, I->getType()))
+  if (!computeAddress(I->getOperand(0), Addr, I->getType()))
     return false;
 
   unsigned ResultReg;
@@ -1469,7 +1545,7 @@ bool AArch64FastISel::SelectStore(const Instruction *I) {
 
   // See if we can handle this address.
   Address Addr;
-  if (!ComputeAddress(I->getOperand(1), Addr, I->getOperand(0)->getType()))
+  if (!computeAddress(I->getOperand(1), Addr, I->getOperand(0)->getType()))
     return false;
 
   if (!EmitStore(VT, SrcReg, Addr, createMachineMemOperandFor(I)))
@@ -2377,7 +2453,7 @@ bool AArch64FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     if (MTI->isVolatile())
       return false;
 
-    // Disable inlining for memmove before calls to ComputeAddress.  Otherwise,
+    // Disable inlining for memmove before calls to computeAddress.  Otherwise,
     // we would emit dead code because we don't currently handle memmoves.
     bool IsMemCpy = (II->getIntrinsicID() == Intrinsic::memcpy);
     if (isa<ConstantInt>(MTI->getLength()) && IsMemCpy) {
@@ -2387,8 +2463,8 @@ bool AArch64FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
       unsigned Alignment = MTI->getAlignment();
       if (IsMemCpySmall(Len, Alignment)) {
         Address Dest, Src;
-        if (!ComputeAddress(MTI->getRawDest(), Dest) ||
-            !ComputeAddress(MTI->getRawSource(), Src))
+        if (!computeAddress(MTI->getRawDest(), Dest) ||
+            !computeAddress(MTI->getRawSource(), Src))
           return false;
         if (TryEmitSmallMemCpy(Dest, Src, Len, Alignment))
           return true;

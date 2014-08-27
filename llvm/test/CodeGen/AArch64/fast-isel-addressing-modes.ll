@@ -281,6 +281,50 @@ define i64 @load_breg_immoff_8(i64 %a) {
   ret i64 %3
 }
 
+; Allow folding of the address if it is used by memory instructions only.
+define void @load_breg_immoff_9(i64 %a) {
+; FAST-LABEL: load_breg_immoff_9
+; FAST:       ldr {{x[0-9]+}}, [x0, #96]
+; FAST:       str {{x[0-9]+}}, [x0, #96]
+  %1 = add i64 %a, 96
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load i64* %2
+  %4 = add i64 %3, 1
+  store i64 %4, i64* %2
+  ret void
+}
+
+; Don't fold if the add result leaves the basic block - even if the user is a
+; memory operation.
+define i64 @load_breg_immoff_10(i64 %a, i1 %c) {
+; FAST-LABEL: load_breg_immoff_10
+; FAST:       add [[REG:x[0-9]+]], {{x[0-9]+}}, {{x[0-9]+}}
+; FAST-NEXT:  ldr {{x[0-9]+}}, {{\[}}[[REG]]{{\]}}
+  %1 = add i64 %a, 96
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load i64* %2
+  br i1 %c, label %bb1, label %bb2
+bb1:
+  %4 = shl i64 %1, 3
+  %5 = inttoptr i64 %4 to i64*
+  %res = load i64* %5
+  ret i64 %res
+bb2:
+  ret i64 %3
+}
+
+; Don't allow folding of the address if it is used by non-memory instructions.
+define i64 @load_breg_immoff_11(i64 %a) {
+; FAST-LABEL: load_breg_immoff_11
+; FAST:       add [[REG:x[0-9]+]], {{x[0-9]+}}, {{x[0-9]+}}
+; FAST-NEXT:  ldr {{x[0-9]+}}, {{\[}}[[REG]]{{\]}}
+  %1 = add i64 %a, 96
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load i64* %2
+  %4 = add i64 %1, %3
+  ret i64 %4
+}
+
 ; Load Base Register + Register Offset
 define i64 @load_breg_offreg_1(i64 %a, i64 %b) {
 ; CHECK-LABEL: load_breg_offreg_1
@@ -299,6 +343,33 @@ define i64 @load_breg_offreg_2(i64 %a, i64 %b) {
   %2 = inttoptr i64 %1 to i64*
   %3 = load i64* %2
   ret i64 %3
+}
+
+; Don't fold if the add result leaves the basic block.
+define i64 @load_breg_offreg_3(i64 %a, i64 %b, i1 %c) {
+; FAST-LABEL: load_breg_offreg_3
+; FAST:       add [[REG:x[0-9]+]], x0, x1
+; FAST-NEXT:  ldr {{x[0-9]+}}, {{\[}}[[REG]]{{\]}}
+  %1 = add i64 %a, %b
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load i64* %2
+  br i1 %c, label %bb1, label %bb2
+bb1:
+  %res = load i64* %2
+  ret i64 %res
+bb2:
+  ret i64 %3
+}
+
+define i64 @load_breg_offreg_4(i64 %a, i64 %b, i1 %c) {
+; FAST-LABEL: load_breg_offreg_4
+; FAST:       add [[REG:x[0-9]+]], x0, x1
+; FAST-NEXT:  ldr {{x[0-9]+}}, {{\[}}[[REG]]{{\]}}
+  %1 = add i64 %a, %b
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load i64* %2
+  %4 = add i64 %1, %3
+  ret i64 %4
 }
 
 ; Load Base Register + Register Offset + Immediate Offset
@@ -405,6 +476,35 @@ define i32 @load_breg_shift_offreg_5(i64 %a, i64 %b) {
   ret i32 %5
 }
 
+; Don't fold if the shift result leaves the basic block.
+define i64 @load_breg_shift_offreg_6(i64 %a, i64 %b, i1 %c) {
+; FAST-LABEL: load_breg_shift_offreg_6
+; FAST:       lsl [[REG:x[0-9]+]], x0, {{x[0-9]+}}
+; FAST-NEXT:  ldr {{x[0-9]+}}, {{\[}}x1, [[REG]]{{\]}}
+  %1 = shl i64 %a, 3
+  %2 = add i64 %b, %1
+  %3 = inttoptr i64 %2 to i64*
+  %4 = load i64* %3
+  br i1 %c, label %bb1, label %bb2
+bb1:
+  %5 = inttoptr i64 %1 to i64*
+  %res = load i64* %5
+  ret i64 %res
+bb2:
+  ret i64 %4
+}
+
+define i64 @load_breg_shift_offreg_7(i64 %a, i64 %b) {
+; FAST-LABEL: load_breg_shift_offreg_7
+; FAST:       lsl [[REG:x[0-9]+]], x0, {{x[0-9]+}}
+; FAST-NEXT:  ldr {{x[0-9]+}}, {{\[}}x1, [[REG]]{{\]}}
+  %1 = shl i64 %a, 3
+  %2 = add i64 %b, %1
+  %3 = inttoptr i64 %2 to i64*
+  %4 = load i64* %3
+  %5 = add i64 %1, %4
+  ret i64 %5
+}
 
 ; Load Base Register + Scaled Register Offset + Sign/Zero extension
 define i32 @load_breg_zext_shift_offreg_1(i32 %a, i64 %b) {
@@ -427,6 +527,36 @@ define i32 @load_breg_zext_shift_offreg_2(i32 %a, i64 %b) {
   %4 = inttoptr i64 %3 to i32*
   %5 = load i32* %4
   ret i32 %5
+}
+
+; Don't fold if the zext result leaves the basic block.
+define i64 @load_breg_zext_shift_offreg_3(i32 %a, i64 %b, i1 %c) {
+; FAST-LABEL: load_breg_zext_shift_offreg_3
+; FAST:       ldr {{x[0-9]+}}, {{\[}}x1, {{x[0-9]+}}, lsl #3{{\]}}
+  %1 = zext i32 %a to i64
+  %2 = shl i64 %1, 3
+  %3 = add i64 %b, %2
+  %4 = inttoptr i64 %3 to i64*
+  %5 = load i64* %4
+  br i1 %c, label %bb1, label %bb2
+bb1:
+  %6 = inttoptr i64 %1 to i64*
+  %res = load i64* %6
+  ret i64 %res
+bb2:
+  ret i64 %5
+}
+
+define i64 @load_breg_zext_shift_offreg_4(i32 %a, i64 %b) {
+; FAST-LABEL: load_breg_zext_shift_offreg_4
+; FAST:       ldr {{x[0-9]+}}, {{\[}}x1, {{x[0-9]+}}, lsl #3{{\]}}
+  %1 = zext i32 %a to i64
+  %2 = shl i64 %1, 3
+  %3 = add i64 %b, %2
+  %4 = inttoptr i64 %3 to i64*
+  %5 = load i64* %4
+  %6 = add i64 %1, %5
+  ret i64 %6
 }
 
 define i32 @load_breg_sext_shift_offreg_1(i32 %a, i64 %b) {
