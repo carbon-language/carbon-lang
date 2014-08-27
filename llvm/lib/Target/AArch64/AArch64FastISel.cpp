@@ -1419,7 +1419,7 @@ bool AArch64FastISel::EmitStore(MVT VT, unsigned SrcReg, Address Addr,
   }
 
   // Storing an i1 requires special handling.
-  if (VTIsi1) {
+  if (VTIsi1 && SrcReg != AArch64::WZR) {
     unsigned ANDReg = emitAND_ri(MVT::i32, SrcReg, /*TODO:IsKill=*/false, 1);
     assert(ANDReg && "Unexpected AND instruction emission failure.");
     SrcReg = ANDReg;
@@ -1436,7 +1436,7 @@ bool AArch64FastISel::EmitStore(MVT VT, unsigned SrcReg, Address Addr,
 
 bool AArch64FastISel::SelectStore(const Instruction *I) {
   MVT VT;
-  Value *Op0 = I->getOperand(0);
+  const Value *Op0 = I->getOperand(0);
   // Verify we have a legal type before going any further.  Currently, we handle
   // simple types that will directly fit in a register (i32/f32/i64/f64) or
   // those that can be sign or zero-extended to a basic operation (i1/i8/i16).
@@ -1444,9 +1444,23 @@ bool AArch64FastISel::SelectStore(const Instruction *I) {
       cast<StoreInst>(I)->isAtomic())
     return false;
 
-  // Get the value to be stored into a register.
-  unsigned SrcReg = getRegForValue(Op0);
-  if (SrcReg == 0)
+  // Get the value to be stored into a register. Use the zero register directly
+  // when possible to avoid an unnecessary copy and a wasted register at -O0.
+  unsigned SrcReg = 0;
+  if (const auto *CI = dyn_cast<ConstantInt>(Op0)) {
+    if (CI->isZero())
+      SrcReg = (VT == MVT::i64) ? AArch64::XZR : AArch64::WZR;
+  } else if (const auto *CF = dyn_cast<ConstantFP>(Op0)) {
+    if (CF->isZero() && !CF->isNegative()) {
+      VT = MVT::getIntegerVT(VT.getSizeInBits());
+      SrcReg = (VT == MVT::i64) ? AArch64::XZR : AArch64::WZR;
+    }
+  }
+
+  if (!SrcReg)
+    SrcReg = getRegForValue(Op0);
+
+  if (!SrcReg)
     return false;
 
   // See if we can handle this address.

@@ -66,8 +66,7 @@ entry:
 define void @t4(i32 *%ptr) nounwind {
 entry:
 ; CHECK-LABEL: t4:
-; CHECK: mov w8, wzr
-; CHECK: stur w8, [x0, #-4]
+; CHECK: stur wzr, [x0, #-4]
 ; CHECK: ret
   %0 = getelementptr i32 *%ptr, i32 -1
   store i32 0, i32* %0, align 4
@@ -77,8 +76,7 @@ entry:
 define void @t5(i32 *%ptr) nounwind {
 entry:
 ; CHECK-LABEL: t5:
-; CHECK: mov w8, wzr
-; CHECK: stur w8, [x0, #-256]
+; CHECK: stur wzr, [x0, #-256]
 ; CHECK: ret
   %0 = getelementptr i32 *%ptr, i32 -64
   store i32 0, i32* %0, align 4
