@@ -6762,6 +6762,7 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
   EVT VT = N->getValueType(0);
   SDLoc dl(N);
+  const TargetOptions *Options = &DAG.getTarget().Options;
 
   // fold vector ops
   if (VT.isVector()) {
@@ -6773,19 +6774,17 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
   if (N0CFP && N1CFP)
     return DAG.getNode(ISD::FSUB, SDLoc(N), VT, N0, N1);
   // fold (fsub A, 0) -> A
-  if (DAG.getTarget().Options.UnsafeFPMath &&
-      N1CFP && N1CFP->getValueAPF().isZero())
+  if (Options->UnsafeFPMath && N1CFP && N1CFP->getValueAPF().isZero())
     return N0;
   // fold (fsub 0, B) -> -B
-  if (DAG.getTarget().Options.UnsafeFPMath &&
-      N0CFP && N0CFP->getValueAPF().isZero()) {
-    if (isNegatibleForFree(N1, LegalOperations, TLI, &DAG.getTarget().Options))
+  if (Options->UnsafeFPMath && N0CFP && N0CFP->getValueAPF().isZero()) {
+    if (isNegatibleForFree(N1, LegalOperations, TLI, Options))
       return GetNegatedExpression(N1, DAG, LegalOperations);
     if (!LegalOperations || TLI.isOperationLegal(ISD::FNEG, VT))
       return DAG.getNode(ISD::FNEG, dl, VT, N1);
   }
   // fold (fsub A, (fneg B)) -> (fadd A, B)
-  if (isNegatibleForFree(N1, LegalOperations, TLI, &DAG.getTarget().Options))
+  if (isNegatibleForFree(N1, LegalOperations, TLI, Options))
     return DAG.getNode(ISD::FADD, dl, VT, N0,
                        GetNegatedExpression(N1, DAG, LegalOperations));
 
@@ -6793,7 +6792,7 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
   //    (fsub x, x) -> 0.0 &
   //    (fsub x, (fadd x, y)) -> (fneg y) &
   //    (fsub x, (fadd y, x)) -> (fneg y)
-  if (DAG.getTarget().Options.UnsafeFPMath) {
+  if (Options->UnsafeFPMath) {
     if (N0 == N1)
       return DAG.getConstantFP(0.0f, VT);
 
@@ -6801,21 +6800,17 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
       SDValue N10 = N1->getOperand(0);
       SDValue N11 = N1->getOperand(1);
 
-      if (N10 == N0 && isNegatibleForFree(N11, LegalOperations, TLI,
-                                          &DAG.getTarget().Options))
+      if (N10 == N0 && isNegatibleForFree(N11, LegalOperations, TLI, Options))
         return GetNegatedExpression(N11, DAG, LegalOperations);
 
-      if (N11 == N0 && isNegatibleForFree(N10, LegalOperations, TLI,
-                                          &DAG.getTarget().Options))
+      if (N11 == N0 && isNegatibleForFree(N10, LegalOperations, TLI, Options))
         return GetNegatedExpression(N10, DAG, LegalOperations);
     }
   }
 
   // FSUB -> FMA combines:
-  if ((DAG.getTarget().Options.AllowFPOpFusion == FPOpFusion::Fast ||
-       DAG.getTarget().Options.UnsafeFPMath) &&
-      DAG.getTarget()
-          .getSubtargetImpl()
+  if ((Options->AllowFPOpFusion == FPOpFusion::Fast || Options->UnsafeFPMath) &&
+      DAG.getTarget().getSubtargetImpl()
           ->getTargetLowering()
           ->isFMAFasterThanFMulAndFAdd(VT) &&
       (!LegalOperations || TLI.isOperationLegalOrCustom(ISD::FMA, VT))) {
