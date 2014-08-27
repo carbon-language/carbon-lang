@@ -869,7 +869,7 @@ VFSFromYAML *VFSFromYAML::create(std::unique_ptr<MemoryBuffer> Buffer,
                                  IntrusiveRefCntPtr<FileSystem> ExternalFS) {
 
   SourceMgr SM;
-  yaml::Stream Stream(std::move(Buffer), SM);
+  yaml::Stream Stream(Buffer->getMemBufferRef(), SM);
 
   SM.setDiagHandler(DiagHandler, DiagContext);
   yaml::document_iterator DI = Stream.begin();
