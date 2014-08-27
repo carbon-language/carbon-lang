@@ -1016,10 +1016,8 @@ void X86TargetLowering::resetOperationActions() {
     // scalars) and extend in-register to a legal 128-bit vector type. For sext
     // loads these must work with a single scalar load.
     setLoadExtAction(ISD::SEXTLOAD, MVT::v4i8, Custom);
-    if (Subtarget->is64Bit()) {
-      setLoadExtAction(ISD::SEXTLOAD, MVT::v4i16, Custom);
-      setLoadExtAction(ISD::SEXTLOAD, MVT::v8i8, Custom);
-    }
+    setLoadExtAction(ISD::SEXTLOAD, MVT::v4i16, Custom);
+    setLoadExtAction(ISD::SEXTLOAD, MVT::v8i8, Custom);
     setLoadExtAction(ISD::EXTLOAD, MVT::v2i8, Custom);
     setLoadExtAction(ISD::EXTLOAD, MVT::v2i16, Custom);
     setLoadExtAction(ISD::EXTLOAD, MVT::v2i32, Custom);

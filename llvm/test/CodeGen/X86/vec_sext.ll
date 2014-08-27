@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86-64
-; PR 9267
+; RUN: llc < %s -march=x86-64 -mattr=+avx | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+avx | FileCheck %s
 
 define<4 x i32> @func_16_32() {
   %F = load <4 x i16>* undef
@@ -67,3 +67,14 @@ define<4 x i64> @const_16_64() {
   ret <4 x i64> %G
 }
 
+define <4 x i32> @sextload(<4 x i16>* %ptr) {
+; From PR20767 - make sure that we correctly use SSE4.1 to do sign extension
+; loads for both 32-bit and 64-bit x86 targets.
+; CHECK-LABEL: sextload:
+; CHECK:         vpmovsxwd {{.*}}, %xmm0
+; CHECK-NEXT:    ret
+entry:
+  %l = load<4 x i16>* %ptr
+  %m = sext<4 x i16> %l to <4 x i32>
+  ret <4 x i32> %m
+}
