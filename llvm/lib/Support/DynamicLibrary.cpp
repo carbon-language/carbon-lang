@@ -56,8 +56,15 @@ static DenseSet<void *> *OpenedHandles = nullptr;
 DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
                                                    std::string *errMsg) {
   SmartScopedLock<true> lock(*SymbolsMutex);
-
-  void *handle = dlopen(filename, RTLD_LAZY|RTLD_GLOBAL);
+  int flags = RTLD_LAZY | RTLD_GLOBAL;
+#if defined(__APPLE__)
+  // RTLD_FIRST is an apple specific flag which causes dlsym() to search only
+  // the module specified in |filename|, and not dependent modules.  This
+  // behavior would be desirable for other platforms as well, except that
+  // there's not a good way to implement it.
+  flags |= RTLD_FIRST;
+#endif
+  void *handle = dlopen(filename, flags);
   if (!handle) {
     if (errMsg) *errMsg = dlerror();
     return DynamicLibrary();
