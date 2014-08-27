@@ -956,7 +956,7 @@ void X86TargetLowering::resetOperationActions() {
   if (!TM.Options.UseSoftFloat && Subtarget->hasSSE2()) {
     addRegisterClass(MVT::v2f64, &X86::VR128RegClass);
 
-    // FIXME: Unfortunately -soft-float and -no-implicit-float means XMM
+    // FIXME: Unfortunately, -soft-float and -no-implicit-float mean XMM
     // registers cannot be used even for integer operations.
     addRegisterClass(MVT::v16i8, &X86::VR128RegClass);
     addRegisterClass(MVT::v8i16, &X86::VR128RegClass);
