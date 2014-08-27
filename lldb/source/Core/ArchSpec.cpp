@@ -116,7 +116,10 @@ static const CoreDefinition g_core_definitions[] =
     { eByteOrderLittle, 4, 4, 4 , llvm::Triple::UnknownArch , ArchSpec::eCore_uknownMach32  , "unknown-mach-32" },
     { eByteOrderLittle, 8, 4, 4 , llvm::Triple::UnknownArch , ArchSpec::eCore_uknownMach64  , "unknown-mach-64" },
 
-    { eByteOrderLittle, 4, 1, 1 , llvm::Triple::kalimba , ArchSpec::eCore_kalimba  , "kalimba" }
+    { eByteOrderLittle, 4, 1, 1 , llvm::Triple::kalimba , ArchSpec::eCore_kalimba  , "kalimba" },
+    { eByteOrderBig   , 4, 1, 1 , llvm::Triple::kalimba , ArchSpec::eCore_kalimba3  , "kalimba3" },
+    { eByteOrderLittle, 4, 1, 1 , llvm::Triple::kalimba , ArchSpec::eCore_kalimba4  , "kalimba4" },
+    { eByteOrderLittle, 4, 1, 1 , llvm::Triple::kalimba , ArchSpec::eCore_kalimba5  , "kalimba5" }
 };
 
 // Ensure that we have an entry in the g_core_definitions for each core. If you comment out an entry above,
@@ -258,7 +261,10 @@ static const ArchDefinitionEntry g_elf_arch_entries[] =
     { ArchSpec::eCore_x86_64_x86_64   , llvm::ELF::EM_X86_64 , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // AMD64
     { ArchSpec::eCore_mips64          , llvm::ELF::EM_MIPS   , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // MIPS
     { ArchSpec::eCore_hexagon_generic , llvm::ELF::EM_HEXAGON, LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // HEXAGON
-    { ArchSpec::eCore_kalimba ,         llvm::ELF::EM_CSR_KALIMBA, LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }  // KALIMBA
+    { ArchSpec::eCore_kalimba ,         llvm::ELF::EM_CSR_KALIMBA, LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu },  // KALIMBA
+    { ArchSpec::eCore_kalimba3 ,        llvm::ELF::EM_CSR_KALIMBA, 3, 0xFFFFFFFFu, 0xFFFFFFFFu },  // KALIMBA
+    { ArchSpec::eCore_kalimba4 ,        llvm::ELF::EM_CSR_KALIMBA, 4, 0xFFFFFFFFu, 0xFFFFFFFFu },  // KALIMBA
+    { ArchSpec::eCore_kalimba5 ,        llvm::ELF::EM_CSR_KALIMBA, 5, 0xFFFFFFFFu, 0xFFFFFFFFu }  // KALIMBA
 
 };
 
@@ -990,6 +996,16 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
             try_inverse = false;
             if (core2 == ArchSpec::eCore_x86_64_x86_64)
                 return true;
+        }
+        break;
+
+    case ArchSpec::eCore_kalimba:
+    case ArchSpec::eCore_kalimba3:
+    case ArchSpec::eCore_kalimba4:
+    case ArchSpec::eCore_kalimba5:
+        if (core2 >= ArchSpec::kCore_kalimba_first && core2 <= ArchSpec::kCore_kalimba_last)
+        {
+            return true;
         }
         break;
 

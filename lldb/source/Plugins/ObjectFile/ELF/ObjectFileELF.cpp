@@ -258,6 +258,35 @@ ELFNote::Parse(const DataExtractor &data, lldb::offset_t *offset)
     return true;
 }
 
+static uint32_t
+kalimbaVariantFromElfFlags(const elf::elf_word e_flags)
+{
+    const uint32_t dsp_rev = e_flags & 0xFF;
+    uint32_t kal_arch_variant = LLDB_INVALID_CPUTYPE;
+    switch(dsp_rev)
+    {
+        // TODO(mg11) Support more variants
+        case 10:
+            kal_arch_variant = 3;
+            break;
+        case 14:
+            kal_arch_variant = 4;
+            break;
+        default:
+            break;           
+    }
+    return kal_arch_variant;
+}
+
+static uint32_t
+subTypeFromElfHeader(const elf::ELFHeader& header)
+{
+    return
+        llvm::ELF::EM_CSR_KALIMBA == header.e_machine ?
+        kalimbaVariantFromElfFlags(header.e_flags) :
+        LLDB_INVALID_CPUTYPE;
+}
+
 // Arbitrary constant used as UUID prefix for core files.
 const uint32_t
 ObjectFileELF::g_core_uuid_magic(0xE210C);
@@ -545,9 +574,12 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
             {
                 ModuleSpec spec;
                 spec.GetFileSpec() = file;
+
+                const uint32_t sub_type = subTypeFromElfHeader(header);
                 spec.GetArchitecture().SetArchitecture(eArchTypeELF,
                                                        header.e_machine,
-                                                       LLDB_INVALID_CPUTYPE);
+                                                       sub_type);
+
                 if (spec.GetArchitecture().IsValid())
                 {
                     llvm::Triple::OSType ostype;
@@ -1270,7 +1302,9 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
     // We'll refine this with note data as we parse the notes.
     if (arch_spec.GetTriple ().getOS () == llvm::Triple::OSType::UnknownOS)
     {
-        arch_spec.SetArchitecture (eArchTypeELF, header.e_machine, LLDB_INVALID_CPUTYPE);
+        const uint32_t sub_type = subTypeFromElfHeader(header);
+        arch_spec.SetArchitecture (eArchTypeELF, header.e_machine, sub_type);
+
         switch (arch_spec.GetAddressByteSize())
         {
         case 4:
