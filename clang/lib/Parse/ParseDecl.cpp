@@ -5438,8 +5438,7 @@ void Parser::ParseParameterDeclarationClause(
 
       // Inform the actions module about the parameter declarator, so it gets
       // added to the current scope.
-      Decl *Param = Actions.ActOnParamDeclarator(getCurScope(), 
-                                                       ParmDeclarator);
+      Decl *Param = Actions.ActOnParamDeclarator(getCurScope(), ParmDeclarator);
       // Parse the default argument, if any. We parse the default
       // arguments in all dialects; the semantic analysis in
       // ActOnParamDefaultArgument will reject the default argument in

@@ -540,11 +540,13 @@ void Parser::ParseLexedMemberInitializer(LateParsedMemberInitializer &MI) {
 
   // The next token should be our artificial terminating EOF token.
   if (Tok.isNot(tok::eof)) {
-    SourceLocation EndLoc = PP.getLocForEndOfToken(PrevTokLocation);
-    if (!EndLoc.isValid())
-      EndLoc = Tok.getLocation();
-    // No fixit; we can't recover as if there were a semicolon here.
-    Diag(EndLoc, diag::err_expected_semi_decl_list);
+    if (!Init.isInvalid()) {
+      SourceLocation EndLoc = PP.getLocForEndOfToken(PrevTokLocation);
+      if (!EndLoc.isValid())
+        EndLoc = Tok.getLocation();
+      // No fixit; we can't recover as if there were a semicolon here.
+      Diag(EndLoc, diag::err_expected_semi_decl_list);
+    }
 
     // Consume tokens until we hit the artificial EOF.
     while (Tok.isNot(tok::eof))
@@ -891,11 +893,13 @@ private:
 /// ConsumeAndStoreInitializer - Consume and store the token at the passed token
 /// container until the end of the current initializer expression (either a
 /// default argument or an in-class initializer for a non-static data member).
-/// The final token is not consumed.
+///
+/// Returns \c true if we reached the end of something initializer-shaped,
+/// \c false if we bailed out.
 bool Parser::ConsumeAndStoreInitializer(CachedTokens &Toks,
                                         CachedInitKind CIK) {
   // We always want this function to consume at least one token if not at EOF.
-  bool IsFirstTokenConsumed = true;
+  bool IsFirstToken = true;
 
   // Number of possible unclosed <s we've seen so far. These might be templates,
   // and might not, but if there were none of them (or we know for sure that
@@ -1064,21 +1068,28 @@ bool Parser::ConsumeAndStoreInitializer(CachedTokens &Toks,
     // Since the user wasn't looking for this token (if they were, it would
     // already be handled), this isn't balanced.  If there is a LHS token at a
     // higher level, we will assume that this matches the unbalanced token
-    // and return it.  Otherwise, this is a spurious RHS token, which we skip.
+    // and return it.  Otherwise, this is a spurious RHS token, which we
+    // consume and pass on to downstream code to diagnose.
     case tok::r_paren:
       if (CIK == CIK_DefaultArgument)
         return true; // End of the default argument.
-      if (ParenCount && !IsFirstTokenConsumed)
-        return false;  // Matches something.
-      goto consume_token;
+      if (ParenCount && !IsFirstToken)
+        return false;
+      Toks.push_back(Tok);
+      ConsumeParen();
+      continue;
     case tok::r_square:
-      if (BracketCount && !IsFirstTokenConsumed)
-        return false;  // Matches something.
-      goto consume_token;
+      if (BracketCount && !IsFirstToken)
+        return false;
+      Toks.push_back(Tok);
+      ConsumeBracket();
+      continue;
     case tok::r_brace:
-      if (BraceCount && !IsFirstTokenConsumed)
-        return false;  // Matches something.
-      goto consume_token;
+      if (BraceCount && !IsFirstToken)
+        return false;
+      Toks.push_back(Tok);
+      ConsumeBrace();
+      continue;
 
     case tok::code_completion:
       Toks.push_back(Tok);
@@ -1103,6 +1114,6 @@ bool Parser::ConsumeAndStoreInitializer(CachedTokens &Toks,
       ConsumeToken();
       break;
     }
-    IsFirstTokenConsumed = false;
+    IsFirstToken = false;
   }
 }
