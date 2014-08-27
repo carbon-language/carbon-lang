@@ -206,7 +206,12 @@ option(COMPILER_RT_DEBUG "Build runtimes with full debug info" OFF)
 # COMPILER_RT_DEBUG_PYBOOL is used by lit.common.configured.in.
 pythonize_bool(COMPILER_RT_DEBUG)
 
+# We have to support both static and dynamic/shared runtime on Windows.
+if(WIN32)
+option(COMPILER_RT_BUILD_SHARED_ASAN "Build shared version of AddressSanitizer runtime" ON)
+else()
 option(COMPILER_RT_BUILD_SHARED_ASAN "Build shared version of AddressSanitizer runtime" OFF)
+endif()
 
 #================================
 # Setup Compiler Flags
