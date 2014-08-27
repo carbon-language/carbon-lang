@@ -8211,7 +8211,7 @@ namespace {
     void HandleValue(Expr *E) {
       if (isReferenceType)
         return;
-      E = E->IgnoreParenImpCasts();
+      E = E->IgnoreParens();
       if (DeclRefExpr* DRE = dyn_cast<DeclRefExpr>(E)) {
         HandleDeclRefExpr(DRE);
         return;
@@ -8220,6 +8220,23 @@ namespace {
       if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E)) {
         HandleValue(CO->getTrueExpr());
         HandleValue(CO->getFalseExpr());
+        return;
+      }
+
+      if (BinaryConditionalOperator *BCO =
+              dyn_cast<BinaryConditionalOperator>(E)) {
+        HandleValue(BCO->getFalseExpr());
+        return;
+      }
+
+      if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(E)) {
+        HandleValue(OVE->getSourceExpr());
+        return;
+      }
+
+      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
+        if (BO->getOpcode() == BO_Comma)
+          HandleValue(BO->getRHS());
         return;
       }
 
@@ -8313,9 +8330,7 @@ namespace {
       if (E->getNumArgs() == 1) {
         if (FunctionDecl *FD = E->getDirectCallee()) {
           if (FD->getIdentifier() && FD->getIdentifier()->isStr("move")) {
-            if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E->getArg(0))) {
-              HandleDeclRefExpr(DRE);
-            }
+            HandleValue(E->getArg(0));
           }
         }
       }

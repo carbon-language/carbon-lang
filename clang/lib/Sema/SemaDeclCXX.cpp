@@ -2279,8 +2279,12 @@ namespace {
 
       if (BinaryConditionalOperator *BCO =
               dyn_cast<BinaryConditionalOperator>(E)) {
-        HandleValue(BCO->getCommon());
         HandleValue(BCO->getFalseExpr());
+        return;
+      }
+
+      if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(E)) {
+        HandleValue(OVE->getSourceExpr());
         return;
       }
 
@@ -2342,9 +2346,7 @@ namespace {
       if (E->getNumArgs() == 1) {
         if (FunctionDecl *FD = E->getDirectCallee()) {
           if (FD->getIdentifier() && FD->getIdentifier()->isStr("move")) {
-            if (MemberExpr *ME = dyn_cast<MemberExpr>(E->getArg(0))) {
-              HandleMemberExpr(ME, false /*CheckReferenceOnly*/);
-            }
+            HandleValue(E->getArg(0));
           }
         }
       }
