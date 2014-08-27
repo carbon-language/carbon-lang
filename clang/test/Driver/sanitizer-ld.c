@@ -23,9 +23,9 @@
 //
 // CHECK-SHARED-ASAN-LINUX: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-SHARED-ASAN-LINUX-NOT: "-lc"
-// CHECK-SHARED-ASAN-LINUX-NOT: libclang_rt.asan_dynamic-i386.a"
+// CHECK-SHARED-ASAN-LINUX-NOT: libclang_rt.asan-i386.a"
 // CHECK-SHARED-ASAN-LINUX: "-whole-archive" "{{.*}}libclang_rt.asan-preinit-i386.a" "-no-whole-archive"
-// CHECK-SHARED-ASAN-LINUX: libclang_rt.asan_dynamic-i386.so"
+// CHECK-SHARED-ASAN-LINUX: libclang_rt.asan-i386.so"
 // CHECK-SHARED-ASAN-LINUX-NOT: "-lpthread"
 // CHECK-SHARED-ASAN-LINUX-NOT: "-lrt"
 // CHECK-SHARED-ASAN-LINUX-NOT: "-ldl"
@@ -40,9 +40,9 @@
 //
 // CHECK-DSO-SHARED-ASAN-LINUX: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-DSO-SHARED-ASAN-LINUX-NOT: "-lc"
-// CHECK-DSO-SHARED-ASAN-LINUX-NOT: libclang_rt.asan_dynamic-i386.a"
+// CHECK-DSO-SHARED-ASAN-LINUX-NOT: libclang_rt.asan-i386.a"
 // CHECK-DSO-SHARED-ASAN-LINUX-NOT: "libclang_rt.asan-preinit-i386.a"
-// CHECK-DSO-SHARED-ASAN-LINUX: libclang_rt.asan_dynamic-i386.so"
+// CHECK-DSO-SHARED-ASAN-LINUX: libclang_rt.asan-i386.so"
 // CHECK-DSO-SHARED-ASAN-LINUX-NOT: "-lpthread"
 // CHECK-DSO-SHARED-ASAN-LINUX-NOT: "-lrt"
 // CHECK-DSO-SHARED-ASAN-LINUX-NOT: "-ldl"
@@ -126,7 +126,7 @@
 //
 // CHECK-ASAN-ANDROID: "{{(.*[^.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-ASAN-ANDROID-NOT: "-lc"
-// CHECK-ASAN-ANDROID: libclang_rt.asan_dynamic-arm-android.so"
+// CHECK-ASAN-ANDROID: libclang_rt.asan-arm-android.so"
 // CHECK-ASAN-ANDROID-NOT: "-lpthread"
 // CHECK-ASAN-ANDROID: "-pie"
 // CHECK-ASAN-ANDROID-NOT: "-lpthread"
@@ -147,7 +147,7 @@
 //
 // CHECK-ASAN-ANDROID-SHARED: "{{(.*[^.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-ASAN-ANDROID-SHARED-NOT: "-lc"
-// CHECK-ASAN-ANDROID-SHARED: libclang_rt.asan_dynamic-arm-android.so"
+// CHECK-ASAN-ANDROID-SHARED: libclang_rt.asan-arm-android.so"
 // CHECK-ASAN-ANDROID-SHARED-NOT: "-lpthread"
 
 // RUN: %clangxx -no-canonical-prefixes %s -### -o %t.o 2>&1 \

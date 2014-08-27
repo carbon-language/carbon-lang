@@ -2198,8 +2198,7 @@ static void addAsanRT(const ToolChain &TC, const ArgList &Args,
                       ArgStringList &CmdArgs, bool Shared, bool IsCXX) {
   if (Shared) {
     // Link dynamic runtime if necessary.
-    SmallString<128> LibSanitizer =
-        getSanitizerRTLibName(TC, "asan_dynamic", Shared);
+    SmallString<128> LibSanitizer = getSanitizerRTLibName(TC, "asan", Shared);
     CmdArgs.insert(CmdArgs.begin(), Args.MakeArgString(LibSanitizer));
   }
 
