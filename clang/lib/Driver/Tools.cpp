@@ -3714,6 +3714,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString("-mstack-alignment=" + alignment));
   }
 
+  if (getToolChain().getTriple().getArch() == llvm::Triple::aarch64 ||
+      getToolChain().getTriple().getArch() == llvm::Triple::aarch64_be)
+    CmdArgs.push_back("-fallow-half-arguments-and-returns");
+
   if (Arg *A = Args.getLastArg(options::OPT_mrestrict_it,
                                options::OPT_mno_restrict_it)) {
     if (A->getOption().matches(options::OPT_mrestrict_it)) {

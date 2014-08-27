@@ -511,6 +511,8 @@ def vtordisp_mode_EQ : Joined<["-"], "vtordisp-mode=">,
   HelpText<"Control vtordisp placement on win32 targets">;
 def fno_rtti_data : Flag<["-"], "fno-rtti-data">,
   HelpText<"Control emission of RTTI data">;
+def fallow_half_arguments_and_returns : Flag<["-"], "fallow-half-arguments-and-returns">,
+  HelpText<"Allow function arguments and returns of type half">;
 
 //===----------------------------------------------------------------------===//
 // Header Search Options

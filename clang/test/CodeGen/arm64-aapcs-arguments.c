@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple arm64-linux-gnu -target-feature +neon -target-abi aapcs -ffreestanding -emit-llvm -w -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple aarch64-linux-gnu -target-feature +neon -target-abi aapcs -ffreestanding -fallow-half-arguments-and-returns -emit-llvm -w -o - %s | FileCheck %s
 
 // AAPCS clause C.8 says: If the argument has an alignment of 16 then the NGRN
 // is rounded up to the next even number.
@@ -40,3 +40,12 @@ void test4(BigHFA v0_v2, BigHFA v3_v5, BigHFA sp, double sp48, BigHFA sp64) {
 // CHECK: define i8 @test5(i8 %a, i16 %b)
 unsigned char test5(unsigned char a, signed short b) {
 }
+
+// __fp16 can be used as a function argument or return type (ACLE 2.0)
+// CHECK: define half @test_half(half %{{.*}})
+__fp16 test_half(__fp16 A) { }
+
+// __fp16 is a base type for homogeneous floating-point aggregates for AArch64 (but not 32-bit ARM).
+// CHECK: define %struct.HFA_half @test_half_hfa(half %{{.*}}, half %{{.*}}, half %{{.*}}, half %{{.*}})
+struct HFA_half { __fp16 a[4]; };
+struct HFA_half test_half_hfa(struct HFA_half A) { }

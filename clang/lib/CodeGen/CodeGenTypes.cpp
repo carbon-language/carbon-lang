@@ -358,9 +358,10 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
 
     case BuiltinType::Half:
       // Half FP can either be storage-only (lowered to i16) or native.
-      ResultType = getTypeForFormat(getLLVMContext(),
-          Context.getFloatTypeSemantics(T),
-          Context.getLangOpts().NativeHalfType);
+      ResultType =
+          getTypeForFormat(getLLVMContext(), Context.getFloatTypeSemantics(T),
+                           Context.getLangOpts().NativeHalfType ||
+                               Context.getLangOpts().HalfArgsAndReturns);
       break;
     case BuiltinType::Float:
     case BuiltinType::Double:
