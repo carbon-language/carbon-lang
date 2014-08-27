@@ -157,6 +157,13 @@ public:
   /// @name Supported Modes
   /// @{
 
+  /// \brief Is this action invoked on a model file? 
+  ///
+  /// Model files are incomplete translation units that relies on type
+  /// information from another translation unit. Check ParseModelFileAction for
+  /// details.
+  virtual bool isModelParsingAction() const { return false; }
+
   /// \brief Does this action only use the preprocessor?
   ///
   /// If so no AST context will be created and this action will be invalid
@@ -224,6 +231,7 @@ protected:
   void ExecuteAction() override;
 
 public:
+  ASTFrontendAction() {}
   bool usesPreprocessorOnly() const override { return false; }
 };
 

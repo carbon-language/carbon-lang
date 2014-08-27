@@ -23,6 +23,8 @@
 
 namespace clang {
 
+class CodeInjector;
+
 namespace ento {
   class CheckerManager;
 
@@ -50,7 +52,8 @@ public:
                   StoreManagerCreator storemgr,
                   ConstraintManagerCreator constraintmgr, 
                   CheckerManager *checkerMgr,
-                  AnalyzerOptions &Options);
+                  AnalyzerOptions &Options,
+                  CodeInjector* injector = nullptr);
 
   ~AnalysisManager();
   

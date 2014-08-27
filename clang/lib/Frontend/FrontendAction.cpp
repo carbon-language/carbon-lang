@@ -287,8 +287,10 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     }
   }
 
-  // Set up the preprocessor.
-  CI.createPreprocessor(getTranslationUnitKind());
+  // Set up the preprocessor if needed. When parsing model files the
+  // preprocessor of the original source is reused.
+  if (!isModelParsingAction())
+    CI.createPreprocessor(getTranslationUnitKind());
 
   // Inform the diagnostic client we are processing a source file.
   CI.getDiagnosticClient().BeginSourceFile(CI.getLangOpts(),
@@ -307,14 +309,18 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   // Create the AST context and consumer unless this is a preprocessor only
   // action.
   if (!usesPreprocessorOnly()) {
-    CI.createASTContext();
+    // Parsing a model file should reuse the existing ASTContext.
+    if (!isModelParsingAction())
+      CI.createASTContext();
 
     std::unique_ptr<ASTConsumer> Consumer =
         CreateWrappedASTConsumer(CI, InputFile);
     if (!Consumer)
       goto failure;
 
-    CI.getASTContext().setASTMutationListener(Consumer->GetASTMutationListener());
+    // FIXME: should not overwrite ASTMutationListener when parsing model files?
+    if (!isModelParsingAction())
+      CI.getASTContext().setASTMutationListener(Consumer->GetASTMutationListener());
     
     if (!CI.getPreprocessorOpts().ChainedIncludes.empty()) {
       // Convert headers to PCH and chain them.

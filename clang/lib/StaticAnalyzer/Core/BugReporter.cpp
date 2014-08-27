@@ -3247,15 +3247,15 @@ void BugReporter::emitReport(BugReport* R) {
   // To guarantee memory release.
   std::unique_ptr<BugReport> UniqueR(R);
 
-  // Defensive checking: throw the bug away if it comes from a BodyFarm-
-  // generated body. We do this very early because report processing relies
-  // on the report's location being valid.
-  // FIXME: Valid bugs can occur in BodyFarm-generated bodies, so really we
-  // need to just find a reasonable location like we do later on with the path
-  // pieces.
   if (const ExplodedNode *E = R->getErrorNode()) {
-    const LocationContext *LCtx = E->getLocationContext();
-    if (LCtx->getAnalysisDeclContext()->isBodyAutosynthesized())
+    const AnalysisDeclContext *DeclCtx =
+        E->getLocationContext()->getAnalysisDeclContext();
+    // The source of autosynthesized body can be handcrafted AST or a model
+    // file. The locations from handcrafted ASTs have no valid source locations
+    // and have to be discarded. Locations from model files should be preserved
+    // for processing and reporting.
+    if (DeclCtx->isBodyAutosynthesized() &&
+        !DeclCtx->isBodyAutosynthesizedFromModelFile())
       return;
   }
   

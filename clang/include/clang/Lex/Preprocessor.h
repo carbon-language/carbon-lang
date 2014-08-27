@@ -194,6 +194,10 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// with this preprocessor.
   PragmaNamespace *PragmaHandlers;
 
+  /// \brief Pragma handlers of the original source is stored here during the
+  /// parsing of a model file.
+  PragmaNamespace *PragmaHandlersBackup;
+
   /// \brief Tracks all of the comment handlers that the client registered
   /// with this preprocessor.
   std::vector<CommentHandler *> CommentHandlers;
@@ -463,6 +467,17 @@ public:
   /// \param Target is owned by the caller and must remain valid for the
   /// lifetime of the preprocessor.
   void Initialize(const TargetInfo &Target);
+
+  /// \brief Initialize the preprocessor to parse a model file
+  ///
+  /// To parse model files the preprocessor of the original source is reused to
+  /// preserver the identifier table. However to avoid some duplicate
+  /// information in the preprocessor some cleanup is needed before it is used
+  /// to parse model files. This method does that cleanup.
+  void InitializeForModelFile();
+
+  /// \brief Cleanup after model file parsing
+  void FinalizeForModelFile();
 
   /// \brief Retrieve the preprocessor options used to initialize this
   /// preprocessor.

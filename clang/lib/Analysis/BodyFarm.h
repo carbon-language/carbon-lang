@@ -27,10 +27,11 @@ class FunctionDecl;
 class ObjCMethodDecl;
 class ObjCPropertyDecl;
 class Stmt;
+class CodeInjector;
   
 class BodyFarm {
 public:
-  BodyFarm(ASTContext &C) : C(C) {}
+  BodyFarm(ASTContext &C, CodeInjector *injector) : C(C), Injector(injector) {}
   
   /// Factory method for creating bodies for ordinary functions.
   Stmt *getBody(const FunctionDecl *D);
@@ -43,6 +44,7 @@ private:
 
   ASTContext &C;
   BodyMap Bodies;
+  CodeInjector *Injector;
 };
 }
 

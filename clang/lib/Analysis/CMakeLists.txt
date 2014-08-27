@@ -11,6 +11,7 @@ add_clang_library(clangAnalysis
   CallGraph.cpp
   CocoaConventions.cpp
   Consumed.cpp
+  CodeInjector.cpp
   Dominators.cpp
   DataflowWorklist.cpp
   FormatString.cpp

@@ -18,6 +18,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ParentMap.h"
+#include "clang/Analysis/CodeInjector.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/CallGraph.h"
@@ -33,6 +34,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Frontend/CheckerRegistration.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -42,6 +44,7 @@
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "ModelInjector.h"
 #include <memory>
 #include <queue>
 
@@ -157,6 +160,7 @@ public:
   const std::string OutDir;
   AnalyzerOptionsRef Opts;
   ArrayRef<std::string> Plugins;
+  CodeInjector *Injector;
 
   /// \brief Stores the declarations from the local translation unit.
   /// Note, we pre-compute the local declarations at parse time as an
@@ -184,9 +188,10 @@ public:
   AnalysisConsumer(const Preprocessor& pp,
                    const std::string& outdir,
                    AnalyzerOptionsRef opts,
-                   ArrayRef<std::string> plugins)
-    : RecVisitorMode(0), RecVisitorBR(nullptr),
-      Ctx(nullptr), PP(pp), OutDir(outdir), Opts(opts), Plugins(plugins) {
+                   ArrayRef<std::string> plugins,
+                   CodeInjector *injector)
+    : RecVisitorMode(0), RecVisitorBR(nullptr), Ctx(nullptr), PP(pp),
+      OutDir(outdir), Opts(opts), Plugins(plugins), Injector(injector) {
     DigestAnalyzerOptions();
     if (Opts->PrintStats) {
       llvm::EnableStatistics();
@@ -286,6 +291,7 @@ public:
     Ctx = &Context;
     checkerMgr.reset(createCheckerManager(*Opts, PP.getLangOpts(), Plugins,
                                           PP.getDiagnostics()));
+
     Mgr.reset(new AnalysisManager(*Ctx,
                                   PP.getDiagnostics(),
                                   PP.getLangOpts(),
@@ -293,7 +299,8 @@ public:
                                   CreateStoreMgr,
                                   CreateConstraintMgr,
                                   checkerMgr.get(),
-                                  *Opts));
+                                  *Opts,
+                                  Injector));
   }
 
   /// \brief Store the top level decls in the set to be processed later on.
@@ -688,13 +695,17 @@ void AnalysisConsumer::RunPathSensitiveChecks(Decl *D,
 //===----------------------------------------------------------------------===//
 
 std::unique_ptr<AnalysisASTConsumer>
-ento::CreateAnalysisConsumer(const Preprocessor &pp, const std::string &outDir,
-                             AnalyzerOptionsRef opts,
-                             ArrayRef<std::string> plugins) {
+ento::CreateAnalysisConsumer(CompilerInstance &CI) {
   // Disable the effects of '-Werror' when using the AnalysisConsumer.
-  pp.getDiagnostics().setWarningsAsErrors(false);
+  CI.getPreprocessor().getDiagnostics().setWarningsAsErrors(false);
 
-  return llvm::make_unique<AnalysisConsumer>(pp, outDir, opts, plugins);
+  AnalyzerOptionsRef analyzerOpts = CI.getAnalyzerOpts();
+  bool hasModelPath = analyzerOpts->Config.count("model-path") > 0;
+
+  return llvm::make_unique<AnalysisConsumer>(
+      CI.getPreprocessor(), CI.getFrontendOpts().OutputFile, analyzerOpts,
+      CI.getFrontendOpts().Plugins,
+      hasModelPath ? new ModelInjector(CI) : nullptr);
 }
 
 //===----------------------------------------------------------------------===//

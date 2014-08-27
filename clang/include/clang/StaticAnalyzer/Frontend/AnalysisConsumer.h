@@ -25,6 +25,8 @@ namespace clang {
 
 class Preprocessor;
 class DiagnosticsEngine;
+class CodeInjector;
+class CompilerInstance;
 
 namespace ento {
 class CheckerManager;
@@ -38,8 +40,7 @@ public:
 /// analysis passes.  (The set of analyses run is controlled by command-line
 /// options.)
 std::unique_ptr<AnalysisASTConsumer>
-CreateAnalysisConsumer(const Preprocessor &pp, const std::string &output,
-                       AnalyzerOptionsRef opts, ArrayRef<std::string> plugins);
+CreateAnalysisConsumer(CompilerInstance &CI);
 
 } // end GR namespace
 

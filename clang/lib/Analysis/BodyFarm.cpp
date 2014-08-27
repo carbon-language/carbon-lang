@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BodyFarm.h"
+#include "clang/Analysis/CodeInjector.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
@@ -381,6 +382,7 @@ Stmt *BodyFarm::getBody(const FunctionDecl *D) {
   }
   
   if (FF) { Val = FF(C, D); }
+  else if (Injector) { Val = Injector->getBody(D); }
   return Val.getValue();
 }
 

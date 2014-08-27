@@ -187,6 +187,25 @@ void Preprocessor::Initialize(const TargetInfo &Target) {
   HeaderInfo.setTarget(Target);
 }
 
+void Preprocessor::InitializeForModelFile() {
+  NumEnteredSourceFiles = 0;
+
+  // Reset pragmas
+  PragmaHandlersBackup = PragmaHandlers;
+  PragmaHandlers = new PragmaNamespace(StringRef());
+  RegisterBuiltinPragmas();
+
+  // Reset PredefinesFileID
+  PredefinesFileID = FileID();
+}
+
+void Preprocessor::FinalizeForModelFile() {
+  NumEnteredSourceFiles = 1;
+
+  delete PragmaHandlers;
+  PragmaHandlers = PragmaHandlersBackup;
+}
+
 void Preprocessor::setPTHManager(PTHManager* pm) {
   PTH.reset(pm);
   FileMgr.addStatCache(PTH->createStatCache());
