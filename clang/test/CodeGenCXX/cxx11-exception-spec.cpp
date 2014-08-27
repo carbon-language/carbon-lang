@@ -122,3 +122,8 @@ void j() {
 
 // CHECK: attributes [[NONE]] = { {{.*}} }
 // CHECK: attributes [[NUW]] = { nounwind{{.*}} }
+
+namespace PR19190 {
+template <class T> struct DWFIterator { virtual void get() throw(int) = 0; };
+void foo(DWFIterator<int> *foo) { foo->get(); }
+}
