@@ -241,9 +241,7 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
     AnalyzerOptions->AnalyzeNestedBlocks = true;
     AnalyzerOptions->eagerlyAssumeBinOpBifurcation = true;
     std::unique_ptr<ento::AnalysisASTConsumer> AnalysisConsumer =
-        ento::CreateAnalysisConsumer(
-            Compiler.getPreprocessor(), Compiler.getFrontendOpts().OutputFile,
-            AnalyzerOptions, Compiler.getFrontendOpts().Plugins);
+        ento::CreateAnalysisConsumer(Compiler);
     AnalysisConsumer->AddDiagnosticConsumer(
         new AnalyzerDiagnosticConsumer(Context));
     Consumers.push_back(std::move(AnalysisConsumer));
