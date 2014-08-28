@@ -9,69 +9,49 @@ HEADER: ExceptionTableRVA: 0x1000
 
 UNWIND: Function Table:
 UNWIND:   Start Address: 0x2000
-UNWIND:   End Address: 0x2000
-UNWIND:   Unwind Info Address: 0x3000
-UNWIND:   Version: 1
-UNWIND:   Flags: 1 UNW_ExceptionHandler
-UNWIND:   Size of prolog: 18
-UNWIND:   Number of Codes: 8
-UNWIND:   Frame register: RBX
-UNWIND:   Frame offset: 0
-UNWIND:   Unwind Codes:
-UNWIND:     0x12: UOP_SetFPReg
-UNWIND:     0x0f: UOP_PushNonVol RBX
-UNWIND:     0x0e: UOP_SaveXMM128 XMM8 [0x0000]
-UNWIND:     0x09: UOP_SaveNonVol RSI [0x0010]
-UNWIND:     0x04: UOP_AllocSmall 24
-UNWIND:     0x00: UOP_PushMachFrame w/o error code
-UNWIND: Function Table:
-UNWIND:   Start Address: 0x2000
-UNWIND:   End Address: 0x2000
-UNWIND:   Unwind Info Address: 0x3000
-UNWIND:   Version: 1
-UNWIND:   Flags: 1 UNW_ExceptionHandler
-UNWIND:   Size of prolog: 18
-UNWIND:   Number of Codes: 8
-UNWIND:   Frame register: RBX
-UNWIND:   Frame offset: 0
-UNWIND:   Unwind Codes:
-UNWIND:     0x12: UOP_SetFPReg
-UNWIND:     0x0f: UOP_PushNonVol RBX
-UNWIND:     0x0e: UOP_SaveXMM128 XMM8 [0x0000]
-UNWIND:     0x09: UOP_SaveNonVol RSI [0x0010]
-UNWIND:     0x04: UOP_AllocSmall 24
-UNWIND:     0x00: UOP_PushMachFrame w/o error code
-UNWIND: Function Table:
-UNWIND:   Start Address: 0x201b
 UNWIND:   End Address: 0x201b
 UNWIND:   Unwind Info Address: 0x3000
-UNWIND:   Version: 1
-UNWIND:   Flags: 1 UNW_ExceptionHandler
-UNWIND:   Size of prolog: 18
-UNWIND:   Number of Codes: 8
-UNWIND:   Frame register: RBX
-UNWIND:   Frame offset: 0
-UNWIND:   Unwind Codes:
-UNWIND:     0x12: UOP_SetFPReg
-UNWIND:     0x0f: UOP_PushNonVol RBX
-UNWIND:     0x0e: UOP_SaveXMM128 XMM8 [0x0000]
-UNWIND:     0x09: UOP_SaveNonVol RSI [0x0010]
-UNWIND:     0x04: UOP_AllocSmall 24
-UNWIND:     0x00: UOP_PushMachFrame w/o error code
+UNWIND:     Version: 1
+UNWIND:     Flags: 1 UNW_ExceptionHandler
+UNWIND:     Size of prolog: 18
+UNWIND:     Number of Codes: 8
+UNWIND:     Frame register: RBX
+UNWIND:     Frame offset: 0
+UNWIND:     Unwind Codes:
+UNWIND:       0x12: UOP_SetFPReg
+UNWIND:       0x0f: UOP_PushNonVol RBX
+UNWIND:       0x0e: UOP_SaveXMM128 XMM8 [0x0000]
+UNWIND:       0x09: UOP_SaveNonVol RSI [0x0010]
+UNWIND:       0x04: UOP_AllocSmall 24
+UNWIND:       0x00: UOP_PushMachFrame w/o error code
+UNWIND: Function Table:
+UNWIND:   Start Address: 0x2012
+UNWIND:   End Address: 0x2012
+UNWIND:   Unwind Info Address: 0x301c
+UNWIND:     Version: 1
+UNWIND:     Flags: 4 UNW_ChainInfo
+UNWIND:     Size of prolog: 0
+UNWIND:     Number of Codes: 0
+UNWIND:     No frame pointer used
+UNWIND: Function Table:
+UNWIND:   Start Address: 0x201b
+UNWIND:   End Address: 0x201c
+UNWIND:   Unwind Info Address: 0x302c
+UNWIND:     Version: 1
+UNWIND:     Flags: 0
+UNWIND:     Size of prolog: 0
+UNWIND:     Number of Codes: 0
+UNWIND:     No frame pointer used
 UNWIND: Function Table:
 UNWIND:   Start Address: 0x201c
-UNWIND:   End Address: 0x201c
-UNWIND:   Unwind Info Address: 0x3000
-UNWIND:   Version: 1
-UNWIND:   Flags: 1 UNW_ExceptionHandler
-UNWIND:   Size of prolog: 18
-UNWIND:   Number of Codes: 8
-UNWIND:   Frame register: RBX
-UNWIND:   Frame offset: 0
-UNWIND:   Unwind Codes:
-UNWIND:     0x12: UOP_SetFPReg
-UNWIND:     0x0f: UOP_PushNonVol RBX
-UNWIND:     0x0e: UOP_SaveXMM128 XMM8 [0x0000]
-UNWIND:     0x09: UOP_SaveNonVol RSI [0x0010]
-UNWIND:     0x04: UOP_AllocSmall 24
-UNWIND:     0x00: UOP_PushMachFrame w/o error code
+UNWIND:   End Address: 0x2039
+UNWIND:   Unwind Info Address: 0x3034
+UNWIND:     Version: 1
+UNWIND:     Flags: 0
+UNWIND:     Size of prolog: 14
+UNWIND:     Number of Codes: 6
+UNWIND:     No frame pointer used
+UNWIND:     Unwind Codes:
+UNWIND:       0x0e: UOP_AllocLarge 8454128
+UNWIND:       0x07: UOP_AllocLarge 8190
+UNWIND:       0x00: UOP_PushMachFrame w/o error code
