@@ -6794,8 +6794,7 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   // If this is a class message the metaclass is passed as the target.
   llvm::Value *Target;
   if (IsClassMessage)
-      Target = EmitMetaClassRef(CGF, Class,
-                                (isCategoryImpl && Class->isWeakImported()));
+      Target = EmitMetaClassRef(CGF, Class, Class->isWeakImported());
   else
     Target = EmitSuperClassRef(CGF, Class);
 

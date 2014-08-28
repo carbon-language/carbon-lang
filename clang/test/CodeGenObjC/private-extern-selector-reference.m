@@ -1,0 +1,18 @@
+// RUN: %clang_cc1 -triple x86_64-apple-ios6.0.0 -emit-llvm -o - %s | FileCheck %s
+// rdar://18150301
+
+@interface Query
++ (void)_configureCI;
+@end
+
+__attribute__((visibility("default"))) __attribute__((availability(ios,introduced=7.0)))
+@interface ObserverQuery : Query @end
+
+@implementation ObserverQuery
++ (void)_configureCI {
+    [super _configureCI];
+}
+@end
+
+// CHECK: @"OBJC_METACLASS_$_ObserverQuery" = global %struct._class_t
+// CHECK: @"\01L_OBJC_SELECTOR_REFERENCES_" = private externally_initialized global
