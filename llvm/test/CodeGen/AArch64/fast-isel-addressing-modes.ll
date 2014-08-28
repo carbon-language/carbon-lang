@@ -478,3 +478,13 @@ define i64 @load_breg_sext_shift_offreg_imm1(i32 %a, i64 %b) {
   ret i64 %6
 }
 
+; Test that the kill flag is not set - the machine instruction verifier does that for us.
+define i64 @kill_reg(i64 %a) {
+  %1 = sub i64 %a, 8
+  %2 = add i64 %1, 96
+  %3 = inttoptr i64 %2 to i64*
+  %4 = load i64* %3
+  %5 = add i64 %2, %4
+  ret i64 %5
+}
+

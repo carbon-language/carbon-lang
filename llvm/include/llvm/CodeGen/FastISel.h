@@ -525,7 +525,7 @@ protected:
   bool canFoldAddIntoGEP(const User *GEP, const Value *Add);
 
   /// Test whether the given value has exactly one use.
-  bool hasTrivialKill(const Value *V) const;
+  bool hasTrivialKill(const Value *V);
 
   /// \brief Create a machine mem operand from the given instruction.
   MachineMemOperand *createMachineMemOperandFor(const Instruction *I) const;
