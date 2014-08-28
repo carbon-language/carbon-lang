@@ -12,6 +12,9 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Config/llvm-config.h"
 
+#define LLVM_360_AND_NEWER \
+  (LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6))
+
 #define LLVM_350_AND_NEWER \
   (LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5))
 
@@ -95,6 +98,15 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+#if LLVM_360_AND_NEWER
+  std::error_code EC;
+  UNIQUE_PTR<tool_output_file> Out
+  (new tool_output_file(OutputFilename, EC, sys::fs::F_None));
+  if (EC) {
+    errs() << EC.message() << '\n';
+    exit(1);
+  }
+#else
   std::string ErrorInfo;
   UNIQUE_PTR<tool_output_file> Out
   (new tool_output_file(OutputFilename.c_str(), ErrorInfo,
@@ -109,6 +121,7 @@ int main(int argc, char **argv) {
     errs() << ErrorInfo << '\n';
     exit(1);
   }
+#endif // LLVM_360_AND_NEWER
 
   WriteBitcodeToFile(M.get(), Out->os());
 
