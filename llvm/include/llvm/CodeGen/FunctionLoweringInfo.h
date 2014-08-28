@@ -115,6 +115,7 @@ public:
   /// TODO: This isn't per-function state, it's per-basic-block state. But
   /// there's no other convenient place for it to live right now.
   std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
+  unsigned OrigNumPHINodesToUpdate;
 
   /// If the current MBB is a landing pad, the exception pointer and exception
   /// selector registers are copied into these virtual registers by
