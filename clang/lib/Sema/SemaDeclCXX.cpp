@@ -2210,15 +2210,16 @@ namespace {
     // List of Decls to generate a warning on.  Also remove Decls that become
     // initialized.
     llvm::SmallPtrSetImpl<ValueDecl*> &Decls;
+    // Vector of decls to be removed from the Decl set prior to visiting the
+    // nodes.  These Decls may have been initialized in the prior initializer.
+    llvm::SmallVector<ValueDecl*, 4> DeclsToRemove;
     // If non-null, add a note to the warning pointing back to the constructor.
     const CXXConstructorDecl *Constructor;
   public:
     typedef EvaluatedExprVisitor<UninitializedFieldVisitor> Inherited;
     UninitializedFieldVisitor(Sema &S,
-                              llvm::SmallPtrSetImpl<ValueDecl*> &Decls,
-                              const CXXConstructorDecl *Constructor)
-      : Inherited(S.Context), S(S), Decls(Decls),
-        Constructor(Constructor) { }
+                              llvm::SmallPtrSetImpl<ValueDecl*> &Decls)
+      : Inherited(S.Context), S(S), Decls(Decls) { }
 
     void HandleMemberExpr(MemberExpr *ME, bool CheckReferenceOnly) {
       if (isa<EnumConstantDecl>(ME->getMemberDecl()))
@@ -2307,6 +2308,20 @@ namespace {
       }
     }
 
+    void CheckInitializer(Expr *E, const CXXConstructorDecl *FieldConstructor,
+                          FieldDecl *Field) {
+      // Remove Decls that may have been initialized in the previous
+      // initializer.
+      for (ValueDecl* VD : DeclsToRemove)
+        Decls.erase(VD);
+
+      DeclsToRemove.clear();
+      Constructor = FieldConstructor;
+      Visit(E);
+      if (Field)
+        Decls.erase(Field);
+    }
+
     void VisitMemberExpr(MemberExpr *ME) {
       // All uses of unbounded reference fields will warn.
       HandleMemberExpr(ME, true /*CheckReferenceOnly*/);
@@ -2365,30 +2380,11 @@ namespace {
         if (MemberExpr *ME = dyn_cast<MemberExpr>(E->getLHS()))
           if (FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl()))
             if (!FD->getType()->isReferenceType())
-              Decls.erase(FD);
+              DeclsToRemove.push_back(FD);
 
       Inherited::VisitBinaryOperator(E);
     }
   };
-  static void CheckInitExprContainsUninitializedFields(
-      Sema &S, Expr *E, llvm::SmallPtrSetImpl<ValueDecl*> &Decls,
-      const CXXConstructorDecl *Constructor) {
-    if (Decls.size() == 0)
-      return;
-
-    if (!E)
-      return;
-
-    if (CXXDefaultInitExpr *Default = dyn_cast<CXXDefaultInitExpr>(E)) {
-      E = Default->getExpr();
-      if (!E)
-        return;
-      // In class initializers will point to the constructor.
-      UninitializedFieldVisitor(S, Decls, Constructor).Visit(E);
-    } else {
-      UninitializedFieldVisitor(S, Decls, nullptr).Visit(E);
-    }
-  }
 
   // Diagnose value-uses of fields to initialize themselves, e.g.
   //   foo(foo)
@@ -2421,14 +2417,32 @@ namespace {
       }
     }
 
+    if (UninitializedFields.empty())
+      return;
+
+    UninitializedFieldVisitor UninitializedChecker(SemaRef,
+                                                   UninitializedFields);
+
     for (const auto *FieldInit : Constructor->inits()) {
+      if (UninitializedFields.empty())
+        break;
+
       Expr *InitExpr = FieldInit->getInit();
+      if (!InitExpr)
+        continue;
 
-      CheckInitExprContainsUninitializedFields(
-          SemaRef, InitExpr, UninitializedFields, Constructor);
-
-      if (FieldDecl *Field = FieldInit->getAnyMember())
-        UninitializedFields.erase(Field);
+      if (CXXDefaultInitExpr *Default =
+              dyn_cast<CXXDefaultInitExpr>(InitExpr)) {
+        InitExpr = Default->getExpr();
+        if (!InitExpr)
+          continue;
+        // In class initializers will point to the constructor.
+        UninitializedChecker.CheckInitializer(InitExpr, Constructor,
+                                              FieldInit->getAnyMember());
+      } else {
+        UninitializedChecker.CheckInitializer(InitExpr, nullptr,
+                                              FieldInit->getAnyMember());
+      }
     }
   }
 } // namespace

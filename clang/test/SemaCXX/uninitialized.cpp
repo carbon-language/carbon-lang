@@ -823,6 +823,20 @@ namespace cross_field_warnings {
     int d = a + b + c;
     R() : a(c = 5), b(c), c(a) {}
   };
+
+  // FIXME: Use the CFG-based analysis to give a sometimes uninitialized
+  // warning on y.
+  struct T {
+    int x;
+    int y;
+    T(bool b)
+        : x(b ? (y = 5) : (1 + y)),  // expected-warning{{field 'y' is uninitialized when used here}}
+          y(y + 1) {}
+    T(int b)
+        : x(!b ? (1 + y) : (y = 5)),  // expected-warning{{field 'y' is uninitialized when used here}}
+          y(y + 1) {}
+  };
+
 }
 
 namespace base_class {
