@@ -92,14 +92,13 @@ int main() {
 // CHECK: call void @llvm.stackrestore(
 // CHECK: ret void
 // CHECK: void [[B_INT]]([[INTPTR_T]]
-// CHECK: [[N_ADDR:%.+]] = alloca [[INTPTR_T]]
 // CHECK: [[SIZE1:%.+]] = call [[INTPTR_T]]
 // CHECK: call i{{.+}}* @llvm.stacksave()
 // CHECK: [[BUFFER2_ADDR:%.+]] = alloca [[INTPTR_T]], [[INTPTR_T]] [[SIZE1]]
 // CHECK: [[SIZE2:%.+]] = add
 // CHECK: [[BUFFER1_ADDR:%.+]] = alloca [[INTPTR_T]], [[INTPTR_T]]
 // CHECK: [[CAP_N_ADDR_REF:%.+]] = getelementptr inbounds [[CAP_TYPE3]]* [[CAP_ARG:%.+]], i{{.+}} 0, i{{.+}} 0
-// CHECK: store [[INTPTR_T]]* [[N_ADDR]], [[INTPTR_T]]** [[CAP_N_ADDR_REF]]
+// CHECK: store [[INTPTR_T]]* {{%.+}}, [[INTPTR_T]]** [[CAP_N_ADDR_REF]]
 // CHECK: [[CAP_SIZE2_REF:%.+]] = getelementptr inbounds [[CAP_TYPE3]]* [[CAP_ARG]], i{{.+}} 0, i{{.+}} 1
 // CHECK: store i{{[0-9]+}} [[SIZE2]], i{{[0-9]+}}* [[CAP_SIZE2_REF]]
 // CHECK: [[CAP_SIZE1_REF:%.+]] = getelementptr inbounds [[CAP_TYPE3]]* [[CAP_ARG]], i{{.+}} 0, i{{.+}} 2
