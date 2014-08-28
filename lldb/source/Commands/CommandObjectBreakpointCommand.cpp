@@ -44,7 +44,8 @@ public:
     CommandObjectBreakpointCommandAdd (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
                              "add",
-                             "Add a set of commands to a breakpoint, to be executed whenever the breakpoint is hit.",
+                             "Add a set of commands to a breakpoint, to be executed whenever the breakpoint is hit."
+                             "  If no breakpoint is specified, adds the commands to the last created breakpoint.",
                              NULL),
     IOHandlerDelegateMultiline ("DONE", IOHandlerDelegate::Completion::LLDBCommand),
         m_options (interpreter)
@@ -193,7 +194,7 @@ one command per line.\n" );
 
         // Define the first (and only) variant of this arg.
         bp_id_arg.arg_type = eArgTypeBreakpointID;
-        bp_id_arg.arg_repetition = eArgRepeatPlain;
+        bp_id_arg.arg_repetition = eArgRepeatOptional;
 
         // There is only one variant this argument could be; put it into the argument entry.
         arg.push_back (bp_id_arg);
