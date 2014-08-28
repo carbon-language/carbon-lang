@@ -333,12 +333,44 @@ define i1 @or(i32 %x) {
 ; CHECK: ret i1 false
 }
 
-define i1 @shl(i32 %x) {
-; CHECK-LABEL: @shl(
+define i1 @shl1(i32 %x) {
+; CHECK-LABEL: @shl1(
   %s = shl i32 1, %x
   %c = icmp eq i32 %s, 0
   ret i1 %c
 ; CHECK: ret i1 false
+}
+
+define i1 @shl2(i32 %X) {
+; CHECK: @shl2
+  %sub = shl nsw i32 -1, %X
+  %cmp = icmp eq i32 %sub, 31
+  ret i1 %cmp
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @shl3(i32 %X) {
+; CHECK: @shl3
+  %sub = shl nuw i32 4, %X
+  %cmp = icmp eq i32 %sub, 31
+  ret i1 %cmp
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @shl4(i32 %X) {
+; CHECK: @shl4
+  %sub = shl nsw i32 -1, %X
+  %cmp = icmp sle i32 %sub, -1
+  ret i1 %cmp
+; CHECK-NEXT: ret i1 true
+}
+
+define i1 @shl5(i32 %X) {
+; CHECK: @shl5
+  %sub = shl nuw i32 4, %X
+  %cmp = icmp ugt i32 %sub, 3
+  ret i1 %cmp
+; CHECK-NEXT: ret i1 true
 }
 
 define i1 @lshr1(i32 %x) {
@@ -1007,5 +1039,41 @@ define i1 @icmp_shl_nsw_1(i64 %a) {
  ret i1 %cmp
 
 ; CHECK-LABEL: @icmp_shl_nsw_1
+; CHECK-NEXT: ret i1 true
+}
+
+define i1 @icmp_shl_1_V_ugt_2147483648(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp ugt i32 %shl, 2147483648
+  ret i1 %cmp
+
+; CHECK-LABEL: @icmp_shl_1_V_ugt_2147483648(
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @icmp_shl_1_V_ule_2147483648(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp ule i32 %shl, 2147483648
+  ret i1 %cmp
+
+; CHECK-LABEL: @icmp_shl_1_V_ule_2147483648(
+; CHECK-NEXT: ret i1 true
+}
+
+define i1 @icmp_shl_1_V_eq_31(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp eq i32 %shl, 31
+  ret i1 %cmp
+
+; CHECK-LABEL: @icmp_shl_1_V_eq_31(
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @icmp_shl_1_V_ne_31(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp ne i32 %shl, 31
+  ret i1 %cmp
+
+; CHECK-LABEL: @icmp_shl_1_V_ne_31(
 ; CHECK-NEXT: ret i1 true
 }
