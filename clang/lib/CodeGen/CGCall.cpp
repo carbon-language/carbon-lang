@@ -1419,6 +1419,30 @@ static llvm::Value *emitArgumentDemotion(CodeGenFunction &CGF,
   return CGF.Builder.CreateFPCast(value, varType, "arg.unpromote");
 }
 
+static bool shouldAddNonNullAttr(const Decl *FD, const ParmVarDecl *PVD) {
+  // FIXME: __attribute__((nonnull)) can also be applied to:
+  //   - references to pointers, where the pointee is known to be
+  //     nonnull (apparently a Clang extension)
+  //   - transparent unions containing pointers
+  // In the former case, LLVM IR cannot represent the constraint. In
+  // the latter case, we have no guarantee that the transparent union
+  // is in fact passed as a pointer.
+  if (!PVD->getType()->isAnyPointerType() &&
+      !PVD->getType()->isBlockPointerType())
+    return false;
+  // First, check attribute on parameter itself.
+  if (PVD->hasAttr<NonNullAttr>())
+    return true;
+  // Check function attributes.
+  if (!FD)
+    return false;
+  for (const auto *NNAttr : FD->specific_attrs<NonNullAttr>()) {
+    if (NNAttr->isNonNull(PVD->getFunctionScopeIndex()))
+      return true;
+  }
+  return false;
+}
+
 void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
                                          llvm::Function *Fn,
                                          const FunctionArgList &Args) {
@@ -1462,10 +1486,6 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     AI->addAttr(llvm::AttributeSet::get(getLLVMContext(), AI->getArgNo() + 1,
                                         llvm::Attribute::NoAlias));
   }
-
-  // Get the function-level nonnull attribute if it exists.
-  const NonNullAttr *NNAtt =
-    CurCodeDecl ? CurCodeDecl->getAttr<NonNullAttr>() : nullptr;
 
   // Track if we received the parameter as a pointer (indirect, byval, or
   // inalloca).  If already have a pointer, EmitParmDecl doesn't need to copy it
@@ -1557,17 +1577,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         llvm::Value *V = AI;
 
         if (const ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(Arg)) {
-          // FIXME: __attribute__((nonnull)) can also be applied to:
-          //   - references to pointers, where the pointee is known to be
-          //     nonnull (apparently a Clang extension)
-          //   - transparent unions containing pointers
-          // In the former case, LLVM IR cannot represent the constraint. In
-          // the latter case, we have no guarantee that the transparent union
-          // is in fact passed as a pointer.
-          if (((NNAtt && NNAtt->isNonNull(PVD->getFunctionScopeIndex())) ||
-               PVD->hasAttr<NonNullAttr>()) &&
-              (PVD->getType()->isAnyPointerType() ||
-               PVD->getType()->isBlockPointerType()))
+          if (shouldAddNonNullAttr(CurCodeDecl, PVD))
             AI->addAttr(llvm::AttributeSet::get(getLLVMContext(),
                                                 AI->getArgNo() + 1,
                                                 llvm::Attribute::NonNull));

@@ -41,3 +41,11 @@ typedef union {
 int bar6(TransparentUnion tu) __attribute__((nonnull(1))) {
   return *tu.p;
 }
+
+// CHECK: define void @bar7(i32* nonnull %a, i32* nonnull %b)
+void bar7(int *a, int *b) __attribute__((nonnull(1)))
+__attribute__((nonnull(2))) {}
+
+// CHECK: define void @bar8(i32* nonnull %a, i32* nonnull %b)
+void bar8(int *a, int *b) __attribute__((nonnull))
+__attribute__((nonnull(1))) {}
