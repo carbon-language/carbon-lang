@@ -1433,7 +1433,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
       SDValue GA = N->getOperand(0);
       return CurDAG->getMachineNode(PPC::LWZtoc, dl, MVT::i32, GA,
                                     N->getOperand(1));
-	}
+    }
     assert (PPCSubTarget->isPPC64() &&
             "Only supported for 64-bit ABI and 32-bit SVR4");
 
