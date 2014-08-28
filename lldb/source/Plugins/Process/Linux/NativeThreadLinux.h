@@ -65,6 +65,9 @@ namespace lldb_private
         SetStoppedBySignal (uint32_t signo);
 
         void
+        SetStoppedByExec ();
+
+        void
         SetStoppedByBreakpoint ();
 
         bool

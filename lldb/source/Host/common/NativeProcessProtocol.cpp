@@ -325,6 +325,21 @@ NativeProcessProtocol::SynchronouslyNotifyProcessStateChanged (lldb::StateType s
     }
 }
 
+void
+NativeProcessProtocol::NotifyDidExec ()
+{
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+    if (log)
+        log->Printf ("NativeProcessProtocol::%s - preparing to call delegates", __FUNCTION__);
+
+    {
+        Mutex::Locker locker (m_delegates_mutex);
+        for (auto native_delegate: m_delegates)
+            native_delegate->DidExec (this);
+    }
+}
+
+
 Error
 NativeProcessProtocol::SetSoftwareBreakpoint (lldb::addr_t addr, uint32_t size_hint)
 {

@@ -230,6 +230,9 @@ namespace lldb_private
 
             virtual void
             ProcessStateChanged (NativeProcessProtocol *process, lldb::StateType state) = 0;
+
+            virtual void
+            DidExec (NativeProcessProtocol *process) = 0;
         };
 
         //------------------------------------------------------------------
@@ -310,6 +313,15 @@ namespace lldb_private
 
         virtual Error
         GetSoftwareBreakpointTrapOpcode (size_t trap_opcode_size_hint, size_t &actual_opcode_size, const uint8_t *&trap_opcode_bytes) = 0;
+
+        // -----------------------------------------------------------
+        /// Notify the delegate that an exec occurred.
+        ///
+        /// Provide a mechanism for a delegate to clear out any exec-
+        /// sensitive data.
+        // -----------------------------------------------------------
+        void
+        NotifyDidExec ();
 
     private:
 

@@ -34,13 +34,16 @@ namespace
         switch (stop_info.reason)
         {
             case eStopReasonSignal:
-                log.Printf ("%s: %s: signal 0x%" PRIx32, __FUNCTION__, header, stop_info.details.signal.signo);
+                log.Printf ("%s: %s signal 0x%" PRIx32, __FUNCTION__, header, stop_info.details.signal.signo);
                 return;
             case eStopReasonException:
-                log.Printf ("%s: %s: exception type 0x%" PRIx64, __FUNCTION__, header, stop_info.details.exception.type);
+                log.Printf ("%s: %s exception type 0x%" PRIx64, __FUNCTION__, header, stop_info.details.exception.type);
+                return;
+            case eStopReasonExec:
+                log.Printf ("%s: %s exec, stopping signal 0x%" PRIx32, __FUNCTION__, header, stop_info.details.signal.signo);
                 return;
             default:
-                log.Printf ("%s: %s: invalid stop reason %" PRIu32, __FUNCTION__, header, static_cast<uint32_t> (stop_info.reason));
+                log.Printf ("%s: %s invalid stop reason %" PRIu32, __FUNCTION__, header, static_cast<uint32_t> (stop_info.reason));
         }
     }
 }
@@ -83,10 +86,10 @@ NativeThreadLinux::GetStopReason (ThreadStopInfo &stop_info)
     case eStateSuspended:
     case eStateUnloaded:
         if (log)
-            LogThreadStopInfo (*log, m_stop_info, "m_stop_info in thread: ");
+            LogThreadStopInfo (*log, m_stop_info, "m_stop_info in thread:");
         stop_info = m_stop_info;
         if (log)
-            LogThreadStopInfo (*log, stop_info, "returned stop_info: ");
+            LogThreadStopInfo (*log, stop_info, "returned stop_info:");
         return true;
 
     case eStateInvalid:
@@ -243,6 +246,21 @@ NativeThreadLinux::SetStoppedBySignal (uint32_t signo)
 
     m_stop_info.reason = StopReason::eStopReasonSignal;
     m_stop_info.details.signal.signo = signo;
+}
+
+void
+NativeThreadLinux::SetStoppedByExec ()
+{
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
+    if (log)
+        log->Printf ("NativeThreadLinux::%s()", __FUNCTION__);
+
+    const StateType new_state = StateType::eStateStopped;
+    MaybeLogStateChange (new_state);
+    m_state = new_state;
+
+    m_stop_info.reason = StopReason::eStopReasonExec;
+    m_stop_info.details.signal.signo = SIGSTOP;
 }
 
 void

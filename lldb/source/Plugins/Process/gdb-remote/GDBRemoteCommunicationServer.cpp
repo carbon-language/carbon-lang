@@ -1094,6 +1094,12 @@ GDBRemoteCommunicationServer::ProcessStateChanged (lldb_private::NativeProcessPr
     m_inferior_prev_state = state;
 }
 
+void
+GDBRemoteCommunicationServer::DidExec (NativeProcessProtocol *process)
+{
+    ClearProcessSpecificData ();
+}
+
 GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServer::SendONotification (const char *buffer, uint32_t len)
 {
@@ -4289,3 +4295,20 @@ GDBRemoteCommunicationServer::GetNextSavedRegistersID ()
     return m_next_saved_registers_id++;
 }
 
+void
+GDBRemoteCommunicationServer::ClearProcessSpecificData ()
+{
+    Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS|GDBR_LOG_PROCESS));
+    if (log)
+        log->Printf ("GDBRemoteCommunicationServer::%s()", __FUNCTION__);
+
+    // Clear any auxv cached data.
+    // *BSD impls should be able to do this too.
+#if defined(__linux__)
+    if (log)
+        log->Printf ("GDBRemoteCommunicationServer::%s clearing auxv buffer (previously %s)",
+                     __FUNCTION__,
+                     m_active_auxv_buffer_sp ? "was set" : "was not set");
+    m_active_auxv_buffer_sp.reset ();
+#endif
+}

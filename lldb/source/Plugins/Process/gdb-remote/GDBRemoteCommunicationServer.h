@@ -218,6 +218,9 @@ public:
     void
     ProcessStateChanged (lldb_private::NativeProcessProtocol *process, lldb::StateType state) override;
 
+    void
+    DidExec (lldb_private::NativeProcessProtocol *process) override;
+
 protected:
     lldb::PlatformSP m_platform_sp;
     lldb::thread_t m_async_thread;
@@ -533,6 +536,9 @@ private:
 
     void
     MaybeCloseInferiorTerminalConnection ();
+
+    void
+    ClearProcessSpecificData ();
 
     //------------------------------------------------------------------
     // For GDBRemoteCommunicationServer only
