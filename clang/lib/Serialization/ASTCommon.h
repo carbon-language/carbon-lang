@@ -80,6 +80,10 @@ const DeclContext *getDefinitiveDeclContext(const DeclContext *DC);
 /// \brief Determine whether the given declaration kind is redeclarable.
 bool isRedeclarableDeclKind(unsigned Kind);
 
+/// \brief Determine whether the given declaration needs an anonymous
+/// declaration number.
+bool needsAnonymousDeclarationNumber(const NamedDecl *D);
+
 } // namespace serialization
 
 } // namespace clang

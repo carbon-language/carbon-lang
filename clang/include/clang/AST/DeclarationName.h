@@ -59,6 +59,7 @@ public:
     CXXLiteralOperatorName,
     CXXUsingDirective
   };
+  static const unsigned NumNameKinds = CXXUsingDirective + 1;
 
 private:
   /// StoredNameKind - The kind of name that is actually stored in the

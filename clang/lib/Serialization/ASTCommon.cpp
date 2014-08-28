@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ASTCommon.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Serialization/ASTDeserializationListener.h"
@@ -216,3 +217,10 @@ bool serialization::isRedeclarableDeclKind(unsigned Kind) {
 
   llvm_unreachable("Unhandled declaration kind");
 }
+
+bool serialization::needsAnonymousDeclarationNumber(const NamedDecl *D) {
+  if (D->getDeclName() || !isa<CXXRecordDecl>(D->getLexicalDeclContext()))
+    return false;
+  return isa<TagDecl>(D) || isa<FieldDecl>(D);
+}
+

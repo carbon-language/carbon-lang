@@ -283,6 +283,10 @@ private:
   llvm::DenseMap<const MacroDefinition *, serialization::PreprocessedEntityID>
       MacroDefinitions;
 
+  /// \brief Cache of indices of anonymous declarations within their lexical
+  /// contexts.
+  llvm::DenseMap<const Decl *, unsigned> AnonymousDeclarationNumbers;
+
   /// An update to a Decl.
   class DeclUpdate {
     /// A DeclUpdateKind.
@@ -639,6 +643,7 @@ public:
                              DeclarationName Name, RecordDataImpl &Record);
   void AddDeclarationNameInfo(const DeclarationNameInfo &NameInfo,
                               RecordDataImpl &Record);
+  unsigned getAnonymousDeclarationNumber(const NamedDecl *D);
 
   void AddQualifierInfo(const QualifierInfo &Info, RecordDataImpl &Record);
 

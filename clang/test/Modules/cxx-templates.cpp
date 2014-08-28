@@ -145,6 +145,11 @@ MergeSpecializations<bool>::explicitly_specialized_in_c spec_in_c_2;
 
 using AliasTemplateMergingTest = WithAliasTemplate<int>::X<char>;
 
+int AnonymousDeclsMergingTest(WithAnonymousDecls<int> WAD) {
+  return InstantiateWithAnonymousDeclsA(WAD) +
+         InstantiateWithAnonymousDeclsB(WAD);
+}
+
 @import cxx_templates_common;
 
 typedef SomeTemplate<int*> SomeTemplateIntPtr;

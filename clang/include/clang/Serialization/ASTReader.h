@@ -443,6 +443,11 @@ private:
   llvm::DenseMap<std::pair<DeclContext*, IdentifierInfo*>, NamedDecl*>
       ImportedTypedefNamesForLinkage;
 
+  /// \brief Mergeable declaration contexts that have anonymous declarations
+  /// within them, and those anonymous declarations.
+  llvm::DenseMap<DeclContext*, llvm::SmallVector<NamedDecl*, 2>>
+    AnonymousDeclarationsForMerging;
+
   struct FileDeclsInfo {
     ModuleFile *Mod;
     ArrayRef<serialization::LocalDeclID> Decls;

@@ -5121,6 +5121,30 @@ void ASTWriter::AddDeclarationName(DeclarationName Name, RecordDataImpl &Record)
   }
 }
 
+unsigned ASTWriter::getAnonymousDeclarationNumber(const NamedDecl *D) {
+  assert(needsAnonymousDeclarationNumber(D) &&
+         "expected an anonymous declaration");
+
+  // Number the anonymous declarations within this context, if we've not
+  // already done so.
+  auto It = AnonymousDeclarationNumbers.find(D);
+  if (It == AnonymousDeclarationNumbers.end()) {
+    unsigned Index = 0;
+    for (Decl *LexicalD : D->getLexicalDeclContext()->decls()) {
+      auto *ND = dyn_cast<NamedDecl>(LexicalD);
+      if (!ND || !needsAnonymousDeclarationNumber(ND))
+        continue;
+      AnonymousDeclarationNumbers[ND] = Index++;
+    }
+
+    It = AnonymousDeclarationNumbers.find(D);
+    assert(It != AnonymousDeclarationNumbers.end() &&
+           "declaration not found within its lexical context");
+  }
+
+  return It->second;
+}
+
 void ASTWriter::AddDeclarationNameLoc(const DeclarationNameLoc &DNLoc,
                                      DeclarationName Name, RecordDataImpl &Record) {
   switch (Name.getNameKind()) {

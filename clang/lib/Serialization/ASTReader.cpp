@@ -8332,7 +8332,10 @@ void ASTReader::diagnoseOdrViolations() {
     }
 
     if (!Found) {
-      D->setInvalidDecl();
+      // The AST doesn't like TagDecls becoming invalid after they've been
+      // completed. We only really need to mark FieldDecls as invalid here.
+      if (!isa<TagDecl>(D))
+        D->setInvalidDecl();
 
       std::string CanonDefModule =
           getOwningModuleNameForDiagnostic(cast<Decl>(CanonDef));

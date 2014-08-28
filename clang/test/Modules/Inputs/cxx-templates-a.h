@@ -87,3 +87,4 @@ template<typename T> struct PartiallyInstantiatePartialSpec<T*> {
 typedef PartiallyInstantiatePartialSpec<int*> PartiallyInstantiatePartialSpecHelper;
 
 void InstantiateWithAliasTemplate(WithAliasTemplate<int>::X<char>);
+inline int InstantiateWithAnonymousDeclsA(WithAnonymousDecls<int> x) { return (x.k ? x.a : x.b) + (x.k ? x.s.c : x.s.d); }
