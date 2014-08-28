@@ -131,7 +131,18 @@ Host::StartMonitoringChildProcess
     info_ptr->monitor_signals = monitor_signals;
     
     char thread_name[256];
-    ::snprintf (thread_name, sizeof(thread_name), "<lldb.host.wait4(pid=%" PRIu64 ")>", pid);
+
+    if (Host::MAX_THREAD_NAME_LENGTH <= 16)
+    {
+        // On some platforms, the thread name is limited to 16 characters.  We need to
+        // abbreviate there or the pid info would get truncated.
+        ::snprintf (thread_name, sizeof(thread_name), "wait4(%" PRIu64 ")", pid);
+    }
+    else
+    {
+        ::snprintf (thread_name, sizeof(thread_name), "<lldb.host.wait4(pid=%" PRIu64 ")>", pid);
+    }
+
     thread = ThreadCreate (thread_name,
                            MonitorChildProcessThreadFunction,
                            info_ptr,
