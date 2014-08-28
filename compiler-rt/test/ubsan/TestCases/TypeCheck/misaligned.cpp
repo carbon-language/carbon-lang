@@ -6,7 +6,7 @@
 // RUN: %run %t m1 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER
 // RUN: %run %t f1 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN
 // RUN: %run %t n1 2>&1 | FileCheck %s --check-prefix=CHECK-NEW
-// RUN: UBSAN_OPTIONS=print_stacktrace=1 %run %t l1 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD --check-prefix=CHECK-STACK-LOAD
+// RUN: UBSAN_OPTIONS=print_stacktrace=1 %run %t l1 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD --check-prefix=CHECK-%os-STACK-LOAD
 
 #include <new>
 
@@ -32,7 +32,11 @@ int main(int, char **argv) {
     // CHECK-LOAD-NEXT: {{^ 00 00 00 01 02 03 04  05}}
     // CHECK-LOAD-NEXT: {{^             \^}}
     return *p && 0;
-    // CHECK-STACK-LOAD: #0 {{.*}} in main{{.*}}misaligned.cpp
+    // Slow stack unwinding is disabled on Darwin for now, see
+    // https://code.google.com/p/address-sanitizer/issues/detail?id=137
+    // CHECK-Linux-STACK-LOAD: #0 {{.*}} in main{{.*}}misaligned.cpp
+    // Check for the already checked line to avoid lit error reports.
+    // CHECK-Darwin-STACK-LOAD: {{ }}
 
   case 's':
     // CHECK-STORE: misaligned.cpp:[[@LINE+4]]:5: runtime error: store to misaligned address [[PTR:0x[0-9a-f]*]] for type 'int', which requires 4 byte alignment
