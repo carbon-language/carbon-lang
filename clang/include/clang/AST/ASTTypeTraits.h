@@ -189,7 +189,7 @@ public:
   /// Note that this is not supported by all AST nodes. For AST nodes
   /// that don't have a pointer-defined identity inside the AST, this
   /// method returns NULL.
-  const void *getMemoizationData() const;
+  const void *getMemoizationData() const { return MemoizationData; }
 
   /// \brief Prints the node to the given output stream.
   void print(llvm::raw_ostream &OS, const PrintingPolicy &PP) const;
@@ -242,6 +242,7 @@ private:
     static DynTypedNode create(const BaseT &Node) {
       DynTypedNode Result;
       Result.NodeKind = ASTNodeKind::getFromNodeKind<T>();
+      Result.MemoizationData = &Node;
       new (Result.Storage.buffer) const BaseT * (&Node);
       return Result;
     }
@@ -257,6 +258,7 @@ private:
     static DynTypedNode create(const T &Node) {
       DynTypedNode Result;
       Result.NodeKind = ASTNodeKind::getFromNodeKind<T>();
+      Result.MemoizationData = &Node;
       new (Result.Storage.buffer) const T * (&Node);
       return Result;
     }
@@ -272,12 +274,14 @@ private:
     static DynTypedNode create(const T &Node) {
       DynTypedNode Result;
       Result.NodeKind = ASTNodeKind::getFromNodeKind<T>();
+      Result.MemoizationData = nullptr;
       new (Result.Storage.buffer) T(Node);
       return Result;
     }
   };
 
   ASTNodeKind NodeKind;
+  const void *MemoizationData;
 
   /// \brief Stores the data of the node.
   ///
@@ -344,19 +348,6 @@ template <typename T, typename EnablerT> struct DynTypedNode::BaseConverter {
     return NULL;
   }
 };
-
-inline const void *DynTypedNode::getMemoizationData() const {
-  if (ASTNodeKind::getFromNodeKind<Decl>().isBaseOf(NodeKind)) {
-    return BaseConverter<Decl>::get(NodeKind, Storage.buffer);
-  } else if (ASTNodeKind::getFromNodeKind<Stmt>().isBaseOf(NodeKind)) {
-    return BaseConverter<Stmt>::get(NodeKind, Storage.buffer);
-  } else if (ASTNodeKind::getFromNodeKind<Type>().isBaseOf(NodeKind)) {
-    return BaseConverter<Type>::get(NodeKind, Storage.buffer);
-  } else if (ASTNodeKind::getFromNodeKind<NestedNameSpecifier>().isBaseOf(NodeKind)) {
-    return BaseConverter<NestedNameSpecifier>::get(NodeKind, Storage.buffer);
-  }
-  return nullptr;
-}
 
 } // end namespace ast_type_traits
 } // end namespace clang
