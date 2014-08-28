@@ -755,10 +755,9 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
       break;
     case llvm::Triple::EABIHF:
     case llvm::Triple::EABI:
+    default:
       ABIName = "aapcs";
       break;
-    default:
-      ABIName = "apcs-gnu";
     }
   }
   CmdArgs.push_back("-target-abi");
