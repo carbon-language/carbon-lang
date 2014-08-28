@@ -840,18 +840,23 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
                                       const MCAsmLayout &Layout) {
   // Assign symbol and section indexes and offsets.
-  Header.NumberOfSections = 0;
+  size_t NumberOfSections = 0;
 
   DenseMap<COFFSection *, uint16_t> SectionIndices;
-  for (auto & Section : Sections) {
-    size_t Number = ++Header.NumberOfSections;
-    SectionIndices[Section.get()] = Number;
+  for (const auto &Section : Sections) {
+    size_t Number = ++NumberOfSections;
+    SectionIndices[Section.get()] = static_cast<uint16_t>(Number);
     MakeSectionReal(*Section, Number);
   }
 
+  if (NumberOfSections > COFF::MaxNumberOfSections)
+    report_fatal_error(
+        "PE COFF object files can't have more than 65,299 sections");
+
+  Header.NumberOfSections = static_cast<uint16_t>(NumberOfSections);
   Header.NumberOfSymbols = 0;
 
-  for (auto & Symbol : Symbols) {
+  for (auto &Symbol : Symbols) {
     // Update section number & offset for symbols that have them.
     if (Symbol->Section)
       Symbol->Data.SectionNumber = Symbol->Section->Number;
@@ -929,7 +934,7 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
       bool RelocationsOverflow = Sec->Relocations.size() >= 0xffff;
 
       if (RelocationsOverflow) {
-        // Signal overflow by setting NumberOfSections to max value. Actual
+        // Signal overflow by setting NumberOfRelocations to max value. Actual
         // size is found in reloc #0. Microsoft tools understand this.
         Sec->Header.NumberOfRelocations = 0xffff;
       } else {
