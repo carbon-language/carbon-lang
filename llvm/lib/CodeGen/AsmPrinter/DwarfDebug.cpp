@@ -2610,7 +2610,7 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
 }
 
 void DwarfDebug::attachLowHighPC(DwarfCompileUnit &Unit, DIE &D,
-                                 MCSymbol *Begin, MCSymbol *End) {
+                                 const MCSymbol *Begin, const MCSymbol *End) {
   assert(Begin && "Begin label should not be null!");
   assert(End && "End label should not be null!");
   assert(Begin->isDefined() && "Invalid starting label");
