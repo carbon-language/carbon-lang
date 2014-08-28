@@ -1985,7 +1985,6 @@ ASTUnit *ASTUnit::LoadFromCommandLine(
   AST.reset(new ASTUnit(false));
   ConfigureDiags(Diags, ArgBegin, ArgEnd, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
-  Diags = nullptr; // Zero out now to ease cleanup during crash recovery.
   AST->FileSystemOpts = CI->getFileSystemOpts();
   IntrusiveRefCntPtr<vfs::FileSystem> VFS =
       createVFSFromCompilerInvocation(*CI, *Diags);
@@ -2004,7 +2003,9 @@ ASTUnit *ASTUnit::LoadFromCommandLine(
   AST->Invocation = CI;
   if (ForSerialization)
     AST->WriterData.reset(new ASTWriterData());
-  CI = nullptr; // Zero out now to ease cleanup during crash recovery.
+  // Zero out now to ease cleanup during crash recovery.
+  CI = nullptr;
+  Diags = nullptr;
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
