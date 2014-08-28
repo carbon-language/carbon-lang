@@ -1117,6 +1117,8 @@ static SDValue emitComparison(SDValue LHS, SDValue RHS, ISD::CondCode CC,
 
 static SDValue getAArch64Cmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
                              SDValue &AArch64cc, SelectionDAG &DAG, SDLoc dl) {
+  SDValue Cmp;
+  AArch64CC::CondCode AArch64CC;
   if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS.getNode())) {
     EVT VT = RHS.getValueType();
     uint64_t C = RHSC->getZExtValue();
@@ -1171,9 +1173,45 @@ static SDValue getAArch64Cmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
       }
     }
   }
-
-  SDValue Cmp = emitComparison(LHS, RHS, CC, dl, DAG);
-  AArch64CC::CondCode AArch64CC = changeIntCCToAArch64CC(CC);
+  // The imm operand of ADDS is an unsigned immediate, in the range 0 to 4095.
+  // For the i8 operand, the largest immediate is 255, so this can be easily
+  // encoded in the compare instruction. For the i16 operand, however, the
+  // largest immediate cannot be encoded in the compare.
+  // Therefore, use a sign extending load and cmn to avoid materializing the -1
+  // constant. For example,
+  // movz w1, #65535
+  // ldrh w0, [x0, #0]
+  // cmp w0, w1
+  // >
+  // ldrsh w0, [x0, #0]
+  // cmn w0, #1
+  // Fundamental, we're relying on the property that (zext LHS) == (zext RHS)
+  // if and only if (sext LHS) == (sext RHS). The checks are in place to ensure
+  // both the LHS and RHS are truely zero extended and to make sure the
+  // transformation is profitable.
+  if ((CC == ISD::SETEQ || CC == ISD::SETNE) && isa<ConstantSDNode>(RHS)) {
+    if ((cast<ConstantSDNode>(RHS)->getZExtValue() >> 16 == 0) &&
+        isa<LoadSDNode>(LHS)) {
+      if (cast<LoadSDNode>(LHS)->getExtensionType() == ISD::ZEXTLOAD &&
+          cast<LoadSDNode>(LHS)->getMemoryVT() == MVT::i16 &&
+          LHS.getNode()->hasNUsesOfValue(1, 0)) {
+        int16_t ValueofRHS = cast<ConstantSDNode>(RHS)->getZExtValue();
+        if (ValueofRHS < 0 && isLegalArithImmed(-ValueofRHS)) {
+          SDValue SExt =
+              DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, LHS.getValueType(), LHS,
+                          DAG.getValueType(MVT::i16));
+          Cmp = emitComparison(SExt,
+                               DAG.getConstant(ValueofRHS, RHS.getValueType()),
+                               CC, dl, DAG);
+          AArch64CC = changeIntCCToAArch64CC(CC);
+          AArch64cc = DAG.getConstant(AArch64CC, MVT::i32);
+          return Cmp;
+        }
+      }
+    }
+  }
+  Cmp = emitComparison(LHS, RHS, CC, dl, DAG);
+  AArch64CC = changeIntCCToAArch64CC(CC);
   AArch64cc = DAG.getConstant(AArch64CC, MVT::i32);
   return Cmp;
 }
