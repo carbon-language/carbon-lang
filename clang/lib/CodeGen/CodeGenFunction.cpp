@@ -691,6 +691,14 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
         CXXThisValue = EmitLoadOfLValue(ThisLValue,
                                         SourceLocation()).getScalarVal();
       }
+      for (auto *FD : MD->getParent()->fields()) {
+        if (FD->hasCapturedVLAType()) {
+          auto *ExprArg = EmitLoadOfLValue(EmitLValueForLambdaField(FD),
+                                           SourceLocation()).getScalarVal();
+          auto VAT = FD->getCapturedVLAType();
+          VLASizeMap[VAT->getSizeExpr()] = ExprArg;
+        }
+      }
     } else {
       // Not in a lambda; just use 'this' from the method.
       // FIXME: Should we generate a new load for each use of 'this'?  The

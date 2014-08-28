@@ -1040,6 +1040,8 @@ StmtProfiler::VisitLambdaExpr(const LambdaExpr *S) {
       VisitDecl(C->getCapturedVar());
       ID.AddBoolean(C->isPackExpansion());
       break;
+    case LCK_VLAType:
+      llvm_unreachable("VLA type in explicit captures.");
     }
   }
   // Note: If we actually needed to be able to match lambda

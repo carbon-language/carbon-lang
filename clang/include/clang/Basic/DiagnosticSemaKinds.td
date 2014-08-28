@@ -5357,9 +5357,6 @@ let CategoryName = "Lambda Issue" in {
     "'this' cannot be %select{implicitly |}0captured in this context">;
   def err_lambda_capture_anonymous_var : Error<
     "unnamed variable cannot be implicitly captured in a lambda expression">;
-  def err_lambda_capture_vm_type : Error<
-    "variable %0 with variably modified type cannot be captured in "
-    "a lambda expression">;
   def err_lambda_capture_flexarray_type : Error<
     "variable %0 with flexible array member cannot be captured in "
     "a lambda expression">;

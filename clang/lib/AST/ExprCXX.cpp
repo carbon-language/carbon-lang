@@ -909,16 +909,21 @@ LambdaCapture::LambdaCapture(SourceLocation Loc, bool Implicit,
   case LCK_ByRef:
     assert(Var && "capture must have a variable!");
     break;
+  case LCK_VLAType:
+    assert(!Var && "VLA type capture cannot have a variable!");
+    Bits |= Capture_ByCopy;
+    break;
   }
   DeclAndBits.setInt(Bits);
 }
 
 LambdaCaptureKind LambdaCapture::getCaptureKind() const {
   Decl *D = DeclAndBits.getPointer();
+  bool CapByCopy = DeclAndBits.getInt() & Capture_ByCopy;
   if (!D)
-    return LCK_This;
+    return CapByCopy ? LCK_VLAType : LCK_This;
 
-  return (DeclAndBits.getInt() & Capture_ByCopy) ? LCK_ByCopy : LCK_ByRef;
+  return CapByCopy ? LCK_ByCopy : LCK_ByRef;
 }
 
 LambdaExpr::LambdaExpr(QualType T,

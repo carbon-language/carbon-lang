@@ -666,10 +666,16 @@ void ASTDeclWriter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
 void ASTDeclWriter::VisitFieldDecl(FieldDecl *D) {
   VisitDeclaratorDecl(D);
   Record.push_back(D->isMutable());
-  if (D->InitializerOrBitWidth.getInt() != ICIS_NoInit ||
-      D->InitializerOrBitWidth.getPointer()) {
+  if ((D->InitializerOrBitWidth.getInt() != ICIS_NoInit ||
+       D->InitializerOrBitWidth.getPointer()) &&
+      !D->hasCapturedVLAType()) {
     Record.push_back(D->InitializerOrBitWidth.getInt() + 1);
-    Writer.AddStmt(D->InitializerOrBitWidth.getPointer());
+    Writer.AddStmt(static_cast<Expr *>(D->InitializerOrBitWidth.getPointer()));
+  } else if (D->hasCapturedVLAType()) {
+    Record.push_back(D->InitializerOrBitWidth.getInt() + 1);
+    Writer.AddTypeRef(
+        QualType(static_cast<Type *>(D->InitializerOrBitWidth.getPointer()), 0),
+        Record);
   } else {
     Record.push_back(0);
   }

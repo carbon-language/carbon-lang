@@ -378,7 +378,7 @@ public:
     /// capture (if this is a capture and not an init-capture). The expression
     /// is only required if we are capturing ByVal and the variable's type has
     /// a non-trivial copy constructor.
-    llvm::PointerIntPair<Expr*, 2, CaptureKind> InitExprAndCaptureKind;
+    llvm::PointerIntPair<void *, 2, CaptureKind> InitExprAndCaptureKind;
 
     /// \brief The source location at which the first capture occurred.
     SourceLocation Loc;
@@ -410,10 +410,11 @@ public:
       return InitExprAndCaptureKind.getInt() == Cap_This;
     }
     bool isVariableCapture() const {
-      return InitExprAndCaptureKind.getInt() != Cap_This;
+      return InitExprAndCaptureKind.getInt() != Cap_This && !isVLATypeCapture();
     }
     bool isCopyCapture() const {
-      return InitExprAndCaptureKind.getInt() == Cap_ByCopy;
+      return InitExprAndCaptureKind.getInt() == Cap_ByCopy &&
+             !isVLATypeCapture();
     }
     bool isReferenceCapture() const {
       return InitExprAndCaptureKind.getInt() == Cap_ByRef;
@@ -421,7 +422,11 @@ public:
     bool isBlockCapture() const {
       return InitExprAndCaptureKind.getInt() == Cap_Block;
     }
-    bool isNested() { return VarAndNested.getInt(); }
+    bool isVLATypeCapture() const {
+      return InitExprAndCaptureKind.getInt() == Cap_ByCopy &&
+             getVariable() == nullptr;
+    }
+    bool isNested() const { return VarAndNested.getInt(); }
 
     VarDecl *getVariable() const {
       return VarAndNested.getPointer();
@@ -440,7 +445,8 @@ public:
     QualType getCaptureType() const { return CaptureType; }
     
     Expr *getInitExpr() const {
-      return InitExprAndCaptureKind.getPointer();
+      assert(!isVLATypeCapture() && "no init expression for type capture");
+      return static_cast<Expr *>(InitExprAndCaptureKind.getPointer());
     }
   };
 
@@ -475,6 +481,13 @@ public:
     CaptureMap[Var] = Captures.size();
   }
 
+  void addVLATypeCapture(SourceLocation Loc, QualType CaptureType) {
+    Captures.push_back(Capture(/*Var*/ nullptr, /*isBlock*/ false,
+                               /*isByref*/ false, /*isNested*/ false, Loc,
+                               /*EllipsisLoc*/ SourceLocation(), CaptureType,
+                               /*Cpy*/ nullptr));
+  }
+
   void addThisCapture(bool isNested, SourceLocation Loc, QualType CaptureType,
                       Expr *Cpy);
 
@@ -491,7 +504,10 @@ public:
   bool isCaptured(VarDecl *Var) const {
     return CaptureMap.count(Var);
   }
-  
+
+  /// \brief Determine whether the given variable-array type has been captured.
+  bool isVLATypeCaptured(const VariableArrayType *VAT) const;
+
   /// \brief Retrieve the capture of the given variable, if it has been
   /// captured already.
   Capture &getCapture(VarDecl *Var) {

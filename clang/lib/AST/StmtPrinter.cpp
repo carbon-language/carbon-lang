@@ -1742,6 +1742,8 @@ void StmtPrinter::VisitLambdaExpr(LambdaExpr *Node) {
     case LCK_ByCopy:
       OS << C->getCapturedVar()->getName();
       break;
+    case LCK_VLAType:
+      llvm_unreachable("VLA type in explicit captures.");
     }
 
     if (C->isInitCapture())

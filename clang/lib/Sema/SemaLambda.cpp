@@ -1414,6 +1414,12 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
                                                          /*isImplicit=*/true));
         continue;
       }
+      if (From.isVLATypeCapture()) {
+        Captures.push_back(
+            LambdaCapture(From.getLocation(), IsImplicit, LCK_VLAType));
+        CaptureInits.push_back(nullptr);
+        continue;
+      }
 
       VarDecl *Var = From.getVariable();
       LambdaCaptureKind Kind = From.isCopyCapture()? LCK_ByCopy : LCK_ByRef;

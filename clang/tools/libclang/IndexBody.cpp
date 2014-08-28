@@ -156,7 +156,7 @@ public:
   }
 
   bool TraverseLambdaCapture(LambdaExpr *LE, const LambdaCapture *C) {
-    if (C->capturesThis())
+    if (C->capturesThis() || C->capturesVLAType())
       return true;
 
     if (C->capturesVariable() && IndexCtx.shouldIndexFunctionLocalSymbols())

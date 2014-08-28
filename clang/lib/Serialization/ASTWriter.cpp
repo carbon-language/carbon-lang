@@ -5582,6 +5582,7 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
       Record.push_back(Capture.getCaptureKind());
       switch (Capture.getCaptureKind()) {
       case LCK_This:
+      case LCK_VLAType:
         break;
       case LCK_ByCopy:
       case LCK_ByRef:

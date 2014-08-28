@@ -9959,6 +9959,7 @@ static void RebuildLambdaScopeInfo(CXXMethodDecl *CallOperator,
 
   // Add the captures to the LSI so they can be noted as already
   // captured within tryCaptureVar. 
+  auto I = LambdaClass->field_begin();
   for (const auto &C : LambdaClass->captures()) {
     if (C.capturesVariable()) {
       VarDecl *VD = C.getCapturedVar();
@@ -9975,7 +9976,10 @@ static void RebuildLambdaScopeInfo(CXXMethodDecl *CallOperator,
     } else if (C.capturesThis()) {
       LSI->addThisCapture(/*Nested*/ false, C.getLocation(), 
                               S.getCurrentThisType(), /*Expr*/ nullptr);
+    } else {
+      LSI->addVLATypeCapture(C.getLocation(), I->getType());
     }
+    ++I;
   }
 }
 

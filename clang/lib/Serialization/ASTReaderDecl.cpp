@@ -976,7 +976,13 @@ void ASTDeclReader::VisitFieldDecl(FieldDecl *FD) {
   FD->Mutable = Record[Idx++];
   if (int BitWidthOrInitializer = Record[Idx++]) {
     FD->InitializerOrBitWidth.setInt(BitWidthOrInitializer - 1);
-    FD->InitializerOrBitWidth.setPointer(Reader.ReadExpr(F));
+    if (FD->getDeclContext()->isRecord() && FD->getParent()->isLambda()) {
+      // Read captured variable length array.
+      FD->InitializerOrBitWidth.setPointer(
+          Reader.readType(F, Record, Idx).getAsOpaquePtr());
+    } else {
+      FD->InitializerOrBitWidth.setPointer(Reader.ReadExpr(F));
+    }
   }
   if (!FD->getDeclName()) {
     if (FieldDecl *Tmpl = ReadDeclAs<FieldDecl>(Record, Idx))
@@ -1301,6 +1307,7 @@ void ASTDeclReader::ReadCXXDefinitionData(
       LambdaCaptureKind Kind = static_cast<LambdaCaptureKind>(Record[Idx++]);
       switch (Kind) {
       case LCK_This:
+      case LCK_VLAType:
         *ToCapture++ = Capture(Loc, IsImplicit, Kind, nullptr,SourceLocation());
         break;
       case LCK_ByCopy:

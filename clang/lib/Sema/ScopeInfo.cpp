@@ -14,6 +14,7 @@
 
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
@@ -91,6 +92,15 @@ FunctionScopeInfo::WeakObjectProfileTy::getBaseInfo(const Expr *E) {
   }
 
   return BaseInfoTy(D, IsExact);
+}
+
+bool CapturingScopeInfo::isVLATypeCaptured(const VariableArrayType *VAT) const {
+  if (auto *LSI = dyn_cast<LambdaScopeInfo>(this))
+    for (auto *FD : LSI->Lambda->fields()) {
+      if (FD->hasCapturedVLAType() && FD->getCapturedVLAType() == VAT)
+        return true;
+    }
+  return false;
 }
 
 FunctionScopeInfo::WeakObjectProfileTy::WeakObjectProfileTy(

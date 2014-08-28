@@ -3261,9 +3261,18 @@ bool FieldDecl::isAnonymousStructOrUnion() const {
   return false;
 }
 
+bool FieldDecl::isBitField() const {
+  if (getInClassInitStyle() == ICIS_NoInit &&
+      InitializerOrBitWidth.getPointer()) {
+    assert(getDeclContext() && "No parent context for FieldDecl");
+    return !getDeclContext()->isRecord() || !getParent()->isLambda();
+  }
+  return false;
+}
+
 unsigned FieldDecl::getBitWidthValue(const ASTContext &Ctx) const {
   assert(isBitField() && "not a bitfield");
-  Expr *BitWidth = InitializerOrBitWidth.getPointer();
+  Expr *BitWidth = static_cast<Expr *>(InitializerOrBitWidth.getPointer());
   return BitWidth->EvaluateKnownConstInt(Ctx).getZExtValue();
 }
 
@@ -3287,21 +3296,34 @@ unsigned FieldDecl::getFieldIndex() const {
 }
 
 SourceRange FieldDecl::getSourceRange() const {
-  if (const Expr *E = InitializerOrBitWidth.getPointer())
+  if (const Expr *E =
+          static_cast<const Expr *>(InitializerOrBitWidth.getPointer()))
     return SourceRange(getInnerLocStart(), E->getLocEnd());
   return DeclaratorDecl::getSourceRange();
 }
 
 void FieldDecl::setBitWidth(Expr *Width) {
   assert(!InitializerOrBitWidth.getPointer() && !hasInClassInitializer() &&
-         "bit width or initializer already set");
+         "bit width, initializer or captured type already set");
   InitializerOrBitWidth.setPointer(Width);
 }
 
 void FieldDecl::setInClassInitializer(Expr *Init) {
   assert(!InitializerOrBitWidth.getPointer() && hasInClassInitializer() &&
-         "bit width or initializer already set");
+         "bit width, initializer or captured expr already set");
   InitializerOrBitWidth.setPointer(Init);
+}
+
+bool FieldDecl::hasCapturedVLAType() const {
+  return getDeclContext()->isRecord() && getParent()->isLambda() &&
+         InitializerOrBitWidth.getPointer();
+}
+
+void FieldDecl::setCapturedVLAType(const VariableArrayType *VLAType) {
+  assert(getParent()->isLambda() && "capturing type in non-lambda.");
+  assert(!InitializerOrBitWidth.getPointer() && !hasInClassInitializer() &&
+         "bit width, initializer or captured type already set");
+  InitializerOrBitWidth.setPointer(const_cast<VariableArrayType *>(VLAType));
 }
 
 //===----------------------------------------------------------------------===//
@@ -3522,6 +3544,12 @@ RecordDecl *RecordDecl::CreateDeserialized(const ASTContext &C, unsigned ID) {
 bool RecordDecl::isInjectedClassName() const {
   return isImplicit() && getDeclName() && getDeclContext()->isRecord() &&
     cast<RecordDecl>(getDeclContext())->getDeclName() == getDeclName();
+}
+
+bool RecordDecl::isLambda() const {
+  if (auto RD = dyn_cast<CXXRecordDecl>(this))
+    return RD->isLambda();
+  return false;
 }
 
 RecordDecl::field_iterator RecordDecl::field_begin() const {

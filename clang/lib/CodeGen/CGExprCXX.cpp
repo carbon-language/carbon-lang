@@ -1805,19 +1805,23 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *Value,
 
 void CodeGenFunction::EmitLambdaExpr(const LambdaExpr *E, AggValueSlot Slot) {
   RunCleanupsScope Scope(*this);
-  LValue SlotLV = MakeAddrLValue(Slot.getAddr(), E->getType(),
-                                 Slot.getAlignment());
+  LValue SlotLV =
+      MakeAddrLValue(Slot.getAddr(), E->getType(), Slot.getAlignment());
 
   CXXRecordDecl::field_iterator CurField = E->getLambdaClass()->field_begin();
   for (LambdaExpr::capture_init_iterator i = E->capture_init_begin(),
                                          e = E->capture_init_end();
        i != e; ++i, ++CurField) {
     // Emit initialization
-    
     LValue LV = EmitLValueForFieldInitialization(SlotLV, *CurField);
-    ArrayRef<VarDecl *> ArrayIndexes;
-    if (CurField->getType()->isArrayType())
-      ArrayIndexes = E->getCaptureInitIndexVars(i);
-    EmitInitializerForField(*CurField, LV, *i, ArrayIndexes);
+    if (CurField->hasCapturedVLAType()) {
+      auto VAT = CurField->getCapturedVLAType();
+      EmitStoreThroughLValue(RValue::get(VLASizeMap[VAT->getSizeExpr()]), LV);
+    } else {
+      ArrayRef<VarDecl *> ArrayIndexes;
+      if (CurField->getType()->isArrayType())
+        ArrayIndexes = E->getCaptureInitIndexVars(i);
+      EmitInitializerForField(*CurField, LV, *i, ArrayIndexes);
+    }
   }
 }
