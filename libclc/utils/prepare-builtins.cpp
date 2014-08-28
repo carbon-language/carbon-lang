@@ -62,7 +62,12 @@ int main(int argc, char **argv) {
       ErrorMessage = ec.message();
     else {
 #if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR > 4)
+# if LLVM_360_AND_NEWER
+      ErrorOr<Module *> ModuleOrErr =
+	parseBitcodeFile(BufferPtr.get()->getMemBufferRef(), Context);
+# else
       ErrorOr<Module *> ModuleOrErr = parseBitcodeFile(BufferPtr.get(), Context);
+# endif
       if (ERROR_CODE ec = ModuleOrErr.getError())
         ErrorMessage = ec.message();
       M.reset(ModuleOrErr.get());
