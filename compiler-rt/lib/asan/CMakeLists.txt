@@ -195,7 +195,7 @@ else()
       add_dependencies(asan clang_rt.asan_dll_thunk-${arch})
       add_compiler_rt_runtime(clang_rt.asan_uar_thunk-${arch} ${arch} STATIC
         SOURCES asan_win_uar_thunk.cc
-        CFLAGS ${ASAN_CFLAGS} -DASAN_UAR_THUNK
+        CFLAGS ${ASAN_CFLAGS} -DASAN_UAR_THUNK -Zl
         DEFS ${ASAN_COMMON_DEFINITIONS})
       add_dependencies(asan clang_rt.asan_uar_thunk-${arch})
     endif()
