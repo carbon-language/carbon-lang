@@ -354,8 +354,8 @@ PBQPRAProblem *PBQPBuilderWithCoalescing::build(MachineFunction *mf,
         if (pregOpt < allowed.size()) {
           ++pregOpt; // +1 to account for spill option.
           PBQPRAGraph::NodeId node = p->getNodeForVReg(src);
-          llvm::dbgs() << "Reading node costs for node " << node << "\n";
-          llvm::dbgs() << "Source node: " << &g.getNodeCosts(node) << "\n";
+          DEBUG(llvm::dbgs() << "Reading node costs for node " << node << "\n");
+          DEBUG(llvm::dbgs() << "Source node: " << &g.getNodeCosts(node) << "\n");
           PBQP::Vector newCosts(g.getNodeCosts(node));
           addPhysRegCoalesce(newCosts, pregOpt, cBenefit);
           g.setNodeCosts(node, newCosts);
