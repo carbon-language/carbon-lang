@@ -740,21 +740,6 @@ Instruction *InstCombiner::FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
 Instruction *InstCombiner::FoldICmpAddOpCst(Instruction &ICI,
                                             Value *X, ConstantInt *CI,
                                             ICmpInst::Predicate Pred) {
-  // If we have X+0, exit early (simplifying logic below) and let it get folded
-  // elsewhere.   icmp X+0, X  -> icmp X, X
-  if (CI->isZero()) {
-    bool isTrue = ICmpInst::isTrueWhenEqual(Pred);
-    return ReplaceInstUsesWith(ICI, ConstantInt::get(ICI.getType(), isTrue));
-  }
-
-  // (X+4) == X -> false.
-  if (Pred == ICmpInst::ICMP_EQ)
-    return ReplaceInstUsesWith(ICI, Builder->getFalse());
-
-  // (X+4) != X -> true.
-  if (Pred == ICmpInst::ICMP_NE)
-    return ReplaceInstUsesWith(ICI, Builder->getTrue());
-
   // From this point on, we know that (X+C <= X) --> (X+C < X) because C != 0,
   // so the values can never be equal.  Similarly for all other "or equals"
   // operators.
