@@ -3112,11 +3112,9 @@ bool SLPVectorizer::tryToVectorize(BinaryOperator *V, BoUpSLP &R) {
     BinaryOperator *B0 = dyn_cast<BinaryOperator>(B->getOperand(0));
     BinaryOperator *B1 = dyn_cast<BinaryOperator>(B->getOperand(1));
     if (tryToVectorizePair(A, B0, R)) {
-      B->moveBefore(V);
       return true;
     }
     if (tryToVectorizePair(A, B1, R)) {
-      B->moveBefore(V);
       return true;
     }
   }
@@ -3126,11 +3124,9 @@ bool SLPVectorizer::tryToVectorize(BinaryOperator *V, BoUpSLP &R) {
     BinaryOperator *A0 = dyn_cast<BinaryOperator>(A->getOperand(0));
     BinaryOperator *A1 = dyn_cast<BinaryOperator>(A->getOperand(1));
     if (tryToVectorizePair(A0, B, R)) {
-      A->moveBefore(V);
       return true;
     }
     if (tryToVectorizePair(A1, B, R)) {
-      A->moveBefore(V);
       return true;
     }
   }
