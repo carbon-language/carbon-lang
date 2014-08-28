@@ -108,6 +108,32 @@ static __inline__ void __attribute__((always_inline, nodebug)) __nop(void) {
 
 /* 9 DATA-PROCESSING INTRINSICS */
 /* 9.2 Miscellaneous data-processing intrinsics */
+/* ROR */
+static __inline__ uint32_t __attribute__((always_inline, nodebug))
+  __ror(uint32_t x, uint32_t y) {
+  if (y == 0)  return y;
+  if (y >= 32) y %= 32;
+  return (x >> y) | (x << (32 - y));
+}
+
+static __inline__ uint64_t __attribute__((always_inline, nodebug))
+  __rorll(uint64_t x, uint32_t y) {
+  if (y == 0)  return y;
+  if (y >= 64) y %= 64;
+  return (x >> y) | (x << (64 - y));
+}
+
+static __inline__ unsigned long __attribute__((always_inline, nodebug))
+  __rorl(unsigned long x, uint32_t y) {
+#if __SIZEOF_LONG__ == 4
+  return __ror(x, y);
+#else
+  return __rorll(x, y);
+#endif
+}
+
+
+/* CLZ */
 static __inline__ uint32_t __attribute__((always_inline, nodebug))
   __clz(uint32_t t) {
   return __builtin_clz(t);
@@ -123,6 +149,7 @@ static __inline__ uint64_t __attribute__((always_inline, nodebug))
   return __builtin_clzll(t);
 }
 
+/* REV */
 static __inline__ uint32_t __attribute__((always_inline, nodebug))
   __rev(uint32_t t) {
   return __builtin_bswap32(t);
@@ -140,6 +167,53 @@ static __inline__ unsigned long __attribute__((always_inline, nodebug))
 static __inline__ uint64_t __attribute__((always_inline, nodebug))
   __revll(uint64_t t) {
   return __builtin_bswap64(t);
+}
+
+/* REV16 */
+static __inline__ uint32_t __attribute__((always_inline, nodebug))
+  __rev16(uint32_t t) {
+  return __ror(__rev(t), 16);
+}
+
+static __inline__ unsigned long __attribute__((always_inline, nodebug))
+  __rev16l(unsigned long t) {
+    return __rorl(__revl(t), sizeof(long) / 2);
+}
+
+static __inline__ uint64_t __attribute__((always_inline, nodebug))
+  __rev16ll(uint64_t t) {
+  return __rorll(__revll(t), 32);
+}
+
+/* REVSH */
+static __inline__ int16_t __attribute__((always_inline, nodebug))
+  __revsh(int16_t t) {
+  return __builtin_bswap16(t);
+}
+
+/* RBIT */
+static __inline__ uint32_t __attribute__((always_inline, nodebug))
+  __rbit(uint32_t t) {
+  return __builtin_arm_rbit(t);
+}
+
+static __inline__ uint64_t __attribute__((always_inline, nodebug))
+  __rbitll(uint64_t t) {
+#if __ARM_32BIT_STATE
+  return (((uint64_t) __builtin_arm_rbit(t)) << 32) |
+    __builtin_arm_rbit(t >> 32);
+#else
+  return __builtin_arm_rbit64(t);
+#endif
+}
+
+static __inline__ unsigned long __attribute__((always_inline, nodebug))
+  __rbitl(unsigned long t) {
+#if __SIZEOF_LONG__ == 4
+  return __rbit(t);
+#else
+  return __rbitll(t);
+#endif
 }
 
 /*
