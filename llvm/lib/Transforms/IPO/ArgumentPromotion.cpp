@@ -78,6 +78,8 @@ namespace {
 
     const DataLayout *DL;
   private:
+    bool isDenselyPacked(Type *type);
+    bool canPaddingBeAccessed(Argument *Arg);
     CallGraphNode *PromoteArguments(CallGraphNode *CGN);
     bool isSafeToPromoteArgument(Argument *Arg, bool isByVal) const;
     CallGraphNode *DoPromotion(Function *F,
@@ -123,6 +125,78 @@ bool ArgPromotion::runOnSCC(CallGraphSCC &SCC) {
   } while (LocalChange);
   
   return Changed;
+}
+
+/// \brief Checks if a type could have padding bytes.
+bool ArgPromotion::isDenselyPacked(Type *type) {
+
+  // There is no size information, so be conservative.
+  if (!type->isSized())
+    return false;
+
+  // If the alloc size is not equal to the storage size, then there are padding
+  // bytes. For x86_fp80 on x86-64, size: 80 alloc size: 128.
+  if (!DL || DL->getTypeSizeInBits(type) != DL->getTypeAllocSizeInBits(type))
+    return false;
+
+  if (!isa<CompositeType>(type))
+    return true;
+
+  // For homogenous sequential types, check for padding within members.
+  if (SequentialType *seqTy = dyn_cast<SequentialType>(type))
+    return isa<PointerType>(seqTy) || isDenselyPacked(seqTy->getElementType());
+
+  // Check for padding within and between elements of a struct.
+  StructType *StructTy = cast<StructType>(type);
+  const StructLayout *Layout = DL->getStructLayout(StructTy);
+  uint64_t StartPos = 0;
+  for (unsigned i = 0, E = StructTy->getNumElements(); i < E; ++i) {
+    Type *ElTy = StructTy->getElementType(i);
+    if (!isDenselyPacked(ElTy))
+      return false;
+    if (StartPos != Layout->getElementOffsetInBits(i))
+      return false;
+    StartPos += DL->getTypeAllocSizeInBits(ElTy);
+  }
+
+  return true;
+}
+
+/// \brief Checks if the padding bytes of an argument could be accessed.
+bool ArgPromotion::canPaddingBeAccessed(Argument *arg) {
+
+  assert(arg->hasByValAttr());
+
+  // Track all the pointers to the argument to make sure they are not captured.
+  SmallPtrSet<Value *, 16> PtrValues;
+  PtrValues.insert(arg);
+
+  // Track all of the stores.
+  SmallVector<StoreInst *, 16> Stores;
+
+  // Scan through the uses recursively to make sure the pointer is always used
+  // sanely.
+  SmallVector<Value *, 16> WorkList;
+  WorkList.insert(WorkList.end(), arg->user_begin(), arg->user_end());
+  while (!WorkList.empty()) {
+    Value *V = WorkList.back();
+    WorkList.pop_back();
+    if (isa<GetElementPtrInst>(V) || isa<PHINode>(V)) {
+      if (PtrValues.insert(V))
+        WorkList.insert(WorkList.end(), V->user_begin(), V->user_end());
+    } else if (StoreInst *Store = dyn_cast<StoreInst>(V)) {
+      Stores.push_back(Store);
+    } else if (!isa<LoadInst>(V)) {
+      return true;
+    }
+  }
+
+// Check to make sure the pointers aren't captured
+  for (StoreInst *Store : Stores)
+    if (PtrValues.count(Store->getValueOperand()))
+      return true;
+
+  return false;
 }
 
 /// PromoteArguments - This method checks the specified function to see if there
@@ -172,9 +246,13 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
     Type *AgTy = cast<PointerType>(PtrArg->getType())->getElementType();
 
     // If this is a byval argument, and if the aggregate type is small, just
-    // pass the elements, which is always safe.  This does not apply to
-    // inalloca.
-    if (PtrArg->hasByValAttr()) {
+    // pass the elements, which is always safe, if the passed value is densely
+    // packed or if we can prove the padding bytes are never accessed. This does
+    // not apply to inalloca.
+    bool isSafeToPromote =
+      PtrArg->hasByValAttr() &&
+      (isDenselyPacked(AgTy) || !canPaddingBeAccessed(PtrArg));
+    if (isSafeToPromote) {
       if (StructType *STy = dyn_cast<StructType>(AgTy)) {
         if (maxElements > 0 && STy->getNumElements() > maxElements) {
           DEBUG(dbgs() << "argpromotion disable promoting argument '"

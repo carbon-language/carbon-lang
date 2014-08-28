@@ -1,6 +1,8 @@
 ; RUN: opt %s -argpromotion -S -o - | FileCheck %s
 ; PR14710
 
+target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
+
 %pair = type { i32, i32 }
 
 declare i8* @foo(%pair*)
