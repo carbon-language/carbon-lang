@@ -849,7 +849,7 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
     MakeSectionReal(*Section, Number);
   }
 
-  if (NumberOfSections > COFF::MaxNumberOfSections)
+  if (NumberOfSections > static_cast<size_t>(COFF::MaxNumberOfSections))
     report_fatal_error(
         "PE COFF object files can't have more than 65,299 sections");
 
