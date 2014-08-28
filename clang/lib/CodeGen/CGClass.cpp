@@ -1716,8 +1716,7 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
   Args.add(RValue::get(Src), QT);
 
   // Skip over first argument (Src).
-  EmitCallArgs(Args, FPT->isVariadic(), FPT->param_type_begin() + 1,
-               FPT->param_type_end(), E->arg_begin() + 1, E->arg_end());
+  EmitCallArgs(Args, FPT, E->arg_begin() + 1, E->arg_end(), /*ParamsToSkip*/ 1);
 
   EmitCall(CGM.getTypes().arrangeCXXMethodCall(Args, FPT, RequiredArgs::All),
            Callee, ReturnValueSlot(), Args, D);

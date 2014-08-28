@@ -2617,62 +2617,49 @@ public:
   void EmitCallArgs(CallArgList &Args, const T *CallArgTypeInfo,
                     CallExpr::const_arg_iterator ArgBeg,
                     CallExpr::const_arg_iterator ArgEnd,
-                    bool ForceColumnInfo = false) {
-    if (CallArgTypeInfo) {
-      EmitCallArgs(Args, CallArgTypeInfo->isVariadic(),
-                   CallArgTypeInfo->param_type_begin(),
-                   CallArgTypeInfo->param_type_end(), ArgBeg, ArgEnd,
-                   ForceColumnInfo);
-    } else {
-      // T::param_type_iterator might not have a default ctor.
-      const QualType *NoIter = nullptr;
-      EmitCallArgs(Args, /*AllowExtraArguments=*/true, NoIter, NoIter, ArgBeg,
-                   ArgEnd, ForceColumnInfo);
-    }
-  }
-
-  template<typename ArgTypeIterator>
-  void EmitCallArgs(CallArgList& Args,
-                    bool AllowExtraArguments,
-                    ArgTypeIterator ArgTypeBeg,
-                    ArgTypeIterator ArgTypeEnd,
-                    CallExpr::const_arg_iterator ArgBeg,
-                    CallExpr::const_arg_iterator ArgEnd,
-                    bool ForceColumnInfo = false) {
+                    unsigned ParamsToSkip = 0, bool ForceColumnInfo = false) {
     SmallVector<QualType, 16> ArgTypes;
     CallExpr::const_arg_iterator Arg = ArgBeg;
 
-    // First, use the argument types that the type info knows about
-    for (ArgTypeIterator I = ArgTypeBeg, E = ArgTypeEnd; I != E; ++I, ++Arg) {
-      assert(Arg != ArgEnd && "Running over edge of argument list!");
+    assert((ParamsToSkip == 0 || CallArgTypeInfo) &&
+           "Can't skip parameters if type info is not provided");
+    if (CallArgTypeInfo) {
+      // First, use the argument types that the type info knows about
+      for (auto I = CallArgTypeInfo->param_type_begin() + ParamsToSkip,
+                E = CallArgTypeInfo->param_type_end();
+           I != E; ++I, ++Arg) {
+        assert(Arg != ArgEnd && "Running over edge of argument list!");
 #ifndef NDEBUG
-      QualType ArgType = *I;
-      QualType ActualArgType = Arg->getType();
-      if (ArgType->isPointerType() && ActualArgType->isPointerType()) {
-        QualType ActualBaseType =
-            ActualArgType->getAs<PointerType>()->getPointeeType();
-        QualType ArgBaseType =
-            ArgType->getAs<PointerType>()->getPointeeType();
-        if (ArgBaseType->isVariableArrayType()) {
-          if (const VariableArrayType *VAT =
-              getContext().getAsVariableArrayType(ActualBaseType)) {
-            if (!VAT->getSizeExpr())
-              ActualArgType = ArgType;
+        QualType ArgType = *I;
+        QualType ActualArgType = Arg->getType();
+        if (ArgType->isPointerType() && ActualArgType->isPointerType()) {
+          QualType ActualBaseType =
+              ActualArgType->getAs<PointerType>()->getPointeeType();
+          QualType ArgBaseType =
+              ArgType->getAs<PointerType>()->getPointeeType();
+          if (ArgBaseType->isVariableArrayType()) {
+            if (const VariableArrayType *VAT =
+                    getContext().getAsVariableArrayType(ActualBaseType)) {
+              if (!VAT->getSizeExpr())
+                ActualArgType = ArgType;
+            }
           }
         }
-      }
-      assert(getContext().getCanonicalType(ArgType.getNonReferenceType()).
-             getTypePtr() ==
-             getContext().getCanonicalType(ActualArgType).getTypePtr() &&
-             "type mismatch in call argument!");
+        assert(getContext()
+                       .getCanonicalType(ArgType.getNonReferenceType())
+                       .getTypePtr() ==
+                   getContext().getCanonicalType(ActualArgType).getTypePtr() &&
+               "type mismatch in call argument!");
 #endif
-      ArgTypes.push_back(*I);
+        ArgTypes.push_back(*I);
+      }
     }
 
     // Either we've emitted all the call args, or we have a call to variadic
-    // function or some other call that allows extra arguments.
-    assert((Arg == ArgEnd || AllowExtraArguments) &&
-           "Extra arguments in non-variadic function!");
+    // function.
+    assert(
+        (Arg == ArgEnd || !CallArgTypeInfo || CallArgTypeInfo->isVariadic()) &&
+        "Extra arguments in non-variadic function!");
 
     // If we still have any arguments, emit them using the type of the argument.
     for (; Arg != ArgEnd; ++Arg)

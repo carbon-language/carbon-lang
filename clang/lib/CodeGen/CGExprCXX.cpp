@@ -1232,15 +1232,13 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   llvm::Value *allocSize =
     EmitCXXNewAllocSize(*this, E, minElements, numElements,
                         allocSizeWithoutCookie);
-  
+
   allocatorArgs.add(RValue::get(allocSize), sizeType);
 
   // We start at 1 here because the first argument (the allocation size)
   // has already been emitted.
-  EmitCallArgs(allocatorArgs, allocatorType->isVariadic(),
-               allocatorType->param_type_begin() + 1,
-               allocatorType->param_type_end(), E->placement_arg_begin(),
-               E->placement_arg_end());
+  EmitCallArgs(allocatorArgs, allocatorType, E->placement_arg_begin(),
+               E->placement_arg_end(), /*ParamsToSkip*/ 1);
 
   // Emit the allocation call.  If the allocator is a global placement
   // operator, just "inline" it directly.
