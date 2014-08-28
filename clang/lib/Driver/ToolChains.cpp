@@ -156,7 +156,7 @@ static bool isSoftFloatABI(const ArgList &Args) {
 StringRef MachO::getMachOArchName(const ArgList &Args) const {
   switch (getTriple().getArch()) {
   default:
-    return getArchName();
+    return getDefaultUniversalArchName();
 
   case llvm::Triple::aarch64:
     return "arm64";

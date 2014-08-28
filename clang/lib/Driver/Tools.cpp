@@ -4952,19 +4952,10 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   RenderExtraToolArgs(JA, CmdArgs);
 
   // If using a driver driver, force the arch.
-  llvm::Triple::ArchType Arch = getToolChain().getArch();
   if (getToolChain().getTriple().isOSDarwin()) {
     CmdArgs.push_back("-arch");
-
-    // FIXME: Remove these special cases.
-    if (Arch == llvm::Triple::ppc)
-      CmdArgs.push_back("ppc");
-    else if (Arch == llvm::Triple::ppc64)
-      CmdArgs.push_back("ppc64");
-    else if (Arch == llvm::Triple::ppc64le)
-      CmdArgs.push_back("ppc64le");
-    else
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().getArchName()));
+    CmdArgs.push_back(
+      Args.MakeArgString(getToolChain().getDefaultUniversalArchName()));
   }
 
   // Try to force gcc to match the tool chain we want, if we recognize
@@ -4972,6 +4963,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   //
   // FIXME: The triple class should directly provide the information we want
   // here.
+  llvm::Triple::ArchType Arch = getToolChain().getArch();
   if (Arch == llvm::Triple::x86 || Arch == llvm::Triple::ppc)
     CmdArgs.push_back("-m32");
   else if (Arch == llvm::Triple::x86_64 || Arch == llvm::Triple::ppc64 ||
