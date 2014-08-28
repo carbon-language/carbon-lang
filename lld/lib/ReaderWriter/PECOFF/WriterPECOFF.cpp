@@ -249,6 +249,7 @@ private:
       StringRef name, const std::vector<const DefinedAtom *> &atoms) const;
 
   mutable llvm::BumpPtrAllocator _alloc;
+  bool is64;
 };
 
 /// A DataDirectoryChunk represents data directory entries that follows the PE
@@ -446,7 +447,7 @@ AtomChunk::AtomChunk(const PECOFFLinkingContext &ctx, StringRef sectionName,
                      const std::vector<const DefinedAtom *> &atoms)
     : SectionChunk(kindAtomChunk, sectionName,
                    computeCharacteristics(ctx, sectionName, atoms)),
-      _virtualAddress(0) {
+      _virtualAddress(0), is64(ctx.is64Bit()) {
   for (auto *a : atoms)
     appendAtom(a);
 }
@@ -633,11 +634,13 @@ void AtomChunk::addBaseRelocations(std::vector<uint64_t> &relocSites) const {
   // should output debug messages with atom names and addresses so that we
   // can inspect relocations, and fix the tests (base-reloc.test, maybe
   // others) to use those messages.
+  int relType = is64 ? llvm::COFF::IMAGE_REL_AMD64_ADDR64
+                     : llvm::COFF::IMAGE_REL_I386_DIR32;
   for (const auto *layout : _atomLayouts) {
     const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
     for (const Reference *ref : *atom)
       if ((ref->kindNamespace() == Reference::KindNamespace::COFF) &&
-          (ref->kindValue() == llvm::COFF::IMAGE_REL_I386_DIR32))
+          (ref->kindValue() == relType))
         relocSites.push_back(layout->_virtualAddr + ref->offsetInAtom());
   }
 }
@@ -822,10 +825,11 @@ std::vector<uint8_t> BaseRelocChunk::createBaseRelocBlock(
   ptr += sizeof(ulittle32_t);
 
   // The rest of the block consists of offsets in the page.
+  uint16_t type = _ctx.is64Bit() ? llvm::COFF::IMAGE_REL_BASED_DIR64
+                                 : llvm::COFF::IMAGE_REL_BASED_HIGHLOW;
   for (uint16_t offset : offsets) {
     assert(offset < _ctx.getPageSize());
-    uint16_t val = (llvm::COFF::IMAGE_REL_BASED_HIGHLOW << 12) | offset;
-    *reinterpret_cast<ulittle16_t *>(ptr) = val;
+    *reinterpret_cast<ulittle16_t *>(ptr) = (type << 12) | offset;
     ptr += sizeof(ulittle16_t);
   }
   return contents;

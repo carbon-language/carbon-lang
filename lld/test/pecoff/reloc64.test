@@ -3,9 +3,13 @@
 
 # RUN: lld -flavor link /out:%t.exe /subsystem:console /machine:x64 \
 # RUN:   /entry:fn1 -- %t1.obj %t2.obj
-# RUN: llvm-objdump -d %t.exe | FileCheck %s
+# RUN: llvm-objdump -d %t.exe | FileCheck -check-prefix=TEXT %s
+# RUN: llvm-objdump -s %t.exe | FileCheck -check-prefix=RELOC %s
 
-CHECK:      Disassembly of section .text:
-CHECK-NEXT: .text:
-CHECK-NEXT:   1000:  e8 0b 00 00 00   callq 11
-CHECK-NEXT:   1005:  48 b8 10 10 00 40 01 00 00 00 movabsq $5368713232, %rax
+TEXT:      Disassembly of section .text:
+TEXT-NEXT: .text:
+TEXT-NEXT:   1000:  e8 0b 00 00 00   callq 11
+TEXT-NEXT:   1005:  48 b8 10 10 00 40 01 00 00 00 movabsq $5368713232, %rax
+
+RELOC:      Contents of section .reloc:
+RELOC-NEXT: 2000 00100000 0c000000 07a00000 00000000  ................
