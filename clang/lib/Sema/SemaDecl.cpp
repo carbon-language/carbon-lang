@@ -1623,32 +1623,30 @@ static StringRef getHeaderName(ASTContext::GetBuiltinTypeError Error) {
 /// file scope.  lazily create a decl for it. ForRedeclaration is true
 /// if we're creating this built-in in anticipation of redeclaring the
 /// built-in.
-NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
+NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID,
                                      Scope *S, bool ForRedeclaration,
                                      SourceLocation Loc) {
   LookupPredefedObjCSuperType(*this, S, II);
-  
-  Builtin::ID BID = (Builtin::ID)bid;
 
   ASTContext::GetBuiltinTypeError Error;
-  QualType R = Context.GetBuiltinType(BID, Error);
+  QualType R = Context.GetBuiltinType(ID, Error);
   if (Error) {
     if (ForRedeclaration)
       Diag(Loc, diag::warn_implicit_decl_requires_sysheader)
           << getHeaderName(Error)
-          << Context.BuiltinInfo.GetName(BID);
+          << Context.BuiltinInfo.GetName(ID);
     return nullptr;
   }
 
-  if (!ForRedeclaration && Context.BuiltinInfo.isPredefinedLibFunction(BID)) {
+  if (!ForRedeclaration && Context.BuiltinInfo.isPredefinedLibFunction(ID)) {
     Diag(Loc, diag::ext_implicit_lib_function_decl)
-      << Context.BuiltinInfo.GetName(BID)
+      << Context.BuiltinInfo.GetName(ID)
       << R;
-    if (Context.BuiltinInfo.getHeaderName(BID) &&
+    if (Context.BuiltinInfo.getHeaderName(ID) &&
         !Diags.isIgnored(diag::ext_implicit_lib_function_decl, Loc))
       Diag(Loc, diag::note_include_header_or_declare)
-          << Context.BuiltinInfo.getHeaderName(BID)
-          << Context.BuiltinInfo.GetName(BID);
+          << Context.BuiltinInfo.getHeaderName(ID)
+          << Context.BuiltinInfo.GetName(ID);
   }
 
   DeclContext *Parent = Context.getTranslationUnitDecl();
