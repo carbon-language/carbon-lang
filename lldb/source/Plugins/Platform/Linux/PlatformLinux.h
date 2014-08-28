@@ -23,6 +23,9 @@ namespace lldb_private {
     public:
 
         static void
+        DebuggerInitialize (lldb_private::Debugger &debugger);
+
+        static void
         Initialize ();
 
         static void

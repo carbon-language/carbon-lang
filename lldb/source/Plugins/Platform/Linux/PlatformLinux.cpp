@@ -43,6 +43,81 @@ using namespace lldb_private;
 
 static uint32_t g_initialize_count = 0;
 
+//------------------------------------------------------------------
+/// Code to handle the PlatformLinux settings
+//------------------------------------------------------------------
+
+static PropertyDefinition
+g_properties[] =
+{
+    { "use-llgs-for-local" , OptionValue::eTypeBoolean, true, false, NULL, NULL, "Control whether the platform uses llgs for local debug sessions." },
+    {  NULL        , OptionValue::eTypeInvalid, false, 0  , NULL, NULL, NULL  }
+};
+
+enum {
+    ePropertyUseLlgsForLocal = 0,
+};
+
+
+
+class PlatformLinuxProperties : public Properties
+{
+public:
+
+    static ConstString &
+    GetSettingName ()
+    {
+        static ConstString g_setting_name("linux");
+        return g_setting_name;
+    }
+
+    PlatformLinuxProperties() :
+    Properties ()
+    {
+        m_collection_sp.reset (new OptionValueProperties(GetSettingName()));
+        m_collection_sp->Initialize(g_properties);
+    }
+
+    virtual
+    ~PlatformLinuxProperties()
+    {
+    }
+
+    bool
+    GetUseLlgsForLocal() const
+    {
+        const uint32_t idx = ePropertyUseLlgsForLocal;
+        return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+    }
+};
+
+typedef std::shared_ptr<PlatformLinuxProperties> PlatformLinuxPropertiesSP;
+
+static const PlatformLinuxPropertiesSP &
+GetGlobalProperties()
+{
+    static PlatformLinuxPropertiesSP g_settings_sp;
+    if (!g_settings_sp)
+        g_settings_sp.reset (new PlatformLinuxProperties ());
+    return g_settings_sp;
+}
+
+void
+PlatformLinux::DebuggerInitialize (lldb_private::Debugger &debugger)
+{
+    if (!PluginManager::GetSettingForPlatformPlugin (debugger, PlatformLinuxProperties::GetSettingName()))
+    {
+        const bool is_global_setting = true;
+        PluginManager::CreateSettingForPlatformPlugin (debugger,
+                                                       GetGlobalProperties()->GetValueProperties(),
+                                                       ConstString ("Properties for the PlatformLinux plug-in."),
+                                                       is_global_setting);
+    }
+}
+
+
+//------------------------------------------------------------------
+
 Platform *
 PlatformLinux::CreateInstance (bool force, const ArchSpec *arch)
 {
@@ -160,7 +235,8 @@ PlatformLinux::Initialize ()
 #endif
         PluginManager::RegisterPlugin(PlatformLinux::GetPluginNameStatic(false),
                                       PlatformLinux::GetPluginDescriptionStatic(false),
-                                      PlatformLinux::CreateInstance);
+                                      PlatformLinux::CreateInstance,
+                                      PlatformLinux::DebuggerInitialize);
     }
 }
 
