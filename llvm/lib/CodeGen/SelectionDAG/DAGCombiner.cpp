@@ -10316,8 +10316,7 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   // at most two distinct vectors, turn this into a shuffle node.
 
   // May only combine to shuffle after legalize if shuffle is legal.
-  if (LegalOperations &&
-      !TLI.isOperationLegalOrCustom(ISD::VECTOR_SHUFFLE, VT))
+  if (LegalOperations && !TLI.isOperationLegal(ISD::VECTOR_SHUFFLE, VT))
     return SDValue();
 
   SDValue VecIn1, VecIn2;
