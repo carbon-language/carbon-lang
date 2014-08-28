@@ -220,7 +220,7 @@ namespace {
   int HexagonHardwareLoops::Counter = 0;
 #endif
 
-  /// \brief Abstraction for a trip count of a loop. A smaller vesrsion
+  /// \brief Abstraction for a trip count of a loop. A smaller version
   /// of the MachineOperand class without the concerns of changing the
   /// operand representation.
   class CountValue {
