@@ -626,7 +626,9 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
           cast<GlobalVariable>(GV)) < 32)
     return UStringSection;
 
-  if (Kind.isMergeableConst()) {
+  // With MachO only variables whose corresponding symbol starts with 'l' or
+  // 'L' can be merged, so we only try merging GVs with private linkage.
+  if (GV->hasPrivateLinkage() && Kind.isMergeableConst()) {
     if (Kind.isMergeableConst4())
       return FourByteConstantSection;
     if (Kind.isMergeableConst8())
