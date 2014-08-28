@@ -572,11 +572,11 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
     }
 
     // On overflow, produce a -1 so operator new will fail.
-    if (hasAnyOverflow) {
-      size = llvm::Constant::getAllOnesValue(CGF.SizeTy);
-    } else {
+    if (hasAnyOverflow)
+      size = CGF.CGM.getCXXABI().EmitNewArrayLengthOverflowCheck(
+          CGF, true, nullptr, llvm::Constant::getAllOnesValue(CGF.SizeTy));
+    else
       size = llvm::ConstantInt::get(CGF.SizeTy, allocationSize);
-    }
 
   // Otherwise, we might need to use the overflow intrinsics.
   } else {
@@ -714,9 +714,9 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
     // overwrite 'size' with an all-ones value, which should cause
     // operator new to throw.
     if (hasOverflow)
-      size = CGF.Builder.CreateSelect(hasOverflow,
-                                 llvm::Constant::getAllOnesValue(CGF.SizeTy),
-                                      size);
+      size = CGF.CGM.getCXXABI().EmitNewArrayLengthOverflowCheck(CGF, false,
+                                                                 hasOverflow,
+                                                                 size);
   }
 
   if (cookieSize == 0)

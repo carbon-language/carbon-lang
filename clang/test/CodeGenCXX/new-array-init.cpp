@@ -14,7 +14,12 @@ void fn(int n) {
 // CHECK-LABEL: define void @_Z15const_underflowv
 void const_underflow() {
   // CHECK-NOT: icmp ult i{{32|64}} %{{[^ ]+}}, 3
-  // CHECK: call noalias i8* @_Zna{{.}}(i{{32|64}} -1)
+  // CHECK: br label %[[BAD:.*]]
+  // CHECK: [[BAD]]:
+  // CHECK-NEXT: call void @__cxa_bad_array_new_length()
+  // CHECK-NEXT: unreachable
+  // CHECK: {{.*}}:
+  // CHECK: ret void
   new int[2] { 1, 2, 3 };
 }
 
