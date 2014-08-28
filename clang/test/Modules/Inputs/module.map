@@ -233,6 +233,10 @@ module cxx_templates_c {
   header "cxx-templates-c.h"
 }
 
+module cxx_templates_d {
+  header "cxx-templates-d.h"
+}
+
 module cxx_decls {
   module unimported {
     header "cxx-decls-unimported.h"

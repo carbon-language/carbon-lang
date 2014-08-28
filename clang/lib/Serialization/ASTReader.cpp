@@ -6065,9 +6065,7 @@ void ASTReader::CompleteRedeclChain(const Decl *D) {
   // If this is a named declaration, complete it by looking it up
   // within its context.
   //
-  // FIXME: We don't currently handle the cases where we can't do this;
-  // merging a class definition that contains unnamed entities should merge
-  // those entities. Likewise, merging a function definition should merge
+  // FIXME: Merging a function definition should merge
   // all mergeable entities within it.
   if (isa<TranslationUnitDecl>(DC) || isa<NamespaceDecl>(DC) ||
       isa<CXXRecordDecl>(DC) || isa<EnumDecl>(DC)) {
@@ -6080,6 +6078,9 @@ void ASTReader::CompleteRedeclChain(const Decl *D) {
           updateOutOfDateIdentifier(*II);
       } else
         DC->lookup(Name);
+    } else if (needsAnonymousDeclarationNumber(cast<NamedDecl>(D))) {
+      // FIXME: It'd be nice to do something a bit more targeted here.
+      D->getDeclContext()->decls_begin();
     }
   }
 }
@@ -8310,12 +8311,21 @@ void ASTReader::diagnoseOdrViolations() {
       continue;
 
     DeclContext *CanonDef = D->getDeclContext();
-    DeclContext::lookup_result R = CanonDef->lookup(D->getDeclName());
 
     bool Found = false;
     const Decl *DCanon = D->getCanonicalDecl();
 
+    for (auto RI : D->redecls()) {
+      if (RI->getLexicalDeclContext() == CanonDef) {
+        Found = true;
+        break;
+      }
+    }
+    if (Found)
+      continue;
+
     llvm::SmallVector<const NamedDecl*, 4> Candidates;
+    DeclContext::lookup_result R = CanonDef->lookup(D->getDeclName());
     for (DeclContext::lookup_iterator I = R.begin(), E = R.end();
          !Found && I != E; ++I) {
       for (auto RI : (*I)->redecls()) {

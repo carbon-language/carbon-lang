@@ -49,6 +49,7 @@ template<typename T> struct WithAnonymousDecls {
   struct { bool k; };
   union { int a, b; };
   struct { int c, d; } s;
+  enum { e = 123 };
   typedef int X;
 };
 
