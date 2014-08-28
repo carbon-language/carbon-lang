@@ -79,6 +79,8 @@ static const CoreDefinition g_core_definitions[] =
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::thumb  , ArchSpec::eCore_thumbv7m        , "thumbv7m"  },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::thumb  , ArchSpec::eCore_thumbv7em       , "thumbv7em" },
     { eByteOrderLittle, 8, 4, 4, llvm::Triple::aarch64, ArchSpec::eCore_arm_arm64       , "arm64"     },
+    { eByteOrderLittle, 8, 4, 4, llvm::Triple::aarch64, ArchSpec::eCore_arm_armv8       , "armv8"     },
+    { eByteOrderLittle, 8, 4, 4, llvm::Triple::aarch64, ArchSpec::eCore_arm_aarch64     , "aarch64"   },
 
     { eByteOrderBig   , 8, 4, 4, llvm::Triple::mips64 , ArchSpec::eCore_mips64          , "mips64"    },
     
@@ -257,6 +259,7 @@ static const ArchDefinitionEntry g_elf_arch_entries[] =
     { ArchSpec::eCore_ppc_generic     , llvm::ELF::EM_PPC    , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // PowerPC
     { ArchSpec::eCore_ppc64_generic   , llvm::ELF::EM_PPC64  , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // PowerPC64
     { ArchSpec::eCore_arm_generic     , llvm::ELF::EM_ARM    , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // ARM
+    { ArchSpec::eCore_arm_aarch64     , llvm::ELF::EM_AARCH64, LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // ARM64
     { ArchSpec::eCore_sparc9_generic  , llvm::ELF::EM_SPARCV9, LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // SPARC V9
     { ArchSpec::eCore_x86_64_x86_64   , llvm::ELF::EM_X86_64 , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // AMD64
     { ArchSpec::eCore_mips64          , llvm::ELF::EM_MIPS   , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // MIPS
@@ -1006,6 +1009,39 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
         if (core2 >= ArchSpec::kCore_kalimba_first && core2 <= ArchSpec::kCore_kalimba_last)
         {
             return true;
+        }
+        break;
+
+    case ArchSpec::eCore_arm_armv8:
+        if (!enforce_exact_match)
+        {
+            if (core2 == ArchSpec::eCore_arm_arm64)
+                return true;
+            if (core2 == ArchSpec::eCore_arm_aarch64)
+                return true;
+            try_inverse = false;
+        }
+        break;
+
+    case ArchSpec::eCore_arm_aarch64:
+        if (!enforce_exact_match)
+        {
+            if (core2 == ArchSpec::eCore_arm_arm64)
+                return true;
+            if (core2 == ArchSpec::eCore_arm_armv8)
+                return true;
+            try_inverse = false;
+        }
+        break;
+
+    case ArchSpec::eCore_arm_arm64:
+        if (!enforce_exact_match)
+        {
+            if (core2 == ArchSpec::eCore_arm_aarch64)
+                return true;
+            if (core2 == ArchSpec::eCore_arm_armv8)
+                return true;
+            try_inverse = false;
         }
         break;
 
