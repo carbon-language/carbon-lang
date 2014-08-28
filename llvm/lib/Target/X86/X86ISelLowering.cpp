@@ -16446,6 +16446,11 @@ static SDValue LowerXALUO(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::MERGE_VALUES, DL, N->getVTList(), Sum, SetCC);
 }
 
+// Sign extension of the low part of vector elements. This may be used either
+// when sign extend instructions are not available or if the vector element
+// sizes already match the sign-extended size. If the vector elements are in
+// their pre-extended size and sign extend instructions are available, that will
+// be handled by LowerSIGN_EXTEND.
 SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
                                                   SelectionDAG &DAG) const {
   SDLoc dl(Op);
@@ -16491,32 +16496,13 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
     case MVT::v4i32:
     case MVT::v8i16: {
       SDValue Op0 = Op.getOperand(0);
-      SDValue Op00 = Op0.getOperand(0);
-      SDValue Tmp1;
-      // Hopefully, this VECTOR_SHUFFLE is just a VZEXT.
-      if (Op0.getOpcode() == ISD::BITCAST &&
-          Op00.getOpcode() == ISD::VECTOR_SHUFFLE) {
-        // (sext (vzext x)) -> (vsext x)
-        Tmp1 = LowerVectorIntExtend(Op00, Subtarget, DAG);
-        if (Tmp1.getNode()) {
-          EVT ExtraEltVT = ExtraVT.getVectorElementType();
-          // This folding is only valid when the in-reg type is a vector of i8,
-          // i16, or i32.
-          if (ExtraEltVT == MVT::i8 || ExtraEltVT == MVT::i16 ||
-              ExtraEltVT == MVT::i32) {
-            SDValue Tmp1Op0 = Tmp1.getOperand(0);
-            assert(Tmp1Op0.getOpcode() == X86ISD::VZEXT &&
-                   "This optimization is invalid without a VZEXT.");
-            return DAG.getNode(X86ISD::VSEXT, dl, VT, Tmp1Op0.getOperand(0));
-          }
-          Op0 = Tmp1;
-        }
-      }
 
-      // If the above didn't work, then just use Shift-Left + Shift-Right.
-      Tmp1 = getTargetVShiftByConstNode(X86ISD::VSHLI, dl, VT, Op0, BitsDiff,
-                                        DAG);
-      return getTargetVShiftByConstNode(X86ISD::VSRAI, dl, VT, Tmp1, BitsDiff,
+      // This is a sign extension of some low part of vector elements without
+      // changing the size of the vector elements themselves:
+      // Shift-Left + Shift-Right-Algebraic.
+      SDValue Shl = getTargetVShiftByConstNode(X86ISD::VSHLI, dl, VT, Op0,
+                                               BitsDiff, DAG);
+      return getTargetVShiftByConstNode(X86ISD::VSRAI, dl, VT, Shl, BitsDiff,
                                         DAG);
     }
   }
