@@ -61,7 +61,7 @@ static void dumpSectionMemory(const SectionEntry &S, StringRef State) {
 
   while (BytesRemaining > 0) {
     if ((LoadAddr & (ColsPerRow - 1)) == 0)
-      dbgs() << "\n" << format("0x%08x", LoadAddr) << ":";
+      dbgs() << "\n" << format("0x%016" PRIx64, LoadAddr) << ":";
 
     dbgs() << " " << format("%02x", *DataAddr);
 
