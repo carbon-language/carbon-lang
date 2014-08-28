@@ -236,13 +236,6 @@ public:
 
   virtual bool EmitBadCastCall(CodeGenFunction &CGF) = 0;
 
-  /// Emit the code required to throw a std::bad_array_new_length exception by
-  /// the ABI, and returns the array length size to allocate.
-  virtual llvm::Value *
-  EmitNewArrayLengthOverflowCheck(CodeGenFunction &CGF, bool ConstantOverflow,
-                                  llvm::Value *DynamicOverflow,
-                                  llvm::Value *Size);
-
   virtual llvm::Value *GetVirtualBaseClassOffset(CodeGenFunction &CGF,
                                                  llvm::Value *This,
                                                  const CXXRecordDecl *ClassDecl,

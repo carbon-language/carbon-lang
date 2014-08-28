@@ -325,12 +325,3 @@ LValue CGCXXABI::EmitThreadLocalVarDeclLValue(CodeGenFunction &CGF,
 bool CGCXXABI::NeedsVTTParameter(GlobalDecl GD) {
   return false;
 }
-
-llvm::Value *CGCXXABI::EmitNewArrayLengthOverflowCheck(
-    CodeGenFunction &CGF, bool ConstantOverflow, llvm::Value *DynamicOverflow,
-    llvm::Value *Size) {
-  llvm::Value *AllOnes = llvm::Constant::getAllOnesValue(CGF.SizeTy);
-  if (ConstantOverflow)
-    return AllOnes;
-  return CGF.Builder.CreateSelect(DynamicOverflow, AllOnes, Size);
-}

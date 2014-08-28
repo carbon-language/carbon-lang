@@ -133,11 +133,6 @@ public:
 
   bool EmitBadCastCall(CodeGenFunction &CGF) override;
 
-  llvm::Value *EmitNewArrayLengthOverflowCheck(CodeGenFunction &CGF,
-                                               bool ConstantOverflow,
-                                               llvm::Value *DynamicOverflow,
-                                               llvm::Value *Size) override;
-
   llvm::Value *
     GetVirtualBaseClassOffset(CodeGenFunction &CGF, llvm::Value *This,
                               const CXXRecordDecl *ClassDecl,
@@ -1047,36 +1042,6 @@ bool ItaniumCXXABI::EmitBadCastCall(CodeGenFunction &CGF) {
   CGF.EmitRuntimeCallOrInvoke(Fn).setDoesNotReturn();
   CGF.Builder.CreateUnreachable();
   return true;
-}
-
-llvm::Value *ItaniumCXXABI::EmitNewArrayLengthOverflowCheck(
-    CodeGenFunction &CGF, bool ConstantOverflow, llvm::Value *DynamicOverflow,
-    llvm::Value *Size) {
-  // In C++11 and later, an overflow results in throwing
-  // std::bad_array_new_length.
-  if (!CGF.getLangOpts().CPlusPlus11)
-    return CGCXXABI::EmitNewArrayLengthOverflowCheck(CGF, ConstantOverflow,
-                                                     DynamicOverflow, Size);
-
-  llvm::BasicBlock *BadArrayNewLengthBlock =
-    CGF.createBasicBlock("new.bad_array_new_length");
-  llvm::BasicBlock *EndBlock = CGF.createBasicBlock("new.end");
-
-  if (!ConstantOverflow) {
-    assert(DynamicOverflow && "Called for dynamic case, but no overflow value");
-    CGF.Builder.CreateCondBr(DynamicOverflow, BadArrayNewLengthBlock, EndBlock);
-  }
-  CGF.EmitBlock(BadArrayNewLengthBlock);
-
-  // void __cxa_bad_array_new_length();
-  llvm::FunctionType *FTy = llvm::FunctionType::get(CGF.VoidTy, false);
-  llvm::Value *Fn =
-    CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_bad_array_new_length");
-  CGF.EmitRuntimeCallOrInvoke(Fn).setDoesNotReturn();
-  CGF.Builder.CreateUnreachable();
-
-  CGF.EmitBlock(EndBlock);
-  return Size;
 }
 
 llvm::Value *
