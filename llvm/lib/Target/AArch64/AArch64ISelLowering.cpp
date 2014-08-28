@@ -7514,11 +7514,11 @@ static SDValue performExtendCombine(SDNode *N,
   // If the vector type isn't a simple VT, it's beyond the scope of what
   // we're  worried about here. Let legalization do its thing and hope for
   // the best.
-  if (!ResVT.isSimple())
+  SDValue Src = N->getOperand(0);
+  EVT SrcVT = Src->getValueType(0);
+  if (!ResVT.isSimple() || !SrcVT.isSimple())
     return SDValue();
 
-  SDValue Src = N->getOperand(0);
-  MVT SrcVT = Src->getValueType(0).getSimpleVT();
   // If the source VT is a 64-bit vector, we can play games and get the
   // better results we want.
   if (SrcVT.getSizeInBits() != 64)
