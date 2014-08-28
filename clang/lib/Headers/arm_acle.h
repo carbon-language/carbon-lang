@@ -111,15 +111,15 @@ static __inline__ void __attribute__((always_inline, nodebug)) __nop(void) {
 /* ROR */
 static __inline__ uint32_t __attribute__((always_inline, nodebug))
   __ror(uint32_t x, uint32_t y) {
-  if (y == 0)  return y;
-  if (y >= 32) y %= 32;
+  y %= 32;
+  if (y == 0)  return x;
   return (x >> y) | (x << (32 - y));
 }
 
 static __inline__ uint64_t __attribute__((always_inline, nodebug))
   __rorll(uint64_t x, uint32_t y) {
-  if (y == 0)  return y;
-  if (y >= 64) y %= 64;
+  y %= 64;
+  if (y == 0)  return x;
   return (x >> y) | (x << (64 - y));
 }
 
