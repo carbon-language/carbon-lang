@@ -370,6 +370,36 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
   int64_t MemLocOffset = 0;
   unsigned Limit = BlockScanLimit;
   bool isInvariantLoad = false;
+
+  // We must be careful with atomic accesses, as they may allow another thread
+  //   to touch this location, cloberring it. We are conservative: if the
+  //   QueryInst is not a simple (non-atomic) memory access, we automatically
+  //   return getClobber.
+  // If it is simple, we know based on the results of
+  // "Compiler testing via a theory of sound optimisations in the C11/C++11
+  //   memory model" in PLDI 2013, that a non-atomic location can only be
+  //   clobbered between a pair of a release and an acquire action, with no
+  //   access to the location in between.
+  // Here is an example for giving the general intuition behind this rule.
+  // In the following code:
+  //   store x 0;
+  //   release action; [1]
+  //   acquire action; [4]
+  //   %val = load x;
+  // It is unsafe to replace %val by 0 because another thread may be running:
+  //   acquire action; [2]
+  //   store x 42;
+  //   release action; [3]
+  // with synchronization from 1 to 2 and from 3 to 4, resulting in %val
+  // being 42. A key property of this program however is that if either
+  // 1 or 4 were missing, there would be a race between the store of 42
+  // either the store of 0 or the load (making the whole progam racy).
+  // The paper mentionned above shows that the same property is respected
+  // by every program that can detect any optimisation of that kind: either
+  // it is racy (undefined) or there is a release followed by an acquire
+  // between the pair of accesses under consideration.
+  bool HasSeenAcquire = false;
+
   if (isLoad && QueryInst) {
     LoadInst *LI = dyn_cast<LoadInst>(QueryInst);
     if (LI && LI->getMetadata(LLVMContext::MD_invariant_load) != nullptr)
@@ -412,12 +442,12 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
     // be accessing the location.
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
       // Atomic loads have complications involved.
-      // A monotonic load is OK if the query inst is itself not atomic.
+      // A Monotonic (or higher) load is OK if the query inst is itself not atomic.
+      // An Acquire (or higher) load sets the HasSeenAcquire flag, so that any
+      //   release store will know to return getClobber.
       // FIXME: This is overly conservative.
       if (!LI->isUnordered()) {
         if (!QueryInst)
-          return MemDepResult::getClobber(LI);
-        if (LI->getOrdering() != Monotonic)
           return MemDepResult::getClobber(LI);
         if (auto *QueryLI = dyn_cast<LoadInst>(QueryInst))
           if (!QueryLI->isSimple())
@@ -425,6 +455,8 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
         if (auto *QuerySI = dyn_cast<StoreInst>(QueryInst))
           if (!QuerySI->isSimple())
             return MemDepResult::getClobber(LI);
+        if (isAtLeastAcquire(LI->getOrdering()))
+          HasSeenAcquire = true;
       }
 
       // FIXME: this is overly conservative.
@@ -490,12 +522,12 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
 
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       // Atomic stores have complications involved.
-      // A monotonic store is OK if the query inst is itself not atomic.
+      // A Monotonic store is OK if the query inst is itself not atomic.
+      // A Release (or higher) store further requires that no acquire load
+      //   has been seen.
       // FIXME: This is overly conservative.
       if (!SI->isUnordered()) {
         if (!QueryInst)
-          return MemDepResult::getClobber(SI);
-        if (SI->getOrdering() != Monotonic)
           return MemDepResult::getClobber(SI);
         if (auto *QueryLI = dyn_cast<LoadInst>(QueryInst))
           if (!QueryLI->isSimple())
@@ -503,6 +535,8 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
         if (auto *QuerySI = dyn_cast<StoreInst>(QueryInst))
           if (!QuerySI->isSimple())
             return MemDepResult::getClobber(SI);
+        if (HasSeenAcquire && isAtLeastRelease(SI->getOrdering()))
+          return MemDepResult::getClobber(SI);
       }
 
       // FIXME: this is overly conservative.

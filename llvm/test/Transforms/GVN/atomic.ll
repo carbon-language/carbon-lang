@@ -8,7 +8,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 
 ; GVN across unordered store (allowed)
 define i32 @test1() nounwind uwtable ssp {
-; CHECK: test1
+; CHECK-LABEL: test1
 ; CHECK: add i32 %x, %x
 entry:
   %x = load i32* @y
@@ -18,10 +18,10 @@ entry:
   ret i32 %z
 }
 
-; GVN across seq_cst store (allowed in theory; not implemented ATM)
+; GVN across seq_cst store (allowed)
 define i32 @test2() nounwind uwtable ssp {
-; CHECK: test2
-; CHECK: add i32 %x, %y
+; CHECK-LABEL: test2
+; CHECK: add i32 %x, %x
 entry:
   %x = load i32* @y
   store atomic i32 %x, i32* @x seq_cst, align 4
@@ -32,7 +32,7 @@ entry:
 
 ; GVN across unordered load (allowed)
 define i32 @test3() nounwind uwtable ssp {
-; CHECK: test3
+; CHECK-LABEL: test3
 ; CHECK: add i32 %x, %x
 entry:
   %x = load i32* @y
@@ -43,11 +43,11 @@ entry:
   ret i32 %b
 }
 
-; GVN across acquire load (load after atomic load must not be removed)
+; GVN across acquire load (allowed as the original load was not atomic)
 define i32 @test4() nounwind uwtable ssp {
-; CHECK: test4
+; CHECK-LABEL: test4
 ; CHECK: load atomic i32* @x
-; CHECK: load i32* @y
+; CHECK-NOT: load i32* @y
 entry:
   %x = load i32* @y
   %y = load atomic i32* @x seq_cst, align 4
@@ -59,7 +59,7 @@ entry:
 
 ; GVN load to unordered load (allowed)
 define i32 @test5() nounwind uwtable ssp {
-; CHECK: test5
+; CHECK-LABEL: test5
 ; CHECK: add i32 %x, %x
 entry:
   %x = load atomic i32* @x unordered, align 4
@@ -70,7 +70,7 @@ entry:
 
 ; GVN unordered load to load (unordered load must not be removed)
 define i32 @test6() nounwind uwtable ssp {
-; CHECK: test6
+; CHECK-LABEL: test6
 ; CHECK: load atomic i32* @x unordered
 entry:
   %x = load i32* @x
@@ -79,9 +79,35 @@ entry:
   ret i32 %x3
 }
 
-; GVN across monotonic store (allowed)
+; GVN across release-acquire pair (forbidden)
 define i32 @test7() nounwind uwtable ssp {
-; CHECK: test7
+; CHECK-LABEL: test7
+; CHECK: add i32 %x, %y
+entry:
+  %x = load i32* @y
+  store atomic i32 %x, i32* @x release, align 4
+  %w = load atomic i32* @x acquire, align 4
+  %y = load i32* @y
+  %z = add i32 %x, %y
+  ret i32 %z
+}
+
+; GVN across acquire-release pair (allowed)
+define i32 @test8() nounwind uwtable ssp {
+; CHECK-LABEL: test8
+; CHECK: add i32 %x, %x
+entry:
+  %x = load i32* @y
+  %w = load atomic i32* @x acquire, align 4
+  store atomic i32 %x, i32* @x release, align 4
+  %y = load i32* @y
+  %z = add i32 %x, %y
+  ret i32 %z
+}
+
+; GVN across monotonic store (allowed)
+define i32 @test9() nounwind uwtable ssp {
+; CHECK-LABEL: test9
 ; CHECK: add i32 %x, %x
 entry:
   %x = load i32* @y
@@ -92,8 +118,8 @@ entry:
 }
 
 ; GVN of an unordered across monotonic load (not allowed)
-define i32 @test8() nounwind uwtable ssp {
-; CHECK: test8
+define i32 @test10() nounwind uwtable ssp {
+; CHECK-LABEL: test10
 ; CHECK: add i32 %x, %y
 entry:
   %x = load atomic i32* @y unordered, align 4
@@ -102,5 +128,4 @@ entry:
   %z = add i32 %x, %y
   ret i32 %z
 }
-
 

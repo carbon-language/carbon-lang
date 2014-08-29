@@ -5,7 +5,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 
 ; Sanity tests for atomic stores.
 ; Note that it turns out essentially every transformation DSE does is legal on
-; atomic ops, just some transformations are not allowed across them. 
+; atomic ops, just some transformations are not allowed across release-acquire pairs.
 
 @x = common global i32 0, align 4
 @y = common global i32 0, align 4
@@ -13,35 +13,32 @@ target triple = "x86_64-apple-macosx10.7.0"
 declare void @randomop(i32*)
 
 ; DSE across unordered store (allowed)
-define void @test1()  nounwind uwtable ssp {
-; CHECK: test1
+define void @test1() {
+; CHECK-LABEL: test1
 ; CHECK-NOT: store i32 0
 ; CHECK: store i32 1
-entry:
   store i32 0, i32* @x
   store atomic i32 0, i32* @y unordered, align 4
   store i32 1, i32* @x
   ret void
 }
 
-; DSE across seq_cst load (allowed in theory; not implemented ATM)
-define i32 @test2()  nounwind uwtable ssp {
-; CHECK: test2
-; CHECK: store i32 0
+; DSE across seq_cst load (allowed)
+define i32 @test2() {
+; CHECK-LABEL: test2
+; CHECK-NOT: store i32 0
 ; CHECK: store i32 1
-entry:
   store i32 0, i32* @x
   %x = load atomic i32* @y seq_cst, align 4
   store i32 1, i32* @x
   ret i32 %x
 }
 
-; DSE across seq_cst store (store before atomic store must not be removed)
-define void @test3()  nounwind uwtable ssp {
-; CHECK: test3
-; CHECK: store i32
+; DSE across seq_cst store (allowed)
+define void @test3() {
+; CHECK-LABEL: test3
+; CHECK-NOT: store i32 0
 ; CHECK: store atomic i32 2
-entry:
   store i32 0, i32* @x
   store atomic i32 2, i32* @y seq_cst, align 4
   store i32 1, i32* @x
@@ -49,32 +46,29 @@ entry:
 }
 
 ; DSE remove unordered store (allowed)
-define void @test4()  nounwind uwtable ssp {
-; CHECK: test4
+define void @test4() {
+; CHECK-LABEL: test4
 ; CHECK-NOT: store atomic
 ; CHECK: store i32 1
-entry:
   store atomic i32 0, i32* @x unordered, align 4
   store i32 1, i32* @x
   ret void
 }
 
 ; DSE unordered store overwriting non-atomic store (allowed)
-define void @test5()  nounwind uwtable ssp {
-; CHECK: test5
+define void @test5() {
+; CHECK-LABEL: test5
 ; CHECK: store atomic i32 1
-entry:
   store i32 0, i32* @x
   store atomic i32 1, i32* @x unordered, align 4
   ret void
 }
 
 ; DSE no-op unordered atomic store (allowed)
-define void @test6()  nounwind uwtable ssp {
-; CHECK: test6
+define void @test6() {
+; CHECK-LABEL: test6
 ; CHECK-NOT: store
 ; CHECK: ret void
-entry:
   %x = load atomic i32* @x unordered, align 4
   store atomic i32 %x, i32* @x unordered, align 4
   ret void
@@ -82,10 +76,9 @@ entry:
 
 ; DSE seq_cst store (be conservative; DSE doesn't have infrastructure
 ; to reason about atomic operations).
-define void @test7()  nounwind uwtable ssp {
-; CHECK: test7
-; CHECK: store atomic 
-entry:
+define void @test7() {
+; CHECK-LABEL: test7
+; CHECK: store atomic
   %a = alloca i32
   store atomic i32 0, i32* %a seq_cst, align 4
   ret void
@@ -93,11 +86,10 @@ entry:
 
 ; DSE and seq_cst load (be conservative; DSE doesn't have infrastructure
 ; to reason about atomic operations).
-define i32 @test8()  nounwind uwtable ssp {
-; CHECK: test8
+define i32 @test8() {
+; CHECK-LABEL: test8
 ; CHECK: store
-; CHECK: load atomic 
-entry:
+; CHECK: load atomic
   %a = alloca i32
   call void @randomop(i32* %a)
   store i32 0, i32* %a, align 4
@@ -106,11 +98,10 @@ entry:
 }
 
 ; DSE across monotonic load (allowed as long as the eliminated store isUnordered)
-define i32 @test9()  nounwind uwtable ssp {
-; CHECK: test9
+define i32 @test9() {
+; CHECK-LABEL: test9
 ; CHECK-NOT: store i32 0
 ; CHECK: store i32 1
-entry:
   store i32 0, i32* @x
   %x = load atomic i32* @y monotonic, align 4
   store i32 1, i32* @x
@@ -118,11 +109,10 @@ entry:
 }
 
 ; DSE across monotonic store (allowed as long as the eliminated store isUnordered)
-define void @test10()  nounwind uwtable ssp {
-; CHECK: test10
+define void @test10() {
+; CHECK-LABEL: test10
 ; CHECK-NOT: store i32 0
 ; CHECK: store i32 1
-entry:
   store i32 0, i32* @x
   store atomic i32 42, i32* @y monotonic, align 4
   store i32 1, i32* @x
@@ -130,11 +120,10 @@ entry:
 }
 
 ; DSE across monotonic load (forbidden since the eliminated store is atomic)
-define i32 @test11()  nounwind uwtable ssp {
-; CHECK: test11
+define i32 @test11() {
+; CHECK-LABEL: test11
 ; CHECK: store atomic i32 0
 ; CHECK: store atomic i32 1
-entry:
   store atomic i32 0, i32* @x monotonic, align 4
   %x = load atomic i32* @y monotonic, align 4
   store atomic i32 1, i32* @x monotonic, align 4
@@ -142,13 +131,48 @@ entry:
 }
 
 ; DSE across monotonic store (forbidden since the eliminated store is atomic)
-define void @test12()  nounwind uwtable ssp {
-; CHECK: test12
+define void @test12() {
+; CHECK-LABEL: test12
 ; CHECK: store atomic i32 0
 ; CHECK: store atomic i32 1
-entry:
   store atomic i32 0, i32* @x monotonic, align 4
   store atomic i32 42, i32* @y monotonic, align 4
   store atomic i32 1, i32* @x monotonic, align 4
   ret void
+}
+
+; DSE is allowed across a pair of an atomic read and then write.
+define i32 @test13() {
+; CHECK-LABEL: test13
+; CHECK-NOT: store i32 0
+; CHECK: store i32 1
+  store i32 0, i32* @x
+  %x = load atomic i32* @y seq_cst, align 4
+  store atomic i32 %x, i32* @y seq_cst, align 4
+  store i32 1, i32* @x
+  ret i32 %x
+}
+
+; Same if it is acquire-release instead of seq_cst/seq_cst
+define i32 @test14() {
+; CHECK-LABEL: test14
+; CHECK-NOT: store i32 0
+; CHECK: store i32 1
+  store i32 0, i32* @x
+  %x = load atomic i32* @y acquire, align 4
+  store atomic i32 %x, i32* @y release, align 4
+  store i32 1, i32* @x
+  ret i32 %x
+}
+
+; But DSE is not allowed across a release-acquire pair.
+define i32 @test15() {
+; CHECK-LABEL: test15
+; CHECK: store i32 0
+; CHECK: store i32 1
+  store i32 0, i32* @x
+  store atomic i32 0, i32* @y release, align 4
+  %x = load atomic i32* @y acquire, align 4
+  store i32 1, i32* @x
+  ret i32 %x
 }
