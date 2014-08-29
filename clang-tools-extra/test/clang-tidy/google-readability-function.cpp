@@ -43,6 +43,9 @@ struct X {
 // CHECK-FIXES: X operator++(int /*unused*/) {}
   X operator--(int /*unused*/) {}
 
+  X(X&) = delete;
+  X &operator=(X&) = default;
+
   const int &i;
 };
 

@@ -40,7 +40,8 @@ void NamedParameterCheck::check(const MatchFinder::MatchResult &Result) {
   // Ignore declarations without a definition if we're not dealing with an
   // overriden method.
   const FunctionDecl *Definition = nullptr;
-  if (!Function->isDefined(Definition) &&
+  if ((!Function->isDefined(Definition) || Function->isDefaulted() ||
+       Function->isDeleted()) &&
       (!isa<CXXMethodDecl>(Function) ||
        cast<CXXMethodDecl>(Function)->size_overridden_methods() == 0))
     return;
