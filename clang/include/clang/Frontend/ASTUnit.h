@@ -424,10 +424,23 @@ private:
 
   void CleanTemporaryFiles();
   bool Parse(std::unique_ptr<llvm::MemoryBuffer> OverrideMainBuffer);
-  
-  std::pair<llvm::MemoryBuffer *, std::pair<unsigned, bool> >
-  ComputePreamble(CompilerInvocation &Invocation, 
-                  unsigned MaxLines, bool &CreatedBuffer);
+
+  struct ComputedPreamble {
+    llvm::MemoryBuffer *Buffer;
+    std::unique_ptr<llvm::MemoryBuffer> Owner;
+    unsigned Size;
+    bool PreambleEndsAtStartOfLine;
+    ComputedPreamble(llvm::MemoryBuffer *Buffer,
+                     std::unique_ptr<llvm::MemoryBuffer> Owner, unsigned Size,
+                     bool PreambleEndsAtStartOfLine)
+        : Buffer(Buffer), Owner(std::move(Owner)), Size(Size),
+          PreambleEndsAtStartOfLine(PreambleEndsAtStartOfLine) {}
+    ComputedPreamble(ComputedPreamble &&C)
+        : Buffer(C.Buffer), Owner(std::move(C.Owner)), Size(C.Size),
+          PreambleEndsAtStartOfLine(C.PreambleEndsAtStartOfLine) {}
+  };
+  ComputedPreamble ComputePreamble(CompilerInvocation &Invocation,
+                                   unsigned MaxLines);
 
   std::unique_ptr<llvm::MemoryBuffer> getMainBufferWithPrecompiledPreamble(
       const CompilerInvocation &PreambleInvocationIn, bool AllowRebuild = true,
