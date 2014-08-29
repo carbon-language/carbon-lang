@@ -165,9 +165,8 @@ static void SetupSerializedDiagnostics(DiagnosticOptions *DiagOpts,
                                        DiagnosticsEngine &Diags,
                                        StringRef OutputFile) {
   std::error_code EC;
-  std::unique_ptr<llvm::raw_fd_ostream> OS;
-  OS.reset(
-      new llvm::raw_fd_ostream(OutputFile.str(), EC, llvm::sys::fs::F_None));
+  auto OS = llvm::make_unique<llvm::raw_fd_ostream>(OutputFile.str(), EC,
+                                                    llvm::sys::fs::F_None);
 
   if (EC) {
     Diags.Report(diag::warn_fe_serialized_diag_failure) << OutputFile
@@ -176,7 +175,7 @@ static void SetupSerializedDiagnostics(DiagnosticOptions *DiagOpts,
   }
 
   DiagnosticConsumer *SerializedConsumer =
-      clang::serialized_diags::create(OS.release(), DiagOpts);
+      clang::serialized_diags::create(std::move(OS), DiagOpts);
 
   Diags.setClient(new ChainedDiagnosticConsumer(Diags.takeClient(),
                                                 SerializedConsumer));

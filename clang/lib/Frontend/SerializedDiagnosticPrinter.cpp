@@ -96,10 +96,9 @@ class SDiagsWriter : public DiagnosticConsumer {
     : LangOpts(nullptr), OriginalInstance(false), State(State) {}
 
 public:
-  SDiagsWriter(raw_ostream *os, DiagnosticOptions *diags)
-    : LangOpts(nullptr), OriginalInstance(true),
-      State(new SharedState(os, diags))
-  {
+  SDiagsWriter(std::unique_ptr<raw_ostream> os, DiagnosticOptions *diags)
+      : LangOpts(nullptr), OriginalInstance(true),
+        State(new SharedState(std::move(os), diags)) {
     EmitPreamble();
   }
 
@@ -187,8 +186,9 @@ private:
   /// \brief State that is shared among the various clones of this diagnostic
   /// consumer.
   struct SharedState : RefCountedBase<SharedState> {
-    SharedState(raw_ostream *os, DiagnosticOptions *diags)
-      : DiagOpts(diags), Stream(Buffer), OS(os), EmittedAnyDiagBlocks(false) { }
+    SharedState(std::unique_ptr<raw_ostream> os, DiagnosticOptions *diags)
+        : DiagOpts(diags), Stream(Buffer), OS(std::move(os)),
+          EmittedAnyDiagBlocks(false) {}
 
     /// \brief Diagnostic options.
     IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
@@ -236,8 +236,9 @@ private:
 
 namespace clang {
 namespace serialized_diags {
-DiagnosticConsumer *create(raw_ostream *OS, DiagnosticOptions *diags) {
-  return new SDiagsWriter(OS, diags);
+DiagnosticConsumer *create(std::unique_ptr<raw_ostream> OS,
+                           DiagnosticOptions *diags) {
+  return new SDiagsWriter(std::move(OS), diags);
 }
 } // end namespace serialized_diags
 } // end namespace clang
