@@ -1321,6 +1321,15 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
           NewBits.push_back(BI->getBit((e - i) - 1));
         continue;
       }
+      // bits<n> can also come from variable initializers.
+      if (VarInit *VI = dyn_cast<VarInit>(Vals[i])) {
+        if (BitsRecTy *BitsRec = dyn_cast<BitsRecTy>(VI->getType())) {
+          for (unsigned i = 0, e = BitsRec->getNumBits(); i != e; ++i)
+            NewBits.push_back(VI->getBit((e - i) - 1));
+          continue;
+        }
+        // Fallthrough to try convert this to a bit.
+      }
       // All other values must be convertible to just a single bit.
       Init *Bit = Vals[i]->convertInitializerTo(BitRecTy::get());
       if (!Bit) {
