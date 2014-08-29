@@ -632,7 +632,7 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
       }
       
     // Handle 'l' flag
-    case LengthModifier::AsLong:
+    case LengthModifier::AsLong: // or AsWideChar
       switch (CS.getKind()) {
         case ConversionSpecifier::dArg:
         case ConversionSpecifier::DArg:
