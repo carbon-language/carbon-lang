@@ -7903,10 +7903,271 @@ static SDValue performNEONPostLDSTCombine(SDNode *N,
   return SDValue();
 }
 
+// Checks to see if the value is the prescribed width and returns information
+// about its extension mode.
+static
+bool checkValueWidth(SDValue V, unsigned width, ISD::LoadExtType &ExtType) {
+  ExtType = ISD::NON_EXTLOAD;
+  switch(V.getNode()->getOpcode()) {
+  default:
+    return false;
+  case ISD::LOAD: {
+    LoadSDNode *LoadNode = cast<LoadSDNode>(V.getNode());
+    if ((LoadNode->getMemoryVT() == MVT::i8 && width == 8)
+       || (LoadNode->getMemoryVT() == MVT::i16 && width == 16)) {
+      ExtType = LoadNode->getExtensionType();
+      return true;
+    }
+    return false;
+  }
+  case ISD::AssertSext: {
+    VTSDNode *TypeNode = cast<VTSDNode>(V.getNode()->getOperand(1));
+    if ((TypeNode->getVT() == MVT::i8 && width == 8)
+       || (TypeNode->getVT() == MVT::i16 && width == 16)) {
+      ExtType = ISD::SEXTLOAD;
+      return true;
+    }
+    return false;
+  }
+  case ISD::AssertZext: {
+    VTSDNode *TypeNode = cast<VTSDNode>(V.getNode()->getOperand(1));
+    if ((TypeNode->getVT() == MVT::i8 && width == 8)
+       || (TypeNode->getVT() == MVT::i16 && width == 16)) {
+      ExtType = ISD::ZEXTLOAD;
+      return true;
+    }
+    return false;
+  }
+  case ISD::Constant:
+  case ISD::TargetConstant: {
+    if(abs(cast<ConstantSDNode>(V.getNode())->getSExtValue()) < 1<<(width-1))
+      return true;
+    return false;
+  }
+  }
+
+  return true;
+}
+
+// This function does a whole lot of voodoo to determine if the tests are
+// equivalent without and with a mask. Essentially what happens is that given a
+// DAG resembling:
+//
+//  +-------------+ +-------------+ +-------------+ +-------------+
+//  |    Input    | | AddConstant | | CompConstant| |     CC      |
+//  +-------------+ +-------------+ +-------------+ +-------------+
+//           |           |           |               |
+//           V           V           |    +----------+
+//          +-------------+  +----+  |    |
+//          |     ADD     |  |0xff|  |    |
+//          +-------------+  +----+  |    |
+//                  |           |    |    |
+//                  V           V    |    |
+//                 +-------------+   |    |
+//                 |     AND     |   |    |
+//                 +-------------+   |    |
+//                      |            |    |
+//                      +-----+      |    |
+//                            |      |    |
+//                            V      V    V
+//                           +-------------+
+//                           |     CMP     |
+//                           +-------------+
+//
+// The AND node may be safely removed for some combinations of inputs. In
+// particular we need to take into account the extension type of the Input,
+// the exact values of AddConstant, CompConstant, and CC, along with the nominal
+// width of the input (this can work for any width inputs, the above graph is
+// specific to 8 bits.
+//
+// The specific equations were worked out by generating output tables for each
+// AArch64CC value in terms of and AddConstant (w1), CompConstant(w2). The
+// problem was simplified by working with 4 bit inputs, which means we only
+// needed to reason about 24 distinct bit patterns: 8 patterns unique to zero
+// extension (8,15), 8 patterns unique to sign extensions (-8,-1), and 8
+// patterns present in both extensions (0,7). For every distinct set of
+// AddConstant and CompConstants bit patterns we can consider the masked and
+// unmasked versions to be equivalent if the result of this function is true for
+// all 16 distinct bit patterns of for the current extension type of Input (w0).
+//
+//   sub      w8, w0, w1
+//   and      w10, w8, #0x0f
+//   cmp      w8, w2
+//   cset     w9, AArch64CC
+//   cmp      w10, w2
+//   cset     w11, AArch64CC
+//   cmp      w9, w11
+//   cset     w0, eq
+//   ret
+//
+// Since the above function shows when the outputs are equivalent it defines
+// when it is safe to remove the AND. Unfortunately it only runs on AArch64 and
+// would be expensive to run during compiles. The equations below were written
+// in a test harness that confirmed they gave equivalent outputs to the above
+// for all inputs function, so they can be used determine if the removal is
+// legal instead.
+//
+// isEquivalentMaskless() is the code for testing if the AND can be removed
+// factored out of the DAG recognition as the DAG can take several forms.
+
+static
+bool isEquivalentMaskless(unsigned CC, unsigned width,
+                          ISD::LoadExtType ExtType, signed AddConstant,
+                          signed CompConstant) {
+  // By being careful about our equations and only writing the in term
+  // symbolic values and well known constants (0, 1, -1, MaxUInt) we can
+  // make them generally applicable to all bit widths.
+  signed MaxUInt = (1 << width);
+
+  // For the purposes of these comparisons sign extending the type is
+  // equivalent to zero extending the add and displacing it by half the integer
+  // width. Provided we are careful and make sure our equations are valid over
+  // the whole range we can just adjust the input and avoid writing equations
+  // for sign extended inputs.
+  if (ExtType == ISD::SEXTLOAD)
+    AddConstant -= (1 << (width-1));
+
+  switch(CC) {
+  case AArch64CC::LE:
+  case AArch64CC::GT: {
+    if ((AddConstant == 0) ||
+        (CompConstant == MaxUInt - 1 && AddConstant < 0) ||
+        (AddConstant >= 0 && CompConstant < 0) ||
+        (AddConstant <= 0 && CompConstant <= 0 && CompConstant < AddConstant))
+      return true;
+  } break;
+  case AArch64CC::LT:
+  case AArch64CC::GE: {
+    if ((AddConstant == 0) ||
+        (AddConstant >= 0 && CompConstant <= 0) ||
+        (AddConstant <= 0 && CompConstant <= 0 && CompConstant <= AddConstant))
+      return true;
+  } break;
+  case AArch64CC::HI:
+  case AArch64CC::LS: {
+    if ((AddConstant >= 0 && CompConstant < 0) ||
+       (AddConstant <= 0 && CompConstant >= -1 &&
+        CompConstant < AddConstant + MaxUInt))
+      return true;
+  } break;
+  case AArch64CC::PL:
+  case AArch64CC::MI: {
+    if ((AddConstant == 0) ||
+        (AddConstant > 0 && CompConstant <= 0) ||
+        (AddConstant < 0 && CompConstant <= AddConstant))
+      return true;
+  } break;
+  case AArch64CC::LO:
+  case AArch64CC::HS: {
+    if ((AddConstant >= 0 && CompConstant <= 0) ||
+        (AddConstant <= 0 && CompConstant >= 0 &&
+         CompConstant <= AddConstant + MaxUInt))
+      return true;
+  } break;
+  case AArch64CC::EQ:
+  case AArch64CC::NE: {
+    if ((AddConstant > 0 && CompConstant < 0) ||
+        (AddConstant < 0 && CompConstant >= 0 &&
+         CompConstant < AddConstant + MaxUInt) ||
+        (AddConstant >= 0 && CompConstant >= 0 &&
+         CompConstant >= AddConstant) ||
+        (AddConstant <= 0 && CompConstant < 0 && CompConstant < AddConstant))
+
+      return true;
+  } break;
+  case AArch64CC::VS:
+  case AArch64CC::VC:
+  case AArch64CC::AL:
+  case AArch64CC::NV:
+    return true;
+  case AArch64CC::Invalid:
+    break;
+  }
+
+  return false;
+}
+
+static
+SDValue performCONDCombine(SDNode *N,
+                           TargetLowering::DAGCombinerInfo &DCI,
+                           SelectionDAG &DAG, unsigned CCIndex,
+                           unsigned CmpIndex) {
+  unsigned CC = cast<ConstantSDNode>(N->getOperand(CCIndex))->getSExtValue();
+  SDNode *SubsNode = N->getOperand(CmpIndex).getNode();
+  unsigned CondOpcode = SubsNode->getOpcode();
+
+  if (CondOpcode != AArch64ISD::SUBS)
+    return SDValue();
+
+  // There is a SUBS feeding this condition. Is it fed by a mask we can
+  // use?
+
+  SDNode *AndNode = SubsNode->getOperand(0).getNode();
+  unsigned MaskBits = 0;
+
+  if (AndNode->getOpcode() != ISD::AND)
+    return SDValue();
+
+  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(AndNode->getOperand(1))) {
+    uint32_t CNV = CN->getZExtValue();
+    if (CNV == 255)
+      MaskBits = 8;
+    else if (CNV == 65535)
+      MaskBits = 16;
+  }
+
+  if (!MaskBits)
+    return SDValue();
+
+  SDValue AddValue = AndNode->getOperand(0);
+
+  if (AddValue.getOpcode() != ISD::ADD)
+    return SDValue();
+
+  // The basic dag structure is correct, grab the inputs and validate them.
+
+  SDValue AddInputValue1 = AddValue.getNode()->getOperand(0);
+  SDValue AddInputValue2 = AddValue.getNode()->getOperand(1);
+  SDValue SubsInputValue = SubsNode->getOperand(1);
+
+  // The mask is present and the provenance of all the values is a smaller type,
+  // lets see if the mask is superfluous.
+
+  if (!isa<ConstantSDNode>(AddInputValue2.getNode()) ||
+      !isa<ConstantSDNode>(SubsInputValue.getNode()))
+    return SDValue();
+
+  ISD::LoadExtType ExtType;
+
+  if (!checkValueWidth(SubsInputValue, MaskBits, ExtType) ||
+      !checkValueWidth(AddInputValue2, MaskBits, ExtType) ||
+      !checkValueWidth(AddInputValue1, MaskBits, ExtType) )
+    return SDValue();
+
+  if(!isEquivalentMaskless(CC, MaskBits, ExtType,
+                cast<ConstantSDNode>(AddInputValue2.getNode())->getSExtValue(),
+                cast<ConstantSDNode>(SubsInputValue.getNode())->getSExtValue()))
+    return SDValue();
+
+  // The AND is not necessary, remove it.
+
+  SDVTList VTs = DAG.getVTList(SubsNode->getValueType(0),
+                               SubsNode->getValueType(1));
+  SDValue Ops[] = { AddValue, SubsNode->getOperand(1) };
+
+  SDValue NewValue = DAG.getNode(CondOpcode, SDLoc(SubsNode), VTs, Ops);
+  DAG.ReplaceAllUsesWith(SubsNode, NewValue.getNode());
+
+  return SDValue(N, 0);
+}
+
 // Optimize compare with zero and branch.
 static SDValue performBRCONDCombine(SDNode *N,
                                     TargetLowering::DAGCombinerInfo &DCI,
                                     SelectionDAG &DAG) {
+  SDValue NV = performCONDCombine(N, DCI, DAG, 2, 3);
+  if (NV.getNode())
+    N = NV.getNode();
   SDValue Chain = N->getOperand(0);
   SDValue Dest = N->getOperand(1);
   SDValue CCVal = N->getOperand(2);
@@ -8063,6 +8324,8 @@ SDValue AArch64TargetLowering::PerformDAGCombine(SDNode *N,
     return performSTORECombine(N, DCI, DAG, Subtarget);
   case AArch64ISD::BRCOND:
     return performBRCONDCombine(N, DCI, DAG);
+  case AArch64ISD::CSEL:
+    return performCONDCombine(N, DCI, DAG, 2, 3);
   case AArch64ISD::DUP:
     return performPostLD1Combine(N, DCI, false);
   case ISD::INSERT_VECTOR_ELT:
