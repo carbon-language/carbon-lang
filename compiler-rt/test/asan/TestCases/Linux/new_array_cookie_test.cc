@@ -1,8 +1,8 @@
 // REQUIRES: asan-64-bits
 // RUN: %clangxx_asan -O3 %s -o %t
-// RUN                                     %run %t
+// RUN:                                    not %run %t 2>&1  | FileCheck %s
 // RUN: ASAN_OPTIONS=poison_array_cookie=1 not %run %t 2>&1  | FileCheck %s
-// RUN: ASAN_OPTIONS=poison_array_cookie=0 %run %t
+// RUN: ASAN_OPTIONS=poison_array_cookie=0     %run %t
 #include <stdio.h>
 struct C {
   int x;

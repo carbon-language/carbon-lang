@@ -269,7 +269,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->allow_reexec = true;
   f->print_full_thread_history = true;
   f->poison_heap = true;
-  f->poison_array_cookie = false;
+  f->poison_array_cookie = true;
   f->poison_partial = true;
   // Turn off alloc/dealloc mismatch checker on Mac and Windows for now.
   // https://code.google.com/p/address-sanitizer/issues/detail?id=131
