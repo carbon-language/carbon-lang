@@ -31,12 +31,12 @@ TEST(ProcessTest, SelfProcess) {
 
   EXPECT_LT(1u, process::get_self()->page_size());
 
-  EXPECT_LT(TimeValue::MinTime, process::get_self()->get_user_time());
-  EXPECT_GT(TimeValue::MaxTime, process::get_self()->get_user_time());
-  EXPECT_LT(TimeValue::MinTime, process::get_self()->get_system_time());
-  EXPECT_GT(TimeValue::MaxTime, process::get_self()->get_system_time());
-  EXPECT_LT(TimeValue::MinTime, process::get_self()->get_wall_time());
-  EXPECT_GT(TimeValue::MaxTime, process::get_self()->get_wall_time());
+  EXPECT_LT(TimeValue::MinTime(), process::get_self()->get_user_time());
+  EXPECT_GT(TimeValue::MaxTime(), process::get_self()->get_user_time());
+  EXPECT_LT(TimeValue::MinTime(), process::get_self()->get_system_time());
+  EXPECT_GT(TimeValue::MaxTime(), process::get_self()->get_system_time());
+  EXPECT_LT(TimeValue::MinTime(), process::get_self()->get_wall_time());
+  EXPECT_GT(TimeValue::MaxTime(), process::get_self()->get_wall_time());
 }
 
 TEST(ProcessTest, GetRandomNumberTest) {

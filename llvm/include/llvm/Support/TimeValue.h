@@ -38,28 +38,38 @@ namespace sys {
     /// value permissible by the class. MinTime is some point
     /// in the distant past, about 300 billion years BCE.
     /// @brief The smallest possible time value.
-    static const TimeValue MinTime;
+    static TimeValue MinTime() {
+      return TimeValue ( INT64_MIN,0 );
+    }
 
     /// A constant TimeValue representing the largest time
     /// value permissible by the class. MaxTime is some point
     /// in the distant future, about 300 billion years AD.
     /// @brief The largest possible time value.
-    static const TimeValue MaxTime;
+    static TimeValue MaxTime() {
+      return TimeValue ( INT64_MAX,0 );
+    }
 
     /// A constant TimeValue representing the base time,
     /// or zero time of 00:00:00 (midnight) January 1st, 2000.
     /// @brief 00:00:00 Jan 1, 2000 UTC.
-    static const TimeValue ZeroTime;
+    static TimeValue ZeroTime() {
+      return TimeValue ( 0,0 );
+    }
 
     /// A constant TimeValue for the Posix base time which is
     /// 00:00:00 (midnight) January 1st, 1970.
     /// @brief 00:00:00 Jan 1, 1970 UTC.
-    static const TimeValue PosixZeroTime;
+    static TimeValue PosixZeroTime() {
+      return TimeValue ( PosixZeroTimeSeconds,0 );
+    }
 
     /// A constant TimeValue for the Win32 base time which is
     /// 00:00:00 (midnight) January 1st, 1601.
     /// @brief 00:00:00 Jan 1, 1601 UTC.
-    static const TimeValue Win32ZeroTime;
+    static TimeValue Win32ZeroTime() {
+      return TimeValue ( Win32ZeroTimeSeconds,0 );
+    }
 
   /// @}
   /// @name Types

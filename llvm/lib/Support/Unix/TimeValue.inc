@@ -41,7 +41,7 @@ TimeValue TimeValue::now() {
     // errors concern the timezone parameter which we're passing in as 0.
     // In the unlikely case it does happen, just return MinTime, no error
     // message needed.
-    return MinTime;
+    return MinTime();
   }
 
   return TimeValue(
