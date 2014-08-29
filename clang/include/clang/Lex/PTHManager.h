@@ -52,7 +52,7 @@ class PTHManager : public IdentifierInfoLookup {
 
   /// IdMap - A lazily generated cache mapping from persistent identifiers to
   ///  IdentifierInfo*.
-  IdentifierInfo** PerIDCache;
+  std::unique_ptr<IdentifierInfo *[], llvm::FreeDeleter> PerIDCache;
 
   /// FileLookup - Abstract data structure used for mapping between files
   ///  and token data in the PTH file.
@@ -86,7 +86,8 @@ class PTHManager : public IdentifierInfoLookup {
   /// method.
   PTHManager(std::unique_ptr<const llvm::MemoryBuffer> buf,
              std::unique_ptr<PTHFileLookup> fileLookup,
-             const unsigned char *idDataTable, IdentifierInfo **perIDCache,
+             const unsigned char *idDataTable,
+             std::unique_ptr<IdentifierInfo *[], llvm::FreeDeleter> perIDCache,
              std::unique_ptr<PTHStringIdLookup> stringIdLookup, unsigned numIds,
              const unsigned char *spellingBase, const char *originalSourceFile);
 

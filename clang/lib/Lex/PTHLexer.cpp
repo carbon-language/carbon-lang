@@ -413,20 +413,18 @@ public:
 // PTHManager methods.
 //===----------------------------------------------------------------------===//
 
-PTHManager::PTHManager(std::unique_ptr<const llvm::MemoryBuffer> buf,
-                       std::unique_ptr<PTHFileLookup> fileLookup,
-                       const unsigned char *idDataTable,
-                       IdentifierInfo **perIDCache,
-                       std::unique_ptr<PTHStringIdLookup> stringIdLookup,
-                       unsigned numIds, const unsigned char *spellingBase,
-                       const char *originalSourceFile)
-    : Buf(std::move(buf)), PerIDCache(perIDCache),
+PTHManager::PTHManager(
+    std::unique_ptr<const llvm::MemoryBuffer> buf,
+    std::unique_ptr<PTHFileLookup> fileLookup, const unsigned char *idDataTable,
+    std::unique_ptr<IdentifierInfo *[], llvm::FreeDeleter> perIDCache,
+    std::unique_ptr<PTHStringIdLookup> stringIdLookup, unsigned numIds,
+    const unsigned char *spellingBase, const char *originalSourceFile)
+    : Buf(std::move(buf)), PerIDCache(std::move(perIDCache)),
       FileLookup(std::move(fileLookup)), IdDataTable(idDataTable),
       StringIdLookup(std::move(stringIdLookup)), NumIds(numIds), PP(nullptr),
       SpellingBase(spellingBase), OriginalSourceFile(originalSourceFile) {}
 
 PTHManager::~PTHManager() {
-  free(PerIDCache);
 }
 
 static void InvalidPTH(DiagnosticsEngine &Diags, const char *Msg) {
@@ -537,10 +535,10 @@ PTHManager *PTHManager::Create(const std::string &file,
   // Pre-allocate the persistent ID -> IdentifierInfo* cache.  We use calloc()
   // so that we in the best case only zero out memory once when the OS returns
   // us new pages.
-  IdentifierInfo **PerIDCache = nullptr;
+  std::unique_ptr<IdentifierInfo *[], llvm::FreeDeleter> PerIDCache;
 
   if (NumIds) {
-    PerIDCache = (IdentifierInfo**)calloc(NumIds, sizeof(*PerIDCache));
+    PerIDCache.reset((IdentifierInfo **)calloc(NumIds, sizeof(PerIDCache[0])));
     if (!PerIDCache) {
       InvalidPTH(Diags, "Could not allocate memory for processing PTH file");
       return nullptr;
@@ -554,9 +552,9 @@ PTHManager *PTHManager::Create(const std::string &file,
   if (!len) originalSourceBase = nullptr;
 
   // Create the new PTHManager.
-  return new PTHManager(std::move(File), std::move(FL), IData, PerIDCache,
-                        std::move(SL), NumIds, spellingBase,
-                        (const char *)originalSourceBase);
+  return new PTHManager(std::move(File), std::move(FL), IData,
+                        std::move(PerIDCache), std::move(SL), NumIds,
+                        spellingBase, (const char *)originalSourceBase);
 }
 
 IdentifierInfo* PTHManager::LazilyCreateIdentifierInfo(unsigned PersistentID) {
