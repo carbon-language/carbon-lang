@@ -510,7 +510,7 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
           ObjSet.insert(O);
       }
 
-      // Figure out if we're derived from anyhing that is not a noalias
+      // Figure out if we're derived from anything that is not a noalias
       // argument.
       bool CanDeriveViaCapture = false;
       for (const Value *V : ObjSet)
