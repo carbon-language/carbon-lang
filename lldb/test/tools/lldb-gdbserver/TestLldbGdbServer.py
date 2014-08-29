@@ -13,6 +13,7 @@ the initial set of tests implemented.
 import gdbremote_testcase
 import lldbgdbserverutils
 import platform
+import signal
 import unittest2
 from lldbtest import *
 
@@ -736,7 +737,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.set_inferior_startup_attach()
         self.Hg_switches_to_3_threads()
 
-    def Hc_then_Csignal_signals_correct_thread(self):
+    def Hc_then_Csignal_signals_correct_thread(self, segfault_signo):
         # NOTE only run this one in inferior-launched mode: we can't grab inferior stdout when running attached,
         # and the test requires getting stdout from the exe.
 
@@ -778,7 +779,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
             context = self.expect_gdbremote_sequence(timeout_seconds=10)
             self.assertIsNotNone(context)
             signo = context.get("signo")
-            self.assertEqual(int(signo, 16), self.TARGET_EXC_BAD_ACCESS)
+            self.assertEqual(int(signo, 16), segfault_signo)
 
             # Ensure we haven't seen this tid yet.
             thread_id = int(context.get("thread_id"), 16)
@@ -845,7 +846,8 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.init_debugserver_test()
         self.buildDsym()
         self.set_inferior_startup_launch()
-        self.Hc_then_Csignal_signals_correct_thread()
+        # Darwin debugserver translates some signals like SIGSEGV into some gdb expectations about fixed signal numbers.
+        self.Hc_then_Csignal_signals_correct_thread(self.TARGET_EXC_BAD_ACCESS)
 
     @llgs_test
     @dwarf_test
@@ -853,7 +855,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.init_llgs_test()
         self.buildDwarf()
         self.set_inferior_startup_launch()
-        self.Hc_then_Csignal_signals_correct_thread()
+        self.Hc_then_Csignal_signals_correct_thread(signal.SIGSEGV)
 
     def m_packet_reads_memory(self):
         # This is the memory we will write into the inferior and then ensure we can read back with $m.
