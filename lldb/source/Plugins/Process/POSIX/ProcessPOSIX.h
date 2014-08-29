@@ -18,7 +18,6 @@
 
 // Other libraries and framework includes
 #include "lldb/Target/Process.h"
-#include "lldb/Target/UnixSignals.h"
 #include "ProcessMessage.h"
 
 class ProcessMonitor;
@@ -33,7 +32,8 @@ public:
     // Constructors and destructors
     //------------------------------------------------------------------
     ProcessPOSIX(lldb_private::Target& target,
-                 lldb_private::Listener &listener);
+                 lldb_private::Listener &listener,
+                 lldb_private::UnixSignalsSP &unix_signals_sp);
 
     virtual
     ~ProcessPOSIX();
@@ -154,9 +154,6 @@ public:
     ProcessMonitor &
     GetMonitor() { assert(m_monitor); return *m_monitor; }
 
-    lldb_private::UnixSignals &
-    GetUnixSignals();
-
     const char *GetFilePath(const lldb_private::FileAction *file_action, const char *default_path);
 
     /// Stops all threads in the process.
@@ -191,9 +188,6 @@ protected:
 
     /// Drive any exit events to completion.
     bool m_exit_now;
-
-    /// OS-specific signal set.
-    lldb_private::UnixSignals m_signals;
 
     /// Returns true if the process has exited.
     bool HasExited();

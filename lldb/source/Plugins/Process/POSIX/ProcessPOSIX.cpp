@@ -70,8 +70,8 @@ ProcessPOSIX::Initialize()
 //------------------------------------------------------------------------------
 // Constructors and destructors.
 
-ProcessPOSIX::ProcessPOSIX(Target& target, Listener &listener)
-    : Process(target, listener),
+ProcessPOSIX::ProcessPOSIX(Target& target, Listener &listener, UnixSignalsSP &unix_signals_sp)
+    : Process(target, listener, unix_signals_sp),
       m_byte_order(lldb::endian::InlHostByteOrder()),
       m_monitor(NULL),
       m_module(NULL),
@@ -876,12 +876,6 @@ ProcessPOSIX::PutSTDIN(const char *buf, size_t len, Error &error)
         return 0;
     }
     return status;
-}
-
-UnixSignals &
-ProcessPOSIX::GetUnixSignals()
-{
-    return m_signals;
 }
 
 //------------------------------------------------------------------------------

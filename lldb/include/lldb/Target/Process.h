@@ -895,8 +895,15 @@ public:
 
     //------------------------------------------------------------------
     /// Construct with a shared pointer to a target, and the Process listener.
+    /// Uses the Host UnixSignalsSP by default.
     //------------------------------------------------------------------
     Process(Target &target, Listener &listener);
+
+    //------------------------------------------------------------------
+    /// Construct with a shared pointer to a target, the Process listener,
+    /// and the appropriate UnixSignalsSP for the process.
+    //------------------------------------------------------------------
+    Process(Target &target, Listener &listener, const UnixSignalsSP &unix_signals_sp);
 
     //------------------------------------------------------------------
     /// Destructor.
@@ -1321,10 +1328,18 @@ public:
     Error
     Signal (int signal);
 
-    virtual UnixSignals &
+    void
+    SetUnixSignals (const UnixSignalsSP &signals_sp)
+    {
+        assert (signals_sp && "null signals_sp");
+        m_unix_signals_sp = signals_sp;
+    }
+
+    UnixSignals &
     GetUnixSignals ()
     {
-        return m_unix_signals;
+        assert (m_unix_signals_sp && "null m_unix_signals_sp");
+        return *m_unix_signals_sp;
     }
 
     //==================================================================
@@ -3045,7 +3060,7 @@ protected:
     std::unique_ptr<DynamicCheckerFunctions> m_dynamic_checkers_ap; ///< The functions used by the expression parser to validate data that expressions use.
     std::unique_ptr<OperatingSystem> m_os_ap;
     std::unique_ptr<SystemRuntime> m_system_runtime_ap;
-    UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
+    UnixSignalsSP               m_unix_signals_sp;         /// This is the current signal set for this process.
     lldb::ABISP                 m_abi_sp;
     lldb::IOHandlerSP           m_process_input_reader;
     Communication               m_stdio_communication;

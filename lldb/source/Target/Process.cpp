@@ -653,6 +653,13 @@ Process::GetStaticBroadcasterClass ()
 // Process constructor
 //----------------------------------------------------------------------
 Process::Process(Target &target, Listener &listener) :
+    Process(target, listener, Host::GetUnixSignals ())
+{
+    // This constructor just delegates to the full Process constructor,
+    // defaulting to using the Host's UnixSignals.
+}
+
+Process::Process(Target &target, Listener &listener, const UnixSignalsSP &unix_signals_sp) :
     ProcessProperties (false),
     UserID (LLDB_INVALID_PROCESS_ID),
     Broadcaster (&(target.GetDebugger()), "lldb.process"),
@@ -682,7 +689,7 @@ Process::Process(Target &target, Listener &listener) :
     m_listener (listener),
     m_breakpoint_site_list (),
     m_dynamic_checkers_ap (),
-    m_unix_signals (),
+    m_unix_signals_sp (unix_signals_sp),
     m_abi_sp (),
     m_process_input_reader (),
     m_stdio_communication ("process.stdio"),
@@ -712,6 +719,9 @@ Process::Process(Target &target, Listener &listener) :
     if (log)
         log->Printf ("%p Process::Process()", static_cast<void*>(this));
 
+    if (!m_unix_signals_sp)
+        m_unix_signals_sp.reset (new UnixSignals ());
+
     SetEventName (eBroadcastBitStateChanged, "state-changed");
     SetEventName (eBroadcastBitInterrupt, "interrupt");
     SetEventName (eBroadcastBitSTDOUT, "stdout-available");
@@ -737,6 +747,8 @@ Process::Process(Target &target, Listener &listener) :
                                                      eBroadcastInternalStateControlStop |
                                                      eBroadcastInternalStateControlPause |
                                                      eBroadcastInternalStateControlResume);
+    // We need something valid here, even if just the default UnixSignalsSP.
+    assert (m_unix_signals_sp && "null m_unix_signals_sp after initialization");
 }
 
 //----------------------------------------------------------------------

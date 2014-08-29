@@ -104,18 +104,6 @@ public:
     IsAlive ();
 
     //------------------------------------------------------------------
-    // Process Signals
-    //------------------------------------------------------------------
-    virtual lldb_private::UnixSignals &
-    GetUnixSignals()
-    {
-        if (m_signals_sp)
-            return *m_signals_sp;
-        else
-            return Process::GetUnixSignals();
-    }
-
-    //------------------------------------------------------------------
     // Process Memory
     //------------------------------------------------------------------
     virtual size_t
@@ -155,7 +143,6 @@ private:
     DISALLOW_COPY_AND_ASSIGN (ProcessElfCore);
 
     llvm::Triple::OSType m_os;
-    std::shared_ptr<lldb_private::UnixSignals> m_signals_sp;
 
     // True if m_thread_contexts contains valid entries
     bool m_thread_data_valid;

@@ -20,12 +20,14 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/DynamicLoader.h"
+#include "lldb/Target/UnixSignals.h"
 
 #include "llvm/Support/ELF.h"
 
 #include "Plugins/ObjectFile/ELF/ObjectFileELF.h"
 #include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
 #include "Plugins/Process/Utility/FreeBSDSignals.h"
+#include "Plugins/Process/Utility/LinuxSignals.h"
 
 // Project includes
 #include "ProcessElfCore.h"
@@ -108,7 +110,6 @@ ProcessElfCore::ProcessElfCore(Target& target, Listener &listener,
     m_core_file (core_file),
     m_dyld_plugin_name (),
     m_os(llvm::Triple::UnknownOS),
-    m_signals_sp (),
     m_thread_data_valid(false),
     m_thread_data(),
     m_core_aranges ()
@@ -236,8 +237,17 @@ ProcessElfCore::DoLoadCore ()
     switch (m_os)
     {
         case llvm::Triple::FreeBSD:
-            m_signals_sp.reset(new FreeBSDSignals());
+        {
+            static UnixSignalsSP s_freebsd_signals_sp(new FreeBSDSignals ());
+            SetUnixSignals(s_freebsd_signals_sp);
             break;
+        }
+        case llvm::Triple::Linux:
+        {
+            static UnixSignalsSP s_linux_signals_sp(new process_linux::LinuxSignals ());
+            SetUnixSignals(s_linux_signals_sp);
+            break;
+        }
         default:
             break;
     }
@@ -356,7 +366,9 @@ ProcessElfCore::Clear()
 {
     m_thread_list.Clear();
     m_os = llvm::Triple::UnknownOS;
-    m_signals_sp.reset();
+
+    static UnixSignalsSP s_default_unix_signals_sp(new UnixSignals());
+    SetUnixSignals(s_default_unix_signals_sp);
 }
 
 void
@@ -587,4 +599,3 @@ ProcessElfCore::GetAuxvData()
     lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(start, len));
     return buffer;
 }
-

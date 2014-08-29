@@ -66,6 +66,7 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/lldb-private-forward.h"
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
@@ -1359,6 +1360,17 @@ lldb::pid_t
 Host::LaunchApplication (const FileSpec &app_file_spec)
 {
     return LLDB_INVALID_PROCESS_ID;
+}
+
+#endif
+
+#if !defined (__linux__) && !defined (__FreeBSD__) && !defined (__NetBSD__)
+
+const lldb_private::UnixSignalsSP&
+Host::GetUnixSignals ()
+{
+    static UnixSignalsSP s_unix_signals_sp (new UnixSignals ());
+    return s_unix_signals_sp;
 }
 
 #endif

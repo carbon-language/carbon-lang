@@ -17,6 +17,7 @@
 #include <string>
 
 #include "lldb/lldb-private.h"
+#include "lldb/lldb-private-forward.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Host/File.h"
 #include "lldb/Host/FileSpec.h"
@@ -337,6 +338,9 @@ public:
 
     static bool AddPosixSpawnFileAction(void *file_actions, const FileAction *info, Log *log, Error &error);
 #endif
+
+    static const lldb_private::UnixSignalsSP&
+    GetUnixSignals ();
 
     static lldb::pid_t
     LaunchApplication (const FileSpec &app_file_spec);

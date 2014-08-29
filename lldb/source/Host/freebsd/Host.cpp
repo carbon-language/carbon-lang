@@ -39,8 +39,9 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Utility/CleanUp.h"
 
-#include "llvm/Support/Host.h"
+#include "Plugins/Process/Utility/FreeBSDSignals.h"
 
+#include "llvm/Support/Host.h"
 
 extern "C" {
     extern char **environ;
@@ -401,3 +402,11 @@ Host::GetAuxvData(lldb_private::Process *process)
    done:
    return buf_sp;
 }
+
+const UnixSignalsSP&
+Host::GetUnixSignals ()
+{
+    static const lldb_private::UnixSignalsSP s_unix_signals_sp (new FreeBSDSignals ());
+    return s_unix_signals_sp;
+}
+

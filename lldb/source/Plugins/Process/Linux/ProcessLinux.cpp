@@ -22,11 +22,22 @@
 #include "ProcessLinux.h"
 #include "ProcessPOSIXLog.h"
 #include "Plugins/Process/Utility/InferiorCallPOSIX.h"
+#include "Plugins/Process/Utility/LinuxSignals.h"
 #include "ProcessMonitor.h"
 #include "LinuxThread.h"
 
 using namespace lldb;
 using namespace lldb_private;
+
+namespace
+{
+    UnixSignalsSP&
+    GetStaticLinuxSignalsSP ()
+    {
+        static UnixSignalsSP s_unix_signals_sp (new process_linux::LinuxSignals ());
+        return s_unix_signals_sp;
+    }
+}
 
 //------------------------------------------------------------------------------
 // Static functions.
@@ -64,7 +75,7 @@ ProcessLinux::Initialize()
 // Constructors and destructors.
 
 ProcessLinux::ProcessLinux(Target& target, Listener &listener, FileSpec *core_file)
-    : ProcessPOSIX(target, listener), m_core_file(core_file), m_stopping_threads(false)
+    : ProcessPOSIX(target, listener, GetStaticLinuxSignalsSP ()), m_core_file(core_file), m_stopping_threads(false)
 {
 #if 0
     // FIXME: Putting this code in the ctor and saving the byte order in a

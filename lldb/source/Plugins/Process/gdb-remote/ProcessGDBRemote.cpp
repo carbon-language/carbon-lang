@@ -287,8 +287,7 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_waiting_for_attach (false),
     m_destroy_tried_resuming (false),
     m_command_sp (),
-    m_breakpoint_pc_offset (0),
-    m_unix_signals_sp (new UnixSignals ())
+    m_breakpoint_pc_offset (0)
 {
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
@@ -713,19 +712,19 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
             switch (arch_spec.GetTriple ().getOS ())
             {
             case llvm::Triple::Linux:
-                m_unix_signals_sp.reset (new process_linux::LinuxSignals ());
+                SetUnixSignals (UnixSignalsSP (new process_linux::LinuxSignals ()));
                 if (log)
                     log->Printf ("ProcessGDBRemote::%s using Linux unix signals type for pid %" PRIu64, __FUNCTION__, GetID ());
                 break;
             case llvm::Triple::OpenBSD:
             case llvm::Triple::FreeBSD:
             case llvm::Triple::NetBSD:
-                m_unix_signals_sp.reset (new FreeBSDSignals ());
+                SetUnixSignals (UnixSignalsSP (new FreeBSDSignals ()));
                 if (log)
                     log->Printf ("ProcessGDBRemote::%s using *BSD unix signals type for pid %" PRIu64, __FUNCTION__, GetID ());
                 break;
             default:
-                m_unix_signals_sp.reset (new UnixSignals ());
+                SetUnixSignals (UnixSignalsSP (new UnixSignals ()));
                 if (log)
                     log->Printf ("ProcessGDBRemote::%s using generic unix signals type for pid %" PRIu64, __FUNCTION__, GetID ());
                 break;
@@ -1084,13 +1083,6 @@ ProcessGDBRemote::DidLaunch ()
 {
     ArchSpec process_arch;
     DidLaunchOrAttach (process_arch);
-}
-
-UnixSignals&
-ProcessGDBRemote::GetUnixSignals ()
-{
-    assert (m_unix_signals_sp && "m_unix_signals_sp is null");
-    return *m_unix_signals_sp;
 }
 
 Error
