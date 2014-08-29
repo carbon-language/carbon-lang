@@ -461,7 +461,7 @@ public:
   }
 
   std::unique_ptr<Sema> takeSema();
-  void resetAndLeakSema() { BuryPointer(TheSema.release()); }
+  void resetAndLeakSema();
 
   /// }
   /// @name Module Management

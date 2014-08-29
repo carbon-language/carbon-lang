@@ -1605,3 +1605,4 @@ CompilerInstance::lookupMissingImports(StringRef Name,
 
   return false;
 }
+void CompilerInstance::resetAndLeakSema() { BuryPointer(takeSema()); }

@@ -122,7 +122,7 @@ public:
     delete PerModulePasses;
     delete PerFunctionPasses;
     if (CodeGenOpts.DisableFree)
-      BuryPointer(TM.release());
+      BuryPointer(std::move(TM));
   }
 
   std::unique_ptr<TargetMachine> TM;
