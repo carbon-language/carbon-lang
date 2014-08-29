@@ -81,7 +81,7 @@ bool EachOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
       Result.addMatch(BuilderInner);
     }
   }
-  *Builder = Result;
+  *Builder = std::move(Result);
   return Matched;
 }
 
@@ -92,7 +92,7 @@ bool AnyOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
   for (size_t i = 0, e = InnerMatchers.size(); i != e; ++i) {
     BoundNodesTreeBuilder Result = *Builder;
     if (InnerMatchers[i].matches(DynNode, Finder, &Result)) {
-      *Builder = Result;
+      *Builder = std::move(Result);
       return true;
     }
   }

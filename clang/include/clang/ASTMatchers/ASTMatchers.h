@@ -2285,7 +2285,7 @@ AST_POLYMORPHIC_MATCHER_P(hasAnyArgument, AST_POLYMORPHIC_SUPPORTED_TYPES_2(
     BoundNodesTreeBuilder Result(*Builder);
     if (InnerMatcher.matches(*Node.getArg(I)->IgnoreParenImpCasts(), Finder,
                              &Result)) {
-      *Builder = Result;
+      *Builder = std::move(Result);
       return true;
     }
   }
@@ -3614,7 +3614,7 @@ AST_MATCHER_P(SwitchStmt, forEachSwitchCase, internal::Matcher<SwitchCase>,
       Result.addMatch(CaseBuilder);
     }
   }
-  *Builder = Result;
+  *Builder = std::move(Result);
   return Matched;
 }
 
@@ -3637,7 +3637,7 @@ AST_MATCHER_P(CXXConstructorDecl, forEachConstructorInitializer,
       Result.addMatch(InitBuilder);
     }
   }
-  *Builder = Result;
+  *Builder = std::move(Result);
   return Matched;
 }
 
