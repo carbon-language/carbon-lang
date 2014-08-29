@@ -1526,8 +1526,39 @@ void X86TargetLowering::resetOperationActions() {
   }// has  AVX-512
 
   if (!TM.Options.UseSoftFloat && Subtarget->hasBWI()) {
+    addRegisterClass(MVT::v32i16, &X86::VR512RegClass);
+    addRegisterClass(MVT::v64i8,  &X86::VR512RegClass);
+
     addRegisterClass(MVT::v32i1,  &X86::VK32RegClass);
     addRegisterClass(MVT::v64i1,  &X86::VK64RegClass);
+
+    setOperationAction(ISD::LOAD,               MVT::v32i16, Legal);
+    setOperationAction(ISD::LOAD,               MVT::v64i8, Legal);
+    setOperationAction(ISD::SETCC,              MVT::v32i1, Custom);
+    setOperationAction(ISD::SETCC,              MVT::v64i1, Custom);
+
+    for (int i = MVT::v32i8; i != MVT::v8i64; ++i) {
+      const MVT VT = (MVT::SimpleValueType)i;
+
+      const unsigned EltSize = VT.getVectorElementType().getSizeInBits();
+
+      // Do not attempt to promote non-256-bit vectors
+      if (!VT.is512BitVector())
+        continue;
+
+      if ( EltSize < 32) {
+        setOperationAction(ISD::BUILD_VECTOR,        VT, Custom);
+        setOperationAction(ISD::VSELECT,             VT, Legal);
+      }
+    }
+  }
+
+  if (!TM.Options.UseSoftFloat && Subtarget->hasVLX()) {
+    addRegisterClass(MVT::v4i1,   &X86::VK4RegClass);
+    addRegisterClass(MVT::v2i1,   &X86::VK2RegClass);
+
+    setOperationAction(ISD::SETCC,              MVT::v4i1, Custom);
+    setOperationAction(ISD::SETCC,              MVT::v2i1, Custom);
   }
 
   // SIGN_EXTEND_INREGs are evaluated by the extend type. Handle the expansion
@@ -1665,10 +1696,40 @@ EVT X86TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
   if (!VT.isVector())
     return Subtarget->hasAVX512() ? MVT::i1: MVT::i8;
 
-  if (Subtarget->hasAVX512())
-    switch(VT.getVectorNumElements()) {
-    case  8: return MVT::v8i1;
-    case 16: return MVT::v16i1;
+  const unsigned NumElts = VT.getVectorNumElements();
+  const EVT EltVT = VT.getVectorElementType();
+  if (VT.is512BitVector()) {
+    if (Subtarget->hasAVX512())
+      if (EltVT == MVT::i32 || EltVT == MVT::i64 ||
+          EltVT == MVT::f32 || EltVT == MVT::f64)
+        switch(NumElts) {
+        case  8: return MVT::v8i1;
+        case 16: return MVT::v16i1;
+      }
+    if (Subtarget->hasBWI())
+      if (EltVT == MVT::i8 || EltVT == MVT::i16)
+        switch(NumElts) {
+        case 32: return MVT::v32i1;
+        case 64: return MVT::v64i1;
+      }
+  }
+
+  if (VT.is256BitVector() || VT.is128BitVector()) {
+    if (Subtarget->hasVLX())
+      if (EltVT == MVT::i32 || EltVT == MVT::i64 ||
+          EltVT == MVT::f32 || EltVT == MVT::f64)
+        switch(NumElts) {
+        case 2: return MVT::v2i1;
+        case 4: return MVT::v4i1;
+        case 8: return MVT::v8i1;
+      }
+    if (Subtarget->hasBWI() && Subtarget->hasVLX())
+      if (EltVT == MVT::i8 || EltVT == MVT::i16)
+        switch(NumElts) {
+        case  8: return MVT::v8i1;
+        case 16: return MVT::v16i1;
+        case 32: return MVT::v32i1;
+      }
   }
 
   return VT.changeVectorElementTypeToInteger();
@@ -10435,6 +10496,8 @@ SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
     break;
   case MVT::v8i16:
   case MVT::v16i16:
+    if (Subtarget->hasBWI() && Subtarget->hasVLX())
+      break;
     return SDValue();
   }
 
@@ -12829,7 +12892,7 @@ static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG,
   MVT VT = Op.getSimpleValueType();
   SDLoc dl(Op);
 
-  assert(Op0.getValueType().getVectorElementType().getSizeInBits() >= 32 &&
+  assert(Op0.getValueType().getVectorElementType().getSizeInBits() >= 8 &&
          Op.getValueType().getScalarType() == MVT::i1 &&
          "Cannot set masked compare for this operation");
 
@@ -12943,11 +13006,12 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
   EVT OpVT = Op1.getValueType();
   if (Subtarget->hasAVX512()) {
     if (Op1.getValueType().is512BitVector() ||
+        (Subtarget->hasBWI() && Subtarget->hasVLX()) ||
         (MaskResult && OpVT.getVectorElementType().getSizeInBits() >= 32))
       return LowerIntVSETCC_AVX512(Op, DAG, Subtarget);
 
     // In AVX-512 architecture setcc returns mask with i1 elements,
-    // But there is no compare instruction for i8 and i16 elements.
+    // But there is no compare instruction for i8 and i16 elements in KNL.
     // We are not talking about 512-bit operands in this case, these
     // types are illegal.
     if (MaskResult &&
@@ -20218,13 +20282,15 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   if (Subtarget->hasAVX512() && VT.isVector() && CondVT.isVector() &&
       CondVT.getVectorElementType() == MVT::i1) {
     // v16i8 (select v16i1, v16i8, v16i8) does not have a proper
-    // lowering on AVX-512. In this case we convert it to
+    // lowering on KNL. In this case we convert it to
     // v16i8 (select v16i8, v16i8, v16i8) and use AVX instruction.
-    // The same situation for all 128 and 256-bit vectors of i8 and i16
+    // The same situation for all 128 and 256-bit vectors of i8 and i16.
+    // Since SKX these selects have a proper lowering.
     EVT OpVT = LHS.getValueType();
     if ((OpVT.is128BitVector() || OpVT.is256BitVector()) &&
         (OpVT.getVectorElementType() == MVT::i8 ||
-         OpVT.getVectorElementType() == MVT::i16)) {
+         OpVT.getVectorElementType() == MVT::i16) &&
+        !(Subtarget->hasBWI() && Subtarget->hasVLX())) {
       Cond = DAG.getNode(ISD::SIGN_EXTEND, DL, OpVT, Cond);
       DCI.AddToWorklist(Cond.getNode());
       return DAG.getNode(N->getOpcode(), DL, OpVT, Cond, LHS, RHS);
