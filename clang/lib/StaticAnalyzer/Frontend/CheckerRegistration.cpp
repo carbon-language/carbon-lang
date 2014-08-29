@@ -118,9 +118,12 @@ CheckerManager *ento::createCheckerManager(AnalyzerOptions &opts,
   checkerMgr->finishedCheckerRegistration();
 
   for (unsigned i = 0, e = checkerOpts.size(); i != e; ++i) {
-    if (checkerOpts[i].isUnclaimed())
+    if (checkerOpts[i].isUnclaimed()) {
       diags.Report(diag::err_unknown_analyzer_checker)
           << checkerOpts[i].getName();
+      diags.Report(diag::note_suggest_disabling_all_checkers);
+    }
+
   }
 
   return checkerMgr.release();

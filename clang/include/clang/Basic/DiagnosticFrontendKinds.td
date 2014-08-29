@@ -135,6 +135,9 @@ def warn_unknown_warning_specifier : Warning<
 
 def err_unknown_analyzer_checker : Error<
     "no analyzer checkers are associated with '%0'">;
+def note_suggest_disabling_all_checkers : Note<
+    "use -analyzer-disable-all-checks to disable all static analyzer checkers">;
+
 def warn_incompatible_analyzer_plugin_api : Warning<
     "checker plugin '%0' is not compatible with this version of the analyzer">,
     InGroup<DiagGroup<"analyzer-incompatible-plugin"> >;
