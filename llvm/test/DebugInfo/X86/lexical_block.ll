@@ -1,11 +1,19 @@
 ; REQUIRES: object-emission
 
 ; RUN: llc -mtriple=x86_64-linux -O0 -filetype=obj < %s \
-; RUN:     | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN:     | llvm-dwarfdump -debug-dump=info - | FileCheck --check-prefix=CHECK --check-prefix=CHECK-V4 %s
+; RUN: llc -mtriple=x86_64-linux -dwarf-version=3 -O0 -filetype=obj < %s \
+; RUN:     | llvm-dwarfdump -debug-dump=info - | FileCheck --check-prefix=CHECK --check-prefix=CHECK-V3 %s
+
+; Check that we emit DW_TAG_lexical_block and that it has the right encoding
+; depending on the dwarf version.
 
 ; CHECK: DW_TAG_lexical_block
-; CHECK-NEXT: DW_AT_low_pc [DW_FORM_addr]
-; CHECK-NEXT: DW_AT_high_pc [DW_FORM_data4]
+; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK: DW_AT_low_pc [DW_FORM_addr]
+; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK-V4: DW_AT_high_pc [DW_FORM_data4]
+; CHECK-V3: DW_AT_high_pc [DW_FORM_addr]
 
 ; Test case produced from:
 ; void b() {

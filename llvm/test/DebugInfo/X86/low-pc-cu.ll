@@ -1,14 +1,24 @@
-; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj
-; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-darwin -filetype=obj < %s \
+; RUN:     | llvm-dwarfdump -debug-dump=info - | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-V4
+; RUN: llc -mtriple=x86_64-apple-darwin -filetype=obj -dwarf-version=3 < %s \
+; RUN:     | llvm-dwarfdump -debug-dump=info - | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-V3
 
-; Check that we use DW_AT_low_pc
+
+; Check that we use DW_AT_low_pc and that it has the right encoding depending
+; on dwarf version.
 
 ; CHECK: DW_TAG_compile_unit [1]
+; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
-; CHECK: DW_AT_high_pc [DW_FORM_data4]
+; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK-V3: DW_AT_high_pc [DW_FORM_addr]
+; CHECK-V4: DW_AT_high_pc [DW_FORM_data4]
 ; CHECK: DW_TAG_subprogram [2]
+; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]
-; CHECK: DW_AT_high_pc [DW_FORM_data4]
+; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK-V3: DW_AT_high_pc [DW_FORM_addr]
+; CHECK-V4: DW_AT_high_pc [DW_FORM_data4]
 
 ; Function Attrs: nounwind uwtable
 define void @z() #0 {

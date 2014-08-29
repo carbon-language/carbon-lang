@@ -950,10 +950,7 @@ void DwarfDebug::finalizeModuleInfo() {
                     0);
         } else {
           RangeSpan &Range = TheU->getRanges().back();
-          U.addLocalLabelAddress(U.getUnitDie(), dwarf::DW_AT_low_pc,
-                                 Range.getStart());
-          U.addLabelDelta(U.getUnitDie(), dwarf::DW_AT_high_pc, Range.getEnd(),
-                          Range.getStart());
+          attachLowHighPC(U, U.getUnitDie(), Range.getStart(), Range.getEnd());
         }
       }
     }
