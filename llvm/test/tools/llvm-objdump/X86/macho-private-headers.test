@@ -3,3 +3,95 @@
 CHECK: Mach header
 CHECK:       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
 CHECK: MH_MAGIC_64  X86_64        ALL  0x00      OBJECT     3        496 SUBSECTIONS_VIA_SYMBOLS
+CHECK: Load command 0
+CHECK:       cmd LC_SEGMENT_64
+CHECK:   cmdsize 392
+CHECK:   segname 
+CHECK:    vmaddr 0x0000000000000000
+CHECK:    vmsize 0x00000000000000a8
+CHECK:   fileoff 528
+CHECK:  filesize 168
+CHECK:   maxprot rwx
+CHECK:  initprot rwx
+CHECK:    nsects 4
+CHECK:     flags (none)
+CHECK: Section
+CHECK:   sectname __text
+CHECK:    segname __TEXT
+CHECK:       addr 0x0000000000000000
+CHECK:       size 0x000000000000003b
+CHECK:     offset 528
+CHECK:      align 2^4 (16)
+CHECK:     reloff 696
+CHECK:     nreloc 2
+CHECK:       type S_REGULAR
+CHECK: attributes PURE_INSTRUCTIONS SOME_INSTRUCTIONS
+CHECK:  reserved1 0
+CHECK:  reserved2 0
+CHECK: Section
+CHECK:   sectname __cstring
+CHECK:    segname __TEXT
+CHECK:       addr 0x000000000000003b
+CHECK:       size 0x000000000000000d
+CHECK:     offset 587
+CHECK:      align 2^0 (1)
+CHECK:     reloff 0
+CHECK:     nreloc 0
+CHECK:       type S_CSTRING_LITERALS
+CHECK: attributes (none)
+CHECK:  reserved1 0
+CHECK:  reserved2 0
+CHECK: Section
+CHECK:   sectname __compact_unwind
+CHECK:    segname __LD
+CHECK:       addr 0x0000000000000048
+CHECK:       size 0x0000000000000020
+CHECK:     offset 600
+CHECK:      align 2^3 (8)
+CHECK:     reloff 712
+CHECK:     nreloc 1
+CHECK:       type S_REGULAR
+CHECK: attributes DEBUG
+CHECK:  reserved1 0
+CHECK:  reserved2 0
+CHECK: Section
+CHECK:   sectname __eh_frame
+CHECK:    segname __TEXT
+CHECK:       addr 0x0000000000000068
+CHECK:       size 0x0000000000000040
+CHECK:     offset 632
+CHECK:      align 2^3 (8)
+CHECK:     reloff 0
+CHECK:     nreloc 0
+CHECK:       type S_COALESCED
+CHECK: attributes NO_TOC STRIP_STATIC_SYMS LIVE_SUPPORT
+CHECK:  reserved1 0
+CHECK:  reserved2 0
+CHECK: Load command 1
+CHECK:      cmd LC_SYMTAB
+CHECK:  cmdsize 24
+CHECK:   symoff 720
+CHECK:    nsyms 5
+CHECK:   stroff 800
+CHECK:  strsize 44
+CHECK: Load command 2
+CHECK:             cmd LC_DYSYMTAB
+CHECK:         cmdsize 80
+CHECK:       ilocalsym 0
+CHECK:       nlocalsym 2
+CHECK:      iextdefsym 2
+CHECK:      nextdefsym 2
+CHECK:       iundefsym 4
+CHECK:       nundefsym 1
+CHECK:          tocoff 0
+CHECK:            ntoc 0
+CHECK:       modtaboff 0
+CHECK:         nmodtab 0
+CHECK:    extrefsymoff 0
+CHECK:     nextrefsyms 0
+CHECK:  indirectsymoff 0
+CHECK:   nindirectsyms 0
+CHECK:       extreloff 0
+CHECK:         nextrel 0
+CHECK:       locreloff 0
+CHECK:         nlocrel 0

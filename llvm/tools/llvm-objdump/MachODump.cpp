@@ -1272,22 +1272,514 @@ static void PrintMachHeader(uint32_t magic, uint32_t cputype,
   outs() << "\n";
 }
 
-static void getAndPrintMachHeader(const MachOObjectFile *Obj, bool verbose) {
+static void PrintSegmentCommand(uint32_t cmd, uint32_t cmdsize,
+                                StringRef SegName, uint64_t vmaddr,
+                                uint64_t vmsize, uint64_t fileoff,
+                                uint64_t filesize, uint32_t maxprot,
+                                uint32_t initprot, uint32_t nsects,
+                                uint32_t flags, uint32_t object_size,
+                                bool verbose) {
+  uint64_t expected_cmdsize;
+  if (cmd == MachO::LC_SEGMENT) {
+    outs() << "      cmd LC_SEGMENT\n";
+    expected_cmdsize = nsects;
+    expected_cmdsize *= sizeof(struct MachO::section);
+    expected_cmdsize += sizeof(struct MachO::segment_command);
+  } else {
+    outs() << "      cmd LC_SEGMENT_64\n";
+    expected_cmdsize = nsects;
+    expected_cmdsize *= sizeof(struct MachO::section_64);
+    expected_cmdsize += sizeof(struct MachO::segment_command_64);
+  }
+  outs() << "  cmdsize " << cmdsize;
+  if (cmdsize != expected_cmdsize)
+    outs() << " Inconsistent size\n";
+  else
+    outs() << "\n";
+  outs() << "  segname " << SegName << "\n";
+  if (cmd == MachO::LC_SEGMENT_64) {
+    outs() << "   vmaddr " << format("0x%016" PRIx64, vmaddr) << "\n";
+    outs() << "   vmsize " << format("0x%016" PRIx64, vmsize) << "\n";
+  } else {
+    outs() << "   vmaddr " << format("0x%08" PRIx32, vmaddr) << "\n";
+    outs() << "   vmsize " << format("0x%08" PRIx32, vmsize) << "\n";
+  }
+  outs() << "  fileoff " << fileoff;
+  if (fileoff > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << " filesize " << filesize;
+  if (fileoff + filesize > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  if (verbose) {
+    if ((maxprot &
+         ~(MachO::VM_PROT_READ | MachO::VM_PROT_WRITE |
+           MachO::VM_PROT_EXECUTE)) != 0)
+      outs() << "  maxprot ?" << format("0x%08" PRIx32, maxprot) << "\n";
+    else {
+      if (maxprot & MachO::VM_PROT_READ)
+        outs() << "  maxprot r";
+      else
+        outs() << "  maxprot -";
+      if (maxprot & MachO::VM_PROT_WRITE)
+        outs() << "w";
+      else
+        outs() << "-";
+      if (maxprot & MachO::VM_PROT_EXECUTE)
+        outs() << "x\n";
+      else
+        outs() << "-\n";
+    }
+    if ((initprot &
+         ~(MachO::VM_PROT_READ | MachO::VM_PROT_WRITE |
+           MachO::VM_PROT_EXECUTE)) != 0)
+      outs() << "  initprot ?" << format("0x%08" PRIx32, initprot) << "\n";
+    else {
+      if (initprot & MachO::VM_PROT_READ)
+        outs() << " initprot r";
+      else
+        outs() << " initprot -";
+      if (initprot & MachO::VM_PROT_WRITE)
+        outs() << "w";
+      else
+        outs() << "-";
+      if (initprot & MachO::VM_PROT_EXECUTE)
+        outs() << "x\n";
+      else
+        outs() << "-\n";
+    }
+  } else {
+    outs() << "  maxprot " << format("0x%08" PRIx32, maxprot) << "\n";
+    outs() << " initprot " << format("0x%08" PRIx32, initprot) << "\n";
+  }
+  outs() << "   nsects " << nsects << "\n";
+  if (verbose) {
+    outs() << "    flags";
+    if (flags == 0)
+      outs() << " (none)\n";
+    else {
+      if (flags & MachO::SG_HIGHVM) {
+        outs() << " HIGHVM";
+        flags &= ~MachO::SG_HIGHVM;
+      }
+      if (flags & MachO::SG_FVMLIB) {
+        outs() << " FVMLIB";
+        flags &= ~MachO::SG_FVMLIB;
+      }
+      if (flags & MachO::SG_NORELOC) {
+        outs() << " NORELOC";
+        flags &= ~MachO::SG_NORELOC;
+      }
+      if (flags & MachO::SG_PROTECTED_VERSION_1) {
+        outs() << " PROTECTED_VERSION_1";
+        flags &= ~MachO::SG_PROTECTED_VERSION_1;
+      }
+      if (flags)
+        outs() << format(" 0x%08" PRIx32, flags) << " (unknown flags)\n";
+      else
+        outs() << "\n";
+    }
+  } else {
+    outs() << "    flags " << format("0x%" PRIx32, flags) << "\n";
+  }
+}
+
+static void PrintSection(const char *sectname, const char *segname,
+                         uint64_t addr, uint64_t size, uint32_t offset,
+                         uint32_t align, uint32_t reloff, uint32_t nreloc,
+                         uint32_t flags, uint32_t reserved1, uint32_t reserved2,
+                         uint32_t cmd, const char *sg_segname,
+                         uint32_t filetype, uint32_t object_size,
+                         bool verbose) {
+  outs() << "Section\n";
+  outs() << "  sectname " << format("%.16s\n", sectname);
+  outs() << "   segname " << format("%.16s", segname);
+  if (filetype != MachO::MH_OBJECT && strncmp(sg_segname, segname, 16) != 0)
+    outs() << " (does not match segment)\n";
+  else
+    outs() << "\n";
+  if (cmd == MachO::LC_SEGMENT_64) {
+    outs() << "      addr " << format("0x%016" PRIx64, addr) << "\n";
+    outs() << "      size " << format("0x%016" PRIx64, size);
+  } else {
+    outs() << "      addr " << format("0x%08" PRIx32, addr) << "\n";
+    outs() << "      size " << format("0x%08" PRIx32, size);
+  }
+  if ((flags & MachO::S_ZEROFILL) != 0 && offset + size > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "    offset " << offset;
+  if (offset > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  uint32_t align_shifted = 1 << align;
+  outs() << "     align 2^" << align << " (" << align_shifted << ")\n";
+  outs() << "    reloff " << reloff;
+  if (reloff > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "    nreloc " << nreloc;
+  if (reloff + nreloc * sizeof(struct MachO::relocation_info) > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  uint32_t section_type = flags & MachO::SECTION_TYPE;
+  if (verbose) {
+    outs() << "      type";
+    if (section_type == MachO::S_REGULAR)
+      outs() << " S_REGULAR\n";
+    else if (section_type == MachO::S_ZEROFILL)
+      outs() << " S_ZEROFILL\n";
+    else if (section_type == MachO::S_CSTRING_LITERALS)
+      outs() << " S_CSTRING_LITERALS\n";
+    else if (section_type == MachO::S_4BYTE_LITERALS)
+      outs() << " S_4BYTE_LITERALS\n";
+    else if (section_type == MachO::S_8BYTE_LITERALS)
+      outs() << " S_8BYTE_LITERALS\n";
+    else if (section_type == MachO::S_16BYTE_LITERALS)
+      outs() << " S_16BYTE_LITERALS\n";
+    else if (section_type == MachO::S_LITERAL_POINTERS)
+      outs() << " S_LITERAL_POINTERS\n";
+    else if (section_type == MachO::S_NON_LAZY_SYMBOL_POINTERS)
+      outs() << " S_NON_LAZY_SYMBOL_POINTERS\n";
+    else if (section_type == MachO::S_LAZY_SYMBOL_POINTERS)
+      outs() << " S_LAZY_SYMBOL_POINTERS\n";
+    else if (section_type == MachO::S_SYMBOL_STUBS)
+      outs() << " S_SYMBOL_STUBS\n";
+    else if (section_type == MachO::S_MOD_INIT_FUNC_POINTERS)
+      outs() << " S_MOD_INIT_FUNC_POINTERS\n";
+    else if (section_type == MachO::S_MOD_TERM_FUNC_POINTERS)
+      outs() << " S_MOD_TERM_FUNC_POINTERS\n";
+    else if (section_type == MachO::S_COALESCED)
+      outs() << " S_COALESCED\n";
+    else if (section_type == MachO::S_INTERPOSING)
+      outs() << " S_INTERPOSING\n";
+    else if (section_type == MachO::S_DTRACE_DOF)
+      outs() << " S_DTRACE_DOF\n";
+    else if (section_type == MachO::S_LAZY_DYLIB_SYMBOL_POINTERS)
+      outs() << " S_LAZY_DYLIB_SYMBOL_POINTERS\n";
+    else if (section_type == MachO::S_THREAD_LOCAL_REGULAR)
+      outs() << " S_THREAD_LOCAL_REGULAR\n";
+    else if (section_type == MachO::S_THREAD_LOCAL_ZEROFILL)
+      outs() << " S_THREAD_LOCAL_ZEROFILL\n";
+    else if (section_type == MachO::S_THREAD_LOCAL_VARIABLES)
+      outs() << " S_THREAD_LOCAL_VARIABLES\n";
+    else if (section_type == MachO::S_THREAD_LOCAL_VARIABLE_POINTERS)
+      outs() << " S_THREAD_LOCAL_VARIABLE_POINTERS\n";
+    else if (section_type == MachO::S_THREAD_LOCAL_INIT_FUNCTION_POINTERS)
+      outs() << " S_THREAD_LOCAL_INIT_FUNCTION_POINTERS\n";
+    else
+      outs() << format("0x%08" PRIx32, section_type) << "\n";
+    outs() << "attributes";
+    uint32_t section_attributes = flags & MachO::SECTION_ATTRIBUTES;
+    if (section_attributes & MachO::S_ATTR_PURE_INSTRUCTIONS)
+      outs() << " PURE_INSTRUCTIONS";
+    if (section_attributes & MachO::S_ATTR_NO_TOC)
+      outs() << " NO_TOC";
+    if (section_attributes & MachO::S_ATTR_STRIP_STATIC_SYMS)
+      outs() << " STRIP_STATIC_SYMS";
+    if (section_attributes & MachO::S_ATTR_NO_DEAD_STRIP)
+      outs() << " NO_DEAD_STRIP";
+    if (section_attributes & MachO::S_ATTR_LIVE_SUPPORT)
+      outs() << " LIVE_SUPPORT";
+    if (section_attributes & MachO::S_ATTR_SELF_MODIFYING_CODE)
+      outs() << " SELF_MODIFYING_CODE";
+    if (section_attributes & MachO::S_ATTR_DEBUG)
+      outs() << " DEBUG";
+    if (section_attributes & MachO::S_ATTR_SOME_INSTRUCTIONS)
+      outs() << " SOME_INSTRUCTIONS";
+    if (section_attributes & MachO::S_ATTR_EXT_RELOC)
+      outs() << " EXT_RELOC";
+    if (section_attributes & MachO::S_ATTR_LOC_RELOC)
+      outs() << " LOC_RELOC";
+    if (section_attributes == 0)
+      outs() << " (none)";
+    outs() << "\n";
+  } else
+    outs() << "     flags " << format("0x%08" PRIx32, flags) << "\n";
+  outs() << " reserved1 " << reserved1;
+  if (section_type == MachO::S_SYMBOL_STUBS ||
+      section_type == MachO::S_LAZY_SYMBOL_POINTERS ||
+      section_type == MachO::S_LAZY_DYLIB_SYMBOL_POINTERS ||
+      section_type == MachO::S_NON_LAZY_SYMBOL_POINTERS ||
+      section_type == MachO::S_THREAD_LOCAL_VARIABLE_POINTERS)
+    outs() << " (index into indirect symbol table)\n";
+  else
+    outs() << "\n";
+  outs() << " reserved2 " << reserved2;
+  if (section_type == MachO::S_SYMBOL_STUBS)
+    outs() << " (size of stubs)\n";
+  else
+    outs() << "\n";
+}
+
+static void PrintSymtabLoadCommand(MachO::symtab_command st, uint32_t cputype,
+                                   uint32_t object_size) {
+  outs() << "     cmd LC_SYMTAB\n";
+  outs() << " cmdsize " << st.cmdsize;
+  if (st.cmdsize != sizeof(struct MachO::symtab_command))
+    outs() << " Incorrect size\n";
+  else
+    outs() << "\n";
+  outs() << "  symoff " << st.symoff;
+  if (st.symoff > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "   nsyms " << st.nsyms;
+  uint64_t big_size;
+  if (cputype & MachO::CPU_ARCH_ABI64) {
+    big_size = st.nsyms;
+    big_size *= sizeof(struct MachO::nlist_64);
+    big_size += st.symoff;
+    if (big_size > object_size)
+      outs() << " (past end of file)\n";
+    else
+      outs() << "\n";
+  } else {
+    big_size = st.nsyms;
+    big_size *= sizeof(struct MachO::nlist);
+    big_size += st.symoff;
+    if (big_size > object_size)
+      outs() << " (past end of file)\n";
+    else
+      outs() << "\n";
+  }
+  outs() << "  stroff " << st.stroff;
+  if (st.stroff > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << " strsize " << st.strsize;
+  big_size = st.stroff;
+  big_size += st.strsize;
+  if (big_size > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+}
+
+static void PrintDysymtabLoadCommand(MachO::dysymtab_command dyst,
+                                     uint32_t nsyms, uint32_t object_size,
+                                     uint32_t cputype) {
+  outs() << "            cmd LC_DYSYMTAB\n";
+  outs() << "        cmdsize " << dyst.cmdsize;
+  if (dyst.cmdsize != sizeof(struct MachO::dysymtab_command))
+    outs() << " Incorrect size\n";
+  else
+    outs() << "\n";
+  outs() << "      ilocalsym " << dyst.ilocalsym;
+  if (dyst.ilocalsym > nsyms)
+    outs() << " (greater than the number of symbols)\n";
+  else
+    outs() << "\n";
+  outs() << "      nlocalsym " << dyst.nlocalsym;
+  uint64_t big_size;
+  big_size = dyst.ilocalsym;
+  big_size += dyst.nlocalsym;
+  if (big_size > nsyms)
+    outs() << " (past the end of the symbol table)\n";
+  else
+    outs() << "\n";
+  outs() << "     iextdefsym " << dyst.iextdefsym;
+  if (dyst.iextdefsym > nsyms)
+    outs() << " (greater than the number of symbols)\n";
+  else
+    outs() << "\n";
+  outs() << "     nextdefsym " << dyst.nextdefsym;
+  big_size = dyst.iextdefsym;
+  big_size += dyst.nextdefsym;
+  if (big_size > nsyms)
+    outs() << " (past the end of the symbol table)\n";
+  else
+    outs() << "\n";
+  outs() << "      iundefsym " << dyst.iundefsym;
+  if (dyst.iundefsym > nsyms)
+    outs() << " (greater than the number of symbols)\n";
+  else
+    outs() << "\n";
+  outs() << "      nundefsym " << dyst.nundefsym;
+  big_size = dyst.iundefsym;
+  big_size += dyst.nundefsym;
+  if (big_size > nsyms)
+    outs() << " (past the end of the symbol table)\n";
+  else
+    outs() << "\n";
+  outs() << "         tocoff " << dyst.tocoff;
+  if (dyst.tocoff > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "           ntoc " << dyst.ntoc;
+  big_size = dyst.ntoc;
+  big_size *= sizeof(struct MachO::dylib_table_of_contents);
+  big_size += dyst.tocoff;
+  if (big_size > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "      modtaboff " << dyst.modtaboff;
+  if (dyst.modtaboff > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "        nmodtab " << dyst.nmodtab;
+  uint64_t modtabend;
+  if (cputype & MachO::CPU_ARCH_ABI64) {
+    modtabend = dyst.nmodtab;
+    modtabend *= sizeof(struct MachO::dylib_module_64);
+    modtabend += dyst.modtaboff;
+  } else {
+    modtabend = dyst.nmodtab;
+    modtabend *= sizeof(struct MachO::dylib_module);
+    modtabend += dyst.modtaboff;
+  }
+  if (modtabend > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "   extrefsymoff " << dyst.extrefsymoff;
+  if (dyst.extrefsymoff > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "    nextrefsyms " << dyst.nextrefsyms;
+  big_size = dyst.nextrefsyms;
+  big_size *= sizeof(struct MachO::dylib_reference);
+  big_size += dyst.extrefsymoff;
+  if (big_size > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << " indirectsymoff " << dyst.indirectsymoff;
+  if (dyst.indirectsymoff > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "  nindirectsyms " << dyst.nindirectsyms;
+  big_size = dyst.nindirectsyms;
+  big_size *= sizeof(uint32_t);
+  big_size += dyst.indirectsymoff;
+  if (big_size > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "      extreloff " << dyst.extreloff;
+  if (dyst.extreloff > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "        nextrel " << dyst.nextrel;
+  big_size = dyst.nextrel;
+  big_size *= sizeof(struct MachO::relocation_info);
+  big_size += dyst.extreloff;
+  if (big_size > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "      locreloff " << dyst.locreloff;
+  if (dyst.locreloff > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "        nlocrel " << dyst.nlocrel;
+  big_size = dyst.nlocrel;
+  big_size *= sizeof(struct MachO::relocation_info);
+  big_size += dyst.locreloff;
+  if (big_size > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+}
+
+static void PrintLoadCommands(const MachOObjectFile *Obj, uint32_t ncmds,
+                              uint32_t filetype, uint32_t cputype,
+                              bool verbose) {
+  StringRef Buf = Obj->getData();
+  MachOObjectFile::LoadCommandInfo Command = Obj->getFirstLoadCommandInfo();
+  for (unsigned i = 0;; ++i) {
+    outs() << "Load command " << i << "\n";
+    if (Command.C.cmd == MachO::LC_SEGMENT) {
+      MachO::segment_command SLC = Obj->getSegmentLoadCommand(Command);
+      const char *sg_segname = SLC.segname;
+      PrintSegmentCommand(SLC.cmd, SLC.cmdsize, SLC.segname, SLC.vmaddr,
+                          SLC.vmsize, SLC.fileoff, SLC.filesize, SLC.maxprot,
+                          SLC.initprot, SLC.nsects, SLC.flags, Buf.size(),
+                          verbose);
+      for (unsigned j = 0; j < SLC.nsects; j++) {
+        MachO::section_64 S = Obj->getSection64(Command, j);
+        PrintSection(S.sectname, S.segname, S.addr, S.size, S.offset, S.align,
+                     S.reloff, S.nreloc, S.flags, S.reserved1, S.reserved2,
+                     SLC.cmd, sg_segname, filetype, Buf.size(), verbose);
+      }
+    } else if (Command.C.cmd == MachO::LC_SEGMENT_64) {
+      MachO::segment_command_64 SLC_64 = Obj->getSegment64LoadCommand(Command);
+      const char *sg_segname = SLC_64.segname;
+      PrintSegmentCommand(SLC_64.cmd, SLC_64.cmdsize, SLC_64.segname,
+                          SLC_64.vmaddr, SLC_64.vmsize, SLC_64.fileoff,
+                          SLC_64.filesize, SLC_64.maxprot, SLC_64.initprot,
+                          SLC_64.nsects, SLC_64.flags, Buf.size(), verbose);
+      for (unsigned j = 0; j < SLC_64.nsects; j++) {
+        MachO::section_64 S_64 = Obj->getSection64(Command, j);
+        PrintSection(S_64.sectname, S_64.segname, S_64.addr, S_64.size,
+                     S_64.offset, S_64.align, S_64.reloff, S_64.nreloc,
+                     S_64.flags, S_64.reserved1, S_64.reserved2, SLC_64.cmd,
+                     sg_segname, filetype, Buf.size(), verbose);
+      }
+    } else if (Command.C.cmd == MachO::LC_SYMTAB) {
+      MachO::symtab_command Symtab = Obj->getSymtabLoadCommand();
+      PrintSymtabLoadCommand(Symtab, cputype, Buf.size());
+    } else if (Command.C.cmd == MachO::LC_DYSYMTAB) {
+      MachO::dysymtab_command Dysymtab = Obj->getDysymtabLoadCommand();
+      MachO::symtab_command Symtab = Obj->getSymtabLoadCommand();
+      PrintDysymtabLoadCommand(Dysymtab, Symtab.nsyms, Buf.size(), cputype);
+    } else {
+      outs() << "      cmd ?(" << format("0x%08" PRIx32, Command.C.cmd)
+             << ")\n";
+      outs() << "  cmdsize " << Command.C.cmdsize << "\n";
+      // TODO: get and print the raw bytes of the load command.
+    }
+    // TODO: print all the other kinds of load commands.
+    if (i == ncmds - 1)
+      break;
+    else
+      Command = Obj->getNextLoadCommandInfo(Command);
+  }
+}
+
+static void getAndPrintMachHeader(const MachOObjectFile *Obj, uint32_t &ncmds,
+                                  uint32_t &filetype, uint32_t &cputype,
+                                  bool verbose) {
   if (Obj->is64Bit()) {
     MachO::mach_header_64 H_64;
     H_64 = Obj->getHeader64();
     PrintMachHeader(H_64.magic, H_64.cputype, H_64.cpusubtype, H_64.filetype,
                     H_64.ncmds, H_64.sizeofcmds, H_64.flags, verbose);
+    ncmds = H_64.ncmds;
+    filetype = H_64.filetype;
+    cputype = H_64.cputype;
   } else {
     MachO::mach_header H;
     H = Obj->getHeader();
     PrintMachHeader(H.magic, H.cputype, H.cpusubtype, H.filetype, H.ncmds,
                     H.sizeofcmds, H.flags, verbose);
+    ncmds = H.ncmds;
+    filetype = H.filetype;
+    cputype = H.cputype;
   }
 }
 
 void llvm::printMachOFileHeader(const object::ObjectFile *Obj) {
   const MachOObjectFile *file = dyn_cast<const MachOObjectFile>(Obj);
-  getAndPrintMachHeader(file, true);
-  // TODO: next get and print the load commands.
+  uint32_t ncmds = 0;
+  uint32_t filetype = 0;
+  uint32_t cputype = 0;
+  getAndPrintMachHeader(file, ncmds, filetype, cputype, true);
+  PrintLoadCommands(file, ncmds, filetype, cputype, true);
 }
