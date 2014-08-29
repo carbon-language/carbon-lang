@@ -72,7 +72,7 @@ namespace clang {
       llvm::TimePassesIsEnabled = TimePasses;
     }
 
-    llvm::Module *takeModule() { return TheModule.release(); }
+    std::unique_ptr<llvm::Module> takeModule() { return std::move(TheModule); }
     llvm::Module *takeLinkModule() { return LinkModule.release(); }
 
     void HandleCXXStaticMemberVarInstantiation(VarDecl *VD) override {
@@ -576,7 +576,7 @@ void CodeGenAction::EndSourceFileAction() {
     BEConsumer->takeLinkModule();
 
   // Steal the module from the consumer.
-  TheModule.reset(BEConsumer->takeModule());
+  TheModule = BEConsumer->takeModule();
 }
 
 std::unique_ptr<llvm::Module> CodeGenAction::takeModule() {
