@@ -24,7 +24,6 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/OnDiskHashTable.h"
 #include <memory>
 #include <system_error>
 using namespace clang;
@@ -342,7 +341,9 @@ public:
   }
 };
 
-class PTHFileLookupTrait : public PTHFileLookupCommonTrait {
+} // end anonymous namespace
+
+class PTHManager::PTHFileLookupTrait : public PTHFileLookupCommonTrait {
 public:
   typedef const FileEntry* external_key_type;
   typedef PTHFileData      data_type;
@@ -365,7 +366,7 @@ public:
   }
 };
 
-class PTHStringLookupTrait {
+class PTHManager::PTHStringLookupTrait {
 public:
   typedef uint32_t data_type;
   typedef const std::pair<const char*, unsigned> external_key_type;
@@ -408,30 +409,23 @@ public:
   }
 };
 
-} // end anonymous namespace
-
-typedef llvm::OnDiskChainedHashTable<PTHFileLookupTrait>   PTHFileLookup;
-typedef llvm::OnDiskChainedHashTable<PTHStringLookupTrait> PTHStringIdLookup;
-
 //===----------------------------------------------------------------------===//
 // PTHManager methods.
 //===----------------------------------------------------------------------===//
 
-PTHManager::PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
-                       const unsigned char* idDataTable,
-                       IdentifierInfo** perIDCache,
-                       void* stringIdLookup, unsigned numIds,
-                       const unsigned char* spellingBase,
-                       const char* originalSourceFile)
-: Buf(buf), PerIDCache(perIDCache), FileLookup(fileLookup),
-  IdDataTable(idDataTable), StringIdLookup(stringIdLookup),
-  NumIds(numIds), PP(nullptr), SpellingBase(spellingBase),
-  OriginalSourceFile(originalSourceFile) {}
+PTHManager::PTHManager(std::unique_ptr<const llvm::MemoryBuffer> buf,
+                       std::unique_ptr<PTHFileLookup> fileLookup,
+                       const unsigned char *idDataTable,
+                       IdentifierInfo **perIDCache,
+                       std::unique_ptr<PTHStringIdLookup> stringIdLookup,
+                       unsigned numIds, const unsigned char *spellingBase,
+                       const char *originalSourceFile)
+    : Buf(std::move(buf)), PerIDCache(perIDCache),
+      FileLookup(std::move(fileLookup)), IdDataTable(idDataTable),
+      StringIdLookup(std::move(stringIdLookup)), NumIds(numIds), PP(nullptr),
+      SpellingBase(spellingBase), OriginalSourceFile(originalSourceFile) {}
 
 PTHManager::~PTHManager() {
-  delete Buf;
-  delete (PTHFileLookup*) FileLookup;
-  delete (PTHStringIdLookup*) StringIdLookup;
   free(PerIDCache);
 }
 
@@ -560,8 +554,8 @@ PTHManager *PTHManager::Create(const std::string &file,
   if (!len) originalSourceBase = nullptr;
 
   // Create the new PTHManager.
-  return new PTHManager(File.release(), FL.release(), IData, PerIDCache,
-                        SL.release(), NumIds, spellingBase,
+  return new PTHManager(std::move(File), std::move(FL), IData, PerIDCache,
+                        std::move(SL), NumIds, spellingBase,
                         (const char *)originalSourceBase);
 }
 
@@ -589,12 +583,11 @@ IdentifierInfo* PTHManager::LazilyCreateIdentifierInfo(unsigned PersistentID) {
 }
 
 IdentifierInfo* PTHManager::get(StringRef Name) {
-  PTHStringIdLookup& SL = *((PTHStringIdLookup*)StringIdLookup);
   // Double check our assumption that the last character isn't '\0'.
   assert(Name.empty() || Name.back() != '\0');
-  PTHStringIdLookup::iterator I = SL.find(std::make_pair(Name.data(),
-                                                         Name.size()));
-  if (I == SL.end()) // No identifier found?
+  PTHStringIdLookup::iterator I =
+      StringIdLookup->find(std::make_pair(Name.data(), Name.size()));
+  if (I == StringIdLookup->end()) // No identifier found?
     return nullptr;
 
   // Match found.  Return the identifier!
@@ -612,10 +605,9 @@ PTHLexer *PTHManager::CreateLexer(FileID FID) {
   // Lookup the FileEntry object in our file lookup data structure.  It will
   // return a variant that indicates whether or not there is an offset within
   // the PTH file that contains cached tokens.
-  PTHFileLookup& PFL = *((PTHFileLookup*)FileLookup);
-  PTHFileLookup::iterator I = PFL.find(FE);
+  PTHFileLookup::iterator I = FileLookup->find(FE);
 
-  if (I == PFL.end()) // No tokens available?
+  if (I == FileLookup->end()) // No tokens available?
     return nullptr;
 
   const PTHFileData& FileData = *I;
@@ -694,15 +686,17 @@ public:
     return data_type();
   }
 };
+} // end anonymous namespace
 
+namespace clang {
 class PTHStatCache : public FileSystemStatCache {
   typedef llvm::OnDiskChainedHashTable<PTHStatLookupTrait> CacheTy;
   CacheTy Cache;
 
 public:
-  PTHStatCache(PTHFileLookup &FL) :
-    Cache(FL.getNumBuckets(), FL.getNumEntries(), FL.getBuckets(),
-          FL.getBase()) {}
+  PTHStatCache(PTHManager::PTHFileLookup &FL)
+      : Cache(FL.getNumBuckets(), FL.getNumEntries(), FL.getBuckets(),
+              FL.getBase()) {}
 
   LookupResult getStat(const char *Path, FileData &Data, bool isFile,
                        std::unique_ptr<vfs::File> *F,
@@ -730,8 +724,8 @@ public:
     return CacheExists;
   }
 };
-} // end anonymous namespace
+}
 
 std::unique_ptr<FileSystemStatCache> PTHManager::createStatCache() {
-  return llvm::make_unique<PTHStatCache>(*((PTHFileLookup *)FileLookup));
+  return llvm::make_unique<PTHStatCache>(*FileLookup);
 }

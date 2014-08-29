@@ -20,6 +20,7 @@
 #include "clang/Lex/PTHLexer.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/OnDiskHashTable.h"
 #include <string>
 
 namespace llvm {
@@ -36,8 +37,15 @@ class FileSystemStatCache;
 class PTHManager : public IdentifierInfoLookup {
   friend class PTHLexer;
 
+  friend class PTHStatCache;
+
+  class PTHStringLookupTrait;
+  class PTHFileLookupTrait;
+  typedef llvm::OnDiskChainedHashTable<PTHStringLookupTrait> PTHStringIdLookup;
+  typedef llvm::OnDiskChainedHashTable<PTHFileLookupTrait> PTHFileLookup;
+
   /// The memory mapped PTH file.
-  const llvm::MemoryBuffer* Buf;
+  std::unique_ptr<const llvm::MemoryBuffer> Buf;
 
   /// Alloc - Allocator used for IdentifierInfo objects.
   llvm::BumpPtrAllocator Alloc;
@@ -48,7 +56,7 @@ class PTHManager : public IdentifierInfoLookup {
 
   /// FileLookup - Abstract data structure used for mapping between files
   ///  and token data in the PTH file.
-  void* FileLookup;
+  std::unique_ptr<PTHFileLookup> FileLookup;
 
   /// IdDataTable - Array representing the mapping from persistent IDs to the
   ///  data offset within the PTH file containing the information to
@@ -57,7 +65,7 @@ class PTHManager : public IdentifierInfoLookup {
 
   /// SortedIdTable - Abstract data structure mapping from strings to
   ///  persistent IDs.  This is used by get().
-  void* StringIdLookup;
+  std::unique_ptr<PTHStringIdLookup> StringIdLookup;
 
   /// NumIds - The number of identifiers in the PTH file.
   const unsigned NumIds;
@@ -76,10 +84,11 @@ class PTHManager : public IdentifierInfoLookup {
 
   /// This constructor is intended to only be called by the static 'Create'
   /// method.
-  PTHManager(const llvm::MemoryBuffer* buf, void* fileLookup,
-             const unsigned char* idDataTable, IdentifierInfo** perIDCache,
-             void* stringIdLookup, unsigned numIds,
-             const unsigned char* spellingBase, const char *originalSourceFile);
+  PTHManager(std::unique_ptr<const llvm::MemoryBuffer> buf,
+             std::unique_ptr<PTHFileLookup> fileLookup,
+             const unsigned char *idDataTable, IdentifierInfo **perIDCache,
+             std::unique_ptr<PTHStringIdLookup> stringIdLookup, unsigned numIds,
+             const unsigned char *spellingBase, const char *originalSourceFile);
 
   PTHManager(const PTHManager &) LLVM_DELETED_FUNCTION;
   void operator=(const PTHManager &) LLVM_DELETED_FUNCTION;
