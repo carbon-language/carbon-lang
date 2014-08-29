@@ -2182,15 +2182,16 @@ bool AArch64FastISel::FastLowerCall(CallLoweringInfo &CLI) {
   // Issue the call.
   MachineInstrBuilder MIB;
   if (CM == CodeModel::Small) {
-    unsigned CallOpc = Addr.getReg() ? AArch64::BLR : AArch64::BL;
-    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(CallOpc));
+    const MCInstrDesc &II = TII.get(Addr.getReg() ? AArch64::BLR : AArch64::BL);
+    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II);
     if (SymName)
       MIB.addExternalSymbol(SymName, 0);
     else if (Addr.getGlobalValue())
       MIB.addGlobalAddress(Addr.getGlobalValue(), 0, 0);
-    else if (Addr.getReg())
-      MIB.addReg(Addr.getReg());
-    else
+    else if (Addr.getReg()) {
+      unsigned Reg = constrainOperandRegClass(II, Addr.getReg(), 0);
+      MIB.addReg(Reg);
+    } else
       return false;
   } else {
     unsigned CallReg = 0;
@@ -2214,8 +2215,9 @@ bool AArch64FastISel::FastLowerCall(CallLoweringInfo &CLI) {
     if (!CallReg)
       return false;
 
-    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-                  TII.get(AArch64::BLR)).addReg(CallReg);
+    const MCInstrDesc &II = TII.get(AArch64::BLR);
+    CallReg = constrainOperandRegClass(II, CallReg, 0);
+    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II).addReg(CallReg);
   }
 
   // Add implicit physical register uses to the call.

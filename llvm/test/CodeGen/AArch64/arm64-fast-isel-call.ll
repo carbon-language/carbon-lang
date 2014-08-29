@@ -252,3 +252,18 @@ define void @call_arguments9(i8 %a1, i16 %a2, i32 %a3, i64 %a4, float %a5, doubl
 ; CHECK-LABEL: call_arguments9
   ret void
 }
+
+; Test that we use the correct register class for the branch.
+define void @call_blr(i64 %Fn, i1 %c) {
+; CHECK-LABEL: call_blr
+; CHECK:       blr
+  br i1 %c, label %bb1, label %bb2
+bb1:
+  %1 = inttoptr i64 %Fn to void (i64)*
+  br label %bb2
+bb2:
+  %2 = phi void (i64)* [ %1, %bb1 ], [ undef, %0 ]
+  call void %2(i64 1)
+  ret void
+}
+
