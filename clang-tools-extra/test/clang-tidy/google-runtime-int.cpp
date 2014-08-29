@@ -1,13 +1,13 @@
 // RUN: clang-tidy -checks=-*,google-runtime-int %s -- -x c++ 2>&1 | FileCheck %s -implicit-check-not='{{warning:|error:}}'
 
 long a();
-// CHECK: [[@LINE-1]]:1: warning: consider replacing 'long' with 'int64'
+// CHECK: [[@LINE-1]]:1: warning: consider replacing 'long' with 'int{{..}}'
 
 typedef unsigned long long uint64; // NOLINT
 
 long b(long = 1);
-// CHECK: [[@LINE-1]]:1: warning: consider replacing 'long' with 'int64'
-// CHECK: [[@LINE-2]]:8: warning: consider replacing 'long' with 'int64'
+// CHECK: [[@LINE-1]]:1: warning: consider replacing 'long' with 'int{{..}}'
+// CHECK: [[@LINE-2]]:8: warning: consider replacing 'long' with 'int{{..}}'
 
 template <typename T>
 void tmpl() {
@@ -33,7 +33,7 @@ short bar(const short, unsigned short) {
   long volatile long wat = 42;
 // CHECK: [[@LINE-1]]:3: warning: consider replacing 'long long' with 'int64'
   unsigned long y;
-// CHECK: [[@LINE-1]]:3: warning: consider replacing 'unsigned long' with 'uint64'
+// CHECK: [[@LINE-1]]:3: warning: consider replacing 'unsigned long' with 'uint{{..}}'
   unsigned long long **const *tmp;
 // CHECK: [[@LINE-1]]:3: warning: consider replacing 'unsigned long long' with 'uint64'
   unsigned long long **const *&z = tmp;

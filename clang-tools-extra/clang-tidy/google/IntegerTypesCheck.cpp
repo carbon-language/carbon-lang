@@ -34,7 +34,7 @@ void IntegerTypesCheck::check(const MatchFinder::MatchResult &Result) {
   auto TL = *Result.Nodes.getNodeAs<TypeLoc>("tl");
   SourceLocation Loc = TL.getLocStart();
 
-  if (Loc.isMacroID())
+  if (Loc.isInvalid() || Loc.isMacroID())
     return;
 
   // Look through qualification.
