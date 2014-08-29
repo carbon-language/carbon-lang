@@ -104,6 +104,14 @@ namespace llvm {
       Length(Vec.size()) {}
 #endif
 
+    /// Construct an ArrayRef<const T*> from ArrayRef<T*>. This uses SFINAE to
+    /// ensure that only ArrayRefs of pointers can be converted.
+    template <typename U>
+    ArrayRef(const ArrayRef<U *> &A,
+             typename std::enable_if<
+                 std::is_convertible<U *const *, T const *>::value>::type* = 0)
+      : Data(A.data()), Length(A.size()) {}
+
     /// @}
     /// @name Simple Operations
     /// @{
