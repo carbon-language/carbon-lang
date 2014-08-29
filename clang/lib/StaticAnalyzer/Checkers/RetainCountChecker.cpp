@@ -1717,9 +1717,9 @@ namespace {
                                    BugReporterContext &BRC,
                                    BugReport &BR) override;
 
-    PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
-                                    const ExplodedNode *N,
-                                    BugReport &BR) override;
+    std::unique_ptr<PathDiagnosticPiece> getEndPath(BugReporterContext &BRC,
+                                                    const ExplodedNode *N,
+                                                    BugReport &BR) override;
   };
 
   class CFRefLeakReportVisitor : public CFRefReportVisitor {
@@ -1728,9 +1728,9 @@ namespace {
                            const SummaryLogTy &log)
        : CFRefReportVisitor(sym, GCEnabled, log) {}
 
-    PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
-                                    const ExplodedNode *N,
-                                    BugReport &BR) override;
+    std::unique_ptr<PathDiagnosticPiece> getEndPath(BugReporterContext &BRC,
+                                                    const ExplodedNode *N,
+                                                    BugReport &BR) override;
 
     BugReporterVisitor *clone() const override {
       // The curiously-recurring template pattern only works for one level of
@@ -2219,18 +2219,16 @@ GetAllocationSite(ProgramStateManager& StateMgr, const ExplodedNode *N,
                         InterestingMethodContext);
 }
 
-PathDiagnosticPiece*
+std::unique_ptr<PathDiagnosticPiece>
 CFRefReportVisitor::getEndPath(BugReporterContext &BRC,
-                               const ExplodedNode *EndN,
-                               BugReport &BR) {
+                               const ExplodedNode *EndN, BugReport &BR) {
   BR.markInteresting(Sym);
   return BugReporterVisitor::getDefaultEndPath(BRC, EndN, BR);
 }
 
-PathDiagnosticPiece*
+std::unique_ptr<PathDiagnosticPiece>
 CFRefLeakReportVisitor::getEndPath(BugReporterContext &BRC,
-                                   const ExplodedNode *EndN,
-                                   BugReport &BR) {
+                                   const ExplodedNode *EndN, BugReport &BR) {
 
   // Tell the BugReporterContext to report cases when the tracked symbol is
   // assigned to different variables, etc.
@@ -2310,7 +2308,7 @@ CFRefLeakReportVisitor::getEndPath(BugReporterContext &BRC,
     os << " is not referenced later in this execution path and has a retain "
           "count of +" << RV->getCount();
 
-  return new PathDiagnosticEventPiece(L, os.str());
+  return llvm::make_unique<PathDiagnosticEventPiece>(L, os.str());
 }
 
 CFRefLeakReport::CFRefLeakReport(CFRefBug &D, const LangOptions &LOpts,

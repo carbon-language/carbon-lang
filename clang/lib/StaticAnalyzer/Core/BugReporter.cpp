@@ -3153,16 +3153,17 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
       std::unique_ptr<PathDiagnosticPiece> LastPiece;
       for (BugReport::visitor_iterator I = visitors.begin(), E = visitors.end();
           I != E; ++I) {
-        if (PathDiagnosticPiece *Piece = (*I)->getEndPath(PDB, N, *R)) {
+        if (std::unique_ptr<PathDiagnosticPiece> Piece =
+                (*I)->getEndPath(PDB, N, *R)) {
           assert (!LastPiece &&
               "There can only be one final piece in a diagnostic.");
-          LastPiece.reset(Piece);
+          LastPiece = std::move(Piece);
         }
       }
 
       if (ActiveScheme != PathDiagnosticConsumer::None) {
         if (!LastPiece)
-          LastPiece.reset(BugReporterVisitor::getDefaultEndPath(PDB, N, *R));
+          LastPiece = BugReporterVisitor::getDefaultEndPath(PDB, N, *R);
         assert(LastPiece);
         PD.setEndOfPath(LastPiece.release());
       }

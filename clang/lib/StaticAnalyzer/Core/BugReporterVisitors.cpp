@@ -100,17 +100,14 @@ const Stmt *bugreporter::GetRetValExpr(const ExplodedNode *N) {
 // Definitions for bug reporter visitors.
 //===----------------------------------------------------------------------===//
 
-PathDiagnosticPiece*
+std::unique_ptr<PathDiagnosticPiece>
 BugReporterVisitor::getEndPath(BugReporterContext &BRC,
-                               const ExplodedNode *EndPathNode,
-                               BugReport &BR) {
+                               const ExplodedNode *EndPathNode, BugReport &BR) {
   return nullptr;
 }
 
-PathDiagnosticPiece*
-BugReporterVisitor::getDefaultEndPath(BugReporterContext &BRC,
-                                      const ExplodedNode *EndPathNode,
-                                      BugReport &BR) {
+std::unique_ptr<PathDiagnosticPiece> BugReporterVisitor::getDefaultEndPath(
+    BugReporterContext &BRC, const ExplodedNode *EndPathNode, BugReport &BR) {
   PathDiagnosticLocation L =
     PathDiagnosticLocation::createEndOfPath(EndPathNode,BRC.getSourceManager());
 
@@ -119,13 +116,12 @@ BugReporterVisitor::getDefaultEndPath(BugReporterContext &BRC,
 
   // Only add the statement itself as a range if we didn't specify any
   // special ranges for this report.
-  PathDiagnosticPiece *P = new PathDiagnosticEventPiece(L,
-      BR.getDescription(),
-      Beg == End);
+  auto P = llvm::make_unique<PathDiagnosticEventPiece>(L, BR.getDescription(),
+                                                       Beg == End);
   for (; Beg != End; ++Beg)
     P->addRange(*Beg);
 
-  return P;
+  return std::move(P);
 }
 
 
@@ -399,9 +395,9 @@ public:
     llvm_unreachable("Invalid visit mode!");
   }
 
-  PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
-                                  const ExplodedNode *N,
-                                  BugReport &BR) override {
+  std::unique_ptr<PathDiagnosticPiece> getEndPath(BugReporterContext &BRC,
+                                                  const ExplodedNode *N,
+                                                  BugReport &BR) override {
     if (EnableNullFPSuppression)
       BR.markInvalid(ReturnVisitor::getTag(), StackFrame);
     return nullptr;
@@ -1517,8 +1513,7 @@ static bool isInStdNamespace(const Decl *D) {
   return ND->isStdNamespace();
 }
 
-
-PathDiagnosticPiece *
+std::unique_ptr<PathDiagnosticPiece>
 LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
                                                     const ExplodedNode *N,
                                                     BugReport &BR) {

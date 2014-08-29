@@ -66,17 +66,15 @@ public:
   /// If returns NULL the default implementation will be used.
   /// Also note that at most one visitor of a BugReport should generate a
   /// non-NULL end of path diagnostic piece.
-  virtual PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
-                                          const ExplodedNode *N,
-                                          BugReport &BR);
+  virtual std::unique_ptr<PathDiagnosticPiece>
+  getEndPath(BugReporterContext &BRC, const ExplodedNode *N, BugReport &BR);
 
   virtual void Profile(llvm::FoldingSetNodeID &ID) const = 0;
 
   /// \brief Generates the default final diagnostic piece.
-  static PathDiagnosticPiece *getDefaultEndPath(BugReporterContext &BRC,
-                                                const ExplodedNode *N,
-                                                BugReport &BR);
-
+  static std::unique_ptr<PathDiagnosticPiece>
+  getDefaultEndPath(BugReporterContext &BRC, const ExplodedNode *N,
+                    BugReport &BR);
 };
 
 /// This class provides a convenience implementation for clone() using the
@@ -268,9 +266,9 @@ public:
     return nullptr;
   }
 
-  PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
-                                  const ExplodedNode *N,
-                                  BugReport &BR) override;
+  std::unique_ptr<PathDiagnosticPiece> getEndPath(BugReporterContext &BRC,
+                                                  const ExplodedNode *N,
+                                                  BugReport &BR) override;
 };
 
 /// \brief When a region containing undefined value or '0' value is passed 

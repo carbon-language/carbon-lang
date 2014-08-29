@@ -420,9 +420,9 @@ private:
                                    BugReporterContext &BRC,
                                    BugReport &BR) override;
 
-    PathDiagnosticPiece* getEndPath(BugReporterContext &BRC,
-                                    const ExplodedNode *EndPathNode,
-                                    BugReport &BR) override {
+    std::unique_ptr<PathDiagnosticPiece>
+    getEndPath(BugReporterContext &BRC, const ExplodedNode *EndPathNode,
+               BugReport &BR) override {
       if (!IsLeak)
         return nullptr;
 
@@ -430,7 +430,8 @@ private:
         PathDiagnosticLocation::createEndOfPath(EndPathNode,
                                                 BRC.getSourceManager());
       // Do not add the statement itself as a range in case of leak.
-      return new PathDiagnosticEventPiece(L, BR.getDescription(), false);
+      return llvm::make_unique<PathDiagnosticEventPiece>(L, BR.getDescription(),
+                                                         false);
     }
 
   private:
