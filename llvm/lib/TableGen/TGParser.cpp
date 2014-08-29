@@ -1315,6 +1315,9 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     // first.  We'll first read everything in to a vector, then we can reverse
     // it to get the bits in the correct order for the BitsInit value.
     for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
+      // FIXME: The following two loops would not be duplicated
+      //        if the API was a little more orthogonal.
+
       // bits<n> values are allowed to initialize n bits.
       if (BitsInit *BI = dyn_cast<BitsInit>(Vals[i])) {
         for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i)
