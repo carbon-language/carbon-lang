@@ -819,7 +819,25 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
             ::snprintf (arg_cstr, sizeof(arg_cstr), "--log-flags=%s", env_debugserver_log_flags);
             debugserver_args.AppendArgument(arg_cstr);
         }
-        
+
+        // Add additional args, starting with LLDB_DEBUGSERVER_EXTRA_ARG_1 until an env var doesn't come back.
+        uint32_t env_var_index = 1;
+        bool has_env_var;
+        do
+        {
+            char env_var_name[64];
+            snprintf (env_var_name, sizeof (env_var_name), "LLDB_DEBUGSERVER_EXTRA_ARG_%" PRIu32, env_var_index++);
+            const char *extra_arg = getenv(env_var_name);
+            has_env_var = extra_arg != nullptr;
+
+            if (has_env_var)
+            {
+                debugserver_args.AppendArgument (extra_arg);
+                if (log)
+                    log->Printf ("GDBRemoteCommunication::%s adding env var %s contents to stub command line (%s)", __FUNCTION__, env_var_name, extra_arg);
+            }
+        } while (has_env_var);
+
         // Close STDIN, STDOUT and STDERR. We might need to redirect them
         // to "/dev/null" if we run into any problems.
         launch_info.AppendCloseFileAction (STDIN_FILENO);
