@@ -7994,16 +7994,16 @@ static SDValue performVSelectCombine(SDNode *N, SelectionDAG &DAG) {
 static SDValue performSelectCombine(SDNode *N, SelectionDAG &DAG) {
   SDValue N0 = N->getOperand(0);
   EVT ResVT = N->getValueType(0);
-  EVT SrcVT = N0.getOperand(0).getValueType();
-  int NumMaskElts = ResVT.getSizeInBits() / SrcVT.getSizeInBits();
+
+  if (N0.getOpcode() != ISD::SETCC || N0.getValueType() != MVT::i1)
+    return SDValue();
 
   // If NumMaskElts == 0, the comparison is larger than select result. The
   // largest real NEON comparison is 64-bits per lane, which means the result is
   // at most 32-bits and an illegal vector. Just bail out for now.
+  EVT SrcVT = N0.getOperand(0).getValueType();
+  int NumMaskElts = ResVT.getSizeInBits() / SrcVT.getSizeInBits();
   if (!ResVT.isVector() || NumMaskElts == 0)
-    return SDValue();
-
-  if (N0.getOpcode() != ISD::SETCC || N0.getValueType() != MVT::i1)
     return SDValue();
 
   SrcVT = EVT::getVectorVT(*DAG.getContext(), SrcVT, NumMaskElts);

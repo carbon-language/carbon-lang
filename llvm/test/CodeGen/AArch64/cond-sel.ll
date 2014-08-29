@@ -224,3 +224,10 @@ define <1 x i1> @test_wide_comparison(i32 %in) {
   %res = select i1 %tmp, <1 x i1> <i1 1>, <1 x i1> zeroinitializer
   ret <1 x i1> %res
 }
+
+define i32 @test_select_undef() {
+; CHECK-LABEL: test_select_undef:
+; CHECK: ret
+  %res = select i1 undef, i32 0, i32 42
+  ret i32 %res
+}
