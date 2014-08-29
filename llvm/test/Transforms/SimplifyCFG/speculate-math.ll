@@ -3,6 +3,7 @@
 declare float @llvm.sqrt.f32(float) nounwind readonly
 declare float @llvm.fma.f32(float, float, float) nounwind readonly
 declare float @llvm.fmuladd.f32(float, float, float) nounwind readonly
+declare float @llvm.fabs.f32(float) nounwind readonly
 
 ; CHECK-LABEL: @sqrt_test(
 ; CHECK: select
@@ -21,6 +22,22 @@ test_sqrt.exit:                                   ; preds = %cond.else.i, %entry
   ret void
 }
 
+; CHECK-LABEL: @fabs_test(
+; CHECK: select
+define void @fabs_test(float addrspace(1)* noalias nocapture %out, float %a) nounwind {
+entry:
+  %cmp.i = fcmp olt float %a, 0.000000e+00
+  br i1 %cmp.i, label %test_fabs.exit, label %cond.else.i
+
+cond.else.i:                                      ; preds = %entry
+  %0 = tail call float @llvm.fabs.f32(float %a) nounwind readnone
+  br label %test_fabs.exit
+
+test_fabs.exit:                                   ; preds = %cond.else.i, %entry
+  %cond.i = phi float [ %0, %cond.else.i ], [ 0x7FF8000000000000, %entry ]
+  store float %cond.i, float addrspace(1)* %out, align 4
+  ret void
+}
 
 ; CHECK-LABEL: @fma_test(
 ; CHECK: select
