@@ -345,9 +345,12 @@ class BugReportEquivClass : public llvm::FoldingSetNode {
   llvm::ilist<BugReport> Reports;
 
   friend class BugReporter;
-  void AddReport(BugReport* R) { Reports.push_back(R); }
+  void AddReport(std::unique_ptr<BugReport> R) {
+    Reports.push_back(R.release());
+  }
+
 public:
-  BugReportEquivClass(BugReport* R) { Reports.push_back(R); }
+  BugReportEquivClass(std::unique_ptr<BugReport> R) { AddReport(std::move(R)); }
   ~BugReportEquivClass();
 
   void Profile(llvm::FoldingSetNodeID& ID) const {

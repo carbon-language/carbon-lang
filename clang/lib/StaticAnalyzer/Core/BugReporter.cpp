@@ -3278,12 +3278,11 @@ void BugReporter::emitReport(BugReport* R) {
   BugReportEquivClass* EQ = EQClasses.FindNodeOrInsertPos(ID, InsertPos);
 
   if (!EQ) {
-    EQ = new BugReportEquivClass(UniqueR.release());
+    EQ = new BugReportEquivClass(std::move(UniqueR));
     EQClasses.InsertNode(EQ, InsertPos);
     EQClassesVector.push_back(EQ);
-  }
-  else
-    EQ->AddReport(UniqueR.release());
+  } else
+    EQ->AddReport(std::move(UniqueR));
 }
 
 
