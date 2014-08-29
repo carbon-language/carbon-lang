@@ -1,15 +1,18 @@
-# RUN: yaml2obj %p/Inputs/reloc64-1.obj.yaml > %t1.obj
-# RUN: yaml2obj %p/Inputs/reloc64-2.obj.yaml > %t2.obj
+# RUN: yaml2obj %p/Inputs/reloc64.obj.yaml > %t.obj
 
 # RUN: lld -flavor link /out:%t.exe /subsystem:console /machine:x64 \
-# RUN:   /entry:fn1 -- %t1.obj %t2.obj
-# RUN: llvm-objdump -d %t.exe | FileCheck -check-prefix=TEXT %s
-# RUN: llvm-objdump -s %t.exe | FileCheck -check-prefix=RELOC %s
+# RUN:   /entry:entry -- %t.obj
+# RUN: llvm-objdump -d %t.exe | FileCheck %s
 
-TEXT:      Disassembly of section .text:
-TEXT-NEXT: .text:
-TEXT-NEXT:   1000:  e8 0b 00 00 00   callq 11
-TEXT-NEXT:   1005:  48 b8 10 10 00 40 01 00 00 00 movabsq $5368713232, %rax
-
-RELOC:      Contents of section .reloc:
-RELOC-NEXT: 2000 00100000 0c000000 07a00000 00000000  ................
+CHECK:      Disassembly of section .text:
+CHECK-NEXT: .text:
+CHECK-NEXT:     1000: 48 b8 28 10 00 40 01 00 00 ff
+CHECK-NEXT:     100a: e8 19 00 00 ff
+CHECK-NEXT:     100f: e8 13 00 00 ff
+CHECK-NEXT:     1014: e8 0d 00 00 ff
+CHECK-NEXT:     1019: e8 07 00 00 ff
+CHECK-NEXT:     101e: e8 01 00 00 ff
+CHECK-NEXT:     1023: e8 fb ff ff fe
+CHECK-NEXT:     1028: e8 01 00 00 ff
+CHECK-NEXT:     102d: e8 28 00 00 ff
+CHECK-NEXT:     1032: c3

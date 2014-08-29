@@ -587,26 +587,26 @@ void AtomChunk::applyRelocations64(uint8_t *buffer,
         break;
       case llvm::COFF::IMAGE_REL_AMD64_REL32_1:
         *relocSite32 =
-            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() - 3;
+            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() - 5;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_REL32_2:
         *relocSite32 =
-            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() - 2;
+            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() - 6;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_REL32_3:
         *relocSite32 =
-            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() - 1;
+            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() - 7;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_REL32_4:
         *relocSite32 =
-            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom();
+            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() - 8;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_REL32_5:
         *relocSite32 =
-            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() + 1;
+            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() - 9;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_SECTION:
-        *relocSite16 = *relocSite16 + getSectionIndex(targetAddr, sectionRva);
+        *relocSite16 = *relocSite16 + getSectionIndex(targetAddr, sectionRva) - 1;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_SECREL:
         *relocSite32 = *relocSite32 + targetAddr -

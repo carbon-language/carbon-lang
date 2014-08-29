@@ -1,0 +1,63 @@
+---
+header:
+  Machine:         IMAGE_FILE_MACHINE_AMD64
+  Characteristics: []
+sections:
+  - Name:            .text
+    Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
+    Alignment:       16
+    SectionData:     48B800000000000000ffE8000000ffE8000000ffE8000000ffE8000000ffE8000000ffE8000000ffE8000000ffE8000000ffC3
+    Relocations:
+      - VirtualAddress:  2
+        SymbolName:      end
+        Type:            IMAGE_REL_AMD64_ADDR64
+      - VirtualAddress:  11
+        SymbolName:      end
+        Type:            IMAGE_REL_AMD64_REL32
+      - VirtualAddress:  16
+        SymbolName:      end
+        Type:            IMAGE_REL_AMD64_REL32_1
+      - VirtualAddress:  21
+        SymbolName:      end
+        Type:            IMAGE_REL_AMD64_REL32_2
+      - VirtualAddress:  26
+        SymbolName:      end
+        Type:            IMAGE_REL_AMD64_REL32_3
+      - VirtualAddress:  31
+        SymbolName:      end
+        Type:            IMAGE_REL_AMD64_REL32_4
+      - VirtualAddress:  36
+        SymbolName:      end
+        Type:            IMAGE_REL_AMD64_REL32_5
+      - VirtualAddress:  41
+        SymbolName:      end
+        Type:            IMAGE_REL_AMD64_SECTION
+      - VirtualAddress:  46
+        SymbolName:      end
+        Type:            IMAGE_REL_AMD64_SECREL
+symbols:
+  - Name:            .text
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    SectionDefinition:
+      Length:          41
+      NumberOfRelocations: 7
+      NumberOfLinenumbers: 0
+      CheckSum:        0
+      Number:          0
+  - Name:            entry
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            end
+    Value:           40
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+...
