@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include <assert.h>
+#include <stddef.h>
 #include <unwind.h>
 
 extern "C" _Unwind_Reason_Code
