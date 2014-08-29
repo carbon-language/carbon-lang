@@ -18,7 +18,6 @@ struct C {
   virtual int bar(int, double);
   virtual S baz(int);
   virtual S qux(U);
-  virtual S __fastcall zed(U);
 };
 
 namespace {
@@ -44,9 +43,6 @@ void f() {
   S (C::*ptr5)(U);
   ptr5 = &C::qux;
 
-  S (__fastcall C::*ptr6)(U);
-  ptr6 = &C::zed;
-
 
 // CHECK32-LABEL: define void @"\01?f@@YAXXZ"()
 // CHECK32: store i8* bitcast (void (%struct.C*, ...)* @"\01??_9C@@$BA@AE" to i8*), i8** %ptr
@@ -66,7 +62,7 @@ void f() {
 
 // Thunk for calling the 1st virtual function in C with no parameters.
 // CHECK32-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_9C@@$BA@AE"(%struct.C* %this, ...)
-// CHECK32:             unnamed_addr
+// CHECK32-NOT:             unnamed_addr
 // CHECK32: [[VPTR:%.*]] = getelementptr inbounds void (%struct.C*, ...)** %{{.*}}, i64 0
 // CHECK32: [[CALLEE:%.*]] = load void (%struct.C*, ...)** [[VPTR]]
 // CHECK32: musttail call x86_thiscallcc void (%struct.C*, ...)* [[CALLEE]](%struct.C* %{{.*}}, ...)
@@ -74,7 +70,7 @@ void f() {
 // CHECK32: }
 //
 // CHECK64-LABEL: define linkonce_odr void @"\01??_9C@@$BA@AA"(%struct.C* %this, ...)
-// CHECK64:             unnamed_addr
+// CHECK64-NOT:             unnamed_addr
 // CHECK64: [[VPTR:%.*]] = getelementptr inbounds void (%struct.C*, ...)** %{{.*}}, i64 0
 // CHECK64: [[CALLEE:%.*]] = load void (%struct.C*, ...)** [[VPTR]]
 // CHECK64: musttail call void (%struct.C*, ...)* [[CALLEE]](%struct.C* %{{.*}}, ...)
@@ -137,22 +133,6 @@ void f() {
 //
 // CHECK64-LABEL: define linkonce_odr void @"\01??_9C@@$BBI@AA"(%struct.C* %this, ...)
 // CHECK64: [[VPTR:%.*]] = getelementptr inbounds void (%struct.C*, ...)** %{{.*}}, i64 3
-// CHECK64: [[CALLEE:%.*]] = load void (%struct.C*, ...)** [[VPTR]]
-// CHECK64: musttail call void (%struct.C*, ...)* [[CALLEE]](%struct.C* %{{.*}}, ...)
-// CHECK64: ret void
-// CHECK64: }
-
-// Thunk for calling the fifth virtual function in C, taking a struct parameter
-// and returning a struct.
-// CHECK32-LABEL: define linkonce_odr x86_fastcallcc void @"\01??_9C@@$BBA@AE"(%struct.C* inreg %this, ...)
-// CHECK32: [[VPTR:%.*]] = getelementptr inbounds void (%struct.C*, ...)** %{{.*}}, i64 4
-// CHECK32: [[CALLEE:%.*]] = load void (%struct.C*, ...)** [[VPTR]]
-// CHECK32: musttail call x86_fastcallcc void (%struct.C*, ...)* [[CALLEE]](%struct.C* inreg %{{.*}}, ...)
-// CHECK32-NEXT: ret void
-// CHECK32: }
-//
-// CHECK64-LABEL: define linkonce_odr void @"\01??_9C@@$BCA@AA"(%struct.C* %this, ...)
-// CHECK64: [[VPTR:%.*]] = getelementptr inbounds void (%struct.C*, ...)** %{{.*}}, i64 4
 // CHECK64: [[CALLEE:%.*]] = load void (%struct.C*, ...)** [[VPTR]]
 // CHECK64: musttail call void (%struct.C*, ...)* [[CALLEE]](%struct.C* %{{.*}}, ...)
 // CHECK64: ret void
