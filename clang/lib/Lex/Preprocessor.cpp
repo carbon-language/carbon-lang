@@ -151,8 +151,7 @@ Preprocessor::~Preprocessor() {
   // Free any cached macro expanders.
   // This populates MacroArgCache, so all TokenLexers need to be destroyed
   // before the code below that frees up the MacroArgCache list.
-  for (unsigned i = 0, e = NumCachedTokenLexers; i != e; ++i)
-    delete TokenLexerCache[i];
+  std::fill(TokenLexerCache, TokenLexerCache + NumCachedTokenLexers, nullptr);
   CurTokenLexer.reset();
 
   while (DeserializedMacroInfoChain *I = DeserialMIChainHead) {

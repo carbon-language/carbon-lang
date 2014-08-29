@@ -395,7 +395,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// \brief Cache of macro expanders to reduce malloc traffic.
   enum { TokenLexerCacheSize = 8 };
   unsigned NumCachedTokenLexers;
-  TokenLexer *TokenLexerCache[TokenLexerCacheSize];
+  std::unique_ptr<TokenLexer> TokenLexerCache[TokenLexerCacheSize];
   /// \}
 
   /// \brief Keeps macro expanded tokens for TokenLexers.
