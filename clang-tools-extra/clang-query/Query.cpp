@@ -92,7 +92,7 @@ bool MatchQuery::run(llvm::raw_ostream &OS, QuerySession &QS) const {
             TD.emitDiagnostic(
                 R.getBegin(), DiagnosticsEngine::Note,
                 "\"" + BI->first + "\" binds here",
-                llvm::makeArrayRef(CharSourceRange::getTokenRange(R)),
+                CharSourceRange::getTokenRange(R),
                 None, &AST->getSourceManager());
           }
           break;
