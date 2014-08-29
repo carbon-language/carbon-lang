@@ -439,7 +439,7 @@ class DarwinX86AsmBackend : public X86AsmBackend {
   unsigned OffsetSize;                   ///< Offset of a "push" instruction.
   unsigned PushInstrSize;                ///< Size of a "push" instruction.
   unsigned MoveInstrSize;                ///< Size of a "move" instruction.
-  unsigned StackDivide;                  ///< Amount to adjust stack stize by.
+  unsigned StackDivide;                  ///< Amount to adjust stack size by.
 protected:
   /// \brief Implementation of algorithm to generate the compact unwind encoding
   /// for the CFI instructions.
