@@ -50,13 +50,18 @@ __declspec(dllimport) extern int GlobalRedecl4;
 USEVAR(GlobalRedecl4)
                       int GlobalRedecl4; // dllimport ignored
 
+// FIXME: dllimport is dropped in the AST; this should be reflected in codegen (PR02803).
+// CHECK: @GlobalRedecl5 = external dllimport global i32
+__declspec(dllimport) extern int GlobalRedecl5;
+USEVAR(GlobalRedecl5)
+                      extern int GlobalRedecl5; // dllimport ignored
 
 // Redeclaration in local context.
-// CHECK: @GlobalRedecl5 = external dllimport global i32
-__declspec(dllimport) int GlobalRedecl5;
+// CHECK: @GlobalRedecl6 = external dllimport global i32
+__declspec(dllimport) int GlobalRedecl6;
 int functionScope() {
-  extern int GlobalRedecl5; // still dllimport
-  return GlobalRedecl5;
+  extern int GlobalRedecl6; // still dllimport
+  return GlobalRedecl6;
 }
 
 
@@ -112,3 +117,9 @@ USE(redecl3)
 __declspec(dllimport) void redecl4(void);
 USE(redecl4)
                       void redecl4(void) {} // dllimport ignored
+
+// FIXME: dllimport is dropped in the AST; this should be reflected in codegen (PR20803).
+// CHECK-DAG: declare dllimport
+__declspec(dllimport) void redecl5(void);
+USE(redecl5)
+                      void redecl5(void); // dllimport ignored
