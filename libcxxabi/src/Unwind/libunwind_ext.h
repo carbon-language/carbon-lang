@@ -13,7 +13,9 @@
 #ifndef __LIBUNWIND_EXT__
 #define __LIBUNWIND_EXT__
 
+#include "config.h"
 #include <libunwind.h>
+#include <unwind.h>
 
 #define UNW_STEP_SUCCESS 1
 #define UNW_STEP_END     0
@@ -30,6 +32,13 @@ extern void unw_iterate_dwarf_unwind_cache(void (*func)(unw_word_t ip_start,
 // IPI
 extern void _unw_add_dynamic_fde(unw_word_t fde);
 extern void _unw_remove_dynamic_fde(unw_word_t fde);
+
+#if LIBCXXABI_ARM_EHABI
+extern const uint32_t* decode_eht_entry(const uint32_t*, size_t*, size_t*);
+extern _Unwind_Reason_Code _Unwind_VRS_Interpret(_Unwind_Context *context,
+                                                 const uint32_t *data,
+                                                 size_t offset, size_t len);
+#endif
 
 #ifdef __cplusplus
 }

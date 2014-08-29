@@ -109,6 +109,7 @@ _Unwind_Backtrace(_Unwind_Trace_Fn callback, void *ref) {
 
   // walk each frame
   while (true) {
+    _Unwind_Reason_Code result;
 
     // ask libuwind to get next frame (skip over first frame which is
     // _Unwind_Backtrace())
@@ -118,6 +119,28 @@ _Unwind_Backtrace(_Unwind_Trace_Fn callback, void *ref) {
                                  _URC_END_OF_STACK);
       return _URC_END_OF_STACK;
     }
+
+#if LIBCXXABI_ARM_EHABI
+    // Get the information for this frame.
+    unw_proc_info_t frameInfo;
+    if (unw_get_proc_info(&cursor, &frameInfo) != UNW_ESUCCESS) {
+      return _URC_END_OF_STACK;
+    }
+
+    struct _Unwind_Context *context = (struct _Unwind_Context *)&cursor;
+    size_t off;
+    size_t len;
+    uint32_t* unwindInfo = (uint32_t *) frameInfo.unwind_info;
+    unwindInfo = decode_eht_entry(unwindInfo, &off, &len);
+    if (unwindInfo == NULL) {
+      return _URC_FAILURE;
+    }
+
+    result = _Unwind_VRS_Interpret(context, unwindInfo, off, len);
+    if (result != _URC_CONTINUE_UNWIND) {
+      return _URC_END_OF_STACK;
+    }
+#endif // LIBCXXABI_ARM_EHABI
 
     // debugging
     if (_LIBUNWIND_TRACING_UNWINDING) {
@@ -133,8 +156,7 @@ _Unwind_Backtrace(_Unwind_Trace_Fn callback, void *ref) {
     }
 
     // call trace function with this frame
-    _Unwind_Reason_Code result =
-        (*callback)((struct _Unwind_Context *)(&cursor), ref);
+    result = (*callback)((struct _Unwind_Context *)(&cursor), ref);
     if (result != _URC_NO_REASON) {
       _LIBUNWIND_TRACE_UNWINDING(" _backtrace: ended because callback "
                                  "returned %d\n",

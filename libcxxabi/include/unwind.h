@@ -207,10 +207,6 @@ _Unwind_VRS_Pop(_Unwind_Context *context, _Unwind_VRS_RegClass regclass,
                 uint32_t discriminator,
                 _Unwind_VRS_DataRepresentation representation);
 
-extern _Unwind_Reason_Code _Unwind_VRS_Interpret(_Unwind_Context *context,
-                                                 uint32_t *data, size_t offset,
-                                                 size_t len);
-
 static inline uintptr_t _Unwind_GetGR(struct _Unwind_Context* context,
                                       int index) {
   uintptr_t value = 0;

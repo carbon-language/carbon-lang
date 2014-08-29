@@ -12,14 +12,19 @@
 //  
 //===----------------------------------------------------------------------===//
 
+#include <assert.h>
+#include <stdlib.h>
+#include <typeinfo>
+
 #include "config.h"
-#include "unwind.h"
 #include "cxa_exception.hpp"
 #include "cxa_handlers.hpp"
 #include "private_typeinfo.h"
-#include <typeinfo>
-#include <stdlib.h>
-#include <assert.h>
+#include "unwind.h"
+
+#if LIBCXXABI_ARM_EHABI
+#include "Unwind/libunwind_ext.h"
+#endif
 
 /*
     Exception Header Layout:

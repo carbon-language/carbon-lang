@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "libunwind.h"
+#include "libunwind_ext.h"
 #include "unwind.h"
 #include "../private_typeinfo.h"
 
@@ -28,8 +29,8 @@ namespace {
 
 // Strange order: take words in order, but inside word, take from most to least
 // signinficant byte.
-uint8_t getByte(uint32_t* data, size_t offset) {
-  uint8_t* byteData = reinterpret_cast<uint8_t*>(data);
+uint8_t getByte(const uint32_t* data, size_t offset) {
+  const uint8_t* byteData = reinterpret_cast<const uint8_t*>(data);
   return byteData[(offset & ~(size_t)0x03) + (3 - (offset & (size_t)0x03))];
 }
 
@@ -166,25 +167,15 @@ _Unwind_Reason_Code unwindOneFrame(
     _Unwind_Control_Block* ucbp,
     struct _Unwind_Context* context) {
   // Read the compact model EHT entry's header # 6.3
-  uint32_t* unwindingData = ucbp->pr_cache.ehtp;
-  uint32_t unwindInfo = *unwindingData;
-  assert((unwindInfo & 0xf0000000) == 0x80000000 && "Must be a compact entry");
+  const uint32_t* unwindingData = ucbp->pr_cache.ehtp;
+  assert((*unwindingData & 0xf0000000) == 0x80000000 && "Must be a compact entry");
   Descriptor::Format format =
-      static_cast<Descriptor::Format>((unwindInfo & 0x0f000000) >> 24);
+      static_cast<Descriptor::Format>((*unwindingData & 0x0f000000) >> 24);
   size_t len = 0;
-  size_t startOffset = 0;
-  switch (format) {
-    case Descriptor::SU16:
-      len = 4;
-      startOffset = 1;
-      break;
-    case Descriptor::LU16:
-    case Descriptor::LU32:
-      len = 4 + 4 * ((unwindInfo & 0x00ff0000) >> 16);
-      startOffset = 2;
-      break;
-    default:
-      return _URC_FAILURE;
+  size_t off = 0;
+  unwindingData = decode_eht_entry(unwindingData, &off, &len);
+  if (unwindingData == nullptr) {
+    return _URC_FAILURE;
   }
 
   // Handle descriptors before unwinding so they are processed in the context
@@ -198,7 +189,7 @@ _Unwind_Reason_Code unwindOneFrame(
   if (result != _URC_CONTINUE_UNWIND)
     return result;
 
-  return _Unwind_VRS_Interpret(context, unwindingData, startOffset, len);
+  return _Unwind_VRS_Interpret(context, unwindingData, off, len);
 }
 
 // Generates mask discriminator for _Unwind_VRS_Pop, e.g. for _UVRSC_CORE /
@@ -215,9 +206,46 @@ uint32_t RegisterRange(uint8_t start, uint8_t count_minus_one) {
 
 } // end anonymous namespace
 
+/**
+ * Decodes an EHT entry.
+ *
+ * @param data Pointer to EHT.
+ * @param[out] off Offset from return value (in bytes) to begin interpretation.
+ * @param[out] len Number of bytes in unwind code.
+ * @return Pointer to beginning of unwind code.
+ */
+extern "C" const uint32_t*
+decode_eht_entry(const uint32_t* data, size_t* off, size_t* len) {
+  if ((*data & 0x80000000) == 0) {
+    // 6.2: Generic Model
+    *off = 1; // First byte is size data.
+    *len = (((data[1] >> 24) & 0xff) + 1) * 4;
+    data++; // Skip the first word, which is the prel31 offset.
+  } else {
+    // 6.3: ARM Compact Model
+    Descriptor::Format format =
+        static_cast<Descriptor::Format>((*data & 0x0f000000) >> 24);
+    switch (format) {
+      case Descriptor::SU16:
+        *len = 4;
+        *off = 1;
+        break;
+      case Descriptor::LU16:
+      case Descriptor::LU32:
+        *len = 4 + 4 * ((*data & 0x00ff0000) >> 16);
+        *off = 2;
+        break;
+      default:
+        return nullptr;
+    }
+  }
+
+  return data;
+}
+
 _Unwind_Reason_Code _Unwind_VRS_Interpret(
     _Unwind_Context* context,
-    uint32_t* data,
+    const uint32_t* data,
     size_t offset,
     size_t len) {
   bool wrotePC = false;
