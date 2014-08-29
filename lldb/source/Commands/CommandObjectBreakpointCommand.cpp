@@ -47,7 +47,7 @@ public:
                              "Add a set of commands to a breakpoint, to be executed whenever the breakpoint is hit."
                              "  If no breakpoint is specified, adds the commands to the last created breakpoint.",
                              NULL),
-    IOHandlerDelegateMultiline ("DONE", IOHandlerDelegate::Completion::LLDBCommand),
+        IOHandlerDelegateMultiline ("DONE", IOHandlerDelegate::Completion::LLDBCommand),
         m_options (interpreter)
     {
         SetHelpLong (
@@ -229,9 +229,12 @@ one command per line.\n" );
     {
         io_handler.SetIsDone(true);
         
-        BreakpointOptions *bp_options = (BreakpointOptions *) io_handler.GetUserData();
-        if (bp_options)
+        std::vector<BreakpointOptions *> *bp_options_vec = (std::vector<BreakpointOptions *> *)io_handler.GetUserData();
+        for (BreakpointOptions *bp_options : *bp_options_vec)
         {
+            if (!bp_options)
+                continue;
+                    
             std::unique_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
             if (data_ap.get())
             {
@@ -240,36 +243,37 @@ one command per line.\n" );
                 bp_options->SetCallback (BreakpointOptionsCallbackFunction, baton_sp);
             }
         }
-
     }
     
     void
-    CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options, 
+    CollectDataForBreakpointCommandCallback (std::vector<BreakpointOptions *> &bp_options_vec,
                                              CommandReturnObject &result)
     {
         m_interpreter.GetLLDBCommandsFromIOHandler ("> ",           // Prompt
                                                     *this,          // IOHandlerDelegate
                                                     true,           // Run IOHandler in async mode
-                                                    bp_options);    // Baton for the "io_handler" that will be passed back into our IOHandlerDelegate functions
+                                                    &bp_options_vec);    // Baton for the "io_handler" that will be passed back into our IOHandlerDelegate functions
     }
     
     /// Set a one-liner as the callback for the breakpoint.
     void 
-    SetBreakpointCommandCallback (BreakpointOptions *bp_options,
+    SetBreakpointCommandCallback (std::vector<BreakpointOptions *> &bp_options_vec,
                                   const char *oneliner)
     {
-        std::unique_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
+        for (auto bp_options : bp_options_vec)
+        {
+            std::unique_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
 
-        // It's necessary to set both user_source and script_source to the oneliner.
-        // The former is used to generate callback description (as in breakpoint command list)
-        // while the latter is used for Python to interpret during the actual callback.
-        data_ap->user_source.AppendString (oneliner);
-        data_ap->script_source.assign (oneliner);
-        data_ap->stop_on_error = m_options.m_stop_on_error;
+            // It's necessary to set both user_source and script_source to the oneliner.
+            // The former is used to generate callback description (as in breakpoint command list)
+            // while the latter is used for Python to interpret during the actual callback.
+            data_ap->user_source.AppendString (oneliner);
+            data_ap->script_source.assign (oneliner);
+            data_ap->stop_on_error = m_options.m_stop_on_error;
 
-        BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
-        bp_options->SetCallback (BreakpointOptionsCallbackFunction, baton_sp);
-
+            BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
+            bp_options->SetCallback (BreakpointOptionsCallbackFunction, baton_sp);
+        }
         return;
     }
     
@@ -460,15 +464,11 @@ protected:
         BreakpointIDList valid_bp_ids;
         CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
 
+        m_bp_options_vec.clear();
+        
         if (result.Succeeded())
         {
             const size_t count = valid_bp_ids.GetSize();
-            if (count > 1)
-            {
-                result.AppendError ("can only add commands to one breakpoint at a time.");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
             
             for (size_t i = 0; i < count; ++i)
             {
@@ -490,44 +490,45 @@ protected:
                         if (bp_loc_sp)
                             bp_options = bp_loc_sp->GetLocationOptions();
                     }
-
-                    // Skip this breakpoint if bp_options is not good.
-                    if (bp_options == NULL) continue;
-
-                    // If we are using script language, get the script interpreter
-                    // in order to set or collect command callback.  Otherwise, call
-                    // the methods associated with this object.
-                    if (m_options.m_use_script_language)
-                    {
-                        // Special handling for one-liner specified inline.
-                        if (m_options.m_use_one_liner)
-                        {
-                            m_interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (bp_options,
-                                                                                                m_options.m_one_liner.c_str());
-                        }
-                        else if (m_options.m_function_name.size())
-                        {
-                            m_interpreter.GetScriptInterpreter()->SetBreakpointCommandCallbackFunction (bp_options,
-                                                                                                        m_options.m_function_name.c_str());
-                        }
-                        else
-                        {
-                            m_interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (bp_options,
-                                                                                                           result);
-                        }
-                    }
-                    else
-                    {
-                        // Special handling for one-liner specified inline.
-                        if (m_options.m_use_one_liner)
-                            SetBreakpointCommandCallback (bp_options,
-                                                          m_options.m_one_liner.c_str());
-                        else
-                            CollectDataForBreakpointCommandCallback (bp_options, 
-                                                                     result);
-                    }
+                    if (bp_options)
+                        m_bp_options_vec.push_back (bp_options);
                 }
             }
+
+            // If we are using script language, get the script interpreter
+            // in order to set or collect command callback.  Otherwise, call
+            // the methods associated with this object.
+            if (m_options.m_use_script_language)
+            {
+                ScriptInterpreter *script_interp = m_interpreter.GetScriptInterpreter();
+                // Special handling for one-liner specified inline.
+                if (m_options.m_use_one_liner)
+                {
+                    script_interp->SetBreakpointCommandCallback (m_bp_options_vec,
+                                                                 m_options.m_one_liner.c_str());
+                }
+                else if (m_options.m_function_name.size())
+                {
+                    script_interp->SetBreakpointCommandCallbackFunction (m_bp_options_vec,
+                                                                         m_options.m_function_name.c_str());
+                }
+                else
+                {
+                    script_interp->CollectDataForBreakpointCommandCallback (m_bp_options_vec,
+                                                                            result);
+                }
+            }
+            else
+            {
+                // Special handling for one-liner specified inline.
+                if (m_options.m_use_one_liner)
+                    SetBreakpointCommandCallback (m_bp_options_vec,
+                                                  m_options.m_one_liner.c_str());
+                else
+                    CollectDataForBreakpointCommandCallback (m_bp_options_vec,
+                                                             result);
+            }
+
         }
 
         return result.Succeeded();
@@ -535,6 +536,17 @@ protected:
 
 private:
     CommandOptions m_options;
+    std::vector<BreakpointOptions *> m_bp_options_vec;  // This stores the breakpoint options that we are currently
+                                                        // collecting commands for.  In the CollectData... calls we need
+                                                        // to hand this off to the IOHandler, which may run asynchronously.
+                                                        // So we have to have some way to keep it alive, and not leak it.
+                                                        // Making it an ivar of the command object, which never goes away
+                                                        // achieves this.  Note that if we were able to run
+                                                        // the same command concurrently in one interpreter we'd have to
+                                                        // make this "per invocation".  But there are many more reasons
+                                                        // why it is not in general safe to do that in lldb at present,
+                                                        // so it isn't worthwhile to come up with a more complex mechanism
+                                                        // to address this particular weakness right now.
     static const char *g_reader_instructions;
 
 };

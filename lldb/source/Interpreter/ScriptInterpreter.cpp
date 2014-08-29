@@ -44,7 +44,7 @@ ScriptInterpreter::GetCommandInterpreter ()
 void 
 ScriptInterpreter::CollectDataForBreakpointCommandCallback 
 (
-    BreakpointOptions *bp_options,
+    std::vector<BreakpointOptions *> &bp_options_vec,
     CommandReturnObject &result
 )
 {
@@ -79,6 +79,30 @@ ScriptInterpreter::LanguageToString (lldb::ScriptLanguage language)
     }
 
     return return_value;
+}
+
+Error
+ScriptInterpreter::SetBreakpointCommandCallback (std::vector<BreakpointOptions *> &bp_options_vec,
+                                                 const char *callback_text)
+{
+    Error return_error;
+    for (BreakpointOptions *bp_options : bp_options_vec)
+    {
+        return_error = SetBreakpointCommandCallback(bp_options, callback_text);
+        if (return_error.Success())
+            break;
+    }
+    return return_error;
+}
+
+void
+ScriptInterpreter::SetBreakpointCommandCallbackFunction (std::vector<BreakpointOptions *> &bp_options_vec,
+                                                         const char *function_name)
+{
+    for (BreakpointOptions *bp_options : bp_options_vec)
+    {
+        SetBreakpointCommandCallbackFunction(bp_options, function_name);
+    }
 }
 
 std::unique_ptr<ScriptInterpreterLocker>

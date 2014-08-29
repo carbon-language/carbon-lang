@@ -256,24 +256,30 @@ ScriptInterpreterPython::IOHandlerInputComplete (IOHandler &io_handler, std::str
         break;
     case eIOHandlerBreakpoint:
         {
-            BreakpointOptions *bp_options = (BreakpointOptions *)io_handler.GetUserData();
-            std::unique_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
-            if (data_ap.get())
+            std::vector<BreakpointOptions *> *bp_options_vec = (std::vector<BreakpointOptions *> *)io_handler.GetUserData();
+            for (auto bp_options : *bp_options_vec)
             {
-                data_ap->user_source.SplitIntoLines(data);
-                
-                if (GenerateBreakpointCommandCallbackData (data_ap->user_source, data_ap->script_source).Success())
+                if (!bp_options)
+                    continue;
+                    
+                std::unique_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
+                if (data_ap.get())
                 {
-                    BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
-                    bp_options->SetCallback (ScriptInterpreterPython::BreakpointCallbackFunction, baton_sp);
-                }
-                else if (!batch_mode)
-                {
-                    StreamFileSP error_sp = io_handler.GetErrorStreamFile();
-                    if (error_sp)
+                    data_ap->user_source.SplitIntoLines(data);
+                    
+                    if (GenerateBreakpointCommandCallbackData (data_ap->user_source, data_ap->script_source).Success())
                     {
-                        error_sp->Printf ("Warning: No command attached to breakpoint.\n");
-                        error_sp->Flush();
+                        BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
+                        bp_options->SetCallback (ScriptInterpreterPython::BreakpointCallbackFunction, baton_sp);
+                    }
+                    else if (!batch_mode)
+                    {
+                        StreamFileSP error_sp = io_handler.GetErrorStreamFile();
+                        if (error_sp)
+                        {
+                            error_sp->Printf ("Warning: No command attached to breakpoint.\n");
+                            error_sp->Flush();
+                        }
                     }
                 }
             }
@@ -307,8 +313,6 @@ ScriptInterpreterPython::IOHandlerInputComplete (IOHandler &io_handler, std::str
         }
         break;
     }
-
-
 }
 
 
@@ -1087,11 +1091,11 @@ ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string, const Exec
 
 
 void
-ScriptInterpreterPython::CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
+ScriptInterpreterPython::CollectDataForBreakpointCommandCallback (std::vector<BreakpointOptions *> &bp_options_vec,
                                                                   CommandReturnObject &result)
 {
     m_active_io_handler = eIOHandlerBreakpoint;
-    m_interpreter.GetPythonCommandsFromIOHandler ("    ", *this, true, bp_options);
+    m_interpreter.GetPythonCommandsFromIOHandler ("    ", *this, true, &bp_options_vec);
 }
 
 void

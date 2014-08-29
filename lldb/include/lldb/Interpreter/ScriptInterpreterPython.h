@@ -225,7 +225,7 @@ public:
     AcquireInterpreterLock ();
     
     void
-    CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
+    CollectDataForBreakpointCommandCallback (std::vector<BreakpointOptions *> &bp_options_vec,
                                              CommandReturnObject &result);
 
     void 

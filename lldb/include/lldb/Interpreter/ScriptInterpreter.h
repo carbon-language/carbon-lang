@@ -372,7 +372,7 @@ public:
     }
 
     virtual void 
-    CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
+    CollectDataForBreakpointCommandCallback (std::vector<BreakpointOptions *> &options,
                                              CommandReturnObject &result);
 
     virtual void 
@@ -380,6 +380,10 @@ public:
                                              CommandReturnObject &result);
 
     /// Set the specified text as the callback for the breakpoint.
+    Error
+    SetBreakpointCommandCallback (std::vector<BreakpointOptions *> &bp_options_vec,
+                                  const char *callback_text);
+
     virtual Error
     SetBreakpointCommandCallback (BreakpointOptions *bp_options,
                                   const char *callback_text)
@@ -389,6 +393,10 @@ public:
         return error;
     }
     
+    void
+    SetBreakpointCommandCallbackFunction (std::vector<BreakpointOptions *> &bp_options_vec,
+                                  const char *function_name);
+
     /// Set a one-liner as the callback for the breakpoint.
     virtual void 
     SetBreakpointCommandCallbackFunction (BreakpointOptions *bp_options,
