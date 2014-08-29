@@ -4,7 +4,7 @@
 define i32 @and(i32 %a, i32 %b) nounwind readnone {
 ; CHECK-LABEL: and:
 ; CHECK: and.w r{{[0-9]+}}, r{{[0-9]+}}, r{{[0-9]+}} @ encoding: [{{0x..,0x..,0x..,0x..}}]
-; CHECK-OPT: ands r{{[0-9]+}}, r{{[0-9]+}}  @ encoding: [{{0x..,0x..}}]
+; CHECK-OPT: ands r{{[0-7]}}, r{{[0-7]}} @ encoding: [{{0x..,0x..}}]
 entry:
   %and = and i32 %b, %a
   ret i32 %and
