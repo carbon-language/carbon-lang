@@ -18,3 +18,12 @@ entry:
   %shr = ashr i32 %a, 13
   ret i32 %shr
 }
+
+define i32 @asr-reg(i32 %a, i32 %b) nounwind readnone {
+; CHECK-LABEL: "asr-reg":
+; CHECK: asr.w r{{[0-9]+}}, r{{[0-9]+}}, r{{[0-9]+}} @ encoding: [{{0x..,0x..,0x..,0x..}}]
+; CHECK-OPT: asrs r{{[0-7]}}, r{{[0-7]}} @ encoding: [{{0x..,0x..}}]
+entry:
+  %shr = ashr i32 %a, %b
+  ret i32 %shr
+}
