@@ -232,7 +232,7 @@ public:
 
   /// Convenience function for setting all the fast-math flags on this
   /// instruction, which must be an operator which supports these flags. See
-  /// LangRef.html for the meaning of these flats.
+  /// LangRef.html for the meaning of these flags.
   void setFastMathFlags(FastMathFlags FMF);
 
   /// Determine whether the unsafe-algebra flag is set.
