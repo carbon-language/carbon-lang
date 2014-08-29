@@ -148,7 +148,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
 
       // If we have a musttail call in a variadic funciton, we need to ensure we
       // forward implicit register parameters.
-      if (auto *CI = dyn_cast<CallInst>(I)) {
+      if (const auto *CI = dyn_cast<CallInst>(I)) {
         if (CI->isMustTailCall() && Fn->isVarArg())
           MF->getFrameInfo()->setHasMustTailInVarArgFunc(true);
       }

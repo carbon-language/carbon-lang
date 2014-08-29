@@ -2326,6 +2326,7 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
   }
 }
 
+// FIXME: Get this from tablegen.
 static ArrayRef<MCPhysReg> get64BitArgumentGPRs(CallingConv::ID CallConv,
                                                 const X86Subtarget *Subtarget) {
   assert(Subtarget->is64Bit());
@@ -2343,6 +2344,7 @@ static ArrayRef<MCPhysReg> get64BitArgumentGPRs(CallingConv::ID CallConv,
   return GPR64ArgRegs64Bit;
 }
 
+// FIXME: Get this from tablegen.
 static ArrayRef<MCPhysReg> get64BitArgumentXMMs(MachineFunction &MF,
                                                 CallingConv::ID CallConv,
                                                 const X86Subtarget *Subtarget) {
@@ -2351,6 +2353,7 @@ static ArrayRef<MCPhysReg> get64BitArgumentXMMs(MachineFunction &MF,
     // The XMM registers which might contain var arg parameters are shadowed
     // in their paired GPR.  So we only need to save the GPR to their home
     // slots.
+    // TODO: __vectorcall will change this.
     return None;
   }
 
@@ -2613,13 +2616,12 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
       if (!MemOps.empty())
         Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOps);
     } else {
-      // TODO: Save virtual registers away some where so we can do
-      // getCopyFromReg in the musttail call lowering bb.
+      // Add all GPRs, al, and XMMs to the list of forwards.  We will add then
+      // to the liveout set on a musttail call.
       assert(MFI->hasMustTailInVarArgFunc());
       auto &Forwards = FuncInfo->getForwardedMustTailRegParms();
       typedef X86MachineFunctionInfo::Forward Forward;
 
-      // Add all GPRs, al, and XMMs to the list of forwards.
       for (unsigned I = 0, E = LiveGPRs.size(); I != E; ++I) {
         unsigned VReg =
             MF.getRegInfo().createVirtualRegister(&X86::GR64RegClass);
