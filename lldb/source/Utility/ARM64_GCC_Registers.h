@@ -86,7 +86,7 @@ enum
     v31  // 95
 };
 
-};
+}
 
 #endif // utility_ARM64_gdb_Registers_h_
 

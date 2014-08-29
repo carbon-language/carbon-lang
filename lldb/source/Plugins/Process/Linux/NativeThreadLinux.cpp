@@ -20,6 +20,7 @@
 #include "lldb/Host/HostInfo.h"
 #include "lldb/lldb-enumerations.h"
 #include "lldb/lldb-private-log.h"
+#include "Plugins/Process/Utility/RegisterContextLinux_arm64.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_i386.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_x86_64.h"
 #include "Plugins/Process/Utility/RegisterInfoInterface.h"
@@ -130,6 +131,10 @@ NativeThreadLinux::GetRegisterContext ()
         case llvm::Triple::Linux:
             switch (target_arch.GetMachine())
             {
+            case llvm::Triple::aarch64:
+                assert((HostInfo::GetArchitecture ().GetAddressByteSize() == 8) && "Register setting path assumes this is a 64-bit host");
+                reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_arm64(target_arch));
+                break;
             case llvm::Triple::x86:
             case llvm::Triple::x86_64:
                 if (HostInfo::GetArchitecture().GetAddressByteSize() == 4)

@@ -32,6 +32,7 @@
 #include "ProcessMonitor.h"
 #include "RegisterContextPOSIXProcessMonitor_mips64.h"
 #include "RegisterContextPOSIXProcessMonitor_x86.h"
+#include "RegisterContextLinux_arm64.h"
 #include "RegisterContextLinux_i386.h"
 #include "RegisterContextLinux_x86_64.h"
 #include "RegisterContextFreeBSD_i386.h"
@@ -179,6 +180,10 @@ POSIXThread::GetRegisterContext()
             case llvm::Triple::Linux:
                 switch (target_arch.GetMachine())
                 {
+                    case llvm::Triple::aarch64:
+                        assert((HostInfo::GetArchitecture().GetAddressByteSize() == 8) && "Register setting path assumes this is a 64-bit host");
+                        reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_arm64(target_arch));
+                        break;
                     case llvm::Triple::x86:
                     case llvm::Triple::x86_64:
                         if (HostInfo::GetArchitecture().GetAddressByteSize() == 4)
