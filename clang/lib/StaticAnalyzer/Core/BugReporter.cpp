@@ -3165,7 +3165,7 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
         if (!LastPiece)
           LastPiece = BugReporterVisitor::getDefaultEndPath(PDB, N, *R);
         assert(LastPiece);
-        PD.setEndOfPath(LastPiece.release());
+        PD.setEndOfPath(std::move(LastPiece));
       }
 
       // Make sure we get a clean location context map so we don't
@@ -3450,13 +3450,13 @@ void BugReporter::FlushReport(BugReport *exampleReport,
   // of the issue.
   if (D->path.empty()) {
     PathDiagnosticLocation L = exampleReport->getLocation(getSourceManager());
-    PathDiagnosticPiece *piece =
-      new PathDiagnosticEventPiece(L, exampleReport->getDescription());
+    auto piece = llvm::make_unique<PathDiagnosticEventPiece>(
+        L, exampleReport->getDescription());
     BugReport::ranges_iterator Beg, End;
     std::tie(Beg, End) = exampleReport->getRanges();
     for ( ; Beg != End; ++Beg)
       piece->addRange(*Beg);
-    D->setEndOfPath(piece);
+    D->setEndOfPath(std::move(piece));
   }
 
   // Get the meta data.
