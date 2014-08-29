@@ -134,6 +134,7 @@ private:
   // Utility helper routines.
   bool isTypeLegal(Type *Ty, MVT &VT);
   bool isLoadStoreTypeLegal(Type *Ty, MVT &VT);
+  bool isValueAvailable(const Value *V) const;
   bool ComputeAddress(const Value *Obj, Address &Addr, Type *Ty = nullptr);
   bool ComputeCallAddress(const Value *V, Address &Addr);
   bool SimplifyAddress(Address &Addr, MVT VT);
@@ -679,6 +680,17 @@ bool AArch64FastISel::isLoadStoreTypeLegal(Type *Ty, MVT &VT) {
   return false;
 }
 
+bool AArch64FastISel::isValueAvailable(const Value *V) const {
+  if (!isa<Instruction>(V))
+    return true;
+
+  const auto *I = cast<Instruction>(V);
+  if (FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB)
+    return true;
+
+  return false;
+}
+
 bool AArch64FastISel::SimplifyAddress(Address &Addr, MVT VT) {
   unsigned ScaleFactor;
   switch (VT.SimpleTy) {
@@ -853,7 +865,7 @@ unsigned AArch64FastISel::emitAddsSubs(bool UseAdds, MVT RetVT,
     std::swap(LHS, RHS);
 
   // Canonicalize shift immediate to the RHS.
-  if (UseAdds)
+  if (UseAdds && isValueAvailable(LHS))
     if (const auto *SI = dyn_cast<BinaryOperator>(LHS))
       if (isa<ConstantInt>(SI->getOperand(1)))
         if (SI->getOpcode() == Instruction::Shl  ||
@@ -883,7 +895,7 @@ unsigned AArch64FastISel::emitAddsSubs(bool UseAdds, MVT RetVT,
     return ResultReg;
 
   // Only extend the RHS within the instruction if there is a valid extend type.
-  if (ExtendType != AArch64_AM::InvalidShiftExtend) {
+  if (ExtendType != AArch64_AM::InvalidShiftExtend && isValueAvailable(RHS)) {
     if (const auto *SI = dyn_cast<BinaryOperator>(RHS))
       if (const auto *C = dyn_cast<ConstantInt>(SI->getOperand(1)))
         if ((SI->getOpcode() == Instruction::Shl) && (C->getZExtValue() < 4)) {
@@ -904,26 +916,27 @@ unsigned AArch64FastISel::emitAddsSubs(bool UseAdds, MVT RetVT,
   }
 
   // Check if the shift can be folded into the instruction.
-  if (const auto *SI = dyn_cast<BinaryOperator>(RHS)) {
-    if (const auto *C = dyn_cast<ConstantInt>(SI->getOperand(1))) {
-      AArch64_AM::ShiftExtendType ShiftType = AArch64_AM::InvalidShiftExtend;
-      switch (SI->getOpcode()) {
-      default: break;
-      case Instruction::Shl:  ShiftType = AArch64_AM::LSL; break;
-      case Instruction::LShr: ShiftType = AArch64_AM::LSR; break;
-      case Instruction::AShr: ShiftType = AArch64_AM::ASR; break;
-      }
-      uint64_t ShiftVal = C->getZExtValue();
-      if (ShiftType != AArch64_AM::InvalidShiftExtend) {
-        unsigned RHSReg = getRegForValue(SI->getOperand(0));
-        if (!RHSReg)
-          return 0;
-        bool RHSIsKill = hasTrivialKill(SI->getOperand(0));
-        return emitAddsSubs_rs(UseAdds, RetVT, LHSReg, LHSIsKill, RHSReg,
-                               RHSIsKill, ShiftType, ShiftVal, WantResult);
+  if (isValueAvailable(RHS))
+    if (const auto *SI = dyn_cast<BinaryOperator>(RHS)) {
+      if (const auto *C = dyn_cast<ConstantInt>(SI->getOperand(1))) {
+        AArch64_AM::ShiftExtendType ShiftType = AArch64_AM::InvalidShiftExtend;
+        switch (SI->getOpcode()) {
+        default: break;
+        case Instruction::Shl:  ShiftType = AArch64_AM::LSL; break;
+        case Instruction::LShr: ShiftType = AArch64_AM::LSR; break;
+        case Instruction::AShr: ShiftType = AArch64_AM::ASR; break;
+        }
+        uint64_t ShiftVal = C->getZExtValue();
+        if (ShiftType != AArch64_AM::InvalidShiftExtend) {
+          unsigned RHSReg = getRegForValue(SI->getOperand(0));
+          if (!RHSReg)
+            return 0;
+          bool RHSIsKill = hasTrivialKill(SI->getOperand(0));
+          return emitAddsSubs_rs(UseAdds, RetVT, LHSReg, LHSIsKill, RHSReg,
+                                 RHSIsKill, ShiftType, ShiftVal, WantResult);
+        }
       }
     }
-  }
 
   unsigned RHSReg = getRegForValue(RHS);
   if (!RHSReg)
@@ -3281,17 +3294,19 @@ bool AArch64FastISel::SelectShift(const Instruction *I) {
     uint64_t ShiftVal = C->getZExtValue();
     MVT SrcVT = RetVT;
     bool IsZExt = (I->getOpcode() == Instruction::AShr) ? false : true;
-    const Value * Op0 = I->getOperand(0);
+    const Value *Op0 = I->getOperand(0);
     if (const auto *ZExt = dyn_cast<ZExtInst>(Op0)) {
       MVT TmpVT;
-      if (isLoadStoreTypeLegal(ZExt->getSrcTy(), TmpVT)) {
+      if (isValueAvailable(ZExt) &&
+          isLoadStoreTypeLegal(ZExt->getSrcTy(), TmpVT)) {
         SrcVT = TmpVT;
         IsZExt = true;
         Op0 = ZExt->getOperand(0);
       }
     } else if (const auto *SExt = dyn_cast<SExtInst>(Op0)) {
       MVT TmpVT;
-      if (isLoadStoreTypeLegal(SExt->getSrcTy(), TmpVT)) {
+      if (isValueAvailable(SExt) &&
+          isLoadStoreTypeLegal(SExt->getSrcTy(), TmpVT)) {
         SrcVT = TmpVT;
         IsZExt = false;
         Op0 = SExt->getOperand(0);
