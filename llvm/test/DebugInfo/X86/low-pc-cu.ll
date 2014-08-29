@@ -8,15 +8,15 @@
 ; on dwarf version.
 
 ; CHECK: DW_TAG_compile_unit [1]
-; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
-; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK-NOT: DW_TAG
 ; CHECK-V3: DW_AT_high_pc [DW_FORM_addr]
 ; CHECK-V4: DW_AT_high_pc [DW_FORM_data4]
 ; CHECK: DW_TAG_subprogram [2]
-; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]
-; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK-NOT: DW_TAG
 ; CHECK-V3: DW_AT_high_pc [DW_FORM_addr]
 ; CHECK-V4: DW_AT_high_pc [DW_FORM_data4]
 

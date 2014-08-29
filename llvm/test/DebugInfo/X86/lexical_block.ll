@@ -9,9 +9,9 @@
 ; depending on the dwarf version.
 
 ; CHECK: DW_TAG_lexical_block
-; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]
-; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK-NOT: DW_TAG
 ; CHECK-V4: DW_AT_high_pc [DW_FORM_data4]
 ; CHECK-V3: DW_AT_high_pc [DW_FORM_addr]
 
