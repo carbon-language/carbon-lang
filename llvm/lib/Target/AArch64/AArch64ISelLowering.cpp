@@ -7939,7 +7939,8 @@ bool checkValueWidth(SDValue V, unsigned width, ISD::LoadExtType &ExtType) {
   }
   case ISD::Constant:
   case ISD::TargetConstant: {
-    if(abs(cast<ConstantSDNode>(V.getNode())->getSExtValue()) < 1<<(width-1))
+    if (std::abs(cast<ConstantSDNode>(V.getNode())->getSExtValue()) <
+        1 << (width - 1))
       return true;
     return false;
   }
