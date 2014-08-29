@@ -576,13 +576,13 @@ AArch64TargetLowering::AArch64TargetLowering(TargetMachine &TM)
 }
 
 void AArch64TargetLowering::addTypeForNEON(EVT VT, EVT PromotedBitwiseVT) {
-  if (VT == MVT::v2f32) {
+  if (VT == MVT::v2f32 || VT == MVT::v4f16) {
     setOperationAction(ISD::LOAD, VT.getSimpleVT(), Promote);
     AddPromotedToType(ISD::LOAD, VT.getSimpleVT(), MVT::v2i32);
 
     setOperationAction(ISD::STORE, VT.getSimpleVT(), Promote);
     AddPromotedToType(ISD::STORE, VT.getSimpleVT(), MVT::v2i32);
-  } else if (VT == MVT::v2f64 || VT == MVT::v4f32) {
+  } else if (VT == MVT::v2f64 || VT == MVT::v4f32 || VT == MVT::v8f16) {
     setOperationAction(ISD::LOAD, VT.getSimpleVT(), Promote);
     AddPromotedToType(ISD::LOAD, VT.getSimpleVT(), MVT::v2i64);
 
