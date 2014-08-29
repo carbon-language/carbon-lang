@@ -81,7 +81,8 @@ const HeaderMap *HeaderMap::Create(const FileEntry *FE, FileManager &FM) {
   unsigned FileSize = FE->getSize();
   if (FileSize <= sizeof(HMapHeader)) return nullptr;
 
-  std::unique_ptr<const llvm::MemoryBuffer> FileBuffer(FM.getBufferForFile(FE));
+  std::unique_ptr<const llvm::MemoryBuffer> FileBuffer =
+      FM.getBufferForFile(FE);
   if (!FileBuffer) return nullptr;  // Unreadable file?
   const char *FileStart = FileBuffer->getBufferStart();
 
@@ -103,11 +104,7 @@ const HeaderMap *HeaderMap::Create(const FileEntry *FE, FileManager &FM) {
   if (Header->Reserved != 0) return nullptr;
 
   // Okay, everything looks good, create the header map.
-  return new HeaderMap(FileBuffer.release(), NeedsByteSwap);
-}
-
-HeaderMap::~HeaderMap() {
-  delete FileBuffer;
+  return new HeaderMap(std::move(FileBuffer), NeedsByteSwap);
 }
 
 //===----------------------------------------------------------------------===//
