@@ -1755,8 +1755,8 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadArith(SDNode *Node, MVT NVT) {
   SDValue Chain = Node->getOperand(0);
   SDValue Ptr = Node->getOperand(1);
   SDValue Val = Node->getOperand(2);
-  SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
-  if (!SelectAddr(Node, Ptr, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4))
+  SDValue Base, Scale, Index, Disp, Segment;
+  if (!SelectAddr(Node, Ptr, Base, Scale, Index, Disp, Segment))
     return nullptr;
 
   // Which index into the table.
@@ -1810,31 +1810,38 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadArith(SDNode *Node, MVT NVT) {
         Opc = AtomicOpcTbl[Op][I32];
       break;
     case MVT::i64:
-      Opc = AtomicOpcTbl[Op][I64];
       if (isCN) {
         if (immSext8(Val.getNode()))
           Opc = AtomicOpcTbl[Op][SextConstantI64];
         else if (i64immSExt32(Val.getNode()))
           Opc = AtomicOpcTbl[Op][ConstantI64];
-      }
+      } else
+        Opc = AtomicOpcTbl[Op][I64];
       break;
   }
 
   assert(Opc != 0 && "Invalid arith lock transform!");
 
+  // Building the new node.
   SDValue Ret;
-  SDValue Undef = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
-                                                 dl, NVT), 0);
-  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
-  MemOp[0] = cast<MemSDNode>(Node)->getMemOperand();
   if (isUnOp) {
-    SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, Chain };
+    SDValue Ops[] = { Base, Scale, Index, Disp, Segment, Chain };
     Ret = SDValue(CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops), 0);
   } else {
-    SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, Val, Chain };
+    SDValue Ops[] = { Base, Scale, Index, Disp, Segment, Val, Chain };
     Ret = SDValue(CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops), 0);
   }
+
+  // Copying the MachineMemOperand.
+  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
+  MemOp[0] = cast<MemSDNode>(Node)->getMemOperand();
   cast<MachineSDNode>(Ret)->setMemRefs(MemOp, MemOp + 1);
+
+  // We need to have two outputs as that is what the original instruction had.
+  // So we add a dummy, undefined output. This is safe as we checked first
+  // that no-one uses our output anyway.
+  SDValue Undef = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
+                                                 dl, NVT), 0);
   SDValue RetVals[] = { Undef, Ret };
   return CurDAG->getMergeValues(RetVals, dl).getNode();
 }
