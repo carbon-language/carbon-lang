@@ -288,8 +288,8 @@ LLVM-specific variables
 
 **LLVM_USE_SANITIZER**:STRING
   Define the sanitizer used to build LLVM binaries and tests. Possible values
-  are ``Address``, ``Memory`` and ``MemoryWithOrigins``. Defaults to empty
-  string.
+  are ``Address``, ``Memory``, ``MemoryWithOrigins`` and ``Undefined``.
+  Defaults to empty string.
 
 **LLVM_BUILD_DOCS**:BOOL
   Enables all enabled documentation targets (i.e. Doxgyen and Sphinx targets) to
