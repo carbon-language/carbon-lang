@@ -56,7 +56,6 @@ static std::vector<std::pair<void(*)(void*), void*> > CallBacksToRun;
 static const int IntSigs[] = {
   SIGHUP, SIGINT, SIGPIPE, SIGTERM, SIGUSR1, SIGUSR2
 };
-static const int *const IntSigsEnd = std::end(IntSigs);
 
 // KillSigs - Signals that represent that we have a bug, and our prompt
 // termination has been ordered.
@@ -75,7 +74,6 @@ static const int KillSigs[] = {
   , SIGEMT
 #endif
 };
-static const int *const KillSigsEnd = std::end(KillSigs);
 
 static unsigned NumRegisteredSignals = 0;
 static struct {
@@ -106,8 +104,8 @@ static void RegisterHandlers() {
   // If the handlers are already registered, we're done.
   if (NumRegisteredSignals != 0) return;
 
-  std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
-  std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
+  for (auto S : IntSigs) RegisterHandler(S);
+  for (auto S : KillSigs) RegisterHandler(S);
 }
 
 static void UnregisterHandlers() {
@@ -167,7 +165,8 @@ static RETSIGTYPE SignalHandler(int Sig) {
     unique_lock<SmartMutex<true>> Guard(SignalsMutex);
     RemoveFilesToRemove();
 
-    if (std::find(IntSigs, IntSigsEnd, Sig) != IntSigsEnd) {
+    if (std::find(std::begin(IntSigs), std::end(IntSigs), Sig)
+        != std::end(IntSigs)) {
       if (InterruptFunction) {
         void (*IF)() = InterruptFunction;
         Guard.unlock();
