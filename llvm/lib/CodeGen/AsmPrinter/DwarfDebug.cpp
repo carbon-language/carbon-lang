@@ -319,12 +319,9 @@ DIE &DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
 
   attachLowHighPC(SPCU, *SPDie, FunctionBeginSym, FunctionEndSym);
 
-  if (SPCU.getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly) {
-    const TargetRegisterInfo *RI =
-        Asm->TM.getSubtargetImpl()->getRegisterInfo();
-    MachineLocation Location(RI->getFrameRegister(*Asm->MF));
-    SPCU.addAddress(*SPDie, dwarf::DW_AT_frame_base, Location);
-  }
+  const TargetRegisterInfo *RI = Asm->TM.getSubtargetImpl()->getRegisterInfo();
+  MachineLocation Location(RI->getFrameRegister(*Asm->MF));
+  SPCU.addAddress(*SPDie, dwarf::DW_AT_frame_base, Location);
 
   // Add name to the name table, we do this here because we're guaranteed
   // to have concrete versions of our DW_TAG_subprogram nodes.
@@ -754,11 +751,6 @@ void DwarfDebug::beginModule() {
   for (MDNode *N : CU_Nodes->operands()) {
     DICompileUnit CUNode(N);
     DwarfCompileUnit &CU = constructDwarfCompileUnit(CUNode);
-    DIArray SPs = CUNode.getSubprograms();
-    for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
-      SPMap.insert(std::make_pair(SPs.getElement(i), &CU));
-    if (CU.getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly)
-      continue;
     DIArray ImportedEntities = CUNode.getImportedEntities();
     for (unsigned i = 0, e = ImportedEntities.getNumElements(); i != e; ++i)
       ScopesWithImportedEntities.push_back(std::make_pair(
@@ -769,6 +761,9 @@ void DwarfDebug::beginModule() {
     DIArray GVs = CUNode.getGlobalVariables();
     for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i)
       CU.createGlobalVariableDIE(DIGlobalVariable(GVs.getElement(i)));
+    DIArray SPs = CUNode.getSubprograms();
+    for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
+      SPMap.insert(std::make_pair(SPs.getElement(i), &CU));
     DIArray EnumTypes = CUNode.getEnumTypes();
     for (unsigned i = 0, e = EnumTypes.getNumElements(); i != e; ++i) {
       DIType Ty(EnumTypes.getElement(i));
@@ -838,13 +833,12 @@ void DwarfDebug::finishSubprogramDefinitions() {
           // If this subprogram has an abstract definition, reference that
           SPCU->addDIEEntry(*D, dwarf::DW_AT_abstract_origin, *AbsSPDIE);
       } else {
-        if (!D && TheCU.getEmissionKind() != DIBuilder::LineTablesOnly)
+        if (!D)
           // Lazily construct the subprogram if we didn't see either concrete or
           // inlined versions during codegen.
           D = SPCU->getOrCreateSubprogramDIE(SP);
-        if (D)
-          // And attach the attributes
-          SPCU->applySubprogramAttributesToDefinition(SP, *D);
+        // And attach the attributes
+        SPCU->applySubprogramAttributesToDefinition(SP, *D);
       }
     }
   }
@@ -1673,17 +1667,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
 
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
   DwarfCompileUnit &TheCU = *SPMap.lookup(FnScope->getScopeNode());
-  if (TheCU.getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly && LScopes.getAbstractScopesList().empty()) {
-    assert(ScopeVariables.empty());
-    assert(CurrentFnArguments.empty());
-    assert(DbgValues.empty());
-    assert(AbstractVariables.empty());
-    LabelsBeforeInsn.clear();
-    LabelsAfterInsn.clear();
-    PrevLabel = nullptr;
-    CurFn = nullptr;
-    return;
-  }
 
   // Construct abstract scopes.
   for (LexicalScope *AScope : LScopes.getAbstractScopesList()) {
