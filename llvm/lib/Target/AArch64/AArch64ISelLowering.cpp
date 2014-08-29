@@ -7994,22 +7994,24 @@ static SDValue performVSelectCombine(SDNode *N, SelectionDAG &DAG) {
 static SDValue performSelectCombine(SDNode *N, SelectionDAG &DAG) {
   SDValue N0 = N->getOperand(0);
   EVT ResVT = N->getValueType(0);
+  EVT SrcVT = N0.getOperand(0).getValueType();
+  int NumMaskElts = ResVT.getSizeInBits() / SrcVT.getSizeInBits();
 
-  if (!N->getOperand(1).getValueType().isVector())
+  // If NumMaskElts == 0, the comparison is larger than select result. The
+  // largest real NEON comparison is 64-bits per lane, which means the result is
+  // at most 32-bits and an illegal vector. Just bail out for now.
+  if (!ResVT.isVector() || NumMaskElts == 0)
     return SDValue();
 
   if (N0.getOpcode() != ISD::SETCC || N0.getValueType() != MVT::i1)
     return SDValue();
 
-  SDLoc DL(N0);
-
-  EVT SrcVT = N0.getOperand(0).getValueType();
-  SrcVT = EVT::getVectorVT(*DAG.getContext(), SrcVT,
-                           ResVT.getSizeInBits() / SrcVT.getSizeInBits());
+  SrcVT = EVT::getVectorVT(*DAG.getContext(), SrcVT, NumMaskElts);
   EVT CCVT = SrcVT.changeVectorElementTypeToInteger();
 
   // First perform a vector comparison, where lane 0 is the one we're interested
   // in.
+  SDLoc DL(N0);
   SDValue LHS =
       DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, SrcVT, N0.getOperand(0));
   SDValue RHS =
@@ -8019,8 +8021,8 @@ static SDValue performSelectCombine(SDNode *N, SelectionDAG &DAG) {
   // Now duplicate the comparison mask we want across all other lanes.
   SmallVector<int, 8> DUPMask(CCVT.getVectorNumElements(), 0);
   SDValue Mask = DAG.getVectorShuffle(CCVT, DL, SetCC, SetCC, DUPMask.data());
-  Mask = DAG.getNode(ISD::BITCAST, DL, ResVT.changeVectorElementTypeToInteger(),
-                     Mask);
+  Mask = DAG.getNode(ISD::BITCAST, DL,
+                     ResVT.changeVectorElementTypeToInteger(), Mask);
 
   return DAG.getSelect(DL, ResVT, Mask, N->getOperand(1), N->getOperand(2));
 }

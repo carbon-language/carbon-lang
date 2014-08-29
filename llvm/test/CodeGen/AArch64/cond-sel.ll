@@ -214,3 +214,13 @@ define void @test_csetm(i32 %lhs, i32 %rhs, i64 %lhs64) {
   ret void
 ; CHECK: ret
 }
+
+define <1 x i1> @test_wide_comparison(i32 %in) {
+; CHECK-LABEL: test_wide_comparison:
+; CHECK: cmp w0, #1234
+; CHECK: cset
+
+  %tmp = icmp sgt i32 %in, 1234
+  %res = select i1 %tmp, <1 x i1> <i1 1>, <1 x i1> zeroinitializer
+  ret <1 x i1> %res
+}
