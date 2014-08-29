@@ -796,6 +796,17 @@ multiclass VOP3b_64 <bits<9> op, string opName, list<dag> pattern> :
 multiclass VOP3b_32 <bits<9> op, string opName, list<dag> pattern> :
   VOP3b_Helper <op, VReg_32, VSrc_32, opName, pattern>;
 
+
+class Vop3ModPat<Instruction Inst, VOPProfile P, SDPatternOperator node> : Pat<
+  (node (P.Src0VT (VOP3Mods0 P.Src0VT:$src0, i32:$src0_modifiers, i32:$clamp, i32:$omod)),
+        (P.Src1VT (VOP3Mods P.Src1VT:$src1, i32:$src1_modifiers)),
+        (P.Src2VT (VOP3Mods P.Src2VT:$src2, i32:$src2_modifiers))),
+  (Inst i32:$src0_modifiers, P.Src0VT:$src0,
+        i32:$src1_modifiers, P.Src1VT:$src1,
+        i32:$src2_modifiers, P.Src2VT:$src2,
+        i32:$clamp,
+        i32:$omod)>;
+
 //===----------------------------------------------------------------------===//
 // Vector I/O classes
 //===----------------------------------------------------------------------===//

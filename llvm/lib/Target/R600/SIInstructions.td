@@ -2513,6 +2513,9 @@ def : Pat <
   (V_MUL_HI_I32 $src0, $src1)
 >;
 
+def : Vop3ModPat<V_MAD_F32, VOP_F32_F32_F32_F32, AMDGPUmad>;
+
+
 defm : BFIPatterns <V_BFI_B32, S_MOV_B32>;
 def : ROTRPattern <V_ALIGNBIT_B32>;
 

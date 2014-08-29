@@ -226,6 +226,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::FDIV, MVT::f32, Custom);
 
+  setTargetDAGCombine(ISD::FSUB);
   setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::SETCC);
 
@@ -1386,6 +1387,42 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
 
   case ISD::UINT_TO_FP: {
     return performUCharToFloatCombine(N, DCI);
+
+  case ISD::FSUB: {
+    if (DCI.getDAGCombineLevel() < AfterLegalizeDAG)
+      break;
+
+    EVT VT = N->getValueType(0);
+
+    // Try to get the fneg to fold into the source modifier. This undoes generic
+    // DAG combines and folds them into the mad.
+    if (VT == MVT::f32) {
+      SDValue LHS = N->getOperand(0);
+      SDValue RHS = N->getOperand(1);
+
+      if (LHS.getOpcode() == ISD::FMUL) {
+        // (fsub (fmul a, b), c) -> mad a, b, (fneg c)
+
+        SDValue A = LHS.getOperand(0);
+        SDValue B = LHS.getOperand(1);
+        SDValue C = DAG.getNode(ISD::FNEG, DL, VT, RHS);
+
+        return DAG.getNode(AMDGPUISD::MAD, DL, VT, A, B, C);
+      }
+
+      if (RHS.getOpcode() == ISD::FMUL) {
+        // (fsub c, (fmul a, b)) -> mad (fneg a), b, c
+
+        SDValue A = DAG.getNode(ISD::FNEG, DL, VT, RHS.getOperand(0));
+        SDValue B = RHS.getOperand(1);
+        SDValue C = LHS;
+
+        return DAG.getNode(AMDGPUISD::MAD, DL, VT, A, B, C);
+      }
+    }
+
+    break;
+  }
   }
   case ISD::LOAD:
   case ISD::STORE:
