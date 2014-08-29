@@ -14,6 +14,7 @@
 #define LLVM_CLANG_TOOLS_LIBCLANG_CINDEXDIAGNOSTIC_H
 
 #include "clang-c/Index.h"
+#include <memory>
 #include <vector>
 #include <assert.h>
 
@@ -24,27 +25,25 @@ class StoredDiagnostic;
 class CXDiagnosticImpl;
   
 class CXDiagnosticSetImpl {
-  std::vector<CXDiagnosticImpl *> Diagnostics;
+  std::vector<std::unique_ptr<CXDiagnosticImpl>> Diagnostics;
   const bool IsExternallyManaged;
 public:
   CXDiagnosticSetImpl(bool isManaged = false)
     : IsExternallyManaged(isManaged) {}
 
   virtual ~CXDiagnosticSetImpl();
-  
+
   size_t getNumDiagnostics() const {
     return Diagnostics.size();
   }
   
   CXDiagnosticImpl *getDiagnostic(unsigned i) const {
     assert(i < getNumDiagnostics());
-    return Diagnostics[i];
+    return Diagnostics[i].get();
   }
-  
-  void appendDiagnostic(CXDiagnosticImpl *D) {
-    Diagnostics.push_back(D);
-  }
-  
+
+  void appendDiagnostic(std::unique_ptr<CXDiagnosticImpl> D);
+
   bool empty() const {
     return Diagnostics.empty();
   }
@@ -99,9 +98,9 @@ public:
 protected:
   CXDiagnosticImpl(Kind k) : K(k) {}
   CXDiagnosticSetImpl ChildDiags;
-  
-  void append(CXDiagnosticImpl *D) {
-    ChildDiags.appendDiagnostic(D);
+
+  void append(std::unique_ptr<CXDiagnosticImpl> D) {
+    ChildDiags.appendDiagnostic(std::move(D));
   }
   
 private:

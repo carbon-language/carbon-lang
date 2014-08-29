@@ -567,7 +567,7 @@ LoadResult DiagLoader::readDiagnosticBlock(llvm::BitstreamCursor &Stream,
         continue;
       }
       case Read_BlockEnd:
-        Diags.appendDiagnostic(D.release());
+        Diags.appendDiagnostic(std::move(D));
         return Success;
       case Read_Record:
         break;

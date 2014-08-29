@@ -30,13 +30,11 @@ using namespace clang::cxloc;
 using namespace clang::cxdiag;
 using namespace llvm;
 
+CXDiagnosticSetImpl::~CXDiagnosticSetImpl() {}
 
-CXDiagnosticSetImpl::~CXDiagnosticSetImpl() {
-  for (std::vector<CXDiagnosticImpl *>::iterator it = Diagnostics.begin(),
-       et = Diagnostics.end();
-       it != et; ++it) {
-    delete *it;
-  }
+void
+CXDiagnosticSetImpl::appendDiagnostic(std::unique_ptr<CXDiagnosticImpl> D) {
+  Diagnostics.push_back(std::move(D));
 }
 
 CXDiagnosticImpl::~CXDiagnosticImpl() {}
@@ -105,12 +103,13 @@ public:
     
     if (Level != DiagnosticsEngine::Note)
       CurrentSet = MainSet;
-    
-    CXStoredDiagnostic *CD = new CXStoredDiagnostic(*SD, LangOpts);
-    CurrentSet->appendDiagnostic(CD);
-    
+
+    auto Owner = llvm::make_unique<CXStoredDiagnostic>(*SD, LangOpts);
+    CXStoredDiagnostic &CD = *Owner;
+    CurrentSet->appendDiagnostic(std::move(Owner));
+
     if (Level != DiagnosticsEngine::Note)
-      CurrentSet = &CD->getChildDiagnostics();
+      CurrentSet = &CD.getChildDiagnostics();
   }
 
   void emitDiagnosticMessage(SourceLocation Loc, PresumedLoc PLoc,
@@ -127,8 +126,8 @@ public:
       L = translateSourceLocation(*SM, LangOpts, Loc);
     else
       L = clang_getNullLocation();
-    CXDiagnosticImpl *CD = new CXDiagnosticCustomNoteImpl(Message, L);
-    CurrentSet->appendDiagnostic(CD);
+    CurrentSet->appendDiagnostic(
+        llvm::make_unique<CXDiagnosticCustomNoteImpl>(Message, L));
   }
 
   void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
@@ -149,8 +148,8 @@ public:
       L = translateSourceLocation(*SM, LangOpts, Loc);
     else
       L = clang_getNullLocation();
-    CurrentSet->appendDiagnostic(new CXDiagnosticCustomNoteImpl(Message,
-                                                                L));
+    CurrentSet->appendDiagnostic(
+        llvm::make_unique<CXDiagnosticCustomNoteImpl>(Message, L));
   }
 
   CXDiagnosticSetImpl *CurrentSet;
