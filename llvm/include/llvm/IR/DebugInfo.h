@@ -64,9 +64,14 @@ class DIDescriptor {
   template <typename T> friend class DIRef;
 
 public:
+  /// The three accessibility flags are mutually exclusive and rolled
+  /// together in the first two bits.
   enum {
-    FlagPrivate           = 1 << 0,
-    FlagProtected         = 1 << 1,
+    FlagAccessibility     = 1 << 0 | 1 << 1,
+    FlagPrivate           = 1,
+    FlagProtected         = 2,
+    FlagPublic            = 3,
+
     FlagFwdDecl           = 1 << 2,
     FlagAppleBlock        = 1 << 3,
     FlagBlockByrefStruct  = 1 << 4,
@@ -315,8 +320,15 @@ public:
   // carry this is just plain insane.
   uint64_t getOffsetInBits() const { return getUInt64Field(7); }
   unsigned getFlags() const { return getUnsignedField(8); }
-  bool isPrivate() const { return (getFlags() & FlagPrivate) != 0; }
-  bool isProtected() const { return (getFlags() & FlagProtected) != 0; }
+  bool isPrivate() const {
+    return (getFlags() & FlagAccessibility) == FlagPrivate;
+  }
+  bool isProtected() const {
+    return (getFlags() & FlagAccessibility) == FlagProtected;
+  }
+  bool isPublic() const {
+    return (getFlags() & FlagAccessibility) == FlagPublic;
+  }
   bool isForwardDecl() const { return (getFlags() & FlagFwdDecl) != 0; }
   // isAppleBlock - Return true if this is the Apple Blocks extension.
   bool isAppleBlockExtension() const {
@@ -503,11 +515,18 @@ public:
   }
   /// isPrivate - Return true if this subprogram has "private"
   /// access specifier.
-  bool isPrivate() const { return (getUnsignedField(13) & FlagPrivate) != 0; }
+  bool isPrivate() const {
+    return (getFlags() & FlagAccessibility) == FlagPrivate;
+  }
   /// isProtected - Return true if this subprogram has "protected"
   /// access specifier.
   bool isProtected() const {
-    return (getUnsignedField(13) & FlagProtected) != 0;
+    return (getFlags() & FlagAccessibility) == FlagProtected;
+  }
+  /// isPublic - Return true if this subprogram has "public"
+  /// access specifier.
+  bool isPublic() const {
+    return (getFlags() & FlagAccessibility) == FlagPublic;
   }
   /// isExplicit - Return true if this subprogram is marked as explicit.
   bool isExplicit() const { return (getUnsignedField(13) & FlagExplicit) != 0; }

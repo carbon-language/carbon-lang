@@ -489,6 +489,7 @@ bool DIType::Verify() const {
       Tag != dwarf::DW_TAG_inheritance && Tag != dwarf::DW_TAG_friend &&
       getFilename().empty())
     return false;
+
   // DIType is abstract, it should be a BasicType, a DerivedType or
   // a CompositeType.
   if (isBasicType())
@@ -1344,6 +1345,8 @@ void DIType::printInternal(raw_ostream &OS) const {
     OS << " [private]";
   else if (isProtected())
     OS << " [protected]";
+  else if (isPublic())
+    OS << " [public]";
 
   if (isArtificial())
     OS << " [artificial]";
@@ -1403,6 +1406,8 @@ void DISubprogram::printInternal(raw_ostream &OS) const {
     OS << " [private]";
   else if (isProtected())
     OS << " [protected]";
+  else if (isPublic())
+    OS << " [public]";
 
   if (isLValueReference())
     OS << " [reference]";
