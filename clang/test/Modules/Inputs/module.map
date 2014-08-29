@@ -246,6 +246,10 @@ module cxx_decls {
   }
 }
 
+module cxx_decls_premerged {
+  header "cxx-decls-premerged.h"
+}
+
 module cxx_decls_merged {
   header "cxx-decls-merged.h"
 }

@@ -35,3 +35,4 @@ struct HasVirtualFunctions {
 struct OverridesVirtualFunctions : HasVirtualFunctions {
   void f();
 };
+extern "C" void ExternCFunction();

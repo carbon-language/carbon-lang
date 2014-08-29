@@ -13,3 +13,4 @@ struct OverridesVirtualFunctions : HasVirtualFunctions {
   void f();
 };
 extern OverridesVirtualFunctions overrides_virtual_functions;
+extern "C" void ExternCFunction();

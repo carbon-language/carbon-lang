@@ -41,5 +41,11 @@ int name_for_linkage_test = use_name_for_linkage(name_for_linkage);
 int overrides_virtual_functions_test =
     use_overrides_virtual_functions(overrides_virtual_functions);
 
+void use_extern_c_function() { ExternCFunction(); }
+
+@import cxx_decls_premerged;
+
+void use_extern_c_function_2() { ExternCFunction(); }
+
 // CHECK: VarDecl [[mergeUsedFlag:0x[0-9a-f]*]] {{.*}} in cxx_decls.imported used mergeUsedFlag
 // CHECK: VarDecl {{0x[0-9a-f]*}} prev [[mergeUsedFlag]] {{.*}} in cxx_decls_merged used mergeUsedFlag
