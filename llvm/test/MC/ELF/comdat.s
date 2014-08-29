@@ -1,6 +1,6 @@
 // RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -t | FileCheck %s
 
-// Test that we produce the group sections and that they are a the beginning
+// Test that we produce the group sections and that they are at the beginning
 // of the file.
 
 // CHECK:        Section {

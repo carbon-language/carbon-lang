@@ -537,7 +537,7 @@ public:
 
   static void *ID() { return (void *)&PassID; }
 
-  /// \brief Compute the \c LazyCallGraph for a the module \c M.
+  /// \brief Compute the \c LazyCallGraph for the module \c M.
   ///
   /// This just builds the set of entry points to the call graph. The rest is
   /// built lazily as it is walked.

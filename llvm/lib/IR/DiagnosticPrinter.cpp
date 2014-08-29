@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the a diagnostic printer relying on raw_ostream.
+// This file defines a diagnostic printer relying on raw_ostream.
 //
 //===----------------------------------------------------------------------===//
 

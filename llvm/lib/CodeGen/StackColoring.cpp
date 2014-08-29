@@ -228,7 +228,7 @@ void StackColoring::dump() const {
 unsigned StackColoring::collectMarkers(unsigned NumSlot) {
   unsigned MarkersFound = 0;
   // Scan the function to find all lifetime markers.
-  // NOTE: We use the a reverse-post-order iteration to ensure that we obtain a
+  // NOTE: We use a reverse-post-order iteration to ensure that we obtain a
   // deterministic numbering, and because we'll need a post-order iteration
   // later for solving the liveness dataflow problem.
   for (MachineBasicBlock *MBB : depth_first(MF)) {

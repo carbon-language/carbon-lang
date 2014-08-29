@@ -303,7 +303,7 @@ static AArch64_AM::ShiftExtendType getShiftTypeForNode(SDValue N) {
 
 /// \brief Determine wether it is worth to fold V into an extended register.
 bool AArch64DAGToDAGISel::isWorthFolding(SDValue V) const {
-  // it hurts if the a value is used at least twice, unless we are optimizing
+  // it hurts if the value is used at least twice, unless we are optimizing
   // for code size.
   if (ForCodeSize || V.hasOneUse())
     return true;

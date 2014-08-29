@@ -1781,8 +1781,7 @@ unsigned AArch64TargetLowering::getFunctionAlignment(const Function *F) const {
 
 #include "AArch64GenCallingConv.inc"
 
-/// Selects the correct CCAssignFn for a the given CallingConvention
-/// value.
+/// Selects the correct CCAssignFn for a given CallingConvention value.
 CCAssignFn *AArch64TargetLowering::CCAssignFnForCall(CallingConv::ID CC,
                                                      bool IsVarArg) const {
   switch (CC) {

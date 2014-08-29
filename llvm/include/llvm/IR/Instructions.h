@@ -135,7 +135,7 @@ public:
     return getSubclassDataFromInstruction() & 32;
   }
 
-  /// \brief Specify whether this alloca is used to represent a the arguments to
+  /// \brief Specify whether this alloca is used to represent the arguments to
   /// a call.
   void setUsedWithInAlloca(bool V) {
     setInstructionSubclassData((getSubclassDataFromInstruction() & ~32) |

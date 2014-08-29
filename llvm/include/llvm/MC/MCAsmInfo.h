@@ -87,7 +87,7 @@ protected:
   bool HasMachoTBSSDirective;
 
   /// True if the compiler should emit a ".reference .constructors_used" or
-  /// ".reference .destructors_used" directive after the a static ctor/dtor
+  /// ".reference .destructors_used" directive after the static ctor/dtor
   /// list.  This directive is only emitted in Static relocation model.  Default
   /// is false.
   bool HasStaticCtorDtorReferenceInStaticMode;

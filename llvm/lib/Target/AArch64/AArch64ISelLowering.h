@@ -199,8 +199,7 @@ class AArch64TargetLowering : public TargetLowering {
 public:
   explicit AArch64TargetLowering(TargetMachine &TM);
 
-  /// Selects the correct CCAssignFn for a the given CallingConvention
-  /// value.
+  /// Selects the correct CCAssignFn for a given CallingConvention value.
   CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool IsVarArg) const;
 
   /// computeKnownBitsForTargetNode - Determine which of the bits specified in

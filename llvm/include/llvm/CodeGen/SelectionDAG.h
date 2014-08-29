@@ -749,7 +749,7 @@ public:
                    SDValue SV, unsigned Align);
 
   /// getAtomicCmpSwap - Gets a node for an atomic cmpxchg op. There are two
-  /// valid Opcodes. ISD::ATOMIC_CMO_SWAP produces a the value loaded and a
+  /// valid Opcodes. ISD::ATOMIC_CMO_SWAP produces the value loaded and a
   /// chain result. ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS produces the value loaded,
   /// a success flag (initially i1), and a chain.
   SDValue getAtomicCmpSwap(unsigned Opcode, SDLoc dl, EVT MemVT, SDVTList VTs,

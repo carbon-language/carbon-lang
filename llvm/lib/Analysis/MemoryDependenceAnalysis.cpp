@@ -937,7 +937,7 @@ GetNonLocalInfoForBlock(const AliasAnalysis::Location &Loc,
   return Dep;
 }
 
-/// SortNonLocalDepInfoCache - Sort the a NonLocalDepInfo cache, given a certain
+/// SortNonLocalDepInfoCache - Sort the NonLocalDepInfo cache, given a certain
 /// number of elements in the array that are already properly ordered.  This is
 /// optimized for the case when only a few entries are added.
 static void

@@ -873,7 +873,7 @@ variety of customizations.
 llvm/ADT/ilist_node.h
 ^^^^^^^^^^^^^^^^^^^^^
 
-``ilist_node<T>`` implements a the forward and backward links that are expected
+``ilist_node<T>`` implements the forward and backward links that are expected
 by the ``ilist<T>`` (and analogous containers) in the default manner.
 
 ``ilist_node<T>``\ s are meant to be embedded in the node type ``T``, usually

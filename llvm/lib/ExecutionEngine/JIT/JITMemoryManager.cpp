@@ -680,7 +680,7 @@ sys::MemoryBlock DefaultJITMemoryManager::allocateNewSlab(size_t size) {
 bool DefaultJITMemoryManager::CheckInvariants(std::string &ErrorStr) {
   raw_string_ostream Err(ErrorStr);
 
-  // Construct a the set of FreeRangeHeader pointers so we can query it
+  // Construct the set of FreeRangeHeader pointers so we can query it
   // efficiently.
   llvm::SmallPtrSet<MemoryRangeHeader*, 16> FreeHdrSet;
   FreeRangeHeader* FreeHead = FreeMemoryList;

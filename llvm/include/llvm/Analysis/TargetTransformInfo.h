@@ -183,7 +183,7 @@ public:
   /// should probably move to simpler cost metrics using the above.
   /// Alternatively, we could split the cost interface into distinct code-size
   /// and execution-speed costs. This would allow modelling the core of this
-  /// query more accurately as the a call is a single small instruction, but
+  /// query more accurately as a call is a single small instruction, but
   /// incurs significant execution cost.
   virtual bool isLoweredToCall(const Function *F) const;
 

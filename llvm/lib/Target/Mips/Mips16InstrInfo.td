@@ -1771,9 +1771,9 @@ def: Mips16Pat
 
 //
 // For constants, llvm transforms this to:
-// x > (k -1) and then reverses the operands to use setlt. So this pattern
+// x > (k - 1) and then reverses the operands to use setlt. So this pattern
 // is not used now by the compiler. (Presumably checking that k-1 does not
-// overflow). The compiler never uses this at a the current time, due to
+// overflow). The compiler never uses this at the current time, due to
 // other optimizations.
 //
 //def: Mips16Pat

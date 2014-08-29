@@ -261,7 +261,7 @@ void DIEHash::hashDIEEntry(dwarf::Attribute Attribute, dwarf::Tag Tag,
     return;
   }
 
-  // otherwise, b) use the letter 'T' as a the marker, ...
+  // otherwise, b) use the letter 'T' as the marker, ...
   addULEB128('T');
 
   addULEB128(Attribute);

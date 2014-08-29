@@ -323,7 +323,7 @@ public:
   }
 
   /// getContainedType - This method is used to implement the type iterator
-  /// (defined a the end of the file).  For derived types, this returns the
+  /// (defined at the end of the file).  For derived types, this returns the
   /// types 'contained' in the derived type.
   ///
   Type *getContainedType(unsigned i) const {

@@ -2889,7 +2889,7 @@ static unsigned getNumMicroOpsSwiftLdSt(const InstrItineraryData *ItinData,
 // FIXME: The current MachineInstr design does not support relying on machine
 // mem operands to determine the width of a memory access. Instead, we expect
 // the target to provide this information based on the instruction opcode and
-// operands. However, using MachineMemOperand is a the best solution now for
+// operands. However, using MachineMemOperand is the best solution now for
 // two reasons:
 //
 // 1) getNumMicroOps tries to infer LDM memory width from the total number of MI
