@@ -747,24 +747,48 @@ bool Sema::containsUnexpandedParameterPacks(Declarator &D) {
   case TST_error:
     break;
   }
-  
+
   for (unsigned I = 0, N = D.getNumTypeObjects(); I != N; ++I) {
     const DeclaratorChunk &Chunk = D.getTypeObject(I);
     switch (Chunk.Kind) {
     case DeclaratorChunk::Pointer:
     case DeclaratorChunk::Reference:
     case DeclaratorChunk::Paren:
+    case DeclaratorChunk::BlockPointer:
       // These declarator chunks cannot contain any parameter packs.
       break;
         
     case DeclaratorChunk::Array:
+      if (Chunk.Arr.NumElts &&
+          Chunk.Arr.NumElts->containsUnexpandedParameterPack())
+        return true;
+      break;
     case DeclaratorChunk::Function:
-    case DeclaratorChunk::BlockPointer:
-      // Syntactically, these kinds of declarator chunks all come after the
-      // declarator-id (conceptually), so the parser should not invoke this
-      // routine at this time.
-      llvm_unreachable("Could not have seen this kind of declarator chunk");
-        
+      for (unsigned i = 0, e = Chunk.Fun.NumParams; i != e; ++i) {
+        ParmVarDecl *Param = cast<ParmVarDecl>(Chunk.Fun.Params[i].Param);
+        QualType ParamTy = Param->getType();
+        assert(!ParamTy.isNull() && "Couldn't parse type?");
+        if (ParamTy->containsUnexpandedParameterPack()) return true;
+      }
+
+      if (Chunk.Fun.getExceptionSpecType() == EST_Dynamic) {
+        for (unsigned i = 0; i != Chunk.Fun.NumExceptions; ++i) {
+          if (Chunk.Fun.Exceptions[i]
+                  .Ty.get()
+                  ->containsUnexpandedParameterPack())
+            return true;
+        }
+      } else if (Chunk.Fun.getExceptionSpecType() == EST_ComputedNoexcept &&
+                 Chunk.Fun.NoexceptExpr->containsUnexpandedParameterPack())
+        return true;
+
+      if (Chunk.Fun.hasTrailingReturnType() &&
+          Chunk.Fun.getTrailingReturnType()
+              .get()
+              ->containsUnexpandedParameterPack())
+        return true;
+      break;
+
     case DeclaratorChunk::MemberPointer:
       if (Chunk.Mem.Scope().getScopeRep() &&
           Chunk.Mem.Scope().getScopeRep()->containsUnexpandedParameterPack())

@@ -231,3 +231,9 @@ namespace pr16989 {
   };
   void C2::f() {}
 }
+
+namespace pr20660 {
+ appendList(int[]...);     // expected-error {{C++ requires a type specifier for all declarations}}
+ appendList(int[]...) { }  // expected-error {{C++ requires a type specifier for all declarations}}
+}
+
