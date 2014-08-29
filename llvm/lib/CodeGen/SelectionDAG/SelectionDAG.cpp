@@ -4361,18 +4361,11 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDLoc dl, SDValue Dst,
   TargetLowering::ArgListEntry Entry;
   Entry.Node = Dst; Entry.Ty = IntPtrTy;
   Args.push_back(Entry);
-  // Extend or truncate the argument to be an i32 value for the call.
-  if (Src.getValueType().bitsGT(MVT::i32))
-    Src = getNode(ISD::TRUNCATE, dl, MVT::i32, Src);
-  else
-    Src = getNode(ISD::ZERO_EXTEND, dl, MVT::i32, Src);
   Entry.Node = Src;
-  Entry.Ty = Type::getInt32Ty(*getContext());
-  Entry.isSExt = true;
+  Entry.Ty = Src.getValueType().getTypeForEVT(*getContext());
   Args.push_back(Entry);
   Entry.Node = Size;
   Entry.Ty = IntPtrTy;
-  Entry.isSExt = false;
   Args.push_back(Entry);
 
   // FIXME: pass in SDLoc
