@@ -88,7 +88,7 @@
 @end
 
 @protocol TopProtocol
-  @property (readonly) id myString; // expected-warning {{auto property synthesis will not synthesize property 'myString' because it will be implemented by its superclass}}
+  @property (readonly) id myString; // expected-note {{property declared here}}
 @end
 
 @interface TopClass <TopProtocol> 
@@ -100,7 +100,7 @@
 @interface SubClass : TopClass <TopProtocol>
 @end
 
-@implementation SubClass @end  // expected-note {{detected while default synthesizing properties in class implementation}}
+@implementation SubClass @end // expected-warning {{auto property synthesis will not synthesize property 'myString' declared in protocol 'TopProtocol'}}
 
 // rdar://7920807
 @interface C @end
@@ -137,4 +137,26 @@
 @end
  
 @implementation MyClass // expected-warning {{auto property synthesis will not synthesize property 'requiredString' declared in protocol 'MyProtocol'}}
+@end
+
+// rdar://18152478
+@protocol NSObject @end
+@protocol TMSourceManagerDelegate<NSObject>
+@end
+
+@protocol TMSourceManager <NSObject>
+@property (nonatomic, assign) id <TMSourceManagerDelegate> delegate;
+@end
+
+@interface TMSourceManager
+@property (nonatomic, assign) id <TMSourceManagerDelegate> delegate;
+@end
+
+@protocol TMTimeZoneManager <TMSourceManager>
+@end
+
+@interface TimeZoneManager : TMSourceManager <TMTimeZoneManager>
+@end
+
+@implementation TimeZoneManager
 @end

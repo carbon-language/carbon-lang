@@ -201,7 +201,7 @@ expected-note {{'setObject:' has been explicitly marked deprecated here}}
 @end
 
 @interface TestDerived : TestBase
-@property (nonatomic, strong) id object; //expected-warning {{auto property synthesis will not synthesize property 'object' because it will be implemented by its superclass}}
+@property (nonatomic, strong) id object; //expected-warning {{auto property synthesis will not synthesize property 'object'; it will be implemented by its superclass}}
 @end
 
 @interface TestUse @end

@@ -787,7 +787,8 @@ def warn_no_autosynthesis_property : Warning<
   InGroup<ObjCNoPropertyAutoSynthesis>;
 def warn_autosynthesis_property_in_superclass : Warning<
   "auto property synthesis will not synthesize property "
-  "%0 because it will be implemented by its superclass">,
+  "%0; it will be implemented by its superclass, use @dynamic to "
+  "acknowledge intention">,
   InGroup<ObjCNoPropertyAutoSynthesis>;
 def warn_autosynthesis_property_ivar_match :Warning<
   "autosynthesized property %0 will use %select{|synthesized}1 instance variable "
