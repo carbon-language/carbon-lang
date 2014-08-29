@@ -1055,20 +1055,19 @@ void Verifier::visitFunction(const Function &F) {
           "Attribute 'builtin' can only be applied to a callsite.", &F);
 
   // Check that this function meets the restrictions on this calling convention.
+  // Sometimes varargs is used for perfectly forwarding thunks, so some of these
+  // restrictions can be lifted.
   switch (F.getCallingConv()) {
   default:
-    break;
   case CallingConv::C:
     break;
   case CallingConv::Fast:
   case CallingConv::Cold:
-  case CallingConv::X86_FastCall:
-  case CallingConv::X86_ThisCall:
   case CallingConv::Intel_OCL_BI:
   case CallingConv::PTX_Kernel:
   case CallingConv::PTX_Device:
-    Assert1(!F.isVarArg(),
-            "Varargs functions must have C calling conventions!", &F);
+    Assert1(!F.isVarArg(), "Calling convention does not support varargs or "
+                           "perfect forwarding!", &F);
     break;
   }
 

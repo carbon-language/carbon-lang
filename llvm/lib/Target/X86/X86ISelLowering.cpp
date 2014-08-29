@@ -3605,23 +3605,18 @@ bool X86::isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
 /// own arguments. Callee pop is necessary to support tail calls.
 bool X86::isCalleePop(CallingConv::ID CallingConv,
                       bool is64Bit, bool IsVarArg, bool TailCallOpt) {
-  if (IsVarArg)
-    return false;
-
   switch (CallingConv) {
   default:
     return false;
   case CallingConv::X86_StdCall:
-    return !is64Bit;
   case CallingConv::X86_FastCall:
-    return !is64Bit;
   case CallingConv::X86_ThisCall:
     return !is64Bit;
   case CallingConv::Fast:
-    return TailCallOpt;
   case CallingConv::GHC:
-    return TailCallOpt;
   case CallingConv::HiPE:
+    if (IsVarArg)
+      return false;
     return TailCallOpt;
   }
 }
