@@ -502,13 +502,12 @@ static bool ParseDirective(StringRef S, ExpectedData *ED, SourceManager &SM,
     }
 
     // Construct new directive.
-    std::unique_ptr<Directive> D(
-        Directive::create(RegexKind, Pos, ExpectedLoc, MatchAnyLine, Text,
-                          Min, Max));
+    std::unique_ptr<Directive> D = Directive::create(
+        RegexKind, Pos, ExpectedLoc, MatchAnyLine, Text, Min, Max);
 
     std::string Error;
     if (D->isValid(Error)) {
-      DL->push_back(D.release());
+      DL->push_back(std::move(D));
       FoundDirective = true;
     } else {
       Diags.Report(Pos.getLocWithOffset(ContentBegin-PH.Begin),
@@ -644,15 +643,16 @@ static unsigned PrintUnexpected(DiagnosticsEngine &Diags, SourceManager *SourceM
 
 /// \brief Takes a list of diagnostics that were expected to have been generated
 /// but were not and produces a diagnostic to the user from this.
-static unsigned PrintExpected(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
-                              DirectiveList &DL, const char *Kind) {
+static unsigned PrintExpected(DiagnosticsEngine &Diags,
+                              SourceManager &SourceMgr,
+                              std::vector<Directive *> &DL, const char *Kind) {
   if (DL.empty())
     return 0;
 
   SmallString<256> Fmt;
   llvm::raw_svector_ostream OS(Fmt);
-  for (DirectiveList::iterator I = DL.begin(), E = DL.end(); I != E; ++I) {
-    Directive &D = **I;
+  for (auto *DirPtr : DL) {
+    Directive &D = *DirPtr;
     OS << "\n  File " << SourceMgr.getFilename(D.DiagnosticLoc);
     if (D.MatchAnyLine)
       OS << " Line *";
@@ -694,11 +694,11 @@ static unsigned CheckLists(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
                            DirectiveList &Left,
                            const_diag_iterator d2_begin,
                            const_diag_iterator d2_end) {
-  DirectiveList LeftOnly;
+  std::vector<Directive *> LeftOnly;
   DiagList Right(d2_begin, d2_end);
 
-  for (DirectiveList::iterator I = Left.begin(), E = Left.end(); I != E; ++I) {
-    Directive& D = **I;
+  for (auto &Owner : Left) {
+    Directive &D = *Owner;
     unsigned LineNo1 = SourceMgr.getPresumedLineNumber(D.DiagnosticLoc);
 
     for (unsigned i = 0; i < D.Max; ++i) {
@@ -720,7 +720,7 @@ static unsigned CheckLists(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
       if (II == IE) {
         // Not found.
         if (i >= D.Min) break;
-        LeftOnly.push_back(*I);
+        LeftOnly.push_back(&D);
       } else {
         // Found. The same cannot be found twice.
         Right.erase(II);
@@ -872,12 +872,14 @@ void VerifyDiagnosticConsumer::CheckDiagnostics() {
   ED.Reset();
 }
 
-Directive *Directive::create(bool RegexKind, SourceLocation DirectiveLoc,
-                             SourceLocation DiagnosticLoc, bool MatchAnyLine,
-                             StringRef Text, unsigned Min, unsigned Max) {
+std::unique_ptr<Directive> Directive::create(bool RegexKind,
+                                             SourceLocation DirectiveLoc,
+                                             SourceLocation DiagnosticLoc,
+                                             bool MatchAnyLine, StringRef Text,
+                                             unsigned Min, unsigned Max) {
   if (!RegexKind)
-    return new StandardDirective(DirectiveLoc, DiagnosticLoc, MatchAnyLine,
-                                 Text, Min, Max);
+    return llvm::make_unique<StandardDirective>(DirectiveLoc, DiagnosticLoc,
+                                                MatchAnyLine, Text, Min, Max);
 
   // Parse the directive into a regular expression.
   std::string RegexStr;
@@ -902,6 +904,6 @@ Directive *Directive::create(bool RegexKind, SourceLocation DirectiveLoc,
     }
   }
 
-  return new RegexDirective(DirectiveLoc, DiagnosticLoc, MatchAnyLine, Text,
-                            Min, Max, RegexStr);
+  return llvm::make_unique<RegexDirective>(
+      DirectiveLoc, DiagnosticLoc, MatchAnyLine, Text, Min, Max, RegexStr);
 }

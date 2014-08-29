@@ -145,9 +145,12 @@ public:
   ///
   class Directive {
   public:
-    static Directive *create(bool RegexKind, SourceLocation DirectiveLoc,
-                             SourceLocation DiagnosticLoc, bool MatchAnyLine,
-                             StringRef Text, unsigned Min, unsigned Max);
+    static std::unique_ptr<Directive> create(bool RegexKind,
+                                             SourceLocation DirectiveLoc,
+                                             SourceLocation DiagnosticLoc,
+                                             bool MatchAnyLine, StringRef Text,
+                                             unsigned Min, unsigned Max);
+
   public:
     /// Constant representing n or more matches.
     static const unsigned MaxCount = UINT_MAX;
@@ -181,7 +184,7 @@ public:
     void operator=(const Directive &) LLVM_DELETED_FUNCTION;
   };
 
-  typedef std::vector<Directive*> DirectiveList;
+  typedef std::vector<std::unique_ptr<Directive>> DirectiveList;
 
   /// ExpectedData - owns directive objects and deletes on destructor.
   ///
@@ -192,13 +195,11 @@ public:
     DirectiveList Notes;
 
     void Reset() {
-      llvm::DeleteContainerPointers(Errors);
-      llvm::DeleteContainerPointers(Warnings);
-      llvm::DeleteContainerPointers(Remarks);
-      llvm::DeleteContainerPointers(Notes);
+      Errors.clear();
+      Warnings.clear();
+      Remarks.clear();
+      Notes.clear();
     }
-
-    ~ExpectedData() { Reset(); }
   };
 
   enum DirectiveStatus {
