@@ -319,9 +319,12 @@ DIE &DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
 
   attachLowHighPC(SPCU, *SPDie, FunctionBeginSym, FunctionEndSym);
 
-  const TargetRegisterInfo *RI = Asm->TM.getSubtargetImpl()->getRegisterInfo();
-  MachineLocation Location(RI->getFrameRegister(*Asm->MF));
-  SPCU.addAddress(*SPDie, dwarf::DW_AT_frame_base, Location);
+  if (SPCU.getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly) {
+    const TargetRegisterInfo *RI =
+        Asm->TM.getSubtargetImpl()->getRegisterInfo();
+    MachineLocation Location(RI->getFrameRegister(*Asm->MF));
+    SPCU.addAddress(*SPDie, dwarf::DW_AT_frame_base, Location);
+  }
 
   // Add name to the name table, we do this here because we're guaranteed
   // to have concrete versions of our DW_TAG_subprogram nodes.
