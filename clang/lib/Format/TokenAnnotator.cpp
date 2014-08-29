@@ -925,8 +925,7 @@ private:
     if (!NextToken || NextToken->is(tok::l_brace))
       return TT_Unknown;
 
-    if (PrevToken->is(tok::coloncolon) ||
-        (PrevToken->is(tok::l_paren) && !IsExpression))
+    if (PrevToken->is(tok::coloncolon))
       return TT_PointerOrReference;
 
     if (PrevToken->isOneOf(tok::l_paren, tok::l_square, tok::l_brace,
