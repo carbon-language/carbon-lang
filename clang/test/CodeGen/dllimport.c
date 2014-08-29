@@ -44,12 +44,19 @@ __declspec(dllimport) extern int GlobalRedecl3;
                       extern int GlobalRedecl3; // dllimport ignored
 USEVAR(GlobalRedecl3)
 
+// Make sure this works even if the decl has been used before it's defined (PR20792).
+// CHECK: @GlobalRedecl4 = common global i32
+__declspec(dllimport) extern int GlobalRedecl4;
+USEVAR(GlobalRedecl4)
+                      int GlobalRedecl4; // dllimport ignored
+
+
 // Redeclaration in local context.
-// CHECK: @GlobalRedecl4 = external dllimport global i32
-__declspec(dllimport) int GlobalRedecl4;
+// CHECK: @GlobalRedecl5 = external dllimport global i32
+__declspec(dllimport) int GlobalRedecl5;
 int functionScope() {
-  extern int GlobalRedecl4; // still dllimport
-  return GlobalRedecl4;
+  extern int GlobalRedecl5; // still dllimport
+  return GlobalRedecl5;
 }
 
 
@@ -99,3 +106,9 @@ USE(redecl2)
 __declspec(dllimport) void redecl3(void);
                       void redecl3(void) {} // dllimport ignored
 USE(redecl3)
+
+// Make sure this works even if the decl is used before it's defined (PR20792).
+// CHECK-DAG: define void @redecl4()
+__declspec(dllimport) void redecl4(void);
+USE(redecl4)
+                      void redecl4(void) {} // dllimport ignored

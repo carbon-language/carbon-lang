@@ -1449,6 +1449,10 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
         Entry->setLinkage(llvm::Function::ExternalLinkage);
     }
 
+    // Handle dropped DLL attributes.
+    if (D && !D->hasAttr<DLLImportAttr>() && !D->hasAttr<DLLExportAttr>())
+      Entry->setDLLStorageClass(llvm::GlobalValue::DefaultStorageClass);
+
     if (Entry->getType()->getElementType() == Ty)
       return Entry;
 
@@ -1613,6 +1617,10 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
       if (D && !D->hasAttr<WeakAttr>())
         Entry->setLinkage(llvm::Function::ExternalLinkage);
     }
+
+    // Handle dropped DLL attributes.
+    if (D && !D->hasAttr<DLLImportAttr>() && !D->hasAttr<DLLExportAttr>())
+      Entry->setDLLStorageClass(llvm::GlobalValue::DefaultStorageClass);
 
     if (Entry->getType() == Ty)
       return Entry;
