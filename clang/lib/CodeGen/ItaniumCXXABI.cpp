@@ -1476,8 +1476,9 @@ llvm::Value *ItaniumCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
   llvm::Value *NumElementsPtr =
       CGF.Builder.CreateBitCast(CookiePtr, NumElementsTy);
   llvm::Instruction *SI = CGF.Builder.CreateStore(NumElements, NumElementsPtr);
-  if (CGM.getLangOpts().Sanitize.Address &&
+  if (CGM.getLangOpts().Sanitize.Address && AS == 0 &&
       expr->getOperatorNew()->isReplaceableGlobalAllocationFunction()) {
+    // The store to the CookiePtr does not need to be instrumented.
     CGM.getSanitizerMetadata()->disableSanitizerForInstruction(SI);
     llvm::FunctionType *FTy =
         llvm::FunctionType::get(CGM.VoidTy, NumElementsTy, false);
@@ -1507,10 +1508,18 @@ llvm::Value *ItaniumCXXABI::readArrayCookieImpl(CodeGenFunction &CGF,
   unsigned AS = allocPtr->getType()->getPointerAddressSpace();
   numElementsPtr = 
     CGF.Builder.CreateBitCast(numElementsPtr, CGF.SizeTy->getPointerTo(AS));
-  llvm::Instruction *LI = CGF.Builder.CreateLoad(numElementsPtr);
-  if (CGM.getLangOpts().Sanitize.Address)
-    CGM.getSanitizerMetadata()->disableSanitizerForInstruction(LI);
-  return LI;
+  if (!CGM.getLangOpts().Sanitize.Address || AS != 0)
+    return CGF.Builder.CreateLoad(numElementsPtr);
+  // In asan mode emit a function call instead of a regular load and let the
+  // run-time deal with it: if the shadow is properly poisoned return the
+  // cookie, otherwise return 0 to avoid an infinite loop calling DTORs.
+  // We can't simply ignore this load using nosanitize metadata because
+  // the metadata may be lost.
+  llvm::FunctionType *FTy =
+      llvm::FunctionType::get(CGF.SizeTy, CGF.SizeTy->getPointerTo(0), false);
+  llvm::Constant *F =
+      CGM.CreateRuntimeFunction(FTy, "__asan_load_cxx_array_cookie");
+  return CGF.Builder.CreateCall(F, numElementsPtr);
 }
 
 CharUnits ARMCXXABI::getArrayCookieSizeImpl(QualType elementType) {

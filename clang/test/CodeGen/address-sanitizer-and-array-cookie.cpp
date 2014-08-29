@@ -43,7 +43,8 @@ void CallDelete(C *c) {
 // PLAIN-LABEL: CallDelete
 // PLAIN-NOT: nosanitize
 // ASAN-LABEL: CallDelete
-// ASAN: load{{.*}}!nosanitize
+// ASAN-NOT: nosanitize
+// ASAN: call i64 @__asan_load_cxx_array_cookie
 // ASAN-NOT: nosanitize
 
 char Buffer[20];
