@@ -13,6 +13,7 @@
 #include "AvoidCStyleCastsCheck.h"
 #include "ExplicitConstructorCheck.h"
 #include "ExplicitMakePairCheck.h"
+#include "IntegerTypesCheck.h"
 #include "MemsetZeroLengthCheck.h"
 #include "NamedParameterCheck.h"
 #include "OverloadedUnaryAndCheck.h"
@@ -40,6 +41,9 @@ public:
     CheckFactories.addCheckFactory(
         "google-explicit-constructor",
         new ClangTidyCheckFactory<ExplicitConstructorCheck>());
+    CheckFactories.addCheckFactory(
+        "google-runtime-int",
+        new ClangTidyCheckFactory<runtime::IntegerTypesCheck>());
     CheckFactories.addCheckFactory(
         "google-runtime-operator",
         new ClangTidyCheckFactory<runtime::OverloadedUnaryAndCheck>());
