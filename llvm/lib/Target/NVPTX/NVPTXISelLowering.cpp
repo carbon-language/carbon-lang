@@ -3270,16 +3270,7 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
     Info.vol = 0;
     Info.readMem = true;
     Info.writeMem = false;
-
-    // alignment is available as metadata.
-    // Grab it and set the alignment.
-    assert(I.hasMetadataOtherThanDebugLoc() && "Must have alignment metadata");
-    MDNode *AlignMD = I.getMetadata("align");
-    assert(AlignMD && "Must have a non-null MDNode");
-    assert(AlignMD->getNumOperands() == 1 && "Must have a single operand");
-    Value *Align = AlignMD->getOperand(0);
-    int64_t Alignment = cast<ConstantInt>(Align)->getZExtValue();
-    Info.align = Alignment;
+    Info.align = cast<ConstantInt>(I.getArgOperand(1))->getZExtValue();
 
     return true;
   }
@@ -3299,16 +3290,7 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
     Info.vol = 0;
     Info.readMem = true;
     Info.writeMem = false;
-
-    // alignment is available as metadata.
-    // Grab it and set the alignment.
-    assert(I.hasMetadataOtherThanDebugLoc() && "Must have alignment metadata");
-    MDNode *AlignMD = I.getMetadata("align");
-    assert(AlignMD && "Must have a non-null MDNode");
-    assert(AlignMD->getNumOperands() == 1 && "Must have a single operand");
-    Value *Align = AlignMD->getOperand(0);
-    int64_t Alignment = cast<ConstantInt>(Align)->getZExtValue();
-    Info.align = Alignment;
+    Info.align = cast<ConstantInt>(I.getArgOperand(1))->getZExtValue();
 
     return true;
   }

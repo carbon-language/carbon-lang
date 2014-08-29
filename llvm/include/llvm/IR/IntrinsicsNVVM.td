@@ -797,24 +797,30 @@ def llvm_anyi64ptr_ty     : LLVMAnyPointerType<llvm_i64_ty>;     // (space)i64*
 
 // Generated within nvvm. Use for ldu on sm_20 or later
 def int_nvvm_ldu_global_i : Intrinsic<[llvm_anyint_ty],
-  [LLVMAnyPointerType<LLVMMatchType<0>>], [IntrReadMem, NoCapture<0>],
+  [LLVMAnyPointerType<LLVMMatchType<0>>, llvm_i32_ty],
+  [IntrReadMem, NoCapture<0>],
   "llvm.nvvm.ldu.global.i">;
 def int_nvvm_ldu_global_f : Intrinsic<[llvm_anyfloat_ty],
-  [LLVMAnyPointerType<LLVMMatchType<0>>], [IntrReadMem, NoCapture<0>],
+  [LLVMAnyPointerType<LLVMMatchType<0>>, llvm_i32_ty],
+  [IntrReadMem, NoCapture<0>],
   "llvm.nvvm.ldu.global.f">;
 def int_nvvm_ldu_global_p : Intrinsic<[llvm_anyptr_ty],
-  [LLVMAnyPointerType<LLVMMatchType<0>>], [IntrReadMem, NoCapture<0>],
+  [LLVMAnyPointerType<LLVMMatchType<0>>, llvm_i32_ty],
+  [IntrReadMem, NoCapture<0>],
   "llvm.nvvm.ldu.global.p">;
 
 // Generated within nvvm. Use for ldg on sm_35 or later
 def int_nvvm_ldg_global_i : Intrinsic<[llvm_anyint_ty],
-  [LLVMAnyPointerType<LLVMMatchType<0>>], [IntrReadMem, NoCapture<0>],
+  [LLVMAnyPointerType<LLVMMatchType<0>>, llvm_i32_ty],
+  [IntrReadMem, NoCapture<0>],
   "llvm.nvvm.ldg.global.i">;
 def int_nvvm_ldg_global_f : Intrinsic<[llvm_anyfloat_ty],
-  [LLVMAnyPointerType<LLVMMatchType<0>>], [IntrReadMem, NoCapture<0>],
+  [LLVMAnyPointerType<LLVMMatchType<0>>, llvm_i32_ty],
+  [IntrReadMem, NoCapture<0>],
   "llvm.nvvm.ldg.global.f">;
 def int_nvvm_ldg_global_p : Intrinsic<[llvm_anyptr_ty],
-  [LLVMAnyPointerType<LLVMMatchType<0>>], [IntrReadMem, NoCapture<0>],
+  [LLVMAnyPointerType<LLVMMatchType<0>>, llvm_i32_ty],
+  [IntrReadMem, NoCapture<0>],
   "llvm.nvvm.ldg.global.p">;
 
 // Use for generic pointers
