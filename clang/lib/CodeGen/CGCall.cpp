@@ -332,6 +332,20 @@ CodeGenTypes::arrangeGlobalDeclaration(GlobalDecl GD) {
   return arrangeFunctionDeclaration(FD);
 }
 
+/// Arrange a thunk that takes 'this' as the first parameter followed by
+/// varargs.  Return a void pointer, regardless of the actual return type.
+/// The body of the thunk will end in a musttail call to a function of the
+/// correct type, and the caller will bitcast the function to the correct
+/// prototype.
+const CGFunctionInfo &
+CodeGenTypes::arrangeMSMemberPointerThunk(const CXXMethodDecl *MD) {
+  assert(MD->isVirtual() && "only virtual memptrs have thunks");
+  CanQual<FunctionProtoType> FTP = GetFormalType(MD);
+  CanQualType ArgTys[] = { GetThisType(Context, MD->getParent()) };
+  return arrangeLLVMFunctionInfo(Context.VoidTy, false, ArgTys,
+                                 FTP->getExtInfo(), RequiredArgs(1));
+}
+
 /// Arrange a call as unto a free function, except possibly with an
 /// additional number of formal parameters considered required.
 static const CGFunctionInfo &

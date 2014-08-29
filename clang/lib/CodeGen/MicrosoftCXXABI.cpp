@@ -1434,6 +1434,9 @@ MicrosoftCXXABI::enumerateVBTables(const CXXRecordDecl *RD) {
 llvm::Function *MicrosoftCXXABI::EmitVirtualMemPtrThunk(
     const CXXMethodDecl *MD,
     const MicrosoftVTableContext::MethodVFTableLocation &ML) {
+  assert(!isa<CXXConstructorDecl>(MD) && !isa<CXXDestructorDecl>(MD) &&
+         "can't form pointers to ctors or virtual dtors");
+
   // Calculate the mangled name.
   SmallString<256> ThunkName;
   llvm::raw_svector_ostream Out(ThunkName);
@@ -1445,7 +1448,7 @@ llvm::Function *MicrosoftCXXABI::EmitVirtualMemPtrThunk(
     return cast<llvm::Function>(GV);
 
   // Create the llvm::Function.
-  const CGFunctionInfo &FnInfo = CGM.getTypes().arrangeGlobalDeclaration(MD);
+  const CGFunctionInfo &FnInfo = CGM.getTypes().arrangeMSMemberPointerThunk(MD);
   llvm::FunctionType *ThunkTy = CGM.getTypes().GetFunctionType(FnInfo);
   llvm::Function *ThunkFn =
       llvm::Function::Create(ThunkTy, llvm::Function::ExternalLinkage,
@@ -1464,18 +1467,28 @@ llvm::Function *MicrosoftCXXABI::EmitVirtualMemPtrThunk(
 
   // Start codegen.
   CodeGenFunction CGF(CGM);
-  CGF.StartThunk(ThunkFn, MD, FnInfo);
+  CGF.CurGD = GlobalDecl(MD);
+  CGF.CurFuncIsThunk = true;
+
+  // Build FunctionArgs, but only include the implicit 'this' parameter
+  // declaration.
+  FunctionArgList FunctionArgs;
+  buildThisParam(CGF, FunctionArgs);
+
+  // Start defining the function.
+  CGF.StartFunction(GlobalDecl(), FnInfo.getReturnType(), ThunkFn, FnInfo,
+                    FunctionArgs, MD->getLocation(), SourceLocation());
+  EmitThisParam(CGF);
 
   // Load the vfptr and then callee from the vftable.  The callee should have
   // adjusted 'this' so that the vfptr is at offset zero.
-  llvm::Value *This = CGF.LoadCXXThis();
-  llvm::Value *VTable =
-      CGF.GetVTablePtr(This, ThunkTy->getPointerTo()->getPointerTo());
+  llvm::Value *VTable = CGF.GetVTablePtr(
+      getThisValue(CGF), ThunkTy->getPointerTo()->getPointerTo());
   llvm::Value *VFuncPtr =
       CGF.Builder.CreateConstInBoundsGEP1_64(VTable, ML.Index, "vfn");
   llvm::Value *Callee = CGF.Builder.CreateLoad(VFuncPtr);
 
-  CGF.EmitCallAndReturnForThunk(Callee, 0);
+  CGF.EmitMustTailThunk(MD, getThisValue(CGF), Callee);
 
   return ThunkFn;
 }
@@ -1935,8 +1948,8 @@ MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
   CodeGenTypes &Types = CGM.getTypes();
 
   llvm::Constant *FirstField;
+  const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
   if (!MD->isVirtual()) {
-    const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
     llvm::Type *Ty;
     // Check whether the function has a computable LLVM signature.
     if (Types.isFuncTypeConvertible(FPT)) {
@@ -1952,13 +1965,13 @@ MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
   } else {
     MicrosoftVTableContext::MethodVFTableLocation ML =
         CGM.getMicrosoftVTableContext().getMethodVFTableLocation(MD);
-    if (MD->isVariadic()) {
-      CGM.ErrorUnsupported(MD, "pointer to variadic virtual member function");
-      FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
-    } else if (!CGM.getTypes().isFuncTypeConvertible(
-                    MD->getType()->castAs<FunctionType>())) {
+    if (!CGM.getTypes().isFuncTypeConvertible(
+            MD->getType()->castAs<FunctionType>())) {
       CGM.ErrorUnsupported(MD, "pointer to virtual member function with "
                                "incomplete return or parameter type");
+      FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
+    } else if (FPT->getCallConv() == CC_X86FastCall) {
+      CGM.ErrorUnsupported(MD, "pointer to fastcall virtual member function");
       FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
     } else if (ML.VBase) {
       CGM.ErrorUnsupported(MD, "pointer to virtual member function overriding "

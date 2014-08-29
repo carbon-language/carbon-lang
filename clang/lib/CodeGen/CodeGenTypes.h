@@ -207,6 +207,7 @@ public:
   const CGFunctionInfo &arrangeCXXMethodCall(const CallArgList &args,
                                              const FunctionProtoType *type,
                                              RequiredArgs required);
+  const CGFunctionInfo &arrangeMSMemberPointerThunk(const CXXMethodDecl *MD);
 
   const CGFunctionInfo &arrangeFreeFunctionType(CanQual<FunctionProtoType> Ty);
   const CGFunctionInfo &arrangeFreeFunctionType(CanQual<FunctionNoProtoType> Ty);
