@@ -45,7 +45,7 @@ static inline StringRef MCLOHDirectiveName() {
   return StringRef(".loh");
 }
 
-static inline bool isValidMCLOHType(MCLOHType Kind) {
+static inline bool isValidMCLOHType(unsigned Kind) {
   return Kind >= MCLOH_AdrpAdrp && Kind <= MCLOH_AdrpLdrGot;
 }
 
