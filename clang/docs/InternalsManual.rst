@@ -1396,10 +1396,7 @@ body by single call to a static class method:
 .. code-block:: c++
 
   Stmt *FooBody = ...
-  CFG *FooCFG = CFG::buildCFG(FooBody);
-
-It is the responsibility of the caller of ``CFG::buildCFG`` to ``delete`` the
-returned ``CFG*`` when the CFG is no longer needed.
+  std::unique_ptr<CFG> FooCFG = CFG::buildCFG(FooBody);
 
 Along with providing an interface to iterate over its ``CFGBlocks``, the
 ``CFG`` class also provides methods that are useful for debugging and
