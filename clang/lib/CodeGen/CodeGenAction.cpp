@@ -277,7 +277,7 @@ static FullSourceLoc ConvertBackendLocation(const llvm::SMDiagnostic &D,
       llvm::MemoryBuffer::getMemBufferCopy(LBuf->getBuffer(),
                                            LBuf->getBufferIdentifier());
   // FIXME: Keep a file ID map instead of creating new IDs for each location.
-  FileID FID = CSM.createFileID(CBuf.release());
+  FileID FID = CSM.createFileID(std::move(CBuf));
 
   // Translate the offset into the file.
   unsigned Offset = D.getLoc().getPointer() - LBuf->getBufferStart();

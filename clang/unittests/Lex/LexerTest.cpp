@@ -63,7 +63,7 @@ protected:
   std::vector<Token> CheckLex(StringRef Source,
                               ArrayRef<tok::TokenKind> ExpectedTokens) {
     std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Source);
-    SourceMgr.setMainFileID(SourceMgr.createFileID(Buf.release()));
+    SourceMgr.setMainFileID(SourceMgr.createFileID(std::move(Buf)));
 
     VoidModuleLoader ModLoader;
     HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts,

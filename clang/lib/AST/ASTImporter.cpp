@@ -4922,7 +4922,7 @@ FileID ASTImporter::Import(FileID FromID) {
     std::unique_ptr<llvm::MemoryBuffer> ToBuf
       = llvm::MemoryBuffer::getMemBufferCopy(FromBuf->getBuffer(),
                                              FromBuf->getBufferIdentifier());
-    ToID = ToSM.createFileID(ToBuf.release(),
+    ToID = ToSM.createFileID(std::move(ToBuf),
                              FromSLoc.getFile().getFileCharacteristic());
   }
   

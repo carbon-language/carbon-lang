@@ -91,7 +91,7 @@ TEST_F(PPConditionalDirectiveRecordTest, PPRecAPI) {
       "9\n";
 
   std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(source);
-  SourceMgr.setMainFileID(SourceMgr.createFileID(Buf.release()));
+  SourceMgr.setMainFileID(SourceMgr.createFileID(std::move(Buf)));
 
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts, 

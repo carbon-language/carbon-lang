@@ -161,7 +161,7 @@ protected:
   CharSourceRange InclusionDirectiveFilenameRange(const char* SourceText, 
       const char* HeaderPath, bool SystemHeader) {
     std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(SourceText);
-    SourceMgr.setMainFileID(SourceMgr.createFileID(Buf.release()));
+    SourceMgr.setMainFileID(SourceMgr.createFileID(std::move(Buf)));
 
     VoidModuleLoader ModLoader;
 
@@ -199,7 +199,7 @@ protected:
 
     std::unique_ptr<MemoryBuffer> SourceBuf =
         MemoryBuffer::getMemBuffer(SourceText, "test.cl");
-    SourceMgr.setMainFileID(SourceMgr.createFileID(SourceBuf.release()));
+    SourceMgr.setMainFileID(SourceMgr.createFileID(std::move(SourceBuf)));
 
     VoidModuleLoader ModLoader;
     HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, 

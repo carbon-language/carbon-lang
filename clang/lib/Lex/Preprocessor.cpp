@@ -506,7 +506,7 @@ void Preprocessor::EnterMainSourceFile() {
   std::unique_ptr<llvm::MemoryBuffer> SB =
     llvm::MemoryBuffer::getMemBufferCopy(Predefines, "<built-in>");
   assert(SB && "Cannot create predefined source buffer");
-  FileID FID = SourceMgr.createFileID(SB.release());
+  FileID FID = SourceMgr.createFileID(std::move(SB));
   assert(!FID.isInvalid() && "Could not create FileID for predefines?");
   setPredefinesFileID(FID);
 

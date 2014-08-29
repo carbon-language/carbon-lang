@@ -1253,7 +1253,7 @@ bool ASTReader::ReadSLocEntry(int ID) {
 
     std::unique_ptr<llvm::MemoryBuffer> Buffer =
         llvm::MemoryBuffer::getMemBuffer(Blob.drop_back(1), Name);
-    SourceMgr.createFileID(Buffer.release(), FileCharacter, ID,
+    SourceMgr.createFileID(std::move(Buffer), FileCharacter, ID,
                            BaseOffset + Offset, IncludeLoc);
     break;
   }

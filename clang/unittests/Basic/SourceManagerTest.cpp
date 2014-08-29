@@ -75,7 +75,7 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnit) {
     "#define M(x) [x]\n"
     "M(foo)";
   std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(source);
-  FileID mainFileID = SourceMgr.createFileID(Buf.release());
+  FileID mainFileID = SourceMgr.createFileID(std::move(Buf));
   SourceMgr.setMainFileID(mainFileID);
 
   VoidModuleLoader ModLoader;
@@ -128,7 +128,7 @@ TEST_F(SourceManagerTest, getColumnNumber) {
     "int y;";
 
   std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Source);
-  FileID MainFileID = SourceMgr.createFileID(Buf.release());
+  FileID MainFileID = SourceMgr.createFileID(std::move(Buf));
   SourceMgr.setMainFileID(MainFileID);
 
   bool Invalid;
@@ -188,7 +188,7 @@ TEST_F(SourceManagerTest, getMacroArgExpandedLocation) {
 
   std::unique_ptr<MemoryBuffer> HeaderBuf = MemoryBuffer::getMemBuffer(header);
   std::unique_ptr<MemoryBuffer> MainBuf = MemoryBuffer::getMemBuffer(main);
-  FileID mainFileID = SourceMgr.createFileID(MainBuf.release());
+  FileID mainFileID = SourceMgr.createFileID(std::move(MainBuf));
   SourceMgr.setMainFileID(mainFileID);
 
   const FileEntry *headerFile = FileMgr.getVirtualFile("/test-header.h",
@@ -287,7 +287,7 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnitWithMacroInInclude) {
 
   std::unique_ptr<MemoryBuffer> HeaderBuf = MemoryBuffer::getMemBuffer(header);
   std::unique_ptr<MemoryBuffer> MainBuf = MemoryBuffer::getMemBuffer(main);
-  SourceMgr.setMainFileID(SourceMgr.createFileID(MainBuf.release()));
+  SourceMgr.setMainFileID(SourceMgr.createFileID(std::move(MainBuf)));
 
   const FileEntry *headerFile = FileMgr.getVirtualFile("/test-header.h",
                                                  HeaderBuf->getBufferSize(), 0);
