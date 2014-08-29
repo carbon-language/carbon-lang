@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=thumbv7-linux-gnueabihf -o - -show-mc-encoding -t2-reduce-limit2=0 %s | FileCheck %s
+; RUN: llc -mtriple=thumbv7-linux-gnueabihf -o - -show-mc-encoding -t2-reduce-limit=0 -t2-reduce-limit2=0 %s | FileCheck %s
 ; RUN: llc -mtriple=thumbv7-linux-gnueabihf -o - -show-mc-encoding %s | FileCheck %s --check-prefix=CHECK-OPT
 
 define i32 @and(i32 %a, i32 %b) nounwind readnone {
@@ -10,3 +10,11 @@ entry:
   ret i32 %and
 }
 
+define i32 @asr-imm(i32 %a) nounwind readnone {
+; CHECK-LABEL: "asr-imm":
+; CHECK: asr.w r{{[0-9]+}}, r{{[0-9]+}}, #13 @ encoding: [{{0x..,0x..,0x..,0x..}}]
+; CHECK-OPT: asrs r{{[0-7]}}, r{{[0-7]}}, #13 @ encoding: [{{0x..,0x..}}]
+entry:
+  %shr = ashr i32 %a, 13
+  ret i32 %shr
+}
