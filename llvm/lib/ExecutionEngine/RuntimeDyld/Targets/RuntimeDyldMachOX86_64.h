@@ -84,7 +84,7 @@ public:
     case MachO::X86_64_RELOC_SIGNED:
     case MachO::X86_64_RELOC_UNSIGNED:
     case MachO::X86_64_RELOC_BRANCH:
-      writeBytesUnaligned(LocalAddress, Value + RE.Addend, 1 << RE.Size);
+      writeBytesUnaligned(Value + RE.Addend, LocalAddress, 1 << RE.Size);
       break;
     case MachO::X86_64_RELOC_GOT_LOAD:
     case MachO::X86_64_RELOC_GOT:

@@ -90,7 +90,7 @@ public:
     default:
       llvm_unreachable("Invalid relocation type!");
     case MachO::GENERIC_RELOC_VANILLA:
-      writeBytesUnaligned(LocalAddress, Value + RE.Addend, 1 << RE.Size);
+      writeBytesUnaligned(Value + RE.Addend, LocalAddress, 1 << RE.Size);
       break;
     case MachO::GENERIC_RELOC_SECTDIFF:
     case MachO::GENERIC_RELOC_LOCAL_SECTDIFF: {
@@ -99,7 +99,7 @@ public:
       assert((Value == SectionABase || Value == SectionBBase) &&
              "Unexpected SECTDIFF relocation value.");
       Value = SectionABase - SectionBBase + RE.Addend;
-      writeBytesUnaligned(LocalAddress, Value, 1 << RE.Size);
+      writeBytesUnaligned(Value, LocalAddress, 1 << RE.Size);
       break;
     }
     case MachO::GENERIC_RELOC_PB_LA_PTR:

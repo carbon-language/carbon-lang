@@ -98,7 +98,7 @@ public:
     default:
       llvm_unreachable("Invalid relocation type!");
     case MachO::ARM_RELOC_VANILLA:
-      writeBytesUnaligned(LocalAddress, Value, 1 << RE.Size);
+      writeBytesUnaligned(Value, LocalAddress, 1 << RE.Size);
       break;
     case MachO::ARM_RELOC_BR24: {
       // Mask the value into the target address. We know instructions are

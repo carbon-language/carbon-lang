@@ -28,23 +28,10 @@ using namespace llvm::object;
 namespace llvm {
 
 int64_t RuntimeDyldMachO::memcpyAddend(const RelocationEntry &RE) const {
-  const SectionEntry &Section = Sections[RE.SectionID];
   unsigned NumBytes = 1 << RE.Size;
-  int64_t Addend = 0;
-  uint8_t *LocalAddress = Section.Address + RE.Offset;
-  uint8_t *Dst = reinterpret_cast<uint8_t*>(&Addend);
+  uint8_t *Src = Sections[RE.SectionID].Address + RE.Offset;
 
-  if (IsTargetLittleEndian == sys::IsLittleEndianHost) {
-    if (!sys::IsLittleEndianHost)
-      Dst += sizeof(Addend) - NumBytes;
-    memcpy(Dst, LocalAddress, NumBytes);
-  } else {
-    Dst += NumBytes - 1;
-    for (unsigned i = 0; i < NumBytes; ++i)
-      *Dst-- = *LocalAddress++;
-  }
-
-  return Addend;
+  return static_cast<int64_t>(readBytesUnaligned(Src, NumBytes));
 }
 
 RelocationValueRef RuntimeDyldMachO::getRelocationValueRef(
@@ -119,25 +106,6 @@ void RuntimeDyldMachO::dumpRelocationToResolve(const RelocationEntry &RE,
          << " Value: " << format("0x%016" PRIx64, Value) << " Addend: " << RE.Addend
          << " isPCRel: " << RE.IsPCRel << " MachoType: " << RE.RelType
          << " Size: " << (1 << RE.Size) << "\n";
-}
-
-bool RuntimeDyldMachO::writeBytesUnaligned(uint8_t *Dst, uint64_t Value,
-                                           unsigned Size) {
-
-  uint8_t *Src = reinterpret_cast<uint8_t*>(&Value);
-  // If host and target endianness match use memcpy, otherwise copy in reverse
-  // order.
-  if (IsTargetLittleEndian == sys::IsLittleEndianHost) {
-    if (!sys::IsLittleEndianHost)
-      Src += sizeof(Value) - Size;
-    memcpy(Dst, Src, Size);
-  } else {
-    Src += Size - 1;
-    for (unsigned i = 0; i < Size; ++i)
-      *Dst++ = *Src--;
-  }
-
-  return false;
 }
 
 bool

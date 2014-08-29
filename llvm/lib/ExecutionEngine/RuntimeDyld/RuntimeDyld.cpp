@@ -395,6 +395,38 @@ unsigned RuntimeDyldImpl::computeSectionStubBufSize(ObjectImage &Obj,
   return StubBufSize;
 }
 
+uint64_t RuntimeDyldImpl::readBytesUnaligned(uint8_t *Src,
+                                             unsigned Size) const {
+  uint64_t Result = 0;
+  uint8_t *Dst = reinterpret_cast<uint8_t*>(&Result);
+
+  if (IsTargetLittleEndian == sys::IsLittleEndianHost) {
+    if (!sys::IsLittleEndianHost)
+      Dst += sizeof(Result) - Size;
+    memcpy(Dst, Src, Size);
+  } else {
+    Dst += Size - 1;
+    for (unsigned i = 0; i < Size; ++i)
+      *Dst-- = *Src++;
+  }
+
+  return Result;
+}
+
+void RuntimeDyldImpl::writeBytesUnaligned(uint64_t Value, uint8_t *Dst,
+                                          unsigned Size) const {
+  uint8_t *Src = reinterpret_cast<uint8_t*>(&Value);
+  if (IsTargetLittleEndian == sys::IsLittleEndianHost) {
+    if (!sys::IsLittleEndianHost)
+      Src += sizeof(Value) - Size;
+    memcpy(Dst, Src, Size);
+  } else {
+    Src += Size - 1;
+    for (unsigned i = 0; i < Size; ++i)
+      *Dst++ = *Src--;
+  }
+}
+
 void RuntimeDyldImpl::emitCommonSymbols(ObjectImage &Obj,
                                         const CommonSymbolMap &CommonSymbols,
                                         uint64_t TotalSize,
