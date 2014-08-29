@@ -94,8 +94,8 @@ public:
                                     FilesMade *filesMade) = 0;
 
   virtual StringRef getName() const = 0;
-  
-  void HandlePathDiagnostic(PathDiagnostic *D);
+
+  void HandlePathDiagnostic(std::unique_ptr<PathDiagnostic> D);
 
   enum PathGenerationScheme { None, Minimal, Extensive, AlternateExtensive };
   virtual PathGenerationScheme getGenerationScheme() const { return Minimal; }

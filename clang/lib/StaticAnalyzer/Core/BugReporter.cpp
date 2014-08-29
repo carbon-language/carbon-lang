@@ -3465,7 +3465,7 @@ void BugReporter::FlushReport(BugReport *exampleReport,
     D->addMeta(*i);
   }
 
-  PD.HandlePathDiagnostic(D.release());
+  PD.HandlePathDiagnostic(std::move(D));
 }
 
 void BugReporter::EmitBasicReport(const Decl *DeclWithIssue,

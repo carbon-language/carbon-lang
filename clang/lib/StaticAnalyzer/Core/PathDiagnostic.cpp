@@ -197,9 +197,8 @@ PathDiagnosticConsumer::~PathDiagnosticConsumer() {
   }
 }
 
-void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
-  std::unique_ptr<PathDiagnostic> OwningD(D);
-
+void PathDiagnosticConsumer::HandlePathDiagnostic(
+    std::unique_ptr<PathDiagnostic> D) {
   if (!D || D->path.empty())
     return;
   
@@ -213,7 +212,7 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
   if (!supportsCrossFileDiagnostics()) {
     // Verify that the entire path is from the same FileID.
     FileID FID;
-    const SourceManager &SMgr = (*D->path.begin())->getLocation().getManager();
+    const SourceManager &SMgr = D->path.front()->getLocation().getManager();
     SmallVector<const PathPieces *, 5> WorkList;
     WorkList.push_back(&D->path);
 
@@ -272,12 +271,12 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
     if (orig_size <= new_size)
       return;
 
-    assert(orig != D);
+    assert(orig != D.get());
     Diags.RemoveNode(orig);
     delete orig;
   }
 
-  Diags.InsertNode(OwningD.release());
+  Diags.InsertNode(D.release());
 }
 
 static Optional<bool> comparePath(const PathPieces &X, const PathPieces &Y);
