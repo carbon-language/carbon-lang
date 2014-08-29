@@ -1518,6 +1518,9 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie) {
     constructSubprogramArguments(SPDie, Args);
   }
 
+  if(getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly)
+    return;
+
   if (SP.isArtificial())
     addFlag(SPDie, dwarf::DW_AT_artificial);
 
