@@ -88,7 +88,7 @@
 @end
 
 @protocol TopProtocol
-  @property (readonly) id myString; // expected-note {{property declared here}}
+  @property (readonly) id myString;
 @end
 
 @interface TopClass <TopProtocol> 
@@ -100,7 +100,7 @@
 @interface SubClass : TopClass <TopProtocol>
 @end
 
-@implementation SubClass @end // expected-warning {{auto property synthesis will not synthesize property 'myString' declared in protocol 'TopProtocol'}}
+@implementation SubClass @end
 
 // rdar://7920807
 @interface C @end
@@ -159,4 +159,18 @@
 @end
 
 @implementation TimeZoneManager
+@end
+
+// rdar://18179833
+@protocol BaseProt
+@property (assign) id prot;
+@end
+
+@interface Base<BaseProt>
+@end
+
+@interface I : Base<BaseProt>
+@end
+
+@implementation I
 @end

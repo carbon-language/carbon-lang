@@ -1555,12 +1555,14 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
         Diag(PID->getLocation(), diag::note_property_synthesize);
       continue;
     }
+    ObjCPropertyDecl *PropInSuperClass = SuperPropMap[Prop->getIdentifier()];
     if (ObjCProtocolDecl *Proto =
           dyn_cast<ObjCProtocolDecl>(Prop->getDeclContext())) {
       // We won't auto-synthesize properties declared in protocols.
       // Suppress the warning if class's superclass implements property's
       // getter and implements property's setter (if readwrite property).
-      if (!SuperClassImplementsProperty(IDecl, Prop)) {
+      // Or, if property is going to be implemented in its super class.
+      if (!SuperClassImplementsProperty(IDecl, Prop) && !PropInSuperClass) {
         Diag(IMPDecl->getLocation(),
              diag::warn_auto_synthesizing_protocol_property)
           << Prop << Proto;
@@ -1569,8 +1571,7 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
       continue;
     }
     // If property to be implemented in the super class, ignore.
-    if (ObjCPropertyDecl *PropInSuperClass =
-          SuperPropMap[Prop->getIdentifier()]) {
+    if (PropInSuperClass) {
       if ((Prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_readwrite) &&
           (PropInSuperClass->getPropertyAttributes() &
            ObjCPropertyDecl::OBJC_PR_readonly) &&
