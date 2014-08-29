@@ -72,8 +72,12 @@ private:
 protected:
   Action(ActionClass _Kind, types::ID _Type)
     : Kind(_Kind), Type(_Type), OwnsInputs(true)  {}
-  Action(ActionClass _Kind, Action *Input, types::ID _Type)
-    : Kind(_Kind), Type(_Type), Inputs(&Input, &Input + 1), OwnsInputs(true) {}
+  Action(ActionClass _Kind, std::unique_ptr<Action> Input, types::ID _Type)
+      : Kind(_Kind), Type(_Type), Inputs(1, Input.release()), OwnsInputs(true) {
+  }
+  Action(ActionClass _Kind, std::unique_ptr<Action> Input)
+      : Kind(_Kind), Type(Input->getType()), Inputs(1, Input.release()),
+        OwnsInputs(true) {}
   Action(ActionClass _Kind, const ActionList &_Inputs, types::ID _Type)
     : Kind(_Kind), Type(_Type), Inputs(_Inputs), OwnsInputs(true) {}
 public:
@@ -119,7 +123,7 @@ class BindArchAction : public Action {
   const char *ArchName;
 
 public:
-  BindArchAction(Action *Input, const char *_ArchName);
+  BindArchAction(std::unique_ptr<Action> Input, const char *_ArchName);
 
   const char *getArchName() const { return ArchName; }
 
@@ -131,7 +135,7 @@ public:
 class JobAction : public Action {
   virtual void anchor();
 protected:
-  JobAction(ActionClass Kind, Action *Input, types::ID Type);
+  JobAction(ActionClass Kind, std::unique_ptr<Action> Input, types::ID Type);
   JobAction(ActionClass Kind, const ActionList &Inputs, types::ID Type);
 
 public:
@@ -144,7 +148,7 @@ public:
 class PreprocessJobAction : public JobAction {
   void anchor() override;
 public:
-  PreprocessJobAction(Action *Input, types::ID OutputType);
+  PreprocessJobAction(std::unique_ptr<Action> Input, types::ID OutputType);
 
   static bool classof(const Action *A) {
     return A->getKind() == PreprocessJobClass;
@@ -154,7 +158,7 @@ public:
 class PrecompileJobAction : public JobAction {
   void anchor() override;
 public:
-  PrecompileJobAction(Action *Input, types::ID OutputType);
+  PrecompileJobAction(std::unique_ptr<Action> Input, types::ID OutputType);
 
   static bool classof(const Action *A) {
     return A->getKind() == PrecompileJobClass;
@@ -164,7 +168,7 @@ public:
 class AnalyzeJobAction : public JobAction {
   void anchor() override;
 public:
-  AnalyzeJobAction(Action *Input, types::ID OutputType);
+  AnalyzeJobAction(std::unique_ptr<Action> Input, types::ID OutputType);
 
   static bool classof(const Action *A) {
     return A->getKind() == AnalyzeJobClass;
@@ -174,7 +178,7 @@ public:
 class MigrateJobAction : public JobAction {
   void anchor() override;
 public:
-  MigrateJobAction(Action *Input, types::ID OutputType);
+  MigrateJobAction(std::unique_ptr<Action> Input, types::ID OutputType);
 
   static bool classof(const Action *A) {
     return A->getKind() == MigrateJobClass;
@@ -184,7 +188,7 @@ public:
 class CompileJobAction : public JobAction {
   void anchor() override;
 public:
-  CompileJobAction(Action *Input, types::ID OutputType);
+  CompileJobAction(std::unique_ptr<Action> Input, types::ID OutputType);
 
   static bool classof(const Action *A) {
     return A->getKind() == CompileJobClass;
@@ -194,7 +198,7 @@ public:
 class AssembleJobAction : public JobAction {
   void anchor() override;
 public:
-  AssembleJobAction(Action *Input, types::ID OutputType);
+  AssembleJobAction(std::unique_ptr<Action> Input, types::ID OutputType);
 
   static bool classof(const Action *A) {
     return A->getKind() == AssembleJobClass;
@@ -234,7 +238,8 @@ public:
 class VerifyJobAction : public JobAction {
   void anchor() override;
 public:
-  VerifyJobAction(ActionClass Kind, Action *Input, types::ID Type);
+  VerifyJobAction(ActionClass Kind, std::unique_ptr<Action> Input,
+                  types::ID Type);
   VerifyJobAction(ActionClass Kind, ActionList &Inputs, types::ID Type);
   static bool classof(const Action *A) {
     return A->getKind() == VerifyDebugInfoJobClass ||
@@ -245,7 +250,7 @@ public:
 class VerifyDebugInfoJobAction : public VerifyJobAction {
   void anchor() override;
 public:
-  VerifyDebugInfoJobAction(Action *Input, types::ID Type);
+  VerifyDebugInfoJobAction(std::unique_ptr<Action> Input, types::ID Type);
   static bool classof(const Action *A) {
     return A->getKind() == VerifyDebugInfoJobClass;
   }
@@ -254,7 +259,7 @@ public:
 class VerifyPCHJobAction : public VerifyJobAction {
   void anchor() override;
 public:
-  VerifyPCHJobAction(Action *Input, types::ID Type);
+  VerifyPCHJobAction(std::unique_ptr<Action> Input, types::ID Type);
   static bool classof(const Action *A) {
     return A->getKind() == VerifyPCHJobClass;
   }

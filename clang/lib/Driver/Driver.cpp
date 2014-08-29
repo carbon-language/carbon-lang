@@ -906,7 +906,8 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
 
     ActionList Inputs;
     for (unsigned i = 0, e = Archs.size(); i != e; ++i) {
-      Inputs.push_back(new BindArchAction(Act, Archs[i]));
+      Inputs.push_back(
+          new BindArchAction(std::unique_ptr<Action>(Act), Archs[i]));
       if (i != 0)
         Inputs.back()->setOwnsInputs(false);
     }
@@ -937,9 +938,9 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
 
       // Verify the debug info output.
       if (Args.hasArg(options::OPT_verify_debug_info)) {
-        Action *VerifyInput = Actions.back();
+        std::unique_ptr<Action> VerifyInput(Actions.back());
         Actions.pop_back();
-        Actions.push_back(new VerifyDebugInfoJobAction(VerifyInput,
+        Actions.push_back(new VerifyDebugInfoJobAction(std::move(VerifyInput),
                                                        types::TY_Nothing));
       }
     }
@@ -1249,7 +1250,7 @@ void Driver::BuildActions(const ToolChain &TC, DerivedArgList &Args,
         continue;
 
       // Otherwise construct the appropriate action.
-      Current.reset(ConstructPhaseAction(Args, Phase, Current.release()));
+      Current = ConstructPhaseAction(Args, Phase, std::move(Current));
       if (Current->getType() == types::TY_Nothing)
         break;
     }
@@ -1274,8 +1275,9 @@ void Driver::BuildActions(const ToolChain &TC, DerivedArgList &Args,
   Args.ClaimAllArgs(options::OPT_cl_ignored_Group);
 }
 
-Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
-                                     Action *Input) const {
+std::unique_ptr<Action>
+Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
+                             std::unique_ptr<Action> Input) const {
   llvm::PrettyStackTraceString CrashInfo("Constructing phase actions");
   // Build the appropriate action.
   switch (Phase) {
@@ -1294,7 +1296,7 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
       assert(OutputTy != types::TY_INVALID &&
              "Cannot preprocess this input type!");
     }
-    return new PreprocessJobAction(Input, OutputTy);
+    return llvm::make_unique<PreprocessJobAction>(std::move(Input), OutputTy);
   }
   case phases::Precompile: {
     types::ID OutputTy = types::TY_PCH;
@@ -1302,39 +1304,49 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
       // Syntax checks should not emit a PCH file
       OutputTy = types::TY_Nothing;
     }
-    return new PrecompileJobAction(Input, OutputTy);
+    return llvm::make_unique<PrecompileJobAction>(std::move(Input), OutputTy);
   }
   case phases::Compile: {
-    if (Args.hasArg(options::OPT_fsyntax_only)) {
-      return new CompileJobAction(Input, types::TY_Nothing);
-    } else if (Args.hasArg(options::OPT_rewrite_objc)) {
-      return new CompileJobAction(Input, types::TY_RewrittenObjC);
-    } else if (Args.hasArg(options::OPT_rewrite_legacy_objc)) {
-      return new CompileJobAction(Input, types::TY_RewrittenLegacyObjC);
-    } else if (Args.hasArg(options::OPT__analyze, options::OPT__analyze_auto)) {
-      return new AnalyzeJobAction(Input, types::TY_Plist);
-    } else if (Args.hasArg(options::OPT__migrate)) {
-      return new MigrateJobAction(Input, types::TY_Remap);
-    } else if (Args.hasArg(options::OPT_emit_ast)) {
-      return new CompileJobAction(Input, types::TY_AST);
-    } else if (Args.hasArg(options::OPT_module_file_info)) {
-      return new CompileJobAction(Input, types::TY_ModuleFile);
-    } else if (Args.hasArg(options::OPT_verify_pch)) {
-      return new VerifyPCHJobAction(Input, types::TY_Nothing);
-    } else if (IsUsingLTO(Args)) {
+    if (Args.hasArg(options::OPT_fsyntax_only))
+      return llvm::make_unique<CompileJobAction>(std::move(Input),
+                                                 types::TY_Nothing);
+    if (Args.hasArg(options::OPT_rewrite_objc))
+      return llvm::make_unique<CompileJobAction>(std::move(Input),
+                                                 types::TY_RewrittenObjC);
+    if (Args.hasArg(options::OPT_rewrite_legacy_objc))
+      return llvm::make_unique<CompileJobAction>(std::move(Input),
+                                                 types::TY_RewrittenLegacyObjC);
+    if (Args.hasArg(options::OPT__analyze, options::OPT__analyze_auto))
+      return llvm::make_unique<AnalyzeJobAction>(std::move(Input),
+                                                 types::TY_Plist);
+    if (Args.hasArg(options::OPT__migrate))
+      return llvm::make_unique<MigrateJobAction>(std::move(Input),
+                                                 types::TY_Remap);
+    if (Args.hasArg(options::OPT_emit_ast))
+      return llvm::make_unique<CompileJobAction>(std::move(Input),
+                                                 types::TY_AST);
+    if (Args.hasArg(options::OPT_module_file_info))
+      return llvm::make_unique<CompileJobAction>(std::move(Input),
+                                                 types::TY_ModuleFile);
+    if (Args.hasArg(options::OPT_verify_pch))
+      return llvm::make_unique<VerifyPCHJobAction>(std::move(Input),
+                                                   types::TY_Nothing);
+    if (IsUsingLTO(Args)) {
       types::ID Output =
         Args.hasArg(options::OPT_S) ? types::TY_LTO_IR : types::TY_LTO_BC;
-      return new CompileJobAction(Input, Output);
-    } else if (Args.hasArg(options::OPT_emit_llvm)) {
+      return llvm::make_unique<CompileJobAction>(std::move(Input), Output);
+    }
+    if (Args.hasArg(options::OPT_emit_llvm)) {
       types::ID Output =
         Args.hasArg(options::OPT_S) ? types::TY_LLVM_IR : types::TY_LLVM_BC;
-      return new CompileJobAction(Input, Output);
-    } else {
-      return new CompileJobAction(Input, types::TY_PP_Asm);
+      return llvm::make_unique<CompileJobAction>(std::move(Input), Output);
     }
+    return llvm::make_unique<CompileJobAction>(std::move(Input),
+                                               types::TY_PP_Asm);
   }
   case phases::Assemble:
-    return new AssembleJobAction(Input, types::TY_Object);
+    return llvm::make_unique<AssembleJobAction>(std::move(Input),
+                                                types::TY_Object);
   }
 
   llvm_unreachable("invalid phase in ConstructPhaseAction");
