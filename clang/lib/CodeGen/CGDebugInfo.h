@@ -180,20 +180,24 @@ class CGDebugInfo {
 
   llvm::DIType createFieldType(StringRef name, QualType type,
                                uint64_t sizeInBitsOverride, SourceLocation loc,
-                               AccessSpecifier AS, uint64_t offsetInBits,
+                               AccessSpecifier AS,
+                               uint64_t offsetInBits,
                                llvm::DIFile tunit,
-                               llvm::DIScope scope);
+                               llvm::DIScope scope,
+                               const RecordDecl* RD = nullptr);
 
   // Helpers for collecting fields of a record.
   void CollectRecordLambdaFields(const CXXRecordDecl *CXXDecl,
                                  SmallVectorImpl<llvm::Value *> &E,
                                  llvm::DIType RecordTy);
   llvm::DIDerivedType CreateRecordStaticField(const VarDecl *Var,
-                                              llvm::DIType RecordTy);
+                                              llvm::DIType RecordTy,
+                                              const RecordDecl* RD);
   void CollectRecordNormalField(const FieldDecl *Field, uint64_t OffsetInBits,
                                 llvm::DIFile F,
                                 SmallVectorImpl<llvm::Value *> &E,
-                                llvm::DIType RecordTy);
+                                llvm::DIType RecordTy,
+                                const RecordDecl* RD);
   void CollectRecordFields(const RecordDecl *Decl, llvm::DIFile F,
                            SmallVectorImpl<llvm::Value *> &E,
                            llvm::DICompositeType RecordTy);

@@ -34,7 +34,7 @@ int d(int x) { D y[10]; return [x,y] { return y[x].x; }(); }
 // CHECK: [[LAM_D_ARGS]] = metadata !{metadata [[CAP_D_X:.*]], metadata [[CAP_D_Y:.*]], metadata [[CON_LAM_D:.*]]}
 // CHECK: [[CAP_D_X]] = {{.*}}, metadata [[LAM_D]], {{.*}} [ DW_TAG_member ] [x] [line [[D_LINE]],
 // CHECK: [[CAP_D_Y]] = {{.*}}, metadata [[LAM_D]], {{.*}} [ DW_TAG_member ] [y] [line [[D_LINE]],
-// CHECK: [[CON_LAM_D]] = {{.*}}, metadata [[LAM_D]], {{.*}} [ DW_TAG_subprogram ] [line [[D_LINE]]] [operator()]
+// CHECK: [[CON_LAM_D]] = {{.*}}, metadata [[LAM_D]], {{.*}} [ DW_TAG_subprogram ] [line [[D_LINE]]] [public] [operator()]
 
 
 // Back to C. -- 55
@@ -42,19 +42,19 @@ int d(int x) { D y[10]; return [x,y] { return y[x].x; }(); }
 // CHECK: [[LAM_C_ARGS]] = metadata !{metadata [[CAP_C:.*]], metadata [[CON_LAM_C:.*]]}
 // Ignoring the member type for now.
 // CHECK: [[CAP_C]] = {{.*}}, metadata [[LAM_C]], {{.*}}} ; [ DW_TAG_member ] [x] [line [[C_LINE]],
-// CHECK: [[CON_LAM_C]] = {{.*}}, metadata [[LAM_C]], {{.*}} [ DW_TAG_subprogram ] [line [[C_LINE]]] [operator()]
+// CHECK: [[CON_LAM_C]] = {{.*}}, metadata [[LAM_C]], {{.*}} [ DW_TAG_subprogram ] [line [[C_LINE]]] [public] [operator()]
 
 
 // Back to B. -- 67
 // CHECK: [[LAM_B:.*]] = {{.*}}, metadata [[B_FUNC]], {{.*}}, metadata [[LAM_B_ARGS:.*]], i32 0, null, null, null} ; [ DW_TAG_class_type ] [line [[B_LINE]],
 // CHECK: [[LAM_B_ARGS]] = metadata !{metadata [[CAP_B:.*]], metadata [[CON_LAM_B:.*]]}
 // CHECK: [[CAP_B]] = {{.*}}, metadata [[LAM_B]], {{.*}}} ; [ DW_TAG_member ] [x] [line [[B_LINE]],
-// CHECK: [[CON_LAM_B]] = {{.*}}, metadata [[LAM_B]], {{.*}} [ DW_TAG_subprogram ] [line [[B_LINE]]] [operator()]
+// CHECK: [[CON_LAM_B]] = {{.*}}, metadata [[LAM_B]], {{.*}} [ DW_TAG_subprogram ] [line [[B_LINE]]] [public] [operator()]
 
 // Back to A. -- 78
 // CHECK: [[LAM_A:.*]] = {{.*}}, metadata [[A_FUNC]], {{.*}}, metadata [[LAM_A_ARGS:.*]], i32 0, null, null, null} ; [ DW_TAG_class_type ] [line [[A_LINE]],
 // CHECK: [[LAM_A_ARGS]] = metadata !{metadata [[CON_LAM_A:.*]]}
-// CHECK: [[CON_LAM_A]] = {{.*}}, metadata [[LAM_A]], {{.*}} [ DW_TAG_subprogram ] [line [[A_LINE]]] [operator()]
+// CHECK: [[CON_LAM_A]] = {{.*}}, metadata [[LAM_A]], {{.*}} [ DW_TAG_subprogram ] [line [[A_LINE]]] [public] [operator()]
 
 // CVAR:
 // CHECK: {{.*}} metadata [[CVAR_T:![0-9]*]], {{.*}} ; [ DW_TAG_variable ] [cvar] [line [[CVAR_LINE:[0-9]*]]] 

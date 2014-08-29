@@ -12,4 +12,4 @@ int D::d(int x) {
   }();
 }
 
-// CHECK: {{.*}} [ DW_TAG_member ] [this] [line 11, size 64, align 64, offset 0] [private] [from ]
+// CHECK: {{.*}} [ DW_TAG_member ] [this] [line 11, size 64, align 64, offset 0] [from ]

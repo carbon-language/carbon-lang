@@ -2,13 +2,13 @@
 // Test (r)value and CVR qualifiers on C++11 non-static member functions.
 class A {
 public:
-  // CHECK: i32 [[@LINE+2]], metadata ![[PLSR:[0-9]+]], {{.*}}[ DW_TAG_subprogram ] [line [[@LINE+2]]] [reference] [l]
+  // CHECK: i32 [[@LINE+2]], metadata ![[PLSR:[0-9]+]], {{.*}}[ DW_TAG_subprogram ] [line [[@LINE+2]]] [public] [reference] [l]
   // CHECK: ![[PLSR]] ={{.*}}[ DW_TAG_subroutine_type ]{{.*}}[reference]
   void l() const &;
   // CHECK: ![[ARGS:[0-9]+]] = metadata !{null, metadata ![[THIS:[0-9]+]]}
   // CHECK: ![[THIS]] = {{.*}} metadata ![[CONST_A:.*]]} ; [ DW_TAG_pointer_type ]
   // CHECK: ![[CONST_A]] = {{.*}} [ DW_TAG_const_type ]
-  // CHECK: i32 [[@LINE+2]], metadata ![[PRSR:[0-9]+]], {{.*}}[ DW_TAG_subprogram ] [line [[@LINE+2]]] [rvalue reference] [r]
+  // CHECK: i32 [[@LINE+2]], metadata ![[PRSR:[0-9]+]], {{.*}}[ DW_TAG_subprogram ] [line [[@LINE+2]]] [public] [rvalue reference] [r]
   // CHECK: ![[PRSR]] ={{.*}}metadata ![[ARGS]], i32 0, null, null, null}{{.*}}[ DW_TAG_subroutine_type ]{{.*}}[rvalue reference]
   void r() const &&;
 };

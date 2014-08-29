@@ -788,6 +788,27 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   return DBuilder.createSubroutineType(Unit, EltTypeArray);
 }
 
+/// Convert an AccessSpecifier into the corresponding DIDescriptor flag.
+/// As an optimization, return 0 if the access specifier equals the
+/// default for the containing type.
+static unsigned getAccessFlag(AccessSpecifier Access, const RecordDecl *RD) {
+  AccessSpecifier Default = clang::AS_none;
+  if (RD && RD->isClass())
+    Default = clang::AS_private;
+  else if (RD && (RD->isStruct() || RD->isUnion()))
+    Default = clang::AS_public;
+
+  if (Access == Default)
+    return 0;
+
+  switch(Access) {
+  case clang::AS_private:   return llvm::DIDescriptor::FlagPrivate;
+  case clang::AS_protected: return llvm::DIDescriptor::FlagProtected;
+  case clang::AS_public:    return llvm::DIDescriptor::FlagPublic;
+  case clang::AS_none:      return 0;
+  }
+  llvm_unreachable("unexpected access enumerator");
+}
 
 llvm::DIType CGDebugInfo::createFieldType(StringRef name,
                                           QualType type,
@@ -796,7 +817,8 @@ llvm::DIType CGDebugInfo::createFieldType(StringRef name,
                                           AccessSpecifier AS,
                                           uint64_t offsetInBits,
                                           llvm::DIFile tunit,
-                                          llvm::DIScope scope) {
+                                          llvm::DIScope scope,
+                                          const RecordDecl* RD) {
   llvm::DIType debugType = getOrCreateType(type, tunit);
 
   // Get the location for the field.
@@ -814,12 +836,7 @@ llvm::DIType CGDebugInfo::createFieldType(StringRef name,
       SizeInBits = sizeInBitsOverride;
   }
 
-  unsigned flags = 0;
-  if (AS == clang::AS_private)
-    flags |= llvm::DIDescriptor::FlagPrivate;
-  else if (AS == clang::AS_protected)
-    flags |= llvm::DIDescriptor::FlagProtected;
-
+  unsigned flags = getAccessFlag(AS, RD);
   return DBuilder.createMemberType(scope, name, file, line, SizeInBits,
                                    AlignInBits, offsetInBits, flags, debugType);
 }
@@ -850,7 +867,8 @@ CollectRecordLambdaFields(const CXXRecordDecl *CXXDecl,
       llvm::DIType fieldType
         = createFieldType(VName, Field->getType(), SizeInBitsOverride,
                           C.getLocation(), Field->getAccess(),
-                          layout.getFieldOffset(fieldno), VUnit, RecordTy);
+                          layout.getFieldOffset(fieldno), VUnit, RecordTy,
+                          CXXDecl);
       elements.push_back(fieldType);
     } else if (C.capturesThis()) {
       // TODO: Need to handle 'this' in some way by probably renaming the
@@ -862,7 +880,8 @@ CollectRecordLambdaFields(const CXXRecordDecl *CXXDecl,
       QualType type = f->getType();
       llvm::DIType fieldType
         = createFieldType("this", type, 0, f->getLocation(), f->getAccess(),
-                          layout.getFieldOffset(fieldno), VUnit, RecordTy);
+                          layout.getFieldOffset(fieldno), VUnit, RecordTy,
+                          CXXDecl);
 
       elements.push_back(fieldType);
     }
@@ -872,7 +891,8 @@ CollectRecordLambdaFields(const CXXRecordDecl *CXXDecl,
 /// Helper for CollectRecordFields.
 llvm::DIDerivedType
 CGDebugInfo::CreateRecordStaticField(const VarDecl *Var,
-                                     llvm::DIType RecordTy) {
+                                     llvm::DIType RecordTy,
+                                     const RecordDecl* RD) {
   // Create the descriptor for the static variable, with or without
   // constant initializers.
   llvm::DIFile VUnit = getOrCreateFile(Var->getLocation());
@@ -891,13 +911,7 @@ CGDebugInfo::CreateRecordStaticField(const VarDecl *Var,
     }
   }
 
-  unsigned Flags = 0;
-  AccessSpecifier Access = Var->getAccess();
-  if (Access == clang::AS_private)
-    Flags |= llvm::DIDescriptor::FlagPrivate;
-  else if (Access == clang::AS_protected)
-    Flags |= llvm::DIDescriptor::FlagProtected;
-
+  unsigned Flags = getAccessFlag(Var->getAccess(), RD);
   llvm::DIDerivedType GV = DBuilder.createStaticMemberType(
       RecordTy, VName, VUnit, LineNumber, VTy, Flags, C);
   StaticDataMemberCache[Var->getCanonicalDecl()] = llvm::WeakVH(GV);
@@ -909,7 +923,8 @@ void CGDebugInfo::
 CollectRecordNormalField(const FieldDecl *field, uint64_t OffsetInBits,
                          llvm::DIFile tunit,
                          SmallVectorImpl<llvm::Value *> &elements,
-                         llvm::DIType RecordTy) {
+                         llvm::DIType RecordTy,
+                         const RecordDecl* RD) {
   StringRef name = field->getName();
   QualType type = field->getType();
 
@@ -926,7 +941,7 @@ CollectRecordNormalField(const FieldDecl *field, uint64_t OffsetInBits,
   llvm::DIType fieldType
     = createFieldType(name, type, SizeInBitsOverride,
                       field->getLocation(), field->getAccess(),
-                      OffsetInBits, tunit, RecordTy);
+                      OffsetInBits, tunit, RecordTy, RD);
 
   elements.push_back(fieldType);
 }
@@ -959,11 +974,13 @@ void CGDebugInfo::CollectRecordFields(const RecordDecl *record,
                  "Static data member declaration should still exist");
           elements.push_back(
               llvm::DIDerivedType(cast<llvm::MDNode>(MI->second)));
-        } else
-          elements.push_back(CreateRecordStaticField(V, RecordTy));
+        } else {
+          auto Field = CreateRecordStaticField(V, RecordTy, record);
+          elements.push_back(Field);
+        }
       } else if (const auto *field = dyn_cast<FieldDecl>(I)) {
         CollectRecordNormalField(field, layout.getFieldOffset(fieldNo),
-                                 tunit, elements, RecordTy);
+                                 tunit, elements, RecordTy, record);
 
         // Bump field number for next field.
         ++fieldNo;
@@ -1097,11 +1114,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
   unsigned Flags = 0;
   if (Method->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
-  AccessSpecifier Access = Method->getAccess();
-  if (Access == clang::AS_private)
-    Flags |= llvm::DIDescriptor::FlagPrivate;
-  else if (Access == clang::AS_protected)
-    Flags |= llvm::DIDescriptor::FlagProtected;
+  Flags |= getAccessFlag(Method->getAccess(), Method->getParent());
   if (const CXXConstructorDecl *CXXC = dyn_cast<CXXConstructorDecl>(Method)) {
     if (CXXC->isExplicit())
       Flags |= llvm::DIDescriptor::FlagExplicit;
@@ -1210,12 +1223,7 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
     // FIXME: Inconsistent units for BaseOffset. It is in bytes when
     // BI->isVirtual() and bits when not.
 
-    AccessSpecifier Access = BI.getAccessSpecifier();
-    if (Access == clang::AS_private)
-      BFlags |= llvm::DIDescriptor::FlagPrivate;
-    else if (Access == clang::AS_protected)
-      BFlags |= llvm::DIDescriptor::FlagProtected;
-
+    BFlags |= getAccessFlag(BI.getAccessSpecifier(), RD);
     llvm::DIType DTy =
       DBuilder.createInheritance(RecordTy,
                                  getOrCreateType(BI.getType(), Unit),
@@ -1773,6 +1781,8 @@ llvm::DIType CGDebugInfo::CreateTypeDefinition(const ObjCInterfaceType *Ty, llvm
       Flags = llvm::DIDescriptor::FlagProtected;
     else if (Field->getAccessControl() == ObjCIvarDecl::Private)
       Flags = llvm::DIDescriptor::FlagPrivate;
+    else if (Field->getAccessControl() == ObjCIvarDecl::Public)
+      Flags = llvm::DIDescriptor::FlagPublic;
 
     llvm::MDNode *PropertyNode = nullptr;
     if (ObjCImplementationDecl *ImpD = ID->getImplementation()) {
@@ -3111,10 +3121,9 @@ CGDebugInfo::getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D) {
 
   // If the member wasn't found in the cache, lazily construct and add it to the
   // type (used when a limited form of the type is emitted).
-  llvm::DICompositeType Ctxt(
-      getContextDescriptor(cast<Decl>(D->getDeclContext())));
-  llvm::DIDerivedType T = CreateRecordStaticField(D, Ctxt);
-  return T;
+  auto DC = D->getDeclContext();
+  llvm::DICompositeType Ctxt(getContextDescriptor(cast<Decl>(DC)));
+  return CreateRecordStaticField(D, Ctxt, cast<RecordDecl>(DC));
 }
 
 /// Recursively collect all of the member fields of a global anonymous decl and
