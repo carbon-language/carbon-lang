@@ -146,6 +146,13 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
           MF->getFrameInfo()->setHasVAStart(true);
       }
 
+      // If we have a musttail call in a variadic funciton, we need to ensure we
+      // forward implicit register parameters.
+      if (auto *CI = dyn_cast<CallInst>(I)) {
+        if (CI->isMustTailCall() && Fn->isVarArg())
+          MF->getFrameInfo()->setHasMustTailInVarArgFunc(true);
+      }
+
       // Mark values used outside their block as exported, by allocating
       // a virtual register for them.
       if (isUsedOutsideOfDefiningBlock(I))

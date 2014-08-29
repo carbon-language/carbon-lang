@@ -2326,6 +2326,52 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
   }
 }
 
+static ArrayRef<MCPhysReg> get64BitArgumentGPRs(CallingConv::ID CallConv,
+                                                const X86Subtarget *Subtarget) {
+  assert(Subtarget->is64Bit());
+
+  if (Subtarget->isCallingConvWin64(CallConv)) {
+    static const MCPhysReg GPR64ArgRegsWin64[] = {
+      X86::RCX, X86::RDX, X86::R8,  X86::R9
+    };
+    return GPR64ArgRegsWin64;
+  }
+
+  static const MCPhysReg GPR64ArgRegs64Bit[] = {
+    X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8, X86::R9
+  };
+  return GPR64ArgRegs64Bit;
+}
+
+static ArrayRef<MCPhysReg> get64BitArgumentXMMs(MachineFunction &MF,
+                                                CallingConv::ID CallConv,
+                                                const X86Subtarget *Subtarget) {
+  assert(Subtarget->is64Bit());
+  if (Subtarget->isCallingConvWin64(CallConv)) {
+    // The XMM registers which might contain var arg parameters are shadowed
+    // in their paired GPR.  So we only need to save the GPR to their home
+    // slots.
+    return None;
+  }
+
+  const Function *Fn = MF.getFunction();
+  bool NoImplicitFloatOps = Fn->getAttributes().
+      hasAttribute(AttributeSet::FunctionIndex, Attribute::NoImplicitFloat);
+  assert(!(MF.getTarget().Options.UseSoftFloat && NoImplicitFloatOps) &&
+         "SSE register cannot be used when SSE is disabled!");
+  if (MF.getTarget().Options.UseSoftFloat || NoImplicitFloatOps ||
+      !Subtarget->hasSSE1())
+    // Kernel mode asks for SSE to be disabled, so there are no XMM argument
+    // registers.
+    return None;
+
+  static const MCPhysReg XMMArgRegs64Bit[] = {
+    X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
+    X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
+  };
+  return XMMArgRegs64Bit;
+}
+
 SDValue
 X86TargetLowering::LowerFormalArguments(SDValue Chain,
                                         CallingConv::ID CallConv,
@@ -2469,57 +2515,49 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start. We
   // can skip this if there are no va_start calls.
-  if (isVarArg && MFI->hasVAStart()) {
-    if (Is64Bit || (CallConv != CallingConv::X86_FastCall &&
-                    CallConv != CallingConv::X86_ThisCall)) {
-      FuncInfo->setVarArgsFrameIndex(MFI->CreateFixedObject(1, StackSize,true));
+  if (MFI->hasVAStart() &&
+      (Is64Bit || (CallConv != CallingConv::X86_FastCall &&
+                   CallConv != CallingConv::X86_ThisCall))) {
+    FuncInfo->setVarArgsFrameIndex(
+        MFI->CreateFixedObject(1, StackSize, true));
+  }
+
+  // 64-bit calling conventions support varargs and register parameters, so we
+  // have to do extra work to spill them in the prologue or forward them to
+  // musttail calls.
+  if (Is64Bit && isVarArg &&
+      (MFI->hasVAStart() || MFI->hasMustTailInVarArgFunc())) {
+    // Find the first unallocated argument registers.
+    ArrayRef<MCPhysReg> ArgGPRs = get64BitArgumentGPRs(CallConv, Subtarget);
+    ArrayRef<MCPhysReg> ArgXMMs = get64BitArgumentXMMs(MF, CallConv, Subtarget);
+    unsigned NumIntRegs =
+        CCInfo.getFirstUnallocated(ArgGPRs.data(), ArgGPRs.size());
+    unsigned NumXMMRegs =
+        CCInfo.getFirstUnallocated(ArgXMMs.data(), ArgXMMs.size());
+    assert(!(NumXMMRegs && !Subtarget->hasSSE1()) &&
+           "SSE register cannot be used when SSE is disabled!");
+
+    // Gather all the live in physical registers.
+    SmallVector<SDValue, 6> LiveGPRs;
+    SmallVector<SDValue, 8> LiveXMMRegs;
+    SDValue ALVal;
+    for (MCPhysReg Reg : ArgGPRs.slice(NumIntRegs)) {
+      unsigned GPR = MF.addLiveIn(Reg, &X86::GR64RegClass);
+      LiveGPRs.push_back(
+          DAG.getCopyFromReg(DAG.getEntryNode(), dl, GPR, MVT::i64));
     }
-    if (Is64Bit) {
-      unsigned TotalNumIntRegs = 0, TotalNumXMMRegs = 0;
-
-      // FIXME: We should really autogenerate these arrays
-      static const MCPhysReg GPR64ArgRegsWin64[] = {
-        X86::RCX, X86::RDX, X86::R8,  X86::R9
-      };
-      static const MCPhysReg GPR64ArgRegs64Bit[] = {
-        X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8, X86::R9
-      };
-      static const MCPhysReg XMMArgRegs64Bit[] = {
-        X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
-        X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
-      };
-      const MCPhysReg *GPR64ArgRegs;
-      unsigned NumXMMRegs = 0;
-
-      if (IsWin64) {
-        // The XMM registers which might contain var arg parameters are shadowed
-        // in their paired GPR.  So we only need to save the GPR to their home
-        // slots.
-        TotalNumIntRegs = 4;
-        GPR64ArgRegs = GPR64ArgRegsWin64;
-      } else {
-        TotalNumIntRegs = 6; TotalNumXMMRegs = 8;
-        GPR64ArgRegs = GPR64ArgRegs64Bit;
-
-        NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs64Bit,
-                                                TotalNumXMMRegs);
+    if (!ArgXMMs.empty()) {
+      unsigned AL = MF.addLiveIn(X86::AL, &X86::GR8RegClass);
+      ALVal = DAG.getCopyFromReg(DAG.getEntryNode(), dl, AL, MVT::i8);
+      for (MCPhysReg Reg : ArgXMMs.slice(NumXMMRegs)) {
+        unsigned XMMReg = MF.addLiveIn(Reg, &X86::VR128RegClass);
+        LiveXMMRegs.push_back(
+            DAG.getCopyFromReg(Chain, dl, XMMReg, MVT::v4f32));
       }
-      unsigned NumIntRegs = CCInfo.getFirstUnallocated(GPR64ArgRegs,
-                                                       TotalNumIntRegs);
+    }
 
-      bool NoImplicitFloatOps = Fn->getAttributes().
-        hasAttribute(AttributeSet::FunctionIndex, Attribute::NoImplicitFloat);
-      assert(!(NumXMMRegs && !Subtarget->hasSSE1()) &&
-             "SSE register cannot be used when SSE is disabled!");
-      assert(!(NumXMMRegs && MF.getTarget().Options.UseSoftFloat &&
-               NoImplicitFloatOps) &&
-             "SSE register cannot be used when SSE is disabled!");
-      if (MF.getTarget().Options.UseSoftFloat || NoImplicitFloatOps ||
-          !Subtarget->hasSSE1())
-        // Kernel mode asks for SSE to be disabled, so don't push them
-        // on the stack.
-        TotalNumXMMRegs = 0;
-
+    // Store them to the va_list returned by va_start.
+    if (MFI->hasVAStart()) {
       if (IsWin64) {
         const TargetFrameLowering &TFI = *MF.getSubtarget().getFrameLowering();
         // Get to the caller-allocated home save location.  Add 8 to account
@@ -2535,10 +2573,9 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         // registers, then we must store them to their spots on the stack so
         // they may be loaded by deferencing the result of va_next.
         FuncInfo->setVarArgsGPOffset(NumIntRegs * 8);
-        FuncInfo->setVarArgsFPOffset(TotalNumIntRegs * 8 + NumXMMRegs * 16);
-        FuncInfo->setRegSaveFrameIndex(
-          MFI->CreateStackObject(TotalNumIntRegs * 8 + TotalNumXMMRegs * 16, 16,
-                               false));
+        FuncInfo->setVarArgsFPOffset(ArgGPRs.size() * 8 + NumXMMRegs * 16);
+        FuncInfo->setRegSaveFrameIndex(MFI->CreateStackObject(
+            ArgGPRs.size() * 8 + ArgXMMs.size() * 16, 16, false));
       }
 
       // Store the integer parameter registers.
@@ -2546,12 +2583,9 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
       SDValue RSFIN = DAG.getFrameIndex(FuncInfo->getRegSaveFrameIndex(),
                                         getPointerTy());
       unsigned Offset = FuncInfo->getVarArgsGPOffset();
-      for (; NumIntRegs != TotalNumIntRegs; ++NumIntRegs) {
+      for (SDValue Val : LiveGPRs) {
         SDValue FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), RSFIN,
                                   DAG.getIntPtrConstant(Offset));
-        unsigned VReg = MF.addLiveIn(GPR64ArgRegs[NumIntRegs],
-                                     &X86::GR64RegClass);
-        SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i64);
         SDValue Store =
           DAG.getStore(Val.getValue(1), dl, Val, FIN,
                        MachinePointerInfo::getFixedStack(
@@ -2561,32 +2595,52 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         Offset += 8;
       }
 
-      if (TotalNumXMMRegs != 0 && NumXMMRegs != TotalNumXMMRegs) {
+      if (!ArgXMMs.empty() && NumXMMRegs != ArgXMMs.size()) {
         // Now store the XMM (fp + vector) parameter registers.
         SmallVector<SDValue, 12> SaveXMMOps;
         SaveXMMOps.push_back(Chain);
-
-        unsigned AL = MF.addLiveIn(X86::AL, &X86::GR8RegClass);
-        SDValue ALVal = DAG.getCopyFromReg(DAG.getEntryNode(), dl, AL, MVT::i8);
         SaveXMMOps.push_back(ALVal);
-
         SaveXMMOps.push_back(DAG.getIntPtrConstant(
                                FuncInfo->getRegSaveFrameIndex()));
         SaveXMMOps.push_back(DAG.getIntPtrConstant(
                                FuncInfo->getVarArgsFPOffset()));
-
-        for (; NumXMMRegs != TotalNumXMMRegs; ++NumXMMRegs) {
-          unsigned VReg = MF.addLiveIn(XMMArgRegs64Bit[NumXMMRegs],
-                                       &X86::VR128RegClass);
-          SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::v4f32);
-          SaveXMMOps.push_back(Val);
-        }
+        SaveXMMOps.insert(SaveXMMOps.end(), LiveXMMRegs.begin(),
+                          LiveXMMRegs.end());
         MemOps.push_back(DAG.getNode(X86ISD::VASTART_SAVE_XMM_REGS, dl,
                                      MVT::Other, SaveXMMOps));
       }
 
       if (!MemOps.empty())
         Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOps);
+    } else {
+      // TODO: Save virtual registers away some where so we can do
+      // getCopyFromReg in the musttail call lowering bb.
+      assert(MFI->hasMustTailInVarArgFunc());
+      auto &Forwards = FuncInfo->getForwardedMustTailRegParms();
+      typedef X86MachineFunctionInfo::Forward Forward;
+
+      // Add all GPRs, al, and XMMs to the list of forwards.
+      for (unsigned I = 0, E = LiveGPRs.size(); I != E; ++I) {
+        unsigned VReg =
+            MF.getRegInfo().createVirtualRegister(&X86::GR64RegClass);
+        Chain = DAG.getCopyToReg(Chain, dl, VReg, LiveGPRs[I]);
+        Forwards.push_back(Forward(VReg, ArgGPRs[NumIntRegs + I], MVT::i64));
+      }
+
+      if (!ArgXMMs.empty()) {
+        unsigned ALVReg =
+            MF.getRegInfo().createVirtualRegister(&X86::GR8RegClass);
+        Chain = DAG.getCopyToReg(Chain, dl, ALVReg, ALVal);
+        Forwards.push_back(Forward(ALVReg, X86::AL, MVT::i8));
+
+        for (unsigned I = 0, E = LiveXMMRegs.size(); I != E; ++I) {
+          unsigned VReg =
+              MF.getRegInfo().createVirtualRegister(&X86::VR128RegClass);
+          Chain = DAG.getCopyToReg(Chain, dl, VReg, LiveXMMRegs[I]);
+          Forwards.push_back(
+              Forward(VReg, ArgXMMs[NumXMMRegs + I], MVT::v4f32));
+        }
+      }
     }
   }
 
@@ -2689,6 +2743,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   bool IsWin64        = Subtarget->isCallingConvWin64(CallConv);
   StructReturnType SR = callIsStructReturn(Outs);
   bool IsSibcall      = false;
+  X86MachineFunctionInfo *X86Info = MF.getInfo<X86MachineFunctionInfo>();
 
   if (MF.getTarget().Options.DisableTailCalls)
     isTailCall = false;
@@ -2741,7 +2796,6 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   int FPDiff = 0;
   if (isTailCall && !IsSibcall && !IsMustTail) {
     // Lower arguments at fp - stackoffset + fpdiff.
-    X86MachineFunctionInfo *X86Info = MF.getInfo<X86MachineFunctionInfo>();
     unsigned NumBytesCallerPushed = X86Info->getBytesToPopOnReturn();
 
     FPDiff = NumBytesCallerPushed - NumBytes;
@@ -2884,7 +2938,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     }
   }
 
-  if (Is64Bit && isVarArg && !IsWin64) {
+  if (Is64Bit && isVarArg && !IsWin64 && !IsMustTail) {
     // From AMD64 ABI document:
     // For calls that may call functions that use varargs or stdargs
     // (prototype-less calls or calls to functions containing ellipsis (...) in
@@ -2904,6 +2958,14 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
     RegsToPass.push_back(std::make_pair(unsigned(X86::AL),
                                         DAG.getConstant(NumXMMRegs, MVT::i8)));
+  }
+
+  if (Is64Bit && isVarArg && IsMustTail) {
+    const auto &Forwards = X86Info->getForwardedMustTailRegParms();
+    for (const auto &F : Forwards) {
+      SDValue Val = DAG.getCopyFromReg(Chain, dl, F.VReg, F.VT);
+      RegsToPass.push_back(std::make_pair(unsigned(F.PReg), Val));
+    }
   }
 
   // For tail calls lower the arguments to the 'real' stack slots.  Sibcalls
