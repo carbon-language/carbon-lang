@@ -48,3 +48,5 @@ entry:
   %2 = icmp eq i32 %1, %a
   ret i1 %2
 }
+
+; CHECK: Stream type: LLVM IR

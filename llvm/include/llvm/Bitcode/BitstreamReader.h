@@ -58,13 +58,25 @@ public:
   BitstreamReader() : IgnoreBlockInfoNames(true) {
   }
 
-  BitstreamReader(const unsigned char *Start, const unsigned char *End) {
-    IgnoreBlockInfoNames = true;
+  BitstreamReader(const unsigned char *Start, const unsigned char *End)
+      : IgnoreBlockInfoNames(true) {
     init(Start, End);
   }
 
-  BitstreamReader(StreamableMemoryObject *bytes) {
+  BitstreamReader(StreamableMemoryObject *bytes) : IgnoreBlockInfoNames(true) {
     BitcodeBytes.reset(bytes);
+  }
+
+  BitstreamReader(BitstreamReader &&Other) {
+    *this = std::move(Other);
+  }
+
+  BitstreamReader &operator=(BitstreamReader &&Other) {
+    BitcodeBytes = std::move(Other.BitcodeBytes);
+    // Explicitly swap block info, so that nothing gets destroyed twice.
+    std::swap(BlockInfoRecords, Other.BlockInfoRecords);
+    IgnoreBlockInfoNames = Other.IgnoreBlockInfoNames;
+    return *this;
   }
 
   void init(const unsigned char *Start, const unsigned char *End) {
@@ -122,6 +134,15 @@ public:
     BlockInfoRecords.push_back(BlockInfo());
     BlockInfoRecords.back().BlockID = BlockID;
     return BlockInfoRecords.back();
+  }
+
+  /// Takes block info from the other bitstream reader.
+  ///
+  /// This is a "take" operation because BlockInfo records are non-trivial, and
+  /// indeed rather expensive.
+  void takeBlockInfo(BitstreamReader &&Other) {
+    assert(!hasBlockInfoRecords());
+    BlockInfoRecords = std::move(Other.BlockInfoRecords);
   }
 };
 
