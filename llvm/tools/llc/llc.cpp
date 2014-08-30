@@ -95,23 +95,6 @@ static cl::opt<bool> AsmVerbose("asm-verbose",
 
 static int compileModule(char **, LLVMContext &);
 
-// GetFileNameRoot - Helper function to get the basename of a filename.
-static inline std::string
-GetFileNameRoot(const std::string &InputFilename) {
-  std::string IFN = InputFilename;
-  std::string outputFilename;
-  int Len = IFN.length();
-  if ((Len > 2) &&
-      IFN[Len-3] == '.' &&
-      ((IFN[Len-2] == 'b' && IFN[Len-1] == 'c') ||
-       (IFN[Len-2] == 'l' && IFN[Len-1] == 'l'))) {
-    outputFilename = std::string(IFN.begin(), IFN.end()-3); // s/.bc/.s/
-  } else {
-    outputFilename = IFN;
-  }
-  return outputFilename;
-}
-
 static tool_output_file *GetOutputStream(const char *TargetName,
                                          Triple::OSType OS,
                                          const char *ProgName) {
@@ -120,7 +103,12 @@ static tool_output_file *GetOutputStream(const char *TargetName,
     if (InputFilename == "-")
       OutputFilename = "-";
     else {
-      OutputFilename = GetFileNameRoot(InputFilename);
+      // If InputFilename ends in .bc or .ll, remove it.
+      StringRef IFN = InputFilename;
+      if (IFN.endswith(".bc") || IFN.endswith(".ll"))
+        OutputFilename = IFN.drop_back(3);
+      else
+        OutputFilename = IFN;
 
       switch (FileType) {
       case TargetMachine::CGFT_AssemblyFile:
