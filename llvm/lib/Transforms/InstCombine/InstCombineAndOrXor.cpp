@@ -1101,7 +1101,6 @@ Value *InstCombiner::FoldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
   return nullptr;
 }
 
-
 Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -1307,10 +1306,33 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       return BinaryOperator::CreateAnd(A, B);
   }
 
-  if (ICmpInst *RHS = dyn_cast<ICmpInst>(Op1))
-    if (ICmpInst *LHS = dyn_cast<ICmpInst>(Op0))
+  {
+    ICmpInst *LHS = dyn_cast<ICmpInst>(Op0);
+    ICmpInst *RHS = dyn_cast<ICmpInst>(Op1);
+    if (LHS && RHS)
       if (Value *Res = FoldAndOfICmps(LHS, RHS))
         return ReplaceInstUsesWith(I, Res);
+
+    // TODO: Make this recursive; it's a little tricky because an arbitrary
+    // number of 'and' instructions might have to be created.
+    Value *X, *Y;
+    if (LHS && match(Op1, m_OneUse(m_And(m_Value(X), m_Value(Y))))) {
+      if (auto *Cmp = dyn_cast<ICmpInst>(X))
+        if (Value *Res = FoldAndOfICmps(LHS, Cmp))
+          return ReplaceInstUsesWith(I, Builder->CreateAnd(Res, Y));
+      if (auto *Cmp = dyn_cast<ICmpInst>(Y))
+        if (Value *Res = FoldAndOfICmps(LHS, Cmp))
+          return ReplaceInstUsesWith(I, Builder->CreateAnd(Res, X));
+    }
+    if (RHS && match(Op0, m_OneUse(m_And(m_Value(X), m_Value(Y))))) {
+      if (auto *Cmp = dyn_cast<ICmpInst>(X))
+        if (Value *Res = FoldAndOfICmps(Cmp, RHS))
+          return ReplaceInstUsesWith(I, Builder->CreateAnd(Res, Y));
+      if (auto *Cmp = dyn_cast<ICmpInst>(Y))
+        if (Value *Res = FoldAndOfICmps(Cmp, RHS))
+          return ReplaceInstUsesWith(I, Builder->CreateAnd(Res, X));
+    }
+  }
 
   // If and'ing two fcmp, try combine them into one.
   if (FCmpInst *LHS = dyn_cast<FCmpInst>(I.getOperand(0)))
