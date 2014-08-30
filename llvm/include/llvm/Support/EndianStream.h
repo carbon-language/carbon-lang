@@ -15,8 +15,8 @@
 #ifndef LLVM_SUPPORT_ENDIANSTREAM_H
 #define LLVM_SUPPORT_ENDIANSTREAM_H
 
-#include <llvm/Support/Endian.h>
-#include <llvm/Support/raw_ostream.h>
+#include "llvm/Support/Endian.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 namespace support {
