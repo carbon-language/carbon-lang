@@ -471,17 +471,17 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
       else if (const AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(I))
         PtrArgs.push_back(RMWI->getPointerOperand());
       else if (ImmutableCallSite ICS = ImmutableCallSite(I)) {
-	// If we know that the call does not access memory, then we'll still
-	// know that about the inlined clone of this call site, and we don't
-	// need to add metadata.
+        // If we know that the call does not access memory, then we'll still
+        // know that about the inlined clone of this call site, and we don't
+        // need to add metadata.
         if (ICS.doesNotAccessMemory())
           continue;
 
         for (ImmutableCallSite::arg_iterator AI = ICS.arg_begin(),
              AE = ICS.arg_end(); AI != AE; ++AI)
-	  // We need to check the underlying objects of all arguments, not just
-	  // the pointer arguments, because we might be passing pointers as
-	  // integers, etc.
+          // We need to check the underlying objects of all arguments, not just
+          // the pointer arguments, because we might be passing pointers as
+          // integers, etc.
           // FIXME: If we know that the call only accesses pointer arguments,
           // then we only need to check the pointer arguments.
           PtrArgs.push_back(*AI);
@@ -512,12 +512,23 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
 
       // Figure out if we're derived from anything that is not a noalias
       // argument.
-      bool CanDeriveViaCapture = false;
-      for (const Value *V : ObjSet)
-        if (!isIdentifiedFunctionLocal(const_cast<Value*>(V))) {
-          CanDeriveViaCapture = true;
-          break;
+      bool CanDeriveViaCapture = false, UsesAliasingPtr = false;
+      for (const Value *V : ObjSet) {
+        // Is this value a constant that cannot be derived from any pointer
+        // value (we need to exclude constant expressions, for example, that
+        // are formed from arithmetic on global symbols).
+        bool IsNonPtrConst = isa<ConstantInt>(V) || isa<ConstantFP>(V) ||
+                             isa<ConstantPointerNull>(V) ||
+                             isa<ConstantDataVector>(V) || isa<UndefValue>(V);
+        if (!IsNonPtrConst &&
+            !isIdentifiedFunctionLocal(const_cast<Value*>(V))) {
+          UsesAliasingPtr = true;
+          if (!isa<Argument>(V)) {
+            CanDeriveViaCapture = true;
+            break;
+          }
         }
+      }
   
       // First, we want to figure out all of the sets with which we definitely
       // don't alias. Iterate over all noalias set, and add those for which:
@@ -526,7 +537,12 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
       //   2. The noalias argument has not yet been captured.
       for (const Argument *A : NoAliasArgs) {
         if (!ObjSet.count(A) && (!CanDeriveViaCapture ||
-                                 A->hasNoCaptureAttr() ||
+                                 // It might be tempting to skip the
+                                 // PointerMayBeCapturedBefore check if
+                                 // A->hasNoCaptureAttr() is true, but this is
+                                 // incorrect because nocapture only guarantees
+                                 // that no copies outlive the function, not
+                                 // that the value cannot be locally captured.
                                  !PointerMayBeCapturedBefore(A,
                                    /* ReturnCaptures */ false,
                                    /* StoreCaptures */ false, I, &DT)))
@@ -537,21 +553,31 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
         NI->setMetadata(LLVMContext::MD_noalias, MDNode::concatenate(
           NI->getMetadata(LLVMContext::MD_noalias),
             MDNode::get(CalledFunc->getContext(), NoAliases)));
+
       // Next, we want to figure out all of the sets to which we might belong.
-      // We might below to a set if:
-      //  1. The noalias argument is in the set of underlying objects
-      // or
-      //  2. There is some non-noalias argument in our list and the no-alias
-      //     argument has been captured.
-      
-      for (const Argument *A : NoAliasArgs) {
-        if (ObjSet.count(A) || (CanDeriveViaCapture &&
-                                PointerMayBeCapturedBefore(A,
-                                  /* ReturnCaptures */ false,
-                                  /* StoreCaptures */ false,
-                                  I, &DT)))
-          Scopes.push_back(NewScopes[A]);
+      // We might belong to a set if the noalias argument is in the set of
+      // underlying objects. If there is some non-noalias argument in our list
+      // of underlying objects, then we cannot add a scope because the fact
+      // that some access does not alias with any set of our noalias arguments
+      // cannot itself guarantee that it does not alias with this access
+      // (because there is some pointer of unknown origin involved and the
+      // other access might also depend on this pointer). We also cannot add
+      // scopes to arbitrary functions unless we know they don't access any
+      // non-parameter pointer-values.
+      bool CanAddScopes = !UsesAliasingPtr;
+      if (CanAddScopes && (isa<CallInst>(I) || isa<InvokeInst>(I))) {
+        // FIXME: We should have a way to access the
+        // IntrReadArgMem/IntrReadWriteArgMem properties of intrinsics, and we
+        // should have a way to determine that for regular functions too. For
+        // now, just do this for the memory intrinsics we understand.
+        CanAddScopes = isa<MemIntrinsic>(I);
       }
+
+      if (CanAddScopes)
+        for (const Argument *A : NoAliasArgs) {
+          if (ObjSet.count(A))
+            Scopes.push_back(NewScopes[A]);
+        }
 
       if (!Scopes.empty())
         NI->setMetadata(LLVMContext::MD_alias_scope, MDNode::concatenate(
