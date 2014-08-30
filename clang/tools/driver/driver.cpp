@@ -382,7 +382,7 @@ int main(int argc_, const char **argv_) {
   SmallVector<const char *, 256> argv;
   llvm::SpecificBumpPtrAllocator<char> ArgAllocator;
   std::error_code EC = llvm::sys::Process::GetArgumentVector(
-      argv, ArrayRef<const char *>(argv_, argc_), ArgAllocator);
+      argv, llvm::makeArrayRef(argv_, argc_), ArgAllocator);
   if (EC) {
     llvm::errs() << "error: couldn't get arguments: " << EC.message() << '\n';
     return 1;

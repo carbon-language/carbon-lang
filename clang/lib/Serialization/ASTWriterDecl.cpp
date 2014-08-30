@@ -167,8 +167,8 @@ void ASTDeclWriter::VisitDecl(Decl *D) {
   Record.push_back(D->isInvalidDecl());
   Record.push_back(D->hasAttrs());
   if (D->hasAttrs())
-    Writer.WriteAttributes(ArrayRef<const Attr*>(D->getAttrs().begin(),
-                                                 D->getAttrs().size()), Record);
+    Writer.WriteAttributes(llvm::makeArrayRef(D->getAttrs().begin(),
+                                              D->getAttrs().size()), Record);
   Record.push_back(D->isImplicit());
   Record.push_back(D->isUsed(false));
   Record.push_back(D->isReferenced());

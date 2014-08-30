@@ -90,7 +90,7 @@ public:
     return llvm::makeArrayRef(begin(), end());
   }
   ArrayRef<const NamedDecl*> asArray() const {
-    return ArrayRef<const NamedDecl*>(begin(), size());
+    return llvm::makeArrayRef(begin(), size());
   }
 
   NamedDecl* getParam(unsigned Idx) {

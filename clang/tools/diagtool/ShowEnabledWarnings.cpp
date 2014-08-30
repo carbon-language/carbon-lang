@@ -65,7 +65,7 @@ createDiagnostics(unsigned int argc, char **argv) {
 
   // Try to build a CompilerInvocation.
   std::unique_ptr<CompilerInvocation> Invocation(
-      createInvocationFromCommandLine(ArrayRef<const char *>(argv, argc),
+      createInvocationFromCommandLine(llvm::makeArrayRef(argv, argc),
                                       InterimDiags));
   if (!Invocation)
     return nullptr;

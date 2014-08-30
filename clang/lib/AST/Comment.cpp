@@ -157,8 +157,7 @@ void DeclInfo::fill() {
   case Decl::CXXConversion: {
     const FunctionDecl *FD = cast<FunctionDecl>(CommentDecl);
     Kind = FunctionKind;
-    ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
-                                              FD->getNumParams());
+    ParamVars = llvm::makeArrayRef(FD->param_begin(), FD->getNumParams());
     ReturnType = FD->getReturnType();
     unsigned NumLists = FD->getNumTemplateParameterLists();
     if (NumLists != 0) {
@@ -178,8 +177,7 @@ void DeclInfo::fill() {
   case Decl::ObjCMethod: {
     const ObjCMethodDecl *MD = cast<ObjCMethodDecl>(CommentDecl);
     Kind = FunctionKind;
-    ParamVars = ArrayRef<const ParmVarDecl *>(MD->param_begin(),
-                                              MD->param_size());
+    ParamVars = llvm::makeArrayRef(MD->param_begin(), MD->param_size());
     ReturnType = MD->getReturnType();
     IsObjCMethod = true;
     IsInstanceMethod = MD->isInstanceMethod();
@@ -191,8 +189,7 @@ void DeclInfo::fill() {
     Kind = FunctionKind;
     TemplateKind = Template;
     const FunctionDecl *FD = FTD->getTemplatedDecl();
-    ParamVars = ArrayRef<const ParmVarDecl *>(FD->param_begin(),
-                                              FD->getNumParams());
+    ParamVars = llvm::makeArrayRef(FD->param_begin(), FD->getNumParams());
     ReturnType = FD->getReturnType();
     TemplateParameters = FTD->getTemplateParameters();
     break;
@@ -278,9 +275,7 @@ void DeclInfo::fill() {
       // Is this a typedef for a function type?
       if (FunctionTypeLoc FTL = TL.getAs<FunctionTypeLoc>()) {
         Kind = FunctionKind;
-        ArrayRef<ParmVarDecl *> Params = FTL.getParams();
-        ParamVars = ArrayRef<const ParmVarDecl *>(Params.data(),
-                                                  Params.size());
+        ParamVars = FTL.getParams();
         ReturnType = FTL.getReturnLoc().getType();
         break;
       }
@@ -299,9 +294,7 @@ void DeclInfo::fill() {
         TypeLoc TL = MaybeFunctionTSI->getTypeLoc().getUnqualifiedLoc();
         if (FunctionTypeLoc FTL = TL.getAs<FunctionTypeLoc>()) {
           Kind = FunctionKind;
-          ArrayRef<ParmVarDecl *> Params = FTL.getParams();
-          ParamVars = ArrayRef<const ParmVarDecl *>(Params.data(),
-                                                    Params.size());
+          ParamVars = FTL.getParams();
           ReturnType = FTL.getReturnLoc().getType();
         }
         break;

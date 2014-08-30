@@ -297,8 +297,8 @@ variadicMatcherDescriptor(StringRef MatcherName, const SourceRange &NameRange,
 
   VariantMatcher Out;
   if (!HasError) {
-    Out = outvalueToVariantMatcher(
-        Func(ArrayRef<const ArgT *>(InnerArgs, Args.size())));
+    Out = outvalueToVariantMatcher(Func(llvm::makeArrayRef(InnerArgs,
+                                                           Args.size())));
   }
 
   for (size_t i = 0, e = Args.size(); i != e; ++i) {
