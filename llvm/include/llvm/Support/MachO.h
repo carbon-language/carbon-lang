@@ -322,13 +322,13 @@ namespace llvm {
     };
 
     enum {
+      EXPORT_SYMBOL_FLAGS_KIND_MASK           = 0x03u,
       EXPORT_SYMBOL_FLAGS_WEAK_DEFINITION     = 0x04u,
       EXPORT_SYMBOL_FLAGS_REEXPORT            = 0x08u,
       EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER   = 0x10u
     };
 
     enum ExportSymbolKind {
-      EXPORT_SYMBOL_FLAGS_KIND_MASK           = 0x03u,
       EXPORT_SYMBOL_FLAGS_KIND_REGULAR        = 0x00u,
       EXPORT_SYMBOL_FLAGS_KIND_THREAD_LOCAL   = 0x01u,
       EXPORT_SYMBOL_FLAGS_KIND_ABSOLUTE       = 0x02u

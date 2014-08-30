@@ -19,6 +19,8 @@
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/LEB128.h"
+#include "llvm/Support/MachO.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cctype>
@@ -226,7 +228,7 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
                                  bool Is64bits, std::error_code &EC)
     : ObjectFile(getMachOType(IsLittleEndian, Is64bits), Object),
       SymtabLoadCmd(nullptr), DysymtabLoadCmd(nullptr),
-      DataInCodeLoadCmd(nullptr) {
+      DataInCodeLoadCmd(nullptr), DyldInfoLoadCmd(nullptr) {
   uint32_t LoadCommandCount = this->getHeader().ncmds;
   MachO::LoadCommandType SegmentLoadType = is64Bit() ?
     MachO::LC_SEGMENT_64 : MachO::LC_SEGMENT;
@@ -242,6 +244,10 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
     } else if (Load.C.cmd == MachO::LC_DATA_IN_CODE) {
       assert(!DataInCodeLoadCmd && "Multiple data in code tables");
       DataInCodeLoadCmd = Load.Ptr;
+    } else if (Load.C.cmd == MachO::LC_DYLD_INFO || 
+               Load.C.cmd == MachO::LC_DYLD_INFO_ONLY) {
+      assert(!DyldInfoLoadCmd && "Multiple dyldinfo load commands");
+      DyldInfoLoadCmd = Load.Ptr;
     } else if (Load.C.cmd == SegmentLoadType) {
       uint32_t NumSections = getSegmentLoadCommandNumSections(this, Load);
       for (unsigned J = 0; J < NumSections; ++J) {
@@ -1159,7 +1165,7 @@ guess_qtx:
 // It is passed the index (0 - based) of the library as translated from
 // GET_LIBRARY_ORDINAL (1 - based).
 std::error_code MachOObjectFile::getLibraryShortNameByIndex(unsigned Index,
-                                                            StringRef &Res) {
+                                                         StringRef &Res) const {
   if (Index >= Libraries.size())
     return object_error::parse_failed;
 
@@ -1505,6 +1511,183 @@ dice_iterator MachOObjectFile::end_dices() const {
   return dice_iterator(DiceRef(DRI, this));
 }
 
+ExportEntry::ExportEntry(ArrayRef<uint8_t> T) 
+  : Trie(T), Malformed(false), Done(false) { }
+
+void ExportEntry::moveToFirst() {
+  pushNode(0);
+  pushDownUntilBottom();
+}
+
+void ExportEntry::moveToEnd() {
+  Stack.clear();
+  Done = true;
+}
+
+bool ExportEntry::operator==(const ExportEntry &Other) const {
+  // Common case, one at end, other iterating from begin. 
+  if (Done || Other.Done)
+    return (Done == Other.Done);
+  // Not equal if different stack sizes.
+  if (Stack.size() != Other.Stack.size())
+    return false;
+  // Not equal if different cumulative strings.
+  if (!CumulativeString.str().equals(CumulativeString.str()))
+    return false;
+  // Equal if all nodes in both stacks match.
+  for (unsigned i=0; i < Stack.size(); ++i) {
+    if (Stack[i].Start != Other.Stack[i].Start)
+      return false;
+  }
+  return true;  
+}
+
+uint64_t ExportEntry::readULEB128(const uint8_t *&p) {
+  unsigned count;
+  uint64_t result = decodeULEB128(p, &count);
+  p += count;
+  if (p > Trie.end()) {
+    p = Trie.end();
+    Malformed = true;
+  }
+  return result;
+}
+
+StringRef ExportEntry::name() const {
+  return CumulativeString.str();
+}
+
+uint64_t ExportEntry::flags() const {
+  return Stack.back().Flags;
+}
+
+uint64_t ExportEntry::address() const {
+  return Stack.back().Address;
+}
+
+uint64_t ExportEntry::other() const {
+  return Stack.back().Other;
+}
+
+StringRef ExportEntry::otherName() const {
+  const char* ImportName = Stack.back().ImportName;
+  if (ImportName)
+    return StringRef(ImportName);
+  return StringRef();
+}
+
+uint32_t ExportEntry::nodeOffset() const {
+  return Stack.back().Start - Trie.begin();
+}
+
+ExportEntry::NodeState::NodeState(const uint8_t *Ptr) 
+  : Start(Ptr), Current(Ptr), Flags(0), Address(0), Other(0), 
+    ImportName(nullptr), ChildCount(0), NextChildIndex(0),  
+    ParentStringLength(0), IsExportNode(false) {
+}
+
+void ExportEntry::pushNode(uint64_t offset) {
+  const uint8_t *Ptr = Trie.begin() + offset;
+  NodeState State(Ptr);
+  uint64_t ExportInfoSize = readULEB128(State.Current);
+  State.IsExportNode = (ExportInfoSize != 0);
+  const uint8_t* Children = State.Current + ExportInfoSize;
+  if (State.IsExportNode) {
+    State.Flags = readULEB128(State.Current);
+    if (State.Flags & MachO::EXPORT_SYMBOL_FLAGS_REEXPORT) {
+      State.Address = 0;
+      State.Other = readULEB128(State.Current); // dylib ordinal
+      State.ImportName = reinterpret_cast<const char*>(State.Current);
+    } else {
+      State.Address = readULEB128(State.Current);
+			if (State.Flags &  MachO::EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER)
+				State.Other = readULEB128(State.Current); 
+    }
+  }
+  State.ChildCount = *Children;
+  State.Current = Children + 1;
+  State.NextChildIndex = 0;
+  State.ParentStringLength = CumulativeString.size();
+  Stack.push_back(State);
+}
+
+void ExportEntry::pushDownUntilBottom() {
+  while (Stack.back().NextChildIndex < Stack.back().ChildCount) {
+    NodeState &Top = Stack.back();
+    CumulativeString.resize(Top.ParentStringLength);
+    for (;*Top.Current != 0; Top.Current++) {
+      char c = *Top.Current;
+      CumulativeString.push_back(c);
+    }
+    Top.Current += 1;
+    uint64_t childNodeIndex = readULEB128(Top.Current);
+    Top.NextChildIndex += 1;
+    pushNode(childNodeIndex);
+  }
+  if (!Stack.back().IsExportNode) {
+    Malformed = true;
+    moveToEnd();
+  }
+}
+
+// We have a trie data structure and need a way to walk it that is compatible
+// with the C++ iterator model. The solution is a non-recursive depth first
+// traversal where the iterator contains a stack of parent nodes along with a
+// string that is the accumulation of all edge strings along the parent chain
+// to this point.
+//
+// There is one “export” node for each exported symbol.  But because some
+// symbols may be a prefix of another symbol (e.g. _dup and _dup2), an export
+// node may have child nodes too.  
+//
+// The algorithm for moveNext() is to keep moving down the leftmost unvisited
+// child until hitting a node with no children (which is an export node or
+// else the trie is malformed). On the way down, each node is pushed on the
+// stack ivar.  If there is no more ways down, it pops up one and tries to go
+// down a sibling path until a childless node is reached.
+void ExportEntry::moveNext() {
+  if (Stack.empty() || !Stack.back().IsExportNode) {
+    Malformed = true;
+    moveToEnd();
+    return;
+  }
+
+  Stack.pop_back();
+  while (!Stack.empty()) {
+    NodeState &Top = Stack.back();
+    if (Top.NextChildIndex < Top.ChildCount) {
+      pushDownUntilBottom();
+      // Now at the next export node.
+      return;
+    } else {
+      if (Top.IsExportNode) {
+        // This node has no children but is itself an export node.
+        CumulativeString.resize(Top.ParentStringLength);
+        return;
+      }
+      Stack.pop_back();
+    }
+  }
+  Done = true;
+}
+
+iterator_range<export_iterator> 
+MachOObjectFile::exports(ArrayRef<uint8_t> Trie) {
+  ExportEntry Start(Trie);
+  Start.moveToFirst();
+
+  ExportEntry Finish(Trie);
+  Finish.moveToEnd();
+
+  return iterator_range<export_iterator>(export_iterator(Start), 
+                                         export_iterator(Finish));
+}
+
+iterator_range<export_iterator> MachOObjectFile::exports() const {
+  return exports(getDyldInfoExportsTrie());
+}
+
+
 StringRef
 MachOObjectFile::getSectionFinalSegmentName(DataRefImpl Sec) const {
   ArrayRef<char> Raw = getSectionRawFinalSegmentName(Sec);
@@ -1747,6 +1930,62 @@ MachOObjectFile::getDataInCodeLoadCommand() const {
   Cmd.datasize = 0;
   return Cmd;
 }
+
+ArrayRef<uint8_t> MachOObjectFile::getDyldInfoRebaseOpcodes() const {
+  if (!DyldInfoLoadCmd) 
+    return ArrayRef<uint8_t>();
+
+  MachO::dyld_info_command DyldInfo 
+                   = getStruct<MachO::dyld_info_command>(this, DyldInfoLoadCmd);
+  const uint8_t *Ptr = reinterpret_cast<const uint8_t*>(
+                                             getPtr(this, DyldInfo.rebase_off));
+  return ArrayRef<uint8_t>(Ptr, DyldInfo.rebase_size);
+}
+
+ArrayRef<uint8_t> MachOObjectFile::getDyldInfoBindOpcodes() const {
+  if (!DyldInfoLoadCmd) 
+    return ArrayRef<uint8_t>();
+
+  MachO::dyld_info_command DyldInfo 
+                   = getStruct<MachO::dyld_info_command>(this, DyldInfoLoadCmd);
+  const uint8_t *Ptr = reinterpret_cast<const uint8_t*>(
+                                               getPtr(this, DyldInfo.bind_off));
+  return ArrayRef<uint8_t>(Ptr, DyldInfo.bind_size);
+}
+
+ArrayRef<uint8_t> MachOObjectFile::getDyldInfoWeakBindOpcodes() const {
+  if (!DyldInfoLoadCmd) 
+    return ArrayRef<uint8_t>();
+
+  MachO::dyld_info_command DyldInfo 
+                   = getStruct<MachO::dyld_info_command>(this, DyldInfoLoadCmd);
+  const uint8_t *Ptr = reinterpret_cast<const uint8_t*>(
+                                          getPtr(this, DyldInfo.weak_bind_off));
+  return ArrayRef<uint8_t>(Ptr, DyldInfo.weak_bind_size);
+}
+
+ArrayRef<uint8_t> MachOObjectFile::getDyldInfoLazyBindOpcodes() const {
+  if (!DyldInfoLoadCmd) 
+    return ArrayRef<uint8_t>();
+
+  MachO::dyld_info_command DyldInfo 
+                   = getStruct<MachO::dyld_info_command>(this, DyldInfoLoadCmd);
+  const uint8_t *Ptr = reinterpret_cast<const uint8_t*>(
+                                          getPtr(this, DyldInfo.lazy_bind_off));
+  return ArrayRef<uint8_t>(Ptr, DyldInfo.lazy_bind_size);
+}
+
+ArrayRef<uint8_t> MachOObjectFile::getDyldInfoExportsTrie() const {
+  if (!DyldInfoLoadCmd) 
+    return ArrayRef<uint8_t>();
+
+  MachO::dyld_info_command DyldInfo 
+                   = getStruct<MachO::dyld_info_command>(this, DyldInfoLoadCmd);
+  const uint8_t *Ptr = reinterpret_cast<const uint8_t*>(
+                                             getPtr(this, DyldInfo.export_off));
+  return ArrayRef<uint8_t>(Ptr, DyldInfo.export_size);
+}
+
 
 StringRef MachOObjectFile::getStringTableData() const {
   MachO::symtab_command S = getSymtabLoadCommand();

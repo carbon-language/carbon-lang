@@ -85,6 +85,9 @@ static cl::opt<bool>
 SymbolTable("t", cl::desc("Display the symbol table"));
 
 static cl::opt<bool>
+ExportsTrie("exports-trie", cl::desc("Display mach-o exported symbols"));
+
+static cl::opt<bool>
 MachOOpt("macho", cl::desc("Use MachO specific object file parser"));
 static cl::alias
 MachOm("m", cl::desc("Alias for --macho"), cl::aliasopt(MachOOpt));
@@ -829,6 +832,17 @@ static void PrintUnwindInfo(const ObjectFile *o) {
   }
 }
 
+static void printExportsTrie(const ObjectFile *o) {
+  outs() << "Exports trie:\n";
+  if (const MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
+    printMachOExportsTrie(MachO);
+  else {
+    errs() << "This operation is only currently supported "
+              "for Mach-O executable files.\n";
+    return;
+  }
+}
+
 static void printPrivateFileHeader(const ObjectFile *o) {
   if (o->isELF()) {
     printELFFileHeader(o);
@@ -858,6 +872,8 @@ static void DumpObject(const ObjectFile *o) {
     PrintUnwindInfo(o);
   if (PrivateHeaders)
     printPrivateFileHeader(o);
+  if (ExportsTrie)
+    printExportsTrie(o);
 }
 
 /// @brief Dump each object file in \a a;
@@ -939,7 +955,8 @@ int main(int argc, char **argv) {
       && !SectionContents
       && !SymbolTable
       && !UnwindInfo
-      && !PrivateHeaders) {
+      && !PrivateHeaders
+      && !ExportsTrie) {
     cl::PrintHelpMessage();
     return 2;
   }

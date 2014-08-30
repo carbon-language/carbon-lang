@@ -49,6 +49,57 @@ public:
 };
 typedef content_iterator<DiceRef> dice_iterator;
 
+/// ExportEntry encapsulates the current-state-of-the-walk used when doing a
+/// non-recursive walk of the trie data structure.  This allows you to iterate
+/// across all exported symbols using:
+///      for (const llvm::object::ExportEntry &AnExport : Obj->exports()) {
+///      }
+class ExportEntry {
+public:
+  ExportEntry(ArrayRef<uint8_t> Trie);
+
+  StringRef name() const;
+  uint64_t flags() const;
+  uint64_t address() const;
+  uint64_t other() const;
+  StringRef otherName() const;
+  uint32_t nodeOffset() const;
+
+  bool operator==(const ExportEntry &) const;
+
+  void moveNext();
+
+private:
+  friend class MachOObjectFile;
+  void moveToFirst();
+  void moveToEnd();
+  uint64_t readULEB128(const uint8_t *&p);
+  void pushDownUntilBottom();
+  void pushNode(uint64_t Offset);
+
+  // Represents a node in the mach-o exports trie.
+  struct NodeState {
+    NodeState(const uint8_t *Ptr);
+    const uint8_t *Start;
+    const uint8_t *Current;
+    uint64_t Flags;
+    uint64_t Address;
+    uint64_t Other;
+    const char *ImportName;
+    unsigned ChildCount;
+    unsigned NextChildIndex;
+    unsigned ParentStringLength;
+    bool IsExportNode;
+  };
+
+  ArrayRef<uint8_t> Trie;
+  SmallString<256> CumulativeString;
+  SmallVector<NodeState, 16> Stack;
+  bool Malformed;
+  bool Done;
+};
+typedef content_iterator<ExportEntry> export_iterator;
+
 class MachOObjectFile : public ObjectFile {
 public:
   struct LoadCommandInfo {
@@ -119,7 +170,7 @@ public:
                                       bool &Result) const override;
 
   // MachO specific.
-  std::error_code getLibraryShortNameByIndex(unsigned Index, StringRef &Res);
+  std::error_code getLibraryShortNameByIndex(unsigned Index, StringRef &) const;
 
   // TODO: Would be useful to have an iterator based version
   // of the load command interface too.
@@ -144,6 +195,12 @@ public:
 
   dice_iterator begin_dices() const;
   dice_iterator end_dices() const;
+  
+  /// For use iterating over all exported symbols.
+  iterator_range<export_iterator> exports() const;
+  
+  /// For use examining a trie not in a MachOObjectFile.
+  static iterator_range<export_iterator> exports(ArrayRef<uint8_t> Trie);
 
   // In a MachO file, sections have a segment name. This is used in the .o
   // files. They have a single segment, but this field specifies which segment
@@ -207,6 +264,11 @@ public:
   MachO::symtab_command getSymtabLoadCommand() const;
   MachO::dysymtab_command getDysymtabLoadCommand() const;
   MachO::linkedit_data_command getDataInCodeLoadCommand() const;
+  ArrayRef<uint8_t> getDyldInfoRebaseOpcodes() const;
+  ArrayRef<uint8_t> getDyldInfoBindOpcodes() const;
+  ArrayRef<uint8_t> getDyldInfoWeakBindOpcodes() const;
+  ArrayRef<uint8_t> getDyldInfoLazyBindOpcodes() const;
+  ArrayRef<uint8_t> getDyldInfoExportsTrie() const;
 
   StringRef getStringTableData() const;
   bool is64Bit() const;
@@ -237,10 +299,11 @@ private:
   typedef SmallVector<const char*, 1> LibraryList;
   LibraryList Libraries;
   typedef SmallVector<StringRef, 1> LibraryShortName;
-  LibraryShortName LibrariesShortNames;
+  mutable LibraryShortName LibrariesShortNames;
   const char *SymtabLoadCmd;
   const char *DysymtabLoadCmd;
   const char *DataInCodeLoadCmd;
+  const char *DyldInfoLoadCmd;
 };
 
 /// DiceRef

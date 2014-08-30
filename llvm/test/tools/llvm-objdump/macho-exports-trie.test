@@ -1,0 +1,11 @@
+# RUN: llvm-objdump -macho -exports-trie -arch x86_64 \
+# RUN:   %p/Inputs/exports-trie.macho-x86_64 2>/dev/null | FileCheck %s
+
+
+# CHECK:[re-export] _malloc (from libSystem)
+# CHECK:[re-export] _myfree (_free from libSystem)
+# CHECK:0x00000F70  _myWeakweak_def]
+# CHECK:0x00001018  _myTLVper-thread]
+# CHECK:0x12345678  _myAbsabsolute]
+# CHECK:0x00000F60  _foo
+
