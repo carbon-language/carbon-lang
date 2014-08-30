@@ -48,8 +48,7 @@ struct SpecialCaseList::Entry {
 
 SpecialCaseList::SpecialCaseList() : Entries() {}
 
-SpecialCaseList *SpecialCaseList::create(
-    const StringRef Path, std::string &Error) {
+SpecialCaseList *SpecialCaseList::create(StringRef Path, std::string &Error) {
   if (Path.empty())
     return new SpecialCaseList();
   ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
@@ -69,7 +68,7 @@ SpecialCaseList *SpecialCaseList::create(
   return SCL.release();
 }
 
-SpecialCaseList *SpecialCaseList::createOrDie(const StringRef Path) {
+SpecialCaseList *SpecialCaseList::createOrDie(StringRef Path) {
   std::string Error;
   if (SpecialCaseList *SCL = create(Path, Error))
     return SCL;
@@ -157,8 +156,8 @@ bool SpecialCaseList::parse(const MemoryBuffer *MB, std::string &Error) {
 
 SpecialCaseList::~SpecialCaseList() {}
 
-bool SpecialCaseList::inSection(const StringRef Section, const StringRef Query,
-                                const StringRef Category) const {
+bool SpecialCaseList::inSection(StringRef Section, StringRef Query,
+                                StringRef Category) const {
   StringMap<StringMap<Entry> >::const_iterator I = Entries.find(Section);
   if (I == Entries.end()) return false;
   StringMap<Entry>::const_iterator II = I->second.find(Category);

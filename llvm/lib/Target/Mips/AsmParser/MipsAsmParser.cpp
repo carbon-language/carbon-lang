@@ -2081,7 +2081,7 @@ bool MipsAsmParser::searchSymbolAlias(OperandVector &Operands) {
       return false;
     if (Expr->getKind() == MCExpr::SymbolRef) {
       const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr *>(Expr);
-      const StringRef DefSymbol = Ref->getSymbol().getName();
+      StringRef DefSymbol = Ref->getSymbol().getName();
       if (DefSymbol.startswith("$")) {
         OperandMatchResultTy ResTy =
             MatchAnyRegisterNameWithoutDollar(Operands, DefSymbol.substr(1), S);

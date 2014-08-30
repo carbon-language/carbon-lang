@@ -381,10 +381,10 @@ public:
 ///
 class DIEString : public DIEValue {
   const DIEValue *Access;
-  const StringRef Str;
+  StringRef Str;
 
 public:
-  DIEString(const DIEValue *Acc, const StringRef S)
+  DIEString(const DIEValue *Acc, StringRef S)
       : DIEValue(isString), Access(Acc), Str(S) {}
 
   /// getString - Grab the string out of the object.

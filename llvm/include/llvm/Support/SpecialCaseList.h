@@ -60,13 +60,13 @@ class SpecialCaseList {
   /// Parses the special case list from a file. If Path is empty, returns
   /// an empty special case list. On failure, returns 0 and writes an error
   /// message to string.
-  static SpecialCaseList *create(const StringRef Path, std::string &Error);
+  static SpecialCaseList *create(StringRef Path, std::string &Error);
   /// Parses the special case list from a memory buffer. On failure, returns
   /// 0 and writes an error message to string.
   static SpecialCaseList *create(const MemoryBuffer *MB, std::string &Error);
   /// Parses the special case list from a file. On failure, reports a fatal
   /// error.
-  static SpecialCaseList *createOrDie(const StringRef Path);
+  static SpecialCaseList *createOrDie(StringRef Path);
 
   ~SpecialCaseList();
 
@@ -75,8 +75,8 @@ class SpecialCaseList {
   ///   @Section:<E>=@Category
   /// \endcode
   /// and @Query satisfies a wildcard expression <E>.
-  bool inSection(const StringRef Section, const StringRef Query,
-                 const StringRef Category = StringRef()) const;
+  bool inSection(StringRef Section, StringRef Query,
+                 StringRef Category = StringRef()) const;
 
  private:
   SpecialCaseList(SpecialCaseList const &) LLVM_DELETED_FUNCTION;

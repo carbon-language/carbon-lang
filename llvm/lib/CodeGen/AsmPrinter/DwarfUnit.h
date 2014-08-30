@@ -275,11 +275,11 @@ public:
   void addSInt(DIELoc &Die, Optional<dwarf::Form> Form, int64_t Integer);
 
   /// addString - Add a string attribute data and value.
-  void addString(DIE &Die, dwarf::Attribute Attribute, const StringRef Str);
+  void addString(DIE &Die, dwarf::Attribute Attribute, StringRef Str);
 
   /// addLocalString - Add a string attribute data and value.
   void addLocalString(DIE &Die, dwarf::Attribute Attribute,
-                      const StringRef Str);
+                      StringRef Str);
 
   /// addExpr - Add a Dwarf expression attribute data and value.
   void addExpr(DIELoc &Die, dwarf::Form Form, const MCExpr *Expr);

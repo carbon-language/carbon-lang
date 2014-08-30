@@ -204,7 +204,7 @@ void native(SmallVectorImpl<char> &path);
 ///
 /// @param path Input path.
 /// @result The root name of \a path if it has one, otherwise "".
-const StringRef root_name(StringRef path);
+StringRef root_name(StringRef path);
 
 /// @brief Get root directory.
 ///
@@ -217,7 +217,7 @@ const StringRef root_name(StringRef path);
 /// @param path Input path.
 /// @result The root directory of \a path if it has one, otherwise
 ///               "".
-const StringRef root_directory(StringRef path);
+StringRef root_directory(StringRef path);
   
 /// @brief Get root path.
 ///
@@ -225,7 +225,7 @@ const StringRef root_directory(StringRef path);
 ///
 /// @param path Input path.
 /// @result The root path of \a path if it has one, otherwise "".
-const StringRef root_path(StringRef path);
+StringRef root_path(StringRef path);
 
 /// @brief Get relative path.
 ///
@@ -237,7 +237,7 @@ const StringRef root_path(StringRef path);
 ///
 /// @param path Input path.
 /// @result The path starting after root_path if one exists, otherwise "".
-const StringRef relative_path(StringRef path);
+StringRef relative_path(StringRef path);
 
 /// @brief Get parent path.
 ///
@@ -249,7 +249,7 @@ const StringRef relative_path(StringRef path);
 ///
 /// @param path Input path.
 /// @result The parent path of \a path if one exists, otherwise "".
-const StringRef parent_path(StringRef path);
+StringRef parent_path(StringRef path);
 
 /// @brief Get filename.
 ///
@@ -263,7 +263,7 @@ const StringRef parent_path(StringRef path);
 /// @param path Input path.
 /// @result The filename part of \a path. This is defined as the last component
 ///         of \a path.
-const StringRef filename(StringRef path);
+StringRef filename(StringRef path);
 
 /// @brief Get stem.
 ///
@@ -281,7 +281,7 @@ const StringRef filename(StringRef path);
 ///
 /// @param path Input path.
 /// @result The stem of \a path.
-const StringRef stem(StringRef path);
+StringRef stem(StringRef path);
 
 /// @brief Get extension.
 ///
@@ -297,7 +297,7 @@ const StringRef stem(StringRef path);
 ///
 /// @param path Input path.
 /// @result The extension of \a path.
-const StringRef extension(StringRef path);
+StringRef extension(StringRef path);
 
 /// @brief Check whether the given char is a path separator on the host OS.
 ///
@@ -308,7 +308,7 @@ bool is_separator(char value);
 /// @brief Return the preferred separator for this platform.
 ///
 /// @result StringRef of the preferred separator, null-terminated.
-const StringRef get_separator();
+StringRef get_separator();
 
 /// @brief Get the typical temporary directory for the system, e.g., 
 /// "/var/tmp" or "C:/TEMP"

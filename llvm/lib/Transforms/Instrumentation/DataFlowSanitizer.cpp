@@ -143,7 +143,7 @@ class DFSanABIList {
 
   /// Returns whether either this function or its source file are listed in the
   /// given category.
-  bool isIn(const Function &F, const StringRef Category) const {
+  bool isIn(const Function &F, StringRef Category) const {
     return isIn(*F.getParent(), Category) ||
            SCL->inSection("fun", F.getName(), Category);
   }
@@ -152,7 +152,7 @@ class DFSanABIList {
   ///
   /// If GA aliases a function, the alias's name is matched as a function name
   /// would be.  Similarly, aliases of globals are matched like globals.
-  bool isIn(const GlobalAlias &GA, const StringRef Category) const {
+  bool isIn(const GlobalAlias &GA, StringRef Category) const {
     if (isIn(*GA.getParent(), Category))
       return true;
 
@@ -164,7 +164,7 @@ class DFSanABIList {
   }
 
   /// Returns whether this module is listed in the given category.
-  bool isIn(const Module &M, const StringRef Category) const {
+  bool isIn(const Module &M, StringRef Category) const {
     return SCL->inSection("src", M.getModuleIdentifier(), Category);
   }
 };

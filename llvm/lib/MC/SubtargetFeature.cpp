@@ -27,7 +27,7 @@ using namespace llvm;
 
 /// hasFlag - Determine if a feature has a flag; '+' or '-'
 ///
-static inline bool hasFlag(const StringRef Feature) {
+static inline bool hasFlag(StringRef Feature) {
   assert(!Feature.empty() && "Empty string");
   // Get first character
   char Ch = Feature[0];
@@ -37,13 +37,13 @@ static inline bool hasFlag(const StringRef Feature) {
 
 /// StripFlag - Return string stripped of flag.
 ///
-static inline std::string StripFlag(const StringRef Feature) {
+static inline std::string StripFlag(StringRef Feature) {
   return hasFlag(Feature) ? Feature.substr(1) : Feature;
 }
 
 /// isEnabled - Return true if enable flag; '+'.
 ///
-static inline bool isEnabled(const StringRef Feature) {
+static inline bool isEnabled(StringRef Feature) {
   assert(!Feature.empty() && "Empty string");
   // Get first character
   char Ch = Feature[0];
@@ -53,7 +53,7 @@ static inline bool isEnabled(const StringRef Feature) {
 
 /// Split - Splits a string of comma separated items in to a vector of strings.
 ///
-static void Split(std::vector<std::string> &V, const StringRef S) {
+static void Split(std::vector<std::string> &V, StringRef S) {
   SmallVector<StringRef, 3> Tmp;
   S.split(Tmp, ",", -1, false /* KeepEmpty */);
   V.assign(Tmp.begin(), Tmp.end());
@@ -81,7 +81,7 @@ static std::string Join(const std::vector<std::string> &V) {
 }
 
 /// Adding features.
-void SubtargetFeatures::AddFeature(const StringRef String) {
+void SubtargetFeatures::AddFeature(StringRef String) {
   // Don't add empty features or features we already have.
   if (!String.empty())
     // Convert to lowercase, prepend flag if we don't already have a flag.
@@ -136,7 +136,7 @@ static void Help(ArrayRef<SubtargetFeatureKV> CPUTable,
 //                    SubtargetFeatures Implementation
 //===----------------------------------------------------------------------===//
 
-SubtargetFeatures::SubtargetFeatures(const StringRef Initial) {
+SubtargetFeatures::SubtargetFeatures(StringRef Initial) {
   // Break up string into separate features
   Split(Features, Initial);
 }
@@ -181,7 +181,7 @@ void ClearImpliedBits(uint64_t &Bits, const SubtargetFeatureKV *FeatureEntry,
 /// ToggleFeature - Toggle a feature and returns the newly updated feature
 /// bits.
 uint64_t
-SubtargetFeatures::ToggleFeature(uint64_t Bits, const StringRef Feature,
+SubtargetFeatures::ToggleFeature(uint64_t Bits, StringRef Feature,
                                  ArrayRef<SubtargetFeatureKV> FeatureTable) {
 
   // Find feature in table.
@@ -213,7 +213,7 @@ SubtargetFeatures::ToggleFeature(uint64_t Bits, const StringRef Feature,
 /// getFeatureBits - Get feature bits a CPU.
 ///
 uint64_t
-SubtargetFeatures::getFeatureBits(const StringRef CPU,
+SubtargetFeatures::getFeatureBits(StringRef CPU,
                                   ArrayRef<SubtargetFeatureKV> CPUTable,
                                   ArrayRef<SubtargetFeatureKV> FeatureTable) {
 

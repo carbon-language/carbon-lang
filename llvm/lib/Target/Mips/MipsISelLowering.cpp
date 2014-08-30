@@ -3034,7 +3034,7 @@ MipsTargetLowering::getSingleConstraintMatchWeight(
 /// that is returned indicates whether parsing was successful. The second flag
 /// is true if the numeric part exists.
 static std::pair<bool, bool>
-parsePhysicalReg(const StringRef &C, std::string &Prefix,
+parsePhysicalReg(StringRef C, std::string &Prefix,
                  unsigned long long &Reg) {
   if (C.front() != '{' || C.back() != '}')
     return std::make_pair(false, false);
@@ -3055,7 +3055,7 @@ parsePhysicalReg(const StringRef &C, std::string &Prefix,
 }
 
 std::pair<unsigned, const TargetRegisterClass *> MipsTargetLowering::
-parseRegForInlineAsmConstraint(const StringRef &C, MVT VT) const {
+parseRegForInlineAsmConstraint(StringRef C, MVT VT) const {
   const TargetRegisterInfo *TRI =
       getTargetMachine().getSubtargetImpl()->getRegisterInfo();
   const TargetRegisterClass *RC;

@@ -359,7 +359,7 @@ bool reverse_iterator::operator==(const reverse_iterator &RHS) const {
          Position == RHS.Position;
 }
 
-const StringRef root_path(StringRef path) {
+StringRef root_path(StringRef path) {
   const_iterator b = begin(path),
                  pos = b,
                  e = end(path);
@@ -391,7 +391,7 @@ const StringRef root_path(StringRef path) {
   return StringRef();
 }
 
-const StringRef root_name(StringRef path) {
+StringRef root_name(StringRef path) {
   const_iterator b = begin(path),
                  e = end(path);
   if (b != e) {
@@ -413,7 +413,7 @@ const StringRef root_name(StringRef path) {
   return StringRef();
 }
 
-const StringRef root_directory(StringRef path) {
+StringRef root_directory(StringRef path) {
   const_iterator b = begin(path),
                  pos = b,
                  e = end(path);
@@ -442,7 +442,7 @@ const StringRef root_directory(StringRef path) {
   return StringRef();
 }
 
-const StringRef relative_path(StringRef path) {
+StringRef relative_path(StringRef path) {
   StringRef root = root_path(path);
   return path.substr(root.size());
 }
@@ -494,7 +494,7 @@ void append(SmallVectorImpl<char> &path,
     path::append(path, *begin);
 }
 
-const StringRef parent_path(StringRef path) {
+StringRef parent_path(StringRef path) {
   size_t end_pos = parent_path_end(path);
   if (end_pos == StringRef::npos)
     return StringRef();
@@ -552,11 +552,11 @@ void native(SmallVectorImpl<char> &Path) {
 #endif
 }
 
-const StringRef filename(StringRef path) {
+StringRef filename(StringRef path) {
   return *rbegin(path);
 }
 
-const StringRef stem(StringRef path) {
+StringRef stem(StringRef path) {
   StringRef fname = filename(path);
   size_t pos = fname.find_last_of('.');
   if (pos == StringRef::npos)
@@ -569,7 +569,7 @@ const StringRef stem(StringRef path) {
       return fname.substr(0, pos);
 }
 
-const StringRef extension(StringRef path) {
+StringRef extension(StringRef path) {
   StringRef fname = filename(path);
   size_t pos = fname.find_last_of('.');
   if (pos == StringRef::npos)
@@ -594,7 +594,7 @@ bool is_separator(char value) {
 
 static const char preferred_separator_string[] = { preferred_separator, '\0' };
 
-const StringRef get_separator() {
+StringRef get_separator() {
   return preferred_separator_string;
 }
 

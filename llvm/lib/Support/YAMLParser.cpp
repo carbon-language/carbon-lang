@@ -259,7 +259,7 @@ namespace yaml {
 /// @brief Scans YAML tokens from a MemoryBuffer.
 class Scanner {
 public:
-  Scanner(const StringRef Input, SourceMgr &SM);
+  Scanner(StringRef Input, SourceMgr &SM);
   Scanner(MemoryBufferRef Buffer, SourceMgr &SM_);
 
   /// @brief Parse the next token and return it without popping it.

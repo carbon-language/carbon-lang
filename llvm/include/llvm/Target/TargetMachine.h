@@ -92,9 +92,9 @@ public:
 
   const Target &getTarget() const { return TheTarget; }
 
-  const StringRef getTargetTriple() const { return TargetTriple; }
-  const StringRef getTargetCPU() const { return TargetCPU; }
-  const StringRef getTargetFeatureString() const { return TargetFS; }
+  StringRef getTargetTriple() const { return TargetTriple; }
+  StringRef getTargetCPU() const { return TargetCPU; }
+  StringRef getTargetFeatureString() const { return TargetFS; }
 
   /// getSubtargetImpl - virtual method implemented by subclasses that returns
   /// a reference to that target's TargetSubtargetInfo-derived member variable.
