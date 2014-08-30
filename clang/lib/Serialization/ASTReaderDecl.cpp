@@ -44,6 +44,8 @@ namespace clang {
     unsigned &Idx;
     TypeID TypeIDForTypeDecl;
     unsigned AnonymousDeclNumber;
+    GlobalDeclID NamedDeclForTagDecl;
+    IdentifierInfo *TypedefNameForLinkage;
     
     bool HasPendingBody;
 
@@ -165,24 +167,29 @@ namespace clang {
       NamedDecl *New;
       NamedDecl *Existing;
       mutable bool AddResult;
+
       unsigned AnonymousDeclNumber;
+      IdentifierInfo *TypedefNameForLinkage;
 
       void operator=(FindExistingResult&) LLVM_DELETED_FUNCTION;
 
     public:
       FindExistingResult(ASTReader &Reader)
           : Reader(Reader), New(nullptr), Existing(nullptr), AddResult(false),
-            AnonymousDeclNumber(0) {}
+            AnonymousDeclNumber(0), TypedefNameForLinkage(0) {}
 
       FindExistingResult(ASTReader &Reader, NamedDecl *New, NamedDecl *Existing,
-                         unsigned AnonymousDeclNumber = 0)
+                         unsigned AnonymousDeclNumber,
+                         IdentifierInfo *TypedefNameForLinkage)
           : Reader(Reader), New(New), Existing(Existing), AddResult(true),
-            AnonymousDeclNumber(AnonymousDeclNumber) {}
+            AnonymousDeclNumber(AnonymousDeclNumber),
+            TypedefNameForLinkage(TypedefNameForLinkage) {}
 
       FindExistingResult(const FindExistingResult &Other)
           : Reader(Other.Reader), New(Other.New), Existing(Other.Existing),
             AddResult(Other.AddResult),
-            AnonymousDeclNumber(Other.AnonymousDeclNumber) {
+            AnonymousDeclNumber(Other.AnonymousDeclNumber),
+            TypedefNameForLinkage(Other.TypedefNameForLinkage) {
         Other.AddResult = false;
       }
 
@@ -201,13 +208,12 @@ namespace clang {
     FindExistingResult findExisting(NamedDecl *D);
 
   public:
-    ASTDeclReader(ASTReader &Reader, ModuleFile &F,
-                  DeclID thisDeclID,
-                  unsigned RawLocation,
-                  const RecordData &Record, unsigned &Idx)
-      : Reader(Reader), F(F), ThisDeclID(thisDeclID),
-        RawLocation(RawLocation), Record(Record), Idx(Idx),
-        TypeIDForTypeDecl(0), HasPendingBody(false) { }
+    ASTDeclReader(ASTReader &Reader, ModuleFile &F, DeclID thisDeclID,
+                  unsigned RawLocation, const RecordData &Record, unsigned &Idx)
+        : Reader(Reader), F(F), ThisDeclID(thisDeclID),
+          RawLocation(RawLocation), Record(Record), Idx(Idx),
+          TypeIDForTypeDecl(0), NamedDeclForTagDecl(0),
+          TypedefNameForLinkage(nullptr), HasPendingBody(false) {}
 
     template <typename DeclT>
     static void attachPreviousDeclImpl(ASTReader &Reader,
@@ -371,6 +377,12 @@ void ASTDeclReader::Visit(Decl *D) {
   if (TypeDecl *TD = dyn_cast<TypeDecl>(D)) {
     // We have a fully initialized TypeDecl. Read its type now.
     TD->setTypeForDecl(Reader.GetType(TypeIDForTypeDecl).getTypePtrOrNull());
+
+    // If this is a tag declaration with a typedef name for linkage, it's safe
+    // to load that typedef now.
+    if (NamedDeclForTagDecl)
+      cast<TagDecl>(D)->NamedDeclOrQualifier =
+          cast<NamedDecl>(Reader.GetDecl(NamedDeclForTagDecl));
   } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
     // if we have a fully initialized TypeDecl, we can safely read its type now.
     ID->TypeForDecl = Reader.GetType(TypeIDForTypeDecl).getTypePtrOrNull();
@@ -509,12 +521,25 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitTagDecl(TagDecl *TD) {
   TD->setCompleteDefinitionRequired(Record[Idx++]);
   TD->setRBraceLoc(ReadSourceLocation(Record, Idx));
   
-  if (Record[Idx++]) { // hasExtInfo
+  switch (Record[Idx++]) {
+  case 0:
+    break;
+  case 1: { // ExtInfo
     TagDecl::ExtInfo *Info = new (Reader.getContext()) TagDecl::ExtInfo();
     ReadQualifierInfo(*Info, Record, Idx);
     TD->NamedDeclOrQualifier = Info;
-  } else
+    break;
+  }
+  case 2: // TypedefNameForAnonDecl
+    NamedDeclForTagDecl = ReadDeclID(Record, Idx);
+    TypedefNameForLinkage = Reader.GetIdentifierInfo(F, Record, Idx);
+    break;
+  case 3: // DeclaratorForAnonDecl
     TD->NamedDeclOrQualifier = ReadDeclAs<NamedDecl>(Record, Idx);
+    break;
+  default:
+    llvm_unreachable("unexpected tag info kind");
+  }
 
   if (!isa<CXXRecordDecl>(TD))
     mergeRedeclarable(TD, Redecl);
@@ -2447,36 +2472,15 @@ static DeclContext *getPrimaryContextForMerging(DeclContext *DC) {
   return nullptr;
 }
 
-static DeclarationName
-getNameForMerging(NamedDecl *D, bool &IsTypedefNameForLinkage) {
-  DeclarationName Name = D->getDeclName();
-
-  if (!Name) {
-    // If this declaration has a typedef name for linkage purposes,
-    // look that name up when merging. We may be able to find another
-    // typedef that names a matching TagDecl.
-    if (auto *TD = dyn_cast<TagDecl>(D)) {
-      if (auto *Typedef = TD->getTypedefNameForAnonDecl()) {
-        Name = Typedef->getDeclName();
-        IsTypedefNameForLinkage = true;
-      }
-    }
-  }
-
-  return Name;
-}
-
 ASTDeclReader::FindExistingResult::~FindExistingResult() {
   if (!AddResult || Existing)
     return;
 
-  bool IsTypedefNameForLinkage = false;
-  DeclarationName Name = getNameForMerging(New, IsTypedefNameForLinkage);
-
+  DeclarationName Name = New->getDeclName();
   DeclContext *DC = New->getDeclContext()->getRedeclContext();
-  if (IsTypedefNameForLinkage) {
+  if (TypedefNameForLinkage) {
     Reader.ImportedTypedefNamesForLinkage.insert(
-        std::make_pair(std::make_pair(DC, Name.getAsIdentifierInfo()), New));
+        std::make_pair(std::make_pair(DC, TypedefNameForLinkage), New));
   } else if (!Name) {
     assert(needsAnonymousDeclarationNumber(New));
     setAnonymousDeclForMerging(Reader, New->getLexicalDeclContext(),
@@ -2557,13 +2561,14 @@ void ASTDeclReader::setAnonymousDeclForMerging(ASTReader &Reader,
 }
 
 ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
-  bool IsTypedefNameForLinkage = false;
-  DeclarationName Name = getNameForMerging(D, IsTypedefNameForLinkage);
+  DeclarationName Name = TypedefNameForLinkage ? TypedefNameForLinkage
+                                               : D->getDeclName();
 
   if (!Name && !needsAnonymousDeclarationNumber(D)) {
     // Don't bother trying to find unnamed declarations that are in
     // unmergeable contexts.
-    FindExistingResult Result(Reader, D, /*Existing=*/nullptr);
+    FindExistingResult Result(Reader, D, /*Existing=*/nullptr,
+                              AnonymousDeclNumber, TypedefNameForLinkage);
     // FIXME: We may still need to pull in the redeclaration chain; there can
     // be redeclarations via 'decltype'.
     Result.suppress();
@@ -2574,12 +2579,13 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
   // necessary merging already.
 
   DeclContext *DC = D->getDeclContext()->getRedeclContext();
-  if (IsTypedefNameForLinkage) {
+  if (TypedefNameForLinkage) {
     auto It = Reader.ImportedTypedefNamesForLinkage.find(
-        std::make_pair(DC, Name.getAsIdentifierInfo()));
+        std::make_pair(DC, TypedefNameForLinkage));
     if (It != Reader.ImportedTypedefNamesForLinkage.end())
       if (isSameEntity(It->second, D))
-        return FindExistingResult(Reader, D, It->second);
+        return FindExistingResult(Reader, D, It->second, AnonymousDeclNumber,
+                                  TypedefNameForLinkage);
     // Go on to check in other places in case an existing typedef name
     // was not imported.
   }
@@ -2591,7 +2597,8 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
     if (auto *Existing = getAnonymousDeclForMerging(
             Reader, D->getLexicalDeclContext(), AnonymousDeclNumber))
       if (isSameEntity(Existing, D))
-        return FindExistingResult(Reader, D, Existing, AnonymousDeclNumber);
+        return FindExistingResult(Reader, D, Existing, AnonymousDeclNumber,
+                                  TypedefNameForLinkage);
   } else if (DC->isTranslationUnit() && Reader.SemaObj) {
     IdentifierResolver &IdResolver = Reader.SemaObj->IdResolver;
 
@@ -2621,16 +2628,18 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
     for (IdentifierResolver::iterator I = IdResolver.begin(Name), 
                                    IEnd = IdResolver.end();
          I != IEnd; ++I) {
-      if (NamedDecl *Existing = getDeclForMerging(*I, IsTypedefNameForLinkage))
+      if (NamedDecl *Existing = getDeclForMerging(*I, TypedefNameForLinkage))
         if (isSameEntity(Existing, D))
-          return FindExistingResult(Reader, D, Existing);
+          return FindExistingResult(Reader, D, Existing, AnonymousDeclNumber,
+                                    TypedefNameForLinkage);
     }
   } else if (DeclContext *MergeDC = getPrimaryContextForMerging(DC)) {
     DeclContext::lookup_result R = MergeDC->noload_lookup(Name);
     for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E; ++I) {
-      if (NamedDecl *Existing = getDeclForMerging(*I, IsTypedefNameForLinkage))
+      if (NamedDecl *Existing = getDeclForMerging(*I, TypedefNameForLinkage))
         if (isSameEntity(Existing, D))
-          return FindExistingResult(Reader, D, Existing);
+          return FindExistingResult(Reader, D, Existing, AnonymousDeclNumber,
+                                    TypedefNameForLinkage);
     }
   } else {
     // Not in a mergeable context.
@@ -2648,7 +2657,7 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
     Reader.PendingOdrMergeChecks.push_back(D);
 
   return FindExistingResult(Reader, D, /*Existing=*/nullptr,
-                            AnonymousDeclNumber);
+                            AnonymousDeclNumber, TypedefNameForLinkage);
 }
 
 template<typename DeclT>

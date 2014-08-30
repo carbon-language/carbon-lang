@@ -36,3 +36,11 @@ struct OverridesVirtualFunctions : HasVirtualFunctions {
   void f();
 };
 extern "C" void ExternCFunction();
+
+typedef struct {
+  struct Inner {
+    int n;
+  };
+} NameForLinkage2;
+auto name_for_linkage2_inner_a = NameForLinkage2::Inner();
+typedef decltype(name_for_linkage2_inner_a) NameForLinkage2Inner;

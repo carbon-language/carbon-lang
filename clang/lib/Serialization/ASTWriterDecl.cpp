@@ -254,13 +254,20 @@ void ASTDeclWriter::VisitTagDecl(TagDecl *D) {
   Record.push_back(D->isFreeStanding());
   Record.push_back(D->isCompleteDefinitionRequired());
   Writer.AddSourceLocation(D->getRBraceLoc(), Record);
-  Record.push_back(D->hasExtInfo());
-  if (D->hasExtInfo())
+
+  if (D->hasExtInfo()) {
+    Record.push_back(1);
     Writer.AddQualifierInfo(*D->getExtInfo(), Record);
-  else if (D->hasDeclaratorForAnonDecl())
-    Writer.AddDeclRef(D->getDeclaratorForAnonDecl(), Record);
-  else
-    Writer.AddDeclRef(D->getTypedefNameForAnonDecl(), Record);
+  } else if (auto *TD = D->getTypedefNameForAnonDecl()) {
+    Record.push_back(2);
+    Writer.AddDeclRef(TD, Record);
+    Writer.AddIdentifierRef(TD->getDeclName().getAsIdentifierInfo(), Record);
+  } else if (auto *DD = D->getDeclaratorForAnonDecl()) {
+    Record.push_back(3);
+    Writer.AddDeclRef(DD, Record);
+  } else {
+    Record.push_back(0);
+  }
 }
 
 void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {
@@ -286,6 +293,8 @@ void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {
       !D->isImplicit() &&
       !D->isUsed(false) &&
       !D->hasExtInfo() &&
+      !D->getTypedefNameForAnonDecl() &&
+      !D->getDeclaratorForAnonDecl() &&
       D->getFirstDecl() == D->getMostRecentDecl() &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
@@ -313,6 +322,8 @@ void ASTDeclWriter::VisitRecordDecl(RecordDecl *D) {
       !D->isImplicit() &&
       !D->isUsed(false) &&
       !D->hasExtInfo() &&
+      !D->getTypedefNameForAnonDecl() &&
+      !D->getDeclaratorForAnonDecl() &&
       D->getFirstDecl() == D->getMostRecentDecl() &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
@@ -1573,8 +1584,7 @@ void ASTWriter::WriteDeclAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // IsFreeStanding
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // IsCompleteDefinitionRequired
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));   // SourceLocation
-  Abv->Add(BitCodeAbbrevOp(0));                         // hasExtInfo
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));   // TypedefNameAnonDecl
+  Abv->Add(BitCodeAbbrevOp(0));                         // ExtInfoKind
   // EnumDecl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));   // AddTypeRef
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));   // IntegerType
@@ -1621,8 +1631,7 @@ void ASTWriter::WriteDeclAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // IsFreeStanding
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // IsCompleteDefinitionRequired
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));   // SourceLocation
-  Abv->Add(BitCodeAbbrevOp(0));                         // hasExtInfo
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));   // TypedefNameAnonDecl
+  Abv->Add(BitCodeAbbrevOp(0));                         // ExtInfoKind
   // RecordDecl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // FlexibleArrayMember
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // AnonymousStructUnion

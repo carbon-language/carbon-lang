@@ -37,6 +37,9 @@ int use_overrides_virtual_functions(OverridesVirtualFunctions ovf) { return 0; }
 
 @import cxx_decls_merged;
 
+NameForLinkage2Inner use_name_for_linkage2_inner;
+NameForLinkage2 use_name_for_linkage2;
+
 int name_for_linkage_test = use_name_for_linkage(name_for_linkage);
 int overrides_virtual_functions_test =
     use_overrides_virtual_functions(overrides_virtual_functions);
