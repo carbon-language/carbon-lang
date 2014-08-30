@@ -1532,7 +1532,7 @@ bool ExportEntry::operator==(const ExportEntry &Other) const {
   if (Stack.size() != Other.Stack.size())
     return false;
   // Not equal if different cumulative strings.
-  if (!CumulativeString.str().equals(CumulativeString.str()))
+  if (!CumulativeString.str().equals(Other.CumulativeString.str()))
     return false;
   // Equal if all nodes in both stacks match.
   for (unsigned i=0; i < Stack.size(); ++i) {
@@ -1600,8 +1600,8 @@ void ExportEntry::pushNode(uint64_t offset) {
       State.ImportName = reinterpret_cast<const char*>(State.Current);
     } else {
       State.Address = readULEB128(State.Current);
-			if (State.Flags &  MachO::EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER)
-				State.Other = readULEB128(State.Current); 
+      if (State.Flags & MachO::EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER)
+        State.Other = readULEB128(State.Current); 
     }
   }
   State.ChildCount = *Children;
