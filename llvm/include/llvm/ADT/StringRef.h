@@ -118,7 +118,7 @@ namespace llvm {
     }
 
     // copy - Allocate copy in Allocator and return StringRef to it.
-    template <typename Allocator> StringRef copy(Allocator &A) {
+    template <typename Allocator> StringRef copy(Allocator &A) const {
       char *S = A.template Allocate<char>(Length);
       std::copy(begin(), end(), S);
       return StringRef(S, Length);
