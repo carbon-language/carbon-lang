@@ -391,8 +391,8 @@ private:
   ///
   /// This structure is used by both classes and categories, and contains a next
   /// pointer allowing them to be chained together in a linked list.
-  llvm::Constant *GenerateMethodList(const StringRef &ClassName,
-      const StringRef &CategoryName,
+  llvm::Constant *GenerateMethodList(StringRef ClassName,
+      StringRef CategoryName,
       ArrayRef<Selector> MethodSels,
       ArrayRef<llvm::Constant *> MethodTypes,
       bool isClassMethodList);
@@ -875,8 +875,8 @@ void CGObjCGNU::EmitClassRef(const std::string &className) {
     llvm::GlobalValue::WeakAnyLinkage, ClassSymbol, symbolRef);
 }
 
-static std::string SymbolNameForMethod(const StringRef &ClassName,
-    const StringRef &CategoryName, const Selector MethodName,
+static std::string SymbolNameForMethod( StringRef ClassName,
+     StringRef CategoryName, const Selector MethodName,
     bool isClassMethod) {
   std::string MethodNameColonStripped = MethodName.getAsString();
   std::replace(MethodNameColonStripped.begin(), MethodNameColonStripped.end(),
@@ -1463,8 +1463,8 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
 /// Generates a MethodList.  Used in construction of a objc_class and
 /// objc_category structures.
 llvm::Constant *CGObjCGNU::
-GenerateMethodList(const StringRef &ClassName,
-                   const StringRef &CategoryName,
+GenerateMethodList(StringRef ClassName,
+                   StringRef CategoryName,
                    ArrayRef<Selector> MethodSels,
                    ArrayRef<llvm::Constant *> MethodTypes,
                    bool isClassMethodList) {

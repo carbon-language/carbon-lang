@@ -1558,7 +1558,7 @@ AST_MATCHER_P(NamedDecl, matchesName, std::string, RegExp) {
 inline internal::PolymorphicMatcherWithParam1<
     internal::HasOverloadedOperatorNameMatcher, StringRef,
     AST_POLYMORPHIC_SUPPORTED_TYPES_2(CXXOperatorCallExpr, FunctionDecl)>
-hasOverloadedOperatorName(const StringRef Name) {
+hasOverloadedOperatorName(StringRef Name) {
   return internal::PolymorphicMatcherWithParam1<
       internal::HasOverloadedOperatorNameMatcher, StringRef,
       AST_POLYMORPHIC_SUPPORTED_TYPES_2(CXXOperatorCallExpr, FunctionDecl)>(

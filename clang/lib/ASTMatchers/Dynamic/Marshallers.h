@@ -473,7 +473,7 @@ private:
   template <typename FromTypeList>
   inline void collect(FromTypeList);
 
-  const StringRef Name;
+  StringRef Name;
   std::vector<MatcherDescriptor *> &Out;
 };
 

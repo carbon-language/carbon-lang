@@ -111,7 +111,7 @@ llvm::MemoryBuffer *ContentCache::getBuffer(DiagnosticsEngine &Diag,
   // that we are in an inconsistent situation and error out as quickly as
   // possible.
   if (!Buffer.getPointer()) {
-    const StringRef FillStr("<<<MISSING SOURCE FILE>>>\n");
+    StringRef FillStr("<<<MISSING SOURCE FILE>>>\n");
     Buffer.setPointer(MemoryBuffer::getNewMemBuffer(ContentsEntry->getSize(),
                                                     "<invalid>").release());
     char *Ptr = const_cast<char*>(Buffer.getPointer()->getBufferStart());

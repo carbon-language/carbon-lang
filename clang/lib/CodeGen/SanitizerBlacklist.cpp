@@ -31,7 +31,7 @@ static StringRef GetGlobalTypeString(const llvm::GlobalValue &G) {
 }
 
 bool SanitizerBlacklist::isIn(const llvm::Module &M,
-                              const StringRef Category) const {
+                              StringRef Category) const {
   return SCL->inSection("src", M.getModuleIdentifier(), Category);
 }
 
@@ -41,7 +41,7 @@ bool SanitizerBlacklist::isIn(const llvm::Function &F) const {
 }
 
 bool SanitizerBlacklist::isIn(const llvm::GlobalVariable &G,
-                              const StringRef Category) const {
+                              StringRef Category) const {
   return isIn(*G.getParent(), Category) ||
          SCL->inSection("global", G.getName(), Category) ||
          SCL->inSection("type", GetGlobalTypeString(G), Category);

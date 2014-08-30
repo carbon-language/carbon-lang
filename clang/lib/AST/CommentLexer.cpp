@@ -362,7 +362,7 @@ void Lexer::lexCommentText(Token &T) {
           }
         }
 
-        const StringRef CommandName(BufferPtr + 1, Length);
+        StringRef CommandName(BufferPtr + 1, Length);
 
         const CommandInfo *Info = Traits.getCommandInfoOrNULL(CommandName);
         if (!Info) {
@@ -531,7 +531,7 @@ void Lexer::lexVerbatimLineText(Token &T) {
 
   // Extract current line.
   const char *Newline = findNewline(BufferPtr, CommentEnd);
-  const StringRef Text(BufferPtr, Newline - BufferPtr);
+  StringRef Text(BufferPtr, Newline - BufferPtr);
   formTokenWithChars(T, Newline, tok::verbatim_line_text);
   T.setVerbatimLineText(Text);
 

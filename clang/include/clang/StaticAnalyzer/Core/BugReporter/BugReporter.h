@@ -179,9 +179,9 @@ public:
 
   const ExplodedNode *getErrorNode() const { return ErrorNode; }
 
-  const StringRef getDescription() const { return Description; }
+  StringRef getDescription() const { return Description; }
 
-  const StringRef getShortDescription(bool UseFallback = true) const {
+  StringRef getShortDescription(bool UseFallback = true) const {
     if (ShortDescription.empty() && UseFallback)
       return Description;
     return ShortDescription;

@@ -378,7 +378,7 @@ public:
 
   VariableKind kind() const { return static_cast<VariableKind>(Flags); }
 
-  const StringRef name() const { return Name; }
+  StringRef name() const { return Name; }
   const clang::ValueDecl *clangDecl() const { return Cvdecl; }
 
   // Returns the definition (for let vars) or type (for parameter & self vars)

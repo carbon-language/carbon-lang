@@ -1637,7 +1637,7 @@ void Clang::AddHexagonTargetArgs(const ArgList &Args,
 }
 
 // Decode AArch64 features from string like +[no]featureA+[no]featureB+...
-static bool DecodeAArch64Features(const Driver &D, const StringRef &text,
+static bool DecodeAArch64Features(const Driver &D, StringRef text,
                                   std::vector<const char *> &Features) {
   SmallVector<StringRef, 8> Split;
   text.split(Split, StringRef("+"), -1, false);
@@ -2134,7 +2134,7 @@ static void addProfileRT(
 }
 
 static SmallString<128> getSanitizerRTLibName(const ToolChain &TC,
-                                              const StringRef Sanitizer,
+                                              StringRef Sanitizer,
                                               bool Shared) {
   // Sanitizer runtime has name "libclang_rt.<Sanitizer>-<ArchName>.{a,so}"
   // (or "libclang_rt.<Sanitizer>-<ArchName>-android.so for Android)
@@ -2150,7 +2150,7 @@ static SmallString<128> getSanitizerRTLibName(const ToolChain &TC,
 
 static void addSanitizerRTLinkFlags(const ToolChain &TC, const ArgList &Args,
                                     ArgStringList &CmdArgs,
-                                    const StringRef Sanitizer,
+                                    StringRef Sanitizer,
                                     bool ExportSymbols, bool LinkDeps) {
   SmallString<128> LibSanitizer =
       getSanitizerRTLibName(TC, Sanitizer, /*Shared*/ false);
@@ -7765,7 +7765,7 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
 static void addSanitizerRTWindows(const ToolChain &TC, const ArgList &Args,
                                   ArgStringList &CmdArgs,
-                                  const StringRef RTName) {
+                                  StringRef RTName) {
   SmallString<128> LibSanitizer(getCompilerRTLibDir(TC));
   llvm::sys::path::append(LibSanitizer,
                           Twine("clang_rt.") + RTName + ".lib");
@@ -7863,7 +7863,7 @@ static std::string FindFallback(const char *FallbackName,
   llvm::SplitString(OptPath.getValue(), PathSegments, EnvPathSeparatorStr);
 
   for (size_t i = 0, e = PathSegments.size(); i != e; ++i) {
-    const StringRef &PathSegment = PathSegments[i];
+    StringRef PathSegment = PathSegments[i];
     if (PathSegment.empty())
       continue;
 

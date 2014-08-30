@@ -615,7 +615,7 @@ bool ObjCPropertyOpBuilder::findSetter(bool warn) {
     if (setter->isPropertyAccessor() && warn)
       if (const ObjCInterfaceDecl *IFace =
           dyn_cast<ObjCInterfaceDecl>(setter->getDeclContext())) {
-        const StringRef thisPropertyName(prop->getName());
+        StringRef thisPropertyName = prop->getName();
         // Try flipping the case of the first character.
         char front = thisPropertyName.front();
         front = isLowercase(front) ? toUppercase(front) : toLowercase(front);
