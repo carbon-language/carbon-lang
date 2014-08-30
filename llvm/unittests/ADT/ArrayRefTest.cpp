@@ -63,4 +63,14 @@ TEST(ArrayRefTest, EmptyEquals) {
   EXPECT_TRUE(ArrayRef<unsigned>() == ArrayRef<unsigned>());
 }
 
+TEST(ArrayRefTest, ConstConvert) {
+  int buf[4];
+  for (int i = 0; i < 4; ++i)
+    buf[i] = i;
+
+  static int *A[] = {&buf[0], &buf[1], &buf[2], &buf[3]};
+  ArrayRef<const int *> a((ArrayRef<int *>(A)));
+  a = ArrayRef<int *>(A);
+}
+
 } // end anonymous namespace
