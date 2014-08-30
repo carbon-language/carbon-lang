@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-codegen-isl %vector-opt -dce -S < %s | FileCheck %s
+; RUN: opt %loadPolly -basicaa -polly-codegen-isl %vector-opt -dce -S < %s | FileCheck %s
 
 ;#define N 1024
 ;float A[N];

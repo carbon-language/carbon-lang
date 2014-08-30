@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze %s
+; RUN: opt %loadPolly -polly-cloog -analyze %s
 
 ;int bar1();
 ;int bar2();

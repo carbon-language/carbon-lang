@@ -1,7 +1,7 @@
-; RUN: opt %loadPolly %defaultOpts -polly-cloog -polly-codegen -enable-polly-openmp -analyze  < %s | FileCheck %s
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -polly-codegen -enable-polly-openmp -analyze  < %s | FileCheck -check-prefix=IMPORT %s
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -polly-codegen -enable-polly-openmp -analyze  < %s | FileCheck -check-prefix=IMPORT %s
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-postfix=tiled -polly-import-jscop-dir=%S -polly-cloog -polly-codegen -enable-polly-openmp -analyze -disable-polly-legality < %s | FileCheck -check-prefix=TILED %s
+; RUN: opt %loadPolly -basicaa -polly-cloog -polly-codegen -enable-polly-openmp -analyze  < %s | FileCheck %s
+; RUN: opt %loadPolly -basicaa -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -polly-codegen -enable-polly-openmp -analyze  < %s | FileCheck -check-prefix=IMPORT %s
+; RUN: opt %loadPolly -basicaa -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -polly-codegen -enable-polly-openmp -analyze  < %s | FileCheck -check-prefix=IMPORT %s
+; RUN: opt %loadPolly -basicaa -polly-import-jscop -polly-import-jscop-postfix=tiled -polly-import-jscop-dir=%S -polly-cloog -polly-codegen -enable-polly-openmp -analyze -disable-polly-legality < %s | FileCheck -check-prefix=TILED %s
 
 ;#define M 1024
 ;#define N 1024

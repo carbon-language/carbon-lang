@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze  -S < %s | FileCheck %s
-; RUN: opt %loadPolly %defaultOpts -polly-codegen < %s
+; RUN: opt %loadPolly -polly-cloog -analyze  -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen < %s
 
 ;#define N 20
 ;#include "limits.h"

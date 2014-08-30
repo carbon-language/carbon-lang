@@ -39,7 +39,6 @@ if config.link_polly_into_tools == '' or \
 else:
     config.substitutions.append(('%loadPolly', ''))
 
-config.substitutions.append(('%defaultOpts', ' -basicaa -polly-prepare'))
 config.substitutions.append(('%polybenchOpts', ' -O3 -loop-simplify -indvars '))
 config.substitutions.append(('%vector-opt', '-polly-vectorizer=polly'))
 

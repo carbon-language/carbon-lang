@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-codegen -enable-polly-openmp -analyze < %s 2>&1 | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen -enable-polly-openmp -analyze < %s 2>&1 | FileCheck %s
 
 ;#define N 500000
 ;float A[N];

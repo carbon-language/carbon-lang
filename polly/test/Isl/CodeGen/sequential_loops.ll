@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-ast -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-ast -analyze < %s | FileCheck %s
 
 ;#include <string.h>
 ;#define N 1024

@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-cloog -polly-codegen -enable-polly-openmp -analyze  < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-cloog -polly-codegen -enable-polly-openmp -analyze  < %s | FileCheck %s
 
 ;#define M 1024
 ;#define N 1024
