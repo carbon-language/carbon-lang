@@ -720,7 +720,7 @@ private:
     llvm_unreachable("invalid mode");
   }
 
-  virtual bool OmitRegisterFromClobberLists(unsigned RegNo) override;
+  bool OmitRegisterFromClobberLists(unsigned RegNo) override;
 
   /// doSrcDstMatch - Returns true if operands are matching in their
   /// word size (%si and %di, %esi and %edi, etc.). Order depends on

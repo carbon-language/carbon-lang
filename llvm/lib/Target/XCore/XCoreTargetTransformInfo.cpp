@@ -43,17 +43,17 @@ public:
     initializeXCoreTTIPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void initializePass() override {
+  void initializePass() override {
     pushTTIStack(this);
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     TargetTransformInfo::getAnalysisUsage(AU);
   }
 
   static char ID;
 
-  virtual void *getAdjustedAnalysisPointer(const void *ID) override {
+  void *getAdjustedAnalysisPointer(const void *ID) override {
     if (ID == &TargetTransformInfo::ID)
       return (TargetTransformInfo*)this;
     return this;

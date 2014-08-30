@@ -35,7 +35,7 @@ public:
 
   bool runOnMachineFunction(MachineFunction &MF);
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "NVPTX Replace Image Handles";
   }
 private:

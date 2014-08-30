@@ -40,14 +40,14 @@ public:
     initializeSILowerI1CopiesPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF) override;
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-  virtual const char *getPassName() const override {
+  const char *getPassName() const override {
     return "SI Lower il Copies";
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
-  AU.addRequired<MachineDominatorTree>();
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<MachineDominatorTree>();
     AU.setPreservesCFG();
     MachineFunctionPass::getAnalysisUsage(AU);
   }

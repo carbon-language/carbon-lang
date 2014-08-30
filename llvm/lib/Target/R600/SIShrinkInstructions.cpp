@@ -45,13 +45,13 @@ public:
   SIShrinkInstructions() : MachineFunctionPass(ID) {
   }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF) override;
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-  virtual const char *getPassName() const override {
+  const char *getPassName() const override {
     return "SI Shrink Instructions";
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     MachineFunctionPass::getAnalysisUsage(AU);
   }

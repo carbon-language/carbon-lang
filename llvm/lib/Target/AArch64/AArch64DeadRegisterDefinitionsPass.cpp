@@ -37,11 +37,11 @@ public:
   static char ID; // Pass identification, replacement for typeid.
   explicit AArch64DeadRegisterDefinitions() : MachineFunctionPass(ID) {}
 
-  virtual bool runOnMachineFunction(MachineFunction &F) override;
+  bool runOnMachineFunction(MachineFunction &F) override;
 
   const char *getPassName() const override { return "Dead register definitions"; }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     MachineFunctionPass::getAnalysisUsage(AU);
   }

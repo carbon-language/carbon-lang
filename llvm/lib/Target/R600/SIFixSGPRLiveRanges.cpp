@@ -40,13 +40,13 @@ public:
     initializeSIFixSGPRLiveRangesPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF) override;
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-  virtual const char *getPassName() const override {
+  const char *getPassName() const override {
     return "SI Fix SGPR live ranges";
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<LiveIntervals>();
     AU.addPreserved<LiveIntervals>();
     AU.addPreserved<SlotIndexes>();

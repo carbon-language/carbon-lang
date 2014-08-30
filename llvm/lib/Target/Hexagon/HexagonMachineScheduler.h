@@ -101,7 +101,7 @@ public:
 
   /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
   /// time to do some work.
-  virtual void schedule() override;
+  void schedule() override;
   /// Perform platform-specific DAG postprocessing.
   void postprocessDAG();
 };
@@ -209,15 +209,15 @@ public:
     : DAG(nullptr), SchedModel(nullptr), Top(TopQID, "TopQ"),
       Bot(BotQID, "BotQ") {}
 
-  virtual void initialize(ScheduleDAGMI *dag) override;
+  void initialize(ScheduleDAGMI *dag) override;
 
-  virtual SUnit *pickNode(bool &IsTopNode) override;
+  SUnit *pickNode(bool &IsTopNode) override;
 
-  virtual void schedNode(SUnit *SU, bool IsTopNode) override;
+  void schedNode(SUnit *SU, bool IsTopNode) override;
 
-  virtual void releaseTopNode(SUnit *SU) override;
+  void releaseTopNode(SUnit *SU) override;
 
-  virtual void releaseBottomNode(SUnit *SU) override;
+  void releaseBottomNode(SUnit *SU) override;
 
   unsigned ReportPackets() {
     return Top.ResourceModel->getTotalPackets() +

@@ -76,10 +76,10 @@ class PPCHazardRecognizer970 : public ScheduleHazardRecognizer {
 
 public:
   PPCHazardRecognizer970(const ScheduleDAG &DAG);
-  virtual HazardType getHazardType(SUnit *SU, int Stalls) override;
-  virtual void EmitInstruction(SUnit *SU) override;
-  virtual void AdvanceCycle() override;
-  virtual void Reset() override;
+  HazardType getHazardType(SUnit *SU, int Stalls) override;
+  void EmitInstruction(SUnit *SU) override;
+  void AdvanceCycle() override;
+  void Reset() override;
 
 private:
   /// EndDispatchGroup - Called when we are finishing a new dispatch group.

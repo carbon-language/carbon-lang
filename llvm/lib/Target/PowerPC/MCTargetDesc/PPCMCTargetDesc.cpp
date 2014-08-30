@@ -129,10 +129,10 @@ public:
   void emitMachine(StringRef CPU) override {
     OS << "\t.machine " << CPU << '\n';
   }
-  virtual void emitAbiVersion(int AbiVersion) override {
+  void emitAbiVersion(int AbiVersion) override {
     OS << "\t.abiversion " << AbiVersion << '\n';
   }
-  virtual void emitLocalEntry(MCSymbol *S, const MCExpr *LocalOffset) {
+  void emitLocalEntry(MCSymbol *S, const MCExpr *LocalOffset) override {
     OS << "\t.localentry\t" << *S << ", " << *LocalOffset << '\n';
   }
 };
@@ -143,7 +143,7 @@ public:
   MCELFStreamer &getStreamer() {
     return static_cast<MCELFStreamer &>(Streamer);
   }
-  virtual void emitTCEntry(const MCSymbol &S) override {
+  void emitTCEntry(const MCSymbol &S) override {
     // Creates a R_PPC64_TOC relocation
     Streamer.EmitSymbolValue(&S, 8);
   }
@@ -151,14 +151,14 @@ public:
     // FIXME: Is there anything to do in here or does this directive only
     // limit the parser?
   }
-  virtual void emitAbiVersion(int AbiVersion) override {
+  void emitAbiVersion(int AbiVersion) override {
     MCAssembler &MCA = getStreamer().getAssembler();
     unsigned Flags = MCA.getELFHeaderEFlags();
     Flags &= ~ELF::EF_PPC64_ABI;
     Flags |= (AbiVersion & ELF::EF_PPC64_ABI);
     MCA.setELFHeaderEFlags(Flags);
   }
-  virtual void emitLocalEntry(MCSymbol *S, const MCExpr *LocalOffset) {
+  void emitLocalEntry(MCSymbol *S, const MCExpr *LocalOffset) override {
     MCAssembler &MCA = getStreamer().getAssembler();
     MCSymbolData &Data = getStreamer().getOrCreateSymbolData(S);
 
@@ -196,10 +196,10 @@ public:
     // FIXME: We should update the CPUType, CPUSubType in the Object file if
     // the new values are different from the defaults.
   }
-  virtual void emitAbiVersion(int AbiVersion) override {
+  void emitAbiVersion(int AbiVersion) override {
     llvm_unreachable("Unknown pseudo-op: .abiversion");
   }
-  virtual void emitLocalEntry(MCSymbol *S, const MCExpr *LocalOffset) {
+  void emitLocalEntry(MCSymbol *S, const MCExpr *LocalOffset) override {
     llvm_unreachable("Unknown pseudo-op: .localentry");
   }
 };

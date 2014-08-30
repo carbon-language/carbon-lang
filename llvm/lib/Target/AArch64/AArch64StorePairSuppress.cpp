@@ -39,7 +39,7 @@ public:
   static char ID;
   AArch64StorePairSuppress() : MachineFunctionPass(ID) {}
 
-  virtual const char *getPassName() const override {
+  const char *getPassName() const override {
     return "AArch64 Store Pair Suppression";
   }
 
@@ -50,7 +50,7 @@ private:
 
   bool isNarrowFPStore(const MachineInstr &MI);
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     AU.addRequired<MachineTraceMetrics>();
     AU.addPreserved<MachineTraceMetrics>();
