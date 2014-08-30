@@ -75,7 +75,7 @@
 ;  return 0;
 ;}
 
-; RUN: opt %loadPolly -basicaa -polly-codegen -disable-output %s
+; RUN: opt %loadPolly -basicaa -polly-codegen -disable-output < %s
 ; RUN: opt %loadPolly -basicaa -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -analyze  < %s | FileCheck -check-prefix=IMPORT %s
 ; RUN: opt %loadPolly -basicaa -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=valid_reverse -polly-cloog -analyze < %s | FileCheck -check-prefix=REVERSE %s > /dev/null
 ; RUN: opt %loadPolly -basicaa -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=invalid_reverse -polly-cloog -analyze < %s 2>&1  | FileCheck -check-prefix=INVALID %s > /dev/null

@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-opt-isl -analyze -polly-no-tiling=0 -polly-ast -polly-tile-sizes=1,64 %s
+; RUN: opt %loadPolly -polly-opt-isl -analyze -polly-no-tiling=0 -polly-ast -polly-tile-sizes=1,64 < %s
 ; CHECK: c0 += 1
 ; CHECK: c1 += 64
 ; CHECK: c1 <= c1 + 63
