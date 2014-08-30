@@ -936,10 +936,10 @@ static size_t visitUDivOperand(Value *Op0, Value *Op1, const BinaryOperator &I,
     return 0;
 
   if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
-    if (size_t LHSIdx = visitUDivOperand(Op0, SI->getOperand(1), I, Actions))
-      if (visitUDivOperand(Op0, SI->getOperand(2), I, Actions)) {
-        Actions.push_back(UDivFoldAction((FoldUDivOperandCb)nullptr, Op1,
-                                         LHSIdx-1));
+    if (size_t LHSIdx =
+            visitUDivOperand(Op0, SI->getOperand(1), I, Actions, Depth))
+      if (visitUDivOperand(Op0, SI->getOperand(2), I, Actions, Depth)) {
+        Actions.push_back(UDivFoldAction(nullptr, Op1, LHSIdx - 1));
         return Actions.size();
       }
 
