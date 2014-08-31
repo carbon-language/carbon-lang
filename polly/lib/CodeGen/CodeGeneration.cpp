@@ -789,7 +789,7 @@ void ClastStmtCodeGen::codegenForGPGPU(const clast_for *F) {
   // fixed later.
   Function *FN = Builder.GetInsertBlock()->getParent();
   for (Value *BaseAddr : Values)
-    for (BasicBlock *BB: *FN)
+    for (BasicBlock *BB : *FN)
       for (Instruction *Inst : *BB)
         Inst->replaceUsesOfWith(BaseAddr, ValueMap[BaseAddr]);
   Builder.SetInsertPoint(AfterLoop);
