@@ -478,9 +478,8 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
   if (IVS) {
     assert(u->substitutions && "Substitutions expected!");
     int i = 0;
-    for (std::vector<Value *>::iterator II = IVS->begin(), IE = IVS->end();
-         II != IE; ++II) {
-      ClastVars[iterator] = *II;
+    for (Value *IV : *IVS) {
+      ClastVars[iterator] = IV;
       codegenSubstitutions(u->substitutions, Statement, i, &VectorMap, &VLTS);
       i++;
     }
@@ -562,9 +561,8 @@ SetVector<Value *> ClastStmtCodeGen::getOMPValues(const clast_stmt *Body) {
   SetVector<Value *> Values;
 
   // The clast variables
-  for (CharMapT::iterator I = ClastVars.begin(), E = ClastVars.end(); I != E;
-       I++)
-    Values.insert(I->second);
+  for (auto I : ClastVars)
+    Values.insert(I.second);
 
   // Find the temporaries that are referenced in the clast statements'
   // basic blocks but are not defined by these blocks (e.g., references
@@ -573,9 +571,7 @@ SetVector<Value *> ClastStmtCodeGen::getOMPValues(const clast_stmt *Body) {
   ParameterVisitor Params;
   Params.visit(Body);
 
-  for (ParameterVisitor::const_iterator PI = Params.begin(), PE = Params.end();
-       PI != PE; ++PI) {
-    Value *V = *PI;
+  for (Value *V : Params) {
     Values.insert(V);
     DEBUG(dbgs() << "Adding temporary for OMP copy-in: " << *V << "\n");
   }
@@ -587,19 +583,16 @@ void
 ClastStmtCodeGen::updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap) {
   std::set<Value *> Inserted;
 
-  for (CharMapT::iterator I = ClastVars.begin(), E = ClastVars.end(); I != E;
-       I++) {
-    ClastVars[I->first] = VMap[I->second];
-    Inserted.insert(I->second);
+  for (auto I : ClastVars) {
+    ClastVars[I.first] = VMap[I.second];
+    Inserted.insert(I.second);
   }
 
-  for (OMPGenerator::ValueToValueMapTy::iterator I = VMap.begin(),
-                                                 E = VMap.end();
-       I != E; ++I) {
-    if (Inserted.count(I->first))
+  for (auto I : VMap) {
+    if (Inserted.count(I.first))
       continue;
 
-    ValueMap[I->first] = I->second;
+    ValueMap[I.first] = I.second;
   }
 }
 
@@ -609,9 +602,8 @@ static void clearDomtree(Function *F, DominatorTree &DT) {
   for (po_iterator<DomTreeNode *> I = po_begin(N), E = po_end(N); I != E; ++I)
     Nodes.push_back(I->getBlock());
 
-  for (std::vector<BasicBlock *>::iterator I = Nodes.begin(), E = Nodes.end();
-       I != E; ++I)
-    DT.eraseNode(*I);
+  for (BasicBlock *BB : Nodes)
+    DT.eraseNode(BB);
 }
 
 void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
@@ -796,13 +788,10 @@ void ClastStmtCodeGen::codegenForGPGPU(const clast_for *F) {
   // following codes to avoid affecting other parts of Polly. This should be
   // fixed later.
   Function *FN = Builder.GetInsertBlock()->getParent();
-  for (unsigned j = 0; j < Values.size(); j++) {
-    Value *baseAddr = Values[j];
-    for (Function::iterator B = FN->begin(); B != FN->end(); ++B) {
-      for (BasicBlock::iterator I = B->begin(); I != B->end(); ++I)
-        I->replaceUsesOfWith(baseAddr, ValueMap[baseAddr]);
-    }
-  }
+  for (Value *BaseAddr : Values)
+    for (BasicBlock *BB: *FN)
+      for (Instruction *Inst : *BB)
+        Inst->replaceUsesOfWith(BaseAddr, ValueMap[BaseAddr]);
   Builder.SetInsertPoint(AfterLoop);
   PTXGen.setLaunchingParameters(NumIterations[0], NumIterations[1],
                                 NumIterations[2], NumIterations[3]);
@@ -1071,10 +1060,8 @@ public:
   }
 
   virtual void printScop(raw_ostream &OS) const {
-    for (std::vector<std::string>::const_iterator PI = ParallelLoops.begin(),
-                                                  PE = ParallelLoops.end();
-         PI != PE; ++PI)
-      OS << "Parallel loop with iterator '" << *PI << "' generated\n";
+    for (auto PI : ParallelLoops)
+      OS << "Parallel loop with iterator '" << PI << "' generated\n";
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
