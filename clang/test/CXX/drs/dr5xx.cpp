@@ -511,6 +511,7 @@ namespace dr546 { // dr546: yes
   template<typename T> void A<T>::f() { T::error; }
 }
 
+#if !defined(_M_IX86) // This is incompatible to attribute(thiscall).
 namespace dr547 { // d547: yes
   template<typename T> struct X;
   template<typename T> struct X<T() const> {};
@@ -519,6 +520,7 @@ namespace dr547 { // d547: yes
   struct S { void f() const; };
   X<void() const> x = f(&S::f);
 }
+#endif
 
 namespace dr548 { // dr548: dup 482
   template<typename T> struct S {};
