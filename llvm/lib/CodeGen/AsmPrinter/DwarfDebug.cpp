@@ -597,14 +597,14 @@ std::unique_ptr<DIE> DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
                          ScopesWithImportedEntities.end(),
                          std::pair<const MDNode *, const MDNode *>(DS, nullptr),
                          less_first());
-    if (Children.empty() && Range.first == Range.second)
+    for (ImportedEntityMap::const_iterator i = Range.first; i != Range.second;
+         ++i)
+      Children.push_back(
+          constructImportedEntityDIE(TheCU, DIImportedEntity(i->second)));
+    if (Children.empty())
       return nullptr;
     ScopeDIE = constructLexicalScopeDIE(TheCU, Scope);
     assert(ScopeDIE && "Scope DIE should not be null.");
-    for (ImportedEntityMap::const_iterator i = Range.first; i != Range.second;
-         ++i)
-      ScopeDIE->addChild(
-          constructImportedEntityDIE(TheCU, DIImportedEntity(i->second)));
   }
 
   // Add children
