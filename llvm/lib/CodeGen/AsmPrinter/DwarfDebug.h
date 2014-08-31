@@ -508,11 +508,8 @@ class DwarfDebug : public AsmPrinterHandler {
   DwarfCompileUnit &constructDwarfCompileUnit(DICompileUnit DIUnit);
 
   /// \brief Construct imported_module or imported_declaration DIE.
-  void constructImportedEntityDIE(DwarfCompileUnit &TheCU, const MDNode *N);
-
-  /// \brief Construct import_module DIE.
-  void constructImportedEntityDIE(DwarfCompileUnit &TheCU, const MDNode *N,
-                                  DIE &Context);
+  void constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
+                                        const MDNode *N);
 
   /// \brief Construct import_module DIE.
   std::unique_ptr<DIE>

@@ -603,7 +603,8 @@ std::unique_ptr<DIE> DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
     assert(ScopeDIE && "Scope DIE should not be null.");
     for (ImportedEntityMap::const_iterator i = Range.first; i != Range.second;
          ++i)
-      constructImportedEntityDIE(TheCU, i->second, *ScopeDIE);
+      ScopeDIE->addChild(
+          constructImportedEntityDIE(TheCU, DIImportedEntity(i->second)));
   }
 
   // Add children
@@ -683,19 +684,12 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   return NewCU;
 }
 
-void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
-                                            const MDNode *N) {
+void DwarfDebug::constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
+                                                  const MDNode *N) {
   DIImportedEntity Module(N);
   assert(Module.Verify());
   if (DIE *D = TheCU.getOrCreateContextDIE(Module.getContext()))
     D->addChild(constructImportedEntityDIE(TheCU, Module));
-}
-
-void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
-                                            const MDNode *N, DIE &Context) {
-  DIImportedEntity Module(N);
-  assert(Module.Verify());
-  Context.addChild(constructImportedEntityDIE(TheCU, Module));
 }
 
 std::unique_ptr<DIE>
@@ -785,7 +779,7 @@ void DwarfDebug::beginModule() {
     // Emit imported_modules last so that the relevant context is already
     // available.
     for (unsigned i = 0, e = ImportedEntities.getNumElements(); i != e; ++i)
-      constructImportedEntityDIE(CU, ImportedEntities.getElement(i));
+      constructAndAddImportedEntityDIE(CU, ImportedEntities.getElement(i));
   }
 
   // Tell MMI that we have debug info.
