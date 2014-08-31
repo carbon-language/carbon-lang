@@ -346,9 +346,7 @@ bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
 
   // We don't create a DIE if we have a single Range and the end label
   // is null.
-  SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin();
-  MCSymbol *End = getLabelAfterInsn(RI->second);
-  return !End;
+  return !getLabelAfterInsn(Ranges.front().second);
 }
 
 static void addSectionLabel(AsmPrinter &Asm, DwarfUnit &U, DIE &D,
