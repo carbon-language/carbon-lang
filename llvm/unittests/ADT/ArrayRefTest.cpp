@@ -13,6 +13,23 @@
 #include "gtest/gtest.h"
 using namespace llvm;
 
+// Check that the ArrayRef-of-pointer converting constructor only allows adding
+// cv qualifiers (not removing them, or otherwise changing the type)
+static_assert(
+    std::is_convertible<ArrayRef<int *>, ArrayRef<const int *>>::value,
+    "Adding const");
+static_assert(
+    std::is_convertible<ArrayRef<int *>, ArrayRef<volatile int *>>::value,
+    "Adding volatile");
+static_assert(!std::is_convertible<ArrayRef<int *>, ArrayRef<float *>>::value,
+              "Changing pointer of one type to a pointer of another");
+static_assert(
+    !std::is_convertible<ArrayRef<const int *>, ArrayRef<int *>>::value,
+    "Removing const");
+static_assert(
+    !std::is_convertible<ArrayRef<volatile int *>, ArrayRef<int *>>::value,
+    "Removing volatile");
+
 namespace llvm {
 
 TEST(ArrayRefTest, AllocatorCopy) {
