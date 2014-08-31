@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -g -triple %itanium_abi_triple %s -o - | FileCheck %s
 // Test the various accessibility flags in the debug info.
 struct A {
   // CHECK-DAG: [ DW_TAG_subprogram ] [line [[@LINE+1]]] [pub_default]
