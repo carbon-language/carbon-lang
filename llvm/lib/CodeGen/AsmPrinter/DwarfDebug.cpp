@@ -458,26 +458,6 @@ DIE *DwarfDebug::createScopeChildrenDIE(
     SmallVectorImpl<std::unique_ptr<DIE>> &Children) {
   DIE *ObjectPointer = nullptr;
 
-  // Collect arguments for current function.
-  if (LScopes.isCurrentFunctionScope(Scope)) {
-    for (DbgVariable *ArgDV : CurrentFnArguments)
-      if (ArgDV)
-        Children.push_back(
-            constructVariableDIE(TheCU, *ArgDV, *Scope, ObjectPointer));
-
-    // If this is a variadic function, add an unspecified parameter.
-    DISubprogram SP(Scope->getScopeNode());
-    DITypeArray FnArgs = SP.getType().getTypeArray();
-    // If we have a single element of null, it is a function that returns void.
-    // If we have more than one elements and the last one is null, it is a
-    // variadic function.
-    if (FnArgs.getNumElements() > 1 &&
-        !FnArgs.getElement(FnArgs.getNumElements() - 1))
-      Children.push_back(
-          make_unique<DIE>(dwarf::DW_TAG_unspecified_parameters));
-  }
-
-  // Collect lexical scope children first.
   for (DbgVariable *DV : ScopeVariables.lookup(Scope))
     Children.push_back(constructVariableDIE(TheCU, *DV, *Scope, ObjectPointer));
 
@@ -487,16 +467,17 @@ DIE *DwarfDebug::createScopeChildrenDIE(
   return ObjectPointer;
 }
 
-void DwarfDebug::createAndAddScopeChildren(DwarfCompileUnit &TheCU,
+DIE *DwarfDebug::createAndAddScopeChildren(DwarfCompileUnit &TheCU,
                                            LexicalScope *Scope, DIE &ScopeDIE) {
   // We create children when the scope DIE is not null.
   SmallVector<std::unique_ptr<DIE>, 8> Children;
-  if (DIE *ObjectPointer = createScopeChildrenDIE(TheCU, Scope, Children))
-    TheCU.addDIEEntry(ScopeDIE, dwarf::DW_AT_object_pointer, *ObjectPointer);
+  DIE *ObjectPointer = createScopeChildrenDIE(TheCU, Scope, Children);
 
   // Add children
   for (auto &I : Children)
     ScopeDIE.addChild(std::move(I));
+
+  return ObjectPointer;
 }
 
 void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
@@ -535,7 +516,8 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
   SPCU.applySubprogramAttributesToDefinition(SP, *AbsDef);
 
   SPCU.addUInt(*AbsDef, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
-  createAndAddScopeChildren(SPCU, Scope, *AbsDef);
+  if (DIE *ObjectPointer = createAndAddScopeChildren(SPCU, Scope, *AbsDef))
+    SPCU.addDIEEntry(*AbsDef, dwarf::DW_AT_object_pointer, *ObjectPointer);
 }
 
 DIE &DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
@@ -551,7 +533,33 @@ DIE &DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
 
   DIE &ScopeDIE = updateSubprogramScopeDIE(TheCU, Sub);
 
-  createAndAddScopeChildren(TheCU, Scope, ScopeDIE);
+  // Collect arguments for current function.
+  assert(LScopes.isCurrentFunctionScope(Scope));
+  DIE *ObjectPointer = nullptr;
+  for (DbgVariable *ArgDV : CurrentFnArguments)
+    if (ArgDV)
+      ScopeDIE.addChild(
+          constructVariableDIE(TheCU, *ArgDV, *Scope, ObjectPointer));
+
+  // If this is a variadic function, add an unspecified parameter.
+  DITypeArray FnArgs = Sub.getType().getTypeArray();
+  // If we have a single element of null, it is a function that returns void.
+  // If we have more than one elements and the last one is null, it is a
+  // variadic function.
+  if (FnArgs.getNumElements() > 1 &&
+      !FnArgs.getElement(FnArgs.getNumElements() - 1))
+    ScopeDIE.addChild(make_unique<DIE>(dwarf::DW_TAG_unspecified_parameters));
+
+  // Collect lexical scope children first.
+  // ObjectPointer might be a local (non-argument) local variable if it's a
+  // block's synthetic this pointer.
+  if (DIE *BlockObjPtr = createAndAddScopeChildren(TheCU, Scope, ScopeDIE)) {
+    assert(!ObjectPointer && "multiple object pointers can't be described");
+    ObjectPointer = BlockObjPtr;
+  }
+
+  if (ObjectPointer)
+    TheCU.addDIEEntry(ScopeDIE, dwarf::DW_AT_object_pointer, *ObjectPointer);
 
   return ScopeDIE;
 }
