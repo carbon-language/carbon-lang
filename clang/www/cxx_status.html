@@ -28,8 +28,8 @@
 <p>Last updated: $Date$</p>
 
 <p>Clang fully implements all published ISO C++ standards including <a
-href="#cxx11">C++11</a>, as well as the upcoming standard provisionally named <a
-href="#cxx14">C++14</a>, and some parts of the fledgling <a
+href="#cxx11">C++11</a>, as well as the upcoming <a
+href="#cxx14">C++14</a> standard, and some parts of the fledgling <a
 href="#cxx17">C++1z</a> standard,
 and is considered a production-quality C++ compiler.
 
@@ -422,20 +422,21 @@ because changing <code>intmax_t</code> would be an ABI-incompatible
 change.</span>
 </p>
 
-<h2 id="cxx14">C++1y implementation status</h2>
+<h2 id="cxx14">C++14 implementation status</h2>
 
 <p>Clang 3.4 and later implement all of the Draft International Standard (see <a
 href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3797.pdf">most
 recent publicly available draft</a>)
-of the upcoming C++ language standard, provisionally named C++1y.  The following
-table describes the Clang version in which each feature became available.</p>
+of the upcoming C++14 language standard. The following table describes the
+Clang version in which each feature became available.</p>
 
-<p>You can use Clang in C++1y mode with the <code>-std=c++1y</code> option.</p>
+<p>You can use Clang in C++14 mode with the <code>-std=c++14</code> option
+(use <code>-std=c++1y</code> in Clang 3.4).</p>
 
 <table width="689" border="1" cellspacing="0">
  <tr>
     <th>Language Feature</th>
-    <th>C++1y Proposal</th>
+    <th>C++14 Proposal</th>
     <th>Available in Clang?</th>
  </tr>
     <tr>
@@ -507,7 +508,7 @@ table describes the Clang version in which each feature became available.</p>
 <h2 id="cxx17">C++1z implementation status</h2>
 
 <p>Clang has <b>highly experimental</b> support for some proposed features of
-the C++ standard following C++1y,
+the C++ standard following C++14,
 provisionally named C++1z.  The following table describes which C++1z features
 have been implemented in Clang and in which Clang version they became
 available.</p>
