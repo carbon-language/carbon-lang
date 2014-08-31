@@ -76,6 +76,9 @@ namespace polly {
 /// enough).
 class IslExprBuilder {
 public:
+  /// @brief A map from isl_ids to llvm::Values.
+  typedef std::map<isl_id *, llvm::Value *> IDToValueTy;
+
   /// @brief Construct an IslExprBuilder.
   ///
   /// @param Builder The IRBuilder used to construct the isl_ast_expr[ession].
@@ -86,8 +89,7 @@ public:
   ///                  variables (identified by an isl_id). The IDTOValue map
   ///                  specifies the LLVM-IR Values that correspond to these
   ///                  parameters and variables.
-  IslExprBuilder(PollyIRBuilder &Builder,
-                 std::map<isl_id *, llvm::Value *> &IDToValue)
+  IslExprBuilder(PollyIRBuilder &Builder, IDToValueTy &IDToValue)
       : Builder(Builder), IDToValue(IDToValue) {}
 
   /// @brief Create LLVM-IR for an isl_ast_expr[ession].

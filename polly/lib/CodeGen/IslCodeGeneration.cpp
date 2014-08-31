@@ -49,8 +49,6 @@
 #include "isl/map.h"
 #include "isl/aff.h"
 
-#include <map>
-
 using namespace polly;
 using namespace llvm;
 
@@ -81,7 +79,7 @@ private:
   // This maps an isl_id* to the Value* it has in the generated program. For now
   // on, the only isl_ids that are stored here are the newly calculated loop
   // ivs.
-  std::map<isl_id *, Value *> IDToValue;
+  IslExprBuilder::IDToValueTy IDToValue;
 
   // Extract the upper bound of this loop
   //
