@@ -688,22 +688,23 @@ void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
   DIImportedEntity Module(N);
   assert(Module.Verify());
   if (DIE *D = TheCU.getOrCreateContextDIE(Module.getContext()))
-    constructImportedEntityDIE(TheCU, Module, *D);
+    D->addChild(constructImportedEntityDIE(TheCU, Module));
 }
 
 void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
                                             const MDNode *N, DIE &Context) {
   DIImportedEntity Module(N);
   assert(Module.Verify());
-  return constructImportedEntityDIE(TheCU, Module, Context);
+  Context.addChild(constructImportedEntityDIE(TheCU, Module));
 }
 
-void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
-                                            const DIImportedEntity &Module,
-                                            DIE &Context) {
+std::unique_ptr<DIE>
+DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
+                                       const DIImportedEntity &Module) {
   assert(Module.Verify() &&
          "Use one of the MDNode * overloads to handle invalid metadata");
-  DIE &IMDie = TheCU.createAndAddDIE(Module.getTag(), Context, Module);
+  std::unique_ptr<DIE> IMDie = make_unique<DIE>((dwarf::Tag)Module.getTag());
+  TheCU.insertDIE(Module, IMDie.get());
   DIE *EntityDie;
   DIDescriptor Entity = resolve(Module.getEntity());
   if (Entity.isNameSpace())
@@ -714,13 +715,16 @@ void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
     EntityDie = TheCU.getOrCreateTypeDIE(DIType(Entity));
   else
     EntityDie = TheCU.getDIE(Entity);
-  TheCU.addSourceLine(IMDie, Module.getLineNumber(),
+  assert(EntityDie);
+  TheCU.addSourceLine(*IMDie, Module.getLineNumber(),
                       Module.getContext().getFilename(),
                       Module.getContext().getDirectory());
-  TheCU.addDIEEntry(IMDie, dwarf::DW_AT_import, *EntityDie);
+  TheCU.addDIEEntry(*IMDie, dwarf::DW_AT_import, *EntityDie);
   StringRef Name = Module.getName();
   if (!Name.empty())
-    TheCU.addString(IMDie, dwarf::DW_AT_name, Name);
+    TheCU.addString(*IMDie, dwarf::DW_AT_name, Name);
+
+  return IMDie;
 }
 
 // Emit all Dwarf sections that should come prior to the content. Create
