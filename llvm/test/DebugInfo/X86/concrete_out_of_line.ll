@@ -32,9 +32,6 @@
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK-NOT: NULL
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_TAG_lexical_block
-; CHECK-NOT: NULL
-; CHECK-NOT: DW_TAG
 ; CHECK: DW_TAG_inlined_subroutine
 ; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[ASSIGN:0x........]]}
 ; CHECK-NOT: NULL

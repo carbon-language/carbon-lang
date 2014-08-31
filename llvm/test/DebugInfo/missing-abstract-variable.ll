@@ -45,8 +45,6 @@
 ; CHECK-NOT: DW_TAG
 ; CHECK:     DW_AT_name {{.*}} "b"
 ; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK:     DW_TAG_lexical_block
-; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:       DW_TAG_lexical_block
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK: [[ABS_S:.*]]:       DW_TAG_variable
@@ -89,19 +87,12 @@
 ; CHECK-NOT: DW_TAG
 ; CHECK:       DW_AT_abstract_origin {{.*}} {[[ABS_B]]}
 
-; The two lexical blocks here are caused by the scope of the if that includes
-; the condition variable, and the scope within the if's composite statement. I'm
-; not sure we really need both of them since there's no variable declared in the
-; outer of the two
-
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:     DW_TAG_lexical_block
 ; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK:       DW_TAG_lexical_block
-; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK:         DW_TAG_variable
+; CHECK:       DW_TAG_variable
 ; CHECK-NOT: DW_TAG
-; CHECK:           DW_AT_abstract_origin {{.*}} {[[ABS_S]]}
+; CHECK:         DW_AT_abstract_origin {{.*}} {[[ABS_S]]}
 
 @t = external global i32
 

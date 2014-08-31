@@ -30,22 +30,18 @@
 ; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_name {{.*}} "fun4"
 ; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK:   DW_TAG_lexical_block
-; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK:     DW_TAG_inlined_subroutine
+; CHECK:   DW_TAG_inlined_subroutine
 ; CHECK-NOT: DW_TAG
-; CHECK:       DW_AT_abstract_origin {{.*}} {[[D1_ABS]]}
+; CHECK:     DW_AT_abstract_origin {{.*}} {[[D1_ABS]]}
 ; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK:       DW_TAG_formal_parameter
+; CHECK:     DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
-; CHECK:         DW_AT_abstract_origin {{.*}} {[[D1_THIS_ABS]]}
+; CHECK:       DW_AT_abstract_origin {{.*}} {[[D1_THIS_ABS]]}
 
 ; FIXME: D2 is actually inlined into D1 but doesn't show up here, possibly due
 ; to there being no work in D2 (calling another member function from the dtor
 ; causes D2 to show up, calling a free function doesn't).
 
-; CHECK-NOT: DW_TAG
-; CHECK:       NULL
 ; CHECK-NOT: DW_TAG
 ; CHECK:     NULL
 ; CHECK-NOT: DW_TAG

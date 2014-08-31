@@ -455,15 +455,21 @@ static std::unique_ptr<DIE> constructVariableDIE(DwarfCompileUnit &TheCU,
 
 DIE *DwarfDebug::createScopeChildrenDIE(
     DwarfCompileUnit &TheCU, LexicalScope *Scope,
-    SmallVectorImpl<std::unique_ptr<DIE>> &Children) {
+    SmallVectorImpl<std::unique_ptr<DIE>> &Children,
+    unsigned *ChildScopeCount) {
   DIE *ObjectPointer = nullptr;
 
   for (DbgVariable *DV : ScopeVariables.lookup(Scope))
     Children.push_back(constructVariableDIE(TheCU, *DV, *Scope, ObjectPointer));
 
+  unsigned ChildCountWithoutScopes = Children.size();
+
   for (LexicalScope *LS : Scope->getChildren())
-    if (std::unique_ptr<DIE> Nested = constructScopeDIE(TheCU, LS))
-      Children.push_back(std::move(Nested));
+    constructScopeDIE(TheCU, LS, Children);
+
+  if (ChildScopeCount)
+    *ChildScopeCount = Children.size() - ChildCountWithoutScopes;
+
   return ObjectPointer;
 }
 
@@ -565,10 +571,11 @@ DIE &DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
 }
 
 // Construct a DIE for this scope.
-std::unique_ptr<DIE> DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
-                                                   LexicalScope *Scope) {
+void DwarfDebug::constructScopeDIE(
+    DwarfCompileUnit &TheCU, LexicalScope *Scope,
+    SmallVectorImpl<std::unique_ptr<DIE>> &FinalChildren) {
   if (!Scope || !Scope->getScopeNode())
-    return nullptr;
+    return;
 
   DIScope DS(Scope->getScopeNode());
 
@@ -586,17 +593,19 @@ std::unique_ptr<DIE> DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
   if (Scope->getParent() && DS.isSubprogram()) {
     ScopeDIE = constructInlinedScopeDIE(TheCU, Scope);
     if (!ScopeDIE)
-      return nullptr;
+      return;
     // We create children when the scope DIE is not null.
     createScopeChildrenDIE(TheCU, Scope, Children);
   } else {
     // Early exit when we know the scope DIE is going to be null.
     if (isLexicalScopeDIENull(Scope))
-      return nullptr;
+      return;
+
+    unsigned ChildScopeCount;
 
     // We create children here when we know the scope DIE is not going to be
     // null and the children will be added to the scope DIE.
-    createScopeChildrenDIE(TheCU, Scope, Children);
+    createScopeChildrenDIE(TheCU, Scope, Children, &ChildScopeCount);
 
     // There is no need to emit empty lexical block DIE.
     std::pair<ImportedEntityMap::const_iterator,
@@ -609,8 +618,14 @@ std::unique_ptr<DIE> DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
          ++i)
       Children.push_back(
           constructImportedEntityDIE(TheCU, DIImportedEntity(i->second)));
-    if (Children.empty())
-      return nullptr;
+    // If there are only other scopes as children, put them directly in the
+    // parent instead, as this scope would serve no purpose.
+    if (Children.size() == ChildScopeCount) {
+      FinalChildren.insert(FinalChildren.end(),
+                           std::make_move_iterator(Children.begin()),
+                           std::make_move_iterator(Children.end()));
+      return;
+    }
     ScopeDIE = constructLexicalScopeDIE(TheCU, Scope);
     assert(ScopeDIE && "Scope DIE should not be null.");
   }
@@ -619,7 +634,7 @@ std::unique_ptr<DIE> DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
   for (auto &I : Children)
     ScopeDIE->addChild(std::move(I));
 
-  return ScopeDIE;
+  FinalChildren.push_back(std::move(ScopeDIE));
 }
 
 void DwarfDebug::addGnuPubAttributes(DwarfUnit &U, DIE &D) const {
