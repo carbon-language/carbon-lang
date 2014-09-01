@@ -265,6 +265,9 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool hasARM() const {
     return !(STI.getFeatureBits() & ARM::FeatureNoARM);
   }
+  bool hasThumb2DSP() const {
+    return STI.getFeatureBits() & ARM::FeatureDSPThumb2;
+  }
 
   void SwitchMode() {
     uint64_t FB = ComputeAvailableFeatures(STI.ToggleFeature(ARM::ModeThumb));
@@ -3928,9 +3931,6 @@ ARMAsmParser::parseMSRMaskOperand(OperandVector &Operands) {
       // should really only be allowed when writing a special register.  Note
       // they get dropped in the MRS instruction reading a special register as
       // the SYSm field is only 8 bits.
-      //
-      // FIXME: the _g and _nzcvqg versions are only allowed if the processor
-      // includes the DSP extension but that is not checked.
       .Case("apsr", 0x800)
       .Case("apsr_nzcvq", 0x800)
       .Case("apsr_g", 0x400)
@@ -3960,6 +3960,11 @@ ARMAsmParser::parseMSRMaskOperand(OperandVector &Operands) {
       .Default(~0U);
 
     if (FlagsVal == ~0U)
+      return MatchOperand_NoMatch;
+
+    if (!hasThumb2DSP() && (FlagsVal & 0x400))
+      // The _g and _nzcvqg versions are only valid if the DSP extension is
+      // available.
       return MatchOperand_NoMatch;
 
     if (!hasV7Ops() && FlagsVal >= 0x811 && FlagsVal <= 0x813)

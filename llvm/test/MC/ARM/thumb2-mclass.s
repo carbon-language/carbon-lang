@@ -1,7 +1,7 @@
-@ RUN: llvm-mc -triple=thumbv7m-apple-darwin -show-encoding < %s | FileCheck %s
-@ RUN: llvm-mc -triple=thumbv6m -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -triple=thumbv6m -show-encoding < %s | FileCheck --check-prefix=CHECK --check-prefix=CHECK-V6M %s
+@ RUN: llvm-mc -triple=thumbv7m -show-encoding < %s | FileCheck --check-prefix=CHECK --check-prefix=CHECK-V7M %s
+
   .syntax unified
-  .globl _func
 
 @ Check that the assembler can handle the documented syntax from the ARM ARM.
 @ These tests test instruction encodings specific to v6m & v7m (FeatureMClass).
@@ -40,20 +40,12 @@
 
         msr  apsr, r0
         msr  apsr_nzcvq, r0
-        msr  apsr_g, r0
-        msr  apsr_nzcvqg, r0
         msr  iapsr, r0
         msr  iapsr_nzcvq, r0
-        msr  iapsr_g, r0
-        msr  iapsr_nzcvqg, r0
         msr  eapsr, r0
         msr  eapsr_nzcvq, r0
-        msr  eapsr_g, r0
-        msr  eapsr_nzcvqg, r0
         msr  xpsr, r0
         msr  xpsr_nzcvq, r0
-        msr  xpsr_g, r0
-        msr  xpsr_nzcvqg, r0
         msr  ipsr, r0
         msr  epsr, r0
         msr  iepsr, r0
@@ -62,22 +54,22 @@
         msr  primask, r0
         msr  control, r0
 
-@ CHECK: msr	apsr, r0                @ encoding: [0x80,0xf3,0x00,0x88]
-@ CHECK: msr	apsr, r0                @ encoding: [0x80,0xf3,0x00,0x88]
-@ CHECK: msr	apsr_g, r0              @ encoding: [0x80,0xf3,0x00,0x84]
-@ CHECK: msr	apsr_nzcvqg, r0         @ encoding: [0x80,0xf3,0x00,0x8c]
-@ CHECK: msr	iapsr, r0               @ encoding: [0x80,0xf3,0x01,0x88]
-@ CHECK: msr	iapsr, r0               @ encoding: [0x80,0xf3,0x01,0x88]
-@ CHECK: msr	iapsr_g, r0             @ encoding: [0x80,0xf3,0x01,0x84]
-@ CHECK: msr	iapsr_nzcvqg, r0        @ encoding: [0x80,0xf3,0x01,0x8c]
-@ CHECK: msr	eapsr, r0               @ encoding: [0x80,0xf3,0x02,0x88]
-@ CHECK: msr	eapsr, r0               @ encoding: [0x80,0xf3,0x02,0x88]
-@ CHECK: msr	eapsr_g, r0             @ encoding: [0x80,0xf3,0x02,0x84]
-@ CHECK: msr	eapsr_nzcvqg, r0        @ encoding: [0x80,0xf3,0x02,0x8c]
-@ CHECK: msr	xpsr, r0                @ encoding: [0x80,0xf3,0x03,0x88]
-@ CHECK: msr	xpsr, r0                @ encoding: [0x80,0xf3,0x03,0x88]
-@ CHECK: msr	xpsr_g, r0              @ encoding: [0x80,0xf3,0x03,0x84]
-@ CHECK: msr	xpsr_nzcvqg, r0         @ encoding: [0x80,0xf3,0x03,0x8c]
+@ CHECK-V6M: msr	apsr, r0                @ encoding: [0x80,0xf3,0x00,0x88]
+@ CHECK-V6M: msr	apsr, r0                @ encoding: [0x80,0xf3,0x00,0x88]
+@ CHECK-V6M: msr	iapsr, r0               @ encoding: [0x80,0xf3,0x01,0x88]
+@ CHECK-V6M: msr	iapsr, r0               @ encoding: [0x80,0xf3,0x01,0x88]
+@ CHECK-V6M: msr	eapsr, r0               @ encoding: [0x80,0xf3,0x02,0x88]
+@ CHECK-V6M: msr	eapsr, r0               @ encoding: [0x80,0xf3,0x02,0x88]
+@ CHECK-V6M: msr	xpsr, r0                @ encoding: [0x80,0xf3,0x03,0x88]
+@ CHECK-V6M: msr	xpsr, r0                @ encoding: [0x80,0xf3,0x03,0x88]
+@ CHECK-V7M: msr	apsr_nzcvq, r0          @ encoding: [0x80,0xf3,0x00,0x88]
+@ CHECK-V7M: msr	apsr_nzcvq, r0          @ encoding: [0x80,0xf3,0x00,0x88]
+@ CHECK-V7M: msr	iapsr_nzcvq, r0         @ encoding: [0x80,0xf3,0x01,0x88]
+@ CHECK-V7M: msr	iapsr_nzcvq, r0         @ encoding: [0x80,0xf3,0x01,0x88]
+@ CHECK-V7M: msr	eapsr_nzcvq, r0         @ encoding: [0x80,0xf3,0x02,0x88]
+@ CHECK-V7M: msr	eapsr_nzcvq, r0         @ encoding: [0x80,0xf3,0x02,0x88]
+@ CHECK-V7M: msr	xpsr_nzcvq, r0          @ encoding: [0x80,0xf3,0x03,0x88]
+@ CHECK-V7M: msr	xpsr_nzcvq, r0          @ encoding: [0x80,0xf3,0x03,0x88]
 @ CHECK: msr	ipsr, r0                @ encoding: [0x80,0xf3,0x05,0x88]
 @ CHECK: msr	epsr, r0                @ encoding: [0x80,0xf3,0x06,0x88]
 @ CHECK: msr	iepsr, r0               @ encoding: [0x80,0xf3,0x07,0x88]

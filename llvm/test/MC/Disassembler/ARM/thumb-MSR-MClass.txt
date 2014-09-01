@@ -1,4 +1,4 @@
-# RUN: llvm-mc --disassemble %s -triple=thumbv7-apple-darwin9 -mcpu cortex-m4 | FileCheck %s
+# RUN: llvm-mc --disassemble %s -triple=thumbv7em | FileCheck %s
 
 #------------------------------------------------------------------------------
 # MRS
@@ -39,7 +39,7 @@
 # MSR
 #------------------------------------------------------------------------------
 
-# CHECK: msr apsr, r0
+# CHECK: msr apsr_nzcvq, r0
 # CHECK: msr apsr_g, r0
 # CHECK: msr apsr_nzcvqg, r0
 
@@ -47,7 +47,7 @@
 0x80 0xf3 0x00 0x84
 0x80 0xf3 0x00 0x8c
 
-# CHECK: msr iapsr, r0
+# CHECK: msr iapsr_nzcvq, r0
 # CHECK: msr iapsr_g, r0
 # CHECK: msr iapsr_nzcvqg, r0
 
@@ -55,7 +55,7 @@
 0x80 0xf3 0x01 0x84
 0x80 0xf3 0x01 0x8c
 
-# CHECK: msr eapsr, r0
+# CHECK: msr eapsr_nzcvq, r0
 # CHECK: msr eapsr_g, r0
 # CHECK: msr eapsr_nzcvqg, r0
 
@@ -63,7 +63,7 @@
 0x80 0xf3 0x02 0x84
 0x80 0xf3 0x02 0x8c
 
-# CHECK: msr xpsr, r0
+# CHECK: msr xpsr_nzcvq, r0
 # CHECK: msr xpsr_g, r0
 # CHECK: msr xpsr_nzcvqg, r0
 

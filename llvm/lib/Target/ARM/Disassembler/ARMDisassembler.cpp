@@ -3976,6 +3976,7 @@ static DecodeStatus DecodeInstSyncBarrierOption(MCInst &Inst, unsigned Val,
 
 static DecodeStatus DecodeMSRMask(MCInst &Inst, unsigned Val,
                           uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
   uint64_t FeatureBits = ((const MCDisassembler*)Decoder)->getSubtargetInfo()
                                                           .getFeatureBits();
   if (FeatureBits & ARM::FeatureMClass) {
@@ -4006,17 +4007,25 @@ static DecodeStatus DecodeMSRMask(MCInst &Inst, unsigned Val,
       return MCDisassembler::Fail;
     }
 
-    // The ARMv7-M architecture has an additional 2-bit mask value in the MSR
-    // instruction (bits {11,10}). The mask is used only with apsr, iapsr,
-    // eapsr and xpsr, it has to be 0b10 in other cases. Bit mask{1} indicates
-    // if the NZCVQ bits should be moved by the instruction. Bit mask{0}
-    // indicates the move for the GE{3:0} bits, the mask{0} bit can be set
-    // only if the processor includes the DSP extension.
-    if ((FeatureBits & ARM::HasV7Ops) && Inst.getOpcode() == ARM::t2MSR_M) {
-      unsigned Mask = (Val >> 10) & 3;
-      if (Mask == 0 || (Mask != 2 && ValLow > 3) ||
-          (!(FeatureBits & ARM::FeatureDSPThumb2) && Mask == 1))
-        return MCDisassembler::Fail;
+    if (Inst.getOpcode() == ARM::t2MSR_M) {
+      unsigned Mask = fieldFromInstruction(Val, 10, 2);
+      if (!(FeatureBits & ARM::HasV7Ops)) {
+        // The ARMv6-M MSR bits {11-10} can be only 0b10, other values are
+        // unpredictable.
+        if (Mask != 2)
+          S = MCDisassembler::SoftFail;
+      }
+      else {
+        // The ARMv7-M architecture stores an additional 2-bit mask value in
+        // MSR bits {11-10}. The mask is used only with apsr, iapsr, eapsr and
+        // xpsr, it has to be 0b10 in other cases. Bit mask{1} indicates if
+        // the NZCVQ bits should be moved by the instruction. Bit mask{0}
+        // indicates the move for the GE{3:0} bits, the mask{0} bit can be set
+        // only if the processor includes the DSP extension.
+        if (Mask == 0 || (Mask != 2 && ValLow > 3) ||
+            (!(FeatureBits & ARM::FeatureDSPThumb2) && (Mask & 1)))
+          S = MCDisassembler::SoftFail;
+      }
     }
   } else {
     // A/R class
@@ -4024,7 +4033,7 @@ static DecodeStatus DecodeMSRMask(MCInst &Inst, unsigned Val,
       return MCDisassembler::Fail;
   }
   Inst.addOperand(MCOperand::CreateImm(Val));
-  return MCDisassembler::Success;
+  return S;
 }
 
 static DecodeStatus DecodeBankedReg(MCInst &Inst, unsigned Val,
