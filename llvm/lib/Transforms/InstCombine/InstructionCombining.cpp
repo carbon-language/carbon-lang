@@ -1508,19 +1508,50 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         GetElementPtrInst::Create(Src->getOperand(0), Indices, GEP.getName());
   }
 
-  // Canonicalize (gep i8* X, -(ptrtoint Y)) to (sub (ptrtoint X), (ptrtoint Y))
-  // The GEP pattern is emitted by the SCEV expander for certain kinds of
-  // pointer arithmetic.
-  if (DL && GEP.getNumIndices() == 1 &&
-      match(GEP.getOperand(1), m_Neg(m_PtrToInt(m_Value())))) {
+  if (DL && GEP.getNumIndices() == 1) {
     unsigned AS = GEP.getPointerAddressSpace();
-    if (GEP.getType() == Builder->getInt8PtrTy(AS) &&
-        GEP.getOperand(1)->getType()->getScalarSizeInBits() ==
+    if (GEP.getOperand(1)->getType()->getScalarSizeInBits() ==
         DL->getPointerSizeInBits(AS)) {
-      Operator *Index = cast<Operator>(GEP.getOperand(1));
-      Value *PtrToInt = Builder->CreatePtrToInt(PtrOp, Index->getType());
-      Value *NewSub = Builder->CreateSub(PtrToInt, Index->getOperand(1));
-      return CastInst::Create(Instruction::IntToPtr, NewSub, GEP.getType());
+      Type *PtrTy = GEP.getPointerOperandType();
+      Type *Ty = PtrTy->getPointerElementType();
+      uint64_t TyAllocSize = DL->getTypeAllocSize(Ty);
+
+      bool Matched = false;
+      uint64_t C;
+      Value *V = nullptr;
+      if (TyAllocSize == 1) {
+        V = GEP.getOperand(1);
+        Matched = true;
+      } else if (match(GEP.getOperand(1),
+                       m_AShr(m_Value(V), m_ConstantInt(C)))) {
+        if (TyAllocSize == 1ULL << C)
+          Matched = true;
+      } else if (match(GEP.getOperand(1),
+                       m_SDiv(m_Value(V), m_ConstantInt(C)))) {
+        if (TyAllocSize == C)
+          Matched = true;
+      }
+
+      if (Matched) {
+        // Canonicalize (gep i8* X, -(ptrtoint Y))
+        // to (inttoptr (sub (ptrtoint X), (ptrtoint Y)))
+        // The GEP pattern is emitted by the SCEV expander for certain kinds of
+        // pointer arithmetic.
+        if (match(V, m_Neg(m_PtrToInt(m_Value())))) {
+          Operator *Index = cast<Operator>(V);
+          Value *PtrToInt = Builder->CreatePtrToInt(PtrOp, Index->getType());
+          Value *NewSub = Builder->CreateSub(PtrToInt, Index->getOperand(1));
+          return CastInst::Create(Instruction::IntToPtr, NewSub, GEP.getType());
+        }
+        // Canonicalize (gep i8* X, (ptrtoint Y)-(ptrtoint X))
+        // to (bitcast Y)
+        Value *Y;
+        if (match(V, m_Sub(m_PtrToInt(m_Value(Y)),
+                           m_PtrToInt(m_Specific(GEP.getOperand(0)))))) {
+          return CastInst::CreatePointerBitCastOrAddrSpaceCast(Y,
+                                                               GEP.getType());
+        }
+      }
     }
   }
 
