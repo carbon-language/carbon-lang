@@ -740,11 +740,9 @@ bool MicrosoftCXXABI::EmitBadCastCall(CodeGenFunction &CGF) {
   return false;
 }
 
-llvm::Value *
-MicrosoftCXXABI::GetVirtualBaseClassOffset(CodeGenFunction &CGF,
-                                           llvm::Value *This,
-                                           const CXXRecordDecl *ClassDecl,
-                                           const CXXRecordDecl *BaseClassDecl) {
+llvm::Value *MicrosoftCXXABI::GetVirtualBaseClassOffset(
+    CodeGenFunction &CGF, llvm::Value *This, const CXXRecordDecl *ClassDecl,
+    const CXXRecordDecl *BaseClassDecl) {
   int64_t VBPtrChars =
       getContext().getASTRecordLayout(ClassDecl).getVBPtrOffset().getQuantity();
   llvm::Value *VBPtrOffset = llvm::ConstantInt::get(CGM.PtrDiffTy, VBPtrChars);
@@ -753,12 +751,12 @@ MicrosoftCXXABI::GetVirtualBaseClassOffset(CodeGenFunction &CGF,
       IntSize *
       CGM.getMicrosoftVTableContext().getVBTableIndex(ClassDecl, BaseClassDecl);
   llvm::Value *VBTableOffset =
-    llvm::ConstantInt::get(CGM.IntTy, VBTableChars.getQuantity());
+      llvm::ConstantInt::get(CGM.IntTy, VBTableChars.getQuantity());
 
   llvm::Value *VBPtrToNewBase =
-    GetVBaseOffsetFromVBPtr(CGF, This, VBPtrOffset, VBTableOffset);
+      GetVBaseOffsetFromVBPtr(CGF, This, VBPtrOffset, VBTableOffset);
   VBPtrToNewBase =
-    CGF.Builder.CreateSExtOrBitCast(VBPtrToNewBase, CGM.PtrDiffTy);
+      CGF.Builder.CreateSExtOrBitCast(VBPtrToNewBase, CGM.PtrDiffTy);
   return CGF.Builder.CreateNSWAdd(VBPtrOffset, VBPtrToNewBase);
 }
 
