@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "DwarfException.h"
+#include "Win64Exception.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
