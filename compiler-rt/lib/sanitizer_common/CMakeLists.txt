@@ -28,7 +28,6 @@ set(SANITIZER_SOURCES
   sanitizer_symbolizer_win.cc
   sanitizer_tls_get_addr.cc
   sanitizer_thread_registry.cc
-  sanitizer_unwind_posix.cc
   sanitizer_win.cc)
 
 set(SANITIZER_LIBCDEP_SOURCES
@@ -40,7 +39,8 @@ set(SANITIZER_LIBCDEP_SOURCES
   sanitizer_stacktrace_libcdep.cc
   sanitizer_stoptheworld_linux_libcdep.cc
   sanitizer_symbolizer_libcdep.cc
-  sanitizer_symbolizer_posix_libcdep.cc)
+  sanitizer_symbolizer_posix_libcdep.cc
+  sanitizer_unwind_posix_libcdep.cc)
 
 # Explicitly list all sanitizer_common headers. Not all of these are
 # included in sanitizer_common source files, but we need to depend on

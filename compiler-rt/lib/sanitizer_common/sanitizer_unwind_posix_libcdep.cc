@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
-
+#if SANITIZER_POSIX
 #include "sanitizer_common.h"
 #include "sanitizer_stacktrace.h"
 
@@ -149,3 +149,5 @@ void StackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
 }
 
 }  // namespace __sanitizer
+
+#endif  // SANITIZER_POSIX
