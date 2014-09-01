@@ -25,6 +25,10 @@
 #include "sanitizer_atomic.h"
 #include "sanitizer_symbolizer.h"
 
+#if SANITIZER_ANDROID
+#include <dlfcn.h>  // for dlsym()
+#endif
+
 #include <pthread.h>
 #include <signal.h>
 #include <sys/resource.h>
