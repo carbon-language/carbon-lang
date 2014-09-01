@@ -1685,6 +1685,7 @@ namespace __tsan {
 
 static void CallUserSignalHandler(ThreadState *thr, bool sync, bool sigact,
     int sig, my_siginfo_t *info, void *uctx) {
+  Acquire(thr, 0, (uptr)&sigactions[sig]);
   // Ensure that the handler does not spoil errno.
   const int saved_errno = errno;
   errno = 99;
@@ -1822,6 +1823,7 @@ TSAN_INTERCEPTOR(int, sigaction, int sig, sigaction_t *act, sigaction_t *old) {
     else
       newact.sa_handler = rtl_sighandler;
   }
+  ReleaseStore(thr, pc, (uptr)&sigactions[sig]);
   int res = REAL(sigaction)(sig, &newact, 0);
   return res;
 }
