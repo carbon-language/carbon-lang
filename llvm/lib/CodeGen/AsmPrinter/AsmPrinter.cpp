@@ -244,7 +244,12 @@ bool AsmPrinter::doInitialization(Module &M) {
     ES = new ARMException(this);
     break;
   case ExceptionHandling::WinEH:
-    ES = new Win64Exception(this);
+    switch (MAI->getWinEHEncodingType()) {
+    default: llvm_unreachable("unsupported unwinding information encoding");
+    case WinEH::EncodingType::Itanium:
+      ES = new Win64Exception(this);
+      break;
+    }
     break;
   }
   if (ES)
