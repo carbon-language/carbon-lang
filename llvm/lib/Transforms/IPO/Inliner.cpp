@@ -16,6 +16,7 @@
 #include "llvm/Transforms/IPO/InlinerPass.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/InlineCost.h"
 #include "llvm/IR/CallSite.h"
@@ -74,6 +75,7 @@ Inliner::Inliner(char &ID, int Threshold, bool InsertLifetime)
 /// the call graph.  If the derived class implements this method, it should
 /// always explicitly call the implementation here.
 void Inliner::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<AliasAnalysis>();
   CallGraphSCCPass::getAnalysisUsage(AU);
 }
 
@@ -442,6 +444,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
   const TargetLibraryInfo *TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
+  AliasAnalysis *AA = &getAnalysis<AliasAnalysis>();
 
   SmallPtrSet<Function*, 8> SCCFunctions;
   DEBUG(dbgs() << "Inliner visiting SCC:");
@@ -500,7 +503,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
 
   
   InlinedArrayAllocasTy InlinedArrayAllocas;
-  InlineFunctionInfo InlineInfo(&CG, DL);
+  InlineFunctionInfo InlineInfo(&CG, DL, AA);
   
   // Now that we have all of the call sites, loop over them and inline them if
   // it looks profitable to do so.

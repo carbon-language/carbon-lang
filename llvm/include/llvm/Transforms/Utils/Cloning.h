@@ -43,6 +43,7 @@ class DataLayout;
 class Loop;
 class LoopInfo;
 class AllocaInst;
+class AliasAnalysis;
 
 /// CloneModule - Return an exact copy of the specified module
 ///
@@ -157,13 +158,16 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
 /// InlineFunction call, and records the auxiliary results produced by it.
 class InlineFunctionInfo {
 public:
-  explicit InlineFunctionInfo(CallGraph *cg = nullptr, const DataLayout *DL = nullptr)
-    : CG(cg), DL(DL) {}
+  explicit InlineFunctionInfo(CallGraph *cg = nullptr,
+                              const DataLayout *DL = nullptr,
+                              AliasAnalysis *AA = nullptr)
+    : CG(cg), DL(DL), AA(AA) {}
 
   /// CG - If non-null, InlineFunction will update the callgraph to reflect the
   /// changes it makes.
   CallGraph *CG;
   const DataLayout *DL;
+  AliasAnalysis *AA;
 
   /// StaticAllocas - InlineFunction fills this in with all static allocas that
   /// get copied into the caller.

@@ -394,7 +394,7 @@ static void CloneAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap) {
 /// parameters with noalias metadata specifying the new scope, and tag all
 /// non-derived loads, stores and memory intrinsics with the new alias scopes.
 static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
-                                  const DataLayout *DL) {
+                                  const DataLayout *DL, AliasAnalysis *AA) {
   if (!EnableNoAliasConversion)
     return;
 
@@ -458,6 +458,7 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
       if (!NI)
         continue;
 
+      bool IsArgMemOnlyCall = false, IsFuncCall = false;
       SmallVector<const Value *, 2> PtrArgs;
 
       if (const LoadInst *LI = dyn_cast<LoadInst>(I))
@@ -477,22 +478,27 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
         if (ICS.doesNotAccessMemory())
           continue;
 
+        IsFuncCall = true;
+        if (AA) {
+          AliasAnalysis::ModRefBehavior MRB = AA->getModRefBehavior(ICS);
+          if (MRB == AliasAnalysis::OnlyAccessesArgumentPointees ||
+              MRB == AliasAnalysis::OnlyReadsArgumentPointees)
+            IsArgMemOnlyCall = true;
+        }
+
         for (ImmutableCallSite::arg_iterator AI = ICS.arg_begin(),
-             AE = ICS.arg_end(); AI != AE; ++AI)
+             AE = ICS.arg_end(); AI != AE; ++AI) {
           // We need to check the underlying objects of all arguments, not just
           // the pointer arguments, because we might be passing pointers as
           // integers, etc.
-          // FIXME: If we know that the call only accesses pointer arguments,
+          // However, if we know that the call only accesses pointer arguments,
           // then we only need to check the pointer arguments.
-          PtrArgs.push_back(*AI);
-      }
+          if (IsArgMemOnlyCall && !(*AI)->getType()->isPointerTy())
+            continue;
 
-      bool IsFuncCall = isa<CallInst>(I) || isa<InvokeInst>(I);
-      // FIXME: We should have a way to access the
-      // IntrReadArgMem/IntrReadWriteArgMem properties of intrinsics, and we
-      // should have a way to determine that for regular functions too. For
-      // now, just do this for the memory intrinsics we understand.
-      bool IsArgMemOnlyCall = isa<MemIntrinsic>(I);
+          PtrArgs.push_back(*AI);
+        }
+      }
 
       // If we found no pointers, then this instruction is not suitable for
       // pairing with an instruction to receive aliasing metadata.
@@ -975,7 +981,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
     CloneAliasScopeMetadata(CS, VMap);
 
     // Add noalias metadata if necessary.
-    AddAliasScopeMetadata(CS, VMap, IFI.DL);
+    AddAliasScopeMetadata(CS, VMap, IFI.DL, IFI.AA);
   }
 
   // If there are any alloca instructions in the block that used to be the entry
