@@ -55,6 +55,12 @@ void NamedParameterCheck::check(const MatchFinder::MatchResult &Result) {
     if (!Parm->getName().empty())
       continue;
 
+    // Don't warn on the dummy argument on post-inc and post-dec operators.
+    if ((Function->getOverloadedOperator() == OO_PlusPlus ||
+         Function->getOverloadedOperator() == OO_MinusMinus) &&
+        Parm->getType()->isSpecificBuiltinType(BuiltinType::Int))
+      continue;
+
     // Sanity check the source locations.
     if (!Parm->getLocation().isValid() || Parm->getLocation().isMacroID() ||
         !SM.isWrittenInSameFile(Parm->getLocStart(), Parm->getLocation()))
