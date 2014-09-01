@@ -12231,13 +12231,9 @@ static SDValue LowerFABS(SDValue Op, SelectionDAG &DAG) {
     EltVT = VT.getVectorElementType();
     NumElts = VT.getVectorNumElements();
   }
-  Constant *C;
-  if (EltVT == MVT::f64)
-    C = ConstantFP::get(*Context, APFloat(APFloat::IEEEdouble,
-                                          APInt(64, ~(1ULL << 63))));
-  else
-    C = ConstantFP::get(*Context, APFloat(APFloat::IEEEsingle,
-                                          APInt(32, ~(1U << 31))));
+
+  unsigned EltBits = EltVT.getSizeInBits();
+  Constant *C = ConstantInt::get(*Context, APInt::getSignedMaxValue(EltBits));
   C = ConstantVector::getSplat(NumElts, C);
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   SDValue CPIdx = DAG.getConstantPool(C, TLI.getPointerTy());
@@ -12266,13 +12262,9 @@ static SDValue LowerFNEG(SDValue Op, SelectionDAG &DAG) {
     EltVT = VT.getVectorElementType();
     NumElts = VT.getVectorNumElements();
   }
-  Constant *C;
-  if (EltVT == MVT::f64)
-    C = ConstantFP::get(*Context, APFloat(APFloat::IEEEdouble,
-                                          APInt(64, 1ULL << 63)));
-  else
-    C = ConstantFP::get(*Context, APFloat(APFloat::IEEEsingle,
-                                          APInt(32, 1U << 31)));
+  
+  unsigned EltBits = EltVT.getSizeInBits();
+  Constant *C = ConstantInt::get(*Context, APInt::getSignBit(EltBits));
   C = ConstantVector::getSplat(NumElts, C);
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   SDValue CPIdx = DAG.getConstantPool(C, TLI.getPointerTy());
