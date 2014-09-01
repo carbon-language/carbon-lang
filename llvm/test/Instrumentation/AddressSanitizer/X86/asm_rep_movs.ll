@@ -8,33 +8,17 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK-NEXT: testq %rcx, %rcx
 ; CHECK-NEXT: je [[B:.*]]
 
-; CHECK: leaq -128(%rsp), %rsp
-; CHECK-NEXT: pushq %rax
-; CHECK-NEXT: pushq %rdx
-; CHECK-NEXT: pushq %rbx
-; CHECK-NEXT: pushfq
+; CHECK: leaq (%rsi), {{.*}}
+; CHECK: callq __asan_report_load1@PLT
 
-; CHECK: leaq (%rsi), %rdx
-; CHECK: movq %rdx, %rdi
-; CHECK-NEXT: callq __asan_report_load1@PLT
+; CHECK: leaq -1(%rsi,%rcx), {{.*}}
+; CHECK: callq __asan_report_load1@PLT
 
-; CHECK: leaq -1(%rsi,%rcx), %rdx
-; CHECK: movq %rdx, %rdi
-; CHECK-NEXT: callq __asan_report_load1@PLT
+; CHECK: leaq (%rdi), {{.*}}
+; CHECK: callq __asan_report_store1@PLT
 
-; CHECK: leaq (%rdi), %rdx
-; CHECK: movq %rdx, %rdi
-; CHECK-NEXT: callq __asan_report_store1@PLT
-
-; CHECK: leaq -1(%rdi,%rcx), %rdx
-; CHECK: movq %rdx, %rdi
-; CHECK-NEXT: callq __asan_report_store1@PLT
-
-; CHECK: popfq
-; CHECK-NEXT: popq %rbx
-; CHECK-NEXT: popq %rdx
-; CHECK-NEXT: popq %rax
-; CHECK-NEXT: leaq 128(%rsp), %rsp
+; CHECK: leaq -1(%rdi,%rcx), {{.*}}
+; CHECK: callq __asan_report_store1@PLT
 
 ; CHECK: [[B]]:
 ; CHECK-NEXT: popfq
@@ -54,21 +38,17 @@ entry:
 ; CHECK-NEXT: testq %rcx, %rcx
 ; CHECK-NEXT: je [[Q:.*]]
 
-; CHECK: leaq (%rsi), %rdx
-; CHECK: movq %rdx, %rdi
-; CHECK-NEXT: callq __asan_report_load8@PLT
+; CHECK: leaq (%rsi), {{.*}}
+; CHECK: callq __asan_report_load8@PLT
 
-; CHECK: leaq -1(%rsi,%rcx,8), %rdx
-; CHECK: movq %rdx, %rdi
-; CHECK-NEXT: callq __asan_report_load8@PLT
+; CHECK: leaq -1(%rsi,%rcx,8), {{.*}}
+; CHECK: callq __asan_report_load8@PLT
 
-; CHECK: leaq (%rdi), %rdx
-; CHECK: movq %rdx, %rdi
-; CHECK-NEXT: callq __asan_report_store8@PLT
+; CHECK: leaq (%rdi), {{.*}}
+; CHECK: callq __asan_report_store8@PLT
 
-; CHECK: leaq -1(%rdi,%rcx,8), %rdx
-; CHECK: movq %rdx, %rdi
-; CHECK-NEXT: callq __asan_report_store8@PLT
+; CHECK: leaq -1(%rdi,%rcx,8), {{.*}}
+; CHECK: callq __asan_report_store8@PLT
 
 ; CHECK: [[Q]]:
 ; CHECK-NEXT: popfq

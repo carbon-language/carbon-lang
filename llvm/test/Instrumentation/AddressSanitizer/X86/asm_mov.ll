@@ -6,8 +6,8 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK-LABEL: mov1b
 ; CHECK: leaq -128(%rsp), %rsp
 ; CHECK-NEXT: pushq %rax
-; CHECK-NEXT: pushq %rdi
 ; CHECK-NEXT: pushq %rcx
+; CHECK-NEXT: pushq %rdi
 ; CHECK-NEXT: pushfq
 ; CHECK-NEXT: leaq {{.*}}, %rdi
 ; CHECK-NEXT: movq %rdi, %rax
@@ -26,8 +26,8 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK-NEXT: callq __asan_report_load1@PLT
 ; CHECK-NEXT: [[A]]:
 ; CHECK-NEXT: popfq
-; CHECK-NEXT: popq %rcx
 ; CHECK-NEXT: popq %rdi
+; CHECK-NEXT: popq %rcx
 ; CHECK-NEXT: popq %rax
 ; CHECK-NEXT: leaq 128(%rsp), %rsp
 
@@ -81,10 +81,8 @@ entry:
 ; CHECK-LABEL: mov8b
 ; CHECK: leaq -128(%rsp), %rsp
 ; CHECK-NEXT: pushq %rax
-; CHECK-NEXT: pushq %rdi
 ; CHECK-NEXT: pushfq
-; CHECK-NEXT: leaq {{.*}}, %rdi
-; CHECK-NEXT: movq %rdi, %rax
+; CHECK-NEXT: leaq {{.*}}, %rax
 ; CHECK-NEXT: shrq $3, %rax
 ; CHECK-NEXT: cmpb $0, 2147450880(%rax)
 ; CHECK-NEXT: je [[A:.*]]
@@ -94,16 +92,13 @@ entry:
 ; CHECK-NEXT: callq __asan_report_load8@PLT
 ; CHECK-NEXT: [[A]]:
 ; CHECK-NEXT: popfq
-; CHECK-NEXT: popq %rdi
 ; CHECK-NEXT: popq %rax
 ; CHECK-NEXT: leaq 128(%rsp), %rsp
 
 ; CHECK: leaq -128(%rsp), %rsp
 ; CHECK-NEXT: pushq %rax
-; CHECK-NEXT: pushq %rdi
 ; CHECK-NEXT: pushfq
-; CHECK-NEXT: leaq {{.*}}, %rdi
-; CHECK-NEXT: movq %rdi, %rax
+; CHECK-NEXT: leaq {{.*}}, %rax
 ; CHECK-NEXT: shrq $3, %rax
 ; CHECK-NEXT: cmpb $0, 2147450880(%rax)
 ; CHECK-NEXT: je [[A:.*]]
@@ -113,7 +108,6 @@ entry:
 ; CHECK-NEXT: callq __asan_report_store8@PLT
 ; CHECK-NEXT: [[A]]:
 ; CHECK-NEXT: popfq
-; CHECK-NEXT: popq %rdi
 ; CHECK-NEXT: popq %rax
 ; CHECK-NEXT: leaq 128(%rsp), %rsp
 
