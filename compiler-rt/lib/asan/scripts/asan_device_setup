@@ -77,9 +77,19 @@ if [[ x$revert == xyes ]]; then
     $ADB root
     $ADB wait-for-device
     $ADB remount
-    $ADB shell mv /system/bin/app_process.real /system/bin/app_process
-    $ADB shell rm /system/bin/asanwrapper
-    $ADB shell rm /system/lib/$ASAN_RT
+
+    if ! $ADB shell readlink /system/bin/app_process | grep 'app_process' >&/dev/null; then
+        echo '>> Pre-L device detected.'
+        $ADB shell mv /system/bin/app_process.real /system/bin/app_process
+        $ADB shell rm /system/bin/asanwrapper
+        $ADB shell rm /system/lib/$ASAN_RT
+    else
+        $ADB shell rm /system/bin/app_process.wrap
+        $ADB shell rm /system/bin/asanwrapper
+        $ADB shell rm /system/lib/$ASAN_RT
+        $ADB shell rm /system/bin/app_process
+        $ADB shell ln -s /system/bin/app_process32 /system/bin/app_process
+    fi
 
     echo '>> Restarting shell'
     $ADB shell stop
@@ -105,7 +115,7 @@ elif [[ $(basename "$HERE") == "bin" ]]; then
 fi
 
 if [[ -z "$ASAN_RT_PATH" || ! -f "$ASAN_RT_PATH/$ASAN_RT" ]]; then
-    echo "ASan runtime library not found"
+    echo ">> ASan runtime library not found"
     exit 1
 fi
 
@@ -119,23 +129,28 @@ $ADB root
 $ADB wait-for-device
 $ADB remount
 
+if ! $ADB shell readlink /system/bin/app_process | grep 'app_process' >&/dev/null; then
+
+    if $ADB pull /system/bin/app_process.real /dev/null >&/dev/null; then
+        echo '>> Old-style ASan installation detected. Reverting.'
+        $ADB shell mv /system/bin/app_process.real /system/bin/app_process
+    fi
+
+    echo '>> Pre-L device detected. Setting up app_process symlink.'
+    $ADB shell mv /system/bin/app_process /system/bin/app_process32
+    $ADB shell ln -s /system/bin/app_process32 /system/bin/app_process
+fi
+
 echo '>> Copying files from the device'
-$ADB pull /system/bin/app_process "$TMPDIROLD"
-$ADB pull /system/bin/app_process.real "$TMPDIROLD" || true
+$ADB pull /system/bin/app_process.wrap "$TMPDIROLD" || true
 $ADB pull /system/bin/asanwrapper "$TMPDIROLD" || true
 $ADB pull /system/lib/libclang_rt.asan-arm-android.so "$TMPDIROLD" || true
 cp -r "$TMPDIROLD" "$TMPDIR"
 
-if ! [[ -f "$TMPDIR/app_process" ]]; then
-    echo "app_process missing???"
-    exit 1
-fi
-
-if [[ -f "$TMPDIR/app_process.real" ]]; then
-    echo "app_process.real exists, updating the wrapper"
+if [[ -f "$TMPDIR/app_process.wrap" ]]; then
+    echo ">> Previous installation detected"
 else
-    echo "app_process.real missing, new installation"
-    mv "$TMPDIR/app_process" "$TMPDIR/app_process.real"
+    echo ">> New installation"
 fi
 
 echo '>> Generating wrappers'
@@ -150,11 +165,11 @@ if [[ x$extra_options != x ]] ; then
 fi
 
 # Zygote wrapper.
-cat <<EOF >"$TMPDIR/app_process"
+cat <<EOF >"$TMPDIR/app_process.wrap"
 #!/system/bin/sh
 ASAN_OPTIONS=$ASAN_OPTIONS \\
 LD_PRELOAD=libclang_rt.asan-arm-android.so \\
-exec /system/bin/app_process.real \$@
+exec /system/bin/app_process32 \$@
 
 EOF
 
@@ -170,16 +185,20 @@ EOF
 if ! ( cd "$TMPDIRBASE" && diff -qr old/ new/ ) ; then
     echo '>> Pushing files to the device'
     $ADB push "$TMPDIR/$ASAN_RT" /system/lib/
-    $ADB push "$TMPDIR/app_process" /system/bin/app_process
-    $ADB push "$TMPDIR/app_process.real" /system/bin/app_process.real
+    $ADB push "$TMPDIR/app_process.wrap" /system/bin/app_process.wrap
     $ADB push "$TMPDIR/asanwrapper" /system/bin/asanwrapper
+
+    $ADB shell rm /system/bin/app_process
+    $ADB shell ln -s /system/bin/app_process.wrap /system/bin/app_process
+
     $ADB shell chown root.shell \
-        /system/bin/app_process \
-        /system/bin/app_process.real \
+        /system/lib/"$ASAN_RT" \
+        /system/bin/app_process.wrap \
         /system/bin/asanwrapper
+    $ADB shell chmod 644 \
+        /system/lib/"$ASAN_RT"
     $ADB shell chmod 755 \
-        /system/bin/app_process \
-        /system/bin/app_process.real \
+        /system/bin/app_process.wrap \
         /system/bin/asanwrapper
 
     echo '>> Restarting shell (asynchronous)'
