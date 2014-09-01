@@ -7,10 +7,12 @@ declare void @hey() #0
 
 define void @hello(i8* noalias nocapture %a, i8* noalias nocapture readonly %c, i8* nocapture %b) #1 {
 entry:
+  %l = alloca i8, i32 512, align 1
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* %b, i64 16, i32 16, i1 0)
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %b, i8* %c, i64 16, i32 16, i1 0)
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* %c, i64 16, i32 16, i1 0)
   call void @hey()
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %l, i8* %c, i64 16, i32 16, i1 0)
   ret void
 }
 
@@ -26,6 +28,7 @@ entry:
 ; CHECK:   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %b, i8* %c, i64 16, i32 16, i1 false) #0, !noalias !3
 ; CHECK:   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* %c, i64 16, i32 16, i1 false) #0, !alias.scope !5
 ; CHECK:   call void @hey() #0, !noalias !5
+; CHECK:   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.*}}, i8* %c, i64 16, i32 16, i1 false) #0, !noalias !3
 ; CHECK:   ret void
 ; CHECK: }
 

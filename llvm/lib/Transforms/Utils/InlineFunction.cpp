@@ -487,11 +487,18 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
           PtrArgs.push_back(*AI);
       }
 
+      bool IsFuncCall = isa<CallInst>(I) || isa<InvokeInst>(I);
+      // FIXME: We should have a way to access the
+      // IntrReadArgMem/IntrReadWriteArgMem properties of intrinsics, and we
+      // should have a way to determine that for regular functions too. For
+      // now, just do this for the memory intrinsics we understand.
+      bool IsArgMemOnlyCall = isa<MemIntrinsic>(I);
+
       // If we found no pointers, then this instruction is not suitable for
       // pairing with an instruction to receive aliasing metadata.
       // However, if this is a call, this we might just alias with none of the
       // noalias arguments.
-      if (PtrArgs.empty() && !isa<CallInst>(I) && !isa<InvokeInst>(I))
+      if (PtrArgs.empty() && !IsFuncCall)
         continue;
 
       // It is possible that there is only one underlying object, but you
@@ -520,21 +527,41 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
         bool IsNonPtrConst = isa<ConstantInt>(V) || isa<ConstantFP>(V) ||
                              isa<ConstantPointerNull>(V) ||
                              isa<ConstantDataVector>(V) || isa<UndefValue>(V);
-        if (!IsNonPtrConst &&
-            !isIdentifiedFunctionLocal(const_cast<Value*>(V))) {
+        if (IsNonPtrConst)
+          continue;
+
+        // If this is anything other than a noalias argument, then we cannot
+        // completely describe the aliasing properties using alias.scope
+        // metadata (and, thus, won't add any).
+        if (const Argument *A = dyn_cast<Argument>(V)) {
+          if (!A->hasNoAliasAttr())
+            UsesAliasingPtr = true;
+        } else {
           UsesAliasingPtr = true;
-          if (!isa<Argument>(V)) {
-            CanDeriveViaCapture = true;
-            break;
-          }
         }
+
+        // If this is not some identified function-local object (which cannot
+        // directly alias a noalias argument), or some other argument (which,
+        // by definition, also cannot alias a noalias argument), then we could
+        // alias a noalias argument that has been captured).
+        if (!isa<Argument>(V) &&
+            !isIdentifiedFunctionLocal(const_cast<Value*>(V)))
+          CanDeriveViaCapture = true;
       }
-  
+
+      // A function call can always get captured noalias pointers (via other
+      // parameters, globals, etc.).
+      if (IsFuncCall && !IsArgMemOnlyCall)
+        CanDeriveViaCapture = true;
+
       // First, we want to figure out all of the sets with which we definitely
       // don't alias. Iterate over all noalias set, and add those for which:
       //   1. The noalias argument is not in the set of objects from which we
       //      definitely derive.
       //   2. The noalias argument has not yet been captured.
+      // An arbitrary function that might load pointers could see captured
+      // noalias arguments via other noalias arguments or globals, and so we
+      // must always check for prior capture.
       for (const Argument *A : NoAliasArgs) {
         if (!ObjSet.count(A) && (!CanDeriveViaCapture ||
                                  // It might be tempting to skip the
@@ -565,13 +592,8 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
       // scopes to arbitrary functions unless we know they don't access any
       // non-parameter pointer-values.
       bool CanAddScopes = !UsesAliasingPtr;
-      if (CanAddScopes && (isa<CallInst>(I) || isa<InvokeInst>(I))) {
-        // FIXME: We should have a way to access the
-        // IntrReadArgMem/IntrReadWriteArgMem properties of intrinsics, and we
-        // should have a way to determine that for regular functions too. For
-        // now, just do this for the memory intrinsics we understand.
-        CanAddScopes = isa<MemIntrinsic>(I);
-      }
+      if (CanAddScopes && IsFuncCall)
+        CanAddScopes = IsArgMemOnlyCall;
 
       if (CanAddScopes)
         for (const Argument *A : NoAliasArgs) {
