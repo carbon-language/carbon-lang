@@ -679,6 +679,10 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
           srcUseList.push_back(UU);
       else
         return false;
+    } else if (const IntrinsicInst *IT = dyn_cast<IntrinsicInst>(U)) {
+      if (IT->getIntrinsicID() != Intrinsic::lifetime_start &&
+          IT->getIntrinsicID() != Intrinsic::lifetime_end)
+        continue;
     } else if (U != C && U != cpy) {
       return false;
     }
