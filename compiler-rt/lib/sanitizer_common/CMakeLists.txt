@@ -28,6 +28,7 @@ set(SANITIZER_SOURCES
   sanitizer_symbolizer_win.cc
   sanitizer_tls_get_addr.cc
   sanitizer_thread_registry.cc
+  sanitizer_unwind_posix.cc
   sanitizer_win.cc)
 
 set(SANITIZER_LIBCDEP_SOURCES
