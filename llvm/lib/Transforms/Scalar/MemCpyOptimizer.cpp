@@ -673,19 +673,23 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
     if (isa<BitCastInst>(U) || isa<AddrSpaceCastInst>(U)) {
       for (User *UU : U->users())
         srcUseList.push_back(UU);
-    } else if (GetElementPtrInst *G = dyn_cast<GetElementPtrInst>(U)) {
-      if (G->hasAllZeroIndices())
-        for (User *UU : U->users())
-          srcUseList.push_back(UU);
-      else
-        return false;
-    } else if (const IntrinsicInst *IT = dyn_cast<IntrinsicInst>(U)) {
-      if (IT->getIntrinsicID() != Intrinsic::lifetime_start &&
-          IT->getIntrinsicID() != Intrinsic::lifetime_end)
-        continue;
-    } else if (U != C && U != cpy) {
-      return false;
+      continue;
     }
+    if (GetElementPtrInst *G = dyn_cast<GetElementPtrInst>(U)) {
+      if (!G->hasAllZeroIndices())
+        return false;
+
+      for (User *UU : U->users())
+        srcUseList.push_back(UU);
+      continue;
+    }
+    if (const IntrinsicInst *IT = dyn_cast<IntrinsicInst>(U))
+      if (IT->getIntrinsicID() == Intrinsic::lifetime_start ||
+          IT->getIntrinsicID() == Intrinsic::lifetime_end)
+        continue;
+
+    if (U != C && U != cpy)
+      return false;
   }
 
   // Check that src isn't captured by the called function since the
