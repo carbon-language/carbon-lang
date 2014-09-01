@@ -65,6 +65,7 @@ uptr GetThreadSelf() {
   return GetTid();
 }
 
+#if !SANITIZER_GO
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom) {
   CHECK(stack_top);
@@ -77,6 +78,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
   *stack_top = (uptr)mbi.BaseAddress + mbi.RegionSize;
   *stack_bottom = (uptr)mbi.AllocationBase;
 }
+#endif  // #if !SANITIZER_GO
 
 void *MmapOrDie(uptr size, const char *mem_type) {
   void *rv = VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
@@ -441,6 +443,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 #endif
 }
 
+#if !SANITIZER_GO
 void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
   CHECK_GE(max_depth, 2);
   // FIXME: CaptureStackBackTrace might be too slow for us.
@@ -483,6 +486,7 @@ void StackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
     trace[size++] = (uptr)stack_frame.AddrPC.Offset;
   }
 }
+#endif  // #if !SANITIZER_GO
 
 void MaybeOpenReportFile() {
   // Windows doesn't have native fork, and we don't support Cygwin or other
