@@ -27,3 +27,13 @@ entry:
   %shr = ashr i32 %a, %b
   ret i32 %shr
 }
+
+define i32 @bic(i32 %a, i32 %b) nounwind readnone {
+; CHECK-LABEL: bic:
+; CHECK: bic.w r{{[0-9]+}}, r{{[0-9]+}}, r{{[0-9]+}} @ encoding: [{{0x..,0x..,0x..,0x..}}]
+; CHECK-OPT: bics r{{[0-7]}}, r{{[0-7]}} @ encoding: [{{0x..,0x..}}]
+entry:
+  %neg = xor i32 %b, -1
+  %and = and i32 %neg, %a
+  ret i32 %and
+}
