@@ -497,6 +497,40 @@ ArchSpec::GetMachOCPUSubType () const
     return LLDB_INVALID_CPUTYPE;
 }
 
+uint32_t
+ArchSpec::GetDataByteSize () const
+{
+    switch (m_core)
+    {
+    case eCore_kalimba3:
+        return 3;        
+    case eCore_kalimba4:
+        return 1;        
+    case eCore_kalimba5:
+        return 3;
+    default:        
+        return 1;        
+    }
+    return 1;
+}
+
+uint32_t
+ArchSpec::GetCodeByteSize () const
+{
+    switch (m_core)
+    {
+    case eCore_kalimba3:
+        return 4;        
+    case eCore_kalimba4:
+        return 1;        
+    case eCore_kalimba5:
+        return 1;        
+    default:        
+        return 1;        
+    }
+    return 1;
+}
+
 llvm::Triple::ArchType
 ArchSpec::GetMachine () const
 {
