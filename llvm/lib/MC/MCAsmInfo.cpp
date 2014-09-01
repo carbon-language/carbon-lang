@@ -81,7 +81,7 @@ MCAsmInfo::MCAsmInfo() {
   ProtectedVisibilityAttr = MCSA_Protected;
   SupportsDebugInformation = false;
   ExceptionsType = ExceptionHandling::None;
-  WinEHEncodingType = WinEH::EncodingType::ET_Invalid;
+  WinEHEncodingType = WinEH::EncodingType::Invalid;
   DwarfUsesRelocationsAcrossSections = true;
   DwarfFDESymbolsUseAbsDiff = false;
   DwarfRegNumForCFI = false;

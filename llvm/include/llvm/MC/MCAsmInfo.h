@@ -31,13 +31,13 @@ class MCContext;
 
 namespace WinEH {
 enum class EncodingType {
-  ET_Invalid, /// Invalid
-  ET_Alpha,   /// Windows Alpha
-  ET_Alpha64, /// Windows AXP64
-  ET_ARM,     /// Windows NT (Windows on ARM)
-  ET_CE,      /// Windows CE ARM, PowerPC, SH3, SH4
-  ET_Itanium, /// Windows x64, Windows Itanium (IA-64)
-  ET_MIPS = ET_Alpha,
+  Invalid, /// Invalid
+  Alpha,   /// Windows Alpha
+  Alpha64, /// Windows AXP64
+  ARM,     /// Windows NT (Windows on ARM)
+  CE,      /// Windows CE ARM, PowerPC, SH3, SH4
+  Itanium, /// Windows x64, Windows Itanium (IA-64)
+  MIPS = Alpha,
 };
 }
 
