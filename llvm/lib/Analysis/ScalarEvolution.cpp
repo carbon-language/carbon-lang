@@ -1,4 +1,4 @@
-//===- ScalarEvolution.cpp - Scalar Evolution Analysis ----------*- C++ -*-===//
+//===- ScalarEvolution.cpp - Scalar Evolution Analysis --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -2061,71 +2061,66 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
     // Okay, if there weren't any loop invariants to be folded, check to see if
     // there are multiple AddRec's with the same loop induction variable being
     // multiplied together.  If so, we can fold them.
+
+    // {A1,+,A2,+,...,+,An}<L> * {B1,+,B2,+,...,+,Bn}<L>
+    // = {x=1 in [ sum y=x..2x [ sum z=max(y-x, y-n)..min(x,n) [
+    //       choose(x, 2x)*choose(2x-y, x-z)*A_{y-z}*B_z
+    //   ]]],+,...up to x=2n}.
+    // Note that the arguments to choose() are always integers with values
+    // known at compile time, never SCEV objects.
+    //
+    // The implementation avoids pointless extra computations when the two
+    // addrec's are of different length (mathematically, it's equivalent to
+    // an infinite stream of zeros on the right).
+    bool OpsModified = false;
     for (unsigned OtherIdx = Idx+1;
-         OtherIdx < Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
+         OtherIdx != Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
          ++OtherIdx) {
-      if (AddRecLoop != cast<SCEVAddRecExpr>(Ops[OtherIdx])->getLoop())
+      const SCEVAddRecExpr *OtherAddRec =
+        dyn_cast<SCEVAddRecExpr>(Ops[OtherIdx]);
+      if (!OtherAddRec || OtherAddRec->getLoop() != AddRecLoop)
         continue;
 
-      // {A1,+,A2,+,...,+,An}<L> * {B1,+,B2,+,...,+,Bn}<L>
-      // = {x=1 in [ sum y=x..2x [ sum z=max(y-x, y-n)..min(x,n) [
-      //       choose(x, 2x)*choose(2x-y, x-z)*A_{y-z}*B_z
-      //   ]]],+,...up to x=2n}.
-      // Note that the arguments to choose() are always integers with values
-      // known at compile time, never SCEV objects.
-      //
-      // The implementation avoids pointless extra computations when the two
-      // addrec's are of different length (mathematically, it's equivalent to
-      // an infinite stream of zeros on the right).
-      bool OpsModified = false;
-      for (; OtherIdx != Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
-           ++OtherIdx) {
-        const SCEVAddRecExpr *OtherAddRec =
-          dyn_cast<SCEVAddRecExpr>(Ops[OtherIdx]);
-        if (!OtherAddRec || OtherAddRec->getLoop() != AddRecLoop)
-          continue;
-
-        bool Overflow = false;
-        Type *Ty = AddRec->getType();
-        bool LargerThan64Bits = getTypeSizeInBits(Ty) > 64;
-        SmallVector<const SCEV*, 7> AddRecOps;
-        for (int x = 0, xe = AddRec->getNumOperands() +
-               OtherAddRec->getNumOperands() - 1; x != xe && !Overflow; ++x) {
-          const SCEV *Term = getConstant(Ty, 0);
-          for (int y = x, ye = 2*x+1; y != ye && !Overflow; ++y) {
-            uint64_t Coeff1 = Choose(x, 2*x - y, Overflow);
-            for (int z = std::max(y-x, y-(int)AddRec->getNumOperands()+1),
-                   ze = std::min(x+1, (int)OtherAddRec->getNumOperands());
-                 z < ze && !Overflow; ++z) {
-              uint64_t Coeff2 = Choose(2*x - y, x-z, Overflow);
-              uint64_t Coeff;
-              if (LargerThan64Bits)
-                Coeff = umul_ov(Coeff1, Coeff2, Overflow);
-              else
-                Coeff = Coeff1*Coeff2;
-              const SCEV *CoeffTerm = getConstant(Ty, Coeff);
-              const SCEV *Term1 = AddRec->getOperand(y-z);
-              const SCEV *Term2 = OtherAddRec->getOperand(z);
-              Term = getAddExpr(Term, getMulExpr(CoeffTerm, Term1,Term2));
-            }
+      bool Overflow = false;
+      Type *Ty = AddRec->getType();
+      bool LargerThan64Bits = getTypeSizeInBits(Ty) > 64;
+      SmallVector<const SCEV*, 7> AddRecOps;
+      for (int x = 0, xe = AddRec->getNumOperands() +
+             OtherAddRec->getNumOperands() - 1; x != xe && !Overflow; ++x) {
+        const SCEV *Term = getConstant(Ty, 0);
+        for (int y = x, ye = 2*x+1; y != ye && !Overflow; ++y) {
+          uint64_t Coeff1 = Choose(x, 2*x - y, Overflow);
+          for (int z = std::max(y-x, y-(int)AddRec->getNumOperands()+1),
+                 ze = std::min(x+1, (int)OtherAddRec->getNumOperands());
+               z < ze && !Overflow; ++z) {
+            uint64_t Coeff2 = Choose(2*x - y, x-z, Overflow);
+            uint64_t Coeff;
+            if (LargerThan64Bits)
+              Coeff = umul_ov(Coeff1, Coeff2, Overflow);
+            else
+              Coeff = Coeff1*Coeff2;
+            const SCEV *CoeffTerm = getConstant(Ty, Coeff);
+            const SCEV *Term1 = AddRec->getOperand(y-z);
+            const SCEV *Term2 = OtherAddRec->getOperand(z);
+            Term = getAddExpr(Term, getMulExpr(CoeffTerm, Term1,Term2));
           }
-          AddRecOps.push_back(Term);
         }
-        if (!Overflow) {
-          const SCEV *NewAddRec = getAddRecExpr(AddRecOps, AddRec->getLoop(),
-                                                SCEV::FlagAnyWrap);
-          if (Ops.size() == 2) return NewAddRec;
-          Ops[Idx] = NewAddRec;
-          Ops.erase(Ops.begin() + OtherIdx); --OtherIdx;
-          OpsModified = true;
-          AddRec = dyn_cast<SCEVAddRecExpr>(NewAddRec);
-          if (!AddRec)
-            break;
-        }
+        AddRecOps.push_back(Term);
       }
-      if (OpsModified)
-        return getMulExpr(Ops);
+      if (!Overflow) {
+        const SCEV *NewAddRec = getAddRecExpr(AddRecOps, AddRec->getLoop(),
+                                              SCEV::FlagAnyWrap);
+        if (Ops.size() == 2) return NewAddRec;
+        Ops[Idx] = NewAddRec;
+        Ops.erase(Ops.begin() + OtherIdx); --OtherIdx;
+        OpsModified = true;
+        AddRec = dyn_cast<SCEVAddRecExpr>(NewAddRec);
+        if (!AddRec)
+          break;
+      }
     }
+    if (OpsModified)
+      return getMulExpr(Ops);
 
     // Otherwise couldn't fold anything into this recurrence.  Move onto the
     // next one.
