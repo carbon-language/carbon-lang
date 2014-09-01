@@ -37,3 +37,12 @@ entry:
   %and = and i32 %neg, %a
   ret i32 %and
 }
+
+define i32 @eor(i32 %a, i32 %b) nounwind readnone {
+; CHECK-LABEL: eor:
+; CHECK: eor.w r{{[0-9]+}}, r{{[0-9]+}}, r{{[0-9]+}} @ encoding: [{{0x..,0x..,0x..,0x..}}]
+; CHECK-OPT: eors r{{[0-7]}}, r{{[0-7]}} @ encoding: [{{0x..,0x..}}]
+entry:
+  %eor = xor i32 %a, %b
+  ret i32 %eor
+}
