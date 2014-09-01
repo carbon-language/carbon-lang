@@ -358,6 +358,10 @@ public:
   /// isExact - Determine whether the exact flag is set.
   bool isExact() const;
 
+  /// Convenience method to copy wrapping, exact, and fast-math flag values
+  /// from V to this instruction.
+  void copyFlags(const Value *V);
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *I) {
     return I->isBinaryOp();
