@@ -686,7 +686,7 @@ private:
     return Link;
   }
 
-  bool inbounds(StratifiedIndex N) const { return N >= 0 && N < Links.size(); }
+  bool inbounds(StratifiedIndex N) const { return N < Links.size(); }
 };
 }
 #endif // LLVM_ADT_STRATIFIEDSETS_H
