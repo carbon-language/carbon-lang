@@ -838,11 +838,6 @@ public:
     return UseUnderscoreLongJmp;
   }
 
-  /// Return whether the target can generate code for jump tables.
-  bool supportJumpTables() const {
-    return SupportJumpTables;
-  }
-
   /// Return integer threshold on number of blocks to use jump tables rather
   /// than if sequence.
   int getMinimumJumpTableEntries() const {
@@ -1029,11 +1024,6 @@ protected:
   /// llvm.longjmp or the version without _.  Defaults to false.
   void setUseUnderscoreLongJmp(bool Val) {
     UseUnderscoreLongJmp = Val;
-  }
-
-  /// Indicate whether the target can generate code for jump tables.
-  void setSupportJumpTables(bool Val) {
-    SupportJumpTables = Val;
   }
 
   /// Indicate the number of blocks to generate jump tables rather than if
@@ -1548,10 +1538,6 @@ private:
   ///
   /// Defaults to false.
   bool UseUnderscoreLongJmp;
-
-  /// Whether the target can generate code for jumptables.  If it's not true,
-  /// then each jumptable must be lowered into if-then-else's.
-  bool SupportJumpTables;
 
   /// Number of blocks threshold to use jump tables.
   int MinimumJumpTableEntries;

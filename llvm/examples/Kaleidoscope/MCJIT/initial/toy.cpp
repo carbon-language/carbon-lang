@@ -778,7 +778,6 @@ void *MCJITHelper::getPointerToFunction(Function* F) {
     std::string ErrStr;
     ExecutionEngine *NewEngine = EngineBuilder(OpenModule)
                                               .setErrorStr(&ErrStr)
-                                              .setUseMCJIT(true)
                                               .setMCJITMemoryManager(new HelpingMemoryManager(this))
                                               .create();
     if (!NewEngine) {

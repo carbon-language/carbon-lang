@@ -1,5 +1,4 @@
 ; RUN: %lli %s > /dev/null
-; XFAIL: arm
 
 declare void @exit(i32)
 

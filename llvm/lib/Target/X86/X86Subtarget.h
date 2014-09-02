@@ -17,7 +17,6 @@
 #include "X86FrameLowering.h"
 #include "X86ISelLowering.h"
 #include "X86InstrInfo.h"
-#include "X86JITInfo.h"
 #include "X86SelectionDAGInfo.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/CallingConv.h"
@@ -247,7 +246,6 @@ private:
   X86InstrInfo InstrInfo;
   X86TargetLowering TLInfo;
   X86FrameLowering FrameLowering;
-  X86JITInfo JITInfo;
 
 public:
   /// This constructor initializes the data members to match that
@@ -271,7 +269,6 @@ public:
   const X86RegisterInfo *getRegisterInfo() const override {
     return &getInstrInfo()->getRegisterInfo();
   }
-  X86JITInfo *getJITInfo() override { return &JITInfo; }
 
   /// getStackAlignment - Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every

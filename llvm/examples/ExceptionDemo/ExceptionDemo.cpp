@@ -1966,10 +1966,8 @@ int main(int argc, char *argv[]) {
   // Build engine with JIT
   llvm::EngineBuilder factory(std::move(Owner));
   factory.setEngineKind(llvm::EngineKind::JIT);
-  factory.setAllocateGVsWithCode(false);
   factory.setTargetOptions(Opts);
   factory.setMCJITMemoryManager(MemMgr);
-  factory.setUseMCJIT(true);
   llvm::ExecutionEngine *executionEngine = factory.create();
 
   {

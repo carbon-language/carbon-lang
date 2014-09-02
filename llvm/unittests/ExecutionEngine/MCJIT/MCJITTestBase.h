@@ -316,11 +316,9 @@ protected:
     EngineBuilder EB(std::move(M));
     std::string Error;
     TheJIT.reset(EB.setEngineKind(EngineKind::JIT)
-                 .setUseMCJIT(true) /* can this be folded into the EngineKind enum? */
                  .setMCJITMemoryManager(MM)
                  .setErrorStr(&Error)
                  .setOptLevel(CodeGenOpt::None)
-                 .setAllocateGVsWithCode(false) /*does this do anything?*/
                  .setCodeModel(CodeModel::JITDefault)
                  .setRelocationModel(Reloc::Default)
                  .setMArch(MArch)

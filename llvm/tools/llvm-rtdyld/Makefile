@@ -9,7 +9,7 @@
 
 LEVEL := ../..
 TOOLNAME := llvm-rtdyld
-LINK_COMPONENTS := all-targets support MC object RuntimeDyld JIT debuginfo
+LINK_COMPONENTS := all-targets support MC object RuntimeDyld MCJIT debuginfo
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS := 1

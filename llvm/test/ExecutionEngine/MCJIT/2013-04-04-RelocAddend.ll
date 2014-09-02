@@ -1,4 +1,4 @@
-; RUN: %lli_mcjit %s
+; RUN: %lli %s
 ;
 ; Verify relocations to global symbols with addend work correctly.
 ;

@@ -82,19 +82,7 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
               TargetTriple.getArch() == Triple::ppc64le),
       OptLevel(OptLevel), TargetABI(PPC_ABI_UNKNOWN),
       FrameLowering(initializeSubtargetDependencies(CPU, FS)), InstrInfo(*this),
-      JITInfo(*this), TLInfo(TM), TSInfo(&DL) {}
-
-/// SetJITMode - This is called to inform the subtarget info that we are
-/// producing code for the JIT.
-void PPCSubtarget::SetJITMode() {
-  // JIT mode doesn't want lazy resolver stubs, it knows exactly where
-  // everything is.  This matters for PPC64, which codegens in PIC mode without
-  // stubs.
-  HasLazyResolverStubs = false;
-
-  // Calls to external functions need to use indirect calls
-  IsJITCodeModel = true;
-}
+      TLInfo(TM), TSInfo(&DL) {}
 
 void PPCSubtarget::resetSubtargetFeatures(const MachineFunction *MF) {
   AttributeSet FnAttrs = MF->getFunction()->getAttributes();
@@ -144,7 +132,6 @@ void PPCSubtarget::initializeEnvironment() {
   DeprecatedMFTB = false;
   DeprecatedDST = false;
   HasLazyResolverStubs = false;
-  IsJITCodeModel = false;
 }
 
 void PPCSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {

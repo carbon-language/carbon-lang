@@ -23,7 +23,6 @@ class ARMAsmPrinter;
 class ARMBaseTargetMachine;
 class FunctionPass;
 class ImmutablePass;
-class JITCodeEmitter;
 class MachineInstr;
 class MCInst;
 class TargetLowering;
@@ -31,10 +30,6 @@ class TargetMachine;
 
 FunctionPass *createARMISelDag(ARMBaseTargetMachine &TM,
                                CodeGenOpt::Level OptLevel);
-
-FunctionPass *createARMJITCodeEmitterPass(ARMBaseTargetMachine &TM,
-                                          JITCodeEmitter &JCE);
-
 FunctionPass *createA15SDOptimizerPass();
 FunctionPass *createARMLoadStoreOptimizationPass(bool PreAlloc = false);
 FunctionPass *createARMExpandPseudoPass();

@@ -34,7 +34,6 @@ extern "C" {
  * @{
  */
 
-void LLVMLinkInJIT(void);
 void LLVMLinkInMCJIT(void);
 void LLVMLinkInInterpreter(void);
 

@@ -720,7 +720,6 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm,
   PrefLoopAlignment = 0;
   MinStackArgumentAlignment = 1;
   InsertFencesForAtomic = false;
-  SupportJumpTables = true;
   MinimumJumpTableEntries = 4;
 
   InitLibcallNames(LibcallRoutineNames, Triple(TM.getTargetTriple()));

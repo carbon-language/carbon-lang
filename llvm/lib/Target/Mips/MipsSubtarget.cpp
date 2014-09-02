@@ -116,7 +116,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
       AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16),
       HasMSA(false), TM(_TM), TargetTriple(TT),
       DL(computeDataLayout(initializeSubtargetDependencies(CPU, FS, TM))),
-      TSInfo(DL), JITInfo(), InstrInfo(MipsInstrInfo::create(*this)),
+      TSInfo(DL), InstrInfo(MipsInstrInfo::create(*this)),
       FrameLowering(MipsFrameLowering::create(*this)),
       TLInfo(MipsTargetLowering::create(*TM, *this)) {
 

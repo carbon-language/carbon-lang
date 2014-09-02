@@ -17,7 +17,6 @@
 #include "SparcFrameLowering.h"
 #include "SparcInstrInfo.h"
 #include "SparcISelLowering.h"
-#include "SparcJITInfo.h"
 #include "SparcSelectionDAGInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
@@ -43,7 +42,6 @@ class SparcSubtarget : public SparcGenSubtargetInfo {
   SparcTargetLowering TLInfo;
   SparcSelectionDAGInfo TSInfo;
   SparcFrameLowering FrameLowering;
-  SparcJITInfo JITInfo;
 
 public:
   SparcSubtarget(const std::string &TT, const std::string &CPU,
@@ -62,7 +60,6 @@ public:
   const SparcSelectionDAGInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }
-  SparcJITInfo *getJITInfo() override { return &JITInfo; }
   const DataLayout *getDataLayout() const override { return &DL; }
 
   bool isV9() const { return IsV9; }

@@ -247,10 +247,3 @@ bool ARMPassConfig::addPreEmitPass() {
 
   return true;
 }
-
-bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
-                                          JITCodeEmitter &JCE) {
-  // Machine code emitter pass for ARM.
-  PM.add(createARMJITCodeEmitterPass(*this, JCE));
-  return false;
-}

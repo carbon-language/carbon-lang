@@ -1,5 +1,4 @@
 ; RUN: %lli %s test
-; XFAIL: arm
 
 declare i32 @puts(i8*)
 

@@ -22,7 +22,6 @@
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
-#include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
@@ -75,10 +74,6 @@ namespace {
   cl::opt<bool> ForceInterpreter("force-interpreter",
                                  cl::desc("Force interpretation: disable JIT"),
                                  cl::init(false));
-
-  cl::opt<bool> UseMCJIT(
-    "use-mcjit", cl::desc("Enable use of the MC-based JIT (if available)"),
-    cl::init(false));
 
   cl::opt<bool> DebugIR(
     "debug-ir", cl::desc("Generate debug information to allow debugging IR."),
@@ -406,12 +401,9 @@ int main(int argc, char **argv, char * const *envp) {
   }
 
   if (EnableCacheManager) {
-    if (UseMCJIT) {
-      std::string CacheName("file:");
-      CacheName.append(InputFile);
-      Mod->setModuleIdentifier(CacheName);
-    } else
-      errs() << "warning: -enable-cache-manager can only be used with MCJIT.";
+    std::string CacheName("file:");
+    CacheName.append(InputFile);
+    Mod->setModuleIdentifier(CacheName);
   }
 
   // If not jitting lazily, load the whole bitcode file eagerly too.
@@ -424,12 +416,6 @@ int main(int argc, char **argv, char * const *envp) {
   }
 
   if (DebugIR) {
-    if (!UseMCJIT) {
-      errs() << "warning: -debug-ir used without -use-mcjit. Only partial debug"
-        << " information will be emitted by the non-MC JIT engine. To see full"
-        << " source debug information, enable the flag '-use-mcjit'.\n";
-
-    }
     ModulePass *DebugIRPass = createDebugIRPass();
     DebugIRPass->runOnModule(*Mod);
   }
@@ -452,8 +438,7 @@ int main(int argc, char **argv, char * const *envp) {
 
   // Enable MCJIT if desired.
   RTDyldMemoryManager *RTDyldMM = nullptr;
-  if (UseMCJIT && !ForceInterpreter) {
-    builder.setUseMCJIT(true);
+  if (!ForceInterpreter) {
     if (RemoteMCJIT)
       RTDyldMM = new RemoteMemoryManager();
     else
@@ -518,12 +503,9 @@ int main(int argc, char **argv, char * const *envp) {
       return 1;
     }
     if (EnableCacheManager) {
-      if (UseMCJIT) {
-        std::string CacheName("file:");
-        CacheName.append(ExtraModules[i]);
-        XMod->setModuleIdentifier(CacheName);
-      }
-      // else, we already printed a warning above.
+      std::string CacheName("file:");
+      CacheName.append(ExtraModules[i]);
+      XMod->setModuleIdentifier(CacheName);
     }
     EE->addModule(std::move(XMod));
   }
@@ -618,19 +600,11 @@ int main(int argc, char **argv, char * const *envp) {
                                                       NULL);
 
     // Run static constructors.
-    if (UseMCJIT && !ForceInterpreter) {
+    if (!ForceInterpreter) {
       // Give MCJIT a chance to apply relocations and set page permissions.
       EE->finalizeObject();
     }
     EE->runStaticConstructorsDestructors(false);
-
-    if (!UseMCJIT && NoLazyCompilation) {
-      for (Module::iterator I = Mod->begin(), E = Mod->end(); I != E; ++I) {
-        Function *Fn = &*I;
-        if (Fn != EntryFn && !Fn->isDeclaration())
-          EE->getPointerToFunction(Fn);
-      }
-    }
 
     // Trigger compilation separately so code regions that need to be
     // invalidated will be known.

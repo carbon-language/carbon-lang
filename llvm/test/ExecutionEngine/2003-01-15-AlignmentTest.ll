@@ -1,5 +1,4 @@
 ; RUN: %lli %s > /dev/null
-; XFAIL: arm
 
 define i32 @bar(i8* %X) {
         ; pointer should be 4 byte aligned!
