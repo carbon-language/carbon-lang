@@ -48,9 +48,10 @@ struct SpecialCaseList::Entry {
 
 SpecialCaseList::SpecialCaseList() : Entries() {}
 
-SpecialCaseList *SpecialCaseList::create(StringRef Path, std::string &Error) {
+std::unique_ptr<SpecialCaseList> SpecialCaseList::create(StringRef Path,
+                                                         std::string &Error) {
   if (Path.empty())
-    return new SpecialCaseList();
+    return std::unique_ptr<SpecialCaseList>(new SpecialCaseList());
   ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
       MemoryBuffer::getFile(Path);
   if (std::error_code EC = FileOrErr.getError()) {
@@ -60,17 +61,17 @@ SpecialCaseList *SpecialCaseList::create(StringRef Path, std::string &Error) {
   return create(FileOrErr.get().get(), Error);
 }
 
-SpecialCaseList *SpecialCaseList::create(
-    const MemoryBuffer *MB, std::string &Error) {
+std::unique_ptr<SpecialCaseList> SpecialCaseList::create(const MemoryBuffer *MB,
+                                                         std::string &Error) {
   std::unique_ptr<SpecialCaseList> SCL(new SpecialCaseList());
   if (!SCL->parse(MB, Error))
     return nullptr;
-  return SCL.release();
+  return SCL;
 }
 
-SpecialCaseList *SpecialCaseList::createOrDie(StringRef Path) {
+std::unique_ptr<SpecialCaseList> SpecialCaseList::createOrDie(StringRef Path) {
   std::string Error;
-  if (SpecialCaseList *SCL = create(Path, Error))
+  if (auto SCL = create(Path, Error))
     return SCL;
   report_fatal_error(Error);
 }

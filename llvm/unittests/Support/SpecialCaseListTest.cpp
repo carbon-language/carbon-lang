@@ -17,14 +17,15 @@ namespace {
 
 class SpecialCaseListTest : public ::testing::Test {
 protected:
-  SpecialCaseList *makeSpecialCaseList(StringRef List, std::string &Error) {
+  std::unique_ptr<SpecialCaseList> makeSpecialCaseList(StringRef List,
+                                                       std::string &Error) {
     std::unique_ptr<MemoryBuffer> MB = MemoryBuffer::getMemBuffer(List);
     return SpecialCaseList::create(MB.get(), Error);
   }
 
-  SpecialCaseList *makeSpecialCaseList(StringRef List) {
+  std::unique_ptr<SpecialCaseList> makeSpecialCaseList(StringRef List) {
     std::string Error;
-    SpecialCaseList *SCL = makeSpecialCaseList(List, Error);
+    auto SCL = makeSpecialCaseList(List, Error);
     assert(SCL);
     assert(Error == "");
     return SCL;
@@ -32,13 +33,13 @@ protected:
 };
 
 TEST_F(SpecialCaseListTest, Basic) {
-  std::unique_ptr<SpecialCaseList> SCL(
+  std::unique_ptr<SpecialCaseList> SCL =
       makeSpecialCaseList("# This is a comment.\n"
                           "\n"
                           "src:hello\n"
                           "src:bye\n"
                           "src:hi=category\n"
-                          "src:z*=category\n"));
+                          "src:z*=category\n");
   EXPECT_TRUE(SCL->inSection("src", "hello"));
   EXPECT_TRUE(SCL->inSection("src", "bye"));
   EXPECT_TRUE(SCL->inSection("src", "hi", "category"));
@@ -49,38 +50,38 @@ TEST_F(SpecialCaseListTest, Basic) {
 }
 
 TEST_F(SpecialCaseListTest, GlobalInitCompat) {
-  std::unique_ptr<SpecialCaseList> SCL(
-      makeSpecialCaseList("global:foo=init\n"));
+  std::unique_ptr<SpecialCaseList> SCL =
+      makeSpecialCaseList("global:foo=init\n");
   EXPECT_FALSE(SCL->inSection("global", "foo"));
   EXPECT_FALSE(SCL->inSection("global", "bar"));
   EXPECT_TRUE(SCL->inSection("global", "foo", "init"));
   EXPECT_FALSE(SCL->inSection("global", "bar", "init"));
 
-  SCL.reset(makeSpecialCaseList("global-init:foo\n"));
+  SCL = makeSpecialCaseList("global-init:foo\n");
   EXPECT_FALSE(SCL->inSection("global", "foo"));
   EXPECT_FALSE(SCL->inSection("global", "bar"));
   EXPECT_TRUE(SCL->inSection("global", "foo", "init"));
   EXPECT_FALSE(SCL->inSection("global", "bar", "init"));
 
-  SCL.reset(makeSpecialCaseList("type:t2=init\n"));
+  SCL = makeSpecialCaseList("type:t2=init\n");
   EXPECT_FALSE(SCL->inSection("type", "t1"));
   EXPECT_FALSE(SCL->inSection("type", "t2"));
   EXPECT_FALSE(SCL->inSection("type", "t1", "init"));
   EXPECT_TRUE(SCL->inSection("type", "t2", "init"));
 
-  SCL.reset(makeSpecialCaseList("global-init-type:t2\n"));
+  SCL = makeSpecialCaseList("global-init-type:t2\n");
   EXPECT_FALSE(SCL->inSection("type", "t1"));
   EXPECT_FALSE(SCL->inSection("type", "t2"));
   EXPECT_FALSE(SCL->inSection("type", "t1", "init"));
   EXPECT_TRUE(SCL->inSection("type", "t2", "init"));
 
-  SCL.reset(makeSpecialCaseList("src:hello=init\n"));
+  SCL = makeSpecialCaseList("src:hello=init\n");
   EXPECT_FALSE(SCL->inSection("src", "hello"));
   EXPECT_FALSE(SCL->inSection("src", "bye"));
   EXPECT_TRUE(SCL->inSection("src", "hello", "init"));
   EXPECT_FALSE(SCL->inSection("src", "bye", "init"));
 
-  SCL.reset(makeSpecialCaseList("global-init-src:hello\n"));
+  SCL = makeSpecialCaseList("global-init-src:hello\n");
   EXPECT_FALSE(SCL->inSection("src", "hello"));
   EXPECT_FALSE(SCL->inSection("src", "bye"));
   EXPECT_TRUE(SCL->inSection("src", "hello", "init"));
@@ -88,14 +89,14 @@ TEST_F(SpecialCaseListTest, GlobalInitCompat) {
 }
 
 TEST_F(SpecialCaseListTest, Substring) {
-  std::unique_ptr<SpecialCaseList> SCL(makeSpecialCaseList("src:hello\n"
-                                                           "fun:foo\n"
-                                                           "global:bar\n"));
+  std::unique_ptr<SpecialCaseList> SCL = makeSpecialCaseList("src:hello\n"
+                                                             "fun:foo\n"
+                                                             "global:bar\n");
   EXPECT_FALSE(SCL->inSection("src", "othello"));
   EXPECT_FALSE(SCL->inSection("fun", "tomfoolery"));
   EXPECT_FALSE(SCL->inSection("global", "bartender"));
 
-  SCL.reset(makeSpecialCaseList("fun:*foo*\n"));
+  SCL = makeSpecialCaseList("fun:*foo*\n");
   EXPECT_TRUE(SCL->inSection("fun", "tomfoolery"));
   EXPECT_TRUE(SCL->inSection("fun", "foobar"));
 }
@@ -117,7 +118,7 @@ TEST_F(SpecialCaseListTest, InvalidSpecialCaseList) {
 }
 
 TEST_F(SpecialCaseListTest, EmptySpecialCaseList) {
-  std::unique_ptr<SpecialCaseList> SCL(makeSpecialCaseList(""));
+  std::unique_ptr<SpecialCaseList> SCL = makeSpecialCaseList("");
   EXPECT_FALSE(SCL->inSection("foo", "bar"));
 }
 
