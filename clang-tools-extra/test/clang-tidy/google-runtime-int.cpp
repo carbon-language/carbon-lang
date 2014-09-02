@@ -41,12 +41,17 @@ short bar(const short, unsigned short) {
   unsigned short porthole;
 // CHECK: [[@LINE-1]]:3: warning: consider replacing 'unsigned short' with 'uint16'
 
+  uint64 cast = (short)42;
+// CHECK: [[@LINE-1]]:18: warning: consider replacing 'short' with 'int16'
+
 #define l long
   l x;
 
   tmpl<short>();
 // CHECK: [[@LINE-1]]:8: warning: consider replacing 'short' with 'int16'
 }
+
+void p(unsigned short port);
 
 void qux() {
   short port;

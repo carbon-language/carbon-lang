@@ -15,11 +15,6 @@
 #include "clang/Basic/TargetInfo.h"
 
 namespace clang {
-
-namespace ast_matchers {
-const internal::VariadicDynCastAllOfMatcher<Decl, TypedefDecl> typedefDecl;
-} // namespace ast_matchers
-
 namespace tidy {
 namespace runtime {
 
