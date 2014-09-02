@@ -52,6 +52,7 @@ else()
     add_host_subdirectory(macosx
       macosx/Host.mm
       macosx/Symbols.cpp
+      macosx/HostInfoMacOSX.mm
       macosx/cfcpp/CFCBundle.cpp
       macosx/cfcpp/CFCData.cpp
       macosx/cfcpp/CFCMutableArray.cpp
