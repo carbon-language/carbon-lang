@@ -56,7 +56,7 @@ int main()
     test_is_not_empty<int*>();
     test_is_not_empty<const int*>();
     test_is_not_empty<char[3]>();
-    test_is_not_empty<char[3]>();
+    test_is_not_empty<char[]>();
     test_is_not_empty<Union>();
     test_is_not_empty<NotEmpty>();
 

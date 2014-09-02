@@ -30,7 +30,7 @@ int main()
     test_is_const<int*>();
     test_is_const<const int*>();
     test_is_const<char[3]>();
-    test_is_const<char[3]>();
+    test_is_const<char[]>();
 
     static_assert(!std::is_const<int&>::value, "");
     static_assert(!std::is_const<const int&>::value, "");

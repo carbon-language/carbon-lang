@@ -2861,7 +2861,7 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_move_assignable
 #if __has_feature(has_trivial_destructor) || (_GNUC_VER >= 403)
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_destructible
-    : public integral_constant<bool, __has_trivial_destructor(_Tp)> {};
+    : public integral_constant<bool, is_destructible<_Tp>::value && __has_trivial_destructor(_Tp)> {};
 
 #else
 

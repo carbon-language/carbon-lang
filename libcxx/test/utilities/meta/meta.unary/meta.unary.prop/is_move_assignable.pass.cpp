@@ -60,7 +60,6 @@ int main()
     test_is_not_move_assignable<const int> ();
     test_is_not_move_assignable<int[]> ();
     test_is_not_move_assignable<int[3]> ();
-    test_is_not_move_assignable<int[3]> ();
 #endif
     test_is_not_move_assignable<void> ();
 }

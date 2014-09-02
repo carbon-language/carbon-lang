@@ -30,7 +30,7 @@ int main()
     test_is_volatile<int*>();
     test_is_volatile<const int*>();
     test_is_volatile<char[3]>();
-    test_is_volatile<char[3]>();
+    test_is_volatile<char[]>();
 
     static_assert(!std::is_volatile<int&>::value, "");
     static_assert(!std::is_volatile<volatile int&>::value, "");

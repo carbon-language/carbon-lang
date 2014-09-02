@@ -45,7 +45,7 @@ int main()
     test_is_not_unsigned<int*>();
     test_is_not_unsigned<const int*>();
     test_is_not_unsigned<char[3]>();
-    test_is_not_unsigned<char[3]>();
+    test_is_not_unsigned<char[]>();
     test_is_not_unsigned<int>();
     test_is_not_unsigned<double>();
 

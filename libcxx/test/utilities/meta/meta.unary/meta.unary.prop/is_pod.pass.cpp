@@ -48,5 +48,5 @@ int main()
     test_is_pod<int*>();
     test_is_pod<const int*>();
     test_is_pod<char[3]>();
-    test_is_pod<char[3]>();
+    test_is_pod<char[]>();
 }

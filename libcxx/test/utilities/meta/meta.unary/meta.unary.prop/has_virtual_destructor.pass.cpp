@@ -69,7 +69,7 @@ int main()
     test_has_not_virtual_destructor<int*>();
     test_has_not_virtual_destructor<const int*>();
     test_has_not_virtual_destructor<char[3]>();
-    test_has_not_virtual_destructor<char[3]>();
+    test_has_not_virtual_destructor<char[]>();
     test_has_not_virtual_destructor<bit_zero>();
 
     test_has_virtual_destructor<Abstract>();

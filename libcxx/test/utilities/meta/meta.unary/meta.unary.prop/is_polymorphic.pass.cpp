@@ -69,7 +69,7 @@ int main()
     test_is_not_polymorphic<int*>();
     test_is_not_polymorphic<const int*>();
     test_is_not_polymorphic<char[3]>();
-    test_is_not_polymorphic<char[3]>();
+    test_is_not_polymorphic<char[]>();
     test_is_not_polymorphic<Union>();
     test_is_not_polymorphic<Empty>();
     test_is_not_polymorphic<bit_zero>();

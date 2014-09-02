@@ -61,7 +61,7 @@ int main()
     test_is_not_abstract<int*>();
     test_is_not_abstract<const int*>();
     test_is_not_abstract<char[3]>();
-    test_is_not_abstract<char[3]>();
+    test_is_not_abstract<char[]>();
     test_is_not_abstract<Union>();
     test_is_not_abstract<Empty>();
     test_is_not_abstract<bit_zero>();
