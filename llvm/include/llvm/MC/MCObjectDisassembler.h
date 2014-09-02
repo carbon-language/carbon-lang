@@ -66,8 +66,8 @@ public:
   /// \brief Set the region on which to fallback if disassembly was requested
   /// somewhere not accessible in the object file.
   /// This is used for dynamic disassembly (see RawMemoryObject).
-  void setFallbackRegion(std::unique_ptr<MemoryObject> &Region) {
-    FallbackRegion.reset(Region.release());
+  void setFallbackRegion(std::unique_ptr<MemoryObject> Region) {
+    FallbackRegion = std::move(Region);
   }
 
   /// \brief Set the symbolizer to use to get information on external functions.
