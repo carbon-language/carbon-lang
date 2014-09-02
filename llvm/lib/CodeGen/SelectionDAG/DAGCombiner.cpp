@@ -711,11 +711,7 @@ static ConstantFPSDNode *isConstOrConstSplatFP(SDValue N) {
     BitVector UndefElements;
     ConstantFPSDNode *CN = BV->getConstantFPSplatNode(&UndefElements);
 
-    // BuildVectors can truncate their operands. Ignore that case here.
-    // FIXME: We blindly ignore splats which include undef which is overly
-    // pessimistic.
-    if (CN && UndefElements.none() &&
-        CN->getValueType(0) == N.getValueType().getScalarType())
+    if (CN && UndefElements.none())
       return CN;
   }
 
