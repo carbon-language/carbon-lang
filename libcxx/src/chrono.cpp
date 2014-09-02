@@ -46,6 +46,7 @@ system_clock::from_time_t(time_t t) _NOEXCEPT
     return system_clock::time_point(seconds(t));
 }
 
+#ifndef _LIBCPP_HAS_NO_MONOTONIC_CLOCK
 // steady_clock
 
 const bool steady_clock::is_steady;
@@ -126,6 +127,8 @@ steady_clock::now() _NOEXCEPT
     return time_point(seconds(tp.tv_sec) + nanoseconds(tp.tv_nsec));
 }
 #endif  // __APPLE__
+
+#endif // !_LIBCPP_HAS_NO_MONOTONIC_CLOCK
 
 }
 

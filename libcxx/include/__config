@@ -650,6 +650,11 @@ template <unsigned> struct __static_assert_check {};
 #  define _LIBCPP_TRIVIAL_PAIR_COPY_CTOR 1
 #endif
 
+#if (!defined(_POSIX_TIMERS) || _POSIX_TIMERS <= 0) || \
+    (!defined(_POSIX_MONOTONIC_CLOCK) || _POSIX_MONOTONIC_CLOCK <= 0)
+#define _LIBCPP_HAS_NO_MONOTONIC_CLOCK
+#endif
+
 #ifndef _LIBCPP_STD_VER
 #  if  __cplusplus <= 201103L
 #    define _LIBCPP_STD_VER 11

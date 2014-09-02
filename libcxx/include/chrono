@@ -926,6 +926,7 @@ public:
     static time_point from_time_t(time_t __t) _NOEXCEPT;
 };
 
+#ifndef _LIBCPP_HAS_NO_MONOTONIC_CLOCK
 class _LIBCPP_TYPE_VIS steady_clock
 {
 public:
@@ -939,6 +940,9 @@ public:
 };
 
 typedef steady_clock high_resolution_clock;
+#else
+typedef system_clock high_resolution_clock;
+#endif
 
 } // chrono
 
