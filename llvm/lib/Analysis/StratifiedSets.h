@@ -38,7 +38,7 @@ struct StratifiedInfo {
 // The number of attributes that StratifiedAttrs should contain. Attributes are
 // described below, and 32 was an arbitrary choice because it fits nicely in 32
 // bits (because we use a bitset for StratifiedAttrs).
-static LLVM_CONSTEXPR unsigned NumStratifiedAttrs = 32;
+static const unsigned NumStratifiedAttrs = 32;
 
 // These are attributes that the users of StratifiedSets/StratifiedSetBuilders
 // may use for various purposes. These also have the special property of that
