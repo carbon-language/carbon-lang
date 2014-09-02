@@ -48,3 +48,28 @@ define void @fmul_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)
   store <4 x float> %result, <4 x float> addrspace(1)* %out
   ret void
 }
+
+; FUNC-LABEL: @test_mul_2_k
+; SI: V_MUL_F32
+; SI-NOT: V_MUL_F32
+; SI: S_ENDPGM
+define void @test_mul_2_k(float addrspace(1)* %out, float %x) #0 {
+  %y = fmul float %x, 2.0
+  %z = fmul float %y, 3.0
+  store float %z, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: @test_mul_2_k_inv
+; SI: V_MUL_F32
+; SI-NOT: V_MUL_F32
+; SI-NOT: V_MAD_F32
+; SI: S_ENDPGM
+define void @test_mul_2_k_inv(float addrspace(1)* %out, float %x) #0 {
+  %y = fmul float %x, 3.0
+  %z = fmul float %y, 2.0
+  store float %z, float addrspace(1)* %out
+  ret void
+}
+
+attributes #0 = { "less-precise-fpmad"="true" "no-infs-fp-math"="true" "no-nans-fp-math"="true" "unsafe-fp-math"="true" }

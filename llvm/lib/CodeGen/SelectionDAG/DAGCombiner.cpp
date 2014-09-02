@@ -6870,6 +6870,27 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
   if (N1CFP && N1CFP->isExactlyValue(1.0))
     return N0;
 
+  if (DAG.getTarget().Options.UnsafeFPMath) {
+    // If allowed, fold (fmul (fmul x, c1), c2) -> (fmul x, (fmul c1, c2))
+    if (N1CFP && N0.getOpcode() == ISD::FMUL &&
+        N0.getNode()->hasOneUse() && isConstOrConstSplatFP(N0.getOperand(1))) {
+      SDLoc SL(N);
+      SDValue MulConsts = DAG.getNode(ISD::FMUL, SL, VT, N0.getOperand(1), N1);
+      return DAG.getNode(ISD::FMUL, SL, VT, N0.getOperand(0), MulConsts);
+    }
+
+    // If allowed, fold (fmul (fadd x, x), c) -> (fmul x, (fmul 2.0, c))
+    // Undo the fmul 2.0, x -> fadd x, x transformation, since if it occurs
+    // during an early run of DAGCombiner can prevent folding with fmuls
+    // inserted during lowering.
+    if (N0.getOpcode() == ISD::FADD && N0.getOperand(0) == N0.getOperand(1)) {
+      SDLoc SL(N);
+      const SDValue Two = DAG.getConstantFP(2.0, VT);
+      SDValue MulConsts = DAG.getNode(ISD::FMUL, SL, VT, Two, N1);
+      return DAG.getNode(ISD::FMUL, SDLoc(N), VT, N0.getOperand(0), MulConsts);
+    }
+  }
+
   // fold (fmul X, 2.0) -> (fadd X, X)
   if (N1CFP && N1CFP->isExactlyValue(+2.0))
     return DAG.getNode(ISD::FADD, SDLoc(N), VT, N0, N0);
@@ -6888,14 +6909,6 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
                            GetNegatedExpression(N0, DAG, LegalOperations),
                            GetNegatedExpression(N1, DAG, LegalOperations));
     }
-  }
-
-  // If allowed, fold (fmul (fmul x, c1), c2) -> (fmul x, (fmul c1, c2))
-  if (Options.UnsafeFPMath && N1CFP && N0.getOpcode() == ISD::FMUL &&
-      N0.getNode()->hasOneUse() && isConstOrConstSplatFP(N0.getOperand(1))) {
-    return DAG.getNode(ISD::FMUL, SDLoc(N), VT, N0.getOperand(0),
-                       DAG.getNode(ISD::FMUL, SDLoc(N), VT,
-                                   N0.getOperand(1), N1));
   }
 
   return SDValue();
