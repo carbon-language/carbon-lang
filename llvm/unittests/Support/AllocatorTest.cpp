@@ -130,7 +130,7 @@ public:
     void *MemBase = malloc(Size + Alignment - 1 + sizeof(void*));
 
     // Find the slab start.
-    void *Slab = alignPtr((char *)MemBase + sizeof(void *), Alignment);
+    void *Slab = (void *)alignAddr((char*)MemBase + sizeof(void *), Alignment);
 
     // Hold a pointer to the base so we can free the whole malloced block.
     ((void**)Slab)[-1] = MemBase;
