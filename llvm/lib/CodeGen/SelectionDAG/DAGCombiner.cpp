@@ -77,6 +77,10 @@ namespace {
                              "slicing"),
                     cl::init(false));
 
+  static cl::opt<bool>
+    MaySplitLoadIndex("combiner-split-load-index", cl::Hidden, cl::init(true),
+                      cl::desc("DAG combiner may split indexing from loads"));
+
 //------------------------------ DAGCombiner ---------------------------------//
 
   class DAGCombiner {
@@ -182,6 +186,7 @@ namespace {
 
     bool CombineToPreIndexedLoadStore(SDNode *N);
     bool CombineToPostIndexedLoadStore(SDNode *N);
+    SDValue SplitIndexingFromLoad(LoadSDNode *LD);
     bool SliceUpLoad(SDNode *N);
 
     /// \brief Replace an ISD::EXTRACT_VECTOR_ELT of a load with a narrowed
@@ -462,7 +467,10 @@ void DAGCombiner::deleteAndRecombine(SDNode *N) {
   // If the operands of this node are only used by the node, they will now be
   // dead. Make sure to re-visit them and recursively delete dead nodes.
   for (const SDValue &Op : N->ops())
-    if (Op->hasOneUse())
+    // For an operand generating multiple values, one of the values may
+    // become dead allowing further simplification (e.g. split index
+    // arithmetic from an indexed load).
+    if (Op->hasOneUse() || Op->getNumValues() > 1)
       AddToWorklist(Op.getNode());
 
   DAG.DeleteNode(N);
@@ -8015,6 +8023,19 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
   return false;
 }
 
+/// \brief Return the base-pointer arithmetic from an indexed \p LD.
+SDValue DAGCombiner::SplitIndexingFromLoad(LoadSDNode *LD) {
+  ISD::MemIndexedMode AM = LD->getAddressingMode();
+  assert(AM != ISD::UNINDEXED);
+  SDValue BP = LD->getOperand(1);
+  SDValue Inc = LD->getOperand(2);
+  assert(Inc.getOpcode() != ISD::TargetConstant &&
+         "Cannot split out indexing using target constants");
+  unsigned Opc =
+      (AM == ISD::PRE_INC || AM == ISD::POST_INC ? ISD::ADD : ISD::SUB);
+  return DAG.getNode(Opc, SDLoc(LD), BP.getSimpleValueType(), BP, Inc);
+}
+
 SDValue DAGCombiner::visitLOAD(SDNode *N) {
   LoadSDNode *LD  = cast<LoadSDNode>(N);
   SDValue Chain = LD->getChain();
@@ -8049,8 +8070,23 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
     } else {
       // Indexed loads.
       assert(N->getValueType(2) == MVT::Other && "Malformed indexed loads?");
-      if (!N->hasAnyUseOfValue(0) && !N->hasAnyUseOfValue(1)) {
+
+      // If this load has an TargetConstant offset, then we cannot split the
+      // indexing into an add/sub directly (that TargetConstant may not be
+      // valid for a different type of node).
+      bool HasTCInc = LD->getOperand(2).getOpcode() == ISD::TargetConstant;
+
+      if (!N->hasAnyUseOfValue(0) &&
+          ((MaySplitLoadIndex && !HasTCInc) || !N->hasAnyUseOfValue(1))) {
         SDValue Undef = DAG.getUNDEF(N->getValueType(0));
+        SDValue Index;
+        if (N->hasAnyUseOfValue(1) && MaySplitLoadIndex && !HasTCInc) {
+          Index = SplitIndexingFromLoad(LD);
+          // Try to fold the base pointer arithmetic into subsequent loads and
+          // stores.
+          AddUsersToWorklist(N);
+        } else
+          Index = DAG.getUNDEF(N->getValueType(1));
         DEBUG(dbgs() << "\nReplacing.7 ";
               N->dump(&DAG);
               dbgs() << "\nWith: ";
@@ -8058,8 +8094,7 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
               dbgs() << " and 2 other values\n");
         WorklistRemover DeadNodes(*this);
         DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Undef);
-        DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1),
-                                      DAG.getUNDEF(N->getValueType(1)));
+        DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), Index);
         DAG.ReplaceAllUsesOfValueWith(SDValue(N, 2), Chain);
         deleteAndRecombine(N);
         return SDValue(N, 0);   // Return N so it doesn't get rechecked!
