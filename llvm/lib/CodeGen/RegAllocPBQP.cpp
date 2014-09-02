@@ -183,15 +183,15 @@ unsigned PBQPRAProblem::getPRegForOption(unsigned vreg, unsigned option) const {
   return allowedSet[option - 1];
 }
 
-PBQPRAProblem *PBQPBuilder::build(MachineFunction *mf, const LiveIntervals *lis,
-                                  const MachineBlockFrequencyInfo *mbfi,
-                                  const RegSet &vregs) {
+std::unique_ptr<PBQPRAProblem>
+PBQPBuilder::build(MachineFunction *mf, const LiveIntervals *lis,
+                   const MachineBlockFrequencyInfo *mbfi, const RegSet &vregs) {
 
   LiveIntervals *LIS = const_cast<LiveIntervals*>(lis);
   MachineRegisterInfo *mri = &mf->getRegInfo();
   const TargetRegisterInfo *tri = mf->getSubtarget().getRegisterInfo();
 
-  std::unique_ptr<PBQPRAProblem> p(new PBQPRAProblem());
+  auto p = llvm::make_unique<PBQPRAProblem>();
   PBQPRAGraph &g = p->getGraph();
   RegSet pregs;
 
@@ -280,7 +280,7 @@ PBQPRAProblem *PBQPBuilder::build(MachineFunction *mf, const LiveIntervals *lis,
     }
   }
 
-  return p.release();
+  return p;
 }
 
 void PBQPBuilder::addSpillCosts(PBQP::Vector &costVec,
@@ -309,12 +309,12 @@ void PBQPBuilder::addInterferenceCosts(
   }
 }
 
-PBQPRAProblem *PBQPBuilderWithCoalescing::build(MachineFunction *mf,
-                                                const LiveIntervals *lis,
-                                                const MachineBlockFrequencyInfo *mbfi,
-                                                const RegSet &vregs) {
+std::unique_ptr<PBQPRAProblem>
+PBQPBuilderWithCoalescing::build(MachineFunction *mf, const LiveIntervals *lis,
+                                 const MachineBlockFrequencyInfo *mbfi,
+                                 const RegSet &vregs) {
 
-  std::unique_ptr<PBQPRAProblem> p(PBQPBuilder::build(mf, lis, mbfi, vregs));
+  std::unique_ptr<PBQPRAProblem> p = PBQPBuilder::build(mf, lis, mbfi, vregs);
   PBQPRAGraph &g = p->getGraph();
 
   const TargetMachine &tm = mf->getTarget();
@@ -383,7 +383,7 @@ PBQPRAProblem *PBQPBuilderWithCoalescing::build(MachineFunction *mf,
     }
   }
 
-  return p.release();
+  return p;
 }
 
 void PBQPBuilderWithCoalescing::addPhysRegCoalesce(PBQP::Vector &costVec,
@@ -579,8 +579,8 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
     while (!pbqpAllocComplete) {
       DEBUG(dbgs() << "  PBQP Regalloc round " << round << ":\n");
 
-      std::unique_ptr<PBQPRAProblem> problem(
-          builder->build(mf, lis, mbfi, vregsToAlloc));
+      std::unique_ptr<PBQPRAProblem> problem =
+          builder->build(mf, lis, mbfi, vregsToAlloc);
 
 #ifndef NDEBUG
       if (pbqpDumpGraphs) {
