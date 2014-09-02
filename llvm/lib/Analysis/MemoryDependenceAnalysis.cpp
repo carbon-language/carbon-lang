@@ -449,12 +449,16 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
       if (!LI->isUnordered()) {
         if (!QueryInst)
           return MemDepResult::getClobber(LI);
-        if (auto *QueryLI = dyn_cast<LoadInst>(QueryInst))
+        if (auto *QueryLI = dyn_cast<LoadInst>(QueryInst)) {
           if (!QueryLI->isSimple())
             return MemDepResult::getClobber(LI);
-        if (auto *QuerySI = dyn_cast<StoreInst>(QueryInst))
+        } else if (auto *QuerySI = dyn_cast<StoreInst>(QueryInst)) {
           if (!QuerySI->isSimple())
             return MemDepResult::getClobber(LI);
+        } else if (QueryInst->mayReadOrWriteMemory()) {
+          return MemDepResult::getClobber(LI);
+        }
+
         if (isAtLeastAcquire(LI->getOrdering()))
           HasSeenAcquire = true;
       }
@@ -529,12 +533,16 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
       if (!SI->isUnordered()) {
         if (!QueryInst)
           return MemDepResult::getClobber(SI);
-        if (auto *QueryLI = dyn_cast<LoadInst>(QueryInst))
+        if (auto *QueryLI = dyn_cast<LoadInst>(QueryInst)) {
           if (!QueryLI->isSimple())
             return MemDepResult::getClobber(SI);
-        if (auto *QuerySI = dyn_cast<StoreInst>(QueryInst))
+        } else if (auto *QuerySI = dyn_cast<StoreInst>(QueryInst)) {
           if (!QuerySI->isSimple())
             return MemDepResult::getClobber(SI);
+        } else if (QueryInst->mayReadOrWriteMemory()) {
+          return MemDepResult::getClobber(SI);
+        }
+
         if (HasSeenAcquire && isAtLeastRelease(SI->getOrdering()))
           return MemDepResult::getClobber(SI);
       }
