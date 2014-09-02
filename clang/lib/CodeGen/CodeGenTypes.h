@@ -22,39 +22,39 @@
 #include <vector>
 
 namespace llvm {
-  class FunctionType;
-  class Module;
-  class DataLayout;
-  class Type;
-  class LLVMContext;
-  class StructType;
+class FunctionType;
+class Module;
+class DataLayout;
+class Type;
+class LLVMContext;
+class StructType;
 }
 
 namespace clang {
-  class ABIInfo;
-  class ASTContext;
-  template <typename> class CanQual;
-  class CXXConstructorDecl;
-  class CXXDestructorDecl;
-  class CXXMethodDecl;
-  class CodeGenOptions;
-  class FieldDecl;
-  class FunctionProtoType;
-  class ObjCInterfaceDecl;
-  class ObjCIvarDecl;
-  class PointerType;
-  class QualType;
-  class RecordDecl;
-  class TagDecl;
-  class TargetInfo;
-  class Type;
-  typedef CanQual<Type> CanQualType;
+class ABIInfo;
+class ASTContext;
+template <typename> class CanQual;
+class CXXConstructorDecl;
+class CXXDestructorDecl;
+class CXXMethodDecl;
+class CodeGenOptions;
+class FieldDecl;
+class FunctionProtoType;
+class ObjCInterfaceDecl;
+class ObjCIvarDecl;
+class PointerType;
+class QualType;
+class RecordDecl;
+class TagDecl;
+class TargetInfo;
+class Type;
+typedef CanQual<Type> CanQualType;
 
 namespace CodeGen {
-  class CGCXXABI;
-  class CGRecordLayout;
-  class CodeGenModule;
-  class RequiredArgs;
+class CGCXXABI;
+class CGRecordLayout;
+class CodeGenModule;
+class RequiredArgs;
 
 /// CodeGenTypes - This class organizes the cross-module state that is used
 /// while lowering AST types to LLVM types.
