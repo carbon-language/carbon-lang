@@ -54,8 +54,7 @@ struct StratifiedLink {
   // Optional<StratifiedIndex> because Optional<StratifiedIndex> would
   // eat up a considerable amount of extra memory, after struct
   // padding/alignment is taken into account.
-  static const auto SetSentinel =
-    std::numeric_limits<StratifiedIndex>::max();
+  static const StratifiedIndex SetSentinel;
 
   // \brief The index for the set "above" current
   StratifiedIndex Above;

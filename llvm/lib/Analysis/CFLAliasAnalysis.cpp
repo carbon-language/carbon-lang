@@ -73,6 +73,9 @@ static Optional<Value *> getTargetValue(Instruction *);
 // This notes that we should ignore those.
 static bool hasUsefulEdges(Instruction *);
 
+const StratifiedIndex StratifiedLink::SetSentinel =
+  std::numeric_limits<StratifiedIndex>::max();
+
 namespace {
 // StratifiedInfo Attribute things.
 typedef unsigned StratifiedAttr;
@@ -837,7 +840,8 @@ static void buildGraphFrom(CFLAliasAnalysis &Analysis, Function *Fn,
         auto From = findOrInsertNode(E.From);
         auto FlippedWeight = flipWeight(E.Weight);
         auto Attrs = E.AdditionalAttrs;
-        Graph.addEdge(From, To, {E.Weight, Attrs}, {FlippedWeight, Attrs});
+        Graph.addEdge(From, To, std::make_pair(E.Weight, Attrs),
+                                std::make_pair(FlippedWeight, Attrs));
       }
     }
   }
