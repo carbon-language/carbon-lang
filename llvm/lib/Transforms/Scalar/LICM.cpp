@@ -597,8 +597,13 @@ void LICM::sink(Instruction &I) {
   // PHI nodes in exit blocks due to LCSSA form. Just RAUW them with clones of
   // the instruction.
   while (!I.use_empty()) {
+    Instruction *User = I.user_back();
+    if (!DT->isReachableFromEntry(User->getParent())) {
+      User->replaceUsesOfWith(&I, UndefValue::get(I.getType()));
+      continue;
+    }
     // The user must be a PHI node.
-    PHINode *PN = cast<PHINode>(I.user_back());
+    PHINode *PN = cast<PHINode>(User);
 
     BasicBlock *ExitBlock = PN->getParent();
     assert(ExitBlockSet.count(ExitBlock) &&
