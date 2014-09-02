@@ -402,7 +402,7 @@ public:
   /// getPointerAddressSpace - Method to return the address space of the
   /// pointer operand.
   unsigned getPointerAddressSpace() const {
-    return cast<PointerType>(getPointerOperandType())->getAddressSpace();
+    return getPointerOperandType()->getPointerAddressSpace();
   }
 
   unsigned getNumIndices() const {  // Note: always non-negative
