@@ -1789,8 +1789,8 @@ void llvm::printMachOFileHeader(const object::ObjectFile *Obj) {
 //===----------------------------------------------------------------------===//
 
 void llvm::printMachOExportsTrie(const object::MachOObjectFile *Obj) {
-  for (const llvm::object::ExportEntry &entry : Obj->exports()) {
-    uint64_t Flags = entry.flags();
+  for (const llvm::object::ExportEntry &Entry : Obj->exports()) {
+    uint64_t Flags = Entry.flags();
     bool ReExport = (Flags & MachO::EXPORT_SYMBOL_FLAGS_REEXPORT);
     bool WeakDef = (Flags & MachO::EXPORT_SYMBOL_FLAGS_WEAK_DEFINITION);
     bool ThreadLocal = ((Flags & MachO::EXPORT_SYMBOL_FLAGS_KIND_MASK) ==
@@ -1802,43 +1802,43 @@ void llvm::printMachOExportsTrie(const object::MachOObjectFile *Obj) {
       outs() << "[re-export] ";
     else
       outs()
-          << format("0x%08llX  ", entry.address()); // FIXME:add in base address
-    outs() << entry.name();
+          << format("0x%08llX  ", Entry.address()); // FIXME:add in base address
+    outs() << Entry.name();
     if (WeakDef || ThreadLocal || Resolver || Abs) {
-      bool needComma = false;
+      bool NeedsComma = false;
       printf(" [");
       if (WeakDef) {
         outs() << "weak_def";
-        needComma = true;
+        NeedsComma = true;
       }
       if (ThreadLocal) {
-        if (needComma)
+        if (NeedsComma)
           outs() << ", ";
         outs() << "per-thread";
-        needComma = true;
+        NeedsComma = true;
       }
       if (Abs) {
-        if (needComma)
+        if (NeedsComma)
           outs() << ", ";
         outs() << "absolute";
-        needComma = true;
+        NeedsComma = true;
       }
       if (Resolver) {
-        if (needComma)
+        if (NeedsComma)
           outs() << ", ";
-        outs() << format("resolver=0x%08llX", entry.other());
-        needComma = true;
+        outs() << format("resolver=0x%08llX", Entry.other());
+        NeedsComma = true;
       }
       outs() << "]";
     }
     if (ReExport) {
       StringRef DylibName = "unknown";
-      int ordinal = entry.other() - 1;
-      Obj->getLibraryShortNameByIndex(ordinal, DylibName);
-      if (entry.otherName().empty())
+      int Ordinal = Entry.other() - 1;
+      Obj->getLibraryShortNameByIndex(Ordinal, DylibName);
+      if (Entry.otherName().empty())
         outs() << " (from " << DylibName << ")";
       else
-        outs() << " (" << entry.otherName() << " from " << DylibName << ")";
+        outs() << " (" << Entry.otherName() << " from " << DylibName << ")";
     }
     outs() << "\n";
   }
