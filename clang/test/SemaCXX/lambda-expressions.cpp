@@ -363,3 +363,53 @@ namespace PR18473 {
 void PR19249() {
   auto x = [&x]{}; // expected-error {{cannot appear in its own init}}
 }
+
+namespace PR20731 {
+template <class L, int X = sizeof(L)>
+void Job(L l);
+
+template <typename... Args>
+void Logger(Args &&... args) {
+  auto len = Invalid_Function((args)...);
+  // expected-error@-1 {{use of undeclared identifier 'Invalid_Function'}}
+  Job([len]() {});
+}
+
+void GetMethod() {
+  Logger();
+  // expected-note@-1 {{in instantiation of function template specialization 'PR20731::Logger<>' requested here}}
+}
+
+template <typename T>
+struct A {
+  T t;
+  // expected-error@-1 {{field has incomplete type 'void'}}
+};
+
+template <typename F>
+void g(F f) {
+  auto a = A<decltype(f())>{};
+  // expected-note@-1 {{in instantiation of template class 'PR20731::A<void>' requested here}}
+  auto xf = [a, f]() {};
+  int x = sizeof(xf);
+};
+void f() {
+  g([] {});
+  // expected-note-re@-1 {{in instantiation of function template specialization 'PR20731::g<(lambda at {{.*}}>' requested here}}
+}
+
+template <class _Rp> struct function {
+  template <class _Fp>
+  function(_Fp) {
+    static_assert(sizeof(_Fp) > 0, "Type must be complete.");
+  }
+};
+
+template <typename T> void p(T t) {
+  auto l = some_undefined_function(t);
+  // expected-error@-1 {{use of undeclared identifier 'some_undefined_function'}}
+  function<void()>(([l]() {}));
+}
+void q() { p(0); }
+// expected-note@-1 {{in instantiation of function template specialization 'PR20731::p<int>' requested here}}
+}

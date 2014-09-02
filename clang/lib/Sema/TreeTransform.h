@@ -9085,7 +9085,7 @@ TreeTransform<Derived>::TransformLambdaScope(LambdaExpr *E,
     VarDecl *CapturedVar
       = cast_or_null<VarDecl>(getDerived().TransformDecl(C->getLocation(),
                                                          C->getCapturedVar()));
-    if (!CapturedVar) {
+    if (!CapturedVar || CapturedVar->isInvalidDecl()) {
       Invalid = true;
       continue;
     }
