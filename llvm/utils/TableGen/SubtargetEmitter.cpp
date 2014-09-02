@@ -575,12 +575,13 @@ EmitItineraries(raw_ostream &OS,
     assert(ProcItinListsIter != ProcItinLists.end() && "bad iterator");
     std::vector<InstrItinerary> &ItinList = *ProcItinListsIter;
 
+    // Empty itineraries aren't referenced anywhere in the tablegen output
+    // so don't emit them.
+    if (ItinList.empty())
+      continue;
+
     OS << "\n";
     OS << "static const llvm::InstrItinerary ";
-    if (ItinList.empty()) {
-      OS << '*' << Name << " = nullptr;\n";
-      continue;
-    }
 
     // Begin processor itinerary table
     OS << Name << "[] = {\n";
