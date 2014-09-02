@@ -5,7 +5,8 @@
 // FIXME: This is included to avoid a diagnostic with no source location
 // pointing at the implicit operator new. We can't match such a diagnostic
 // with -verify.
-void *operator new(__SIZE_TYPE__); // expected-warning 0-1{{missing exception spec}} expected-note{{candidate}}
+__extension__ typedef __SIZE_TYPE__ size_t;
+void *operator new(size_t); // expected-warning 0-1{{missing exception spec}} expected-note{{candidate}}
 
 namespace dr500 { // dr500: dup 372
   class D;
@@ -564,7 +565,7 @@ namespace dr552 { // dr552: yes
 }
 
 struct dr553_class {
-  friend void *operator new(__SIZE_TYPE__, dr553_class);
+  friend void *operator new(size_t, dr553_class);
 };
 namespace dr553 {
   dr553_class c;
@@ -574,7 +575,7 @@ namespace dr553 {
   void *p = new (c) int; // expected-error {{no matching function}}
 
   struct namespace_scope {
-    friend void *operator new(__SIZE_TYPE__, namespace_scope); // expected-error {{cannot be declared inside a namespace}}
+    friend void *operator new(size_t, namespace_scope); // expected-error {{cannot be declared inside a namespace}}
   };
 }
 
