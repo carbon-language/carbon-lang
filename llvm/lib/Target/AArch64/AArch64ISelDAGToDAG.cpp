@@ -1381,20 +1381,21 @@ static bool isBitfieldExtractOpFromAnd(SelectionDAG *CurDAG, SDNode *N,
   return true;
 }
 
-static bool isOneBitExtractOpFromShr(SDNode *N, unsigned &Opc, SDValue &Opd0,
-                                     unsigned &LSB, unsigned &MSB) {
-  // We are looking for the following pattern which basically extracts a single
-  // bit from the source value and places it in the LSB of the destination
-  // value, all other bits of the destination value or set to zero:
+static bool isSeveralBitsExtractOpFromShr(SDNode *N, unsigned &Opc,
+                                          SDValue &Opd0, unsigned &LSB,
+                                          unsigned &MSB) {
+  // We are looking for the following pattern which basically extracts several
+  // continuous bits from the source value and places it from the LSB of the
+  // destination value, all other bits of the destination value or set to zero:
   //
   // Value2 = AND Value, MaskImm
   // SRL Value2, ShiftImm
   //
-  // with MaskImm >> ShiftImm == 1.
+  // with MaskImm >> ShiftImm to search for the bit width.
   //
   // This gets selected into a single UBFM:
   //
-  // UBFM Value, ShiftImm, ShiftImm
+  // UBFM Value, ShiftImm, BitWide + Srl_imm -1
   //
 
   if (N->getOpcode() != ISD::SRL)
@@ -1410,15 +1411,16 @@ static bool isOneBitExtractOpFromShr(SDNode *N, unsigned &Opc, SDValue &Opd0,
   if (!isIntImmediate(N->getOperand(1), Srl_imm))
     return false;
 
-  // Check whether we really have a one bit extract here.
-  if (And_mask >> Srl_imm == 0x1) {
+  // Check whether we really have several bits extract here.
+  unsigned BitWide = 64 - CountLeadingOnes_64(~(And_mask >> Srl_imm));
+  if (BitWide && isMask_64(And_mask >> Srl_imm)) {
     if (N->getValueType(0) == MVT::i32)
       Opc = AArch64::UBFMWri;
     else
       Opc = AArch64::UBFMXri;
 
-    LSB = MSB = Srl_imm;
-
+    LSB = Srl_imm;
+    MSB = BitWide + Srl_imm - 1;
     return true;
   }
 
@@ -1439,8 +1441,8 @@ static bool isBitfieldExtractOpFromShr(SDNode *N, unsigned &Opc, SDValue &Opd0,
   assert((VT == MVT::i32 || VT == MVT::i64) &&
          "Type checking must have been done before calling this function");
 
-  // Check for AND + SRL doing a one bit extract.
-  if (isOneBitExtractOpFromShr(N, Opc, Opd0, LSB, MSB))
+  // Check for AND + SRL doing several bits extract.
+  if (isSeveralBitsExtractOpFromShr(N, Opc, Opd0, LSB, MSB))
     return true;
 
   // we're looking for a shift of a shift
