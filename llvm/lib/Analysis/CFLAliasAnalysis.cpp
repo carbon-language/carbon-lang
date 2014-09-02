@@ -250,49 +250,50 @@ public:
   }
 
   void visitCastInst(CastInst &Inst) {
-    Output.push_back({&Inst, Inst.getOperand(0), EdgeType::Assign, AttrNone});
+    Output.push_back(Edge(&Inst, Inst.getOperand(0), EdgeType::Assign,
+                          AttrNone));
   }
 
   void visitBinaryOperator(BinaryOperator &Inst) {
     auto *Op1 = Inst.getOperand(0);
     auto *Op2 = Inst.getOperand(1);
-    Output.push_back({&Inst, Op1, EdgeType::Assign, AttrNone});
-    Output.push_back({&Inst, Op2, EdgeType::Assign, AttrNone});
+    Output.push_back(Edge(&Inst, Op1, EdgeType::Assign, AttrNone));
+    Output.push_back(Edge(&Inst, Op2, EdgeType::Assign, AttrNone));
   }
 
   void visitAtomicCmpXchgInst(AtomicCmpXchgInst &Inst) {
     auto *Ptr = Inst.getPointerOperand();
     auto *Val = Inst.getNewValOperand();
-    Output.push_back({Ptr, Val, EdgeType::Dereference, AttrNone});
+    Output.push_back(Edge(Ptr, Val, EdgeType::Dereference, AttrNone));
   }
 
   void visitAtomicRMWInst(AtomicRMWInst &Inst) {
     auto *Ptr = Inst.getPointerOperand();
     auto *Val = Inst.getValOperand();
-    Output.push_back({Ptr, Val, EdgeType::Dereference, AttrNone});
+    Output.push_back(Edge(Ptr, Val, EdgeType::Dereference, AttrNone));
   }
 
   void visitPHINode(PHINode &Inst) {
     for (unsigned I = 0, E = Inst.getNumIncomingValues(); I != E; ++I) {
       Value *Val = Inst.getIncomingValue(I);
-      Output.push_back({&Inst, Val, EdgeType::Assign, AttrNone});
+      Output.push_back(Edge(&Inst, Val, EdgeType::Assign, AttrNone));
     }
   }
 
   void visitGetElementPtrInst(GetElementPtrInst &Inst) {
     auto *Op = Inst.getPointerOperand();
-    Output.push_back({&Inst, Op, EdgeType::Assign, AttrNone});
+    Output.push_back(Edge(&Inst, Op, EdgeType::Assign, AttrNone));
     for (auto I = Inst.idx_begin(), E = Inst.idx_end(); I != E; ++I)
-      Output.push_back({&Inst, *I, EdgeType::Assign, AttrNone});
+      Output.push_back(Edge(&Inst, *I, EdgeType::Assign, AttrNone));
   }
 
   void visitSelectInst(SelectInst &Inst) {
     auto *Condition = Inst.getCondition();
-    Output.push_back({&Inst, Condition, EdgeType::Assign, AttrNone});
+    Output.push_back(Edge(&Inst, Condition, EdgeType::Assign, AttrNone));
     auto *TrueVal = Inst.getTrueValue();
-    Output.push_back({&Inst, TrueVal, EdgeType::Assign, AttrNone});
+    Output.push_back(Edge(&Inst, TrueVal, EdgeType::Assign, AttrNone));
     auto *FalseVal = Inst.getFalseValue();
-    Output.push_back({&Inst, FalseVal, EdgeType::Assign, AttrNone});
+    Output.push_back(Edge(&Inst, FalseVal, EdgeType::Assign, AttrNone));
   }
 
   void visitAllocaInst(AllocaInst &) {}
@@ -300,13 +301,13 @@ public:
   void visitLoadInst(LoadInst &Inst) {
     auto *Ptr = Inst.getPointerOperand();
     auto *Val = &Inst;
-    Output.push_back({Val, Ptr, EdgeType::Reference, AttrNone});
+    Output.push_back(Edge(Val, Ptr, EdgeType::Reference, AttrNone));
   }
 
   void visitStoreInst(StoreInst &Inst) {
     auto *Ptr = Inst.getPointerOperand();
     auto *Val = Inst.getValueOperand();
-    Output.push_back({Ptr, Val, EdgeType::Dereference, AttrNone});
+    Output.push_back(Edge(Ptr, Val, EdgeType::Dereference, AttrNone));
   }
 
   static bool isFunctionExternal(Function *Fn) {
@@ -427,7 +428,7 @@ public:
             continue;
 
           auto NewAttrs = SubAttrs | MainAttrs;
-          Output.push_back({MainVal, SubVal, EdgeType::Assign, NewAttrs});
+          Output.push_back(Edge(MainVal, SubVal, EdgeType::Assign, NewAttrs));
         }
       }
     }
@@ -444,7 +445,7 @@ public:
     }
 
     for (Value *V : Inst.arg_operands())
-      Output.push_back({&Inst, V, EdgeType::Assign, AttrAll});
+      Output.push_back(Edge(&Inst, V, EdgeType::Assign, AttrAll));
   }
 
   void visitCallInst(CallInst &Inst) { visitCallLikeInst(Inst); }
@@ -459,40 +460,40 @@ public:
   void visitExtractElementInst(ExtractElementInst &Inst) {
     auto *Ptr = Inst.getVectorOperand();
     auto *Val = &Inst;
-    Output.push_back({Val, Ptr, EdgeType::Reference, AttrNone});
+    Output.push_back(Edge(Val, Ptr, EdgeType::Reference, AttrNone));
   }
 
   void visitInsertElementInst(InsertElementInst &Inst) {
     auto *Vec = Inst.getOperand(0);
     auto *Val = Inst.getOperand(1);
-    Output.push_back({&Inst, Vec, EdgeType::Assign, AttrNone});
-    Output.push_back({&Inst, Val, EdgeType::Dereference, AttrNone});
+    Output.push_back(Edge(&Inst, Vec, EdgeType::Assign, AttrNone));
+    Output.push_back(Edge(&Inst, Val, EdgeType::Dereference, AttrNone));
   }
 
   void visitLandingPadInst(LandingPadInst &Inst) {
     // Exceptions come from "nowhere", from our analysis' perspective.
     // So we place the instruction its own group, noting that said group may
     // alias externals
-    Output.push_back({&Inst, &Inst, EdgeType::Assign, AttrAll});
+    Output.push_back(Edge(&Inst, &Inst, EdgeType::Assign, AttrAll));
   }
 
   void visitInsertValueInst(InsertValueInst &Inst) {
     auto *Agg = Inst.getOperand(0);
     auto *Val = Inst.getOperand(1);
-    Output.push_back({&Inst, Agg, EdgeType::Assign, AttrNone});
-    Output.push_back({&Inst, Val, EdgeType::Dereference, AttrNone});
+    Output.push_back(Edge(&Inst, Agg, EdgeType::Assign, AttrNone));
+    Output.push_back(Edge(&Inst, Val, EdgeType::Dereference, AttrNone));
   }
 
   void visitExtractValueInst(ExtractValueInst &Inst) {
     auto *Ptr = Inst.getAggregateOperand();
-    Output.push_back({&Inst, Ptr, EdgeType::Reference, AttrNone});
+    Output.push_back(Edge(&Inst, Ptr, EdgeType::Reference, AttrNone));
   }
 
   void visitShuffleVectorInst(ShuffleVectorInst &Inst) {
     auto *From1 = Inst.getOperand(0);
     auto *From2 = Inst.getOperand(1);
-    Output.push_back({&Inst, From1, EdgeType::Assign, AttrNone});
-    Output.push_back({&Inst, From2, EdgeType::Assign, AttrNone});
+    Output.push_back(Edge(&Inst, From1, EdgeType::Assign, AttrNone));
+    Output.push_back(Edge(&Inst, From2, EdgeType::Assign, AttrNone));
   }
 };
 
@@ -849,7 +850,7 @@ static FunctionInfo buildSetsFrom(CFLAliasAnalysis &Analysis, Function *Fn) {
   DenseMap<GraphT::Node, Value *> NodeValueMap;
   NodeValueMap.resize(Map.size());
   for (const auto &Pair : Map)
-    NodeValueMap.insert({Pair.second, Pair.first});
+    NodeValueMap.insert(std::make_pair(Pair.second, Pair.first));
 
   const auto findValueOrDie = [&NodeValueMap](GraphT::Node Node) {
     auto ValIter = NodeValueMap.find(Node);
@@ -921,7 +922,7 @@ static FunctionInfo buildSetsFrom(CFLAliasAnalysis &Analysis, Function *Fn) {
 }
 
 void CFLAliasAnalysis::scan(Function *Fn) {
-  auto InsertPair = Cache.insert({Fn, Optional<FunctionInfo>()});
+  auto InsertPair = Cache.insert(std::make_pair(Fn, Optional<FunctionInfo>()));
   (void)InsertPair;
   assert(InsertPair.second &&
          "Trying to scan a function that has already been cached");

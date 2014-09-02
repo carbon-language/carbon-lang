@@ -21,6 +21,7 @@
 #include <cmath>
 #include <limits>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace llvm {
@@ -319,7 +320,7 @@ template <typename T> class StratifiedSetsBuilder {
       }
 
       StratifiedIndex Number = StratLinks.size();
-      Remaps.insert({Link.Number, Number});
+      Remaps.insert(std::make_pair(Link.Number, Number));
       StratLinks.push_back(Link.getLink());
     }
 
@@ -494,7 +495,7 @@ private:
   // necessary.
   bool addAtMerging(const T &ToAdd, StratifiedIndex Index) {
     StratifiedInfo Info = {Index};
-    auto Pair = Values.insert({ToAdd, Info});
+    auto Pair = Values.insert(std::make_pair(ToAdd, Info));
     if (Pair.second)
       return true;
 
