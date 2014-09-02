@@ -42,6 +42,7 @@
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 #include <cassert>
@@ -75,15 +76,15 @@ static bool hasUsefulEdges(Instruction *);
 namespace {
 // StratifiedInfo Attribute things.
 typedef unsigned StratifiedAttr;
-constexpr unsigned MaxStratifiedAttrIndex = NumStratifiedAttrs;
-constexpr unsigned AttrAllIndex = 0;
-constexpr unsigned AttrGlobalIndex = 1;
-constexpr unsigned AttrFirstArgIndex = 2;
-constexpr unsigned AttrLastArgIndex = MaxStratifiedAttrIndex;
-constexpr unsigned AttrMaxNumArgs = AttrLastArgIndex - AttrFirstArgIndex;
+LLVM_CONSTEXPR unsigned MaxStratifiedAttrIndex = NumStratifiedAttrs;
+LLVM_CONSTEXPR unsigned AttrAllIndex = 0;
+LLVM_CONSTEXPR unsigned AttrGlobalIndex = 1;
+LLVM_CONSTEXPR unsigned AttrFirstArgIndex = 2;
+LLVM_CONSTEXPR unsigned AttrLastArgIndex = MaxStratifiedAttrIndex;
+LLVM_CONSTEXPR unsigned AttrMaxNumArgs = AttrLastArgIndex - AttrFirstArgIndex;
 
-constexpr StratifiedAttr AttrNone = 0;
-constexpr StratifiedAttr AttrAll = ~AttrNone;
+LLVM_CONSTEXPR StratifiedAttr AttrNone = 0;
+LLVM_CONSTEXPR StratifiedAttr AttrAll = ~AttrNone;
 
 // \brief StratifiedSets call for knowledge of "direction", so this is how we
 // represent that locally.
@@ -341,8 +342,8 @@ public:
   tryInterproceduralAnalysis(const SmallVectorImpl<Function *> &Fns,
                              Value *FuncValue,
                              const iterator_range<User::op_iterator> &Args) {
-    constexpr unsigned ExpectedMaxArgs = 8;
-    constexpr unsigned MaxSupportedArgs = 50;
+    LLVM_CONSTEXPR unsigned ExpectedMaxArgs = 8;
+    LLVM_CONSTEXPR unsigned MaxSupportedArgs = 50;
     assert(Fns.size() > 0);
 
     // I put this here to give us an upper bound on time taken by IPA. Is it
@@ -535,7 +536,7 @@ public:
   typedef std::size_t Node;
 
 private:
-  constexpr static Node StartNode = Node(0);
+  LLVM_CONSTEXPR static Node StartNode = Node(0);
 
   struct Edge {
     EdgeTypeT Weight;

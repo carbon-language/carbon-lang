@@ -15,6 +15,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Compiler.h"
 #include <bitset>
 #include <cassert>
 #include <cmath>
@@ -37,7 +38,7 @@ struct StratifiedInfo {
 // The number of attributes that StratifiedAttrs should contain. Attributes are
 // described below, and 32 was an arbitrary choice because it fits nicely in 32
 // bits (because we use a bitset for StratifiedAttrs).
-static constexpr unsigned NumStratifiedAttrs = 32;
+static LLVM_CONSTEXPR unsigned NumStratifiedAttrs = 32;
 
 // These are attributes that the users of StratifiedSets/StratifiedSetBuilders
 // may use for various purposes. These also have the special property of that
@@ -52,7 +53,7 @@ struct StratifiedLink {
   // Optional<StratifiedIndex> because Optional<StratifiedIndex> would
   // eat up a considerable amount of extra memory, after struct
   // padding/alignment is taken into account.
-  static constexpr auto SetSentinel =
+  static LLVM_CONSTEXPR auto SetSentinel =
       std::numeric_limits<StratifiedIndex>::max();
 
   // \brief The index for the set "above" current
