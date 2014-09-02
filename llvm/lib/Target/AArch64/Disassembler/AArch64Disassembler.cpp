@@ -610,7 +610,7 @@ static DecodeStatus DecodePCRelLabel19(llvm::MCInst &Inst, unsigned Imm,
   if (ImmVal & (1 << (19 - 1)))
     ImmVal |= ~((1LL << 19) - 1);
 
-  if (!Dis->tryAddingSymbolicOperand(Inst, ImmVal << 2, Addr,
+  if (!Dis->tryAddingSymbolicOperand(Inst, ImmVal *  4, Addr,
                                      Inst.getOpcode() != AArch64::LDRXl, 0, 4))
     Inst.addOperand(MCOperand::CreateImm(ImmVal));
   return Success;
@@ -1506,7 +1506,7 @@ static DecodeStatus DecodeUnconditionalBranch(llvm::MCInst &Inst, uint32_t insn,
   if (imm & (1 << (26 - 1)))
     imm |= ~((1LL << 26) - 1);
 
-  if (!Dis->tryAddingSymbolicOperand(Inst, imm << 2, Addr, true, 0, 4))
+  if (!Dis->tryAddingSymbolicOperand(Inst, imm * 4, Addr, true, 0, 4))
     Inst.addOperand(MCOperand::CreateImm(imm));
 
   return Success;
@@ -1548,7 +1548,7 @@ static DecodeStatus DecodeTestAndBranch(llvm::MCInst &Inst, uint32_t insn,
   else
     DecodeGPR64RegisterClass(Inst, Rt, Addr, Decoder);
   Inst.addOperand(MCOperand::CreateImm(bit));
-  if (!Dis->tryAddingSymbolicOperand(Inst, dst << 2, Addr, true, 0, 4))
+  if (!Dis->tryAddingSymbolicOperand(Inst, dst * 4, Addr, true, 0, 4))
     Inst.addOperand(MCOperand::CreateImm(dst));
 
   return Success;
