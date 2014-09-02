@@ -2043,7 +2043,7 @@ void BinaryOperator::copyFlags(const Value *V) {
   
   // Copy the fast-math flags.
   if (auto *FP = dyn_cast<FPMathOperator>(V))
-    setFastMathFlags(FP->getFastMathFlags());
+    copyFastMathFlags(FP->getFastMathFlags());
 }
 
 //===----------------------------------------------------------------------===//

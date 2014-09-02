@@ -257,9 +257,16 @@ private:
       (B * FastMathFlags::AllowReciprocal);
   }
 
-  /// Convenience function for setting all the fast-math flags
+  /// Convenience function for setting multiple fast-math flags.
+  /// FMF is a mask of the bits to set.
   void setFastMathFlags(FastMathFlags FMF) {
     SubclassOptionalData |= FMF.Flags;
+  }
+
+  /// Convenience function for copying all fast-math flags.
+  /// All values in FMF are transferred to this operator.
+  void copyFastMathFlags(FastMathFlags FMF) {
+    SubclassOptionalData = FMF.Flags;
   }
 
 public:

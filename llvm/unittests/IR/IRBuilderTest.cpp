@@ -189,12 +189,16 @@ TEST_F(IRBuilderTest, FastMathFlags) {
 
   Builder.clearFastMathFlags();
 
+  // To test a copy, make sure that a '0' and a '1' change state. 
   F = Builder.CreateFDiv(F, F);
   ASSERT_TRUE(isa<Instruction>(F));
   FDiv = cast<Instruction>(F);
   EXPECT_FALSE(FDiv->getFastMathFlags().any());
+  FDiv->setHasAllowReciprocal(true);
+  FAdd->setHasAllowReciprocal(false);
   FDiv->copyFastMathFlags(FAdd);
   EXPECT_TRUE(FDiv->hasNoNaNs());
+  EXPECT_FALSE(FDiv->hasAllowReciprocal());
 
 }
 

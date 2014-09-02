@@ -230,10 +230,15 @@ public:
   /// this flag.
   void setHasAllowReciprocal(bool B);
 
-  /// Convenience function for setting all the fast-math flags on this
+  /// Convenience function for setting multiple fast-math flags on this
   /// instruction, which must be an operator which supports these flags. See
   /// LangRef.html for the meaning of these flags.
   void setFastMathFlags(FastMathFlags FMF);
+
+  /// Convenience function for transferring all fast-math flag values to this
+  /// instruction, which must be an operator which supports these flags. See
+  /// LangRef.html for the meaning of these flags.
+  void copyFastMathFlags(FastMathFlags FMF);
 
   /// Determine whether the unsafe-algebra flag is set.
   bool hasUnsafeAlgebra() const;

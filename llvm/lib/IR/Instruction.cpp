@@ -143,6 +143,11 @@ void Instruction::setFastMathFlags(FastMathFlags FMF) {
   cast<FPMathOperator>(this)->setFastMathFlags(FMF);
 }
 
+void Instruction::copyFastMathFlags(FastMathFlags FMF) {
+  assert(isa<FPMathOperator>(this) && "copying fast-math flag on invalid op");
+  cast<FPMathOperator>(this)->copyFastMathFlags(FMF);
+}
+
 /// Determine whether the unsafe-algebra flag is set.
 bool Instruction::hasUnsafeAlgebra() const {
   assert(isa<FPMathOperator>(this) && "getting fast-math flag on invalid op");
@@ -183,7 +188,7 @@ FastMathFlags Instruction::getFastMathFlags() const {
 
 /// Copy I's fast-math flags
 void Instruction::copyFastMathFlags(const Instruction *I) {
-  setFastMathFlags(I->getFastMathFlags());
+  copyFastMathFlags(I->getFastMathFlags());
 }
 
 

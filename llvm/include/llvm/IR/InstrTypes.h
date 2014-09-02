@@ -358,7 +358,7 @@ public:
   /// isExact - Determine whether the exact flag is set.
   bool isExact() const;
 
-  /// Convenience method to copy wrapping, exact, and fast-math flag values
+  /// Convenience method to copy supported wrapping, exact, and fast-math flags
   /// from V to this instruction.
   void copyFlags(const Value *V);
 
