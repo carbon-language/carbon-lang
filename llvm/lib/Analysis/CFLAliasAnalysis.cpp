@@ -343,13 +343,13 @@ public:
   tryInterproceduralAnalysis(const SmallVectorImpl<Function *> &Fns,
                              Value *FuncValue,
                              const iterator_range<User::op_iterator> &Args) {
-    LLVM_CONSTEXPR unsigned ExpectedMaxArgs = 8;
-    LLVM_CONSTEXPR unsigned MaxSupportedArgs = 50;
+    const unsigned ExpectedMaxArgs = 8;
+    const unsigned MaxSupportedArgs = 50;
     assert(Fns.size() > 0);
 
     // I put this here to give us an upper bound on time taken by IPA. Is it
     // really (realistically) needed? Keep in mind that we do have an n^2 algo.
-    if (std::distance(Args.begin(), Args.end()) > MaxSupportedArgs)
+    if (std::distance(Args.begin(), Args.end()) > (int) MaxSupportedArgs)
       return false;
 
     // Exit early if we'll fail anyway
@@ -400,8 +400,8 @@ public:
           }
         }
         if (AddEdge)
-          Output.push_back({FuncValue, ArgVal, EdgeType::Assign,
-                            StratifiedAttrs().flip()});
+          Output.push_back(Edge(FuncValue, ArgVal, EdgeType::Assign,
+                            StratifiedAttrs().flip()));
       }
 
       if (Parameters.size() != Arguments.size())
@@ -537,11 +537,14 @@ public:
   typedef std::size_t Node;
 
 private:
-  LLVM_CONSTEXPR static Node StartNode = Node(0);
+  const static Node StartNode = Node(0);
 
   struct Edge {
     EdgeTypeT Weight;
     Node Other;
+
+    Edge(const EdgeTypeT &W, const Node &N)
+      : Weight(W), Other(N) {}
 
     bool operator==(const Edge &E) const {
       return Weight == E.Weight && Other == E.Other;
@@ -620,7 +623,7 @@ public:
 
   // ----- Actual graph-related things ----- //
 
-  WeightedBidirectionalGraph() = default;
+  WeightedBidirectionalGraph() {}
 
   WeightedBidirectionalGraph(WeightedBidirectionalGraph<EdgeTypeT> &&Other)
       : NodeImpls(std::move(Other.NodeImpls)) {}
@@ -644,8 +647,8 @@ public:
     assert(inbounds(To));
     auto &FromNode = getNode(From);
     auto &ToNode = getNode(To);
-    FromNode.Edges.push_back(Edge{Weight, To});
-    ToNode.Edges.push_back(Edge{ReverseWeight, From});
+    FromNode.Edges.push_back(Edge(Weight, To));
+    ToNode.Edges.push_back(Edge(ReverseWeight, From));
   }
 
   EdgeIterable edgesFor(const Node &N) const {
