@@ -1344,8 +1344,24 @@ FastISel::SelectInstruction(const Instruction *I) {
   }
 
   // First, try doing target-independent selection.
-  if (SelectOperator(I, I->getOpcode())) {
-    ++NumFastIselSuccessIndependent;
+  if (!SkipTargetIndependentISel) {
+    if (SelectOperator(I, I->getOpcode())) {
+      ++NumFastIselSuccessIndependent;
+      DbgLoc = DebugLoc();
+      return true;
+    }
+    // Remove dead code.  However, ignore call instructions since we've flushed
+    // the local value map and recomputed the insert point.
+    if (!isa<CallInst>(I)) {
+      recomputeInsertPt();
+      if (SavedInsertPt != FuncInfo.InsertPt)
+        removeDeadCode(FuncInfo.InsertPt, SavedInsertPt);
+    }
+    SavedInsertPt = FuncInfo.InsertPt;
+  }
+  // Next, try calling the target to attempt to handle the instruction.
+  if (TargetSelectInstruction(I)) {
+    ++NumFastIselSuccessTarget;
     DbgLoc = DebugLoc();
     return true;
   }
@@ -1356,18 +1372,6 @@ FastISel::SelectInstruction(const Instruction *I) {
     if (SavedInsertPt != FuncInfo.InsertPt)
       removeDeadCode(FuncInfo.InsertPt, SavedInsertPt);
   }
-
-  // Next, try calling the target to attempt to handle the instruction.
-  SavedInsertPt = FuncInfo.InsertPt;
-  if (TargetSelectInstruction(I)) {
-    ++NumFastIselSuccessTarget;
-    DbgLoc = DebugLoc();
-    return true;
-  }
-  // Check for dead code and remove as necessary.
-  recomputeInsertPt();
-  if (SavedInsertPt != FuncInfo.InsertPt)
-    removeDeadCode(FuncInfo.InsertPt, SavedInsertPt);
 
   DbgLoc = DebugLoc();
   // Undo phi node updates, because they will be added again by SelectionDAG.
@@ -1603,14 +1607,16 @@ FastISel::SelectOperator(const User *I, unsigned Opcode) {
   }
 }
 
-FastISel::FastISel(FunctionLoweringInfo &funcInfo,
-                   const TargetLibraryInfo *libInfo)
-    : FuncInfo(funcInfo), MF(funcInfo.MF), MRI(FuncInfo.MF->getRegInfo()),
+FastISel::FastISel(FunctionLoweringInfo &FuncInfo,
+                   const TargetLibraryInfo *LibInfo,
+                   bool SkipTargetIndependentISel)
+    : FuncInfo(FuncInfo), MF(FuncInfo.MF), MRI(FuncInfo.MF->getRegInfo()),
       MFI(*FuncInfo.MF->getFrameInfo()), MCP(*FuncInfo.MF->getConstantPool()),
       TM(FuncInfo.MF->getTarget()), DL(*TM.getSubtargetImpl()->getDataLayout()),
       TII(*TM.getSubtargetImpl()->getInstrInfo()),
       TLI(*TM.getSubtargetImpl()->getTargetLowering()),
-      TRI(*TM.getSubtargetImpl()->getRegisterInfo()), LibInfo(libInfo) {}
+      TRI(*TM.getSubtargetImpl()->getRegisterInfo()), LibInfo(LibInfo),
+      SkipTargetIndependentISel(SkipTargetIndependentISel) {}
 
 FastISel::~FastISel() {}
 

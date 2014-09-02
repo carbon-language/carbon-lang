@@ -202,6 +202,7 @@ protected:
   const TargetLowering &TLI;
   const TargetRegisterInfo &TRI;
   const TargetLibraryInfo *LibInfo;
+  bool SkipTargetIndependentISel;
 
   /// The position of the last instruction for materializing constants for use
   /// in the current block. It resets to EmitStartPt when it makes sense (for
@@ -307,8 +308,9 @@ public:
   virtual ~FastISel();
 
 protected:
-  explicit FastISel(FunctionLoweringInfo &funcInfo,
-                    const TargetLibraryInfo *libInfo);
+  explicit FastISel(FunctionLoweringInfo &FuncInfo,
+                    const TargetLibraryInfo *LibInfo,
+                    bool SkipTargetIndependentISel = false);
 
   /// This method is called by target-independent code when the normal FastISel
   /// process fails to select an instruction.  This gives targets a chance to
@@ -545,7 +547,6 @@ protected:
     }
   }
 
-private:
   bool SelectBinaryOp(const User *I, unsigned ISDOpcode);
 
   bool SelectFNeg(const User *I);
@@ -566,6 +567,7 @@ private:
 
   bool SelectInsertValue(const User *I);
 
+private:
   /// \brief Handle PHI nodes in successor blocks.
   ///
   /// Emit code to ensure constants are copied into registers when needed.
