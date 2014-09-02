@@ -2547,11 +2547,11 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
     for (MCPhysReg Reg : ArgGPRs.slice(NumIntRegs)) {
       unsigned GPR = MF.addLiveIn(Reg, &X86::GR64RegClass);
       LiveGPRs.push_back(
-          DAG.getCopyFromReg(DAG.getEntryNode(), dl, GPR, MVT::i64));
+          DAG.getCopyFromReg(Chain, dl, GPR, MVT::i64));
     }
     if (!ArgXMMs.empty()) {
       unsigned AL = MF.addLiveIn(X86::AL, &X86::GR8RegClass);
-      ALVal = DAG.getCopyFromReg(DAG.getEntryNode(), dl, AL, MVT::i8);
+      ALVal = DAG.getCopyFromReg(Chain, dl, AL, MVT::i8);
       for (MCPhysReg Reg : ArgXMMs.slice(NumXMMRegs)) {
         unsigned XMMReg = MF.addLiveIn(Reg, &X86::VR128RegClass);
         LiveXMMRegs.push_back(

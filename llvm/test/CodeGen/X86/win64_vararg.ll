@@ -111,3 +111,22 @@ entry:
   %tmp = va_arg i8** %ap, i32
   ret i32 %tmp
 }
+
+define void @sret_arg(i32* sret %agg.result, i8* nocapture readnone %format, ...) {
+entry:
+  %ap = alloca i8*
+  %ap_i8 = bitcast i8** %ap to i8*
+  call void @llvm.va_start(i8* %ap_i8)
+  %tmp = va_arg i8** %ap, i32
+  store i32 %tmp, i32* %agg.result
+  ret void
+}
+; CHECK-LABEL: sret_arg:
+; CHECK: pushq
+; CHECK-DAG: movq %r9, 40(%rsp)
+; CHECK-DAG: movq %r8, 32(%rsp)
+; CHECK: movl 32(%rsp), %[[tmp:[^ ]*]]
+; CHECK: movl %[[tmp]], (%[[sret:[^ ]*]])
+; CHECK: movq %[[sret]], %rax
+; CHECK: popq
+; CHECK: retq

@@ -75,34 +75,26 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
   // instruction values that are used outside of the block that defines
   // them.
   Function::const_iterator BB = Fn->begin(), EB = Fn->end();
-  for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-    if (const AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
-      // Don't fold inalloca allocas or other dynamic allocas into the initial
-      // stack frame allocation, even if they are in the entry block.
-      if (!AI->isStaticAlloca())
-        continue;
-
-      if (const ConstantInt *CUI = dyn_cast<ConstantInt>(AI->getArraySize())) {
-        Type *Ty = AI->getAllocatedType();
-        uint64_t TySize = TLI->getDataLayout()->getTypeAllocSize(Ty);
-        unsigned Align =
-          std::max((unsigned)TLI->getDataLayout()->getPrefTypeAlignment(Ty),
-                   AI->getAlignment());
-
-        TySize *= CUI->getZExtValue();   // Get total allocated size.
-        if (TySize == 0) TySize = 1; // Don't create zero-sized stack objects.
-
-        StaticAllocaMap[AI] =
-          MF->getFrameInfo()->CreateStackObject(TySize, Align, false, AI);
-      }
-    }
-
   for (; BB != EB; ++BB)
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
          I != E; ++I) {
-      // Look for dynamic allocas.
       if (const AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
-        if (!AI->isStaticAlloca()) {
+        // Static allocas can be folded into the initial stack frame adjustment.
+        if (AI->isStaticAlloca()) {
+          const ConstantInt *CUI = cast<ConstantInt>(AI->getArraySize());
+          Type *Ty = AI->getAllocatedType();
+          uint64_t TySize = TLI->getDataLayout()->getTypeAllocSize(Ty);
+          unsigned Align =
+            std::max((unsigned)TLI->getDataLayout()->getPrefTypeAlignment(Ty),
+                     AI->getAlignment());
+
+          TySize *= CUI->getZExtValue();   // Get total allocated size.
+          if (TySize == 0) TySize = 1; // Don't create zero-sized stack objects.
+
+          StaticAllocaMap[AI] =
+            MF->getFrameInfo()->CreateStackObject(TySize, Align, false, AI);
+
+        } else {
           unsigned Align = std::max(
               (unsigned)TLI->getDataLayout()->getPrefTypeAlignment(
                 AI->getAllocatedType()),
