@@ -142,7 +142,7 @@ private:
   lto_codegen_model CodeModel;
   StringSet MustPreserveSymbols;
   StringSet AsmUndefinedRefs;
-  MemoryBuffer *NativeObjectFile;
+  std::unique_ptr<MemoryBuffer> NativeObjectFile;
   std::vector<char *> CodegenOptions;
   std::string MCpu;
   std::string MAttr;
