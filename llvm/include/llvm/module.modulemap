@@ -108,9 +108,6 @@ module LLVM_MC {
   umbrella "MC"
   module * { export * }
 
-  // FIXME: Excluded due to mislayering.
-  exclude header "MC/MCAnalysis/MCObjectSymbolizer.h"
-
   // Exclude this; it's fundamentally non-modular.
   exclude header "MC/MCTargetOptionsCommandFlags.h"
 }
@@ -119,8 +116,6 @@ module LLVM_Object {
   requires cplusplus
   umbrella "Object"
   module * { export * }
-
-  module LLVM_MC_MCAnalysis_MCObjectSymbolizer { header "MC/MCAnalysis/MCObjectSymbolizer.h" export * }
 }
 
 module LLVM_Option { requires cplusplus umbrella "Option" module * { export * } }

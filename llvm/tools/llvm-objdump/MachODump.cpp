@@ -308,8 +308,6 @@ static void DisassembleInputMachO2(StringRef Filename,
 
   MachO::mach_header Header = MachOOF->getHeader();
 
-  // FIXME: FoundFns isn't used anymore. Using symbols/LC_FUNCTION_STARTS to
-  // determine function locations will eventually go in MCObjectDisassembler.
   // FIXME: Using the -cfg command line option, this code used to be able to
   // annotate relocations with the referenced symbol's name, and if this was
   // inside a __[cf]string section, the data it points to. This is now replaced

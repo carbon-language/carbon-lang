@@ -1,5 +1,0 @@
-[component_0]
-type = Library
-name = MCAnalysis
-parent = Libraries
-required_libraries = MC Object Support

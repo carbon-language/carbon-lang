@@ -2,7 +2,6 @@ set(LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
   DebugInfo
   MC
-  MCAnalysis
   MCDisassembler
   Object
   Support

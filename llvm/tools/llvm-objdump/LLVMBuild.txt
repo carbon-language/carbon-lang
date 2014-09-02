@@ -19,4 +19,4 @@
 type = Tool
 name = llvm-objdump
 parent = Tools
-required_libraries = DebugInfo MC MCAnalysis MCDisassembler MCParser Object all-targets
+required_libraries = DebugInfo MC MCDisassembler MCParser Object all-targets

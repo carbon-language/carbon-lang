@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TESTNAME = MC
-LINK_COMPONENTS := MCAnalysis
+LINK_COMPONENTS := Object
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest

@@ -48,6 +48,5 @@ add_llvm_library(LLVMMC
   YAML.cpp
   )
 
-add_subdirectory(MCAnalysis)
 add_subdirectory(MCParser)
 add_subdirectory(MCDisassembler)
