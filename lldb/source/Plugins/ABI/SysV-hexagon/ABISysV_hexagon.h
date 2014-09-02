@@ -75,13 +75,7 @@ public:
         
     virtual bool
     RegisterIsVolatile ( const lldb_private::RegisterInfo *reg_info );
-    
-    virtual bool
-    StackUsesFrames ( void )
-    {
-        return true;
-    }
-    
+
     virtual bool
     CallFrameAddressIsValid ( lldb::addr_t cfa )
     {
@@ -98,12 +92,6 @@ public:
     {
         // We have a 64 bit address space, so anything is valid as opcodes
         // aren't fixed width...
-        return true;
-    }
-
-    virtual bool
-    FunctionCallsChangeCFA ( void )
-    {
         return true;
     }
 

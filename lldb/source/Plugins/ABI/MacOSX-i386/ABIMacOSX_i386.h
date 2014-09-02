@@ -64,13 +64,7 @@ public:
     
     virtual bool
     RegisterIsVolatile (const lldb_private::RegisterInfo *reg_info);
-    
-    virtual bool
-    StackUsesFrames ()
-    {
-        return true;
-    }
-    
+
     // The Darwin i386 ABI requires that stack frames be 16 byte aligned.
     // When there is a trap handler on the stack, e.g. _sigtramp in userland
     // code, we've seen that the stack pointer is often not aligned properly
@@ -100,12 +94,6 @@ public:
     {
         // Just make sure the address is a valid 32 bit address. 
         return pc <= UINT32_MAX;
-    }
-
-    virtual bool
-    FunctionCallsChangeCFA ()
-    {
-        return true;
     }
 
     virtual const lldb_private::RegisterInfo *

@@ -61,13 +61,7 @@ public:
         
     virtual bool
     RegisterIsVolatile (const lldb_private::RegisterInfo *reg_info);
-    
-    virtual bool
-    StackUsesFrames ()
-    {
-        return true;
-    }
-    
+
     // The SysV x86_64 ABI requires that stack frames be 16 byte aligned.
     // When there is a trap handler on the stack, e.g. _sigtramp in userland
     // code, we've seen that the stack pointer is often not aligned properly
@@ -94,12 +88,6 @@ public:
     {
         // We have a 64 bit address space, so anything is valid as opcodes
         // aren't fixed width...
-        return true;
-    }
-
-    virtual bool
-    FunctionCallsChangeCFA ()
-    {
         return true;
     }
 

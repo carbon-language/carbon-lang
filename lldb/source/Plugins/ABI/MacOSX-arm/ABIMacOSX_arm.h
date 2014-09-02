@@ -53,13 +53,7 @@ public:
     
     virtual bool
     RegisterIsVolatile (const lldb_private::RegisterInfo *reg_info);
-    
-    virtual bool
-    StackUsesFrames ()
-    {
-        return true;
-    }
-    
+
     virtual bool
     CallFrameAddressIsValid (lldb::addr_t cfa)
     {
@@ -86,12 +80,6 @@ public:
         // ARM uses bit zero to signify a code address is thumb, so we must
         // strip bit zero in any code addresses.
         return pc & ~(lldb::addr_t)1;
-    }
-
-    virtual bool
-    FunctionCallsChangeCFA ()
-    {
-        return false;
     }
 
     virtual const lldb_private::RegisterInfo *

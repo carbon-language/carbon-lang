@@ -46,15 +46,7 @@ public:
     
     virtual bool
     RegisterIsVolatile (const lldb_private::RegisterInfo *reg_info);
-    
-    
-    virtual bool
-    StackUsesFrames ()
-    {
-        // MacOSX uses frame pointers.
-        return true;
-    }
-    
+
     // The arm64 ABI requires that stack frames be 16 byte aligned.
     // When there is a trap handler on the stack, e.g. _sigtramp in userland
     // code, we've seen that the stack pointer is often not aligned properly
@@ -85,12 +77,6 @@ public:
         
         // Anything else if fair game..
         return true;
-    }
-
-    virtual bool
-    FunctionCallsChangeCFA ()
-    {
-        return false;
     }
 
     virtual const lldb_private::RegisterInfo *

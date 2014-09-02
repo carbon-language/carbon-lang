@@ -98,6 +98,12 @@ private:
     // UnwindLLDB needs to pass around references to RegisterLocations
     friend class UnwindLLDB;
 
+
+    // Returns true if we have an unwind loop -- the same stack frame unwinding 
+    // multiple times.
+    bool
+    CheckIfLoopingStack ();
+
     // Indicates whether this frame is frame zero -- the currently
     // executing frame -- or not.
     bool
