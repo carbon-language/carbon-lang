@@ -635,6 +635,17 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_WCTYPE_IS_MASK
 #endif
 
+#if defined(ELAST)
+#define _LIBCPP_ELAST ELAST
+#elif defined(__linux__)
+#define _LIBCPP_ELAST 4095
+#elif defined(_NEWLIB_VERSION)
+#define _LIBCPP_ELAST __ELASTERROR
+#else
+// Warn here so that the person doing the libcxx port has an easier time:
+#warning This platform's ELAST hasn't been ported yet
+#endif
+
 #ifndef _LIBCPP_TRIVIAL_PAIR_COPY_CTOR
 #  define _LIBCPP_TRIVIAL_PAIR_COPY_CTOR 1
 #endif

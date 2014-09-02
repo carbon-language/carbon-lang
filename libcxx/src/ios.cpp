@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "__config"
 #include "ios"
 #include "streambuf"
 #include "istream"
@@ -52,11 +53,9 @@ string
 __iostream_category::message(int ev) const
 {
     if (ev != static_cast<int>(io_errc::stream)
-#ifdef ELAST
-        && ev <= ELAST
-#elif defined(__linux__)
-        && ev <= 4095
-#endif  // ELAST
+#ifdef _LIBCPP_ELAST
+        && ev <= _LIBCPP_ELAST
+#endif  // _LIBCPP_ELAST
         )
         return __do_message::message(ev);
     return string("unspecified iostream_category error");
