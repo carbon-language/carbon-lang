@@ -8029,8 +8029,19 @@ SDValue DAGCombiner::SplitIndexingFromLoad(LoadSDNode *LD) {
   assert(AM != ISD::UNINDEXED);
   SDValue BP = LD->getOperand(1);
   SDValue Inc = LD->getOperand(2);
-  assert(Inc.getOpcode() != ISD::TargetConstant &&
-         "Cannot split out indexing using target constants");
+
+  // Some backends use TargetConstants for load offsets, but don't expect
+  // TargetConstants in general ADD nodes. We can convert these constants into
+  // regular Constants (if the constant is not opaque).
+  assert((Inc.getOpcode() != ISD::TargetConstant ||
+          !cast<ConstantSDNode>(Inc)->isOpaque()) &&
+         "Cannot split out indexing using opaque target constants");
+  if (Inc.getOpcode() == ISD::TargetConstant) {
+    ConstantSDNode *ConstInc = cast<ConstantSDNode>(Inc);
+    Inc = DAG.getConstant(*ConstInc->getConstantIntValue(),
+                          ConstInc->getValueType(0));
+  }
+
   unsigned Opc =
       (AM == ISD::PRE_INC || AM == ISD::POST_INC ? ISD::ADD : ISD::SUB);
   return DAG.getNode(Opc, SDLoc(LD), BP.getSimpleValueType(), BP, Inc);
@@ -8071,16 +8082,18 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
       // Indexed loads.
       assert(N->getValueType(2) == MVT::Other && "Malformed indexed loads?");
 
-      // If this load has an TargetConstant offset, then we cannot split the
-      // indexing into an add/sub directly (that TargetConstant may not be
-      // valid for a different type of node).
-      bool HasTCInc = LD->getOperand(2).getOpcode() == ISD::TargetConstant;
+      // If this load has an opaque TargetConstant offset, then we cannot split
+      // the indexing into an add/sub directly (that TargetConstant may not be
+      // valid for a different type of node, and we cannot convert an opaque
+      // target constant into a regular constant).
+      bool HasOTCInc = LD->getOperand(2).getOpcode() == ISD::TargetConstant &&
+                       cast<ConstantSDNode>(LD->getOperand(2))->isOpaque();
 
       if (!N->hasAnyUseOfValue(0) &&
-          ((MaySplitLoadIndex && !HasTCInc) || !N->hasAnyUseOfValue(1))) {
+          ((MaySplitLoadIndex && !HasOTCInc) || !N->hasAnyUseOfValue(1))) {
         SDValue Undef = DAG.getUNDEF(N->getValueType(0));
         SDValue Index;
-        if (N->hasAnyUseOfValue(1) && MaySplitLoadIndex && !HasTCInc) {
+        if (N->hasAnyUseOfValue(1) && MaySplitLoadIndex && !HasOTCInc) {
           Index = SplitIndexingFromLoad(LD);
           // Try to fold the base pointer arithmetic into subsequent loads and
           // stores.
