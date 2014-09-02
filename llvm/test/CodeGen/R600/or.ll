@@ -57,7 +57,7 @@ define void @vector_or_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %a, i32 %b)
 }
 
 ; SI-LABEL: @scalar_or_literal_i32
-; SI: S_OR_B32 s0, s0, 0x1869f
+; SI: S_OR_B32 s{{[0-9]+}}, s{{[0-9]+}}, 0x1869f
 define void @scalar_or_literal_i32(i32 addrspace(1)* %out, i32 %a) {
   %or = or i32 %a, 99999
   store i32 %or, i32 addrspace(1)* %out, align 4
