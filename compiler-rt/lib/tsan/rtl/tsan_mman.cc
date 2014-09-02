@@ -63,7 +63,8 @@ void AllocatorPrintStats() {
 }
 
 static void SignalUnsafeCall(ThreadState *thr, uptr pc) {
-  if (!thr->in_signal_handler || !flags()->report_signal_unsafe)
+  if (atomic_load(&thr->in_signal_handler, memory_order_relaxed) == 0 ||
+      !flags()->report_signal_unsafe)
     return;
   StackTrace stack;
   stack.ObtainCurrent(thr, pc);

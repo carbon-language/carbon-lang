@@ -369,7 +369,7 @@ struct ThreadState {
   DDPhysicalThread *dd_pt;
   DDLogicalThread *dd_lt;
 
-  bool in_signal_handler;
+  atomic_uintptr_t in_signal_handler;
   SignalContext *signal_ctx;
 
   DenseSlabAllocCache block_cache;

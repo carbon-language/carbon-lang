@@ -124,9 +124,9 @@ struct SignalDesc {
 };
 
 struct SignalContext {
-  int in_blocking_func;
   int int_signal_send;
-  int pending_signal_count;
+  bool in_blocking_func;
+  bool have_pending_signals;
   SignalDesc pending_signals[kSigCount];
 };
 
@@ -222,11 +222,11 @@ ScopedInterceptor::~ScopedInterceptor() {
 struct BlockingCall {
   explicit BlockingCall(ThreadState *thr)
       : ctx(SigCtx(thr)) {
-    ctx->in_blocking_func++;
+    ctx->in_blocking_func = true;
   }
 
   ~BlockingCall() {
-    ctx->in_blocking_func--;
+    ctx->in_blocking_func = false;
   }
 
   SignalContext *ctx;
@@ -1683,9 +1683,10 @@ TSAN_INTERCEPTOR(int, epoll_wait, int epfd, void *ev, int cnt, int timeout) {
 
 namespace __tsan {
 
-static void CallUserSignalHandler(ThreadState *thr, bool sync, bool sigact,
-    int sig, my_siginfo_t *info, void *uctx) {
-  Acquire(thr, 0, (uptr)&sigactions[sig]);
+static void CallUserSignalHandler(ThreadState *thr, bool sync, bool acquire,
+    bool sigact, int sig, my_siginfo_t *info, void *uctx) {
+  if (acquire)
+    Acquire(thr, 0, (uptr)&sigactions[sig]);
   // Ensure that the handler does not spoil errno.
   const int saved_errno = errno;
   errno = 99;
@@ -1720,10 +1721,10 @@ static void CallUserSignalHandler(ThreadState *thr, bool sync, bool sigact,
 
 void ProcessPendingSignals(ThreadState *thr) {
   SignalContext *sctx = SigCtx(thr);
-  if (sctx == 0 || sctx->pending_signal_count == 0 || thr->in_signal_handler)
+  if (sctx == 0 || !sctx->have_pending_signals)
     return;
-  thr->in_signal_handler = true;
-  sctx->pending_signal_count = 0;
+  sctx->have_pending_signals = false;
+  atomic_fetch_add(&thr->in_signal_handler, 1, memory_order_relaxed);
   // These are too big for stack.
   static THREADLOCAL __sanitizer_sigset_t emptyset, oldset;
   REAL(sigfillset)(&emptyset);
@@ -1734,14 +1735,13 @@ void ProcessPendingSignals(ThreadState *thr) {
       signal->armed = false;
       if (sigactions[sig].sa_handler != SIG_DFL
           && sigactions[sig].sa_handler != SIG_IGN) {
-        CallUserSignalHandler(thr, false, signal->sigaction,
+        CallUserSignalHandler(thr, false, true, signal->sigaction,
             sig, &signal->siginfo, &signal->ctx);
       }
     }
   }
   pthread_sigmask(SIG_SETMASK, &oldset, 0);
-  CHECK_EQ(thr->in_signal_handler, true);
-  thr->in_signal_handler = false;
+  atomic_fetch_add(&thr->in_signal_handler, -1, memory_order_relaxed);
 }
 
 }  // namespace __tsan
@@ -1767,21 +1767,27 @@ void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
       // If we are in blocking function, we can safely process it now
       // (but check if we are in a recursive interceptor,
       // i.e. pthread_join()->munmap()).
-      (sctx && sctx->in_blocking_func == 1)) {
-    CHECK_EQ(thr->in_signal_handler, false);
-    thr->in_signal_handler = true;
-    if (sctx && sctx->in_blocking_func == 1) {
+      (sctx && sctx->in_blocking_func)) {
+    atomic_fetch_add(&thr->in_signal_handler, 1, memory_order_relaxed);
+    if (sctx && sctx->in_blocking_func) {
       // We ignore interceptors in blocking functions,
       // temporary enbled them again while we are calling user function.
       int const i = thr->ignore_interceptors;
       thr->ignore_interceptors = 0;
-      CallUserSignalHandler(thr, sync, sigact, sig, info, ctx);
+      sctx->in_blocking_func = false;
+      CallUserSignalHandler(thr, sync, true, sigact, sig, info, ctx);
       thr->ignore_interceptors = i;
+      sctx->in_blocking_func = true;
     } else {
-      CallUserSignalHandler(thr, sync, sigact, sig, info, ctx);
+      // Be very conservative with when we do acquire in this case.
+      // It's unsafe to do acquire in async handlers, because ThreadState
+      // can be in inconsistent state.
+      // SIGSYS looks relatively safe -- it's synchronous and can actually
+      // need some global state.
+      bool acq = (sig == SIGSYS);
+      CallUserSignalHandler(thr, sync, acq, sigact, sig, info, ctx);
     }
-    CHECK_EQ(thr->in_signal_handler, true);
-    thr->in_signal_handler = false;
+    atomic_fetch_add(&thr->in_signal_handler, -1, memory_order_relaxed);
     return;
   }
 
@@ -1795,7 +1801,7 @@ void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
       internal_memcpy(&signal->siginfo, info, sizeof(*info));
     if (ctx)
       internal_memcpy(&signal->ctx, ctx, sizeof(signal->ctx));
-    sctx->pending_signal_count++;
+    sctx->have_pending_signals = true;
   }
 }
 
