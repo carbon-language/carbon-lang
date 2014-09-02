@@ -16,7 +16,8 @@
 
 #include <unistd.h>
 
-#if defined(_POSIX_THREADS) && _POSIX_THREADS > 0
+#if !defined(LIBCXXABI_SINGLE_THREADED) && \
+    defined(_POSIX_THREADS) && _POSIX_THREADS > 0
 #  define LIBCXXABI_SINGLE_THREADED 0
 #else
 #  define LIBCXXABI_SINGLE_THREADED 1
