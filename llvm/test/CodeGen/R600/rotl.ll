@@ -20,10 +20,11 @@ entry:
 }
 
 ; FUNC-LABEL: @rotl_v2i32
-; SI: S_SUB_I32
-; SI: V_ALIGNBIT_B32
-; SI: S_SUB_I32
-; SI: V_ALIGNBIT_B32
+; SI-DAG: S_SUB_I32
+; SI-DAG: S_SUB_I32
+; SI-DAG: V_ALIGNBIT_B32
+; SI-DAG: V_ALIGNBIT_B32
+; SI: S_ENDPGM
 define void @rotl_v2i32(<2 x i32> addrspace(1)* %in, <2 x i32> %x, <2 x i32> %y) {
 entry:
   %0 = shl <2 x i32> %x, %y
@@ -35,14 +36,15 @@ entry:
 }
 
 ; FUNC-LABEL: @rotl_v4i32
-; SI: S_SUB_I32
-; SI: V_ALIGNBIT_B32
-; SI: S_SUB_I32
-; SI: V_ALIGNBIT_B32
-; SI: S_SUB_I32
-; SI: V_ALIGNBIT_B32
-; SI: S_SUB_I32
-; SI: V_ALIGNBIT_B32
+; SI-DAG: S_SUB_I32
+; SI-DAG: V_ALIGNBIT_B32
+; SI-DAG: S_SUB_I32
+; SI-DAG: V_ALIGNBIT_B32
+; SI-DAG: S_SUB_I32
+; SI-DAG: V_ALIGNBIT_B32
+; SI-DAG: S_SUB_I32
+; SI-DAG: V_ALIGNBIT_B32
+; SI: S_ENDPGM
 define void @rotl_v4i32(<4 x i32> addrspace(1)* %in, <4 x i32> %x, <4 x i32> %y) {
 entry:
   %0 = shl <4 x i32> %x, %y

@@ -195,10 +195,11 @@ define void @sext_in_reg_i1_in_i32_other_amount(i32 addrspace(1)* %out, i32 %a, 
 }
 
 ; FUNC-LABEL: @sext_in_reg_v2i1_in_v2i32_other_amount
-; SI: S_LSHL_B32 [[REG0:s[0-9]+]], {{s[0-9]}}, 6
-; SI: S_ASHR_I32 {{s[0-9]+}}, [[REG0]], 7
-; SI: S_LSHL_B32 [[REG1:s[0-9]+]], {{s[0-9]}}, 6
-; SI: S_ASHR_I32 {{s[0-9]+}}, [[REG1]], 7
+; SI-DAG: S_LSHL_B32 [[REG0:s[0-9]+]], {{s[0-9]}}, 6
+; SI-DAG: S_ASHR_I32 {{s[0-9]+}}, [[REG0]], 7
+; SI-DAG: S_LSHL_B32 [[REG1:s[0-9]+]], {{s[0-9]}}, 6
+; SI-DAG: S_ASHR_I32 {{s[0-9]+}}, [[REG1]], 7
+; SI: S_ENDPGM
 
 ; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+]]{{\.[XYZW][XYZW]}}, [[ADDR:T[0-9]+.[XYZW]]]
 ; EG-NOT: BFE
