@@ -1801,7 +1801,7 @@ APFloat::fusedMultiplyAdd(const APFloat &multiplicand,
      extended-precision calculation.  */
   if (isFiniteNonZero() &&
       multiplicand.isFiniteNonZero() &&
-      addend.isFiniteNonZero()) {
+      addend.isFinite()) {
     lostFraction lost_fraction;
 
     lost_fraction = multiplySignificand(multiplicand, &addend);
