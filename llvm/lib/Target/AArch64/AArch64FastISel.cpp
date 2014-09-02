@@ -3475,16 +3475,16 @@ bool AArch64FastISel::TargetSelectInstruction(const Instruction *I) {
   case Instruction::FRem:
     return SelectBinaryOp(I, ISD::FREM);
   case Instruction::Shl:
-    if (!SelectBinaryOp(I, ISD::SHL))
-      return SelectShift(I);
+    if (!SelectShift(I))
+      return SelectBinaryOp(I, ISD::SHL);
     return true;
   case Instruction::LShr:
-    if (!SelectBinaryOp(I, ISD::SRL))
-      return SelectShift(I);
+    if (!SelectShift(I))
+      return SelectBinaryOp(I, ISD::SRL);
     return true;
   case Instruction::AShr:
-    if (!SelectBinaryOp(I, ISD::SRA))
-      return SelectShift(I);
+    if (!SelectShift(I))
+      return SelectBinaryOp(I, ISD::SRA);
     return true;
   case Instruction::And:
     return SelectBinaryOp(I, ISD::AND);

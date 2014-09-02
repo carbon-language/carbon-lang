@@ -48,18 +48,16 @@ define i32 @lsl_sext_i8_i32(i8 %b) {
   ret i32 %2
 }
 
-; FIXME: Cannot test this yet, because the target-independent instruction
-; selector handles this.
 ; CHECK-LABEL: lsl_zext_i8_i64
+; CHECK:       ubfiz {{x[0-9]*}}, {{x[0-9]*}}, #4, #8
 define i64 @lsl_zext_i8_i64(i8 %b) {
   %1 = zext i8 %b to i64
   %2 = shl i64 %1, 4
   ret i64 %2
 }
 
-; FIXME: Cannot test this yet, because the target-independent instruction
-; selector handles this.
 ; CHECK-LABEL: lsl_sext_i8_i64
+; CHECK:       sbfiz {{x[0-9]*}}, {{x[0-9]*}}, #4, #8
 define i64 @lsl_sext_i8_i64(i8 %b) {
   %1 = sext i8 %b to i64
   %2 = shl i64 %1, 4
@@ -98,18 +96,16 @@ define i32 @lsl_sext_i16_i32(i16 %b) {
   ret i32 %2
 }
 
-; FIXME: Cannot test this yet, because the target-independent instruction
-; selector handles this.
 ; CHECK-LABEL: lsl_zext_i16_i64
+; CHECK:       ubfiz {{x[0-9]*}}, {{x[0-9]*}}, #8, #16
 define i64 @lsl_zext_i16_i64(i16 %b) {
   %1 = zext i16 %b to i64
   %2 = shl i64 %1, 8
   ret i64 %2
 }
 
-; FIXME: Cannot test this yet, because the target-independent instruction
-; selector handles this.
 ; CHECK-LABEL: lsl_sext_i16_i64
+; CHECK:       sbfiz {{x[0-9]*}}, {{x[0-9]*}}, #8, #16
 define i64 @lsl_sext_i16_i64(i16 %b) {
   %1 = sext i16 %b to i64
   %2 = shl i64 %1, 8
@@ -130,26 +126,22 @@ define zeroext i32 @lsl_i32(i32 %a) {
   ret i32 %1
 }
 
-; FIXME: Cannot test this yet, because the target-independent instruction
-; selector handles this.
 ; CHECK-LABEL: lsl_zext_i32_i64
+; CHECK:       ubfiz {{x[0-9]+}}, {{x[0-9]+}}, #16, #32
 define i64 @lsl_zext_i32_i64(i32 %b) {
   %1 = zext i32 %b to i64
   %2 = shl i64 %1, 16
   ret i64 %2
 }
 
-; FIXME: Cannot test this yet, because the target-independent instruction
-; selector handles this.
 ; CHECK-LABEL: lsl_sext_i32_i64
+; CHECK:       sbfiz {{x[0-9]+}}, {{x[0-9]+}}, #16, #32
 define i64 @lsl_sext_i32_i64(i32 %b) {
   %1 = sext i32 %b to i64
   %2 = shl i64 %1, 16
   ret i64 %2
 }
 
-; FIXME: Cannot test this yet, because the target-independent instruction
-; selector handles this.
 ; CHECK-LABEL: lslv_i64
 ; CHECK:       lsl {{x[0-9]*}}, x0, x1
 define i64 @lslv_i64(i64 %a, i64 %b) {
@@ -157,9 +149,8 @@ define i64 @lslv_i64(i64 %a, i64 %b) {
   ret i64 %1
 }
 
-; FIXME: This shouldn't use the variable shift version.
 ; CHECK-LABEL: lsl_i64
-; CHECK:       lsl {{x[0-9]*}}, {{x[0-9]*}}, {{x[0-9]*}}
+; CHECK:       lsl {{x[0-9]*}}, {{x[0-9]*}}, #32
 define i64 @lsl_i64(i64 %a) {
   %1 = shl i64 %a, 32
   ret i64 %1
@@ -254,9 +245,8 @@ define i64 @lsrv_i64(i64 %a, i64 %b) {
   ret i64 %1
 }
 
-; FIXME: This shouldn't use the variable shift version.
 ; CHECK-LABEL: lsr_i64
-; CHECK:       lsr {{x[0-9]*}}, {{x[0-9]*}}, {{x[0-9]*}}
+; CHECK:       lsr {{x[0-9]*}}, {{x[0-9]*}}, #32
 define i64 @lsr_i64(i64 %a) {
   %1 = lshr i64 %a, 32
   ret i64 %1
@@ -349,9 +339,8 @@ define i64 @asrv_i64(i64 %a, i64 %b) {
   ret i64 %1
 }
 
-; FIXME: This shouldn't use the variable shift version.
 ; CHECK-LABEL: asr_i64
-; CHECK:       asr {{x[0-9]*}}, {{x[0-9]*}}, {{x[0-9]*}}
+; CHECK:       asr {{x[0-9]*}}, {{x[0-9]*}}, #32
 define i64 @asr_i64(i64 %a) {
   %1 = ashr i64 %a, 32
   ret i64 %1

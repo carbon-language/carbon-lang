@@ -365,7 +365,7 @@ define i32 @load_breg_shift_offreg_3(i64 %a, i64 %b) {
 ; SDAG:       lsl [[REG:x[0-9]+]], x0, #2
 ; SDAG-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]], x1, lsl #2{{\]}}
 ; FAST-LABEL: load_breg_shift_offreg_3
-; FAST:       lsl [[REG:x[0-9]+]], x1, {{x[0-9]+}}
+; FAST:       lsl [[REG:x[0-9]+]], x1, #2
 ; FAST-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]], x0, lsl #2{{\]}}
   %1 = shl i64 %a, 2
   %2 = shl i64 %b, 2
@@ -380,7 +380,7 @@ define i32 @load_breg_shift_offreg_4(i64 %a, i64 %b) {
 ; SDAG:       lsl [[REG:x[0-9]+]], x1, #2
 ; SDAG-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]], x0, lsl #2{{\]}}
 ; FAST-LABEL: load_breg_shift_offreg_4
-; FAST:       lsl [[REG:x[0-9]+]], x0, {{x[0-9]+}}
+; FAST:       lsl [[REG:x[0-9]+]], x0, #2
 ; FAST-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]], x1, lsl #2{{\]}}
   %1 = shl i64 %a, 2
   %2 = shl i64 %b, 2
@@ -395,7 +395,7 @@ define i32 @load_breg_shift_offreg_5(i64 %a, i64 %b) {
 ; SDAG:       lsl [[REG:x[0-9]+]], x1, #3
 ; SDAG-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]], x0, lsl #2{{\]}}
 ; FAST-LABEL: load_breg_shift_offreg_5
-; FAST:       lsl [[REG:x[0-9]+]], x1, {{x[0-9]+}}
+; FAST:       lsl [[REG:x[0-9]+]], x1, #3
 ; FAST-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]], x0, lsl #2{{\]}}
   %1 = shl i64 %a, 2
   %2 = shl i64 %b, 3
