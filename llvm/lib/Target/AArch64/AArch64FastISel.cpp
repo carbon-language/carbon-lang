@@ -233,11 +233,11 @@ public:
   unsigned TargetMaterializeConstant(const Constant *C) override;
   unsigned TargetMaterializeFloatZero(const ConstantFP* CF) override;
 
-  explicit AArch64FastISel(FunctionLoweringInfo &funcInfo,
-                         const TargetLibraryInfo *libInfo)
-      : FastISel(funcInfo, libInfo) {
+  explicit AArch64FastISel(FunctionLoweringInfo &FuncInfo,
+                         const TargetLibraryInfo *LibInfo)
+      : FastISel(FuncInfo, LibInfo, /*SkipTargetIndependentISel=*/true) {
     Subtarget = &TM.getSubtarget<AArch64Subtarget>();
-    Context = &funcInfo.Fn->getContext();
+    Context = &FuncInfo.Fn->getContext();
   }
 
   bool TargetSelectInstruction(const Instruction *I) override;
@@ -3421,56 +3421,148 @@ bool AArch64FastISel::SelectBitCast(const Instruction *I) {
 bool AArch64FastISel::TargetSelectInstruction(const Instruction *I) {
   switch (I->getOpcode()) {
   default:
-    break;
+    return false;
+  case Instruction::Add:
+    return SelectBinaryOp(I, ISD::ADD);
+  case Instruction::FAdd:
+    return SelectBinaryOp(I, ISD::FADD);
+  case Instruction::Sub:
+    return SelectBinaryOp(I, ISD::SUB);
+  case Instruction::FSub:
+    // FNeg is currently represented in LLVM IR as a special case of FSub.
+    if (BinaryOperator::isFNeg(I))
+      return SelectFNeg(I);
+    return SelectBinaryOp(I, ISD::FSUB);
+  case Instruction::Mul:
+    if (!SelectBinaryOp(I, ISD::MUL))
+      return SelectMul(I);
+    return true;
+  case Instruction::FMul:
+    return SelectBinaryOp(I, ISD::FMUL);
+  case Instruction::SDiv:
+    return SelectBinaryOp(I, ISD::SDIV);
+  case Instruction::UDiv:
+    return SelectBinaryOp(I, ISD::UDIV);
+  case Instruction::FDiv:
+    return SelectBinaryOp(I, ISD::FDIV);
+  case Instruction::SRem:
+    if (!SelectBinaryOp(I, ISD::SREM))
+      return SelectRem(I, ISD::SREM);
+    return true;
+  case Instruction::URem:
+    if (!SelectBinaryOp(I, ISD::UREM))
+      return SelectRem(I, ISD::UREM);
+    return true;
+  case Instruction::FRem:
+    return SelectBinaryOp(I, ISD::FREM);
+  case Instruction::Shl:
+    if (!SelectBinaryOp(I, ISD::SHL))
+      return SelectShift(I);
+    return true;
+  case Instruction::LShr:
+    if (!SelectBinaryOp(I, ISD::SRL))
+      return SelectShift(I);
+    return true;
+  case Instruction::AShr:
+    if (!SelectBinaryOp(I, ISD::SRA))
+      return SelectShift(I);
+    return true;
+  case Instruction::And:
+    return SelectBinaryOp(I, ISD::AND);
+  case Instruction::Or:
+    return SelectBinaryOp(I, ISD::OR);
+  case Instruction::Xor:
+    return SelectBinaryOp(I, ISD::XOR);
+  case Instruction::GetElementPtr:
+    return SelectGetElementPtr(I);
+  case Instruction::Br: {
+    const BranchInst *BI = cast<BranchInst>(I);
+    if (BI->isUnconditional()) {
+      const BasicBlock *LLVMSucc = BI->getSuccessor(0);
+      MachineBasicBlock *MSucc = FuncInfo.MBBMap[LLVMSucc];
+      FastEmitBranch(MSucc, BI->getDebugLoc());
+      return true;
+    }
+    return SelectBranch(I);
+  }
+  case Instruction::IndirectBr:
+    return SelectIndirectBr(I);
+  case Instruction::Unreachable:
+    if (TM.Options.TrapUnreachable)
+      return FastEmit_(MVT::Other, MVT::Other, ISD::TRAP) != 0;
+    else
+      return true;
+  case Instruction::Alloca:
+    // FunctionLowering has the static-sized case covered.
+    if (FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(I)))
+      return true;
+    // Dynamic-sized alloca is not handled yet.
+    return false;
+  case Instruction::Call:
+    return SelectCall(I);
+  case Instruction::BitCast:
+    if (!FastISel::SelectBitCast(I))
+      return SelectBitCast(I);
+    return true;
+  case Instruction::FPToSI:
+    if (!SelectCast(I, ISD::FP_TO_SINT))
+      return SelectFPToInt(I, /*Signed=*/true);
+    return true;
+  case Instruction::FPToUI:
+    return SelectFPToInt(I, /*Signed=*/false);
+  case Instruction::ZExt:
+    if (!SelectCast(I, ISD::ZERO_EXTEND))
+      return SelectIntExt(I);
+    return true;
+  case Instruction::SExt:
+    if (!SelectCast(I, ISD::SIGN_EXTEND))
+      return SelectIntExt(I);
+    return true;
+  case Instruction::Trunc:
+    if (!SelectCast(I, ISD::TRUNCATE))
+      return SelectTrunc(I);
+    return true;
+  case Instruction::FPExt:
+    return SelectFPExt(I);
+  case Instruction::FPTrunc:
+    return SelectFPTrunc(I);
+  case Instruction::SIToFP:
+    if (!SelectCast(I, ISD::SINT_TO_FP))
+      return SelectIntToFP(I, /*Signed=*/true);
+    return true;
+  case Instruction::UIToFP:
+    return SelectIntToFP(I, /*Signed=*/false);
+  case Instruction::IntToPtr: // Deliberate fall-through.
+  case Instruction::PtrToInt: {
+    EVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
+    EVT DstVT = TLI.getValueType(I->getType());
+    if (DstVT.bitsGT(SrcVT))
+      return SelectCast(I, ISD::ZERO_EXTEND);
+    if (DstVT.bitsLT(SrcVT))
+      return SelectCast(I, ISD::TRUNCATE);
+    unsigned Reg = getRegForValue(I->getOperand(0));
+    if (!Reg)
+      return false;
+    UpdateValueMap(I, Reg);
+    return true;
+  }
+  case Instruction::ExtractValue:
+    return SelectExtractValue(I);
+  case Instruction::PHI:
+    llvm_unreachable("FastISel shouldn't visit PHI nodes!");
   case Instruction::Load:
     return SelectLoad(I);
   case Instruction::Store:
     return SelectStore(I);
-  case Instruction::Br:
-    return SelectBranch(I);
-  case Instruction::IndirectBr:
-    return SelectIndirectBr(I);
   case Instruction::FCmp:
   case Instruction::ICmp:
     return SelectCmp(I);
   case Instruction::Select:
     return SelectSelect(I);
-  case Instruction::FPExt:
-    return SelectFPExt(I);
-  case Instruction::FPTrunc:
-    return SelectFPTrunc(I);
-  case Instruction::FPToSI:
-    return SelectFPToInt(I, /*Signed=*/true);
-  case Instruction::FPToUI:
-    return SelectFPToInt(I, /*Signed=*/false);
-  case Instruction::SIToFP:
-    return SelectIntToFP(I, /*Signed=*/true);
-  case Instruction::UIToFP:
-    return SelectIntToFP(I, /*Signed=*/false);
-  case Instruction::SRem:
-    return SelectRem(I, ISD::SREM);
-  case Instruction::URem:
-    return SelectRem(I, ISD::UREM);
   case Instruction::Ret:
     return SelectRet(I);
-  case Instruction::Trunc:
-    return SelectTrunc(I);
-  case Instruction::ZExt:
-  case Instruction::SExt:
-    return SelectIntExt(I);
-
-  // FIXME: All of these should really be handled by the target-independent
-  // selector -> improve FastISel tblgen.
-  case Instruction::Mul:
-    return SelectMul(I);
-  case Instruction::Shl:  // fall-through
-  case Instruction::LShr: // fall-through
-  case Instruction::AShr:
-    return SelectShift(I);
-  case Instruction::BitCast:
-    return SelectBitCast(I);
   }
-  return false;
+
   // Silence warnings.
   (void)&CC_AArch64_DarwinPCS_VarArg;
 }
