@@ -11,6 +11,7 @@ add_llvm_library(LLVMAnalysis
   BranchProbabilityInfo.cpp
   CFG.cpp
   CFGPrinter.cpp
+  CFLAliasAnalysis.cpp
   CGSCCPassManager.cpp
   CaptureTracking.cpp
   CostModel.cpp

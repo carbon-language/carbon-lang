@@ -62,6 +62,7 @@ namespace {
       (void) llvm::createCallGraphPrinterPass();
       (void) llvm::createCallGraphViewerPass();
       (void) llvm::createCFGSimplificationPass();
+      (void) llvm::createCFLAliasAnalysisPass();
       (void) llvm::createStructurizeCFGPass();
       (void) llvm::createConstantMergePass();
       (void) llvm::createConstantPropagationPass();

@@ -89,6 +89,7 @@ void initializeCFGOnlyPrinterPass(PassRegistry&);
 void initializeCFGOnlyViewerPass(PassRegistry&);
 void initializeCFGPrinterPass(PassRegistry&);
 void initializeCFGSimplifyPassPass(PassRegistry&);
+void initializeCFLAliasAnalysisPass(PassRegistry&);
 void initializeFlattenCFGPassPass(PassRegistry&);
 void initializeStructurizeCFGPass(PassRegistry&);
 void initializeCFGViewerPass(PassRegistry&);
