@@ -20,6 +20,7 @@ integer/clz_if.ll
 integer/clz_impl.ll
 integer/hadd.cl
 integer/mad24.cl
+integer/mad_sat.cl
 integer/mul24.cl
 integer/mul_hi.cl
 integer/rhadd.cl
