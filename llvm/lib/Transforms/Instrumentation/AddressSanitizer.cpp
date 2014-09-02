@@ -870,8 +870,11 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
   TerminatorInst *CrashTerm = nullptr;
 
   if (ClAlwaysSlowPath || (TypeSize < 8 * Granularity)) {
+    // We use branch weights for the slow path check, to indicate that the slow
+    // path is rarely taken. This seems to be the case for SPEC benchmarks.
     TerminatorInst *CheckTerm =
-        SplitBlockAndInsertIfThen(Cmp, InsertBefore, false);
+        SplitBlockAndInsertIfThen(Cmp, InsertBefore, false,
+            MDBuilder(*C).createBranchWeights(1, 100000));
     assert(dyn_cast<BranchInst>(CheckTerm)->isUnconditional());
     BasicBlock *NextBB = CheckTerm->getSuccessor(0);
     IRB.SetInsertPoint(CheckTerm);

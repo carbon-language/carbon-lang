@@ -14,7 +14,7 @@ define i32 @test_load(i32* %a) sanitize_address {
 ; CHECK:   %[[LOAD_SHADOW_PTR:[^ ]*]] = inttoptr
 ; CHECK:   %[[LOAD_SHADOW:[^ ]*]] = load i8* %[[LOAD_SHADOW_PTR]]
 ; CHECK:   icmp ne i8
-; CHECK:   br i1 %{{.*}}, label %{{.*}}, label %{{.*}}
+; CHECK:   br i1 %{{.*}}, label %{{.*}}, label %{{.*}}!prof ![[PROF:[0-9]+]]
 ;
 ; First instrumentation block refines the shadow test.
 ; CHECK:   and i64 %[[LOAD_ADDR]], 7
@@ -169,3 +169,5 @@ define void @memintr_test(i8* %a, i8* %b) nounwind uwtable sanitize_address {
 ; CHECK: __asan_memcpy
 ; CHECK: ret void
 
+; PROF
+; CHECK: ![[PROF]] = metadata !{metadata !"branch_weights", i32 1, i32 100000}

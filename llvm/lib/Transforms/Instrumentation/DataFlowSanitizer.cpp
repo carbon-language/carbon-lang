@@ -139,7 +139,7 @@ class DFSanABIList {
   std::unique_ptr<SpecialCaseList> SCL;
 
  public:
-   DFSanABIList(std::unique_ptr<SpecialCaseList> SCL) : SCL(std::move(SCL)) {}
+  DFSanABIList(std::unique_ptr<SpecialCaseList> SCL) : SCL(std::move(SCL)) {}
 
   /// Returns whether either this function or its source file are listed in the
   /// given category.
