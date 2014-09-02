@@ -1008,23 +1008,47 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
 
   // If this is a pseudo instruction, lower it.
   switch (Desc->getOpcode()) {
-  case X86::ADD16rr_DB:      Desc = UpdateOp(MI, II, X86::OR16rr); break;
-  case X86::ADD32rr_DB:      Desc = UpdateOp(MI, II, X86::OR32rr); break;
-  case X86::ADD64rr_DB:      Desc = UpdateOp(MI, II, X86::OR64rr); break;
-  case X86::ADD16ri_DB:      Desc = UpdateOp(MI, II, X86::OR16ri); break;
-  case X86::ADD32ri_DB:      Desc = UpdateOp(MI, II, X86::OR32ri); break;
-  case X86::ADD64ri32_DB:    Desc = UpdateOp(MI, II, X86::OR64ri32); break;
-  case X86::ADD16ri8_DB:     Desc = UpdateOp(MI, II, X86::OR16ri8); break;
-  case X86::ADD32ri8_DB:     Desc = UpdateOp(MI, II, X86::OR32ri8); break;
-  case X86::ADD64ri8_DB:     Desc = UpdateOp(MI, II, X86::OR64ri8); break;
-  case X86::ACQUIRE_MOV8rm:  Desc = UpdateOp(MI, II, X86::MOV8rm); break;
-  case X86::ACQUIRE_MOV16rm: Desc = UpdateOp(MI, II, X86::MOV16rm); break;
-  case X86::ACQUIRE_MOV32rm: Desc = UpdateOp(MI, II, X86::MOV32rm); break;
-  case X86::ACQUIRE_MOV64rm: Desc = UpdateOp(MI, II, X86::MOV64rm); break;
-  case X86::RELEASE_MOV8mr:  Desc = UpdateOp(MI, II, X86::MOV8mr); break;
-  case X86::RELEASE_MOV16mr: Desc = UpdateOp(MI, II, X86::MOV16mr); break;
-  case X86::RELEASE_MOV32mr: Desc = UpdateOp(MI, II, X86::MOV32mr); break;
-  case X86::RELEASE_MOV64mr: Desc = UpdateOp(MI, II, X86::MOV64mr); break;
+  case X86::ADD16rr_DB:        Desc = UpdateOp(MI, II, X86::OR16rr); break;
+  case X86::ADD32rr_DB:        Desc = UpdateOp(MI, II, X86::OR32rr); break;
+  case X86::ADD64rr_DB:        Desc = UpdateOp(MI, II, X86::OR64rr); break;
+  case X86::ADD16ri_DB:        Desc = UpdateOp(MI, II, X86::OR16ri); break;
+  case X86::ADD32ri_DB:        Desc = UpdateOp(MI, II, X86::OR32ri); break;
+  case X86::ADD64ri32_DB:      Desc = UpdateOp(MI, II, X86::OR64ri32); break;
+  case X86::ADD16ri8_DB:       Desc = UpdateOp(MI, II, X86::OR16ri8); break;
+  case X86::ADD32ri8_DB:       Desc = UpdateOp(MI, II, X86::OR32ri8); break;
+  case X86::ADD64ri8_DB:       Desc = UpdateOp(MI, II, X86::OR64ri8); break;
+  case X86::ACQUIRE_MOV8rm:    Desc = UpdateOp(MI, II, X86::MOV8rm); break;
+  case X86::ACQUIRE_MOV16rm:   Desc = UpdateOp(MI, II, X86::MOV16rm); break;
+  case X86::ACQUIRE_MOV32rm:   Desc = UpdateOp(MI, II, X86::MOV32rm); break;
+  case X86::ACQUIRE_MOV64rm:   Desc = UpdateOp(MI, II, X86::MOV64rm); break;
+  case X86::RELEASE_MOV8mr:    Desc = UpdateOp(MI, II, X86::MOV8mr); break;
+  case X86::RELEASE_MOV16mr:   Desc = UpdateOp(MI, II, X86::MOV16mr); break;
+  case X86::RELEASE_MOV32mr:   Desc = UpdateOp(MI, II, X86::MOV32mr); break;
+  case X86::RELEASE_MOV64mr:   Desc = UpdateOp(MI, II, X86::MOV64mr); break;
+  case X86::RELEASE_MOV8mi:    Desc = UpdateOp(MI, II, X86::MOV8mi); break;
+  case X86::RELEASE_MOV16mi:   Desc = UpdateOp(MI, II, X86::MOV16mi); break;
+  case X86::RELEASE_MOV32mi:   Desc = UpdateOp(MI, II, X86::MOV32mi); break;
+  case X86::RELEASE_MOV64mi32: Desc = UpdateOp(MI, II, X86::MOV64mi32); break;
+  case X86::RELEASE_ADD8mi:    Desc = UpdateOp(MI, II, X86::ADD8mi); break;
+  case X86::RELEASE_ADD32mi:   Desc = UpdateOp(MI, II, X86::ADD32mi); break;
+  case X86::RELEASE_ADD64mi32: Desc = UpdateOp(MI, II, X86::ADD64mi32); break;
+  case X86::RELEASE_AND8mi:    Desc = UpdateOp(MI, II, X86::AND8mi); break;
+  case X86::RELEASE_AND32mi:   Desc = UpdateOp(MI, II, X86::AND32mi); break;
+  case X86::RELEASE_AND64mi32: Desc = UpdateOp(MI, II, X86::AND64mi32); break;
+  case X86::RELEASE_OR8mi:     Desc = UpdateOp(MI, II, X86::OR8mi); break;
+  case X86::RELEASE_OR32mi:    Desc = UpdateOp(MI, II, X86::OR32mi); break;
+  case X86::RELEASE_OR64mi32:  Desc = UpdateOp(MI, II, X86::OR64mi32); break;
+  case X86::RELEASE_XOR8mi:    Desc = UpdateOp(MI, II, X86::XOR8mi); break;
+  case X86::RELEASE_XOR32mi:   Desc = UpdateOp(MI, II, X86::XOR32mi); break;
+  case X86::RELEASE_XOR64mi32: Desc = UpdateOp(MI, II, X86::XOR64mi32); break;
+  case X86::RELEASE_INC8m:     Desc = UpdateOp(MI, II, X86::INC8m); break;
+  case X86::RELEASE_INC16m:    Desc = UpdateOp(MI, II, X86::INC16m); break;
+  case X86::RELEASE_INC32m:    Desc = UpdateOp(MI, II, X86::INC32m); break;
+  case X86::RELEASE_INC64m:    Desc = UpdateOp(MI, II, X86::INC64m); break;
+  case X86::RELEASE_DEC8m:     Desc = UpdateOp(MI, II, X86::DEC8m); break;
+  case X86::RELEASE_DEC16m:    Desc = UpdateOp(MI, II, X86::DEC16m); break;
+  case X86::RELEASE_DEC32m:    Desc = UpdateOp(MI, II, X86::DEC32m); break;
+  case X86::RELEASE_DEC64m:    Desc = UpdateOp(MI, II, X86::DEC64m); break;
   }
 
 
