@@ -650,8 +650,9 @@ template <unsigned> struct __static_assert_check {};
 #  define _LIBCPP_TRIVIAL_PAIR_COPY_CTOR 1
 #endif
 
-#if (!defined(_POSIX_TIMERS) || _POSIX_TIMERS <= 0) || \
-    (!defined(_POSIX_MONOTONIC_CLOCK) || _POSIX_MONOTONIC_CLOCK <= 0)
+#if !defined(__APPLE__) && \
+    ((!defined(_POSIX_TIMERS) || _POSIX_TIMERS <= 0) || \
+     (!defined(_POSIX_MONOTONIC_CLOCK) || _POSIX_MONOTONIC_CLOCK <= 0))
 #define _LIBCPP_HAS_NO_MONOTONIC_CLOCK
 #endif
 
