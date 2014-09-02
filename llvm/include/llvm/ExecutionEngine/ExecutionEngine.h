@@ -139,11 +139,10 @@ protected:
   /// getMemoryforGV - Allocate memory for a global variable.
   virtual char *getMemoryForGV(const GlobalVariable *GV);
 
-  static ExecutionEngine *(*MCJITCtor)(
-    std::unique_ptr<Module> M,
-    std::string *ErrorStr,
-    RTDyldMemoryManager *MCJMM,
-    TargetMachine *TM);
+  static ExecutionEngine *(*MCJITCtor)(std::unique_ptr<Module> M,
+                                       std::string *ErrorStr,
+                                       RTDyldMemoryManager *MCJMM,
+                                       std::unique_ptr<TargetMachine> TM);
   static ExecutionEngine *(*InterpCtor)(std::unique_ptr<Module> M,
                                         std::string *ErrorStr);
 

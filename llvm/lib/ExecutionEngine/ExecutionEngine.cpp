@@ -49,10 +49,8 @@ void ObjectBuffer::anchor() {}
 void ObjectBufferStream::anchor() {}
 
 ExecutionEngine *(*ExecutionEngine::MCJITCtor)(
-  std::unique_ptr<Module >M,
-  std::string *ErrorStr,
-  RTDyldMemoryManager *MCJMM,
-  TargetMachine *TM) = nullptr;
+    std::unique_ptr<Module> M, std::string *ErrorStr,
+    RTDyldMemoryManager *MCJMM, std::unique_ptr<TargetMachine> TM) = nullptr;
 ExecutionEngine *(*ExecutionEngine::InterpCtor)(std::unique_ptr<Module> M,
                                                 std::string *ErrorStr) =nullptr;
 
@@ -453,7 +451,7 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
     ExecutionEngine *EE = nullptr;
     if (ExecutionEngine::MCJITCtor)
       EE = ExecutionEngine::MCJITCtor(std::move(M), ErrorStr,
-                                      MCJMM ? MCJMM : JMM, TheTM.release());
+                                      MCJMM ? MCJMM : JMM, std::move(TheTM));
     if (EE) {
       EE->setVerifyModules(VerifyModules);
       return EE;

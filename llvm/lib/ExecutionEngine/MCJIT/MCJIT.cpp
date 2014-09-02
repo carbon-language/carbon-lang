@@ -46,20 +46,20 @@ extern "C" void LLVMLinkInMCJIT() {
 ExecutionEngine *MCJIT::createJIT(std::unique_ptr<Module> M,
                                   std::string *ErrorStr,
                                   RTDyldMemoryManager *MemMgr,
-                                  TargetMachine *TM) {
+                                  std::unique_ptr<TargetMachine> TM) {
   // Try to register the program as a source of symbols to resolve against.
   //
   // FIXME: Don't do this here.
   sys::DynamicLibrary::LoadLibraryPermanently(nullptr, nullptr);
 
-  return new MCJIT(std::move(M), TM,
+  return new MCJIT(std::move(M), std::move(TM),
                    MemMgr ? MemMgr : new SectionMemoryManager());
 }
 
-MCJIT::MCJIT(std::unique_ptr<Module> M, TargetMachine *tm,
+MCJIT::MCJIT(std::unique_ptr<Module> M, std::unique_ptr<TargetMachine> tm,
              RTDyldMemoryManager *MM)
-    : ExecutionEngine(std::move(M)), TM(tm), Ctx(nullptr), MemMgr(this, MM),
-      Dyld(&MemMgr), ObjCache(nullptr) {
+    : ExecutionEngine(std::move(M)), TM(std::move(tm)), Ctx(nullptr),
+      MemMgr(this, MM), Dyld(&MemMgr), ObjCache(nullptr) {
   // FIXME: We are managing our modules, so we do not want the base class
   // ExecutionEngine to manage them as well. To avoid double destruction
   // of the first (and only) module added in ExecutionEngine constructor
@@ -93,8 +93,6 @@ MCJIT::~MCJIT() {
   LoadedObjects.clear();
 
   Archives.clear();
-
-  delete TM;
 }
 
 void MCJIT::addModule(std::unique_ptr<Module> M) {

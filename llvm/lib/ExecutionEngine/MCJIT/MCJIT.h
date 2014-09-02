@@ -101,7 +101,7 @@ private:
 // called.
 
 class MCJIT : public ExecutionEngine {
-  MCJIT(std::unique_ptr<Module> M, TargetMachine *tm,
+  MCJIT(std::unique_ptr<Module> M, std::unique_ptr<TargetMachine> tm,
         RTDyldMemoryManager *MemMgr);
 
   typedef llvm::SmallPtrSet<Module *, 4> ModulePtrSet;
@@ -208,7 +208,7 @@ class MCJIT : public ExecutionEngine {
     }
   };
 
-  TargetMachine *TM;
+  std::unique_ptr<TargetMachine> TM;
   MCContext *Ctx;
   LinkingMemoryManager MemMgr;
   RuntimeDyld Dyld;
@@ -311,7 +311,7 @@ public:
   uint64_t getGlobalValueAddress(const std::string &Name) override;
   uint64_t getFunctionAddress(const std::string &Name) override;
 
-  TargetMachine *getTargetMachine() override { return TM; }
+  TargetMachine *getTargetMachine() override { return TM.get(); }
 
   /// @}
   /// @name (Private) Registration Interfaces
@@ -324,7 +324,7 @@ public:
   static ExecutionEngine *createJIT(std::unique_ptr<Module> M,
                                     std::string *ErrorStr,
                                     RTDyldMemoryManager *MemMgr,
-                                    TargetMachine *TM);
+                                    std::unique_ptr<TargetMachine> TM);
 
   // @}
 
