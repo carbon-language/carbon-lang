@@ -59,12 +59,17 @@ function(llvm_check_source_file_list)
   file(GLOB globbed *.c *.cpp)
   foreach(g ${globbed})
     get_filename_component(fn ${g} NAME)
-    list(FIND LLVM_OPTIONAL_SOURCES ${fn} idx)
-    if( idx LESS 0 )
-      list(FIND listed ${fn} idx)
+
+    # Don't reject hidden files. Some editors create backups in the
+    # same directory as the file.
+    if (NOT "${fn}" MATCHES "^\\.")
+      list(FIND LLVM_OPTIONAL_SOURCES ${fn} idx)
       if( idx LESS 0 )
-        message(SEND_ERROR "Found unknown source file ${g}
+        list(FIND listed ${fn} idx)
+        if( idx LESS 0 )
+          message(SEND_ERROR "Found unknown source file ${g}
 Please update ${CMAKE_CURRENT_LIST_FILE}\n")
+        endif()
       endif()
     endif()
   endforeach()
