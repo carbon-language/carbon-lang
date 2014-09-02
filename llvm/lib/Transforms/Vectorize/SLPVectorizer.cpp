@@ -342,6 +342,33 @@ static void reorderInputsAccordingToOpcode(ArrayRef<Value *> VL,
   }
 }
 
+/// \returns True if in-tree use also needs extract. This refers to
+/// possible scalar operand in vectorized instruction.
+static bool InTreeUserNeedToExtract(Value *Scalar, Instruction *UserInst,
+                                    TargetLibraryInfo *TLI) {
+
+  unsigned Opcode = UserInst->getOpcode();
+  switch (Opcode) {
+  case Instruction::Load: {
+    LoadInst *LI = cast<LoadInst>(UserInst);
+    return (LI->getPointerOperand() == Scalar);
+  }
+  case Instruction::Store: {
+    StoreInst *SI = cast<StoreInst>(UserInst);
+    return (SI->getPointerOperand() == Scalar);
+  }
+  case Instruction::Call: {
+    CallInst *CI = cast<CallInst>(UserInst);
+    Intrinsic::ID ID = getIntrinsicIDForCall(CI, TLI);
+    if (hasVectorInstrinsicScalarOpd(ID, 1)) {
+      return (CI->getArgOperand(1) == Scalar);
+    }
+  }
+  default:
+    return false;
+  }
+}
+
 /// Bottom Up SLP Vectorizer.
 class BoUpSLP {
 public:
@@ -864,17 +891,26 @@ void BoUpSLP::buildTree(ArrayRef<Value *> Roots,
       for (User *U : Scalar->users()) {
         DEBUG(dbgs() << "SLP: Checking user:" << *U << ".\n");
 
-        // Skip in-tree scalars that become vectors.
-        if (ScalarToTreeEntry.count(U)) {
-          DEBUG(dbgs() << "SLP: \tInternal user will be removed:" <<
-                *U << ".\n");
-          int Idx = ScalarToTreeEntry[U]; (void) Idx;
-          assert(!VectorizableTree[Idx].NeedToGather && "Bad state");
-          continue;
-        }
         Instruction *UserInst = dyn_cast<Instruction>(U);
         if (!UserInst)
           continue;
+
+        // Skip in-tree scalars that become vectors
+        if (ScalarToTreeEntry.count(U)) {
+          int Idx = ScalarToTreeEntry[U];
+          TreeEntry *UseEntry = &VectorizableTree[Idx];
+          Value *UseScalar = UseEntry->Scalars[0];
+          // Some in-tree scalars will remain as scalar in vectorized
+          // instructions. If that is the case, the one in Lane 0 will
+          // be used.
+          if (UseScalar != U ||
+              !InTreeUserNeedToExtract(Scalar, UserInst, TLI)) {
+            DEBUG(dbgs() << "SLP: \tInternal user will be removed:" << *U
+                         << ".\n");
+            assert(!VectorizableTree[Idx].NeedToGather && "Bad state");
+            continue;
+          }
+        }
 
         // Ignore users in the user ignore list.
         if (std::find(UserIgnoreList.begin(), UserIgnoreList.end(), UserInst) !=
@@ -1184,16 +1220,6 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
       for (unsigned j = 0; j < VL.size(); ++j) {
         if (cast<Instruction>(VL[j])->getNumOperands() != 2) {
           DEBUG(dbgs() << "SLP: not-vectorizable GEP (nested indexes).\n");
-          BS.cancelScheduling(VL);
-          newTreeEntry(VL, false);
-          return;
-        }
-      }
-
-      // We combine only GEPs with a single use.
-      for (unsigned j = 0; j < VL.size(); ++j) {
-        if (cast<Instruction>(VL[j])->getNumUses() > 1) {
-          DEBUG(dbgs() << "SLP: not-vectorizable GEP (multiple uses).\n");
           BS.cancelScheduling(VL);
           newTreeEntry(VL, false);
           return;
@@ -2023,6 +2049,14 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
 
       Value *VecPtr = Builder.CreateBitCast(LI->getPointerOperand(),
                                             VecTy->getPointerTo(AS));
+
+      // The pointer operand uses an in-tree scalar so we add the new BitCast to
+      // ExternalUses list to make sure that an extract will be generated in the
+      // future.
+      if (ScalarToTreeEntry.count(LI->getPointerOperand()))
+        ExternalUses.push_back(
+            ExternalUser(LI->getPointerOperand(), cast<User>(VecPtr), 0));
+
       unsigned Alignment = LI->getAlignment();
       LI = Builder.CreateLoad(VecPtr);
       if (!Alignment)
@@ -2047,6 +2081,14 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       Value *VecPtr = Builder.CreateBitCast(SI->getPointerOperand(),
                                             VecTy->getPointerTo(AS));
       StoreInst *S = Builder.CreateStore(VecValue, VecPtr);
+
+      // The pointer operand uses an in-tree scalar so we add the new BitCast to
+      // ExternalUses list to make sure that an extract will be generated in the
+      // future.
+      if (ScalarToTreeEntry.count(SI->getPointerOperand()))
+        ExternalUses.push_back(
+            ExternalUser(SI->getPointerOperand(), cast<User>(VecPtr), 0));
+
       if (!Alignment)
         Alignment = DL->getABITypeAlignment(SI->getValueOperand()->getType());
       S->setAlignment(Alignment);
@@ -2088,6 +2130,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       setInsertPointAfterBundle(E->Scalars);
       Function *FI;
       Intrinsic::ID IID  = Intrinsic::not_intrinsic;
+      Value *ScalarArg = nullptr;
       if (CI && (FI = CI->getCalledFunction())) {
         IID = (Intrinsic::ID) FI->getIntrinsicID();
       }
@@ -2098,6 +2141,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
         // a scalar. This argument should not be vectorized.
         if (hasVectorInstrinsicScalarOpd(IID, 1) && j == 1) {
           CallInst *CEI = cast<CallInst>(E->Scalars[0]);
+          ScalarArg = CEI->getArgOperand(j);
           OpVecs.push_back(CEI->getArgOperand(j));
           continue;
         }
@@ -2116,6 +2160,13 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       Type *Tys[] = { VectorType::get(CI->getType(), E->Scalars.size()) };
       Function *CF = Intrinsic::getDeclaration(M, ID, Tys);
       Value *V = Builder.CreateCall(CF, OpVecs);
+
+      // The scalar argument uses an in-tree scalar so we add the new vectorized
+      // call to ExternalUses list to make sure that an extract will be
+      // generated in the future.
+      if (ScalarArg && ScalarToTreeEntry.count(ScalarArg))
+        ExternalUses.push_back(ExternalUser(ScalarArg, cast<User>(V), 0));
+
       E->VectorizedValue = V;
       ++NumVectorInstructions;
       return V;
