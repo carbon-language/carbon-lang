@@ -12221,50 +12221,35 @@ static SDValue LowerFP_EXTEND(SDValue Op, SelectionDAG &DAG) {
                                  In, DAG.getUNDEF(SVT)));
 }
 
-static SDValue LowerFABS(SDValue Op, SelectionDAG &DAG) {
-  LLVMContext *Context = DAG.getContext();
+// The only differences between FABS and FNEG are the mask and the logic op.
+static SDValue LowerFABSorFNEG(SDValue Op, SelectionDAG &DAG) {
+  assert((Op.getOpcode() == ISD::FABS || Op.getOpcode() == ISD::FNEG) &&
+         "Wrong opcode for lowering FABS or FNEG.");
+
+  bool IsFABS = (Op.getOpcode() == ISD::FABS);
   SDLoc dl(Op);
   MVT VT = Op.getSimpleValueType();
+  // Assume scalar op for initialization; update for vector if needed.
+  // Note that there are no scalar bitwise logical SSE/AVX instructions, so we
+  // generate a 16-byte vector constant and logic op even for the scalar case.
+  // Using a 16-byte mask allows folding the load of the mask with
+  // the logic op, so it can save (~4 bytes) on code size.
   MVT EltVT = VT;
   unsigned NumElts = VT == MVT::f64 ? 2 : 4;
-  if (VT.isVector()) {
-    EltVT = VT.getVectorElementType();
-    NumElts = VT.getVectorNumElements();
-  }
-
-  unsigned EltBits = EltVT.getSizeInBits();
-  Constant *C = ConstantInt::get(*Context, APInt::getSignedMaxValue(EltBits));
-  C = ConstantVector::getSplat(NumElts, C);
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  SDValue CPIdx = DAG.getConstantPool(C, TLI.getPointerTy());
-  unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
-  SDValue Mask = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
-                             MachinePointerInfo::getConstantPool(),
-                             false, false, false, Alignment);
-  if (VT.isVector()) {
-    MVT ANDVT = VT.is128BitVector() ? MVT::v2i64 : MVT::v4i64;
-    return DAG.getNode(ISD::BITCAST, dl, VT,
-                       DAG.getNode(ISD::AND, dl, ANDVT,
-                                   DAG.getNode(ISD::BITCAST, dl, ANDVT,
-                                               Op.getOperand(0)),
-                                   DAG.getNode(ISD::BITCAST, dl, ANDVT, Mask)));
-  }
-  return DAG.getNode(X86ISD::FAND, dl, VT, Op.getOperand(0), Mask);
-}
-
-static SDValue LowerFNEG(SDValue Op, SelectionDAG &DAG) {
-  LLVMContext *Context = DAG.getContext();
-  SDLoc dl(Op);
-  MVT VT = Op.getSimpleValueType();
-  MVT EltVT = VT;
-  unsigned NumElts = VT == MVT::f64 ? 2 : 4;
+  // FIXME: Use function attribute "OptimizeForSize" and/or CodeGenOpt::Level to
+  // decide if we should generate a 16-byte constant mask when we only need 4 or
+  // 8 bytes for the scalar case.
   if (VT.isVector()) {
     EltVT = VT.getVectorElementType();
     NumElts = VT.getVectorNumElements();
   }
   
   unsigned EltBits = EltVT.getSizeInBits();
-  Constant *C = ConstantInt::get(*Context, APInt::getSignBit(EltBits));
+  LLVMContext *Context = DAG.getContext();
+  // For FABS, mask is 0x7f...; for FNEG, mask is 0x80...
+  APInt MaskElt =
+    IsFABS ? APInt::getSignedMaxValue(EltBits) : APInt::getSignBit(EltBits);
+  Constant *C = ConstantInt::get(*Context, MaskElt);
   C = ConstantVector::getSplat(NumElts, C);
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   SDValue CPIdx = DAG.getConstantPool(C, TLI.getPointerTy());
@@ -12272,16 +12257,20 @@ static SDValue LowerFNEG(SDValue Op, SelectionDAG &DAG) {
   SDValue Mask = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
                              MachinePointerInfo::getConstantPool(),
                              false, false, false, Alignment);
-  if (VT.isVector()) {
-    MVT XORVT = MVT::getVectorVT(MVT::i64, VT.getSizeInBits()/64);
-    return DAG.getNode(ISD::BITCAST, dl, VT,
-                       DAG.getNode(ISD::XOR, dl, XORVT,
-                                   DAG.getNode(ISD::BITCAST, dl, XORVT,
-                                               Op.getOperand(0)),
-                                   DAG.getNode(ISD::BITCAST, dl, XORVT, Mask)));
-  }
 
-  return DAG.getNode(X86ISD::FXOR, dl, VT, Op.getOperand(0), Mask);
+  if (VT.isVector()) {
+    // For a vector, cast operands to a vector type, perform the logic op,
+    // and cast the result back to the original value type.
+    MVT VecVT = MVT::getVectorVT(MVT::i64, VT.getSizeInBits() / 64);
+    SDValue Op0Casted = DAG.getNode(ISD::BITCAST, dl, VecVT, Op.getOperand(0));
+    SDValue MaskCasted = DAG.getNode(ISD::BITCAST, dl, VecVT, Mask);
+    unsigned LogicOp = IsFABS ? ISD::AND : ISD::XOR;
+    return DAG.getNode(ISD::BITCAST, dl, VT,
+                       DAG.getNode(LogicOp, dl, VecVT, Op0Casted, MaskCasted));
+  }
+  // If not vector, then scalar.
+  unsigned LogicOp = IsFABS ? X86ISD::FAND : X86ISD::FXOR;
+  return DAG.getNode(LogicOp, dl, VT, Op.getOperand(0), Mask);
 }
 
 static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
@@ -16908,8 +16897,8 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::FP_TO_UINT:         return LowerFP_TO_UINT(Op, DAG);
   case ISD::FP_EXTEND:          return LowerFP_EXTEND(Op, DAG);
   case ISD::LOAD:               return LowerExtendedLoad(Op, Subtarget, DAG);
-  case ISD::FABS:               return LowerFABS(Op, DAG);
-  case ISD::FNEG:               return LowerFNEG(Op, DAG);
+  case ISD::FABS:
+  case ISD::FNEG:               return LowerFABSorFNEG(Op, DAG);
   case ISD::FCOPYSIGN:          return LowerFCOPYSIGN(Op, DAG);
   case ISD::FGETSIGN:           return LowerFGETSIGN(Op, DAG);
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
