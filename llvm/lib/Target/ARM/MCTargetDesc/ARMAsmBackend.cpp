@@ -48,7 +48,7 @@ public:
     : MCAsmBackend(), STI(ARM_MC::createARMMCSubtargetInfo(TT, "", "")),
       isThumbMode(TT.startswith("thumb")), IsLittleEndian(IsLittle) {}
 
-  ~ARMAsmBackend() {
+  ~ARMAsmBackend() override {
     delete STI;
   }
 
@@ -857,4 +857,3 @@ MCAsmBackend *llvm::createThumbBEAsmBackend(const Target &T,
                                           StringRef TT, StringRef CPU) {
   return createARMAsmBackend(T, MRI, TT, CPU, false);
 }
-
