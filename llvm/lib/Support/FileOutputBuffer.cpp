@@ -14,18 +14,16 @@
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
 
 using llvm::sys::fs::mapped_file_region;
 
 namespace llvm {
-FileOutputBuffer::FileOutputBuffer(mapped_file_region * R,
+FileOutputBuffer::FileOutputBuffer(std::unique_ptr<mapped_file_region> R,
                                    StringRef Path, StringRef TmpPath)
-  : Region(R)
-  , FinalPath(Path)
-  , TempPath(TmpPath) {
-}
+    : Region(std::move(R)), FinalPath(Path), TempPath(TmpPath) {}
 
 FileOutputBuffer::~FileOutputBuffer() {
   sys::fs::remove(Twine(TempPath));
@@ -73,14 +71,13 @@ FileOutputBuffer::create(StringRef FilePath, size_t Size,
   if (EC)
     return EC;
 
-  std::unique_ptr<mapped_file_region> MappedFile(new mapped_file_region(
-      FD, true, mapped_file_region::readwrite, Size, 0, EC));
+  auto MappedFile = llvm::make_unique<mapped_file_region>(
+      FD, true, mapped_file_region::readwrite, Size, 0, EC);
   if (EC)
     return EC;
 
-  Result.reset(new FileOutputBuffer(MappedFile.get(), FilePath, TempFilePath));
-  if (Result)
-    MappedFile.release();
+  Result.reset(
+      new FileOutputBuffer(std::move(MappedFile), FilePath, TempFilePath));
 
   return std::error_code();
 }
