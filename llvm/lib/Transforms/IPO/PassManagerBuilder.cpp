@@ -66,6 +66,9 @@ RunSLPAfterLoopVectorization("run-slp-after-loop-vectorization",
   cl::desc("Run the SLP vectorizer (and BB vectorizer) after the Loop "
            "vectorizer instead of before"));
 
+static cl::opt<bool> UseCFLAA("use-cfl-aa",
+  cl::init(false), cl::Hidden,
+  cl::desc("Enable the new, experimental CFL alias analysis"));
 
 PassManagerBuilder::PassManagerBuilder() {
     OptLevel = 2;
@@ -120,6 +123,8 @@ PassManagerBuilder::addInitialAliasAnalysisPasses(PassManagerBase &PM) const {
   // Add TypeBasedAliasAnalysis before BasicAliasAnalysis so that
   // BasicAliasAnalysis wins if they disagree. This is intended to help
   // support "obvious" type-punning idioms.
+  if (UseCFLAA)
+    PM.add(createCFLAliasAnalysisPass());
   PM.add(createTypeBasedAliasAnalysisPass());
   PM.add(createScopedNoAliasAAPass());
   PM.add(createBasicAliasAnalysisPass());
