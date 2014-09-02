@@ -2,6 +2,11 @@
 // RUN: %clang_cc1 -std=c++11 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
 // RUN: %clang_cc1 -std=c++1y %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
 
+// FIXME: This is included to avoid a diagnostic with no source location
+// pointing at the implicit operator new. We can't match such a diagnostic
+// with -verify.
+void *operator new(__SIZE_TYPE__); // expected-warning 0-1{{missing exception spec}} expected-note{{candidate}}
+
 namespace dr500 { // dr500: dup 372
   class D;
   class A {
@@ -527,4 +532,187 @@ namespace dr548 { // dr548: dup 482
   template<typename T> void f() {}
   template struct dr548::S<int>;
   template void dr548::f<int>();
+}
+
+namespace dr551 { // dr551: yes c++11
+  // FIXME: This obviously should apply in C++98 mode too.
+  template<typename T> void f() {}
+  template inline void f<int>();
+#if __cplusplus >= 201103L
+  // expected-error@-2 {{cannot be 'inline'}}
+#endif
+
+  template<typename T> inline void g() {}
+  template inline void g<int>();
+#if __cplusplus >= 201103L
+  // expected-error@-2 {{cannot be 'inline'}}
+#endif
+
+  template<typename T> struct X {
+    void f() {}
+  };
+  template inline void X<int>::f();
+#if __cplusplus >= 201103L
+  // expected-error@-2 {{cannot be 'inline'}}
+#endif
+}
+
+namespace dr552 { // dr552: yes
+  template<typename T, typename T::U> struct X {};
+  struct Y { typedef int U; };
+  X<Y, 0> x;
+}
+
+struct dr553_class {
+  friend void *operator new(__SIZE_TYPE__, dr553_class);
+};
+namespace dr553 {
+  dr553_class c;
+  // Contrary to the apparent intention of the DR, operator new is not actually
+  // looked up with a lookup mechanism that performs ADL; the standard says it
+  // "is looked up in global scope", where it is not visible.
+  void *p = new (c) int; // expected-error {{no matching function}}
+
+  struct namespace_scope {
+    friend void *operator new(__SIZE_TYPE__, namespace_scope); // expected-error {{cannot be declared inside a namespace}}
+  };
+}
+
+// dr556: na
+
+namespace dr557 { // dr557: yes
+  template<typename T> struct S {
+    friend void f(S<T> *);
+    friend void g(S<S<T> > *);
+  };
+  void x(S<int> *p, S<S<int> > *q) {
+    f(p);
+    g(q);
+  }
+}
+
+namespace dr558 { // dr558: yes
+  wchar_t a = L'\uD7FF';
+  wchar_t b = L'\xD7FF';
+  wchar_t c = L'\uD800'; // expected-error {{invalid universal character}}
+  wchar_t d = L'\xD800';
+  wchar_t e = L'\uDFFF'; // expected-error {{invalid universal character}}
+  wchar_t f = L'\xDFFF';
+  wchar_t g = L'\uE000';
+  wchar_t h = L'\xE000';
+}
+
+template<typename> struct dr559 { typedef int T; dr559::T u; }; // dr559: yes
+
+namespace dr561 { // dr561: yes
+  template<typename T> void f(int);
+  template<typename T> void g(T t) {
+    f<T>(t);
+  }
+  namespace {
+    struct S {};
+    template<typename T> static void f(S);
+  }
+  void h(S s) {
+    g(s);
+  }
+}
+
+namespace dr564 { // dr564: yes
+  extern "C++" void f(int);
+  void f(int); // ok
+  extern "C++" { extern int n; }
+  int n; // ok
+}
+
+namespace dr565 { // dr565: yes
+  namespace N {
+    template<typename T> int f(T); // expected-note {{target}}
+  }
+  using N::f; // expected-note {{using}}
+  template<typename T> int f(T*);
+  template<typename T> void f(T);
+  template<typename T, int = 0> int f(T); // expected-error 0-1{{extension}}
+  template<typename T> int f(T, int = 0);
+  template<typename T> int f(T); // expected-error {{conflicts with}}
+}
+
+namespace dr566 { // dr566: yes
+#if __cplusplus >= 201103L
+  int check[int(-3.99) == -3 ? 1 : -1];
+#endif
+}
+
+// dr567: na
+
+namespace dr568 { // dr568: yes c++11
+  // FIXME: This is a DR issue against C++98, so should probably apply there
+  // too.
+  struct x { int y; };
+  class trivial : x {
+    x y;
+  public:
+    int n;
+  };
+  int check_trivial[__is_trivial(trivial) ? 1 : -1];
+
+  struct std_layout {
+    std_layout();
+    std_layout(const std_layout &);
+    ~std_layout();
+  private:
+    int n;
+  };
+  int check_std_layout[__is_standard_layout(std_layout) ? 1 : -1];
+
+  struct aggregate {
+    int x;
+    int y;
+    trivial t;
+    std_layout sl;
+  };
+  aggregate aggr = {};
+
+  void f(...);
+  void g(trivial t) { f(t); }
+#if __cplusplus < 201103L
+  // expected-error@-2 {{non-POD}}
+#endif
+
+  void jump() {
+    goto x;
+#if __cplusplus < 201103L
+    // expected-error@-2 {{protected scope}}
+    // expected-note@+2 {{non-POD}}
+#endif
+    trivial t;
+  x: ;
+  }
+}
+
+namespace dr569 { // dr569: yes c++11
+  // FIXME: This is a DR issue against C++98, so should probably apply there
+  // too.
+  ;;;;;
+#if __cplusplus < 201103L
+  // expected-error@-2 {{C++11 extension}}
+#endif
+}
+
+namespace dr570 { // dr570: dup 633
+  int n;
+  int &r = n; // expected-note {{previous}}
+  int &r = n; // expected-error {{redefinition}}
+}
+
+namespace dr571 { // dr571 unknown
+  // FIXME: Add a codegen test.
+  typedef int &ir;
+  int n;
+  const ir r = n; // expected-warning {{has no effect}} FIXME: Test if this has internal linkage.
+}
+
+namespace dr572 { // dr572: yes
+  enum E { a = 1, b = 2 };
+  int check[a + b == 3 ? 1 : -1];
 }

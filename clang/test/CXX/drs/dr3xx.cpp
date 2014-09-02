@@ -366,7 +366,7 @@ namespace dr331 { // dr331: yes
   } const a, b(a); // expected-error {{no matching constructor}}
 }
 
-namespace dr332 { // dr332: dup 557
+namespace dr332 { // dr332: dup 577
   void f(volatile void); // expected-error {{'void' as parameter must not have type qualifiers}}
   void g(const void); // expected-error {{'void' as parameter must not have type qualifiers}}
   void h(int n, volatile void); // expected-error {{'void' must be the first and only parameter}}
