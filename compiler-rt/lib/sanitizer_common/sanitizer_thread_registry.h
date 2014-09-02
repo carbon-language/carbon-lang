@@ -111,7 +111,6 @@ class ThreadRegistry {
 
   void SetThreadName(u32 tid, const char *name);
   void SetThreadNameByUserId(uptr user_id, const char *name);
-  void DetachThread(u32 tid);
   void DetachThread(u32 tid, void *arg);
   void JoinThread(u32 tid, void *arg);
   void FinishThread(u32 tid);

@@ -174,7 +174,7 @@ void ThreadClock::release(ClockCache *c, SyncClock *dst) const {
   CPP_STAT_INC(StatClockRelease);
   // Check if we need to resize dst.
   if (dst->size_ < nclk_)
-    Resize(c, dst);
+    dst->Resize(c, nclk_);
 
   // Check if we had not acquired anything from other threads
   // since the last release on dst. If so, we need to update
@@ -221,7 +221,7 @@ void ThreadClock::ReleaseStore(ClockCache *c, SyncClock *dst) const {
 
   // Check if we need to resize dst.
   if (dst->size_ < nclk_)
-    Resize(c, dst);
+    dst->Resize(c, nclk_);
 
   if (dst->release_store_tid_ == tid_ &&
       dst->release_store_reused_ == reused_ &&
@@ -299,51 +299,51 @@ bool ThreadClock::IsAlreadyAcquired(const SyncClock *src) const {
   return true;
 }
 
-void ThreadClock::Resize(ClockCache *c, SyncClock *dst) const {
+void SyncClock::Resize(ClockCache *c, uptr nclk) {
   CPP_STAT_INC(StatClockReleaseResize);
-  if (RoundUpTo(nclk_, ClockBlock::kClockCount) <=
-      RoundUpTo(dst->size_, ClockBlock::kClockCount)) {
+  if (RoundUpTo(nclk, ClockBlock::kClockCount) <=
+      RoundUpTo(size_, ClockBlock::kClockCount)) {
     // Growing within the same block.
     // Memory is already allocated, just increase the size.
-    dst->size_ = nclk_;
+    size_ = nclk;
     return;
   }
-  if (nclk_ <= ClockBlock::kClockCount) {
+  if (nclk <= ClockBlock::kClockCount) {
     // Grow from 0 to one-level table.
-    CHECK_EQ(dst->size_, 0);
-    CHECK_EQ(dst->tab_, 0);
-    CHECK_EQ(dst->tab_idx_, 0);
-    dst->size_ = nclk_;
-    dst->tab_idx_ = ctx->clock_alloc.Alloc(c);
-    dst->tab_ = ctx->clock_alloc.Map(dst->tab_idx_);
-    internal_memset(dst->tab_, 0, sizeof(*dst->tab_));
+    CHECK_EQ(size_, 0);
+    CHECK_EQ(tab_, 0);
+    CHECK_EQ(tab_idx_, 0);
+    size_ = nclk;
+    tab_idx_ = ctx->clock_alloc.Alloc(c);
+    tab_ = ctx->clock_alloc.Map(tab_idx_);
+    internal_memset(tab_, 0, sizeof(*tab_));
     return;
   }
   // Growing two-level table.
-  if (dst->size_ == 0) {
+  if (size_ == 0) {
     // Allocate first level table.
-    dst->tab_idx_ = ctx->clock_alloc.Alloc(c);
-    dst->tab_ = ctx->clock_alloc.Map(dst->tab_idx_);
-    internal_memset(dst->tab_, 0, sizeof(*dst->tab_));
-  } else if (dst->size_ <= ClockBlock::kClockCount) {
+    tab_idx_ = ctx->clock_alloc.Alloc(c);
+    tab_ = ctx->clock_alloc.Map(tab_idx_);
+    internal_memset(tab_, 0, sizeof(*tab_));
+  } else if (size_ <= ClockBlock::kClockCount) {
     // Transform one-level table to two-level table.
-    u32 old = dst->tab_idx_;
-    dst->tab_idx_ = ctx->clock_alloc.Alloc(c);
-    dst->tab_ = ctx->clock_alloc.Map(dst->tab_idx_);
-    internal_memset(dst->tab_, 0, sizeof(*dst->tab_));
-    dst->tab_->table[0] = old;
+    u32 old = tab_idx_;
+    tab_idx_ = ctx->clock_alloc.Alloc(c);
+    tab_ = ctx->clock_alloc.Map(tab_idx_);
+    internal_memset(tab_, 0, sizeof(*tab_));
+    tab_->table[0] = old;
   }
   // At this point we have first level table allocated.
   // Add second level tables as necessary.
-  for (uptr i = RoundUpTo(dst->size_, ClockBlock::kClockCount);
-      i < nclk_; i += ClockBlock::kClockCount) {
+  for (uptr i = RoundUpTo(size_, ClockBlock::kClockCount);
+      i < nclk; i += ClockBlock::kClockCount) {
     u32 idx = ctx->clock_alloc.Alloc(c);
     ClockBlock *cb = ctx->clock_alloc.Map(idx);
     internal_memset(cb, 0, sizeof(*cb));
-    CHECK_EQ(dst->tab_->table[i/ClockBlock::kClockCount], 0);
-    dst->tab_->table[i/ClockBlock::kClockCount] = idx;
+    CHECK_EQ(tab_->table[i/ClockBlock::kClockCount], 0);
+    tab_->table[i/ClockBlock::kClockCount] = idx;
   }
-  dst->size_ = nclk_;
+  size_ = nclk;
 }
 
 // Sets a single element in the vector clock.
@@ -368,17 +368,18 @@ void ThreadClock::DebugDump(int(*printf)(const char *s, ...)) {
       tid_, reused_, last_acquire_);
 }
 
-SyncClock::SyncClock() {
-  tab_ = 0;
-  tab_idx_ = 0;
-  size_ = 0;
-  release_store_tid_ = kInvalidTid;
-  release_store_reused_ = 0;
+SyncClock::SyncClock()
+    : release_store_tid_(kInvalidTid)
+    , release_store_reused_()
+    , tab_()
+    , tab_idx_()
+    , size_() {
   for (uptr i = 0; i < kDirtyTids; i++)
     dirty_tids_[i] = kInvalidTid;
 }
 
 SyncClock::~SyncClock() {
+  // Reset must be called before dtor.
   CHECK_EQ(size_, 0);
   CHECK_EQ(tab_, 0);
   CHECK_EQ(tab_idx_, 0);

@@ -54,6 +54,7 @@ class SyncClock {
     return elem(tid).epoch;
   }
 
+  void Resize(ClockCache *c, uptr nclk);
   void Reset(ClockCache *c);
 
   void DebugDump(int(*printf)(const char *s, ...));
@@ -121,7 +122,6 @@ struct ThreadClock {
 
   bool IsAlreadyAcquired(const SyncClock *src) const;
   void UpdateCurrentThread(SyncClock *dst) const;
-  void Resize(ClockCache *c, SyncClock *dst) const;
 };
 
 }  // namespace __tsan
