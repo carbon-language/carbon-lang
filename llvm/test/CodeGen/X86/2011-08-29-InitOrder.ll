@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-linux-gnu | FileCheck %s --check-prefix=CHECK-DEFAULT
+; RUN: llc < %s -mtriple=i386-linux-gnu -use-ctors | FileCheck %s --check-prefix=CHECK-DEFAULT
 ; RUN: llc < %s -mtriple=i386-apple-darwin | FileCheck %s --check-prefix=CHECK-DARWIN
 ; PR5329
 

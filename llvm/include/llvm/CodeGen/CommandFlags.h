@@ -190,8 +190,8 @@ EnablePIE("enable-pie",
           cl::init(false));
 
 cl::opt<bool>
-UseInitArray("use-init-array",
-             cl::desc("Use .init_array instead of .ctors."),
+UseCtors("use-ctors",
+             cl::desc("Use .ctors instead of .init_array."),
              cl::init(false));
 
 cl::opt<std::string> StopAfter("stop-after",
@@ -248,7 +248,7 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   Options.StackAlignmentOverride = OverrideStackAlignment;
   Options.TrapFuncName = TrapFuncName;
   Options.PositionIndependentExecutable = EnablePIE;
-  Options.UseInitArray = UseInitArray;
+  Options.UseInitArray = !UseCtors;
   Options.DataSections = DataSections;
   Options.FunctionSections = FunctionSections;
 
