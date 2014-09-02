@@ -784,7 +784,6 @@ private:
             void
         >::type
         __construct_at_end(_ForwardIterator __first, _ForwardIterator __last);
-    void __move_construct_at_end(pointer __first, pointer __last);
     void __append(size_type __n);
     void __append(size_type __n, const_reference __x);
     _LIBCPP_INLINE_VISIBILITY
@@ -836,7 +835,7 @@ private:
     // may not meet the AddressSanitizer alignment constraints.
     // See the documentation for __sanitizer_annotate_contiguous_container for more details.
     void __annotate_contiguous_container
-    (const void *__beg, const void *__end, const void *__old_mid, const void *__new_mid)
+    (const void *__beg, const void *__end, const void *__old_mid, const void *__new_mid) const
     {
 #ifndef _LIBCPP_HAS_NO_ASAN
       if (__beg && is_same<allocator_type, __default_allocator_type>::value)
@@ -844,26 +843,42 @@ private:
 #endif
     }
 
-    void __annotate_new(size_type __current_size)
+    void __annotate_new(size_type __current_size) const
     {
       __annotate_contiguous_container(data(), data() + capacity(),
                                       data() + capacity(), data() + __current_size);
     }
-    void __annotate_delete()
+    void __annotate_delete() const
     {
       __annotate_contiguous_container(data(), data() + capacity(),
                                       data() + size(), data() + capacity());
     }
-    void __annotate_increase(size_type __n)
+    void __annotate_increase(size_type __n) const
     {
       __annotate_contiguous_container(data(), data() + capacity(),
                                       data() + size(), data() + size() + __n);
     }
-    void __annotate_shrink(size_type __old_size)
+    void __annotate_shrink(size_type __old_size) const
     {
       __annotate_contiguous_container(data(), data() + capacity(),
                                       data() + __old_size, data() + size());
     }
+    // The annotation for size increase should happen before the actual increase,
+    // but if an exception is thrown after that the annotation has to be undone.
+    struct __RAII_IncreaseAnnotator {
+      __RAII_IncreaseAnnotator(const vector &__v, size_type __n = 1)
+        : __commit(false), __v(__v), __n(__n) {
+        __v.__annotate_increase(__n);
+      }
+      void __done() { __commit = true; }
+      ~__RAII_IncreaseAnnotator() {
+        if (__commit) return;
+        __v.__annotate_shrink(__v.size() + __n);
+      }
+      bool __commit;
+      size_type __n;
+      const vector &__v;
+    };
 };
 
 template <class _Tp, class _Allocator>
@@ -959,12 +974,13 @@ void
 vector<_Tp, _Allocator>::__construct_at_end(size_type __n)
 {
     allocator_type& __a = this->__alloc();
-    __annotate_increase(__n);
     do
     {
+        __RAII_IncreaseAnnotator __annotator(*this);
         __alloc_traits::construct(__a, _VSTD::__to_raw_pointer(this->__end_));
         ++this->__end_;
         --__n;
+        __annotator.__done();
     } while (__n > 0);
 }
 
@@ -980,12 +996,13 @@ void
 vector<_Tp, _Allocator>::__construct_at_end(size_type __n, const_reference __x)
 {
     allocator_type& __a = this->__alloc();
-    __annotate_increase(__n);
     do
     {
+        __RAII_IncreaseAnnotator __annotator(*this);
         __alloc_traits::construct(__a, _VSTD::__to_raw_pointer(this->__end_), __x);
         ++this->__end_;
         --__n;
+        __annotator.__done();
     } while (__n > 0);
 }
 
@@ -1001,22 +1018,9 @@ vector<_Tp, _Allocator>::__construct_at_end(_ForwardIterator __first, _ForwardIt
     allocator_type& __a = this->__alloc();
     for (; __first != __last; ++__first)
     {
-        __annotate_increase(1);
+        __RAII_IncreaseAnnotator __annotator(*this);
         __alloc_traits::construct(__a, _VSTD::__to_raw_pointer(this->__end_), *__first);
-        ++this->__end_;
-    }
-}
-
-template <class _Tp, class _Allocator>
-void
-vector<_Tp, _Allocator>::__move_construct_at_end(pointer __first, pointer __last)
-{
-    allocator_type& __a = this->__alloc();
-    for (; __first != __last; ++__first)
-    {
-        __annotate_increase(1);
-        __alloc_traits::construct(__a, _VSTD::__to_raw_pointer(this->__end_),
-                                  _VSTD::move(*__first));
+        __annotator.__done();
         ++this->__end_;
     }
 }
@@ -1578,9 +1582,10 @@ vector<_Tp, _Allocator>::push_back(const_reference __x)
 {
     if (this->__end_ != this->__end_cap())
     {
-        __annotate_increase(1);
+        __RAII_IncreaseAnnotator __annotator(*this);
         __alloc_traits::construct(this->__alloc(),
                                   _VSTD::__to_raw_pointer(this->__end_), __x);
+        __annotator.__done();
         ++this->__end_;
     }
     else
@@ -1596,10 +1601,11 @@ vector<_Tp, _Allocator>::push_back(value_type&& __x)
 {
     if (this->__end_ < this->__end_cap())
     {
-        __annotate_increase(1);
+        __RAII_IncreaseAnnotator __annotator(*this);
         __alloc_traits::construct(this->__alloc(),
                                   _VSTD::__to_raw_pointer(this->__end_),
                                   _VSTD::move(__x));
+        __annotator.__done();
         ++this->__end_;
     }
     else
@@ -1629,10 +1635,11 @@ vector<_Tp, _Allocator>::emplace_back(_Args&&... __args)
 {
     if (this->__end_ < this->__end_cap())
     {
-        __annotate_increase(1);
+        __RAII_IncreaseAnnotator __annotator(*this);
         __alloc_traits::construct(this->__alloc(),
                                   _VSTD::__to_raw_pointer(this->__end_),
                                   _VSTD::forward<_Args>(__args)...);
+        __annotator.__done();
         ++this->__end_;
     }
     else
@@ -1712,7 +1719,7 @@ vector<_Tp, _Allocator>::insert(const_iterator __position, const_reference __x)
     pointer __p = this->__begin_ + (__position - begin());
     if (this->__end_ < this->__end_cap())
     {
-        __annotate_increase(1);
+        __RAII_IncreaseAnnotator __annotator(*this);
         if (__p == this->__end_)
         {
             __alloc_traits::construct(this->__alloc(),
@@ -1727,6 +1734,7 @@ vector<_Tp, _Allocator>::insert(const_iterator __position, const_reference __x)
                 ++__xr;
             *__p = *__xr;
         }
+        __annotator.__done();
     }
     else
     {
@@ -1752,7 +1760,7 @@ vector<_Tp, _Allocator>::insert(const_iterator __position, value_type&& __x)
     pointer __p = this->__begin_ + (__position - begin());
     if (this->__end_ < this->__end_cap())
     {
-        __annotate_increase(1);
+        __RAII_IncreaseAnnotator __annotator(*this);
         if (__p == this->__end_)
         {
             __alloc_traits::construct(this->__alloc(),
@@ -1765,6 +1773,7 @@ vector<_Tp, _Allocator>::insert(const_iterator __position, value_type&& __x)
             __move_range(__p, this->__end_, __p + 1);
             *__p = _VSTD::move(__x);
         }
+        __annotator.__done();
     }
     else
     {
@@ -1791,7 +1800,7 @@ vector<_Tp, _Allocator>::emplace(const_iterator __position, _Args&&... __args)
     pointer __p = this->__begin_ + (__position - begin());
     if (this->__end_ < this->__end_cap())
     {
-        __annotate_increase(1);
+        __RAII_IncreaseAnnotator __annotator(*this);
         if (__p == this->__end_)
         {
             __alloc_traits::construct(this->__alloc(),
@@ -1805,6 +1814,7 @@ vector<_Tp, _Allocator>::emplace(const_iterator __position, _Args&&... __args)
             __move_range(__p, this->__end_, __p + 1);
             *__p = _VSTD::move(__tmp);
         }
+        __annotator.__done();
     }
     else
     {
@@ -1843,8 +1853,9 @@ vector<_Tp, _Allocator>::insert(const_iterator __position, size_type __n, const_
             }
             if (__n > 0)
             {
-                __annotate_increase(__n);
+                __RAII_IncreaseAnnotator __annotator(*this);
                 __move_range(__p, __old_last, __p + __old_n);
+                __annotator.__done();
                 const_pointer __xr = pointer_traits<const_pointer>::pointer_to(__x);
                 if (__p <= __xr && __xr < this->__end_)
                     __xr += __old_n;
@@ -1954,8 +1965,9 @@ vector<_Tp, _Allocator>::insert(const_iterator __position, _ForwardIterator __fi
             }
             if (__n > 0)
             {
-                __annotate_increase(__n);
+                __RAII_IncreaseAnnotator __annotator(*this, __n);
                 __move_range(__p, __old_last, __p + __old_n);
+                __annotator.__done();
                 _VSTD::copy(__first, __m, __p);
             }
         }

@@ -19,7 +19,7 @@ extern "C" int __sanitizer_verify_contiguous_container
 template <typename T, typename Alloc>
 bool is_contiguous_container_asan_correct ( const std::vector<T, Alloc> &c )
 {
-    if ( std::is_same<Alloc, std::allocator<T>>::value && c.data() != NULL)
+    if ( std::is_same<Alloc, std::allocator<T> >::value && c.data() != NULL)
         return __sanitizer_verify_contiguous_container (
             c.data(), c.data() + c.size(), c.data() + c.capacity()) != 0;
     return true;
