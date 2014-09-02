@@ -93,6 +93,11 @@ typedef void (*sighandler_t)(int sig);
 
 #define errno (*__errno_location())
 
+// 16K loaded modules should be enough for everyone.
+static const uptr kMaxModules = 1 << 14;
+static LoadedModule *modules;
+static uptr nmodules;
+
 struct sigaction_t {
   union {
     sighandler_t sa_handler;
@@ -267,52 +272,56 @@ class AtExitContext {
     , pos_() {
   }
 
-  typedef void(*atexit_t)();
+  typedef void(*atexit_cb_t)();
 
   int atexit(ThreadState *thr, uptr pc, bool is_on_exit,
-             atexit_t f, void *arg) {
+             atexit_cb_t f, void *arg, void *dso) {
     Lock l(&mtx_);
     if (pos_ == kMaxAtExit)
       return 1;
     Release(thr, pc, (uptr)this);
-    stack_[pos_] = f;
-    args_[pos_] = arg;
-    is_on_exits_[pos_] = is_on_exit;
+    atexit_t *a = &stack_[pos_];
+    a->cb = f;
+    a->arg = arg;
+    a->dso = dso;
+    a->is_on_exit = is_on_exit;
     pos_++;
     return 0;
   }
 
   void exit(ThreadState *thr, uptr pc) {
     for (;;) {
-      atexit_t f = 0;
-      void *arg = 0;
-      bool is_on_exit = false;
+      atexit_t a = {};
       {
         Lock l(&mtx_);
         if (pos_) {
           pos_--;
-          f = stack_[pos_];
-          arg = args_[pos_];
-          is_on_exit = is_on_exits_[pos_];
+          a = stack_[pos_];
           Acquire(thr, pc, (uptr)this);
         }
       }
-      if (f == 0)
+      if (a.cb == 0)
         break;
-      DPrintf("#%d: executing atexit func %p\n", thr->tid, f);
-      if (is_on_exit)
-        ((void(*)(int status, void *arg))f)(0, arg);
+      VPrintf(2, "#%d: executing atexit func %p(%p) dso=%p\n",
+          thr->tid, a.cb, a.arg, a.dso);
+      if (a.is_on_exit)
+        ((void(*)(int status, void *arg))a.cb)(0, a.arg);
       else
-        ((void(*)(void *arg, void *dso))f)(arg, 0);
+        ((void(*)(void *arg, void *dso))a.cb)(a.arg, a.dso);
     }
   }
 
  private:
-  static const int kMaxAtExit = 128;
+  struct atexit_t {
+    atexit_cb_t cb;
+    void *arg;
+    void *dso;
+    bool is_on_exit;
+  };
+
+  static const int kMaxAtExit = 1024;
   Mutex mtx_;
   atexit_t stack_[kMaxAtExit];
-  void *args_[kMaxAtExit];
-  bool is_on_exits_[kMaxAtExit];
   int pos_;
 };
 
@@ -324,29 +333,42 @@ TSAN_INTERCEPTOR(int, atexit, void (*f)()) {
   // We want to setup the atexit callback even if we are in ignored lib
   // or after fork.
   SCOPED_INTERCEPTOR_RAW(atexit, f);
-  return atexit_ctx->atexit(thr, pc, false, (void(*)())f, 0);
+  return atexit_ctx->atexit(thr, pc, false, (void(*)())f, 0, 0);
 }
 
 TSAN_INTERCEPTOR(int, on_exit, void(*f)(int, void*), void *arg) {
   if (cur_thread()->in_symbolizer)
     return 0;
   SCOPED_TSAN_INTERCEPTOR(on_exit, f, arg);
-  return atexit_ctx->atexit(thr, pc, true, (void(*)())f, arg);
+  return atexit_ctx->atexit(thr, pc, true, (void(*)())f, arg, 0);
+}
+
+bool IsSaticModule(void *dso) {
+  if (modules == 0)
+    return false;
+  for (uptr i = 0; i < nmodules; i++) {
+    if (modules[i].containsAddress((uptr)dso))
+      return true;
+  }
+  return false;
 }
 
 TSAN_INTERCEPTOR(int, __cxa_atexit, void (*f)(void *a), void *arg, void *dso) {
   if (cur_thread()->in_symbolizer)
     return 0;
   SCOPED_TSAN_INTERCEPTOR(__cxa_atexit, f, arg, dso);
-  if (dso) {
-    // Memory allocation in __cxa_atexit will race with free during exit,
-    // because we do not see synchronization around atexit callback list.
-    ThreadIgnoreBegin(thr, pc);
-    int res = REAL(__cxa_atexit)(f, arg, dso);
-    ThreadIgnoreEnd(thr, pc);
-    return res;
-  }
-  return atexit_ctx->atexit(thr, pc, false, (void(*)())f, arg);
+  // If it's the main executable or a statically loaded library,
+  // we will call the callback.
+  if (dso == 0 || IsSaticModule(dso))
+    return atexit_ctx->atexit(thr, pc, false, (void(*)())f, arg, dso);
+
+  // Dynamically load module, don't know when to call the callback for it.
+  // Memory allocation in __cxa_atexit will race with free during exit,
+  // because we do not see synchronization around atexit callback list.
+  ThreadIgnoreBegin(thr, pc);
+  int res = REAL(__cxa_atexit)(f, arg, dso);
+  ThreadIgnoreEnd(thr, pc);
+  return res;
 }
 
 // Cleanup old bufs.
@@ -2387,6 +2409,11 @@ void InitializeInterceptors() {
   }
 
   FdInit();
+
+  // Remember list of loaded libraries for atexit interceptors.
+  modules = (LoadedModule*)MmapOrDie(sizeof(*modules)*kMaxModules,
+      "LoadedModule");
+  nmodules = GetListOfModules(modules, kMaxModules, 0);
 }
 
 void *internal_start_thread(void(*func)(void *arg), void *arg) {
