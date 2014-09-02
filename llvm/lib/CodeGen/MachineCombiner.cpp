@@ -38,7 +38,7 @@ namespace {
 class MachineCombiner : public MachineFunctionPass {
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
-  const MCSchedModel *SchedModel;
+  MCSchedModel SchedModel;
   MachineRegisterInfo *MRI;
   MachineTraceMetrics *Traces;
   MachineTraceMetrics::Ensemble *MinInstr;
@@ -260,7 +260,7 @@ void MachineCombiner::instr2instrSC(
   for (auto *InstrPtr : Instrs) {
     unsigned Opc = InstrPtr->getOpcode();
     unsigned Idx = TII->get(Opc).getSchedClass();
-    const MCSchedClassDesc *SC = SchedModel->getSchedClassDesc(Idx);
+    const MCSchedClassDesc *SC = SchedModel.getSchedClassDesc(Idx);
     InstrsSC.push_back(SC);
   }
 }
@@ -411,7 +411,7 @@ bool MachineCombiner::runOnMachineFunction(MachineFunction &MF) {
   TII = STI.getInstrInfo();
   TRI = STI.getRegisterInfo();
   SchedModel = STI.getSchedModel();
-  TSchedModel.init(*SchedModel, &STI, TII);
+  TSchedModel.init(SchedModel, &STI, TII);
   MRI = &MF.getRegInfo();
   Traces = &getAnalysis<MachineTraceMetrics>();
   MinInstr = 0;

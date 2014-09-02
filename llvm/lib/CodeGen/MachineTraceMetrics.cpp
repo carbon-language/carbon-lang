@@ -58,7 +58,7 @@ bool MachineTraceMetrics::runOnMachineFunction(MachineFunction &Func) {
   Loops = &getAnalysis<MachineLoopInfo>();
   const TargetSubtargetInfo &ST =
     MF->getTarget().getSubtarget<TargetSubtargetInfo>();
-  SchedModel.init(*ST.getSchedModel(), &ST, TII);
+  SchedModel.init(ST.getSchedModel(), &ST, TII);
   BlockInfo.resize(MF->getNumBlockIDs());
   ProcResourceCycles.resize(MF->getNumBlockIDs() *
                             SchedModel.getNumProcResourceKinds());

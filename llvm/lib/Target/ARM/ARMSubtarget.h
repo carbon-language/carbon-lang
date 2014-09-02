@@ -219,7 +219,7 @@ protected:
   Triple TargetTriple;
 
   /// SchedModel - Processor specific instruction costs.
-  const MCSchedModel *SchedModel;
+  MCSchedModel SchedModel;
 
   /// Selected instruction itineraries (one entry per itinerary class.)
   InstrItineraryData InstrItins;

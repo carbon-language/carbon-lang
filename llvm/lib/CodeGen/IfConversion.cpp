@@ -281,7 +281,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
 
   const TargetSubtargetInfo &ST =
     MF.getTarget().getSubtarget<TargetSubtargetInfo>();
-  SchedModel.init(*ST.getSchedModel(), &ST, TII);
+  SchedModel.init(ST.getSchedModel(), &ST, TII);
 
   if (!TII) return false;
 

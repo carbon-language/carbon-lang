@@ -580,7 +580,7 @@ namespace {
 class EarlyIfConverter : public MachineFunctionPass {
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
-  const MCSchedModel *SchedModel;
+  MCSchedModel SchedModel;
   MachineRegisterInfo *MRI;
   MachineDominatorTree *DomTree;
   MachineLoopInfo *Loops;
@@ -688,7 +688,7 @@ bool EarlyIfConverter::shouldConvertIf() {
                               FBBTrace.getCriticalPath());
 
   // Set a somewhat arbitrary limit on the critical path extension we accept.
-  unsigned CritLimit = SchedModel->MispredictPenalty/2;
+  unsigned CritLimit = SchedModel.MispredictPenalty/2;
 
   // If-conversion only makes sense when there is unexploited ILP. Compute the
   // maximum-ILP resource length of the trace after if-conversion. Compare it

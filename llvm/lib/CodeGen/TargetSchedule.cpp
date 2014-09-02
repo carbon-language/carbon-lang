@@ -157,7 +157,7 @@ unsigned TargetSchedModel::computeOperandLatency(
   const MachineInstr *UseMI, unsigned UseOperIdx) const {
 
   if (!hasInstrSchedModel() && !hasInstrItineraries())
-    return TII->defaultDefLatency(&SchedModel, DefMI);
+    return TII->defaultDefLatency(SchedModel, DefMI);
 
   if (hasInstrItineraries()) {
     int OperLatency = 0;
@@ -181,7 +181,7 @@ unsigned TargetSchedModel::computeOperandLatency(
     // applicable to the InstrItins model. InstrSchedModel should model all
     // special cases without TII hooks.
     InstrLatency = std::max(InstrLatency,
-                            TII->defaultDefLatency(&SchedModel, DefMI));
+                            TII->defaultDefLatency(SchedModel, DefMI));
     return InstrLatency;
   }
   // hasInstrSchedModel()
@@ -222,7 +222,7 @@ unsigned TargetSchedModel::computeOperandLatency(
   // FIXME: Automatically giving all implicit defs defaultDefLatency is
   // undesirable. We should only do it for defs that are known to the MC
   // desc like flags. Truly implicit defs should get 1 cycle latency.
-  return DefMI->isTransient() ? 0 : TII->defaultDefLatency(&SchedModel, DefMI);
+  return DefMI->isTransient() ? 0 : TII->defaultDefLatency(SchedModel, DefMI);
 }
 
 unsigned TargetSchedModel::computeInstrLatency(unsigned Opcode) const {
@@ -270,7 +270,7 @@ TargetSchedModel::computeInstrLatency(const MachineInstr *MI,
       return Latency;
     }
   }
-  return TII->defaultDefLatency(&SchedModel, MI);
+  return TII->defaultDefLatency(SchedModel, MI);
 }
 
 unsigned TargetSchedModel::

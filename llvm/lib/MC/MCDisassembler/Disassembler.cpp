@@ -202,19 +202,19 @@ static int getItineraryLatency(LLVMDisasmContext *DC, const MCInst &Inst) {
 static int getLatency(LLVMDisasmContext *DC, const MCInst &Inst) {
   // Try to compute scheduling information.
   const MCSubtargetInfo *STI = DC->getSubtargetInfo();
-  const MCSchedModel *SCModel = STI->getSchedModel();
+  const MCSchedModel SCModel = STI->getSchedModel();
   const int NoInformationAvailable = -1;
 
   // Check if we have a scheduling model for instructions.
-  if (!SCModel || !SCModel->hasInstrSchedModel())
-    // Try to fall back to the itinerary model if we do not have a
-    // scheduling model.
+  if (!SCModel.hasInstrSchedModel())
+    // Try to fall back to the itinerary model if the scheduling model doesn't
+    // have a scheduling table.  Note the default does not have a table.
     return getItineraryLatency(DC, Inst);
 
   // Get the scheduling class of the requested instruction.
   const MCInstrDesc& Desc = DC->getInstrInfo()->get(Inst.getOpcode());
   unsigned SCClass = Desc.getSchedClass();
-  const MCSchedClassDesc *SCDesc = SCModel->getSchedClassDesc(SCClass);
+  const MCSchedClassDesc *SCDesc = SCModel.getSchedClassDesc(SCClass);
   // Resolving the variant SchedClass requires an MI to pass to
   // SubTargetInfo::resolveSchedClass.
   if (!SCDesc || !SCDesc->isValid() || SCDesc->isVariant())

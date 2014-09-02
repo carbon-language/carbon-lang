@@ -123,7 +123,7 @@ bool AArch64StorePairSuppress::runOnMachineFunction(MachineFunction &mf) {
   MRI = &MF->getRegInfo();
   const TargetSubtargetInfo &ST =
       MF->getTarget().getSubtarget<TargetSubtargetInfo>();
-  SchedModel.init(*ST.getSchedModel(), &ST, TII);
+  SchedModel.init(ST.getSchedModel(), &ST, TII);
 
   Traces = &getAnalysis<MachineTraceMetrics>();
   MinInstr = nullptr;

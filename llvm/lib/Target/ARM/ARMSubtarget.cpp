@@ -415,7 +415,7 @@ ARMSubtarget::GVIsIndirectSymbol(const GlobalValue *GV,
 }
 
 unsigned ARMSubtarget::getMispredictionPenalty() const {
-  return SchedModel->MispredictPenalty;
+  return SchedModel.MispredictPenalty;
 }
 
 bool ARMSubtarget::hasSinCos() const {

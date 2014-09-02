@@ -229,8 +229,8 @@ void BasicTTI::getUnrollingPreferences(Loop *L,
   const TargetSubtargetInfo *ST = &TM->getSubtarget<TargetSubtargetInfo>();
   if (PartialUnrollingThreshold.getNumOccurrences() > 0)
     MaxOps = PartialUnrollingThreshold;
-  else if (ST->getSchedModel()->LoopMicroOpBufferSize > 0)
-    MaxOps = ST->getSchedModel()->LoopMicroOpBufferSize;
+  else if (ST->getSchedModel().LoopMicroOpBufferSize > 0)
+    MaxOps = ST->getSchedModel().LoopMicroOpBufferSize;
   else
     return;
 

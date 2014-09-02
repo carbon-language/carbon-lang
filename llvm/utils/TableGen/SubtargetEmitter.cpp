@@ -1192,7 +1192,7 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
 
     // Begin processor itinerary properties
     OS << "\n";
-    OS << "static const llvm::MCSchedModel " << PI->ModelName << "(\n";
+    OS << "static const llvm::MCSchedModel " << PI->ModelName << " = {\n";
     EmitProcessorProp(OS, PI->ModelDef, "IssueWidth", ',');
     EmitProcessorProp(OS, PI->ModelDef, "MicroOpBufferSize", ',');
     EmitProcessorProp(OS, PI->ModelDef, "LoopMicroOpBufferSize", ',');
@@ -1217,10 +1217,10 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
                      - SchedModels.schedClassBegin()) << ",\n";
     else
       OS << "  0, 0, 0, 0, // No instruction-level machine model.\n";
-    if (SchedModels.hasItineraries())
-      OS << "  " << PI->ItinsDef->getName() << ");\n";
+    if (PI->hasItineraries())
+      OS << "  " << PI->ItinsDef->getName() << "};\n";
     else
-      OS << "  0); // No Itinerary\n";
+      OS << "  nullptr}; // No Itinerary\n";
   }
 }
 

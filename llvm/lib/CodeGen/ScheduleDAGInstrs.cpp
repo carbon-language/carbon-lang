@@ -63,7 +63,7 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
          "Virtual registers must be removed prior to PostRA scheduling");
 
   const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
-  SchedModel.init(*ST.getSchedModel(), &ST, TII);
+  SchedModel.init(ST.getSchedModel(), &ST, TII);
 }
 
 /// getUnderlyingObjectFromInt - This is the function that does the work of

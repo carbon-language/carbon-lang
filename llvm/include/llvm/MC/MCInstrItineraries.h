@@ -110,7 +110,7 @@ struct InstrItinerary {
 ///
 class InstrItineraryData {
 public:
-  const MCSchedModel   *SchedModel;     ///< Basic machine properties.
+  MCSchedModel          SchedModel;     ///< Basic machine properties.
   const InstrStage     *Stages;         ///< Array of stages selected
   const unsigned       *OperandCycles;  ///< Array of operand cycles selected
   const unsigned       *Forwardings;    ///< Array of pipeline forwarding pathes
@@ -118,14 +118,14 @@ public:
 
   /// Ctors.
   ///
-  InstrItineraryData() : SchedModel(&MCSchedModel::DefaultSchedModel),
+  InstrItineraryData() : SchedModel(MCSchedModel::GetDefaultSchedModel()),
                          Stages(nullptr), OperandCycles(nullptr),
                          Forwardings(nullptr), Itineraries(nullptr) {}
 
-  InstrItineraryData(const MCSchedModel *SM, const InstrStage *S,
+  InstrItineraryData(const MCSchedModel &SM, const InstrStage *S,
                      const unsigned *OS, const unsigned *F)
     : SchedModel(SM), Stages(S), OperandCycles(OS), Forwardings(F),
-      Itineraries(SchedModel->InstrItineraries) {}
+      Itineraries(SchedModel.InstrItineraries) {}
 
   /// isEmpty - Returns true if there are no itineraries.
   ///

@@ -53,7 +53,7 @@ bool TargetSubtargetInfo::enableRALocalReassignment(
 }
 
 bool TargetSubtargetInfo::enablePostMachineScheduler() const {
-  return getSchedModel()->PostRAScheduler;
+  return getSchedModel().PostRAScheduler;
 }
 
 bool TargetSubtargetInfo::useAA() const {

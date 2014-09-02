@@ -31,7 +31,7 @@ class MachineMemOperand;
 class MachineRegisterInfo;
 class MDNode;
 class MCInst;
-class MCSchedModel;
+struct MCSchedModel;
 class MCSymbolRefExpr;
 class SDNode;
 class ScheduleHazardRecognizer;
@@ -1032,7 +1032,7 @@ public:
                               SDNode *Node) const;
 
   /// Return the default expected latency for a def based on it's opcode.
-  unsigned defaultDefLatency(const MCSchedModel *SchedModel,
+  unsigned defaultDefLatency(const MCSchedModel &SchedModel,
                              const MachineInstr *DefMI) const;
 
   int computeDefOperandLatency(const InstrItineraryData *ItinData,
