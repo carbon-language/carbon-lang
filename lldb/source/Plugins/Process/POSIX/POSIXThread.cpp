@@ -30,6 +30,7 @@
 #include "ProcessPOSIX.h"
 #include "ProcessPOSIXLog.h"
 #include "ProcessMonitor.h"
+#include "RegisterContextPOSIXProcessMonitor_arm64.h"
 #include "RegisterContextPOSIXProcessMonitor_mips64.h"
 #include "RegisterContextPOSIXProcessMonitor_x86.h"
 #include "RegisterContextLinux_arm64.h"
@@ -211,6 +212,13 @@ POSIXThread::GetRegisterContext()
 
         switch (target_arch.GetMachine())
         {
+            case llvm::Triple::aarch64:
+                {
+                    RegisterContextPOSIXProcessMonitor_arm64 *reg_ctx = new RegisterContextPOSIXProcessMonitor_arm64(*this, 0, reg_interface);
+                    m_posix_thread = reg_ctx;
+                    m_reg_context_sp.reset(reg_ctx);
+                    break;
+                }
             case llvm::Triple::mips64:
                 {
                     RegisterContextPOSIXProcessMonitor_mips64 *reg_ctx = new RegisterContextPOSIXProcessMonitor_mips64(*this, 0, reg_interface);
@@ -611,6 +619,7 @@ POSIXThread::GetRegisterIndexFromOffset(unsigned offset)
         llvm_unreachable("CPU type not supported!");
         break;
 
+    case llvm::Triple::aarch64:
     case llvm::Triple::mips64:
     case llvm::Triple::x86:
     case llvm::Triple::x86_64:
@@ -641,6 +650,7 @@ POSIXThread::GetRegisterName(unsigned reg)
         assert(false && "CPU type not supported!");
         break;
 
+    case llvm::Triple::aarch64:
     case llvm::Triple::mips64:
     case llvm::Triple::x86:
     case llvm::Triple::x86_64:
