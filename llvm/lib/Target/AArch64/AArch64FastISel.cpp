@@ -134,6 +134,7 @@ private:
   // Utility helper routines.
   bool isTypeLegal(Type *Ty, MVT &VT);
   bool isLoadStoreTypeLegal(Type *Ty, MVT &VT);
+  bool isTypeSupported(Type *Ty, MVT &VT);
   bool isValueAvailable(const Value *V) const;
   bool ComputeAddress(const Value *Obj, Address &Addr, Type *Ty = nullptr);
   bool ComputeCallAddress(const Value *V, Address &Addr);
@@ -674,6 +675,26 @@ bool AArch64FastISel::isLoadStoreTypeLegal(Type *Ty, MVT &VT) {
 
   // If this is a type than can be sign or zero-extended to a basic operation
   // go ahead and accept it now. For stores, this reflects truncation.
+  if (VT == MVT::i1 || VT == MVT::i8 || VT == MVT::i16)
+    return true;
+
+  return false;
+}
+
+/// \brief Determine if the value type is supported by FastISel.
+///
+/// FastISel for AArch64 can handle more value types than are legal. This adds
+/// simple value type such as i1, i8, and i16.
+/// Vectors on the other side are not supported yet.
+bool AArch64FastISel::isTypeSupported(Type *Ty, MVT &VT) {
+  if (Ty->isVectorTy())
+    return false;
+
+  if (isTypeLegal(Ty, VT))
+    return true;
+
+  // If this is a type than can be sign or zero-extended to a basic operation
+  // go ahead and accept it now.
   if (VT == MVT::i1 || VT == MVT::i8 || VT == MVT::i16)
     return true;
 
@@ -1571,7 +1592,7 @@ bool AArch64FastISel::SelectBranch(const Instruction *I) {
   } else if (TruncInst *TI = dyn_cast<TruncInst>(BI->getCondition())) {
     MVT SrcVT;
     if (TI->hasOneUse() && TI->getParent() == I->getParent() &&
-        (isLoadStoreTypeLegal(TI->getOperand(0)->getType(), SrcVT))) {
+        (isTypeSupported(TI->getOperand(0)->getType(), SrcVT))) {
       unsigned CondReg = getRegForValue(TI->getOperand(0));
       if (!CondReg)
         return false;
@@ -3295,7 +3316,7 @@ bool AArch64FastISel::SelectMul(const Instruction *I) {
 
 bool AArch64FastISel::SelectShift(const Instruction *I) {
   MVT RetVT;
-  if (!isLoadStoreTypeLegal(I->getType(), RetVT))
+  if (!isTypeSupported(I->getType(), RetVT))
     return false;
 
   if (const auto *C = dyn_cast<ConstantInt>(I->getOperand(1))) {
@@ -3306,16 +3327,14 @@ bool AArch64FastISel::SelectShift(const Instruction *I) {
     const Value *Op0 = I->getOperand(0);
     if (const auto *ZExt = dyn_cast<ZExtInst>(Op0)) {
       MVT TmpVT;
-      if (isValueAvailable(ZExt) &&
-          isLoadStoreTypeLegal(ZExt->getSrcTy(), TmpVT)) {
+      if (isValueAvailable(ZExt) && isTypeSupported(ZExt->getSrcTy(), TmpVT)) {
         SrcVT = TmpVT;
         IsZExt = true;
         Op0 = ZExt->getOperand(0);
       }
     } else if (const auto *SExt = dyn_cast<SExtInst>(Op0)) {
       MVT TmpVT;
-      if (isValueAvailable(SExt) &&
-          isLoadStoreTypeLegal(SExt->getSrcTy(), TmpVT)) {
+      if (isValueAvailable(SExt) && isTypeSupported(SExt->getSrcTy(), TmpVT)) {
         SrcVT = TmpVT;
         IsZExt = false;
         Op0 = SExt->getOperand(0);
