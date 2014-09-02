@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s
+; RUN: llc -mtriple=armv6t2-eabi %s -o - | FileCheck %s
 
 define i64 @f1(i64 %a, i64 %b) {
 ; CHECK-LABEL: f1:
