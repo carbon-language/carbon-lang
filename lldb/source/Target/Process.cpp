@@ -108,6 +108,7 @@ g_properties[] =
     { "python-os-plugin-path", OptionValue::eTypeFileSpec, false, true, NULL, NULL, "A path to a python OS plug-in module file that contains a OperatingSystemPlugIn class." },
     { "stop-on-sharedlibrary-events" , OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, stop when a shared library is loaded or unloaded." },
     { "detach-keeps-stopped" , OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, detach will attempt to keep the process stopped." },
+    { "memory-cache-line-size" , OptionValue::eTypeUInt64, false, 512, NULL, NULL, "The memory cache line size" },
     {  NULL                  , OptionValue::eTypeInvalid, false, 0, NULL, NULL, NULL  }
 };
 
@@ -118,7 +119,8 @@ enum {
     ePropertyUnwindOnErrorInExpressions,
     ePropertyPythonOSPluginPath,
     ePropertyStopOnSharedLibraryEvents,
-    ePropertyDetachKeepsStopped
+    ePropertyDetachKeepsStopped,
+    ePropertyMemCacheLineSize
 };
 
 ProcessProperties::ProcessProperties (bool is_global) :
@@ -146,6 +148,13 @@ ProcessProperties::GetDisableMemoryCache() const
 {
     const uint32_t idx = ePropertyDisableMemCache;
     return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+
+uint64_t
+ProcessProperties::GetMemoryCacheLineSize() const
+{
+    const uint32_t idx = ePropertyMemCacheLineSize;
+    return m_collection_sp->GetPropertyAtIndexAsUInt64 (NULL, idx, g_properties[idx].default_uint_value);
 }
 
 Args

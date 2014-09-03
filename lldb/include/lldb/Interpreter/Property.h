@@ -29,7 +29,7 @@ namespace lldb_private {
     {
         const char *name;
         OptionValue::Type type;
-        bool global;
+        bool global;                        // false == this setting is a global setting by default
         uintptr_t default_uint_value;
         const char *default_cstr_value;
         OptionEnumValueElement *enum_values;

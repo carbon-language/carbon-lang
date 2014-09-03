@@ -26,7 +26,7 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 MemoryCache::MemoryCache(Process &process) :
     m_process (process),
-    m_cache_line_byte_size (512),
+    m_cache_line_byte_size (process.GetMemoryCacheLineSize()),
     m_mutex (Mutex::eMutexTypeRecursive),
     m_cache (),
     m_invalid_ranges ()
@@ -47,6 +47,7 @@ MemoryCache::Clear(bool clear_invalid_ranges)
     m_cache.clear();
     if (clear_invalid_ranges)
         m_invalid_ranges.Clear();
+    m_cache_line_byte_size = m_process.GetMemoryCacheLineSize();
 }
 
 void

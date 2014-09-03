@@ -68,6 +68,9 @@ public:
     bool
     GetDisableMemoryCache() const;
 
+    uint64_t
+    GetMemoryCacheLineSize () const;
+
     Args
     GetExtraStartupCommands () const;
 

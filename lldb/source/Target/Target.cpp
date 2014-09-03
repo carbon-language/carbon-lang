@@ -1436,7 +1436,12 @@ Target::ReadCStringFromMemory (const Address& addr, char *dst, size_t dst_max_le
         Error error;
         addr_t curr_addr = addr.GetLoadAddress(this);
         Address address(addr);
+
+        // We could call m_process_sp->GetMemoryCacheLineSize() but I don't
+        // think this really needs to be tied to the memory cache subsystem's
+        // cache line size, so leave this as a fixed constant.
         const size_t cache_line_size = 512;
+
         size_t bytes_left = dst_max_len - 1;
         char *curr_dst = dst;
         
