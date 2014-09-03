@@ -24,12 +24,9 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCRegisterInfo.h"
 
-using namespace llvm;
-
 namespace llvm {
 class MipsELFStreamer;
 class MCSubtargetInfo;
-}
 
 class MipsOptionRecord {
 public:
@@ -58,7 +55,7 @@ public:
   }
   ~MipsRegInfoRecord() {}
 
-  void EmitMipsOptionRecord();
+  void EmitMipsOptionRecord() override;
   void SetPhysRegUsed(unsigned Reg, const MCRegisterInfo *MCRegInfo);
 
 private:
@@ -77,4 +74,5 @@ private:
   uint32_t ri_cprmask[4];
   int64_t ri_gp_value;
 };
+} // namespace llvm
 #endif

@@ -9,6 +9,7 @@
 
 #include "MipsELFStreamer.h"
 #include "llvm/MC/MCInst.h"
+using namespace llvm;
 
 void MipsELFStreamer::EmitInstruction(const MCInst &Inst,
                                       const MCSubtargetInfo &STI) {

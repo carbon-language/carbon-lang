@@ -221,7 +221,7 @@ static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls,
 // Returns the loop hint metadata node with the given name (for example,
 // "llvm.loop.unroll.count").  If no such metadata node exists, then nullptr is
 // returned.
-const MDNode *GetUnrollMetadata(const Loop *L, StringRef Name) {
+static const MDNode *GetUnrollMetadata(const Loop *L, StringRef Name) {
   MDNode *LoopID = L->getLoopID();
   if (!LoopID)
     return nullptr;

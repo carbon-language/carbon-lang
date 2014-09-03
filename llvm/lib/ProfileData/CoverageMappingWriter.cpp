@@ -103,7 +103,8 @@ static unsigned countFileIDs(ArrayRef<CounterMappingRegion> Regions,
 ///     A counter with kind Counter::Expression and an expression
 ///     with kind CounterExpression::Add
 /// Remaining bits - Counter/Expression ID.
-unsigned encodeCounter(ArrayRef<CounterExpression> Expressions, Counter C) {
+static unsigned encodeCounter(ArrayRef<CounterExpression> Expressions,
+                              Counter C) {
   unsigned Tag = unsigned(C.getKind());
   if (C.isExpression())
     Tag += Expressions[C.getExpressionID()].Kind;
