@@ -70,35 +70,6 @@ function(add_public_tablegen_target target)
   set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} ${target} PARENT_SCOPE)
 endfunction()
 
-if(CMAKE_CROSSCOMPILING)
-  set(CX_NATIVE_TG_DIR "${CMAKE_BINARY_DIR}/native")
-
-  add_custom_command(OUTPUT ${CX_NATIVE_TG_DIR}
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CX_NATIVE_TG_DIR}
-    COMMENT "Creating ${CX_NATIVE_TG_DIR}...")
-
-  # Forward a subset of configure options to discover additional tablegen modules.
-  get_cmake_property(_variableNames CACHE_VARIABLES)
-  foreach (_variableName ${_variableNames})
-    if (_variableName MATCHES "^(LLVM_EXTERNAL_.*_SOURCE_DIR)$")
-      list(APPEND CX_CMAKE_ARGUMENTS "-D${_variableName}=\"${${_variableName}}\"")
-    endif ()
-  endforeach()
-
-  add_custom_command(OUTPUT ${CX_NATIVE_TG_DIR}/CMakeCache.txt
-    # TODO: Clear the old CMakeCache.txt somehow without breaking restat.
-    COMMAND ${CMAKE_COMMAND} -UMAKE_TOOLCHAIN_FILE -DCMAKE_BUILD_TYPE=Release
-                             -DLLVM_BUILD_POLLY=OFF ${CX_CMAKE_ARGUMENTS}
-                             -G "${CMAKE_GENERATOR}" ${CMAKE_SOURCE_DIR}
-    WORKING_DIRECTORY ${CX_NATIVE_TG_DIR}
-    DEPENDS ${CX_NATIVE_TG_DIR}
-    COMMENT "Configuring native TableGen...")
-
-  add_custom_target(ConfigureNativeTableGen DEPENDS ${CX_NATIVE_TG_DIR}/CMakeCache.txt)
-
-  set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${CX_NATIVE_TG_DIR})
-endif()
-
 macro(add_tablegen target project)
   set(${target}_OLD_LLVM_LINK_COMPONENTS ${LLVM_LINK_COMPONENTS})
   set(LLVM_LINK_COMPONENTS ${LLVM_LINK_COMPONENTS} TableGen)
@@ -122,16 +93,16 @@ macro(add_tablegen target project)
 
   if(CMAKE_CROSSCOMPILING)
     if( ${${project}_TABLEGEN} STREQUAL "${target}" )
-      set(${project}_TABLEGEN_EXE "${CX_NATIVE_TG_DIR}/bin/${target}")
+      set(${project}_TABLEGEN_EXE "${LLVM_NATIVE_BUILD}/bin/${target}")
       set(${project}_TABLEGEN_EXE ${${project}_TABLEGEN_EXE} PARENT_SCOPE)
 
       add_custom_command(OUTPUT ${${project}_TABLEGEN_EXE}
-        COMMAND ${CMAKE_BUILD_TOOL} ${target}
-        DEPENDS ${CX_NATIVE_TG_DIR}/CMakeCache.txt
-        WORKING_DIRECTORY ${CX_NATIVE_TG_DIR}
+        COMMAND ${CMAKE_COMMAND} --build . --target ${target} --config $<CONFIGURATION>
+        DEPENDS ${LLVM_NATIVE_BUILD}/CMakeCache.txt
+        WORKING_DIRECTORY ${LLVM_NATIVE_BUILD}
         COMMENT "Building native TableGen...")
       add_custom_target(${project}NativeTableGen DEPENDS ${${project}_TABLEGEN_EXE})
-      add_dependencies(${project}NativeTableGen ConfigureNativeTableGen)
+      add_dependencies(${project}NativeTableGen ConfigureNativeLLVM)
 
       add_dependencies(${target} ${project}NativeTableGen)
     endif()

@@ -33,3 +33,18 @@ add_llvm_tool(llvm-config
 
 # Add the dependency on the generation step.
 add_file_dependencies(${CMAKE_CURRENT_SOURCE_DIR}/llvm-config.cpp ${BUILDVARIABLES_OBJPATH})
+
+if(CMAKE_CROSSCOMPILING)
+  set(${project}_LLVM_CONFIG_EXE "${LLVM_NATIVE_BUILD}/bin/llvm-config")
+  set(${project}_LLVM_CONFIG_EXE ${${project}_LLVM_CONFIG_EXE} PARENT_SCOPE)
+
+  add_custom_command(OUTPUT "${${project}_LLVM_CONFIG_EXE}"
+    COMMAND ${CMAKE_COMMAND} --build . --target llvm-config --config $<CONFIGURATION>
+    DEPENDS ${LLVM_NATIVE_BUILD}/CMakeCache.txt
+    WORKING_DIRECTORY ${LLVM_NATIVE_BUILD}
+    COMMENT "Building native llvm-config...")
+  add_custom_target(${project}NativeLLVMConfig DEPENDS ${${project}_LLVM_CONFIG_EXE})
+  add_dependencies(${project}NativeLLVMConfig ConfigureNativeLLVM)
+
+  add_dependencies(llvm-config ${project}NativeLLVMConfig)
+endif(CMAKE_CROSSCOMPILING)

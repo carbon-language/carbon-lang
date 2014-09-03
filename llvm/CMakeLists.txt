@@ -470,6 +470,11 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 include_directories( ${LLVM_INCLUDE_DIR} ${LLVM_MAIN_INCLUDE_DIR})
 
+# when crosscompiling import the executable targets from a file
+if(CMAKE_CROSSCOMPILING)
+  include(CrossCompile)
+endif(CMAKE_CROSSCOMPILING)
+
 if( ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD )
   # On FreeBSD, /usr/local/* is not used by default. In order to build LLVM
   # with libxml2, iconv.h, etc., we must add /usr/local paths.
