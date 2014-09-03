@@ -1095,7 +1095,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
         ++NumEntryBlocks;
 
         // Lower any arguments needed in this block if this is the entry block.
-        if (!FastIS->LowerArguments()) {
+        if (!FastIS->lowerArguments()) {
           // Fast isel failed to lower these arguments
           ++NumFastIselFailLowerArguments;
           if (EnableFastISelAbortArgs)
@@ -1133,7 +1133,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
         FastIS->recomputeInsertPt();
 
         // Try to select the instruction with FastISel.
-        if (FastIS->SelectInstruction(Inst)) {
+        if (FastIS->selectInstruction(Inst)) {
           --NumFastIselRemaining;
           ++NumFastIselSuccess;
           // If fast isel succeeded, skip over all the folded instructions, and

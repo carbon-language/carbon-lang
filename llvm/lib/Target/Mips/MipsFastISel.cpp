@@ -64,8 +64,8 @@ public:
                        (Subtarget->hasMips32r2() && (Subtarget->isABI_O32())));
   }
 
-  bool TargetSelectInstruction(const Instruction *I) override;
-  unsigned TargetMaterializeConstant(const Constant *C) override;
+  bool fastSelectInstruction(const Instruction *I) override;
+  unsigned fastMaterializeConstant(const Constant *C) override;
 
   bool ComputeAddress(const Value *Obj, Address &Addr);
 
@@ -194,7 +194,7 @@ bool MipsFastISel::EmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
 
 // Materialize a constant into a register, and return the register
 // number (or zero if we failed to handle it).
-unsigned MipsFastISel::TargetMaterializeConstant(const Constant *C) {
+unsigned MipsFastISel::fastMaterializeConstant(const Constant *C) {
   EVT CEVT = TLI.getValueType(C->getType(), true);
 
   // Only handle simple types.
@@ -259,7 +259,7 @@ bool MipsFastISel::SelectLoad(const Instruction *I) {
   unsigned ResultReg;
   if (!EmitLoad(VT, ResultReg, Addr, cast<LoadInst>(I)->getAlignment()))
     return false;
-  UpdateValueMap(I, ResultReg);
+  updateValueMap(I, ResultReg);
   return true;
 }
 
@@ -303,7 +303,7 @@ bool MipsFastISel::SelectRet(const Instruction *I) {
   return true;
 }
 
-bool MipsFastISel::TargetSelectInstruction(const Instruction *I) {
+bool MipsFastISel::fastSelectInstruction(const Instruction *I) {
   if (!TargetSupported)
     return false;
   switch (I->getOpcode()) {

@@ -214,12 +214,12 @@ public:
   /// \brief Do "fast" instruction selection for function arguments and append
   /// the machine instructions to the current block. Returns true when
   /// successful.
-  bool LowerArguments();
+  bool lowerArguments();
 
   /// \brief Do "fast" instruction selection for the given LLVM IR instruction
   /// and append the generated machine instructions to the current block.
   /// Returns true if selection was successful.
-  bool SelectInstruction(const Instruction *I);
+  bool selectInstruction(const Instruction *I);
 
   /// \brief Do "fast" instruction selection for the given LLVM IR operator
   /// (Instruction or ConstantExpr), and append generated machine instructions
@@ -295,19 +295,19 @@ protected:
   /// FastISel process fails to select an instruction. This gives targets a
   /// chance to emit code for anything that doesn't fit into FastISel's
   /// framework. It returns true if it was successful.
-  virtual bool TargetSelectInstruction(const Instruction *I) = 0;
+  virtual bool fastSelectInstruction(const Instruction *I) = 0;
 
   /// \brief This method is called by target-independent code to do target-
   /// specific argument lowering. It returns true if it was successful.
-  virtual bool FastLowerArguments();
+  virtual bool fastLowerArguments();
 
   /// \brief This method is called by target-independent code to do target-
   /// specific call lowering. It returns true if it was successful.
-  virtual bool FastLowerCall(CallLoweringInfo &CLI);
+  virtual bool fastLowerCall(CallLoweringInfo &CLI);
 
   /// \brief This method is called by target-independent code to do target-
   /// specific intrinsic lowering. It returns true if it was successful.
-  virtual bool FastLowerIntrinsicCall(const IntrinsicInst *II);
+  virtual bool fastLowerIntrinsicCall(const IntrinsicInst *II);
 
   /// \brief This method is called by target-independent code to request that an
   /// instruction with the given type and opcode be emitted.
@@ -433,11 +433,11 @@ protected:
 
   /// \brief Emit MachineInstrs to compute the value of Op with all but the
   /// least significant bit set to zero.
-  unsigned FastEmitZExtFromI1(MVT VT, unsigned Op0, bool Op0IsKill);
+  unsigned fastEmitZExtFromI1(MVT VT, unsigned Op0, bool Op0IsKill);
 
   /// \brief Emit an unconditional branch to the given block, unless it is the
   /// immediate (fall-through) successor, and update the CFG.
-  void FastEmitBranch(MachineBasicBlock *MBB, DebugLoc DL);
+  void fastEmitBranch(MachineBasicBlock *MBB, DebugLoc DL);
 
   /// \brief Update the value map to include the new mapping for this
   /// instruction, or insert an extra copy to get the result in a previous
@@ -446,7 +446,7 @@ protected:
   /// NOTE: This is only necessary because we might select a block that uses a
   /// value before we select the block that defines the value. It might be
   /// possible to fix this by selecting blocks in reverse postorder.
-  void UpdateValueMap(const Value *I, unsigned Reg, unsigned NumRegs = 1);
+  void updateValueMap(const Value *I, unsigned Reg, unsigned NumRegs = 1);
 
   unsigned createResultReg(const TargetRegisterClass *RC);
 
@@ -458,14 +458,14 @@ protected:
 
   /// \brief Emit a constant in a register using target-specific logic, such as
   /// constant pool loads.
-  virtual unsigned TargetMaterializeConstant(const Constant *C) { return 0; }
+  virtual unsigned fastMaterializeConstant(const Constant *C) { return 0; }
 
   /// \brief Emit an alloca address in a register using target-specific logic.
-  virtual unsigned TargetMaterializeAlloca(const AllocaInst *C) { return 0; }
+  virtual unsigned fastMaterializeAlloca(const AllocaInst *C) { return 0; }
 
   /// \brief Emit the floating-point constant +0.0 in a register using target-
   /// specific logic.
-  virtual unsigned TargetMaterializeFloatZero(const ConstantFP *CF) {
+  virtual unsigned fastMaterializeFloatZero(const ConstantFP *CF) {
     return 0;
   }
 
@@ -484,7 +484,7 @@ protected:
   /// \brief Create a machine mem operand from the given instruction.
   MachineMemOperand *createMachineMemOperandFor(const Instruction *I) const;
 
-  bool LowerCallTo(const CallInst *CI, const char *SymName, unsigned NumArgs);
+  bool lowerCallTo(const CallInst *CI, const char *SymName, unsigned NumArgs);
   bool lowerCallTo(CallLoweringInfo &CLI);
 
   bool isCommutativeIntrinsic(IntrinsicInst const *II) {
@@ -499,6 +499,8 @@ protected:
     }
   }
 
+
+  bool lowerCall(const CallInst *I);
   /// \brief Select and emit code for a binary operator instruction, which has
   /// an opcode which directly corresponds to the given ISD opcode.
   bool selectBinaryOp(const User *I, unsigned ISDOpcode);
@@ -506,7 +508,6 @@ protected:
   bool selectGetElementPtr(const User *I);
   bool selectStackmap(const CallInst *I);
   bool selectPatchpoint(const CallInst *I);
-  bool lowerCall(const CallInst *I);
   bool selectCall(const User *Call);
   bool selectIntrinsicCall(const IntrinsicInst *II);
   bool selectBitCast(const User *I);

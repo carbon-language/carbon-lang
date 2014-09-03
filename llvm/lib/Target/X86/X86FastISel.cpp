@@ -64,7 +64,7 @@ public:
     X86ScalarSSEf32 = Subtarget->hasSSE1();
   }
 
-  bool TargetSelectInstruction(const Instruction *I) override;
+  bool fastSelectInstruction(const Instruction *I) override;
 
   /// \brief The specified machine instr operand is a vreg, and that
   /// vreg is being provided by the specified load instruction.  If possible,
@@ -73,9 +73,9 @@ public:
   bool tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
                            const LoadInst *LI) override;
 
-  bool FastLowerArguments() override;
-  bool FastLowerCall(CallLoweringInfo &CLI) override;
-  bool FastLowerIntrinsicCall(const IntrinsicInst *II) override;
+  bool fastLowerArguments() override;
+  bool fastLowerCall(CallLoweringInfo &CLI) override;
+  bool fastLowerIntrinsicCall(const IntrinsicInst *II) override;
 
 #include "X86GenFastISel.inc"
 
@@ -138,11 +138,11 @@ private:
   unsigned X86MaterializeInt(const ConstantInt *CI, MVT VT);
   unsigned X86MaterializeFP(const ConstantFP *CFP, MVT VT);
   unsigned X86MaterializeGV(const GlobalValue *GV,MVT VT);
-  unsigned TargetMaterializeConstant(const Constant *C) override;
+  unsigned fastMaterializeConstant(const Constant *C) override;
 
-  unsigned TargetMaterializeAlloca(const AllocaInst *C) override;
+  unsigned fastMaterializeAlloca(const AllocaInst *C) override;
 
-  unsigned TargetMaterializeFloatZero(const ConstantFP *CF) override;
+  unsigned fastMaterializeFloatZero(const ConstantFP *CF) override;
 
   /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
   /// computed in an SSE register, not on the X87 floating point stack.
@@ -1038,7 +1038,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
       if (SrcVT == MVT::i1) {
         if (Outs[0].Flags.isSExt())
           return false;
-        SrcReg = FastEmitZExtFromI1(MVT::i8, SrcReg, /*TODO: Kill=*/false);
+        SrcReg = fastEmitZExtFromI1(MVT::i8, SrcReg, /*TODO: Kill=*/false);
         SrcVT = MVT::i8;
       }
       unsigned Op = Outs[0].Flags.isZExt() ? ISD::ZERO_EXTEND :
@@ -1106,7 +1106,7 @@ bool X86FastISel::X86SelectLoad(const Instruction *I) {
   if (!X86FastEmitLoad(VT, AM, createMachineMemOperandFor(LI), ResultReg))
     return false;
 
-  UpdateValueMap(I, ResultReg);
+  updateValueMap(I, ResultReg);
   return true;
 }
 
@@ -1211,7 +1211,7 @@ bool X86FastISel::X86SelectCmp(const Instruction *I) {
   }
 
   if (ResultReg) {
-    UpdateValueMap(I, ResultReg);
+    updateValueMap(I, ResultReg);
     return true;
   }
 
@@ -1252,7 +1252,7 @@ bool X86FastISel::X86SelectCmp(const Instruction *I) {
             FlagReg2);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(SETFOpc[2]),
             ResultReg).addReg(FlagReg1).addReg(FlagReg2);
-    UpdateValueMap(I, ResultReg);
+    updateValueMap(I, ResultReg);
     return true;
   }
 
@@ -1270,7 +1270,7 @@ bool X86FastISel::X86SelectCmp(const Instruction *I) {
     return false;
 
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg);
-  UpdateValueMap(I, ResultReg);
+  updateValueMap(I, ResultReg);
   return true;
 }
 
@@ -1287,7 +1287,7 @@ bool X86FastISel::X86SelectZExt(const Instruction *I) {
   MVT SrcVT = TLI.getSimpleValueType(I->getOperand(0)->getType());
   if (SrcVT.SimpleTy == MVT::i1) {
     // Set the high bits to zero.
-    ResultReg = FastEmitZExtFromI1(MVT::i8, ResultReg, /*TODO: Kill=*/false);
+    ResultReg = fastEmitZExtFromI1(MVT::i8, ResultReg, /*TODO: Kill=*/false);
     SrcVT = MVT::i8;
 
     if (ResultReg == 0)
@@ -1320,7 +1320,7 @@ bool X86FastISel::X86SelectZExt(const Instruction *I) {
       return false;
   }
 
-  UpdateValueMap(I, ResultReg);
+  updateValueMap(I, ResultReg);
   return true;
 }
 
@@ -1344,8 +1344,8 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
       CmpInst::Predicate Predicate = optimizeCmpPredicate(CI);
       switch (Predicate) {
       default: break;
-      case CmpInst::FCMP_FALSE: FastEmitBranch(FalseMBB, DbgLoc); return true;
-      case CmpInst::FCMP_TRUE:  FastEmitBranch(TrueMBB, DbgLoc); return true;
+      case CmpInst::FCMP_FALSE: fastEmitBranch(FalseMBB, DbgLoc); return true;
+      case CmpInst::FCMP_TRUE:  fastEmitBranch(TrueMBB, DbgLoc); return true;
       }
 
       const Value *CmpLHS = CI->getOperand(0);
@@ -1415,7 +1415,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
 
       // Emits an unconditional branch to the FalseBB, obtains the branch
       // weight, and adds it to the successor list.
-      FastEmitBranch(FalseMBB, DbgLoc);
+      fastEmitBranch(FalseMBB, DbgLoc);
 
       return true;
     }
@@ -1447,7 +1447,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
 
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(JmpOpc))
           .addMBB(TrueMBB);
-        FastEmitBranch(FalseMBB, DbgLoc);
+        fastEmitBranch(FalseMBB, DbgLoc);
         uint32_t BranchWeight = 0;
         if (FuncInfo.BPI)
           BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
@@ -1467,7 +1467,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
 
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(BranchOpc))
       .addMBB(TrueMBB);
-    FastEmitBranch(FalseMBB, DbgLoc);
+    fastEmitBranch(FalseMBB, DbgLoc);
     uint32_t BranchWeight = 0;
     if (FuncInfo.BPI)
       BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
@@ -1486,7 +1486,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
     .addReg(OpReg).addImm(1);
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JNE_4))
     .addMBB(TrueMBB);
-  FastEmitBranch(FalseMBB, DbgLoc);
+  fastEmitBranch(FalseMBB, DbgLoc);
   uint32_t BranchWeight = 0;
   if (FuncInfo.BPI)
     BranchWeight = FuncInfo.BPI->getEdgeWeight(BI->getParent(),
@@ -1560,7 +1560,7 @@ bool X86FastISel::X86SelectShift(const Instruction *I) {
   unsigned ResultReg = createResultReg(RC);
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(OpReg), ResultReg)
     .addReg(Op0Reg);
-  UpdateValueMap(I, ResultReg);
+  updateValueMap(I, ResultReg);
   return true;
 }
 
@@ -1723,7 +1723,7 @@ bool X86FastISel::X86SelectDivRem(const Instruction *I) {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Copy), ResultReg)
         .addReg(OpEntry.DivRemResultReg);
   }
-  UpdateValueMap(I, ResultReg);
+  updateValueMap(I, ResultReg);
 
   return true;
 }
@@ -1841,7 +1841,7 @@ bool X86FastISel::X86FastEmitCMoveSelect(MVT RetVT, const Instruction *I) {
   unsigned Opc = X86::getCMovFromCond(CC, RC->getSize());
   unsigned ResultReg = FastEmitInst_rr(Opc, RC, RHSReg, RHSIsKill,
                                        LHSReg, LHSIsKill);
-  UpdateValueMap(I, ResultReg);
+  updateValueMap(I, ResultReg);
   return true;
 }
 
@@ -1927,7 +1927,7 @@ bool X86FastISel::X86FastEmitSSESelect(MVT RetVT, const Instruction *I) {
                                      RHSReg, RHSIsKill);
   unsigned ResultReg = FastEmitInst_rr(Opc[3], RC, AndNReg, /*IsKill=*/true,
                                        AndReg, /*IsKill=*/true);
-  UpdateValueMap(I, ResultReg);
+  updateValueMap(I, ResultReg);
   return true;
 }
 
@@ -1991,7 +1991,7 @@ bool X86FastISel::X86FastEmitPseudoSelect(MVT RetVT, const Instruction *I) {
 
   unsigned ResultReg =
     FastEmitInst_rri(Opc, RC, RHSReg, RHSIsKill, LHSReg, LHSIsKill, CC);
-  UpdateValueMap(I, ResultReg);
+  updateValueMap(I, ResultReg);
   return true;
 }
 
@@ -2020,7 +2020,7 @@ bool X86FastISel::X86SelectSelect(const Instruction *I) {
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
               TII.get(TargetOpcode::COPY), ResultReg)
         .addReg(OpReg, getKillRegState(OpIsKill));
-      UpdateValueMap(I, ResultReg);
+      updateValueMap(I, ResultReg);
       return true;
     }
   }
@@ -2053,7 +2053,7 @@ bool X86FastISel::X86SelectFPExt(const Instruction *I) {
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
               TII.get(X86::CVTSS2SDrr), ResultReg)
         .addReg(OpReg);
-      UpdateValueMap(I, ResultReg);
+      updateValueMap(I, ResultReg);
       return true;
     }
   }
@@ -2072,7 +2072,7 @@ bool X86FastISel::X86SelectFPTrunc(const Instruction *I) {
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                 TII.get(X86::CVTSD2SSrr), ResultReg)
           .addReg(OpReg);
-        UpdateValueMap(I, ResultReg);
+        updateValueMap(I, ResultReg);
         return true;
       }
     }
@@ -2098,7 +2098,7 @@ bool X86FastISel::X86SelectTrunc(const Instruction *I) {
 
   if (SrcVT == MVT::i8) {
     // Truncate from i8 to i1; no code needed.
-    UpdateValueMap(I, InputReg);
+    updateValueMap(I, InputReg);
     return true;
   }
 
@@ -2121,7 +2121,7 @@ bool X86FastISel::X86SelectTrunc(const Instruction *I) {
   if (!ResultReg)
     return false;
 
-  UpdateValueMap(I, ResultReg);
+  updateValueMap(I, ResultReg);
   return true;
 }
 
@@ -2165,7 +2165,7 @@ bool X86FastISel::TryEmitSmallMemcpy(X86AddressMode DestAM,
   return true;
 }
 
-bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
+bool X86FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
   // FIXME: Handle more intrinsics.
   switch (II->getIntrinsicID()) {
   default: return false;
@@ -2218,7 +2218,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
       SrcReg = DestReg;
     }
 
-    UpdateValueMap(II, SrcReg);
+    updateValueMap(II, SrcReg);
     return true;
   }
   case Intrinsic::memcpy: {
@@ -2248,7 +2248,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     if (MCI->getSourceAddressSpace() > 255 || MCI->getDestAddressSpace() > 255)
       return false;
 
-    return LowerCallTo(II, "memcpy", II->getNumArgOperands() - 2);
+    return lowerCallTo(II, "memcpy", II->getNumArgOperands() - 2);
   }
   case Intrinsic::memset: {
     const MemSetInst *MSI = cast<MemSetInst>(II);
@@ -2263,7 +2263,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     if (MSI->getDestAddressSpace() > 255)
       return false;
 
-    return LowerCallTo(II, "memset", II->getNumArgOperands() - 2);
+    return lowerCallTo(II, "memset", II->getNumArgOperands() - 2);
   }
   case Intrinsic::stackprotector: {
     // Emit code to store the stack guard onto the stack.
@@ -2346,7 +2346,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
 
     MIB.addReg(SrcReg);
 
-    UpdateValueMap(II, ResultReg);
+    updateValueMap(II, ResultReg);
     return true;
   }
   case Intrinsic::sadd_with_overflow:
@@ -2478,7 +2478,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(CondOpc),
             ResultReg2);
 
-    UpdateValueMap(II, ResultReg, 2);
+    updateValueMap(II, ResultReg, 2);
     return true;
   }
   case Intrinsic::x86_sse_cvttss2si:
@@ -2544,13 +2544,13 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
       .addReg(Reg);
 
-    UpdateValueMap(II, ResultReg);
+    updateValueMap(II, ResultReg);
     return true;
   }
   }
 }
 
-bool X86FastISel::FastLowerArguments() {
+bool X86FastISel::fastLowerArguments() {
   if (!FuncInfo.CanLowerReturn)
     return false;
 
@@ -2640,7 +2640,7 @@ bool X86FastISel::FastLowerArguments() {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
             TII.get(TargetOpcode::COPY), ResultReg)
       .addReg(DstReg, getKillRegState(true));
-    UpdateValueMap(&Arg, ResultReg);
+    updateValueMap(&Arg, ResultReg);
   }
   return true;
 }
@@ -2662,7 +2662,7 @@ static unsigned computeBytesPoppedByCallee(const X86Subtarget *Subtarget,
   return 4;
 }
 
-bool X86FastISel::FastLowerCall(CallLoweringInfo &CLI) {
+bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
   auto &OutVals       = CLI.OutVals;
   auto &OutFlags      = CLI.OutFlags;
   auto &OutRegs       = CLI.OutRegs;
@@ -2748,7 +2748,7 @@ bool X86FastISel::FastLowerCall(CallLoweringInfo &CLI) {
 
         if (!ResultReg)
           return false;
-        UpdateValueMap(Val, ResultReg);
+        updateValueMap(Val, ResultReg);
       }
     }
   }
@@ -3051,7 +3051,7 @@ bool X86FastISel::FastLowerCall(CallLoweringInfo &CLI) {
 }
 
 bool
-X86FastISel::TargetSelectInstruction(const Instruction *I)  {
+X86FastISel::fastSelectInstruction(const Instruction *I)  {
   switch (I->getOpcode()) {
   default: break;
   case Instruction::Load:
@@ -3094,7 +3094,7 @@ X86FastISel::TargetSelectInstruction(const Instruction *I)  {
       return X86SelectTrunc(I);
     unsigned Reg = getRegForValue(I->getOperand(0));
     if (Reg == 0) return false;
-    UpdateValueMap(I, Reg);
+    updateValueMap(I, Reg);
     return true;
   }
   }
@@ -3160,7 +3160,7 @@ unsigned X86FastISel::X86MaterializeInt(const ConstantInt *CI, MVT VT) {
 
 unsigned X86FastISel::X86MaterializeFP(const ConstantFP *CFP, MVT VT) {
   if (CFP->isNullValue())
-    return TargetMaterializeFloatZero(CFP);
+    return fastMaterializeFloatZero(CFP);
 
   // Can't handle alternate code models yet.
   CodeModel::Model CM = TM.getCodeModel();
@@ -3273,7 +3273,7 @@ unsigned X86FastISel::X86MaterializeGV(const GlobalValue *GV, MVT VT) {
   return 0;
 }
 
-unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
+unsigned X86FastISel::fastMaterializeConstant(const Constant *C) {
   EVT CEVT = TLI.getValueType(C->getType(), true);
 
   // Only handle simple types.
@@ -3291,14 +3291,14 @@ unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
   return 0;
 }
 
-unsigned X86FastISel::TargetMaterializeAlloca(const AllocaInst *C) {
+unsigned X86FastISel::fastMaterializeAlloca(const AllocaInst *C) {
   // Fail on dynamic allocas. At this point, getRegForValue has already
   // checked its CSE maps, so if we're here trying to handle a dynamic
   // alloca, we're not going to succeed. X86SelectAddress has a
   // check for dynamic allocas, because it's called directly from
-  // various places, but TargetMaterializeAlloca also needs a check
+  // various places, but targetMaterializeAlloca also needs a check
   // in order to avoid recursion between getRegForValue,
-  // X86SelectAddrss, and TargetMaterializeAlloca.
+  // X86SelectAddrss, and targetMaterializeAlloca.
   if (!FuncInfo.StaticAllocaMap.count(C))
     return 0;
   assert(C->isStaticAlloca() && "dynamic alloca in the static alloca map?");
@@ -3314,7 +3314,7 @@ unsigned X86FastISel::TargetMaterializeAlloca(const AllocaInst *C) {
   return ResultReg;
 }
 
-unsigned X86FastISel::TargetMaterializeFloatZero(const ConstantFP *CF) {
+unsigned X86FastISel::fastMaterializeFloatZero(const ConstantFP *CF) {
   MVT VT;
   if (!isTypeLegal(CF->getType(), VT))
     return 0;

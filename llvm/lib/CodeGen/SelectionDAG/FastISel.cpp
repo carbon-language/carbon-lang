@@ -103,13 +103,13 @@ void FastISel::startNewBlock() {
   LastLocalValue = EmitStartPt;
 }
 
-bool FastISel::LowerArguments() {
+bool FastISel::lowerArguments() {
   if (!FuncInfo.CanLowerReturn)
     // Fallback to SDISel argument lowering code to deal with sret pointer
     // parameter.
     return false;
 
-  if (!FastLowerArguments())
+  if (!fastLowerArguments())
     return false;
 
   // Enter arguments into ValueMap for uses in non-entry BBs.
@@ -209,7 +209,7 @@ unsigned FastISel::materializeConstant(const Value *V, MVT VT) {
     if (CI->getValue().getActiveBits() <= 64)
       Reg = FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
   } else if (isa<AllocaInst>(V))
-    Reg = TargetMaterializeAlloca(cast<AllocaInst>(V));
+    Reg = fastMaterializeAlloca(cast<AllocaInst>(V));
   else if (isa<ConstantPointerNull>(V))
     // Translate this as an integer zero so that it can be
     // local-CSE'd with actual integer zeros.
@@ -217,7 +217,7 @@ unsigned FastISel::materializeConstant(const Value *V, MVT VT) {
         Constant::getNullValue(DL.getIntPtrType(V->getContext())));
   else if (const auto *CF = dyn_cast<ConstantFP>(V)) {
     if (CF->isNullValue())
-      Reg = TargetMaterializeFloatZero(CF);
+      Reg = fastMaterializeFloatZero(CF);
     else
       // Try to emit the constant directly.
       Reg = FastEmit_f(VT, VT, ISD::ConstantFP, CF);
@@ -245,7 +245,7 @@ unsigned FastISel::materializeConstant(const Value *V, MVT VT) {
   } else if (const auto *Op = dyn_cast<Operator>(V)) {
     if (!selectOperator(Op, Op->getOpcode()))
       if (!isa<Instruction>(Op) ||
-          !TargetSelectInstruction(cast<Instruction>(Op)))
+          !fastSelectInstruction(cast<Instruction>(Op)))
         return 0;
     Reg = lookUpRegForValue(Op);
   } else if (isa<UndefValue>(V)) {
@@ -263,7 +263,7 @@ unsigned FastISel::materializeRegForValue(const Value *V, MVT VT) {
   unsigned Reg = 0;
   // Give the target-specific code a try first.
   if (isa<Constant>(V))
-    Reg = TargetMaterializeConstant(cast<Constant>(V));
+    Reg = fastMaterializeConstant(cast<Constant>(V));
 
   // If target-specific code couldn't or didn't want to handle the value, then
   // give target-independent code a try.
@@ -290,7 +290,7 @@ unsigned FastISel::lookUpRegForValue(const Value *V) {
   return LocalValueMap[V];
 }
 
-void FastISel::UpdateValueMap(const Value *I, unsigned Reg, unsigned NumRegs) {
+void FastISel::updateValueMap(const Value *I, unsigned Reg, unsigned NumRegs) {
   if (!isa<Instruction>(I)) {
     LocalValueMap[I] = Reg;
     return;
@@ -412,7 +412,7 @@ bool FastISel::selectBinaryOp(const User *I, unsigned ISDOpcode) {
         return false;
 
       // We successfully emitted code for the given LLVM Instruction.
-      UpdateValueMap(I, ResultReg);
+      updateValueMap(I, ResultReg);
       return true;
     }
 
@@ -445,7 +445,7 @@ bool FastISel::selectBinaryOp(const User *I, unsigned ISDOpcode) {
       return false;
 
     // We successfully emitted code for the given LLVM Instruction.
-    UpdateValueMap(I, ResultReg);
+    updateValueMap(I, ResultReg);
     return true;
   }
 
@@ -455,7 +455,7 @@ bool FastISel::selectBinaryOp(const User *I, unsigned ISDOpcode) {
                                      ISDOpcode, Op0, Op0IsKill, CF);
     if (ResultReg) {
       // We successfully emitted code for the given LLVM Instruction.
-      UpdateValueMap(I, ResultReg);
+      updateValueMap(I, ResultReg);
       return true;
     }
   }
@@ -474,7 +474,7 @@ bool FastISel::selectBinaryOp(const User *I, unsigned ISDOpcode) {
     return false;
 
   // We successfully emitted code for the given LLVM Instruction.
-  UpdateValueMap(I, ResultReg);
+  updateValueMap(I, ResultReg);
   return true;
 }
 
@@ -562,7 +562,7 @@ bool FastISel::selectGetElementPtr(const User *I) {
   }
 
   // We successfully emitted code for the given LLVM Instruction.
-  UpdateValueMap(I, N);
+  updateValueMap(I, N);
   return true;
 }
 
@@ -829,7 +829,7 @@ bool FastISel::selectPatchpoint(const CallInst *I) {
   FuncInfo.MF->getFrameInfo()->setHasPatchPoint();
 
   if (CLI.NumResultRegs)
-    UpdateValueMap(I, CLI.ResultReg, CLI.NumResultRegs);
+    updateValueMap(I, CLI.ResultReg, CLI.NumResultRegs);
   return true;
 }
 
@@ -848,7 +848,7 @@ static AttributeSet getReturnAttrs(FastISel::CallLoweringInfo &CLI) {
                            Attrs);
 }
 
-bool FastISel::LowerCallTo(const CallInst *CI, const char *SymName,
+bool FastISel::lowerCallTo(const CallInst *CI, const char *SymName,
                            unsigned NumArgs) {
   ImmutableCallSite CS(CI);
 
@@ -966,7 +966,7 @@ bool FastISel::lowerCallTo(CallLoweringInfo &CLI) {
     CLI.OutFlags.push_back(Flags);
   }
 
-  if (!FastLowerCall(CLI))
+  if (!fastLowerCall(CLI))
     return false;
 
   // Set all unused physreg defs as dead.
@@ -974,7 +974,7 @@ bool FastISel::lowerCallTo(CallLoweringInfo &CLI) {
   CLI.Call->setPhysRegsDeadExcept(CLI.InRegs, TRI);
 
   if (CLI.NumResultRegs && CLI.CS)
-    UpdateValueMap(CLI.CS->getInstruction(), CLI.ResultReg, CLI.NumResultRegs);
+    updateValueMap(CLI.CS->getInstruction(), CLI.ResultReg, CLI.NumResultRegs);
 
   return true;
 }
@@ -1007,7 +1007,7 @@ bool FastISel::lowerCall(const CallInst *CI) {
   }
 
   // Check if target-independent constraints permit a tail call here.
-  // Target-dependent constraints are checked within FastLowerCall.
+  // Target-dependent constraints are checked within fastLowerCall.
   bool IsTailCall = CI->isTailCall();
   if (IsTailCall && !isInTailCallPosition(CS, TM))
     IsTailCall = false;
@@ -1185,14 +1185,14 @@ bool FastISel::selectIntrinsicCall(const IntrinsicInst *II) {
     unsigned ResultReg = getRegForValue(ResCI);
     if (!ResultReg)
       return false;
-    UpdateValueMap(II, ResultReg);
+    updateValueMap(II, ResultReg);
     return true;
   }
   case Intrinsic::expect: {
     unsigned ResultReg = getRegForValue(II->getArgOperand(0));
     if (!ResultReg)
       return false;
-    UpdateValueMap(II, ResultReg);
+    updateValueMap(II, ResultReg);
     return true;
   }
   case Intrinsic::experimental_stackmap:
@@ -1202,7 +1202,7 @@ bool FastISel::selectIntrinsicCall(const IntrinsicInst *II) {
     return selectPatchpoint(II);
   }
 
-  return FastLowerIntrinsicCall(II);
+  return fastLowerIntrinsicCall(II);
 }
 
 bool FastISel::selectCast(const User *I, unsigned Opcode) {
@@ -1234,7 +1234,7 @@ bool FastISel::selectCast(const User *I, unsigned Opcode) {
   if (!ResultReg)
     return false;
 
-  UpdateValueMap(I, ResultReg);
+  updateValueMap(I, ResultReg);
   return true;
 }
 
@@ -1244,7 +1244,7 @@ bool FastISel::selectBitCast(const User *I) {
     unsigned Reg = getRegForValue(I->getOperand(0));
     if (!Reg)
       return false;
-    UpdateValueMap(I, Reg);
+    updateValueMap(I, Reg);
     return true;
   }
 
@@ -1283,11 +1283,11 @@ bool FastISel::selectBitCast(const User *I) {
   if (!ResultReg)
     return false;
 
-  UpdateValueMap(I, ResultReg);
+  updateValueMap(I, ResultReg);
   return true;
 }
 
-bool FastISel::SelectInstruction(const Instruction *I) {
+bool FastISel::selectInstruction(const Instruction *I) {
   // Just before the terminator instruction, insert instructions to
   // feed PHI nodes in successor blocks.
   if (isa<TerminatorInst>(I))
@@ -1332,7 +1332,7 @@ bool FastISel::SelectInstruction(const Instruction *I) {
     SavedInsertPt = FuncInfo.InsertPt;
   }
   // Next, try calling the target to attempt to handle the instruction.
-  if (TargetSelectInstruction(I)) {
+  if (fastSelectInstruction(I)) {
     ++NumFastIselSuccessTarget;
     DbgLoc = DebugLoc();
     return true;
@@ -1352,10 +1352,9 @@ bool FastISel::SelectInstruction(const Instruction *I) {
   return false;
 }
 
-/// FastEmitBranch - Emit an unconditional branch to the given block,
-/// unless it is the immediate (fall-through) successor, and update
-/// the CFG.
-void FastISel::FastEmitBranch(MachineBasicBlock *MSucc, DebugLoc DbgLoc) {
+/// Emit an unconditional branch to the given block, unless it is the immediate
+/// (fall-through) successor, and update the CFG.
+void FastISel::fastEmitBranch(MachineBasicBlock *MSucc, DebugLoc DbgLoc) {
   if (FuncInfo.MBB->getBasicBlock()->size() > 1 &&
       FuncInfo.MBB->isLayoutSuccessor(MSucc)) {
     // For more accurate line information if this is the only instruction
@@ -1373,8 +1372,7 @@ void FastISel::FastEmitBranch(MachineBasicBlock *MSucc, DebugLoc DbgLoc) {
   FuncInfo.MBB->addSuccessor(MSucc, BranchWeight);
 }
 
-/// SelectFNeg - Emit an FNeg operation.
-///
+/// Emit an FNeg operation.
 bool FastISel::selectFNeg(const User *I) {
   unsigned OpReg = getRegForValue(BinaryOperator::getFNegArgument(I));
   if (!OpReg)
@@ -1386,7 +1384,7 @@ bool FastISel::selectFNeg(const User *I) {
   unsigned ResultReg = FastEmit_r(VT.getSimpleVT(), VT.getSimpleVT(), ISD::FNEG,
                                   OpReg, OpRegIsKill);
   if (ResultReg) {
-    UpdateValueMap(I, ResultReg);
+    updateValueMap(I, ResultReg);
     return true;
   }
 
@@ -1414,7 +1412,7 @@ bool FastISel::selectFNeg(const User *I) {
   if (!ResultReg)
     return false;
 
-  UpdateValueMap(I, ResultReg);
+  updateValueMap(I, ResultReg);
   return true;
 }
 
@@ -1454,7 +1452,7 @@ bool FastISel::selectExtractValue(const User *U) {
   for (unsigned i = 0; i < VTIndex; i++)
     ResultReg += TLI.getNumRegisters(FuncInfo.Fn->getContext(), AggValueVTs[i]);
 
-  UpdateValueMap(EVI, ResultReg);
+  updateValueMap(EVI, ResultReg);
   return true;
 }
 
@@ -1509,7 +1507,7 @@ bool FastISel::selectOperator(const User *I, unsigned Opcode) {
     if (BI->isUnconditional()) {
       const BasicBlock *LLVMSucc = BI->getSuccessor(0);
       MachineBasicBlock *MSucc = FuncInfo.MBBMap[LLVMSucc];
-      FastEmitBranch(MSucc, BI->getDebugLoc());
+      fastEmitBranch(MSucc, BI->getDebugLoc());
       return true;
     }
 
@@ -1560,7 +1558,7 @@ bool FastISel::selectOperator(const User *I, unsigned Opcode) {
     unsigned Reg = getRegForValue(I->getOperand(0));
     if (!Reg)
       return false;
-    UpdateValueMap(I, Reg);
+    updateValueMap(I, Reg);
     return true;
   }
 
@@ -1589,11 +1587,11 @@ FastISel::FastISel(FunctionLoweringInfo &FuncInfo,
 
 FastISel::~FastISel() {}
 
-bool FastISel::FastLowerArguments() { return false; }
+bool FastISel::fastLowerArguments() { return false; }
 
-bool FastISel::FastLowerCall(CallLoweringInfo & /*CLI*/) { return false; }
+bool FastISel::fastLowerCall(CallLoweringInfo & /*CLI*/) { return false; }
 
-bool FastISel::FastLowerIntrinsicCall(const IntrinsicInst * /*II*/) {
+bool FastISel::fastLowerIntrinsicCall(const IntrinsicInst * /*II*/) {
   return false;
 }
 
@@ -1636,8 +1634,8 @@ unsigned FastISel::FastEmit_rri(MVT, MVT, unsigned, unsigned /*Op0*/,
   return 0;
 }
 
-/// FastEmit_ri_ - This method is a wrapper of FastEmit_ri. It first tries
-/// to emit an instruction with an immediate operand using FastEmit_ri.
+/// This method is a wrapper of FastEmit_ri. It first tries to emit an
+/// instruction with an immediate operand using FastEmit_ri.
 /// If that fails, it materializes the immediate into a register and try
 /// FastEmit_rr instead.
 unsigned FastISel::FastEmit_ri_(MVT VT, unsigned Opcode, unsigned Op0,
@@ -1950,9 +1948,9 @@ unsigned FastISel::FastEmitInst_extractsubreg(MVT RetVT, unsigned Op0,
   return ResultReg;
 }
 
-/// FastEmitZExtFromI1 - Emit MachineInstrs to compute the value of Op
-/// with all but the least significant bit set to zero.
-unsigned FastISel::FastEmitZExtFromI1(MVT VT, unsigned Op0, bool Op0IsKill) {
+/// Emit MachineInstrs to compute the value of Op with all but the least
+/// significant bit set to zero.
+unsigned FastISel::fastEmitZExtFromI1(MVT VT, unsigned Op0, bool Op0IsKill) {
   return FastEmit_ri(VT, VT, ISD::AND, Op0, Op0IsKill, 1);
 }
 
