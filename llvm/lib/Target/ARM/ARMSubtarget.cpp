@@ -148,7 +148,7 @@ static std::string computeDataLayout(ARMSubtarget &ST) {
 ARMSubtarget &ARMSubtarget::initializeSubtargetDependencies(StringRef CPU,
                                                             StringRef FS) {
   initializeEnvironment();
-  resetSubtargetFeatures(CPU, FS);
+  initSubtargetFeatures(CPU, FS);
   return *this;
 }
 
@@ -219,23 +219,7 @@ void ARMSubtarget::initializeEnvironment() {
   UnsafeFPMath = false;
 }
 
-void ARMSubtarget::resetSubtargetFeatures(const MachineFunction *MF) {
-  AttributeSet FnAttrs = MF->getFunction()->getAttributes();
-  Attribute CPUAttr = FnAttrs.getAttribute(AttributeSet::FunctionIndex,
-                                           "target-cpu");
-  Attribute FSAttr = FnAttrs.getAttribute(AttributeSet::FunctionIndex,
-                                          "target-features");
-  std::string CPU =
-    !CPUAttr.hasAttribute(Attribute::None) ?CPUAttr.getValueAsString() : "";
-  std::string FS =
-    !FSAttr.hasAttribute(Attribute::None) ? FSAttr.getValueAsString() : "";
-  if (!FS.empty()) {
-    initializeEnvironment();
-    resetSubtargetFeatures(CPU, FS);
-  }
-}
-
-void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
+void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   if (CPUString.empty()) {
     if (isTargetIOS() && TargetTriple.getArchName().endswith("v7s"))
       // Default to the Swift CPU when targeting armv7s/thumbv7s.

@@ -160,10 +160,6 @@ public:
 
   /// \brief Enable the use of the early if conversion pass.
   virtual bool enableEarlyIfConversion() const { return false; }
-
-  /// \brief Reset the features for the subtarget.
-  virtual void resetSubtargetFeatures(const MachineFunction *MF) { }
-
 };
 
 } // End llvm namespace

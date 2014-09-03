@@ -69,7 +69,7 @@ static std::string getDataLayoutString(const Triple &T) {
 PPCSubtarget &PPCSubtarget::initializeSubtargetDependencies(StringRef CPU,
                                                             StringRef FS) {
   initializeEnvironment();
-  resetSubtargetFeatures(CPU, FS);
+  initSubtargetFeatures(CPU, FS);
   return *this;
 }
 
@@ -83,22 +83,6 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
       OptLevel(OptLevel), TargetABI(PPC_ABI_UNKNOWN),
       FrameLowering(initializeSubtargetDependencies(CPU, FS)), InstrInfo(*this),
       TLInfo(TM), TSInfo(&DL) {}
-
-void PPCSubtarget::resetSubtargetFeatures(const MachineFunction *MF) {
-  AttributeSet FnAttrs = MF->getFunction()->getAttributes();
-  Attribute CPUAttr = FnAttrs.getAttribute(AttributeSet::FunctionIndex,
-                                           "target-cpu");
-  Attribute FSAttr = FnAttrs.getAttribute(AttributeSet::FunctionIndex,
-                                          "target-features");
-  std::string CPU =
-    !CPUAttr.hasAttribute(Attribute::None) ? CPUAttr.getValueAsString() : "";
-  std::string FS =
-    !FSAttr.hasAttribute(Attribute::None) ? FSAttr.getValueAsString() : "";
-  if (!FS.empty()) {
-    initializeEnvironment();
-    resetSubtargetFeatures(CPU, FS);
-  }
-}
 
 void PPCSubtarget::initializeEnvironment() {
   StackAlignment = 16;
@@ -134,7 +118,7 @@ void PPCSubtarget::initializeEnvironment() {
   HasLazyResolverStubs = false;
 }
 
-void PPCSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
+void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   // Determine default and user specified characteristics
   std::string CPUName = CPU;
   if (CPUName.empty())

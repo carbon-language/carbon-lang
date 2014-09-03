@@ -183,23 +183,7 @@ bool X86Subtarget::IsLegalToCallImmediateAddr(const TargetMachine &TM) const {
   return isTargetELF() || TM.getRelocationModel() == Reloc::Static;
 }
 
-void X86Subtarget::resetSubtargetFeatures(const MachineFunction *MF) {
-  AttributeSet FnAttrs = MF->getFunction()->getAttributes();
-  Attribute CPUAttr =
-      FnAttrs.getAttribute(AttributeSet::FunctionIndex, "target-cpu");
-  Attribute FSAttr =
-      FnAttrs.getAttribute(AttributeSet::FunctionIndex, "target-features");
-  std::string CPU =
-      !CPUAttr.hasAttribute(Attribute::None) ? CPUAttr.getValueAsString() : "";
-  std::string FS =
-      !FSAttr.hasAttribute(Attribute::None) ? FSAttr.getValueAsString() : "";
-  if (!FS.empty()) {
-    initializeEnvironment();
-    resetSubtargetFeatures(CPU, FS);
-  }
-}
-
-void X86Subtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
+void X86Subtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   std::string CPUName = CPU;
   if (CPUName.empty())
     CPUName = "generic";
@@ -342,7 +326,7 @@ static std::string computeDataLayout(const Triple &TT) {
 X86Subtarget &X86Subtarget::initializeSubtargetDependencies(StringRef CPU,
                                                             StringRef FS) {
   initializeEnvironment();
-  resetSubtargetFeatures(CPU, FS);
+  initSubtargetFeatures(CPU, FS);
   return *this;
 }
 

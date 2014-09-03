@@ -171,11 +171,9 @@ public:
   /// so that we can use initializer lists for subtarget initialization.
   PPCSubtarget &initializeSubtargetDependencies(StringRef CPU, StringRef FS);
 
-  /// \brief Reset the features for the PowerPC target.
-  void resetSubtargetFeatures(const MachineFunction *MF) override;
 private:
   void initializeEnvironment();
-  void resetSubtargetFeatures(StringRef CPU, StringRef FS);
+  void initSubtargetFeatures(StringRef CPU, StringRef FS);
 
 public:
   /// isPPC64 - Return true if we are generating code for 64-bit pointer mode.

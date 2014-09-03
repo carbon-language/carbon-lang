@@ -421,9 +421,6 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   LibInfo = &getAnalysis<TargetLibraryInfo>();
   GFI = Fn.hasGC() ? &getAnalysis<GCModuleInfo>().getFunctionInfo(Fn) : nullptr;
 
-  TargetSubtargetInfo &ST =
-    const_cast<TargetSubtargetInfo&>(TM.getSubtarget<TargetSubtargetInfo>());
-  ST.resetSubtargetFeatures(MF);
   TM.resetTargetOptions(MF);
 
   // Reset OptLevel to None for optnone functions.
