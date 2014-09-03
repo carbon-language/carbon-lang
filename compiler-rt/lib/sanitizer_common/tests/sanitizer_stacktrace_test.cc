@@ -46,8 +46,8 @@ void FastUnwindTest::SetUp() {
     fake_stack[i] = (uptr)&fake_stack[i+2];  // fp
     fake_stack[i+1] = PC(i + 1); // retaddr
   }
-  // Mark the last fp as zero to terminate the stack trace.
-  fake_stack[RoundDownTo(ARRAY_SIZE(fake_stack) - 1, 2)] = 0;
+  // Mark the last fp point back up to terminate the stack trace.
+  fake_stack[RoundDownTo(ARRAY_SIZE(fake_stack) - 1, 2)] = (uptr)&fake_stack[0];
 
   // Top is two slots past the end because FastUnwindStack subtracts two.
   fake_top = (uptr)&fake_stack[ARRAY_SIZE(fake_stack) + 2];
