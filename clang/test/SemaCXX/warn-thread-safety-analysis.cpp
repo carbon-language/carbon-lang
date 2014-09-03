@@ -63,6 +63,12 @@ class SCOPED_LOCKABLE ReleasableMutexLock {
   void Release() UNLOCK_FUNCTION();
 };
 
+class __attribute__((scoped_lockable)) DoubleMutexLock {
+public:
+  DoubleMutexLock(Mutex *mu1, Mutex *mu2)
+      __attribute__((exclusive_lock_function(mu1, mu2)));
+  ~DoubleMutexLock() __attribute__((unlock_function));
+};
 
 // The universal lock, written "*", allows checking to be selectively turned
 // off for a particular piece of code.
@@ -1661,6 +1667,12 @@ struct TestScopedLockable {
     MutexLock mulock1(&mu1), mulock2(&mu2);
     a = b+1;
     b = a+1;
+  }
+
+  void foo5() {
+    DoubleMutexLock mulock(&mu1, &mu2);
+    a = b + 1;
+    b = a + 1;
   }
 };
 
