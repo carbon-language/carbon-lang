@@ -4624,19 +4624,25 @@ __kmp_reset_root(int gtid, kmp_root_t *root)
 void
 __kmp_unregister_root_current_thread( int gtid )
 {
+    KA_TRACE( 1, ("__kmp_unregister_root_current_thread: enter T#%d\n", gtid ));
+    /* This lock should be OK, since unregister_root_current_thread is never called during
+     * an abort, only during a normal close.  Furthermore, if you have the
+     * forkjoin lock, you should never try to get the initz lock.
+     */
+
+    __kmp_acquire_bootstrap_lock( &__kmp_forkjoin_lock );
+    if( TCR_4(__kmp_global.g.g_done) || !__kmp_init_serial ) {
+        KC_TRACE( 10, ("__kmp_unregister_root_current_thread: already finished, exiting T#%d\n", gtid ));
+        __kmp_release_bootstrap_lock( &__kmp_forkjoin_lock );
+        return;
+    }
     kmp_root_t *root = __kmp_root[gtid];
 
-    KA_TRACE( 1, ("__kmp_unregister_root_current_thread: enter T#%d\n", gtid ));
     KMP_DEBUG_ASSERT( __kmp_threads && __kmp_threads[gtid] );
     KMP_ASSERT( KMP_UBER_GTID( gtid ));
     KMP_ASSERT( root == __kmp_threads[gtid]->th.th_root );
     KMP_ASSERT( root->r.r_active == FALSE );
 
-    /* this lock should be ok, since unregister_root_current_thread is never called during
-     * and abort, only during a normal close.  furthermore, if you have the
-     * forkjoin lock, you should never try to get the initz lock */
-
-    __kmp_acquire_bootstrap_lock( &__kmp_forkjoin_lock );
 
     KMP_MB();
 
@@ -6851,11 +6857,11 @@ __kmp_internal_end(void)
     } else {
         /* TODO move this to cleanup code */
         #ifdef KMP_DEBUG
-            /* make sure that everything has properly ended */
+            /* Make sure that everything has properly ended */
             for ( i = 0; i < __kmp_threads_capacity; i++ ) {
                 if( __kmp_root[i] ) {
-                    KMP_ASSERT( ! KMP_UBER_GTID( i ) );
-                    KMP_ASSERT( ! __kmp_root[i] -> r.r_active );
+//                  KMP_ASSERT( ! KMP_UBER_GTID( i ) );         // AC: there can be uber threads alive here
+                    KMP_ASSERT( ! __kmp_root[i]->r.r_active );  // TODO: can they be active?
                 }
             }
         #endif
@@ -7093,14 +7099,14 @@ __kmp_internal_end_thread( int gtid_req )
         }
     }
     #if defined GUIDEDLL_EXPORTS
-    // AC: lets not shutdown the Linux* OS dynamic library at the exit of uber thread,
-    //     because we will better shutdown later in the library destructor.
-    //     The reason of this change is performance problem when non-openmp thread
+    // AC: let's not shutdown the Linux* OS dynamic library at the exit of uber thread,
+    //     because it is better shutdown later, in the library destructor.
+    //     The reason for this change is a performance problem when a non-openmp thread
     //     in a loop forks and joins many openmp threads. We can save a lot of time
     //     keeping worker threads alive until the program shutdown.
     // OM: Removed Linux* OS restriction to fix the crash on OS X* (DPD200239966) and
     //     Windows(DPD200287443) that occurs when using critical sections from foreign threads.
-        KA_TRACE( 10, ("__kmp_internal_end_thread: exiting\n") );
+        KA_TRACE( 10, ("__kmp_internal_end_thread: exiting T#%d\n", gtid_req) );
         return;
     #endif
     /* synchronize the termination process */
@@ -7144,7 +7150,7 @@ __kmp_internal_end_thread( int gtid_req )
     __kmp_release_bootstrap_lock( &__kmp_forkjoin_lock );
     __kmp_release_bootstrap_lock( &__kmp_initz_lock );
 
-    KA_TRACE( 10, ("__kmp_internal_end_thread: exit\n" ) );
+    KA_TRACE( 10, ("__kmp_internal_end_thread: exit T#%d\n", gtid_req ) );
 
     #ifdef DUMP_DEBUG_ON_EXIT
         if ( __kmp_debug_buf )
