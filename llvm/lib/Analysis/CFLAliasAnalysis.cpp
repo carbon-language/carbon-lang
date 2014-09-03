@@ -140,6 +140,10 @@ struct FunctionInfo {
   StratifiedSets<Value *> Sets;
   // Lots of functions have < 4 returns. Adjust as necessary.
   SmallVector<Value *, 4> ReturnedValues;
+
+  FunctionInfo(StratifiedSets<Value *> &&S,
+               SmallVector<Value *, 4> &&RV)
+    : Sets(std::move(S)), ReturnedValues(std::move(RV)) {}
 };
 
 struct CFLAliasAnalysis;
@@ -925,7 +929,7 @@ static FunctionInfo buildSetsFrom(CFLAliasAnalysis &Analysis, Function *Fn) {
     Builder.add(&Arg);
   }
 
-  return {Builder.build(), std::move(ReturnedValues)};
+  return FunctionInfo(Builder.build(), std::move(ReturnedValues));
 }
 
 void CFLAliasAnalysis::scan(Function *Fn) {
