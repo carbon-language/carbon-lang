@@ -116,6 +116,7 @@
 #include <clc/relational/isequal.h>
 #include <clc/relational/isgreater.h>
 #include <clc/relational/isgreaterequal.h>
+#include <clc/relational/isinf.h>
 #include <clc/relational/isless.h>
 #include <clc/relational/islessequal.h>
 #include <clc/relational/isnan.h>
