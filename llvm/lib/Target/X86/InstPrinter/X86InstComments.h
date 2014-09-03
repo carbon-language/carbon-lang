@@ -18,7 +18,7 @@
 namespace llvm {
   class MCInst;
   class raw_ostream;
-  void EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
+  bool EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
                               const char *(*getRegName)(unsigned));
 }
 

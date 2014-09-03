@@ -129,6 +129,9 @@ public:
   void printMemOffs64(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemOffset(MI, OpNo, O);
   }
+
+private:
+  bool HasCustomInstComment;
 };
   
 }

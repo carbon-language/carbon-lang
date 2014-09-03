@@ -45,6 +45,11 @@ void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
   const MCInstrDesc &Desc = MII.get(MI->getOpcode());
   uint64_t TSFlags = Desc.TSFlags;
 
+  // If verbose assembly is enabled, we can print some informative comments.
+  if (CommentStream)
+    HasCustomInstComment =
+        EmitAnyX86InstComments(MI, *CommentStream, getRegisterName);
+
   if (TSFlags & X86II::LOCK)
     OS << "\tlock\n";
 
@@ -54,10 +59,6 @@ void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
 
   // Next always print the annotation.
   printAnnotation(OS, Annot);
-
-  // If verbose assembly is enabled, we can print some informative comments.
-  if (CommentStream)
-    EmitAnyX86InstComments(MI, *CommentStream, getRegisterName);
 }
 
 void X86ATTInstPrinter::printSSECC(const MCInst *MI, unsigned Op,
@@ -170,7 +171,11 @@ void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
       << '$' << formatImm((int64_t)Op.getImm())
       << markup(">");
 
-    if (CommentStream && (Op.getImm() > 255 || Op.getImm() < -256))
+    // If there are no instruction-specific comments, add a comment clarifying
+    // the hex value of the immediate operand when it isn't in the range
+    // [-256,255].
+    if (CommentStream && !HasCustomInstComment &&
+        (Op.getImm() > 255 || Op.getImm() < -256))
       *CommentStream << format("imm = 0x%" PRIX64 "\n", (uint64_t)Op.getImm());
 
   } else {
