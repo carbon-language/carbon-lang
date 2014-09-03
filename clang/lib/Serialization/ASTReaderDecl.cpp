@@ -1205,11 +1205,13 @@ void ASTDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
 }
 
 void ASTDeclReader::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
+  RedeclarableResult Redecl = VisitRedeclarable(D);
   VisitNamedDecl(D);
   D->NamespaceLoc = ReadSourceLocation(Record, Idx);
   D->IdentLoc = ReadSourceLocation(Record, Idx);
   D->QualifierLoc = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
   D->Namespace = ReadDeclAs<NamedDecl>(Record, Idx);
+  mergeRedeclarable(D, Redecl);
 }
 
 void ASTDeclReader::VisitUsingDecl(UsingDecl *D) {
@@ -2355,10 +2357,10 @@ static bool isSameTemplateParameterList(const TemplateParameterList *X,
 /// \brief Determine whether the two declarations refer to the same entity.
 static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
   assert(X->getDeclName() == Y->getDeclName() && "Declaration name mismatch!");
-  
+
   if (X == Y)
     return true;
-  
+
   // Must be in the same context.
   if (!X->getDeclContext()->getRedeclContext()->Equals(
          Y->getDeclContext()->getRedeclContext()))
@@ -2370,11 +2372,11 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
     if (TypedefNameDecl *TypedefY = dyn_cast<TypedefNameDecl>(Y))
       return X->getASTContext().hasSameType(TypedefX->getUnderlyingType(),
                                             TypedefY->getUnderlyingType());
-  
+
   // Must have the same kind.
   if (X->getKind() != Y->getKind())
     return false;
-    
+
   // Objective-C classes and protocols with the same name always match.
   if (isa<ObjCInterfaceDecl>(X) || isa<ObjCProtocolDecl>(X))
     return true;
@@ -2396,8 +2398,8 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
   }
 
   // Functions with the same type and linkage match.
-  // FIXME: This needs to cope with function template specializations,
-  // merging of prototyped/non-prototyped functions, etc.
+  // FIXME: This needs to cope with merging of prototyped/non-prototyped
+  // functions, etc.
   if (FunctionDecl *FuncX = dyn_cast<FunctionDecl>(X)) {
     FunctionDecl *FuncY = cast<FunctionDecl>(Y);
     return (FuncX->getLinkageInternal() == FuncY->getLinkageInternal()) &&
@@ -2430,7 +2432,6 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
   // Fields with the same name and the same type match.
   if (FieldDecl *FDX = dyn_cast<FieldDecl>(X)) {
     FieldDecl *FDY = cast<FieldDecl>(Y);
-    // FIXME: Diagnose if the types don't match.
     // FIXME: Also check the bitwidth is odr-equivalent, if any.
     return X->getASTContext().hasSameType(FDX->getType(), FDY->getType());
   }
@@ -2444,6 +2445,12 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
   if (UsingShadowDecl *USX = dyn_cast<UsingShadowDecl>(X)) {
     UsingShadowDecl *USY = cast<UsingShadowDecl>(Y);
     return USX->getTargetDecl() == USY->getTargetDecl();
+  }
+
+  // Namespace alias definitions with the same target match.
+  if (auto *NAX = dyn_cast<NamespaceAliasDecl>(X)) {
+    auto *NAY = cast<NamespaceAliasDecl>(Y);
+    return NAX->getNamespace()->Equals(NAY->getNamespace());
   }
 
   // FIXME: Many other cases to implement.

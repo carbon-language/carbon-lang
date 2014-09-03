@@ -44,3 +44,6 @@ typedef struct {
 } NameForLinkage2;
 auto name_for_linkage2_inner_a = NameForLinkage2::Inner();
 typedef decltype(name_for_linkage2_inner_a) NameForLinkage2Inner;
+
+namespace Aliased { extern int a; }
+namespace Alias = Aliased;

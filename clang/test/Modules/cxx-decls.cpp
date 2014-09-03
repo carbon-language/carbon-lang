@@ -46,6 +46,8 @@ int overrides_virtual_functions_test =
 
 void use_extern_c_function() { ExternCFunction(); }
 
+int use_namespace_alias() { return Alias::a + Alias::b; }
+
 @import cxx_decls_premerged;
 
 void use_extern_c_function_2() { ExternCFunction(); }
