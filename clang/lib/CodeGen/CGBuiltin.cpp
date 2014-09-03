@@ -142,26 +142,12 @@ static RValue EmitBinaryAtomicPost(CodeGenFunction &CGF,
   return RValue::get(Result);
 }
 
-/// EmitFAbs - Emit a call to fabs/fabsf/fabsl, depending on the type of ValTy,
-/// which must be a scalar floating point type.
+/// EmitFAbs - Emit a call to @llvm.fabs().
 static Value *EmitFAbs(CodeGenFunction &CGF, Value *V, QualType ValTy) {
-  const BuiltinType *ValTyP = ValTy->getAs<BuiltinType>();
-  assert(ValTyP && "isn't scalar fp type!");
-
-  StringRef FnName;
-  switch (ValTyP->getKind()) {
-  default: llvm_unreachable("Isn't a scalar fp type!");
-  case BuiltinType::Float:      FnName = "fabsf"; break;
-  case BuiltinType::Double:     FnName = "fabs"; break;
-  case BuiltinType::LongDouble: FnName = "fabsl"; break;
-  }
-
-  // The prototype is something that takes and returns whatever V's type is.
-  llvm::FunctionType *FT = llvm::FunctionType::get(V->getType(), V->getType(),
-                                                   false);
-  llvm::Value *Fn = CGF.CGM.CreateRuntimeFunction(FT, FnName);
-
-  return CGF.EmitNounwindRuntimeCall(Fn, V, "abs");
+  Value *F = CGF.CGM.getIntrinsic(Intrinsic::fabs, V->getType());
+  llvm::CallInst *Call = CGF.Builder.CreateCall(F, V);
+  Call->setDoesNotAccessMemory();
+  return Call;
 }
 
 static RValue emitLibraryCall(CodeGenFunction &CGF, const FunctionDecl *Fn,
