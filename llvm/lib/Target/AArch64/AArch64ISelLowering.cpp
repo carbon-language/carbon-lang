@@ -8513,19 +8513,6 @@ void AArch64TargetLowering::ReplaceNodeResults(
   }
 }
 
-bool AArch64TargetLowering::shouldExpandAtomicInIR(Instruction *Inst) const {
-  // Loads and stores less than 128-bits are already atomic; ones above that
-  // are doomed anyway, so defer to the default libcall and blame the OS when
-  // things go wrong:
-  if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
-    return SI->getValueOperand()->getType()->getPrimitiveSizeInBits() == 128;
-  else if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
-    return LI->getType()->getPrimitiveSizeInBits() == 128;
-
-  // For the real atomic operations, we have ldxr/stxr up to 128 bits.
-  return Inst->getType()->getPrimitiveSizeInBits() <= 128;
-}
-
 bool AArch64TargetLowering::useLoadStackGuardNode() const {
   return true;
 }
@@ -8540,6 +8527,28 @@ AArch64TargetLowering::getPreferredVectorAction(EVT VT) const {
     return TypeWidenVector;
 
   return TargetLoweringBase::getPreferredVectorAction(VT);
+}
+
+// Loads and stores less than 128-bits are already atomic; ones above that
+// are doomed anyway, so defer to the default libcall and blame the OS when
+// things go wrong.
+bool AArch64TargetLowering::shouldExpandAtomicStoreInIR(StoreInst *SI) const {
+  unsigned Size = SI->getValueOperand()->getType()->getPrimitiveSizeInBits();
+  return Size == 128;
+}
+
+// Loads and stores less than 128-bits are already atomic; ones above that
+// are doomed anyway, so defer to the default libcall and blame the OS when
+// things go wrong.
+bool AArch64TargetLowering::shouldExpandAtomicLoadInIR(LoadInst *LI) const {
+  unsigned Size = LI->getType()->getPrimitiveSizeInBits();
+  return Size == 128;
+}
+
+// For the real atomic operations, we have ldxr/stxr up to 128 bits,
+bool AArch64TargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
+  unsigned Size = AI->getType()->getPrimitiveSizeInBits();
+  return Size <= 128;
 }
 
 Value *AArch64TargetLowering::emitLoadLinked(IRBuilder<> &Builder, Value *Addr,

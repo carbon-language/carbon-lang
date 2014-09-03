@@ -338,6 +338,11 @@ public:
     return mayReadFromMemory() || mayWriteToMemory();
   }
 
+  /// isAtomic - Return true if this instruction has an
+  /// AtomicOrdering of unordered or higher.
+  ///
+  bool isAtomic() const;
+
   /// mayThrow - Return true if this instruction may throw an exception.
   ///
   bool mayThrow() const;

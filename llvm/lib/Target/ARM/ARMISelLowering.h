@@ -402,7 +402,9 @@ namespace llvm {
     void emitTrailingFence(IRBuilder<> &Builder, AtomicOrdering Ord,
                            bool IsStore, bool IsLoad) const override;
 
-    bool shouldExpandAtomicInIR(Instruction *Inst) const override;
+    bool shouldExpandAtomicLoadInIR(LoadInst *LI) const override;
+    bool shouldExpandAtomicStoreInIR(StoreInst *SI) const override;
+    bool shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const override;
 
     bool useLoadStackGuardNode() const override;
 

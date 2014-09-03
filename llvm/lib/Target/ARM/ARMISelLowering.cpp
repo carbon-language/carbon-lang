@@ -11039,23 +11039,29 @@ void ARMTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
   }
 }
 
-bool ARMTargetLowering::shouldExpandAtomicInIR(Instruction *Inst) const {
-  // Loads and stores less than 64-bits are already atomic; ones above that
-  // are doomed anyway, so defer to the default libcall and blame the OS when
-  // things go wrong. Cortex M doesn't have ldrexd/strexd though, so don't emit
-  // anything for those.
-  bool IsMClass = Subtarget->isMClass();
-  if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-    unsigned Size = SI->getValueOperand()->getType()->getPrimitiveSizeInBits();
-    return Size == 64 && !IsMClass;
-  } else if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
-    return LI->getType()->getPrimitiveSizeInBits() == 64 && !IsMClass;
-  }
+// Loads and stores less than 64-bits are already atomic; ones above that
+// are doomed anyway, so defer to the default libcall and blame the OS when
+// things go wrong. Cortex M doesn't have ldrexd/strexd though, so don't emit
+// anything for those.
+bool ARMTargetLowering::shouldExpandAtomicStoreInIR(StoreInst *SI) const {
+  unsigned Size = SI->getValueOperand()->getType()->getPrimitiveSizeInBits();
+  return (Size == 64) && !Subtarget->isMClass();
+}
 
-  // For the real atomic operations, we have ldrex/strex up to 32 bits,
-  // and up to 64 bits on the non-M profiles
-  unsigned AtomicLimit = IsMClass ? 32 : 64;
-  return Inst->getType()->getPrimitiveSizeInBits() <= AtomicLimit;
+// Loads and stores less than 64-bits are already atomic; ones above that
+// are doomed anyway, so defer to the default libcall and blame the OS when
+// things go wrong. Cortex M doesn't have ldrexd/strexd though, so don't emit
+// anything for those.
+bool ARMTargetLowering::shouldExpandAtomicLoadInIR(LoadInst *LI) const {
+  unsigned Size = LI->getType()->getPrimitiveSizeInBits();
+  return (Size == 64) && !Subtarget->isMClass();
+}
+
+// For the real atomic operations, we have ldrex/strex up to 32 bits,
+// and up to 64 bits on the non-M profiles
+bool ARMTargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
+  unsigned Size = AI->getType()->getPrimitiveSizeInBits();
+  return Size <= (Subtarget->isMClass() ? 32 : 64);
 }
 
 // This has so far only been implemented for MachO.

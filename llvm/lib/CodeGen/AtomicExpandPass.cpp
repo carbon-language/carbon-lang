@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
@@ -38,10 +39,10 @@ namespace {
     }
 
     bool runOnFunction(Function &F) override;
-    bool expandAtomicInsts(Function &F);
 
+  private:
     bool expandAtomicLoad(LoadInst *LI);
-    bool expandAtomicStore(StoreInst *LI);
+    bool expandAtomicStore(StoreInst *SI);
     bool expandAtomicRMW(AtomicRMWInst *AI);
     bool expandAtomicCmpXchg(AtomicCmpXchgInst *CI);
   };
@@ -60,37 +61,37 @@ FunctionPass *llvm::createAtomicExpandPass(const TargetMachine *TM) {
 bool AtomicExpand::runOnFunction(Function &F) {
   if (!TM || !TM->getSubtargetImpl()->enableAtomicExpand())
     return false;
+  auto TargetLowering = TM->getSubtargetImpl()->getTargetLowering();
 
   SmallVector<Instruction *, 1> AtomicInsts;
 
   // Changing control-flow while iterating through it is a bad idea, so gather a
   // list of all atomic instructions before we start.
-  for (BasicBlock &BB : F)
-    for (Instruction &Inst : BB) {
-      if (isa<AtomicRMWInst>(&Inst) || isa<AtomicCmpXchgInst>(&Inst) ||
-          (isa<LoadInst>(&Inst) && cast<LoadInst>(&Inst)->isAtomic()) ||
-          (isa<StoreInst>(&Inst) && cast<StoreInst>(&Inst)->isAtomic()))
-        AtomicInsts.push_back(&Inst);
-    }
-
-  bool MadeChange = false;
-  for (Instruction *Inst : AtomicInsts) {
-    if (!TM->getSubtargetImpl()->getTargetLowering()->shouldExpandAtomicInIR(
-            Inst))
-      continue;
-
-    if (AtomicRMWInst *AI = dyn_cast<AtomicRMWInst>(Inst))
-      MadeChange |= expandAtomicRMW(AI);
-    else if (AtomicCmpXchgInst *CI = dyn_cast<AtomicCmpXchgInst>(Inst))
-      MadeChange |= expandAtomicCmpXchg(CI);
-    else if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
-      MadeChange |= expandAtomicLoad(LI);
-    else if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
-      MadeChange |= expandAtomicStore(SI);
-    else
-      llvm_unreachable("Unknown atomic instruction");
+  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
+    if (I->isAtomic())
+      AtomicInsts.push_back(&*I);
   }
 
+  bool MadeChange = false;
+  for (auto I : AtomicInsts) {
+    auto LI = dyn_cast<LoadInst>(I);
+    auto SI = dyn_cast<StoreInst>(I);
+    auto RMWI = dyn_cast<AtomicRMWInst>(I);
+    auto CASI = dyn_cast<AtomicCmpXchgInst>(I);
+
+    assert((LI || SI || RMWI || CASI || isa<FenceInst>(I)) &&
+           "Unknown atomic instruction");
+
+    if (LI && TargetLowering->shouldExpandAtomicLoadInIR(LI)) {
+      MadeChange |= expandAtomicLoad(LI);
+    } else if (SI && TargetLowering->shouldExpandAtomicStoreInIR(SI)) {
+      MadeChange |= expandAtomicStore(SI);
+    } else if (RMWI && TargetLowering->shouldExpandAtomicRMWInIR(RMWI)) {
+      MadeChange |= expandAtomicRMW(RMWI);
+    } else if (CASI) {
+      MadeChange |= expandAtomicCmpXchg(CASI);
+    }
+  }
   return MadeChange;
 }
 
@@ -146,10 +147,10 @@ bool AtomicExpand::expandAtomicRMW(AtomicRMWInst *AI) {
   BasicBlock *BB = AI->getParent();
   Function *F = BB->getParent();
   LLVMContext &Ctx = F->getContext();
-  // If getInsertFencesForAtomic() return true, then the target does not want to
-  // deal with memory orders, and emitLeading/TrailingFence should take care of
-  // everything. Otherwise, emitLeading/TrailingFence are no-op and we should
-  // preserve the ordering.
+  // If getInsertFencesForAtomic() returns true, then the target does not want
+  // to deal with memory orders, and emitLeading/TrailingFence should take care
+  // of everything. Otherwise, emitLeading/TrailingFence are no-op and we
+  // should preserve the ordering.
   AtomicOrdering MemOpOrder =
       TLI->getInsertFencesForAtomic() ? Monotonic : Order;
 
@@ -252,10 +253,10 @@ bool AtomicExpand::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   BasicBlock *BB = CI->getParent();
   Function *F = BB->getParent();
   LLVMContext &Ctx = F->getContext();
-  // If getInsertFencesForAtomic() return true, then the target does not want to
-  // deal with memory orders, and emitLeading/TrailingFence should take care of
-  // everything. Otherwise, emitLeading/TrailingFence are no-op and we should
-  // preserve the ordering.
+  // If getInsertFencesForAtomic() returns true, then the target does not want
+  // to deal with memory orders, and emitLeading/TrailingFence should take care
+  // of everything. Otherwise, emitLeading/TrailingFence are no-op and we
+  // should preserve the ordering.
   AtomicOrdering MemOpOrder =
       TLI->getInsertFencesForAtomic() ? Monotonic : SuccessOrder;
 

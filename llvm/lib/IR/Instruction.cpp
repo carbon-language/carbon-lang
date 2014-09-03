@@ -443,6 +443,21 @@ bool Instruction::mayWriteToMemory() const {
   }
 }
 
+bool Instruction::isAtomic() const {
+  switch (getOpcode()) {
+  default:
+    return false;
+  case Instruction::AtomicCmpXchg:
+  case Instruction::AtomicRMW:
+  case Instruction::Fence:
+    return true;
+  case Instruction::Load:
+    return cast<LoadInst>(this)->getOrdering() != NotAtomic;
+  case Instruction::Store:
+    return cast<StoreInst>(this)->getOrdering() != NotAtomic;
+  }
+}
+
 bool Instruction::mayThrow() const {
   if (const CallInst *CI = dyn_cast<CallInst>(this))
     return !CI->doesNotThrow();
