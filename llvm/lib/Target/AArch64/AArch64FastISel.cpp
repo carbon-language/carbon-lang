@@ -1524,6 +1524,12 @@ static AArch64CC::CondCode getCompareCC(CmpInst::Predicate Pred) {
 
 bool AArch64FastISel::SelectBranch(const Instruction *I) {
   const BranchInst *BI = cast<BranchInst>(I);
+  if (BI->isUnconditional()) {
+    MachineBasicBlock *MSucc = FuncInfo.MBBMap[BI->getSuccessor(0)];
+    FastEmitBranch(MSucc, BI->getDebugLoc());
+    return true;
+  }
+
   MachineBasicBlock *TBB = FuncInfo.MBBMap[BI->getSuccessor(0)];
   MachineBasicBlock *FBB = FuncInfo.MBBMap[BI->getSuccessor(1)];
 
@@ -3471,16 +3477,8 @@ bool AArch64FastISel::TargetSelectInstruction(const Instruction *I) {
     return SelectBinaryOp(I, ISD::XOR);
   case Instruction::GetElementPtr:
     return SelectGetElementPtr(I);
-  case Instruction::Br: {
-    const BranchInst *BI = cast<BranchInst>(I);
-    if (BI->isUnconditional()) {
-      const BasicBlock *LLVMSucc = BI->getSuccessor(0);
-      MachineBasicBlock *MSucc = FuncInfo.MBBMap[LLVMSucc];
-      FastEmitBranch(MSucc, BI->getDebugLoc());
-      return true;
-    }
+  case Instruction::Br:
     return SelectBranch(I);
-  }
   case Instruction::IndirectBr:
     return SelectIndirectBr(I);
   case Instruction::Unreachable:
