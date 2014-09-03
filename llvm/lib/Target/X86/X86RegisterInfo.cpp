@@ -443,10 +443,8 @@ bool X86RegisterInfo::canRealignStack(const MachineFunction &MF) const {
 bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const Function *F = MF.getFunction();
-  unsigned StackAlign = MF.getTarget()
-                            .getSubtargetImpl()
-                            ->getFrameLowering()
-                            ->getStackAlignment();
+  unsigned StackAlign =
+    MF.getSubtarget().getFrameLowering()->getStackAlignment();
   bool requiresRealignment =
     ((MFI->getMaxAlignment() > StackAlign) ||
      F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,

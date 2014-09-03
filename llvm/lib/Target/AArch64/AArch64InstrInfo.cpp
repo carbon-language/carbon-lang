@@ -2518,7 +2518,7 @@ void AArch64InstrInfo::genAlternativeCodeSequence(
   MachineBasicBlock &MBB = *Root.getParent();
   MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo *TII = MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
 
   MachineInstr *MUL;
   const TargetRegisterClass *RC;

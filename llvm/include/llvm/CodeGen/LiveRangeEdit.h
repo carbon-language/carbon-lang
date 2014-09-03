@@ -116,7 +116,7 @@ public:
                 MachineFunction &MF, LiveIntervals &lis, VirtRegMap *vrm,
                 Delegate *delegate = nullptr)
       : Parent(parent), NewRegs(newRegs), MRI(MF.getRegInfo()), LIS(lis),
-        VRM(vrm), TII(*MF.getTarget().getSubtargetImpl()->getInstrInfo()),
+        VRM(vrm), TII(*MF.getSubtarget().getInstrInfo()),
         TheDelegate(delegate), FirstNew(newRegs.size()),
         ScannedRemattable(false) {
     MRI.setDelegate(this);
