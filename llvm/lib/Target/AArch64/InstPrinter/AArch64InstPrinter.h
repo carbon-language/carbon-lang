@@ -127,8 +127,9 @@ public:
 
   void printInstruction(const MCInst *MI, raw_ostream &O) override;
   bool printAliasInstr(const MCInst *MI, raw_ostream &O) override;
-  virtual void printCustomAliasOperand(const MCInst *MI, unsigned OpIdx,
-                                       unsigned PrintMethodIdx, raw_ostream &O);
+  void printCustomAliasOperand(const MCInst *MI, unsigned OpIdx,
+                               unsigned PrintMethodIdx,
+                               raw_ostream &O) override;
   StringRef getRegName(unsigned RegNo) const override {
     return getRegisterName(RegNo);
   }

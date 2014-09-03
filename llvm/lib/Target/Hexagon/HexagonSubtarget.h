@@ -58,19 +58,23 @@ public:
 
   /// getInstrItins - Return the instruction itineraries based on subtarget
   /// selection.
-  const InstrItineraryData *getInstrItineraryData() const {
+  const InstrItineraryData *getInstrItineraryData() const override {
     return &InstrItins;
   }
   const HexagonInstrInfo *getInstrInfo() const override { return &InstrInfo; }
-  const HexagonRegisterInfo *getRegisterInfo() const {
+  const HexagonRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
-  const HexagonTargetLowering *getTargetLowering() const { return &TLInfo; }
-  const HexagonFrameLowering *getFrameLowering() const {
+  const HexagonTargetLowering *getTargetLowering() const override {
+    return &TLInfo;
+  }
+  const HexagonFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
   }
-  const HexagonSelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
-  const DataLayout *getDataLayout() const { return &DL; }
+  const HexagonSelectionDAGInfo *getSelectionDAGInfo() const override {
+    return &TSInfo;
+  }
+  const DataLayout *getDataLayout() const override { return &DL; }
 
   HexagonSubtarget &initializeSubtargetDependencies(StringRef CPU,
                                                     StringRef FS);

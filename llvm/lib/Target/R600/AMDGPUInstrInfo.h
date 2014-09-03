@@ -73,11 +73,6 @@ public:
                         LiveVariables *LV) const override;
 
 
-  virtual void copyPhysReg(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator MI, DebugLoc DL,
-                           unsigned DestReg, unsigned SrcReg,
-                           bool KillSrc) const = 0;
-
   bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const override;
 
   void storeRegToStackSlot(MachineBasicBlock &MBB,

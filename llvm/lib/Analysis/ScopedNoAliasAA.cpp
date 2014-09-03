@@ -80,15 +80,13 @@ public:
     initializeScopedNoAliasAAPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void initializePass() {
-    InitializeAliasAnalysis(this);
-  }
+  void initializePass() override { InitializeAliasAnalysis(this); }
 
   /// getAdjustedAnalysisPointer - This method is used when a pass implements
   /// an analysis interface through multiple inheritance.  If needed, it
   /// should override this to adjust the this pointer as needed for the
   /// specified pass info.
-  virtual void *getAdjustedAnalysisPointer(const void *PI) {
+  void *getAdjustedAnalysisPointer(const void *PI) override {
     if (PI == &AliasAnalysis::ID)
       return (AliasAnalysis*)this;
     return this;
@@ -100,15 +98,15 @@ protected:
                          SmallPtrSetImpl<const MDNode *> &Nodes) const;
 
 private:
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-  virtual AliasResult alias(const Location &LocA, const Location &LocB);
-  virtual bool pointsToConstantMemory(const Location &Loc, bool OrLocal);
-  virtual ModRefBehavior getModRefBehavior(ImmutableCallSite CS);
-  virtual ModRefBehavior getModRefBehavior(const Function *F);
-  virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
-                                     const Location &Loc);
-  virtual ModRefResult getModRefInfo(ImmutableCallSite CS1,
-                                     ImmutableCallSite CS2);
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  AliasResult alias(const Location &LocA, const Location &LocB) override;
+  bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override;
+  ModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
+  ModRefBehavior getModRefBehavior(const Function *F) override;
+  ModRefResult getModRefInfo(ImmutableCallSite CS,
+                             const Location &Loc) override;
+  ModRefResult getModRefInfo(ImmutableCallSite CS1,
+                             ImmutableCallSite CS2) override;
 };
 }  // End of anonymous namespace
 

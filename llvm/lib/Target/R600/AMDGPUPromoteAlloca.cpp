@@ -36,11 +36,9 @@ class AMDGPUPromoteAlloca : public FunctionPass,
 public:
   AMDGPUPromoteAlloca(const AMDGPUSubtarget &st) : FunctionPass(ID), ST(st),
                                                    LocalMemAvailable(0) { }
-  virtual bool doInitialization(Module &M);
-  virtual bool runOnFunction(Function &F);
-  virtual const char *getPassName() const {
-    return "AMDGPU Promote Alloca";
-  }
+  bool doInitialization(Module &M) override;
+  bool runOnFunction(Function &F) override;
+  const char *getPassName() const override { return "AMDGPU Promote Alloca"; }
   void visitAlloca(AllocaInst &I);
 };
 

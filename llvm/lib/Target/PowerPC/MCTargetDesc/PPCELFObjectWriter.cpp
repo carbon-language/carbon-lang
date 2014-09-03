@@ -24,11 +24,7 @@ namespace {
   public:
     PPCELFObjectWriter(bool Is64Bit, uint8_t OSABI);
 
-    virtual ~PPCELFObjectWriter();
   protected:
-    virtual unsigned getRelocTypeInner(const MCValue &Target,
-                                       const MCFixup &Fixup,
-                                       bool IsPCRel) const;
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                           bool IsPCRel) const override;
 
@@ -41,9 +37,6 @@ PPCELFObjectWriter::PPCELFObjectWriter(bool Is64Bit, uint8_t OSABI)
   : MCELFObjectTargetWriter(Is64Bit, OSABI,
                             Is64Bit ?  ELF::EM_PPC64 : ELF::EM_PPC,
                             /*HasRelocationAddend*/ true) {}
-
-PPCELFObjectWriter::~PPCELFObjectWriter() {
-}
 
 static MCSymbolRefExpr::VariantKind getAccessVariant(const MCValue &Target,
                                                      const MCFixup &Fixup) {
@@ -73,10 +66,9 @@ static MCSymbolRefExpr::VariantKind getAccessVariant(const MCValue &Target,
   llvm_unreachable("unknown PPCMCExpr kind");
 }
 
-unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
-                                               const MCFixup &Fixup,
-                                               bool IsPCRel) const
-{
+unsigned PPCELFObjectWriter::GetRelocType(const MCValue &Target,
+                                          const MCFixup &Fixup,
+                                          bool IsPCRel) const {
   MCSymbolRefExpr::VariantKind Modifier = getAccessVariant(Target, Fixup);
 
   // determine the type of the relocation
@@ -398,12 +390,6 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
     }
   }
   return Type;
-}
-
-unsigned PPCELFObjectWriter::GetRelocType(const MCValue &Target,
-                                          const MCFixup &Fixup,
-                                          bool IsPCRel) const {
-  return getRelocTypeInner(Target, Fixup, IsPCRel);
 }
 
 bool PPCELFObjectWriter::needsRelocateWithSymbol(const MCSymbolData &SD,

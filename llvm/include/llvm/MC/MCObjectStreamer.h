@@ -126,7 +126,7 @@ public:
   void EmitZeros(uint64_t NumBytes) override;
   void FinishImpl() override;
 
-  virtual bool mayHaveInstructions() const {
+  bool mayHaveInstructions() const override {
     return getCurrentSectionData()->hasInstructions();
   }
 };

@@ -80,7 +80,7 @@ public:
     return nullptr;
   }
 
-  virtual void addCodeGenPrepare();
+  void addCodeGenPrepare() override;
   bool addPreISel() override;
   bool addInstSelector() override;
   bool addPreRegAlloc() override;

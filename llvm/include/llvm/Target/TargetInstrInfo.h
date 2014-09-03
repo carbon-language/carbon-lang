@@ -688,7 +688,7 @@ public:
   }
 
   /// useMachineCombiner - return true when a target supports MachineCombiner
-  virtual bool useMachineCombiner(void) const { return false; }
+  virtual bool useMachineCombiner() const { return false; }
 
 protected:
   /// foldMemoryOperandImpl - Target-dependent implementation for

@@ -140,7 +140,8 @@ private:
 public:
   RuntimeDyldMachOCRTPBase(RTDyldMemoryManager *mm) : RuntimeDyldMachO(mm) {}
 
-  void finalizeLoad(ObjectImage &ObjImg, ObjSectionToIDMap &SectionMap) {
+  void finalizeLoad(ObjectImage &ObjImg,
+                    ObjSectionToIDMap &SectionMap) override {
     unsigned EHFrameSID = RTDYLD_INVALID_SECTION_ID;
     unsigned TextSID = RTDYLD_INVALID_SECTION_ID;
     unsigned ExceptTabSID = RTDYLD_INVALID_SECTION_ID;

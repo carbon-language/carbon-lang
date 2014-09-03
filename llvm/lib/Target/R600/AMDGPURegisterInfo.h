@@ -51,7 +51,7 @@ struct AMDGPURegisterInfo : public AMDGPUGenRegisterInfo {
   unsigned getSubRegFromChannel(unsigned Channel) const;
 
   const MCPhysReg* getCalleeSavedRegs(const MachineFunction *MF) const override;
-  virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
+  void eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
                            unsigned FIOperandNum,
                            RegScavenger *RS) const override;
   unsigned getFrameRegister(const MachineFunction &MF) const override;

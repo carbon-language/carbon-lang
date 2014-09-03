@@ -36,7 +36,9 @@ public:
   const AMDGPUSubtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }
-  const AMDGPUIntrinsicInfo *getIntrinsicInfo() const { return &IntrinsicInfo; }
+  const AMDGPUIntrinsicInfo *getIntrinsicInfo() const override {
+    return &IntrinsicInfo;
+  }
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
   /// \brief Register R600 analysis passes with a pass manager.

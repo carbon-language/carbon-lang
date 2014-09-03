@@ -437,7 +437,7 @@ public:
 
   /// getInstrItins - Return the instruction itineraries based on subtarget
   /// selection.
-  const InstrItineraryData *getInstrItineraryData() const {
+  const InstrItineraryData *getInstrItineraryData() const override {
     return &InstrItins;
   }
 

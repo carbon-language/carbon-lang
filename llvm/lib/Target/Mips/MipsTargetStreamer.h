@@ -163,7 +163,7 @@ public:
   void emitDirectiveSetDsp() override;
 
   // PIC support
-  virtual void emitDirectiveCpload(unsigned RegNo);
+  void emitDirectiveCpload(unsigned RegNo) override;
   void emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                             const MCSymbol &Sym, bool IsReg) override;
 
@@ -209,7 +209,7 @@ public:
   void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff) override;
 
   // PIC support
-  virtual void emitDirectiveCpload(unsigned RegNo);
+  void emitDirectiveCpload(unsigned RegNo) override;
   void emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                             const MCSymbol &Sym, bool IsReg) override;
 

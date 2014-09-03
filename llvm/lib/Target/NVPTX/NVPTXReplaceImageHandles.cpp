@@ -33,7 +33,7 @@ private:
 public:
   NVPTXReplaceImageHandles();
 
-  bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
   const char *getPassName() const override {
     return "NVPTX Replace Image Handles";

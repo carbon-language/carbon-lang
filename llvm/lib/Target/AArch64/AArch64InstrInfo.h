@@ -161,20 +161,20 @@ public:
   /// for an instruction chain ending in <Root>. All potential patterns are
   /// listed
   /// in the <Pattern> array.
-  virtual bool hasPattern(
-      MachineInstr &Root,
-      SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Pattern) const;
+  bool hasPattern(MachineInstr &Root,
+                  SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Pattern)
+      const override;
 
   /// genAlternativeCodeSequence - when hasPattern() finds a pattern
   /// this function generates the instructions that could replace the
   /// original code sequence
-  virtual void genAlternativeCodeSequence(
+  void genAlternativeCodeSequence(
       MachineInstr &Root, MachineCombinerPattern::MC_PATTERN P,
       SmallVectorImpl<MachineInstr *> &InsInstrs,
       SmallVectorImpl<MachineInstr *> &DelInstrs,
-      DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) const;
+      DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) const override;
   /// useMachineCombiner - AArch64 supports MachineCombiner
-  virtual bool useMachineCombiner(void) const;
+  bool useMachineCombiner() const override;
 
   bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const override;
 private:

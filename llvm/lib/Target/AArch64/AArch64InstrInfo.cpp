@@ -2206,7 +2206,7 @@ void AArch64InstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
   NopInst.addOperand(MCOperand::CreateImm(0));
 }
 /// useMachineCombiner - return true when a target supports MachineCombiner
-bool AArch64InstrInfo::useMachineCombiner(void) const {
+bool AArch64InstrInfo::useMachineCombiner() const {
   // AArch64 supports the combiner
   return true;
 }
