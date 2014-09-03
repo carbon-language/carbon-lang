@@ -151,7 +151,7 @@ void InitializeLibIgnore() {
 
 static SignalContext *SigCtx(ThreadState *thr) {
   SignalContext *ctx = (SignalContext*)thr->signal_ctx;
-  if (ctx == 0 && thr->is_alive) {
+  if (ctx == 0 && !thr->is_dead) {
     ctx = (SignalContext*)MmapOrDie(sizeof(*ctx), "SignalContext");
     MemoryResetRange(thr, (uptr)&SigCtx, (uptr)ctx, sizeof(*ctx));
     thr->signal_ctx = ctx;

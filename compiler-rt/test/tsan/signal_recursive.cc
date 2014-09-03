@@ -119,7 +119,6 @@ int main(int argc, const char *argv[]) {
   Init();
   pthread_t busy_thread;
   pthread_create(&busy_thread, NULL, &BusyThread, NULL);
-  sleep(1); // Tsan deadlocks without these sleeps
   CollectGarbage(busy_thread);
   pthread_join(busy_thread, 0);
   fprintf(stderr, "DONE\n");

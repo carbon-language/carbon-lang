@@ -123,7 +123,6 @@ void ThreadContext::OnStarted(void *arg) {
           "tls_addr=%zx tls_size=%zx\n",
           tid, (uptr)epoch0, args->stk_addr, args->stk_size,
           args->tls_addr, args->tls_size);
-  thr->is_alive = true;
 }
 
 void ThreadContext::OnFinished() {
@@ -284,7 +283,7 @@ void ThreadFinish(ThreadState *thr) {
     DontNeedShadowFor(thr->stk_addr, thr->stk_size);
   if (thr->tls_addr && thr->tls_size)
     DontNeedShadowFor(thr->tls_addr, thr->tls_size);
-  thr->is_alive = false;
+  thr->is_dead = true;
   ctx->thread_registry->FinishThread(thr->tid);
 }
 
