@@ -189,6 +189,7 @@ class AssertingVH
   : public ValueHandleBase
 #endif
   {
+  friend struct DenseMapInfo<AssertingVH<ValueTy> >;
 
 #ifndef NDEBUG
   ValueTy *getValPtr() const {
@@ -248,11 +249,19 @@ struct DenseMapInfo<AssertingVH<T> > {
   static unsigned getHashValue(const AssertingVH<T> &Val) {
     return PointerInfo::getHashValue(Val);
   }
+#ifndef NDEBUG
+  static bool isEqual(const AssertingVH<T> &LHS, const AssertingVH<T> &RHS) {
+    // Avoid downcasting AssertingVH<T> to T*, as empty/tombstone keys may not
+    // be properly aligned pointers to T*.
+    return LHS.ValueHandleBase::getValPtr() == RHS.ValueHandleBase::getValPtr();
+  }
+#else
   static bool isEqual(const AssertingVH<T> &LHS, const AssertingVH<T> &RHS) {
     return LHS == RHS;
   }
+#endif
 };
-  
+
 template <typename T>
 struct isPodLike<AssertingVH<T> > {
 #ifdef NDEBUG
