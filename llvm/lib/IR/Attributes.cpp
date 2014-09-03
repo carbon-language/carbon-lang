@@ -31,12 +31,10 @@ using namespace llvm;
 // Attribute Construction Methods
 //===----------------------------------------------------------------------===//
 
-Attribute Attribute::get(LLVMContext &Context, Attribute::AttrKind Kind,
-                         uint64_t Val) {
+Attribute Attribute::get(LLVMContext &Context, Attribute::AttrKind Kind) {
   LLVMContextImpl *pImpl = Context.pImpl;
   FoldingSetNodeID ID;
   ID.AddInteger(Kind);
-  if (Val) ID.AddInteger(Val);
 
   void *InsertPoint;
   AttributeImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
@@ -44,10 +42,28 @@ Attribute Attribute::get(LLVMContext &Context, Attribute::AttrKind Kind,
   if (!PA) {
     // If we didn't find any existing attributes of the same shape then create a
     // new one and insert it.
-    if (!Val)
-      PA = new EnumAttributeImpl(Kind);
-    else
-      PA = new IntAttributeImpl(Kind, Val);
+    PA = new EnumAttributeImpl(Kind);
+    pImpl->AttrsSet.InsertNode(PA, InsertPoint);
+  }
+
+  // Return the Attribute that we found or created.
+  return Attribute(PA);
+}
+
+Attribute Attribute::get(LLVMContext &Context, Attribute::AttrKind Kind,
+                         uint64_t Val) {
+  LLVMContextImpl *pImpl = Context.pImpl;
+  FoldingSetNodeID ID;
+  ID.AddInteger(Kind);
+  ID.AddInteger(Val);
+
+  void *InsertPoint;
+  AttributeImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
+
+  if (!PA) {
+    // If we didn't find any existing attributes of the same shape then create a
+    // new one and insert it.
+    PA = new IntAttributeImpl(Kind, Val);
     pImpl->AttrsSet.InsertNode(PA, InsertPoint);
   }
 
