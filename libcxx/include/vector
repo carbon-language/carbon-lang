@@ -863,6 +863,7 @@ private:
       __annotate_contiguous_container(data(), data() + capacity(),
                                       data() + __old_size, data() + size());
     }
+#ifndef _LIBCPP_HAS_NO_ASAN
     // The annotation for size increase should happen before the actual increase,
     // but if an exception is thrown after that the annotation has to be undone.
     struct __RAII_IncreaseAnnotator {
@@ -879,6 +880,13 @@ private:
       size_type __n;
       const vector &__v;
     };
+#else
+    struct __RAII_IncreaseAnnotator {
+      inline __RAII_IncreaseAnnotator(const vector &, size_type __n = 1) {}
+      inline void __done() {}
+    };
+#endif
+
 };
 
 template <class _Tp, class _Allocator>
