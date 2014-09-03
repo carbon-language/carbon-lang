@@ -2030,7 +2030,7 @@ bool BinaryOperator::isExact() const {
   return cast<PossiblyExactOperator>(this)->isExact();
 }
 
-void BinaryOperator::copyFlags(const Value *V) {
+void BinaryOperator::copyIRFlags(const Value *V) {
   // Copy the wrapping flags.
   if (auto *OB = dyn_cast<OverflowingBinaryOperator>(V)) {
     setHasNoSignedWrap(OB->hasNoSignedWrap());
@@ -2045,6 +2045,23 @@ void BinaryOperator::copyFlags(const Value *V) {
   if (auto *FP = dyn_cast<FPMathOperator>(V))
     copyFastMathFlags(FP->getFastMathFlags());
 }
+
+void BinaryOperator::andIRFlags(const Value *V) {
+  if (auto *OB = dyn_cast<OverflowingBinaryOperator>(V)) {
+    setHasNoSignedWrap(hasNoSignedWrap() & OB->hasNoSignedWrap());
+    setHasNoUnsignedWrap(hasNoUnsignedWrap() & OB->hasNoUnsignedWrap());
+  }
+  
+  if (auto *PE = dyn_cast<PossiblyExactOperator>(V))
+    setIsExact(isExact() & PE->isExact());
+  
+  if (auto *FP = dyn_cast<FPMathOperator>(V)) {
+    FastMathFlags FM = getFastMathFlags();
+    FM &= FP->getFastMathFlags();
+    copyFastMathFlags(FM);
+  }
+}
+
 
 //===----------------------------------------------------------------------===//
 //                             FPMathOperator Class

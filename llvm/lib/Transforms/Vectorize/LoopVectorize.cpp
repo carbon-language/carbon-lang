@@ -3249,7 +3249,7 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
         Value *V = Builder.CreateBinOp(BinOp->getOpcode(), A[Part], B[Part]);
 
         if (BinaryOperator *VecOp = dyn_cast<BinaryOperator>(V))
-          VecOp->copyFlags(BinOp);
+          VecOp->copyIRFlags(BinOp);
         
         Entry[Part] = V;
       }
