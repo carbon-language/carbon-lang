@@ -3422,61 +3422,61 @@ bool AArch64FastISel::TargetSelectInstruction(const Instruction *I) {
     return false;
   case Instruction::Add:
     if (!selectAddSub(I))
-      return SelectBinaryOp(I, ISD::ADD);
+      return selectBinaryOp(I, ISD::ADD);
     return true;
   case Instruction::Sub:
     if (!selectAddSub(I))
-      return SelectBinaryOp(I, ISD::SUB);
+      return selectBinaryOp(I, ISD::SUB);
     return true;
   case Instruction::FAdd:
-    return SelectBinaryOp(I, ISD::FADD);
+    return selectBinaryOp(I, ISD::FADD);
   case Instruction::FSub:
     // FNeg is currently represented in LLVM IR as a special case of FSub.
     if (BinaryOperator::isFNeg(I))
-      return SelectFNeg(I);
-    return SelectBinaryOp(I, ISD::FSUB);
+      return selectFNeg(I);
+    return selectBinaryOp(I, ISD::FSUB);
   case Instruction::Mul:
-    if (!SelectBinaryOp(I, ISD::MUL))
+    if (!selectBinaryOp(I, ISD::MUL))
       return SelectMul(I);
     return true;
   case Instruction::FMul:
-    return SelectBinaryOp(I, ISD::FMUL);
+    return selectBinaryOp(I, ISD::FMUL);
   case Instruction::SDiv:
-    return SelectBinaryOp(I, ISD::SDIV);
+    return selectBinaryOp(I, ISD::SDIV);
   case Instruction::UDiv:
-    return SelectBinaryOp(I, ISD::UDIV);
+    return selectBinaryOp(I, ISD::UDIV);
   case Instruction::FDiv:
-    return SelectBinaryOp(I, ISD::FDIV);
+    return selectBinaryOp(I, ISD::FDIV);
   case Instruction::SRem:
-    if (!SelectBinaryOp(I, ISD::SREM))
+    if (!selectBinaryOp(I, ISD::SREM))
       return SelectRem(I, ISD::SREM);
     return true;
   case Instruction::URem:
-    if (!SelectBinaryOp(I, ISD::UREM))
+    if (!selectBinaryOp(I, ISD::UREM))
       return SelectRem(I, ISD::UREM);
     return true;
   case Instruction::FRem:
-    return SelectBinaryOp(I, ISD::FREM);
+    return selectBinaryOp(I, ISD::FREM);
   case Instruction::Shl:
     if (!SelectShift(I))
-      return SelectBinaryOp(I, ISD::SHL);
+      return selectBinaryOp(I, ISD::SHL);
     return true;
   case Instruction::LShr:
     if (!SelectShift(I))
-      return SelectBinaryOp(I, ISD::SRL);
+      return selectBinaryOp(I, ISD::SRL);
     return true;
   case Instruction::AShr:
     if (!SelectShift(I))
-      return SelectBinaryOp(I, ISD::SRA);
+      return selectBinaryOp(I, ISD::SRA);
     return true;
   case Instruction::And:
-    return SelectBinaryOp(I, ISD::AND);
+    return selectBinaryOp(I, ISD::AND);
   case Instruction::Or:
-    return SelectBinaryOp(I, ISD::OR);
+    return selectBinaryOp(I, ISD::OR);
   case Instruction::Xor:
-    return SelectBinaryOp(I, ISD::XOR);
+    return selectBinaryOp(I, ISD::XOR);
   case Instruction::GetElementPtr:
-    return SelectGetElementPtr(I);
+    return selectGetElementPtr(I);
   case Instruction::Br:
     return SelectBranch(I);
   case Instruction::IndirectBr:
@@ -3493,27 +3493,27 @@ bool AArch64FastISel::TargetSelectInstruction(const Instruction *I) {
     // Dynamic-sized alloca is not handled yet.
     return false;
   case Instruction::Call:
-    return SelectCall(I);
+    return selectCall(I);
   case Instruction::BitCast:
-    if (!FastISel::SelectBitCast(I))
+    if (!FastISel::selectBitCast(I))
       return SelectBitCast(I);
     return true;
   case Instruction::FPToSI:
-    if (!SelectCast(I, ISD::FP_TO_SINT))
+    if (!selectCast(I, ISD::FP_TO_SINT))
       return SelectFPToInt(I, /*Signed=*/true);
     return true;
   case Instruction::FPToUI:
     return SelectFPToInt(I, /*Signed=*/false);
   case Instruction::ZExt:
-    if (!SelectCast(I, ISD::ZERO_EXTEND))
+    if (!selectCast(I, ISD::ZERO_EXTEND))
       return SelectIntExt(I);
     return true;
   case Instruction::SExt:
-    if (!SelectCast(I, ISD::SIGN_EXTEND))
+    if (!selectCast(I, ISD::SIGN_EXTEND))
       return SelectIntExt(I);
     return true;
   case Instruction::Trunc:
-    if (!SelectCast(I, ISD::TRUNCATE))
+    if (!selectCast(I, ISD::TRUNCATE))
       return SelectTrunc(I);
     return true;
   case Instruction::FPExt:
@@ -3521,7 +3521,7 @@ bool AArch64FastISel::TargetSelectInstruction(const Instruction *I) {
   case Instruction::FPTrunc:
     return SelectFPTrunc(I);
   case Instruction::SIToFP:
-    if (!SelectCast(I, ISD::SINT_TO_FP))
+    if (!selectCast(I, ISD::SINT_TO_FP))
       return SelectIntToFP(I, /*Signed=*/true);
     return true;
   case Instruction::UIToFP:
@@ -3531,9 +3531,9 @@ bool AArch64FastISel::TargetSelectInstruction(const Instruction *I) {
     EVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
     EVT DstVT = TLI.getValueType(I->getType());
     if (DstVT.bitsGT(SrcVT))
-      return SelectCast(I, ISD::ZERO_EXTEND);
+      return selectCast(I, ISD::ZERO_EXTEND);
     if (DstVT.bitsLT(SrcVT))
-      return SelectCast(I, ISD::TRUNCATE);
+      return selectCast(I, ISD::TRUNCATE);
     unsigned Reg = getRegForValue(I->getOperand(0));
     if (!Reg)
       return false;
@@ -3541,7 +3541,7 @@ bool AArch64FastISel::TargetSelectInstruction(const Instruction *I) {
     return true;
   }
   case Instruction::ExtractValue:
-    return SelectExtractValue(I);
+    return selectExtractValue(I);
   case Instruction::PHI:
     llvm_unreachable("FastISel shouldn't visit PHI nodes!");
   case Instruction::Load:
