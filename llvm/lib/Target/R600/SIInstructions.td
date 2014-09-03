@@ -1897,6 +1897,7 @@ class BinOp64Pat <SDNode node, Instruction inst> : Pat <
                   (EXTRACT_SUBREG i64:$src1, sub1)), sub1)
 >;
 
+def : BinOp64Pat <and, V_AND_B32_e32>;
 def : BinOp64Pat <or, V_OR_B32_e32>;
 def : BinOp64Pat <xor, V_XOR_B32_e32>;
 
