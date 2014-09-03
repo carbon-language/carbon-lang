@@ -27,6 +27,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/circular_raw_ostream.h"
+#include "llvm/Support/ManagedStatic.h"
 
 using namespace llvm;
 
@@ -50,14 +51,14 @@ DebugBufferSize("debug-buffer-size",
                 cl::Hidden,
                 cl::init(0));
 
-static std::string CurrentDebugType;
+static ManagedStatic<std::string> CurrentDebugType;
 
 namespace {
 
 struct DebugOnlyOpt {
   void operator=(const std::string &Val) const {
     DebugFlag |= !Val.empty();
-    CurrentDebugType = Val;
+    *CurrentDebugType = Val;
   }
 };
 
@@ -86,7 +87,7 @@ static void debug_user_sig_handler(void *Cookie) {
 // with the -debug-only=X option.
 //
 bool llvm::isCurrentDebugType(const char *DebugType) {
-  return CurrentDebugType.empty() || DebugType == CurrentDebugType;
+  return CurrentDebugType->empty() || DebugType == *CurrentDebugType;
 }
 
 /// setCurrentDebugType - Set the current debug type, as if the -debug-only=X
@@ -94,7 +95,7 @@ bool llvm::isCurrentDebugType(const char *DebugType) {
 /// debug output to be produced.
 ///
 void llvm::setCurrentDebugType(const char *Type) {
-  CurrentDebugType = Type;
+  *CurrentDebugType = Type;
 }
 
 /// dbgs - Return a circular-buffered debug stream.
