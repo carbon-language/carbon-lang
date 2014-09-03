@@ -1804,7 +1804,7 @@ void llvm::printMachOExportsTrie(const object::MachOObjectFile *Obj) {
     outs() << Entry.name();
     if (WeakDef || ThreadLocal || Resolver || Abs) {
       bool NeedsComma = false;
-      printf(" [");
+      outs() << " [";
       if (WeakDef) {
         outs() << "weak_def";
         NeedsComma = true;
