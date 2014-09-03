@@ -1321,7 +1321,9 @@ void AddressSanitizer::InjectCoverageAtBlock(Function &F, BasicBlock &BB) {
       break;
   }
 
-  DebugLoc EntryLoc = IP->getDebugLoc().getFnDebugLoc(*C);
+  DebugLoc EntryLoc = &BB == &F.getEntryBlock()
+                          ? IP->getDebugLoc().getFnDebugLoc(*C)
+                          : IP->getDebugLoc();
   IRBuilder<> IRB(IP);
   IRB.SetCurrentDebugLocation(EntryLoc);
   Type *Int8Ty = IRB.getInt8Ty();
