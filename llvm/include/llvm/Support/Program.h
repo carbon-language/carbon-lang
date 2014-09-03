@@ -126,6 +126,40 @@ struct ProcessInfo {
   /// argument length limits.
   bool argumentsFitWithinSystemLimits(ArrayRef<const char*> Args);
 
+  /// File encoding options when writing contents that a non-UTF8 tool will
+  /// read (on Windows systems). For UNIX, we always use UTF-8.
+  enum WindowsEncodingMethod {
+    /// UTF-8 is the LLVM native encoding, being the same as "do not perform
+    /// encoding conversion".
+    WEM_UTF8,
+    WEM_CurrentCodePage,
+    WEM_UTF16
+  };
+
+  /// Saves the UTF8-encoded \p contents string into the file \p FileName
+  /// using a specific encoding.
+  ///
+  /// This write file function adds the possibility to choose which encoding
+  /// to use when writing a text file. On Windows, this is important when
+  /// writing files with internationalization support with an encoding that is
+  /// different from the one used in LLVM (UTF-8). We use this when writing
+  /// response files, since GCC tools on MinGW only understand legacy code
+  /// pages, and VisualStudio tools only understand UTF-16.
+  /// For UNIX, using different encodings is silently ignored, since all tools
+  /// work well with UTF-8.
+  /// This function assumes that you only use UTF-8 *text* data and will convert
+  /// it to your desired encoding before writing to the file.
+  ///
+  /// FIXME: We use EM_CurrentCodePage to write response files for GNU tools in
+  /// a MinGW/MinGW-w64 environment, which has serious flaws but currently is
+  /// our best shot to make gcc/ld understand international characters. This
+  /// should be changed as soon as binutils fix this to support UTF16 on mingw.
+  ///
+  /// \returns non-zero error_code if failed
+  std::error_code
+  writeFileWithEncoding(StringRef FileName, StringRef Contents,
+                        WindowsEncodingMethod Encoding = WEM_UTF8);
+
   /// This function waits for the process specified by \p PI to finish.
   /// \returns A \see ProcessInfo struct with Pid set to:
   /// \li The process id of the child process if the child process has changed

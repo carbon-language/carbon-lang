@@ -19,6 +19,7 @@
 #include "Unix.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/raw_ostream.h"
 #include <llvm/Config/config.h>
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -438,6 +439,23 @@ ProcessInfo sys::Wait(const ProcessInfo &PI, unsigned SecondsToWait,
   std::error_code sys::ChangeStdoutToBinary(){
   // Do nothing, as Unix doesn't differentiate between text and binary.
     return std::error_code();
+}
+
+std::error_code
+llvm::sys::writeFileWithEncoding(StringRef FileName, StringRef Contents,
+                                 WindowsEncodingMethod Encoding /*unused*/) {
+  std::error_code EC;
+  llvm::raw_fd_ostream OS(FileName, EC, llvm::sys::fs::OpenFlags::F_Text);
+
+  if (EC)
+    return EC;
+
+  OS << Contents;
+
+  if (OS.has_error())
+    return std::make_error_code(std::errc::io_error);
+
+  return EC;
 }
 
 bool llvm::sys::argumentsFitWithinSystemLimits(ArrayRef<const char*> Args) {

@@ -919,11 +919,13 @@ std::error_code UTF8ToUTF16(llvm::StringRef utf8,
   return std::error_code();
 }
 
-std::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
-                            llvm::SmallVectorImpl<char> &utf8) {
+static
+std::error_code UTF16ToCodePage(unsigned codepage, const wchar_t *utf16,
+                                size_t utf16_len,
+                                llvm::SmallVectorImpl<char> &utf8) {
   if (utf16_len) {
     // Get length.
-    int len = ::WideCharToMultiByte(CP_UTF8, 0, utf16, utf16_len, utf8.begin(),
+    int len = ::WideCharToMultiByte(codepage, 0, utf16, utf16_len, utf8.begin(),
                                     0, NULL, NULL);
 
     if (len == 0)
@@ -933,7 +935,7 @@ std::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
     utf8.set_size(len);
 
     // Now do the actual conversion.
-    len = ::WideCharToMultiByte(CP_UTF8, 0, utf16, utf16_len, utf8.data(),
+    len = ::WideCharToMultiByte(codepage, 0, utf16, utf16_len, utf8.data(),
                                 utf8.size(), NULL, NULL);
 
     if (len == 0)
@@ -945,6 +947,16 @@ std::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
   utf8.pop_back();
 
   return std::error_code();
+}
+
+std::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
+                            llvm::SmallVectorImpl<char> &utf8) {
+  return UTF16ToCodePage(CP_UTF8, utf16, utf16_len, utf8);
+}
+
+std::error_code UTF16ToCurCP(const wchar_t *utf16, size_t utf16_len,
+                             llvm::SmallVectorImpl<char> &utf8) {
+  return UTF16ToCodePage(CP_ACP, utf16, utf16_len, utf8);
 }
 } // end namespace windows
 } // end namespace sys

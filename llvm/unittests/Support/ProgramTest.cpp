@@ -34,6 +34,16 @@ void sleep_for(unsigned int seconds) {
 #error sleep_for is not implemented on your platform.
 #endif
 
+#define ASSERT_NO_ERROR(x)                                                     \
+  if (std::error_code ASSERT_NO_ERROR_ec = x) {                                \
+    SmallString<128> MessageStorage;                                           \
+    raw_svector_ostream Message(MessageStorage);                               \
+    Message << #x ": did not return errc::success.\n"                          \
+            << "error number: " << ASSERT_NO_ERROR_ec.value() << "\n"          \
+            << "error message: " << ASSERT_NO_ERROR_ec.message() << "\n";      \
+    GTEST_FATAL_FAILURE_(MessageStorage.c_str());                              \
+  } else {                                                                     \
+  }
 // From TestMain.cpp.
 extern const char *TestMainArgv0;
 
@@ -218,6 +228,46 @@ TEST(ProgramTest, TestExecuteNegative) {
     ASSERT_FALSE(Error.empty());
   }
 
+}
+
+#ifdef LLVM_ON_WIN32
+const char utf16le_text[] =
+    "\x6c\x00\x69\x00\x6e\x00\x67\x00\xfc\x00\x69\x00\xe7\x00\x61\x00";
+const char utf16be_text[] =
+    "\x00\x6c\x00\x69\x00\x6e\x00\x67\x00\xfc\x00\x69\x00\xe7\x00\x61";
+#endif
+const char utf8_text[] = "\x6c\x69\x6e\x67\xc3\xbc\x69\xc3\xa7\x61";
+
+TEST(ProgramTest, TestWriteWithSystemEncoding) {
+  SmallString<128> TestDirectory;
+  ASSERT_NO_ERROR(fs::createUniqueDirectory("program-test", TestDirectory));
+  errs() << "Test Directory: " << TestDirectory << '\n';
+  errs().flush();
+  SmallString<128> file_pathname(TestDirectory);
+  path::append(file_pathname, "international-file.txt");
+  // Only on Windows we should encode in UTF16. For other systems, use UTF8
+  ASSERT_NO_ERROR(sys::writeFileWithEncoding(file_pathname.c_str(), utf8_text,
+                                             sys::WEM_UTF16));
+  int fd = 0;
+  ASSERT_NO_ERROR(fs::openFileForRead(file_pathname.c_str(), fd));
+#if defined(LLVM_ON_WIN32)
+  char buf[18];
+  ASSERT_EQ(::read(fd, buf, 18), 18);
+  if (strncmp(buf, "\xfe\xff", 2) == 0) { // UTF16-BE
+    ASSERT_EQ(strncmp(&buf[2], utf16be_text, 16), 0);
+  } else if (strncmp(buf, "\xff\xfe", 2) == 0) { // UTF16-LE
+    ASSERT_EQ(strncmp(&buf[2], utf16le_text, 16), 0);
+  } else {
+    FAIL() << "Invalid BOM in UTF-16 file";
+  }
+#else
+  char buf[10];
+  ASSERT_EQ(::read(fd, buf, 10), 10);
+  ASSERT_EQ(strncmp(buf, utf8_text, 10), 0);
+#endif
+  ::close(fd);
+  ASSERT_NO_ERROR(fs::remove(file_pathname.str()));
+  ASSERT_NO_ERROR(fs::remove(TestDirectory.str()));
 }
 
 } // end anonymous namespace
