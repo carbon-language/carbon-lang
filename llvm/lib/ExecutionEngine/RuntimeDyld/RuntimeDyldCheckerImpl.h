@@ -28,19 +28,39 @@ public:
   bool checkAllRulesInBuffer(StringRef RulePrefix, MemoryBuffer *MemBuf) const;
 
 private:
+
+  // StubMap typedefs.
+  typedef std::map<std::string, uint64_t> StubOffsetsMap;
+  struct SectionAddressInfo {
+    uint64_t SectionID;
+    StubOffsetsMap StubOffsets;
+  };
+  typedef std::map<std::string, SectionAddressInfo> SectionMap;
+  typedef std::map<std::string, SectionMap> StubMap;
+
   RuntimeDyldImpl &getRTDyld() const { return *RTDyld.Dyld; }
 
   bool isSymbolValid(StringRef Symbol) const;
   uint64_t getSymbolLinkerAddr(StringRef Symbol) const;
   uint64_t getSymbolRemoteAddr(StringRef Symbol) const;
   uint64_t readMemoryAtAddr(uint64_t Addr, unsigned Size) const;
-  std::pair<uint64_t, std::string> getStubAddrFor(StringRef FilePath,
+
+  std::pair<const SectionAddressInfo*, std::string> findSectionAddrInfo(
+                                                   StringRef FileName,
+                                                   StringRef SectionName) const;
+
+  std::pair<uint64_t, std::string> getSectionAddr(StringRef FileName,
+                                                  StringRef SectionName,
+                                                  bool IsInsideLoad) const;
+
+  std::pair<uint64_t, std::string> getStubAddrFor(StringRef FileName,
                                                   StringRef SectionName,
                                                   StringRef Symbol,
                                                   bool IsInsideLoad) const;
   StringRef getSubsectionStartingAt(StringRef Name) const;
 
-  void registerStubMap(StringRef FileName, unsigned SectionID,
+  void registerSection(StringRef FilePath, unsigned SectionID);
+  void registerStubMap(StringRef FilePath, unsigned SectionID,
                        const RuntimeDyldImpl::StubMap &RTDyldStubs);
 
   RuntimeDyld &RTDyld;
@@ -48,11 +68,6 @@ private:
   MCInstPrinter *InstPrinter;
   llvm::raw_ostream &ErrStream;
 
-  // StubMap typedefs.
-  typedef std::pair<unsigned, uint64_t> StubLoc;
-  typedef std::map<std::string, StubLoc> SymbolStubMap;
-  typedef std::map<std::string, SymbolStubMap> SectionStubMap;
-  typedef std::map<std::string, SectionStubMap> StubMap;
   StubMap Stubs;
 };
 }

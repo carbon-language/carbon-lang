@@ -550,6 +550,10 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
   }
 
   Sections.push_back(SectionEntry(Name, Addr, DataSize, (uintptr_t)pData));
+
+  if (Checker)
+    Checker->registerSection(Obj.getImageName(), SectionID);
+
   return SectionID;
 }
 
