@@ -552,7 +552,7 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
   if (release_input_file(F.handle) != LDPS_OK)
     message(LDPL_FATAL, "Failed to release file information");
 
-  ErrorOr<Module *> MOrErr = getLazyBitcodeModule(Buffer, Context);
+  ErrorOr<Module *> MOrErr = getLazyBitcodeModule(std::move(Buffer), Context);
 
   if (std::error_code EC = MOrErr.getError())
     message(LDPL_FATAL, "Could not read bitcode from file : %s",

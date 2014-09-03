@@ -54,7 +54,7 @@ LLVMBool LLVMGetBitcodeModuleInContext(LLVMContextRef ContextRef,
   std::unique_ptr<MemoryBuffer> Owner(unwrap(MemBuf));
 
   ErrorOr<Module *> ModuleOrErr =
-      getLazyBitcodeModule(Owner, *unwrap(ContextRef));
+      getLazyBitcodeModule(std::move(Owner), *unwrap(ContextRef));
   Owner.release();
 
   if (std::error_code EC = ModuleOrErr.getError()) {
