@@ -2504,6 +2504,11 @@ def : IMad24Pat<V_MAD_I32_I24>;
 def : UMad24Pat<V_MAD_U32_U24>;
 
 def : Pat <
+  (mul i32:$src0, i32:$src1),
+  (V_MUL_LO_I32 $src0, $src1)
+>;
+
+def : Pat <
   (mulhu i32:$src0, i32:$src1),
   (V_MUL_HI_U32 $src0, $src1)
 >;
@@ -2511,11 +2516,6 @@ def : Pat <
 def : Pat <
   (mulhs i32:$src0, i32:$src1),
   (V_MUL_HI_I32 $src0, $src1)
->;
-
-def : Pat <
-  (mul i32:$src0, i32:$src1),
-  (V_MUL_LO_I32 $src0, $src1)
 >;
 
 def : Vop3ModPat<V_MAD_F32, VOP_F32_F32_F32_F32, AMDGPUmad>;
