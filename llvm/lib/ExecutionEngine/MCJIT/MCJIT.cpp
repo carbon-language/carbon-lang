@@ -123,7 +123,7 @@ void MCJIT::setObjectCache(ObjectCache* NewCache) {
   ObjCache = NewCache;
 }
 
-ObjectBufferStream* MCJIT::emitObject(Module *M) {
+std::unique_ptr<ObjectBufferStream> MCJIT::emitObject(Module *M) {
   MutexGuard locked(lock);
 
   // This must be a module which has already been added but not loaded to this
@@ -159,7 +159,7 @@ ObjectBufferStream* MCJIT::emitObject(Module *M) {
     ObjCache->notifyObjectCompiled(M, MB);
   }
 
-  return CompiledObject.release();
+  return CompiledObject;
 }
 
 void MCJIT::generateCodeForModule(Module *M) {
@@ -185,8 +185,8 @@ void MCJIT::generateCodeForModule(Module *M) {
 
   // If the cache did not contain a suitable object, compile the object
   if (!ObjectToLoad) {
-    ObjectToLoad.reset(emitObject(M));
-    assert(ObjectToLoad.get() && "Compilation did not produce an object.");
+    ObjectToLoad = emitObject(M);
+    assert(ObjectToLoad && "Compilation did not produce an object.");
   }
 
   // Load the object into the dynamic linker.

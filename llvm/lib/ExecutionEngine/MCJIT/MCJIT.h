@@ -338,7 +338,7 @@ protected:
   /// this function call is expected to be the contained module.  The module
   /// is passed as a parameter here to prepare for multiple module support in
   /// the future.
-  ObjectBufferStream* emitObject(Module *M);
+  std::unique_ptr<ObjectBufferStream> emitObject(Module *M);
 
   void NotifyObjectEmitted(const ObjectImage& Obj);
   void NotifyFreeingObject(const ObjectImage& Obj);
