@@ -70,7 +70,7 @@ static bool nodesHaveSameOperandValue(SDNode *N0, SDNode* N1, unsigned OpName) {
   --Op0Idx;
   --Op1Idx;
 
-  return N0->getOperand(Op0Idx) == N0->getOperand(Op1Idx);
+  return N0->getOperand(Op0Idx) == N1->getOperand(Op1Idx);
 }
 
 bool SIInstrInfo::areLoadsFromSameBasePtr(SDNode *Load0, SDNode *Load1,
@@ -131,7 +131,7 @@ bool SIInstrInfo::areLoadsFromSameBasePtr(SDNode *Load0, SDNode *Load1,
     if (!nodesHaveSameOperandValue(Load0, Load1, AMDGPU::OpName::soffset) ||
         findChainOperand(Load0) != findChainOperand(Load1) ||
         !nodesHaveSameOperandValue(Load0, Load1, AMDGPU::OpName::vaddr) ||
-        !nodesHaveSameOperandValue(Load1, Load1, AMDGPU::OpName::srsrc))
+        !nodesHaveSameOperandValue(Load0, Load1, AMDGPU::OpName::srsrc))
       return false;
 
     int OffIdx0 = AMDGPU::getNamedOperandIdx(Opc0, AMDGPU::OpName::offset);
