@@ -1641,9 +1641,10 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
            Tok.getNextNonComment() && Tok.Type != TT_ObjCMethodExpr &&
            !Tok.Previous->is(tok::question) &&
            (Tok.Type != TT_DictLiteral || Style.SpacesInContainerLiterals);
-  if (Tok.Previous->Type == TT_UnaryOperator ||
-      Tok.Previous->Type == TT_CastRParen)
+  if (Tok.Previous->Type == TT_UnaryOperator)
     return Tok.Type == TT_BinaryOperator;
+  if (Tok.Previous->Type == TT_CastRParen)
+    return Style.SpaceAfterCStyleCast || Tok.Type == TT_BinaryOperator;
   if (Tok.Previous->is(tok::greater) && Tok.is(tok::greater)) {
     return Tok.Type == TT_TemplateCloser &&
            Tok.Previous->Type == TT_TemplateCloser &&
