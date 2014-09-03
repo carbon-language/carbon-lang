@@ -119,7 +119,8 @@ public:
                     ObjSectionToIDMap &SectionMap) override;
   virtual ~RuntimeDyldELF();
 
-  static ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
+  static std::unique_ptr<ObjectImage>
+  createObjectImage(std::unique_ptr<ObjectBuffer> InputBuffer);
   static ObjectImage *createObjectImageFromFile(std::unique_ptr<object::ObjectFile> Obj);
 };
 

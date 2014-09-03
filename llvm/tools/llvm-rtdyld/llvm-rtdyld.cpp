@@ -203,8 +203,8 @@ static int printLineInfoForInput() {
 
     std::unique_ptr<ObjectImage> LoadedObject;
     // Load the object file
-    LoadedObject.reset(
-        Dyld.loadObject(new ObjectBuffer(InputBuffer.get().release())));
+    LoadedObject = Dyld.loadObject(
+        llvm::make_unique<ObjectBuffer>(std::move(*InputBuffer)));
     if (!LoadedObject) {
       return Error(Dyld.getErrorString());
     }
@@ -264,8 +264,8 @@ static int executeInput() {
       return Error("unable to read input: '" + EC.message() + "'");
     std::unique_ptr<ObjectImage> LoadedObject;
     // Load the object file
-    LoadedObject.reset(
-        Dyld.loadObject(new ObjectBuffer(InputBuffer.get().release())));
+    LoadedObject = Dyld.loadObject(
+        llvm::make_unique<ObjectBuffer>(std::move(*InputBuffer)));
     if (!LoadedObject) {
       return Error(Dyld.getErrorString());
     }
@@ -427,8 +427,8 @@ static int linkAndVerify() {
 
     std::unique_ptr<ObjectImage> LoadedObject;
     // Load the object file
-    LoadedObject.reset(
-        Dyld.loadObject(new ObjectBuffer(InputBuffer.get().release())));
+    LoadedObject = Dyld.loadObject(
+        llvm::make_unique<ObjectBuffer>(std::move(*InputBuffer)));
     if (!LoadedObject) {
       return Error(Dyld.getErrorString());
     }

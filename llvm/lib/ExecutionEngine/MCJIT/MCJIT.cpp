@@ -82,15 +82,9 @@ MCJIT::~MCJIT() {
 
   Dyld.deregisterEHFrames();
 
-  LoadedObjectList::iterator it, end;
-  for (it = LoadedObjects.begin(), end = LoadedObjects.end(); it != end; ++it) {
-    ObjectImage *Obj = *it;
-    if (Obj) {
+  for (auto &Obj : LoadedObjects)
+    if (Obj)
       NotifyFreeingObject(*Obj);
-      delete Obj;
-    }
-  }
-  LoadedObjects.clear();
 
   Archives.clear();
 }
@@ -106,11 +100,11 @@ bool MCJIT::removeModule(Module *M) {
 }
 
 void MCJIT::addObjectFile(std::unique_ptr<object::ObjectFile> Obj) {
-  ObjectImage *LoadedObject = Dyld.loadObject(std::move(Obj));
+  std::unique_ptr<ObjectImage> LoadedObject = Dyld.loadObject(std::move(Obj));
   if (!LoadedObject || Dyld.hasError())
     report_fatal_error(Dyld.getErrorString());
 
-  LoadedObjects.push_back(LoadedObject);
+  LoadedObjects.push_back(std::move(LoadedObject));
 
   NotifyObjectEmitted(*LoadedObject);
 }
@@ -183,9 +177,10 @@ void MCJIT::generateCodeForModule(Module *M) {
   std::unique_ptr<ObjectBuffer> ObjectToLoad;
   // Try to load the pre-compiled object from cache if possible
   if (ObjCache) {
-    std::unique_ptr<MemoryBuffer> PreCompiledObject(ObjCache->getObject(M));
-    if (PreCompiledObject.get())
-      ObjectToLoad.reset(new ObjectBuffer(PreCompiledObject.release()));
+    if (std::unique_ptr<MemoryBuffer> PreCompiledObject =
+            ObjCache->getObject(M))
+      ObjectToLoad =
+          llvm::make_unique<ObjectBuffer>(std::move(PreCompiledObject));
   }
 
   // If the cache did not contain a suitable object, compile the object
@@ -196,8 +191,8 @@ void MCJIT::generateCodeForModule(Module *M) {
 
   // Load the object into the dynamic linker.
   // MCJIT now owns the ObjectImage pointer (via its LoadedObjects list).
-  ObjectImage *LoadedObject = Dyld.loadObject(ObjectToLoad.release());
-  LoadedObjects.push_back(LoadedObject);
+  std::unique_ptr<ObjectImage> LoadedObject =
+      Dyld.loadObject(std::move(ObjectToLoad));
   if (!LoadedObject)
     report_fatal_error(Dyld.getErrorString());
 
@@ -205,6 +200,8 @@ void MCJIT::generateCodeForModule(Module *M) {
   LoadedObject->registerWithDebugger();
 
   NotifyObjectEmitted(*LoadedObject);
+
+  LoadedObjects.push_back(std::move(LoadedObject));
 
   OwnedModules.markModuleAsLoaded(M);
 }
@@ -563,10 +560,8 @@ void MCJIT::NotifyObjectEmitted(const ObjectImage& Obj) {
 }
 void MCJIT::NotifyFreeingObject(const ObjectImage& Obj) {
   MutexGuard locked(lock);
-  for (unsigned I = 0, S = EventListeners.size(); I < S; ++I) {
-    JITEventListener *L = EventListeners[I];
+  for (JITEventListener *L : EventListeners)
     L->NotifyFreeingObject(Obj);
-  }
 }
 
 uint64_t LinkingMemoryManager::getSymbolAddress(const std::string &Name) {

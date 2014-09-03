@@ -31,7 +31,7 @@ protected:
   std::unique_ptr<ObjectBuffer> Buffer;
 
 public:
-  ObjectImage(ObjectBuffer *Input) : Buffer(Input) {}
+  ObjectImage(std::unique_ptr<ObjectBuffer> Input) : Buffer(std::move(Input)) {}
   virtual ~ObjectImage() {}
 
   virtual object::symbol_iterator begin_symbols() const = 0;

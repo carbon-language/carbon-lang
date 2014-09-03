@@ -219,8 +219,7 @@ class MCJIT : public ExecutionEngine {
   SmallVector<object::OwningBinary<object::Archive>, 2> Archives;
   SmallVector<std::unique_ptr<MemoryBuffer>, 2> Buffers;
 
-  typedef SmallVector<ObjectImage *, 2> LoadedObjectList;
-  LoadedObjectList  LoadedObjects;
+  SmallVector<std::unique_ptr<ObjectImage>, 2> LoadedObjects;
 
   // An optional ObjectCache to be notified of compiled objects and used to
   // perform lookup of pre-compiled code to avoid re-compilation.

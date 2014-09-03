@@ -103,8 +103,9 @@ protected:
 
 public:
   /// Create an ObjectImage from the given ObjectBuffer.
-  static ObjectImage *createObjectImage(ObjectBuffer *InputBuffer) {
-    return new ObjectImageCommon(InputBuffer);
+  static std::unique_ptr<ObjectImage>
+  createObjectImage(std::unique_ptr<ObjectBuffer> InputBuffer) {
+    return llvm::make_unique<ObjectImageCommon>(std::move(InputBuffer));
   }
 
   /// Create an ObjectImage from the given ObjectFile.

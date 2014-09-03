@@ -77,8 +77,10 @@ template <class ELFT> class ELFObjectImage : public ObjectImageCommon {
   bool Registered;
 
 public:
-  ELFObjectImage(ObjectBuffer *Input, std::unique_ptr<DyldELFObject<ELFT>> Obj)
-      : ObjectImageCommon(Input, std::move(Obj)), Registered(false) {}
+  ELFObjectImage(std::unique_ptr<ObjectBuffer> Input,
+                 std::unique_ptr<DyldELFObject<ELFT>> Obj)
+      : ObjectImageCommon(std::move(Input), std::move(Obj)), Registered(false) {
+  }
 
   virtual ~ELFObjectImage() {
     if (Registered)
@@ -212,7 +214,8 @@ RuntimeDyldELF::createObjectImageFromFile(std::unique_ptr<object::ObjectFile> Ob
     llvm_unreachable("Unexpected ELF format");
 }
 
-ObjectImage *RuntimeDyldELF::createObjectImage(ObjectBuffer *Buffer) {
+std::unique_ptr<ObjectImage>
+RuntimeDyldELF::createObjectImage(std::unique_ptr<ObjectBuffer> Buffer) {
   if (Buffer->getBufferSize() < ELF::EI_NIDENT)
     llvm_unreachable("Unexpected ELF object size");
   std::pair<unsigned char, unsigned char> Ident =
@@ -226,28 +229,30 @@ ObjectImage *RuntimeDyldELF::createObjectImage(ObjectBuffer *Buffer) {
     auto Obj =
         llvm::make_unique<DyldELFObject<ELFType<support::little, 4, false>>>(
             Buf, ec);
-    return new ELFObjectImage<ELFType<support::little, 4, false>>(
-        Buffer, std::move(Obj));
-  } else if (Ident.first == ELF::ELFCLASS32 &&
-             Ident.second == ELF::ELFDATA2MSB) {
+    return llvm::make_unique<
+        ELFObjectImage<ELFType<support::little, 4, false>>>(std::move(Buffer),
+                                                            std::move(Obj));
+  }
+  if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2MSB) {
     auto Obj =
         llvm::make_unique<DyldELFObject<ELFType<support::big, 4, false>>>(Buf,
                                                                           ec);
-    return new ELFObjectImage<ELFType<support::big, 4, false>>(Buffer,
-                                                               std::move(Obj));
-  } else if (Ident.first == ELF::ELFCLASS64 &&
-             Ident.second == ELF::ELFDATA2MSB) {
+    return llvm::make_unique<ELFObjectImage<ELFType<support::big, 4, false>>>(
+        std::move(Buffer), std::move(Obj));
+  }
+  if (Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2MSB) {
     auto Obj = llvm::make_unique<DyldELFObject<ELFType<support::big, 8, true>>>(
         Buf, ec);
-    return new ELFObjectImage<ELFType<support::big, 8, true>>(Buffer, std::move(Obj));
-  } else if (Ident.first == ELF::ELFCLASS64 &&
-             Ident.second == ELF::ELFDATA2LSB) {
-    auto Obj =
-        llvm::make_unique<DyldELFObject<ELFType<support::little, 8, true>>>(Buf,
-                                                                            ec);
-    return new ELFObjectImage<ELFType<support::little, 8, true>>(Buffer, std::move(Obj));
-  } else
-    llvm_unreachable("Unexpected ELF format");
+    return llvm::make_unique<ELFObjectImage<ELFType<support::big, 8, true>>>(
+        std::move(Buffer), std::move(Obj));
+  }
+  assert(Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2LSB &&
+         "Unexpected ELF format");
+  auto Obj =
+      llvm::make_unique<DyldELFObject<ELFType<support::little, 8, true>>>(Buf,
+                                                                          ec);
+  return llvm::make_unique<ELFObjectImage<ELFType<support::little, 8, true>>>(
+      std::move(Buffer), std::move(Obj));
 }
 
 RuntimeDyldELF::~RuntimeDyldELF() {}

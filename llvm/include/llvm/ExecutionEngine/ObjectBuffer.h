@@ -29,7 +29,7 @@ class ObjectBuffer {
   virtual void anchor();
 public:
   ObjectBuffer() {}
-  ObjectBuffer(MemoryBuffer* Buf) : Buffer(Buf) {}
+  ObjectBuffer(std::unique_ptr<MemoryBuffer> Buf) : Buffer(std::move(Buf)) {}
   virtual ~ObjectBuffer() {}
 
   MemoryBufferRef getMemBuffer() const { return Buffer->getMemBufferRef(); }

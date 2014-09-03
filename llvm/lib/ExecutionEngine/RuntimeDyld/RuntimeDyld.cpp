@@ -794,7 +794,8 @@ createRuntimeDyldMachO(Triple::ArchType Arch, RTDyldMemoryManager *MM,
   return Dyld;
 }
 
-ObjectImage *RuntimeDyld::loadObject(std::unique_ptr<ObjectFile> InputObject) {
+std::unique_ptr<ObjectImage>
+RuntimeDyld::loadObject(std::unique_ptr<ObjectFile> InputObject) {
   std::unique_ptr<ObjectImage> InputImage;
 
   ObjectFile &Obj = *InputObject;
@@ -816,19 +817,21 @@ ObjectImage *RuntimeDyld::loadObject(std::unique_ptr<ObjectFile> InputObject) {
     report_fatal_error("Incompatible object format!");
 
   Dyld->loadObject(InputImage.get());
-  return InputImage.release();
+  return InputImage;
 }
 
-ObjectImage *RuntimeDyld::loadObject(ObjectBuffer *InputBuffer) {
+std::unique_ptr<ObjectImage>
+RuntimeDyld::loadObject(std::unique_ptr<ObjectBuffer> InputBuffer) {
   std::unique_ptr<ObjectImage> InputImage;
   sys::fs::file_magic Type = sys::fs::identify_magic(InputBuffer->getBuffer());
+  auto *InputBufferPtr = InputBuffer.get();
 
   switch (Type) {
   case sys::fs::file_magic::elf_relocatable:
   case sys::fs::file_magic::elf_executable:
   case sys::fs::file_magic::elf_shared_object:
   case sys::fs::file_magic::elf_core:
-    InputImage.reset(RuntimeDyldELF::createObjectImage(InputBuffer));
+    InputImage = RuntimeDyldELF::createObjectImage(std::move(InputBuffer));
     if (!Dyld)
       Dyld = createRuntimeDyldELF(MM, ProcessAllSections, Checker).release();
     break;
@@ -842,7 +845,7 @@ ObjectImage *RuntimeDyld::loadObject(ObjectBuffer *InputBuffer) {
   case sys::fs::file_magic::macho_bundle:
   case sys::fs::file_magic::macho_dynamically_linked_shared_lib_stub:
   case sys::fs::file_magic::macho_dsym_companion:
-    InputImage.reset(RuntimeDyldMachO::createObjectImage(InputBuffer));
+    InputImage = RuntimeDyldMachO::createObjectImage(std::move(InputBuffer));
     if (!Dyld)
       Dyld = createRuntimeDyldMachO(
                            static_cast<Triple::ArchType>(InputImage->getArch()),
@@ -859,11 +862,11 @@ ObjectImage *RuntimeDyld::loadObject(ObjectBuffer *InputBuffer) {
     report_fatal_error("Incompatible object format!");
   }
 
-  if (!Dyld->isCompatibleFormat(InputBuffer))
+  if (!Dyld->isCompatibleFormat(InputBufferPtr))
     report_fatal_error("Incompatible object format!");
 
   Dyld->loadObject(InputImage.get());
-  return InputImage.release();
+  return InputImage;
 }
 
 void *RuntimeDyld::getSymbolAddress(StringRef Name) {
