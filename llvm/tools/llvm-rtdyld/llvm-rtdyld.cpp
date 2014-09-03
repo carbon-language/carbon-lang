@@ -411,6 +411,7 @@ static int linkAndVerify() {
   // Instantiate a dynamic linker.
   TrivialMemoryManager MemMgr;
   RuntimeDyld Dyld(&MemMgr);
+  Dyld.setProcessAllSections(true);
   RuntimeDyldChecker Checker(Dyld, Disassembler.get(), InstPrinter.get(),
                              llvm::dbgs());
 
@@ -438,6 +439,9 @@ static int linkAndVerify() {
 
   // Resolve all the relocations we can.
   Dyld.resolveRelocations();
+
+  // Register EH frames.
+  Dyld.registerEHFrames();
 
   int ErrorCode = checkAllExpressions(Checker);
   if (Dyld.hasError()) {

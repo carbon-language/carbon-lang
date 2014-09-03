@@ -860,7 +860,6 @@ void RuntimeDyldCheckerImpl::registerSection(
   const SectionEntry &Section = getRTDyld().Sections[SectionID];
   StringRef SectionName = Section.Name;
 
-  dbgs() << "Registering " << SectionName << "\n";
   Stubs[FileName][SectionName].SectionID = SectionID;
 }
 
