@@ -211,8 +211,8 @@ supported include:
     on string, int and bit objects.  Use !cast<string> to compare other types of
     objects.
 
-``!shl(a,b)`` ``!srl(a,b)`` ``!sra(a,b)`` ``!add(a,b)``
-    The usual logical and arithmetic operators.
+``!shl(a,b)`` ``!srl(a,b)`` ``!sra(a,b)`` ``!add(a,b)`` ``!and(a,b)``
+    The usual binary and arithmetic operators.
 
 Note that all of the values have rules specifying how they convert to values
 for different types.  These rules allow you to assign a value like "``7``"

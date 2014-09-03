@@ -96,7 +96,7 @@ wide variety of meanings:
 .. productionlist::
    BangOperator: one of
                :!eq     !if      !head    !tail      !con
-               :!add    !shl     !sra     !srl
+               :!add    !shl     !sra     !srl       !and
                :!cast   !empty   !subst   !foreach   !listconcat   !strconcat
 
 Syntax
