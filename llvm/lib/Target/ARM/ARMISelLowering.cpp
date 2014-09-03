@@ -2723,7 +2723,7 @@ static SDValue LowerATOMIC_FENCE(SDValue Op, SelectionDAG &DAG,
 
   ConstantSDNode *OrdN = cast<ConstantSDNode>(Op.getOperand(1));
   AtomicOrdering Ord = static_cast<AtomicOrdering>(OrdN->getZExtValue());
-  unsigned Domain = ARM_MB::ISH;
+  ARM_MB::MemBOpt Domain = ARM_MB::ISH;
   if (Subtarget->isMClass()) {
     // Only a full system barrier exists in the M-class architectures.
     Domain = ARM_MB::SY;
@@ -10980,6 +10980,63 @@ bool ARMTargetLowering::shouldConvertConstantLoadToIntImm(const APInt &Imm,
   if (Bits == 0 || Bits > 32)
     return false;
   return true;
+}
+
+static void makeDMB(IRBuilder<> &Builder, ARM_MB::MemBOpt Domain) {
+  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
+  Function *DMB = llvm::Intrinsic::getDeclaration(M, Intrinsic::arm_dmb);
+  Constant *CDomain = Builder.getInt32(Domain);
+  Builder.CreateCall(DMB, CDomain);
+}
+
+// Based on http://www.cl.cam.ac.uk/~pes20/cpp/cpp0xmappings.html
+void ARMTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
+                                         AtomicOrdering Ord, bool IsStore,
+                                         bool IsLoad) const {
+  if (!getInsertFencesForAtomic())
+    return;
+
+  switch (Ord) {
+  case NotAtomic:
+  case Unordered:
+    llvm_unreachable("Invalid fence: unordered/non-atomic");
+  case Monotonic:
+  case Acquire:
+    return; // Nothing to do
+  case SequentiallyConsistent:
+    if (!IsStore)
+      return; // Nothing to do
+              /*FALLTHROUGH*/
+  case Release:
+  case AcquireRelease:
+    if (Subtarget->isSwift())
+      makeDMB(Builder, ARM_MB::ISHST);
+    // FIXME: add a comment with a link to documentation justifying this.
+    else
+      makeDMB(Builder, ARM_MB::ISH);
+    return;
+  }
+}
+
+void ARMTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
+                                          AtomicOrdering Ord, bool IsStore,
+                                          bool IsLoad) const {
+  if (!getInsertFencesForAtomic())
+    return;
+
+  switch (Ord) {
+  case NotAtomic:
+  case Unordered:
+    llvm_unreachable("Invalid fence: unordered/not-atomic");
+  case Monotonic:
+  case Release:
+    return; // Nothing to do
+  case Acquire:
+  case AcquireRelease:
+    case SequentiallyConsistent:
+    makeDMB(Builder, ARM_MB::ISH);
+    return;
+  }
 }
 
 bool ARMTargetLowering::shouldExpandAtomicInIR(Instruction *Inst) const {

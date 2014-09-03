@@ -2,7 +2,8 @@
 
 define i32 @test_cmpxchg_seq_cst(i32* %addr, i32 %desired, i32 %new) {
 ; CHECK-LABEL: @test_cmpxchg_seq_cst
-; CHECK:     fence release
+; Intrinsic for "dmb ishst" is then expected
+; CHECK:     call void @llvm.arm.dmb(i32 10)
 ; CHECK:     br label %[[START:.*]]
 
 ; CHECK: [[START]]:
@@ -16,11 +17,11 @@ define i32 @test_cmpxchg_seq_cst(i32* %addr, i32 %desired, i32 %new) {
 ; CHECK:     br i1 [[SUCCESS]], label %[[SUCCESS_BB:.*]], label %[[FAILURE_BB]]
 
 ; CHECK: [[SUCCESS_BB]]:
-; CHECK:     fence seq_cst
+; CHECK:     call void @llvm.arm.dmb(i32 11)
 ; CHECK:     br label %[[END:.*]]
 
 ; CHECK: [[FAILURE_BB]]:
-; CHECK:     fence seq_cst
+; CHECK:     call void @llvm.arm.dmb(i32 11)
 ; CHECK:     br label %[[END]]
 
 ; CHECK: [[END]]:
@@ -34,7 +35,7 @@ define i32 @test_cmpxchg_seq_cst(i32* %addr, i32 %desired, i32 %new) {
 
 define i1 @test_cmpxchg_weak_fail(i32* %addr, i32 %desired, i32 %new) {
 ; CHECK-LABEL: @test_cmpxchg_weak_fail
-; CHECK:     fence release
+; CHECK:     call void @llvm.arm.dmb(i32 10)
 ; CHECK:     br label %[[START:.*]]
 
 ; CHECK: [[START]]:
@@ -48,11 +49,11 @@ define i1 @test_cmpxchg_weak_fail(i32* %addr, i32 %desired, i32 %new) {
 ; CHECK:     br i1 [[SUCCESS]], label %[[SUCCESS_BB:.*]], label %[[FAILURE_BB:.*]]
 
 ; CHECK: [[SUCCESS_BB]]:
-; CHECK:     fence seq_cst
+; CHECK:     call void @llvm.arm.dmb(i32 11)
 ; CHECK:     br label %[[END:.*]]
 
 ; CHECK: [[FAILURE_BB]]:
-; CHECK-NOT: fence
+; CHECK-NOT: dmb
 ; CHECK:     br label %[[END]]
 
 ; CHECK: [[END]]:
@@ -66,7 +67,7 @@ define i1 @test_cmpxchg_weak_fail(i32* %addr, i32 %desired, i32 %new) {
 
 define i32 @test_cmpxchg_monotonic(i32* %addr, i32 %desired, i32 %new) {
 ; CHECK-LABEL: @test_cmpxchg_monotonic
-; CHECK-NOT: fence
+; CHECK-NOT: dmb
 ; CHECK:     br label %[[START:.*]]
 
 ; CHECK: [[START]]:
@@ -80,11 +81,11 @@ define i32 @test_cmpxchg_monotonic(i32* %addr, i32 %desired, i32 %new) {
 ; CHECK:     br i1 [[SUCCESS]], label %[[SUCCESS_BB:.*]], label %[[FAILURE_BB:.*]]
 
 ; CHECK: [[SUCCESS_BB]]:
-; CHECK-NOT: fence
+; CHECK-NOT: dmb
 ; CHECK:     br label %[[END:.*]]
 
 ; CHECK: [[FAILURE_BB]]:
-; CHECK-NOT: fence
+; CHECK-NOT: dmb
 ; CHECK:     br label %[[END]]
 
 ; CHECK: [[END]]:
