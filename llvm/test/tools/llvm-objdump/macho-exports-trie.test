@@ -4,8 +4,8 @@
 
 # CHECK:[re-export] _malloc (from libSystem)
 # CHECK:[re-export] _myfree (_free from libSystem)
-# CHECK:0x00000F70  _myWeakweak_def]
-# CHECK:0x00001018  _myTLVper-thread]
-# CHECK:0x12345678  _myAbsabsolute]
+# CHECK:0x00000F70  _myWeak [weak_def]
+# CHECK:0x00001018  _myTLV [per-thread]
+# CHECK:0x12345678  _myAbs [absolute]
 # CHECK:0x00000F60  _foo
 
