@@ -29,8 +29,8 @@ class LLVMContext;
 //                            TerminatorInst Class
 //===----------------------------------------------------------------------===//
 
-/// TerminatorInst - Subclasses of this class are all able to terminate a basic
-/// block.  Thus, these are all the flow control type of operations.
+/// Subclasses of this class are all able to terminate a basic
+/// block. Thus, these are all the flow control type of operations.
 ///
 class TerminatorInst : public Instruction {
 protected:
@@ -54,20 +54,17 @@ protected:
   TerminatorInst *clone_impl() const override = 0;
 public:
 
-  /// getNumSuccessors - Return the number of successors that this terminator
-  /// has.
+  /// Return the number of successors that this terminator has.
   unsigned getNumSuccessors() const {
     return getNumSuccessorsV();
   }
 
-  /// getSuccessor - Return the specified successor.
-  ///
+  /// Return the specified successor.
   BasicBlock *getSuccessor(unsigned idx) const {
     return getSuccessorV(idx);
   }
 
-  /// setSuccessor - Update the specified successor to point at the provided
-  /// block.
+  /// Update the specified successor to point at the provided block.
   void setSuccessor(unsigned idx, BasicBlock *B) {
     setSuccessorV(idx, B);
   }
@@ -153,7 +150,7 @@ public:
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
-  /// Create() - Construct a binary instruction, given the opcode and the two
+  /// Construct a binary instruction, given the opcode and the two
   /// operands.  Optionally (if InstBefore is specified) insert the instruction
   /// into a BasicBlock right before the specified instruction.  The specified
   /// Instruction is allowed to be a dereferenced end iterator.
@@ -162,14 +159,14 @@ public:
                                 const Twine &Name = Twine(),
                                 Instruction *InsertBefore = nullptr);
 
-  /// Create() - Construct a binary instruction, given the opcode and the two
+  /// Construct a binary instruction, given the opcode and the two
   /// operands.  Also automatically insert this instruction to the end of the
   /// BasicBlock specified.
   ///
   static BinaryOperator *Create(BinaryOps Op, Value *S1, Value *S2,
                                 const Twine &Name, BasicBlock *InsertAtEnd);
 
-  /// Create* - These methods just forward to Create, and are useful when you
+  /// These methods just forward to Create, and are useful when you
   /// statically know what type of instruction you're going to create.  These
   /// helpers just save some typing.
 #define HANDLE_BINARY_INST(N, OPC, CLASS) \
@@ -281,8 +278,7 @@ public:
   /// Helper functions to construct and inspect unary operations (NEG and NOT)
   /// via binary operators SUB and XOR:
   ///
-  /// CreateNeg, CreateNot - Create the NEG and NOT
-  ///     instructions out of SUB and XOR instructions.
+  /// Create the NEG and NOT instructions out of SUB and XOR instructions.
   ///
   static BinaryOperator *CreateNeg(Value *Op, const Twine &Name = "",
                                    Instruction *InsertBefore = nullptr);
@@ -305,16 +301,14 @@ public:
   static BinaryOperator *CreateNot(Value *Op, const Twine &Name,
                                    BasicBlock *InsertAtEnd);
 
-  /// isNeg, isFNeg, isNot - Check if the given Value is a
-  /// NEG, FNeg, or NOT instruction.
+  /// Check if the given Value is a NEG, FNeg, or NOT instruction.
   ///
   static bool isNeg(const Value *V);
   static bool isFNeg(const Value *V, bool IgnoreZeroSign=false);
   static bool isNot(const Value *V);
 
-  /// getNegArgument, getNotArgument - Helper functions to extract the
-  ///     unary argument of a NEG, FNEG or NOT operation implemented via
-  ///     Sub, FSub, or Xor.
+  /// Helper functions to extract the unary argument of a NEG, FNEG or NOT
+  /// operation implemented via Sub, FSub, or Xor.
   ///
   static const Value *getNegArgument(const Value *BinOp);
   static       Value *getNegArgument(      Value *BinOp);
@@ -327,35 +321,32 @@ public:
     return static_cast<BinaryOps>(Instruction::getOpcode());
   }
 
-  /// swapOperands - Exchange the two operands to this instruction.
+  /// Exchange the two operands to this instruction.
   /// This instruction is safe to use on any binary instruction and
   /// does not modify the semantics of the instruction.  If the instruction
   /// cannot be reversed (ie, it's a Div), then return true.
   ///
   bool swapOperands();
 
-  /// setHasNoUnsignedWrap - Set or clear the nsw flag on this instruction,
-  /// which must be an operator which supports this flag. See LangRef.html
-  /// for the meaning of this flag.
+  /// Set or clear the nsw flag on this instruction, which must be an operator
+  /// which supports this flag. See LangRef.html for the meaning of this flag.
   void setHasNoUnsignedWrap(bool b = true);
 
-  /// setHasNoSignedWrap - Set or clear the nsw flag on this instruction,
-  /// which must be an operator which supports this flag. See LangRef.html
-  /// for the meaning of this flag.
+  /// Set or clear the nsw flag on this instruction, which must be an operator
+  /// which supports this flag. See LangRef.html for the meaning of this flag.
   void setHasNoSignedWrap(bool b = true);
 
-  /// setIsExact - Set or clear the exact flag on this instruction,
-  /// which must be an operator which supports this flag. See LangRef.html
-  /// for the meaning of this flag.
+  /// Set or clear the exact flag on this instruction, which must be an operator
+  /// which supports this flag. See LangRef.html for the meaning of this flag.
   void setIsExact(bool b = true);
 
-  /// hasNoUnsignedWrap - Determine whether the no unsigned wrap flag is set.
+  /// Determine whether the no unsigned wrap flag is set.
   bool hasNoUnsignedWrap() const;
 
-  /// hasNoSignedWrap - Determine whether the no signed wrap flag is set.
+  /// Determine whether the no signed wrap flag is set.
   bool hasNoSignedWrap() const;
 
-  /// isExact - Determine whether the exact flag is set.
+  /// Determine whether the exact flag is set.
   bool isExact() const;
 
   /// Convenience method to copy supported wrapping, exact, and fast-math flags
@@ -386,7 +377,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BinaryOperator, Value)
 //                               CastInst Class
 //===----------------------------------------------------------------------===//
 
-/// CastInst - This is the base class for all instructions that perform data
+/// This is the base class for all instructions that perform data
 /// casts. It is simply provided so that instruction category testing
 /// can be performed with code like:
 ///
