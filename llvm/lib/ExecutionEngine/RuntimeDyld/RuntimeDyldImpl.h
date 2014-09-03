@@ -373,7 +373,8 @@ public:
     this->Checker = Checker;
   }
 
-  ObjectImage *loadObject(ObjectImage *InputObject);
+  std::unique_ptr<ObjectImage>
+  loadObject(std::unique_ptr<ObjectImage> InputObject);
 
   uint8_t* getSymbolAddress(StringRef Name) {
     // FIXME: Just look up as a function for now. Overly simple of course.

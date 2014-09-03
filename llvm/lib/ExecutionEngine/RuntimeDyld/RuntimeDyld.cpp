@@ -137,10 +137,10 @@ static std::error_code getOffset(const SymbolRef &Sym, uint64_t &Result) {
   return object_error::success;
 }
 
-ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
+std::unique_ptr<ObjectImage>
+RuntimeDyldImpl::loadObject(std::unique_ptr<ObjectImage> Obj) {
   MutexGuard locked(lock);
 
-  std::unique_ptr<ObjectImage> Obj(InputObject);
   if (!Obj)
     return nullptr;
 
@@ -250,7 +250,7 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
   // Give the subclasses a chance to tie-up any loose ends.
   finalizeLoad(*Obj, LocalSections);
 
-  return Obj.release();
+  return Obj;
 }
 
 // A helper method for computeTotalAllocSize.
@@ -816,8 +816,7 @@ RuntimeDyld::loadObject(std::unique_ptr<ObjectFile> InputObject) {
   if (!Dyld->isCompatibleFile(&Obj))
     report_fatal_error("Incompatible object format!");
 
-  Dyld->loadObject(InputImage.get());
-  return InputImage;
+  return Dyld->loadObject(std::move(InputImage));
 }
 
 std::unique_ptr<ObjectImage>
@@ -865,8 +864,7 @@ RuntimeDyld::loadObject(std::unique_ptr<ObjectBuffer> InputBuffer) {
   if (!Dyld->isCompatibleFormat(InputBufferPtr))
     report_fatal_error("Incompatible object format!");
 
-  Dyld->loadObject(InputImage.get());
-  return InputImage;
+  return Dyld->loadObject(std::move(InputImage));
 }
 
 void *RuntimeDyld::getSymbolAddress(StringRef Name) {
