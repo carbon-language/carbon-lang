@@ -60,9 +60,7 @@ void UndelegatedConstructorCheck::registerMatchers(MatchFinder *Finder) {
               constructExpr(hasDeclaration(constructorDecl(ofClass(
                                 recordDecl(baseOfBoundNode("parent"))))))
                   .bind("construct"))),
-          unless(hasAncestor(decl(
-              anyOf(recordDecl(ast_matchers::isTemplateInstantiation()),
-                    functionDecl(ast_matchers::isTemplateInstantiation())))))),
+          unless(isInTemplateInstantiation())),
       this);
 }
 

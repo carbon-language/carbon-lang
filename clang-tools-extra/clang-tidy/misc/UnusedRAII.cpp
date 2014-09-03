@@ -29,14 +29,11 @@ void UnusedRAIICheck::registerMatchers(MatchFinder *Finder) {
   // those returned from a call.
   auto BindTemp = bindTemporaryExpr(unless(has(callExpr()))).bind("temp");
   Finder->addMatcher(
-      exprWithCleanups(
-          unless(hasAncestor(decl(
-              anyOf(recordDecl(ast_matchers::isTemplateInstantiation()),
-                    functionDecl(ast_matchers::isTemplateInstantiation()))))),
-          hasParent(compoundStmt().bind("compound")),
-          hasType(recordDecl(hasUserDeclaredDestructor())),
-          anyOf(has(BindTemp), has(functionalCastExpr(has(BindTemp)))))
-          .bind("expr"),
+      exprWithCleanups(unless(isInTemplateInstantiation()),
+                       hasParent(compoundStmt().bind("compound")),
+                       hasType(recordDecl(hasUserDeclaredDestructor())),
+                       anyOf(has(BindTemp), has(functionalCastExpr(
+                                                has(BindTemp))))).bind("expr"),
       this);
 }
 

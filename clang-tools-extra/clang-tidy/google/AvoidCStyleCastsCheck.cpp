@@ -28,10 +28,7 @@ AvoidCStyleCastsCheck::registerMatchers(ast_matchers::MatchFinder *Finder) {
           // FIXME: Remove this once this is fixed in the AST.
           unless(hasParent(substNonTypeTemplateParmExpr())),
           // Avoid matches in template instantiations.
-          unless(hasAncestor(decl(
-              anyOf(recordDecl(ast_matchers::isTemplateInstantiation()),
-                    functionDecl(ast_matchers::isTemplateInstantiation()))))))
-          .bind("cast"),
+          unless(isInTemplateInstantiation())).bind("cast"),
       this);
 }
 

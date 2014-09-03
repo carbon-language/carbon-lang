@@ -19,13 +19,7 @@ namespace tidy {
 namespace readability {
 
 void NamedParameterCheck::registerMatchers(ast_matchers::MatchFinder *Finder) {
-  Finder->addMatcher(
-      functionDecl(
-          unless(hasAncestor(decl(
-              anyOf(recordDecl(ast_matchers::isTemplateInstantiation()),
-                    functionDecl(ast_matchers::isTemplateInstantiation()))))))
-          .bind("decl"),
-      this);
+  Finder->addMatcher(functionDecl(unless(isInstantiated())).bind("decl"), this);
 }
 
 void NamedParameterCheck::check(const MatchFinder::MatchResult &Result) {

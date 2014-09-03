@@ -30,9 +30,7 @@ ExplicitMakePairCheck::registerMatchers(ast_matchers::MatchFinder *Finder) {
   // Look for std::make_pair with explicit template args. Ignore calls in
   // templates.
   Finder->addMatcher(
-      callExpr(unless(hasAncestor(decl(anyOf(
-                   recordDecl(ast_matchers::isTemplateInstantiation()),
-                   functionDecl(ast_matchers::isTemplateInstantiation()))))),
+      callExpr(unless(isInTemplateInstantiation()),
                callee(expr(ignoringParenImpCasts(
                    declRefExpr(hasExplicitTemplateArgs(),
                                to(functionDecl(hasName("::std::make_pair"))))
