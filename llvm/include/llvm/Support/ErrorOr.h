@@ -115,19 +115,19 @@ public:
   }
 
   template <class OtherT>
-  ErrorOr(const ErrorOr<OtherT> &Other) {
+  ErrorOr(
+      const ErrorOr<OtherT> &Other,
+      typename std::enable_if<std::is_convertible<OtherT, T>::value>::type * =
+          nullptr) {
     copyConstruct(Other);
   }
 
-  ErrorOr &operator =(const ErrorOr &Other) {
-    copyAssign(Other);
-    return *this;
-  }
-
   template <class OtherT>
-  ErrorOr &operator =(const ErrorOr<OtherT> &Other) {
-    copyAssign(Other);
-    return *this;
+  explicit ErrorOr(
+      const ErrorOr<OtherT> &Other,
+      typename std::enable_if<
+          !std::is_convertible<OtherT, const T &>::value>::type * = nullptr) {
+    copyConstruct(Other);
   }
 
   ErrorOr(ErrorOr &&Other) {
@@ -135,17 +135,29 @@ public:
   }
 
   template <class OtherT>
-  ErrorOr(ErrorOr<OtherT> &&Other) {
+  ErrorOr(
+      ErrorOr<OtherT> &&Other,
+      typename std::enable_if<std::is_convertible<OtherT, T>::value>::type * =
+          nullptr) {
     moveConstruct(std::move(Other));
   }
 
-  ErrorOr &operator =(ErrorOr &&Other) {
-    moveAssign(std::move(Other));
+  // This might eventually need SFINAE but it's more complex than is_convertible
+  // & I'm too lazy to write it right now.
+  template <class OtherT>
+  explicit ErrorOr(
+      ErrorOr<OtherT> &&Other,
+      typename std::enable_if<!std::is_convertible<OtherT, T>::value>::type * =
+          nullptr) {
+    moveConstruct(std::move(Other));
+  }
+
+  ErrorOr &operator=(const ErrorOr &Other) {
+    copyAssign(Other);
     return *this;
   }
 
-  template <class OtherT>
-  ErrorOr &operator =(ErrorOr<OtherT> &&Other) {
+  ErrorOr &operator=(ErrorOr &&Other) {
     moveAssign(std::move(Other));
     return *this;
   }

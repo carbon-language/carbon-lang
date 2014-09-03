@@ -60,5 +60,36 @@ TEST(ErrorOr, Covariant) {
 
   ErrorOr<std::unique_ptr<B> > b1(ErrorOr<std::unique_ptr<D> >(nullptr));
   b1 = ErrorOr<std::unique_ptr<D> >(nullptr);
+
+  ErrorOr<std::unique_ptr<int>> b2(ErrorOr<int *>(nullptr));
+  ErrorOr<int *> b3(nullptr);
+  ErrorOr<std::unique_ptr<int>> b4(b3);
 }
+
+// ErrorOr<int*> x(nullptr);
+// ErrorOr<std::unique_ptr<int>> y = x; // invalid conversion
+static_assert(
+    !std::is_convertible<const ErrorOr<int *> &,
+                         ErrorOr<std::unique_ptr<int>>>::value,
+    "do not invoke explicit ctors in implicit conversion from lvalue");
+
+// ErrorOr<std::unique_ptr<int>> y = ErrorOr<int*>(nullptr); // invalid
+//                                                           // conversion
+static_assert(
+    !std::is_convertible<ErrorOr<int *> &&,
+                         ErrorOr<std::unique_ptr<int>>>::value,
+    "do not invoke explicit ctors in implicit conversion from rvalue");
+
+// ErrorOr<int*> x(nullptr);
+// ErrorOr<std::unique_ptr<int>> y;
+// y = x; // invalid conversion
+static_assert(!std::is_assignable<ErrorOr<std::unique_ptr<int>>,
+                                  const ErrorOr<int *> &>::value,
+              "do not invoke explicit ctors in assignment");
+
+// ErrorOr<std::unique_ptr<int>> x;
+// x = ErrorOr<int*>(nullptr); // invalid conversion
+static_assert(!std::is_assignable<ErrorOr<std::unique_ptr<int>>,
+                                  ErrorOr<int *> &&>::value,
+              "do not invoke explicit ctors in assignment");
 } // end anon namespace
