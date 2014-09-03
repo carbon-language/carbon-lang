@@ -105,28 +105,28 @@ class ARMFastISel final : public FastISel {
 
     // Code from FastISel.cpp.
   private:
-    unsigned FastEmitInst_r(unsigned MachineInstOpcode,
+    unsigned fastEmitInst_r(unsigned MachineInstOpcode,
                             const TargetRegisterClass *RC,
                             unsigned Op0, bool Op0IsKill);
-    unsigned FastEmitInst_rr(unsigned MachineInstOpcode,
+    unsigned fastEmitInst_rr(unsigned MachineInstOpcode,
                              const TargetRegisterClass *RC,
                              unsigned Op0, bool Op0IsKill,
                              unsigned Op1, bool Op1IsKill);
-    unsigned FastEmitInst_rrr(unsigned MachineInstOpcode,
+    unsigned fastEmitInst_rrr(unsigned MachineInstOpcode,
                               const TargetRegisterClass *RC,
                               unsigned Op0, bool Op0IsKill,
                               unsigned Op1, bool Op1IsKill,
                               unsigned Op2, bool Op2IsKill);
-    unsigned FastEmitInst_ri(unsigned MachineInstOpcode,
+    unsigned fastEmitInst_ri(unsigned MachineInstOpcode,
                              const TargetRegisterClass *RC,
                              unsigned Op0, bool Op0IsKill,
                              uint64_t Imm);
-    unsigned FastEmitInst_rri(unsigned MachineInstOpcode,
+    unsigned fastEmitInst_rri(unsigned MachineInstOpcode,
                               const TargetRegisterClass *RC,
                               unsigned Op0, bool Op0IsKill,
                               unsigned Op1, bool Op1IsKill,
                               uint64_t Imm);
-    unsigned FastEmitInst_i(unsigned MachineInstOpcode,
+    unsigned fastEmitInst_i(unsigned MachineInstOpcode,
                             const TargetRegisterClass *RC,
                             uint64_t Imm);
 
@@ -285,7 +285,7 @@ ARMFastISel::AddOptionalDefs(const MachineInstrBuilder &MIB) {
   return MIB;
 }
 
-unsigned ARMFastISel::FastEmitInst_r(unsigned MachineInstOpcode,
+unsigned ARMFastISel::fastEmitInst_r(unsigned MachineInstOpcode,
                                      const TargetRegisterClass *RC,
                                      unsigned Op0, bool Op0IsKill) {
   unsigned ResultReg = createResultReg(RC);
@@ -307,7 +307,7 @@ unsigned ARMFastISel::FastEmitInst_r(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned ARMFastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
+unsigned ARMFastISel::fastEmitInst_rr(unsigned MachineInstOpcode,
                                       const TargetRegisterClass *RC,
                                       unsigned Op0, bool Op0IsKill,
                                       unsigned Op1, bool Op1IsKill) {
@@ -335,7 +335,7 @@ unsigned ARMFastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned ARMFastISel::FastEmitInst_rrr(unsigned MachineInstOpcode,
+unsigned ARMFastISel::fastEmitInst_rrr(unsigned MachineInstOpcode,
                                        const TargetRegisterClass *RC,
                                        unsigned Op0, bool Op0IsKill,
                                        unsigned Op1, bool Op1IsKill,
@@ -367,7 +367,7 @@ unsigned ARMFastISel::FastEmitInst_rrr(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned ARMFastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
+unsigned ARMFastISel::fastEmitInst_ri(unsigned MachineInstOpcode,
                                       const TargetRegisterClass *RC,
                                       unsigned Op0, bool Op0IsKill,
                                       uint64_t Imm) {
@@ -393,7 +393,7 @@ unsigned ARMFastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned ARMFastISel::FastEmitInst_rri(unsigned MachineInstOpcode,
+unsigned ARMFastISel::fastEmitInst_rri(unsigned MachineInstOpcode,
                                        const TargetRegisterClass *RC,
                                        unsigned Op0, bool Op0IsKill,
                                        unsigned Op1, bool Op1IsKill,
@@ -423,7 +423,7 @@ unsigned ARMFastISel::FastEmitInst_rri(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned ARMFastISel::FastEmitInst_i(unsigned MachineInstOpcode,
+unsigned ARMFastISel::fastEmitInst_i(unsigned MachineInstOpcode,
                                      const TargetRegisterClass *RC,
                                      uint64_t Imm) {
   unsigned ResultReg = createResultReg(RC);
@@ -548,7 +548,7 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, MVT VT) {
 
   unsigned ResultReg = 0;
   if (Subtarget->useMovt(*FuncInfo.MF))
-    ResultReg = FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
+    ResultReg = fastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
 
   if (ResultReg)
     return ResultReg;
@@ -909,7 +909,7 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, MVT VT, bool useAM3) {
   // Since the offset is too large for the load/store instruction
   // get the reg+offset into a register.
   if (needsLowering) {
-    Addr.Base.Reg = FastEmit_ri_(MVT::i32, ISD::ADD, Addr.Base.Reg,
+    Addr.Base.Reg = fastEmit_ri_(MVT::i32, ISD::ADD, Addr.Base.Reg,
                                  /*Op0IsKill*/false, Addr.Offset, MVT::i32);
     Addr.Offset = 0;
   }
@@ -1976,7 +1976,7 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
         break;
       }
       case CCValAssign::BCvt: {
-        unsigned BC = FastEmit_r(ArgVT, VA.getLocVT(), ISD::BITCAST, Arg,
+        unsigned BC = fastEmit_r(ArgVT, VA.getLocVT(), ISD::BITCAST, Arg,
                                  /*TODO: Kill=*/false);
         assert(BC != 0 && "Failed to emit a bitcast!");
         Arg = BC;

@@ -106,15 +106,15 @@ class PPCFastISel final : public FastISel {
     bool tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
                              const LoadInst *LI) override;
     bool fastLowerArguments() override;
-    unsigned FastEmit_i(MVT Ty, MVT RetTy, unsigned Opc, uint64_t Imm) override;
-    unsigned FastEmitInst_ri(unsigned MachineInstOpcode,
+    unsigned fastEmit_i(MVT Ty, MVT RetTy, unsigned Opc, uint64_t Imm) override;
+    unsigned fastEmitInst_ri(unsigned MachineInstOpcode,
                              const TargetRegisterClass *RC,
                              unsigned Op0, bool Op0IsKill,
                              uint64_t Imm);
-    unsigned FastEmitInst_r(unsigned MachineInstOpcode,
+    unsigned fastEmitInst_r(unsigned MachineInstOpcode,
                             const TargetRegisterClass *RC,
                             unsigned Op0, bool Op0IsKill);
-    unsigned FastEmitInst_rr(unsigned MachineInstOpcode,
+    unsigned fastEmitInst_rr(unsigned MachineInstOpcode,
                              const TargetRegisterClass *RC,
                              unsigned Op0, bool Op0IsKill,
                              unsigned Op1, bool Op1IsKill);
@@ -2183,7 +2183,7 @@ bool PPCFastISel::fastLowerArguments() {
 
 // Handle materializing integer constants into a register.  This is not
 // automatically generated for PowerPC, so must be explicitly created here.
-unsigned PPCFastISel::FastEmit_i(MVT Ty, MVT VT, unsigned Opc, uint64_t Imm) {
+unsigned PPCFastISel::fastEmit_i(MVT Ty, MVT VT, unsigned Opc, uint64_t Imm) {
   
   if (Opc != ISD::Constant)
     return 0;
@@ -2220,7 +2220,7 @@ unsigned PPCFastISel::FastEmit_i(MVT Ty, MVT VT, unsigned Opc, uint64_t Imm) {
 // assigning R0 or X0 to the output register for GPRC and G8RC
 // register classes, as any such result could be used in ADDI, etc.,
 // where those regs have another meaning.
-unsigned PPCFastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
+unsigned PPCFastISel::fastEmitInst_ri(unsigned MachineInstOpcode,
                                       const TargetRegisterClass *RC,
                                       unsigned Op0, bool Op0IsKill,
                                       uint64_t Imm) {
@@ -2233,27 +2233,27 @@ unsigned PPCFastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
     (RC == &PPC::GPRCRegClass ? &PPC::GPRC_and_GPRC_NOR0RegClass :
      (RC == &PPC::G8RCRegClass ? &PPC::G8RC_and_G8RC_NOX0RegClass : RC));
 
-  return FastISel::FastEmitInst_ri(MachineInstOpcode, UseRC,
+  return FastISel::fastEmitInst_ri(MachineInstOpcode, UseRC,
                                    Op0, Op0IsKill, Imm);
 }
 
 // Override for instructions with one register operand to avoid use of
 // R0/X0.  The automatic infrastructure isn't aware of the context so
 // we must be conservative.
-unsigned PPCFastISel::FastEmitInst_r(unsigned MachineInstOpcode,
+unsigned PPCFastISel::fastEmitInst_r(unsigned MachineInstOpcode,
                                      const TargetRegisterClass* RC,
                                      unsigned Op0, bool Op0IsKill) {
   const TargetRegisterClass *UseRC =
     (RC == &PPC::GPRCRegClass ? &PPC::GPRC_and_GPRC_NOR0RegClass :
      (RC == &PPC::G8RCRegClass ? &PPC::G8RC_and_G8RC_NOX0RegClass : RC));
 
-  return FastISel::FastEmitInst_r(MachineInstOpcode, UseRC, Op0, Op0IsKill);
+  return FastISel::fastEmitInst_r(MachineInstOpcode, UseRC, Op0, Op0IsKill);
 }
 
 // Override for instructions with two register operands to avoid use
 // of R0/X0.  The automatic infrastructure isn't aware of the context
 // so we must be conservative.
-unsigned PPCFastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
+unsigned PPCFastISel::fastEmitInst_rr(unsigned MachineInstOpcode,
                                       const TargetRegisterClass* RC,
                                       unsigned Op0, bool Op0IsKill,
                                       unsigned Op1, bool Op1IsKill) {
@@ -2261,7 +2261,7 @@ unsigned PPCFastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
     (RC == &PPC::GPRCRegClass ? &PPC::GPRC_and_GPRC_NOR0RegClass :
      (RC == &PPC::G8RCRegClass ? &PPC::G8RC_and_G8RC_NOX0RegClass : RC));
 
-  return FastISel::FastEmitInst_rr(MachineInstOpcode, UseRC, Op0, Op0IsKill,
+  return FastISel::fastEmitInst_rr(MachineInstOpcode, UseRC, Op0, Op0IsKill,
                                    Op1, Op1IsKill);
 }
 

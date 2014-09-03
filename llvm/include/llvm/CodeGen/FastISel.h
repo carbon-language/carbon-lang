@@ -311,124 +311,124 @@ protected:
 
   /// \brief This method is called by target-independent code to request that an
   /// instruction with the given type and opcode be emitted.
-  virtual unsigned FastEmit_(MVT VT, MVT RetVT, unsigned Opcode);
+  virtual unsigned fastEmit_(MVT VT, MVT RetVT, unsigned Opcode);
 
   /// \brief This method is called by target-independent code to request that an
   /// instruction with the given type, opcode, and register operand be emitted.
-  virtual unsigned FastEmit_r(MVT VT, MVT RetVT, unsigned Opcode, unsigned Op0,
+  virtual unsigned fastEmit_r(MVT VT, MVT RetVT, unsigned Opcode, unsigned Op0,
                               bool Op0IsKill);
 
   /// \brief This method is called by target-independent code to request that an
   /// instruction with the given type, opcode, and register operands be emitted.
-  virtual unsigned FastEmit_rr(MVT VT, MVT RetVT, unsigned Opcode, unsigned Op0,
+  virtual unsigned fastEmit_rr(MVT VT, MVT RetVT, unsigned Opcode, unsigned Op0,
                                bool Op0IsKill, unsigned Op1, bool Op1IsKill);
 
   /// \brief This method is called by target-independent code to request that an
   /// instruction with the given type, opcode, and register and immediate
   // operands be emitted.
-  virtual unsigned FastEmit_ri(MVT VT, MVT RetVT, unsigned Opcode, unsigned Op0,
+  virtual unsigned fastEmit_ri(MVT VT, MVT RetVT, unsigned Opcode, unsigned Op0,
                                bool Op0IsKill, uint64_t Imm);
 
   /// \brief This method is called by target-independent code to request that an
   /// instruction with the given type, opcode, and register and floating-point
   /// immediate operands be emitted.
-  virtual unsigned FastEmit_rf(MVT VT, MVT RetVT, unsigned Opcode, unsigned Op0,
+  virtual unsigned fastEmit_rf(MVT VT, MVT RetVT, unsigned Opcode, unsigned Op0,
                                bool Op0IsKill, const ConstantFP *FPImm);
 
   /// \brief This method is called by target-independent code to request that an
   /// instruction with the given type, opcode, and register and immediate
   /// operands be emitted.
-  virtual unsigned FastEmit_rri(MVT VT, MVT RetVT, unsigned Opcode,
+  virtual unsigned fastEmit_rri(MVT VT, MVT RetVT, unsigned Opcode,
                                 unsigned Op0, bool Op0IsKill, unsigned Op1,
                                 bool Op1IsKill, uint64_t Imm);
 
-  /// \brief This method is a wrapper of FastEmit_ri.
+  /// \brief This method is a wrapper of fastEmit_ri.
   ///
   /// It first tries to emit an instruction with an immediate operand using
-  /// FastEmit_ri.  If that fails, it materializes the immediate into a register
-  /// and try FastEmit_rr instead.
-  unsigned FastEmit_ri_(MVT VT, unsigned Opcode, unsigned Op0, bool Op0IsKill,
+  /// fastEmit_ri.  If that fails, it materializes the immediate into a register
+  /// and try fastEmit_rr instead.
+  unsigned fastEmit_ri_(MVT VT, unsigned Opcode, unsigned Op0, bool Op0IsKill,
                         uint64_t Imm, MVT ImmType);
 
   /// \brief This method is called by target-independent code to request that an
   /// instruction with the given type, opcode, and immediate operand be emitted.
-  virtual unsigned FastEmit_i(MVT VT, MVT RetVT, unsigned Opcode, uint64_t Imm);
+  virtual unsigned fastEmit_i(MVT VT, MVT RetVT, unsigned Opcode, uint64_t Imm);
 
   /// \brief This method is called by target-independent code to request that an
   /// instruction with the given type, opcode, and floating-point immediate
   /// operand be emitted.
-  virtual unsigned FastEmit_f(MVT VT, MVT RetVT, unsigned Opcode,
+  virtual unsigned fastEmit_f(MVT VT, MVT RetVT, unsigned Opcode,
                               const ConstantFP *FPImm);
 
   /// \brief Emit a MachineInstr with no operands and a result register in the
   /// given register class.
-  unsigned FastEmitInst_(unsigned MachineInstOpcode,
+  unsigned fastEmitInst_(unsigned MachineInstOpcode,
                          const TargetRegisterClass *RC);
 
   /// \brief Emit a MachineInstr with one register operand and a result register
   /// in the given register class.
-  unsigned FastEmitInst_r(unsigned MachineInstOpcode,
+  unsigned fastEmitInst_r(unsigned MachineInstOpcode,
                           const TargetRegisterClass *RC, unsigned Op0,
                           bool Op0IsKill);
 
   /// \brief Emit a MachineInstr with two register operands and a result
   /// register in the given register class.
-  unsigned FastEmitInst_rr(unsigned MachineInstOpcode,
+  unsigned fastEmitInst_rr(unsigned MachineInstOpcode,
                            const TargetRegisterClass *RC, unsigned Op0,
                            bool Op0IsKill, unsigned Op1, bool Op1IsKill);
 
   /// \brief Emit a MachineInstr with three register operands and a result
   /// register in the given register class.
-  unsigned FastEmitInst_rrr(unsigned MachineInstOpcode,
+  unsigned fastEmitInst_rrr(unsigned MachineInstOpcode,
                             const TargetRegisterClass *RC, unsigned Op0,
                             bool Op0IsKill, unsigned Op1, bool Op1IsKill,
                             unsigned Op2, bool Op2IsKill);
 
   /// \brief Emit a MachineInstr with a register operand, an immediate, and a
   /// result register in the given register class.
-  unsigned FastEmitInst_ri(unsigned MachineInstOpcode,
+  unsigned fastEmitInst_ri(unsigned MachineInstOpcode,
                            const TargetRegisterClass *RC, unsigned Op0,
                            bool Op0IsKill, uint64_t Imm);
 
   /// \brief Emit a MachineInstr with one register operand and two immediate
   /// operands.
-  unsigned FastEmitInst_rii(unsigned MachineInstOpcode,
+  unsigned fastEmitInst_rii(unsigned MachineInstOpcode,
                             const TargetRegisterClass *RC, unsigned Op0,
                             bool Op0IsKill, uint64_t Imm1, uint64_t Imm2);
 
   /// \brief Emit a MachineInstr with two register operands and a result
   /// register in the given register class.
-  unsigned FastEmitInst_rf(unsigned MachineInstOpcode,
+  unsigned fastEmitInst_rf(unsigned MachineInstOpcode,
                            const TargetRegisterClass *RC, unsigned Op0,
                            bool Op0IsKill, const ConstantFP *FPImm);
 
   /// \brief Emit a MachineInstr with two register operands, an immediate, and a
   /// result register in the given register class.
-  unsigned FastEmitInst_rri(unsigned MachineInstOpcode,
+  unsigned fastEmitInst_rri(unsigned MachineInstOpcode,
                             const TargetRegisterClass *RC, unsigned Op0,
                             bool Op0IsKill, unsigned Op1, bool Op1IsKill,
                             uint64_t Imm);
 
   /// \brief Emit a MachineInstr with two register operands, two immediates
   /// operands, and a result register in the given register class.
-  unsigned FastEmitInst_rrii(unsigned MachineInstOpcode,
+  unsigned fastEmitInst_rrii(unsigned MachineInstOpcode,
                              const TargetRegisterClass *RC, unsigned Op0,
                              bool Op0IsKill, unsigned Op1, bool Op1IsKill,
                              uint64_t Imm1, uint64_t Imm2);
 
   /// \brief Emit a MachineInstr with a single immediate operand, and a result
   /// register in the given register class.
-  unsigned FastEmitInst_i(unsigned MachineInstrOpcode,
+  unsigned fastEmitInst_i(unsigned MachineInstrOpcode,
                           const TargetRegisterClass *RC, uint64_t Imm);
 
   /// \brief Emit a MachineInstr with a two immediate operands.
-  unsigned FastEmitInst_ii(unsigned MachineInstrOpcode,
+  unsigned fastEmitInst_ii(unsigned MachineInstrOpcode,
                            const TargetRegisterClass *RC, uint64_t Imm1,
                            uint64_t Imm2);
 
   /// \brief Emit a MachineInstr for an extract_subreg from a specified index of
   /// a superregister to a specified type.
-  unsigned FastEmitInst_extractsubreg(MVT RetVT, unsigned Op0, bool Op0IsKill,
+  unsigned fastEmitInst_extractsubreg(MVT RetVT, unsigned Op0, bool Op0IsKill,
                                       uint32_t Idx);
 
   /// \brief Emit MachineInstrs to compute the value of Op with all but the

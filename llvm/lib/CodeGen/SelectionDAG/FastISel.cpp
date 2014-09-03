@@ -207,7 +207,7 @@ unsigned FastISel::materializeConstant(const Value *V, MVT VT) {
   unsigned Reg = 0;
   if (const auto *CI = dyn_cast<ConstantInt>(V)) {
     if (CI->getValue().getActiveBits() <= 64)
-      Reg = FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
+      Reg = fastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
   } else if (isa<AllocaInst>(V))
     Reg = fastMaterializeAlloca(cast<AllocaInst>(V));
   else if (isa<ConstantPointerNull>(V))
@@ -220,7 +220,7 @@ unsigned FastISel::materializeConstant(const Value *V, MVT VT) {
       Reg = fastMaterializeFloatZero(CF);
     else
       // Try to emit the constant directly.
-      Reg = FastEmit_f(VT, VT, ISD::ConstantFP, CF);
+      Reg = fastEmit_f(VT, VT, ISD::ConstantFP, CF);
 
     if (!Reg) {
       // Try to emit the constant by using an integer constant with a cast.
@@ -238,7 +238,7 @@ unsigned FastISel::materializeConstant(const Value *V, MVT VT) {
         unsigned IntegerReg =
             getRegForValue(ConstantInt::get(V->getContext(), IntVal));
         if (IntegerReg != 0)
-          Reg = FastEmit_r(IntVT.getSimpleVT(), VT, ISD::SINT_TO_FP, IntegerReg,
+          Reg = fastEmit_r(IntVT.getSimpleVT(), VT, ISD::SINT_TO_FP, IntegerReg,
                            /*Kill=*/false);
       }
     }
@@ -321,12 +321,12 @@ std::pair<unsigned, bool> FastISel::getRegForGEPIndex(const Value *Idx) {
   MVT PtrVT = TLI.getPointerTy();
   EVT IdxVT = EVT::getEVT(Idx->getType(), /*HandleUnknown=*/false);
   if (IdxVT.bitsLT(PtrVT)) {
-    IdxN = FastEmit_r(IdxVT.getSimpleVT(), PtrVT, ISD::SIGN_EXTEND, IdxN,
+    IdxN = fastEmit_r(IdxVT.getSimpleVT(), PtrVT, ISD::SIGN_EXTEND, IdxN,
                       IdxNIsKill);
     IdxNIsKill = true;
   } else if (IdxVT.bitsGT(PtrVT)) {
     IdxN =
-        FastEmit_r(IdxVT.getSimpleVT(), PtrVT, ISD::TRUNCATE, IdxN, IdxNIsKill);
+        fastEmit_r(IdxVT.getSimpleVT(), PtrVT, ISD::TRUNCATE, IdxN, IdxNIsKill);
     IdxNIsKill = true;
   }
   return std::pair<unsigned, bool>(IdxN, IdxNIsKill);
@@ -406,7 +406,7 @@ bool FastISel::selectBinaryOp(const User *I, unsigned ISDOpcode) {
       bool Op1IsKill = hasTrivialKill(I->getOperand(1));
 
       unsigned ResultReg =
-          FastEmit_ri_(VT.getSimpleVT(), ISDOpcode, Op1, Op1IsKill,
+          fastEmit_ri_(VT.getSimpleVT(), ISDOpcode, Op1, Op1IsKill,
                        CI->getZExtValue(), VT.getSimpleVT());
       if (!ResultReg)
         return false;
@@ -439,7 +439,7 @@ bool FastISel::selectBinaryOp(const User *I, unsigned ISDOpcode) {
       ISDOpcode = ISD::AND;
     }
 
-    unsigned ResultReg = FastEmit_ri_(VT.getSimpleVT(), ISDOpcode, Op0,
+    unsigned ResultReg = fastEmit_ri_(VT.getSimpleVT(), ISDOpcode, Op0,
                                       Op0IsKill, Imm, VT.getSimpleVT());
     if (!ResultReg)
       return false;
@@ -451,7 +451,7 @@ bool FastISel::selectBinaryOp(const User *I, unsigned ISDOpcode) {
 
   // Check if the second operand is a constant float.
   if (const auto *CF = dyn_cast<ConstantFP>(I->getOperand(1))) {
-    unsigned ResultReg = FastEmit_rf(VT.getSimpleVT(), VT.getSimpleVT(),
+    unsigned ResultReg = fastEmit_rf(VT.getSimpleVT(), VT.getSimpleVT(),
                                      ISDOpcode, Op0, Op0IsKill, CF);
     if (ResultReg) {
       // We successfully emitted code for the given LLVM Instruction.
@@ -466,7 +466,7 @@ bool FastISel::selectBinaryOp(const User *I, unsigned ISDOpcode) {
   bool Op1IsKill = hasTrivialKill(I->getOperand(1));
 
   // Now we have both operands in registers. Emit the instruction.
-  unsigned ResultReg = FastEmit_rr(VT.getSimpleVT(), VT.getSimpleVT(),
+  unsigned ResultReg = fastEmit_rr(VT.getSimpleVT(), VT.getSimpleVT(),
                                    ISDOpcode, Op0, Op0IsKill, Op1, Op1IsKill);
   if (!ResultReg)
     // Target-specific code wasn't able to find a machine opcode for
@@ -501,7 +501,7 @@ bool FastISel::selectGetElementPtr(const User *I) {
         // N = N + Offset
         TotalOffs += DL.getStructLayout(StTy)->getElementOffset(Field);
         if (TotalOffs >= MaxOffs) {
-          N = FastEmit_ri_(VT, ISD::ADD, N, NIsKill, TotalOffs, VT);
+          N = fastEmit_ri_(VT, ISD::ADD, N, NIsKill, TotalOffs, VT);
           if (!N) // Unhandled operand. Halt "fast" selection and bail.
             return false;
           NIsKill = true;
@@ -520,7 +520,7 @@ bool FastISel::selectGetElementPtr(const User *I) {
         TotalOffs +=
             DL.getTypeAllocSize(Ty) * cast<ConstantInt>(CI)->getSExtValue();
         if (TotalOffs >= MaxOffs) {
-          N = FastEmit_ri_(VT, ISD::ADD, N, NIsKill, TotalOffs, VT);
+          N = fastEmit_ri_(VT, ISD::ADD, N, NIsKill, TotalOffs, VT);
           if (!N) // Unhandled operand. Halt "fast" selection and bail.
             return false;
           NIsKill = true;
@@ -529,7 +529,7 @@ bool FastISel::selectGetElementPtr(const User *I) {
         continue;
       }
       if (TotalOffs) {
-        N = FastEmit_ri_(VT, ISD::ADD, N, NIsKill, TotalOffs, VT);
+        N = fastEmit_ri_(VT, ISD::ADD, N, NIsKill, TotalOffs, VT);
         if (!N) // Unhandled operand. Halt "fast" selection and bail.
           return false;
         NIsKill = true;
@@ -545,18 +545,18 @@ bool FastISel::selectGetElementPtr(const User *I) {
         return false;
 
       if (ElementSize != 1) {
-        IdxN = FastEmit_ri_(VT, ISD::MUL, IdxN, IdxNIsKill, ElementSize, VT);
+        IdxN = fastEmit_ri_(VT, ISD::MUL, IdxN, IdxNIsKill, ElementSize, VT);
         if (!IdxN) // Unhandled operand. Halt "fast" selection and bail.
           return false;
         IdxNIsKill = true;
       }
-      N = FastEmit_rr(VT, VT, ISD::ADD, N, NIsKill, IdxN, IdxNIsKill);
+      N = fastEmit_rr(VT, VT, ISD::ADD, N, NIsKill, IdxN, IdxNIsKill);
       if (!N) // Unhandled operand. Halt "fast" selection and bail.
         return false;
     }
   }
   if (TotalOffs) {
-    N = FastEmit_ri_(VT, ISD::ADD, N, NIsKill, TotalOffs, VT);
+    N = fastEmit_ri_(VT, ISD::ADD, N, NIsKill, TotalOffs, VT);
     if (!N) // Unhandled operand. Halt "fast" selection and bail.
       return false;
   }
@@ -1229,7 +1229,7 @@ bool FastISel::selectCast(const User *I, unsigned Opcode) {
 
   bool InputRegIsKill = hasTrivialKill(I->getOperand(0));
 
-  unsigned ResultReg = FastEmit_r(SrcVT.getSimpleVT(), DstVT.getSimpleVT(),
+  unsigned ResultReg = fastEmit_r(SrcVT.getSimpleVT(), DstVT.getSimpleVT(),
                                   Opcode, InputReg, InputRegIsKill);
   if (!ResultReg)
     return false;
@@ -1278,7 +1278,7 @@ bool FastISel::selectBitCast(const User *I) {
 
   // If the reg-reg copy failed, select a BITCAST opcode.
   if (!ResultReg)
-    ResultReg = FastEmit_r(SrcVT, DstVT, ISD::BITCAST, Op0, Op0IsKill);
+    ResultReg = fastEmit_r(SrcVT, DstVT, ISD::BITCAST, Op0, Op0IsKill);
 
   if (!ResultReg)
     return false;
@@ -1381,7 +1381,7 @@ bool FastISel::selectFNeg(const User *I) {
 
   // If the target has ISD::FNEG, use it.
   EVT VT = TLI.getValueType(I->getType());
-  unsigned ResultReg = FastEmit_r(VT.getSimpleVT(), VT.getSimpleVT(), ISD::FNEG,
+  unsigned ResultReg = fastEmit_r(VT.getSimpleVT(), VT.getSimpleVT(), ISD::FNEG,
                                   OpReg, OpRegIsKill);
   if (ResultReg) {
     updateValueMap(I, ResultReg);
@@ -1396,18 +1396,18 @@ bool FastISel::selectFNeg(const User *I) {
   if (!TLI.isTypeLegal(IntVT))
     return false;
 
-  unsigned IntReg = FastEmit_r(VT.getSimpleVT(), IntVT.getSimpleVT(),
+  unsigned IntReg = fastEmit_r(VT.getSimpleVT(), IntVT.getSimpleVT(),
                                ISD::BITCAST, OpReg, OpRegIsKill);
   if (!IntReg)
     return false;
 
-  unsigned IntResultReg = FastEmit_ri_(
+  unsigned IntResultReg = fastEmit_ri_(
       IntVT.getSimpleVT(), ISD::XOR, IntReg, /*IsKill=*/true,
       UINT64_C(1) << (VT.getSizeInBits() - 1), IntVT.getSimpleVT());
   if (!IntResultReg)
     return false;
 
-  ResultReg = FastEmit_r(IntVT.getSimpleVT(), VT.getSimpleVT(), ISD::BITCAST,
+  ResultReg = fastEmit_r(IntVT.getSimpleVT(), VT.getSimpleVT(), ISD::BITCAST,
                          IntResultReg, /*IsKill=*/true);
   if (!ResultReg)
     return false;
@@ -1518,7 +1518,7 @@ bool FastISel::selectOperator(const User *I, unsigned Opcode) {
 
   case Instruction::Unreachable:
     if (TM.Options.TrapUnreachable)
-      return FastEmit_(MVT::Other, MVT::Other, ISD::TRAP) != 0;
+      return fastEmit_(MVT::Other, MVT::Other, ISD::TRAP) != 0;
     else
       return true;
 
@@ -1595,50 +1595,50 @@ bool FastISel::fastLowerIntrinsicCall(const IntrinsicInst * /*II*/) {
   return false;
 }
 
-unsigned FastISel::FastEmit_(MVT, MVT, unsigned) { return 0; }
+unsigned FastISel::fastEmit_(MVT, MVT, unsigned) { return 0; }
 
-unsigned FastISel::FastEmit_r(MVT, MVT, unsigned, unsigned /*Op0*/,
+unsigned FastISel::fastEmit_r(MVT, MVT, unsigned, unsigned /*Op0*/,
                               bool /*Op0IsKill*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_rr(MVT, MVT, unsigned, unsigned /*Op0*/,
+unsigned FastISel::fastEmit_rr(MVT, MVT, unsigned, unsigned /*Op0*/,
                                bool /*Op0IsKill*/, unsigned /*Op1*/,
                                bool /*Op1IsKill*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_i(MVT, MVT, unsigned, uint64_t /*Imm*/) {
+unsigned FastISel::fastEmit_i(MVT, MVT, unsigned, uint64_t /*Imm*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_f(MVT, MVT, unsigned,
+unsigned FastISel::fastEmit_f(MVT, MVT, unsigned,
                               const ConstantFP * /*FPImm*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_ri(MVT, MVT, unsigned, unsigned /*Op0*/,
+unsigned FastISel::fastEmit_ri(MVT, MVT, unsigned, unsigned /*Op0*/,
                                bool /*Op0IsKill*/, uint64_t /*Imm*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_rf(MVT, MVT, unsigned, unsigned /*Op0*/,
+unsigned FastISel::fastEmit_rf(MVT, MVT, unsigned, unsigned /*Op0*/,
                                bool /*Op0IsKill*/,
                                const ConstantFP * /*FPImm*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_rri(MVT, MVT, unsigned, unsigned /*Op0*/,
+unsigned FastISel::fastEmit_rri(MVT, MVT, unsigned, unsigned /*Op0*/,
                                 bool /*Op0IsKill*/, unsigned /*Op1*/,
                                 bool /*Op1IsKill*/, uint64_t /*Imm*/) {
   return 0;
 }
 
-/// This method is a wrapper of FastEmit_ri. It first tries to emit an
-/// instruction with an immediate operand using FastEmit_ri.
+/// This method is a wrapper of fastEmit_ri. It first tries to emit an
+/// instruction with an immediate operand using fastEmit_ri.
 /// If that fails, it materializes the immediate into a register and try
-/// FastEmit_rr instead.
-unsigned FastISel::FastEmit_ri_(MVT VT, unsigned Opcode, unsigned Op0,
+/// fastEmit_rr instead.
+unsigned FastISel::fastEmit_ri_(MVT VT, unsigned Opcode, unsigned Op0,
                                 bool Op0IsKill, uint64_t Imm, MVT ImmType) {
   // If this is a multiply by a power of two, emit this as a shift left.
   if (Opcode == ISD::MUL && isPowerOf2_64(Imm)) {
@@ -1657,10 +1657,10 @@ unsigned FastISel::FastEmit_ri_(MVT VT, unsigned Opcode, unsigned Op0,
     return 0;
 
   // First check if immediate type is legal. If not, we can't use the ri form.
-  unsigned ResultReg = FastEmit_ri(VT, VT, Opcode, Op0, Op0IsKill, Imm);
+  unsigned ResultReg = fastEmit_ri(VT, VT, Opcode, Op0, Op0IsKill, Imm);
   if (ResultReg)
     return ResultReg;
-  unsigned MaterialReg = FastEmit_i(ImmType, ImmType, ISD::Constant, Imm);
+  unsigned MaterialReg = fastEmit_i(ImmType, ImmType, ISD::Constant, Imm);
   if (!MaterialReg) {
     // This is a bit ugly/slow, but failing here means falling out of
     // fast-isel, which would be very slow.
@@ -1670,7 +1670,7 @@ unsigned FastISel::FastEmit_ri_(MVT VT, unsigned Opcode, unsigned Op0,
     if (!MaterialReg)
       return 0;
   }
-  return FastEmit_rr(VT, VT, Opcode, Op0, Op0IsKill, MaterialReg,
+  return fastEmit_rr(VT, VT, Opcode, Op0, Op0IsKill, MaterialReg,
                      /*IsKill=*/true);
 }
 
@@ -1695,7 +1695,7 @@ unsigned FastISel::constrainOperandRegClass(const MCInstrDesc &II, unsigned Op,
   return Op;
 }
 
-unsigned FastISel::FastEmitInst_(unsigned MachineInstOpcode,
+unsigned FastISel::fastEmitInst_(unsigned MachineInstOpcode,
                                  const TargetRegisterClass *RC) {
   unsigned ResultReg = createResultReg(RC);
   const MCInstrDesc &II = TII.get(MachineInstOpcode);
@@ -1704,7 +1704,7 @@ unsigned FastISel::FastEmitInst_(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned FastISel::FastEmitInst_r(unsigned MachineInstOpcode,
+unsigned FastISel::fastEmitInst_r(unsigned MachineInstOpcode,
                                   const TargetRegisterClass *RC, unsigned Op0,
                                   bool Op0IsKill) {
   const MCInstrDesc &II = TII.get(MachineInstOpcode);
@@ -1725,7 +1725,7 @@ unsigned FastISel::FastEmitInst_r(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned FastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
+unsigned FastISel::fastEmitInst_rr(unsigned MachineInstOpcode,
                                    const TargetRegisterClass *RC, unsigned Op0,
                                    bool Op0IsKill, unsigned Op1,
                                    bool Op1IsKill) {
@@ -1749,7 +1749,7 @@ unsigned FastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned FastISel::FastEmitInst_rrr(unsigned MachineInstOpcode,
+unsigned FastISel::fastEmitInst_rrr(unsigned MachineInstOpcode,
                                     const TargetRegisterClass *RC, unsigned Op0,
                                     bool Op0IsKill, unsigned Op1,
                                     bool Op1IsKill, unsigned Op2,
@@ -1777,7 +1777,7 @@ unsigned FastISel::FastEmitInst_rrr(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned FastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
+unsigned FastISel::fastEmitInst_ri(unsigned MachineInstOpcode,
                                    const TargetRegisterClass *RC, unsigned Op0,
                                    bool Op0IsKill, uint64_t Imm) {
   const MCInstrDesc &II = TII.get(MachineInstOpcode);
@@ -1799,7 +1799,7 @@ unsigned FastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned FastISel::FastEmitInst_rii(unsigned MachineInstOpcode,
+unsigned FastISel::fastEmitInst_rii(unsigned MachineInstOpcode,
                                     const TargetRegisterClass *RC, unsigned Op0,
                                     bool Op0IsKill, uint64_t Imm1,
                                     uint64_t Imm2) {
@@ -1824,7 +1824,7 @@ unsigned FastISel::FastEmitInst_rii(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned FastISel::FastEmitInst_rf(unsigned MachineInstOpcode,
+unsigned FastISel::fastEmitInst_rf(unsigned MachineInstOpcode,
                                    const TargetRegisterClass *RC, unsigned Op0,
                                    bool Op0IsKill, const ConstantFP *FPImm) {
   const MCInstrDesc &II = TII.get(MachineInstOpcode);
@@ -1846,7 +1846,7 @@ unsigned FastISel::FastEmitInst_rf(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned FastISel::FastEmitInst_rri(unsigned MachineInstOpcode,
+unsigned FastISel::fastEmitInst_rri(unsigned MachineInstOpcode,
                                     const TargetRegisterClass *RC, unsigned Op0,
                                     bool Op0IsKill, unsigned Op1,
                                     bool Op1IsKill, uint64_t Imm) {
@@ -1872,7 +1872,7 @@ unsigned FastISel::FastEmitInst_rri(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned FastISel::FastEmitInst_rrii(unsigned MachineInstOpcode,
+unsigned FastISel::fastEmitInst_rrii(unsigned MachineInstOpcode,
                                      const TargetRegisterClass *RC,
                                      unsigned Op0, bool Op0IsKill, unsigned Op1,
                                      bool Op1IsKill, uint64_t Imm1,
@@ -1901,7 +1901,7 @@ unsigned FastISel::FastEmitInst_rrii(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned FastISel::FastEmitInst_i(unsigned MachineInstOpcode,
+unsigned FastISel::fastEmitInst_i(unsigned MachineInstOpcode,
                                   const TargetRegisterClass *RC, uint64_t Imm) {
   unsigned ResultReg = createResultReg(RC);
   const MCInstrDesc &II = TII.get(MachineInstOpcode);
@@ -1917,7 +1917,7 @@ unsigned FastISel::FastEmitInst_i(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned FastISel::FastEmitInst_ii(unsigned MachineInstOpcode,
+unsigned FastISel::fastEmitInst_ii(unsigned MachineInstOpcode,
                                    const TargetRegisterClass *RC, uint64_t Imm1,
                                    uint64_t Imm2) {
   unsigned ResultReg = createResultReg(RC);
@@ -1936,7 +1936,7 @@ unsigned FastISel::FastEmitInst_ii(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
-unsigned FastISel::FastEmitInst_extractsubreg(MVT RetVT, unsigned Op0,
+unsigned FastISel::fastEmitInst_extractsubreg(MVT RetVT, unsigned Op0,
                                               bool Op0IsKill, uint32_t Idx) {
   unsigned ResultReg = createResultReg(TLI.getRegClassFor(RetVT));
   assert(TargetRegisterInfo::isVirtualRegister(Op0) &&
@@ -1951,7 +1951,7 @@ unsigned FastISel::FastEmitInst_extractsubreg(MVT RetVT, unsigned Op0,
 /// Emit MachineInstrs to compute the value of Op with all but the least
 /// significant bit set to zero.
 unsigned FastISel::fastEmitZExtFromI1(MVT VT, unsigned Op0, bool Op0IsKill) {
-  return FastEmit_ri(VT, VT, ISD::AND, Op0, Op0IsKill, 1);
+  return fastEmit_ri(VT, VT, ISD::AND, Op0, Op0IsKill, 1);
 }
 
 /// HandlePHINodesInSuccessorBlocks - Handle PHI nodes in successor blocks.

@@ -347,7 +347,7 @@ struct OperandsSignature {
         // Implicit physical register operand. e.g. Instruction::Mul expect to
         // select to a binary op. On x86, mul may take a single operand with
         // the other operand being implicit. We must emit something that looks
-        // like a binary instruction except for the very inner FastEmitInst_*
+        // like a binary instruction except for the very inner fastEmitInst_*
         // call.
         continue;
       Operands[i].printManglingSuffix(OS, ImmPredicates, StripImmCodes);
@@ -610,7 +610,7 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
             const PredMap &PM = RI->second;
             bool HasPred = false;
 
-            OS << "unsigned FastEmit_"
+            OS << "unsigned fastEmit_"
                << getLegalCName(Opcode)
                << "_" << getLegalCName(getName(VT))
                << "_" << getLegalCName(getName(RetVT)) << "_";
@@ -643,7 +643,7 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
                      << (*Memo.PhysRegs)[i] << ").addReg(Op" << i << ");\n";
               }
 
-              OS << "  return FastEmitInst_";
+              OS << "  return fastEmitInst_";
               if (Memo.SubRegNo.empty()) {
                 Operands.PrintManglingSuffix(OS, *Memo.PhysRegs,
                                              ImmediatePredicates, true);
@@ -670,7 +670,7 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
           }
 
           // Emit one function for the type that demultiplexes on return type.
-          OS << "unsigned FastEmit_"
+          OS << "unsigned fastEmit_"
              << getLegalCName(Opcode) << "_"
              << getLegalCName(getName(VT)) << "_";
           Operands.PrintManglingSuffix(OS, ImmediatePredicates);
@@ -682,7 +682,7 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
           for (RetPredMap::const_iterator RI = RM.begin(), RE = RM.end();
                RI != RE; ++RI) {
             MVT::SimpleValueType RetVT = RI->first;
-            OS << "  case " << getName(RetVT) << ": return FastEmit_"
+            OS << "  case " << getName(RetVT) << ": return fastEmit_"
                << getLegalCName(Opcode) << "_" << getLegalCName(getName(VT))
                << "_" << getLegalCName(getName(RetVT)) << "_";
             Operands.PrintManglingSuffix(OS, ImmediatePredicates);
@@ -694,7 +694,7 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
 
         } else {
           // Non-variadic return type.
-          OS << "unsigned FastEmit_"
+          OS << "unsigned fastEmit_"
              << getLegalCName(Opcode) << "_"
              << getLegalCName(getName(VT)) << "_";
           Operands.PrintManglingSuffix(OS, ImmediatePredicates);
@@ -734,7 +734,7 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
                    << (*Memo.PhysRegs)[i] << ").addReg(Op" << i << ");\n";
             }
 
-            OS << "  return FastEmitInst_";
+            OS << "  return fastEmitInst_";
 
             if (Memo.SubRegNo.empty()) {
               Operands.PrintManglingSuffix(OS, *Memo.PhysRegs,
@@ -764,7 +764,7 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
       }
 
       // Emit one function for the opcode that demultiplexes based on the type.
-      OS << "unsigned FastEmit_"
+      OS << "unsigned fastEmit_"
          << getLegalCName(Opcode) << "_";
       Operands.PrintManglingSuffix(OS, ImmediatePredicates);
       OS << "(MVT VT, MVT RetVT";
@@ -777,7 +777,7 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
            TI != TE; ++TI) {
         MVT::SimpleValueType VT = TI->first;
         std::string TypeName = getName(VT);
-        OS << "  case " << TypeName << ": return FastEmit_"
+        OS << "  case " << TypeName << ": return fastEmit_"
            << getLegalCName(Opcode) << "_" << getLegalCName(TypeName) << "_";
         Operands.PrintManglingSuffix(OS, ImmediatePredicates);
         OS << "(RetVT";
@@ -797,7 +797,7 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
 
     // Emit one function for the operand signature that demultiplexes based
     // on opcode and type.
-    OS << "unsigned FastEmit_";
+    OS << "unsigned fastEmit_";
     Operands.PrintManglingSuffix(OS, ImmediatePredicates);
     OS << "(MVT VT, MVT RetVT, unsigned Opcode";
     if (!Operands.empty())
@@ -823,7 +823,7 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
       for (unsigned i = 0, e = MI->second.size(); i != e; ++i) {
         OS << "  if (";
         MI->second[i].emitImmediatePredicate(OS, ImmediatePredicates);
-        OS << ")\n    if (unsigned Reg = FastEmit_";
+        OS << ")\n    if (unsigned Reg = fastEmit_";
         MI->second[i].PrintManglingSuffix(OS, ImmediatePredicates);
         OS << "(VT, RetVT, Opcode";
         if (!MI->second[i].empty())
@@ -841,7 +841,7 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
          I != E; ++I) {
       const std::string &Opcode = I->first;
 
-      OS << "  case " << Opcode << ": return FastEmit_"
+      OS << "  case " << Opcode << ": return fastEmit_"
          << getLegalCName(Opcode) << "_";
       Operands.PrintManglingSuffix(OS, ImmediatePredicates);
       OS << "(VT, RetVT";
