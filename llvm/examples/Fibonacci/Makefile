@@ -12,6 +12,6 @@ TOOLNAME = Fibonacci
 EXAMPLE_TOOL = 1
 
 # Link in JIT support
-LINK_COMPONENTS := jit interpreter nativecodegen
+LINK_COMPONENTS := interpreter mcjit nativecodegen
 
 include $(LEVEL)/Makefile.common

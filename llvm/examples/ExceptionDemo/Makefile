@@ -11,6 +11,6 @@ TOOLNAME = ExceptionDemo
 EXAMPLE_TOOL = 1
 REQUIRES_EH = 1
 
-LINK_COMPONENTS := jit mcjit nativecodegen
+LINK_COMPONENTS := mcjit nativecodegen
 
 include $(LEVEL)/Makefile.common

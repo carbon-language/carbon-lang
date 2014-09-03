@@ -10,6 +10,6 @@ LEVEL = ../..
 TOOLNAME = HowToUseJIT
 EXAMPLE_TOOL = 1
 
-LINK_COMPONENTS := jit interpreter nativecodegen
+LINK_COMPONENTS := mcjit interpreter nativecodegen
 
 include $(LEVEL)/Makefile.common

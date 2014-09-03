@@ -10,6 +10,6 @@ LEVEL = ../../..
 TOOLNAME = Kaleidoscope-Ch5
 EXAMPLE_TOOL = 1
 
-LINK_COMPONENTS := core jit native
+LINK_COMPONENTS := core mcjit native
 
 include $(LEVEL)/Makefile.common
