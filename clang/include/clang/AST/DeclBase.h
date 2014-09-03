@@ -679,9 +679,9 @@ public:
     return const_cast<Decl*>(this)->getLexicalDeclContext();
   }
 
-  virtual bool isOutOfLine() const {
-    return getLexicalDeclContext() != getDeclContext();
-  }
+  /// Determine whether this declaration is declared out of line (outside its
+  /// semantic context).
+  virtual bool isOutOfLine() const;
 
   /// setDeclContext - Set both the semantic and lexical DeclContext
   /// to DC.

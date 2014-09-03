@@ -53,3 +53,7 @@ namespace EmitDefaultedSpecialMembers {
     // trivial dtor
   };
 }
+
+template<typename T> struct WithUndefinedStaticDataMember {
+  static T undefined;
+};

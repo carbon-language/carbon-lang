@@ -12,10 +12,11 @@ void testInlineRedeclEarly() {
 
 @import templates_right;
 
-// CHECK: @list_left = global { %{{.*}}*, i32, [4 x i8] } { %{{.*}}* null, i32 8,
-// CHECK: @list_right = global { %{{.*}}*, i32, [4 x i8] } { %{{.*}}* null, i32 12,
-// CHECK: @_ZZ15testMixedStructvE1l = {{.*}} constant { %{{.*}}*, i32, [4 x i8] } { %{{.*}}* null, i32 1,
-// CHECK: @_ZZ15testMixedStructvE1r = {{.*}} constant { %{{.*}}*, i32, [4 x i8] } { %{{.*}}* null, i32 2,
+// CHECK-DAG: @list_left = global { %{{.*}}*, i32, [4 x i8] } { %{{.*}}* null, i32 8,
+// CHECK-DAG: @list_right = global { %{{.*}}*, i32, [4 x i8] } { %{{.*}}* null, i32 12,
+// CHECK-DAG: @_ZZ15testMixedStructvE1l = {{.*}} constant { %{{.*}}*, i32, [4 x i8] } { %{{.*}}* null, i32 1,
+// CHECK-DAG: @_ZZ15testMixedStructvE1r = {{.*}} constant { %{{.*}}*, i32, [4 x i8] } { %{{.*}}* null, i32 2,
+// CHECK-DAG: @_ZN29WithUndefinedStaticDataMemberIA_iE9undefinedE = external global
 
 void testTemplateClasses() {
   Vector<int> vec_int;
@@ -100,3 +101,17 @@ template struct ExplicitInstantiation<false, true>;
 template struct ExplicitInstantiation<true, true>;
 
 void testDelayUpdatesImpl() { testDelayUpdates<int>(); }
+
+void testStaticDataMember() {
+  WithUndefinedStaticDataMember<int[]> load_it;
+
+  // CHECK-LABEL: define linkonce_odr i32* @_Z23getStaticDataMemberLeftv(
+  // CHECK: ret i32* getelementptr inbounds ([0 x i32]* @_ZN29WithUndefinedStaticDataMemberIA_iE9undefinedE, i32 0, i32 0)
+  (void) getStaticDataMemberLeft();
+
+  // CHECK-LABEL: define linkonce_odr i32* @_Z24getStaticDataMemberRightv(
+  // CHECK: ret i32* getelementptr inbounds ([0 x i32]* @_ZN29WithUndefinedStaticDataMemberIA_iE9undefinedE, i32 0, i32 0)
+  (void) getStaticDataMemberRight();
+}
+
+

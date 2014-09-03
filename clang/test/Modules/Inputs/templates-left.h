@@ -66,3 +66,7 @@ namespace EmitDefaultedSpecialMembers {
     SmallString<256> SS;
   };
 }
+
+inline int *getStaticDataMemberLeft() {
+  return WithUndefinedStaticDataMember<int[]>::undefined;
+}

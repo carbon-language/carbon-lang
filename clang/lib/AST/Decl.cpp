@@ -38,6 +38,11 @@ Decl *clang::getPrimaryMergedDecl(Decl *D) {
   return D->getASTContext().getPrimaryMergedDecl(D);
 }
 
+// Defined here so that it can be inlined into its direct callers.
+bool Decl::isOutOfLine() const {
+  return !getLexicalDeclContext()->Equals(getDeclContext());
+}
+
 //===----------------------------------------------------------------------===//
 // NamedDecl Implementation
 //===----------------------------------------------------------------------===//
