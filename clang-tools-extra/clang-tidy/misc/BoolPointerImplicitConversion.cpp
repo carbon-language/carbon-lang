@@ -24,9 +24,6 @@ AST_MATCHER(QualType, isBoolean) { return Node->isBooleanType(); }
 namespace tidy {
 
 void BoolPointerImplicitConversion::registerMatchers(MatchFinder *Finder) {
-  auto InTemplateInstantiation = hasAncestor(
-      decl(anyOf(recordDecl(ast_matchers::isTemplateInstantiation()),
-                 functionDecl(ast_matchers::isTemplateInstantiation()))));
   // Look for ifs that have an implicit bool* to bool conversion in the
   // condition. Filter negations.
   Finder->addMatcher(
@@ -36,7 +33,7 @@ void BoolPointerImplicitConversion::registerMatchers(MatchFinder *Finder) {
                            hasType(pointerType(pointee(isBoolean()))),
                            ignoringParenImpCasts(declRefExpr().bind("expr")))),
                        isPointerToBoolean())))),
-             unless(InTemplateInstantiation)).bind("if"),
+             unless(isInTemplateInstantiation())).bind("if"),
       this);
 }
 

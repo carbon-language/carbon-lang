@@ -21,15 +21,12 @@ namespace runtime {
 
 void
 MemsetZeroLengthCheck::registerMatchers(ast_matchers::MatchFinder *Finder) {
-  auto InTemplateInstantiation = hasAncestor(
-      decl(anyOf(recordDecl(ast_matchers::isTemplateInstantiation()),
-                 functionDecl(ast_matchers::isTemplateInstantiation()))));
   // Look for memset(x, y, 0) as those is most likely an argument swap.
   // TODO: Also handle other standard functions that suffer from the same
   //       problem, e.g. memchr.
   Finder->addMatcher(
       callExpr(callee(functionDecl(hasName("::memset"))), argumentCountIs(3),
-               unless(InTemplateInstantiation)).bind("decl"),
+               unless(isInTemplateInstantiation())).bind("decl"),
       this);
 }
 
