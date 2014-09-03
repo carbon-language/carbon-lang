@@ -235,7 +235,7 @@ void atomFromSymbol(DefinedAtom::ContentType atomType, const Section &section,
     bool thumb = (symbolDescFlags & N_ARM_THUMB_DEF);
     if (atomType == DefinedAtom::typeUnknown) {
       // Mach-O needs a segment and section name.  Concatentate those two
-      // with a / seperator (e.g. "seg/sect") to fit into the lld model
+      // with a / separator (e.g. "seg/sect") to fit into the lld model
       // of just a section name.
       std::string segSectName = section.segmentName.str()
                                 + "/" + section.sectionName.str();
@@ -676,10 +676,19 @@ normalizedDylibToAtoms(const NormalizedFile &normalizedFile, StringRef path,
   std::unique_ptr<MachODylibFile> file(
                           new MachODylibFile(path, normalizedFile.installName));
   // Tell MachODylibFile object about all symbols it exports.
-  for (auto &sym : normalizedFile.globalSymbols) {
-    assert((sym.scope & N_EXT) && "only expect external symbols here");
-    bool weakDef = (sym.desc & N_WEAK_DEF);
-    file->addExportedSymbol(sym.name, weakDef, copyRefs);
+  if (!normalizedFile.exportInfo.empty()) {
+    // If exports trie exists, use it instead of traditional symbol table.
+    for (const Export &exp : normalizedFile.exportInfo) {
+      bool weakDef = (exp.flags & EXPORT_SYMBOL_FLAGS_WEAK_DEFINITION);
+      // StringRefs from export iterator are ephemeral, so force copy.
+      file->addExportedSymbol(exp.name, weakDef, true);
+    }
+  } else {
+    for (auto &sym : normalizedFile.globalSymbols) {
+      assert((sym.scope & N_EXT) && "only expect external symbols here");
+      bool weakDef = (sym.desc & N_WEAK_DEF);
+      file->addExportedSymbol(sym.name, weakDef, copyRefs);
+    }
   }
   // Tell MachODylibFile object about all dylibs it re-exports.
   for (const DependentDylib &dep : normalizedFile.dependentDylibs) {

@@ -566,8 +566,10 @@ struct ScalarEnumerationTraits<ExportSymbolKind> {
   static void enumeration(IO &io, ExportSymbolKind &value) {
     io.enumCase(value, "EXPORT_SYMBOL_FLAGS_KIND_REGULAR",
                         llvm::MachO::EXPORT_SYMBOL_FLAGS_KIND_REGULAR);
-    io.enumCase(value, "EXPORT_SYMBOL_FLAGS_KIND_THREAD_LOCALl",
+    io.enumCase(value, "EXPORT_SYMBOL_FLAGS_KIND_THREAD_LOCAL",
                         llvm::MachO::EXPORT_SYMBOL_FLAGS_KIND_THREAD_LOCAL);
+    io.enumCase(value, "EXPORT_SYMBOL_FLAGS_KIND_ABSOLUTE",
+                        llvm::MachO::EXPORT_SYMBOL_FLAGS_KIND_ABSOLUTE);
   }
 };
 
@@ -588,11 +590,12 @@ template <>
 struct MappingTraits<Export> {
   static void mapping(IO &io, Export &exp) {
     io.mapRequired("name",         exp.name);
-    io.mapRequired("offset",       exp.offset);
+    io.mapOptional("offset",       exp.offset);
     io.mapOptional("kind",         exp.kind,
                                 llvm::MachO::EXPORT_SYMBOL_FLAGS_KIND_REGULAR);
-    io.mapOptional("flags",        exp.flags);
-    io.mapOptional("other-offset", exp.otherOffset, Hex32(0));
+    if (!io.outputting() || exp.flags)
+      io.mapOptional("flags",      exp.flags);
+    io.mapOptional("other",        exp.otherOffset, Hex32(0));
     io.mapOptional("other-name",   exp.otherName, StringRef());
   }
 };

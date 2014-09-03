@@ -61,28 +61,10 @@ undefined-symbols:
 --- !mach-o
 arch:            armv6
 file-type:       MH_DYLIB
-flags:           [ ]
 install-name:    /usr/lib/libSystem.B.dylib
-sections:
-  - segment:         __TEXT
-    section:         __text
-    type:            S_REGULAR
-    attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
-    address:         0x0000000000000000
-    content:         [ 0x55 ]
-
-global-symbols:
+exports:
   - name:            _printf
-    type:            N_SECT
-    scope:           [ N_EXT ]
-    sect:            1
-    value:           0x0000000000000001
   - name:            dyld_stub_binder
-    type:            N_SECT
-    scope:           [ N_EXT ]
-    sect:            1
-    value:           0x0000000000000001
-
 ...
 
 # CHECK:	{{[0-9a-f]+}} (__TEXT,__text) external _main

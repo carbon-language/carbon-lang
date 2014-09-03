@@ -109,6 +109,7 @@ public:
   std::error_code addSymbols(const lld::File &atomFile, NormalizedFile &file);
   void      addIndirectSymbols(const lld::File &atomFile, NormalizedFile &file);
   void      addRebaseAndBindingInfo(const lld::File &, NormalizedFile &file);
+  void      addExportInfo(const lld::File &, NormalizedFile &file);
   void      addSectionRelocs(const lld::File &, NormalizedFile &file);
   void      buildDataInCodeArray(const lld::File &, NormalizedFile &file);
   void      addDependentDylibs(const lld::File &, NormalizedFile &file);
@@ -1085,6 +1086,35 @@ void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
   }
 }
 
+
+void Util::addExportInfo(const lld::File &atomFile, NormalizedFile &nFile) {
+  if (_context.outputMachOType() == llvm::MachO::MH_OBJECT)
+    return;
+
+  for (SectionInfo *sect : _sectionInfos) {
+    for (const AtomInfo &info : sect->atomsAndOffsets) {
+      const DefinedAtom *atom = info.atom;
+      if (atom->scope() != Atom::scopeGlobal)
+        continue;
+      if (_context.exportRestrictMode()) {
+        if (!_context.exportSymbolNamed(atom->name()))
+          continue;
+      }
+      Export exprt;
+      exprt.name = atom->name();
+      exprt.offset = _atomToAddress[atom];   // FIXME: subtract base address
+      exprt.kind = EXPORT_SYMBOL_FLAGS_KIND_REGULAR;
+      if (atom->merge() == DefinedAtom::mergeAsWeak)
+        exprt.flags = EXPORT_SYMBOL_FLAGS_WEAK_DEFINITION;
+      else
+        exprt.flags = 0;
+      exprt.otherOffset = 0;
+      exprt.otherName = StringRef();
+      nFile.exportInfo.push_back(exprt);
+    }
+  }
+}
+
 uint32_t Util::fileFlags() {
   // FIXME: these need to determined at runtime.
   if (_context.outputMachOType() == MH_OBJECT) {
@@ -1128,6 +1158,7 @@ normalizedFromAtoms(const lld::File &atomFile,
   }
   util.addIndirectSymbols(atomFile, normFile);
   util.addRebaseAndBindingInfo(atomFile, normFile);
+  util.addExportInfo(atomFile, normFile);
   util.addSectionRelocs(atomFile, normFile);
   util.buildDataInCodeArray(atomFile, normFile);
   util.copyEntryPointAddress(normFile);

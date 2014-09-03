@@ -33,6 +33,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/MachO.h"
@@ -77,12 +78,14 @@ private:
   void        writeRebaseInfo();
   void        writeBindingInfo();
   void        writeLazyBindingInfo();
+  void        writeExportInfo();
   void        writeDataInCodeInfo();
   void        writeLinkEditContent();
   void        buildLinkEditInfo();
   void        buildRebaseInfo();
   void        buildBindInfo();
   void        buildLazyBindInfo();
+  void        buildExportTrie();
   void        computeDataInCodeSize();
   void        computeSymbolTableSizes();
   void        buildSectionRelocations();
@@ -115,6 +118,7 @@ private:
   class ByteBuffer {
   public:
     ByteBuffer() : _ostream(_bytes) { }
+
     void append_byte(uint8_t b) {
       _ostream << b;
     }
@@ -144,6 +148,37 @@ private:
     llvm::raw_svector_ostream     _ostream;
   };
 
+  struct TrieNode; // Forward declaration.
+
+  struct TrieEdge {
+    TrieEdge(StringRef s, TrieNode *node) : _subString(s), _child(node) {}
+    ~TrieEdge() {}
+
+    StringRef          _subString;
+    struct TrieNode   *_child;
+  };
+
+  struct TrieNode {
+    TrieNode(StringRef s)
+        : _cummulativeString(s), _address(0), _flags(0), _other(0),
+          _trieOffset(0), _hasExportInfo(false) {}
+    ~TrieNode() {}
+
+    void addSymbol(const Export &entry, BumpPtrAllocator &allocator,
+                   std::vector<TrieNode *> &allNodes);
+    bool updateOffset(uint32_t &offset);
+    void appendToByteBuffer(ByteBuffer &out);
+
+private:
+    StringRef                 _cummulativeString;
+    SmallVector<TrieEdge, 8>  _children;
+    uint64_t                  _address;
+    uint64_t                  _flags;
+    uint64_t                  _other;
+    StringRef                 _importedName;
+    uint32_t                  _trieOffset;
+    bool                      _hasExportInfo;
+  };
 
   struct SegExtraInfo {
     uint32_t                    fileOffset;
@@ -190,6 +225,8 @@ private:
   uint32_t              _endOfBindingInfo;
   uint32_t              _startOfLazyBindingInfo;
   uint32_t              _endOfLazyBindingInfo;
+  uint32_t              _startOfExportTrie;
+  uint32_t              _endOfExportTrie;
   uint32_t              _endOfLinkEdit;
   uint64_t              _addressOfLinkEdit;
   SegMap                _segInfo;
@@ -198,7 +235,7 @@ private:
   ByteBuffer            _bindingInfo;
   ByteBuffer            _lazyBindingInfo;
   ByteBuffer            _weakBindingInfo;
-  ByteBuffer            _exportInfo;
+  ByteBuffer            _exportTrie;
 };
 
 size_t headerAndLoadCommandsSize(const NormalizedFile &file) {
@@ -295,7 +332,9 @@ MachOFileLayout::MachOFileLayout(const NormalizedFile &file)
     _endOfBindingInfo = _startOfBindingInfo + _bindingInfo.size();
     _startOfLazyBindingInfo = _endOfBindingInfo;
     _endOfLazyBindingInfo = _startOfLazyBindingInfo + _lazyBindingInfo.size();
-    _startOfDataInCode = _endOfLazyBindingInfo;
+    _startOfExportTrie = _endOfLazyBindingInfo;
+    _endOfExportTrie = _startOfExportTrie + _exportTrie.size();
+    _startOfDataInCode = _endOfExportTrie;
     _startOfSymbols = _startOfDataInCode + _dataInCodeSize;
     _startOfIndirectSymbols = _startOfSymbols + _symbolTableSize;
     _startOfSymbolStrings = _startOfIndirectSymbols
@@ -315,6 +354,8 @@ MachOFileLayout::MachOFileLayout(const NormalizedFile &file)
       << "  endOfBindingInfo=" << _endOfBindingInfo << "\n"
       << "  startOfLazyBindingInfo=" << _startOfLazyBindingInfo << "\n"
       << "  endOfLazyBindingInfo=" << _endOfLazyBindingInfo << "\n"
+      << "  startOfExportTrie=" << _startOfExportTrie << "\n"
+      << "  endOfExportTrie=" << _endOfExportTrie << "\n"
       << "  startOfDataInCode=" << _startOfDataInCode << "\n"
       << "  startOfSymbols=" << _startOfSymbols << "\n"
       << "  startOfSymbolStrings=" << _startOfSymbolStrings << "\n"
@@ -685,8 +726,8 @@ std::error_code MachOFileLayout::writeLoadCommands() {
     di->weak_bind_size = 0;
     di->lazy_bind_off  = _lazyBindingInfo.size() ? _startOfLazyBindingInfo : 0;
     di->lazy_bind_size = _lazyBindingInfo.size();
-    di->export_off     = 0;
-    di->export_size    = 0;
+    di->export_off     = _exportTrie.size() ? _startOfExportTrie : 0;
+    di->export_size    = _exportTrie.size();
     if (_swap)
       swapStruct(*di);
     lc += sizeof(dyld_info_command);
@@ -897,10 +938,15 @@ void MachOFileLayout::writeLazyBindingInfo() {
                             _lazyBindingInfo.bytes(), _lazyBindingInfo.size());
 }
 
+void MachOFileLayout::writeExportInfo() {
+  memcpy(&_buffer[_startOfExportTrie], _exportTrie.bytes(), _exportTrie.size());
+}
+
 void MachOFileLayout::buildLinkEditInfo() {
   buildRebaseInfo();
   buildBindInfo();
   buildLazyBindInfo();
+  buildExportTrie();
   computeSymbolTableSizes();
   computeDataInCodeSize();
 }
@@ -957,6 +1003,191 @@ void MachOFileLayout::buildLazyBindInfo() {
   _lazyBindingInfo.align(_is64 ? 8 : 4);
 }
 
+void MachOFileLayout::TrieNode::addSymbol(const Export& entry,
+                                          BumpPtrAllocator &allocator,
+                                          std::vector<TrieNode*> &allNodes) {
+  StringRef partialStr = entry.name.drop_front(_cummulativeString.size());
+  for (TrieEdge &edge : _children) {
+    StringRef edgeStr = edge._subString;
+    if (partialStr.startswith(edgeStr)) {
+      // Already have matching edge, go down that path.
+      edge._child->addSymbol(entry, allocator, allNodes);
+      return;
+    }
+    // See if string has commmon prefix with existing edge.
+    for (int n=edgeStr.size()-1; n > 0; --n) {
+      if (partialStr.substr(0, n).equals(edgeStr.substr(0, n))) {
+        // Splice in new node:  was A -> C,  now A -> B -> C
+        StringRef bNodeStr = edge._child->_cummulativeString;
+        bNodeStr = bNodeStr.drop_back(edgeStr.size()-n).copy(allocator);
+        TrieNode* bNode = new (allocator) TrieNode(bNodeStr);
+        allNodes.push_back(bNode);
+        TrieNode* cNode = edge._child;
+        StringRef abEdgeStr = edgeStr.substr(0,n).copy(allocator);
+        StringRef bcEdgeStr = edgeStr.substr(n).copy(allocator);
+        DEBUG_WITH_TYPE("trie-builder", llvm::dbgs()
+                        << "splice in TrieNode('" << bNodeStr
+                        << "') between edge '"
+                        << abEdgeStr << "' and edge='"
+                        << bcEdgeStr<< "'\n");
+        TrieEdge& abEdge = edge;
+        abEdge._subString = abEdgeStr;
+        abEdge._child = bNode;
+        TrieEdge bcEdge(bcEdgeStr, cNode);
+        bNode->_children.push_back(bcEdge);
+        bNode->addSymbol(entry, allocator, allNodes);
+        return;
+      }
+    }
+  }
+  if (entry.flags & EXPORT_SYMBOL_FLAGS_REEXPORT) {
+    assert(entry.otherOffset != 0);
+  }
+  if (entry.flags & EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER) {
+    assert(entry.otherOffset != 0);
+  }
+  // No commonality with any existing child, make a new edge.
+  TrieNode* newNode = new (allocator) TrieNode(entry.name.copy(allocator));
+  TrieEdge newEdge(partialStr, newNode);
+  _children.push_back(newEdge);
+  DEBUG_WITH_TYPE("trie-builder", llvm::dbgs()
+                   << "new TrieNode('" << entry.name << "') with edge '"
+                   << partialStr << "' from node='"
+                   << _cummulativeString << "'\n");
+  newNode->_address = entry.offset;
+  newNode->_flags = entry.flags | entry.kind;
+  newNode->_other = entry.otherOffset;
+  if ((entry.flags & EXPORT_SYMBOL_FLAGS_REEXPORT) && !entry.otherName.empty())
+    newNode->_importedName = entry.otherName.copy(allocator);
+  newNode->_hasExportInfo = true;
+  allNodes.push_back(newNode);
+}
+
+bool MachOFileLayout::TrieNode::updateOffset(uint32_t& offset) {
+  uint32_t nodeSize = 1; // Length when no export info
+  if (_hasExportInfo) {
+    if (_flags & EXPORT_SYMBOL_FLAGS_REEXPORT) {
+      nodeSize = llvm::getULEB128Size(_flags);
+      nodeSize += llvm::getULEB128Size(_other); // Other contains ordinal.
+      nodeSize += _importedName.size();
+      ++nodeSize; // Trailing zero in imported name.
+    } else {
+      nodeSize = llvm::getULEB128Size(_flags) + llvm::getULEB128Size(_address);
+      if (_flags & EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER)
+        nodeSize += llvm::getULEB128Size(_other);
+    }
+    // Overall node size so far is uleb128 of export info + actual export info.
+    nodeSize += llvm::getULEB128Size(nodeSize);
+  }
+  // Compute size of all child edges.
+  ++nodeSize; // Byte for number of chidren.
+  for (TrieEdge &edge : _children) {
+    nodeSize += edge._subString.size() + 1 // String length.
+              + llvm::getULEB128Size(edge._child->_trieOffset); // Offset len.
+  }
+  // On input, 'offset' is new prefered location for this node.
+  bool result = (_trieOffset != offset);
+  // Store new location in node object for use by parents.
+  _trieOffset = offset;
+  // Update offset for next iteration.
+  offset += nodeSize;
+  // Return true if _trieOffset was changed.
+  return result;
+}
+
+void MachOFileLayout::TrieNode::appendToByteBuffer(ByteBuffer &out) {
+  if (_hasExportInfo) {
+    if (_flags & EXPORT_SYMBOL_FLAGS_REEXPORT) {
+      if (!_importedName.empty()) {
+        // nodes with re-export info: size, flags, ordinal, import-name
+        uint32_t nodeSize = llvm::getULEB128Size(_flags)
+                          + llvm::getULEB128Size(_other)
+                          + _importedName.size() + 1;
+        assert(nodeSize < 256);
+        out.append_byte(nodeSize);
+        out.append_uleb128(_flags);
+        out.append_uleb128(_other);
+        out.append_string(_importedName);
+      } else {
+        // nodes without re-export info: size, flags, ordinal, empty-string
+        uint32_t nodeSize = llvm::getULEB128Size(_flags)
+                          + llvm::getULEB128Size(_other) + 1;
+        assert(nodeSize < 256);
+        out.append_byte(nodeSize);
+        out.append_uleb128(_flags);
+        out.append_uleb128(_other);
+        out.append_byte(0);
+      }
+    } else if ( _flags & EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER ) {
+      // Nodes with export info: size, flags, address, other
+      uint32_t nodeSize = llvm::getULEB128Size(_flags)
+                        + llvm::getULEB128Size(_address)
+                        + llvm::getULEB128Size(_other);
+      assert(nodeSize < 256);
+      out.append_byte(nodeSize);
+      out.append_uleb128(_flags);
+      out.append_uleb128(_address);
+      out.append_uleb128(_other);
+    } else {
+      // Nodes with export info: size, flags, address
+      uint32_t nodeSize = llvm::getULEB128Size(_flags)
+                        + llvm::getULEB128Size(_address);
+      assert(nodeSize < 256);
+      out.append_byte(nodeSize);
+      out.append_uleb128(_flags);
+      out.append_uleb128(_address);
+    }
+  } else {
+    // Node with no export info.
+    uint32_t nodeSize = 0;
+    out.append_byte(nodeSize);
+  }
+  // Add number of children.
+  assert(_children.size() < 256);
+  out.append_byte(_children.size());
+  // Append each child edge substring and node offset.
+  for (TrieEdge &edge : _children) {
+    out.append_string(edge._subString);
+    out.append_uleb128(edge._child->_trieOffset);
+  }
+}
+
+void MachOFileLayout::buildExportTrie() {
+  if (_file.exportInfo.empty())
+    return;
+
+  // For all temporary strings and objects used building trie.
+  BumpPtrAllocator allocator;
+
+  // Build trie of all exported symbols.
+  TrieNode* rootNode = new (allocator) TrieNode(StringRef());
+  std::vector<TrieNode*> allNodes;
+  allNodes.reserve(_file.exportInfo.size()*2);
+  allNodes.push_back(rootNode);
+  for (const Export& entry : _file.exportInfo) {
+    rootNode->addSymbol(entry, allocator, allNodes);
+  }
+
+  // Assign each node in the vector an offset in the trie stream, iterating
+  // until all uleb128 sizes have stabilized.
+  bool more;
+  do {
+    uint32_t offset = 0;
+    more = false;
+    for (TrieNode* node : allNodes) {
+      if (node->updateOffset(offset))
+        more = true;
+    }
+  } while (more);
+
+  // Serialize trie to ByteBuffer.
+  for (TrieNode* node : allNodes) {
+    node->appendToByteBuffer(_exportTrie);
+  }
+  _exportTrie.align(_is64 ? 8 : 4);
+}
+
+
 void MachOFileLayout::computeSymbolTableSizes() {
   // MachO symbol tables have three ranges: locals, globals, and undefines
   const size_t nlistSize = (_is64 ? sizeof(nlist_64) : sizeof(nlist));
@@ -998,6 +1229,7 @@ void MachOFileLayout::writeLinkEditContent() {
     writeBindingInfo();
     writeLazyBindingInfo();
     // TODO: add weak binding info
+    writeExportInfo();
     writeSymbolTable();
   }
 }
