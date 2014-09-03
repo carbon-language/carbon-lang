@@ -6,7 +6,7 @@
 ; Function Attrs: nounwind
 define void @t1() #0 {
 entry:
-; CHECK-LABEL: t1
+; CHECK-LABEL: t1:
 ; CHECK-NOT: ldm
 ; CHECK-NOT: stm
     tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* bitcast ([64 x i32]* @s to i8*), i8* bitcast ([64 x i32]* @d to i8*), i32 17, i32 4, i1 false)
