@@ -6,9 +6,9 @@
 define void @Initrand() nounwind {
 entry:
 ; CHECK: @Initrand
-; CHECK: adrp x[[REG:[0-9]+]], _seed@GOTPAGE
-; CHECK: ldr x[[REG2:[0-9]+]], [x[[REG]], _seed@GOTPAGEOFF]
-; CHECK: str x{{[0-9]+}}, [x[[REG2]]]
+; CHECK: adrp [[REG:x[0-9]+]], _seed@GOTPAGE
+; CHECK: ldr  [[REG2:x[0-9]+]], {{\[}}[[REG]], _seed@GOTPAGEOFF{{\]}}
+; CHECK: str  {{x[0-9]+}}, {{\[}}[[REG2]]{{\]}}
   store i64 74755, i64* @seed, align 8
   ret void
 }
@@ -16,17 +16,17 @@ entry:
 define i32 @Rand() nounwind {
 entry:
 ; CHECK: @Rand
-; CHECK: adrp x[[REG:[0-9]+]], _seed@GOTPAGE
-; CHECK: ldr x[[REG2:[0-9]+]], [x[[REG]], _seed@GOTPAGEOFF]
-; CHECK: movz x[[REG3:[0-9]+]], #0x51d
-; CHECK: ldr x[[REG4:[0-9]+]], [x[[REG2]]]
-; CHECK: mul x[[REG5:[0-9]+]], x[[REG4]], x[[REG3]]
-; CHECK: movz x[[REG6:[0-9]+]], #0x3619
-; CHECK: add x[[REG7:[0-9]+]], x[[REG5]], x[[REG6]]
-; CHECK: orr x[[REG8:[0-9]+]], xzr, #0xffff
-; CHECK: and x[[REG9:[0-9]+]], x[[REG7]], x[[REG8]]
-; CHECK: str x[[REG9]], [x[[REG]]]
-; CHECK: ldr x{{[0-9]+}}, [x[[REG]]]
+; CHECK: adrp [[REG1:x[0-9]+]], _seed@GOTPAGE
+; CHECK: ldr  [[REG2:x[0-9]+]], {{\[}}[[REG1]], _seed@GOTPAGEOFF{{\]}}
+; CHECK: movz [[REG3:x[0-9]+]], #0x3619
+; CHECK: movz [[REG4:x[0-9]+]], #0x51d
+; CHECK: ldr  [[REG5:x[0-9]+]], {{\[}}[[REG2]]{{\]}}
+; CHECK: mul  [[REG6:x[0-9]+]], [[REG5]], [[REG4]]
+; CHECK: add  [[REG7:x[0-9]+]], [[REG6]], [[REG3]]
+; CHECK: orr  [[REG8:x[0-9]+]], xzr, #0xffff
+; CHECK: and  [[REG9:x[0-9]+]], [[REG7]], [[REG8]]
+; CHECK: str  [[REG9]], {{\[}}[[REG1]]{{\]}}
+; CHECK: ldr  {{x[0-9]+}}, {{\[}}[[REG1]]{{\]}}
   %0 = load i64* @seed, align 8
   %mul = mul nsw i64 %0, 1309
   %add = add nsw i64 %mul, 13849
