@@ -10,8 +10,8 @@ define void @test1(%structA* nocapture readonly %J, i32 %xmin, i32 %ymin) {
 ; CHECK: %arrayidx9 = getelementptr inbounds %structA* %J, i64 0, i32 0, i64 1
 ; CHECK: %3 = bitcast float* %arrayidx4 to <2 x float>*
 ; CHECK: %4 = load <2 x float>* %3, align 4
-; CHECK: %5 = fsub <2 x float> %2, %4
-; CHECK: %6 = fmul <2 x float> %5, %5
+; CHECK: %5 = fsub fast <2 x float> %2, %4
+; CHECK: %6 = fmul fast <2 x float> %5, %5
 ; CHECK: %7 = extractelement <2 x float> %6, i32 0
 ; CHECK: %8 = extractelement <2 x float> %6, i32 1
 ; CHECK: %add = fadd fast float %7, %8
@@ -45,8 +45,8 @@ define void @test2(%structA* nocapture readonly %J, i32 %xmin, i32 %ymin) {
 ; CHECK: %arrayidx9 = getelementptr inbounds %structA* %J, i64 0, i32 0, i64 1
 ; CHECK: %3 = bitcast float* %arrayidx4 to <2 x float>*
 ; CHECK: %4 = load <2 x float>* %3, align 4
-; CHECK: %5 = fsub <2 x float> %2, %4
-; CHECK: %6 = fmul <2 x float> %5, %5
+; CHECK: %5 = fsub fast <2 x float> %2, %4
+; CHECK: %6 = fmul fast <2 x float> %5, %5
 ; CHECK: %7 = extractelement <2 x float> %6, i32 0
 ; CHECK: %8 = extractelement <2 x float> %6, i32 1
 ; CHECK: %add = fadd fast float %8, %7

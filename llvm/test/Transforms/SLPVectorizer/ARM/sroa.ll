@@ -5,11 +5,11 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-
 %class.Complex = type { double, double }
 
 ; Code like this is the result of SROA. Make sure we don't vectorize this
-; because the in the scalar version of this the shl/or are handled by the
+; because the scalar version of the shl/or are handled by the
 ; backend and disappear, the vectorized code stays.
 
 ; CHECK-LABEL: SROAed
-; CHECK-NOT: shl <2 x i64>
+; CHECK-NOT: shl nuw <2 x i64>
 ; CHECK-NOT: or <2 x i64>
 
 define void @SROAed(%class.Complex* noalias nocapture sret %agg.result, [4 x i32] %a.coerce, [4 x i32] %b.coerce) {

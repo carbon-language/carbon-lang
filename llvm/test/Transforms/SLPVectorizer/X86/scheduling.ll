@@ -6,7 +6,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 ;CHECK-LABEL: @foo
 ;CHECK: load <4 x i32>
 ;CHECK: load <4 x i32>
-;CHECK: %[[S1:.+]] = add <4 x i32>
+;CHECK: %[[S1:.+]] = add nsw <4 x i32>
 ;CHECK-DAG: store <4 x i32> %[[S1]]
 ;CHECK-DAG: %[[A1:.+]] = add nsw i32
 ;CHECK-DAG: %[[A2:.+]] = add nsw i32 %[[A1]]

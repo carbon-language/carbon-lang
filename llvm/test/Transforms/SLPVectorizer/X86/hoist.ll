@@ -21,7 +21,7 @@ target triple = "i386-apple-macosx10.9.0"
 ; loop body:
 ;CHECK: phi
 ;CHECK: load <4 x i32>
-;CHECK: add <4 x i32>
+;CHECK: add nsw <4 x i32>
 ;CHECK: store <4 x i32>
 ;CHECK: ret
 define i32 @foo(i32* nocapture %A, i32 %n, i32 %k) {

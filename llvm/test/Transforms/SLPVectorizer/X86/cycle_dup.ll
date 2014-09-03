@@ -15,7 +15,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 ;CHECK: bitcast i32* %A to <4 x i32>*
 ;CHECK-NEXT: load <4 x i32>
 ;CHECK: phi <4 x i32>
-;CHECK-NEXT: mul <4 x i32>
+;CHECK-NEXT: mul nsw <4 x i32>
 ;CHECK-NOT: mul
 ;CHECK: phi <4 x i32>
 ;CHECK: bitcast i32* %A to <4 x i32>*

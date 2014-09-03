@@ -166,6 +166,23 @@ static unsigned getSameOpcode(ArrayRef<Value *> VL) {
   return Opcode;
 }
 
+/// Get the intersection (logical and) of all of the potential IR flags
+/// of each scalar operation (VL) that will be converted into a vector (I).
+/// Flag set: NSW, NUW, exact, and all of fast-math.
+static void propagateIRFlags(Value *I, ArrayRef<Value *> VL) {
+  if (auto *VecOp = dyn_cast<BinaryOperator>(I)) {
+    if (auto *Intersection = dyn_cast<BinaryOperator>(VL[0])) {
+      // Intersection is initialized to the 0th scalar,
+      // so start counting from index '1'.
+      for (int i = 1, e = VL.size(); i < e; ++i) {
+        if (auto *Scalar = dyn_cast<BinaryOperator>(VL[i]))
+          Intersection->andIRFlags(Scalar);
+      }
+      VecOp->copyIRFlags(Intersection);
+    }
+  }
+}
+  
 /// \returns \p I after propagating metadata from \p VL.
 static Instruction *propagateMetadata(Instruction *I, ArrayRef<Value *> VL) {
   Instruction *I0 = cast<Instruction>(VL[0]);
@@ -2031,6 +2048,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       BinaryOperator *BinOp = cast<BinaryOperator>(VL0);
       Value *V = Builder.CreateBinOp(BinOp->getOpcode(), LHS, RHS);
       E->VectorizedValue = V;
+      propagateIRFlags(E->VectorizedValue, E->Scalars);
       ++NumVectorInstructions;
 
       if (Instruction *I = dyn_cast<Instruction>(V))
@@ -2194,18 +2212,25 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       BinaryOperator *BinOp1 = cast<BinaryOperator>(VL1);
       Value *V1 = Builder.CreateBinOp(BinOp1->getOpcode(), LHS, RHS);
 
-      // Create appropriate shuffle to take alternative operations from
-      // the vector.
-      std::vector<Constant *> Mask(E->Scalars.size());
+      // Create shuffle to take alternate operations from the vector.
+      // Also, gather up odd and even scalar ops to propagate IR flags to
+      // each vector operation.
+      ValueList OddScalars, EvenScalars;
       unsigned e = E->Scalars.size();
+      SmallVector<Constant *, 8> Mask(e);
       for (unsigned i = 0; i < e; ++i) {
-        if (i & 1)
+        if (i & 1) {
           Mask[i] = Builder.getInt32(e + i);
-        else
+          OddScalars.push_back(E->Scalars[i]);
+        } else {
           Mask[i] = Builder.getInt32(i);
+          EvenScalars.push_back(E->Scalars[i]);
+        }
       }
 
       Value *ShuffleMask = ConstantVector::get(Mask);
+      propagateIRFlags(V0, EvenScalars);
+      propagateIRFlags(V1, OddScalars);
 
       Value *V = Builder.CreateShuffleVector(V0, V1, ShuffleMask);
       E->VectorizedValue = V;

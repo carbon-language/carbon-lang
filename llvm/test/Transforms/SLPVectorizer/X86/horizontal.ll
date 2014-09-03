@@ -148,7 +148,7 @@ for.end:
 ; }
 
 ; CHECK-LABEL: long_red
-; CHECK: fmul <4 x float>
+; CHECK: fmul fast <4 x float>
 ; CHECK: shufflevector <4 x float>
 
 define i32 @long_red(float* noalias %A, float* noalias %B, i32 %n) {
@@ -250,7 +250,7 @@ for.end:
 ; }
 
 ; CHECK-LABEL: chain_red
-; CHECK: fmul <4 x float>
+; CHECK: fmul fast <4 x float>
 ; CHECK: shufflevector <4 x float>
 
 define i32 @chain_red(float* noalias %A, float* noalias %B, i32 %n) {
@@ -317,7 +317,7 @@ for.end:
 ; }
 
 ; CHECK-LABEL: store_red
-; CHECK: fmul <4 x float>
+; CHECK: fmul fast <4 x float>
 ; CHECK: shufflevector <4 x float>
 
 define i32 @store_red(float* noalias %A, float* noalias %B, float* noalias %C, i32 %n) {
@@ -379,7 +379,7 @@ for.end:
 ; }
 
 ; STORE-LABEL: store_red_double
-; STORE: fmul <2 x double>
+; STORE: fmul fast <2 x double>
 ; STORE: extractelement <2 x double>
 ; STORE: extractelement <2 x double>
 

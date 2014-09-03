@@ -5,7 +5,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 ;CHECK-LABEL: @powof2div(
 ;CHECK: load <4 x i32>*
-;CHECK: add <4 x i32>
+;CHECK: add nsw <4 x i32>
 ;CHECK: sdiv <4 x i32>
 define void @powof2div(i32* noalias nocapture %a, i32* noalias nocapture readonly %b, i32* noalias nocapture readonly %c){
 entry:

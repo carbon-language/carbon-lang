@@ -5,10 +5,10 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 ;CHECK-LABEL: @foo(
 ;CHECK: load <4 x i32>
-;CHECK: add <4 x i32>
+;CHECK: add nsw <4 x i32>
 ;CHECK: store <4 x i32>
 ;CHECK: load <4 x i32>
-;CHECK: add <4 x i32>
+;CHECK: add nsw <4 x i32>
 ;CHECK: store <4 x i32>
 ;CHECK: ret
 define i32 @foo(i32* nocapture %A, i32 %n) #0 {

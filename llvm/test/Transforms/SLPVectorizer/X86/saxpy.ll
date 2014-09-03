@@ -5,7 +5,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 ; SLP vectorization example from http://cs.stanford.edu/people/eschkufz/research/asplos291-schkufza.pdf
 ;CHECK: SAXPY
-;CHECK: mul <4 x i32>
+;CHECK: mul nsw <4 x i32>
 ;CHECK: ret
 
 define void @SAXPY(i32* noalias nocapture %x, i32* noalias nocapture %y, i32 %a, i64 %i) {

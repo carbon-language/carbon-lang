@@ -12,9 +12,9 @@ target triple = "x86_64-unknown-linux-gnu"
 @fa = common global [4 x float] zeroinitializer, align 16
 
 ; CHECK-LABEL: @addsub
-; CHECK: %5 = add <4 x i32> %3, %4
-; CHECK: %6 = add <4 x i32> %2, %5
-; CHECK: %7 = sub <4 x i32> %2, %5
+; CHECK: %5 = add nsw <4 x i32> %3, %4
+; CHECK: %6 = add nsw <4 x i32> %2, %5
+; CHECK: %7 = sub nsw <4 x i32> %2, %5
 ; CHECK: %8 = shufflevector <4 x i32> %6, <4 x i32> %7, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
 
 ; Function Attrs: nounwind uwtable
@@ -56,9 +56,9 @@ entry:
 }
 
 ; CHECK-LABEL: @subadd
-; CHECK:  %5 = add <4 x i32> %3, %4
-; CHECK:  %6 = sub <4 x i32> %2, %5
-; CHECK:  %7 = add <4 x i32> %2, %5
+; CHECK:  %5 = add nsw <4 x i32> %3, %4
+; CHECK:  %6 = sub nsw <4 x i32> %2, %5
+; CHECK:  %7 = add nsw <4 x i32> %2, %5
 ; CHECK:  %8 = shufflevector <4 x i32> %6, <4 x i32> %7, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
 
 ; Function Attrs: nounwind uwtable
