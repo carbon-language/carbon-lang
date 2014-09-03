@@ -307,72 +307,6 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
   return ClsType;
 }
 
-/// The Objective-C property callback.  This should be defined where
-/// it's used, but instead it's been lifted to here to support VS2005.
-struct Parser::ObjCPropertyCallback : FieldCallback {
-private:
-  virtual void anchor();
-public:
-  Parser &P;
-  SmallVectorImpl<Decl *> &Props;
-  ObjCDeclSpec &OCDS;
-  SourceLocation AtLoc;
-  SourceLocation LParenLoc;
-  tok::ObjCKeywordKind MethodImplKind;
-        
-  ObjCPropertyCallback(Parser &P, 
-                       SmallVectorImpl<Decl *> &Props,
-                       ObjCDeclSpec &OCDS, SourceLocation AtLoc,
-                       SourceLocation LParenLoc,
-                       tok::ObjCKeywordKind MethodImplKind) :
-    P(P), Props(Props), OCDS(OCDS), AtLoc(AtLoc), LParenLoc(LParenLoc),
-    MethodImplKind(MethodImplKind) {
-  }
-
-  void invoke(ParsingFieldDeclarator &FD) override {
-    if (FD.D.getIdentifier() == nullptr) {
-      P.Diag(AtLoc, diag::err_objc_property_requires_field_name)
-        << FD.D.getSourceRange();
-      return;
-    }
-    if (FD.BitfieldSize) {
-      P.Diag(AtLoc, diag::err_objc_property_bitfield)
-        << FD.D.getSourceRange();
-      return;
-    }
-
-    // Install the property declarator into interfaceDecl.
-    IdentifierInfo *SelName =
-      OCDS.getGetterName() ? OCDS.getGetterName() : FD.D.getIdentifier();
-
-    Selector GetterSel =
-      P.PP.getSelectorTable().getNullarySelector(SelName);
-    IdentifierInfo *SetterName = OCDS.getSetterName();
-    Selector SetterSel;
-    if (SetterName)
-      SetterSel = P.PP.getSelectorTable().getSelector(1, &SetterName);
-    else
-      SetterSel =
-        SelectorTable::constructSetterSelector(P.PP.getIdentifierTable(),
-                                               P.PP.getSelectorTable(),
-                                               FD.D.getIdentifier());
-    bool isOverridingProperty = false;
-    Decl *Property =
-      P.Actions.ActOnProperty(P.getCurScope(), AtLoc, LParenLoc,
-                              FD, OCDS,
-                              GetterSel, SetterSel, 
-                              &isOverridingProperty,
-                              MethodImplKind);
-    if (!isOverridingProperty)
-      Props.push_back(Property);
-
-    FD.complete(Property);
-  }
-};
-
-void Parser::ObjCPropertyCallback::anchor() {
-}
-
 ///   objc-interface-decl-list:
 ///     empty
 ///     objc-interface-decl-list objc-property-decl [OBJC2]
@@ -511,12 +445,44 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
         ParseObjCPropertyAttribute(OCDS);
       }
 
-      ObjCPropertyCallback Callback(*this, allProperties,
-                                    OCDS, AtLoc, LParenLoc, MethodImplKind);
+      auto ObjCPropertyCallback = [&](ParsingFieldDeclarator &FD) {
+        if (FD.D.getIdentifier() == nullptr) {
+          Diag(AtLoc, diag::err_objc_property_requires_field_name)
+              << FD.D.getSourceRange();
+          return;
+        }
+        if (FD.BitfieldSize) {
+          Diag(AtLoc, diag::err_objc_property_bitfield)
+              << FD.D.getSourceRange();
+          return;
+        }
+
+        // Install the property declarator into interfaceDecl.
+        IdentifierInfo *SelName =
+            OCDS.getGetterName() ? OCDS.getGetterName() : FD.D.getIdentifier();
+
+        Selector GetterSel = PP.getSelectorTable().getNullarySelector(SelName);
+        IdentifierInfo *SetterName = OCDS.getSetterName();
+        Selector SetterSel;
+        if (SetterName)
+          SetterSel = PP.getSelectorTable().getSelector(1, &SetterName);
+        else
+          SetterSel = SelectorTable::constructSetterSelector(
+              PP.getIdentifierTable(), PP.getSelectorTable(),
+              FD.D.getIdentifier());
+        bool isOverridingProperty = false;
+        Decl *Property = Actions.ActOnProperty(
+            getCurScope(), AtLoc, LParenLoc, FD, OCDS, GetterSel, SetterSel,
+            &isOverridingProperty, MethodImplKind);
+        if (!isOverridingProperty)
+          allProperties.push_back(Property);
+
+        FD.complete(Property);
+      };
 
       // Parse all the comma separated declarators.
       ParsingDeclSpec DS(*this);
-      ParseStructDeclaration(DS, Callback);
+      ParseStructDeclaration(DS, ObjCPropertyCallback);
 
       ExpectAndConsume(tok::semi, diag::err_expected_semi_decl_list);
       break;
@@ -1338,35 +1304,22 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
                                        Sema::PCC_ObjCInstanceVariableList);
       return cutOffParsing();
     }
-    
-    struct ObjCIvarCallback : FieldCallback {
-      Parser &P;
-      Decl *IDecl;
-      tok::ObjCKeywordKind visibility;
-      SmallVectorImpl<Decl *> &AllIvarDecls;
 
-      ObjCIvarCallback(Parser &P, Decl *IDecl, tok::ObjCKeywordKind V,
-                       SmallVectorImpl<Decl *> &AllIvarDecls) :
-        P(P), IDecl(IDecl), visibility(V), AllIvarDecls(AllIvarDecls) {
-      }
+    auto ObjCIvarCallback = [&](ParsingFieldDeclarator &FD) {
+      Actions.ActOnObjCContainerStartDefinition(interfaceDecl);
+      // Install the declarator into the interface decl.
+      Decl *Field = Actions.ActOnIvar(
+          getCurScope(), FD.D.getDeclSpec().getSourceRange().getBegin(), FD.D,
+          FD.BitfieldSize, visibility);
+      Actions.ActOnObjCContainerFinishDefinition();
+      if (Field)
+        AllIvarDecls.push_back(Field);
+      FD.complete(Field);
+    };
 
-      void invoke(ParsingFieldDeclarator &FD) override {
-        P.Actions.ActOnObjCContainerStartDefinition(IDecl);
-        // Install the declarator into the interface decl.
-        Decl *Field
-          = P.Actions.ActOnIvar(P.getCurScope(),
-                                FD.D.getDeclSpec().getSourceRange().getBegin(),
-                                FD.D, FD.BitfieldSize, visibility);
-        P.Actions.ActOnObjCContainerFinishDefinition();
-        if (Field)
-          AllIvarDecls.push_back(Field);
-        FD.complete(Field);
-      }
-    } Callback(*this, interfaceDecl, visibility, AllIvarDecls);
-    
     // Parse all the comma separated declarators.
     ParsingDeclSpec DS(*this);
-    ParseStructDeclaration(DS, Callback);
+    ParseStructDeclaration(DS, ObjCIvarCallback);
 
     if (Tok.is(tok::semi)) {
       ConsumeToken();

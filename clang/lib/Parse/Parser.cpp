@@ -1756,13 +1756,6 @@ SourceLocation Parser::handleUnexpectedCodeCompletionToken() {
   return PrevTokLocation;
 }
 
-// Anchor the Parser::FieldCallback vtable to this translation unit.
-// We use a spurious method instead of the destructor because
-// destroying FieldCallbacks can actually be slightly
-// performance-sensitive.
-void Parser::FieldCallback::_anchor() {
-}
-
 // Code-completion pass-through functions
 
 void Parser::CodeCompleteDirective(bool InConditional) {
