@@ -252,7 +252,7 @@ public:
     return *(FilterChooserMap.find((unsigned)-1)->second);
   }
 
-  Filter(const Filter &f);
+  Filter(Filter &&f);
   Filter(FilterChooser &owner, unsigned startBit, unsigned numBits, bool mixed);
 
   ~Filter();
@@ -333,13 +333,9 @@ protected:
   // Parent emitter
   const FixedLenDecoderEmitter *Emitter;
 
+  FilterChooser(const FilterChooser &) LLVM_DELETED_FUNCTION;
+  void operator=(const FilterChooser &) LLVM_DELETED_FUNCTION;
 public:
-  FilterChooser(const FilterChooser &FC)
-    : AllInstructions(FC.AllInstructions), Opcodes(FC.Opcodes),
-      Operands(FC.Operands), Filters(FC.Filters),
-      FilterBitValues(FC.FilterBitValues), Parent(FC.Parent),
-      BestIndex(FC.BestIndex), BitWidth(FC.BitWidth),
-      Emitter(FC.Emitter) { }
 
   FilterChooser(const std::vector<const CodeGenInstruction*> &Insts,
                 const std::vector<unsigned> &IDs,
@@ -490,11 +486,11 @@ public:
 //                       //
 ///////////////////////////
 
-Filter::Filter(const Filter &f)
+Filter::Filter(Filter &&f)
   : Owner(f.Owner), StartBit(f.StartBit), NumBits(f.NumBits), Mixed(f.Mixed),
-    FilteredInstructions(f.FilteredInstructions),
-    VariableInstructions(f.VariableInstructions),
-    FilterChooserMap(f.FilterChooserMap), NumFiltered(f.NumFiltered),
+    FilteredInstructions(std::move(f.FilteredInstructions)),
+    VariableInstructions(std::move(f.VariableInstructions)),
+    FilterChooserMap(std::move(f.FilterChooserMap)), NumFiltered(f.NumFiltered),
     LastOpcFiltered(f.LastOpcFiltered) {
 }
 
@@ -1384,8 +1380,7 @@ void FilterChooser::emitSingletonTableEntry(DecoderTableInfo &TableInfo,
 void FilterChooser::runSingleFilter(unsigned startBit, unsigned numBit,
                                     bool mixed) {
   Filters.clear();
-  Filter F(*this, startBit, numBit, true);
-  Filters.push_back(F);
+  Filters.push_back(Filter(*this, startBit, numBit, true));
   BestIndex = 0; // Sole Filter instance to choose from.
   bestFilter().recurse();
 }
