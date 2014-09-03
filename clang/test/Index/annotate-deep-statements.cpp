@@ -3,8 +3,8 @@
 // rdar://11979525
 // Check that we don't get stack overflow trying to annotate an extremely deep AST.
 
-// AddressSanitizer increases stack usage.
-// REQUIRES: not_asan
+// AddressSanitizer and UndefinedBehaviorSanitizer increases stack usage.
+// REQUIRES: not_asan, not_ubsan
 
 struct S {
   S &operator()();
