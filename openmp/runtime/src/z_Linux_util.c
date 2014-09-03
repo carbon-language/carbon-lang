@@ -859,14 +859,15 @@ __kmp_launch_monitor( void *thr )
 
         status = pthread_mutex_lock( & __kmp_wait_mx.m_mutex );
         KMP_CHECK_SYSFAIL( "pthread_mutex_lock", status );
-        status = pthread_cond_timedwait( & __kmp_wait_cv.c_cond, & __kmp_wait_mx.m_mutex,
-                                         & now );
-        if ( status != 0 ) {
-            if ( status != ETIMEDOUT && status != EINTR ) {
-                KMP_SYSFAIL( "pthread_cond_timedwait", status );
+        // AC: the monitor should not fall asleep if g_done has been set
+        if ( !TCR_4(__kmp_global.g.g_done) ) {  // check once more under mutex
+            status = pthread_cond_timedwait( &__kmp_wait_cv.c_cond, &__kmp_wait_mx.m_mutex, &now );
+            if ( status != 0 ) {
+                if ( status != ETIMEDOUT && status != EINTR ) {
+                    KMP_SYSFAIL( "pthread_cond_timedwait", status );
+                };
             };
         };
-
         status = pthread_mutex_unlock( & __kmp_wait_mx.m_mutex );
         KMP_CHECK_SYSFAIL( "pthread_mutex_unlock", status );
 
@@ -1231,6 +1232,8 @@ __kmp_exit_thread(
     pthread_exit( (void *) exit_status );
 } // __kmp_exit_thread
 
+void __kmp_resume_monitor();
+
 void
 __kmp_reap_monitor( kmp_info_t *th )
 {
@@ -1262,6 +1265,7 @@ __kmp_reap_monitor( kmp_info_t *th )
 
     } else
     {
+        __kmp_resume_monitor();   // Wake up the monitor thread
         status = pthread_join( th->th.th_info.ds.ds_thread, & exit_val);
         if (exit_val != th) {
             __kmp_msg(
@@ -1540,7 +1544,7 @@ __kmp_atfork_child (void)
     __kmp_init_common = FALSE;
 
     TCW_4(__kmp_init_user_locks, FALSE);
-    __kmp_user_lock_table.used = 0;
+    __kmp_user_lock_table.used = 1;
     __kmp_user_lock_table.allocated = 0;
     __kmp_user_lock_table.table = NULL;
     __kmp_lock_blocks = NULL;
@@ -1849,6 +1853,32 @@ __kmp_resume( int target_gtid, volatile kmp_uint *spin )
                     gtid, target_gtid ) );
 }
 
+void
+__kmp_resume_monitor()
+{
+    int status;
+#ifdef KMP_DEBUG
+    int gtid = TCR_4(__kmp_init_gtid) ? __kmp_get_gtid() : -1;
+    KF_TRACE( 30, ( "__kmp_resume_monitor: T#%d wants to wakeup T#%d enter\n",
+                    gtid, KMP_GTID_MONITOR ) );
+    KMP_DEBUG_ASSERT( gtid != KMP_GTID_MONITOR );
+#endif
+    status = pthread_mutex_lock( &__kmp_wait_mx.m_mutex );
+    KMP_CHECK_SYSFAIL( "pthread_mutex_lock", status );
+#ifdef DEBUG_SUSPEND
+    {
+        char buffer[128];
+        __kmp_print_cond( buffer, &__kmp_wait_cv.c_cond );
+        __kmp_printf( "__kmp_resume_monitor: T#%d resuming T#%d: %s\n", gtid, KMP_GTID_MONITOR, buffer );
+    }
+#endif
+    status = pthread_cond_signal( &__kmp_wait_cv.c_cond );
+    KMP_CHECK_SYSFAIL( "pthread_cond_signal", status );
+    status = pthread_mutex_unlock( &__kmp_wait_mx.m_mutex );
+    KMP_CHECK_SYSFAIL( "pthread_mutex_unlock", status );
+    KF_TRACE( 30, ( "__kmp_resume_monitor: T#%d exiting after signaling wake up for T#%d\n",
+                    gtid, KMP_GTID_MONITOR ) );
+}
 
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
