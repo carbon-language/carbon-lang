@@ -36,19 +36,39 @@ uptr StackTrace::GetCurrentPc() {
   return GET_CALLER_PC();
 }
 
+// Check if given pointer points into allocated stack area.
+static inline bool IsValidFrame(uptr frame, uptr stack_top, uptr stack_bottom) {
+  return frame > stack_bottom && frame < stack_top - 2 * sizeof (uhwptr);
+}
+
+// In GCC on ARM bp points to saved lr, not fp, so we should check the next
+// cell in stack to be a saved frame pointer. GetCanonicFrame returns the
+// pointer to saved frame pointer in any case.
+static inline uhwptr *GetCanonicFrame(uptr bp,
+                                      uptr stack_top,
+                                      uptr stack_bottom) {
+#ifdef __arm__
+  if (!IsValidFrame(bp, stack_top, stack_bottom)) return 0;
+  uhwptr *bp_prev = (uhwptr *)bp;
+  if (IsValidFrame((uptr)bp_prev[0], stack_top, stack_bottom)) return bp_prev;
+  return bp_prev - 1;
+#else
+  return (uhwptr*)bp;
+#endif
+}
+
 void StackTrace::FastUnwindStack(uptr pc, uptr bp,
                                  uptr stack_top, uptr stack_bottom,
                                  uptr max_depth) {
   CHECK_GE(max_depth, 2);
   trace[0] = pc;
   size = 1;
-  uhwptr *frame = (uhwptr *)bp;
-  uhwptr *prev_frame = frame - 1;
   if (stack_top < 4096) return;  // Sanity check for stack top.
+  uhwptr *frame = GetCanonicFrame(bp, stack_top, stack_bottom);
+  uhwptr *prev_frame = 0;
   // Avoid infinite loop when frame == frame[0] by using frame > prev_frame.
   while (frame > prev_frame &&
-         frame < (uhwptr *)stack_top - 2 &&
-         frame > (uhwptr *)stack_bottom &&
+         IsValidFrame((uptr)frame, stack_top, stack_bottom) &&
          IsAligned((uptr)frame, sizeof(*frame)) &&
          size < max_depth) {
     uhwptr pc1 = frame[1];
@@ -56,7 +76,7 @@ void StackTrace::FastUnwindStack(uptr pc, uptr bp,
       trace[size++] = (uptr) pc1;
     }
     prev_frame = frame;
-    frame = (uhwptr *)frame[0];
+    frame = GetCanonicFrame((uptr)frame[0], stack_top, stack_bottom);
   }
 }
 
