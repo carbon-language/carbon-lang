@@ -1651,7 +1651,7 @@ public:
   /// unnecessary AST de-serialization of the body.
   Stmt *getBody(const FunctionDecl *&Definition) const;
 
-   Stmt *getBody() const override {
+  Stmt *getBody() const override {
     const FunctionDecl* Definition;
     return getBody(Definition);
   }
