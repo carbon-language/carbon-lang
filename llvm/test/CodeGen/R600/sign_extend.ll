@@ -10,10 +10,10 @@ define void @s_sext_i1_to_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
   ret void
 }
 
-; SI-LABEL: @test:
-; SI: V_ASHR
+; SI-LABEL: @test_s_sext_i32_to_i64:
+; SI: S_ASHR_I32
 ; SI: S_ENDPG
-define void @test(i64 addrspace(1)* %out, i32 %a, i32 %b, i32 %c) nounwind {
+define void @test_s_sext_i32_to_i64(i64 addrspace(1)* %out, i32 %a, i32 %b, i32 %c) nounwind {
 entry:
   %mul = mul i32 %a, %b
   %add = add i32 %mul, %c

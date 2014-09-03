@@ -7,8 +7,8 @@ target triple = "r600--"
 ; FUNC-LABEL: @test
 ; OPT: mul nsw i32
 ; OPT-NEXT: sext
-; SI-LLC: V_MUL_LO_I32
-; SI-LLC-NOT: V_MUL_HI
+; SI-LLC: S_MUL_I32
+; SI-LLC-NOT: MUL
 define void @test(i8 addrspace(1)* nocapture readonly %in, i32 %a, i8 %b) {
 entry:
   %0 = mul nsw i32 %a, 3

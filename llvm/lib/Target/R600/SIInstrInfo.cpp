@@ -908,6 +908,7 @@ unsigned SIInstrInfo::getVALUOp(const MachineInstr &MI) {
   case AMDGPU::S_ADDC_U32: return AMDGPU::V_ADDC_U32_e32;
   case AMDGPU::S_SUB_I32: return AMDGPU::V_SUB_I32_e32;
   case AMDGPU::S_SUBB_U32: return AMDGPU::V_SUBB_U32_e32;
+  case AMDGPU::S_MUL_I32: return AMDGPU::V_MUL_LO_I32;
   case AMDGPU::S_AND_B32: return AMDGPU::V_AND_B32_e32;
   case AMDGPU::S_OR_B32: return AMDGPU::V_OR_B32_e32;
   case AMDGPU::S_XOR_B32: return AMDGPU::V_XOR_B32_e32;
@@ -981,10 +982,14 @@ void SIInstrInfo::legalizeOpWithMove(MachineInstr *MI, unsigned OpIdx) const {
   unsigned RCID = get(MI->getOpcode()).OpInfo[OpIdx].RegClass;
   const TargetRegisterClass *RC = RI.getRegClass(RCID);
   unsigned Opcode = AMDGPU::V_MOV_B32_e32;
+
   if (MO.isReg()) {
     Opcode = AMDGPU::COPY;
   } else if (RI.isSGPRClass(RC)) {
     Opcode = AMDGPU::S_MOV_B32;
+  } else if (MO.isImm()) {
+    if (RC == &AMDGPU::VSrc_32RegClass)
+      Opcode = AMDGPU::S_MOV_B32;
   }
 
   const TargetRegisterClass *VRC = RI.getEquivalentVGPRClass(RC);
