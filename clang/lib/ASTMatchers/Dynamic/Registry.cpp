@@ -241,7 +241,9 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(isExpr);
   REGISTER_MATCHER(isExternC);
   REGISTER_MATCHER(isImplicit);
+  REGISTER_MATCHER(isInstantiated);
   REGISTER_MATCHER(isInteger);
+  REGISTER_MATCHER(isInTemplateInstantiation);
   REGISTER_MATCHER(isListInitialization);
   REGISTER_MATCHER(isOverride);
   REGISTER_MATCHER(isPrivate);

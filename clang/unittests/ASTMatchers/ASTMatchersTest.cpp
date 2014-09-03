@@ -3504,6 +3504,62 @@ TEST(IsTemplateInstantiation, DoesNotMatchNonTemplate) {
       recordDecl(isTemplateInstantiation())));
 }
 
+TEST(IsInstantiated, MatchesInstantiation) {
+  EXPECT_TRUE(
+      matches("template<typename T> class A { T i; }; class Y { A<int> a; };",
+              recordDecl(isInstantiated())));
+}
+
+TEST(IsInstantiated, NotMatchesDefinition) {
+  EXPECT_TRUE(notMatches("template<typename T> class A { T i; };",
+                         recordDecl(isInstantiated())));
+}
+
+TEST(IsInTemplateInstantiation, MatchesInstantiationStmt) {
+  EXPECT_TRUE(matches("template<typename T> struct A { A() { T i; } };"
+                      "class Y { A<int> a; }; Y y;",
+                      declStmt(isInTemplateInstantiation())));
+}
+
+TEST(IsInTemplateInstantiation, NotMatchesDefinitionStmt) {
+  EXPECT_TRUE(notMatches("template<typename T> struct A { void x() { T i; } };",
+                         declStmt(isInTemplateInstantiation())));
+}
+
+TEST(IsInstantiated, MatchesFunctionInstantiation) {
+  EXPECT_TRUE(
+      matches("template<typename T> void A(T t) { T i; } void x() { A(0); }",
+              functionDecl(isInstantiated())));
+}
+
+TEST(IsInstantiated, NotMatchesFunctionDefinition) {
+  EXPECT_TRUE(notMatches("template<typename T> void A(T t) { T i; }",
+                         varDecl(isInstantiated())));
+}
+
+TEST(IsInTemplateInstantiation, MatchesFunctionInstantiationStmt) {
+  EXPECT_TRUE(
+      matches("template<typename T> void A(T t) { T i; } void x() { A(0); }",
+              declStmt(isInTemplateInstantiation())));
+}
+
+TEST(IsInTemplateInstantiation, NotMatchesFunctionDefinitionStmt) {
+  EXPECT_TRUE(notMatches("template<typename T> void A(T t) { T i; }",
+                         declStmt(isInTemplateInstantiation())));
+}
+
+TEST(IsInTemplateInstantiation, Sharing) {
+  auto Matcher = binaryOperator(unless(isInTemplateInstantiation()));
+  // FIXME: Node sharing is an implementation detail, exposing it is ugly
+  // and makes the matcher behave in non-obvious ways.
+  EXPECT_TRUE(notMatches(
+      "int j; template<typename T> void A(T t) { j += 42; } void x() { A(0); }",
+      Matcher));
+  EXPECT_TRUE(matches(
+      "int j; template<typename T> void A(T t) { j += t; } void x() { A(0); }",
+      Matcher));
+}
+
 TEST(IsExplicitTemplateSpecialization,
      DoesNotMatchPrimaryTemplate) {
   EXPECT_TRUE(notMatches(
