@@ -230,7 +230,7 @@ protected:
   std::vector<unsigned> VariableInstructions;
 
   // Map of well-known segment value to its delegate.
-  std::map<unsigned, const FilterChooser*> FilterChooserMap;
+  std::map<unsigned, std::unique_ptr<const FilterChooser>> FilterChooserMap;
 
   // Number of instructions which fall under FilteredInstructions category.
   unsigned NumFiltered;
@@ -530,12 +530,6 @@ Filter::Filter(FilterChooser &owner, unsigned startBit, unsigned numBits,
 }
 
 Filter::~Filter() {
-  std::map<unsigned, const FilterChooser*>::iterator filterIterator;
-  for (filterIterator = FilterChooserMap.begin();
-       filterIterator != FilterChooserMap.end();
-       filterIterator++) {
-    delete filterIterator->second;
-  }
 }
 
 // Divides the decoding task into sub tasks and delegates them to the
@@ -557,14 +551,12 @@ void Filter::recurse() {
 
     // Delegates to an inferior filter chooser for further processing on this
     // group of instructions whose segment values are variable.
-    FilterChooserMap.insert(std::pair<unsigned, const FilterChooser*>(
-                              (unsigned)-1,
-                              new FilterChooser(Owner->AllInstructions,
-                                                VariableInstructions,
-                                                Owner->Operands,
-                                                BitValueArray,
-                                                *Owner)
-                              ));
+    FilterChooserMap.emplace((unsigned)-1,
+                             make_unique<FilterChooser>(Owner->AllInstructions,
+                                                        VariableInstructions,
+                                                        Owner->Operands,
+                                                        BitValueArray,
+                                                        *Owner));
   }
 
   // No need to recurse for a singleton filtered instruction.
@@ -590,14 +582,12 @@ void Filter::recurse() {
 
     // Delegates to an inferior filter chooser for further processing on this
     // category of instructions.
-    FilterChooserMap.insert(std::pair<unsigned, const FilterChooser*>(
-                              mapIterator->first,
-                              new FilterChooser(Owner->AllInstructions,
-                                                mapIterator->second,
-                                                Owner->Operands,
-                                                BitValueArray,
-                                                *Owner)
-                              ));
+    FilterChooserMap.emplace(mapIterator->first,
+                             make_unique<FilterChooser>(Owner->AllInstructions,
+                                                        mapIterator->second,
+                                                        Owner->Operands,
+                                                        BitValueArray,
+                                                        *Owner));
   }
 }
 
@@ -632,7 +622,8 @@ void Filter::emitTableEntry(DecoderTableInfo &TableInfo) const {
   // A new filter entry begins a new scope for fixup resolution.
   TableInfo.FixupStack.push_back(FixupList());
 
-  std::map<unsigned, const FilterChooser*>::const_iterator filterIterator;
+  std::map<unsigned,
+           std::unique_ptr<const FilterChooser>>::const_iterator filterIterator;
 
   DecoderTable &Table = TableInfo.Table;
 
