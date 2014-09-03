@@ -3,6 +3,7 @@
 ; RUN: opt < %s -asan -asan-module -asan-coverage=2 -S | FileCheck %s --check-prefix=CHECK2
 ; RUN: opt < %s -asan -asan-module -asan-coverage=2 -asan-coverage-block-threshold=10 -S | FileCheck %s --check-prefix=CHECK2
 ; RUN: opt < %s -asan -asan-module -asan-coverage=2 -asan-coverage-block-threshold=1  -S | FileCheck %s --check-prefix=CHECK1
+; RUN: opt < %s -asan -asan-module -asan-coverage=3 -asan-coverage-block-threshold=10 -S | FileCheck %s --check-prefix=CHECK3
 
 ; RUN: opt < %s -asan -asan-module -asan-coverage=0 -asan-globals=0 -S | \
 ; RUN:     FileCheck %s --check-prefix=CHECK0
@@ -58,3 +59,12 @@ entry:
 ; CHECK2-NOT: ret
 ; CHECK2: call void @__sanitizer_cov_module_init(i64 3)
 ; CHECK2: ret
+
+; CHECK3-LABEL: define void @foo
+; CHECK3: call void @__sanitizer_cov
+; CHECK3: call void @__sanitizer_cov
+; CHECK3: call void @__sanitizer_cov
+; CHECK3: call void @__sanitizer_cov
+; CHECK3-NOT: call void @__sanitizer_cov
+; CHECK3: ret void
+
