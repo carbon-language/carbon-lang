@@ -85,7 +85,8 @@ public:
   };
 
   MachOUniversalBinary(MemoryBufferRef Souce, std::error_code &EC);
-  static ErrorOr<MachOUniversalBinary *> create(MemoryBufferRef Source);
+  static ErrorOr<std::unique_ptr<MachOUniversalBinary>>
+  create(MemoryBufferRef Source);
 
   object_iterator begin_objects() const {
     return ObjectForArch(this, 0);

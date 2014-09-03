@@ -63,8 +63,7 @@ ErrorOr<std::unique_ptr<Binary>> object::createBinary(MemoryBufferRef Buffer,
     case sys::fs::file_magic::bitcode:
       return ObjectFile::createSymbolicFile(Buffer, Type, Context);
     case sys::fs::file_magic::macho_universal_binary:
-      return ErrorOr<std::unique_ptr<Binary>>(
-          MachOUniversalBinary::create(Buffer));
+      return MachOUniversalBinary::create(Buffer);
     case sys::fs::file_magic::unknown:
     case sys::fs::file_magic::windows_resource:
       // Unrecognized object file format.
