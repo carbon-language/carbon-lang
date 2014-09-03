@@ -105,7 +105,7 @@ private:
   static const Registry::KindStrings _sKindStrings[];
   static const StubInfo              _sStubInfo;
 
-  enum : Reference::KindValue {
+  enum X86_64_Kinds: Reference::KindValue {
     invalid,               /// for error condition
     
     // Kinds found in mach-o .o files:
@@ -413,48 +413,50 @@ void ArchHandler_x86_64::applyFixupFinal(const Reference &ref,
   assert(ref.kindArch() == Reference::KindArch::x86_64);
   int32_t *loc32 = reinterpret_cast<int32_t *>(location);
   uint64_t *loc64 = reinterpret_cast<uint64_t *>(location);
-  switch (ref.kindValue()) {
+  switch (static_cast<X86_64_Kinds>(ref.kindValue())) {
   case branch32:
   case ripRel32:
+  case ripRel32Anon:
   case ripRel32Got:
   case ripRel32GotLoad:
     write32(*loc32, _swap, (targetAddress - (fixupAddress + 4)) + ref.addend());
-    break;
+    return;
   case pointer64:
   case pointer64Anon:
     write64(*loc64, _swap, targetAddress + ref.addend());
-    break;
+    return;
   case ripRel32Minus1:
     write32(*loc32, _swap, (targetAddress - (fixupAddress + 5)) + ref.addend());
-    break;
+    return;
   case ripRel32Minus2:
     write32(*loc32, _swap, (targetAddress - (fixupAddress + 6)) + ref.addend());
-    break;
+    return;
   case ripRel32Minus4:
     write32(*loc32, _swap, (targetAddress - (fixupAddress + 8)) + ref.addend());
-    break;
+    return;
   case delta32:
   case delta32Anon:
     write32(*loc32, _swap, (targetAddress - fixupAddress) + ref.addend());
-    break;
+    return;
   case delta64:
   case delta64Anon:
     write64(*loc64, _swap, (targetAddress - fixupAddress) + ref.addend());
-    break;
+    return;
   case ripRel32GotLoadNowLea:
     // Change MOVQ to LEA
     assert(location[-2] == 0x8B);
     location[-2] = 0x8D;
     write32(*loc32, _swap, (targetAddress - (fixupAddress + 4)) + ref.addend());
-    break;
+    return;
   case lazyPointer:
   case lazyImmediateLocation:
     // do nothing
-    break;
-  default:
-    llvm_unreachable("invalid x86_64 Reference Kind");
+    return;
+  case invalid:
+    // Fall into llvm_unreachable().
     break;
   }
+  llvm_unreachable("invalid x86_64 Reference Kind");
 }
 
 
@@ -465,51 +467,55 @@ void ArchHandler_x86_64::applyFixupRelocatable(const Reference &ref,
                                                uint64_t inAtomAddress)  {
   int32_t *loc32 = reinterpret_cast<int32_t *>(location);
   uint64_t *loc64 = reinterpret_cast<uint64_t *>(location);
-  switch (ref.kindValue()) {
+  switch (static_cast<X86_64_Kinds>(ref.kindValue())) {
   case branch32:
   case ripRel32:
   case ripRel32Got:
   case ripRel32GotLoad:
     write32(*loc32, _swap, ref.addend());
-    break;
+    return;
+  case ripRel32Anon:
+    write32(*loc32, _swap, (targetAddress - (fixupAddress + 4)) + ref.addend());
+    return;
   case pointer64:
     write64(*loc64, _swap, ref.addend());
-    break;
+    return;
   case pointer64Anon:
     write64(*loc64, _swap, targetAddress + ref.addend());
-    break;
+    return;
   case ripRel32Minus1:
     write32(*loc32, _swap, ref.addend() - 1);
-    break;
+    return;
   case ripRel32Minus2:
     write32(*loc32, _swap, ref.addend() - 2);
-    break;
+    return;
   case ripRel32Minus4:
     write32(*loc32, _swap, ref.addend() - 4);
-    break;
+    return;
   case delta32:
     write32(*loc32, _swap, ref.addend() + inAtomAddress - fixupAddress);
-    break;
+    return;
   case delta32Anon:
     write32(*loc32, _swap, (targetAddress - fixupAddress) + ref.addend());
-    break;
+    return;
   case delta64:
     write64(*loc64, _swap, ref.addend() + inAtomAddress - fixupAddress);
-    break;
+    return;
   case delta64Anon:
     write64(*loc64, _swap, (targetAddress - fixupAddress) + ref.addend());
-    break;
+    return;
   case ripRel32GotLoadNowLea:
     llvm_unreachable("ripRel32GotLoadNowLea implies GOT pass was run");
-    break;
+    return;
   case lazyPointer:
   case lazyImmediateLocation:
     llvm_unreachable("lazy reference kind implies Stubs pass was run");
-    break;
-  default:
-    llvm_unreachable("unknown x86_64 Reference Kind");
+    return;
+  case invalid:
+    // Fall into llvm_unreachable().
     break;
   }
+  llvm_unreachable("unknown x86_64 Reference Kind");
 }
 
 void ArchHandler_x86_64::appendSectionRelocations(
@@ -524,78 +530,83 @@ void ArchHandler_x86_64::appendSectionRelocations(
     return;
   assert(ref.kindArch() == Reference::KindArch::x86_64);
   uint32_t sectionOffset = atomSectionOffset + ref.offsetInAtom();
-  switch (ref.kindValue()) {
+  switch (static_cast<X86_64_Kinds>(ref.kindValue())) {
   case branch32:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_BRANCH | rPcRel | rExtern | rLength4);
-    break;
+    return;
   case ripRel32:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_SIGNED | rPcRel | rExtern | rLength4 );
-    break;
+    return;
+  case ripRel32Anon:
+    appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
+                X86_64_RELOC_SIGNED | rPcRel          | rLength4 );
+    return;
   case ripRel32Got:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_GOT | rPcRel | rExtern | rLength4 );
-    break;
+    return;
   case ripRel32GotLoad:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_GOT_LOAD | rPcRel | rExtern | rLength4 );
-    break;
+    return;
   case pointer64:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_UNSIGNED  | rExtern | rLength8);
-    break;
+    return;
   case pointer64Anon:
     appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_UNSIGNED | rLength8);
-    break;
+    return;
   case ripRel32Minus1:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_SIGNED_1 | rPcRel | rExtern | rLength4 );
-    break;
+    return;
   case ripRel32Minus2:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_SIGNED_2 | rPcRel | rExtern | rLength4 );
-    break;
+    return;
   case ripRel32Minus4:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_SIGNED_4 | rPcRel | rExtern | rLength4 );
-    break;
+    return;
   case delta32:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(atom), 0,
                 X86_64_RELOC_SUBTRACTOR | rExtern | rLength4 );
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_UNSIGNED   | rExtern | rLength4 );
-    break;
+    return;
   case delta32Anon:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(atom), 0,
                 X86_64_RELOC_SUBTRACTOR | rExtern | rLength4 );
     appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_UNSIGNED             | rLength4 );
-    break;
+    return;
   case delta64:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(atom), 0,
                 X86_64_RELOC_SUBTRACTOR | rExtern | rLength8 );
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_UNSIGNED   | rExtern | rLength8 );
-    break;
+    return;
   case delta64Anon:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(atom), 0,
                 X86_64_RELOC_SUBTRACTOR | rExtern | rLength8 );
     appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_UNSIGNED             | rLength8 );
-    break;
+    return;
   case ripRel32GotLoadNowLea:
     llvm_unreachable("ripRel32GotLoadNowLea implies GOT pass was run");
-    break;
+    return;
   case lazyPointer:
   case lazyImmediateLocation:
     llvm_unreachable("lazy reference kind implies Stubs pass was run");
-    break;
-  default:
-    llvm_unreachable("unknown x86_64 Reference Kind");
+    return;
+  case invalid:
+    // Fall into llvm_unreachable().
     break;
   }
+  llvm_unreachable("unknown x86_64 Reference Kind");
 }
 
 

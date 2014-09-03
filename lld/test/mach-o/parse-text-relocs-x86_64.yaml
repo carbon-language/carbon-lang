@@ -18,29 +18,38 @@
 #  movb  $0x12, _foo(%rip)
 #  movw  $0x1234, _foo(%rip)
 #  movl  $0x12345678, _foo(%rip)
+#  movl  L2(%rip), %eax
 #
+#  .data
+#L2: .long 0
+
 
 --- !mach-o
 arch:            x86_64
 file-type:       MH_OBJECT
 flags:           [  ]
-has-UUID:        false
-OS:              unknown
-sections:        
+sections:
   - segment:         __TEXT
     section:         __text
     type:            S_REGULAR
     attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
     address:         0x0000000000000000
-    content:         [ 0xE8, 0x00, 0x00, 0x00, 0x00, 0xE8, 0x04, 0x00, 
-                       0x00, 0x00, 0x48, 0x8B, 0x05, 0x00, 0x00, 0x00, 
-                       0x00, 0xFF, 0x35, 0x00, 0x00, 0x00, 0x00, 0x8B, 
-                       0x05, 0x00, 0x00, 0x00, 0x00, 0x8B, 0x05, 0x04, 
-                       0x00, 0x00, 0x00, 0xC6, 0x05, 0xFF, 0xFF, 0xFF, 
-                       0xFF, 0x12, 0x66, 0xC7, 0x05, 0xFE, 0xFF, 0xFF, 
-                       0xFF, 0x34, 0x12, 0xC7, 0x05, 0xFC, 0xFF, 0xFF, 
-                       0xFF, 0x78, 0x56, 0x34, 0x12 ]
-    relocations:     
+    content:         [ 0xE8, 0x00, 0x00, 0x00, 0x00, 0xE8, 0x04, 0x00,
+                       0x00, 0x00, 0x48, 0x8B, 0x05, 0x00, 0x00, 0x00,
+                       0x00, 0xFF, 0x35, 0x00, 0x00, 0x00, 0x00, 0x8B,
+                       0x05, 0x00, 0x00, 0x00, 0x00, 0x8B, 0x05, 0x04,
+                       0x00, 0x00, 0x00, 0xC6, 0x05, 0xFF, 0xFF, 0xFF,
+                       0xFF, 0x12, 0x66, 0xC7, 0x05, 0xFE, 0xFF, 0xFF,
+                       0xFF, 0x34, 0x12, 0xC7, 0x05, 0xFC, 0xFF, 0xFF,
+                       0xFF, 0x78, 0x56, 0x34, 0x12, 0x8B, 0x05, 0x00,
+                       0x00, 0x00, 0x00 ]
+    relocations:
+      - offset:          0x0000003F
+        type:            X86_64_RELOC_SIGNED
+        length:          2
+        pc-rel:          true
+        extern:          false
+        symbol:          2
       - offset:          0x00000035
         type:            X86_64_RELOC_SIGNED_4
         length:          2
@@ -95,20 +104,30 @@ sections:
         pc-rel:          true
         extern:          true
         symbol:          1
-local-symbols:   
+  - segment:         __DATA
+    section:         __data
+    type:            S_REGULAR
+    attributes:      [  ]
+    address:         0x0000000000000043
+    content:         [ 0x00, 0x00, 0x00, 0x00 ]
+local-symbols:
   - name:            _test
     type:            N_SECT
     sect:            1
     value:           0x0000000000000000
-undefined-symbols: 
+undefined-symbols:
   - name:            _foo
     type:            N_UNDF
     scope:           [ N_EXT ]
     value:           0x0000000000000000
 ...
+
 # CHECK: defined-atoms:
+# CHECK:   - ref-name:        [[LABEL:L[0-9]+]]
+# CHECK:     type:            data
+# CHECK:     content:         [ 00, 00, 00, 00 ]
 # CHECK:  - name:            _test
-# CHECK:    references:      
+# CHECK:    references:
 # CHECK:      - kind:            branch32
 # CHECK:        offset:          1
 # CHECK:        target:          _foo
@@ -132,13 +151,16 @@ undefined-symbols:
 # CHECK:      - kind:            ripRel32Minus1
 # CHECK:        offset:          37
 # CHECK:        target:          _foo
-# CHECK-NOT:    addend: 
+# CHECK-NOT:    addend:
 # CHECK:      - kind:            ripRel32Minus2
 # CHECK:        offset:          45
 # CHECK:        target:          _foo
-# CHECK-NOT:    addend: 
+# CHECK-NOT:    addend:
 # CHECK:      - kind:            ripRel32Minus4
 # CHECK:        offset:          53
 # CHECK:        target:          _foo
-# CHECK-NOT:    addend: 
-
+# CHECK-NOT:    addend:
+# CHECK:      - kind:            ripRel32Anon
+# CHECK:        offset:          63
+# CHECK:        target:          [[LABEL]]
+# CHECK-NOT:    addend:
