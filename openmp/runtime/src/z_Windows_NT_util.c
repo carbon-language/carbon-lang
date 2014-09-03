@@ -754,7 +754,7 @@ __kmp_affinity_bind_thread( int proc )
         KMP_DEBUG_ASSERT((proc >= 0) && (proc < (__kmp_num_proc_groups
            * CHAR_BIT * sizeof(DWORD_PTR))));
         ga.group = proc / (CHAR_BIT * sizeof(DWORD_PTR));
-        ga.mask = 1 << (proc % (CHAR_BIT * sizeof(DWORD_PTR)));
+        ga.mask = (unsigned long long)1 << (proc % (CHAR_BIT * sizeof(DWORD_PTR)));
         ga.reserved[0] = ga.reserved[1] = ga.reserved[2] = 0;
 
         KMP_DEBUG_ASSERT(__kmp_SetThreadGroupAffinity != NULL);
