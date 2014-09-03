@@ -249,7 +249,6 @@ static int CovOpenFile(bool packed, const char* name) {
   InternalScopedBuffer<char> path(1024);
   if (!packed) {
     CHECK(name);
-    Printf("%s\n", common_flags()->coverage_dir);
     internal_snprintf((char *)path.data(), path.size(), "%s/%s.%zd.sancov",
                       common_flags()->coverage_dir, name, internal_getpid());
   } else {
