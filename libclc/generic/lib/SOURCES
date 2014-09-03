@@ -31,6 +31,7 @@ integer/sub_sat_impl.ll
 integer/upsample.cl
 math/atan.cl
 math/atan2.cl
+math/copysign.cl
 math/cos.cl
 math/exp.cl
 math/exp10.cl
