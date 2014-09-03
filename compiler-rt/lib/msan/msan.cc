@@ -282,14 +282,17 @@ u32 ChainOrigin(u32 id, StackTrace *stack) {
 
   StackDepotHandle h = StackDepotPut_WithHandle(stack->trace, stack->size);
   if (!h.valid()) return id;
-  int use_count = h.use_count();
-  if (use_count > flags()->origin_history_per_stack_limit)
-    return id;
+
+  if (flags()->origin_history_per_stack_limit > 0) {
+    int use_count = h.use_count();
+    if (use_count > flags()->origin_history_per_stack_limit) return id;
+  }
 
   u32 chained_id;
   bool inserted = ChainedOriginDepotPut(h.id(), o.id(), &chained_id);
 
-  if (inserted) h.inc_use_count_unsafe();
+  if (inserted && flags()->origin_history_per_stack_limit > 0)
+    h.inc_use_count_unsafe();
 
   return Origin(chained_id, depth).raw_id();
 }
