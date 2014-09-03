@@ -296,7 +296,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     BufferRef = Buffer->getMemBufferRef();
   }
 
-  ErrorOr<object::IRObjectFile *> ObjOrErr =
+  ErrorOr<std::unique_ptr<object::IRObjectFile>> ObjOrErr =
       object::IRObjectFile::createIRObjectFile(BufferRef, Context);
   std::error_code EC = ObjOrErr.getError();
   if (EC == BitcodeError::InvalidBitcodeSignature)
@@ -309,7 +309,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
             EC.message().c_str());
     return LDPS_ERR;
   }
-  std::unique_ptr<object::IRObjectFile> Obj(ObjOrErr.get());
+  std::unique_ptr<object::IRObjectFile> Obj = std::move(*ObjOrErr);
 
   Modules.resize(Modules.size() + 1);
   claimed_file &cf = Modules.back();

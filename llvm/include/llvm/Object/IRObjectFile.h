@@ -49,8 +49,8 @@ public:
     return v->isIR();
   }
 
-  static ErrorOr<IRObjectFile *> createIRObjectFile(MemoryBufferRef Object,
-                                                    LLVMContext &Context);
+  static ErrorOr<std::unique_ptr<IRObjectFile>>
+  createIRObjectFile(MemoryBufferRef Object, LLVMContext &Context);
 };
 }
 }

@@ -264,7 +264,7 @@ basic_symbol_iterator IRObjectFile::symbol_end_impl() const {
   return basic_symbol_iterator(BasicSymbolRef(Ret, this));
 }
 
-ErrorOr<IRObjectFile *>
+ErrorOr<std::unique_ptr<IRObjectFile>>
 llvm::object::IRObjectFile::createIRObjectFile(MemoryBufferRef Object,
                                                LLVMContext &Context) {
 
@@ -275,5 +275,5 @@ llvm::object::IRObjectFile::createIRObjectFile(MemoryBufferRef Object,
     return EC;
 
   std::unique_ptr<Module> M(MOrErr.get());
-  return new IRObjectFile(Object, std::move(M));
+  return llvm::make_unique<IRObjectFile>(Object, std::move(M));
 }
