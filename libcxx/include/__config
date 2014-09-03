@@ -19,6 +19,10 @@
 #define _GNUC_VER (__GNUC__ * 100 + __GNUC_MINOR__)
 #endif
 
+#if !_WIN32
+#include <unistd.h>
+#endif
+
 #define _LIBCPP_VERSION 1101
 
 #define _LIBCPP_ABI_VERSION 1
