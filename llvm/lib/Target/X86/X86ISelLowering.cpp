@@ -7182,6 +7182,21 @@ static bool isSingleInputShuffleMask(ArrayRef<int> Mask) {
   return true;
 }
 
+/// \brief Check wether all of one set of inputs to a shuffle mask are in place.
+///
+/// Mask entries pointing at the other input or undef will be skipped.
+static bool isShuffleMaskInputInPlace(ArrayRef<int> Mask, bool LoInput = true) {
+  int Size = Mask.size();
+  for (int i = 0; i < Size; ++i) {
+    int M = Mask[i];
+    if (M == -1 || (LoInput && M >= 4) || (!LoInput && M < 4))
+      continue;
+    if (M - (LoInput ? 0 : Size) != i)
+      return false;
+  }
+  return true;
+}
+
 // Hide this symbol with an anonymous namespace instead of 'static' so that MSVC
 // 2013 will allow us to use it as a non-type template parameter.
 namespace {
@@ -7365,6 +7380,20 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     int V2Index =
         std::find_if(Mask.begin(), Mask.end(), [](int M) { return M >= 4; }) -
         Mask.begin();
+
+    // Check for whether we can use INSERTPS to perform the blend. We only use
+    // INSERTPS when the V1 elements are already in the correct locations
+    // because otherwise we can just always use two SHUFPS instructions which
+    // are much smaller to encode than a SHUFPS and an INSERTPS.
+    if (Subtarget->hasSSE41() &&
+        isShuffleMaskInputInPlace(Mask, /*LoInput*/ true)) {
+      // Insert the V2 element into the desired position.
+      SDValue InsertPSMask =
+          DAG.getIntPtrConstant(Mask[V2Index] << 6 | V2Index << 4);
+      return DAG.getNode(X86ISD::INSERTPS, DL, MVT::v4f32, V1, V2,
+                         InsertPSMask);
+    }
+
     // Compute the index adjacent to V2Index and in the same half by toggling
     // the low bit.
     int V2AdjIndex = V2Index ^ 1;

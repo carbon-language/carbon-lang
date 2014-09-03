@@ -121,10 +121,18 @@ define <4 x float> @shuffle_v4f32_3210(<4 x float> %a, <4 x float> %b) {
 }
 
 define <4 x i32> @shuffle_v4i32_0124(<4 x i32> %a, <4 x i32> %b) {
-; ALL-LABEL: @shuffle_v4i32_0124
-; ALL:         shufps {{.*}} # xmm1 = xmm1[0,0],xmm0[2,0]
-; ALL-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,1],xmm1[2,0]
-; ALL-NEXT:    retq
+; SSE2-LABEL: @shuffle_v4i32_0124
+; SSE2:         shufps {{.*}} # xmm1 = xmm1[0,0],xmm0[2,0]
+; SSE2-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,1],xmm1[2,0]
+; SSE2-NEXT:    retq
+;
+; SSE41-LABEL: @shuffle_v4i32_0124
+; SSE41:         insertps {{.*}} # xmm0 = xmm0[0,1,2],xmm1[0]
+; SSE41-NEXT:    retq
+;
+; AVX1-LABEL: @shuffle_v4i32_0124
+; AVX1:         vinsertps {{.*}} # xmm0 = xmm0[0,1,2],xmm1[0]
+; AVX1-NEXT:    retq
   %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 1, i32 2, i32 4>
   ret <4 x i32> %shuffle
 }
