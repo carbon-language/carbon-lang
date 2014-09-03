@@ -400,7 +400,7 @@ GetPurgeableAndAnonymous(task_t task, uint64_t &purgeable, uint64_t &anonymous)
     if (kr == KERN_SUCCESS)
     {
         purgeable = vm_info.purgeable_volatile_resident;
-        anonymous = vm_info.internal - vm_info.purgeable_volatile_pmap;
+        anonymous = vm_info.internal + vm_info.compressed - vm_info.purgeable_volatile_pmap;
     }
 
 #endif
