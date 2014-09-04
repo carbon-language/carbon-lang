@@ -11,6 +11,7 @@
 
 #include "ArchHandler.h"
 #include "File.h"
+#include "MachONormalizedFile.h"
 #include "MachOPasses.h"
 
 #include "lld/Core/PassManager.h"
@@ -123,6 +124,10 @@ uint32_t MachOLinkingContext::cpuSubtypeFromArch(Arch arch) {
       return info->cpusubtype;
   }
   llvm_unreachable("Unknown arch type");
+}
+
+bool MachOLinkingContext::isThinObjectFile(StringRef path, Arch &arch) {
+  return mach_o::normalized::isThinObjectFile(path, arch);
 }
 
 MachOLinkingContext::MachOLinkingContext()

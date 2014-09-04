@@ -243,6 +243,20 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
       return false;
     }
   }
+  // If no -arch specified, scan input files to find first non-fat .o file.
+  if ((arch == MachOLinkingContext::arch_unknown)
+      && !parsedArgs->getLastArg(OPT_test_file_usage)) {
+    for (auto &inFile: parsedArgs->filtered(OPT_INPUT)) {
+      // This is expensive because it opens and maps the file.  But that is
+      // ok because no -arch is rare.
+      if (MachOLinkingContext::isThinObjectFile(inFile->getValue(), arch))
+        break;
+    }
+    if (arch == MachOLinkingContext::arch_unknown) {
+      diagnostics << "error: -arch not specified and could not be inferred\n";
+      return false;
+    }
+  }
 
   // Handle -macosx_version_min or -ios_version_min
   MachOLinkingContext::OS os = MachOLinkingContext::OS::macOSX;

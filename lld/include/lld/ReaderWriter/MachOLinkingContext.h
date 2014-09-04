@@ -222,6 +222,7 @@ public:
   /// Creates a copy (owned by this MachOLinkingContext) of a string.
   StringRef copy(StringRef str) { return str.copy(_allocator); }
 
+  static bool isThinObjectFile(StringRef path, Arch &arch);
   static Arch archFromCpuType(uint32_t cputype, uint32_t cpusubtype);
   static Arch archFromName(StringRef archName);
   static StringRef nameFromArch(Arch arch);

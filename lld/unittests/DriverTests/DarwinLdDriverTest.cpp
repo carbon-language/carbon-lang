@@ -30,7 +30,7 @@ protected:
 }
 
 TEST_F(DarwinLdParserTest, Basic) {
-  EXPECT_TRUE(parse("ld", "foo.o", "bar.o", nullptr));
+  EXPECT_TRUE(parse("ld", "foo.o", "bar.o", "-arch", "i386", nullptr));
   EXPECT_FALSE(_context.allowRemainingUndefines());
   EXPECT_FALSE(_context.deadStrip());
   EXPECT_EQ(2, inputFileCount());
@@ -39,43 +39,38 @@ TEST_F(DarwinLdParserTest, Basic) {
 }
 
 TEST_F(DarwinLdParserTest, Output) {
-  EXPECT_TRUE(parse("ld", "-o", "my.out", "foo.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-o", "my.out", "foo.o", "-arch", "i386", nullptr));
   EXPECT_EQ("my.out", _context.outputPath());
 }
 
 TEST_F(DarwinLdParserTest, Dylib) {
-  EXPECT_TRUE(parse("ld", "-dylib", "foo.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-dylib", "foo.o", "-arch", "i386", nullptr));
   EXPECT_EQ(llvm::MachO::MH_DYLIB, _context.outputMachOType());
 }
 
 TEST_F(DarwinLdParserTest, Relocatable) {
-  EXPECT_TRUE(parse("ld", "-r", "foo.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-r", "foo.o", "-arch", "i386", nullptr));
   EXPECT_EQ(llvm::MachO::MH_OBJECT, _context.outputMachOType());
 }
 
 TEST_F(DarwinLdParserTest, Bundle) {
-  EXPECT_TRUE(parse("ld", "-bundle", "foo.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-bundle", "foo.o", "-arch", "i386", nullptr));
   EXPECT_EQ(llvm::MachO::MH_BUNDLE, _context.outputMachOType());
 }
 
 TEST_F(DarwinLdParserTest, Preload) {
-  EXPECT_TRUE(parse("ld", "-preload", "foo.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-preload", "foo.o", "-arch", "i386", nullptr));
   EXPECT_EQ(llvm::MachO::MH_PRELOAD, _context.outputMachOType());
 }
 
 TEST_F(DarwinLdParserTest, Static) {
-  EXPECT_TRUE(parse("ld", "-static", "foo.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-static", "foo.o", "-arch", "i386", nullptr));
   EXPECT_EQ(llvm::MachO::MH_EXECUTE, _context.outputMachOType());
 }
 
 TEST_F(DarwinLdParserTest, Entry) {
-  EXPECT_TRUE(parse("ld", "-e", "entryFunc", "foo.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-e", "entryFunc", "foo.o", "-arch", "i386",nullptr));
   EXPECT_EQ("entryFunc", _context.entrySymbolName());
-}
-
-TEST_F(DarwinLdParserTest, OutputPath) {
-  EXPECT_TRUE(parse("ld", "-o", "foo", "foo.o", nullptr));
-  EXPECT_EQ("foo", _context.outputPath());
 }
 
 TEST_F(DarwinLdParserTest, DeadStrip) {
@@ -130,42 +125,48 @@ TEST_F(DarwinLdParserTest, Arch_armv7s) {
 }
 
 TEST_F(DarwinLdParserTest, MinMacOSX10_7) {
-  EXPECT_TRUE(parse("ld", "-macosx_version_min", "10.7", "foo.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-macosx_version_min", "10.7", "foo.o",
+                    "-arch", "x86_64", nullptr));
   EXPECT_EQ(MachOLinkingContext::OS::macOSX, _context.os());
   EXPECT_TRUE(_context.minOS("10.7", ""));
   EXPECT_FALSE(_context.minOS("10.8", ""));
 }
 
 TEST_F(DarwinLdParserTest, MinMacOSX10_8) {
-  EXPECT_TRUE(parse("ld", "-macosx_version_min", "10.8.3", "foo.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-macosx_version_min", "10.8.3", "foo.o",
+                    "-arch", "x86_64", nullptr));
   EXPECT_EQ(MachOLinkingContext::OS::macOSX, _context.os());
   EXPECT_TRUE(_context.minOS("10.7", ""));
   EXPECT_TRUE(_context.minOS("10.8", ""));
 }
 
 TEST_F(DarwinLdParserTest, iOS5) {
-  EXPECT_TRUE(parse("ld", "-ios_version_min", "5.0", "foo.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-ios_version_min", "5.0", "foo.o",
+                    "-arch", "armv7", nullptr));
   EXPECT_EQ(MachOLinkingContext::OS::iOS, _context.os());
   EXPECT_TRUE(_context.minOS("", "5.0"));
   EXPECT_FALSE(_context.minOS("", "6.0"));
 }
 
 TEST_F(DarwinLdParserTest, iOS6) {
-  EXPECT_TRUE(parse("ld", "-ios_version_min", "6.0", "foo.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-ios_version_min", "6.0", "foo.o", "-arch", "armv7",
+                    nullptr));
   EXPECT_EQ(MachOLinkingContext::OS::iOS, _context.os());
   EXPECT_TRUE(_context.minOS("", "5.0"));
   EXPECT_TRUE(_context.minOS("", "6.0"));
 }
 
 TEST_F(DarwinLdParserTest, iOS_Simulator5) {
-  EXPECT_TRUE(parse("ld", "-ios_simulator_version_min", "5.0", "a.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-ios_simulator_version_min", "5.0", "a.o",
+                    "-arch", "i386", nullptr));
   EXPECT_EQ(MachOLinkingContext::OS::iOS_simulator, _context.os());
   EXPECT_TRUE(_context.minOS("", "5.0"));
   EXPECT_FALSE(_context.minOS("", "6.0"));
 }
 
 TEST_F(DarwinLdParserTest, iOS_Simulator6) {
-  EXPECT_TRUE(parse("ld", "-ios_simulator_version_min", "6.0", "a.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-ios_simulator_version_min", "6.0", "a.o",
+                    "-arch", "i386", nullptr));
   EXPECT_EQ(MachOLinkingContext::OS::iOS_simulator, _context.os());
   EXPECT_TRUE(_context.minOS("", "5.0"));
   EXPECT_TRUE(_context.minOS("", "6.0"));
@@ -173,58 +174,67 @@ TEST_F(DarwinLdParserTest, iOS_Simulator6) {
 
 TEST_F(DarwinLdParserTest, compatibilityVersion) {
   EXPECT_TRUE(
-      parse("ld", "-dylib", "-compatibility_version", "1.2.3", "a.o", nullptr));
+      parse("ld", "-dylib", "-compatibility_version", "1.2.3", "a.o",
+             "-arch", "i386",nullptr));
   EXPECT_EQ(_context.compatibilityVersion(), 0x10203U);
 }
 
 TEST_F(DarwinLdParserTest, compatibilityVersionInvalidType) {
   EXPECT_FALSE(parse("ld", "-bundle", "-compatibility_version", "1.2.3", "a.o",
-                     nullptr));
+                     "-arch", "i386",nullptr));
 }
 
 TEST_F(DarwinLdParserTest, compatibilityVersionInvalidValue) {
   EXPECT_FALSE(parse("ld", "-bundle", "-compatibility_version", "1,2,3", "a.o",
-                     nullptr));
+                     "-arch", "i386", nullptr));
 }
 
 TEST_F(DarwinLdParserTest, currentVersion) {
   EXPECT_TRUE(
-      parse("ld", "-dylib", "-current_version", "1.2.3", "a.o", nullptr));
+      parse("ld", "-dylib", "-current_version", "1.2.3", "a.o", "-arch", "i386",
+            nullptr));
   EXPECT_EQ(_context.currentVersion(), 0x10203U);
 }
 
 TEST_F(DarwinLdParserTest, currentVersionInvalidType) {
   EXPECT_FALSE(
-      parse("ld", "-bundle", "-current_version", "1.2.3", "a.o", nullptr));
+      parse("ld", "-bundle", "-current_version", "1.2.3", "a.o",
+            "-arch", "i386", nullptr));
 }
 
 TEST_F(DarwinLdParserTest, currentVersionInvalidValue) {
   EXPECT_FALSE(
-      parse("ld", "-bundle", "-current_version", "1,2,3", "a.o", nullptr));
+      parse("ld", "-bundle", "-current_version", "1,2,3", "a.o",
+            "-arch", "i386", nullptr));
 }
 
 TEST_F(DarwinLdParserTest, bundleLoader) {
   EXPECT_TRUE(
-      parse("ld", "-bundle", "-bundle_loader", "/bin/ls", "a.o", nullptr));
+      parse("ld", "-bundle", "-bundle_loader", "/bin/ls", "a.o",
+             "-arch", "i386", nullptr));
   EXPECT_EQ(_context.bundleLoader(), "/bin/ls");
 }
 
 TEST_F(DarwinLdParserTest, bundleLoaderInvalidType) {
-  EXPECT_FALSE(parse("ld", "-bundle_loader", "/bin/ls", "a.o", nullptr));
+  EXPECT_FALSE(parse("ld", "-bundle_loader", "/bin/ls", "a.o", "-arch", "i386",
+                     nullptr));
 }
 
 TEST_F(DarwinLdParserTest, deadStrippableDylib) {
   EXPECT_TRUE(
-      parse("ld", "-dylib", "-mark_dead_strippable_dylib", "a.o", nullptr));
+      parse("ld", "-dylib", "-mark_dead_strippable_dylib", "a.o",
+            "-arch", "i386", nullptr));
   EXPECT_EQ(true, _context.deadStrippableDylib());
 }
 
 TEST_F(DarwinLdParserTest, deadStrippableDylibInvalidType) {
-  EXPECT_FALSE(parse("ld", "-mark_dead_strippable_dylib", "a.o", nullptr));
+  EXPECT_FALSE(parse("ld", "-mark_dead_strippable_dylib", "a.o",
+                     "-arch", "i386", nullptr));
 }
 
 TEST_F(DarwinLdParserTest, llvmOptions) {
-  EXPECT_TRUE(parse("ld", "-mllvm", "-debug-only", "-mllvm", "foo", "a.o", nullptr));
+  EXPECT_TRUE(parse("ld", "-mllvm", "-debug-only", "-mllvm", "foo", "a.o",
+                    "-arch", "i386", nullptr));
   const std::vector<const char *> &options = _context.llvmOptions();
   EXPECT_EQ(options.size(), 2UL);
   EXPECT_EQ(strcmp(options[0],"-debug-only"), 0);

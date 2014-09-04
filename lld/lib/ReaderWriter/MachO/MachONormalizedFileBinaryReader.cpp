@@ -117,6 +117,59 @@ template <typename T> static T readBigEndian(T t) {
   return t;
 }
 
+
+static bool isMachOHeader(const mach_header *mh, bool &is64, bool &swap) {
+  switch (mh->magic) {
+  case llvm::MachO::MH_MAGIC:
+    is64 = false;
+    swap = false;
+    return true;
+  case llvm::MachO::MH_MAGIC_64:
+    is64 = true;
+    swap = false;
+    return true;
+  case llvm::MachO::MH_CIGAM:
+    is64 = false;
+    swap = true;
+    return true;
+  case llvm::MachO::MH_CIGAM_64:
+    is64 = true;
+    swap = true;
+    return true;
+  default:
+    return false;
+  }
+}
+
+
+bool isThinObjectFile(StringRef path, MachOLinkingContext::Arch &arch) {
+  // Try opening and mapping file at path.
+  ErrorOr<std::unique_ptr<MemoryBuffer>> b = MemoryBuffer::getFileOrSTDIN(path);
+  if (b.getError())
+    return false;
+
+  // If file length < 32 it is too small to be mach-o object file.
+  StringRef fileBuffer = b->get()->getBuffer();
+  if (fileBuffer.size() < 32)
+    return false;
+
+  // If file buffer does not start with MH_MAGIC (and variants), not obj file.
+  const mach_header *mh = reinterpret_cast<const mach_header *>(
+                                                            fileBuffer.begin());
+  bool is64, swap;
+  if (!isMachOHeader(mh, is64, swap))
+    return false;
+
+  // If not MH_OBJECT, not object file.
+  if (read32(swap, mh->filetype) != MH_OBJECT)
+    return false;
+
+  // Lookup up arch from cpu/subtype pair.
+  arch = MachOLinkingContext::archFromCpuType(read32(swap, mh->cputype),
+                                              read32(swap, mh->cpusubtype));
+  return true;
+}
+
 /// Reads a mach-o file and produces an in-memory normalized view.
 ErrorOr<std::unique_ptr<NormalizedFile>>
 readBinary(std::unique_ptr<MemoryBuffer> &mb,
@@ -162,26 +215,8 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
   }
 
   bool is64, swap;
-  switch (mh->magic) {
-  case llvm::MachO::MH_MAGIC:
-    is64 = false;
-    swap = false;
-    break;
-  case llvm::MachO::MH_MAGIC_64:
-    is64 = true;
-    swap = false;
-    break;
-  case llvm::MachO::MH_CIGAM:
-    is64 = false;
-    swap = true;
-    break;
-  case llvm::MachO::MH_CIGAM_64:
-    is64 = true;
-    swap = true;
-    break;
-  default:
+  if (!isMachOHeader(mh, is64, swap))
     return make_error_code(llvm::errc::executable_format_error);
-  }
 
   // Endian swap header, if needed.
   mach_header headerCopy;

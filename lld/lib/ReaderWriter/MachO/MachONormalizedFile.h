@@ -252,6 +252,8 @@ struct NormalizedFile {
   BumpPtrAllocator            ownedAllocations;
 };
 
+/// Tests if a file is a non-fat mach-o object file.
+bool isThinObjectFile(StringRef path, MachOLinkingContext::Arch &arch);
 
 /// Reads a mach-o file and produces an in-memory normalized view.
 ErrorOr<std::unique_ptr<NormalizedFile>>
