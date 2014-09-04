@@ -104,9 +104,9 @@ void MCJIT::addObjectFile(std::unique_ptr<object::ObjectFile> Obj) {
   if (!LoadedObject || Dyld.hasError())
     report_fatal_error(Dyld.getErrorString());
 
-  LoadedObjects.push_back(std::move(LoadedObject));
-
   NotifyObjectEmitted(*LoadedObject);
+
+  LoadedObjects.push_back(std::move(LoadedObject));
 }
 
 void MCJIT::addObjectFile(object::OwningBinary<object::ObjectFile> Obj) {
