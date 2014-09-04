@@ -15,6 +15,7 @@
 #include "TargetInfo.h"
 #include "ABIInfo.h"
 #include "CGCXXABI.h"
+#include "CGValue.h"
 #include "CodeGenFunction.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
@@ -593,6 +594,14 @@ public:
     return X86AdjustInlineAsmType(CGF, Constraint, Ty);
   }
 
+  void addReturnRegisterOutputs(CodeGenFunction &CGF, LValue ReturnValue,
+                                std::string &Constraints,
+                                std::vector<llvm::Type *> &ResultRegTypes,
+                                std::vector<llvm::Type *> &ResultTruncRegTypes,
+                                std::vector<LValue> &ResultRegDests,
+                                std::string &AsmString,
+                                unsigned NumOutputs) const override;
+
   llvm::Constant *
   getUBSanFunctionSignature(CodeGen::CodeGenModule &CGM) const override {
     unsigned Sig = (0xeb << 0) |  // jmp rel8
@@ -604,6 +613,85 @@ public:
 
 };
 
+}
+
+/// Rewrite input constraint references after adding some output constraints.
+/// In the case where there is one output and one input and we add one output,
+/// we need to replace all operand references greater than or equal to 1:
+///     mov $0, $1
+///     mov eax, $1
+/// The result will be:
+///     mov $0, $2
+///     mov eax, $2
+static void rewriteInputConstraintReferences(unsigned FirstIn,
+                                             unsigned NumNewOuts,
+                                             std::string &AsmString) {
+  std::string Buf;
+  llvm::raw_string_ostream OS(Buf);
+  size_t Pos = 0;
+  while (Pos < AsmString.size()) {
+    size_t DollarStart = AsmString.find('$', Pos);
+    if (DollarStart == std::string::npos)
+      DollarStart = AsmString.size();
+    size_t DollarEnd = AsmString.find_first_not_of('$', DollarStart);
+    if (DollarEnd == std::string::npos)
+      DollarEnd = AsmString.size();
+    OS << StringRef(&AsmString[Pos], DollarEnd - Pos);
+    Pos = DollarEnd;
+    size_t NumDollars = DollarEnd - DollarStart;
+    if (NumDollars % 2 != 0 && Pos < AsmString.size()) {
+      // We have an operand reference.
+      size_t DigitStart = Pos;
+      size_t DigitEnd = AsmString.find_first_not_of("0123456789", DigitStart);
+      if (DigitEnd == std::string::npos)
+        DigitEnd = AsmString.size();
+      StringRef OperandStr(&AsmString[DigitStart], DigitEnd - DigitStart);
+      unsigned OperandIndex;
+      if (!OperandStr.getAsInteger(10, OperandIndex)) {
+        if (OperandIndex >= FirstIn)
+          OperandIndex += NumNewOuts;
+        OS << OperandIndex;
+      } else {
+        OS << OperandStr;
+      }
+      Pos = DigitEnd;
+    }
+  }
+  AsmString = std::move(OS.str());
+}
+
+/// Add output constraints for EAX:EDX because they are return registers.
+void X86_32TargetCodeGenInfo::addReturnRegisterOutputs(
+    CodeGenFunction &CGF, LValue ReturnSlot, std::string &Constraints,
+    std::vector<llvm::Type *> &ResultRegTypes,
+    std::vector<llvm::Type *> &ResultTruncRegTypes,
+    std::vector<LValue> &ResultRegDests, std::string &AsmString,
+    unsigned NumOutputs) const {
+  uint64_t RetWidth = CGF.getContext().getTypeSize(ReturnSlot.getType());
+
+  // Use the EAX constraint if the width is 32 or smaller and EAX:EDX if it is
+  // larger.
+  if (!Constraints.empty())
+    Constraints += ',';
+  if (RetWidth <= 32) {
+    Constraints += "={eax}";
+    ResultRegTypes.push_back(CGF.Int32Ty);
+  } else {
+    // Use the 'A' constraint for EAX:EDX.
+    Constraints += "=A";
+    ResultRegTypes.push_back(CGF.Int64Ty);
+  }
+
+  // Truncate EAX or EAX:EDX to an integer of the appropriate size.
+  llvm::Type *CoerceTy = llvm::IntegerType::get(CGF.getLLVMContext(), RetWidth);
+  ResultTruncRegTypes.push_back(CoerceTy);
+
+  // Coerce the integer by bitcasting the return slot pointer.
+  ReturnSlot.setAddress(CGF.Builder.CreateBitCast(ReturnSlot.getAddress(),
+                                                  CoerceTy->getPointerTo()));
+  ResultRegDests.push_back(ReturnSlot);
+
+  rewriteInputConstraintReferences(NumOutputs, 1, AsmString);
 }
 
 /// shouldReturnTypeInRegister - Determine if the given type should be

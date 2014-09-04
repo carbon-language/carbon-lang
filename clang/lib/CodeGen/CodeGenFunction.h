@@ -265,6 +265,10 @@ public:
   /// In ARC, whether we should autorelease the return value.
   bool AutoreleaseResult;
 
+  /// Whether we processed a Microsoft-style asm block during CodeGen. These can
+  /// potentially set the return value.
+  bool SawAsmBlock;
+
   const CodeGen::CGBlockInfo *BlockInfo;
   llvm::Value *BlockPointer;
 

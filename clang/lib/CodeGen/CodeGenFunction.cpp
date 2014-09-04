@@ -39,7 +39,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
               CGBuilderInserterTy(this)),
       CapturedStmtInfo(nullptr), SanOpts(&CGM.getLangOpts().Sanitize),
       IsSanitizerScope(false), CurFuncIsThunk(false), AutoreleaseResult(false),
-      BlockInfo(nullptr), BlockPointer(nullptr),
+      SawAsmBlock(false), BlockInfo(nullptr), BlockPointer(nullptr),
       LambdaThisCaptureField(nullptr), NormalCleanupDest(nullptr),
       NextCleanupDestIndex(1), FirstBlockInfo(nullptr), EHResumeBlock(nullptr),
       ExceptionSlot(nullptr), EHSelectorSlot(nullptr),
@@ -878,7 +878,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   // C11 6.9.1p12:
   //   If the '}' that terminates a function is reached, and the value of the
   //   function call is used by the caller, the behavior is undefined.
-  if (getLangOpts().CPlusPlus && !FD->hasImplicitReturnZero() &&
+  if (getLangOpts().CPlusPlus && !FD->hasImplicitReturnZero() && !SawAsmBlock &&
       !FD->getReturnType()->isVoidType() && Builder.GetInsertBlock()) {
     if (SanOpts->Return) {
       SanitizerScope SanScope(this);
