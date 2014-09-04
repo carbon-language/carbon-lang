@@ -615,18 +615,17 @@ int CodeCoverageTool::show(int argc, const char **argv,
       if (findMainViewFileID(Function, MainFileID))
         continue;
       StringRef SourceFile = Function.Filenames[MainFileID];
-      std::unique_ptr<SourceCoverageView> mainView;
       auto SourceBuffer = getSourceFile(SourceFile);
       if (!SourceBuffer)
         return 1;
       auto Range = findExpandedFileInterestingLineRange(MainFileID, Function);
-      mainView.reset(new SourceCoverageView(SourceBuffer.get(), ViewOpts,
-                                            Range.first, Range.second));
-      createSourceFileView(SourceFile, *mainView, Function, true);
+      SourceCoverageView mainView(SourceBuffer.get(), ViewOpts, Range.first,
+                                  Range.second);
+      createSourceFileView(SourceFile, mainView, Function, true);
       ViewOpts.colored_ostream(outs(), raw_ostream::CYAN)
           << Function.PrettyName << " from " << SourceFile << ":";
       outs() << "\n";
-      mainView->render(outs());
+      mainView.render(outs());
       if (FunctionMappingRecords.size() > 1)
         outs() << "\n";
     }
@@ -648,12 +647,11 @@ int CodeCoverageTool::show(int argc, const char **argv,
   }
 
   for (const auto &SourceFile : SourceFiles) {
-    std::unique_ptr<SourceCoverageView> mainView;
     auto SourceBuffer = getSourceFile(SourceFile);
     if (!SourceBuffer)
       return 1;
-    mainView.reset(new SourceCoverageView(SourceBuffer.get(), ViewOpts));
-    if (createSourceFileView(SourceFile, *mainView, FunctionMappingRecords)) {
+    SourceCoverageView mainView(SourceBuffer.get(), ViewOpts);
+    if (createSourceFileView(SourceFile, mainView, FunctionMappingRecords)) {
       ViewOpts.colored_ostream(outs(), raw_ostream::RED)
           << "warning: The file '" << SourceFile << "' isn't covered.";
       outs() << "\n";
@@ -664,7 +662,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
       ViewOpts.colored_ostream(outs(), raw_ostream::CYAN) << SourceFile << ":";
       outs() << "\n";
     }
-    mainView->render(outs());
+    mainView.render(outs());
     if (SourceFiles.size() > 1)
       outs() << "\n";
   }
