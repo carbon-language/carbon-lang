@@ -2644,8 +2644,8 @@ bool GVN::iterateOnFunction(Function &F) {
   //
   std::vector<BasicBlock *> BBVect;
   BBVect.reserve(256);
-  for (DomTreeNode *x : depth_first(DT->getRootNode()))
-    BBVect.push_back(x->getBlock());
+  for (DomTreeNode *X : depth_first(DT->getRootNode()))
+    BBVect.push_back(X->getBlock());
 
   for (std::vector<BasicBlock *>::iterator I = BBVect.begin(), E = BBVect.end();
        I != E; I++)
