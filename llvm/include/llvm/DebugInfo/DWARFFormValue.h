@@ -70,6 +70,7 @@ public:
   Optional<const char *> getAsCString(const DWARFUnit *U) const;
   Optional<uint64_t> getAsAddress(const DWARFUnit *U) const;
   Optional<uint64_t> getAsSectionOffset() const;
+  Optional<ArrayRef<const uint8_t>> getAsBlock() const;
 
   bool skipValue(DataExtractor debug_info_data, uint32_t *offset_ptr,
                  const DWARFUnit *u) const;

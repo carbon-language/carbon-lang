@@ -543,7 +543,15 @@ Optional<uint64_t> DWARFFormValue::getAsSectionOffset() const {
 }
 
 Optional<uint64_t> DWARFFormValue::getAsUnsignedConstant() const {
-  if (!isFormClass(FC_Constant) || Form == DW_FORM_sdata)
+  if ((!isFormClass(FC_Constant) && !isFormClass(FC_Flag))
+      || Form == DW_FORM_sdata)
     return None;
   return Value.uval;
 }
+
+Optional<ArrayRef<const uint8_t>> DWARFFormValue::getAsBlock() const {
+  if (!isFormClass(FC_Block) && !isFormClass(FC_Exprloc))
+    return None;
+  return ArrayRef<const uint8_t>(Value.data, Value.uval);
+}
+
