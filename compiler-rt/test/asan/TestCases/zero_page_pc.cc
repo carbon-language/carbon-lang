@@ -6,6 +6,5 @@ int main() {
   void_f *func = (void_f *)0x7;
   func();
   // CHECK: {{AddressSanitizer: SEGV.*(pc.*0007)}}
-  // CHECK: AddressSanitizer: while reporting a bug found another one. Ignoring.
   return 0;
 }
