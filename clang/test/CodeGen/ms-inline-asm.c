@@ -510,3 +510,9 @@ void call_clobber() {
   // CHECK-LABEL: define void @call_clobber
   // CHECK: call void asm sideeffect inteldialect "call dword ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(void (i16)* @t41)
 }
+
+void xgetbv() {
+  __asm xgetbv
+}
+// CHECK-LABEL: define void @xgetbv()
+// CHECK: call void asm sideeffect inteldialect "xgetbv", "~{eax},~{edx},~{dirflag},~{fpsr},~{flags}"()
