@@ -24,10 +24,6 @@ enum IntrinsicType {
 };
 
 struct IntrinsicData {
-  IntrinsicData(unsigned IId, IntrinsicType IType, unsigned IOpc0, unsigned IOpc1)
-    :Id(IId), Type(IType), Opc0(IOpc0), Opc1(IOpc1) {}
-  IntrinsicData(unsigned IId)
-    :Id(IId), Type(INTR_NO_TYPE) {}
 
   unsigned      Id;
   IntrinsicType Type;
@@ -111,7 +107,7 @@ static const IntrinsicData IntrinsicsWithChain[] = {
  */
 static const IntrinsicData* getIntrinsicWithChain(unsigned IntNo) {
 
-  IntrinsicData IntrinsicToFind(IntNo);
+  IntrinsicData IntrinsicToFind = {IntNo, INTR_NO_TYPE, 0, 0 };
   const IntrinsicData *Data =  std::lower_bound(std::begin(IntrinsicsWithChain),
                                                 std::end(IntrinsicsWithChain),
                                                 IntrinsicToFind);
@@ -241,7 +237,7 @@ static const IntrinsicData  IntrinsicsWithoutChain[] = {
  * Return nullptr if intrinsic is not defined in the table.
  */
 static const IntrinsicData* getIntrinsicWithoutChain(unsigned IntNo) {
-  IntrinsicData IntrinsicToFind(IntNo);
+  IntrinsicData IntrinsicToFind = { IntNo, INTR_NO_TYPE, 0, 0 };
   const IntrinsicData *Data = std::lower_bound(std::begin(IntrinsicsWithoutChain),
                                                std::end(IntrinsicsWithoutChain),
                                                IntrinsicToFind);
