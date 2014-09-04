@@ -8207,8 +8207,6 @@ namespace {
     // For conditional operators, the cast can be outside the conditional
     // operator if both expressions are DeclRefExpr's.
     void HandleValue(Expr *E) {
-      if (isReferenceType)
-        return;
       E = E->IgnoreParens();
       if (DeclRefExpr* DRE = dyn_cast<DeclRefExpr>(E)) {
         HandleDeclRefExpr(DRE);
@@ -8223,6 +8221,7 @@ namespace {
 
       if (BinaryConditionalOperator *BCO =
               dyn_cast<BinaryConditionalOperator>(E)) {
+        Visit(BCO->getCond());
         HandleValue(BCO->getFalseExpr());
         return;
       }
@@ -8250,10 +8249,12 @@ namespace {
           HandleDeclRefExpr(DRE);
         return;
       }
+
+      Visit(E);
     }
 
-    // Reference types are handled here since all uses of references are
-    // bad, not just r-value uses.
+    // Reference types not handled in HandleValue are handled here since all
+    // uses of references are bad, not just r-value uses.
     void VisitDeclRefExpr(DeclRefExpr *E) {
       if (isReferenceType)
         HandleDeclRefExpr(E);
@@ -8261,8 +8262,10 @@ namespace {
 
     void VisitImplicitCastExpr(ImplicitCastExpr *E) {
       if (E->getCastKind() == CK_LValueToRValue ||
-          (isRecordType && E->getCastKind() == CK_NoOp))
+          (isRecordType && E->getCastKind() == CK_NoOp)) {
         HandleValue(E->getSubExpr());
+        return;
+      }
 
       Inherited::VisitImplicitCastExpr(E);
     }
@@ -8329,11 +8332,20 @@ namespace {
         if (FunctionDecl *FD = E->getDirectCallee()) {
           if (FD->getIdentifier() && FD->getIdentifier()->isStr("move")) {
             HandleValue(E->getArg(0));
+            return;
           }
         }
       }
 
       Inherited::VisitCallExpr(E);
+    }
+
+    // A custom visitor for BinaryConditionalOperator is needed because the
+    // regular visitor would check the condition and true expression separately
+    // but both point to the same place giving duplicate diagnostics.
+    void VisitBinaryConditionalOperator(BinaryConditionalOperator *E) {
+      Visit(E->getCond());
+      Visit(E->getFalseExpr());
     }
 
     void HandleDeclRefExpr(DeclRefExpr *DRE) {

@@ -566,6 +566,12 @@ namespace references {
   int &e = d ?: e; // expected-warning{{reference 'e' is not yet bound to a value when used within its own initialization}}
   int &f = f ?: d; // expected-warning{{reference 'f' is not yet bound to a value when used within its own initialization}}
 
+  int &return_ref1(int);
+  int &return_ref2(int&);
+
+  int &g = return_ref1(g); // expected-warning{{reference 'g' is not yet bound to a value when used within its own initialization}}
+  int &h = return_ref2(h); // expected-warning{{reference 'h' is not yet bound to a value when used within its own initialization}}
+
   struct S {
     S() : a(a) {} // expected-warning{{reference 'a' is not yet bound to a value when used here}}
     int &a;
