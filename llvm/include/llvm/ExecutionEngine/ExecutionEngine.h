@@ -152,9 +152,8 @@ protected:
   void *(*LazyFunctionCreator)(const std::string &);
 
 public:
-  /// lock - This lock protects the ExecutionEngine, MCJIT, JIT, JITResolver and
-  /// JITEmitter classes.  It must be held while changing the internal state of
-  /// any of those classes.
+  /// lock - This lock protects the ExecutionEngine and MCJIT classes. It must
+  /// be held while changing the internal state of any of those classes.
   sys::Mutex lock;
 
   //===--------------------------------------------------------------------===//
@@ -216,10 +215,6 @@ public:
   /// it prints a message to stderr and aborts.
   ///
   /// This function is deprecated for the MCJIT execution engine.
-  ///
-  /// FIXME: the JIT and MCJIT interfaces should be disentangled or united
-  /// again, if possible.
-  ///
   virtual void *getPointerToNamedFunction(const std::string &Name,
                                           bool AbortOnFailure = true) = 0;
 
@@ -232,7 +227,7 @@ public:
                      "EE!");
   }
 
-  /// generateCodeForModule - Run code generationen for the specified module and
+  /// generateCodeForModule - Run code generation for the specified module and
   /// load it into memory.
   ///
   /// When this function has completed, all code and data for the specified
@@ -246,7 +241,7 @@ public:
   /// locally can use the getFunctionAddress call, which will generate code
   /// and apply final preparations all in one step.
   ///
-  /// This method has no effect for the legacy JIT engine or the interpeter.
+  /// This method has no effect for the interpeter.
   virtual void generateCodeForModule(Module *M) {}
 
   /// finalizeObject - ensure the module is fully processed and is usable.
@@ -255,8 +250,7 @@ public:
   /// object usable for execution.  It should be called after sections within an
   /// object have been relocated using mapSectionAddress.  When this method is
   /// called the MCJIT execution engine will reapply relocations for a loaded
-  /// object.  This method has no effect for the legacy JIT engine or the
-  /// interpeter.
+  /// object.  This method has no effect for the interpeter.
   virtual void finalizeObject() {}
 
   /// runStaticConstructorsDestructors - This method is used to execute all of
@@ -341,9 +335,9 @@ public:
   /// getGlobalValueAddress - Return the address of the specified global
   /// value. This may involve code generation.
   ///
-  /// This function should not be called with the JIT or interpreter engines.
+  /// This function should not be called with the interpreter engine.
   virtual uint64_t getGlobalValueAddress(const std::string &Name) {
-    // Default implementation for JIT and interpreter.  MCJIT will override this.
+    // Default implementation for the interpreter.  MCJIT will override this.
     // JIT and interpreter clients should use getPointerToGlobal instead.
     return 0;
   }
@@ -351,13 +345,10 @@ public:
   /// getFunctionAddress - Return the address of the specified function.
   /// This may involve code generation.
   virtual uint64_t getFunctionAddress(const std::string &Name) {
-    // Default implementation for JIT and interpreter.  MCJIT will override this.
-    // JIT and interpreter clients should use getPointerToFunction instead.
+    // Default implementation for the interpreter.  MCJIT will override this.
+    // Interpreter clients should use getPointerToFunction instead.
     return 0;
   }
-
-  // The JIT overrides a version that actually does this.
-  virtual void runJITOnFunction(Function *, MachineCodeInfo * = nullptr) { }
 
   /// getGlobalValueAtAddress - Return the LLVM global value object that starts
   /// at the specified address.
@@ -391,7 +382,7 @@ public:
   virtual void UnregisterJITEventListener(JITEventListener *) {}
 
   /// Sets the pre-compiled object cache.  The ownership of the ObjectCache is
-  /// not changed.  Supported by MCJIT but not JIT.
+  /// not changed.  Supported by MCJIT but not the interpreter.
   virtual void setObjectCache(ObjectCache *) {
     llvm_unreachable("No support for an object cache");
   }
@@ -432,11 +423,6 @@ public:
   }
   bool isCompilingLazily() const {
     return CompilingLazily;
-  }
-  // Deprecated in favor of isCompilingLazily (to reduce double-negatives).
-  // Remove this in LLVM 2.8.
-  bool isLazyCompilationDisabled() const {
-    return !CompilingLazily;
   }
 
   /// DisableGVCompilation - If called, the JIT will abort if it's asked to
