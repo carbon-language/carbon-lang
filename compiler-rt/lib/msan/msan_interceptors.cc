@@ -1148,6 +1148,24 @@ INTERCEPTOR(void *, shmat, int shmid, const void *shmaddr, int shmflg) {
   return p;
 }
 
+static void BeforeFork() {
+  StackDepotLockAll();
+  ChainedOriginDepotLockAll();
+}
+
+static void AfterFork() {
+  ChainedOriginDepotUnlockAll();
+  StackDepotUnlockAll();
+}
+
+INTERCEPTOR(int, fork, void) {
+  ENSURE_MSAN_INITED();
+  BeforeFork();
+  int pid = REAL(fork)();
+  AfterFork();
+  return pid;
+}
+
 struct MSanInterceptorContext {
   bool in_interceptor_scope;
 };
@@ -1532,6 +1550,7 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(tzset);
   INTERCEPT_FUNCTION(__cxa_atexit);
   INTERCEPT_FUNCTION(shmat);
+  INTERCEPT_FUNCTION(fork);
 
   inited = 1;
 }

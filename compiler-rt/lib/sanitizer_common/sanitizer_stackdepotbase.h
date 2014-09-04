@@ -32,6 +32,9 @@ class StackDepotBase {
 
   StackDepotStats *GetStats() { return &stats; }
 
+  void LockAll();
+  void UnlockAll();
+
  private:
   static Node *find(Node *s, args_type args, u32 hash);
   static Node *lock(atomic_uintptr_t *p);
@@ -151,6 +154,22 @@ StackDepotBase<Node, kReservedBits, kTabSizeLog>::Get(u32 id) {
     }
   }
   return args_type();
+}
+
+template <class Node, int kReservedBits, int kTabSizeLog>
+void StackDepotBase<Node, kReservedBits, kTabSizeLog>::LockAll() {
+  for (int i = 0; i < kTabSize; ++i) {
+    lock(&tab[i]);
+  }
+}
+
+template <class Node, int kReservedBits, int kTabSizeLog>
+void StackDepotBase<Node, kReservedBits, kTabSizeLog>::UnlockAll() {
+  for (int i = 0; i < kTabSize; ++i) {
+    atomic_uintptr_t *p = &tab[i];
+    uptr s = atomic_load(p, memory_order_relaxed);
+    unlock(p, (Node *)(s & ~1UL));
+  }
 }
 
 }  // namespace __sanitizer

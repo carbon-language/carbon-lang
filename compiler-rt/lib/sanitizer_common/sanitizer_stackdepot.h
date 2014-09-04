@@ -40,6 +40,9 @@ StackDepotHandle StackDepotPut_WithHandle(const uptr *stack, uptr size);
 // Retrieves a stored stack trace by the id.
 const uptr *StackDepotGet(u32 id, uptr *size);
 
+void StackDepotLockAll();
+void StackDepotUnlockAll();
+
 // Instantiating this class creates a snapshot of StackDepot which can be
 // efficiently queried with StackDepotGet(). You can use it concurrently with
 // StackDepot, but the snapshot is only guaranteed to contain those stack traces

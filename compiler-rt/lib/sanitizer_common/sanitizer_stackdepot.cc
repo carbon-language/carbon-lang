@@ -128,6 +128,14 @@ const uptr *StackDepotGet(u32 id, uptr *size) {
   return desc.stack;
 }
 
+void StackDepotLockAll() {
+  theDepot.LockAll();
+}
+
+void StackDepotUnlockAll() {
+  theDepot.UnlockAll();
+}
+
 bool StackDepotReverseMap::IdDescPair::IdComparator(
     const StackDepotReverseMap::IdDescPair &a,
     const StackDepotReverseMap::IdDescPair &b) {

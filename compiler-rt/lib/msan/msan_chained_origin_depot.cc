@@ -116,4 +116,12 @@ u32 ChainedOriginDepotGet(u32 id, u32 *other) {
   return desc.here_id;
 }
 
+void ChainedOriginDepotLockAll() {
+  chainedOriginDepot.LockAll();
+}
+
+void ChainedOriginDepotUnlockAll() {
+  chainedOriginDepot.UnlockAll();
+}
+
 }  // namespace __msan
