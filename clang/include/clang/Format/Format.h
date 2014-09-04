@@ -506,10 +506,8 @@ tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
 
 /// \brief Returns the \c LangOpts that the formatter expects you to set.
 ///
-/// \param Standard determines lexing mode: LC_Cpp11 and LS_Auto turn on C++11
-/// lexing mode, LS_Cpp03 - C++03 mode.
-LangOptions getFormattingLangOpts(
-    FormatStyle::LanguageStandard Standard = FormatStyle::LS_Cpp11);
+/// \param Style determines specific settings for lexing mode.
+LangOptions getFormattingLangOpts(const FormatStyle &Style = getLLVMStyle());
 
 /// \brief Description to be used for help text for a llvm::cl option for
 /// specifying format style. The description is closely related to the operation

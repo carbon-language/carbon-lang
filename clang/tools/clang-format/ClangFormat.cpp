@@ -226,7 +226,7 @@ static bool format(StringRef FileName) {
   FormatStyle FormatStyle = getStyle(
       Style, (FileName == "-") ? AssumeFilename : FileName, FallbackStyle);
   Lexer Lex(ID, Sources.getBuffer(ID), Sources,
-            getFormattingLangOpts(FormatStyle.Standard));
+            getFormattingLangOpts(FormatStyle));
   tooling::Replacements Replaces = reformat(FormatStyle, Lex, Sources, Ranges);
   if (OutputXML) {
     llvm::outs()
