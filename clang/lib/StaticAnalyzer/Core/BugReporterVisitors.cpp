@@ -218,7 +218,8 @@ public:
         EnableNullFPSuppression = State->isNull(*RetLoc).isConstrainedTrue();
 
     BR.markInteresting(CalleeContext);
-    BR.addVisitor(new ReturnVisitor(CalleeContext, EnableNullFPSuppression));
+    BR.addVisitor(llvm::make_unique<ReturnVisitor>(CalleeContext,
+                                                   EnableNullFPSuppression));
   }
 
   /// Returns true if any counter-suppression heuristics are enabled for
@@ -565,8 +566,8 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
           if (const VarRegion *OriginalR = BDR->getOriginalRegion(VR)) {
             if (Optional<KnownSVal> KV =
                 State->getSVal(OriginalR).getAs<KnownSVal>())
-              BR.addVisitor(new FindLastStoreBRVisitor(*KV, OriginalR,
-                                                      EnableNullFPSuppression));
+              BR.addVisitor(llvm::make_unique<FindLastStoreBRVisitor>(
+                  *KV, OriginalR, EnableNullFPSuppression));
           }
         }
       }
@@ -975,8 +976,8 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
       // got initialized.
       if (const MemRegion *RR = getLocationRegionIfReference(Inner, N)) {
         if (Optional<KnownSVal> KV = LVal.getAs<KnownSVal>())
-          report.addVisitor(new FindLastStoreBRVisitor(*KV, RR,
-                                                      EnableNullFPSuppression));
+          report.addVisitor(llvm::make_unique<FindLastStoreBRVisitor>(
+              *KV, RR, EnableNullFPSuppression));
       }
     }
 
@@ -986,30 +987,26 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
 
       report.markInteresting(R);
       report.markInteresting(V);
-      report.addVisitor(new UndefOrNullArgVisitor(R));
+      report.addVisitor(llvm::make_unique<UndefOrNullArgVisitor>(R));
 
       // If the contents are symbolic, find out when they became null.
-      if (V.getAsLocSymbol(/*IncludeBaseRegions*/ true)) {
-        BugReporterVisitor *ConstraintTracker =
-          new TrackConstraintBRVisitor(V.castAs<DefinedSVal>(), false);
-        report.addVisitor(ConstraintTracker);
-      }
+      if (V.getAsLocSymbol(/*IncludeBaseRegions*/ true))
+        report.addVisitor(llvm::make_unique<TrackConstraintBRVisitor>(
+            V.castAs<DefinedSVal>(), false));
 
       // Add visitor, which will suppress inline defensive checks.
       if (Optional<DefinedSVal> DV = V.getAs<DefinedSVal>()) {
-        if (!DV->isZeroConstant() &&
-          LVState->isNull(*DV).isConstrainedTrue() &&
-          EnableNullFPSuppression) {
-          BugReporterVisitor *IDCSuppressor =
-            new SuppressInlineDefensiveChecksVisitor(*DV,
-                                                     LVNode);
-          report.addVisitor(IDCSuppressor);
+        if (!DV->isZeroConstant() && LVState->isNull(*DV).isConstrainedTrue() &&
+            EnableNullFPSuppression) {
+          report.addVisitor(
+              llvm::make_unique<SuppressInlineDefensiveChecksVisitor>(*DV,
+                                                                      LVNode));
         }
       }
 
       if (Optional<KnownSVal> KV = V.getAs<KnownSVal>())
-        report.addVisitor(new FindLastStoreBRVisitor(*KV, R,
-                                                     EnableNullFPSuppression));
+        report.addVisitor(llvm::make_unique<FindLastStoreBRVisitor>(
+            *KV, R, EnableNullFPSuppression));
       return true;
     }
   }
@@ -1040,12 +1037,12 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
       RVal = state->getSVal(L->getRegion());
 
     const MemRegion *RegionRVal = RVal.getAsRegion();
-    report.addVisitor(new UndefOrNullArgVisitor(L->getRegion()));
+    report.addVisitor(llvm::make_unique<UndefOrNullArgVisitor>(L->getRegion()));
 
     if (RegionRVal && isa<SymbolicRegion>(RegionRVal)) {
       report.markInteresting(RegionRVal);
-      report.addVisitor(new TrackConstraintBRVisitor(
-        loc::MemRegionVal(RegionRVal), false));
+      report.addVisitor(llvm::make_unique<TrackConstraintBRVisitor>(
+          loc::MemRegionVal(RegionRVal), false));
     }
   }
 
@@ -1128,8 +1125,8 @@ void FindLastStoreBRVisitor::registerStatementVarDecls(BugReport &BR,
 
         if (V.getAs<loc::ConcreteInt>() || V.getAs<nonloc::ConcreteInt>()) {
           // Register a new visitor with the BugReport.
-          BR.addVisitor(new FindLastStoreBRVisitor(V.castAs<KnownSVal>(), R,
-                                                   EnableNullFPSuppression));
+          BR.addVisitor(llvm::make_unique<FindLastStoreBRVisitor>(
+              V.castAs<KnownSVal>(), R, EnableNullFPSuppression));
         }
       }
     }

@@ -63,7 +63,7 @@ public:
   };
 
   typedef const SourceRange *ranges_iterator;
-  typedef SmallVector<BugReporterVisitor *, 8> VisitorList;
+  typedef SmallVector<std::unique_ptr<BugReporterVisitor>, 8> VisitorList;
   typedef VisitorList::iterator visitor_iterator;
   typedef SmallVector<StringRef, 2> ExtraTextList;
 
@@ -299,9 +299,9 @@ public:
   /// \sa registerConditionVisitor(), registerTrackNullOrUndefValue(),
   /// registerFindLastStore(), registerNilReceiverVisitor(), and
   /// registerVarDeclsLastStore().
-  void addVisitor(BugReporterVisitor *visitor);
+  void addVisitor(std::unique_ptr<BugReporterVisitor> visitor);
 
-	/// Iterators through the custom diagnostic visitors.
+        /// Iterators through the custom diagnostic visitors.
   visitor_iterator visitor_begin() { return Callbacks.begin(); }
   visitor_iterator visitor_end() { return Callbacks.end(); }
 

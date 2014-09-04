@@ -176,7 +176,8 @@ void TestAfterDivZeroChecker::reportBug(SVal Val, CheckerContext &C) const {
                                    "already been used for division",
                       N);
 
-    R->addVisitor(new DivisionBRVisitor(Val.getAsSymbol(), C.getStackFrame()));
+    R->addVisitor(llvm::make_unique<DivisionBRVisitor>(Val.getAsSymbol(),
+                                                       C.getStackFrame()));
     C.emitReport(R);
   }
 }

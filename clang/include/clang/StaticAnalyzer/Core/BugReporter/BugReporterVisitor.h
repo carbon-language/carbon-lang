@@ -48,7 +48,7 @@ public:
   /// (Warning: if you have a deep subclass of BugReporterVisitorImpl, the
   /// default implementation of clone() will NOT do the right thing, and you
   /// will have to provide your own implementation.)
-  virtual BugReporterVisitor *clone() const = 0;
+  virtual std::unique_ptr<BugReporterVisitor> clone() const = 0;
 
   /// \brief Return a diagnostic piece which should be associated with the
   /// given node.
@@ -87,8 +87,8 @@ public:
 /// will have to provide your own implementation.)
 template <class DERIVED>
 class BugReporterVisitorImpl : public BugReporterVisitor {
-  BugReporterVisitor *clone() const override {
-    return new DERIVED(*static_cast<const DERIVED *>(this));
+  std::unique_ptr<BugReporterVisitor> clone() const override {
+    return llvm::make_unique<DERIVED>(*static_cast<const DERIVED *>(this));
   }
 };
 
