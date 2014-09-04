@@ -28,10 +28,6 @@ using llvm::object::export_directory_table_entry;
 namespace lld {
 namespace pecoff {
 
-static bool compare(const TableEntry &a, const TableEntry &b) {
-  return a.exportName.compare(b.exportName) < 0;
-}
-
 static void assignOrdinals(PECOFFLinkingContext &ctx) {
   std::set<PECOFFLinkingContext::ExportDesc> exports;
   int maxOrdinal = -1;
@@ -89,7 +85,10 @@ static bool getExportedAtoms(PECOFFLinkingContext &ctx, MutableFile *file,
     exports.insert(desc);
   }
   ctx.getDllExports().swap(exports);
-  std::sort(ret.begin(), ret.end(), compare);
+  std::sort(ret.begin(), ret.end(),
+            [](const TableEntry &a, const TableEntry &b) {
+    return a.exportName.compare(b.exportName) < 0;
+  });
   return true;
 }
 
