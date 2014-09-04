@@ -10376,6 +10376,17 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
          !CheckConstexprFunctionBody(FD, Body)))
       FD->setInvalidDecl();
 
+    if (FD && FD->hasAttr<NakedAttr>()) {
+      for (const Stmt *S : Body->children()) {
+        if (!isa<AsmStmt>(S)) {
+          Diag(S->getLocStart(), diag::err_non_asm_stmt_in_naked_function);
+          Diag(FD->getAttr<NakedAttr>()->getLocation(), diag::note_attribute);
+          FD->setInvalidDecl();
+          break;
+        }
+      }
+    }
+
     assert(ExprCleanupObjects.empty() && "Leftover temporaries in function");
     assert(!ExprNeedsCleanups && "Unaccounted cleanups in function");
     assert(MaybeODRUseExprs.empty() &&

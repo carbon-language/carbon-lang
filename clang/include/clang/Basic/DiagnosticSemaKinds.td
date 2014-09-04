@@ -6991,6 +6991,9 @@ def err_unknown_any_function : Error<
 def err_filter_expression_integral : Error<
   "filter expression type should be an integral value not %0">;
 
+def err_non_asm_stmt_in_naked_function : Error<
+  "non-ASM statement in naked function is not supported">;
+
 // OpenCL warnings and errors.
 def err_invalid_astype_of_different_size : Error<
   "invalid reinterpretation: sizes of %0 and %1 must match">;
