@@ -159,8 +159,7 @@ public:
   const DWARFDebugFrame *getDebugFrame();
 
   /// Get a pointer to a parsed line table corresponding to a compile unit.
-  const DWARFDebugLine::LineTable *
-  getLineTableForCompileUnit(DWARFCompileUnit *cu);
+  const DWARFDebugLine::LineTable *getLineTableForUnit(DWARFUnit *cu);
 
   DILineInfo getLineInfoForAddress(uint64_t Address,
       DILineInfoSpecifier Specifier = DILineInfoSpecifier()) override;

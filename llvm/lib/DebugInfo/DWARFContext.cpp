@@ -291,7 +291,7 @@ const DWARFDebugFrame *DWARFContext::getDebugFrame() {
 }
 
 const DWARFLineTable *
-DWARFContext::getLineTableForCompileUnit(DWARFCompileUnit *cu) {
+DWARFContext::getLineTableForUnit(DWARFUnit *cu) {
   if (!Line)
     Line.reset(new DWARFDebugLine(&getLineSection().Relocs));
 
@@ -425,18 +425,18 @@ DWARFCompileUnit *DWARFContext::getCompileUnitForAddress(uint64_t Address) {
   return getCompileUnitForOffset(CUOffset);
 }
 
-static bool getFileNameForCompileUnit(DWARFCompileUnit *CU,
-                                      const DWARFLineTable *LineTable,
-                                      uint64_t FileIndex, FileLineInfoKind Kind,
-                                      std::string &FileName) {
-  if (!CU || !LineTable || Kind == FileLineInfoKind::None ||
+static bool getFileNameForUnit(DWARFCompileUnit *U,
+                               const DWARFLineTable *LineTable,
+                               uint64_t FileIndex, FileLineInfoKind Kind,
+                               std::string &FileName) {
+  if (!U || !LineTable || Kind == FileLineInfoKind::None ||
       !LineTable->getFileNameByIndex(FileIndex, Kind, FileName))
     return false;
   if (Kind == FileLineInfoKind::AbsoluteFilePath &&
       sys::path::is_relative(FileName)) {
     // We may still need to append compilation directory of compile unit.
     SmallString<16> AbsolutePath;
-    if (const char *CompilationDir = CU->getCompilationDir()) {
+    if (const char *CompilationDir = U->getCompilationDir()) {
       sys::path::append(AbsolutePath, CompilationDir);
     }
     sys::path::append(AbsolutePath, FileName);
@@ -458,8 +458,8 @@ static bool getFileLineInfoForCompileUnit(DWARFCompileUnit *CU,
     return false;
   // Take file number and line/column from the row.
   const DWARFDebugLine::Row &Row = LineTable->Rows[RowIndex];
-  if (!getFileNameForCompileUnit(CU, LineTable, Row.File, Kind,
-                                 Result.FileName))
+  if (!getFileNameForUnit(CU, LineTable, Row.File, Kind,
+                          Result.FileName))
     return false;
   Result.Line = Row.Line;
   Result.Column = Row.Column;
@@ -496,7 +496,7 @@ DILineInfo DWARFContext::getLineInfoForAddress(uint64_t Address,
     return Result;
   getFunctionNameForAddress(CU, Address, Spec.FNKind, Result.FunctionName);
   if (Spec.FLIKind != FileLineInfoKind::None) {
-    const DWARFLineTable *LineTable = getLineTableForCompileUnit(CU);
+    const DWARFLineTable *LineTable = getLineTableForUnit(CU);
     getFileLineInfoForCompileUnit(CU, LineTable, Address, Spec.FLIKind, Result);
   }
   return Result;
@@ -522,7 +522,7 @@ DWARFContext::getLineInfoForAddressRange(uint64_t Address, uint64_t Size,
     return Lines;
   }
 
-  const DWARFLineTable *LineTable = getLineTableForCompileUnit(CU);
+  const DWARFLineTable *LineTable = getLineTableForUnit(CU);
 
   // Get the index of row we're looking for in the line table.
   std::vector<uint32_t> RowVector;
@@ -533,8 +533,8 @@ DWARFContext::getLineInfoForAddressRange(uint64_t Address, uint64_t Size,
     // Take file number and line/column from the row.
     const DWARFDebugLine::Row &Row = LineTable->Rows[RowIndex];
     DILineInfo Result;
-    getFileNameForCompileUnit(CU, LineTable, Row.File, Spec.FLIKind,
-                              Result.FileName);
+    getFileNameForUnit(CU, LineTable, Row.File, Spec.FLIKind,
+                       Result.FileName);
     Result.FunctionName = FunctionName;
     Result.Line = Row.Line;
     Result.Column = Row.Column;
@@ -561,7 +561,7 @@ DWARFContext::getInliningInfoForAddress(uint64_t Address,
     // try to at least get file/line info from symbol table.
     if (Spec.FLIKind != FileLineInfoKind::None) {
       DILineInfo Frame;
-      LineTable = getLineTableForCompileUnit(CU);
+      LineTable = getLineTableForUnit(CU);
       if (getFileLineInfoForCompileUnit(CU, LineTable, Address, Spec.FLIKind,
                                         Frame)) {
         InliningInfo.addFrame(Frame);
@@ -582,15 +582,15 @@ DWARFContext::getInliningInfoForAddress(uint64_t Address,
       if (i == 0) {
         // For the topmost frame, initialize the line table of this
         // compile unit and fetch file/line info from it.
-        LineTable = getLineTableForCompileUnit(CU);
+        LineTable = getLineTableForUnit(CU);
         // For the topmost routine, get file/line info from line table.
         getFileLineInfoForCompileUnit(CU, LineTable, Address, Spec.FLIKind,
                                       Frame);
       } else {
         // Otherwise, use call file, call line and call column from
         // previous DIE in inlined chain.
-        getFileNameForCompileUnit(CU, LineTable, CallFile, Spec.FLIKind,
-                                  Frame.FileName);
+        getFileNameForUnit(CU, LineTable, CallFile, Spec.FLIKind,
+                           Frame.FileName);
         Frame.Line = CallLine;
         Frame.Column = CallColumn;
       }
