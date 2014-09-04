@@ -7,7 +7,7 @@ LLVM 3.5 Release Notes
 
 .. warning::
    These are in-progress notes for the upcoming LLVM 3.6 release.  You may
-   prefer the `LLVM 3.5 Release Notes <http://llvm.org/releases/3.5/docs
+   prefer the `LLVM 3.5 Release Notes <http://llvm.org/releases/3.5.0/docs
    /ReleaseNotes.html>`_.
 
 
