@@ -549,9 +549,9 @@ Optional<uint64_t> DWARFFormValue::getAsUnsignedConstant() const {
   return Value.uval;
 }
 
-Optional<ArrayRef<const uint8_t>> DWARFFormValue::getAsBlock() const {
+Optional<ArrayRef<uint8_t>> DWARFFormValue::getAsBlock() const {
   if (!isFormClass(FC_Block) && !isFormClass(FC_Exprloc))
     return None;
-  return ArrayRef<const uint8_t>(Value.data, Value.uval);
+  return ArrayRef<uint8_t>(Value.data, Value.uval);
 }
 
