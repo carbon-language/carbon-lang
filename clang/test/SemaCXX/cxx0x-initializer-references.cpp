@@ -118,3 +118,9 @@ namespace inner_init {
   F f2 { { 0 } }; // expected-error {{chosen constructor is explicit}}
   F f3 { { { 0 } } }; // expected-error {{chosen constructor is explicit}}
 }
+
+namespace PR20844 {
+  struct A {};
+  struct B { operator A&(); } b;
+  A &a{b}; // expected-error {{excess elements}} expected-note {{in initialization of temporary of type 'PR20844::A'}}
+}

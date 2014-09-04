@@ -4,7 +4,7 @@ namespace std {
   typedef decltype(sizeof(int)) size_t;
 
   template <typename E>
-  struct initializer_list // expected-note 2{{candidate}}
+  struct initializer_list
   {
     const E *p;
     size_t n;
@@ -112,15 +112,16 @@ namespace bullet8 {
 }
 
 namespace rdar13395022 {
-  struct MoveOnly {
-    MoveOnly(MoveOnly&&);
+  struct MoveOnly { // expected-note {{candidate}}
+    MoveOnly(MoveOnly&&); // expected-note 2{{copy constructor is implicitly deleted because}} expected-note {{candidate}}
   };
 
   void test(MoveOnly mo) {
-    // FIXME: These diagnostics are poor.
-    auto &&list1 = {mo}; // expected-error{{no viable conversion}}
-    MoveOnly (&&list2)[1] = {mo}; // expected-error{{no viable conversion}}
+    auto &&list1 = {mo}; // expected-error {{call to implicitly-deleted copy constructor}} expected-note {{in initialization of temporary of type 'std::initializer_list}}
+    MoveOnly (&&list2)[1] = {mo}; // expected-error {{call to implicitly-deleted copy constructor}} expected-note {{in initialization of temporary of type 'rdar13395022::MoveOnly [1]'}}
     std::initializer_list<MoveOnly> &&list3 = {};
-    MoveOnly (&&list4)[1] = {}; // expected-error{{uninitialized}}
+    MoveOnly (&&list4)[1] = {}; // expected-error {{no matching constructor}}
+    // expected-note@-1 {{in implicit initialization of array element 0 with omitted initializer}}
+    // expected-note@-2 {{in initialization of temporary of type 'rdar13395022::MoveOnly [1]' created to list-initialize this reference}}
   }
 }
