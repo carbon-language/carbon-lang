@@ -25,7 +25,7 @@
 #include "sanitizer_atomic.h"
 #include "sanitizer_symbolizer.h"
 
-#if SANITIZER_ANDROID
+#if SANITIZER_ANDROID || SANITIZER_FREEBSD
 #include <dlfcn.h>  // for dlsym()
 #endif
 
