@@ -89,7 +89,13 @@ static Flavor strToFlavor(StringRef str) {
       .Case("lld-link", Flavor::win_link)
       .Case("darwin", Flavor::darwin_ld)
       .Case("core", Flavor::core)
-      .Case("ld", Flavor::gnu_ld) // deprecated
+#if __APPLE__
+      // On a Darwin systems, if linker binary is named "ld", use Darwin driver.
+      .Case("ld", Flavor::darwin_ld)
+#else
+      // On other *nix systems, if linker binary is named "ld", use gnu driver.
+      .Case("ld", Flavor::gnu_ld)
+#endif
       .Default(Flavor::invalid);
 }
 
