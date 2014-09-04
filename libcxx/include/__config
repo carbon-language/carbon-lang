@@ -21,6 +21,7 @@
 
 #if !_WIN32
 #include <unistd.h>
+#include <errno.h>  // for ELAST on FreeBSD
 #endif
 
 #define _LIBCPP_VERSION 1101
