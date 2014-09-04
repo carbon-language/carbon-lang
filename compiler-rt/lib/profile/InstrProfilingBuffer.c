@@ -26,12 +26,12 @@ int __llvm_profile_write_buffer(char *Buffer) {
   /* Match logic in __llvm_profile_get_size_for_buffer().
    * Match logic in __llvm_profile_write_file().
    */
-  const __llvm_profile_data *DataBegin = __llvm_profile_data_begin();
-  const __llvm_profile_data *DataEnd = __llvm_profile_data_end();
-  const uint64_t *CountersBegin = __llvm_profile_counters_begin();
-  const uint64_t *CountersEnd   = __llvm_profile_counters_end();
-  const char *NamesBegin = __llvm_profile_names_begin();
-  const char *NamesEnd   = __llvm_profile_names_end();
+  const __llvm_profile_data *DataBegin = __llvm_profile_begin_data();
+  const __llvm_profile_data *DataEnd = __llvm_profile_end_data();
+  const uint64_t *CountersBegin = __llvm_profile_begin_counters();
+  const uint64_t *CountersEnd   = __llvm_profile_end_counters();
+  const char *NamesBegin = __llvm_profile_begin_names();
+  const char *NamesEnd   = __llvm_profile_end_names();
 
   /* Calculate size of sections. */
   const uint64_t DataSize = DataEnd - DataBegin;

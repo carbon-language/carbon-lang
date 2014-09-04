@@ -56,19 +56,19 @@ void __llvm_profile_register_function(void *Data_) {
 }
 
 __attribute__((visibility("hidden")))
-const __llvm_profile_data *__llvm_profile_data_begin(void) {
+const __llvm_profile_data *__llvm_profile_begin_data(void) {
   return DataFirst;
 }
 __attribute__((visibility("hidden")))
-const __llvm_profile_data *__llvm_profile_data_end(void) {
+const __llvm_profile_data *__llvm_profile_end_data(void) {
   return DataLast;
 }
 __attribute__((visibility("hidden")))
-const char *__llvm_profile_names_begin(void) { return NamesFirst; }
+const char *__llvm_profile_begin_names(void) { return NamesFirst; }
 __attribute__((visibility("hidden")))
-const char *__llvm_profile_names_end(void) { return NamesLast; }
+const char *__llvm_profile_end_names(void) { return NamesLast; }
 __attribute__((visibility("hidden")))
-uint64_t *__llvm_profile_counters_begin(void) { return CountersFirst; }
+uint64_t *__llvm_profile_begin_counters(void) { return CountersFirst; }
 __attribute__((visibility("hidden")))
-uint64_t *__llvm_profile_counters_end(void) { return CountersLast; }
+uint64_t *__llvm_profile_end_counters(void) { return CountersLast; }
 #endif

@@ -41,8 +41,8 @@ uint64_t __llvm_profile_get_version(void) {
 
 __attribute__((visibility("hidden")))
 void __llvm_profile_reset_counters(void) {
-  uint64_t *I = __llvm_profile_counters_begin();
-  uint64_t *E = __llvm_profile_counters_end();
+  uint64_t *I = __llvm_profile_begin_counters();
+  uint64_t *E = __llvm_profile_end_counters();
 
   memset(I, 0, sizeof(uint64_t)*(E - I));
 }
