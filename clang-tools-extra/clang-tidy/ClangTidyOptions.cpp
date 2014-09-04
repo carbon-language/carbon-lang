@@ -10,6 +10,7 @@
 #include "ClangTidyOptions.h"
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
@@ -137,7 +138,7 @@ const ClangTidyOptions &FileOptionsProvider::getOptions(StringRef FileName) {
       }
       return CachedOptions.GetOrCreateValue(Path, *Result).getValue();
     }
-    if (Result.getError() != std::errc::no_such_file_or_directory) {
+    if (Result.getError() != llvm::errc::no_such_file_or_directory) {
       llvm::errs() << "Error reading " << ConfigFileName << " from " << Path
                    << ": " << Result.getError().message() << "\n";
     }
@@ -150,7 +151,7 @@ FileOptionsProvider::TryReadConfigFile(StringRef Directory) {
 
   ClangTidyOptions Options = DefaultOptionsProvider::getOptions(Directory);
   if (!llvm::sys::fs::is_directory(Directory))
-    return std::errc::not_a_directory;
+    return make_error_code(llvm::errc::not_a_directory);
 
   SmallString<128> ConfigFile(Directory);
   llvm::sys::path::append(ConfigFile, ".clang-tidy");
@@ -162,7 +163,7 @@ FileOptionsProvider::TryReadConfigFile(StringRef Directory) {
   llvm::sys::fs::is_regular_file(Twine(ConfigFile), IsFile);
 
   if (!IsFile)
-    return std::errc::no_such_file_or_directory;
+    return make_error_code(llvm::errc::no_such_file_or_directory);
 
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Text =
       llvm::MemoryBuffer::getFile(ConfigFile.c_str());
