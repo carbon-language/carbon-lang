@@ -320,7 +320,6 @@ EXE: Load command 12
 EXE:           cmd LC_LOAD_DYLIB
 EXE:       cmdsize 56
 EXE:          name /usr/lib/libSystem.B.dylib (offset 24)
-EXE:    time stamp 2 Wed Dec 31 16:00:02 1969
 EXE:       current version 1197.1.1
 EXE: compatibility version 1.0.0
 EXE: Load command 13
