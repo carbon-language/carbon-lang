@@ -3550,34 +3550,16 @@ bool AArch64FastISel::SelectBitCast(const Instruction *I) {
 bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
   switch (I->getOpcode()) {
   default:
-    return false;
+    break;
   case Instruction::Add:
-    if (!selectAddSub(I))
-      return selectBinaryOp(I, ISD::ADD);
-    return true;
   case Instruction::Sub:
-    if (!selectAddSub(I))
-      return selectBinaryOp(I, ISD::SUB);
-    return true;
-  case Instruction::FAdd:
-    return selectBinaryOp(I, ISD::FADD);
-  case Instruction::FSub:
-    // FNeg is currently represented in LLVM IR as a special case of FSub.
-    if (BinaryOperator::isFNeg(I))
-      return selectFNeg(I);
-    return selectBinaryOp(I, ISD::FSUB);
+    if (selectAddSub(I))
+      return true;
+    break;
   case Instruction::Mul:
     if (!selectBinaryOp(I, ISD::MUL))
       return SelectMul(I);
     return true;
-  case Instruction::FMul:
-    return selectBinaryOp(I, ISD::FMUL);
-  case Instruction::SDiv:
-    return selectBinaryOp(I, ISD::SDIV);
-  case Instruction::UDiv:
-    return selectBinaryOp(I, ISD::UDIV);
-  case Instruction::FDiv:
-    return selectBinaryOp(I, ISD::FDIV);
   case Instruction::SRem:
     if (!selectBinaryOp(I, ISD::SREM))
       return SelectRem(I, ISD::SREM);
@@ -3586,51 +3568,22 @@ bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
     if (!selectBinaryOp(I, ISD::UREM))
       return SelectRem(I, ISD::UREM);
     return true;
-  case Instruction::FRem:
-    return selectBinaryOp(I, ISD::FREM);
   case Instruction::Shl:
-    if (!SelectShift(I))
-      return selectBinaryOp(I, ISD::SHL);
-    return true;
   case Instruction::LShr:
-    if (!SelectShift(I))
-      return selectBinaryOp(I, ISD::SRL);
-    return true;
   case Instruction::AShr:
-    if (!SelectShift(I))
-      return selectBinaryOp(I, ISD::SRA);
-    return true;
+    if (SelectShift(I))
+      return true;
+    break;
   case Instruction::And:
-    if (!selectLogicalOp(I))
-      return selectBinaryOp(I, ISD::AND);
-    return true;
   case Instruction::Or:
-    if (!selectLogicalOp(I))
-      return selectBinaryOp(I, ISD::OR);
-    return true;
   case Instruction::Xor:
-    if (!selectLogicalOp(I))
-      return selectBinaryOp(I, ISD::XOR);
-    return true;
-  case Instruction::GetElementPtr:
-    return selectGetElementPtr(I);
+    if (selectLogicalOp(I))
+      return true;
+    break;
   case Instruction::Br:
     return SelectBranch(I);
   case Instruction::IndirectBr:
     return SelectIndirectBr(I);
-  case Instruction::Unreachable:
-    if (TM.Options.TrapUnreachable)
-      return fastEmit_(MVT::Other, MVT::Other, ISD::TRAP) != 0;
-    else
-      return true;
-  case Instruction::Alloca:
-    // FunctionLowering has the static-sized case covered.
-    if (FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(I)))
-      return true;
-    // Dynamic-sized alloca is not handled yet.
-    return false;
-  case Instruction::Call:
-    return selectCall(I);
   case Instruction::BitCast:
     if (!FastISel::selectBitCast(I))
       return SelectBitCast(I);
@@ -3663,24 +3616,6 @@ bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
     return true;
   case Instruction::UIToFP:
     return SelectIntToFP(I, /*Signed=*/false);
-  case Instruction::IntToPtr: // Deliberate fall-through.
-  case Instruction::PtrToInt: {
-    EVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
-    EVT DstVT = TLI.getValueType(I->getType());
-    if (DstVT.bitsGT(SrcVT))
-      return selectCast(I, ISD::ZERO_EXTEND);
-    if (DstVT.bitsLT(SrcVT))
-      return selectCast(I, ISD::TRUNCATE);
-    unsigned Reg = getRegForValue(I->getOperand(0));
-    if (!Reg)
-      return false;
-    updateValueMap(I, Reg);
-    return true;
-  }
-  case Instruction::ExtractValue:
-    return selectExtractValue(I);
-  case Instruction::PHI:
-    llvm_unreachable("FastISel shouldn't visit PHI nodes!");
   case Instruction::Load:
     return SelectLoad(I);
   case Instruction::Store:
@@ -3694,6 +3629,8 @@ bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
     return SelectRet(I);
   }
 
+  // fall-back to target-independent instruction selection.
+  return selectOperator(I, I->getOpcode());
   // Silence warnings.
   (void)&CC_AArch64_DarwinPCS_VarArg;
 }
