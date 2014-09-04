@@ -34,6 +34,7 @@
 #include "clang/Rewrite/Frontend/FrontendActions.h"
 #include "clang/StaticAnalyzer/Frontend/AnalysisConsumer.h"
 #include "clang/Tooling/Refactoring.h"
+#include "clang/Tooling/ReplacementsYaml.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
@@ -360,6 +361,17 @@ void handleErrors(const std::vector<ClangTidyError> &Errors, bool Fix) {
   for (const ClangTidyError &Error : Errors)
     Reporter.reportDiagnostic(Error);
   Reporter.Finish();
+}
+
+void exportReplacements(const std::vector<ClangTidyError> &Errors,
+                        raw_ostream &OS) {
+  tooling::TranslationUnitReplacements TUR;
+  for (const ClangTidyError &Error : Errors)
+    TUR.Replacements.insert(TUR.Replacements.end(), Error.Fix.begin(),
+                            Error.Fix.end());
+
+  yaml::Output YAML(OS);
+  YAML << TUR;
 }
 
 } // namespace tidy

@@ -78,6 +78,13 @@ AnalyzeTemporaryDtors("analyze-temporary-dtors",
                                "clang-analyzer- checks."),
                       cl::init(false), cl::cat(ClangTidyCategory));
 
+static cl::opt<std::string> ExportFixes(
+    "export-fixes",
+    cl::desc("YAML file to store suggested fixes in. The\n"
+             "stored fixes can be applied to the input source\n"
+             "code with clang-apply-replacements."),
+    cl::value_desc("filename"), cl::cat(ClangTidyCategory));
+
 static void printStats(const clang::tidy::ClangTidyStats &Stats) {
   if (Stats.errorsIgnored()) {
     llvm::errs() << "Suppressed " << Stats.errorsIgnored() << " warnings (";
@@ -146,6 +153,16 @@ int main(int argc, const char **argv) {
       OptionsProvider, OptionsParser.getCompilations(),
       OptionsParser.getSourcePathList(), &Errors);
   clang::tidy::handleErrors(Errors, Fix);
+
+  if (!ExportFixes.empty()) {
+    std::error_code EC;
+    llvm::raw_fd_ostream OS(ExportFixes, EC, llvm::sys::fs::F_None);
+    if (EC) {
+      llvm::errs() << "Error opening output file: " << EC.message() << '\n';
+      return 1;
+    }
+    clang::tidy::exportReplacements(Errors, OS);
+  }
 
   printStats(Stats);
   return 0;
