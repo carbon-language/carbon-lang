@@ -111,6 +111,14 @@ TEST_F(FormatTestJS, ContainerLiterals) {
                "        f();  //\n"
                "      }\n"
                "};");
+  verifyFormat("var stuff = {\n"
+               "  // comment for update\n"
+               "  update: false,\n"
+               "  // comment for modules\n"
+               "  modules: false,\n"
+               "  // comment for tasks\n"
+               "  tasks: false\n"
+               "};");
 }
 
 TEST_F(FormatTestJS, SpacesInContainerLiterals) {

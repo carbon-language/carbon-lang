@@ -1100,7 +1100,7 @@ public:
           ++OperatorIndex;
         }
 
-        next();
+        next(/*SkipPastLeadingComments=*/false);
       }
     }
   }
@@ -1113,7 +1113,9 @@ private:
       if (Current->Type == TT_ConditionalExpr)
         return prec::Conditional;
       else if (Current->is(tok::semi) || Current->Type == TT_InlineASMColon ||
-               Current->Type == TT_SelectorName)
+               Current->Type == TT_SelectorName ||
+               (Current->is(tok::comment) && Current->getNextNonComment() &&
+                Current->getNextNonComment()->Type == TT_SelectorName))
         return 0;
       else if (Current->Type == TT_RangeBasedForLoopColon)
         return prec::Comma;
@@ -1166,10 +1168,12 @@ private:
     addFakeParenthesis(Start, prec::Conditional);
   }
 
-  void next() {
+  void next(bool SkipPastLeadingComments = true) {
     if (Current)
       Current = Current->Next;
-    while (Current && Current->isTrailingComment())
+    while (Current &&
+           (Current->NewlinesBefore == 0 || SkipPastLeadingComments) &&
+           Current->isTrailingComment())
       Current = Current->Next;
   }
 
