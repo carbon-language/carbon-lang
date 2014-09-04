@@ -162,6 +162,13 @@ enum {
   SITOF,
   UITOF,
 
+  /// Natural vector cast. ISD::BITCAST is not natural in the big-endian
+  /// world w.r.t vectors; which causes additional REV instructions to be
+  /// generated to compensate for the byte-swapping. But sometimes we do
+  /// need to re-interpret the data in SIMD vector registers in big-endian
+  /// mode without emitting such REV instructions.
+  NVCAST,
+
   // NEON Load/Store with post-increment base updates
   LD2post = ISD::FIRST_TARGET_MEMORY_OPCODE,
   LD3post,
