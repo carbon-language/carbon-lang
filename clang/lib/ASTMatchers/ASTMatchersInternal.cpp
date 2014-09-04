@@ -26,6 +26,17 @@ void BoundNodesTreeBuilder::visitMatches(Visitor *ResultVisitor) {
   }
 }
 
+bool DynTypedMatcher::canConvertTo(ast_type_traits::ASTNodeKind To) const {
+  const auto From = getSupportedKind();
+  auto QualKind = ast_type_traits::ASTNodeKind::getFromNodeKind<QualType>();
+  auto TypeKind = ast_type_traits::ASTNodeKind::getFromNodeKind<Type>();
+  /// Mimic the implicit conversions of Matcher<>.
+  /// - From Matcher<Type> to Matcher<QualType>
+  if (From.isSame(TypeKind) && To.isSame(QualKind)) return true;
+  /// - From Matcher<Base> to Matcher<Derived>
+  return From.isBaseOf(To);
+}
+
 DynTypedMatcher::MatcherStorage::~MatcherStorage() {}
 
 void BoundNodesTreeBuilder::addMatch(const BoundNodesTreeBuilder &Other) {

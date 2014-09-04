@@ -93,13 +93,25 @@ class VariantMatcher {
   /// \brief Methods that depend on T from hasTypedMatcher/getTypedMatcher.
   class MatcherOps {
   public:
-    virtual ~MatcherOps();
-    virtual bool canConstructFrom(const DynTypedMatcher &Matcher,
-                                  bool &IsExactMatch) const = 0;
-    virtual void constructFrom(const DynTypedMatcher &Matcher) = 0;
-    virtual void constructVariadicOperator(
+    MatcherOps(ast_type_traits::ASTNodeKind NodeKind) : NodeKind(NodeKind) {}
+
+    bool canConstructFrom(const DynTypedMatcher &Matcher,
+                          bool &IsExactMatch) const;
+
+    /// \brief Convert \p Matcher the destination type and return it as a new
+    /// DynTypedMatcher.
+    virtual DynTypedMatcher
+    convertMatcher(const DynTypedMatcher &Matcher) const = 0;
+
+    /// \brief Constructs a variadic typed matcher from \p InnerMatchers.
+    /// Will try to convert each inner matcher to the destination type and
+    /// return llvm::None if it fails to do so.
+    llvm::Optional<DynTypedMatcher> constructVariadicOperator(
         ast_matchers::internal::VariadicOperatorFunction Func,
-        ArrayRef<VariantMatcher> InnerMatchers) = 0;
+        ArrayRef<VariantMatcher> InnerMatchers) const;
+
+  private:
+    ast_type_traits::ASTNodeKind NodeKind;
   };
 
   /// \brief Payload interface to be specialized by each matcher type.
@@ -110,7 +122,8 @@ class VariantMatcher {
     virtual ~Payload();
     virtual llvm::Optional<DynTypedMatcher> getSingleMatcher() const = 0;
     virtual std::string getTypeAsString() const = 0;
-    virtual void makeTypedMatcher(MatcherOps &Ops) const = 0;
+    virtual llvm::Optional<DynTypedMatcher>
+    getTypedMatcher(const MatcherOps &Ops) const = 0;
     virtual bool isConvertibleTo(ast_type_traits::ASTNodeKind Kind,
                                  unsigned *Specificity) const = 0;
   };
@@ -158,9 +171,8 @@ public:
   /// that can, the result would be ambiguous and false is returned.
   template <class T>
   bool hasTypedMatcher() const {
-    TypedMatcherOps<T> Ops;
-    if (Value) Value->makeTypedMatcher(Ops);
-    return Ops.hasMatcher();
+    if (!Value) return false;
+    return Value->getTypedMatcher(TypedMatcherOps<T>()).hasValue();
   }
 
   /// \brief Determines if the contained matcher can be converted to \p Kind.
@@ -182,10 +194,9 @@ public:
   /// Asserts that \c hasTypedMatcher<T>() is true.
   template <class T>
   ast_matchers::internal::Matcher<T> getTypedMatcher() const {
-    TypedMatcherOps<T> Ops;
-    Value->makeTypedMatcher(Ops);
-    assert(Ops.hasMatcher() && "hasTypedMatcher<T>() == false");
-    return Ops.matcher();
+    assert(hasTypedMatcher<T>() && "hasTypedMatcher<T>() == false");
+    return Value->getTypedMatcher(TypedMatcherOps<T>())
+        ->template convertTo<T>();
   }
 
   /// \brief String representation of the type of the value.
@@ -197,51 +208,25 @@ public:
 private:
   explicit VariantMatcher(Payload *Value) : Value(Value) {}
 
+  template <typename T> struct TypedMatcherOps;
+
   class SinglePayload;
   class PolymorphicPayload;
   class VariadicOpPayload;
 
-  template <typename T>
-  class TypedMatcherOps : public MatcherOps {
-  public:
-    typedef ast_matchers::internal::Matcher<T> MatcherT;
-
-    virtual bool canConstructFrom(const DynTypedMatcher &Matcher,
-                                  bool &IsExactMatch) const {
-      IsExactMatch = Matcher.getSupportedKind().isSame(
-          ast_type_traits::ASTNodeKind::getFromNodeKind<T>());
-      return Matcher.canConvertTo<T>();
-    }
-
-    virtual void constructFrom(const DynTypedMatcher& Matcher) {
-      Out.reset(new MatcherT(Matcher.convertTo<T>()));
-    }
-
-    virtual void constructVariadicOperator(
-        ast_matchers::internal::VariadicOperatorFunction Func,
-        ArrayRef<VariantMatcher> InnerMatchers) {
-      std::vector<DynTypedMatcher> DynMatchers;
-      for (size_t i = 0, e = InnerMatchers.size(); i != e; ++i) {
-        // Abort if any of the inner matchers can't be converted to
-        // Matcher<T>.
-        if (!InnerMatchers[i].hasTypedMatcher<T>()) {
-          return;
-        }
-        DynMatchers.push_back(InnerMatchers[i].getTypedMatcher<T>());
-      }
-      Out.reset(new MatcherT(
-          new ast_matchers::internal::VariadicOperatorMatcherInterface<T>(
-              Func, DynMatchers)));
-    }
-
-    bool hasMatcher() const { return Out.get() != nullptr; }
-    const MatcherT &matcher() const { return *Out; }
-
-  private:
-    std::unique_ptr<MatcherT> Out;
-  };
-
   IntrusiveRefCntPtr<const Payload> Value;
+};
+
+template <typename T>
+struct VariantMatcher::TypedMatcherOps : VariantMatcher::MatcherOps {
+  TypedMatcherOps()
+      : MatcherOps(ast_type_traits::ASTNodeKind::getFromNodeKind<T>()) {}
+  typedef ast_matchers::internal::Matcher<T> MatcherT;
+
+  DynTypedMatcher
+  convertMatcher(const DynTypedMatcher &Matcher) const override {
+    return DynTypedMatcher(Matcher.convertTo<T>());
+  }
 };
 
 /// \brief Variant value class.

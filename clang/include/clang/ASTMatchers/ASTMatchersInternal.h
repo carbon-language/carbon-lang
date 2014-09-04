@@ -342,6 +342,17 @@ public:
   /// This version enables \c tryBind() on the \c DynTypedMatcher.
   template <typename T> inline DynTypedMatcher(const BindableMatcher<T> &M);
 
+  /// \brief Construct from a variadic function.
+  typedef bool (*VariadicOperatorFunction)(
+      const ast_type_traits::DynTypedNode DynNode, ASTMatchFinder *Finder,
+      BoundNodesTreeBuilder *Builder, ArrayRef<DynTypedMatcher> InnerMatchers);
+  static DynTypedMatcher
+  constructVariadic(VariadicOperatorFunction Func,
+                    ArrayRef<DynTypedMatcher> InnerMatchers) {
+    assert(InnerMatchers.size() > 0 && "Array must not be empty.");
+    return DynTypedMatcher(new VariadicStorage(Func, InnerMatchers));
+  }
+
   /// \brief Returns true if the matcher matches the given \c DynNode.
   bool matches(const ast_type_traits::DynTypedNode DynNode,
                ASTMatchFinder *Finder, BoundNodesTreeBuilder *Builder) const {
@@ -372,9 +383,9 @@ public:
   /// This method verifies that the underlying matcher in \c Other can process
   /// nodes of types T.
   template <typename T> bool canConvertTo() const {
-    return getSupportedKind().isBaseOf(
-        ast_type_traits::ASTNodeKind::getFromNodeKind<T>());
+    return canConvertTo(ast_type_traits::ASTNodeKind::getFromNodeKind<T>());
   }
+  bool canConvertTo(ast_type_traits::ASTNodeKind To) const;
 
   /// \brief Construct a \c Matcher<T> interface around the dynamic matcher.
   ///
@@ -416,8 +427,34 @@ private:
     const uint64_t ID;
   };
 
+  class VariadicStorage : public MatcherStorage {
+  public:
+    VariadicStorage(VariadicOperatorFunction Func,
+                    ArrayRef<DynTypedMatcher> InnerMatchers)
+        : MatcherStorage(InnerMatchers[0].getSupportedKind(),
+                         reinterpret_cast<uint64_t>(this)),
+          Func(Func), InnerMatchers(InnerMatchers) {}
+
+    bool matches(const ast_type_traits::DynTypedNode DynNode,
+                 ASTMatchFinder *Finder,
+                 BoundNodesTreeBuilder *Builder) const override {
+      return Func(DynNode, Finder, Builder, InnerMatchers);
+    }
+
+    llvm::Optional<DynTypedMatcher> tryBind(StringRef ID) const override {
+      return llvm::None;
+    }
+
+  private:
+    VariadicOperatorFunction Func;
+    std::vector<DynTypedMatcher> InnerMatchers;
+  };
+
   /// \brief Typed implementation of \c MatcherStorage.
   template <typename T> class TypedMatcherStorage;
+
+  /// \brief Internal constructor for \c constructVariadic.
+  DynTypedMatcher(MatcherStorage *Storage) : Storage(Storage) {}
 
   IntrusiveRefCntPtr<const MatcherStorage> Storage;
 };
@@ -460,16 +497,8 @@ inline DynTypedMatcher::DynTypedMatcher(const BindableMatcher<T> &M)
 
 /// \brief Specialization of the conversion functions for QualType.
 ///
-/// These specializations provide the Matcher<Type>->Matcher<QualType>
+/// This specialization provides the Matcher<Type>->Matcher<QualType>
 /// conversion that the static API does.
-template <> inline bool DynTypedMatcher::canConvertTo<QualType>() const {
-  const ast_type_traits::ASTNodeKind SourceKind = getSupportedKind();
-  return SourceKind.isSame(
-             ast_type_traits::ASTNodeKind::getFromNodeKind<Type>()) ||
-         SourceKind.isSame(
-             ast_type_traits::ASTNodeKind::getFromNodeKind<QualType>());
-}
-
 template <>
 inline Matcher<QualType> DynTypedMatcher::convertTo<QualType>() const {
   assert(canConvertTo<QualType>());
