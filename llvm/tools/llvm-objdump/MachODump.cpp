@@ -1112,7 +1112,7 @@ static void PrintMachHeader(uint32_t magic, uint32_t cputype,
       break;
     }
     if ((cpusubtype & MachO::CPU_SUBTYPE_MASK) == MachO::CPU_SUBTYPE_LIB64) {
-      outs() << " LIB64 ";
+      outs() << " LIB64";
     } else {
       outs() << format("  0x%02" PRIx32,
                        (cpusubtype & MachO::CPU_SUBTYPE_MASK) >> 24);
@@ -1696,6 +1696,275 @@ static void PrintDysymtabLoadCommand(MachO::dysymtab_command dyst,
     outs() << "\n";
 }
 
+static void PrintDyldInfoLoadCommand(MachO::dyld_info_command dc,
+                                     uint32_t object_size) {
+  if (dc.cmd == MachO::LC_DYLD_INFO)
+    outs() << "            cmd LC_DYLD_INFO\n";
+  else
+    outs() << "            cmd LC_DYLD_INFO_ONLY\n";
+  outs() << "        cmdsize " << dc.cmdsize;
+  if (dc.cmdsize != sizeof(struct MachO::dyld_info_command))
+    outs() << " Incorrect size\n";
+  else
+    outs() << "\n";
+  outs() << "     rebase_off " << dc.rebase_off;
+  if (dc.rebase_off > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "    rebase_size " << dc.rebase_size;
+  uint64_t big_size;
+  big_size = dc.rebase_off;
+  big_size += dc.rebase_size;
+  if (big_size > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "       bind_off " << dc.bind_off;
+  if (dc.bind_off > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "      bind_size " << dc.bind_size;
+  big_size = dc.bind_off;
+  big_size += dc.bind_size;
+  if (big_size > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "  weak_bind_off " << dc.weak_bind_off;
+  if (dc.weak_bind_off > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << " weak_bind_size " << dc.weak_bind_size;
+  big_size = dc.weak_bind_off;
+  big_size += dc.weak_bind_size;
+  if (big_size > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "  lazy_bind_off " << dc.lazy_bind_off;
+  if (dc.lazy_bind_off > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << " lazy_bind_size " << dc.lazy_bind_size;
+  big_size = dc.lazy_bind_off;
+  big_size += dc.lazy_bind_size;
+  if (big_size > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "     export_off " << dc.export_off;
+  if (dc.export_off > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << "    export_size " << dc.export_size;
+  big_size = dc.export_off;
+  big_size += dc.export_size;
+  if (big_size > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+}
+
+static void PrintDyldLoadCommand(MachO::dylinker_command dyld,
+                                 const char *Ptr) {
+  if (dyld.cmd == MachO::LC_ID_DYLINKER)
+    outs() << "          cmd LC_ID_DYLINKER\n";
+  else if (dyld.cmd == MachO::LC_LOAD_DYLINKER)
+    outs() << "          cmd LC_LOAD_DYLINKER\n";
+  else if (dyld.cmd == MachO::LC_DYLD_ENVIRONMENT)
+    outs() << "          cmd LC_DYLD_ENVIRONMENT\n";
+  else
+    outs() << "          cmd ?(" << dyld.cmd << ")\n";
+  outs() << "      cmdsize " << dyld.cmdsize;
+  if (dyld.cmdsize < sizeof(struct MachO::dylinker_command))
+    outs() << " Incorrect size\n";
+  else
+    outs() << "\n";
+  if (dyld.name >= dyld.cmdsize)
+    outs() << "         name ?(bad offset " << dyld.name << ")\n";
+  else {
+    const char *P = (const char *)(Ptr)+dyld.name;
+    outs() << "         name " << P << " (offset " << dyld.name << ")\n";
+  }
+}
+
+static void PrintUuidLoadCommand(MachO::uuid_command uuid) {
+  outs() << "     cmd LC_UUID\n";
+  outs() << " cmdsize " << uuid.cmdsize;
+  if (uuid.cmdsize != sizeof(struct MachO::uuid_command))
+    outs() << " Incorrect size\n";
+  else
+    outs() << "\n";
+  outs() << "    uuid ";
+  outs() << format("%02" PRIX32, uuid.uuid[0]);
+  outs() << format("%02" PRIX32, uuid.uuid[1]);
+  outs() << format("%02" PRIX32, uuid.uuid[2]);
+  outs() << format("%02" PRIX32, uuid.uuid[3]);
+  outs() << "-";
+  outs() << format("%02" PRIX32, uuid.uuid[4]);
+  outs() << format("%02" PRIX32, uuid.uuid[5]);
+  outs() << "-";
+  outs() << format("%02" PRIX32, uuid.uuid[6]);
+  outs() << format("%02" PRIX32, uuid.uuid[7]);
+  outs() << "-";
+  outs() << format("%02" PRIX32, uuid.uuid[8]);
+  outs() << format("%02" PRIX32, uuid.uuid[9]);
+  outs() << "-";
+  outs() << format("%02" PRIX32, uuid.uuid[10]);
+  outs() << format("%02" PRIX32, uuid.uuid[11]);
+  outs() << format("%02" PRIX32, uuid.uuid[12]);
+  outs() << format("%02" PRIX32, uuid.uuid[13]);
+  outs() << format("%02" PRIX32, uuid.uuid[14]);
+  outs() << format("%02" PRIX32, uuid.uuid[15]);
+  outs() << "\n";
+}
+
+static void PrintVersionMinLoadCommand(MachO::version_min_command vd) {
+  if (vd.cmd == MachO::LC_VERSION_MIN_MACOSX)
+    outs() << "      cmd LC_VERSION_MIN_MACOSX\n";
+  else if (vd.cmd == MachO::LC_VERSION_MIN_IPHONEOS)
+    outs() << "      cmd LC_VERSION_MIN_IPHONEOS\n";
+  else
+    outs() << "      cmd " << vd.cmd << " (?)\n";
+  outs() << "  cmdsize " << vd.cmdsize;
+  if (vd.cmdsize != sizeof(struct MachO::version_min_command))
+    outs() << " Incorrect size\n";
+  else
+    outs() << "\n";
+  outs() << "  version " << ((vd.version >> 16) & 0xffff) << "."
+         << ((vd.version >> 8) & 0xff);
+  if ((vd.version & 0xff) != 0)
+    outs() << "." << (vd.version & 0xff);
+  outs() << "\n";
+  if (vd.sdk == 0)
+    outs() << "      sdk n/a\n";
+  else {
+    outs() << "      sdk " << ((vd.sdk >> 16) & 0xffff) << "."
+           << ((vd.sdk >> 8) & 0xff);
+  }
+  if ((vd.sdk & 0xff) != 0)
+    outs() << "." << (vd.sdk & 0xff);
+  outs() << "\n";
+}
+
+static void PrintSourceVersionCommand(MachO::source_version_command sd) {
+  outs() << "      cmd LC_SOURCE_VERSION\n";
+  outs() << "  cmdsize " << sd.cmdsize;
+  if (sd.cmdsize != sizeof(struct MachO::source_version_command))
+    outs() << " Incorrect size\n";
+  else
+    outs() << "\n";
+  uint64_t a = (sd.version >> 40) & 0xffffff;
+  uint64_t b = (sd.version >> 30) & 0x3ff;
+  uint64_t c = (sd.version >> 20) & 0x3ff;
+  uint64_t d = (sd.version >> 10) & 0x3ff;
+  uint64_t e = sd.version & 0x3ff;
+  outs() << "  version " << a << "." << b;
+  if (e != 0)
+    outs() << "." << c << "." << d << "." << e;
+  else if (d != 0)
+    outs() << "." << c << "." << d;
+  else if (c != 0)
+    outs() << "." << c;
+  outs() << "\n";
+}
+
+static void PrintEntryPointCommand(MachO::entry_point_command ep) {
+  outs() << "       cmd LC_MAIN\n";
+  outs() << "   cmdsize " << ep.cmdsize;
+  if (ep.cmdsize != sizeof(struct MachO::entry_point_command))
+    outs() << " Incorrect size\n";
+  else
+    outs() << "\n";
+  outs() << "  entryoff " << ep.entryoff << "\n";
+  outs() << " stacksize " << ep.stacksize << "\n";
+}
+
+static void PrintDylibCommand(MachO::dylib_command dl, const char *Ptr) {
+  if (dl.cmd == MachO::LC_ID_DYLIB)
+    outs() << "          cmd LC_ID_DYLIB\n";
+  else if (dl.cmd == MachO::LC_LOAD_DYLIB)
+    outs() << "          cmd LC_LOAD_DYLIB\n";
+  else if (dl.cmd == MachO::LC_LOAD_WEAK_DYLIB)
+    outs() << "          cmd LC_LOAD_WEAK_DYLIB\n";
+  else if (dl.cmd == MachO::LC_REEXPORT_DYLIB)
+    outs() << "          cmd LC_REEXPORT_DYLIB\n";
+  else if (dl.cmd == MachO::LC_LAZY_LOAD_DYLIB)
+    outs() << "          cmd LC_LAZY_LOAD_DYLIB\n";
+  else if (dl.cmd == MachO::LC_LOAD_UPWARD_DYLIB)
+    outs() << "          cmd LC_LOAD_UPWARD_DYLIB\n";
+  else
+    outs() << "          cmd " << dl.cmd << " (unknown)\n";
+  outs() << "      cmdsize " << dl.cmdsize;
+  if (dl.cmdsize < sizeof(struct MachO::dylib_command))
+    outs() << " Incorrect size\n";
+  else
+    outs() << "\n";
+  if (dl.dylib.name < dl.cmdsize) {
+    const char *P = (const char *)(Ptr)+dl.dylib.name;
+    outs() << "         name " << P << " (offset " << dl.dylib.name << ")\n";
+  } else {
+    outs() << "         name ?(bad offset " << dl.dylib.name << ")\n";
+  }
+  outs() << "   time stamp " << dl.dylib.timestamp << " ";
+  time_t t = dl.dylib.timestamp;
+  outs() << ctime(&t);
+  outs() << "      current version ";
+  if (dl.dylib.current_version == 0xffffffff)
+    outs() << "n/a\n";
+  else
+    outs() << ((dl.dylib.current_version >> 16) & 0xffff) << "."
+           << ((dl.dylib.current_version >> 8) & 0xff) << "."
+           << (dl.dylib.current_version & 0xff) << "\n";
+  outs() << "compatibility version ";
+  if (dl.dylib.compatibility_version == 0xffffffff)
+    outs() << "n/a\n";
+  else
+    outs() << ((dl.dylib.compatibility_version >> 16) & 0xffff) << "."
+           << ((dl.dylib.compatibility_version >> 8) & 0xff) << "."
+           << (dl.dylib.compatibility_version & 0xff) << "\n";
+}
+
+static void PrintLinkEditDataCommand(MachO::linkedit_data_command ld,
+                                     uint32_t object_size) {
+  if (ld.cmd == MachO::LC_CODE_SIGNATURE)
+    outs() << "      cmd LC_FUNCTION_STARTS\n";
+  else if (ld.cmd == MachO::LC_SEGMENT_SPLIT_INFO)
+    outs() << "      cmd LC_SEGMENT_SPLIT_INFO\n";
+  else if (ld.cmd == MachO::LC_FUNCTION_STARTS)
+    outs() << "      cmd LC_FUNCTION_STARTS\n";
+  else if (ld.cmd == MachO::LC_DATA_IN_CODE)
+    outs() << "      cmd LC_DATA_IN_CODE\n";
+  else if (ld.cmd == MachO::LC_DYLIB_CODE_SIGN_DRS)
+    outs() << "      cmd LC_DYLIB_CODE_SIGN_DRS\n";
+  else if (ld.cmd == MachO::LC_LINKER_OPTIMIZATION_HINT)
+    outs() << "      cmd LC_LINKER_OPTIMIZATION_HINT\n";
+  else
+    outs() << "      cmd " << ld.cmd << " (?)\n";
+  outs() << "  cmdsize " << ld.cmdsize;
+  if (ld.cmdsize != sizeof(struct MachO::linkedit_data_command))
+    outs() << " Incorrect size\n";
+  else
+    outs() << "\n";
+  outs() << "  dataoff " << ld.dataoff;
+  if (ld.dataoff > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+  outs() << " datasize " << ld.datasize;
+  uint64_t big_size = ld.dataoff;
+  big_size += ld.datasize;
+  if (big_size > object_size)
+    outs() << " (past end of file)\n";
+  else
+    outs() << "\n";
+}
+
 static void PrintLoadCommands(const MachOObjectFile *Obj, uint32_t ncmds,
                               uint32_t filetype, uint32_t cputype,
                               bool verbose) {
@@ -1737,6 +2006,39 @@ static void PrintLoadCommands(const MachOObjectFile *Obj, uint32_t ncmds,
       MachO::dysymtab_command Dysymtab = Obj->getDysymtabLoadCommand();
       MachO::symtab_command Symtab = Obj->getSymtabLoadCommand();
       PrintDysymtabLoadCommand(Dysymtab, Symtab.nsyms, Buf.size(), cputype);
+    } else if (Command.C.cmd == MachO::LC_DYLD_INFO ||
+               Command.C.cmd == MachO::LC_DYLD_INFO_ONLY) {
+      MachO::dyld_info_command DyldInfo = Obj->getDyldInfoLoadCommand(Command);
+      PrintDyldInfoLoadCommand(DyldInfo, Buf.size());
+    } else if (Command.C.cmd == MachO::LC_LOAD_DYLINKER ||
+               Command.C.cmd == MachO::LC_ID_DYLINKER ||
+               Command.C.cmd == MachO::LC_DYLD_ENVIRONMENT) {
+      MachO::dylinker_command Dyld = Obj->getDylinkerCommand(Command);
+      PrintDyldLoadCommand(Dyld, Command.Ptr);
+    } else if (Command.C.cmd == MachO::LC_UUID) {
+      MachO::uuid_command Uuid = Obj->getUuidCommand(Command);
+      PrintUuidLoadCommand(Uuid);
+    } else if (Command.C.cmd == MachO::LC_VERSION_MIN_MACOSX) {
+      MachO::version_min_command Vd = Obj->getVersionMinLoadCommand(Command);
+      PrintVersionMinLoadCommand(Vd);
+    } else if (Command.C.cmd == MachO::LC_SOURCE_VERSION) {
+      MachO::source_version_command Sd = Obj->getSourceVersionCommand(Command);
+      PrintSourceVersionCommand(Sd);
+    } else if (Command.C.cmd == MachO::LC_MAIN) {
+      MachO::entry_point_command Ep = Obj->getEntryPointCommand(Command);
+      PrintEntryPointCommand(Ep);
+    } else if (Command.C.cmd == MachO::LC_LOAD_DYLIB) {
+      MachO::dylib_command Dl = Obj->getDylibIDLoadCommand(Command);
+      PrintDylibCommand(Dl, Command.Ptr);
+    } else if (Command.C.cmd == MachO::LC_CODE_SIGNATURE ||
+               Command.C.cmd == MachO::LC_SEGMENT_SPLIT_INFO ||
+               Command.C.cmd == MachO::LC_FUNCTION_STARTS ||
+               Command.C.cmd == MachO::LC_DATA_IN_CODE ||
+               Command.C.cmd == MachO::LC_DYLIB_CODE_SIGN_DRS ||
+               Command.C.cmd == MachO::LC_LINKER_OPTIMIZATION_HINT) {
+      MachO::linkedit_data_command Ld =
+          Obj->getLinkeditDataLoadCommand(Command);
+      PrintLinkEditDataCommand(Ld, Buf.size());
     } else {
       outs() << "      cmd ?(" << format("0x%08" PRIx32, Command.C.cmd)
              << ")\n";

@@ -1861,6 +1861,31 @@ MachOObjectFile::getDylibIDLoadCommand(const LoadCommandInfo &L) const {
   return getStruct<MachO::dylib_command>(this, L.Ptr);
 }
 
+MachO::dyld_info_command
+MachOObjectFile::getDyldInfoLoadCommand(const LoadCommandInfo &L) const {
+  return getStruct<MachO::dyld_info_command>(this, L.Ptr);
+}
+
+MachO::dylinker_command
+MachOObjectFile::getDylinkerCommand(const LoadCommandInfo &L) const {
+  return getStruct<MachO::dylinker_command>(this, L.Ptr);
+}
+
+MachO::uuid_command
+MachOObjectFile::getUuidCommand(const LoadCommandInfo &L) const {
+  return getStruct<MachO::uuid_command>(this, L.Ptr);
+}
+
+MachO::source_version_command
+MachOObjectFile::getSourceVersionCommand(const LoadCommandInfo &L) const {
+  return getStruct<MachO::source_version_command>(this, L.Ptr);
+}
+
+MachO::entry_point_command
+MachOObjectFile::getEntryPointCommand(const LoadCommandInfo &L) const {
+  return getStruct<MachO::entry_point_command>(this, L.Ptr);
+}
+
 
 MachO::any_relocation_info
 MachOObjectFile::getRelocation(DataRefImpl Rel) const {

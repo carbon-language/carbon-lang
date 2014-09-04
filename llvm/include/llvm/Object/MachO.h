@@ -251,6 +251,16 @@ public:
   getVersionMinLoadCommand(const LoadCommandInfo &L) const;
   MachO::dylib_command
   getDylibIDLoadCommand(const LoadCommandInfo &L) const;
+  MachO::dyld_info_command
+  getDyldInfoLoadCommand(const LoadCommandInfo &L) const;
+  MachO::dylinker_command
+  getDylinkerCommand(const LoadCommandInfo &L) const;
+  MachO::uuid_command
+  getUuidCommand(const LoadCommandInfo &L) const;
+  MachO::source_version_command
+  getSourceVersionCommand(const LoadCommandInfo &L) const;
+  MachO::entry_point_command
+  getEntryPointCommand(const LoadCommandInfo &L) const;
 
   MachO::any_relocation_info getRelocation(DataRefImpl Rel) const;
   MachO::data_in_code_entry getDice(DataRefImpl Rel) const;

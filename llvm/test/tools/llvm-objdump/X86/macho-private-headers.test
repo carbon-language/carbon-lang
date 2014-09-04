@@ -1,4 +1,6 @@
 // RUN: llvm-objdump -p %p/Inputs/hello.obj.macho-x86_64 | FileCheck %s
+// RUN: llvm-objdump -p %p/Inputs/hello.exe.macho-x86_64 \
+// RUN:     | FileCheck %s -check-prefix=EXE
 
 CHECK: Mach header
 CHECK:       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
@@ -95,3 +97,244 @@ CHECK:       extreloff 0
 CHECK:         nextrel 0
 CHECK:       locreloff 0
 CHECK:         nlocrel 0
+
+EXE: Mach header
+EXE:       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
+EXE: MH_MAGIC_64  X86_64        ALL LIB64     EXECUTE    16       1296   NOUNDEFS DYLDLINK TWOLEVEL PIE
+EXE: Load command 0
+EXE:       cmd LC_SEGMENT_64
+EXE:   cmdsize 72
+EXE:   segname __PAGEZERO
+EXE:    vmaddr 0x0000000000000000
+EXE:    vmsize 0x0000000100000000
+EXE:   fileoff 0
+EXE:  filesize 0
+EXE:   maxprot ---
+EXE:  initprot ---
+EXE:    nsects 0
+EXE:     flags (none)
+EXE: Load command 1
+EXE:       cmd LC_SEGMENT_64
+EXE:   cmdsize 552
+EXE:   segname __TEXT
+EXE:    vmaddr 0x0000000100000000
+EXE:    vmsize 0x0000000000001000
+EXE:   fileoff 0
+EXE:  filesize 4096
+EXE:   maxprot rwx
+EXE:  initprot r-x
+EXE:    nsects 6
+EXE:     flags (none)
+EXE: Section
+EXE:   sectname __text
+EXE:    segname __TEXT
+EXE:       addr 0x0000000100000f30
+EXE:       size 0x000000000000003b
+EXE:     offset 3888
+EXE:      align 2^4 (16)
+EXE:     reloff 0
+EXE:     nreloc 0
+EXE:       type S_REGULAR
+EXE: attributes PURE_INSTRUCTIONS SOME_INSTRUCTIONS
+EXE:  reserved1 0
+EXE:  reserved2 0
+EXE: Section
+EXE:   sectname __stubs
+EXE:    segname __TEXT
+EXE:       addr 0x0000000100000f6c
+EXE:       size 0x0000000000000006
+EXE:     offset 3948
+EXE:      align 2^1 (2)
+EXE:     reloff 0
+EXE:     nreloc 0
+EXE:       type S_SYMBOL_STUBS
+EXE: attributes PURE_INSTRUCTIONS SOME_INSTRUCTIONS
+EXE:  reserved1 0 (index into indirect symbol table)
+EXE:  reserved2 6 (size of stubs)
+EXE: Section
+EXE:   sectname __stub_helper
+EXE:    segname __TEXT
+EXE:       addr 0x0000000100000f74
+EXE:       size 0x000000000000001a
+EXE:     offset 3956
+EXE:      align 2^2 (4)
+EXE:     reloff 0
+EXE:     nreloc 0
+EXE:       type S_REGULAR
+EXE: attributes PURE_INSTRUCTIONS SOME_INSTRUCTIONS
+EXE:  reserved1 0
+EXE:  reserved2 0
+EXE: Section
+EXE:   sectname __cstring
+EXE:    segname __TEXT
+EXE:       addr 0x0000000100000f8e
+EXE:       size 0x000000000000000d
+EXE:     offset 3982
+EXE:      align 2^0 (1)
+EXE:     reloff 0
+EXE:     nreloc 0
+EXE:       type S_CSTRING_LITERALS
+EXE: attributes (none)
+EXE:  reserved1 0
+EXE:  reserved2 0
+EXE: Section
+EXE:   sectname __unwind_info
+EXE:    segname __TEXT
+EXE:       addr 0x0000000100000f9b
+EXE:       size 0x0000000000000048
+EXE:     offset 3995
+EXE:      align 2^0 (1)
+EXE:     reloff 0
+EXE:     nreloc 0
+EXE:       type S_REGULAR
+EXE: attributes (none)
+EXE:  reserved1 0
+EXE:  reserved2 0
+EXE: Section
+EXE:   sectname __eh_frame
+EXE:    segname __TEXT
+EXE:       addr 0x0000000100000fe8
+EXE:       size 0x0000000000000018
+EXE:     offset 4072
+EXE:      align 2^3 (8)
+EXE:     reloff 0
+EXE:     nreloc 0
+EXE:       type S_REGULAR
+EXE: attributes (none)
+EXE:  reserved1 0
+EXE:  reserved2 0
+EXE: Load command 2
+EXE:       cmd LC_SEGMENT_64
+EXE:   cmdsize 232
+EXE:   segname __DATA
+EXE:    vmaddr 0x0000000100001000
+EXE:    vmsize 0x0000000000001000
+EXE:   fileoff 4096
+EXE:  filesize 4096
+EXE:   maxprot rwx
+EXE:  initprot rw-
+EXE:    nsects 2
+EXE:     flags (none)
+EXE: Section
+EXE:   sectname __nl_symbol_ptr
+EXE:    segname __DATA
+EXE:       addr 0x0000000100001000
+EXE:       size 0x0000000000000010
+EXE:     offset 4096
+EXE:      align 2^3 (8)
+EXE:     reloff 0
+EXE:     nreloc 0
+EXE:       type S_NON_LAZY_SYMBOL_POINTERS
+EXE: attributes (none)
+EXE:  reserved1 1 (index into indirect symbol table)
+EXE:  reserved2 0
+EXE: Section
+EXE:   sectname __la_symbol_ptr
+EXE:    segname __DATA
+EXE:       addr 0x0000000100001010
+EXE:       size 0x0000000000000008
+EXE:     offset 4112
+EXE:      align 2^3 (8)
+EXE:     reloff 0
+EXE:     nreloc 0
+EXE:       type S_LAZY_SYMBOL_POINTERS
+EXE: attributes (none)
+EXE:  reserved1 3 (index into indirect symbol table)
+EXE:  reserved2 0
+EXE: Load command 3
+EXE:       cmd LC_SEGMENT_64
+EXE:   cmdsize 72
+EXE:   segname __LINKEDIT
+EXE:    vmaddr 0x0000000100002000
+EXE:    vmsize 0x0000000000001000
+EXE:   fileoff 8192
+EXE:  filesize 304
+EXE:   maxprot rwx
+EXE:  initprot r--
+EXE:    nsects 0
+EXE:     flags (none)
+EXE: Load command 4
+EXE:             cmd LC_DYLD_INFO_ONLY
+EXE:         cmdsize 48
+EXE:      rebase_off 8192
+EXE:     rebase_size 8
+EXE:        bind_off 8200
+EXE:       bind_size 24
+EXE:   weak_bind_off 0
+EXE:  weak_bind_size 0
+EXE:   lazy_bind_off 8224
+EXE:  lazy_bind_size 16
+EXE:      export_off 8240
+EXE:     export_size 48
+EXE: Load command 5
+EXE:      cmd LC_SYMTAB
+EXE:  cmdsize 24
+EXE:   symoff 8360
+EXE:    nsyms 4
+EXE:   stroff 8440
+EXE:  strsize 56
+EXE: Load command 6
+EXE:             cmd LC_DYSYMTAB
+EXE:         cmdsize 80
+EXE:       ilocalsym 0
+EXE:       nlocalsym 0
+EXE:      iextdefsym 0
+EXE:      nextdefsym 2
+EXE:       iundefsym 2
+EXE:       nundefsym 2
+EXE:          tocoff 0
+EXE:            ntoc 0
+EXE:       modtaboff 0
+EXE:         nmodtab 0
+EXE:    extrefsymoff 0
+EXE:     nextrefsyms 0
+EXE:  indirectsymoff 8424
+EXE:   nindirectsyms 4
+EXE:       extreloff 0
+EXE:         nextrel 0
+EXE:       locreloff 0
+EXE:         nlocrel 0
+EXE: Load command 7
+EXE:           cmd LC_LOAD_DYLINKER
+EXE:       cmdsize 32
+EXE:          name /usr/lib/dyld (offset 12)
+EXE: Load command 8
+EXE:      cmd LC_UUID
+EXE:  cmdsize 24
+EXE:     uuid 65C2DD41-79B0-3B34-871B-8CB3446AB762
+EXE: Load command 9
+EXE:       cmd LC_VERSION_MIN_MACOSX
+EXE:   cmdsize 16
+EXE:   version 10.9
+EXE:       sdk 10.9
+EXE: Load command 10
+EXE:       cmd LC_SOURCE_VERSION
+EXE:   cmdsize 16
+EXE:   version 0.0
+EXE: Load command 11
+EXE:        cmd LC_MAIN
+EXE:    cmdsize 24
+EXE:   entryoff 3888
+EXE:  stacksize 0
+EXE: Load command 12
+EXE:           cmd LC_LOAD_DYLIB
+EXE:       cmdsize 56
+EXE:          name /usr/lib/libSystem.B.dylib (offset 24)
+EXE:    time stamp 2 Wed Dec 31 16:00:02 1969
+EXE:       current version 1197.1.1
+EXE: compatibility version 1.0.0
+EXE: Load command 13
+EXE:       cmd LC_FUNCTION_STARTS
+EXE:   cmdsize 16
+EXE:   dataoff 8288
+EXE:  datasize 8
+EXE: Load command 14
+EXE:       cmd LC_DATA_IN_CODE
+EXE:   cmdsize 16
+EXE:   dataoff 8296
+EXE:  datasize 0
+EXE: Load command 15
+EXE:       cmd LC_DYLIB_CODE_SIGN_DRS
+EXE:   cmdsize 16
+EXE:   dataoff 8296
+EXE:  datasize 64

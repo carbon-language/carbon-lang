@@ -6,5 +6,5 @@
 // CHECK:  (('command', 36)
 // CHECK:   ('size', 16)
 // CHECK:   ('version, 1639169)
-// CHECK:   ('reserved, 0)
+// CHECK:   ('sdk, 0)
 // CHECK:  ),

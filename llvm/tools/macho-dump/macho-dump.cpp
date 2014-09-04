@@ -324,7 +324,7 @@ DumpVersionMin(const MachOObjectFile &Obj,
                const MachOObjectFile::LoadCommandInfo &LCI) {
   MachO::version_min_command VMLC = Obj.getVersionMinLoadCommand(LCI);
   outs() << "  ('version, " << VMLC.version << ")\n"
-         << "  ('reserved, " << VMLC.reserved << ")\n";
+         << "  ('sdk, " << VMLC.sdk << ")\n";
   return 0;
 }
 
