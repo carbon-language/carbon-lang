@@ -16,6 +16,7 @@
 namespace llvm {
 
 class RuntimeDyldCheckerImpl {
+  friend class RuntimeDyldChecker;
   friend class RuntimeDyldImpl;
   friend class RuntimeDyldCheckerExprEval;
 

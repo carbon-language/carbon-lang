@@ -695,6 +695,10 @@ void RuntimeDyldImpl::reassignSectionAddress(unsigned SectionID,
   // Addr is a uint64_t because we can't assume the pointer width
   // of the target is the same as that of the host. Just use a generic
   // "big enough" type.
+  DEBUG(dbgs() << "Reassigning address for section "
+               << SectionID << " (" << Sections[SectionID].Name << "): "
+               << format("0x%016x", Sections[SectionID].LoadAddress) << " -> "
+               << format("0x%016x", Addr) << "\n");
   Sections[SectionID].LoadAddress = Addr;
 }
 

@@ -905,6 +905,14 @@ RuntimeDyldChecker::RuntimeDyldChecker(RuntimeDyld &RTDyld,
 
 RuntimeDyldChecker::~RuntimeDyldChecker() {}
 
+RuntimeDyld& RuntimeDyldChecker::getRTDyld() {
+  return Impl->RTDyld;
+}
+
+const RuntimeDyld& RuntimeDyldChecker::getRTDyld() const {
+  return Impl->RTDyld;
+}
+
 bool RuntimeDyldChecker::check(StringRef CheckExpr) const {
   return Impl->check(CheckExpr);
 }
@@ -912,4 +920,10 @@ bool RuntimeDyldChecker::check(StringRef CheckExpr) const {
 bool RuntimeDyldChecker::checkAllRulesInBuffer(StringRef RulePrefix,
                                                MemoryBuffer *MemBuf) const {
   return Impl->checkAllRulesInBuffer(RulePrefix, MemBuf);
+}
+
+std::pair<uint64_t, std::string>
+RuntimeDyldChecker::getSectionAddr(StringRef FileName, StringRef SectionName,
+                                   bool LinkerAddress) {
+  return Impl->getSectionAddr(FileName, SectionName, LinkerAddress);
 }
