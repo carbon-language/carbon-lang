@@ -42,7 +42,7 @@
 using namespace llvm;
 
 static cl::opt<bool>
-EnableNoAliasConversion("enable-noalias-to-md-conversion", cl::init(false),
+EnableNoAliasConversion("enable-noalias-to-md-conversion", cl::init(true),
   cl::Hidden,
   cl::desc("Convert noalias attributes to metadata during inlining."));
 
