@@ -612,8 +612,20 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
       return true;
       
     // Handle most integer flags
-    case LengthModifier::AsChar:
     case LengthModifier::AsShort:
+      if (Target.getTriple().isOSMSVCRT()) {
+        switch (CS.getKind()) {
+          case ConversionSpecifier::cArg:
+          case ConversionSpecifier::CArg:
+          case ConversionSpecifier::sArg:
+          case ConversionSpecifier::SArg:
+            return true;
+          default:
+            break;
+        }
+      }
+      // Fall through.
+    case LengthModifier::AsChar:
     case LengthModifier::AsLongLong:
     case LengthModifier::AsQuad:
     case LengthModifier::AsIntMax:

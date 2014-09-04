@@ -63,4 +63,16 @@ void w_test(wchar_t c, wchar_t *s) {
 
 }
 
+void h_test(char c, char* s) {
+  double bad;
+  printf("%hc", bad); // expected-warning{{format specifies type 'int' but the argument has type 'double'}}
+  printf("%hC", bad); // expected-warning{{format specifies type 'int' but the argument has type 'double'}}
+  printf("%hs", bad); // expected-warning{{format specifies type 'char *' but the argument has type 'double'}}
+  printf("%hS", bad); // expected-warning{{format specifies type 'char *' but the argument has type 'double'}}
+  scanf("%hc", &bad); // expected-warning{{format specifies type 'char *' but the argument has type 'double *'}}
+  scanf("%hC", &bad); // expected-warning{{format specifies type 'char *' but the argument has type 'double *'}}
+  scanf("%hs", &bad); // expected-warning{{format specifies type 'char *' but the argument has type 'double *'}}
+  scanf("%hS", &bad); // expected-warning{{format specifies type 'char *' but the argument has type 'double *'}}
+}
+
 #endif
