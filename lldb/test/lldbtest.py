@@ -1325,6 +1325,22 @@ class Base(unittest2.TestCase):
         if not module.buildDwarf(self, architecture, compiler, dictionary, clean):
             raise Exception("Don't know how to build binary with dwarf")
 
+    def findBuiltClang(self):
+        """Tries to find and use Clang from the build directory as the compiler (instead of the system compiler)."""
+        paths_to_try = [
+          "llvm-build/Release+Asserts/x86_64/Release+Asserts/bin/clang",
+          "llvm-build/Debug+Asserts/x86_64/Debug+Asserts/bin/clang",
+          "llvm-build/Release/x86_64/Release/bin/clang",
+          "llvm-build/Debug/x86_64/Debug/bin/clang",
+        ]
+        lldb_root_path = os.path.join(os.path.dirname(__file__), "..")
+        for p in paths_to_try:
+            path = os.path.join(lldb_root_path, p)
+            if os.path.exists(path):
+                return path
+        
+        return os.environ["CC"]
+
     def getBuildFlags(self, use_cpp11=True, use_libcxx=False, use_libstdcxx=False, use_pthreads=True):
         """ Returns a dictionary (which can be provided to build* functions above) which
             contains OS-specific build flags.

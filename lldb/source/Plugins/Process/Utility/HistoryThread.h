@@ -101,6 +101,18 @@ public:
     {
         m_thread_name = name;
     }
+    
+    virtual const char *
+    GetName ()
+    {
+        return m_thread_name.c_str();
+    }
+    
+    virtual void
+    SetName(const char *name)
+    {
+        m_thread_name = name;
+    }
 
 protected:
     virtual lldb::StackFrameListSP

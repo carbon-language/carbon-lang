@@ -92,6 +92,7 @@
 #include "Plugins/Platform/gdb-server/PlatformRemoteGDBServer.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemote.h"
 #include "Plugins/DynamicLoader/Static/DynamicLoaderStatic.h"
+#include "Plugins/MemoryHistory/asan/MemoryHistoryASan.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -154,6 +155,7 @@ lldb_private::Initialize ()
 #endif
         JITLoaderGDB::Initialize();
         ProcessElfCore::Initialize();
+        MemoryHistoryASan::Initialize();
         
 #if defined (__APPLE__)
         //----------------------------------------------------------------------
@@ -244,6 +246,7 @@ lldb_private::Terminate ()
 #endif
     JITLoaderGDB::Terminate();
     ProcessElfCore::Terminate();
+    MemoryHistoryASan::Terminate();
     
 #if defined (__APPLE__)
     DynamicLoaderMacOSXDYLD::Terminate();

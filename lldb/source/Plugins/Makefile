@@ -24,7 +24,8 @@ DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-x86_64 ABI/SysV
 	DynamicLoader/POSIX-DYLD \
 	DynamicLoader/Hexagon-DYLD \
 	OperatingSystem/Python \
-	SymbolVendor/ELF
+	SymbolVendor/ELF \
+	MemoryHistory/asan
 
 ifeq ($(HOST_OS),Darwin)
 DIRS += Process/MacOSX-Kernel

@@ -11,6 +11,7 @@ add_lldb_library(lldbTarget
   JITLoaderList.cpp
   LanguageRuntime.cpp
   Memory.cpp
+  MemoryHistory.cpp
   NativeRegisterContext.cpp
   NativeRegisterContextRegisterInfo.cpp
   ObjCLanguageRuntime.cpp

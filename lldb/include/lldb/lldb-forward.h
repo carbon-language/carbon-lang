@@ -116,6 +116,7 @@ class   Log;
 class   LogChannel;
 class   Mangled;
 class   Materializer;
+class   MemoryHistory;
 class   Module;
 class   ModuleList;
 class   ModuleSpec;
@@ -316,6 +317,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::LineTable> LineTableSP;
     typedef std::shared_ptr<lldb_private::Listener> ListenerSP;
     typedef std::shared_ptr<lldb_private::LogChannel> LogChannelSP;
+    typedef std::shared_ptr<lldb_private::MemoryHistory> MemoryHistorySP;
     typedef std::shared_ptr<lldb_private::Module> ModuleSP;
     typedef std::weak_ptr<lldb_private::Module> ModuleWP;
     typedef std::shared_ptr<lldb_private::ObjectFile> ObjectFileSP;
