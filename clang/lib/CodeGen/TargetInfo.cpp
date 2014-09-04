@@ -5562,7 +5562,7 @@ ABIArgInfo MipsABIInfo::classifyReturnType(QualType RetTy) const {
         return ABIArgInfo::getDirect();
 
       // O32 returns integer vectors in registers and N32/N64 returns all small
-      // aggregates in registers..
+      // aggregates in registers.
       if (!IsO32 ||
           (RetTy->isVectorType() && !RetTy->hasFloatingRepresentation())) {
         ABIArgInfo ArgInfo =
