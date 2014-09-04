@@ -778,7 +778,7 @@ RuntimeDyld::RuntimeDyld(RTDyldMemoryManager *mm) {
   Checker = nullptr;
 }
 
-RuntimeDyld::~RuntimeDyld() { delete Dyld; }
+RuntimeDyld::~RuntimeDyld() {}
 
 static std::unique_ptr<RuntimeDyldELF>
 createRuntimeDyldELF(RTDyldMemoryManager *MM, bool ProcessAllSections,
@@ -807,13 +807,13 @@ RuntimeDyld::loadObject(std::unique_ptr<ObjectFile> InputObject) {
   if (InputObject->isELF()) {
     InputImage.reset(RuntimeDyldELF::createObjectImageFromFile(std::move(InputObject)));
     if (!Dyld)
-      Dyld = createRuntimeDyldELF(MM, ProcessAllSections, Checker).release();
+      Dyld = createRuntimeDyldELF(MM, ProcessAllSections, Checker);
   } else if (InputObject->isMachO()) {
     InputImage.reset(RuntimeDyldMachO::createObjectImageFromFile(std::move(InputObject)));
     if (!Dyld)
       Dyld = createRuntimeDyldMachO(
-                           static_cast<Triple::ArchType>(InputImage->getArch()),
-                           MM, ProcessAllSections, Checker).release();
+          static_cast<Triple::ArchType>(InputImage->getArch()), MM,
+          ProcessAllSections, Checker);
   } else
     report_fatal_error("Incompatible object format!");
 
@@ -836,7 +836,7 @@ RuntimeDyld::loadObject(std::unique_ptr<ObjectBuffer> InputBuffer) {
   case sys::fs::file_magic::elf_core:
     InputImage = RuntimeDyldELF::createObjectImage(std::move(InputBuffer));
     if (!Dyld)
-      Dyld = createRuntimeDyldELF(MM, ProcessAllSections, Checker).release();
+      Dyld = createRuntimeDyldELF(MM, ProcessAllSections, Checker);
     break;
   case sys::fs::file_magic::macho_object:
   case sys::fs::file_magic::macho_executable:
@@ -851,8 +851,8 @@ RuntimeDyld::loadObject(std::unique_ptr<ObjectBuffer> InputBuffer) {
     InputImage = RuntimeDyldMachO::createObjectImage(std::move(InputBuffer));
     if (!Dyld)
       Dyld = createRuntimeDyldMachO(
-                           static_cast<Triple::ArchType>(InputImage->getArch()),
-                           MM, ProcessAllSections, Checker).release();
+          static_cast<Triple::ArchType>(InputImage->getArch()), MM,
+          ProcessAllSections, Checker);
     break;
   case sys::fs::file_magic::unknown:
   case sys::fs::file_magic::bitcode:

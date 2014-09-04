@@ -37,7 +37,7 @@ class RuntimeDyld {
 
   // RuntimeDyldImpl is the actual class. RuntimeDyld is just the public
   // interface.
-  RuntimeDyldImpl *Dyld;
+  std::unique_ptr<RuntimeDyldImpl> Dyld;
   RTDyldMemoryManager *MM;
   bool ProcessAllSections;
   RuntimeDyldCheckerImpl *Checker;
