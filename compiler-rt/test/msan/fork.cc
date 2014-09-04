@@ -20,11 +20,10 @@
 #include <sys/time.h>
 #include <signal.h>
 #include <errno.h>
-#include <atomic>
 
 #include <sanitizer/msan_interface.h>
 
-std::atomic<bool> done;
+int done;
 
 void copy_uninit_thread2() {
   volatile int x;
@@ -32,7 +31,7 @@ void copy_uninit_thread2() {
   while (true) {
     v = x;
     x = v;
-    if (done.load())
+    if (__atomic_load_n(&done, __ATOMIC_RELAXED))
       return;
   }
 }
@@ -62,7 +61,6 @@ void child() {
 }
 
 void test() {
-  done.store(false);
   const int kThreads = 10;
   pthread_t t[kThreads];
   for (int i = 0; i < kThreads; ++i)
@@ -71,7 +69,7 @@ void test() {
   pid_t pid = fork();
   if (pid) {
     // parent
-    done.store(true);
+    __atomic_store_n(&done, 1, __ATOMIC_RELAXED);
     usleep(1000000);
     kill(pid, SIGKILL);
   } else {
