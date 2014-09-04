@@ -284,6 +284,13 @@ namespace llvm {
 
     const MCSectionCOFF *getCOFFSection(StringRef Section);
 
+    /// Gets or creates a section equivalent to Sec that is associated with the
+    /// section containing KeySym. For example, to create a debug info section
+    /// associated with an inline function, pass the normal debug info section
+    /// as Sec and the function symbol as KeySym.
+    const MCSectionCOFF *getAssociativeCOFFSection(const MCSectionCOFF *Sec,
+                                                   const MCSymbol *KeySym);
+
     /// @}
 
     /// @name Dwarf Management

@@ -967,29 +967,14 @@ emitModuleFlags(MCStreamer &Streamer,
   }
 }
 
-static const MCSection *getAssociativeCOFFSection(MCContext &Ctx,
-                                                  const MCSection *Sec,
-                                                  const MCSymbol *KeySym) {
-  // Return the normal section if we don't have to be associative.
-  if (!KeySym)
-    return Sec;
-
-  // Make an associative section with the same name and kind as the normal
-  // section.
-  const MCSectionCOFF *SecCOFF = cast<MCSectionCOFF>(Sec);
-  unsigned Characteristics =
-      SecCOFF->getCharacteristics() | COFF::IMAGE_SCN_LNK_COMDAT;
-  return Ctx.getCOFFSection(SecCOFF->getSectionName(), Characteristics,
-                            SecCOFF->getKind(), KeySym->getName(),
-                            COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE);
-}
-
 const MCSection *TargetLoweringObjectFileCOFF::getStaticCtorSection(
     unsigned Priority, const MCSymbol *KeySym) const {
-  return getAssociativeCOFFSection(getContext(), StaticCtorSection, KeySym);
+  return getContext().getAssociativeCOFFSection(
+      cast<MCSectionCOFF>(StaticCtorSection), KeySym);
 }
 
 const MCSection *TargetLoweringObjectFileCOFF::getStaticDtorSection(
     unsigned Priority, const MCSymbol *KeySym) const {
-  return getAssociativeCOFFSection(getContext(), StaticDtorSection, KeySym);
+  return getContext().getAssociativeCOFFSection(
+      cast<MCSectionCOFF>(StaticDtorSection), KeySym);
 }

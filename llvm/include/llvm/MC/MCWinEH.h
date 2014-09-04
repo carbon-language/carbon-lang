@@ -65,9 +65,10 @@ struct FrameInfo {
 
 class UnwindEmitter {
 public:
-  static StringRef GetSectionSuffix(const MCSymbol *Function);
-  static const MCSection *GetPDataSection(StringRef Suffix, MCContext &Context);
-  static const MCSection *GetXDataSection(StringRef Suffix, MCContext &Context);
+  static const MCSection *getPDataSection(const MCSymbol *Function,
+                                          MCContext &Context);
+  static const MCSection *getXDataSection(const MCSymbol *Function,
+                                          MCContext &Context);
 
   virtual ~UnwindEmitter() { }
 

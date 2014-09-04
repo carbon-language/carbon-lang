@@ -317,6 +317,22 @@ const MCSectionCOFF *MCContext::getCOFFSection(StringRef Section) {
   return Iter->second;
 }
 
+const MCSectionCOFF *
+MCContext::getAssociativeCOFFSection(const MCSectionCOFF *Sec,
+                                     const MCSymbol *KeySym) {
+  // Return the normal section if we don't have to be associative.
+  if (!KeySym)
+    return Sec;
+
+  // Make an associative section with the same name and kind as the normal
+  // section.
+  unsigned Characteristics =
+      Sec->getCharacteristics() | COFF::IMAGE_SCN_LNK_COMDAT;
+  return getCOFFSection(Sec->getSectionName(), Characteristics, Sec->getKind(),
+                        KeySym->getName(),
+                        COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE);
+}
+
 //===----------------------------------------------------------------------===//
 // Dwarf Management
 //===----------------------------------------------------------------------===//
