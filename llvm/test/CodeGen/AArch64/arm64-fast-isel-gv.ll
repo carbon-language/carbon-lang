@@ -23,9 +23,8 @@ entry:
 ; CHECK: ldr  [[REG5:x[0-9]+]], {{\[}}[[REG2]]{{\]}}
 ; CHECK: mul  [[REG6:x[0-9]+]], [[REG5]], [[REG4]]
 ; CHECK: add  [[REG7:x[0-9]+]], [[REG6]], [[REG3]]
-; CHECK: orr  [[REG8:x[0-9]+]], xzr, #0xffff
-; CHECK: and  [[REG9:x[0-9]+]], [[REG7]], [[REG8]]
-; CHECK: str  [[REG9]], {{\[}}[[REG1]]{{\]}}
+; CHECK: and  [[REG8:x[0-9]+]], [[REG7]], #0xffff
+; CHECK: str  [[REG8]], {{\[}}[[REG1]]{{\]}}
 ; CHECK: ldr  {{x[0-9]+}}, {{\[}}[[REG1]]{{\]}}
   %0 = load i64* @seed, align 8
   %mul = mul nsw i64 %0, 1309

@@ -137,11 +137,10 @@ declare void @foo1()
 ; rdar://15174028
 define i32 @trunc64(i64 %foo) nounwind {
 ; CHECK: trunc64
-; CHECK: orr  [[REG:x[0-9]+]], xzr, #0x1
-; CHECK: and  [[REG2:x[0-9]+]], x0, [[REG]]
-; CHECK: mov  x[[REG3:[0-9]+]], [[REG2]]
-; CHECK: and  [[REG4:w[0-9]+]], w[[REG3]], #0x1
-; CHECK: cmp  [[REG4]], #0
+; CHECK: and  [[REG1:x[0-9]+]], x0, #0x1
+; CHECK: mov  x[[REG2:[0-9]+]], [[REG1]]
+; CHECK: and  [[REG3:w[0-9]+]], w[[REG2]], #0x1
+; CHECK: cmp  [[REG3]], #0
 ; CHECK: b.eq LBB5_2
   %a = and i64 %foo, 1
   %b = trunc i64 %a to i1
