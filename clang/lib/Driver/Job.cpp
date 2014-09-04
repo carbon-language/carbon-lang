@@ -136,9 +136,9 @@ int Command::Execute(const StringRef **Redirects, std::string *ErrMsg,
 FallbackCommand::FallbackCommand(const Action &Source_, const Tool &Creator_,
                                  const char *Executable_,
                                  const ArgStringList &Arguments_,
-                                 Command *Fallback_)
-    : Command(Source_, Creator_, Executable_, Arguments_), Fallback(Fallback_) {
-}
+                                 std::unique_ptr<Command> Fallback_)
+    : Command(Source_, Creator_, Executable_, Arguments_),
+      Fallback(std::move(Fallback_)) {}
 
 void FallbackCommand::Print(raw_ostream &OS, const char *Terminator,
                             bool Quote, bool CrashReport) const {
@@ -175,17 +175,10 @@ int FallbackCommand::Execute(const StringRef **Redirects, std::string *ErrMsg,
 
 JobList::JobList() : Job(JobListClass) {}
 
-JobList::~JobList() {
-  for (iterator it = begin(), ie = end(); it != ie; ++it)
-    delete *it;
-}
-
 void JobList::Print(raw_ostream &OS, const char *Terminator, bool Quote,
                     bool CrashReport) const {
   for (const_iterator it = begin(), ie = end(); it != ie; ++it)
     (*it)->Print(OS, Terminator, Quote, CrashReport);
 }
 
-void JobList::clear() {
-  DeleteContainerPointers(Jobs);
-}
+void JobList::clear() { Jobs.clear(); }

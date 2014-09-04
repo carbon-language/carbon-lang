@@ -94,7 +94,7 @@ public:
   JobList &getJobs() { return Jobs; }
   const JobList &getJobs() const { return Jobs; }
 
-  void addCommand(Command *C) { Jobs.addJob(C); }
+  void addCommand(std::unique_ptr<Command> C) { Jobs.addJob(std::move(C)); }
 
   const llvm::opt::ArgStringList &getTempFiles() const { return TempFiles; }
 

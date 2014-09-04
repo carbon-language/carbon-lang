@@ -252,11 +252,11 @@ static bool stripPositionalArgs(std::vector<const char *> Args,
   for (driver::JobList::const_iterator I = Jobs.begin(), E = Jobs.end(); I != E;
        ++I) {
     if ((*I)->getKind() == driver::Job::CommandClass) {
-      const driver::Command *Cmd = cast<driver::Command>(*I);
+      const driver::Command &Cmd = cast<driver::Command>(**I);
       // Collect only for Assemble jobs. If we do all jobs we get duplicates
       // since Link jobs point to Assemble jobs as inputs.
-      if (Cmd->getSource().getKind() == driver::Action::AssembleJobClass)
-        CompileAnalyzer.run(&Cmd->getSource());
+      if (Cmd.getSource().getKind() == driver::Action::AssembleJobClass)
+        CompileAnalyzer.run(&Cmd.getSource());
     }
   }
 

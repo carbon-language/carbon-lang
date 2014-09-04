@@ -104,7 +104,7 @@ class FallbackCommand : public Command {
 public:
   FallbackCommand(const Action &Source_, const Tool &Creator_,
                   const char *Executable_, const ArgStringList &Arguments_,
-                  Command *Fallback_);
+                  std::unique_ptr<Command> Fallback_);
 
   void Print(llvm::raw_ostream &OS, const char *Terminator, bool Quote,
              bool CrashReport = false) const override;
@@ -123,7 +123,7 @@ private:
 /// JobList - A sequence of jobs to perform.
 class JobList : public Job {
 public:
-  typedef SmallVector<Job*, 4> list_type;
+  typedef SmallVector<std::unique_ptr<Job>, 4> list_type;
   typedef list_type::size_type size_type;
   typedef list_type::iterator iterator;
   typedef list_type::const_iterator const_iterator;
@@ -133,13 +133,13 @@ private:
 
 public:
   JobList();
-  virtual ~JobList();
+  virtual ~JobList() {}
 
   void Print(llvm::raw_ostream &OS, const char *Terminator,
              bool Quote, bool CrashReport = false) const override;
 
   /// Add a job to the list (taking ownership).
-  void addJob(Job *J) { Jobs.push_back(J); }
+  void addJob(std::unique_ptr<Job> J) { Jobs.push_back(std::move(J)); }
 
   /// Clear the job list.
   void clear();

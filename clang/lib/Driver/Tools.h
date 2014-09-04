@@ -584,11 +584,11 @@ namespace visualstudio {
                       const llvm::opt::ArgList &TCArgs,
                       const char *LinkingOutput) const override;
 
-    Command *GetCommand(Compilation &C, const JobAction &JA,
-                        const InputInfo &Output,
-                        const InputInfoList &Inputs,
-                        const llvm::opt::ArgList &TCArgs,
-                        const char *LinkingOutput) const;
+    std::unique_ptr<Command> GetCommand(Compilation &C, const JobAction &JA,
+                                        const InputInfo &Output,
+                                        const InputInfoList &Inputs,
+                                        const llvm::opt::ArgList &TCArgs,
+                                        const char *LinkingOutput) const;
   };
 } // end namespace visualstudio
 
