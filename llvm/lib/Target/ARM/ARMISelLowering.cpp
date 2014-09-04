@@ -11061,7 +11061,7 @@ bool ARMTargetLowering::shouldExpandAtomicLoadInIR(LoadInst *LI) const {
 // and up to 64 bits on the non-M profiles
 bool ARMTargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
   unsigned Size = AI->getType()->getPrimitiveSizeInBits();
-  return Size <= (Subtarget->isMClass() ? 32 : 64);
+  return Size <= (Subtarget->isMClass() ? 32U : 64U);
 }
 
 // This has so far only been implemented for MachO.
