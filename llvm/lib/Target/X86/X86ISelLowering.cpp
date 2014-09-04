@@ -1673,7 +1673,7 @@ void X86TargetLowering::resetOperationActions() {
 
   setPrefFunctionAlignment(4); // 2^4 bytes.
 
-  InitIntrinsicTables();
+  verifyIntrinsicTables();
 }
 
 // This has so far only been implemented for 64-bit MachO.
@@ -14631,7 +14631,7 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   SDLoc dl(Op);
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
 
-  const IntrinsicData* IntrData = GetIntrinsicWithoutChain(IntNo);
+  const IntrinsicData* IntrData = getIntrinsicWithoutChain(IntNo);
   if (IntrData) {
     switch(IntrData->Type) {
     case INTR_TYPE_1OP:
@@ -15197,7 +15197,7 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
                                       SelectionDAG &DAG) {
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
 
-  const IntrinsicData* IntrData = GetIntrinsicWithChain(IntNo);
+  const IntrinsicData* IntrData = getIntrinsicWithChain(IntNo);
   if (!IntrData)
     return SDValue();
 
