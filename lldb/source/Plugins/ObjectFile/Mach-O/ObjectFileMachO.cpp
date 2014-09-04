@@ -5026,9 +5026,9 @@ ObjectFileMachO::GetSDKVersion(uint32_t *versions, uint32_t num_versions)
             {
                 if (m_data.GetU32 (&offset, &lc.version, (sizeof(lc) / sizeof(uint32_t)) - 2))
                 {
-                    const uint32_t xxxx = lc.reserved >> 16;
-                    const uint32_t yy = (lc.reserved >> 8) & 0xffu;
-                    const uint32_t zz = lc.reserved  & 0xffu;
+                    const uint32_t xxxx = lc.sdk >> 16;
+                    const uint32_t yy = (lc.sdk >> 8) & 0xffu;
+                    const uint32_t zz = lc.sdk & 0xffu;
                     if (xxxx)
                     {
                         m_sdk_versions.push_back(xxxx);
