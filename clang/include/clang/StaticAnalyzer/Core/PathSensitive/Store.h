@@ -276,8 +276,10 @@ inline StoreRef &StoreRef::operator=(StoreRef const &newStore) {
 }
 
 // FIXME: Do we need to pass ProgramStateManager anymore?
-StoreManager *CreateRegionStoreManager(ProgramStateManager& StMgr);
-StoreManager *CreateFieldsOnlyRegionStoreManager(ProgramStateManager& StMgr);
+std::unique_ptr<StoreManager>
+CreateRegionStoreManager(ProgramStateManager &StMgr);
+std::unique_ptr<StoreManager>
+CreateFieldsOnlyRegionStoreManager(ProgramStateManager &StMgr);
 
 } // end GR namespace
 

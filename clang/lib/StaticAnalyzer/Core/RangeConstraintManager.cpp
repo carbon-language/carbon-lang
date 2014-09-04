@@ -328,9 +328,9 @@ private:
 
 } // end anonymous namespace
 
-ConstraintManager *
+std::unique_ptr<ConstraintManager>
 ento::CreateRangeConstraintManager(ProgramStateManager &StMgr, SubEngine *Eng) {
-  return new RangeConstraintManager(Eng, StMgr.getSValBuilder());
+  return llvm::make_unique<RangeConstraintManager>(Eng, StMgr.getSValBuilder());
 }
 
 const llvm::APSInt* RangeConstraintManager::getSymVal(ProgramStateRef St,

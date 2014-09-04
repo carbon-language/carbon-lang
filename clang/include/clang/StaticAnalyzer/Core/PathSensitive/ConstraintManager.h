@@ -148,8 +148,9 @@ protected:
   virtual ConditionTruthVal checkNull(ProgramStateRef State, SymbolRef Sym);
 };
 
-ConstraintManager* CreateRangeConstraintManager(ProgramStateManager& statemgr,
-                                                SubEngine *subengine);
+std::unique_ptr<ConstraintManager>
+CreateRangeConstraintManager(ProgramStateManager &statemgr,
+                             SubEngine *subengine);
 
 } // end GR namespace
 

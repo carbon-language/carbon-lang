@@ -39,9 +39,10 @@ namespace ento {
 class CallEvent;
 class CallEventManager;
 
-typedef ConstraintManager* (*ConstraintManagerCreator)(ProgramStateManager&,
-                                                       SubEngine*);
-typedef StoreManager* (*StoreManagerCreator)(ProgramStateManager&);
+typedef std::unique_ptr<ConstraintManager>(*ConstraintManagerCreator)(
+    ProgramStateManager &, SubEngine *);
+typedef std::unique_ptr<StoreManager>(*StoreManagerCreator)(
+    ProgramStateManager &);
 
 //===----------------------------------------------------------------------===//
 // ProgramStateTrait - Traits used by the Generic Data Map of a ProgramState.

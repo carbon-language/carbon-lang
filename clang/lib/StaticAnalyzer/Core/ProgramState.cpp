@@ -75,8 +75,8 @@ ProgramStateManager::ProgramStateManager(ASTContext &Ctx,
   : Eng(SubEng), EnvMgr(alloc), GDMFactory(alloc),
     svalBuilder(createSimpleSValBuilder(alloc, Ctx, *this)),
     CallEventMgr(new CallEventManager(alloc)), Alloc(alloc) {
-  StoreMgr.reset((*CreateSMgr)(*this));
-  ConstraintMgr.reset((*CreateCMgr)(*this, SubEng));
+  StoreMgr = (*CreateSMgr)(*this);
+  ConstraintMgr = (*CreateCMgr)(*this, SubEng);
 }
 
 
