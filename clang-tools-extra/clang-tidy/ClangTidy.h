@@ -118,10 +118,8 @@ private:
 std::vector<std::string> getCheckNames(const ClangTidyOptions &Options);
 
 /// \brief Run a set of clang-tidy checks on a set of files.
-///
-/// Takes ownership of the \c OptionsProvider.
 ClangTidyStats
-runClangTidy(ClangTidyOptionsProvider *OptionsProvider,
+runClangTidy(std::unique_ptr<ClangTidyOptionsProvider> OptionsProvider,
              const tooling::CompilationDatabase &Compilations,
              ArrayRef<std::string> InputFiles,
              std::vector<ClangTidyError> *Errors);

@@ -45,8 +45,10 @@ std::string runCheckOnCode(StringRef Code,
                            const Twine &Filename = "input.cc",
                            ArrayRef<std::string> ExtraArgs = None) {
   T Check;
-  ClangTidyContext Context(
-      new DefaultOptionsProvider(ClangTidyGlobalOptions(), ClangTidyOptions()));
+  ClangTidyOptions Options;
+  Options.Checks = "*";
+  ClangTidyContext Context(llvm::make_unique<DefaultOptionsProvider>(
+      ClangTidyGlobalOptions(), Options));
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
   Check.setContext(&Context);
   std::vector<std::string> ArgCXX11(1, "-std=c++11");

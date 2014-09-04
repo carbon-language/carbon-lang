@@ -117,9 +117,7 @@ struct ClangTidyStats {
 class ClangTidyContext {
 public:
   /// \brief Initializes \c ClangTidyContext instance.
-  ///
-  /// Takes ownership of the \c OptionsProvider.
-  ClangTidyContext(ClangTidyOptionsProvider *OptionsProvider);
+  ClangTidyContext(std::unique_ptr<ClangTidyOptionsProvider> OptionsProvider);
 
   /// \brief Report any errors detected using this method.
   ///
@@ -180,6 +178,7 @@ private:
   std::unique_ptr<ClangTidyOptionsProvider> OptionsProvider;
 
   std::string CurrentFile;
+  ClangTidyOptions CurrentOptions;
   std::unique_ptr<GlobList> CheckFilter;
 
   ClangTidyStats Stats;

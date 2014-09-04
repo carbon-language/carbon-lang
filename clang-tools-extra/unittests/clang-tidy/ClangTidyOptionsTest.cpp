@@ -61,9 +61,9 @@ TEST(ParseConfiguration, ValidConfiguration) {
                                              "AnalyzeTemporaryDtors: true\n",
                                              Options);
   EXPECT_FALSE(Error);
-  EXPECT_EQ("-*,misc-*", Options.Checks);
-  EXPECT_EQ(".*", Options.HeaderFilterRegex);
-  EXPECT_TRUE(Options.AnalyzeTemporaryDtors);
+  EXPECT_EQ("-*,misc-*", *Options.Checks);
+  EXPECT_EQ(".*", *Options.HeaderFilterRegex);
+  EXPECT_TRUE(*Options.AnalyzeTemporaryDtors);
 }
 
 } // namespace test

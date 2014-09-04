@@ -10,7 +10,10 @@
 #ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_OPTIONS_H
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_OPTIONS_H
 
+#include "llvm/ADT/Optional.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/ErrorOr.h"
 #include <string>
 #include <system_error>
 #include <utility>
@@ -42,18 +45,31 @@ struct ClangTidyGlobalOptions {
 /// \brief Contains options for clang-tidy. These options may be read from
 /// configuration files, and may be different for different translation units.
 struct ClangTidyOptions {
-  /// \brief Allow all checks and no headers by default.
-  ClangTidyOptions() : Checks("*"), AnalyzeTemporaryDtors(false) {}
+  /// \brief These options are used for all settings that haven't been
+  /// overridden by the \c OptionsProvider.
+  ///
+  /// Allow no checks and no headers by default.
+  static ClangTidyOptions getDefaults() {
+    ClangTidyOptions Options;
+    Options.Checks = "";
+    Options.HeaderFilterRegex = "";
+    Options.AnalyzeTemporaryDtors = false;
+    return Options;
+  }
+
+  /// \brief Creates a new \c ClangTidyOptions instance combined from all fields
+  /// of this instance overridden by the fields of \p Other that have a value.
+  ClangTidyOptions mergeWith(const ClangTidyOptions &Other) const;
 
   /// \brief Checks filter.
-  std::string Checks;
+  llvm::Optional<std::string> Checks;
 
   /// \brief Output warnings from headers matching this filter. Warnings from
   /// main files will always be displayed.
-  std::string HeaderFilterRegex;
+  llvm::Optional<std::string> HeaderFilterRegex;
 
   /// \brief Turns on temporary destructor-based analysis.
-  bool AnalyzeTemporaryDtors;
+  llvm::Optional<bool> AnalyzeTemporaryDtors;
 };
 
 /// \brief Abstract interface for retrieving various ClangTidy options.
@@ -79,7 +95,7 @@ public:
   const ClangTidyGlobalOptions &getGlobalOptions() override {
     return GlobalOptions;
   }
-  const ClangTidyOptions &getOptions(llvm::StringRef) override {
+  const ClangTidyOptions &getOptions(llvm::StringRef /*FileName*/) override {
     return DefaultOptions;
   }
 
@@ -88,13 +104,45 @@ private:
   ClangTidyOptions DefaultOptions;
 };
 
+/// \brief Implementation of the \c ClangTidyOptionsProvider interface, which
+/// tries to find a .clang-tidy file in the closest parent directory of each
+/// file.
+class FileOptionsProvider : public DefaultOptionsProvider {
+public:
+  /// \brief Initializes the \c FileOptionsProvider instance.
+  ///
+  /// \param GlobalOptions are just stored and returned to the caller of
+  /// \c getGlobalOptions.
+  ///
+  /// \param FallbackOptions are used in case there's no corresponding
+  /// .clang-tidy file.
+  ///
+  /// If any of the \param OverrideOptions fields are set, they will override
+  /// whatever options are read from the configuration file.
+  FileOptionsProvider(const ClangTidyGlobalOptions &GlobalOptions,
+                      const ClangTidyOptions &FallbackOptions,
+                      const ClangTidyOptions &OverrideOptions);
+  const ClangTidyOptions &getOptions(llvm::StringRef FileName) override;
+
+private:
+  /// \brief Try to read configuration file from \p Directory. If \p Directory
+  /// is empty, use the fallback value.
+  llvm::ErrorOr<ClangTidyOptions> TryReadConfigFile(llvm::StringRef Directory);
+
+  llvm::StringMap<ClangTidyOptions> CachedOptions;
+  ClangTidyOptions OverrideOptions;
+};
+
 /// \brief Parses LineFilter from JSON and stores it to the \p Options.
-std::error_code parseLineFilter(const std::string &LineFilter,
-                                clang::tidy::ClangTidyGlobalOptions &Options);
+std::error_code parseLineFilter(llvm::StringRef LineFilter,
+                                ClangTidyGlobalOptions &Options);
 
 /// \brief Parses configuration from JSON and stores it to the \p Options.
-std::error_code parseConfiguration(const std::string &Config,
-                                   clang::tidy::ClangTidyOptions &Options);
+std::error_code parseConfiguration(llvm::StringRef Config,
+                                   ClangTidyOptions &Options);
+
+/// \brief Serializes configuration to a YAML-encoded string.
+std::string configurationAsText(const ClangTidyOptions &Options);
 
 } // end namespace tidy
 } // end namespace clang

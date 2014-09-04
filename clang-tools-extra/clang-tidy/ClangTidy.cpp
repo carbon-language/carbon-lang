@@ -314,17 +314,19 @@ void ClangTidyCheck::setName(StringRef Name) {
 
 std::vector<std::string> getCheckNames(const ClangTidyOptions &Options) {
   clang::tidy::ClangTidyContext Context(
-      new DefaultOptionsProvider(ClangTidyGlobalOptions(), Options));
+      llvm::make_unique<DefaultOptionsProvider>(ClangTidyGlobalOptions(),
+                                                Options));
   ClangTidyASTConsumerFactory Factory(Context);
   return Factory.getCheckNames(Context.getChecksFilter());
 }
 
-ClangTidyStats runClangTidy(ClangTidyOptionsProvider *OptionsProvider,
-                            const tooling::CompilationDatabase &Compilations,
-                            ArrayRef<std::string> InputFiles,
-                            std::vector<ClangTidyError> *Errors) {
+ClangTidyStats
+runClangTidy(std::unique_ptr<ClangTidyOptionsProvider> OptionsProvider,
+             const tooling::CompilationDatabase &Compilations,
+             ArrayRef<std::string> InputFiles,
+             std::vector<ClangTidyError> *Errors) {
   ClangTool Tool(Compilations, InputFiles);
-  clang::tidy::ClangTidyContext Context(OptionsProvider);
+  clang::tidy::ClangTidyContext Context(std::move(OptionsProvider));
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
 
   Tool.setDiagnosticConsumer(&DiagConsumer);

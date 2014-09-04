@@ -160,8 +160,9 @@ bool GlobList::contains(StringRef S, bool Contains) {
   return Contains;
 }
 
-ClangTidyContext::ClangTidyContext(ClangTidyOptionsProvider *OptionsProvider)
-    : DiagEngine(nullptr), OptionsProvider(OptionsProvider) {
+ClangTidyContext::ClangTidyContext(
+    std::unique_ptr<ClangTidyOptionsProvider> OptionsProvider)
+    : DiagEngine(nullptr), OptionsProvider(std::move(OptionsProvider)) {
   // Before the first translation unit we can get errors related to command-line
   // parsing, use empty string for the file name in this case.
   setCurrentFile("");
@@ -202,7 +203,10 @@ void ClangTidyContext::setSourceManager(SourceManager *SourceMgr) {
 
 void ClangTidyContext::setCurrentFile(StringRef File) {
   CurrentFile = File;
-  CheckFilter.reset(new GlobList(getOptions().Checks));
+  // Safeguard against options with unset values.
+  CurrentOptions = ClangTidyOptions::getDefaults().mergeWith(
+      OptionsProvider->getOptions(CurrentFile));
+  CheckFilter.reset(new GlobList(*getOptions().Checks));
 }
 
 void ClangTidyContext::setASTContext(ASTContext *Context) {
@@ -214,7 +218,7 @@ const ClangTidyGlobalOptions &ClangTidyContext::getGlobalOptions() const {
 }
 
 const ClangTidyOptions &ClangTidyContext::getOptions() const {
-  return OptionsProvider->getOptions(CurrentFile);
+  return CurrentOptions;
 }
 
 GlobList &ClangTidyContext::getChecksFilter() {
@@ -328,7 +332,7 @@ void ClangTidyDiagnosticConsumer::BeginSourceFile(const LangOptions &LangOpts,
                                                   const Preprocessor *PP) {
   // Before the first translation unit we don't need HeaderFilter, as we
   // shouldn't get valid source locations in diagnostics.
-  HeaderFilter.reset(new llvm::Regex(Context.getOptions().HeaderFilterRegex));
+  HeaderFilter.reset(new llvm::Regex(*Context.getOptions().HeaderFilterRegex));
 }
 
 bool ClangTidyDiagnosticConsumer::passesLineFilter(StringRef FileName,

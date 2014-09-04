@@ -26,6 +26,13 @@ using namespace llvm;
 static cl::OptionCategory ClangTidyCategory("clang-tidy options");
 
 static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
+static cl::extrahelp ClangTidyHelp(
+    "Configuration files:\n"
+    "  clang-tidy attempts to read configuration for each source file from a\n"
+    "  .clang-tidy file located in the closest parent directory of the source\n"
+    "  file. If any configuration options have a corresponding command-line\n"
+    "  option, command-line option takes precedence. The effective\n"
+    "  configuration can be inspected using -dump-config.\n\n");
 
 const char DefaultChecks[] =
     "*,"                       // Enable all checks, except these:
@@ -39,7 +46,9 @@ Checks("checks", cl::desc("Comma-separated list of globs with optional '-'\n"
                           "in the list. Globs without '-' prefix add checks\n"
                           "with matching names to the set, globs with the '-'\n"
                           "prefix remove checks with matching names from the\n"
-                          "set of enabled checks."),
+                          "set of enabled checks.\n"
+                          "This option's value is appended to the value read\n"
+                          "from a .clang-tidy file, if any."),
        cl::init(""), cl::cat(ClangTidyCategory));
 
 static cl::opt<std::string>
@@ -48,7 +57,9 @@ HeaderFilter("header-filter",
                       "headers to output diagnostics from. Diagnostics\n"
                       "from the main file of each translation unit are\n"
                       "always displayed.\n"
-                      "Can be used together with -line-filter."),
+                      "Can be used together with -line-filter.\n"
+                      "This option overrides the value read from a\n"
+                      ".clang-tidy file."),
              cl::init(""), cl::cat(ClangTidyCategory));
 
 static cl::opt<std::string>
@@ -73,10 +84,17 @@ ListChecks("list-checks",
            cl::init(false), cl::cat(ClangTidyCategory));
 
 static cl::opt<bool>
-AnalyzeTemporaryDtors("analyze-temporary-dtors",
-                      cl::desc("Enable temporary destructor-aware analysis in\n"
-                               "clang-analyzer- checks."),
-                      cl::init(false), cl::cat(ClangTidyCategory));
+DumpConfig("dump-config",
+           cl::desc("Dumps configuration in the YAML format to stdout."),
+           cl::init(false), cl::cat(ClangTidyCategory));
+
+static cl::opt<bool> AnalyzeTemporaryDtors(
+    "analyze-temporary-dtors",
+    cl::desc("Enable temporary destructor-aware analysis in\n"
+             "clang-analyzer- checks.\n"
+             "This option overrides the value read from a\n"
+             ".clang-tidy file."),
+    cl::init(false), cl::cat(ClangTidyCategory));
 
 static cl::opt<std::string> ExportFixes(
     "export-fixes",
@@ -123,12 +141,25 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  clang::tidy::ClangTidyOptions Options;
-  Options.Checks = DefaultChecks + Checks;
-  Options.HeaderFilterRegex = HeaderFilter;
-  Options.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
+  clang::tidy::ClangTidyOptions FallbackOptions;
+  FallbackOptions.Checks = DefaultChecks;
+  FallbackOptions.HeaderFilterRegex = HeaderFilter;
+  FallbackOptions.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
 
-  std::vector<std::string> EnabledChecks = clang::tidy::getCheckNames(Options);
+  clang::tidy::ClangTidyOptions OverrideOptions;
+  if (Checks.getNumOccurrences() > 0)
+    OverrideOptions.Checks = Checks;
+  if (HeaderFilter.getNumOccurrences() > 0)
+    OverrideOptions.HeaderFilterRegex = HeaderFilter;
+  if (AnalyzeTemporaryDtors.getNumOccurrences() > 0)
+    OverrideOptions.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
+
+  auto OptionsProvider = llvm::make_unique<clang::tidy::FileOptionsProvider>(
+      GlobalOptions, FallbackOptions, OverrideOptions);
+
+  std::string FileName = OptionsParser.getSourcePathList().front();
+  std::vector<std::string> EnabledChecks =
+      clang::tidy::getCheckNames(OptionsProvider->getOptions(FileName));
 
   // FIXME: Allow using --list-checks without positional arguments.
   if (ListChecks) {
@@ -139,18 +170,23 @@ int main(int argc, const char **argv) {
     return 0;
   }
 
+  if (DumpConfig) {
+    llvm::outs() << clang::tidy::configurationAsText(
+                        clang::tidy::ClangTidyOptions::getDefaults()
+                            .mergeWith(OptionsProvider->getOptions(FileName)))
+                 << "\n";
+    return 0;
+  }
+
   if (EnabledChecks.empty()) {
     llvm::errs() << "Error: no checks enabled.\n";
     llvm::cl::PrintHelpMessage(/*Hidden=*/false, /*Categorized=*/true);
     return 1;
   }
 
-  // TODO: Implement configuration file reading and a "real" options provider.
-  auto OptionsProvider =
-      new clang::tidy::DefaultOptionsProvider(GlobalOptions, Options);
   std::vector<clang::tidy::ClangTidyError> Errors;
   clang::tidy::ClangTidyStats Stats = clang::tidy::runClangTidy(
-      OptionsProvider, OptionsParser.getCompilations(),
+      std::move(OptionsProvider), OptionsParser.getCompilations(),
       OptionsParser.getSourcePathList(), &Errors);
   clang::tidy::handleErrors(Errors, Fix);
 
