@@ -17,12 +17,12 @@
 using namespace llvm;
 using namespace dwarf;
 
-DWARFUnit::DWARFUnit(const DWARFDebugAbbrev *DA, StringRef IS, StringRef RS,
-                     StringRef SS, StringRef SOS, StringRef AOS,
-                     const RelocAddrMap *M, bool LE)
-    : Abbrev(DA), InfoSection(IS), RangeSection(RS), StringSection(SS),
-      StringOffsetSection(SOS), AddrOffsetSection(AOS), RelocMap(M),
-      isLittleEndian(LE) {
+DWARFUnit::DWARFUnit(DWARFContext &DC, const DWARFDebugAbbrev *DA,
+                     StringRef IS, StringRef RS, StringRef SS, StringRef SOS,
+                     StringRef AOS, const RelocAddrMap *M, bool LE)
+  : Context(DC), Abbrev(DA), InfoSection(IS), RangeSection(RS),
+    StringSection(SS), StringOffsetSection(SOS), AddrOffsetSection(AOS),
+    RelocMap(M), isLittleEndian(LE) {
   clear();
 }
 

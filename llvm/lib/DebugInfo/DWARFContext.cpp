@@ -318,7 +318,7 @@ void DWARFContext::parseCompileUnits() {
   const DataExtractor &DIData = DataExtractor(getInfoSection().Data,
                                               isLittleEndian(), 0);
   while (DIData.isValidOffset(offset)) {
-    std::unique_ptr<DWARFCompileUnit> CU(new DWARFCompileUnit(
+    std::unique_ptr<DWARFCompileUnit> CU(new DWARFCompileUnit(*this,
         getDebugAbbrev(), getInfoSection().Data, getRangeSection(),
         getStringSection(), StringRef(), getAddrSection(),
         &getInfoSection().Relocs, isLittleEndian()));
@@ -338,10 +338,10 @@ void DWARFContext::parseTypeUnits() {
     const DataExtractor &DIData =
         DataExtractor(I.second.Data, isLittleEndian(), 0);
     while (DIData.isValidOffset(offset)) {
-      std::unique_ptr<DWARFTypeUnit> TU(
-          new DWARFTypeUnit(getDebugAbbrev(), I.second.Data, getRangeSection(),
-                            getStringSection(), StringRef(), getAddrSection(),
-                            &I.second.Relocs, isLittleEndian()));
+      std::unique_ptr<DWARFTypeUnit> TU(new DWARFTypeUnit(*this,
+           getDebugAbbrev(), I.second.Data, getRangeSection(),
+           getStringSection(), StringRef(), getAddrSection(),
+           &I.second.Relocs, isLittleEndian()));
       if (!TU->extract(DIData, &offset))
         break;
       TUs.push_back(std::move(TU));
@@ -357,7 +357,7 @@ void DWARFContext::parseDWOCompileUnits() {
   const DataExtractor &DIData =
       DataExtractor(getInfoDWOSection().Data, isLittleEndian(), 0);
   while (DIData.isValidOffset(offset)) {
-    std::unique_ptr<DWARFCompileUnit> DWOCU(new DWARFCompileUnit(
+    std::unique_ptr<DWARFCompileUnit> DWOCU(new DWARFCompileUnit(*this,
         getDebugAbbrevDWO(), getInfoDWOSection().Data, getRangeDWOSection(),
         getStringDWOSection(), getStringOffsetDWOSection(), getAddrSection(),
         &getInfoDWOSection().Relocs, isLittleEndian()));
@@ -377,7 +377,7 @@ void DWARFContext::parseDWOTypeUnits() {
     const DataExtractor &DIData =
         DataExtractor(I.second.Data, isLittleEndian(), 0);
     while (DIData.isValidOffset(offset)) {
-      std::unique_ptr<DWARFTypeUnit> TU(new DWARFTypeUnit(
+      std::unique_ptr<DWARFTypeUnit> TU(new DWARFTypeUnit(*this,
           getDebugAbbrevDWO(), I.second.Data, getRangeDWOSection(),
           getStringDWOSection(), getStringOffsetDWOSection(), getAddrSection(),
           &I.second.Relocs, isLittleEndian()));
