@@ -1462,6 +1462,10 @@ static bool shouldAddNonNullAttr(const Decl *FD, const ParmVarDecl *PVD) {
 void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
                                          llvm::Function *Fn,
                                          const FunctionArgList &Args) {
+  if (CurCodeDecl && CurCodeDecl->hasAttr<NakedAttr>())
+    // Naked functions don't have prologues.
+    return;
+
   // If this is an implicit-return-zero function, go ahead and
   // initialize the return value.  TODO: it might be nice to have
   // a more general mechanism for this that didn't require synthesized
@@ -1985,6 +1989,12 @@ static llvm::StoreInst *findDominatingStoreToReturnValue(CodeGenFunction &CGF) {
 void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
                                          bool EmitRetDbgLoc,
                                          SourceLocation EndLoc) {
+  if (CurCodeDecl && CurCodeDecl->hasAttr<NakedAttr>()) {
+    // Naked functions don't have epilogues.
+    Builder.CreateUnreachable();
+    return;
+  }
+
   // Functions with no result always return void.
   if (!ReturnValue) {
     Builder.CreateRetVoid();
