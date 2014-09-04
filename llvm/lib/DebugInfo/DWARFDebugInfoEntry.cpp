@@ -86,7 +86,17 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
     return;
 
   OS << "\t(";
-  formValue.dump(OS, u);
+  
+  const char *Name = nullptr;
+  if (Optional<uint64_t> Val = formValue.getAsUnsignedConstant())
+    Name = AttributeValueString(attr, *Val);
+
+  if (Name) {
+    OS << Name;
+  } else {
+    formValue.dump(OS, u);
+  }
+
   OS << ")\n";
 }
 

@@ -22,7 +22,7 @@
 ; CHECK: [[BASE2]]: DW_TAG_base_type
 ; CHECK-NEXT: DW_AT_name
 ; CHECK-NEXT: DW_AT_byte_size [DW_FORM_data1]  (0x08)
-; CHECK-NEXT: DW_AT_encoding [DW_FORM_data1]   (0x07)
+; CHECK-NEXT: DW_AT_encoding [DW_FORM_data1]   (DW_ATE_unsigned)
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!21}

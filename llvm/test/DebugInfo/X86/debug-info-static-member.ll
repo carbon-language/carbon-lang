@@ -101,33 +101,33 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; PRESENT-NEXT: DW_AT_name {{.*}} "a"
 ; PRESENT:      DW_AT_external
 ; PRESENT:      DW_AT_declaration
-; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x03)
+; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_private)
 ; PRESENT:      DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "const_a"
 ; PRESENT:      DW_AT_external
 ; PRESENT:      DW_AT_declaration
-; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x03)
+; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_private)
 ; PRESENT:      DW_AT_const_value {{.*}} (1)
 ; PRESENT:      0x[[DECL_B:[0-9a-f]+]]: DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "b"
-; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x02)
+; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_protected)
 ; PRESENT:      DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "const_b"
-; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x02)
+; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_protected)
 ; PRESENT:      DW_AT_const_value [DW_FORM_udata] (1078523331)
 ; PRESENT:      0x[[DECL_C:[0-9a-f]+]]: DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "c"
-; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x01)
+; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_public)
 ; PRESENT:      DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "const_c"
-; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x01)
+; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_public)
 ; PRESENT:      DW_AT_const_value {{.*}} (18)
 ; While we're here, a normal member has data_member_location and
 ; accessibility attributes.
 ; PRESENT:      DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "d"
 ; PRESENT:      DW_AT_data_member_location
-; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x01)
+; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_public)
 ; PRESENT:      NULL
 ; Definitions point back to their declarations, and have a location.
 ; PRESENT:      DW_TAG_variable
@@ -151,33 +151,33 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; DARWINP-NEXT: DW_AT_name {{.*}} "a"
 ; DARWINP:      DW_AT_external
 ; DARWINP:      DW_AT_declaration
-; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x03)
+; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_private)
 ; DARWINP:      DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "const_a"
 ; DARWINP:      DW_AT_external
 ; DARWINP:      DW_AT_declaration
-; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x03)
+; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_private)
 ; DARWINP:      DW_AT_const_value {{.*}} (1)
 ; DARWINP:      0x[[DECL_B:[0-9a-f]+]]: DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "b"
-; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x02)
+; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_protected)
 ; DARWINP:      DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "const_b"
-; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x02)
+; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_protected)
 ; DARWINP:      DW_AT_const_value [DW_FORM_udata] (1078523331)
 ; DARWINP:      0x[[DECL_C:[0-9a-f]+]]: DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "c"
-; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x01)
+; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_public)
 ; DARWINP:      DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "const_c"
-; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x01)
+; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_public)
 ; DARWINP:      DW_AT_const_value {{.*}} (18)
 ; While we're here, a normal member has data_member_location and
 ; accessibility attributes.
 ; DARWINP:      DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "d"
 ; DARWINP:      DW_AT_data_member_location
-; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x01)
+; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_public)
 ; DARWINP:      NULL
 ; Definitions point back to their declarations, and have a location.
 ; DARWINP:      DW_TAG_variable

@@ -19,7 +19,7 @@
 ; }
 ;
 ; CHECK: _ZN1A6setFooEv
-; CHECK: DW_AT_accessibility [DW_FORM_data1]   (0x01)
+; CHECK: DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_public)
 ; CHECK-NOT: DW_AT_accessibility
 ; CHECK: DW_TAG
 

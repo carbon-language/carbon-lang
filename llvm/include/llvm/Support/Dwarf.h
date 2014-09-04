@@ -950,6 +950,10 @@ private:
   };
 };
 
+/// Returns the symbolic string representing Val when used as a value
+/// for attribute Attr.
+const char *AttributeValueString(uint16_t Attr, unsigned Val);
+
 } // End of namespace dwarf
 
 } // End of namespace llvm

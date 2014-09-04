@@ -30,7 +30,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 ; CHECK:      DW_TAG_base_type
 ; CHECK-NEXT: DW_AT_name [DW_FORM_strp]  ( .debug_str[{{.*}}] = "int")
-; CHECK-NEXT: DW_AT_encoding [DW_FORM_data1]   (0x05)
+; CHECK-NEXT: DW_AT_encoding [DW_FORM_data1]   (DW_ATE_signed)
 ; CHECK-NEXT: DW_AT_byte_size [DW_FORM_data1]  (0x04)
 
 ; int foo::b[1]:

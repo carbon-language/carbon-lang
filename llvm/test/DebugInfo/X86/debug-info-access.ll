@@ -46,22 +46,22 @@
 ;
 ; CHECK: DW_TAG_inheritance
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_accessibility {{.*}}(0x01)
+; CHECK:     DW_AT_accessibility {{.*}}(DW_ACCESS_public)
 ;
 ; CHECK: DW_TAG_member
 ; CHECK:     DW_AT_name {{.*}}"public_static")
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_accessibility {{.*}}(0x01)
+; CHECK:     DW_AT_accessibility {{.*}}(DW_ACCESS_public)
 ;
 ; CHECK: DW_TAG_subprogram
 ; CHECK:     DW_AT_name {{.*}}"pub")
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_accessibility {{.*}}(0x01)
+; CHECK:     DW_AT_accessibility {{.*}}(DW_ACCESS_public)
 ;
 ; CHECK: DW_TAG_subprogram
 ; CHECK:     DW_AT_name {{.*}}"prot")
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_accessibility {{.*}}(0x02)
+; CHECK:     DW_AT_accessibility {{.*}}(DW_ACCESS_protected)
 ;
 ; CHECK: DW_TAG_subprogram
 ; CHECK:     DW_AT_name {{.*}}"priv_default")
@@ -71,7 +71,7 @@
 ; CHECK: DW_TAG_member
 ; CHECK:     DW_AT_name {{.*}}"union_priv")
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_accessibility {{.*}}(0x03)
+; CHECK:     DW_AT_accessibility {{.*}}(DW_ACCESS_private)
 ;
 ; CHECK: DW_TAG_subprogram
 ; CHECK:     DW_AT_name {{.*}}"union_pub_default")
