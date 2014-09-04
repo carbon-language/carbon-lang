@@ -110,6 +110,9 @@ class VariantMatcher {
         ast_matchers::internal::VariadicOperatorFunction Func,
         ArrayRef<VariantMatcher> InnerMatchers) const;
 
+  protected:
+    ~MatcherOps() {}
+
   private:
     ast_type_traits::ASTNodeKind NodeKind;
   };
@@ -218,7 +221,7 @@ private:
 };
 
 template <typename T>
-struct VariantMatcher::TypedMatcherOps : VariantMatcher::MatcherOps {
+struct VariantMatcher::TypedMatcherOps final : VariantMatcher::MatcherOps {
   TypedMatcherOps()
       : MatcherOps(ast_type_traits::ASTNodeKind::getFromNodeKind<T>()) {}
   typedef ast_matchers::internal::Matcher<T> MatcherT;
