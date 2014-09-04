@@ -190,7 +190,7 @@ int main(int argc, const char **argv) {
       OptionsParser.getSourcePathList(), &Errors);
   clang::tidy::handleErrors(Errors, Fix);
 
-  if (!ExportFixes.empty()) {
+  if (!ExportFixes.empty() && !Errors.empty()) {
     std::error_code EC;
     llvm::raw_fd_ostream OS(ExportFixes, EC, llvm::sys::fs::F_None);
     if (EC) {
