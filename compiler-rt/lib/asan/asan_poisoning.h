@@ -35,7 +35,6 @@ void PoisonShadowPartialRightRedzone(uptr addr,
 ALWAYS_INLINE void FastPoisonShadow(uptr aligned_beg, uptr aligned_size,
                                     u8 value) {
   DCHECK(flags()->poison_heap);
-  uptr PageSize = GetPageSizeCached();
   uptr shadow_beg = MEM_TO_SHADOW(aligned_beg);
   uptr shadow_end = MEM_TO_SHADOW(
       aligned_beg + aligned_size - SHADOW_GRANULARITY) + 1;
@@ -48,8 +47,9 @@ ALWAYS_INLINE void FastPoisonShadow(uptr aligned_beg, uptr aligned_size,
       shadow_end - shadow_beg < common_flags()->clear_shadow_mmap_threshold) {
     REAL(memset)((void*)shadow_beg, value, shadow_end - shadow_beg);
   } else {
-    uptr page_beg = RoundUpTo(shadow_beg, PageSize);
-    uptr page_end = RoundDownTo(shadow_end, PageSize);
+    uptr page_size = GetPageSizeCached();
+    uptr page_beg = RoundUpTo(shadow_beg, page_size);
+    uptr page_end = RoundDownTo(shadow_end, page_size);
 
     if (page_beg >= page_end) {
       REAL(memset)((void *)shadow_beg, 0, shadow_end - shadow_beg);
