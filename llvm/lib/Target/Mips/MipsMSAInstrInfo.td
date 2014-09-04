@@ -69,7 +69,7 @@ def MipsVExtractZExt : SDNode<"MipsISD::VEXTRACT_ZEXT_ELT",
 // as the encoded value should be subtracted by one.
 def uimm2LSAAsmOperand : AsmOperandClass {
   let Name = "LSAImm";
-  let ParserMethod = "ParseLSAImm";
+  let ParserMethod = "parseLSAImm";
   let RenderMethod = "addImmOperands";
 }
 

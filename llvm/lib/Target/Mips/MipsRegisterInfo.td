@@ -417,7 +417,7 @@ def OCTEON_P : RegisterClass<"Mips", [i64], 64, (add P0, P1, P2)>,
 // Register Operands.
 
 class MipsAsmRegOperand : AsmOperandClass {
-  let ParserMethod = "ParseAnyRegister";
+  let ParserMethod = "parseAnyRegister";
 }
 
 def GPR64AsmOperand : MipsAsmRegOperand {

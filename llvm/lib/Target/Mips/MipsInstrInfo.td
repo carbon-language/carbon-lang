@@ -331,7 +331,7 @@ include "MipsInstrFormats.td"
 
 def MipsJumpTargetAsmOperand : AsmOperandClass {
   let Name = "JumpTarget";
-  let ParserMethod = "ParseJumpTarget";
+  let ParserMethod = "parseJumpTarget";
   let PredicateMethod = "isImm";
   let RenderMethod = "addImmOperands";
 }

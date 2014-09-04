@@ -100,9 +100,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   /// Parse a register as used in CFI directives
   bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
 
-  bool ParseParenSuffix(StringRef Name, OperandVector &Operands);
+  bool parseParenSuffix(StringRef Name, OperandVector &Operands);
 
-  bool ParseBracketSuffix(StringRef Name, OperandVector &Operands);
+  bool parseBracketSuffix(StringRef Name, OperandVector &Operands);
 
   bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                         SMLoc NameLoc, OperandVector &Operands) override;
@@ -112,25 +112,25 @@ class MipsAsmParser : public MCTargetAsmParser {
   MipsAsmParser::OperandMatchResultTy parseMemOperand(OperandVector &Operands);
 
   MipsAsmParser::OperandMatchResultTy
-  MatchAnyRegisterNameWithoutDollar(OperandVector &Operands,
+  matchAnyRegisterNameWithoutDollar(OperandVector &Operands,
                                     StringRef Identifier, SMLoc S);
 
   MipsAsmParser::OperandMatchResultTy
-  MatchAnyRegisterWithoutDollar(OperandVector &Operands, SMLoc S);
+  matchAnyRegisterWithoutDollar(OperandVector &Operands, SMLoc S);
 
-  MipsAsmParser::OperandMatchResultTy ParseAnyRegister(OperandVector &Operands);
+  MipsAsmParser::OperandMatchResultTy parseAnyRegister(OperandVector &Operands);
 
-  MipsAsmParser::OperandMatchResultTy ParseImm(OperandVector &Operands);
+  MipsAsmParser::OperandMatchResultTy parseImm(OperandVector &Operands);
 
-  MipsAsmParser::OperandMatchResultTy ParseJumpTarget(OperandVector &Operands);
+  MipsAsmParser::OperandMatchResultTy parseJumpTarget(OperandVector &Operands);
 
   MipsAsmParser::OperandMatchResultTy parseInvNum(OperandVector &Operands);
 
-  MipsAsmParser::OperandMatchResultTy ParseLSAImm(OperandVector &Operands);
+  MipsAsmParser::OperandMatchResultTy parseLSAImm(OperandVector &Operands);
 
   bool searchSymbolAlias(OperandVector &Operands);
 
-  bool ParseOperand(OperandVector &, StringRef Mnemonic);
+  bool parseOperand(OperandVector &, StringRef Mnemonic);
 
   bool needsExpansion(MCInst &Inst);
 
@@ -351,7 +351,7 @@ public:
   bool abiUsesSoftFloat() const { return false; }
 
   /// Warn if RegNo is the current assembler temporary.
-  void WarnIfAssemblerTemporary(int RegNo, SMLoc Loc);
+  void warnIfAssemblerTemporary(int RegNo, SMLoc Loc);
 };
 }
 
@@ -453,7 +453,7 @@ public:
   /// target.
   unsigned getGPR32Reg() const {
     assert(isRegIdx() && (RegIdx.Kind & RegKind_GPR) && "Invalid access!");
-    AsmParser.WarnIfAssemblerTemporary(RegIdx.Index, StartLoc);
+    AsmParser.warnIfAssemblerTemporary(RegIdx.Index, StartLoc);
     unsigned ClassID = Mips::GPR32RegClassID;
     return RegIdx.RegInfo->getRegClass(ClassID).getRegister(RegIdx.Index);
   }
@@ -789,16 +789,16 @@ public:
   /// Create a numeric register (e.g. $1). The exact register remains
   /// unresolved until an instruction successfully matches
   static std::unique_ptr<MipsOperand>
-  CreateNumericReg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S,
+  createNumericReg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S,
                    SMLoc E, MipsAsmParser &Parser) {
-    DEBUG(dbgs() << "CreateNumericReg(" << Index << ", ...)\n");
+    DEBUG(dbgs() << "createNumericReg(" << Index << ", ...)\n");
     return CreateReg(Index, RegKind_Numeric, RegInfo, S, E, Parser);
   }
 
   /// Create a register that is definitely a GPR.
   /// This is typically only used for named registers such as $gp.
   static std::unique_ptr<MipsOperand>
-  CreateGPRReg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S, SMLoc E,
+  createGPRReg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S, SMLoc E,
                MipsAsmParser &Parser) {
     return CreateReg(Index, RegKind_GPR, RegInfo, S, E, Parser);
   }
@@ -806,7 +806,7 @@ public:
   /// Create a register that is definitely a FGR.
   /// This is typically only used for named registers such as $f0.
   static std::unique_ptr<MipsOperand>
-  CreateFGRReg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S, SMLoc E,
+  createFGRReg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S, SMLoc E,
                MipsAsmParser &Parser) {
     return CreateReg(Index, RegKind_FGR, RegInfo, S, E, Parser);
   }
@@ -814,7 +814,7 @@ public:
   /// Create a register that is definitely an FCC.
   /// This is typically only used for named registers such as $fcc0.
   static std::unique_ptr<MipsOperand>
-  CreateFCCReg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S, SMLoc E,
+  createFCCReg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S, SMLoc E,
                MipsAsmParser &Parser) {
     return CreateReg(Index, RegKind_FCC, RegInfo, S, E, Parser);
   }
@@ -822,7 +822,7 @@ public:
   /// Create a register that is definitely an ACC.
   /// This is typically only used for named registers such as $ac0.
   static std::unique_ptr<MipsOperand>
-  CreateACCReg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S, SMLoc E,
+  createACCReg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S, SMLoc E,
                MipsAsmParser &Parser) {
     return CreateReg(Index, RegKind_ACC, RegInfo, S, E, Parser);
   }
@@ -830,7 +830,7 @@ public:
   /// Create a register that is definitely an MSA128.
   /// This is typically only used for named registers such as $w0.
   static std::unique_ptr<MipsOperand>
-  CreateMSA128Reg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S,
+  createMSA128Reg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S,
                   SMLoc E, MipsAsmParser &Parser) {
     return CreateReg(Index, RegKind_MSA128, RegInfo, S, E, Parser);
   }
@@ -838,7 +838,7 @@ public:
   /// Create a register that is definitely an MSACtrl.
   /// This is typically only used for named registers such as $msaaccess.
   static std::unique_ptr<MipsOperand>
-  CreateMSACtrlReg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S,
+  createMSACtrlReg(unsigned Index, const MCRegisterInfo *RegInfo, SMLoc S,
                    SMLoc E, MipsAsmParser &Parser) {
     return CreateReg(Index, RegKind_MSACtrl, RegInfo, S, E, Parser);
   }
@@ -1561,7 +1561,7 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   return true;
 }
 
-void MipsAsmParser::WarnIfAssemblerTemporary(int RegIndex, SMLoc Loc) {
+void MipsAsmParser::warnIfAssemblerTemporary(int RegIndex, SMLoc Loc) {
   if ((RegIndex != 0) && ((int)Options.getATRegNum() == RegIndex)) {
     if (RegIndex == 1)
       Warning(Loc, "Used $at without \".set noat\"");
@@ -1735,8 +1735,8 @@ int MipsAsmParser::matchRegisterByNumber(unsigned RegNum, unsigned RegClass) {
   return getReg(RegClass, RegNum);
 }
 
-bool MipsAsmParser::ParseOperand(OperandVector &Operands, StringRef Mnemonic) {
-  DEBUG(dbgs() << "ParseOperand\n");
+bool MipsAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
+  DEBUG(dbgs() << "parseOperand\n");
 
   // Check if the current operand has a custom associated parser, if so, try to
   // custom parse the operand, or fallback to the general approach.
@@ -1764,7 +1764,7 @@ bool MipsAsmParser::ParseOperand(OperandVector &Operands, StringRef Mnemonic) {
     // for div, divu, and similar instructions because it is not an operand
     // to the instruction definition but an explicit register. Special case
     // this situation for now.
-    if (ParseAnyRegister(Operands) != MatchOperand_NoMatch)
+    if (parseAnyRegister(Operands) != MatchOperand_NoMatch)
       return false;
 
     // Maybe it is a symbol reference.
@@ -1789,7 +1789,7 @@ bool MipsAsmParser::ParseOperand(OperandVector &Operands, StringRef Mnemonic) {
   case AsmToken::Tilde:
   case AsmToken::String: {
     DEBUG(dbgs() << ".. generic integer\n");
-    OperandMatchResultTy ResTy = ParseImm(Operands);
+    OperandMatchResultTy ResTy = parseImm(Operands);
     return ResTy != MatchOperand_Success;
   }
   case AsmToken::Percent: {
@@ -1935,7 +1935,7 @@ bool MipsAsmParser::parseRelocOperand(const MCExpr *&Res) {
 bool MipsAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc,
                                   SMLoc &EndLoc) {
   SmallVector<std::unique_ptr<MCParsedAsmOperand>, 1> Operands;
-  OperandMatchResultTy ResTy = ParseAnyRegister(Operands);
+  OperandMatchResultTy ResTy = parseAnyRegister(Operands);
   if (ResTy == MatchOperand_Success) {
     assert(Operands.size() == 1);
     MipsOperand &Operand = static_cast<MipsOperand &>(*Operands.front());
@@ -2020,7 +2020,7 @@ MipsAsmParser::parseMemOperand(OperandVector &Operands) {
 
         // Zero register assumed, add a memory operand with ZERO as its base.
         // "Base" will be managed by k_Memory.
-        auto Base = MipsOperand::CreateGPRReg(0, getContext().getRegisterInfo(),
+        auto Base = MipsOperand::createGPRReg(0, getContext().getRegisterInfo(),
                                               S, E, *this);
         Operands.push_back(
             MipsOperand::CreateMem(std::move(Base), IdVal, S, E, *this));
@@ -2033,7 +2033,7 @@ MipsAsmParser::parseMemOperand(OperandVector &Operands) {
     Parser.Lex(); // Eat the '(' token.
   }
 
-  Res = ParseAnyRegister(Operands);
+  Res = parseAnyRegister(Operands);
   if (Res != MatchOperand_Success)
     return Res;
 
@@ -2084,7 +2084,7 @@ bool MipsAsmParser::searchSymbolAlias(OperandVector &Operands) {
       StringRef DefSymbol = Ref->getSymbol().getName();
       if (DefSymbol.startswith("$")) {
         OperandMatchResultTy ResTy =
-            MatchAnyRegisterNameWithoutDollar(Operands, DefSymbol.substr(1), S);
+            matchAnyRegisterNameWithoutDollar(Operands, DefSymbol.substr(1), S);
         if (ResTy == MatchOperand_Success) {
           Parser.Lex();
           return true;
@@ -2104,47 +2104,47 @@ bool MipsAsmParser::searchSymbolAlias(OperandVector &Operands) {
 }
 
 MipsAsmParser::OperandMatchResultTy
-MipsAsmParser::MatchAnyRegisterNameWithoutDollar(OperandVector &Operands,
+MipsAsmParser::matchAnyRegisterNameWithoutDollar(OperandVector &Operands,
                                                  StringRef Identifier,
                                                  SMLoc S) {
   int Index = matchCPURegisterName(Identifier);
   if (Index != -1) {
-    Operands.push_back(MipsOperand::CreateGPRReg(
+    Operands.push_back(MipsOperand::createGPRReg(
         Index, getContext().getRegisterInfo(), S, getLexer().getLoc(), *this));
     return MatchOperand_Success;
   }
 
   Index = matchFPURegisterName(Identifier);
   if (Index != -1) {
-    Operands.push_back(MipsOperand::CreateFGRReg(
+    Operands.push_back(MipsOperand::createFGRReg(
         Index, getContext().getRegisterInfo(), S, getLexer().getLoc(), *this));
     return MatchOperand_Success;
   }
 
   Index = matchFCCRegisterName(Identifier);
   if (Index != -1) {
-    Operands.push_back(MipsOperand::CreateFCCReg(
+    Operands.push_back(MipsOperand::createFCCReg(
         Index, getContext().getRegisterInfo(), S, getLexer().getLoc(), *this));
     return MatchOperand_Success;
   }
 
   Index = matchACRegisterName(Identifier);
   if (Index != -1) {
-    Operands.push_back(MipsOperand::CreateACCReg(
+    Operands.push_back(MipsOperand::createACCReg(
         Index, getContext().getRegisterInfo(), S, getLexer().getLoc(), *this));
     return MatchOperand_Success;
   }
 
   Index = matchMSA128RegisterName(Identifier);
   if (Index != -1) {
-    Operands.push_back(MipsOperand::CreateMSA128Reg(
+    Operands.push_back(MipsOperand::createMSA128Reg(
         Index, getContext().getRegisterInfo(), S, getLexer().getLoc(), *this));
     return MatchOperand_Success;
   }
 
   Index = matchMSA128CtrlRegisterName(Identifier);
   if (Index != -1) {
-    Operands.push_back(MipsOperand::CreateMSACtrlReg(
+    Operands.push_back(MipsOperand::createMSACtrlReg(
         Index, getContext().getRegisterInfo(), S, getLexer().getLoc(), *this));
     return MatchOperand_Success;
   }
@@ -2153,18 +2153,18 @@ MipsAsmParser::MatchAnyRegisterNameWithoutDollar(OperandVector &Operands,
 }
 
 MipsAsmParser::OperandMatchResultTy
-MipsAsmParser::MatchAnyRegisterWithoutDollar(OperandVector &Operands, SMLoc S) {
+MipsAsmParser::matchAnyRegisterWithoutDollar(OperandVector &Operands, SMLoc S) {
   auto Token = Parser.getLexer().peekTok(false);
 
   if (Token.is(AsmToken::Identifier)) {
     DEBUG(dbgs() << ".. identifier\n");
     StringRef Identifier = Token.getIdentifier();
     OperandMatchResultTy ResTy =
-        MatchAnyRegisterNameWithoutDollar(Operands, Identifier, S);
+        matchAnyRegisterNameWithoutDollar(Operands, Identifier, S);
     return ResTy;
   } else if (Token.is(AsmToken::Integer)) {
     DEBUG(dbgs() << ".. integer\n");
-    Operands.push_back(MipsOperand::CreateNumericReg(
+    Operands.push_back(MipsOperand::createNumericReg(
         Token.getIntVal(), getContext().getRegisterInfo(), S, Token.getLoc(),
         *this));
     return MatchOperand_Success;
@@ -2176,8 +2176,8 @@ MipsAsmParser::MatchAnyRegisterWithoutDollar(OperandVector &Operands, SMLoc S) {
 }
 
 MipsAsmParser::OperandMatchResultTy
-MipsAsmParser::ParseAnyRegister(OperandVector &Operands) {
-  DEBUG(dbgs() << "ParseAnyRegister\n");
+MipsAsmParser::parseAnyRegister(OperandVector &Operands) {
+  DEBUG(dbgs() << "parseAnyRegister\n");
 
   auto Token = Parser.getTok();
 
@@ -2194,7 +2194,7 @@ MipsAsmParser::ParseAnyRegister(OperandVector &Operands) {
   }
   DEBUG(dbgs() << ".. $\n");
 
-  OperandMatchResultTy ResTy = MatchAnyRegisterWithoutDollar(Operands, S);
+  OperandMatchResultTy ResTy = matchAnyRegisterWithoutDollar(Operands, S);
   if (ResTy == MatchOperand_Success) {
     Parser.Lex(); // $
     Parser.Lex(); // identifier
@@ -2203,7 +2203,7 @@ MipsAsmParser::ParseAnyRegister(OperandVector &Operands) {
 }
 
 MipsAsmParser::OperandMatchResultTy
-MipsAsmParser::ParseImm(OperandVector &Operands) {
+MipsAsmParser::parseImm(OperandVector &Operands) {
   switch (getLexer().getKind()) {
   default:
     return MatchOperand_NoMatch;
@@ -2227,18 +2227,18 @@ MipsAsmParser::ParseImm(OperandVector &Operands) {
 }
 
 MipsAsmParser::OperandMatchResultTy
-MipsAsmParser::ParseJumpTarget(OperandVector &Operands) {
-  DEBUG(dbgs() << "ParseJumpTarget\n");
+MipsAsmParser::parseJumpTarget(OperandVector &Operands) {
+  DEBUG(dbgs() << "parseJumpTarget\n");
 
   SMLoc S = getLexer().getLoc();
 
   // Integers and expressions are acceptable
-  OperandMatchResultTy ResTy = ParseImm(Operands);
+  OperandMatchResultTy ResTy = parseImm(Operands);
   if (ResTy != MatchOperand_NoMatch)
     return ResTy;
 
   // Registers are a valid target and have priority over symbols.
-  ResTy = ParseAnyRegister(Operands);
+  ResTy = parseAnyRegister(Operands);
   if (ResTy != MatchOperand_NoMatch)
     return ResTy;
 
@@ -2271,7 +2271,7 @@ MipsAsmParser::parseInvNum(OperandVector &Operands) {
 }
 
 MipsAsmParser::OperandMatchResultTy
-MipsAsmParser::ParseLSAImm(OperandVector &Operands) {
+MipsAsmParser::parseLSAImm(OperandVector &Operands) {
   switch (getLexer().getKind()) {
   default:
     return MatchOperand_NoMatch;
@@ -2350,12 +2350,12 @@ MCSymbolRefExpr::VariantKind MipsAsmParser::getVariantKind(StringRef Symbol) {
 /// ::= '(', register, ')'
 /// handle it before we iterate so we don't get tripped up by the lack of
 /// a comma.
-bool MipsAsmParser::ParseParenSuffix(StringRef Name, OperandVector &Operands) {
+bool MipsAsmParser::parseParenSuffix(StringRef Name, OperandVector &Operands) {
   if (getLexer().is(AsmToken::LParen)) {
     Operands.push_back(
         MipsOperand::CreateToken("(", getLexer().getLoc(), *this));
     Parser.Lex();
-    if (ParseOperand(Operands, Name)) {
+    if (parseOperand(Operands, Name)) {
       SMLoc Loc = getLexer().getLoc();
       Parser.eatToEndOfStatement();
       return Error(Loc, "unexpected token in argument list");
@@ -2378,13 +2378,13 @@ bool MipsAsmParser::ParseParenSuffix(StringRef Name, OperandVector &Operands) {
 /// ::= '[', integer, ']'
 /// handle it before we iterate so we don't get tripped up by the lack of
 /// a comma.
-bool MipsAsmParser::ParseBracketSuffix(StringRef Name,
+bool MipsAsmParser::parseBracketSuffix(StringRef Name,
                                        OperandVector &Operands) {
   if (getLexer().is(AsmToken::LBrac)) {
     Operands.push_back(
         MipsOperand::CreateToken("[", getLexer().getLoc(), *this));
     Parser.Lex();
-    if (ParseOperand(Operands, Name)) {
+    if (parseOperand(Operands, Name)) {
       SMLoc Loc = getLexer().getLoc();
       Parser.eatToEndOfStatement();
       return Error(Loc, "unexpected token in argument list");
@@ -2419,29 +2419,29 @@ bool MipsAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   // Read the remaining operands.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
-    if (ParseOperand(Operands, Name)) {
+    if (parseOperand(Operands, Name)) {
       SMLoc Loc = getLexer().getLoc();
       Parser.eatToEndOfStatement();
       return Error(Loc, "unexpected token in argument list");
     }
-    if (getLexer().is(AsmToken::LBrac) && ParseBracketSuffix(Name, Operands))
+    if (getLexer().is(AsmToken::LBrac) && parseBracketSuffix(Name, Operands))
       return true;
     // AFAIK, parenthesis suffixes are never on the first operand
 
     while (getLexer().is(AsmToken::Comma)) {
       Parser.Lex(); // Eat the comma.
       // Parse and remember the operand.
-      if (ParseOperand(Operands, Name)) {
+      if (parseOperand(Operands, Name)) {
         SMLoc Loc = getLexer().getLoc();
         Parser.eatToEndOfStatement();
         return Error(Loc, "unexpected token in argument list");
       }
       // Parse bracket and parenthesis suffixes before we iterate
       if (getLexer().is(AsmToken::LBrac)) {
-        if (ParseBracketSuffix(Name, Operands))
+        if (parseBracketSuffix(Name, Operands))
           return true;
       } else if (getLexer().is(AsmToken::LParen) &&
-                 ParseParenSuffix(Name, Operands))
+                 parseParenSuffix(Name, Operands))
         return true;
     }
   }
@@ -2787,7 +2787,7 @@ bool MipsAsmParser::parseDirectiveCPLoad(SMLoc Loc) {
   // FIXME: Warn if cpload is used in Mips16 mode.
 
   SmallVector<std::unique_ptr<MCParsedAsmOperand>, 1> Reg;
-  OperandMatchResultTy ResTy = ParseAnyRegister(Reg);
+  OperandMatchResultTy ResTy = parseAnyRegister(Reg);
   if (ResTy == MatchOperand_NoMatch || ResTy == MatchOperand_ParseFail) {
     reportParseError("expected register containing function address");
     return false;
@@ -2809,7 +2809,7 @@ bool MipsAsmParser::parseDirectiveCPSetup() {
   bool SaveIsReg = true;
 
   SmallVector<std::unique_ptr<MCParsedAsmOperand>, 1> TmpReg;
-  OperandMatchResultTy ResTy = ParseAnyRegister(TmpReg);
+  OperandMatchResultTy ResTy = parseAnyRegister(TmpReg);
   if (ResTy == MatchOperand_NoMatch) {
     reportParseError("expected register containing function address");
     Parser.eatToEndOfStatement();
@@ -2829,7 +2829,7 @@ bool MipsAsmParser::parseDirectiveCPSetup() {
   if (!eatComma("expected comma parsing directive"))
     return true;
 
-  ResTy = ParseAnyRegister(TmpReg);
+  ResTy = parseAnyRegister(TmpReg);
   if (ResTy == MatchOperand_NoMatch) {
     const AsmToken &Tok = Parser.getTok();
     if (Tok.is(AsmToken::Integer)) {
@@ -3265,7 +3265,7 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   if (IDVal == ".frame") {
     // .frame $stack_reg, frame_size_in_bytes, $return_reg
     SmallVector<std::unique_ptr<MCParsedAsmOperand>, 1> TmpReg;
-    OperandMatchResultTy ResTy = ParseAnyRegister(TmpReg);
+    OperandMatchResultTy ResTy = parseAnyRegister(TmpReg);
     if (ResTy == MatchOperand_NoMatch || ResTy == MatchOperand_ParseFail) {
       reportParseError("expected stack register");
       return false;
@@ -3309,7 +3309,7 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
 
     // Parse the return register.
     TmpReg.clear();
-    ResTy = ParseAnyRegister(TmpReg);
+    ResTy = parseAnyRegister(TmpReg);
     if (ResTy == MatchOperand_NoMatch || ResTy == MatchOperand_ParseFail) {
       reportParseError("expected return register");
       return false;
