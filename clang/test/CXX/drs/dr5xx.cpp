@@ -517,7 +517,8 @@ namespace dr546 { // dr546: yes
   template<typename T> void A<T>::f() { T::error; }
 }
 
-#if !defined(_M_IX86) // This is incompatible to attribute(thiscall).
+// This is incompatible to attribute(thiscall).
+#if !defined(_M_IX86) && !defined(__MINGW32__) && !defined(__MINGW64__)
 namespace dr547 { // d547: yes
   template<typename T> struct X;
   template<typename T> struct X<T() const> {};
