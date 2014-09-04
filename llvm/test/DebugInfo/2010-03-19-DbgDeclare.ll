@@ -1,6 +1,6 @@
 ; RUN: opt < %s -verify -S | FileCheck %s
 
-; CHECK: [DW_LANG_Mips_Assembler]
+; CHECK: lang 0x8001
 
 define void @Foo(i32 %a, i32 %b) {
 entry:
