@@ -148,7 +148,9 @@ static void MaybeInstallSigaction(int signum,
   struct sigaction sigact;
   internal_memset(&sigact, 0, sizeof(sigact));
   sigact.sa_sigaction = (sa_sigaction_t)handler;
-  sigact.sa_flags = SA_SIGINFO;
+  // Do not block the signal from being received in that signal's handler.
+  // Clients are responsible for handling this correctly.
+  sigact.sa_flags = SA_SIGINFO | SA_NODEFER;
   if (common_flags()->use_sigaltstack) sigact.sa_flags |= SA_ONSTACK;
   CHECK_EQ(0, internal_sigaction(signum, &sigact, 0));
   VReport(1, "Installed the sigaction for signal %d\n", signum);
