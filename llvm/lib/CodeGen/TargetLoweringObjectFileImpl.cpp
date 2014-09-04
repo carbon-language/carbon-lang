@@ -360,42 +360,66 @@ TargetLoweringObjectFileELF::getSectionForConstant(SectionKind Kind,
 
 const MCSection *TargetLoweringObjectFileELF::getStaticCtorSection(
     unsigned Priority, const MCSymbol *KeySym) const {
-  // The default scheme is .ctor / .dtor, so we have to invert the priority
-  // numbering.
-  if (Priority == 65535)
-    return StaticCtorSection;
+  std::string Name;
+  unsigned Type;
+  unsigned Flags = ELF::SHF_ALLOC | ELF::SHF_WRITE;
+  SectionKind Kind = SectionKind::getDataRel();
+  StringRef COMDAT = KeySym ? KeySym->getName() : "";
+
+  if (KeySym)
+    Flags |= ELF::SHF_GROUP;
 
   if (UseInitArray) {
-    std::string Name = std::string(".init_array.") + utostr(Priority);
-    return getContext().getELFSection(Name, ELF::SHT_INIT_ARRAY,
-                                      ELF::SHF_ALLOC | ELF::SHF_WRITE,
-                                      SectionKind::getDataRel());
+    Name = ".init_array";
+    if (Priority != 65535) {
+      Name += '.';
+      Name += utostr(Priority);
+    }
+    Type = ELF::SHT_INIT_ARRAY;
   } else {
-    std::string Name = std::string(".ctors.") + utostr(65535 - Priority);
-    return getContext().getELFSection(Name, ELF::SHT_PROGBITS,
-                                      ELF::SHF_ALLOC |ELF::SHF_WRITE,
-                                      SectionKind::getDataRel());
+    // The default scheme is .ctor / .dtor, so we have to invert the priority
+    // numbering.
+    Name = std::string(".ctors");
+    if (Priority != 65535) {
+      Name += '.';
+      Name += utostr(65535 - Priority);
+    }
+    Type = ELF::SHT_PROGBITS;
   }
+
+  return getContext().getELFSection(Name, Type, Flags, Kind, 0, COMDAT);
 }
 
 const MCSection *TargetLoweringObjectFileELF::getStaticDtorSection(
     unsigned Priority, const MCSymbol *KeySym) const {
-  // The default scheme is .ctor / .dtor, so we have to invert the priority
-  // numbering.
-  if (Priority == 65535)
-    return StaticDtorSection;
+  std::string Name;
+  unsigned Type;
+  unsigned Flags = ELF::SHF_ALLOC | ELF::SHF_WRITE;
+  SectionKind Kind = SectionKind::getDataRel();
+  StringRef COMDAT = KeySym ? KeySym->getName() : "";
+
+  if (KeySym)
+    Flags |= ELF::SHF_GROUP;
 
   if (UseInitArray) {
-    std::string Name = std::string(".fini_array.") + utostr(Priority);
-    return getContext().getELFSection(Name, ELF::SHT_FINI_ARRAY,
-                                      ELF::SHF_ALLOC | ELF::SHF_WRITE,
-                                      SectionKind::getDataRel());
+    Name = ".fini_array";
+    if (Priority != 65535) {
+      Name += '.';
+      Name += utostr(Priority);
+    }
+    Type = ELF::SHT_FINI_ARRAY;
   } else {
-    std::string Name = std::string(".dtors.") + utostr(65535 - Priority);
-    return getContext().getELFSection(Name, ELF::SHT_PROGBITS,
-                                      ELF::SHF_ALLOC |ELF::SHF_WRITE,
-                                      SectionKind::getDataRel());
+    // The default scheme is .ctor / .dtor, so we have to invert the priority
+    // numbering.
+    Name = ".dtors";
+    if (Priority != 65535) {
+      Name += '.';
+      Name += utostr(65535 - Priority);
+    }
+    Type = ELF::SHT_PROGBITS;
   }
+
+  return getContext().getELFSection(Name, Type, Flags, Kind, 0, COMDAT);
 }
 
 void
