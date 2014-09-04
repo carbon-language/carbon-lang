@@ -59,11 +59,10 @@ bool Windows::IsIntegratedAssemblerDefault() const {
 }
 
 bool Windows::IsUnwindTablesDefault() const {
-  // FIXME: LLVM's lowering of Win64 data is broken right now.  MSVC's linker
-  // says that our object files provide invalid .pdata contributions.  Until
-  // that is fixed, don't ask for unwind tables.
-  return false;
-  //return getArch() == llvm::Triple::x86_64;
+  // Emit unwind tables by default on Win64. All non-x86_32 Windows platforms
+  // such as ARM and PPC actually require unwind tables, but LLVM doesn't know
+  // how to generate them yet.
+  return getArch() == llvm::Triple::x86_64;
 }
 
 bool Windows::isPICDefault() const {
