@@ -724,19 +724,9 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
                          ++MachineBasicBlock::iterator(DbgMI));
   }
 
-  // When sinking the instruction the live time of its operands can be extended
-  // bejond their original last use (marked with a kill flag). Conservatively
-  // clear the kill flag in all instructions that use the same operand
-  // registers.
-  for (auto &MO : MI->uses())
-    if (MO.isReg() && MO.isUse()) {
-      // Preserve the kill flag for this instruction.
-      bool IsKill = MO.isKill();
-      // Clear the kill flag in all instruction that use this operand.
-      MRI->clearKillFlags(MO.getReg());
-      // Restore the kill flag for only this instruction.
-      MO.setIsKill(IsKill);
-    }
+  // Conservatively, clear any kill flags, since it's possible that they are no
+  // longer correct.
+  MI->clearKillInfo();
 
   return true;
 }
