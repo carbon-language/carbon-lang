@@ -271,7 +271,8 @@ TEST(Transform, isFileModifiable) {
 
   DummyTransform T("dummy", Options);
   MatchFinder Finder;
-  Finder.addMatcher(varDecl().bind("decl"), new ModifiableCallback(T));
+  ModifiableCallback Callback(T);
+  Finder.addMatcher(varDecl().bind("decl"), &Callback);
   Tool.run(tooling::newFrontendActionFactory(&Finder).get());
 }
 
