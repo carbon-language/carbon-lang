@@ -257,6 +257,7 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
         case LengthModifier::AsMAllocate:
         case LengthModifier::AsInt32:
         case LengthModifier::AsInt3264:
+        case LengthModifier::AsWide:
           return ArgType::Invalid();
       }
 
@@ -295,6 +296,7 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
         case LengthModifier::AsMAllocate:
         case LengthModifier::AsInt32:
         case LengthModifier::AsInt3264:
+        case LengthModifier::AsWide:
           return ArgType::Invalid();
       }
 
@@ -326,6 +328,7 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
         case LengthModifier::None:
           return ArgType::PtrTo(ArgType::AnyCharTy);
         case LengthModifier::AsLong:
+        case LengthModifier::AsWide:
           return ArgType::PtrTo(ArgType(Ctx.getWideCharType(), "wchar_t"));
         case LengthModifier::AsAllocate:
         case LengthModifier::AsMAllocate:
@@ -338,6 +341,7 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
       // FIXME: Mac OS X specific?
       switch (LM.getKind()) {
         case LengthModifier::None:
+        case LengthModifier::AsWide:
           return ArgType::PtrTo(ArgType(Ctx.getWideCharType(), "wchar_t"));
         case LengthModifier::AsAllocate:
         case LengthModifier::AsMAllocate:
@@ -378,6 +382,7 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
         case LengthModifier::AsMAllocate:
         case LengthModifier::AsInt32:
         case LengthModifier::AsInt3264:
+        case LengthModifier::AsWide:
           return ArgType::Invalid();
         }
 

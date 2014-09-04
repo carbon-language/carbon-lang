@@ -79,6 +79,7 @@ public:
     AsLongDouble, // 'L'
     AsAllocate,   // for '%as', GNU extension to C90 scanf
     AsMAllocate,  // for '%ms', GNU extension to scanf
+    AsWide,       // 'w' (MSVCRT, like l but only for c, C, s, S, or Z
     AsWideChar = AsLong // for '%ls', only makes sense for printf
   };
 

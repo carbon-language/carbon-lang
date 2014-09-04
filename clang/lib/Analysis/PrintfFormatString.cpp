@@ -268,6 +268,7 @@ ArgType PrintfSpecifier::getArgType(ASTContext &Ctx,
     switch (LM.getKind()) {
       case LengthModifier::None: return Ctx.IntTy;
       case LengthModifier::AsLong:
+      case LengthModifier::AsWide:
         return ArgType(ArgType::WIntTy, "wint_t");
       default:
         return ArgType::Invalid();
@@ -303,6 +304,7 @@ ArgType PrintfSpecifier::getArgType(ASTContext &Ctx,
         return ArgType(Ctx.getPointerDiffType(), "ptrdiff_t");
       case LengthModifier::AsAllocate:
       case LengthModifier::AsMAllocate:
+      case LengthModifier::AsWide:
         return ArgType::Invalid();
     }
 
@@ -337,6 +339,7 @@ ArgType PrintfSpecifier::getArgType(ASTContext &Ctx,
         return ArgType();
       case LengthModifier::AsAllocate:
       case LengthModifier::AsMAllocate:
+      case LengthModifier::AsWide:
         return ArgType::Invalid();
     }
 
@@ -372,6 +375,7 @@ ArgType PrintfSpecifier::getArgType(ASTContext &Ctx,
       case LengthModifier::AsInt32:
       case LengthModifier::AsInt3264:
       case LengthModifier::AsInt64:
+      case LengthModifier::AsWide:
         return ArgType::Invalid();
     }
   }
@@ -384,6 +388,8 @@ ArgType PrintfSpecifier::getArgType(ASTContext &Ctx,
                          "const unichar *");
         return ArgType(ArgType::WCStrTy, "wchar_t *");
       }
+      if (LM.getKind() == LengthModifier::AsWide)
+        return ArgType(ArgType::WCStrTy, "wchar_t *");
       return ArgType::CStrTy;
     case ConversionSpecifier::SArg:
       if (IsObjCLiteral)
