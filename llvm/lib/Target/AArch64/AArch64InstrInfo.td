@@ -4962,36 +4962,47 @@ def : Pat<(trap), (BRK 1)>;
 def : Pat<(v8i8 (AArch64NvCast (v2i32 FPR64:$src))), (v8i8 FPR64:$src)>;
 def : Pat<(v4i16 (AArch64NvCast (v2i32 FPR64:$src))), (v4i16 FPR64:$src)>;
 def : Pat<(v2i32 (AArch64NvCast (v2i32 FPR64:$src))), (v2i32 FPR64:$src)>;
+def : Pat<(v2f32 (AArch64NvCast (v2i32 FPR64:$src))), (v2f32 FPR64:$src)>;
+def : Pat<(v1i64 (AArch64NvCast (v2i32 FPR64:$src))), (v1i64 FPR64:$src)>;
 
 def : Pat<(v8i8 (AArch64NvCast (v4i16 FPR64:$src))), (v8i8 FPR64:$src)>;
 def : Pat<(v4i16 (AArch64NvCast (v4i16 FPR64:$src))), (v4i16 FPR64:$src)>;
 def : Pat<(v2i32 (AArch64NvCast (v4i16 FPR64:$src))), (v2i32 FPR64:$src)>;
+def : Pat<(v1i64 (AArch64NvCast (v4i16 FPR64:$src))), (v1i64 FPR64:$src)>;
 
 def : Pat<(v8i8 (AArch64NvCast (v8i8 FPR64:$src))), (v8i8 FPR64:$src)>;
 def : Pat<(v4i16 (AArch64NvCast (v8i8 FPR64:$src))), (v4i16 FPR64:$src)>;
 def : Pat<(v2i32 (AArch64NvCast (v8i8 FPR64:$src))), (v2i32 FPR64:$src)>;
+def : Pat<(v1i64 (AArch64NvCast (v8i8 FPR64:$src))), (v1i64 FPR64:$src)>;
 
 def : Pat<(v8i8 (AArch64NvCast (f64 FPR64:$src))), (v8i8 FPR64:$src)>;
 def : Pat<(v4i16 (AArch64NvCast (f64 FPR64:$src))), (v4i16 FPR64:$src)>;
 def : Pat<(v2i32 (AArch64NvCast (f64 FPR64:$src))), (v2i32 FPR64:$src)>;
+def : Pat<(v2f32 (AArch64NvCast (f64 FPR64:$src))), (v2f32 FPR64:$src)>;
 def : Pat<(v1i64 (AArch64NvCast (f64 FPR64:$src))), (v1i64 FPR64:$src)>;
+def : Pat<(v1f64 (AArch64NvCast (f64 FPR64:$src))), (v1f64 FPR64:$src)>;
 
 def : Pat<(v8i8 (AArch64NvCast (v2f32 FPR64:$src))), (v8i8 FPR64:$src)>;
 def : Pat<(v4i16 (AArch64NvCast (v2f32 FPR64:$src))), (v4i16 FPR64:$src)>;
 def : Pat<(v2i32 (AArch64NvCast (v2f32 FPR64:$src))), (v2i32 FPR64:$src)>;
+def : Pat<(v2f32 (AArch64NvCast (v2f32 FPR64:$src))), (v2f32 FPR64:$src)>;
 
 // Natural vector casts (128 bit)
 def : Pat<(v16i8 (AArch64NvCast (v4i32 FPR128:$src))), (v16i8 FPR128:$src)>;
 def : Pat<(v8i16 (AArch64NvCast (v4i32 FPR128:$src))), (v8i16 FPR128:$src)>;
 def : Pat<(v4i32 (AArch64NvCast (v4i32 FPR128:$src))), (v4i32 FPR128:$src)>;
+def : Pat<(v4f32 (AArch64NvCast (v4i32 FPR128:$src))), (v4f32 FPR128:$src)>;
+def : Pat<(v2i64 (AArch64NvCast (v4i32 FPR128:$src))), (v2i64 FPR128:$src)>;
 
 def : Pat<(v16i8 (AArch64NvCast (v8i16 FPR128:$src))), (v16i8 FPR128:$src)>;
 def : Pat<(v8i16 (AArch64NvCast (v8i16 FPR128:$src))), (v8i16 FPR128:$src)>;
 def : Pat<(v4i32 (AArch64NvCast (v8i16 FPR128:$src))), (v4i32 FPR128:$src)>;
+def : Pat<(v2i64 (AArch64NvCast (v8i16 FPR128:$src))), (v2i64 FPR128:$src)>;
 
 def : Pat<(v16i8 (AArch64NvCast (v16i8 FPR128:$src))), (v16i8 FPR128:$src)>;
 def : Pat<(v8i16 (AArch64NvCast (v16i8 FPR128:$src))), (v8i16 FPR128:$src)>;
 def : Pat<(v4i32 (AArch64NvCast (v16i8 FPR128:$src))), (v4i32 FPR128:$src)>;
+def : Pat<(v2i64 (AArch64NvCast (v16i8 FPR128:$src))), (v2i64 FPR128:$src)>;
 
 def : Pat<(v16i8 (AArch64NvCast (v2i64 FPR128:$src))), (v16i8 FPR128:$src)>;
 def : Pat<(v8i16 (AArch64NvCast (v2i64 FPR128:$src))), (v8i16 FPR128:$src)>;
@@ -5003,6 +5014,7 @@ def : Pat<(v2f64 (AArch64NvCast (v2i64 FPR128:$src))), (v2f64 FPR128:$src)>;
 def : Pat<(v16i8 (AArch64NvCast (v4f32 FPR128:$src))), (v16i8 FPR128:$src)>;
 def : Pat<(v8i16 (AArch64NvCast (v4f32 FPR128:$src))), (v8i16 FPR128:$src)>;
 def : Pat<(v4i32 (AArch64NvCast (v4f32 FPR128:$src))), (v4i32 FPR128:$src)>;
+def : Pat<(v4f32 (AArch64NvCast (v4f32 FPR128:$src))), (v4f32 FPR128:$src)>;
 def : Pat<(v2i64 (AArch64NvCast (v4f32 FPR128:$src))), (v2i64 FPR128:$src)>;
 
 def : Pat<(v16i8 (AArch64NvCast (v2f64 FPR128:$src))), (v16i8 FPR128:$src)>;
