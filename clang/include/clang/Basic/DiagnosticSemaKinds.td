@@ -6993,6 +6993,8 @@ def err_filter_expression_integral : Error<
 
 def err_non_asm_stmt_in_naked_function : Error<
   "non-ASM statement in naked function is not supported">;
+def err_asm_naked_parm_ref : Error<
+  "parameter references not allowed in naked functions">;
 
 // OpenCL warnings and errors.
 def err_invalid_astype_of_different_size : Error<

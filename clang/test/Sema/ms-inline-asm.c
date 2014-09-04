@@ -103,3 +103,14 @@ void t4() {
 void test_operand_size() {
   __asm { call word t4 } // expected-error {{Expected 'PTR' or 'ptr' token!}}
 }
+
+__declspec(naked) int t5(int x) { // expected-note {{attribute is here}}
+  asm { movl eax, x } // expected-error {{parameter references not allowed in naked functions}}
+  asm { retl }
+}
+
+int y;
+__declspec(naked) int t6(int x) {
+  asm { mov eax, y } // No error.
+  asm { ret }
+}
