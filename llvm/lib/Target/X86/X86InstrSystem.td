@@ -462,11 +462,7 @@ def LMSW16m : I<0x01, MRM6m, (outs), (ins i16mem:$src),
                 "lmsw{w}\t$src", [], IIC_LMSW_REG>, TB;
 
 let Defs = [EAX, EBX, ECX, EDX], Uses = [EAX, ECX] in
-  def CPUID32 : I<0xA2, RawFrm, (outs), (ins), "cpuid", [], IIC_CPUID>, TB,
-  Requires<[Not64BitMode]>;
-let Defs = [RAX, RBX, RCX, RDX], Uses = [RAX, RCX] in
-  def CPUID64 : I<0xA2, RawFrm, (outs), (ins), "cpuid", [], IIC_CPUID>, TB,
-  Requires<[In64BitMode]>;
+  def CPUID : I<0xA2, RawFrm, (outs), (ins), "cpuid", [], IIC_CPUID>, TB;
 } // SchedRW
 
 //===----------------------------------------------------------------------===//
@@ -479,10 +475,10 @@ def WBINVD : I<0x09, RawFrm, (outs), (ins), "wbinvd", [], IIC_INVD>, TB;
 //===----------------------------------------------------------------------===//
 // XSAVE instructions
 let SchedRW = [WriteSystem] in {
-let Defs = [RDX, RAX], Uses = [RCX] in
+let Defs = [EDX, EAX], Uses = [ECX] in
   def XGETBV : I<0x01, MRM_D0, (outs), (ins), "xgetbv", []>, TB;
 
-let Uses = [RDX, RAX, RCX] in
+let Uses = [EDX, EAX, ECX] in
   def XSETBV : I<0x01, MRM_D1, (outs), (ins), "xsetbv", []>, TB;
 
 let Uses = [RDX, RAX] in {
