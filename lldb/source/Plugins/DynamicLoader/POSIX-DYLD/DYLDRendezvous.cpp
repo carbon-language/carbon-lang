@@ -320,23 +320,11 @@ DYLDRendezvous::ReadStringFromMemory(addr_t addr)
 {
     std::string str;
     Error error;
-    size_t size;
-    char c;
 
     if (addr == LLDB_INVALID_ADDRESS)
         return std::string();
 
-    for (;;) {
-        size = m_process->DoReadMemory(addr, &c, 1, error);
-        if (size != 1 || error.Fail())
-            return std::string();
-        if (c == 0)
-            break;
-        else {
-            str.push_back(c);
-            addr++;
-        }
-    }
+    m_process->ReadCStringFromMemory(addr, str, error);
 
     return str;
 }
