@@ -20,6 +20,9 @@ namespace llvm {
 class RuntimeDyldMachOAArch64
     : public RuntimeDyldMachOCRTPBase<RuntimeDyldMachOAArch64> {
 public:
+
+  typedef uint64_t TargetPtrT;
+
   RuntimeDyldMachOAArch64(RTDyldMemoryManager *MM)
       : RuntimeDyldMachOCRTPBase(MM) {}
 

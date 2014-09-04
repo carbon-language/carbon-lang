@@ -128,8 +128,37 @@ bool RuntimeDyldMachO::isCompatibleFile(const object::ObjectFile *Obj) const {
   return Obj->isMachO();
 }
 
-static unsigned char *processFDE(unsigned char *P, intptr_t DeltaForText,
-                                 intptr_t DeltaForEH) {
+template <typename Impl>
+void RuntimeDyldMachOCRTPBase<Impl>::finalizeLoad(ObjectImage &ObjImg,
+                                                  ObjSectionToIDMap &SectionMap) {
+  unsigned EHFrameSID = RTDYLD_INVALID_SECTION_ID;
+  unsigned TextSID = RTDYLD_INVALID_SECTION_ID;
+  unsigned ExceptTabSID = RTDYLD_INVALID_SECTION_ID;
+  ObjSectionToIDMap::iterator i, e;
+
+  for (i = SectionMap.begin(), e = SectionMap.end(); i != e; ++i) {
+    const SectionRef &Section = i->first;
+    StringRef Name;
+    Section.getName(Name);
+    if (Name == "__eh_frame")
+      EHFrameSID = i->second;
+    else if (Name == "__text")
+      TextSID = i->second;
+    else if (Name == "__gcc_except_tab")
+      ExceptTabSID = i->second;
+    else
+      impl().finalizeSection(ObjImg, i->second, Section);
+  }
+  UnregisteredEHFrameSections.push_back(
+    EHFrameRelatedSections(EHFrameSID, TextSID, ExceptTabSID));
+}
+
+template <typename Impl>
+unsigned char *RuntimeDyldMachOCRTPBase<Impl>::processFDE(unsigned char *P,
+                                                          int64_t DeltaForText,
+                                                          int64_t DeltaForEH) {
+  typedef typename Impl::TargetPtrT TargetPtrT;
+
   DEBUG(dbgs() << "Processing FDE: Delta for text: " << DeltaForText
                << ", Delta for EH: " << DeltaForEH << "\n");
   uint32_t Length = *((uint32_t *)P);
@@ -140,32 +169,33 @@ static unsigned char *processFDE(unsigned char *P, intptr_t DeltaForText,
     return Ret;
 
   P += 4;
-  intptr_t FDELocation = *((intptr_t *)P);
-  intptr_t NewLocation = FDELocation - DeltaForText;
-  *((intptr_t *)P) = NewLocation;
-  P += sizeof(intptr_t);
+  TargetPtrT FDELocation = *((TargetPtrT*)P);
+  TargetPtrT NewLocation = FDELocation - DeltaForText;
+  *((TargetPtrT*)P) = NewLocation;
+  P += sizeof(TargetPtrT);
 
   // Skip the FDE address range
-  P += sizeof(intptr_t);
+  P += sizeof(TargetPtrT);
 
   uint8_t Augmentationsize = *P;
   P += 1;
   if (Augmentationsize != 0) {
-    intptr_t LSDA = *((intptr_t *)P);
-    intptr_t NewLSDA = LSDA - DeltaForEH;
-    *((intptr_t *)P) = NewLSDA;
+    TargetPtrT LSDA = *((TargetPtrT *)P);
+    TargetPtrT NewLSDA = LSDA - DeltaForEH;
+    *((TargetPtrT *)P) = NewLSDA;
   }
 
   return Ret;
 }
 
-static intptr_t computeDelta(SectionEntry *A, SectionEntry *B) {
-  intptr_t ObjDistance = A->ObjAddress - B->ObjAddress;
-  intptr_t MemDistance = A->LoadAddress - B->LoadAddress;
+static int64_t computeDelta(SectionEntry *A, SectionEntry *B) {
+  int64_t ObjDistance = A->ObjAddress - B->ObjAddress;
+  int64_t MemDistance = A->LoadAddress - B->LoadAddress;
   return ObjDistance - MemDistance;
 }
 
-void RuntimeDyldMachO::registerEHFrames() {
+template <typename Impl>
+void RuntimeDyldMachOCRTPBase<Impl>::registerEHFrames() {
 
   if (!MemMgr)
     return;
@@ -180,8 +210,8 @@ void RuntimeDyldMachO::registerEHFrames() {
     if (SectionInfo.ExceptTabSID != RTDYLD_INVALID_SECTION_ID)
       ExceptTab = &Sections[SectionInfo.ExceptTabSID];
 
-    intptr_t DeltaForText = computeDelta(Text, EHFrame);
-    intptr_t DeltaForEH = 0;
+    int64_t DeltaForText = computeDelta(Text, EHFrame);
+    int64_t DeltaForEH = 0;
     if (ExceptTab)
       DeltaForEH = computeDelta(ExceptTab, EHFrame);
 

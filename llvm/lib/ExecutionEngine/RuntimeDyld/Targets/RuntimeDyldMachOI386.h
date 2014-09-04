@@ -19,6 +19,9 @@ namespace llvm {
 class RuntimeDyldMachOI386
     : public RuntimeDyldMachOCRTPBase<RuntimeDyldMachOI386> {
 public:
+
+  typedef uint32_t TargetPtrT;
+
   RuntimeDyldMachOI386(RTDyldMemoryManager *MM)
       : RuntimeDyldMachOCRTPBase(MM) {}
 

@@ -22,6 +22,9 @@ private:
   typedef RuntimeDyldMachOCRTPBase<RuntimeDyldMachOARM> ParentT;
 
 public:
+
+  typedef uint32_t TargetPtrT;
+
   RuntimeDyldMachOARM(RTDyldMemoryManager *MM) : RuntimeDyldMachOCRTPBase(MM) {}
 
   unsigned getMaxStubSize() override { return 8; }

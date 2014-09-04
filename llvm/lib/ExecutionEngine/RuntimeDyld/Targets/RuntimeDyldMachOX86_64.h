@@ -19,6 +19,9 @@ namespace llvm {
 class RuntimeDyldMachOX86_64
     : public RuntimeDyldMachOCRTPBase<RuntimeDyldMachOX86_64> {
 public:
+
+  typedef uint64_t TargetPtrT;
+
   RuntimeDyldMachOX86_64(RTDyldMemoryManager *MM)
       : RuntimeDyldMachOCRTPBase(MM) {}
 

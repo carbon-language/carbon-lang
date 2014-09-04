@@ -122,7 +122,6 @@ public:
 
   bool isCompatibleFormat(const ObjectBuffer *Buffer) const override;
   bool isCompatibleFile(const object::ObjectFile *Obj) const override;
-  void registerEHFrames() override;
 };
 
 /// RuntimeDyldMachOTarget - Templated base class for generic MachO linker
@@ -138,32 +137,15 @@ private:
   Impl &impl() { return static_cast<Impl &>(*this); }
   const Impl &impl() const { return static_cast<const Impl &>(*this); }
 
+  unsigned char *processFDE(unsigned char *P, int64_t DeltaForText,
+                            int64_t DeltaForEH);
+
 public:
   RuntimeDyldMachOCRTPBase(RTDyldMemoryManager *mm) : RuntimeDyldMachO(mm) {}
 
   void finalizeLoad(ObjectImage &ObjImg,
-                    ObjSectionToIDMap &SectionMap) override {
-    unsigned EHFrameSID = RTDYLD_INVALID_SECTION_ID;
-    unsigned TextSID = RTDYLD_INVALID_SECTION_ID;
-    unsigned ExceptTabSID = RTDYLD_INVALID_SECTION_ID;
-    ObjSectionToIDMap::iterator i, e;
-
-    for (i = SectionMap.begin(), e = SectionMap.end(); i != e; ++i) {
-      const SectionRef &Section = i->first;
-      StringRef Name;
-      Section.getName(Name);
-      if (Name == "__eh_frame")
-        EHFrameSID = i->second;
-      else if (Name == "__text")
-        TextSID = i->second;
-      else if (Name == "__gcc_except_tab")
-        ExceptTabSID = i->second;
-      else
-        impl().finalizeSection(ObjImg, i->second, Section);
-    }
-    UnregisteredEHFrameSections.push_back(
-        EHFrameRelatedSections(EHFrameSID, TextSID, ExceptTabSID));
-  }
+                    ObjSectionToIDMap &SectionMap) override;
+  void registerEHFrames() override;
 };
 
 } // end namespace llvm
