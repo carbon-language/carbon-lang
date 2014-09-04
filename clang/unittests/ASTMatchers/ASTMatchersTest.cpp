@@ -377,6 +377,11 @@ TEST(DeclarationMatcher, hasDeclContext) {
                           hasName("M"), hasDeclContext(namespaceDecl()))))));
 }
 
+TEST(DeclarationMatcher, LinkageSpecification) {
+  EXPECT_TRUE(matches("extern \"C\" { void foo() {}; }", linkageSpecDecl()));
+  EXPECT_TRUE(notMatches("void foo() {};", linkageSpecDecl()));
+}
+
 TEST(ClassTemplate, DoesNotMatchClass) {
   DeclarationMatcher ClassX = classTemplateDecl(hasName("X"));
   EXPECT_TRUE(notMatches("class X;", ClassX));

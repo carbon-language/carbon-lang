@@ -156,6 +156,17 @@ anything() {
 /// \endcode
 const internal::VariadicAllOfMatcher<Decl> decl;
 
+/// \brief Matches a declaration of a linkage specification.
+///
+/// Given
+/// \code
+///   extern "C" {}
+/// \endcode
+/// linkageSpecDecl()
+///   matches "extern "C" {}"
+const internal::VariadicDynCastAllOfMatcher<Decl, LinkageSpecDecl>
+    linkageSpecDecl;
+
 /// \brief Matches a declaration of anything that could have a name.
 ///
 /// Example matches \c X, \c S, the anonymous union type, \c i, and \c U;
