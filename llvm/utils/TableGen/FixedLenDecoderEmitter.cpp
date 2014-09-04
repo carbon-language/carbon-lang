@@ -343,10 +343,8 @@ public:
                 unsigned BW,
                 const FixedLenDecoderEmitter *E)
     : AllInstructions(Insts), Opcodes(IDs), Operands(Ops), Filters(),
-      Parent(nullptr), BestIndex(-1), BitWidth(BW), Emitter(E) {
-    for (unsigned i = 0; i < BitWidth; ++i)
-      FilterBitValues.push_back(BIT_UNFILTERED);
-
+      FilterBitValues(BW, BIT_UNFILTERED), Parent(nullptr), BestIndex(-1),
+      BitWidth(BW), Emitter(E) {
     doFilter();
   }
 
