@@ -65,6 +65,8 @@
 
 #define LLDB_PERSONALITY_GET_CURRENT_SETTINGS  0xffffffff
 
+#define LLDB_PTRACE_NT_ARM_TLS  0x401           // ARM TLS register
+
 // Support hardware breakpoints in case it has not been defined
 #ifndef TRAP_HWBKPT
   #define TRAP_HWBKPT 4
@@ -800,7 +802,7 @@ ReadThreadPointerOperation::Execute(ProcessMonitor *monitor)
     {
     case llvm::Triple::aarch64:
     {
-         int regset = NT_ARM_TLS;
+         int regset = LLDB_PTRACE_NT_ARM_TLS;
          struct iovec ioVec;
 
          ioVec.iov_base = m_addr;
