@@ -317,3 +317,52 @@ define <4 x float> @shuffle_v4f32_z6zz(<4 x float> %a) {
   %shuffle = shufflevector <4 x float> zeroinitializer, <4 x float> %a, <4 x i32> <i32 0, i32 6, i32 2, i32 3>
   ret <4 x float> %shuffle
 }
+
+define <4 x i32> @shuffle_v4i32_4zzz(i32 %i) {
+; ALL-LABEL: @shuffle_v4i32_4zzz
+; ALL:         movd {{.*}}, %xmm0
+; ALL-NEXT:    retq
+  %a = insertelement <4 x i32> undef, i32 %i, i32 0
+  %shuffle = shufflevector <4 x i32> zeroinitializer, <4 x i32> %a, <4 x i32> <i32 4, i32 1, i32 2, i32 3>
+  ret <4 x i32> %shuffle
+}
+
+define <4 x i32> @shuffle_v4i32_z4zz(i32 %i) {
+; ALL-LABEL: @shuffle_v4i32_z4zz
+; ALL:         movd {{.*}}, %xmm0
+; ALL-NEXT:    pshufd {{.*}} # xmm0 = xmm0[1,0,1,1]
+; ALL-NEXT:    retq
+  %a = insertelement <4 x i32> undef, i32 %i, i32 0
+  %shuffle = shufflevector <4 x i32> zeroinitializer, <4 x i32> %a, <4 x i32> <i32 2, i32 4, i32 3, i32 0>
+  ret <4 x i32> %shuffle
+}
+
+define <4 x i32> @shuffle_v4i32_zz4z(i32 %i) {
+; ALL-LABEL: @shuffle_v4i32_zz4z
+; ALL:         movd {{.*}}, %xmm0
+; ALL-NEXT:    pshufd {{.*}} # xmm0 = xmm0[1,1,0,1]
+; ALL-NEXT:    retq
+  %a = insertelement <4 x i32> undef, i32 %i, i32 0
+  %shuffle = shufflevector <4 x i32> zeroinitializer, <4 x i32> %a, <4 x i32> <i32 0, i32 0, i32 4, i32 0>
+  ret <4 x i32> %shuffle
+}
+
+define <4 x i32> @shuffle_v4i32_zuu4(i32 %i) {
+; ALL-LABEL: @shuffle_v4i32_zuu4
+; ALL:         movd {{.*}}, %xmm0
+; ALL-NEXT:    pshufd {{.*}} # xmm0 = xmm0[1,1,1,0]
+; ALL-NEXT:    retq
+  %a = insertelement <4 x i32> undef, i32 %i, i32 0
+  %shuffle = shufflevector <4 x i32> zeroinitializer, <4 x i32> %a, <4 x i32> <i32 0, i32 undef, i32 undef, i32 4>
+  ret <4 x i32> %shuffle
+}
+
+define <4 x i32> @shuffle_v4i32_z6zz(i32 %i) {
+; ALL-LABEL: @shuffle_v4i32_z6zz
+; ALL:         movd {{.*}}, %xmm0
+; ALL-NEXT:    pshufd {{.*}} # xmm0 = xmm0[1,0,1,1]
+; ALL-NEXT:    retq
+  %a = insertelement <4 x i32> undef, i32 %i, i32 2
+  %shuffle = shufflevector <4 x i32> zeroinitializer, <4 x i32> %a, <4 x i32> <i32 0, i32 6, i32 2, i32 3>
+  ret <4 x i32> %shuffle
+}
