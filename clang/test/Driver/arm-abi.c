@@ -20,6 +20,14 @@
 // RUN: %clang -target arm--windows-gnueabi %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-AAPCS %s
 
+// NetBSD defaults to apcs-gnu, but can also use aapcs
+// RUN: %clang -target arm--netbsd- %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-APCS-GNU %s
+// RUN: %clang -target arm--netbsd-eabi %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-AAPCS %s
+// RUN: %clang -target arm--netbsd-eabihf %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-AAPCS %s
+
 // Otherwise, ABI is celected based on environment
 // RUN: %clang -target arm---android %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-AAPCS-LINUX %s
