@@ -101,6 +101,18 @@ DataVisualization::GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp)
 }
 #endif
 
+lldb::TypeValidatorImplSP
+DataVisualization::GetValidator (ValueObject& valobj, lldb::DynamicValueType use_dynamic)
+{
+    return GetFormatManager().GetValidator(valobj, use_dynamic);
+}
+
+lldb::TypeValidatorImplSP
+DataVisualization::GetValidatorForType (lldb::TypeNameSpecifierImplSP type_sp)
+{
+    return GetFormatManager().GetValidatorForType(type_sp);
+}
+
 bool
 DataVisualization::AnyMatches (ConstString type_name,
                                TypeCategoryImpl::FormatCategoryItems items,

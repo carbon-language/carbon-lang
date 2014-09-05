@@ -72,6 +72,13 @@ public:
                          lldb::DynamicValueType use_dynamic);
 #endif
     
+    static lldb::TypeValidatorImplSP
+    GetValidator (ValueObject& valobj,
+                  lldb::DynamicValueType use_dynamic);
+    
+    static lldb::TypeValidatorImplSP
+    GetValidatorForType (lldb::TypeNameSpecifierImplSP type_sp);
+    
     static bool
     AnyMatches(ConstString type_name,
                TypeCategoryImpl::FormatCategoryItems items = TypeCategoryImpl::ALL_ITEM_TYPES,

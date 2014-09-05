@@ -108,6 +108,10 @@ namespace lldb_private {
                               lldb::DynamicValueType use_dynamic);
 #endif
         
+    lldb::TypeValidatorImplSP
+    GetValidator (ValueObject& valobj,
+                  lldb::DynamicValueType use_dynamic);
+        
     private:
         
         class delete_matching_categories

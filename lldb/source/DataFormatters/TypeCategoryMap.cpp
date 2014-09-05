@@ -266,6 +266,34 @@ TypeCategoryMap::GetSyntheticChildren (ValueObject& valobj,
 }
 #endif
 
+lldb::TypeValidatorImplSP
+TypeCategoryMap::GetValidator (ValueObject& valobj,
+                               lldb::DynamicValueType use_dynamic)
+{
+    Mutex::Locker locker(m_map_mutex);
+    
+    uint32_t reason_why;
+    ActiveCategoriesIterator begin, end = m_active_categories.end();
+    
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    
+    FormattersMatchVector matches = FormatManager::GetPossibleMatches(valobj, use_dynamic);
+    
+    for (begin = m_active_categories.begin(); begin != end; begin++)
+    {
+        lldb::TypeCategoryImplSP category_sp = *begin;
+        lldb::TypeValidatorImplSP current_format;
+        if (log)
+            log->Printf("\n[CategoryMap::GetValidator] Trying to use category %s", category_sp->GetName());
+        if (!category_sp->Get(valobj, matches, current_format, &reason_why))
+            continue;
+        return current_format;
+    }
+    if (log)
+        log->Printf("[CategoryMap::GetValidator] nothing found - returning empty SP");
+    return lldb::TypeValidatorImplSP();
+}
+
 void
 TypeCategoryMap::LoopThrough(CallbackType callback, void* param)
 {

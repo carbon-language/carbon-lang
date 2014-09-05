@@ -31,16 +31,19 @@ private:
         bool m_format_cached : 1;
         bool m_summary_cached : 1;
         bool m_synthetic_cached : 1;
+        bool m_validator_cached : 1;
         
         lldb::TypeFormatImplSP m_format_sp;
         lldb::TypeSummaryImplSP m_summary_sp;
         lldb::SyntheticChildrenSP m_synthetic_sp;
+        lldb::TypeValidatorImplSP m_validator_sp;
     public:
         Entry ();
         Entry (lldb::TypeFormatImplSP);
         Entry (lldb::TypeSummaryImplSP);
         Entry (lldb::SyntheticChildrenSP);
-        Entry (lldb::TypeFormatImplSP,lldb::TypeSummaryImplSP,lldb::SyntheticChildrenSP);
+        Entry (lldb::TypeValidatorImplSP);
+        Entry (lldb::TypeFormatImplSP,lldb::TypeSummaryImplSP,lldb::SyntheticChildrenSP,lldb::TypeValidatorImplSP);
 
         bool
         IsFormatCached ();
@@ -51,6 +54,9 @@ private:
         bool
         IsSyntheticCached ();
         
+        bool
+        IsValidatorCached ();
+        
         lldb::TypeFormatImplSP
         GetFormat ();
         
@@ -60,6 +66,9 @@ private:
         lldb::SyntheticChildrenSP
         GetSynthetic ();
         
+        lldb::TypeValidatorImplSP
+        GetValidator ();
+        
         void
         SetFormat (lldb::TypeFormatImplSP);
         
@@ -68,6 +77,9 @@ private:
         
         void
         SetSynthetic (lldb::SyntheticChildrenSP);
+        
+        void
+        SetValidator (lldb::TypeValidatorImplSP);
     };
     typedef std::map<ConstString,Entry> CacheMap;
     CacheMap m_map;
@@ -91,6 +103,9 @@ public:
     bool
     GetSynthetic (const ConstString& type,lldb::SyntheticChildrenSP& synthetic_sp);
     
+    bool
+    GetValidator (const ConstString& type,lldb::TypeValidatorImplSP& summary_sp);
+    
     void
     SetFormat (const ConstString& type,lldb::TypeFormatImplSP& format_sp);
     
@@ -99,6 +114,9 @@ public:
     
     void
     SetSynthetic (const ConstString& type,lldb::SyntheticChildrenSP& synthetic_sp);
+    
+    void
+    SetValidator (const ConstString& type,lldb::TypeValidatorImplSP& synthetic_sp);
     
     void
     Clear ();

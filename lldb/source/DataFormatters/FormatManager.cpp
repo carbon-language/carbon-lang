@@ -447,6 +447,32 @@ FormatManager::GetSyntheticChildrenForType (lldb::TypeNameSpecifierImplSP type_s
 }
 #endif
 
+lldb::TypeValidatorImplSP
+FormatManager::GetValidatorForType (lldb::TypeNameSpecifierImplSP type_sp)
+{
+    if (!type_sp)
+        return lldb::TypeValidatorImplSP();
+    lldb::TypeValidatorImplSP validator_chosen_sp;
+    uint32_t num_categories = m_categories_map.GetCount();
+    lldb::TypeCategoryImplSP category_sp;
+    uint32_t prio_category = UINT32_MAX;
+    for (uint32_t category_id = 0;
+         category_id < num_categories;
+         category_id++)
+    {
+        category_sp = GetCategoryAtIndex(category_id);
+        if (category_sp->IsEnabled() == false)
+            continue;
+        lldb::TypeValidatorImplSP validator_current_sp(category_sp->GetValidatorForType(type_sp).get());
+        if (validator_current_sp && (validator_chosen_sp.get() == NULL || (prio_category > category_sp->GetEnabledPosition())))
+        {
+            prio_category = category_sp->GetEnabledPosition();
+            validator_chosen_sp = validator_current_sp;
+        }
+    }
+    return validator_chosen_sp;
+}
+
 lldb::TypeCategoryImplSP
 FormatManager::GetCategory (const ConstString& category_name,
                          bool can_create)
@@ -756,6 +782,63 @@ FormatManager::GetSyntheticChildren (ValueObject& valobj,
 }
 #endif
 
+lldb::TypeValidatorImplSP
+FormatManager::GetValidator (ValueObject& valobj,
+                             lldb::DynamicValueType use_dynamic)
+{
+    TypeValidatorImplSP retval;
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    ConstString valobj_type(GetTypeForCache(valobj, use_dynamic));
+    if (valobj_type)
+    {
+        if (log)
+            log->Printf("\n\n[FormatManager::GetValidator] Looking into cache for type %s", valobj_type.AsCString("<invalid>"));
+        if (m_format_cache.GetValidator(valobj_type,retval))
+        {
+            if (log)
+            {
+                log->Printf("[FormatManager::GetValidator] Cache search success. Returning.");
+                if (log->GetDebug())
+                    log->Printf("[FormatManager::GetValidator] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
+            }
+            return retval;
+        }
+        if (log)
+            log->Printf("[FormatManager::GetValidator] Cache search failed. Going normal route");
+    }
+    retval = m_categories_map.GetValidator(valobj, use_dynamic);
+    if (!retval)
+    {
+        if (log)
+            log->Printf("[FormatManager::GetValidator] Search failed. Giving hardcoded a chance.");
+        retval = GetHardcodedValidator(valobj, use_dynamic);
+    }
+    else if (valobj_type)
+    {
+        if (log)
+            log->Printf("[FormatManager::GetValidator] Caching %p for type %s",
+                        static_cast<void*>(retval.get()),
+                        valobj_type.AsCString("<invalid>"));
+        m_format_cache.SetValidator(valobj_type,retval);
+    }
+    if (log && log->GetDebug())
+        log->Printf("[FormatManager::GetValidator] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
+    return retval;
+}
+
+lldb::TypeValidatorImplSP
+FormatManager::GetHardcodedValidator (ValueObject& valobj,
+                                      lldb::DynamicValueType use_dynamic)
+{
+    for (const auto& candidate: m_hardcoded_validators)
+    {
+        auto result = candidate(valobj,use_dynamic,*this);
+        if (result)
+            return result;
+    }
+    return nullptr;
+}
+
 FormatManager::FormatManager() :
     m_format_cache(),
     m_named_summaries_map(this),
@@ -773,7 +856,8 @@ FormatManager::FormatManager() :
     m_appkit_category_name(ConstString("AppKit")),
     m_hardcoded_formats(),
     m_hardcoded_summaries(),
-    m_hardcoded_synthetics()
+    m_hardcoded_synthetics(),
+    m_hardcoded_validators()
     
 {
     LoadSystemFormatters();
@@ -1474,5 +1558,8 @@ FormatManager::LoadHardcodedFormatters()
     }
     {
         // insert code to load synthetics here
+    }
+    {
+        // insert code to load validators here
     }
 }

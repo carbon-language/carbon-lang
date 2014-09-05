@@ -71,6 +71,7 @@ namespace lldb_private {
         typedef FormatterContainerPair<TypeFormatImpl> FormatContainer;
         typedef FormatterContainerPair<TypeSummaryImpl> SummaryContainer;
         typedef FormatterContainerPair<TypeFilterImpl> FilterContainer;
+        typedef FormatterContainerPair<TypeValidatorImpl> ValidatorContainer;
         
 #ifndef LLDB_DISABLE_PYTHON
         typedef FormatterContainerPair<ScriptedSyntheticChildren> SynthContainer;
@@ -93,6 +94,9 @@ namespace lldb_private {
         typedef SynthContainer::ExactMatchContainerSP SynthContainerSP;
         typedef SynthContainer::RegexMatchContainerSP RegexSynthContainerSP;
 #endif // #ifndef LLDB_DISABLE_PYTHON
+        
+        typedef ValidatorContainer::ExactMatchContainerSP ValidatorContainerSP;
+        typedef ValidatorContainer::RegexMatchContainerSP RegexValidatorContainerSP;
         
         TypeCategoryImpl (IFormatChangeListener* clist,
                           ConstString name);
@@ -147,6 +151,9 @@ namespace lldb_private {
         GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp);
 #endif
         
+        ValidatorContainer::MapValueType
+        GetValidatorForType (lldb::TypeNameSpecifierImplSP type_sp);
+        
         lldb::TypeNameSpecifierImplSP
         GetTypeNameSpecifierForFormatAtIndex (size_t index);
         
@@ -183,8 +190,25 @@ namespace lldb_private {
         
         lldb::TypeNameSpecifierImplSP
         GetTypeNameSpecifierForSyntheticAtIndex (size_t index);
-        
 #endif // #ifndef LLDB_DISABLE_PYTHON
+        
+        ValidatorContainerSP
+        GetTypeValidatorsContainer ()
+        {
+            return m_validator_cont.GetExactMatch();
+        }
+        
+        RegexValidatorContainerSP
+        GetRegexTypeValidatorsContainer ()
+        {
+            return m_validator_cont.GetRegexMatch();
+        }
+        
+        ValidatorContainer::MapValueType
+        GetValidatorAtIndex (size_t index);
+        
+        lldb::TypeNameSpecifierImplSP
+        GetTypeNameSpecifierForValidatorAtIndex (size_t index);
         
         bool
         IsEnabled () const
@@ -219,6 +243,12 @@ namespace lldb_private {
              lldb::SyntheticChildrenSP& entry,
              uint32_t* reason = NULL);
         
+        bool
+        Get (ValueObject& valobj,
+             const FormattersMatchVector& candidates,
+             lldb::TypeValidatorImplSP& entry,
+             uint32_t* reason = NULL);
+        
         void
         Clear (FormatCategoryItems items = ALL_ITEM_TYPES);
         
@@ -246,14 +276,12 @@ namespace lldb_private {
         
     private:
         FormatContainer m_format_cont;
-        
         SummaryContainer m_summary_cont;
-
         FilterContainer m_filter_cont;
-
 #ifndef LLDB_DISABLE_PYTHON
         SynthContainer m_synth_cont;
 #endif // #ifndef LLDB_DISABLE_PYTHON
+        ValidatorContainer m_validator_cont;
         
         bool m_enabled;
         
@@ -289,6 +317,9 @@ namespace lldb_private {
         friend class FormattersContainer<ConstString, ScriptedSyntheticChildren>;
         friend class FormattersContainer<lldb::RegularExpressionSP, ScriptedSyntheticChildren>;
 #endif // #ifndef LLDB_DISABLE_PYTHON
+        
+        friend class FormattersContainer<ConstString, TypeValidatorImpl>;
+        friend class FormattersContainer<lldb::RegularExpressionSP, TypeValidatorImpl>;
     };
     
 } // namespace lldb_private

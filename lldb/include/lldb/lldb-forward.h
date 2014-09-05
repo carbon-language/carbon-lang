@@ -248,8 +248,10 @@ class   TypeListImpl;
 class   TypeMemberImpl;
 class   TypeEnumMemberImpl;
 class   TypeEnumMemberListImpl;
+class   TypeFormatImpl;
 class   TypeNameSpecifierImpl;
 class   TypePair;
+class   TypeValidatorImpl;
 class   UUID;
 class   UnixSignals;
 class   Unwind;
@@ -258,7 +260,6 @@ class   UnwindPlan;
 class   UnwindTable;
 class   VMRange;
 class   Value;
-class   TypeFormatImpl;
 class   ValueList;
 class   ValueObject;
 class   ValueObjectChild;
@@ -394,6 +395,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::TypeFormatImpl> TypeFormatImplSP;
     typedef std::shared_ptr<lldb_private::TypeNameSpecifierImpl> TypeNameSpecifierImplSP;
     typedef std::shared_ptr<lldb_private::TypeSummaryImpl> TypeSummaryImplSP;
+    typedef std::shared_ptr<lldb_private::TypeValidatorImpl> TypeValidatorImplSP;
 #ifndef LLDB_DISABLE_PYTHON
     typedef std::shared_ptr<lldb_private::ScriptedSyntheticChildren> ScriptedSyntheticChildrenSP;
 #endif

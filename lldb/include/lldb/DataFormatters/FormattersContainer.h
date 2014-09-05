@@ -29,6 +29,7 @@
 #include "lldb/DataFormatters/TypeFormat.h"
 #include "lldb/DataFormatters/TypeSummary.h"
 #include "lldb/DataFormatters/TypeSynthetic.h"
+#include "lldb/DataFormatters/TypeValidator.h"
 
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ClangASTType.h"

@@ -27,6 +27,7 @@ m_filter_cont("filter","regex-filter",clist),
 #ifndef LLDB_DISABLE_PYTHON
 m_synth_cont("synth","regex-synth",clist),
 #endif
+m_validator_cont("validator","regex-validator",clist),
 m_enabled(false),
 m_change_listener(clist),
 m_mutex(Mutex::eMutexTypeRecursive),
@@ -129,6 +130,22 @@ TypeCategoryImpl::Get (ValueObject& valobj,
     return false;
 }
 
+bool
+TypeCategoryImpl::Get (ValueObject& valobj,
+                       const FormattersMatchVector& candidates,
+                       lldb::TypeValidatorImplSP& entry,
+                       uint32_t* reason)
+{
+    if (!IsEnabled())
+        return false;
+    if (GetTypeValidatorsContainer()->Get(candidates, entry, reason))
+        return true;
+    bool regex = GetRegexTypeValidatorsContainer()->Get(candidates, entry, reason);
+    if (regex && reason)
+        *reason |= lldb_private::eFormatterChoiceCriterionRegularExpressionSummary;
+    return regex;
+}
+
 void
 TypeCategoryImpl::Clear (FormatCategoryItems items)
 {
@@ -153,6 +170,11 @@ TypeCategoryImpl::Clear (FormatCategoryItems items)
     if ( (items & eFormatCategoryItemRegexSynth) == eFormatCategoryItemRegexSynth )
         GetRegexTypeSyntheticsContainer()->Clear();
 #endif
+    
+    if ( (items & eFormatCategoryItemValidator)  == eFormatCategoryItemValidator )
+        GetTypeValidatorsContainer()->Clear();
+    if ( (items & eFormatCategoryItemRegexValidator) == eFormatCategoryItemRegexValidator )
+        GetRegexTypeValidatorsContainer()->Clear();
 }
 
 bool
@@ -182,6 +204,12 @@ TypeCategoryImpl::Delete (ConstString name,
     if ( (items & eFormatCategoryItemRegexSynth) == eFormatCategoryItemRegexSynth )
         success = GetRegexTypeSyntheticsContainer()->Delete(name) || success;
 #endif
+    
+    if ( (items & eFormatCategoryItemValidator)  == eFormatCategoryItemValidator )
+        success = GetTypeValidatorsContainer()->Delete(name) || success;
+    if ( (items & eFormatCategoryItemRegexValidator) == eFormatCategoryItemRegexValidator )
+        success = GetRegexTypeValidatorsContainer()->Delete(name) || success;
+    
     return success;
 }
 
@@ -211,6 +239,12 @@ TypeCategoryImpl::GetCount (FormatCategoryItems items)
     if ( (items & eFormatCategoryItemRegexSynth) == eFormatCategoryItemRegexSynth )
         count += GetRegexTypeSyntheticsContainer()->GetCount();
 #endif
+    
+    if ( (items & eFormatCategoryItemValidator)  == eFormatCategoryItemValidator )
+        count += GetTypeValidatorsContainer()->GetCount();
+    if ( (items & eFormatCategoryItemRegexValidator) == eFormatCategoryItemRegexValidator )
+        count += GetRegexTypeValidatorsContainer()->GetCount();
+    
     return count;
 }
 
@@ -230,6 +264,7 @@ TypeCategoryImpl::AnyMatches(ConstString type_name,
 #ifndef LLDB_DISABLE_PYTHON
     ScriptedSyntheticChildren::SharedPointer synth_sp;
 #endif
+    TypeValidatorImpl::SharedPointer validator_sp;
     
     if ( (items & eFormatCategoryItemValue) == eFormatCategoryItemValue )
     {
@@ -324,6 +359,30 @@ TypeCategoryImpl::AnyMatches(ConstString type_name,
         }
     }
 #endif
+    
+    if ( (items & eFormatCategoryItemValidator)  == eFormatCategoryItemValidator )
+    {
+        if (GetTypeValidatorsContainer()->Get(type_name, validator_sp))
+        {
+            if (matching_category)
+                *matching_category = m_name.GetCString();
+            if (matching_type)
+                *matching_type = eFormatCategoryItemValidator;
+            return true;
+        }
+    }
+    if ( (items & eFormatCategoryItemRegexValidator) == eFormatCategoryItemRegexValidator )
+    {
+        if (GetRegexTypeValidatorsContainer()->Get(type_name, validator_sp))
+        {
+            if (matching_category)
+                *matching_category = m_name.GetCString();
+            if (matching_type)
+                *matching_type = eFormatCategoryItemRegexValidator;
+            return true;
+        }
+    }
+    
     return false;
 }
 
@@ -392,6 +451,22 @@ TypeCategoryImpl::GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp)
     return retval;
 }
 #endif
+
+TypeCategoryImpl::ValidatorContainer::MapValueType
+TypeCategoryImpl::GetValidatorForType (lldb::TypeNameSpecifierImplSP type_sp)
+{
+    ValidatorContainer::MapValueType retval;
+    
+    if (type_sp)
+    {
+        if (type_sp->IsRegex())
+            GetRegexTypeValidatorsContainer()->GetExact(ConstString(type_sp->GetName()),retval);
+        else
+            GetTypeValidatorsContainer()->GetExact(ConstString(type_sp->GetName()),retval);
+    }
+    
+    return retval;
+}
 
 lldb::TypeNameSpecifierImplSP
 TypeCategoryImpl::GetTypeNameSpecifierForSummaryAtIndex (size_t index)
@@ -466,6 +541,24 @@ TypeCategoryImpl::GetTypeNameSpecifierForSyntheticAtIndex (size_t index)
         return GetRegexTypeSyntheticsContainer()->GetTypeNameSpecifierAtIndex(index - GetTypeSyntheticsContainer()->GetCount());
 }
 #endif
+
+TypeCategoryImpl::ValidatorContainer::MapValueType
+TypeCategoryImpl::GetValidatorAtIndex (size_t index)
+{
+    if (index < GetTypeValidatorsContainer()->GetCount())
+        return GetTypeValidatorsContainer()->GetAtIndex(index);
+    else
+        return GetRegexTypeValidatorsContainer()->GetAtIndex(index-GetTypeValidatorsContainer()->GetCount());
+}
+
+lldb::TypeNameSpecifierImplSP
+TypeCategoryImpl::GetTypeNameSpecifierForValidatorAtIndex (size_t index)
+{
+    if (index < GetTypeValidatorsContainer()->GetCount())
+        return GetTypeValidatorsContainer()->GetTypeNameSpecifierAtIndex(index);
+    else
+        return GetRegexTypeValidatorsContainer()->GetTypeNameSpecifierAtIndex(index - GetTypeValidatorsContainer()->GetCount());
+}
 
 void
 TypeCategoryImpl::Enable (bool value, uint32_t position)

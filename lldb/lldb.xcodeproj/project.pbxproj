@@ -662,6 +662,7 @@
 		94CB257116B0A4270059775D /* TypeSummary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CB256E16B0A4260059775D /* TypeSummary.cpp */; };
 		94CB257216B0A4270059775D /* TypeSynthetic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CB256F16B0A4270059775D /* TypeSynthetic.cpp */; };
 		94CB257416B1D3880059775D /* FormatCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CB257316B1D3870059775D /* FormatCache.cpp */; };
+		94CD131A19BA33B400DB7BED /* TypeValidator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CD131919BA33B400DB7BED /* TypeValidator.cpp */; };
 		94CD704D16F8DDEA00CF1E42 /* CF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CD704B16F8DDEA00CF1E42 /* CF.cpp */; };
 		94CD704E16F8DDEA00CF1E42 /* Cocoa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CD704C16F8DDEA00CF1E42 /* Cocoa.cpp */; };
 		94CD705016F8DF1C00CF1E42 /* LibCxxList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94CD704F16F8DF1C00CF1E42 /* LibCxxList.cpp */; };
@@ -1975,6 +1976,8 @@
 		94CB256F16B0A4270059775D /* TypeSynthetic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeSynthetic.cpp; path = source/DataFormatters/TypeSynthetic.cpp; sourceTree = "<group>"; };
 		94CB257316B1D3870059775D /* FormatCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FormatCache.cpp; path = source/DataFormatters/FormatCache.cpp; sourceTree = "<group>"; };
 		94CB257516B1D3910059775D /* FormatCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FormatCache.h; path = include/lldb/DataFormatters/FormatCache.h; sourceTree = "<group>"; };
+		94CD131819BA33A100DB7BED /* TypeValidator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TypeValidator.h; path = include/lldb/DataFormatters/TypeValidator.h; sourceTree = "<group>"; };
+		94CD131919BA33B400DB7BED /* TypeValidator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeValidator.cpp; path = source/DataFormatters/TypeValidator.cpp; sourceTree = "<group>"; };
 		94CD704B16F8DDEA00CF1E42 /* CF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CF.cpp; path = source/DataFormatters/CF.cpp; sourceTree = "<group>"; };
 		94CD704C16F8DDEA00CF1E42 /* Cocoa.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Cocoa.cpp; path = source/DataFormatters/Cocoa.cpp; sourceTree = "<group>"; };
 		94CD704F16F8DF1C00CF1E42 /* LibCxxList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LibCxxList.cpp; path = source/DataFormatters/LibCxxList.cpp; sourceTree = "<group>"; };
@@ -4188,6 +4191,8 @@
 				94CB256E16B0A4260059775D /* TypeSummary.cpp */,
 				94CB256C16B0A4040059775D /* TypeSynthetic.h */,
 				94CB256F16B0A4270059775D /* TypeSynthetic.cpp */,
+				94CD131819BA33A100DB7BED /* TypeValidator.h */,
+				94CD131919BA33B400DB7BED /* TypeValidator.cpp */,
 				945215DD17F639E600521C0B /* ValueObjectPrinter.h */,
 				945215DE17F639EE00521C0B /* ValueObjectPrinter.cpp */,
 			);
@@ -5134,6 +5139,7 @@
 				AF45FDE518A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp in Sources */,
 				26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */,
 				26D5E163135BB054006EA0A7 /* OptionGroupPlatform.cpp in Sources */,
+				94CD131A19BA33B400DB7BED /* TypeValidator.cpp in Sources */,
 				26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */,
 				26A7A035135E6E4200FB369E /* OptionValue.cpp in Sources */,
 				9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */,

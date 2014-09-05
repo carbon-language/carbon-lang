@@ -163,7 +163,9 @@ typedef enum FormatCategoryItem
     eFormatCategoryItemSynth =           0x0010,
     eFormatCategoryItemRegexSynth =      0x0020,
     eFormatCategoryItemValue =           0x0040,
-    eFormatCategoryItemRegexValue =      0x0080
+    eFormatCategoryItemRegexValue =      0x0080,
+    eFormatCategoryItemValidator =       0x0100,
+    eFormatCategoryItemRegexValidator =  0x0200
 } FormatCategoryItem;
 
 //------------------------------------------------------------------
