@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -triple i686-pc-windows-msvc -emit-llvm -o - -fasm-blocks | FileCheck %s
+// XFAIL: arm
 
 // Check that we take EAX or EAX:EDX and return it from these functions for MSVC
 // compatibility.
