@@ -2501,6 +2501,7 @@ GDBRemoteCommunicationClient::GetCurrentProcessInfo ()
                 {
                     assert (pointer_byte_size == m_process_arch.GetAddressByteSize());
                 }
+                m_process_arch.GetTriple().setVendorName (llvm::StringRef (vendor_name));
                 m_process_arch.GetTriple().setOSName(llvm::StringRef (os_name));
                 m_host_arch.GetTriple().setVendorName (llvm::StringRef (vendor_name));
                 m_host_arch.GetTriple().setOSName (llvm::StringRef (os_name));
