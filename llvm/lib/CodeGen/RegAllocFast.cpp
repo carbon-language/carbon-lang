@@ -309,10 +309,10 @@ void RAFast::spillVirtReg(MachineBasicBlock::iterator MI,
         DL = (--EI)->getDebugLoc();
       } else
         DL = MI->getDebugLoc();
-      MachineBasicBlock *MBB = DBG->getParent();
       MachineInstr *NewDV =
           BuildMI(*MBB, MI, DL, TII->get(TargetOpcode::DBG_VALUE))
               .addFrameIndex(FI).addImm(Offset).addMetadata(MDPtr);
+      assert(NewDV->getParent() == MBB && "dangling parent pointer");
       (void)NewDV;
       DEBUG(dbgs() << "Inserting debug info due to spill:" << "\n" << *NewDV);
     }
