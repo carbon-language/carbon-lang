@@ -83,6 +83,10 @@ TEST_F(FormatTestJS, UnderstandsJavaScriptOperators) {
   verifyFormat("var b = a.map((x) => x + 1);");
 }
 
+TEST_F(FormatTestJS, UnderstandsAmpAmp) {
+  verifyFormat("e && e.SomeFunction();");
+}
+
 TEST_F(FormatTestJS, LiteralOperatorsCanBeKeywords) {
   verifyFormat("not.and.or.not_eq = 1;");
 }
