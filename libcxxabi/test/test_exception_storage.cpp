@@ -12,7 +12,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <iostream>
-#if !LIBCXXABI_SINGLE_THREADED
+#if !LIBCXXABI_HAS_NO_THREADS
 #  include <pthread.h>
 #endif
 #include <unistd.h>
@@ -38,7 +38,7 @@ void *thread_code (void *parm) {
     return parm;
     }
 
-#if !LIBCXXABI_SINGLE_THREADED
+#if !LIBCXXABI_HAS_NO_THREADS
 #define NUMTHREADS  10
 size_t      thread_globals [ NUMTHREADS ] = { 0 };
 pthread_t   threads        [ NUMTHREADS ];
@@ -54,7 +54,7 @@ void print_sizes ( size_t *first, size_t *last ) {
 int main ( int argc, char *argv [] ) {
     int retVal = 0;
 
-#if LIBCXXABI_SINGLE_THREADED
+#if LIBCXXABI_HAS_NO_THREADS
     size_t thread_globals;
     retVal = thread_code(&thread_globals) != 0;
 #else

@@ -10,7 +10,7 @@
 #include "abort_message.h"
 #include "config.h"
 
-#if !LIBCXXABI_SINGLE_THREADED
+#if !LIBCXXABI_HAS_NO_THREADS
 #  include <pthread.h>
 #endif
 #include <stdint.h>
@@ -62,7 +62,7 @@ void set_initialized(guard_type* guard_object) {
 
 #endif
 
-#if !LIBCXXABI_SINGLE_THREADED
+#if !LIBCXXABI_HAS_NO_THREADS
 pthread_mutex_t guard_mut = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  guard_cv  = PTHREAD_COND_INITIALIZER;
 #endif
@@ -166,7 +166,7 @@ set_lock(uint32_t& x, lock_type y)
 extern "C"
 {
 
-#if LIBCXXABI_SINGLE_THREADED
+#if LIBCXXABI_HAS_NO_THREADS
 int __cxa_guard_acquire(guard_type* guard_object)
 {
     return !is_initialized(guard_object);
@@ -183,7 +183,7 @@ void __cxa_guard_abort(guard_type* guard_object)
     *guard_object = 0;
 }
 
-#else // !LIBCXXABI_SINGLE_THREADED
+#else // !LIBCXXABI_HAS_NO_THREADS
 
 int __cxa_guard_acquire(guard_type* guard_object)
 {
@@ -250,7 +250,7 @@ void __cxa_guard_abort(guard_type* guard_object)
         abort_message("__cxa_guard_abort failed to broadcast condition variable");
 }
 
-#endif // !LIBCXXABI_SINGLE_THREADED
+#endif // !LIBCXXABI_HAS_NO_THREADS
 
 }  // extern "C"
 

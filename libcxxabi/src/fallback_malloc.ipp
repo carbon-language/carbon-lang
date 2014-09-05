@@ -26,7 +26,7 @@
 namespace {
 
 // When POSIX threads are not available, make the mutex operations a nop
-#if LIBCXXABI_SINGLE_THREADED
+#if LIBCXXABI_HAS_NO_THREADS
 static void * heap_mutex = 0;
 #else
 static pthread_mutex_t heap_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -34,7 +34,7 @@ static pthread_mutex_t heap_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 class mutexor {
 public:
-#if LIBCXXABI_SINGLE_THREADED
+#if LIBCXXABI_HAS_NO_THREADS
     mutexor ( void * ) {}
     ~mutexor () {}
 #else
@@ -44,7 +44,7 @@ public:
 private:
     mutexor ( const mutexor &rhs );
     mutexor & operator = ( const mutexor &rhs );
-#if !LIBCXXABI_SINGLE_THREADED
+#if !LIBCXXABI_HAS_NO_THREADS
     pthread_mutex_t *mtx_;
 #endif
     };

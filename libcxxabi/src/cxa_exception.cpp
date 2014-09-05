@@ -17,7 +17,7 @@
 #include <exception>        // for std::terminate
 #include <cstdlib>          // for malloc, free
 #include <cstring>          // for memset
-#if !LIBCXXABI_SINGLE_THREADED
+#if !LIBCXXABI_HAS_NO_THREADS
 #  include <pthread.h>      // for fallback_malloc.ipp's mutexes
 #endif
 #include "cxa_exception.hpp"

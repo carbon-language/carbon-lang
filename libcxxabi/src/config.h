@@ -16,11 +16,9 @@
 
 #include <unistd.h>
 
-#if !defined(LIBCXXABI_SINGLE_THREADED) && \
-    defined(_POSIX_THREADS) && _POSIX_THREADS > 0
-#  define LIBCXXABI_SINGLE_THREADED 0
-#else
-#  define LIBCXXABI_SINGLE_THREADED 1
+// Set this in the CXXFLAGS when you need it
+#if !defined(LIBCXXABI_HAS_NO_THREADS)
+#  define LIBCXXABI_HAS_NO_THREADS 0
 #endif
 
 // Set this in the CXXFLAGS when you need it, because otherwise we'd have to
