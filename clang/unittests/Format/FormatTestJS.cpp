@@ -167,6 +167,7 @@ TEST_F(FormatTestJS, FormatsFreestandingFunctions) {
 }
 
 TEST_F(FormatTestJS, FunctionLiterals) {
+  verifyFormat("doFoo(function() {});");
   verifyFormat("doFoo(function() { return 1; });");
   verifyFormat("var func = function() { return 1; };");
   verifyFormat("return {\n"

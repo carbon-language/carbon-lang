@@ -1041,6 +1041,13 @@ void UnwrappedLineParser::parseParens() {
       if (FormatTok->Tok.is(tok::l_brace))
         parseBracedList();
       break;
+    case tok::identifier:
+      if (Style.Language == FormatStyle::LK_JavaScript &&
+          FormatTok->TokenText == "function")
+        tryToParseJSFunction();
+      else
+        nextToken();
+      break;
     default:
       nextToken();
       break;
