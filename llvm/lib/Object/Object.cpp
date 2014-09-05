@@ -64,9 +64,10 @@ LLVMObjectFileRef LLVMCreateObjectFile(LLVMMemoryBufferRef MemBuf) {
   ErrorOr<std::unique_ptr<ObjectFile>> ObjOrErr(
       ObjectFile::createObjectFile(Buf->getMemBufferRef()));
   std::unique_ptr<ObjectFile> Obj;
-  if (ObjOrErr)
-    Obj = std::move(ObjOrErr.get());
-  auto *Ret = new OwningBinary<ObjectFile>(std::move(Obj), std::move(Buf));
+  if (!ObjOrErr)
+    return nullptr;
+
+  auto *Ret = new OwningBinary<ObjectFile>(std::move(ObjOrErr.get()), std::move(Buf));
   return wrap(Ret);
 }
 
