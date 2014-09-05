@@ -57,7 +57,7 @@ attempt to retrieve an object image from its ObjectCache member, if one
 has been set.  If a cached object image cannot be retrieved, MCJIT will
 call its emitObject method.  MCJIT::emitObject uses a local PassManager
 instance and creates a new ObjectBufferStream instance, both of which it
-passes to TargetManager::addPassesToEmitMC before calling PassManager::run
+passes to TargetMachine::addPassesToEmitMC before calling PassManager::run
 on the Module with which it was created.
 
 .. image:: MCJIT-load.png
