@@ -42,7 +42,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_decl_file [DW_FORM_data1] (0x01)
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_decl_line [DW_FORM_data1] (0x01)
+; CHECK: DW_AT_decl_line [DW_FORM_data1] (1)
 
 ; CHECK: DW_TAG_variable
 ; CHECK-NOT: DW_TAG
@@ -50,6 +50,6 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_decl_file [DW_FORM_data1]     (0x01)
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_decl_line [DW_FORM_data1]     (0x04)
+; CHECK: DW_AT_decl_line [DW_FORM_data1]     (4)
 
 !21 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

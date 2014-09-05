@@ -6,12 +6,12 @@
 ; CHECK: [[NS1:0x[0-9a-f]*]]:{{ *}}DW_TAG_namespace
 ; CHECK-NEXT: DW_AT_name{{.*}} = "A"
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F1:[0-9]]])
-; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x03)
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(3)
 ; CHECK-NOT: NULL
 ; CHECK: [[NS2:0x[0-9a-f]*]]:{{ *}}DW_TAG_namespace
 ; CHECK-NEXT: DW_AT_name{{.*}} = "B"
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F2:[0-9]]])
-; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x01)
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(1)
 ; CHECK-NOT: NULL
 ; CHECK: [[I:0x[0-9a-f]*]]:{{ *}}DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name{{.*}}= "i"
@@ -40,7 +40,7 @@
 ; This is a bug, it should be in F2 but it inherits the file from its
 ; enclosing scope
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F1]])
-; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x08)
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(8)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[NS2]]})
 ; CHECK: NULL
 ; CHECK-NOT: NULL
@@ -48,7 +48,7 @@
 ; CHECK: DW_TAG_imported_module
 ; Same bug as above, this should be F2, not F1
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F1]])
-; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x0b)
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(11)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[NS1]]})
 ; CHECK-NOT: NULL
 
@@ -60,38 +60,38 @@
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_imported_module
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F2]])
-; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x12)
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(18)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[NS1]]})
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_imported_declaration
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F2]])
-; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x13)
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(19)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[FOO]]})
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_imported_declaration
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F2]])
-; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x14)
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(20)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[BAR]]})
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_imported_declaration
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F2]])
-; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x15)
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(21)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[FUNC1]]})
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_imported_declaration
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F2]])
-; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x16)
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(22)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[I]]})
 ; CHECK-NOT: NULL
 ; CHECK: [[X:0x[0-9a-f]*]]:{{ *}}DW_TAG_imported_declaration
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F2]])
-; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x18)
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(24)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[NS1]]})
 ; CHECK-NEXT: DW_AT_name{{.*}}"X"
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_imported_declaration
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F2]])
-; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x19)
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(25)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[X]]})
 ; CHECK-NEXT: DW_AT_name{{.*}}"Y"
 ; CHECK-NOT: NULL
@@ -99,7 +99,7 @@
 ; CHECK-NOT: NULL
 ; CHECK: DW_TAG_imported_module
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F2]])
-; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x0f)
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(15)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[NS2]]})
 ; CHECK: NULL
 ; CHECK: NULL

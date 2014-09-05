@@ -93,6 +93,8 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
 
   if (Name) {
     OS << Name;
+  } else if (attr == DW_AT_decl_line || attr == DW_AT_call_line) {
+    OS << *formValue.getAsUnsignedConstant();
   } else {
     formValue.dump(OS, u);
   }
