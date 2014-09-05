@@ -8,7 +8,7 @@ define <4 x float> @test(float %a) {
 ; CHECK-NEXT:    retl
 ;
 ; CHECK-EXP-LABEL: test:
-; CHECK-EXP:         insertps $285, {{.*}}, %xmm0
+; CHECK-EXP:         insertps $29, {{.*}}, %xmm0
 ; CHECK-EXP-NEXT:    retl
 
 entry:

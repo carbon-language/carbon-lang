@@ -7417,11 +7417,12 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
         if ((ZMask | 1 << V2Index) == 0xF)
           V1 = DAG.getUNDEF(MVT::v4f32);
 
+        unsigned InsertPSMask = (Mask[V2Index] - 4) << 6 | V2Index << 4 | ZMask;
+        assert((InsertPSMask & ~0xFFu) == 0 && "Invalid mask!");
+
         // Insert the V2 element into the desired position.
-        SDValue InsertPSMask =
-            DAG.getIntPtrConstant(Mask[V2Index] << 6 | V2Index << 4 | ZMask);
         return DAG.getNode(X86ISD::INSERTPS, DL, MVT::v4f32, V1, V2,
-                           InsertPSMask);
+                           DAG.getConstant(InsertPSMask, MVT::i8));
       }
     }
 
