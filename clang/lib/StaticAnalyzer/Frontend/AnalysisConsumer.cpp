@@ -54,7 +54,7 @@ using llvm::SmallPtrSet;
 
 #define DEBUG_TYPE "AnalysisConsumer"
 
-static ExplodedNode::Auditor* CreateUbiViz();
+static std::unique_ptr<ExplodedNode::Auditor> CreateUbiViz();
 
 STATISTIC(NumFunctionTopLevel, "The # of functions at top level.");
 STATISTIC(NumFunctionsAnalyzed,
@@ -649,7 +649,7 @@ void AnalysisConsumer::ActionExprEngine(Decl *D, bool ObjCGCEnabled,
   // Set the graph auditor.
   std::unique_ptr<ExplodedNode::Auditor> Auditor;
   if (Mgr->options.visualizeExplodedGraphWithUbiGraph) {
-    Auditor.reset(CreateUbiViz());
+    Auditor = CreateUbiViz();
     ExplodedNode::SetAuditor(Auditor.get());
   }
 
@@ -731,7 +731,7 @@ public:
 
 } // end anonymous namespace
 
-static ExplodedNode::Auditor* CreateUbiViz() {
+static std::unique_ptr<ExplodedNode::Auditor> CreateUbiViz() {
   SmallString<128> P;
   int FD;
   llvm::sys::fs::createTemporaryFile("llvm_ubi", "", FD, P);
@@ -739,7 +739,7 @@ static ExplodedNode::Auditor* CreateUbiViz() {
 
   auto Stream = llvm::make_unique<llvm::raw_fd_ostream>(FD, true);
 
-  return new UbigraphViz(std::move(Stream), P);
+  return llvm::make_unique<UbigraphViz>(std::move(Stream), P);
 }
 
 void UbigraphViz::AddEdge(ExplodedNode *Src, ExplodedNode *Dst) {
