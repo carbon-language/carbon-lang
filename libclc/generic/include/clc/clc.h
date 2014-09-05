@@ -120,6 +120,7 @@
 #include <clc/relational/isinf.h>
 #include <clc/relational/isless.h>
 #include <clc/relational/islessequal.h>
+#include <clc/relational/islessgreater.h>
 #include <clc/relational/isnan.h>
 #include <clc/relational/isnormal.h>
 #include <clc/relational/isnotequal.h>

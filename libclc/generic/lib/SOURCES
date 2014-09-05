@@ -55,6 +55,7 @@ relational/isgreaterequal.cl
 relational/isinf.cl
 relational/isless.cl
 relational/islessequal.cl
+relational/islessgreater.cl
 relational/isnan.cl
 relational/isnormal.cl
 relational/isnotequal.cl
