@@ -1223,14 +1223,34 @@ static void getArrayElements(Constant *C, SmallVectorImpl<Constant*> &Dest) {
 
 void ModuleLinker::linkAppendingVarInit(const AppendingVarInfo &AVI) {
   // Merge the initializer.
-  SmallVector<Constant*, 16> Elements;
-  getArrayElements(AVI.DstInit, Elements);
+  SmallVector<Constant *, 16> DstElements;
+  getArrayElements(AVI.DstInit, DstElements);
 
-  Constant *SrcInit = MapValue(AVI.SrcInit, ValueMap, RF_None, &TypeMap, &ValMaterializer);
-  getArrayElements(SrcInit, Elements);
+  SmallVector<Constant *, 16> SrcElements;
+  getArrayElements(AVI.SrcInit, SrcElements);
 
   ArrayType *NewType = cast<ArrayType>(AVI.NewGV->getType()->getElementType());
-  AVI.NewGV->setInitializer(ConstantArray::get(NewType, Elements));
+
+  StringRef Name = AVI.NewGV->getName();
+  bool IsNewStructor =
+      (Name == "llvm.global_ctors" || Name == "llvm.global_dtors") &&
+      cast<StructType>(NewType->getElementType())->getNumElements() == 3;
+
+  for (auto *V : SrcElements) {
+    if (IsNewStructor) {
+      Constant *Key = V->getAggregateElement(2);
+      if (DoNotLinkFromSource.count(Key))
+        continue;
+    }
+    DstElements.push_back(
+        MapValue(V, ValueMap, RF_None, &TypeMap, &ValMaterializer));
+  }
+  if (IsNewStructor) {
+    NewType = ArrayType::get(NewType->getElementType(), DstElements.size());
+    AVI.NewGV->mutateType(PointerType::get(NewType, 0));
+  }
+
+  AVI.NewGV->setInitializer(ConstantArray::get(NewType, DstElements));
 }
 
 /// linkGlobalInits - Update the initializers in the Dest module now that all
