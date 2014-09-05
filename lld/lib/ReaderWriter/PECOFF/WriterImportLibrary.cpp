@@ -80,7 +80,7 @@ void writeImportLibrary(const PECOFFLinkingContext &ctx) {
   std::vector<const char *> args;
   args.push_back(programPath.c_str());
   args.push_back("/nologo");
-  args.push_back("/machine:x86");
+  args.push_back(ctx.is64Bit() ? "/machine:x64" : "/machine:x86");
   args.push_back(defArg.c_str());
   args.push_back(outputArg.c_str());
   args.push_back(nullptr);
