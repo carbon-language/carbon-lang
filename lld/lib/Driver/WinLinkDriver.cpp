@@ -295,7 +295,8 @@ static bool isResoruceFile(StringRef path) {
 
 // Merge Windows resource files and convert them to a single COFF file.
 // The temporary file path is set to result.
-static bool convertResourceFiles(std::vector<std::string> inFiles,
+static bool convertResourceFiles(PECOFFLinkingContext &ctx,
+                                 std::vector<std::string> inFiles,
                                  std::string &result) {
   // Create an output file path.
   SmallString<128> outFile;
@@ -313,7 +314,7 @@ static bool convertResourceFiles(std::vector<std::string> inFiles,
 
   std::vector<const char *> args;
   args.push_back(programPath.c_str());
-  args.push_back("/machine:x86");
+  args.push_back(ctx.is64Bit() ? "/machine:x64" : "/machine:x86");
   args.push_back("/readonly");
   args.push_back("/nologo");
   args.push_back(outFileArg.c_str());
@@ -1263,7 +1264,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     if (it != inputFiles.begin()) {
       std::vector<std::string> resFiles(inputFiles.begin(), it);
       std::string resObj;
-      if (!convertResourceFiles(resFiles, resObj)) {
+      if (!convertResourceFiles(ctx, resFiles, resObj)) {
         diag << "Failed to convert resource files\n";
         return false;
       }
