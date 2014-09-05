@@ -187,6 +187,8 @@ template<class Callable, class ...Args>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+#ifndef _LIBCPP_HAS_NO_THREADS
+
 class _LIBCPP_TYPE_VIS recursive_mutex
 {
     pthread_mutex_t __m_;
@@ -424,6 +426,8 @@ lock(_L0& __l0, _L1& __l1, _L2& __l2, _L3& ...__l3)
 }
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
+
+#endif // !_LIBCPP_HAS_NO_THREADS
 
 struct _LIBCPP_TYPE_VIS_ONLY once_flag;
 

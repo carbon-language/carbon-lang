@@ -374,6 +374,10 @@ template <class R, class Alloc> struct uses_allocator<packaged_task<R>, Alloc>;
 #pragma GCC system_header
 #endif
 
+#ifndef _LIBCPP_HAS_NO_THREADS
+#error <future> is not supported on this single threaded system
+#else // !_LIBCPP_HAS_NO_THREADS
+
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 //enum class future_errc
@@ -2611,5 +2615,7 @@ future<void>::share()
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 _LIBCPP_END_NAMESPACE_STD
+
+#endif // !_LIBCPP_HAS_NO_THREADS
 
 #endif  // _LIBCPP_FUTURE

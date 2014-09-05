@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "__config"
+#ifndef _LIBCPP_HAS_NO_THREADS
+
 #define _LIBCPP_BUILDING_SHARED_MUTEX
 #include "shared_mutex"
 
@@ -99,3 +102,5 @@ shared_timed_mutex::unlock_shared()
 
 
 _LIBCPP_END_NAMESPACE_STD
+
+#endif // !_LIBCPP_HAS_NO_THREADS

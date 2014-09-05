@@ -533,6 +533,10 @@ void atomic_signal_fence(memory_order m) noexcept;
 #pragma GCC system_header
 #endif
 
+#ifdef _LIBCPP_HAS_NO_THREADS
+#error <atomic> is not supported on this single threaded system
+#else // !_LIBCPP_HAS_NO_THREADS
+
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 #if !__has_feature(cxx_atomic) && _GNUC_VER < 407
@@ -1778,5 +1782,7 @@ typedef atomic<uintmax_t> atomic_uintmax_t;
 #endif  //  !__has_feature(cxx_atomic)
 
 _LIBCPP_END_NAMESPACE_STD
+
+#endif  // !_LIBCPP_HAS_NO_THREADS
 
 #endif  // _LIBCPP_ATOMIC

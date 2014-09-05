@@ -7,6 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "__config"
+
+#ifndef _LIBCPP_HAS_NO_THREADS
+
 #include "future"
 #include "string"
 
@@ -298,3 +302,5 @@ shared_future<void>::operator=(const shared_future& __rhs)
 }
 
 _LIBCPP_END_NAMESPACE_STD
+
+#endif // !_LIBCPP_HAS_NO_THREADS

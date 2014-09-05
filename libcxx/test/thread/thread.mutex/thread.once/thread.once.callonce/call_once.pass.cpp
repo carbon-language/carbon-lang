@@ -6,6 +6,8 @@
 // Source Licenses. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// UNSUPPORTED: libcpp-has-no-threads
 
 // <mutex>
 
@@ -133,7 +135,15 @@ void f42()
 
 class MoveOnly
 {
+#if !defined(__clang__)
+   // GCC 4.8 complains about the following being private
+public:
+    MoveOnly(const MoveOnly&)
+    {
+    }
+#else
     MoveOnly(const MoveOnly&);
+#endif
 public:
     MoveOnly() {}
     MoveOnly(MoveOnly&&) {}

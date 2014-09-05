@@ -1,3 +1,14 @@
+//===----------------------------------------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// UNSUPPORTED: libcpp-has-no-threads
+
 #include <thread>
 #include <condition_variable>
 #include <mutex>
