@@ -1309,6 +1309,10 @@ Module::GetObjectFile()
                 // unknown.
                 m_objfile_sp->GetArchitecture (m_arch);
             }
+            else
+            {
+                ReportError ("failed to load objfile for %s", GetFileSpec().GetPath().c_str());
+            }
         }
     }
     return m_objfile_sp.get();
