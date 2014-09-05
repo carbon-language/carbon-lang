@@ -643,7 +643,8 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
       State.Stack[State.Stack.size() - 2].JSFunctionInlined = false;
     }
     if (Current.TokenText == "function")
-      State.Stack.back().JSFunctionInlined = !Newline;
+      State.Stack.back().JSFunctionInlined =
+          !Newline && Previous && Previous->Type != TT_DictLiteral;
   }
 
   moveStatePastFakeLParens(State, Newline);
