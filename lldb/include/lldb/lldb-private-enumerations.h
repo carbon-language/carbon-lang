@@ -240,6 +240,14 @@ typedef enum ExitType {
     eExitTypeStop,    // The exit status represents the stop signal that caused the program to exit (i.e. WIFSTOPPED() was true)
 } ExitType;
 
+//----------------------------------------------------------------------
+// Boolean result of running a Type Validator
+//----------------------------------------------------------------------
+enum class TypeValidatorResult : bool {
+    Success = true,
+    Failure = false
+};
+    
 } // namespace lldb_private
 
 

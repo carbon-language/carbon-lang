@@ -23,13 +23,13 @@ using namespace lldb_private;
 TypeValidatorImpl::ValidationResult
 TypeValidatorImpl::Success ()
 {
-    return ValidationResult { ValidationResult::ResultType::eSuccess, "" };
+    return ValidationResult { TypeValidatorResult::Success, "" };
 }
 
 TypeValidatorImpl::ValidationResult
 TypeValidatorImpl::Failure (std::string message)
 {
-    return ValidationResult { ValidationResult::ResultType::eFailure, message };
+    return ValidationResult { TypeValidatorResult::Failure, message };
 }
 
 TypeValidatorImpl_CXX::TypeValidatorImpl_CXX (ValidatorFunction f, std::string d, const TypeValidatorImpl::Flags& flags) :

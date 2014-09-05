@@ -21,6 +21,7 @@
 // Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
+#include "lldb/lldb-private-enumerations.h"
 
 namespace lldb_private {
     
@@ -196,10 +197,7 @@ public:
     };
     
     struct ValidationResult {
-        enum class ResultType {
-            eSuccess,
-            eFailure
-        } m_result;
+        TypeValidatorResult m_result;
         std::string m_message;
     };
     
