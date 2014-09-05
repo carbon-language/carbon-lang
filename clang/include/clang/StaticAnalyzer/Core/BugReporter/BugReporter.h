@@ -301,7 +301,7 @@ public:
   /// registerVarDeclsLastStore().
   void addVisitor(std::unique_ptr<BugReporterVisitor> visitor);
 
-        /// Iterators through the custom diagnostic visitors.
+  /// Iterators through the custom diagnostic visitors.
   visitor_iterator visitor_begin() { return Callbacks.begin(); }
   visitor_iterator visitor_end() { return Callbacks.end(); }
 
