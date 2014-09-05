@@ -55,19 +55,8 @@ public:
     const char *memberStart = ci->getBuffer().data();
     if (_membersInstantiated.count(memberStart))
       return nullptr;
-
-    if (dataSymbolOnly) {
-      ErrorOr<llvm::MemoryBufferRef> buffOrErr = ci->getMemoryBufferRef();
-      if (buffOrErr.getError())
-        return nullptr;
-
-      llvm::MemoryBufferRef mb = buffOrErr.get();
-      std::unique_ptr<MemoryBuffer> buff(MemoryBuffer::getMemBuffer(
-          mb.getBuffer(), mb.getBufferIdentifier(), false));
-
-      if (isDataSymbol(std::move(buff), name))
-        return nullptr;
-    }
+    if (dataSymbolOnly && !isDataSymbol(ci, name))
+      return nullptr;
 
     std::vector<std::unique_ptr<File>> result;
     if (instantiateMember(ci, result))
@@ -156,14 +145,19 @@ protected:
     return std::error_code();
   }
 
-  // Parses the given memory buffer as an object file, and returns success error
+  // Parses the given memory buffer as an object file, and returns true
   // code if the given symbol is a data symbol. If the symbol is not a data
-  // symbol or does not exist, returns a failure.
-  std::error_code isDataSymbol(std::unique_ptr<MemoryBuffer> mb,
-                               StringRef symbol) const {
+  // symbol or does not exist, returns false.
+  bool isDataSymbol(Archive::child_iterator member, StringRef symbol) const {
+    ErrorOr<llvm::MemoryBufferRef> buf = member->getMemoryBufferRef();
+    if (buf.getError())
+      return false;
+    std::unique_ptr<MemoryBuffer> mb(MemoryBuffer::getMemBuffer(
+        buf.get().getBuffer(), buf.get().getBufferIdentifier(), false));
+
     auto objOrErr(ObjectFile::createObjectFile(mb->getMemBufferRef()));
-    if (auto ec = objOrErr.getError())
-      return ec;
+    if (objOrErr.getError())
+      return false;
     std::unique_ptr<ObjectFile> obj = std::move(objOrErr.get());
     SymbolRef::Type symtype;
     uint32_t symflags;
@@ -173,8 +167,8 @@ protected:
 
     for (symbol_iterator i = ibegin; i != iend; ++i) {
       // Get symbol name
-      if (std::error_code ec = i->getName(symbolname))
-        return ec;
+      if (i->getName(symbolname))
+        return false;
       if (symbolname != symbol)
         continue;
 
@@ -185,13 +179,13 @@ protected:
         continue;
 
       // Get Symbol Type
-      if (std::error_code ec = i->getType(symtype))
-        return ec;
+      if (i->getType(symtype))
+        return false;
 
       if (symtype == SymbolRef::ST_Data)
-        return std::error_code();
+        return true;
     }
-    return object_error::parse_failed;
+    return false;
   }
 
 private:
