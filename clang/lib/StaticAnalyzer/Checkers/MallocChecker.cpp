@@ -901,6 +901,10 @@ ProgramStateRef MallocChecker::MallocMemAux(CheckerContext &C,
                                            ProgramStateRef State,
                                            AllocationFamily Family) {
 
+  // We expect the malloc functions to return a pointer.
+  if (!Loc::isLocType(CE->getType()))
+    return nullptr;
+
   // Bind the return value to the symbolic value from the heap region.
   // TODO: We could rewrite post visit to eval call; 'malloc' does not have
   // side effects other than what we model here.
@@ -910,10 +914,6 @@ ProgramStateRef MallocChecker::MallocMemAux(CheckerContext &C,
   DefinedSVal RetVal = svalBuilder.getConjuredHeapSymbolVal(CE, LCtx, Count)
       .castAs<DefinedSVal>();
   State = State->BindExpr(CE, C.getLocationContext(), RetVal);
-
-  // We expect the malloc functions to return a pointer.
-  if (!RetVal.getAs<Loc>())
-    return nullptr;
 
   // Fill the region with the initialization value.
   State = State->bindDefault(RetVal, Init);
