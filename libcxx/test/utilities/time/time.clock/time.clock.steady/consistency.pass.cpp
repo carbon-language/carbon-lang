@@ -11,7 +11,7 @@
 // darwin11 and darwin12:
 // XFAIL: with_system_lib=x86_64-apple-darwin11
 // XFAIL: with_system_lib=x86_64-apple-darwin12
-// UNSUPPORTED: no-monotonic-clock
+// UNSUPPORTED: libcpp-has-no-monotonic-clock
 
 // <chrono>
 
