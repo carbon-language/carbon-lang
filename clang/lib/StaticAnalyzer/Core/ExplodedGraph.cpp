@@ -336,10 +336,10 @@ ExplodedNode *ExplodedGraph::getNode(const ProgramPoint &L,
   return V;
 }
 
-ExplodedGraph *
+std::unique_ptr<ExplodedGraph>
 ExplodedGraph::trim(ArrayRef<const NodeTy *> Sinks,
                     InterExplodedGraphMap *ForwardMap,
-                    InterExplodedGraphMap *InverseMap) const{
+                    InterExplodedGraphMap *InverseMap) const {
 
   if (Nodes.empty())
     return nullptr;
@@ -388,7 +388,7 @@ ExplodedGraph::trim(ArrayRef<const NodeTy *> Sinks,
     return nullptr;
 
   // Create an empty graph.
-  ExplodedGraph* G = MakeEmptyGraph();
+  std::unique_ptr<ExplodedGraph> G = MakeEmptyGraph();
 
   // ===- Pass 2 (forward DFS to construct the new graph) -===
   while (!WL2.empty()) {

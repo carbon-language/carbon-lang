@@ -297,8 +297,8 @@ public:
                         bool IsSink = false,
                         bool* IsNew = nullptr);
 
-  ExplodedGraph* MakeEmptyGraph() const {
-    return new ExplodedGraph();
+  std::unique_ptr<ExplodedGraph> MakeEmptyGraph() const {
+    return llvm::make_unique<ExplodedGraph>();
   }
 
   /// addRoot - Add an untyped node to the set of roots.
@@ -372,9 +372,10 @@ public:
   /// \param[out] InverseMap An optional map from nodes in the returned graph to
   ///                        nodes in this graph.
   /// \returns The trimmed graph
-  ExplodedGraph *trim(ArrayRef<const NodeTy *> Nodes,
-                      InterExplodedGraphMap *ForwardMap = nullptr,
-                      InterExplodedGraphMap *InverseMap = nullptr) const;
+  std::unique_ptr<ExplodedGraph>
+  trim(ArrayRef<const NodeTy *> Nodes,
+       InterExplodedGraphMap *ForwardMap = nullptr,
+       InterExplodedGraphMap *InverseMap = nullptr) const;
 
   /// Enable tracking of recently allocated nodes for potential reclamation
   /// when calling reclaimRecentlyAllocatedNodes().

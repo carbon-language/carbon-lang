@@ -2856,7 +2856,7 @@ TrimmedGraph::TrimmedGraph(const ExplodedGraph *OriginalGraph,
   // The trimmed graph is created in the body of the constructor to ensure
   // that the DenseMaps have been initialized already.
   InterExplodedGraphMap ForwardMap;
-  G.reset(OriginalGraph->trim(Nodes, &ForwardMap, &InverseMap));
+  G = OriginalGraph->trim(Nodes, &ForwardMap, &InverseMap);
 
   // Find the (first) error node in the trimmed graph.  We just need to consult
   // the node map which maps from nodes in the original graph to nodes
