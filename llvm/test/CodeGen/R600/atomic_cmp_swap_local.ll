@@ -1,4 +1,5 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -check-prefix=CI -check-prefix=FUNC %s
 
 ; FUNC-LABEL: @lds_atomic_cmpxchg_ret_i32_offset:
 ; SI: S_LOAD_DWORD [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
@@ -33,5 +34,19 @@ define void @lds_atomic_cmpxchg_ret_i64_offset(i64 addrspace(1)* %out, i64 addrs
   %pair = cmpxchg i64 addrspace(3)* %gep, i64 7, i64 %swap seq_cst monotonic
   %result = extractvalue { i64, i1 } %pair, 0
   store i64 %result, i64 addrspace(1)* %out, align 8
+  ret void
+}
+
+; FUNC-LABEL: @lds_atomic_cmpxchg_ret_i32_bad_si_offset
+; SI: DS_CMPST_RTN_B32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, 0x0
+; CI: DS_CMPST_RTN_B32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, 0x10
+; SI: S_ENDPGM
+define void @lds_atomic_cmpxchg_ret_i32_bad_si_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr, i32 %swap, i32 %a, i32 %b) nounwind {
+  %sub = sub i32 %a, %b
+  %add = add i32 %sub, 4
+  %gep = getelementptr i32 addrspace(3)* %ptr, i32 %add
+  %pair = cmpxchg i32 addrspace(3)* %gep, i32 7, i32 %swap seq_cst monotonic
+  %result = extractvalue { i32, i1 } %pair, 0
+  store i32 %result, i32 addrspace(1)* %out, align 4
   ret void
 }

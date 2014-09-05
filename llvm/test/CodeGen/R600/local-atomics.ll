@@ -1,4 +1,5 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -check-prefix=CI -check-prefix=FUNC %s
 
 ; FUNC-LABEL: @lds_atomic_xchg_ret_i32:
 ; SI: S_LOAD_DWORD [[SPTR:s[0-9]+]],
@@ -47,6 +48,19 @@ define void @lds_atomic_add_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace
   ret void
 }
 
+; FUNC-LABEL: @lds_atomic_add_ret_i32_bad_si_offset
+; SI: DS_ADD_RTN_U32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, 0x0
+; CI: DS_ADD_RTN_U32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, 0x10
+; SI: S_ENDPGM
+define void @lds_atomic_add_ret_i32_bad_si_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr, i32 %a, i32 %b) nounwind {
+  %sub = sub i32 %a, %b
+  %add = add i32 %sub, 4
+  %gep = getelementptr i32 addrspace(3)* %ptr, i32 %add
+  %result = atomicrmw add i32 addrspace(3)* %gep, i32 4 seq_cst
+  store i32 %result, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
 ; FUNC-LABEL: @lds_atomic_inc_ret_i32:
 ; SI: S_MOV_B32 [[SNEGONE:s[0-9]+]], -1
 ; SI: V_MOV_B32_e32 [[NEGONE:v[0-9]+]], [[SNEGONE]]
@@ -65,6 +79,19 @@ define void @lds_atomic_inc_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %p
 ; SI: S_ENDPGM
 define void @lds_atomic_inc_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
   %gep = getelementptr i32 addrspace(3)* %ptr, i32 4
+  %result = atomicrmw add i32 addrspace(3)* %gep, i32 1 seq_cst
+  store i32 %result, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; FUNC-LABEL: @lds_atomic_inc_ret_i32_bad_si_offset:
+; SI: DS_INC_RTN_U32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, 0x0
+; CI: DS_INC_RTN_U32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, 0x10
+; SI: S_ENDPGM
+define void @lds_atomic_inc_ret_i32_bad_si_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr, i32 %a, i32 %b) nounwind {
+  %sub = sub i32 %a, %b
+  %add = add i32 %sub, 4
+  %gep = getelementptr i32 addrspace(3)* %ptr, i32 %add
   %result = atomicrmw add i32 addrspace(3)* %gep, i32 1 seq_cst
   store i32 %result, i32 addrspace(1)* %out, align 4
   ret void
