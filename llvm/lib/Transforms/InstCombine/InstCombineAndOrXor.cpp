@@ -2614,17 +2614,25 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         match(Op1I, m_And(m_Specific(A), m_Not(m_Specific(B))))) {
       return BinaryOperator::CreateXor(A, B);
     }
-    // (A ^ B)^(A | B) -> A & B
-    if (match(Op0I, m_Xor(m_Value(A), m_Value(B))) &&
-        match(Op1I, m_Or(m_Value(C), m_Value(D)))) {
-      if ((A == C && B == D) || (A == D && B == C))
-        return BinaryOperator::CreateAnd(A, B);
+    // (A ^ C)^(A | B) -> ((~A) & B) ^ C
+    if (match(Op0I, m_Xor(m_Value(D), m_Value(C))) &&
+        match(Op1I, m_Or(m_Value(A), m_Value(B)))) {
+      if (D == A)
+        return BinaryOperator::CreateXor(
+            Builder->CreateAnd(Builder->CreateNot(A), B), C);
+      if (D == B)
+        return BinaryOperator::CreateXor(
+            Builder->CreateAnd(Builder->CreateNot(B), A), C);
     }
-    // (A | B)^(A ^ B) -> A & B
+    // (A | B)^(A ^ C) -> ((~A) & B) ^ C
     if (match(Op0I, m_Or(m_Value(A), m_Value(B))) &&
-        match(Op1I, m_Xor(m_Value(C), m_Value(D)))) {
-      if ((A == C && B == D) || (A == D && B == C))
-        return BinaryOperator::CreateAnd(A, B);
+        match(Op1I, m_Xor(m_Value(D), m_Value(C)))) {
+      if (D == A)
+        return BinaryOperator::CreateXor(
+            Builder->CreateAnd(Builder->CreateNot(A), B), C);
+      if (D == B)
+        return BinaryOperator::CreateXor(
+            Builder->CreateAnd(Builder->CreateNot(B), A), C);
     }
     // (A & B) ^ (A ^ B) -> (A | B)
     if (match(Op0I, m_And(m_Value(A), m_Value(B))) &&
@@ -2636,12 +2644,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       return BinaryOperator::CreateOr(A, B);
   }
 
-  // (A | B)^(~A) -> (A | ~B)
   Value *A = nullptr, *B = nullptr;
-  if (match(Op0, m_Or(m_Value(A), m_Value(B))) &&
-      match(Op1, m_Not(m_Specific(A))))
-    return BinaryOperator::CreateOr(A, Builder->CreateNot(B));
-
   // (A & ~B) ^ (~A) -> ~(A & B)
   if (match(Op0, m_And(m_Value(A), m_Not(m_Value(B)))) &&
       match(Op1, m_Not(m_Specific(A))))
