@@ -225,12 +225,14 @@ void MCJIT::finalizeLoadedModules() {
 void MCJIT::finalizeObject() {
   MutexGuard locked(lock);
 
-  for (ModulePtrSet::iterator I = OwnedModules.begin_added(),
-                              E = OwnedModules.end_added();
-       I != E; ++I) {
-    Module *M = *I;
+  // Generate code for module is going to move objects out of the 'added' list,
+  // so we need to copy that out before using it:
+  SmallVector<Module*, 16> ModsToAdd;
+  for (auto M : OwnedModules.added())
+    ModsToAdd.push_back(M);
+
+  for (auto M : ModsToAdd)
     generateCodeForModule(M);
-  }
 
   finalizeLoadedModules();
 }
