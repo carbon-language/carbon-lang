@@ -246,10 +246,14 @@ uptr __asan_load_cxx_array_cookie(uptr *p) {
   // which means that we are going to get double-free. So, return 0 to avoid
   // infinite loop of destructors. We don't want to report a double-free here
   // though, so print a warning just in case.
-  CHECK_EQ(sval, kAsanHeapFreeMagic);
-  Report("AddressSanitizer: loaded array cookie from free-d memory; "
-         "expect a double-free report\n");
-  return 0;
+  // CHECK_EQ(sval, kAsanHeapFreeMagic);
+  if (sval == kAsanHeapFreeMagic) {
+    Report("AddressSanitizer: loaded array cookie from free-d memory; "
+           "expect a double-free report\n");
+    return 0;
+  }
+  // FIXME: apparently it can be something else; need to find a reproducer.
+  return *p;
 }
 
 // This is a simplified version of __asan_(un)poison_memory_region, which
