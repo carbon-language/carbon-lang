@@ -325,3 +325,50 @@ define <16 x i8> @PR20540(<8 x i8> %a) {
   %shuffle = shufflevector <8 x i8> %a, <8 x i8> zeroinitializer, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 8, i32 8, i32 8, i32 8, i32 8, i32 8, i32 8>
   ret <16 x i8> %shuffle
 }
+
+define <16 x i8> @shuffle_v16i8_16_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz(i8 %i) {
+; SSE2-LABEL: @shuffle_v16i8_16_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movzbl {{.*}}, %[[R:.*]]
+; SSE2-NEXT:    movd %[[R]], %xmm0
+; SSE2-NEXT:    retq
+  %a = insertelement <16 x i8> undef, i8 %i, i32 0
+  %shuffle = shufflevector <16 x i8> zeroinitializer, <16 x i8> %a, <16 x i32> <i32 16, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+  ret <16 x i8> %shuffle
+}
+
+define <16 x i8> @shuffle_v16i8_zz_zz_zz_zz_zz_16_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz(i8 %i) {
+; SSE2-LABEL: @shuffle_v16i8_zz_zz_zz_zz_zz_16_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movzbl {{.*}}, %[[R:.*]]
+; SSE2-NEXT:    movd %[[R]], %xmm0
+; SSE2-NEXT:    pslldq $5, %xmm0
+; SSE2-NEXT:    retq
+  %a = insertelement <16 x i8> undef, i8 %i, i32 0
+  %shuffle = shufflevector <16 x i8> zeroinitializer, <16 x i8> %a, <16 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 16, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
+  ret <16 x i8> %shuffle
+}
+
+define <16 x i8> @shuffle_v16i8_zz_uu_uu_zz_uu_uu_zz_zz_zz_zz_zz_zz_zz_zz_zz_16(i8 %i) {
+; SSE2-LABEL: @shuffle_v16i8_zz_uu_uu_zz_uu_uu_zz_zz_zz_zz_zz_zz_zz_zz_zz_16
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movzbl {{.*}}, %[[R:.*]]
+; SSE2-NEXT:    movd %[[R]], %xmm0
+; SSE2-NEXT:    pslldq $15, %xmm0
+; SSE2-NEXT:    retq
+  %a = insertelement <16 x i8> undef, i8 %i, i32 0
+  %shuffle = shufflevector <16 x i8> zeroinitializer, <16 x i8> %a, <16 x i32> <i32 0, i32 undef, i32 undef, i32 3, i32 undef, i32 undef, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 16>
+  ret <16 x i8> %shuffle
+}
+
+define <16 x i8> @shuffle_v16i8_zz_zz_19_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz(i8 %i) {
+; SSE2-LABEL: @shuffle_v16i8_zz_zz_19_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movzbl {{.*}}, %[[R:.*]]
+; SSE2-NEXT:    movd %[[R]], %xmm0
+; SSE2-NEXT:    pslldq $2, %xmm0
+; SSE2-NEXT:    retq
+  %a = insertelement <16 x i8> undef, i8 %i, i32 3
+  %shuffle = shufflevector <16 x i8> zeroinitializer, <16 x i8> %a, <16 x i32> <i32 0, i32 1, i32 19, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+  ret <16 x i8> %shuffle
+}

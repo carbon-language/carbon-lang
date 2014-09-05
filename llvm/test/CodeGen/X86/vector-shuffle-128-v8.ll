@@ -771,3 +771,62 @@ define <8 x i16> @shuffle_v8i16_XX4X8acX(<8 x i16> %a, <8 x i16> %b) {
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 undef, i32 undef, i32 4, i32 undef, i32 8, i32 10, i32 12, i32 undef>
   ret <8 x i16> %shuffle
 }
+
+define <8 x i16> @shuffle_v8i16_8zzzzzzz(i16 %i) {
+; ALL-LABEL: @shuffle_v8i16_8zzzzzzz
+; ALL:       # BB#0:
+; ALL-NEXT:    movzwl {{.*}}, %[[R:.*]]
+; ALL-NEXT:    movd %[[R]], %xmm0
+; ALL-NEXT:    retq
+  %a = insertelement <8 x i16> undef, i16 %i, i32 0
+  %shuffle = shufflevector <8 x i16> zeroinitializer, <8 x i16> %a, <8 x i32> <i32 8, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_z8zzzzzz(i16 %i) {
+; ALL-LABEL: @shuffle_v8i16_z8zzzzzz
+; ALL:       # BB#0:
+; ALL-NEXT:    movzwl {{.*}}, %[[R:.*]]
+; ALL-NEXT:    movd %[[R]], %xmm0
+; ALL-NEXT:    pslldq $2, %xmm0
+; ALL-NEXT:    retq
+  %a = insertelement <8 x i16> undef, i16 %i, i32 0
+  %shuffle = shufflevector <8 x i16> zeroinitializer, <8 x i16> %a, <8 x i32> <i32 2, i32 8, i32 3, i32 7, i32 6, i32 5, i32 4, i32 3>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_zzzzz8zz(i16 %i) {
+; ALL-LABEL: @shuffle_v8i16_zzzzz8zz
+; ALL:       # BB#0:
+; ALL-NEXT:    movzwl {{.*}}, %[[R:.*]]
+; ALL-NEXT:    movd %[[R]], %xmm0
+; ALL-NEXT:    pslldq $10, %xmm0
+; ALL-NEXT:    retq
+  %a = insertelement <8 x i16> undef, i16 %i, i32 0
+  %shuffle = shufflevector <8 x i16> zeroinitializer, <8 x i16> %a, <8 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 8, i32 0, i32 0>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_zuuzuuz8(i16 %i) {
+; ALL-LABEL: @shuffle_v8i16_zuuzuuz8
+; ALL:       # BB#0:
+; ALL-NEXT:    movzwl {{.*}}, %[[R:.*]]
+; ALL-NEXT:    movd %[[R]], %xmm0
+; ALL-NEXT:    pslldq $14, %xmm0
+; ALL-NEXT:    retq
+  %a = insertelement <8 x i16> undef, i16 %i, i32 0
+  %shuffle = shufflevector <8 x i16> zeroinitializer, <8 x i16> %a, <8 x i32> <i32 0, i32 undef, i32 undef, i32 3, i32 undef, i32 undef, i32 6, i32 8>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_zzBzzzzz(i16 %i) {
+; ALL-LABEL: @shuffle_v8i16_zzBzzzzz
+; ALL:       # BB#0:
+; ALL-NEXT:    movzwl {{.*}}, %[[R:.*]]
+; ALL-NEXT:    movd %[[R]], %xmm0
+; ALL-NEXT:    pslldq $4, %xmm0
+; ALL-NEXT:    retq
+  %a = insertelement <8 x i16> undef, i16 %i, i32 3
+  %shuffle = shufflevector <8 x i16> zeroinitializer, <8 x i16> %a, <8 x i32> <i32 0, i32 1, i32 11, i32 3, i32 4, i32 5, i32 6, i32 7>
+  ret <8 x i16> %shuffle
+}
