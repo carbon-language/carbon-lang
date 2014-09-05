@@ -254,14 +254,14 @@ class MipsAsmParser : public MCTargetAsmParser {
         ComputeAvailableFeatures(STI.ToggleFeature(ArchFeature)));
   }
 
-  void setFeatureBits(unsigned Feature, StringRef FeatureString) {
+  void setFeatureBits(uint64_t Feature, StringRef FeatureString) {
     if (!(STI.getFeatureBits() & Feature)) {
       setAvailableFeatures(
           ComputeAvailableFeatures(STI.ToggleFeature(FeatureString)));
     }
   }
 
-  void clearFeatureBits(unsigned Feature, StringRef FeatureString) {
+  void clearFeatureBits(uint64_t Feature, StringRef FeatureString) {
     if (STI.getFeatureBits() & Feature) {
       setAvailableFeatures(
           ComputeAvailableFeatures(STI.ToggleFeature(FeatureString)));
