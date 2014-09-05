@@ -871,13 +871,13 @@ RuntimeDyld::loadObject(std::unique_ptr<ObjectBuffer> InputBuffer) {
   return Dyld->loadObject(std::move(InputImage));
 }
 
-void *RuntimeDyld::getSymbolAddress(StringRef Name) {
+void *RuntimeDyld::getSymbolAddress(StringRef Name) const {
   if (!Dyld)
     return nullptr;
   return Dyld->getSymbolAddress(Name);
 }
 
-uint64_t RuntimeDyld::getSymbolLoadAddress(StringRef Name) {
+uint64_t RuntimeDyld::getSymbolLoadAddress(StringRef Name) const {
   if (!Dyld)
     return 0;
   return Dyld->getSymbolLoadAddress(Name);
