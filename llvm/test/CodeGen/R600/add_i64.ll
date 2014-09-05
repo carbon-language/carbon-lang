@@ -43,9 +43,9 @@ define void @sgpr_operand_reversed(i64 addrspace(1)* noalias %out, i64 addrspace
 
 
 ; SI-LABEL: @test_v2i64_sreg:
-; SI: S_ADD_I32
+; SI: S_ADD_U32
 ; SI: S_ADDC_U32
-; SI: S_ADD_I32
+; SI: S_ADD_U32
 ; SI: S_ADDC_U32
 define void @test_v2i64_sreg(<2 x i64> addrspace(1)* noalias %out, <2 x i64> %a, <2 x i64> %b) {
   %result = add <2 x i64> %a, %b

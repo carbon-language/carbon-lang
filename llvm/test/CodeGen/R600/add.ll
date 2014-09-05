@@ -117,7 +117,7 @@ entry:
 }
 
 ; FUNC-LABEL: @add64
-; SI-CHECK: S_ADD_I32
+; SI-CHECK: S_ADD_U32
 ; SI-CHECK: S_ADDC_U32
 define void @add64(i64 addrspace(1)* %out, i64 %a, i64 %b) {
 entry:

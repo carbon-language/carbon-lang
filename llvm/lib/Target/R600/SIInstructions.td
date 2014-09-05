@@ -1858,11 +1858,11 @@ def : Pat <
 // SOP2 Patterns
 //===----------------------------------------------------------------------===//
 
-// V_ADD_I32_e32/S_ADD_I32 produces carry in VCC/SCC. For the vector
+// V_ADD_I32_e32/S_ADD_U32 produces carry in VCC/SCC. For the vector
 // case, the sgpr-copies pass will fix this to use the vector version.
 def : Pat <
   (i32 (addc i32:$src0, i32:$src1)),
-  (S_ADD_I32 $src0, $src1)
+  (S_ADD_U32 $src0, $src1)
 >;
 
 } // Predicates = [isSI, isCFDepth0]

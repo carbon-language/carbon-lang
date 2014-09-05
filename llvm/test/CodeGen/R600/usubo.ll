@@ -40,7 +40,7 @@ define void @v_usubo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32
 }
 
 ; FUNC-LABEL: @s_usubo_i64
-; SI: S_SUB_I32
+; SI: S_SUB_U32
 ; SI: S_SUBB_U32
 define void @s_usubo_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %carryout, i64 %a, i64 %b) nounwind {
   %usub = call { i64, i1 } @llvm.usub.with.overflow.i64(i64 %a, i64 %b) nounwind

@@ -31,7 +31,7 @@ define void @trunc_load_shl_i64(i32 addrspace(1)* %out, i64 %a) {
 
 ; SI-LABEL: @trunc_shl_i64:
 ; SI: S_LOAD_DWORDX2 s{{\[}}[[LO_SREG:[0-9]+]]:{{[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0xd
-; SI: S_ADD_I32 s[[LO_SREG2:[0-9]+]], s[[LO_SREG]],
+; SI: S_ADD_U32 s[[LO_SREG2:[0-9]+]], s[[LO_SREG]],
 ; SI: S_ADDC_U32
 ; SI: S_LSHL_B64 s{{\[}}[[LO_SHL:[0-9]+]]:{{[0-9]+\]}}, s{{\[}}[[LO_SREG2]]:{{[0-9]+\]}}, 2
 ; SI: V_MOV_B32_e32 v[[LO_VREG:[0-9]+]], s[[LO_SHL]]

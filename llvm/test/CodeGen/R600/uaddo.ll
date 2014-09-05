@@ -43,7 +43,7 @@ define void @v_uaddo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32
 }
 
 ; FUNC-LABEL: @s_uaddo_i64
-; SI: S_ADD_I32
+; SI: S_ADD_U32
 ; SI: S_ADDC_U32
 define void @s_uaddo_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %carryout, i64 %a, i64 %b) nounwind {
   %uadd = call { i64, i1 } @llvm.uadd.with.overflow.i64(i64 %a, i64 %b) nounwind

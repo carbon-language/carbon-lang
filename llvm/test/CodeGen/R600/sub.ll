@@ -40,7 +40,7 @@ define void @test4(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
 }
 
 ; FUNC-LABEL: @s_sub_i64:
-; SI: S_SUB_I32
+; SI: S_SUB_U32
 ; SI: S_SUBB_U32
 
 ; EG-DAG: SETGE_UINT

@@ -494,7 +494,7 @@ bool SIInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     BuildMI(MBB, MI, DL, get(AMDGPU::S_GETPC_B64), Reg);
 
     // Add 32-bit offset from this instruction to the start of the constant data.
-    BuildMI(MBB, MI, DL, get(AMDGPU::S_ADD_I32), RegLo)
+    BuildMI(MBB, MI, DL, get(AMDGPU::S_ADD_U32), RegLo)
             .addReg(RegLo)
             .addTargetIndex(AMDGPU::TI_CONSTDATA_START)
             .addReg(AMDGPU::SCC, RegState::Define | RegState::Implicit);
@@ -904,9 +904,11 @@ unsigned SIInstrInfo::getVALUOp(const MachineInstr &MI) {
   case AMDGPU::S_MOV_B32:
     return MI.getOperand(1).isReg() ?
            AMDGPU::COPY : AMDGPU::V_MOV_B32_e32;
-  case AMDGPU::S_ADD_I32: return AMDGPU::V_ADD_I32_e32;
+  case AMDGPU::S_ADD_I32:
+  case AMDGPU::S_ADD_U32: return AMDGPU::V_ADD_I32_e32;
   case AMDGPU::S_ADDC_U32: return AMDGPU::V_ADDC_U32_e32;
-  case AMDGPU::S_SUB_I32: return AMDGPU::V_SUB_I32_e32;
+  case AMDGPU::S_SUB_I32:
+  case AMDGPU::S_SUB_U32: return AMDGPU::V_SUB_I32_e32;
   case AMDGPU::S_SUBB_U32: return AMDGPU::V_SUBB_U32_e32;
   case AMDGPU::S_MUL_I32: return AMDGPU::V_MUL_LO_I32;
   case AMDGPU::S_AND_B32: return AMDGPU::V_AND_B32_e32;
