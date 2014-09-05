@@ -124,7 +124,26 @@ DynamicLoaderPOSIXDYLD::DidAttach()
         ModuleList module_list;
         module_list.Append(executable);
         UpdateLoadedSections(executable, LLDB_INVALID_ADDRESS, load_offset);
-        LoadAllCurrentModules();
+
+        // When attaching to a target, there are two possible states:
+        // (1) We already crossed the entry point and therefore the rendezvous
+        //     structure is ready to be used and we can load the list of modules
+        //     and place the rendezvous breakpoint.
+        // (2) We didn't cross the entry point yet, so these structures are not
+        //     ready; we should behave as if we just launched the target and
+        //     call ProbeEntry(). This will place a breakpoint on the entry
+        //     point which itself will be hit after the rendezvous structure is
+        //     set up and will perform actions described in (1).
+        if (m_rendezvous.Resolve())
+        {
+            LoadAllCurrentModules();
+            SetRendezvousBreakpoint();
+        }
+        else
+        {
+            ProbeEntry();
+        }
+
         m_process->GetTarget().ModulesDidLoad(module_list);
     }
 }
