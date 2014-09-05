@@ -537,7 +537,7 @@ def : Pat<(fp_to_uint f32:$src0), (FLT_TO_UINT_eg (TRUNC $src0))>;
 // SHA-256 Patterns
 def : SHA256MaPattern <BFI_INT_eg, XOR_INT>;
 
-def : FROUNDPat <CNDGE_eg>;
+def : FROUNDPat <CNDGE_eg, CNDGT_eg>;
 
 def EG_ExportSwz : ExportSwzInst {
   let Word1{19-16} = 0; // BURST_COUNT

@@ -1,11 +1,13 @@
-; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=R600 --check-prefix=FUNC
+; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck %s --check-prefix=R600 --check-prefix=FUNC
 
 ; FUNC-LABEL: @f32
-; R600: FRACT
-; R600-DAG: ADD
-; R600-DAG: CEIL
-; R600-DAG: FLOOR
-; R600: CNDGE
+; R600: FRACT {{.*}}, [[ARG:KC[0-9]\[[0-9]+\]\.[XYZW]]]
+; R600-DAG: ADD  {{.*}}, -0.5
+; R600-DAG: CEIL {{.*}} [[ARG]]
+; R600-DAG: FLOOR {{.*}} [[ARG]]
+; R600-DAG: CNDGE
+; R600-DAG: CNDGT
+; R600: CNDGE {{[^,]+}}, [[ARG]]
 define void @f32(float addrspace(1)* %out, float %in) {
 entry:
   %0 = call float @llvm.round.f32(float %in)
