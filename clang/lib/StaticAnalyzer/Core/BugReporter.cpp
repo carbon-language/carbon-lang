@@ -2920,8 +2920,7 @@ bool TrimmedGraph::popNextReportGraph(ReportGraph &GraphWrapper) {
 
   // Create a new graph with a single path.  This is the graph
   // that will be returned to the caller.
-  ExplodedGraph *GNew = new ExplodedGraph();
-  GraphWrapper.Graph.reset(GNew);
+  auto GNew = llvm::make_unique<ExplodedGraph>();
   GraphWrapper.BackMap.clear();
 
   // Now walk from the error node up the BFS path, always taking the
@@ -2957,6 +2956,8 @@ bool TrimmedGraph::popNextReportGraph(ReportGraph &GraphWrapper) {
     OrigN = *std::min_element(OrigN->pred_begin(), OrigN->pred_end(),
                           PriorityCompare<false>(PriorityMap));
   }
+
+  GraphWrapper.Graph = std::move(GNew);
 
   return true;
 }
