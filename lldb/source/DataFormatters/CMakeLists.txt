@@ -21,5 +21,6 @@ add_lldb_library(lldbDataFormatters
   TypeFormat.cpp
   TypeSummary.cpp
   TypeSynthetic.cpp
+  TypeValidator.cpp
   ValueObjectPrinter.cpp
   )
