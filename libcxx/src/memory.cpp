@@ -121,7 +121,7 @@ __shared_weak_count::__get_deleter(const type_info&) const _NOEXCEPT
 
 #endif  // _LIBCPP_NO_RTTI
 
-#if __has_feature(cxx_atomic) && !_LIBCPP_HAS_NO_THREADS
+#if __has_feature(cxx_atomic) && !defined(_LIBCPP_HAS_NO_THREADS)
 
 static const std::size_t __sp_mut_count = 16;
 static pthread_mutex_t mut_back_imp[__sp_mut_count] =

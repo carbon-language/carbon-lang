@@ -374,7 +374,7 @@ template <class R, class Alloc> struct uses_allocator<packaged_task<R>, Alloc>;
 #pragma GCC system_header
 #endif
 
-#ifndef _LIBCPP_HAS_NO_THREADS
+#ifdef _LIBCPP_HAS_NO_THREADS
 #error <future> is not supported on this single threaded system
 #else // !_LIBCPP_HAS_NO_THREADS
 
