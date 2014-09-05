@@ -51,11 +51,11 @@ class DWARFUnit {
   std::vector<DWARFDebugInfoEntryMinimal> DieArray;
 
   class DWOHolder {
-    std::unique_ptr<object::ObjectFile> DWOFile;
+    object::OwningBinary<object::ObjectFile> DWOFile;
     std::unique_ptr<DWARFContext> DWOContext;
     DWARFUnit *DWOU;
   public:
-    DWOHolder(std::unique_ptr<object::ObjectFile> DWOFile);
+    DWOHolder(StringRef DWOPath);
     DWARFUnit *getUnit() const { return DWOU; }
   };
   std::unique_ptr<DWOHolder> DWO;

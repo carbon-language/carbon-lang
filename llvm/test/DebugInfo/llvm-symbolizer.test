@@ -19,9 +19,14 @@ RUN: echo "%p/Inputs/macho-universal:x86_64 0x100000f05" >> %t.input
 RUN: echo "%p/Inputs/llvm-symbolizer-dwo-test 0x400514" >> %t.input
 RUN: echo "%p/Inputs/fission-ranges.elf-x86_64 0x720" >> %t.input
 RUN: echo "%p/Inputs/arange-overlap.elf-x86_64 0x714" >> %t.input
+RUN: cp %p/Inputs/split-dwarf-test.dwo %T
+RUN: echo "%p/Inputs/split-dwarf-test 0x4004d0" >> %t.input
+RUN: echo "%p/Inputs/split-dwarf-test 0x4004c0" >> %t.input
 
 RUN: llvm-symbolizer --functions=linkage --inlining --demangle=false \
 RUN:    --default-arch=i386 < %t.input | FileCheck %s
+
+REQUIRES: shell
 
 CHECK:       main
 CHECK-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test.cc:16
@@ -97,6 +102,14 @@ CHECK-NEXT: {{.*}}fission-ranges.cc:6
 
 CHECK: _ZN1S3bazEv
 CHECK-NEXT: {{.*}}arange-overlap.cc:6
+
+CHECK: _Z3fooi
+CHECK-NEXT: {{.*}}split-dwarf-test.cc
+CHECK-NEXT: main
+CHECK-NEXT: {{.*}}split-dwarf-test.cc
+
+CHECK: _Z3fooi
+CHECK-NEXT: {{.*}}split-dwarf-test.cc
 
 RUN: echo "unexisting-file 0x1234" > %t.input2
 RUN: llvm-symbolizer < %t.input2
