@@ -31,6 +31,7 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -40,6 +41,13 @@
 #include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 using namespace dwarf;
+
+// Disabled by default because it hits bug 17350 in GNU ld (gold is fine)
+static cl::opt<bool>
+    EnableStructorCOMDAT("enable-structor-comdat", cl::Hidden,
+                         cl::desc("Use comdats to keep only one copy of a "
+                                  "constructor/destructor invocation"),
+                         cl::init(false));
 
 //===----------------------------------------------------------------------===//
 //                                  ELF
@@ -363,6 +371,9 @@ static const MCSectionELF *getStaticStructorSection(MCContext &Ctx,
                                                     bool IsCtor,
                                                     unsigned Priority,
                                                     const MCSymbol *KeySym) {
+  if (!EnableStructorCOMDAT)
+    KeySym = nullptr;
+
   std::string Name;
   unsigned Type;
   unsigned Flags = ELF::SHF_ALLOC | ELF::SHF_WRITE;
