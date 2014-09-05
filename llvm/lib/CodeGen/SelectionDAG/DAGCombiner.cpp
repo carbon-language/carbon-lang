@@ -619,7 +619,7 @@ static SDValue GetNegatedExpression(SDValue Op, SelectionDAG &DAG,
   }
 }
 
-// isSetCCEquivalent - Return true if this node is a setcc, or is a select_cc
+// Return true if this node is a setcc, or is a select_cc
 // that selects between the target values used for true and false, making it
 // equivalent to a setcc. Also, set the incoming LHS, RHS, and CC references to
 // the appropriate nodes based on the type of node we are checking. This
@@ -675,7 +675,7 @@ static SDNode *isConstantBuildVectorOrConstantInt(SDValue N) {
   if (isa<ConstantSDNode>(N))
     return N.getNode();
   BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(N);
-  if(BV && BV->isConstant())
+  if (BV && BV->isConstant())
     return BV;
   return nullptr;
 }
