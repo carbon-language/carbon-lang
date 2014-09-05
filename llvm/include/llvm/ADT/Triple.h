@@ -90,7 +90,11 @@ public:
     ARMSubArch_v6t2,
     ARMSubArch_v5,
     ARMSubArch_v5te,
-    ARMSubArch_v4t
+    ARMSubArch_v4t,
+
+    KalimbaSubArch_v3,
+    KalimbaSubArch_v4,
+    KalimbaSubArch_v5
   };
   enum VendorType {
     UnknownVendor,
