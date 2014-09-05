@@ -49,6 +49,7 @@ math/sincos_helpers.cl
 relational/all.cl
 relational/any.cl
 relational/isequal.cl
+relational/isfinite.cl
 relational/isgreater.cl
 relational/isgreaterequal.cl
 relational/isinf.cl

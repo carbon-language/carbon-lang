@@ -114,6 +114,7 @@
 #include <clc/relational/any.h>
 #include <clc/relational/bitselect.h>
 #include <clc/relational/isequal.h>
+#include <clc/relational/isfinite.h>
 #include <clc/relational/isgreater.h>
 #include <clc/relational/isgreaterequal.h>
 #include <clc/relational/isinf.h>
