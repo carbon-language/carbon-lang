@@ -68,6 +68,11 @@ EnableEarlyIfConversion("aarch64-enable-early-ifcvt", cl::Hidden,
                         cl::desc("Run early if-conversion"),
                         cl::init(true));
 
+static cl::opt<bool>
+EnableCondOpt("aarch64-condopt",
+              cl::desc("Enable the condition optimizer pass"),
+              cl::init(true), cl::Hidden);
+
 
 extern "C" void LLVMInitializeAArch64Target() {
   // Register the target.
@@ -182,6 +187,8 @@ bool AArch64PassConfig::addInstSelector() {
 }
 
 bool AArch64PassConfig::addILPOpts() {
+  if (EnableCondOpt)
+    addPass(createAArch64ConditionOptimizerPass());
   if (EnableCCMP)
     addPass(createAArch64ConditionalCompares());
   if (EnableMCR)

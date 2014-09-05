@@ -27,6 +27,7 @@ add_llvm_target(AArch64CodeGen
   AArch64ExpandPseudoInsts.cpp
   AArch64FastISel.cpp
   AArch64FrameLowering.cpp
+  AArch64ConditionOptimizer.cpp
   AArch64ISelDAGToDAG.cpp
   AArch64ISelLowering.cpp
   AArch64InstrInfo.cpp
