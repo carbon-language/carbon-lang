@@ -124,6 +124,7 @@
 #include <clc/relational/isnan.h>
 #include <clc/relational/isnormal.h>
 #include <clc/relational/isnotequal.h>
+#include <clc/relational/isunordered.h>
 #include <clc/relational/select.h>
 #include <clc/relational/signbit.h>
 
