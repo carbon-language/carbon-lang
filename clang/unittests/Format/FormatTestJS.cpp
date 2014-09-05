@@ -123,6 +123,11 @@ TEST_F(FormatTestJS, ContainerLiterals) {
                "  // comment for tasks\n"
                "  tasks: false\n"
                "};");
+  verifyFormat("return {\n"
+               "  'finish':\n"
+               "      //\n"
+               "      a\n"
+               "};");
 }
 
 TEST_F(FormatTestJS, SpacesInContainerLiterals) {
