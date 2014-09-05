@@ -56,6 +56,7 @@ relational/isinf.cl
 relational/isless.cl
 relational/islessequal.cl
 relational/isnan.cl
+relational/isnormal.cl
 relational/isnotequal.cl
 relational/signbit.cl
 shared/clamp.cl
