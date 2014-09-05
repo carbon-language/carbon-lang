@@ -91,6 +91,10 @@ bool InlineAsm::ConstraintInfo::Parse(StringRef Str,
   if (*I == '~') {
     Type = isClobber;
     ++I;
+
+    // '{' must immediately follow '~'.
+    if (I != E && *I != '{')
+      return true;
   } else if (*I == '=') {
     ++I;
     Type = isOutput;
