@@ -358,8 +358,11 @@ TargetLoweringObjectFileELF::getSectionForConstant(SectionKind Kind,
   return DataRelROSection;
 }
 
-const MCSection *TargetLoweringObjectFileELF::getStaticCtorSection(
-    unsigned Priority, const MCSymbol *KeySym) const {
+static const MCSectionELF *getStaticStructorSection(MCContext &Ctx,
+                                                    bool UseInitArray,
+                                                    bool IsCtor,
+                                                    unsigned Priority,
+                                                    const MCSymbol *KeySym) {
   std::string Name;
   unsigned Type;
   unsigned Flags = ELF::SHF_ALLOC | ELF::SHF_WRITE;
@@ -370,16 +373,24 @@ const MCSection *TargetLoweringObjectFileELF::getStaticCtorSection(
     Flags |= ELF::SHF_GROUP;
 
   if (UseInitArray) {
-    Name = ".init_array";
+    if (IsCtor) {
+      Type = ELF::SHT_INIT_ARRAY;
+      Name = ".init_array";
+    } else {
+      Type = ELF::SHT_FINI_ARRAY;
+      Name = ".fini_array";
+    }
     if (Priority != 65535) {
       Name += '.';
       Name += utostr(Priority);
     }
-    Type = ELF::SHT_INIT_ARRAY;
   } else {
     // The default scheme is .ctor / .dtor, so we have to invert the priority
     // numbering.
-    Name = std::string(".ctors");
+    if (IsCtor)
+      Name = ".ctors";
+    else
+      Name = ".dtors";
     if (Priority != 65535) {
       Name += '.';
       Name += utostr(65535 - Priority);
@@ -387,39 +398,19 @@ const MCSection *TargetLoweringObjectFileELF::getStaticCtorSection(
     Type = ELF::SHT_PROGBITS;
   }
 
-  return getContext().getELFSection(Name, Type, Flags, Kind, 0, COMDAT);
+  return Ctx.getELFSection(Name, Type, Flags, Kind, 0, COMDAT);
+}
+
+const MCSection *TargetLoweringObjectFileELF::getStaticCtorSection(
+    unsigned Priority, const MCSymbol *KeySym) const {
+  return getStaticStructorSection(getContext(), UseInitArray, true, Priority,
+                                  KeySym);
 }
 
 const MCSection *TargetLoweringObjectFileELF::getStaticDtorSection(
     unsigned Priority, const MCSymbol *KeySym) const {
-  std::string Name;
-  unsigned Type;
-  unsigned Flags = ELF::SHF_ALLOC | ELF::SHF_WRITE;
-  SectionKind Kind = SectionKind::getDataRel();
-  StringRef COMDAT = KeySym ? KeySym->getName() : "";
-
-  if (KeySym)
-    Flags |= ELF::SHF_GROUP;
-
-  if (UseInitArray) {
-    Name = ".fini_array";
-    if (Priority != 65535) {
-      Name += '.';
-      Name += utostr(Priority);
-    }
-    Type = ELF::SHT_FINI_ARRAY;
-  } else {
-    // The default scheme is .ctor / .dtor, so we have to invert the priority
-    // numbering.
-    Name = ".dtors";
-    if (Priority != 65535) {
-      Name += '.';
-      Name += utostr(65535 - Priority);
-    }
-    Type = ELF::SHT_PROGBITS;
-  }
-
-  return getContext().getELFSection(Name, Type, Flags, Kind, 0, COMDAT);
+  return getStaticStructorSection(getContext(), UseInitArray, false, Priority,
+                                  KeySym);
 }
 
 void
