@@ -226,6 +226,7 @@ class   QueueImpl;
 class   Target;
 class   TargetList;
 class   Thread;
+class   ThreadCollection;
 class   ThreadList;
 class   ThreadPlan;
 class   ThreadPlanBase;
@@ -381,6 +382,7 @@ namespace lldb {
     typedef std::weak_ptr<lldb_private::Target> TargetWP;
     typedef std::shared_ptr<lldb_private::Thread> ThreadSP;
     typedef std::weak_ptr<lldb_private::Thread> ThreadWP;
+    typedef std::shared_ptr<lldb_private::ThreadCollection> ThreadCollectionSP;
     typedef std::shared_ptr<lldb_private::ThreadPlan> ThreadPlanSP;
     typedef std::shared_ptr<lldb_private::ThreadPlanTracer> ThreadPlanTracerSP;
     typedef std::shared_ptr<lldb_private::Type> TypeSP;

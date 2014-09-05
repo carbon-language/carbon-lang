@@ -15,16 +15,14 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Utility/Iterable.h"
+#include "lldb/Target/ThreadCollection.h"
 
-
-// FIXME: Currently this is a thread list with lots of functionality for use only by
-// the process for which this is the thread list.  If we ever want a container class
-// to hand out that is just a random subset of threads, with iterator functionality,
-// then we should make that part a base class, and make a ProcessThreadList for the
-// process.
 namespace lldb_private {
 
-class ThreadList
+// This is a thread list with lots of functionality for use only by the process
+// for which this is the thread list.  A generic container class with iterator
+// functionality is ThreadCollection.
+class ThreadList : public ThreadCollection
 {
 friend class Process;
 
@@ -34,6 +32,7 @@ public:
 
     ThreadList (const ThreadList &rhs);
 
+    virtual
     ~ThreadList ();
 
     const ThreadList&
@@ -42,11 +41,6 @@ public:
     uint32_t
     GetSize(bool can_update = true);
 
-    void
-    AddThread (const lldb::ThreadSP &thread_sp);
-
-    void
-    InsertThread (const lldb::ThreadSP &thread_sp, uint32_t idx);
     // Return the selected thread if there is one.  Otherwise, return the thread
     // selected at index 0.
     lldb::ThreadSP
@@ -72,15 +66,6 @@ public:
     // is a unique index assigned
     lldb::ThreadSP
     GetThreadAtIndex (uint32_t idx, bool can_update = true);
-    
-    typedef std::vector<lldb::ThreadSP> collection;
-    typedef LockingAdaptedIterable<collection, lldb::ThreadSP, vector_adapter> ThreadIterable;
-    
-    ThreadIterable
-    Threads ()
-    {
-        return ThreadIterable(m_threads, GetMutex());
-    }
 
     lldb::ThreadSP
     FindThreadByID (lldb::tid_t tid, bool can_update = true);
@@ -143,7 +128,7 @@ public:
     void
     SetStopID (uint32_t stop_id);
 
-    Mutex &
+    virtual Mutex &
     GetMutex ();
     
     void
@@ -162,7 +147,6 @@ protected:
     //------------------------------------------------------------------
     Process *m_process; ///< The process that manages this thread list.
     uint32_t m_stop_id; ///< The process stop ID that this thread list is valid for.
-    collection m_threads; ///< The threads for this process.
     lldb::tid_t m_selected_tid;  ///< For targets that need the notion of a current thread.
 
 private:

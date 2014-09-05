@@ -22,17 +22,17 @@ using namespace lldb;
 using namespace lldb_private;
 
 ThreadList::ThreadList (Process *process) :
+    ThreadCollection(),
     m_process (process),
     m_stop_id (0),
-    m_threads(),
     m_selected_tid (LLDB_INVALID_THREAD_ID)
 {
 }
 
 ThreadList::ThreadList (const ThreadList &rhs) :
+    ThreadCollection(),
     m_process (rhs.m_process),
     m_stop_id (rhs.m_stop_id),
-    m_threads (),
     m_selected_tid ()
 {
     // Use the assignment operator since it uses the mutex
@@ -76,25 +76,6 @@ ThreadList::SetStopID (uint32_t stop_id)
 {
     m_stop_id = stop_id;
 }
-
-
-void
-ThreadList::AddThread (const ThreadSP &thread_sp)
-{
-    Mutex::Locker locker(GetMutex());
-    m_threads.push_back(thread_sp);
-}
-
-void
-ThreadList::InsertThread (const lldb::ThreadSP &thread_sp, uint32_t idx)
-{
-    Mutex::Locker locker(GetMutex());
-    if (idx < m_threads.size())
-        m_threads.insert(m_threads.begin() + idx, thread_sp);
-    else
-        m_threads.push_back (thread_sp);
-}
-
 
 uint32_t
 ThreadList::GetSize (bool can_update)
