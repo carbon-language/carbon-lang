@@ -43,6 +43,7 @@ add_lldb_library(lldbAPI
   SBSymbolContextList.cpp
   SBTarget.cpp
   SBThread.cpp
+  SBThreadCollection.cpp
   SBType.cpp
   SBTypeCategory.cpp
   SBTypeEnumMember.cpp
