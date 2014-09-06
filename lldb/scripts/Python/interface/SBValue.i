@@ -123,6 +123,9 @@ public:
     
     const char *
     GetObjectDescription ();
+    
+    const char *
+    GetTypeValidatorResult ();
 
     lldb::SBValue
     GetDynamicValue (lldb::DynamicValueType use_dynamic);

@@ -543,6 +543,36 @@ SBValue::GetObjectDescription ()
     return cstr;
 }
 
+const char *
+SBValue::GetTypeValidatorResult ()
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    const char *cstr = NULL;
+    ValueLocker locker;
+    lldb::ValueObjectSP value_sp(GetSP(locker));
+    if (value_sp)
+    {
+        const auto& validation(value_sp->GetValidationStatus());
+        if (TypeValidatorResult::Failure == validation.first)
+        {
+            if (validation.second.empty())
+                cstr = "unknown error";
+            else
+                cstr = validation.second.c_str();
+        }
+    }
+    if (log)
+    {
+        if (cstr)
+            log->Printf ("SBValue(%p)::GetTypeValidatorResult() => \"%s\"",
+                         static_cast<void*>(value_sp.get()), cstr);
+        else
+            log->Printf ("SBValue(%p)::GetTypeValidatorResult() => NULL",
+                         static_cast<void*>(value_sp.get()));
+    }
+    return cstr;
+}
+
 SBType
 SBValue::GetType()
 {
