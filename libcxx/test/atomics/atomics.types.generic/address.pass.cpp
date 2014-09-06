@@ -73,6 +73,8 @@
 #include <type_traits>
 #include <cassert>
 
+#include <cmpxchg_loop.h>
+
 template <class A, class T>
 void
 do_test()
@@ -96,7 +98,7 @@ do_test()
     assert(obj.exchange(T(3), std::memory_order_relaxed) == T(2));
     assert(obj == T(3));
     T x = obj;
-    assert(obj.compare_exchange_weak(x, T(2)) == true);
+    assert(cmpxchg_weak_loop(obj, x, T(2)) == true);
     assert(obj == T(2));
     assert(x == T(3));
     assert(obj.compare_exchange_weak(x, T(1)) == false);
