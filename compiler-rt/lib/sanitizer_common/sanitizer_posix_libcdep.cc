@@ -69,7 +69,7 @@ void DisableCoreDumperIfNecessary() {
 
 bool StackSizeIsUnlimited() {
   rlim_t stack_size = getlim(RLIMIT_STACK);
-  return (stack_size == (rlim_t)-1);
+  return (stack_size == RLIM_INFINITY);
 }
 
 void SetStackSizeLimitInBytes(uptr limit) {
@@ -79,11 +79,11 @@ void SetStackSizeLimitInBytes(uptr limit) {
 
 bool AddressSpaceIsUnlimited() {
   rlim_t as_size = getlim(RLIMIT_AS);
-  return (as_size == (rlim_t)-1);
+  return (as_size == RLIM_INFINITY);
 }
 
 void SetAddressSpaceUnlimited() {
-  setlim(RLIMIT_AS, -1);
+  setlim(RLIMIT_AS, RLIM_INFINITY);
   CHECK(AddressSpaceIsUnlimited());
 }
 
