@@ -133,6 +133,15 @@ M
 **MC**
     Machine Code
 
+N
+-
+
+**NFC**
+  "No functional change". Used in a commit message to indicate that a patch
+  is a pure refactoring/cleanup.
+  Usually used in the first line, so it is visible without opening the
+  actual commit email.
+
 O
 -
 .. _object pointer:
