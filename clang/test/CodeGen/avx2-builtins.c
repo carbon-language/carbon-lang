@@ -6,7 +6,7 @@
 #include <immintrin.h>
 
 __m256i test_mm256_mpsadbw_epu8(__m256i x, __m256i y) {
-  // CHECK: @llvm.x86.avx2.mpsadbw({{.*}}, {{.*}}, i32 3)
+  // CHECK: @llvm.x86.avx2.mpsadbw({{.*}}, {{.*}}, i8 3)
   return _mm256_mpsadbw_epu8(x, y, 3);
 }
 

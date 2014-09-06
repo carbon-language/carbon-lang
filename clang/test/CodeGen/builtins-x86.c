@@ -386,7 +386,7 @@ void f0() {
   tmp_V4f = __builtin_ia32_roundss(tmp_V4f, tmp_V4f, imm_i_0_16);
   tmp_V2d = __builtin_ia32_roundsd(tmp_V2d, tmp_V2d, imm_i_0_16);
   tmp_V2d = __builtin_ia32_roundpd(tmp_V2d, imm_i_0_16);
-  tmp_V4f = __builtin_ia32_insertps128(tmp_V4f, tmp_V4f, tmp_i);
+  tmp_V4f = __builtin_ia32_insertps128(tmp_V4f, tmp_V4f, imm_i_0_256);
 #endif
 
   tmp_V4d = __builtin_ia32_addsubpd256(tmp_V4d, tmp_V4d);
