@@ -59,7 +59,8 @@ public:
                ptr_depth != 0 ||
                use_synth == false ||
                be_raw == true ||
-               ignore_cap == true;
+               ignore_cap == true ||
+               run_validator == true;
     }
     
     DumpValueObjectOptions
@@ -67,17 +68,19 @@ public:
                       lldb::Format format = lldb::eFormatDefault,
                       lldb::TypeSummaryImplSP summary_sp = lldb::TypeSummaryImplSP());
 
-    bool show_types;
+    bool show_types : 1,
+         show_location : 1,
+         flat_output : 1,
+         use_objc : 1,
+         use_synth : 1,
+         be_raw : 1,
+         ignore_cap : 1,
+         run_validator : 1;
+    
     uint32_t no_summary_depth;
-    bool show_location;
-    bool flat_output;
-    bool use_objc;
     uint32_t max_depth;
     uint32_t ptr_depth;
     lldb::DynamicValueType use_dynamic;
-    bool use_synth;
-    bool be_raw;
-    bool ignore_cap;
 };
 
 } // namespace lldb_private

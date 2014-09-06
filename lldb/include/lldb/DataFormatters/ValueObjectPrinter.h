@@ -44,6 +44,7 @@ struct DumpValueObjectOptions
     bool m_hide_name;
     bool m_hide_value;
     bool m_be_raw;
+    bool m_run_validator;
     
     DumpValueObjectOptions() :
     m_max_ptr_depth(0),
@@ -63,7 +64,8 @@ struct DumpValueObjectOptions
     m_hide_root_type(false),  // provide a special compact display for "po"
     m_hide_name(false), // provide a special compact display for "po"
     m_hide_value(false), // provide a special compact display for "po"
-    m_be_raw(false)
+    m_be_raw(false),
+    m_run_validator(false)
     {}
     
     static const DumpValueObjectOptions
@@ -92,7 +94,8 @@ struct DumpValueObjectOptions
     m_hide_root_type(rhs.m_hide_root_type),
     m_hide_name(rhs.m_hide_name),
     m_hide_value(rhs.m_hide_value),
-    m_be_raw(rhs.m_be_raw)
+    m_be_raw(rhs.m_be_raw),
+    m_run_validator(rhs.m_run_validator)
     {}
     
     DumpValueObjectOptions&
@@ -250,6 +253,13 @@ struct DumpValueObjectOptions
         m_hide_value = hide_value;
         return *this;
     }
+    
+    DumpValueObjectOptions&
+    SetRunValidator (bool run = true)
+    {
+        m_run_validator = run;
+        return *this;
+    }
 };
     
 class ValueObjectPrinter
@@ -297,6 +307,9 @@ protected:
     ShouldPrintValueObject ();
     
     bool
+    ShouldPrintValidation ();
+    
+    bool
     IsNil ();
     
     bool
@@ -307,6 +320,12 @@ protected:
     
     bool
     IsAggregate ();
+    
+    bool
+    PrintValidationMarkerIfNeeded ();
+    
+    bool
+    PrintValidationErrorIfNeeded ();
     
     bool
     PrintLocationIfNeeded ();
@@ -385,6 +404,7 @@ private:
     std::string m_value;
     std::string m_summary;
     std::string m_error;
+    std::pair<TypeValidatorResult,std::string> m_validation;
     
     friend struct StringSummaryFormat;
     

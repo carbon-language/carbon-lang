@@ -71,6 +71,8 @@ ValueObjectPrinter::PrintValueObject ()
     
     if (ShouldPrintValueObject())
     {
+        PrintValidationMarkerIfNeeded();
+        
         PrintLocationIfNeeded();
         m_stream->Indent();
         
@@ -88,6 +90,8 @@ ValueObjectPrinter::PrintValueObject ()
         PrintChildrenIfNeeded (value_printed, summary_printed);
     else
         m_stream->EOL();
+    
+    PrintValidationErrorIfNeeded();
     
     return true;
 }
@@ -623,4 +627,45 @@ ValueObjectPrinter::PrintChildrenIfNeeded (bool value_printed,
     }
     else
         m_stream->EOL();
+}
+
+bool
+ValueObjectPrinter::ShouldPrintValidation ()
+{
+    return options.m_run_validator;
+}
+
+bool
+ValueObjectPrinter::PrintValidationMarkerIfNeeded ()
+{
+    if (!ShouldPrintValidation())
+        return false;
+    
+    m_validation = m_valobj->GetValidationStatus();
+    
+    if (TypeValidatorResult::Failure == m_validation.first)
+    {
+        m_stream->Printf("! ");
+        return true;
+    }
+    
+    return false;
+}
+
+bool
+ValueObjectPrinter::PrintValidationErrorIfNeeded ()
+{
+    if (!ShouldPrintValidation())
+        return false;
+    
+    if (TypeValidatorResult::Success == m_validation.first)
+        return false;
+    
+    if (m_validation.second.empty())
+        m_validation.second.assign("unknown error");
+    
+    m_stream->Printf(" ! validation error: %s", m_validation.second.c_str());
+    m_stream->EOL();
+    
+    return true;
 }
