@@ -38,6 +38,7 @@
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBThread.h"
+#include "lldb/API/SBThreadCollection.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/API/SBStringList.h"
 #include "lldb/API/SBUnixSignals.h"
@@ -1380,4 +1381,16 @@ SBProcess::GetExtendedBacktraceTypeAtIndex (uint32_t idx)
         }
     }
     return NULL;
+}
+
+SBThreadCollection
+SBProcess::GetHistoryThreads (addr_t addr)
+{
+    ProcessSP process_sp(GetSP());
+    SBThreadCollection threads;
+    if (process_sp)
+    {
+        threads = SBThreadCollection(process_sp->GetHistoryThreads(addr));
+    }
+    return threads;
 }

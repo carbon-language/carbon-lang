@@ -70,6 +70,24 @@ class AsanTestCase(TestBase):
                 'Memory allocated at', 'a.out`f1', 'main.c:%d' % self.line_malloc,
                 'Memory deallocated at', 'a.out`f2', 'main.c:%d' % self.line_free])
 
+        # do the same using SB API
+        process = self.dbg.GetSelectedTarget().process
+        val = process.GetSelectedThread().GetSelectedFrame().EvaluateExpression("pointer")
+        addr = val.GetValueAsUnsigned()
+        threads = process.GetHistoryThreads(addr);
+        self.assertEqual(threads.GetSize(), 2)
+        
+        history_thread = threads.GetThreadAtIndex(0)
+        self.assertTrue(history_thread.num_frames >= 2)
+        self.assertEqual(history_thread.frames[1].GetLineEntry().GetFileSpec().GetFilename(), "main.c")
+        self.assertEqual(history_thread.frames[1].GetLineEntry().GetLine(), self.line_malloc)
+        
+        history_thread = threads.GetThreadAtIndex(1)
+        self.assertTrue(history_thread.num_frames >= 2)
+        self.assertEqual(history_thread.frames[1].GetLineEntry().GetFileSpec().GetFilename(), "main.c")
+        self.assertEqual(history_thread.frames[1].GetLineEntry().GetLine(), self.line_free)
+
+        # now let's break when an ASan report occurs and try the API then
         self.runCmd("breakpoint set -n __asan_report_error")
 
         self.runCmd("continue")

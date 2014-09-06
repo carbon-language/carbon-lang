@@ -316,6 +316,9 @@ public:
     //------------------------------------------------------------------
     const char *
     GetExtendedBacktraceTypeAtIndex (uint32_t idx);
+    
+    lldb::SBThreadCollection
+    GetHistoryThreads (addr_t addr);
 
 protected:
     friend class SBAddress;

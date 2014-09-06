@@ -32,6 +32,7 @@
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/JITLoader.h"
+#include "lldb/Target/MemoryHistory.h"
 #include "lldb/Target/OperatingSystem.h"
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/CPPLanguageRuntime.h"
@@ -6021,4 +6022,20 @@ Process::ModulesDidLoad (ModuleList &module_list)
   }
 
   GetJITLoaders().ModulesDidLoad (module_list);
+}
+
+ThreadCollectionSP
+Process::GetHistoryThreads(lldb::addr_t addr)
+{
+    ThreadCollectionSP threads;
+    
+    const MemoryHistorySP &memory_history = MemoryHistory::FindPlugin(shared_from_this());
+    
+    if (! memory_history.get()) {
+        return threads;
+    }
+    
+    threads.reset(new ThreadCollection(memory_history->GetHistoryThreads(addr)));
+    
+    return threads;
 }
