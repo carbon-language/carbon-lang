@@ -26,6 +26,7 @@ entry:
 ; CHECK-LABEL: @smrd2
 ; CHECK: S_MOV_B32 s[[OFFSET:[0-9]]], 0x400
 ; CHECK: S_LOAD_DWORD s{{[0-9]}}, s[{{[0-9]:[0-9]}}], s[[OFFSET]] ; encoding: [0x0[[OFFSET]]
+; CHECK: S_ENDPGM
 define void @smrd2(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
 entry:
   %0 = getelementptr i32 addrspace(2)* %ptr, i64 256
@@ -36,14 +37,14 @@ entry:
 
 ; SMRD load with a 64-bit offset
 ; CHECK-LABEL: @smrd3
-; CHECK-DAG: S_MOV_B32 s[[SHI:[0-9]+]], 4
 ; CHECK-DAG: S_MOV_B32 s[[SLO:[0-9]+]], 0
+; CHECK-DAG: S_MOV_B32 s[[SHI:[0-9]+]], 4
 ; FIXME: We don't need to copy these values to VGPRs
 ; CHECK-DAG: V_MOV_B32_e32 v[[VHI:[0-9]+]], s[[SHI]]
 ; CHECK-DAG: V_MOV_B32_e32 v[[VLO:[0-9]+]], s[[SLO]]
 ; FIXME: We should be able to use S_LOAD_DWORD here
-; BUFFER_LOAD_DWORD v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}] + v[[[VLO]]:[[VHI]]] + 0x0
-
+; CHECK: BUFFER_LOAD_DWORD v{{[0-9]+}}, v{{\[}}[[VLO]]:[[VHI]]{{\]}}, s[{{[0-9]+:[0-9]+}}], 0
+; CHECK: S_ENDPGM
 define void @smrd3(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
 entry:
   %0 = getelementptr i32 addrspace(2)* %ptr, i64 4294967296 ; 2 ^ 32

@@ -3,9 +3,9 @@
 
 define void @trunc_i64_to_i32_store(i32 addrspace(1)* %out, i64 %in) {
 ; SI-LABEL: @trunc_i64_to_i32_store
-; SI: S_LOAD_DWORD s0, s[0:1], 0xb
-; SI: V_MOV_B32_e32 v0, s0
-; SI: BUFFER_STORE_DWORD v0
+; SI: S_LOAD_DWORD [[SLOAD:s[0-9]+]], s[0:1], 0xb
+; SI: V_MOV_B32_e32 [[VLOAD:v[0-9]+]], [[SLOAD]]
+; SI: BUFFER_STORE_DWORD [[VLOAD]]
 
 ; EG-LABEL: @trunc_i64_to_i32_store
 ; EG: MEM_RAT_CACHELESS STORE_RAW T0.X, T1.X, 1
