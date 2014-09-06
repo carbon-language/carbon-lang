@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target
 // RUN: %clang_cc1 -fsyntax-only -Wunused-local-typedef -verify -std=c++1y -fasm-blocks %s
 
 struct S {
