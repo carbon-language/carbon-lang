@@ -167,6 +167,7 @@ set(arm_SOURCES
   arm/adddf3vfp.S
   arm/addsf3vfp.S
   arm/aeabi_dcmp.S
+  arm/aeabi_div0.c
   arm/aeabi_fcmp.S
   arm/aeabi_idivmod.S
   arm/aeabi_ldivmod.S
