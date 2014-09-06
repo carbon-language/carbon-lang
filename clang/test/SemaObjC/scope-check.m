@@ -3,9 +3,9 @@
 @class A, B, C;
 
 void test1() {
-  goto L; // expected-error{{goto into protected scope}}
-  goto L2; // expected-error{{goto into protected scope}}
-  goto L3; // expected-error{{goto into protected scope}}
+  goto L; // expected-error{{cannot jump}}
+  goto L2; // expected-error{{cannot jump}}
+  goto L3; // expected-error{{cannot jump}}
   @try {   // expected-note {{jump bypasses initialization of @try block}}
 L: ;
   } @catch (A *x) { // expected-note {{jump bypasses initialization of @catch block}}
@@ -17,11 +17,11 @@ L3: ;
   }
   
   @try {
-    goto L4; // expected-error{{goto into protected scope}}
-    goto L5; // expected-error{{goto into protected scope}}
+    goto L4; // expected-error{{cannot jump}}
+    goto L5; // expected-error{{cannot jump}}
   } @catch (C *c) { // expected-note {{jump bypasses initialization of @catch block}}
   L5: ;
-    goto L6; // expected-error{{goto into protected scope}}
+    goto L6; // expected-error{{cannot jump}}
   } @catch (B *c) { // expected-note {{jump bypasses initialization of @catch block}}
   L6: ;
   } @finally { // expected-note {{jump bypasses initialization of @finally block}}
@@ -32,12 +32,12 @@ L3: ;
   @try { // expected-note 2 {{jump bypasses initialization of @try block}}
   L7: ;
   } @catch (C *c) {
-    goto L7; // expected-error{{goto into protected scope}}
+    goto L7; // expected-error{{cannot jump}}
   } @finally {
-    goto L7; // expected-error{{goto into protected scope}}
+    goto L7; // expected-error{{cannot jump}}
   }
   
-  goto L8;  // expected-error{{goto into protected scope}}
+  goto L8;  // expected-error{{cannot jump}}
   @try { 
   } @catch (A *c) {
   } @catch (B *c) {
@@ -47,7 +47,7 @@ L3: ;
   
   // rdar://6810106
   id X;
-  goto L9;    // expected-error{{goto into protected scope}}
+  goto L9;    // expected-error{{cannot jump}}
   goto L10;   // ok
   @synchronized    // expected-note {{jump bypasses initialization of @synchronized block}}
   ( ({ L10: ; X; })) {
@@ -79,7 +79,7 @@ void test3() {
 + (void) hello {
 
   @try {
-    goto blargh;     // expected-error {{goto into protected scope}}
+    goto blargh;     // expected-error {{cannot jump}}
   } @catch (...) {   // expected-note {{jump bypasses initialization of @catch block}}
   blargh: ;
   }
@@ -87,14 +87,14 @@ void test3() {
 
 + (void)meth2 {
     int n; void *P;
-    goto L0;     // expected-error {{goto into protected scope}}
+    goto L0;     // expected-error {{cannot jump}}
     typedef int A[n];  // expected-note {{jump bypasses initialization of VLA typedef}}
   L0:
     
-    goto L1;      // expected-error {{goto into protected scope}}
+    goto L1;      // expected-error {{cannot jump}}
     A b, c[10];        // expected-note 2 {{jump bypasses initialization of variable length array}}
   L1:
-    goto L2;     // expected-error {{goto into protected scope}}
+    goto L2;     // expected-error {{cannot jump}}
     A d[n];      // expected-note {{jump bypasses initialization of variable length array}}
   L2:
     return;

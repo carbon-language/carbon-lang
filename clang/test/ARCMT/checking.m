@@ -182,7 +182,7 @@ void test6(unsigned cond) {
     ;
     id x; // expected-note {{jump bypasses initialization of retaining variable}}
 
-  case 1: // expected-error {{switch case is in protected scope}}
+  case 1: // expected-error {{cannot jump}}
     x = 0;
     break;
   }

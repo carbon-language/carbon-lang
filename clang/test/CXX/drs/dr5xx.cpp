@@ -692,7 +692,7 @@ namespace dr568 { // dr568: yes c++11
   void jump() {
     goto x;
 #if __cplusplus < 201103L
-    // expected-error@-2 {{protected scope}}
+    // expected-error@-2 {{cannot jump}}
     // expected-note@+2 {{non-POD}}
 #endif
     trivial t;

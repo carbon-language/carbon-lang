@@ -34,7 +34,7 @@ namespace ms_protected_scope {
 
   int jump_over_variable_init(bool b) {
     if (b)
-      goto foo; // expected-warning {{goto into protected scope}}
+      goto foo; // expected-warning {{jump from this goto statement to its label is a Microsoft extension}}
     C c; // expected-note {{jump bypasses variable initialization}}
   foo:
     return 1;
@@ -45,7 +45,7 @@ struct Y {
 };
 
 void jump_over_var_with_dtor() {
-  goto end; // expected-warning{{goto into protected scope}}
+  goto end; // expected-warning{{jump from this goto statement to its label is a Microsoft extension}}
   Y y; // expected-note {{jump bypasses variable with a non-trivial destructor}}
  end:
     ;
@@ -55,14 +55,14 @@ void jump_over_var_with_dtor() {
     switch (c) {
     case 0:
       int x = 56; // expected-note {{jump bypasses variable initialization}}
-    case 1:       // expected-error {{switch case is in protected scope}}
+    case 1:       // expected-error {{cannot jump}}
       x = 10;
     }
   }
 
  
 void exception_jump() {
-  goto l2; // expected-error {{goto into protected scope}}
+  goto l2; // expected-error {{cannot jump}}
   try { // expected-note {{jump bypasses initialization of try block}}
      l2: ;
   } catch(int) {
@@ -71,7 +71,7 @@ void exception_jump() {
 
 int jump_over_indirect_goto() {
   static void *ps[] = { &&a0 };
-  goto *&&a0; // expected-warning {{goto into protected scope}}
+  goto *&&a0; // expected-warning {{jump from this goto statement to its label is a Microsoft extension}}
   int a = 3; // expected-note {{jump bypasses variable initialization}}
  a0:
   return 0;

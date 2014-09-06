@@ -755,7 +755,7 @@ namespace dr467 { // dr467: yes
     return k;
   }
   int g() {
-    goto later; // expected-error {{protected scope}}
+    goto later; // expected-error {{cannot jump}}
     int k = stuff(); // expected-note {{bypasses variable initialization}}
   later:
     return k;

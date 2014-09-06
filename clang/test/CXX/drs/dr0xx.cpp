@@ -1051,18 +1051,18 @@ namespace dr98 { // dr98: yes
   void test(int n) {
     switch (n) {
       try { // expected-note 2{{bypasses}}
-        case 0: // expected-error {{protected}}
+        case 0: // expected-error {{cannot jump}}
         x:
           throw n;
       } catch (...) { // expected-note 2{{bypasses}}
-        case 1: // expected-error {{protected}}
+        case 1: // expected-error {{cannot jump}}
         y:
           throw n;
       }
       case 2:
-        goto x; // expected-error {{protected}}
+        goto x; // expected-error {{cannot jump}}
       case 3:
-        goto y; // expected-error {{protected}}
+        goto y; // expected-error {{cannot jump}}
     }
   }
 }

@@ -499,7 +499,7 @@ namespace dr246 { // dr246: yes
       throw 0;
 X: ;
     } catch (int) {
-      goto X; // expected-error {{protected scope}}
+      goto X; // expected-error {{cannot jump}}
     }
   };
 }

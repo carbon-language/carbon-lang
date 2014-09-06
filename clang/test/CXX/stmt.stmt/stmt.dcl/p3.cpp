@@ -29,7 +29,7 @@ struct Y {
 };
 
 void test_Y() {
-  goto end; // expected-error{{goto into protected scope}}
+  goto end; // expected-error{{cannot jump from this goto statement to its label}}
   Y y; // expected-note{{jump bypasses variable with a non-trivial destructor}}
  end:
   return;
@@ -40,7 +40,7 @@ struct Z {
 };
 
 void test_Z() {
-  goto end; // expected-error{{goto into protected scope}}
+  goto end; // expected-error{{cannot jump from this goto statement to its label}}
   Z z; // expected-note{{jump bypasses initialization of non-POD variable}}
  end:
   return;

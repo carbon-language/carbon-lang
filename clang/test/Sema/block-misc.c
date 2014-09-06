@@ -190,7 +190,7 @@ void test18() {
 
 // rdar://7072507
 int test19() {
-  goto L0;       // expected-error {{goto into protected scope}}
+  goto L0;       // expected-error {{cannot jump}}
   
   __block int x; // expected-note {{jump bypasses setup of __block variable}}
 L0:

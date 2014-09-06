@@ -10,7 +10,7 @@ struct X {
 };
 
 void test2() {
-  goto later;  // expected-error {{goto into protected scope}}
+  goto later;  // expected-error {{cannot jump}}
   X x;         // expected-note {{jump bypasses variable initialization}} 
 later:
   ;

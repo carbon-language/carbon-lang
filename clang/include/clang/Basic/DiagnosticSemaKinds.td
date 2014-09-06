@@ -4110,25 +4110,28 @@ def err_undeclared_label_use : Error<"use of undeclared label %0">;
 def warn_unused_label : Warning<"unused label %0">,
   InGroup<UnusedLabel>, DefaultIgnore;
 
-def err_goto_into_protected_scope : Error<"goto into protected scope">;
-def ext_goto_into_protected_scope : ExtWarn<"goto into protected scope">,
+def err_goto_into_protected_scope : Error<
+  "cannot jump from this goto statement to its label">;
+def ext_goto_into_protected_scope : ExtWarn<
+  "jump from this goto statement to its label is a Microsoft extension">,
   InGroup<Microsoft>;
 def warn_cxx98_compat_goto_into_protected_scope : Warning<
-  "goto would jump into protected scope in C++98">,
+  "jump from this goto statement to its label is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_switch_into_protected_scope : Error<
-  "switch case is in protected scope">;
+  "cannot jump from switch statement to this case label">;
 def warn_cxx98_compat_switch_into_protected_scope : Warning<
-  "switch case would be in a protected scope in C++98">,
+  "jump from switch statement to this case label is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_indirect_goto_without_addrlabel : Error<
   "indirect goto in function with no address-of-label expressions">;
 def err_indirect_goto_in_protected_scope : Error<
-  "indirect goto might cross protected scopes">;
+  "cannot jump from this indirect goto statement to one of its possible targets">;
 def warn_cxx98_compat_indirect_goto_in_protected_scope : Warning<
-  "indirect goto might cross protected scopes in C++98">,
-  InGroup<CXX98Compat>, DefaultIgnore;
-def note_indirect_goto_target : Note<"possible target of indirect goto">;
+  "jump from this indirect goto statement to one of its possible targets "
+  "is incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
+def note_indirect_goto_target : Note<
+  "possible target of indirect goto statement">;
 def note_protected_by_variable_init : Note<
   "jump bypasses variable initialization">;
 def note_protected_by_variable_nontriv_destructor : Note<

@@ -30,11 +30,11 @@ struct Y {
 
 void f();
 void test_Y() {
-  goto end; // expected-error{{goto into protected scope}}
+  goto end; // expected-error{{cannot jump from this goto statement to its label}}
   Y y; // expected-note{{jump bypasses variable with a non-trivial destructor}}
  end:
   f();
-  goto inner; // expected-error{{goto into protected scope}}
+  goto inner; // expected-error{{cannot jump from this goto statement to its label}}
   {
     Y y2; // expected-note{{jump bypasses variable with a non-trivial destructor}}
   inner:

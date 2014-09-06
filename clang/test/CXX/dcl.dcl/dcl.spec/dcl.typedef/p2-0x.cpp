@@ -44,7 +44,7 @@ namespace VariableLengthArrays {
 
   void f() {
     int n = 42;
-    goto foo; // expected-error {{goto into protected scope}}
+    goto foo; // expected-error {{cannot jump}}
     using T = int[n]; // expected-note {{bypasses initialization of VLA type alias}}
   foo: ;
   }
