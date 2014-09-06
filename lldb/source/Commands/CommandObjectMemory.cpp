@@ -1080,7 +1080,7 @@ protected:
       lldb::addr_t high_addr = Args::StringToAddress(&m_exe_ctx, command.GetArgumentAtIndex(1),LLDB_INVALID_ADDRESS,&error);
       if (high_addr == LLDB_INVALID_ADDRESS || error.Fail())
       {
-          result.AppendError("invalid low address");
+          result.AppendError("invalid high address");
           return false;
       }
 
