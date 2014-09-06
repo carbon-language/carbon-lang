@@ -1200,6 +1200,9 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
     SemaRef.InstantiateClassMembers(D->getLocation(), Record, TemplateArgs,
                                     TSK_ImplicitInstantiation);
   }
+
+  SemaRef.DiagnoseUnusedNestedTypedefs(Record);
+
   return Record;
 }
 
@@ -3653,7 +3656,7 @@ void Sema::BuildVariableInstantiation(
   // Diagnose unused local variables with dependent types, where the diagnostic
   // will have been deferred.
   if (!NewVar->isInvalidDecl() &&
-      NewVar->getDeclContext()->isFunctionOrMethod() && !NewVar->isUsed() &&
+      NewVar->getDeclContext()->isFunctionOrMethod() &&
       OldVar->getType()->isDependentType())
     DiagnoseUnusedDecl(NewVar);
 }

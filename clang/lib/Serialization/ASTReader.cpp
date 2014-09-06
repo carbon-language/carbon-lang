@@ -3285,6 +3285,12 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       }
       OptimizeOffPragmaLocation = ReadSourceLocation(F, Record[0]);
       break;
+
+    case UNUSED_LOCAL_TYPEDEF_NAME_CANDIDATES:
+      for (unsigned I = 0, N = Record.size(); I != N; ++I)
+        UnusedLocalTypedefNameCandidates.push_back(
+            getGlobalDeclID(F, Record[I]));
+      break;
     }
   }
 }
@@ -7194,6 +7200,18 @@ void ASTReader::ReadDynamicClasses(SmallVectorImpl<CXXRecordDecl *> &Decls) {
       Decls.push_back(D);
   }
   DynamicClasses.clear();
+}
+
+void ASTReader::ReadUnusedLocalTypedefNameCandidates(
+    llvm::SmallSetVector<const TypedefNameDecl *, 4> &Decls) {
+  for (unsigned I = 0, N = UnusedLocalTypedefNameCandidates.size(); I != N;
+       ++I) {
+    TypedefNameDecl *D = dyn_cast_or_null<TypedefNameDecl>(
+        GetDecl(UnusedLocalTypedefNameCandidates[I]));
+    if (D)
+      Decls.insert(D);
+  }
+  UnusedLocalTypedefNameCandidates.clear();
 }
 
 void 

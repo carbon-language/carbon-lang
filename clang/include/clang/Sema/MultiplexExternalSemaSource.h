@@ -282,6 +282,15 @@ public:
   /// introduce the same declarations repeatedly.
   void ReadDynamicClasses(SmallVectorImpl<CXXRecordDecl*> &Decls) override;
 
+  /// \brief Read the set of potentially unused typedefs known to the source.
+  ///
+  /// The external source should append its own potentially unused local
+  /// typedefs to the given vector of declarations. Note that this routine may
+  /// be invoked multiple times; the external source should take care not to
+  /// introduce the same declarations repeatedly.
+  void ReadUnusedLocalTypedefNameCandidates(
+      llvm::SmallSetVector<const TypedefNameDecl *, 4> &Decls) override;
+
   /// \brief Read the set of locally-scoped extern "C" declarations known to the
   /// external Sema source.
   ///

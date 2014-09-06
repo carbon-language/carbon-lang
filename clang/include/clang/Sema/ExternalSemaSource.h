@@ -20,6 +20,10 @@
 #include "llvm/ADT/MapVector.h"
 #include <utility>
 
+namespace llvm {
+template <class T, unsigned n> class SmallSetVector;
+}
+
 namespace clang {
 
 class CXXConstructorDecl;
@@ -131,6 +135,15 @@ public:
   /// invoked multiple times; the external source should take care not to
   /// introduce the same declarations repeatedly.
   virtual void ReadDynamicClasses(SmallVectorImpl<CXXRecordDecl *> &Decls) {}
+
+  /// \brief Read the set of potentially unused typedefs known to the source.
+  ///
+  /// The external source should append its own potentially unused local
+  /// typedefs to the given vector of declarations. Note that this routine may
+  /// be invoked multiple times; the external source should take care not to
+  /// introduce the same declarations repeatedly.
+  virtual void ReadUnusedLocalTypedefNameCandidates(
+      llvm::SmallSetVector<const TypedefNameDecl *, 4> &Decls) {};
 
   /// \brief Read the set of locally-scoped external declarations known to the
   /// external Sema source.

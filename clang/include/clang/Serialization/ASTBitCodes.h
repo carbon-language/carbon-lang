@@ -545,7 +545,10 @@ namespace clang {
       LATE_PARSED_TEMPLATE = 50,
 
       /// \brief Record code for \#pragma optimize options.
-      OPTIMIZE_PRAGMA_OPTIONS = 51
+      OPTIMIZE_PRAGMA_OPTIONS = 51,
+
+      /// \brief Record code for potentially unused local typedef names.
+      UNUSED_LOCAL_TYPEDEF_NAME_CANDIDATES = 52,
     };
 
     /// \brief Record types used within a source manager block.

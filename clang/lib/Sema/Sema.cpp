@@ -597,6 +597,19 @@ static bool IsRecordFullyDefined(const CXXRecordDecl *RD,
   return Complete;
 }
 
+void Sema::emitAndClearUnusedLocalTypedefWarnings() {
+  if (ExternalSource)
+    ExternalSource->ReadUnusedLocalTypedefNameCandidates(
+        UnusedLocalTypedefNameCandidates);
+  for (const TypedefNameDecl *TD : UnusedLocalTypedefNameCandidates) {
+    if (TD->isReferenced())
+      continue;
+    Diag(TD->getLocation(), diag::warn_unused_local_typedef)
+        << isa<TypeAliasDecl>(TD) << TD->getDeclName();
+  }
+  UnusedLocalTypedefNameCandidates.clear();
+}
+
 /// ActOnEndOfTranslationUnit - This is called at the very end of the
 /// translation unit when EOF is reached and all but the top-level scope is
 /// popped.
@@ -719,6 +732,10 @@ void Sema::ActOnEndOfTranslationUnit() {
       }
     }
 
+    // Warnings emitted in ActOnEndOfTranslationUnit() should be emitted for
+    // modules when they are built, not every time they are used.
+    emitAndClearUnusedLocalTypedefWarnings();
+
     // Modules don't need any of the checking below.
     TUScope = nullptr;
     return;
@@ -827,6 +844,8 @@ void Sema::ActOnEndOfTranslationUnit() {
     if (ExternalSource)
       ExternalSource->ReadUndefinedButUsed(UndefinedButUsed);
     checkUndefinedButUsed(*this);
+
+    emitAndClearUnusedLocalTypedefWarnings();
   }
 
   if (!Diags.isIgnored(diag::warn_unused_private_field, SourceLocation())) {

@@ -380,6 +380,7 @@ ParsedType Sema::getTypeName(const IdentifierInfo &II, SourceLocation NameLoc,
     DiagnoseUseOfDecl(IIDecl, NameLoc);
 
     T = Context.getTypeDeclType(TD);
+    MarkAnyDeclReferenced(TD->getLocation(), TD, /*OdrUse=*/false);
 
     // NOTE: avoid constructing an ElaboratedType(Loc) if this is a
     // constructor or destructor name (in such a case, the scope specifier
@@ -928,6 +929,7 @@ Corrected:
   NamedDecl *FirstDecl = (*Result.begin())->getUnderlyingDecl();
   if (TypeDecl *Type = dyn_cast<TypeDecl>(FirstDecl)) {
     DiagnoseUseOfDecl(Type, NameLoc);
+    MarkAnyDeclReferenced(Type->getLocation(), Type, /*OdrUse=*/false);
     QualType T = Context.getTypeDeclType(Type);
     if (SS.isNotEmpty())
       return buildNestedType(*this, SS, T, NameLoc);
@@ -1395,10 +1397,22 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
 
   if (isa<LabelDecl>(D))
     return true;
+
+  // Except for labels, we only care about unused decls that are local to
+  // functions.
+  bool WithinFunction = D->getDeclContext()->isFunctionOrMethod();
+  if (const auto *R = dyn_cast<CXXRecordDecl>(D->getDeclContext()))
+    // For dependent types, the diagnostic is deferred.
+    WithinFunction =
+        WithinFunction || (R->isLocalClass() && !R->isDependentType());
+  if (!WithinFunction)
+    return false;
+
+  if (isa<TypedefNameDecl>(D))
+    return true;
   
   // White-list anything that isn't a local variable.
-  if (!isa<VarDecl>(D) || isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D) ||
-      !D->getDeclContext()->isFunctionOrMethod())
+  if (!isa<VarDecl>(D) || isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D))
     return false;
 
   // Types of valid local variables should be complete, so this should succeed.
@@ -1461,11 +1475,30 @@ static void GenerateFixForUnusedDecl(const NamedDecl *D, ASTContext &Ctx,
   return;
 }
 
+void Sema::DiagnoseUnusedNestedTypedefs(const RecordDecl *D) {
+  if (D->getTypeForDecl()->isDependentType())
+    return;
+
+  for (auto *TmpD : D->decls()) {
+    if (const auto *T = dyn_cast<TypedefNameDecl>(TmpD))
+      DiagnoseUnusedDecl(T);
+    else if(const auto *R = dyn_cast<RecordDecl>(TmpD))
+      DiagnoseUnusedNestedTypedefs(R);
+  }
+}
+
 /// DiagnoseUnusedDecl - Emit warnings about declarations that are not used
 /// unless they are marked attr(unused).
 void Sema::DiagnoseUnusedDecl(const NamedDecl *D) {
   if (!ShouldDiagnoseUnusedDecl(D))
     return;
+
+  if (auto *TD = dyn_cast<TypedefNameDecl>(D)) {
+    // typedefs can be referenced later on, so the diagnostics are emitted
+    // at end-of-translation-unit.
+    UnusedLocalTypedefNameCandidates.insert(TD);
+    return;
+  }
   
   FixItHint Hint;
   GenerateFixForUnusedDecl(D, Context, Hint);
@@ -1505,8 +1538,11 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
     if (!D->getDeclName()) continue;
 
     // Diagnose unused variables in this scope.
-    if (!S->hasUnrecoverableErrorOccurred())
+    if (!S->hasUnrecoverableErrorOccurred()) {
       DiagnoseUnusedDecl(D);
+      if (const auto *RD = dyn_cast<RecordDecl>(D))
+        DiagnoseUnusedNestedTypedefs(RD);
+    }
     
     // If this was a forward reference to a label, verify it was defined.
     if (LabelDecl *LD = dyn_cast<LabelDecl>(D))

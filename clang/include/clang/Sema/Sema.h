@@ -389,6 +389,10 @@ public:
   /// \brief Set containing all declared private fields that are not used.
   NamedDeclSetType UnusedPrivateFields;
 
+  /// \brief Set containing all typedefs that are likely unused.
+  llvm::SmallSetVector<const TypedefNameDecl *, 4>
+      UnusedLocalTypedefNameCandidates;
+
   typedef llvm::SmallPtrSet<const CXXRecordDecl*, 8> RecordDeclSetTy;
 
   /// PureVirtualClassDiagSet - a set of class declarations which we have
@@ -1047,6 +1051,8 @@ public:
 
   /// \brief Retrieve the module loader associated with the preprocessor.
   ModuleLoader &getModuleLoader() const;
+
+  void emitAndClearUnusedLocalTypedefWarnings();
 
   void ActOnEndOfTranslationUnit();
 
@@ -3209,6 +3215,7 @@ public:
   /// DiagnoseUnusedExprResult - If the statement passed in is an expression
   /// whose result is unused, warn.
   void DiagnoseUnusedExprResult(const Stmt *S);
+  void DiagnoseUnusedNestedTypedefs(const RecordDecl *D);
   void DiagnoseUnusedDecl(const NamedDecl *ND);
 
   /// Emit \p DiagID if statement located on \p StmtLoc has a suspicious null

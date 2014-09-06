@@ -7945,6 +7945,7 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
     if (TypeDecl *Type = dyn_cast<TypeDecl>(Result.getFoundDecl())) {
       // We found a type. Build an ElaboratedType, since the
       // typename-specifier was just sugar.
+      MarkAnyDeclReferenced(Type->getLocation(), Type, /*OdrUse=*/false);
       return Context.getElaboratedType(ETK_Typename, 
                                        QualifierLoc.getNestedNameSpecifier(),
                                        Context.getTypeDeclType(Type));

@@ -242,6 +242,12 @@ void MultiplexExternalSemaSource::ReadDynamicClasses(
     Sources[i]->ReadDynamicClasses(Decls);
 }
 
+void MultiplexExternalSemaSource::ReadUnusedLocalTypedefNameCandidates(
+    llvm::SmallSetVector<const TypedefNameDecl *, 4> &Decls) {
+  for(size_t i = 0; i < Sources.size(); ++i)
+    Sources[i]->ReadUnusedLocalTypedefNameCandidates(Decls);
+}
+
 void MultiplexExternalSemaSource::ReadLocallyScopedExternCDecls(
                                            SmallVectorImpl<NamedDecl*> &Decls) {
   for(size_t i = 0; i < Sources.size(); ++i)

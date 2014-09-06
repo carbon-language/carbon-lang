@@ -175,6 +175,9 @@ def warn_unused_parameter : Warning<"unused parameter %0">,
   InGroup<UnusedParameter>, DefaultIgnore;
 def warn_unused_variable : Warning<"unused variable %0">,
   InGroup<UnusedVariable>, DefaultIgnore;
+def warn_unused_local_typedef : Warning<
+  "unused %select{typedef|type alias}0 %1">,
+  InGroup<UnusedLocalTypedef>, DefaultIgnore;
 def warn_unused_property_backing_ivar : 
   Warning<"ivar %0 which backs the property is not "
   "referenced in this property's accessor">,
