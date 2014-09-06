@@ -15,8 +15,8 @@ declare <16 x double> @llvm.ceil.v16f64(<16 x double>) nounwind readnone
 ; SI: S_LSHR_B64
 ; SI: S_NOT_B64
 ; SI: S_AND_B64
-; SI: S_AND_B32 s{{[0-9]+}}, s{{[0-9]+}}, 0x80000000
-; SI: CMP_LT_I32
+; SI-DAG: S_AND_B32 s{{[0-9]+}}, s{{[0-9]+}}, 0x80000000
+; SI-DAG: CMP_LT_I32
 ; SI: CNDMASK_B32
 ; SI: CNDMASK_B32
 ; SI: CMP_GT_I32

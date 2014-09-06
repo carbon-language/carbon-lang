@@ -22,8 +22,8 @@ declare void @llvm.AMDGPU.barrier.local() nounwind noduplicate
 ; to interpret:
 ; getelementptr [4 x i32]* %alloca, i32 1, i32 %b
 
-; SI-PROMOTE: V_ADD_I32_e32 [[PTRREG:v[0-9]+]]
-; SI-PROMOTE: DS_WRITE_B32 {{v[0-9]+}}, [[PTRREG]]
+; SI-PROMOTE: V_ADD_I32_e32 [[PTRREG:v[0-9]+]], 16
+; SI-PROMOTE: DS_WRITE_B32 [[PTRREG]]
 define void @test_private_array_ptr_calc(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %inA, i32 addrspace(1)* noalias %inB) {
   %alloca = alloca [4 x i32], i32 4, align 16
   %tid = call i32 @llvm.SI.tid() readnone

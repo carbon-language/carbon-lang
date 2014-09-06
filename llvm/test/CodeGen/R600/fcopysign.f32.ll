@@ -10,7 +10,7 @@ declare <4 x float> @llvm.copysign.v4f32(<4 x float>, <4 x float>) nounwind read
 ; FUNC-LABEL: @test_copysign_f32:
 ; SI: S_LOAD_DWORD [[SMAG:s[0-9]+]], {{.*}} 0xb
 ; SI: S_LOAD_DWORD [[SSIGN:s[0-9]+]], {{.*}} 0xc
-; SI: V_MOV_B32_e32 [[VSIGN:v[0-9]+]], [[SSIGN]]
+; SI-DAG: V_MOV_B32_e32 [[VSIGN:v[0-9]+]], [[SSIGN]]
 ; SI-DAG: V_MOV_B32_e32 [[VMAG:v[0-9]+]], [[SMAG]]
 ; SI-DAG: S_MOV_B32 [[SCONST:s[0-9]+]], 0x7fffffff
 ; SI: V_BFI_B32 [[RESULT:v[0-9]+]], [[SCONST]], [[VMAG]], [[VSIGN]]
