@@ -212,15 +212,15 @@ skipLeadingZeroesAndAnyDot(StringRef::iterator begin, StringRef::iterator end,
 {
   StringRef::iterator p = begin;
   *dot = end;
-  while (*p == '0' && p != end)
+  while (p != end && *p == '0')
     p++;
 
-  if (*p == '.') {
+  if (p != end && *p == '.') {
     *dot = p++;
 
     assert(end - begin != 1 && "Significand has no digits");
 
-    while (*p == '0' && p != end)
+    while (p != end && *p == '0')
       p++;
   }
 
