@@ -3377,7 +3377,9 @@ void APFloat::makeLargest(bool Negative) {
   // internal consistency.
   const unsigned NumUnusedHighBits =
     PartCount*integerPartWidth - semantics->precision;
-  significand[PartCount - 1] = ~integerPart(0) >> NumUnusedHighBits;
+  significand[PartCount - 1] = (NumUnusedHighBits < integerPartWidth)
+                                   ? (~integerPart(0) >> NumUnusedHighBits)
+                                   : 0;
 }
 
 /// Make this number the smallest magnitude denormal number in the given
