@@ -22,19 +22,13 @@
 
 /* ABI macro definitions */
 
-/*
- * TODO define this appropriately for targets that require explicit export
- * declarations (i.e. Windows)
- */
-#define COMPILER_RT_EXPORT
-
 #if __ARM_EABI__
 # define ARM_EABI_FNALIAS(aeabi_name, name)         \
   void __aeabi_##aeabi_name() __attribute__((alias("__" #name)));
-# define COMPILER_RT_ABI COMPILER_RT_EXPORT __attribute__((pcs("aapcs")))
+# define COMPILER_RT_ABI __attribute__((pcs("aapcs")))
 #else
 # define ARM_EABI_FNALIAS(aeabi_name, name)
-# define COMPILER_RT_ABI COMPILER_RT_EXPORT
+# define COMPILER_RT_ABI
 #endif
 
 #if defined(__NetBSD__) && (defined(_KERNEL) || defined(_STANDALONE))

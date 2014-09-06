@@ -32,9 +32,7 @@
  * specified range.
  */
 
-COMPILER_RT_EXPORT void
-__clear_cache(void* start, void* end)
-{
+void __clear_cache(void *start, void *end) {
 #if __i386__ || __x86_64__
 /*
  * Intel processors have a unified instruction and data cache
