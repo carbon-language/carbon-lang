@@ -153,20 +153,6 @@ struct X86Operand : public MCParsedAsmOperand {
     // extension.
     return isImmSExti32i8Value(CE->getValue());
   }
-  bool isImmZExtu32u8() const {
-    if (!isImm())
-      return false;
-
-    // If this isn't a constant expr, just assume it fits and let relaxation
-    // handle it.
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    if (!CE)
-      return true;
-
-    // Otherwise, check the value is in a range that makes sense for this
-    // extension.
-    return isImmZExtu32u8Value(CE->getValue());
-  }
   bool isImmSExti64i8() const {
     if (!isImm())
       return false;

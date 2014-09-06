@@ -83,7 +83,7 @@ def X86pinsrw  : SDNode<"X86ISD::PINSRW",
                                       SDTCisVT<2, i32>, SDTCisPtrTy<3>]>>;
 def X86insertps : SDNode<"X86ISD::INSERTPS",
                  SDTypeProfile<1, 3, [SDTCisVT<0, v4f32>, SDTCisSameAs<0,1>,
-                                      SDTCisVT<2, v4f32>, SDTCisPtrTy<3>]>>;
+                                      SDTCisVT<2, v4f32>, SDTCisVT<3, i8>]>>;
 def X86vzmovl  : SDNode<"X86ISD::VZEXT_MOVL",
                  SDTypeProfile<1, 1, [SDTCisSameAs<0,1>]>>;
 
@@ -197,7 +197,7 @@ def SDTVBroadcast  : SDTypeProfile<1, 1, [SDTCisVec<0>]>;
 def SDTVBroadcastm : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>]>;
 
 def SDTBlend : SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
-                             SDTCisSameAs<1,2>, SDTCisVT<3, i32>]>;
+                             SDTCisSameAs<1,2>, SDTCisVT<3, i8>]>;
 
 def SDTFma : SDTypeProfile<1, 3, [SDTCisSameAs<0,1>,
                            SDTCisSameAs<1,2>, SDTCisSameAs<1,3>]>;

@@ -60,7 +60,7 @@ define <4 x float> @insertps_from_vector_load_offset_2(<4 x float> %a, <4 x floa
 ; X32: movl    8(%esp), %ecx
 ; CHECK-NOT: mov
 ;; Try to match a bit more of the instr, since we need the load's offset.
-; CHECK: vinsertps    $192, 12(%{{...}},%{{...}}), %
+; CHECK: vinsertps    $-64, 12(%{{...}},%{{...}}), %
 ; CHECK-NEXT: ret
   %1 = getelementptr inbounds <4 x float>* %pb, i64 %index
   %2 = load <4 x float>* %1, align 16

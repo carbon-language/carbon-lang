@@ -19618,22 +19618,36 @@
 // CHECK:   blendvps	%xmm2, %xmm1    # encoding: [0x66,0x0f,0x38,0x14,0xca]
             blendvps %xmm2, %xmm1
 
-// rdar://9795008
-// These instructions take a mask not an 8-bit sign extended value.
+// These instructions can take an unsigned 8-bit mask as well as a signed 8-bit
+// immediate. Check both forms here.
 // CHECK: blendps $129, %xmm2, %xmm1
           blendps $0x81, %xmm2, %xmm1
+// CHECK: blendps $-64, %xmm2, %xmm1
+          blendps $-64, %xmm2, %xmm1
 // CHECK: blendpd $129, %xmm2, %xmm1
           blendpd $0x81, %xmm2, %xmm1
+// CHECK: blendpd $-64, %xmm2, %xmm1
+          blendpd $-64, %xmm2, %xmm1
 // CHECK: pblendw $129, %xmm2, %xmm1
           pblendw $0x81, %xmm2, %xmm1
+// CHECK: pblendw $-64, %xmm2, %xmm1
+          pblendw $-64, %xmm2, %xmm1
 // CHECK: mpsadbw $129, %xmm2, %xmm1
           mpsadbw $0x81, %xmm2, %xmm1
+// CHECK: mpsadbw $-64, %xmm2, %xmm1
+          mpsadbw $-64, %xmm2, %xmm1
 // CHECK: dpps $129, %xmm2, %xmm1
           dpps $0x81, %xmm2, %xmm1
+// CHECK: dpps $-64, %xmm2, %xmm1
+          dpps $-64, %xmm2, %xmm1
 // CHECK: dppd $129, %xmm2, %xmm1
           dppd $0x81, %xmm2, %xmm1
+// CHECK: dppd $-64, %xmm2, %xmm1
+          dppd $-64, %xmm2, %xmm1
 // CHECK: insertps $129, %xmm2, %xmm1
           insertps $0x81, %xmm2, %xmm1
+// CHECK: insertps $-64, %xmm2, %xmm1
+          insertps $-64, %xmm2, %xmm1
 
 // PR13253 handle implicit optional third argument that must always be xmm0
 // CHECK: pblendvb %xmm2, %xmm1

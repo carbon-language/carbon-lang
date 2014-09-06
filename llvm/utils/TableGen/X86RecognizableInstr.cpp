@@ -912,7 +912,6 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("i32mem",              TYPE_Mv)
   TYPE("i32imm",              TYPE_IMMv)
   TYPE("i32i8imm",            TYPE_IMM32)
-  TYPE("u32u8imm",            TYPE_IMM32)
   TYPE("GR32",                TYPE_R32)
   TYPE("GR32orGR64",          TYPE_R32)
   TYPE("i64mem",              TYPE_Mv)
@@ -1015,7 +1014,6 @@ RecognizableInstr::immediateEncodingFromString(const std::string &s,
     ENCODING("i16imm",        ENCODING_IW)
   }
   ENCODING("i32i8imm",        ENCODING_IB)
-  ENCODING("u32u8imm",        ENCODING_IB)
   ENCODING("SSECC",           ENCODING_IB)
   ENCODING("AVXCC",           ENCODING_IB)
   ENCODING("AVX512RC",        ENCODING_IB)

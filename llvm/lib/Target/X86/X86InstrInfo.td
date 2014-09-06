@@ -551,11 +551,6 @@ class ImmSExtAsmOperandClass : AsmOperandClass {
   let RenderMethod = "addImmOperands";
 }
 
-class ImmZExtAsmOperandClass : AsmOperandClass {
-  let SuperClasses = [ImmAsmOperand];
-  let RenderMethod = "addImmOperands";
-}
-
 def X86GR32orGR64AsmOperand : AsmOperandClass {
   let Name = "GR32orGR64";
 }
@@ -568,6 +563,7 @@ def AVX512RC : Operand<i32> {
   let PrintMethod = "printRoundingControl";
   let OperandType = "OPERAND_IMMEDIATE";
 }
+
 // Sign-extended immediate classes. We don't need to define the full lattice
 // here because there is no instruction with an ambiguity between ImmSExti64i32
 // and ImmSExti32i8.
@@ -595,12 +591,6 @@ def ImmSExti32i8AsmOperand : ImmSExtAsmOperandClass {
   let Name = "ImmSExti32i8";
 }
 
-// [0, 0x000000FF]
-def ImmZExtu32u8AsmOperand : ImmZExtAsmOperandClass {
-  let Name = "ImmZExtu32u8";
-}
-
-
 // [0, 0x0000007F]                                            |
 //   [0xFFFFFFFFFFFFFF80, 0xFFFFFFFFFFFFFFFF]
 def ImmSExti64i8AsmOperand : ImmSExtAsmOperandClass {
@@ -618,11 +608,6 @@ def i16i8imm  : Operand<i16> {
 // 32-bits but only 8 bits are significant.
 def i32i8imm  : Operand<i32> {
   let ParserMatchClass = ImmSExti32i8AsmOperand;
-  let OperandType = "OPERAND_IMMEDIATE";
-}
-// 32-bits but only 8 bits are significant, and those 8 bits are unsigned.
-def u32u8imm  : Operand<i32> {
-  let ParserMatchClass = ImmZExtu32u8AsmOperand;
   let OperandType = "OPERAND_IMMEDIATE";
 }
 

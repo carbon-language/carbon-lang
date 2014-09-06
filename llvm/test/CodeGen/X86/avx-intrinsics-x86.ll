@@ -818,18 +818,18 @@ declare <16 x i8> @llvm.x86.sse3.ldu.dq(i8*) nounwind readonly
 
 define <2 x double> @test_x86_sse41_blendpd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vblendpd
-  %res = call <2 x double> @llvm.x86.sse41.blendpd(<2 x double> %a0, <2 x double> %a1, i32 7) ; <<2 x double>> [#uses=1]
+  %res = call <2 x double> @llvm.x86.sse41.blendpd(<2 x double> %a0, <2 x double> %a1, i8 7) ; <<2 x double>> [#uses=1]
   ret <2 x double> %res
 }
-declare <2 x double> @llvm.x86.sse41.blendpd(<2 x double>, <2 x double>, i32) nounwind readnone
+declare <2 x double> @llvm.x86.sse41.blendpd(<2 x double>, <2 x double>, i8) nounwind readnone
 
 
 define <4 x float> @test_x86_sse41_blendps(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vblendps
-  %res = call <4 x float> @llvm.x86.sse41.blendps(<4 x float> %a0, <4 x float> %a1, i32 7) ; <<4 x float>> [#uses=1]
+  %res = call <4 x float> @llvm.x86.sse41.blendps(<4 x float> %a0, <4 x float> %a1, i8 7) ; <<4 x float>> [#uses=1]
   ret <4 x float> %res
 }
-declare <4 x float> @llvm.x86.sse41.blendps(<4 x float>, <4 x float>, i32) nounwind readnone
+declare <4 x float> @llvm.x86.sse41.blendps(<4 x float>, <4 x float>, i8) nounwind readnone
 
 
 define <2 x double> @test_x86_sse41_blendvpd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2) {
@@ -850,35 +850,35 @@ declare <4 x float> @llvm.x86.sse41.blendvps(<4 x float>, <4 x float>, <4 x floa
 
 define <2 x double> @test_x86_sse41_dppd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vdppd
-  %res = call <2 x double> @llvm.x86.sse41.dppd(<2 x double> %a0, <2 x double> %a1, i32 7) ; <<2 x double>> [#uses=1]
+  %res = call <2 x double> @llvm.x86.sse41.dppd(<2 x double> %a0, <2 x double> %a1, i8 7) ; <<2 x double>> [#uses=1]
   ret <2 x double> %res
 }
-declare <2 x double> @llvm.x86.sse41.dppd(<2 x double>, <2 x double>, i32) nounwind readnone
+declare <2 x double> @llvm.x86.sse41.dppd(<2 x double>, <2 x double>, i8) nounwind readnone
 
 
 define <4 x float> @test_x86_sse41_dpps(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vdpps
-  %res = call <4 x float> @llvm.x86.sse41.dpps(<4 x float> %a0, <4 x float> %a1, i32 7) ; <<4 x float>> [#uses=1]
+  %res = call <4 x float> @llvm.x86.sse41.dpps(<4 x float> %a0, <4 x float> %a1, i8 7) ; <<4 x float>> [#uses=1]
   ret <4 x float> %res
 }
-declare <4 x float> @llvm.x86.sse41.dpps(<4 x float>, <4 x float>, i32) nounwind readnone
+declare <4 x float> @llvm.x86.sse41.dpps(<4 x float>, <4 x float>, i8) nounwind readnone
 
 
 define <4 x float> @test_x86_sse41_insertps(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vinsertps
-  %res = call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a0, <4 x float> %a1, i32 7) ; <<4 x float>> [#uses=1]
+  %res = call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a0, <4 x float> %a1, i8 7) ; <<4 x float>> [#uses=1]
   ret <4 x float> %res
 }
-declare <4 x float> @llvm.x86.sse41.insertps(<4 x float>, <4 x float>, i32) nounwind readnone
+declare <4 x float> @llvm.x86.sse41.insertps(<4 x float>, <4 x float>, i8) nounwind readnone
 
 
 
 define <8 x i16> @test_x86_sse41_mpsadbw(<16 x i8> %a0, <16 x i8> %a1) {
   ; CHECK: vmpsadbw
-  %res = call <8 x i16> @llvm.x86.sse41.mpsadbw(<16 x i8> %a0, <16 x i8> %a1, i32 7) ; <<8 x i16>> [#uses=1]
+  %res = call <8 x i16> @llvm.x86.sse41.mpsadbw(<16 x i8> %a0, <16 x i8> %a1, i8 7) ; <<8 x i16>> [#uses=1]
   ret <8 x i16> %res
 }
-declare <8 x i16> @llvm.x86.sse41.mpsadbw(<16 x i8>, <16 x i8>, i32) nounwind readnone
+declare <8 x i16> @llvm.x86.sse41.mpsadbw(<16 x i8>, <16 x i8>, i8) nounwind readnone
 
 
 define <8 x i16> @test_x86_sse41_packusdw(<4 x i32> %a0, <4 x i32> %a1) {
@@ -899,10 +899,10 @@ declare <16 x i8> @llvm.x86.sse41.pblendvb(<16 x i8>, <16 x i8>, <16 x i8>) noun
 
 define <8 x i16> @test_x86_sse41_pblendw(<8 x i16> %a0, <8 x i16> %a1) {
   ; CHECK: vpblendw
-  %res = call <8 x i16> @llvm.x86.sse41.pblendw(<8 x i16> %a0, <8 x i16> %a1, i32 7) ; <<8 x i16>> [#uses=1]
+  %res = call <8 x i16> @llvm.x86.sse41.pblendw(<8 x i16> %a0, <8 x i16> %a1, i8 7) ; <<8 x i16>> [#uses=1]
   ret <8 x i16> %res
 }
-declare <8 x i16> @llvm.x86.sse41.pblendw(<8 x i16>, <8 x i16>, i32) nounwind readnone
+declare <8 x i16> @llvm.x86.sse41.pblendw(<8 x i16>, <8 x i16>, i8) nounwind readnone
 
 
 define <8 x i16> @test_x86_sse41_phminposuw(<8 x i16> %a0) {
@@ -1770,18 +1770,18 @@ declare <8 x float> @llvm.x86.avx.addsub.ps.256(<8 x float>, <8 x float>) nounwi
 
 define <4 x double> @test_x86_avx_blend_pd_256(<4 x double> %a0, <4 x double> %a1) {
   ; CHECK: vblendpd
-  %res = call <4 x double> @llvm.x86.avx.blend.pd.256(<4 x double> %a0, <4 x double> %a1, i32 7) ; <<4 x double>> [#uses=1]
+  %res = call <4 x double> @llvm.x86.avx.blend.pd.256(<4 x double> %a0, <4 x double> %a1, i8 7) ; <<4 x double>> [#uses=1]
   ret <4 x double> %res
 }
-declare <4 x double> @llvm.x86.avx.blend.pd.256(<4 x double>, <4 x double>, i32) nounwind readnone
+declare <4 x double> @llvm.x86.avx.blend.pd.256(<4 x double>, <4 x double>, i8) nounwind readnone
 
 
 define <8 x float> @test_x86_avx_blend_ps_256(<8 x float> %a0, <8 x float> %a1) {
   ; CHECK: vblendps
-  %res = call <8 x float> @llvm.x86.avx.blend.ps.256(<8 x float> %a0, <8 x float> %a1, i32 7) ; <<8 x float>> [#uses=1]
+  %res = call <8 x float> @llvm.x86.avx.blend.ps.256(<8 x float> %a0, <8 x float> %a1, i8 7) ; <<8 x float>> [#uses=1]
   ret <8 x float> %res
 }
-declare <8 x float> @llvm.x86.avx.blend.ps.256(<8 x float>, <8 x float>, i32) nounwind readnone
+declare <8 x float> @llvm.x86.avx.blend.ps.256(<8 x float>, <8 x float>, i8) nounwind readnone
 
 
 define <4 x double> @test_x86_avx_blendv_pd_256(<4 x double> %a0, <4 x double> %a1, <4 x double> %a2) {
@@ -1950,10 +1950,10 @@ declare <8 x i32> @llvm.x86.avx.cvtt.ps2dq.256(<8 x float>) nounwind readnone
 
 define <8 x float> @test_x86_avx_dp_ps_256(<8 x float> %a0, <8 x float> %a1) {
   ; CHECK: vdpps
-  %res = call <8 x float> @llvm.x86.avx.dp.ps.256(<8 x float> %a0, <8 x float> %a1, i32 7) ; <<8 x float>> [#uses=1]
+  %res = call <8 x float> @llvm.x86.avx.dp.ps.256(<8 x float> %a0, <8 x float> %a1, i8 7) ; <<8 x float>> [#uses=1]
   ret <8 x float> %res
 }
-declare <8 x float> @llvm.x86.avx.dp.ps.256(<8 x float>, <8 x float>, i32) nounwind readnone
+declare <8 x float> @llvm.x86.avx.dp.ps.256(<8 x float>, <8 x float>, i8) nounwind readnone
 
 
 define <4 x double> @test_x86_avx_hadd_pd_256(<4 x double> %a0, <4 x double> %a1) {
