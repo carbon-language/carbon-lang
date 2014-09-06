@@ -113,6 +113,7 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb.h"\
 " ${SRC_ROOT}/include/lldb/API/SBSymbolContextList.h"\
 " ${SRC_ROOT}/include/lldb/API/SBTarget.h"\
 " ${SRC_ROOT}/include/lldb/API/SBThread.h"\
+" ${SRC_ROOT}/include/lldb/API/SBThreadCollection.h"\
 " ${SRC_ROOT}/include/lldb/API/SBType.h"\
 " ${SRC_ROOT}/include/lldb/API/SBTypeCategory.h"\
 " ${SRC_ROOT}/include/lldb/API/SBTypeFilter.h"\
@@ -161,6 +162,7 @@ INTERFACE_FILES="${SRC_ROOT}/scripts/Python/interface/SBAddress.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBSymbolContext.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBTarget.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBThread.i"\
+" ${SRC_ROOT}/scripts/Python/interface/SBThreadCollection.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBType.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBTypeCategory.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBTypeFilter.i"\

@@ -621,6 +621,8 @@
 		8C2D6A53197A1EAF006989C9 /* MemoryHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A52197A1EAF006989C9 /* MemoryHistory.cpp */; };
 		8C2D6A5E197A250F006989C9 /* MemoryHistoryASan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A5A197A1FDC006989C9 /* MemoryHistoryASan.cpp */; };
 		8CCB017E19BA28A80009FD44 /* ThreadCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CCB017A19BA283D0009FD44 /* ThreadCollection.cpp */; };
+		8CCB018219BA4E270009FD44 /* SBThreadCollection.h in Headers */ = {isa = PBXBuildFile; fileRef = 8CCB018119BA4E210009FD44 /* SBThreadCollection.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		8CCB018319BA51BF0009FD44 /* SBThreadCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CCB017F19BA4DD00009FD44 /* SBThreadCollection.cpp */; };
 		94094C6B163B6F840083A547 /* ValueObjectCast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94094C69163B6CD90083A547 /* ValueObjectCast.cpp */; };
 		94145431175E63B500284436 /* lldb-versioning.h in Headers */ = {isa = PBXBuildFile; fileRef = 94145430175D7FDE00284436 /* lldb-versioning.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		941BCC7F14E48C4000BB969C /* SBTypeFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568614E355F2003A195C /* SBTypeFilter.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -1904,6 +1906,9 @@
 		8C2D6A5B197A1FDC006989C9 /* MemoryHistoryASan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MemoryHistoryASan.h; sourceTree = "<group>"; };
 		8CCB017A19BA283D0009FD44 /* ThreadCollection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadCollection.cpp; path = source/Target/ThreadCollection.cpp; sourceTree = "<group>"; };
 		8CCB017C19BA289B0009FD44 /* ThreadCollection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ThreadCollection.h; path = include/lldb/Target/ThreadCollection.h; sourceTree = "<group>"; };
+		8CCB017F19BA4DD00009FD44 /* SBThreadCollection.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SBThreadCollection.cpp; path = source/API/SBThreadCollection.cpp; sourceTree = "<group>"; };
+		8CCB018119BA4E210009FD44 /* SBThreadCollection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBThreadCollection.h; path = include/lldb/API/SBThreadCollection.h; sourceTree = "<group>"; };
+		8CCB018419BA54930009FD44 /* SBThreadCollection.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBThreadCollection.i; sourceTree = "<group>"; };
 		94005E0313F438DF001EF42D /* python-wrapper.swig */ = {isa = PBXFileReference; lastKnownFileType = text; path = "python-wrapper.swig"; sourceTree = "<group>"; };
 		94005E0513F45A1B001EF42D /* embedded_interpreter.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = embedded_interpreter.py; path = source/Interpreter/embedded_interpreter.py; sourceTree = "<group>"; };
 		94031A9F13CF5B3D00DCFF3C /* PriorityPointerPair.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PriorityPointerPair.h; path = include/lldb/Utility/PriorityPointerPair.h; sourceTree = "<group>"; };
@@ -2609,6 +2614,7 @@
 				2611FF0E142D83060017FEA3 /* SBSymbolContextList.i */,
 				2611FF0F142D83060017FEA3 /* SBTarget.i */,
 				2611FF10142D83060017FEA3 /* SBThread.i */,
+				8CCB018419BA54930009FD44 /* SBThreadCollection.i */,
 				2611FF11142D83060017FEA3 /* SBType.i */,
 				9475C18A14E5EA1C001BFC6D /* SBTypeCategory.i */,
 				9461569214E3567F003A195C /* SBTypeFilter.i */,
@@ -2723,6 +2729,8 @@
 				9A9831071125FC5800A56CB0 /* SBTarget.cpp */,
 				9A98310A1125FC5800A56CB0 /* SBThread.h */,
 				9A9831091125FC5800A56CB0 /* SBThread.cpp */,
+				8CCB018119BA4E210009FD44 /* SBThreadCollection.h */,
+				8CCB017F19BA4DD00009FD44 /* SBThreadCollection.cpp */,
 				2617447911685869005ADD65 /* SBType.h */,
 				261744771168585B005ADD65 /* SBType.cpp */,
 				9475C18514E5E9C5001BFC6D /* SBTypeCategory.h */,
@@ -4282,6 +4290,7 @@
 				26680220115FD13D008E1FE4 /* SBDebugger.h in Headers */,
 				490A966B1628C3BF00F0002E /* SBDeclaration.h in Headers */,
 				26680221115FD13D008E1FE4 /* SBDefines.h in Headers */,
+				8CCB018219BA4E270009FD44 /* SBThreadCollection.h in Headers */,
 				AF0EBBEC185941360059E52F /* SBQueue.h in Headers */,
 				26680222115FD13D008E1FE4 /* SBError.h in Headers */,
 				26680223115FD13D008E1FE4 /* SBEvent.h in Headers */,
@@ -4802,6 +4811,7 @@
 				9443B122140C18C40013457C /* SBData.cpp in Sources */,
 				4CF52AF8142829390051E832 /* SBFileSpecList.cpp in Sources */,
 				23059A101958B319007B8189 /* SBUnixSignals.cpp in Sources */,
+				8CCB018319BA51BF0009FD44 /* SBThreadCollection.cpp in Sources */,
 				26B82840142D020F002DBC64 /* SBSection.cpp in Sources */,
 				B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */,
 				263C4938178B50C40070F12D /* SBModuleSpec.cpp in Sources */,
