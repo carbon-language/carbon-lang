@@ -492,6 +492,8 @@ def err_constructor_bad_name : Error<
   "missing return type for function %0; did you mean the constructor name %1?">;
 def err_destructor_tilde_identifier : Error<
   "expected a class name after '~' to name a destructor">;
+def err_destructor_tilde_scope : Error<
+  "'~' in destructor name should be after nested name specifier">;
 def err_destructor_template_id : Error<
   "destructor name %0 does not refer to a template">;
 def err_default_arg_unparsed : Error<

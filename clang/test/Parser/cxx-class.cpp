@@ -139,6 +139,20 @@ namespace CtorErrors {
   };
 }
 
+namespace DtorErrors {
+  struct A { ~A(); } a;
+  ~A::A() {} // expected-error {{'~' in destructor name should be after nested name specifier}} expected-note {{previous}}
+  A::~A() {} // expected-error {{redefinition}}
+
+  struct B { ~B(); } *b;
+  DtorErrors::~B::B() {} // expected-error {{'~' in destructor name should be after nested name specifier}}
+
+  void f() {
+    a.~A::A(); // expected-error {{'~' in destructor name should be after nested name specifier}}
+    b->~DtorErrors::~B::B(); // expected-error {{'~' in destructor name should be after nested name specifier}}
+  }
+}
+
 namespace BadFriend {
   struct A {
     friend int : 3; // expected-error {{friends can only be classes or functions}}

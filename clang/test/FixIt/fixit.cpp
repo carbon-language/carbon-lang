@@ -308,6 +308,13 @@ namespace dtor_fixit {
     ~bar() { }  // expected-error {{expected the class name after '~' to name a destructor}}
     // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:6-[[@LINE-1]]:9}:"foo"
   };
+
+  class bar {
+    ~bar();
+  };
+  ~bar::bar() {} // expected-error {{'~' in destructor name should be after nested name specifier}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:3-[[@LINE-1]]:4}:""
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:9-[[@LINE-2]]:9}:"~"
 }
 
 namespace PR5066 {
