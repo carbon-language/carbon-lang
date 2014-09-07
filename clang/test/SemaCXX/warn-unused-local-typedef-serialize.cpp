@@ -1,6 +1,6 @@
 // RUN: %clang -x c++-header -c -Wunused-local-typedef %s -o %t.gch -Werror
-// RUN: %clang -DBE_THE_SOURCE -c -Wunused-local-typedef -include %t %s 2>&1 | FileCheck %s
-// RUN: %clang -DBE_THE_SOURCE -c -Wunused-local-typedef -include %t %s 2>&1 | FileCheck %s
+// RUN: %clang -DBE_THE_SOURCE -c -Wunused-local-typedef -include %t %s -o /dev/null 2>&1 | FileCheck %s
+// RUN: %clang -DBE_THE_SOURCE -c -Wunused-local-typedef -include %t %s -o /dev/null 2>&1 | FileCheck %s
 
 #ifndef BE_THE_SOURCE
 inline void myfun() {
