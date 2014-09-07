@@ -73,7 +73,7 @@ bool CorrelatedValuePropagation::processSelect(SelectInst *S) {
   if (S->getType()->isVectorTy()) return false;
   if (isa<Constant>(S->getOperand(0))) return false;
 
-  Constant *C = LVI->getConstant(S->getOperand(0), S->getParent());
+  Constant *C = LVI->getConstant(S->getOperand(0), S->getParent(), S);
   if (!C) return false;
 
   ConstantInt *CI = dyn_cast<ConstantInt>(C);
@@ -100,7 +100,7 @@ bool CorrelatedValuePropagation::processPHI(PHINode *P) {
     Value *Incoming = P->getIncomingValue(i);
     if (isa<Constant>(Incoming)) continue;
 
-    Value *V = LVI->getConstantOnEdge(Incoming, P->getIncomingBlock(i), BB);
+    Value *V = LVI->getConstantOnEdge(Incoming, P->getIncomingBlock(i), BB, P);
 
     // Look if the incoming value is a select with a constant but LVI tells us
     // that the incoming value can never be that constant. In that case replace
@@ -114,7 +114,7 @@ bool CorrelatedValuePropagation::processPHI(PHINode *P) {
       if (!C) continue;
 
       if (LVI->getPredicateOnEdge(ICmpInst::ICMP_EQ, SI, C,
-                                  P->getIncomingBlock(i), BB) !=
+                                  P->getIncomingBlock(i), BB, P) !=
           LazyValueInfo::False)
         continue;
 
@@ -148,7 +148,7 @@ bool CorrelatedValuePropagation::processMemAccess(Instruction *I) {
 
   if (isa<Constant>(Pointer)) return false;
 
-  Constant *C = LVI->getConstant(Pointer, I->getParent());
+  Constant *C = LVI->getConstant(Pointer, I->getParent(), I);
   if (!C) return false;
 
   ++NumMemAccess;
@@ -174,13 +174,15 @@ bool CorrelatedValuePropagation::processCmp(CmpInst *C) {
   if (PI == PE) return false;
 
   LazyValueInfo::Tristate Result = LVI->getPredicateOnEdge(C->getPredicate(),
-                                    C->getOperand(0), Op1, *PI, C->getParent());
+                                    C->getOperand(0), Op1, *PI,
+                                    C->getParent(), C);
   if (Result == LazyValueInfo::Unknown) return false;
 
   ++PI;
   while (PI != PE) {
     LazyValueInfo::Tristate Res = LVI->getPredicateOnEdge(C->getPredicate(),
-                                    C->getOperand(0), Op1, *PI, C->getParent());
+                                    C->getOperand(0), Op1, *PI,
+                                    C->getParent(), C);
     if (Res != Result) return false;
     ++PI;
   }
@@ -230,7 +232,8 @@ bool CorrelatedValuePropagation::processSwitch(SwitchInst *SI) {
     for (pred_iterator PI = PB; PI != PE; ++PI) {
       // Is the switch condition equal to the case value?
       LazyValueInfo::Tristate Value = LVI->getPredicateOnEdge(CmpInst::ICMP_EQ,
-                                                              Cond, Case, *PI, BB);
+                                                              Cond, Case, *PI,
+                                                              BB, SI);
       // Give up on this case if nothing is known.
       if (Value == LazyValueInfo::Unknown) {
         State = LazyValueInfo::Unknown;

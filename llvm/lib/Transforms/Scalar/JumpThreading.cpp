@@ -124,9 +124,11 @@ namespace {
 
     bool ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,
                                          PredValueInfo &Result,
-                                         ConstantPreference Preference);
+                                         ConstantPreference Preference,
+                                         Instruction *CxtI = nullptr);
     bool ProcessThreadableEdges(Value *Cond, BasicBlock *BB,
-                                ConstantPreference Preference);
+                                ConstantPreference Preference,
+                                Instruction *CxtI = nullptr);
 
     bool ProcessBranchOnPHI(PHINode *PN);
     bool ProcessBranchOnXOR(BinaryOperator *BO);
@@ -340,7 +342,8 @@ static Constant *getKnownConstant(Value *Val, ConstantPreference Preference) {
 ///
 bool JumpThreading::
 ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
-                                ConstantPreference Preference) {
+                                ConstantPreference Preference,
+                                Instruction *CxtI) {
   // This method walks up use-def chains recursively.  Because of this, we could
   // get into an infinite loop going around loops in the use-def chain.  To
   // prevent this, keep track of what (value, block) pairs we've already visited
@@ -382,7 +385,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
       BasicBlock *P = *PI;
       // If the value is known by LazyValueInfo to be a constant in a
       // predecessor, use that information to try to thread this block.
-      Constant *PredCst = LVI->getConstantOnEdge(V, P, BB);
+      Constant *PredCst = LVI->getConstantOnEdge(V, P, BB, CxtI);
       if (Constant *KC = getKnownConstant(PredCst, Preference))
         Result.push_back(std::make_pair(KC, P));
     }
@@ -398,7 +401,8 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
         Result.push_back(std::make_pair(KC, PN->getIncomingBlock(i)));
       } else {
         Constant *CI = LVI->getConstantOnEdge(InVal,
-                                              PN->getIncomingBlock(i), BB);
+                                              PN->getIncomingBlock(i),
+                                              BB, CxtI);
         if (Constant *KC = getKnownConstant(CI, Preference))
           Result.push_back(std::make_pair(KC, PN->getIncomingBlock(i)));
       }
@@ -417,9 +421,9 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
     if (I->getOpcode() == Instruction::Or ||
         I->getOpcode() == Instruction::And) {
       ComputeValueKnownInPredecessors(I->getOperand(0), BB, LHSVals,
-                                      WantInteger);
+                                      WantInteger, CxtI);
       ComputeValueKnownInPredecessors(I->getOperand(1), BB, RHSVals,
-                                      WantInteger);
+                                      WantInteger, CxtI);
 
       if (LHSVals.empty() && RHSVals.empty())
         return false;
@@ -460,7 +464,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
         isa<ConstantInt>(I->getOperand(1)) &&
         cast<ConstantInt>(I->getOperand(1))->isOne()) {
       ComputeValueKnownInPredecessors(I->getOperand(0), BB, Result,
-                                      WantInteger);
+                                      WantInteger, CxtI);
       if (Result.empty())
         return false;
 
@@ -478,7 +482,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
     if (ConstantInt *CI = dyn_cast<ConstantInt>(BO->getOperand(1))) {
       PredValueInfoTy LHSVals;
       ComputeValueKnownInPredecessors(BO->getOperand(0), BB, LHSVals,
-                                      WantInteger);
+                                      WantInteger, CxtI);
 
       // Try to use constant folding to simplify the binary operator.
       for (unsigned i = 0, e = LHSVals.size(); i != e; ++i) {
@@ -512,7 +516,8 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
 
           LazyValueInfo::Tristate
             ResT = LVI->getPredicateOnEdge(Cmp->getPredicate(), LHS,
-                                           cast<Constant>(RHS), PredBB, BB);
+                                           cast<Constant>(RHS), PredBB, BB,
+                                           CxtI ? CxtI : Cmp);
           if (ResT == LazyValueInfo::Unknown)
             continue;
           Res = ConstantInt::get(Type::getInt1Ty(LHS->getContext()), ResT);
@@ -524,7 +529,6 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
 
       return !Result.empty();
     }
-
 
     // If comparing a live-in value against a constant, see if we know the
     // live-in value on any predecessors.
@@ -539,7 +543,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
           // predecessor, use that information to try to thread this block.
           LazyValueInfo::Tristate Res =
             LVI->getPredicateOnEdge(Cmp->getPredicate(), Cmp->getOperand(0),
-                                    RHSCst, P, BB);
+                                    RHSCst, P, BB, CxtI ? CxtI : Cmp);
           if (Res == LazyValueInfo::Unknown)
             continue;
 
@@ -555,7 +559,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
       if (Constant *CmpConst = dyn_cast<Constant>(Cmp->getOperand(1))) {
         PredValueInfoTy LHSVals;
         ComputeValueKnownInPredecessors(I->getOperand(0), BB, LHSVals,
-                                        WantInteger);
+                                        WantInteger, CxtI);
 
         for (unsigned i = 0, e = LHSVals.size(); i != e; ++i) {
           Constant *V = LHSVals[i].first;
@@ -578,7 +582,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
     PredValueInfoTy Conds;
     if ((TrueVal || FalseVal) &&
         ComputeValueKnownInPredecessors(SI->getCondition(), BB, Conds,
-                                        WantInteger)) {
+                                        WantInteger, CxtI)) {
       for (unsigned i = 0, e = Conds.size(); i != e; ++i) {
         Constant *Cond = Conds[i].first;
 
@@ -605,7 +609,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
   }
 
   // If all else fails, see if LVI can figure out a constant value for us.
-  Constant *CI = LVI->getConstant(V, BB);
+  Constant *CI = LVI->getConstant(V, BB, CxtI);
   if (Constant *KC = getKnownConstant(CI, Preference)) {
     for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
       Result.push_back(std::make_pair(KC, *PI));
@@ -745,7 +749,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // All the rest of our checks depend on the condition being an instruction.
   if (!CondInst) {
     // FIXME: Unify this with code below.
-    if (ProcessThreadableEdges(Condition, BB, Preference))
+    if (ProcessThreadableEdges(Condition, BB, Preference, Terminator))
       return true;
     return false;
   }
@@ -767,13 +771,14 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
       // FIXME: We could handle mixed true/false by duplicating code.
       LazyValueInfo::Tristate Baseline =
         LVI->getPredicateOnEdge(CondCmp->getPredicate(), CondCmp->getOperand(0),
-                                CondConst, *PI, BB);
+                                CondConst, *PI, BB, CondCmp);
       if (Baseline != LazyValueInfo::Unknown) {
         // Check that all remaining incoming values match the first one.
         while (++PI != PE) {
           LazyValueInfo::Tristate Ret =
             LVI->getPredicateOnEdge(CondCmp->getPredicate(),
-                                    CondCmp->getOperand(0), CondConst, *PI, BB);
+                                    CondCmp->getOperand(0), CondConst, *PI, BB,
+                                    CondCmp);
           if (Ret != Baseline) break;
         }
 
@@ -788,6 +793,21 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
         }
       }
 
+    } else if (CondBr && CondConst && CondBr->isConditional()) {
+      // There might be an invairant in the same block with the conditional
+      // that can determine the predicate.
+
+      LazyValueInfo::Tristate Ret =
+        LVI->getPredicateAt(CondCmp->getPredicate(), CondCmp->getOperand(0),
+                            CondConst, CondCmp);
+      if (Ret != LazyValueInfo::Unknown) {
+        unsigned ToRemove = Ret == LazyValueInfo::True ? 1 : 0;
+        unsigned ToKeep = Ret == LazyValueInfo::True ? 0 : 1;
+        CondBr->getSuccessor(ToRemove)->removePredecessor(BB, true);
+        BranchInst::Create(CondBr->getSuccessor(ToKeep), CondBr);
+        CondBr->eraseFromParent();
+        return true;
+      }
     }
 
     if (CondBr && CondConst && TryToUnfoldSelect(CondCmp, BB))
@@ -815,7 +835,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // a PHI node in the current block.  If we can prove that any predecessors
   // compute a predictable value based on a PHI node, thread those predecessors.
   //
-  if (ProcessThreadableEdges(CondInst, BB, Preference))
+  if (ProcessThreadableEdges(CondInst, BB, Preference, Terminator))
     return true;
 
   // If this is an otherwise-unfoldable branch on a phi node in the current
@@ -1083,14 +1103,15 @@ FindMostPopularDest(BasicBlock *BB,
 }
 
 bool JumpThreading::ProcessThreadableEdges(Value *Cond, BasicBlock *BB,
-                                           ConstantPreference Preference) {
+                                           ConstantPreference Preference,
+                                           Instruction *CxtI) {
   // If threading this would thread across a loop header, don't even try to
   // thread the edge.
   if (LoopHeaders.count(BB))
     return false;
 
   PredValueInfoTy PredValues;
-  if (!ComputeValueKnownInPredecessors(Cond, BB, PredValues, Preference))
+  if (!ComputeValueKnownInPredecessors(Cond, BB, PredValues, Preference, CxtI))
     return false;
 
   assert(!PredValues.empty() &&
@@ -1255,10 +1276,10 @@ bool JumpThreading::ProcessBranchOnXOR(BinaryOperator *BO) {
   PredValueInfoTy XorOpValues;
   bool isLHS = true;
   if (!ComputeValueKnownInPredecessors(BO->getOperand(0), BB, XorOpValues,
-                                       WantInteger)) {
+                                       WantInteger, BO)) {
     assert(XorOpValues.empty());
     if (!ComputeValueKnownInPredecessors(BO->getOperand(1), BB, XorOpValues,
-                                         WantInteger))
+                                         WantInteger, BO))
       return false;
     isLHS = false;
   }
@@ -1674,10 +1695,10 @@ bool JumpThreading::TryToUnfoldSelect(CmpInst *CondCmp, BasicBlock *BB) {
     // cases will be threaded in any case.
     LazyValueInfo::Tristate LHSFolds =
         LVI->getPredicateOnEdge(CondCmp->getPredicate(), SI->getOperand(1),
-                                CondRHS, Pred, BB);
+                                CondRHS, Pred, BB, CondCmp);
     LazyValueInfo::Tristate RHSFolds =
         LVI->getPredicateOnEdge(CondCmp->getPredicate(), SI->getOperand(2),
-                                CondRHS, Pred, BB);
+                                CondRHS, Pred, BB, CondCmp);
     if ((LHSFolds != LazyValueInfo::Unknown ||
          RHSFolds != LazyValueInfo::Unknown) &&
         LHSFolds != RHSFolds) {
