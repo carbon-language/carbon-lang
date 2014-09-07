@@ -310,6 +310,10 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   if (!DisableUnrollLoops)
     MPM.add(createLoopUnrollPass());    // Unroll small loops
 
+  // After vectorization and unrolling, assume intrinsics may tell us more
+  // about pointer alignments.
+  MPM.add(createAlignmentFromAssumptionsPass());
+
   if (!DisableUnitAtATime) {
     // FIXME: We shouldn't bother with this anymore.
     MPM.add(createStripDeadPrototypesPass()); // Get rid of dead prototypes
@@ -398,6 +402,10 @@ void PassManagerBuilder::addLTOOptimizationPasses(PassManagerBase &PM) {
 
   // More scalar chains could be vectorized due to more alias information
   PM.add(createSLPVectorizerPass()); // Vectorize parallel scalar chains.
+
+  // After vectorization, assume intrinsics may tell us more about pointer
+  // alignments.
+  PM.add(createAlignmentFromAssumptionsPass());
 
   if (LoadCombine)
     PM.add(createLoadCombinePass());

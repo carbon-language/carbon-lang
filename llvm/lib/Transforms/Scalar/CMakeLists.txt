@@ -1,5 +1,6 @@
 add_llvm_library(LLVMScalarOpts
   ADCE.cpp
+  AlignmentFromAssumptions.cpp
   ConstantHoisting.cpp
   ConstantProp.cpp
   CorrelatedValuePropagation.cpp

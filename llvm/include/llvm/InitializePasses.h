@@ -73,6 +73,7 @@ void initializeAlwaysInlinerPass(PassRegistry&);
 void initializeArgPromotionPass(PassRegistry&);
 void initializeAtomicExpandPass(PassRegistry&);
 void initializeSampleProfileLoaderPass(PassRegistry&);
+void initializeAlignmentFromAssumptionsPass(PassRegistry&);
 void initializeBarrierNoopPass(PassRegistry&);
 void initializeBasicAliasAnalysisPass(PassRegistry&);
 void initializeCallGraphWrapperPassPass(PassRegistry &);
