@@ -18,6 +18,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/AssumptionTracker.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/InstructionSimplify.h"
@@ -982,6 +983,11 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
 
     // Add noalias metadata if necessary.
     AddAliasScopeMetadata(CS, VMap, IFI.DL, IFI.AA);
+
+    // FIXME: We could register any cloned assumptions instead of clearing the
+    // whole function's cache.
+    if (IFI.AT)
+      IFI.AT->forgetCachedAssumptions(Caller);
   }
 
   // If there are any alloca instructions in the block that used to be the entry

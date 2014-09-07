@@ -996,6 +996,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   }
   case Intrinsic::assume: {
     // Canonicalize assume(a && b) -> assume(a); assume(b);
+    // Note: New assumption intrinsics created here are registered by
+    // the InstCombineIRInserter object.
     Value *IIOperand = II->getArgOperand(0), *A, *B,
           *AssumeIntrinsic = II->getCalledValue();
     if (match(IIOperand, m_And(m_Value(A), m_Value(B)))) {
@@ -1005,8 +1007,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     }
     // assume(!(a || b)) -> assume(!a); assume(!b);
     if (match(IIOperand, m_Not(m_Or(m_Value(A), m_Value(B))))) {
-      Builder->CreateCall(AssumeIntrinsic, Builder->CreateNot(A), II->getName());
-      Builder->CreateCall(AssumeIntrinsic, Builder->CreateNot(B), II->getName());
+      Builder->CreateCall(AssumeIntrinsic, Builder->CreateNot(A),
+                          II->getName());
+      Builder->CreateCall(AssumeIntrinsic, Builder->CreateNot(B),
+                          II->getName());
       return EraseInstFromFunction(*II);
     }
     break;

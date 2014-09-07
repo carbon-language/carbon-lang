@@ -11,12 +11,14 @@
 #define LLVM_LIB_TRANSFORMS_INSTCOMBINE_INSTCOMBINE_H
 
 #include "InstCombineWorklist.h"
+#include "llvm/Analysis/AssumptionTracker.h"
 #include "llvm/Analysis/TargetFolder.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/SimplifyLibCalls.h"
 
@@ -71,14 +73,20 @@ static inline Constant *SubOne(Constant *C) {
 class LLVM_LIBRARY_VISIBILITY InstCombineIRInserter
     : public IRBuilderDefaultInserter<true> {
   InstCombineWorklist &Worklist;
+  AssumptionTracker *AT;
 
 public:
-  InstCombineIRInserter(InstCombineWorklist &WL) : Worklist(WL) {}
+  InstCombineIRInserter(InstCombineWorklist &WL, AssumptionTracker *AT)
+    : Worklist(WL), AT(AT) {}
 
   void InsertHelper(Instruction *I, const Twine &Name, BasicBlock *BB,
                     BasicBlock::iterator InsertPt) const {
     IRBuilderDefaultInserter<true>::InsertHelper(I, Name, BB, InsertPt);
     Worklist.Add(I);
+
+    using namespace llvm::PatternMatch;
+    if ((match(I, m_Intrinsic<Intrinsic::assume>(m_Value()))))
+      AT->registerAssumption(cast<CallInst>(I));
   }
 };
 
@@ -86,6 +94,7 @@ public:
 class LLVM_LIBRARY_VISIBILITY InstCombiner
     : public FunctionPass,
       public InstVisitor<InstCombiner, Instruction *> {
+  AssumptionTracker *AT;
   const DataLayout *DL;
   TargetLibraryInfo *TLI;
   bool MadeIRChange;
@@ -113,6 +122,8 @@ public:
   bool DoOneIteration(Function &F, unsigned ItNum);
 
   void getAnalysisUsage(AnalysisUsage &AU) const override;
+
+  AssumptionTracker *getAssumptionTracker() const { return AT; }
 
   const DataLayout *getDataLayout() const { return DL; }
 

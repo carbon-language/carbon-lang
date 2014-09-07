@@ -19,6 +19,7 @@
 #include "llvm/Transforms/Utils/UnrollLoop.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AssumptionTracker.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopIterator.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -154,7 +155,8 @@ FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI, LPPassManager *LPM,
 /// available from the Pass it must also preserve those analyses.
 bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
                       bool AllowRuntime, unsigned TripMultiple,
-                      LoopInfo *LI, Pass *PP, LPPassManager *LPM) {
+                      LoopInfo *LI, Pass *PP, LPPassManager *LPM,
+                      AssumptionTracker *AT) {
   BasicBlock *Preheader = L->getLoopPreheader();
   if (!Preheader) {
     DEBUG(dbgs() << "  Can't unroll; loop preheader-insertion failed.\n");
@@ -441,6 +443,10 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
         std::replace(Latches.begin(), Latches.end(), Dest, Fold);
     }
   }
+
+  // FIXME: We could register any cloned assumptions instead of clearing the
+  // whole function's cache.
+  AT->forgetCachedAssumptions(F);
 
   DominatorTree *DT = nullptr;
   if (PP) {

@@ -44,6 +44,7 @@ class Loop;
 class LoopInfo;
 class AllocaInst;
 class AliasAnalysis;
+class AssumptionTracker;
 
 /// CloneModule - Return an exact copy of the specified module
 ///
@@ -160,14 +161,16 @@ class InlineFunctionInfo {
 public:
   explicit InlineFunctionInfo(CallGraph *cg = nullptr,
                               const DataLayout *DL = nullptr,
-                              AliasAnalysis *AA = nullptr)
-    : CG(cg), DL(DL), AA(AA) {}
+                              AliasAnalysis *AA = nullptr,
+                              AssumptionTracker *AT = nullptr)
+    : CG(cg), DL(DL), AA(AA), AT(AT) {}
 
   /// CG - If non-null, InlineFunction will update the callgraph to reflect the
   /// changes it makes.
   CallGraph *CG;
   const DataLayout *DL;
   AliasAnalysis *AA;
+  AssumptionTracker *AT;
 
   /// StaticAllocas - InlineFunction fills this in with all static allocas that
   /// get copied into the caller.

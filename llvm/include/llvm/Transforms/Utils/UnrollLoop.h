@@ -18,6 +18,7 @@
 
 namespace llvm {
 
+class AssumptionTracker;
 class Loop;
 class LoopInfo;
 class LPPassManager;
@@ -25,7 +26,7 @@ class Pass;
 
 bool UnrollLoop(Loop *L, unsigned Count, unsigned TripCount, bool AllowRuntime,
                 unsigned TripMultiple, LoopInfo *LI, Pass *PP,
-                LPPassManager *LPM);
+                LPPassManager *LPM, AssumptionTracker *AT);
 
 bool UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
                              LPPassManager* LPM);

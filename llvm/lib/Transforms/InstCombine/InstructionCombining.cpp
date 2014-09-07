@@ -39,6 +39,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Analysis/AssumptionTracker.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
@@ -85,12 +86,14 @@ void LLVMInitializeInstCombine(LLVMPassRegistryRef R) {
 char InstCombiner::ID = 0;
 INITIALIZE_PASS_BEGIN(InstCombiner, "instcombine",
                 "Combine redundant instructions", false, false)
+INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_PASS_END(InstCombiner, "instcombine",
                 "Combine redundant instructions", false, false)
 
 void InstCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
+  AU.addRequired<AssumptionTracker>();
   AU.addRequired<TargetLibraryInfo>();
 }
 
@@ -2907,6 +2910,7 @@ bool InstCombiner::runOnFunction(Function &F) {
   if (skipOptnoneFunction(F))
     return false;
 
+  AT = &getAnalysis<AssumptionTracker>();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   DL = DLP ? &DLP->getDataLayout() : nullptr;
   TLI = &getAnalysis<TargetLibraryInfo>();
@@ -2918,7 +2922,7 @@ bool InstCombiner::runOnFunction(Function &F) {
   /// instructions into the worklist when they are created.
   IRBuilder<true, TargetFolder, InstCombineIRInserter>
     TheBuilder(F.getContext(), TargetFolder(DL),
-               InstCombineIRInserter(Worklist));
+               InstCombineIRInserter(Worklist, AT));
   Builder = &TheBuilder;
 
   InstCombinerLibCallSimplifier TheSimplifier(DL, TLI, this);
