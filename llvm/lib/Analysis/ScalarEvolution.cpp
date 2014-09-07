@@ -6313,13 +6313,22 @@ ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
 
   BranchInst *LoopContinuePredicate =
     dyn_cast<BranchInst>(Latch->getTerminator());
-  if (!LoopContinuePredicate ||
-      LoopContinuePredicate->isUnconditional())
-    return false;
+  if (LoopContinuePredicate && LoopContinuePredicate->isConditional() &&
+      isImpliedCond(Pred, LHS, RHS,
+                    LoopContinuePredicate->getCondition(),
+                    LoopContinuePredicate->getSuccessor(0) != L->getHeader()))
+    return true;
 
-  return isImpliedCond(Pred, LHS, RHS,
-                       LoopContinuePredicate->getCondition(),
-                       LoopContinuePredicate->getSuccessor(0) != L->getHeader());
+  // Check conditions due to any @llvm.assume intrinsics.
+  for (auto &CI : AT->assumptions(F)) {
+    if (!DT->dominates(CI, Latch->getTerminator()))
+      continue;
+
+    if (isImpliedCond(Pred, LHS, RHS, CI->getArgOperand(0), false))
+      return true;
+  }
+
+  return false;
 }
 
 /// isLoopEntryGuardedByCond - Test whether entry to the loop is protected
@@ -6350,6 +6359,15 @@ ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
     if (isImpliedCond(Pred, LHS, RHS,
                       LoopEntryPredicate->getCondition(),
                       LoopEntryPredicate->getSuccessor(0) != Pair.second))
+      return true;
+  }
+
+  // Check conditions due to any @llvm.assume intrinsics.
+  for (auto &CI : AT->assumptions(F)) {
+    if (!DT->dominates(CI, L->getHeader()))
+      continue;
+
+    if (isImpliedCond(Pred, LHS, RHS, CI->getArgOperand(0), false))
       return true;
   }
 
