@@ -198,7 +198,7 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
     case '@': k = ConversionSpecifier::ObjCObjArg; break;
     // Glibc specific.
     case 'm': k = ConversionSpecifier::PrintErrno; break;
-    // Apple-specific
+    // Apple-specific.
     case 'D':
       if (Target.getTriple().isOSDarwin())
         k = ConversionSpecifier::DArg;
@@ -211,6 +211,10 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
       if (Target.getTriple().isOSDarwin())
         k = ConversionSpecifier::UArg;
       break;
+    // MS specific.
+    case 'Z':
+      if (Target.getTriple().isOSMSVCRT())
+        k = ConversionSpecifier::ZArg;
   }
   PrintfConversionSpecifier CS(conversionPosition, k);
   FS.setConversionSpecifier(CS);

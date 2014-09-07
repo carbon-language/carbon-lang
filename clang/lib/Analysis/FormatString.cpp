@@ -554,6 +554,9 @@ const char *ConversionSpecifier::toString() const {
 
   // GlibC specific specifiers.
   case PrintErrno: return "m";
+
+  // MS specific specifiers.
+  case ZArg: return "Z";
   }
   return nullptr;
 }
@@ -619,6 +622,7 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
           case ConversionSpecifier::CArg:
           case ConversionSpecifier::sArg:
           case ConversionSpecifier::SArg:
+          case ConversionSpecifier::ZArg:
             return true;
           default:
             break;
@@ -671,6 +675,7 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
         case ConversionSpecifier::cArg:
         case ConversionSpecifier::sArg:
         case ConversionSpecifier::ScanListArg:
+        case ConversionSpecifier::ZArg:
           return true;
         default:
           return false;
@@ -740,7 +745,8 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
         case ConversionSpecifier::cArg:
         case ConversionSpecifier::CArg:
         case ConversionSpecifier::sArg:
-        case ConversionSpecifier::SArg: // FIXME: Or Z.
+        case ConversionSpecifier::SArg:
+        case ConversionSpecifier::ZArg:
           return Target.getTriple().isOSMSVCRT();
         default:
           return false;
@@ -805,6 +811,7 @@ bool FormatSpecifier::hasStandardConversionSpecifier(const LangOptions &LangOpt)
     case ConversionSpecifier::DArg:
     case ConversionSpecifier::OArg:
     case ConversionSpecifier::UArg:
+    case ConversionSpecifier::ZArg:
       return false;
   }
   llvm_unreachable("Invalid ConversionSpecifier Kind!");

@@ -8,11 +8,12 @@ typedef unsigned short wchar_t;
 #ifdef NON_ISO_WARNING
 
 // Split off this test to reduce the warning noise in the rest of the file.
-void non_iso_warning_test(__int32 i32, __int64 i64, wchar_t c) {
+void non_iso_warning_test(__int32 i32, __int64 i64, wchar_t c, void *p) {
   printf("%Id", i32); // expected-warning{{'I' length modifier is not supported by ISO C}}
   printf("%I32d", i32); // expected-warning{{'I32' length modifier is not supported by ISO C}}
   printf("%I64d", i64); // expected-warning{{'I64' length modifier is not supported by ISO C}}
   printf("%wc", c); // expected-warning{{'w' length modifier is not supported by ISO C}}
+  printf("%Z", p); // expected-warning{{'Z' conversion specifier is not supported by ISO C}}
 }
 
 #else
@@ -73,6 +74,15 @@ void h_test(char c, char* s) {
   scanf("%hC", &bad); // expected-warning{{format specifies type 'char *' but the argument has type 'double *'}}
   scanf("%hs", &bad); // expected-warning{{format specifies type 'char *' but the argument has type 'double *'}}
   scanf("%hS", &bad); // expected-warning{{format specifies type 'char *' but the argument has type 'double *'}}
+}
+
+void z_test(void *p) {
+  printf("%Z", p);
+  printf("%hZ", p);
+  printf("%lZ", p);
+  printf("%wZ", p);
+  printf("%hhZ", p); // expected-warning{{length modifier 'hh' results in undefined behavior or no effect with 'Z' conversion specifier}}
+  scanf("%Z", p); // expected-warning{{invalid conversion specifier 'Z'}}
 }
 
 #endif

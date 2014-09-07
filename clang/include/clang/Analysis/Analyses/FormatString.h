@@ -155,6 +155,8 @@ public:
 
     // ** Printf-specific **
 
+    ZArg, // MS extension
+
     // Objective-C specific specifiers.
     ObjCObjArg,  // '@'
     ObjCBeg = ObjCObjArg, ObjCEnd = ObjCObjArg,
