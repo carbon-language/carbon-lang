@@ -288,7 +288,7 @@ void DwarfUnit::addSectionOffset(DIE &Die, dwarf::Attribute Attribute,
 void DwarfCompileUnit::addLabelAddress(DIE &Die, dwarf::Attribute Attribute,
                                        const MCSymbol *Label) {
 
-  if (!DD->useSplitDwarf())
+  if (!DD->useSplitDwarf() || !Skeleton)
     return addLocalLabelAddress(Die, Attribute, Label);
 
   if (Label)
