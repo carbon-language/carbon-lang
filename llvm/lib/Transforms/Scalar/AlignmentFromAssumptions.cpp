@@ -96,8 +96,10 @@ FunctionPass *llvm::createAlignmentFromAssumptionsPass() {
 
 // Given an expression for the (constant) alignment, AlignSCEV, and an
 // expression for the displacement between a pointer and the aligned address,
-// DiffSCEV, compute the alignment of the displaced pointer if it can be
-// reduced to a constant.
+// DiffSCEV, compute the alignment of the displaced pointer if it can be reduced
+// to a constant. Using SCEV to compute alignment handles the case where
+// DiffSCEV is a recurrence with constant start such that the aligned offset
+// is constant. e.g. {16,+,32} % 32 -> 16.
 static unsigned getNewAlignmentDiff(const SCEV *DiffSCEV,
                                     const SCEV *AlignSCEV,
                                     ScalarEvolution *SE) {
