@@ -18,14 +18,14 @@ e1 g1(e1 *x) {
   return *x;
 }
 // CHECK-LABEL: define i32 @_Z2g1P2e1
-// CHECK: load i32* %x, align 4, !range [[RANGE_i32_0_1:![^ ]*]]
+// CHECK: ret i32 0
 
 enum e2 { e2_a = 0 };
 e2 g2(e2 *x) {
   return *x;
 }
 // CHECK-LABEL: define i32 @_Z2g2P2e2
-// CHECK: load i32* %x, align 4, !range [[RANGE_i32_0_1]]
+// CHECK: ret i32 0
 
 enum e3 { e3_a = 16 };
 e3 g3(e3 *x) {
@@ -137,7 +137,6 @@ e16 g16(e16 *x) {
 
 
 // CHECK: [[RANGE_i8_0_2]] = metadata !{i8 0, i8 2}
-// CHECK: [[RANGE_i32_0_1]] = metadata !{i32 0, i32 1}
 // CHECK: [[RANGE_i32_0_32]] = metadata !{i32 0, i32 32}
 // CHECK: [[RANGE_i32_m16_16]] = metadata !{i32 -16, i32 16}
 // CHECK: [[RANGE_i32_m32_32]] = metadata !{i32 -32, i32 32}
