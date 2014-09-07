@@ -264,6 +264,12 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     assert(!(RHSKnownZero & RHSKnownOne) && "Bits known to be one AND zero?");
     assert(!(LHSKnownZero & LHSKnownOne) && "Bits known to be one AND zero?");
 
+    // If the client is only demanding bits that we know, return the known
+    // constant.
+    if ((DemandedMask & ((RHSKnownZero | LHSKnownZero)|
+                         (RHSKnownOne & LHSKnownOne))) == DemandedMask)
+      return Constant::getIntegerValue(VTy, RHSKnownOne & LHSKnownOne);
+
     // If all of the demanded bits are known 1 on one side, return the other.
     // These bits cannot contribute to the result of the 'and'.
     if ((DemandedMask & ~LHSKnownZero & RHSKnownOne) ==
@@ -295,6 +301,12 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
       return I;
     assert(!(RHSKnownZero & RHSKnownOne) && "Bits known to be one AND zero?");
     assert(!(LHSKnownZero & LHSKnownOne) && "Bits known to be one AND zero?");
+
+    // If the client is only demanding bits that we know, return the known
+    // constant.
+    if ((DemandedMask & ((RHSKnownZero & LHSKnownZero)|
+                         (RHSKnownOne | LHSKnownOne))) == DemandedMask)
+      return Constant::getIntegerValue(VTy, RHSKnownOne | LHSKnownOne);
 
     // If all of the demanded bits are known zero on one side, return the other.
     // These bits cannot contribute to the result of the 'or'.
@@ -331,6 +343,18 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
       return I;
     assert(!(RHSKnownZero & RHSKnownOne) && "Bits known to be one AND zero?");
     assert(!(LHSKnownZero & LHSKnownOne) && "Bits known to be one AND zero?");
+
+    // Output known-0 bits are known if clear or set in both the LHS & RHS.
+    APInt IKnownZero = (RHSKnownZero & LHSKnownZero) |
+                       (RHSKnownOne & LHSKnownOne);
+    // Output known-1 are known to be set if set in only one of the LHS, RHS.
+    APInt IKnownOne =  (RHSKnownZero & LHSKnownOne) |
+                       (RHSKnownOne & LHSKnownZero);
+
+    // If the client is only demanding bits that we know, return the known
+    // constant.
+    if ((DemandedMask & (IKnownZero|IKnownOne)) == DemandedMask)
+      return Constant::getIntegerValue(VTy, IKnownOne);
 
     // If all of the demanded bits are known zero on one side, return the other.
     // These bits cannot contribute to the result of the 'xor'.
