@@ -189,7 +189,12 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
       return ExprError();
     break;
   case Builtin::BI__assume:
+  case Builtin::BI__builtin_assume:
     if (SemaBuiltinAssume(TheCall))
+      return ExprError();
+    break;
+  case Builtin::BI__builtin_assume_aligned:
+    if (SemaBuiltinAssumeAligned(TheCall))
       return ExprError();
     break;
   case Builtin::BI__builtin_object_size:
@@ -2059,7 +2064,46 @@ bool Sema::SemaBuiltinAssume(CallExpr *TheCall) {
 
   if (Arg->HasSideEffects(Context))
     return Diag(Arg->getLocStart(), diag::warn_assume_side_effects)
-      << Arg->getSourceRange();
+      << Arg->getSourceRange()
+      << cast<FunctionDecl>(TheCall->getCalleeDecl())->getIdentifier();
+
+  return false;
+}
+
+/// Handle __builtin_assume_aligned. This is declared
+/// as (const void*, size_t, ...) and can take one optional constant int arg.
+bool Sema::SemaBuiltinAssumeAligned(CallExpr *TheCall) {
+  unsigned NumArgs = TheCall->getNumArgs();
+
+  if (NumArgs > 3)
+    return Diag(TheCall->getLocEnd(),
+             diag::err_typecheck_call_too_many_args_at_most)
+             << 0 /*function call*/ << 3 << NumArgs
+             << TheCall->getSourceRange();
+
+  // The alignment must be a constant integer.
+  Expr *Arg = TheCall->getArg(1);
+
+  // We can't check the value of a dependent argument.
+  if (!Arg->isTypeDependent() && !Arg->isValueDependent()) {
+    llvm::APSInt Result;
+    if (SemaBuiltinConstantArg(TheCall, 1, Result))
+      return true;
+
+    if (!Result.isPowerOf2())
+      return Diag(TheCall->getLocStart(),
+                  diag::err_alignment_not_power_of_two)
+           << Arg->getSourceRange();
+  }
+
+  if (NumArgs > 2) {
+    ExprResult Arg(TheCall->getArg(2));
+    InitializedEntity Entity = InitializedEntity::InitializeParameter(Context,
+      Context.getSizeType(), false);
+    Arg = PerformCopyInitialization(Entity, SourceLocation(), Arg);
+    if (Arg.isInvalid()) return true;
+    TheCall->setArg(2, Arg.get());
+  }
 
   return false;
 }

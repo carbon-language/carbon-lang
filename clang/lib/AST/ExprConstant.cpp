@@ -6092,6 +6092,7 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     return Success(Operand, E);
   }
 
+  case Builtin::BI__builtin_assume_aligned:
   case Builtin::BI__builtin_expect:
     return Visit(E->getArg(0));
 
@@ -7967,6 +7968,7 @@ public:
     default:
       return ExprEvaluatorBaseTy::VisitCallExpr(E);
     case Builtin::BI__assume:
+    case Builtin::BI__builtin_assume:
       // The argument is not evaluated!
       return true;
     }

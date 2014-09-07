@@ -412,6 +412,7 @@ BUILTIN(__builtin_va_start, "vA.", "nt")
 BUILTIN(__builtin_va_end, "vA", "n")
 BUILTIN(__builtin_va_copy, "vAA", "n")
 BUILTIN(__builtin_stdarg_start, "vA.", "n")
+BUILTIN(__builtin_assume_aligned, "v*vC*z.", "nc")
 BUILTIN(__builtin_bcmp, "iv*v*z", "n")
 BUILTIN(__builtin_bcopy, "vv*v*z", "n")
 BUILTIN(__builtin_bzero, "vv*z", "nF")
@@ -1172,6 +1173,9 @@ LIBBUILTIN(_Block_object_dispose, "vvC*iC", "f", "Blocks.h", ALL_LANGUAGES)
 
 // Annotation function
 BUILTIN(__builtin_annotation, "v.", "tn")
+
+// Invariants
+BUILTIN(__builtin_assume, "vb", "n")
 
 // Multiprecision Arithmetic Builtins.
 BUILTIN(__builtin_addcb, "UcUcCUcCUcCUc*", "n")

@@ -451,7 +451,7 @@ def note_strncat_wrong_size : Note<
   "the terminating null byte">;
 
 def warn_assume_side_effects : Warning<
-  "the argument to __assume has side effects that will be discarded">,
+  "the argument to %0 has side effects that will be discarded">,
   InGroup<DiagGroup<"assume">>;
 
 /// main()
@@ -2078,8 +2078,9 @@ def err_no_accessor_for_property : Error<
 def error_cannot_find_suitable_accessor : Error<
   "cannot find suitable %select{getter|setter}0 for property %1">;
 
-def err_attribute_aligned_not_power_of_two : Error<
+def err_alignment_not_power_of_two : Error<
   "requested alignment is not a power of 2">;
+
 def err_attribute_aligned_too_great : Error<
   "requested alignment must be %0 bytes or smaller">;
 def warn_redeclaration_without_attribute_prev_attribute_ignored : Warning<

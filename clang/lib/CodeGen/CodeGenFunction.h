@@ -1743,6 +1743,10 @@ public:
                                        bool isInc, bool isPre);
   ComplexPairTy EmitComplexPrePostIncDec(const UnaryOperator *E, LValue LV,
                                          bool isInc, bool isPre);
+
+  void EmitAlignmentAssumption(llvm::Value *PtrValue, unsigned Alignment,
+                               llvm::Value *OffsetValue = nullptr);
+
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//
