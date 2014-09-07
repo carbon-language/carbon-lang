@@ -43,6 +43,18 @@ entry:
 ; Function Attrs: nounwind
 declare void @llvm.assume(i1) #1
 
+define i32 @simple(i32 %a) #1 {
+entry:
+
+; CHECK-LABEL: @simple
+; CHECK: call void @llvm.assume
+; CHECK: ret i32 4
+
+  %cmp = icmp eq i32 %a, 4
+  tail call void @llvm.assume(i1 %cmp)
+  ret i32 %a
+}
+
 ; Function Attrs: nounwind uwtable
 define i32 @can1(i1 %a, i1 %b, i1 %c) {
 entry:

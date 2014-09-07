@@ -232,6 +232,7 @@ public:
   Instruction *visitStoreInst(StoreInst &SI);
   Instruction *visitBranchInst(BranchInst &BI);
   Instruction *visitSwitchInst(SwitchInst &SI);
+  Instruction *visitReturnInst(ReturnInst &RI);
   Instruction *visitInsertValueInst(InsertValueInst &IV);
   Instruction *visitInsertElementInst(InsertElementInst &IE);
   Instruction *visitExtractElementInst(ExtractElementInst &EI);

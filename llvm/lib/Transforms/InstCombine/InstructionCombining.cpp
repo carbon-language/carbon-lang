@@ -2004,7 +2004,25 @@ Instruction *InstCombiner::visitFree(CallInst &FI) {
   return nullptr;
 }
 
+Instruction *InstCombiner::visitReturnInst(ReturnInst &RI) {
+  if (RI.getNumOperands() == 0) // ret void
+    return nullptr;
 
+  Value *ResultOp = RI.getOperand(0);
+  Type *VTy = ResultOp->getType();
+  if (!VTy->isIntegerTy())
+    return nullptr;
+
+  // There might be assume intrinsics dominating this return that completely
+  // determine the value. If so, constant fold it.
+  unsigned BitWidth = VTy->getPrimitiveSizeInBits();
+  APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+  computeKnownBits(ResultOp, KnownZero, KnownOne, 0, &RI);
+  if ((KnownZero|KnownOne).isAllOnesValue())
+    RI.setOperand(0, Constant::getIntegerValue(VTy, KnownOne));
+
+  return nullptr;
+}
 
 Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
   // Change br (not X), label True, label False to: br X, label False, True
