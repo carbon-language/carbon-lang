@@ -1711,7 +1711,7 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
 
     // Fold constant phis. They may be congruent to other constant phis and
     // would confuse the logic below that expects proper IVs.
-    if (Value *V = SimplifyInstruction(Phi, SE.DL, SE.TLI, SE.DT)) {
+    if (Value *V = SimplifyInstruction(Phi, SE.DL, SE.TLI, SE.DT, SE.AT)) {
       Phi->replaceAllUsesWith(V);
       DeadInsts.push_back(Phi);
       ++NumElim;

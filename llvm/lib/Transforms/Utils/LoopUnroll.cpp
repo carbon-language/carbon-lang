@@ -509,7 +509,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
       DataLayoutPass *DLP = PP->getAnalysisIfAvailable<DataLayoutPass>();
       const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
       ScalarEvolution *SE = PP->getAnalysisIfAvailable<ScalarEvolution>();
-      simplifyLoop(OuterL, DT, LI, PP, /*AliasAnalysis*/ nullptr, SE, DL);
+      simplifyLoop(OuterL, DT, LI, PP, /*AliasAnalysis*/ nullptr, SE, DL, AT);
 
       // LCSSA must be performed on the outermost affected loop. The unrolled
       // loop's last loop latch is guaranteed to be in the outermost loop after

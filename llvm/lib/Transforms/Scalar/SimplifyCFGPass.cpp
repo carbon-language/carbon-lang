@@ -25,6 +25,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AssumptionTracker.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/CFG.h"
@@ -50,6 +51,7 @@ struct CFGSimplifyPass : public FunctionPass {
   bool runOnFunction(Function &F) override;
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<AssumptionTracker>();
     AU.addRequired<TargetTransformInfo>();
   }
 };
@@ -59,6 +61,7 @@ char CFGSimplifyPass::ID = 0;
 INITIALIZE_PASS_BEGIN(CFGSimplifyPass, "simplifycfg", "Simplify the CFG", false,
                       false)
 INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
 INITIALIZE_PASS_END(CFGSimplifyPass, "simplifycfg", "Simplify the CFG", false,
                     false)
 
@@ -146,7 +149,8 @@ static bool mergeEmptyReturnBlocks(Function &F) {
 /// iterativelySimplifyCFG - Call SimplifyCFG on all the blocks in the function,
 /// iterating until no more changes are made.
 static bool iterativelySimplifyCFG(Function &F, const TargetTransformInfo &TTI,
-                                   const DataLayout *DL) {
+                                   const DataLayout *DL,
+                                   AssumptionTracker *AT) {
   bool Changed = false;
   bool LocalChange = true;
   while (LocalChange) {
@@ -155,7 +159,7 @@ static bool iterativelySimplifyCFG(Function &F, const TargetTransformInfo &TTI,
     // Loop over all of the basic blocks and remove them if they are unneeded...
     //
     for (Function::iterator BBIt = F.begin(); BBIt != F.end(); ) {
-      if (SimplifyCFG(BBIt++, TTI, DL)) {
+      if (SimplifyCFG(BBIt++, TTI, DL, AT)) {
         LocalChange = true;
         ++NumSimpl;
       }
@@ -172,12 +176,13 @@ bool CFGSimplifyPass::runOnFunction(Function &F) {
   if (skipOptnoneFunction(F))
     return false;
 
+  AssumptionTracker *AT = &getAnalysis<AssumptionTracker>();
   const TargetTransformInfo &TTI = getAnalysis<TargetTransformInfo>();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
   bool EverChanged = removeUnreachableBlocks(F);
   EverChanged |= mergeEmptyReturnBlocks(F);
-  EverChanged |= iterativelySimplifyCFG(F, TTI, DL);
+  EverChanged |= iterativelySimplifyCFG(F, TTI, DL, AT);
 
   // If neither pass changed anything, we're done.
   if (!EverChanged) return false;
@@ -191,7 +196,7 @@ bool CFGSimplifyPass::runOnFunction(Function &F) {
     return true;
 
   do {
-    EverChanged = iterativelySimplifyCFG(F, TTI, DL);
+    EverChanged = iterativelySimplifyCFG(F, TTI, DL, AT);
     EverChanged |= removeUnreachableBlocks(F);
   } while (EverChanged);
 

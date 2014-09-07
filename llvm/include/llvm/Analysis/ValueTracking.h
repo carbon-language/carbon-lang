@@ -25,6 +25,8 @@ namespace llvm {
   class DataLayout;
   class StringRef;
   class MDNode;
+  class AssumptionTracker;
+  class DominatorTree;
   class TargetLibraryInfo;
 
   /// Determine which bits of V are known to be either zero or one and return
@@ -36,7 +38,10 @@ namespace llvm {
   /// same width as the vector element, and the bit is set only if it is true
   /// for all of the elements in the vector.
   void computeKnownBits(Value *V,  APInt &KnownZero, APInt &KnownOne,
-                        const DataLayout *TD = nullptr, unsigned Depth = 0);
+                        const DataLayout *TD = nullptr, unsigned Depth = 0,
+                        AssumptionTracker *AT = nullptr,
+                        const Instruction *CxtI = nullptr,
+                        const DominatorTree *DT = nullptr);
   /// Compute known bits from the range metadata.
   /// \p KnownZero the set of bits that are known to be zero
   void computeKnownBitsFromRangeMetadata(const MDNode &Ranges,
@@ -45,21 +50,29 @@ namespace llvm {
   /// ComputeSignBit - Determine whether the sign bit is known to be zero or
   /// one.  Convenience wrapper around computeKnownBits.
   void ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
-                      const DataLayout *TD = nullptr, unsigned Depth = 0);
+                      const DataLayout *TD = nullptr, unsigned Depth = 0,
+                      AssumptionTracker *AT = nullptr,
+                      const Instruction *CxtI = nullptr,
+                      const DominatorTree *DT = nullptr);
 
   /// isKnownToBeAPowerOfTwo - Return true if the given value is known to have
   /// exactly one bit set when defined. For vectors return true if every
   /// element is known to be a power of two when defined.  Supports values with
   /// integer or pointer type and vectors of integers.  If 'OrZero' is set then
   /// returns true if the given value is either a power of two or zero.
-  bool isKnownToBeAPowerOfTwo(Value *V, bool OrZero = false, unsigned Depth = 0);
+  bool isKnownToBeAPowerOfTwo(Value *V, bool OrZero = false, unsigned Depth = 0,
+                              AssumptionTracker *AT = nullptr,
+                              const Instruction *CxtI = nullptr,
+                              const DominatorTree *DT = nullptr);
 
   /// isKnownNonZero - Return true if the given value is known to be non-zero
   /// when defined.  For vectors return true if every element is known to be
   /// non-zero when defined.  Supports values with integer or pointer type and
   /// vectors of integers.
   bool isKnownNonZero(Value *V, const DataLayout *TD = nullptr,
-                      unsigned Depth = 0);
+                      unsigned Depth = 0, AssumptionTracker *AT = nullptr,
+                      const Instruction *CxtI = nullptr,
+                      const DominatorTree *DT = nullptr);
 
   /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
   /// this predicate to simplify operations downstream.  Mask is known to be
@@ -71,7 +84,10 @@ namespace llvm {
   /// same width as the vector element, and the bit is set only if it is true
   /// for all of the elements in the vector.
   bool MaskedValueIsZero(Value *V, const APInt &Mask, 
-                         const DataLayout *TD = nullptr, unsigned Depth = 0);
+                         const DataLayout *TD = nullptr, unsigned Depth = 0,
+                         AssumptionTracker *AT = nullptr,
+                         const Instruction *CxtI = nullptr,
+                         const DominatorTree *DT = nullptr);
 
   
   /// ComputeNumSignBits - Return the number of times the sign bit of the
@@ -83,7 +99,10 @@ namespace llvm {
   /// 'Op' must have a scalar integer type.
   ///
   unsigned ComputeNumSignBits(Value *Op, const DataLayout *TD = nullptr,
-                              unsigned Depth = 0);
+                              unsigned Depth = 0,
+                              AssumptionTracker *AT = nullptr,
+                              const Instruction *CxtI = nullptr,
+                              const DominatorTree *DT = nullptr);
 
   /// ComputeMultiple - This function computes the integer multiple of Base that
   /// equals V.  If successful, it returns true and returns the multiple in
@@ -190,6 +209,13 @@ namespace llvm {
   /// its definition.  This returns true for allocas, non-extern-weak globals
   /// and byval arguments.
   bool isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI = nullptr);
+
+  /// Return true if it is valid to use the assumptions provided by an
+  /// assume intrinsic, I, at the point in the control-flow identified by the
+  /// context instruction, CxtI.
+  bool isValidAssumeForContext(const Instruction *I, const Instruction *CxtI,
+                               const DataLayout *DL = nullptr,
+                               const DominatorTree *DT = nullptr);
 
 } // end namespace llvm
 

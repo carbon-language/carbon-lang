@@ -126,6 +126,7 @@ bool CorrelatedValuePropagation::processPHI(PHINode *P) {
     Changed = true;
   }
 
+  // FIXME: Provide DL, TLI, DT, AT to SimplifyInstruction.
   if (Value *V = SimplifyInstruction(P)) {
     P->replaceAllUsesWith(V);
     P->eraseFromParent();

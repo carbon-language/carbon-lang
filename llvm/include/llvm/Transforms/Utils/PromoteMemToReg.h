@@ -22,6 +22,7 @@ namespace llvm {
 class AllocaInst;
 class DominatorTree;
 class AliasSetTracker;
+class AssumptionTracker;
 
 /// \brief Return true if this alloca is legal for promotion.
 ///
@@ -41,7 +42,8 @@ bool isAllocaPromotable(const AllocaInst *AI);
 /// If AST is specified, the specified tracker is updated to reflect changes
 /// made to the IR.
 void PromoteMemToReg(ArrayRef<AllocaInst *> Allocas, DominatorTree &DT,
-                     AliasSetTracker *AST = nullptr);
+                     AliasSetTracker *AST = nullptr,
+                     AssumptionTracker *AT = nullptr);
 
 } // End llvm namespace
 

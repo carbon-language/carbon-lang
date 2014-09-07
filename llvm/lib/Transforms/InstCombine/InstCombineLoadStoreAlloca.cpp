@@ -268,7 +268,8 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
     SmallVector<Instruction *, 4> ToDelete;
     if (MemTransferInst *Copy = isOnlyCopiedFromConstantGlobal(&AI, ToDelete)) {
       unsigned SourceAlign = getOrEnforceKnownAlignment(Copy->getSource(),
-                                                        AI.getAlignment(), DL);
+                                                        AI.getAlignment(),
+                                                        DL, AT, &AI, DT);
       if (AI.getAlignment() <= SourceAlign) {
         DEBUG(dbgs() << "Found alloca equal to global: " << AI << '\n');
         DEBUG(dbgs() << "  memcpy = " << *Copy << '\n');
@@ -363,7 +364,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   // Attempt to improve the alignment.
   if (DL) {
     unsigned KnownAlign =
-      getOrEnforceKnownAlignment(Op, DL->getPrefTypeAlignment(LI.getType()),DL);
+      getOrEnforceKnownAlignment(Op, DL->getPrefTypeAlignment(LI.getType()),
+                                 DL, AT, &LI, DT);
     unsigned LoadAlign = LI.getAlignment();
     unsigned EffectiveLoadAlign = LoadAlign != 0 ? LoadAlign :
       DL->getABITypeAlignment(LI.getType());
@@ -601,7 +603,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   if (DL) {
     unsigned KnownAlign =
       getOrEnforceKnownAlignment(Ptr, DL->getPrefTypeAlignment(Val->getType()),
-                                 DL);
+                                 DL, AT, &SI, DT);
     unsigned StoreAlign = SI.getAlignment();
     unsigned EffectiveStoreAlign = StoreAlign != 0 ? StoreAlign :
       DL->getABITypeAlignment(Val->getType());

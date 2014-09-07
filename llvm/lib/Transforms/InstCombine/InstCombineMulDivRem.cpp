@@ -25,7 +25,8 @@ using namespace PatternMatch;
 /// simplifyValueKnownNonZero - The specific integer value is used in a context
 /// where it is known to be non-zero.  If this allows us to simplify the
 /// computation, do so and return the new operand, otherwise return null.
-static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC) {
+static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC,
+                                        Instruction *CxtI) {
   // If V has multiple uses, then we would have to do more analysis to determine
   // if this is safe.  For example, the use could be in dynamically unreached
   // code.
@@ -39,7 +40,8 @@ static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC) {
   if (match(V, m_LShr(m_OneUse(m_Shl(m_Value(PowerOf2), m_Value(A))),
                       m_Value(B))) &&
       // The "1" can be any value known to be a power of 2.
-      isKnownToBeAPowerOfTwo(PowerOf2)) {
+      isKnownToBeAPowerOfTwo(PowerOf2, false, 0, IC.getAssumptionTracker(),
+                             CxtI, IC.getDominatorTree())) {
     A = IC.Builder->CreateSub(A, B);
     return IC.Builder->CreateShl(PowerOf2, A);
   }
@@ -47,10 +49,13 @@ static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC) {
   // (PowerOfTwo >>u B) --> isExact since shifting out the result would make it
   // inexact.  Similarly for <<.
   if (BinaryOperator *I = dyn_cast<BinaryOperator>(V))
-    if (I->isLogicalShift() && isKnownToBeAPowerOfTwo(I->getOperand(0))) {
+    if (I->isLogicalShift() && isKnownToBeAPowerOfTwo(I->getOperand(0), false,
+                                                      0, IC.getAssumptionTracker(),
+                                                      CxtI,
+                                                      IC.getDominatorTree())) {
       // We know that this is an exact/nuw shift and that the input is a
       // non-zero context as well.
-      if (Value *V2 = simplifyValueKnownNonZero(I->getOperand(0), IC)) {
+      if (Value *V2 = simplifyValueKnownNonZero(I->getOperand(0), IC, CxtI)) {
         I->setOperand(0, V2);
         MadeChange = true;
       }
@@ -138,7 +143,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return ReplaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyMulInst(Op0, Op1, DL))
+  if (Value *V = SimplifyMulInst(Op0, Op1, DL, TLI, DT, AT))
     return ReplaceInstUsesWith(I, V);
 
   if (Value *V = SimplifyUsingDistributiveLaws(I))
@@ -292,9 +297,9 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     APInt Negative2(I.getType()->getPrimitiveSizeInBits(), (uint64_t)-2, true);
 
     Value *BoolCast = nullptr, *OtherOp = nullptr;
-    if (MaskedValueIsZero(Op0, Negative2))
+    if (MaskedValueIsZero(Op0, Negative2, 0, &I))
       BoolCast = Op0, OtherOp = Op1;
-    else if (MaskedValueIsZero(Op1, Negative2))
+    else if (MaskedValueIsZero(Op1, Negative2, 0, &I))
       BoolCast = Op1, OtherOp = Op0;
 
     if (BoolCast) {
@@ -455,7 +460,8 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
   if (isa<Constant>(Op0))
     std::swap(Op0, Op1);
 
-  if (Value *V = SimplifyFMulInst(Op0, Op1, I.getFastMathFlags(), DL))
+  if (Value *V = SimplifyFMulInst(Op0, Op1, I.getFastMathFlags(), DL, TLI,
+                                  DT, AT))
     return ReplaceInstUsesWith(I, V);
 
   bool AllowReassociate = I.hasUnsafeAlgebra();
@@ -699,7 +705,7 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   // The RHS is known non-zero.
-  if (Value *V = simplifyValueKnownNonZero(I.getOperand(1), *this)) {
+  if (Value *V = simplifyValueKnownNonZero(I.getOperand(1), *this, &I)) {
     I.setOperand(1, V);
     return &I;
   }
@@ -952,7 +958,7 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return ReplaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyUDivInst(Op0, Op1, DL))
+  if (Value *V = SimplifyUDivInst(Op0, Op1, DL, TLI, DT, AT))
     return ReplaceInstUsesWith(I, V);
 
   // Handle the integer div common cases
@@ -1014,7 +1020,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return ReplaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifySDivInst(Op0, Op1, DL))
+  if (Value *V = SimplifySDivInst(Op0, Op1, DL, TLI, DT, AT))
     return ReplaceInstUsesWith(I, V);
 
   // Handle the integer div common cases
@@ -1051,8 +1057,8 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
   // unsigned inputs), turn this into a udiv.
   if (I.getType()->isIntegerTy()) {
     APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
-    if (MaskedValueIsZero(Op0, Mask)) {
-      if (MaskedValueIsZero(Op1, Mask)) {
+    if (MaskedValueIsZero(Op0, Mask, 0, &I)) {
+      if (MaskedValueIsZero(Op1, Mask, 0, &I)) {
         // X sdiv Y -> X udiv Y, iff X and Y don't have sign bit set
         return BinaryOperator::CreateUDiv(Op0, Op1, I.getName());
       }
@@ -1107,7 +1113,7 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return ReplaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyFDivInst(Op0, Op1, DL))
+  if (Value *V = SimplifyFDivInst(Op0, Op1, DL, TLI, DT, AT))
     return ReplaceInstUsesWith(I, V);
 
   if (isa<Constant>(Op0))
@@ -1238,7 +1244,7 @@ Instruction *InstCombiner::commonIRemTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   // The RHS is known non-zero.
-  if (Value *V = simplifyValueKnownNonZero(I.getOperand(1), *this)) {
+  if (Value *V = simplifyValueKnownNonZero(I.getOperand(1), *this, &I)) {
     I.setOperand(1, V);
     return &I;
   }
@@ -1272,7 +1278,7 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return ReplaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyURemInst(Op0, Op1, DL))
+  if (Value *V = SimplifyURemInst(Op0, Op1, DL, TLI, DT, AT))
     return ReplaceInstUsesWith(I, V);
 
   if (Instruction *common = commonIRemTransforms(I))
@@ -1285,7 +1291,7 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
                           I.getType());
 
   // X urem Y -> X and Y-1, where Y is a power of 2,
-  if (isKnownToBeAPowerOfTwo(Op1, /*OrZero*/true)) {
+  if (isKnownToBeAPowerOfTwo(Op1, /*OrZero*/true, 0, AT, &I, DT)) {
     Constant *N1 = Constant::getAllOnesValue(I.getType());
     Value *Add = Builder->CreateAdd(Op1, N1);
     return BinaryOperator::CreateAnd(Op0, Add);
@@ -1307,7 +1313,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return ReplaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifySRemInst(Op0, Op1, DL))
+  if (Value *V = SimplifySRemInst(Op0, Op1, DL, TLI, DT, AT))
     return ReplaceInstUsesWith(I, V);
 
   // Handle the integer rem common cases
@@ -1328,7 +1334,8 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
   // unsigned inputs), turn this into a urem.
   if (I.getType()->isIntegerTy()) {
     APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
-    if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
+    if (MaskedValueIsZero(Op1, Mask, 0, &I) &&
+        MaskedValueIsZero(Op0, Mask, 0, &I)) {
       // X srem Y -> X urem Y, iff X and Y don't have sign bit set
       return BinaryOperator::CreateURem(Op0, Op1, I.getName());
     }
@@ -1381,7 +1388,7 @@ Instruction *InstCombiner::visitFRem(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return ReplaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyFRemInst(Op0, Op1, DL))
+  if (Value *V = SimplifyFRemInst(Op0, Op1, DL, TLI, DT, AT))
     return ReplaceInstUsesWith(I, V);
 
   // Handle cases involving: rem X, (select Cond, Y, Z)

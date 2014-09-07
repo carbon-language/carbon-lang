@@ -35,6 +35,7 @@
 
 namespace llvm {
   class APInt;
+  class AssumptionTracker;
   class Constant;
   class ConstantInt;
   class DominatorTree;
@@ -220,6 +221,9 @@ namespace llvm {
     /// F - The function we are analyzing.
     ///
     Function *F;
+
+    /// The tracker for @llvm.assume intrinsics in this function.
+    AssumptionTracker *AT;
 
     /// LI - The loop information for the function we are currently analyzing.
     ///

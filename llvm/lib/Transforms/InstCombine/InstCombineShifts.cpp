@@ -68,7 +68,7 @@ Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
 /// this succeeds, the GetShiftedValue function will be called to produce the
 /// value.
 static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
-                               InstCombiner &IC) {
+                               InstCombiner &IC, Instruction *CxtI) {
   // We can always evaluate constants shifted.
   if (isa<Constant>(V))
     return true;
@@ -111,8 +111,8 @@ static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
   case Instruction::Or:
   case Instruction::Xor:
     // Bitwise operators can all arbitrarily be arbitrarily evaluated shifted.
-    return CanEvaluateShifted(I->getOperand(0), NumBits, isLeftShift, IC) &&
-           CanEvaluateShifted(I->getOperand(1), NumBits, isLeftShift, IC);
+    return CanEvaluateShifted(I->getOperand(0), NumBits, isLeftShift, IC, I) &&
+           CanEvaluateShifted(I->getOperand(1), NumBits, isLeftShift, IC, I);
 
   case Instruction::Shl: {
     // We can often fold the shift into shifts-by-a-constant.
@@ -131,8 +131,9 @@ static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
     // profitable unless we know the and'd out bits are already zero.
     if (CI->getZExtValue() > NumBits) {
       unsigned LowBits = TypeWidth - CI->getZExtValue();
-      if (MaskedValueIsZero(I->getOperand(0),
-                       APInt::getLowBitsSet(TypeWidth, NumBits) << LowBits))
+      if (IC.MaskedValueIsZero(I->getOperand(0),
+                       APInt::getLowBitsSet(TypeWidth, NumBits) << LowBits,
+                       0, CxtI))
         return true;
     }
 
@@ -155,8 +156,9 @@ static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
     // profitable unless we know the and'd out bits are already zero.
     if (CI->getValue().ult(TypeWidth) && CI->getZExtValue() > NumBits) {
       unsigned LowBits = CI->getZExtValue() - NumBits;
-      if (MaskedValueIsZero(I->getOperand(0),
-                          APInt::getLowBitsSet(TypeWidth, NumBits) << LowBits))
+      if (IC.MaskedValueIsZero(I->getOperand(0),
+                          APInt::getLowBitsSet(TypeWidth, NumBits) << LowBits,
+                          0, CxtI))
         return true;
     }
 
@@ -164,8 +166,9 @@ static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
   }
   case Instruction::Select: {
     SelectInst *SI = cast<SelectInst>(I);
-    return CanEvaluateShifted(SI->getTrueValue(), NumBits, isLeftShift, IC) &&
-           CanEvaluateShifted(SI->getFalseValue(), NumBits, isLeftShift, IC);
+    return CanEvaluateShifted(SI->getTrueValue(), NumBits, isLeftShift,
+                              IC, SI) &&
+           CanEvaluateShifted(SI->getFalseValue(), NumBits, isLeftShift, IC, SI);
   }
   case Instruction::PHI: {
     // We can change a phi if we can change all operands.  Note that we never
@@ -173,7 +176,8 @@ static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
     // instructions with a single use.
     PHINode *PN = cast<PHINode>(I);
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (!CanEvaluateShifted(PN->getIncomingValue(i), NumBits, isLeftShift,IC))
+      if (!CanEvaluateShifted(PN->getIncomingValue(i), NumBits, isLeftShift,
+                              IC, PN))
         return false;
     return true;
   }
@@ -329,7 +333,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, Constant *Op1,
   // See if we can propagate this shift into the input, this covers the trivial
   // cast of lshr(shl(x,c1),c2) as well as other more complex cases.
   if (I.getOpcode() != Instruction::AShr &&
-      CanEvaluateShifted(Op0, COp1->getZExtValue(), isLeftShift, *this)) {
+      CanEvaluateShifted(Op0, COp1->getZExtValue(), isLeftShift, *this, &I)) {
     DEBUG(dbgs() << "ICE: GetShiftedValue propagating shift through expression"
               " to eliminate shift:\n  IN: " << *Op0 << "\n  SH: " << I <<"\n");
 
@@ -691,7 +695,7 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
 
   if (Value *V = SimplifyShlInst(I.getOperand(0), I.getOperand(1),
                                  I.hasNoSignedWrap(), I.hasNoUnsignedWrap(),
-                                 DL))
+                                 DL, TLI, DT, AT))
     return ReplaceInstUsesWith(I, V);
 
   if (Instruction *V = commonShiftTransforms(I))
@@ -703,14 +707,15 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
     // If the shifted-out value is known-zero, then this is a NUW shift.
     if (!I.hasNoUnsignedWrap() &&
         MaskedValueIsZero(I.getOperand(0),
-                          APInt::getHighBitsSet(Op1C->getBitWidth(), ShAmt))) {
+                          APInt::getHighBitsSet(Op1C->getBitWidth(), ShAmt),
+                          0, &I)) {
           I.setHasNoUnsignedWrap();
           return &I;
         }
 
     // If the shifted out value is all signbits, this is a NSW shift.
     if (!I.hasNoSignedWrap() &&
-        ComputeNumSignBits(I.getOperand(0)) > ShAmt) {
+        ComputeNumSignBits(I.getOperand(0), 0, &I) > ShAmt) {
       I.setHasNoSignedWrap();
       return &I;
     }
@@ -731,7 +736,7 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
     return ReplaceInstUsesWith(I, V);
 
   if (Value *V = SimplifyLShrInst(I.getOperand(0), I.getOperand(1),
-                                  I.isExact(), DL))
+                                  I.isExact(), DL, TLI, DT, AT))
     return ReplaceInstUsesWith(I, V);
 
   if (Instruction *R = commonShiftTransforms(I))
@@ -760,7 +765,8 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
 
     // If the shifted-out value is known-zero, then this is an exact shift.
     if (!I.isExact() &&
-        MaskedValueIsZero(Op0,APInt::getLowBitsSet(Op1C->getBitWidth(),ShAmt))){
+        MaskedValueIsZero(Op0, APInt::getLowBitsSet(Op1C->getBitWidth(), ShAmt),
+                          0, &I)){
       I.setIsExact();
       return &I;
     }
@@ -774,7 +780,7 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
     return ReplaceInstUsesWith(I, V);
 
   if (Value *V = SimplifyAShrInst(I.getOperand(0), I.getOperand(1),
-                                  I.isExact(), DL))
+                                  I.isExact(), DL, TLI, DT, AT))
     return ReplaceInstUsesWith(I, V);
 
   if (Instruction *R = commonShiftTransforms(I))
@@ -804,7 +810,8 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
 
     // If the shifted-out value is known-zero, then this is an exact shift.
     if (!I.isExact() &&
-        MaskedValueIsZero(Op0,APInt::getLowBitsSet(Op1C->getBitWidth(),ShAmt))){
+        MaskedValueIsZero(Op0,APInt::getLowBitsSet(Op1C->getBitWidth(),ShAmt),
+                          0, &I)){
       I.setIsExact();
       return &I;
     }
@@ -812,7 +819,8 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
 
   // See if we can turn a signed shr into an unsigned shr.
   if (MaskedValueIsZero(Op0,
-                        APInt::getSignBit(I.getType()->getScalarSizeInBits())))
+                        APInt::getSignBit(I.getType()->getScalarSizeInBits()),
+                        0, &I))
     return BinaryOperator::CreateLShr(Op0, Op1);
 
   return nullptr;

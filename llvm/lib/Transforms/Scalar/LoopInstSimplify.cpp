@@ -14,6 +14,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AssumptionTracker.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -41,6 +42,7 @@ namespace {
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
+      AU.addRequired<AssumptionTracker>();
       AU.addRequired<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
@@ -54,6 +56,7 @@ namespace {
 char LoopInstSimplify::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopInstSimplify, "loop-instsimplify",
                 "Simplify instructions in loops", false, false)
+INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
@@ -76,6 +79,7 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
   const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
+  AssumptionTracker *AT = &getAnalysis<AssumptionTracker>();
 
   SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getUniqueExitBlocks(ExitBlocks);
@@ -116,7 +120,7 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
         // Don't bother simplifying unused instructions.
         if (!I->use_empty()) {
-          Value *V = SimplifyInstruction(I, DL, TLI, DT);
+          Value *V = SimplifyInstruction(I, DL, TLI, DT, AT);
           if (V && LI->replacementPreservesLCSSAForm(I, V)) {
             // Mark all uses for resimplification next time round the loop.
             for (User *U : I->users())

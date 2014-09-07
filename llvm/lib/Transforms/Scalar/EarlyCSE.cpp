@@ -16,6 +16,7 @@
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AssumptionTracker.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
@@ -266,6 +267,7 @@ public:
   const DataLayout *DL;
   const TargetLibraryInfo *TLI;
   DominatorTree *DT;
+  AssumptionTracker *AT;
   typedef RecyclingAllocator<BumpPtrAllocator,
                       ScopedHashTableVal<SimpleValue, Value*> > AllocatorTy;
   typedef ScopedHashTable<SimpleValue, Value*, DenseMapInfo<SimpleValue>,
@@ -378,6 +380,7 @@ private:
 
   // This transformation requires dominator postdominator info
   void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<AssumptionTracker>();
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<TargetLibraryInfo>();
     AU.setPreservesCFG();
@@ -393,6 +396,7 @@ FunctionPass *llvm::createEarlyCSEPass() {
 }
 
 INITIALIZE_PASS_BEGIN(EarlyCSE, "early-cse", "Early CSE", false, false)
+INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_PASS_END(EarlyCSE, "early-cse", "Early CSE", false, false)
@@ -433,7 +437,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
 
     // If the instruction can be simplified (e.g. X+0 = X) then replace it with
     // its simpler value.
-    if (Value *V = SimplifyInstruction(Inst, DL, TLI, DT)) {
+    if (Value *V = SimplifyInstruction(Inst, DL, TLI, DT, AT)) {
       DEBUG(dbgs() << "EarlyCSE Simplify: " << *Inst << "  to: " << *V << '\n');
       Inst->replaceAllUsesWith(V);
       Inst->eraseFromParent();
@@ -562,6 +566,7 @@ bool EarlyCSE::runOnFunction(Function &F) {
   DL = DLP ? &DLP->getDataLayout() : nullptr;
   TLI = &getAnalysis<TargetLibraryInfo>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  AT = &getAnalysis<AssumptionTracker>();
 
   // Tables that the pass uses when walking the domtree.
   ScopedHTType AVTable;

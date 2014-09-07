@@ -34,12 +34,14 @@ class Value;
 class Pass;
 class PHINode;
 class AllocaInst;
+class AssumptionTracker;
 class ConstantExpr;
 class DataLayout;
 class TargetLibraryInfo;
 class TargetTransformInfo;
 class DIBuilder;
 class AliasAnalysis;
+class DominatorTree;
 
 template<typename T> class SmallVectorImpl;
 
@@ -136,7 +138,8 @@ bool EliminateDuplicatePHINodes(BasicBlock *BB);
 /// the basic block that was pointed to.
 ///
 bool SimplifyCFG(BasicBlock *BB, const TargetTransformInfo &TTI,
-                 const DataLayout *TD = nullptr);
+                 const DataLayout *TD = nullptr,
+                 AssumptionTracker *AT = nullptr);
 
 /// FlatternCFG - This function is used to flatten a CFG.  For
 /// example, it uses parallel-and and parallel-or mode to collapse
@@ -170,12 +173,18 @@ AllocaInst *DemotePHIToStack(PHINode *P, Instruction *AllocaPoint = nullptr);
 /// and it is more than the alignment of the ultimate object, see if we can
 /// increase the alignment of the ultimate object, making this check succeed.
 unsigned getOrEnforceKnownAlignment(Value *V, unsigned PrefAlign,
-                                    const DataLayout *TD = nullptr);
+                                    const DataLayout *TD = nullptr,
+                                    AssumptionTracker *AT = nullptr,
+                                    const Instruction *CxtI = nullptr,
+                                    const DominatorTree *DT = nullptr);
 
 /// getKnownAlignment - Try to infer an alignment for the specified pointer.
 static inline unsigned getKnownAlignment(Value *V,
-                                         const DataLayout *TD = nullptr) {
-  return getOrEnforceKnownAlignment(V, 0, TD);
+                                         const DataLayout *TD = nullptr,
+                                         AssumptionTracker *AT = nullptr,
+                                         const Instruction *CxtI = nullptr,
+                                         const DominatorTree *DT = nullptr) {
+  return getOrEnforceKnownAlignment(V, 0, TD, AT, CxtI, DT);
 }
 
 /// EmitGEPOffset - Given a getelementptr instruction/constantexpr, emit the

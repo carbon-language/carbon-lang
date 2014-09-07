@@ -732,7 +732,7 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
     // If the pointer is already known to be sufficiently aligned, or if we can
     // round it up to a larger alignment, then we don't need a temporary.
     if (getOrEnforceKnownAlignment(Arg, ByValAlignment,
-                                   IFI.DL) >= ByValAlignment)
+                                   IFI.DL, IFI.AT, TheCall) >= ByValAlignment)
       return Arg;
     
     // Otherwise, we have to make a memcpy to get a safe alignment.  This is bad
@@ -1358,7 +1358,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
   // the entries are the same or undef).  If so, remove the PHI so it doesn't
   // block other optimizations.
   if (PHI) {
-    if (Value *V = SimplifyInstruction(PHI, IFI.DL)) {
+    if (Value *V = SimplifyInstruction(PHI, IFI.DL, nullptr, nullptr, IFI.AT)) {
       PHI->replaceAllUsesWith(V);
       PHI->eraseFromParent();
     }

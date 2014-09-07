@@ -28,6 +28,7 @@ namespace llvm {
   class Instruction;
   class CallSite;
   class AliasAnalysis;
+  class AssumptionTracker;
   class DataLayout;
   class MemoryDependenceAnalysis;
   class PredIteratorCache;
@@ -325,6 +326,7 @@ namespace llvm {
     AliasAnalysis *AA;
     const DataLayout *DL;
     DominatorTree *DT;
+    AssumptionTracker *AT;
     std::unique_ptr<PredIteratorCache> PredCache;
 
   public:

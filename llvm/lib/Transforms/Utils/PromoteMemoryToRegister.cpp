@@ -238,6 +238,9 @@ struct PromoteMem2Reg {
   /// An AliasSetTracker object to update.  If null, don't update it.
   AliasSetTracker *AST;
 
+  /// A cache of @llvm.assume intrinsics used by SimplifyInstruction.
+  AssumptionTracker *AT;
+
   /// Reverse mapping of Allocas.
   DenseMap<AllocaInst *, unsigned> AllocaLookup;
 
@@ -279,9 +282,9 @@ struct PromoteMem2Reg {
 
 public:
   PromoteMem2Reg(ArrayRef<AllocaInst *> Allocas, DominatorTree &DT,
-                 AliasSetTracker *AST)
+                 AliasSetTracker *AST, AssumptionTracker *AT)
       : Allocas(Allocas.begin(), Allocas.end()), DT(DT),
-        DIB(*DT.getRoot()->getParent()->getParent()), AST(AST) {}
+        DIB(*DT.getRoot()->getParent()->getParent()), AST(AST), AT(AT) {}
 
   void run();
 
@@ -685,7 +688,7 @@ void PromoteMem2Reg::run() {
       PHINode *PN = I->second;
 
       // If this PHI node merges one value and/or undefs, get the value.
-      if (Value *V = SimplifyInstruction(PN, nullptr, nullptr, &DT)) {
+      if (Value *V = SimplifyInstruction(PN, nullptr, nullptr, &DT, AT)) {
         if (AST && PN->getType()->isPointerTy())
           AST->deleteValue(PN);
         PN->replaceAllUsesWith(V);
@@ -1065,10 +1068,10 @@ NextIteration:
 }
 
 void llvm::PromoteMemToReg(ArrayRef<AllocaInst *> Allocas, DominatorTree &DT,
-                           AliasSetTracker *AST) {
+                           AliasSetTracker *AST, AssumptionTracker *AT) {
   // If there is nothing to do, bail out...
   if (Allocas.empty())
     return;
 
-  PromoteMem2Reg(Allocas, DT, AST).run();
+  PromoteMem2Reg(Allocas, DT, AST, AT).run();
 }

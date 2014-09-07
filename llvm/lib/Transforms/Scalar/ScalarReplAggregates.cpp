@@ -23,6 +23,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AssumptionTracker.h"
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/CallSite.h"
@@ -197,6 +198,7 @@ namespace {
     // getAnalysisUsage - This pass does not require any passes, but we know it
     // will not alter the CFG, so say so.
     void getAnalysisUsage(AnalysisUsage &AU) const override {
+      AU.addRequired<AssumptionTracker>();
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.setPreservesCFG();
     }
@@ -214,6 +216,7 @@ namespace {
     // getAnalysisUsage - This pass does not require any passes, but we know it
     // will not alter the CFG, so say so.
     void getAnalysisUsage(AnalysisUsage &AU) const override {
+      AU.addRequired<AssumptionTracker>();
       AU.setPreservesCFG();
     }
   };
@@ -225,12 +228,14 @@ char SROA_SSAUp::ID = 0;
 
 INITIALIZE_PASS_BEGIN(SROA_DT, "scalarrepl",
                 "Scalar Replacement of Aggregates (DT)", false, false)
+INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_END(SROA_DT, "scalarrepl",
                 "Scalar Replacement of Aggregates (DT)", false, false)
 
 INITIALIZE_PASS_BEGIN(SROA_SSAUp, "scalarrepl-ssa",
                       "Scalar Replacement of Aggregates (SSAUp)", false, false)
+INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
 INITIALIZE_PASS_END(SROA_SSAUp, "scalarrepl-ssa",
                     "Scalar Replacement of Aggregates (SSAUp)", false, false)
 
@@ -1412,6 +1417,7 @@ bool SROA::performPromotion(Function &F) {
   DominatorTree *DT = nullptr;
   if (HasDomTree)
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  AssumptionTracker *AT = &getAnalysis<AssumptionTracker>();
 
   BasicBlock &BB = F.getEntryBlock();  // Get the entry node for the function
   DIBuilder DIB(*F.getParent());
@@ -1430,7 +1436,7 @@ bool SROA::performPromotion(Function &F) {
     if (Allocas.empty()) break;
 
     if (HasDomTree)
-      PromoteMemToReg(Allocas, *DT);
+      PromoteMemToReg(Allocas, *DT, nullptr, AT);
     else {
       SSAUpdater SSA;
       for (unsigned i = 0, e = Allocas.size(); i != e; ++i) {

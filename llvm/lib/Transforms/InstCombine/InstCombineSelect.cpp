@@ -313,7 +313,9 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
 /// replaced with RepOp.
 static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
                                      const DataLayout *TD,
-                                     const TargetLibraryInfo *TLI) {
+                                     const TargetLibraryInfo *TLI,
+                                     DominatorTree *DT,
+                                     AssumptionTracker *AT) {
   // Trivial replacement.
   if (V == Op)
     return RepOp;
@@ -334,10 +336,10 @@ static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
   if (CmpInst *C = dyn_cast<CmpInst>(I)) {
     if (C->getOperand(0) == Op)
       return SimplifyCmpInst(C->getPredicate(), RepOp, C->getOperand(1), TD,
-                             TLI);
+                             TLI, DT, AT);
     if (C->getOperand(1) == Op)
       return SimplifyCmpInst(C->getPredicate(), C->getOperand(0), RepOp, TD,
-                             TLI);
+                             TLI, DT, AT);
   }
 
   // TODO: We could hand off more cases to instsimplify here.
@@ -605,18 +607,26 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
   // arms of the select. See if substituting this value into the arm and
   // simplifying the result yields the same value as the other arm.
   if (Pred == ICmpInst::ICMP_EQ) {
-    if (SimplifyWithOpReplaced(FalseVal, CmpLHS, CmpRHS, DL, TLI) == TrueVal ||
-        SimplifyWithOpReplaced(FalseVal, CmpRHS, CmpLHS, DL, TLI) == TrueVal)
+    if (SimplifyWithOpReplaced(FalseVal, CmpLHS, CmpRHS, DL, TLI,
+                               DT, AT) == TrueVal ||
+        SimplifyWithOpReplaced(FalseVal, CmpRHS, CmpLHS, DL, TLI,
+                               DT, AT) == TrueVal)
       return ReplaceInstUsesWith(SI, FalseVal);
-    if (SimplifyWithOpReplaced(TrueVal, CmpLHS, CmpRHS, DL, TLI) == FalseVal ||
-        SimplifyWithOpReplaced(TrueVal, CmpRHS, CmpLHS, DL, TLI) == FalseVal)
+    if (SimplifyWithOpReplaced(TrueVal, CmpLHS, CmpRHS, DL, TLI,
+                               DT, AT) == FalseVal ||
+        SimplifyWithOpReplaced(TrueVal, CmpRHS, CmpLHS, DL, TLI,
+                               DT, AT) == FalseVal)
       return ReplaceInstUsesWith(SI, FalseVal);
   } else if (Pred == ICmpInst::ICMP_NE) {
-    if (SimplifyWithOpReplaced(TrueVal, CmpLHS, CmpRHS, DL, TLI) == FalseVal ||
-        SimplifyWithOpReplaced(TrueVal, CmpRHS, CmpLHS, DL, TLI) == FalseVal)
+    if (SimplifyWithOpReplaced(TrueVal, CmpLHS, CmpRHS, DL, TLI,
+                               DT, AT) == FalseVal ||
+        SimplifyWithOpReplaced(TrueVal, CmpRHS, CmpLHS, DL, TLI,
+                               DT, AT) == FalseVal)
       return ReplaceInstUsesWith(SI, TrueVal);
-    if (SimplifyWithOpReplaced(FalseVal, CmpLHS, CmpRHS, DL, TLI) == TrueVal ||
-        SimplifyWithOpReplaced(FalseVal, CmpRHS, CmpLHS, DL, TLI) == TrueVal)
+    if (SimplifyWithOpReplaced(FalseVal, CmpLHS, CmpRHS, DL, TLI,
+                               DT, AT) == TrueVal ||
+        SimplifyWithOpReplaced(FalseVal, CmpRHS, CmpLHS, DL, TLI,
+                               DT, AT) == TrueVal)
       return ReplaceInstUsesWith(SI, TrueVal);
   }
 
@@ -825,7 +835,8 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   Value *TrueVal = SI.getTrueValue();
   Value *FalseVal = SI.getFalseValue();
 
-  if (Value *V = SimplifySelectInst(CondVal, TrueVal, FalseVal, DL))
+  if (Value *V = SimplifySelectInst(CondVal, TrueVal, FalseVal, DL, TLI,
+                                    DT, AT))
     return ReplaceInstUsesWith(SI, V);
 
   if (SI.getType()->isIntegerTy(1)) {

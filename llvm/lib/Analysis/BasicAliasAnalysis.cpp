@@ -17,6 +17,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/AssumptionTracker.h"
 #include "llvm/Analysis/CFG.h"
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/InstructionSimplify.h"
@@ -194,7 +195,9 @@ namespace {
 /// represented in the result.
 static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
                                   ExtensionKind &Extension,
-                                  const DataLayout &DL, unsigned Depth) {
+                                  const DataLayout &DL, unsigned Depth,
+                                  AssumptionTracker *AT,
+                                  DominatorTree *DT) {
   assert(V->getType()->isIntegerTy() && "Not an integer value");
 
   // Limit our recursion depth.
@@ -211,23 +214,24 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
       case Instruction::Or:
         // X|C == X+C if all the bits in C are unset in X.  Otherwise we can't
         // analyze it.
-        if (!MaskedValueIsZero(BOp->getOperand(0), RHSC->getValue(), &DL))
+        if (!MaskedValueIsZero(BOp->getOperand(0), RHSC->getValue(), &DL, 0,
+                               AT, BOp, DT))
           break;
         // FALL THROUGH.
       case Instruction::Add:
         V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, Extension,
-                                DL, Depth+1);
+                                DL, Depth+1, AT, DT);
         Offset += RHSC->getValue();
         return V;
       case Instruction::Mul:
         V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, Extension,
-                                DL, Depth+1);
+                                DL, Depth+1, AT, DT);
         Offset *= RHSC->getValue();
         Scale *= RHSC->getValue();
         return V;
       case Instruction::Shl:
         V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, Extension,
-                                DL, Depth+1);
+                                DL, Depth+1, AT, DT);
         Offset <<= RHSC->getValue().getLimitedValue();
         Scale <<= RHSC->getValue().getLimitedValue();
         return V;
@@ -248,7 +252,7 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
     Extension = isa<SExtInst>(V) ? EK_SignExt : EK_ZeroExt;
 
     Value *Result = GetLinearExpression(CastOp, Scale, Offset, Extension,
-                                        DL, Depth+1);
+                                        DL, Depth+1, AT, DT);
     Scale = Scale.zext(OldWidth);
     Offset = Offset.zext(OldWidth);
 
@@ -278,7 +282,8 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
 static const Value *
 DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
                        SmallVectorImpl<VariableGEPIndex> &VarIndices,
-                       bool &MaxLookupReached, const DataLayout *DL) {
+                       bool &MaxLookupReached, const DataLayout *DL,
+                       AssumptionTracker *AT, DominatorTree *DT) {
   // Limit recursion depth to limit compile time in crazy cases.
   unsigned MaxLookup = MaxLookupSearchDepth;
   MaxLookupReached = false;
@@ -309,7 +314,10 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       // If it's not a GEP, hand it off to SimplifyInstruction to see if it
       // can come up with something. This matches what GetUnderlyingObject does.
       if (const Instruction *I = dyn_cast<Instruction>(V))
-        // TODO: Get a DominatorTree and use it here.
+        // TODO: Get a DominatorTree and AssumptionTracker and use them here
+        // (these are both now available in this function, but this should be
+        // updated when GetUnderlyingObject is updated). TLI should be
+        // provided also.
         if (const Value *Simplified =
               SimplifyInstruction(const_cast<Instruction *>(I), DL)) {
           V = Simplified;
@@ -368,7 +376,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       // Use GetLinearExpression to decompose the index into a C1*V+C2 form.
       APInt IndexScale(Width, 0), IndexOffset(Width, 0);
       Index = GetLinearExpression(Index, IndexScale, IndexOffset, Extension,
-                                  *DL, 0);
+                                  *DL, 0, AT, DT);
 
       // The GEP index scale ("Scale") scales C1*V+C2, yielding (C1*V+C2)*Scale.
       // This gives us an aggregate computation of (C1*Scale)*V + C2*Scale.
@@ -449,6 +457,7 @@ namespace {
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<AliasAnalysis>();
+      AU.addRequired<AssumptionTracker>();
       AU.addRequired<TargetLibraryInfo>();
     }
 
@@ -571,6 +580,7 @@ char BasicAliasAnalysis::ID = 0;
 INITIALIZE_AG_PASS_BEGIN(BasicAliasAnalysis, AliasAnalysis, "basicaa",
                    "Basic Alias Analysis (stateless AA impl)",
                    false, true, false)
+INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_AG_PASS_END(BasicAliasAnalysis, AliasAnalysis, "basicaa",
                    "Basic Alias Analysis (stateless AA impl)",
@@ -884,6 +894,11 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
   bool GEP1MaxLookupReached;
   SmallVector<VariableGEPIndex, 4> GEP1VariableIndices;
 
+  AssumptionTracker *AT = &getAnalysis<AssumptionTracker>();
+  DominatorTreeWrapperPass *DTWP =
+      getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  DominatorTree *DT = DTWP ? &DTWP->getDomTree() : nullptr;
+
   // If we have two gep instructions with must-alias or not-alias'ing base
   // pointers, figure out if the indexes to the GEP tell us anything about the
   // derived pointer.
@@ -907,10 +922,10 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
         SmallVector<VariableGEPIndex, 4> GEP2VariableIndices;
         const Value *GEP2BasePtr =
           DecomposeGEPExpression(GEP2, GEP2BaseOffset, GEP2VariableIndices,
-                                 GEP2MaxLookupReached, DL);
+                                 GEP2MaxLookupReached, DL, AT, DT);
         const Value *GEP1BasePtr =
           DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices,
-                                 GEP1MaxLookupReached, DL);
+                                 GEP1MaxLookupReached, DL, AT, DT);
         // DecomposeGEPExpression and GetUnderlyingObject should return the
         // same result except when DecomposeGEPExpression has no DataLayout.
         if (GEP1BasePtr != UnderlyingV1 || GEP2BasePtr != UnderlyingV2) {
@@ -939,14 +954,14 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
     // about the relation of the resulting pointer.
     const Value *GEP1BasePtr =
       DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices,
-                             GEP1MaxLookupReached, DL);
+                             GEP1MaxLookupReached, DL, AT, DT);
 
     int64_t GEP2BaseOffset;
     bool GEP2MaxLookupReached;
     SmallVector<VariableGEPIndex, 4> GEP2VariableIndices;
     const Value *GEP2BasePtr =
       DecomposeGEPExpression(GEP2, GEP2BaseOffset, GEP2VariableIndices,
-                             GEP2MaxLookupReached, DL);
+                             GEP2MaxLookupReached, DL, AT, DT);
 
     // DecomposeGEPExpression and GetUnderlyingObject should return the
     // same result except when DecomposeGEPExpression has no DataLayout.
@@ -985,7 +1000,7 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
 
     const Value *GEP1BasePtr =
       DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices,
-                             GEP1MaxLookupReached, DL);
+                             GEP1MaxLookupReached, DL, AT, DT);
 
     // DecomposeGEPExpression and GetUnderlyingObject should return the
     // same result except when DecomposeGEPExpression has no DataLayout.
