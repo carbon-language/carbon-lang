@@ -326,7 +326,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm20restoreCoreAndJu
   ldm lr, {r0-r12}
   ldr sp, [lr, #52]
   ldr lr, [lr, #60]  @ restore pc into lr
-#if _ARM_ARCH > 4
+#if __ARM_ARCH > 4
   bx lr
 #else
   mov pc, lr
