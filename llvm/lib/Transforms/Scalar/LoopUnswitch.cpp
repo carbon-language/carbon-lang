@@ -104,7 +104,8 @@ namespace {
 
       // Analyze loop. Check its size, calculate is it possible to unswitch
       // it. Returns true if we can unswitch this loop.
-      bool countLoop(const Loop *L, const TargetTransformInfo &TTI);
+      bool countLoop(const Loop *L, const TargetTransformInfo &TTI,
+                     AssumptionTracker *AT);
 
       // Clean all data related to given loop.
       void forgetLoop(const Loop *L);
@@ -215,7 +216,8 @@ namespace {
 
 // Analyze loop. Check its size, calculate is it possible to unswitch
 // it. Returns true if we can unswitch this loop.
-bool LUAnalysisCache::countLoop(const Loop *L, const TargetTransformInfo &TTI) {
+bool LUAnalysisCache::countLoop(const Loop *L, const TargetTransformInfo &TTI,
+                                AssumptionTracker *AT) {
 
   LoopPropsMapIt PropsIt;
   bool Inserted;
@@ -232,13 +234,16 @@ bool LUAnalysisCache::countLoop(const Loop *L, const TargetTransformInfo &TTI) {
     // large numbers of branches which cause loop unswitching to go crazy.
     // This is a very ad-hoc heuristic.
 
+    SmallPtrSet<const Value *, 32> EphValues;
+    CodeMetrics::collectEphemeralValues(L, AT, EphValues);
+
     // FIXME: This is overly conservative because it does not take into
     // consideration code simplification opportunities and code that can
     // be shared by the resultant unswitched loops.
     CodeMetrics Metrics;
     for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
          I != E; ++I)
-      Metrics.analyzeBasicBlock(*I, TTI);
+      Metrics.analyzeBasicBlock(*I, TTI, EphValues);
 
     Props.SizeEstimation = std::min(Metrics.NumInsts, Metrics.NumBlocks * 5);
     Props.CanBeUnswitchedCount = MaxSize / (Props.SizeEstimation);
@@ -426,7 +431,8 @@ bool LoopUnswitch::processCurrentLoop() {
 
   // Probably we reach the quota of branches for this loop. If so
   // stop unswitching.
-  if (!BranchesInfo.countLoop(currentLoop, getAnalysis<TargetTransformInfo>()))
+  if (!BranchesInfo.countLoop(currentLoop, getAnalysis<TargetTransformInfo>(),
+                              AT))
     return false;
 
   // Loop over all of the basic blocks in the loop.  If we find an interior

@@ -16,10 +16,13 @@
 #define LLVM_ANALYSIS_CODEMETRICS_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/CallSite.h"
 
 namespace llvm {
+class AssumptionTracker;
 class BasicBlock;
+class Loop;
 class Function;
 class Instruction;
 class DataLayout;
@@ -85,7 +88,18 @@ struct CodeMetrics {
         NumInlineCandidates(0), NumVectorInsts(0), NumRets(0) {}
 
   /// \brief Add information about a block to the current state.
-  void analyzeBasicBlock(const BasicBlock *BB, const TargetTransformInfo &TTI);
+  void analyzeBasicBlock(const BasicBlock *BB, const TargetTransformInfo &TTI,
+                         SmallPtrSetImpl<const Value*> &EphValues);
+
+  /// \brief Collect a loop's ephemeral values (those used only by an assume
+  /// or similar intrinsics in the loop).
+  static void collectEphemeralValues(const Loop *L, AssumptionTracker *AT,
+                                     SmallPtrSetImpl<const Value*> &EphValues);
+
+  /// \brief Collect a functions's ephemeral values (those used only by an
+  /// assume or similar intrinsics in the function).
+  static void collectEphemeralValues(const Function *L, AssumptionTracker *AT,
+                                     SmallPtrSetImpl<const Value*> &EphValues);
 };
 
 }

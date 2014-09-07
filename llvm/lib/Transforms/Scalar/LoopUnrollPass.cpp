@@ -203,11 +203,15 @@ Pass *llvm::createSimpleLoopUnrollPass() {
 /// ApproximateLoopSize - Approximate the size of the loop.
 static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls,
                                     bool &NotDuplicatable,
-                                    const TargetTransformInfo &TTI) {
+                                    const TargetTransformInfo &TTI,
+                                    AssumptionTracker *AT) {
+  SmallPtrSet<const Value *, 32> EphValues;
+  CodeMetrics::collectEphemeralValues(L, AT, EphValues);
+
   CodeMetrics Metrics;
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I)
-    Metrics.analyzeBasicBlock(*I, TTI);
+    Metrics.analyzeBasicBlock(*I, TTI, EphValues);
   NumCalls = Metrics.NumInlineCandidates;
   NotDuplicatable = Metrics.notDuplicatable;
 
@@ -391,7 +395,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   unsigned NumInlineCandidates;
   bool notDuplicatable;
   unsigned LoopSize =
-      ApproximateLoopSize(L, NumInlineCandidates, notDuplicatable, TTI);
+      ApproximateLoopSize(L, NumInlineCandidates, notDuplicatable, TTI, AT);
   DEBUG(dbgs() << "  Loop Size = " << LoopSize << "\n");
   uint64_t UnrolledSize = (uint64_t)LoopSize * Count;
   if (notDuplicatable) {

@@ -11,23 +11,99 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/AssumptionTracker.h"
 #include "llvm/Analysis/CodeMetrics.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/Support/Debug.h"
+
+#define DEBUG_TYPE "code-metrics"
 
 using namespace llvm;
+
+static void completeEphemeralValues(SmallVector<const Value *, 16> &WorkSet,
+                                    SmallPtrSetImpl<const Value*> &EphValues) {
+  SmallPtrSet<const Value *, 32> Visited;
+
+  // Make sure that all of the items in WorkSet are in our EphValues set.
+  EphValues.insert(WorkSet.begin(), WorkSet.end());
+
+  // Note: We don't speculate PHIs here, so we'll miss instruction chains kept
+  // alive only by ephemeral values.
+
+  while (!WorkSet.empty()) {
+    const Value *V = WorkSet.pop_back_val();
+    if (!Visited.insert(V))
+      continue;
+
+    // If all uses of this value are ephemeral, then so is this value.
+    bool FoundNEUse = false;
+    for (const User *I : V->users())
+      if (!EphValues.count(I)) {
+        FoundNEUse = true;
+        break;
+      }
+
+    if (FoundNEUse)
+      continue;
+
+    EphValues.insert(V);
+    DEBUG(dbgs() << "Ephemeral Value: " << *V << "\n");
+
+    if (const User *U = dyn_cast<User>(V))
+      for (const Value *J : U->operands()) {
+        if (isSafeToSpeculativelyExecute(J))
+          WorkSet.push_back(J);
+      }
+  }
+}
+
+// Find all ephemeral values.
+void CodeMetrics::collectEphemeralValues(const Loop *L, AssumptionTracker *AT,
+                                         SmallPtrSetImpl<const Value*> &EphValues) {
+  SmallVector<const Value *, 16> WorkSet;
+
+  for (auto &I : AT->assumptions(L->getHeader()->getParent())) {
+    // Filter out call sites outside of the loop so we don't to a function's
+    // worth of work for each of its loops (and, in the common case, ephemeral
+    // values in the loop are likely due to @llvm.assume calls in the loop).
+    if (!L->contains(I->getParent()))
+      continue;
+
+    WorkSet.push_back(I);
+  }
+
+  completeEphemeralValues(WorkSet, EphValues);
+}
+
+void CodeMetrics::collectEphemeralValues(const Function *F, AssumptionTracker *AT,
+                                         SmallPtrSetImpl<const Value*> &EphValues) {
+  SmallVector<const Value *, 16> WorkSet;
+
+  for (auto &I : AT->assumptions(const_cast<Function*>(F)))
+    WorkSet.push_back(I);
+
+  completeEphemeralValues(WorkSet, EphValues);
+}
 
 /// analyzeBasicBlock - Fill in the current structure with information gleaned
 /// from the specified block.
 void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
-                                    const TargetTransformInfo &TTI) {
+                                    const TargetTransformInfo &TTI,
+                                    SmallPtrSetImpl<const Value*> &EphValues) {
   ++NumBlocks;
   unsigned NumInstsBeforeThisBB = NumInsts;
   for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
        II != E; ++II) {
+    // Skip ephemeral values.
+    if (EphValues.count(II))
+      continue;
+
     // Special handling for calls.
     if (isa<CallInst>(II) || isa<InvokeInst>(II)) {
       ImmutableCallSite CS(cast<Instruction>(II));

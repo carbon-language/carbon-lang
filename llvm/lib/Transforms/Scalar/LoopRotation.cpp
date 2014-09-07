@@ -13,6 +13,7 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/AssumptionTracker.h"
 #include "llvm/Analysis/CodeMetrics.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -53,6 +54,7 @@ namespace {
 
     // LCSSA form makes instruction renaming easier.
     void getAnalysisUsage(AnalysisUsage &AU) const override {
+      AU.addRequired<AssumptionTracker>();
       AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
@@ -72,12 +74,14 @@ namespace {
     unsigned MaxHeaderSize;
     LoopInfo *LI;
     const TargetTransformInfo *TTI;
+    AssumptionTracker *AT;
   };
 }
 
 char LoopRotate::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopRotate, "loop-rotate", "Rotate Loops", false, false)
 INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
@@ -98,6 +102,7 @@ bool LoopRotate::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   LI = &getAnalysis<LoopInfo>();
   TTI = &getAnalysis<TargetTransformInfo>();
+  AT = &getAnalysis<AssumptionTracker>();
 
   // Simplify the loop latch before attempting to rotate the header
   // upward. Rotation may not be needed if the loop tail can be folded into the
@@ -323,8 +328,11 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
   // Check size of original header and reject loop if it is very big or we can't
   // duplicate blocks inside it.
   {
+    SmallPtrSet<const Value *, 32> EphValues;
+    CodeMetrics::collectEphemeralValues(L, AT, EphValues);
+
     CodeMetrics Metrics;
-    Metrics.analyzeBasicBlock(OrigHeader, *TTI);
+    Metrics.analyzeBasicBlock(OrigHeader, *TTI, EphValues);
     if (Metrics.notDuplicatable) {
       DEBUG(dbgs() << "LoopRotation: NOT rotating - contains non-duplicatable"
             << " instructions: "; L->dump());
