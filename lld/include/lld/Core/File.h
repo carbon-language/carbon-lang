@@ -39,7 +39,7 @@ class LinkingContext;
 /// are destroyed when the File object is destroyed.
 class File {
 public:
-  virtual ~File();
+  virtual ~File() {}
 
   /// \brief Kinds of files that are supported.
   enum Kind {
@@ -58,12 +58,6 @@ public:
   StringRef path() const  {
     return _path;
   }
-
-  /// \brief Returns the path of the source file used to create the object
-  /// file which this (File) object represents.  This information is usually
-  /// parsed out of the DWARF debug information. If the source file cannot
-  /// be ascertained, this method returns the empty string.
-  virtual StringRef translationUnitSource() const;
 
   /// Returns the command line order of the file.
   uint64_t ordinal() const {
