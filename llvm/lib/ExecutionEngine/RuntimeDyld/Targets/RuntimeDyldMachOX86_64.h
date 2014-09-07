@@ -54,7 +54,7 @@ public:
         RE.RelType == MachO::X86_64_RELOC_GOT_LOAD)
       processGOTRelocation(RE, Value, Stubs);
     else {
-      RE.Addend = Value.Addend;
+      RE.Addend = Value.Offset;
       if (Value.SymbolName)
         addRelocationForSymbol(RE, Value.SymbolName);
       else
@@ -106,7 +106,7 @@ private:
     SectionEntry &Section = Sections[RE.SectionID];
     assert(RE.IsPCRel);
     assert(RE.Size == 2);
-    Value.Addend -= RE.Addend;
+    Value.Offset -= RE.Addend;
     RuntimeDyldMachO::StubMap::const_iterator i = Stubs.find(Value);
     uint8_t *Addr;
     if (i != Stubs.end()) {
@@ -115,7 +115,7 @@ private:
       Stubs[Value] = Section.StubOffset;
       uint8_t *GOTEntry = Section.Address + Section.StubOffset;
       RelocationEntry GOTRE(RE.SectionID, Section.StubOffset,
-                            MachO::X86_64_RELOC_UNSIGNED, Value.Addend, false,
+                            MachO::X86_64_RELOC_UNSIGNED, Value.Offset, false,
                             3);
       if (Value.SymbolName)
         addRelocationForSymbol(GOTRE, Value.SymbolName);

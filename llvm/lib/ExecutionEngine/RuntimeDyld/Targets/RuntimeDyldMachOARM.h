@@ -71,7 +71,7 @@ public:
     if ((RE.RelType & 0xf) == MachO::ARM_RELOC_BR24)
       processBranchRelocation(RE, Value, Stubs);
     else {
-      RE.Addend = Value.Addend;
+      RE.Addend = Value.Offset;
       if (Value.SymbolName)
         addRelocationForSymbol(RE, Value.SymbolName);
       else
@@ -152,7 +152,7 @@ private:
       uint8_t *StubTargetAddr =
           createStubFunction(Section.Address + Section.StubOffset);
       RelocationEntry StubRE(RE.SectionID, StubTargetAddr - Section.Address,
-                             MachO::GENERIC_RELOC_VANILLA, Value.Addend, false,
+                             MachO::GENERIC_RELOC_VANILLA, Value.Offset, false,
                              2);
       if (Value.SymbolName)
         addRelocationForSymbol(StubRE, Value.SymbolName);

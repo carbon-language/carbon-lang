@@ -53,15 +53,15 @@ RelocationValueRef RuntimeDyldMachO::getRelocationValueRef(
     SymbolTableMap::const_iterator SI = Symbols.find(TargetName.data());
     if (SI != Symbols.end()) {
       Value.SectionID = SI->second.first;
-      Value.Addend = SI->second.second + RE.Addend;
+      Value.Offset = SI->second.second + RE.Addend;
     } else {
       SI = GlobalSymbolTable.find(TargetName.data());
       if (SI != GlobalSymbolTable.end()) {
         Value.SectionID = SI->second.first;
-        Value.Addend = SI->second.second + RE.Addend;
+        Value.Offset = SI->second.second + RE.Addend;
       } else {
         Value.SymbolName = TargetName.data();
-        Value.Addend = RE.Addend;
+        Value.Offset = RE.Addend;
       }
     }
   } else {
@@ -71,7 +71,7 @@ RelocationValueRef RuntimeDyldMachO::getRelocationValueRef(
     Value.SectionID = findOrEmitSection(ObjImg, Sec, IsCode, ObjSectionToID);
     uint64_t Addr;
     Sec.getAddress(Addr);
-    Value.Addend = RE.Addend - Addr;
+    Value.Offset = RE.Addend - Addr;
   }
 
   return Value;
@@ -90,7 +90,7 @@ void RuntimeDyldMachO::makeValueAddendPCRel(RelocationValueRef &Value,
   if (IsPCRel) {
     uint64_t RelocAddr = 0;
     RI->getAddress(RelocAddr);
-    Value.Addend += RelocAddr + OffsetToNextPC;
+    Value.Offset += RelocAddr + OffsetToNextPC;
   }
 }
 

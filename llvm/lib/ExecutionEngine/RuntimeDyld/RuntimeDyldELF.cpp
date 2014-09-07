@@ -1034,11 +1034,11 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
           createStubFunction(Section.Address + Section.StubOffset);
 
       RelocationEntry REmovz_g3(SectionID, StubTargetAddr - Section.Address,
-                                ELF::R_AARCH64_MOVW_UABS_G3, Value.Addend);
+                                ELF::R_AARCH64_MOVW_UABS_G3, Value.Offset + Addend);
       RelocationEntry REmovk_g2(SectionID, StubTargetAddr - Section.Address + 4,
-                                ELF::R_AARCH64_MOVW_UABS_G2_NC, Value.Addend);
+                                ELF::R_AARCH64_MOVW_UABS_G2_NC, Value.Offset + Addend);
       RelocationEntry REmovk_g1(SectionID, StubTargetAddr - Section.Address + 8,
-                                ELF::R_AARCH64_MOVW_UABS_G1_NC, Value.Addend);
+                                ELF::R_AARCH64_MOVW_UABS_G1_NC, Value.Offset + Addend);
       RelocationEntry REmovk_g0(SectionID,
                                 StubTargetAddr - Section.Address + 12,
                                 ELF::R_AARCH64_MOVW_UABS_G0_NC, Value.Addend);

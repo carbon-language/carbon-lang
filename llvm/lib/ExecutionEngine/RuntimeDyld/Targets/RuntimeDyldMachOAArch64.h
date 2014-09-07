@@ -277,14 +277,14 @@ public:
       "ARM64_RELOC_ADDEND and embedded addend in the instruction.");
     if (ExplicitAddend) {
       RE.Addend = ExplicitAddend;
-      Value.Addend = ExplicitAddend;
+      Value.Offset = ExplicitAddend;
     }
 
     bool IsExtern = Obj.getPlainRelocationExternal(RelInfo);
     if (!IsExtern && RE.IsPCRel)
       makeValueAddendPCRel(Value, ObjImg, RelI, 1 << RE.Size);
 
-    RE.Addend = Value.Addend;
+    RE.Addend = Value.Offset;
 
     if (RE.RelType == MachO::ARM64_RELOC_GOT_LOAD_PAGE21 ||
         RE.RelType == MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12)
@@ -384,7 +384,7 @@ private:
       assert(((StubAddress % getStubAlignment()) == 0) &&
              "GOT entry not aligned");
       RelocationEntry GOTRE(RE.SectionID, StubOffset,
-                            MachO::ARM64_RELOC_UNSIGNED, Value.Addend,
+                            MachO::ARM64_RELOC_UNSIGNED, Value.Offset,
                             /*IsPCRel=*/false, /*Size=*/3);
       if (Value.SymbolName)
         addRelocationForSymbol(GOTRE, Value.SymbolName);

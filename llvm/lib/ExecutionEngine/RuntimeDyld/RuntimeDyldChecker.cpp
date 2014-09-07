@@ -883,7 +883,7 @@ void RuntimeDyldCheckerImpl::registerStubMap(
       for (auto &GSTEntry : getRTDyld().GlobalSymbolTable) {
         if (GSTEntry.second.first == StubMapEntry.first.SectionID &&
             GSTEntry.second.second ==
-                static_cast<uint64_t>(StubMapEntry.first.Addend)) {
+                static_cast<uint64_t>(StubMapEntry.first.Offset)) {
           SymbolName = GSTEntry.first();
           break;
         }
