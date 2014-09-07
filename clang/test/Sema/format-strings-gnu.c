@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -triple i386-apple-darwin9 %s
 // RUN: %clang_cc1 -fsyntax-only -verify -triple thumbv6-apple-ios4.0 %s
-// RUN: %clang_cc1 -fsyntax-only -verify -triple x86_64-mingw32 %s
-// RUN: %clang_cc1 -fsyntax-only -verify -triple i686-pc-win32 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -triple x86_64-mingw32 -DMS %s
+// RUN: %clang_cc1 -fsyntax-only -verify -triple i686-pc-win32 -DMS %s
 
 // RUN: %clang_cc1 -fsyntax-only -verify -triple i686-linux-gnu -DALLOWED %s
 // RUN: %clang_cc1 -fsyntax-only -verify -triple x86_64-unknown-freebsd -DALLOWED %s
@@ -22,6 +22,10 @@ void test() {
 
   // expected-warning@-6 {{length modifier 'L' results in undefined behavior or no effect with 'd' conversion specifier}}
   // expected-note@-7 {{did you mean to use 'll'?}}
+#endif
+
+#ifndef MS
+  printf("%Z\n", quiteLong); // expected-warning{{invalid conversion specifier 'Z'}}
 #endif
 }
 
