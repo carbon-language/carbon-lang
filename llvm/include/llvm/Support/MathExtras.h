@@ -558,7 +558,15 @@ inline uintptr_t alignAddr(void *Addr, size_t Alignment) {
   assert(Alignment && isPowerOf2_64((uint64_t)Alignment) &&
          "Alignment is not a power of two!");
 
+  assert((uintptr_t)Addr + Alignment - 1 >= (uintptr_t)Addr);
+
   return (((uintptr_t)Addr + Alignment - 1) & ~(uintptr_t)(Alignment - 1));
+}
+
+/// \brief Returns the necessary adjustment for aligning \c Ptr to \c Alignment
+/// bytes, rounding up.
+inline size_t alignmentAdjustment(void *Ptr, size_t Alignment) {
+  return alignAddr(Ptr, Alignment) - (uintptr_t)Ptr;
 }
 
 /// NextPowerOf2 - Returns the next power of two (in 64-bits)

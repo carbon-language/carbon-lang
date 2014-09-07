@@ -209,12 +209,12 @@ public:
     // Keep track of how many bytes we've allocated.
     BytesAllocated += Size;
 
-    // Allocate the aligned space, going forwards from CurPtr.
-    uintptr_t AlignedAddr = alignAddr(CurPtr, Alignment);
+    size_t Adjustment = alignmentAdjustment(CurPtr, Alignment);
+    assert(Adjustment + Size >= Size && "Adjustment + Size must not overflow");
 
-    // Check if we can hold it.
-    if (AlignedAddr + Size <= (uintptr_t)End) {
-      char *AlignedPtr = (char*)AlignedAddr;
+    // Check if we have enough space.
+    if (Adjustment + Size <= size_t(End - CurPtr)) {
+      char *AlignedPtr = CurPtr + Adjustment;
       CurPtr = AlignedPtr + Size;
       // Update the allocation point of this memory block in MemorySanitizer.
       // Without this, MemorySanitizer messages for values originated from here
@@ -238,7 +238,7 @@ public:
 
     // Otherwise, start a new slab and try again.
     StartNewSlab();
-    AlignedAddr = alignAddr(CurPtr, Alignment);
+    uintptr_t AlignedAddr = alignAddr(CurPtr, Alignment);
     assert(AlignedAddr + Size <= (uintptr_t)End &&
            "Unable to allocate memory!");
     char *AlignedPtr = (char*)AlignedAddr;

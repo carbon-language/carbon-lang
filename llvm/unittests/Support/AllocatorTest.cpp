@@ -115,6 +115,18 @@ TEST(AllocatorTest, TestSmallSlabSize) {
   EXPECT_EQ(1U, Alloc.GetNumSlabs());
 }
 
+// Test requesting alignment that goes past the end of the current slab.
+TEST(AllocatorTest, TestAlignmentPastSlab) {
+  BumpPtrAllocator Alloc;
+  Alloc.Allocate(1234, 1);
+
+  // Any attempt to align the pointer in the current slab would move it beyond
+  // the end of that slab.
+  Alloc.Allocate(1024, 8192);
+
+  EXPECT_EQ(2U, Alloc.GetNumSlabs());
+}
+
 // Mock slab allocator that returns slabs aligned on 4096 bytes.  There is no
 // easy portable way to do this, so this is kind of a hack.
 class MockSlabAllocator {
