@@ -118,10 +118,11 @@ TEST(AllocatorTest, TestSmallSlabSize) {
 // Test requesting alignment that goes past the end of the current slab.
 TEST(AllocatorTest, TestAlignmentPastSlab) {
   BumpPtrAllocator Alloc;
-  Alloc.Allocate(1234, 1);
+  Alloc.Allocate(4095, 1);
 
-  // Any attempt to align the pointer in the current slab would move it beyond
-  // the end of that slab.
+  // Aligning the current slab pointer is likely to move it past the end of the
+  // slab, which would confuse any unsigned comparisons with the difference of
+  // the the end pointer and the aligned pointer.
   Alloc.Allocate(1024, 8192);
 
   EXPECT_EQ(2U, Alloc.GetNumSlabs());
