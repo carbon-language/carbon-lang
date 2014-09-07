@@ -19320,26 +19320,42 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
   // Use the float domain if the operand type is a floating point type.
   bool FloatDomain = VT.isFloatingPoint();
 
-  // If we don't have access to VEX encodings, the generic PSHUF instructions
-  // are preferable to some of the specialized forms despite requiring one more
-  // byte to encode because they can implicitly copy.
+  // For floating point shuffles, we don't have free copies in the shuffle
+  // instructions, so this always makes sense to canonicalize.
   //
-  // IF we *do* have VEX encodings, than we can use shorter, more specific
+  // For integer shuffles, if we don't have access to VEX encodings, the generic
+  // PSHUF instructions are preferable to some of the specialized forms despite
+  // requiring one more byte to encode because they can implicitly copy.
+  //
+  // IF we *do* have VEX encodings, then we can use shorter, more specific
   // shuffle instructions freely as they can copy due to the extra register
   // operand.
-  if (Subtarget->hasAVX()) {
+  if (FloatDomain || Subtarget->hasAVX()) {
     // We have both floating point and integer variants of shuffles that dup
     // either the low or high half of the vector.
     if (Mask.equals(0, 0) || Mask.equals(1, 1)) {
       bool Lo = Mask.equals(0, 0);
-      unsigned Shuffle = FloatDomain ? (Lo ? X86ISD::MOVLHPS : X86ISD::MOVHLPS)
-                                     : (Lo ? X86ISD::UNPCKL : X86ISD::UNPCKH);
+      unsigned Shuffle;
+      // If the input is a floating point, check if we have SSE3 which will let
+      // us use MOVDDUP. That instruction is no slower than UNPCKLPD but has the
+      // option to fold the input operand into even an unaligned memory load.
+      if (FloatDomain && Lo && Subtarget->hasSSE3()) {
+        Shuffle = X86ISD::MOVDDUP;
+      } else {
+        // We model everything else using UNPCK instructions. While MOVLHPS and
+        // MOVHLPS are shorter encodings they cannot accept a memory operand
+        // which overly constrains subsequent lowering.
+        Shuffle = Lo ? X86ISD::UNPCKL : X86ISD::UNPCKH;
+      }
       if (Depth == 1 && Root->getOpcode() == Shuffle)
         return false; // Nothing to do!
-      MVT ShuffleVT = FloatDomain ? MVT::v4f32 : MVT::v2i64;
+      MVT ShuffleVT = FloatDomain ? MVT::v2f64 : MVT::v2i64;
       Op = DAG.getNode(ISD::BITCAST, DL, ShuffleVT, Input);
       DCI.AddToWorklist(Op.getNode());
-      Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op, Op);
+      if (Shuffle == X86ISD::MOVDDUP)
+        Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op);
+      else
+        Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op, Op);
       DCI.AddToWorklist(Op.getNode());
       DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Op),
                     /*AddTo*/ true);
