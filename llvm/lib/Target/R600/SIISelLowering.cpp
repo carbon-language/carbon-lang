@@ -1641,7 +1641,8 @@ void SITargetLowering::ensureSRegLimit(SelectionDAG &DAG, SDValue &Operand,
 
   SDNode *Node;
   // We can't use COPY_TO_REGCLASS with FrameIndex arguments.
-  if (isa<FrameIndexSDNode>(Operand)) {
+  if (isa<FrameIndexSDNode>(Operand) ||
+      isa<GlobalAddressSDNode>(Operand)) {
     unsigned Opcode = Operand.getValueType() == MVT::i32 ?
                       AMDGPU::S_MOV_B32 : AMDGPU::S_MOV_B64;
     Node = DAG.getMachineNode(Opcode, SDLoc(), Operand.getValueType(),
