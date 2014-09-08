@@ -138,7 +138,7 @@ struct NonNullArgData {
 };
 
 /// \brief Handle passing null pointer to function with nonnull attribute.
-RECOVERABLE(nonnull_arg, NonNullArgData *Data);
+RECOVERABLE(nonnull_arg, NonNullArgData *Data)
 
 }
 
