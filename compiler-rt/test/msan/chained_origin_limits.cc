@@ -12,8 +12,8 @@
 // RUN: MSAN_OPTIONS=origin_history_per_stack_limit=1 not %run %t >%t.out 2>&1
 // RUN: FileCheck %s --check-prefix=CHECK-PER-STACK < %t.out
 
-// RUN: MSAN_OPTIONS=origin_history_size=0,origin_history_per_stack_limit=0 not %run %t >%t.out 2>&1
-// RUN: FileCheck %s --check-prefix=CHECK-UNLIMITED < %t.out
+// RUN: MSAN_OPTIONS=origin_history_size=7,origin_history_per_stack_limit=0 not %run %t >%t.out 2>&1
+// RUN: FileCheck %s --check-prefix=CHECK7 < %t.out
 
 // Stack origin.
 // RUN: %clangxx_msan -DSTACK -fsanitize-memory-track-origins=2 -m64 -O3 %s -o %t
@@ -27,8 +27,8 @@
 // RUN: MSAN_OPTIONS=origin_history_per_stack_limit=1 not %run %t >%t.out 2>&1
 // RUN: FileCheck %s --check-prefix=CHECK-PER-STACK < %t.out
 
-// RUN: MSAN_OPTIONS=origin_history_size=0,origin_history_per_stack_limit=0 not %run %t >%t.out 2>&1
-// RUN: FileCheck %s --check-prefix=CHECK-UNLIMITED < %t.out
+// RUN: MSAN_OPTIONS=origin_history_size=7,origin_history_per_stack_limit=0 not %run %t >%t.out 2>&1
+// RUN: FileCheck %s --check-prefix=CHECK7 < %t.out
 
 
 // Heap origin, with calls.
@@ -43,8 +43,8 @@
 // RUN: MSAN_OPTIONS=origin_history_per_stack_limit=1 not %run %t >%t.out 2>&1
 // RUN: FileCheck %s --check-prefix=CHECK-PER-STACK < %t.out
 
-// RUN: MSAN_OPTIONS=origin_history_size=0,origin_history_per_stack_limit=0 not %run %t >%t.out 2>&1
-// RUN: FileCheck %s --check-prefix=CHECK-UNLIMITED < %t.out
+// RUN: MSAN_OPTIONS=origin_history_size=7,origin_history_per_stack_limit=0 not %run %t >%t.out 2>&1
+// RUN: FileCheck %s --check-prefix=CHECK7 < %t.out
 
 
 // Stack origin, with calls.
@@ -59,8 +59,8 @@
 // RUN: MSAN_OPTIONS=origin_history_per_stack_limit=1 not %run %t >%t.out 2>&1
 // RUN: FileCheck %s --check-prefix=CHECK-PER-STACK < %t.out
 
-// RUN: MSAN_OPTIONS=origin_history_size=0,origin_history_per_stack_limit=0 not %run %t >%t.out 2>&1
-// RUN: FileCheck %s --check-prefix=CHECK-UNLIMITED < %t.out
+// RUN: MSAN_OPTIONS=origin_history_size=7,origin_history_per_stack_limit=0 not %run %t >%t.out 2>&1
+// RUN: FileCheck %s --check-prefix=CHECK7 < %t.out
 
 #include <stdio.h>
 #include <stdlib.h>
