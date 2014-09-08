@@ -8,10 +8,11 @@ Taken from http://docs.python.org/library/socket.html#example.
 import socket
 
 HOST = 'localhost'        # Symbolic name meaning local interfaces
-PORT = 12345              # Arbitrary non-privileged port
+PORT = 0                  # Let the system give us a random free port
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
-print '\nListening on %s:%d' % (HOST, PORT)
+PORT = s.getsockname()[1]
+print 'Listening on %s:%d' % (HOST, PORT)
 s.listen(1)
 conn, addr = s.accept()
 print 'Connected by', addr
