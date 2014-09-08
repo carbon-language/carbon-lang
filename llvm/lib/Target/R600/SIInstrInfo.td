@@ -884,6 +884,8 @@ class DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc, string noRetOp = ""
   let data1 = 0;
   let mayStore = 1;
   let mayLoad = 1;
+
+  let hasPostISelHook = 1; // Adjusted to no return version.
 }
 
 // 1 address, 2 data.
@@ -896,6 +898,8 @@ class DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc, string noRetOp = ""
   AtomicNoRet<noRetOp, 1> {
   let mayStore = 1;
   let mayLoad = 1;
+
+  let hasPostISelHook = 1; // Adjusted to no return version.
 }
 
 // 1 address, 2 data.

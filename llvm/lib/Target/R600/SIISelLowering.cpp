@@ -1943,27 +1943,39 @@ void SITargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
                                                      SDNode *Node) const {
   const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
       getTargetMachine().getSubtargetImpl()->getInstrInfo());
-  if (!TII->isMIMG(MI->getOpcode()))
+
+  if (TII->isMIMG(MI->getOpcode())) {
+    unsigned VReg = MI->getOperand(0).getReg();
+    unsigned Writemask = MI->getOperand(1).getImm();
+    unsigned BitsSet = 0;
+    for (unsigned i = 0; i < 4; ++i)
+      BitsSet += Writemask & (1 << i) ? 1 : 0;
+
+    const TargetRegisterClass *RC;
+    switch (BitsSet) {
+    default: return;
+    case 1:  RC = &AMDGPU::VReg_32RegClass; break;
+    case 2:  RC = &AMDGPU::VReg_64RegClass; break;
+    case 3:  RC = &AMDGPU::VReg_96RegClass; break;
+    }
+
+    unsigned NewOpcode = TII->getMaskedMIMGOp(MI->getOpcode(), BitsSet);
+    MI->setDesc(TII->get(NewOpcode));
+    MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
+    MRI.setRegClass(VReg, RC);
     return;
-
-  unsigned VReg = MI->getOperand(0).getReg();
-  unsigned Writemask = MI->getOperand(1).getImm();
-  unsigned BitsSet = 0;
-  for (unsigned i = 0; i < 4; ++i)
-    BitsSet += Writemask & (1 << i) ? 1 : 0;
-
-  const TargetRegisterClass *RC;
-  switch (BitsSet) {
-  default: return;
-  case 1:  RC = &AMDGPU::VReg_32RegClass; break;
-  case 2:  RC = &AMDGPU::VReg_64RegClass; break;
-  case 3:  RC = &AMDGPU::VReg_96RegClass; break;
   }
 
-  unsigned NewOpcode = TII->getMaskedMIMGOp(MI->getOpcode(), BitsSet);
-  MI->setDesc(TII->get(NewOpcode));
-  MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
-  MRI.setRegClass(VReg, RC);
+  // Replace unused atomics with the no return version.
+  int NoRetAtomicOp = AMDGPU::getAtomicNoRetOp(MI->getOpcode());
+  if (NoRetAtomicOp != -1) {
+    if (!Node->hasAnyUseOfValue(0)) {
+      MI->setDesc(TII->get(NoRetAtomicOp));
+      MI->RemoveOperand(0);
+    }
+
+    return;
+  }
 }
 
 MachineSDNode *SITargetLowering::AdjustRegClass(MachineSDNode *N,

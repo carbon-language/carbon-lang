@@ -3,7 +3,7 @@
 
 ; FUNC-LABEL: @atomic_add_local
 ; R600: LDS_ADD *
-; SI: DS_ADD_RTN_U32
+; SI: DS_ADD_U32
 define void @atomic_add_local(i32 addrspace(3)* %local) {
    %unused = atomicrmw volatile add i32 addrspace(3)* %local, i32 5 seq_cst
    ret void
@@ -11,7 +11,7 @@ define void @atomic_add_local(i32 addrspace(3)* %local) {
 
 ; FUNC-LABEL: @atomic_add_local_const_offset
 ; R600: LDS_ADD *
-; SI: DS_ADD_RTN_U32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, 0x10
+; SI: DS_ADD_U32 v{{[0-9]+}}, v{{[0-9]+}}, 0x10
 define void @atomic_add_local_const_offset(i32 addrspace(3)* %local) {
   %gep = getelementptr i32 addrspace(3)* %local, i32 4
   %val = atomicrmw volatile add i32 addrspace(3)* %gep, i32 5 seq_cst
