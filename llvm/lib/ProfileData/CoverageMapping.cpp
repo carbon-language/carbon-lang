@@ -123,11 +123,11 @@ ErrorOr<int64_t> CounterMappingContext::evaluate(const Counter &C) const {
     return 0;
   case Counter::CounterValueReference:
     if (C.getCounterID() >= CounterValues.size())
-      return std::errc::argument_out_of_domain;
+      return std::make_error_code(std::errc::argument_out_of_domain);
     return CounterValues[C.getCounterID()];
   case Counter::Expression: {
     if (C.getExpressionID() >= Expressions.size())
-      return std::errc::argument_out_of_domain;
+      return std::make_error_code(std::errc::argument_out_of_domain);
     const auto &E = Expressions[C.getExpressionID()];
     ErrorOr<int64_t> LHS = evaluate(E.LHS);
     if (!LHS)
