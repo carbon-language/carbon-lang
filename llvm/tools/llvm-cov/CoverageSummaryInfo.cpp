@@ -65,7 +65,7 @@ FunctionCoverageSummary::get(const FunctionCoverageMapping &Function) {
     NumLines += LineCount;
   }
   return FunctionCoverageSummary(
-      Function.PrettyName, RegionCoverageInfo(CoveredRegions, NumCodeRegions),
+      Function.Name, RegionCoverageInfo(CoveredRegions, NumCodeRegions),
       LineCoverageInfo(CoveredLines, 0, NumLines));
 }
 

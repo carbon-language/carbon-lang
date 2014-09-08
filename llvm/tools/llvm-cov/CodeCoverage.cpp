@@ -368,7 +368,7 @@ bool CodeCoverageTool::createSourceFileView(
     for (auto Function : InstantiationSet.second) {
       auto SubView = llvm::make_unique<SourceCoverageView>(
           View, InterestingRange.first, InterestingRange.second,
-          Function->PrettyName);
+          Function->Name);
       createInstantiationSubView(SourceFile, *Function, *SubView);
       View.addChild(std::move(SubView));
     }
@@ -417,7 +417,7 @@ bool CodeCoverageTool::load() {
       if (Error && !RegionError) {
         colored_ostream(errs(), raw_ostream::RED)
             << "error: Regions and counters don't match in a function '"
-            << Function.PrettyName << "' (re-run the instrumented binary).";
+            << Function.Name << "' (re-run the instrumented binary).";
         errs() << "\n";
         RegionError = true;
       }
@@ -623,7 +623,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
                                   Range.second);
       createSourceFileView(SourceFile, mainView, Function, true);
       ViewOpts.colored_ostream(outs(), raw_ostream::CYAN)
-          << Function.PrettyName << " from " << SourceFile << ":";
+          << Function.Name << " from " << SourceFile << ":";
       outs() << "\n";
       mainView.render(outs());
       if (FunctionMappingRecords.size() > 1)

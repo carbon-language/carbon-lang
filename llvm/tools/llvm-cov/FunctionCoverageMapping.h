@@ -35,14 +35,11 @@ struct MappingRegion : public coverage::CounterMappingRegion {
 struct FunctionCoverageMapping {
   /// \brief Raw function name.
   std::string Name;
-  /// \brief Demangled function name.
-  std::string PrettyName;
   std::vector<std::string> Filenames;
   std::vector<MappingRegion> MappingRegions;
 
   FunctionCoverageMapping(StringRef Name, ArrayRef<StringRef> Filenames)
-      : Name(Name), PrettyName(Name),
-        Filenames(Filenames.begin(), Filenames.end()) {}
+      : Name(Name), Filenames(Filenames.begin(), Filenames.end()) {}
 };
 
 } // namespace llvm

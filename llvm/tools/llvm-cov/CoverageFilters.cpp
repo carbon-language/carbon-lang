@@ -18,12 +18,12 @@
 using namespace llvm;
 
 bool NameCoverageFilter::matches(const FunctionCoverageMapping &Function) {
-  StringRef FuncName = Function.PrettyName;
+  StringRef FuncName = Function.Name;
   return FuncName.find(Name) != StringRef::npos;
 }
 
 bool NameRegexCoverageFilter::matches(const FunctionCoverageMapping &Function) {
-  return llvm::Regex(Regex).match(Function.PrettyName);
+  return llvm::Regex(Regex).match(Function.Name);
 }
 
 bool RegionCoverageFilter::matches(const FunctionCoverageMapping &Function) {
