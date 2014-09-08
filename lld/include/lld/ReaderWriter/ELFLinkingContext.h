@@ -19,6 +19,7 @@
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 
+#include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
@@ -68,6 +69,9 @@ public:
   uint16_t getOutputMachine() const;
   bool mergeCommonStrings() const { return _mergeCommonStrings; }
   virtual uint64_t getBaseAddress() const { return _baseAddress; }
+
+  void notifySymbolTableCoalesce(const Atom *existingAtom, const Atom *newAtom,
+                                 bool &useNew) override;
 
   /// This controls if undefined atoms need to be created for undefines that are
   /// present in a SharedLibrary. If this option is set, undefined atoms are
@@ -258,6 +262,10 @@ public:
 
   void setCreateSeparateROSegment() { _mergeRODataToTextSegment = false; }
 
+  bool hasCoalescedWeakPair(StringRef name) const {
+    return _weakCoalescedSymbols.count(name) != 0;
+  }
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 
@@ -292,6 +300,7 @@ protected:
   StringRefVector _rpathList;
   StringRefVector _rpathLinkList;
   std::map<std::string, uint64_t> _absoluteSymbols;
+  llvm::StringSet<> _weakCoalescedSymbols;
 };
 } // end namespace lld
 

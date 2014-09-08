@@ -30,7 +30,7 @@
 #include <vector>
 
 namespace lld {
-SymbolTable::SymbolTable(const LinkingContext &context) : _context(context) {}
+SymbolTable::SymbolTable(LinkingContext &context) : _context(context) {}
 
 bool SymbolTable::add(const UndefinedAtom &atom) { return addByName(atom); }
 

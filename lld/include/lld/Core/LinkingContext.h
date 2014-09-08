@@ -234,9 +234,7 @@ public:
   /// but that can be changed by the LinkingContext.  This is also an
   /// opportunity for flavor specific processing.
   virtual void notifySymbolTableCoalesce(const Atom *existingAtom,
-                                         const Atom *newAtom,
-                                         bool &useNew) const {
-  }
+                                         const Atom *newAtom, bool &useNew) {}
 
   /// This method adds undefined symbols specified by the -u option to the to
   /// the list of undefined symbols known to the linker. This option essentially
