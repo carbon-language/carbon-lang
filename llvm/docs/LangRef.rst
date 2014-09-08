@@ -5075,7 +5075,7 @@ Example:
 
       %agg1 = insertvalue {i32, float} undef, i32 1, 0              ; yields {i32 1, float undef}
       %agg2 = insertvalue {i32, float} %agg1, float %val, 1         ; yields {i32 1, float %val}
-      %agg3 = insertvalue {i32, {float}} %agg1, float %val, 1, 0    ; yields {i32 1, float %val}
+      %agg3 = insertvalue {i32, {float}} undef, float %val, 1, 0    ; yields {i32 undef, {float %val}}
 
 .. _memoryops:
 
