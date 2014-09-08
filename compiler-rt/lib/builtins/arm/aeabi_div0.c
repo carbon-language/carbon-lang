@@ -14,7 +14,7 @@
  */
 
 /*
- * §4.3.2 - Division by zero
+ * RTABI 4.3.2 - Division by zero
  *
  * The *div0 functions:
  * - Return the value passed to them as a parameter
