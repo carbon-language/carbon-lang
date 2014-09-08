@@ -44,6 +44,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginEmulateInstructionARM64.a \
 	lldbPluginLanguageRuntimeCPlusPlusItaniumABI.a \
 	lldbPluginLanguageRuntimeObjCAppleObjCRuntime.a \
+	lldbPluginMemoryHistoryASan.a \
 	lldbPluginObjectContainerBSDArchive.a \
 	lldbPluginObjectFileELF.a \
 	lldbPluginObjectFileJIT.a \
