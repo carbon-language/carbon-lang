@@ -931,7 +931,15 @@ Driver::MainLoop ()
 #endif
         if (err == 0)
         {
-            if (write (fds[WRITE], commands_data, commands_size) == commands_size)
+            ssize_t nrwr = write(fds[WRITE], commands_data, commands_size);
+            if (nrwr < 0)
+            {
+                fprintf(stderr, "error: write(%i, %p, %zd) failed (errno = %i) "
+                                "when trying to open LLDB commands pipe\n",
+                        fds[WRITE], commands_data, commands_size, errno);
+                success = false;
+            }
+            else if (static_cast<size_t>(nrwr) == commands_size)
             {
                 // Close the write end of the pipe so when we give the read end to
                 // the debugger/command interpreter it will exit when it consumes all
@@ -953,9 +961,17 @@ Driver::MainLoop ()
                 }
                 else
                 {
-                    fprintf(stderr, "error: fdopen(%i, \"r\") failed (errno = %i) when trying to open LLDB commands pipe\n", fds[READ], errno);
+                    fprintf(stderr,
+                            "error: fdopen(%i, \"r\") failed (errno = %i) when "
+                            "trying to open LLDB commands pipe\n",
+                            fds[READ], errno);
                     success = false;
                 }
+            }
+            else
+            {
+                assert(!"partial writes not handled");
+                success = false;
             }
         }
         else
