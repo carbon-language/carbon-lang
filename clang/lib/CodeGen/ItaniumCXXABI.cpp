@@ -138,15 +138,10 @@ public:
                               const CXXRecordDecl *ClassDecl,
                               const CXXRecordDecl *BaseClassDecl) override;
 
-  void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
-                                 CXXCtorType T, CanQualType &ResTy,
-                                 SmallVectorImpl<CanQualType> &ArgTys) override;
-
   void EmitCXXConstructors(const CXXConstructorDecl *D) override;
 
-  void BuildDestructorSignature(const CXXDestructorDecl *Dtor,
-                                CXXDtorType T, CanQualType &ResTy,
-                                SmallVectorImpl<CanQualType> &ArgTys) override;
+  void buildStructorSignature(const CXXMethodDecl *MD, StructorType T,
+                              SmallVectorImpl<CanQualType> &ArgTys) override;
 
   bool useThunkForDtorVariant(const CXXDestructorDecl *Dtor,
                               CXXDtorType DT) const override {
@@ -1066,23 +1061,6 @@ ItaniumCXXABI::GetVirtualBaseClassOffset(CodeGenFunction &CGF,
   return VBaseOffset;
 }
 
-/// The generic ABI passes 'this', plus a VTT if it's initializing a
-/// base subobject.
-void
-ItaniumCXXABI::BuildConstructorSignature(const CXXConstructorDecl *Ctor,
-                                         CXXCtorType Type, CanQualType &ResTy,
-                                         SmallVectorImpl<CanQualType> &ArgTys) {
-  ASTContext &Context = getContext();
-
-  // All parameters are already in place except VTT, which goes after 'this'.
-  // These are Clang types, so we don't need to worry about sret yet.
-
-  // Check if we need to add a VTT parameter (which has type void **).
-  if (Type == Ctor_Base && Ctor->getParent()->getNumVBases() != 0)
-    ArgTys.insert(ArgTys.begin() + 1,
-                  Context.getPointerType(Context.VoidPtrTy));
-}
-
 void ItaniumCXXABI::EmitCXXConstructors(const CXXConstructorDecl *D) {
   // Just make sure we're in sync with TargetCXXABI.
   assert(CGM.getTarget().getCXXABI().hasConstructorVariants());
@@ -1099,20 +1077,18 @@ void ItaniumCXXABI::EmitCXXConstructors(const CXXConstructorDecl *D) {
   }
 }
 
-/// The generic ABI passes 'this', plus a VTT if it's destroying a
-/// base subobject.
-void ItaniumCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
-                                             CXXDtorType Type,
-                                             CanQualType &ResTy,
-                                SmallVectorImpl<CanQualType> &ArgTys) {
+void
+ItaniumCXXABI::buildStructorSignature(const CXXMethodDecl *MD, StructorType T,
+                                      SmallVectorImpl<CanQualType> &ArgTys) {
   ASTContext &Context = getContext();
 
-  // 'this' parameter is already there, as well as 'this' return if
-  // HasThisReturn(GlobalDecl(Dtor, Type)) is true
+  // All parameters are already in place except VTT, which goes after 'this'.
+  // These are Clang types, so we don't need to worry about sret yet.
 
   // Check if we need to add a VTT parameter (which has type void **).
-  if (Type == Dtor_Base && Dtor->getParent()->getNumVBases() != 0)
-    ArgTys.push_back(Context.getPointerType(Context.VoidPtrTy));
+  if (T == StructorType::Base && MD->getParent()->getNumVBases() != 0)
+    ArgTys.insert(ArgTys.begin() + 1,
+                  Context.getPointerType(Context.VoidPtrTy));
 }
 
 void ItaniumCXXABI::EmitCXXDestructors(const CXXDestructorDecl *D) {
@@ -1346,8 +1322,8 @@ void ItaniumCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
   assert(CE == nullptr || CE->arg_begin() == CE->arg_end());
   assert(DtorType == Dtor_Deleting || DtorType == Dtor_Complete);
 
-  const CGFunctionInfo *FInfo
-    = &CGM.getTypes().arrangeCXXDestructor(Dtor, DtorType);
+  const CGFunctionInfo *FInfo = &CGM.getTypes().arrangeCXXStructorDeclaration(
+      Dtor, getFromDtorType(DtorType));
   llvm::Type *Ty = CGF.CGM.getTypes().GetFunctionType(*FInfo);
   llvm::Value *Callee =
       getVirtualFunctionPointer(CGF, GlobalDecl(Dtor, DtorType), This, Ty);

@@ -803,6 +803,13 @@ public:
   QualType getObjCFastEnumerationStateType();
   
   /// Return the address of the constructor of the given type.
+
+  llvm::GlobalValue *
+  getAddrOfCXXStructor(const CXXMethodDecl *MD, StructorType Type,
+                       const CGFunctionInfo *FnInfo = nullptr,
+                       llvm::FunctionType *FnType = nullptr,
+                       bool DontDefer = false);
+
   llvm::GlobalValue *
   GetAddrOfCXXConstructor(const CXXConstructorDecl *ctor, CXXCtorType ctorType,
                           const CGFunctionInfo *fnInfo = nullptr,

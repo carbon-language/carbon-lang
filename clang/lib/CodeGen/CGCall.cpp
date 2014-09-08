@@ -181,30 +181,35 @@ CodeGenTypes::arrangeCXXMethodDeclaration(const CXXMethodDecl *MD) {
   return arrangeFreeFunctionType(prototype);
 }
 
-/// Arrange the argument and result information for a declaration
-/// or definition to the given constructor variant.
 const CGFunctionInfo &
-CodeGenTypes::arrangeCXXConstructorDeclaration(const CXXConstructorDecl *D,
-                                               CXXCtorType ctorKind) {
+CodeGenTypes::arrangeCXXStructorDeclaration(const CXXMethodDecl *MD,
+                                            StructorType Type) {
+
   SmallVector<CanQualType, 16> argTypes;
-  argTypes.push_back(GetThisType(Context, D->getParent()));
+  argTypes.push_back(GetThisType(Context, MD->getParent()));
 
-  GlobalDecl GD(D, ctorKind);
-  CanQualType resultType =
-    TheCXXABI.HasThisReturn(GD) ? argTypes.front() : Context.VoidTy;
+  GlobalDecl GD;
+  if (auto *CD = dyn_cast<CXXConstructorDecl>(MD)) {
+    GD = GlobalDecl(CD, toCXXCtorType(Type));
+  } else {
+    auto *DD = dyn_cast<CXXDestructorDecl>(MD);
+    GD = GlobalDecl(DD, toCXXDtorType(Type));
+  }
 
-  CanQual<FunctionProtoType> FTP = GetFormalType(D);
+  CanQual<FunctionProtoType> FTP = GetFormalType(MD);
 
   // Add the formal parameters.
   for (unsigned i = 0, e = FTP->getNumParams(); i != e; ++i)
     argTypes.push_back(FTP->getParamType(i));
 
-  TheCXXABI.BuildConstructorSignature(D, ctorKind, resultType, argTypes);
+  TheCXXABI.buildStructorSignature(MD, Type, argTypes);
 
   RequiredArgs required =
-      (D->isVariadic() ? RequiredArgs(argTypes.size()) : RequiredArgs::All);
+      (MD->isVariadic() ? RequiredArgs(argTypes.size()) : RequiredArgs::All);
 
   FunctionType::ExtInfo extInfo = FTP->getExtInfo();
+  CanQualType resultType =
+      TheCXXABI.HasThisReturn(GD) ? argTypes.front() : Context.VoidTy;
   return arrangeLLVMFunctionInfo(resultType, true, argTypes, extInfo, required);
 }
 
@@ -227,30 +232,6 @@ CodeGenTypes::arrangeCXXConstructorCall(const CallArgList &args,
 
   FunctionType::ExtInfo Info = FPT->getExtInfo();
   return arrangeLLVMFunctionInfo(ResultType, true, ArgTypes, Info, Required);
-}
-
-/// Arrange the argument and result information for a declaration,
-/// definition, or call to the given destructor variant.  It so
-/// happens that all three cases produce the same information.
-const CGFunctionInfo &
-CodeGenTypes::arrangeCXXDestructor(const CXXDestructorDecl *D,
-                                   CXXDtorType dtorKind) {
-  SmallVector<CanQualType, 2> argTypes;
-  argTypes.push_back(GetThisType(Context, D->getParent()));
-
-  GlobalDecl GD(D, dtorKind);
-  CanQualType resultType =
-    TheCXXABI.HasThisReturn(GD) ? argTypes.front() : Context.VoidTy;
-
-  TheCXXABI.BuildDestructorSignature(D, dtorKind, resultType, argTypes);
-
-  CanQual<FunctionProtoType> FTP = GetFormalType(D);
-  assert(FTP->getNumParams() == 0 && "dtor with formal parameters");
-  assert(FTP->isVariadic() == 0 && "dtor with formal parameters");
-
-  FunctionType::ExtInfo extInfo = FTP->getExtInfo();
-  return arrangeLLVMFunctionInfo(resultType, true, argTypes, extInfo,
-                                 RequiredArgs::All);
 }
 
 /// Arrange the argument and result information for the declaration or
@@ -324,10 +305,10 @@ CodeGenTypes::arrangeGlobalDeclaration(GlobalDecl GD) {
   const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
 
   if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD))
-    return arrangeCXXConstructorDeclaration(CD, GD.getCtorType());
+    return arrangeCXXStructorDeclaration(CD, getFromCtorType(GD.getCtorType()));
 
   if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD))
-    return arrangeCXXDestructor(DD, GD.getDtorType());
+    return arrangeCXXStructorDeclaration(DD, getFromDtorType(GD.getDtorType()));
 
   return arrangeFunctionDeclaration(FD);
 }
@@ -1029,7 +1010,8 @@ llvm::Type *CodeGenTypes::GetFunctionTypeForVTable(GlobalDecl GD) {
     
   const CGFunctionInfo *Info;
   if (isa<CXXDestructorDecl>(MD))
-    Info = &arrangeCXXDestructor(cast<CXXDestructorDecl>(MD), GD.getDtorType());
+    Info =
+        &arrangeCXXStructorDeclaration(MD, getFromDtorType(GD.getDtorType()));
   else
     Info = &arrangeCXXMethodDeclaration(MD);
   return GetFunctionType(*Info);

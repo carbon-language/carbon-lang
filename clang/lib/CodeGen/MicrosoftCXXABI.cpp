@@ -89,10 +89,6 @@ public:
                             const CXXRecordDecl *ClassDecl,
                             const CXXRecordDecl *BaseClassDecl) override;
 
-  void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
-                                 CXXCtorType Type, CanQualType &ResTy,
-                                 SmallVectorImpl<CanQualType> &ArgTys) override;
-
   llvm::BasicBlock *
   EmitCtorCompleteObjectHandler(CodeGenFunction &CGF,
                                 const CXXRecordDecl *RD) override;
@@ -134,10 +130,8 @@ public:
   // lacks a definition for the destructor, non-base destructors must always
   // delegate to or alias the base destructor.
 
-  void BuildDestructorSignature(const CXXDestructorDecl *Dtor,
-                                CXXDtorType Type,
-                                CanQualType &ResTy,
-                                SmallVectorImpl<CanQualType> &ArgTys) override;
+  void buildStructorSignature(const CXXMethodDecl *MD, StructorType T,
+                              SmallVectorImpl<CanQualType> &ArgTys) override;
 
   /// Non-base dtors should be emitted as delegating thunks in this ABI.
   bool useThunkForDtorVariant(const CXXDestructorDecl *Dtor,
@@ -785,23 +779,6 @@ bool MicrosoftCXXABI::classifyReturnType(CGFunctionInfo &FI) const {
   return false;
 }
 
-void MicrosoftCXXABI::BuildConstructorSignature(
-    const CXXConstructorDecl *Ctor, CXXCtorType Type, CanQualType &ResTy,
-    SmallVectorImpl<CanQualType> &ArgTys) {
-
-  // All parameters are already in place except is_most_derived, which goes
-  // after 'this' if it's variadic and last if it's not.
-
-  const CXXRecordDecl *Class = Ctor->getParent();
-  const FunctionProtoType *FPT = Ctor->getType()->castAs<FunctionProtoType>();
-  if (Class->getNumVBases()) {
-    if (FPT->isVariadic())
-      ArgTys.insert(ArgTys.begin() + 1, CGM.getContext().IntTy);
-    else
-      ArgTys.push_back(CGM.getContext().IntTy);
-  }
-}
-
 llvm::BasicBlock *
 MicrosoftCXXABI::EmitCtorCompleteObjectHandler(CodeGenFunction &CGF,
                                                const CXXRecordDecl *RD) {
@@ -910,17 +887,28 @@ void MicrosoftCXXABI::EmitVBPtrStores(CodeGenFunction &CGF,
   }
 }
 
-void MicrosoftCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
-                                               CXXDtorType Type,
-                                               CanQualType &ResTy,
+void
+MicrosoftCXXABI::buildStructorSignature(const CXXMethodDecl *MD, StructorType T,
                                         SmallVectorImpl<CanQualType> &ArgTys) {
-  // 'this' is already in place
-
   // TODO: 'for base' flag
-
-  if (Type == Dtor_Deleting) {
+  if (T == StructorType::Deleting) {
     // The scalar deleting destructor takes an implicit int parameter.
     ArgTys.push_back(CGM.getContext().IntTy);
+  }
+  auto *CD = dyn_cast<CXXConstructorDecl>(MD);
+  if (!CD)
+    return;
+
+  // All parameters are already in place except is_most_derived, which goes
+  // after 'this' if it's variadic and last if it's not.
+
+  const CXXRecordDecl *Class = CD->getParent();
+  const FunctionProtoType *FPT = CD->getType()->castAs<FunctionProtoType>();
+  if (Class->getNumVBases()) {
+    if (FPT->isVariadic())
+      ArgTys.insert(ArgTys.begin() + 1, CGM.getContext().IntTy);
+    else
+      ArgTys.push_back(CGM.getContext().IntTy);
   }
 }
 
@@ -1387,8 +1375,8 @@ void MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
   // We have only one destructor in the vftable but can get both behaviors
   // by passing an implicit int parameter.
   GlobalDecl GD(Dtor, Dtor_Deleting);
-  const CGFunctionInfo *FInfo =
-      &CGM.getTypes().arrangeCXXDestructor(Dtor, Dtor_Deleting);
+  const CGFunctionInfo *FInfo = &CGM.getTypes().arrangeCXXStructorDeclaration(
+      Dtor, StructorType::Deleting);
   llvm::Type *Ty = CGF.CGM.getTypes().GetFunctionType(*FInfo);
   llvm::Value *Callee = getVirtualFunctionPointer(CGF, GD, This, Ty);
 

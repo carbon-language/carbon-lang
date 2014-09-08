@@ -56,6 +56,60 @@ class CGRecordLayout;
 class CodeGenModule;
 class RequiredArgs;
 
+enum class StructorType {
+  Complete, // constructor or destructor
+  Base,     // constructor or destructor
+  Deleting  // destructor only
+};
+
+inline CXXCtorType toCXXCtorType(StructorType T) {
+  switch (T) {
+  case StructorType::Complete:
+    return Ctor_Complete;
+  case StructorType::Base:
+    return Ctor_Base;
+  case StructorType::Deleting:
+    llvm_unreachable("cannot have a deleting ctor");
+  }
+  llvm_unreachable("not a StructorType");
+}
+
+inline StructorType getFromCtorType(CXXCtorType T) {
+  switch (T) {
+  case Ctor_Complete:
+    return StructorType::Complete;
+  case Ctor_Base:
+    return StructorType::Base;
+  case Ctor_CompleteAllocating:
+    llvm_unreachable("invalid enum");
+  }
+  llvm_unreachable("not a CXXCtorType");
+}
+
+inline CXXDtorType toCXXDtorType(StructorType T) {
+  switch (T) {
+  case StructorType::Complete:
+    return Dtor_Complete;
+  case StructorType::Base:
+    return Dtor_Base;
+  case StructorType::Deleting:
+    return Dtor_Deleting;
+  }
+  llvm_unreachable("not a StructorType");
+}
+
+inline StructorType getFromDtorType(CXXDtorType T) {
+  switch (T) {
+  case Dtor_Deleting:
+    return StructorType::Deleting;
+  case Dtor_Complete:
+    return StructorType::Complete;
+  case Dtor_Base:
+    return StructorType::Base;
+  }
+  llvm_unreachable("not a CXXDtorType");
+}
+
 /// CodeGenTypes - This class organizes the cross-module state that is used
 /// while lowering AST types to LLVM types.
 class CodeGenTypes {
@@ -185,16 +239,12 @@ public:
                                                         QualType receiverType);
 
   const CGFunctionInfo &arrangeCXXMethodDeclaration(const CXXMethodDecl *MD);
-  const CGFunctionInfo &arrangeCXXConstructorDeclaration(
-                                                    const CXXConstructorDecl *D,
-                                                    CXXCtorType Type);
+  const CGFunctionInfo &arrangeCXXStructorDeclaration(const CXXMethodDecl *MD,
+                                                      StructorType Type);
   const CGFunctionInfo &arrangeCXXConstructorCall(const CallArgList &Args,
                                                   const CXXConstructorDecl *D,
                                                   CXXCtorType CtorKind,
                                                   unsigned ExtraArgs);
-  const CGFunctionInfo &arrangeCXXDestructor(const CXXDestructorDecl *D,
-                                             CXXDtorType Type);
-
   const CGFunctionInfo &arrangeFreeFunctionCall(const CallArgList &Args,
                                                 const FunctionType *Ty);
   const CGFunctionInfo &arrangeFreeFunctionCall(QualType ResTy,

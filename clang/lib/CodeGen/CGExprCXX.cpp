@@ -170,11 +170,11 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   const CXXMethodDecl *CalleeDecl = DevirtualizedMethod ? DevirtualizedMethod : MD;
   const CGFunctionInfo *FInfo = nullptr;
   if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(CalleeDecl))
-    FInfo = &CGM.getTypes().arrangeCXXDestructor(Dtor,
-                                                 Dtor_Complete);
+    FInfo = &CGM.getTypes().arrangeCXXStructorDeclaration(
+        Dtor, StructorType::Complete);
   else if (const CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(CalleeDecl))
-    FInfo = &CGM.getTypes().arrangeCXXConstructorDeclaration(Ctor,
-                                                             Ctor_Complete);
+    FInfo = &CGM.getTypes().arrangeCXXStructorDeclaration(
+        Ctor, StructorType::Complete);
   else
     FInfo = &CGM.getTypes().arrangeCXXMethodDeclaration(CalleeDecl);
 
