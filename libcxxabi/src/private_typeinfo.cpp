@@ -957,7 +957,6 @@ __class_type_info::search_below_dst(__dynamic_cast_info* info,
                                     int path_below,
                                     bool use_strcmp) const
 {
-    typedef const __base_class_type_info* Iter;
     if (is_equal(this, info->static_type, use_strcmp))
         process_static_type_below_dst(info, current_ptr, path_below);
     else if (is_equal(this, info->dst_type, use_strcmp))
