@@ -1326,13 +1326,13 @@ PRE_SYSCALL(io_submit)(long ctx_id, long nr, __sanitizer_iocb **iocbpp) {
     } else if (op == iocb_cmd_pread && buf && len) {
       POST_WRITE(buf, len);
     } else if (op == iocb_cmd_pwritev) {
-      __sanitizer_iovec *iovec = (__sanitizer_iovec*)iocbpp[i]->aio_buf;
+      __sanitizer_iovec *iovec = (__sanitizer_iovec*)buf;
       for (uptr v = 0; v < len; v++)
-        PRE_READ(iovec[i].iov_base, iovec[i].iov_len);
+        PRE_READ(iovec[v].iov_base, iovec[v].iov_len);
     } else if (op == iocb_cmd_preadv) {
-      __sanitizer_iovec *iovec = (__sanitizer_iovec*)iocbpp[i]->aio_buf;
+      __sanitizer_iovec *iovec = (__sanitizer_iovec*)buf;
       for (uptr v = 0; v < len; v++)
-        POST_WRITE(iovec[i].iov_base, iovec[i].iov_len);
+        POST_WRITE(iovec[v].iov_base, iovec[v].iov_len);
     }
     // See comment in io_getevents.
     COMMON_SYSCALL_RELEASE(data);

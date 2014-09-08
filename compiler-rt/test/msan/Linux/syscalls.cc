@@ -10,6 +10,7 @@
 #include <linux/aio_abi.h>
 #include <sys/ptrace.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
 
 #include <sanitizer/linux_syscall_hooks.h>
 #include <sanitizer/msan_interface.h>
@@ -84,17 +85,24 @@ int main(int argc, char *argv[]) {
   assert(__msan_test_shadow(buf, sizeof(buf)) == sizeof(void *));
 
   __msan_poison(buf, sizeof(buf));
-  struct iocb iocb[2];
-  struct iocb *iocbp[2] = { &iocb[0], &iocb[1] };
+  struct iocb iocb[3];
+  struct iocb *iocbp[3] = { &iocb[0], &iocb[1], &iocb[2] };
   memset(iocb, 0, sizeof(iocb));
   iocb[0].aio_lio_opcode = IOCB_CMD_PREAD;
   iocb[0].aio_buf = (__u64)buf;
-  iocb[0].aio_nbytes = kFortyTwo;
+  iocb[0].aio_nbytes = 10;
   iocb[1].aio_lio_opcode = IOCB_CMD_PREAD;
-  iocb[1].aio_buf = (__u64)(&buf[kFortyTwo]);
-  iocb[1].aio_nbytes = kFortyTwo;
-  __sanitizer_syscall_pre_io_submit(0, 2, &iocbp);
-  assert(__msan_test_shadow(buf, sizeof(buf)) == 2 * kFortyTwo);
+  iocb[1].aio_buf = (__u64)(&buf[20]);
+  iocb[1].aio_nbytes = 15;
+  struct iovec vec[2] = { {&buf[40], 3}, {&buf[50], 20} };
+  iocb[2].aio_lio_opcode = IOCB_CMD_PREADV;
+  iocb[2].aio_buf = (__u64)(&vec);
+  iocb[2].aio_nbytes = 2;
+  __sanitizer_syscall_pre_io_submit(0, 3, &iocbp);
+  assert(__msan_test_shadow(buf, sizeof(buf)) == 10);
+  assert(__msan_test_shadow(buf + 20, sizeof(buf) - 20) == 15);
+  assert(__msan_test_shadow(buf + 40, sizeof(buf) - 40) == 3);
+  assert(__msan_test_shadow(buf + 50, sizeof(buf) - 50) == 20);
 
   __msan_poison(buf, sizeof(buf));
   char *p = buf;
