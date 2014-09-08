@@ -125,6 +125,7 @@ RECOVERABLE(function_type_mismatch,
 
 struct NonNullReturnData {
   SourceLocation Loc;
+  SourceLocation AttrLoc;
 };
 
 /// \brief Handle returning null from function with returns_nonnull attribute.

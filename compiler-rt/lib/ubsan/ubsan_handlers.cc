@@ -340,6 +340,8 @@ static void handleNonNullReturn(NonNullReturnData *Data, ReportOptions Opts) {
 
   Diag(Loc, DL_Error, "null pointer returned from function declared to never "
                       "return null");
+  if (!Data->AttrLoc.isInvalid())
+    Diag(Data->AttrLoc, DL_Note, "returns_nonnull attribute specified here");
 }
 
 void __ubsan::__ubsan_handle_nonnull_return(NonNullReturnData *Data) {

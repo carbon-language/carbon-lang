@@ -2095,15 +2095,17 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
 
   llvm::Instruction *Ret;
   if (RV) {
-    if (SanOpts->ReturnsNonnullAttribute &&
-        CurGD.getDecl()->hasAttr<ReturnsNonNullAttr>()) {
-      SanitizerScope SanScope(this);
-      llvm::Value *Cond =
-          Builder.CreateICmpNE(RV, llvm::Constant::getNullValue(RV->getType()));
-      llvm::Constant *StaticData[] = {
-        EmitCheckSourceLocation(EndLoc)
-      };
-      EmitCheck(Cond, "nonnull_return", StaticData, None, CRK_Recoverable);
+    if (SanOpts->ReturnsNonnullAttribute) {
+      if (auto RetNNAttr = CurGD.getDecl()->getAttr<ReturnsNonNullAttr>()) {
+        SanitizerScope SanScope(this);
+        llvm::Value *Cond = Builder.CreateICmpNE(
+            RV, llvm::Constant::getNullValue(RV->getType()));
+        llvm::Constant *StaticData[] = {
+            EmitCheckSourceLocation(EndLoc),
+            EmitCheckSourceLocation(RetNNAttr->getLocation()),
+        };
+        EmitCheck(Cond, "nonnull_return", StaticData, None, CRK_Recoverable);
+      }
     }
     Ret = Builder.CreateRet(RV);
   } else {
