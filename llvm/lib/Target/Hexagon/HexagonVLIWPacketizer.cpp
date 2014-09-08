@@ -1276,9 +1276,9 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
       }
 
       // For V4, special case ALLOCFRAME. Even though there is dependency
-      // between ALLOCAFRAME and subsequent store, allow it to be
+      // between ALLOCFRAME and subsequent store, allow it to be
       // packetized in a same packet. This implies that the store is using
-      // caller's SP. Hense, offset needs to be updated accordingly.
+      // caller's SP. Hence, offset needs to be updated accordingly.
       else if (DepType == SDep::Data
                && QRI->Subtarget.hasV4TOps()
                && J->getOpcode() == Hexagon::ALLOCFRAME
