@@ -127,6 +127,7 @@ void FastISel::flushLocalValueMap() {
   LocalValueMap.clear();
   LastLocalValue = EmitStartPt;
   recomputeInsertPt();
+  SavedInsertPt = FuncInfo.InsertPt;
 }
 
 bool FastISel::hasTrivialKill(const Value *V) {
@@ -1296,7 +1297,7 @@ bool FastISel::selectInstruction(const Instruction *I) {
 
   DbgLoc = I->getDebugLoc();
 
-  MachineBasicBlock::iterator SavedInsertPt = FuncInfo.InsertPt;
+  SavedInsertPt = FuncInfo.InsertPt;
 
   if (const auto *Call = dyn_cast<CallInst>(I)) {
     const Function *F = Call->getCalledFunction();
@@ -1322,13 +1323,10 @@ bool FastISel::selectInstruction(const Instruction *I) {
       DbgLoc = DebugLoc();
       return true;
     }
-    // Remove dead code.  However, ignore call instructions since we've flushed
-    // the local value map and recomputed the insert point.
-    if (!isa<CallInst>(I)) {
-      recomputeInsertPt();
-      if (SavedInsertPt != FuncInfo.InsertPt)
-        removeDeadCode(FuncInfo.InsertPt, SavedInsertPt);
-    }
+    // Remove dead code.
+    recomputeInsertPt();
+    if (SavedInsertPt != FuncInfo.InsertPt)
+      removeDeadCode(FuncInfo.InsertPt, SavedInsertPt);
     SavedInsertPt = FuncInfo.InsertPt;
   }
   // Next, try calling the target to attempt to handle the instruction.
@@ -1337,13 +1335,10 @@ bool FastISel::selectInstruction(const Instruction *I) {
     DbgLoc = DebugLoc();
     return true;
   }
-  // Remove dead code.  However, ignore call instructions since we've flushed
-  // the local value map and recomputed the insert point.
-  if (!isa<CallInst>(I)) {
-    recomputeInsertPt();
-    if (SavedInsertPt != FuncInfo.InsertPt)
-      removeDeadCode(FuncInfo.InsertPt, SavedInsertPt);
-  }
+  // Remove dead code.
+  recomputeInsertPt();
+  if (SavedInsertPt != FuncInfo.InsertPt)
+    removeDeadCode(FuncInfo.InsertPt, SavedInsertPt);
 
   DbgLoc = DebugLoc();
   // Undo phi node updates, because they will be added again by SelectionDAG.

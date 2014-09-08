@@ -539,6 +539,9 @@ private:
   /// across heavy instructions like calls.
   void flushLocalValueMap();
 
+  /// \brief Insertion point before trying to select the current instruction.
+  MachineBasicBlock::iterator SavedInsertPt;
+
   /// \brief Add a stackmap or patchpoint intrinsic call's live variable
   /// operands to a stackmap or patchpoint machine instruction.
   bool addStackMapLiveVars(SmallVectorImpl<MachineOperand> &Ops,
