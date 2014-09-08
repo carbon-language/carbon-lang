@@ -1192,6 +1192,20 @@ public:
     return nullptr;
   }
 
+  // areMemAccessesTriviallyDisjoint - Sometimes, it is possible for the target
+  // to tell, even without aliasing information, that two MIs access different
+  // memory addresses. This function returns true if two MIs access different
+  // memory addresses, and false otherwise.
+  virtual bool
+  areMemAccessesTriviallyDisjoint(MachineInstr *MIa, MachineInstr *MIb,
+                                  AliasAnalysis *AA = nullptr) const {
+    assert(MIa && (MIa->mayLoad() || MIa->mayStore()) &&
+           "MIa must load from or modify a memory location");
+    assert(MIb && (MIb->mayLoad() || MIb->mayStore()) &&
+           "MIb must load from or modify a memory location");
+    return false;
+  }
+
 private:
   int CallFrameSetupOpcode, CallFrameDestroyOpcode;
 };

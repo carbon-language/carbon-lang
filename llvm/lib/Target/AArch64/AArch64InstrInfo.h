@@ -52,6 +52,10 @@ public:
   bool isCoalescableExtInstr(const MachineInstr &MI, unsigned &SrcReg,
                              unsigned &DstReg, unsigned &SubIdx) const override;
 
+  bool
+  areMemAccessesTriviallyDisjoint(MachineInstr *MIa, MachineInstr *MIb,
+                                  AliasAnalysis *AA = nullptr) const override;
+
   unsigned isLoadFromStackSlot(const MachineInstr *MI,
                                int &FrameIndex) const override;
   unsigned isStoreToStackSlot(const MachineInstr *MI,
@@ -89,6 +93,10 @@ public:
   bool getLdStBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
                             unsigned &Offset,
                             const TargetRegisterInfo *TRI) const override;
+
+  bool getLdStBaseRegImmOfsWidth(MachineInstr *LdSt, unsigned &BaseReg,
+                                 int &Offset, int &Width,
+                                 const TargetRegisterInfo *TRI) const;
 
   bool enableClusterLoads() const override { return true; }
 

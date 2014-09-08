@@ -511,9 +511,18 @@ static inline bool isUnsafeMemoryObject(MachineInstr *MI,
 static bool MIsNeedChainEdge(AliasAnalysis *AA, const MachineFrameInfo *MFI,
                              MachineInstr *MIa,
                              MachineInstr *MIb) {
+  const MachineFunction *MF = MIa->getParent()->getParent();
+  const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
+
   // Cover a trivial case - no edge is need to itself.
   if (MIa == MIb)
     return false;
+ 
+  // Let the target decide if memory accesses cannot possibly overlap.
+  if ((MIa->mayLoad() || MIa->mayStore()) &&
+      (MIb->mayLoad() || MIb->mayStore()))
+    if (TII->areMemAccessesTriviallyDisjoint(MIa, MIb, AA))
+      return false;
 
   // FIXME: Need to handle multiple memory operands to support all targets.
   if (!MIa->hasOneMemOperand() || !MIb->hasOneMemOperand())

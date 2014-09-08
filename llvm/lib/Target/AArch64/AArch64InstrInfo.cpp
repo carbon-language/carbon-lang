@@ -607,6 +607,42 @@ bool AArch64InstrInfo::isCoalescableExtInstr(const MachineInstr &MI,
   }
 }
 
+bool
+AArch64InstrInfo::areMemAccessesTriviallyDisjoint(MachineInstr *MIa,
+                                                  MachineInstr *MIb,
+                                                  AliasAnalysis *AA) const {
+  const TargetRegisterInfo *TRI = &getRegisterInfo();
+  unsigned BaseRegA = 0, BaseRegB = 0;
+  int OffsetA = 0, OffsetB = 0;
+  int WidthA = 0, WidthB = 0;
+
+  assert(MIa && (MIa->mayLoad() || MIa->mayStore()) &&
+         "MIa must be a store or a load");
+  assert(MIb && (MIb->mayLoad() || MIb->mayStore()) &&
+         "MIb must be a store or a load");
+
+  if (MIa->hasUnmodeledSideEffects() || MIb->hasUnmodeledSideEffects() ||
+      MIa->hasOrderedMemoryRef() || MIb->hasOrderedMemoryRef())
+    return false;
+
+  // Retrieve the base register, offset from the base register and width. Width
+  // is the size of memory that is being loaded/stored (e.g. 1, 2, 4, 8).  If
+  // base registers are identical, and the offset of a lower memory access +
+  // the width doesn't overlap the offset of a higher memory access,
+  // then the memory accesses are different.
+  if (getLdStBaseRegImmOfsWidth(MIa, BaseRegA, OffsetA, WidthA, TRI) &&
+      getLdStBaseRegImmOfsWidth(MIb, BaseRegB, OffsetB, WidthB, TRI)) {
+    if (BaseRegA == BaseRegB) {
+      int LowOffset = OffsetA < OffsetB ? OffsetA : OffsetB;
+      int HighOffset = OffsetA < OffsetB ? OffsetB : OffsetA;
+      int LowWidth = (LowOffset == OffsetA) ? WidthA : WidthB;
+      if (LowOffset + LowWidth <= HighOffset)
+        return true;
+    }
+  }
+  return false;
+}
+
 /// analyzeCompare - For a comparison instruction, return the source registers
 /// in SrcReg and SrcReg2, and the value it compares against in CmpValue.
 /// Return true if the comparison instruction can be analyzed.
@@ -1268,6 +1304,102 @@ AArch64InstrInfo::getLdStBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
     Offset = LdSt->getOperand(2).getImm() * Width;
     return true;
   };
+}
+
+bool AArch64InstrInfo::getLdStBaseRegImmOfsWidth(
+    MachineInstr *LdSt, unsigned &BaseReg, int &Offset, int &Width,
+    const TargetRegisterInfo *TRI) const {
+  // Handle only loads/stores with base register followed by immediate offset.
+  if (LdSt->getNumOperands() != 3)
+    return false;
+  if (!LdSt->getOperand(1).isReg() || !LdSt->getOperand(2).isImm())
+    return false;
+
+  // Offset is calculated as the immediate operand multiplied by the scaling factor.
+  // Unscaled instructions have scaling factor set to 1.
+  int Scale = 0;
+  switch (LdSt->getOpcode()) {
+  default:
+    return false;
+  case AArch64::LDURQi:
+  case AArch64::STURQi:
+    Width = 16;
+    Scale = 1;
+    break;
+  case AArch64::LDURXi:
+  case AArch64::LDURDi:
+  case AArch64::STURXi:
+  case AArch64::STURDi:
+    Width = 8;
+    Scale = 1;
+    break;
+  case AArch64::LDURWi:
+  case AArch64::LDURSi:
+  case AArch64::LDURSWi:
+  case AArch64::STURWi:
+  case AArch64::STURSi:
+    Width = 4;
+    Scale = 1;
+    break;
+  case AArch64::LDURHi:
+  case AArch64::LDURHHi:
+  case AArch64::LDURSHXi:
+  case AArch64::LDURSHWi:
+  case AArch64::STURHi:
+  case AArch64::STURHHi:
+    Width = 2;
+    Scale = 1;
+    break;
+  case AArch64::LDURBi:
+  case AArch64::LDURBBi:
+  case AArch64::LDURSBXi:
+  case AArch64::LDURSBWi:
+  case AArch64::STURBi:
+  case AArch64::STURBBi:
+    Width = 1;
+    Scale = 1;
+    break;
+  case AArch64::LDRXui:
+  case AArch64::STRXui:
+    Scale = Width = 8;
+    break;
+  case AArch64::LDRWui:
+  case AArch64::STRWui:
+    Scale = Width = 4;
+    break;
+  case AArch64::LDRBui:
+  case AArch64::STRBui:
+    Scale = Width = 1;
+    break;
+  case AArch64::LDRHui:
+  case AArch64::STRHui:
+    Scale = Width = 2;
+    break;
+  case AArch64::LDRSui:
+  case AArch64::STRSui:
+    Scale = Width = 4;
+    break;
+  case AArch64::LDRDui:
+  case AArch64::STRDui:
+    Scale = Width = 8;
+    break;
+  case AArch64::LDRQui:
+  case AArch64::STRQui:
+    Scale = Width = 16;
+    break;
+  case AArch64::LDRBBui:
+  case AArch64::STRBBui:
+    Scale = Width = 1;
+    break;
+  case AArch64::LDRHHui:
+  case AArch64::STRHHui:
+    Scale = Width = 2;
+    break;
+  };
+
+  BaseReg = LdSt->getOperand(1).getReg();
+  Offset = LdSt->getOperand(2).getImm() * Scale;
+  return true;
 }
 
 /// Detect opportunities for ldp/stp formation.
