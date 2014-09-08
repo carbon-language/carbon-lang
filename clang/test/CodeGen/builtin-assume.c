@@ -3,9 +3,10 @@
 
 // CHECK-LABEL: @test1
 int test1(int *a, int i) {
-// CHECK: %0 = load i32** %a.addr
-// CHECK: %cmp = icmp ne i32* %0, null
-// CHECK: call void @llvm.assume(i1 %cmp)
+// CHECK: store i32* %a, i32** [[A_ADDR:%.+]], align
+// CHECK: [[A:%.+]] = load i32** [[A_ADDR]]
+// CHECK: [[CMP:%.+]] = icmp ne i32* [[A]], null
+// CHECK: call void @llvm.assume(i1 [[CMP]])
 #ifdef _MSC_VER
   __assume(a != 0)
 #else
