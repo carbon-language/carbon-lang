@@ -20,6 +20,12 @@
 using namespace lldb;
 using namespace lldb_private;
 
+TypeValidatorImpl::TypeValidatorImpl(const Flags &flags)
+    : m_flags(flags)
+    , m_my_revision(0)
+{
+}
+
 TypeValidatorImpl::ValidationResult
 TypeValidatorImpl::Success ()
 {
@@ -36,6 +42,10 @@ TypeValidatorImpl_CXX::TypeValidatorImpl_CXX (ValidatorFunction f, std::string d
     TypeValidatorImpl(flags),
     m_description(d),
     m_validator_function(f)
+{
+}
+
+TypeValidatorImpl_CXX::~TypeValidatorImpl_CXX()
 {
 }
 
