@@ -326,6 +326,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->setOutputELFType(llvm::ELF::ET_DYN);
       ctx->setAllowShlibUndefines(true);
       ctx->setUseShlibUndefines(false);
+      ctx->setPrintRemainingUndefines(false);
+      ctx->setAllowRemainingUndefines(true);
       break;
     }
   }
