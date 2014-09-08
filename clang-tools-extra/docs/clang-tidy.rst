@@ -344,7 +344,7 @@ The script provides multiple configuration flags.
 
 * The default set of checks can be overridden using the ``-checks`` argument,
   taking the identical format as :program:`clang-tidy` does. For example
-  ``-checks='.*,misc-use-override'`` will run the ``misc-use-override``
+  ``-checks='-*,misc-use-override'`` will run the ``misc-use-override``
   checker only.
 
 * To restrict the files examined you can provide one or more regex arguments
@@ -357,3 +357,4 @@ The script provides multiple configuration flags.
 * To apply suggested fixes ``-fix`` can be passed as an argument. This gathers
   all changes in a temporary directory and applies them. Passing ``-format``
   will run clang-format over changed lines.
+
