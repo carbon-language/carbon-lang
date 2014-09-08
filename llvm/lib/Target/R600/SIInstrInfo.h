@@ -220,6 +220,8 @@ namespace AMDGPU {
   int getCommuteOrig(uint16_t Opcode);
   int getMCOpcode(uint16_t Opcode, unsigned Gen);
   int getAddr64Inst(uint16_t Opcode);
+  int getAtomicRetOp(uint16_t Opcode);
+  int getAtomicNoRetOp(uint16_t Opcode);
 
   const uint64_t RSRC_DATA_FORMAT = 0xf00000000000LL;
   const uint64_t RSRC_TID_ENABLE = 1LL << 55;

@@ -513,6 +513,11 @@ class VOP2_REV <string revOp, bit isOrig> {
   bit IsOrig = isOrig;
 }
 
+class AtomicNoRet <string noRetOp, bit isRet> {
+  string NoRetOp = noRetOp;
+  bit IsRet = isRet;
+}
+
 class SIMCInstr <string pseudo, int subtarget> {
   string PseudoInstr = pseudo;
   int Subtarget = subtarget;
@@ -869,12 +874,12 @@ class DS_Store2_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
 }
 
 // 1 address, 1 data.
-class DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
+class DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc, string noRetOp = ""> : DS_1A <
   op,
   (outs rc:$vdst),
   (ins i1imm:$gds, VReg_32:$addr, rc:$data0, u16imm:$offset),
-  asm#" $vdst, $addr, $data0, $offset, [M0]",
-  []> {
+  asm#" $vdst, $addr, $data0, $offset, [M0]", []>,
+  AtomicNoRet<noRetOp, 1> {
 
   let data1 = 0;
   let mayStore = 1;
@@ -882,34 +887,37 @@ class DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
 }
 
 // 1 address, 2 data.
-class DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
+class DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc, string noRetOp = ""> : DS_1A <
   op,
   (outs rc:$vdst),
   (ins i1imm:$gds, VReg_32:$addr, rc:$data0, rc:$data1, u16imm:$offset),
   asm#" $vdst, $addr, $data0, $data1, $offset, [M0]",
-  []> {
+  []>,
+  AtomicNoRet<noRetOp, 1> {
   let mayStore = 1;
   let mayLoad = 1;
 }
 
 // 1 address, 2 data.
-class DS_1A2D_NORET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
+class DS_1A2D_NORET <bits<8> op, string asm, RegisterClass rc, string noRetOp = asm> : DS_1A <
   op,
   (outs),
   (ins i1imm:$gds, VReg_32:$addr, rc:$data0, rc:$data1, u16imm:$offset),
   asm#" $addr, $data0, $data1, $offset, [M0]",
-  []> {
+  []>,
+  AtomicNoRet<noRetOp, 0> {
   let mayStore = 1;
   let mayLoad = 1;
 }
 
 // 1 address, 1 data.
-class DS_1A1D_NORET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
+class DS_1A1D_NORET <bits<8> op, string asm, RegisterClass rc, string noRetOp = asm> : DS_1A <
   op,
   (outs),
   (ins i1imm:$gds, VReg_32:$addr, rc:$data0, u16imm:$offset),
   asm#" $addr, $data0, $offset, [M0]",
-  []> {
+  []>,
+  AtomicNoRet<noRetOp, 0> {
 
   let data1 = 0;
   let mayStore = 1;
@@ -1259,6 +1267,24 @@ def getAddr64Inst : InstrMapping {
   let ColFields = ["IsAddr64"];
   let KeyCol = ["0"];
   let ValueCols = [["1"]];
+}
+
+// Maps an atomic opcode to its version with a return value.
+def getAtomicRetOp : InstrMapping {
+  let FilterClass = "AtomicNoRet";
+  let RowFields = ["NoRetOp"];
+  let ColFields = ["IsRet"];
+  let KeyCol = ["0"];
+  let ValueCols = [["1"]];
+}
+
+// Maps an atomic opcode to its returnless version.
+def getAtomicNoRetOp : InstrMapping {
+  let FilterClass = "AtomicNoRet";
+  let RowFields = ["NoRetOp"];
+  let ColFields = ["IsRet"];
+  let KeyCol = ["1"];
+  let ValueCols = [["0"]];
 }
 
 include "SIInstructions.td"
