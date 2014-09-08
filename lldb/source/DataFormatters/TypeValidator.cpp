@@ -26,6 +26,10 @@ TypeValidatorImpl::TypeValidatorImpl(const Flags &flags)
 {
 }
 
+TypeValidatorImpl::~TypeValidatorImpl()
+{
+}
+
 TypeValidatorImpl::ValidationResult
 TypeValidatorImpl::Success ()
 {
