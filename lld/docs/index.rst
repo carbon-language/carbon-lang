@@ -50,6 +50,9 @@ lld can self host on x86-64 Linux and x86 Windows.
 
 All SingleSource tests in test-suite pass on x86-64 Linux.
 
+All SingleSource and MultiSource tests in the LLVM test-suite
+pass on MIPS 32-bit little-endian Linux.
+
 Source
 ------
 
