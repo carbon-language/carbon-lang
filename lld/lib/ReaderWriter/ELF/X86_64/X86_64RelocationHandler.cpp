@@ -47,19 +47,6 @@ static void reloc32S(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   // TODO: Make sure that the result sign extends to the 64bit value.
 }
 
-int64_t X86_64TargetRelocationHandler::relocAddend(const Reference &ref) const {
-  if (ref.kindNamespace() != Reference::KindNamespace::ELF)
-    return false;
-  assert(ref.kindArch() == Reference::KindArch::x86_64);
-  switch (ref.kindValue()) {
-  case R_X86_64_PC32:
-    return 4;
-  default:
-    return 0;
-  }
-  return 0;
-}
-
 std::error_code X86_64TargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {

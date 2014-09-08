@@ -363,20 +363,6 @@ static void relocR_AARCH64_TLSLE_ADD_TPREL_LO12_NC(uint8_t *location,
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
 }
 
-int64_t
-AArch64TargetRelocationHandler::relocAddend(const Reference &ref) const {
-  if (ref.kindNamespace() != Reference::KindNamespace::ELF)
-    return false;
-  assert(ref.kindArch() == Reference::KindArch::AArch64);
-  switch (ref.kindValue()) {
-  case R_AARCH64_PREL32:
-    return 4;
-  default:
-    return 0;
-  }
-  return 0;
-}
-
 std::error_code AArch64TargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {

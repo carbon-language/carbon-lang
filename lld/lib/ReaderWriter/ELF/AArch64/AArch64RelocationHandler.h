@@ -27,8 +27,6 @@ public:
                                   const lld::AtomLayout &,
                                   const Reference &) const override;
 
-  virtual int64_t relocAddend(const Reference &) const;
-
   static const Registry::KindStrings kindStrings[];
 };
 
