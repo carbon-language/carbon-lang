@@ -12,6 +12,8 @@
 
 namespace lld {
 
+File::~File() {}
+
 File::atom_collection_empty<DefinedAtom>       File::_noDefinedAtoms;
 File::atom_collection_empty<UndefinedAtom>     File::_noUndefinedAtoms;
 File::atom_collection_empty<SharedLibraryAtom> File::_noSharedLibraryAtoms;

@@ -39,7 +39,7 @@ class LinkingContext;
 /// are destroyed when the File object is destroyed.
 class File {
 public:
-  virtual ~File() {}
+  virtual ~File();
 
   /// \brief Kinds of files that are supported.
   enum Kind {
