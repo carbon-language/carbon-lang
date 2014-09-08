@@ -1176,7 +1176,7 @@ private:
   void EmitCoverageFile();
 
   /// Emits the initializer for a uuidof string.
-  llvm::Constant *EmitUuidofInitializer(StringRef uuidstr, QualType IIDType);
+  llvm::Constant *EmitUuidofInitializer(StringRef uuidstr);
 
   /// Determine if the given decl can be emitted lazily; this is only relevant
   /// for definitions. The given decl must be either a function or var decl.

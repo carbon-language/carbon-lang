@@ -1177,7 +1177,7 @@ llvm::Constant *CodeGenModule::GetAddrOfUuidDescriptor(
   if (llvm::GlobalVariable *GV = getModule().getNamedGlobal(Name))
     return GV;
 
-  llvm::Constant *Init = EmitUuidofInitializer(Uuid, E->getType());
+  llvm::Constant *Init = EmitUuidofInitializer(Uuid);
   assert(Init && "failed to initialize as constant");
 
   auto *GV = new llvm::GlobalVariable(
@@ -3386,8 +3386,7 @@ void CodeGenModule::EmitCoverageFile() {
   }
 }
 
-llvm::Constant *CodeGenModule::EmitUuidofInitializer(StringRef Uuid,
-                                                     QualType GuidType) {
+llvm::Constant *CodeGenModule::EmitUuidofInitializer(StringRef Uuid) {
   // Sema has checked that all uuid strings are of the form
   // "12345678-1234-1234-1234-1234567890ab".
   assert(Uuid.size() == 36);
