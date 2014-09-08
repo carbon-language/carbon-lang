@@ -296,9 +296,9 @@ Diag::~Diag() {
 
   Printf("%s\n", Decor.Default());
 
-  /*if (Loc.isMemoryLocation())
+  if (Loc.isMemoryLocation())
     renderMemorySnippet(Decor, Loc.getMemoryLocation(), Ranges,
-                        NumRanges, Args);*/
+                        NumRanges, Args);
 }
 
 ScopedReport::ScopedReport(ReportOptions Opts) : Opts(Opts) {
