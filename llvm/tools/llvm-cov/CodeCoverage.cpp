@@ -411,10 +411,10 @@ bool CodeCoverageTool::load() {
         }
         outs() << "\n";
       }
-      std::error_code Error;
-      Function.MappingRegions.push_back(
-          MappingRegion(R, Ctx.evaluate(R.Count, Error)));
-      if (Error && !RegionError) {
+      ErrorOr<int64_t> ExecutionCount = Ctx.evaluate(R.Count);
+      if (ExecutionCount) {
+        Function.MappingRegions.push_back(MappingRegion(R, *ExecutionCount));
+      } else if (!RegionError) {
         colored_ostream(errs(), raw_ostream::RED)
             << "error: Regions and counters don't match in a function '"
             << Function.Name << "' (re-run the instrumented binary).";

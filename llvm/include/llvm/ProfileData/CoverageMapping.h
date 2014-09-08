@@ -16,6 +16,7 @@
 #define LLVM_PROFILEDATA_COVERAGEMAPPING_H_
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
 
@@ -186,13 +187,9 @@ public:
   void dump(const Counter &C, llvm::raw_ostream &OS) const;
   void dump(const Counter &C) const { dump(C, llvm::outs()); }
 
-  /// \brief Return the number of times that a region of code
-  /// associated with this counter was executed.
-  int64_t evaluate(const Counter &C, std::error_code *Error) const;
-  int64_t evaluate(const Counter &C, std::error_code &Error) const {
-    Error.clear();
-    return evaluate(C, &Error);
-  }
+  /// \brief Return the number of times that a region of code associated with
+  /// this counter was executed.
+  ErrorOr<int64_t> evaluate(const Counter &C) const;
 };
 
 } // end namespace coverage

@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ProfileData/CoverageMapping.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 using namespace coverage;
@@ -110,40 +111,32 @@ void CounterMappingContext::dump(const Counter &C,
   }
   if (CounterValues.empty())
     return;
-  std::error_code Error;
-  auto Value = evaluate(C, Error);
-  if (Error)
+  ErrorOr<int64_t> Value = evaluate(C);
+  if (!Value)
     return;
-  OS << '[' << Value << ']';
+  OS << '[' << *Value << ']';
 }
 
-int64_t CounterMappingContext::evaluate(const Counter &C,
-                                        std::error_code *EC) const {
+ErrorOr<int64_t> CounterMappingContext::evaluate(const Counter &C) const {
   switch (C.getKind()) {
   case Counter::Zero:
     return 0;
   case Counter::CounterValueReference:
-    if (C.getCounterID() >= CounterValues.size()) {
-      if (EC)
-        *EC = std::make_error_code(std::errc::argument_out_of_domain);
-      break;
-    }
+    if (C.getCounterID() >= CounterValues.size())
+      return std::errc::argument_out_of_domain;
     return CounterValues[C.getCounterID()];
   case Counter::Expression: {
-    if (C.getExpressionID() >= Expressions.size()) {
-      if (EC)
-        *EC = std::make_error_code(std::errc::argument_out_of_domain);
-      break;
-    }
+    if (C.getExpressionID() >= Expressions.size())
+      return std::errc::argument_out_of_domain;
     const auto &E = Expressions[C.getExpressionID()];
-    auto LHS = evaluate(E.LHS, EC);
-    if (EC && *EC)
-      return 0;
-    auto RHS = evaluate(E.RHS, EC);
-    if (EC && *EC)
-      return 0;
-    return E.Kind == CounterExpression::Subtract ? LHS - RHS : LHS + RHS;
+    ErrorOr<int64_t> LHS = evaluate(E.LHS);
+    if (!LHS)
+      return LHS;
+    ErrorOr<int64_t> RHS = evaluate(E.RHS);
+    if (!RHS)
+      return RHS;
+    return E.Kind == CounterExpression::Subtract ? *LHS - *RHS : *LHS + *RHS;
   }
   }
-  return 0;
+  llvm_unreachable("Unhandled CounterKind");
 }
