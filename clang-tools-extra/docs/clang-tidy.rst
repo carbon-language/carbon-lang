@@ -327,3 +327,33 @@ you link the ``clang-tidy`` library in) ``clang-tidy/tool/ClangTidyMain.cpp``:
   extern volatile int MyModuleAnchorSource;
   static int MyModuleAnchorDestination = MyModuleAnchorSource;
 
+
+Running clang-tidy on LLVM
+--------------------------
+
+To test a check it's best to try it out on a larger code base. LLVM and Clang
+are the natural targets as you already have the source around. The most
+convenient way to run :program:`clang-tidy` is with a compile command database;
+CMake can automatically generate one, for a description of how to enable it see
+`How To Setup Tooling For LLVM`_. Once ``compile_commands.json`` is in place and
+a working version of :program:`clang-tidy` is in ``PATH`` the entire code base
+can be analyzed with ``clang-tidy/tool/run-clang-tidy.py``. The script executes
+:program:`clang-tidy` with the default set of checks on every translation unit
+in the compile command database and displays the resulting warnings and errors.
+The script provides multiple configuration flags.
+
+* The default set of checks can be overridden using the ``-checks`` argument,
+  taking the identical format as :program:`clang-tidy` does. For example
+  ``-checks='.*,misc-use-override'`` will run the ``misc-use-override``
+  checker only.
+
+* To restrict the files examined you can provide one or more regex arguments
+  that the file names are matched against.
+  ``run-clang-tidy.py clang-tidy/.*Check\.cpp`` will only analyze clang-tidy
+  checkers. It may also be necessary to restrict the header files warnings are
+  displayed from using the ``-header-filter`` flag. It has the same behavior
+  as the corresponding :program:`clang-tidy` flag.
+
+* To apply suggested fixes ``-fix`` can be passed as an argument. This gathers
+  all changes in a temporary directory and applies them. Passing ``-format``
+  will run clang-format over changed lines.
