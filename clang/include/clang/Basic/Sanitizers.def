@@ -59,6 +59,7 @@ SANITIZER("float-cast-overflow", FloatCastOverflow)
 SANITIZER("float-divide-by-zero", FloatDivideByZero)
 SANITIZER("function", Function)
 SANITIZER("integer-divide-by-zero", IntegerDivideByZero)
+SANITIZER("nonnull-attribute", NonnullAttribute)
 SANITIZER("null", Null)
 SANITIZER("object-size", ObjectSize)
 SANITIZER("return", Return)
@@ -79,9 +80,10 @@ SANITIZER("dataflow", DataFlow)
 // ABI or address space layout implications, and only catch undefined behavior.
 SANITIZER_GROUP("undefined", Undefined,
                 Alignment | Bool | ArrayBounds | Enum | FloatCastOverflow |
-                    FloatDivideByZero | Function | IntegerDivideByZero | Null |
-                    ObjectSize | Return | ReturnsNonnullAttribute | Shift |
-                    SignedIntegerOverflow | Unreachable | VLABound | Vptr)
+                    FloatDivideByZero | Function | IntegerDivideByZero |
+                    NonnullAttribute | Null | ObjectSize | Return |
+                    ReturnsNonnullAttribute | Shift | SignedIntegerOverflow |
+                    Unreachable | VLABound | Vptr)
 
 // -fsanitize=undefined-trap includes
 // all sanitizers included by -fsanitize=undefined, except those that require
@@ -89,9 +91,9 @@ SANITIZER_GROUP("undefined", Undefined,
 // -fsanitize-undefined-trap-on-error flag.
 SANITIZER_GROUP("undefined-trap", UndefinedTrap,
                 Alignment | Bool | ArrayBounds | Enum | FloatCastOverflow |
-                    FloatDivideByZero | IntegerDivideByZero | Null |
-                    ObjectSize | Return | ReturnsNonnullAttribute | Shift |
-                    SignedIntegerOverflow | Unreachable | VLABound)
+                    FloatDivideByZero | IntegerDivideByZero | NonnullAttribute |
+                    Null | ObjectSize | Return | ReturnsNonnullAttribute |
+                    Shift | SignedIntegerOverflow | Unreachable | VLABound)
 
 SANITIZER_GROUP("integer", Integer,
                 SignedIntegerOverflow | UnsignedIntegerOverflow | Shift |

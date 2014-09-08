@@ -1417,7 +1417,10 @@ static llvm::Value *emitArgumentDemotion(CodeGenFunction &CGF,
   return CGF.Builder.CreateFPCast(value, varType, "arg.unpromote");
 }
 
-static bool shouldAddNonNullAttr(const Decl *FD, const ParmVarDecl *PVD) {
+/// Returns the attribute (either parameter attribute, or function
+/// attribute), which declares argument ArgNo to be non-null.
+static const NonNullAttr *getNonNullAttr(const Decl *FD, const ParmVarDecl *PVD,
+                                         QualType ArgType, unsigned ArgNo) {
   // FIXME: __attribute__((nonnull)) can also be applied to:
   //   - references to pointers, where the pointee is known to be
   //     nonnull (apparently a Clang extension)
@@ -1425,20 +1428,21 @@ static bool shouldAddNonNullAttr(const Decl *FD, const ParmVarDecl *PVD) {
   // In the former case, LLVM IR cannot represent the constraint. In
   // the latter case, we have no guarantee that the transparent union
   // is in fact passed as a pointer.
-  if (!PVD->getType()->isAnyPointerType() &&
-      !PVD->getType()->isBlockPointerType())
-    return false;
+  if (!ArgType->isAnyPointerType() && !ArgType->isBlockPointerType())
+    return nullptr;
   // First, check attribute on parameter itself.
-  if (PVD->hasAttr<NonNullAttr>())
-    return true;
+  if (PVD) {
+    if (auto ParmNNAttr = PVD->getAttr<NonNullAttr>())
+      return ParmNNAttr;
+  }
   // Check function attributes.
   if (!FD)
-    return false;
+    return nullptr;
   for (const auto *NNAttr : FD->specific_attrs<NonNullAttr>()) {
-    if (NNAttr->isNonNull(PVD->getFunctionScopeIndex()))
-      return true;
+    if (NNAttr->isNonNull(ArgNo))
+      return NNAttr;
   }
-  return false;
+  return nullptr;
 }
 
 void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
@@ -1579,7 +1583,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         llvm::Value *V = AI;
 
         if (const ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(Arg)) {
-          if (shouldAddNonNullAttr(CurCodeDecl, PVD))
+          if (getNonNullAttr(CurCodeDecl, PVD, PVD->getType(),
+                             PVD->getFunctionScopeIndex()))
             AI->addAttr(llvm::AttributeSet::get(getLLVMContext(),
                                                 AI->getArgNo() + 1,
                                                 llvm::Attribute::NonNull));
@@ -2412,10 +2417,36 @@ void CallArgList::freeArgumentMemory(CodeGenFunction &CGF) const {
   }
 }
 
+static void emitNonNullArgCheck(CodeGenFunction &CGF, RValue RV,
+                                QualType ArgType, SourceLocation ArgLoc,
+                                const FunctionDecl *FD, unsigned ParmNum) {
+  if (!CGF.SanOpts->NonnullAttribute || !FD)
+    return;
+  auto PVD = ParmNum < FD->getNumParams() ? FD->getParamDecl(ParmNum) : nullptr;
+  unsigned ArgNo = PVD ? PVD->getFunctionScopeIndex() : ParmNum;
+  auto NNAttr = getNonNullAttr(FD, PVD, ArgType, ArgNo);
+  if (!NNAttr)
+    return;
+  CodeGenFunction::SanitizerScope SanScope(&CGF);
+  assert(RV.isScalar());
+  llvm::Value *V = RV.getScalarVal();
+  llvm::Value *Cond =
+      CGF.Builder.CreateICmpNE(V, llvm::Constant::getNullValue(V->getType()));
+  llvm::Constant *StaticData[] = {
+      CGF.EmitCheckSourceLocation(ArgLoc),
+      CGF.EmitCheckSourceLocation(NNAttr->getLocation()),
+      llvm::ConstantInt::get(CGF.Int32Ty, ArgNo + 1),
+  };
+  CGF.EmitCheck(Cond, "nonnull_arg", StaticData, None,
+                CodeGenFunction::CRK_Recoverable);
+}
+
 void CodeGenFunction::EmitCallArgs(CallArgList &Args,
                                    ArrayRef<QualType> ArgTypes,
                                    CallExpr::const_arg_iterator ArgBeg,
                                    CallExpr::const_arg_iterator ArgEnd,
+                                   const FunctionDecl *CalleeDecl,
+                                   unsigned ParamsToSkip,
                                    bool ForceColumnInfo) {
   CGDebugInfo *DI = getDebugInfo();
   SourceLocation CallLoc;
@@ -2439,6 +2470,8 @@ void CodeGenFunction::EmitCallArgs(CallArgList &Args,
     for (int I = ArgTypes.size() - 1; I >= 0; --I) {
       CallExpr::const_arg_iterator Arg = ArgBeg + I;
       EmitCallArg(Args, *Arg, ArgTypes[I]);
+      emitNonNullArgCheck(*this, Args.back().RV, ArgTypes[I], Arg->getExprLoc(),
+                          CalleeDecl, ParamsToSkip + I);
       // Restore the debug location.
       if (DI) DI->EmitLocation(Builder, CallLoc, ForceColumnInfo);
     }
@@ -2453,6 +2486,8 @@ void CodeGenFunction::EmitCallArgs(CallArgList &Args,
     CallExpr::const_arg_iterator Arg = ArgBeg + I;
     assert(Arg != ArgEnd);
     EmitCallArg(Args, *Arg, ArgTypes[I]);
+    emitNonNullArgCheck(*this, Args.back().RV, ArgTypes[I], Arg->getExprLoc(),
+                        CalleeDecl, ParamsToSkip + I);
     // Restore the debug location.
     if (DI) DI->EmitLocation(Builder, CallLoc, ForceColumnInfo);
   }

@@ -331,7 +331,7 @@ void __ubsan::__ubsan_handle_function_type_mismatch_abort(
   handleFunctionTypeMismatch(Data, Function, Opts);
 }
 
-static void handleNonnullReturn(NonNullReturnData *Data, ReportOptions Opts) {
+static void handleNonNullReturn(NonNullReturnData *Data, ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
   if (Loc.isDisabled())
     return;
@@ -344,10 +344,33 @@ static void handleNonnullReturn(NonNullReturnData *Data, ReportOptions Opts) {
 
 void __ubsan::__ubsan_handle_nonnull_return(NonNullReturnData *Data) {
   GET_REPORT_OPTIONS(false);
-  handleNonnullReturn(Data, Opts);
+  handleNonNullReturn(Data, Opts);
 }
 
 void __ubsan::__ubsan_handle_nonnull_return_abort(NonNullReturnData *Data) {
   GET_REPORT_OPTIONS(true);
-  handleNonnullReturn(Data, Opts);
+  handleNonNullReturn(Data, Opts);
+}
+
+static void handleNonNullArg(NonNullArgData *Data, ReportOptions Opts) {
+  SourceLocation Loc = Data->Loc.acquire();
+  if (Loc.isDisabled())
+    return;
+
+  ScopedReport R(Opts);
+
+  Diag(Loc, DL_Error, "null pointer passed as argument %0, which is declared to "
+       "never be null") << Data->ArgIndex;
+  if (!Data->AttrLoc.isInvalid())
+    Diag(Data->AttrLoc, DL_Note, "nonnull attribute specified here");
+}
+
+void __ubsan::__ubsan_handle_nonnull_arg(NonNullArgData *Data) {
+  GET_REPORT_OPTIONS(false);
+  handleNonNullArg(Data, Opts);
+}
+
+void __ubsan::__ubsan_handle_nonnull_arg_abort(NonNullArgData *Data) {
+  GET_REPORT_OPTIONS(true);
+  handleNonNullArg(Data, Opts);
 }

@@ -977,6 +977,8 @@ are listed below.
    -  ``-fsanitize=function``: Indirect call of a function through a
       function pointer of the wrong type (Linux, C++ and x86/x86_64 only).
    -  ``-fsanitize=integer-divide-by-zero``: Integer division by zero.
+   -  ``-fsanitize=nonnull-attribute``: Passing null pointer as a function
+      parameter which is declared to never be null.
    -  ``-fsanitize=null``: Use of a null pointer or creation of a null
       reference.
    -  ``-fsanitize=object-size``: An attempt to use bytes which the

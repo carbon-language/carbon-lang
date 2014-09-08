@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsanitize=alignment,null,object-size,shift,return,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool,returns-nonnull-attribute -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
-// RUN: %clang_cc1 -fsanitize-undefined-trap-on-error -fsanitize=alignment,null,object-size,shift,return,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool,returns-nonnull-attribute -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=CHECK-TRAP
+// RUN: %clang_cc1 -fsanitize=alignment,null,object-size,shift,return,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool,returns-nonnull-attribute,nonnull-attribute -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
+// RUN: %clang_cc1 -fsanitize-undefined-trap-on-error -fsanitize=alignment,null,object-size,shift,return,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool,returns-nonnull-attribute,nonnull-attribute -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=CHECK-TRAP
 // RUN: %clang_cc1 -fsanitize=null -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=CHECK-NULL
 // RUN: %clang_cc1 -fsanitize=signed-integer-overflow -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=CHECK-OVERFLOW
 
@@ -444,6 +444,31 @@ int *ret_nonnull(int *a) {
   // CHECK-TRAP: call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP: unreachable
   return a;
+}
+
+// CHECK-LABEL: @call_decl_nonnull
+__attribute__((nonnull)) void decl_nonnull(int *a);
+void call_decl_nonnull(int *a) {
+  // CHECK: [[OK:%.*]] = icmp ne i32* {{.*}}, null
+  // CHECK: br i1 [[OK]]
+  // CHECK: call void @__ubsan_handle_nonnull_arg
+
+  // CHECK-TRAP: [[OK:%.*]] = icmp ne i32* {{.*}}, null
+  // CHECK-TRAP: br i1 [[OK]]
+  // CHECK-TRAP: call void @llvm.trap() [[NR_NUW]]
+  // CHECK-TRAP: unreachable
+  decl_nonnull(a);
+}
+
+// CHECK-LABEL: @call_nonnull_variadic
+__attribute__((nonnull)) void nonnull_variadic(int a, ...);
+void call_nonnull_variadic(int a, int *b) {
+  // CHECK: [[OK:%.*]] = icmp ne i32* {{.*}}, null
+  // CHECK: br i1 [[OK]]
+  // CHECK: call void @__ubsan_handle_nonnull_arg
+  // CHECK-NOT: __ubsan_handle_nonnull_arg
+  // CHECK: call void (i32, ...)* @nonnull_variadic
+  nonnull_variadic(a, b);
 }
 
 // CHECK: ![[WEIGHT_MD]] = metadata !{metadata !"branch_weights", i32 1048575, i32 1}

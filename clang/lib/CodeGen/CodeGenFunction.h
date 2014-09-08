@@ -2625,6 +2625,7 @@ public:
   void EmitCallArgs(CallArgList &Args, const T *CallArgTypeInfo,
                     CallExpr::const_arg_iterator ArgBeg,
                     CallExpr::const_arg_iterator ArgEnd,
+                    const FunctionDecl *CalleeDecl = nullptr,
                     unsigned ParamsToSkip = 0, bool ForceColumnInfo = false) {
     SmallVector<QualType, 16> ArgTypes;
     CallExpr::const_arg_iterator Arg = ArgBeg;
@@ -2673,13 +2674,15 @@ public:
     for (; Arg != ArgEnd; ++Arg)
       ArgTypes.push_back(Arg->getType());
 
-    EmitCallArgs(Args, ArgTypes, ArgBeg, ArgEnd, ForceColumnInfo);
+    EmitCallArgs(Args, ArgTypes, ArgBeg, ArgEnd, CalleeDecl, ParamsToSkip,
+                 ForceColumnInfo);
   }
 
   void EmitCallArgs(CallArgList &Args, ArrayRef<QualType> ArgTypes,
                     CallExpr::const_arg_iterator ArgBeg,
                     CallExpr::const_arg_iterator ArgEnd,
-                    bool ForceColumnInfo = false);
+                    const FunctionDecl *CalleeDecl = nullptr,
+                    unsigned ParamsToSkip = 0, bool ForceColumnInfo = false);
 
 private:
   const TargetCodeGenInfo &getTargetHooks() const {
