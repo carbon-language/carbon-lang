@@ -537,6 +537,10 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->setSharedObjectName(inputArg->getValue());
       break;
 
+    case OPT_rosegment:
+      ctx->setCreateSeparateROSegment();
+      break;
+
     default:
       break;
     } // end switch on option ID

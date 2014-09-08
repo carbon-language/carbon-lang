@@ -251,6 +251,13 @@ public:
     return true;
   }
 
+  // By default, the linker would merge sections that are read only with
+  // segments that have read and execute permissions. When the user specifies a
+  // flag --rosegment, a separate segment needs to be created.
+  bool mergeRODataToTextSegment() const { return _mergeRODataToTextSegment; }
+
+  void setCreateSeparateROSegment() { _mergeRODataToTextSegment = false; }
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 
@@ -273,6 +280,7 @@ protected:
   bool _useShlibUndefines;
   bool _dynamicLinkerArg;
   bool _noAllowDynamicLibraries;
+  bool _mergeRODataToTextSegment;
   OutputMagic _outputMagic;
   StringRefVector _inputSearchPaths;
   std::unique_ptr<Writer> _writer;

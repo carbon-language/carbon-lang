@@ -634,7 +634,8 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
         StringRef segmentName = section->segmentKindToStr();
 
         int64_t lookupSectionFlag = msi->flags();
-        if (!(lookupSectionFlag & llvm::ELF::SHF_WRITE))
+        if ((!(lookupSectionFlag & llvm::ELF::SHF_WRITE)) &&
+            (_context.mergeRODataToTextSegment()))
           lookupSectionFlag &= ~llvm::ELF::SHF_EXECINSTR;
 
         // Merge string sections into Data segment itself

@@ -59,8 +59,8 @@ ELFLinkingContext::ELFLinkingContext(
       _isStaticExecutable(false), _noInhibitExec(false),
       _mergeCommonStrings(false), _runLayoutPass(true),
       _useShlibUndefines(true), _dynamicLinkerArg(false),
-      _noAllowDynamicLibraries(false), _outputMagic(OutputMagic::DEFAULT),
-      _sysrootPath("") {}
+      _noAllowDynamicLibraries(false), _mergeRODataToTextSegment(true),
+      _outputMagic(OutputMagic::DEFAULT), _sysrootPath("") {}
 
 bool ELFLinkingContext::is64Bits() const { return getTriple().isArch64Bit(); }
 

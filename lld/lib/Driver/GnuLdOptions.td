@@ -201,6 +201,9 @@ def defsym : Joined<["--"], "defsym=">,
 //===----------------------------------------------------------------------===//
 def grp_customopts : OptionGroup<"opts">,
      HelpText<"CUSTOM OPTIONS">;
+def rosegment: Flag<["--"], "rosegment">,
+     HelpText<"Put read-only non-executable sections in their own segment">,
+     Group<grp_customopts>;
 def z : Separate<["-"], "z">,
      HelpText<"Linker Option extensions">,
      Group<grp_customopts>;
