@@ -270,6 +270,19 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
   FileEntry &UFE = UniqueRealFiles[Data.UniqueID];
 
   NamedFileEnt.setValue(&UFE);
+
+  // If the name returned by getStatValue is different than Filename, re-intern
+  // the name.
+  if (Data.Name != Filename) {
+    auto &NamedFileEnt = SeenFileEntries.GetOrCreateValue(Data.Name);
+    if (!NamedFileEnt.getValue())
+      NamedFileEnt.setValue(&UFE);
+    else
+      assert(NamedFileEnt.getValue() == &UFE &&
+             "filename from getStatValue() refers to wrong file");
+    InterndFileName = NamedFileEnt.getKeyData();
+  }
+
   if (UFE.isValid()) { // Already have an entry with this inode, return it.
 
     // FIXME: this hack ensures that if we look up a file by a virtual path in
@@ -286,13 +299,13 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
     // to switch towards a design where we return a FileName object that
     // encapsulates both the name by which the file was accessed and the
     // corresponding FileEntry.
-    UFE.Name = Data.Name;
+    UFE.Name = InterndFileName;
 
     return &UFE;
   }
 
   // Otherwise, we don't have this file yet, add it.
-  UFE.Name    = Data.Name;
+  UFE.Name    = InterndFileName;
   UFE.Size = Data.Size;
   UFE.ModTime = Data.ModTime;
   UFE.Dir     = DirInfo;
