@@ -4,5 +4,6 @@
 // RUN: %clang_cc1 %s -include-pch %t/pch-used.h.pch -fmodules -fmodules-cache-path=%t/cache -O0 -isystem %S/Inputs/System/usr/include -emit-llvm -o - | FileCheck %s
 
 void f() { SPXTrace(); }
+void g() { double x = DBL_MAX; }
 
 // CHECK: define internal void @SPXTrace

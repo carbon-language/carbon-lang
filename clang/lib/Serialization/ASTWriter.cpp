@@ -4617,10 +4617,13 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
       auto Cmp = [](const ModuleInfo &A, const ModuleInfo &B) {
         return A.ID < B.ID;
       };
+      auto Eq = [](const ModuleInfo &A, const ModuleInfo &B) {
+        return A.ID == B.ID;
+      };
 
       // Sort and deduplicate module IDs.
       std::sort(Imports.begin(), Imports.end(), Cmp);
-      Imports.erase(std::unique(Imports.begin(), Imports.end(), Cmp),
+      Imports.erase(std::unique(Imports.begin(), Imports.end(), Eq),
                     Imports.end());
 
       RecordData ImportedModules;
