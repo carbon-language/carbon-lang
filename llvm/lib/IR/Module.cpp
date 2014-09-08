@@ -259,6 +259,17 @@ void Module::eraseNamedMetadata(NamedMDNode *NMD) {
   NamedMDList.erase(NMD);
 }
 
+bool Module::isValidModFlagBehavior(Value *V, ModFlagBehavior &MFB) {
+  if (ConstantInt *Behavior = dyn_cast<ConstantInt>(V)) {
+    uint64_t Val = Behavior->getLimitedValue();
+    if (Val >= ModFlagBehaviorFirstVal && Val <= ModFlagBehaviorLastVal) {
+      MFB = static_cast<ModFlagBehavior>(Val);
+      return true;
+    }
+  }
+  return false;
+}
+
 /// getModuleFlagsMetadata - Returns the module flags in the provided vector.
 void Module::
 getModuleFlagsMetadata(SmallVectorImpl<ModuleFlagEntry> &Flags) const {
@@ -266,15 +277,15 @@ getModuleFlagsMetadata(SmallVectorImpl<ModuleFlagEntry> &Flags) const {
   if (!ModFlags) return;
 
   for (const MDNode *Flag : ModFlags->operands()) {
-    if (Flag->getNumOperands() >= 3 && isa<ConstantInt>(Flag->getOperand(0)) &&
+    ModFlagBehavior MFB;
+    if (Flag->getNumOperands() >= 3 &&
+        isValidModFlagBehavior(Flag->getOperand(0), MFB) &&
         isa<MDString>(Flag->getOperand(1))) {
       // Check the operands of the MDNode before accessing the operands.
       // The verifier will actually catch these failures.
-      ConstantInt *Behavior = cast<ConstantInt>(Flag->getOperand(0));
       MDString *Key = cast<MDString>(Flag->getOperand(1));
       Value *Val = Flag->getOperand(2);
-      Flags.push_back(ModuleFlagEntry(ModFlagBehavior(Behavior->getZExtValue()),
-                                      Key, Val));
+      Flags.push_back(ModuleFlagEntry(MFB, Key, Val));
     }
   }
 }
