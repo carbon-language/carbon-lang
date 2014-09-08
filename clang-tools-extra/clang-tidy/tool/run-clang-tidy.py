@@ -58,9 +58,10 @@ def find_compilation_database(path):
   return os.path.realpath(result)
 
 
-def get_tidy_invocation(f, checks, tmpdir, build_path, header_filter):
+def get_tidy_invocation(f, clang_tidy_binary, checks, tmpdir, build_path,
+                        header_filter):
   """Gets a command line for clang-tidy."""
-  start = ['clang-tidy']
+  start = [clang_tidy_binary]
   if header_filter is not None:
     start.append('-header-filter=' + header_filter)
   else:
@@ -73,17 +74,17 @@ def get_tidy_invocation(f, checks, tmpdir, build_path, header_filter):
     # Get a temporary file. We immediately close the handle so clang-tidy can
     # overwrite it.
     (handle, name) = tempfile.mkstemp(suffix='.yaml', dir=tmpdir)
-    handle.close()
+    os.close(handle)
     start.append(name)
   start.append('-p=' + build_path)
   start.append(f)
   return start
 
 
-def apply_fixes(tmpdir, format_enabled):
+def apply_fixes(args, tmpdir):
   """Calls clang-apply-fixes on a given directory. Deletes the dir when done."""
-  invocation = ['clang-apply-replacements']
-  if format_enabled:
+  invocation = [args.clang_apply_replacements_binary]
+  if args.format:
     invocation.append('-format')
   invocation.append(tmpdir)
   subprocess.call(invocation)
@@ -94,8 +95,8 @@ def run_tidy(args, tmpdir, build_path, queue):
   """Takes filenames out of queue and runs clang-tidy on them."""
   while True:
     name = queue.get()
-    invocation = get_tidy_invocation(name, args.checks, tmpdir,
-                                     build_path, args.header_filter)
+    invocation = get_tidy_invocation(name, args.clang_tidy_binary, args.checks,
+                                     tmpdir, build_path, args.header_filter)
     sys.stdout.write(' '.join(invocation) + '\n')
     subprocess.call(invocation)
     queue.task_done()
@@ -106,6 +107,12 @@ def main():
                                    'in a compilation database. Requires '
                                    'clang-tidy and clang-apply-replacements in '
                                    '$PATH.')
+  parser.add_argument('-clang-tidy-binary', metavar='PATH',
+                      default='clang-tidy',
+                      help='path to clang-tidy binary')
+  parser.add_argument('-clang-apply-replacements-binary', metavar='PATH',
+                      default='clang-apply-replacements',
+                      help='path to clang-apply-replacements binary')
   parser.add_argument('-checks', default=None,
                       help='checks filter, when not specified, use clang-tidy '
                       'default')
@@ -122,6 +129,13 @@ def main():
   parser.add_argument('-format', action='store_true', help='Reformat code '
                       'after applying fixes')
   args = parser.parse_args()
+
+  try:
+    print subprocess.check_output([args.clang_tidy_binary, '-list-checks',
+                                   '-checks='+args.checks, 'dummy'])
+  except:
+    print >>sys.stderr, "Unable to run clang-tidy."
+    sys.exit(1)
 
   # Find our database.
   db_path = 'compile_commands.json'
@@ -169,7 +183,7 @@ def main():
 
   if args.fix:
     print 'Applying fixes ...'
-    apply_fixes(tmpdir, args.format)
+    apply_fixes(args, tmpdir)
 
 if __name__ == '__main__':
   main()
