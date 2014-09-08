@@ -1,6 +1,11 @@
 {
   "project_id" : "polly",
   "conduit_uri" : "http://reviews.llvm.org/",
+  "history.immutable" : true,
   "linter.scriptandregex.script": "sh -c './utils/check_format.sh \"$0\" 2> /dev/null || true'",
-  "linter.scriptandregex.regex": "/^(OK:(?P<ignore>.+)|Error:) (?P<message>.+)$/m"
+  "linter.scriptandregex.regex": "/^(OK:(?P<ignore>.+)|Error:) (?P<message>.+)$/m",
+  "load" : [
+    "utils/arcanist/LitTestEngine"
+  ],
+  "unit.engine" : "LitTestEngine"
 }
