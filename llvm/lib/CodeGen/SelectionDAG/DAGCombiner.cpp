@@ -6602,21 +6602,10 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
     // We can fold chains of FADD's of the same value into multiplications.
     // This transform is not safe in general because we are reducing the number
     // of rounding steps.
-
-    // FIXME: There are 4 redundant folds below where fmul canonicalization
-    // should have moved the constant out of Op0?
     if (TLI.isOperationLegalOrCustom(ISD::FMUL, VT) && !N0CFP && !N1CFP) {
       if (N0.getOpcode() == ISD::FMUL) {
         ConstantFPSDNode *CFP00 = dyn_cast<ConstantFPSDNode>(N0.getOperand(0));
         ConstantFPSDNode *CFP01 = dyn_cast<ConstantFPSDNode>(N0.getOperand(1));
-        
-        // (fadd (fmul c, x), x) -> (fmul x, c+1)
-        if (CFP00 && !CFP01 && N0.getOperand(1) == N1) {
-          SDValue NewCFP = DAG.getNode(ISD::FADD, SDLoc(N), VT,
-                                       SDValue(CFP00, 0),
-                                       DAG.getConstantFP(1.0, VT));
-          return DAG.getNode(ISD::FMUL, SDLoc(N), VT, N1, NewCFP);
-        }
         
         // (fadd (fmul x, c), x) -> (fmul x, c+1)
         if (CFP01 && !CFP00 && N0.getOperand(0) == N1) {
@@ -6624,17 +6613,6 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
                                        SDValue(CFP01, 0),
                                        DAG.getConstantFP(1.0, VT));
           return DAG.getNode(ISD::FMUL, SDLoc(N), VT, N1, NewCFP);
-        }
-
-        // (fadd (fmul c, x), (fadd x, x)) -> (fmul x, c+2)
-        if (CFP00 && !CFP01 && N1.getOpcode() == ISD::FADD &&
-            N1.getOperand(0) == N1.getOperand(1) &&
-            N0.getOperand(1) == N1.getOperand(0)) {
-          SDValue NewCFP = DAG.getNode(ISD::FADD, SDLoc(N), VT,
-                                       SDValue(CFP00, 0),
-                                       DAG.getConstantFP(2.0, VT));
-          return DAG.getNode(ISD::FMUL, SDLoc(N), VT,
-                             N0.getOperand(1), NewCFP);
         }
         
         // (fadd (fmul x, c), (fadd x, x)) -> (fmul x, c+2)
@@ -6653,14 +6631,6 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
         ConstantFPSDNode *CFP10 = dyn_cast<ConstantFPSDNode>(N1.getOperand(0));
         ConstantFPSDNode *CFP11 = dyn_cast<ConstantFPSDNode>(N1.getOperand(1));
         
-        // (fadd x, (fmul c, x)) -> (fmul x, c+1)
-        if (CFP10 && !CFP11 && N1.getOperand(1) == N0) {
-          SDValue NewCFP = DAG.getNode(ISD::FADD, SDLoc(N), VT,
-                                       SDValue(CFP10, 0),
-                                       DAG.getConstantFP(1.0, VT));
-          return DAG.getNode(ISD::FMUL, SDLoc(N), VT, N0, NewCFP);
-        }
-        
         // (fadd x, (fmul x, c)) -> (fmul x, c+1)
         if (CFP11 && !CFP10 && N1.getOperand(0) == N0) {
           SDValue NewCFP = DAG.getNode(ISD::FADD, SDLoc(N), VT,
@@ -6668,18 +6638,7 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
                                        DAG.getConstantFP(1.0, VT));
           return DAG.getNode(ISD::FMUL, SDLoc(N), VT, N0, NewCFP);
         }
-        
-        
-        // (fadd (fadd x, x), (fmul c, x)) -> (fmul x, c+2)
-        if (CFP10 && !CFP11 && N0.getOpcode() == ISD::FADD &&
-            N0.getOperand(0) == N0.getOperand(1) &&
-            N1.getOperand(1) == N0.getOperand(0)) {
-          SDValue NewCFP = DAG.getNode(ISD::FADD, SDLoc(N), VT,
-                                       SDValue(CFP10, 0),
-                                       DAG.getConstantFP(2.0, VT));
-          return DAG.getNode(ISD::FMUL, SDLoc(N), VT, N1.getOperand(1), NewCFP);
-        }
-        
+
         // (fadd (fadd x, x), (fmul x, c)) -> (fmul x, c+2)
         if (CFP11 && !CFP10 && N0.getOpcode() == ISD::FADD &&
             N0.getOperand(0) == N0.getOperand(1) &&
@@ -6690,7 +6649,7 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
           return DAG.getNode(ISD::FMUL, SDLoc(N), VT, N1.getOperand(0), NewCFP);
         }
       }
-      
+
       if (N0.getOpcode() == ISD::FADD && AllowNewConst) {
         ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N0.getOperand(0));
         // (fadd (fadd x, x), x) -> (fmul x, 3.0)
