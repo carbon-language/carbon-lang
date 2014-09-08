@@ -3396,6 +3396,7 @@ llvm::Constant *CodeGenModule::EmitUuidofInitializer(StringRef Uuid,
     else                                         assert(isHexDigit(Uuid[i]));
   }
 
+  // The starts of all bytes of Field3 in Uuid. Field 3 is "1234-1234567890ab".
   const unsigned Field3ValueOffsets[8] = { 19, 21, 24, 26, 28, 30, 32, 34 };
 
   llvm::Constant *Field3[8];
