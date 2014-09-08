@@ -699,12 +699,18 @@ GDBRemoteCommunicationServer::SendWResponse (lldb_private::NativeProcessProtocol
         char return_type_code;
         switch (exit_type)
         {
-            case ExitType::eExitTypeExit:   return_type_code = 'W'; break;
-            case ExitType::eExitTypeSignal: return_type_code = 'X'; break;
-            case ExitType::eExitTypeStop:   return_type_code = 'S'; break;
-
+            case ExitType::eExitTypeExit:
+                return_type_code = 'W';
+                break;
+            case ExitType::eExitTypeSignal:
+                return_type_code = 'X';
+                break;
+            case ExitType::eExitTypeStop:
+                return_type_code = 'S';
+                break;
             case ExitType::eExitTypeInvalid:
-            default:                        return_type_code = 'E'; break;
+                return_type_code = 'E';
+                break;
         }
         response.PutChar (return_type_code);
 
