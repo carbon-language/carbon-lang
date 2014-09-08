@@ -66,7 +66,7 @@ class AssumptionTracker : public ImmutablePass {
       operator CallInst*() const {
         Value *V = getValPtr();
         if (V == DMI::getEmptyKey() || V == DMI::getTombstoneKey())
-          return static_cast<CallInst*>(V);
+          return reinterpret_cast<CallInst*>(V);
 
         return cast<CallInst>(V);
       }
