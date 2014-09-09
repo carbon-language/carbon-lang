@@ -11,6 +11,7 @@
 #include "lldb/Host/freebsd/HostThreadFreeBSD.h"
 
 // C includes
+#include <errno.h>
 #include <pthread.h>
 #include <pthread_np.h>
 #include <stdlib.h>
@@ -33,7 +34,7 @@ HostThreadFreeBSD::HostThreadFreeBSD(lldb::thread_t thread)
 void
 HostThreadFreeBSD::SetName(lldb::thread_t thread, llvm::StringRef name)
 {
-    ::pthread_set_name_np(thread, name);
+    ::pthread_set_name_np(thread, name.data());
 }
 
 void
