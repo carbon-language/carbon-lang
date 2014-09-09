@@ -469,6 +469,7 @@ CommandInterpreter::LoadCommandDictionary ()
             char buffer[1024];
             int num_printed = snprintf(buffer, 1024, "%s %s", break_regexes[i][1], "-o");
             assert (num_printed < 1024);
+	    // Quiet unused variable warning for release builds.
 	    (void) num_printed;
             success = tbreak_regex_cmd_ap->AddRegexCommand (break_regexes[i][0], buffer);
             if (!success)
