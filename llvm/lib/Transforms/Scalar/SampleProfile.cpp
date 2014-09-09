@@ -707,7 +707,6 @@ unsigned SampleProfileLoader::getFunctionLoc(Function &F) {
 /// metadata on B using the computed values for each of its branches.
 ///
 /// \param F The function to query.
-/// \param S The set of samples collected during \p F's execution.
 ///
 /// \returns true if \p F was modified. Returns false, otherwise.
 bool SampleProfileLoader::emitAnnotations(Function &F) {
