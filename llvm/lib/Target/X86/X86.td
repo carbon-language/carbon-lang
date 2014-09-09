@@ -341,11 +341,14 @@ def : Proc<"amdfam10",        [FeatureSSE4A,
 def : Proc<"btver1",          [FeatureSSSE3, FeatureSSE4A, FeatureCMPXCHG16B,
                                FeaturePRFCHW, FeatureLZCNT, FeaturePOPCNT,
                                FeatureSlowSHLD]>;
+
 // Jaguar
-def : Proc<"btver2",          [FeatureAVX, FeatureSSE4A, FeatureCMPXCHG16B,
-                               FeaturePRFCHW, FeatureAES, FeaturePCLMUL,
-                               FeatureBMI, FeatureF16C, FeatureMOVBE,
-                               FeatureLZCNT, FeaturePOPCNT, FeatureSlowSHLD]>;
+def : ProcessorModel<"btver2", BtVer2Model,
+                     [FeatureAVX, FeatureSSE4A, FeatureCMPXCHG16B,
+                      FeaturePRFCHW, FeatureAES, FeaturePCLMUL,
+                      FeatureBMI, FeatureF16C, FeatureMOVBE,
+                      FeatureLZCNT, FeaturePOPCNT, FeatureSlowSHLD]>;
+
 // Bulldozer
 def : Proc<"bdver1",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAES, FeaturePRFCHW, FeaturePCLMUL,
