@@ -157,6 +157,11 @@ bool MachineSinking::PerformTrivialForwardCoalescing(MachineInstr *MI,
   DEBUG(dbgs() << "*** to: " << *MI);
   MRI->replaceRegWith(DstReg, SrcReg);
   MI->eraseFromParent();
+
+  // Conservatively, clear any kill flags, since it's possible that they are no
+  // longer correct.
+  MRI->clearKillFlags(SrcReg);
+
   ++NumCoalesces;
   return true;
 }
