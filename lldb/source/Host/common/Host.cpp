@@ -48,6 +48,10 @@
 #include <pthread_np.h>
 #endif
 
+#if defined(__linux__)
+#include "Plugins/Process/Linux/ProcFileReader.h"
+#endif
+
 // C++ includes
 #include <limits>
 
@@ -66,6 +70,7 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Host/ThreadLauncher.h"
 #include "lldb/lldb-private-forward.h"
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/Process.h"
@@ -95,13 +100,6 @@ extern "C"
 using namespace lldb;
 using namespace lldb_private;
 
-// Define maximum thread name length
-#if defined (__linux__) || defined (__FreeBSD__) || defined (__FreeBSD_kernel__) || defined (__NetBSD__)
-uint32_t const Host::MAX_THREAD_NAME_LENGTH = 16;
-#else
-uint32_t const Host::MAX_THREAD_NAME_LENGTH = std::numeric_limits<uint32_t>::max ();
-#endif
-
 #if !defined (__APPLE__) && !defined (_WIN32)
 struct MonitorInfo
 {
@@ -114,16 +112,9 @@ struct MonitorInfo
 static thread_result_t
 MonitorChildProcessThreadFunction (void *arg);
 
-lldb::thread_t
-Host::StartMonitoringChildProcess
-(
-    Host::MonitorChildProcessCallback callback,
-    void *callback_baton,
-    lldb::pid_t pid,
-    bool monitor_signals
-)
+HostThread
+Host::StartMonitoringChildProcess(Host::MonitorChildProcessCallback callback, void *callback_baton, lldb::pid_t pid, bool monitor_signals)
 {
-    lldb::thread_t thread = LLDB_INVALID_HOST_THREAD;
     MonitorInfo * info_ptr = new MonitorInfo();
 
     info_ptr->pid = pid;
@@ -132,24 +123,8 @@ Host::StartMonitoringChildProcess
     info_ptr->monitor_signals = monitor_signals;
     
     char thread_name[256];
-
-    if (Host::MAX_THREAD_NAME_LENGTH <= 16)
-    {
-        // On some platforms, the thread name is limited to 16 characters.  We need to
-        // abbreviate there or the pid info would get truncated.
-        ::snprintf (thread_name, sizeof(thread_name), "wait4(%" PRIu64 ")", pid);
-    }
-    else
-    {
-        ::snprintf (thread_name, sizeof(thread_name), "<lldb.host.wait4(pid=%" PRIu64 ")>", pid);
-    }
-
-    thread = ThreadCreate (thread_name,
-                           MonitorChildProcessThreadFunction,
-                           info_ptr,
-                           NULL);
-                           
-    return thread;
+    ::snprintf(thread_name, sizeof(thread_name), "<lldb.host.wait4(pid=%" PRIu64 ")>", pid);
+    return ThreadLauncher::LaunchThread(thread_name, MonitorChildProcessThreadFunction, info_ptr, NULL);
 }
 
 //------------------------------------------------------------------
@@ -429,11 +404,6 @@ Host::WillTerminate ()
 #if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) && !defined (__linux__) // see macosx/Host.mm
 
 void
-Host::ThreadCreated (const char *thread_name)
-{
-}
-
-void
 Host::Backtrace (Stream &strm, uint32_t max_frames)
 {
     // TODO: Is there a way to backtrace the current process on other systems?
@@ -448,100 +418,7 @@ Host::GetEnvironment (StringList &env)
 
 #endif // #if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) && !defined (__linux__)
 
-struct HostThreadCreateInfo
-{
-    std::string thread_name;
-    thread_func_t thread_fptr;
-    thread_arg_t thread_arg;
-    
-    HostThreadCreateInfo (const char *name, thread_func_t fptr, thread_arg_t arg) :
-        thread_name (name ? name : ""),
-        thread_fptr (fptr),
-        thread_arg (arg)
-    {
-    }
-};
-
-static thread_result_t
-#ifdef _WIN32
-__stdcall
-#endif
-ThreadCreateTrampoline (thread_arg_t arg)
-{
-    HostThreadCreateInfo *info = (HostThreadCreateInfo *)arg;
-    Host::ThreadCreated (info->thread_name.c_str());
-    thread_func_t thread_fptr = info->thread_fptr;
-    thread_arg_t thread_arg = info->thread_arg;
-    
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
-    if (log)
-        log->Printf("thread created");
-    
-    delete info;
-    return thread_fptr (thread_arg);
-}
-
-lldb::thread_t
-Host::ThreadCreate
-(
-    const char *thread_name,
-    thread_func_t thread_fptr,
-    thread_arg_t thread_arg,
-    Error *error
-)
-{
-    lldb::thread_t thread = LLDB_INVALID_HOST_THREAD;
-    
-    // Host::ThreadCreateTrampoline will delete this pointer for us.
-    HostThreadCreateInfo *info_ptr = new HostThreadCreateInfo (thread_name, thread_fptr, thread_arg);
-    
-#ifdef _WIN32
-    thread = ::_beginthreadex(0, 0, ThreadCreateTrampoline, info_ptr, 0, NULL);
-    int err = thread <= 0 ? GetLastError() : 0;
-#else
-    int err = ::pthread_create (&thread, NULL, ThreadCreateTrampoline, info_ptr);
-#endif
-    if (err == 0)
-    {
-        if (error)
-            error->Clear();
-        return thread;
-    }
-    
-    if (error)
-        error->SetError (err, eErrorTypePOSIX);
-    
-    return LLDB_INVALID_HOST_THREAD;
-}
-
 #ifndef _WIN32
-
-bool
-Host::ThreadCancel (lldb::thread_t thread, Error *error)
-{
-    int err = ::pthread_cancel (thread);
-    if (error)
-        error->SetError(err, eErrorTypePOSIX);
-    return err == 0;
-}
-
-bool
-Host::ThreadDetach (lldb::thread_t thread, Error *error)
-{
-    int err = ::pthread_detach (thread);
-    if (error)
-        error->SetError(err, eErrorTypePOSIX);
-    return err == 0;
-}
-
-bool
-Host::ThreadJoin (lldb::thread_t thread, thread_result_t *thread_result_ptr, Error *error)
-{
-    int err = ::pthread_join (thread, thread_result_ptr);
-    if (error)
-        error->SetError(err, eErrorTypePOSIX);
-    return err == 0;
-}
 
 lldb::thread_key_t
 Host::ThreadLocalStorageCreate(ThreadLocalStorageCleanupCallback callback)
@@ -561,99 +438,6 @@ void
 Host::ThreadLocalStorageSet(lldb::thread_key_t key, void *value)
 {
    ::pthread_setspecific (key, value);
-}
-
-bool
-Host::SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name)
-{
-#if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5
-    lldb::pid_t curr_pid = Host::GetCurrentProcessID();
-    lldb::tid_t curr_tid = Host::GetCurrentThreadID();
-    if (pid == LLDB_INVALID_PROCESS_ID)
-        pid = curr_pid;
-
-    if (tid == LLDB_INVALID_THREAD_ID)
-        tid = curr_tid;
-
-    // Set the pthread name if possible
-    if (pid == curr_pid && tid == curr_tid)
-    {
-        if (::pthread_setname_np (name) == 0)
-            return true;
-    }
-    return false;
-#elif defined (__FreeBSD__)
-    lldb::pid_t curr_pid = Host::GetCurrentProcessID();
-    lldb::tid_t curr_tid = Host::GetCurrentThreadID();
-    if (pid == LLDB_INVALID_PROCESS_ID)
-        pid = curr_pid;
-
-    if (tid == LLDB_INVALID_THREAD_ID)
-        tid = curr_tid;
-
-    // Set the pthread name if possible
-    if (pid == curr_pid && tid == curr_tid)
-    {
-        ::pthread_set_name_np (::pthread_self(), name);
-        return true;
-    }
-    return false;
-#elif defined (__linux__) || defined (__GLIBC__)
-    void *fn = dlsym (RTLD_DEFAULT, "pthread_setname_np");
-    if (fn)
-    {
-        lldb::pid_t curr_pid = Host::GetCurrentProcessID();
-        lldb::tid_t curr_tid = Host::GetCurrentThreadID();
-        if (pid == LLDB_INVALID_PROCESS_ID)
-            pid = curr_pid;
-
-        if (tid == LLDB_INVALID_THREAD_ID)
-            tid = curr_tid;
-
-        if (pid == curr_pid && tid == curr_tid)
-        {
-            int (*pthread_setname_np_func)(pthread_t thread, const char *name);
-            *reinterpret_cast<void **> (&pthread_setname_np_func) = fn;
-
-            if (pthread_setname_np_func (::pthread_self(), name) == 0)
-                return true;
-        }
-    }
-    return false;
-#else
-    return false;
-#endif
-}
-
-bool
-Host::SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid,
-                          const char *thread_name, size_t len)
-{
-    std::unique_ptr<char[]> namebuf(new char[len+1]);
-    
-    // Thread names are coming in like '<lldb.comm.debugger.edit>' and
-    // '<lldb.comm.debugger.editline>'.  So just chopping the end of the string
-    // off leads to a lot of similar named threads.  Go through the thread name
-    // and search for the last dot and use that.
-    const char *lastdot = ::strrchr (thread_name, '.');
-
-    if (lastdot && lastdot != thread_name)
-        thread_name = lastdot + 1;
-    ::strncpy (namebuf.get(), thread_name, len);
-    namebuf[len] = 0;
-
-    int namebuflen = strlen(namebuf.get());
-    if (namebuflen > 0)
-    {
-        if (namebuf[namebuflen - 1] == '(' || namebuf[namebuflen - 1] == '>')
-        {
-            // Trim off trailing '(' and '>' characters for a bit more cleanup.
-            namebuflen--;
-            namebuf[namebuflen] = 0;
-        }
-        return Host::SetThreadName (pid, tid, namebuf.get());
-    }
-    return false;
 }
 
 #endif

@@ -19,6 +19,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Host/HostThread.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/lldb-private.h"
 
@@ -350,7 +351,7 @@ private:
 
 protected:
     lldb::ConnectionSP m_connection_sp; ///< The connection that is current in use by this communications class.
-    lldb::thread_t m_read_thread; ///< The read thread handle in case we need to cancel the thread.
+    HostThread m_read_thread;           ///< The read thread handle in case we need to cancel the thread.
     bool m_read_thread_enabled;
     std::string m_bytes;    ///< A buffer to cache bytes read in the ReadThread function.
     Mutex m_bytes_mutex;    ///< A mutex to protect multi-threaded access to the cached bytes.

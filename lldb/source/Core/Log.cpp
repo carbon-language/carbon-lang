@@ -26,9 +26,12 @@
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/Host.h"
-#include "lldb/Host/TimeValue.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Host/ThisThread.h"
+#include "lldb/Host/TimeValue.h"
 #include "lldb/Interpreter/Args.h"
+
+#include "llvm/ADT/SmallString.h"
 using namespace lldb;
 using namespace lldb_private;
 
@@ -113,7 +116,8 @@ Log::PrintfWithFlagsVarArg (uint32_t flags, const char *format, va_list args)
         // Add the thread name if requested
         if (m_options.Test (LLDB_LOG_OPTION_PREPEND_THREAD_NAME))
         {
-            std::string thread_name (Host::GetThreadName (getpid(), Host::GetCurrentThreadID()));
+            llvm::SmallString<32> thread_name;
+            ThisThread::GetName(thread_name);
             if (!thread_name.empty())
                 header.Printf ("%s ", thread_name.c_str());
         }

@@ -45,6 +45,7 @@
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
+#include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/NativeRegisterContext.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
@@ -1209,8 +1210,6 @@ NativeProcessLinux::AttachToProcess (
 NativeProcessLinux::NativeProcessLinux () :
     NativeProcessProtocol (LLDB_INVALID_PROCESS_ID),
     m_arch (),
-    m_operation_thread (LLDB_INVALID_HOST_THREAD),
-    m_monitor_thread (LLDB_INVALID_HOST_THREAD),
     m_operation (nullptr),
     m_operation_mutex (),
     m_operation_pending (),
@@ -1289,7 +1288,7 @@ WAIT_AGAIN:
     // Finally, start monitoring the child process for change in state.
     m_monitor_thread = Host::StartMonitoringChildProcess(
         NativeProcessLinux::MonitorCallback, this, GetID(), true);
-    if (!IS_VALID_LLDB_HOST_THREAD(m_monitor_thread))
+    if (m_monitor_thread.GetState() != eThreadStateRunning)
     {
         error.SetErrorToGenericError();
         error.SetErrorString ("Process attach failed to create monitor thread for NativeProcessLinux::MonitorCallback.");
@@ -1367,7 +1366,7 @@ WAIT_AGAIN:
     // Finally, start monitoring the child process for change in state.
     m_monitor_thread = Host::StartMonitoringChildProcess (
         NativeProcessLinux::MonitorCallback, this, GetID (), true);
-    if (!IS_VALID_LLDB_HOST_THREAD (m_monitor_thread))
+    if (m_monitor_thread.GetState() != eThreadStateRunning)
     {
         error.SetErrorToGenericError ();
         error.SetErrorString ("Process attach failed to create monitor thread for NativeProcessLinux::MonitorCallback.");
@@ -1388,11 +1387,10 @@ NativeProcessLinux::StartLaunchOpThread(LaunchArgs *args, Error &error)
 {
     static const char *g_thread_name = "lldb.process.nativelinux.operation";
 
-    if (IS_VALID_LLDB_HOST_THREAD (m_operation_thread))
+    if (m_operation_thread.GetState() == eThreadStateRunning)
         return;
 
-    m_operation_thread =
-        Host::ThreadCreate (g_thread_name, LaunchOpThread, args, &error);
+    m_operation_thread = ThreadLauncher::LaunchThread(g_thread_name, LaunchOpThread, args, &error);
 }
 
 void *
@@ -1698,11 +1696,10 @@ NativeProcessLinux::StartAttachOpThread(AttachArgs *args, lldb_private::Error &e
 {
     static const char *g_thread_name = "lldb.process.linux.operation";
 
-    if (IS_VALID_LLDB_HOST_THREAD(m_operation_thread))
+    if (m_operation_thread.GetState() == eThreadStateRunning)
         return;
 
-    m_operation_thread =
-        Host::ThreadCreate(g_thread_name, AttachOpThread, args, &error);
+    m_operation_thread = ThreadLauncher::LaunchThread(g_thread_name, AttachOpThread, args, &error);
 }
 
 void *
@@ -3396,13 +3393,11 @@ NativeProcessLinux::DupDescriptor(const char *path, int fd, int flags)
 void
 NativeProcessLinux::StopMonitoringChildProcess()
 {
-    lldb::thread_result_t thread_result;
-
-    if (IS_VALID_LLDB_HOST_THREAD(m_monitor_thread))
+    if (m_monitor_thread.GetState() == eThreadStateRunning)
     {
-        Host::ThreadCancel(m_monitor_thread, NULL);
-        Host::ThreadJoin(m_monitor_thread, &thread_result, NULL);
-        m_monitor_thread = LLDB_INVALID_HOST_THREAD;
+        m_monitor_thread.Cancel();
+        m_monitor_thread.Join(nullptr);
+        m_monitor_thread.Reset();
     }
 }
 
@@ -3424,14 +3419,12 @@ NativeProcessLinux::StopMonitor()
 void
 NativeProcessLinux::StopOpThread()
 {
-    lldb::thread_result_t result;
-
-    if (!IS_VALID_LLDB_HOST_THREAD(m_operation_thread))
+    if (m_operation_thread.GetState() != eThreadStateRunning)
         return;
 
-    Host::ThreadCancel(m_operation_thread, NULL);
-    Host::ThreadJoin(m_operation_thread, &result, NULL);
-    m_operation_thread = LLDB_INVALID_HOST_THREAD;
+    m_operation_thread.Cancel();
+    m_operation_thread.Join(nullptr);
+    m_operation_thread.Reset();
 }
 
 bool

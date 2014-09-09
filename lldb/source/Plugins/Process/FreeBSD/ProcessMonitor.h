@@ -17,6 +17,7 @@
 // C++ Includes
 // Other libraries and framework includes
 #include "lldb/lldb-types.h"
+#include "lldb/Host/HostThread.h"
 #include "lldb/Host/Mutex.h"
 
 namespace lldb_private
@@ -212,8 +213,8 @@ public:
 private:
     ProcessFreeBSD *m_process;
 
-    lldb::thread_t m_operation_thread;
-    lldb::thread_t m_monitor_thread;
+    HostThread m_operation_thread;
+    HostThread m_monitor_thread;
     lldb::pid_t m_pid;
 
     int m_terminal_fd;

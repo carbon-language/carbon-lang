@@ -589,6 +589,14 @@
 		3FDFE53119A292F0009756A7 /* HostInfoPosix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFE53019A292F0009756A7 /* HostInfoPosix.cpp */; };
 		3FDFE53319A29304009756A7 /* HostInfoPosix.h in Headers */ = {isa = PBXBuildFile; fileRef = 3FDFE53219A29304009756A7 /* HostInfoPosix.h */; };
 		3FDFE53519A29327009756A7 /* HostInfoBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFE53419A29327009756A7 /* HostInfoBase.cpp */; };
+		3FDFE56C19AF9C44009756A7 /* HostProcessPosix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFE56A19AF9C44009756A7 /* HostProcessPosix.cpp */; };
+		3FDFE56D19AF9C44009756A7 /* HostThreadPosix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFE56B19AF9C44009756A7 /* HostThreadPosix.cpp */; };
+		3FDFED0B19B7C8DE009756A7 /* HostThreadMacOSX.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFED0519B7C898009756A7 /* HostThreadMacOSX.mm */; };
+		3FDFED0C19B7C8E7009756A7 /* ThisThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFED0619B7C898009756A7 /* ThisThread.cpp */; };
+		3FDFED0F19B7D269009756A7 /* ThisThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFED0D19B7D269009756A7 /* ThisThread.cpp */; };
+		3FDFED2719BA6D96009756A7 /* HostNativeThreadBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFED2419BA6D96009756A7 /* HostNativeThreadBase.cpp */; };
+		3FDFED2819BA6D96009756A7 /* HostThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFED2519BA6D96009756A7 /* HostThread.cpp */; };
+		3FDFED2919BA6D96009756A7 /* ThreadLauncher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFED2619BA6D96009756A7 /* ThreadLauncher.cpp */; };
 		449ACC98197DEA0B008D175E /* FastDemangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 449ACC96197DE9EC008D175E /* FastDemangle.cpp */; };
 		490A36C0180F0E6F00BA31F8 /* PlatformWindows.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490A36BD180F0E6F00BA31F8 /* PlatformWindows.cpp */; };
 		490A36C2180F0E9300BA31F8 /* PlatformWindows.h in Headers */ = {isa = PBXBuildFile; fileRef = 490A36BE180F0E6F00BA31F8 /* PlatformWindows.h */; };
@@ -1759,7 +1767,7 @@
 		3FDFDDC1199D34E2009756A7 /* FileSystem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FileSystem.h; path = include/lldb/Host/FileSystem.h; sourceTree = "<group>"; };
 		3FDFDDC5199D37ED009756A7 /* FileSystem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileSystem.cpp; path = source/Host/posix/FileSystem.cpp; sourceTree = "<group>"; };
 		3FDFE52B19A2917A009756A7 /* HostInfoMacOSX.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = HostInfoMacOSX.mm; path = source/Host/macosx/HostInfoMacOSX.mm; sourceTree = "<group>"; };
-		3FDFE52D19A291AF009756A7 /* HostInfoMacOSX.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostInfoMacOSX.h; path = include/lldb/Host/macosx/HostInfoMacOSX.h; sourceTree = "<group>"; };
+		3FDFE52D19A291AF009756A7 /* HostInfoMacOSX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HostInfoMacOSX.h; path = include/lldb/Host/macosx/HostInfoMacOSX.h; sourceTree = "<group>"; };
 		3FDFE53019A292F0009756A7 /* HostInfoPosix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HostInfoPosix.cpp; path = source/Host/posix/HostInfoPosix.cpp; sourceTree = "<group>"; };
 		3FDFE53219A29304009756A7 /* HostInfoPosix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HostInfoPosix.h; path = include/lldb/Host/posix/HostInfoPosix.h; sourceTree = "<group>"; };
 		3FDFE53419A29327009756A7 /* HostInfoBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HostInfoBase.cpp; sourceTree = "<group>"; };
@@ -1782,6 +1790,38 @@
 		3FDFE54919A2946B009756A7 /* HostInfoWindows.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostInfoWindows.h; path = include/lldb/Host/windows/HostInfoWindows.h; sourceTree = "<group>"; };
 		3FDFE54A19A2946B009756A7 /* win32.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = win32.h; path = include/lldb/Host/windows/win32.h; sourceTree = "<group>"; };
 		3FDFE54B19A2946B009756A7 /* windows.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = windows.h; path = include/lldb/Host/windows/windows.h; sourceTree = "<group>"; };
+		3FDFE55E19AF9B14009756A7 /* Host.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Host.cpp; path = source/Host/freebsd/Host.cpp; sourceTree = "<group>"; };
+		3FDFE55F19AF9B14009756A7 /* HostThreadFreeBSD.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = HostThreadFreeBSD.cpp; path = source/Host/freebsd/HostThreadFreeBSD.cpp; sourceTree = "<group>"; };
+		3FDFE56019AF9B39009756A7 /* HostThreadFreeBSD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HostThreadFreeBSD.h; path = include/lldb/Host/freebsd/HostThreadFreeBSD.h; sourceTree = "<group>"; };
+		3FDFE56219AF9B60009756A7 /* HostThreadLinux.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HostThreadLinux.cpp; sourceTree = "<group>"; };
+		3FDFE56319AF9B77009756A7 /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = include/lldb/Host/linux/Config.h; sourceTree = SOURCE_ROOT; };
+		3FDFE56419AF9B77009756A7 /* HostInfoLinux.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostInfoLinux.h; path = include/lldb/Host/linux/HostInfoLinux.h; sourceTree = SOURCE_ROOT; };
+		3FDFE56519AF9B77009756A7 /* HostThreadLinux.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostThreadLinux.h; path = include/lldb/Host/linux/HostThreadLinux.h; sourceTree = SOURCE_ROOT; };
+		3FDFE56619AF9BB2009756A7 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Config.h; path = include/lldb/Host/macosx/Config.h; sourceTree = "<group>"; };
+		3FDFE56719AF9BB2009756A7 /* HostThreadMacOSX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HostThreadMacOSX.h; path = include/lldb/Host/macosx/HostThreadMacOSX.h; sourceTree = "<group>"; };
+		3FDFE56A19AF9C44009756A7 /* HostProcessPosix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HostProcessPosix.cpp; path = source/Host/posix/HostProcessPosix.cpp; sourceTree = "<group>"; };
+		3FDFE56B19AF9C44009756A7 /* HostThreadPosix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HostThreadPosix.cpp; path = source/Host/posix/HostThreadPosix.cpp; sourceTree = "<group>"; };
+		3FDFE56E19AF9C5A009756A7 /* HostProcessPosix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HostProcessPosix.h; path = include/lldb/Host/posix/HostProcessPosix.h; sourceTree = "<group>"; };
+		3FDFE56F19AF9C5A009756A7 /* HostThreadPosix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HostThreadPosix.h; path = include/lldb/Host/posix/HostThreadPosix.h; sourceTree = "<group>"; };
+		3FDFE57019AF9CA0009756A7 /* HostProcessWindows.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = HostProcessWindows.cpp; path = source/Host/windows/HostProcessWindows.cpp; sourceTree = "<group>"; };
+		3FDFE57119AF9CA0009756A7 /* HostThreadWindows.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = HostThreadWindows.cpp; path = source/Host/windows/HostThreadWindows.cpp; sourceTree = "<group>"; };
+		3FDFE57219AF9CD3009756A7 /* HostProcessWindows.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostProcessWindows.h; path = include/lldb/Host/windows/HostProcessWindows.h; sourceTree = "<group>"; };
+		3FDFE57319AF9CD3009756A7 /* HostThreadWindows.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostThreadWindows.h; path = include/lldb/Host/windows/HostThreadWindows.h; sourceTree = "<group>"; };
+		3FDFE57419AFABFD009756A7 /* HostProcess.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostProcess.h; path = include/lldb/Host/HostProcess.h; sourceTree = "<group>"; };
+		3FDFE57519AFABFD009756A7 /* HostThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostThread.h; path = include/lldb/Host/HostThread.h; sourceTree = "<group>"; };
+		3FDFED0519B7C898009756A7 /* HostThreadMacOSX.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = HostThreadMacOSX.mm; path = source/Host/macosx/HostThreadMacOSX.mm; sourceTree = "<group>"; };
+		3FDFED0619B7C898009756A7 /* ThisThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThisThread.cpp; path = source/Host/macosx/ThisThread.cpp; sourceTree = "<group>"; };
+		3FDFED0919B7C8C7009756A7 /* ThisThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ThisThread.h; path = include/lldb/Host/ThisThread.h; sourceTree = "<group>"; };
+		3FDFED0D19B7D269009756A7 /* ThisThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThisThread.cpp; path = source/Host/common/ThisThread.cpp; sourceTree = "<group>"; };
+		3FDFED1E19BA6D55009756A7 /* Debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Debug.h; path = include/lldb/Host/Debug.h; sourceTree = "<group>"; };
+		3FDFED1F19BA6D55009756A7 /* HostGetOpt.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostGetOpt.h; path = include/lldb/Host/HostGetOpt.h; sourceTree = "<group>"; };
+		3FDFED2019BA6D55009756A7 /* HostNativeThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostNativeThread.h; path = include/lldb/Host/HostNativeThread.h; sourceTree = "<group>"; };
+		3FDFED2119BA6D55009756A7 /* HostNativeThreadBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostNativeThreadBase.h; path = include/lldb/Host/HostNativeThreadBase.h; sourceTree = "<group>"; };
+		3FDFED2219BA6D55009756A7 /* ProcessRunLock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ProcessRunLock.h; path = include/lldb/Host/ProcessRunLock.h; sourceTree = "<group>"; };
+		3FDFED2319BA6D55009756A7 /* ThreadLauncher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ThreadLauncher.h; path = include/lldb/Host/ThreadLauncher.h; sourceTree = "<group>"; };
+		3FDFED2419BA6D96009756A7 /* HostNativeThreadBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HostNativeThreadBase.cpp; sourceTree = "<group>"; };
+		3FDFED2519BA6D96009756A7 /* HostThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HostThread.cpp; sourceTree = "<group>"; };
+		3FDFED2619BA6D96009756A7 /* ThreadLauncher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadLauncher.cpp; sourceTree = "<group>"; };
 		449ACC96197DE9EC008D175E /* FastDemangle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FastDemangle.cpp; path = source/Core/FastDemangle.cpp; sourceTree = "<group>"; };
 		4906FD4012F2255300A2A77C /* ASTDumper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTDumper.cpp; path = source/Expression/ASTDumper.cpp; sourceTree = "<group>"; };
 		4906FD4412F2257600A2A77C /* ASTDumper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTDumper.h; path = include/lldb/Expression/ASTDumper.h; sourceTree = "<group>"; };
@@ -2331,9 +2371,13 @@
 		233B009C19610D130090E598 /* linux */ = {
 			isa = PBXGroup;
 			children = (
+				3FDFE56319AF9B77009756A7 /* Config.h */,
 				233B009D19610D6B0090E598 /* Host.cpp */,
 				237C577A19AF9D9F00213D59 /* HostInfoLinux.h */,
 				3FDFE53619A2933E009756A7 /* HostInfoLinux.cpp */,
+				3FDFE56419AF9B77009756A7 /* HostInfoLinux.h */,
+				3FDFE56219AF9B60009756A7 /* HostThreadLinux.cpp */,
+				3FDFE56519AF9B77009756A7 /* HostThreadLinux.h */,
 			);
 			name = linux;
 			path = source/Host/linux;
@@ -3526,6 +3570,7 @@
 				3FDFE53E19A2940E009756A7 /* windows */,
 				26BC7DD210F1B7D500F91463 /* Condition.h */,
 				266F5CBB12FC846200DFCE33 /* Config.h */,
+				3FDFED1E19BA6D55009756A7 /* Debug.h */,
 				26CFDCA01861638D000E63E5 /* Editline.h */,
 				26BC7DD310F1B7D500F91463 /* Endian.h */,
 				260C6EA013011578005E16B0 /* File.h */,
@@ -3534,8 +3579,13 @@
 				26FA4315130103F400E71120 /* FileSpec.h */,
 				3FDFDDC1199D34E2009756A7 /* FileSystem.h */,
 				26BC7DD410F1B7D500F91463 /* Host.h */,
+				3FDFED1F19BA6D55009756A7 /* HostGetOpt.h */,
 				3FDFE53719A2936B009756A7 /* HostInfo.h */,
 				3FDFE53819A2936B009756A7 /* HostInfoBase.h */,
+				3FDFED2019BA6D55009756A7 /* HostNativeThread.h */,
+				3FDFED2119BA6D55009756A7 /* HostNativeThreadBase.h */,
+				3FDFE57419AFABFD009756A7 /* HostProcess.h */,
+				3FDFE57519AFABFD009756A7 /* HostThread.h */,
 				236124A61986B50E004EFC37 /* IOObject.h */,
 				26BC7DD510F1B7D500F91463 /* Mutex.h */,
 				232CB60B191E00CC00EF39FC /* NativeBreakpoint.cpp */,
@@ -3549,6 +3599,7 @@
 				A36FF33D17D8E98800244D40 /* OptionParser.h */,
 				260A39A519647A3A004B4130 /* Pipe.h */,
 				26BC7DD610F1B7D500F91463 /* Predicate.h */,
+				3FDFED2219BA6D55009756A7 /* ProcessRunLock.h */,
 				236124A71986B50E004EFC37 /* Socket.h */,
 				26D7E45B13D5E2F9007FD12B /* SocketAddress.h */,
 				26D7E45C13D5E30A007FD12B /* SocketAddress.cpp */,
@@ -3556,6 +3607,9 @@
 				232CB614191E00CD00EF39FC /* SoftwareBreakpoint.h */,
 				2689B0A4113EE3CD00A4AEDB /* Symbols.h */,
 				268DA871130095D000C9483A /* Terminal.h */,
+				3FDFED0D19B7D269009756A7 /* ThisThread.cpp */,
+				3FDFED0919B7C8C7009756A7 /* ThisThread.h */,
+				3FDFED2319BA6D55009756A7 /* ThreadLauncher.h */,
 				26B4E26E112F35F700AB3F64 /* TimeValue.h */,
 			);
 			name = Host;
@@ -3775,8 +3829,7 @@
 		26BC7EE510F1B88100F91463 /* MacOSX */ = {
 			isa = PBXGroup;
 			children = (
-				3FDFE52D19A291AF009756A7 /* HostInfoMacOSX.h */,
-				3FDFE52B19A2917A009756A7 /* HostInfoMacOSX.mm */,
+				3FDFE56619AF9BB2009756A7 /* Config.h */,
 				26BC7EED10F1B8AD00F91463 /* CFCBundle.cpp */,
 				26BC7EEE10F1B8AD00F91463 /* CFCBundle.h */,
 				26BC7EEF10F1B8AD00F91463 /* CFCData.cpp */,
@@ -3791,7 +3844,12 @@
 				26BC7EF810F1B8AD00F91463 /* CFCString.cpp */,
 				26BC7EF910F1B8AD00F91463 /* CFCString.h */,
 				26BC7EE810F1B88F00F91463 /* Host.mm */,
+				3FDFE52B19A2917A009756A7 /* HostInfoMacOSX.mm */,
+				3FDFE52D19A291AF009756A7 /* HostInfoMacOSX.h */,
+				3FDFED0519B7C898009756A7 /* HostThreadMacOSX.mm */,
+				3FDFE56719AF9BB2009756A7 /* HostThreadMacOSX.h */,
 				2689B0B5113EE47E00A4AEDB /* Symbols.cpp */,
+				3FDFED0619B7C898009756A7 /* ThisThread.cpp */,
 				EDC6D49114E5C15C001B75F8 /* launcherXPCService */,
 			);
 			name = MacOSX;
@@ -3991,8 +4049,12 @@
 		3FDFDDC4199D37BE009756A7 /* posix */ = {
 			isa = PBXGroup;
 			children = (
-				3FDFE53219A29304009756A7 /* HostInfoPosix.h */,
 				3FDFE53019A292F0009756A7 /* HostInfoPosix.cpp */,
+				3FDFE53219A29304009756A7 /* HostInfoPosix.h */,
+				3FDFE56A19AF9C44009756A7 /* HostProcessPosix.cpp */,
+				3FDFE56E19AF9C5A009756A7 /* HostProcessPosix.h */,
+				3FDFE56B19AF9C44009756A7 /* HostThreadPosix.cpp */,
+				3FDFE56F19AF9C5A009756A7 /* HostThreadPosix.h */,
 				3FDFDDC5199D37ED009756A7 /* FileSystem.cpp */,
 			);
 			name = posix;
@@ -4002,8 +4064,11 @@
 			isa = PBXGroup;
 			children = (
 				3FDFE53C19A293CA009756A7 /* Config.h */,
-				3FDFE53D19A293CA009756A7 /* HostInfoFreeBSD.h */,
+				3FDFE55E19AF9B14009756A7 /* Host.cpp */,
 				3FDFE53B19A293B3009756A7 /* HostInfoFreeBSD.cpp */,
+				3FDFE53D19A293CA009756A7 /* HostInfoFreeBSD.h */,
+				3FDFE55F19AF9B14009756A7 /* HostThreadFreeBSD.cpp */,
+				3FDFE56019AF9B39009756A7 /* HostThreadFreeBSD.h */,
 			);
 			name = freebsd;
 			sourceTree = "<group>";
@@ -4017,13 +4082,17 @@
 				3FDFE54019A29448009756A7 /* EditLineWin.cpp */,
 				3FDFE54119A29448009756A7 /* FileSystem.cpp */,
 				3FDFE54219A29448009756A7 /* Host.cpp */,
-				3FDFE54919A2946B009756A7 /* HostInfoWindows.h */,
 				3FDFE54319A29448009756A7 /* HostInfoWindows.cpp */,
+				3FDFE54919A2946B009756A7 /* HostInfoWindows.h */,
+				3FDFE57019AF9CA0009756A7 /* HostProcessWindows.cpp */,
+				3FDFE57219AF9CD3009756A7 /* HostProcessWindows.h */,
+				3FDFE57119AF9CA0009756A7 /* HostThreadWindows.cpp */,
+				3FDFE57319AF9CD3009756A7 /* HostThreadWindows.h */,
 				3FDFE54419A29448009756A7 /* Mutex.cpp */,
 				3FDFE54519A29448009756A7 /* ProcessRunLock.cpp */,
 				3FDFE54A19A2946B009756A7 /* win32.h */,
-				3FDFE54B19A2946B009756A7 /* windows.h */,
 				3FDFE54619A29448009756A7 /* Windows.cpp */,
+				3FDFE54B19A2946B009756A7 /* windows.h */,
 			);
 			name = windows;
 			sourceTree = "<group>";
@@ -4125,6 +4194,8 @@
 				69A01E1B1236C5D400C660B5 /* Condition.cpp */,
 				69A01E1C1236C5D400C660B5 /* Host.cpp */,
 				3FDFE53419A29327009756A7 /* HostInfoBase.cpp */,
+				3FDFED2419BA6D96009756A7 /* HostNativeThreadBase.cpp */,
+				3FDFED2519BA6D96009756A7 /* HostThread.cpp */,
 				236124A21986B4E2004EFC37 /* IOObject.cpp */,
 				69A01E1E1236C5D400C660B5 /* Mutex.cpp */,
 				A36FF33B17D8E94600244D40 /* OptionParser.cpp */,
@@ -4133,6 +4204,7 @@
 				236124A31986B4E2004EFC37 /* Socket.cpp */,
 				69A01E1F1236C5D400C660B5 /* Symbols.cpp */,
 				268DA873130095ED00C9483A /* Terminal.cpp */,
+				3FDFED2619BA6D96009756A7 /* ThreadLauncher.cpp */,
 				69A01E201236C5D400C660B5 /* TimeValue.cpp */,
 			);
 			name = common;
@@ -4953,6 +5025,7 @@
 				8C2D6A53197A1EAF006989C9 /* MemoryHistory.cpp in Sources */,
 				2689005D13353E0400698AC0 /* VMRange.cpp in Sources */,
 				2689005E13353E0E00698AC0 /* ClangASTSource.cpp in Sources */,
+				3FDFED0F19B7D269009756A7 /* ThisThread.cpp in Sources */,
 				2689005F13353E0E00698AC0 /* ClangFunction.cpp in Sources */,
 				2689006013353E0E00698AC0 /* ClangExpressionDeclMap.cpp in Sources */,
 				2689006113353E0E00698AC0 /* ClangExpressionParser.cpp in Sources */,
@@ -5022,6 +5095,7 @@
 				AF1729D6182C907200E0AB97 /* HistoryThread.cpp in Sources */,
 				268900AF13353E5000698AC0 /* UnwindLLDB.cpp in Sources */,
 				268900B013353E5000698AC0 /* RegisterContextLLDB.cpp in Sources */,
+				3FDFE56C19AF9C44009756A7 /* HostProcessPosix.cpp in Sources */,
 				268900B413353E5000698AC0 /* RegisterContextMacOSXFrameBackchain.cpp in Sources */,
 				268900B513353E5000698AC0 /* StopInfoMachException.cpp in Sources */,
 				268900B613353E5000698AC0 /* UnwindMacOSXFrameBackchain.cpp in Sources */,
@@ -5078,6 +5152,7 @@
 				268900E013353E6F00698AC0 /* SymbolVendor.cpp in Sources */,
 				268900E113353E6F00698AC0 /* Symtab.cpp in Sources */,
 				268900E213353E6F00698AC0 /* Type.cpp in Sources */,
+				3FDFED2719BA6D96009756A7 /* HostNativeThreadBase.cpp in Sources */,
 				268900E313353E6F00698AC0 /* TypeList.cpp in Sources */,
 				268900E413353E6F00698AC0 /* UnwindPlan.cpp in Sources */,
 				268900E513353E6F00698AC0 /* UnwindTable.cpp in Sources */,
@@ -5114,11 +5189,13 @@
 				232CB61B191E00CD00EF39FC /* NativeThreadProtocol.cpp in Sources */,
 				2689010113353E6F00698AC0 /* ThreadPlanStepOut.cpp in Sources */,
 				2689010213353E6F00698AC0 /* ThreadPlanStepOverBreakpoint.cpp in Sources */,
+				3FDFED2919BA6D96009756A7 /* ThreadLauncher.cpp in Sources */,
 				232CB617191E00CD00EF39FC /* NativeBreakpointList.cpp in Sources */,
 				232CB615191E00CD00EF39FC /* NativeBreakpoint.cpp in Sources */,
 				2689010313353E6F00698AC0 /* ThreadPlanStepRange.cpp in Sources */,
 				2689010413353E6F00698AC0 /* ThreadPlanStepInRange.cpp in Sources */,
 				2689010513353E6F00698AC0 /* ThreadPlanStepOverRange.cpp in Sources */,
+				3FDFE56D19AF9C44009756A7 /* HostThreadPosix.cpp in Sources */,
 				2689010613353E6F00698AC0 /* ThreadPlanRunToAddress.cpp in Sources */,
 				2689010713353E6F00698AC0 /* ThreadPlanStepThrough.cpp in Sources */,
 				2689010813353E6F00698AC0 /* ThreadPlanStepUntil.cpp in Sources */,
@@ -5142,6 +5219,7 @@
 				264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */,
 				2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */,
 				26651A18133BF9E0005B64B7 /* Opcode.cpp in Sources */,
+				3FDFED0B19B7C8DE009756A7 /* HostThreadMacOSX.mm in Sources */,
 				266603CA1345B5A8004DA8B6 /* ConnectionSharedMemory.cpp in Sources */,
 				2671A0D013482601003A87BB /* ConnectionMachPort.cpp in Sources */,
 				4CABA9E0134A8BCD00539BDD /* ValueObjectMemory.cpp in Sources */,
@@ -5214,6 +5292,7 @@
 				26954EBE1401EE8B00294D09 /* DynamicRegisterInfo.cpp in Sources */,
 				26274FA714030F79006BA130 /* DynamicLoaderDarwinKernel.cpp in Sources */,
 				94FA3DE01405D50400833217 /* ValueObjectConstResultChild.cpp in Sources */,
+				3FDFED2819BA6D96009756A7 /* HostThread.cpp in Sources */,
 				949ADF031406F648004833E1 /* ValueObjectConstResultImpl.cpp in Sources */,
 				B27318421416AC12006039C8 /* WatchpointList.cpp in Sources */,
 				26CFDCA3186163A4000E63E5 /* Editline.cpp in Sources */,
@@ -5247,6 +5326,7 @@
 				260CC64915D0440D002BF2E0 /* OptionValueArray.cpp in Sources */,
 				260CC64A15D0440D002BF2E0 /* OptionValueBoolean.cpp in Sources */,
 				260CC64B15D0440D002BF2E0 /* OptionValueProperties.cpp in Sources */,
+				3FDFED0C19B7C8E7009756A7 /* ThisThread.cpp in Sources */,
 				260CC64C15D0440D002BF2E0 /* OptionValueDictionary.cpp in Sources */,
 				49DCF6FE170E6B4A0092F75E /* IRMemoryMap.cpp in Sources */,
 				260CC64D15D0440D002BF2E0 /* OptionValueEnumeration.cpp in Sources */,

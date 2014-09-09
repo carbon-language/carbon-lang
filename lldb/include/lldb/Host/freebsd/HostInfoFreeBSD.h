@@ -19,6 +19,7 @@ namespace lldb_private
 class HostInfoFreeBSD : public HostInfoPosix
 {
   public:
+    static uint32_t GetMaxThreadNameLength();
     static bool GetOSVersion(uint32_t &major, uint32_t &minor, uint32_t &update);
     static bool GetOSBuildString(std::string &s);
     static bool GetOSKernelDescription(std::string &s);

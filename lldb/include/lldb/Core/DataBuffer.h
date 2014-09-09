@@ -14,6 +14,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "lldb/lldb-types.h"
+
 namespace lldb_private {
 
 //----------------------------------------------------------------------

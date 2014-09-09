@@ -110,12 +110,6 @@ Host::GetAuxvData(lldb_private::Process *process)
     return 0;
 }
 
-std::string
-Host::GetThreadName (lldb::pid_t pid, lldb::tid_t tid)
-{
-    return std::string();
-}
-
 lldb::tid_t
 Host::GetCurrentThreadID()
 {
@@ -126,26 +120,6 @@ lldb::thread_t
 Host::GetCurrentThread ()
 {
     return lldb::thread_t(::GetCurrentThread());
-}
-
-bool
-Host::ThreadCancel (lldb::thread_t thread, Error *error)
-{
-    int err = ::TerminateThread((HANDLE)thread, 0);
-    return err == 0;
-}
-
-bool
-Host::ThreadDetach (lldb::thread_t thread, Error *error)
-{
-    return ThreadCancel(thread, error);
-}
-
-bool
-Host::ThreadJoin (lldb::thread_t thread, thread_result_t *thread_result_ptr, Error *error)
-{
-    WaitForSingleObject((HANDLE) thread, INFINITE);
-    return true;
 }
 
 lldb::thread_key_t
@@ -164,19 +138,6 @@ void
 Host::ThreadLocalStorageSet(lldb::thread_key_t key, void *value)
 {
    ::TlsSetValue (key, value);
-}
-
-bool
-Host::SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name)
-{
-    return false;
-}
-
-bool
-Host::SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid,
-                          const char *thread_name, size_t len)
-{
-    return false;
 }
 
 void
@@ -260,14 +221,8 @@ Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
     return true;
 }
 
-lldb::thread_t
-Host::StartMonitoringChildProcess
-(
-    Host::MonitorChildProcessCallback callback,
-    void *callback_baton,
-    lldb::pid_t pid,
-    bool monitor_signals
-)
+HostThread
+Host::StartMonitoringChildProcess(Host::MonitorChildProcessCallback callback, void *callback_baton, lldb::pid_t pid, bool monitor_signals)
 {
-    return LLDB_INVALID_HOST_THREAD;
+    return HostThread();
 }

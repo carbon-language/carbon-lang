@@ -21,6 +21,7 @@
 #include "lldb/Core/StringList.h"
 #include "lldb/Host/File.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Host/HostThread.h"
 
 namespace lldb_private {
 
@@ -37,9 +38,6 @@ class ProcessLaunchInfo;
 class Host
 {
 public:
-
-    /// A value of std::numeric_limits<uint32_t>::max() is used if there is no practical limit.
-    static const uint32_t MAX_THREAD_NAME_LENGTH;
 
     typedef bool (*MonitorChildProcessCallback) (void *callback_baton,
                                                  lldb::pid_t pid,
@@ -86,11 +84,8 @@ public:
     ///
     /// @see static void Host::StopMonitoringChildProcess (uint32_t)
     //------------------------------------------------------------------
-    static lldb::thread_t
-    StartMonitoringChildProcess (MonitorChildProcessCallback callback,
-                                 void *callback_baton,
-                                 lldb::pid_t pid,
-                                 bool monitor_signals);
+    static HostThread StartMonitoringChildProcess(MonitorChildProcessCallback callback, void *callback_baton, lldb::pid_t pid,
+                                                  bool monitor_signals);
 
     enum SystemLogType
     {
@@ -140,36 +135,6 @@ public:
 
     static void
     WillTerminate ();
-    //------------------------------------------------------------------
-    /// Host specific thread created function call.
-    ///
-    /// This function call lets the current host OS do any thread
-    /// specific initialization that it needs, including naming the
-    /// thread. No cleanup routine is expected to be called
-    ///
-    /// @param[in] name
-    ///     The current thread's name in the current process.
-    //------------------------------------------------------------------
-    static void
-    ThreadCreated (const char *name);
-
-    static lldb::thread_t
-    ThreadCreate (const char *name,
-                  lldb::thread_func_t function,
-                  lldb::thread_arg_t thread_arg,
-                  Error *err);
-
-    static bool
-    ThreadCancel (lldb::thread_t thread,
-                  Error *error);
-
-    static bool
-    ThreadDetach (lldb::thread_t thread,
-                  Error *error);
-    static bool
-    ThreadJoin (lldb::thread_t thread,
-                lldb::thread_result_t *thread_result_ptr,
-                Error *error);
 
     typedef void (*ThreadLocalStorageCleanupCallback) (void *p);
 
@@ -182,65 +147,6 @@ public:
     static void
     ThreadLocalStorageSet(lldb::thread_key_t key, void *value);
 
-    //------------------------------------------------------------------
-    /// Gets the name of a thread in a process.
-    ///
-    /// This function will name a thread in a process using it's own
-    /// thread name pool, and also will attempt to set a thread name
-    /// using any supported host OS APIs.
-    ///
-    /// @param[in] pid
-    ///     The process ID in which we are trying to get the name of
-    ///     a thread.
-    ///
-    /// @param[in] tid
-    ///     The thread ID for which we are trying retrieve the name of.
-    ///
-    /// @return
-    ///     A std::string containing the thread name.
-    //------------------------------------------------------------------
-    static std::string
-    GetThreadName (lldb::pid_t pid, lldb::tid_t tid);
-
-    //------------------------------------------------------------------
-    /// Sets the name of a thread in the current process.
-    ///
-    /// @param[in] pid
-    ///     The process ID in which we are trying to name a thread.
-    ///
-    /// @param[in] tid
-    ///     The thread ID which we are trying to name.
-    ///
-    /// @param[in] name
-    ///     The current thread's name in the current process to \a name.
-    ///
-    /// @return
-    ///     \b true if the thread name was able to be set, \b false
-    ///     otherwise.
-    //------------------------------------------------------------------
-    static bool
-    SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name);
-
-    //------------------------------------------------------------------
-    /// Sets a shortened name of a thread in the current process.
-    ///
-    /// @param[in] pid
-    ///     The process ID in which we are trying to name a thread.
-    ///
-    /// @param[in] tid
-    ///     The thread ID which we are trying to name.
-    ///
-    /// @param[in] name
-    ///     The current thread's name in the current process to \a name.
-    ///
-    /// @param[in] len
-    ///     The maximum length for the thread's shortened name.
-    ///
-    /// @return
-    ///     \b true if the thread name was able to be set, \b false
-    ///     otherwise.
-    static bool
-    SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name, size_t len);
 
     //------------------------------------------------------------------
     /// Given an address in the current process (the process that

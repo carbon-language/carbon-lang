@@ -38,6 +38,7 @@
 #include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostThread.h"
 #include "lldb/Host/ProcessRunLock.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/Options.h"
@@ -2909,7 +2910,7 @@ public:
     ProcessRunLock &
     GetRunLock ()
     {
-        if (Host::GetCurrentThread() == m_private_state_thread)
+        if (m_private_state_thread.EqualsThread(Host::GetCurrentThread()))
             return m_private_run_lock;
         else
             return m_public_run_lock;
@@ -3007,7 +3008,7 @@ protected:
     bool
     PrivateStateThreadIsValid () const
     {
-        return IS_VALID_LLDB_HOST_THREAD(m_private_state_thread);
+        return m_private_state_thread.GetState() != eThreadStateInvalid;
     }
     
     void
@@ -3042,7 +3043,7 @@ protected:
     Broadcaster                 m_private_state_control_broadcaster; // This is the control broadcaster, used to pause, resume & stop the private state thread.
     Listener                    m_private_state_listener;     // This is the listener for the private state thread.
     Predicate<bool>             m_private_state_control_wait; /// This Predicate is used to signal that a control operation is complete.
-    lldb::thread_t              m_private_state_thread;  // Thread ID for the thread that watches internal state events
+    HostThread m_private_state_thread;                        // Thread ID for the thread that watches internal state events
     ProcessModID                m_mod_id;               ///< Tracks the state of the process over stops and other alterations.
     uint32_t                    m_process_unique_id;    ///< Each lldb_private::Process class that is created gets a unique integer ID that increments with each new instance
     uint32_t                    m_thread_index_id;      ///< Each thread is created with a 1 based index that won't get re-used.

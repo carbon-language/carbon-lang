@@ -25,6 +25,7 @@
 #include "lldb/Core/StringList.h"
 #include "lldb/Core/StructuredData.h"
 #include "lldb/Core/ThreadSafeValue.h"
+#include "lldb/Host/HostThread.h"
 #include "lldb/lldb-private-forward.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
@@ -324,13 +325,6 @@ protected:
         eBroadcastBitAsyncThreadShouldExit          = (1 << 1),
         eBroadcastBitAsyncThreadDidExit             = (1 << 2)
     };
-
-    typedef enum AsyncThreadState
-    {
-        eAsyncThreadNotStarted,
-        eAsyncThreadRunning,
-        eAsyncThreadDone
-    } AsyncThreadState;
     
     lldb_private::Flags m_flags;            // Process specific flags (see eFlags enums)
     GDBRemoteCommunicationClient m_gdb_comm;
@@ -339,8 +333,7 @@ protected:
     lldb_private::Mutex m_last_stop_packet_mutex;
     GDBRemoteDynamicRegisterInfo m_register_info;
     lldb_private::Broadcaster m_async_broadcaster;
-    lldb::thread_t m_async_thread;
-    AsyncThreadState m_async_thread_state;
+    lldb_private::HostThread m_async_thread;
     lldb_private::Mutex m_async_thread_state_mutex;
     typedef std::vector<lldb::tid_t> tid_collection;
     typedef std::vector< std::pair<lldb::tid_t,int> > tid_sig_collection;

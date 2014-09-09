@@ -13,6 +13,12 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
+#include "lldb/Host/HostThread.h"
+#include "lldb/Host/ThreadLauncher.h"
+
+#if !defined(_WIN32)
+#include "lldb/Host/HostNativeThread.h"
+#endif
 
 using namespace lldb;
 using namespace lldb_private;
@@ -69,31 +75,54 @@ SBHostOS::ThreadCreate
 
     // FIXME: You should log the return value?
 
-    return Host::ThreadCreate (name, thread_function, thread_arg, error_ptr ? error_ptr->get() : NULL);
+    HostThread thread(ThreadLauncher::LaunchThread(name, thread_function, thread_arg, error_ptr ? error_ptr->get() : NULL));
+    return thread.Release();
 }
 
 void
 SBHostOS::ThreadCreated (const char *name)
 {
-    Host::ThreadCreated (name);
 }
 
 bool
 SBHostOS::ThreadCancel (lldb::thread_t thread, SBError *error_ptr)
 {
-    return Host::ThreadCancel (thread, error_ptr ? error_ptr->get() : NULL);
+    Error error;
+    HostThread host_thread(thread);
+    error = host_thread.Cancel();
+    if (error_ptr)
+        error_ptr->SetError(error);
+    host_thread.Release();
+    return error.Success();
 }
 
 bool
 SBHostOS::ThreadDetach (lldb::thread_t thread, SBError *error_ptr)
 {
-    return Host::ThreadDetach (thread, error_ptr ? error_ptr->get() : NULL);
+    Error error;
+#if defined(_WIN32)
+    if (error_ptr)
+        error_ptr->SetErrorString("ThreadDetach is not supported on this platform");
+#else
+    HostThread host_thread(thread);
+    error = ((HostThreadPosix &)host_thread.GetNativeThread()).Detach();
+    if (error_ptr)
+        error_ptr->SetError(error);
+    host_thread.Release();
+#endif
+    return error.Success();
 }
 
 bool
 SBHostOS::ThreadJoin (lldb::thread_t thread, lldb::thread_result_t *result, SBError *error_ptr)
 {
-    return Host::ThreadJoin (thread, result, error_ptr ? error_ptr->get() : NULL);
+    Error error;
+    HostThread host_thread(thread);
+    error = host_thread.Join(result);
+    if (error_ptr)
+        error_ptr->SetError(error);
+    host_thread.Release();
+    return error.Success();
 }
 
 

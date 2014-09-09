@@ -94,6 +94,12 @@ HostInfoBase::GetNumberCPUS()
     return g_fields->m_number_cpus;
 }
 
+uint32_t
+HostInfoBase::GetMaxThreadNameLength()
+{
+    return 0;
+}
+
 llvm::StringRef
 HostInfoBase::GetVendorString()
 {

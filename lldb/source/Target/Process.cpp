@@ -27,8 +27,10 @@
 #include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/Pipe.h"
 #include "lldb/Host/Terminal.h"
+#include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/JITLoader.h"
@@ -680,7 +682,6 @@ Process::Process(Target &target, Listener &listener, const UnixSignalsSP &unix_s
     m_private_state_control_broadcaster (NULL, "lldb.process.internal_state_control_broadcaster"),
     m_private_state_listener ("lldb.process.internal_state_listener"),
     m_private_state_control_wait(),
-    m_private_state_thread (LLDB_INVALID_HOST_THREAD),
     m_mod_id (),
     m_process_unique_id(0),
     m_thread_index_id (0),
@@ -770,6 +771,11 @@ Process::~Process()
     if (log)
         log->Printf ("%p Process::~Process()", static_cast<void*>(this));
     StopPrivateStateThread();
+
+    // ThreadList::Clear() will try to acquire this process's mutex, so
+    // explicitly clear the thread list here to ensure that the mutex
+    // is not destroyed before the thread list.
+    m_thread_list.Clear();
 }
 
 const ProcessPropertiesSP &
@@ -3833,26 +3839,25 @@ Process::StartPrivateStateThread (bool force)
     // events make it to clients (into the DCProcess event queue).
     char thread_name[1024];
 
-    if (Host::MAX_THREAD_NAME_LENGTH <= 16)
+    if (HostInfo::GetMaxThreadNameLength() <= 30)
     {
-            // On platforms with abbreviated thread name lengths, choose thread names that fit within the limit.
-            if (already_running)
-                snprintf(thread_name, sizeof(thread_name), "intern-state-OV");
-            else
-                snprintf(thread_name, sizeof(thread_name), "intern-state");
+        // On platforms with abbreviated thread name lengths, choose thread names that fit within the limit.
+        if (already_running)
+            snprintf(thread_name, sizeof(thread_name), "intern-state-OV");
+        else
+            snprintf(thread_name, sizeof(thread_name), "intern-state");
     }
     else
     {
         if (already_running)
-                snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state-override(pid=%" PRIu64 ")>", GetID());
+            snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state-override(pid=%" PRIu64 ")>", GetID());
         else
-                snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state(pid=%" PRIu64 ")>", GetID());
+            snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state(pid=%" PRIu64 ")>", GetID());
     }
 
     // Create the private state thread, and start it running.
-    m_private_state_thread = Host::ThreadCreate (thread_name, Process::PrivateStateThread, this, NULL);
-    bool success = IS_VALID_LLDB_HOST_THREAD(m_private_state_thread);
-    if (success)
+    m_private_state_thread = ThreadLauncher::LaunchThread(thread_name, Process::PrivateStateThread, this, NULL);
+    if (m_private_state_thread.GetState() == eThreadStateRunning)
     {
         ResumePrivateStateThread();
         return true;
@@ -3901,8 +3906,8 @@ Process::ControlPrivateStateThread (uint32_t signal)
     // Signal the private state thread. First we should copy this is case the
     // thread starts exiting since the private state thread will NULL this out
     // when it exits
-    const lldb::thread_t private_state_thread = m_private_state_thread;
-    if (IS_VALID_LLDB_HOST_THREAD(private_state_thread))
+    HostThread private_state_thread(m_private_state_thread);
+    if (private_state_thread.GetState() == eThreadStateRunning)
     {
         TimeValue timeout_time;
         bool timed_out;
@@ -3920,8 +3925,7 @@ Process::ControlPrivateStateThread (uint32_t signal)
         {
             if (timed_out)
             {
-                Error error;
-                Host::ThreadCancel (private_state_thread, &error);
+                Error error = private_state_thread.Cancel();
                 if (log)
                     log->Printf ("Timed out responding to the control event, cancel got error: \"%s\".", error.AsCString());
             }
@@ -3932,8 +3936,8 @@ Process::ControlPrivateStateThread (uint32_t signal)
             }
 
             thread_result_t result = NULL;
-            Host::ThreadJoin (private_state_thread, &result, NULL);
-            m_private_state_thread = LLDB_INVALID_HOST_THREAD;
+            private_state_thread.Join(&result);
+            m_private_state_thread.Reset();
         }
     }
     else
@@ -4177,7 +4181,7 @@ Process::RunPrivateStateThread ()
 
     m_public_run_lock.SetStopped();
     m_private_state_control_wait.SetValue (true, eBroadcastAlways);
-    m_private_state_thread = LLDB_INVALID_HOST_THREAD;
+    m_private_state_thread.Reset();
     return NULL;
 }
 
@@ -4954,12 +4958,12 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         selected_tid = LLDB_INVALID_THREAD_ID;
     }
 
-    lldb::thread_t backup_private_state_thread = LLDB_INVALID_HOST_THREAD;
+    HostThread backup_private_state_thread;
     lldb::StateType old_state;
     lldb::ThreadPlanSP stopper_base_plan_sp;
     
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_PROCESS));
-    if (Host::GetCurrentThread() == m_private_state_thread)
+    if (m_private_state_thread.EqualsThread(Host::GetCurrentThread()))
     {
         // Yikes, we are running on the private state thread!  So we can't wait for public events on this thread, since
         // we are the thread that is generating public events.
@@ -5564,7 +5568,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         }  // END WAIT LOOP
 
         // If we had to start up a temporary private state thread to run this thread plan, shut it down now.
-        if (IS_VALID_LLDB_HOST_THREAD(backup_private_state_thread))
+        if (backup_private_state_thread.GetState() != eThreadStateInvalid)
         {
             StopPrivateStateThread();
             Error error;

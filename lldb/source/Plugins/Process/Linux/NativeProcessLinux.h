@@ -21,6 +21,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/lldb-types.h"
 #include "lldb/Host/Debug.h"
+#include "lldb/Host/HostThread.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/MemoryRegionInfo.h"
 
@@ -170,8 +171,8 @@ namespace lldb_private
 
         lldb_private::ArchSpec m_arch;
 
-        lldb::thread_t m_operation_thread;
-        lldb::thread_t m_monitor_thread;
+        HostThread m_operation_thread;
+        HostThread m_monitor_thread;
 
         // current operation which must be executed on the priviliged thread
         void *m_operation;

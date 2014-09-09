@@ -241,6 +241,18 @@ typedef enum ExitType {
 } ExitType;
 
 //----------------------------------------------------------------------
+// State for running threads
+//----------------------------------------------------------------------
+enum ThreadState
+{
+    eThreadStateInvalid,    // The thread does not represent a current or past thread.
+    eThreadStateRunning,    // The thread is currently running.
+    eThreadStateExited,     // The thread's start routine returned normally.
+    eThreadStateCancelling, // The thread has been sent a cancellation request.
+    eThreadStateCancelled   // The thread was cancelled before completing normally.
+};
+
+//----------------------------------------------------------------------
 // Boolean result of running a Type Validator
 //----------------------------------------------------------------------
 enum class TypeValidatorResult : bool {

@@ -18,8 +18,12 @@
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
+#include "lldb/Host/HostNativeThread.h"
 #include "lldb/lldb-enumerations.h"
 #include "lldb/lldb-private-log.h"
+
+#include "llvm/ADT/SmallString.h"
+
 #include "Plugins/Process/Utility/RegisterContextLinux_arm64.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_i386.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_x86_64.h"
@@ -65,7 +69,9 @@ NativeThreadLinux::GetName()
         return "<unknown: no process>";
 
     // const NativeProcessLinux *const process = reinterpret_cast<NativeProcessLinux*> (process_sp->get ());
-    return Host::GetThreadName (process_sp->GetID (), GetID ()).c_str ();
+    llvm::SmallString<32> thread_name;
+    HostNativeThread::GetName(GetID(), thread_name);
+    return thread_name.c_str();
 }
 
 lldb::StateType

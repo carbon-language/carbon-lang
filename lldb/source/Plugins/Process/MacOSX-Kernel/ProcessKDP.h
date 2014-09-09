@@ -24,6 +24,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Core/ThreadSafeValue.h"
+#include "lldb/Host/HostThread.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 
@@ -246,7 +247,7 @@ protected:
     //------------------------------------------------------------------
     CommunicationKDP m_comm;
     lldb_private::Broadcaster m_async_broadcaster;
-    lldb::thread_t m_async_thread;
+    lldb_private::HostThread m_async_thread;
     lldb_private::ConstString m_dyld_plugin_name;
     lldb::addr_t m_kernel_load_addr;
     lldb::CommandObjectSP m_command_sp;

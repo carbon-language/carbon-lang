@@ -32,6 +32,8 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostThread.h"
+#include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Utility/PseudoTerminal.h"
@@ -1104,7 +1106,7 @@ WAIT_AGAIN:
     // Finally, start monitoring the child process for change in state.
     m_monitor_thread = Host::StartMonitoringChildProcess(
         ProcessMonitor::MonitorCallback, this, GetPID(), true);
-    if (!IS_VALID_LLDB_HOST_THREAD(m_monitor_thread))
+    if (m_monitor_thread.GetState() != eThreadStateRunning)
     {
         error.SetErrorToGenericError();
         error.SetErrorString("Process launch failed.");
@@ -1155,7 +1157,7 @@ WAIT_AGAIN:
     // Finally, start monitoring the child process for change in state.
     m_monitor_thread = Host::StartMonitoringChildProcess(
         ProcessMonitor::MonitorCallback, this, GetPID(), true);
-    if (!IS_VALID_LLDB_HOST_THREAD(m_monitor_thread))
+    if (m_monitor_thread.GetState() != eThreadStateRunning)
     {
         error.SetErrorToGenericError();
         error.SetErrorString("Process attach failed.");
@@ -1175,11 +1177,10 @@ ProcessMonitor::StartLaunchOpThread(LaunchArgs *args, Error &error)
 {
     static const char *g_thread_name = "lldb.process.linux.operation";
 
-    if (IS_VALID_LLDB_HOST_THREAD(m_operation_thread))
+    if (m_operation_thread.GetState() == eThreadStateRunning)
         return;
 
-    m_operation_thread =
-        Host::ThreadCreate(g_thread_name, LaunchOpThread, args, &error);
+    m_operation_thread = ThreadLauncher::LaunchThread(g_thread_name, LaunchOpThread, args, &error);
 }
 
 void *
@@ -1399,11 +1400,10 @@ ProcessMonitor::StartAttachOpThread(AttachArgs *args, lldb_private::Error &error
 {
     static const char *g_thread_name = "lldb.process.linux.operation";
 
-    if (IS_VALID_LLDB_HOST_THREAD(m_operation_thread))
+    if (m_operation_thread.GetState() == eThreadStateRunning)
         return;
 
-    m_operation_thread =
-        Host::ThreadCreate(g_thread_name, AttachOpThread, args, &error);
+    m_operation_thread = ThreadLauncher::LaunchThread(g_thread_name, AttachOpThread, args, &error);
 }
 
 void *
@@ -2373,13 +2373,11 @@ ProcessMonitor::DupDescriptor(const char *path, int fd, int flags)
 void
 ProcessMonitor::StopMonitoringChildProcess()
 {
-    lldb::thread_result_t thread_result;
-
-    if (IS_VALID_LLDB_HOST_THREAD(m_monitor_thread))
+    if (m_monitor_thread.GetState() == eThreadStateRunning)
     {
-        Host::ThreadCancel(m_monitor_thread, NULL);
-        Host::ThreadJoin(m_monitor_thread, &thread_result, NULL);
-        m_monitor_thread = LLDB_INVALID_HOST_THREAD;
+        m_monitor_thread.Cancel();
+        m_monitor_thread.Join(nullptr);
+        m_monitor_thread.Reset();
     }
 }
 
@@ -2400,12 +2398,10 @@ ProcessMonitor::StopMonitor()
 void
 ProcessMonitor::StopOpThread()
 {
-    lldb::thread_result_t result;
-
-    if (!IS_VALID_LLDB_HOST_THREAD(m_operation_thread))
+    if (m_operation_thread.GetState() != eThreadStateRunning)
         return;
 
-    Host::ThreadCancel(m_operation_thread, NULL);
-    Host::ThreadJoin(m_operation_thread, &result, NULL);
-    m_operation_thread = LLDB_INVALID_HOST_THREAD;
+    m_operation_thread.Cancel();
+    m_operation_thread.Join(nullptr);
+    m_operation_thread.Reset();
 }

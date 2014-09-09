@@ -20,11 +20,13 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostNativeThread.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/ThreadSpec.h"
+#include "llvm/ADT/SmallString.h"
 #include "POSIXStopInfo.h"
 #include "POSIXThread.h"
 #include "ProcessPOSIX.h"
@@ -140,7 +142,9 @@ POSIXThread::GetName ()
 {
     if (!m_thread_name_valid)
     {
-        SetName(Host::GetThreadName(GetProcess()->GetID(), GetID()).c_str());
+        llvm::SmallString<32> thread_name;
+        HostNativeThread::GetName(GetID(), thread_name);
+        m_thread_name = thread_name.c_str();
         m_thread_name_valid = true;
     }
 
