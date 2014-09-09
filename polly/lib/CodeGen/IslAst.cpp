@@ -249,7 +249,8 @@ astBuildAfterFor(__isl_take isl_ast_node *Node, __isl_keep isl_ast_build *Build,
     else
       Payload->IsInnermostParallel =
           astScheduleDimIsParallel(Build, BuildInfo->Deps, Payload);
-  } else if (Payload->IsOutermostParallel)
+  }
+  if (Payload->IsOutermostParallel)
     BuildInfo->InParallelFor = false;
 
   isl_id_free(Id);
