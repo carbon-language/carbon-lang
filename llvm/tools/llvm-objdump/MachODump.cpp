@@ -650,6 +650,9 @@ static void printUnwindRelocDest(const MachOObjectFile *Obj,
   StringRef Name;
   uint64_t Addend;
 
+  if (!Reloc.getObjectFile())
+    return;
+
   findUnwindRelocNameAddend(Obj, Symbols, Reloc, Addr, Name, Addend);
 
   outs() << Name;
