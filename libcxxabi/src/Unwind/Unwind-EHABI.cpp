@@ -218,11 +218,25 @@ extern "C" const uint32_t*
 decode_eht_entry(const uint32_t* data, size_t* off, size_t* len) {
   if ((*data & 0x80000000) == 0) {
     // 6.2: Generic Model
-    *off = 1; // First byte is size data.
-    *len = (((data[1] >> 24) & 0xff) + 1) * 4;
+    // EHT entry is a prel31 pointing to the PR, followed by data understood only
+    // by the personality routine. Since EHABI doesn't guarantee the location or
+    // availability of the unwind opcodes in the generic model, we have to check
+    // for them on a case-by-case basis:
+    _Unwind_Reason_Code __gxx_personality_v0(int version, _Unwind_Action actions,
+                                             uint64_t exceptionClass,
+                                             _Unwind_Exception* unwind_exception,
+                                             _Unwind_Context* context);
+    void *PR = (void*)signExtendPrel31(*data);
+    if (PR == &__gxx_personality_v0) {
+      *off = 1; // First byte is size data.
+      *len = (((data[1] >> 24) & 0xff) + 1) * 4;
+    } else
+      return nullptr;
     data++; // Skip the first word, which is the prel31 offset.
   } else {
     // 6.3: ARM Compact Model
+    // EHT entries here correspond to the __aeabi_unwind_cpp_pr[012] PRs indeded
+    // by format:
     Descriptor::Format format =
         static_cast<Descriptor::Format>((*data & 0x0f000000) >> 24);
     switch (format) {
