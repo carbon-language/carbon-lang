@@ -393,6 +393,8 @@ TEST(DeduplicateTest, removesDuplicates) {
   Input.push_back(Replacement("fileA", 50, 0, " foo ")); // Duplicate
   Input.push_back(Replacement("fileA", 51, 3, " bar "));
   Input.push_back(Replacement("fileB", 51, 3, " bar ")); // Filename differs!
+  Input.push_back(Replacement("fileB", 60, 1, " bar "));
+  Input.push_back(Replacement("fileA", 60, 2, " bar "));
   Input.push_back(Replacement("fileA", 51, 3, " moo ")); // Replacement text
                                                          // differs!
 
@@ -403,12 +405,14 @@ TEST(DeduplicateTest, removesDuplicates) {
   Expected.push_back(Replacement("fileA", 50, 0, " foo "));
   Expected.push_back(Replacement("fileA", 51, 3, " bar "));
   Expected.push_back(Replacement("fileA", 51, 3, " moo "));
-  Expected.push_back(Replacement("fileB", 51, 3, " bar "));
+  Expected.push_back(Replacement("fileB", 60, 1, " bar "));
+  Expected.push_back(Replacement("fileA", 60, 2, " bar "));
 
   std::vector<Range> Conflicts; // Ignored for this test
   deduplicate(Input, Conflicts);
 
-  ASSERT_TRUE(Expected == Input);
+  EXPECT_EQ(3U, Conflicts.size());
+  EXPECT_EQ(Expected, Input);
 }
 
 TEST(DeduplicateTest, detectsConflicts) {

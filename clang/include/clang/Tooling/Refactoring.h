@@ -171,7 +171,7 @@ unsigned shiftedCodePosition(const std::vector<Replacement> &Replaces,
                              unsigned Position);
 
 /// \brief Removes duplicate Replacements and reports if Replacements conflict
-/// with one another.
+/// with one another. All Replacements are assumed to be in the same file.
 ///
 /// \post Replaces[i].getOffset() <= Replaces[i+1].getOffset().
 ///

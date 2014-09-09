@@ -238,11 +238,25 @@ void deduplicate(std::vector<Replacement> &Replaces,
   if (Replaces.empty())
     return;
 
-  // Deduplicate
-  std::sort(Replaces.begin(), Replaces.end());
-  std::vector<Replacement>::iterator End =
-      std::unique(Replaces.begin(), Replaces.end());
-  Replaces.erase(End, Replaces.end());
+  auto LessNoPath = [](const Replacement &LHS, const Replacement &RHS) {
+    if (LHS.getOffset() != RHS.getOffset())
+      return LHS.getOffset() < RHS.getOffset();
+    if (LHS.getLength() != RHS.getLength())
+      return LHS.getLength() < RHS.getLength();
+    return LHS.getReplacementText() < RHS.getReplacementText();
+  };
+
+  auto EqualNoPath = [](const Replacement &LHS, const Replacement &RHS) {
+    return LHS.getOffset() == RHS.getOffset() &&
+           LHS.getLength() == RHS.getLength() &&
+           LHS.getReplacementText() == RHS.getReplacementText();
+  };
+
+  // Deduplicate. We don't want to deduplicate based on the path as we assume
+  // that all replacements refer to the same file (or are symlinks).
+  std::sort(Replaces.begin(), Replaces.end(), LessNoPath);
+  Replaces.erase(std::unique(Replaces.begin(), Replaces.end(), EqualNoPath),
+                 Replaces.end());
 
   // Detect conflicts
   Range ConflictRange(Replaces.front().getOffset(),
