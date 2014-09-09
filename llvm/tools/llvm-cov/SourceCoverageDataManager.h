@@ -16,49 +16,14 @@
 
 #include "FunctionCoverageMapping.h"
 #include "llvm/ProfileData/CoverageMapping.h"
-#include "llvm/ADT/Hashing.h"
 #include <vector>
-#include <unordered_map>
 
 namespace llvm {
 
 /// \brief Partions mapping regions by their kind and sums
 /// the execution counts of the regions that start at the same location.
 class SourceCoverageDataManager {
-public:
-  struct SourceRange {
-    unsigned LineStart, ColumnStart, LineEnd, ColumnEnd;
-
-    SourceRange(unsigned LineStart, unsigned ColumnStart, unsigned LineEnd,
-                unsigned ColumnEnd)
-        : LineStart(LineStart), ColumnStart(ColumnStart), LineEnd(LineEnd),
-          ColumnEnd(ColumnEnd) {}
-
-    bool operator==(const SourceRange &Other) const {
-      return LineStart == Other.LineStart && ColumnStart == Other.ColumnStart &&
-             LineEnd == Other.LineEnd && ColumnEnd == Other.ColumnEnd;
-    }
-
-    bool operator<(const SourceRange &Other) const {
-      if (LineStart == Other.LineStart)
-        return ColumnStart < Other.ColumnStart;
-      return LineStart < Other.LineStart;
-    }
-
-    bool contains(const SourceRange &Other) {
-      if (LineStart > Other.LineStart ||
-          (LineStart == Other.LineStart && ColumnStart > Other.ColumnStart))
-        return false;
-      if (LineEnd < Other.LineEnd ||
-          (LineEnd == Other.LineEnd && ColumnEnd < Other.ColumnEnd))
-        return false;
-      return true;
-    }
-  };
-
-protected:
-  std::vector<std::pair<SourceRange, uint64_t>> Regions;
-  std::vector<SourceRange> SkippedRegions;
+  std::vector<coverage::CountedRegion> Regions;
   bool Uniqued;
 
 public:
@@ -66,12 +31,8 @@ public:
 
   void insert(const coverage::CountedRegion &CR);
 
-  /// \brief Return the source ranges and execution counts
-  /// obtained from the non-skipped mapping regions.
-  ArrayRef<std::pair<SourceRange, uint64_t>> getSourceRegions();
-
-  /// \brief Return the source ranges obtained from the skipped mapping regions.
-  ArrayRef<SourceRange> getSkippedRegions() const { return SkippedRegions; }
+  /// \brief Return the source regions in order of first to last occurring.
+  ArrayRef<coverage::CountedRegion> getSourceRegions();
 };
 
 } // namespace llvm

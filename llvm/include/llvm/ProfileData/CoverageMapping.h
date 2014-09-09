@@ -171,6 +171,26 @@ struct CounterMappingRegion {
       return ColumnStart < Other.ColumnStart;
     return LineStart < Other.LineStart;
   }
+
+  bool coversSameSource(const CounterMappingRegion &Other) const {
+    return FileID == Other.FileID &&
+        LineStart == Other.LineStart &&
+        ColumnStart == Other.ColumnStart &&
+        LineEnd == Other.LineEnd &&
+        ColumnEnd == Other.ColumnEnd;
+  }
+
+  bool contains(const CounterMappingRegion &Other) const {
+    if (FileID != Other.FileID)
+      return false;
+    if (LineStart > Other.LineStart ||
+        (LineStart == Other.LineStart && ColumnStart > Other.ColumnStart))
+      return false;
+    if (LineEnd < Other.LineEnd ||
+        (LineEnd == Other.LineEnd && ColumnEnd < Other.ColumnEnd))
+      return false;
+    return true;
+  }
 };
 
 /// \brief Associates a source range with an execution count.

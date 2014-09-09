@@ -320,51 +320,49 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned Offset) {
 void
 SourceCoverageView::createLineCoverageInfo(SourceCoverageDataManager &Data) {
   LineStats.resize(LineCount);
-  for (const auto &Region : Data.getSourceRegions()) {
-    auto Value = Region.second;
-    LineStats[Region.first.LineStart - LineStart].addRegionStartCount(Value);
-    for (unsigned Line = Region.first.LineStart + 1;
-         Line <= Region.first.LineEnd; ++Line)
-      LineStats[Line - LineStart].addRegionCount(Value);
-  }
-
-  // Reset the line stats for skipped regions.
-  for (const auto &Region : Data.getSkippedRegions()) {
-    for (unsigned Line = Region.LineStart; Line <= Region.LineEnd; ++Line)
-      LineStats[Line - LineStart] = LineCoverageInfo();
+  for (const auto &CR : Data.getSourceRegions()) {
+    if (CR.Kind == coverage::CounterMappingRegion::SkippedRegion) {
+      // Reset the line stats for skipped regions.
+      for (unsigned Line = CR.LineStart; Line <= CR.LineEnd;
+           ++Line)
+        LineStats[Line - LineStart] = LineCoverageInfo();
+      continue;
+    }
+    LineStats[CR.LineStart - LineStart].addRegionStartCount(CR.ExecutionCount);
+    for (unsigned Line = CR.LineStart + 1; Line <= CR.LineEnd; ++Line)
+      LineStats[Line - LineStart].addRegionCount(CR.ExecutionCount);
   }
 }
 
 void
 SourceCoverageView::createHighlightRanges(SourceCoverageDataManager &Data) {
-  auto Regions = Data.getSourceRegions();
+  auto CountedRegions = Data.getSourceRegions();
   std::vector<bool> AlreadyHighlighted;
-  AlreadyHighlighted.resize(Regions.size(), false);
+  AlreadyHighlighted.resize(CountedRegions.size(), false);
 
-  for (size_t I = 0, S = Regions.size(); I < S; ++I) {
-    const auto &Region = Regions[I];
-    auto Value = Region.second;
-    auto SrcRange = Region.first;
-    if (Value != 0)
+  for (size_t I = 0, S = CountedRegions.size(); I < S; ++I) {
+    const auto &CR = CountedRegions[I];
+    if (CR.Kind == coverage::CounterMappingRegion::SkippedRegion ||
+        CR.ExecutionCount != 0)
       continue;
     if (AlreadyHighlighted[I])
       continue;
     for (size_t J = 0; J < S; ++J) {
-      if (SrcRange.contains(Regions[J].first)) {
+      if (CR.contains(CountedRegions[J])) {
         AlreadyHighlighted[J] = true;
       }
     }
-    if (SrcRange.LineStart == SrcRange.LineEnd) {
+    if (CR.LineStart == CR.LineEnd) {
       HighlightRanges.push_back(HighlightRange(
-          SrcRange.LineStart, SrcRange.ColumnStart, SrcRange.ColumnEnd));
+          CR.LineStart, CR.ColumnStart, CR.ColumnEnd));
       continue;
     }
     HighlightRanges.push_back(
-        HighlightRange(SrcRange.LineStart, SrcRange.ColumnStart,
+        HighlightRange(CR.LineStart, CR.ColumnStart,
                        std::numeric_limits<unsigned>::max()));
     HighlightRanges.push_back(
-        HighlightRange(SrcRange.LineEnd, 1, SrcRange.ColumnEnd));
-    for (unsigned Line = SrcRange.LineStart + 1; Line < SrcRange.LineEnd;
+        HighlightRange(CR.LineEnd, 1, CR.ColumnEnd));
+    for (unsigned Line = CR.LineStart + 1; Line < CR.LineEnd;
          ++Line) {
       HighlightRanges.push_back(
           HighlightRange(Line, 1, std::numeric_limits<unsigned>::max()));
@@ -387,10 +385,12 @@ SourceCoverageView::createHighlightRanges(SourceCoverageDataManager &Data) {
 }
 
 void SourceCoverageView::createRegionMarkers(SourceCoverageDataManager &Data) {
-  for (const auto &Region : Data.getSourceRegions()) {
-    if (Region.first.LineStart >= LineStart)
-      Markers.push_back(RegionMarker(Region.first.LineStart,
-                                     Region.first.ColumnStart, Region.second));
+  for (const auto &CR : Data.getSourceRegions()) {
+    if (CR.Kind == coverage::CounterMappingRegion::SkippedRegion)
+      continue;
+    if (CR.LineStart >= LineStart)
+      Markers.push_back(
+          RegionMarker(CR.LineStart, CR.ColumnStart, CR.ExecutionCount));
   }
 
   if (Options.Debug) {

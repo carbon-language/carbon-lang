@@ -36,8 +36,9 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include <system_error>
 #include <functional>
+#include <system_error>
+#include <unordered_map>
 
 using namespace llvm;
 using namespace coverage;
