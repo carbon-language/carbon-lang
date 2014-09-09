@@ -98,29 +98,26 @@ static void reportConflict(
 
   // FIXME: Output something a little more user-friendly (e.g. unified diff?)
   errs() << "The following changes conflict:\n";
-  for (const tooling::Replacement *I = ConflictingReplacements.begin(),
-                                  *E = ConflictingReplacements.end();
-       I != E; ++I) {
-    if (I->getLength() == 0) {
-      errs() << "  Insert at " << SM.getLineNumber(FID, I->getOffset()) << ":"
-             << SM.getColumnNumber(FID, I->getOffset()) << " "
-             << I->getReplacementText() << "\n";
+  for (const tooling::Replacement &R : ConflictingReplacements) {
+    if (R.getLength() == 0) {
+      errs() << "  Insert at " << SM.getLineNumber(FID, R.getOffset()) << ":"
+             << SM.getColumnNumber(FID, R.getOffset()) << " "
+             << R.getReplacementText() << "\n";
     } else {
-      if (I->getReplacementText().empty())
+      if (R.getReplacementText().empty())
         errs() << "  Remove ";
       else
         errs() << "  Replace ";
 
-      errs() << SM.getLineNumber(FID, I->getOffset()) << ":"
-             << SM.getColumnNumber(FID, I->getOffset()) << "-"
-             << SM.getLineNumber(FID, I->getOffset() + I->getLength() - 1)
-             << ":"
-             << SM.getColumnNumber(FID, I->getOffset() + I->getLength() - 1);
+      errs() << SM.getLineNumber(FID, R.getOffset()) << ":"
+             << SM.getColumnNumber(FID, R.getOffset()) << "-"
+             << SM.getLineNumber(FID, R.getOffset() + R.getLength() - 1) << ":"
+             << SM.getColumnNumber(FID, R.getOffset() + R.getLength() - 1);
 
-      if (I->getReplacementText().empty())
+      if (R.getReplacementText().empty())
         errs() << "\n";
       else
-        errs() << " with \"" << I->getReplacementText() << "\"\n";
+        errs() << " with \"" << R.getReplacementText() << "\"\n";
     }
   }
 }
@@ -218,11 +215,7 @@ RangeVector calculateChangedRanges(
   // NOTE: This is O(n^2) in the number of replacements. If this starts to
   // become a problem inline shiftedCodePosition() here and do shifts in a
   // single run through this loop.
-  for (std::vector<clang::tooling::Replacement>::const_iterator
-           I = Replaces.begin(),
-           E = Replaces.end();
-       I != E; ++I) {
-    const tooling::Replacement &R = *I;
+  for (const tooling::Replacement &R : Replaces) {
     unsigned Offset = tooling::shiftedCodePosition(Replaces, R.getOffset());
     unsigned Length = R.getReplacementText().size();
 
@@ -255,13 +248,12 @@ bool writeFiles(const clang::Rewriter &Rewrites) {
 bool deleteReplacementFiles(const TUReplacementFiles &Files,
                             clang::DiagnosticsEngine &Diagnostics) {
   bool Success = true;
-  for (TUReplacementFiles::const_iterator I = Files.begin(), E = Files.end();
-       I != E; ++I) {
-    std::error_code Error = llvm::sys::fs::remove(*I);
+  for (const auto &Filename : Files) {
+    std::error_code Error = llvm::sys::fs::remove(Filename);
     if (Error) {
       Success = false;
       // FIXME: Use Diagnostics for outputting errors.
-      errs() << "Error deleting file: " << *I << "\n";
+      errs() << "Error deleting file: " << Filename << "\n";
       errs() << Error.message() << "\n";
       errs() << "Please delete the file manually\n";
     }

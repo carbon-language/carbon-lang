@@ -199,11 +199,10 @@ int main(int argc, char **argv) {
   // Only include our options in -help output.
   StringMap<cl::Option*> OptMap;
   cl::getRegisteredOptions(OptMap);
-  const char **EndOpts = OptionsToShow + array_lengthof(OptionsToShow);
-  for (StringMap<cl::Option *>::iterator I = OptMap.begin(), E = OptMap.end();
-       I != E; ++I) {
-    if (std::find(OptionsToShow, EndOpts, I->getKey()) == EndOpts)
-      I->getValue()->setHiddenFlag(cl::ReallyHidden);
+  const char **EndOpts = std::end(OptionsToShow);
+  for (const auto &Opt : OptMap) {
+    if (std::find(OptionsToShow, EndOpts, Opt.getKey()) == EndOpts)
+      Opt.getValue()->setHiddenFlag(cl::ReallyHidden);
   }
 
   cl::SetVersionPrinter(&printVersion);
