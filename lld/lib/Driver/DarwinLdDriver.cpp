@@ -542,9 +542,10 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
       diagnostics << "warning: -multi_module is obsolete and being ignored\n";
     }
     else {
-      if (ctx.outputMachOType() != llvm::MachO::MH_DYLIB)
+      if (ctx.outputMachOType() != llvm::MachO::MH_DYLIB) {
         diagnostics << "-single_module only used when creating a dylib\n";
         return false;
+      }
     }
   }
 
