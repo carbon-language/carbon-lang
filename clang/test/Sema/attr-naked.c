@@ -23,3 +23,12 @@ __attribute__((naked)) int t5(int x) {
   asm("movl x, %eax");
   asm("retl");
 }
+
+__attribute__((naked)) void t6() {
+  ;
+}
+
+__attribute__((naked)) void t7() {
+  asm("movl $42, %eax");
+  ;
+}
