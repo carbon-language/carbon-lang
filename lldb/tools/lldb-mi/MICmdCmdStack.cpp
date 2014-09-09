@@ -225,7 +225,7 @@ bool CMICmdCmdStackListFrames::Execute( void )
 	}
 
 	// Frame low and high options are not mandatory
-	MIuint nFrameHigh = pArgFrameHigh->GetFound() ? pArgFrameHigh->GetValue() : UINT64_MAX;
+	MIuint nFrameHigh = pArgFrameHigh->GetFound() ? pArgFrameHigh->GetValue() : UINT32_MAX;
 	const MIuint nFrameLow = pArgFrameLow->GetFound() ? pArgFrameLow->GetValue() : 0;
 
 	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
