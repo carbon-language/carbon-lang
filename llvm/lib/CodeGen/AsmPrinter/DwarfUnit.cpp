@@ -2044,16 +2044,13 @@ void DwarfUnit::addRange(RangeSpan Range) {
     // check the current section and CU against the previous section and CU we
     // emitted into and the subprogram was contained within. If these are the
     // same then extend our current range, otherwise add this as a new range.
-    if (CURanges.size() == 0 ||
-        this != DD->getPrevCU() ||
-        Asm->getCurrentSection() != DD->getPrevSection()) {
+    if (CURanges.empty() || this != DD->getPrevCU() ||
+        (&CURanges.back().getEnd()->getSection() !=
+         &Range.getEnd()->getSection())) {
       CURanges.push_back(Range);
       return;
     }
 
-    assert(&(CURanges.back().getEnd()->getSection()) ==
-               &(Range.getEnd()->getSection()) &&
-           "We can only append to a range in the same section!");
     CURanges.back().setEnd(Range.getEnd());
   }
 }

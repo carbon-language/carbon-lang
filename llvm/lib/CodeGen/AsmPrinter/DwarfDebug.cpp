@@ -1667,7 +1667,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     // If we don't have a lexical scope for this function then there will
     // be a hole in the range information. Keep note of this by setting the
     // previously used section to nullptr.
-    PrevSection = nullptr;
     PrevCU = nullptr;
     CurFn = nullptr;
     return;
@@ -1710,7 +1709,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   // Add the range of this function to the list of ranges for the CU.
   RangeSpan Span(FunctionBeginSym, FunctionEndSym);
   TheCU.addRange(std::move(Span));
-  PrevSection = Asm->getCurrentSection();
   PrevCU = &TheCU;
 
   // Clear debug info
