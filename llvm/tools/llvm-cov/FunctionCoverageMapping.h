@@ -22,21 +22,13 @@
 
 namespace llvm {
 
-/// \brief Associates a source range with an execution count.
-struct MappingRegion : public coverage::CounterMappingRegion {
-  uint64_t ExecutionCount;
-
-  MappingRegion(const CounterMappingRegion &R, uint64_t ExecutionCount)
-      : CounterMappingRegion(R), ExecutionCount(ExecutionCount) {}
-};
-
 /// \brief Stores all the required information
 /// about code coverage for a single function.
 struct FunctionCoverageMapping {
   /// \brief Raw function name.
   std::string Name;
   std::vector<std::string> Filenames;
-  std::vector<MappingRegion> MappingRegions;
+  std::vector<coverage::CountedRegion> CountedRegions;
 
   FunctionCoverageMapping(StringRef Name, ArrayRef<StringRef> Filenames)
       : Name(Name), Filenames(Filenames.begin(), Filenames.end()) {}

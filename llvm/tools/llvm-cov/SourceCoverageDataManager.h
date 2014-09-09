@@ -64,7 +64,7 @@ protected:
 public:
   SourceCoverageDataManager() : Uniqued(false) {}
 
-  void insert(const MappingRegion &Region);
+  void insert(const coverage::CountedRegion &CR);
 
   /// \brief Return the source ranges and execution counts
   /// obtained from the non-skipped mapping regions.

@@ -17,14 +17,13 @@
 using namespace llvm;
 using namespace coverage;
 
-void SourceCoverageDataManager::insert(const MappingRegion &Region) {
-  SourceRange Range(Region.LineStart, Region.ColumnStart, Region.LineEnd,
-                    Region.ColumnEnd);
-  if (Region.Kind == CounterMappingRegion::SkippedRegion) {
+void SourceCoverageDataManager::insert(const CountedRegion &CR) {
+  SourceRange Range(CR.LineStart, CR.ColumnStart, CR.LineEnd, CR.ColumnEnd);
+  if (CR.Kind == CounterMappingRegion::SkippedRegion) {
     SkippedRegions.push_back(Range);
     return;
   }
-  Regions.push_back(std::make_pair(Range, Region.ExecutionCount));
+  Regions.push_back(std::make_pair(Range, CR.ExecutionCount));
 }
 
 ArrayRef<std::pair<SourceCoverageDataManager::SourceRange, uint64_t>>

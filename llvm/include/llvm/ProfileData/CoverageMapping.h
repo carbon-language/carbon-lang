@@ -173,6 +173,14 @@ struct CounterMappingRegion {
   }
 };
 
+/// \brief Associates a source range with an execution count.
+struct CountedRegion : public CounterMappingRegion {
+  uint64_t ExecutionCount;
+
+  CountedRegion(const CounterMappingRegion &R, uint64_t ExecutionCount)
+      : CounterMappingRegion(R), ExecutionCount(ExecutionCount) {}
+};
+
 /// \brief A Counter mapping context is used to connect the counters,
 /// expressions and the obtained counter values.
 class CounterMappingContext {
