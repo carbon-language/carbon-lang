@@ -721,8 +721,9 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
   } else if (Src->isWeakForLinker()) {
     assert(!Dest->hasExternalWeakLinkage());
     assert(!Dest->hasAvailableExternallyLinkage());
-    if (Dest->hasLinkOnceLinkage() &&
-        (Src->hasWeakLinkage() || Src->hasCommonLinkage())) {
+    if ((Dest->hasLinkOnceLinkage() && Src->hasWeakLinkage()) ||
+        ((Dest->hasLinkOnceLinkage() || Dest->hasWeakLinkage()) &&
+         Src->hasCommonLinkage())) {
       LinkFromSrc = true;
       LT = Src->getLinkage();
     } else {
