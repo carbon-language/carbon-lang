@@ -81,9 +81,6 @@ EXTRA_OPTIONS += -Wno-unknown-pragmas
 # Drop -Wsign-compare, which we are not currently clean with.
 EXTRA_OPTIONS += -Wno-sign-compare
 
-# Drop -Wunused-function which we are not currently clean with.
-EXTRA_OPTIONS += -Wno-unused-function
-
 ###
 # LLDB Top Level specific stuff.
 
