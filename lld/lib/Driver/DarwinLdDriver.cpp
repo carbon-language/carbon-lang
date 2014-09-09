@@ -253,7 +253,11 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
         break;
     }
     if (arch == MachOLinkingContext::arch_unknown) {
-      diagnostics << "error: -arch not specified and could not be inferred\n";
+      // If no -arch and no options at all, print usage message.
+      if (parsedArgs->size() == 0)
+        table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
+      else
+        diagnostics << "error: -arch not specified and could not be inferred\n";
       return false;
     }
   }
@@ -635,10 +639,6 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   }
 
   if (!inputGraph->size()) {
-    if (parsedArgs->size() == 0) {
-      table.PrintHelp(llvm::outs(), "lld", "LLVM Linker", false);
-      return false;
-    }
     diagnostics << "No input files\n";
     return false;
   }
