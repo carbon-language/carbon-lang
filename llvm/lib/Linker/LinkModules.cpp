@@ -705,6 +705,9 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
       if (DestIsDeclaration) {
         LinkFromSrc = true;
         LT = Src->getLinkage();
+      } else {
+        LinkFromSrc = false;
+        LT = Dest->getLinkage();
       }
     } else if (Dest->hasExternalWeakLinkage()) {
       // If the Dest is weak, use the source linkage.
