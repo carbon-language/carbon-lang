@@ -420,6 +420,8 @@ namespace {
     bool run();
 
   private:
+    bool shouldLinkFromSource(const GlobalValue &Dest, const GlobalValue &Src);
+
     /// emitError - Helper method for setting a message and returning an error
     /// code.
     bool emitError(const Twine &Message) {
@@ -681,6 +683,48 @@ static bool isDeclaration(const GlobalValue &V) {
   return V.isDeclaration();
 }
 
+bool ModuleLinker::shouldLinkFromSource(const GlobalValue &Dest,
+                                        const GlobalValue &Src) {
+  bool SrcIsDeclaration = isDeclaration(Src);
+  bool DestIsDeclaration = isDeclaration(Dest);
+
+  if (SrcIsDeclaration) {
+    // If Src is external or if both Src & Dest are external..  Just link the
+    // external globals, we aren't adding anything.
+    if (Src.hasDLLImportStorageClass())
+      // If one of GVs is marked as DLLImport, result should be dllimport'ed.
+      return DestIsDeclaration;
+    // If the Dest is weak, use the source linkage.
+    return Dest.hasExternalWeakLinkage();
+  }
+
+  if (DestIsDeclaration)
+    // If Dest is external but Src is not:
+    return true;
+
+  if (Src.isWeakForLinker()) {
+    assert(!Dest.hasExternalWeakLinkage());
+    assert(!Dest.hasAvailableExternallyLinkage());
+    if (Dest.hasLinkOnceLinkage() && Src.hasWeakLinkage())
+      return true;
+
+    return (Dest.hasLinkOnceLinkage() || Dest.hasWeakLinkage()) &&
+           Src.hasCommonLinkage();
+  }
+
+  if (Dest.isWeakForLinker()) {
+    assert(Src.hasExternalLinkage());
+    return true;
+  }
+
+  assert(!Src.hasExternalWeakLinkage());
+  assert(!Dest.hasExternalWeakLinkage());
+  assert(Dest.hasExternalLinkage() && Src.hasExternalLinkage() &&
+         "Unexpected linkage type!");
+  return emitError("Linking globals named '" + Src.getName() +
+                   "': symbol multiply defined!");
+}
+
 /// This analyzes the two global values and determines what the result will look
 /// like in the destination module. In particular, it computes the resultant
 /// linkage type and visibility, computes whether the global in the source
@@ -694,57 +738,15 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
   assert(!Src->hasLocalLinkage() &&
          "If Src has internal linkage, Dest shouldn't be set!");
 
-  bool SrcIsDeclaration = isDeclaration(*Src);
-  bool DestIsDeclaration = isDeclaration(*Dest);
+  assert(ErrorMsg.empty());
+  LinkFromSrc = shouldLinkFromSource(*Dest, *Src);
+  if (!ErrorMsg.empty())
+    return true;
 
-  if (SrcIsDeclaration) {
-    // If Src is external or if both Src & Dest are external..  Just link the
-    // external globals, we aren't adding anything.
-    if (Src->hasDLLImportStorageClass()) {
-      // If one of GVs is marked as DLLImport, result should be dllimport'ed.
-      if (DestIsDeclaration) {
-        LinkFromSrc = true;
-        LT = Src->getLinkage();
-      } else {
-        LinkFromSrc = false;
-        LT = Dest->getLinkage();
-      }
-    } else if (Dest->hasExternalWeakLinkage()) {
-      // If the Dest is weak, use the source linkage.
-      LinkFromSrc = true;
-      LT = Src->getLinkage();
-    } else {
-      LinkFromSrc = false;
-      LT = Dest->getLinkage();
-    }
-  } else if (DestIsDeclaration) {
-    // If Dest is external but Src is not:
-    LinkFromSrc = true;
+  if (LinkFromSrc)
     LT = Src->getLinkage();
-  } else if (Src->isWeakForLinker()) {
-    assert(!Dest->hasExternalWeakLinkage());
-    assert(!Dest->hasAvailableExternallyLinkage());
-    if ((Dest->hasLinkOnceLinkage() && Src->hasWeakLinkage()) ||
-        ((Dest->hasLinkOnceLinkage() || Dest->hasWeakLinkage()) &&
-         Src->hasCommonLinkage())) {
-      LinkFromSrc = true;
-      LT = Src->getLinkage();
-    } else {
-      LinkFromSrc = false;
-      LT = Dest->getLinkage();
-    }
-  } else if (Dest->isWeakForLinker()) {
-    assert(!Src->hasExternalWeakLinkage());
-    LinkFromSrc = true;
-    LT = GlobalValue::ExternalLinkage;
-  } else {
-    assert(!Src->hasExternalWeakLinkage());
-    assert(!Dest->hasExternalWeakLinkage());
-    assert(Dest->hasExternalLinkage() && Src->hasExternalLinkage() &&
-           "Unexpected linkage type!");
-    return emitError("Linking globals named '" + Src->getName() +
-                     "': symbol multiply defined!");
-  }
+  else
+    LT = Dest->getLinkage();
 
   // Compute the visibility. We follow the rules in the System V Application
   // Binary Interface.
