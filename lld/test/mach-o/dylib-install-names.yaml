@@ -13,6 +13,11 @@
 # RUN: macho-dump libwibble.dylib | FileCheck %s --check-prefix=CHECK-BINARY-WRITE
 # RUN: rm -f libwibble.dylib
 
+# Check -single_module does nothing
+# RUN: lld -flavor darwin -arch x86_64 -dylib %s -install_name libwibble.dylib \
+# RUN:     -single_module -o %t2.dylib %p/Inputs/libSystem.yaml
+# RUN: macho-dump %t2.dylib | FileCheck %s --check-prefix=CHECK-BINARY-WRITE
+
 --- !mach-o
 arch:            x86_64
 file-type:       MH_OBJECT
