@@ -11,6 +11,6 @@ LLDB_LEVEL := ../../..
 LIBRARYNAME := lldbHostFreeBSD
 BUILD_ARCHIVE = 1
 
-CPPFLAGS += -I/usr/local/include
+CPP.Flags += -I/usr/local/include
 
 include $(LLDB_LEVEL)/Makefile

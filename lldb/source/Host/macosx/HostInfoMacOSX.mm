@@ -176,6 +176,7 @@ HostInfoMacOSX::ComputeHeaderDirectory(FileSpec &file_spec)
 bool
 HostInfoMacOSX::ComputePythonDirectory(FileSpec &file_spec)
 {
+#ifndef LLDB_DISABLE_PYTHON
     FileSpec lldb_file_spec;
     if (!GetLLDBPath(lldb::ePathTypeLLDBShlibDir, lldb_file_spec))
         return false;
@@ -200,7 +201,9 @@ HostInfoMacOSX::ComputePythonDirectory(FileSpec &file_spec)
         ::strncat(raw_path, python_version_dir.c_str(), sizeof(raw_path) - strlen(raw_path) - 1);
     }
     file_spec.GetDirectory().SetCString(raw_path);
-    return true;
+#else
+    return false;
+#endif
 }
 
 bool

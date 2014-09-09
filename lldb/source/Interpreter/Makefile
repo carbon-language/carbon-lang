@@ -13,12 +13,16 @@ BUILD_ARCHIVE = 1
 include $(LLDB_LEVEL)/../../Makefile.config
 
 ifneq ($(HOST_OS),MingW)
+ifeq (,$(findstring -DLLDB_DISABLE_PYTHON,$(CXXFLAGS)))
+DO_BUILD_LLDBWrapPython = 1
 BUILT_SOURCES := LLDBWrapPython.cpp
+endif
 endif
 
 include $(LLDB_LEVEL)/Makefile
 -include $(PROJ_OBJ_DIR)/LLDBWrapPython.cpp.d
 
+ifeq ($(DO_BUILD_LLDBWrapPython),1)
 # Drop -Wfour-char-constants,  which we are not currently clean with.
 EXTRA_OPTIONS += -Wno-four-char-constants
 
@@ -41,3 +45,4 @@ install-local:: lldb.py
 
 clean-local::
 	$(Verb) $(RM) -f LLDBWrapPython.cpp lldb.py
+endif

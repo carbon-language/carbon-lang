@@ -14,19 +14,19 @@ BUILD_ARCHIVE = 1
 include $(LLDB_LEVEL)/../../Makefile.config
 
 # Extend the include path so we may locate UnwindLLDB.h
-CPPFLAGS += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Utility
+CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Utility
 
 ifeq ($(HOST_OS),Linux)
-CPPFLAGS += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Process/Linux
+CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Process/Linux
 
 # Disable warning for now as offsetof is used with an index into a structure member array
 # in defining register info tables.
-CPPFLAGS += -Wno-extended-offsetof
+CPP.Flags += -Wno-extended-offsetof
 endif
 
 ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
 # Extend the include path so we may locate ProcessMonitor
-CPPFLAGS += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Process/FreeBSD
+CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Process/FreeBSD
 endif
 
 include $(LLDB_LEVEL)/Makefile

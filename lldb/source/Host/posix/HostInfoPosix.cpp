@@ -173,6 +173,7 @@ HostInfoPosix::ComputeHeaderDirectory(FileSpec &file_spec)
 bool
 HostInfoPosix::ComputePythonDirectory(FileSpec &file_spec)
 {
+#ifndef LLDB_DISABLE_PYTHON
     FileSpec lldb_file_spec;
     if (!GetLLDBPath(lldb::ePathTypeLLDBShlibDir, lldb_file_spec))
         return false;
@@ -190,4 +191,7 @@ HostInfoPosix::ComputePythonDirectory(FileSpec &file_spec)
 
     file_spec.GetDirectory().SetCString(raw_path);
     return true;
+#else
+    return false;
+#endif
 }

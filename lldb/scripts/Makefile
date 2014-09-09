@@ -10,6 +10,8 @@
 LLDB_LEVEL := ..
 include $(LLDB_LEVEL)/../../Makefile.config
 
+ifeq (,$(findstring -DLLDB_DISABLE_PYTHON,$(CXXFLAGS)))
 DIRS := Python
+endif
 
 include $(LLDB_LEVEL)/Makefile
