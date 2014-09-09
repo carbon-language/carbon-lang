@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 
 LLFILE=`echo $1 | sed -e 's/\.c/.ll/g'`
 LLFILE_TMP=${LLFILE}.tmp
