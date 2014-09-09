@@ -43,6 +43,7 @@ public:
     arch_armv6,
     arch_armv7,
     arch_armv7s,
+    arch_arm64,
   };
 
   enum class OS {

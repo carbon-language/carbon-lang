@@ -185,6 +185,7 @@ const ArchHandler::StubInfo ArchHandler_x86_64::_sStubInfo = {
   6, 
   { 0xff, 0x25, 0x00, 0x00, 0x00, 0x00 },       // jmp *lazyPointer
   { Reference::KindArch::x86_64, ripRel32, 2, 0 },
+  { false, 0, 0, 0 },
   
   // Stub Helper size and code
   10,
@@ -200,7 +201,9 @@ const ArchHandler::StubInfo ArchHandler_x86_64::_sStubInfo = {
     0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,         // jmp *binder(%rip)
     0x90 },                                     // nop
   { Reference::KindArch::x86_64, ripRel32, 3, 0 },
-  { Reference::KindArch::x86_64, ripRel32, 11, 0 }
+  { false, 0, 0, 0 },
+  { Reference::KindArch::x86_64, ripRel32, 11, 0 },
+  { false, 0, 0, 0 }
   
 };
 

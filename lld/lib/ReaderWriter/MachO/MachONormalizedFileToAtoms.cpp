@@ -285,6 +285,12 @@ std::error_code processSymboledSection(DefinedAtom::ContentType atomType,
               Atom::Scope rScope = atomScope(rhs->scope);
               if (lScope != rScope)
                 return lScope < rScope;
+              // If same address and scope, see if one might be better as
+              // the alias.
+              bool lPrivate = (lhs->name.front() == 'l');
+              bool rPrivate = (rhs->name.front() == 'l');
+              if (lPrivate != rPrivate)
+                return lPrivate;
               // If same address and scope, sort by name.
               return lhs->name < rhs->name;
             });
@@ -315,8 +321,15 @@ std::error_code processSymboledSection(DefinedAtom::ContentType atomType,
   const Symbol *lastSym = nullptr;
   for (const Symbol *sym : symbols) {
     if (lastSym != nullptr) {
-      atomFromSymbol(atomType, section, file, lastSym->value, lastSym->name,
-                     lastSym->desc, atomScope(lastSym->scope), sym->value, copyRefs);
+      // Ignore any assembler added "ltmpNNN" symbol at start of section
+      // if there is another symbol at the start.
+      if ((lastSym->value != sym->value)
+          || lastSym->value != section.address
+          || !lastSym->name.startswith("ltmp")) {
+        atomFromSymbol(atomType, section, file, lastSym->value, lastSym->name,
+                       lastSym->desc, atomScope(lastSym->scope), sym->value,
+                       copyRefs);
+      }
     }
     lastSym = sym;
   }

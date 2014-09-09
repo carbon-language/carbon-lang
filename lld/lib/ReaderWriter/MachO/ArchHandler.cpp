@@ -42,6 +42,8 @@ std::unique_ptr<mach_o::ArchHandler> ArchHandler::create(
   case MachOLinkingContext::arch_armv7:
   case MachOLinkingContext::arch_armv7s:
     return create_arm();
+  case MachOLinkingContext::arch_arm64:
+    return create_arm64();
   default:
     llvm_unreachable("Unknown arch");
   }

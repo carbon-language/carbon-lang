@@ -470,15 +470,20 @@ void MachOFileLayout::buildFileOffsets() {
   // Assign sections to segments.
   for (const Section &s : _file.sections) {
     _sectInfo[&s] = t2;
+    bool foundSegment = false;
     for (const Segment &sg : _file.segments) {
-      if ((s.address >= sg.address)
+      if (sg.name.equals(s.segmentName)) {
+        if ((s.address >= sg.address)
                         && (s.address+s.content.size() <= sg.address+sg.size)) {
-        if (!sg.name.equals(s.segmentName)) {
-          _ec = make_error_code(llvm::errc::executable_format_error);
-          return;
+          _segInfo[&sg].sections.push_back(&s);
+          foundSegment = true;
+          break;
         }
-        _segInfo[&sg].sections.push_back(&s);
       }
+    }
+    if (!foundSegment) {
+      _ec = make_error_code(llvm::errc::executable_format_error);
+      return;
     }
   }
 
@@ -507,9 +512,10 @@ void MachOFileLayout::buildFileOffsets() {
                   << ", fileOffset=" << fileOffset << "\n");
     }
 
-    // FIXME: 4096 should be inferred from segments in normalized file.
-    _segInfo[&sg].fileSize = llvm::RoundUpToAlignment(segFileSize, 4096);
-    fileOffset = llvm::RoundUpToAlignment(fileOffset + segFileSize, 4096);
+    _segInfo[&sg].fileSize = llvm::RoundUpToAlignment(segFileSize,
+                                                      _file.pageSize);
+    fileOffset = llvm::RoundUpToAlignment(fileOffset + segFileSize,
+                                          _file.pageSize);
     _addressOfLinkEdit = sg.address + sg.size;
   }
   _startOfLinkEdit = fileOffset;
@@ -638,15 +644,16 @@ std::error_code MachOFileLayout::writeSegmentLoadCommands(uint8_t *&lc) {
     lc = reinterpret_cast<uint8_t*>(next);
   }
   // Add implicit __LINKEDIT segment
+  size_t linkeditSize = _endOfLinkEdit - _startOfLinkEdit;
   typename T::command* cmd = reinterpret_cast<typename T::command*>(lc);
   cmd->cmd = T::LC;
   cmd->cmdsize = sizeof(typename T::command);
   uint8_t *next = lc + cmd->cmdsize;
   setString16("__LINKEDIT", cmd->segname);
   cmd->vmaddr   = _addressOfLinkEdit;
-  cmd->vmsize   = _endOfLinkEdit - _startOfLinkEdit;
+  cmd->vmsize   = llvm::RoundUpToAlignment(linkeditSize, _file.pageSize);
   cmd->fileoff  = _startOfLinkEdit;
-  cmd->filesize = _endOfLinkEdit - _startOfLinkEdit;
+  cmd->filesize = linkeditSize;
   cmd->maxprot  = VM_PROT_READ;
   cmd->initprot = VM_PROT_READ;
   cmd->nsects   = 0;
@@ -822,6 +829,8 @@ void MachOFileLayout::writeSectionContent() {
   for (const Section &s : _file.sections) {
     // Copy all section content to output buffer.
     if (s.type == llvm::MachO::S_ZEROFILL)
+      continue;
+    if (s.content.empty())
       continue;
     uint32_t offset = _sectInfo[&s].fileOffset;
     uint8_t *p = &_buffer[offset];
@@ -1260,7 +1269,6 @@ std::error_code MachOFileLayout::writeBinary(StringRef path) {
 
   return std::error_code();
 }
-
 
 
 /// Takes in-memory normalized view and writes a mach-o object file.

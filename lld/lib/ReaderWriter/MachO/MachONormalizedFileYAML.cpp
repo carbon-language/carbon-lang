@@ -129,6 +129,7 @@ struct ScalarEnumerationTraits<lld::MachOLinkingContext::Arch> {
     io.enumCase(value, "armv6",  lld::MachOLinkingContext::arch_armv6);
     io.enumCase(value, "armv7",  lld::MachOLinkingContext::arch_armv7);
     io.enumCase(value, "armv7s", lld::MachOLinkingContext::arch_armv7s);
+    io.enumCase(value, "arm64",  lld::MachOLinkingContext::arch_arm64);
   }
 };
 
@@ -400,6 +401,30 @@ struct ScalarEnumerationTraits<RelocationInfoType> {
       io.enumCase(value, "ARM_RELOC_HALF_SECTDIFF",
                                   llvm::MachO::ARM_RELOC_HALF_SECTDIFF);
       break;
+    case lld::MachOLinkingContext::arch_arm64:
+      io.enumCase(value, "ARM64_RELOC_UNSIGNED",
+                                  llvm::MachO::ARM64_RELOC_UNSIGNED);
+      io.enumCase(value, "ARM64_RELOC_SUBTRACTOR",
+                                  llvm::MachO::ARM64_RELOC_SUBTRACTOR);
+      io.enumCase(value, "ARM64_RELOC_BRANCH26",
+                                  llvm::MachO::ARM64_RELOC_BRANCH26);
+      io.enumCase(value, "ARM64_RELOC_PAGE21",
+                                  llvm::MachO::ARM64_RELOC_PAGE21);
+      io.enumCase(value, "ARM64_RELOC_PAGEOFF12",
+                                  llvm::MachO::ARM64_RELOC_PAGEOFF12);
+      io.enumCase(value, "ARM64_RELOC_GOT_LOAD_PAGE21",
+                                  llvm::MachO::ARM64_RELOC_GOT_LOAD_PAGE21);
+      io.enumCase(value, "ARM64_RELOC_GOT_LOAD_PAGEOFF12",
+                                  llvm::MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12);
+      io.enumCase(value, "ARM64_RELOC_POINTER_TO_GOT",
+                                  llvm::MachO::ARM64_RELOC_POINTER_TO_GOT);
+      io.enumCase(value, "ARM64_RELOC_TLVP_LOAD_PAGE21",
+                                  llvm::MachO::ARM64_RELOC_TLVP_LOAD_PAGE21);
+      io.enumCase(value, "ARM64_RELOC_TLVP_LOAD_PAGEOFF12",
+                                  llvm::MachO::ARM64_RELOC_TLVP_LOAD_PAGEOFF12);
+      io.enumCase(value, "ARM64_RELOC_ADDEND",
+                                  llvm::MachO::ARM64_RELOC_ADDEND);
+      break;
     default:
       llvm_unreachable("unknown architecture");
     }
@@ -646,6 +671,7 @@ struct MappingTraits<NormalizedFile> {
     io.mapOptional("local-symbols",    file.localSymbols);
     io.mapOptional("global-symbols",   file.globalSymbols);
     io.mapOptional("undefined-symbols",file.undefinedSymbols);
+    io.mapOptional("page-size",        file.pageSize,       Hex32(4096));
     io.mapOptional("rebasings",        file.rebasingInfo);
     io.mapOptional("bindings",         file.bindingInfo);
     io.mapOptional("weak-bindings",    file.weakBindingInfo);

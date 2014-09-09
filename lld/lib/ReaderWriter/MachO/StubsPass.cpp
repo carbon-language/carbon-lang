@@ -321,6 +321,8 @@ private:
                                               StubHelperAtom(_file, _stubInfo);
    
     addReference(stub, _stubInfo.stubReferenceToLP, lp);
+    addOptReference(stub, _stubInfo.stubReferenceToLP,
+                    _stubInfo.optStubReferenceToLP, lp);
     addReference(lp, _stubInfo.lazyPointerReferenceToHelper, helper);
     addReference(lp, _stubInfo.lazyPointerReferenceToFinal, &target);
     addReference(helper, _stubInfo.stubHelperReferenceToImm, helper);
@@ -334,14 +336,25 @@ private:
     return stub;
   }
  
-  void addReference(SimpleDefinedAtom* atom, 
+  void addReference(SimpleDefinedAtom* atom,
                     const ArchHandler::ReferenceInfo &refInfo,
                     const lld::Atom* target) {
     atom->addReference(Reference::KindNamespace::mach_o,
                       refInfo.arch, refInfo.kind, refInfo.offset,
                       target, refInfo.addend);
   }
-  
+
+   void addOptReference(SimpleDefinedAtom* atom,
+                    const ArchHandler::ReferenceInfo &refInfo,
+                    const ArchHandler::OptionalRefInfo &optRef,
+                    const lld::Atom* target) {
+      if (!optRef.used)
+        return;
+    atom->addReference(Reference::KindNamespace::mach_o,
+                      refInfo.arch, optRef.kind, optRef.offset,
+                      target, optRef.addend);
+  }
+
   const DefinedAtom* helperCommon() {
     if ( !_helperCommonAtom ) {
       // Lazily create common helper code and data.
@@ -352,11 +365,19 @@ private:
       _helperBinderNLPAtom = new (_file.allocator()) 
                                   NonLazyPointerAtom(_file, _context.is64Bit());
       addReference(_helperCommonAtom, 
-                   _stubInfo.stubHelperCommonReferenceToCache, 
+                   _stubInfo.stubHelperCommonReferenceToCache,
                    _helperCacheNLPAtom);
-      addReference(_helperCommonAtom, 
-                   _stubInfo.stubHelperCommonReferenceToBinder, 
+      addOptReference(_helperCommonAtom,
+                      _stubInfo.stubHelperCommonReferenceToCache,
+                      _stubInfo.optStubHelperCommonReferenceToCache,
+                      _helperCacheNLPAtom);
+      addReference(_helperCommonAtom,
+                   _stubInfo.stubHelperCommonReferenceToBinder,
                    _helperBinderNLPAtom);
+      addOptReference(_helperCommonAtom,
+                      _stubInfo.stubHelperCommonReferenceToBinder,
+                      _stubInfo.optStubHelperCommonReferenceToBinder,
+                      _helperBinderNLPAtom);
     }
     return _helperCommonAtom;
   }

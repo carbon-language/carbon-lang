@@ -1149,6 +1149,7 @@ normalizedFromAtoms(const lld::File &atomFile,
   normFile.fileType = context.outputMachOType();
   normFile.flags = util.fileFlags();
   normFile.installName = context.installName();
+  normFile.pageSize = context.pageSize();
   util.addDependentDylibs(atomFile, normFile);
   util.copySegmentInfo(normFile);
   util.copySectionInfo(normFile);

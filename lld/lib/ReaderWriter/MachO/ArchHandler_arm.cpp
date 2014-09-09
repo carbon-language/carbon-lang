@@ -208,6 +208,7 @@ const ArchHandler::StubInfo ArchHandler_arm::_sStubInfoArmPIC = {
     0x00, 0xF0, 0x9C, 0xE5,       // 	ldr pc, [ip]
     0x00, 0x00, 0x00, 0x00 },     // 	.long L_foo$lazy_ptr - (L1$scv + 8)
   { Reference::KindArch::ARM, delta32, 12, 0 },
+  { false, 0, 0, 0 },
   
   // Stub Helper size and code
   12,
@@ -232,7 +233,9 @@ const ArchHandler::StubInfo ArchHandler_arm::_sStubInfoArmPIC = {
     0x00, 0x00, 0x00, 0x00,       // L1: .long fFastStubGOTAtom - (helper+16)
     0x00, 0x00, 0x00, 0x00 },     // L2: .long dyld_stub_binder - (helper+28)
   { Reference::KindArch::ARM, delta32, 28, 0xC },
-  { Reference::KindArch::ARM, delta32, 32, 0x04 }
+  { false, 0, 0, 0 },
+  { Reference::KindArch::ARM, delta32, 32, 0x04 },
+  { false, 0, 0, 0 }
 };
 
 const ArchHandler::StubInfo &ArchHandler_arm::stubInfo() {

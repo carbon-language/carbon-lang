@@ -170,6 +170,7 @@ const ArchHandler::StubInfo ArchHandler_x86::_sStubInfo = {
   6, 
   { 0xff, 0x25, 0x00, 0x00, 0x00, 0x00 },       // jmp *lazyPointer
   { Reference::KindArch::x86, abs32, 2, 0 },
+  { false, 0, 0, 0 },
   
   // Stub Helper size and code
   10,
@@ -184,7 +185,9 @@ const ArchHandler::StubInfo ArchHandler_x86::_sStubInfo = {
     0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,         // jmp *_fast_lazy_bind
     0x90 },                                     // nop
   { Reference::KindArch::x86, abs32, 1, 0 },
-  { Reference::KindArch::x86, abs32, 7, 0 }
+  { false, 0, 0, 0 },
+  { Reference::KindArch::x86, abs32, 7, 0 },
+  { false, 0, 0, 0 }
 };
 
 bool ArchHandler_x86::isCallSite(const Reference &ref) {

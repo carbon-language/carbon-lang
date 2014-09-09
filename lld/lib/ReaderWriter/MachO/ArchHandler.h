@@ -174,6 +174,13 @@ public:
     int32_t             addend;
   };
 
+  struct OptionalRefInfo {
+    bool                used;
+    uint16_t            kind;
+    uint32_t            offset;
+    int32_t             addend;
+  };
+
   /// Table of architecture specific information for creating stubs.
   struct StubInfo {
     const char*     binderSymbolName;
@@ -185,16 +192,19 @@ public:
     uint32_t        stubSize;
     uint8_t         stubBytes[16];
     ReferenceInfo   stubReferenceToLP;
-    
+    OptionalRefInfo optStubReferenceToLP;
+
     uint32_t        stubHelperSize;
     uint8_t         stubHelperBytes[16];
     ReferenceInfo   stubHelperReferenceToImm;
     ReferenceInfo   stubHelperReferenceToHelperCommon;
-    
+
     uint32_t        stubHelperCommonSize;
     uint8_t         stubHelperCommonBytes[36];
     ReferenceInfo   stubHelperCommonReferenceToCache;
+    OptionalRefInfo optStubHelperCommonReferenceToCache;
     ReferenceInfo   stubHelperCommonReferenceToBinder;
+    OptionalRefInfo optStubHelperCommonReferenceToBinder;
   };
 
   virtual const StubInfo &stubInfo() = 0;
@@ -205,6 +215,7 @@ protected:
   static std::unique_ptr<mach_o::ArchHandler> create_x86_64();
   static std::unique_ptr<mach_o::ArchHandler> create_x86();
   static std::unique_ptr<mach_o::ArchHandler> create_arm();
+  static std::unique_ptr<mach_o::ArchHandler> create_arm64();
 
   // Handy way to pack mach-o r_type and other bit fields into one 16-bit value.
   typedef uint16_t RelocPattern;

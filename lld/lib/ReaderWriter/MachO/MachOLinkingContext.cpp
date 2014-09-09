@@ -79,6 +79,7 @@ MachOLinkingContext::ArchInfo MachOLinkingContext::_s_archInfos[] = {
   { "armv6",  arch_armv6,  true,  CPU_TYPE_ARM,     CPU_SUBTYPE_ARM_V6 },
   { "armv7",  arch_armv7,  true,  CPU_TYPE_ARM,     CPU_SUBTYPE_ARM_V7 },
   { "armv7s", arch_armv7s, true,  CPU_TYPE_ARM,     CPU_SUBTYPE_ARM_V7S },
+  { "arm64",  arch_arm64,  true,  CPU_TYPE_ARM64,   CPU_SUBTYPE_ARM64_ALL },
   { "",       arch_unknown,false, 0,                0 }
 };
 
@@ -194,6 +195,10 @@ void MachOLinkingContext::configure(HeaderFileType type, Arch arch, OS os,
   default:
     break;
   }
+
+  // Set default segment page sizes based on arch.
+  if (arch == arch_arm64)
+    _pageSize = 4*4096;
 }
 
 uint32_t MachOLinkingContext::getCPUType() const {
@@ -264,10 +269,17 @@ bool MachOLinkingContext::needsStubsPass() const {
 }
 
 bool MachOLinkingContext::needsGOTPass() const {
-  // Only x86_64 uses GOT pass but not in -r mode.
-  if (_arch != arch_x86_64)
+  // GOT pass not used in -r mode.
+  if (_outputMachOType == MH_OBJECT)
     return false;
-  return (_outputMachOType != MH_OBJECT);
+  // Only some arches use GOT pass.
+  switch (_arch) {
+    case arch_x86_64:
+    case arch_arm64:
+      return true;
+    default:
+      return false;
+  }
 }
 
 

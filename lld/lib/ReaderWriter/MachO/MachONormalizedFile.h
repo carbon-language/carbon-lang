@@ -236,6 +236,7 @@ struct NormalizedFile {
   Hex32                       sdkVersion;
 
   // Maps to load commands with LINKEDIT content (final linked images only).
+  Hex32                       pageSize;
   std::vector<RebaseLocation> rebasingInfo;
   std::vector<BindLocation>   bindingInfo;
   std::vector<BindLocation>   weakBindingInfo;
