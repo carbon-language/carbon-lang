@@ -8403,6 +8403,8 @@ public:
                          FormatStringType Type, bool inFunctionCall,
                          VariadicCallType CallType,
                          llvm::SmallBitVector &CheckedVarArgs);
+  
+  bool FormatStringHasSArg(const StringLiteral *FExpr);
 
 private:
   bool CheckFormatArguments(const FormatAttr *Format,

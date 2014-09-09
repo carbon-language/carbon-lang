@@ -2114,6 +2114,32 @@ static void checkCocoaAPI(Sema &S, const ObjCMessageExpr *Msg) {
                      edit::rewriteObjCRedundantCallWithLiteral);
 }
 
+/// \brief Diagnose use of %s directive in an NSString which is being passed
+/// as formatting string to formatting method.
+static void
+DiagnoseCStringFormatDirectiveInObjCAPI(Sema &S,
+                                        ObjCMethodDecl *Method,
+                                        Selector Sel,
+                                        Expr **Args, unsigned NumArgs) {
+  if (NumArgs == 0)
+    return;
+  ObjCStringFormatFamily SFFamily = Sel.getStringFormatFamily();
+  if (SFFamily == ObjCStringFormatFamily::SFF_NSString) {
+    Expr *FormatExpr = Args[0];
+    if (ObjCStringLiteral *OSL =
+        dyn_cast<ObjCStringLiteral>(FormatExpr->IgnoreParenImpCasts())) {
+      StringLiteral *FormatString = OSL->getString();
+      if (S.FormatStringHasSArg(FormatString)) {
+        S.Diag(FormatExpr->getExprLoc(), diag::warn_objc_cdirective_format_string)
+        << "%s" << 0 << 0;
+        if (Method)
+          S.Diag(Method->getLocation(), diag::note_method_declared_at)
+          << Method->getDeclName();
+      }
+    }
+  }
+}
+
 /// \brief Build an Objective-C class message expression.
 ///
 /// This routine takes care of both normal class messages and
@@ -2258,7 +2284,9 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
       }
     }
   }
-
+  
+  DiagnoseCStringFormatDirectiveInObjCAPI(*this, Method, Sel, Args, NumArgs);
+  
   // Construct the appropriate ObjCMessageExpr.
   ObjCMessageExpr *Result;
   if (SuperLoc.isValid())
@@ -2743,6 +2771,8 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     }
   }
 
+  DiagnoseCStringFormatDirectiveInObjCAPI(*this, Method, Sel, Args, NumArgs);
+  
   // Construct the appropriate ObjCMessageExpr instance.
   ObjCMessageExpr *Result;
   if (SuperLoc.isValid())

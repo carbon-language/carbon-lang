@@ -289,6 +289,8 @@ public:
     return const_cast<NamedDecl*>(this)->getMostRecentDecl();
   }
 
+  ObjCStringFormatFamily getObjCFStringFormattingFamily() const;
+
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K >= firstNamed && K <= lastNamed; }
 };
