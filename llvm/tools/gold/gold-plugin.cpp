@@ -18,6 +18,7 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/CommandFlags.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
@@ -575,6 +576,13 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
     GlobalValue *GV = M->getNamedValue(Sym.name);
     if (!GV)
       continue; // Asm symbol.
+
+    if (GV->hasCommonLinkage()) {
+      // Common linkage is special. There is no single symbol that wins the
+      // resolution. Instead we have to collect the maximum alignment and size.
+      // The IR linker does that for us if we just pass it every common GV.
+      continue;
+    }
 
     switch (Resolution) {
     case LDPR_UNKNOWN:
