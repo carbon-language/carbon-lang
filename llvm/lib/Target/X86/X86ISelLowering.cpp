@@ -317,6 +317,8 @@ void X86TargetLowering::resetOperationActions() {
   setTruncStoreAction(MVT::i32, MVT::i8 , Expand);
   setTruncStoreAction(MVT::i16, MVT::i8,  Expand);
 
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
+
   // SETOEQ and SETUNE require checking two conditions.
   setCondCodeAction(ISD::SETOEQ, MVT::f32, Expand);
   setCondCodeAction(ISD::SETOEQ, MVT::f64, Expand);
@@ -1056,8 +1058,6 @@ void X86TargetLowering::resetOperationActions() {
       setOperationAction(ISD::SELECT, VT, Promote);
       AddPromotedToType (ISD::SELECT, VT, MVT::v2i64);
     }
-
-    setTruncStoreAction(MVT::f64, MVT::f32, Expand);
 
     // Custom lower v2i64 and v2f64 selects.
     setOperationAction(ISD::LOAD,               MVT::v2f64, Legal);
