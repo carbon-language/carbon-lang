@@ -22,3 +22,31 @@ void testSize() {
 
   clang_analyzer_eval(i == 0); // expected-warning{{TRUE}}
 }
+
+void test_assume_aligned_1(char *p) {
+  char *q;
+
+  q = (char*) __builtin_assume_aligned(p, 16);
+  clang_analyzer_eval(p == q); // expected-warning{{TRUE}}
+}
+
+void test_assume_aligned_2(char *p) {
+  char *q;
+
+  q = (char*) __builtin_assume_aligned(p, 16, 8);
+  clang_analyzer_eval(p == q); // expected-warning{{TRUE}}
+}
+
+void test_assume_aligned_3(char *p) {
+  void *q;
+
+  q = __builtin_assume_aligned(p, 16, 8);
+  clang_analyzer_eval(p == q); // expected-warning{{TRUE}}
+}
+
+void test_assume_aligned_4(char *p) {
+  char *q;
+
+  q = (char*) __builtin_assume_aligned(p + 1, 16);
+  clang_analyzer_eval(p == q); // expected-warning{{FALSE}}
+}

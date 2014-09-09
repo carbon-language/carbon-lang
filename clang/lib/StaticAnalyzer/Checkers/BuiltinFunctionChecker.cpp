@@ -42,8 +42,10 @@ bool BuiltinFunctionChecker::evalCall(const CallExpr *CE,
     return false;
 
   case Builtin::BI__builtin_expect:
+  case Builtin::BI__builtin_assume_aligned:
   case Builtin::BI__builtin_addressof: {
-    // For __builtin_expect, just return the value of the subexpression.
+    // For __builtin_expect and __builtin_assume_aligned, just return the value
+    // of the subexpression.
     // __builtin_addressof is going from a reference to a pointer, but those
     // are represented the same way in the analyzer.
     assert (CE->arg_begin() != CE->arg_end());
