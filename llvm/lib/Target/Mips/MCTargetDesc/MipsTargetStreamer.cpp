@@ -70,6 +70,8 @@ void MipsTargetStreamer::emitDirectiveSetMips32R6() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips64() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips64R2() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips64R6() { forbidModuleDirective(); }
+void MipsTargetStreamer::emitDirectiveSetPop() {}
+void MipsTargetStreamer::emitDirectiveSetPush() {}
 void MipsTargetStreamer::emitDirectiveSetDsp() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveCpload(unsigned RegNo) {}
 void MipsTargetStreamer::emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
@@ -241,6 +243,11 @@ void MipsTargetAsmStreamer::emitDirectiveSetDsp() {
   OS << "\t.set\tdsp\n";
   MipsTargetStreamer::emitDirectiveSetDsp();
 }
+
+void MipsTargetAsmStreamer::emitDirectiveSetPop() { OS << "\t.set\tpop\n"; }
+
+void MipsTargetAsmStreamer::emitDirectiveSetPush() { OS << "\t.set\tpush\n"; }
+
 // Print a 32 bit hex number with all numbers.
 static void printHex32(unsigned Value, raw_ostream &OS) {
   OS << "0x";

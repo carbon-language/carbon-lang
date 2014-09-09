@@ -13,6 +13,7 @@
 #include "MipsTargetStreamer.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -26,6 +27,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/TargetRegistry.h"
+#include <memory>
 
 using namespace llvm;
 
@@ -38,18 +40,29 @@ class MCInstrInfo;
 namespace {
 class MipsAssemblerOptions {
 public:
-  MipsAssemblerOptions() : ATReg(1), Reorder(true), Macro(true) {}
+  MipsAssemblerOptions(uint64_t Features_) : 
+    ATReg(1), Reorder(true), Macro(true), Features(Features_) {}
 
-  unsigned getATRegNum() { return ATReg; }
+  MipsAssemblerOptions(const MipsAssemblerOptions *Opts) {
+    ATReg = Opts->getATRegNum();
+    Reorder = Opts->isReorder();
+    Macro = Opts->isMacro();
+    Features = Opts->getFeatures();
+  }
+
+  unsigned getATRegNum() const { return ATReg; }
   bool setATReg(unsigned Reg);
 
-  bool isReorder() { return Reorder; }
+  bool isReorder() const { return Reorder; }
   void setReorder() { Reorder = true; }
   void setNoReorder() { Reorder = false; }
 
-  bool isMacro() { return Macro; }
+  bool isMacro() const { return Macro; }
   void setMacro() { Macro = true; }
   void setNoMacro() { Macro = false; }
+
+  uint64_t getFeatures() const { return Features; }
+  void setFeatures(uint64_t Features_) { Features = Features_; }
 
   // Set of features that are either architecture features or referenced
   // by them (e.g.: FeatureNaN2008 implied by FeatureMips32r6).
@@ -69,6 +82,7 @@ private:
   unsigned ATReg;
   bool Reorder;
   bool Macro;
+  uint64_t Features;
 };
 }
 
@@ -81,7 +95,7 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
-  MipsAssemblerOptions Options;
+  SmallVector<std::unique_ptr<MipsAssemblerOptions>, 2> AssemblerOptions;
   MCSymbol *CurrentFn; // Pointer to the function being parsed. It may be a
                        // nullptr, which indicates that no function is currently
                        // selected. This usually happens after an '.end func'
@@ -181,6 +195,8 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseSetNoReorderDirective();
   bool parseSetNoMips16Directive();
   bool parseSetFpDirective();
+  bool parseSetPopDirective();
+  bool parseSetPushDirective();
 
   bool parseSetAssignment();
 
@@ -252,6 +268,7 @@ class MipsAsmParser : public MCTargetAsmParser {
     STI.setFeatureBits(FeatureBits);
     setAvailableFeatures(
         ComputeAvailableFeatures(STI.ToggleFeature(ArchFeature)));
+    AssemblerOptions.back()->setFeatures(getAvailableFeatures());
   }
 
   void setFeatureBits(uint64_t Feature, StringRef FeatureString) {
@@ -259,6 +276,7 @@ class MipsAsmParser : public MCTargetAsmParser {
       setAvailableFeatures(
           ComputeAvailableFeatures(STI.ToggleFeature(FeatureString)));
     }
+    AssemblerOptions.back()->setFeatures(getAvailableFeatures());
   }
 
   void clearFeatureBits(uint64_t Feature, StringRef FeatureString) {
@@ -266,6 +284,7 @@ class MipsAsmParser : public MCTargetAsmParser {
       setAvailableFeatures(
           ComputeAvailableFeatures(STI.ToggleFeature(FeatureString)));
     }
+    AssemblerOptions.back()->setFeatures(getAvailableFeatures());
   }
 
 public:
@@ -282,6 +301,16 @@ public:
       : MCTargetAsmParser(), STI(sti), Parser(parser) {
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
+    
+    // Remember the initial assembler options. The user can not modify these.
+    MipsAssemblerOptions *TmpAOPtr = 
+      new MipsAssemblerOptions(getAvailableFeatures());
+    AssemblerOptions.push_back(std::unique_ptr<MipsAssemblerOptions>(TmpAOPtr));
+    
+    // Create an assembler options environment for the user to modify.
+    TmpAOPtr = new MipsAssemblerOptions(getAvailableFeatures());
+    AssemblerOptions.push_back(std::unique_ptr<MipsAssemblerOptions>(TmpAOPtr));
+    TmpAOPtr = nullptr;
 
     getTargetStreamer().updateABIInfo(*this);
 
@@ -1017,7 +1046,7 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
                                                       "nop instruction");
   }
 
-  if (MCID.hasDelaySlot() && Options.isReorder()) {
+  if (MCID.hasDelaySlot() && AssemblerOptions.back()->isReorder()) {
     // If this instruction has a delay slot and .set reorder is active,
     // emit a NOP after it.
     Instructions.push_back(Inst);
@@ -1562,7 +1591,8 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 }
 
 void MipsAsmParser::warnIfAssemblerTemporary(int RegIndex, SMLoc Loc) {
-  if ((RegIndex != 0) && ((int)Options.getATRegNum() == RegIndex)) {
+  if ((RegIndex != 0) && 
+      ((int)AssemblerOptions.back()->getATRegNum() == RegIndex)) {
     if (RegIndex == 1)
       Warning(Loc, "Used $at without \".set noat\"");
     else
@@ -1711,7 +1741,7 @@ bool MipsAssemblerOptions::setATReg(unsigned Reg) {
 }
 
 int MipsAsmParser::getATReg(SMLoc Loc) {
-  int AT = Options.getATRegNum();
+  int AT = AssemblerOptions.back()->getATRegNum();
   if (AT == 0)
     reportParseError(Loc,
                      "Pseudo instruction requires $at, which is not available");
@@ -2467,7 +2497,7 @@ bool MipsAsmParser::reportParseError(SMLoc Loc, Twine ErrorMsg) {
 bool MipsAsmParser::parseSetNoAtDirective() {
   // Line should look like: ".set noat".
   // set at reg to 0.
-  Options.setATReg(0);
+  AssemblerOptions.back()->setATReg(0);
   // eat noat
   Parser.Lex();
   // If this is not the end of the statement, report an error.
@@ -2485,7 +2515,7 @@ bool MipsAsmParser::parseSetAtDirective() {
   int AtRegNo;
   getParser().Lex();
   if (getLexer().is(AsmToken::EndOfStatement)) {
-    Options.setATReg(1);
+    AssemblerOptions.back()->setATReg(1);
     Parser.Lex(); // Consume the EndOfStatement.
     return false;
   } else if (getLexer().is(AsmToken::Equal)) {
@@ -2510,7 +2540,7 @@ bool MipsAsmParser::parseSetAtDirective() {
       return false;
     }
 
-    if (!Options.setATReg(AtRegNo)) {
+    if (!AssemblerOptions.back()->setATReg(AtRegNo)) {
       reportParseError("unexpected token in statement");
       return false;
     }
@@ -2535,7 +2565,7 @@ bool MipsAsmParser::parseSetReorderDirective() {
     reportParseError("unexpected token in statement");
     return false;
   }
-  Options.setReorder();
+  AssemblerOptions.back()->setReorder();
   getTargetStreamer().emitDirectiveSetReorder();
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
@@ -2548,7 +2578,7 @@ bool MipsAsmParser::parseSetNoReorderDirective() {
     reportParseError("unexpected token in statement");
     return false;
   }
-  Options.setNoReorder();
+  AssemblerOptions.back()->setNoReorder();
   getTargetStreamer().emitDirectiveSetNoReorder();
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
@@ -2561,7 +2591,7 @@ bool MipsAsmParser::parseSetMacroDirective() {
     reportParseError("unexpected token in statement");
     return false;
   }
-  Options.setMacro();
+  AssemblerOptions.back()->setMacro();
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }
@@ -2573,11 +2603,11 @@ bool MipsAsmParser::parseSetNoMacroDirective() {
     reportParseError("`noreorder' must be set before `nomacro'");
     return false;
   }
-  if (Options.isReorder()) {
+  if (AssemblerOptions.back()->isReorder()) {
     reportParseError("`noreorder' must be set before `nomacro'");
     return false;
   }
-  Options.setNoMacro();
+  AssemblerOptions.back()->setNoMacro();
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }
@@ -2641,6 +2671,39 @@ bool MipsAsmParser::parseSetFpDirective() {
   }
   getTargetStreamer().emitDirectiveSetFp(FpAbiVal);
   Parser.Lex(); // Consume the EndOfStatement.
+  return false;
+}
+
+bool MipsAsmParser::parseSetPopDirective() {
+  SMLoc Loc = getLexer().getLoc();
+
+  Parser.Lex();
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return reportParseError("unexpected token, expected end of statement");
+
+  // Always keep an element on the options "stack" to prevent the user
+  // from changing the initial options. This is how we remember them.
+  if (AssemblerOptions.size() == 2)
+    return reportParseError(Loc, ".set pop with no .set push");
+
+  AssemblerOptions.pop_back();
+  setAvailableFeatures(AssemblerOptions.back()->getFeatures());
+
+  getTargetStreamer().emitDirectiveSetPop();
+  return false;
+}
+
+bool MipsAsmParser::parseSetPushDirective() {
+  Parser.Lex();
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return reportParseError("unexpected token, expected end of statement");
+
+  // Create a copy of the current assembler options environment and push it.
+  MipsAssemblerOptions *TmpAOPtr = 
+    new MipsAssemblerOptions(AssemblerOptions.back().get());
+  AssemblerOptions.push_back(std::unique_ptr<MipsAssemblerOptions>(TmpAOPtr));
+
+  getTargetStreamer().emitDirectiveSetPush();
   return false;
 }
 
@@ -2781,7 +2844,7 @@ bool MipsAsmParser::eatComma(StringRef ErrorStr) {
 }
 
 bool MipsAsmParser::parseDirectiveCPLoad(SMLoc Loc) {
-  if (Options.isReorder())
+  if (AssemblerOptions.back()->isReorder())
     Warning(Loc, ".cpload in reorder section");
 
   // FIXME: Warn if cpload is used in Mips16 mode.
@@ -2896,6 +2959,10 @@ bool MipsAsmParser::parseDirectiveSet() {
     return parseSetArchDirective();
   } else if (Tok.getString() == "fp") {
     return parseSetFpDirective();
+  } else if (Tok.getString() == "pop") {
+    return parseSetPopDirective();
+  } else if (Tok.getString() == "push") {
+    return parseSetPushDirective();
   } else if (Tok.getString() == "reorder") {
     return parseSetReorderDirective();
   } else if (Tok.getString() == "noreorder") {
