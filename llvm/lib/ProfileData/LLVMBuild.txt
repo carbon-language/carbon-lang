@@ -19,4 +19,4 @@
 type = Library
 name = ProfileData
 parent = Libraries
-required_libraries = Support Object
+required_libraries = Core Support Object
