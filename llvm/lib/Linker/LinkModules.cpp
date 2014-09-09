@@ -1001,6 +1001,7 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
   GlobalValue *DGV = getLinkedToGlobal(SGV);
   llvm::Optional<GlobalValue::VisibilityTypes> NewVisibility;
   bool HasUnnamedAddr = SGV->hasUnnamedAddr();
+  unsigned Alignment = SGV->getAlignment();
 
   bool LinkFromSrc = false;
   Comdat *DC = nullptr;
@@ -1025,15 +1026,22 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
         return true;
       NewVisibility = NV;
       HasUnnamedAddr = HasUnnamedAddr && DGV->hasUnnamedAddr();
+      if (DGV->hasCommonLinkage() && SGV->hasCommonLinkage())
+        Alignment = std::max(Alignment, DGV->getAlignment());
+      else if (!LinkFromSrc)
+        Alignment = DGV->getAlignment();
 
       // If we're not linking from the source, then keep the definition that we
       // have.
       if (!LinkFromSrc) {
         // Special case for const propagation.
-        if (GlobalVariable *DGVar = dyn_cast<GlobalVariable>(DGV))
+        if (GlobalVariable *DGVar = dyn_cast<GlobalVariable>(DGV)) {
+          DGVar->setAlignment(Alignment);
+
           if (DGVar->isDeclaration() && SGV->isConstant() &&
               !DGVar->isConstant())
             DGVar->setConstant(true);
+        }
 
         // Set calculated linkage, visibility and unnamed_addr.
         DGV->setLinkage(NewLinkage);
@@ -1071,6 +1079,7 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
                        SGV->getType()->getAddressSpace());
   // Propagate alignment, visibility and section info.
   copyGVAttributes(NewDGV, SGV);
+  NewDGV->setAlignment(Alignment);
   if (NewVisibility)
     NewDGV->setVisibility(*NewVisibility);
   NewDGV->setUnnamedAddr(HasUnnamedAddr);
