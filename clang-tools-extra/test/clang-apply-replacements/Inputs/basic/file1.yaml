@@ -13,4 +13,8 @@ Replacements:
     Offset:          298
     Length:          1
     ReplacementText: elem
+  - FilePath:        $(path)/../basic/basic.h
+    Offset:          148
+    Length:          0
+    ReplacementText: 'override '
 ...

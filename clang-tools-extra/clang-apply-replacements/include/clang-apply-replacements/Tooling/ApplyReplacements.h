@@ -45,8 +45,9 @@ TUReplacements;
 typedef std::vector<std::string> TUReplacementFiles;
 
 /// \brief Map mapping file name to Replacements targeting that file.
-typedef llvm::StringMap<std::vector<clang::tooling::Replacement> >
-FileToReplacementsMap;
+typedef llvm::DenseMap<const clang::FileEntry *,
+                       std::vector<clang::tooling::Replacement>>
+    FileToReplacementsMap;
 
 /// \brief Recursively descends through a directory structure rooted at \p
 /// Directory and attempts to deserialize *.yaml files as

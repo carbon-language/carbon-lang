@@ -246,35 +246,34 @@ int main(int argc, char **argv) {
 
   Rewriter ReplacementsRewriter(SM, LangOptions());
 
-  for (FileToReplacementsMap::const_iterator I = GroupedReplacements.begin(),
-                                             E = GroupedReplacements.end();
-       I != E; ++I) {
-
-    std::string NewFileData;
-
+  for (const auto &FileAndReplacements : GroupedReplacements) {
     // This shouldn't happen but if a file somehow has no replacements skip to
     // next file.
-    if (I->getValue().empty())
+    if (FileAndReplacements.second.empty())
       continue;
 
-    if (!applyReplacements(I->getValue(), NewFileData, Diagnostics)) {
-      errs() << "Failed to apply replacements to " << I->getKey() << "\n";
+    std::string NewFileData;
+    const char *FileName = FileAndReplacements.first->getName();
+    if (!applyReplacements(FileAndReplacements.second, NewFileData,
+                           Diagnostics)) {
+      errs() << "Failed to apply replacements to " << FileName << "\n";
       continue;
     }
 
     // Apply formatting if requested.
-    if (DoFormat && !applyFormatting(I->getValue(), NewFileData, NewFileData,
-                                     FormatStyle, Diagnostics)) {
-      errs() << "Failed to apply reformatting replacements for " << I->getKey()
+    if (DoFormat &&
+        !applyFormatting(FileAndReplacements.second, NewFileData, NewFileData,
+                         FormatStyle, Diagnostics)) {
+      errs() << "Failed to apply reformatting replacements for " << FileName
              << "\n";
       continue;
     }
 
     // Write new file to disk
     std::error_code EC;
-    llvm::raw_fd_ostream FileStream(I->getKey(), EC, llvm::sys::fs::F_Text);
+    llvm::raw_fd_ostream FileStream(FileName, EC, llvm::sys::fs::F_Text);
     if (EC) {
-      llvm::errs() << "Could not open " << I->getKey() << " for writing\n";
+      llvm::errs() << "Could not open " << FileName << " for writing\n";
       continue;
     }
 

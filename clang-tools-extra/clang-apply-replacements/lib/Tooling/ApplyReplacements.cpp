@@ -140,33 +140,24 @@ static bool deduplicateAndDetectConflicts(FileToReplacementsMap &Replacements,
                                           SourceManager &SM) {
   bool conflictsFound = false;
 
-  for (FileToReplacementsMap::iterator I = Replacements.begin(),
-                                       E = Replacements.end();
-       I != E; ++I) {
-
-    const FileEntry *Entry = SM.getFileManager().getFile(I->getKey());
-    if (!Entry) {
-      errs() << "Described file '" << I->getKey()
-             << "' doesn't exist. Ignoring...\n";
-      continue;
-    }
+  for (auto &FileAndReplacements : Replacements) {
+    const FileEntry *Entry = FileAndReplacements.first;
+    auto &Replacements = FileAndReplacements.second;
+    assert(Entry != nullptr && "No file entry!");
 
     std::vector<tooling::Range> Conflicts;
-    tooling::deduplicate(I->getValue(), Conflicts);
+    tooling::deduplicate(FileAndReplacements.second, Conflicts);
 
     if (Conflicts.empty())
       continue;
 
     conflictsFound = true;
 
-    errs() << "There are conflicting changes to " << I->getKey() << ":\n";
+    errs() << "There are conflicting changes to " << Entry->getName() << ":\n";
 
-    for (std::vector<tooling::Range>::const_iterator
-             ConflictI = Conflicts.begin(),
-             ConflictE = Conflicts.end();
-         ConflictI != ConflictE; ++ConflictI) {
-      ArrayRef<tooling::Replacement> ConflictingReplacements(
-          &I->getValue()[ConflictI->getOffset()], ConflictI->getLength());
+    for (const tooling::Range &Conflict : Conflicts) {
+      auto ConflictingReplacements = llvm::makeArrayRef(
+          &Replacements[Conflict.getOffset()], Conflict.getLength());
       reportConflict(Entry, ConflictingReplacements, SM);
     }
   }
@@ -179,14 +170,20 @@ bool mergeAndDeduplicate(const TUReplacements &TUs,
                          clang::SourceManager &SM) {
 
   // Group all replacements by target file.
-  for (TUReplacements::const_iterator TUI = TUs.begin(), TUE = TUs.end();
-       TUI != TUE; ++TUI)
-    for (std::vector<tooling::Replacement>::const_iterator
-             RI = TUI->Replacements.begin(),
-             RE = TUI->Replacements.end();
-         RI != RE; ++RI)
-      GroupedReplacements[RI->getFilePath()].push_back(*RI);
-
+  std::set<StringRef> Warned;
+  for (const auto &TU : TUs) {
+    for (const tooling::Replacement &R : TU.Replacements) {
+      // Use the file manager to deduplicate paths. FileEntries are
+      // automatically canonicalized.
+      const FileEntry *Entry = SM.getFileManager().getFile(R.getFilePath());
+      if (!Entry && Warned.insert(R.getFilePath()).second) {
+        errs() << "Described file '" << R.getFilePath()
+               << "' doesn't exist. Ignoring...\n";
+        continue;
+      }
+      GroupedReplacements[Entry].push_back(R);
+    }
+  }
 
   // Ask clang to deduplicate and report conflicts.
   if (deduplicateAndDetectConflicts(GroupedReplacements, SM))
@@ -204,10 +201,8 @@ bool applyReplacements(const FileToReplacementsMap &GroupedReplacements,
   // data structure for applying replacements. Rewriter certainly doesn't care.
   // However, until we nail down the design of ReplacementGroups, might as well
   // leave this as is.
-  for (FileToReplacementsMap::const_iterator I = GroupedReplacements.begin(),
-                                             E = GroupedReplacements.end();
-       I != E; ++I) {
-    if (!tooling::applyAllReplacements(I->getValue(), Rewrites))
+  for (const auto &FileAndReplacements : GroupedReplacements) {
+    if (!tooling::applyAllReplacements(FileAndReplacements.second, Rewrites))
       return false;
   }
 
