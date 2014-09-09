@@ -1709,7 +1709,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   // Add the range of this function to the list of ranges for the CU.
   RangeSpan Span(FunctionBeginSym, FunctionEndSym);
   TheCU.addRange(std::move(Span));
-  PrevCU = &TheCU;
 
   // Clear debug info
   // Ownership of DbgVariables is a bit subtle - ScopeVariables owns all the

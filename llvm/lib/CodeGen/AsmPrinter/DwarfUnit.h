@@ -216,9 +216,6 @@ public:
   /// hasContent - Return true if this compile unit has something to write out.
   bool hasContent() const { return !UnitDie.getChildren().empty(); }
 
-  /// addRange - Add an address range to the list of ranges for this unit.
-  void addRange(RangeSpan Range);
-
   /// getRanges - Get the list of ranges for this unit.
   const SmallVectorImpl<RangeSpan> &getRanges() const { return CURanges; }
   SmallVectorImpl<RangeSpan> &getRanges() { return CURanges; }
@@ -555,6 +552,9 @@ public:
   DwarfCompileUnit &getCU() override { return *this; }
 
   unsigned getOrCreateSourceID(StringRef FileName, StringRef DirName) override;
+
+  /// addRange - Add an address range to the list of ranges for this unit.
+  void addRange(RangeSpan Range);
 };
 
 class DwarfTypeUnit : public DwarfUnit {
