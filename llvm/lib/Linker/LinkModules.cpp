@@ -670,11 +670,22 @@ bool ModuleLinker::getComdatResult(const Comdat *SrcC,
                                        LinkFromSrc);
 }
 
-/// getLinkageResult - This analyzes the two global values and determines what
-/// the result will look like in the destination module.  In particular, it
-/// computes the resultant linkage type and visibility, computes whether the
-/// global in the source should be copied over to the destination (replacing
-/// the existing one), and computes whether this linkage is an error or not.
+// FIXME: Duplicated from the gold plugin. This should be refactored somewhere.
+static bool isDeclaration(const GlobalValue &V) {
+  if (V.hasAvailableExternallyLinkage())
+    return true;
+
+  if (V.isMaterializable())
+    return false;
+
+  return V.isDeclaration();
+}
+
+/// This analyzes the two global values and determines what the result will look
+/// like in the destination module. In particular, it computes the resultant
+/// linkage type and visibility, computes whether the global in the source
+/// should be copied over to the destination (replacing the existing one), and
+/// computes whether this linkage is an error or not.
 bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
                                     GlobalValue::LinkageTypes &LT,
                                     GlobalValue::VisibilityTypes &Vis,
@@ -683,8 +694,8 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
   assert(!Src->hasLocalLinkage() &&
          "If Src has internal linkage, Dest shouldn't be set!");
 
-  bool SrcIsDeclaration = Src->isDeclaration() && !Src->isMaterializable();
-  bool DestIsDeclaration = Dest->isDeclaration();
+  bool SrcIsDeclaration = isDeclaration(*Src);
+  bool DestIsDeclaration = isDeclaration(*Dest);
 
   if (SrcIsDeclaration) {
     // If Src is external or if both Src & Dest are external..  Just link the
@@ -703,17 +714,15 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
       LinkFromSrc = false;
       LT = Dest->getLinkage();
     }
-  } else if (DestIsDeclaration && !Dest->hasDLLImportStorageClass()) {
+  } else if (DestIsDeclaration) {
     // If Dest is external but Src is not:
     LinkFromSrc = true;
     LT = Src->getLinkage();
   } else if (Src->isWeakForLinker()) {
-    // At this point we know that Dest has LinkOnce, External*, Weak, Common,
-    // or DLL* linkage.
-    if (Dest->hasExternalWeakLinkage() ||
-        Dest->hasAvailableExternallyLinkage() ||
-        (Dest->hasLinkOnceLinkage() &&
-         (Src->hasWeakLinkage() || Src->hasCommonLinkage()))) {
+    assert(!Dest->hasExternalWeakLinkage());
+    assert(!Dest->hasAvailableExternallyLinkage());
+    if (Dest->hasLinkOnceLinkage() &&
+        (Src->hasWeakLinkage() || Src->hasCommonLinkage())) {
       LinkFromSrc = true;
       LT = Src->getLinkage();
     } else {
@@ -721,20 +730,16 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
       LT = Dest->getLinkage();
     }
   } else if (Dest->isWeakForLinker()) {
-    // At this point we know that Src has External* or DLL* linkage.
-    if (Src->hasExternalWeakLinkage()) {
-      LinkFromSrc = false;
-      LT = Dest->getLinkage();
-    } else {
-      LinkFromSrc = true;
-      LT = GlobalValue::ExternalLinkage;
-    }
+    assert(!Src->hasExternalWeakLinkage());
+    LinkFromSrc = true;
+    LT = GlobalValue::ExternalLinkage;
   } else {
-    assert((Dest->hasExternalLinkage()  || Dest->hasExternalWeakLinkage()) &&
-           (Src->hasExternalLinkage()   || Src->hasExternalWeakLinkage()) &&
+    assert(!Src->hasExternalWeakLinkage());
+    assert(!Dest->hasExternalWeakLinkage());
+    assert(Dest->hasExternalLinkage() && Src->hasExternalLinkage() &&
            "Unexpected linkage type!");
     return emitError("Linking globals named '" + Src->getName() +
-                 "': symbol multiply defined!");
+                     "': symbol multiply defined!");
   }
 
   // Compute the visibility. We follow the rules in the System V Application
