@@ -55,6 +55,12 @@ def grp_main : OptionGroup<"opts">, HelpText<"MAIN EXECUTABLE OPTIONS">;
 def entry : Separate<["-"], "e">,
      MetaVarName<"<entry-name>">,
      HelpText<"entry symbol name">,Group<grp_main>;
+def pie : Flag<["-"], "pie">,
+     HelpText<"Create Position Independent Executable (for ASLR)">,
+     Group<grp_main>;
+def no_pie : Flag<["-"], "no_pie">,
+     HelpText<"Do not create Position Independent Executable">,
+     Group<grp_main>;
 
 // dylib executable options
 def grp_dylib : OptionGroup<"opts">, HelpText<"DYLIB EXECUTABLE OPTIONS">;

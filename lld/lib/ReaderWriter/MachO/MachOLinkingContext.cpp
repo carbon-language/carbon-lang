@@ -132,7 +132,8 @@ bool MachOLinkingContext::isThinObjectFile(StringRef path, Arch &arch) {
 
 MachOLinkingContext::MachOLinkingContext()
     : _outputMachOType(MH_EXECUTE), _outputMachOTypeStatic(false),
-      _doNothing(false), _arch(arch_unknown), _os(OS::macOSX), _osMinVersion(0),
+      _doNothing(false), _pie(false),
+      _arch(arch_unknown), _os(OS::macOSX), _osMinVersion(0),
       _pageZeroSize(0), _pageSize(4096), _compatibilityVersion(0),
       _currentVersion(0), _deadStrippableDylib(false), _printAtoms(false),
       _testingFileUsage(false), _keepPrivateExterns(false),
@@ -165,6 +166,22 @@ void MachOLinkingContext::configure(HeaderFileType type, Arch arch, OS os,
       _pageZeroSize = 0x1000;
     }
 
+    // Make PIE by default when targetting newer OSs.
+    switch (os) {
+      case OS::macOSX:
+        if (minOSVersion >= 0x000A0700) // MacOSX 10.7
+          _pie = true;
+        break;
+      case OS::iOS:
+        if (minOSVersion >= 0x00040300) // iOS 4.3
+          _pie = true;
+       break;
+       case OS::iOS_simulator:
+        _pie = true;
+       break;
+       case OS::unknown:
+       break;
+    }
     break;
   case llvm::MachO::MH_DYLIB:
     _globalsAreDeadStripRoots = true;

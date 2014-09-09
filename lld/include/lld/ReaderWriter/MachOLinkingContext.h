@@ -104,6 +104,8 @@ public:
   const StringRefVector &frameworkDirs() const { return _frameworkDirs; }
   void setSysLibRoots(const StringRefVector &paths);
   const StringRefVector &sysLibRoots() const { return _syslibRoots; }
+  bool PIE() const { return _pie; }
+  void setPIE(bool pie) { _pie = pie; }
 
   /// \brief Checks whether a given path on the filesystem exists.
   ///
@@ -266,6 +268,7 @@ private:
   HeaderFileType _outputMachOType;   // e.g MH_EXECUTE
   bool _outputMachOTypeStatic; // Disambiguate static vs dynamic prog
   bool _doNothing;            // for -help and -v which just print info
+  bool _pie;
   Arch _arch;
   OS _os;
   uint32_t _osMinVersion;

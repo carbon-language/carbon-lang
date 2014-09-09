@@ -1120,7 +1120,10 @@ uint32_t Util::fileFlags() {
   if (_context.outputMachOType() == MH_OBJECT) {
     return MH_SUBSECTIONS_VIA_SYMBOLS;
   } else {
-    return MH_DYLDLINK | MH_NOUNDEFS | MH_TWOLEVEL;
+    if ((_context.outputMachOType() == MH_EXECUTE) && _context.PIE())
+      return MH_DYLDLINK | MH_NOUNDEFS | MH_TWOLEVEL | MH_PIE;
+    else
+      return MH_DYLDLINK | MH_NOUNDEFS | MH_TWOLEVEL;
   }
 }
 

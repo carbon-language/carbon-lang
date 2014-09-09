@@ -544,6 +544,52 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     }
   }
 
+  // Handle -pie or -no_pie
+  if (llvm::opt::Arg *pie = parsedArgs->getLastArg(OPT_pie, OPT_no_pie)) {
+    switch (ctx.outputMachOType()) {
+    case llvm::MachO::MH_EXECUTE:
+      switch (ctx.os()) {
+      case MachOLinkingContext::OS::macOSX:
+        if ((minOSVersion < 0x000A0500) &&
+            (pie->getOption().getID() == OPT_pie)) {
+          diagnostics << "-pie can only be used when targeting "
+                         "Mac OS X 10.5 or later\n";
+          return false;
+        }
+        break;
+      case MachOLinkingContext::OS::iOS:
+        if ((minOSVersion < 0x00040200) &&
+            (pie->getOption().getID() == OPT_pie)) {
+          diagnostics << "-pie can only be used when targeting "
+                         "iOS 4.2 or later\n";
+          return false;
+        }
+        break;
+      case MachOLinkingContext::OS::iOS_simulator:
+        if (pie->getOption().getID() == OPT_no_pie)
+          diagnostics << "iOS simulator programs must be built PIE\n";
+          return false;
+        break;
+      case MachOLinkingContext::OS::unknown:
+        break;
+      }
+      ctx.setPIE(pie->getOption().getID() == OPT_pie);
+      break;
+    case llvm::MachO::MH_PRELOAD:
+      break;
+    case llvm::MachO::MH_DYLIB:
+    case llvm::MachO::MH_BUNDLE:
+      diagnostics << "warning: " << pie->getSpelling() << " being ignored. "
+                  << "It is only used when linking main executables\n";
+      break;
+    default:
+      diagnostics << pie->getSpelling()
+                  << " can only used when linking main executables\n";
+      return false;
+      break;
+    }
+  }
+
   // Handle input files
   for (auto &arg : *parsedArgs) {
     ErrorOr<StringRef> resolvedPath = StringRef();
