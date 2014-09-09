@@ -927,6 +927,7 @@ const char *Triple::getARMCPUForArch(StringRef MArch) const {
     MArch = getArchName();
 
   switch (getOS()) {
+  case llvm::Triple::FreeBSD:
   case llvm::Triple::NetBSD:
     if (MArch == "armv6")
       return "arm1176jzf-s";
