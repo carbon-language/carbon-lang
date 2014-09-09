@@ -1104,7 +1104,6 @@ bool CMIDriver::SetDriverStateRunningNotDebugging( void )
 	case eDriverState_RunningNotDebugging:
 		break;
 	case eDriverState_count:
-	default:
 		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_CODE_ERR_INVALID_ENUMERATION_VALUE ), "SetDriverStateRunningNotDebugging()" ) );
 		return MIstatus::failure;
 	}
@@ -1152,7 +1151,6 @@ bool CMIDriver::SetDriverStateRunningDebugging( void )
 	case eDriverState_RunningNotDebugging:
 		break;
 	case eDriverState_count:
-	default:
 		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_CODE_ERR_INVALID_ENUMERATION_VALUE ), "SetDriverStateRunningDebugging()" ) );
 		return MIstatus::failure;
 	}
