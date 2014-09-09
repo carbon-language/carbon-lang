@@ -9,6 +9,7 @@
 
 // lldb Includes
 #include "lldb/Host/freebsd/HostThreadFreeBSD.h"
+#include "lldb/Host/Host.h"
 
 // C includes
 #include <errno.h>
@@ -16,6 +17,7 @@
 #include <pthread_np.h>
 #include <stdlib.h>
 #include <sys/sysctl.h>
+#include <sys/user.h>
 
 // C++ includes
 #include <string>
