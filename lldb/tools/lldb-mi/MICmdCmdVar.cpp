@@ -55,7 +55,6 @@
 //--
 CMICmdCmdVarCreate::CMICmdCmdVarCreate( void )
 :	m_nChildren( 0 )
-,	m_nMore( 0 )
 ,	m_nThreadId( 0 )
 ,	m_strType( "??" )
 ,	m_bValid( false )

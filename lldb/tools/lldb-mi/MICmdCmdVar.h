@@ -78,7 +78,6 @@ public:
 private:
 	CMIUtilString		m_strVarName;
 	MIuint				m_nChildren;
-	MIuint				m_nMore;
 	MIuint64			m_nThreadId;
 	CMIUtilString		m_strType;
 	bool				m_bValid;						// True = Variable is valid, false = not valid		
