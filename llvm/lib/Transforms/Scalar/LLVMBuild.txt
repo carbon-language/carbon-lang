@@ -20,4 +20,4 @@ type = Library
 name = Scalar
 parent = Transforms
 library_name = ScalarOpts
-required_libraries = Analysis Core IPA InstCombine ProfileData Support Target TransformUtils
+required_libraries = Analysis Core InstCombine ProfileData Support Target TransformUtils
