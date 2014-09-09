@@ -15,6 +15,7 @@
 #define LLVM_LIB_TARGET_X86_INSTPRINTER_X86ATTINSTPRINTER_H
 
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 
 namespace llvm {
 
@@ -23,8 +24,11 @@ class MCOperand;
 class X86ATTInstPrinter final : public MCInstPrinter {
 public:
   X86ATTInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
-                    const MCRegisterInfo &MRI)
-    : MCInstPrinter(MAI, MII, MRI) {}
+                    const MCRegisterInfo &MRI, const MCSubtargetInfo &STI)
+    : MCInstPrinter(MAI, MII, MRI) {
+    // Initialize the set of available features.
+    setAvailableFeatures(STI.getFeatureBits());
+  }
 
   void printRegName(raw_ostream &OS, unsigned RegNo) const override;
   void printInst(const MCInst *MI, raw_ostream &OS, StringRef Annot) override;

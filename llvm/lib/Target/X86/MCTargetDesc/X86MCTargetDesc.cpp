@@ -377,7 +377,7 @@ static MCInstPrinter *createX86MCInstPrinter(const Target &T,
                                              const MCRegisterInfo &MRI,
                                              const MCSubtargetInfo &STI) {
   if (SyntaxVariant == 0)
-    return new X86ATTInstPrinter(MAI, MII, MRI);
+    return new X86ATTInstPrinter(MAI, MII, MRI, STI);
   if (SyntaxVariant == 1)
     return new X86IntelInstPrinter(MAI, MII, MRI);
   return nullptr;
