@@ -26,7 +26,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
@@ -42,15 +41,14 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/ProfileData/SampleProfReader.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/LineIterator.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cctype>
 
 using namespace llvm;
+using namespace sampleprof;
 
 #define DEBUG_TYPE "sample-profile"
 
@@ -65,76 +63,48 @@ static cl::opt<unsigned> SampleProfileMaxPropagateIterations(
              "sample block/edge weights through the CFG."));
 
 namespace {
-/// \brief Represents the relative location of an instruction.
-///
-/// Instruction locations are specified by the line offset from the
-/// beginning of the function (marked by the line where the function
-/// header is) and the discriminator value within that line.
-///
-/// The discriminator value is useful to distinguish instructions
-/// that are on the same line but belong to different basic blocks
-/// (e.g., the two post-increment instructions in "if (p) x++; else y++;").
-struct InstructionLocation {
-  InstructionLocation(int L, unsigned D) : LineOffset(L), Discriminator(D) {}
-  int LineOffset;
-  unsigned Discriminator;
-};
-}
-
-namespace llvm {
-template <> struct DenseMapInfo<InstructionLocation> {
-  typedef DenseMapInfo<int> OffsetInfo;
-  typedef DenseMapInfo<unsigned> DiscriminatorInfo;
-  static inline InstructionLocation getEmptyKey() {
-    return InstructionLocation(OffsetInfo::getEmptyKey(),
-                               DiscriminatorInfo::getEmptyKey());
-  }
-  static inline InstructionLocation getTombstoneKey() {
-    return InstructionLocation(OffsetInfo::getTombstoneKey(),
-                               DiscriminatorInfo::getTombstoneKey());
-  }
-  static inline unsigned getHashValue(InstructionLocation Val) {
-    return DenseMapInfo<std::pair<int, unsigned>>::getHashValue(
-        std::pair<int, unsigned>(Val.LineOffset, Val.Discriminator));
-  }
-  static inline bool isEqual(InstructionLocation LHS, InstructionLocation RHS) {
-    return LHS.LineOffset == RHS.LineOffset &&
-           LHS.Discriminator == RHS.Discriminator;
-  }
-};
-}
-
-namespace {
-typedef DenseMap<InstructionLocation, unsigned> BodySampleMap;
 typedef DenseMap<BasicBlock *, unsigned> BlockWeightMap;
 typedef DenseMap<BasicBlock *, BasicBlock *> EquivalenceClassMap;
 typedef std::pair<BasicBlock *, BasicBlock *> Edge;
 typedef DenseMap<Edge, unsigned> EdgeWeightMap;
 typedef DenseMap<BasicBlock *, SmallVector<BasicBlock *, 8>> BlockEdgeMap;
 
-/// \brief Representation of the runtime profile for a function.
+/// \brief Sample profile pass.
 ///
-/// This data structure contains the runtime profile for a given
-/// function. It contains the total number of samples collected
-/// in the function and a map of samples collected in every statement.
-class SampleFunctionProfile {
+/// This pass reads profile data from the file specified by
+/// -sample-profile-file and annotates every affected function with the
+/// profile information found in that file.
+class SampleProfileLoader : public FunctionPass {
 public:
-  SampleFunctionProfile()
-      : TotalSamples(0), TotalHeadSamples(0), HeaderLineno(0), DT(nullptr),
-        PDT(nullptr), LI(nullptr), Ctx(nullptr) {}
+  // Class identification, replacement for typeinfo
+  static char ID;
 
+  SampleProfileLoader(StringRef Name = SampleProfileFile)
+      : FunctionPass(ID), DT(nullptr), PDT(nullptr), LI(nullptr), Ctx(nullptr),
+        Reader(), Samples(nullptr), Filename(Name), ProfileIsValid(false) {
+    initializeSampleProfileLoaderPass(*PassRegistry::getPassRegistry());
+  }
+
+  bool doInitialization(Module &M) override;
+
+  void dump() { Reader->dump(); }
+
+  const char *getPassName() const override { return "Sample profile pass"; }
+
+  bool runOnFunction(Function &F) override;
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.setPreservesCFG();
+    AU.addRequired<LoopInfo>();
+    AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addRequired<PostDominatorTree>();
+  }
+
+protected:
   unsigned getFunctionLoc(Function &F);
-  bool emitAnnotations(Function &F, DominatorTree *DomTree,
-                       PostDominatorTree *PostDomTree, LoopInfo *Loops);
+  bool emitAnnotations(Function &F);
   unsigned getInstWeight(Instruction &I);
   unsigned getBlockWeight(BasicBlock *B);
-  void addTotalSamples(unsigned Num) { TotalSamples += Num; }
-  void addHeadSamples(unsigned Num) { TotalHeadSamples += Num; }
-  void addBodySamples(int LineOffset, unsigned Discriminator, unsigned Num) {
-    assert(LineOffset >= 0);
-    BodySamples[InstructionLocation(LineOffset, Discriminator)] += Num;
-  }
-  void print(raw_ostream &OS);
   void printEdgeWeight(raw_ostream &OS, Edge E);
   void printBlockWeight(raw_ostream &OS, BasicBlock *BB);
   void printBlockEquivalence(raw_ostream &OS, BasicBlock *BB);
@@ -147,31 +117,10 @@ public:
   unsigned visitEdge(Edge E, unsigned *NumUnknownEdges, Edge *UnknownEdge);
   void buildEdges(Function &F);
   bool propagateThroughEdges(Function &F);
-  bool empty() { return BodySamples.empty(); }
 
-protected:
-  /// \brief Total number of samples collected inside this function.
-  ///
-  /// Samples are cumulative, they include all the samples collected
-  /// inside this function and all its inlined callees.
-  unsigned TotalSamples;
-
-  /// \brief Total number of samples collected at the head of the function.
-  /// FIXME: Use head samples to estimate a cold/hot attribute for the function.
-  unsigned TotalHeadSamples;
-
-  /// \brief Line number for the function header. Used to compute relative
-  /// line numbers from the absolute line LOCs found in instruction locations.
-  /// The relative line numbers are needed to address the samples from the
-  /// profile file.
+  /// \brief Line number for the function header. Used to compute absolute
+  /// line numbers from the relative line numbers found in the profile.
   unsigned HeaderLineno;
-
-  /// \brief Map line offsets to collected samples.
-  ///
-  /// Each entry in this map contains the number of samples
-  /// collected at the corresponding line offset. All line locations
-  /// are an offset from the start of the function.
-  BodySampleMap BodySamples;
 
   /// \brief Map basic blocks to their computed weights.
   ///
@@ -212,105 +161,12 @@ protected:
 
   /// \brief LLVM context holding the debug data we need.
   LLVMContext *Ctx;
-};
 
-/// \brief Sample-based profile reader.
-///
-/// Each profile contains sample counts for all the functions
-/// executed. Inside each function, statements are annotated with the
-/// collected samples on all the instructions associated with that
-/// statement.
-///
-/// For this to produce meaningful data, the program needs to be
-/// compiled with some debug information (at minimum, line numbers:
-/// -gline-tables-only). Otherwise, it will be impossible to match IR
-/// instructions to the line numbers collected by the profiler.
-///
-/// From the profile file, we are interested in collecting the
-/// following information:
-///
-/// * A list of functions included in the profile (mangled names).
-///
-/// * For each function F:
-///   1. The total number of samples collected in F.
-///
-///   2. The samples collected at each line in F. To provide some
-///      protection against source code shuffling, line numbers should
-///      be relative to the start of the function.
-class SampleModuleProfile {
-public:
-  SampleModuleProfile(const Module &M, StringRef F)
-      : Profiles(0), Filename(F), M(M) {}
-
-  void dump();
-  bool loadText();
-  void loadNative() { llvm_unreachable("not implemented"); }
-  void printFunctionProfile(raw_ostream &OS, StringRef FName);
-  void dumpFunctionProfile(StringRef FName);
-  SampleFunctionProfile &getProfile(const Function &F) {
-    return Profiles[F.getName()];
-  }
-
-  /// \brief Report a parse error message.
-  void reportParseError(int64_t LineNumber, Twine Msg) const {
-    DiagnosticInfoSampleProfile Diag(Filename.data(), LineNumber, Msg);
-    M.getContext().diagnose(Diag);
-  }
-
-protected:
-  /// \brief Map every function to its associated profile.
-  ///
-  /// The profile of every function executed at runtime is collected
-  /// in the structure SampleFunctionProfile. This maps function objects
-  /// to their corresponding profiles.
-  StringMap<SampleFunctionProfile> Profiles;
-
-  /// \brief Path name to the file holding the profile data.
-  ///
-  /// The format of this file is defined by each profiler
-  /// independently. If possible, the profiler should have a text
-  /// version of the profile format to be used in constructing test
-  /// cases and debugging.
-  StringRef Filename;
-
-  /// \brief Module being compiled. Used mainly to access the current
-  /// LLVM context for diagnostics.
-  const Module &M;
-};
-
-/// \brief Sample profile pass.
-///
-/// This pass reads profile data from the file specified by
-/// -sample-profile-file and annotates every affected function with the
-/// profile information found in that file.
-class SampleProfileLoader : public FunctionPass {
-public:
-  // Class identification, replacement for typeinfo
-  static char ID;
-
-  SampleProfileLoader(StringRef Name = SampleProfileFile)
-      : FunctionPass(ID), Profiler(), Filename(Name), ProfileIsValid(false) {
-    initializeSampleProfileLoaderPass(*PassRegistry::getPassRegistry());
-  }
-
-  bool doInitialization(Module &M) override;
-
-  void dump() { Profiler->dump(); }
-
-  const char *getPassName() const override { return "Sample profile pass"; }
-
-  bool runOnFunction(Function &F) override;
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.setPreservesCFG();
-    AU.addRequired<LoopInfo>();
-    AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addRequired<PostDominatorTree>();
-  }
-
-protected:
   /// \brief Profile reader object.
-  std::unique_ptr<SampleModuleProfile> Profiler;
+  std::unique_ptr<SampleProfileReader> Reader;
+
+  /// \brief Samples collected for the body of this function.
+  FunctionSamples *Samples;
 
   /// \brief Name of the profile file to load.
   StringRef Filename;
@@ -320,26 +176,11 @@ protected:
 };
 }
 
-/// \brief Print this function profile on stream \p OS.
-///
-/// \param OS Stream to emit the output to.
-void SampleFunctionProfile::print(raw_ostream &OS) {
-  OS << TotalSamples << ", " << TotalHeadSamples << ", " << BodySamples.size()
-     << " sampled lines\n";
-  for (BodySampleMap::const_iterator SI = BodySamples.begin(),
-                                     SE = BodySamples.end();
-       SI != SE; ++SI)
-    OS << "\tline offset: " << SI->first.LineOffset
-       << ", discriminator: " << SI->first.Discriminator
-       << ", number of samples: " << SI->second << "\n";
-  OS << "\n";
-}
-
 /// \brief Print the weight of edge \p E on stream \p OS.
 ///
 /// \param OS  Stream to emit the output to.
 /// \param E  Edge to print.
-void SampleFunctionProfile::printEdgeWeight(raw_ostream &OS, Edge E) {
+void SampleProfileLoader::printEdgeWeight(raw_ostream &OS, Edge E) {
   OS << "weight[" << E.first->getName() << "->" << E.second->getName()
      << "]: " << EdgeWeights[E] << "\n";
 }
@@ -348,8 +189,8 @@ void SampleFunctionProfile::printEdgeWeight(raw_ostream &OS, Edge E) {
 ///
 /// \param OS  Stream to emit the output to.
 /// \param BB  Block to print.
-void SampleFunctionProfile::printBlockEquivalence(raw_ostream &OS,
-                                                  BasicBlock *BB) {
+void SampleProfileLoader::printBlockEquivalence(raw_ostream &OS,
+                                                BasicBlock *BB) {
   BasicBlock *Equiv = EquivalenceClass[BB];
   OS << "equivalence[" << BB->getName()
      << "]: " << ((Equiv) ? EquivalenceClass[BB]->getName() : "NONE") << "\n";
@@ -359,172 +200,8 @@ void SampleFunctionProfile::printBlockEquivalence(raw_ostream &OS,
 ///
 /// \param OS  Stream to emit the output to.
 /// \param BB  Block to print.
-void SampleFunctionProfile::printBlockWeight(raw_ostream &OS, BasicBlock *BB) {
+void SampleProfileLoader::printBlockWeight(raw_ostream &OS, BasicBlock *BB) {
   OS << "weight[" << BB->getName() << "]: " << BlockWeights[BB] << "\n";
-}
-
-/// \brief Print the function profile for \p FName on stream \p OS.
-///
-/// \param OS Stream to emit the output to.
-/// \param FName Name of the function to print.
-void SampleModuleProfile::printFunctionProfile(raw_ostream &OS,
-                                               StringRef FName) {
-  OS << "Function: " << FName << ":\n";
-  Profiles[FName].print(OS);
-}
-
-/// \brief Dump the function profile for \p FName.
-///
-/// \param FName Name of the function to print.
-void SampleModuleProfile::dumpFunctionProfile(StringRef FName) {
-  printFunctionProfile(dbgs(), FName);
-}
-
-/// \brief Dump all the function profiles found.
-void SampleModuleProfile::dump() {
-  for (StringMap<SampleFunctionProfile>::const_iterator I = Profiles.begin(),
-                                                        E = Profiles.end();
-       I != E; ++I)
-    dumpFunctionProfile(I->getKey());
-}
-
-/// \brief Load samples from a text file.
-///
-/// The file contains a list of samples for every function executed at
-/// runtime. Each function profile has the following format:
-///
-///    function1:total_samples:total_head_samples
-///    offset1[.discriminator]: number_of_samples [fn1:num fn2:num ... ]
-///    offset2[.discriminator]: number_of_samples [fn3:num fn4:num ... ]
-///    ...
-///    offsetN[.discriminator]: number_of_samples [fn5:num fn6:num ... ]
-///
-/// Function names must be mangled in order for the profile loader to
-/// match them in the current translation unit. The two numbers in the
-/// function header specify how many total samples were accumulated in
-/// the function (first number), and the total number of samples accumulated
-/// at the prologue of the function (second number). This head sample
-/// count provides an indicator of how frequent is the function invoked.
-///
-/// Each sampled line may contain several items. Some are optional
-/// (marked below):
-///
-/// a- Source line offset. This number represents the line number
-///    in the function where the sample was collected. The line number
-///    is always relative to the line where symbol of the function
-///    is defined. So, if the function has its header at line 280,
-///    the offset 13 is at line 293 in the file.
-///
-/// b- [OPTIONAL] Discriminator. This is used if the sampled program
-///    was compiled with DWARF discriminator support
-///    (http://wiki.dwarfstd.org/index.php?title=Path_Discriminators)
-///
-/// c- Number of samples. This is the number of samples collected by
-///    the profiler at this source location.
-///
-/// d- [OPTIONAL] Potential call targets and samples. If present, this
-///    line contains a call instruction. This models both direct and
-///    indirect calls. Each called target is listed together with the
-///    number of samples. For example,
-///
-///    130: 7  foo:3  bar:2  baz:7
-///
-///    The above means that at relative line offset 130 there is a
-///    call instruction that calls one of foo(), bar() and baz(). With
-///    baz() being the relatively more frequent call target.
-///
-///    FIXME: This is currently unhandled, but it has a lot of
-///           potential for aiding the inliner.
-///
-///
-/// Since this is a flat profile, a function that shows up more than
-/// once gets all its samples aggregated across all its instances.
-///
-/// FIXME: flat profiles are too imprecise to provide good optimization
-///        opportunities. Convert them to context-sensitive profile.
-///
-/// This textual representation is useful to generate unit tests and
-/// for debugging purposes, but it should not be used to generate
-/// profiles for large programs, as the representation is extremely
-/// inefficient.
-///
-/// \returns true if the file was loaded successfully, false otherwise.
-bool SampleModuleProfile::loadText() {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
-      MemoryBuffer::getFile(Filename);
-  if (std::error_code EC = BufferOrErr.getError()) {
-    std::string Msg(EC.message());
-    M.getContext().diagnose(DiagnosticInfoSampleProfile(Filename.data(), Msg));
-    return false;
-  }
-  MemoryBuffer &Buffer = *BufferOrErr.get();
-  line_iterator LineIt(Buffer, '#');
-
-  // Read the profile of each function. Since each function may be
-  // mentioned more than once, and we are collecting flat profiles,
-  // accumulate samples as we parse them.
-  Regex HeadRE("^([^0-9].*):([0-9]+):([0-9]+)$");
-  Regex LineSample("^([0-9]+)\\.?([0-9]+)?: ([0-9]+)(.*)$");
-  while (!LineIt.is_at_eof()) {
-    // Read the header of each function.
-    //
-    // Note that for function identifiers we are actually expecting
-    // mangled names, but we may not always get them. This happens when
-    // the compiler decides not to emit the function (e.g., it was inlined
-    // and removed). In this case, the binary will not have the linkage
-    // name for the function, so the profiler will emit the function's
-    // unmangled name, which may contain characters like ':' and '>' in its
-    // name (member functions, templates, etc).
-    //
-    // The only requirement we place on the identifier, then, is that it
-    // should not begin with a number.
-    SmallVector<StringRef, 3> Matches;
-    if (!HeadRE.match(*LineIt, &Matches)) {
-      reportParseError(LineIt.line_number(),
-                       "Expected 'mangled_name:NUM:NUM', found " + *LineIt);
-      return false;
-    }
-    assert(Matches.size() == 4);
-    StringRef FName = Matches[1];
-    unsigned NumSamples, NumHeadSamples;
-    Matches[2].getAsInteger(10, NumSamples);
-    Matches[3].getAsInteger(10, NumHeadSamples);
-    Profiles[FName] = SampleFunctionProfile();
-    SampleFunctionProfile &FProfile = Profiles[FName];
-    FProfile.addTotalSamples(NumSamples);
-    FProfile.addHeadSamples(NumHeadSamples);
-    ++LineIt;
-
-    // Now read the body. The body of the function ends when we reach
-    // EOF or when we see the start of the next function.
-    while (!LineIt.is_at_eof() && isdigit((*LineIt)[0])) {
-      if (!LineSample.match(*LineIt, &Matches)) {
-        reportParseError(
-            LineIt.line_number(),
-            "Expected 'NUM[.NUM]: NUM[ mangled_name:NUM]*', found " + *LineIt);
-        return false;
-      }
-      assert(Matches.size() == 5);
-      unsigned LineOffset, NumSamples, Discriminator = 0;
-      Matches[1].getAsInteger(10, LineOffset);
-      if (Matches[2] != "")
-        Matches[2].getAsInteger(10, Discriminator);
-      Matches[3].getAsInteger(10, NumSamples);
-
-      // FIXME: Handle called targets (in Matches[4]).
-
-      // When dealing with instruction weights, we use the value
-      // zero to indicate the absence of a sample. If we read an
-      // actual zero from the profile file, return it as 1 to
-      // avoid the confusion later on.
-      if (NumSamples == 0)
-        NumSamples = 1;
-      FProfile.addBodySamples(LineOffset, Discriminator, NumSamples);
-      ++LineIt;
-    }
-  }
-
-  return true;
 }
 
 /// \brief Get the weight for an instruction.
@@ -538,7 +215,7 @@ bool SampleModuleProfile::loadText() {
 /// \param Inst Instruction to query.
 ///
 /// \returns The profiled weight of I.
-unsigned SampleFunctionProfile::getInstWeight(Instruction &Inst) {
+unsigned SampleProfileLoader::getInstWeight(Instruction &Inst) {
   DebugLoc DLoc = Inst.getDebugLoc();
   unsigned Lineno = DLoc.getLine();
   if (Lineno < HeaderLineno)
@@ -547,8 +224,7 @@ unsigned SampleFunctionProfile::getInstWeight(Instruction &Inst) {
   DILocation DIL(DLoc.getAsMDNode(*Ctx));
   int LOffset = Lineno - HeaderLineno;
   unsigned Discriminator = DIL.getDiscriminator();
-  unsigned Weight =
-      BodySamples.lookup(InstructionLocation(LOffset, Discriminator));
+  unsigned Weight = Samples->samplesAt(LOffset, Discriminator);
   DEBUG(dbgs() << "    " << Lineno << "." << Discriminator << ":" << Inst
                << " (line offset: " << LOffset << "." << Discriminator
                << " - weight: " << Weight << ")\n");
@@ -564,7 +240,7 @@ unsigned SampleFunctionProfile::getInstWeight(Instruction &Inst) {
 /// \param B The basic block to query.
 ///
 /// \returns The computed weight of B.
-unsigned SampleFunctionProfile::getBlockWeight(BasicBlock *B) {
+unsigned SampleProfileLoader::getBlockWeight(BasicBlock *B) {
   // If we've computed B's weight before, return it.
   std::pair<BlockWeightMap::iterator, bool> Entry =
       BlockWeights.insert(std::make_pair(B, 0));
@@ -588,7 +264,7 @@ unsigned SampleFunctionProfile::getBlockWeight(BasicBlock *B) {
 /// the weights of every basic block in the CFG.
 ///
 /// \param F The function to query.
-bool SampleFunctionProfile::computeBlockWeights(Function &F) {
+bool SampleProfileLoader::computeBlockWeights(Function &F) {
   bool Changed = false;
   DEBUG(dbgs() << "Block weights\n");
   for (Function::iterator B = F.begin(), E = F.end(); B != E; ++B) {
@@ -623,7 +299,7 @@ bool SampleFunctionProfile::computeBlockWeights(Function &F) {
 /// \param DomTree  Opposite dominator tree. If \p Descendants is filled
 ///                 with blocks from \p BB1's dominator tree, then
 ///                 this is the post-dominator tree, and vice versa.
-void SampleFunctionProfile::findEquivalencesFor(
+void SampleProfileLoader::findEquivalencesFor(
     BasicBlock *BB1, SmallVector<BasicBlock *, 8> Descendants,
     DominatorTreeBase<BasicBlock> *DomTree) {
   for (SmallVectorImpl<BasicBlock *>::iterator I = Descendants.begin(),
@@ -660,7 +336,7 @@ void SampleFunctionProfile::findEquivalencesFor(
 /// dominates B2, B2 post-dominates B1 and both are in the same loop.
 ///
 /// \param F The function to query.
-void SampleFunctionProfile::findEquivalenceClasses(Function &F) {
+void SampleProfileLoader::findEquivalenceClasses(Function &F) {
   SmallVector<BasicBlock *, 8> DominatedBBs;
   DEBUG(dbgs() << "\nBlock equivalence classes\n");
   // Find equivalence sets based on dominance and post-dominance information.
@@ -731,8 +407,8 @@ void SampleFunctionProfile::findEquivalenceClasses(Function &F) {
 /// \param UnknownEdge  Set if E has not been visited before.
 ///
 /// \returns E's weight, if known. Otherwise, return 0.
-unsigned SampleFunctionProfile::visitEdge(Edge E, unsigned *NumUnknownEdges,
-                                          Edge *UnknownEdge) {
+unsigned SampleProfileLoader::visitEdge(Edge E, unsigned *NumUnknownEdges,
+                                        Edge *UnknownEdge) {
   if (!VisitedEdges.count(E)) {
     (*NumUnknownEdges)++;
     *UnknownEdge = E;
@@ -753,7 +429,7 @@ unsigned SampleFunctionProfile::visitEdge(Edge E, unsigned *NumUnknownEdges,
 /// \param F  Function to process.
 ///
 /// \returns  True if new weights were assigned to edges or blocks.
-bool SampleFunctionProfile::propagateThroughEdges(Function &F) {
+bool SampleProfileLoader::propagateThroughEdges(Function &F) {
   bool Changed = false;
   DEBUG(dbgs() << "\nPropagation through edges\n");
   for (Function::iterator BI = F.begin(), EI = F.end(); BI != EI; ++BI) {
@@ -857,7 +533,7 @@ bool SampleFunctionProfile::propagateThroughEdges(Function &F) {
 ///
 /// We are interested in unique edges. If a block B1 has multiple
 /// edges to another block B2, we only add a single B1->B2 edge.
-void SampleFunctionProfile::buildEdges(Function &F) {
+void SampleProfileLoader::buildEdges(Function &F) {
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     BasicBlock *B1 = I;
 
@@ -900,7 +576,7 @@ void SampleFunctionProfile::buildEdges(Function &F) {
 ///   known, the weight for that edge is set to the weight of the block
 ///   minus the weight of the other incoming edges to that block (if
 ///   known).
-void SampleFunctionProfile::propagateWeights(Function &F) {
+void SampleProfileLoader::propagateWeights(Function &F) {
   bool Changed = true;
   unsigned i = 0;
 
@@ -965,7 +641,7 @@ void SampleFunctionProfile::propagateWeights(Function &F) {
 ///
 /// \returns the line number where \p F is defined. If it returns 0,
 ///          it means that there is no debug information available for \p F.
-unsigned SampleFunctionProfile::getFunctionLoc(Function &F) {
+unsigned SampleProfileLoader::getFunctionLoc(Function &F) {
   NamedMDNode *CUNodes = F.getParent()->getNamedMetadata("llvm.dbg.cu");
   if (CUNodes) {
     for (unsigned I = 0, E1 = CUNodes->getNumOperands(); I != E1; ++I) {
@@ -1031,11 +707,10 @@ unsigned SampleFunctionProfile::getFunctionLoc(Function &F) {
 /// metadata on B using the computed values for each of its branches.
 ///
 /// \param F The function to query.
+/// \param S The set of samples collected during \p F's execution.
 ///
 /// \returns true if \p F was modified. Returns false, otherwise.
-bool SampleFunctionProfile::emitAnnotations(Function &F, DominatorTree *DomTree,
-                                            PostDominatorTree *PostDomTree,
-                                            LoopInfo *Loops) {
+bool SampleProfileLoader::emitAnnotations(Function &F) {
   bool Changed = false;
 
   // Initialize invariants used during computation and propagation.
@@ -1045,10 +720,6 @@ bool SampleFunctionProfile::emitAnnotations(Function &F, DominatorTree *DomTree,
 
   DEBUG(dbgs() << "Line number for the first instruction in " << F.getName()
                << ": " << HeaderLineno << "\n");
-  DT = DomTree;
-  PDT = PostDomTree;
-  LI = Loops;
-  Ctx = &F.getParent()->getContext();
 
   // Compute basic block weights.
   Changed |= computeBlockWeights(F);
@@ -1075,8 +746,8 @@ INITIALIZE_PASS_END(SampleProfileLoader, "sample-profile",
                     "Sample Profile loader", false, false)
 
 bool SampleProfileLoader::doInitialization(Module &M) {
-  Profiler.reset(new SampleModuleProfile(M, Filename));
-  ProfileIsValid = Profiler->loadText();
+  Reader.reset(new SampleProfileReader(M, Filename));
+  ProfileIsValid = Reader->load();
   return true;
 }
 
@@ -1091,11 +762,13 @@ FunctionPass *llvm::createSampleProfileLoaderPass(StringRef Name) {
 bool SampleProfileLoader::runOnFunction(Function &F) {
   if (!ProfileIsValid)
     return false;
-  DominatorTree *DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  PostDominatorTree *PDT = &getAnalysis<PostDominatorTree>();
-  LoopInfo *LI = &getAnalysis<LoopInfo>();
-  SampleFunctionProfile &FunctionProfile = Profiler->getProfile(F);
-  if (!FunctionProfile.empty())
-    return FunctionProfile.emitAnnotations(F, DT, PDT, LI);
+
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  PDT = &getAnalysis<PostDominatorTree>();
+  LI = &getAnalysis<LoopInfo>();
+  Ctx = &F.getParent()->getContext();
+  Samples = Reader->getSamplesFor(F);
+  if (!Samples->empty())
+    return emitAnnotations(F);
   return false;
 }

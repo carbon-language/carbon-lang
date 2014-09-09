@@ -5,4 +5,5 @@ add_llvm_library(LLVMProfileData
   CoverageMapping.cpp
   CoverageMappingWriter.cpp
   CoverageMappingReader.cpp
+  SampleProfReader.cpp
   )

@@ -18,6 +18,7 @@
 #include "llvm-c/Core.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/IR/DebugLoc.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/Casting.h"
 
 namespace llvm {
