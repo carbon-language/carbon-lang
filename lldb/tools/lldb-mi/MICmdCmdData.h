@@ -326,9 +326,7 @@ private:
 	const CMIUtilString	m_constStrArgAddr;	
 	const CMIUtilString	m_constStrArgContents;	
 	const CMIUtilString	m_constStrArgCount;	
-	MIuint64			m_nAddr;
 	CMIUtilString		m_strContents;
-	MIuint64			m_nCount;
 };
 
 //++ ============================================================================

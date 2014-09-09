@@ -1120,8 +1120,6 @@ CMICmdCmdDataWriteMemoryBytes::CMICmdCmdDataWriteMemoryBytes( void )
 ,	m_constStrArgAddr( "address" )	
 ,	m_constStrArgContents( "contents" )	
 ,	m_constStrArgCount( "count" )	
-,	m_nAddr( 0 )
-,	m_nCount( 0 )
 {
 	// Command factory matches this name with that received from the stdin stream
 	m_strMiCmd = "data-write-memory-bytes";
