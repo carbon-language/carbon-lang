@@ -487,14 +487,21 @@ std::string configurationAsText(const FormatStyle &Style);
 /// \brief Reformats the given \p Ranges in the token stream coming out of
 /// \c Lex.
 ///
+/// DEPRECATED: Do not use.
+tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
+                               SourceManager &SourceMgr,
+                               std::vector<CharSourceRange> Ranges);
+
+/// \brief Reformats the given \p Ranges in the file \p ID.
+///
 /// Each range is extended on either end to its next bigger logic unit, i.e.
 /// everything that might influence its formatting or might be influenced by its
 /// formatting.
 ///
 /// Returns the \c Replacements necessary to make all \p Ranges comply with
 /// \p Style.
-tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
-                               SourceManager &SourceMgr,
+tooling::Replacements reformat(const FormatStyle &Style,
+                               SourceManager &SourceMgr, FileID ID,
                                std::vector<CharSourceRange> Ranges);
 
 /// \brief Reformats the given \p Ranges in \p Code.

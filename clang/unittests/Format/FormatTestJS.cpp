@@ -330,6 +330,8 @@ TEST_F(FormatTestJS, RegexLiteralSpecialCharacters) {
   verifyFormat("var regex = /\\\\/g;");
   verifyFormat("var regex = /\\a\\\\/g;");
   verifyFormat("var regex = /\a\\//g;");
+  verifyFormat("var regex = /a\\//;\n"
+               "var x = 0;");
 }
 
 TEST_F(FormatTestJS, RegexLiteralModifiers) {

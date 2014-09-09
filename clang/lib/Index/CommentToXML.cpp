@@ -15,7 +15,6 @@
 #include "clang/AST/CommentVisitor.h"
 #include "clang/Format/Format.h"
 #include "clang/Index/USRGeneration.h"
-#include "clang/Lex/Lexer.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Support/raw_ostream.h"
@@ -611,12 +610,8 @@ void CommentASTToXMLConverter::formatTextOfDeclaration(
 
   std::vector<CharSourceRange> Ranges(
       1, CharSourceRange::getCharRange(Start, Start.getLocWithOffset(Length)));
-  ASTContext &Context = DI->CurrentDecl->getASTContext();
-  const LangOptions &LangOpts = Context.getLangOpts();
-  Lexer Lex(ID, FormatRewriterContext.Sources.getBuffer(ID),
-            FormatRewriterContext.Sources, LangOpts);
   tooling::Replacements Replace = reformat(
-      format::getLLVMStyle(), Lex, FormatRewriterContext.Sources, Ranges);
+      format::getLLVMStyle(), FormatRewriterContext.Sources, ID, Ranges);
   applyAllReplacements(Replace, FormatRewriterContext.Rewrite);
   Declaration = FormatRewriterContext.getRewrittenText(ID);
 }

@@ -1273,13 +1273,16 @@ private:
 
 class FormatTokenLexer {
 public:
-  FormatTokenLexer(Lexer &Lex, SourceManager &SourceMgr, FormatStyle &Style,
+  FormatTokenLexer(SourceManager &SourceMgr, FileID ID, FormatStyle &Style,
                    encoding::Encoding Encoding)
       : FormatTok(nullptr), IsFirstToken(true), GreaterStashed(false),
-        Column(0), TrailingWhitespace(0), Lex(Lex), SourceMgr(SourceMgr),
-        Style(Style), IdentTable(getFormattingLangOpts(Style)),
-        Encoding(Encoding), FirstInLineIndex(0), FormattingDisabled(false) {
-    Lex.SetKeepWhitespaceMode(true);
+        Column(0), TrailingWhitespace(0),
+        SourceMgr(SourceMgr), ID(ID), Style(Style),
+        IdentTable(getFormattingLangOpts(Style)), Encoding(Encoding),
+        FirstInLineIndex(0), FormattingDisabled(false) {
+    Lex.reset(new Lexer(ID, SourceMgr.getBuffer(ID), SourceMgr,
+                        getFormattingLangOpts(Style)));
+    Lex->SetKeepWhitespaceMode(true);
 
     for (const std::string &ForEachMacro : Style.ForEachMacros)
       ForEachMacros.push_back(&IdentTable.get(ForEachMacro));
@@ -1308,9 +1311,9 @@ private:
       return;
 
     if (Style.Language == FormatStyle::LK_JavaScript) {
-      if (tryMergeEscapeSequence())
-        return;
       if (tryMergeJSRegexLiteral())
+        return;
+      if (tryMergeEscapeSequence())
         return;
 
       static tok::TokenKind JSIdentity[] = { tok::equalequal, tok::equal };
@@ -1376,9 +1379,18 @@ private:
   // "(;,{}![:?", a binary operator or 'return', as those cannot be followed by
   // a division.
   bool tryMergeJSRegexLiteral() {
-    if (Tokens.size() < 2 || Tokens.back()->isNot(tok::slash) ||
-        (Tokens[Tokens.size() - 2]->is(tok::unknown) &&
-         Tokens[Tokens.size() - 2]->TokenText == "\\"))
+    if (Tokens.size() < 2)
+      return false;
+    // If a regex literal ends in "\//", this gets represented by an unknown
+    // token "\" and a comment.
+    bool MightEndWithEscapedSlash =
+        Tokens.back()->is(tok::comment) &&
+        Tokens.back()->TokenText.startswith("//") &&
+        Tokens[Tokens.size() - 2]->TokenText == "\\";
+    if (!MightEndWithEscapedSlash &&
+        (Tokens.back()->isNot(tok::slash) ||
+         (Tokens[Tokens.size() - 2]->is(tok::unknown) &&
+          Tokens[Tokens.size() - 2]->TokenText == "\\")))
       return false;
     unsigned TokenCount = 0;
     unsigned LastColumn = Tokens.back()->OriginalColumn;
@@ -1389,6 +1401,17 @@ private:
                          tok::exclaim, tok::l_square, tok::colon, tok::comma,
                          tok::question, tok::kw_return) ||
            I[1]->isBinaryOperator())) {
+        if (MightEndWithEscapedSlash) {
+          StringRef Buffer = SourceMgr.getBufferData(ID);
+          // This regex literal ends in '\//'. Skip past the '//' of the last
+          // token and re-start lexing from there.
+          int offset =
+              SourceMgr.getFileOffset(Tokens.back()->Tok.getLocation()) + 2;
+          Lex.reset(new Lexer(SourceMgr.getLocForStartOfFile(ID),
+                              getFormattingLangOpts(Style), Buffer.begin(),
+                              Buffer.begin() + offset, Buffer.end()));
+          Lex->SetKeepWhitespaceMode(true);
+        }
         Tokens.resize(Tokens.size() - TokenCount);
         Tokens.back()->Tok.setKind(tok::unknown);
         Tokens.back()->Type = TT_RegexLiteral;
@@ -1641,8 +1664,9 @@ private:
   bool GreaterStashed;
   unsigned Column;
   unsigned TrailingWhitespace;
-  Lexer &Lex;
+  std::unique_ptr<Lexer> Lex;
   SourceManager &SourceMgr;
+  FileID ID;
   FormatStyle &Style;
   IdentifierTable IdentTable;
   encoding::Encoding Encoding;
@@ -1655,7 +1679,7 @@ private:
   bool FormattingDisabled;
 
   void readRawToken(FormatToken &Tok) {
-    Lex.LexFromRawLexer(Tok.Tok);
+    Lex->LexFromRawLexer(Tok.Tok);
     Tok.TokenText = StringRef(SourceMgr.getCharacterData(Tok.Tok.getLocation()),
                               Tok.Tok.getLength());
     // For formatting, treat unterminated string literals like normal string
@@ -1692,12 +1716,13 @@ static StringRef getLanguageName(FormatStyle::LanguageKind Language) {
 
 class Formatter : public UnwrappedLineConsumer {
 public:
-  Formatter(const FormatStyle &Style, Lexer &Lex, SourceManager &SourceMgr,
+  Formatter(const FormatStyle &Style, SourceManager &SourceMgr, FileID ID,
             const std::vector<CharSourceRange> &Ranges)
-      : Style(Style), Lex(Lex), SourceMgr(SourceMgr),
-        Whitespaces(SourceMgr, Style, inputUsesCRLF(Lex.getBuffer())),
+      : Style(Style), ID(ID), SourceMgr(SourceMgr),
+        Whitespaces(SourceMgr, Style,
+                    inputUsesCRLF(SourceMgr.getBufferData(ID))),
         Ranges(Ranges.begin(), Ranges.end()), UnwrappedLines(1),
-        Encoding(encoding::detectEncoding(Lex.getBuffer())) {
+        Encoding(encoding::detectEncoding(SourceMgr.getBufferData(ID))) {
     DEBUG(llvm::dbgs() << "File encoding: "
                        << (Encoding == encoding::Encoding_UTF8 ? "UTF8"
                                                                : "unknown")
@@ -1708,7 +1733,7 @@ public:
 
   tooling::Replacements format() {
     tooling::Replacements Result;
-    FormatTokenLexer Tokens(Lex, SourceMgr, Style, Encoding);
+    FormatTokenLexer Tokens(SourceMgr, ID, Style, Encoding);
 
     UnwrappedLineParser Parser(Style, Tokens.lex(), *this);
     bool StructuralError = Parser.parse();
@@ -1962,7 +1987,7 @@ private:
   }
 
   FormatStyle Style;
-  Lexer &Lex;
+  FileID ID;
   SourceManager &SourceMgr;
   WhitespaceManager Whitespaces;
   SmallVector<CharSourceRange, 8> Ranges;
@@ -1977,18 +2002,27 @@ private:
 tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
                                SourceManager &SourceMgr,
                                std::vector<CharSourceRange> Ranges) {
-  if (Style.DisableFormat) {
-    tooling::Replacements EmptyResult;
-    return EmptyResult;
-  }
+  if (Style.DisableFormat)
+    return tooling::Replacements();
+  return reformat(Style, SourceMgr,
+                  SourceMgr.getFileID(Lex.getSourceLocation()), Ranges);
+}
 
-  Formatter formatter(Style, Lex, SourceMgr, Ranges);
+tooling::Replacements reformat(const FormatStyle &Style,
+                               SourceManager &SourceMgr, FileID ID,
+                               std::vector<CharSourceRange> Ranges) {
+  if (Style.DisableFormat)
+    return tooling::Replacements();
+  Formatter formatter(Style, SourceMgr, ID, Ranges);
   return formatter.format();
 }
 
 tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
                                std::vector<tooling::Range> Ranges,
                                StringRef FileName) {
+  if (Style.DisableFormat)
+    return tooling::Replacements();
+
   FileManager Files((FileSystemOptions()));
   DiagnosticsEngine Diagnostics(
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
@@ -2001,8 +2035,6 @@ tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
   SourceMgr.overrideFileContents(Entry, std::move(Buf));
   FileID ID =
       SourceMgr.createFileID(Entry, SourceLocation(), clang::SrcMgr::C_User);
-  Lexer Lex(ID, SourceMgr.getBuffer(ID), SourceMgr,
-            getFormattingLangOpts(Style));
   SourceLocation StartOfFile = SourceMgr.getLocForStartOfFile(ID);
   std::vector<CharSourceRange> CharRanges;
   for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
@@ -2010,7 +2042,7 @@ tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
     SourceLocation End = Start.getLocWithOffset(Ranges[i].getLength());
     CharRanges.push_back(CharSourceRange::getCharRange(Start, End));
   }
-  return reformat(Style, Lex, SourceMgr, CharRanges);
+  return reformat(Style, SourceMgr, ID, CharRanges);
 }
 
 LangOptions getFormattingLangOpts(const FormatStyle &Style) {

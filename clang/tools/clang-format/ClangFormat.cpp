@@ -19,7 +19,6 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Version.h"
 #include "clang/Format/Format.h"
-#include "clang/Lex/Lexer.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Debug.h"
@@ -225,9 +224,7 @@ static bool format(StringRef FileName) {
 
   FormatStyle FormatStyle = getStyle(
       Style, (FileName == "-") ? AssumeFilename : FileName, FallbackStyle);
-  Lexer Lex(ID, Sources.getBuffer(ID), Sources,
-            getFormattingLangOpts(FormatStyle));
-  tooling::Replacements Replaces = reformat(FormatStyle, Lex, Sources, Ranges);
+  tooling::Replacements Replaces = reformat(FormatStyle, Sources, ID, Ranges);
   if (OutputXML) {
     llvm::outs()
         << "<?xml version='1.0'?>\n<replacements xml:space='preserve'>\n";
