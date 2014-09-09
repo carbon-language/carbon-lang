@@ -255,12 +255,6 @@ bool CMICmnLLDBDebuggerHandleEvents::HandleEventSBBreakPoint( const lldb::SBEven
 		pEventType = "eBreakpointEventTypeIgnoreChanged";
 		bOk = HandleEventSBBreakpointCmn( vEvent );
 		break;
-    default:
-	{
-		const CMIUtilString msg( CMIUtilString::Format( MIRSRC( IDS_LLDBOUTOFBAND_ERR_UNKNOWN_EVENT ), "SBBreakPoint", (MIuint) eEvent ) );
-		SetErrorDescription( msg );
-		return MIstatus::failure;
-	}
 	}
 	m_pLog->WriteLog( CMIUtilString::Format( "##### An SB Breakpoint event occurred: %s", pEventType ) );
 
@@ -786,25 +780,6 @@ bool CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateStopped( bool & vwrb
     case lldb::eStopReasonThreadExiting:
 		pEventType = "eStopReasonThreadExiting";
 		break;
-	default:
-	{
-		vwrbShouldBrk = false;
-		
-		// MI print "*stopped,reason=\"%d\",stopped-threads=\"all\",from-thread=\"%u\""
-		const CMIUtilString strReason( CMIUtilString::Format( "%d", eStoppedReason ) );
-		const CMICmnMIValueConst miValueConst( strReason );
-		const CMICmnMIValueResult miValueResult( "reason", miValueConst );
-		CMICmnMIOutOfBandRecord miOutOfBandRecord( CMICmnMIOutOfBandRecord::eOutOfBand_Stopped, miValueResult );
-		const CMICmnMIValueConst miValueConst2( "all" );
-		const CMICmnMIValueResult miValueResult2( "stopped-threads", miValueConst2 );
-		bOk = miOutOfBandRecord.Add( miValueResult2 );
-		const CMIUtilString strFromThread( CMIUtilString::Format( "%u", rProcess.GetSelectedThread().GetIndexID() ) );
-		const CMICmnMIValueConst miValueConst3( strFromThread );
-		const CMICmnMIValueResult miValueResult3( "from-thread", miValueConst3 );
-		bOk = bOk && miOutOfBandRecord.Add( miValueResult3 );
-		bOk = bOk && MiOutOfBandRecordToStdout( miOutOfBandRecord );
-		bOk = bOk && TextToStdout( "(gdb)" );
-	}
 	}
 	
 	// ToDo: Remove when finished coding application
