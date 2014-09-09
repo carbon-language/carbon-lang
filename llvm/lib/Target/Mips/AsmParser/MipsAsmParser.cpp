@@ -177,6 +177,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   const MCExpr *evaluateRelocExpr(const MCExpr *Expr, StringRef RelocStr);
 
   bool isEvaluated(const MCExpr *Expr);
+  bool parseSetMips0Directive();
   bool parseSetArchDirective();
   bool parseSetFeature(uint64_t Feature);
   bool parseDirectiveCPLoad(SMLoc Loc);
@@ -2731,6 +2732,19 @@ bool MipsAsmParser::parseSetAssignment() {
   return false;
 }
 
+bool MipsAsmParser::parseSetMips0Directive() {
+  Parser.Lex();
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return reportParseError("unexpected token, expected end of statement");
+
+  // Reset assembler options to their initial values.
+  setAvailableFeatures(AssemblerOptions.front()->getFeatures());
+  AssemblerOptions.back()->setFeatures(AssemblerOptions.front()->getFeatures());
+
+  getTargetStreamer().emitDirectiveSetMips0();
+  return false;
+}
+
 bool MipsAsmParser::parseSetArchDirective() {
   Parser.Lex();
   if (getLexer().isNot(AsmToken::Equal))
@@ -2981,6 +2995,8 @@ bool MipsAsmParser::parseDirectiveSet() {
     return false;
   } else if (Tok.getString() == "micromips") {
     return parseSetFeature(Mips::FeatureMicroMips);
+  } else if (Tok.getString() == "mips0") {
+    return parseSetMips0Directive();
   } else if (Tok.getString() == "mips1") {
     return parseSetFeature(Mips::FeatureMips1);
   } else if (Tok.getString() == "mips2") {
