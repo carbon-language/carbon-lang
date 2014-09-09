@@ -24,11 +24,9 @@ using namespace lldb_private;
 
 HistoryUnwind::HistoryUnwind (Thread &thread,
                               std::vector<lldb::addr_t> pcs,
-                              uint32_t stop_id,
                               bool stop_id_is_valid) :
         Unwind (thread),
         m_pcs (pcs),
-        m_stop_id (stop_id),
         m_stop_id_is_valid (stop_id_is_valid)
 {
 }

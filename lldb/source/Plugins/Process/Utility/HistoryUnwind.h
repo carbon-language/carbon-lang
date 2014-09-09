@@ -21,7 +21,7 @@ namespace lldb_private {
 class HistoryUnwind : public lldb_private::Unwind
 {
 public:
-    HistoryUnwind (Thread &thread, std::vector<lldb::addr_t> pcs, uint32_t stop_id, bool stop_id_is_valid);
+    HistoryUnwind (Thread &thread, std::vector<lldb::addr_t> pcs, bool stop_id_is_valid);
 
     virtual ~HistoryUnwind ();
 
@@ -42,7 +42,6 @@ protected:
 private:
 
     std::vector<lldb::addr_t>   m_pcs;
-    uint32_t                    m_stop_id;
     bool                        m_stop_id_is_valid;
 };
 
