@@ -542,11 +542,11 @@ bool ARMDAGToDAGISel::SelectAddrModeImm12(SDValue N,
   }
 
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-    int RHSC = (int)RHS->getZExtValue();
+    int RHSC = (int)RHS->getSExtValue();
     if (N.getOpcode() == ISD::SUB)
       RHSC = -RHSC;
 
-    if (RHSC >= 0 && RHSC < 0x1000) { // 12 bits (unsigned)
+    if (RHSC > -0x1000 && RHSC < 0x1000) { // 12 bits
       Base   = N.getOperand(0);
       if (Base.getOpcode() == ISD::FrameIndex) {
         int FI = cast<FrameIndexSDNode>(Base)->getIndex();
