@@ -179,7 +179,9 @@ static unsigned getNewAlignment(const SCEV *AASCEV, const SCEV *AlignSCEV,
     DEBUG(dbgs() << "\tnew start alignment: " << NewAlignment << "\n");
     DEBUG(dbgs() << "\tnew inc alignment: " << NewIncAlignment << "\n");
 
-    if (NewAlignment > NewIncAlignment) {
+    if (!NewAlignment || !NewIncAlignment) {
+      return 0;
+    } else if (NewAlignment > NewIncAlignment) {
       if (NewAlignment % NewIncAlignment == 0) {
         DEBUG(dbgs() << "\tnew start/inc alignment: " <<
                         NewIncAlignment << "\n");
@@ -191,7 +193,7 @@ static unsigned getNewAlignment(const SCEV *AASCEV, const SCEV *AlignSCEV,
                         NewAlignment << "\n");
         return NewAlignment;
       }
-    } else if (NewIncAlignment == NewAlignment && NewIncAlignment) {
+    } else if (NewIncAlignment == NewAlignment) {
       DEBUG(dbgs() << "\tnew start/inc alignment: " <<
                       NewAlignment << "\n");
       return NewAlignment;
