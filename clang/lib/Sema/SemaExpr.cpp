@@ -10994,7 +10994,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
 
   PartialDiagnostic FDiag = PDiag(DiagKind);
   if (Action == AA_Passing_CFAudited)
-    FDiag << FirstType << SecondType << SrcExpr->getSourceRange();
+    FDiag << FirstType << SecondType << AA_Passing << SrcExpr->getSourceRange();
   else
     FDiag << FirstType << SecondType << Action << SrcExpr->getSourceRange();
 
