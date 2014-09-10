@@ -13,8 +13,8 @@ void test() {
 // CHECK: int left_and_right(int *);{{$}}
 // CHECK-NEXT: @import diamond_left; /* clang -E: implicit import for "{{.*}}diamond_left.h" */{{$}}
 
-// CHECK: @import diamond_right; /* clang -E: implicit import for "/Users/blangmuir/src/clang/test/Modules/Inputs/diamond_right.h" */{{$}}
-// CHECK: @import diamond_right; /* clang -E: implicit import for "/Users/blangmuir/src/clang/test/Modules/Inputs/diamond_right.h" */{{$}}
+// CHECK: @import diamond_right; /* clang -E: implicit import for "{{.*}}diamond_right.h" */{{$}}
+// CHECK: @import diamond_right; /* clang -E: implicit import for "{{.*}}diamond_right.h" */{{$}}
 // CHECK-NEXT: void test() {{{$}}
 // CHECK-NEXT:    top_left_before();{{$}}
 // CHECK-NEXT:    left_and_right();{{$}}
