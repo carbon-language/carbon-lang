@@ -206,7 +206,7 @@ gatherLineSubViews(size_t &CurrentIdx,
   while (CurrentIdx < E &&
          Items[CurrentIdx]->getSubViewsExpansionLine() == LineNo)
     ++CurrentIdx;
-  return Items.slice(PrevIdx, CurrentIdx);
+  return Items.slice(PrevIdx, CurrentIdx - PrevIdx);
 }
 
 void SourceCoverageView::render(raw_ostream &OS, unsigned Offset) {
