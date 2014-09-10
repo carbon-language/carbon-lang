@@ -23,34 +23,33 @@
 using namespace llvm;
 using namespace polly;
 
-// We generate a loop of the following structure
+// We generate a loop of either of the following structures:
 //
-//              BeforeBB
-//                 |
-//                 v
-//              GuardBB
-//              /      |
-//     __  PreHeaderBB  |
-//    /  \    /         |
-// latch  HeaderBB      |
-//    \  /    \         /
-//     <       \       /
-//              \     /
-//              ExitBB
+//              BeforeBB                      BeforeBB
+//                 |                             |
+//                 v                             v
+//              GuardBB                      PreHeaderBB
+//              /      |                         |   _____
+//     __  PreHeaderBB  |                        v  \/    |
+//    /  \    /         |                     HeaderBB  latch
+// latch  HeaderBB      |                        |\       |
+//    \  /    \         /                        | \------/
+//     <       \       /                         |
+//              \     /                          v
+//              ExitBB                         ExitBB
 //
-// GuardBB checks if the loop is executed at least once. If this is the case
-// we branch to PreHeaderBB and subsequently to the HeaderBB, which contains the
-// loop iv 'polly.indvar', the incremented loop iv 'polly.indvar_next' as well
-// as the condition to check if we execute another iteration of the loop. After
-// the loop has finished, we branch to ExitBB.
-//
-// TODO: We currently always create the GuardBB. If we can prove the loop is
-//       always executed at least once, we can get rid of this branch.
+// depending on whether or not we know that it is executed at least once. If
+// not, GuardBB checks if the loop is executed at least once. If this is the
+// case we branch to PreHeaderBB and subsequently to the HeaderBB, which
+// contains the loop iv 'polly.indvar', the incremented loop iv
+// 'polly.indvar_next' as well as the condition to check if we execute another
+// iteration of the loop. After the loop has finished, we branch to ExitBB.
 Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
                          PollyIRBuilder &Builder, Pass *P, LoopInfo &LI,
                          DominatorTree &DT, BasicBlock *&ExitBB,
                          ICmpInst::Predicate Predicate,
-                         LoopAnnotator *Annotator, bool Parallel) {
+                         LoopAnnotator *Annotator, bool Parallel,
+                         bool UseGuard) {
   Function *F = Builder.GetInsertBlock()->getParent();
   LLVMContext &Context = F->getContext();
 
@@ -59,7 +58,8 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
   assert(LoopIVType && "UB is not integer?");
 
   BasicBlock *BeforeBB = Builder.GetInsertBlock();
-  BasicBlock *GuardBB = BasicBlock::Create(Context, "polly.loop_if", F);
+  BasicBlock *GuardBB =
+      UseGuard ? BasicBlock::Create(Context, "polly.loop_if", F) : nullptr;
   BasicBlock *HeaderBB = BasicBlock::Create(Context, "polly.loop_header", F);
   BasicBlock *PreHeaderBB =
       BasicBlock::Create(Context, "polly.loop_preheader", F);
@@ -74,16 +74,15 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
   Loop *OuterLoop = LI.getLoopFor(BeforeBB);
   Loop *NewLoop = new Loop();
 
-  if (OuterLoop) {
+  if (OuterLoop)
     OuterLoop->addChildLoop(NewLoop);
-  } else {
+  else
     LI.addTopLevelLoop(NewLoop);
-  }
 
-  if (OuterLoop) {
+  if (OuterLoop && GuardBB)
     OuterLoop->addBasicBlockToLoop(GuardBB, LI.getBase());
+  else if (OuterLoop)
     OuterLoop->addBasicBlockToLoop(PreHeaderBB, LI.getBase());
-  }
 
   NewLoop->addBasicBlockToLoop(HeaderBB, LI.getBase());
 
@@ -92,18 +91,23 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
   ExitBB->setName("polly.loop_exit");
 
   // BeforeBB
-  BeforeBB->getTerminator()->setSuccessor(0, GuardBB);
+  if (GuardBB) {
+    BeforeBB->getTerminator()->setSuccessor(0, GuardBB);
+    DT.addNewBlock(GuardBB, BeforeBB);
 
-  // GuardBB
-  DT.addNewBlock(GuardBB, BeforeBB);
-  Builder.SetInsertPoint(GuardBB);
-  Value *LoopGuard;
-  LoopGuard = Builder.CreateICmp(Predicate, LB, UB);
-  LoopGuard->setName("polly.loop_guard");
-  Builder.CreateCondBr(LoopGuard, PreHeaderBB, ExitBB);
+    // GuardBB
+    Builder.SetInsertPoint(GuardBB);
+    Value *LoopGuard;
+    LoopGuard = Builder.CreateICmp(Predicate, LB, UB);
+    LoopGuard->setName("polly.loop_guard");
+    Builder.CreateCondBr(LoopGuard, PreHeaderBB, ExitBB);
+    DT.addNewBlock(PreHeaderBB, GuardBB);
+  } else {
+    BeforeBB->getTerminator()->setSuccessor(0, PreHeaderBB);
+    DT.addNewBlock(PreHeaderBB, BeforeBB);
+  }
 
   // PreHeaderBB
-  DT.addNewBlock(PreHeaderBB, GuardBB);
   Builder.SetInsertPoint(PreHeaderBB);
   Builder.CreateBr(HeaderBB);
 
@@ -120,7 +124,10 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
   LoopCondition->setName("polly.loop_cond");
   Builder.CreateCondBr(LoopCondition, HeaderBB, ExitBB);
   IV->addIncoming(IncrementedIV, HeaderBB);
-  DT.changeImmediateDominator(ExitBB, GuardBB);
+  if (GuardBB)
+    DT.changeImmediateDominator(ExitBB, GuardBB);
+  else
+    DT.changeImmediateDominator(ExitBB, BeforeBB);
 
   // The loop body should be added here.
   Builder.SetInsertPoint(HeaderBB->getFirstNonPHI());
@@ -322,7 +329,7 @@ Value *OMPGenerator::createSubfunction(Value *Stride, Value *StructData,
   Builder.SetInsertPoint(--Builder.GetInsertPoint());
   LoopInfo &LI = P->getAnalysis<LoopInfo>();
   IV = createLoop(LowerBound, UpperBound, Stride, Builder, P, LI, DT, AfterBB,
-                  ICmpInst::ICMP_SLE);
+                  ICmpInst::ICMP_SLE, nullptr, true, /* UseGuard */ false);
 
   BasicBlock::iterator LoopBody = Builder.GetInsertPoint();
   Builder.SetInsertPoint(AfterBB->begin());

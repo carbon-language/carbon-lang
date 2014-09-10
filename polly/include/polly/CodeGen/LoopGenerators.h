@@ -27,7 +27,7 @@ class BasicBlock;
 namespace polly {
 using namespace llvm;
 
-/// @brief Create a scalar loop.
+/// @brief Create a scalar do/for-style loop.
 ///
 /// @param LowerBound The starting value of the induction variable.
 /// @param UpperBound The upper bound of the induction variable.
@@ -43,12 +43,16 @@ using namespace llvm;
 /// @param Annotator  This function can (optionally) take a LoopAnnotator which
 ///                   tracks the loop structure.
 /// @param Parallel   If this loop should be marked parallel in the Annotator.
+/// @param UseGuard   Create a guard in front of the header to check if the
+///                   loop is executed at least once, otherwise just assume it.
+///
 /// @return Value*    The newly created induction variable for this loop.
 Value *createLoop(Value *LowerBound, Value *UpperBound, Value *Stride,
                   PollyIRBuilder &Builder, Pass *P, LoopInfo &LI,
                   DominatorTree &DT, BasicBlock *&ExitBlock,
                   ICmpInst::Predicate Predicate,
-                  LoopAnnotator *Annotator = NULL, bool Parallel = false);
+                  LoopAnnotator *Annotator = NULL, bool Parallel = false,
+                  bool UseGuard = true);
 
 class OMPGenerator {
 public:

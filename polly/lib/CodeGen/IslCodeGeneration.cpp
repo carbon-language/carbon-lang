@@ -352,8 +352,12 @@ void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For) {
   if (MaxType != ValueInc->getType())
     ValueInc = Builder.CreateSExt(ValueInc, MaxType);
 
+  // If we can show that LB <Predicate> UB holds at least once, we can
+  // omit the GuardBB in front of the loop.
+  bool UseGuardBB =
+      !SE.isKnownPredicate(Predicate, SE.getSCEV(ValueLB), SE.getSCEV(ValueUB));
   IV = createLoop(ValueLB, ValueUB, ValueInc, Builder, P, LI, DT, ExitBlock,
-                  Predicate, &Annotator, Parallel);
+                  Predicate, &Annotator, Parallel, UseGuardBB);
   IDToValue[IteratorID] = IV;
 
   create(Body);
