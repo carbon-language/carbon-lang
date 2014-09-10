@@ -13,46 +13,48 @@
 
 let Namespace = "Hexagon" in {
 
-  class HexagonReg<string n> : Register<n> {
+  class HexagonReg<bits<5> num, string n> : Register<n> {
     field bits<5> Num;
+    let HWEncoding{4-0} = num;
   }
 
-  class HexagonDoubleReg<string n, list<Register> subregs> :
+  class HexagonDoubleReg<bits<5> num, string n, list<Register> subregs> :
         RegisterWithSubRegs<n, subregs> {
     field bits<5> Num;
+    let HWEncoding{4-0} = num;
   }
 
   // Registers are identified with 5-bit ID numbers.
   // Ri - 32-bit integer registers.
-  class Ri<bits<5> num, string n> : HexagonReg<n> {
+  class Ri<bits<5> num, string n> : HexagonReg<num, n> {
     let Num = num;
   }
 
   // Rf - 32-bit floating-point registers.
-  class Rf<bits<5> num, string n> : HexagonReg<n> {
+  class Rf<bits<5> num, string n> : HexagonReg<num, n> {
     let Num = num;
   }
 
 
   // Rd - 64-bit registers.
   class Rd<bits<5> num, string n, list<Register> subregs> :
-        HexagonDoubleReg<n, subregs> {
+        HexagonDoubleReg<num, n, subregs> {
     let Num = num;
     let SubRegs = subregs;
   }
 
   // Rp - predicate registers
-  class Rp<bits<5> num, string n> : HexagonReg<n> {
+  class Rp<bits<5> num, string n> : HexagonReg<num, n> {
     let Num = num;
   }
 
   // Rc - control registers
-  class Rc<bits<5> num, string n> : HexagonReg<n> {
+  class Rc<bits<5> num, string n> : HexagonReg<num, n> {
     let Num = num;
   }
 
   // Rj - aliased integer registers
-  class Rj<string n, Ri R>: HexagonReg<n> {
+  class Rj<string n, Ri R>: HexagonReg<R.Num, n> {
     let Num = R.Num;
     let Aliases = [R];
   }
