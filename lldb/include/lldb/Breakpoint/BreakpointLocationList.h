@@ -19,6 +19,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Utility/Iterable.h"
 
 namespace lldb_private {
 
@@ -248,12 +249,18 @@ protected:
     AddLocation (const Address &addr,
                  bool resolve_indirect_symbols,
                  bool *new_location = NULL);
+    
+    void
+    SwapLocation (lldb::BreakpointLocationSP to_location_sp, lldb::BreakpointLocationSP from_location_sp);
 
     bool
     RemoveLocation (const lldb::BreakpointLocationSP &bp_loc_sp);
     
     void
     RemoveInvalidLocations (const ArchSpec &arch);
+    
+    void
+    Compact();
 
     typedef std::vector<lldb::BreakpointLocationSP> collection;
     typedef std::map<lldb_private::Address,
@@ -266,6 +273,14 @@ protected:
     mutable Mutex m_mutex;
     lldb::break_id_t m_next_id;
     BreakpointLocationCollection *m_new_location_recorder;
+public:
+    typedef AdaptedIterable<collection, lldb::BreakpointLocationSP, vector_adapter> BreakpointLocationIterable;
+    BreakpointLocationIterable
+    BreakpointLocations()
+    {
+        return BreakpointLocationIterable(m_locations);
+    }
+
 };
 
 } // namespace lldb_private

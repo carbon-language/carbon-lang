@@ -203,13 +203,28 @@ public:
     /// Tell this breakpoint to scan a given module list and resolve any
     /// new locations that match the breakpoint's specifications.
     ///
-    /// @param[in] changed_modules
+    /// @param[in] module_list
     ///    The list of modules to look in for new locations.
+    ///
+    /// @param[in]  send_event
+    ///     If \b true, send a breakpoint location added event for non-internal breakpoints.
     //------------------------------------------------------------------
     void
-    ResolveBreakpointInModules (ModuleList &changed_modules);
+    ResolveBreakpointInModules (ModuleList &module_list, bool send_event = true);
 
-
+    //------------------------------------------------------------------
+    /// Tell this breakpoint to scan a given module list and resolve any
+    /// new locations that match the breakpoint's specifications.
+    ///
+    /// @param[in] changed_modules
+    ///    The list of modules to look in for new locations.
+    ///
+    /// @param[in]  new_locations
+    ///     Fills new_locations with the new locations that were made.
+    //------------------------------------------------------------------
+    void
+    ResolveBreakpointInModules (ModuleList &module_list, BreakpointLocationCollection &new_locations);
+    
     //------------------------------------------------------------------
     /// Like ResolveBreakpointInModules, but allows for "unload" events, in
     /// which case we will remove any locations that are in modules that got

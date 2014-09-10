@@ -272,6 +272,20 @@ BreakpointLocationList::AddLocation (const Address &addr, bool resolve_indirect_
     return bp_loc_sp;
 }
 
+void
+BreakpointLocationList::SwapLocation (BreakpointLocationSP to_location_sp, BreakpointLocationSP from_location_sp)
+{
+    if (!from_location_sp || !to_location_sp)
+        return;
+    
+    m_address_to_location.erase(to_location_sp->GetAddress());
+    to_location_sp->SwapLocation(from_location_sp);
+    RemoveLocation(from_location_sp);
+    m_address_to_location[to_location_sp->GetAddress()] = to_location_sp;
+    to_location_sp->ResolveBreakpointSite();
+}
+
+
 bool
 BreakpointLocationList::RemoveLocation (const lldb::BreakpointLocationSP &bp_loc_sp)
 {
@@ -345,3 +359,16 @@ BreakpointLocationList::StopRecordingNewLocations ()
     m_new_location_recorder = NULL;
 }
 
+void
+BreakpointLocationList::Compact()
+{
+    lldb::break_id_t highest_id = 0;
+    
+    for (BreakpointLocationSP loc_sp : m_locations)
+    {
+        lldb::break_id_t cur_id = loc_sp->GetID();
+        if (cur_id > highest_id)
+            highest_id = cur_id;
+    }
+    m_next_id = highest_id;
+}

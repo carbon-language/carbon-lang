@@ -52,6 +52,7 @@ class BreakpointLocation :
     public StoppointLocation
 {
 public:
+    friend class BreakpointLocationList;
 
     ~BreakpointLocation ();
 
@@ -374,6 +375,19 @@ public:
         m_is_reexported = is_reexported;
     }
     
+    //------------------------------------------------------------------
+    /// Returns whether the two breakpoint locations might represent "equivalent locations".
+    /// This is used when modules changed to determine if a Location in the old module might
+    /// be the "same as" the input location.
+    ///
+    /// @param[in] location
+    ///    The location to compare against.
+    ///
+    /// @return
+    ///     \b true or \b false as given in the description above.
+    //------------------------------------------------------------------
+    bool EquivalentToLocation(BreakpointLocation &location);
+    
 protected:
     friend class BreakpointLocationList;
     friend class Process;
@@ -396,8 +410,11 @@ protected:
 
     bool
     IgnoreCountShouldStop();
-
+    
 private:
+    void
+    SwapLocation (lldb::BreakpointLocationSP swap_from);
+
 
     //------------------------------------------------------------------
     // Constructors and Destructors

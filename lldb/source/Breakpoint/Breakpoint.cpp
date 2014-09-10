@@ -20,11 +20,14 @@
 #include "lldb/Breakpoint/BreakpointResolver.h"
 #include "lldb/Breakpoint/BreakpointResolverFileLine.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/SearchFilter.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Symbol/CompileUnit.h"
+#include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/ThreadSpec.h"
@@ -349,10 +352,41 @@ Breakpoint::ResolveBreakpoint ()
 }
 
 void
-Breakpoint::ResolveBreakpointInModules (ModuleList &module_list)
+Breakpoint::ResolveBreakpointInModules (ModuleList &module_list, BreakpointLocationCollection &new_locations)
+{
+    m_locations.StartRecordingNewLocations(new_locations);
+    
+    m_resolver_sp->ResolveBreakpointInModules(*m_filter_sp, module_list);
+
+    m_locations.StopRecordingNewLocations();
+}
+
+void
+Breakpoint::ResolveBreakpointInModules (ModuleList &module_list, bool send_event)
 {
     if (m_resolver_sp)
-        m_resolver_sp->ResolveBreakpointInModules(*m_filter_sp, module_list);
+    {
+        // If this is not an internal breakpoint, set up to record the new locations, then dispatch
+        // an event with the new locations.
+        if (!IsInternal() && send_event)
+        {
+            BreakpointEventData *new_locations_event = new BreakpointEventData (eBreakpointEventTypeLocationsAdded, 
+                                                                                shared_from_this());
+            
+            ResolveBreakpointInModules (module_list, new_locations_event->GetBreakpointLocationCollection());
+
+            if (new_locations_event->GetBreakpointLocationCollection().GetSize() != 0)
+            {
+                SendBreakpointChangedEvent (new_locations_event);
+            }
+            else
+                delete new_locations_event;
+        }
+        else
+        {
+            m_resolver_sp->ResolveBreakpointInModules(*m_filter_sp, module_list);
+        }
+    }
 }
 
 void
@@ -368,6 +402,11 @@ Breakpoint::ClearAllBreakpointSites ()
 void
 Breakpoint::ModulesChanged (ModuleList &module_list, bool load, bool delete_locations)
 {
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+    if (log)
+        log->Printf ("Breakpoint::ModulesChanged: num_modules: %zu load: %i delete_locations: %i\n",
+                     module_list.GetSize(), load, delete_locations);
+    
     Mutex::Locker modules_mutex(module_list.GetMutex());
     if (load)
     {
@@ -383,32 +422,27 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load, bool delete_loca
                                  // them after the locations pass.  Have to do it this way because
                                  // resolving breakpoints will add new locations potentially.
 
-        const size_t num_locs = m_locations.GetSize();
-        size_t num_modules = module_list.GetSize();
-        for (size_t i = 0; i < num_modules; i++)
+        for (ModuleSP module_sp : module_list.ModulesNoLocking())
         {
             bool seen = false;
-            ModuleSP module_sp (module_list.GetModuleAtIndexUnlocked (i));
             if (!m_filter_sp->ModulePasses (module_sp))
                 continue;
 
-            for (size_t loc_idx = 0; loc_idx < num_locs; loc_idx++)
+            for (BreakpointLocationSP break_loc_sp : m_locations.BreakpointLocations())
             {
-                BreakpointLocationSP break_loc = m_locations.GetByIndex(loc_idx);
-                if (!break_loc->IsEnabled())
+                if (!break_loc_sp->IsEnabled())
                     continue;
-                SectionSP section_sp (break_loc->GetAddress().GetSection());
+                SectionSP section_sp (break_loc_sp->GetAddress().GetSection());
                 if (!section_sp || section_sp->GetModule() == module_sp)
                 {
                     if (!seen)
                         seen = true;
 
-                    if (!break_loc->ResolveBreakpointSite())
+                    if (!break_loc_sp->ResolveBreakpointSite())
                     {
-                        Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
                         if (log)
                             log->Printf ("Warning: could not set breakpoint site for breakpoint location %d of breakpoint %d.\n",
-                                         break_loc->GetID(), GetID());
+                                         break_loc_sp->GetID(), GetID());
                     }
                 }
             }
@@ -420,28 +454,7 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load, bool delete_loca
         
         if (new_modules.GetSize() > 0)
         {
-            // If this is not an internal breakpoint, set up to record the new locations, then dispatch
-            // an event with the new locations.
-            if (!IsInternal())
-            {
-                BreakpointEventData *new_locations_event = new BreakpointEventData (eBreakpointEventTypeLocationsAdded, 
-                                                                                    shared_from_this());
-                
-                m_locations.StartRecordingNewLocations(new_locations_event->GetBreakpointLocationCollection());
-                
-                ResolveBreakpointInModules(new_modules);
-
-                m_locations.StopRecordingNewLocations();
-                if (new_locations_event->GetBreakpointLocationCollection().GetSize() != 0)
-                {
-                    SendBreakpointChangedEvent (new_locations_event);
-                }
-                else
-                    delete new_locations_event;
-            }
-            else
-                ResolveBreakpointInModules(new_modules);
-            
+            ResolveBreakpointInModules(new_modules);
         }
     }
     else
@@ -498,21 +511,251 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load, bool delete_loca
     }
 }
 
+namespace
+{
+static bool
+SymbolContextsMightBeEquivalent(SymbolContext &old_sc, SymbolContext &new_sc)
+{
+    bool equivalent_scs = false;
+    
+    if (old_sc.module_sp.get() == new_sc.module_sp.get())
+    {
+        // If these come from the same module, we can directly compare the pointers:
+        if (old_sc.comp_unit && new_sc.comp_unit
+            && (old_sc.comp_unit == new_sc.comp_unit))
+        {
+            if (old_sc.function && new_sc.function
+                && (old_sc.function == new_sc.function))
+            {
+                equivalent_scs = true;
+            }
+        }
+        else if (old_sc.symbol && new_sc.symbol
+                && (old_sc.symbol == new_sc.symbol))
+        {
+            equivalent_scs = true;
+        }
+    }
+    else
+    {
+        // Otherwise we will compare by name...
+        if (old_sc.comp_unit && new_sc.comp_unit)
+        {
+            if (FileSpec::Equal(*old_sc.comp_unit, *new_sc.comp_unit, true))
+            {
+                // Now check the functions:
+                if (old_sc.function && new_sc.function
+                    && (old_sc.function->GetName() == new_sc.function->GetName()))
+                {
+                    equivalent_scs = true;
+                }
+            }
+        }
+        else if (old_sc.symbol && new_sc.symbol)
+        {
+            if (Mangled::Compare(old_sc.symbol->GetMangled(), new_sc.symbol->GetMangled()) == 0)
+            {
+                equivalent_scs = true;
+            }
+        }
+    }
+    return equivalent_scs;
+}
+}
+
 void
 Breakpoint::ModuleReplaced (ModuleSP old_module_sp, ModuleSP new_module_sp)
 {
-    ModuleList temp_list;
-    temp_list.Append (new_module_sp);
-    ModulesChanged (temp_list, true);
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+    if (log)
+        log->Printf ("Breakpoint::ModulesReplaced for %s\n",
+                     old_module_sp->GetSpecificationDescription().c_str());
+    // First find all the locations that are in the old module
+    
+    BreakpointLocationCollection old_break_locs;
+    for (BreakpointLocationSP break_loc_sp : m_locations.BreakpointLocations())
+    {
+        SectionSP section_sp = break_loc_sp->GetAddress().GetSection();
+        if (section_sp && section_sp->GetModule() == old_module_sp)
+        {
+            old_break_locs.Add(break_loc_sp);
+        }
+    }
+    
+    size_t num_old_locations = old_break_locs.GetSize();
+    
+    if (num_old_locations == 0)
+    {
+        // There were no locations in the old module, so we just need to check if there were any in the new module.
+        ModuleList temp_list;
+        temp_list.Append (new_module_sp);
+        ResolveBreakpointInModules(temp_list);
+    }
+    else
+    {
+        // First search the new module for locations.
+        // Then compare this with the old list, copy over locations that "look the same"
+        // Then delete the old locations.
+        // Finally remember to post the creation event.
+        //
+        // Two locations are the same if they have the same comp unit & function (by name) and there are the same number
+        // of locations in the old function as in the new one.
+        
+        ModuleList temp_list;
+        temp_list.Append (new_module_sp);
+        BreakpointLocationCollection new_break_locs;
+        ResolveBreakpointInModules(temp_list, new_break_locs);
+        BreakpointLocationCollection locations_to_remove;
+        BreakpointLocationCollection locations_to_announce;
+        
+        size_t num_new_locations = new_break_locs.GetSize();
+        
+        if (num_new_locations > 0)
+        {
+            // Break out the case of one location -> one location since that's the most common one, and there's no need
+            // to build up the structures needed for the merge in that case.
+            if (num_new_locations == 1 && num_old_locations == 1)
+            {
+                bool equivalent_locations = false;
+                SymbolContext old_sc, new_sc;
+                // The only way the old and new location can be equivalent is if they have the same amount of information:
+                BreakpointLocationSP old_loc_sp = old_break_locs.GetByIndex(0);
+                BreakpointLocationSP new_loc_sp = new_break_locs.GetByIndex(0);
+                
+                if (old_loc_sp->GetAddress().CalculateSymbolContext(&old_sc)
+                    == new_loc_sp->GetAddress().CalculateSymbolContext(&new_sc))
+                {
+                    equivalent_locations = SymbolContextsMightBeEquivalent(old_sc, new_sc);
+                }
+                
+                if (equivalent_locations)
+                {
+                    m_locations.SwapLocation (old_loc_sp, new_loc_sp);
+                }
+                else
+                {
+                    locations_to_remove.Add(old_loc_sp);
+                    locations_to_announce.Add(new_loc_sp);
+                }
+            }
+            else
+            {
+                //We don't want to have to keep computing the SymbolContexts for these addresses over and over,
+                // so lets get them up front:
+                
+                typedef std::map<lldb::break_id_t, SymbolContext> IDToSCMap;
+                IDToSCMap old_sc_map;
+                for (size_t idx = 0; idx < num_old_locations; idx++)
+                {
+                    SymbolContext sc;
+                    BreakpointLocationSP bp_loc_sp = old_break_locs.GetByIndex(idx);
+                    lldb::break_id_t loc_id = bp_loc_sp->GetID();
+                    bp_loc_sp->GetAddress().CalculateSymbolContext(&old_sc_map[loc_id]);
+                }
+                
+                std::map<lldb::break_id_t, SymbolContext> new_sc_map;
+                for (size_t idx = 0; idx < num_new_locations; idx++)
+                {
+                    SymbolContext sc;
+                    BreakpointLocationSP bp_loc_sp = new_break_locs.GetByIndex(idx);
+                    lldb::break_id_t loc_id = bp_loc_sp->GetID();
+                    bp_loc_sp->GetAddress().CalculateSymbolContext(&new_sc_map[loc_id]);
+                }
+                // Take an element from the old Symbol Contexts
+                while (old_sc_map.size() > 0)
+                {
+                    lldb::break_id_t old_id = old_sc_map.begin()->first;
+                    SymbolContext &old_sc = old_sc_map.begin()->second;
+                    
+                    // Count the number of entries equivalent to this SC for the old list:
+                    std::vector<lldb::break_id_t> old_id_vec;
+                    old_id_vec.push_back(old_id);
+                    
+                    IDToSCMap::iterator tmp_iter;
+                    for (tmp_iter = ++old_sc_map.begin(); tmp_iter != old_sc_map.end(); tmp_iter++)
+                    {
+                        if (SymbolContextsMightBeEquivalent (old_sc, tmp_iter->second))
+                            old_id_vec.push_back (tmp_iter->first);
+                    }
+                    
+                    // Now find all the equivalent locations in the new list.
+                    std::vector<lldb::break_id_t> new_id_vec;
+                    for (tmp_iter = new_sc_map.begin(); tmp_iter != new_sc_map.end(); tmp_iter++)
+                    {
+                        if (SymbolContextsMightBeEquivalent (old_sc, tmp_iter->second))
+                            new_id_vec.push_back(tmp_iter->first);
+                    }
+                    
+                    // Alright, if we have the same number of potentially equivalent locations in the old
+                    // and new modules, we'll just map them one to one in ascending ID order (assuming the
+                    // resolver's order would match the equivalent ones.
+                    // Otherwise, we'll dump all the old ones, and just take the new ones, erasing the elements
+                    // from both maps as we go.
+                    
+                    if (old_id_vec.size() == new_id_vec.size())
+                    {
+                        sort(old_id_vec.begin(), old_id_vec.end());
+                        sort(new_id_vec.begin(), new_id_vec.end());
+                        size_t num_elements = old_id_vec.size();
+                        for (size_t idx = 0; idx < num_elements; idx++)
+                        {
+                            BreakpointLocationSP old_loc_sp = old_break_locs.FindByIDPair(GetID(), old_id_vec[idx]);
+                            BreakpointLocationSP new_loc_sp = new_break_locs.FindByIDPair(GetID(), new_id_vec[idx]);
+                            m_locations.SwapLocation(old_loc_sp, new_loc_sp);
+                            old_sc_map.erase(old_id_vec[idx]);
+                            new_sc_map.erase(new_id_vec[idx]);
+                        }
+                    }
+                    else
+                    {
+                        for (lldb::break_id_t old_id : old_id_vec)
+                        {
+                            locations_to_remove.Add(old_break_locs.FindByIDPair(GetID(), old_id));
+                            old_sc_map.erase(old_id);
+                        }
+                        for (lldb::break_id_t new_id : new_id_vec)
+                        {
+                            locations_to_announce.Add(new_break_locs.FindByIDPair(GetID(), new_id));
+                            new_sc_map.erase(new_id);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Now remove the remaining old locations, and cons up a removed locations event.
+        // Note, we don't put the new locations that were swapped with an old location on the locations_to_remove
+        // list, so we don't need to worry about telling the world about removing a location we didn't tell them
+        // about adding.
+        
+        BreakpointEventData *locations_event;
+        if (!IsInternal())
+            locations_event = new BreakpointEventData (eBreakpointEventTypeLocationsRemoved,
+                                                               shared_from_this());
+        else
+            locations_event = NULL;
 
-    // TO DO: For now I'm just adding locations for the new module and removing the
-    // breakpoint locations that were in the old module.
-    // We should really go find the ones that are in the new module & if we can determine that they are "equivalent"
-    // carry over the options from the old location to the new.
+        for (BreakpointLocationSP loc_sp : locations_to_remove.BreakpointLocations())
+        {
+            m_locations.RemoveLocation(loc_sp);
+            if (locations_event)
+                locations_event->GetBreakpointLocationCollection().Add(loc_sp);
+        }
+        SendBreakpointChangedEvent (locations_event);
 
-    temp_list.Clear();
-    temp_list.Append (old_module_sp);
-    ModulesChanged (temp_list, false, true);
+        // And announce the new ones.
+        
+        if (!IsInternal())
+        {
+            locations_event = new BreakpointEventData (eBreakpointEventTypeLocationsAdded,
+                                                               shared_from_this());
+            for (BreakpointLocationSP loc_sp : locations_to_announce.BreakpointLocations())
+                    locations_event->GetBreakpointLocationCollection().Add(loc_sp);
+
+            SendBreakpointChangedEvent (locations_event);
+        }
+        m_locations.Compact();
+    }
 }
 
 void

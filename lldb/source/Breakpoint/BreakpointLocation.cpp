@@ -717,4 +717,13 @@ BreakpointLocation::SendBreakpointLocationChangedEvent (lldb::BreakpointEventTyp
         m_owner.GetTarget().BroadcastEvent (Target::eBroadcastBitBreakpointChanged, data);
     }
 }
-    
+
+void
+BreakpointLocation::SwapLocation (BreakpointLocationSP swap_from)
+{
+    m_address = swap_from->m_address;
+    m_should_resolve_indirect_functions = swap_from->m_should_resolve_indirect_functions;
+    m_is_reexported = swap_from->m_is_reexported;
+    m_is_indirect = swap_from->m_is_indirect;
+    m_user_expression_sp.reset();
+}

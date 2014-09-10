@@ -586,6 +586,13 @@ public:
         return ModuleIterable(m_modules, GetMutex());
     }
     
+    typedef AdaptedIterable<collection, lldb::ModuleSP, vector_adapter> ModuleIterableNoLocking;
+    ModuleIterableNoLocking
+    ModulesNoLocking ()
+    {
+        return ModuleIterableNoLocking(m_modules);
+    }
+    
 };
 
 } // namespace lldb_private

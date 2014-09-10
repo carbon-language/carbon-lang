@@ -16,6 +16,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
+#include "lldb/Utility/Iterable.h"
 
 namespace lldb_private {
 
@@ -201,6 +202,14 @@ private:
     GetIDPairConstIterator(lldb::break_id_t break_id, lldb::break_id_t break_loc_id) const;
 
     collection m_break_loc_collection;
+
+public:
+    typedef AdaptedIterable<collection, lldb::BreakpointLocationSP, vector_adapter> BreakpointLocationCollectionIterable;
+    BreakpointLocationCollectionIterable
+    BreakpointLocations()
+    {
+        return BreakpointLocationCollectionIterable(m_break_loc_collection);
+    }
 
 };
 
