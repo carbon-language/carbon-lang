@@ -180,7 +180,7 @@ bool Instruction::hasAllowReciprocal() const {
 
 /// Convenience function for getting all the fast-math flags, which must be an
 /// operator which supports these flags. See LangRef.html for the meaning of
-/// these flats.
+/// these flags.
 FastMathFlags Instruction::getFastMathFlags() const {
   assert(isa<FPMathOperator>(this) && "getting fast-math flag on invalid op");
   return cast<FPMathOperator>(this)->getFastMathFlags();
