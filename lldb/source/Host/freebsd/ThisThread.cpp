@@ -20,7 +20,7 @@ using namespace lldb_private;
 void
 ThisThread::SetName(llvm::StringRef name)
 {
-    HostNativeThread::SetName(::pthread_self(), name);
+    ::pthread_set_name_np(::pthread_self(), name.data());
 }
 
 void

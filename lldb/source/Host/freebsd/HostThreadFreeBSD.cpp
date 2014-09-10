@@ -34,12 +34,6 @@ HostThreadFreeBSD::HostThreadFreeBSD(lldb::thread_t thread)
 }
 
 void
-HostThreadFreeBSD::SetName(lldb::thread_t thread, llvm::StringRef name)
-{
-    ::pthread_set_name_np(thread, name.data());
-}
-
-void
 HostThreadFreeBSD::GetName(lldb::tid_t tid, llvm::SmallVectorImpl<char> &name)
 {
     name.clear();
