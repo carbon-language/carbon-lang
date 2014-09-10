@@ -291,7 +291,7 @@ whether the instruction has certain target-independent properties (accesses
 memory, is commutable, etc), and holds any target-specific flags.
 
 The ``TargetFrameLowering`` class
------------------------------
+---------------------------------
 
 The ``TargetFrameLowering`` class is used to provide information about the stack
 frame layout of the target. It holds the direction of stack growth, the known
