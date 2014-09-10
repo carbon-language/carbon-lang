@@ -622,7 +622,6 @@ bool MergedLoadStoreMotion::runOnFunction(Function &F) {
 
     // Hoist equivalent loads and sink stores
     // outside diamonds when possible
-    // Run outside core GVN
     if (isDiamondHead(BB)) {
       Changed |= mergeLoads(BB);
       Changed |= mergeStores(getDiamondTail(BB));
