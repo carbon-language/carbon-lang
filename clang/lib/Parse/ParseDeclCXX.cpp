@@ -2072,6 +2072,11 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       ParseOptionalCXXScopeSpecifier(SS, ParsedType(), 
                                      /*EnteringContext=*/false);
 
+      if (SS.isInvalid()) {
+        SkipUntil(tok::semi);
+        return;
+      }
+
       // Try to parse an unqualified-id.
       SourceLocation TemplateKWLoc;
       UnqualifiedId Name;

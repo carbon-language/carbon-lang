@@ -174,6 +174,11 @@ class PR20760_b {
   int f = d // expected-warning {{extension}} expected-error {{expected ';'}}
 };
 
+namespace PR20887 {
+class X1 { a::operator=; }; // expected-error {{undeclared identifier 'a'}}
+class X2 { a::a; }; // expected-error {{undeclared identifier 'a'}}
+}
+
 // PR11109 must appear at the end of the source file
 class pr11109r3 { // expected-note{{to match this '{'}}
   public // expected-error{{expected ':'}} expected-error{{expected '}'}} expected-error{{expected ';' after class}}
