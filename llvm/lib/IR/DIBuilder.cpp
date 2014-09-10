@@ -879,8 +879,7 @@ DIBasicType DIBuilder::createUnspecifiedParameter() {
   return DIBasicType();
 }
 
-/// createForwardDecl - Create a temporary forward-declared type that
-/// can be RAUW'd if the full type is seen.
+/// createForwardDecl - Create a permanent forward-declared type.
 DICompositeType
 DIBuilder::createForwardDecl(unsigned Tag, StringRef Name, DIDescriptor Scope,
                              DIFile F, unsigned Line, unsigned RuntimeLang,
@@ -914,7 +913,7 @@ DIBuilder::createForwardDecl(unsigned Tag, StringRef Name, DIDescriptor Scope,
   return RetTy;
 }
 
-/// createForwardDecl - Create a temporary forward-declared type that
+/// createReplaceableForwardDecl - Create a temporary forward-declared type that
 /// can be RAUW'd if the full type is seen.
 DICompositeType DIBuilder::createReplaceableForwardDecl(
     unsigned Tag, StringRef Name, DIDescriptor Scope, DIFile F, unsigned Line,
@@ -942,7 +941,7 @@ DICompositeType DIBuilder::createReplaceableForwardDecl(
   MDNode *Node = MDNode::getTemporary(VMContext, Elts);
   DICompositeType RetTy(Node);
   assert(RetTy.isCompositeType() &&
-         "createForwardDecl result should be a DIType");
+         "createReplaceableForwardDecl result should be a DIType");
   if (!UniqueIdentifier.empty())
     retainType(RetTy);
   return RetTy;
