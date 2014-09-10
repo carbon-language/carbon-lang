@@ -93,21 +93,19 @@ void InitializeFlags(Flags *f, const char *env) {
   // DDFlags
   f->second_deadlock_stack = false;
 
-  SetCommonFlagsDefaults(f);
+  CommonFlags *cf = common_flags();
+  SetCommonFlagsDefaults(cf);
   // Override some common flags defaults.
-  f->allow_addr2line = true;
-  f->detect_deadlocks = true;
-  f->print_suppressions = false;
+  cf->allow_addr2line = true;
+  cf->detect_deadlocks = true;
+  cf->print_suppressions = false;
 
   // Let a frontend override.
   ParseFlags(f, __tsan_default_options());
-  ParseCommonFlagsFromString(f, __tsan_default_options());
+  ParseCommonFlagsFromString(cf, __tsan_default_options());
   // Override from command line.
   ParseFlags(f, env);
-  ParseCommonFlagsFromString(f, env);
-
-  // Copy back to common flags.
-  internal_memcpy(common_flags(), f, sizeof(*common_flags()));
+  ParseCommonFlagsFromString(cf, env);
 
   // Sanity check.
   if (!f->report_bugs) {
@@ -116,7 +114,7 @@ void InitializeFlags(Flags *f, const char *env) {
     f->report_signal_unsafe = false;
   }
 
-  if (f->help) PrintFlagDescriptions();
+  if (cf->help) PrintFlagDescriptions();
 
   if (f->history_size < 0 || f->history_size > 7) {
     Printf("ThreadSanitizer: incorrect value for history_size"

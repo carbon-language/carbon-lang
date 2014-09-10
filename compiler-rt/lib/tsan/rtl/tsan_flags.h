@@ -19,7 +19,7 @@
 
 namespace __tsan {
 
-struct Flags : CommonFlags, DDFlags {
+struct Flags : DDFlags {
   // Enable dynamic annotations, otherwise they are no-ops.
   bool enable_annotations;
   // Suppress a race report if we've already output another race report

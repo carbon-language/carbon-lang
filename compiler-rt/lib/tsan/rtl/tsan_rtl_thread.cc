@@ -107,7 +107,7 @@ void ThreadContext::OnStarted(void *arg) {
 #ifndef TSAN_GO
   AllocatorThreadStart(thr);
 #endif
-  if (flags()->detect_deadlocks) {
+  if (common_flags()->detect_deadlocks) {
     thr->dd_pt = ctx->dd->CreatePhysicalThread();
     thr->dd_lt = ctx->dd->CreateLogicalThread(unique_id);
   }
@@ -134,7 +134,7 @@ void ThreadContext::OnFinished() {
   }
   epoch1 = thr->fast_state.epoch();
 
-  if (flags()->detect_deadlocks) {
+  if (common_flags()->detect_deadlocks) {
     ctx->dd->DestroyPhysicalThread(thr->dd_pt);
     ctx->dd->DestroyLogicalThread(thr->dd_lt);
   }

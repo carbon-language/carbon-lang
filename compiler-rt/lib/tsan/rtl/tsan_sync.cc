@@ -32,7 +32,7 @@ void SyncVar::Init(ThreadState *thr, uptr pc, uptr addr, u64 uid) {
   creation_stack_id = 0;
   if (kCppMode)  // Go does not use them
     creation_stack_id = CurrentStackId(thr, pc);
-  if (flags()->detect_deadlocks)
+  if (common_flags()->detect_deadlocks)
     DDMutexInit(thr, pc, this);
 }
 

@@ -103,7 +103,7 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   SyncVar *s = ctx->metamap.GetIfExistsAndLock(addr);
   if (s == 0)
     return;
-  if (flags()->detect_deadlocks) {
+  if (common_flags()->detect_deadlocks) {
     Callback cb(thr, pc);
     ctx->dd->MutexDestroy(&cb, &s->dd);
     ctx->dd->MutexInit(&cb, &s->dd);
@@ -172,7 +172,7 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec, bool try_lock) {
   }
   s->recursion += rec;
   thr->mset.Add(s->GetId(), true, thr->fast_state.epoch());
-  if (flags()->detect_deadlocks && (s->recursion - rec) == 0) {
+  if (common_flags()->detect_deadlocks && (s->recursion - rec) == 0) {
     Callback cb(thr, pc);
     if (!try_lock)
       ctx->dd->MutexBeforeLock(&cb, &s->dd, true);
@@ -183,7 +183,7 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec, bool try_lock) {
   // Can't touch s after this point.
   if (report_double_lock)
     ReportMutexMisuse(thr, pc, ReportTypeMutexDoubleLock, addr, mid);
-  if (flags()->detect_deadlocks) {
+  if (common_flags()->detect_deadlocks) {
     Callback cb(thr, pc);
     ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
   }
@@ -215,7 +215,8 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
     }
   }
   thr->mset.Del(s->GetId(), true);
-  if (flags()->detect_deadlocks && s->recursion == 0 && !report_bad_unlock) {
+  if (common_flags()->detect_deadlocks && s->recursion == 0 &&
+      !report_bad_unlock) {
     Callback cb(thr, pc);
     ctx->dd->MutexBeforeUnlock(&cb, &s->dd, true);
   }
@@ -224,7 +225,7 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
   // Can't touch s after this point.
   if (report_bad_unlock)
     ReportMutexMisuse(thr, pc, ReportTypeMutexBadUnlock, addr, mid);
-  if (flags()->detect_deadlocks && !report_bad_unlock) {
+  if (common_flags()->detect_deadlocks && !report_bad_unlock) {
     Callback cb(thr, pc);
     ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
   }
@@ -249,7 +250,7 @@ void MutexReadLock(ThreadState *thr, uptr pc, uptr addr, bool trylock) {
   AcquireImpl(thr, pc, &s->clock);
   s->last_lock = thr->fast_state.raw();
   thr->mset.Add(s->GetId(), false, thr->fast_state.epoch());
-  if (flags()->detect_deadlocks && s->recursion == 0) {
+  if (common_flags()->detect_deadlocks && s->recursion == 0) {
     Callback cb(thr, pc);
     if (!trylock)
       ctx->dd->MutexBeforeLock(&cb, &s->dd, false);
@@ -260,7 +261,7 @@ void MutexReadLock(ThreadState *thr, uptr pc, uptr addr, bool trylock) {
   // Can't touch s after this point.
   if (report_bad_lock)
     ReportMutexMisuse(thr, pc, ReportTypeMutexBadReadLock, addr, mid);
-  if (flags()->detect_deadlocks) {
+  if (common_flags()->detect_deadlocks) {
     Callback cb(thr, pc);
     ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
   }
@@ -282,7 +283,7 @@ void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr) {
     }
   }
   ReleaseImpl(thr, pc, &s->read_clock);
-  if (flags()->detect_deadlocks && s->recursion == 0) {
+  if (common_flags()->detect_deadlocks && s->recursion == 0) {
     Callback cb(thr, pc);
     ctx->dd->MutexBeforeUnlock(&cb, &s->dd, false);
   }
@@ -292,7 +293,7 @@ void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr) {
   thr->mset.Del(mid, false);
   if (report_bad_unlock)
     ReportMutexMisuse(thr, pc, ReportTypeMutexBadReadUnlock, addr, mid);
-  if (flags()->detect_deadlocks) {
+  if (common_flags()->detect_deadlocks) {
     Callback cb(thr, pc);
     ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
   }
@@ -330,7 +331,7 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
     report_bad_unlock = true;
   }
   thr->mset.Del(s->GetId(), write);
-  if (flags()->detect_deadlocks && s->recursion == 0) {
+  if (common_flags()->detect_deadlocks && s->recursion == 0) {
     Callback cb(thr, pc);
     ctx->dd->MutexBeforeUnlock(&cb, &s->dd, write);
   }
@@ -339,7 +340,7 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
   // Can't touch s after this point.
   if (report_bad_unlock)
     ReportMutexMisuse(thr, pc, ReportTypeMutexBadUnlock, addr, mid);
-  if (flags()->detect_deadlocks) {
+  if (common_flags()->detect_deadlocks) {
     Callback cb(thr, pc);
     ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
   }

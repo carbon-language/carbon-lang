@@ -45,8 +45,6 @@ static const char *options1 =
   " report_signal_unsafe=0"
   " report_atomic_races=0"
   " force_seq_cst_atomics=0"
-  " suppressions=qwerty"
-  " print_suppressions=0"
   " print_benign=0"
   " exitcode=111"
   " halt_on_error=0"
@@ -60,22 +58,6 @@ static const char *options1 =
   " history_size=5"
   " io_sync=1"
   " die_after_fork=true"
-
-  " symbolize=0"
-  " external_symbolizer_path=asdfgh"
-  " allow_addr2line=true"
-  " strip_path_prefix=zxcvb"
-  " fast_unwind_on_fatal=0"
-  " fast_unwind_on_malloc=0"
-  " handle_ioctl=0"
-  " malloc_context_size=777"
-  " log_path=aaa"
-  " verbosity=2"
-  " detect_leaks=0"
-  " leak_check_at_exit=0"
-  " allocator_may_return_null=0"
-  " print_summary=0"
-  " legacy_pthread_cond=0"
   "";
 
 static const char *options2 =
@@ -89,8 +71,6 @@ static const char *options2 =
   " report_signal_unsafe=true"
   " report_atomic_races=true"
   " force_seq_cst_atomics=true"
-  " suppressions=aaaaa"
-  " print_suppressions=true"
   " print_benign=true"
   " exitcode=222"
   " halt_on_error=true"
@@ -104,22 +84,6 @@ static const char *options2 =
   " history_size=6"
   " io_sync=2"
   " die_after_fork=false"
-
-  " symbolize=true"
-  " external_symbolizer_path=cccccc"
-  " allow_addr2line=false"
-  " strip_path_prefix=ddddddd"
-  " fast_unwind_on_fatal=true"
-  " fast_unwind_on_malloc=true"
-  " handle_ioctl=true"
-  " malloc_context_size=567"
-  " log_path=eeeeeee"
-  " verbosity=0"
-  " detect_leaks=true"
-  " leak_check_at_exit=true"
-  " allocator_may_return_null=true"
-  " print_summary=true"
-  " legacy_pthread_cond=true"
   "";
 
 void VerifyOptions1(Flags *f) {
@@ -133,8 +97,6 @@ void VerifyOptions1(Flags *f) {
   EXPECT_EQ(f->report_signal_unsafe, 0);
   EXPECT_EQ(f->report_atomic_races, 0);
   EXPECT_EQ(f->force_seq_cst_atomics, 0);
-  EXPECT_EQ(f->suppressions, std::string("qwerty"));
-  EXPECT_EQ(f->print_suppressions, 0);
   EXPECT_EQ(f->print_benign, 0);
   EXPECT_EQ(f->exitcode, 111);
   EXPECT_EQ(f->halt_on_error, 0);
@@ -148,22 +110,6 @@ void VerifyOptions1(Flags *f) {
   EXPECT_EQ(f->history_size, 5);
   EXPECT_EQ(f->io_sync, 1);
   EXPECT_EQ(f->die_after_fork, true);
-
-  EXPECT_EQ(f->symbolize, 0);
-  EXPECT_EQ(f->external_symbolizer_path, std::string("asdfgh"));
-  EXPECT_EQ(f->allow_addr2line, true);
-  EXPECT_EQ(f->strip_path_prefix, std::string("zxcvb"));
-  EXPECT_EQ(f->fast_unwind_on_fatal, 0);
-  EXPECT_EQ(f->fast_unwind_on_malloc, 0);
-  EXPECT_EQ(f->handle_ioctl, 0);
-  EXPECT_EQ(f->malloc_context_size, 777);
-  EXPECT_EQ(f->log_path, std::string("aaa"));
-  EXPECT_EQ(f->verbosity, 2);
-  EXPECT_EQ(f->detect_leaks, 0);
-  EXPECT_EQ(f->leak_check_at_exit, 0);
-  EXPECT_EQ(f->allocator_may_return_null, 0);
-  EXPECT_EQ(f->print_summary, 0);
-  EXPECT_EQ(f->legacy_pthread_cond, false);
 }
 
 void VerifyOptions2(Flags *f) {
@@ -177,8 +123,6 @@ void VerifyOptions2(Flags *f) {
   EXPECT_EQ(f->report_signal_unsafe, true);
   EXPECT_EQ(f->report_atomic_races, true);
   EXPECT_EQ(f->force_seq_cst_atomics, true);
-  EXPECT_EQ(f->suppressions, std::string("aaaaa"));
-  EXPECT_EQ(f->print_suppressions, true);
   EXPECT_EQ(f->print_benign, true);
   EXPECT_EQ(f->exitcode, 222);
   EXPECT_EQ(f->halt_on_error, true);
@@ -192,22 +136,6 @@ void VerifyOptions2(Flags *f) {
   EXPECT_EQ(f->history_size, 6);
   EXPECT_EQ(f->io_sync, 2);
   EXPECT_EQ(f->die_after_fork, false);
-
-  EXPECT_EQ(f->symbolize, true);
-  EXPECT_EQ(f->external_symbolizer_path, std::string("cccccc"));
-  EXPECT_EQ(f->allow_addr2line, false);
-  EXPECT_EQ(f->strip_path_prefix, std::string("ddddddd"));
-  EXPECT_EQ(f->fast_unwind_on_fatal, true);
-  EXPECT_EQ(f->fast_unwind_on_malloc, true);
-  EXPECT_EQ(f->handle_ioctl, true);
-  EXPECT_EQ(f->malloc_context_size, 567);
-  EXPECT_EQ(f->log_path, std::string("eeeeeee"));
-  EXPECT_EQ(f->verbosity, 0);
-  EXPECT_EQ(f->detect_leaks, true);
-  EXPECT_EQ(f->leak_check_at_exit, true);
-  EXPECT_EQ(f->allocator_may_return_null, true);
-  EXPECT_EQ(f->print_summary, true);
-  EXPECT_EQ(f->legacy_pthread_cond, true);
 }
 
 static const char *test_default_options;
