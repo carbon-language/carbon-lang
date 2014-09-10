@@ -11,18 +11,17 @@
 // RUN: UBSAN_OPTIONS=print_stacktrace=1 %run %t oU 2>&1 | FileCheck %s --check-prefix=CHECK-OFFSET --strict-whitespace
 // RUN: UBSAN_OPTIONS=print_stacktrace=1 %run %t m0 2>&1 | FileCheck %s --check-prefix=CHECK-NULL-MEMBER --strict-whitespace
 
-// RUN: %clangxx -fsanitize=vptr -fno-sanitize-recover -g %s -O3 -o %t
 // RUN: (echo "vptr_check:S"; echo "vptr_check:T"; echo "vptr_check:U") > %t.supp
-// RUN: ASAN_OPTIONS=suppressions=%t.supp UBSAN_OPTIONS=suppressions=%t.supp %run %t mS 2>&1
-// RUN: ASAN_OPTIONS=suppressions=%t.supp UBSAN_OPTIONS=suppressions=%t.supp %run %t fS 2>&1
-// RUN: ASAN_OPTIONS=suppressions=%t.supp UBSAN_OPTIONS=suppressions=%t.supp %run %t cS 2>&1
-// RUN: ASAN_OPTIONS=suppressions=%t.supp UBSAN_OPTIONS=suppressions=%t.supp %run %t mV 2>&1
-// RUN: ASAN_OPTIONS=suppressions=%t.supp UBSAN_OPTIONS=suppressions=%t.supp %run %t fV 2>&1
-// RUN: ASAN_OPTIONS=suppressions=%t.supp UBSAN_OPTIONS=suppressions=%t.supp %run %t cV 2>&1
-// RUN: ASAN_OPTIONS=suppressions=%t.supp UBSAN_OPTIONS=suppressions=%t.supp %run %t oU 2>&1
+// RUN: ASAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t mS 2>&1
+// RUN: ASAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t fS 2>&1
+// RUN: ASAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t cS 2>&1
+// RUN: ASAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t mV 2>&1
+// RUN: ASAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t fV 2>&1
+// RUN: ASAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t cV 2>&1
+// RUN: ASAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t oU 2>&1
 
 // RUN: echo "vptr_check:S" > %t.loc-supp
-// RUN: ASAN_OPTIONS=suppressions=%t.loc-supp UBSAN_OPTIONS=suppressions=%t.loc-supp not %run %t x- 2>&1 | FileCheck %s --check-prefix=CHECK-LOC-SUPPRESS
+// RUN: ASAN_OPTIONS=suppressions=%t.loc-supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.loc-supp:halt_on_error=1 not %run %t x- 2>&1 | FileCheck %s --check-prefix=CHECK-LOC-SUPPRESS
 
 // FIXME: This test produces linker errors on Darwin.
 // XFAIL: darwin

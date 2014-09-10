@@ -309,7 +309,7 @@ ScopedReport::ScopedReport(ReportOptions Opts) : Opts(Opts) {
 ScopedReport::~ScopedReport() {
   MaybePrintStackTrace(Opts.pc, Opts.bp);
   CommonSanitizerReportMutex.Unlock();
-  if (Opts.DieAfterReport)
+  if (Opts.DieAfterReport || flags()->halt_on_error)
     Die();
 }
 

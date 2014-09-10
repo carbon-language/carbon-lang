@@ -43,6 +43,8 @@ Flags ubsan_flags;
 static void ParseFlagsFromString(Flags *f, const char *str) {
   if (!str)
     return;
+  ParseFlag(str, &f->halt_on_error, "halt_on_error",
+            "Crash the program after printing the first error report");
   ParseFlag(str, &f->print_stacktrace, "print_stacktrace",
             "Include full stacktrace into an error report");
 }
@@ -50,6 +52,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
 void InitializeFlags() {
   Flags *f = flags();
   // Default values.
+  f->halt_on_error = false;
   f->print_stacktrace = false;
   // Override from compile definition.
   ParseFlagsFromString(f, GetRuntimeFlagsFromCompileDefinition());

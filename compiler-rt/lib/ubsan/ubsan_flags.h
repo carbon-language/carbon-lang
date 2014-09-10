@@ -16,6 +16,7 @@
 namespace __ubsan {
 
 struct Flags {
+  bool halt_on_error;
   bool print_stacktrace;
 };
 
