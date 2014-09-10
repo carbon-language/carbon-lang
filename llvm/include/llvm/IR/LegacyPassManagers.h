@@ -61,7 +61,7 @@
 //
 // [o] class FunctionPassManager;
 //
-// This is a external interface used by JIT to manage FunctionPasses. This
+// This is a external interface used to manage FunctionPasses. This
 // interface relies on FunctionPassManagerImpl to do all the tasks.
 //
 // [o] class FunctionPassManagerImpl : public ModulePass, PMDataManager,
