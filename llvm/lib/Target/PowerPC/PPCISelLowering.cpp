@@ -2504,7 +2504,7 @@ PPCTargetLowering::LowerFormalArguments_32SVR4(
 
     // Make room for NumGPArgRegs and NumFPArgRegs.
     int Depth = NumGPArgRegs * PtrVT.getSizeInBits()/8 +
-                NumFPArgRegs * EVT(MVT::f64).getSizeInBits()/8;
+                NumFPArgRegs * MVT(MVT::f64).getSizeInBits()/8;
 
     FuncInfo->setVarArgsStackOffset(
       MFI->CreateFixedObject(PtrVT.getSizeInBits()/8,
@@ -2546,7 +2546,7 @@ PPCTargetLowering::LowerFormalArguments_32SVR4(
                                    MachinePointerInfo(), false, false, 0);
       MemOps.push_back(Store);
       // Increment the address by eight for the next argument to store
-      SDValue PtrOff = DAG.getConstant(EVT(MVT::f64).getSizeInBits()/8,
+      SDValue PtrOff = DAG.getConstant(MVT(MVT::f64).getSizeInBits()/8,
                                          PtrVT);
       FIN = DAG.getNode(ISD::ADD, dl, PtrOff.getValueType(), FIN, PtrOff);
     }
