@@ -143,6 +143,13 @@ public:
       *EndIfLenPtr = EndIfLen;
 
     StringRef EndIfStr(EndIfData, EndIfLen);
+
+    // Give up if there's an escaped newline.
+    size_t FindEscapedNewline = EndIfStr.find_last_not_of(' ');
+    if (FindEscapedNewline != StringRef::npos &&
+        EndIfStr[FindEscapedNewline] == '\\')
+      return false;
+
     return (EndIf.isValid() && !EndIfStr.endswith("// " + HeaderGuard.str()) &&
             !EndIfStr.endswith("/* " + HeaderGuard.str() + " */"));
   }
