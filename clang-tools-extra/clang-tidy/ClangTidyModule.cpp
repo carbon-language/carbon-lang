@@ -16,16 +16,16 @@
 namespace clang {
 namespace tidy {
 
-void ClangTidyCheckFactories::addCheckFactory(
-    StringRef Name, std::unique_ptr<CheckFactoryBase> Factory) {
-  Factories[Name] = std::move(Factory);
+void ClangTidyCheckFactories::registerCheckFactory(
+    StringRef Name, std::function<ClangTidyCheck *()> Factory) {
+  Factories[Name] = Factory;
 }
 
 void ClangTidyCheckFactories::createChecks(
     GlobList &Filter, std::vector<std::unique_ptr<ClangTidyCheck>> &Checks) {
   for (const auto &Factory : Factories) {
     if (Filter.contains(Factory.first)) {
-      ClangTidyCheck *Check = Factory.second->createCheck();
+      ClangTidyCheck *Check = Factory.second();
       Check->setName(Factory.first);
       Checks.emplace_back(Check);
     }
