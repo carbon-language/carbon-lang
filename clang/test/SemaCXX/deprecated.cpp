@@ -35,9 +35,15 @@ void stuff() {
 #endif
 }
 
-struct S { int n; };
+struct S { int n; void operator+(int); };
 struct T : private S {
   S::n;
+#if __cplusplus < 201103L
+  // expected-warning@-2 {{access declarations are deprecated; use using declarations instead}}
+#else
+  // expected-error@-4 {{ISO C++11 does not allow access declarations; use using declarations instead}}
+#endif
+  S::operator+;
 #if __cplusplus < 201103L
   // expected-warning@-2 {{access declarations are deprecated; use using declarations instead}}
 #else
