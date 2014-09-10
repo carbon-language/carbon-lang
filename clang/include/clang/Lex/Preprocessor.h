@@ -338,7 +338,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
 
   /// \brief Actions invoked when some preprocessor activity is
   /// encountered (e.g. a file is \#included, etc).
-  PPCallbacks *Callbacks;
+  std::unique_ptr<PPCallbacks> Callbacks;
 
   struct MacroExpandsInfo {
     Token Tok;
@@ -575,11 +575,12 @@ public:
   ///
   /// Note that this class takes ownership of any PPCallbacks object given to
   /// it.
-  PPCallbacks *getPPCallbacks() const { return Callbacks; }
-  void addPPCallbacks(PPCallbacks *C) {
+  PPCallbacks *getPPCallbacks() const { return Callbacks.get(); }
+  void addPPCallbacks(std::unique_ptr<PPCallbacks> C) {
     if (Callbacks)
-      C = new PPChainedCallbacks(C, Callbacks);
-    Callbacks = C;
+      C = llvm::make_unique<PPChainedCallbacks>(std::move(C),
+                                                std::move(Callbacks));
+    Callbacks = std::move(C);
   }
   /// \}
 

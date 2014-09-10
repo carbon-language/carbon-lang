@@ -176,7 +176,7 @@ protected:
                     /*OwnsHeaderSearch =*/false);
     PP.Initialize(*Target);
     InclusionDirectiveCallbacks* Callbacks = new InclusionDirectiveCallbacks;
-    PP.addPPCallbacks(Callbacks); // Takes ownership.
+    PP.addPPCallbacks(std::unique_ptr<PPCallbacks>(Callbacks));
 
     // Lex source text.
     PP.EnterMainSourceFile();
@@ -222,7 +222,7 @@ protected:
     Sema S(PP, Context, Consumer);
     Parser P(PP, S, false);
     PragmaOpenCLExtensionCallbacks* Callbacks = new PragmaOpenCLExtensionCallbacks;
-    PP.addPPCallbacks(Callbacks); // Takes ownership.
+    PP.addPPCallbacks(std::unique_ptr<PPCallbacks>(Callbacks));
 
     // Lex source text.
     PP.EnterMainSourceFile();

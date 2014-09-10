@@ -103,7 +103,7 @@ TEST_F(PPConditionalDirectiveRecordTest, PPRecAPI) {
   PP.Initialize(*Target);
   PPConditionalDirectiveRecord *
     PPRec = new PPConditionalDirectiveRecord(SourceMgr);
-  PP.addPPCallbacks(PPRec);
+  PP.addPPCallbacks(std::unique_ptr<PPCallbacks>(PPRec));
   PP.EnterMainSourceFile();
 
   std::vector<Token> toks;

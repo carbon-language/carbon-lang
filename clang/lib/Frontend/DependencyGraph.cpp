@@ -61,7 +61,8 @@ public:
 
 void clang::AttachDependencyGraphGen(Preprocessor &PP, StringRef OutputFile,
                                      StringRef SysRoot) {
-  PP.addPPCallbacks(new DependencyGraphCallback(&PP, OutputFile, SysRoot));
+  PP.addPPCallbacks(llvm::make_unique<DependencyGraphCallback>(&PP, OutputFile,
+                                                               SysRoot));
 }
 
 void DependencyGraphCallback::InclusionDirective(SourceLocation HashLoc,

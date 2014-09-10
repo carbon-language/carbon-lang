@@ -425,12 +425,12 @@ public:
 
     IndexCtx.setASTContext(CI.getASTContext());
     Preprocessor &PP = CI.getPreprocessor();
-    PP.addPPCallbacks(new IndexPPCallbacks(PP, IndexCtx));
+    PP.addPPCallbacks(llvm::make_unique<IndexPPCallbacks>(PP, IndexCtx));
     IndexCtx.setPreprocessor(PP);
 
     if (SKData) {
       auto *PPRec = new PPConditionalDirectiveRecord(PP.getSourceManager());
-      PP.addPPCallbacks(PPRec);
+      PP.addPPCallbacks(std::unique_ptr<PPCallbacks>(PPRec));
       SKCtrl = llvm::make_unique<TUSkipBodyControl>(*SKData, *PPRec, PP);
     }
 

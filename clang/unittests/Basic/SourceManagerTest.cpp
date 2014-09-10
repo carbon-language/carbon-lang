@@ -303,7 +303,7 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnitWithMacroInInclude) {
   PP.Initialize(*Target);
 
   std::vector<MacroAction> Macros;
-  PP.addPPCallbacks(new MacroTracker(Macros));
+  PP.addPPCallbacks(llvm::make_unique<MacroTracker>(Macros));
 
   PP.EnterMainSourceFile();
 

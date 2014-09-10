@@ -111,15 +111,15 @@ struct TestPPCallbacks : public PPCallbacks {
 };
 
 class TestPPCallbacksFrontendAction : public PreprocessorFrontendAction {
-  TestPPCallbacks *Callbacks;
+  std::unique_ptr<TestPPCallbacks> Callbacks;
 
 public:
-  TestPPCallbacksFrontendAction(TestPPCallbacks *C)
-      : Callbacks(C), SeenEnd(false) {}
+  TestPPCallbacksFrontendAction(std::unique_ptr<TestPPCallbacks> C)
+      : Callbacks(std::move(C)), SeenEnd(false) {}
 
   void ExecuteAction() override {
     Preprocessor &PP = getCompilerInstance().getPreprocessor();
-    PP.addPPCallbacks(Callbacks);
+    PP.addPPCallbacks(std::move(Callbacks));
     PP.EnterMainSourceFile();
   }
   void EndSourceFileAction() override { SeenEnd = Callbacks->SeenEnd; }
@@ -140,8 +140,8 @@ TEST(PreprocessorFrontendAction, EndSourceFile) {
   Compiler.setInvocation(Invocation);
   Compiler.createDiagnostics();
 
-  TestPPCallbacks *Callbacks = new TestPPCallbacks;
-  TestPPCallbacksFrontendAction TestAction(Callbacks);
+  std::unique_ptr<TestPPCallbacks> Callbacks(new TestPPCallbacks);
+  TestPPCallbacksFrontendAction TestAction(std::move(Callbacks));
   ASSERT_FALSE(Callbacks->SeenEnd);
   ASSERT_FALSE(TestAction.SeenEnd);
   ASSERT_TRUE(Compiler.ExecuteAction(TestAction));

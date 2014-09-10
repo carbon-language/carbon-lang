@@ -724,7 +724,7 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP, raw_ostream *OS,
   PP.AddPragmaHandler("clang",
                       new UnknownPragmaHandler("#pragma clang", Callbacks));
 
-  PP.addPPCallbacks(Callbacks);
+  PP.addPPCallbacks(std::unique_ptr<PPCallbacks>(Callbacks));
 
   // After we have configured the preprocessor, enter the main file.
   PP.EnterMainSourceFile();

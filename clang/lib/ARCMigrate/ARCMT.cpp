@@ -449,7 +449,7 @@ public:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                  StringRef InFile) override {
     CI.getPreprocessor().addPPCallbacks(
-                              new ARCMTMacroTrackerPPCallbacks(ARCMTMacroLocs));
+               llvm::make_unique<ARCMTMacroTrackerPPCallbacks>(ARCMTMacroLocs));
     return llvm::make_unique<ASTConsumer>();
   }
 };

@@ -172,8 +172,6 @@ Preprocessor::~Preprocessor() {
   // Delete the header search info, if we own it.
   if (OwnsHeaderSearch)
     delete &HeaderInfo;
-
-  delete Callbacks;
 }
 
 void Preprocessor::Initialize(const TargetInfo &Target) {
@@ -853,5 +851,5 @@ void Preprocessor::createPreprocessingRecord() {
     return;
   
   Record = new PreprocessingRecord(getSourceManager());
-  addPPCallbacks(Record);
+  addPPCallbacks(std::unique_ptr<PPCallbacks>(Record));
 }

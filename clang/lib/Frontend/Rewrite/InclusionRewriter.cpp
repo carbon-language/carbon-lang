@@ -565,7 +565,7 @@ void clang::RewriteIncludesInInput(Preprocessor &PP, raw_ostream *OS,
                                                      Opts.ShowLineMarkers);
   Rewrite->detectMainFileEOL();
 
-  PP.addPPCallbacks(Rewrite);
+  PP.addPPCallbacks(std::unique_ptr<PPCallbacks>(Rewrite));
   PP.IgnorePragmas();
 
   // First let the preprocessor process the entire file and call callbacks.

@@ -69,9 +69,12 @@ void clang::AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders,
     }
   }
 
-  PP.addPPCallbacks(new HeaderIncludesCallback(&PP, ShowAllHeaders,
-                                               OutputFile, OwnsOutputFile,
-                                               ShowDepth, MSStyle));
+  PP.addPPCallbacks(llvm::make_unique<HeaderIncludesCallback>(&PP,
+                                                              ShowAllHeaders,
+                                                              OutputFile,
+                                                              OwnsOutputFile,
+                                                              ShowDepth,
+                                                              MSStyle));
 }
 
 void HeaderIncludesCallback::FileChanged(SourceLocation Loc,

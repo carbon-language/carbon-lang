@@ -84,8 +84,8 @@ void VerifyDiagnosticConsumer::BeginSourceFile(const LangOptions &LangOpts,
       const_cast<Preprocessor*>(PP)->addCommentHandler(this);
 #ifndef NDEBUG
       // Debug build tracks parsed files.
-      VerifyFileTracker *V = new VerifyFileTracker(*this, *SrcManager);
-      const_cast<Preprocessor*>(PP)->addPPCallbacks(V);
+      const_cast<Preprocessor*>(PP)->addPPCallbacks(
+                      llvm::make_unique<VerifyFileTracker>(*this, *SrcManager));
 #endif
     }
   }

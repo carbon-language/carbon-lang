@@ -121,7 +121,8 @@ bool DependencyCollector::sawDependency(StringRef Filename, bool FromModule,
 
 DependencyCollector::~DependencyCollector() { }
 void DependencyCollector::attachToPreprocessor(Preprocessor &PP) {
-  PP.addPPCallbacks(new DepCollectorPPCallbacks(*this, PP.getSourceManager()));
+  PP.addPPCallbacks(
+      llvm::make_unique<DepCollectorPPCallbacks>(*this, PP.getSourceManager()));
 }
 void DependencyCollector::attachToASTReader(ASTReader &R) {
   R.addListener(llvm::make_unique<DepCollectorASTListener>(*this));
@@ -203,7 +204,7 @@ DependencyFileGenerator *DependencyFileGenerator::CreateAndAttachToPreprocessor(
     PP.SetSuppressIncludeNotFoundError(true);
 
   DFGImpl *Callback = new DFGImpl(&PP, Opts);
-  PP.addPPCallbacks(Callback); // PP owns the Callback
+  PP.addPPCallbacks(std::unique_ptr<PPCallbacks>(Callback));
   return new DependencyFileGenerator(Callback);
 }
 

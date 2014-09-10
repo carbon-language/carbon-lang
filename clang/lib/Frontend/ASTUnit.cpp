@@ -887,7 +887,8 @@ public:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                  StringRef InFile) override {
     CI.getPreprocessor().addPPCallbacks(
-     new MacroDefinitionTrackerPPCallbacks(Unit.getCurrentTopLevelHashValue()));
+        llvm::make_unique<MacroDefinitionTrackerPPCallbacks>(
+                                           Unit.getCurrentTopLevelHashValue()));
     return llvm::make_unique<TopLevelDeclTrackerConsumer>(
         Unit, Unit.getCurrentTopLevelHashValue());
   }
@@ -985,8 +986,9 @@ PrecompilePreambleAction::CreateASTConsumer(CompilerInstance &CI,
   if (!CI.getFrontendOpts().RelocatablePCH)
     Sysroot.clear();
 
-  CI.getPreprocessor().addPPCallbacks(new MacroDefinitionTrackerPPCallbacks(
-      Unit.getCurrentTopLevelHashValue()));
+  CI.getPreprocessor().addPPCallbacks(
+      llvm::make_unique<MacroDefinitionTrackerPPCallbacks>(
+                                           Unit.getCurrentTopLevelHashValue()));
   return llvm::make_unique<PrecompilePreambleConsumer>(
       Unit, this, CI.getPreprocessor(), Sysroot, OS);
 }
@@ -1827,7 +1829,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(
 
   if (Persistent && !TrackerAct) {
     Clang->getPreprocessor().addPPCallbacks(
-     new MacroDefinitionTrackerPPCallbacks(AST->getCurrentTopLevelHashValue()));
+        llvm::make_unique<MacroDefinitionTrackerPPCallbacks>(
+                                           AST->getCurrentTopLevelHashValue()));
     std::vector<std::unique_ptr<ASTConsumer>> Consumers;
     if (Clang->hasASTConsumer())
       Consumers.push_back(Clang->takeASTConsumer());

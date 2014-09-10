@@ -189,7 +189,7 @@ std::unique_ptr<ASTConsumer>
 ObjCMigrateAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
   PPConditionalDirectiveRecord *
     PPRec = new PPConditionalDirectiveRecord(CompInst->getSourceManager());
-  CompInst->getPreprocessor().addPPCallbacks(PPRec);
+  CI.getPreprocessor().addPPCallbacks(std::unique_ptr<PPCallbacks>(PPRec));
   std::vector<std::unique_ptr<ASTConsumer>> Consumers;
   Consumers.push_back(WrapperFrontendAction::CreateASTConsumer(CI, InFile));
   Consumers.push_back(llvm::make_unique<ObjCMigrateASTConsumer>(
@@ -1873,7 +1873,7 @@ MigrateSourceAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
     ObjCMTAction |= FrontendOptions::ObjCMT_Literals |
                     FrontendOptions::ObjCMT_Subscripting;
   }
-  CI.getPreprocessor().addPPCallbacks(PPRec);
+  CI.getPreprocessor().addPPCallbacks(std::unique_ptr<PPCallbacks>(PPRec));
   std::vector<std::string> WhiteList =
     getWhiteListFilenames(CI.getFrontendOpts().ObjCMTWhiteListPath);
   return llvm::make_unique<ObjCMigrateASTConsumer>(
