@@ -95,8 +95,8 @@ SegmentInfo::SegmentInfo(StringRef n)
 
 class Util {
 public:
-  Util(const MachOLinkingContext &ctxt) : _context(ctxt), 
-    _archHandler(ctxt.archHandler()), _entryAtom(nullptr) {}
+  Util(const MachOLinkingContext &ctxt)
+      : _context(ctxt), _archHandler(ctxt.archHandler()), _entryAtom(nullptr) {}
 
   void      assignAtomsToSections(const lld::File &atomFile);
   void      organizeSections();
@@ -468,16 +468,19 @@ void Util::layoutSectionsInTextSegment(size_t hlcSize, SegmentInfo *seg,
 
 void Util::assignAddressesToSections(const NormalizedFile &file) {
   size_t hlcSize = headerAndLoadCommandsSize(file);
-  uint64_t address = 0;  // FIXME
+  uint64_t address = 0;
   if (_context.outputMachOType() != llvm::MachO::MH_OBJECT) {
     for (SegmentInfo *seg : _segmentInfos) {
       if (seg->name.equals("__PAGEZERO")) {
         seg->size = _context.pageZeroSize();
         address += seg->size;
       }
-      else if (seg->name.equals("__TEXT"))
+      else if (seg->name.equals("__TEXT")) {
+        // _context.baseAddress()  == 0 implies it was either unspecified or
+        // pageZeroSize is also 0. In either case resetting address is safe.
+        address = _context.baseAddress() ? _context.baseAddress() : address;
         layoutSectionsInTextSegment(hlcSize, seg, address);
-      else
+      } else
         layoutSectionsInSegment(seg, address);
 
       address = llvm::RoundUpToAlignment(address, _context.pageSize());

@@ -133,11 +133,10 @@ bool MachOLinkingContext::isThinObjectFile(StringRef path, Arch &arch) {
 
 MachOLinkingContext::MachOLinkingContext()
     : _outputMachOType(MH_EXECUTE), _outputMachOTypeStatic(false),
-      _doNothing(false), _pie(false),
-      _arch(arch_unknown), _os(OS::macOSX), _osMinVersion(0),
-      _pageZeroSize(0), _pageSize(4096), _compatibilityVersion(0),
-      _currentVersion(0), _deadStrippableDylib(false), _printAtoms(false),
-      _testingFileUsage(false), _keepPrivateExterns(false),
+      _doNothing(false), _pie(false), _arch(arch_unknown), _os(OS::macOSX),
+      _osMinVersion(0), _pageZeroSize(0), _pageSize(4096), _baseAddress(0),
+      _compatibilityVersion(0), _currentVersion(0), _deadStrippableDylib(false),
+      _printAtoms(false), _testingFileUsage(false), _keepPrivateExterns(false),
       _archHandler(nullptr), _exportMode(ExportMode::globals) {}
 
 MachOLinkingContext::~MachOLinkingContext() {}

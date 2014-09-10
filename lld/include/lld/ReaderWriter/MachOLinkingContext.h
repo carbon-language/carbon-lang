@@ -108,6 +108,9 @@ public:
   bool PIE() const { return _pie; }
   void setPIE(bool pie) { _pie = pie; }
 
+  uint64_t baseAddress() const { return _baseAddress; }
+  void setBaseAddress(uint64_t baseAddress) { _baseAddress = baseAddress; }
+
   /// \brief Checks whether a given path on the filesystem exists.
   ///
   /// When running in -test_file_usage mode, this method consults an
@@ -275,6 +278,7 @@ private:
   uint32_t _osMinVersion;
   uint64_t _pageZeroSize;
   uint64_t _pageSize;
+  uint64_t _baseAddress;
   uint32_t _compatibilityVersion;
   uint32_t _currentVersion;
   StringRef _installName;

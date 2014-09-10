@@ -1,0 +1,14 @@
+# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.9 %s -o %t -image_base 31415926530 %p/Inputs/libSystem.yaml
+# RUN: macho-dump %t | FileCheck %s
+
+--- !native
+defined-atoms:
+   - name:            _main
+     scope:           global
+     content:         []
+
+  # Unfortunately, llvm-objdump and llvm-readobj are too generic and don't give
+  # us easy access to the MachO segment model, so we have to check the uglier
+  # macho-dump output.
+# CHECK: 'segment_name', '__TEXT
+# CHECK-NEXT: 'vm_addr', 3384796144944
