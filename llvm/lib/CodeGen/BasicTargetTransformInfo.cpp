@@ -101,7 +101,7 @@ public:
   /// @{
 
   unsigned getNumberOfRegisters(bool Vector) const override;
-  unsigned getMaximumUnrollFactor() const override;
+  unsigned getMaxInterleaveFactor() const override;
   unsigned getRegisterBitWidth(bool Vector) const override;
   unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty, OperandValueKind,
                                   OperandValueKind, OperandValueProperties,
@@ -284,7 +284,7 @@ unsigned BasicTTI::getRegisterBitWidth(bool Vector) const {
   return 32;
 }
 
-unsigned BasicTTI::getMaximumUnrollFactor() const {
+unsigned BasicTTI::getMaxInterleaveFactor() const {
   return 1;
 }
 

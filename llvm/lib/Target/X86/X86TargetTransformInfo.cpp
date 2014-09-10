@@ -82,7 +82,7 @@ public:
 
   unsigned getNumberOfRegisters(bool Vector) const override;
   unsigned getRegisterBitWidth(bool Vector) const override;
-  unsigned getMaximumUnrollFactor() const override;
+  unsigned getMaxInterleaveFactor() const override;
   unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty, OperandValueKind,
                                   OperandValueKind, OperandValueProperties,
                                   OperandValueProperties) const override;
@@ -167,7 +167,7 @@ unsigned X86TTI::getRegisterBitWidth(bool Vector) const {
 
 }
 
-unsigned X86TTI::getMaximumUnrollFactor() const {
+unsigned X86TTI::getMaxInterleaveFactor() const {
   if (ST->isAtom())
     return 1;
 

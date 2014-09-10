@@ -81,7 +81,7 @@ public:
 
   unsigned getNumberOfRegisters(bool Vector) const override;
   unsigned getRegisterBitWidth(bool Vector) const override;
-  unsigned getMaximumUnrollFactor() const override;
+  unsigned getMaxInterleaveFactor() const override;
 
   /// @}
 };
@@ -153,7 +153,7 @@ unsigned AMDGPUTTI::getRegisterBitWidth(bool) const {
   return 32;
 }
 
-unsigned AMDGPUTTI::getMaximumUnrollFactor() const {
+unsigned AMDGPUTTI::getMaxInterleaveFactor() const {
   // Semi-arbitrary large amount.
   return 64;
 }

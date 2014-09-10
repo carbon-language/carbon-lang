@@ -104,7 +104,7 @@ public:
     return 64;
   }
 
-  unsigned getMaximumUnrollFactor() const override;
+  unsigned getMaxInterleaveFactor() const override;
 
   unsigned getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const
       override;
@@ -516,7 +516,7 @@ unsigned AArch64TTI::getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys) const {
   return Cost;
 }
 
-unsigned AArch64TTI::getMaximumUnrollFactor() const {
+unsigned AArch64TTI::getMaxInterleaveFactor() const {
   if (ST->isCortexA57() || ST->isCyclone())
     return 4;
   return 2;

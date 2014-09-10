@@ -167,8 +167,8 @@ unsigned TargetTransformInfo::getRegisterBitWidth(bool Vector) const {
   return PrevTTI->getRegisterBitWidth(Vector);
 }
 
-unsigned TargetTransformInfo::getMaximumUnrollFactor() const {
-  return PrevTTI->getMaximumUnrollFactor();
+unsigned TargetTransformInfo::getMaxInterleaveFactor() const {
+  return PrevTTI->getMaxInterleaveFactor();
 }
 
 unsigned TargetTransformInfo::getArithmeticInstrCost(
@@ -565,7 +565,7 @@ struct NoTTI final : ImmutablePass, TargetTransformInfo {
     return 32;
   }
 
-  unsigned getMaximumUnrollFactor() const override {
+  unsigned getMaxInterleaveFactor() const override {
     return 1;
   }
 

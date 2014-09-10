@@ -90,7 +90,7 @@ public:
 
   unsigned getNumberOfRegisters(bool Vector) const override;
   unsigned getRegisterBitWidth(bool Vector) const override;
-  unsigned getMaximumUnrollFactor() const override;
+  unsigned getMaxInterleaveFactor() const override;
   unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty, OperandValueKind,
                                   OperandValueKind, OperandValueProperties,
                                   OperandValueProperties) const override;
@@ -295,7 +295,7 @@ unsigned PPCTTI::getRegisterBitWidth(bool Vector) const {
 
 }
 
-unsigned PPCTTI::getMaximumUnrollFactor() const {
+unsigned PPCTTI::getMaxInterleaveFactor() const {
   unsigned Directive = ST->getDarwinDirective();
   // The 440 has no SIMD support, but floating-point instructions
   // have a 5-cycle latency, so unroll by 5x for latency hiding.

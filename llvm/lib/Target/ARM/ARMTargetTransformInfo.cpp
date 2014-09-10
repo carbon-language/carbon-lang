@@ -104,7 +104,7 @@ public:
     return 32;
   }
 
-  unsigned getMaximumUnrollFactor() const override {
+  unsigned getMaxInterleaveFactor() const override {
     // These are out of order CPUs:
     if (ST->isCortexA15() || ST->isSwift())
       return 2;

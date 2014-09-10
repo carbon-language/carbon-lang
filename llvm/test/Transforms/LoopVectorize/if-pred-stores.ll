@@ -1,5 +1,5 @@
-; RUN: opt -S -vectorize-num-stores-pred=1 -force-vector-width=1 -force-vector-unroll=2 -loop-vectorize < %s | FileCheck %s --check-prefix=UNROLL
-; RUN: opt -S -vectorize-num-stores-pred=1 -force-vector-width=2 -force-vector-unroll=1 -loop-vectorize -enable-cond-stores-vec < %s | FileCheck %s --check-prefix=VEC
+; RUN: opt -S -vectorize-num-stores-pred=1 -force-vector-width=1 -force-vector-interleave=2 -loop-vectorize < %s | FileCheck %s --check-prefix=UNROLL
+; RUN: opt -S -vectorize-num-stores-pred=1 -force-vector-width=2 -force-vector-interleave=1 -loop-vectorize -enable-cond-stores-vec < %s | FileCheck %s --check-prefix=VEC
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.9.0"
 
