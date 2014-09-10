@@ -44,8 +44,11 @@ TIL_OPCODE_DEF(Cast)
 TIL_OPCODE_DEF(SCFG)
 TIL_OPCODE_DEF(BasicBlock)
 TIL_OPCODE_DEF(Phi)
+
+// Terminator instructions
 TIL_OPCODE_DEF(Goto)
 TIL_OPCODE_DEF(Branch)
+TIL_OPCODE_DEF(Return)
 
 // pseudo-terms
 TIL_OPCODE_DEF(Identifier)

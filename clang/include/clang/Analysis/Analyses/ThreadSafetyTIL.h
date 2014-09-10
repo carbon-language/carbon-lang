@@ -63,24 +63,27 @@ namespace threadSafety {
 namespace til {
 
 
+/// Enum for the different distinct classes of SExpr
 enum TIL_Opcode {
 #define TIL_OPCODE_DEF(X) COP_##X,
 #include "ThreadSafetyOps.def"
 #undef TIL_OPCODE_DEF
 };
 
+/// Opcode for unary arithmetic operations.
 enum TIL_UnaryOpcode : unsigned char {
   UOP_Minus,        //  -
   UOP_BitNot,       //  ~
   UOP_LogicNot      //  !
 };
 
+/// Opcode for binary arithmetic operations.
 enum TIL_BinaryOpcode : unsigned char {
+  BOP_Add,          //  +
+  BOP_Sub,          //  -
   BOP_Mul,          //  *
   BOP_Div,          //  /
   BOP_Rem,          //  %
-  BOP_Add,          //  +
-  BOP_Sub,          //  -
   BOP_Shl,          //  <<
   BOP_Shr,          //  >>
   BOP_BitAnd,       //  &
@@ -90,10 +93,11 @@ enum TIL_BinaryOpcode : unsigned char {
   BOP_Neq,          //  !=
   BOP_Lt,           //  <
   BOP_Leq,          //  <=
-  BOP_LogicAnd,     //  &&
-  BOP_LogicOr       //  ||
+  BOP_LogicAnd,     //  &&  (no short-circuit)
+  BOP_LogicOr       //  ||  (no short-circuit)
 };
 
+/// Opcode for cast operations.
 enum TIL_CastOpcode : unsigned char {
   CAST_none = 0,
   CAST_extendNum,   // extend precision of numeric type
@@ -107,21 +111,24 @@ const TIL_Opcode       COP_Min  = COP_Future;
 const TIL_Opcode       COP_Max  = COP_Branch;
 const TIL_UnaryOpcode  UOP_Min  = UOP_Minus;
 const TIL_UnaryOpcode  UOP_Max  = UOP_LogicNot;
-const TIL_BinaryOpcode BOP_Min  = BOP_Mul;
+const TIL_BinaryOpcode BOP_Min  = BOP_Add;
 const TIL_BinaryOpcode BOP_Max  = BOP_LogicOr;
 const TIL_CastOpcode   CAST_Min = CAST_none;
 const TIL_CastOpcode   CAST_Max = CAST_toInt;
 
+/// Return the name of a unary opcode.
 StringRef getUnaryOpcodeString(TIL_UnaryOpcode Op);
+
+/// Return the name of a binary opcode.
 StringRef getBinaryOpcodeString(TIL_BinaryOpcode Op);
 
 
-// ValueTypes are data types that can actually be held in registers.
-// All variables and expressions must have a vBNF_Nonealue type.
-// Pointer types are further subdivided into the various heap-allocated
-// types, such as functions, records, etc.
-// Structured types that are passed by value (e.g. complex numbers)
-// require special handling; they use BT_ValueRef, and size ST_0.
+/// ValueTypes are data types that can actually be held in registers.
+/// All variables and expressions must have a value type.
+/// Pointer types are further subdivided into the various heap-allocated
+/// types, such as functions, records, etc.
+/// Structured types that are passed by value (e.g. complex numbers)
+/// require special handling; they use BT_ValueRef, and size ST_0.
 struct ValueType {
   enum BaseType : unsigned char {
     BT_Void = 0,
@@ -247,8 +254,10 @@ inline ValueType ValueType::getValueType<void*>() {
 }
 
 
+class BasicBlock;
 
-// Base class for AST nodes in the typed intermediate language.
+
+/// Base class for AST nodes in the typed intermediate language.
 class SExpr {
 public:
   TIL_Opcode opcode() const { return static_cast<TIL_Opcode>(Opcode); }
@@ -267,68 +276,44 @@ public:
   // template <class C> typename C::CType compare(CType* E, C& Cmp) {
   //   compare all subexpressions, following the comparator interface
   // }
-
   void *operator new(size_t S, MemRegionRef &R) {
     return ::operator new(S, R);
   }
 
-  // SExpr objects cannot be deleted.
+  /// SExpr objects cannot be deleted.
   // This declaration is public to workaround a gcc bug that breaks building
   // with REQUIRES_EH=1.
   void operator delete(void *) LLVM_DELETED_FUNCTION;
 
+  /// Returns the instruction ID for this expression.
+  /// All basic block instructions have a unique ID (i.e. virtual register).
+  unsigned id() const { return SExprID; }
+
+  /// Returns the block, if this is an instruction in a basic block,
+  /// otherwise returns null.
+  BasicBlock* block() const { return Block; }
+
+  /// Set the basic block and instruction ID for this expression.
+  void setID(BasicBlock *B, unsigned id) { Block = B; SExprID = id; }
+
 protected:
-  SExpr(TIL_Opcode Op) : Opcode(Op), Reserved(0), Flags(0) {}
-  SExpr(const SExpr &E) : Opcode(E.Opcode), Reserved(0), Flags(E.Flags) {}
+  SExpr(TIL_Opcode Op)
+    : Opcode(Op), Reserved(0), Flags(0), SExprID(0), Block(nullptr) {}
+  SExpr(const SExpr &E)
+    : Opcode(E.Opcode), Reserved(0), Flags(E.Flags), SExprID(0),
+      Block(nullptr) {}
 
   const unsigned char Opcode;
   unsigned char Reserved;
   unsigned short Flags;
+  unsigned SExprID;
+  BasicBlock* Block;
 
 private:
   SExpr() LLVM_DELETED_FUNCTION;
 
-  // SExpr objects must be created in an arena.
+  /// SExpr objects must be created in an arena.
   void *operator new(size_t) LLVM_DELETED_FUNCTION;
-};
-
-
-// Class for owning references to SExprs.
-// Includes attach/detach logic for counting variable references and lazy
-// rewriting strategies.
-class SExprRef {
-public:
-  SExprRef() : Ptr(nullptr) { }
-  SExprRef(std::nullptr_t P) : Ptr(nullptr) { }
-  SExprRef(SExprRef &&R) : Ptr(R.Ptr) { R.Ptr = nullptr; }
-
-  // Defined after Variable and Future, below.
-  inline SExprRef(SExpr *P);
-  inline ~SExprRef();
-
-  SExpr       *get()       { return Ptr; }
-  const SExpr *get() const { return Ptr; }
-
-  SExpr       *operator->()       { return get(); }
-  const SExpr *operator->() const { return get(); }
-
-  SExpr       &operator*()        { return *Ptr; }
-  const SExpr &operator*() const  { return *Ptr; }
-
-  bool operator==(const SExprRef &R) const { return Ptr == R.Ptr; }
-  bool operator!=(const SExprRef &R) const { return !operator==(R); }
-  bool operator==(const SExpr *P)    const { return Ptr == P; }
-  bool operator!=(const SExpr *P)    const { return !operator==(P); }
-  bool operator==(std::nullptr_t)    const { return Ptr == nullptr; }
-  bool operator!=(std::nullptr_t)    const { return Ptr != nullptr; }
-
-  inline void reset(SExpr *E);
-
-private:
-  inline void attach();
-  inline void detach();
-
-  SExpr *Ptr;
 };
 
 
@@ -343,62 +328,64 @@ namespace ThreadSafetyTIL {
 // Nodes which declare variables
 class Function;
 class SFunction;
-class BasicBlock;
 class Let;
 
 
-// A named variable, e.g. "x".
-//
-// There are two distinct places in which a Variable can appear in the AST.
-// A variable declaration introduces a new variable, and can occur in 3 places:
-//   Let-expressions:           (Let (x = t) u)
-//   Functions:                 (Function (x : t) u)
-//   Self-applicable functions  (SFunction (x) t)
-//
-// If a variable occurs in any other location, it is a reference to an existing
-// variable declaration -- e.g. 'x' in (x * y + z). To save space, we don't
-// allocate a separate AST node for variable references; a reference is just a
-// pointer to the original declaration.
+/// A named variable, e.g. "x".
+///
+/// There are two distinct places in which a Variable can appear in the AST.
+/// A variable declaration introduces a new variable, and can occur in 3 places:
+///   Let-expressions:           (Let (x = t) u)
+///   Functions:                 (Function (x : t) u)
+///   Self-applicable functions  (SFunction (x) t)
+///
+/// If a variable occurs in any other location, it is a reference to an existing
+/// variable declaration -- e.g. 'x' in (x * y + z). To save space, we don't
+/// allocate a separate AST node for variable references; a reference is just a
+/// pointer to the original declaration.
 class Variable : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Variable; }
 
-  // Let-variable, function parameter, or self-variable
   enum VariableKind {
-    VK_Let,
-    VK_LetBB,
-    VK_Fun,
-    VK_SFun
+    VK_Let,  ///< Let-variable
+    VK_Fun,  ///< Function parameter
+    VK_SFun  ///< SFunction (self) parameter
   };
 
-  // These are defined after SExprRef contructor, below
-  inline Variable(SExpr *D, const clang::ValueDecl *Cvd = nullptr);
-  inline Variable(StringRef s, SExpr *D = nullptr);
-  inline Variable(const Variable &Vd, SExpr *D);
+  Variable(StringRef s, SExpr *D = nullptr)
+      : SExpr(COP_Variable), Name(s), Definition(D), Cvdecl(nullptr) {
+    Flags = VK_Let;
+  }
+  Variable(SExpr *D, const clang::ValueDecl *Cvd = nullptr)
+      : SExpr(COP_Variable), Name(Cvd ? Cvd->getName() : "_x"),
+        Definition(D), Cvdecl(Cvd) {
+    Flags = VK_Let;
+  }
+  Variable(const Variable &Vd, SExpr *D)  // rewrite constructor
+      : SExpr(Vd), Name(Vd.Name), Definition(D), Cvdecl(Vd.Cvdecl) {
+    Flags = Vd.kind();
+  }
 
+  /// Return the kind of variable (let, function param, or self)
   VariableKind kind() const { return static_cast<VariableKind>(Flags); }
 
+  /// Return the name of the variable, if any.
   StringRef name() const { return Name; }
+
+  /// Return the clang declaration for this variable, if any.
   const clang::ValueDecl *clangDecl() const { return Cvdecl; }
 
-  // Returns the definition (for let vars) or type (for parameter & self vars)
-  SExpr *definition() { return Definition.get(); }
-  const SExpr *definition() const { return Definition.get(); }
+  /// Return the definition of the variable.
+  /// For let-vars, this is the setting expression.
+  /// For function and self parameters, it is the type of the variable.
+  SExpr *definition() { return Definition; }
+  const SExpr *definition() const { return Definition; }
 
-  void attachVar() const { ++NumUses; }
-  void detachVar() const { assert(NumUses > 0); --NumUses; }
-
-  unsigned getID() const { return Id; }
-  unsigned getBlockID() const { return BlockID; }
-
-  void setName(StringRef S) { Name = S; }
-  void setID(unsigned Bid, unsigned I) {
-    BlockID = static_cast<unsigned short>(Bid);
-    Id = static_cast<unsigned short>(I);
-  }
-  void setClangDecl(const clang::ValueDecl *VD) { Cvdecl = VD; }
-  void setDefinition(SExpr *E);
+  void setName(StringRef S)    { Name = S;  }
   void setKind(VariableKind K) { Flags = K; }
+  void setDefinition(SExpr *E) { Definition = E; }
+  void setClangDecl(const clang::ValueDecl *VD) { Cvdecl = VD; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -418,17 +405,13 @@ private:
   friend class Let;
 
   StringRef Name;                  // The name of the variable.
-  SExprRef  Definition;            // The TIL type or definition
+  SExpr*    Definition;            // The TIL type or definition
   const clang::ValueDecl *Cvdecl;  // The clang declaration for this variable.
-
-  unsigned short BlockID;
-  unsigned short Id;
-  mutable unsigned NumUses;
 };
 
 
-// Placeholder for an expression that has not yet been created.
-// Used to implement lazy copy and rewriting strategies.
+/// Placeholder for an expression that has not yet been created.
+/// Used to implement lazy copy and rewriting strategies.
 class Future : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Future; }
@@ -439,22 +422,14 @@ public:
     FS_done
   };
 
-  Future() :
-    SExpr(COP_Future), Status(FS_pending), Result(nullptr), Location(nullptr)
-  {}
+  Future() : SExpr(COP_Future), Status(FS_pending), Result(nullptr) {}
+
 private:
   virtual ~Future() LLVM_DELETED_FUNCTION;
+
 public:
-
-  // Registers the location in the AST where this future is stored.
-  // Forcing the future will automatically update the AST.
-  static inline void registerLocation(SExprRef *Member) {
-    if (Future *F = dyn_cast_or_null<Future>(Member->get()))
-      F->Location = Member;
-  }
-
   // A lazy rewriting strategy should subclass Future and override this method.
-  virtual SExpr *create() { return nullptr; }
+  virtual SExpr *compute() { return nullptr; }
 
   // Return the result of this future if it exists, otherwise return null.
   SExpr *maybeGetResult() const {
@@ -465,8 +440,7 @@ public:
   SExpr *result() {
     switch (Status) {
     case FS_pending:
-      force();
-      return Result;
+      return force();
     case FS_evaluating:
       return nullptr; // infinite loop; illegal recursion.
     case FS_done:
@@ -488,81 +462,14 @@ public:
   }
 
 private:
-  // Force the future.
-  inline void force();
+  SExpr* force();
 
   FutureStatus Status;
   SExpr *Result;
-  SExprRef *Location;
 };
 
 
-inline void SExprRef::attach() {
-  if (!Ptr)
-    return;
-
-  TIL_Opcode Op = Ptr->opcode();
-  if (Op == COP_Variable) {
-    cast<Variable>(Ptr)->attachVar();
-  } else if (Op == COP_Future) {
-    cast<Future>(Ptr)->registerLocation(this);
-  }
-}
-
-inline void SExprRef::detach() {
-  if (Ptr && Ptr->opcode() == COP_Variable) {
-    cast<Variable>(Ptr)->detachVar();
-  }
-}
-
-inline SExprRef::SExprRef(SExpr *P) : Ptr(P) {
-  attach();
-}
-
-inline SExprRef::~SExprRef() {
-  detach();
-}
-
-inline void SExprRef::reset(SExpr *P) {
-  detach();
-  Ptr = P;
-  attach();
-}
-
-
-inline Variable::Variable(StringRef s, SExpr *D)
-    : SExpr(COP_Variable), Name(s), Definition(D), Cvdecl(nullptr),
-      BlockID(0), Id(0), NumUses(0) {
-  Flags = VK_Let;
-}
-
-inline Variable::Variable(SExpr *D, const clang::ValueDecl *Cvd)
-    : SExpr(COP_Variable), Name(Cvd ? Cvd->getName() : "_x"),
-      Definition(D), Cvdecl(Cvd), BlockID(0), Id(0), NumUses(0) {
-  Flags = VK_Let;
-}
-
-inline Variable::Variable(const Variable &Vd, SExpr *D) // rewrite constructor
-    : SExpr(Vd), Name(Vd.Name), Definition(D), Cvdecl(Vd.Cvdecl),
-      BlockID(0), Id(0), NumUses(0) {
-  Flags = Vd.kind();
-}
-
-inline void Variable::setDefinition(SExpr *E) {
-  Definition.reset(E);
-}
-
-void Future::force() {
-  Status = FS_evaluating;
-  SExpr *R = create();
-  Result = R;
-  if (Location)
-    Location->reset(R);
-  Status = FS_done;
-}
-
-
-// Placeholder for C++ expressions that cannot be represented in the TIL.
+/// Placeholder for expressions that cannot be represented in the TIL.
 class Undefined : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Undefined; }
@@ -585,7 +492,7 @@ private:
 };
 
 
-// Placeholder for a wildcard that matches any other expression.
+/// Placeholder for a wildcard that matches any other expression.
 class Wildcard : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Wildcard; }
@@ -716,8 +623,8 @@ typename V::R_SExpr Literal::traverse(V &Vs, typename V::R_Ctx Ctx) {
 }
 
 
-// Literal pointer to an object allocated in memory.
-// At compile time, pointer literals are represented by symbolic names.
+/// A Literal pointer to an object allocated in memory.
+/// At compile time, pointer literals are represented by symbolic names.
 class LiteralPtr : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_LiteralPtr; }
@@ -743,9 +650,9 @@ private:
 };
 
 
-// A function -- a.k.a. lambda abstraction.
-// Functions with multiple arguments are created by currying,
-// e.g. (function (x: Int) (function (y: Int) (add x y)))
+/// A function -- a.k.a. lambda abstraction.
+/// Functions with multiple arguments are created by currying,
+/// e.g. (Function (x: Int) (Function (y: Int) (Code { return x + y })))
 class Function : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Function; }
@@ -762,8 +669,8 @@ public:
   Variable *variableDecl()  { return VarDecl; }
   const Variable *variableDecl() const { return VarDecl; }
 
-  SExpr *body() { return Body.get(); }
-  const SExpr *body() const { return Body.get(); }
+  SExpr *body() { return Body; }
+  const SExpr *body() const { return Body; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -790,13 +697,13 @@ public:
 
 private:
   Variable *VarDecl;
-  SExprRef Body;
+  SExpr* Body;
 };
 
 
-// A self-applicable function.
-// A self-applicable function can be applied to itself.  It's useful for
-// implementing objects and late binding
+/// A self-applicable function.
+/// A self-applicable function can be applied to itself.  It's useful for
+/// implementing objects and late binding.
 class SFunction : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_SFunction; }
@@ -805,20 +712,20 @@ public:
       : SExpr(COP_SFunction), VarDecl(Vd), Body(B) {
     assert(Vd->Definition == nullptr);
     Vd->setKind(Variable::VK_SFun);
-    Vd->Definition.reset(this);
+    Vd->Definition = this;
   }
   SFunction(const SFunction &F, Variable *Vd, SExpr *B) // rewrite constructor
       : SExpr(F), VarDecl(Vd), Body(B) {
     assert(Vd->Definition == nullptr);
     Vd->setKind(Variable::VK_SFun);
-    Vd->Definition.reset(this);
+    Vd->Definition = this;
   }
 
   Variable *variableDecl() { return VarDecl; }
   const Variable *variableDecl() const { return VarDecl; }
 
-  SExpr *body() { return Body.get(); }
-  const SExpr *body() const { return Body.get(); }
+  SExpr *body() { return Body; }
+  const SExpr *body() const { return Body; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -842,11 +749,11 @@ public:
 
 private:
   Variable *VarDecl;
-  SExprRef Body;
+  SExpr* Body;
 };
 
 
-// A block of code -- e.g. the body of a function.
+/// A block of code -- e.g. the body of a function.
 class Code : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Code; }
@@ -855,11 +762,11 @@ public:
   Code(const Code &C, SExpr *T, SExpr *B) // rewrite constructor
       : SExpr(C), ReturnType(T), Body(B) {}
 
-  SExpr *returnType() { return ReturnType.get(); }
-  const SExpr *returnType() const { return ReturnType.get(); }
+  SExpr *returnType() { return ReturnType; }
+  const SExpr *returnType() const { return ReturnType; }
 
-  SExpr *body() { return Body.get(); }
-  const SExpr *body() const { return Body.get(); }
+  SExpr *body() { return Body; }
+  const SExpr *body() const { return Body; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -877,12 +784,12 @@ public:
   }
 
 private:
-  SExprRef ReturnType;
-  SExprRef Body;
+  SExpr* ReturnType;
+  SExpr* Body;
 };
 
 
-// A typed, writable location in memory
+/// A typed, writable location in memory
 class Field : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Field; }
@@ -891,11 +798,11 @@ public:
   Field(const Field &C, SExpr *R, SExpr *B) // rewrite constructor
       : SExpr(C), Range(R), Body(B) {}
 
-  SExpr *range() { return Range.get(); }
-  const SExpr *range() const { return Range.get(); }
+  SExpr *range() { return Range; }
+  const SExpr *range() const { return Range; }
 
-  SExpr *body() { return Body.get(); }
-  const SExpr *body() const { return Body.get(); }
+  SExpr *body() { return Body; }
+  const SExpr *body() const { return Body; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -913,12 +820,16 @@ public:
   }
 
 private:
-  SExprRef Range;
-  SExprRef Body;
+  SExpr* Range;
+  SExpr* Body;
 };
 
 
-// Apply an argument to a function
+/// Apply an argument to a function.
+/// Note that this does not actually call the function.  Functions are curried,
+/// so this returns a closure in which the first parameter has been applied.
+/// Once all parameters have been applied, Call can be used to invoke the
+/// function.
 class Apply : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Apply; }
@@ -928,11 +839,11 @@ public:
       : SExpr(A), Fun(F), Arg(Ar)
   {}
 
-  SExpr *fun() { return Fun.get(); }
-  const SExpr *fun() const { return Fun.get(); }
+  SExpr *fun() { return Fun; }
+  const SExpr *fun() const { return Fun; }
 
-  SExpr *arg() { return Arg.get(); }
-  const SExpr *arg() const { return Arg.get(); }
+  SExpr *arg() { return Arg; }
+  const SExpr *arg() const { return Arg; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -950,12 +861,12 @@ public:
   }
 
 private:
-  SExprRef Fun;
-  SExprRef Arg;
+  SExpr* Fun;
+  SExpr* Arg;
 };
 
 
-// Apply a self-argument to a self-applicable function
+/// Apply a self-argument to a self-applicable function.
 class SApply : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_SApply; }
@@ -964,18 +875,18 @@ public:
   SApply(SApply &A, SExpr *Sf, SExpr *Ar = nullptr) // rewrite constructor
       : SExpr(A), Sfun(Sf), Arg(Ar) {}
 
-  SExpr *sfun() { return Sfun.get(); }
-  const SExpr *sfun() const { return Sfun.get(); }
+  SExpr *sfun() { return Sfun; }
+  const SExpr *sfun() const { return Sfun; }
 
-  SExpr *arg() { return Arg.get() ? Arg.get() : Sfun.get(); }
-  const SExpr *arg() const { return Arg.get() ? Arg.get() : Sfun.get(); }
+  SExpr *arg() { return Arg ? Arg : Sfun; }
+  const SExpr *arg() const { return Arg ? Arg : Sfun; }
 
   bool isDelegation() const { return Arg != nullptr; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
     auto Nf = Vs.traverse(Sfun, Vs.subExprCtx(Ctx));
-    typename V::R_SExpr Na = Arg.get() ? Vs.traverse(Arg, Vs.subExprCtx(Ctx))
+    typename V::R_SExpr Na = Arg ? Vs.traverse(Arg, Vs.subExprCtx(Ctx))
                                        : nullptr;
     return Vs.reduceSApply(*this, Nf, Na);
   }
@@ -989,12 +900,12 @@ public:
   }
 
 private:
-  SExprRef Sfun;
-  SExprRef Arg;
+  SExpr* Sfun;
+  SExpr* Arg;
 };
 
 
-// Project a named slot from a C++ struct or class.
+/// Project a named slot from a C++ struct or class.
 class Project : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Project; }
@@ -1009,8 +920,8 @@ public:
       : SExpr(P), Rec(R), SlotName(P.SlotName), Cvdecl(P.Cvdecl)
   { }
 
-  SExpr *record() { return Rec.get(); }
-  const SExpr *record() const { return Rec.get(); }
+  SExpr *record() { return Rec; }
+  const SExpr *record() const { return Rec; }
 
   const clang::ValueDecl *clangDecl() const { return Cvdecl; }
 
@@ -1042,13 +953,13 @@ public:
   }
 
 private:
-  SExprRef Rec;
+  SExpr* Rec;
   StringRef SlotName;
   const clang::ValueDecl *Cvdecl;
 };
 
 
-// Call a function (after all arguments have been applied).
+/// Call a function (after all arguments have been applied).
 class Call : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Call; }
@@ -1057,8 +968,8 @@ public:
       : SExpr(COP_Call), Target(T), Cexpr(Ce) {}
   Call(const Call &C, SExpr *T) : SExpr(C), Target(T), Cexpr(C.Cexpr) {}
 
-  SExpr *target() { return Target.get(); }
-  const SExpr *target() const { return Target.get(); }
+  SExpr *target() { return Target; }
+  const SExpr *target() const { return Target; }
 
   const clang::CallExpr *clangCallExpr() const { return Cexpr; }
 
@@ -1074,12 +985,12 @@ public:
   }
 
 private:
-  SExprRef Target;
+  SExpr* Target;
   const clang::CallExpr *Cexpr;
 };
 
 
-// Allocate memory for a new value on the heap or stack.
+/// Allocate memory for a new value on the heap or stack.
 class Alloc : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Call; }
@@ -1094,8 +1005,8 @@ public:
 
   AllocKind kind() const { return static_cast<AllocKind>(Flags); }
 
-  SExpr *dataType() { return Dtype.get(); }
-  const SExpr *dataType() const { return Dtype.get(); }
+  SExpr *dataType() { return Dtype; }
+  const SExpr *dataType() const { return Dtype; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -1112,11 +1023,11 @@ public:
   }
 
 private:
-  SExprRef Dtype;
+  SExpr* Dtype;
 };
 
 
-// Load a value from memory.
+/// Load a value from memory.
 class Load : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Load; }
@@ -1124,8 +1035,8 @@ public:
   Load(SExpr *P) : SExpr(COP_Load), Ptr(P) {}
   Load(const Load &L, SExpr *P) : SExpr(L), Ptr(P) {}
 
-  SExpr *pointer() { return Ptr.get(); }
-  const SExpr *pointer() const { return Ptr.get(); }
+  SExpr *pointer() { return Ptr; }
+  const SExpr *pointer() const { return Ptr; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -1139,12 +1050,12 @@ public:
   }
 
 private:
-  SExprRef Ptr;
+  SExpr* Ptr;
 };
 
 
-// Store a value to memory.
-// Source is a pointer, destination is the value to store.
+/// Store a value to memory.
+/// The destination is a pointer to a field, the source is the value to store.
 class Store : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Store; }
@@ -1152,11 +1063,11 @@ public:
   Store(SExpr *P, SExpr *V) : SExpr(COP_Store), Dest(P), Source(V) {}
   Store(const Store &S, SExpr *P, SExpr *V) : SExpr(S), Dest(P), Source(V) {}
 
-  SExpr *destination() { return Dest.get(); }  // Address to store to
-  const SExpr *destination() const { return Dest.get(); }
+  SExpr *destination() { return Dest; }  // Address to store to
+  const SExpr *destination() const { return Dest; }
 
-  SExpr *source() { return Source.get(); }     // Value to store
-  const SExpr *source() const { return Source.get(); }
+  SExpr *source() { return Source; }     // Value to store
+  const SExpr *source() const { return Source; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -1174,13 +1085,13 @@ public:
   }
 
 private:
-  SExprRef Dest;
-  SExprRef Source;
+  SExpr* Dest;
+  SExpr* Source;
 };
 
 
-// If p is a reference to an array, then first(p) is a reference to the first
-// element.  The usual array notation p[i]  becomes first(p + i).
+/// If p is a reference to an array, then p[i] is a reference to the i'th
+/// element of the array.
 class ArrayIndex : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_ArrayIndex; }
@@ -1189,11 +1100,11 @@ public:
   ArrayIndex(const ArrayIndex &E, SExpr *A, SExpr *N)
     : SExpr(E), Array(A), Index(N) {}
 
-  SExpr *array() { return Array.get(); }
-  const SExpr *array() const { return Array.get(); }
+  SExpr *array() { return Array; }
+  const SExpr *array() const { return Array; }
 
-  SExpr *index() { return Index.get(); }
-  const SExpr *index() const { return Index.get(); }
+  SExpr *index() { return Index; }
+  const SExpr *index() const { return Index; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -1211,14 +1122,14 @@ public:
   }
 
 private:
-  SExprRef Array;
-  SExprRef Index;
+  SExpr* Array;
+  SExpr* Index;
 };
 
 
-// Pointer arithmetic, restricted to arrays only.
-// If p is a reference to an array, then p + n, where n is an integer, is
-// a reference to a subarray.
+/// Pointer arithmetic, restricted to arrays only.
+/// If p is a reference to an array, then p + n, where n is an integer, is
+/// a reference to a subarray.
 class ArrayAdd : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_ArrayAdd; }
@@ -1227,11 +1138,11 @@ public:
   ArrayAdd(const ArrayAdd &E, SExpr *A, SExpr *N)
     : SExpr(E), Array(A), Index(N) {}
 
-  SExpr *array() { return Array.get(); }
-  const SExpr *array() const { return Array.get(); }
+  SExpr *array() { return Array; }
+  const SExpr *array() const { return Array; }
 
-  SExpr *index() { return Index.get(); }
-  const SExpr *index() const { return Index.get(); }
+  SExpr *index() { return Index; }
+  const SExpr *index() const { return Index; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -1249,12 +1160,13 @@ public:
   }
 
 private:
-  SExprRef Array;
-  SExprRef Index;
+  SExpr* Array;
+  SExpr* Index;
 };
 
 
-// Simple unary operation -- e.g. !, ~, etc.
+/// Simple arithmetic unary operations, e.g. negate and not.
+/// These operations have no side-effects.
 class UnaryOp : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_UnaryOp; }
@@ -1268,8 +1180,8 @@ public:
     return static_cast<TIL_UnaryOpcode>(Flags);
   }
 
-  SExpr *expr() { return Expr0.get(); }
-  const SExpr *expr() const { return Expr0.get(); }
+  SExpr *expr() { return Expr0; }
+  const SExpr *expr() const { return Expr0; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -1287,11 +1199,12 @@ public:
   }
 
 private:
-  SExprRef Expr0;
+  SExpr* Expr0;
 };
 
 
-// Simple binary operation -- e.g. +, -, etc.
+/// Simple arithmetic binary operations, e.g. +, -, etc.
+/// These operations have no side effects.
 class BinaryOp : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_BinaryOp; }
@@ -1309,11 +1222,11 @@ public:
     return static_cast<TIL_BinaryOpcode>(Flags);
   }
 
-  SExpr *expr0() { return Expr0.get(); }
-  const SExpr *expr0() const { return Expr0.get(); }
+  SExpr *expr0() { return Expr0; }
+  const SExpr *expr0() const { return Expr0; }
 
-  SExpr *expr1() { return Expr1.get(); }
-  const SExpr *expr1() const { return Expr1.get(); }
+  SExpr *expr1() { return Expr1; }
+  const SExpr *expr1() const { return Expr1; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -1335,12 +1248,14 @@ public:
   }
 
 private:
-  SExprRef Expr0;
-  SExprRef Expr1;
+  SExpr* Expr0;
+  SExpr* Expr1;
 };
 
 
-// Cast expression
+/// Cast expressions.
+/// Cast expressions are essentially unary operations, but we treat them
+/// as a distinct AST node because they only change the type of the result.
 class Cast : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Cast; }
@@ -1352,8 +1267,8 @@ public:
     return static_cast<TIL_CastOpcode>(Flags);
   }
 
-  SExpr *expr() { return Expr0.get(); }
-  const SExpr *expr() const { return Expr0.get(); }
+  SExpr *expr() { return Expr0; }
+  const SExpr *expr() const { return Expr0; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -1371,16 +1286,18 @@ public:
   }
 
 private:
-  SExprRef Expr0;
+  SExpr* Expr0;
 };
 
 
 class SCFG;
 
 
+/// Phi Node, for code in SSA form.
+/// Each Phi node has an array of possible values that it can take,
+/// depending on where control flow comes from.
 class Phi : public SExpr {
 public:
-  // TODO: change to SExprRef
   typedef SimpleArray<SExpr *> ValArray;
 
   // In minimal SSA form, all Phi nodes are MultiVal.
@@ -1394,15 +1311,24 @@ public:
 
   static bool classof(const SExpr *E) { return E->opcode() == COP_Phi; }
 
-  Phi() : SExpr(COP_Phi) {}
-  Phi(MemRegionRef A, unsigned Nvals) : SExpr(COP_Phi), Values(A, Nvals) {}
-  Phi(const Phi &P, ValArray &&Vs)    : SExpr(P), Values(std::move(Vs)) {}
+  Phi()
+    : SExpr(COP_Phi), Cvdecl(nullptr) {}
+  Phi(MemRegionRef A, unsigned Nvals)
+    : SExpr(COP_Phi), Values(A, Nvals), Cvdecl(nullptr)  {}
+  Phi(const Phi &P, ValArray &&Vs)
+    : SExpr(P), Values(std::move(Vs)), Cvdecl(nullptr) {}
 
   const ValArray &values() const { return Values; }
   ValArray &values() { return Values; }
 
   Status status() const { return static_cast<Status>(Flags); }
   void setStatus(Status s) { Flags = s; }
+
+  /// Return the clang declaration of the variable for this Phi node, if any.
+  const clang::ValueDecl *clangDecl() const { return Cvdecl; }
+
+  /// Set the clang variable associated with this Phi node.
+  void setClangDecl(const clang::ValueDecl *Cvd) { Cvdecl = Cvd; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -1423,65 +1349,260 @@ public:
 
 private:
   ValArray Values;
+  const clang::ValueDecl* Cvdecl;
 };
 
 
-// A basic block is part of an SCFG, and can be treated as a function in
-// continuation passing style.  It consists of a sequence of phi nodes, which
-// are "arguments" to the function, followed by a sequence of instructions.
-// Both arguments and instructions define new variables.  It ends with a
-// branch or goto to another basic block in the same SCFG.
+/// Base class for basic block terminators:  Branch, Goto, and Return.
+class Terminator : public SExpr {
+public:
+  static bool classof(const SExpr *E) {
+    return E->opcode() >= COP_Goto && E->opcode() <= COP_Return;
+  }
+
+protected:
+  Terminator(TIL_Opcode Op)  : SExpr(Op) {}
+  Terminator(const SExpr &E) : SExpr(E)  {}
+
+public:
+  /// Return the list of basic blocks that this terminator can branch to.
+  ArrayRef<BasicBlock*> successors();
+
+  ArrayRef<BasicBlock*> successors() const {
+    return const_cast<const Terminator*>(this)->successors();
+  }
+};
+
+
+/// Jump to another basic block.
+/// A goto instruction is essentially a tail-recursive call into another
+/// block.  In addition to the block pointer, it specifies an index into the
+/// phi nodes of that block.  The index can be used to retrieve the "arguments"
+/// of the call.
+class Goto : public Terminator {
+public:
+  static bool classof(const SExpr *E) { return E->opcode() == COP_Goto; }
+
+  Goto(BasicBlock *B, unsigned I)
+      : Terminator(COP_Goto), TargetBlock(B), Index(I) {}
+  Goto(const Goto &G, BasicBlock *B, unsigned I)
+      : Terminator(COP_Goto), TargetBlock(B), Index(I) {}
+
+  const BasicBlock *targetBlock() const { return TargetBlock; }
+  BasicBlock *targetBlock() { return TargetBlock; }
+
+  /// Returns the index into the
+  unsigned index() const { return Index; }
+
+  /// Return the list of basic blocks that this terminator can branch to.
+  ArrayRef<BasicBlock*> successors() {
+    return ArrayRef<BasicBlock*>(&TargetBlock, 1);
+  }
+
+  template <class V>
+  typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
+    BasicBlock *Ntb = Vs.reduceBasicBlockRef(TargetBlock);
+    return Vs.reduceGoto(*this, Ntb);
+  }
+
+  template <class C>
+  typename C::CType compare(const Goto *E, C &Cmp) const {
+    // TODO: implement CFG comparisons
+    return Cmp.comparePointers(this, E);
+  }
+
+private:
+  BasicBlock *TargetBlock;
+  unsigned Index;
+};
+
+
+/// A conditional branch to two other blocks.
+/// Note that unlike Goto, Branch does not have an index.  The target blocks
+/// must be child-blocks, and cannot have Phi nodes.
+class Branch : public Terminator {
+public:
+  static bool classof(const SExpr *E) { return E->opcode() == COP_Branch; }
+
+  Branch(SExpr *C, BasicBlock *T, BasicBlock *E)
+      : Terminator(COP_Branch), Condition(C) {
+    Branches[0] = T;
+    Branches[1] = E;
+  }
+  Branch(const Branch &Br, SExpr *C, BasicBlock *T, BasicBlock *E)
+      : Terminator(Br), Condition(C) {
+    Branches[0] = T;
+    Branches[1] = E;
+  }
+
+  const SExpr *condition() const { return Condition; }
+  SExpr *condition() { return Condition; }
+
+  const BasicBlock *thenBlock() const { return Branches[0]; }
+  BasicBlock *thenBlock() { return Branches[0]; }
+
+  const BasicBlock *elseBlock() const { return Branches[1]; }
+  BasicBlock *elseBlock() { return Branches[1]; }
+
+  /// Return the list of basic blocks that this terminator can branch to.
+  ArrayRef<BasicBlock*> successors() {
+    return ArrayRef<BasicBlock*>(Branches, 2);
+  }
+
+  template <class V>
+  typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
+    auto Nc = Vs.traverse(Condition, Vs.subExprCtx(Ctx));
+    BasicBlock *Ntb = Vs.reduceBasicBlockRef(Branches[0]);
+    BasicBlock *Nte = Vs.reduceBasicBlockRef(Branches[1]);
+    return Vs.reduceBranch(*this, Nc, Ntb, Nte);
+  }
+
+  template <class C>
+  typename C::CType compare(const Branch *E, C &Cmp) const {
+    // TODO: implement CFG comparisons
+    return Cmp.comparePointers(this, E);
+  }
+
+private:
+  SExpr*     Condition;
+  BasicBlock *Branches[2];
+};
+
+
+/// Return from the enclosing function, passing the return value to the caller.
+/// Only the exit block should end with a return statement.
+class Return : public Terminator {
+public:
+  static bool classof(const SExpr *E) { return E->opcode() == COP_Return; }
+
+  Return(SExpr* Rval) : Terminator(COP_Return), Retval(Rval) {}
+  Return(const Return &R, SExpr* Rval) : Terminator(R), Retval(Rval) {}
+
+  /// Return an empty list.
+  ArrayRef<BasicBlock*> successors() {
+    return ArrayRef<BasicBlock*>();
+  }
+
+  SExpr *returnValue() { return Retval; }
+  const SExpr *returnValue() const { return Retval; }
+
+  template <class V>
+  typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
+    auto Ne = Vs.traverse(Retval, Vs.subExprCtx(Ctx));
+    return Vs.reduceReturn(*this, Ne);
+  }
+
+  template <class C>
+  typename C::CType compare(const Return *E, C &Cmp) const {
+    return Cmp.compare(Retval, E->Retval);
+  }
+
+private:
+  SExpr* Retval;
+};
+
+
+inline ArrayRef<BasicBlock*> Terminator::successors() {
+  switch (opcode()) {
+    case COP_Goto:   return cast<Goto>(this)->successors();
+    case COP_Branch: return cast<Branch>(this)->successors();
+    case COP_Return: return cast<Return>(this)->successors();
+    default:
+      return ArrayRef<BasicBlock*>();
+  }
+}
+
+
+/// A basic block is part of an SCFG.  It can be treated as a function in
+/// continuation passing style.  A block consists of a sequence of phi nodes,
+/// which are "arguments" to the function, followed by a sequence of
+/// instructions.  It ends with a Terminator, which is a Branch or Goto to
+/// another basic block in the same SCFG.
 class BasicBlock : public SExpr {
 public:
-  typedef SimpleArray<Variable*>   VarArray;
+  typedef SimpleArray<SExpr*>      InstrArray;
   typedef SimpleArray<BasicBlock*> BlockArray;
+
+  // TopologyNodes are used to overlay tree structures on top of the CFG,
+  // such as dominator and postdominator trees.  Each block is assigned an
+  // ID in the tree according to a depth-first search.  Tree traversals are
+  // always up, towards the parents.
+  struct TopologyNode {
+    TopologyNode() : NodeID(0), SizeOfSubTree(0), Parent(nullptr) {}
+
+    bool isParentOf(const TopologyNode& OtherNode) {
+      return OtherNode.NodeID > NodeID &&
+             OtherNode.NodeID < NodeID + SizeOfSubTree;
+    }
+
+    bool isParentOfOrEqual(const TopologyNode& OtherNode) {
+      return OtherNode.NodeID >= NodeID &&
+             OtherNode.NodeID < NodeID + SizeOfSubTree;
+    }
+
+    int NodeID;
+    int SizeOfSubTree;    // Includes this node, so must be > 1.
+    BasicBlock *Parent;   // Pointer to parent.
+  };
 
   static bool classof(const SExpr *E) { return E->opcode() == COP_BasicBlock; }
 
-  explicit BasicBlock(MemRegionRef A, BasicBlock* P = nullptr)
+  explicit BasicBlock(MemRegionRef A)
       : SExpr(COP_BasicBlock), Arena(A), CFGPtr(nullptr), BlockID(0),
-        Parent(P), Terminator(nullptr)
-  { }
-  BasicBlock(BasicBlock &B, VarArray &&As, VarArray &&Is, SExpr *T)
-      : SExpr(COP_BasicBlock), Arena(B.Arena), CFGPtr(nullptr), BlockID(0),
-        Parent(nullptr), Args(std::move(As)), Instrs(std::move(Is)),
-        Terminator(T)
-  { }
+        Visited(0), TermInstr(nullptr) {}
+  BasicBlock(BasicBlock &B, MemRegionRef A, InstrArray &&As, InstrArray &&Is,
+             Terminator *T)
+      : SExpr(COP_BasicBlock), Arena(A), CFGPtr(nullptr), BlockID(0),Visited(0),
+        Args(std::move(As)), Instrs(std::move(Is)), TermInstr(T) {}
 
-  unsigned blockID() const { return BlockID; }
-  unsigned numPredecessors() const { return Predecessors.size(); }
+  /// Returns the block ID.  Every block has a unique ID in the CFG.
+  int blockID() const { return BlockID; }
+
+  /// Returns the number of predecessors.
+  size_t numPredecessors() const { return Predecessors.size(); }
+  size_t numSuccessors() const { return successors().size(); }
 
   const SCFG* cfg() const { return CFGPtr; }
   SCFG* cfg() { return CFGPtr; }
 
-  const BasicBlock *parent() const { return Parent; }
-  BasicBlock *parent() { return Parent; }
+  const BasicBlock *parent() const { return DominatorNode.Parent; }
+  BasicBlock *parent() { return DominatorNode.Parent; }
 
-  const VarArray &arguments() const { return Args; }
-  VarArray &arguments() { return Args; }
+  const InstrArray &arguments() const { return Args; }
+  InstrArray &arguments() { return Args; }
 
-  const VarArray &instructions() const { return Instrs; }
-  VarArray &instructions() { return Instrs; }
+  InstrArray &instructions() { return Instrs; }
+  const InstrArray &instructions() const { return Instrs; }
 
-  const BlockArray &predecessors() const { return Predecessors; }
+  /// Returns a list of predecessors.
+  /// The order of predecessors in the list is important; each phi node has
+  /// exactly one argument for each precessor, in the same order.
   BlockArray &predecessors() { return Predecessors; }
+  const BlockArray &predecessors() const { return Predecessors; }
 
-  const SExpr *terminator() const { return Terminator.get(); }
-  SExpr *terminator() { return Terminator.get(); }
+  ArrayRef<BasicBlock*> successors() { return TermInstr->successors(); }
+  ArrayRef<BasicBlock*> successors() const { return TermInstr->successors(); }
 
-  void setBlockID(unsigned i)   { BlockID = i; }
-  void setParent(BasicBlock *P) { Parent = P;  }
-  void setTerminator(SExpr *E)  { Terminator.reset(E); }
+  const Terminator *terminator() const { return TermInstr; }
+  Terminator *terminator() { return TermInstr; }
 
-  // Add a new argument.  V must define a phi-node.
-  void addArgument(Variable *V) {
-    V->setKind(Variable::VK_LetBB);
+  void setTerminator(Terminator *E) { TermInstr = E; }
+
+  bool Dominates(const BasicBlock &Other) {
+    return DominatorNode.isParentOfOrEqual(Other.DominatorNode);
+  }
+
+  bool PostDominates(const BasicBlock &Other) {
+    return PostDominatorNode.isParentOfOrEqual(Other.PostDominatorNode);
+  }
+
+  /// Add a new argument.
+  void addArgument(Phi *V) {
     Args.reserveCheck(1, Arena);
     Args.push_back(V);
   }
-  // Add a new instruction.
-  void addInstruction(Variable *V) {
-    V->setKind(Variable::VK_LetBB);
+  /// Add a new instruction.
+  void addInstruction(SExpr *V) {
     Instrs.reserveCheck(1, Arena);
     Instrs.push_back(V);
   }
@@ -1498,34 +1619,29 @@ public:
   // Reserve space for NumPreds predecessors, including space in phi nodes.
   void reservePredecessors(unsigned NumPreds);
 
-  // Return the index of BB, or Predecessors.size if BB is not a predecessor.
+  /// Return the index of BB, or Predecessors.size if BB is not a predecessor.
   unsigned findPredecessorIndex(const BasicBlock *BB) const {
     auto I = std::find(Predecessors.cbegin(), Predecessors.cend(), BB);
     return std::distance(Predecessors.cbegin(), I);
   }
 
-  // Set id numbers for variables.
-  void renumberVars();
-
   template <class V>
   typename V::R_BasicBlock traverse(V &Vs, typename V::R_Ctx Ctx) {
-    typename V::template Container<Variable*> Nas(Vs, Args.size());
-    typename V::template Container<Variable*> Nis(Vs, Instrs.size());
+    typename V::template Container<SExpr*> Nas(Vs, Args.size());
+    typename V::template Container<SExpr*> Nis(Vs, Instrs.size());
 
     // Entering the basic block should do any scope initialization.
     Vs.enterBasicBlock(*this);
 
-    for (auto *A : Args) {
-      auto Ne = Vs.traverse(A->Definition, Vs.subExprCtx(Ctx));
-      Variable *Nvd = Vs.enterScope(*A, Ne);
-      Nas.push_back(Nvd);
+    for (auto *E : Args) {
+      auto Ne = Vs.traverse(E, Vs.subExprCtx(Ctx));
+      Nas.push_back(Ne);
     }
-    for (auto *I : Instrs) {
-      auto Ne = Vs.traverse(I->Definition, Vs.subExprCtx(Ctx));
-      Variable *Nvd = Vs.enterScope(*I, Ne);
-      Nis.push_back(Nvd);
+    for (auto *E : Instrs) {
+      auto Ne = Vs.traverse(E, Vs.subExprCtx(Ctx));
+      Nis.push_back(Ne);
     }
-    auto Nt = Vs.traverse(Terminator, Ctx);
+    auto Nt = Vs.traverse(TermInstr, Ctx);
 
     // Exiting the basic block should handle any scope cleanup.
     Vs.exitBasicBlock(*this);
@@ -1542,22 +1658,32 @@ public:
 private:
   friend class SCFG;
 
-  MemRegionRef Arena;
+  int  renumberInstrs(int id);  // assign unique ids to all instructions
+  int  topologicalSort(SimpleArray<BasicBlock*>& Blocks, int ID);
+  int  topologicalFinalSort(SimpleArray<BasicBlock*>& Blocks, int ID);
+  void computeDominator();
+  void computePostDominator();
 
-  SCFG       *CFGPtr;       // The CFG that contains this block.
-  unsigned   BlockID;       // unique id for this BB in the containing CFG
-  BasicBlock *Parent;       // The parent block is the enclosing lexical scope.
-                            // The parent dominates this block.
-  BlockArray Predecessors;  // Predecessor blocks in the CFG.
-  VarArray   Args;          // Phi nodes.  One argument per predecessor.
-  VarArray   Instrs;        // Instructions.
-  SExprRef   Terminator;    // Branch or Goto
+private:
+  MemRegionRef Arena;        // The arena used to allocate this block.
+  SCFG         *CFGPtr;      // The CFG that contains this block.
+  int          BlockID : 31; // unique id for this BB in the containing CFG.
+                             // IDs are in topological order.
+  int          Visited : 1;  // Bit to determine if a block has been visited
+                             // during a traversal.
+  BlockArray  Predecessors;  // Predecessor blocks in the CFG.
+  InstrArray  Args;          // Phi nodes.  One argument per predecessor.
+  InstrArray  Instrs;        // Instructions.
+  Terminator* TermInstr;     // Terminating instruction
+
+  TopologyNode DominatorNode;       // The dominator tree
+  TopologyNode PostDominatorNode;   // The post-dominator tree
 };
 
 
-// An SCFG is a control-flow graph.  It consists of a set of basic blocks, each
-// of which terminates in a branch to another basic block.  There is one
-// entry point, and one exit point.
+/// An SCFG is a control-flow graph.  It consists of a set of basic blocks,
+/// each of which terminates in a branch to another basic block.  There is one
+/// entry point, and one exit point.
 class SCFG : public SExpr {
 public:
   typedef SimpleArray<BasicBlock *> BlockArray;
@@ -1568,19 +1694,28 @@ public:
 
   SCFG(MemRegionRef A, unsigned Nblocks)
     : SExpr(COP_SCFG), Arena(A), Blocks(A, Nblocks),
-      Entry(nullptr), Exit(nullptr) {
-    Entry = new (A) BasicBlock(A, nullptr);
-    Exit  = new (A) BasicBlock(A, Entry);
-    auto *V = new (A) Variable(new (A) Phi());
+      Entry(nullptr), Exit(nullptr), NumInstructions(0), Normal(false) {
+    Entry = new (A) BasicBlock(A);
+    Exit  = new (A) BasicBlock(A);
+    auto *V = new (A) Phi();
     Exit->addArgument(V);
+    Exit->setTerminator(new (A) Return(V));
     add(Entry);
     add(Exit);
   }
   SCFG(const SCFG &Cfg, BlockArray &&Ba) // steals memory from Ba
       : SExpr(COP_SCFG), Arena(Cfg.Arena), Blocks(std::move(Ba)),
-        Entry(nullptr), Exit(nullptr) {
+        Entry(nullptr), Exit(nullptr), NumInstructions(0), Normal(false) {
     // TODO: set entry and exit!
   }
+
+  /// Return true if this CFG is valid.
+  bool valid() const { return Entry && Exit && Blocks.size() > 0; }
+
+  /// Return true if this CFG has been normalized.
+  /// After normalization, blocks are in topological order, and block and
+  /// instruction IDs have been assigned.
+  bool normal() const { return Normal; }
 
   iterator begin() { return Blocks.begin(); }
   iterator end() { return Blocks.end(); }
@@ -1596,9 +1731,17 @@ public:
   const BasicBlock *exit() const { return Exit; }
   BasicBlock *exit() { return Exit; }
 
+  /// Return the number of blocks in the CFG.
+  /// Block::blockID() will return a number less than numBlocks();
+  size_t numBlocks() const { return Blocks.size(); }
+
+  /// Return the total number of instructions in the CFG.
+  /// This is useful for building instruction side-tables;
+  /// A call to SExpr::id() will return a number less than numInstructions().
+  unsigned numInstructions() { return NumInstructions; }
+
   inline void add(BasicBlock *BB) {
-    assert(BB->CFGPtr == nullptr || BB->CFGPtr == this);
-    BB->setBlockID(Blocks.size());
+    assert(BB->CFGPtr == nullptr);
     BB->CFGPtr = this;
     Blocks.reserveCheck(1, Arena);
     Blocks.push_back(BB);
@@ -1607,13 +1750,13 @@ public:
   void setEntry(BasicBlock *BB) { Entry = BB; }
   void setExit(BasicBlock *BB)  { Exit = BB;  }
 
-  // Set varable ids in all blocks.
-  void renumberVars();
+  void computeNormalForm();
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
     Vs.enterCFG(*this);
     typename V::template Container<BasicBlock *> Bbs(Vs, Blocks.size());
+
     for (auto *B : Blocks) {
       Bbs.push_back( B->traverse(Vs, Vs.subExprCtx(Ctx)) );
     }
@@ -1623,101 +1766,26 @@ public:
 
   template <class C>
   typename C::CType compare(const SCFG *E, C &Cmp) const {
-    // TODO -- implement CFG comparisons
+    // TODO: implement CFG comparisons
     return Cmp.comparePointers(this, E);
   }
+
+private:
+  void renumberInstrs();       // assign unique ids to all instructions
 
 private:
   MemRegionRef Arena;
   BlockArray   Blocks;
   BasicBlock   *Entry;
   BasicBlock   *Exit;
+  unsigned     NumInstructions;
+  bool         Normal;
 };
 
 
-class Goto : public SExpr {
-public:
-  static bool classof(const SExpr *E) { return E->opcode() == COP_Goto; }
 
-  Goto(BasicBlock *B, unsigned I)
-      : SExpr(COP_Goto), TargetBlock(B), Index(I) {}
-  Goto(const Goto &G, BasicBlock *B, unsigned I)
-      : SExpr(COP_Goto), TargetBlock(B), Index(I) {}
-
-  const BasicBlock *targetBlock() const { return TargetBlock; }
-  BasicBlock *targetBlock() { return TargetBlock; }
-
-  unsigned index() const { return Index; }
-
-  template <class V>
-  typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
-    BasicBlock *Ntb = Vs.reduceBasicBlockRef(TargetBlock);
-    return Vs.reduceGoto(*this, Ntb);
-  }
-
-  template <class C>
-  typename C::CType compare(const Goto *E, C &Cmp) const {
-    // TODO -- implement CFG comparisons
-    return Cmp.comparePointers(this, E);
-  }
-
-private:
-  BasicBlock *TargetBlock;
-  unsigned Index;   // Index into Phi nodes of target block.
-};
-
-
-class Branch : public SExpr {
-public:
-  static bool classof(const SExpr *E) { return E->opcode() == COP_Branch; }
-
-  Branch(SExpr *C, BasicBlock *T, BasicBlock *E, unsigned TI, unsigned EI)
-      : SExpr(COP_Branch), Condition(C), ThenBlock(T), ElseBlock(E),
-        ThenIndex(TI), ElseIndex(EI)
-  {}
-  Branch(const Branch &Br, SExpr *C, BasicBlock *T, BasicBlock *E,
-         unsigned TI, unsigned EI)
-      : SExpr(COP_Branch), Condition(C), ThenBlock(T), ElseBlock(E),
-        ThenIndex(TI), ElseIndex(EI)
-  {}
-
-  const SExpr *condition() const { return Condition; }
-  SExpr *condition() { return Condition; }
-
-  const BasicBlock *thenBlock() const { return ThenBlock; }
-  BasicBlock *thenBlock() { return ThenBlock; }
-
-  const BasicBlock *elseBlock() const { return ElseBlock; }
-  BasicBlock *elseBlock() { return ElseBlock; }
-
-  unsigned thenIndex() const { return ThenIndex; }
-  unsigned elseIndex() const { return ElseIndex; }
-
-  template <class V>
-  typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
-    auto Nc = Vs.traverse(Condition, Vs.subExprCtx(Ctx));
-    BasicBlock *Ntb = Vs.reduceBasicBlockRef(ThenBlock);
-    BasicBlock *Nte = Vs.reduceBasicBlockRef(ElseBlock);
-    return Vs.reduceBranch(*this, Nc, Ntb, Nte);
-  }
-
-  template <class C>
-  typename C::CType compare(const Branch *E, C &Cmp) const {
-    // TODO -- implement CFG comparisons
-    return Cmp.comparePointers(this, E);
-  }
-
-private:
-  SExpr *Condition;
-  BasicBlock *ThenBlock;
-  BasicBlock *ElseBlock;
-  unsigned ThenIndex;
-  unsigned ElseIndex;
-};
-
-
-// An identifier, e.g. 'foo' or 'x'.
-// This is a pseduo-term; it will be lowered to a variable or projection.
+/// An identifier, e.g. 'foo' or 'x'.
+/// This is a pseduo-term; it will be lowered to a variable or projection.
 class Identifier : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Identifier; }
@@ -1742,8 +1810,8 @@ private:
 };
 
 
-// An if-then-else expression.
-// This is a pseduo-term; it will be lowered to a branch in a CFG.
+/// An if-then-else expression.
+/// This is a pseduo-term; it will be lowered to a branch in a CFG.
 class IfThenElse : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_IfThenElse; }
@@ -1755,14 +1823,14 @@ public:
     : SExpr(I), Condition(C), ThenExpr(T), ElseExpr(E)
   { }
 
-  SExpr *condition() { return Condition.get(); }   // Address to store to
-  const SExpr *condition() const { return Condition.get(); }
+  SExpr *condition() { return Condition; }   // Address to store to
+  const SExpr *condition() const { return Condition; }
 
-  SExpr *thenExpr() { return ThenExpr.get(); }     // Value to store
-  const SExpr *thenExpr() const { return ThenExpr.get(); }
+  SExpr *thenExpr() { return ThenExpr; }     // Value to store
+  const SExpr *thenExpr() const { return ThenExpr; }
 
-  SExpr *elseExpr() { return ElseExpr.get(); }     // Value to store
-  const SExpr *elseExpr() const { return ElseExpr.get(); }
+  SExpr *elseExpr() { return ElseExpr; }     // Value to store
+  const SExpr *elseExpr() const { return ElseExpr; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -1784,14 +1852,14 @@ public:
   }
 
 private:
-  SExprRef Condition;
-  SExprRef ThenExpr;
-  SExprRef ElseExpr;
+  SExpr* Condition;
+  SExpr* ThenExpr;
+  SExpr* ElseExpr;
 };
 
 
-// A let-expression,  e.g.  let x=t; u.
-// This is a pseduo-term; it will be lowered to instructions in a CFG.
+/// A let-expression,  e.g.  let x=t; u.
+/// This is a pseduo-term; it will be lowered to instructions in a CFG.
 class Let : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Let; }
@@ -1806,8 +1874,8 @@ public:
   Variable *variableDecl()  { return VarDecl; }
   const Variable *variableDecl() const { return VarDecl; }
 
-  SExpr *body() { return Body.get(); }
-  const SExpr *body() const { return Body.get(); }
+  SExpr *body() { return Body; }
+  const SExpr *body() const { return Body; }
 
   template <class V>
   typename V::R_SExpr traverse(V &Vs, typename V::R_Ctx Ctx) {
@@ -1834,14 +1902,14 @@ public:
 
 private:
   Variable *VarDecl;
-  SExprRef Body;
+  SExpr* Body;
 };
 
 
 
 const SExpr *getCanonicalVal(const SExpr *E);
 SExpr* simplifyToCanonicalVal(SExpr *E);
-void simplifyIncompleteArg(Variable *V, til::Phi *Ph);
+void simplifyIncompleteArg(til::Phi *Ph);
 
 
 } // end namespace til

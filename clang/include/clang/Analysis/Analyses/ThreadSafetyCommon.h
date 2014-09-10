@@ -477,9 +477,9 @@ private:
                                            // Indexed by clang BlockID.
 
   LVarDefinitionMap CurrentLVarMap;
-  std::vector<til::Variable*> CurrentArguments;
-  std::vector<til::Variable*> CurrentInstructions;
-  std::vector<til::Variable*> IncompleteArgs;
+  std::vector<til::Phi*>   CurrentArguments;
+  std::vector<til::SExpr*> CurrentInstructions;
+  std::vector<til::Phi*>   IncompleteArgs;
   til::BasicBlock *CurrentBB;
   BlockInfo *CurrentBlockInfo;
 };

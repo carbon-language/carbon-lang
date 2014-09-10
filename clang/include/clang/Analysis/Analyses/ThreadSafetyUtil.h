@@ -142,18 +142,33 @@ public:
     assert(i < Size && "Array index out of bounds.");
     return Data[i];
   }
+  T &back() {
+    assert(Size && "No elements in the array.");
+    return Data[Size - 1];
+  }
+  const T &back() const {
+    assert(Size && "No elements in the array.");
+    return Data[Size - 1];
+  }
 
   iterator begin() { return Data; }
+  iterator end()   { return Data + Size; }
+
   const_iterator begin() const { return Data; }
-  iterator end() { return Data + Size; }
-  const_iterator end() const { return Data + Size; }
+  const_iterator end()   const { return Data + Size; }
 
   const_iterator cbegin() const { return Data; }
-  const_iterator cend() const { return Data + Size; }
+  const_iterator cend()   const { return Data + Size; }
 
   void push_back(const T &Elem) {
     assert(Size < Capacity);
     Data[Size++] = Elem;
+  }
+
+  // drop last n elements from array
+  void drop(unsigned n = 0) {
+    assert(Size > n);
+    Size -= n;
   }
 
   void setValues(unsigned Sz, const T& C) {
@@ -173,6 +188,37 @@ public:
     return J - Osz;
   }
 
+  // An adaptor to reverse a simple array
+  class ReverseAdaptor {
+   public:
+    ReverseAdaptor(SimpleArray &Array) : Array(Array) {}
+    // A reverse iterator used by the reverse adaptor
+    class Iterator {
+     public:
+      Iterator(T *Data) : Data(Data) {}
+      T &operator*() { return *Data; }
+      const T &operator*() const { return *Data; }
+      Iterator &operator++() {
+        --Data;
+        return *this;
+      }
+      bool operator!=(Iterator Other) { return Data != Other.Data; }
+
+     private:
+      T *Data;
+    };
+    Iterator begin() { return Array.end() - 1; }
+    Iterator end() { return Array.begin() - 1; }
+    const Iterator begin() const { return Array.end() - 1; }
+    const Iterator end() const { return Array.begin() - 1; }
+
+   private:
+    SimpleArray &Array;
+  };
+
+  const ReverseAdaptor reverse() const { return ReverseAdaptor(*this); }
+  ReverseAdaptor reverse() { return ReverseAdaptor(*this); }
+
 private:
   // std::max is annoying here, because it requires a reference,
   // thus forcing InitialCapacity to be initialized outside the .h file.
@@ -186,6 +232,7 @@ private:
   size_t Size;
   size_t Capacity;
 };
+
 
 }  // end namespace til
 
@@ -310,6 +357,12 @@ private:
 
   VectorData *Data;
 };
+
+
+inline std::ostream& operator<<(std::ostream& ss, const StringRef str) {
+  ss << str.data();
+  return ss;
+}
 
 
 } // end namespace threadSafety
