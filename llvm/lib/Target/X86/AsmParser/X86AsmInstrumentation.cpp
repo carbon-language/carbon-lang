@@ -294,6 +294,7 @@ public:
 
   X86AddressSanitizer32(const MCSubtargetInfo &STI)
       : X86AddressSanitizer(STI) {}
+
   virtual ~X86AddressSanitizer32() {}
 
   virtual void StoreFlags(MCStreamer &Out) override {
@@ -307,6 +308,22 @@ public:
   virtual void InstrumentMemOperandPrologue(const RegisterContext &RegCtx,
                                             MCContext &Ctx,
                                             MCStreamer &Out) override {
+    const MCRegisterInfo* MRI = Ctx.getRegisterInfo();
+    if (MRI && FrameReg != X86::NoRegister) {
+      EmitInstruction(
+          Out, MCInstBuilder(X86::PUSH32r).addReg(X86::EBP));
+      if (FrameReg == X86::ESP) {
+        Out.EmitCFIAdjustCfaOffset(4 /* byte size of the FrameReg */);
+        Out.EmitCFIRelOffset(
+            MRI->getDwarfRegNum(X86::EBP, true /* IsEH */), 0);
+      }
+      EmitInstruction(
+          Out, MCInstBuilder(X86::MOV32rr).addReg(X86::EBP).addReg(FrameReg));
+      Out.EmitCFIRememberState();
+      Out.EmitCFIDefCfaRegister(
+          MRI->getDwarfRegNum(X86::EBP, true /* IsEH */));
+    }
+
     EmitInstruction(
         Out, MCInstBuilder(X86::PUSH32r).addReg(RegCtx.addressReg(MVT::i32)));
     EmitInstruction(
@@ -330,6 +347,14 @@ public:
         Out, MCInstBuilder(X86::POP32r).addReg(RegCtx.shadowReg(MVT::i32)));
     EmitInstruction(
         Out, MCInstBuilder(X86::POP32r).addReg(RegCtx.addressReg(MVT::i32)));
+
+    if (Ctx.getRegisterInfo() && FrameReg != X86::NoRegister) {
+      EmitInstruction(
+          Out, MCInstBuilder(X86::POP32r).addReg(X86::EBP));
+      Out.EmitCFIRestoreState();
+      if (FrameReg == X86::ESP)
+        Out.EmitCFIAdjustCfaOffset(-4 /* byte size of the FrameReg */);
+    }
   }
 
   virtual void InstrumentMemOperandSmall(X86Operand &Op, unsigned AccessSize,
@@ -526,6 +551,7 @@ public:
 
   X86AddressSanitizer64(const MCSubtargetInfo &STI)
       : X86AddressSanitizer(STI) {}
+
   virtual ~X86AddressSanitizer64() {}
 
   virtual void StoreFlags(MCStreamer &Out) override {
@@ -539,6 +565,21 @@ public:
   virtual void InstrumentMemOperandPrologue(const RegisterContext &RegCtx,
                                             MCContext &Ctx,
                                             MCStreamer &Out) override {
+    const MCRegisterInfo *RegisterInfo = Ctx.getRegisterInfo();
+    if (RegisterInfo && FrameReg != X86::NoRegister) {
+      EmitInstruction(Out, MCInstBuilder(X86::PUSH64r).addReg(X86::RBP));
+      if (FrameReg == X86::RSP) {
+        Out.EmitCFIAdjustCfaOffset(8 /* byte size of the FrameReg */);
+        Out.EmitCFIRelOffset(
+            RegisterInfo->getDwarfRegNum(X86::RBP, true /* IsEH */), 0);
+      }
+      EmitInstruction(
+          Out, MCInstBuilder(X86::MOV64rr).addReg(X86::RBP).addReg(FrameReg));
+      Out.EmitCFIRememberState();
+      Out.EmitCFIDefCfaRegister(
+          RegisterInfo->getDwarfRegNum(X86::RBP, true /* IsEH */));
+    }
+
     EmitAdjustRSP(Ctx, Out, -128);
     EmitInstruction(
         Out, MCInstBuilder(X86::PUSH64r).addReg(RegCtx.shadowReg(MVT::i64)));
@@ -564,6 +605,14 @@ public:
     EmitInstruction(
         Out, MCInstBuilder(X86::POP64r).addReg(RegCtx.shadowReg(MVT::i64)));
     EmitAdjustRSP(Ctx, Out, 128);
+
+    if (Ctx.getRegisterInfo() && FrameReg != X86::NoRegister) {
+      EmitInstruction(
+          Out, MCInstBuilder(X86::POP64r).addReg(X86::RBP));
+      Out.EmitCFIRestoreState();
+      if (FrameReg == X86::RSP)
+        Out.EmitCFIAdjustCfaOffset(-8 /* byte size of the FrameReg */);
+    }
   }
 
   virtual void InstrumentMemOperandSmall(X86Operand &Op, unsigned AccessSize,
@@ -771,7 +820,7 @@ void X86AddressSanitizer64::InstrumentMOVSImpl(unsigned AccessSize,
 } // End anonymous namespace
 
 X86AsmInstrumentation::X86AsmInstrumentation(const MCSubtargetInfo &STI)
-    : STI(STI) {}
+    : STI(STI), FrameReg(X86::NoRegister) {}
 
 X86AsmInstrumentation::~X86AsmInstrumentation() {}
 

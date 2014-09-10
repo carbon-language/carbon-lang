@@ -34,6 +34,10 @@ class X86AsmInstrumentation {
 public:
   virtual ~X86AsmInstrumentation();
 
+  void SetFrameRegister(unsigned RegNo) {
+    FrameReg = RegNo;
+  }
+
   // Tries to instrument and emit instruction.
   virtual void InstrumentAndEmitInstruction(
       const MCInst &Inst,
@@ -50,6 +54,8 @@ protected:
   void EmitInstruction(MCStreamer &Out, const MCInst &Inst);
 
   const MCSubtargetInfo &STI;
+
+  unsigned FrameReg;
 };
 
 } // End llvm namespace
