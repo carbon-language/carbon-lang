@@ -622,7 +622,7 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
   raw_svector_ostream OS(Str);
   OS << "DEBUG_VALUE: ";
 
-  DIVariable V(MI->getOperand(2).getMetadata());
+  DIVariable V = MI->getDebugVariable();
   if (V.getContext().isSubprogram()) {
     StringRef Name = DISubprogram(V.getContext()).getDisplayName();
     if (!Name.empty())
