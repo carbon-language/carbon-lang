@@ -332,6 +332,11 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
     // COMDAT key is required for correctness.
     AddGlobalCtor(Fn, 65535, Addr);
     DelayedCXXInitPosition.erase(D);
+  } else if (D->hasAttr<SelectAnyAttr>()) {
+    // SelectAny globals will be comdat-folded. Put the initializer into a COMDAT
+    // group associated with the global, so the initializers get folded too.
+    AddGlobalCtor(Fn, 65535, Addr);
+    DelayedCXXInitPosition.erase(D);
   } else {
     llvm::DenseMap<const Decl *, unsigned>::iterator I =
       DelayedCXXInitPosition.find(D);

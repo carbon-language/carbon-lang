@@ -1,9 +1,12 @@
 // RUN: %clang_cc1 -fms-extensions -emit-llvm %s -o - -mconstructor-aliases -triple=i386-pc-win32 | FileCheck %s
 
-// CHECK: @llvm.global_ctors = appending global [2 x { i32, void ()*, i8* }]
-// CHECK: [{ i32, void ()*, i8* } { i32 65535, void ()* @"\01??__Efoo@?$B@H@@2VA@@A@YAXXZ",
-// CHECK:       i8* bitcast (%class.A* @"\01?foo@?$B@H@@2VA@@A" to i8*) },
-// CHECK:  { i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__sub_I_microsoft_abi_static_initializers.cpp, i8* null }]
+// CHECK: @llvm.global_ctors = appending global [5 x { i32, void ()*, i8* }] [
+// CHECK: { i32, void ()*, i8* } { i32 65535, void ()* @"\01??__Eselectany1@@YAXXZ", i8* getelementptr inbounds (%struct.S* @"\01?selectany1@@3US@@A", i32 0, i32 0) },
+// CHECK: { i32, void ()*, i8* } { i32 65535, void ()* @"\01??__Eselectany2@@YAXXZ", i8* getelementptr inbounds (%struct.S* @"\01?selectany2@@3US@@A", i32 0, i32 0) },
+// CHECK: { i32, void ()*, i8* } { i32 65535, void ()* @"\01??__Es@?$ExportedTemplate@H@@2US@@A@YAXXZ", i8* getelementptr inbounds (%struct.S* @"\01?s@?$ExportedTemplate@H@@2US@@A", i32 0, i32 0) },
+// CHECK: { i32, void ()*, i8* } { i32 65535, void ()* @"\01??__Efoo@?$B@H@@2VA@@A@YAXXZ", i8* bitcast (%class.A* @"\01?foo@?$B@H@@2VA@@A" to i8*) },
+// CHECK: { i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__sub_I_microsoft_abi_static_initializers.cpp, i8* null }
+// CHECK: ]
 
 struct S {
   S();
@@ -21,8 +24,8 @@ S s;
 // CHECK: call x86_thiscallcc void @"\01??1S@@QAE@XZ"
 // CHECK: ret void
 
-// These globals should use distinct guard variables, and not different bits of
-// the same global.
+// These globals should have initializers comdat associative with the global.
+// See @llvm.global_ctors above.
 __declspec(selectany) S selectany1;
 __declspec(selectany) S selectany2;
 // CHECK: define linkonce_odr void @"\01??__Eselectany1@@YAXXZ"()
@@ -34,9 +37,20 @@ __declspec(selectany) S selectany2;
 // CHECK: call x86_thiscallcc %struct.S* @"\01??0S@@QAE@XZ"
 // CHECK: ret void
 
+// The implicitly instantiated static data member should have initializer
+// comdat associative with the global.
+template <typename T> struct __declspec(dllexport) ExportedTemplate {
+  static S s;
+};
+template <typename T> S ExportedTemplate<T>::s;
+void useExportedTemplate(ExportedTemplate<int> x) {
+  (void)x.s;
+}
+
 void StaticLocal() {
   static S TheS;
 }
+
 // CHECK-LABEL: define void @"\01?StaticLocal@@YAXXZ"()
 // CHECK: load i32* @"\01?$S1@?0??StaticLocal@@YAXXZ@4IA"
 // CHECK: store i32 {{.*}}, i32* @"\01?$S1@?0??StaticLocal@@YAXXZ@4IA"
