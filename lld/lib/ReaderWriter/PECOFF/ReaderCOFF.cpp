@@ -56,7 +56,7 @@ namespace {
 
 class FileCOFF : public File {
 private:
-  typedef std::vector<const coff_symbol *> SymbolVectorT;
+  typedef std::vector<llvm::object::COFFSymbolRef> SymbolVectorT;
   typedef std::map<const coff_section *, SymbolVectorT> SectionToSymbolsT;
   typedef std::map<const StringRef, Atom *> SymbolNameToAtomT;
   typedef std::map<const coff_section *, std::vector<COFFDefinedFileAtom *>>
@@ -98,7 +98,7 @@ public:
   mutable llvm::BumpPtrAllocator _alloc;
 
 private:
-  std::error_code readSymbolTable(std::vector<const coff_symbol *> &result);
+  std::error_code readSymbolTable(SymbolVectorT &result);
 
   void createAbsoluteAtoms(const SymbolVectorT &symbols,
                            std::vector<const AbsoluteAtom *> &result);
@@ -116,7 +116,7 @@ private:
 
   std::error_code
   AtomizeDefinedSymbolsInSection(const coff_section *section,
-                                 std::vector<const coff_symbol *> &symbols,
+                                 SymbolVectorT &symbols,
                                  std::vector<COFFDefinedFileAtom *> &atoms);
 
   std::error_code
@@ -161,13 +161,13 @@ private:
 
   // A map from symbol to its name. All symbols should be in this map except
   // unnamed ones.
-  std::map<const coff_symbol *, StringRef> _symbolName;
+  std::map<llvm::object::COFFSymbolRef, StringRef> _symbolName;
 
   // A map from symbol to its resultant atom.
-  std::map<const coff_symbol *, Atom *> _symbolAtom;
+  std::map<llvm::object::COFFSymbolRef, Atom *> _symbolAtom;
 
   // A map from symbol to its aux symbol.
-  std::map<const coff_symbol *, const coff_symbol *> _auxSymbol;
+  std::map<llvm::object::COFFSymbolRef, llvm::object::COFFSymbolRef> _auxSymbol;
 
   // A map from section to its atoms.
   std::map<const coff_section *, std::vector<COFFDefinedFileAtom *>>
@@ -208,8 +208,8 @@ private:
 };
 
 // Converts the COFF symbol attribute to the LLD's atom attribute.
-Atom::Scope getScope(const coff_symbol *symbol) {
-  switch (symbol->StorageClass) {
+Atom::Scope getScope(llvm::object::COFFSymbolRef symbol) {
+  switch (symbol.getStorageClass()) {
   case llvm::COFF::IMAGE_SYM_CLASS_EXTERNAL:
     return Atom::scopeGlobal;
   case llvm::COFF::IMAGE_SYM_CLASS_STATIC:
@@ -339,22 +339,18 @@ std::error_code FileCOFF::parse() {
 
 /// Iterate over the symbol table to retrieve all symbols.
 std::error_code
-FileCOFF::readSymbolTable(std::vector<const coff_symbol *> &result) {
-  const llvm::object::coff_file_header *header = nullptr;
-  if (std::error_code ec = _obj->getHeader(header))
-    return ec;
-
-  for (uint32_t i = 0, e = header->NumberOfSymbols; i != e; ++i) {
+FileCOFF::readSymbolTable(SymbolVectorT &result) {
+  for (uint32_t i = 0, e = _obj->getNumberOfSymbols(); i != e; ++i) {
     // Retrieve the symbol.
-    const coff_symbol *sym;
+    ErrorOr<llvm::object::COFFSymbolRef> sym = _obj->getSymbol(i);
     StringRef name;
-    if (std::error_code ec = _obj->getSymbol(i, sym))
+    if (std::error_code ec = sym.getError())
       return ec;
-    if (sym->SectionNumber == llvm::COFF::IMAGE_SYM_DEBUG)
+    if (sym->getSectionNumber() == llvm::COFF::IMAGE_SYM_DEBUG)
       goto next;
-    result.push_back(sym);
+    result.push_back(*sym);
 
-    if (std::error_code ec = _obj->getSymbolName(sym, name))
+    if (std::error_code ec = _obj->getSymbolName(*sym, name))
       return ec;
 
     // Existence of the symbol @feat.00 indicates that object file is compatible
@@ -365,21 +361,21 @@ FileCOFF::readSymbolTable(std::vector<const coff_symbol *> &result) {
     }
 
     // Cache the name.
-    _symbolName[sym] = name;
+    _symbolName[*sym] = name;
 
     // Symbol may be followed by auxiliary symbol table records. The aux
     // record can be in any format, but the size is always the same as the
     // regular symbol. The aux record supplies additional information for the
     // standard symbol. We do not interpret the aux record here, but just
     // store it to _auxSymbol.
-    if (sym->NumberOfAuxSymbols > 0) {
-      const coff_symbol *aux = nullptr;
-      if (std::error_code ec = _obj->getAuxSymbol(i + 1, aux))
+    if (sym->getNumberOfAuxSymbols() > 0) {
+      ErrorOr<llvm::object::COFFSymbolRef> aux = _obj->getSymbol(i + 1);
+      if (std::error_code ec = aux.getError())
         return ec;
-      _auxSymbol[sym] = aux;
+      _auxSymbol[*sym] = *aux;
     }
   next:
-    i += sym->NumberOfAuxSymbols;
+    i += sym->getNumberOfAuxSymbols();
   }
   return std::error_code();
 }
@@ -387,11 +383,11 @@ FileCOFF::readSymbolTable(std::vector<const coff_symbol *> &result) {
 /// Create atoms for the absolute symbols.
 void FileCOFF::createAbsoluteAtoms(const SymbolVectorT &symbols,
                                    std::vector<const AbsoluteAtom *> &result) {
-  for (const coff_symbol *sym : symbols) {
-    if (sym->SectionNumber != llvm::COFF::IMAGE_SYM_ABSOLUTE)
+  for (llvm::object::COFFSymbolRef sym : symbols) {
+    if (sym.getSectionNumber() != llvm::COFF::IMAGE_SYM_ABSOLUTE)
       continue;
-    auto *atom = new (_alloc)
-        COFFAbsoluteAtom(*this, _symbolName[sym], getScope(sym), sym->Value);
+    auto *atom = new (_alloc) COFFAbsoluteAtom(*this, _symbolName[sym],
+                                               getScope(sym), sym.getValue());
 
     result.push_back(atom);
     _symbolAtom[sym] = atom;
@@ -409,10 +405,11 @@ std::error_code
 FileCOFF::createUndefinedAtoms(const SymbolVectorT &symbols,
                                std::vector<const UndefinedAtom *> &result) {
   // Sort out undefined symbols from all symbols.
-  std::set<const coff_symbol *> undefines;
-  std::map<const coff_symbol *, const coff_symbol *> weakExternal;
-  for (const coff_symbol *sym : symbols) {
-    if (sym->SectionNumber != llvm::COFF::IMAGE_SYM_UNDEFINED)
+  std::set<llvm::object::COFFSymbolRef> undefines;
+  std::map<llvm::object::COFFSymbolRef, llvm::object::COFFSymbolRef>
+      weakExternal;
+  for (llvm::object::COFFSymbolRef sym : symbols) {
+    if (sym.getSectionNumber() != llvm::COFF::IMAGE_SYM_UNDEFINED)
       continue;
     undefines.insert(sym);
 
@@ -422,11 +419,12 @@ FileCOFF::createUndefinedAtoms(const SymbolVectorT &symbols,
     if (iter == _auxSymbol.end())
       continue;
     const coff_aux_weak_external *aux =
-        reinterpret_cast<const coff_aux_weak_external *>(iter->second);
-    const coff_symbol *sym2;
-    if (std::error_code ec = _obj->getSymbol(aux->TagIndex, sym2))
+        reinterpret_cast<const coff_aux_weak_external *>(
+            iter->second.getRawPtr());
+    ErrorOr<llvm::object::COFFSymbolRef> sym2 = _obj->getSymbol(aux->TagIndex);
+    if (std::error_code ec = sym2.getError())
       return ec;
-    weakExternal[sym] = sym2;
+    weakExternal[sym] = *sym2;
   }
 
   // Sort out sym1s from sym2s. Sym2s shouldn't be added to the undefined atom
@@ -436,13 +434,13 @@ FileCOFF::createUndefinedAtoms(const SymbolVectorT &symbols,
     undefines.erase(i.second);
 
   // Create atoms for the undefined symbols.
-  for (const coff_symbol *sym : undefines) {
+  for (llvm::object::COFFSymbolRef sym : undefines) {
     // If the symbol has sym2, create an undefiend atom for sym2, so that we
     // can pass it as a fallback atom.
     UndefinedAtom *fallback = nullptr;
     auto iter = weakExternal.find(sym);
     if (iter != weakExternal.end()) {
-      const coff_symbol *sym2 = iter->second;
+      llvm::object::COFFSymbolRef sym2 = iter->second;
       fallback = new (_alloc) COFFUndefinedAtom(*this, _symbolName[sym2]);
       _symbolAtom[sym2] = fallback;
     }
@@ -471,7 +469,7 @@ FileCOFF::createDefinedSymbols(const SymbolVectorT &symbols,
 
   // Filter non-defined atoms, and group defined atoms by its section.
   SectionToSymbolsT definedSymbols;
-  for (const coff_symbol *sym : symbols) {
+  for (llvm::object::COFFSymbolRef sym : symbols) {
     // A symbol with section number 0 and non-zero value represents a common
     // symbol. The MS COFF spec did not give a definition of what the common
     // symbol is. We should probably follow ELF's definition shown below.
@@ -487,10 +485,10 @@ FileCOFF::createDefinedSymbols(const SymbolVectorT &symbols,
     //
     // FIXME: We are currently treating the common symbol as a normal
     // mergeable atom. Implement the above semantcis.
-    if (sym->SectionNumber == llvm::COFF::IMAGE_SYM_UNDEFINED &&
-        sym->Value > 0) {
+    if (sym.getSectionNumber() == llvm::COFF::IMAGE_SYM_UNDEFINED &&
+        sym.getValue() > 0) {
       StringRef name = _symbolName[sym];
-      uint32_t size = sym->Value;
+      uint32_t size = sym.getValue();
       auto *atom = new (_alloc)
           COFFBSSAtom(*this, name, getScope(sym), DefinedAtom::permRW_,
                       DefinedAtom::mergeAsWeakAndAddressUsed, size, _ordinal++);
@@ -506,13 +504,13 @@ FileCOFF::createDefinedSymbols(const SymbolVectorT &symbols,
     }
 
     // Skip if it's not for defined atom.
-    if (sym->SectionNumber == llvm::COFF::IMAGE_SYM_DEBUG ||
-        sym->SectionNumber == llvm::COFF::IMAGE_SYM_ABSOLUTE ||
-        sym->SectionNumber == llvm::COFF::IMAGE_SYM_UNDEFINED)
+    if (sym.getSectionNumber() == llvm::COFF::IMAGE_SYM_DEBUG ||
+        sym.getSectionNumber() == llvm::COFF::IMAGE_SYM_ABSOLUTE ||
+        sym.getSectionNumber() == llvm::COFF::IMAGE_SYM_UNDEFINED)
       continue;
 
     const coff_section *sec;
-    if (std::error_code ec = _obj->getSection(sym->SectionNumber, sec))
+    if (std::error_code ec = _obj->getSection(sym.getSectionNumber(), sec))
       return ec;
     assert(sec && "SectionIndex > 0, Sec must be non-null!");
 
@@ -523,11 +521,11 @@ FileCOFF::createDefinedSymbols(const SymbolVectorT &symbols,
     StringRef sectionName;
     if (std::error_code ec = _obj->getSectionName(sec, sectionName))
       return ec;
-    if (_symbolName[sym] == sectionName && sym->Value == 0 &&
+    if (_symbolName[sym] == sectionName && sym.getValue() == 0 &&
         _merge[sec] != DefinedAtom::mergeNo)
       continue;
 
-    uint8_t sc = sym->StorageClass;
+    uint8_t sc = sym.getStorageClass();
     if (sc != llvm::COFF::IMAGE_SYM_CLASS_EXTERNAL &&
         sc != llvm::COFF::IMAGE_SYM_CLASS_STATIC &&
         sc != llvm::COFF::IMAGE_SYM_CLASS_FUNCTION &&
@@ -556,16 +554,17 @@ std::error_code FileCOFF::cacheSectionAttributes() {
   // how COFF works.
   for (auto i : _auxSymbol) {
     // Read a section from the file
-    const coff_symbol *sym = i.first;
-    if (sym->SectionNumber == llvm::COFF::IMAGE_SYM_ABSOLUTE ||
-        sym->SectionNumber == llvm::COFF::IMAGE_SYM_UNDEFINED)
+    llvm::object::COFFSymbolRef sym = i.first;
+    if (sym.getSectionNumber() == llvm::COFF::IMAGE_SYM_ABSOLUTE ||
+        sym.getSectionNumber() == llvm::COFF::IMAGE_SYM_UNDEFINED)
       continue;
 
     const coff_section *sec;
-    if (std::error_code ec = _obj->getSection(sym->SectionNumber, sec))
+    if (std::error_code ec = _obj->getSection(sym.getSectionNumber(), sec))
       return ec;
     const coff_aux_section_definition *aux =
-        reinterpret_cast<const coff_aux_section_definition *>(i.second);
+        reinterpret_cast<const coff_aux_section_definition *>(
+            i.second.getRawPtr());
 
     if (sec->Characteristics & llvm::COFF::IMAGE_SCN_LNK_COMDAT) {
       // Read aux symbol data.
@@ -595,7 +594,7 @@ std::error_code FileCOFF::cacheSectionAttributes() {
 /// Atomize \p symbols and append the results to \p atoms. The symbols are
 /// assumed to have been defined in the \p section.
 std::error_code FileCOFF::AtomizeDefinedSymbolsInSection(
-    const coff_section *section, std::vector<const coff_symbol *> &symbols,
+    const coff_section *section, SymbolVectorT &symbols,
     std::vector<COFFDefinedFileAtom *> &atoms) {
   // Sort symbols by position.
   std::stable_sort(
@@ -603,9 +602,10 @@ std::error_code FileCOFF::AtomizeDefinedSymbolsInSection(
       // For some reason MSVC fails to allow the lambda in this context with a
       // "illegal use of local type in type instantiation". MSVC is clearly
       // wrong here. Force a conversion to function pointer to work around.
-      static_cast<bool (*)(const coff_symbol *, const coff_symbol *)>(
-          [](const coff_symbol *a, const coff_symbol *b)
-              -> bool { return a->Value < b->Value; }));
+      static_cast<bool (*)(llvm::object::COFFSymbolRef,
+                           llvm::object::COFFSymbolRef)>(
+          [](llvm::object::COFFSymbolRef a, llvm::object::COFFSymbolRef b)
+              -> bool { return a.getValue() < b.getValue(); }));
 
   StringRef sectionName;
   if (std::error_code ec = _obj->getSectionName(section, sectionName))
@@ -615,9 +615,9 @@ std::error_code FileCOFF::AtomizeDefinedSymbolsInSection(
   // COFFBSSAtom instead of COFFDefinedAtom.
   if (section->Characteristics & llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA) {
     for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
-      const coff_symbol *sym = *si;
-      uint32_t size = (si + 1 == se) ? section->SizeOfRawData - sym->Value
-                                     : si[1]->Value - sym->Value;
+      llvm::object::COFFSymbolRef sym = *si;
+      uint32_t size = (si + 1 == se) ? section->SizeOfRawData - sym.getValue()
+                                     : si[1].getValue() - sym.getValue();
       auto *atom = new (_alloc) COFFBSSAtom(
           *this, _symbolName[sym], getScope(sym), getPermissions(section),
           DefinedAtom::mergeAsWeakAndAddressUsed, size, _ordinal++);
@@ -663,8 +663,8 @@ std::error_code FileCOFF::AtomizeDefinedSymbolsInSection(
 
   // Create an unnamed atom if the first atom isn't at the start of the
   // section.
-  if (symbols[0]->Value != 0) {
-    uint64_t size = symbols[0]->Value;
+  if (symbols[0].getValue() != 0) {
+    uint64_t size = symbols[0].getValue();
     ArrayRef<uint8_t> data(secData.data(), size);
     auto *atom = new (_alloc) COFFDefinedAtom(
         *this, "", sectionName, Atom::scopeTranslationUnit, type, isComdat,
@@ -674,17 +674,17 @@ std::error_code FileCOFF::AtomizeDefinedSymbolsInSection(
   }
 
   for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
-    const uint8_t *start = secData.data() + (*si)->Value;
+    const uint8_t *start = secData.data() + si->getValue();
     // if this is the last symbol, take up the remaining data.
     const uint8_t *end = (si + 1 == se) ? secData.data() + secData.size()
-                                        : secData.data() + (*(si + 1))->Value;
+                                        : secData.data() + (si + 1)->getValue();
     ArrayRef<uint8_t> data(start, end);
     auto *atom = new (_alloc) COFFDefinedAtom(
         *this, _symbolName[*si], sectionName, getScope(*si), type, isComdat,
         perms, _merge[section], data, _ordinal++);
     atoms.push_back(atom);
     _symbolAtom[*si] = atom;
-    _definedAtomLocations[section][(*si)->Value].push_back(atom);
+    _definedAtomLocations[section][si->getValue()].push_back(atom);
   }
   return std::error_code();
 }
@@ -696,7 +696,7 @@ std::error_code FileCOFF::AtomizeDefinedSymbols(
   // section, and append the atoms to the result objects.
   for (auto &i : definedSymbols) {
     const coff_section *section = i.first;
-    std::vector<const coff_symbol *> &symbols = i.second;
+    SymbolVectorT &symbols = i.second;
     std::vector<COFFDefinedFileAtom *> atoms;
     if (std::error_code ec =
             AtomizeDefinedSymbolsInSection(section, symbols, atoms))
@@ -764,10 +764,10 @@ std::error_code FileCOFF::findAtomAt(const coff_section *section,
 /// Find the atom for the symbol that was at the \p index in the symbol
 /// table.
 std::error_code FileCOFF::getAtomBySymbolIndex(uint32_t index, Atom *&ret) {
-  const coff_symbol *symbol;
-  if (std::error_code ec = _obj->getSymbol(index, symbol))
+  ErrorOr<llvm::object::COFFSymbolRef> symbol = _obj->getSymbol(index);
+  if (std::error_code ec = symbol.getError())
     return ec;
-  ret = _symbolAtom[symbol];
+  ret = _symbolAtom[*symbol];
   assert(ret);
   return std::error_code();
 }
@@ -813,10 +813,7 @@ std::error_code FileCOFF::getSectionContents(StringRef sectionName,
 
 /// Returns the target machine type of the current object file.
 std::error_code FileCOFF::getReferenceArch(Reference::KindArch &result) {
-  const llvm::object::coff_file_header *header = nullptr;
-  if (std::error_code ec = _obj->getHeader(header))
-    return ec;
-  switch (header->Machine) {
+  switch (_obj->getMachine()) {
   case llvm::COFF::IMAGE_FILE_MACHINE_I386:
     result = Reference::KindArch::x86;
     return std::error_code();
@@ -827,15 +824,12 @@ std::error_code FileCOFF::getReferenceArch(Reference::KindArch &result) {
     result = Reference::KindArch::all;
     return std::error_code();
   }
-  llvm::errs() << "Unsupported machine type: " << header->Machine << "\n";
+  llvm::errs() << "Unsupported machine type: " << _obj->getMachine() << '\n';
   return llvm::object::object_error::parse_failed;
 }
 
 std::error_code FileCOFF::is64(bool &result) {
-  const llvm::object::coff_file_header *header = nullptr;
-  if (std::error_code ec = _obj->getHeader(header))
-    return ec;
-  result = (header->Machine == llvm::COFF::IMAGE_FILE_MACHINE_AMD64);
+  result = (_obj->getMachine() == llvm::COFF::IMAGE_FILE_MACHINE_AMD64);
   return std::error_code();
 }
 
