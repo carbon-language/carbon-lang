@@ -449,13 +449,9 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
     // Collect all non affine memory accesses, and check whether they are linear
     // at the end of scop detection. That way we can delinearize all the memory
     // accesses to the same array in a unique step.
-    if (Context.NonAffineAccesses[BasePointer].size() == 0)
-      Context.NonAffineAccesses[BasePointer] = AFs();
     Context.NonAffineAccesses[BasePointer].push_back({&Inst, AF});
   } else if (const SCEVAddRecExpr *AF =
                  dyn_cast<SCEVAddRecExpr>(AccessFunction)) {
-    if (Context.AffineAccesses[BasePointer].size() == 0)
-      Context.AffineAccesses[BasePointer] = AFs();
     Context.AffineAccesses[BasePointer].push_back({&Inst, AF});
   }
 
