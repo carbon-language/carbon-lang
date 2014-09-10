@@ -463,6 +463,9 @@ protected:
     PacketResult
     Handle_vAttach (StringExtractorGDBRemote &packet);
 
+    PacketResult
+    Handle_qThreadStopInfo (StringExtractorGDBRemote &packet);
+
     void
     SetCurrentThreadID (lldb::tid_t tid);
 
