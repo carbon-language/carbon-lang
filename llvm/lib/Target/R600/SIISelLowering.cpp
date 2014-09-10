@@ -2004,12 +2004,20 @@ MachineSDNode *SITargetLowering::AdjustRegClass(MachineSDNode *N,
       return N;
     }
     ConstantSDNode *Offset = cast<ConstantSDNode>(N->getOperand(1));
-    SDValue Ops[] = {
-      SDValue(DAG.getMachineNode(AMDGPU::SI_ADDR64_RSRC, DL, MVT::i128,
-                                 DAG.getConstant(0, MVT::i64)), 0),
-      N->getOperand(0),
-      DAG.getConstant(Offset->getSExtValue() << 2, MVT::i32)
-    };
+    MachineSDNode *RSrc = DAG.getMachineNode(AMDGPU::SI_ADDR64_RSRC, DL,
+                                             MVT::i128,
+                                             DAG.getConstant(0, MVT::i64));
+
+    SmallVector<SDValue, 8> Ops;
+    Ops.push_back(SDValue(RSrc, 0));
+    Ops.push_back(N->getOperand(0));
+    Ops.push_back(DAG.getConstant(Offset->getSExtValue() << 2, MVT::i32));
+
+    // Copy remaining operands so we keep any chain and glue nodes that follow
+    // the normal operands.
+    for (unsigned I = 2, E = N->getNumOperands(); I != E; ++I)
+      Ops.push_back(N->getOperand(I));
+
     return DAG.getMachineNode(NewOpcode, DL, N->getVTList(), Ops);
   }
   }
