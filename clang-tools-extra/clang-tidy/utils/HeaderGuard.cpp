@@ -258,7 +258,8 @@ private:
 
 void HeaderGuardCheck::registerPPCallbacks(CompilerInstance &Compiler) {
   Compiler.getPreprocessor().addPPCallbacks(
-      new HeaderGuardPPCallbacks(&Compiler.getPreprocessor(), this));
+      llvm::make_unique<HeaderGuardPPCallbacks>(&Compiler.getPreprocessor(),
+                                                this));
 }
 
 bool HeaderGuardCheck::shouldSuggestEndifComment(StringRef FileName) {

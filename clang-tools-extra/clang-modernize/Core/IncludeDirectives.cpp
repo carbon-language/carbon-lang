@@ -60,9 +60,9 @@ class IncludeDirectivesPPCallback : public clang::PPCallbacks {
 public:
   IncludeDirectivesPPCallback(IncludeDirectives *Self)
       : Self(Self), Guard(nullptr) {}
+  virtual ~IncludeDirectivesPPCallback() {}
 
 private:
-  virtual ~IncludeDirectivesPPCallback() {}
   void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
                           StringRef FileName, bool IsAngled,
                           CharSourceRange FilenameRange, const FileEntry *File,
@@ -311,7 +311,8 @@ static std::pair<unsigned, bool> findDirectiveEnd(SourceLocation HashLoc,
 IncludeDirectives::IncludeDirectives(clang::CompilerInstance &CI)
     : CI(CI), Sources(CI.getSourceManager()) {
   // addPPCallbacks takes ownership of the callback
-  CI.getPreprocessor().addPPCallbacks(new IncludeDirectivesPPCallback(this));
+  CI.getPreprocessor().addPPCallbacks(
+                          llvm::make_unique<IncludeDirectivesPPCallback>(this));
 }
 
 bool IncludeDirectives::lookForInclude(const FileEntry *File,

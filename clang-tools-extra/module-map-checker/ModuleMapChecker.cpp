@@ -169,7 +169,7 @@ class ModuleMapCheckerConsumer : public ASTConsumer {
 public:
   ModuleMapCheckerConsumer(ModuleMapChecker &Checker, Preprocessor &PP) {
     // PP takes ownership.
-    PP.addPPCallbacks(new ModuleMapCheckerCallbacks(Checker));
+    PP.addPPCallbacks(llvm::make_unique<ModuleMapCheckerCallbacks>(Checker));
   }
 };
 

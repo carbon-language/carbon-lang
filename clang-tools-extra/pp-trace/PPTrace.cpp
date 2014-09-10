@@ -109,7 +109,8 @@ public:
   PPTraceConsumer(SmallSet<std::string, 4> &Ignore,
                   std::vector<CallbackCall> &CallbackCalls, Preprocessor &PP) {
     // PP takes ownership.
-    PP.addPPCallbacks(new PPCallbacksTracker(Ignore, CallbackCalls, PP));
+    PP.addPPCallbacks(llvm::make_unique<PPCallbacksTracker>(Ignore,
+                                                            CallbackCalls, PP));
   }
 };
 

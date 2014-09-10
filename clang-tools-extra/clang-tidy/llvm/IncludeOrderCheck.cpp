@@ -46,7 +46,8 @@ private:
 
 void IncludeOrderCheck::registerPPCallbacks(CompilerInstance &Compiler) {
   Compiler.getPreprocessor().addPPCallbacks(
-      new IncludeOrderPPCallbacks(*this, Compiler.getSourceManager()));
+      llvm::make_unique<IncludeOrderPPCallbacks>(*this,
+                                                 Compiler.getSourceManager()));
 }
 
 static int getPriority(StringRef Filename, bool IsAngled, bool IsMainModule) {

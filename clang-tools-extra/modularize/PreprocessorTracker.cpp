@@ -877,7 +877,8 @@ public:
     HeadersInThisCompile.clear();
     assert((HeaderStack.size() == 0) && "Header stack should be empty.");
     pushHeaderHandle(addHeader(rootHeaderFile));
-    PP.addPPCallbacks(new PreprocessorCallbacks(*this, PP, rootHeaderFile));
+    PP.addPPCallbacks(llvm::make_unique<PreprocessorCallbacks>(*this, PP,
+                                                               rootHeaderFile));
   }
   // Handle exiting a preprocessing session.
   void handlePreprocessorExit() { HeaderStack.clear(); }
