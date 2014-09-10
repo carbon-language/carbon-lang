@@ -25,13 +25,13 @@ struct TypeMismatchData {
 };
 
 #define UNRECOVERABLE(checkname, ...) \
-  extern "C" SANITIZER_INTERFACE_ATTRIBUTE \
+  extern "C" SANITIZER_INTERFACE_ATTRIBUTE NORETURN \
     void __ubsan_handle_ ## checkname( __VA_ARGS__ );
 
 #define RECOVERABLE(checkname, ...) \
   extern "C" SANITIZER_INTERFACE_ATTRIBUTE \
     void __ubsan_handle_ ## checkname( __VA_ARGS__ ); \
-  extern "C" SANITIZER_INTERFACE_ATTRIBUTE \
+  extern "C" SANITIZER_INTERFACE_ATTRIBUTE NORETURN \
     void __ubsan_handle_ ## checkname ## _abort( __VA_ARGS__ );
 
 /// \brief Handle a runtime type check failure, caused by either a misaligned

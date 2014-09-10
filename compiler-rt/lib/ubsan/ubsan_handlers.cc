@@ -19,6 +19,16 @@
 using namespace __sanitizer;
 using namespace __ubsan;
 
+static bool ignoreReport(SourceLocation SLoc, ReportOptions Opts) {
+  // If source location is already acquired, we don't need to print an error
+  // report for the second time. However, if we're in an unrecoverable handler,
+  // it's possible that location was required by concurrently running thread.
+  // In this case, we should continue the execution to ensure that any of
+  // threads will grab the report mutex and print the report before
+  // crashing the program.
+  return SLoc.isDisabled() && !Opts.DieAfterReport;
+}
+
 namespace __ubsan {
   const char *TypeCheckKinds[] = {
     "load of", "store to", "reference binding to", "member access within",
@@ -30,7 +40,7 @@ static void handleTypeMismatchImpl(TypeMismatchData *Data, ValueHandle Pointer,
                                    Location FallbackLoc, ReportOptions Opts) {
   Location Loc = Data->Loc.acquire();
   // Use the SourceLocation from Data to track deduplication, even if 'invalid'
-  if (Loc.getSourceLocation().isDisabled())
+  if (ignoreReport(Loc.getSourceLocation(), Opts))
     return;
 
   ScopedReport R(Opts);
@@ -63,6 +73,7 @@ void __ubsan::__ubsan_handle_type_mismatch_abort(TypeMismatchData *Data,
                                                  ValueHandle Pointer) {
   GET_REPORT_OPTIONS(true);
   handleTypeMismatchImpl(Data, Pointer, getCallerLocation(), Opts);
+  Die();
 }
 
 /// \brief Common diagnostic emission for various forms of integer overflow.
@@ -71,7 +82,7 @@ static void handleIntegerOverflowImpl(OverflowData *Data, ValueHandle LHS,
                                       const char *Operator, T RHS,
                                       ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (Loc.isDisabled())
+  if (ignoreReport(Loc, Opts))
     return;
 
   ScopedReport R(Opts);
@@ -87,6 +98,7 @@ static void handleIntegerOverflowImpl(OverflowData *Data, ValueHandle LHS,
                              ValueHandle RHS) {                                \
     GET_REPORT_OPTIONS(abort);                                                 \
     handleIntegerOverflowImpl(Data, LHS, op, Value(Data->Type, RHS), Opts);    \
+    if (abort) Die();                                                          \
   }
 
 UBSAN_OVERFLOW_HANDLER(__ubsan_handle_add_overflow, "+", false)
@@ -99,7 +111,7 @@ UBSAN_OVERFLOW_HANDLER(__ubsan_handle_mul_overflow_abort, "*", true)
 static void handleNegateOverflowImpl(OverflowData *Data, ValueHandle OldVal,
                                      ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (Loc.isDisabled())
+  if (ignoreReport(Loc, Opts))
     return;
 
   ScopedReport R(Opts);
@@ -124,12 +136,13 @@ void __ubsan::__ubsan_handle_negate_overflow_abort(OverflowData *Data,
                                                     ValueHandle OldVal) {
   GET_REPORT_OPTIONS(true);
   handleNegateOverflowImpl(Data, OldVal, Opts);
+  Die();
 }
 
 static void handleDivremOverflowImpl(OverflowData *Data, ValueHandle LHS,
                                      ValueHandle RHS, ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (Loc.isDisabled())
+  if (ignoreReport(Loc, Opts))
     return;
 
   ScopedReport R(Opts);
@@ -154,13 +167,14 @@ void __ubsan::__ubsan_handle_divrem_overflow_abort(OverflowData *Data,
                                                     ValueHandle RHS) {
   GET_REPORT_OPTIONS(true);
   handleDivremOverflowImpl(Data, LHS, RHS, Opts);
+  Die();
 }
 
 static void handleShiftOutOfBoundsImpl(ShiftOutOfBoundsData *Data,
                                        ValueHandle LHS, ValueHandle RHS,
                                        ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (Loc.isDisabled())
+  if (ignoreReport(Loc, Opts))
     return;
 
   ScopedReport R(Opts);
@@ -193,12 +207,13 @@ void __ubsan::__ubsan_handle_shift_out_of_bounds_abort(
                                                      ValueHandle RHS) {
   GET_REPORT_OPTIONS(true);
   handleShiftOutOfBoundsImpl(Data, LHS, RHS, Opts);
+  Die();
 }
 
 static void handleOutOfBoundsImpl(OutOfBoundsData *Data, ValueHandle Index,
                                   ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (Loc.isDisabled())
+  if (ignoreReport(Loc, Opts))
     return;
 
   ScopedReport R(Opts);
@@ -217,26 +232,38 @@ void __ubsan::__ubsan_handle_out_of_bounds_abort(OutOfBoundsData *Data,
                                                  ValueHandle Index) {
   GET_REPORT_OPTIONS(true);
   handleOutOfBoundsImpl(Data, Index, Opts);
+  Die();
 }
 
-void __ubsan::__ubsan_handle_builtin_unreachable(UnreachableData *Data) {
-  GET_REPORT_OPTIONS(true);
+static void handleBuiltinUnreachableImpl(UnreachableData *Data,
+                                         ReportOptions Opts) {
   ScopedReport R(Opts);
   Diag(Data->Loc, DL_Error, "execution reached a __builtin_unreachable() call");
 }
 
-void __ubsan::__ubsan_handle_missing_return(UnreachableData *Data) {
+void __ubsan::__ubsan_handle_builtin_unreachable(UnreachableData *Data) {
   GET_REPORT_OPTIONS(true);
+  handleBuiltinUnreachableImpl(Data, Opts);
+  Die();
+}
+
+static void handleMissingReturnImpl(UnreachableData *Data, ReportOptions Opts) {
   ScopedReport R(Opts);
   Diag(Data->Loc, DL_Error,
        "execution reached the end of a value-returning function "
        "without returning a value");
 }
 
+void __ubsan::__ubsan_handle_missing_return(UnreachableData *Data) {
+  GET_REPORT_OPTIONS(true);
+  handleMissingReturnImpl(Data, Opts);
+  Die();
+}
+
 static void handleVLABoundNotPositive(VLABoundData *Data, ValueHandle Bound,
                                       ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (Loc.isDisabled())
+  if (ignoreReport(Loc, Opts))
     return;
 
   ScopedReport R(Opts);
@@ -255,6 +282,7 @@ void __ubsan::__ubsan_handle_vla_bound_not_positive_abort(VLABoundData *Data,
                                                           ValueHandle Bound) {
   GET_REPORT_OPTIONS(true);
   handleVLABoundNotPositive(Data, Bound, Opts);
+  Die();
 }
 
 static void handleFloatCastOverflow(FloatCastOverflowData *Data,
@@ -277,12 +305,13 @@ __ubsan::__ubsan_handle_float_cast_overflow_abort(FloatCastOverflowData *Data,
                                                   ValueHandle From) {
   GET_REPORT_OPTIONS(true);
   handleFloatCastOverflow(Data, From, Opts);
+  Die();
 }
 
 static void handleLoadInvalidValue(InvalidValueData *Data, ValueHandle Val,
                                    ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (Loc.isDisabled())
+  if (ignoreReport(Loc, Opts))
     return;
 
   ScopedReport R(Opts);
@@ -301,6 +330,7 @@ void __ubsan::__ubsan_handle_load_invalid_value_abort(InvalidValueData *Data,
                                                       ValueHandle Val) {
   GET_REPORT_OPTIONS(true);
   handleLoadInvalidValue(Data, Val, Opts);
+  Die();
 }
 
 static void handleFunctionTypeMismatch(FunctionTypeMismatchData *Data,
@@ -329,11 +359,12 @@ void __ubsan::__ubsan_handle_function_type_mismatch_abort(
     FunctionTypeMismatchData *Data, ValueHandle Function) {
   GET_REPORT_OPTIONS(true);
   handleFunctionTypeMismatch(Data, Function, Opts);
+  Die();
 }
 
 static void handleNonNullReturn(NonNullReturnData *Data, ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (Loc.isDisabled())
+  if (ignoreReport(Loc, Opts))
     return;
 
   ScopedReport R(Opts);
@@ -352,11 +383,12 @@ void __ubsan::__ubsan_handle_nonnull_return(NonNullReturnData *Data) {
 void __ubsan::__ubsan_handle_nonnull_return_abort(NonNullReturnData *Data) {
   GET_REPORT_OPTIONS(true);
   handleNonNullReturn(Data, Opts);
+  Die();
 }
 
 static void handleNonNullArg(NonNullArgData *Data, ReportOptions Opts) {
   SourceLocation Loc = Data->Loc.acquire();
-  if (Loc.isDisabled())
+  if (ignoreReport(Loc, Opts))
     return;
 
   ScopedReport R(Opts);
@@ -375,4 +407,5 @@ void __ubsan::__ubsan_handle_nonnull_arg(NonNullArgData *Data) {
 void __ubsan::__ubsan_handle_nonnull_arg_abort(NonNullArgData *Data) {
   GET_REPORT_OPTIONS(true);
   handleNonNullArg(Data, Opts);
+  Die();
 }
