@@ -1022,7 +1022,8 @@ Sema::ObjCSubscriptKind
   // If we don't have a class type in C++, there's no way we can get an
   // expression of integral or enumeration type.
   const RecordType *RecordTy = T->getAs<RecordType>();
-  if (!RecordTy && T->isObjCObjectPointerType())
+  if (!RecordTy &&
+      (T->isObjCObjectPointerType() || T->isVoidPointerType()))
     // All other scalar cases are assumed to be dictionary indexing which
     // caller handles, with diagnostics if needed.
     return OS_Dictionary;
