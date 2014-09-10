@@ -44,7 +44,7 @@ public:
           RelType == MachO::GENERIC_RELOC_LOCAL_SECTDIFF)
         return processSECTDIFFRelocation(SectionID, RelI, ObjImg,
                                          ObjSectionToID);
-      else if (Arch == Triple::x86 && RelType == MachO::GENERIC_RELOC_VANILLA)
+      else if (RelType == MachO::GENERIC_RELOC_VANILLA)
         return processI386ScatteredVANILLA(SectionID, RelI, ObjImg,
                                            ObjSectionToID);
       llvm_unreachable("Unhandled scattered relocation.");
