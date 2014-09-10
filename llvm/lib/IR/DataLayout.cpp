@@ -345,6 +345,10 @@ void DataLayout::parseSpecifier(StringRef Desc) {
 }
 
 DataLayout::DataLayout(const Module *M) : LayoutMap(nullptr) {
+  init(M);
+}
+
+void DataLayout::init(const Module *M) {
   const DataLayout *Other = M->getDataLayout();
   if (Other)
     *this = *Other;
@@ -796,17 +800,17 @@ unsigned DataLayout::getPreferredAlignmentLog(const GlobalVariable *GV) const {
 }
 
 DataLayoutPass::DataLayoutPass() : ImmutablePass(ID), DL("") {
-  report_fatal_error("Bad DataLayoutPass ctor used. Tool did not specify a "
-                     "DataLayout to use?");
+  initializeDataLayoutPassPass(*PassRegistry::getPassRegistry());
 }
 
 DataLayoutPass::~DataLayoutPass() {}
 
-DataLayoutPass::DataLayoutPass(const DataLayout &DL)
-    : ImmutablePass(ID), DL(DL) {
-  initializeDataLayoutPassPass(*PassRegistry::getPassRegistry());
+bool DataLayoutPass::doInitialization(Module &M) {
+  DL.init(&M);
+  return false;
 }
 
-DataLayoutPass::DataLayoutPass(const Module *M) : ImmutablePass(ID), DL(M) {
-  initializeDataLayoutPassPass(*PassRegistry::getPassRegistry());
+bool DataLayoutPass::doFinalization(Module &M) {
+  DL.reset("");
+  return false;
 }

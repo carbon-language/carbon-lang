@@ -432,8 +432,7 @@ void PassManagerBuilder::addLTOOptimizationPasses(PassManagerBase &PM) {
 void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
                                                 TargetMachine *TM) {
   if (TM) {
-    const DataLayout *DL = TM->getSubtargetImpl()->getDataLayout();
-    PM.add(new DataLayoutPass(*DL));
+    PM.add(new DataLayoutPass());
     TM->addAnalysisPasses(PM);
   }
 

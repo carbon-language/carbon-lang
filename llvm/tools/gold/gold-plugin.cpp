@@ -693,7 +693,7 @@ static void codegen(Module &M) {
   runLTOPasses(M, *TM);
 
   PassManager CodeGenPasses;
-  CodeGenPasses.add(new DataLayoutPass(&M));
+  CodeGenPasses.add(new DataLayoutPass());
 
   SmallString<128> Filename;
   int FD;

@@ -133,7 +133,7 @@ std::unique_ptr<ObjectBufferStream> MCJIT::emitObject(Module *M) {
   PassManager PM;
 
   M->setDataLayout(TM->getSubtargetImpl()->getDataLayout());
-  PM.add(new DataLayoutPass(M));
+  PM.add(new DataLayoutPass());
 
   // The RuntimeDyld will take ownership of this shortly
   std::unique_ptr<ObjectBufferStream> CompiledObject(new ObjectBufferStream());

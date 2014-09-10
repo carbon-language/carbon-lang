@@ -471,7 +471,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
   PassManager codeGenPasses;
 
-  codeGenPasses.add(new DataLayoutPass(mergedModule));
+  codeGenPasses.add(new DataLayoutPass());
 
   formatted_raw_ostream Out(out);
 
