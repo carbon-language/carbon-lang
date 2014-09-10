@@ -161,6 +161,18 @@ bool SIInstrInfo::areLoadsFromSameBasePtr(SDNode *Load0, SDNode *Load1,
   return false;
 }
 
+static bool isStride64(unsigned Opc) {
+  switch (Opc) {
+  case AMDGPU::DS_READ2ST64_B32:
+  case AMDGPU::DS_READ2ST64_B64:
+  case AMDGPU::DS_WRITE2ST64_B32:
+  case AMDGPU::DS_WRITE2ST64_B64:
+    return true;
+  default:
+    return false;
+  }
+}
+
 bool SIInstrInfo::getLdStBaseRegImmOfs(MachineInstr *LdSt,
                                        unsigned &BaseReg, unsigned &Offset,
                                        const TargetRegisterInfo *TRI) const {
@@ -202,6 +214,9 @@ bool SIInstrInfo::getLdStBaseRegImmOfs(MachineInstr *LdSt,
         int Data0Idx = AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::data0);
         EltSize = getOpRegClass(*LdSt, Data0Idx)->getSize();
       }
+
+      if (isStride64(Opc))
+        EltSize *= 64;
 
       const MachineOperand *AddrReg = getNamedOperand(*LdSt,
                                                       AMDGPU::OpName::addr);
