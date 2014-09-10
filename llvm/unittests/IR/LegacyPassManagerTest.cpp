@@ -54,11 +54,11 @@ namespace llvm {
       static char run;
       static char ID;
       ModuleNDNM() : ModulePass(ID) { }
-      virtual bool runOnModule(Module &M) {
+      bool runOnModule(Module &M) override {
         run++;
         return false;
       }
-      virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      void getAnalysisUsage(AnalysisUsage &AU) const override {
         AU.setPreservesAll();
       }
     };
@@ -70,7 +70,7 @@ namespace llvm {
       static char run;
       static char ID;
       ModuleNDM() : ModulePass(ID) {}
-      virtual bool runOnModule(Module &M) {
+      bool runOnModule(Module &M) override {
         run++;
         return true;
       }
@@ -83,7 +83,7 @@ namespace llvm {
       static char run;
       static char ID;
       ModuleNDM2() : ModulePass(ID) {}
-      virtual bool runOnModule(Module &M) {
+      bool runOnModule(Module &M) override {
         run++;
         return true;
       }
@@ -98,12 +98,12 @@ namespace llvm {
       ModuleDNM() : ModulePass(ID) {
         initializeModuleNDMPass(*PassRegistry::getPassRegistry());
       }
-      virtual bool runOnModule(Module &M) {
+      bool runOnModule(Module &M) override {
         EXPECT_TRUE(getAnalysisIfAvailable<DataLayoutPass>());
         run++;
         return false;
       }
-      virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      void getAnalysisUsage(AnalysisUsage &AU) const override {
         AU.addRequired<ModuleNDM>();
         AU.setPreservesAll();
       }
@@ -139,7 +139,7 @@ namespace llvm {
         runc = 0;
       }
 
-      virtual void releaseMemory() {
+      void releaseMemory() override {
         EXPECT_GT(runc, 0);
         EXPECT_GT(allocated, 0);
         allocated--;
@@ -157,12 +157,12 @@ namespace llvm {
       using llvm::Pass::doInitialization;
       using llvm::Pass::doFinalization;
 #endif
-      virtual bool doInitialization(T &t) {
+      bool doInitialization(T &t) override {
         EXPECT_FALSE(PassTestBase<P>::initialized);
         PassTestBase<P>::initialized = true;
         return false;
       }
-      virtual bool doFinalization(T &t) {
+      bool doFinalization(T &t) override {
         EXPECT_FALSE(PassTestBase<P>::finalized);
         PassTestBase<P>::finalized = true;
         EXPECT_EQ(0, PassTestBase<P>::allocated);
@@ -175,7 +175,7 @@ namespace llvm {
       CGPass() {
         initializeCGPassPass(*PassRegistry::getPassRegistry());
       }
-      virtual bool runOnSCC(CallGraphSCC &SCMM) {
+      bool runOnSCC(CallGraphSCC &SCMM) override {
         EXPECT_TRUE(getAnalysisIfAvailable<DataLayoutPass>());
         run();
         return false;
@@ -184,7 +184,7 @@ namespace llvm {
 
     struct FPass : public PassTest<Module, FunctionPass> {
     public:
-      virtual bool runOnFunction(Function &F) {
+      bool runOnFunction(Function &F) override {
         // FIXME: PR4112
         // EXPECT_TRUE(getAnalysisIfAvailable<DataLayout>());
         run();
@@ -209,17 +209,17 @@ namespace llvm {
       }
       using llvm::Pass::doInitialization;
       using llvm::Pass::doFinalization;
-      virtual bool doInitialization(Loop* L, LPPassManager &LPM) {
+      bool doInitialization(Loop* L, LPPassManager &LPM) override {
         initialized = true;
         initcount++;
         return false;
       }
-      virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
+      bool runOnLoop(Loop *L, LPPassManager &LPM) override {
         EXPECT_TRUE(getAnalysisIfAvailable<DataLayoutPass>());
         run();
         return false;
       }
-      virtual bool doFinalization() {
+      bool doFinalization() override {
         fincount++;
         finalized = true;
         return false;
@@ -242,25 +242,25 @@ namespace llvm {
         inited = 0;
         fin = 0;
       }
-      virtual bool doInitialization(Module &M) {
+      bool doInitialization(Module &M) override {
         EXPECT_FALSE(initialized);
         initialized = true;
         return false;
       }
-      virtual bool doInitialization(Function &F) {
+      bool doInitialization(Function &F) override {
         inited++;
         return false;
       }
-      virtual bool runOnBasicBlock(BasicBlock &BB) {
+      bool runOnBasicBlock(BasicBlock &BB) override {
         EXPECT_TRUE(getAnalysisIfAvailable<DataLayoutPass>());
         run();
         return false;
       }
-      virtual bool doFinalization(Function &F) {
+      bool doFinalization(Function &F) override {
         fin++;
         return false;
       }
-      virtual bool doFinalization(Module &M) {
+      bool doFinalization(Module &M) override {
         EXPECT_FALSE(finalized);
         finalized = true;
         EXPECT_EQ(0, allocated);
@@ -276,7 +276,7 @@ namespace llvm {
       OnTheFlyTest() : ModulePass(ID) {
         initializeFPassPass(*PassRegistry::getPassRegistry());
       }
-      virtual bool runOnModule(Module &M) {
+      bool runOnModule(Module &M) override {
         EXPECT_TRUE(getAnalysisIfAvailable<DataLayoutPass>());
         for (Module::iterator I=M.begin(),E=M.end(); I != E; ++I) {
           Function &F = *I;
@@ -287,7 +287,7 @@ namespace llvm {
         }
         return false;
       }
-      virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      void getAnalysisUsage(AnalysisUsage &AU) const override {
         AU.addRequired<FPass>();
       }
     };
