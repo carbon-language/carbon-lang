@@ -33,7 +33,6 @@
 #include "llvm/Support/Signals.h"
 
 #include <algorithm>
-#include <cstdlib>
 
 using namespace lld;
 
@@ -314,12 +313,11 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     ctx.setOutputPath("a.out");
 
   if (llvm::opt::Arg *imageBase = parsedArgs->getLastArg(OPT_image_base)) {
-    char *endPtr;
-    uint64_t baseAddress = strtoull(imageBase->getValue(), &endPtr, 16);
-    if (*endPtr != 0) {
+    uint64_t baseAddress;
+    if (StringRef(imageBase->getValue()).getAsInteger(16, baseAddress)) {
       diagnostics << "error: image_base expects a hex number\n";
       return false;
-    } else if  (baseAddress < ctx.pageZeroSize()) {
+    } else if (baseAddress < ctx.pageZeroSize()) {
       diagnostics << "error: image_base overlaps with __PAGEZERO\n";
       return false;
     }
