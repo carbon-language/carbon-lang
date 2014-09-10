@@ -226,7 +226,7 @@ namespace llvm {
     }
     bool ParseOptionalVisibility(unsigned &Visibility);
     bool ParseOptionalDLLStorageClass(unsigned &DLLStorageClass);
-    bool ParseOptionalCallingConv(CallingConv::ID &CC);
+    bool ParseOptionalCallingConv(unsigned &CC);
     bool ParseOptionalAlignment(unsigned &Alignment);
     bool ParseOptionalDereferenceableBytes(uint64_t &Bytes);
     bool ParseScopeAndOrdering(bool isAtomic, SynchronizationScope &Scope,
