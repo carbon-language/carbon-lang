@@ -24,27 +24,17 @@ namespace tidy {
 class MiscModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
-    CheckFactories.addCheckFactory(
-        "misc-argument-comment",
-        new ClangTidyCheckFactory<ArgumentCommentCheck>());
-    CheckFactories.addCheckFactory(
-        "misc-bool-pointer-implicit-conversion",
-        new ClangTidyCheckFactory<BoolPointerImplicitConversion>());
-    CheckFactories.addCheckFactory(
-        "misc-redundant-smartptr-get",
-        new ClangTidyCheckFactory<RedundantSmartptrGet>());
-    CheckFactories.addCheckFactory(
-        "misc-swapped-arguments",
-        new ClangTidyCheckFactory<SwappedArgumentsCheck>());
-    CheckFactories.addCheckFactory(
-        "misc-undelegated-constructor",
-        new ClangTidyCheckFactory<UndelegatedConstructorCheck>());
-    CheckFactories.addCheckFactory(
-        "misc-unused-raii",
-        new ClangTidyCheckFactory<UnusedRAIICheck>());
-    CheckFactories.addCheckFactory(
-        "misc-use-override",
-        new ClangTidyCheckFactory<UseOverride>());
+    CheckFactories.registerCheck<ArgumentCommentCheck>("misc-argument-comment");
+    CheckFactories.registerCheck<BoolPointerImplicitConversion>(
+        "misc-bool-pointer-implicit-conversion");
+    CheckFactories.registerCheck<RedundantSmartptrGet>(
+        "misc-redundant-smartptr-get");
+    CheckFactories.registerCheck<SwappedArgumentsCheck>(
+        "misc-swapped-arguments");
+    CheckFactories.registerCheck<UndelegatedConstructorCheck>(
+        "misc-undelegated-constructor");
+    CheckFactories.registerCheck<UnusedRAIICheck>("misc-unused-raii");
+    CheckFactories.registerCheck<UseOverride>("misc-use-override");
   }
 };
 

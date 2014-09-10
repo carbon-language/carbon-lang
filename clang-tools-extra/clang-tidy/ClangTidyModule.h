@@ -74,13 +74,17 @@ public:
 /// this object.
 class ClangTidyCheckFactories {
 public:
-  ClangTidyCheckFactories() {}
-  ~ClangTidyCheckFactories();
-
   /// \brief Register \p Factory with the name \p Name.
-  ///
-  /// The \c ClangTidyCheckFactories object takes ownership of the \p Factory.
-  void addCheckFactory(StringRef Name, CheckFactoryBase *Factory);
+  void addCheckFactory(StringRef Name,
+                       std::unique_ptr<CheckFactoryBase> Factory);
+
+  /// \brief Registers the \c CheckType with the name \p Name by adding a
+  /// corresponding \c ClangTidyCheckFactory.
+  template<typename CheckType>
+  void registerCheck(StringRef Name) {
+    addCheckFactory(Name,
+                    llvm::make_unique<ClangTidyCheckFactory<CheckType>>());
+  }
 
   /// \brief Create instances of all checks matching \p CheckRegexString and
   /// store them in \p Checks.
@@ -89,7 +93,7 @@ public:
   void createChecks(GlobList &Filter,
                     std::vector<std::unique_ptr<ClangTidyCheck>> &Checks);
 
-  typedef std::map<std::string, CheckFactoryBase *> FactoryMap;
+  typedef std::map<std::string, std::unique_ptr<CheckFactoryBase>> FactoryMap;
   FactoryMap::const_iterator begin() const { return Factories.begin(); }
   FactoryMap::const_iterator end() const { return Factories.end(); }
   bool empty() const { return Factories.empty(); }

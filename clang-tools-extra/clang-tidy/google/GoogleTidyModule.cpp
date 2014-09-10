@@ -29,36 +29,26 @@ namespace tidy {
 class GoogleModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
-    CheckFactories.addCheckFactory(
-        "google-build-explicit-make-pair",
-        new ClangTidyCheckFactory<build::ExplicitMakePairCheck>());
-    CheckFactories.addCheckFactory(
-        "google-build-namespaces",
-        new ClangTidyCheckFactory<build::UnnamedNamespaceInHeaderCheck>());
-    CheckFactories.addCheckFactory(
-        "google-build-using-namespace",
-        new ClangTidyCheckFactory<build::UsingNamespaceDirectiveCheck>());
-    CheckFactories.addCheckFactory(
-        "google-explicit-constructor",
-        new ClangTidyCheckFactory<ExplicitConstructorCheck>());
-    CheckFactories.addCheckFactory(
-        "google-runtime-int",
-        new ClangTidyCheckFactory<runtime::IntegerTypesCheck>());
-    CheckFactories.addCheckFactory(
-        "google-runtime-operator",
-        new ClangTidyCheckFactory<runtime::OverloadedUnaryAndCheck>());
-    CheckFactories.addCheckFactory(
-        "google-runtime-member-string-references",
-        new ClangTidyCheckFactory<runtime::StringReferenceMemberCheck>());
-    CheckFactories.addCheckFactory(
-        "google-runtime-memset",
-        new ClangTidyCheckFactory<runtime::MemsetZeroLengthCheck>());
-    CheckFactories.addCheckFactory(
-        "google-readability-casting",
-        new ClangTidyCheckFactory<readability::AvoidCStyleCastsCheck>());
-    CheckFactories.addCheckFactory(
-        "google-readability-function",
-        new ClangTidyCheckFactory<readability::NamedParameterCheck>());
+    CheckFactories.registerCheck<build::ExplicitMakePairCheck>(
+        "google-build-explicit-make-pair");
+    CheckFactories.registerCheck<build::UnnamedNamespaceInHeaderCheck>(
+        "google-build-namespaces");
+    CheckFactories.registerCheck<build::UsingNamespaceDirectiveCheck>(
+        "google-build-using-namespace");
+    CheckFactories.registerCheck<ExplicitConstructorCheck>(
+        "google-explicit-constructor");
+    CheckFactories.registerCheck<runtime::IntegerTypesCheck>(
+        "google-runtime-int");
+    CheckFactories.registerCheck<runtime::OverloadedUnaryAndCheck>(
+        "google-runtime-operator");
+    CheckFactories.registerCheck<runtime::StringReferenceMemberCheck>(
+        "google-runtime-member-string-references");
+    CheckFactories.registerCheck<runtime::MemsetZeroLengthCheck>(
+        "google-runtime-memset");
+    CheckFactories.registerCheck<readability::AvoidCStyleCastsCheck>(
+        "google-readability-casting");
+    CheckFactories.registerCheck<readability::NamedParameterCheck>(
+        "google-readability-function");
   }
 };
 

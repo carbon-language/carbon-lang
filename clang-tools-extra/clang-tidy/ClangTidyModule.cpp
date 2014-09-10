@@ -16,14 +16,9 @@
 namespace clang {
 namespace tidy {
 
-ClangTidyCheckFactories::~ClangTidyCheckFactories() {
-  for (const auto &Factory : Factories)
-    delete Factory.second;
-}
-
-void ClangTidyCheckFactories::addCheckFactory(StringRef Name,
-                                              CheckFactoryBase *Factory) {
-  Factories[Name] = Factory;
+void ClangTidyCheckFactories::addCheckFactory(
+    StringRef Name, std::unique_ptr<CheckFactoryBase> Factory) {
+  Factories[Name] = std::move(Factory);
 }
 
 void ClangTidyCheckFactories::createChecks(
