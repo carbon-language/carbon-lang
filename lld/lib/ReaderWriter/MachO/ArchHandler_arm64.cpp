@@ -306,7 +306,6 @@ std::error_code ArchHandler_arm64::getReferenceInfo(
     FindAtomBySectionAndAddress atomFromAddress,
     FindAtomBySymbolIndex atomFromSymbolIndex, Reference::KindValue *kind,
     const lld::Atom **target, Reference::Addend *addend) {
-  typedef std::error_code E;
   const uint8_t *fixupContent = &inAtom->rawContent()[offsetInAtom];
   switch (relocPattern(reloc)) {
   case ARM64_RELOC_BRANCH26           | rPcRel | rExtern | rLength4:
