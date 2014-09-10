@@ -103,7 +103,10 @@ static cl::opt<std::string> ExportFixes(
              "code with clang-apply-replacements."),
     cl::value_desc("filename"), cl::cat(ClangTidyCategory));
 
-static void printStats(const clang::tidy::ClangTidyStats &Stats) {
+namespace clang {
+namespace tidy {
+
+static void printStats(const ClangTidyStats &Stats) {
   if (Stats.errorsIgnored()) {
     llvm::errs() << "Suppressed " << Stats.errorsIgnored() << " warnings (";
     StringRef Separator = "";
@@ -130,23 +133,22 @@ static void printStats(const clang::tidy::ClangTidyStats &Stats) {
   }
 }
 
-int main(int argc, const char **argv) {
+int clangTidyMain(int argc, const char **argv) {
   CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory);
 
-  clang::tidy::ClangTidyGlobalOptions GlobalOptions;
-  if (std::error_code Err =
-          clang::tidy::parseLineFilter(LineFilter, GlobalOptions)) {
+  ClangTidyGlobalOptions GlobalOptions;
+  if (std::error_code Err = parseLineFilter(LineFilter, GlobalOptions)) {
     llvm::errs() << "Invalid LineFilter: " << Err.message() << "\n\nUsage:\n";
     llvm::cl::PrintHelpMessage(/*Hidden=*/false, /*Categorized=*/true);
     return 1;
   }
 
-  clang::tidy::ClangTidyOptions FallbackOptions;
+  ClangTidyOptions FallbackOptions;
   FallbackOptions.Checks = DefaultChecks;
   FallbackOptions.HeaderFilterRegex = HeaderFilter;
   FallbackOptions.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
 
-  clang::tidy::ClangTidyOptions OverrideOptions;
+  ClangTidyOptions OverrideOptions;
   if (Checks.getNumOccurrences() > 0)
     OverrideOptions.Checks = Checks;
   if (HeaderFilter.getNumOccurrences() > 0)
@@ -154,12 +156,12 @@ int main(int argc, const char **argv) {
   if (AnalyzeTemporaryDtors.getNumOccurrences() > 0)
     OverrideOptions.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
 
-  auto OptionsProvider = llvm::make_unique<clang::tidy::FileOptionsProvider>(
+  auto OptionsProvider = llvm::make_unique<FileOptionsProvider>(
       GlobalOptions, FallbackOptions, OverrideOptions);
 
   std::string FileName = OptionsParser.getSourcePathList().front();
-  std::vector<std::string> EnabledChecks =
-      clang::tidy::getCheckNames(OptionsProvider->getOptions(FileName));
+  ClangTidyOptions EffectiveOptions = OptionsProvider->getOptions(FileName);
+  std::vector<std::string> EnabledChecks = getCheckNames(EffectiveOptions);
 
   // FIXME: Allow using --list-checks without positional arguments.
   if (ListChecks) {
@@ -171,9 +173,8 @@ int main(int argc, const char **argv) {
   }
 
   if (DumpConfig) {
-    llvm::outs() << clang::tidy::configurationAsText(
-                        clang::tidy::ClangTidyOptions::getDefaults()
-                            .mergeWith(OptionsProvider->getOptions(FileName)))
+    llvm::outs() << configurationAsText(ClangTidyOptions::getDefaults()
+                                            .mergeWith(EffectiveOptions))
                  << "\n";
     return 0;
   }
@@ -184,11 +185,11 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  std::vector<clang::tidy::ClangTidyError> Errors;
-  clang::tidy::ClangTidyStats Stats = clang::tidy::runClangTidy(
-      std::move(OptionsProvider), OptionsParser.getCompilations(),
-      OptionsParser.getSourcePathList(), &Errors);
-  clang::tidy::handleErrors(Errors, Fix);
+  std::vector<ClangTidyError> Errors;
+  ClangTidyStats Stats =
+      runClangTidy(std::move(OptionsProvider), OptionsParser.getCompilations(),
+                   OptionsParser.getSourcePathList(), &Errors);
+  handleErrors(Errors, Fix);
 
   if (!ExportFixes.empty() && !Errors.empty()) {
     std::error_code EC;
@@ -197,15 +198,12 @@ int main(int argc, const char **argv) {
       llvm::errs() << "Error opening output file: " << EC.message() << '\n';
       return 1;
     }
-    clang::tidy::exportReplacements(Errors, OS);
+    exportReplacements(Errors, OS);
   }
 
   printStats(Stats);
   return 0;
 }
-
-namespace clang {
-namespace tidy {
 
 // This anchor is used to force the linker to link the LLVMModule.
 extern volatile int LLVMModuleAnchorSource;
@@ -221,3 +219,7 @@ static int MiscModuleAnchorDestination = MiscModuleAnchorSource;
 
 } // namespace tidy
 } // namespace clang
+
+int main(int argc, const char **argv) {
+  return clang::tidy::clangTidyMain(argc, argv);
+}
