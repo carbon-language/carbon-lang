@@ -290,10 +290,10 @@ the opcode, the number of operands, the list of implicit register uses and defs,
 whether the instruction has certain target-independent properties (accesses
 memory, is commutable, etc), and holds any target-specific flags.
 
-The ``TargetFrameInfo`` class
+The ``TargetFrameLowering`` class
 -----------------------------
 
-The ``TargetFrameInfo`` class is used to provide information about the stack
+The ``TargetFrameLowering`` class is used to provide information about the stack
 frame layout of the target. It holds the direction of stack growth, the known
 stack alignment on entry to each function, and the offset to the local area.
 The offset to the local area is the offset from the stack pointer on function
