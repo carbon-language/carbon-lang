@@ -78,10 +78,15 @@ AArch64Subtarget::ClassifyGlobalReference(const GlobalValue *GV,
     return AArch64II::MO_GOT;
 
   // The small code mode's direct accesses use ADRP, which cannot necessarily
-  // produce the value 0 (if the code is above 4GB). Therefore they must use the
-  // GOT.
-  if (TM.getCodeModel() == CodeModel::Small && GV->isWeakForLinker() && isDecl)
-    return AArch64II::MO_GOT;
+  // produce the value 0 (if the code is above 4GB).
+  if (TM.getCodeModel() == CodeModel::Small &&
+      GV->isWeakForLinker() && isDecl) {
+    // In PIC mode use the GOT, but in absolute mode use a constant pool load.
+    if (TM.getRelocationModel() == Reloc::Static)
+        return AArch64II::MO_CONSTPOOL;
+    else
+        return AArch64II::MO_GOT;
+  }
 
   // If symbol visibility is hidden, the extra load is not needed if
   // the symbol is definitely defined in the current translation unit.
