@@ -195,6 +195,9 @@ struct FormatStyle {
   /// single line.
   bool AllowShortLoopsOnASingleLine;
 
+  /// \brief If \c true, short case labels will be contracted to a single line.
+  bool AllowShortCaseLabelsOnASingleLine;
+
   /// \brief Different styles for merging short functions containing at most one
   /// statement.
   enum ShortFunctionStyle {

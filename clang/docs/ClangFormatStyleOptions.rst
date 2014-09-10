@@ -148,6 +148,9 @@ the configuration (without a prefix: ``Auto``).
 
   E.g., this allows ``if (a) { return; }`` to be put on a single line.
 
+**AllowShortCaseLabelsOnASingleLine** (``bool``)
+  If ``true``, short case labels will be contracted to a single line.
+
 **AllowShortFunctionsOnASingleLine** (``ShortFunctionStyle``)
   Dependent on the value, ``int f() { return 0; }`` can be put
   on a single line.
@@ -257,7 +260,7 @@ the configuration (without a prefix: ``Auto``).
 
 **DerivePointerAlignment** (``bool``)
   If ``true``, analyze the formatted file for the most common
-  alignment of ``&`` and ``*``. ``PointerAlignment`` is then used only as fallback.
+  alignment of & and *. ``PointerAlignment`` is then used only as fallback.
 
 **DisableFormat** (``bool``)
   Disables formatting at all.
@@ -374,6 +377,9 @@ the configuration (without a prefix: ``Auto``).
     Align pointer in the middle.
 
 
+**SpaceAfterCStyleCast** (``bool``)
+  If ``true``, a space may be inserted after C style casts.
+
 **SpaceBeforeAssignmentOperators** (``bool``)
   If ``false``, spaces will be removed before assignment operators.
 
@@ -411,9 +417,6 @@ the configuration (without a prefix: ``Auto``).
 **SpacesInCStyleCastParentheses** (``bool``)
   If ``true``, spaces may be inserted into C style casts.
 
-**SpaceAfterCStyleCast** (``bool``)
-  If ``true``, a space may be inserted after C style casts.
-
 **SpacesInContainerLiterals** (``bool``)
   If ``true``, spaces are inserted inside container literals (e.g.
   ObjC and Javascript array and dict literals).
@@ -422,8 +425,7 @@ the configuration (without a prefix: ``Auto``).
   If ``true``, spaces will be inserted after '(' and before ')'.
 
 **SpacesInSquareBrackets** (``bool``)
-  If ``true``, spaces will be inserted after '[' and before ']' in array
-  declarations and element access expressions, but not in lambdas.
+  If ``true``, spaces will be inserted after '[' and before ']'.
 
 **Standard** (``LanguageStandard``)
   Format compatible with this standard, e.g. use

@@ -700,6 +700,47 @@ TEST_F(FormatTest, CaseRanges) {
                "}");
 }
 
+TEST_F(FormatTest, ShortCaseLabels) {
+  FormatStyle Style = getLLVMStyle();
+  Style.AllowShortCaseLabelsOnASingleLine = true;
+  verifyFormat("switch (a) {\n"
+               "case 1: x = 1; break;\n"
+               "case 2: return;\n"
+               "case 3:\n"
+               "case 4:\n"
+               "case 5: return;\n"
+               "default: y = 1; break;\n"
+               "}",
+               Style);
+  verifyFormat("switch (a) {\n"
+               "case 1: {\n"
+               "}\n"
+               "case 2: {\n"
+               "  return;\n"
+               "}\n"
+               "case 3: {\n"
+               "  x = 1;\n"
+               "  return;\n"
+               "}\n"
+               "case 4:\n"
+               "  if (x)\n"
+               "    return;\n"
+               "}",
+               Style);
+  Style.ColumnLimit = 21;
+  verifyFormat("switch (a) {\n"
+               "case 1: x = 1; break;\n"
+               "case 2: return;\n"
+               "case 3:\n"
+               "case 4:\n"
+               "case 5: return;\n"
+               "default:\n"
+               "  y = 1;\n"
+               "  break;\n"
+               "}",
+               Style);
+}
+
 TEST_F(FormatTest, FormatsLabels) {
   verifyFormat("void f() {\n"
                "  some_code();\n"
@@ -8316,6 +8357,7 @@ TEST_F(FormatTest, ParsesConfigurationBools) {
   CHECK_PARSE_BOOL(AlignTrailingComments);
   CHECK_PARSE_BOOL(AllowAllParametersOfDeclarationOnNextLine);
   CHECK_PARSE_BOOL(AllowShortBlocksOnASingleLine);
+  CHECK_PARSE_BOOL(AllowShortCaseLabelsOnASingleLine);
   CHECK_PARSE_BOOL(AllowShortIfStatementsOnASingleLine);
   CHECK_PARSE_BOOL(AllowShortLoopsOnASingleLine);
   CHECK_PARSE_BOOL(AlwaysBreakAfterDefinitionReturnType);

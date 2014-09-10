@@ -167,6 +167,8 @@ template <> struct MappingTraits<FormatStyle> {
                    Style.AllowAllParametersOfDeclarationOnNextLine);
     IO.mapOptional("AllowShortBlocksOnASingleLine",
                    Style.AllowShortBlocksOnASingleLine);
+    IO.mapOptional("AllowShortCaseLabelsOnASingleLine",
+                   Style.AllowShortCaseLabelsOnASingleLine);
     IO.mapOptional("AllowShortIfStatementsOnASingleLine",
                    Style.AllowShortIfStatementsOnASingleLine);
     IO.mapOptional("AllowShortLoopsOnASingleLine",
@@ -313,6 +315,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.AllowAllParametersOfDeclarationOnNextLine = true;
   LLVMStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_All;
   LLVMStyle.AllowShortBlocksOnASingleLine = false;
+  LLVMStyle.AllowShortCaseLabelsOnASingleLine = false;
   LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
   LLVMStyle.AllowShortLoopsOnASingleLine = false;
   LLVMStyle.AlwaysBreakAfterDefinitionReturnType = false;
@@ -642,6 +645,11 @@ public:
                  ? tryMergeSimpleControlStatement(I, E, Limit)
                  : 0;
     }
+    if (TheLine->First->isOneOf(tok::kw_case, tok::kw_default)) {
+      return Style.AllowShortCaseLabelsOnASingleLine
+                 ? tryMergeShortCaseLabels(I, E, Limit)
+                 : 0;
+    }
     if (TheLine->InPPDirective &&
         (TheLine->First->HasUnescapedNewline || TheLine->First->IsFirst)) {
       return tryMergeSimplePPDirective(I, E, Limit);
@@ -692,6 +700,30 @@ private:
         I[2]->First->is(tok::kw_else))
       return 0;
     return 1;
+  }
+
+  unsigned tryMergeShortCaseLabels(
+      SmallVectorImpl<AnnotatedLine *>::const_iterator I,
+      SmallVectorImpl<AnnotatedLine *>::const_iterator E, unsigned Limit) {
+    if (Limit == 0 || I + 1 == E ||
+        I[1]->First->isOneOf(tok::kw_case, tok::kw_default))
+      return 0;
+    unsigned NumStmts = 0;
+    unsigned Length = 0;
+    for (; NumStmts < 3; ++NumStmts) {
+      if (I + 1 + NumStmts == E)
+        break;
+      const AnnotatedLine *Line = I[1 + NumStmts];
+      if (Line->First->isOneOf(tok::kw_case, tok::kw_default, tok::r_brace))
+        break;
+      if (Line->First->isOneOf(tok::kw_if, tok::kw_for, tok::kw_switch,
+                               tok::kw_while))
+        return 0;
+      Length += I[1 + NumStmts]->Last->TotalLength + 1; // 1 for the space.
+    }
+    if (NumStmts == 0 || NumStmts == 3 || Length > Limit)
+      return 0;
+    return NumStmts;
   }
 
   unsigned
