@@ -284,7 +284,7 @@
 
 /// \macro LLVM_ASSUME_ALIGNED
 /// \brief Returns a pointer with an assumed alignment.
-#if __has_builtin(__builtin_assume_aligned) && __GNUC_PREREQ(4, 7)
+#if __has_builtin(__builtin_assume_aligned) || __GNUC_PREREQ(4, 7)
 # define LLVM_ASSUME_ALIGNED(p, a) __builtin_assume_aligned(p, a)
 #elif defined(LLVM_BUILTIN_UNREACHABLE)
 // As of today, clang does not support __builtin_assume_aligned.
