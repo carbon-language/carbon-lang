@@ -18,7 +18,7 @@ namespace CodeGen {
 class CodeGenFunction;
 
 /// \brief This is an IRBuilder insertion helper that forwards to
-/// CodeGenFunction::InsertHelper, which adds nesessary metadata to
+/// CodeGenFunction::InsertHelper, which adds necessary metadata to
 /// instructions.
 template <bool PreserveNames>
 class CGBuilderInserter
