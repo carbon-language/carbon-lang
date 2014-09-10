@@ -1947,7 +1947,7 @@ static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
       Target.setEnvironment(llvm::Triple::CODE16);
     }
 
-    if (AT != llvm::Triple::UnknownArch)
+    if (AT != llvm::Triple::UnknownArch && AT != Target.getArch())
       Target.setArch(AT);
   }
 
