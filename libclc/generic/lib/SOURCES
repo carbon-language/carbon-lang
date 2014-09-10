@@ -48,6 +48,7 @@ math/pown.cl
 math/sin.cl
 math/sincos.cl
 math/sincos_helpers.cl
+math/tan.cl
 relational/all.cl
 relational/any.cl
 relational/isequal.cl
