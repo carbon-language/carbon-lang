@@ -1,5 +1,7 @@
 include(CompilerRTCompile)
 
+clang_compiler_add_cxx_check()
+
 set(SANITIZER_UNITTESTS
   sanitizer_allocator_test.cc
   sanitizer_atomic_test.cc
