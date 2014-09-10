@@ -567,7 +567,14 @@ public:
                                    const data_directory *&Res) const;
   std::error_code getSection(int32_t index, const coff_section *&Res) const;
   template <typename coff_symbol_type>
-  std::error_code getSymbol(uint32_t index, const coff_symbol_type *&Res) const;
+  std::error_code getSymbol(uint32_t Index,
+                            const coff_symbol_type *&Res) const {
+    if (Index < getNumberOfSymbols())
+      Res = reinterpret_cast<coff_symbol_type *>(getSymbolTable()) + Index;
+    else
+      return object_error::parse_failed;
+    return object_error::success;
+  }
   ErrorOr<COFFSymbolRef> getSymbol(uint32_t index) const {
     if (SymbolTable16) {
       const coff_symbol16 *Symb = nullptr;

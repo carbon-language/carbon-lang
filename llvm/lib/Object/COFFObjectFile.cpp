@@ -768,17 +768,6 @@ std::error_code COFFObjectFile::getString(uint32_t Offset,
   return object_error::success;
 }
 
-template <typename coff_symbol_type>
-std::error_code
-COFFObjectFile::getSymbol(uint32_t Index,
-                          const coff_symbol_type *&Result) const {
-  if (Index < getNumberOfSymbols())
-    Result = reinterpret_cast<coff_symbol_type *>(getSymbolTable()) + Index;
-  else
-    return object_error::parse_failed;
-  return object_error::success;
-}
-
 std::error_code COFFObjectFile::getSymbolName(COFFSymbolRef Symbol,
                                               StringRef &Res) const {
   // Check for string table entry. First 4 bytes are 0.
