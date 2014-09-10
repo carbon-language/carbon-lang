@@ -72,12 +72,6 @@ struct DataInfo {
 
 class Symbolizer {
  public:
-  /// Returns platform-specific implementation of Symbolizer. The symbolizer
-  /// must be initialized (with init or disable) before calling this function.
-  static Symbolizer *Get();
-  /// Returns platform-specific implementation of Symbolizer, or null if not
-  /// initialized.
-  static Symbolizer *GetOrNull();
   /// Initialize and return platform-specific implementation of symbolizer
   /// (if it wasn't already initialized).
   static Symbolizer *GetOrInit();

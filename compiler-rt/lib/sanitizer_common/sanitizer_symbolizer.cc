@@ -22,17 +22,6 @@ Symbolizer *Symbolizer::symbolizer_;
 StaticSpinMutex Symbolizer::init_mu_;
 LowLevelAllocator Symbolizer::symbolizer_allocator_;
 
-Symbolizer *Symbolizer::GetOrNull() {
-  SpinMutexLock l(&init_mu_);
-  return symbolizer_;
-}
-
-Symbolizer *Symbolizer::Get() {
-  SpinMutexLock l(&init_mu_);
-  RAW_CHECK_MSG(symbolizer_ != 0, "Using uninitialized symbolizer!");
-  return symbolizer_;
-}
-
 Symbolizer *Symbolizer::Disable() {
   CHECK_EQ(0, symbolizer_);
   // Initialize a dummy symbolizer.

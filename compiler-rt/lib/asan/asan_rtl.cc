@@ -646,11 +646,7 @@ static void AsanInitInternal() {
   AsanTSDInit(PlatformTSDDtor);
   InstallDeadlySignalHandlers(AsanOnSIGSEGV);
 
-  // Allocator should be initialized before starting external symbolizer, as
-  // fork() on Mac locks the allocator.
   InitializeAllocator();
-
-  Symbolizer::GetOrInit();
 
   // On Linux AsanThread::ThreadStart() calls malloc() that's why asan_inited
   // should be set to 1 prior to initializing the threads.

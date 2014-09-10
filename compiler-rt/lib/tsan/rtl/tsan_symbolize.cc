@@ -111,7 +111,7 @@ ReportStack *SymbolizeCode(uptr addr) {
   InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
   for (uptr i = 0; i < kMaxAddrFrames; i++)
     new(&addr_frames[i]) AddressInfo();
-  uptr addr_frames_num = Symbolizer::Get()->SymbolizePC(
+  uptr addr_frames_num = Symbolizer::GetOrInit()->SymbolizePC(
       addr, addr_frames.data(), kMaxAddrFrames);
   if (addr_frames_num == 0)
     return NewReportStackEntry(addr);
@@ -132,7 +132,7 @@ ReportStack *SymbolizeCode(uptr addr) {
 
 ReportLocation *SymbolizeData(uptr addr) {
   DataInfo info;
-  if (!Symbolizer::Get()->SymbolizeData(addr, &info))
+  if (!Symbolizer::GetOrInit()->SymbolizeData(addr, &info))
     return 0;
   ReportLocation *ent = (ReportLocation*)internal_alloc(MBlockReportStack,
                                                         sizeof(ReportLocation));
@@ -148,7 +148,7 @@ ReportLocation *SymbolizeData(uptr addr) {
 }
 
 void SymbolizeFlush() {
-  Symbolizer::Get()->Flush();
+  Symbolizer::GetOrInit()->Flush();
 }
 
 }  // namespace __tsan

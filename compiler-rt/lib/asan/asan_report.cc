@@ -200,7 +200,7 @@ static const char *MaybeDemangleGlobalName(const char *name) {
   else if (SANITIZER_WINDOWS && name[0] == '\01' && name[1] == '?')
     should_demangle = true;
 
-  return should_demangle ? Symbolizer::Get()->Demangle(name) : name;
+  return should_demangle ? Symbolizer::GetOrInit()->Demangle(name) : name;
 }
 
 // Check if the global is a zero-terminated ASCII string. If so, print it.

@@ -423,8 +423,7 @@ void PrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
   MemoryMappingLayout::CacheMemoryMappings();
   // Same for /proc/self/exe in the symbolizer.
 #if !SANITIZER_GO
-  if (Symbolizer *sym = Symbolizer::GetOrNull())
-    sym->PrepareForSandboxing();
+  Symbolizer::GetOrInit()->PrepareForSandboxing();
   CovPrepareForSandboxing(args);
 #endif
 }

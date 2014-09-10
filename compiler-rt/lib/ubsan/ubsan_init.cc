@@ -39,7 +39,6 @@ void __ubsan::InitIfNecessary() {
     // in this function.
     SanitizerToolName = "UndefinedBehaviorSanitizer";
     InitializeCommonFlags();
-    Symbolizer::GetOrInit();
   }
   // Initialize UBSan-specific flags.
   InitializeFlags();

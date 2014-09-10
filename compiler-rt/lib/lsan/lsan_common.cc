@@ -462,8 +462,8 @@ static Suppression *GetSuppressionForAddr(uptr addr) {
   // Suppress by module name.
   const char *module_name;
   uptr module_offset;
-  if (Symbolizer::Get()->GetModuleNameAndOffsetForPC(addr, &module_name,
-                                                     &module_offset) &&
+  if (Symbolizer::GetOrInit()
+          ->GetModuleNameAndOffsetForPC(addr, &module_name, &module_offset) &&
       SuppressionContext::Get()->Match(module_name, SuppressionLeak, &s))
     return s;
 
@@ -471,7 +471,7 @@ static Suppression *GetSuppressionForAddr(uptr addr) {
   static const uptr kMaxAddrFrames = 16;
   InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
   for (uptr i = 0; i < kMaxAddrFrames; i++) new (&addr_frames[i]) AddressInfo();
-  uptr addr_frames_num = Symbolizer::Get()->SymbolizePC(
+  uptr addr_frames_num = Symbolizer::GetOrInit()->SymbolizePC(
       addr, addr_frames.data(), kMaxAddrFrames);
   for (uptr i = 0; i < addr_frames_num; i++) {
     if (SuppressionContext::Get()->Match(addr_frames[i].function,

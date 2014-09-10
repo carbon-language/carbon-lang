@@ -14,8 +14,6 @@
 #include "sanitizer_common.h"
 #include "sanitizer_flags.h"
 #include "sanitizer_libc.h"
-#include "sanitizer_stacktrace.h"
-#include "sanitizer_symbolizer.h"
 
 namespace __sanitizer {
 
@@ -195,21 +193,6 @@ void ReportErrorSummary(const char *error_type, const char *file,
       file ? StripPathPrefix(file, common_flags()->strip_path_prefix) : "??",
       line, function ? function : "??");
   ReportErrorSummary(buff.data());
-}
-
-void ReportErrorSummary(const char *error_type, StackTrace *stack) {
-  if (!common_flags()->print_summary)
-    return;
-  AddressInfo ai;
-#if !SANITIZER_GO
-  if (stack->size > 0 && Symbolizer::Get()->CanReturnFileLineInfo()) {
-    // Currently, we include the first stack frame into the report summary.
-    // Maybe sometimes we need to choose another frame (e.g. skip memcpy/etc).
-    uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
-    Symbolizer::Get()->SymbolizePC(pc, &ai, 1);
-  }
-#endif
-  ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
 }
 
 LoadedModule::LoadedModule(const char *module_name, uptr base_address) {
