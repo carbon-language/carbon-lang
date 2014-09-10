@@ -1207,6 +1207,12 @@ void ItaniumCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
   // Set the right visibility.
   CGM.setGlobalVisibility(VTable, RD);
 
+  // Use pointer alignment for the vtable. Otherwise we would align them based
+  // on the size of the initializer which doesn't make sense as only single
+  // values are read.
+  unsigned PAlign = CGM.getTarget().getPointerAlign(0);
+  VTable->setAlignment(getContext().toCharUnitsFromBits(PAlign).getQuantity());
+
   // If this is the magic class __cxxabiv1::__fundamental_type_info,
   // we will emit the typeinfo for the fundamental types. This is the
   // same behaviour as GCC.
