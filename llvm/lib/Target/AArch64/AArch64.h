@@ -39,6 +39,7 @@ ModulePass *createAArch64PromoteConstantPass();
 FunctionPass *createAArch64ConditionOptimizerPass();
 FunctionPass *createAArch64AddressTypePromotionPass();
 FunctionPass *createAArch64A57FPLoadBalancing();
+FunctionPass *createAArch64A57PBQPRegAlloc();
 /// \brief Creates an ARM-specific Target Transformation Info pass.
 ImmutablePass *
 createAArch64TargetTransformInfoPass(const AArch64TargetMachine *TM);

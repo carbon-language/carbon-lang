@@ -13,6 +13,7 @@
 #include "AArch64.h"
 #include "AArch64TargetMachine.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -73,6 +74,10 @@ EnableCondOpt("aarch64-condopt",
               cl::desc("Enable the condition optimizer pass"),
               cl::init(true), cl::Hidden);
 
+static cl::opt<bool>
+EnablePBQP("aarch64-pbqp", cl::Hidden,
+           cl::desc("Use PBQP register allocator (experimental)"),
+           cl::init(false));
 
 extern "C" void LLVMInitializeAArch64Target() {
   // Register the target.
@@ -90,8 +95,14 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
                                            CodeGenOpt::Level OL,
                                            bool LittleEndian)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-      Subtarget(TT, CPU, FS, *this, LittleEndian) {
+      Subtarget(TT, CPU, FS, *this, LittleEndian),
+      usingPBQP(false) {
   initAsmInfo();
+
+  if (EnablePBQP && Subtarget.isCortexA57() && OL != CodeGenOpt::None) {
+    usingPBQP = true;
+    RegisterRegAlloc::setDefault(createAArch64A57PBQPRegAlloc);
+  }
 }
 
 void AArch64leTargetMachine::anchor() { }
@@ -216,7 +227,8 @@ bool AArch64PassConfig::addPostRegAlloc() {
   if (TM->getOptLevel() != CodeGenOpt::None && EnableDeadRegisterElimination)
     addPass(createAArch64DeadRegisterDefinitions());
   if (TM->getOptLevel() != CodeGenOpt::None &&
-      TM->getSubtarget<AArch64Subtarget>().isCortexA57())
+      TM->getSubtarget<AArch64Subtarget>().isCortexA57() &&
+      !static_cast<const AArch64TargetMachine *>(TM)->isPBQPUsed())
     // Improve performance for some FP/SIMD code for A57.
     addPass(createAArch64A57FPLoadBalancing());
   return true;

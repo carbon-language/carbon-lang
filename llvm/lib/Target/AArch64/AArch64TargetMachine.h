@@ -40,6 +40,12 @@ public:
 
   /// \brief Register AArch64 analysis passes with a pass manager.
   void addAnalysisPasses(PassManagerBase &PM) override;
+
+  /// \brief Query if the PBQP register allocator is being used
+  bool isPBQPUsed() const { return usingPBQP; }
+
+private:
+  bool usingPBQP;
 };
 
 // AArch64leTargetMachine - AArch64 little endian target machine.
