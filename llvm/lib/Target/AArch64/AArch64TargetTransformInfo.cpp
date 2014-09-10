@@ -517,7 +517,7 @@ unsigned AArch64TTI::getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys) const {
 }
 
 unsigned AArch64TTI::getMaxInterleaveFactor() const {
-  if (ST->isCortexA57() || ST->isCyclone())
+  if (ST->isCortexA57())
     return 4;
   return 2;
 }
