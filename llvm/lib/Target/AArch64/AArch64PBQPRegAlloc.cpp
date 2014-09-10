@@ -31,7 +31,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 #define PBQP_BUILDER PBQPBuilderWithCoalescing
-//#define PBQP_BUILDER PBQPBuilder
 
 using namespace llvm;
 
@@ -195,8 +194,8 @@ bool A57PBQPBuilder::addIntraChainConstraint(PBQPRAProblem *p, unsigned Rd,
     return false;
 
   if (isPhysicalReg(Rd) || isPhysicalReg(Ra)) {
-    dbgs() << "Rd is a physical reg:" << isPhysicalReg(Rd) << '\n';
-    dbgs() << "Ra is a physical reg:" << isPhysicalReg(Ra) << '\n';
+    DEBUG(dbgs() << "Rd is a physical reg:" << isPhysicalReg(Rd) << '\n');
+    DEBUG(dbgs() << "Ra is a physical reg:" << isPhysicalReg(Ra) << '\n');
     return false;
   }
 
@@ -216,9 +215,9 @@ bool A57PBQPBuilder::addIntraChainConstraint(PBQPRAProblem *p, unsigned Rd,
     bool livesOverlap = ld.overlaps(la);
 
     PBQP::Matrix costs(vRdAllowed->size() + 1, vRaAllowed->size() + 1, 0);
-    for (unsigned i = 0; i != vRdAllowed->size(); ++i) {
+    for (unsigned i = 0, ie = vRdAllowed->size(); i != ie; ++i) {
       unsigned pRd = (*vRdAllowed)[i];
-      for (unsigned j = 0; j != vRaAllowed->size(); ++j) {
+      for (unsigned j = 0, je = vRaAllowed->size(); j != je; ++j) {
         unsigned pRa = (*vRaAllowed)[j];
         if (livesOverlap && TRI->regsOverlap(pRd, pRa))
           costs[i + 1][j + 1] = std::numeric_limits<PBQP::PBQPNum>::infinity();
@@ -237,13 +236,13 @@ bool A57PBQPBuilder::addIntraChainConstraint(PBQPRAProblem *p, unsigned Rd,
 
   // Enforce minCost(sameParity(RaClass)) > maxCost(otherParity(RdClass))
   PBQP::Matrix costs(g.getEdgeCosts(edge));
-  for (unsigned i = 0; i != vRdAllowed->size(); ++i) {
+  for (unsigned i = 0, ie = vRdAllowed->size(); i != ie; ++i) {
     unsigned pRd = (*vRdAllowed)[i];
 
     // Get the maximum cost (excluding unallocatable reg) for same parity
     // registers
     PBQP::PBQPNum sameParityMax = std::numeric_limits<PBQP::PBQPNum>::min();
-    for (unsigned j = 0; j != vRaAllowed->size(); ++j) {
+    for (unsigned j = 0, je = vRaAllowed->size(); j != je; ++j) {
       unsigned pRa = (*vRaAllowed)[j];
       if (haveSameParity(pRd, pRa))
         if (costs[i + 1][j + 1] !=
@@ -254,7 +253,7 @@ bool A57PBQPBuilder::addIntraChainConstraint(PBQPRAProblem *p, unsigned Rd,
 
     // Ensure all registers with a different parity have a higher cost
     // than sameParityMax
-    for (unsigned j = 0; j != vRaAllowed->size(); ++j) {
+    for (unsigned j = 0, je = vRaAllowed->size(); j != je; ++j) {
       unsigned pRa = (*vRaAllowed)[j];
       if (!haveSameParity(pRd, pRa))
         if (sameParityMax > costs[i + 1][j + 1])
@@ -310,13 +309,13 @@ A57PBQPBuilder::addInterChainConstraint(PBQPRAProblem *p, unsigned Rd,
 
       // Enforce that cost is higher with all other Chains of the same parity
       PBQP::Matrix costs(g.getEdgeCosts(edge));
-      for (unsigned i = 0; i != vRdAllowed->size(); ++i) {
+      for (unsigned i = 0, ie = vRdAllowed->size(); i != ie; ++i) {
         unsigned pRd = (*vRdAllowed)[i];
 
         // Get the maximum cost (excluding unallocatable reg) for all other
         // parity registers
         PBQP::PBQPNum sameParityMax = std::numeric_limits<PBQP::PBQPNum>::min();
-        for (unsigned j = 0; j != vRrAllowed->size(); ++j) {
+        for (unsigned j = 0, je = vRrAllowed->size(); j != je; ++j) {
           unsigned pRa = (*vRrAllowed)[j];
           if (!haveSameParity(pRd, pRa))
             if (costs[i + 1][j + 1] !=
@@ -327,7 +326,7 @@ A57PBQPBuilder::addInterChainConstraint(PBQPRAProblem *p, unsigned Rd,
 
         // Ensure all registers with same parity have a higher cost
         // than sameParityMax
-        for (unsigned j = 0; j != vRrAllowed->size(); ++j) {
+        for (unsigned j = 0, je = vRrAllowed->size(); j != je; ++j) {
           unsigned pRa = (*vRrAllowed)[j];
           if (haveSameParity(pRd, pRa))
             if (sameParityMax > costs[i + 1][j + 1])
