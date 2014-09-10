@@ -97,9 +97,6 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 //                         MergedLoadStoreMotion Pass
 //===----------------------------------------------------------------------===//
-static cl::opt<bool>
-EnableMLSM("mlsm", cl::desc("Enable motion of merged load and store"),
-           cl::init(true));
 
 namespace {
 class MergedLoadStoreMotion : public FunctionPass {
@@ -611,8 +608,6 @@ bool MergedLoadStoreMotion::runOnFunction(Function &F) {
   AA = &getAnalysis<AliasAnalysis>();
 
   bool Changed = false;
-  if (!EnableMLSM)
-    return false;
   DEBUG(dbgs() << "Instruction Merger\n");
 
   // Merge unconditional branches, allowing PRE to catch more
