@@ -35,6 +35,10 @@
 # CHECK: sne   $23, $23, $20          # encoding: [0x72,0xf4,0xb8,0x2b]
 # CHECK: snei  $4, $16, -313          # encoding: [0x72,0x04,0xb1,0xef]
 # CHECK: snei  $26, $26, 511          # encoding: [0x73,0x5a,0x7f,0xef]
+# CHECK: sync  2                      # encoding: [0x00,0x00,0x00,0x8f]
+# CHECK: sync  6                      # encoding: [0x00,0x00,0x01,0x8f]
+# CHECK: sync  4                      # encoding: [0x00,0x00,0x01,0x0f]
+# CHECK: sync  5                      # encoding: [0x00,0x00,0x01,0x4f]
 # CHECK: v3mulu $21, $10, $21         # encoding: [0x71,0x55,0xa8,0x11]
 # CHECK: v3mulu $20, $20, $10         # encoding: [0x72,0x8a,0xa0,0x11]
 # CHECK: vmm0  $3, $19, $16           # encoding: [0x72,0x70,0x18,0x10]
@@ -77,6 +81,10 @@
   sne   $23, $20
   snei  $4, $16, -313
   snei  $26, 511
+  synciobdma
+  syncs
+  syncw
+  syncws
   v3mulu $21, $10, $21
   v3mulu $20, $10
   vmm0  $3, $19, $16

@@ -510,3 +510,9 @@ def : MipsInstAlias<"dmtc0 $rt, $rd", (DMTC0 GPR64Opnd:$rt, GPR64Opnd:$rd, 0), 0
 def : MipsInstAlias<"dmfc2 $rt, $rd", (DMFC2 GPR64Opnd:$rt, GPR64Opnd:$rd, 0), 0>;
 def : MipsInstAlias<"dmtc2 $rt, $rd", (DMTC2 GPR64Opnd:$rt, GPR64Opnd:$rd, 0), 0>;
 
+let Predicates = [HasMips64, HasCnMips] in {
+def : MipsInstAlias<"synciobdma", (SYNC 0x2), 0>;
+def : MipsInstAlias<"syncs",      (SYNC 0x6), 0>;
+def : MipsInstAlias<"syncw",      (SYNC 0x4), 0>;
+def : MipsInstAlias<"syncws",     (SYNC 0x5), 0>;
+}
