@@ -71,8 +71,8 @@ static cl::opt<bool> UseCFLAA("use-cfl-aa",
   cl::desc("Enable the new, experimental CFL alias analysis"));
 
 static cl::opt<bool>
-EnableMLSM("mlsm", cl::desc("Enable motion of merged load and store"),
-           cl::init(true));
+EnableMLSM("mlsm", cl::init(true), cl::Hidden,
+           cl::desc("Enable motion of merged load and store"));
 
 PassManagerBuilder::PassManagerBuilder() {
     OptLevel = 2;
