@@ -457,6 +457,7 @@ static void drop(GlobalValue &GV) {
                          /*Initializer*/ nullptr);
   Var->takeName(&Alias);
   Alias.replaceAllUsesWith(Var);
+  Alias.eraseFromParent();
 }
 
 static const char *getResolutionName(ld_plugin_symbol_resolution R) {
