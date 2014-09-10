@@ -29,6 +29,7 @@ integer/sub_sat.cl
 integer/sub_sat_if.ll
 integer/sub_sat_impl.ll
 integer/upsample.cl
+math/acos.cl
 math/atan.cl
 math/atan2.cl
 math/copysign.cl

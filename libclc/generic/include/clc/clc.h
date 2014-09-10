@@ -32,6 +32,7 @@
 #include <clc/workitem/get_group_id.h>
 
 /* 6.11.2 Math Functions */
+#include <clc/math/acos.h>
 #include <clc/math/atan.h>
 #include <clc/math/atan2.h>
 #include <clc/math/copysign.h>
