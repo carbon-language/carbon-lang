@@ -62,7 +62,7 @@ private:
   PassManager *getCodeGenPasses() const {
     if (!CodeGenPasses) {
       CodeGenPasses = new PassManager();
-      CodeGenPasses->add(new DataLayoutPass(TheModule));
+      CodeGenPasses->add(new DataLayoutPass());
       if (TM)
         TM->addAnalysisPasses(*CodeGenPasses);
     }
@@ -72,7 +72,7 @@ private:
   PassManager *getPerModulePasses() const {
     if (!PerModulePasses) {
       PerModulePasses = new PassManager();
-      PerModulePasses->add(new DataLayoutPass(TheModule));
+      PerModulePasses->add(new DataLayoutPass());
       if (TM)
         TM->addAnalysisPasses(*PerModulePasses);
     }
@@ -82,7 +82,7 @@ private:
   FunctionPassManager *getPerFunctionPasses() const {
     if (!PerFunctionPasses) {
       PerFunctionPasses = new FunctionPassManager(TheModule);
-      PerFunctionPasses->add(new DataLayoutPass(TheModule));
+      PerFunctionPasses->add(new DataLayoutPass());
       if (TM)
         TM->addAnalysisPasses(*PerFunctionPasses);
     }
