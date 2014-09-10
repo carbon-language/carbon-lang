@@ -28,6 +28,7 @@ typedef long NSInteger;
 - (void)setObject:(id)object atIndexedSubscript:(NSInteger)index;
 @end
 
+void *pvoid;
 int main() {
 	NSDictionary *dict = @{ @"name":@666 };
         dict[@"name"] = @666;
@@ -37,9 +38,13 @@ int main() {
         // rdar://18254621
         [@{@"foo" : @"bar"} objectForKeyedSubscript:nil];
         (void)@{@"foo" : @"bar"}[nil];
+        [@{@"foo" : @"bar"} objectForKeyedSubscript:pvoid];
+        (void)@{@"foo" : @"bar"}[pvoid];
 
 	[@{@"foo" : @"bar"} setObject:nil forKeyedSubscript:@"gorf"];
         @{@"foo" : @"bar"}[nil] = @"gorf";
+	[@{@"foo" : @"bar"} setObject:pvoid forKeyedSubscript:@"gorf"];
+        @{@"foo" : @"bar"}[pvoid] = @"gorf";
 
 	return 0;
 }
