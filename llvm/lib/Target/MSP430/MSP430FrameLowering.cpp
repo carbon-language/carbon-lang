@@ -63,18 +63,18 @@ void MSP430FrameLowering::emitPrologue(MachineFunction &MF) const {
     // Update the frame offset adjustment.
     MFI->setOffsetAdjustment(-NumBytes);
 
-    // Save FPW into the appropriate stack slot...
+    // Save FP into the appropriate stack slot...
     BuildMI(MBB, MBBI, DL, TII.get(MSP430::PUSH16r))
-      .addReg(MSP430::FPW, RegState::Kill);
+      .addReg(MSP430::FP, RegState::Kill);
 
-    // Update FPW with the new base value...
-    BuildMI(MBB, MBBI, DL, TII.get(MSP430::MOV16rr), MSP430::FPW)
-      .addReg(MSP430::SPW);
+    // Update FP with the new base value...
+    BuildMI(MBB, MBBI, DL, TII.get(MSP430::MOV16rr), MSP430::FP)
+      .addReg(MSP430::SP);
 
     // Mark the FramePtr as live-in in every block except the entry.
     for (MachineFunction::iterator I = std::next(MF.begin()), E = MF.end();
          I != E; ++I)
-      I->addLiveIn(MSP430::FPW);
+      I->addLiveIn(MSP430::FP);
 
   } else
     NumBytes = StackSize - MSP430FI->getCalleeSavedFrameSize();
@@ -86,18 +86,18 @@ void MSP430FrameLowering::emitPrologue(MachineFunction &MF) const {
   if (MBBI != MBB.end())
     DL = MBBI->getDebugLoc();
 
-  if (NumBytes) { // adjust stack pointer: SPW -= numbytes
-    // If there is an SUB16ri of SPW immediately before this instruction, merge
+  if (NumBytes) { // adjust stack pointer: SP -= numbytes
+    // If there is an SUB16ri of SP immediately before this instruction, merge
     // the two.
     //NumBytes -= mergeSPUpdates(MBB, MBBI, true);
-    // If there is an ADD16ri or SUB16ri of SPW immediately after this
+    // If there is an ADD16ri or SUB16ri of SP immediately after this
     // instruction, merge the two instructions.
     // mergeSPUpdatesDown(MBB, MBBI, &NumBytes);
 
     if (NumBytes) {
       MachineInstr *MI =
-        BuildMI(MBB, MBBI, DL, TII.get(MSP430::SUB16ri), MSP430::SPW)
-        .addReg(MSP430::SPW).addImm(NumBytes);
+        BuildMI(MBB, MBBI, DL, TII.get(MSP430::SUB16ri), MSP430::SP)
+        .addReg(MSP430::SP).addImm(NumBytes);
       // The SRW implicit def is dead.
       MI->getOperand(3).setIsDead();
     }
@@ -132,8 +132,8 @@ void MSP430FrameLowering::emitEpilogue(MachineFunction &MF,
     uint64_t FrameSize = StackSize - 2;
     NumBytes = FrameSize - CSSize;
 
-    // pop FPW.
-    BuildMI(MBB, MBBI, DL, TII.get(MSP430::POP16r), MSP430::FPW);
+    // pop FP.
+    BuildMI(MBB, MBBI, DL, TII.get(MSP430::POP16r), MSP430::FP);
   } else
     NumBytes = StackSize - CSSize;
 
@@ -148,28 +148,28 @@ void MSP430FrameLowering::emitEpilogue(MachineFunction &MF,
 
   DL = MBBI->getDebugLoc();
 
-  // If there is an ADD16ri or SUB16ri of SPW immediately before this
+  // If there is an ADD16ri or SUB16ri of SP immediately before this
   // instruction, merge the two instructions.
   //if (NumBytes || MFI->hasVarSizedObjects())
   //  mergeSPUpdatesUp(MBB, MBBI, StackPtr, &NumBytes);
 
   if (MFI->hasVarSizedObjects()) {
     BuildMI(MBB, MBBI, DL,
-            TII.get(MSP430::MOV16rr), MSP430::SPW).addReg(MSP430::FPW);
+            TII.get(MSP430::MOV16rr), MSP430::SP).addReg(MSP430::FP);
     if (CSSize) {
       MachineInstr *MI =
         BuildMI(MBB, MBBI, DL,
-                TII.get(MSP430::SUB16ri), MSP430::SPW)
-        .addReg(MSP430::SPW).addImm(CSSize);
+                TII.get(MSP430::SUB16ri), MSP430::SP)
+        .addReg(MSP430::SP).addImm(CSSize);
       // The SRW implicit def is dead.
       MI->getOperand(3).setIsDead();
     }
   } else {
-    // adjust stack pointer back: SPW += numbytes
+    // adjust stack pointer back: SP += numbytes
     if (NumBytes) {
       MachineInstr *MI =
-        BuildMI(MBB, MBBI, DL, TII.get(MSP430::ADD16ri), MSP430::SPW)
-        .addReg(MSP430::SPW).addImm(NumBytes);
+        BuildMI(MBB, MBBI, DL, TII.get(MSP430::ADD16ri), MSP430::SP)
+        .addReg(MSP430::SP).addImm(NumBytes);
       // The SRW implicit def is dead.
       MI->getOperand(3).setIsDead();
     }
@@ -232,8 +232,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
   if (!hasReservedCallFrame(MF)) {
     // If the stack pointer can be changed after prologue, turn the
-    // adjcallstackup instruction into a 'sub SPW, <amt>' and the
-    // adjcallstackdown instruction into 'add SPW, <amt>'
+    // adjcallstackup instruction into a 'sub SP, <amt>' and the
+    // adjcallstackdown instruction into 'add SP, <amt>'
     // TODO: consider using push / pop instead of sub + store / add
     MachineInstr *Old = I;
     uint64_t Amount = Old->getOperand(0).getImm();
@@ -246,8 +246,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       MachineInstr *New = nullptr;
       if (Old->getOpcode() == TII.getCallFrameSetupOpcode()) {
         New = BuildMI(MF, Old->getDebugLoc(),
-                      TII.get(MSP430::SUB16ri), MSP430::SPW)
-          .addReg(MSP430::SPW).addImm(Amount);
+                      TII.get(MSP430::SUB16ri), MSP430::SP)
+          .addReg(MSP430::SP).addImm(Amount);
       } else {
         assert(Old->getOpcode() == TII.getCallFrameDestroyOpcode());
         // factor out the amount the callee already popped.
@@ -255,8 +255,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
         Amount -= CalleeAmt;
         if (Amount)
           New = BuildMI(MF, Old->getDebugLoc(),
-                        TII.get(MSP430::ADD16ri), MSP430::SPW)
-            .addReg(MSP430::SPW).addImm(Amount);
+                        TII.get(MSP430::ADD16ri), MSP430::SP)
+            .addReg(MSP430::SP).addImm(Amount);
       }
 
       if (New) {
@@ -274,7 +274,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       MachineInstr *Old = I;
       MachineInstr *New =
         BuildMI(MF, Old->getDebugLoc(), TII.get(MSP430::SUB16ri),
-                MSP430::SPW).addReg(MSP430::SPW).addImm(CalleeAmt);
+                MSP430::SP).addReg(MSP430::SP).addImm(CalleeAmt);
       // The SRW implicit def is dead.
       New->getOperand(3).setIsDead();
 
@@ -288,11 +288,11 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 void
 MSP430FrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF,
                                                          RegScavenger *) const {
-  // Create a frame entry for the FPW register that must be saved.
+  // Create a frame entry for the FP register that must be saved.
   if (hasFP(MF)) {
     int FrameIdx = MF.getFrameInfo()->CreateFixedObject(2, -4, true);
     (void)FrameIdx;
     assert(FrameIdx == MF.getFrameInfo()->getObjectIndexBegin() &&
-           "Slot for FPW register must be last in order to be found!");
+           "Slot for FP register must be last in order to be found!");
   }
 }

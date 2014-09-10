@@ -46,22 +46,22 @@ def R15B : MSP430Reg<15, "r15">;
 def subreg_8bit : SubRegIndex<8> { let Namespace = "MSP430"; }
 
 let SubRegIndices = [subreg_8bit] in {
-def PCW  : MSP430RegWithSubregs<0,  "r0",  [PCB]>;
-def SPW  : MSP430RegWithSubregs<1,  "r1",  [SPB]>;
-def SRW  : MSP430RegWithSubregs<2,  "r2",  [SRB]>;
-def CGW  : MSP430RegWithSubregs<3,  "r3",  [CGB]>;
-def FPW  : MSP430RegWithSubregs<4,  "r4",  [FPB]>;
-def R5W  : MSP430RegWithSubregs<5,  "r5",  [R5B]>;
-def R6W  : MSP430RegWithSubregs<6,  "r6",  [R6B]>;
-def R7W  : MSP430RegWithSubregs<7,  "r7",  [R7B]>;
-def R8W  : MSP430RegWithSubregs<8,  "r8",  [R8B]>;
-def R9W  : MSP430RegWithSubregs<9,  "r9",  [R9B]>;
-def R10W : MSP430RegWithSubregs<10, "r10", [R10B]>;
-def R11W : MSP430RegWithSubregs<11, "r11", [R11B]>;
-def R12W : MSP430RegWithSubregs<12, "r12", [R12B]>;
-def R13W : MSP430RegWithSubregs<13, "r13", [R13B]>;
-def R14W : MSP430RegWithSubregs<14, "r14", [R14B]>;
-def R15W : MSP430RegWithSubregs<15, "r15", [R15B]>;
+def PC  : MSP430RegWithSubregs<0,  "r0",  [PCB]>;
+def SP  : MSP430RegWithSubregs<1,  "r1",  [SPB]>;
+def SR  : MSP430RegWithSubregs<2,  "r2",  [SRB]>;
+def CG  : MSP430RegWithSubregs<3,  "r3",  [CGB]>;
+def FP  : MSP430RegWithSubregs<4,  "r4",  [FPB]>;
+def R5  : MSP430RegWithSubregs<5,  "r5",  [R5B]>;
+def R6  : MSP430RegWithSubregs<6,  "r6",  [R6B]>;
+def R7  : MSP430RegWithSubregs<7,  "r7",  [R7B]>;
+def R8  : MSP430RegWithSubregs<8,  "r8",  [R8B]>;
+def R9  : MSP430RegWithSubregs<9,  "r9",  [R9B]>;
+def R10 : MSP430RegWithSubregs<10, "r10", [R10B]>;
+def R11 : MSP430RegWithSubregs<11, "r11", [R11B]>;
+def R12 : MSP430RegWithSubregs<12, "r12", [R12B]>;
+def R13 : MSP430RegWithSubregs<13, "r13", [R13B]>;
+def R14 : MSP430RegWithSubregs<14, "r14", [R14B]>;
+def R15 : MSP430RegWithSubregs<15, "r15", [R15B]>;
 }
 
 def GR8 : RegisterClass<"MSP430", [i8], 8,
@@ -74,8 +74,8 @@ def GR8 : RegisterClass<"MSP430", [i8], 8,
 
 def GR16 : RegisterClass<"MSP430", [i16], 16,
    // Volatile registers
-  (add R12W, R13W, R14W, R15W, R11W, R10W, R9W, R8W, R7W, R6W, R5W,
+  (add R12, R13, R14, R15, R11, R10, R9, R8, R7, R6, R5,
    // Frame pointer, sometimes allocable
-   FPW,
+   FP,
    // Volatile, but not allocable
-   PCW, SPW, SRW, CGW)>;
+   PC, SP, SR, CG)>;

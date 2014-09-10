@@ -72,7 +72,7 @@ MSP430TargetLowering::MSP430TargetLowering(const TargetMachine &TM)
   // Division is expensive
   setIntDivIsCheap(false);
 
-  setStackPointerRegisterToSaveRestore(MSP430::SPW);
+  setStackPointerRegisterToSaveRestore(MSP430::SP);
   setBooleanContents(ZeroOrOneBooleanContent);
   setBooleanVectorContents(ZeroOrOneBooleanContent); // FIXME: Is this correct?
 
@@ -282,7 +282,7 @@ static void AnalyzeArguments(CCState &State,
                              SmallVectorImpl<CCValAssign> &ArgLocs,
                              const SmallVectorImpl<ArgT> &Args) {
   static const MCPhysReg RegList[] = {
-    MSP430::R15W, MSP430::R14W, MSP430::R13W, MSP430::R12W
+    MSP430::R15, MSP430::R14, MSP430::R13, MSP430::R12
   };
   static const unsigned NbRegs = array_lengthof(RegList);
 
@@ -627,7 +627,7 @@ MSP430TargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
       assert(VA.isMemLoc());
 
       if (!StackPtr.getNode())
-        StackPtr = DAG.getCopyFromReg(Chain, dl, MSP430::SPW, getPointerTy());
+        StackPtr = DAG.getCopyFromReg(Chain, dl, MSP430::SP, getPointerTy());
 
       SDValue PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(),
                                    StackPtr,
@@ -941,31 +941,31 @@ SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
     Convert = false;
     break;
    case MSP430CC::COND_HS:
-     // Res = SRW & 1, no processing is required
+     // Res = SR & 1, no processing is required
      break;
    case MSP430CC::COND_LO:
-     // Res = ~(SRW & 1)
+     // Res = ~(SR & 1)
      Invert = true;
      break;
    case MSP430CC::COND_NE:
      if (andCC) {
-       // C = ~Z, thus Res = SRW & 1, no processing is required
+       // C = ~Z, thus Res = SR & 1, no processing is required
      } else {
-       // Res = ~((SRW >> 1) & 1)
+       // Res = ~((SR >> 1) & 1)
        Shift = true;
        Invert = true;
      }
      break;
    case MSP430CC::COND_E:
      Shift = true;
-     // C = ~Z for AND instruction, thus we can put Res = ~(SRW & 1), however,
-     // Res = (SRW >> 1) & 1 is 1 word shorter.
+     // C = ~Z for AND instruction, thus we can put Res = ~(SR & 1), however,
+     // Res = (SR >> 1) & 1 is 1 word shorter.
      break;
   }
   EVT VT = Op.getValueType();
   SDValue One  = DAG.getConstant(1, VT);
   if (Convert) {
-    SDValue SR = DAG.getCopyFromReg(DAG.getEntryNode(), dl, MSP430::SRW,
+    SDValue SR = DAG.getCopyFromReg(DAG.getEntryNode(), dl, MSP430::SR,
                                     MVT::i16, Flag);
     if (Shift)
       // FIXME: somewhere this is turned into a SRL, lower it MSP specific?
@@ -1074,7 +1074,7 @@ SDValue MSP430TargetLowering::LowerFRAMEADDR(SDValue Op,
   SDLoc dl(Op);  // FIXME probably not meaningful
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
   SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl,
-                                         MSP430::FPW, VT);
+                                         MSP430::FP, VT);
   while (Depth--)
     FrameAddr = DAG.getLoad(VT, dl, DAG.getEntryNode(), FrameAddr,
                             MachinePointerInfo(),

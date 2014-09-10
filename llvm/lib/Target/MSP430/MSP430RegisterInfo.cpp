@@ -33,32 +33,32 @@ using namespace llvm;
 
 // FIXME: Provide proper call frame setup / destroy opcodes.
 MSP430RegisterInfo::MSP430RegisterInfo()
-  : MSP430GenRegisterInfo(MSP430::PCW) {}
+  : MSP430GenRegisterInfo(MSP430::PC) {}
 
 const MCPhysReg*
 MSP430RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   const TargetFrameLowering *TFI = MF->getSubtarget().getFrameLowering();
   const Function* F = MF->getFunction();
   static const MCPhysReg CalleeSavedRegs[] = {
-    MSP430::FPW, MSP430::R5W, MSP430::R6W, MSP430::R7W,
-    MSP430::R8W, MSP430::R9W, MSP430::R10W, MSP430::R11W,
+    MSP430::FP, MSP430::R5, MSP430::R6, MSP430::R7,
+    MSP430::R8, MSP430::R9, MSP430::R10, MSP430::R11,
     0
   };
   static const MCPhysReg CalleeSavedRegsFP[] = {
-    MSP430::R5W, MSP430::R6W, MSP430::R7W,
-    MSP430::R8W, MSP430::R9W, MSP430::R10W, MSP430::R11W,
+    MSP430::R5, MSP430::R6, MSP430::R7,
+    MSP430::R8, MSP430::R9, MSP430::R10, MSP430::R11,
     0
   };
   static const MCPhysReg CalleeSavedRegsIntr[] = {
-    MSP430::FPW,  MSP430::R5W,  MSP430::R6W,  MSP430::R7W,
-    MSP430::R8W,  MSP430::R9W,  MSP430::R10W, MSP430::R11W,
-    MSP430::R12W, MSP430::R13W, MSP430::R14W, MSP430::R15W,
+    MSP430::FP,  MSP430::R5,  MSP430::R6,  MSP430::R7,
+    MSP430::R8,  MSP430::R9,  MSP430::R10, MSP430::R11,
+    MSP430::R12, MSP430::R13, MSP430::R14, MSP430::R15,
     0
   };
   static const MCPhysReg CalleeSavedRegsIntrFP[] = {
-    MSP430::R5W,  MSP430::R6W,  MSP430::R7W,
-    MSP430::R8W,  MSP430::R9W,  MSP430::R10W, MSP430::R11W,
-    MSP430::R12W, MSP430::R13W, MSP430::R14W, MSP430::R15W,
+    MSP430::R5,  MSP430::R6,  MSP430::R7,
+    MSP430::R8,  MSP430::R9,  MSP430::R10, MSP430::R11,
+    MSP430::R12, MSP430::R13, MSP430::R14, MSP430::R15,
     0
   };
 
@@ -80,15 +80,15 @@ BitVector MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(MSP430::SPB);
   Reserved.set(MSP430::SRB);
   Reserved.set(MSP430::CGB);
-  Reserved.set(MSP430::PCW);
-  Reserved.set(MSP430::SPW);
-  Reserved.set(MSP430::SRW);
-  Reserved.set(MSP430::CGW);
+  Reserved.set(MSP430::PC);
+  Reserved.set(MSP430::SP);
+  Reserved.set(MSP430::SR);
+  Reserved.set(MSP430::CG);
 
   // Mark frame pointer as reserved if needed.
   if (TFI->hasFP(MF)) {
     Reserved.set(MSP430::FPB);
-    Reserved.set(MSP430::FPW);
+    Reserved.set(MSP430::FP);
   }
 
   return Reserved;
@@ -113,7 +113,7 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   DebugLoc dl = MI.getDebugLoc();
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
 
-  unsigned BasePtr = (TFI->hasFP(MF) ? MSP430::FPW : MSP430::SPW);
+  unsigned BasePtr = (TFI->hasFP(MF) ? MSP430::FP : MSP430::SP);
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
   // Skip the saved PC
@@ -122,7 +122,7 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   if (!TFI->hasFP(MF))
     Offset += MF.getFrameInfo()->getStackSize();
   else
-    Offset += 2; // Skip the saved FPW
+    Offset += 2; // Skip the saved FP
 
   // Fold imm into offset
   Offset += MI.getOperand(FIOperandNum + 1).getImm();
@@ -158,5 +158,5 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 unsigned MSP430RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
 
-  return TFI->hasFP(MF) ? MSP430::FPW : MSP430::SPW;
+  return TFI->hasFP(MF) ? MSP430::FP : MSP430::SP;
 }

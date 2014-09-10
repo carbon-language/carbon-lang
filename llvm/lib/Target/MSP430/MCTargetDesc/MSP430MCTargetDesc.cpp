@@ -39,7 +39,7 @@ static MCInstrInfo *createMSP430MCInstrInfo() {
 
 static MCRegisterInfo *createMSP430MCRegisterInfo(StringRef TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
-  InitMSP430MCRegisterInfo(X, MSP430::PCW);
+  InitMSP430MCRegisterInfo(X, MSP430::PC);
   return X;
 }
 
