@@ -13,6 +13,7 @@
 #include "llvm/ADT/SmallVector.h"
 
 #include <pthread.h>
+#include <pthread_np.h>
 
 using namespace lldb_private;
 
@@ -25,5 +26,5 @@ ThisThread::SetName(llvm::StringRef name)
 void
 ThisThread::GetName(llvm::SmallVectorImpl<char> &name)
 {
-    HostNativeThread::GetName(::pthread_self(), name);
+    HostNativeThread::GetName(::pthread_getthreadid_np(), name);
 }

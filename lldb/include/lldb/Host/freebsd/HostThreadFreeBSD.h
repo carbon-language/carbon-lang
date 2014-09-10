@@ -25,7 +25,7 @@ class HostThreadFreeBSD : public HostThreadPosix
     HostThreadFreeBSD(lldb::thread_t thread);
 
     static void SetName(lldb::thread_t thread, llvm::StringRef name);
-    static void GetName(lldb::thread_t thread, llvm::SmallVectorImpl<char> &name);
+    static void GetName(lldb::tid_t tid, llvm::SmallVectorImpl<char> &name);
 };
 }
 

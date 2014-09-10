@@ -40,7 +40,7 @@ HostThreadFreeBSD::SetName(lldb::thread_t thread, llvm::StringRef name)
 }
 
 void
-HostThreadFreeBSD::GetName(lldb::thread_t thread, llvm::SmallVectorImpl<char> &name)
+HostThreadFreeBSD::GetName(lldb::tid_t tid, llvm::SmallVectorImpl<char> &name)
 {
     name.clear();
     int pid = Host::GetCurrentProcessID();
@@ -73,9 +73,9 @@ HostThreadFreeBSD::GetName(lldb::thread_t thread, llvm::SmallVectorImpl<char> &n
 
     for (size_t i = 0; i < len / sizeof(*kp); i++)
     {
-        if (kp[i].ki_tid == (int)thread)
+        if (kp[i].ki_tid == (lwpid_t)tid)
         {
-            name.append(kp[i].ki_tdname, strlen(kp[i].ki_tdname));
+            name.append(kp[i].ki_tdname, kp[i].ki_tdname + strlen(kp[i].ki_tdname));
             break;
         }
     }

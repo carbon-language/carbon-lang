@@ -213,8 +213,8 @@ public:
 private:
     ProcessFreeBSD *m_process;
 
-    HostThread m_operation_thread;
-    HostThread m_monitor_thread;
+    lldb_private::HostThread m_operation_thread;
+    lldb_private::HostThread m_monitor_thread;
     lldb::pid_t m_pid;
 
     int m_terminal_fd;
