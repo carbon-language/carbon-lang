@@ -6893,11 +6893,11 @@ void ASTReader::InitializeSema(Sema &S) {
 
   // Makes sure any declarations that were deserialized "too early"
   // still get added to the identifier's declaration chains.
-  for (unsigned I = 0, N = PreloadedDecls.size(); I != N; ++I) {
-    pushExternalDeclIntoScope(PreloadedDecls[I],
-                              PreloadedDecls[I]->getDeclName());
+  for (uint64_t ID : PreloadedDeclIDs) {
+    NamedDecl *D = cast<NamedDecl>(GetDecl(ID));
+    pushExternalDeclIntoScope(D, D->getDeclName());
   }
-  PreloadedDecls.clear();
+  PreloadedDeclIDs.clear();
 
   // FIXME: What happens if these are changed by a module import?
   if (!FPPragmaOptions.empty()) {
@@ -7349,24 +7349,26 @@ ASTReader::SetGloballyVisibleDecls(IdentifierInfo *II,
   }
 
   for (unsigned I = 0, N = DeclIDs.size(); I != N; ++I) {
-    NamedDecl *D = cast<NamedDecl>(GetDecl(DeclIDs[I]));
-    if (SemaObj) {
-      // If we're simply supposed to record the declarations, do so now.
-      if (Decls) {
-        Decls->push_back(D);
-        continue;
-      }
-
-      // Introduce this declaration into the translation-unit scope
-      // and add it to the declaration chain for this identifier, so
-      // that (unqualified) name lookup will find it.
-      pushExternalDeclIntoScope(D, II);
-    } else {
+    if (!SemaObj) {
       // Queue this declaration so that it will be added to the
       // translation unit scope and identifier's declaration chain
       // once a Sema object is known.
-      PreloadedDecls.push_back(D);
+      PreloadedDeclIDs.push_back(DeclIDs[I]);
+      continue;
     }
+
+    NamedDecl *D = cast<NamedDecl>(GetDecl(DeclIDs[I]));
+
+    // If we're simply supposed to record the declarations, do so now.
+    if (Decls) {
+      Decls->push_back(D);
+      continue;
+    }
+
+    // Introduce this declaration into the translation-unit scope
+    // and add it to the declaration chain for this identifier, so
+    // that (unqualified) name lookup will find it.
+    pushExternalDeclIntoScope(D, II);
   }
 }
 

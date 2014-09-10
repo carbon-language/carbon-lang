@@ -2076,9 +2076,9 @@ public:
   /// \brief Retrieve the AST context that this AST reader supplements.
   ASTContext &getContext() { return Context; }
 
-  // \brief Contains declarations that were loaded before we have
+  // \brief Contains the IDs for declarations that were requested before we have
   // access to a Sema object.
-  SmallVector<NamedDecl *, 16> PreloadedDecls;
+  SmallVector<uint64_t, 16> PreloadedDeclIDs;
 
   /// \brief Retrieve the semantic analysis object used to analyze the
   /// translation unit in which the precompiled header is being

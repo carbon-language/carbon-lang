@@ -332,7 +332,10 @@ void PrintPPOutputPPCallbacks::InclusionDirective(SourceLocation HashLoc,
     MoveToLine(HashLoc);
     OS << "@import " << Imported->getFullModuleName() << ";"
        << " /* clang -E: implicit import for \"" << File->getName() << "\" */";
+    // Since we want a newline after the @import, but not a #<line>, start a new
+    // line immediately.
     EmittedTokensOnThisLine = true;
+    startNewLineIfNeeded();
   }
 }
 

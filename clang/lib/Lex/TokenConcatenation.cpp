@@ -163,8 +163,8 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevPrevTok,
     return false;
 
   tok::TokenKind PrevKind = PrevTok.getKind();
-  if (PrevTok.getIdentifierInfo())  // Language keyword or named operator.
-    PrevKind = tok::identifier;
+  if (!PrevTok.isAnnotation() && PrevTok.getIdentifierInfo())
+    PrevKind = tok::identifier; // Language keyword or named operator.
 
   // Look up information on when we should avoid concatenation with prevtok.
   unsigned ConcatInfo = TokenInfo[PrevKind];
@@ -177,6 +177,14 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevPrevTok,
     if (Tok.is(tok::equal) || Tok.is(tok::equalequal))
       return true;
     ConcatInfo &= ~aci_avoid_equal;
+  }
+  if (Tok.isAnnotation()) {
+    // Modules annotation can show up when generated automatically for includes.
+    assert((Tok.is(tok::annot_module_include) ||
+            Tok.is(tok::annot_module_begin) ||
+            Tok.is(tok::annot_module_end)) &&
+           "unexpected annotation in AvoidConcat");
+    ConcatInfo = 0;
   }
 
   if (ConcatInfo == 0) return false;
