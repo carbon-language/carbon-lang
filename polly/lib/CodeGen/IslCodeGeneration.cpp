@@ -566,41 +566,51 @@ public:
 
   IslCodeGeneration() : ScopPass(ID) {}
 
+  /// @name The analysis passes we need to generate code.
+  ///
+  ///{
+  LoopInfo *LI;
+  IslAstInfo *AI;
+  DominatorTree *DT;
+  ScalarEvolution *SE;
+  ///}
+
+  /// @brief The loop annotator to generate llvm.loop metadata.
+  LoopAnnotator Annotator;
+
+  /// @brief Build the runtime condition.
+  ///
+  /// Build the condition that evaluates at run-time to true iff all
+  /// assumptions taken for the SCoP hold, and to false otherwise.
+  ///
+  /// @return A value evaluating to true/false if execution is save/unsafe.
+  Value *buildRTC(PollyIRBuilder &Builder, IslExprBuilder &ExprBuilder) {
+    Builder.SetInsertPoint(Builder.GetInsertBlock()->getTerminator());
+    Value *RTC = ExprBuilder.create(AI->getRunCondition());
+    return Builder.CreateIsNotNull(RTC);
+  }
+
   bool runOnScop(Scop &S) {
-    LoopInfo &LI = getAnalysis<LoopInfo>();
-    IslAstInfo &AstInfo = getAnalysis<IslAstInfo>();
-    ScalarEvolution &SE = getAnalysis<ScalarEvolution>();
-    DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+    LI = &getAnalysis<LoopInfo>();
+    AI = &getAnalysis<IslAstInfo>();
+    DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+    SE = &getAnalysis<ScalarEvolution>();
 
     assert(!S.getRegion().isTopLevelRegion() &&
            "Top level regions are not supported");
 
-    simplifyRegion(&S, this);
+    BasicBlock *EnteringBB = simplifyRegion(&S, this);
+    PollyIRBuilder Builder = createPollyIRBuilder(EnteringBB, Annotator);
 
-    BasicBlock *StartBlock = executeScopConditionally(S, this);
-    isl_ast_node *Ast = AstInfo.getAst();
-    LoopAnnotator Annotator;
-    PollyIRBuilder Builder(StartBlock->getContext(), llvm::ConstantFolder(),
-                           polly::IRInserter(Annotator));
-    Builder.SetInsertPoint(StartBlock->begin());
-
-    IslNodeBuilder NodeBuilder(Builder, Annotator, this, LI, SE, DT);
-
-    Builder.SetInsertPoint(StartBlock->getSinglePredecessor()->begin());
+    IslNodeBuilder NodeBuilder(Builder, Annotator, this, *LI, *SE, *DT);
     NodeBuilder.addMemoryAccesses(S);
     NodeBuilder.addParameters(S.getContext());
-    // Build condition that evaluates at run-time if all assumptions taken
-    // for the scop hold. If we detect some assumptions do not hold, the
-    // original code is executed.
-    Value *V = NodeBuilder.getExprBuilder().create(AstInfo.getRunCondition());
-    Value *Zero = ConstantInt::get(V->getType(), 0);
-    V = Builder.CreateICmp(CmpInst::ICMP_NE, Zero, V);
-    BasicBlock *PrevBB = StartBlock->getUniquePredecessor();
-    BranchInst *Branch = dyn_cast<BranchInst>(PrevBB->getTerminator());
-    Branch->setCondition(V);
+
+    Value *RTC = buildRTC(Builder, NodeBuilder.getExprBuilder());
+    BasicBlock *StartBlock = executeScopConditionally(S, this, RTC);
     Builder.SetInsertPoint(StartBlock->begin());
 
-    NodeBuilder.create(Ast);
+    NodeBuilder.create(AI->getAst());
     return true;
   }
 

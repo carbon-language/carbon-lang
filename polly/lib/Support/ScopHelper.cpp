@@ -86,11 +86,14 @@ BasicBlock *polly::createSingleExitEdge(Region *R, Pass *P) {
   return SplitBlockPredecessors(BB, Preds, ".region", P);
 }
 
-void polly::simplifyRegion(Scop *S, Pass *P) {
+BasicBlock *polly::simplifyRegion(Scop *S, Pass *P) {
   Region *R = &S->getRegion();
 
+  // The entering block for the region.
+  BasicBlock *EnteringBB = R->getEnteringBlock();
+
   // Create single entry edge if the region has multiple entry edges.
-  if (!R->getEnteringBlock()) {
+  if (!EnteringBB) {
     BasicBlock *OldEntry = R->getEntry();
     BasicBlock *NewEntry = SplitBlock(OldEntry, OldEntry->begin(), P);
 
@@ -101,6 +104,13 @@ void polly::simplifyRegion(Scop *S, Pass *P) {
       }
 
     R->replaceEntryRecursive(NewEntry);
+    EnteringBB = OldEntry;
+  }
+
+  // Create an unconditional entry edge.
+  if (EnteringBB->getTerminator()->getNumSuccessors() != 1) {
+    EnteringBB = SplitEdge(EnteringBB, R->getEntry(), P);
+    EnteringBB->setName("polly.entering.block");
   }
 
   // Create single exit edge if the region has multiple exit edges.
@@ -110,6 +120,8 @@ void polly::simplifyRegion(Scop *S, Pass *P) {
     for (auto &&SubRegion : *R)
       SubRegion->replaceExitRecursive(NewExit);
   }
+
+  return EnteringBB;
 }
 
 void polly::splitEntryBlockForAlloca(BasicBlock *EntryBlock, Pass *P) {

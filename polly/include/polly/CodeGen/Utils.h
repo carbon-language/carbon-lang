@@ -15,6 +15,7 @@
 
 namespace llvm {
 class Pass;
+class Value;
 class BasicBlock;
 }
 
@@ -22,16 +23,12 @@ namespace polly {
 
 class Scop;
 
-/// @brief Execute a Scop conditionally.
+/// @brief Execute a Scop conditionally wrt @p RTC.
 ///
 /// In the CFG the optimized code of the Scop is generated next to the
 /// original code. Both the new and the original version of the code remain
-/// in the CFG. A branch statement decides which version is executed.
-/// For now, we always execute the new version (the old one is dead code
-/// eliminated by the cleanup passes). In the future we may decide to execute
-/// the new version only if certain run time checks succeed. This will be
-/// useful to support constructs for which we cannot prove all assumptions at
-/// compile time.
+/// in the CFG. A branch statement decides which version is executed based on
+/// the runtime value of @p RTC.
 ///
 /// Before transformation:
 ///
@@ -53,9 +50,12 @@ class Scop;
 ///                      \    /
 ///                        bb1 (joinBlock)
 ///
-/// @param S The Scop to execute conditionally.
-/// @param PassInfo A reference to the pass calling this function.
-/// @return BasicBlock The 'StartBlock' to which new code can be added.
-llvm::BasicBlock *executeScopConditionally(Scop &S, llvm::Pass *PassInfo);
+/// @param S   The Scop to execute conditionally.
+/// @param P   A reference to the pass calling this function.
+/// @param RTC The runtime condition checked before executing the new SCoP.
+///
+/// @return The 'StartBlock' to which new code can be added.
+llvm::BasicBlock *executeScopConditionally(Scop &S, llvm::Pass *P,
+                                           llvm::Value *RTC);
 }
 #endif

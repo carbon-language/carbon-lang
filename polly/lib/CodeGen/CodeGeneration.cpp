@@ -1045,7 +1045,8 @@ public:
 
     simplifyRegion(&S, this);
 
-    BasicBlock *StartBlock = executeScopConditionally(S, this);
+    Value *RTC = ConstantInt::getTrue(S.getSE()->getContext());
+    BasicBlock *StartBlock = executeScopConditionally(S, this, RTC);
 
     PollyIRBuilder Builder(StartBlock->begin());
 
