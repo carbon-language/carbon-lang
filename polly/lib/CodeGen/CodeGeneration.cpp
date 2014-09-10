@@ -488,7 +488,7 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
   // Copy the current value map into all vector maps if the key wasn't
   // available yet. This is needed in case vector codegen is performed in
   // OpenMP subfunctions.
-  for (auto KV : ValueMap)
+  for (const auto &KV : ValueMap)
     for (int i = 0; i < VectorDimensions; ++i)
       VectorMap[i].insert(KV);
 
@@ -561,7 +561,7 @@ SetVector<Value *> ClastStmtCodeGen::getOMPValues(const clast_stmt *Body) {
   SetVector<Value *> Values;
 
   // The clast variables
-  for (auto I : ClastVars)
+  for (const auto &I : ClastVars)
     Values.insert(I.second);
 
   // Find the temporaries that are referenced in the clast statements'
@@ -583,12 +583,12 @@ void
 ClastStmtCodeGen::updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap) {
   std::set<Value *> Inserted;
 
-  for (auto I : ClastVars) {
+  for (const auto &I : ClastVars) {
     ClastVars[I.first] = VMap[I.second];
     Inserted.insert(I.second);
   }
 
-  for (auto I : VMap) {
+  for (const auto &I : VMap) {
     if (Inserted.count(I.first))
       continue;
 
@@ -1060,7 +1060,7 @@ public:
   }
 
   virtual void printScop(raw_ostream &OS) const {
-    for (auto PI : ParallelLoops)
+    for (const auto &PI : ParallelLoops)
       OS << "Parallel loop with iterator '" << PI << "' generated\n";
   }
 
