@@ -313,9 +313,10 @@ WeakExternalCharacteristics[] = {
 
 template <typename T>
 static std::error_code getSymbolAuxData(const COFFObjectFile *Obj,
-                                        const coff_symbol *Symbol,
-                                        const T *&Aux) {
+                                        COFFSymbolRef Symbol,
+                                        uint8_t AuxSymbolIdx, const T *&Aux) {
   ArrayRef<uint8_t> AuxData = Obj->getSymbolAuxData(Symbol);
+  AuxData = AuxData.slice(AuxSymbolIdx * Obj->getSymbolTableEntrySize());
   Aux = reinterpret_cast<const T*>(AuxData.data());
   return readobj_error::success;
 }
@@ -342,25 +343,20 @@ void COFFDumper::printDataDirectory(uint32_t Index, const std::string &FieldName
 }
 
 void COFFDumper::printFileHeaders() {
-  // Print COFF header
-  const coff_file_header *COFFHeader = nullptr;
-  if (error(Obj->getCOFFHeader(COFFHeader)))
-    return;
-
-  time_t TDS = COFFHeader->TimeDateStamp;
+  time_t TDS = Obj->getTimeDateStamp();
   char FormattedTime[20] = { };
   strftime(FormattedTime, 20, "%Y-%m-%d %H:%M:%S", gmtime(&TDS));
 
   {
     DictScope D(W, "ImageFileHeader");
-    W.printEnum  ("Machine", COFFHeader->Machine,
+    W.printEnum  ("Machine", Obj->getMachine(),
                     makeArrayRef(ImageFileMachineType));
-    W.printNumber("SectionCount", COFFHeader->NumberOfSections);
-    W.printHex   ("TimeDateStamp", FormattedTime, COFFHeader->TimeDateStamp);
-    W.printHex   ("PointerToSymbolTable", COFFHeader->PointerToSymbolTable);
-    W.printNumber("SymbolCount", COFFHeader->NumberOfSymbols);
-    W.printNumber("OptionalHeaderSize", COFFHeader->SizeOfOptionalHeader);
-    W.printFlags ("Characteristics", COFFHeader->Characteristics,
+    W.printNumber("SectionCount", Obj->getNumberOfSections());
+    W.printHex   ("TimeDateStamp", FormattedTime, Obj->getTimeDateStamp());
+    W.printHex   ("PointerToSymbolTable", Obj->getPointerToSymbolTable());
+    W.printNumber("SymbolCount", Obj->getNumberOfSymbols());
+    W.printNumber("OptionalHeaderSize", Obj->getSizeOfOptionalHeader());
+    W.printFlags ("Characteristics", Obj->getCharacteristics(),
                     makeArrayRef(ImageFileCharacteristics));
   }
 
@@ -722,9 +718,9 @@ void COFFDumper::printDynamicSymbols() { ListScope Group(W, "DynamicSymbols"); }
 void COFFDumper::printSymbol(const SymbolRef &Sym) {
   DictScope D(W, "Symbol");
 
-  const coff_symbol *Symbol = Obj->getCOFFSymbol(Sym);
+  COFFSymbolRef Symbol = Obj->getCOFFSymbol(Sym);
   const coff_section *Section;
-  if (std::error_code EC = Obj->getSection(Symbol->SectionNumber, Section)) {
+  if (std::error_code EC = Obj->getSection(Symbol.getSectionNumber(), Section)) {
     W.startLine() << "Invalid section number: " << EC.message() << "\n";
     W.flush();
     return;
@@ -739,19 +735,19 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
     Obj->getSectionName(Section, SectionName);
 
   W.printString("Name", SymbolName);
-  W.printNumber("Value", Symbol->Value);
-  W.printNumber("Section", SectionName, Symbol->SectionNumber);
-  W.printEnum  ("BaseType", Symbol->getBaseType(), makeArrayRef(ImageSymType));
-  W.printEnum  ("ComplexType", Symbol->getComplexType(),
+  W.printNumber("Value", Symbol.getValue());
+  W.printNumber("Section", SectionName, Symbol.getSectionNumber());
+  W.printEnum  ("BaseType", Symbol.getBaseType(), makeArrayRef(ImageSymType));
+  W.printEnum  ("ComplexType", Symbol.getComplexType(),
                                                    makeArrayRef(ImageSymDType));
-  W.printEnum  ("StorageClass", Symbol->StorageClass,
+  W.printEnum  ("StorageClass", Symbol.getStorageClass(),
                                                    makeArrayRef(ImageSymClass));
-  W.printNumber("AuxSymbolCount", Symbol->NumberOfAuxSymbols);
+  W.printNumber("AuxSymbolCount", Symbol.getNumberOfAuxSymbols());
 
-  for (unsigned I = 0; I < Symbol->NumberOfAuxSymbols; ++I) {
-    if (Symbol->isFunctionDefinition()) {
+  for (uint8_t I = 0; I < Symbol.getNumberOfAuxSymbols(); ++I) {
+    if (Symbol.isFunctionDefinition()) {
       const coff_aux_function_definition *Aux;
-      if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
+      if (error(getSymbolAuxData(Obj, Symbol, I, Aux)))
         break;
 
       DictScope AS(W, "AuxFunctionDef");
@@ -759,18 +755,16 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       W.printNumber("TotalSize", Aux->TotalSize);
       W.printHex("PointerToLineNumber", Aux->PointerToLinenumber);
       W.printHex("PointerToNextFunction", Aux->PointerToNextFunction);
-      W.printBinary("Unused", makeArrayRef(Aux->Unused));
 
-    } else if (Symbol->isWeakExternal()) {
+    } else if (Symbol.isWeakExternal()) {
       const coff_aux_weak_external *Aux;
-      if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
+      if (error(getSymbolAuxData(Obj, Symbol, I, Aux)))
         break;
 
-      const coff_symbol *Linked;
+      ErrorOr<COFFSymbolRef> Linked = Obj->getSymbol(Aux->TagIndex);
       StringRef LinkedName;
-      std::error_code EC;
-      if ((EC = Obj->getSymbol(Aux->TagIndex, Linked)) ||
-          (EC = Obj->getSymbolName(Linked, LinkedName))) {
+      std::error_code EC = Linked.getError();
+      if (EC || (EC = Obj->getSymbolName(*Linked, LinkedName))) {
         LinkedName = "";
         error(EC);
       }
@@ -779,22 +773,21 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       W.printNumber("Linked", LinkedName, Aux->TagIndex);
       W.printEnum  ("Search", Aux->Characteristics,
                     makeArrayRef(WeakExternalCharacteristics));
-      W.printBinary("Unused", makeArrayRef(Aux->Unused));
 
-    } else if (Symbol->isFileRecord()) {
-      const coff_aux_file *Aux;
-      if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
+    } else if (Symbol.isFileRecord()) {
+      const char *FileName;
+      if (error(getSymbolAuxData(Obj, Symbol, I, FileName)))
         break;
 
       DictScope AS(W, "AuxFileRecord");
 
-      StringRef Name(Aux->FileName,
-                     Symbol->NumberOfAuxSymbols * COFF::SymbolSize);
+      StringRef Name(FileName, Symbol.getNumberOfAuxSymbols() *
+                                   Obj->getSymbolTableEntrySize());
       W.printString("FileName", Name.rtrim(StringRef("\0", 1)));
       break;
-    } else if (Symbol->isSectionDefinition()) {
+    } else if (Symbol.isSectionDefinition()) {
       const coff_aux_section_definition *Aux;
-      if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
+      if (error(getSymbolAuxData(Obj, Symbol, I, Aux)))
         break;
 
       DictScope AS(W, "AuxSectionDef");
@@ -804,7 +797,6 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       W.printHex("Checksum", Aux->CheckSum);
       W.printNumber("Number", Aux->Number);
       W.printEnum("Selection", Aux->Selection, makeArrayRef(ImageCOMDATSelect));
-      W.printBinary("Unused", makeArrayRef(Aux->Unused));
 
       if (Section && Section->Characteristics & COFF::IMAGE_SCN_LNK_COMDAT
           && Aux->Selection == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
@@ -819,16 +811,16 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
 
         W.printNumber("AssocSection", AssocName, Aux->Number);
       }
-    } else if (Symbol->isCLRToken()) {
+    } else if (Symbol.isCLRToken()) {
       const coff_aux_clr_token *Aux;
-      if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
+      if (error(getSymbolAuxData(Obj, Symbol, I, Aux)))
         break;
 
-      const coff_symbol *ReferredSym;
+      ErrorOr<COFFSymbolRef> ReferredSym =
+          Obj->getSymbol(Aux->SymbolTableIndex);
       StringRef ReferredName;
-      std::error_code EC;
-      if ((EC = Obj->getSymbol(Aux->SymbolTableIndex, ReferredSym)) ||
-          (EC = Obj->getSymbolName(ReferredSym, ReferredName))) {
+      std::error_code EC = ReferredSym.getError();
+      if (EC || (EC = Obj->getSymbolName(*ReferredSym, ReferredName))) {
         ReferredName = "";
         error(EC);
       }
@@ -837,7 +829,6 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       W.printNumber("AuxType", Aux->AuxType);
       W.printNumber("Reserved", Aux->Reserved);
       W.printNumber("SymbolTableIndex", ReferredName, Aux->SymbolTableIndex);
-      W.printBinary("Unused", makeArrayRef(Aux->Unused));
 
     } else {
       W.startLine() << "<unhandled auxiliary record>\n";
@@ -846,12 +837,8 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
 }
 
 void COFFDumper::printUnwindInfo() {
-  const coff_file_header *Header;
-  if (error(Obj->getCOFFHeader(Header)))
-    return;
-
   ListScope D(W, "UnwindInformation");
-  switch (Header->Machine) {
+  switch (Obj->getMachine()) {
   case COFF::IMAGE_FILE_MACHINE_AMD64: {
     Win64EH::Dumper Dumper(W);
     Win64EH::Dumper::SymbolResolver
@@ -870,7 +857,7 @@ void COFFDumper::printUnwindInfo() {
     break;
   }
   default:
-    W.printEnum("unsupported Image Machine", Header->Machine,
+    W.printEnum("unsupported Image Machine", Obj->getMachine(),
                 makeArrayRef(ImageFileMachineType));
     break;
   }

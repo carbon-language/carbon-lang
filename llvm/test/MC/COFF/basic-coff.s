@@ -113,7 +113,6 @@ L_.str:                                 # @.str
 // CHECK:       Checksum: 0x0
 // CHECK:       Number: 2
 // CHECK:       Selection: 0x0
-// CHECK:       Unused: (00 00 00)
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {

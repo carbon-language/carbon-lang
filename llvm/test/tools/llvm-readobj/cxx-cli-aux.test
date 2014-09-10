@@ -9,7 +9,7 @@ CHECK:      Symbols [
 CHECK:        Symbol {
 CHECK:          Name: ?PerAppDomain@@$$Q3HA
 CHECK-NEXT:     Value: 4
-CHECK-NEXT:     Section:  (65535)
+CHECK-NEXT:     Section:  (-1)
 CHECK-NEXT:     BaseType: Null (0x0)
 CHECK-NEXT:     ComplexType: Null (0x0)
 CHECK-NEXT:     StorageClass: External (0x2)
@@ -21,14 +21,13 @@ CHECK-NEXT:       LineNumberCount: 0
 CHECK-NEXT:       Checksum: 0x0
 CHECK-NEXT:       Number: 0
 CHECK-NEXT:       Selection: NoDuplicates (0x1)
-CHECK-NEXT:       Unused: (00 00 00)
 CHECK-NEXT:     }
 CHECK-NEXT:   }
 
 CHECK:        Symbol {
 CHECK:          Name: 04000001
 CHECK-NEXT:     Value: 4
-CHECK-NEXT:     Section:  (65535)
+CHECK-NEXT:     Section:  (-1)
 CHECK-NEXT:     BaseType: Null (0x0)
 CHECK-NEXT:     ComplexType: Null (0x0)
 CHECK-NEXT:     StorageClass: CLRToken (0x6B)
@@ -37,6 +36,5 @@ CHECK-NEXT:     AuxCLRToken {
 CHECK-NEXT:       AuxType: 1
 CHECK-NEXT:       Reserved: 0
 CHECK-NEXT:       SymbolTableIndex: ?PerAppDomain@@$$Q3HA (19)
-CHECK-NEXT:       Unused: (00 00 00 00 00 00 00 00 00 00 00 00)
 CHECK-NEXT:     }
 CHECK-NEXT:   }

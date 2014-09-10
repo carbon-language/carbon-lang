@@ -52,7 +52,6 @@ COFF-NEXT:           LineNumberCount: 0
 COFF-NEXT:           Checksum: 0x0
 COFF-NEXT:           Number: 1
 COFF-NEXT:           Selection: 0x0
-COFF-NEXT:           Unused: (00 00 00)
 COFF-NEXT:         }
 COFF-NEXT:       }
 COFF-NEXT:       Symbol {

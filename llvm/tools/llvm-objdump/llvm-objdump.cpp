@@ -564,29 +564,25 @@ static void PrintSectionContents(const ObjectFile *Obj) {
 }
 
 static void PrintCOFFSymbolTable(const COFFObjectFile *coff) {
-  const coff_file_header *header;
-  if (error(coff->getHeader(header)))
-    return;
-
-  for (unsigned SI = 0, SE = header->NumberOfSymbols; SI != SE; ++SI) {
-    const coff_symbol *Symbol;
+  for (unsigned SI = 0, SE = coff->getNumberOfSymbols(); SI != SE; ++SI) {
+    ErrorOr<COFFSymbolRef> Symbol = coff->getSymbol(SI);
     StringRef Name;
-    if (error(coff->getSymbol(SI, Symbol)))
+    if (error(Symbol.getError()))
       return;
 
-    if (error(coff->getSymbolName(Symbol, Name)))
+    if (error(coff->getSymbolName(*Symbol, Name)))
       return;
 
     outs() << "[" << format("%2d", SI) << "]"
-           << "(sec " << format("%2d", int(Symbol->SectionNumber)) << ")"
+           << "(sec " << format("%2d", int(Symbol->getSectionNumber())) << ")"
            << "(fl 0x00)" // Flag bits, which COFF doesn't have.
-           << "(ty " << format("%3x", unsigned(Symbol->Type)) << ")"
-           << "(scl " << format("%3x", unsigned(Symbol->StorageClass)) << ") "
-           << "(nx " << unsigned(Symbol->NumberOfAuxSymbols) << ") "
-           << "0x" << format("%08x", unsigned(Symbol->Value)) << " "
+           << "(ty " << format("%3x", unsigned(Symbol->getType())) << ")"
+           << "(scl " << format("%3x", unsigned(Symbol->getStorageClass())) << ") "
+           << "(nx " << unsigned(Symbol->getNumberOfAuxSymbols()) << ") "
+           << "0x" << format("%08x", unsigned(Symbol->getValue())) << " "
            << Name << "\n";
 
-    for (unsigned AI = 0, AE = Symbol->NumberOfAuxSymbols; AI < AE; ++AI, ++SI) {
+    for (unsigned AI = 0, AE = Symbol->getNumberOfAuxSymbols(); AI < AE; ++AI, ++SI) {
       if (Symbol->isSectionDefinition()) {
         const coff_aux_section_definition *asd;
         if (error(coff->getAuxSymbol<coff_aux_section_definition>(SI + 1, asd)))
@@ -602,15 +598,15 @@ static void PrintCOFFSymbolTable(const COFFObjectFile *coff) {
                          , unsigned(asd->Number)
                          , unsigned(asd->Selection));
       } else if (Symbol->isFileRecord()) {
-        const coff_aux_file *AF;
-        if (error(coff->getAuxSymbol<coff_aux_file>(SI + 1, AF)))
+        const char *FileName;
+        if (error(coff->getAuxSymbol<char>(SI + 1, FileName)))
           return;
 
-        StringRef Name(AF->FileName,
-                       Symbol->NumberOfAuxSymbols * COFF::SymbolSize);
+        StringRef Name(FileName, Symbol->getNumberOfAuxSymbols() *
+                                     coff->getSymbolTableEntrySize());
         outs() << "AUX " << Name.rtrim(StringRef("\0", 1))  << '\n';
 
-        SI = SI + Symbol->NumberOfAuxSymbols;
+        SI = SI + Symbol->getNumberOfAuxSymbols();
         break;
       } else {
         outs() << "AUX Unknown\n";

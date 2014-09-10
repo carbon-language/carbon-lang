@@ -4,7 +4,7 @@ CHECK: Symbols [
 CHECK:   Symbol {
 CHECK:     Name: .file
 CHECK:     Value: 0
-CHECK:     Section:  (65534)
+CHECK:     Section:  (-2)
 CHECK:     BaseType: Null (0x0)
 CHECK:     ComplexType: Null (0x0)
 CHECK:     StorageClass: File (0x67)

@@ -686,7 +686,7 @@ static char getSymbolNMTypeChar(ELFObjectFile<ELFT> &Obj,
 }
 
 static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
-  const coff_symbol *Symb = Obj.getCOFFSymbol(*I);
+  COFFSymbolRef Symb = Obj.getCOFFSymbol(*I);
   // OK, this is COFF.
   symbol_iterator SymI(I);
 
@@ -703,7 +703,7 @@ static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
     return Ret;
 
   uint32_t Characteristics = 0;
-  if (!COFF::isReservedSectionNumber(Symb->SectionNumber)) {
+  if (!COFF::isReservedSectionNumber(Symb.getSectionNumber())) {
     section_iterator SecI = Obj.section_end();
     if (error(SymI->getSection(SecI)))
       return '?';
@@ -711,7 +711,7 @@ static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
     Characteristics = Section->Characteristics;
   }
 
-  switch (Symb->SectionNumber) {
+  switch (Symb.getSectionNumber()) {
   case COFF::IMAGE_SYM_DEBUG:
     return 'n';
   default:
@@ -729,7 +729,7 @@ static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
       return 'i';
 
     // Check for section symbol.
-    else if (Symb->isSectionDefinition())
+    else if (Symb.isSectionDefinition())
       return 's';
   }
 

@@ -21,7 +21,7 @@
 // CHECK-SCN: Symbols [
 // CHECK-SCN:   Symbol {
 // CHECK-SCN:     Name: .file
-// CHECK-SCN:     Section: (65534)
+// CHECK-SCN:     Section: (-2)
 // CHECK-SCN:     StorageClass: File
 // CHECK-SCN:     AuxFileRecord {
 // CHECK-SCN:       FileName: null-padded.asm
@@ -29,7 +29,7 @@
 // CHECK-SCN:   }
 // CHECK-SCN:   Symbol {
 // CHECK-SCN:     Name: .file
-// CHECK-SCN:     Section: (65534)
+// CHECK-SCN:     Section: (-2)
 // CHECK-SCN:     StorageClass: File
 // CHECK-SCN:     AuxFileRecord {
 // CHECK-SCN:       FileName: eighteen-chars.asm
@@ -37,7 +37,7 @@
 // CHECK-SCN:   }
 // CHECK-SCN:   Symbol {
 // CHECK-SCN:     Name: .file
-// CHECK-SCN:     Section: (65534)
+// CHECK-SCN:     Section: (-2)
 // CHECK-SCN:     StorageClass: File
 // CHECK-SCN:     AuxFileRecord {
 // CHECK-SCN:       FileName: multiple-auxiliary-entries.asm

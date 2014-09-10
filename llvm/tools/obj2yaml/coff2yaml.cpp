@@ -20,7 +20,7 @@ namespace {
 class COFFDumper {
   const object::COFFObjectFile &Obj;
   COFFYAML::Object YAMLObj;
-  void dumpHeader(const object::coff_file_header *Header);
+  void dumpHeader();
   void dumpSections(unsigned numSections);
   void dumpSymbols(unsigned numSymbols);
 
@@ -31,22 +31,15 @@ public:
 
 }
 
-static void check(std::error_code ec) {
-  if (ec)
-    report_fatal_error(ec.message());
-}
-
 COFFDumper::COFFDumper(const object::COFFObjectFile &Obj) : Obj(Obj) {
-  const object::coff_file_header *Header;
-  check(Obj.getCOFFHeader(Header));
-  dumpHeader(Header);
-  dumpSections(Header->NumberOfSections);
-  dumpSymbols(Header->NumberOfSymbols);
+  dumpHeader();
+  dumpSections(Obj.getNumberOfSections());
+  dumpSymbols(Obj.getNumberOfSymbols());
 }
 
-void COFFDumper::dumpHeader(const object::coff_file_header *Header) {
-  YAMLObj.Header.Machine = Header->Machine;
-  YAMLObj.Header.Characteristics = Header->Characteristics;
+void COFFDumper::dumpHeader() {
+  YAMLObj.Header.Machine = Obj.getMachine();
+  YAMLObj.Header.Characteristics = Obj.getCharacteristics();
 }
 
 void COFFDumper::dumpSections(unsigned NumSections) {
@@ -136,63 +129,64 @@ dumpCLRTokenDefinition(COFFYAML::Symbol *Sym,
 void COFFDumper::dumpSymbols(unsigned NumSymbols) {
   std::vector<COFFYAML::Symbol> &Symbols = YAMLObj.Symbols;
   for (const auto &S : Obj.symbols()) {
-    const object::coff_symbol *Symbol = Obj.getCOFFSymbol(S);
+    object::COFFSymbolRef Symbol = Obj.getCOFFSymbol(S);
     COFFYAML::Symbol Sym;
     Obj.getSymbolName(Symbol, Sym.Name);
-    Sym.SimpleType = COFF::SymbolBaseType(Symbol->getBaseType());
-    Sym.ComplexType = COFF::SymbolComplexType(Symbol->getComplexType());
-    Sym.Header.StorageClass = Symbol->StorageClass;
-    Sym.Header.Value = Symbol->Value;
-    Sym.Header.SectionNumber = Symbol->SectionNumber;
-    Sym.Header.NumberOfAuxSymbols = Symbol->NumberOfAuxSymbols;
+    Sym.SimpleType = COFF::SymbolBaseType(Symbol.getBaseType());
+    Sym.ComplexType = COFF::SymbolComplexType(Symbol.getComplexType());
+    Sym.Header.StorageClass = Symbol.getStorageClass();
+    Sym.Header.Value = Symbol.getValue();
+    Sym.Header.SectionNumber = Symbol.getSectionNumber();
+    Sym.Header.NumberOfAuxSymbols = Symbol.getNumberOfAuxSymbols();
 
-    if (Symbol->NumberOfAuxSymbols > 0) {
+    if (Symbol.getNumberOfAuxSymbols() > 0) {
       ArrayRef<uint8_t> AuxData = Obj.getSymbolAuxData(Symbol);
-      if (Symbol->isFunctionDefinition()) {
+      if (Symbol.isFunctionDefinition()) {
         // This symbol represents a function definition.
-        assert(Symbol->NumberOfAuxSymbols == 1 &&
+        assert(Symbol.getNumberOfAuxSymbols() == 1 &&
                "Expected a single aux symbol to describe this function!");
 
         const object::coff_aux_function_definition *ObjFD =
             reinterpret_cast<const object::coff_aux_function_definition *>(
                 AuxData.data());
         dumpFunctionDefinition(&Sym, ObjFD);
-      } else if (Symbol->isFunctionLineInfo()) {
+      } else if (Symbol.isFunctionLineInfo()) {
         // This symbol describes function line number information.
-        assert(Symbol->NumberOfAuxSymbols == 1 &&
-               "Exepected a single aux symbol to describe this section!");
+        assert(Symbol.getNumberOfAuxSymbols() == 1 &&
+               "Expected a single aux symbol to describe this function!");
 
         const object::coff_aux_bf_and_ef_symbol *ObjBES =
             reinterpret_cast<const object::coff_aux_bf_and_ef_symbol *>(
                 AuxData.data());
         dumpbfAndEfLineInfo(&Sym, ObjBES);
-      } else if (Symbol->isWeakExternal()) {
+      } else if (Symbol.isWeakExternal()) {
         // This symbol represents a weak external definition.
-        assert(Symbol->NumberOfAuxSymbols == 1 &&
-               "Exepected a single aux symbol to describe this section!");
+        assert(Symbol.getNumberOfAuxSymbols() == 1 &&
+               "Expected a single aux symbol to describe this weak symbol!");
 
         const object::coff_aux_weak_external *ObjWE =
             reinterpret_cast<const object::coff_aux_weak_external *>(
                 AuxData.data());
         dumpWeakExternal(&Sym, ObjWE);
-      } else if (Symbol->isFileRecord()) {
+      } else if (Symbol.isFileRecord()) {
         // This symbol represents a file record.
         Sym.File = StringRef(reinterpret_cast<const char *>(AuxData.data()),
-                             Symbol->NumberOfAuxSymbols * COFF::SymbolSize)
+                             Symbol.getNumberOfAuxSymbols() *
+                                 Obj.getSymbolTableEntrySize())
                        .rtrim(StringRef("\0", /*length=*/1));
-      } else if (Symbol->isSectionDefinition()) {
+      } else if (Symbol.isSectionDefinition()) {
         // This symbol represents a section definition.
-        assert(Symbol->NumberOfAuxSymbols == 1 &&
+        assert(Symbol.getNumberOfAuxSymbols() == 1 &&
                "Expected a single aux symbol to describe this section!");
 
         const object::coff_aux_section_definition *ObjSD =
             reinterpret_cast<const object::coff_aux_section_definition *>(
                 AuxData.data());
         dumpSectionDefinition(&Sym, ObjSD);
-      } else if (Symbol->isCLRToken()) {
+      } else if (Symbol.isCLRToken()) {
         // This symbol represents a CLR token definition.
-        assert(Symbol->NumberOfAuxSymbols == 1 &&
-               "Expected a single aux symbol to describe this CLR Token");
+        assert(Symbol.getNumberOfAuxSymbols() == 1 &&
+               "Expected a single aux symbol to describe this CLR Token!");
 
         const object::coff_aux_clr_token *ObjCLRToken =
             reinterpret_cast<const object::coff_aux_clr_token *>(

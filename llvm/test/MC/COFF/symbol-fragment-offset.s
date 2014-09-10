@@ -117,7 +117,6 @@ L_.str2:
 // CHECK:       Checksum: 0x0
 // CHECK:       Number: 1
 // CHECK:       Selection: 0x0
-// CHECK:       Unused: (00 00 00)
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {
@@ -135,7 +134,6 @@ L_.str2:
 // CHECK:       Checksum: 0x0
 // CHECK:       Number: 2
 // CHECK:       Selection: 0x0
-// CHECK:       Unused: (00 00 00)
 // CHECK:     }
 // CHECK:   }
 // CHECK:   Symbol {

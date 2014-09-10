@@ -31,10 +31,15 @@ namespace llvm {
 namespace COFF {
 
   // The maximum number of sections that a COFF object can have (inclusive).
-  const int MaxNumberOfSections = 65299;
+  const uint16_t MaxNumberOfSections16 = 65299;
 
   // The PE signature bytes that follows the DOS stub header.
   static const char PEMagic[] = { 'P', 'E', '\0', '\0' };
+
+  static const char BigObjMagic[] = {
+      '\xc7', '\xa1', '\xba', '\xd1', '\xee', '\xba', '\xa9', '\x4b',
+      '\xaf', '\x20', '\xfa', '\xf6', '\x6a', '\xa4', '\xdc', '\xb8',
+  };
 
   // Sizes in bytes of various things in the COFF format.
   enum {
@@ -53,6 +58,24 @@ namespace COFF {
     uint32_t NumberOfSymbols;
     uint16_t SizeOfOptionalHeader;
     uint16_t Characteristics;
+  };
+
+  struct BigObjHeader {
+    enum { MinBigObjectVersion = 2 };
+
+    uint16_t Sig1; ///< Must be IMAGE_FILE_MACHINE_UNKNOWN (0).
+    uint16_t Sig2; ///< Must be 0xFFFF.
+    uint16_t Version;
+    uint16_t Machine;
+    uint32_t TimeDateStamp;
+    uint8_t  UUID[16];
+    uint32_t unused1;
+    uint32_t unused2;
+    uint32_t unused3;
+    uint32_t unused4;
+    uint32_t NumberOfSections;
+    uint32_t PointerToSymbolTable;
+    uint32_t NumberOfSymbols;
   };
 
   enum MachineTypes {
@@ -140,9 +163,9 @@ namespace COFF {
     SF_WeakExternal = 0x01000000
   };
 
-  enum SymbolSectionNumber {
-    IMAGE_SYM_DEBUG     = 0xFFFE,
-    IMAGE_SYM_ABSOLUTE  = 0xFFFF,
+  enum SymbolSectionNumber : int32_t {
+    IMAGE_SYM_DEBUG     = -2,
+    IMAGE_SYM_ABSOLUTE  = -1,
     IMAGE_SYM_UNDEFINED = 0
   };
 
@@ -647,8 +670,8 @@ namespace COFF {
     DEBUG_INDEX_SUBSECTION        = 0xF4
   };
 
-  inline bool isReservedSectionNumber(int N) {
-    return N == IMAGE_SYM_UNDEFINED || N > MaxNumberOfSections;
+  inline bool isReservedSectionNumber(int32_t SectionNumber) {
+    return SectionNumber <= 0;
   }
 
 } // End namespace COFF.
