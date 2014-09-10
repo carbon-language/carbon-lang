@@ -335,7 +335,7 @@ static bool VerifyLowRegs(MachineInstr *MI) {
   bool isPCOk = (Opc == ARM::t2LDMIA_RET || Opc == ARM::t2LDMIA     ||
                  Opc == ARM::t2LDMDB     || Opc == ARM::t2LDMIA_UPD ||
                  Opc == ARM::t2LDMDB_UPD);
-  bool isLROk = (Opc == ARM::t2STMIA_UPD || Opc == ARM::t2STMDB_UPD);
+  bool isLROk = (Opc == ARM::t2STMDB_UPD);
   bool isSPOk = isPCOk || isLROk;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
