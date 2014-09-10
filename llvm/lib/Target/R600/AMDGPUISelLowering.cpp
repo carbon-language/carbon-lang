@@ -130,6 +130,9 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FROUND, MVT::f32, Legal);
   setOperationAction(ISD::FTRUNC, MVT::f32, Legal);
 
+  setOperationAction(ISD::FREM, MVT::f32, Custom);
+  setOperationAction(ISD::FREM, MVT::f64, Custom);
+
   // Lower floating point store/load to integer store/load to reduce the number
   // of patterns in tablegen.
   setOperationAction(ISD::STORE, MVT::f32, Promote);
@@ -347,6 +350,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::FDIV, VT, Expand);
     setOperationAction(ISD::FEXP2, VT, Expand);
     setOperationAction(ISD::FLOG2, VT, Expand);
+    setOperationAction(ISD::FREM, VT, Expand);
     setOperationAction(ISD::FPOW, VT, Expand);
     setOperationAction(ISD::FFLOOR, VT, Expand);
     setOperationAction(ISD::FTRUNC, VT, Expand);
@@ -548,6 +552,7 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op,
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
   case ISD::SDIVREM: return LowerSDIVREM(Op, DAG);
+  case ISD::FREM: return LowerFREM(Op, DAG);
   case ISD::FCEIL: return LowerFCEIL(Op, DAG);
   case ISD::FTRUNC: return LowerFTRUNC(Op, DAG);
   case ISD::FRINT: return LowerFRINT(Op, DAG);
@@ -1648,6 +1653,20 @@ SDValue AMDGPUTargetLowering::LowerSDIVREM(SDValue Op,
     Rem
   };
   return DAG.getMergeValues(Res, DL);
+}
+
+// (frem x, y) -> (fsub x, (fmul (ftrunc (fdiv x, y)), y))
+SDValue AMDGPUTargetLowering::LowerFREM(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc SL(Op);
+  EVT VT = Op.getValueType();
+  SDValue X = Op.getOperand(0);
+  SDValue Y = Op.getOperand(1);
+
+  SDValue Div = DAG.getNode(ISD::FDIV, SL, VT, X, Y);
+  SDValue Floor = DAG.getNode(ISD::FTRUNC, SL, VT, Div);
+  SDValue Mul = DAG.getNode(ISD::FMUL, SL, VT, Floor, Y);
+
+  return DAG.getNode(ISD::FSUB, SL, VT, X, Mul);
 }
 
 SDValue AMDGPUTargetLowering::LowerFCEIL(SDValue Op, SelectionDAG &DAG) const {
