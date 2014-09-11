@@ -24,6 +24,7 @@
 #include <cstddef>
 #include <vector>
 #include <utility>
+#include <ostream>
 
 namespace clang {
 namespace threadSafety {
@@ -360,8 +361,7 @@ private:
 
 
 inline std::ostream& operator<<(std::ostream& ss, const StringRef str) {
-  ss << str.data();
-  return ss;
+  return ss.write(str.data(), str.size());
 }
 
 
