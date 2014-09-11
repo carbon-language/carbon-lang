@@ -2664,9 +2664,17 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
 
     // fold (and x, 0) -> 0, vector edition
     if (ISD::isBuildVectorAllZeros(N0.getNode()))
-      return N0;
+      // do not return N0, because undef node may exist in N0
+      return DAG.getConstant(
+          APInt::getNullValue(
+              N0.getValueType().getScalarType().getSizeInBits()),
+          N0.getValueType());
     if (ISD::isBuildVectorAllZeros(N1.getNode()))
-      return N1;
+      // do not return N1, because undef node may exist in N1
+      return DAG.getConstant(
+          APInt::getNullValue(
+              N1.getValueType().getScalarType().getSizeInBits()),
+          N1.getValueType());
 
     // fold (and x, -1) -> x, vector edition
     if (ISD::isBuildVectorAllOnes(N0.getNode()))
@@ -3312,9 +3320,17 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
 
     // fold (or x, -1) -> -1, vector edition
     if (ISD::isBuildVectorAllOnes(N0.getNode()))
-      return N0;
+      // do not return N0, because undef node may exist in N0
+      return DAG.getConstant(
+          APInt::getAllOnesValue(
+              N0.getValueType().getScalarType().getSizeInBits()),
+          N0.getValueType());
     if (ISD::isBuildVectorAllOnes(N1.getNode()))
-      return N1;
+      // do not return N1, because undef node may exist in N1
+      return DAG.getConstant(
+          APInt::getAllOnesValue(
+              N1.getValueType().getScalarType().getSizeInBits()),
+          N1.getValueType());
 
     // fold (or (shuf A, V_0, MA), (shuf B, V_0, MB)) -> (shuf A, B, Mask1)
     // fold (or (shuf A, V_0, MA), (shuf B, V_0, MB)) -> (shuf B, A, Mask2)
