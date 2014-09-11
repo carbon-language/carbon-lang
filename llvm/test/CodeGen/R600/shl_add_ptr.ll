@@ -1,7 +1,4 @@
-; XFAIL: *
-; Enable when patch to perform shl + add constant generic DAG combiner patch is in.
-
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
+; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
 
 ; Test that doing a shift of a pointer with a constant add will be
 ; folded into the constant offset addressing mode even if the add has

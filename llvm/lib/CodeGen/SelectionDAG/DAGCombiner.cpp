@@ -1517,28 +1517,6 @@ SDValue DAGCombiner::visitMERGE_VALUES(SDNode *N) {
   return SDValue(N, 0);   // Return N so it doesn't get rechecked!
 }
 
-static
-SDValue combineShlAddConstant(SDLoc DL, SDValue N0, SDValue N1,
-                              SelectionDAG &DAG) {
-  EVT VT = N0.getValueType();
-  SDValue N00 = N0.getOperand(0);
-  SDValue N01 = N0.getOperand(1);
-  ConstantSDNode *N01C = dyn_cast<ConstantSDNode>(N01);
-
-  if (N01C && N00.getOpcode() == ISD::ADD && N00.getNode()->hasOneUse() &&
-      isa<ConstantSDNode>(N00.getOperand(1))) {
-    // fold (add (shl (add x, c1), c2), ) -> (add (add (shl x, c2), c1<<c2), )
-    N0 = DAG.getNode(ISD::ADD, SDLoc(N0), VT,
-                     DAG.getNode(ISD::SHL, SDLoc(N00), VT,
-                                 N00.getOperand(0), N01),
-                     DAG.getNode(ISD::SHL, SDLoc(N01), VT,
-                                 N00.getOperand(1), N01));
-    return DAG.getNode(ISD::ADD, DL, VT, N0, N1);
-  }
-
-  return SDValue();
-}
-
 SDValue DAGCombiner::visitADD(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -1653,16 +1631,6 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
           return DAG.getNode(ISD::OR, SDLoc(N), VT, N0, N1);
       }
     }
-  }
-
-  // fold (add (shl (add x, c1), c2), ) -> (add (add (shl x, c2), c1<<c2), )
-  if (N0.getOpcode() == ISD::SHL && N0.getNode()->hasOneUse()) {
-    SDValue Result = combineShlAddConstant(SDLoc(N), N0, N1, DAG);
-    if (Result.getNode()) return Result;
-  }
-  if (N1.getOpcode() == ISD::SHL && N1.getNode()->hasOneUse()) {
-    SDValue Result = combineShlAddConstant(SDLoc(N), N1, N0, DAG);
-    if (Result.getNode()) return Result;
   }
 
   // fold (add x, shl(0 - y, n)) -> sub(x, shl(y, n))
@@ -4183,6 +4151,18 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
                                             BitSize - N1C->getZExtValue()), VT);
     return DAG.getNode(ISD::AND, SDLoc(N), VT, N0.getOperand(0),
                        HiBitsMask);
+  }
+
+  // fold (shl (add x, c1), c2) -> (add (shl x, c2), c1 << c2)
+  // Variant of version done on multiply, except mul by a power of 2 is turned
+  // into a shift.
+  APInt Val;
+  if (N1C && N0.getOpcode() == ISD::ADD && N0.getNode()->hasOneUse() &&
+      (isa<ConstantSDNode>(N0.getOperand(1)) ||
+       isConstantSplatVector(N0.getOperand(1).getNode(), Val))) {
+    SDValue Shl0 = DAG.getNode(ISD::SHL, SDLoc(N0), VT, N0.getOperand(0), N1);
+    SDValue Shl1 = DAG.getNode(ISD::SHL, SDLoc(N1), VT, N0.getOperand(1), N1);
+    return DAG.getNode(ISD::ADD, SDLoc(N), VT, Shl0, Shl1);
   }
 
   if (N1C) {

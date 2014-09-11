@@ -166,8 +166,8 @@ entry:
 define i32 @extendedLeftShiftshortTointBy16(i16 signext %a) nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: extendedLeftShiftshortTointBy16:
-; CHECK: add [[REG:w[0-9]+]], w0, #1
-; CHECK: lsl w0, [[REG]], #16
+; CHECK: lsl [[REG:w[0-9]+]], w0, #16
+; CHECK: add w0, [[REG]], #16, lsl #12
   %inc = add i16 %a, 1
   %conv2 = zext i16 %inc to i32
   %shl = shl nuw i32 %conv2, 16
