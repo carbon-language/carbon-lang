@@ -3396,10 +3396,8 @@ GDBRemoteCommunicationServer::Handle_interrupt (StringExtractorGDBRemote &packet
         return SendErrorResponse (0x15);
     }
 
-    // Build the ResumeActionList - stop everything.
-    lldb_private::ResumeActionList actions (StateType::eStateStopped, 0);
-
-    Error error = m_debugged_process_sp->Resume (actions);
+    // Interrupt the process.
+    Error error = m_debugged_process_sp->Interrupt ();
     if (error.Fail ())
     {
         if (log)

@@ -259,6 +259,25 @@ NativeThreadLinux::SetStoppedBySignal (uint32_t signo)
     m_stop_info.details.signal.signo = signo;
 }
 
+bool
+NativeThreadLinux::IsStopped (int *signo)
+{
+    if (!StateIsStoppedState (m_state, false))
+        return false;
+
+    // If we are stopped by a signal, return the signo.
+    if (signo &&
+        m_state == StateType::eStateStopped &&
+        m_stop_info.reason == StopReason::eStopReasonSignal)
+    {
+        *signo = m_stop_info.details.signal.signo;
+    }
+
+    // Regardless, we are stopped.
+    return true;
+}
+
+
 void
 NativeThreadLinux::SetStoppedByExec ()
 {

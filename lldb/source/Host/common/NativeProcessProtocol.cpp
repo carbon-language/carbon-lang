@@ -13,6 +13,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/State.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Target/NativeRegisterContext.h"
 
 #include "NativeThreadProtocol.h"
@@ -41,6 +42,18 @@ NativeProcessProtocol::NativeProcessProtocol (lldb::pid_t pid) :
     m_terminal_fd (-1),
     m_stop_id (0)
 {
+}
+
+lldb_private::Error
+NativeProcessProtocol::Interrupt ()
+{
+    Error error;
+#if !defined (SIGSTOP)
+    error.SetErrorString ("local host does not support signaling");
+    return error;
+#else
+    return Signal (SIGSTOP);
+#endif
 }
 
 lldb_private::Error
@@ -110,15 +123,21 @@ NativeProcessProtocol::GetThreadAtIndex (uint32_t idx)
 }
 
 NativeThreadProtocolSP
-NativeProcessProtocol::GetThreadByID (lldb::tid_t tid)
+NativeProcessProtocol::GetThreadByIDUnlocked (lldb::tid_t tid)
 {
-    Mutex::Locker locker (m_threads_mutex);
     for (auto thread_sp : m_threads)
     {
         if (thread_sp->GetID() == tid)
             return thread_sp;
     }
     return NativeThreadProtocolSP ();
+}
+
+NativeThreadProtocolSP
+NativeProcessProtocol::GetThreadByID (lldb::tid_t tid)
+{
+    Mutex::Locker locker (m_threads_mutex);
+    return GetThreadByIDUnlocked (tid);
 }
 
 bool

@@ -189,6 +189,11 @@ namespace lldb_private
         std::unordered_set<lldb::tid_t> m_wait_for_stop_tids;
         lldb_private::Mutex m_wait_for_stop_tids_mutex;
 
+        std::unordered_set<lldb::tid_t> m_wait_for_group_stop_tids;
+        lldb::tid_t m_group_stop_signal_tid;
+        int m_group_stop_signal;
+        lldb_private::Mutex m_wait_for_group_stop_tids_mutex;
+
         lldb_private::LazyBool m_supports_mem_region;
         std::vector<MemoryRegionInfo> m_mem_region_cache;
         lldb_private::Mutex m_mem_region_cache_mutex;
@@ -374,6 +379,17 @@ namespace lldb_private
         /// LLDB_INVALID_SIGNAL_NUMBER, deliver that signal to the thread.
         bool
         SingleStep(lldb::tid_t tid, uint32_t signo);
+
+        /// Safely mark all existing threads as waiting for group stop.
+        /// When the final group stop comes in from the set of group stop threads,
+        /// we'll mark the current thread as signaled_thread_tid and set its stop
+        /// reason as the given signo.  All other threads from group stop notification
+        /// will have thread stop reason marked as signaled with no signo.
+        void
+        SetGroupStopTids (lldb::tid_t signaled_thread_tid, int signo);
+
+        void
+        OnGroupStop (lldb::tid_t tid);
 
         lldb_private::Error
         Detach(lldb::tid_t tid);

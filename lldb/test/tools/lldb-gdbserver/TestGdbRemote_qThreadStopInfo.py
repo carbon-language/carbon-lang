@@ -112,7 +112,6 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure
     def test_qThreadStopInfo_only_reports_one_thread_stop_reason_during_interrupt_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
