@@ -68,19 +68,17 @@ private:
   void removeEntry(PoolEntry *p) { entrySet.erase(p); }
 
 public:
-  template <typename CostKeyT>
-  std::shared_ptr<CostT> getCost(CostKeyT costKey) {
+  template <typename CostKeyT> PoolRef getCost(CostKeyT costKey) {
     typename EntrySet::iterator itr =
       std::lower_bound(entrySet.begin(), entrySet.end(), costKey,
                        EntryComparator());
 
     if (itr != entrySet.end() && costKey == (*itr)->getCost())
-      return std::shared_ptr<CostT>((*itr)->shared_from_this(),
-                                    &(*itr)->getCost());
+      return PoolRef((*itr)->shared_from_this(), &(*itr)->getCost());
 
     auto p = std::make_shared<PoolEntry>(*this, std::move(costKey));
     entrySet.insert(itr, p.get());
-    return std::shared_ptr<CostT>(std::move(p), &p->getCost());
+    return PoolRef(std::move(p), &p->getCost());
   }
 };
 
