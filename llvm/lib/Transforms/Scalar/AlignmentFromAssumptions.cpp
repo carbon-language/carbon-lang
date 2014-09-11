@@ -141,6 +141,10 @@ static unsigned getNewAlignment(const SCEV *AASCEV, const SCEV *AlignSCEV,
   const SCEV *PtrSCEV = SE->getSCEV(Ptr);
   const SCEV *DiffSCEV = SE->getMinusSCEV(PtrSCEV, AASCEV);
 
+  // On 32-bit platforms, DiffSCEV might now have type i32 -- we've always
+  // sign-extended OffSCEV to i64, so make sure they agree again.
+  DiffSCEV = SE->getNoopOrSignExtend(DiffSCEV, OffSCEV->getType());
+
   // What we really want to know is the overall offset to the aligned
   // address. This address is displaced by the provided offset.
   DiffSCEV = SE->getMinusSCEV(DiffSCEV, OffSCEV);
