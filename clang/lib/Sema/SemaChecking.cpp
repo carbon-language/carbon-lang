@@ -767,6 +767,15 @@ static void CheckNonNullArgument(Sema &S,
     S.Diag(CallSiteLoc, diag::warn_null_arg) << ArgExpr->getSourceRange();
 }
 
+bool Sema::GetFormatNSStringIdx(const FormatAttr *Format, unsigned &Idx) {
+  FormatStringInfo FSI;
+  if ((GetFormatStringType(Format) == FST_NSString) &&
+      getFormatStringInfo(Format, false, &FSI)) {
+    Idx = FSI.FormatIdx;
+    return true;
+  }
+  return false;
+}
 /// \brief Diagnose use of %s directive in an NSString which is being passed
 /// as formatting string to formatting method.
 static void
@@ -774,27 +783,38 @@ DiagnoseCStringFormatDirectiveInCFAPI(Sema &S,
                                         const NamedDecl *FDecl,
                                         Expr **Args,
                                         unsigned NumArgs) {
-  if (NumArgs < 3)
-    return;
+  unsigned Idx = 0;
+  bool Format = false;
   ObjCStringFormatFamily SFFamily = FDecl->getObjCFStringFormattingFamily();
   if (SFFamily == ObjCStringFormatFamily::SFF_CFString) {
-    const Expr *FormatExpr = Args[2];
-    if (const CStyleCastExpr *CSCE = dyn_cast<CStyleCastExpr>(FormatExpr))
-      FormatExpr = CSCE->getSubExpr();
-    const StringLiteral *FormatString;
-    if (const ObjCStringLiteral *OSL =
-        dyn_cast<ObjCStringLiteral>(FormatExpr->IgnoreParenImpCasts()))
-      FormatString = OSL->getString();
-    else
-      FormatString = dyn_cast<StringLiteral>(FormatExpr->IgnoreParenImpCasts());
-    if (!FormatString)
-      return;
-    if (S.FormatStringHasSArg(FormatString)) {
-      S.Diag(FormatExpr->getExprLoc(), diag::warn_objc_cdirective_format_string)
-        << "%s" << 1 << 1;
-        S.Diag(FDecl->getLocation(), diag::note_entity_declared_at)
-          << FDecl->getDeclName();
+    Idx = 2;
+    Format = true;
+  }
+  else
+    for (const auto *I : FDecl->specific_attrs<FormatAttr>()) {
+      if (S.GetFormatNSStringIdx(I, Idx)) {
+        Format = true;
+        break;
+      }
     }
+  if (!Format || NumArgs <= Idx)
+    return;
+  const Expr *FormatExpr = Args[Idx];
+  if (const CStyleCastExpr *CSCE = dyn_cast<CStyleCastExpr>(FormatExpr))
+    FormatExpr = CSCE->getSubExpr();
+  const StringLiteral *FormatString;
+  if (const ObjCStringLiteral *OSL =
+      dyn_cast<ObjCStringLiteral>(FormatExpr->IgnoreParenImpCasts()))
+    FormatString = OSL->getString();
+  else
+    FormatString = dyn_cast<StringLiteral>(FormatExpr->IgnoreParenImpCasts());
+  if (!FormatString)
+    return;
+  if (S.FormatStringHasSArg(FormatString)) {
+    S.Diag(FormatExpr->getExprLoc(), diag::warn_objc_cdirective_format_string)
+      << "%s" << 1 << 1;
+    S.Diag(FDecl->getLocation(), diag::note_entity_declared_at)
+      << FDecl->getDeclName();
   }
 }
 
@@ -930,8 +950,8 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall,
     return false;
 
   CheckAbsoluteValueFunction(TheCall, FDecl, FnInfo);
-  
-  DiagnoseCStringFormatDirectiveInCFAPI(*this, FDecl, Args, NumArgs);
+  if (getLangOpts().ObjC1)
+    DiagnoseCStringFormatDirectiveInCFAPI(*this, FDecl, Args, NumArgs);
 
   unsigned CMId = FDecl->getMemoryFunctionKind();
   if (CMId == 0)

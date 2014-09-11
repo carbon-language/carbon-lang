@@ -2121,21 +2121,34 @@ DiagnoseCStringFormatDirectiveInObjCAPI(Sema &S,
                                         ObjCMethodDecl *Method,
                                         Selector Sel,
                                         Expr **Args, unsigned NumArgs) {
-  if (NumArgs == 0)
-    return;
+  unsigned Idx = 0;
+  bool Format = false;
   ObjCStringFormatFamily SFFamily = Sel.getStringFormatFamily();
   if (SFFamily == ObjCStringFormatFamily::SFF_NSString) {
-    Expr *FormatExpr = Args[0];
-    if (ObjCStringLiteral *OSL =
-        dyn_cast<ObjCStringLiteral>(FormatExpr->IgnoreParenImpCasts())) {
-      StringLiteral *FormatString = OSL->getString();
-      if (S.FormatStringHasSArg(FormatString)) {
-        S.Diag(FormatExpr->getExprLoc(), diag::warn_objc_cdirective_format_string)
-        << "%s" << 0 << 0;
-        if (Method)
-          S.Diag(Method->getLocation(), diag::note_method_declared_at)
-          << Method->getDeclName();
+    Idx = 0;
+    Format = true;
+  }
+  else if (Method) {
+    for (const auto *I : Method->specific_attrs<FormatAttr>()) {
+      if (S.GetFormatNSStringIdx(I, Idx)) {
+        Format = true;
+        break;
       }
+    }
+  }
+  if (!Format || NumArgs <= Idx)
+    return;
+  
+  Expr *FormatExpr = Args[Idx];
+  if (ObjCStringLiteral *OSL =
+      dyn_cast<ObjCStringLiteral>(FormatExpr->IgnoreParenImpCasts())) {
+    StringLiteral *FormatString = OSL->getString();
+    if (S.FormatStringHasSArg(FormatString)) {
+      S.Diag(FormatExpr->getExprLoc(), diag::warn_objc_cdirective_format_string)
+        << "%s" << 0 << 0;
+      if (Method)
+        S.Diag(Method->getLocation(), diag::note_method_declared_at)
+          << Method->getDeclName();
     }
   }
 }
