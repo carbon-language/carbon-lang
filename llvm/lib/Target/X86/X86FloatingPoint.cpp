@@ -25,7 +25,6 @@
 
 #include "X86.h"
 #include "X86InstrInfo.h"
-#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -46,6 +45,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <algorithm>
+#include <bitset>
 using namespace llvm;
 
 #define DEBUG_TYPE "x86-codegen"
@@ -1655,7 +1655,7 @@ void FPS::setKillFlags(MachineBasicBlock &MBB) const {
     if (I->isDebugValue())
       continue;
 
-    BitVector Defs(8);
+    std::bitset<8> Defs;
     SmallVector<MachineOperand *, 2> Uses;
     MachineInstr &MI = *I;
 
