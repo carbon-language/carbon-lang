@@ -569,10 +569,10 @@ public:
   template <typename coff_symbol_type>
   std::error_code getSymbol(uint32_t Index,
                             const coff_symbol_type *&Res) const {
-    if (Index < getNumberOfSymbols())
-      Res = reinterpret_cast<coff_symbol_type *>(getSymbolTable()) + Index;
-    else
+    if (Index >= getNumberOfSymbols())
       return object_error::parse_failed;
+
+    Res = reinterpret_cast<coff_symbol_type *>(getSymbolTable()) + Index;
     return object_error::success;
   }
   ErrorOr<COFFSymbolRef> getSymbol(uint32_t index) const {
