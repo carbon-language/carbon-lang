@@ -2047,6 +2047,7 @@
 		94EA27CD17DE91750070F505 /* LibCxxUnorderedMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LibCxxUnorderedMap.cpp; path = source/DataFormatters/LibCxxUnorderedMap.cpp; sourceTree = "<group>"; };
 		94EBAC8313D9EE26009BA64E /* PythonPointer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PythonPointer.h; path = include/lldb/Utility/PythonPointer.h; sourceTree = "<group>"; };
 		94EE33F218643C6900CD703B /* FormattersContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FormattersContainer.h; path = include/lldb/DataFormatters/FormattersContainer.h; sourceTree = "<group>"; };
+		94F6C4D119C264C70049D089 /* ProcessStructReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ProcessStructReader.h; path = include/lldb/Utility/ProcessStructReader.h; sourceTree = "<group>"; };
 		94FA3DDD1405D4E500833217 /* ValueObjectConstResultChild.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectConstResultChild.h; path = include/lldb/Core/ValueObjectConstResultChild.h; sourceTree = "<group>"; };
 		94FA3DDF1405D50300833217 /* ValueObjectConstResultChild.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectConstResultChild.cpp; path = source/Core/ValueObjectConstResultChild.cpp; sourceTree = "<group>"; };
 		94FE476613FC1DA8001F8475 /* finish-swig-Python-LLDB.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "finish-swig-Python-LLDB.sh"; sourceTree = "<group>"; };
@@ -2960,6 +2961,7 @@
 				26D1804416CEE12500EDFB5B /* KQueue.h */,
 				26D1803C16CEBFD300EDFB5B /* KQueue.cpp */,
 				94031A9F13CF5B3D00DCFF3C /* PriorityPointerPair.h */,
+				94F6C4D119C264C70049D089 /* ProcessStructReader.h */,
 				2682F16B115EDA0D00CCFF99 /* PseudoTerminal.h */,
 				2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */,
 				4CAB257C18EC9DB800BAD33E /* SafeMachO.h */,
