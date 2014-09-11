@@ -489,6 +489,8 @@ class R600_LDS_1A2D <bits<6> lds_op, string name, list<dag> pattern> :
 
 def LDS_ADD : R600_LDS_1A1D_NORET <0x0, "LDS_ADD", [] >;
 def LDS_SUB : R600_LDS_1A1D_NORET <0x1, "LDS_SUB", [] >;
+def LDS_MAX_INT : R600_LDS_1A1D_NORET <0x6, "LDS_MAX_INT", [] >;
+def LDS_MAX_UINT : R600_LDS_1A1D_NORET <0x8, "LDS_MAX_UINT", [] >;
 def LDS_WRITE : R600_LDS_1A1D_NORET <0xD, "LDS_WRITE",
   [(local_store (i32 R600_Reg32:$src1), R600_Reg32:$src0)]
 >;
@@ -503,6 +505,12 @@ def LDS_ADD_RET : R600_LDS_1A1D_RET <0x20, "LDS_ADD",
 >;
 def LDS_SUB_RET : R600_LDS_1A1D_RET <0x21, "LDS_SUB",
   [(set i32:$dst, (atomic_load_sub_local i32:$src0, i32:$src1))]
+>;
+def LDS_MAX_INT_RET : R600_LDS_1A1D_RET <0x26, "LDS_MAX_INT",
+  [(set i32:$dst, (atomic_load_max_local i32:$src0, i32:$src1))]
+>;
+def LDS_MAX_UINT_RET : R600_LDS_1A1D_RET <0x28, "LDS_MAX_UINT",
+  [(set i32:$dst, (atomic_load_umax_local i32:$src0, i32:$src1))]
 >;
 def LDS_READ_RET : R600_LDS_1A <0x32, "LDS_READ_RET",
   [(set (i32 R600_Reg32:$dst), (local_load R600_Reg32:$src0))]
