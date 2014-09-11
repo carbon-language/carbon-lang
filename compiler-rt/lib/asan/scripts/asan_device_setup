@@ -168,7 +168,7 @@ fi
 cat <<EOF >"$TMPDIR/app_process.wrap"
 #!/system/bin/sh
 ASAN_OPTIONS=$ASAN_OPTIONS \\
-LD_PRELOAD=libclang_rt.asan-arm-android.so \\
+LD_PRELOAD=\$LD_PRELOAD:libclang_rt.asan-arm-android.so \\
 exec /system/bin/app_process32 \$@
 
 EOF
