@@ -20,7 +20,9 @@ public:
 };
 } // namespace
 
-const char *_obj2yaml_error_category::name() const { return "obj2yaml"; }
+const char *_obj2yaml_error_category::name() const LLVM_NOEXCEPT {
+  return "obj2yaml";
+}
 
 std::string _obj2yaml_error_category::message(int ev) const {
   switch (static_cast<obj2yaml_error>(ev)) {
