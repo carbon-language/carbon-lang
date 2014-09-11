@@ -202,7 +202,10 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
       int DstIdx = TII->getOperandIdx(MI->getOpcode(), AMDGPU::OpName::dst);
       assert(DstIdx != -1);
       MachineInstrBuilder NewMI;
-      if (!MRI.use_empty(MI->getOperand(DstIdx).getReg()))
+      // FIXME: getLDSNoRetOp method only handles LDS_1A1D LDS ops. Add
+      //        LDS_1A2D support and remove this special case.
+      if (!MRI.use_empty(MI->getOperand(DstIdx).getReg()) ||
+           MI->getOpcode() == AMDGPU::LDS_CMPST_RET)
         return BB;
 
       NewMI = BuildMI(*BB, I, BB->findDebugLoc(I),

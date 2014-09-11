@@ -474,17 +474,34 @@ class R600_LDS_1A1D_RET <bits<6> lds_op, string name, list<dag> pattern> :
   let DisableEncoding = "$dst";
 }
 
-class R600_LDS_1A2D <bits<6> lds_op, string name, list<dag> pattern> :
+class R600_LDS_1A2D <bits<6> lds_op, dag outs, string name, list<dag> pattern,
+                     string dst =""> :
     R600_LDS <
-  lds_op,
-  (outs),
+  lds_op, outs,
   (ins R600_Reg32:$src0, REL:$src0_rel, SEL:$src0_sel,
        R600_Reg32:$src1, REL:$src1_rel, SEL:$src1_sel,
        R600_Reg32:$src2, REL:$src2_rel, SEL:$src2_sel,
        LAST:$last, R600_Pred:$pred_sel, BANK_SWIZZLE:$bank_swizzle),
-  "  "#name# "$last $src0$src0_rel, $src1$src1_rel, $src2$src2_rel, $pred_sel",
+  "  "#name# "$last "#dst#"$src0$src0_rel, $src1$src1_rel, $src2$src2_rel, $pred_sel",
   pattern> {
+
+  field string BaseOp;
+
+  let LDS_1A1D = 0;
   let LDS_1A2D = 1;
+}
+
+class R600_LDS_1A2D_NORET <bits<6> lds_op, string name, list<dag> pattern> :
+    R600_LDS_1A2D <lds_op, (outs), name, pattern> {
+  let BaseOp = name;
+}
+
+class R600_LDS_1A2D_RET <bits<6> lds_op, string name, list<dag> pattern> :
+    R600_LDS_1A2D <lds_op, (outs R600_Reg32:$dst), name, pattern> {
+
+  let BaseOp = name;
+  let usesCustomInserter = 1;
+  let DisableEncoding = "$dst";
 }
 
 def LDS_ADD : R600_LDS_1A1D_NORET <0x0, "LDS_ADD", [] >;
@@ -493,6 +510,7 @@ def LDS_AND : R600_LDS_1A1D_NORET <0x9, "LDS_AND", [] >;
 def LDS_OR : R600_LDS_1A1D_NORET <0xa, "LDS_OR", [] >;
 def LDS_XOR : R600_LDS_1A1D_NORET <0xb, "LDS_XOR", [] >;
 def LDS_WRXCHG: R600_LDS_1A1D_NORET <0xd, "LDS_WRXCHG", [] >;
+def LDS_CMPST: R600_LDS_1A2D_NORET <0x10, "LDS_CMPST", [] >;
 def LDS_MIN_INT : R600_LDS_1A1D_NORET <0x5, "LDS_MIN_INT", [] >;
 def LDS_MAX_INT : R600_LDS_1A1D_NORET <0x6, "LDS_MAX_INT", [] >;
 def LDS_MIN_UINT : R600_LDS_1A1D_NORET <0x7, "LDS_MIN_UINT", [] >;
@@ -535,6 +553,9 @@ def LDS_MAX_UINT_RET : R600_LDS_1A1D_RET <0x28, "LDS_MAX_UINT",
 >;
 def LDS_WRXCHG_RET : R600_LDS_1A1D_RET <0x2d, "LDS_WRXCHG",
   [(set i32:$dst, (atomic_swap_local i32:$src0, i32:$src1))]
+>;
+def LDS_CMPST_RET : R600_LDS_1A2D_RET <0x30, "LDS_CMPST",
+  [(set i32:$dst, (atomic_cmp_swap_32_local i32:$src0, i32:$src1, i32:$src2))]
 >;
 def LDS_READ_RET : R600_LDS_1A <0x32, "LDS_READ_RET",
   [(set (i32 R600_Reg32:$dst), (local_load R600_Reg32:$src0))]
