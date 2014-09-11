@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "cxxabi.h"
+#include <new>
 #include <typeinfo>
 
 namespace __cxxabiv1
@@ -29,6 +30,10 @@ void __cxa_bad_typeid(void) {
     throw std::bad_typeid();
 }
 
+LIBCXXABI_NORETURN
+void __cxa_throw_bad_array_new_length(void) {
+    throw std::bad_array_new_length();
+}
 }  // extern "C"
 
 }  // abi
