@@ -9355,6 +9355,16 @@ TEST_F(FormatTest, DisableRegions) {
                    "  int j;\n"
                    " // clang-format on\n"
                    "   int   k;"));
+  EXPECT_EQ("int i;\n"
+            "/* clang-format off */\n"
+            "  int j;\n"
+            "/* clang-format on */\n"
+            "int k;",
+            format(" int  i;\n"
+                   "   /* clang-format off */\n"
+                   "  int j;\n"
+                   " /* clang-format on */\n"
+                   "   int   k;"));
 }
 
 TEST_F(FormatTest, DoNotCrashOnInvalidInput) {

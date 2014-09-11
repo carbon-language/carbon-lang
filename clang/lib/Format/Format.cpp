@@ -1725,11 +1725,18 @@ private:
         Tok.Tok.setKind(tok::char_constant);
       }
     }
-    if (Tok.is(tok::comment) && Tok.TokenText == "// clang-format on")
+
+    if (Tok.is(tok::comment) && (Tok.TokenText == "// clang-format on" ||
+                                 Tok.TokenText == "/* clang-format on */")) {
       FormattingDisabled = false;
+    }
+
     Tok.Finalized = FormattingDisabled;
-    if (Tok.is(tok::comment) && Tok.TokenText == "// clang-format off")
+
+    if (Tok.is(tok::comment) && (Tok.TokenText == "// clang-format off" ||
+                                 Tok.TokenText == "/* clang-format off */")) {
       FormattingDisabled = true;
+    }
   }
 };
 
