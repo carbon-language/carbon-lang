@@ -597,6 +597,7 @@
 		3FDFED2719BA6D96009756A7 /* HostNativeThreadBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFED2419BA6D96009756A7 /* HostNativeThreadBase.cpp */; };
 		3FDFED2819BA6D96009756A7 /* HostThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFED2519BA6D96009756A7 /* HostThread.cpp */; };
 		3FDFED2919BA6D96009756A7 /* ThreadLauncher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFED2619BA6D96009756A7 /* ThreadLauncher.cpp */; };
+		3FDFED2D19C257A0009756A7 /* HostProcess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFED2C19C257A0009756A7 /* HostProcess.cpp */; };
 		449ACC98197DEA0B008D175E /* FastDemangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 449ACC96197DE9EC008D175E /* FastDemangle.cpp */; };
 		490A36C0180F0E6F00BA31F8 /* PlatformWindows.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490A36BD180F0E6F00BA31F8 /* PlatformWindows.cpp */; };
 		490A36C2180F0E9300BA31F8 /* PlatformWindows.h in Headers */ = {isa = PBXBuildFile; fileRef = 490A36BE180F0E6F00BA31F8 /* PlatformWindows.h */; };
@@ -1823,6 +1824,7 @@
 		3FDFED2419BA6D96009756A7 /* HostNativeThreadBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HostNativeThreadBase.cpp; sourceTree = "<group>"; };
 		3FDFED2519BA6D96009756A7 /* HostThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HostThread.cpp; sourceTree = "<group>"; };
 		3FDFED2619BA6D96009756A7 /* ThreadLauncher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadLauncher.cpp; sourceTree = "<group>"; };
+		3FDFED2C19C257A0009756A7 /* HostProcess.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HostProcess.cpp; sourceTree = "<group>"; };
 		449ACC96197DE9EC008D175E /* FastDemangle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FastDemangle.cpp; path = source/Core/FastDemangle.cpp; sourceTree = "<group>"; };
 		4906FD4012F2255300A2A77C /* ASTDumper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTDumper.cpp; path = source/Expression/ASTDumper.cpp; sourceTree = "<group>"; };
 		4906FD4412F2257600A2A77C /* ASTDumper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTDumper.h; path = include/lldb/Expression/ASTDumper.h; sourceTree = "<group>"; };
@@ -4198,6 +4200,7 @@
 				69A01E1C1236C5D400C660B5 /* Host.cpp */,
 				3FDFE53419A29327009756A7 /* HostInfoBase.cpp */,
 				3FDFED2419BA6D96009756A7 /* HostNativeThreadBase.cpp */,
+				3FDFED2C19C257A0009756A7 /* HostProcess.cpp */,
 				3FDFED2519BA6D96009756A7 /* HostThread.cpp */,
 				236124A21986B4E2004EFC37 /* IOObject.cpp */,
 				69A01E1E1236C5D400C660B5 /* Mutex.cpp */,
@@ -5101,6 +5104,7 @@
 				268900B013353E5000698AC0 /* RegisterContextLLDB.cpp in Sources */,
 				3FDFE56C19AF9C44009756A7 /* HostProcessPosix.cpp in Sources */,
 				268900B413353E5000698AC0 /* RegisterContextMacOSXFrameBackchain.cpp in Sources */,
+				3FDFED2D19C257A0009756A7 /* HostProcess.cpp in Sources */,
 				268900B513353E5000698AC0 /* StopInfoMachException.cpp in Sources */,
 				268900B613353E5000698AC0 /* UnwindMacOSXFrameBackchain.cpp in Sources */,
 				268900B713353E5F00698AC0 /* DWARFAbbreviationDeclaration.cpp in Sources */,

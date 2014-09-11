@@ -10,6 +10,8 @@
 #ifndef lldb_Host_HostProcess_h_
 #define lldb_Host_HostProcess_h_
 
+#include "lldb/lldb-types.h"
+
 //----------------------------------------------------------------------
 /// @class HostInfo HostInfo.h "lldb/Host/HostProcess.h"
 /// @brief A class that represents a running process on the host machine.
@@ -26,19 +28,31 @@
 ///
 //----------------------------------------------------------------------
 
-#if defined(_WIN32)
-#include "lldb/Host/windows/HostProcessWindows.h"
-#define HOST_PROCESS_TYPE HostProcessWindows
-#else
-#include "lldb/Host/posix/HostProcessPosix.h"
-#define HOST_PROCESS_TYPE HostProcessPosix
-#endif
-
 namespace lldb_private
 {
-  typedef HOST_PROCESS_TYPE HostProcess;
-}
 
-#undef HOST_PROCESS_TYPE
+class HostNativeProcessBase;
+
+class HostProcess
+{
+  public:
+    HostProcess();
+    HostProcess(lldb::process_t process);
+    ~HostProcess();
+
+    Error Terminate();
+    Error GetMainModule(FileSpec &file_spec) const;
+
+    lldb::pid_t GetProcessId() const;
+    bool IsRunning() const;
+
+    HostNativeProcessBase &GetNativeProcess();
+    const HostNativeProcessBase &GetNativeProcess() const;
+
+  private:
+    std::shared_ptr<HostNativeProcessBase> m_native_process;
+};
+
+}
 
 #endif

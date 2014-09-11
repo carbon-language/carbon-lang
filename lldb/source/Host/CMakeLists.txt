@@ -12,6 +12,7 @@ add_host_subdirectory(common
   common/Host.cpp
   common/HostInfoBase.cpp
   common/HostNativeThreadBase.cpp
+  common/HostProcess.cpp
   common/HostThread.cpp
   common/IOObject.cpp
   common/Mutex.cpp
