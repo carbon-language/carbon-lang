@@ -1303,7 +1303,7 @@ APInt APInt::sqrt() const {
 
   // Okay, all the short cuts are exhausted. We must compute it. The following
   // is a classical Babylonian method for computing the square root. This code
-  // was adapted to APINt from a wikipedia article on such computations.
+  // was adapted to APInt from a wikipedia article on such computations.
   // See http://www.wikipedia.org/ and go to the page named
   // Calculate_an_integer_square_root.
   unsigned nbits = BitWidth, i = 4;
