@@ -2276,7 +2276,9 @@ constants and smaller complex constants.
     square brackets (``[]``)). For example:
     "``[ i32 42, i32 11, i32 74 ]``". Array constants must have
     :ref:`array type <t_array>`, and the number and types of elements must
-    match those specified by the type.
+    match those specified by the type. As a special case, character array
+    constants may also be represented as a double-quoted string using the ``c``
+    prefix. For example: "``c"Hello World\0A\00"``".
 **Vector constants**
     Vector constants are represented with notation similar to vector
     type definitions (a comma separated list of elements, surrounded by
