@@ -726,3 +726,129 @@ namespace dr572 { // dr572: yes
   enum E { a = 1, b = 2 };
   int check[a + b == 3 ? 1 : -1];
 }
+
+namespace dr573 { // dr573: no
+  void *a;
+  int *b = reinterpret_cast<int*>(a);
+  void (*c)() = reinterpret_cast<void(*)()>(a);
+  void *d = reinterpret_cast<void*>(c);
+#if __cplusplus < 201103L
+  // expected-error@-3 {{extension}}
+  // expected-error@-3 {{extension}}
+#endif
+  void f() { delete a; } // expected-error {{cannot delete}}
+  int n = d - a; // expected-error {{arithmetic on pointers to void}}
+  // FIXME: This is ill-formed.
+  template<void*> struct S;
+  template<int*> struct T;
+}
+
+namespace dr574 { // dr574: yes
+  struct A {
+    A &operator=(const A&) const; // expected-note {{does not match because it is const}}
+  };
+  struct B {
+    B &operator=(const B&) volatile; // expected-note {{nearly matches}}
+  };
+#if __cplusplus >= 201103L
+  struct C {
+    C &operator=(const C&) &; // expected-note {{not viable}} expected-note {{nearly matches}} expected-note {{here}}
+  };
+  struct D {
+    D &operator=(const D&) &&; // expected-note {{not viable}} expected-note {{nearly matches}} expected-note {{here}}
+  };
+  void test(C c, D d) {
+    c = c;
+    C() = c; // expected-error {{no viable}}
+    d = d; // expected-error {{no viable}}
+    D() = d;
+  }
+#endif
+  struct Test {
+    friend A &A::operator=(const A&); // expected-error {{does not match}}
+    friend B &B::operator=(const B&); // expected-error {{does not match}}
+#if __cplusplus >= 201103L
+    // FIXME: We shouldn't produce the 'cannot overload' diagnostics here.
+    friend C &C::operator=(const C&); // expected-error {{does not match}} expected-error {{cannot overload}}
+    friend D &D::operator=(const D&); // expected-error {{does not match}} expected-error {{cannot overload}}
+#endif
+  };
+}
+
+namespace dr575 { // dr575: yes
+  template<typename T, typename U = typename T::type> void a(T); void a(...); // expected-error 0-1{{extension}}
+  template<typename T, typename T::type U = 0> void b(T); void b(...); // expected-error 0-1{{extension}}
+  template<typename T, int U = T::value> void c(T); void c(...); // expected-error 0-1{{extension}}
+  template<typename T> void d(T, int = T::value); void d(...); // expected-error {{cannot be used prior to '::'}}
+  void x() {
+    a(0);
+    b(0);
+    c(0);
+    d(0); // expected-note {{in instantiation of default function argument}}
+  }
+
+  template<typename T = int&> void f(T* = 0); // expected-error 0-1{{extension}}
+  template<typename T = int> void f(T = 0); // expected-error 0-1{{extension}}
+  void g() { f<>(); }
+
+  template<typename T> T &h(T *);
+  template<typename T> T *h(T *);
+  void *p = h((void*)0);
+}
+
+namespace dr576 { // dr576: yes
+  typedef void f() {} // expected-error {{function definition is not allowed}}
+  void f(typedef int n); // expected-error {{invalid storage class}}
+  void f(char c) { typedef int n; }
+}
+
+namespace dr577 { // dr577: yes
+  typedef void V;
+  typedef const void CV;
+  void a(void);
+  void b(const void); // expected-error {{qualifiers}}
+  void c(V);
+  void d(CV); // expected-error {{qualifiers}}
+  void (*e)(void) = c;
+  void (*f)(const void); // expected-error {{qualifiers}}
+  void (*g)(V) = a;
+  void (*h)(CV); // expected-error {{qualifiers}}
+  template<typename T> void i(T); // expected-note 2{{requires 1 arg}}
+  template<typename T> void j(void (*)(T)); // expected-note 2{{argument may not have 'void' type}}
+  void k() {
+    a();
+    c();
+    i<void>(); // expected-error {{no match}}
+    i<const void>(); // expected-error {{no match}}
+    j<void>(0); // expected-error {{no match}}
+    j<const void>(0); // expected-error {{no match}}
+  }
+}
+
+namespace dr580 { // dr580: no
+  class C;
+  struct A { static C c; };
+  struct B { static C c; };
+  class C {
+    C(); // expected-note {{here}}
+    ~C(); // expected-note {{here}}
+
+    typedef int I; // expected-note {{here}}
+    template<int> struct X;
+    template<int> friend struct Y;
+    template<int> void f();
+    template<int> friend void g();
+    friend struct A;
+  };
+
+  template<C::I> struct C::X {};
+  template<C::I> struct Y {};
+  template<C::I> struct Z {}; // FIXME: should reject, accepted because C befriends A!
+
+  template<C::I> void C::f() {}
+  template<C::I> void g() {}
+  template<C::I> void h() {} // expected-error {{private}}
+
+  C A::c;
+  C B::c; // expected-error 2{{private}}
+}
