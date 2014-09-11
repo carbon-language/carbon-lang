@@ -444,8 +444,7 @@ static bool checkMachOAndArchFlags(ObjectFile *o, StringRef file) {
 static void PrintFileSectionSizes(StringRef file) {
   // If file is not stdin, check that it exists.
   if (file != "-") {
-    bool exists;
-    if (sys::fs::exists(file, exists) || !exists) {
+    if (!sys::fs::exists(file)) {
       errs() << ToolName << ": '" << file << "': "
              << "No such file\n";
       return;
