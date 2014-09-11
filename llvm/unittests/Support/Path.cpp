@@ -334,9 +334,7 @@ TEST_F(FileSystemTest, TempFiles) {
       fs::createTemporaryFile("prefix", "temp", FileDescriptor, TempPath));
 
   // Make sure it exists.
-  bool TempFileExists;
-  ASSERT_NO_ERROR(sys::fs::exists(Twine(TempPath), TempFileExists));
-  EXPECT_TRUE(TempFileExists);
+  ASSERT_TRUE(sys::fs::exists(Twine(TempPath)));
 
   // Create another temp tile.
   int FD2;
@@ -363,6 +361,7 @@ TEST_F(FileSystemTest, TempFiles) {
   EXPECT_EQ(B.type(), fs::file_type::file_not_found);
 
   // Make sure Temp2 doesn't exist.
+  bool TempFileExists;
   ASSERT_NO_ERROR(fs::exists(Twine(TempPath2), TempFileExists));
   EXPECT_FALSE(TempFileExists);
 
