@@ -47,9 +47,7 @@ CXRemapping clang_getRemappings(const char *migrate_dir_path) {
     return nullptr;
   }
 
-  bool exists = false;
-  llvm::sys::fs::exists(migrate_dir_path, exists);
-  if (!exists) {
+  if (!llvm::sys::fs::exists(migrate_dir_path)) {
     if (Logging) {
       llvm::errs() << "Error by clang_getRemappings(\"" << migrate_dir_path
                    << "\")\n";

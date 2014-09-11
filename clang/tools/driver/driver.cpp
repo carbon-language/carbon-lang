@@ -358,8 +358,7 @@ static void SetInstallDir(SmallVectorImpl<const char *> &argv,
   }
   llvm::sys::fs::make_absolute(InstalledPath);
   InstalledPath = llvm::sys::path::parent_path(InstalledPath);
-  bool exists;
-  if (!llvm::sys::fs::exists(InstalledPath.str(), exists) && exists)
+  if (llvm::sys::fs::exists(InstalledPath.c_str()))
     TheDriver.setInstalledDir(InstalledPath);
 }
 

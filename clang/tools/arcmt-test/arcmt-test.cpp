@@ -269,14 +269,11 @@ static bool verifyTransformedFiles(ArrayRef<std::string> resultFiles) {
       return true;
     }
 
-    bool exists = false;
-    sys::fs::exists(It->second, exists);
-    if (!exists) {
+    if (!sys::fs::exists(It->second)) {
       errs() << "error: '" << It->second << "' does not exist\n";
       return true;
     }
-    sys::fs::exists(inputResultFname, exists);
-    if (!exists) {
+    if (!sys::fs::exists(inputResultFname)) {
       errs() << "error: '" << inputResultFname << "' does not exist\n";
       return true;
     }

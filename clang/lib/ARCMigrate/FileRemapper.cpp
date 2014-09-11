@@ -58,9 +58,7 @@ bool FileRemapper::initFromFile(StringRef filePath, DiagnosticsEngine &Diag,
   assert(FromToMappings.empty() &&
          "initFromDisk should be called before any remap calls");
   std::string infoFile = filePath;
-  bool fileExists = false;
-  llvm::sys::fs::exists(infoFile, fileExists);
-  if (!fileExists)
+  if (!llvm::sys::fs::exists(infoFile))
     return false;
 
   std::vector<std::pair<const FileEntry *, const FileEntry *> > pairs;
@@ -173,9 +171,7 @@ bool FileRemapper::overwriteOriginal(DiagnosticsEngine &Diag,
          I = FromToMappings.begin(), E = FromToMappings.end(); I != E; ++I) {
     const FileEntry *origFE = I->first;
     assert(I->second.is<llvm::MemoryBuffer *>());
-    bool fileExists = false;
-    fs::exists(origFE->getName(), fileExists);
-    if (!fileExists)
+    if (!fs::exists(origFE->getName()))
       return report(StringRef("File does not exist: ") + origFE->getName(),
                     Diag);
 
