@@ -5,6 +5,8 @@ from lldbtest import *
 
 class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
 
+    THREAD_COUNT = 5
+
     def gather_stop_replies_via_qThreadStopInfo(self, thread_count):
         # Set up the inferior args.
         inferior_args=[]
@@ -37,6 +39,7 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEquals(len(threads), thread_count)
 
         # Grab stop reply for each thread via qThreadStopInfo{tid:hex}.
+        stop_replies = {}
         for thread in threads:
             # Run the qThreadStopInfo command.
             self.reset_test_sequence()
@@ -53,18 +56,22 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
             kv_dict = self.parse_key_val_dict(key_vals_text)
             self.assertIsNotNone(kv_dict)
 
-            # Verify there is a thread.
+            # Verify there is a thread and that it matches the expected thread id.
             kv_thread = kv_dict.get("thread")
             self.assertIsNotNone(kv_thread)
-            self.assertEquals(int(kv_thread, 16), thread)
+            kv_thread_id = int(kv_thread, 16)
+            self.assertEquals(kv_thread_id, thread)
 
-        return threads
+            # Grab the stop id reported.
+            stop_result_text = context.get("stop_result")
+            self.assertIsNotNone(stop_result_text)
+            stop_replies[kv_thread_id] = int(stop_result_text, 16)
+
+        return stop_replies
 
     def qThreadStopInfo_works_for_multiple_threads(self, thread_count):
-        # Gather threads from stop notification when QThreadsInStopReply is enabled.
-        # stop_reply_threads = self.gather_stop_replies_via_qThreadStopInfo(self.ENABLE_THREADS_IN_STOP_REPLY_ENTRIES, thread_count)
-        stop_reply_threads = self.gather_stop_replies_via_qThreadStopInfo(thread_count)
-        self.assertEquals(len(stop_reply_threads), thread_count)
+        stop_replies = self.gather_stop_replies_via_qThreadStopInfo(thread_count)
+        self.assertEquals(len(stop_replies), thread_count)
 
     @debugserver_test
     @dsym_test
@@ -72,7 +79,7 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.init_debugserver_test()
         self.buildDsym()
         self.set_inferior_startup_launch()
-        self.qThreadStopInfo_works_for_multiple_threads(5)
+        self.qThreadStopInfo_works_for_multiple_threads(self.THREAD_COUNT)
 
     @llgs_test
     @dwarf_test
@@ -80,7 +87,37 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.init_llgs_test()
         self.buildDwarf()
         self.set_inferior_startup_launch()
-        self.qThreadStopInfo_works_for_multiple_threads(5)
+        self.qThreadStopInfo_works_for_multiple_threads(self.THREAD_COUNT)
+
+    def qThreadStopInfo_only_reports_one_thread_stop_reason_during_interrupt(self, thread_count):
+        stop_replies = self.gather_stop_replies_via_qThreadStopInfo(thread_count)
+        self.assertIsNotNone(stop_replies)
+
+        no_stop_reason_count   = sum(1 for stop_reason in stop_replies.values() if stop_reason == 0)
+        with_stop_reason_count = sum(1 for stop_reason in stop_replies.values() if stop_reason != 0)
+
+        # All but one thread should report no stop reason.
+        self.assertEqual(no_stop_reason_count, thread_count - 1)
+
+        # Only one thread should should indicate a stop reason.
+        self.assertEqual(with_stop_reason_count, 1)
+
+    @debugserver_test
+    @dsym_test
+    def test_qThreadStopInfo_only_reports_one_thread_stop_reason_during_interrupt_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.set_inferior_startup_launch()
+        self.qThreadStopInfo_only_reports_one_thread_stop_reason_during_interrupt(self.THREAD_COUNT)
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure
+    def test_qThreadStopInfo_only_reports_one_thread_stop_reason_during_interrupt_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.set_inferior_startup_launch()
+        self.qThreadStopInfo_only_reports_one_thread_stop_reason_during_interrupt(self.THREAD_COUNT)
 
 
 if __name__ == '__main__':
