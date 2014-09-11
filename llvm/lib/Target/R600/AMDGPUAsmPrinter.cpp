@@ -322,8 +322,10 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
   if (VCCUsed)
     MaxSGPR += 2;
 
-  ProgInfo.NumVGPR = MaxVGPR;
-  ProgInfo.NumSGPR = MaxSGPR;
+  // We found the maximum register index. They start at 0, so add one to get the
+  // number of registers.
+  ProgInfo.NumVGPR = MaxVGPR + 1;
+  ProgInfo.NumSGPR = MaxSGPR + 1;
 
   // Set the value to initialize FP_ROUND and FP_DENORM parts of the mode
   // register.

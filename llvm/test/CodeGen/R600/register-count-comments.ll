@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck -check-prefix=SI %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs -asm-verbose < %s | FileCheck -check-prefix=SI %s
 
 declare i32 @llvm.SI.tid() nounwind readnone
 
@@ -16,5 +16,12 @@ define void @foo(i32 addrspace(1)* noalias %out, i32 addrspace(1)* %abase, i32 a
   %b = load i32 addrspace(1)* %bptr, align 4
   %result = add i32 %a, %b
   store i32 %result, i32 addrspace(1)* %outptr, align 4
+  ret void
+}
+
+; SI-LABEL: @one_vgpr_used
+; SI: NumVgprs: 1
+define void @one_vgpr_used(i32 addrspace(1)* %out, i32 %x) nounwind {
+  store i32 %x, i32 addrspace(1)* %out, align 4
   ret void
 }
