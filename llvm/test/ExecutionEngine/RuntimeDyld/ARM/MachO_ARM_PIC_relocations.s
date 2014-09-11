@@ -17,8 +17,8 @@ insn2:
 nextPC:
         add     r1, r0, r0
 
-# Check stub generation by referencing a common symbol, 'baz'. Check both the
-# Content of the stub, and the reference to the stub.
+# Check stub generation for external symbols by referencing a common symbol, 'baz'.
+# Check both the content of the stub, and the reference to the stub.
 # Stub should contain '0xe51ff004' (ldr pc, [pc, #-4]), followed by the target.
 #
 # rtdyld-check: *{4}(stub_addr(foo.o, __text, baz)) = 0xe51ff004
@@ -27,6 +27,11 @@ nextPC:
 # rtdyld-check: decode_operand(insn3, 0) = stub_addr(foo.o, __text, baz) - (insn3 + 8)
 insn3:
         bl      baz
+
+# Check stub generation for internal symbols by referencing 'bar'.
+# rtdyld-check: *{4}(stub_addr(foo.o, __text, bar) + 4) = bar
+insn4:
+        bl      bar
         bx	lr
 
 # Add 'aaa' to the common symbols to make sure 'baz' isn't at the start of the
