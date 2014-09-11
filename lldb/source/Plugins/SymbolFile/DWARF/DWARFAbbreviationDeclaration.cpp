@@ -73,14 +73,14 @@ DWARFAbbreviationDeclaration::Extract(const DWARFDataExtractor& data, lldb::offs
 void
 DWARFAbbreviationDeclaration::Dump(Stream *s)  const
 {
-//  *ostrm_ptr << std::setfill(' ') << std::dec << '[' << std::setw(3) << std::right << m_code << ']' << ' ' << std::setw(30) << std::left << DW_TAG_value_to_name(m_tag) << DW_CHILDREN_value_to_name(m_has_children) << std::endl;
-//
-//  DWARFAttribute::const_iterator pos;
-//
-//  for (pos = m_attributes.begin(); pos != m_attributes.end(); ++pos)
-//      *ostrm_ptr << "      " << std::setw(29) << std::left << DW_AT_value_to_name(pos->attr()) << ' ' << DW_FORM_value_to_name(pos->form()) << std::endl;
-//
-//  *ostrm_ptr << std::endl;
+    s->Printf("Debug Abbreviation Declaration: code = 0x%4.4x, tag = %s, has_children = %s\n", m_code, DW_TAG_value_to_name(m_tag), DW_CHILDREN_value_to_name(m_has_children));
+
+    DWARFAttribute::const_iterator pos;
+
+    for (pos = m_attributes.begin(); pos != m_attributes.end(); ++pos)
+        s->Printf("        attr = %s, form = %s\n", DW_AT_value_to_name(pos->get_attr()), DW_FORM_value_to_name(pos->get_form()));
+
+    s->Printf("\n");
 }
 
 

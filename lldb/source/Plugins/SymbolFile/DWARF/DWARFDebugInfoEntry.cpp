@@ -190,7 +190,7 @@ DWARFDebugInfoEntry::FastExtract
                         if (cu->GetVersion() <= 2)
                             form_size = cu->GetAddressByteSize();
                         else
-                            form_size = 4; // 4 bytes for DWARF 32, 8 bytes for DWARF 64, but we don't support DWARF64 yet
+                            form_size = cu->IsDWARF64() ? 8 : 4;
                         break;
 
                     // 0 sized form
@@ -212,7 +212,6 @@ DWARFDebugInfoEntry::FastExtract
                         break;
 
                     // 4 byte values
-                    case DW_FORM_strp        :
                     case DW_FORM_data4       :
                     case DW_FORM_ref4        :
                         form_size = 4;
@@ -237,11 +236,12 @@ DWARFDebugInfoEntry::FastExtract
                         form = debug_info_data.GetULEB128 (&offset);
                         break;
 
+                    case DW_FORM_strp        :
                     case DW_FORM_sec_offset  :
-                        if (cu->GetAddressByteSize () == 4)
-                            debug_info_data.GetU32 (offset_ptr);
-                        else
+                        if (cu->IsDWARF64 ())
                             debug_info_data.GetU64 (offset_ptr);
+                        else
+                            debug_info_data.GetU32 (offset_ptr);
                         break;
 
                     default:
@@ -284,7 +284,6 @@ DWARFDebugInfoEntry::Extract
     const DWARFDataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
 //    const DWARFDataExtractor& debug_str_data = dwarf2Data->get_debug_str_data();
     const uint32_t cu_end_offset = cu->GetNextCompileUnitOffset();
-    const uint8_t cu_addr_size = cu->GetAddressByteSize();
     lldb::offset_t offset = *offset_ptr;
 //  if (offset >= cu_end_offset)
 //      Log::Error("DIE at offset 0x%8.8x is beyond the end of the current compile unit (0x%8.8x)", m_offset, cu_end_offset);
@@ -348,13 +347,13 @@ DWARFDebugInfoEntry::Extract
 
                             // Compile unit address sized values
                             case DW_FORM_addr        :
-                                form_size = cu_addr_size;
+                                form_size = cu->GetAddressByteSize();
                                 break;
                             case DW_FORM_ref_addr    :
                                 if (cu->GetVersion() <= 2)
-                                    form_size = cu_addr_size;
+                                    form_size = cu->GetAddressByteSize();
                                 else
-                                    form_size = 4; // 4 bytes for DWARF 32, 8 bytes for DWARF 64, but we don't support DWARF64 yet
+                                    form_size = cu->IsDWARF64() ? 8 : 4;
                                 break;
 
                             // 0 sized form
@@ -376,10 +375,6 @@ DWARFDebugInfoEntry::Extract
                                 break;
 
                             // 4 byte values
-                            case DW_FORM_strp        :
-                                form_size = 4;
-                                break;
-
                             case DW_FORM_data4       :
                             case DW_FORM_ref4        :
                                 form_size = 4;
@@ -404,11 +399,12 @@ DWARFDebugInfoEntry::Extract
                                 form_is_indirect = true;
                                 break;
 
+                            case DW_FORM_strp        :
                             case DW_FORM_sec_offset  :
-                                if (cu->GetAddressByteSize () == 4)
-                                    debug_info_data.GetU32 (offset_ptr);
-                                else
+                                if (cu->IsDWARF64 ())
                                     debug_info_data.GetU64 (offset_ptr);
+                                else
+                                    debug_info_data.GetU32 (offset_ptr);
                                 break;
 
                             default:
@@ -1226,7 +1222,7 @@ DWARFDebugInfoEntry::GetAttributes
         const DWARFDataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
 
         if (fixed_form_sizes == NULL)
-            fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize(cu->GetAddressByteSize());
+            fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize(cu->GetAddressByteSize(), cu->IsDWARF64());
 
         const uint32_t num_attributes = abbrevDecl->NumAttributes();
         uint32_t i;

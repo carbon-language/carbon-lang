@@ -71,7 +71,7 @@ public:
 //  static bool         PutUnsigned(dw_form_t form, dw_offset_t offset, uint64_t value, BinaryStreamBuf& out_buff, const DWARFCompileUnit* cu, bool fixup_cu_relative_refs);
     static bool         IsBlockForm(const dw_form_t form);
     static bool         IsDataForm(const dw_form_t form);
-    static const uint8_t * GetFixedFormSizesForAddressSize (uint8_t addr_size);
+    static const uint8_t * GetFixedFormSizesForAddressSize (uint8_t addr_size, bool is_dwarf64);
     static int          Compare (const DWARFFormValue& a, const DWARFFormValue& b, const DWARFCompileUnit* a_cu, const DWARFCompileUnit* b_cu, const lldb_private::DWARFDataExtractor* debug_str_data_ptr);
 protected:
     dw_form_t   m_form;     // Form for this value

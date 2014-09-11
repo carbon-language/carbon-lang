@@ -87,7 +87,7 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
 
             DWARFCompileUnit* cu = debug_info->GetCompileUnitAtIndex(cu_idx);
 
-            const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (cu->GetAddressByteSize());
+            const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (cu->GetAddressByteSize(), cu->IsDWARF64());
 
             bool clear_dies = cu->ExtractDIEsIfNeeded (false) > 1;
 

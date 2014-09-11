@@ -33,6 +33,9 @@ public:
     size_t
     GetDWARFSizeofInitialLength() const { return m_is_dwarf64 ? 12 : 4; }
 
+    bool
+    IsDWARF64() const { return m_is_dwarf64; }
+
 protected:
     mutable bool m_is_dwarf64;
 };

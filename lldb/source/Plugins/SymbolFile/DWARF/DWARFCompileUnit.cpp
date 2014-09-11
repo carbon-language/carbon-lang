@@ -49,7 +49,8 @@ DWARFCompileUnit::DWARFCompileUnit(SymbolFileDWARF* dwarf2Data) :
     m_producer      (eProducerInvalid),
     m_producer_version_major (0),
     m_producer_version_minor (0),
-    m_producer_version_update (0)
+    m_producer_version_update (0),
+    m_is_dwarf64    (false)
 {
 }
 
@@ -66,6 +67,7 @@ DWARFCompileUnit::Clear()
     m_func_aranges_ap.reset();
     m_user_data     = NULL;
     m_producer      = eProducerInvalid;
+    m_is_dwarf64    = false;
 }
 
 bool
@@ -79,9 +81,10 @@ DWARFCompileUnit::Extract(const DWARFDataExtractor &debug_info, lldb::offset_t *
     {
         dw_offset_t abbr_offset;
         const DWARFDebugAbbrev *abbr = m_dwarf2Data->DebugAbbrev();
-        m_length        = debug_info.GetU32(offset_ptr);
+        m_length        = debug_info.GetDWARFInitialLength(offset_ptr);
+        m_is_dwarf64    = debug_info.IsDWARF64();
         m_version       = debug_info.GetU16(offset_ptr);
-        abbr_offset     = debug_info.GetU32(offset_ptr);
+        abbr_offset     = debug_info.GetDWARFOffset(offset_ptr);
         m_addr_size     = debug_info.GetU8 (offset_ptr);
 
         bool length_OK = debug_info.ValidOffset(GetNextCompileUnitOffset()-1);
@@ -168,7 +171,7 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
     die_index_stack.reserve(32);
     die_index_stack.push_back(0);
     bool prev_die_had_children = false;
-    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize());
+    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize(), m_is_dwarf64);
     while (offset < next_cu_offset &&
            die.FastExtract (debug_info_data, this, fixed_form_sizes, &offset))
     {
@@ -345,6 +348,14 @@ DWARFCompileUnit::GetAddressByteSize(const DWARFCompileUnit* cu)
     if (cu)
         return cu->GetAddressByteSize();
     return DWARFCompileUnit::GetDefaultAddressSize();
+}
+
+bool
+DWARFCompileUnit::IsDWARF64(const DWARFCompileUnit* cu)
+{
+    if (cu)
+        return cu->IsDWARF64();
+    return false;
 }
 
 uint8_t
@@ -619,7 +630,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
 {
     const DWARFDataExtractor* debug_str = &m_dwarf2Data->get_debug_str_data();
 
-    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize());
+    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize(), m_is_dwarf64);
 
     Log *log (LogChannelDWARF::GetLogIfAll (DWARF_LOG_LOOKUPS));
     
@@ -1028,5 +1039,11 @@ DWARFCompileUnit::GetProducerVersionUpdate()
     if (m_producer_version_update == 0)
         ParseProducerInfo ();
     return m_producer_version_update;
+}
+
+bool
+DWARFCompileUnit::IsDWARF64() const
+{
+    return m_is_dwarf64;
 }
 

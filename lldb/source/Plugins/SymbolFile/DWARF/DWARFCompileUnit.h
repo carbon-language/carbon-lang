@@ -41,11 +41,11 @@ public:
     bool        Verify(lldb_private::Stream *s) const;
     void        Dump(lldb_private::Stream *s) const;
     dw_offset_t GetOffset() const { return m_offset; }
-    uint32_t    Size() const { return 11; /* Size in bytes of the compile unit header */ }
+    uint32_t    Size() const { return m_is_dwarf64 ? 23 : 11; /* Size in bytes of the compile unit header */ }
     bool        ContainsDIEOffset(dw_offset_t die_offset) const { return die_offset >= GetFirstDIEOffset() && die_offset < GetNextCompileUnitOffset(); }
     dw_offset_t GetFirstDIEOffset() const { return m_offset + Size(); }
-    dw_offset_t GetNextCompileUnitOffset() const { return m_offset + m_length + 4; }
-    size_t      GetDebugInfoSize() const { return m_length + 4 - Size(); /* Size in bytes of the .debug_info data associated with this compile unit. */ }
+    dw_offset_t GetNextCompileUnitOffset() const { return m_offset + m_length + (m_is_dwarf64 ? 12 : 4); }
+    size_t      GetDebugInfoSize() const { return m_length + (m_is_dwarf64 ? 12 : 4) - Size(); /* Size in bytes of the .debug_info data associated with this compile unit. */ }
     uint32_t    GetLength() const { return m_length; }
     uint16_t    GetVersion() const { return m_version; }
     const DWARFAbbreviationDeclarationSet*  GetAbbreviations() const { return m_abbrevs; }
@@ -118,6 +118,9 @@ public:
     static uint8_t
     GetAddressByteSize(const DWARFCompileUnit* cu);
 
+    static bool
+    IsDWARF64(const DWARFCompileUnit* cu);
+
     static uint8_t
     GetDefaultAddressSize();
 
@@ -183,6 +186,9 @@ public:
     uint32_t
     GetProducerVersionUpdate();
 
+    bool
+    IsDWARF64() const;
+
 protected:
     SymbolFileDWARF*    m_dwarf2Data;
     const DWARFAbbreviationDeclarationSet *m_abbrevs;
@@ -191,13 +197,14 @@ protected:
     std::unique_ptr<DWARFDebugAranges> m_func_aranges_ap;   // A table similar to the .debug_aranges table, but this one points to the exact DW_TAG_subprogram DIEs
     dw_addr_t           m_base_addr;
     dw_offset_t         m_offset;
-    uint32_t            m_length;
+    dw_offset_t         m_length;
     uint16_t            m_version;
     uint8_t             m_addr_size;
     Producer            m_producer;
     uint32_t            m_producer_version_major;
     uint32_t            m_producer_version_minor;
     uint32_t            m_producer_version_update;
+    bool                m_is_dwarf64;
     
     void
     ParseProducerInfo ();

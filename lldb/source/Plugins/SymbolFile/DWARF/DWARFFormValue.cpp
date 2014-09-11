@@ -96,13 +96,59 @@ g_form_sizes_addr8[] =
     8, // 0x20 DW_FORM_ref_sig8
 };
 
-const uint8_t * 
-DWARFFormValue::GetFixedFormSizesForAddressSize (uint8_t addr_size)
+// Difference with g_form_sizes_addr8:
+// DW_FORM_strp and DW_FORM_sec_offset are 8 instead of 4
+static uint8_t
+g_form_sizes_addr8_dwarf64[] =
 {
-    switch (addr_size)
-    {
-    case 4: return g_form_sizes_addr4;
-    case 8: return g_form_sizes_addr8;
+    0, // 0x00 unused
+    8, // 0x01 DW_FORM_addr
+    0, // 0x02 unused
+    0, // 0x03 DW_FORM_block2
+    0, // 0x04 DW_FORM_block4
+    2, // 0x05 DW_FORM_data2
+    4, // 0x06 DW_FORM_data4
+    8, // 0x07 DW_FORM_data8
+    0, // 0x08 DW_FORM_string
+    0, // 0x09 DW_FORM_block
+    0, // 0x0a DW_FORM_block1
+    1, // 0x0b DW_FORM_data1
+    1, // 0x0c DW_FORM_flag
+    0, // 0x0d DW_FORM_sdata
+    8, // 0x0e DW_FORM_strp
+    0, // 0x0f DW_FORM_udata
+    0, // 0x10 DW_FORM_ref_addr (addr size for DWARF2 and earlier, 4 bytes for DWARF32, 8 bytes for DWARF32 in DWARF 3 and later
+    1, // 0x11 DW_FORM_ref1
+    2, // 0x12 DW_FORM_ref2
+    4, // 0x13 DW_FORM_ref4
+    8, // 0x14 DW_FORM_ref8
+    0, // 0x15 DW_FORM_ref_udata
+    0, // 0x16 DW_FORM_indirect
+    8, // 0x17 DW_FORM_sec_offset
+    0, // 0x18 DW_FORM_exprloc
+    0, // 0x19 DW_FORM_flag_present
+    0, // 0x1a
+    0, // 0x1b
+    0, // 0x1c
+    0, // 0x1d
+    0, // 0x1e
+    0, // 0x1f
+    8, // 0x20 DW_FORM_ref_sig8
+};
+
+const uint8_t * 
+DWARFFormValue::GetFixedFormSizesForAddressSize (uint8_t addr_size, bool is_dwarf64)
+{
+    if (!is_dwarf64) {
+        switch (addr_size)
+        {
+        case 4: return g_form_sizes_addr4;
+        case 8: return g_form_sizes_addr8;
+        }
+    } else {
+        if (addr_size == 8)
+            return g_form_sizes_addr8_dwarf64;
+        // is_dwarf64 && addr_size == 4 : no provider does this.
     }
     return NULL;
 }
@@ -119,6 +165,7 @@ DWARFFormValue::ExtractValue(const DWARFDataExtractor& data, lldb::offset_t* off
     bool indirect = false;
     bool is_block = false;
     m_value.data = NULL;
+    uint8_t ref_addr_size;
     // Read the value for the form into value and follow and DW_FORM_indirect instances we run into
     do
     {
@@ -142,15 +189,17 @@ DWARFFormValue::ExtractValue(const DWARFDataExtractor& data, lldb::offset_t* off
         case DW_FORM_data1:     m_value.value.uval = data.GetU8(offset_ptr);                            break;
         case DW_FORM_flag:      m_value.value.uval = data.GetU8(offset_ptr);                            break;
         case DW_FORM_sdata:     m_value.value.sval = data.GetSLEB128(offset_ptr);                       break;
-        case DW_FORM_strp:      m_value.value.uval = data.GetU32(offset_ptr);                           break;
+        case DW_FORM_strp:      m_value.value.uval = data.GetMaxU64(offset_ptr, DWARFCompileUnit::IsDWARF64(cu) ? 8 : 4);  break;
     //  case DW_FORM_APPLE_db_str:
         case DW_FORM_udata:     m_value.value.uval = data.GetULEB128(offset_ptr);                       break;
-        case DW_FORM_ref_addr:
-            if (cu->GetVersion() <= 2)
-                m_value.value.uval = data.GetMaxU64(offset_ptr, DWARFCompileUnit::GetAddressByteSize(cu));
-            else
-                m_value.value.uval = data.GetU32(offset_ptr); // 4 for DWARF32, 8 for DWARF64, but we don't support DWARF64 yet
-            break;
+        case DW_FORM_ref_addr:  ref_addr_size = 4;
+                                if (cu) {
+                                    if (cu->GetVersion() <= 2)
+                                        ref_addr_size = cu->GetAddressByteSize();
+                                    else
+                                        ref_addr_size = cu->IsDWARF64() ? 8 : 4;
+                                }
+                                m_value.value.uval = data.GetMaxU64(offset_ptr, ref_addr_size);         break;
         case DW_FORM_ref1:      m_value.value.uval = data.GetU8(offset_ptr);                            break;
         case DW_FORM_ref2:      m_value.value.uval = data.GetU16(offset_ptr);                           break;
         case DW_FORM_ref4:      m_value.value.uval = data.GetU32(offset_ptr);                           break;
@@ -161,7 +210,7 @@ DWARFFormValue::ExtractValue(const DWARFDataExtractor& data, lldb::offset_t* off
             indirect = true;
             break;
 
-        case DW_FORM_sec_offset:    m_value.value.uval = data.GetU32(offset_ptr);                       break;
+        case DW_FORM_sec_offset:    m_value.value.uval = data.GetMaxU64(offset_ptr, DWARFCompileUnit::IsDWARF64(cu) ? 8 : 4);  break;
         case DW_FORM_flag_present:  m_value.value.uval = 1;                                             break;
         case DW_FORM_ref_sig8:      m_value.value.uval = data.GetU64(offset_ptr);                       break;
         default:
@@ -191,6 +240,7 @@ DWARFFormValue::SkipValue(const DWARFDataExtractor& debug_info_data, lldb::offse
 bool
 DWARFFormValue::SkipValue(dw_form_t form, const DWARFDataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu)
 {
+    uint8_t ref_addr_size;
     switch (form)
     {
     // Blocks if inlined data that have a length field and the data bytes
@@ -212,10 +262,14 @@ DWARFFormValue::SkipValue(dw_form_t form, const DWARFDataExtractor& debug_info_d
         return true;
 
     case DW_FORM_ref_addr:
-        if (cu->GetVersion() <= 2)
-            *offset_ptr += DWARFCompileUnit::GetAddressByteSize(cu);
-        else
-            *offset_ptr += 4;// 4 for DWARF32, 8 for DWARF64, but we don't support DWARF64 yet
+        ref_addr_size = 4;
+        if (cu) {
+            if (cu->GetVersion() <= 2)
+                ref_addr_size = cu->GetAddressByteSize();
+            else
+                ref_addr_size = cu->IsDWARF64() ? 8 : 4;
+        }
+        *offset_ptr += ref_addr_size;
         return true;
 
     // 0 bytes values (implied from DW_FORM)
@@ -237,11 +291,11 @@ DWARFFormValue::SkipValue(dw_form_t form, const DWARFDataExtractor& debug_info_d
 
     // 32 bit for DWARF 32, 64 for DWARF 64
     case DW_FORM_sec_offset:
-        *offset_ptr += 4;
+    case DW_FORM_strp:
+        *offset_ptr += (cu->IsDWARF64() ? 8 : 4);
         return true;
 
     // 4 byte values
-    case DW_FORM_strp:
     case DW_FORM_data4:
     case DW_FORM_ref4:
         *offset_ptr += 4;

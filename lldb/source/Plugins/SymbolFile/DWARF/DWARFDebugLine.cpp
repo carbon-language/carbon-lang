@@ -418,7 +418,7 @@ DWARFDebugLine::ParsePrologue(const DWARFDataExtractor& debug_line_data, lldb::o
     const char * s;
     prologue->total_length      = debug_line_data.GetDWARFInitialLength(offset_ptr);
     prologue->version           = debug_line_data.GetU16(offset_ptr);
-    if (prologue->version < 2 || prologue->version > 3)
+    if (prologue->version < 2 || prologue->version > 4)
       return false;
 
     prologue->prologue_length   = debug_line_data.GetDWARFOffset(offset_ptr);
@@ -486,7 +486,7 @@ DWARFDebugLine::ParseSupportFiles (const lldb::ModuleSP &module_sp,
     (void)debug_line_data.GetDWARFInitialLength(&offset);
     const char * s;
     uint32_t version = debug_line_data.GetU16(&offset);
-    if (version < 2 || version > 3)
+    if (version < 2 || version > 4)
       return false;
 
     const dw_offset_t end_prologue_offset = debug_line_data.GetDWARFOffset(&offset) + offset;
@@ -650,7 +650,10 @@ DWARFDebugLine::ParseStatementTable
                 // relocatable address. All of the other statement program opcodes
                 // that affect the address register add a delta to it. This instruction
                 // stores a relocatable value into it instead.
-                state.address = debug_line_data.GetAddress(offset_ptr);
+                if (arg_size == 4)
+                    state.address = debug_line_data.GetU32(offset_ptr);
+                else // arg_size == 8
+                    state.address = debug_line_data.GetU64(offset_ptr);
                 break;
 
             case DW_LNE_define_file:
