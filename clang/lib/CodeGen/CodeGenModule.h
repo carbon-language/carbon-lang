@@ -661,11 +661,11 @@ public:
 
   llvm::Constant *GetAddrOfGlobal(GlobalDecl GD) {
     if (isa<CXXConstructorDecl>(GD.getDecl()))
-      return GetAddrOfCXXConstructor(cast<CXXConstructorDecl>(GD.getDecl()),
-                                     GD.getCtorType());
+      return getAddrOfCXXStructor(cast<CXXConstructorDecl>(GD.getDecl()),
+                                  getFromCtorType(GD.getCtorType()));
     else if (isa<CXXDestructorDecl>(GD.getDecl()))
-      return GetAddrOfCXXDestructor(cast<CXXDestructorDecl>(GD.getDecl()),
-                                     GD.getDtorType());
+      return getAddrOfCXXStructor(cast<CXXDestructorDecl>(GD.getDecl()),
+                                  getFromDtorType(GD.getDtorType()));
     else if (isa<FunctionDecl>(GD.getDecl()))
       return GetAddrOfFunction(GD);
     else
@@ -801,27 +801,13 @@ public:
   /// \brief Retrieve the record type that describes the state of an
   /// Objective-C fast enumeration loop (for..in).
   QualType getObjCFastEnumerationStateType();
-  
-  /// Return the address of the constructor of the given type.
 
+  /// Return the address of the constructor/destructor of the given type.
   llvm::GlobalValue *
   getAddrOfCXXStructor(const CXXMethodDecl *MD, StructorType Type,
                        const CGFunctionInfo *FnInfo = nullptr,
                        llvm::FunctionType *FnType = nullptr,
                        bool DontDefer = false);
-
-  llvm::GlobalValue *
-  GetAddrOfCXXConstructor(const CXXConstructorDecl *ctor, CXXCtorType ctorType,
-                          const CGFunctionInfo *fnInfo = nullptr,
-                          bool DontDefer = false);
-
-  /// Return the address of the constructor of the given type.
-  llvm::GlobalValue *
-  GetAddrOfCXXDestructor(const CXXDestructorDecl *dtor,
-                         CXXDtorType dtorType,
-                         const CGFunctionInfo *fnInfo = nullptr,
-                         llvm::FunctionType *fnType = nullptr,
-                         bool DontDefer = false);
 
   /// Given a builtin id for a function like "__builtin_fabsf", return a
   /// Function* for "fabsf".

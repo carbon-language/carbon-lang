@@ -1681,7 +1681,7 @@ void CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
       *this, D, Type, ForVirtualBase, Delegating, Args);
 
   // Emit the call.
-  llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
+  llvm::Value *Callee = CGM.getAddrOfCXXStructor(D, getFromCtorType(Type));
   const CGFunctionInfo &Info =
       CGM.getTypes().arrangeCXXConstructorCall(Args, D, Type, ExtraArgs);
   EmitCall(Info, Callee, ReturnValueSlot(), Args, D);
@@ -1698,7 +1698,7 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
     EmitAggregateCopy(This, Src, E->arg_begin()->getType());
     return;
   }
-  llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, clang::Ctor_Complete);
+  llvm::Value *Callee = CGM.getAddrOfCXXStructor(D, StructorType::Complete);
   assert(D->isInstance() &&
          "Trying to emit a member call expr on a static method!");
   
@@ -1758,7 +1758,8 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
     EmitDelegateCallArg(DelegateArgs, param, Loc);
   }
 
-  llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(Ctor, CtorType);
+  llvm::Value *Callee =
+      CGM.getAddrOfCXXStructor(Ctor, getFromCtorType(CtorType));
   EmitCall(CGM.getTypes()
                .arrangeCXXStructorDeclaration(Ctor, getFromCtorType(CtorType)),
            Callee, ReturnValueSlot(), DelegateArgs, Ctor);

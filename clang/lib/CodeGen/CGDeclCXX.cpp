@@ -96,7 +96,7 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
     assert(!record->hasTrivialDestructor());
     CXXDestructorDecl *dtor = record->getDestructor();
 
-    function = CGM.GetAddrOfCXXDestructor(dtor, Dtor_Complete);
+    function = CGM.getAddrOfCXXStructor(dtor, StructorType::Complete);
     argument = llvm::ConstantExpr::getBitCast(
         addr, CGF.getTypes().ConvertType(type)->getPointerTo());
 

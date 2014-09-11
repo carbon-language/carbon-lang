@@ -215,8 +215,8 @@ void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *ctor,
   const CGFunctionInfo &fnInfo =
       getTypes().arrangeCXXStructorDeclaration(ctor, getFromCtorType(ctorType));
 
-  auto *fn = cast<llvm::Function>(
-      GetAddrOfCXXConstructor(ctor, ctorType, &fnInfo, true));
+  auto *fn = cast<llvm::Function>(getAddrOfCXXStructor(
+      ctor, getFromCtorType(ctorType), &fnInfo, nullptr, true));
   setFunctionLinkage(GlobalDecl(ctor, ctorType), fn);
 
   CodeGenFunction(*this).GenerateCode(GlobalDecl(ctor, ctorType), fn, fnInfo);
@@ -251,13 +251,6 @@ llvm::GlobalValue *CodeGenModule::getAddrOfCXXStructor(
                                                       DontDefer));
 }
 
-llvm::GlobalValue *CodeGenModule::GetAddrOfCXXConstructor(
-    const CXXConstructorDecl *ctor, CXXCtorType ctorType,
-    const CGFunctionInfo *fnInfo, bool DontDefer) {
-  return getAddrOfCXXStructor(ctor, getFromCtorType(ctorType), fnInfo, nullptr,
-                              DontDefer);
-}
-
 void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *dtor,
                                       CXXDtorType dtorType) {
   // The complete destructor is equivalent to the base destructor for
@@ -285,24 +278,14 @@ void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *dtor,
   const CGFunctionInfo &fnInfo =
       getTypes().arrangeCXXStructorDeclaration(dtor, getFromDtorType(dtorType));
 
-  auto *fn = cast<llvm::Function>(
-      GetAddrOfCXXDestructor(dtor, dtorType, &fnInfo, nullptr, true));
+  auto *fn = cast<llvm::Function>(getAddrOfCXXStructor(
+      dtor, getFromDtorType(dtorType), &fnInfo, nullptr, true));
   setFunctionLinkage(GlobalDecl(dtor, dtorType), fn);
 
   CodeGenFunction(*this).GenerateCode(GlobalDecl(dtor, dtorType), fn, fnInfo);
 
   setFunctionDefinitionAttributes(dtor, fn);
   SetLLVMFunctionAttributesForDefinition(dtor, fn);
-}
-
-llvm::GlobalValue *
-CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *dtor,
-                                      CXXDtorType dtorType,
-                                      const CGFunctionInfo *fnInfo,
-                                      llvm::FunctionType *fnType,
-                                      bool DontDefer) {
-  return getAddrOfCXXStructor(dtor, getFromDtorType(dtorType), fnInfo, fnType,
-                              DontDefer);
 }
 
 static llvm::Value *BuildAppleKextVirtualCall(CodeGenFunction &CGF,

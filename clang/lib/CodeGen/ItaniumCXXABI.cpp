@@ -1177,7 +1177,7 @@ void ItaniumCXXABI::EmitDestructorCall(CodeGenFunction &CGF,
     Callee = CGF.BuildAppleKextVirtualDestructorCall(DD, Type, DD->getParent());
 
   if (!Callee)
-    Callee = CGM.GetAddrOfCXXDestructor(DD, Type);
+    Callee = CGM.getAddrOfCXXStructor(DD, getFromDtorType(Type));
 
   CGF.EmitCXXMemberOrOperatorCall(DD, Callee, ReturnValueSlot(), This, VTT,
                                   VTTTy, nullptr);
