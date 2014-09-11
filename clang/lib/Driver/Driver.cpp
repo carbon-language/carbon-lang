@@ -518,7 +518,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
       << "\n********************\n\n"
       "PLEASE ATTACH THE FOLLOWING FILES TO THE BUG REPORT:\n"
       "Preprocessed source(s) and associated run script(s) are located at:";
-    ArgStringList Files = C.getTempFiles();
+    const ArgStringList &Files = C.getTempFiles();
     for (ArgStringList::const_iterator it = Files.begin(), ie = Files.end();
          it != ie; ++it) {
       Diag(clang::diag::note_drv_command_failed_diag_msg) << *it;

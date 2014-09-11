@@ -253,7 +253,7 @@ match(MatcherT Matcher, const ast_type_traits::DynTypedNode &Node,
   MatchFinder Finder;
   Finder.addMatcher(Matcher, &Callback);
   Finder.match(Node, Context);
-  return Callback.Nodes;
+  return std::move(Callback.Nodes);
 }
 
 template <typename MatcherT, typename NodeT>

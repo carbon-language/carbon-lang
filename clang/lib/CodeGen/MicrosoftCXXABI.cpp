@@ -1162,7 +1162,7 @@ void MicrosoftCXXABI::EmitDestructorCall(CodeGenFunction &CGF,
 void MicrosoftCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
                                             const CXXRecordDecl *RD) {
   MicrosoftVTableContext &VFTContext = CGM.getMicrosoftVTableContext();
-  VPtrInfoVector VFPtrs = VFTContext.getVFPtrOffsets(RD);
+  const VPtrInfoVector &VFPtrs = VFTContext.getVFPtrOffsets(RD);
 
   for (VPtrInfo *Info : VFPtrs) {
     llvm::GlobalVariable *VTable = getAddrOfVTable(RD, Info->FullOffsetInMDC);
