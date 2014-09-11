@@ -1,0 +1,39 @@
+# REQUIRES: system-linker-mach-o
+#
+# RUN: mkdir -p %t.dir && cp `which lld` %t.dir/ld \
+# RUN:  && %t.dir/ld -arch x86_64 -macosx_version_min 10.8 %s -o %t \
+# RUN:  && llvm-nm %t | FileCheck %s
+#
+# Test linker run as "ld" on darwin works as darwin linker.
+#
+
+--- !mach-o
+arch:            x86_64
+file-type:       MH_OBJECT
+flags:           [ MH_SUBSECTIONS_VIA_SYMBOLS ]
+has-UUID:        false
+OS:              unknown
+sections:
+  - segment:         __TEXT
+    section:         __text
+    type:            S_REGULAR
+    attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
+    address:         0x0000000000000000
+    content:         [ 0xC3 ]
+global-symbols:
+  - name:            _main
+    type:            N_SECT
+    scope:           [ N_EXT ]
+    sect:            1
+    value:           0x0000000000000000
+
+--- !mach-o
+arch:            x86_64
+file-type:       MH_DYLIB
+install-name:    /usr/lib/libSystem.B.dylib
+exports:
+  - name:            dyld_stub_binder
+
+...
+
+# CHECK:	          T _main

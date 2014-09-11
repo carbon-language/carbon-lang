@@ -89,13 +89,7 @@ static Flavor strToFlavor(StringRef str) {
       .Case("lld-link", Flavor::win_link)
       .Case("darwin", Flavor::darwin_ld)
       .Case("core", Flavor::core)
-#if __APPLE__
-      // On a Darwin systems, if linker binary is named "ld", use Darwin driver.
-      .Case("ld", Flavor::darwin_ld)
-#else
-      // On other *nix systems, if linker binary is named "ld", use gnu driver.
       .Case("ld", Flavor::gnu_ld)
-#endif
       .Default(Flavor::invalid);
 }
 
@@ -160,6 +154,17 @@ bool UniversalDriver::link(int argc, const char *argv[],
 
   Flavor flavor;
 
+#if LLVM_ON_UNIX
+  if (llvm::sys::path::filename(argv[0]).equals("ld")) {
+#if __APPLE__
+    // On a Darwin systems, if linker binary is named "ld", use Darwin driver.
+    flavor = Flavor::darwin_ld;
+#else
+    // On a ELF based systems, if linker binary is named "ld", use gnu driver.
+    flavor = Flavor::gnu_ld;
+#endif
+  } else
+#endif
   if (parsedArgs->getLastArg(OPT_core)) {
     flavor = Flavor::core;
     argv++;
