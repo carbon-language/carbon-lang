@@ -1,4 +1,4 @@
-; RUN: llc -march=x86-64 < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-unknown-unknown -march=x86-64 < %s | FileCheck %s
 
 ; CHECK-LABEL: fmul2_f32:
 ; CHECK: addss %xmm0, %xmm0
@@ -56,10 +56,10 @@ define <4 x float> @fmul_c3_c4_v4f32(<4 x float> %x) #0 {
 }
 
 ; We should be able to pre-multiply the two constant vectors.
-; CHECK: ## float 5.000000e+00
-; CHECK: ## float 1.200000e+01
-; CHECK: ## float 2.100000e+01
-; CHECK: ## float 3.200000e+01
+; CHECK: float 5.000000e+00
+; CHECK: float 1.200000e+01
+; CHECK: float 2.100000e+01
+; CHECK: float 3.200000e+01
 ; CHECK-LABEL: fmul_v4f32_two_consts_no_splat:
 ; CHECK: mulps
 ; CHECK-NOT: mulps
@@ -71,10 +71,10 @@ define <4 x float> @fmul_v4f32_two_consts_no_splat(<4 x float> %x) #0 {
 }
 
 ; Same as above, but reverse operands to make sure non-canonical form is also handled.
-; CHECK: ## float 5.000000e+00
-; CHECK: ## float 1.200000e+01
-; CHECK: ## float 2.100000e+01
-; CHECK: ## float 3.200000e+01
+; CHECK: float 5.000000e+00
+; CHECK: float 1.200000e+01
+; CHECK: float 2.100000e+01
+; CHECK: float 3.200000e+01
 ; CHECK-LABEL: fmul_v4f32_two_consts_no_splat_non_canonical:
 ; CHECK: mulps
 ; CHECK-NOT: mulps
@@ -87,10 +87,10 @@ define <4 x float> @fmul_v4f32_two_consts_no_splat_non_canonical(<4 x float> %x)
 
 ; More than one use of a constant multiply should not inhibit the optimization.
 ; Instead of a chain of 2 dependent mults, this test will have 2 independent mults. 
-; CHECK: ## float 5.000000e+00
-; CHECK: ## float 1.200000e+01
-; CHECK: ## float 2.100000e+01
-; CHECK: ## float 3.200000e+01
+; CHECK: float 5.000000e+00
+; CHECK: float 1.200000e+01
+; CHECK: float 2.100000e+01
+; CHECK: float 3.200000e+01
 ; CHECK-LABEL: fmul_v4f32_two_consts_no_splat_multiple_use:
 ; CHECK: mulps
 ; CHECK: mulps
