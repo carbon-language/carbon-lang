@@ -313,8 +313,12 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     ctx.setOutputPath("a.out");
 
   if (llvm::opt::Arg *imageBase = parsedArgs->getLastArg(OPT_image_base)) {
+    StringRef baseString = imageBase->getValue();
+    if (baseString.startswith("0x"))
+      baseString = baseString.drop_front(2);
+
     uint64_t baseAddress;
-    if (StringRef(imageBase->getValue()).getAsInteger(16, baseAddress)) {
+    if (baseString.getAsInteger(16, baseAddress)) {
       diagnostics << "error: image_base expects a hex number\n";
       return false;
     } else if (baseAddress < ctx.pageZeroSize()) {
