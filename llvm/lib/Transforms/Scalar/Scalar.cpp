@@ -151,6 +151,10 @@ void LLVMAddPartiallyInlineLibCallsPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createPartiallyInlineLibCallsPass());
 }
 
+void LLVMAddLowerSwitchPass(LLVMPassManagerRef PM) {
+  unwrap(PM)->add(createLowerSwitchPass());
+}
+
 void LLVMAddPromoteMemoryToRegisterPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createPromoteMemoryToRegisterPass());
 }
