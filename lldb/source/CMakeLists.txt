@@ -259,6 +259,7 @@ add_lldb_library(liblldb
   API/SBSymbolContextList.cpp
   API/SBTarget.cpp
   API/SBThread.cpp
+  API/SBThreadCollection.cpp
   API/SBType.cpp
   API/SBTypeCategory.cpp
   API/SBTypeEnumMember.cpp
