@@ -518,34 +518,34 @@ void AtomChunk::applyRelocations32(uint8_t *buffer,
       uint64_t targetAddr = atomRva[ref->target()];
       // Also account for whatever offset is already stored at the relocation
       // site.
-      targetAddr += *relocSite32;
       switch (ref->kindValue()) {
       case llvm::COFF::IMAGE_REL_I386_ABSOLUTE:
         // This relocation is no-op.
         break;
       case llvm::COFF::IMAGE_REL_I386_DIR32:
         // Set target's 32-bit VA.
-        *relocSite32 = targetAddr + imageBaseAddress;
+        *relocSite32 += targetAddr + imageBaseAddress;
         break;
       case llvm::COFF::IMAGE_REL_I386_DIR32NB:
         // Set target's 32-bit RVA.
-        *relocSite32 = targetAddr;
+        *relocSite32 += targetAddr;
         break;
       case llvm::COFF::IMAGE_REL_I386_REL32: {
         // Set 32-bit relative address of the target. This relocation is
         // usually used for relative branch or call instruction.
         uint32_t disp = atomRva[atom] + ref->offsetInAtom() + 4;
-        *relocSite32 = targetAddr - disp;
+        *relocSite32 += targetAddr - disp;
         break;
       }
       case llvm::COFF::IMAGE_REL_I386_SECTION:
         // The 16-bit section index that contains the target symbol.
-        *relocSite16 = getSectionIndex(targetAddr, sectionRva);
+        *relocSite16 += getSectionIndex(targetAddr, sectionRva);
         break;
       case llvm::COFF::IMAGE_REL_I386_SECREL:
         // The 32-bit relative address from the beginning of the section that
         // contains the target symbol.
-        *relocSite32 = targetAddr - getSectionStartAddr(targetAddr, sectionRva);
+        *relocSite32 +=
+            targetAddr - getSectionStartAddr(targetAddr, sectionRva);
         break;
       default:
         llvm_unreachable("Unsupported relocation kind");
@@ -573,13 +573,13 @@ void AtomChunk::applyRelocations64(uint8_t *buffer,
 
       switch (ref->kindValue()) {
       case llvm::COFF::IMAGE_REL_AMD64_ADDR64:
-        *relocSite64 = *relocSite64 + targetAddr + imageBase;
+        *relocSite64 += targetAddr + imageBase;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_ADDR32:
-        *relocSite32 = *relocSite32 + targetAddr + imageBase;
+        *relocSite32 += targetAddr + imageBase;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_ADDR32NB:
-        *relocSite32 = *relocSite32 + targetAddr;
+        *relocSite32 += targetAddr;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_REL32:
         *relocSite32 += targetAddr - atomRva[atom] - ref->offsetInAtom() - 4;
