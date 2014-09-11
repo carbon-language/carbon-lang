@@ -46,3 +46,12 @@ entry:
   %eor = xor i32 %a, %b
   ret i32 %eor
 }
+
+define i32 @lsl-imm(i32 %a) nounwind readnone {
+; CHECK-LABEL: "lsl-imm":
+; CHECK: lsl.w r{{[0-9]+}}, r{{[0-9]+}}, #13 @ encoding: [{{0x..,0x..,0x..,0x..}}]
+; CHECK-OPT: lsls r{{[0-7]}}, r{{[0-7]}}, #13  @ encoding: [{{0x..,0x..}}]
+entry:
+  %shl = shl i32 %a, 13
+  ret i32 %shl
+}
