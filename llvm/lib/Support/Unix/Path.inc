@@ -321,38 +321,35 @@ std::error_code resize_file(const Twine &path, uint64_t size) {
   return std::error_code();
 }
 
-std::error_code exists(const Twine &path, bool &result) {
-  SmallString<128> path_storage;
-  StringRef p = path.toNullTerminatedStringRef(path_storage);
+static int convertAccessMode(AccessMode Mode) {
+  switch (Mode) {
+  case AccessMode::Exist:
+    return F_OK;
+  case AccessMode::Write:
+    return W_OK;
+  case AccessMode::Execute:
+    return R_OK | X_OK; // scripts also need R_OK.
+  }
+  llvm_unreachable("invalid enum");
+}
 
-  if (::access(p.begin(), F_OK) == -1) {
-    if (errno != ENOENT)
-      return std::error_code(errno, std::generic_category());
-    result = false;
-  } else
-    result = true;
+std::error_code access(const Twine &Path, AccessMode Mode) {
+  SmallString<128> PathStorage;
+  StringRef P = Path.toNullTerminatedStringRef(PathStorage);
+
+  if (::access(P.begin(), convertAccessMode(Mode)) == -1)
+    return std::error_code(errno, std::generic_category());
+
+  if (Mode == AccessMode::Execute) {
+    // Don't say that directories are executable.
+    struct stat buf;
+    if (0 != stat(P.begin(), &buf))
+      return errc::permission_denied;
+    if (!S_ISREG(buf.st_mode))
+      return errc::permission_denied;
+  }
 
   return std::error_code();
-}
-
-bool can_write(const Twine &Path) {
-  SmallString<128> PathStorage;
-  StringRef P = Path.toNullTerminatedStringRef(PathStorage);
-  return 0 == access(P.begin(), W_OK);
-}
-
-bool can_execute(const Twine &Path) {
-  SmallString<128> PathStorage;
-  StringRef P = Path.toNullTerminatedStringRef(PathStorage);
-
-  if (0 != access(P.begin(), R_OK | X_OK))
-    return false;
-  struct stat buf;
-  if (0 != stat(P.begin(), &buf))
-    return false;
-  if (!S_ISREG(buf.st_mode))
-    return false;
-  return true;
 }
 
 bool equivalent(file_status A, file_status B) {

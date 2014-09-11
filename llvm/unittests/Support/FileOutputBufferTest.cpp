@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
@@ -65,9 +66,8 @@ TEST(FileOutputBuffer, Test) {
     // Do *not* commit buffer.
   }
   // Verify file does not exist (because buffer not committed).
-  bool Exists = false;
-  ASSERT_NO_ERROR(fs::exists(Twine(File2), Exists));
-  EXPECT_FALSE(Exists);
+  ASSERT_EQ(fs::access(Twine(File2), fs::AccessMode::Exist),
+            errc::no_such_file_or_directory);
   ASSERT_NO_ERROR(fs::remove(File2.str()));
 
   // TEST 3: Verify sizing down case.

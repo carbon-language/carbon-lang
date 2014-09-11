@@ -361,9 +361,8 @@ TEST_F(FileSystemTest, TempFiles) {
   EXPECT_EQ(B.type(), fs::file_type::file_not_found);
 
   // Make sure Temp2 doesn't exist.
-  bool TempFileExists;
-  ASSERT_NO_ERROR(fs::exists(Twine(TempPath2), TempFileExists));
-  EXPECT_FALSE(TempFileExists);
+  ASSERT_EQ(fs::access(Twine(TempPath2), sys::fs::AccessMode::Exist),
+            errc::no_such_file_or_directory);
 
   SmallString<64> TempPath3;
   ASSERT_NO_ERROR(fs::createTemporaryFile("prefix", "", TempPath3));
@@ -386,8 +385,8 @@ TEST_F(FileSystemTest, TempFiles) {
   ASSERT_NO_ERROR(fs::remove(Twine(TempPath2)));
 
   // Make sure Temp1 doesn't exist.
-  ASSERT_NO_ERROR(fs::exists(Twine(TempPath), TempFileExists));
-  EXPECT_FALSE(TempFileExists);
+  ASSERT_EQ(fs::access(Twine(TempPath), sys::fs::AccessMode::Exist),
+            errc::no_such_file_or_directory);
 
 #ifdef LLVM_ON_WIN32
   // Path name > 260 chars should get an error.

@@ -204,8 +204,8 @@ LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
     // If the lock file is still expected to be there, check whether it still
     // is.
     if (!LockFileGone) {
-      bool Exists;
-      if (!sys::fs::exists(LockFileName.str(), Exists) && !Exists) {
+      if (sys::fs::access(LockFileName.c_str(), sys::fs::AccessMode::Exist) ==
+          errc::no_such_file_or_directory) {
         LockFileGone = true;
         LockFileJustDisappeared = true;
       }

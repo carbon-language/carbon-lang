@@ -352,33 +352,37 @@ std::error_code resize_file(const Twine &path, uint64_t size);
 ///          not.
 bool exists(file_status status);
 
-/// @brief Does file exist?
+/// @brief Can the file be accessed?
 ///
 /// @param path Input path.
-/// @param result Set to true if the file represented by status exists, false if
-///               it does not. Undefined otherwise.
-/// @returns errc::success if result has been successfully set, otherwise a
+/// @returns errc::success if the path can be accessed, otherwise a
 ///          platform-specific error_code.
-std::error_code exists(const Twine &path, bool &result);
+enum class AccessMode { Exist, Write, Execute };
+std::error_code access(const Twine &Path, AccessMode Mode);
 
-/// @brief Simpler version of exists for clients that don't need to
-///        differentiate between an error and false.
-inline bool exists(const Twine &path) {
-  bool result;
-  return !exists(path, result) && result;
+/// @brief Does file exist?
+///
+/// @param Path Input path.
+/// @returns True if it exists, false otherwise.
+inline bool exists(const Twine &Path) {
+  return !access(Path, AccessMode::Exist);
 }
 
 /// @brief Can we execute this file?
 ///
 /// @param Path Input path.
 /// @returns True if we can execute it, false otherwise.
-bool can_execute(const Twine &Path);
+inline bool can_execute(const Twine &Path) {
+  return !access(Path, AccessMode::Execute);
+}
 
 /// @brief Can we write this file?
 ///
 /// @param Path Input path.
 /// @returns True if we can write to it, false otherwise.
-bool can_write(const Twine &Path);
+inline bool can_write(const Twine &Path) {
+  return !access(Path, AccessMode::Write);
+}
 
 /// @brief Do file_status's represent the same thing?
 ///

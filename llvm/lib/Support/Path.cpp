@@ -210,13 +210,13 @@ retry_random_path:
   }
 
   case FS_Name: {
-    bool Exists;
-    std::error_code EC = sys::fs::exists(ResultPath.begin(), Exists);
+    std::error_code EC =
+        sys::fs::access(ResultPath.begin(), sys::fs::AccessMode::Exist);
+    if (EC == errc::no_such_file_or_directory)
+      return std::error_code();
     if (EC)
       return EC;
-    if (Exists)
-      goto retry_random_path;
-    return std::error_code();
+    goto retry_random_path;
   }
 
   case FS_Dir: {

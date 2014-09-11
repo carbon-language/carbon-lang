@@ -251,49 +251,29 @@ std::error_code resize_file(const Twine &path, uint64_t size) {
   return std::error_code(error, std::generic_category());
 }
 
-std::error_code exists(const Twine &path, bool &result) {
-  SmallString<128> path_storage;
-  SmallVector<wchar_t, 128> path_utf16;
+std::error_code access(const Twine &Path, AccessMode Mode) {
+  SmallString<128> PathStorage;
+  SmallVector<wchar_t, 128> PathUtf16;
 
-  if (std::error_code ec =
-          UTF8ToUTF16(path.toStringRef(path_storage), path_utf16))
-    return ec;
+  if (std::error_code EC =
+          UTF8ToUTF16(Path.toStringRef(PathStorage), PathUtf16))
+    return EC;
 
-  DWORD attributes = ::GetFileAttributesW(path_utf16.begin());
+  DWORD Attributes = ::GetFileAttributesW(PathUtf16.begin());
 
-  if (attributes == INVALID_FILE_ATTRIBUTES) {
+  if (Attributes == INVALID_FILE_ATTRIBUTES) {
     // See if the file didn't actually exist.
     DWORD LastError = ::GetLastError();
     if (LastError != ERROR_FILE_NOT_FOUND &&
         LastError != ERROR_PATH_NOT_FOUND)
       return windows_error(LastError);
-    result = false;
-  } else
-    result = true;
+    return errc::no_such_file_or_directory;
+  }
+
+  if (Mode == AccessMode::Write && (Attributes & FILE_ATTRIBUTE_READONLY))
+    return errc::permission_denied;
+
   return std::error_code();
-}
-
-bool can_write(const Twine &Path) {
-  // FIXME: take security attributes into account.
-  SmallString<128> PathStorage;
-  SmallVector<wchar_t, 128> PathUtf16;
-
-  if (UTF8ToUTF16(Path.toStringRef(PathStorage), PathUtf16))
-    return false;
-
-  DWORD Attr = ::GetFileAttributesW(PathUtf16.begin());
-  return (Attr != INVALID_FILE_ATTRIBUTES) && !(Attr & FILE_ATTRIBUTE_READONLY);
-}
-
-bool can_execute(const Twine &Path) {
-  SmallString<128> PathStorage;
-  SmallVector<wchar_t, 128> PathUtf16;
-
-  if (UTF8ToUTF16(Path.toStringRef(PathStorage), PathUtf16))
-    return false;
-
-  DWORD Attr = ::GetFileAttributesW(PathUtf16.begin());
-  return Attr != INVALID_FILE_ATTRIBUTES;
 }
 
 bool equivalent(file_status A, file_status B) {
