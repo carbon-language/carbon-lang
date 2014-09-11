@@ -55,6 +55,54 @@ define <4 x float> @fmul_c3_c4_v4f32(<4 x float> %x) #0 {
   ret <4 x float> %z
 }
 
+; We should be able to pre-multiply the two constant vectors.
+; CHECK: ## float 5.000000e+00
+; CHECK: ## float 1.200000e+01
+; CHECK: ## float 2.100000e+01
+; CHECK: ## float 3.200000e+01
+; CHECK-LABEL: fmul_v4f32_two_consts_no_splat:
+; CHECK: mulps
+; CHECK-NOT: mulps
+; CHECK-NEXT: ret
+define <4 x float> @fmul_v4f32_two_consts_no_splat(<4 x float> %x) #0 {
+  %y = fmul <4 x float> %x, <float 1.0, float 2.0, float 3.0, float 4.0>
+  %z = fmul <4 x float> %y, <float 5.0, float 6.0, float 7.0, float 8.0>
+  ret <4 x float> %z
+}
+
+; Same as above, but reverse operands to make sure non-canonical form is also handled.
+; CHECK: ## float 5.000000e+00
+; CHECK: ## float 1.200000e+01
+; CHECK: ## float 2.100000e+01
+; CHECK: ## float 3.200000e+01
+; CHECK-LABEL: fmul_v4f32_two_consts_no_splat_non_canonical:
+; CHECK: mulps
+; CHECK-NOT: mulps
+; CHECK-NEXT: ret
+define <4 x float> @fmul_v4f32_two_consts_no_splat_non_canonical(<4 x float> %x) #0 {
+  %y = fmul <4 x float> <float 1.0, float 2.0, float 3.0, float 4.0>, %x
+  %z = fmul <4 x float> <float 5.0, float 6.0, float 7.0, float 8.0>, %y
+  ret <4 x float> %z
+}
+
+; More than one use of a constant multiply should not inhibit the optimization.
+; Instead of a chain of 2 dependent mults, this test will have 2 independent mults. 
+; CHECK: ## float 5.000000e+00
+; CHECK: ## float 1.200000e+01
+; CHECK: ## float 2.100000e+01
+; CHECK: ## float 3.200000e+01
+; CHECK-LABEL: fmul_v4f32_two_consts_no_splat_multiple_use:
+; CHECK: mulps
+; CHECK: mulps
+; CHECK: addps
+; CHECK: ret
+define <4 x float> @fmul_v4f32_two_consts_no_splat_multiple_use(<4 x float> %x) #0 {
+  %y = fmul <4 x float> %x, <float 1.0, float 2.0, float 3.0, float 4.0>
+  %z = fmul <4 x float> %y, <float 5.0, float 6.0, float 7.0, float 8.0>
+  %a = fadd <4 x float> %y, %z
+  ret <4 x float> %a
+}
+
 ; CHECK-LABEL: fmul_c2_c4_f32:
 ; CHECK-NOT: addss
 ; CHECK: mulss
