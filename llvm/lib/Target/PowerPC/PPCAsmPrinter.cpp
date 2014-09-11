@@ -275,6 +275,16 @@ bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
         printOperand(MI, OpNo, O);
         return false;
       }
+    case 'U': // Print 'u' for update form.
+    case 'X': // Print 'x' for indexed form.
+      {
+	// Memory constraints should always produce an MO_Register,
+	// so we never get an update or indexed form.  (In GCC, these
+	// are useful in internal code gen; not so much in inline asm.)
+	// So tolerate these but don't output anything.
+	assert(MI->getOperand(OpNo).isReg());
+	return false;
+      }
     }
   }
 
