@@ -320,6 +320,10 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     } else if (baseAddress < ctx.pageZeroSize()) {
       diagnostics << "error: image_base overlaps with __PAGEZERO\n";
       return false;
+    } else if (baseAddress % ctx.pageSize()) {
+      diagnostics << "error: image_base must be a multiple of page size ("
+                  << llvm::format("0x%" PRIx64, ctx.pageSize()) << ")\n";
+      return false;
     }
 
     ctx.setBaseAddress(baseAddress);
