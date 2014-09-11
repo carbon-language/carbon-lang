@@ -483,6 +483,8 @@ TEST_F(FileSystemTest, DirectoryIteration) {
 const char archive[] = "!<arch>\x0A";
 const char bitcode[] = "\xde\xc0\x17\x0b";
 const char coff_object[] = "\x00\x00......";
+const char coff_bigobj[] = "\x00\x00\xff\xff........"
+    "\xc7\xa1\xba\xd1\xee\xba\xa9\x4b\xaf\x20\xfa\xf6\x6a\xa4\xdc\xb8";
 const char coff_import_library[] = "\x00\x00\xff\xff....";
 const char elf_relocatable[] = { 0x7f, 'E', 'L', 'F', 1, 2, 1, 0, 0,
                                  0,    0,   0,   0,   0, 0, 0, 0, 1 };
@@ -512,6 +514,7 @@ TEST_F(FileSystemTest, Magic) {
     DEFINE(archive),
     DEFINE(bitcode),
     DEFINE(coff_object),
+    { "coff_bigobj", coff_bigobj, sizeof(coff_bigobj), fs::file_magic::coff_object },
     DEFINE(coff_import_library),
     DEFINE(elf_relocatable),
     DEFINE(macho_universal_binary),

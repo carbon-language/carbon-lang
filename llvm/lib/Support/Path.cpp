@@ -901,10 +901,16 @@ file_magic identify_magic(StringRef Magic) {
     return file_magic::unknown;
   switch ((unsigned char)Magic[0]) {
     case 0x00: {
-      // COFF short import library file
+      // COFF bigobj or short import library file
       if (Magic[1] == (char)0x00 && Magic[2] == (char)0xff &&
-          Magic[3] == (char)0xff)
-        return file_magic::coff_import_library;
+          Magic[3] == (char)0xff) {
+         const char BigobjMagic[] =
+             "\xc7\xa1\xba\xd1\xee\xba\xa9\x4b\xaf\x20\xfa\xf6\x6a\xa4\xdc\xb8";
+         if (Magic.size() >= 28 &&
+             memcmp(Magic.data() + 12, BigobjMagic, sizeof(BigobjMagic)) == 0)
+           return file_magic::coff_object;
+         return file_magic::coff_import_library;
+      }
       // Windows resource file
       const char Expected[] = { 0, 0, 0, 0, '\x20', 0, 0, 0, '\xff' };
       if (Magic.size() >= sizeof(Expected) &&
