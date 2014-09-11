@@ -11,9 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/COFF.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Process.h"
@@ -904,12 +905,19 @@ file_magic identify_magic(StringRef Magic) {
       // COFF bigobj or short import library file
       if (Magic[1] == (char)0x00 && Magic[2] == (char)0xff &&
           Magic[3] == (char)0xff) {
-         const char BigobjMagic[] =
-             "\xc7\xa1\xba\xd1\xee\xba\xa9\x4b\xaf\x20\xfa\xf6\x6a\xa4\xdc\xb8";
-         if (Magic.size() >= 28 &&
-             memcmp(Magic.data() + 12, BigobjMagic, sizeof(BigobjMagic)) == 0)
-           return file_magic::coff_object;
-         return file_magic::coff_import_library;
+        size_t MinSize = offsetof(COFF::BigObjHeader, UUID) + sizeof(COFF::BigObjMagic);
+        if (Magic.size() < MinSize)
+          return file_magic::coff_import_library;
+
+        int BigObjVersion = *reinterpret_cast<const support::ulittle16_t*>(
+            Magic.data() + offsetof(COFF::BigObjHeader, Version));
+        if (BigObjVersion < COFF::BigObjHeader::MinBigObjectVersion)
+          return file_magic::coff_import_library;
+
+        const char *Start = Magic.data() + offsetof(COFF::BigObjHeader, UUID);
+        if (memcmp(Start, COFF::BigObjMagic, sizeof(COFF::BigObjMagic)) != 0)
+          return file_magic::coff_import_library;
+        return file_magic::coff_object;
       }
       // Windows resource file
       const char Expected[] = { 0, 0, 0, 0, '\x20', 0, 0, 0, '\xff' };
