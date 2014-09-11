@@ -50,6 +50,18 @@ public:
 
   bool isSRetParameterAfterThis() const override { return true; }
 
+  size_t getSrcArgforCopyCtor(const CXXConstructorDecl *CD,
+                              FunctionArgList &Args) const override {
+    assert(Args.size() >= 2 &&
+           "expected the arglist to have at least two args!");
+    // The 'most_derived' parameter goes second if the ctor is variadic and
+    // has v-bases.
+    if (CD->getParent()->getNumVBases() > 0 &&
+        CD->getType()->castAs<FunctionProtoType>()->isVariadic())
+      return 2;
+    return 1;
+  }
+
   StringRef GetPureVirtualCallName() override { return "_purecall"; }
   // No known support for deleted functions in MSVC yet, so this choice is
   // arbitrary.

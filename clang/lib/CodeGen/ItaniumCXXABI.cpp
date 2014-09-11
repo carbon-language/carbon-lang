@@ -208,6 +208,12 @@ public:
   llvm::Value *performReturnAdjustment(CodeGenFunction &CGF, llvm::Value *Ret,
                                        const ReturnAdjustment &RA) override;
 
+  size_t getSrcArgforCopyCtor(const CXXConstructorDecl *,
+                              FunctionArgList &Args) const override {
+    assert(!Args.empty() && "expected the arglist to not be empty!");
+    return Args.size() - 1;
+  }
+
   StringRef GetPureVirtualCallName() override { return "__cxa_pure_virtual"; }
   StringRef GetDeletedVirtualCallName() override
     { return "__cxa_deleted_virtual"; }

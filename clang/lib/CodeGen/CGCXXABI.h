@@ -384,6 +384,9 @@ public:
   virtual void EmitReturnFromThunk(CodeGenFunction &CGF,
                                    RValue RV, QualType ResultType);
 
+  virtual size_t getSrcArgforCopyCtor(const CXXConstructorDecl *,
+                                      FunctionArgList &Args) const = 0;
+
   /// Gets the pure virtual member call function.
   virtual StringRef GetPureVirtualCallName() = 0;
 

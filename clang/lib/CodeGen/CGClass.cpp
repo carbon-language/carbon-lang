@@ -914,11 +914,12 @@ namespace {
   private:
 
     /// Get source argument for copy constructor. Returns null if not a copy
-    /// constructor. 
-    static const VarDecl* getTrivialCopySource(const CXXConstructorDecl *CD,
+    /// constructor.
+    static const VarDecl *getTrivialCopySource(CodeGenFunction &CGF,
+                                               const CXXConstructorDecl *CD,
                                                FunctionArgList &Args) {
       if (CD->isCopyOrMoveConstructor() && CD->isDefaulted())
-        return Args[Args.size() - 1];
+        return Args[CGF.CGM.getCXXABI().getSrcArgforCopyCtor(CD, Args)];
       return nullptr;
     }
 
@@ -949,7 +950,7 @@ namespace {
   public:
     ConstructorMemcpyizer(CodeGenFunction &CGF, const CXXConstructorDecl *CD,
                           FunctionArgList &Args)
-      : FieldMemcpyizer(CGF, CD->getParent(), getTrivialCopySource(CD, Args)),
+      : FieldMemcpyizer(CGF, CD->getParent(), getTrivialCopySource(CGF, CD, Args)),
         ConstructorDecl(CD),
         MemcpyableCtor(CD->isDefaulted() &&
                        CD->isCopyOrMoveConstructor() &&
