@@ -582,35 +582,29 @@ void AtomChunk::applyRelocations64(uint8_t *buffer,
         *relocSite32 = *relocSite32 + targetAddr;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_REL32:
-        *relocSite32 =
-            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() - 4;
+        *relocSite32 += targetAddr - atomRva[atom] - ref->offsetInAtom() - 4;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_REL32_1:
-        *relocSite32 =
-            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() - 5;
+        *relocSite32 += targetAddr - atomRva[atom] - ref->offsetInAtom() - 5;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_REL32_2:
-        *relocSite32 =
-            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() - 6;
+        *relocSite32 += targetAddr - atomRva[atom] - ref->offsetInAtom() - 6;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_REL32_3:
-        *relocSite32 =
-            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() - 7;
+        *relocSite32 += targetAddr - atomRva[atom] - ref->offsetInAtom() - 7;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_REL32_4:
-        *relocSite32 =
-            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() - 8;
+        *relocSite32 += targetAddr - atomRva[atom] - ref->offsetInAtom() - 8;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_REL32_5:
-        *relocSite32 =
-            *relocSite32 + targetAddr - atomRva[atom] - ref->offsetInAtom() - 9;
+        *relocSite32 += targetAddr - atomRva[atom] - ref->offsetInAtom() - 9;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_SECTION:
-        *relocSite16 = *relocSite16 + getSectionIndex(targetAddr, sectionRva) - 1;
+        *relocSite16 += getSectionIndex(targetAddr, sectionRva) - 1;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_SECREL:
-        *relocSite32 = *relocSite32 + targetAddr -
-                       getSectionStartAddr(targetAddr, sectionRva);
+        *relocSite32 +=
+            targetAddr - getSectionStartAddr(targetAddr, sectionRva);
         break;
       default:
         llvm::errs() << "Kind: " << (int)ref->kindValue() << "\n";
