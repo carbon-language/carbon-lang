@@ -55,3 +55,12 @@ entry:
   %shl = shl i32 %a, 13
   ret i32 %shl
 }
+
+define i32 @lsl-reg(i32 %a, i32 %b) nounwind readnone {
+; CHECK-LABEL: "lsl-reg":
+; CHECK: lsl.w r{{[0-9]+}}, r{{[0-9]+}}, r{{[0-9]+}} @ encoding: [{{0x..,0x..,0x..,0x..}}]
+; CHECK-OPT: lsls r{{[0-7]}}, r{{[0-7]}}  @ encoding: [{{0x..,0x..}}]
+entry:
+  %shl = shl i32 %a, %b
+  ret i32 %shl
+}
