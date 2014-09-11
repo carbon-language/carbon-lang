@@ -119,8 +119,9 @@ public:
       populateJumpTable(cast<MachOObjectFile>(*ObjImg.getObjectFile()), Section,
                         SectionID);
     else if (Name == "__pointers")
-      populatePointersSection(cast<MachOObjectFile>(*ObjImg.getObjectFile()),
-                              Section, SectionID);
+      populateIndirectSymbolPointersSection(
+                                 cast<MachOObjectFile>(*ObjImg.getObjectFile()),
+                                 Section, SectionID);
   }
 
 private:
@@ -259,58 +260,6 @@ private:
     }
   }
 
-  // Populate __pointers section.
-  void populatePointersSection(MachOObjectFile &Obj,
-                               const SectionRef &PTSection,
-                               unsigned PTSectionID) {
-    assert(!Obj.is64Bit() &&
-           "__pointers section not supported in 64-bit MachO.");
-
-    MachO::dysymtab_command DySymTabCmd = Obj.getDysymtabLoadCommand();
-    MachO::section Sec32 = Obj.getSection(PTSection.getRawDataRefImpl());
-    uint32_t PTSectionSize = Sec32.size;
-    unsigned FirstIndirectSymbol = Sec32.reserved1;
-    const unsigned PTEntrySize = 4;
-    unsigned NumPTEntries = PTSectionSize / PTEntrySize;
-    unsigned PTEntryOffset = 0;
-
-    assert((PTSectionSize % PTEntrySize) == 0 &&
-           "Pointers section does not contain a whole number of stubs?");
-
-    DEBUG(dbgs() << "Populating __pointers, Section ID " << PTSectionID << ", "
-                 << NumPTEntries << " entries, " << PTEntrySize
-                 << " bytes each:\n");
-
-    for (unsigned i = 0; i < NumPTEntries; ++i) {
-      unsigned SymbolIndex =
-          Obj.getIndirectSymbolTableEntry(DySymTabCmd, FirstIndirectSymbol + i);
-      symbol_iterator SI = Obj.getSymbolByIndex(SymbolIndex);
-      StringRef IndirectSymbolName;
-      SI->getName(IndirectSymbolName);
-      DEBUG(dbgs() << "  " << IndirectSymbolName << ": index " << SymbolIndex
-                   << ", PT offset: " << PTEntryOffset << "\n");
-      RelocationEntry RE(PTSectionID, PTEntryOffset,
-                         MachO::GENERIC_RELOC_VANILLA, 0, false, 2);
-      addRelocationForSymbol(RE, IndirectSymbolName);
-      PTEntryOffset += PTEntrySize;
-    }
-  }
-
-  static section_iterator getSectionByAddress(const MachOObjectFile &Obj,
-                                              uint64_t Addr) {
-    section_iterator SI = Obj.section_begin();
-    section_iterator SE = Obj.section_end();
-
-    for (; SI != SE; ++SI) {
-      uint64_t SAddr, SSize;
-      SI->getAddress(SAddr);
-      SI->getSize(SSize);
-      if ((Addr >= SAddr) && (Addr < SAddr + SSize))
-        return SI;
-    }
-
-    return SE;
-  }
 };
 }
 

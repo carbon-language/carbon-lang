@@ -101,6 +101,16 @@ protected:
   /// Dump information about the relocation entry (RE) and resolved value.
   void dumpRelocationToResolve(const RelocationEntry &RE, uint64_t Value) const;
 
+  // Return a section iterator for the section containing the given address.
+  static section_iterator getSectionByAddress(const MachOObjectFile &Obj,
+                                              uint64_t Addr);
+
+
+  // Populate __pointers section.
+  void populateIndirectSymbolPointersSection(MachOObjectFile &Obj,
+                                             const SectionRef &PTSection,
+                                             unsigned PTSectionID);
+
 public:
   /// Create an ObjectImage from the given ObjectBuffer.
   static std::unique_ptr<ObjectImage>

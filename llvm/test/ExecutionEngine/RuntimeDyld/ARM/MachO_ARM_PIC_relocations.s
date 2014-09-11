@@ -1,21 +1,21 @@
 # RUN: llvm-mc -triple=armv7s-apple-ios7.0.0 -relocation-model=pic -filetype=obj -o %T/foo.o %s
 # RUN: llvm-rtdyld -triple=armv7s-apple-ios7.0.0 -verify -check=%s %/T/foo.o
 
-	.syntax unified
-	.section	__TEXT,__text,regular,pure_instructions
-	.globl	bar
-	.align	2
+        .syntax unified
+        .section        __TEXT,__text,regular,pure_instructions
+        .globl  bar
+        .align  2
 bar:
 # Check lower 16-bits of section difference relocation
-# rtdyld-check: decode_operand(insn1, 1) = (foo-(nextPC+8))[15:0]
+# rtdyld-check: decode_operand(insn1, 1) = (foo$non_lazy_ptr-(nextPC+8))[15:0]
 insn1:
-	movw	r0, :lower16:(foo-(nextPC+8))
+        movw    r0, :lower16:(foo$non_lazy_ptr-(nextPC+8))
 # Check upper 16-bits of section difference relocation
-# rtdyld-check: decode_operand(insn2, 2) = (foo-(nextPC+8))[31:16]
+# rtdyld-check: decode_operand(insn2, 2) = (foo$non_lazy_ptr-(nextPC+8))[31:16]
 insn2:
-	movt	r0, :upper16:(foo-(nextPC+8))
+        movt    r0, :upper16:(foo$non_lazy_ptr-(nextPC+8))
 nextPC:
-	add	r0, pc, r0
+        add     r1, r0, r0
 
 # Check stub generation by referencing a common symbol, 'baz'. Check both the
 # Content of the stub, and the reference to the stub.
@@ -27,16 +27,20 @@ nextPC:
 # rtdyld-check: decode_operand(insn3, 0) = stub_addr(foo.o, __text, baz) - (insn3 + 8)
 insn3:
         bl      baz
-	bx	lr
-
-	.globl	foo
-	.align	2
-foo:
-	bx	lr
+        bx	lr
 
 # Add 'aaa' to the common symbols to make sure 'baz' isn't at the start of the
 # section. This ensures that we test VANILLA relocation addends correctly.
         .comm   aaa, 4, 2
         .comm   baz, 4, 2
+        .comm   foo, 4, 2
+
+# Check that the symbol pointer section entries are fixed up properly:
+# rtdyld-check: *{4}foo$non_lazy_ptr = foo
+        .section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers
+  	.align	2
+foo$non_lazy_ptr:
+	.indirect_symbol	foo
+	.long	0
 
 .subsections_via_symbols
