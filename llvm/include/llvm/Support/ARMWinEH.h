@@ -353,11 +353,11 @@ struct ExceptionDataRecord {
     return makeArrayRef(&Data[Offset], EpilogueCount());
   }
 
-  ArrayRef<support::ulittle8_t> UnwindByteCode() const {
+  ArrayRef<uint8_t> UnwindByteCode() const {
     const size_t Offset = HeaderWords(*this)
                         + (E() ? 0 :  EpilogueCount());
-    const support::ulittle8_t *ByteCode =
-      reinterpret_cast<const support::ulittle8_t *>(&Data[Offset]);
+    const uint8_t *ByteCode =
+      reinterpret_cast<const uint8_t *>(&Data[Offset]);
     return makeArrayRef(ByteCode, CodeWords() * sizeof(uint32_t));
   }
 
@@ -380,4 +380,3 @@ inline size_t HeaderWords(const ExceptionDataRecord &XR) {
 }
 
 #endif
-

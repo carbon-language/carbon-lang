@@ -215,8 +215,8 @@ struct coff_symbol {
 
   support::ulittle16_t Type;
 
-  support::ulittle8_t StorageClass;
-  support::ulittle8_t NumberOfAuxSymbols;
+  uint8_t StorageClass;
+  uint8_t NumberOfAuxSymbols;
 };
 
 typedef coff_symbol<support::ulittle16_t> coff_symbol16;
@@ -362,12 +362,12 @@ struct coff_aux_section_definition {
   support::ulittle16_t NumberOfLinenumbers;
   support::ulittle32_t CheckSum;
   support::ulittle16_t Number;
-  support::ulittle8_t Selection;
+  uint8_t              Selection;
 };
 
 struct coff_aux_clr_token {
-  support::ulittle8_t AuxType;
-  support::ulittle8_t Reserved;
+  uint8_t              AuxType;
+  uint8_t              Reserved;
   support::ulittle32_t SymbolTableIndex;
 };
 

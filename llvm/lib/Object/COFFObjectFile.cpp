@@ -25,7 +25,6 @@
 using namespace llvm;
 using namespace object;
 
-using support::ulittle8_t;
 using support::ulittle16_t;
 using support::ulittle32_t;
 using support::little16_t;

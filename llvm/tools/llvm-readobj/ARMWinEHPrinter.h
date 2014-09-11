@@ -28,55 +28,54 @@ class Decoder {
   struct RingEntry {
     uint8_t Mask;
     uint8_t Value;
-    bool (Decoder::*Routine)(const support::ulittle8_t *, unsigned &, unsigned,
-                             bool);
+    bool (Decoder::*Routine)(const uint8_t *, unsigned &, unsigned, bool);
   };
   static const RingEntry Ring[];
 
-  bool opcode_0xxxxxxx(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_0xxxxxxx(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_10Lxxxxx(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_10Lxxxxx(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_1100xxxx(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_1100xxxx(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11010Lxx(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11010Lxx(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11011Lxx(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11011Lxx(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11100xxx(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11100xxx(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_111010xx(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_111010xx(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_1110110L(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_1110110L(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11101110(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11101110(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11101111(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11101111(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11110101(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11110101(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11110110(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11110110(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11110111(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11110111(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11111000(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11111000(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11111001(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11111001(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11111010(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11111010(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11111011(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11111011(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11111100(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11111100(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11111101(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11111101(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11111110(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11111110(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
-  bool opcode_11111111(const support::ulittle8_t *Opcodes, unsigned &Offset,
+  bool opcode_11111111(const uint8_t *Opcodes, unsigned &Offset,
                        unsigned Length, bool Prologue);
 
-  void decodeOpcodes(ArrayRef<support::ulittle8_t> Opcodes, unsigned Offset,
+  void decodeOpcodes(ArrayRef<uint8_t> Opcodes, unsigned Offset,
                      bool Prologue);
 
   void printRegisters(const std::pair<uint16_t, uint32_t> &RegisterMask);
@@ -116,4 +115,3 @@ public:
 }
 
 #endif
-

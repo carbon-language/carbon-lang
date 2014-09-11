@@ -40,8 +40,8 @@ enum UnwindOpcodes {
 /// or part thereof.
 union UnwindCode {
   struct {
-    support::ulittle8_t CodeOffset;
-    support::ulittle8_t UnwindOpAndOpInfo;
+    uint8_t CodeOffset;
+    uint8_t UnwindOpAndOpInfo;
   } u;
   support::ulittle16_t FrameOffset;
 
@@ -74,10 +74,10 @@ struct RuntimeFunction {
 
 /// UnwindInfo - An entry in the exception table.
 struct UnwindInfo {
-  support::ulittle8_t VersionAndFlags;
-  support::ulittle8_t PrologSize;
-  support::ulittle8_t NumCodes;
-  support::ulittle8_t FrameRegisterAndOffset;
+  uint8_t VersionAndFlags;
+  uint8_t PrologSize;
+  uint8_t NumCodes;
+  uint8_t FrameRegisterAndOffset;
   UnwindCode UnwindCodes[1];
 
   uint8_t getVersion() const {
