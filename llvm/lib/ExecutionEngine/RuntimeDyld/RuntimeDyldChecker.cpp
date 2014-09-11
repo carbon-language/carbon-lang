@@ -825,7 +825,10 @@ std::pair<uint64_t, std::string> RuntimeDyldCheckerImpl::getStubAddrFor(
   auto StubOffsetItr = SymbolStubs.find(SymbolName);
   if (StubOffsetItr == SymbolStubs.end())
     return std::make_pair(0,
-                          ("Symbol '" + SymbolName + "' not found.\n").str());
+                          ("Stub for symbol '" + SymbolName + "' not found. "
+                           "If '" + SymbolName + "' is an internal symbol this "
+                           "may indicate that the stub target offset is being "
+                           "computed incorrectly.\n").str());
 
   uint64_t StubOffset = StubOffsetItr->second;
 
