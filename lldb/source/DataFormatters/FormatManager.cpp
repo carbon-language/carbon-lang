@@ -527,10 +527,9 @@ FormatManager::ShouldPrintAsOneLiner (ValueObject& valobj)
     if (valobj.GetTargetSP().get() && valobj.GetTargetSP()->GetDebugger().GetAutoOneLineSummaries() == false)
         return false; // then don't oneline
     
-    // if this object has a summary, don't try to do anything special to it
-    // if the user wants one-liner, they can ask for it in summary :)
+    // if this object has a summary, then ask the summary
     if (valobj.GetSummaryFormat().get() != nullptr)
-        return false;
+        return valobj.GetSummaryFormat()->IsOneLiner();
     
     // no children, no party
     if (valobj.GetNumChildren() == 0)
