@@ -101,12 +101,13 @@ public:
     default:
       llvm_unreachable("Invalid relocation type!");
     case MachO::ARM_RELOC_VANILLA:
-      writeBytesUnaligned(Value, LocalAddress, 1 << RE.Size);
+      writeBytesUnaligned(Value + RE.Addend, LocalAddress, 1 << RE.Size);
       break;
     case MachO::ARM_RELOC_BR24: {
       // Mask the value into the target address. We know instructions are
       // 32-bit aligned, so we can do it all at once.
       uint32_t *p = (uint32_t *)LocalAddress;
+      Value += RE.Addend;
       // The low two bits of the value are not encoded.
       Value >>= 2;
       // Mask the value to 24 bits.

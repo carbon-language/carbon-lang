@@ -34,6 +34,9 @@ insn3:
 foo:
 	bx	lr
 
+# Add 'aaa' to the common symbols to make sure 'baz' isn't at the start of the
+# section. This ensures that we test VANILLA relocation addends correctly.
+        .comm   aaa, 4, 2
         .comm   baz, 4, 2
 
 .subsections_via_symbols
