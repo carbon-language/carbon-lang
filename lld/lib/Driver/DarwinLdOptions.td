@@ -143,6 +143,8 @@ def sectalign : MultiArg<["-"], "sectalign", 3>,
      MetaVarName<"<segname> <sectname> <alignment>">,
      HelpText<"alignment for segment/section">;
 def image_base : Separate<["-"], "image_base">;
+def seg1addr : Separate<["-"], "seg1addr">, Alias<image_base>;
+
 def t : Flag<["-"], "t">,
      HelpText<"Print the names of the input files as ld processes them">;
 def v : Flag<["-"], "v">,
