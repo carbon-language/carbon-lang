@@ -182,6 +182,9 @@ def _SLASH_MT : Option<["/", "-"], "MT", KIND_FLAG>, Group<_SLASH_M_Group>,
   Flags<[CLOption, DriverOption]>, HelpText<"Use static run-time">;
 def _SLASH_MTd : Option<["/", "-"], "MTd", KIND_FLAG>, Group<_SLASH_M_Group>,
   Flags<[CLOption, DriverOption]>, HelpText<"Use static debug run-time">;
+def _SLASH_o : CLJoinedOrSeparate<"o">,
+  HelpText<"Set output file or directory (ends in / or \\)">,
+  MetaVarName<"<file or directory>">;
 def _SLASH_P : CLFlag<"P">, HelpText<"Preprocess to file">;
 def _SLASH_Tc : CLCompileJoinedOrSeparate<"Tc">,
   HelpText<"Specify a C source file">, MetaVarName<"<filename>">;
@@ -256,7 +259,6 @@ def _SLASH_hotpatch : CLFlag<"hotpatch">;
 def _SLASH_kernel : CLFlag<"kernel">;
 def _SLASH_LN : CLFlag<"LN">;
 def _SLASH_MP : CLJoined<"MP">;
-def _SLASH_o : CLJoinedOrSeparate<"o">;
 def _SLASH_openmp : CLFlag<"openmp">;
 def _SLASH_Qfast_transcendentals : CLFlag<"Qfast_transcendentals">;
 def _SLASH_QIfist : CLFlag<"QIfist">;
