@@ -73,3 +73,12 @@ entry:
   %shr = lshr i32 %a, 13
   ret i32 %shr
 }
+
+define i32 @lsr-reg(i32 %a, i32 %b) nounwind readnone {
+; CHECK-LABEL: "lsr-reg":
+; CHECK: lsr.w r{{[0-9]+}}, r{{[0-9]+}}, r{{[0-9]+}} @ encoding: [{{0x..,0x..,0x..,0x..}}]
+; CHECK-OPT: lsrs r{{[0-7]}}, r{{[0-7]}}  @ encoding: [{{0x..,0x..}}]
+entry:
+  %shr = lshr i32 %a, %b
+  ret i32 %shr
+}
