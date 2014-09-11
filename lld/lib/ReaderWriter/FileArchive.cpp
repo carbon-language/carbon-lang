@@ -58,13 +58,13 @@ public:
     if (dataSymbolOnly && !isDataSymbol(ci, name))
       return nullptr;
 
-    std::vector<std::unique_ptr<File>> result;
+    _membersInstantiated.insert(memberStart);
+    std::unique_ptr<File> result;
     if (instantiateMember(ci, result))
       return nullptr;
-    assert(result.size() == 1);
 
     // give up the pointer so that this object no longer manages it
-    return result[0].release();
+    return result.release();
   }
 
   /// \brief Load all members of the archive?
@@ -75,8 +75,10 @@ public:
   parseAllMembers(std::vector<std::unique_ptr<File>> &result) const override {
     for (auto mf = _archive->child_begin(), me = _archive->child_end();
          mf != me; ++mf) {
-      if (std::error_code ec = instantiateMember(mf, result))
+      std::unique_ptr<File> file;
+      if (std::error_code ec = instantiateMember(mf, file))
         return ec;
+      result.push_back(std::move(file));
     }
     return std::error_code();
   }
@@ -125,10 +127,10 @@ public:
     return ret;
   }
 
-protected:
+private:
   std::error_code
   instantiateMember(Archive::child_iterator member,
-                    std::vector<std::unique_ptr<File>> &result) const {
+                    std::unique_ptr<File> &result) const {
     ErrorOr<llvm::MemoryBufferRef> mbOrErr = member->getMemoryBufferRef();
     if (std::error_code ec = mbOrErr.getError())
       return ec;
@@ -139,9 +141,10 @@ protected:
     std::unique_ptr<MemoryBuffer> buf(MemoryBuffer::getMemBuffer(
         mb.getBuffer(), mb.getBufferIdentifier(), false));
 
-    _registry.parseFile(buf, result);
-    const char *memberStart = member->getBuffer().data();
-    _membersInstantiated.insert(memberStart);
+    std::vector<std::unique_ptr<File>> files;
+    _registry.parseFile(buf, files);
+    assert(files.size() == 1);
+    result = std::move(files[0]);
     return std::error_code();
   }
 
