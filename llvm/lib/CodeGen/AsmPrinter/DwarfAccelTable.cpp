@@ -174,7 +174,8 @@ void DwarfAccelTable::EmitOffsets(AsmPrinter *Asm, MCSymbol *SecBegin) {
 // Walk through the buckets and emit the full data for each element in
 // the bucket. For the string case emit the dies and the various offsets.
 // Terminate each HashData bucket with 0.
-void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfFile *D) {
+void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfFile *D,
+                               MCSymbol *StrSym) {
   uint64_t PrevHash = UINT64_MAX;
   for (size_t i = 0, e = Buckets.size(); i < e; ++i) {
     for (HashList::const_iterator HI = Buckets[i].begin(),
@@ -183,8 +184,7 @@ void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfFile *D) {
       // Remember to emit the label for our offset.
       Asm->OutStreamer.EmitLabel((*HI)->Sym);
       Asm->OutStreamer.AddComment((*HI)->Str);
-      Asm->EmitSectionOffset((*HI)->Data.StrSym,
-                             D->getStringPool().getSectionSymbol());
+      Asm->EmitSectionOffset((*HI)->Data.StrSym, StrSym);
       Asm->OutStreamer.AddComment("Num DIEs");
       Asm->EmitInt32((*HI)->Data.Values.size());
       for (HashDataContents *HD : (*HI)->Data.Values) {
@@ -206,7 +206,8 @@ void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfFile *D) {
 }
 
 // Emit the entire data structure to the output file.
-void DwarfAccelTable::Emit(AsmPrinter *Asm, MCSymbol *SecBegin, DwarfFile *D) {
+void DwarfAccelTable::Emit(AsmPrinter *Asm, MCSymbol *SecBegin, DwarfFile *D,
+                           MCSymbol *StrSym) {
   // Emit the header.
   EmitHeader(Asm);
 
@@ -220,7 +221,7 @@ void DwarfAccelTable::Emit(AsmPrinter *Asm, MCSymbol *SecBegin, DwarfFile *D) {
   EmitOffsets(Asm, SecBegin);
 
   // Emit the hash data.
-  EmitData(Asm, D);
+  EmitData(Asm, D, StrSym);
 }
 
 #ifndef NDEBUG

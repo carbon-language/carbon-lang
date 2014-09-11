@@ -225,10 +225,8 @@ void DwarfUnit::addLocalString(DIE &Die, dwarf::Attribute Attribute,
   DIEValue *Value;
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
     Value = new (DIEValueAllocator) DIELabel(Symb);
-  else {
-    MCSymbol *StringPool = DU->getStringPool().getSectionSymbol();
-    Value = new (DIEValueAllocator) DIEDelta(Symb, StringPool);
-  }
+  else
+    Value = new (DIEValueAllocator) DIEDelta(Symb, DD->getDebugStrSym());
   DIEValue *Str = new (DIEValueAllocator) DIEString(Value, String);
   Die.addValue(Attribute, dwarf::DW_FORM_strp, Str);
 }

@@ -422,6 +422,10 @@ class DwarfDebug : public AsmPrinterHandler {
   /// the line matrix.
   void emitEndOfLineMatrix(unsigned SectionEnd);
 
+  /// \brief Emit a specified accelerator table.
+  void emitAccel(DwarfAccelTable &Accel, const MCSection *Section,
+                 StringRef TableName, StringRef SymName);
+
   /// \brief Emit visible names into a hashed accelerator table section.
   void emitAccelNames();
 
@@ -626,6 +630,9 @@ public:
 
   /// Returns the section symbol for the .debug_loc section.
   MCSymbol *getDebugLocSym() const { return DwarfDebugLocSectionSym; }
+
+  /// Returns the section symbol for the .debug_str section.
+  MCSymbol *getDebugStrSym() const { return DwarfStrSectionSym; }
 
   /// Returns the previous CU that was being updated
   const DwarfCompileUnit *getPrevCU() const { return PrevCU; }

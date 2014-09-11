@@ -74,8 +74,7 @@ public:
 
   /// \brief Emit all of the strings to the section given.
   void emitStrings(const MCSection *StrSection,
-                   const MCSection *OffsetSection = nullptr,
-                   const MCSymbol *StrSecSym = nullptr);
+                   const MCSection *OffsetSection = nullptr);
 
   /// \brief Returns the string pool.
   DwarfStringPool &getStringPool() { return StrPool; }

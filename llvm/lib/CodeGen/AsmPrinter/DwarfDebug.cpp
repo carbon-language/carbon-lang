@@ -1880,54 +1880,41 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
   Asm->EmitInt8(1);
 }
 
-// Emit visible names into a hashed accelerator table section.
-void DwarfDebug::emitAccelNames() {
-  AccelNames.FinalizeTable(Asm, "Names");
-  Asm->OutStreamer.SwitchSection(
-      Asm->getObjFileLowering().getDwarfAccelNamesSection());
-  MCSymbol *SectionBegin = Asm->GetTempSymbol("names_begin");
+void DwarfDebug::emitAccel(DwarfAccelTable &Accel, const MCSection *Section,
+                           StringRef TableName, StringRef SymName) {
+  Accel.FinalizeTable(Asm, TableName);
+  Asm->OutStreamer.SwitchSection(Section);
+  auto *SectionBegin = Asm->GetTempSymbol(SymName);
   Asm->OutStreamer.EmitLabel(SectionBegin);
 
   // Emit the full data.
-  AccelNames.Emit(Asm, SectionBegin, &InfoHolder);
+  Accel.Emit(Asm, SectionBegin, &InfoHolder, DwarfStrSectionSym);
+}
+
+// Emit visible names into a hashed accelerator table section.
+void DwarfDebug::emitAccelNames() {
+  emitAccel(AccelNames, Asm->getObjFileLowering().getDwarfAccelNamesSection(),
+            "Names", "names_begin");
 }
 
 // Emit objective C classes and categories into a hashed accelerator table
 // section.
 void DwarfDebug::emitAccelObjC() {
-  AccelObjC.FinalizeTable(Asm, "ObjC");
-  Asm->OutStreamer.SwitchSection(
-      Asm->getObjFileLowering().getDwarfAccelObjCSection());
-  MCSymbol *SectionBegin = Asm->GetTempSymbol("objc_begin");
-  Asm->OutStreamer.EmitLabel(SectionBegin);
-
-  // Emit the full data.
-  AccelObjC.Emit(Asm, SectionBegin, &InfoHolder);
+  emitAccel(AccelObjC, Asm->getObjFileLowering().getDwarfAccelObjCSection(),
+            "ObjC", "objc_begin");
 }
 
 // Emit namespace dies into a hashed accelerator table.
 void DwarfDebug::emitAccelNamespaces() {
-  AccelNamespace.FinalizeTable(Asm, "namespac");
-  Asm->OutStreamer.SwitchSection(
-      Asm->getObjFileLowering().getDwarfAccelNamespaceSection());
-  MCSymbol *SectionBegin = Asm->GetTempSymbol("namespac_begin");
-  Asm->OutStreamer.EmitLabel(SectionBegin);
-
-  // Emit the full data.
-  AccelNamespace.Emit(Asm, SectionBegin, &InfoHolder);
+  emitAccel(AccelNamespace,
+            Asm->getObjFileLowering().getDwarfAccelNamespaceSection(),
+            "namespac", "namespac_begin");
 }
 
 // Emit type dies into a hashed accelerator table.
 void DwarfDebug::emitAccelTypes() {
-
-  AccelTypes.FinalizeTable(Asm, "types");
-  Asm->OutStreamer.SwitchSection(
-      Asm->getObjFileLowering().getDwarfAccelTypesSection());
-  MCSymbol *SectionBegin = Asm->GetTempSymbol("types_begin");
-  Asm->OutStreamer.EmitLabel(SectionBegin);
-
-  // Emit the full data.
-  AccelTypes.Emit(Asm, SectionBegin, &InfoHolder);
+  emitAccel(AccelTypes, Asm->getObjFileLowering().getDwarfAccelTypesSection(),
+            "types", "types_begin");
 }
 
 // Public name handling.
@@ -2524,9 +2511,8 @@ void DwarfDebug::emitDebugStrDWO() {
   assert(useSplitDwarf() && "No split dwarf?");
   const MCSection *OffSec =
       Asm->getObjFileLowering().getDwarfStrOffDWOSection();
-  const MCSymbol *StrSym = DwarfStrSectionSym;
   InfoHolder.emitStrings(Asm->getObjFileLowering().getDwarfStrDWOSection(),
-                         OffSec, StrSym);
+                         OffSec);
 }
 
 MCDwarfDwoLineTable *DwarfDebug::getDwoLineTable(const DwarfCompileUnit &CU) {

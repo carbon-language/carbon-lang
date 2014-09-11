@@ -223,7 +223,7 @@ private:
   void EmitBuckets(AsmPrinter *);
   void EmitHashes(AsmPrinter *);
   void EmitOffsets(AsmPrinter *, MCSymbol *);
-  void EmitData(AsmPrinter *, DwarfFile *D);
+  void EmitData(AsmPrinter *, DwarfFile *D, MCSymbol *StrSym);
 
   // Allocator for HashData and HashDataContents.
   BumpPtrAllocator Allocator;
@@ -248,7 +248,7 @@ public:
   void AddName(StringRef Name, MCSymbol *StrSym, const DIE *Die,
                char Flags = 0);
   void FinalizeTable(AsmPrinter *, StringRef);
-  void Emit(AsmPrinter *, MCSymbol *, DwarfFile *);
+  void Emit(AsmPrinter *, MCSymbol *, DwarfFile *, MCSymbol *StrSym);
 #ifndef NDEBUG
   void print(raw_ostream &O);
   void dump() { print(dbgs()); }

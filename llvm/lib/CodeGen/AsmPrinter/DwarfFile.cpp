@@ -149,8 +149,7 @@ void DwarfFile::emitAbbrevs(const MCSection *Section) {
 
 // Emit strings into a string section.
 void DwarfFile::emitStrings(const MCSection *StrSection,
-                            const MCSection *OffsetSection,
-                            const MCSymbol *StrSecSym) {
-  StrPool.emit(*Asm, StrSection, OffsetSection, StrSecSym);
+                            const MCSection *OffsetSection) {
+  StrPool.emit(*Asm, StrSection, OffsetSection);
 }
 }
