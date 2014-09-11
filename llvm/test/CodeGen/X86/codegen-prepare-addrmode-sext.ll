@@ -67,6 +67,21 @@ define i8 @oneArgPromotion(i32 %arg1, i8* %base) {
   ret i8 %res
 }
 
+; Check that we are able to merge a sign extension with a zero extension.
+; CHECK-LABEL: @oneArgPromotionZExt
+; CHECK: [[ARG1ZEXT:%[a-zA-Z_0-9-]+]] = zext i8 %arg1 to i64
+; CHECK: [[PROMOTED:%[a-zA-Z_0-9-]+]] = add nsw i64 [[ARG1ZEXT]], 1
+; CHECK: getelementptr inbounds i8* %base, i64 [[PROMOTED]]
+; CHECK: ret
+define i8 @oneArgPromotionZExt(i8 %arg1, i8* %base) {
+  %zext = zext i8 %arg1 to i32
+  %add = add nsw i32 %zext, 1 
+  %sextadd = sext i32 %add to i64
+  %arrayidx = getelementptr inbounds i8* %base, i64 %sextadd
+  %res = load i8* %arrayidx
+  ret i8 %res
+}
+
 ; Check that we do not promote truncate when we cannot determine the
 ; bits that are dropped.
 ; CHECK-LABEL: @oneArgPromotionBlockTrunc1

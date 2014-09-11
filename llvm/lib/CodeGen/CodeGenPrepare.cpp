@@ -1297,6 +1297,29 @@ class TypePromotionTransaction {
     }
   };
 
+  /// \brief Build a zero extension instruction.
+  class ZExtBuilder : public TypePromotionAction {
+  public:
+    /// \brief Build a zero extension instruction of \p Opnd producing a \p Ty
+    /// result.
+    /// zext Opnd to Ty.
+    ZExtBuilder(Instruction *InsertPt, Value *Opnd, Type *Ty)
+        : TypePromotionAction(Inst) {
+      IRBuilder<> Builder(InsertPt);
+      Inst = cast<Instruction>(Builder.CreateZExt(Opnd, Ty, "promoted"));
+      DEBUG(dbgs() << "Do: ZExtBuilder: " << *Inst << "\n");
+    }
+
+    /// \brief Get the built instruction.
+    Instruction *getBuiltInstruction() { return Inst; }
+
+    /// \brief Remove the built instruction.
+    void undo() override {
+      DEBUG(dbgs() << "Undo: ZExtBuilder: " << *Inst << "\n");
+      Inst->eraseFromParent();
+    }
+  };
+
   /// \brief Mutate an instruction to another type.
   class TypeMutator : public TypePromotionAction {
     /// Record the original type.
@@ -1425,6 +1448,8 @@ public:
   Instruction *createTrunc(Instruction *Opnd, Type *Ty);
   /// Same as IRBuilder::createSExt.
   Instruction *createSExt(Instruction *Inst, Value *Opnd, Type *Ty);
+  /// Same as IRBuilder::createZExt.
+  Instruction *createZExt(Instruction *Inst, Value *Opnd, Type *Ty);
   /// Same as Instruction::moveBefore.
   void moveBefore(Instruction *Inst, Instruction *Before);
   /// @}
@@ -1467,6 +1492,14 @@ Instruction *TypePromotionTransaction::createTrunc(Instruction *Opnd,
 Instruction *TypePromotionTransaction::createSExt(Instruction *Inst,
                                                   Value *Opnd, Type *Ty) {
   std::unique_ptr<SExtBuilder> Ptr(new SExtBuilder(Inst, Opnd, Ty));
+  Instruction *I = Ptr->getBuiltInstruction();
+  Actions.push_back(std::move(Ptr));
+  return I;
+}
+
+Instruction *TypePromotionTransaction::createZExt(Instruction *Inst,
+                                                  Value *Opnd, Type *Ty) {
+  std::unique_ptr<ZExtBuilder> Ptr(new ZExtBuilder(Inst, Opnd, Ty));
   Instruction *I = Ptr->getBuiltInstruction();
   Actions.push_back(std::move(Ptr));
   return I;
@@ -1684,16 +1717,16 @@ class TypePromotionHelper {
   }
 
   /// \brief Utility function to promote the operand of \p SExt when this
-  /// operand is a promotable trunc or sext.
+  /// operand is a promotable trunc or sext or zext.
   /// \p PromotedInsts maps the instructions to their type before promotion.
   /// \p CreatedInsts[out] contains how many non-free instructions have been
   /// created to promote the operand of SExt.
   /// Should never be called directly.
   /// \return The promoted value which is used instead of SExt.
-  static Value *promoteOperandForTruncAndSExt(Instruction *SExt,
-                                              TypePromotionTransaction &TPT,
-                                              InstrToOrigTy &PromotedInsts,
-                                              unsigned &CreatedInsts);
+  static Value *promoteOperandForTruncAndAnyExt(Instruction *SExt,
+                                                TypePromotionTransaction &TPT,
+                                                InstrToOrigTy &PromotedInsts,
+                                                unsigned &CreatedInsts);
 
   /// \brief Utility function to promote the operand of \p SExt when this
   /// operand is promotable and is not a supported trunc or sext.
@@ -1729,8 +1762,8 @@ public:
 bool TypePromotionHelper::canGetThrough(const Instruction *Inst,
                                         Type *ConsideredSExtType,
                                         const InstrToOrigTy &PromotedInsts) {
-  // We can always get through sext.
-  if (isa<SExtInst>(Inst))
+  // We can always get through sext or zext.
+  if (isa<SExtInst>(Inst) || isa<ZExtInst>(Inst))
     return true;
 
   // We can get through binary operator, if it is legal. In other words, the
@@ -1798,8 +1831,9 @@ TypePromotionHelper::Action TypePromotionHelper::getAction(
 
   // SExt or Trunc instructions.
   // Return the related handler.
-  if (isa<SExtInst>(SExtOpnd) || isa<TruncInst>(SExtOpnd))
-    return promoteOperandForTruncAndSExt;
+  if (isa<SExtInst>(SExtOpnd) || isa<TruncInst>(SExtOpnd) ||
+      isa<ZExtInst>(SExtOpnd))
+    return promoteOperandForTruncAndAnyExt;
 
   // Regular instruction.
   // Abort early if we will have to insert non-free instructions.
@@ -1809,15 +1843,24 @@ TypePromotionHelper::Action TypePromotionHelper::getAction(
   return promoteOperandForOther;
 }
 
-Value *TypePromotionHelper::promoteOperandForTruncAndSExt(
+Value *TypePromotionHelper::promoteOperandForTruncAndAnyExt(
     llvm::Instruction *SExt, TypePromotionTransaction &TPT,
     InstrToOrigTy &PromotedInsts, unsigned &CreatedInsts) {
   // By construction, the operand of SExt is an instruction. Otherwise we cannot
   // get through it and this method should not be called.
   Instruction *SExtOpnd = cast<Instruction>(SExt->getOperand(0));
-  // Replace sext(trunc(opnd)) or sext(sext(opnd))
-  // => sext(opnd).
-  TPT.setOperand(SExt, 0, SExtOpnd->getOperand(0));
+  if (isa<ZExtInst>(SExtOpnd)) {
+    // Replace sext(zext(opnd))
+    // => zext(opnd).
+    Instruction *ZExt =
+        TPT.createZExt(SExt, SExtOpnd->getOperand(0), SExt->getType());
+    TPT.replaceAllUsesWith(SExt, ZExt);
+    TPT.eraseInstruction(SExt);
+  } else {
+    // Replace sext(trunc(opnd)) or sext(sext(opnd))
+    // => sext(opnd).
+    TPT.setOperand(SExt, 0, SExtOpnd->getOperand(0));
+  }
   CreatedInsts = 0;
 
   // Remove dead code.
