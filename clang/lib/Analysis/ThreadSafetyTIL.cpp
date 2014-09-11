@@ -200,7 +200,7 @@ int BasicBlock::topologicalFinalSort(SimpleArray<BasicBlock*>& Blocks, int ID) {
     ID = DominatorNode.Parent->topologicalFinalSort(Blocks, ID);
   for (auto *Pred : Predecessors)
     ID = Pred->topologicalFinalSort(Blocks, ID);
-  assert(ID < Blocks.size());
+  assert(static_cast<size_t>(ID) < Blocks.size());
   BlockID = ID++;
   Blocks[BlockID] = this;
   return ID;
@@ -314,7 +314,7 @@ void SCFG::computeNormalForm() {
 
   // Once dominators have been computed, the final sort may be performed.
   int NumBlocks = Exit->topologicalFinalSort(Blocks, 0);
-  assert(NumBlocks == Blocks.size());
+  assert(static_cast<size_t>(NumBlocks) == Blocks.size());
   (void) NumBlocks;
 
   // Renumber the instructions now that we have a final sort.
@@ -341,4 +341,3 @@ void SCFG::computeNormalForm() {
 }  // end namespace til
 }  // end namespace threadSafety
 }  // end namespace clang
-
