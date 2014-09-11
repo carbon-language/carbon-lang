@@ -492,7 +492,9 @@ def LDS_SUB : R600_LDS_1A1D_NORET <0x1, "LDS_SUB", [] >;
 def LDS_AND : R600_LDS_1A1D_NORET <0x9, "LDS_AND", [] >;
 def LDS_OR : R600_LDS_1A1D_NORET <0xa, "LDS_OR", [] >;
 def LDS_XOR : R600_LDS_1A1D_NORET <0xb, "LDS_XOR", [] >;
+def LDS_MIN_INT : R600_LDS_1A1D_NORET <0x5, "LDS_MIN_INT", [] >;
 def LDS_MAX_INT : R600_LDS_1A1D_NORET <0x6, "LDS_MAX_INT", [] >;
+def LDS_MIN_UINT : R600_LDS_1A1D_NORET <0x7, "LDS_MIN_UINT", [] >;
 def LDS_MAX_UINT : R600_LDS_1A1D_NORET <0x8, "LDS_MAX_UINT", [] >;
 def LDS_WRITE : R600_LDS_1A1D_NORET <0xD, "LDS_WRITE",
   [(local_store (i32 R600_Reg32:$src1), R600_Reg32:$src0)]
@@ -518,8 +520,14 @@ def LDS_OR_RET : R600_LDS_1A1D_RET <0x2a, "LDS_OR",
 def LDS_XOR_RET : R600_LDS_1A1D_RET <0x2b, "LDS_XOR",
   [(set i32:$dst, (atomic_load_xor_local i32:$src0, i32:$src1))]
 >;
+def LDS_MIN_INT_RET : R600_LDS_1A1D_RET <0x25, "LDS_MIN_INT",
+  [(set i32:$dst, (atomic_load_min_local i32:$src0, i32:$src1))]
+>;
 def LDS_MAX_INT_RET : R600_LDS_1A1D_RET <0x26, "LDS_MAX_INT",
   [(set i32:$dst, (atomic_load_max_local i32:$src0, i32:$src1))]
+>;
+def LDS_MIN_UINT_RET : R600_LDS_1A1D_RET <0x27, "LDS_MIN_UINT",
+  [(set i32:$dst, (atomic_load_umin_local i32:$src0, i32:$src1))]
 >;
 def LDS_MAX_UINT_RET : R600_LDS_1A1D_RET <0x28, "LDS_MAX_UINT",
   [(set i32:$dst, (atomic_load_umax_local i32:$src0, i32:$src1))]
