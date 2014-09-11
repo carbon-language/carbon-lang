@@ -26,6 +26,11 @@ HostProcessPosix::HostProcessPosix()
 {
 }
 
+HostProcessPosix::HostProcessPosix(lldb::process_t process)
+    : HostNativeProcessBase(process)
+{
+}
+
 HostProcessPosix::~HostProcessPosix()
 {
 }
