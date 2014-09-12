@@ -27,7 +27,7 @@ namespace lldb_private
         // ---------------------------------------------------------------------
         // NativeThreadProtocol Interface
         // ---------------------------------------------------------------------
-        const char *
+        std::string
         GetName() override;
 
         lldb::StateType

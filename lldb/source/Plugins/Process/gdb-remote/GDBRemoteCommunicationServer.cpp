@@ -871,21 +871,21 @@ GDBRemoteCommunicationServer::SendStopReplyPacketForThread (lldb::tid_t tid)
     response.Printf ("thread:%" PRIx64 ";", tid);
 
     // Include the thread name if there is one.
-    const char *thread_name = thread_sp->GetName ();
-    if (thread_name && thread_name[0])
+    const std::string thread_name = thread_sp->GetName ();
+    if (!thread_name.empty ())
     {
-        size_t thread_name_len = strlen(thread_name);
+        size_t thread_name_len = thread_name.length ();
 
-        if (::strcspn (thread_name, "$#+-;:") == thread_name_len)
+        if (::strcspn (thread_name.c_str (), "$#+-;:") == thread_name_len)
         {
             response.PutCString ("name:");
-            response.PutCString (thread_name);
+            response.PutCString (thread_name.c_str ());
         }
         else
         {
             // The thread name contains special chars, send as hex bytes.
             response.PutCString ("hexname:");
-            response.PutCStringAsRawHex8 (thread_name);
+            response.PutCStringAsRawHex8 (thread_name.c_str ());
         }
         response.PutChar (';');
     }

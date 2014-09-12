@@ -31,7 +31,7 @@ namespace lldb_private
         {
         }
 
-        virtual const char *
+        virtual std::string
         GetName() = 0;
 
         virtual lldb::StateType

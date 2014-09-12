@@ -61,7 +61,7 @@ NativeThreadLinux::NativeThreadLinux (NativeProcessLinux *process, lldb::tid_t t
 {
 }
 
-const char *
+std::string
 NativeThreadLinux::GetName()
 {
     NativeProcessProtocolSP process_sp = m_process_wp.lock ();
