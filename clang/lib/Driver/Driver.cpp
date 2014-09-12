@@ -987,8 +987,8 @@ void Driver::BuildInputs(const ToolChain &TC, DerivedArgList &Args,
   Arg *InputTypeArg = nullptr;
 
   // The last /TC or /TP option sets the input type to C or C++ globally.
-  if (Arg *TCTP = Args.getLastArg(options::OPT__SLASH_TC,
-                                  options::OPT__SLASH_TP)) {
+  if (Arg *TCTP = Args.getLastArgNoClaim(options::OPT__SLASH_TC,
+                                         options::OPT__SLASH_TP)) {
     InputTypeArg = TCTP;
     InputType = TCTP->getOption().matches(options::OPT__SLASH_TC)
         ? types::TY_C : types::TY_CXX;
