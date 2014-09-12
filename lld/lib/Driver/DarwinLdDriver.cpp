@@ -167,6 +167,13 @@ std::error_code parseFileList(StringRef fileListPath,
   return std::error_code();
 }
 
+/// Parse number assuming it is base 16, but allow 0x prefix.
+bool parseNumberBase16(StringRef numStr, uint64_t &baseAddress) {
+  if (numStr.startswith_lower("0x"))
+    numStr = numStr.drop_front(2);
+  return numStr.getAsInteger(16, baseAddress);
+}
+
 } // namespace anonymous
 
 namespace lld {
@@ -312,13 +319,10 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   else
     ctx.setOutputPath("a.out");
 
+  // Handle -image_base XXX and -seg1addr XXXX
   if (llvm::opt::Arg *imageBase = parsedArgs->getLastArg(OPT_image_base)) {
-    StringRef baseString = imageBase->getValue();
-    if (baseString.startswith("0x"))
-      baseString = baseString.drop_front(2);
-
     uint64_t baseAddress;
-    if (baseString.getAsInteger(16, baseAddress)) {
+    if (parseNumberBase16(imageBase->getValue(), baseAddress)) {
       diagnostics << "error: image_base expects a hex number\n";
       return false;
     } else if (baseAddress < ctx.pageZeroSize()) {
