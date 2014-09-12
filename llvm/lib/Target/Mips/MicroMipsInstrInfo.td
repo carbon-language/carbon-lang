@@ -4,6 +4,10 @@ def simm12 : Operand<i32> {
   let DecoderMethod = "DecodeSimm12";
 }
 
+def uimm5_lsl2 : Operand<OtherVT> {
+  let EncoderMethod = "getUImm5Lsl2Encoding";
+}
+
 def mem_mm_12 : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops GPR32, simm12);
@@ -104,6 +108,17 @@ class JumpLinkRegMM16<string opstr, RegisterOperand RO> :
   let Defs = [RA];
 }
 
+// Base class for JRADDIUSP instruction.
+class JumpRAddiuStackMM16 :
+  MicroMipsInst16<(outs), (ins uimm5_lsl2:$imm), "jraddiusp\t$imm",
+                  [], IIBranch, FrmR> {
+  let isTerminator = 1;
+  let isBarrier = 1;
+  let hasDelaySlot = 1;
+  let isBranch = 1;
+  let isIndirectBranch = 1;
+}
+
 // MicroMIPS Jump and Link (Call) - Short Delay Slot
 let isCall = 1, hasDelaySlot = 1, Defs = [RA] in {
   class JumpLinkMM<string opstr, DAGOperand opnd> :
@@ -126,6 +141,7 @@ def MFHI16_MM : MoveFromHILOMM<"mfhi", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x10>;
 def MFLO16_MM : MoveFromHILOMM<"mflo", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x12>;
 def MOVE16_MM : MoveMM16<"move", GPR32Opnd>, MOVE_FM_MM16<0x03>;
 def JALR16_MM : JumpLinkRegMM16<"jalr", GPR32Opnd>, JALR_FM_MM16<0x0e>;
+def JRADDIUSP : JumpRAddiuStackMM16, JRADDIUSP_FM_MM16<0x18>;
 
 class WaitMM<string opstr> :
   InstSE<(outs), (ins uimm10:$code_), !strconcat(opstr, "\t$code_"), [],

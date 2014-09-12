@@ -72,6 +72,17 @@ class MFHILO_FM_MM16<bits<5> funct> {
   let Inst{4-0}   = rd;
 }
 
+class JRADDIUSP_FM_MM16<bits<5> op> {
+  bits<5> rs;
+  bits<5> imm;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = 0x11;
+  let Inst{9-5}   = op;
+  let Inst{4-0}   = imm;
+}
+
 //===----------------------------------------------------------------------===//
 // MicroMIPS 32-bit Instruction Formats
 //===----------------------------------------------------------------------===//

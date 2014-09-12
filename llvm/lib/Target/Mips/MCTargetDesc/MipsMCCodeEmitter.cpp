@@ -345,6 +345,25 @@ getJumpTargetOpValueMM(const MCInst &MI, unsigned OpNo,
 }
 
 unsigned MipsMCCodeEmitter::
+getUImm5Lsl2Encoding(const MCInst &MI, unsigned OpNo,
+                     SmallVectorImpl<MCFixup> &Fixups,
+                     const MCSubtargetInfo &STI) const {
+
+  const MCOperand &MO = MI.getOperand(OpNo);
+  if (MO.isImm()) {
+    // The immediate is encoded as 'immediate << 2'.
+    unsigned Res = getMachineOpValue(MI, MO, Fixups, STI);
+    assert((Res & 3) == 0);
+    return Res >> 2;
+  }
+
+  assert(MO.isExpr() &&
+         "getUImm5Lsl2Encoding expects only expressions or an immediate");
+
+  return 0;
+}
+
+unsigned MipsMCCodeEmitter::
 getExprOpValue(const MCExpr *Expr,SmallVectorImpl<MCFixup> &Fixups,
                const MCSubtargetInfo &STI) const {
   int64_t Res;
