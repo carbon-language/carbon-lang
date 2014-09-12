@@ -139,7 +139,6 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
     lldbPluginProcessMacOSXKernel
     lldbPluginSymbolVendorMacOSX
     lldbPluginSystemRuntimeMacOSX
-    lldbPluginProcessPOSIX
     lldbPluginProcessElfCore
     lldbPluginJITLoaderGDB
     )
