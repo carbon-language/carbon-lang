@@ -34,6 +34,14 @@
 // WARN: note: The last /TC or /TP option takes precedence over earlier instances
 // WARN-NOT: note
 
+// RUN: env LIB=%S/Inputs/cl-libs %clang_cl /c /TP cl-test.lib %s -### 2>&1 | FileCheck -check-prefix=TPlib %s
+// TPlib: warning: cl-test.lib: 'linker' input unused
+// TPlib-NOT: cl-test.lib
+
+// RUN: env LIB=%S/Inputs/cl-libs %clang_cl /c /TC cl-test.lib %s -### 2>&1 | FileCheck -check-prefix=TClib %s
+// TClib: warning: cl-test.lib: 'linker' input unused
+// TClib-NOT: cl-test.lib
+
 // RUN: not %clang_cl - 2>&1 | FileCheck -check-prefix=STDIN %s
 // STDIN: error: use /Tc or /Tp
 

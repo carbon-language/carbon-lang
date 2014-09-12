@@ -1076,8 +1076,17 @@ void Driver::BuildInputs(const ToolChain &TC, DerivedArgList &Args,
         }
       } else {
         assert(InputTypeArg && "InputType set w/o InputTypeArg");
-        InputTypeArg->claim();
-        Ty = InputType;
+        if (!InputTypeArg->getOption().matches(options::OPT_x)) {
+          // If emulating cl.exe, make sure that /TC and /TP don't affect input
+          // object files.
+          const char *Ext = strrchr(Value, '.');
+          if (Ext && TC.LookupTypeForExtension(Ext + 1) == types::TY_Object)
+            Ty = types::TY_Object;
+        }
+        if (Ty == types::TY_INVALID) {
+          Ty = InputType;
+          InputTypeArg->claim();
+        }
       }
 
       if (DiagnoseInputExistence(*this, Args, Value))
