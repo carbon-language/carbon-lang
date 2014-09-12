@@ -69,9 +69,11 @@ public:
   DarwinLdOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable)){}
 };
 
+} // anonymous namespace
+
 // Test may be running on Windows. Canonicalize the path
 // separator to '/' to get consistent outputs for tests.
-std::string canonicalizePath(StringRef path) {
+static std::string canonicalizePath(StringRef path) {
   char sep = llvm::sys::path::get_separator().front();
   if (sep != '/') {
     std::string fixedPath = path;
@@ -82,17 +84,17 @@ std::string canonicalizePath(StringRef path) {
   }
 }
 
-void addFile(StringRef path, std::unique_ptr<InputGraph> &inputGraph,
-             bool forceLoad) {
+static void addFile(StringRef path, std::unique_ptr<InputGraph> &inputGraph,
+                    bool forceLoad) {
    inputGraph->addInputElement(std::unique_ptr<InputElement>(
                                           new MachOFileNode(path, forceLoad)));
 }
 
 // Export lists are one symbol per line.  Blank lines are ignored.
 // Trailing comments start with #.
-std::error_code parseExportsList(StringRef exportFilePath,
-                                 MachOLinkingContext &ctx,
-                                 raw_ostream &diagnostics) {
+static std::error_code parseExportsList(StringRef exportFilePath,
+                                        MachOLinkingContext &ctx,
+                                        raw_ostream &diagnostics) {
   // Map in export list file.
   ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
                                    MemoryBuffer::getFileOrSTDIN(exportFilePath);
@@ -124,10 +126,10 @@ std::error_code parseExportsList(StringRef exportFilePath,
 // In this variant, the path is to a text file which contains a partial path
 // per line. The <dir> prefix is prepended to each partial path.
 //
-std::error_code parseFileList(StringRef fileListPath,
-                              std::unique_ptr<InputGraph> &inputGraph,
-                              MachOLinkingContext &ctx, bool forceLoad,
-                              raw_ostream &diagnostics) {
+static std::error_code parseFileList(StringRef fileListPath,
+                                     std::unique_ptr<InputGraph> &inputGraph,
+                                     MachOLinkingContext &ctx, bool forceLoad,
+                                     raw_ostream &diagnostics) {
   // If there is a comma, split off <dir>.
   std::pair<StringRef, StringRef> opt = fileListPath.split(',');
   StringRef filePath = opt.first;
@@ -168,13 +170,11 @@ std::error_code parseFileList(StringRef fileListPath,
 }
 
 /// Parse number assuming it is base 16, but allow 0x prefix.
-bool parseNumberBase16(StringRef numStr, uint64_t &baseAddress) {
+static bool parseNumberBase16(StringRef numStr, uint64_t &baseAddress) {
   if (numStr.startswith_lower("0x"))
     numStr = numStr.drop_front(2);
   return numStr.getAsInteger(16, baseAddress);
 }
-
-} // namespace anonymous
 
 namespace lld {
 
