@@ -6236,7 +6236,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocolRef(
     // contents for protocols which were referenced but never defined.
     Entry =
         new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ProtocolnfABITy,
-                                 false, llvm::GlobalValue::WeakAnyLinkage,
+                                 false, llvm::GlobalValue::ExternalLinkage,
                                  nullptr,
                                  "\01l_OBJC_PROTOCOL_$_" + PD->getObjCRuntimeNameAsString());
     Entry->setSection("__DATA,__datacoal_nt,coalesced");
@@ -6347,8 +6347,8 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
                                                    Values);
 
   if (Entry) {
-    // Already created, update the initializer.
-    assert(Entry->hasWeakAnyLinkage());
+    // Already created, fix the linkage and update the initializer.
+    Entry->setLinkage(llvm::GlobalValue::WeakAnyLinkage);
     Entry->setInitializer(Init);
   } else {
     Entry =
