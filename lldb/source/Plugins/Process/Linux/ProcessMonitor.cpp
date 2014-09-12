@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <elf.h>
 #include <sys/personality.h>
+#include <sys/procfs.h>
 #include <sys/ptrace.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
@@ -497,6 +498,48 @@ private:
 void
 ReadRegOperation::Execute(ProcessMonitor *monitor)
 {
+#if defined (__arm64__) || defined (__aarch64__)
+    if (m_offset > sizeof(struct user_pt_regs))
+    {
+        uintptr_t offset = m_offset - sizeof(struct user_pt_regs);
+        if (offset > sizeof(struct user_fpsimd_state))
+        {
+            m_result = false;
+        }
+        else
+        {
+            elf_fpregset_t regs;
+            int regset = NT_FPREGSET;
+            struct iovec ioVec;
+
+            ioVec.iov_base = &regs;
+            ioVec.iov_len = sizeof regs;
+            if (PTRACE(PTRACE_GETREGSET, m_tid, &regset, &ioVec, sizeof regs) < 0)
+                m_result = false;
+            else
+            {
+                m_result = true;
+                m_value.SetBytes((void *)(((unsigned char *)(&regs)) + offset), 16, monitor->GetProcess().GetByteOrder());
+            }
+        }
+    }
+    else
+    {
+        elf_gregset_t regs;
+        int regset = NT_PRSTATUS;
+        struct iovec ioVec;
+
+        ioVec.iov_base = &regs;
+        ioVec.iov_len = sizeof regs;
+        if (PTRACE(PTRACE_GETREGSET, m_tid, &regset, &ioVec, sizeof regs) < 0)
+            m_result = false;
+        else
+        {
+            m_result = true;
+            m_value.SetBytes((void *)(((unsigned char *)(regs)) + m_offset), 8, monitor->GetProcess().GetByteOrder());
+        }
+    }
+#else
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
 
     // Set errno to zero so that we can detect a failed peek.
@@ -512,6 +555,7 @@ ReadRegOperation::Execute(ProcessMonitor *monitor)
     if (log)
         log->Printf ("ProcessMonitor::%s() reg %s: 0x%" PRIx64, __FUNCTION__,
                      m_reg_name, data);
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -539,6 +583,54 @@ private:
 void
 WriteRegOperation::Execute(ProcessMonitor *monitor)
 {
+#if defined (__arm64__) || defined (__aarch64__)
+    if (m_offset > sizeof(struct user_pt_regs))
+    {
+        uintptr_t offset = m_offset - sizeof(struct user_pt_regs);
+        if (offset > sizeof(struct user_fpsimd_state))
+        {
+            m_result = false;
+        }
+        else
+        {
+            elf_fpregset_t regs;
+            int regset = NT_FPREGSET;
+            struct iovec ioVec;
+
+            ioVec.iov_base = &regs;
+            ioVec.iov_len = sizeof regs;
+            if (PTRACE(PTRACE_GETREGSET, m_tid, &regset, &ioVec, sizeof regs) < 0)
+                m_result = false;
+            else
+            {
+                ::memcpy((void *)(((unsigned char *)(&regs)) + offset), m_value.GetBytes(), 16);
+                if (PTRACE(PTRACE_SETREGSET, m_tid, &regset, &ioVec, sizeof regs) < 0)
+                    m_result = false;
+                else
+                    m_result = true;
+            }
+        }
+    }
+    else
+    {
+        elf_gregset_t regs;
+        int regset = NT_PRSTATUS;
+        struct iovec ioVec;
+
+        ioVec.iov_base = &regs;
+        ioVec.iov_len = sizeof regs;
+        if (PTRACE(PTRACE_GETREGSET, m_tid, &regset, &ioVec, sizeof regs) < 0)
+            m_result = false;
+        else
+        {
+            ::memcpy((void *)(((unsigned char *)(&regs)) + m_offset), m_value.GetBytes(), 8);
+            if (PTRACE(PTRACE_SETREGSET, m_tid, &regset, &ioVec, sizeof regs) < 0)
+                m_result = false;
+            else
+                m_result = true;
+        }
+    }
+#else
     void* buf;
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
 
@@ -550,6 +642,7 @@ WriteRegOperation::Execute(ProcessMonitor *monitor)
         m_result = false;
     else
         m_result = true;
+#endif
 }
 
 //------------------------------------------------------------------------------
