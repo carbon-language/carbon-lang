@@ -302,6 +302,10 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetValueOffset (const l
 lldb::ValueObjectSP
 lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetChildAtIndex (size_t idx)
 {
+    static ConstString g___cc("__cc");
+    static ConstString g___nc("__nc");
+
+    
     if (idx >= CalculateNumChildren())
         return lldb::ValueObjectSP();
     if (m_tree == NULL || m_root_node == NULL)
@@ -375,7 +379,31 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetChildAtIndex (size_t
     }
     StreamString name;
     name.Printf("[%" PRIu64 "]", (uint64_t)idx);
-    return (m_children[idx] = ValueObject::CreateValueObjectFromData(name.GetData(), data, m_backend.GetExecutionContextRef(), m_element_type));
+    auto potential_child_sp = ValueObject::CreateValueObjectFromData(name.GetData(), data, m_backend.GetExecutionContextRef(), m_element_type);
+    if (potential_child_sp)
+    {
+        switch (potential_child_sp->GetNumChildren())
+        {
+            case 1:
+            {
+                auto child0_sp = potential_child_sp->GetChildAtIndex(0, true);
+                if (child0_sp && child0_sp->GetName() == g___cc)
+                    potential_child_sp = child0_sp;
+                break;
+            }
+            case 2:
+            {
+                auto child0_sp = potential_child_sp->GetChildAtIndex(0, true);
+                auto child1_sp = potential_child_sp->GetChildAtIndex(1, true);
+                if (child0_sp && child0_sp->GetName() == g___cc &&
+                    child1_sp && child1_sp->GetName() == g___nc)
+                    potential_child_sp = child0_sp;
+                break;
+            }
+        }
+        potential_child_sp->SetName(ConstString(name.GetData()));
+    }
+    return (m_children[idx] = potential_child_sp);
 }
 
 bool
