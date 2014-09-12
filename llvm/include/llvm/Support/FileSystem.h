@@ -354,7 +354,7 @@ bool exists(file_status status);
 
 /// @brief Can the file be accessed?
 ///
-/// @param path Input path.
+/// @param Path Input path.
 /// @returns errc::success if the path can be accessed, otherwise a
 ///          platform-specific error_code.
 enum class AccessMode { Exist, Write, Execute };
