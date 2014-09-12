@@ -269,7 +269,7 @@ class AtExitContext {
  public:
   AtExitContext()
     : mtx_(MutexTypeAtExit, StatMtxAtExit)
-    , pos_() {
+    , stack_(MBlockAtExit) {
   }
 
   typedef void(*atexit_cb_t)();
@@ -277,15 +277,12 @@ class AtExitContext {
   int atexit(ThreadState *thr, uptr pc, bool is_on_exit,
              atexit_cb_t f, void *arg, void *dso) {
     Lock l(&mtx_);
-    if (pos_ == kMaxAtExit)
-      return 1;
     Release(thr, pc, (uptr)this);
-    atexit_t *a = &stack_[pos_];
+    atexit_t *a = stack_.PushBack();
     a->cb = f;
     a->arg = arg;
     a->dso = dso;
     a->is_on_exit = is_on_exit;
-    pos_++;
     return 0;
   }
 
@@ -294,9 +291,9 @@ class AtExitContext {
       atexit_t a = {};
       {
         Lock l(&mtx_);
-        if (pos_) {
-          pos_--;
-          a = stack_[pos_];
+        if (stack_.Size() != 0) {
+          a = stack_[stack_.Size() - 1];
+          stack_.PopBack();
           Acquire(thr, pc, (uptr)this);
         }
       }
@@ -321,8 +318,7 @@ class AtExitContext {
 
   static const int kMaxAtExit = 1024;
   Mutex mtx_;
-  atexit_t stack_[kMaxAtExit];
-  int pos_;
+  Vector<atexit_t> stack_;
 };
 
 static AtExitContext *atexit_ctx;
