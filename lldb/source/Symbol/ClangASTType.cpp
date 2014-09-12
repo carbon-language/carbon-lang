@@ -47,6 +47,7 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 
+#include <iterator>
 #include <mutex>
 
 using namespace lldb;
@@ -1741,6 +1742,68 @@ ClangASTType::GetFunctionReturnType () const
     return ClangASTType();
 }
 
+size_t
+ClangASTType::GetNumMemberFunctions () const
+{
+    size_t num_functions = 0;
+    if (IsValid())
+    {
+        clang::QualType qual_type(GetCanonicalQualType());
+        switch (qual_type->getTypeClass()) {
+            case clang::Type::Record:
+                if (GetCompleteQualType (m_ast, qual_type))
+                {
+                    const clang::RecordType *record_type = llvm::cast<clang::RecordType>(qual_type.getTypePtr());
+                    const clang::RecordDecl *record_decl = record_type->getDecl();
+                    assert(record_decl);
+                    const clang::CXXRecordDecl *cxx_record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
+                    if (cxx_record_decl)
+                        num_functions = std::distance(cxx_record_decl->method_begin(), cxx_record_decl->method_end());
+                    break;
+                }
+                
+            default:
+                break;
+        }
+    }
+    return num_functions;
+}
+
+ClangASTType
+ClangASTType::GetMemberFunctionAtIndex (size_t idx)
+{
+    if (IsValid())
+    {
+        clang::QualType qual_type(GetCanonicalQualType());
+        switch (qual_type->getTypeClass()) {
+            case clang::Type::Record:
+                if (GetCompleteQualType (m_ast, qual_type))
+                {
+                    const clang::RecordType *record_type = llvm::cast<clang::RecordType>(qual_type.getTypePtr());
+                    const clang::RecordDecl *record_decl = record_type->getDecl();
+                    assert(record_decl);
+                    const clang::CXXRecordDecl *cxx_record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
+                    if (cxx_record_decl)
+                    {
+                        auto method_iter = cxx_record_decl->method_begin();
+                        auto method_end = cxx_record_decl->method_end();
+                        if (idx < std::distance(method_iter, method_end))
+                        {
+                            std::advance(method_iter, idx);
+                            auto method_decl = method_iter->getCanonicalDecl();
+                            if (method_decl)
+                                return ClangASTType(m_ast,method_decl->getType().getAsOpaquePtr());
+                        }
+                    }
+                }
+                
+            default:
+                break;
+        }
+    }
+    
+    return ClangASTType();
+}
 
 ClangASTType
 ClangASTType::GetLValueReferenceType () const

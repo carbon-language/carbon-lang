@@ -334,6 +334,12 @@ public:
     ClangASTType
     GetFunctionReturnType () const;
     
+    size_t
+    GetNumMemberFunctions () const;
+    
+    ClangASTType
+    GetMemberFunctionAtIndex (size_t idx);
+    
     ClangASTType
     GetLValueReferenceType () const;
     

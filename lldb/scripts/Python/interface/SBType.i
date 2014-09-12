@@ -239,6 +239,12 @@ public:
     
     lldb::SBTypeList
     GetFunctionArgumentTypes ();
+    
+    uint32_t
+    GetNumberOfMemberFunctions ();
+    
+    lldb::SBType
+    GetMemberFunctionAtIndex (uint32_t idx);
 
     bool
     IsTypeComplete ();

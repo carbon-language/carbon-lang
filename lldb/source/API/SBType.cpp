@@ -252,6 +252,28 @@ SBType::GetFunctionArgumentTypes ()
     return sb_type_list;
 }
 
+uint32_t
+SBType::GetNumberOfMemberFunctions ()
+{
+    if (IsValid())
+    {
+        return m_opaque_sp->GetClangASTType(true).GetNumMemberFunctions();
+    }
+    return 0;
+}
+
+lldb::SBType
+SBType::GetMemberFunctionAtIndex (uint32_t idx)
+{
+    SBType sb_func_type;
+    if (IsValid())
+    {
+        ClangASTType func_type(m_opaque_sp->GetClangASTType(true).GetMemberFunctionAtIndex(idx));
+        sb_func_type = SBType(func_type);
+    }
+    return sb_func_type;
+}
+
 lldb::SBType
 SBType::GetUnqualifiedType()
 {
