@@ -24,7 +24,7 @@
 // ASAN-MD: "-debug"
 // ASAN-MD: "-incremental:no"
 // ASAN-MD: "{{.*}}clang_rt.asan_dynamic-i386.lib"
-// ASAN-MD: "{{.*}}clang_rt.asan_uar_thunk-i386.lib"
+// ASAN-MD: "{{.*}}clang_rt.asan_dynamic_runtime_thunk-i386.lib"
 // ASAN-MD: "{{.*}}cl-link{{.*}}.obj"
 
 // RUN: %clang_cl /LD -### /Tc%s 2>&1 | FileCheck --check-prefix=DLL %s
