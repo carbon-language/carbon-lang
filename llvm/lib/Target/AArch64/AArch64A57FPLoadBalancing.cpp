@@ -73,8 +73,6 @@ static bool isMul(MachineInstr *MI) {
   case AArch64::FNMULSrr:
   case AArch64::FMULDrr:
   case AArch64::FNMULDrr:
-
-  case AArch64::FMULv2f32:
     return true;
   default:
     return false;
@@ -92,9 +90,6 @@ static bool isMla(MachineInstr *MI) {
   case AArch64::FMADDDrrr:
   case AArch64::FNMSUBDrrr:
   case AArch64::FNMADDDrrr:
-
-  case AArch64::FMLAv2f32:
-  case AArch64::FMLSv2f32:
     return true;
   default:
     return false;
