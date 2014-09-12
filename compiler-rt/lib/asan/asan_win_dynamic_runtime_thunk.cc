@@ -15,7 +15,7 @@
 //
 // This includes:
 //  - forwarding the detect_stack_use_after_return runtime option
-//  - FIXME: installing a custom SEH handler (PR20918)
+//  - installing a custom SEH handler
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,6 +24,7 @@
 // simplifies the build procedure.
 #ifdef ASAN_DYNAMIC_RUNTIME_THUNK
 extern "C" {
+__declspec(dllimport) int __asan_set_seh_filter();
 __declspec(dllimport) int __asan_should_detect_stack_use_after_return();
 
 // Define a copy of __asan_option_detect_stack_use_after_return that should be
@@ -38,5 +39,14 @@ __declspec(dllimport) int __asan_should_detect_stack_use_after_return();
 // constant after initialization anyways.
 int __asan_option_detect_stack_use_after_return =
     __asan_should_detect_stack_use_after_return();
+
+// Set the ASan-specific SEH handler at the end of CRT initialization of each
+// module (see asan_win.cc for the details).
+//
+// Unfortunately, putting a pointer to __asan_set_seh_filter into
+// __asan_intercept_seh gets optimized out, so we have to use an extra function.
+static int SetSEHFilter() { return __asan_set_seh_filter(); }
+#pragma section(".CRT$XIZ", long, read)  // NOLINT
+__declspec(allocate(".CRT$XIZ")) int (*__asan_seh_interceptor)() = SetSEHFilter;
 }
 #endif // ASAN_DYNAMIC_RUNTIME_THUNK

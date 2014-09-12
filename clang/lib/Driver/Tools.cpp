@@ -7822,6 +7822,9 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
       addSanitizerRTWindows(getToolChain(), Args, CmdArgs, "asan_dynamic-i386");
       addSanitizerRTWindows(getToolChain(), Args, CmdArgs,
                             "asan_dynamic_runtime_thunk-i386");
+      // Make sure the dynamic runtime thunk is not optimized out at link time
+      // to ensure proper SEH handling.
+      CmdArgs.push_back(Args.MakeArgString("-include:___asan_seh_interceptor"));
     } else if (DLL) {
       addSanitizerRTWindows(getToolChain(), Args, CmdArgs,
                             "asan_dll_thunk-i386");

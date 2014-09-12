@@ -89,7 +89,7 @@ void AsanOnSIGSEGV(int, void *siginfo, void *context) {
 
 static LPTOP_LEVEL_EXCEPTION_FILTER default_seh_handler;
 
-long WINAPI SEHHandler(EXCEPTION_POINTERS *info) {
+static long WINAPI SEHHandler(EXCEPTION_POINTERS *info) {
   EXCEPTION_RECORD *exception_record = info->ExceptionRecord;
   CONTEXT *context = info->ContextRecord;
   uptr pc = (uptr)exception_record->ExceptionAddress;
@@ -114,16 +114,39 @@ long WINAPI SEHHandler(EXCEPTION_POINTERS *info) {
   return default_seh_handler(info);
 }
 
-int SetSEHFilter() {
-  default_seh_handler = SetUnhandledExceptionFilter(SEHHandler);
+// We want to install our own exception handler (EH) to print helpful reports
+// on access violations and whatnot.  Unfortunately, the CRT initializers assume
+// they are run before any user code and drop any previously-installed EHs on
+// the floor, so we can't install our handler inside __asan_init.
+// (See crt0dat.c in the CRT sources for the details)
+//
+// Things get even more complicated with the dynamic runtime, as it finishes its
+// initialization before the .exe module CRT begins to initialize.
+//
+// For the static runtime (-MT), it's enough to put a callback to
+// __asan_set_seh_filter in the last section for C initializers.
+//
+// For the dynamic runtime (-MD), we want link the same
+// asan_dynamic_runtime_thunk.lib to all the modules, thus __asan_set_seh_filter
+// will be called for each instrumented module.  This ensures that at least one
+// __asan_set_seh_filter call happens after the .exe module CRT is initialized.
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+int __asan_set_seh_filter() {
+  // We should only store the previous handler if it's not our own handler in
+  // order to avoid loops in the EH chain.
+  auto prev_seh_handler = SetUnhandledExceptionFilter(SEHHandler);
+  if (prev_seh_handler != &SEHHandler)
+    default_seh_handler = prev_seh_handler;
   return 0;
 }
 
-// Put a pointer to SetSEHFilter at the end of the global list
-// of C initializers, after the default handler is set by the CRT.
-// See crt0dat.c in the CRT sources for the details.
+#if !ASAN_DYNAMIC
+// Put a pointer to __asan_set_seh_filter at the end of the global list
+// of C initializers, after the default EH is set by the CRT.
 #pragma section(".CRT$XIZ", long, read)  // NOLINT
-__declspec(allocate(".CRT$XIZ")) int (*__intercept_seh)() = SetSEHFilter;
+static __declspec(allocate(".CRT$XIZ"))
+    int (*__intercept_seh)() = __asan_set_seh_filter;
+#endif
 
 }  // namespace __asan
 
