@@ -7820,7 +7820,8 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
     // FIXME: Handle 64-bit.
     if (Args.hasArg(options::OPT__SLASH_MD, options::OPT__SLASH_MDd)) {
       addSanitizerRTWindows(getToolChain(), Args, CmdArgs, "asan_dynamic-i386");
-      addSanitizerRTWindows(getToolChain(), Args, CmdArgs, "asan_uar_thunk-i386");
+      addSanitizerRTWindows(getToolChain(), Args, CmdArgs,
+                            "asan_dynamic_runtime_thunk-i386");
     } else if (DLL) {
       addSanitizerRTWindows(getToolChain(), Args, CmdArgs,
                             "asan_dll_thunk-i386");

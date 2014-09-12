@@ -193,11 +193,12 @@ else()
         CFLAGS ${ASAN_CFLAGS} -DASAN_DLL_THUNK
         DEFS ${ASAN_COMMON_DEFINITIONS})
       add_dependencies(asan clang_rt.asan_dll_thunk-${arch})
-      add_compiler_rt_runtime(clang_rt.asan_uar_thunk-${arch} ${arch} STATIC
-        SOURCES asan_win_uar_thunk.cc
-        CFLAGS ${ASAN_CFLAGS} -DASAN_UAR_THUNK -Zl
+      add_compiler_rt_runtime(clang_rt.asan_dynamic_runtime_thunk-${arch} ${arch}
+        STATIC
+        SOURCES asan_win_dynamic_runtime_thunk.cc
+        CFLAGS ${ASAN_CFLAGS} -DASAN_DYNAMIC_RUNTIME_THUNK -Zl
         DEFS ${ASAN_COMMON_DEFINITIONS})
-      add_dependencies(asan clang_rt.asan_uar_thunk-${arch})
+      add_dependencies(asan clang_rt.asan_dynamic_runtime_thunk-${arch})
     endif()
   endforeach()
 endif()
