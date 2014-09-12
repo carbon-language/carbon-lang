@@ -39,6 +39,7 @@ module Clang_Basic {
   exclude header "Basic/BuiltinsR600.def"
   exclude header "Basic/BuiltinsX86.def"
   exclude header "Basic/BuiltinsXCore.def"
+  exclude header "Basic/BuiltinsLe64.def"
   exclude header "Basic/DiagnosticOptions.def"
   exclude header "Basic/LangOptions.def"
   exclude header "Basic/OpenCLExtensions.def"

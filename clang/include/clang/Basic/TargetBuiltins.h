@@ -164,6 +164,17 @@ namespace clang {
         LastTSBuiltin
     };
   }
+
+  /// \brief Le64 builtins
+  namespace Le64 {
+  enum {
+    LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1,
+  #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+  #include "clang/Basic/BuiltinsLe64.def"
+    LastTSBuiltin
+  };
+  }
+
 } // end namespace clang.
 
 #endif
