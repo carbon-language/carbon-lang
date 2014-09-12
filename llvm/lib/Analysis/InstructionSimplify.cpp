@@ -41,6 +41,7 @@ enum { RecursionLimit = 3 };
 STATISTIC(NumExpand,  "Number of expansions");
 STATISTIC(NumReassoc, "Number of reassociations");
 
+namespace {
 struct Query {
   const DataLayout *DL;
   const TargetLibraryInfo *TLI;
@@ -53,6 +54,7 @@ struct Query {
         const Instruction *cxti = nullptr)
     : DL(DL), TLI(tli), DT(dt), AT(at), CxtI(cxti) {}
 };
+} // end anonymous namespace
 
 static Value *SimplifyAndInst(Value *, Value *, const Query &, unsigned);
 static Value *SimplifyBinOp(unsigned, Value *, Value *, const Query &,

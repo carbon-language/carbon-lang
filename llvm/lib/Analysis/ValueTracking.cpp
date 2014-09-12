@@ -58,6 +58,7 @@ static unsigned getBitWidth(Type *Ty, const DataLayout *TD) {
 // isKnownToBeAPowerOfTwo (all of which can call computeKnownBits), and so on.
 typedef SmallPtrSet<const Value *, 8> ExclInvsSet;
 
+namespace {
 // Simplifying using an assume can only be done in a particular control-flow
 // context (the context instruction provides that context). If an assume and
 // the context instruction are not in the same block then the DT helps in
@@ -77,6 +78,7 @@ struct Query {
     ExclInvs.insert(NewExcl);
   }
 };
+} // end anonymous namespace
 
 // Given the provided Value and, potentially, a context instruction, returned
 // the preferred context instruction (if any).
