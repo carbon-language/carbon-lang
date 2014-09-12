@@ -390,6 +390,13 @@ unsigned ARMTTI::getVectorInstrCost(unsigned Opcode, Type *ValTy,
       ValTy->getScalarSizeInBits() <= 32)
     return 3;
 
+  // Cross-class copies are expensive on many microarchitectures,
+  // so assume they are expensive by default.
+  if ((Opcode == Instruction::InsertElement ||
+       Opcode == Instruction::ExtractElement) &&
+      ValTy->getVectorElementType()->isIntegerTy())
+    return 3;
+
   return TargetTransformInfo::getVectorInstrCost(Opcode, ValTy, Index);
 }
 
