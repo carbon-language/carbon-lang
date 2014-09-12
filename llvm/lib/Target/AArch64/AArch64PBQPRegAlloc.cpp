@@ -41,7 +41,7 @@ bool isFPReg(unsigned reg) {
   return AArch64::FPR32RegClass.contains(reg) ||
          AArch64::FPR64RegClass.contains(reg) ||
          AArch64::FPR128RegClass.contains(reg);
-};
+}
 #endif
 
 bool isOdd(unsigned reg) {
