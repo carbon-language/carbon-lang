@@ -868,6 +868,10 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo,
     return;
   }
 
+  // See if the target wants to custom expand this node.
+  if (CustomLowerNode(N, N->getValueType(0), true))
+    return;
+
   // Spill the vector to the stack.
   EVT VecVT = Vec.getValueType();
   EVT EltVT = VecVT.getVectorElementType();
@@ -1348,6 +1352,10 @@ SDValue DAGTypeLegalizer::SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
                                   DAG.getConstant(IdxVal - LoElts,
                                                   Idx.getValueType())), 0);
   }
+
+  // See if the target wants to custom expand this node.
+  if (CustomLowerNode(N, N->getValueType(0), true))
+    return SDValue();
 
   // Store the vector to the stack.
   EVT EltVT = VecVT.getVectorElementType();
