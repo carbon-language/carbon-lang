@@ -11,6 +11,7 @@
 #define liblldb_CleanUp_h_
 
 #include "lldb/lldb-public.h"
+#include <functional>
 
 namespace lldb_utility {
 
@@ -57,7 +58,7 @@ class CleanUp
 {
 public:
     typedef T value_type;
-    typedef R (*CallbackType)(value_type);
+    typedef std::function<R(value_type)> CallbackType;
 
     //----------------------------------------------------------------------
     // Constructor that sets the current value only. No values are 
@@ -188,7 +189,7 @@ class CleanUp2
 {
 public:
     typedef T value_type;
-    typedef R (*CallbackType)(value_type, A0);
+    typedef std::function<R(value_type,A0)> CallbackType;
     
     //----------------------------------------------------------------------
     // Constructor that sets the current value only. No values are 
