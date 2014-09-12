@@ -352,12 +352,13 @@ std::error_code resize_file(const Twine &path, uint64_t size);
 ///          not.
 bool exists(file_status status);
 
+enum class AccessMode { Exist, Write, Execute };
+
 /// @brief Can the file be accessed?
 ///
 /// @param Path Input path.
 /// @returns errc::success if the path can be accessed, otherwise a
 ///          platform-specific error_code.
-enum class AccessMode { Exist, Write, Execute };
 std::error_code access(const Twine &Path, AccessMode Mode);
 
 /// @brief Does file exist?
