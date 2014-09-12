@@ -296,6 +296,30 @@ struct X : E {
 void build_vftable(X *obj) { obj->foo(); }
 }
 
+namespace test7 {
+struct A {
+  virtual A *f() = 0;
+};
+struct B {
+  virtual void g();
+};
+struct C : B, A {
+  virtual void g();
+  virtual C *f() = 0;
+  // CHECK-LABEL: VFTable for 'test7::B' in 'test7::C' (1 entry).
+  // CHECK-NEXT:   0 | void test7::C::g()
+
+  // CHECK-LABEL: VFTable for 'test7::A' in 'test7::C' (2 entries).
+  // CHECK-NEXT:   0 | test7::C *test7::C::f() [pure]
+  // CHECK-NEXT:   1 | test7::C *test7::C::f() [pure]
+
+  // No return adjusting thunks needed for pure virtual methods.
+  // CHECK-NOT: Thunks for 'test7::C *test7::C::f()'
+};
+
+void build_vftable(C *obj) { obj->g(); }
+}
+
 namespace pr20444 {
 struct A {
   virtual A* f();
