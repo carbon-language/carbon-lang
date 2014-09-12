@@ -193,24 +193,34 @@ static Range *upperBound(MemoryLocation Loc, Range *Ranges,
   return Best;
 }
 
+static inline uptr subtractNoOverflow(uptr LHS, uptr RHS) {
+  return (LHS < RHS) ? 0 : LHS - RHS;
+}
+
+static inline uptr addNoOverflow(uptr LHS, uptr RHS) {
+  const uptr Limit = (uptr)-1;
+  return (LHS > Limit - RHS) ? Limit : LHS + RHS;
+}
+
 /// Render a snippet of the address space near a location.
 static void renderMemorySnippet(const Decorator &Decor, MemoryLocation Loc,
                                 Range *Ranges, unsigned NumRanges,
                                 const Diag::Arg *Args) {
-  const unsigned BytesToShow = 32;
-  const unsigned MinBytesNearLoc = 4;
-
   // Show at least the 8 bytes surrounding Loc.
-  MemoryLocation Min = Loc - MinBytesNearLoc, Max = Loc + MinBytesNearLoc;
+  const unsigned MinBytesNearLoc = 4;
+  MemoryLocation Min = subtractNoOverflow(Loc, MinBytesNearLoc);
+  MemoryLocation Max = addNoOverflow(Loc, MinBytesNearLoc);
+  MemoryLocation OrigMin = Min;
   for (unsigned I = 0; I < NumRanges; ++I) {
     Min = __sanitizer::Min(Ranges[I].getStart().getMemoryLocation(), Min);
     Max = __sanitizer::Max(Ranges[I].getEnd().getMemoryLocation(), Max);
   }
 
   // If we have too many interesting bytes, prefer to show bytes after Loc.
+  const unsigned BytesToShow = 32;
   if (Max - Min > BytesToShow)
-    Min = __sanitizer::Min(Max - BytesToShow, Loc - MinBytesNearLoc);
-  Max = Min + BytesToShow;
+    Min = __sanitizer::Min(Max - BytesToShow, OrigMin);
+  Max = addNoOverflow(Min, BytesToShow);
 
   // Emit data.
   for (uptr P = Min; P != Max; ++P) {
