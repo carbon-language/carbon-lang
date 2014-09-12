@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mattr=+sse2 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+sse2 | FileCheck %s
 
 declare <2 x i64> @llvm.cttz.v2i64(<2 x i64>, i1)
 declare <2 x i64> @llvm.ctlz.v2i64(<2 x i64>, i1)
