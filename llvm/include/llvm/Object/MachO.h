@@ -100,6 +100,42 @@ private:
 };
 typedef content_iterator<ExportEntry> export_iterator;
 
+/// MachORebaseEntry encapsulates the current state in the decompression of   
+/// rebasing opcodes. This allows you to iterate through the compressed table of
+/// rebasing using:
+///    for (const llvm::object::MachORebaseEntry &Entry : Obj->rebaseTable()) {
+///    }
+class MachORebaseEntry {
+public:
+  MachORebaseEntry(ArrayRef<uint8_t> opcodes, bool is64Bit);
+
+  uint32_t segmentIndex() const;
+  uint64_t segmentOffset() const;
+  StringRef typeName() const;
+
+  bool operator==(const MachORebaseEntry &) const;
+
+  void moveNext();
+  
+private:
+  friend class MachOObjectFile;
+  void moveToFirst();
+  void moveToEnd();
+  uint64_t readULEB128();
+
+  ArrayRef<uint8_t> Opcodes;
+  const uint8_t *Ptr;
+  uint64_t SegmentOffset;
+  uint32_t SegmentIndex;
+  uint64_t RemainingLoopCount;
+  uint64_t AdvanceAmount;
+  uint8_t  RebaseType;
+  uint8_t  PointerSize;
+  bool     Malformed;
+  bool     Done;
+};
+typedef content_iterator<MachORebaseEntry> rebase_iterator;
+
 class MachOObjectFile : public ObjectFile {
 public:
   struct LoadCommandInfo {
@@ -201,6 +237,13 @@ public:
   
   /// For use examining a trie not in a MachOObjectFile.
   static iterator_range<export_iterator> exports(ArrayRef<uint8_t> Trie);
+
+  /// For use iterating over all rebase table entries.
+  iterator_range<rebase_iterator> rebaseTable() const;
+
+  /// For use examining rebase opcodes not in a MachOObjectFile.
+  static iterator_range<rebase_iterator> rebaseTable(ArrayRef<uint8_t> Opcodes,
+                                                     bool is64);
 
   // In a MachO file, sections have a segment name. This is used in the .o
   // files. They have a single segment, but this field specifies which segment

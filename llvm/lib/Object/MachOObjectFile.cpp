@@ -17,6 +17,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/DataExtractor.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/LEB128.h"
@@ -1687,6 +1688,177 @@ iterator_range<export_iterator> MachOObjectFile::exports() const {
   return exports(getDyldInfoExportsTrie());
 }
 
+
+MachORebaseEntry::MachORebaseEntry(ArrayRef<uint8_t> Bytes, bool is64Bit)
+    : Opcodes(Bytes), Ptr(Bytes.begin()), SegmentOffset(0), SegmentIndex(0),
+      RemainingLoopCount(0), AdvanceAmount(0), RebaseType(0),
+      PointerSize(is64Bit ? 8 : 4), Malformed(false), Done(false) {}
+
+void MachORebaseEntry::moveToFirst() {
+  Ptr = Opcodes.begin();
+  moveNext();
+}
+
+void MachORebaseEntry::moveToEnd() {
+  Ptr = Opcodes.end();
+  RemainingLoopCount = 0;
+  Done = true;
+}
+
+void MachORebaseEntry::moveNext() {
+  // If in the middle of some loop, move to next rebasing in loop.
+  SegmentOffset += AdvanceAmount;
+  if (RemainingLoopCount) {
+    --RemainingLoopCount;
+    return;
+  }
+  if (Ptr == Opcodes.end()) {
+    Done = true;
+    return;
+  }
+  bool More = true;
+  while (More && !Malformed) {
+    // Parse next opcode and set up next loop.
+    uint8_t Byte = *Ptr++;
+    uint8_t ImmValue = Byte & MachO::REBASE_IMMEDIATE_MASK;
+    uint8_t Opcode = Byte & MachO::REBASE_OPCODE_MASK;
+    switch (Opcode) {
+    case MachO::REBASE_OPCODE_DONE:
+      More = false;
+      Done = true;
+      moveToEnd();
+      DEBUG_WITH_TYPE("mach-o-rebase", llvm::dbgs() << "REBASE_OPCODE_DONE\n");
+      break;
+    case MachO::REBASE_OPCODE_SET_TYPE_IMM:
+      RebaseType = ImmValue;
+      DEBUG_WITH_TYPE(
+          "mach-o-rebase",
+          llvm::dbgs() << "REBASE_OPCODE_SET_TYPE_IMM: "
+                       << "RebaseType=" << (int) RebaseType << "\n");
+      break;
+    case MachO::REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB:
+      SegmentIndex = ImmValue;
+      SegmentOffset = readULEB128();
+      DEBUG_WITH_TYPE(
+          "mach-o-rebase",
+          llvm::dbgs() << "REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB: "
+                       << "SegmentIndex=" << SegmentIndex << ", "
+                       << format("SegmentOffset=0x%06X", SegmentOffset)
+                       << "\n");
+      break;
+    case MachO::REBASE_OPCODE_ADD_ADDR_ULEB:
+      SegmentOffset += readULEB128();
+      DEBUG_WITH_TYPE("mach-o-rebase",
+                      llvm::dbgs() << "REBASE_OPCODE_ADD_ADDR_ULEB: "
+                                   << format("SegmentOffset=0x%06X",
+                                             SegmentOffset) << "\n");
+      break;
+    case MachO::REBASE_OPCODE_ADD_ADDR_IMM_SCALED:
+      SegmentOffset += ImmValue * PointerSize;
+      DEBUG_WITH_TYPE("mach-o-rebase",
+                      llvm::dbgs() << "REBASE_OPCODE_ADD_ADDR_IMM_SCALED: "
+                                   << format("SegmentOffset=0x%06X",
+                                             SegmentOffset) << "\n");
+      break;
+    case MachO::REBASE_OPCODE_DO_REBASE_IMM_TIMES:
+      AdvanceAmount = PointerSize;
+      RemainingLoopCount = ImmValue - 1;
+      DEBUG_WITH_TYPE(
+          "mach-o-rebase",
+          llvm::dbgs() << "REBASE_OPCODE_DO_REBASE_IMM_TIMES: "
+                       << format("SegmentOffset=0x%06X", SegmentOffset)
+                       << ", AdvanceAmount=" << AdvanceAmount
+                       << ", RemainingLoopCount=" << RemainingLoopCount
+                       << "\n");
+      return;
+    case MachO::REBASE_OPCODE_DO_REBASE_ULEB_TIMES:
+      AdvanceAmount = PointerSize;
+      RemainingLoopCount = readULEB128() - 1;
+      DEBUG_WITH_TYPE(
+          "mach-o-rebase",
+          llvm::dbgs() << "REBASE_OPCODE_DO_REBASE_ULEB_TIMES: "
+                       << format("SegmentOffset=0x%06X", SegmentOffset)
+                       << ", AdvanceAmount=" << AdvanceAmount
+                       << ", RemainingLoopCount=" << RemainingLoopCount
+                       << "\n");
+      return;
+    case MachO::REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB:
+      AdvanceAmount = readULEB128() + PointerSize;
+      RemainingLoopCount = 0;
+      DEBUG_WITH_TYPE(
+          "mach-o-rebase",
+          llvm::dbgs() << "REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB: "
+                       << format("SegmentOffset=0x%06X", SegmentOffset)
+                       << ", AdvanceAmount=" << AdvanceAmount
+                       << ", RemainingLoopCount=" << RemainingLoopCount
+                       << "\n");
+      return;
+    case MachO::REBASE_OPCODE_DO_REBASE_ULEB_TIMES_SKIPPING_ULEB:
+      RemainingLoopCount = readULEB128() - 1;
+      AdvanceAmount = readULEB128() + PointerSize;
+      DEBUG_WITH_TYPE(
+          "mach-o-rebase",
+          llvm::dbgs() << "REBASE_OPCODE_DO_REBASE_ULEB_TIMES_SKIPPING_ULEB: "
+                       << format("SegmentOffset=0x%06X", SegmentOffset)
+                       << ", AdvanceAmount=" << AdvanceAmount
+                       << ", RemainingLoopCount=" << RemainingLoopCount
+                       << "\n");
+      return;
+    default:
+      Malformed = true;
+    }
+  }
+}
+
+uint64_t MachORebaseEntry::readULEB128() {
+  unsigned Count;
+  uint64_t Result = decodeULEB128(Ptr, &Count);
+  Ptr += Count;
+  if (Ptr > Opcodes.end()) {
+    Ptr = Opcodes.end();
+    Malformed = true;
+  }
+  return Result;
+}
+
+uint32_t MachORebaseEntry::segmentIndex() const { return SegmentIndex; }
+
+uint64_t MachORebaseEntry::segmentOffset() const { return SegmentOffset; }
+
+StringRef MachORebaseEntry::typeName() const {
+  switch (RebaseType) {
+  case MachO::REBASE_TYPE_POINTER:
+    return "pointer";
+  case MachO::REBASE_TYPE_TEXT_ABSOLUTE32:
+    return "text abs32";
+  case MachO::REBASE_TYPE_TEXT_PCREL32:
+    return "text rel32";
+  }
+  return "unknown";
+}
+
+bool MachORebaseEntry::operator==(const MachORebaseEntry &Other) const {
+  assert(Opcodes == Other.Opcodes && "compare iterators of different files");
+  return (Ptr == Other.Ptr) &&
+         (RemainingLoopCount == Other.RemainingLoopCount) &&
+         (Done == Other.Done);
+}
+
+iterator_range<rebase_iterator>
+MachOObjectFile::rebaseTable(ArrayRef<uint8_t> Opcodes, bool is64) {
+  MachORebaseEntry Start(Opcodes, is64);
+  Start.moveToFirst();
+
+  MachORebaseEntry Finish(Opcodes, is64);
+  Finish.moveToEnd();
+
+  return iterator_range<rebase_iterator>(rebase_iterator(Start),
+                                         rebase_iterator(Finish));
+}
+
+iterator_range<rebase_iterator> MachOObjectFile::rebaseTable() const {
+  return rebaseTable(getDyldInfoRebaseOpcodes(), is64Bit());
+}
 
 StringRef
 MachOObjectFile::getSectionFinalSegmentName(DataRefImpl Sec) const {

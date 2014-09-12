@@ -2146,3 +2146,109 @@ void llvm::printMachOExportsTrie(const object::MachOObjectFile *Obj) {
     outs() << "\n";
   }
 }
+
+
+//===----------------------------------------------------------------------===//
+// rebase table dumping
+//===----------------------------------------------------------------------===//
+
+namespace {
+class SegInfo {
+public:
+  SegInfo(const object::MachOObjectFile *Obj);
+
+  StringRef segmentName(uint32_t SegIndex);
+  StringRef sectionName(uint32_t SegIndex, uint64_t SegOffset);
+  uint64_t address(uint32_t SegIndex, uint64_t SegOffset);
+
+private:
+  struct SectionInfo {
+    uint64_t Address;
+    uint64_t Size;
+    StringRef SectionName;
+    StringRef SegmentName;
+    uint64_t OffsetInSegment;
+    uint64_t SegmentStartAddress;
+    uint32_t SegmentIndex;
+  };
+  const SectionInfo &findSection(uint32_t SegIndex, uint64_t SegOffset);
+  SmallVector<SectionInfo, 32> Sections;
+};
+}
+
+SegInfo::SegInfo(const object::MachOObjectFile *Obj) {
+  // Build table of sections so segIndex/offset pairs can be translated.
+  uint32_t CurSegIndex = 0;
+  StringRef CurSegName;
+  uint64_t CurSegAddress;
+  for (const SectionRef &Section : Obj->sections()) {
+    SectionInfo Info;
+    if (error(Section.getName(Info.SectionName)))
+      return;
+    if (error(Section.getAddress(Info.Address)))
+      return;
+    if (error(Section.getSize(Info.Size)))
+      return;
+    Info.SegmentName =
+        Obj->getSectionFinalSegmentName(Section.getRawDataRefImpl());
+    if (!Info.SegmentName.equals(CurSegName)) {
+      ++CurSegIndex;
+      CurSegName = Info.SegmentName;
+      CurSegAddress = Info.Address;
+    }
+    Info.SegmentIndex = CurSegIndex - 1;
+    Info.OffsetInSegment = Info.Address - CurSegAddress;
+    Info.SegmentStartAddress = CurSegAddress;
+    Sections.push_back(Info);
+  }
+}
+
+StringRef SegInfo::segmentName(uint32_t SegIndex) {
+  for (const SectionInfo &SI : Sections) {
+    if (SI.SegmentIndex == SegIndex)
+      return SI.SegmentName;
+  }
+  llvm_unreachable("invalid segIndex");
+}
+
+const SegInfo::SectionInfo &SegInfo::findSection(uint32_t SegIndex,
+                                                 uint64_t OffsetInSeg) {
+  for (const SectionInfo &SI : Sections) {
+    if (SI.SegmentIndex != SegIndex)
+      continue;
+    if (SI.OffsetInSegment > OffsetInSeg)
+      continue;
+    if (OffsetInSeg >= (SI.OffsetInSegment + SI.Size))
+      continue;
+    return SI;
+  }
+  llvm_unreachable("segIndex and offset not in any section");
+}
+
+StringRef SegInfo::sectionName(uint32_t SegIndex, uint64_t OffsetInSeg) {
+  return findSection(SegIndex, OffsetInSeg).SectionName;
+}
+
+uint64_t SegInfo::address(uint32_t SegIndex, uint64_t OffsetInSeg) {
+  const SectionInfo &SI = findSection(SegIndex, OffsetInSeg);
+  return SI.SegmentStartAddress + OffsetInSeg;
+}
+
+void llvm::printMachORebaseTable(const object::MachOObjectFile *Obj) {
+  // Build table of sections so names can used in final output.
+  SegInfo sectionTable(Obj);
+
+  outs() << "segment  section            address     type\n";
+  for (const llvm::object::MachORebaseEntry &Entry : Obj->rebaseTable()) {
+    uint32_t SegIndex = Entry.segmentIndex();
+    uint64_t OffsetInSeg = Entry.segmentOffset();
+    StringRef SegmentName = sectionTable.segmentName(SegIndex);
+    StringRef SectionName = sectionTable.sectionName(SegIndex, OffsetInSeg);
+    uint64_t Address = sectionTable.address(SegIndex, OffsetInSeg);
+
+    // Table lines look like: __DATA  __nl_symbol_ptr  0x0000F00C  pointer
+    outs() << format("%-8s %-18s 0x%08X  %s\n", SegmentName.str().c_str(),
+                     SectionName.str().c_str(), Address,
+                     Entry.typeName().str().c_str());
+  }
+}

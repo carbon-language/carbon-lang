@@ -82,6 +82,9 @@ static cl::opt<bool>
 ExportsTrie("exports-trie", cl::desc("Display mach-o exported symbols"));
 
 static cl::opt<bool>
+Rebase("rebase", cl::desc("Display mach-o rebasing info"));
+
+static cl::opt<bool>
 MachOOpt("macho", cl::desc("Use MachO specific object file parser"));
 static cl::alias
 MachOm("m", cl::desc("Alias for --macho"), cl::aliasopt(MachOOpt));
@@ -720,6 +723,18 @@ static void printExportsTrie(const ObjectFile *o) {
   }
 }
 
+static void printRebaseTable(const ObjectFile *o) {
+  outs() << "Rebase table:\n";
+  if (const MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
+    printMachORebaseTable(MachO);
+  else {
+    errs() << "This operation is only currently supported "
+              "for Mach-O executable files.\n";
+    return;
+  }
+}
+
+
 static void printPrivateFileHeader(const ObjectFile *o) {
   if (o->isELF()) {
     printELFFileHeader(o);
@@ -751,6 +766,8 @@ static void DumpObject(const ObjectFile *o) {
     printPrivateFileHeader(o);
   if (ExportsTrie)
     printExportsTrie(o);
+  if (Rebase)
+    printRebaseTable(o);
 }
 
 /// @brief Dump each object file in \a a;
@@ -833,7 +850,8 @@ int main(int argc, char **argv) {
       && !SymbolTable
       && !UnwindInfo
       && !PrivateHeaders
-      && !ExportsTrie) {
+      && !ExportsTrie
+      && !Rebase) {
     cl::PrintHelpMessage();
     return 2;
   }
