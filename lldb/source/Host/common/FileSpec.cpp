@@ -56,7 +56,8 @@ GetFileStats (const FileSpec *file_spec, struct stat *stats_ptr)
 }
 
 // Resolves the username part of a path of the form ~user/other/directories, and
-// writes the result into dst_path.
+// writes the result into dst_path.  This will also resolve "~" to the current user.
+// If you want to complete "~" to the list of users, pass it to ResolvePartialUsername.
 void
 FileSpec::ResolveUsername (llvm::SmallVectorImpl<char> &path)
 {
@@ -66,7 +67,7 @@ FileSpec::ResolveUsername (llvm::SmallVectorImpl<char> &path)
     
     llvm::StringRef path_str(path.data());
     size_t slash_pos = path_str.find_first_of("/", 1);
-    if (slash_pos == 1)
+    if (slash_pos == 1 || path.size() == 1)
     {
         // A path of ~/ resolves to the current user's home dir
         llvm::SmallString<64> home_dir;
