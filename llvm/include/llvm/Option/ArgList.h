@@ -187,6 +187,7 @@ public:
   ///
   /// \p Claim Whether the argument should be claimed, if it exists.
   Arg *getLastArgNoClaim(OptSpecifier Id) const;
+  Arg *getLastArgNoClaim(OptSpecifier Id0, OptSpecifier Id1) const;
   Arg *getLastArg(OptSpecifier Id) const;
   Arg *getLastArg(OptSpecifier Id0, OptSpecifier Id1) const;
   Arg *getLastArg(OptSpecifier Id0, OptSpecifier Id1, OptSpecifier Id2) const;

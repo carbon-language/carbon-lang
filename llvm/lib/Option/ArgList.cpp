@@ -54,6 +54,15 @@ Arg *ArgList::getLastArgNoClaim(OptSpecifier Id) const {
   return nullptr;
 }
 
+Arg *ArgList::getLastArgNoClaim(OptSpecifier Id0, OptSpecifier Id1) const {
+  // FIXME: Make search efficient?
+  for (const_reverse_iterator it = rbegin(), ie = rend(); it != ie; ++it)
+    if ((*it)->getOption().matches(Id0) ||
+        (*it)->getOption().matches(Id1))
+      return *it;
+  return nullptr;
+}
+
 Arg *ArgList::getLastArg(OptSpecifier Id) const {
   Arg *Res = nullptr;
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
