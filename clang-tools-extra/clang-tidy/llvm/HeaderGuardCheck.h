@@ -18,6 +18,8 @@ namespace tidy {
 /// Finds and fixes header guards that do not adhere to LLVM style.
 class LLVMHeaderGuardCheck : public HeaderGuardCheck {
 public:
+  LLVMHeaderGuardCheck(StringRef Name, ClangTidyContext *Context)
+      : HeaderGuardCheck(Name, Context) {}
   bool shouldSuggestEndifComment(StringRef Filename) override { return false; }
   bool shouldFixHeaderGuard(StringRef Filename) override;
   std::string getHeaderGuard(StringRef Filename, StringRef OldGuard) override;

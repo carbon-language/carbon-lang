@@ -18,8 +18,10 @@ using namespace clang::ast_matchers;
 namespace clang {
 namespace tidy {
 
-ArgumentCommentCheck::ArgumentCommentCheck()
-    : IdentRE("^(/\\* *)([_A-Za-z][_A-Za-z0-9]*)( *= *\\*/)$") {}
+ArgumentCommentCheck::ArgumentCommentCheck(StringRef Name,
+                                           ClangTidyContext *Context)
+    : ClangTidyCheck(Name, Context),
+      IdentRE("^(/\\* *)([_A-Za-z][_A-Za-z0-9]*)( *= *\\*/)$") {}
 
 void ArgumentCommentCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(

@@ -16,7 +16,10 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Tooling/Refactoring.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include <memory>
+#include <type_traits>
 #include <vector>
 
 namespace clang {
@@ -27,6 +30,55 @@ class CompilationDatabase;
 }
 
 namespace tidy {
+
+/// \brief Provides access to the \c ClangTidyCheck options via check-local
+/// names.
+///
+/// Methods of this class prepend <tt>CheckName + "."</tt> to translate
+/// check-local option names to global option names.
+class OptionsView {
+public:
+  /// \brief Initializes the instance using \p CheckName + "." as a prefix.
+  OptionsView(StringRef CheckName,
+              const ClangTidyOptions::OptionMap &CheckOptions);
+
+  /// \brief Read a named option from the \c Context.
+  ///
+  /// Reads the option with the check-local name \p LocalName from the
+  /// \c CheckOptions. If the corresponding key is not present, returns
+  /// \p Default.
+  std::string get(StringRef LocalName, std::string Default) const;
+
+  /// \brief Read a named option from the \c Context and parse it as an integral
+  /// type \c T.
+  ///
+  /// Reads the option with the check-local name \p LocalName from the
+  /// \c CheckOptions. If the corresponding key is not present, returns
+  /// \p Default.
+  template <typename T>
+  typename std::enable_if<std::is_integral<T>::value, T>::type
+  get(StringRef LocalName, T Default) const {
+    std::string Value = get(LocalName, "");
+    T Result = Default;
+    if (!Value.empty())
+      StringRef(Value).getAsInteger(10, Result);
+    return Result;
+  }
+
+  /// \brief Stores an option with the check-local name \p LocalName with string
+  /// value \p Value to \p Options.
+  void store(ClangTidyOptions::OptionMap &Options, StringRef LocalName,
+             StringRef Value) const;
+
+  /// \brief Stores an option with the check-local name \p LocalName with
+  /// \c int64_t value \p Value to \p Options.
+  void store(ClangTidyOptions::OptionMap &Options, StringRef LocalName,
+             int64_t Value) const;
+
+private:
+  std::string NamePrefix;
+  const ClangTidyOptions::OptionMap &CheckOptions;
+};
 
 /// \brief Base class for all clang-tidy checks.
 ///
@@ -49,6 +101,18 @@ namespace tidy {
 /// useful/necessary.
 class ClangTidyCheck : public ast_matchers::MatchFinder::MatchCallback {
 public:
+  /// \brief Initializes the check with \p CheckName and \p Context.
+  ///
+  /// Derived classes must implement the constructor with this signature or
+  /// delegate it. If a check needs to read options, it can do this in the
+  /// constructor using the Options.get() methods below.
+  ClangTidyCheck(StringRef CheckName, ClangTidyContext *Context)
+      : CheckName(CheckName), Context(Context),
+        Options(CheckName, Context->getOptions().CheckOptions) {
+    assert(Context != nullptr);
+    assert(!CheckName.empty());
+  }
+
   virtual ~ClangTidyCheck() {}
 
   /// \brief Overwrite this to register \c PPCallbacks with \c Compiler.
@@ -75,21 +139,24 @@ public:
   /// work in here.
   virtual void check(const ast_matchers::MatchFinder::MatchResult &Result) {}
 
-  /// \brief The infrastructure sets the context to \p Ctx with this function.
-  void setContext(ClangTidyContext *Ctx) { Context = Ctx; }
-
   /// \brief Add a diagnostic with the check's name.
   DiagnosticBuilder diag(SourceLocation Loc, StringRef Description,
                          DiagnosticIDs::Level Level = DiagnosticIDs::Warning);
 
-  /// \brief Sets the check name. Intended to be used by the clang-tidy
-  /// framework. Can be called only once.
-  void setName(StringRef Name);
+  /// \brief Should store all options supported by this check with their
+  /// current values or default values for options that haven't been overridden.
+  ///
+  /// The check should use \c Options.store() to store each option it supports
+  /// whether it has the default value or it has been overridden.
+  virtual void storeOptions(ClangTidyOptions::OptionMap &Options) {}
 
 private:
   void run(const ast_matchers::MatchFinder::MatchResult &Result) override;
-  ClangTidyContext *Context;
   std::string CheckName;
+  ClangTidyContext *Context;
+
+protected:
+  OptionsView Options;
 };
 
 class ClangTidyCheckFactories;
@@ -103,10 +170,13 @@ public:
   CreateASTConsumer(clang::CompilerInstance &Compiler, StringRef File);
 
   /// \brief Get the list of enabled checks.
-  std::vector<std::string> getCheckNames(GlobList &Filter);
+  std::vector<std::string> getCheckNames();
+
+  /// \brief Get the union of options from all checks.
+  ClangTidyOptions::OptionMap getCheckOptions();
 
 private:
-  typedef std::vector<std::pair<std::string, bool> > CheckersList;
+  typedef std::vector<std::pair<std::string, bool>> CheckersList;
   CheckersList getCheckersControlList(GlobList &Filter);
 
   ClangTidyContext &Context;
@@ -116,6 +186,14 @@ private:
 /// \brief Fills the list of check names that are enabled when the provided
 /// filters are applied.
 std::vector<std::string> getCheckNames(const ClangTidyOptions &Options);
+
+/// \brief Returns the effective check-specific options.
+///
+/// The method configures ClangTidy with the specified \p Options and collects
+/// effective options from all created checks. The returned set of options
+/// includes default check-specific options for all keys not overridden by \p
+/// Options.
+ClangTidyOptions::OptionMap getCheckOptions(const ClangTidyOptions &Options);
 
 /// \brief Run a set of clang-tidy checks on a set of files.
 ClangTidyStats

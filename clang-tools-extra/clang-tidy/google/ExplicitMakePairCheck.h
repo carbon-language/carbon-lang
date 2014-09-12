@@ -24,6 +24,8 @@ namespace build {
 /// Corresponding cpplint.py check name: 'build/explicit_make_pair'.
 class ExplicitMakePairCheck : public ClangTidyCheck {
 public:
+  ExplicitMakePairCheck(StringRef Name, ClangTidyContext *Context)
+      : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };

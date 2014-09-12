@@ -37,6 +37,8 @@ namespace tidy {
 ///   - Ignore objects returned from a call.
 class UnusedRAIICheck : public ClangTidyCheck {
 public:
+  UnusedRAIICheck(StringRef Name, ClangTidyContext *Context)
+      : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };

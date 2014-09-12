@@ -22,6 +22,8 @@ namespace readability {
 /// Corresponding cpplint.py check name: 'readability/function'.
 class NamedParameterCheck : public ClangTidyCheck {
 public:
+  NamedParameterCheck(StringRef Name, ClangTidyContext *Context)
+      : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };

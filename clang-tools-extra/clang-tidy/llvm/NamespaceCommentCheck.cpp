@@ -11,20 +11,26 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Lex/Lexer.h"
-
-
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/StringExtras.h"
 
 using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
 
-NamespaceCommentCheck::NamespaceCommentCheck()
-    : NamespaceCommentPattern("^/[/*] *(end (of )?)? *(anonymous|unnamed)? *"
+NamespaceCommentCheck::NamespaceCommentCheck(StringRef Name,
+                                             ClangTidyContext *Context)
+    : ClangTidyCheck(Name, Context),
+      NamespaceCommentPattern("^/[/*] *(end (of )?)? *(anonymous|unnamed)? *"
                               "namespace( +([a-zA-Z0-9_]+))? *(\\*/)?$",
                               llvm::Regex::IgnoreCase),
-      ShortNamespaceLines(1) {}
+      ShortNamespaceLines(Options.get("ShortNamespaceLines", 1u)),
+      SpacesBeforeComments(Options.get("SpacesBeforeComments", 1u)) {}
+
+void NamespaceCommentCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
+  Options.store(Opts, "ShortNamespaceLines", ShortNamespaceLines);
+  Options.store(Opts, "SpacesBeforeComments", SpacesBeforeComments);
+}
 
 void NamespaceCommentCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(namespaceDecl().bind("namespace"), this);
@@ -36,10 +42,12 @@ bool locationsInSameFile(const SourceManager &Sources, SourceLocation Loc1,
          Sources.getFileID(Loc1) == Sources.getFileID(Loc2);
 }
 
-std::string getNamespaceComment(const NamespaceDecl *ND, bool InsertLineBreak) {
+std::string getNamespaceComment(const NamespaceDecl *ND, bool InsertLineBreak,
+                                unsigned SpacesBeforeComments) {
   std::string Fix = "// namespace";
   if (!ND->isAnonymousNamespace())
-    Fix.append(" ").append(ND->getNameAsString());
+    Fix.append(std::string(SpacesBeforeComments, ' '))
+        .append(ND->getNameAsString());
   if (InsertLineBreak)
     Fix.append("\n");
   return Fix;
@@ -97,7 +105,8 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
       diag(Loc, "namespace closing comment refers to a wrong namespace '%0'")
           << NamespaceNameInComment
           << FixItHint::CreateReplacement(
-                 OldCommentRange, getNamespaceComment(ND, NeedLineBreak));
+                 OldCommentRange,
+                 getNamespaceComment(ND, NeedLineBreak, SpacesBeforeComments));
       return;
     }
 
@@ -110,7 +119,8 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
 
   diag(ND->getLocation(), "namespace not terminated with a closing comment")
       << FixItHint::CreateInsertion(
-          AfterRBrace, " " + getNamespaceComment(ND, NeedLineBreak));
+          AfterRBrace,
+          " " + getNamespaceComment(ND, NeedLineBreak, SpacesBeforeComments));
 }
 
 } // namespace tidy

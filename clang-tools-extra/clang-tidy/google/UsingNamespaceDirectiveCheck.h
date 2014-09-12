@@ -22,6 +22,8 @@ namespace build {
 /// Corresponding cpplint.py check name: 'build/namespaces'.
 class UsingNamespaceDirectiveCheck : public ClangTidyCheck {
 public:
+  UsingNamespaceDirectiveCheck(StringRef Name, ClangTidyContext *Context)
+      : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };

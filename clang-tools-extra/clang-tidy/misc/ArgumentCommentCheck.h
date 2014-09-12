@@ -19,7 +19,7 @@ namespace tidy {
 /// \brief Checks that argument comments match parameter names.
 class ArgumentCommentCheck : public ClangTidyCheck {
 public:
-  ArgumentCommentCheck();
+  ArgumentCommentCheck(StringRef Name, ClangTidyContext *Context);
 
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;

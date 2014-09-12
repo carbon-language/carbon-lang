@@ -8,6 +8,8 @@ namespace test {
 
 class TestCheck : public ClangTidyCheck {
 public:
+  TestCheck(StringRef Name, ClangTidyContext *Context)
+      : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override {
     Finder->addMatcher(ast_matchers::varDecl().bind("var"), this);
   }
@@ -23,9 +25,8 @@ TEST(ClangTidyDiagnosticConsumer, SortsErrors) {
   std::vector<ClangTidyError> Errors;
   runCheckOnCode<TestCheck>("int a;", &Errors);
   EXPECT_EQ(2ul, Errors.size());
-  // FIXME: Remove " []" once the check name is removed from the message text.
-  EXPECT_EQ("type specifier []", Errors[0].Message.Message);
-  EXPECT_EQ("variable []", Errors[1].Message.Message);
+  EXPECT_EQ("type specifier", Errors[0].Message.Message);
+  EXPECT_EQ("variable", Errors[1].Message.Message);
 }
 
 TEST(GlobList, Empty) {

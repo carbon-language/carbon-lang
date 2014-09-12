@@ -214,13 +214,11 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   Context.setASTContext(&Compiler.getASTContext());
 
   std::vector<std::unique_ptr<ClangTidyCheck>> Checks;
-  GlobList &Filter = Context.getChecksFilter();
-  CheckFactories->createChecks(Filter, Checks);
+  CheckFactories->createChecks(&Context, Checks);
 
   std::unique_ptr<ast_matchers::MatchFinder> Finder(
       new ast_matchers::MatchFinder);
   for (auto &Check : Checks) {
-    Check->setContext(&Context);
     Check->registerMatchers(&*Finder);
     Check->registerPPCallbacks(Compiler);
   }
@@ -235,6 +233,7 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   AnalyzerOptions->Config["cfg-temporary-dtors"] =
       Context.getOptions().AnalyzeTemporaryDtors ? "true" : "false";
 
+  GlobList &Filter = Context.getChecksFilter();
   AnalyzerOptions->CheckersControlList = getCheckersControlList(Filter);
   if (!AnalyzerOptions->CheckersControlList.empty()) {
     AnalyzerOptions->AnalysisStoreOpt = RegionStoreModel;
@@ -251,9 +250,9 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
       std::move(Consumers), std::move(Finder), std::move(Checks));
 }
 
-std::vector<std::string>
-ClangTidyASTConsumerFactory::getCheckNames(GlobList &Filter) {
+std::vector<std::string> ClangTidyASTConsumerFactory::getCheckNames() {
   std::vector<std::string> CheckNames;
+  GlobList &Filter = Context.getChecksFilter();
   for (const auto &CheckFactory : *CheckFactories) {
     if (Filter.contains(CheckFactory.first))
       CheckNames.push_back(CheckFactory.first);
@@ -264,6 +263,15 @@ ClangTidyASTConsumerFactory::getCheckNames(GlobList &Filter) {
 
   std::sort(CheckNames.begin(), CheckNames.end());
   return CheckNames;
+}
+
+ClangTidyOptions::OptionMap ClangTidyASTConsumerFactory::getCheckOptions() {
+  ClangTidyOptions::OptionMap Options;
+  std::vector<std::unique_ptr<ClangTidyCheck>> Checks;
+  CheckFactories->createChecks(&Context, Checks);
+  for (const auto &Check : Checks)
+    Check->storeOptions(Options);
+  return Options;
 }
 
 ClangTidyASTConsumerFactory::CheckersList
@@ -307,9 +315,25 @@ void ClangTidyCheck::run(const ast_matchers::MatchFinder::MatchResult &Result) {
   check(Result);
 }
 
-void ClangTidyCheck::setName(StringRef Name) {
-  assert(CheckName.empty());
-  CheckName = Name.str();
+OptionsView::OptionsView(StringRef CheckName,
+                         const ClangTidyOptions::OptionMap &CheckOptions)
+    : NamePrefix(CheckName.str() + "."), CheckOptions(CheckOptions) {}
+
+std::string OptionsView::get(StringRef LocalName, std::string Default) const {
+  const auto &Iter = CheckOptions.find(NamePrefix + LocalName.str());
+  if (Iter != CheckOptions.end())
+    return Iter->second;
+  return Default;
+}
+
+void OptionsView::store(ClangTidyOptions::OptionMap &Options,
+                        StringRef LocalName, StringRef Value) const {
+  Options[NamePrefix + LocalName.str()] = Value;
+}
+
+void OptionsView::store(ClangTidyOptions::OptionMap &Options,
+                        StringRef LocalName, int64_t Value) const {
+  store(Options, LocalName, llvm::itostr(Value));
 }
 
 std::vector<std::string> getCheckNames(const ClangTidyOptions &Options) {
@@ -317,7 +341,15 @@ std::vector<std::string> getCheckNames(const ClangTidyOptions &Options) {
       llvm::make_unique<DefaultOptionsProvider>(ClangTidyGlobalOptions(),
                                                 Options));
   ClangTidyASTConsumerFactory Factory(Context);
-  return Factory.getCheckNames(Context.getChecksFilter());
+  return Factory.getCheckNames();
+}
+
+ClangTidyOptions::OptionMap getCheckOptions(const ClangTidyOptions &Options) {
+  clang::tidy::ClangTidyContext Context(
+      llvm::make_unique<DefaultOptionsProvider>(ClangTidyGlobalOptions(),
+                                                Options));
+  ClangTidyASTConsumerFactory Factory(Context);
+  return Factory.getCheckOptions();
 }
 
 ClangTidyStats

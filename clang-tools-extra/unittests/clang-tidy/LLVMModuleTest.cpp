@@ -95,6 +95,8 @@ static std::string runHeaderGuardCheck(StringRef Code, const Twine &Filename) {
 
 namespace {
 struct WithEndifComment : public LLVMHeaderGuardCheck {
+  WithEndifComment(StringRef Name, ClangTidyContext *Context)
+      : LLVMHeaderGuardCheck(Name, Context) {}
   bool shouldSuggestEndifComment(StringRef Filename) override { return true; }
 };
 } // namespace

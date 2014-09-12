@@ -18,6 +18,8 @@ namespace tidy {
 /// \brief Finds and fixes header guards.
 class HeaderGuardCheck : public ClangTidyCheck {
 public:
+  HeaderGuardCheck(StringRef Name, ClangTidyContext *Context)
+      : ClangTidyCheck(Name, Context) {}
   void registerPPCallbacks(CompilerInstance &Compiler) override;
 
   /// \brief Returns true if the checker should suggest inserting a trailing

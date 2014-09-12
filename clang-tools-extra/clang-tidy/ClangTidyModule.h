@@ -26,11 +26,13 @@ namespace tidy {
 /// this object.
 class ClangTidyCheckFactories {
 public:
+  typedef std::function<ClangTidyCheck *(
+      StringRef Name, ClangTidyContext *Context)> CheckFactory;
+
   /// \brief Registers check \p Factory with name \p Name.
   ///
   /// For all checks that have default constructors, use \c registerCheck.
-  void registerCheckFactory(StringRef Name,
-                            std::function<ClangTidyCheck *()> Factory);
+  void registerCheckFactory(StringRef Name, CheckFactory Factory);
 
   /// \brief Registers the \c CheckType with the name \p Name.
   ///
@@ -53,19 +55,21 @@ public:
   ///   }
   /// };
   /// \endcode
-  template<typename CheckType>
-  void registerCheck(StringRef Name) {
-    registerCheckFactory(Name, []() { return new CheckType(); });
+  template <typename CheckType> void registerCheck(StringRef CheckName) {
+    registerCheckFactory(CheckName,
+                         [](StringRef Name, ClangTidyContext *Context) {
+      return new CheckType(Name, Context);
+    });
   }
 
   /// \brief Create instances of all checks matching \p CheckRegexString and
   /// store them in \p Checks.
   ///
   /// The caller takes ownership of the return \c ClangTidyChecks.
-  void createChecks(GlobList &Filter,
+  void createChecks(ClangTidyContext *Context,
                     std::vector<std::unique_ptr<ClangTidyCheck>> &Checks);
 
-  typedef std::map<std::string, std::function<ClangTidyCheck *()>> FactoryMap;
+  typedef std::map<std::string, CheckFactory> FactoryMap;
   FactoryMap::const_iterator begin() const { return Factories.begin(); }
   FactoryMap::const_iterator end() const { return Factories.end(); }
   bool empty() const { return Factories.empty(); }

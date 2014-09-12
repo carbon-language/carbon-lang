@@ -25,6 +25,7 @@ using clang::tidy::FileFilter;
 
 LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(FileFilter)
 LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(FileFilter::LineRange)
+LLVM_YAML_IS_SEQUENCE_VECTOR(ClangTidyOptions::StringPair);
 
 namespace llvm {
 namespace yaml {
@@ -57,11 +58,34 @@ template <> struct MappingTraits<FileFilter> {
   }
 };
 
+template <> struct MappingTraits<ClangTidyOptions::StringPair> {
+  static void mapping(IO &IO, ClangTidyOptions::StringPair &KeyValue) {
+    IO.mapRequired("key", KeyValue.first);
+    IO.mapRequired("value", KeyValue.second);
+  }
+};
+
+struct NOptionMap {
+  NOptionMap(IO &) {}
+  NOptionMap(IO &, const ClangTidyOptions::OptionMap &OptionMap)
+      : Options(OptionMap.begin(), OptionMap.end()) {}
+  ClangTidyOptions::OptionMap denormalize(IO &) {
+    ClangTidyOptions::OptionMap Map;
+    for (const auto &KeyValue : Options)
+      Map[KeyValue.first] = KeyValue.second;
+    return Map;
+  }
+  std::vector<ClangTidyOptions::StringPair> Options;
+};
+
 template <> struct MappingTraits<ClangTidyOptions> {
   static void mapping(IO &IO, ClangTidyOptions &Options) {
+    MappingNormalization<NOptionMap, ClangTidyOptions::OptionMap> NOpts(
+        IO, Options.CheckOptions);
     IO.mapOptional("Checks", Options.Checks);
     IO.mapOptional("HeaderFilterRegex", Options.HeaderFilterRegex);
     IO.mapOptional("AnalyzeTemporaryDtors", Options.AnalyzeTemporaryDtors);
+    IO.mapOptional("CheckOptions", NOpts->Options);
   }
 };
 
@@ -85,6 +109,10 @@ ClangTidyOptions::mergeWith(const ClangTidyOptions &Other) const {
     Result.HeaderFilterRegex = Other.HeaderFilterRegex;
   if (Other.AnalyzeTemporaryDtors)
     Result.AnalyzeTemporaryDtors = Other.AnalyzeTemporaryDtors;
+
+  for (const auto &KeyValue : Other.CheckOptions)
+    Result.CheckOptions[KeyValue.first] = KeyValue.second;
+
   return Result;
 }
 
@@ -169,6 +197,10 @@ FileOptionsProvider::TryReadConfigFile(StringRef Directory) {
       llvm::MemoryBuffer::getFile(ConfigFile.c_str());
   if (std::error_code EC = Text.getError())
     return EC;
+  // Skip empty files, e.g. files opened for writing via shell output
+  // redirection.
+  if ((*Text)->getBuffer().empty())
+    return make_error_code(llvm::errc::no_such_file_or_directory);
   if (std::error_code EC = parseConfiguration((*Text)->getBuffer(), Options))
     return EC;
   return Options.mergeWith(OverrideOptions);

@@ -21,9 +21,9 @@ namespace runtime {
 /// Correspondig cpplint.py check: runtime/int.
 class IntegerTypesCheck : public ClangTidyCheck {
 public:
-  IntegerTypesCheck()
-      : UnsignedTypePrefix("uint"), SignedTypePrefix("int"),
-        AddUnderscoreT(false) {}
+  IntegerTypesCheck(StringRef Name, ClangTidyContext *Context)
+      : ClangTidyCheck(Name, Context), UnsignedTypePrefix("uint"),
+        SignedTypePrefix("int"), AddUnderscoreT(false) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 

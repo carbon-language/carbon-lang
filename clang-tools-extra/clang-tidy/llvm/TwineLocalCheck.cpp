@@ -17,8 +17,6 @@ using namespace clang::ast_matchers;
 namespace clang {
 namespace tidy {
 
-TwineLocalCheck::TwineLocalCheck() {}
-
 void TwineLocalCheck::registerMatchers(MatchFinder *Finder) {
   auto TwineType =
       qualType(hasDeclaration(recordDecl(hasName("::llvm::Twine"))));

@@ -21,13 +21,16 @@ namespace tidy {
 /// see: http://llvm.org/docs/CodingStandards.html#namespace-indentation
 class NamespaceCommentCheck : public ClangTidyCheck {
 public:
-  NamespaceCommentCheck();
+  NamespaceCommentCheck(StringRef Name, ClangTidyContext *Context);
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 
 private:
+  void storeOptions(ClangTidyOptions::OptionMap &Options) override;
+
   llvm::Regex NamespaceCommentPattern;
   const unsigned ShortNamespaceLines;
+  const unsigned SpacesBeforeComments;
 };
 
 } // namespace tidy

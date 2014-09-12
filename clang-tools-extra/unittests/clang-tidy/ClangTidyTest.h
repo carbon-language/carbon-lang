@@ -44,13 +44,12 @@ std::string runCheckOnCode(StringRef Code,
                            std::vector<ClangTidyError> *Errors = nullptr,
                            const Twine &Filename = "input.cc",
                            ArrayRef<std::string> ExtraArgs = None) {
-  T Check;
   ClangTidyOptions Options;
   Options.Checks = "*";
   ClangTidyContext Context(llvm::make_unique<DefaultOptionsProvider>(
       ClangTidyGlobalOptions(), Options));
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
-  Check.setContext(&Context);
+  T Check("test-check", &Context);
   std::vector<std::string> ArgCXX11(1, "-std=c++11");
   ArgCXX11.insert(ArgCXX11.end(), ExtraArgs.begin(), ExtraArgs.end());
 

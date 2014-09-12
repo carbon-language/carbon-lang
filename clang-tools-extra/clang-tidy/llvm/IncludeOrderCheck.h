@@ -20,6 +20,8 @@ namespace tidy {
 /// see: http://llvm.org/docs/CodingStandards.html#include-style
 class IncludeOrderCheck : public ClangTidyCheck {
 public:
+  IncludeOrderCheck(StringRef Name, ClangTidyContext *Context)
+      : ClangTidyCheck(Name, Context) {}
   void registerPPCallbacks(CompilerInstance &Compiler) override;
 };
 

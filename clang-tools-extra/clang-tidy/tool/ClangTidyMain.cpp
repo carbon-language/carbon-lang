@@ -173,6 +173,7 @@ int clangTidyMain(int argc, const char **argv) {
   }
 
   if (DumpConfig) {
+    EffectiveOptions.CheckOptions = getCheckOptions(EffectiveOptions);
     llvm::outs() << configurationAsText(ClangTidyOptions::getDefaults()
                                             .mergeWith(EffectiveOptions))
                  << "\n";

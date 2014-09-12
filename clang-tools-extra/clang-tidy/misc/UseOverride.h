@@ -18,6 +18,8 @@ namespace tidy {
 /// \brief Use C++11's 'override' and remove 'virtual' where applicable.
 class UseOverride : public ClangTidyCheck {
 public:
+  UseOverride(StringRef Name, ClangTidyContext *Context)
+      : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };

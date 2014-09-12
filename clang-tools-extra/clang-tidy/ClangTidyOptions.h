@@ -14,6 +14,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorOr.h"
+#include <map>
 #include <string>
 #include <system_error>
 #include <utility>
@@ -70,6 +71,12 @@ struct ClangTidyOptions {
 
   /// \brief Turns on temporary destructor-based analysis.
   llvm::Optional<bool> AnalyzeTemporaryDtors;
+
+  typedef std::pair<std::string, std::string> StringPair;
+  typedef std::map<std::string, std::string> OptionMap;
+
+  /// \brief Key-value mapping used to store check-specific options.
+  OptionMap CheckOptions;
 };
 
 /// \brief Abstract interface for retrieving various ClangTidy options.

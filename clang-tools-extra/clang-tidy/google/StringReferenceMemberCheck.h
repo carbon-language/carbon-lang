@@ -39,6 +39,8 @@ namespace runtime {
 /// Corresponding cpplint.py check name: 'runtime/member_string_reference'.
 class StringReferenceMemberCheck : public ClangTidyCheck {
 public:
+  StringReferenceMemberCheck(StringRef Name, ClangTidyContext *Context)
+      : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };

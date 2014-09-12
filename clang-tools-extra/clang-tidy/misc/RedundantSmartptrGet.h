@@ -23,6 +23,8 @@ namespace tidy {
 ///   *ptr->get()  ==>  **ptr
 class RedundantSmartptrGet : public ClangTidyCheck {
 public:
+  RedundantSmartptrGet(StringRef Name, ClangTidyContext *Context)
+      : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
