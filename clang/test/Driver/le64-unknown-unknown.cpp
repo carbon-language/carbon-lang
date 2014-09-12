@@ -1,5 +1,5 @@
-// RUN: %clang -target le64-unknown-nacl -### %s -emit-llvm-only -c 2>&1 | FileCheck %s -check-prefix=ECHO
-// RUN: %clang -target le64-unknown-nacl %s -emit-llvm -S -c -o - | FileCheck %s
+// RUN: %clang -target le64-unknown-unknown -### %s -emit-llvm-only -c 2>&1 | FileCheck %s -check-prefix=ECHO
+// RUN: %clang -target le64-unknown-unknown %s -emit-llvm -S -c -o - | FileCheck %s
 
 // ECHO: {{.*}} "-cc1" {{.*}}le64-unknown-unknown.c
 
