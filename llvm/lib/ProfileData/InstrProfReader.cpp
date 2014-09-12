@@ -190,6 +190,9 @@ RawInstrProfReader<IntPtrT>::readNextHeader(const char *CurrentPos) {
   // garbage at the end of the file.
   if (CurrentPos + sizeof(RawHeader) > End)
     return instrprof_error::malformed;
+  // The writer ensures each profile is padded to start at an aligned address.
+  if (reinterpret_cast<size_t>(CurrentPos) % alignOf<uint64_t>())
+    return instrprof_error::malformed;
   // The magic should have the same byte order as in the previous header.
   uint64_t Magic = *reinterpret_cast<const uint64_t *>(CurrentPos);
   if (Magic != swap(getRawMagic<IntPtrT>()))
