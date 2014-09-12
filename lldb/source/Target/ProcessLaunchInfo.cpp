@@ -41,19 +41,19 @@ ProcessLaunchInfo::ProcessLaunchInfo () :
 }
 
 ProcessLaunchInfo::ProcessLaunchInfo(const char *stdin_path, const char *stdout_path, const char *stderr_path,
-                                     const char *working_directory, uint32_t launch_flags)
-    : ProcessInfo()
-    , m_working_dir()
-    , m_plugin_name()
-    , m_shell()
-    , m_flags(launch_flags)
-    , m_file_actions()
-    , m_pty(new lldb_utility::PseudoTerminal)
-    , m_resume_count(0)
-    , m_monitor_callback(NULL)
-    , m_monitor_callback_baton(NULL)
-    , m_monitor_signals(false)
-    , m_hijack_listener_sp()
+                                     const char *working_directory, uint32_t launch_flags) :
+    ProcessInfo(),
+    m_working_dir(),
+    m_plugin_name(),
+    m_shell(),
+    m_flags(launch_flags),
+    m_file_actions(),
+    m_pty(new lldb_utility::PseudoTerminal),
+    m_resume_count(0),
+    m_monitor_callback(NULL),
+    m_monitor_callback_baton(NULL),
+    m_monitor_signals(false),
+    m_hijack_listener_sp()
 {
     if (stdin_path)
     {
