@@ -42,7 +42,8 @@ public:
   // The type of the scev affine function
   enum TypeKind {
     READ = 0x1,
-    WRITE = 0x2,
+    MUST_WRITE = 0x2,
+    MAY_WRITE = 0x3,
   };
 
 private:
@@ -72,7 +73,9 @@ public:
 
   bool isRead() const { return Type == READ; }
 
-  bool isWrite() const { return Type == WRITE; }
+  bool isWrite() const { return Type == MUST_WRITE; }
+
+  bool isMayWrite() const { return Type == MAY_WRITE; }
 
   bool isScalar() const { return Subscripts.size() == 0; }
 

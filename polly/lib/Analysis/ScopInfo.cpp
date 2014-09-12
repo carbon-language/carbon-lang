@@ -330,6 +330,18 @@ MemoryAccess::~MemoryAccess() {
   isl_map_free(newAccessRelation);
 }
 
+static MemoryAccess::AccessType getMemoryAccessType(const IRAccess &Access) {
+  switch (Access.getType()) {
+  case IRAccess::READ:
+    return MemoryAccess::READ;
+  case IRAccess::MUST_WRITE:
+    return MemoryAccess::MUST_WRITE;
+  case IRAccess::MAY_WRITE:
+    return MemoryAccess::MAY_WRITE;
+  }
+  llvm_unreachable("Unknown IRAccess type!");
+}
+
 isl_id *MemoryAccess::getArrayId() const {
   return isl_map_get_tuple_id(AccessRelation, isl_dim_out);
 }
@@ -416,7 +428,8 @@ void MemoryAccess::assumeNoOutOfBound(const IRAccess &Access) {
 
 MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
                            ScopStmt *Statement)
-    : Statement(Statement), Inst(AccInst), newAccessRelation(nullptr) {
+    : Type(getMemoryAccessType(Access)), Statement(Statement), Inst(AccInst),
+      newAccessRelation(nullptr) {
 
   isl_ctx *Ctx = Statement->getIslCtx();
   BaseAddr = Access.getBase();
@@ -431,11 +444,8 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
     AccessRelation = isl_map_from_basic_map(createBasicAccessMap(Statement));
     AccessRelation =
         isl_map_set_tuple_id(AccessRelation, isl_dim_out, BaseAddrId);
-    Type = Access.isRead() ? READ : MAY_WRITE;
     return;
   }
-
-  Type = Access.isRead() ? READ : MUST_WRITE;
 
   isl_space *Space = isl_space_alloc(Ctx, 0, Statement->getNumIterators(), 0);
   AccessRelation = isl_map_universe(Space);

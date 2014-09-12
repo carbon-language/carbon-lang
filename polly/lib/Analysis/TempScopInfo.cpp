@@ -41,9 +41,11 @@ using namespace polly;
 void IRAccess::print(raw_ostream &OS) const {
   if (isRead())
     OS << "Read ";
-  else
+  else {
+    if (isMayWrite())
+      OS << "May";
     OS << "Write ";
-
+  }
   OS << BaseAddress->getName() << '[' << *Offset << "]\n";
 }
 
@@ -160,7 +162,7 @@ IRAccess TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R) {
     StoreInst *Store = cast<StoreInst>(Inst);
     SizeType = Store->getValueOperand()->getType();
     Size = TD->getTypeStoreSize(SizeType);
-    Type = IRAccess::WRITE;
+    Type = IRAccess::MUST_WRITE;
   }
 
   const SCEV *AccessFunction = SE->getSCEVAtScope(getPointerOperand(*Inst), L);
@@ -178,6 +180,9 @@ IRAccess TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R) {
 
   bool IsAffine = isAffineExpr(R, AccessFunction, *SE, BasePointer->getValue());
   Subscripts.push_back(AccessFunction);
+  if (!IsAffine && Type == IRAccess::MUST_WRITE)
+    Type = IRAccess::MAY_WRITE;
+
   Sizes.push_back(SE->getConstant(ZeroOffset->getType(), Size));
   return IRAccess(Type, BasePointer->getValue(), AccessFunction, Size, IsAffine,
                   Subscripts, Sizes);
@@ -196,7 +201,7 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
       // If the Instruction is used outside the statement, we need to build the
       // write access.
       SmallVector<const SCEV *, 4> Subscripts, Sizes;
-      IRAccess ScalarAccess(IRAccess::WRITE, Inst, ZeroOffset, 1, true,
+      IRAccess ScalarAccess(IRAccess::MUST_WRITE, Inst, ZeroOffset, 1, true,
                             Subscripts, Sizes);
       Functions.push_back(std::make_pair(ScalarAccess, Inst));
     }
