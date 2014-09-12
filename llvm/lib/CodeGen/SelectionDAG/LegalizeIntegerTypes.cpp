@@ -342,9 +342,10 @@ SDValue DAGTypeLegalizer::PromoteIntRes_CTLZ(SDNode *N) {
   EVT NVT = Op.getValueType();
   Op = DAG.getNode(N->getOpcode(), dl, NVT, Op);
   // Subtract off the extra leading bits in the bigger type.
-  return DAG.getNode(ISD::SUB, dl, NVT, Op,
-                     DAG.getConstant(NVT.getSizeInBits() -
-                                     OVT.getSizeInBits(), NVT));
+  return DAG.getNode(
+      ISD::SUB, dl, NVT, Op,
+      DAG.getConstant(NVT.getScalarSizeInBits() - OVT.getScalarSizeInBits(),
+                      NVT));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_CTPOP(SDNode *N) {
@@ -362,8 +363,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_CTTZ(SDNode *N) {
     // The count is the same in the promoted type except if the original
     // value was zero.  This can be handled by setting the bit just off
     // the top of the original type.
-    APInt TopBit(NVT.getSizeInBits(), 0);
-    TopBit.setBit(OVT.getSizeInBits());
+    auto TopBit = APInt::getOneBitSet(NVT.getScalarSizeInBits(),
+                                      OVT.getScalarSizeInBits());
     Op = DAG.getNode(ISD::OR, dl, NVT, Op, DAG.getConstant(TopBit, NVT));
   }
   return DAG.getNode(N->getOpcode(), dl, NVT, Op);
