@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -pedantic -Wno-string-plus-int -triple=i686-apple-darwin9
+// RUN: %clang_cc1 %s -fsyntax-only -verify -pedantic -Wstrlcpy-strlcat-size -Wno-string-plus-int -triple=i686-apple-darwin9
 // This test needs to set the target because it uses __builtin_ia32_vec_ext_v4si
 
 int test1(float a, int b) {
@@ -184,12 +184,12 @@ void test18() {
   void *ptr;
 
   ptr = __builtin___memccpy_chk(dst, src, '\037', sizeof(src), sizeof(dst));
-  result = __builtin___strlcpy_chk(dst, src, sizeof(src), sizeof(dst));
-  result = __builtin___strlcat_chk(dst, src, sizeof(src), sizeof(dst));
+  result = __builtin___strlcpy_chk(dst, src, sizeof(dst), sizeof(dst));
+  result = __builtin___strlcat_chk(dst, src, sizeof(dst), sizeof(dst));
 
   ptr = __builtin___memccpy_chk(dst, src, '\037', sizeof(src));      // expected-error {{too few arguments to function call}}
-  ptr = __builtin___strlcpy_chk(dst, src, sizeof(src), sizeof(dst)); // expected-warning {{incompatible integer to pointer conversion}}
-  ptr = __builtin___strlcat_chk(dst, src, sizeof(src), sizeof(dst)); // expected-warning {{incompatible integer to pointer conversion}}
+  ptr = __builtin___strlcpy_chk(dst, src, sizeof(dst), sizeof(dst)); // expected-warning {{incompatible integer to pointer conversion}}
+  ptr = __builtin___strlcat_chk(dst, src, sizeof(dst), sizeof(dst)); // expected-warning {{incompatible integer to pointer conversion}}
 }
 
 void no_ms_builtins() {
@@ -201,4 +201,24 @@ void no_ms_builtins() {
 void unavailable() {
   __builtin_operator_new(0); // expected-error {{'__builtin_operator_new' is only available in C++}}
   __builtin_operator_delete(0); // expected-error {{'__builtin_operator_delete' is only available in C++}}
+}
+
+// rdar://18259539
+size_t strlcpy(char * restrict dst, const char * restrict src, size_t size);
+size_t strlcat(char * restrict dst, const char * restrict src, size_t size);
+
+void Test19(void)
+{
+        static char b[40];
+        static char buf[20];
+
+        strlcpy(buf, b, sizeof(b)); // expected-warning {{size argument in 'strlcpy' call appears to be size of the source; expected the size of the destination}} \\
+                                    // expected-note {{change size argument to be the size of the destination}}
+        __builtin___strlcpy_chk(buf, b, sizeof(b), __builtin_object_size(buf, 0)); // expected-warning {{size argument in '__builtin___strlcpy_chk' call appears to be size of the source; expected the size of the destination}} \
+                                    // expected-note {{change size argument to be the size of the destination}}
+
+        strlcat(buf, b, sizeof(b)); // expected-warning {{size argument in 'strlcat' call appears to be size of the source; expected the size of the destination}} \
+                                    // expected-note {{change size argument to be the size of the destination}}
+        __builtin___strlcat_chk(buf, b, sizeof(b), __builtin_object_size(buf, 0)); // expected-warning {{size argument in '__builtin___strlcat_chk' call appears to be size of the source; expected the size of the destination}} \
+                                                                                   // expected-note {{change size argument to be the size of the destination}}
 }

@@ -4485,7 +4485,8 @@ void Sema::CheckStrlcpycatArguments(const CallExpr *Call,
                                     IdentifierInfo *FnName) {
 
   // Don't crash if the user has the wrong number of arguments
-  if (Call->getNumArgs() != 3)
+  unsigned NumArgs = Call->getNumArgs();
+  if ((NumArgs != 3) && (NumArgs != 4))
     return;
 
   const Expr *SrcArg = ignoreLiteralAdditions(Call->getArg(1), Context);

@@ -3188,8 +3188,11 @@ unsigned FunctionDecl::getMemoryFunctionKind() const {
     return Builtin::BImemmove;
 
   case Builtin::BIstrlcpy:
+  case Builtin::BI__builtin___strlcpy_chk:
     return Builtin::BIstrlcpy;
+
   case Builtin::BIstrlcat:
+  case Builtin::BI__builtin___strlcat_chk:
     return Builtin::BIstrlcat;
 
   case Builtin::BI__builtin_memcmp:
