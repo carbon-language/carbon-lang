@@ -861,3 +861,19 @@ namespace base_class {
     C() : A(y = 4), x(y) {}
   };
 }
+
+namespace delegating_constructor {
+  struct A {
+    A(int);
+    A(int&, int);
+
+    A(char (*)[1]) : A(x) {}
+    // expected-warning@-1 {{field 'x' is uninitialized when used here}}
+    A(char (*)[2]) : A(x, x) {}
+    // expected-warning@-1 {{field 'x' is uninitialized when used here}}
+
+    A(char (*)[3]) : A(x, 0) {}
+
+    int x;
+  };
+}

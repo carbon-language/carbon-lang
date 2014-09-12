@@ -3623,6 +3623,8 @@ Sema::SetDelegatingInitializer(CXXConstructorDecl *Constructor,
 
   DelegatingCtorDecls.push_back(Constructor);
 
+  DiagnoseUninitializedFields(*this, Constructor);
+
   return false;
 }
 
