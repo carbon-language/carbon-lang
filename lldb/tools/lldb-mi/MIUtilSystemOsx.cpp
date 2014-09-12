@@ -95,11 +95,8 @@ CMIUtilString CMIUtilSystemOsx::GetOSLastError( void ) const
 //--
 bool CMIUtilSystemOsx::GetExecutablesPath( CMIUtilString & vrwFileNamePath ) const
 {
-	bool bOk = MIstatus::failure;
-	
-	// ToDo: Implement OSX version
-	
-	return bOk;
+	vrwFileNamePath = CMIUtilString( "." );
+	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -115,11 +112,8 @@ bool CMIUtilSystemOsx::GetExecutablesPath( CMIUtilString & vrwFileNamePath ) con
 //--
 bool CMIUtilSystemOsx::GetLogFilesPath( CMIUtilString & vrwFileNamePath ) const
 {
-	bool bOk = MIstatus::failure;
-	
-	// ToDo: Implement OSX version
-	
-	return bOk;
+	vrwFileNamePath = CMIUtilString( "." );
+	return MIstatus::success;
 }
 
 #endif // #if defined( __APPLE__ )
