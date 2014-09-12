@@ -66,9 +66,9 @@ FileSpec::ResolveUsername (llvm::SmallVectorImpl<char> &path)
     
     llvm::StringRef path_str(path.data());
     size_t slash_pos = path_str.find_first_of("/", 1);
-    if (slash_pos == 1)
+    if (slash_pos == 1 || path_str.size() == 1)
     {
-        // A path of the form ~/ resolves to the current user's home dir
+        // A path of the form ~ or ~/ resolves to the current user's home dir
         llvm::SmallString<64> home_dir;
         if (!llvm::sys::path::home_directory(home_dir))
             return;
