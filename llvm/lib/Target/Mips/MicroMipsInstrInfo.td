@@ -104,6 +104,19 @@ class JumpLinkRegMM16<string opstr, RegisterOperand RO> :
   let Defs = [RA];
 }
 
+// MicroMIPS Jump and Link (Call) - Short Delay Slot
+let isCall = 1, hasDelaySlot = 1, Defs = [RA] in {
+  class JumpLinkMM<string opstr, DAGOperand opnd> :
+    InstSE<(outs), (ins opnd:$target), !strconcat(opstr, "\t$target"),
+           [], IIBranch, FrmJ, opstr> {
+    let DecoderMethod = "DecodeJumpTargetMM";
+  }
+
+  class JumpLinkRegMM<string opstr, RegisterOperand RO>:
+    InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
+            [], IIBranch, FrmR>;
+}
+
 def MFHI16_MM : MoveFromHILOMM<"mfhi", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x10>;
 def MFLO16_MM : MoveFromHILOMM<"mflo", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x12>;
 def MOVE16_MM : MoveMM16<"move", GPR32Opnd>, MOVE_FM_MM16<0x03>;
@@ -262,6 +275,10 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   }
   def JR_MM   : MMRel, IndirectBranch<"jr", GPR32Opnd>, JR_FM_MM<0x3c>;
   def JALR_MM : JumpLinkReg<"jalr", GPR32Opnd>, JALR_FM_MM<0x03c>;
+
+  /// Jump Instructions - Short Delay Slot
+  def JALS_MM   : JumpLinkMM<"jals", calltarget_mm>, J_FM_MM<0x1d>;
+  def JALRS_MM  : JumpLinkRegMM<"jalrs", GPR32Opnd>, JALR_FM_MM<0x13c>;
 
   /// Branch Instructions
   def BEQ_MM  : MMRel, CBranch<"beq", brtarget_mm, seteq, GPR32Opnd>,
