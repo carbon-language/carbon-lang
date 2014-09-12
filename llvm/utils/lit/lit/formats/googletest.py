@@ -31,7 +31,7 @@ class GoogleTest(TestFormat):
         try:
             lines = lit.util.capture([path, '--gtest_list_tests'],
                                      env=localConfig.environment)
-            lines = lines.decode('ascii')
+            lines = lines.decode('utf-8')
             if kIsWindows:
               lines = lines.replace('\r', '')
             lines = lines.split('\n')

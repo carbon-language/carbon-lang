@@ -1,0 +1,3 @@
+REQUIRES: shell
+RUN: echo "ようこそ" | FileCheck %s
+CHECK: {{^}}ようこそ{{$}}

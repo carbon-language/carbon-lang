@@ -6,8 +6,8 @@
 import sys, re, time
 
 def to_bytes(str):
-    # Encode to Latin1 to get binary data.
-    return str.encode('ISO-8859-1')
+    # Encode to UTF-8 to get binary data.
+    return str.encode('utf-8')
 
 class TerminalController:
     """
@@ -136,7 +136,7 @@ class TerminalController:
 
     def _tparm(self, arg, index):
         import curses
-        return curses.tparm(to_bytes(arg), index).decode('ascii') or ''
+        return curses.tparm(to_bytes(arg), index).decode('utf-8') or ''
 
     def _tigetstr(self, cap_name):
         # String capabilities can include "delays" of the form "$<2>".
@@ -147,7 +147,7 @@ class TerminalController:
         if cap is None:
             cap = ''
         else:
-            cap = cap.decode('ascii')
+            cap = cap.decode('utf-8')
         return re.sub(r'\$<\d+>[/*]?', '', cap)
 
     def render(self, template):
