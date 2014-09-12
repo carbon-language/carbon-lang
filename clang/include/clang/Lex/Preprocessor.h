@@ -92,7 +92,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   const TargetInfo  *Target;
   FileManager       &FileMgr;
   SourceManager     &SourceMgr;
-  ScratchBuffer     *ScratchBuf;
+  std::unique_ptr<ScratchBuffer> ScratchBuf;
   HeaderSearch      &HeaderInfo;
   ModuleLoader      &TheModuleLoader;
 
@@ -192,7 +192,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
 
   /// \brief Tracks all of the pragmas that the client registered
   /// with this preprocessor.
-  PragmaNamespace *PragmaHandlers;
+  std::unique_ptr<PragmaNamespace> PragmaHandlers;
 
   /// \brief Pragma handlers of the original source is stored here during the
   /// parsing of a model file.

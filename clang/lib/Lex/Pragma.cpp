@@ -728,7 +728,7 @@ void Preprocessor::HandlePragmaIncludeAlias(Token &Tok) {
 /// pragma line before the pragma string starts, e.g. "STDC" or "GCC".
 void Preprocessor::AddPragmaHandler(StringRef Namespace,
                                     PragmaHandler *Handler) {
-  PragmaNamespace *InsertNS = PragmaHandlers;
+  PragmaNamespace *InsertNS = PragmaHandlers.get();
 
   // If this is specified to be in a namespace, step down into it.
   if (!Namespace.empty()) {
@@ -759,7 +759,7 @@ void Preprocessor::AddPragmaHandler(StringRef Namespace,
 /// a handler that has not been registered.
 void Preprocessor::RemovePragmaHandler(StringRef Namespace,
                                        PragmaHandler *Handler) {
-  PragmaNamespace *NS = PragmaHandlers;
+  PragmaNamespace *NS = PragmaHandlers.get();
 
   // If this is specified to be in a namespace, step down into it.
   if (!Namespace.empty()) {
@@ -772,9 +772,8 @@ void Preprocessor::RemovePragmaHandler(StringRef Namespace,
 
   NS->RemovePragmaHandler(Handler);
 
-  // If this is a non-default namespace and it is now empty, remove
-  // it.
-  if (NS != PragmaHandlers && NS->IsEmpty()) {
+  // If this is a non-default namespace and it is now empty, remove it.
+  if (NS != PragmaHandlers.get() && NS->IsEmpty()) {
     PragmaHandlers->RemovePragmaHandler(NS);
     delete NS;
   }
