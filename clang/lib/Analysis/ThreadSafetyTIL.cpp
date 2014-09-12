@@ -170,7 +170,7 @@ int BasicBlock::renumberInstrs(int ID) {
 // block, and ID should be the total number of blocks.
 int BasicBlock::topologicalSort(SimpleArray<BasicBlock*>& Blocks, int ID) {
   if (Visited) return ID;
-  Visited = 1;
+  Visited = true;
   for (auto *Block : successors())
     ID = Block->topologicalSort(Blocks, ID);
   // set ID and update block array in place.
@@ -195,7 +195,7 @@ int BasicBlock::topologicalFinalSort(SimpleArray<BasicBlock*>& Blocks, int ID) {
   // Visited is assumed to have been set by the topologicalSort.  This pass
   // assumes !Visited means that we've visited this node before.
   if (!Visited) return ID;
-  Visited = 0;
+  Visited = false;
   if (DominatorNode.Parent)
     ID = DominatorNode.Parent->topologicalFinalSort(Blocks, ID);
   for (auto *Pred : Predecessors)

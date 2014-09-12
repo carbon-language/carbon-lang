@@ -1669,7 +1669,7 @@ private:
   SCFG         *CFGPtr;      // The CFG that contains this block.
   int          BlockID : 31; // unique id for this BB in the containing CFG.
                              // IDs are in topological order.
-  int          Visited : 1;  // Bit to determine if a block has been visited
+  bool         Visited : 1;  // Bit to determine if a block has been visited
                              // during a traversal.
   BlockArray  Predecessors;  // Predecessor blocks in the CFG.
   InstrArray  Args;          // Phi nodes.  One argument per predecessor.
