@@ -621,22 +621,22 @@ Debugger::FindTargetWithProcess (Process *process)
     return target_sp;
 }
 
-Debugger::Debugger(lldb::LogOutputCallback log_callback, void *baton)
-    : UserID(g_unique_id++)
-    , Properties(OptionValuePropertiesSP(new OptionValueProperties()))
-    , m_input_file_sp(new StreamFile(stdin, false))
-    , m_output_file_sp(new StreamFile(stdout, false))
-    , m_error_file_sp(new StreamFile(stderr, false))
-    , m_terminal_state()
-    , m_target_list(*this)
-    , m_platform_list()
-    , m_listener("lldb.Debugger")
-    , m_source_manager_ap()
-    , m_source_file_cache()
-    , m_command_interpreter_ap(new CommandInterpreter(*this, eScriptLanguageDefault, false))
-    , m_input_reader_stack()
-    , m_instance_name()
-    , m_loaded_plugins()
+Debugger::Debugger(lldb::LogOutputCallback log_callback, void *baton) :
+    UserID(g_unique_id++),
+    Properties(OptionValuePropertiesSP(new OptionValueProperties())),
+    m_input_file_sp(new StreamFile(stdin, false)),
+    m_output_file_sp(new StreamFile(stdout, false)),
+    m_error_file_sp(new StreamFile(stderr, false)),
+    m_terminal_state(),
+    m_target_list(*this),
+    m_platform_list(),
+    m_listener("lldb.Debugger"),
+    m_source_manager_ap(),
+    m_source_file_cache(),
+    m_command_interpreter_ap(new CommandInterpreter(*this, eScriptLanguageDefault, false)),
+    m_input_reader_stack(),
+    m_instance_name(),
+    m_loaded_plugins()
 {
     char instance_cstr[256];
     snprintf(instance_cstr, sizeof(instance_cstr), "debugger_%d", (int)GetID());

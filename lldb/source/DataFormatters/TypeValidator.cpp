@@ -20,9 +20,9 @@
 using namespace lldb;
 using namespace lldb_private;
 
-TypeValidatorImpl::TypeValidatorImpl(const Flags &flags)
-    : m_flags(flags)
-    , m_my_revision(0)
+TypeValidatorImpl::TypeValidatorImpl(const Flags &flags) :
+    m_flags(flags),
+    m_my_revision(0)
 {
 }
 
