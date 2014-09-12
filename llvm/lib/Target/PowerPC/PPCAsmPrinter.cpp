@@ -278,10 +278,12 @@ bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
     case 'U': // Print 'u' for update form.
     case 'X': // Print 'x' for indexed form.
       {
-	// Memory constraints should always produce an MO_Register,
-	// so we never get an update or indexed form.  (In GCC, these
-	// are useful in internal code gen; not so much in inline asm.)
-	// So tolerate these but don't output anything.
+	// FIXME: Currently for PowerPC memory operands are always loaded
+	// into a register, so we never get an update or indexed form.
+	// This is bad even for offset forms, since even if we know we
+	// have a value in -16(r1), we will generate a load into r<n>
+	// and then load from 0(r<n>).  Until that issue is fixed,
+	// tolerate 'U' and 'X' but don't output anything.
 	assert(MI->getOperand(OpNo).isReg());
 	return false;
       }

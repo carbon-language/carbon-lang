@@ -1,5 +1,17 @@
 ; RUN: llc < %s -mcpu=pwr8 | FileCheck %s
 
+; Generated from following C code:
+;
+; void foo (int result, char *addr) {
+;   __asm__ __volatile__ (
+;     "ld%U1%X1 %0,%1\n"
+;     "cmpw %0,%0\n"
+;     "bne- 1f\n"
+;     "1: isync\n"
+;     : "=r" (result)
+;     : "m"(*addr) : "memory", "cr0");
+; }
+
 target datalayout = "e-m:e-i64:64-n32:64"
 target triple = "powerpc64le-unknown-linux-gnu"
 
