@@ -985,6 +985,8 @@ static bool hasShortDelaySlot(unsigned Opcode) {
   switch (Opcode) {
     case Mips::JALS_MM:
     case Mips::JALRS_MM:
+    case Mips::BGEZALS_MM:
+    case Mips::BLTZALS_MM:
       return true;
     default:
       return false;

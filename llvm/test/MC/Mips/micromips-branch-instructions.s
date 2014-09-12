@@ -29,6 +29,10 @@
 # CHECK-EL: nop                  # encoding: [0x00,0x00,0x00,0x00]
 # CHECK-EL: bltz $6, 1332        # encoding: [0x06,0x40,0x9a,0x02]
 # CHECK-EL: nop                  # encoding: [0x00,0x00,0x00,0x00]
+# CHECK-EL: bgezals $6, 1332     # encoding: [0x66,0x42,0x9a,0x02]
+# CHECK-EL: move $zero, $zero    # encoding: [0x00,0x0c]
+# CHECK-EL: bltzals $6, 1332     # encoding: [0x26,0x42,0x9a,0x02]
+# CHECK-EL: move $zero, $zero    # encoding: [0x00,0x0c]
 #------------------------------------------------------------------------------
 # Big endian
 #------------------------------------------------------------------------------
@@ -52,6 +56,10 @@
 # CHECK-EB: nop                  # encoding: [0x00,0x00,0x00,0x00]
 # CHECK-EB: bltz $6, 1332        # encoding: [0x40,0x06,0x02,0x9a]
 # CHECK-EB: nop                  # encoding: [0x00,0x00,0x00,0x00]
+# CHECK-EB: bgezals $6, 1332     # encoding: [0x42,0x66,0x02,0x9a]
+# CHECK-EB: move $zero, $zero    # encoding: [0x0c,0x00]
+# CHECK-EB: bltzals $6, 1332     # encoding: [0x42,0x26,0x02,0x9a]
+# CHECK-EB: move $zero, $zero    # encoding: [0x0c,0x00]
 
      b      1332
      beq    $9,$6,1332
@@ -63,3 +71,5 @@
      bne    $9,$6,1332
      bal    1332
      bltz   $6,1332
+     bgezals $6,1332
+     bltzals $6,1332

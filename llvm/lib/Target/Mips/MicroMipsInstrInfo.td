@@ -115,6 +115,11 @@ let isCall = 1, hasDelaySlot = 1, Defs = [RA] in {
   class JumpLinkRegMM<string opstr, RegisterOperand RO>:
     InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
             [], IIBranch, FrmR>;
+
+  class BranchCompareToZeroLinkMM<string opstr, DAGOperand opnd,
+                                  RegisterOperand RO> :
+    InstSE<(outs), (ins RO:$rs, opnd:$offset),
+           !strconcat(opstr, "\t$rs, $offset"), [], IIBranch, FrmI, opstr>;
 }
 
 def MFHI16_MM : MoveFromHILOMM<"mfhi", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x10>;
@@ -297,6 +302,12 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                   BGEZAL_FM_MM<0x03>;
   def BLTZAL_MM : MMRel, BGEZAL_FT<"bltzal", brtarget_mm, GPR32Opnd>,
                   BGEZAL_FM_MM<0x01>;
+
+  /// Branch Instructions - Short Delay Slot
+  def BGEZALS_MM : BranchCompareToZeroLinkMM<"bgezals", brtarget_mm,
+                                             GPR32Opnd>, BGEZAL_FM_MM<0x13>;
+  def BLTZALS_MM : BranchCompareToZeroLinkMM<"bltzals", brtarget_mm,
+                                             GPR32Opnd>, BGEZAL_FM_MM<0x11>;
 
   /// Control Instructions
   def SYNC_MM    : MMRel, SYNC_FT<"sync">, SYNC_FM_MM;
