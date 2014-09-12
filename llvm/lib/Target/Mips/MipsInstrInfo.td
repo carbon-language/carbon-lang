@@ -1409,11 +1409,11 @@ def JR_HB : JR_HB_DESC, JR_HB_ENC, ISA_MIPS32_NOT_32R6_64R6;
 def JALR_HB : JALR_HB_DESC, JALR_HB_ENC, ISA_MIPS32;
 
 class TLB<string asmstr> : InstSE<(outs), (ins), asmstr, [], NoItinerary,
-                                      FrmOther>;
-def TLBP : TLB<"tlbp">, COP0_TLB_FM<0x08>;
-def TLBR : TLB<"tlbr">, COP0_TLB_FM<0x01>;
-def TLBWI : TLB<"tlbwi">, COP0_TLB_FM<0x02>;
-def TLBWR : TLB<"tlbwr">, COP0_TLB_FM<0x06>;
+                                      FrmOther, asmstr>;
+def TLBP : MMRel, TLB<"tlbp">, COP0_TLB_FM<0x08>;
+def TLBR : MMRel, TLB<"tlbr">, COP0_TLB_FM<0x01>;
+def TLBWI : MMRel, TLB<"tlbwi">, COP0_TLB_FM<0x02>;
+def TLBWR : MMRel, TLB<"tlbwr">, COP0_TLB_FM<0x06>;
 
 class CacheOp<string instr_asm, Operand MemOpnd, RegisterOperand GPROpnd> :
     InstSE<(outs), (ins  MemOpnd:$addr, uimm5:$hint),
