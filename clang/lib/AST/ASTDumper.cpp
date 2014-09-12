@@ -709,8 +709,12 @@ void ASTDumper::dumpCXXCtorInitializer(const CXXCtorInitializer *Init) {
   if (Init->isAnyMemberInitializer()) {
     OS << ' ';
     dumpBareDeclRef(Init->getAnyMember());
-  } else {
+  } else if (Init->isBaseInitializer()) {
     dumpType(QualType(Init->getBaseClass(), 0));
+  } else if (Init->isDelegatingInitializer()) {
+    dumpType(Init->getTypeSourceInfo()->getType());
+  } else {
+    llvm_unreachable("Unknown initializer type");
   }
   dumpStmt(Init->getInit());
 }

@@ -116,6 +116,7 @@ namespace testCXXConstructorDecl {
   class TestCXXConstructorDecl : public A {
     int I;
     TestCXXConstructorDecl(A &a, int i) : A(a), I(i) { }
+    TestCXXConstructorDecl(A &a) : TestCXXConstructorDecl(a, 0) { }
   };
 }
 // CHECK:      CXXConstructorDecl{{.*}} TestCXXConstructorDecl 'void {{.*}}'
@@ -126,6 +127,10 @@ namespace testCXXConstructorDecl {
 // CHECK:        CXXCtorInitializer{{.*}}I
 // CHECK-NEXT:     Expr
 // CHECK:        CompoundStmt
+// CHECK:      CXXConstructorDecl{{.*}} TestCXXConstructorDecl 'void {{.*}}'
+// CHECK-NEXT:   ParmVarDecl{{.*}} a
+// CHECK-NEXT:   CXXCtorInitializer{{.*}}TestCXXConstructorDecl
+// CHECK-NEXT:     CXXConstructExpr{{.*}}TestCXXConstructorDecl
 
 class TestCXXDestructorDecl {
   ~TestCXXDestructorDecl() { }
