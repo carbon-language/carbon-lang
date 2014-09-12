@@ -14,7 +14,6 @@
 #ifndef LLVM_COV_SOURCECOVERAGEDATAMANAGER_H
 #define LLVM_COV_SOURCECOVERAGEDATAMANAGER_H
 
-#include "FunctionCoverageMapping.h"
 #include "llvm/ProfileData/CoverageMapping.h"
 #include <vector>
 

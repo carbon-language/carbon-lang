@@ -220,6 +220,19 @@ public:
   ErrorOr<int64_t> evaluate(const Counter &C) const;
 };
 
+/// \brief Code coverage information for a single function.
+struct FunctionCoverageMapping {
+  /// \brief Raw function name.
+  std::string Name;
+  /// \brief Associated files.
+  std::vector<std::string> Filenames;
+  /// \brief Regions in the function along with their counts.
+  std::vector<CountedRegion> CountedRegions;
+
+  FunctionCoverageMapping(StringRef Name, ArrayRef<StringRef> Filenames)
+      : Name(Name), Filenames(Filenames.begin(), Filenames.end()) {}
+};
+
 } // end namespace coverage
 } // end namespace llvm
 

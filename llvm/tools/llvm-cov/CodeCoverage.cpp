@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "FunctionCoverageMapping.h"
 #include "RenderingSupport.h"
 #include "CoverageViewOptions.h"
 #include "CoverageFilters.h"

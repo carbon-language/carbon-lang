@@ -14,11 +14,13 @@
 #ifndef LLVM_COV_COVERAGEFILTERS_H
 #define LLVM_COV_COVERAGEFILTERS_H
 
-#include "FunctionCoverageMapping.h"
+#include "llvm/ProfileData/CoverageMapping.h"
 #include <vector>
 #include <memory>
 
 namespace llvm {
+
+using coverage::FunctionCoverageMapping;
 
 /// \brief Matches specific functions that pass the requirement of this filter.
 class CoverageFilter {

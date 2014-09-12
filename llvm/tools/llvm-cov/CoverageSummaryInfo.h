@@ -15,7 +15,7 @@
 #ifndef LLVM_COV_COVERAGESUMMARYINFO_H
 #define LLVM_COV_COVERAGESUMMARYINFO_H
 
-#include "FunctionCoverageMapping.h"
+#include "llvm/ProfileData/CoverageMapping.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
@@ -100,7 +100,8 @@ struct FunctionCoverageSummary {
 
   /// \brief Compute the code coverage summary for the given function coverage
   /// mapping record.
-  static FunctionCoverageSummary get(const FunctionCoverageMapping &Function);
+  static FunctionCoverageSummary
+  get(const coverage::FunctionCoverageMapping &Function);
 };
 
 /// \brief A summary of file's code coverage.
