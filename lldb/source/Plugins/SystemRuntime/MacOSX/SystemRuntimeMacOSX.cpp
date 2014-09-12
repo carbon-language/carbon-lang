@@ -28,6 +28,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Utility/ProcessStructReader.h"
 
 #include "SystemRuntimeMacOSX.h"
 
@@ -423,10 +424,14 @@ SystemRuntimeMacOSX::ReadLibdispatchTSDIndexes ()
 
     if (m_dispatch_tsd_indexes_addr != LLDB_INVALID_ADDRESS)
     {
-        size_t maximum_tsd_indexes_struct_size;
-        Address dti_struct_addr;
+
+        // We don't need to check the version number right now, it will be at least 2, but
+        // keep this code around to fetch just the version # for the future where we need
+        // to fetch alternate versions of the struct.
+# if 0
         uint16_t dti_version = 2;
-        if (m_process->GetTarget().ResolveLoadAddress(m_dispatch_tsd_indexes_addr, dti_struct_addr))
+        Address dti_struct_addr;
+        if (m_process->GetTarget().ResolveLoadAddress (m_dispatch_tsd_indexes_addr, dti_struct_addr))
         {
             Error error;
             uint16_t version = m_process->GetTarget().ReadUnsignedIntegerFromMemory (dti_struct_addr, false, 2, UINT16_MAX, error);
@@ -435,55 +440,26 @@ SystemRuntimeMacOSX::ReadLibdispatchTSDIndexes ()
                 dti_version = version;
             }
         }
-        if (dti_version == 1)
-        {
-            if (m_process->GetAddressByteSize() == 4)
-            {
-                maximum_tsd_indexes_struct_size = 4 + 4 + 4 + 4;
-            }
-            else
-            {
-                maximum_tsd_indexes_struct_size = 8 + 8 + 8 + 8;
-            }
-        }
-        else
-        {
-            maximum_tsd_indexes_struct_size = 2 + 2 + 2 + 2;
-        }
+#endif
 
-        uint8_t memory_buffer[maximum_tsd_indexes_struct_size];
-        DataExtractor data (memory_buffer, 
-                            sizeof(memory_buffer), 
-                            m_process->GetByteOrder(), 
-                            m_process->GetAddressByteSize());
-        Error error;
-        if (m_process->ReadMemory (m_dispatch_tsd_indexes_addr, memory_buffer, sizeof(memory_buffer), error) == sizeof(memory_buffer))
+        ClangASTContext *ast_ctx = m_process->GetTarget().GetScratchClangASTContext();
+        if (ast_ctx->getASTContext() && m_dispatch_tsd_indexes_addr != LLDB_INVALID_ADDRESS)
         {
-            lldb::offset_t offset = 0;
-    
-            if (dti_version == 1)
-            {
-                m_libdispatch_tsd_indexes.dti_version = data.GetU16 (&offset);
-                // word alignment to next item
-                if (m_process->GetAddressByteSize() == 4)
-                {
-                    offset += 2;
-                }
-                else
-                {
-                    offset += 6;
-                }
-                m_libdispatch_tsd_indexes.dti_queue_index = data.GetPointer (&offset);
-                m_libdispatch_tsd_indexes.dti_voucher_index = data.GetPointer (&offset);
-                m_libdispatch_tsd_indexes.dti_qos_class_index = data.GetPointer (&offset);
-            }
-            else
-            {
-                m_libdispatch_tsd_indexes.dti_version = data.GetU16 (&offset);
-                m_libdispatch_tsd_indexes.dti_queue_index = data.GetU16 (&offset);
-                m_libdispatch_tsd_indexes.dti_voucher_index = data.GetU16 (&offset);
-                m_libdispatch_tsd_indexes.dti_qos_class_index = data.GetU16 (&offset);
-            }
+            ClangASTType uint16 = ast_ctx->GetIntTypeFromBitSize(16, false);
+            ClangASTType dispatch_tsd_indexes_s = ast_ctx->CreateRecordType(nullptr, lldb::eAccessPublic, "__lldb_dispatch_tsd_indexes_s", clang::TTK_Struct, lldb::eLanguageTypeC);
+            dispatch_tsd_indexes_s.StartTagDeclarationDefinition();
+            dispatch_tsd_indexes_s.AddFieldToRecordType ("dti_version", uint16, lldb::eAccessPublic, 0);
+            dispatch_tsd_indexes_s.AddFieldToRecordType ("dti_queue_index", uint16, lldb::eAccessPublic, 0);
+            dispatch_tsd_indexes_s.AddFieldToRecordType ("dti_voucher_index", uint16, lldb::eAccessPublic, 0);
+            dispatch_tsd_indexes_s.AddFieldToRecordType ("dti_qos_class_index", uint16, lldb::eAccessPublic, 0);
+            dispatch_tsd_indexes_s.CompleteTagDeclarationDefinition();
+
+            ProcessStructReader struct_reader (m_process, m_dispatch_tsd_indexes_addr, dispatch_tsd_indexes_s);
+
+            m_libdispatch_tsd_indexes.dti_version = struct_reader.GetField<uint16_t>(ConstString("dti_version"));
+            m_libdispatch_tsd_indexes.dti_queue_index = struct_reader.GetField<uint16_t>(ConstString("dti_queue_index"));
+            m_libdispatch_tsd_indexes.dti_voucher_index = struct_reader.GetField<uint16_t>(ConstString("dti_voucher_index"));
+            m_libdispatch_tsd_indexes.dti_qos_class_index = struct_reader.GetField<uint16_t>(ConstString("dti_qos_class_index"));
         }
     }
 }
