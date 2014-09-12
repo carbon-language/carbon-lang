@@ -662,6 +662,10 @@ maybeKillChain(MachineOperand &MO, unsigned Idx,
   // determine if a chain should be ended and remove from ActiveChains.
   MachineInstr *MI = MO.getParent();
 
+  if (MO.isReg() && MO.isDef())
+    // We don't care about defs. We see them before uses, so reject them early.
+    return;
+
   if (MO.isReg()) {
 
     // If this is a KILL of a current chain, record it.
