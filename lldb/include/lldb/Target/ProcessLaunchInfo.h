@@ -169,7 +169,7 @@ namespace lldb_private
         lldb_utility::PseudoTerminal &
         GetPTY ()
         {
-            return m_pty;
+            return *m_pty;
         }
 
         lldb::ListenerSP
@@ -212,7 +212,7 @@ namespace lldb_private
         std::string m_shell;
         Flags m_flags;       // Bitwise OR of bits from lldb::LaunchFlags
         std::vector<FileAction> m_file_actions; // File actions for any other files
-        lldb_utility::PseudoTerminal m_pty;
+        std::shared_ptr<lldb_utility::PseudoTerminal> m_pty;
         uint32_t m_resume_count; // How many times do we resume after launching
         Host::MonitorChildProcessCallback m_monitor_callback;
         void *m_monitor_callback_baton;
