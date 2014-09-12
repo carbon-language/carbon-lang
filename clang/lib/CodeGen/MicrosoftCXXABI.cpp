@@ -63,8 +63,6 @@ public:
   }
 
   StringRef GetPureVirtualCallName() override { return "_purecall"; }
-  // No known support for deleted functions in MSVC yet, so this choice is
-  // arbitrary.
   StringRef GetDeletedVirtualCallName() override { return "_purecall"; }
 
   llvm::Value *adjustToCompleteObject(CodeGenFunction &CGF,

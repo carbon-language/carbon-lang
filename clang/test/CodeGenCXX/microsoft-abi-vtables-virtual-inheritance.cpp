@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fno-rtti -emit-llvm -o %t.ll -fdump-vtable-layouts %s -triple=i386-pc-win32 >%t
+// RUN: %clang_cc1 -std=c++11 -fms-extensions -fno-rtti -emit-llvm -o %t.ll -fdump-vtable-layouts %s -triple=i386-pc-win32 >%t
 // RUN: FileCheck %s < %t
 // RUN: FileCheck --check-prefix=MANGLING %s < %t.ll
 
@@ -763,4 +763,12 @@ struct W : B, Y {
 };
 
 W::W() {}
+}
+
+namespace Test13 {
+struct __declspec(dllexport) A {
+  // CHECK-LABEL: VFTable for 'Test13::A' (1 entry).
+  // CHECK-NEXT:   0 | void Test13::A::f() [deleted]
+  virtual void f() = delete;
+};
 }

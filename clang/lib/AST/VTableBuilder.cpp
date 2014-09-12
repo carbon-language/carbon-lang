@@ -2566,13 +2566,6 @@ private:
     }
   }
 
-  void ErrorUnsupported(StringRef Feature, SourceLocation Location) {
-    clang::DiagnosticsEngine &Diags = Context.getDiagnostics();
-    unsigned DiagID = Diags.getCustomDiagID(
-        DiagnosticsEngine::Error, "v-table layout for %0 is not supported yet");
-    Diags.Report(Context.getFullLoc(Location), DiagID) << Feature;
-  }
-
 public:
   VFTableBuilder(MicrosoftVTableContext &VTables,
                  const CXXRecordDecl *MostDerivedClass, const VPtrInfo *Which)
@@ -3037,10 +3030,8 @@ void VFTableBuilder::dumpLayout(raw_ostream &Out) {
       if (MD->isPure())
         Out << " [pure]";
 
-      if (MD->isDeleted()) {
-        ErrorUnsupported("deleted methods", MD->getLocation());
+      if (MD->isDeleted())
         Out << " [deleted]";
-      }
 
       ThunkInfo Thunk = VTableThunks.lookup(I);
       if (!Thunk.isEmpty())
