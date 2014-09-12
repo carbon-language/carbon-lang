@@ -304,14 +304,12 @@ public:
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
     
     // Remember the initial assembler options. The user can not modify these.
-    MipsAssemblerOptions *TmpAOPtr = 
-      new MipsAssemblerOptions(getAvailableFeatures());
-    AssemblerOptions.push_back(std::unique_ptr<MipsAssemblerOptions>(TmpAOPtr));
+    AssemblerOptions.push_back(
+                     make_unique<MipsAssemblerOptions>(getAvailableFeatures()));
     
     // Create an assembler options environment for the user to modify.
-    TmpAOPtr = new MipsAssemblerOptions(getAvailableFeatures());
-    AssemblerOptions.push_back(std::unique_ptr<MipsAssemblerOptions>(TmpAOPtr));
-    TmpAOPtr = nullptr;
+    AssemblerOptions.push_back(
+                     make_unique<MipsAssemblerOptions>(getAvailableFeatures()));
 
     getTargetStreamer().updateABIInfo(*this);
 
@@ -2700,9 +2698,8 @@ bool MipsAsmParser::parseSetPushDirective() {
     return reportParseError("unexpected token, expected end of statement");
 
   // Create a copy of the current assembler options environment and push it.
-  MipsAssemblerOptions *TmpAOPtr = 
-    new MipsAssemblerOptions(AssemblerOptions.back().get());
-  AssemblerOptions.push_back(std::unique_ptr<MipsAssemblerOptions>(TmpAOPtr));
+  AssemblerOptions.push_back(
+              make_unique<MipsAssemblerOptions>(AssemblerOptions.back().get()));
 
   getTargetStreamer().emitDirectiveSetPush();
   return false;
