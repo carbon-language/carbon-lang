@@ -302,6 +302,18 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
   if (startsSegmentOfBuilderTypeCall(Current))
     State.Stack.back().ContainsUnwrappedBuilder = true;
 
+  if (Current.isMemberAccess() && Previous.is(tok::r_paren) &&
+      (Previous.MatchingParen &&
+       (Previous.TotalLength - Previous.MatchingParen->TotalLength > 10))) {
+    // If there is a function call with long parameters, break before trailing
+    // calls. This prevents things like:
+    //   EXPECT_CALL(SomeLongParameter).Times(
+    //       2);
+    // We don't want to do this for short parameters as they can just be
+    // indexes.
+    State.Stack.back().NoLineBreak = true;
+  }
+
   State.Column += Spaces;
   if (Current.isNot(tok::comment) && Previous.is(tok::l_paren) &&
       Previous.Previous && Previous.Previous->isOneOf(tok::kw_if, tok::kw_for))
