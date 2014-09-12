@@ -1,5 +1,5 @@
 # RUN: llvm-objdump -macho -rebase -arch x86_64 \
-# RUN:   %p/Inputs/rebase.macho-x86_64 2>/dev/null | FileCheck %s
+# RUN:   %p/Inputs/rebase.macho-x86_64 | FileCheck %s
 
 
 # CHECK: segment  section            address     type
