@@ -86,6 +86,9 @@ public:
     return &getInstrInfo()->getRegisterInfo();
   }
   bool enableMachineScheduler() const override { return true; }
+  bool enablePostMachineScheduler() const override {
+    return isCortexA53() || isCortexA57();
+  }
 
   bool hasZeroCycleRegMove() const { return HasZeroCycleRegMove; }
 

@@ -128,7 +128,9 @@ namespace {
 class AArch64PassConfig : public TargetPassConfig {
 public:
   AArch64PassConfig(AArch64TargetMachine *TM, PassManagerBase &PM)
-      : TargetPassConfig(TM, PM) {}
+      : TargetPassConfig(TM, PM) {
+    substitutePass(&PostRASchedulerID, &PostMachineSchedulerID);
+  }
 
   AArch64TargetMachine &getAArch64TargetMachine() const {
     return getTM<AArch64TargetMachine>();
