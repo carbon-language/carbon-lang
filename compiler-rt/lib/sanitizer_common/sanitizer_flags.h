@@ -67,10 +67,7 @@ inline CommonFlags *common_flags() {
   return &common_flags_dont_use;
 }
 
-// Sets default values for common flags. If called multiple times,
-// sets default values only once.
 void SetCommonFlagsDefaults(CommonFlags *f);
-
 void ParseCommonFlagsFromString(CommonFlags *f, const char *str);
 void PrintFlagDescriptions();
 

@@ -12,16 +12,16 @@
 // RUN: UBSAN_OPTIONS=print_stacktrace=1 %run %t m0 2>&1 | FileCheck %s --check-prefix=CHECK-NULL-MEMBER --strict-whitespace
 
 // RUN: (echo "vptr_check:S"; echo "vptr_check:T"; echo "vptr_check:U") > %t.supp
-// RUN: UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t mS 2>&1
-// RUN: UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t fS 2>&1
-// RUN: UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t cS 2>&1
-// RUN: UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t mV 2>&1
-// RUN: UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t fV 2>&1
-// RUN: UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t cV 2>&1
-// RUN: UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t oU 2>&1
+// RUN: ASAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t mS 2>&1
+// RUN: ASAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t fS 2>&1
+// RUN: ASAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t cS 2>&1
+// RUN: ASAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t mV 2>&1
+// RUN: ASAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t fV 2>&1
+// RUN: ASAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t cV 2>&1
+// RUN: ASAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.supp:halt_on_error=1 %run %t oU 2>&1
 
 // RUN: echo "vptr_check:S" > %t.loc-supp
-// RUN: UBSAN_OPTIONS=suppressions=%t.loc-supp:halt_on_error=1 not %run %t x- 2>&1 | FileCheck %s --check-prefix=CHECK-LOC-SUPPRESS
+// RUN: ASAN_OPTIONS=suppressions=%t.loc-supp:halt_on_error=1 UBSAN_OPTIONS=suppressions=%t.loc-supp:halt_on_error=1 not %run %t x- 2>&1 | FileCheck %s --check-prefix=CHECK-LOC-SUPPRESS
 
 // FIXME: This test produces linker errors on Darwin.
 // XFAIL: darwin

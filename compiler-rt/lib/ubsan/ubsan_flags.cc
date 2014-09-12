@@ -28,7 +28,7 @@ static const char *GetRuntimeFlagsFromCompileDefinition() {
 #endif
 }
 
-static void InitializeCommonFlags() {
+void InitializeCommonFlags() {
   CommonFlags *cf = common_flags();
   SetCommonFlagsDefaults(cf);
   cf->print_summary = false;
@@ -50,7 +50,6 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
 }
 
 void InitializeFlags() {
-  InitializeCommonFlags();
   Flags *f = flags();
   // Default values.
   f->halt_on_error = false;

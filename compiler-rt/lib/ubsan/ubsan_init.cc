@@ -32,9 +32,15 @@ void __ubsan::InitIfNecessary() {
   if (LIKELY(ubsan_inited))
    return;
   if (0 == internal_strcmp(SanitizerToolName, "SanitizerTool")) {
-    // This will be overwritten if another sanitizer will initialize later.
+    // WARNING: If this condition holds, then either UBSan runs in a standalone
+    // mode, or initializer for another sanitizer hasn't run yet. In a latter
+    // case, another sanitizer will overwrite "SanitizerToolName" and reparse
+    // common flags. It means, that we are not allowed to *use* common flags
+    // in this function.
     SanitizerToolName = "UndefinedBehaviorSanitizer";
+    InitializeCommonFlags();
   }
+  // Initialize UBSan-specific flags.
   InitializeFlags();
   SuppressionContext::InitIfNecessary();
   ubsan_inited = true;

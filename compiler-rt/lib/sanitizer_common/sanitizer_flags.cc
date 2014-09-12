@@ -20,7 +20,6 @@
 namespace __sanitizer {
 
 CommonFlags common_flags_dont_use;
-bool common_flags_defaults_set = false;
 
 struct FlagDescription {
   const char *name;
@@ -36,11 +35,6 @@ IntrusiveList<FlagDescription> flag_descriptions;
 #endif
 
 void SetCommonFlagsDefaults(CommonFlags *f) {
-  CHECK_EQ(common_flags(), f);
-  if (common_flags_defaults_set)
-    return;
-  common_flags_defaults_set = true;
-
   f->symbolize = true;
   f->external_symbolizer_path = 0;
   f->allow_addr2line = false;

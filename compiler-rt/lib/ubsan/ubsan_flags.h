@@ -23,6 +23,7 @@ struct Flags {
 extern Flags ubsan_flags;
 inline Flags *flags() { return &ubsan_flags; }
 
+void InitializeCommonFlags();
 void InitializeFlags();
 
 }  // namespace __ubsan
