@@ -46,7 +46,7 @@ attributes #0 = { optnone noinline }
 ; LLC-Ox-DAG: Skipping pass 'Merge disjoint stack slots'
 ; LLC-Ox-DAG: Skipping pass 'Optimize machine instruction PHIs'
 ; LLC-Ox-DAG: Skipping pass 'Peephole Optimizations'
-; LLC-Ox-DAG: Skipping pass 'Post RA top-down list latency scheduler'
+; LLC-Ox-DAG: Skipping pass 'Post{{.*}}RA{{.*}}{{[Ss]}}cheduler'
 ; LLC-Ox-DAG: Skipping pass 'Remove dead machine instructions'
 ; LLC-Ox-DAG: Skipping pass 'Tail Duplication'
 
