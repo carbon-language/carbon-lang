@@ -213,10 +213,10 @@ bool SIShrinkInstructions::runOnMachineFunction(MachineFunction &MF) {
         unsigned DstReg = MI.getOperand(0).getReg();
         if (TargetRegisterInfo::isVirtualRegister(DstReg)) {
           // VOPC instructions can only write to the VCC register.  We can't
-          // force them to use VCC here, because the register allocator
-          // has trouble with sequences like this, which cause the allocator
-          // to run out of registes if vreg0 and vreg1 belong to the VCCReg
-          // register class:
+          // force them to use VCC here, because the register allocator has
+          // trouble with sequences like this, which cause the allocator to run
+          // out of registers if vreg0 and vreg1 belong to the VCCReg register
+          // class:
           // vreg0 = VOPC;
           // vreg1 = VOPC;
           // S_AND_B64 vreg0, vreg1
