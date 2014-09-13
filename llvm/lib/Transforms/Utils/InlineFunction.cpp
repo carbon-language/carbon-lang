@@ -683,31 +683,19 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
 static void HandleByValArgumentInit(Value *Dst, Value *Src, Module *M,
                                     BasicBlock *InsertBlock,
                                     InlineFunctionInfo &IFI) {
-  LLVMContext &Context = Src->getContext();
-  Type *VoidPtrTy = Type::getInt8PtrTy(Context);
   Type *AggTy = cast<PointerType>(Src->getType())->getElementType();
-  Type *Tys[3] = { VoidPtrTy, VoidPtrTy, Type::getInt64Ty(Context) };
-  Function *MemCpyFn = Intrinsic::getDeclaration(M, Intrinsic::memcpy, Tys);
-  IRBuilder<> builder(InsertBlock->begin());
-  Value *DstCast = builder.CreateBitCast(Dst, VoidPtrTy, "tmp");
-  Value *SrcCast = builder.CreateBitCast(Src, VoidPtrTy, "tmp");
+  IRBuilder<> Builder(InsertBlock->begin());
 
   Value *Size;
   if (IFI.DL == nullptr)
     Size = ConstantExpr::getSizeOf(AggTy);
   else
-    Size = ConstantInt::get(Type::getInt64Ty(Context),
-                            IFI.DL->getTypeStoreSize(AggTy));
+    Size = Builder.getInt64(IFI.DL->getTypeStoreSize(AggTy));
 
   // Always generate a memcpy of alignment 1 here because we don't know
   // the alignment of the src pointer.  Other optimizations can infer
   // better alignment.
-  Value *CallArgs[] = {
-    DstCast, SrcCast, Size,
-    ConstantInt::get(Type::getInt32Ty(Context), 1),
-    ConstantInt::getFalse(Context) // isVolatile
-  };
-  builder.CreateCall(MemCpyFn, CallArgs);
+  Builder.CreateMemCpy(Dst, Src, Size, /*Align=*/1);
 }
 
 /// HandleByValArgument - When inlining a call site that has a byval argument,
