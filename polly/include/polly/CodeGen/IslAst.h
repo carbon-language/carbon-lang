@@ -52,7 +52,7 @@ public:
     IslAstUserPayload()
         : IsInnermost(false), IsInnermostParallel(false),
           IsOutermostParallel(false), IsReductionParallel(false),
-          Build(nullptr) {}
+          MinimalDependenceDistance(nullptr), Build(nullptr) {}
 
     /// @brief Cleanup all isl structs on destruction.
     ~IslAstUserPayload();
@@ -68,6 +68,9 @@ public:
 
     /// @brief Flag to mark parallel loops which break reductions.
     bool IsReductionParallel;
+
+    /// @brief The minimal dependence distance for non parallel loops.
+    isl_pw_aff *MinimalDependenceDistance;
 
     /// @brief The build environment at the time this node was constructed.
     isl_ast_build *Build;
@@ -125,6 +128,10 @@ public:
 
   /// @brief Get the nodes schedule or a nullptr if not available.
   static __isl_give isl_union_map *getSchedule(__isl_keep isl_ast_node *Node);
+
+  /// @brief Get minimal dependence distance or nullptr if not available.
+  static __isl_give isl_pw_aff *
+  getMinimalDependenceDistance(__isl_keep isl_ast_node *Node);
 
   /// @brief Get the nodes broken reductions or a nullptr if not available.
   static MemoryAccessSet *getBrokenReductions(__isl_keep isl_ast_node *Node);

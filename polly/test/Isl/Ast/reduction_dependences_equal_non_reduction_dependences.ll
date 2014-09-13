@@ -4,6 +4,7 @@
 ; accesses to the array A. We need to ensure we do __not__ parallelize anything
 ; here.
 ;
+; CHECK: #pragma minimal dependence distance: 1
 ; CHECK-NOT: pragma
 ; CHECK-NOT: reduction
 ;

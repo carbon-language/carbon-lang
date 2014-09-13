@@ -82,6 +82,7 @@ static void freeIslAstUserPayload(void *Ptr) {
 
 IslAstInfo::IslAstUserPayload::~IslAstUserPayload() {
   isl_ast_build_free(Build);
+  isl_pw_aff_free(MinimalDependenceDistance);
 }
 
 /// @brief Temporary information used when building the ast.
@@ -102,9 +103,12 @@ struct AstBuildUserInfo {
 
 /// @brief Print a string @p str in a single line using @p Printer.
 static isl_printer *printLine(__isl_take isl_printer *Printer,
-                              const std::string &str) {
+                              const std::string &str,
+                              __isl_keep isl_pw_aff *PWA = nullptr) {
   Printer = isl_printer_start_line(Printer);
   Printer = isl_printer_print_str(Printer, str.c_str());
+  if (PWA)
+    Printer = isl_printer_print_pw_aff(Printer, PWA);
   return isl_printer_end_line(Printer);
 }
 
@@ -141,9 +145,14 @@ static isl_printer *cbPrintFor(__isl_take isl_printer *Printer,
                                __isl_take isl_ast_print_options *Options,
                                __isl_keep isl_ast_node *Node, void *) {
 
+  isl_pw_aff *DD = IslAstInfo::getMinimalDependenceDistance(Node);
   const std::string BrokenReductionsStr = getBrokenReductionsStr(Node);
+  const std::string DepDisPragmaStr = "#pragma minimal dependence distance: ";
   const std::string SimdPragmaStr = "#pragma simd";
   const std::string OmpPragmaStr = "#pragma omp parallel for";
+
+  if (DD)
+    Printer = printLine(Printer, DepDisPragmaStr, DD);
 
   if (IslAstInfo::isInnermostParallel(Node))
     Printer = printLine(Printer, SimdPragmaStr + BrokenReductionsStr);
@@ -151,6 +160,7 @@ static isl_printer *cbPrintFor(__isl_take isl_printer *Printer,
   if (IslAstInfo::isOutermostParallel(Node))
     Printer = printLine(Printer, OmpPragmaStr + BrokenReductionsStr);
 
+  isl_pw_aff_free(DD);
   return isl_ast_node_for_print(Node, Printer, Options);
 }
 
@@ -173,7 +183,9 @@ static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
   isl_union_map *Schedule = isl_ast_build_get_schedule(Build);
   isl_union_map *Deps = D->getDependences(
       Dependences::TYPE_RAW | Dependences::TYPE_WAW | Dependences::TYPE_WAR);
-  if (!D->isParallel(Schedule, Deps) && !isl_union_map_free(Schedule))
+
+  if (!D->isParallel(Schedule, Deps, &NodeInfo->MinimalDependenceDistance) &&
+      !isl_union_map_free(Schedule))
     return false;
 
   isl_union_map *RedDeps = D->getDependences(Dependences::TYPE_TC_RED);
@@ -406,6 +418,13 @@ bool IslAstInfo::isReductionParallel(__isl_keep isl_ast_node *Node) {
 isl_union_map *IslAstInfo::getSchedule(__isl_keep isl_ast_node *Node) {
   IslAstUserPayload *Payload = getNodePayload(Node);
   return Payload ? isl_ast_build_get_schedule(Payload->Build) : nullptr;
+}
+
+isl_pw_aff *
+IslAstInfo::getMinimalDependenceDistance(__isl_keep isl_ast_node *Node) {
+  IslAstUserPayload *Payload = getNodePayload(Node);
+  return Payload ? isl_pw_aff_copy(Payload->MinimalDependenceDistance)
+                 : nullptr;
 }
 
 IslAstInfo::MemoryAccessSet *

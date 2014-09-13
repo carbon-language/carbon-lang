@@ -28,6 +28,7 @@
 #include <map>
 #include "isl/ctx.h"
 
+struct isl_pw_aff;
 struct isl_union_map;
 struct isl_union_set;
 struct isl_map;
@@ -88,13 +89,17 @@ public:
 
   /// @brief Check if a partial schedule is parallel wrt to @p Deps.
   ///
-  /// @param Schedule The subset of the scattering space that we want to check.
-  /// @param Deps     The dependences @p Schedule needs to respect.
+  /// @param Schedule       The subset of the scattering space that we want to
+  ///                       check.
+  /// @param Deps           The dependences @p Schedule needs to respect.
+  /// @param MinDistancePtr If not nullptr, the minimal dependence distance will
+  ///                       be returned at the address of that pointer
   ///
   /// @return Returns true, if executing parallel the outermost dimension of
   ///         @p Schedule is valid according to the dependences @p Deps.
   bool isParallel(__isl_keep isl_union_map *Schedule,
-                  __isl_take isl_union_map *Deps);
+                  __isl_take isl_union_map *Deps,
+                  __isl_give isl_pw_aff **MinDistancePtr = nullptr);
 
   /// @brief Get the dependences in this Scop.
   ///

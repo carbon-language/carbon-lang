@@ -486,9 +486,12 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
 // dimension, then the loop is parallel. The distance is zero in the current
 // dimension if it is a subset of a map with equal values for the current
 // dimension.
-bool Dependences::isParallel(isl_union_map *Schedule, isl_union_map *Deps) {
-  isl_map *ScheduleDeps, *Test;
-  unsigned Dimension, IsParallel;
+bool Dependences::isParallel(isl_union_map *Schedule, isl_union_map *Deps,
+                             isl_pw_aff **MinDistancePtr) {
+  isl_set *Deltas, *Distance;
+  isl_map *ScheduleDeps;
+  unsigned Dimension;
+  bool IsParallel;
 
   Deps = isl_union_map_apply_range(Deps, isl_union_map_copy(Schedule));
   Deps = isl_union_map_apply_domain(Deps, isl_union_map_copy(Schedule));
@@ -504,14 +507,31 @@ bool Dependences::isParallel(isl_union_map *Schedule, isl_union_map *Deps) {
   for (unsigned i = 0; i < Dimension; i++)
     ScheduleDeps = isl_map_equate(ScheduleDeps, isl_dim_out, i, isl_dim_in, i);
 
-  Test = isl_map_universe(isl_map_get_space(ScheduleDeps));
-  Test = isl_map_equate(Test, isl_dim_out, Dimension, isl_dim_in, Dimension);
-  IsParallel = isl_map_is_subset(ScheduleDeps, Test);
+  Deltas = isl_map_deltas(ScheduleDeps);
+  Distance = isl_set_universe(isl_set_get_space(Deltas));
 
-  isl_map_free(Test);
-  isl_map_free(ScheduleDeps);
+  // [0, ..., 0, +] - All zeros and last dimension larger than zero
+  for (unsigned i = 0; i < Dimension; i++)
+    Distance = isl_set_fix_si(Distance, isl_dim_set, i, 0);
 
-  return IsParallel;
+  Distance = isl_set_lower_bound_si(Distance, isl_dim_set, Dimension, 1);
+  Distance = isl_set_intersect(Distance, Deltas);
+
+  IsParallel = isl_set_is_empty(Distance);
+  if (IsParallel || !MinDistancePtr) {
+    isl_set_free(Distance);
+    return IsParallel;
+  }
+
+  Distance = isl_set_project_out(Distance, isl_dim_set, 0, Dimension);
+  Distance = isl_set_coalesce(Distance);
+
+  // This last step will compute a expression for the minimal value in the
+  // distance polyhedron Distance with regards to the first (outer most)
+  // dimension.
+  *MinDistancePtr = isl_pw_aff_coalesce(isl_set_dim_min(Distance, 0));
+
+  return false;
 }
 
 static void printDependencyMap(raw_ostream &OS, __isl_keep isl_union_map *DM) {
