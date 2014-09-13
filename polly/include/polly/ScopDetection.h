@@ -52,6 +52,8 @@
 
 #include "polly/ScopDetectionDiagnostic.h"
 
+#include "llvm/ADT/SetVector.h"
+
 #include <set>
 #include <map>
 
@@ -100,8 +102,8 @@ struct MemAcc {
 };
 
 typedef std::map<const Instruction *, MemAcc *> MapInsnToMemAcc;
-typedef std::pair<const Instruction *, const SCEVAddRecExpr *> PairInsnAddRec;
-typedef std::vector<PairInsnAddRec> AFs;
+typedef std::pair<const Instruction *, const SCEV *> PairInstSCEV;
+typedef std::vector<PairInstSCEV> AFs;
 typedef std::map<const SCEVUnknown *, AFs> BaseToAFs;
 typedef std::map<const SCEVUnknown *, const SCEV *> BaseToElSize;
 
@@ -134,8 +136,17 @@ class ScopDetection : public FunctionPass {
     bool Verifying;      // If we are in the verification phase?
     RejectLog Log;
 
-    // Map a base pointer to all access functions accessing it.
-    BaseToAFs NonAffineAccesses, AffineAccesses;
+    /// @brief Map a base pointer to all access functions accessing it.
+    ///
+    /// This map is indexed by the base pointer. Each element of the map
+    /// is a list of memory accesses that reference this base pointer.
+    BaseToAFs Accesses;
+
+    /// @brief The set of base pointers with non-affine accesses.
+    ///
+    /// This set contains all base pointers which are used in memory accesses
+    /// that can not be detected as affine accesses.
+    SetVector<const SCEVUnknown *> NonAffineAccesses;
     BaseToElSize ElementSize;
 
     DetectionContext(Region &R, AliasAnalysis &AA, bool Verify)
