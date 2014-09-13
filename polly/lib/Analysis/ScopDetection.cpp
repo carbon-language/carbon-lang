@@ -433,6 +433,15 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
 
+  const SCEV *Size = SE->getElementSize(&Inst);
+  if (Context.ElementSize.count(BasePointer)) {
+    if (Context.ElementSize[BasePointer] != Size)
+      return invalid<ReportDifferentArrayElementSize>(Context, /*Assert=*/true,
+                                                      &Inst, BaseValue);
+  } else {
+    Context.ElementSize[BasePointer] = Size;
+  }
+
   if (AllowNonAffine) {
     // Do not check whether AccessFunction is affine.
   } else if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE,
@@ -442,9 +451,6 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
     if (!PollyDelinearize || !AF)
       return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true,
                                             AccessFunction, &Inst, BaseValue);
-
-    const SCEV *ElementSize = SE->getElementSize(&Inst);
-    Context.ElementSize[BasePointer] = ElementSize;
 
     // Collect all non affine memory accesses, and check whether they are linear
     // at the end of scop detection. That way we can delinearize all the memory
