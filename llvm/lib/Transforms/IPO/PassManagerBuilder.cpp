@@ -91,6 +91,7 @@ PassManagerBuilder::PassManagerBuilder() {
     VerifyInput = false;
     VerifyOutput = false;
     StripDebug = false;
+    MergeFunctions = false;
 }
 
 PassManagerBuilder::~PassManagerBuilder() {
@@ -330,6 +331,10 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
       MPM.add(createConstantMergePass());     // Merge dup global constants
     }
   }
+
+  if (MergeFunctions)
+    MPM.add(createMergeFunctionsPass());
+
   addExtensionsToPM(EP_OptimizerLast, MPM);
 }
 
@@ -427,6 +432,11 @@ void PassManagerBuilder::addLTOOptimizationPasses(PassManagerBase &PM) {
 
   // Now that we have optimized the program, discard unreachable functions.
   PM.add(createGlobalDCEPass());
+
+  // FIXME: this is profitable (for compiler time) to do at -O0 too, but
+  // currently it damages debug info.
+  if (MergeFunctions)
+    PM.add(createMergeFunctionsPass());
 }
 
 void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
