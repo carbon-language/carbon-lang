@@ -2247,7 +2247,8 @@ void llvm::printMachORebaseTable(const object::MachOObjectFile *Obj) {
     uint64_t Address = sectionTable.address(SegIndex, OffsetInSeg);
 
     // Table lines look like: __DATA  __nl_symbol_ptr  0x0000F00C  pointer
-    outs() << format("%-8s %-18s 0x%08X  %s\n", SegmentName.str().c_str(),
+    outs() << format("%-8s %-18s 0x%08" PRIX64 "  %s\n", 
+                     SegmentName.str().c_str(),
                      SectionName.str().c_str(), Address,
                      Entry.typeName().str().c_str());
   }
