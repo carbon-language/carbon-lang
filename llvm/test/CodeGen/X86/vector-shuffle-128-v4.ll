@@ -216,11 +216,14 @@ define <4 x float> @shuffle_v4f32_4zzz(<4 x float> %a) {
 ; SSE2-NEXT:    retq
 ;
 ; SSE41-LABEL: @shuffle_v4f32_4zzz
-; SSE41:         insertps {{.*}} # xmm0 = xmm0[0],zero,zero,zero
+; SSE41:         xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSE41-NEXT:    blendps {{.*}} # [[X]] = xmm0[0],[[X]][1,2,3]
+; SSE41-NEXT:    movaps %[[X]], %xmm0
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: @shuffle_v4f32_4zzz
-; AVX1:         vinsertps {{.*}} # xmm0 = xmm0[0],zero,zero,zero
+; AVX1:         vxorps %[[X:xmm[0-9]+]], %[[X]]
+; AVX1-NEXT:    vblendps {{.*}} # xmm0 = xmm0[0],[[X]][1,2,3]
 ; AVX1-NEXT:    retq
   %shuffle = shufflevector <4 x float> zeroinitializer, <4 x float> %a, <4 x i32> <i32 4, i32 1, i32 2, i32 3>
   ret <4 x float> %shuffle
@@ -290,11 +293,14 @@ define <4 x float> @shuffle_v4f32_zzz7(<4 x float> %a) {
 ; SSE2-NEXT:    retq
 ;
 ; SSE41-LABEL: @shuffle_v4f32_zzz7
-; SSE41:         insertps {{.*}} # xmm0 = zero,zero,zero,xmm0[3]
+; SSE41:         xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSE41-NEXT:    blendps {{.*}} # [[X]] = [[X]][0,1,2],xmm0[3]
+; SSE41-NEXT:    movaps %[[X]], %xmm0
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: @shuffle_v4f32_zzz7
-; AVX1:         vinsertps {{.*}} # xmm0 = zero,zero,zero,xmm0[3]
+; AVX1:         vxorps %[[X:xmm[0-9]+]], %[[X]]
+; AVX1-NEXT:    vblendps {{.*}} # xmm0 = [[X]][0,1,2],xmm0[3]
 ; AVX1-NEXT:    retq
   %shuffle = shufflevector <4 x float> zeroinitializer, <4 x float> %a, <4 x i32> <i32 0, i32 1, i32 2, i32 7>
   ret <4 x float> %shuffle

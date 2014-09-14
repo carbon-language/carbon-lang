@@ -7233,6 +7233,31 @@ static SDValue getV4X86ShuffleImm8ForMask(ArrayRef<int> Mask,
   return DAG.getConstant(Imm, MVT::i8);
 }
 
+/// \brief Try to emit a blend instruction for a shuffle.
+///
+/// This doesn't do any checks for the availability of instructions for blending
+/// these values. It relies on the availability of the X86ISD::BLENDI pattern to
+/// be matched in the backend with the type given. What it does check for is
+/// that the shuffle mask is in fact a blend.
+static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
+                                         SDValue V2, ArrayRef<int> Mask,
+                                         SelectionDAG &DAG) {
+
+  unsigned BlendMask = 0;
+  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
+    if (Mask[i] >= Size) {
+      if (Mask[i] != i + Size)
+        return SDValue(); // Shuffled V2 input!
+      BlendMask |= 1u << i;
+      continue;
+    }
+    if (Mask[i] >= 0 && Mask[i] != i)
+      return SDValue(); // Shuffled V1 input!
+  }
+  return DAG.getNode(X86ISD::BLENDI, DL, VT, V1, V2,
+                     DAG.getConstant(BlendMask, MVT::i8));
+}
+
 /// \brief Handle lowering of 2-lane 64-bit floating point shuffles.
 ///
 /// This is the basis function for the 2-lane 64-bit shuffles as we have full
@@ -7266,6 +7291,11 @@ static SDValue lowerV2F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v2f64, V1, V2);
   if (isShuffleEquivalent(Mask, 1, 3))
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v2f64, V1, V2);
+
+  if (Subtarget->hasSSE41())
+    if (SDValue Blend =
+            lowerVectorShuffleAsBlend(DL, MVT::v2f64, V1, V2, Mask, DAG))
+      return Blend;
 
   unsigned SHUFPDMask = (Mask[0] == 1) | (((Mask[1] - 2) == 1) << 1);
   return DAG.getNode(X86ISD::SHUFP, SDLoc(Op), MVT::v2f64, V1, V2,
@@ -7352,6 +7382,11 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v4f32, V1, V2);
   if (isShuffleEquivalent(Mask, 2, 6, 3, 7))
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v4f32, V1, V2);
+
+  if (Subtarget->hasSSE41())
+    if (SDValue Blend =
+            lowerVectorShuffleAsBlend(DL, MVT::v4f32, V1, V2, Mask, DAG))
+      return Blend;
 
   if (NumV2Elements == 1) {
     int V2Index =
