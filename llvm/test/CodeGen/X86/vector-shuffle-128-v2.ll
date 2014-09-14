@@ -91,6 +91,21 @@ define <2 x double> @shuffle_v2f64_33(<2 x double> %a, <2 x double> %b) {
   %shuffle = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 3, i32 3>
   ret <2 x double> %shuffle
 }
+define <2 x double> @shuffle_v2f64_03(<2 x double> %a, <2 x double> %b) {
+; CHECK-SSE2-LABEL: @shuffle_v2f64_03
+; CHECK-SSE2:         shufpd {{.*}} # xmm0 = xmm0[0],xmm1[1]
+; CHECK-SSE2-NEXT:    retq
+  %shuffle = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 0, i32 3>
+  ret <2 x double> %shuffle
+}
+define <2 x double> @shuffle_v2f64_21(<2 x double> %a, <2 x double> %b) {
+; CHECK-SSE2-LABEL: @shuffle_v2f64_21
+; CHECK-SSE2:         shufpd {{.*}} # xmm1 = xmm1[0],xmm0[1]
+; CHECK-SSE2-NEXT:    movapd %xmm1, %xmm0
+; CHECK-SSE2-NEXT:    retq
+  %shuffle = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 2, i32 1>
+  ret <2 x double> %shuffle
+}
 
 
 define <2 x i64> @shuffle_v2i64_02(<2 x i64> %a, <2 x i64> %b) {
