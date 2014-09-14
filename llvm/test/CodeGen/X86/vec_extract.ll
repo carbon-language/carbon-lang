@@ -41,7 +41,7 @@ entry:
 define double @test4(double %A) nounwind {
 ; CHECK-LABEL: test4:
 ; CHECK:         calll {{.*}}foo
-; CHECK-NEXT:    unpckhpd %[[X:xmm[0-9]+]], %[[X]]
+; CHECK-NEXT:    movhlps %[[X:xmm[0-9]+]], %[[X]]
 ; CHECK-NEXT:    addsd {{.*}}(%{{.*}}), %[[X2]]
 ; CHECK-NEXT:    movsd %[[X2]], [[mem:.*\(%.*\)]]
 ; CHECK-NEXT:    fldl [[mem]]

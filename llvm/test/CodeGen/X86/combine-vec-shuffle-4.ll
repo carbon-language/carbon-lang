@@ -77,7 +77,7 @@ define <4 x float> @test7(<4 x float> %a) {
 ; Mask: [0,1,0,1]
 ; CHECK-NOT: pshufd
 ; CHECK-NOT: shufps
-; CHECK: movlhps 
+; CHECK: unpcklpd
 ; CHECK-NEXT: ret
 
 define <4 x float> @test8(<4 x float> %a) {
@@ -89,7 +89,7 @@ define <4 x float> @test8(<4 x float> %a) {
 ; Mask: [0,1,0,u]
 ; CHECK-NOT: pshufd
 ; CHECK-NOT: shufps
-; CHECK: movlhps
+; CHECK: unpcklpd
 ; CHECK-NEXT: ret
 
 define <4 x float> @test9(<4 x float> %a) {
@@ -196,7 +196,7 @@ define <4 x float> @test17(<4 x float> %a) {
 ; Mask: [0,1,0,1]
 ; CHECK-NOT: pshufd
 ; CHECK-NOT: shufps
-; CHECK: movlhps 
+; CHECK: unpcklpd
 ; CHECK-NEXT: ret
 
 define <4 x float> @test18(<4 x float> %a) {
@@ -208,7 +208,7 @@ define <4 x float> @test18(<4 x float> %a) {
 ; Mask: [0,1,0,u]
 ; CHECK-NOT: pshufd
 ; CHECK-NOT: shufps
-; CHECK: movlhps
+; CHECK: unpcklpd
 ; CHECK-NEXT: ret
 
 define <4 x float> @test19(<4 x float> %a) {

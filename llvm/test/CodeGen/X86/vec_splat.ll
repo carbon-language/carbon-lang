@@ -28,7 +28,7 @@ define void @test_v2sd(<2 x double>* %P, <2 x double>* %Q, double %X) nounwind {
 	ret void
 
 ; SSE2-LABEL: test_v2sd:
-; SSE2: shufpd $0
+; SSE2: movlhps
 
 ; SSE3-LABEL: test_v2sd:
 ; SSE3: movddup

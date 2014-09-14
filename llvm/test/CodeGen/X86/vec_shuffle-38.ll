@@ -7,7 +7,7 @@ define <2 x double> @ld(<2 x double> %p) nounwind optsize ssp {
 }
 
 define <2 x double> @hd(<2 x double> %p) nounwind optsize ssp {
-; CHECK: unpckhpd
+; CHECK: movhlps
   %shuffle = shufflevector <2 x double> %p, <2 x double> undef, <2 x i32> <i32 1, i32 1>
   ret <2 x double> %shuffle
 }

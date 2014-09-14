@@ -36,7 +36,9 @@ define void @t3() {
 ;
 ; This movs the entire vector, shuffling the high double down. If we fixed the
 ; FIXME above it would just move the high double directly.
-; CHECK: movhpd %xmm
+; CHECK: movups
+; CHECK: movhlps
+; CHECK: movlps
 
 bb:
   %tmp13 = load <2 x double>* undef, align 1

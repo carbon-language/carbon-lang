@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=CHECK-SSE2
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse3 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=CHECK-SSE3
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-unknown"
@@ -48,7 +49,7 @@ define <2 x i64> @shuffle_v2i64_33(<2 x i64> %a, <2 x i64> %b) {
 
 define <2 x double> @shuffle_v2f64_00(<2 x double> %a, <2 x double> %b) {
 ; CHECK-SSE2-LABEL: @shuffle_v2f64_00
-; CHECK-SSE2:         shufpd {{.*}} # xmm0 = xmm0[0,0]
+; CHECK-SSE2:         movlhps {{.*}} # xmm0 = xmm0[0,0]
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 0, i32 0>
   ret <2 x double> %shuffle
@@ -62,17 +63,15 @@ define <2 x double> @shuffle_v2f64_10(<2 x double> %a, <2 x double> %b) {
 }
 define <2 x double> @shuffle_v2f64_11(<2 x double> %a, <2 x double> %b) {
 ; CHECK-SSE2-LABEL: @shuffle_v2f64_11
-; CHECK-SSE2:         shufpd {{.*}} # xmm0 = xmm0[1,1]
+; CHECK-SSE2:         movhlps {{.*}} # xmm0 = xmm0[1,1]
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 1, i32 1>
   ret <2 x double> %shuffle
 }
 define <2 x double> @shuffle_v2f64_22(<2 x double> %a, <2 x double> %b) {
-; FIXME: Should these use movapd + shufpd to remove a domain change at the cost
-;        of a mov?
-;
 ; CHECK-SSE2-LABEL: @shuffle_v2f64_22
-; CHECK-SSE2:         pshufd {{.*}} # xmm0 = xmm1[0,1,0,1]
+; CHECK-SSE2:         movlhps {{.*}} # xmm1 = xmm1[0,0]
+; CHECK-SSE2-NEXT:    movaps %xmm1, %xmm0
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 2, i32 2>
   ret <2 x double> %shuffle
@@ -86,7 +85,8 @@ define <2 x double> @shuffle_v2f64_32(<2 x double> %a, <2 x double> %b) {
 }
 define <2 x double> @shuffle_v2f64_33(<2 x double> %a, <2 x double> %b) {
 ; CHECK-SSE2-LABEL: @shuffle_v2f64_33
-; CHECK-SSE2:         pshufd {{.*}} # xmm0 = xmm1[2,3,2,3]
+; CHECK-SSE2:         movhlps {{.*}} # xmm1 = xmm1[1,1]
+; CHECK-SSE2-NEXT:    movaps %xmm1, %xmm0
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 3, i32 3>
   ret <2 x double> %shuffle
@@ -216,4 +216,33 @@ define <2 x i64> @shuffle_v2i64_31_copy(<2 x i64> %nonce, <2 x i64> %a, <2 x i64
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <2 x i64> %a, <2 x i64> %b, <2 x i32> <i32 3, i32 1>
   ret <2 x i64> %shuffle
+}
+
+
+define <2 x double> @insert_dup_reg_v2f64(double %a) {
+; CHECK-SSE2-LABEL: @insert_dup_reg_v2f64
+; CHECK-SSE2:         movlhps {{.*}} # xmm0 = xmm0[0,0]
+; CHECK-SSE2-NEXT:    retq
+;
+; FIXME: This should match movddup as well!
+; CHECK-SSE3-LABEL: @insert_dup_reg_v2f64
+; CHECK-SSE3:         unpcklpd {{.*}} # xmm0 = xmm0[0,0]
+; CHECK-SSE3-NEXT:    retq
+  %v = insertelement <2 x double> undef, double %a, i32 0
+  %shuffle = shufflevector <2 x double> %v, <2 x double> undef, <2 x i32> <i32 0, i32 0>
+  ret <2 x double> %shuffle
+}
+define <2 x double> @insert_dup_mem_v2f64(double* %ptr) {
+; CHECK-SSE2-LABEL: @insert_dup_mem_v2f64
+; CHECK-SSE2:         movsd {{.*}}, %xmm0
+; CHECK-SSE2-NEXT:    movlhps {{.*}} # xmm0 = xmm0[0,0]
+; CHECK-SSE2-NEXT:    retq
+;
+; CHECK-SSE3-LABEL: @insert_dup_mem_v2f64
+; CHECK-SSE3:         movddup {{.*}}, %xmm0
+; CHECK-SSE3-NEXT:    retq
+  %a = load double* %ptr
+  %v = insertelement <2 x double> undef, double %a, i32 0
+  %shuffle = shufflevector <2 x double> %v, <2 x double> undef, <2 x i32> <i32 0, i32 0>
+  ret <2 x double> %shuffle
 }
