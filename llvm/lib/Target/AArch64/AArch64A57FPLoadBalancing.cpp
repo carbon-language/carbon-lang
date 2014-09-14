@@ -582,7 +582,9 @@ scanInstruction(MachineInstr *MI, unsigned Idx,
 
   if (isMul(MI)) {
 
-    for (auto &I : MI->operands())
+    for (auto &I : MI->uses())
+      maybeKillChain(I, Idx, ActiveChains);
+    for (auto &I : MI->defs())
       maybeKillChain(I, Idx, ActiveChains);
 
     // Create a new chain. Multiplies don't require forwarding so can go on any
@@ -644,7 +646,9 @@ scanInstruction(MachineInstr *MI, unsigned Idx,
 
     // Non-MUL or MLA instruction. Invalidate any chain in the uses or defs
     // lists.
-    for (auto &I : MI->operands())
+    for (auto &I : MI->uses())
+      maybeKillChain(I, Idx, ActiveChains);
+    for (auto &I : MI->defs())
       maybeKillChain(I, Idx, ActiveChains);
 
   }
@@ -656,10 +660,6 @@ maybeKillChain(MachineOperand &MO, unsigned Idx,
   // Given an operand and the set of active chains (keyed by register),
   // determine if a chain should be ended and remove from ActiveChains.
   MachineInstr *MI = MO.getParent();
-
-  if (MO.isReg() && MO.isDef())
-    // We don't care about defs. We see them before uses, so reject them early.
-    return;
 
   if (MO.isReg()) {
 
