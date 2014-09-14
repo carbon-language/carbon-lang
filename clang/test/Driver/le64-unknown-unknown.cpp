@@ -3,9 +3,9 @@
 
 // ECHO: {{.*}} "-cc1" {{.*}}le64-unknown-unknown.c
 
-// Check platform defines
-#include <stdarg.h>
-#include <stddef.h>
+typedef __builtin_va_list va_list;
+typedef __SIZE_TYPE__ size_t;
+typedef __PTRDIFF_TYPE__ ptrdiff_t;
 
 extern "C" {
 
