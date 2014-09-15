@@ -510,6 +510,12 @@ namespace {
   class VariadicArgument : public Argument {
     std::string Type, ArgName, ArgSizeName, RangeName;
 
+  protected:
+    // Assumed to receive a parameter: raw_ostream OS.
+    virtual void writeValueImpl(raw_ostream &OS) const {
+      OS << "    OS << Val;\n";
+    }
+
   public:
     VariadicArgument(const Record &Arg, StringRef Attr, std::string T)
         : Argument(Arg, Attr), Type(T), ArgName(getLowerName().str() + "_"),
@@ -589,9 +595,9 @@ namespace {
       OS << "  bool isFirst = true;\n"
          << "  for (const auto &Val : " << RangeName << "()) {\n"
          << "    if (isFirst) isFirst = false;\n"
-         << "    else OS << \", \";\n"
-         << "    OS << Val;\n"
-         << "  }\n";
+         << "    else OS << \", \";\n";
+      writeValueImpl(OS);
+      OS << "  }\n";
       OS << "  OS << \"";
     }
     void writeDump(raw_ostream &OS) const override {
@@ -678,7 +684,8 @@ namespace {
       OS << "Record.push_back(SA->get" << getUpperName() << "());\n";
     }
     void writeValue(raw_ostream &OS) const override {
-      OS << "\" << get" << getUpperName() << "() << \"";
+      OS << "\\\"\" << " << getAttrName() << "Attr::Convert" << type << "ToStr(get"
+         << getUpperName() << "()) << \"\\\"";
     }
     void writeDump(raw_ostream &OS) const override {
       OS << "    switch(SA->get" << getUpperName() << "()) {\n";
@@ -703,13 +710,37 @@ namespace {
       OS << "    if (R) {\n";
       OS << "      Out = *R;\n      return true;\n    }\n";
       OS << "    return false;\n";
-      OS << "  }\n";
+      OS << "  }\n\n";
+
+      // Mapping from enumeration values back to enumeration strings isn't
+      // trivial because some enumeration values have multiple named
+      // enumerators, such as type_visibility(internal) and
+      // type_visibility(hidden) both mapping to TypeVisibilityAttr::Hidden.
+      OS << "  static const char *Convert" << type << "ToStr("
+         << type << " Val) {\n"
+         << "    switch(Val) {\n";
+      std::set<std::string> Uniques;
+      for (size_t I = 0; I < enums.size(); ++I) {
+        if (Uniques.insert(enums[I]).second)
+          OS << "    case " << getAttrName() << "Attr::" << enums[I]
+             << ": return \"" << values[I] << "\";\n";       
+      }
+      OS << "    }\n"
+         << "    llvm_unreachable(\"No enumerator with that value\");\n"
+         << "  }\n";
     }
   };
   
   class VariadicEnumArgument: public VariadicArgument {
     std::string type, QualifiedTypeName;
     std::vector<std::string> values, enums, uniques;
+
+  protected:
+    void writeValueImpl(raw_ostream &OS) const override {
+      OS << "    OS << \"\\\"\" << " << getAttrName() << "Attr::Convert" << type
+         << "ToStr(Val)" << "<< \"\\\"\";\n";
+    }
+
   public:
     VariadicEnumArgument(const Record &Arg, StringRef Attr)
       : VariadicArgument(Arg, Attr, Arg.getValueAsString("Type")),
@@ -785,7 +816,20 @@ namespace {
       OS << "    if (R) {\n";
       OS << "      Out = *R;\n      return true;\n    }\n";
       OS << "    return false;\n";
-      OS << "  }\n";
+      OS << "  }\n\n";
+
+      OS << "  static const char *Convert" << type << "ToStr("
+        << type << " Val) {\n"
+        << "    switch(Val) {\n";
+      std::set<std::string> Uniques;
+      for (size_t I = 0; I < enums.size(); ++I) {
+        if (Uniques.insert(enums[I]).second)
+          OS << "    case " << getAttrName() << "Attr::" << enums[I]
+          << ": return \"" << values[I] << "\";\n";
+      }
+      OS << "    }\n"
+        << "    llvm_unreachable(\"No enumerator with that value\");\n"
+        << "  }\n";
     }
   };
 
