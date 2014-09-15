@@ -1849,6 +1849,7 @@ Value *TypePromotionHelper::promoteOperandForTruncAndAnyExt(
   // By construction, the operand of SExt is an instruction. Otherwise we cannot
   // get through it and this method should not be called.
   Instruction *SExtOpnd = cast<Instruction>(SExt->getOperand(0));
+  Instruction *ExtInst = SExt;
   if (isa<ZExtInst>(SExtOpnd)) {
     // Replace sext(zext(opnd))
     // => zext(opnd).
@@ -1856,6 +1857,7 @@ Value *TypePromotionHelper::promoteOperandForTruncAndAnyExt(
         TPT.createZExt(SExt, SExtOpnd->getOperand(0), SExt->getType());
     TPT.replaceAllUsesWith(SExt, ZExt);
     TPT.eraseInstruction(SExt);
+    ExtInst = ZExt;
   } else {
     // Replace sext(trunc(opnd)) or sext(sext(opnd))
     // => sext(opnd).
@@ -1867,14 +1869,14 @@ Value *TypePromotionHelper::promoteOperandForTruncAndAnyExt(
   if (SExtOpnd->use_empty())
     TPT.eraseInstruction(SExtOpnd);
 
-  // Check if the sext is still needed.
-  if (SExt->getType() != SExt->getOperand(0)->getType())
-    return SExt;
+  // Check if the extension is still needed.
+  if (ExtInst->getType() != ExtInst->getOperand(0)->getType())
+    return ExtInst;
 
-  // At this point we have: sext ty opnd to ty.
-  // Reassign the uses of SExt to the opnd and remove SExt.
-  Value *NextVal = SExt->getOperand(0);
-  TPT.eraseInstruction(SExt, NextVal);
+  // At this point we have: ext ty opnd to ty.
+  // Reassign the uses of ExtInst to the opnd and remove ExtInst.
+  Value *NextVal = ExtInst->getOperand(0);
+  TPT.eraseInstruction(ExtInst, NextVal);
   return NextVal;
 }
 

@@ -336,3 +336,66 @@ end:
   %final = load i32* %addr
   ret i32 %final
 }
+
+%struct.dns_packet = type { i32, i32, %union.anon }
+%union.anon = type { i32 }
+
+@a = common global i32 0, align 4
+@b = common global i16 0, align 2
+
+; We used to crash on this function because we did not return the right
+; promoted instruction for %conv.i.
+; Make sure we generate the right code now.
+; CHECK-LABEL: @fn3
+; %conv.i is used twice and only one of its use is being promoted.
+; Use it at the starting point for the matching.
+; CHECK: %conv.i = zext i16 [[PLAIN_OPND:%[.a-zA-Z_0-9-]+]] to i32
+; CHECK-NEXT: [[PROMOTED_CONV:%[.a-zA-Z_0-9-]+]] = zext i16 [[PLAIN_OPND]] to i64
+; CHECK-NEXT: [[BASE:%[a-zA-Z_0-9-]+]] = ptrtoint %struct.dns_packet* %P to i64
+; CHECK-NEXT: [[ADD:%[a-zA-Z_0-9-]+]] = add i64 [[BASE]], [[PROMOTED_CONV]]
+; CHECK-NEXT: [[ADDR:%[a-zA-Z_0-9-]+]] = add i64 [[ADD]], 7
+; CHECK-NEXT: [[CAST:%[a-zA-Z_0-9-]+]] = inttoptr i64 [[ADDR]] to i8*
+; CHECK-NEXT: load i8* [[CAST]], align 1
+define signext i16 @fn3(%struct.dns_packet* nocapture readonly %P) {
+entry:
+  %tmp = getelementptr inbounds %struct.dns_packet* %P, i64 0, i32 2
+  %data.i.i = bitcast %union.anon* %tmp to [0 x i8]*
+  br label %while.body.i.i
+
+while.body.i.i:                                   ; preds = %while.body.i.i, %entry
+  %src.addr.0.i.i = phi i16 [ 0, %entry ], [ %inc.i.i, %while.body.i.i ]
+  %inc.i.i = add i16 %src.addr.0.i.i, 1
+  %idxprom.i.i = sext i16 %src.addr.0.i.i to i64
+  %arrayidx.i.i = getelementptr inbounds [0 x i8]* %data.i.i, i64 0, i64 %idxprom.i.i
+  %tmp1 = load i8* %arrayidx.i.i, align 1
+  %conv2.i.i = zext i8 %tmp1 to i32
+  %and.i.i = and i32 %conv2.i.i, 15
+  store i32 %and.i.i, i32* @a, align 4
+  %tobool.i.i = icmp eq i32 %and.i.i, 0
+  br i1 %tobool.i.i, label %while.body.i.i, label %fn1.exit.i
+
+fn1.exit.i:                                       ; preds = %while.body.i.i
+  %inc.i.i.lcssa = phi i16 [ %inc.i.i, %while.body.i.i ]
+  %conv.i = zext i16 %inc.i.i.lcssa to i32
+  %sub.i = add nsw i32 %conv.i, -1
+  %idxprom.i = sext i32 %sub.i to i64
+  %arrayidx.i = getelementptr inbounds [0 x i8]* %data.i.i, i64 0, i64 %idxprom.i
+  %tmp2 = load i8* %arrayidx.i, align 1
+  %conv2.i = sext i8 %tmp2 to i16
+  store i16 %conv2.i, i16* @b, align 2
+  %sub4.i = sub nsw i32 0, %conv.i
+  %conv5.i = zext i16 %conv2.i to i32
+  %cmp.i = icmp sgt i32 %conv5.i, %sub4.i
+  br i1 %cmp.i, label %if.then.i, label %fn2.exit
+
+if.then.i:                                        ; preds = %fn1.exit.i
+  %end.i = getelementptr inbounds %struct.dns_packet* %P, i64 0, i32 1
+  %tmp3 = load i32* %end.i, align 4
+  %sub7.i = add i32 %tmp3, 65535
+  %conv8.i = trunc i32 %sub7.i to i16
+  br label %fn2.exit
+
+fn2.exit:                                         ; preds = %if.then.i, %fn1.exit.i
+  %retval.0.i = phi i16 [ %conv8.i, %if.then.i ], [ undef, %fn1.exit.i ]
+  ret i16 %retval.0.i
+}
