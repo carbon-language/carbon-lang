@@ -406,6 +406,10 @@ PseudoOpBuilder::buildAssignmentOperation(Scope *Sc, SourceLocation opcLoc,
                                           BinaryOperatorKind opcode,
                                           Expr *LHS, Expr *RHS) {
   assert(BinaryOperator::isAssignmentOp(opcode));
+  
+  // Recover from user error
+  if (isa<UnresolvedLookupExpr>(RHS))
+    return ExprError();
 
   Expr *syntacticLHS = rebuildAndCaptureObject(LHS);
   OpaqueValueExpr *capturedRHS = capture(RHS);
