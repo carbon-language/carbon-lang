@@ -193,6 +193,9 @@ namespace llvm {
       /// BLENDI - Blend where the selector is an immediate.
       BLENDI,
 
+      /// ADDSUB - Combined add and sub on an FP vector.
+      ADDSUB,
+
       // SUBUS - Integer sub with unsigned saturation.
       SUBUS,
 

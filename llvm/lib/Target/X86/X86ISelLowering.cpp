@@ -6501,14 +6501,14 @@ static SDValue matchAddSub(const BuildVectorSDNode *BV, SelectionDAG &DAG,
 
   for (unsigned i = 0, e = NumElts; i != e; i++) {
     SDValue Op = BV->getOperand(i);
-      
+
     // Skip 'undef' values.
     unsigned Opcode = Op.getOpcode();
     if (Opcode == ISD::UNDEF) {
       std::swap(ExpectedOpcode, NextExpectedOpcode);
       continue;
     }
-      
+
     // Early exit if we found an unexpected opcode.
     if (Opcode != ExpectedOpcode)
       return SDValue();
@@ -6565,31 +6565,9 @@ static SDValue matchAddSub(const BuildVectorSDNode *BV, SelectionDAG &DAG,
   // Don't try to fold this build_vector into a VSELECT if it has
   // too many UNDEF operands.
   if (AddFound && SubFound && InVec0.getOpcode() != ISD::UNDEF &&
-      InVec1.getOpcode() != ISD::UNDEF) {
-    // Emit a sequence of vector add and sub followed by a VSELECT.
-    // The new VSELECT will be lowered into a BLENDI.
-    // At ISel stage, we pattern-match the sequence 'add + sub + BLENDI'
-    // and emit a single ADDSUB instruction.
-    SDValue Sub = DAG.getNode(ExpectedOpcode, DL, VT, InVec0, InVec1);
-    SDValue Add = DAG.getNode(NextExpectedOpcode, DL, VT, InVec0, InVec1);
+      InVec1.getOpcode() != ISD::UNDEF)
+    return DAG.getNode(X86ISD::ADDSUB, DL, VT, InVec0, InVec1);
 
-    // Construct the VSELECT mask.
-    EVT MaskVT = VT.changeVectorElementTypeToInteger();
-    EVT SVT = MaskVT.getVectorElementType();
-    unsigned SVTBits = SVT.getSizeInBits();
-    SmallVector<SDValue, 8> Ops;
-
-    for (unsigned i = 0, e = NumElts; i != e; ++i) {
-      APInt Value = i & 1 ? APInt::getNullValue(SVTBits) :
-                            APInt::getAllOnesValue(SVTBits);
-      SDValue Constant = DAG.getConstant(Value, SVT);
-      Ops.push_back(Constant);
-    }
-
-    SDValue Mask = DAG.getNode(ISD::BUILD_VECTOR, DL, MaskVT, Ops);
-    return DAG.getSelect(DL, VT, Mask, Sub, Add);
-  }
-  
   return SDValue();
 }
 
