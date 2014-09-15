@@ -2638,6 +2638,56 @@ bool AArch64FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
 
     return lowerCallTo(II, "memset", II->getNumArgOperands() - 2);
   }
+  case Intrinsic::sin:
+  case Intrinsic::cos:
+  case Intrinsic::pow: {
+    MVT RetVT;
+    if (!isTypeLegal(II->getType(), RetVT))
+      return false;
+
+    if (RetVT != MVT::f32 && RetVT != MVT::f64)
+      return false;
+
+    static const RTLIB::Libcall LibCallTable[3][2] = {
+      { RTLIB::SIN_F32, RTLIB::SIN_F64 },
+      { RTLIB::COS_F32, RTLIB::COS_F64 },
+      { RTLIB::POW_F32, RTLIB::POW_F64 }
+    };
+    RTLIB::Libcall LC;
+    bool Is64Bit = RetVT == MVT::f64;
+    switch (II->getIntrinsicID()) {
+    default:
+      llvm_unreachable("Unexpected intrinsic.");
+    case Intrinsic::sin:
+      LC = LibCallTable[0][Is64Bit];
+      break;
+    case Intrinsic::cos:
+      LC = LibCallTable[1][Is64Bit];
+      break;
+    case Intrinsic::pow:
+      LC = LibCallTable[2][Is64Bit];
+      break;
+    }
+
+    ArgListTy Args;
+    Args.reserve(II->getNumArgOperands());
+
+    // Populate the argument list.
+    for (auto &Arg : II->arg_operands()) {
+      ArgListEntry Entry;
+      Entry.Val = Arg;
+      Entry.Ty = Arg->getType();
+      Args.push_back(Entry);
+    }
+
+    CallLoweringInfo CLI;
+    CLI.setCallee(TLI.getLibcallCallingConv(LC), II->getType(),
+                  TLI.getLibcallName(LC), std::move(Args));
+    if (!lowerCallTo(CLI))
+      return false;
+    updateValueMap(II, CLI.ResultReg);
+    return true;
+  }
   case Intrinsic::trap: {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::BRK))
         .addImm(1);
