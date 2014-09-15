@@ -103,8 +103,8 @@ public:
       RetZExt = Call.paramHasAttr(0, Attribute::ZExt);
 
       CallConv = Call.getCallingConv();
-      NumFixedArgs = FuncTy->getNumParams();
       Args = std::move(ArgsList);
+      NumFixedArgs = FuncTy->getNumParams();
 
       CS = &Call;
 
@@ -127,8 +127,8 @@ public:
       RetZExt = Call.paramHasAttr(0, Attribute::ZExt);
 
       CallConv = Call.getCallingConv();
-      NumFixedArgs = (FixedArgs == ~0U) ? FuncTy->getNumParams() : FixedArgs;
       Args = std::move(ArgsList);
+      NumFixedArgs = (FixedArgs == ~0U) ? FuncTy->getNumParams() : FixedArgs;
 
       CS = &Call;
 
