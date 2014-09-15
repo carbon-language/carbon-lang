@@ -41,6 +41,7 @@ namespace yaml {
 template <> struct ScalarEnumerationTraits<FormatStyle::LanguageKind> {
   static void enumeration(IO &IO, FormatStyle::LanguageKind &Value) {
     IO.enumCase(Value, "Cpp", FormatStyle::LK_Cpp);
+    IO.enumCase(Value, "Java", FormatStyle::LK_Java);
     IO.enumCase(Value, "JavaScript", FormatStyle::LK_JavaScript);
     IO.enumCase(Value, "Proto", FormatStyle::LK_Proto);
   }
@@ -405,7 +406,11 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
   GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;
   GoogleStyle.PenaltyBreakBeforeFirstCallParameter = 1;
 
-  if (Language == FormatStyle::LK_JavaScript) {
+  if (Language == FormatStyle::LK_Java) {
+    GoogleStyle.BreakBeforeBinaryOperators = FormatStyle::BOS_NonAssignment;
+    GoogleStyle.ColumnLimit = 100;
+    GoogleStyle.SpaceAfterCStyleCast = true;
+  } else if (Language == FormatStyle::LK_JavaScript) {
     GoogleStyle.BreakBeforeTernaryOperators = false;
     GoogleStyle.MaxEmptyLinesToKeep = 3;
     GoogleStyle.SpacesInContainerLiterals = false;
@@ -1031,6 +1036,8 @@ private:
   /// For example, 'public:' labels in classes are offset by 1 or 2
   /// characters to the left from their level.
   int getIndentOffset(const FormatToken &RootToken) {
+    if (Style.Language == FormatStyle::LK_Java)
+      return 0;
     if (RootToken.isAccessSpecifier(false) || RootToken.isObjCAccessSpecifier())
       return Style.AccessModifierOffset;
     return 0;
@@ -1754,6 +1761,8 @@ static StringRef getLanguageName(FormatStyle::LanguageKind Language) {
   switch (Language) {
   case FormatStyle::LK_Cpp:
     return "C++";
+  case FormatStyle::LK_Java:
+    return "Java";
   case FormatStyle::LK_JavaScript:
     return "JavaScript";
   case FormatStyle::LK_Proto:
@@ -2120,7 +2129,9 @@ const char *StyleOptionHelpDescription =
     "  -style=\"{BasedOnStyle: llvm, IndentWidth: 8}\"";
 
 static FormatStyle::LanguageKind getLanguageByFileName(StringRef FileName) {
-  if (FileName.endswith_lower(".js")) {
+  if (FileName.endswith(".java")) {
+    return FormatStyle::LK_Java;
+  } else if (FileName.endswith_lower(".js")) {
     return FormatStyle::LK_JavaScript;
   } else if (FileName.endswith_lower(".proto") ||
              FileName.endswith_lower(".protodevel")) {

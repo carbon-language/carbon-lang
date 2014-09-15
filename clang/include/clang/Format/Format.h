@@ -47,6 +47,8 @@ struct FormatStyle {
     LK_None,
     /// Should be used for C, C++, ObjectiveC, ObjectiveC++.
     LK_Cpp,
+    /// Should be used for Java.
+    LK_Java,
     /// Should be used for JavaScript.
     LK_JavaScript,
     /// Should be used for Protocol Buffers
