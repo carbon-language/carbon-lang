@@ -37,29 +37,22 @@ typedef generic_gep_type_iterator<User::const_op_iterator> gep_type_iterator;
 // stack, which causes the dtor to be run, which frees all the alloca'd memory.
 //
 class AllocaHolder {
-  friend class AllocaHolderHandle;
-  std::vector<void*> Allocations;
-  unsigned RefCnt;
+  std::vector<void *> Allocations;
+
 public:
-  AllocaHolder() : RefCnt(0) {}
-  void add(void *mem) { Allocations.push_back(mem); }
-  ~AllocaHolder() {
-    for (unsigned i = 0; i < Allocations.size(); ++i)
-      free(Allocations[i]);
+  AllocaHolder() {}
+  // Make this type move-only.
+  AllocaHolder(AllocaHolder &&RHS) : Allocations(std::move(RHS.Allocations)) {}
+  AllocaHolder &operator=(AllocaHolder &&RHS) {
+    Allocations = std::move(RHS.Allocations);
   }
-};
 
-// AllocaHolderHandle gives AllocaHolder value semantics so we can stick it into
-// a vector...
-//
-class AllocaHolderHandle {
-  AllocaHolder *H;
-public:
-  AllocaHolderHandle() : H(new AllocaHolder()) { H->RefCnt++; }
-  AllocaHolderHandle(const AllocaHolderHandle &AH) : H(AH.H) { H->RefCnt++; }
-  ~AllocaHolderHandle() { if (--H->RefCnt == 0) delete H; }
+  ~AllocaHolder() {
+    for (void *Allocation : Allocations)
+      free(Allocation);
+  }
 
-  void add(void *mem) { H->add(mem); }
+  void add(void *Mem) { Allocations.push_back(Mem); }
 };
 
 typedef std::vector<GenericValue> ValuePlaneTy;
@@ -75,7 +68,7 @@ struct ExecutionContext {
   std::vector<GenericValue>  VarArgs; // Values passed through an ellipsis
   CallSite             Caller;     // Holds the call that called subframes.
                                    // NULL if main func or debugger invoked fn
-  AllocaHolderHandle    Allocas;    // Track memory allocated by alloca
+  AllocaHolder Allocas;            // Track memory allocated by alloca
 };
 
 // Interpreter - This class represents the entirety of the interpreter.
