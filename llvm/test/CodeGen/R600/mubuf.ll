@@ -1,5 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=SI -show-mc-encoding -verify-machineinstrs < %s | FileCheck %s
 
+declare i32 @llvm.r600.read.tidig.x() readnone
+
 ;;;==========================================================================;;;
 ;;; MUBUF LOAD TESTS
 ;;;==========================================================================;;;
@@ -94,5 +96,37 @@ entry:
   %0 = getelementptr i32 addrspace(1)* %out, i64 %offset
   %1 = getelementptr i32 addrspace(1)* %0, i64 1
   store i32 0, i32 addrspace(1)* %1
+  ret void
+}
+
+; CHECK-LABEL: @store_sgpr_ptr
+; CHECK: BUFFER_STORE_DWORD v{{[0-9]+}}, s{{\[[0-9]+:[0-9]+\]}}, 0
+define void @store_sgpr_ptr(i32 addrspace(1)* %out) #0 {
+  store i32 99, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; CHECK-LABEL: @store_sgpr_ptr_offset
+; CHECK: BUFFER_STORE_DWORD v{{[0-9]+}}, s{{\[[0-9]+:[0-9]+\]}}, 0 offset:0x28
+define void @store_sgpr_ptr_offset(i32 addrspace(1)* %out) #0 {
+  %out.gep = getelementptr i32 addrspace(1)* %out, i32 10
+  store i32 99, i32 addrspace(1)* %out.gep, align 4
+  ret void
+}
+
+; CHECK-LABEL: @store_sgpr_ptr_large_offset
+; CHECK: BUFFER_STORE_DWORD v{{[0-9]+}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64
+define void @store_sgpr_ptr_large_offset(i32 addrspace(1)* %out) #0 {
+  %out.gep = getelementptr i32 addrspace(1)* %out, i32 32768
+  store i32 99, i32 addrspace(1)* %out.gep, align 4
+  ret void
+}
+
+; CHECK-LABEL: @store_vgpr_ptr
+; CHECK: BUFFER_STORE_DWORD v{{[0-9]+}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64
+define void @store_vgpr_ptr(i32 addrspace(1)* %out) #0 {
+  %tid = call i32 @llvm.r600.read.tidig.x() readnone
+  %out.gep = getelementptr i32 addrspace(1)* %out, i32 %tid
+  store i32 99, i32 addrspace(1)* %out.gep, align 4
   ret void
 }
