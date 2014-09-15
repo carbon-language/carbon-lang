@@ -498,15 +498,6 @@ TEST(AddressSanitizer, StrArgsOverlapTest) {
   free(str);
 }
 
-void CallAtoi(const char *nptr) {
-  Ident(atoi(nptr));
-}
-void CallAtol(const char *nptr) {
-  Ident(atol(nptr));
-}
-void CallAtoll(const char *nptr) {
-  Ident(atoll(nptr));
-}
 typedef void(*PointerToCallAtoi)(const char*);
 
 void RunAtoiOOBTest(PointerToCallAtoi Atoi) {
@@ -534,6 +525,15 @@ void RunAtoiOOBTest(PointerToCallAtoi Atoi) {
 }
 
 #if !defined(_WIN32)  // FIXME: Fix and enable on Windows.
+void CallAtoi(const char *nptr) {
+  Ident(atoi(nptr));
+}
+void CallAtol(const char *nptr) {
+  Ident(atol(nptr));
+}
+void CallAtoll(const char *nptr) {
+  Ident(atoll(nptr));
+}
 TEST(AddressSanitizer, AtoiAndFriendsOOBTest) {
   RunAtoiOOBTest(&CallAtoi);
   RunAtoiOOBTest(&CallAtol);
@@ -541,12 +541,6 @@ TEST(AddressSanitizer, AtoiAndFriendsOOBTest) {
 }
 #endif
 
-void CallStrtol(const char *nptr, char **endptr, int base) {
-  Ident(strtol(nptr, endptr, base));
-}
-void CallStrtoll(const char *nptr, char **endptr, int base) {
-  Ident(strtoll(nptr, endptr, base));
-}
 typedef void(*PointerToCallStrtol)(const char*, char**, int);
 
 void RunStrtolOOBTest(PointerToCallStrtol Strtol) {
@@ -590,6 +584,12 @@ void RunStrtolOOBTest(PointerToCallStrtol Strtol) {
 }
 
 #if !defined(_WIN32)  // FIXME: Fix and enable on Windows.
+void CallStrtol(const char *nptr, char **endptr, int base) {
+  Ident(strtol(nptr, endptr, base));
+}
+void CallStrtoll(const char *nptr, char **endptr, int base) {
+  Ident(strtoll(nptr, endptr, base));
+}
 TEST(AddressSanitizer, StrtollOOBTest) {
   RunStrtolOOBTest(&CallStrtoll);
 }
