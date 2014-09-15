@@ -277,3 +277,11 @@ typedef NS_ENUM(NSUInteger, NSSelectionDirection) {
 };
 
 // standard window buttons
+
+// rdar://18262255
+typedef enum : NSUInteger {
+   ThingOne,
+   ThingTwo,
+   ThingThree,
+} Thing;
+

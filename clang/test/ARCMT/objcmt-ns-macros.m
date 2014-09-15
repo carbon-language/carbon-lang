@@ -294,3 +294,11 @@ enum {
     NSWindowToolbarButton,
     NSWindowDocumentIconButton
 };
+
+// rdar://18262255
+typedef enum : NSUInteger {
+   ThingOne,
+   ThingTwo,
+   ThingThree,
+} Thing;
+

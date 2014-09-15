@@ -760,7 +760,7 @@ bool ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
                                            const EnumDecl *EnumDcl,
                                            const TypedefDecl *TypedefDcl) {
   if (!EnumDcl->isCompleteDefinition() || EnumDcl->getIdentifier() ||
-      EnumDcl->isDeprecated())
+      EnumDcl->isDeprecated() || EnumDcl->getIntegerTypeSourceInfo())
     return false;
   if (!TypedefDcl) {
     if (NSIntegerTypedefed) {
