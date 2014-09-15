@@ -684,6 +684,9 @@ namespace {
       OS << "Record.push_back(SA->get" << getUpperName() << "());\n";
     }
     void writeValue(raw_ostream &OS) const override {
+      // FIXME: this isn't 100% correct -- some enum arguments require printing
+      // as a string literal, while others require printing as an identifier.
+      // Tablegen currently does not distinguish between the two forms.
       OS << "\\\"\" << " << getAttrName() << "Attr::Convert" << type << "ToStr(get"
          << getUpperName() << "()) << \"\\\"";
     }
@@ -737,6 +740,9 @@ namespace {
 
   protected:
     void writeValueImpl(raw_ostream &OS) const override {
+      // FIXME: this isn't 100% correct -- some enum arguments require printing
+      // as a string literal, while others require printing as an identifier.
+      // Tablegen currently does not distinguish between the two forms.
       OS << "    OS << \"\\\"\" << " << getAttrName() << "Attr::Convert" << type
          << "ToStr(Val)" << "<< \"\\\"\";\n";
     }
