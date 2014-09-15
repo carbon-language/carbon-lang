@@ -943,16 +943,17 @@ private:
   };
 
   class MapHNode : public HNode {
+    virtual void anchor();
+
   public:
     MapHNode(Node *n) : HNode(n) { }
-    virtual ~MapHNode();
 
     static inline bool classof(const HNode *n) {
       return MappingNode::classof(n->_node);
     }
     static inline bool classof(const MapHNode *) { return true; }
 
-    typedef llvm::StringMap<HNode*> NameToNode;
+    typedef llvm::StringMap<std::unique_ptr<HNode>> NameToNode;
 
     bool isValidKey(StringRef key);
 
@@ -961,19 +962,20 @@ private:
   };
 
   class SequenceHNode : public HNode {
+    virtual void anchor();
+
   public:
     SequenceHNode(Node *n) : HNode(n) { }
-    virtual ~SequenceHNode();
 
     static inline bool classof(const HNode *n) {
       return SequenceNode::classof(n->_node);
     }
     static inline bool classof(const SequenceHNode *) { return true; }
 
-    std::vector<HNode*> Entries;
+    std::vector<std::unique_ptr<HNode>> Entries;
   };
 
-  Input::HNode *createHNodes(Node *node);
+  std::unique_ptr<Input::HNode> createHNodes(Node *node);
   void setError(HNode *hnode, const Twine &message);
   void setError(Node *node, const Twine &message);
 
