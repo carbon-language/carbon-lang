@@ -40,7 +40,7 @@ using namespace llvm;
 
 namespace {
 
-class AArch64FastISel : public FastISel {
+class AArch64FastISel final : public FastISel {
   class Address {
   public:
     typedef enum {
