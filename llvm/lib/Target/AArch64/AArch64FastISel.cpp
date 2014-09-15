@@ -114,7 +114,7 @@ class AArch64FastISel : public FastISel {
 private:
   // Selection routines.
   bool selectAddSub(const Instruction *I);
-  bool selectLogicalOp(const Instruction *I, unsigned ISDOpcode);
+  bool selectLogicalOp(const Instruction *I);
   bool SelectLoad(const Instruction *I);
   bool SelectStore(const Instruction *I);
   bool SelectBranch(const Instruction *I);
@@ -1437,29 +1437,52 @@ bool AArch64FastISel::EmitLoad(MVT VT, unsigned &ResultReg, Address Addr,
 
 bool AArch64FastISel::selectAddSub(const Instruction *I) {
   MVT VT;
-  if (!isTypeSupported(I->getType(), VT))
+  if (!isTypeSupported(I->getType(), VT, /*IsVectorAllowed=*/true))
     return false;
 
-  unsigned ResultReg;
-  if (I->getOpcode() == Instruction::Add)
-    ResultReg = emitAdd(VT, I->getOperand(0), I->getOperand(1));
-  else if (I->getOpcode() == Instruction::Sub)
-    ResultReg = emitSub(VT, I->getOperand(0), I->getOperand(1));
-  else
-    llvm_unreachable("Unexpected instruction.");
+  if (VT.isVector())
+    return selectOperator(I, I->getOpcode());
 
-  assert(ResultReg && "Couldn't select Add/Sub instruction.");
+  unsigned ResultReg;
+  switch (I->getOpcode()) {
+  default:
+    llvm_unreachable("Unexpected instruction.");
+  case Instruction::Add:
+    ResultReg = emitAdd(VT, I->getOperand(0), I->getOperand(1));
+    break;
+  case Instruction::Sub:
+    ResultReg = emitSub(VT, I->getOperand(0), I->getOperand(1));
+    break;
+  }
+  if (!ResultReg)
+    return false;
+
   updateValueMap(I, ResultReg);
   return true;
 }
 
-bool AArch64FastISel::selectLogicalOp(const Instruction *I, unsigned ISDOpc) {
+bool AArch64FastISel::selectLogicalOp(const Instruction *I) {
   MVT VT;
-  if (!isTypeSupported(I->getType(), VT))
+  if (!isTypeSupported(I->getType(), VT, /*IsVectorAllowed=*/true))
     return false;
 
-  unsigned ResultReg =
-      emitLogicalOp(ISDOpc, VT, I->getOperand(0), I->getOperand(1));
+  if (VT.isVector())
+    return selectOperator(I, I->getOpcode());
+
+  unsigned ResultReg;
+  switch (I->getOpcode()) {
+  default:
+    llvm_unreachable("Unexpected instruction.");
+  case Instruction::And:
+    ResultReg = emitLogicalOp(ISD::AND, VT, I->getOperand(0), I->getOperand(1));
+    break;
+  case Instruction::Or:
+    ResultReg = emitLogicalOp(ISD::OR, VT, I->getOperand(0), I->getOperand(1));
+    break;
+  case Instruction::Xor:
+    ResultReg = emitLogicalOp(ISD::XOR, VT, I->getOperand(0), I->getOperand(1));
+    break;
+  }
   if (!ResultReg)
     return false;
 
@@ -3477,8 +3500,11 @@ bool AArch64FastISel::SelectMul(const Instruction *I) {
 
 bool AArch64FastISel::SelectShift(const Instruction *I) {
   MVT RetVT;
-  if (!isTypeSupported(I->getType(), RetVT))
+  if (!isTypeSupported(I->getType(), RetVT, /*IsVectorAllowed=*/true))
     return false;
+
+  if (RetVT.isVector())
+    return selectOperator(I, I->getOpcode());
 
   if (const auto *C = dyn_cast<ConstantInt>(I->getOperand(1))) {
     unsigned ResultReg = 0;
@@ -3604,9 +3630,7 @@ bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
     break;
   case Instruction::Add:
   case Instruction::Sub:
-    if (selectAddSub(I))
-      return true;
-    break;
+    return selectAddSub(I);
   case Instruction::Mul:
     if (!selectBinaryOp(I, ISD::MUL))
       return SelectMul(I);
@@ -3622,21 +3646,11 @@ bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
-    if (SelectShift(I))
-      return true;
-    break;
+    return SelectShift(I);
   case Instruction::And:
-    if (selectLogicalOp(I, ISD::AND))
-      return true;
-    break;
   case Instruction::Or:
-    if (selectLogicalOp(I, ISD::OR))
-      return true;
-    break;
   case Instruction::Xor:
-    if (selectLogicalOp(I, ISD::XOR))
-      return true;
-    break;
+    return selectLogicalOp(I);
   case Instruction::Br:
     return SelectBranch(I);
   case Instruction::IndirectBr:
