@@ -141,8 +141,19 @@ public:
       RetTy = ResultTy;
       Callee = Target;
       CallConv = CC;
-      NumFixedArgs = (FixedArgs == ~0U) ? Args.size() : FixedArgs;
       Args = std::move(ArgsList);
+      NumFixedArgs = (FixedArgs == ~0U) ? Args.size() : FixedArgs;
+      return *this;
+    }
+
+    CallLoweringInfo &setCallee(CallingConv::ID CC, Type *ResultTy,
+                                const char *Target, ArgListTy &&ArgsList,
+                                unsigned FixedArgs = ~0U) {
+      RetTy = ResultTy;
+      SymName = Target;
+      CallConv = CC;
+      Args = std::move(ArgsList);
+      NumFixedArgs = (FixedArgs == ~0U) ? Args.size() : FixedArgs;
       return *this;
     }
 

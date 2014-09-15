@@ -132,6 +132,7 @@ private:
   bool SelectMul(const Instruction *I);
   bool SelectShift(const Instruction *I);
   bool SelectBitCast(const Instruction *I);
+  bool selectFRem(const Instruction *I);
 
   // Utility helper routines.
   bool isTypeLegal(Type *Ty, MVT &VT);
@@ -2322,6 +2323,9 @@ bool AArch64FastISel::fastLowerCall(CallLoweringInfo &CLI) {
   const Value *Callee = CLI.Callee;
   const char *SymName = CLI.SymName;
 
+  if (!Callee && !SymName)
+    return false;
+
   // Allow SelectionDAG isel to handle tail calls.
   if (IsTailCall)
     return false;
@@ -2368,7 +2372,7 @@ bool AArch64FastISel::fastLowerCall(CallLoweringInfo &CLI) {
   }
 
   Address Addr;
-  if (!ComputeCallAddress(Callee, Addr))
+  if (Callee && !ComputeCallAddress(Callee, Addr))
     return false;
 
   // Handle the arguments now that we've gotten them.
@@ -3624,6 +3628,43 @@ bool AArch64FastISel::SelectBitCast(const Instruction *I) {
   return true;
 }
 
+bool AArch64FastISel::selectFRem(const Instruction *I) {
+  MVT RetVT;
+  if (!isTypeLegal(I->getType(), RetVT))
+    return false;
+
+  RTLIB::Libcall LC;
+  switch (RetVT.SimpleTy) {
+  default:
+    return false;
+  case MVT::f32:
+    LC = RTLIB::REM_F32;
+    break;
+  case MVT::f64:
+    LC = RTLIB::REM_F64;
+    break;
+  }
+
+  ArgListTy Args;
+  Args.reserve(I->getNumOperands());
+
+  // Populate the argument list.
+  for (auto &Arg : I->operands()) {
+    ArgListEntry Entry;
+    Entry.Val = Arg;
+    Entry.Ty = Arg->getType();
+    Args.push_back(Entry);
+  }
+
+  CallLoweringInfo CLI;
+  CLI.setCallee(TLI.getLibcallCallingConv(LC), I->getType(),
+                TLI.getLibcallName(LC), std::move(Args));
+  if (!lowerCallTo(CLI))
+    return false;
+  updateValueMap(I, CLI.ResultReg);
+  return true;
+}
+
 bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
   switch (I->getOpcode()) {
   default:
@@ -3698,6 +3739,8 @@ bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
     return SelectSelect(I);
   case Instruction::Ret:
     return SelectRet(I);
+  case Instruction::FRem:
+    return selectFRem(I);
   }
 
   // fall-back to target-independent instruction selection.
