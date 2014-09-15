@@ -2871,11 +2871,14 @@ bool AArch64FastISel::selectRet(const Instruction *I) {
     const Value *RV = Ret->getOperand(0);
 
     // Don't bother handling odd stuff for now.
-    if (VA.getLocInfo() != CCValAssign::Full)
+    if ((VA.getLocInfo() != CCValAssign::Full) &&
+        (VA.getLocInfo() != CCValAssign::BCvt))
       return false;
+
     // Only handle register returns for now.
     if (!VA.isRegLoc())
       return false;
+
     unsigned Reg = getRegForValue(RV);
     if (Reg == 0)
       return false;
@@ -2891,12 +2894,14 @@ bool AArch64FastISel::selectRet(const Instruction *I) {
       return false;
 
     // Vectors (of > 1 lane) in big endian need tricky handling.
-    if (RVEVT.isVector() && RVEVT.getVectorNumElements() > 1)
+    if (RVEVT.isVector() && RVEVT.getVectorNumElements() > 1 &&
+        !Subtarget->isLittleEndian())
       return false;
 
     MVT RVVT = RVEVT.getSimpleVT();
     if (RVVT == MVT::f128)
       return false;
+
     MVT DestVT = VA.getValVT();
     // Special handling for extended integers.
     if (RVVT != DestVT) {
