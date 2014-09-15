@@ -128,6 +128,42 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     DecodeMOVHLPSMask(2, ShuffleMask);
     break;
 
+  case X86::MOVSLDUPrr:
+  case X86::VMOVSLDUPrr:
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    // FALL THROUGH.
+  case X86::MOVSLDUPrm:
+  case X86::VMOVSLDUPrm:
+    DestName = getRegName(MI->getOperand(0).getReg());
+    DecodeMOVSLDUPMask(MVT::v4f32, ShuffleMask);
+    break;
+
+  case X86::VMOVSHDUPYrr:
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    // FALL THROUGH.
+  case X86::VMOVSHDUPYrm:
+    DestName = getRegName(MI->getOperand(0).getReg());
+    DecodeMOVSHDUPMask(MVT::v8f32, ShuffleMask);
+    break;
+
+  case X86::VMOVSLDUPYrr:
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    // FALL THROUGH.
+  case X86::VMOVSLDUPYrm:
+    DestName = getRegName(MI->getOperand(0).getReg());
+    DecodeMOVSLDUPMask(MVT::v8f32, ShuffleMask);
+    break;
+
+  case X86::MOVSHDUPrr:
+  case X86::VMOVSHDUPrr:
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    // FALL THROUGH.
+  case X86::MOVSHDUPrm:
+  case X86::VMOVSHDUPrm:
+    DestName = getRegName(MI->getOperand(0).getReg());
+    DecodeMOVSHDUPMask(MVT::v4f32, ShuffleMask);
+    break;
+
   case X86::PALIGNR128rr:
   case X86::VPALIGNR128rr:
     Src1Name = getRegName(MI->getOperand(2).getReg());

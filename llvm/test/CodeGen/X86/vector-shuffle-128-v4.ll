@@ -119,6 +119,36 @@ define <4 x float> @shuffle_v4f32_3210(<4 x float> %a, <4 x float> %b) {
   %shuffle = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
   ret <4 x float> %shuffle
 }
+define <4 x float> @shuffle_v4f32_0022(<4 x float> %a, <4 x float> %b) {
+; SSE2-LABEL: @shuffle_v4f32_0022
+; SSE2:         shufps {{.*}} # xmm0 = xmm0[0,0,2,2]
+; SSE2-NEXT:    retq
+;
+; SSE41-LABEL: @shuffle_v4f32_0022
+; SSE41:         movsldup {{.*}} # xmm0 = xmm0[0,0,2,2]
+; SSE41-NEXT:    retq
+;
+; AVX1-LABEL: @shuffle_v4f32_0022
+; AVX1:         vmovsldup {{.*}} # xmm0 = xmm0[0,0,2,2]
+; AVX1-NEXT:    retq
+  %shuffle = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 0, i32 0, i32 2, i32 2>
+  ret <4 x float> %shuffle
+}
+define <4 x float> @shuffle_v4f32_1133(<4 x float> %a, <4 x float> %b) {
+; SSE2-LABEL: @shuffle_v4f32_1133
+; SSE2:         shufps {{.*}} # xmm0 = xmm0[1,1,3,3]
+; SSE2-NEXT:    retq
+;
+; SSE41-LABEL: @shuffle_v4f32_1133
+; SSE41:         movshdup {{.*}} # xmm0 = xmm0[1,1,3,3]
+; SSE41-NEXT:    retq
+;
+; AVX1-LABEL: @shuffle_v4f32_1133
+; AVX1:         vmovshdup {{.*}} # xmm0 = xmm0[1,1,3,3]
+; AVX1-NEXT:    retq
+  %shuffle = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 1, i32 1, i32 3, i32 3>
+  ret <4 x float> %shuffle
+}
 
 define <4 x i32> @shuffle_v4i32_0124(<4 x i32> %a, <4 x i32> %b) {
 ; SSE2-LABEL: @shuffle_v4i32_0124

@@ -5407,12 +5407,16 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
     DecodeVPERM2X128Mask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
     if (Mask.empty()) return false;
     break;
+  case X86ISD::MOVSLDUP:
+    DecodeMOVSLDUPMask(VT, Mask);
+    break;
+  case X86ISD::MOVSHDUP:
+    DecodeMOVSHDUPMask(VT, Mask);
+    break;
   case X86ISD::MOVDDUP:
   case X86ISD::MOVLHPD:
   case X86ISD::MOVLPD:
   case X86ISD::MOVLPS:
-  case X86ISD::MOVSHDUP:
-  case X86ISD::MOVSLDUP:
     // Not yet implemented
     return false;
   default: llvm_unreachable("unknown target shuffle node");
@@ -19364,37 +19368,52 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
   // Note that even with AVX we prefer the PSHUFD form of shuffle for integer
   // vectors because it can have a load folded into it that UNPCK cannot. This
   // doesn't preclude something switching to the shorter encoding post-RA.
-  if (FloatDomain && (Mask.equals(0, 0) || Mask.equals(1, 1))) {
-    bool Lo = Mask.equals(0, 0);
-    unsigned Shuffle;
-    MVT ShuffleVT;
-    // Check if we have SSE3 which will let us use MOVDDUP. That instruction
-    // is no slower than UNPCKLPD but has the option to fold the input operand
-    // into even an unaligned memory load.
-    if (Lo && Subtarget->hasSSE3()) {
-      Shuffle = X86ISD::MOVDDUP;
-      ShuffleVT = MVT::v2f64;
-    } else {
-      // We have MOVLHPS and MOVHLPS throughout SSE and they encode smaller
-      // than the UNPCK variants.
-      Shuffle = Lo ? X86ISD::MOVLHPS : X86ISD::MOVHLPS;
-      ShuffleVT = MVT::v4f32;
+  if (FloatDomain) {
+    if (Mask.equals(0, 0) || Mask.equals(1, 1)) {
+      bool Lo = Mask.equals(0, 0);
+      unsigned Shuffle;
+      MVT ShuffleVT;
+      // Check if we have SSE3 which will let us use MOVDDUP. That instruction
+      // is no slower than UNPCKLPD but has the option to fold the input operand
+      // into even an unaligned memory load.
+      if (Lo && Subtarget->hasSSE3()) {
+        Shuffle = X86ISD::MOVDDUP;
+        ShuffleVT = MVT::v2f64;
+      } else {
+        // We have MOVLHPS and MOVHLPS throughout SSE and they encode smaller
+        // than the UNPCK variants.
+        Shuffle = Lo ? X86ISD::MOVLHPS : X86ISD::MOVHLPS;
+        ShuffleVT = MVT::v4f32;
+      }
+      if (Depth == 1 && Root->getOpcode() == Shuffle)
+        return false; // Nothing to do!
+      Op = DAG.getNode(ISD::BITCAST, DL, ShuffleVT, Input);
+      DCI.AddToWorklist(Op.getNode());
+      if (Shuffle == X86ISD::MOVDDUP)
+        Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op);
+      else
+        Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op, Op);
+      DCI.AddToWorklist(Op.getNode());
+      DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Op),
+                    /*AddTo*/ true);
+      return true;
     }
-    if (Depth == 1 && Root->getOpcode() == Shuffle)
-      return false; // Nothing to do!
-    Op = DAG.getNode(ISD::BITCAST, DL, ShuffleVT, Input);
-    DCI.AddToWorklist(Op.getNode());
-    if (Shuffle == X86ISD::MOVDDUP)
+    if (Subtarget->hasSSE3() &&
+        (Mask.equals(0, 0, 2, 2) || Mask.equals(1, 1, 3, 3))) {
+      bool Lo = Mask.equals(0, 0, 2, 2);
+      unsigned Shuffle = Lo ? X86ISD::MOVSLDUP : X86ISD::MOVSHDUP;
+      MVT ShuffleVT = MVT::v4f32;
+      if (Depth == 1 && Root->getOpcode() == Shuffle)
+        return false; // Nothing to do!
+      Op = DAG.getNode(ISD::BITCAST, DL, ShuffleVT, Input);
+      DCI.AddToWorklist(Op.getNode());
       Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op);
-    else
-      Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op, Op);
-    DCI.AddToWorklist(Op.getNode());
-    DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Op),
-                  /*AddTo*/ true);
-    return true;
+      DCI.AddToWorklist(Op.getNode());
+      DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Op),
+                    /*AddTo*/ true);
+      return true;
+    }
   }
-
-  // FIXME: We should match UNPCKLPS and UNPCKHPS here.
 
   // We always canonicalize the 8 x i16 and 16 x i8 shuffles into their UNPCK
   // variants as none of these have single-instruction variants that are

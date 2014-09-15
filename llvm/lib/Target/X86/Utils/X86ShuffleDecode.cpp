@@ -63,6 +63,22 @@ void DecodeMOVLHPSMask(unsigned NElts, SmallVectorImpl<int> &ShuffleMask) {
     ShuffleMask.push_back(NElts+i);
 }
 
+void DecodeMOVSLDUPMask(MVT VT, SmallVectorImpl<int> &ShuffleMask) {
+  unsigned NumElts = VT.getVectorNumElements();
+  for (int i = 0, e = NumElts / 2; i < e; ++i) {
+    ShuffleMask.push_back(2 * i);
+    ShuffleMask.push_back(2 * i);
+  }
+}
+
+void DecodeMOVSHDUPMask(MVT VT, SmallVectorImpl<int> &ShuffleMask) {
+  unsigned NumElts = VT.getVectorNumElements();
+  for (int i = 0, e = NumElts / 2; i < e; ++i) {
+    ShuffleMask.push_back(2 * i + 1);
+    ShuffleMask.push_back(2 * i + 1);
+  }
+}
+
 void DecodePALIGNRMask(MVT VT, unsigned Imm,
                        SmallVectorImpl<int> &ShuffleMask) {
   unsigned NumElts = VT.getVectorNumElements();
