@@ -567,6 +567,10 @@ TEST(TripleTest, NormalizeWindows) {
 
 TEST(TripleTest, getARMCPUForArch) {
   {
+    llvm::Triple Triple("armv6-unknown-freebsd");
+    EXPECT_STREQ("arm1176jzf-s", Triple.getARMCPUForArch());
+  }
+  {
     llvm::Triple Triple("armv7s-apple-ios7");
     EXPECT_STREQ("swift", Triple.getARMCPUForArch());
   }
