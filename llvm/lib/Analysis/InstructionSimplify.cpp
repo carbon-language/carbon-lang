@@ -1414,6 +1414,54 @@ Value *llvm::SimplifyAShrInst(Value *Op0, Value *Op1, bool isExact,
                             RecursionLimit);
 }
 
+// Simplify (and (icmp ...) (icmp ...)) to true when we can tell that the range
+// of possible values cannot be satisfied.
+static Value *SimplifyAndOfICmps(ICmpInst *Op0, ICmpInst *Op1) {
+  ICmpInst::Predicate Pred0, Pred1;
+  ConstantInt *CI1, *CI2;
+  Value *V;
+  if (!match(Op0, m_ICmp(Pred0, m_Add(m_Value(V), m_ConstantInt(CI1)),
+                         m_ConstantInt(CI2))))
+   return nullptr;
+
+  if (!match(Op1, m_ICmp(Pred1, m_Specific(V), m_Specific(CI1))))
+    return nullptr;
+
+  Type *ITy = Op0->getType();
+
+  auto *AddInst = cast<BinaryOperator>(Op0->getOperand(0));
+  bool isNSW = AddInst->hasNoSignedWrap();
+  bool isNUW = AddInst->hasNoUnsignedWrap();
+
+  const APInt &CI1V = CI1->getValue();
+  const APInt &CI2V = CI2->getValue();
+  const APInt Delta = CI2V - CI1V;
+  if (CI1V.isStrictlyPositive()) {
+    if (Delta == 2) {
+      if (Pred0 == ICmpInst::ICMP_ULT && Pred1 == ICmpInst::ICMP_SGT)
+        return getFalse(ITy);
+      if (Pred0 == ICmpInst::ICMP_SLT && Pred1 == ICmpInst::ICMP_SGT && isNSW)
+        return getFalse(ITy);
+    }
+    if (Delta == 1) {
+      if (Pred0 == ICmpInst::ICMP_ULE && Pred1 == ICmpInst::ICMP_SGT)
+        return getFalse(ITy);
+      if (Pred0 == ICmpInst::ICMP_SLE && Pred1 == ICmpInst::ICMP_SGT && isNSW)
+        return getFalse(ITy);
+    }
+  }
+  if (CI1V.getBoolValue() && isNUW) {
+    if (Delta == 2)
+      if (Pred0 == ICmpInst::ICMP_ULT && Pred1 == ICmpInst::ICMP_UGT)
+        return getFalse(ITy);
+    if (Delta == 1)
+      if (Pred0 == ICmpInst::ICMP_ULE && Pred1 == ICmpInst::ICMP_UGT)
+        return getFalse(ITy);
+  }
+
+  return nullptr;
+}
+
 /// SimplifyAndInst - Given operands for an And, see if we can
 /// fold the result.  If not, this returns null.
 static Value *SimplifyAndInst(Value *Op0, Value *Op1, const Query &Q,
@@ -1470,6 +1518,15 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const Query &Q,
       return Op1;
   }
 
+  if (auto *ICILHS = dyn_cast<ICmpInst>(Op0)) {
+    if (auto *ICIRHS = dyn_cast<ICmpInst>(Op1)) {
+      if (Value *V = SimplifyAndOfICmps(ICILHS, ICIRHS))
+        return V;
+      if (Value *V = SimplifyAndOfICmps(ICIRHS, ICILHS))
+        return V;
+    }
+  }
+
   // Try some generic simplifications for associative operations.
   if (Value *V = SimplifyAssociativeBinOp(Instruction::And, Op0, Op1, Q,
                                           MaxRecurse))
@@ -1508,6 +1565,54 @@ Value *llvm::SimplifyAndInst(Value *Op0, Value *Op1, const DataLayout *DL,
                              const Instruction *CxtI) {
   return ::SimplifyAndInst(Op0, Op1, Query (DL, TLI, DT, AT, CxtI),
                            RecursionLimit);
+}
+
+// Simplify (or (icmp ...) (icmp ...)) to true when we can tell that the union
+// contains all possible values.
+static Value *SimplifyOrOfICmps(ICmpInst *Op0, ICmpInst *Op1) {
+  ICmpInst::Predicate Pred0, Pred1;
+  ConstantInt *CI1, *CI2;
+  Value *V;
+  if (!match(Op0, m_ICmp(Pred0, m_Add(m_Value(V), m_ConstantInt(CI1)),
+                         m_ConstantInt(CI2))))
+   return nullptr;
+
+  if (!match(Op1, m_ICmp(Pred1, m_Specific(V), m_Specific(CI1))))
+    return nullptr;
+
+  Type *ITy = Op0->getType();
+
+  auto *AddInst = cast<BinaryOperator>(Op0->getOperand(0));
+  bool isNSW = AddInst->hasNoSignedWrap();
+  bool isNUW = AddInst->hasNoUnsignedWrap();
+
+  const APInt &CI1V = CI1->getValue();
+  const APInt &CI2V = CI2->getValue();
+  const APInt Delta = CI2V - CI1V;
+  if (CI1V.isStrictlyPositive()) {
+    if (Delta == 2) {
+      if (Pred0 == ICmpInst::ICMP_UGE && Pred1 == ICmpInst::ICMP_SLE)
+        return getTrue(ITy);
+      if (Pred0 == ICmpInst::ICMP_SGE && Pred1 == ICmpInst::ICMP_SLE && isNSW)
+        return getTrue(ITy);
+    }
+    if (Delta == 1) {
+      if (Pred0 == ICmpInst::ICMP_UGT && Pred1 == ICmpInst::ICMP_SLE)
+        return getTrue(ITy);
+      if (Pred0 == ICmpInst::ICMP_SGT && Pred1 == ICmpInst::ICMP_SLE && isNSW)
+        return getTrue(ITy);
+    }
+  }
+  if (CI1V.getBoolValue() && isNUW) {
+    if (Delta == 2)
+      if (Pred0 == ICmpInst::ICMP_UGE && Pred1 == ICmpInst::ICMP_ULE)
+        return getTrue(ITy);
+    if (Delta == 1)
+      if (Pred0 == ICmpInst::ICMP_UGT && Pred1 == ICmpInst::ICMP_ULE)
+        return getTrue(ITy);
+  }
+
+  return nullptr;
 }
 
 /// SimplifyOrInst - Given operands for an Or, see if we can
@@ -1566,6 +1671,15 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const Query &Q,
   if (match(Op1, m_Not(m_And(m_Value(A), m_Value(B)))) &&
       (A == Op0 || B == Op0))
     return Constant::getAllOnesValue(Op0->getType());
+
+  if (auto *ICILHS = dyn_cast<ICmpInst>(Op0)) {
+    if (auto *ICIRHS = dyn_cast<ICmpInst>(Op1)) {
+      if (Value *V = SimplifyOrOfICmps(ICILHS, ICIRHS))
+        return V;
+      if (Value *V = SimplifyOrOfICmps(ICIRHS, ICILHS))
+        return V;
+    }
+  }
 
   // Try some generic simplifications for associative operations.
   if (Value *V = SimplifyAssociativeBinOp(Instruction::Or, Op0, Op1, Q,
