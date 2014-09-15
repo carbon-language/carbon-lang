@@ -156,6 +156,11 @@ public:
 
   /// dump - print descriptor to dbgs() with a newline.
   void dump() const;
+
+  /// replaceAllUsesWith - Replace all uses of debug info referenced by
+  /// this descriptor.
+  void replaceAllUsesWith(LLVMContext &VMContext, DIDescriptor D);
+  void replaceAllUsesWith(MDNode *D);
 };
 
 /// DISubrange - This is used to represent ranges, for array bounds.
@@ -352,11 +357,6 @@ public:
     return (getFlags() & FlagRValueReference) != 0;
   }
   bool isValid() const { return DbgNode && isType(); }
-
-  /// replaceAllUsesWith - Replace all uses of debug info referenced by
-  /// this descriptor.
-  void replaceAllUsesWith(LLVMContext &VMContext, DIDescriptor D);
-  void replaceAllUsesWith(MDNode *D);
 };
 
 /// DIBasicType - A basic type, like 'int' or 'float'.

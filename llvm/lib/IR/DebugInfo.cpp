@@ -363,7 +363,7 @@ bool DIDescriptor::isImportedEntity() const {
 
 /// replaceAllUsesWith - Replace all uses of the MDNode used by this
 /// type with the one in the passed descriptor.
-void DIType::replaceAllUsesWith(LLVMContext &VMContext, DIDescriptor D) {
+void DIDescriptor::replaceAllUsesWith(LLVMContext &VMContext, DIDescriptor D) {
 
   assert(DbgNode && "Trying to replace an unverified type!");
 
@@ -389,7 +389,7 @@ void DIType::replaceAllUsesWith(LLVMContext &VMContext, DIDescriptor D) {
 
 /// replaceAllUsesWith - Replace all uses of the MDNode used by this
 /// type with the one in D.
-void DIType::replaceAllUsesWith(MDNode *D) {
+void DIDescriptor::replaceAllUsesWith(MDNode *D) {
 
   assert(DbgNode && "Trying to replace an unverified type!");
   assert(DbgNode != D && "This replacement should always happen");
