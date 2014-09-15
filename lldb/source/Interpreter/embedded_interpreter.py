@@ -61,7 +61,7 @@ def get_terminal_size(fd):
 
 def readfunc_stdio(prompt):
     sys.stdout.write(prompt)
-    return sys.stdin.readline()
+    return sys.stdin.readline().rstrip()
 
 def run_python_interpreter (local_dict):
     # Pass in the dictionary, for continuity from one session to the next.
