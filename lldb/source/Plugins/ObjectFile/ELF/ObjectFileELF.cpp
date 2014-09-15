@@ -826,6 +826,38 @@ ObjectFileELF::GetAddressByteSize() const
     return m_data.GetAddressByteSize();
 }
 
+// Top 16 bits of the `Symbol` flags are available.
+#define ARM_ELF_SYM_IS_THUMB    (1 << 16)
+
+AddressClass
+ObjectFileELF::GetAddressClass (addr_t file_addr)
+{
+    auto res = ObjectFile::GetAddressClass (file_addr);
+
+    if (res != eAddressClassCode)
+        return res;
+
+    ArchSpec arch_spec;
+    GetArchitecture(arch_spec);
+    if (arch_spec.GetMachine() != llvm::Triple::arm)
+        return res;
+
+    auto symtab = GetSymtab();
+    if (symtab == nullptr)
+        return res;
+
+    auto symbol = symtab->FindSymbolContainingFileAddress(file_addr);
+    if (symbol == nullptr)
+        return res;
+
+    // Thumb symbols have the lower bit set in the flags field so we just check
+    // for that.
+    if (symbol->GetFlags() & ARM_ELF_SYM_IS_THUMB)
+        res = eAddressClassCodeAlternateISA;
+
+    return res;
+}
+
 size_t
 ObjectFileELF::SectionIndex(const SectionHeaderCollIter &I)
 {
@@ -1747,6 +1779,8 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
         }
 
         ArchSpec arch;
+        int64_t symbol_value_offset = 0;
+        uint32_t additional_flags = 0;
 
         if (GetArchitecture(arch) &&
             arch.GetMachine() == llvm::Triple::arm)
@@ -1770,6 +1804,20 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
                  symbol_name_ref.startswith(g_armelf_thumb_marker) ||
                  symbol_name_ref.startswith(g_armelf_data_marker)))
                 continue;
+
+            // THUMB functions have the lower bit of their address set. Fixup
+            // the actual address and mark the symbol as THUMB.
+            if (symbol_type == eSymbolTypeCode && symbol.st_value & 1)
+            {
+                // Substracting 1 from the address effectively unsets
+                // the low order bit, which results in the address
+                // actually pointing to the beginning of the symbol.
+                // This delta will be used below in conjuction with
+                // symbol.st_value to produce the final symbol_value
+                // that we store in the symtab.
+                symbol_value_offset = -1;
+                additional_flags = ARM_ELF_SYM_IS_THUMB;
+            }
         }
 
         // If the symbol section we've found has no data (SHT_NOBITS), then check the module section
@@ -1792,12 +1840,15 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
             }
         }
 
-        uint64_t symbol_value = symbol.st_value;
+        // symbol_value_offset may contain 0 for ARM symbols or -1 for
+        // THUMB symbols. See above for more details.
+        uint64_t symbol_value = symbol.st_value | symbol_value_offset;
         if (symbol_section_sp && CalculateType() != ObjectFile::Type::eTypeObjectFile)
             symbol_value -= symbol_section_sp->GetFileAddress();
         bool is_global = symbol.getBinding() == STB_GLOBAL;
-        uint32_t flags = symbol.st_other << 8 | symbol.st_info;
+        uint32_t flags = symbol.st_other << 8 | symbol.st_info | additional_flags;
         bool is_mangled = symbol_name ? (symbol_name[0] == '_' && symbol_name[1] == 'Z') : false;
+
         Symbol dc_symbol(
             i + start_id,       // ID is the original symbol table index.
             symbol_name,        // Symbol name.
