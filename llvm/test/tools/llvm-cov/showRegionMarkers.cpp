@@ -1,4 +1,4 @@
-// RUN: llvm-cov show %S/Inputs/regionMarkers.covmapping -instr-profile %S/Inputs/regionMarkers.profdata -show-regions -dump -filename-equivalence %s | FileCheck %s
+// RUN: llvm-cov show %S/Inputs/regionMarkers.covmapping -instr-profile %S/Inputs/regionMarkers.profdata -show-regions -dump -filename-equivalence %s 2>&1 | FileCheck %s
 
 int main() {                      // CHECK: Marker at [[@LINE]]:12 = 1
   int x = 0;

@@ -119,6 +119,9 @@ private:
   std::vector<RegionMarker> Markers;
   StringRef FunctionName;
 
+  /// \brief Initialize the visible source range for this view.
+  void setUpVisibleRange(SourceCoverageDataManager &Data);
+
   /// \brief Create the line coverage information using the coverage data.
   void createLineCoverageInfo(SourceCoverageDataManager &Data);
 

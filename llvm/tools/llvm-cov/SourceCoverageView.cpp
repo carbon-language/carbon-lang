@@ -118,6 +118,13 @@ void SourceCoverageView::renderRegionMarkers(raw_ostream &OS,
     Buffer.clear();
   }
   OS << "\n";
+
+  if (Options.Debug) {
+    for (const auto &Region : Regions) {
+      errs() << "Marker at " << Region.Line << ":" << Region.Column << " = "
+             << Region.ExecutionCount << "\n";
+    }
+  }
 }
 
 /// \brief Insert a new highlighting range into the line's highlighting ranges
@@ -316,17 +323,24 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned Offset) {
   }
 }
 
-void
-SourceCoverageView::createLineCoverageInfo(SourceCoverageDataManager &Data) {
+void SourceCoverageView::setUpVisibleRange(SourceCoverageDataManager &Data) {
   auto CountedRegions = Data.getSourceRegions();
   if (!CountedRegions.size())
     return;
 
-  LineOffset = CountedRegions.front().LineStart;
-  LineStats.resize(CountedRegions.front().LineEnd - LineOffset + 1);
+  unsigned Start = CountedRegions.front().LineStart, End = 0;
   for (const auto &CR : CountedRegions) {
-    if (CR.LineEnd > LineStats.size())
-      LineStats.resize(CR.LineEnd - LineOffset + 1);
+    Start = std::min(Start, CR.LineStart);
+    End = std::max(End, CR.LineEnd);
+  }
+  LineOffset = Start;
+  LineStats.resize(End - Start + 1);
+}
+
+void
+SourceCoverageView::createLineCoverageInfo(SourceCoverageDataManager &Data) {
+  auto CountedRegions = Data.getSourceRegions();
+  for (const auto &CR : CountedRegions) {
     if (CR.Kind == coverage::CounterMappingRegion::SkippedRegion) {
       // Reset the line stats for skipped regions.
       for (unsigned Line = CR.LineStart; Line <= CR.LineEnd;
@@ -395,16 +409,10 @@ void SourceCoverageView::createRegionMarkers(SourceCoverageDataManager &Data) {
     if (CR.Kind != coverage::CounterMappingRegion::SkippedRegion)
       Markers.push_back(
           RegionMarker(CR.LineStart, CR.ColumnStart, CR.ExecutionCount));
-
-  if (Options.Debug) {
-    for (const auto &Marker : Markers) {
-      outs() << "Marker at " << Marker.Line << ":" << Marker.Column << " = "
-             << Marker.ExecutionCount << "\n";
-    }
-  }
 }
 
 void SourceCoverageView::load(SourceCoverageDataManager &Data) {
+  setUpVisibleRange(Data);
   if (Options.ShowLineStats)
     createLineCoverageInfo(Data);
   if (Options.Colors)
