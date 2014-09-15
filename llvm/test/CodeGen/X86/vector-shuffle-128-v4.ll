@@ -119,6 +119,20 @@ define <4 x float> @shuffle_v4f32_3210(<4 x float> %a, <4 x float> %b) {
   %shuffle = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
   ret <4 x float> %shuffle
 }
+define <4 x float> @shuffle_v4f32_0011(<4 x float> %a, <4 x float> %b) {
+; ALL-LABEL: @shuffle_v4f32_0011
+; ALL:         unpcklps {{.*}} # xmm0 = xmm0[0,0,1,1]
+; ALL-NEXT:    retq
+  %shuffle = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
+  ret <4 x float> %shuffle
+}
+define <4 x float> @shuffle_v4f32_2233(<4 x float> %a, <4 x float> %b) {
+; ALL-LABEL: @shuffle_v4f32_2233
+; ALL:         unpckhps {{.*}} # xmm0 = xmm0[2,2,3,3]
+; ALL-NEXT:    retq
+  %shuffle = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 2, i32 2, i32 3, i32 3>
+  ret <4 x float> %shuffle
+}
 define <4 x float> @shuffle_v4f32_0022(<4 x float> %a, <4 x float> %b) {
 ; SSE2-LABEL: @shuffle_v4f32_0022
 ; SSE2:         shufps {{.*}} # xmm0 = xmm0[0,0,2,2]

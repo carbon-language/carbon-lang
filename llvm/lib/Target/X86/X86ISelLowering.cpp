@@ -19413,6 +19413,20 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
                     /*AddTo*/ true);
       return true;
     }
+    if (Mask.equals(0, 0, 1, 1) || Mask.equals(2, 2, 3, 3)) {
+      bool Lo = Mask.equals(0, 0, 1, 1);
+      unsigned Shuffle = Lo ? X86ISD::UNPCKL : X86ISD::UNPCKH;
+      MVT ShuffleVT = MVT::v4f32;
+      if (Depth == 1 && Root->getOpcode() == Shuffle)
+        return false; // Nothing to do!
+      Op = DAG.getNode(ISD::BITCAST, DL, ShuffleVT, Input);
+      DCI.AddToWorklist(Op.getNode());
+      Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op, Op);
+      DCI.AddToWorklist(Op.getNode());
+      DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Op),
+                    /*AddTo*/ true);
+      return true;
+    }
   }
 
   // We always canonicalize the 8 x i16 and 16 x i8 shuffles into their UNPCK
