@@ -45,6 +45,7 @@ public:
   AllocaHolder(AllocaHolder &&RHS) : Allocations(std::move(RHS.Allocations)) {}
   AllocaHolder &operator=(AllocaHolder &&RHS) {
     Allocations = std::move(RHS.Allocations);
+    return *this;
   }
 
   ~AllocaHolder() {
