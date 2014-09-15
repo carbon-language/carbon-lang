@@ -484,6 +484,8 @@ protected:
   /// \brief Create a machine mem operand from the given instruction.
   MachineMemOperand *createMachineMemOperandFor(const Instruction *I) const;
 
+  CmpInst::Predicate optimizeCmpPredicate(const CmpInst *CI) const;
+
   bool lowerCallTo(const CallInst *CI, const char *SymName, unsigned NumArgs);
   bool lowerCallTo(CallLoweringInfo &CLI);
 
