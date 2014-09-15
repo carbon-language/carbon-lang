@@ -836,11 +836,19 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
 #endif  // defined(__x86_64__) && SANITIZER_LINUX
 
 #if SANITIZER_ANDROID
+static atomic_uint8_t android_log_initialized;
+
+void AndroidLogInit() {
+  atomic_store(&android_log_initialized, 1, memory_order_release);
+}
 // This thing is not, strictly speaking, async signal safe, but it does not seem
 // to cause any issues. Alternative is writing to log devices directly, but
 // their location and message format might change in the future, so we'd really
 // like to avoid that.
 void AndroidLogWrite(const char *buffer) {
+  if (!atomic_load(&android_log_initialized, memory_order_acquire))
+    return;
+
   char *copy = internal_strdup(buffer);
   char *p = copy;
   char *q;

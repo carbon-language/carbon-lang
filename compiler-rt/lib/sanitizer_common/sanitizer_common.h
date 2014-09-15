@@ -544,10 +544,13 @@ F IndirectExternCall(F f) {
 #endif
 
 #if SANITIZER_ANDROID
+// Initialize Android logging. Any writes before this are silently lost.
+void AndroidLogInit();
 void AndroidLogWrite(const char *buffer);
 void GetExtraActivationFlags(char *buf, uptr size);
 void SanitizerInitializeUnwinder();
 #else
+INLINE void AndroidLogInit() {}
 INLINE void AndroidLogWrite(const char *buffer_unused) {}
 INLINE void GetExtraActivationFlags(char *buf, uptr size) { *buf = '\0'; }
 INLINE void SanitizerInitializeUnwinder() {}

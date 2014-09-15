@@ -592,6 +592,11 @@ static void AsanInitInternal() {
 
   InitializeAsanInterceptors();
 
+  // Enable system log ("adb logcat") on Android.
+  // Doing this before interceptors are initialized crashes in:
+  // AsanInitInternal -> android_log_write -> __interceptor_strcmp
+  AndroidLogInit();
+
   ReplaceSystemMalloc();
 
   uptr shadow_start = kLowShadowBeg;
