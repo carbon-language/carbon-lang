@@ -86,32 +86,69 @@ BasicBlock *polly::createSingleExitEdge(Region *R, Pass *P) {
   return SplitBlockPredecessors(BB, Preds, ".region", P);
 }
 
+static void replaceScopAndRegionEntry(polly::Scop *S, BasicBlock *OldEntry,
+                                      BasicBlock *NewEntry) {
+  for (polly::ScopStmt *Stmt : *S)
+    if (Stmt->getBasicBlock() == OldEntry) {
+      Stmt->setBasicBlock(NewEntry);
+      break;
+    }
+
+  S->getRegion().replaceEntryRecursive(NewEntry);
+}
+
 BasicBlock *polly::simplifyRegion(Scop *S, Pass *P) {
   Region *R = &S->getRegion();
 
   // The entering block for the region.
   BasicBlock *EnteringBB = R->getEnteringBlock();
+  BasicBlock *OldEntry = R->getEntry();
+  BasicBlock *NewEntry = nullptr;
 
   // Create single entry edge if the region has multiple entry edges.
   if (!EnteringBB) {
-    BasicBlock *OldEntry = R->getEntry();
-    BasicBlock *NewEntry = SplitBlock(OldEntry, OldEntry->begin(), P);
-
-    for (ScopStmt *Stmt : *S)
-      if (Stmt->getBasicBlock() == OldEntry) {
-        Stmt->setBasicBlock(NewEntry);
-        break;
-      }
-
-    R->replaceEntryRecursive(NewEntry);
+    NewEntry = SplitBlock(OldEntry, OldEntry->begin(), P);
     EnteringBB = OldEntry;
   }
 
   // Create an unconditional entry edge.
   if (EnteringBB->getTerminator()->getNumSuccessors() != 1) {
-    EnteringBB = SplitEdge(EnteringBB, R->getEntry(), P);
+    BasicBlock *EntryBB = NewEntry ? NewEntry : OldEntry;
+    BasicBlock *SplitEdgeBB = SplitEdge(EnteringBB, EntryBB, P);
+
+    // Once the edge between EnteringBB and EntryBB is split, two cases arise.
+    // The first is simple. The new block is inserted between EnteringBB and
+    // EntryBB. In this case no further action is needed. However it might
+    // happen (if the splitted edge is not critical) that the new block is
+    // inserted __after__ EntryBB causing the following situation:
+    //
+    // EnteringBB
+    //     |
+    //    / \
+    //    |  \-> some_other_BB_not_in_R
+    //    V
+    // EntryBB
+    //    |
+    //    V
+    // SplitEdgeBB
+    //
+    // In this case we need to swap the role of EntryBB and SplitEdgeBB.
+
+    // Check which case SplitEdge produced:
+    if (SplitEdgeBB->getTerminator()->getSuccessor(0) == EntryBB) {
+      // First (simple) case.
+      EnteringBB = SplitEdgeBB;
+    } else {
+      // Second (complicated) case.
+      NewEntry = SplitEdgeBB;
+      EnteringBB = EntryBB;
+    }
+
     EnteringBB->setName("polly.entering.block");
   }
+
+  if (NewEntry)
+    replaceScopAndRegionEntry(S, OldEntry, NewEntry);
 
   // Create single exit edge if the region has multiple exit edges.
   if (!R->getExitingBlock()) {
