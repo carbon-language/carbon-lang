@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     // CHECK: stack-buffer-overflow
     // CHECK: {{WRITE of size .* at 0x.* thread T0}}
     // CHECK: {{in .*wait}}
-    // CHECK: {{in main .*wait.cc:}}
+    // CHECK: {{in main .*wait4.cc:}}
     // CHECK: is located in stack of thread T0 at offset
     // CHECK: {{in main}}
     return res == -1 ? 1 : 0;
