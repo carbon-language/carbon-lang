@@ -3038,18 +3038,7 @@ static void emitCXXDestructor(CodeGenModule &CGM, const CXXDestructorDecl *dtor,
   if (dtorType == StructorType::Base && !CGM.TryEmitBaseDestructorAsAlias(dtor))
     return;
 
-  const CGFunctionInfo &fnInfo =
-      CGM.getTypes().arrangeCXXStructorDeclaration(dtor, dtorType);
-
-  auto *fn = cast<llvm::Function>(
-      CGM.getAddrOfCXXStructor(dtor, dtorType, &fnInfo, nullptr, true));
-
-  GlobalDecl GD(dtor, toCXXDtorType(dtorType));
-  CGM.setFunctionLinkage(GD, fn);
-  CodeGenFunction(CGM).GenerateCode(GD, fn, fnInfo);
-
-  CGM.setFunctionDefinitionAttributes(dtor, fn);
-  CGM.SetLLVMFunctionAttributesForDefinition(dtor, fn);
+  CGM.codegenCXXStructor(dtor, dtorType);
 }
 
 void ItaniumCXXABI::emitCXXStructor(const CXXMethodDecl *MD,
