@@ -2153,155 +2153,114 @@ static SmallString<128> getSanitizerRTLibName(const ToolChain &TC,
   return LibSanitizer;
 }
 
-static void addSanitizerRTLinkFlags(const ToolChain &TC, const ArgList &Args,
-                                    ArgStringList &CmdArgs,
-                                    StringRef Sanitizer,
-                                    bool ExportSymbols, bool LinkDeps) {
-  SmallString<128> LibSanitizer =
-      getSanitizerRTLibName(TC, Sanitizer, /*Shared*/ false);
-
-  // Sanitizer runtime may need to come before -lstdc++ (or -lc++, libstdc++.a,
-  // etc.) so that the linker picks custom versions of the global 'operator
-  // new' and 'operator delete' symbols. We take the extreme (but simple)
-  // strategy of inserting it at the front of the link command. It also
-  // needs to be forced to end up in the executable, so wrap it in
+static void addSanitizerRuntime(const ToolChain &TC, const ArgList &Args,
+                                ArgStringList &CmdArgs, StringRef Sanitizer,
+                                bool IsShared) {
+  SmallString<128> LibSanitizer = getSanitizerRTLibName(TC, Sanitizer, IsShared);
+  // Static runtimes must be forced into executable, so we wrap them in
   // whole-archive.
-  SmallVector<const char *, 8> LibSanitizerArgs;
-  LibSanitizerArgs.push_back("-whole-archive");
-  LibSanitizerArgs.push_back(Args.MakeArgString(LibSanitizer));
-  LibSanitizerArgs.push_back("-no-whole-archive");
-  if (LinkDeps) {
-    // Link sanitizer dependencies explicitly. These libraries should be added
-    // at the front of the link command, so that they will definitely
-    // participate in link even if user specified -Wl,-as-needed (see PR15823).
-    LibSanitizerArgs.push_back("-lpthread");
-    LibSanitizerArgs.push_back("-lrt");
-    LibSanitizerArgs.push_back("-lm");
-    // There's no libdl on FreeBSD.
-    if (TC.getTriple().getOS() != llvm::Triple::FreeBSD)
-      LibSanitizerArgs.push_back("-ldl");
-  }
-  // If possible, use a dynamic symbols file to export the symbols from the
-  // runtime library. If we can't do so, use -export-dynamic instead to export
-  // all symbols from the binary.
-  if (ExportSymbols) {
-    if (llvm::sys::fs::exists(LibSanitizer + ".syms"))
-      LibSanitizerArgs.push_back(
-          Args.MakeArgString("--dynamic-list=" + LibSanitizer + ".syms"));
-    else
-      LibSanitizerArgs.push_back("-export-dynamic");
-  }
-
-  CmdArgs.insert(CmdArgs.begin(), LibSanitizerArgs.begin(),
-                 LibSanitizerArgs.end());
+  if (!IsShared)
+    CmdArgs.push_back("-whole-archive");
+  CmdArgs.push_back(Args.MakeArgString(LibSanitizer));
+  if (!IsShared)
+    CmdArgs.push_back("-no-whole-archive");
 }
 
-/// If AddressSanitizer is enabled, add appropriate linker flags (Linux).
-/// This needs to be called before we add the C run-time (malloc, etc).
-static void addAsanRT(const ToolChain &TC, const ArgList &Args,
-                      ArgStringList &CmdArgs, bool Shared, bool IsCXX) {
-  if (Shared) {
-    // Link dynamic runtime if necessary.
-    SmallString<128> LibSanitizer = getSanitizerRTLibName(TC, "asan", Shared);
-    CmdArgs.insert(CmdArgs.begin(), Args.MakeArgString(LibSanitizer));
+// Tries to use a file with the list of dynamic symbols that need to be exported
+// from the runtime library. Returns true if the file was found.
+static bool addSanitizerDynamicList(const ToolChain &TC, const ArgList &Args,
+                                    ArgStringList &CmdArgs,
+                                    StringRef Sanitizer) {
+  SmallString<128> LibSanitizer = getSanitizerRTLibName(TC, Sanitizer, false);
+  if (llvm::sys::fs::exists(LibSanitizer + ".syms")) {
+    CmdArgs.push_back(
+        Args.MakeArgString("--dynamic-list=" + LibSanitizer + ".syms"));
+    return true;
+  }
+  return false;
+}
+
+static void linkSanitizerRuntimeDeps(const ToolChain &TC,
+                                     ArgStringList &CmdArgs) {
+  // Force linking against the system libraries sanitizers depends on
+  // (see PR15823 why this is necessary).
+  CmdArgs.push_back("--no-as-needed");
+  CmdArgs.push_back("-lpthread");
+  CmdArgs.push_back("-lrt");
+  CmdArgs.push_back("-lm");
+  // There's no libdl on FreeBSD.
+  if (TC.getTriple().getOS() != llvm::Triple::FreeBSD)
+    CmdArgs.push_back("-ldl");
+}
+
+static void
+collectSanitizerRuntimes(const ToolChain &TC, const ArgList &Args,
+                         SmallVectorImpl<StringRef> &SharedRuntimes,
+                         SmallVectorImpl<StringRef> &StaticRuntimes,
+                         SmallVectorImpl<StringRef> &HelperStaticRuntimes) {
+  const SanitizerArgs &SanArgs = TC.getSanitizerArgs();
+  // Collect shared runtimes.
+  if (SanArgs.needsAsanRt() && SanArgs.needsSharedAsanRt()) {
+    SharedRuntimes.push_back("asan");
   }
 
-  // Do not link static runtime to DSOs or if compiling for Android.
+  // Collect static runtimes.
   if (Args.hasArg(options::OPT_shared) ||
-      (TC.getTriple().getEnvironment() == llvm::Triple::Android))
+      (TC.getTriple().getEnvironment() == llvm::Triple::Android)) {
+    // Don't link static runtimes into DSOs or if compiling for Android.
     return;
-
-  if (Shared) {
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "asan-preinit",
-                            /*ExportSymbols*/ false,
-                            /*LinkDeps*/ false);
-  } else {
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "asan", /*ExportSymbols*/ true,
-                            /*LinkDeps*/ true);
-    if (IsCXX)
-      addSanitizerRTLinkFlags(TC, Args, CmdArgs, "asan_cxx",
-                              /*ExportSymbols*/ true, /*LinkDeps*/ false);
+  }
+  if (SanArgs.needsAsanRt()) {
+    if (SanArgs.needsSharedAsanRt()) {
+      HelperStaticRuntimes.push_back("asan-preinit");
+    } else {
+      StaticRuntimes.push_back("asan");
+      if (SanArgs.linkCXXRuntimes())
+        StaticRuntimes.push_back("asan_cxx");
+    }
+  }
+  if (SanArgs.needsDfsanRt())
+    StaticRuntimes.push_back("dfsan");
+  if (SanArgs.needsLsanRt())
+    StaticRuntimes.push_back("lsan");
+  if (SanArgs.needsMsanRt())
+    StaticRuntimes.push_back("msan");
+  if (SanArgs.needsTsanRt())
+    StaticRuntimes.push_back("tsan");
+  // WARNING: UBSan should always go last.
+  if (SanArgs.needsUbsanRt()) {
+    // If UBSan is not combined with another sanitizer, we need to pull in
+    // sanitizer_common explicitly.
+    if (StaticRuntimes.empty())
+      HelperStaticRuntimes.push_back("san");
+    StaticRuntimes.push_back("ubsan");
+    if (SanArgs.linkCXXRuntimes())
+      StaticRuntimes.push_back("ubsan_cxx");
   }
 }
 
-/// If ThreadSanitizer is enabled, add appropriate linker flags (Linux).
-/// This needs to be called before we add the C run-time (malloc, etc).
-static void addTsanRT(const ToolChain &TC, const ArgList &Args,
-                      ArgStringList &CmdArgs) {
-  if (!Args.hasArg(options::OPT_shared))
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "tsan", /*ExportSymbols*/ true,
-                            /*LinkDeps*/ true);
-}
-
-/// If MemorySanitizer is enabled, add appropriate linker flags (Linux).
-/// This needs to be called before we add the C run-time (malloc, etc).
-static void addMsanRT(const ToolChain &TC, const ArgList &Args,
-                      ArgStringList &CmdArgs) {
-  if (!Args.hasArg(options::OPT_shared))
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "msan", /*ExportSymbols*/ true,
-                            /*LinkDeps*/ true);
-}
-
-/// If LeakSanitizer is enabled, add appropriate linker flags (Linux).
-/// This needs to be called before we add the C run-time (malloc, etc).
-static void addLsanRT(const ToolChain &TC, const ArgList &Args,
-                      ArgStringList &CmdArgs) {
-  if (!Args.hasArg(options::OPT_shared))
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "lsan", /*ExportSymbols */ true,
-                            /*LinkDeps*/ true);
-}
-
-/// If UndefinedBehaviorSanitizer is enabled, add appropriate linker flags
-/// (Linux).
-static void addUbsanRT(const ToolChain &TC, const ArgList &Args,
-                       ArgStringList &CmdArgs, bool IsCXX,
-                       bool HasOtherSanitizerRt) {
-  // Do not link runtime into shared libraries.
-  if (Args.hasArg(options::OPT_shared))
-    return;
-
-  // Need a copy of sanitizer_common. This could come from another sanitizer
-  // runtime; if we're not including one, include our own copy.
-  if (!HasOtherSanitizerRt)
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "san", /*ExportSymbols*/ false,
-                            /*LinkDeps*/ false);
-
-  addSanitizerRTLinkFlags(TC, Args, CmdArgs, "ubsan", /*ExportSymbols*/ true,
-                          /*LinkDeps*/ true);
-
-  // Only include the bits of the runtime which need a C++ ABI library if
-  // we're linking in C++ mode.
-  if (IsCXX)
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "ubsan_cxx",
-                            /*ExportSymbols*/ true, /*LinkDeps*/ false);
-}
-
-static void addDfsanRT(const ToolChain &TC, const ArgList &Args,
-                       ArgStringList &CmdArgs) {
-  if (!Args.hasArg(options::OPT_shared))
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "dfsan", /*ExportSymbols*/ true,
-                            /*LinkDeps*/ true);
-}
-
-// Should be called before we add C++ ABI library.
-static void addSanitizerRuntimes(const ToolChain &TC, const ArgList &Args,
+// Should be called before we add system libraries (C++ ABI, libstdc++/libc++,
+// C runtime, etc). Returns true if sanitizer system deps need to be linked in.
+static bool addSanitizerRuntimes(const ToolChain &TC, const ArgList &Args,
                                  ArgStringList &CmdArgs) {
-  const SanitizerArgs &Sanitize = TC.getSanitizerArgs();
-  if (Sanitize.needsUbsanRt())
-    addUbsanRT(TC, Args, CmdArgs, Sanitize.linkCXXRuntimes(),
-               Sanitize.needsAsanRt() || Sanitize.needsTsanRt() ||
-                   Sanitize.needsMsanRt() || Sanitize.needsLsanRt());
-  if (Sanitize.needsAsanRt())
-    addAsanRT(TC, Args, CmdArgs, Sanitize.needsSharedAsanRt(),
-              Sanitize.linkCXXRuntimes());
-  if (Sanitize.needsTsanRt())
-    addTsanRT(TC, Args, CmdArgs);
-  if (Sanitize.needsMsanRt())
-    addMsanRT(TC, Args, CmdArgs);
-  if (Sanitize.needsLsanRt())
-    addLsanRT(TC, Args, CmdArgs);
-  if (Sanitize.needsDfsanRt())
-    addDfsanRT(TC, Args, CmdArgs);
+  SmallVector<StringRef, 4> SharedRuntimes, StaticRuntimes,
+      HelperStaticRuntimes;
+  collectSanitizerRuntimes(TC, Args, SharedRuntimes, StaticRuntimes,
+                           HelperStaticRuntimes);
+  for (auto RT : SharedRuntimes)
+    addSanitizerRuntime(TC, Args, CmdArgs, RT, true);
+  for (auto RT : HelperStaticRuntimes)
+    addSanitizerRuntime(TC, Args, CmdArgs, RT, false);
+  bool AddExportDynamic = false;
+  for (auto RT : StaticRuntimes) {
+    addSanitizerRuntime(TC, Args, CmdArgs, RT, false);
+    AddExportDynamic |= !addSanitizerDynamicList(TC, Args, CmdArgs, RT);
+  }
+  // If there is a static runtime with no dynamic list, force all the symbols
+  // to be dynamic to be sure we export sanitizer interface functions.
+  if (AddExportDynamic)
+    CmdArgs.push_back("-export-dynamic");
+  return !StaticRuntimes.empty();
 }
 
 static bool shouldUseFramePointerForTarget(const ArgList &Args,
@@ -6641,6 +6600,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (D.IsUsingLTO(Args))
     AddGoldPlugin(ToolChain, Args, CmdArgs);
 
+  bool NeedsSanitizerDeps = addSanitizerRuntimes(ToolChain, Args, CmdArgs);
   AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
@@ -6652,6 +6612,8 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
       else
         CmdArgs.push_back("-lm");
     }
+    if (NeedsSanitizerDeps)
+      linkSanitizerRuntimeDeps(ToolChain, CmdArgs);
     // FIXME: For some reason GCC passes -lgcc and -lgcc_s before adding
     // the default system libraries. Just mimic this for now.
     if (Args.hasArg(options::OPT_pg))
@@ -6705,8 +6667,6 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtend.o")));
     CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtn.o")));
   }
-
-  addSanitizerRuntimes(getToolChain(), Args, CmdArgs);
 
   addProfileRT(ToolChain, Args, CmdArgs);
 
@@ -7465,9 +7425,8 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT_Z_Xlinker__no_demangle))
     CmdArgs.push_back("--no-demangle");
 
+  bool NeedsSanitizerDeps = addSanitizerRuntimes(ToolChain, Args, CmdArgs);
   AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
-
-  addSanitizerRuntimes(getToolChain(), Args, CmdArgs);
   // The profile runtime also needs access to system libraries.
   addProfileRT(getToolChain(), Args, CmdArgs);
 
@@ -7488,6 +7447,9 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
     if (!Args.hasArg(options::OPT_nodefaultlibs)) {
       if (Args.hasArg(options::OPT_static))
         CmdArgs.push_back("--start-group");
+
+      if (NeedsSanitizerDeps)
+        linkSanitizerRuntimeDeps(ToolChain, CmdArgs);
 
       LibOpenMP UsedOpenMPLib = LibUnknown;
       if (Args.hasArg(options::OPT_fopenmp)) {
