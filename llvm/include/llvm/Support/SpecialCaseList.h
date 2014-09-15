@@ -56,19 +56,19 @@ class Regex;
 class StringRef;
 
 class SpecialCaseList {
- public:
+public:
   /// Parses the special case list from a file. If Path is empty, returns
   /// an empty special case list. On failure, returns 0 and writes an error
   /// message to string.
-   static std::unique_ptr<SpecialCaseList> create(StringRef Path,
+  static std::unique_ptr<SpecialCaseList> create(StringRef Path,
                                                   std::string &Error);
   /// Parses the special case list from a memory buffer. On failure, returns
   /// 0 and writes an error message to string.
-   static std::unique_ptr<SpecialCaseList> create(const MemoryBuffer *MB,
+  static std::unique_ptr<SpecialCaseList> create(const MemoryBuffer *MB,
                                                   std::string &Error);
   /// Parses the special case list from a file. On failure, reports a fatal
   /// error.
-   static std::unique_ptr<SpecialCaseList> createOrDie(StringRef Path);
+  static std::unique_ptr<SpecialCaseList> createOrDie(StringRef Path);
 
   ~SpecialCaseList();
 
@@ -80,7 +80,7 @@ class SpecialCaseList {
   bool inSection(StringRef Section, StringRef Query,
                  StringRef Category = StringRef()) const;
 
- private:
+private:
   SpecialCaseList(SpecialCaseList const &) LLVM_DELETED_FUNCTION;
   SpecialCaseList &operator=(SpecialCaseList const &) LLVM_DELETED_FUNCTION;
 
