@@ -19,10 +19,11 @@ using namespace dwarf;
 
 DWARFUnit::DWARFUnit(DWARFContext &DC, const DWARFDebugAbbrev *DA,
                      StringRef IS, StringRef RS, StringRef SS, StringRef SOS,
-                     StringRef AOS, const RelocAddrMap *M, bool LE)
+                     StringRef AOS, const RelocAddrMap *M, bool LE,
+                     const DWARFUnitSectionBase& UnitSection)
   : Context(DC), Abbrev(DA), InfoSection(IS), RangeSection(RS),
     StringSection(SS), StringOffsetSection(SOS), AddrOffsetSection(AOS),
-    RelocMap(M), isLittleEndian(LE) {
+    RelocMap(M), isLittleEndian(LE), UnitSection(UnitSection)  {
   clear();
 }
 

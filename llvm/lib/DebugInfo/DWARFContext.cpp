@@ -321,7 +321,7 @@ void DWARFContext::parseCompileUnits() {
     std::unique_ptr<DWARFCompileUnit> CU(new DWARFCompileUnit(*this,
         getDebugAbbrev(), getInfoSection().Data, getRangeSection(),
         getStringSection(), StringRef(), getAddrSection(),
-        &getInfoSection().Relocs, isLittleEndian()));
+        &getInfoSection().Relocs, isLittleEndian(), CUs));
     if (!CU->extract(DIData, &offset)) {
       break;
     }
@@ -341,7 +341,7 @@ void DWARFContext::parseTypeUnits() {
       std::unique_ptr<DWARFTypeUnit> TU(new DWARFTypeUnit(*this,
            getDebugAbbrev(), I.second.Data, getRangeSection(),
            getStringSection(), StringRef(), getAddrSection(),
-           &I.second.Relocs, isLittleEndian()));
+           &I.second.Relocs, isLittleEndian(), TUs));
       if (!TU->extract(DIData, &offset))
         break;
       TUs.push_back(std::move(TU));
@@ -360,7 +360,7 @@ void DWARFContext::parseDWOCompileUnits() {
     std::unique_ptr<DWARFCompileUnit> DWOCU(new DWARFCompileUnit(*this,
         getDebugAbbrevDWO(), getInfoDWOSection().Data, getRangeDWOSection(),
         getStringDWOSection(), getStringOffsetDWOSection(), getAddrSection(),
-        &getInfoDWOSection().Relocs, isLittleEndian()));
+        &getInfoDWOSection().Relocs, isLittleEndian(), DWOCUs));
     if (!DWOCU->extract(DIData, &offset)) {
       break;
     }
@@ -380,7 +380,7 @@ void DWARFContext::parseDWOTypeUnits() {
       std::unique_ptr<DWARFTypeUnit> TU(new DWARFTypeUnit(*this,
           getDebugAbbrevDWO(), I.second.Data, getRangeDWOSection(),
           getStringDWOSection(), getStringOffsetDWOSection(), getAddrSection(),
-          &I.second.Relocs, isLittleEndian()));
+          &I.second.Relocs, isLittleEndian(), DWOTUs));
       if (!TU->extract(DIData, &offset))
         break;
       DWOTUs.push_back(std::move(TU));
@@ -389,33 +389,9 @@ void DWARFContext::parseDWOTypeUnits() {
   }
 }
 
-namespace {
-  struct OffsetComparator {
-
-    bool operator()(const std::unique_ptr<DWARFCompileUnit> &LHS,
-                    const std::unique_ptr<DWARFCompileUnit> &RHS) const {
-      return LHS->getOffset() < RHS->getOffset();
-    }
-    bool operator()(const std::unique_ptr<DWARFCompileUnit> &LHS,
-                    uint32_t RHS) const {
-      return LHS->getOffset() < RHS;
-    }
-    bool operator()(uint32_t LHS,
-                    const std::unique_ptr<DWARFCompileUnit> &RHS) const {
-      return LHS < RHS->getOffset();
-    }
-  };
-}
-
 DWARFCompileUnit *DWARFContext::getCompileUnitForOffset(uint32_t Offset) {
   parseCompileUnits();
-
-  std::unique_ptr<DWARFCompileUnit> *CU =
-      std::lower_bound(CUs.begin(), CUs.end(), Offset, OffsetComparator());
-  if (CU != CUs.end()) {
-    return CU->get();
-  }
-  return nullptr;
+  return CUs.getUnitForOffset(Offset);
 }
 
 DWARFCompileUnit *DWARFContext::getCompileUnitForAddress(uint64_t Address) {

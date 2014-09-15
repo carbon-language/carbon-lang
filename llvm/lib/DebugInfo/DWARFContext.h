@@ -28,19 +28,17 @@ namespace llvm {
 /// information parsing. The actual data is supplied through pure virtual
 /// methods that a concrete implementation provides.
 class DWARFContext : public DIContext {
-  typedef SmallVector<std::unique_ptr<DWARFCompileUnit>, 1> CUVector;
-  typedef SmallVector<std::unique_ptr<DWARFTypeUnit>, 1> TUVector;
 
-  CUVector CUs;
-  TUVector TUs;
+  DWARFUnitSection<DWARFCompileUnit> CUs;
+  DWARFUnitSection<DWARFTypeUnit> TUs;
   std::unique_ptr<DWARFDebugAbbrev> Abbrev;
   std::unique_ptr<DWARFDebugLoc> Loc;
   std::unique_ptr<DWARFDebugAranges> Aranges;
   std::unique_ptr<DWARFDebugLine> Line;
   std::unique_ptr<DWARFDebugFrame> DebugFrame;
 
-  CUVector DWOCUs;
-  TUVector DWOTUs;
+  DWARFUnitSection<DWARFCompileUnit> DWOCUs;
+  DWARFUnitSection<DWARFTypeUnit> DWOTUs;
   std::unique_ptr<DWARFDebugAbbrev> AbbrevDWO;
   std::unique_ptr<DWARFDebugLocDWO> LocDWO;
 
@@ -77,8 +75,8 @@ public:
 
   void dump(raw_ostream &OS, DIDumpType DumpType = DIDT_All) override;
 
-  typedef iterator_range<CUVector::iterator> cu_iterator_range;
-  typedef iterator_range<TUVector::iterator> tu_iterator_range;
+  typedef DWARFUnitSection<DWARFCompileUnit>::iterator_range cu_iterator_range;
+  typedef DWARFUnitSection<DWARFTypeUnit>::iterator_range tu_iterator_range;
 
   /// Get compile units in this context.
   cu_iterator_range compile_units() {
