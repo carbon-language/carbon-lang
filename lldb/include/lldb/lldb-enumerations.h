@@ -432,6 +432,7 @@ namespace lldb {
         eArgTypeFunctionName,
         eArgTypeFunctionOrSymbol,
         eArgTypeGDBFormat,
+        eArgTypeHelpText,
         eArgTypeIndex,
         eArgTypeLanguage,
         eArgTypeLineNum,

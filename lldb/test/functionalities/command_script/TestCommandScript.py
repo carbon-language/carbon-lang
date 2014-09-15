@@ -59,16 +59,15 @@ class CmdPythonTestCase(TestBase):
                                'A command that says hello to LLDB users'])
 
         self.expect("help",
-                    substrs = ['Run Python function welcome.welcome_impl',
+                    substrs = ['For more information run',
                                'welcome'])
 
         self.expect("help -a",
-                    substrs = ['Run Python function welcome.welcome_impl',
+                    substrs = ['For more information run',
                                'welcome'])
 
         self.expect("help -u", matching=False,
-                    substrs = ['Run Python function welcome.welcome_impl',
-                               'welcome'])
+                    substrs = ['For more information run'])
 
         self.runCmd("command script delete welcome");
 
@@ -83,11 +82,10 @@ class CmdPythonTestCase(TestBase):
 
         self.expect('command script list',
             substrs = ['targetname',
-                       'Run Python function welcome.target_name_impl'])
+                       'For more information run'])
 
         self.expect("help targetname",
-                    substrs = ['Run Python function welcome.target_name_imp',
-                               'This command takes','\'raw\' input',
+                    substrs = ['This command takes','\'raw\' input',
                                'quote stuff'])
 
         self.expect("longwait",
@@ -112,8 +110,8 @@ class CmdPythonTestCase(TestBase):
                     substrs = ['I am running sync'])
 
         # Test that a python command can redefine itself
-        self.expect('command script add -f foobar welcome')
-
+        self.expect('command script add -f foobar welcome -h "just some help"')
+        
         self.runCmd("command script clear")
 
         # Test that re-defining an existing command works
