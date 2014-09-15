@@ -10,7 +10,7 @@
 
 declare void @foo3(%struct.S1*)
 
-; CHECK: movsd (%rsp), [[R0:%xmm[0-9]+]]
+; CHECK: movsd {{[0-9]*}}(%rsp), [[R0:%xmm[0-9]+]]
 ; CHECK: addpd [[R0]], %xmm{{[0-9]+}}
 
 define void @foo1(double %a.coerce0, double %a.coerce1, double %b.coerce0, double %b.coerce1) {
