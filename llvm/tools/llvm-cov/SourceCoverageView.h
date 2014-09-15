@@ -110,7 +110,7 @@ public:
 private:
   const MemoryBuffer &File;
   const CoverageViewOptions &Options;
-  unsigned LineStart, LineCount;
+  unsigned LineOffset;
   SubViewKind Kind;
   coverage::CounterMappingRegion ExpansionRegion;
   std::vector<std::unique_ptr<SourceCoverageView>> Children;
@@ -157,31 +157,19 @@ private:
 public:
   SourceCoverageView(const MemoryBuffer &File,
                      const CoverageViewOptions &Options)
-      : File(File), Options(Options), LineStart(1), Kind(View),
-        ExpansionRegion(coverage::Counter(), 0, 0, 0, 0, 0) {
-    LineCount = File.getBuffer().count('\n') + 1;
-  }
-
-  SourceCoverageView(const MemoryBuffer &File,
-                     const CoverageViewOptions &Options, unsigned LineStart,
-                     unsigned LineEnd)
-      : File(File), Options(Options), LineStart(LineStart),
-        LineCount(LineEnd - LineStart + 1), Kind(View),
+      : File(File), Options(Options), LineOffset(0), Kind(View),
         ExpansionRegion(coverage::Counter(), 0, 0, 0, 0, 0) {}
 
-  SourceCoverageView(SourceCoverageView &Parent, unsigned LineStart,
-                     unsigned LineEnd, StringRef FunctionName)
-      : File(Parent.File), Options(Parent.Options), LineStart(LineStart),
-        LineCount(LineEnd - LineStart + 1), Kind(InstantiationView),
-        ExpansionRegion(coverage::Counter(), 0, LineEnd, 0, LineEnd, 0),
+  SourceCoverageView(SourceCoverageView &Parent, StringRef FunctionName)
+      : File(Parent.File), Options(Parent.Options), LineOffset(0),
+        Kind(InstantiationView),
+        ExpansionRegion(coverage::Counter(), 0, 0, 0, 0, 0),
         FunctionName(FunctionName) {}
 
   SourceCoverageView(const MemoryBuffer &File,
-                     const CoverageViewOptions &Options, unsigned LineStart,
-                     unsigned LineEnd,
+                     const CoverageViewOptions &Options,
                      const coverage::CounterMappingRegion &ExpansionRegion)
-      : File(File), Options(Options), LineStart(LineStart),
-        LineCount(LineEnd - LineStart + 1), Kind(ExpansionView),
+      : File(File), Options(Options), LineOffset(0), Kind(ExpansionView),
         ExpansionRegion(ExpansionRegion) {}
 
   const CoverageViewOptions &getOptions() const { return Options; }

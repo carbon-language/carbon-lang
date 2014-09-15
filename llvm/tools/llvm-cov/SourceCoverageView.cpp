@@ -220,7 +220,7 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned Offset) {
 
   line_iterator Lines(File);
   // Advance the line iterator to the first line.
-  while (Lines.line_number() < LineStart)
+  while (Lines.line_number() < LineOffset)
     ++Lines;
 
   // The width of the leading columns
@@ -231,8 +231,8 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned Offset) {
   // subviews.
   unsigned DividerWidth = CombinedColumnWidth + 4;
 
-  for (size_t I = 0; I < LineCount; ++I) {
-    unsigned LineNo = I + LineStart;
+  for (size_t I = 0, E = LineStats.size(); I < E; ++I) {
+    unsigned LineNo = I + LineOffset;
 
     // Gather the child subviews that are visible on this line.
     auto LineSubViews = gatherLineSubViews(CurrentChild, Children, LineNo);
@@ -318,18 +318,25 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned Offset) {
 
 void
 SourceCoverageView::createLineCoverageInfo(SourceCoverageDataManager &Data) {
-  LineStats.resize(LineCount);
-  for (const auto &CR : Data.getSourceRegions()) {
+  auto CountedRegions = Data.getSourceRegions();
+  if (!CountedRegions.size())
+    return;
+
+  LineOffset = CountedRegions.front().LineStart;
+  LineStats.resize(CountedRegions.front().LineEnd - LineOffset + 1);
+  for (const auto &CR : CountedRegions) {
+    if (CR.LineEnd > LineStats.size())
+      LineStats.resize(CR.LineEnd - LineOffset + 1);
     if (CR.Kind == coverage::CounterMappingRegion::SkippedRegion) {
       // Reset the line stats for skipped regions.
       for (unsigned Line = CR.LineStart; Line <= CR.LineEnd;
            ++Line)
-        LineStats[Line - LineStart] = LineCoverageInfo();
+        LineStats[Line - LineOffset] = LineCoverageInfo();
       continue;
     }
-    LineStats[CR.LineStart - LineStart].addRegionStartCount(CR.ExecutionCount);
+    LineStats[CR.LineStart - LineOffset].addRegionStartCount(CR.ExecutionCount);
     for (unsigned Line = CR.LineStart + 1; Line <= CR.LineEnd; ++Line)
-      LineStats[Line - LineStart].addRegionCount(CR.ExecutionCount);
+      LineStats[Line - LineOffset].addRegionCount(CR.ExecutionCount);
   }
 }
 
@@ -384,13 +391,10 @@ SourceCoverageView::createHighlightRanges(SourceCoverageDataManager &Data) {
 }
 
 void SourceCoverageView::createRegionMarkers(SourceCoverageDataManager &Data) {
-  for (const auto &CR : Data.getSourceRegions()) {
-    if (CR.Kind == coverage::CounterMappingRegion::SkippedRegion)
-      continue;
-    if (CR.LineStart >= LineStart)
+  for (const auto &CR : Data.getSourceRegions())
+    if (CR.Kind != coverage::CounterMappingRegion::SkippedRegion)
       Markers.push_back(
           RegionMarker(CR.LineStart, CR.ColumnStart, CR.ExecutionCount));
-  }
 
   if (Options.Debug) {
     for (const auto &Marker : Markers) {

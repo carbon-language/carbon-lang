@@ -283,8 +283,7 @@ void CodeCoverageTool::createExpansionSubView(
   if (!SourceBuffer)
     return;
   auto SubView = llvm::make_unique<SourceCoverageView>(
-      SourceBuffer.get(), Parent.getOptions(), ExpandedLines.first,
-      ExpandedLines.second, ExpandedRegion);
+      SourceBuffer.get(), Parent.getOptions(), ExpandedRegion);
   SourceCoverageDataManager RegionManager;
   for (const auto &CR : Function.CountedRegions) {
     if (CR.FileID == ExpandedRegion.ExpandedFileID)
@@ -362,13 +361,9 @@ bool CodeCoverageTool::createSourceFileView(
   for (const auto &InstantiationSet : InstantiationSetCollector) {
     if (InstantiationSet.second.size() < 2)
       continue;
-    auto InterestingRange = findExpandedFileInterestingLineRange(
-        InstantiationSet.second.front()->CountedRegions.front().FileID,
-        *InstantiationSet.second.front());
     for (auto Function : InstantiationSet.second) {
-      auto SubView = llvm::make_unique<SourceCoverageView>(
-          View, InterestingRange.first, InterestingRange.second,
-          Function->Name);
+      auto SubView =
+          llvm::make_unique<SourceCoverageView>(View, Function->Name);
       createInstantiationSubView(SourceFile, *Function, *SubView);
       View.addChild(std::move(SubView));
     }
@@ -618,9 +613,7 @@ int CodeCoverageTool::show(int argc, const char **argv,
       auto SourceBuffer = getSourceFile(SourceFile);
       if (!SourceBuffer)
         return 1;
-      auto Range = findExpandedFileInterestingLineRange(MainFileID, Function);
-      SourceCoverageView mainView(SourceBuffer.get(), ViewOpts, Range.first,
-                                  Range.second);
+      SourceCoverageView mainView(SourceBuffer.get(), ViewOpts);
       createSourceFileView(SourceFile, mainView, Function, true);
       ViewOpts.colored_ostream(outs(), raw_ostream::CYAN)
           << Function.Name << " from " << SourceFile << ":";
