@@ -504,6 +504,10 @@ public:
   virtual LValue EmitThreadLocalVarDeclLValue(CodeGenFunction &CGF,
                                               const VarDecl *VD,
                                               QualType LValType);
+
+  /// Emit a single constructor/destructor with the given type from a C++
+  /// constructor Decl.
+  virtual void emitCXXStructor(const CXXMethodDecl *MD, StructorType Type) = 0;
 };
 
 // Create an instance of a C++ ABI class:

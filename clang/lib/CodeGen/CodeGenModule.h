@@ -1091,10 +1091,6 @@ private:
   void EmitLinkageSpec(const LinkageSpecDecl *D);
   void CompleteDIClassType(const CXXMethodDecl* D);
 
-  /// Emit a single constructor/destructor with the given type from a C++
-  /// constructor Decl.
-  void emitCXXStructor(const CXXMethodDecl *D, StructorType Type);
-
   /// \brief Emit the function that initializes C++ thread_local variables.
   void EmitCXXThreadLocalInitFunc();
 
