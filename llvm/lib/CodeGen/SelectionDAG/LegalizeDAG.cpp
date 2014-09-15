@@ -2786,7 +2786,7 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
     // x = x | (x >>32); // for 64-bit input
     // return popcount(~x);
     //
-    // but see also: http://www.hackersdelight.org/HDcode/nlz.cc
+    // Ref: "Hacker's Delight" by Henry Warren
     EVT VT = Op.getValueType();
     EVT ShVT = TLI.getShiftAmountTy(VT);
     unsigned len = VT.getSizeInBits();
@@ -2805,7 +2805,7 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
     // for now, we use: { return popcount(~x & (x - 1)); }
     // unless the target has ctlz but not ctpop, in which case we use:
     // { return 32 - nlz(~x & (x-1)); }
-    // see also http://www.hackersdelight.org/HDcode/ntz.cc
+    // Ref: "Hacker's Delight" by Henry Warren
     EVT VT = Op.getValueType();
     SDValue Tmp3 = DAG.getNode(ISD::AND, dl, VT,
                                DAG.getNOT(dl, Op, VT),

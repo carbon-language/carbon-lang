@@ -11629,8 +11629,8 @@ SDValue DAGCombiner::SimplifySetCC(EVT VT, SDValue N0,
 
 /// Given an ISD::SDIV node expressing a divide by constant, return
 /// a DAG expression to select that will generate the same value by multiplying
-/// by a magic number.  See:
-/// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
+/// by a magic number.
+/// Ref: "Hacker's Delight" or "The PowerPC Compiler Writer's Guide".
 SDValue DAGCombiner::BuildSDIV(SDNode *N) {
   ConstantSDNode *C = isConstOrConstSplat(N->getOperand(1));
   if (!C)
@@ -11670,8 +11670,8 @@ SDValue DAGCombiner::BuildSDIVPow2(SDNode *N) {
 
 /// Given an ISD::UDIV node expressing a divide by constant, return a DAG
 /// expression that will generate the same value by multiplying by a magic
-/// number. See:
-/// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
+/// number.
+/// Ref: "Hacker's Delight" or "The PowerPC Compiler Writer's Guide".
 SDValue DAGCombiner::BuildUDIV(SDNode *N) {
   ConstantSDNode *C = isConstOrConstSplat(N->getOperand(1));
   if (!C)
