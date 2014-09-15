@@ -2096,49 +2096,6 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI, const DataLayout *DL) {
         continue;
     }
 
-    // Ensure that any values used in the bonus instruction are also used
-    // by the terminator of the predecessor.  This means that those values
-    // must already have been resolved, so we won't be inhibiting the
-    // out-of-order core by speculating them earlier. We also allow
-    // instructions that are used by the terminator's condition because it
-    // exposes more merging opportunities.
-    bool UsedByBranch = (BonusInst && BonusInst->hasOneUse() &&
-                         BonusInst->user_back() == Cond);
-
-    if (BonusInst && !UsedByBranch) {
-      // Collect the values used by the bonus inst
-      SmallPtrSet<Value*, 4> UsedValues;
-      for (Instruction::op_iterator OI = BonusInst->op_begin(),
-           OE = BonusInst->op_end(); OI != OE; ++OI) {
-        Value *V = *OI;
-        if (!isa<Constant>(V) && !isa<Argument>(V))
-          UsedValues.insert(V);
-      }
-
-      SmallVector<std::pair<Value*, unsigned>, 4> Worklist;
-      Worklist.push_back(std::make_pair(PBI->getOperand(0), 0));
-
-      // Walk up to four levels back up the use-def chain of the predecessor's
-      // terminator to see if all those values were used.  The choice of four
-      // levels is arbitrary, to provide a compile-time-cost bound.
-      while (!Worklist.empty()) {
-        std::pair<Value*, unsigned> Pair = Worklist.back();
-        Worklist.pop_back();
-
-        if (Pair.second >= 4) continue;
-        UsedValues.erase(Pair.first);
-        if (UsedValues.empty()) break;
-
-        if (Instruction *I = dyn_cast<Instruction>(Pair.first)) {
-          for (Instruction::op_iterator OI = I->op_begin(), OE = I->op_end();
-               OI != OE; ++OI)
-            Worklist.push_back(std::make_pair(OI->get(), Pair.second+1));
-        }
-      }
-
-      if (!UsedValues.empty()) return false;
-    }
-
     DEBUG(dbgs() << "FOLDING BRANCH TO COMMON DEST:\n" << *PBI << *BB);
     IRBuilder<> Builder(PBI);
 
