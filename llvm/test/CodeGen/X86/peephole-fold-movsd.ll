@@ -1,4 +1,4 @@
-; RUN: llc -march=x86-64 < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-linux < %s | FileCheck %s
 ;
 ; Check that x86's peephole optimization doesn't fold a 64-bit load (movsd) into
 ; addpd.
