@@ -40,12 +40,12 @@ class BitstreamWriter {
   unsigned BlockInfoCurBID;
 
   /// CurAbbrevs - Abbrevs installed at in this block.
-  std::vector<BitCodeAbbrev*> CurAbbrevs;
+  std::vector<IntrusiveRefCntPtr<BitCodeAbbrev>> CurAbbrevs;
 
   struct Block {
     unsigned PrevCodeSize;
     unsigned StartSizeWord;
-    std::vector<BitCodeAbbrev*> PrevAbbrevs;
+    std::vector<IntrusiveRefCntPtr<BitCodeAbbrev>> PrevAbbrevs;
     Block(unsigned PCS, unsigned SSW) : PrevCodeSize(PCS), StartSizeWord(SSW) {}
   };
 
@@ -56,7 +56,7 @@ class BitstreamWriter {
   /// These describe abbreviations that all blocks of the specified ID inherit.
   struct BlockInfo {
     unsigned BlockID;
-    std::vector<BitCodeAbbrev*> Abbrevs;
+    std::vector<IntrusiveRefCntPtr<BitCodeAbbrev>> Abbrevs;
   };
   std::vector<BlockInfo> BlockInfoRecords;
 
@@ -99,16 +99,6 @@ public:
   ~BitstreamWriter() {
     assert(CurBit == 0 && "Unflushed data remaining");
     assert(BlockScope.empty() && CurAbbrevs.empty() && "Block imbalance");
-
-    // Free the BlockInfoRecords.
-    while (!BlockInfoRecords.empty()) {
-      BlockInfo &Info = BlockInfoRecords.back();
-      // Free blockinfo abbrev info.
-      for (unsigned i = 0, e = static_cast<unsigned>(Info.Abbrevs.size());
-           i != e; ++i)
-        Info.Abbrevs[i]->dropRef();
-      BlockInfoRecords.pop_back();
-    }
   }
 
   /// \brief Retrieve the current position in the stream, in bits.
@@ -231,22 +221,13 @@ public:
     // If there is a blockinfo for this BlockID, add all the predefined abbrevs
     // to the abbrev list.
     if (BlockInfo *Info = getBlockInfo(BlockID)) {
-      for (unsigned i = 0, e = static_cast<unsigned>(Info->Abbrevs.size());
-           i != e; ++i) {
-        CurAbbrevs.push_back(Info->Abbrevs[i]);
-        Info->Abbrevs[i]->addRef();
-      }
+      CurAbbrevs.insert(CurAbbrevs.end(), Info->Abbrevs.begin(),
+                        Info->Abbrevs.end());
     }
   }
 
   void ExitBlock() {
     assert(!BlockScope.empty() && "Block scope imbalance!");
-
-    // Delete all abbrevs.
-    for (unsigned i = 0, e = static_cast<unsigned>(CurAbbrevs.size());
-         i != e; ++i)
-      CurAbbrevs[i]->dropRef();
-
     const Block &B = BlockScope.back();
 
     // Block tail:
@@ -263,7 +244,7 @@ public:
 
     // Restore the inner block's code size and abbrev table.
     CurCodeSize = B.PrevCodeSize;
-    BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
+    CurAbbrevs = std::move(B.PrevAbbrevs);
     BlockScope.pop_back();
   }
 
@@ -317,7 +298,7 @@ private:
     unsigned BlobLen = (unsigned) Blob.size();
     unsigned AbbrevNo = Abbrev-bitc::FIRST_APPLICATION_ABBREV;
     assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
-    BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo];
+    const BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo].get();
 
     EmitCode(Abbrev);
 

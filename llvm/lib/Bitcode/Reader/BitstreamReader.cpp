@@ -15,41 +15,11 @@ using namespace llvm;
 //  BitstreamCursor implementation
 //===----------------------------------------------------------------------===//
 
-void BitstreamCursor::operator=(const BitstreamCursor &RHS) {
-  freeState();
-
-  BitStream = RHS.BitStream;
-  NextChar = RHS.NextChar;
-  CurWord = RHS.CurWord;
-  BitsInCurWord = RHS.BitsInCurWord;
-  CurCodeSize = RHS.CurCodeSize;
-
-  // Copy abbreviations, and bump ref counts.
-  CurAbbrevs = RHS.CurAbbrevs;
-  for (size_t i = 0, e = CurAbbrevs.size(); i != e; ++i)
-    CurAbbrevs[i]->addRef();
-
-  // Copy block scope and bump ref counts.
-  BlockScope = RHS.BlockScope;
-  for (size_t S = 0, e = BlockScope.size(); S != e; ++S) {
-    std::vector<BitCodeAbbrev*> &Abbrevs = BlockScope[S].PrevAbbrevs;
-    for (size_t i = 0, e = Abbrevs.size(); i != e; ++i)
-      Abbrevs[i]->addRef();
-  }
-}
-
 void BitstreamCursor::freeState() {
   // Free all the Abbrevs.
-  for (size_t i = 0, e = CurAbbrevs.size(); i != e; ++i)
-    CurAbbrevs[i]->dropRef();
   CurAbbrevs.clear();
 
   // Free all the Abbrevs in the block scope.
-  for (size_t S = 0, e = BlockScope.size(); S != e; ++S) {
-    std::vector<BitCodeAbbrev*> &Abbrevs = BlockScope[S].PrevAbbrevs;
-    for (size_t i = 0, e = Abbrevs.size(); i != e; ++i)
-      Abbrevs[i]->dropRef();
-  }
   BlockScope.clear();
 }
 
@@ -63,10 +33,8 @@ bool BitstreamCursor::EnterSubBlock(unsigned BlockID, unsigned *NumWordsP) {
   // Add the abbrevs specific to this block to the CurAbbrevs list.
   if (const BitstreamReader::BlockInfo *Info =
       BitStream->getBlockInfo(BlockID)) {
-    for (size_t i = 0, e = Info->Abbrevs.size(); i != e; ++i) {
-      CurAbbrevs.push_back(Info->Abbrevs[i]);
-      CurAbbrevs.back()->addRef();
-    }
+    CurAbbrevs.insert(CurAbbrevs.end(), Info->Abbrevs.begin(),
+                      Info->Abbrevs.end());
   }
 
   // Get the codesize of this block.
@@ -339,9 +307,8 @@ bool BitstreamCursor::ReadBlockInfoBlock() {
 
       // ReadAbbrevRecord installs the abbrev in CurAbbrevs.  Move it to the
       // appropriate BlockInfo.
-      BitCodeAbbrev *Abbv = CurAbbrevs.back();
+      CurBlockInfo->Abbrevs.push_back(std::move(CurAbbrevs.back()));
       CurAbbrevs.pop_back();
-      CurBlockInfo->Abbrevs.push_back(Abbv);
       continue;
     }
 
