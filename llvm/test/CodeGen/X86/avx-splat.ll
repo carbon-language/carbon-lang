@@ -19,7 +19,7 @@ entry:
 }
 
 ; CHECK: vmovq
-; CHECK-NEXT: vpunpcklqdq %xmm
+; CHECK-NEXT: vmovlhps %xmm
 ; CHECK-NEXT: vinsertf128 $1
 define <4 x i64> @funcC(i64 %q) nounwind uwtable readnone ssp {
 entry:

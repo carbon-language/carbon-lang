@@ -156,7 +156,7 @@ define <4 x i64> @sext_4i1_to_4i64(<4 x i1> %mask) {
 
 ; AVX-LABEL: sext_16i8_to_16i16
 ; AVX: vpmovsxbw
-; AVX: vpunpckhqdq
+; AVX: vmovhlps
 ; AVX: vpmovsxbw
 ; AVX: ret
 define <16 x i16> @sext_16i8_to_16i16(<16 x i8> *%ptr) {

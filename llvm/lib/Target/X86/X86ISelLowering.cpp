@@ -7598,11 +7598,22 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   int NumV2Elements =
       std::count_if(Mask.begin(), Mask.end(), [](int M) { return M >= 4; });
 
-  if (NumV2Elements == 0)
+  if (NumV2Elements == 0) {
     // Straight shuffle of a single input vector. For everything from SSE2
     // onward this has a single fast instruction with no scary immediates.
+    // We coerce the shuffle pattern to be compatible with UNPCK instructions
+    // but we aren't actually going to use the UNPCK instruction because doing
+    // so prevents folding a load into this instruction or making a copy.
+    const int UnpackLoMask[] = {0, 0, 1, 1};
+    const int UnpackHiMask[] = {2, 2, 3, 3};
+    if (isShuffleEquivalent(Mask, 0, 0, 1, 1))
+      Mask = UnpackLoMask;
+    else if (isShuffleEquivalent(Mask, 2, 2, 3, 3))
+      Mask = UnpackHiMask;
+
     return DAG.getNode(X86ISD::PSHUFD, DL, MVT::v4i32, V1,
                        getV4X86ShuffleImm8ForMask(Mask, DAG));
+  }
 
   // Use dedicated unpack instructions for masks that match their pattern.
   if (isShuffleEquivalent(Mask, 0, 4, 1, 5))
@@ -19347,86 +19358,75 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
   bool FloatDomain = VT.isFloatingPoint();
 
   // For floating point shuffles, we don't have free copies in the shuffle
-  // instructions, so this always makes sense to canonicalize.
+  // instructions or the ability to load as part of the instruction, so
+  // canonicalize their shuffles to UNPCK or MOV variants.
   //
-  // For integer shuffles, if we don't have access to VEX encodings, the generic
-  // PSHUF instructions are preferable to some of the specialized forms despite
-  // requiring one more byte to encode because they can implicitly copy.
-  //
-  // IF we *do* have VEX encodings, then we can use shorter, more specific
-  // shuffle instructions freely as they can copy due to the extra register
-  // operand.
-  if (FloatDomain || Subtarget->hasAVX()) {
-    // We have both floating point and integer variants of shuffles that dup
-    // either the low or high half of the vector.
-    if (Mask.equals(0, 0) || Mask.equals(1, 1)) {
-      bool Lo = Mask.equals(0, 0);
-      unsigned Shuffle;
-      MVT ShuffleVT;
-      // If the input is a floating point, check if we have SSE3 which will let
-      // us use MOVDDUP. That instruction is no slower than UNPCKLPD but has the
-      // option to fold the input operand into even an unaligned memory load.
-      if (FloatDomain && Lo && Subtarget->hasSSE3()) {
-        Shuffle = X86ISD::MOVDDUP;
-        ShuffleVT = MVT::v2f64;
-      } else if (FloatDomain) {
-        // We have MOVLHPS and MOVHLPS throughout SSE and they encode smaller
-        // than the UNPCK variants.
-        Shuffle = Lo ? X86ISD::MOVLHPS : X86ISD::MOVHLPS;
-        ShuffleVT = MVT::v4f32;
-      } else if (Subtarget->hasSSE2()) {
-        // We model everything else using UNPCK instructions. While MOVLHPS and
-        // MOVHLPS are shorter encodings they cannot accept a memory operand
-        // which overly constrains subsequent lowering.
-        Shuffle = Lo ? X86ISD::UNPCKL : X86ISD::UNPCKH;
-        ShuffleVT = MVT::v2i64;
-      } else {
-        // No available instructions here.
-        return false;
-      }
-      if (Depth == 1 && Root->getOpcode() == Shuffle)
-        return false; // Nothing to do!
-      Op = DAG.getNode(ISD::BITCAST, DL, ShuffleVT, Input);
-      DCI.AddToWorklist(Op.getNode());
-      if (Shuffle == X86ISD::MOVDDUP)
-        Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op);
-      else
-        Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op, Op);
-      DCI.AddToWorklist(Op.getNode());
-      DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Op),
-                    /*AddTo*/ true);
-      return true;
+  // Note that even with AVX we prefer the PSHUFD form of shuffle for integer
+  // vectors because it can have a load folded into it that UNPCK cannot. This
+  // doesn't preclude something switching to the shorter encoding post-RA.
+  if (FloatDomain && (Mask.equals(0, 0) || Mask.equals(1, 1))) {
+    bool Lo = Mask.equals(0, 0);
+    unsigned Shuffle;
+    MVT ShuffleVT;
+    // Check if we have SSE3 which will let us use MOVDDUP. That instruction
+    // is no slower than UNPCKLPD but has the option to fold the input operand
+    // into even an unaligned memory load.
+    if (Lo && Subtarget->hasSSE3()) {
+      Shuffle = X86ISD::MOVDDUP;
+      ShuffleVT = MVT::v2f64;
+    } else {
+      // We have MOVLHPS and MOVHLPS throughout SSE and they encode smaller
+      // than the UNPCK variants.
+      Shuffle = Lo ? X86ISD::MOVLHPS : X86ISD::MOVHLPS;
+      ShuffleVT = MVT::v4f32;
     }
-
-    // FIXME: We should match UNPCKLPS and UNPCKHPS here.
-
-    // For the integer domain we have specialized instructions for duplicating
-    // any element size from the low or high half.
-    if (!FloatDomain &&
-        (Mask.equals(0, 0, 1, 1) || Mask.equals(2, 2, 3, 3) ||
-         Mask.equals(0, 0, 1, 1, 2, 2, 3, 3) ||
-         Mask.equals(4, 4, 5, 5, 6, 6, 7, 7) ||
-         Mask.equals(0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7) ||
-         Mask.equals(8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15,
-                     15))) {
-      bool Lo = Mask[0] == 0;
-      unsigned Shuffle = Lo ? X86ISD::UNPCKL : X86ISD::UNPCKH;
-      if (Depth == 1 && Root->getOpcode() == Shuffle)
-        return false; // Nothing to do!
-      MVT ShuffleVT;
-      switch (Mask.size()) {
-      case 4: ShuffleVT = MVT::v4i32; break;
-      case 8: ShuffleVT = MVT::v8i16; break;
-      case 16: ShuffleVT = MVT::v16i8; break;
-      };
-      Op = DAG.getNode(ISD::BITCAST, DL, ShuffleVT, Input);
-      DCI.AddToWorklist(Op.getNode());
+    if (Depth == 1 && Root->getOpcode() == Shuffle)
+      return false; // Nothing to do!
+    Op = DAG.getNode(ISD::BITCAST, DL, ShuffleVT, Input);
+    DCI.AddToWorklist(Op.getNode());
+    if (Shuffle == X86ISD::MOVDDUP)
+      Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op);
+    else
       Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op, Op);
-      DCI.AddToWorklist(Op.getNode());
-      DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Op),
-                    /*AddTo*/ true);
-      return true;
-    }
+    DCI.AddToWorklist(Op.getNode());
+    DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Op),
+                  /*AddTo*/ true);
+    return true;
+  }
+
+  // FIXME: We should match UNPCKLPS and UNPCKHPS here.
+
+  // We always canonicalize the 8 x i16 and 16 x i8 shuffles into their UNPCK
+  // variants as none of these have single-instruction variants that are
+  // superior to the UNPCK formulation.
+  if (!FloatDomain &&
+      (Mask.equals(0, 0, 1, 1, 2, 2, 3, 3) ||
+       Mask.equals(4, 4, 5, 5, 6, 6, 7, 7) ||
+       Mask.equals(0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7) ||
+       Mask.equals(8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15,
+                   15))) {
+    bool Lo = Mask[0] == 0;
+    unsigned Shuffle = Lo ? X86ISD::UNPCKL : X86ISD::UNPCKH;
+    if (Depth == 1 && Root->getOpcode() == Shuffle)
+      return false; // Nothing to do!
+    MVT ShuffleVT;
+    switch (Mask.size()) {
+    case 8:
+      ShuffleVT = MVT::v8i16;
+      break;
+    case 16:
+      ShuffleVT = MVT::v16i8;
+      break;
+    default:
+      llvm_unreachable("Impossible mask size!");
+    };
+    Op = DAG.getNode(ISD::BITCAST, DL, ShuffleVT, Input);
+    DCI.AddToWorklist(Op.getNode());
+    Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op, Op);
+    DCI.AddToWorklist(Op.getNode());
+    DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Op),
+                  /*AddTo*/ true);
+    return true;
   }
 
   // Don't try to re-form single instruction chains under any circumstances now

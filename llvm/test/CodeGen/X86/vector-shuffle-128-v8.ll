@@ -639,7 +639,7 @@ define <8 x i16> @shuffle_v8i16_032dXXXX(<8 x i16> %a, <8 x i16> %b) {
 define <8 x i16> @shuffle_v8i16_XXXdXXXX(<8 x i16> %a, <8 x i16> %b) {
 ; ALL-LABEL: @shuffle_v8i16_XXXdXXXX
 ; ALL:       # BB#0:
-; ALL-NEXT:    pshufd {{.*}} # xmm0 = xmm1[0,2,2,3]
+; ALL-NEXT:    pshufd {{.*}} # xmm0 = xmm1[2,2,3,3]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 undef, i32 undef, i32 undef, i32 13, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <8 x i16> %shuffle
