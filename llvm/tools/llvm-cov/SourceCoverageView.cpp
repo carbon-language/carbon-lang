@@ -49,6 +49,18 @@ void SourceCoverageView::renderLine(raw_ostream &OS, StringRef Line,
   // Show the rest of the line
   OS << Line.substr(Start - 1, Line.size() - Start + 1);
   OS << "\n";
+
+  if (Options.Debug) {
+    for (const auto &Range : Ranges) {
+      errs() << "Highlighted line " << Range.Line << ", " << Range.ColumnStart
+             << " -> ";
+      if (Range.ColumnEnd == std::numeric_limits<unsigned>::max()) {
+        errs() << "?\n";
+      } else {
+        errs() << Range.ColumnEnd << "\n";
+      }
+    }
+  }
 }
 
 void SourceCoverageView::renderOffset(raw_ostream &OS, unsigned I) {
@@ -390,18 +402,6 @@ SourceCoverageView::createHighlightRanges(SourceCoverageDataManager &Data) {
   }
 
   std::sort(HighlightRanges.begin(), HighlightRanges.end());
-
-  if (Options.Debug) {
-    for (const auto &Range : HighlightRanges) {
-      outs() << "Highlighted line " << Range.Line << ", " << Range.ColumnStart
-             << " -> ";
-      if (Range.ColumnEnd == std::numeric_limits<unsigned>::max()) {
-        outs() << "?\n";
-      } else {
-        outs() << Range.ColumnEnd << "\n";
-      }
-    }
-  }
 }
 
 void SourceCoverageView::createRegionMarkers(SourceCoverageDataManager &Data) {

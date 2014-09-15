@@ -1,4 +1,4 @@
-// RUN: llvm-cov show %S/Inputs/highlightedRanges.covmapping -instr-profile %S/Inputs/highlightedRanges.profdata -dump -filename-equivalence %s | FileCheck %s
+// RUN: llvm-cov show %S/Inputs/highlightedRanges.covmapping -instr-profile %S/Inputs/highlightedRanges.profdata -dump -filename-equivalence %s 2>&1 | FileCheck %s
 
 void func() {
   return;

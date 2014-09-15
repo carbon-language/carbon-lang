@@ -273,7 +273,7 @@ void CodeCoverageTool::createExpansionSubView(
   auto ExpandedLines = findExpandedFileInterestingLineRange(
       ExpandedRegion.ExpandedFileID, Function);
   if (ViewOpts.Debug)
-    llvm::outs() << "Expansion of " << ExpandedRegion.ExpandedFileID << ":"
+    llvm::errs() << "Expansion of " << ExpandedRegion.ExpandedFileID << ":"
                  << ExpandedLines.first << " -> " << ExpandedLines.second
                  << " @ " << ExpandedRegion.FileID << ", "
                  << ExpandedRegion.LineStart << ":"
@@ -397,14 +397,14 @@ bool CodeCoverageTool::load() {
     for (const auto &R : I.MappingRegions) {
       // Compute the values of mapped regions
       if (ViewOpts.Debug) {
-        outs() << "File " << R.FileID << "| " << R.LineStart << ":"
+        errs() << "File " << R.FileID << "| " << R.LineStart << ":"
                << R.ColumnStart << " -> " << R.LineEnd << ":" << R.ColumnEnd
                << " = ";
         Ctx.dump(R.Count);
         if (R.Kind == CounterMappingRegion::ExpansionRegion) {
-          outs() << " (Expanded file id = " << R.ExpandedFileID << ") ";
+          errs() << " (Expanded file id = " << R.ExpandedFileID << ") ";
         }
-        outs() << "\n";
+        errs() << "\n";
       }
       ErrorOr<int64_t> ExecutionCount = Ctx.evaluate(R.Count);
       if (ExecutionCount) {
