@@ -3983,6 +3983,10 @@ public:
 
     // __ARM_ARCH is defined as an integer value indicating the current ARM ISA
     Builder.defineMacro("__ARM_ARCH", CPUArch.substr(0, 1));
+    if (CPUArch[0] >= '8') {                                                    
+      Builder.defineMacro("__ARM_FEATURE_NUMERIC_MAXMIN");                      
+      Builder.defineMacro("__ARM_FEATURE_DIRECTED_ROUNDING");                   
+    }
 
     // __ARM_ARCH_ISA_ARM is defined to 1 if the core supports the ARM ISA.  It
     // is not defined for the M-profile.
@@ -4478,6 +4482,10 @@ public:
     Builder.defineMacro("__ARM_FEATURE_CLZ");
     Builder.defineMacro("__ARM_FEATURE_FMA");
     Builder.defineMacro("__ARM_FEATURE_DIV");
+    Builder.defineMacro("__ARM_FEATURE_IDIV"); // As specified in ACLE
+    Builder.defineMacro("__ARM_FEATURE_DIV");  // For backwards compatibility
+    Builder.defineMacro("__ARM_FEATURE_NUMERIC_MAXMIN");
+    Builder.defineMacro("__ARM_FEATURE_DIRECTED_ROUNDING");
 
     Builder.defineMacro("__ARM_ALIGN_MAX_STACK_PWR", "4");
 

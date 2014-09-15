@@ -1213,7 +1213,7 @@ def FCVTAU_S64 : SInst<"vcvta_u64", "ud", "dQd">;
 ////////////////////////////////////////////////////////////////////////////////
 // Round to Integral
 
-let ArchGuard = "__ARM_ARCH >= 8" in {
+let ArchGuard = "__ARM_ARCH >= 8 && defined(__ARM_FEATURE_DIRECTED_ROUNDING)" in {
 def FRINTN_S32 : SInst<"vrndn", "dd", "fQf">;
 def FRINTA_S32 : SInst<"vrnda", "dd", "fQf">;
 def FRINTP_S32 : SInst<"vrndp", "dd", "fQf">;
@@ -1222,7 +1222,7 @@ def FRINTX_S32 : SInst<"vrndx", "dd", "fQf">;
 def FRINTZ_S32 : SInst<"vrnd", "dd", "fQf">;
 }
 
-let ArchGuard = "__ARM_ARCH >= 8 && defined(__aarch64__)" in {
+let ArchGuard = "__ARM_ARCH >= 8 && defined(__aarch64__) && defined(__ARM_FEATURE_DIRECTED_ROUNDING)" in {
 def FRINTN_S64 : SInst<"vrndn", "dd", "dQd">;
 def FRINTA_S64 : SInst<"vrnda", "dd", "dQd">;
 def FRINTP_S64 : SInst<"vrndp", "dd", "dQd">;
@@ -1235,12 +1235,12 @@ def FRINTI_S64 : SInst<"vrndi", "dd", "fdQfQd">;
 ////////////////////////////////////////////////////////////////////////////////
 // MaxNum/MinNum Floating Point
 
-let ArchGuard = "__ARM_ARCH >= 8" in {
+let ArchGuard = "__ARM_ARCH >= 8 && defined(__ARM_FEATURE_NUMERIC_MAXMIN)" in {
 def FMAXNM_S32 : SInst<"vmaxnm", "ddd", "fQf">;
 def FMINNM_S32 : SInst<"vminnm", "ddd", "fQf">;
 }
 
-let ArchGuard = "__ARM_ARCH >= 8 && defined(__aarch64__)" in {
+let ArchGuard = "__ARM_ARCH >= 8 && defined(__aarch64__) && defined(__ARM_FEATURE_NUMERIC_MAXMIN)" in {
 def FMAXNM_S64 : SInst<"vmaxnm", "ddd", "dQd">;
 def FMINNM_S64 : SInst<"vminnm", "ddd", "dQd">;
 }
