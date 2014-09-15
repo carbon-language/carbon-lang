@@ -196,7 +196,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
 
   /// \brief Pragma handlers of the original source is stored here during the
   /// parsing of a model file.
-  PragmaNamespace *PragmaHandlersBackup;
+  std::unique_ptr<PragmaNamespace> PragmaHandlersBackup;
 
   /// \brief Tracks all of the comment handlers that the client registered
   /// with this preprocessor.
