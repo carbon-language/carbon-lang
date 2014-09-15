@@ -42,3 +42,6 @@ int rvarr(int n, int a[restrict static n]) {
 typedef struct {
   int f;
 } T __attribute__ ((__aligned__));
+
+// CHECK: struct __attribute__((visibility("default"))) S;
+struct __attribute__((visibility("default"))) S;

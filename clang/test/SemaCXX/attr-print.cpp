@@ -26,7 +26,7 @@ int small __attribute__((mode(byte)));
 // CHECK: int v __attribute__((visibility("hidden")));
 int v __attribute__((visibility("hidden")));
 
-// FIXME: The attribute should be printed with the tag declaration.
+// CHECK: class __attribute__((consumable("unknown"))) AttrTester1
 class __attribute__((consumable(unknown))) AttrTester1 {
   // CHECK: void callableWhen() __attribute__((callable_when("unconsumed", "consumed")));
   void callableWhen()  __attribute__((callable_when("unconsumed", "consumed")));

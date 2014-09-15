@@ -208,3 +208,8 @@ void test(int i) {
   }
 }
 }
+
+namespace {
+// CHECK: struct {{\[\[gnu::visibility\(\"hidden\"\)\]\]}} S;
+struct [[gnu::visibility("hidden")]] S;
+}
