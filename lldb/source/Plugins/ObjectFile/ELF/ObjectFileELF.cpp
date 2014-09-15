@@ -1746,6 +1746,32 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
             }
         }
 
+        ArchSpec arch;
+
+        if (GetArchitecture(arch) &&
+            arch.GetMachine() == llvm::Triple::arm)
+        {
+            // ELF symbol tables may contain some mapping symbols. They provide
+            // information about the underlying data. There are three of them
+            // currently defined:
+            //   $a[.<any>]* - marks an ARM instruction sequence
+            //   $t[.<any>]* - marks a THUMB instruction sequence
+            //   $d[.<any>]* - marks a data item sequence (e.g. lit pool)
+            // These symbols interfere with normal debugger operations and we
+            // don't need them. We can drop them here.
+
+            static const llvm::StringRef g_armelf_arm_marker("$a");
+            static const llvm::StringRef g_armelf_thumb_marker("$t");
+            static const llvm::StringRef g_armelf_data_marker("$d");
+            llvm::StringRef symbol_name_ref(symbol_name);
+
+            if (symbol_name &&
+                (symbol_name_ref.startswith(g_armelf_arm_marker) ||
+                 symbol_name_ref.startswith(g_armelf_thumb_marker) ||
+                 symbol_name_ref.startswith(g_armelf_data_marker)))
+                continue;
+        }
+
         // If the symbol section we've found has no data (SHT_NOBITS), then check the module section
         // list. This can happen if we're parsing the debug file and it has no .text section, for example.
         if (symbol_section_sp && (symbol_section_sp->GetFileSize() == 0))
