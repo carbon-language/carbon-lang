@@ -81,6 +81,10 @@ private:
     bool
     ReadJITDescriptor(bool all_entries);
 
+    template <typename ptr_t>
+    bool
+    ReadJITDescriptorImpl(bool all_entries);
+
     static bool
     JITDebugBreakpointHit(void *baton,
                           lldb_private::StoppointCallbackContext *context,

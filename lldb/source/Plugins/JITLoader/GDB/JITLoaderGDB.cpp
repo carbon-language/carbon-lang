@@ -36,21 +36,24 @@ typedef enum
     JIT_UNREGISTER_FN
 } jit_actions_t;
 
+#pragma pack(push, 4)
+template <typename ptr_t>
 struct jit_code_entry
 {
-    struct jit_code_entry *next_entry;
-    struct jit_code_entry *prev_entry;
-    const char *symfile_addr;
+    ptr_t    next_entry; // pointer
+    ptr_t    prev_entry; // pointer
+    ptr_t    symfile_addr; // pointer
     uint64_t symfile_size;
 };
-
+template <typename ptr_t>
 struct jit_descriptor
 {
     uint32_t version;
     uint32_t action_flag; // Values are jit_action_t
-    struct jit_code_entry *relevant_entry;
-    struct jit_code_entry *first_entry;
+    ptr_t    relevant_entry; // pointer
+    ptr_t    first_entry; // pointer
 };
+#pragma pack(pop)
 
 JITLoaderGDB::JITLoaderGDB (lldb_private::Process *process) :
     JITLoader(process),
@@ -198,6 +201,17 @@ static void updateSectionLoadAddress(const SectionList &section_list,
 bool
 JITLoaderGDB::ReadJITDescriptor(bool all_entries)
 {
+    Target &target = m_process->GetTarget();
+    if (target.GetArchitecture().GetAddressByteSize() == 8)
+        return ReadJITDescriptorImpl<uint64_t>(all_entries);
+    else
+        return ReadJITDescriptorImpl<uint32_t>(all_entries);
+}
+
+template <typename ptr_t>
+bool
+JITLoaderGDB::ReadJITDescriptorImpl(bool all_entries)
+{
     if (m_jit_descriptor_addr == LLDB_INVALID_ADDRESS)
         return false;
 
@@ -205,7 +219,7 @@ JITLoaderGDB::ReadJITDescriptor(bool all_entries)
     Target &target = m_process->GetTarget();
     ModuleList &module_list = target.GetImages();
 
-    jit_descriptor jit_desc;
+    jit_descriptor<ptr_t> jit_desc;
     const size_t jit_desc_size = sizeof(jit_desc);
     Error error;
     size_t bytes_read = m_process->DoReadMemory(
@@ -228,7 +242,7 @@ JITLoaderGDB::ReadJITDescriptor(bool all_entries)
 
     while (jit_relevant_entry != 0)
     {
-        jit_code_entry jit_entry;
+        jit_code_entry<ptr_t> jit_entry;
         const size_t jit_entry_size = sizeof(jit_entry);
         bytes_read = m_process->DoReadMemory(jit_relevant_entry, &jit_entry, jit_entry_size, error);
         if (bytes_read != jit_entry_size || !error.Success())
