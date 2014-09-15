@@ -2877,19 +2877,7 @@ static void emitCXXConstructor(CodeGenModule &CGM,
                                const CXXConstructorDecl *ctor,
                                StructorType ctorType) {
   // There are no constructor variants, always emit the complete destructor.
-  ctorType = StructorType::Complete;
-
-  const CGFunctionInfo &fnInfo =
-      CGM.getTypes().arrangeCXXStructorDeclaration(ctor, ctorType);
-
-  auto *fn = cast<llvm::Function>(
-      CGM.getAddrOfCXXStructor(ctor, ctorType, &fnInfo, nullptr, true));
-  GlobalDecl GD(ctor, toCXXCtorType(ctorType));
-  CGM.setFunctionLinkage(GD, fn);
-  CodeGenFunction(CGM).GenerateCode(GD, fn, fnInfo);
-
-  CGM.setFunctionDefinitionAttributes(ctor, fn);
-  CGM.SetLLVMFunctionAttributesForDefinition(ctor, fn);
+  CGM.codegenCXXStructor(ctor, StructorType::Complete);
 }
 
 static void emitCXXDestructor(CodeGenModule &CGM, const CXXDestructorDecl *dtor,

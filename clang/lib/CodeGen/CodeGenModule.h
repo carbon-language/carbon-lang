@@ -802,6 +802,12 @@ public:
   /// Objective-C fast enumeration loop (for..in).
   QualType getObjCFastEnumerationStateType();
 
+  // Produce code for this constructor/destructor. This method doesn't try
+  // to apply any ABI rules about which other constructors/destructors
+  // are needed or if they are alias to each other.
+  llvm::Function *codegenCXXStructor(const CXXMethodDecl *MD,
+                                     StructorType Type);
+
   /// Return the address of the constructor/destructor of the given type.
   llvm::GlobalValue *
   getAddrOfCXXStructor(const CXXMethodDecl *MD, StructorType Type,

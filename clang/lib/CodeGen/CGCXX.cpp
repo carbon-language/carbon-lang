@@ -196,6 +196,28 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   return false;
 }
 
+llvm::Function *CodeGenModule::codegenCXXStructor(const CXXMethodDecl *MD,
+                                                  StructorType Type) {
+  const CGFunctionInfo &FnInfo =
+      getTypes().arrangeCXXStructorDeclaration(MD, Type);
+  auto *Fn = cast<llvm::Function>(
+      getAddrOfCXXStructor(MD, Type, &FnInfo, nullptr, true));
+
+  GlobalDecl GD;
+  if (const auto *DD = dyn_cast<CXXDestructorDecl>(MD)) {
+    GD = GlobalDecl(DD, toCXXDtorType(Type));
+  } else {
+    const auto *CD = cast<CXXConstructorDecl>(MD);
+    GD = GlobalDecl(CD, toCXXCtorType(Type));
+  }
+
+  setFunctionLinkage(GD, Fn);
+  CodeGenFunction(*this).GenerateCode(GD, Fn, FnInfo);
+  setFunctionDefinitionAttributes(MD, Fn);
+  SetLLVMFunctionAttributesForDefinition(MD, Fn);
+  return Fn;
+}
+
 llvm::GlobalValue *CodeGenModule::getAddrOfCXXStructor(
     const CXXMethodDecl *MD, StructorType Type, const CGFunctionInfo *FnInfo,
     llvm::FunctionType *FnType, bool DontDefer) {
