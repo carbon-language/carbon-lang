@@ -4423,6 +4423,25 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
   return foldMemoryOperandImpl(MF, MI, Ops[0], MOs, Size, Alignment);
 }
 
+static bool isPartialRegisterLoad(const MachineInstr &LoadMI,
+                                  const MachineFunction &MF) {
+  unsigned Opc = LoadMI.getOpcode();
+  unsigned RegSize =
+      MF.getRegInfo().getRegClass(LoadMI.getOperand(0).getReg())->getSize();
+
+  if ((Opc == X86::MOVSSrm || Opc == X86::VMOVSSrm) && RegSize > 4)
+    // These instructions only load 32 bits, we can't fold them if the
+    // destination register is wider than 32 bits (4 bytes).
+    return true;
+
+  if ((Opc == X86::MOVSDrm || Opc == X86::VMOVSDrm) && RegSize > 8)
+    // These instructions only load 64 bits, we can't fold them if the
+    // destination register is wider than 64 bits (8 bytes).
+    return true;
+
+  return false;
+}
+
 MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                                   MachineInstr *MI,
                                            const SmallVectorImpl<unsigned> &Ops,
@@ -4430,8 +4449,11 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   // If loading from a FrameIndex, fold directly from the FrameIndex.
   unsigned NumOps = LoadMI->getDesc().getNumOperands();
   int FrameIndex;
-  if (isLoadFromStackSlot(LoadMI, FrameIndex))
+  if (isLoadFromStackSlot(LoadMI, FrameIndex)) {
+    if (isPartialRegisterLoad(*LoadMI, MF))
+      return nullptr;
     return foldMemoryOperandImpl(MF, MI, Ops, FrameIndex);
+  }
 
   // Check switch flag
   if (NoFusing) return nullptr;
@@ -4542,19 +4564,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     break;
   }
   default: {
-    if ((LoadMI->getOpcode() == X86::MOVSSrm ||
-         LoadMI->getOpcode() == X86::VMOVSSrm) &&
-        MF.getRegInfo().getRegClass(LoadMI->getOperand(0).getReg())->getSize()
-          > 4)
-      // These instructions only load 32 bits, we can't fold them if the
-      // destination register is wider than 32 bits (4 bytes).
-      return nullptr;
-    if ((LoadMI->getOpcode() == X86::MOVSDrm ||
-         LoadMI->getOpcode() == X86::VMOVSDrm) &&
-        MF.getRegInfo().getRegClass(LoadMI->getOperand(0).getReg())->getSize()
-          > 8)
-      // These instructions only load 64 bits, we can't fold them if the
-      // destination register is wider than 64 bits (8 bytes).
+    if (isPartialRegisterLoad(*LoadMI, MF))
       return nullptr;
 
     // Folding a normal load. Just copy the load's address operands.
