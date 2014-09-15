@@ -35,6 +35,8 @@ public:
   /// Returns the Unit that contains the given section offset in the
   /// same section this Unit originated from.
   virtual DWARFUnit *getUnitForOffset(uint32_t Offset) const = 0;
+
+  virtual ~DWARFUnitSectionBase() {}
 };
 
 /// Concrete instance of DWARFUnitSection, specialized for one Unit type.
