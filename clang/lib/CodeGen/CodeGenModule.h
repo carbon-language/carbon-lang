@@ -1044,6 +1044,14 @@ public:
   /// are emitted lazily.
   void EmitGlobal(GlobalDecl D);
 
+  bool TryEmitDefinitionAsAlias(GlobalDecl Alias, GlobalDecl Target,
+                                bool InEveryTU);
+  bool TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D);
+
+  /// Set attributes for a global definition.
+  void setFunctionDefinitionAttributes(const FunctionDecl *D,
+                                       llvm::Function *F);
+
 private:
   llvm::GlobalValue *GetGlobalValue(StringRef Ref);
 
@@ -1064,10 +1072,6 @@ private:
 
   void setNonAliasAttributes(const Decl *D, llvm::GlobalObject *GO);
 
-  /// Set attributes for a global definition.
-  void setFunctionDefinitionAttributes(const FunctionDecl *D,
-                                       llvm::Function *F);
-
   /// Set function attributes for a function declaration.
   void SetFunctionAttributes(GlobalDecl GD,
                              llvm::Function *F,
@@ -1083,19 +1087,13 @@ private:
   
   // C++ related functions.
 
-  bool TryEmitDefinitionAsAlias(GlobalDecl Alias, GlobalDecl Target,
-                                bool InEveryTU);
-  bool TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D);
-
   void EmitNamespace(const NamespaceDecl *D);
   void EmitLinkageSpec(const LinkageSpecDecl *D);
   void CompleteDIClassType(const CXXMethodDecl* D);
 
-  /// Emit a single constructor with the given type from a C++ constructor Decl.
-  void EmitCXXConstructor(const CXXConstructorDecl *D, CXXCtorType Type);
-
-  /// Emit a single destructor with the given type from a C++ destructor Decl.
-  void EmitCXXDestructor(const CXXDestructorDecl *D, CXXDtorType Type);
+  /// Emit a single constructor/destructor with the given type from a C++
+  /// constructor Decl.
+  void emitCXXStructor(const CXXMethodDecl *D, StructorType Type);
 
   /// \brief Emit the function that initializes C++ thread_local variables.
   void EmitCXXThreadLocalInitFunc();
