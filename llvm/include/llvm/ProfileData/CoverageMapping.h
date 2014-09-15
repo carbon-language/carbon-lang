@@ -164,30 +164,26 @@ struct CounterMappingRegion {
         ColumnStart(ColumnStart), LineEnd(LineEnd), ColumnEnd(ColumnEnd),
         Kind(Kind), HasCodeBefore(HasCodeBefore) {}
 
+  inline std::pair<unsigned, unsigned> startLoc() const {
+    return std::pair<unsigned, unsigned>(LineStart, ColumnStart);
+  }
+
+  inline std::pair<unsigned, unsigned> endLoc() const {
+    return std::pair<unsigned, unsigned>(LineEnd, ColumnEnd);
+  }
+
   bool operator<(const CounterMappingRegion &Other) const {
     if (FileID != Other.FileID)
       return FileID < Other.FileID;
-    if (LineStart == Other.LineStart)
-      return ColumnStart < Other.ColumnStart;
-    return LineStart < Other.LineStart;
-  }
-
-  bool coversSameSource(const CounterMappingRegion &Other) const {
-    return FileID == Other.FileID &&
-        LineStart == Other.LineStart &&
-        ColumnStart == Other.ColumnStart &&
-        LineEnd == Other.LineEnd &&
-        ColumnEnd == Other.ColumnEnd;
+    return startLoc() < Other.startLoc();
   }
 
   bool contains(const CounterMappingRegion &Other) const {
     if (FileID != Other.FileID)
       return false;
-    if (LineStart > Other.LineStart ||
-        (LineStart == Other.LineStart && ColumnStart > Other.ColumnStart))
+    if (startLoc() > Other.startLoc())
       return false;
-    if (LineEnd < Other.LineEnd ||
-        (LineEnd == Other.LineEnd && ColumnEnd < Other.ColumnEnd))
+    if (endLoc() < Other.endLoc())
       return false;
     return true;
   }

@@ -26,13 +26,16 @@ ArrayRef<CountedRegion> SourceCoverageDataManager::getSourceRegions() {
   if (Uniqued || Regions.size() <= 1)
     return Regions;
 
-  // Sort.
-  std::sort(Regions.begin(), Regions.end());
+  // Sort the regions given that they're all in the same file at this point.
+  std::sort(Regions.begin(), Regions.end(),
+            [](const CountedRegion &LHS, const CountedRegion &RHS) {
+    return LHS.startLoc() < RHS.startLoc();
+  });
 
   // Merge duplicate source ranges and sum their execution counts.
   auto Prev = Regions.begin();
   for (auto I = Prev + 1, E = Regions.end(); I != E; ++I) {
-    if (I->coversSameSource(*Prev)) {
+    if (I->startLoc() == Prev->startLoc() && I->endLoc() == Prev->endLoc()) {
       Prev->ExecutionCount += I->ExecutionCount;
       continue;
     }
