@@ -88,7 +88,7 @@ bool Compilation::CleanupFile(const char *File, bool IssueErrors) const {
     // Failure is only failure if the file exists and is "regular". We checked
     // for it being regular before, and llvm::sys::fs::remove ignores ENOENT,
     // so we don't need to check again.
-    
+
     if (IssueErrors)
       getDriver().Diag(clang::diag::err_drv_unable_to_remove_file)
         << EC.message();

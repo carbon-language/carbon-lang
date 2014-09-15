@@ -42,6 +42,7 @@ namespace driver {
   class Command;
   class Compilation;
   class InputInfo;
+  class Job;
   class JobAction;
   class SanitizerArgs;
   class ToolChain;
@@ -190,6 +191,9 @@ private:
   phases::ID getFinalPhase(const llvm::opt::DerivedArgList &DAL,
                            llvm::opt::Arg **FinalPhaseArg = nullptr) const;
 
+  // Before executing jobs, sets up response files for commands that need them.
+  void setUpResponseFiles(Compilation &C, Job &J);
+
 public:
   Driver(StringRef _ClangExecutable,
          StringRef _DefaultTargetTriple,
@@ -291,10 +295,10 @@ public:
   /// arguments and return an appropriate exit code.
   ///
   /// This routine handles additional processing that must be done in addition
-  /// to just running the subprocesses, for example reporting errors, removing
-  /// temporary files, etc.
-  int ExecuteCompilation(const Compilation &C,
-     SmallVectorImpl< std::pair<int, const Command *> > &FailingCommands) const;
+  /// to just running the subprocesses, for example reporting errors, setting
+  /// up response files, removing temporary files, etc.
+  int ExecuteCompilation(Compilation &C,
+     SmallVectorImpl< std::pair<int, const Command *> > &FailingCommands);
   
   /// generateCompilationDiagnostics - Generate diagnostics information 
   /// including preprocessed source file(s).

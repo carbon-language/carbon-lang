@@ -576,8 +576,31 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   }
 }
 
-int Driver::ExecuteCompilation(const Compilation &C,
-    SmallVectorImpl< std::pair<int, const Command *> > &FailingCommands) const {
+void Driver::setUpResponseFiles(Compilation &C, Job &J) {
+  if (JobList *Jobs = dyn_cast<JobList>(&J)) {
+    for (JobList::iterator I = Jobs->begin(), E = Jobs->end(); I != E; ++I)
+      setUpResponseFiles(C, **I);
+    return;
+  }
+
+  Command *CurCommand = dyn_cast<Command>(&J);
+  if (!CurCommand)
+    return;
+
+  // Since argumentsFitWithinSystemLimits() may underestimate system's capacity
+  // if the tool does not support response files, there is a chance/ that things
+  // will just work without a response file, so we silently just skip it.
+  if (CurCommand->getCreator().getResponseFilesSupport() == Tool::RF_None ||
+      llvm::sys::argumentsFitWithinSystemLimits(CurCommand->getArguments()))
+    return;
+
+  std::string TmpName = GetTemporaryPath("response", "txt");
+  CurCommand->setResponseFile(C.addTempFile(C.getArgs().MakeArgString(
+      TmpName.c_str())));
+}
+
+int Driver::ExecuteCompilation(Compilation &C,
+    SmallVectorImpl< std::pair<int, const Command *> > &FailingCommands) {
   // Just print if -### was present.
   if (C.getArgs().hasArg(options::OPT__HASH_HASH_HASH)) {
     C.getJobs().Print(llvm::errs(), "\n", true);
@@ -587,6 +610,9 @@ int Driver::ExecuteCompilation(const Compilation &C,
   // If there were errors building the compilation, quit now.
   if (Diags.hasErrorOccurred())
     return 1;
+
+  // Set up response file names for each command, if necessary
+  setUpResponseFiles(C, C.getJobs());
 
   C.ExecuteJob(C.getJobs(), FailingCommands);
 

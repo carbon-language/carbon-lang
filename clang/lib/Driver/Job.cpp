@@ -12,8 +12,10 @@
 #include "clang/Driver/Job.h"
 #include "clang/Driver/Tool.h"
 #include "clang/Driver/ToolChain.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
@@ -21,6 +23,7 @@
 using namespace clang::driver;
 using llvm::raw_ostream;
 using llvm::StringRef;
+using llvm::ArrayRef;
 
 Job::~Job() {}
 
@@ -28,7 +31,8 @@ Command::Command(const Action &_Source, const Tool &_Creator,
                  const char *_Executable,
                  const ArgStringList &_Arguments)
     : Job(CommandClass), Source(_Source), Creator(_Creator),
-      Executable(_Executable), Arguments(_Arguments) {}
+      Executable(_Executable), Arguments(_Arguments),
+      ResponseFile(nullptr) {}
 
 static int skipArgs(const char *Flag) {
   // These flags are all of the form -Flag <Arg> and are treated as two
@@ -93,14 +97,74 @@ static void PrintArg(raw_ostream &OS, const char *Arg, bool Quote) {
   OS << '"';
 }
 
+void Command::writeResponseFile(raw_ostream &OS) const {
+  // In a file list, we only write the set of inputs to the response file
+  if (Creator.getResponseFilesSupport() == Tool::RF_FileList) {
+    for (const char *Arg : InputFileList) {
+      OS << Arg << '\n';
+    }
+    return;
+  }
+
+  // In regular response files, we send all arguments to the response file
+  for (const char *Arg : Arguments) {
+    OS << '"';
+
+    for (; *Arg != '\0'; Arg++) {
+      if (*Arg == '\"' || *Arg == '\\') {
+        OS << '\\';
+      }
+      OS << *Arg;
+    }
+
+    OS << "\" ";
+  }
+}
+
+void Command::buildArgvForResponseFile(
+    llvm::SmallVectorImpl<const char *> &Out) const {
+  // When not a file list, all arguments are sent to the response file.
+  // This leaves us to set the argv to a single parameter, requesting the tool
+  // to read the response file.
+  if (Creator.getResponseFilesSupport() != Tool::RF_FileList) {
+    Out.push_back(Executable);
+    Out.push_back(ResponseFileFlag.c_str());
+    return;
+  }
+
+  llvm::StringSet<> Inputs;
+  for (const char *InputName : InputFileList)
+    Inputs.insert(InputName);
+  Out.push_back(Executable);
+  // In a file list, build args vector ignoring parameters that will go in the
+  // response file (elements of the InputFileList vector)
+  bool FirstInput = true;
+  for (const char *Arg : Arguments) {
+    if (Inputs.count(Arg) == 0) {
+      Out.push_back(Arg);
+    } else if (FirstInput) {
+      FirstInput = false;
+      Out.push_back(Creator.getResponseFileFlag());
+      Out.push_back(ResponseFile);
+    }
+  }
+}
+
 void Command::Print(raw_ostream &OS, const char *Terminator, bool Quote,
                     bool CrashReport) const {
   // Always quote the exe.
   OS << ' ';
   PrintArg(OS, Executable, /*Quote=*/true);
 
-  for (size_t i = 0, e = Arguments.size(); i < e; ++i) {
-    const char *const Arg = Arguments[i];
+  llvm::ArrayRef<const char *> Args = Arguments;
+  llvm::SmallVector<const char *, 128> ArgsRespFile;
+  if (ResponseFile != nullptr) {
+    buildArgvForResponseFile(ArgsRespFile);
+    Args = ArrayRef<const char *>(ArgsRespFile).slice(1); // no executable name
+  }
+
+  for (size_t i = 0, e = Args.size(); i < e; ++i) {
+    const char *const Arg = Args[i];
 
     if (CrashReport) {
       if (int Skip = skipArgs(Arg)) {
@@ -114,19 +178,65 @@ void Command::Print(raw_ostream &OS, const char *Terminator, bool Quote,
 
     if (CrashReport && quoteNextArg(Arg) && i + 1 < e) {
       OS << ' ';
-      PrintArg(OS, Arguments[++i], true);
+      PrintArg(OS, Args[++i], true);
     }
   }
+
+  if (ResponseFile != nullptr) {
+    OS << "\n Arguments passed via response file:\n";
+    writeResponseFile(OS);
+    // Avoiding duplicated newline terminator, since FileLists are
+    // newline-separated.
+    if (Creator.getResponseFilesSupport() != Tool::RF_FileList)
+      OS << "\n";
+    OS << " (end of response file)";
+  }
+
   OS << Terminator;
+}
+
+void Command::setResponseFile(const char *FileName) {
+  ResponseFile = FileName;
+  ResponseFileFlag = Creator.getResponseFileFlag();
+  ResponseFileFlag += FileName;
 }
 
 int Command::Execute(const StringRef **Redirects, std::string *ErrMsg,
                      bool *ExecutionFailed) const {
   SmallVector<const char*, 128> Argv;
-  Argv.push_back(Executable);
-  for (size_t i = 0, e = Arguments.size(); i != e; ++i)
-    Argv.push_back(Arguments[i]);
+
+  if (ResponseFile == nullptr) {
+    Argv.push_back(Executable);
+    for (size_t i = 0, e = Arguments.size(); i != e; ++i)
+      Argv.push_back(Arguments[i]);
+    Argv.push_back(nullptr);
+
+    return llvm::sys::ExecuteAndWait(Executable, Argv.data(), /*env*/ nullptr,
+                                     Redirects, /*secondsToWait*/ 0,
+                                     /*memoryLimit*/ 0, ErrMsg,
+                                     ExecutionFailed);
+  }
+
+  // We need to put arguments in a response file (command is too large)
+  // Open stream to store the response file contents
+  std::string RespContents;
+  llvm::raw_string_ostream SS(RespContents);
+
+  // Write file contents and build the Argv vector
+  writeResponseFile(SS);
+  buildArgvForResponseFile(Argv);
   Argv.push_back(nullptr);
+  SS.flush();
+
+  // Save the response file in the appropriate encoding
+  if (std::error_code EC = writeFileWithEncoding(
+          ResponseFile, RespContents, Creator.getResponseFileEncoding())) {
+    if (ErrMsg)
+      *ErrMsg = EC.message();
+    if (ExecutionFailed)
+      *ExecutionFailed = true;
+    return -1;
+  }
 
   return llvm::sys::ExecuteAndWait(Executable, Argv.data(), /*env*/ nullptr,
                                    Redirects, /*secondsToWait*/ 0,

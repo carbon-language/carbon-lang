@@ -72,6 +72,30 @@ class Command : public Job {
   /// argument, which will be the executable).
   llvm::opt::ArgStringList Arguments;
 
+  /// Response file name, if this command is set to use one, or nullptr
+  /// otherwise
+  const char *ResponseFile;
+
+  /// The input file list in case we need to emit a file list instead of a
+  /// proper response file
+  llvm::opt::ArgStringList InputFileList;
+
+  /// String storage if we need to create a new argument to specify a response
+  /// file
+  std::string ResponseFileFlag;
+
+  /// When a response file is needed, we try to put most arguments in an
+  /// exclusive file, while others remains as regular command line arguments.
+  /// This functions fills a vector with the regular command line arguments,
+  /// argv, excluding the ones passed in a response file.
+  void buildArgvForResponseFile(llvm::SmallVectorImpl<const char *> &Out) const;
+
+  /// Encodes an array of C strings into a single string separated by whitespace.
+  /// This function will also put in quotes arguments that have whitespaces and
+  /// will escape the regular backslashes (used in Windows paths) and quotes.
+  /// The results are the contents of a response file, written into a raw_ostream.
+  void writeResponseFile(raw_ostream &OS) const;
+
 public:
   Command(const Action &_Source, const Tool &_Creator, const char *_Executable,
           const llvm::opt::ArgStringList &_Arguments);
@@ -87,6 +111,15 @@ public:
 
   /// getCreator - Return the Tool which caused the creation of this job.
   const Tool &getCreator() const { return Creator; }
+
+  /// Set to pass arguments via a response file when launching the command
+  void setResponseFile(const char *FileName);
+
+  /// Set an input file list, necessary if we need to use a response file but
+  /// the tool being called only supports input files lists.
+  void setInputFileList(llvm::opt::ArgStringList List) {
+    InputFileList = std::move(List);
+  }
 
   const char *getExecutable() const { return Executable; }
 

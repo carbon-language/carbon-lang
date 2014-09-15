@@ -506,7 +506,7 @@ static void getARMHWDivFeatures(const Driver &D, const Arg *A,
   } else
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
- 
+
 // Handle -mfpu=.
 //
 // FIXME: Centralize feature selection, defaulting shouldn't be also in the
@@ -4928,6 +4928,8 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
                    SplitDebugName(Args, Inputs));
 }
 
+void GnuTool::anchor() {}
+
 void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
                                const InputInfo &Output,
                                const InputInfoList &Inputs,
@@ -5782,6 +5784,12 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                 const char *LinkingOutput) const {
   assert(Output.getType() == types::TY_Image && "Invalid linker output type.");
 
+  // If the number of arguments surpasses the system limits, we will encode the
+  // input files in a separate file, shortening the command line. To this end,
+  // build a list of input file names that can be passed via a file with the
+  // -filelist linker option.
+  llvm::opt::ArgStringList InputFileList;
+
   // The logic here is derived from gcc's behavior; most of which
   // comes from specs (starting with link_command). Consult gcc for
   // more information.
@@ -5850,7 +5858,23 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
-  
+  // Build the input file for -filelist (list of linker input files) in case we
+  // need it later
+  for (const auto &II : Inputs) {
+    if (!II.isFilename()) {
+      // This is a linker input argument.
+      // We cannot mix input arguments and file names in a -filelist input, thus
+      // we prematurely stop our list (remaining files shall be passed as
+      // arguments).
+      if (InputFileList.size() > 0)
+        break;
+
+      continue;
+    }
+
+    InputFileList.push_back(II.getFilename());
+  }
+
   if (isObjCRuntimeLinked(Args) &&
       !Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
@@ -5893,7 +5917,10 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetLinkerPath());
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  std::unique_ptr<Command> Cmd =
+    llvm::make_unique<Command>(JA, *this, Exec, CmdArgs);
+  Cmd->setInputFileList(std::move(InputFileList));
+  C.addCommand(std::move(Cmd));
 }
 
 void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
