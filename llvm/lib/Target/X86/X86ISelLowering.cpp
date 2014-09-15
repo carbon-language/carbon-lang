@@ -7667,6 +7667,12 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
   MutableArrayRef<int> HToLInputs(LoInputs.data() + NumLToL, NumHToL);
   MutableArrayRef<int> HToHInputs(HiInputs.data() + NumLToH, NumHToH);
 
+  // Use dedicated unpack instructions for masks that match their pattern.
+  if (isShuffleEquivalent(Mask, 0, 0, 1, 1, 2, 2, 3, 3))
+    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8i16, V, V);
+  if (isShuffleEquivalent(Mask, 4, 4, 5, 5, 6, 6, 7, 7))
+    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8i16, V, V);
+
   // Simplify the 1-into-3 and 3-into-1 cases with a single pshufd. For all
   // such inputs we can swap two of the dwords across the half mark and end up
   // with <=2 inputs to each half in each half. Once there, we can fall through
@@ -8914,7 +8920,9 @@ static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 /// simplified by widening the elements being shuffled.
 static bool canWidenShuffleElements(ArrayRef<int> Mask) {
   for (int i = 0, Size = Mask.size(); i < Size; i += 2)
-    if (Mask[i] % 2 != 0 || Mask[i] + 1 != Mask[i+1])
+    if ((Mask[i] != -1 && Mask[i] % 2 != 0) ||
+        (Mask[i + 1] != -1 && (Mask[i + 1] % 2 != 1 ||
+                               (Mask[i] != -1 && Mask[i] + 1 != Mask[i + 1]))))
       return false;
 
   return true;
@@ -8971,7 +8979,9 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
       canWidenShuffleElements(Mask)) {
     SmallVector<int, 8> NewMask;
     for (int i = 0, Size = Mask.size(); i < Size; i += 2)
-      NewMask.push_back(Mask[i] / 2);
+      NewMask.push_back(Mask[i] != -1
+                            ? Mask[i] / 2
+                            : (Mask[i + 1] != -1 ? Mask[i + 1] / 2 : -1));
     MVT NewVT =
         MVT::getVectorVT(MVT::getIntegerVT(VT.getScalarSizeInBits() * 2),
                          VT.getVectorNumElements() / 2);
