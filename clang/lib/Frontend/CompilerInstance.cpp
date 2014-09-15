@@ -135,27 +135,27 @@ static void SetUpDiagnosticLog(DiagnosticOptions *DiagOpts,
                                const CodeGenOptions *CodeGenOpts,
                                DiagnosticsEngine &Diags) {
   std::error_code EC;
-  bool OwnsStream = false;
+  std::unique_ptr<raw_ostream> StreamOwner;
   raw_ostream *OS = &llvm::errs();
   if (DiagOpts->DiagnosticLogFile != "-") {
     // Create the output stream.
-    llvm::raw_fd_ostream *FileOS(new llvm::raw_fd_ostream(
+    auto FileOS = llvm::make_unique<llvm::raw_fd_ostream>(
         DiagOpts->DiagnosticLogFile, EC,
-        llvm::sys::fs::F_Append | llvm::sys::fs::F_Text));
+        llvm::sys::fs::F_Append | llvm::sys::fs::F_Text);
     if (EC) {
       Diags.Report(diag::warn_fe_cc_log_diagnostics_failure)
           << DiagOpts->DiagnosticLogFile << EC.message();
     } else {
       FileOS->SetUnbuffered();
       FileOS->SetUseAtomicWrites(true);
-      OS = FileOS;
-      OwnsStream = true;
+      OS = FileOS.get();
+      StreamOwner = std::move(FileOS);
     }
   }
 
   // Chain in the diagnostic client which will log the diagnostics.
-  LogDiagnosticPrinter *Logger = new LogDiagnosticPrinter(*OS, DiagOpts,
-                                                          OwnsStream);
+  LogDiagnosticPrinter *Logger =
+      new LogDiagnosticPrinter(*OS, DiagOpts, std::move(StreamOwner));
   if (CodeGenOpts)
     Logger->setDwarfDebugFlags(CodeGenOpts->DwarfDebugFlags);
   Diags.setClient(new ChainedDiagnosticConsumer(Diags.takeClient(), Logger));
