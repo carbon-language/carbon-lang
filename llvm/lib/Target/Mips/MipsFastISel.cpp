@@ -61,7 +61,8 @@ public:
     MFI = funcInfo.MF->getInfo<MipsFunctionInfo>();
     Context = &funcInfo.Fn->getContext();
     TargetSupported = ((Subtarget->getRelocationModel() == Reloc::PIC_) &&
-                       (Subtarget->hasMips32r2() && (Subtarget->isABI_O32())));
+                       ((Subtarget->hasMips32r2() || Subtarget->hasMips32()) &&
+                        (Subtarget->isABI_O32())));
   }
 
   bool fastSelectInstruction(const Instruction *I) override;

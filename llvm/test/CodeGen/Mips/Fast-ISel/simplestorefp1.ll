@@ -1,5 +1,11 @@
 ; RUN: llc -march=mipsel -relocation-model=pic -O0 -mips-fast-isel -fast-isel-abort -mcpu=mips32r2 \
+; RUN:     < %s | FileCheck %s 
+; RUN: llc -march=mipsel -relocation-model=pic -O0 -mips-fast-isel -fast-isel-abort -mcpu=mips32 \
 ; RUN:     < %s | FileCheck %s
+; RUN: llc -march=mipsel -relocation-model=pic -O0 -mips-fast-isel -fast-isel-abort -mcpu=mips32r2 \
+; RUN:     < %s | FileCheck %s -check-prefix=mips32r2 
+; RUN: llc -march=mipsel -relocation-model=pic -O0 -mips-fast-isel -fast-isel-abort -mcpu=mips32 \
+; RUN:     < %s | FileCheck %s -check-prefix=mips32
 
 @f = common global float 0.000000e+00, align 4
 @de = common global double 0.000000e+00, align 8
@@ -23,15 +29,25 @@ entry:
 define void @d1() #0 {
 entry:
   store double 1.234567e+00, double* @de, align 8
-; CHECK:  .ent  d1
-; CHECK:  lui  $[[REG1a:[0-9]+]], 16371
-; CHECK:  ori  $[[REG2a:[0-9]+]], $[[REG1a]], 49353
-; CHECK:  lui  $[[REG1b:[0-9]+]], 21403
-; CHECK:  ori  $[[REG2b:[0-9]+]], $[[REG1b]], 34951
-; CHECK:  mtc1  $[[REG2b]], $f[[REG3:[0-9]+]]
-; CHECK:  mthc1  $[[REG2a]], $f[[REG3]]
-; CHECK:  sdc1  $f[[REG3]], 0(${{[0-9]+}})
-; CHECK:  .end  d1
+; mip32r2:  .ent  d1
+; mips32r2:  lui  $[[REG1a:[0-9]+]], 16371
+; mips32r2:  ori  $[[REG2a:[0-9]+]], $[[REG1a]], 49353
+; mips32r2:  lui  $[[REG1b:[0-9]+]], 21403
+; mips32r2:  ori  $[[REG2b:[0-9]+]], $[[REG1b]], 34951
+; mips32r2:  mtc1  $[[REG2b]], $f[[REG3:[0-9]+]]
+; mips32r2:  mthc1  $[[REG2a]], $f[[REG3]]
+; mips32r2:  sdc1  $f[[REG3]], 0(${{[0-9]+}})
+; mips32r2:  .end  d1
+; mips32:  .ent  d1
+; mips32:  lui  $[[REG1a:[0-9]+]], 16371
+; mips32:  ori  $[[REG2a:[0-9]+]], $[[REG1a]], 49353
+; mips32:  lui  $[[REG1b:[0-9]+]], 21403
+; mips32:  ori  $[[REG2b:[0-9]+]], $[[REG1b]], 34951
+; mips32:  mtc1  $[[REG2b]], $f[[REG3:[0-9]+]]
+; mips32:  mtc1  $[[REG2a]], $f{{[0-9]+}}
+; mips32:  sdc1  $f[[REG3]], 0(${{[0-9]+}})
+; mips32:  .end  d1
+
   ret void
 }
 

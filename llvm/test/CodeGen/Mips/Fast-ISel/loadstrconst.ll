@@ -1,5 +1,7 @@
 ; RUN: llc -march=mipsel -relocation-model=pic -O0 -mips-fast-isel -fast-isel-abort -mcpu=mips32r2 \
 ; RUN:     < %s | FileCheck %s
+; RUN: llc -march=mipsel -relocation-model=pic -O0 -mips-fast-isel -fast-isel-abort -mcpu=mips32 \
+; RUN:     < %s | FileCheck %s
 
 @.str = private unnamed_addr constant [6 x i8] c"hello\00", align 1
 @s = common global i8* null, align 4
