@@ -93,8 +93,6 @@ public:
                             const TargetRegisterInfo *TRI) const override;
 
   unsigned getGlobalBaseReg(MachineFunction *MF) const;
-
-  void getNoopForMachoTarget(MCInst &NopInst) const override;
 };
 
 }

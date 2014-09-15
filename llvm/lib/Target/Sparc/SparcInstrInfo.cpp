@@ -37,11 +37,6 @@ SparcInstrInfo::SparcInstrInfo(SparcSubtarget &ST)
     RI(ST), Subtarget(ST) {
 }
 
-/// getNoopForMachoTarget - Return the noop instruction to use for a noop.
-void SparcInstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
-  NopInst.setOpcode(SP::NOP);
-}
-
 /// isLoadFromStackSlot - If the specified machine instruction is a direct
 /// load from a stack slot, return the virtual or physical register number of
 /// the destination along with the FrameIndex of the loaded stack slot.  If

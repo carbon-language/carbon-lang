@@ -372,6 +372,10 @@ static const TargetRegisterClass *canFoldCopy(const MachineInstr *MI,
   return nullptr;
 }
 
+void TargetInstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
+  llvm_unreachable("Not a MachO target");
+}
+
 bool TargetInstrInfo::
 canFoldMemoryOperand(const MachineInstr *MI,
                      const SmallVectorImpl<unsigned> &Ops) const {
