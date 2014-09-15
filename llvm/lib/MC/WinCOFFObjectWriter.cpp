@@ -582,10 +582,10 @@ void WinCOFFObjectWriter::WriteFileHeader(const COFF::header &Header) {
     WriteLE32(Header.TimeDateStamp);
     for (uint8_t MagicChar : COFF::BigObjMagic)
       Write8(MagicChar);
-    WriteZeros(sizeof(COFF::BigObjHeader::unused1));
-    WriteZeros(sizeof(COFF::BigObjHeader::unused2));
-    WriteZeros(sizeof(COFF::BigObjHeader::unused3));
-    WriteZeros(sizeof(COFF::BigObjHeader::unused4));
+    WriteLE32(0);
+    WriteLE32(0);
+    WriteLE32(0);
+    WriteLE32(0);
     WriteLE32(Header.NumberOfSections);
     WriteLE32(Header.PointerToSymbolTable);
     WriteLE32(Header.NumberOfSymbols);
