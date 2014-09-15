@@ -165,7 +165,8 @@ template <> struct isPodLike<BitCodeAbbrevOp> { static const bool value=true; };
 class BitCodeAbbrev : public RefCountedBase<BitCodeAbbrev> {
   SmallVector<BitCodeAbbrevOp, 32> OperandList;
   ~BitCodeAbbrev() {}
-  friend class RefCountedBase; // Only RefCountedBase is allowed to delete.
+  // Only RefCountedBase is allowed to delete.
+  friend class RefCountedBase<BitCodeAbbrev>;
 
 public:
   unsigned getNumOperandInfos() const {
