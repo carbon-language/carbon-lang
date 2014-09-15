@@ -365,7 +365,8 @@ bool CallInst::paramHasAttr(unsigned i, Attribute::AttrKind A) const {
 /// IsConstantOne - Return true only if val is constant int 1
 static bool IsConstantOne(Value *val) {
   assert(val && "IsConstantOne does not work with NULL val");
-  return isa<ConstantInt>(val) && cast<ConstantInt>(val)->isOne();
+  const ConstantInt *CVal = dyn_cast<ConstantInt>(val);
+  return CVal && CVal->isOne();
 }
 
 static Instruction *createMalloc(Instruction *InsertBefore,
