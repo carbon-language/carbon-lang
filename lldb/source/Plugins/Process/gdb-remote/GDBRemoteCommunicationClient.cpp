@@ -2404,6 +2404,8 @@ GDBRemoteCommunicationClient::GetProcessInfo (lldb::pid_t pid, ProcessInstanceIn
 bool
 GDBRemoteCommunicationClient::GetCurrentProcessInfo ()
 {
+    Log *log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_PROCESS | GDBR_LOG_PACKETS));
+
     if (m_qProcessInfo_is_valid == eLazyBoolYes)
         return true;
     if (m_qProcessInfo_is_valid == eLazyBoolNo)
@@ -2502,7 +2504,25 @@ GDBRemoteCommunicationClient::GetCurrentProcessInfo ()
             }
             else if (cpu != LLDB_INVALID_CPUTYPE && !os_name.empty() && !vendor_name.empty())
             {
-                m_process_arch.SetArchitecture (eArchTypeMachO, cpu, sub);
+                llvm::Triple triple(llvm::Twine("-") + vendor_name + "-" + os_name);
+
+                assert(triple.getObjectFormat() != llvm::Triple::UnknownObjectFormat);
+                switch (triple.getObjectFormat()) {
+                    case llvm::Triple::MachO:
+                        m_process_arch.SetArchitecture (eArchTypeMachO, cpu, sub);
+                        break;
+                    case llvm::Triple::ELF:
+                        m_process_arch.SetArchitecture (eArchTypeELF, cpu, sub);
+                        break;
+                    case llvm::Triple::COFF:
+                        m_process_arch.SetArchitecture (eArchTypeCOFF, cpu, sub);
+                        break;
+                    case llvm::Triple::UnknownObjectFormat:
+                        if (log)
+                            log->Printf("error: failed to determine target architecture");
+                        return false;
+                }
+
                 if (pointer_byte_size)
                 {
                     assert (pointer_byte_size == m_process_arch.GetAddressByteSize());
