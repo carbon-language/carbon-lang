@@ -106,8 +106,8 @@ protected:
 
     Pipe m_pipe;
     Mutex m_mutex;
-    bool m_shutting_down;       // This marks that we are shutting down so if we get woken up from
-                                // BytesAvailable to disconnect, we won't try to read again.
+    std::atomic<bool> m_shutting_down;    // This marks that we are shutting down so if we get woken up from
+                                          // BytesAvailable to disconnect, we won't try to read again.
     bool m_waiting_for_accept;
 private:
     DISALLOW_COPY_AND_ASSIGN (ConnectionFileDescriptor);

@@ -328,7 +328,7 @@ protected:
     
     lldb_private::Flags m_flags;            // Process specific flags (see eFlags enums)
     GDBRemoteCommunicationClient m_gdb_comm;
-    lldb::pid_t m_debugserver_pid;
+    std::atomic<lldb::pid_t> m_debugserver_pid;
     StringExtractorGDBRemote m_last_stop_packet;
     lldb_private::Mutex m_last_stop_packet_mutex;
     GDBRemoteDynamicRegisterInfo m_register_info;

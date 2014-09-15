@@ -688,6 +688,7 @@ Process::Process(Target &target, Listener &listener, const UnixSignalsSP &unix_s
     m_thread_id_to_index_id_map (),
     m_exit_status (-1),
     m_exit_string (),
+    m_exit_status_mutex(),
     m_thread_mutex (Mutex::eMutexTypeRecursive),
     m_thread_list_real (this),
     m_thread_list (this),
@@ -1186,6 +1187,8 @@ Process::IsRunning () const
 int
 Process::GetExitStatus ()
 {
+    Mutex::Locker locker (m_exit_status_mutex);
+
     if (m_public_state.GetValue() == eStateExited)
         return m_exit_status;
     return -1;
@@ -1195,6 +1198,8 @@ Process::GetExitStatus ()
 const char *
 Process::GetExitDescription ()
 {
+    Mutex::Locker locker (m_exit_status_mutex);
+
     if (m_public_state.GetValue() == eStateExited && !m_exit_string.empty())
         return m_exit_string.c_str();
     return NULL;
@@ -1219,11 +1224,16 @@ Process::SetExitStatus (int status, const char *cstr)
         return false;
     }
     
-    m_exit_status = status;
-    if (cstr)
-        m_exit_string = cstr;
-    else
-        m_exit_string.clear();
+    // use a mutex to protect the status and string during updating
+    {
+        Mutex::Locker locker (m_exit_status_mutex);
+
+        m_exit_status = status;
+        if (cstr)
+            m_exit_string = cstr;
+        else
+            m_exit_string.clear();
+    }
 
     DidExit ();
 

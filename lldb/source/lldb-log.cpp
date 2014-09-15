@@ -27,7 +27,7 @@ using namespace lldb_private;
 // that will construct the static g_lob_sp the first time this function is 
 // called.
 
-static bool g_log_enabled = false;
+static std::atomic<bool> g_log_enabled {false};
 static Log * g_log = NULL;
 static Log *
 GetLog ()

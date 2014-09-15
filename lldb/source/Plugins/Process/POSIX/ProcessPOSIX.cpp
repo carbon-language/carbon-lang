@@ -434,8 +434,7 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
         // FIXME: I'm not sure we need to do this.
         if (message.GetTID() == GetID())
         {
-            m_exit_status = message.GetExitStatus();
-            SetExitStatus(m_exit_status, NULL);
+            SetExitStatus(message.GetExitStatus(), NULL);
         }
         else if (!IsAThreadRunning())
             SetPrivateState(eStateStopped);

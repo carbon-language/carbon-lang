@@ -258,8 +258,7 @@ ProcessFreeBSD::SendMessage(const ProcessMessage &message)
 
     case ProcessMessage::eLimboMessage:
     case ProcessMessage::eExitMessage:
-        m_exit_status = message.GetExitStatus();
-        SetExitStatus(m_exit_status, NULL);
+        SetExitStatus(message.GetExitStatus(), NULL);
         break;
 
     case ProcessMessage::eSignalMessage:
