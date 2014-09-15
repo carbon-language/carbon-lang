@@ -530,6 +530,7 @@ class MTBUF <bits<3> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let MTBUF = 1;
 
   let neverHasSideEffects = 1;
+  let UseNamedOperandTable = 1;
 }
 
 class MIMG <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
