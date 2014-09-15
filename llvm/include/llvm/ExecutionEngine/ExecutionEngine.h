@@ -215,7 +215,7 @@ public:
   /// it prints a message to stderr and aborts.
   ///
   /// This function is deprecated for the MCJIT execution engine.
-  virtual void *getPointerToNamedFunction(const std::string &Name,
+  virtual void *getPointerToNamedFunction(StringRef Name,
                                           bool AbortOnFailure = true) = 0;
 
   /// mapSectionAddress - map a section to its target address space value.

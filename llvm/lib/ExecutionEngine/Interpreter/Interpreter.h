@@ -116,7 +116,7 @@ public:
   GenericValue runFunction(Function *F,
                            const std::vector<GenericValue> &ArgValues) override;
 
-  void *getPointerToNamedFunction(const std::string &Name,
+  void *getPointerToNamedFunction(StringRef Name,
                                   bool AbortOnFailure = true) override {
     // FIXME: not implemented.
     return nullptr;

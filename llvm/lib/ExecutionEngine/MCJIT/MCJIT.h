@@ -293,7 +293,7 @@ public:
   /// found, this function silently returns a null pointer. Otherwise,
   /// it prints a message to stderr and aborts.
   ///
-  void *getPointerToNamedFunction(const std::string &Name,
+  void *getPointerToNamedFunction(StringRef Name,
                                   bool AbortOnFailure = true) override;
 
   /// mapSectionAddress - map a section to its target address space value.
