@@ -137,12 +137,14 @@ namespace {
     static const EHPersonality &get(const LangOptions &Lang);
     static const EHPersonality GNU_C;
     static const EHPersonality GNU_C_SJLJ;
+    static const EHPersonality GNU_C_SEH;
     static const EHPersonality GNU_ObjC;
     static const EHPersonality GNUstep_ObjC;
     static const EHPersonality GNU_ObjCXX;
     static const EHPersonality NeXT_ObjC;
     static const EHPersonality GNU_CPlusPlus;
     static const EHPersonality GNU_CPlusPlus_SJLJ;
+    static const EHPersonality GNU_CPlusPlus_SEH;
   };
 }
 
@@ -150,11 +152,15 @@ const EHPersonality EHPersonality::GNU_C = { "__gcc_personality_v0", nullptr };
 const EHPersonality
 EHPersonality::GNU_C_SJLJ = { "__gcc_personality_sj0", nullptr };
 const EHPersonality
+EHPersonality::GNU_C_SEH = { "__gcc_personality_seh0", nullptr };
+const EHPersonality
 EHPersonality::NeXT_ObjC = { "__objc_personality_v0", nullptr };
 const EHPersonality
 EHPersonality::GNU_CPlusPlus = { "__gxx_personality_v0", nullptr };
 const EHPersonality
 EHPersonality::GNU_CPlusPlus_SJLJ = { "__gxx_personality_sj0", nullptr };
+const EHPersonality
+EHPersonality::GNU_CPlusPlus_SEH = { "__gxx_personality_seh0", nullptr };
 const EHPersonality
 EHPersonality::GNU_ObjC = {"__gnu_objc_personality_v0", "objc_exception_throw"};
 const EHPersonality
@@ -165,6 +171,8 @@ EHPersonality::GNUstep_ObjC = { "__gnustep_objc_personality_v0", nullptr };
 static const EHPersonality &getCPersonality(const LangOptions &L) {
   if (L.SjLjExceptions)
     return EHPersonality::GNU_C_SJLJ;
+  if (L.SEHExceptions)
+    return EHPersonality::GNU_C_SEH;
   return EHPersonality::GNU_C;
 }
 
@@ -189,6 +197,8 @@ static const EHPersonality &getObjCPersonality(const LangOptions &L) {
 static const EHPersonality &getCXXPersonality(const LangOptions &L) {
   if (L.SjLjExceptions)
     return EHPersonality::GNU_CPlusPlus_SJLJ;
+  else if (L.SEHExceptions)
+    return EHPersonality::GNU_CPlusPlus_SEH;
   else
     return EHPersonality::GNU_CPlusPlus;
 }
