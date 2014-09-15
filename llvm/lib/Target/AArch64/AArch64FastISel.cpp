@@ -1830,22 +1830,77 @@ bool AArch64FastISel::SelectIndirectBr(const Instruction *I) {
 bool AArch64FastISel::SelectCmp(const Instruction *I) {
   const CmpInst *CI = cast<CmpInst>(I);
 
-  // We may not handle every CC for now.
-  AArch64CC::CondCode CC = getCompareCC(CI->getPredicate());
-  if (CC == AArch64CC::AL)
-    return false;
+  // Try to optimize or fold the cmp.
+  CmpInst::Predicate Predicate = optimizeCmpPredicate(CI);
+  unsigned ResultReg = 0;
+  switch (Predicate) {
+  default:
+    break;
+  case CmpInst::FCMP_FALSE:
+    ResultReg = createResultReg(&AArch64::GPR32RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::COPY), ResultReg)
+        .addReg(AArch64::WZR, getKillRegState(true));
+    break;
+  case CmpInst::FCMP_TRUE:
+    ResultReg = fastEmit_i(MVT::i32, MVT::i32, ISD::Constant, 1);
+    break;
+  }
+
+  if (ResultReg) {
+    updateValueMap(I, ResultReg);
+    return true;
+  }
 
   // Emit the cmp.
   if (!emitCmp(CI->getOperand(0), CI->getOperand(1), CI->isUnsigned()))
     return false;
 
+  ResultReg = createResultReg(&AArch64::GPR32RegClass);
+
+  // FCMP_UEQ and FCMP_ONE cannot be checked with a single instruction. These
+  // condition codes are inverted, because they are used by CSINC.
+  static unsigned CondCodeTable[2][2] = {
+    { AArch64CC::NE, AArch64CC::VC },
+    { AArch64CC::PL, AArch64CC::LE }
+  };
+  unsigned *CondCodes = nullptr;
+  switch (Predicate) {
+  default:
+    break;
+  case CmpInst::FCMP_UEQ:
+    CondCodes = &CondCodeTable[0][0];
+    break;
+  case CmpInst::FCMP_ONE:
+    CondCodes = &CondCodeTable[1][0];
+    break;
+  }
+
+  if (CondCodes) {
+    unsigned TmpReg1 = createResultReg(&AArch64::GPR32RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::CSINCWr),
+            TmpReg1)
+        .addReg(AArch64::WZR, getKillRegState(true))
+        .addReg(AArch64::WZR, getKillRegState(true))
+        .addImm(CondCodes[0]);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::CSINCWr),
+            ResultReg)
+        .addReg(TmpReg1, getKillRegState(true))
+        .addReg(AArch64::WZR, getKillRegState(true))
+        .addImm(CondCodes[1]);
+
+    updateValueMap(I, ResultReg);
+    return true;
+  }
+
   // Now set a register based on the comparison.
+  AArch64CC::CondCode CC = getCompareCC(Predicate);
+  assert((CC != AArch64CC::AL) && "Unexpected condition code.");
   AArch64CC::CondCode invertedCC = getInvertedCondCode(CC);
-  unsigned ResultReg = createResultReg(&AArch64::GPR32RegClass);
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::CSINCWr),
           ResultReg)
-      .addReg(AArch64::WZR)
-      .addReg(AArch64::WZR)
+      .addReg(AArch64::WZR, getKillRegState(true))
+      .addReg(AArch64::WZR, getKillRegState(true))
       .addImm(invertedCC);
 
   updateValueMap(I, ResultReg);
