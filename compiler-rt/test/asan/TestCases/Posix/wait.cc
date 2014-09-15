@@ -7,14 +7,9 @@
 // RUN: %clangxx_asan -DWAIT3 -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -DWAIT3 -O3 %s -o %t && not %run %t 2>&1 | FileCheck %s
 
-// RUN: %clangxx_asan -DWAIT4 -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -DWAIT4 -O3 %s -o %t && not %run %t 2>&1 | FileCheck %s
-
 // RUN: %clangxx_asan -DWAIT3_RUSAGE -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -DWAIT3_RUSAGE -O3 %s -o %t && not %run %t 2>&1 | FileCheck %s
 
-// RUN: %clangxx_asan -DWAIT4_RUSAGE -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -DWAIT4_RUSAGE -O3 %s -o %t && not %run %t 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <sys/wait.h>
@@ -32,16 +27,10 @@ int main(int argc, char **argv) {
     res = waitpid(pid, status, WNOHANG);
 #elif defined(WAIT3)
     res = wait3(status, WNOHANG, NULL);
-#elif defined(WAIT4)
-    res = wait4(pid, status, WNOHANG, NULL);
-#elif defined(WAIT3_RUSAGE) || defined(WAIT4_RUSAGE)
+#elif defined(WAIT3_RUSAGE)
     struct rusage *ru = (struct rusage*)(x + argc * 3);
     int good_status;
-# if defined(WAIT3_RUSAGE)
     res = wait3(&good_status, WNOHANG, ru);
-# elif defined(WAIT4_RUSAGE)
-    res = wait4(pid, &good_status, WNOHANG, ru);
-# endif
 #endif
     // CHECK: stack-buffer-overflow
     // CHECK: {{WRITE of size .* at 0x.* thread T0}}
