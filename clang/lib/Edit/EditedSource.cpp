@@ -280,6 +280,12 @@ static void adjustRemoval(const SourceManager &SM, const LangOptions &LangOpts,
   unsigned begin = offs.getOffset();
   unsigned end = begin + len;
 
+  // Do not try to extend the removal if we're at the end of the buffer already.
+  if (end == buffer.size())
+    return;
+
+  assert(begin < buffer.size() && end < buffer.size() && "Invalid range!");
+
   // FIXME: Remove newline.
 
   if (begin == 0) {
