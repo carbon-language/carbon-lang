@@ -58,9 +58,9 @@ class DWARFUnitSection : public SmallVector<std::unique_ptr<UnitType>, 1>,
   };
 
 public:
-  typedef SmallVectorImpl<std::unique_ptr<UnitType>> UnitVector;
+  typedef llvm::SmallVectorImpl<std::unique_ptr<UnitType>> UnitVector;
   typedef typename UnitVector::iterator iterator;
-  typedef iterator_range<typename UnitVector::iterator> iterator_range;
+  typedef llvm::iterator_range<typename UnitVector::iterator> iterator_range;
 
   UnitType *getUnitForOffset(uint32_t Offset) const {
     auto *CU = std::lower_bound(this->begin(), this->end(), Offset,
