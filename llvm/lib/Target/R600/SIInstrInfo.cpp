@@ -638,6 +638,10 @@ bool SIInstrInfo::isMTBUF(uint16_t Opcode) const {
   return get(Opcode).TSFlags & SIInstrFlags::MTBUF;
 }
 
+bool SIInstrInfo::isFLAT(uint16_t Opcode) const {
+  return get(Opcode).TSFlags & SIInstrFlags::FLAT;
+}
+
 bool SIInstrInfo::isVOP1(uint16_t Opcode) const {
   return get(Opcode).TSFlags & SIInstrFlags::VOP1;
 }
@@ -841,6 +845,10 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
 
         // EXEC register uses the constant bus.
         if (!MO.isImplicit() && MO.getReg() == AMDGPU::EXEC)
+          ++ConstantBusCount;
+
+        // FLAT_SCR is just an SGPR pair.
+        if (!MO.isImplicit() && (MO.getReg() == AMDGPU::FLAT_SCR))
           ++ConstantBusCount;
 
         // SGPRs use the constant bus

@@ -195,6 +195,14 @@ def sextloadi8_global : PatFrag<(ops node:$ptr), (sextloadi8 node:$ptr), [{
     return isGlobalLoad(dyn_cast<LoadSDNode>(N));
 }]>;
 
+def az_extloadi8_flat : PatFrag<(ops node:$ptr), (az_extloadi8 node:$ptr), [{
+    return isFlatLoad(dyn_cast<LoadSDNode>(N));
+}]>;
+
+def sextloadi8_flat : PatFrag<(ops node:$ptr), (sextloadi8 node:$ptr), [{
+    return isFlatLoad(dyn_cast<LoadSDNode>(N));
+}]>;
+
 def az_extloadi8_constant : PatFrag<(ops node:$ptr), (az_extloadi8 node:$ptr), [{
     return isConstantLoad(dyn_cast<LoadSDNode>(N), -1);
 }]>;
@@ -223,6 +231,14 @@ def sextloadi16_global : PatFrag<(ops node:$ptr), (sextloadi16 node:$ptr), [{
     return isGlobalLoad(dyn_cast<LoadSDNode>(N));
 }]>;
 
+def az_extloadi16_flat : PatFrag<(ops node:$ptr), (az_extloadi16 node:$ptr), [{
+    return isFlatLoad(dyn_cast<LoadSDNode>(N));
+}]>;
+
+def sextloadi16_flat : PatFrag<(ops node:$ptr), (sextloadi16 node:$ptr), [{
+    return isFlatLoad(dyn_cast<LoadSDNode>(N));
+}]>;
+
 def az_extloadi16_constant : PatFrag<(ops node:$ptr), (az_extloadi16 node:$ptr), [{
     return isConstantLoad(dyn_cast<LoadSDNode>(N), -1);
 }]>;
@@ -248,6 +264,11 @@ def az_extloadi32_global : PatFrag<(ops node:$ptr),
   return isGlobalLoad(dyn_cast<LoadSDNode>(N));
 }]>;
 
+def az_extloadi32_flat : PatFrag<(ops node:$ptr),
+                                   (az_extloadi32 node:$ptr), [{
+  return isFlatLoad(dyn_cast<LoadSDNode>(N));
+}]>;
+
 def az_extloadi32_constant : PatFrag<(ops node:$ptr),
                                      (az_extloadi32 node:$ptr), [{
   return isConstantLoad(dyn_cast<LoadSDNode>(N), -1);
@@ -261,6 +282,16 @@ def truncstorei8_global : PatFrag<(ops node:$val, node:$ptr),
 def truncstorei16_global : PatFrag<(ops node:$val, node:$ptr),
                                   (truncstorei16 node:$val, node:$ptr), [{
   return isGlobalStore(dyn_cast<StoreSDNode>(N));
+}]>;
+
+def truncstorei8_flat : PatFrag<(ops node:$val, node:$ptr),
+                                  (truncstorei8 node:$val, node:$ptr), [{
+  return isFlatStore(dyn_cast<StoreSDNode>(N));
+}]>;
+
+def truncstorei16_flat : PatFrag<(ops node:$val, node:$ptr),
+                                  (truncstorei16 node:$val, node:$ptr), [{
+  return isFlatStore(dyn_cast<StoreSDNode>(N));
 }]>;
 
 def local_store : PatFrag<(ops node:$val, node:$ptr),
@@ -318,6 +349,7 @@ def mskor_global : PatFrag<(ops node:$val, node:$ptr),
   return dyn_cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS;
 }]>;
 
+
 def atomic_cmp_swap_32_local :
   PatFrag<(ops node:$ptr, node:$cmp, node:$swap),
           (atomic_cmp_swap node:$ptr, node:$cmp, node:$swap), [{
@@ -332,6 +364,20 @@ def atomic_cmp_swap_64_local :
   AtomicSDNode *AN = cast<AtomicSDNode>(N);
   return AN->getMemoryVT() == MVT::i64 &&
          AN->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
+}]>;
+
+def flat_load : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+    return isFlatLoad(dyn_cast<LoadSDNode>(N));
+}]>;
+
+def flat_store : PatFrag<(ops node:$val, node:$ptr),
+                         (store node:$val, node:$ptr), [{
+  return isFlatStore(dyn_cast<StoreSDNode>(N));
+}]>;
+
+def mskor_flat : PatFrag<(ops node:$val, node:$ptr),
+                            (AMDGPUstore_mskor node:$val, node:$ptr), [{
+  return dyn_cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::FLAT_ADDRESS;
 }]>;
 
 //===----------------------------------------------------------------------===//

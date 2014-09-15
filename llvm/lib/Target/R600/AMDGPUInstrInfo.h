@@ -95,6 +95,7 @@ protected:
                                       MachineInstr *MI,
                                       const SmallVectorImpl<unsigned> &Ops,
                                       MachineInstr *LoadMI) const override;
+public:
   /// \returns the smallest register index that will be accessed by an indirect
   /// read or write or -1 if indirect addressing is not used by this program.
   int getIndirectIndexBegin(const MachineFunction &MF) const;
@@ -103,7 +104,6 @@ protected:
   /// read or write or -1 if indirect addressing is not used by this program.
   int getIndirectIndexEnd(const MachineFunction &MF) const;
 
-public:
   bool canFoldMemoryOperand(const MachineInstr *MI,
                            const SmallVectorImpl<unsigned> &Ops) const override;
   bool unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,

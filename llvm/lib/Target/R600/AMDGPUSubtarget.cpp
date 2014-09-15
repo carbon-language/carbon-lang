@@ -77,14 +77,14 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef GPU, StringRef FS,
       DumpCode(false), R600ALUInst(false), HasVertexCache(false),
       TexVTXClauseSize(0), Gen(AMDGPUSubtarget::R600), FP64(false),
       FP64Denormals(false), FP32Denormals(false), CaymanISA(false),
-      EnableIRStructurizer(true), EnablePromoteAlloca(false), EnableIfCvt(true),
+      FlatAddressSpace(false), EnableIRStructurizer(true),
+      EnablePromoteAlloca(false), EnableIfCvt(true),
       WavefrontSize(0), CFALUBug(false), LocalMemorySize(0),
       DL(computeDataLayout(initializeSubtargetDependencies(GPU, FS))),
       FrameLowering(TargetFrameLowering::StackGrowsUp,
                     64 * 16, // Maximum stack alignment (long16)
                     0),
       InstrItins(getInstrItineraryForCPU(GPU)) {
-
   if (getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
     InstrInfo.reset(new R600InstrInfo(*this));
     TLInfo.reset(new R600TargetLowering(TM));

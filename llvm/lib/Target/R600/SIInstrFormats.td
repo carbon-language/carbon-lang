@@ -26,6 +26,7 @@ class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
   field bits<1> SALU = 0;
   field bits<1> MUBUF = 0;
   field bits<1> MTBUF = 0;
+  field bits<1> FLAT = 0;
 
   // These need to be kept in sync with the enum in SIInstrFlags.
   let TSFlags{0} = VM_CNT;
@@ -40,6 +41,7 @@ class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
   let TSFlags{9} = SALU;
   let TSFlags{10} = MUBUF;
   let TSFlags{11} = MTBUF;
+  let TSFlags{12} = FLAT;
 }
 
 class Enc32 {
@@ -425,8 +427,27 @@ class MIMGe <bits<7> op> : Enc64 {
   let Inst{57-53} = SSAMP{6-2};
 }
 
-class EXPe : Enc64 {
+class FLATe<bits<7> op> : Enc64 {
+  bits<8> addr;
+  bits<8> data;
+  bits<8> vdst;
+  bits<1> slc;
+  bits<1> glc;
+  bits<1> tfe;
 
+  // 15-0 is reserved.
+  let Inst{16} = glc;
+  let Inst{17} = slc;
+  let Inst{24-18} = op;
+  let Inst{31-26} = 0x37; // Encoding.
+  let Inst{39-32} = addr;
+  let Inst{47-40} = data;
+  // 54-48 is reserved.
+  let Inst{55} = tfe;
+  let Inst{63-56} = vdst;
+}
+
+class EXPe : Enc64 {
   bits<4> EN;
   bits<6> TGT;
   bits<1> COMPR;
@@ -531,6 +552,21 @@ class MTBUF <bits<3> op, dag outs, dag ins, string asm, list<dag> pattern> :
 
   let neverHasSideEffects = 1;
   let UseNamedOperandTable = 1;
+}
+
+class FLAT <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
+    InstSI<outs, ins, asm, pattern>, FLATe <op> {
+  let FLAT = 1;
+  // Internally, FLAT instruction are executed as both an LDS and a
+  // Buffer instruction; so, they increment both VM_CNT and LGKM_CNT
+  // and are not considered done until both have been decremented.
+  let VM_CNT = 1;
+  let LGKM_CNT = 1;
+
+  let Uses = [EXEC, FLAT_SCR]; // M0
+
+  let UseNamedOperandTable = 1;
+  let hasSideEffects = 0;
 }
 
 class MIMG <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :

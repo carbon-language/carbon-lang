@@ -33,6 +33,7 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   Reserved.set(AMDGPU::EXEC);
   Reserved.set(AMDGPU::INDIRECT_BASE_ADDR);
+  Reserved.set(AMDGPU::FLAT_SCR);
   return Reserved;
 }
 
@@ -246,6 +247,28 @@ unsigned SIRegisterInfo::getPhysRegSubReg(unsigned Reg,
         default: llvm_unreachable("Invalid SubIdx for VCC");
       }
       break;
+
+  case AMDGPU::FLAT_SCR:
+    switch (Channel) {
+    case 0:
+      return AMDGPU::FLAT_SCR_LO;
+    case 1:
+      return AMDGPU::FLAT_SCR_HI;
+    default:
+      llvm_unreachable("Invalid SubIdx for FLAT_SCR");
+    }
+    break;
+
+  case AMDGPU::EXEC:
+    switch (Channel) {
+    case 0:
+      return AMDGPU::EXEC_LO;
+    case 1:
+      return AMDGPU::EXEC_HI;
+    default:
+      llvm_unreachable("Invalid SubIdx for EXEC");
+    }
+    break;
   }
 
   unsigned Index = getHWRegIndex(Reg);

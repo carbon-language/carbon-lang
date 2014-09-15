@@ -209,6 +209,7 @@ def VOP3Mods  : ComplexPattern<untyped, 2, "SelectVOP3Mods">;
 def SIOperand {
   int ZERO = 0x80;
   int VCC = 0x6A;
+  int FLAT_SCR = 0x68;
 }
 
 def SRCMODS {
@@ -1061,6 +1062,30 @@ multiclass MUBUF_Store_Helper <bits<7> op, string name, RegisterClass vdataClass
       let tfe = 0;
       let soffset = 128; // ZERO
    }
+}
+
+class FLAT_Load_Helper <bits<7> op, string asm, RegisterClass regClass> :
+      FLAT <op, (outs regClass:$data),
+                (ins VReg_64:$addr),
+            asm#" $data, $addr, [M0, FLAT_SCRATCH]", []> {
+  let glc = 0;
+  let slc = 0;
+  let tfe = 0;
+  let mayLoad = 1;
+}
+
+class FLAT_Store_Helper <bits<7> op, string name, RegisterClass vdataClass> :
+      FLAT <op, (outs), (ins vdataClass:$data, VReg_64:$addr),
+          name#" $data, $addr, [M0, FLAT_SCRATCH]",
+         []> {
+
+  let mayLoad = 0;
+  let mayStore = 1;
+
+  // Encoding
+  let glc = 0;
+  let slc = 0;
+  let tfe = 0;
 }
 
 class MTBUF_Load_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBUF <

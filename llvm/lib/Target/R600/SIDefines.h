@@ -22,7 +22,8 @@ enum {
   VOPC = 1 << 8,
   SALU = 1 << 9,
   MUBUF = 1 << 10,
-  MTBUF = 1 << 11
+  MTBUF = 1 << 11,
+  FLAT = 1 << 12
 };
 }
 

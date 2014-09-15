@@ -33,6 +33,8 @@ private:
       DebugMode(0),
       IEEEMode(0),
       ScratchSize(0),
+      FlatUsed(false),
+      VCCUsed(false),
       CodeLen(0) {}
 
     // Fields set in PGM_RSRC1 pm4 packet.
@@ -46,7 +48,10 @@ private:
     uint32_t IEEEMode;
     uint32_t ScratchSize;
 
+    bool FlatUsed;
+
     // Bonus information for debugging.
+    bool VCCUsed;
     uint64_t CodeLen;
   };
 

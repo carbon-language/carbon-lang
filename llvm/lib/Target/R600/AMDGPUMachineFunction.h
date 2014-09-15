@@ -33,6 +33,9 @@ public:
   unsigned getShaderType() const {
     return ShaderType;
   }
+
+  unsigned ScratchSize;
+  bool IsKernel;
 };
 
 }

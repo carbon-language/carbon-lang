@@ -240,6 +240,7 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
   unsigned MaxSGPR = 0;
   unsigned MaxVGPR = 0;
   bool VCCUsed = false;
+  bool FlatUsed = false;
   const SIRegisterInfo *RI = static_cast<const SIRegisterInfo *>(
       TM.getSubtargetImpl()->getRegisterInfo());
 
@@ -261,6 +262,11 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
         if (reg == AMDGPU::VCC || reg == AMDGPU::VCC_LO ||
 	    reg == AMDGPU::VCC_HI) {
           VCCUsed = true;
+          continue;
+        } else if (reg == AMDGPU::FLAT_SCR ||
+                   reg == AMDGPU::FLAT_SCR_LO ||
+                   reg == AMDGPU::FLAT_SCR_HI) {
+          FlatUsed = true;
           continue;
         }
 
@@ -322,6 +328,9 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
   if (VCCUsed)
     MaxSGPR += 2;
 
+  if (FlatUsed)
+    MaxSGPR += 2;
+
   // We found the maximum register index. They start at 0, so add one to get the
   // number of registers.
   ProgInfo.NumVGPR = MaxVGPR + 1;
@@ -340,6 +349,8 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
   const MachineFrameInfo *FrameInfo = MF.getFrameInfo();
   ProgInfo.ScratchSize = FrameInfo->estimateStackSize(MF);
 
+  ProgInfo.FlatUsed = FlatUsed;
+  ProgInfo.VCCUsed = VCCUsed;
   ProgInfo.CodeLen = CodeSize;
 }
 
@@ -402,6 +413,9 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(const MachineFunction &MF,
 
     OutStreamer.EmitIntValue(R_00B860_COMPUTE_TMPRING_SIZE, 4);
     OutStreamer.EmitIntValue(S_00B860_WAVESIZE(ScratchBlocks), 4);
+
+    // TODO: Should probably note flat usage somewhere. SC emits a "FlatPtr32 =
+    // 0" comment but I don't see a corresponding field in the register spec.
   } else {
     OutStreamer.EmitIntValue(RsrcReg, 4);
     OutStreamer.EmitIntValue(S_00B028_VGPRS(KernelInfo.NumVGPR / 4) |

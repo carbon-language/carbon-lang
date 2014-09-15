@@ -98,6 +98,27 @@ void AMDGPUInstPrinter::printRegOperand(unsigned reg, raw_ostream &O) {
   case AMDGPU::M0:
     O << "m0";
     return;
+  case AMDGPU::FLAT_SCR:
+    O << "flat_scratch";
+    return;
+  case AMDGPU::VCC_LO:
+    O << "vcc_lo";
+    return;
+  case AMDGPU::VCC_HI:
+    O << "vcc_hi";
+    return;
+  case AMDGPU::EXEC_LO:
+    O << "exec_lo";
+    return;
+  case AMDGPU::EXEC_HI:
+    O << "exec_hi";
+    return;
+  case AMDGPU::FLAT_SCR_LO:
+    O << "flat_scratch_lo";
+    return;
+  case AMDGPU::FLAT_SCR_HI:
+    O << "flat_scratch_hi";
+    return;
   default:
     break;
   }

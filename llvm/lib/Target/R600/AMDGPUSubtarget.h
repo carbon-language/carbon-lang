@@ -56,6 +56,7 @@ private:
   bool FP64Denormals;
   bool FP32Denormals;
   bool CaymanISA;
+  bool FlatAddressSpace;
   bool EnableIRStructurizer;
   bool EnablePromoteAlloca;
   bool EnableIfCvt;
@@ -122,6 +123,10 @@ public:
 
   bool hasFP64Denormals() const {
     return FP64Denormals;
+  }
+
+  bool hasFlatAddressSpace() const {
+    return FlatAddressSpace;
   }
 
   bool hasBFE() const {
