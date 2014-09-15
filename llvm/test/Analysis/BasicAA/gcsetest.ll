@@ -1,5 +1,5 @@
-; Test that GCSE uses basicaa to do alias analysis, which is capable of 
-; disambiguating some obvious cases.  All loads should be removable in 
+; Test that GCSE uses basicaa to do alias analysis, which is capable of
+; disambiguating some obvious cases.  All loads should be removable in
 ; this testcase.
 
 ; RUN: opt < %s -basicaa -gvn -instcombine -dce -S | FileCheck %s
