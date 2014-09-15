@@ -3002,13 +3002,8 @@ ItaniumCXXABI::RTTIUniquenessKind ItaniumCXXABI::classifyRTTIUniqueness(
 static void emitCXXConstructor(CodeGenModule &CGM,
                                const CXXConstructorDecl *ctor,
                                StructorType ctorType) {
-  if (!CGM.getTarget().getCXXABI().hasConstructorVariants()) {
-    // If there are no constructor variants, always emit the complete
-    // destructor.
-    ctorType = StructorType::Complete;
-  } else if (!ctor->getParent()->getNumVBases() &&
-             (ctorType == StructorType::Complete ||
-              ctorType == StructorType::Base)) {
+  if (!ctor->getParent()->getNumVBases() &&
+      (ctorType == StructorType::Complete || ctorType == StructorType::Base)) {
     // The complete constructor is equivalent to the base constructor
     // for classes with no virtual bases.  Try to emit it as an alias.
     bool ProducedAlias = !CGM.TryEmitDefinitionAsAlias(
