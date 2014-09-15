@@ -31,7 +31,7 @@ namespace llvm {
 namespace COFF {
 
   // The maximum number of sections that a COFF object can have (inclusive).
-  const uint16_t MaxNumberOfSections16 = 65299;
+  const int32_t MaxNumberOfSections16 = 65279;
 
   // The PE signature bytes that follows the DOS stub header.
   static const char PEMagic[] = { 'P', 'E', '\0', '\0' };
@@ -43,16 +43,18 @@ namespace COFF {
 
   // Sizes in bytes of various things in the COFF format.
   enum {
-    HeaderSize     = 20,
+    Header16Size   = 20,
+    Header32Size   = 56,
     NameSize       = 8,
-    SymbolSize     = 18,
+    Symbol16Size   = 18,
+    Symbol32Size   = 20,
     SectionSize    = 40,
     RelocationSize = 10
   };
 
   struct header {
     uint16_t Machine;
-    uint16_t NumberOfSections;
+    int32_t  NumberOfSections;
     uint32_t TimeDateStamp;
     uint32_t PointerToSymbolTable;
     uint32_t NumberOfSymbols;
@@ -147,7 +149,7 @@ namespace COFF {
   struct symbol {
     char     Name[NameSize];
     uint32_t Value;
-    uint16_t SectionNumber;
+    int32_t  SectionNumber;
     uint16_t Type;
     uint8_t  StorageClass;
     uint8_t  NumberOfAuxSymbols;
@@ -390,18 +392,14 @@ namespace COFF {
     IMAGE_WEAK_EXTERN_SEARCH_ALIAS     = 3
   };
 
-  struct AuxiliaryFile {
-    uint8_t FileName[18];
-  };
-
   struct AuxiliarySectionDefinition {
     uint32_t Length;
     uint16_t NumberOfRelocations;
     uint16_t NumberOfLinenumbers;
     uint32_t CheckSum;
-    uint16_t Number;
+    uint32_t Number;
     uint8_t  Selection;
-    char     unused[3];
+    char     unused;
   };
 
   struct AuxiliaryCLRToken {
@@ -415,7 +413,6 @@ namespace COFF {
     AuxiliaryFunctionDefinition FunctionDefinition;
     AuxiliarybfAndefSymbol      bfAndefSymbol;
     AuxiliaryWeakExternal       WeakExternal;
-    AuxiliaryFile               File;
     AuxiliarySectionDefinition  SectionDefinition;
   };
 

@@ -71,7 +71,6 @@ public:
   MCSymbolData const *MCData;
 
   COFFSymbol(StringRef name);
-  size_t size() const;
   void set_name_offset(uint32_t Offset);
 
   bool should_keep() const;
@@ -137,6 +136,8 @@ public:
   section_map SectionMap;
   symbol_map  SymbolMap;
 
+  bool UseBigObj;
+
   WinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW, raw_ostream &OS);
 
   COFFSymbol *createSymbol(StringRef Name);
@@ -197,10 +198,6 @@ COFFSymbol::COFFSymbol(StringRef name)
   , Relocations(0)
   , MCData(nullptr) {
   memset(&Data, 0, sizeof(Data));
-}
-
-size_t COFFSymbol::size() const {
-  return COFF::SymbolSize + (Data.NumberOfAuxSymbols * COFF::SymbolSize);
 }
 
 // In the case that the name does not fit within 8 bytes, the offset
@@ -301,8 +298,7 @@ size_t StringTable::insert(StringRef String) {
 
 WinCOFFObjectWriter::WinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW,
                                          raw_ostream &OS)
-  : MCObjectWriter(OS, true)
-  , TargetObjectWriter(MOTW) {
+    : MCObjectWriter(OS, true), TargetObjectWriter(MOTW) {
   memset(&Header, 0, sizeof(Header));
 
   Header.Machine = TargetObjectWriter->getMachine();
@@ -578,19 +574,39 @@ bool WinCOFFObjectWriter::IsPhysicalSection(COFFSection *S) {
 // entity writing methods
 
 void WinCOFFObjectWriter::WriteFileHeader(const COFF::header &Header) {
-  WriteLE16(Header.Machine);
-  WriteLE16(Header.NumberOfSections);
-  WriteLE32(Header.TimeDateStamp);
-  WriteLE32(Header.PointerToSymbolTable);
-  WriteLE32(Header.NumberOfSymbols);
-  WriteLE16(Header.SizeOfOptionalHeader);
-  WriteLE16(Header.Characteristics);
+  if (UseBigObj) {
+    WriteLE16(COFF::IMAGE_FILE_MACHINE_UNKNOWN);
+    WriteLE16(0xFFFF);
+    WriteLE16(COFF::BigObjHeader::MinBigObjectVersion);
+    WriteLE16(Header.Machine);
+    WriteLE32(Header.TimeDateStamp);
+    for (uint8_t MagicChar : COFF::BigObjMagic)
+      Write8(MagicChar);
+    WriteZeros(sizeof(COFF::BigObjHeader::unused1));
+    WriteZeros(sizeof(COFF::BigObjHeader::unused2));
+    WriteZeros(sizeof(COFF::BigObjHeader::unused3));
+    WriteZeros(sizeof(COFF::BigObjHeader::unused4));
+    WriteLE32(Header.NumberOfSections);
+    WriteLE32(Header.PointerToSymbolTable);
+    WriteLE32(Header.NumberOfSymbols);
+  } else {
+    WriteLE16(Header.Machine);
+    WriteLE16(static_cast<int16_t>(Header.NumberOfSections));
+    WriteLE32(Header.TimeDateStamp);
+    WriteLE32(Header.PointerToSymbolTable);
+    WriteLE32(Header.NumberOfSymbols);
+    WriteLE16(Header.SizeOfOptionalHeader);
+    WriteLE16(Header.Characteristics);
+  }
 }
 
 void WinCOFFObjectWriter::WriteSymbol(const COFFSymbol &S) {
   WriteBytes(StringRef(S.Data.Name, COFF::NameSize));
   WriteLE32(S.Data.Value);
-  WriteLE16(S.Data.SectionNumber);
+  if (UseBigObj)
+    WriteLE32(S.Data.SectionNumber);
+  else
+    WriteLE16(static_cast<int16_t>(S.Data.SectionNumber));
   WriteLE16(S.Data.Type);
   Write8(S.Data.StorageClass);
   Write8(S.Data.NumberOfAuxSymbols);
@@ -608,6 +624,8 @@ void WinCOFFObjectWriter::WriteAuxiliarySymbols(
       WriteLE32(i->Aux.FunctionDefinition.PointerToLinenumber);
       WriteLE32(i->Aux.FunctionDefinition.PointerToNextFunction);
       WriteZeros(sizeof(i->Aux.FunctionDefinition.unused));
+      if (UseBigObj)
+        WriteZeros(COFF::Symbol32Size - COFF::Symbol16Size);
       break;
     case ATbfAndefSymbol:
       WriteZeros(sizeof(i->Aux.bfAndefSymbol.unused1));
@@ -615,24 +633,32 @@ void WinCOFFObjectWriter::WriteAuxiliarySymbols(
       WriteZeros(sizeof(i->Aux.bfAndefSymbol.unused2));
       WriteLE32(i->Aux.bfAndefSymbol.PointerToNextFunction);
       WriteZeros(sizeof(i->Aux.bfAndefSymbol.unused3));
+      if (UseBigObj)
+        WriteZeros(COFF::Symbol32Size - COFF::Symbol16Size);
       break;
     case ATWeakExternal:
       WriteLE32(i->Aux.WeakExternal.TagIndex);
       WriteLE32(i->Aux.WeakExternal.Characteristics);
       WriteZeros(sizeof(i->Aux.WeakExternal.unused));
+      if (UseBigObj)
+        WriteZeros(COFF::Symbol32Size - COFF::Symbol16Size);
       break;
     case ATFile:
-      WriteBytes(StringRef(reinterpret_cast<const char *>(i->Aux.File.FileName),
-                 sizeof(i->Aux.File.FileName)));
+      WriteBytes(
+          StringRef(reinterpret_cast<const char *>(&i->Aux),
+                    UseBigObj ? COFF::Symbol32Size : COFF::Symbol16Size));
       break;
     case ATSectionDefinition:
       WriteLE32(i->Aux.SectionDefinition.Length);
       WriteLE16(i->Aux.SectionDefinition.NumberOfRelocations);
       WriteLE16(i->Aux.SectionDefinition.NumberOfLinenumbers);
       WriteLE32(i->Aux.SectionDefinition.CheckSum);
-      WriteLE16(i->Aux.SectionDefinition.Number);
+      WriteLE16(static_cast<int16_t>(i->Aux.SectionDefinition.Number));
       Write8(i->Aux.SectionDefinition.Selection);
       WriteZeros(sizeof(i->Aux.SectionDefinition.unused));
+      WriteLE16(static_cast<int16_t>(i->Aux.SectionDefinition.Number >> 16));
+      if (UseBigObj)
+        WriteZeros(COFF::Symbol32Size - COFF::Symbol16Size);
       break;
     }
   }
@@ -665,37 +691,6 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
                                                    const MCAsmLayout &Layout) {
   // "Define" each section & symbol. This creates section & symbol
   // entries in the staging area.
-
-  static_assert(sizeof(((COFF::AuxiliaryFile *)nullptr)->FileName) == COFF::SymbolSize,
-                "size mismatch for COFF::AuxiliaryFile::FileName");
-  for (auto FI = Asm.file_names_begin(), FE = Asm.file_names_end();
-       FI != FE; ++FI) {
-    // round up to calculate the number of auxiliary symbols required
-    unsigned Count = (FI->size() + COFF::SymbolSize - 1) / COFF::SymbolSize;
-
-    COFFSymbol *file = createSymbol(".file");
-    file->Data.SectionNumber = COFF::IMAGE_SYM_DEBUG;
-    file->Data.StorageClass = COFF::IMAGE_SYM_CLASS_FILE;
-    file->Aux.resize(Count);
-
-    unsigned Offset = 0;
-    unsigned Length = FI->size();
-    for (auto & Aux : file->Aux) {
-      Aux.AuxType = ATFile;
-
-      if (Length > COFF::SymbolSize) {
-        memcpy(Aux.Aux.File.FileName, FI->c_str() + Offset, COFF::SymbolSize);
-        Length = Length - COFF::SymbolSize;
-      } else {
-        memcpy(Aux.Aux.File.FileName, FI->c_str() + Offset, Length);
-        memset(&Aux.Aux.File.FileName[Length], 0, COFF::SymbolSize - Length);
-        Length = 0;
-      }
-
-      Offset = Offset + COFF::SymbolSize;
-    }
-  }
-
   for (const auto & Section : Asm)
     DefineSection(Section);
 
@@ -839,22 +834,56 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
 void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
                                       const MCAsmLayout &Layout) {
-  // Assign symbol and section indexes and offsets.
-  size_t NumberOfSections = 0;
+  size_t SectionsSize = Sections.size();
+  if (SectionsSize > static_cast<size_t>(INT32_MAX))
+    report_fatal_error(
+        "PE COFF object files can't have more than 2147483647 sections");
 
-  DenseMap<COFFSection *, uint16_t> SectionIndices;
+  // Assign symbol and section indexes and offsets.
+  int32_t NumberOfSections = static_cast<int32_t>(SectionsSize);
+
+  UseBigObj = NumberOfSections > COFF::MaxNumberOfSections16;
+
+  DenseMap<COFFSection *, int32_t> SectionIndices(
+      NextPowerOf2(NumberOfSections));
+  size_t Number = 1;
   for (const auto &Section : Sections) {
-    size_t Number = ++NumberOfSections;
-    SectionIndices[Section.get()] = static_cast<uint16_t>(Number);
+    SectionIndices[Section.get()] = Number;
     MakeSectionReal(*Section, Number);
+    ++Number;
   }
 
-  if (NumberOfSections > static_cast<size_t>(COFF::MaxNumberOfSections16))
-    report_fatal_error(
-        "PE COFF object files can't have more than 65,299 sections");
-
-  Header.NumberOfSections = static_cast<uint16_t>(NumberOfSections);
+  Header.NumberOfSections = NumberOfSections;
   Header.NumberOfSymbols = 0;
+
+  for (auto FI = Asm.file_names_begin(), FE = Asm.file_names_end();
+       FI != FE; ++FI) {
+    // round up to calculate the number of auxiliary symbols required
+    unsigned SymbolSize = UseBigObj ? COFF::Symbol32Size : COFF::Symbol16Size;
+    unsigned Count = (FI->size() + SymbolSize - 1) / SymbolSize;
+
+    COFFSymbol *file = createSymbol(".file");
+    file->Data.SectionNumber = COFF::IMAGE_SYM_DEBUG;
+    file->Data.StorageClass = COFF::IMAGE_SYM_CLASS_FILE;
+    file->Aux.resize(Count);
+
+    unsigned Offset = 0;
+    unsigned Length = FI->size();
+    for (auto & Aux : file->Aux) {
+      Aux.AuxType = ATFile;
+
+      if (Length > SymbolSize) {
+        memcpy(&Aux.Aux, FI->c_str() + Offset, SymbolSize);
+        Length = Length - SymbolSize;
+      } else {
+        memcpy(&Aux.Aux, FI->c_str() + Offset, Length);
+        memset((char *)&Aux.Aux + Length, 0, SymbolSize - Length);
+        break;
+      }
+
+      Offset += SymbolSize;
+    }
+  }
 
   for (auto &Symbol : Symbols) {
     // Update section number & offset for symbols that have them.
@@ -913,7 +942,10 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
 
   unsigned offset = 0;
 
-  offset += COFF::HeaderSize;
+  if (UseBigObj)
+    offset += COFF::Header32Size;
+  else
+    offset += COFF::Header16Size;
   offset += COFF::SectionSize * Header.NumberOfSections;
 
   for (const auto & Section : Asm) {

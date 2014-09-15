@@ -790,12 +790,14 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       if (error(getSymbolAuxData(Obj, Symbol, I, Aux)))
         break;
 
+      int32_t AuxNumber = Aux->getNumber(Symbol.isBigObj());
+
       DictScope AS(W, "AuxSectionDef");
       W.printNumber("Length", Aux->Length);
       W.printNumber("RelocationCount", Aux->NumberOfRelocations);
       W.printNumber("LineNumberCount", Aux->NumberOfLinenumbers);
       W.printHex("Checksum", Aux->CheckSum);
-      W.printNumber("Number", Aux->Number);
+      W.printNumber("Number", AuxNumber);
       W.printEnum("Selection", Aux->Selection, makeArrayRef(ImageCOMDATSelect));
 
       if (Section && Section->Characteristics & COFF::IMAGE_SCN_LNK_COMDAT
@@ -803,13 +805,13 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
         const coff_section *Assoc;
         StringRef AssocName;
         std::error_code EC;
-        if ((EC = Obj->getSection(Aux->Number, Assoc)) ||
+        if ((EC = Obj->getSection(AuxNumber, Assoc)) ||
             (EC = Obj->getSectionName(Assoc, AssocName))) {
           AssocName = "";
           error(EC);
         }
 
-        W.printNumber("AssocSection", AssocName, Aux->Number);
+        W.printNumber("AssocSection", AssocName, AuxNumber);
       }
     } else if (Symbol.isCLRToken()) {
       const coff_aux_clr_token *Aux;

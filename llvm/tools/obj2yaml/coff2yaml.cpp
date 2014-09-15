@@ -104,13 +104,15 @@ static void dumpWeakExternal(COFFYAML::Symbol *Sym,
 
 static void
 dumpSectionDefinition(COFFYAML::Symbol *Sym,
-                      const object::coff_aux_section_definition *ObjSD) {
+                      const object::coff_aux_section_definition *ObjSD,
+                      bool IsBigObj) {
   COFF::AuxiliarySectionDefinition YAMLASD;
+  int32_t AuxNumber = ObjSD->getNumber(IsBigObj);
   YAMLASD.Length = ObjSD->Length;
   YAMLASD.NumberOfRelocations = ObjSD->NumberOfRelocations;
   YAMLASD.NumberOfLinenumbers = ObjSD->NumberOfLinenumbers;
   YAMLASD.CheckSum = ObjSD->CheckSum;
-  YAMLASD.Number = ObjSD->Number;
+  YAMLASD.Number = AuxNumber;
   YAMLASD.Selection = ObjSD->Selection;
 
   Sym->SectionDefinition = YAMLASD;
@@ -182,7 +184,7 @@ void COFFDumper::dumpSymbols(unsigned NumSymbols) {
         const object::coff_aux_section_definition *ObjSD =
             reinterpret_cast<const object::coff_aux_section_definition *>(
                 AuxData.data());
-        dumpSectionDefinition(&Sym, ObjSD);
+        dumpSectionDefinition(&Sym, ObjSD, Symbol.isBigObj());
       } else if (Symbol.isCLRToken()) {
         // This symbol represents a CLR token definition.
         assert(Symbol.getNumberOfAuxSymbols() == 1 &&

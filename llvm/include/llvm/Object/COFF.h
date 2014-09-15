@@ -236,6 +236,14 @@ public:
     return A.getRawPtr() < B.getRawPtr();
   }
 
+  bool isBigObj() const {
+    if (CS16)
+      return false;
+    if (CS32)
+      return true;
+    llvm_unreachable("COFFSymbolRef points to nothing!");
+  }
+
   const char *getShortName() const {
     return CS16 ? CS16->Name.ShortName : CS32->Name.ShortName;
   }
@@ -361,8 +369,16 @@ struct coff_aux_section_definition {
   support::ulittle16_t NumberOfRelocations;
   support::ulittle16_t NumberOfLinenumbers;
   support::ulittle32_t CheckSum;
-  support::ulittle16_t Number;
+  support::ulittle16_t NumberLowPart;
   uint8_t              Selection;
+  uint8_t              Unused;
+  support::ulittle16_t NumberHighPart;
+  int32_t getNumber(bool IsBigObj) const {
+    uint32_t Number = static_cast<uint32_t>(NumberLowPart);
+    if (IsBigObj)
+      Number |= static_cast<uint32_t>(NumberHighPart) << 16;
+    return static_cast<int32_t>(Number);
+  }
 };
 
 struct coff_aux_clr_token {

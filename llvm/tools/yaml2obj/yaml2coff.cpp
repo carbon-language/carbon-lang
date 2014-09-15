@@ -121,8 +121,8 @@ static bool layoutCOFF(COFFParser &CP) {
 
   // The section table starts immediately after the header, including the
   // optional header.
-  SectionTableStart = sizeof(COFF::header) + CP.Obj.Header.SizeOfOptionalHeader;
-  SectionTableSize = sizeof(COFF::section) * CP.Obj.Sections.size();
+  SectionTableStart = COFF::Header16Size + CP.Obj.Header.SizeOfOptionalHeader;
+  SectionTableSize = COFF::SectionSize * CP.Obj.Sections.size();
 
   uint32_t CurrentSectionDataOffset = SectionTableStart + SectionTableSize;
 
@@ -163,7 +163,7 @@ static bool layoutCOFF(COFFParser &CP) {
       NumberOfAuxSymbols += 1;
     if (!i->File.empty())
       NumberOfAuxSymbols +=
-          (i->File.size() + COFF::SymbolSize - 1) / COFF::SymbolSize;
+          (i->File.size() + COFF::Symbol16Size - 1) / COFF::Symbol16Size;
     if (i->SectionDefinition)
       NumberOfAuxSymbols += 1;
     if (i->CLRToken)
@@ -224,7 +224,7 @@ zeros_impl<sizeof(T)> zeros(const T &) {
 
 bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
   OS << binary_le(CP.Obj.Header.Machine)
-     << binary_le(CP.Obj.Header.NumberOfSections)
+     << binary_le(static_cast<int16_t>(CP.Obj.Header.NumberOfSections))
      << binary_le(CP.Obj.Header.TimeDateStamp)
      << binary_le(CP.Obj.Header.PointerToSymbolTable)
      << binary_le(CP.Obj.Header.NumberOfSymbols)
@@ -277,7 +277,7 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
                                                      i != e; ++i) {
     OS.write(i->Header.Name, COFF::NameSize);
     OS << binary_le(i->Header.Value)
-       << binary_le(i->Header.SectionNumber)
+       << binary_le(static_cast<int16_t>(i->Header.SectionNumber))
        << binary_le(i->Header.Type)
        << binary_le(i->Header.StorageClass)
        << binary_le(i->Header.NumberOfAuxSymbols);
@@ -300,8 +300,8 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
          << zeros(i->WeakExternal->unused);
     if (!i->File.empty()) {
       uint32_t NumberOfAuxRecords =
-          (i->File.size() + COFF::SymbolSize - 1) / COFF::SymbolSize;
-      uint32_t NumberOfAuxBytes = NumberOfAuxRecords * COFF::SymbolSize;
+          (i->File.size() + COFF::Symbol16Size - 1) / COFF::Symbol16Size;
+      uint32_t NumberOfAuxBytes = NumberOfAuxRecords * COFF::Symbol16Size;
       uint32_t NumZeros = NumberOfAuxBytes - i->File.size();
       OS.write(i->File.data(), i->File.size());
       for (uint32_t Padding = 0; Padding < NumZeros; ++Padding)
@@ -312,9 +312,10 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
          << binary_le(i->SectionDefinition->NumberOfRelocations)
          << binary_le(i->SectionDefinition->NumberOfLinenumbers)
          << binary_le(i->SectionDefinition->CheckSum)
-         << binary_le(i->SectionDefinition->Number)
+         << binary_le(static_cast<int16_t>(i->SectionDefinition->Number))
          << binary_le(i->SectionDefinition->Selection)
-         << zeros(i->SectionDefinition->unused);
+         << zeros(i->SectionDefinition->unused)
+         << binary_le(static_cast<int16_t>(i->SectionDefinition->Number >> 16));
     if (i->CLRToken)
       OS << binary_le(i->CLRToken->AuxType)
          << zeros(i->CLRToken->unused1)
