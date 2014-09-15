@@ -135,8 +135,7 @@ private:
 
   // Utility helper routines.
   bool isTypeLegal(Type *Ty, MVT &VT);
-  bool isLoadStoreTypeLegal(Type *Ty, MVT &VT);
-  bool isTypeSupported(Type *Ty, MVT &VT);
+  bool isTypeSupported(Type *Ty, MVT &VT, bool IsVectorAllowed = false);
   bool isValueAvailable(const Value *V) const;
   bool ComputeAddress(const Value *Obj, Address &Addr, Type *Ty = nullptr);
   bool ComputeCallAddress(const Value *V, Address &Addr);
@@ -676,25 +675,12 @@ bool AArch64FastISel::isTypeLegal(Type *Ty, MVT &VT) {
   return TLI.isTypeLegal(VT);
 }
 
-bool AArch64FastISel::isLoadStoreTypeLegal(Type *Ty, MVT &VT) {
-  if (isTypeLegal(Ty, VT))
-    return true;
-
-  // If this is a type than can be sign or zero-extended to a basic operation
-  // go ahead and accept it now. For stores, this reflects truncation.
-  if (VT == MVT::i1 || VT == MVT::i8 || VT == MVT::i16)
-    return true;
-
-  return false;
-}
-
 /// \brief Determine if the value type is supported by FastISel.
 ///
 /// FastISel for AArch64 can handle more value types than are legal. This adds
 /// simple value type such as i1, i8, and i16.
-/// Vectors on the other side are not supported yet.
-bool AArch64FastISel::isTypeSupported(Type *Ty, MVT &VT) {
-  if (Ty->isVectorTy())
+bool AArch64FastISel::isTypeSupported(Type *Ty, MVT &VT, bool IsVectorAllowed) {
+  if (Ty->isVectorTy() && !IsVectorAllowed)
     return false;
 
   if (isTypeLegal(Ty, VT))
@@ -1486,7 +1472,8 @@ bool AArch64FastISel::SelectLoad(const Instruction *I) {
   // Verify we have a legal type before going any further.  Currently, we handle
   // simple types that will directly fit in a register (i32/f32/i64/f64) or
   // those that can be sign or zero-extended to a basic operation (i1/i8/i16).
-  if (!isLoadStoreTypeLegal(I->getType(), VT) || cast<LoadInst>(I)->isAtomic())
+  if (!isTypeSupported(I->getType(), VT, /*IsVectorAllowed=*/true) ||
+      cast<LoadInst>(I)->isAtomic())
     return false;
 
   // See if we can handle this address.
@@ -1583,7 +1570,7 @@ bool AArch64FastISel::SelectStore(const Instruction *I) {
   // Verify we have a legal type before going any further.  Currently, we handle
   // simple types that will directly fit in a register (i32/f32/i64/f64) or
   // those that can be sign or zero-extended to a basic operation (i1/i8/i16).
-  if (!isLoadStoreTypeLegal(Op0->getType(), VT) ||
+  if (!isTypeSupported(Op0->getType(), VT, /*IsVectorAllowed=*/true) ||
       cast<StoreInst>(I)->isAtomic())
     return false;
 
