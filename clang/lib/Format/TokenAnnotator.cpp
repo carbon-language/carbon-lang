@@ -1851,16 +1851,21 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if (Left.is(tok::greater) && Right.is(tok::greater) &&
       Left.Type != TT_TemplateCloser)
     return false;
-  if (Right.Type == TT_BinaryOperator && Style.BreakBeforeBinaryOperators)
+  if (Right.Type == TT_BinaryOperator &&
+      Style.BreakBeforeBinaryOperators != FormatStyle::BOS_None &&
+      (Style.BreakBeforeBinaryOperators == FormatStyle::BOS_All ||
+       Right.getPrecedence() != prec::Assignment))
     return true;
   if (Left.Type == TT_ArrayInitializerLSquare)
     return true;
   if (Right.is(tok::kw_typename) && Left.isNot(tok::kw_const))
     return true;
-  return (Left.isBinaryOperator() &&
-          !Left.isOneOf(tok::arrowstar, tok::lessless) &&
-          !Style.BreakBeforeBinaryOperators) ||
-         Left.isOneOf(tok::comma, tok::coloncolon, tok::semi, tok::l_brace,
+  if (Left.isBinaryOperator() && !Left.isOneOf(tok::arrowstar, tok::lessless) &&
+      Style.BreakBeforeBinaryOperators != FormatStyle::BOS_All &&
+      (Style.BreakBeforeBinaryOperators == FormatStyle::BOS_None ||
+       Left.getPrecedence() == prec::Assignment))
+    return true;
+  return Left.isOneOf(tok::comma, tok::coloncolon, tok::semi, tok::l_brace,
                       tok::kw_class, tok::kw_struct) ||
          Right.isMemberAccess() ||
          Right.isOneOf(tok::lessless, tok::colon, tok::l_square, tok::at) ||

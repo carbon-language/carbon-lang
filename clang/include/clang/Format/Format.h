@@ -266,8 +266,18 @@ struct FormatStyle {
   /// \brief The way to use tab characters in the resulting file.
   UseTabStyle UseTab;
 
-  /// \brief If \c true, binary operators will be placed after line breaks.
-  bool BreakBeforeBinaryOperators;
+  /// \brief The style of breaking before or after binary operators.
+  enum BinaryOperatorStyle {
+    /// Break after operators.
+    BOS_None,
+    /// Break before operators that aren't assignments.
+    BOS_NonAssignment,
+    /// Break before operators.
+    BOS_All,
+  };
+
+  /// \brief The way to wrap binary operators.
+  BinaryOperatorStyle BreakBeforeBinaryOperators;
 
   /// \brief If \c true, ternary operators will be placed after line breaks.
   bool BreakBeforeTernaryOperators;

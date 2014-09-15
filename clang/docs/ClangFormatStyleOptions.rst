@@ -191,8 +191,18 @@ the configuration (without a prefix: ``Auto``).
   If ``false``, a function call's or function definition's parameters
   will either all be on the same line or will have one line each.
 
-**BreakBeforeBinaryOperators** (``bool``)
-  If ``true``, binary operators will be placed after line breaks.
+**BreakBeforeBinaryOperators** (``BinaryOperatorStyle``)
+  The way to wrap binary operators.
+
+  Possible values:
+
+  * ``BOS_None`` (in configuration: ``None``)
+    Break after operators.
+  * ``BOS_NonAssignment`` (in configuration: ``NonAssignment``)
+    Break before operators that aren't assignments.
+  * ``BOS_All`` (in configuration: ``All``)
+    Break before operators.
+
 
 **BreakBeforeBraces** (``BraceBreakingStyle``)
   The brace breaking style to use.
@@ -260,7 +270,7 @@ the configuration (without a prefix: ``Auto``).
 
 **DerivePointerAlignment** (``bool``)
   If ``true``, analyze the formatted file for the most common
-  alignment of & and ``*``. ``PointerAlignment`` is then used only as fallback.
+  alignment of & and *. ``PointerAlignment`` is then used only as fallback.
 
 **DisableFormat** (``bool``)
   Disables formatting at all.

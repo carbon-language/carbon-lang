@@ -3171,7 +3171,7 @@ TEST_F(FormatTest, ExpressionIndentationBreakingBeforeOperators) {
   // everything until something with the same indent as the operator is found.
   // FIXME: Is this a good system?
   FormatStyle Style = getLLVMStyle();
-  Style.BreakBeforeBinaryOperators = true;
+  Style.BreakBeforeBinaryOperators = FormatStyle::BOS_All;
   verifyFormat(
       "bool value = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
       "             + aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
@@ -3222,6 +3222,15 @@ TEST_F(FormatTest, ExpressionIndentationBreakingBeforeOperators) {
                "    = bbbbbbbbbbbbbbbbb\n"
                "      >> aaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaa);",
                Style);
+}
+
+TEST_F(FormatTest, BreakingBeforeNonAssigmentOperators) {
+  FormatStyle Style = getLLVMStyle();
+  Style.BreakBeforeBinaryOperators = FormatStyle::BOS_NonAssignment;
+  verifyFormat("int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+               "    + bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;", Style);
+
 }
 
 TEST_F(FormatTest, ConstructorInitializers) {
@@ -8368,7 +8377,6 @@ TEST_F(FormatTest, ParsesConfigurationBools) {
   CHECK_PARSE_BOOL(AlwaysBreakAfterDefinitionReturnType);
   CHECK_PARSE_BOOL(AlwaysBreakTemplateDeclarations);
   CHECK_PARSE_BOOL(BinPackParameters);
-  CHECK_PARSE_BOOL(BreakBeforeBinaryOperators);
   CHECK_PARSE_BOOL(BreakBeforeTernaryOperators);
   CHECK_PARSE_BOOL(BreakConstructorInitializersBeforeComma);
   CHECK_PARSE_BOOL(ConstructorInitializerAllOnOneLineOrOnePerLine);
@@ -8415,9 +8423,12 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE("ContinuationIndentWidth: 11", ContinuationIndentWidth, 11u);
 
   Style.PointerAlignment = FormatStyle::PAS_Middle;
-  CHECK_PARSE("PointerAlignment: Left", PointerAlignment, FormatStyle::PAS_Left);
-  CHECK_PARSE("PointerAlignment: Right", PointerAlignment, FormatStyle::PAS_Right);
-  CHECK_PARSE("PointerAlignment: Middle", PointerAlignment, FormatStyle::PAS_Middle);
+  CHECK_PARSE("PointerAlignment: Left", PointerAlignment,
+              FormatStyle::PAS_Left);
+  CHECK_PARSE("PointerAlignment: Right", PointerAlignment,
+              FormatStyle::PAS_Right);
+  CHECK_PARSE("PointerAlignment: Middle", PointerAlignment,
+              FormatStyle::PAS_Middle);
 
   Style.Standard = FormatStyle::LS_Auto;
   CHECK_PARSE("Standard: Cpp03", Standard, FormatStyle::LS_Cpp03);
@@ -8425,6 +8436,18 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE("Standard: C++03", Standard, FormatStyle::LS_Cpp03);
   CHECK_PARSE("Standard: C++11", Standard, FormatStyle::LS_Cpp11);
   CHECK_PARSE("Standard: Auto", Standard, FormatStyle::LS_Auto);
+
+  Style.BreakBeforeBinaryOperators = FormatStyle::BOS_All;
+  CHECK_PARSE("BreakBeforeBinaryOperators: false", BreakBeforeBinaryOperators,
+              FormatStyle::BOS_None);
+  CHECK_PARSE("BreakBeforeBinaryOperators: NonAssignment",
+              BreakBeforeBinaryOperators, FormatStyle::BOS_NonAssignment);
+  CHECK_PARSE("BreakBeforeBinaryOperators: true", BreakBeforeBinaryOperators,
+              FormatStyle::BOS_All);
+  CHECK_PARSE("BreakBeforeBinaryOperators: None", BreakBeforeBinaryOperators,
+              FormatStyle::BOS_None);
+  CHECK_PARSE("BreakBeforeBinaryOperators: All", BreakBeforeBinaryOperators,
+              FormatStyle::BOS_All);
 
   Style.UseTab = FormatStyle::UT_ForIndentation;
   CHECK_PARSE("UseTab: false", UseTab, FormatStyle::UT_Never);
