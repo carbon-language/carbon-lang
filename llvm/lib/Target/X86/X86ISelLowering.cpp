@@ -7258,8 +7258,27 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
     if (Mask[i] >= 0 && Mask[i] != i)
       return SDValue(); // Shuffled V1 input!
   }
-  return DAG.getNode(X86ISD::BLENDI, DL, VT, V1, V2,
-                     DAG.getConstant(BlendMask, MVT::i8));
+  if (VT == MVT::v4f32 || VT == MVT::v2f64)
+    return DAG.getNode(X86ISD::BLENDI, DL, VT, V1, V2,
+                       DAG.getConstant(BlendMask, MVT::i8));
+  assert(!VT.isFloatingPoint() && "Only v4f32 and v2f64 are supported!");
+
+  // For integer shuffles we need to expand the mask and cast the inputs to
+  // v8i16s prior to blending.
+  assert((VT == MVT::v8i16 || VT == MVT::v4i32 || VT == MVT::v2i64) &&
+         "Not a supported integer vector type!");
+  int Scale = 8 / VT.getVectorNumElements();
+  BlendMask = 0;
+  for (int i = 0, Size = Mask.size(); i < Size; ++i)
+    if (Mask[i] >= Size)
+      for (int j = 0; j < Scale; ++j)
+        BlendMask |= 1u << (i * Scale + j);
+
+  V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V1);
+  V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V2);
+  return DAG.getNode(ISD::BITCAST, DL, VT,
+                     DAG.getNode(X86ISD::BLENDI, DL, MVT::v8i16, V1, V2,
+                                 DAG.getConstant(BlendMask, MVT::i8)));
 }
 
 /// \brief Handle lowering of 2-lane 64-bit floating point shuffles.
@@ -7342,6 +7361,11 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v2i64, V1, V2);
   if (isShuffleEquivalent(Mask, 1, 3))
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v2i64, V1, V2);
+
+  if (Subtarget->hasSSE41())
+    if (SDValue Blend =
+            lowerVectorShuffleAsBlend(DL, MVT::v2i64, V1, V2, Mask, DAG))
+      return Blend;
 
   // We implement this with SHUFPD which is pretty lame because it will likely
   // incur 2 cycles of stall for integer vectors on Nehalem and older chips.
@@ -7630,6 +7654,11 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (SDValue V = lowerIntegerElementInsertionVectorShuffle(
             MVT::v4i32, DL, V1, V2, Mask, Subtarget, DAG))
       return V;
+
+  if (Subtarget->hasSSE41())
+    if (SDValue Blend =
+            lowerVectorShuffleAsBlend(DL, MVT::v4i32, V1, V2, Mask, DAG))
+      return Blend;
 
   // We implement this with SHUFPS because it can blend from two vectors.
   // Because we're going to eventually use SHUFPS, we use SHUFPS even to build
@@ -8288,6 +8317,11 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (SDValue V = lowerIntegerElementInsertionVectorShuffle(
             MVT::v8i16, DL, V1, V2, Mask, Subtarget, DAG))
       return V;
+
+  if (Subtarget->hasSSE41())
+    if (SDValue Blend =
+            lowerVectorShuffleAsBlend(DL, MVT::v8i16, V1, V2, Mask, DAG))
+      return Blend;
 
   if (NumV1Inputs + NumV2Inputs <= 4)
     return lowerV8I16BasicBlendVectorShuffle(DL, V1, V2, Mask, Subtarget, DAG);

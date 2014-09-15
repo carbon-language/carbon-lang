@@ -170,7 +170,7 @@ define <2 x i64> @shuffle_v2i64_03(<2 x i64> %a, <2 x i64> %b) {
 ; SSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: @shuffle_v2i64_03
-; SSE41:         blendpd {{.*}} # xmm0 = xmm0[0],xmm1[1]
+; SSE41:         pblendw {{.*}} # xmm0 = xmm0[0,1,2,3],xmm1[4,5,6,7]
 ; SSE41-NEXT:    retq
   %shuffle = shufflevector <2 x i64> %a, <2 x i64> %b, <2 x i32> <i32 0, i32 3>
   ret <2 x i64> %shuffle
@@ -187,8 +187,8 @@ define <2 x i64> @shuffle_v2i64_03_copy(<2 x i64> %nonce, <2 x i64> %a, <2 x i64
 ; SSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: @shuffle_v2i64_03_copy
-; SSE41:         blendpd {{.*}} # xmm1 = xmm1[0],xmm2[1]
-; SSE41-NEXT:    movapd %xmm1, %xmm0
+; SSE41:         pblendw {{.*}} # xmm1 = xmm1[0,1,2,3],xmm2[4,5,6,7]
+; SSE41-NEXT:    movdqa %xmm1, %xmm0
 ; SSE41-NEXT:    retq
   %shuffle = shufflevector <2 x i64> %a, <2 x i64> %b, <2 x i32> <i32 0, i32 3>
   ret <2 x i64> %shuffle
@@ -251,8 +251,8 @@ define <2 x i64> @shuffle_v2i64_21(<2 x i64> %a, <2 x i64> %b) {
 ; SSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: @shuffle_v2i64_21
-; SSE41:         blendpd {{.*}} # xmm1 = xmm1[0],xmm0[1]
-; SSE41-NEXT:    movapd %xmm1, %xmm0
+; SSE41:         pblendw {{.*}} # xmm1 = xmm1[0,1,2,3],xmm0[4,5,6,7]
+; SSE41-NEXT:    movdqa %xmm1, %xmm0
 ; SSE41-NEXT:    retq
   %shuffle = shufflevector <2 x i64> %a, <2 x i64> %b, <2 x i32> <i32 2, i32 1>
   ret <2 x i64> %shuffle
@@ -269,8 +269,8 @@ define <2 x i64> @shuffle_v2i64_21_copy(<2 x i64> %nonce, <2 x i64> %a, <2 x i64
 ; SSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: @shuffle_v2i64_21_copy
-; SSE41:         blendpd {{.*}} # xmm2 = xmm2[0],xmm1[1]
-; SSE41-NEXT:    movapd %xmm2, %xmm0
+; SSE41:         pblendw {{.*}} # xmm2 = xmm2[0,1,2,3],xmm1[4,5,6,7]
+; SSE41-NEXT:    movdqa %xmm2, %xmm0
 ; SSE41-NEXT:    retq
   %shuffle = shufflevector <2 x i64> %a, <2 x i64> %b, <2 x i32> <i32 2, i32 1>
   ret <2 x i64> %shuffle
