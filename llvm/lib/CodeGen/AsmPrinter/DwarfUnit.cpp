@@ -286,6 +286,11 @@ void DwarfUnit::addSectionOffset(DIE &Die, dwarf::Attribute Attribute,
 void DwarfCompileUnit::addLabelAddress(DIE &Die, dwarf::Attribute Attribute,
                                        const MCSymbol *Label) {
 
+  // Don't use the address pool in non-fission or in the skeleton unit itself.
+  // FIXME: Once GDB supports this, it's probably worthwhile using the address
+  // pool from the skeleton - maybe even in non-fission (possibly fewer
+  // relocations by sharing them in the pool, but we have other ideas about how
+  // to reduce the number of relocations as well/instead).
   if (!DD->useSplitDwarf() || !Skeleton)
     return addLocalLabelAddress(Die, Attribute, Label);
 
