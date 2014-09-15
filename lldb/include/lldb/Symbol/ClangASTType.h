@@ -338,7 +338,9 @@ public:
     GetNumMemberFunctions () const;
     
     ClangASTType
-    GetMemberFunctionAtIndex (size_t idx);
+    GetMemberFunctionAtIndex (size_t idx,
+                              std::string& name,
+                              lldb::MemberFunctionKind& kind);
     
     ClangASTType
     GetLValueReferenceType () const;

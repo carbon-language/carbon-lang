@@ -1291,6 +1291,68 @@ TypeImpl::GetDescription (lldb_private::Stream &strm,
     return true;
 }
 
+TypeMemberFunctionImpl&
+TypeMemberFunctionImpl::operator = (const TypeMemberFunctionImpl& rhs)
+{
+    if (this != &rhs)
+    {
+        m_type = rhs.m_type;
+        m_name = rhs.m_name;
+        m_kind = rhs.m_kind;
+    }
+    return *this;
+}
+
+bool
+TypeMemberFunctionImpl::IsValid ()
+{
+    return m_type.IsValid() && m_kind != lldb::eMemberFunctionKindUnknown;
+}
+
+ConstString
+TypeMemberFunctionImpl::GetName () const
+{
+    return m_name;
+}
+
+ClangASTType
+TypeMemberFunctionImpl::GetType () const
+{
+    return m_type;
+}
+
+lldb::MemberFunctionKind
+TypeMemberFunctionImpl::GetKind () const
+{
+    return m_kind;
+}
+
+bool
+TypeMemberFunctionImpl::GetDescription (Stream& stream)
+{
+    switch (m_kind) {
+        case lldb::eMemberFunctionKindUnknown:
+            return false;
+        case lldb::eMemberFunctionKindConstructor:
+            stream.Printf("constructor for %s", m_type.GetTypeName().AsCString());
+            break;
+        case lldb::eMemberFunctionKindDestructor:
+            stream.Printf("destructor for %s", m_type.GetTypeName().AsCString());
+            break;
+        case lldb::eMemberFunctionKindInstanceMethod:
+            stream.Printf("instance method %s of type %s",
+                          m_name.AsCString(),
+                          m_type.GetTypeName().AsCString());
+            break;
+        case lldb::eMemberFunctionKindStaticMethod:
+            stream.Printf("static method %s of type %s",
+                          m_name.AsCString(),
+                          m_type.GetTypeName().AsCString());
+            break;
+    }
+    return true;
+}
+
 TypeEnumMemberImpl::TypeEnumMemberImpl (const clang::EnumConstantDecl* enum_member_decl,
                                         const lldb_private::ClangASTType& integer_type) :
     m_integer_type_sp(),

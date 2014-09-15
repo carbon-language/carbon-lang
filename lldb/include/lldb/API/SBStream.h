@@ -87,6 +87,7 @@ protected:
     friend class SBThread;
     friend class SBType;
     friend class SBTypeEnumMember;
+    friend class SBTypeMemberFunction;
     friend class SBTypeMember;
     friend class SBValue;
     friend class SBWatchpoint;

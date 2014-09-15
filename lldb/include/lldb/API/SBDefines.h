@@ -77,6 +77,7 @@ class LLDB_API SBTypeEnumMember;
 class LLDB_API SBTypeEnumMemberList;
 class LLDB_API SBTypeFilter;
 class LLDB_API SBTypeFormat;
+class LLDB_API SBTypeMemberFunction;
 class LLDB_API SBTypeNameSpecifier;
 class LLDB_API SBTypeSummary;
 #ifndef LLDB_DISABLE_PYTHON

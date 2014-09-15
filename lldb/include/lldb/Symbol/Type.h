@@ -810,6 +810,56 @@ private:
     TypePair m_type_pair;
     ConstString m_type_name;
 };
+    
+class TypeMemberFunctionImpl
+{
+public:
+    TypeMemberFunctionImpl() :
+        m_type(),
+        m_name(),
+        m_kind(lldb::eMemberFunctionKindUnknown)
+    {
+    }
+    
+    TypeMemberFunctionImpl (const ClangASTType& type,
+                            const std::string& name,
+                            const lldb::MemberFunctionKind& kind) :
+        m_type(type),
+        m_name(name),
+        m_kind(kind)
+    {
+    }
+    
+    TypeMemberFunctionImpl (const TypeMemberFunctionImpl& rhs) :
+        m_type(rhs.m_type),
+        m_name(rhs.m_name),
+        m_kind(rhs.m_kind)
+    {
+    }
+    
+    TypeMemberFunctionImpl&
+    operator = (const TypeMemberFunctionImpl& rhs);
+    
+    bool
+    IsValid ();
+    
+    ConstString
+    GetName () const;
+    
+    ClangASTType
+    GetType () const;
+    
+    lldb::MemberFunctionKind
+    GetKind () const;
+    
+    bool
+    GetDescription (Stream& stream);
+
+private:
+    ClangASTType m_type;
+    ConstString m_name;
+    lldb::MemberFunctionKind m_kind;
+};
 
 class TypeEnumMemberImpl
 {

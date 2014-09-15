@@ -67,6 +67,50 @@ protected:
 
     std::unique_ptr<lldb_private::TypeMemberImpl> m_opaque_ap;
 };
+    
+class SBTypeMemberFunction
+{
+public:
+    SBTypeMemberFunction ();
+    
+    SBTypeMemberFunction (const lldb::SBTypeMemberFunction& rhs);
+    
+    ~SBTypeMemberFunction();
+    
+    lldb::SBTypeMemberFunction&
+    operator = (const lldb::SBTypeMemberFunction& rhs);
+    
+    bool
+    IsValid() const;
+    
+    const char *
+    GetName ();
+    
+    lldb::SBType
+    GetType ();
+    
+    lldb::MemberFunctionKind
+    GetKind();
+    
+    bool
+    GetDescription (lldb::SBStream &description,
+                    lldb::DescriptionLevel description_level);
+    
+protected:
+    friend class SBType;
+    
+    void
+    reset (lldb_private::TypeMemberFunctionImpl *);
+    
+    lldb_private::TypeMemberFunctionImpl &
+    ref ();
+    
+    const lldb_private::TypeMemberFunctionImpl &
+    ref () const;
+    
+    lldb::TypeMemberFunctionImplSP m_opaque_sp;
+};
+
 
 class SBType
 {
@@ -164,7 +208,7 @@ public:
     uint32_t
     GetNumberOfMemberFunctions ();
     
-    lldb::SBType
+    lldb::SBTypeMemberFunction
     GetMemberFunctionAtIndex (uint32_t idx);
 
     const char*
@@ -215,6 +259,7 @@ protected:
     friend class SBTypeEnumMemberList;
     friend class SBTypeNameSpecifier;
     friend class SBTypeMember;
+    friend class SBTypeMemberFunction;
     friend class SBTypeList;
     friend class SBValue;
         

@@ -246,6 +246,7 @@ class   TypeImpl;
 class   TypeList;
 class   TypeListImpl;
 class   TypeMemberImpl;
+class   TypeMemberFunctionImpl;
 class   TypeEnumMemberImpl;
 class   TypeEnumMemberListImpl;
 class   TypeFormatImpl;
@@ -390,6 +391,7 @@ namespace lldb {
     typedef std::weak_ptr<lldb_private::Type> TypeWP;
     typedef std::shared_ptr<lldb_private::TypeCategoryImpl> TypeCategoryImplSP;
     typedef std::shared_ptr<lldb_private::TypeImpl> TypeImplSP;
+    typedef std::shared_ptr<lldb_private::TypeMemberFunctionImpl> TypeMemberFunctionImplSP;
     typedef std::shared_ptr<lldb_private::TypeEnumMemberImpl> TypeEnumMemberImplSP;
     typedef std::shared_ptr<lldb_private::TypeFilterImpl> TypeFilterImplSP;
     typedef std::shared_ptr<lldb_private::TypeFormatImpl> TypeFormatImplSP;
