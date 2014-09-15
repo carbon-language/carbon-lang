@@ -129,11 +129,30 @@ endif:
 }
 
 ; FUNC-LABEL: @v_and_constant_i64
-; SI: V_AND_B32
-; SI: V_AND_B32
+; SI: V_AND_B32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
+; SI: V_AND_B32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
 define void @v_and_constant_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr) {
   %a = load i64 addrspace(1)* %aptr, align 8
   %and = and i64 %a, 1234567
+  store i64 %and, i64 addrspace(1)* %out, align 8
+  ret void
+}
+
+; FIXME: Replace and 0 with mov 0
+; FUNC-LABEL: @v_and_inline_imm_i64
+; SI: V_AND_B32_e32 {{v[0-9]+}}, 64, {{v[0-9]+}}
+; SI: V_AND_B32_e32 {{v[0-9]+}}, 0, {{v[0-9]+}}
+define void @v_and_inline_imm_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr) {
+  %a = load i64 addrspace(1)* %aptr, align 8
+  %and = and i64 %a, 64
+  store i64 %and, i64 addrspace(1)* %out, align 8
+  ret void
+}
+
+; FUNC-LABEL: @s_and_inline_imm_i64
+; SI: S_AND_B64 s{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 64
+define void @s_and_inline_imm_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr, i64 %a) {
+  %and = and i64 %a, 64
   store i64 %and, i64 addrspace(1)* %out, align 8
   ret void
 }

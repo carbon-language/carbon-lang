@@ -46,9 +46,20 @@ define void @trunc_shl_i64(i64 addrspace(1)* %out2, i32 addrspace(1)* %out, i64 
 }
 
 ; SI-LABEL: @trunc_i32_to_i1:
-; SI: V_AND_B32
+; SI: V_AND_B32_e32 v{{[0-9]+}}, 1, v{{[0-9]+}}
 ; SI: V_CMP_EQ_I32
-define void @trunc_i32_to_i1(i32 addrspace(1)* %out, i32 %a) {
+define void @trunc_i32_to_i1(i32 addrspace(1)* %out, i32 addrspace(1)* %ptr) {
+  %a = load i32 addrspace(1)* %ptr, align 4
+  %trunc = trunc i32 %a to i1
+  %result = select i1 %trunc, i32 1, i32 0
+  store i32 %result, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; SI-LABEL: @sgpr_trunc_i32_to_i1:
+; SI: V_AND_B32_e64 v{{[0-9]+}}, 1, s{{[0-9]+}}
+; SI: V_CMP_EQ_I32
+define void @sgpr_trunc_i32_to_i1(i32 addrspace(1)* %out, i32 %a) {
   %trunc = trunc i32 %a to i1
   %result = select i1 %trunc, i32 1, i32 0
   store i32 %result, i32 addrspace(1)* %out, align 4

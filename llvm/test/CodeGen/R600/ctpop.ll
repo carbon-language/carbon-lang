@@ -42,8 +42,7 @@ define void @v_ctpop_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noali
 ; SI: BUFFER_LOAD_DWORD [[VAL1:v[0-9]+]],
 ; SI: V_MOV_B32_e32 [[VZERO:v[0-9]+]], 0
 ; SI: V_BCNT_U32_B32_e32 [[MIDRESULT:v[0-9]+]], [[VAL1]], [[VZERO]]
-; SI-NOT: ADD
-; SI: V_BCNT_U32_B32_e32 [[RESULT:v[0-9]+]], [[VAL0]], [[MIDRESULT]]
+; SI-NEXT: V_BCNT_U32_B32_e32 [[RESULT:v[0-9]+]], [[VAL0]], [[MIDRESULT]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
 ; SI: S_ENDPGM
 
@@ -55,6 +54,20 @@ define void @v_ctpop_add_chain_i32(i32 addrspace(1)* noalias %out, i32 addrspace
   %ctpop0 = call i32 @llvm.ctpop.i32(i32 %val0) nounwind readnone
   %ctpop1 = call i32 @llvm.ctpop.i32(i32 %val1) nounwind readnone
   %add = add i32 %ctpop0, %ctpop1
+  store i32 %add, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; FUNC-LABEL: @v_ctpop_add_sgpr_i32
+; SI: BUFFER_LOAD_DWORD [[VAL0:v[0-9]+]],
+; SI-NEXT: S_WAITCNT
+; SI-NEXT: V_BCNT_U32_B32_e64 [[RESULT:v[0-9]+]], [[VAL0]], s{{[0-9]+}}
+; SI-NEXT: BUFFER_STORE_DWORD [[RESULT]],
+; SI: S_ENDPGM
+define void @v_ctpop_add_sgpr_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %in0, i32 addrspace(1)* noalias %in1, i32 %sval) nounwind {
+  %val0 = load i32 addrspace(1)* %in0, align 4
+  %ctpop0 = call i32 @llvm.ctpop.i32(i32 %val0) nounwind readnone
+  %add = add i32 %ctpop0, %sval
   store i32 %add, i32 addrspace(1)* %out, align 4
   ret void
 }

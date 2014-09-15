@@ -1976,9 +1976,9 @@ class BinOp64Pat <SDNode node, Instruction inst> : Pat <
                   (EXTRACT_SUBREG i64:$src1, sub1)), sub1)
 >;
 
-def : BinOp64Pat <and, V_AND_B32_e32>;
-def : BinOp64Pat <or, V_OR_B32_e32>;
-def : BinOp64Pat <xor, V_XOR_B32_e32>;
+def : BinOp64Pat <and, V_AND_B32_e64>;
+def : BinOp64Pat <or, V_OR_B32_e64>;
+def : BinOp64Pat <xor, V_XOR_B32_e64>;
 
 class SextInReg <ValueType vt, int ShiftAmt> : Pat <
   (sext_inreg i32:$src0, vt),
@@ -1990,7 +1990,7 @@ def : SextInReg <i16, 16>;
 
 def : Pat <
   (i32 (add (i32 (ctpop i32:$popcnt)), i32:$val)),
-  (V_BCNT_U32_B32_e32 $popcnt, $val)
+  (V_BCNT_U32_B32_e64 $popcnt, $val)
 >;
 
 def : Pat <
@@ -2010,7 +2010,7 @@ def : Pat <
 
 def : Pat <
   (addc i32:$src0, i32:$src1),
-  (V_ADD_I32_e32 $src0, $src1)
+  (V_ADD_I32_e64 $src0, $src1)
 >;
 
 /********** ======================= **********/
@@ -3070,13 +3070,13 @@ def : Pat <
 
 def : Pat <
   (i1 (trunc i32:$a)),
-  (V_CMP_EQ_I32_e64 (V_AND_B32_e32 (i32 1), $a), 1)
+  (V_CMP_EQ_I32_e64 (V_AND_B32_e64 (i32 1), $a), 1)
 >;
 
 //============================================================================//
 // Miscellaneous Optimization Patterns
 //============================================================================//
 
-def : SHA256MaPattern <V_BFI_B32, V_XOR_B32_e32>;
+def : SHA256MaPattern <V_BFI_B32, V_XOR_B32_e64>;
 
 } // End isSI predicate

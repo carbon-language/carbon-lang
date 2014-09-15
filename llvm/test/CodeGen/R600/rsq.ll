@@ -26,3 +26,13 @@ define void @rsq_f64(double addrspace(1)* noalias %out, double addrspace(1)* noa
   store double %div, double addrspace(1)* %out, align 4
   ret void
 }
+
+; SI-LABEL: @rsq_f32_sgpr
+; SI: V_RSQ_F32_e32 {{v[0-9]+}}, {{s[0-9]+}}
+; SI: S_ENDPGM
+define void @rsq_f32_sgpr(float addrspace(1)* noalias %out, float %val) nounwind {
+  %sqrt = call float @llvm.sqrt.f32(float %val) nounwind readnone
+  %div = fdiv float 1.0, %sqrt
+  store float %div, float addrspace(1)* %out, align 4
+  ret void
+}
