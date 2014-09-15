@@ -26,11 +26,9 @@ class ChainedDiagnosticConsumer : public DiagnosticConsumer {
   std::unique_ptr<DiagnosticConsumer> Secondary;
 
 public:
-  ChainedDiagnosticConsumer(DiagnosticConsumer *_Primary,
-                          DiagnosticConsumer *_Secondary) {
-    Primary.reset(_Primary);
-    Secondary.reset(_Secondary);
-  }
+  ChainedDiagnosticConsumer(std::unique_ptr<DiagnosticConsumer> Primary,
+                            std::unique_ptr<DiagnosticConsumer> Secondary)
+      : Primary(std::move(Primary)), Secondary(std::move(Secondary)) {}
 
   void BeginSourceFile(const LangOptions &LO,
                        const Preprocessor *PP) override {

@@ -154,11 +154,14 @@ static void SetUpDiagnosticLog(DiagnosticOptions *DiagOpts,
   }
 
   // Chain in the diagnostic client which will log the diagnostics.
-  LogDiagnosticPrinter *Logger =
-      new LogDiagnosticPrinter(*OS, DiagOpts, std::move(StreamOwner));
+  auto Logger = llvm::make_unique<LogDiagnosticPrinter>(*OS, DiagOpts,
+                                                        std::move(StreamOwner));
   if (CodeGenOpts)
     Logger->setDwarfDebugFlags(CodeGenOpts->DwarfDebugFlags);
-  Diags.setClient(new ChainedDiagnosticConsumer(Diags.takeClient(), Logger));
+  assert(Diags.ownsClient());
+  Diags.setClient(new ChainedDiagnosticConsumer(
+      std::unique_ptr<DiagnosticConsumer>(Diags.takeClient()),
+      std::move(Logger)));
 }
 
 static void SetupSerializedDiagnostics(DiagnosticOptions *DiagOpts,
@@ -174,11 +177,13 @@ static void SetupSerializedDiagnostics(DiagnosticOptions *DiagOpts,
     return;
   }
 
-  DiagnosticConsumer *SerializedConsumer =
+  auto SerializedConsumer =
       clang::serialized_diags::create(std::move(OS), DiagOpts);
 
-  Diags.setClient(new ChainedDiagnosticConsumer(Diags.takeClient(),
-                                                SerializedConsumer));
+  assert(Diags.ownsClient());
+  Diags.setClient(new ChainedDiagnosticConsumer(
+      std::unique_ptr<DiagnosticConsumer>(Diags.takeClient()),
+      std::move(SerializedConsumer)));
 }
 
 void CompilerInstance::createDiagnostics(DiagnosticConsumer *Client,

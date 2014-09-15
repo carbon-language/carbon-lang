@@ -236,9 +236,9 @@ private:
 
 namespace clang {
 namespace serialized_diags {
-DiagnosticConsumer *create(std::unique_ptr<raw_ostream> OS,
-                           DiagnosticOptions *diags) {
-  return new SDiagsWriter(std::move(OS), diags);
+std::unique_ptr<DiagnosticConsumer> create(std::unique_ptr<raw_ostream> OS,
+                                           DiagnosticOptions *diags) {
+  return llvm::make_unique<SDiagsWriter>(std::move(OS), diags);
 }
 } // end namespace serialized_diags
 } // end namespace clang

@@ -67,8 +67,8 @@ enum Level {
 /// This allows wrapper tools for Clang to get diagnostics from Clang
 /// (via libclang) without needing to parse Clang's command line output.
 ///
-DiagnosticConsumer *create(std::unique_ptr<raw_ostream> OS,
-                           DiagnosticOptions *diags);
+std::unique_ptr<DiagnosticConsumer> create(std::unique_ptr<raw_ostream> OS,
+                                           DiagnosticOptions *diags);
 
 } // end serialized_diags namespace
 } // end clang namespace
