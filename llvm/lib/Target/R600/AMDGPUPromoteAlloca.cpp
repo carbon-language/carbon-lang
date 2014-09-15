@@ -329,6 +329,13 @@ void AMDGPUPromoteAlloca::visitAlloca(AllocaInst &I) {
     if (!Call) {
       Type *EltTy = V->getType()->getPointerElementType();
       PointerType *NewTy = PointerType::get(EltTy, AMDGPUAS::LOCAL_ADDRESS);
+
+      // The operand's value should be corrected on its own.
+      if (isa<AddrSpaceCastInst>(V))
+        continue;
+
+      // FIXME: It doesn't really make sense to try to do this for all
+      // instructions.
       V->mutateType(NewTy);
       continue;
     }
