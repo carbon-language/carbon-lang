@@ -54,6 +54,8 @@
         daddi     $sp,-27705           # CHECK: daddi $sp, $sp, -27705 # encoding: [0x63,0xbd,0x93,0xc7]
         daddiu    $k0,$s6,-4586
         daddu     $s3,$at,$ra
+        daddu     $24,$2,18079         # CHECK: daddiu $24, $2, 18079  # encoding: [0x64,0x58,0x46,0x9f]
+        daddu     $19,26943            # CHECK: daddiu $19, $19, 26943 # encoding: [0x66,0x73,0x69,0x3f]
         dclo      $s2,$a2              # CHECK: dclo $18, $6   # encoding: [0x70,0xd2,0x90,0x25]
         dclz      $s0,$25              # CHECK: dclz $16, $25  # encoding: [0x73,0x30,0x80,0x24]
         deret
@@ -101,6 +103,8 @@
         dsubi     $sp,-27705           # CHECK: daddi $sp, $sp, 27705  # encoding: [0x63,0xbd,0x6c,0x39]
         dsubu     $a1,$a1,$k0
         dsubu     $a1,$a1,$k0
+        dsubu     $15,$11,5025         # CHECK: daddiu $15, $11, -5025 # encoding: [0x65,0x6f,0xec,0x5f]
+        dsubu     $14,-4586            # CHECK: daddiu $14, $14, 4586  # encoding: [0x65,0xce,0x11,0xea]
         ehb                            # CHECK: ehb # encoding:  [0x00,0x00,0x00,0xc0]
         ei        $14
         eret
