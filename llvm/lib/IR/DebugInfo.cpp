@@ -384,7 +384,7 @@ void DIDescriptor::replaceAllUsesWith(LLVMContext &VMContext, DIDescriptor D) {
   const Value *V = cast_or_null<Value>(DN);
   Node->replaceAllUsesWith(const_cast<Value *>(V));
   MDNode::deleteTemporary(Node);
-  DbgNode = D;
+  DbgNode = DN;
 }
 
 /// replaceAllUsesWith - Replace all uses of the MDNode used by this
