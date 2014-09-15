@@ -119,6 +119,42 @@ TEST(LEB128Test, DecodeULEB128) {
 #undef EXPECT_DECODE_ULEB128_EQ
 }
 
+TEST(LEB128Test, DecodeSLEB128) {
+#define EXPECT_DECODE_SLEB128_EQ(EXPECTED, VALUE) \
+  do { \
+    unsigned ActualSize = 0; \
+    int64_t Actual = decodeSLEB128(reinterpret_cast<const uint8_t *>(VALUE), \
+                                    &ActualSize); \
+    EXPECT_EQ(sizeof(VALUE) - 1, ActualSize); \
+    EXPECT_EQ(EXPECTED, Actual); \
+  } while (0)
+
+  // Decode SLEB128
+  EXPECT_DECODE_SLEB128_EQ(0L, "\x00");
+  EXPECT_DECODE_SLEB128_EQ(1L, "\x01");
+  EXPECT_DECODE_SLEB128_EQ(63L, "\x3f");
+  EXPECT_DECODE_SLEB128_EQ(-64L, "\x40");
+  EXPECT_DECODE_SLEB128_EQ(-63L, "\x41");
+  EXPECT_DECODE_SLEB128_EQ(-1L, "\x7f");
+  EXPECT_DECODE_SLEB128_EQ(128L, "\x80\x01");
+  EXPECT_DECODE_SLEB128_EQ(129L, "\x81\x01");
+  EXPECT_DECODE_SLEB128_EQ(-129L, "\xff\x7e");
+  EXPECT_DECODE_SLEB128_EQ(-128L, "\x80\x7f");
+  EXPECT_DECODE_SLEB128_EQ(-127L, "\x81\x7f");
+  EXPECT_DECODE_SLEB128_EQ(64L, "\xc0\x00");
+  EXPECT_DECODE_SLEB128_EQ(-12345L, "\xc7\x9f\x7f");
+
+  // Decode unnormalized SLEB128 with extra padding bytes.
+  EXPECT_DECODE_SLEB128_EQ(0L, "\x80\x00");
+  EXPECT_DECODE_SLEB128_EQ(0L, "\x80\x80\x00");
+  EXPECT_DECODE_SLEB128_EQ(0x7fL, "\xff\x00");
+  EXPECT_DECODE_SLEB128_EQ(0x7fL, "\xff\x80\x00");
+  EXPECT_DECODE_SLEB128_EQ(0x80L, "\x80\x81\x00");
+  EXPECT_DECODE_SLEB128_EQ(0x80L, "\x80\x81\x80\x00");
+
+#undef EXPECT_DECODE_SLEB128_EQ
+}
+
 TEST(LEB128Test, SLEB128Size) {
   // Positive Value Testing Plan:
   // (1) 128 ^ n - 1 ........ need (n+1) bytes
