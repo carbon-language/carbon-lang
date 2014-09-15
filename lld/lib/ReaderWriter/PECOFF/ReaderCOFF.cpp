@@ -575,7 +575,8 @@ std::error_code FileCOFF::cacheSectionAttributes() {
     // Handle associative sections.
     if (aux->Selection == llvm::COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
       const coff_section *parent;
-      if (std::error_code ec = _obj->getSection(aux->Number, parent))
+      if (std::error_code ec =
+              _obj->getSection(aux->getNumber(sym.isBigObj()), parent))
         return ec;
       _association[parent].insert(sec);
     }
