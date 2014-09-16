@@ -1254,69 +1254,75 @@ class TypePromotionTransaction {
 
   /// \brief Build a truncate instruction.
   class TruncBuilder : public TypePromotionAction {
+    Value *Val;
   public:
     /// \brief Build a truncate instruction of \p Opnd producing a \p Ty
     /// result.
     /// trunc Opnd to Ty.
     TruncBuilder(Instruction *Opnd, Type *Ty) : TypePromotionAction(Opnd) {
       IRBuilder<> Builder(Opnd);
-      Inst = cast<Instruction>(Builder.CreateTrunc(Opnd, Ty, "promoted"));
-      DEBUG(dbgs() << "Do: TruncBuilder: " << *Inst << "\n");
+      Val = Builder.CreateTrunc(Opnd, Ty, "promoted");
+      DEBUG(dbgs() << "Do: TruncBuilder: " << *Val << "\n");
     }
 
-    /// \brief Get the built instruction.
-    Instruction *getBuiltInstruction() { return Inst; }
+    /// \brief Get the built value.
+    Value *getBuiltValue() { return Val; }
 
     /// \brief Remove the built instruction.
     void undo() override {
-      DEBUG(dbgs() << "Undo: TruncBuilder: " << *Inst << "\n");
-      Inst->eraseFromParent();
+      DEBUG(dbgs() << "Undo: TruncBuilder: " << *Val << "\n");
+      if (Instruction *IVal = dyn_cast<Instruction>(Val))
+        IVal->eraseFromParent();
     }
   };
 
   /// \brief Build a sign extension instruction.
   class SExtBuilder : public TypePromotionAction {
+    Value *Val;
   public:
     /// \brief Build a sign extension instruction of \p Opnd producing a \p Ty
     /// result.
     /// sext Opnd to Ty.
     SExtBuilder(Instruction *InsertPt, Value *Opnd, Type *Ty)
-        : TypePromotionAction(Inst) {
+        : TypePromotionAction(InsertPt) {
       IRBuilder<> Builder(InsertPt);
-      Inst = cast<Instruction>(Builder.CreateSExt(Opnd, Ty, "promoted"));
-      DEBUG(dbgs() << "Do: SExtBuilder: " << *Inst << "\n");
+      Val = Builder.CreateSExt(Opnd, Ty, "promoted");
+      DEBUG(dbgs() << "Do: SExtBuilder: " << *Val << "\n");
     }
 
-    /// \brief Get the built instruction.
-    Instruction *getBuiltInstruction() { return Inst; }
+    /// \brief Get the built value.
+    Value *getBuiltValue() { return Val; }
 
     /// \brief Remove the built instruction.
     void undo() override {
-      DEBUG(dbgs() << "Undo: SExtBuilder: " << *Inst << "\n");
-      Inst->eraseFromParent();
+      DEBUG(dbgs() << "Undo: SExtBuilder: " << *Val << "\n");
+      if (Instruction *IVal = dyn_cast<Instruction>(Val))
+        IVal->eraseFromParent();
     }
   };
 
   /// \brief Build a zero extension instruction.
   class ZExtBuilder : public TypePromotionAction {
+    Value *Val;
   public:
     /// \brief Build a zero extension instruction of \p Opnd producing a \p Ty
     /// result.
     /// zext Opnd to Ty.
     ZExtBuilder(Instruction *InsertPt, Value *Opnd, Type *Ty)
-        : TypePromotionAction(Inst) {
+        : TypePromotionAction(InsertPt) {
       IRBuilder<> Builder(InsertPt);
-      Inst = cast<Instruction>(Builder.CreateZExt(Opnd, Ty, "promoted"));
-      DEBUG(dbgs() << "Do: ZExtBuilder: " << *Inst << "\n");
+      Val = Builder.CreateZExt(Opnd, Ty, "promoted");
+      DEBUG(dbgs() << "Do: ZExtBuilder: " << *Val << "\n");
     }
 
-    /// \brief Get the built instruction.
-    Instruction *getBuiltInstruction() { return Inst; }
+    /// \brief Get the built value.
+    Value *getBuiltValue() { return Val; }
 
     /// \brief Remove the built instruction.
     void undo() override {
-      DEBUG(dbgs() << "Undo: ZExtBuilder: " << *Inst << "\n");
-      Inst->eraseFromParent();
+      DEBUG(dbgs() << "Undo: ZExtBuilder: " << *Val << "\n");
+      if (Instruction *IVal = dyn_cast<Instruction>(Val))
+        IVal->eraseFromParent();
     }
   };
 
@@ -1445,11 +1451,11 @@ public:
   /// Same as Value::mutateType.
   void mutateType(Instruction *Inst, Type *NewTy);
   /// Same as IRBuilder::createTrunc.
-  Instruction *createTrunc(Instruction *Opnd, Type *Ty);
+  Value *createTrunc(Instruction *Opnd, Type *Ty);
   /// Same as IRBuilder::createSExt.
-  Instruction *createSExt(Instruction *Inst, Value *Opnd, Type *Ty);
+  Value *createSExt(Instruction *Inst, Value *Opnd, Type *Ty);
   /// Same as IRBuilder::createZExt.
-  Instruction *createZExt(Instruction *Inst, Value *Opnd, Type *Ty);
+  Value *createZExt(Instruction *Inst, Value *Opnd, Type *Ty);
   /// Same as Instruction::moveBefore.
   void moveBefore(Instruction *Inst, Instruction *Before);
   /// @}
@@ -1481,28 +1487,28 @@ void TypePromotionTransaction::mutateType(Instruction *Inst, Type *NewTy) {
   Actions.push_back(make_unique<TypePromotionTransaction::TypeMutator>(Inst, NewTy));
 }
 
-Instruction *TypePromotionTransaction::createTrunc(Instruction *Opnd,
-                                                   Type *Ty) {
+Value *TypePromotionTransaction::createTrunc(Instruction *Opnd,
+                                             Type *Ty) {
   std::unique_ptr<TruncBuilder> Ptr(new TruncBuilder(Opnd, Ty));
-  Instruction *I = Ptr->getBuiltInstruction();
+  Value *Val = Ptr->getBuiltValue();
   Actions.push_back(std::move(Ptr));
-  return I;
+  return Val;
 }
 
-Instruction *TypePromotionTransaction::createSExt(Instruction *Inst,
-                                                  Value *Opnd, Type *Ty) {
+Value *TypePromotionTransaction::createSExt(Instruction *Inst,
+                                            Value *Opnd, Type *Ty) {
   std::unique_ptr<SExtBuilder> Ptr(new SExtBuilder(Inst, Opnd, Ty));
-  Instruction *I = Ptr->getBuiltInstruction();
+  Value *Val = Ptr->getBuiltValue();
   Actions.push_back(std::move(Ptr));
-  return I;
+  return Val;
 }
 
-Instruction *TypePromotionTransaction::createZExt(Instruction *Inst,
-                                                  Value *Opnd, Type *Ty) {
+Value *TypePromotionTransaction::createZExt(Instruction *Inst,
+                                            Value *Opnd, Type *Ty) {
   std::unique_ptr<ZExtBuilder> Ptr(new ZExtBuilder(Inst, Opnd, Ty));
-  Instruction *I = Ptr->getBuiltInstruction();
+  Value *Val = Ptr->getBuiltValue();
   Actions.push_back(std::move(Ptr));
-  return I;
+  return Val;
 }
 
 void TypePromotionTransaction::moveBefore(Instruction *Inst,
@@ -1849,15 +1855,15 @@ Value *TypePromotionHelper::promoteOperandForTruncAndAnyExt(
   // By construction, the operand of SExt is an instruction. Otherwise we cannot
   // get through it and this method should not be called.
   Instruction *SExtOpnd = cast<Instruction>(SExt->getOperand(0));
-  Instruction *ExtInst = SExt;
+  Value *ExtVal = SExt;
   if (isa<ZExtInst>(SExtOpnd)) {
     // Replace sext(zext(opnd))
     // => zext(opnd).
-    Instruction *ZExt =
+    Value *ZExt =
         TPT.createZExt(SExt, SExtOpnd->getOperand(0), SExt->getType());
     TPT.replaceAllUsesWith(SExt, ZExt);
     TPT.eraseInstruction(SExt);
-    ExtInst = ZExt;
+    ExtVal = ZExt;
   } else {
     // Replace sext(trunc(opnd)) or sext(sext(opnd))
     // => sext(opnd).
@@ -1870,8 +1876,9 @@ Value *TypePromotionHelper::promoteOperandForTruncAndAnyExt(
     TPT.eraseInstruction(SExtOpnd);
 
   // Check if the extension is still needed.
-  if (ExtInst->getType() != ExtInst->getOperand(0)->getType())
-    return ExtInst;
+  Instruction *ExtInst = dyn_cast<Instruction>(ExtVal);
+  if (!ExtInst || ExtInst->getType() != ExtInst->getOperand(0)->getType())
+    return ExtVal;
 
   // At this point we have: ext ty opnd to ty.
   // Reassign the uses of ExtInst to the opnd and remove ExtInst.
@@ -1894,10 +1901,12 @@ TypePromotionHelper::promoteOperandForOther(Instruction *SExt,
     // All its uses, but SExt, will need to use a truncated value of the
     // promoted version.
     // Create the truncate now.
-    Instruction *Trunc = TPT.createTrunc(SExt, SExtOpnd->getType());
-    Trunc->removeFromParent();
-    // Insert it just after the definition.
-    Trunc->insertAfter(SExtOpnd);
+    Value *Trunc = TPT.createTrunc(SExt, SExtOpnd->getType());
+    if (Instruction *ITrunc = dyn_cast<Instruction>(Trunc)) {
+      ITrunc->removeFromParent();
+      // Insert it just after the definition.
+      ITrunc->insertAfter(SExtOpnd);
+    }
 
     TPT.replaceAllUsesWith(SExtOpnd, Trunc);
     // Restore the operand of SExt (which has been replace by the previous call
@@ -1951,7 +1960,8 @@ TypePromotionHelper::promoteOperandForOther(Instruction *SExt,
     if (!SExtForOpnd) {
       // If yes, create a new one.
       DEBUG(dbgs() << "More operands to sext\n");
-      SExtForOpnd = TPT.createSExt(SExt, Opnd, SExt->getType());
+      SExtForOpnd =
+        cast<Instruction>(TPT.createSExt(SExt, Opnd, SExt->getType()));
       ++CreatedInsts;
     }
 

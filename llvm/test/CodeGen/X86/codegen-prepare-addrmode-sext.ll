@@ -82,6 +82,28 @@ define i8 @oneArgPromotionZExt(i8 %arg1, i8* %base) {
   ret i8 %res
 }
 
+; When promoting a constant zext, the IR builder returns a constant,
+; not an instruction. Make sure this is properly handled. This used
+; to crash.
+; Note: The constant zext is promoted, but does not help matching
+; more thing in the addressing mode. Therefore the modification is
+; rolled back.
+; Still, this test case exercises the desired code path.
+; CHECK-LABEL: @oneArgPromotionCstZExt
+; CHECK: [[ZEXT:%[a-zA-Z_0-9-]+]] = zext i16 undef to i32
+; CHECK: [[SEXT:%[a-zA-Z_0-9-]+]] = sext i32 [[ZEXT]] to i64
+; CHECK: [[PROMOTED:%[a-zA-Z_0-9-]+]] = add nsw i64 [[SEXT]], 1
+; CHECK: getelementptr inbounds i8* %base, i64 [[PROMOTED]]
+; CHECK: ret
+define i8 @oneArgPromotionCstZExt(i8* %base) {
+  %cst = zext i16 undef to i32
+  %add = add nsw i32 %cst, 1
+  %sextadd = sext i32 %add to i64
+  %arrayidx = getelementptr inbounds i8* %base, i64 %sextadd
+  %res = load i8* %arrayidx
+  ret i8 %res
+}
+
 ; Check that we do not promote truncate when we cannot determine the
 ; bits that are dropped.
 ; CHECK-LABEL: @oneArgPromotionBlockTrunc1
