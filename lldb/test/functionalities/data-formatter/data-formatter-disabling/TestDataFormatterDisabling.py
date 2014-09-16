@@ -47,16 +47,7 @@ class DataFormatterDisablingTestCase(TestBase):
         # This is the function to remove the custom formats in order to have a
         # clean slate for the next test case.
         def cleanup():
-             self.runCmd('type category enable default', check=False)
-             self.runCmd('type category enable system', check=False)
-             self.runCmd('type category enable VectorTypes', check=False)
-             self.runCmd('type category enable libcxx', check=False)
-             self.runCmd('type category enable gnu-libstdc++', check=False)
-             self.runCmd('type category enable CoreGraphics', check=False)
-             self.runCmd('type category enable CoreServices', check=False)
-             self.runCmd('type category enable AppKit', check=False)
-             self.runCmd('type category enable CoreFoundation', check=False)
-             self.runCmd('type category enable objc', check=False)
+             self.runCmd('type category enable *', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
