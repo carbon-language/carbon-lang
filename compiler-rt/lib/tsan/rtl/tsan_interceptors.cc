@@ -390,6 +390,11 @@ static void SetJmp(ThreadState *thr, uptr sp, uptr mangled_sp) {
   buf->sp = sp;
   buf->mangled_sp = mangled_sp;
   buf->shadow_stack_pos = thr->shadow_stack_pos;
+  SignalContext *sctx = SigCtx(thr);
+  buf->int_signal_send = sctx ? sctx->int_signal_send : 0;
+  buf->in_blocking_func = sctx ? sctx->in_blocking_func : false;
+  buf->in_signal_handler = atomic_load(&thr->in_signal_handler,
+      memory_order_relaxed);
 }
 
 static void LongJmp(ThreadState *thr, uptr *env) {
@@ -402,6 +407,13 @@ static void LongJmp(ThreadState *thr, uptr *env) {
       // Unwind the stack.
       while (thr->shadow_stack_pos > buf->shadow_stack_pos)
         FuncExit(thr);
+      SignalContext *sctx = SigCtx(thr);
+      if (sctx) {
+        sctx->int_signal_send = buf->int_signal_send;
+        sctx->in_blocking_func = buf->in_blocking_func;
+      }
+      atomic_store(&thr->in_signal_handler, buf->in_signal_handler,
+          memory_order_relaxed);
       JmpBufGarbageCollect(thr, buf->sp - 1);  // do not collect buf->sp
       return;
     }
