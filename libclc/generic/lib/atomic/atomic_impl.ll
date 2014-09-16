@@ -22,6 +22,20 @@ entry:
   ret i32 %0
 }
 
+define i32 @__clc_atomic_cmpxchg_addr1(i32 addrspace(1)* nocapture %ptr, i32 %compare, i32 %value) nounwind alwaysinline {
+entry:
+  %0 = cmpxchg volatile i32 addrspace(1)* %ptr, i32 %compare, i32 %value seq_cst seq_cst
+  %1 = extractvalue { i32, i1 } %0, 0
+  ret i32 %1
+}
+
+define i32 @__clc_atomic_cmpxchg_addr3(i32 addrspace(3)* nocapture %ptr, i32 %compare, i32 %value) nounwind alwaysinline {
+entry:
+  %0 = cmpxchg volatile i32 addrspace(3)* %ptr, i32 %compare, i32 %value seq_cst seq_cst
+  %1 = extractvalue { i32, i1 } %0, 0
+  ret i32 %1
+}
+
 define i32 @__clc_atomic_max_addr1(i32 addrspace(1)* nocapture %ptr, i32 %value) nounwind alwaysinline {
 entry:
   %0 = atomicrmw volatile max i32 addrspace(1)* %ptr, i32 %value seq_cst
