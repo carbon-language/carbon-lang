@@ -8364,6 +8364,11 @@ TEST_F(FormatTest, GetsCorrectBasedOnStyle) {
   EXPECT_EQ(0, parseConfiguration(#FIELD ": false", &Style).value());          \
   EXPECT_FALSE(Style.FIELD);
 
+#define CHECK_PARSE(TEXT, FIELD, VALUE)                                        \
+  EXPECT_NE(VALUE, Style.FIELD);                                               \
+  EXPECT_EQ(0, parseConfiguration(TEXT, &Style).value());                      \
+  EXPECT_EQ(VALUE, Style.FIELD)
+
 TEST_F(FormatTest, ParsesConfigurationBools) {
   FormatStyle Style = {};
   Style.Language = FormatStyle::LK_Cpp;
@@ -8381,6 +8386,9 @@ TEST_F(FormatTest, ParsesConfigurationBools) {
   CHECK_PARSE_BOOL(BreakConstructorInitializersBeforeComma);
   CHECK_PARSE_BOOL(ConstructorInitializerAllOnOneLineOrOnePerLine);
   CHECK_PARSE_BOOL(DerivePointerAlignment);
+  // For backward compatibility:
+  CHECK_PARSE("DerivePointerBinding: true", DerivePointerAlignment, true);
+  CHECK_PARSE("DerivePointerBinding: false", DerivePointerAlignment, false);
   CHECK_PARSE_BOOL(IndentCaseLabels);
   CHECK_PARSE_BOOL(IndentWrappedFunctionNames);
   CHECK_PARSE_BOOL(KeepEmptyLinesAtTheStartOfBlocks);
@@ -8398,11 +8406,6 @@ TEST_F(FormatTest, ParsesConfigurationBools) {
 }
 
 #undef CHECK_PARSE_BOOL
-
-#define CHECK_PARSE(TEXT, FIELD, VALUE)                                        \
-  EXPECT_NE(VALUE, Style.FIELD);                                               \
-  EXPECT_EQ(0, parseConfiguration(TEXT, &Style).value());                      \
-  EXPECT_EQ(VALUE, Style.FIELD)
 
 TEST_F(FormatTest, ParsesConfiguration) {
   FormatStyle Style = {};
@@ -8429,6 +8432,13 @@ TEST_F(FormatTest, ParsesConfiguration) {
               FormatStyle::PAS_Right);
   CHECK_PARSE("PointerAlignment: Middle", PointerAlignment,
               FormatStyle::PAS_Middle);
+  // For backward compatibility:
+  CHECK_PARSE("PointerBindsToType: Left", PointerAlignment,
+              FormatStyle::PAS_Left);
+  CHECK_PARSE("PointerBindsToType: Right", PointerAlignment,
+              FormatStyle::PAS_Right);
+  CHECK_PARSE("PointerBindsToType: Middle", PointerAlignment,
+              FormatStyle::PAS_Middle);
 
   Style.Standard = FormatStyle::LS_Auto;
   CHECK_PARSE("Standard: Cpp03", Standard, FormatStyle::LS_Cpp03);
@@ -8438,34 +8448,37 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE("Standard: Auto", Standard, FormatStyle::LS_Auto);
 
   Style.BreakBeforeBinaryOperators = FormatStyle::BOS_All;
-  CHECK_PARSE("BreakBeforeBinaryOperators: false", BreakBeforeBinaryOperators,
-              FormatStyle::BOS_None);
   CHECK_PARSE("BreakBeforeBinaryOperators: NonAssignment",
               BreakBeforeBinaryOperators, FormatStyle::BOS_NonAssignment);
-  CHECK_PARSE("BreakBeforeBinaryOperators: true", BreakBeforeBinaryOperators,
-              FormatStyle::BOS_All);
   CHECK_PARSE("BreakBeforeBinaryOperators: None", BreakBeforeBinaryOperators,
               FormatStyle::BOS_None);
   CHECK_PARSE("BreakBeforeBinaryOperators: All", BreakBeforeBinaryOperators,
               FormatStyle::BOS_All);
+  // For backward compatibility:
+  CHECK_PARSE("BreakBeforeBinaryOperators: false", BreakBeforeBinaryOperators,
+              FormatStyle::BOS_None);
+  CHECK_PARSE("BreakBeforeBinaryOperators: true", BreakBeforeBinaryOperators,
+              FormatStyle::BOS_All);
 
   Style.UseTab = FormatStyle::UT_ForIndentation;
-  CHECK_PARSE("UseTab: false", UseTab, FormatStyle::UT_Never);
-  CHECK_PARSE("UseTab: true", UseTab, FormatStyle::UT_Always);
   CHECK_PARSE("UseTab: Never", UseTab, FormatStyle::UT_Never);
   CHECK_PARSE("UseTab: ForIndentation", UseTab, FormatStyle::UT_ForIndentation);
   CHECK_PARSE("UseTab: Always", UseTab, FormatStyle::UT_Always);
+  // For backward compatibility:
+  CHECK_PARSE("UseTab: false", UseTab, FormatStyle::UT_Never);
+  CHECK_PARSE("UseTab: true", UseTab, FormatStyle::UT_Always);
 
   Style.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Inline;
-  CHECK_PARSE("AllowShortFunctionsOnASingleLine: false",
-              AllowShortFunctionsOnASingleLine, FormatStyle::SFS_None);
-  CHECK_PARSE("AllowShortFunctionsOnASingleLine: true",
-              AllowShortFunctionsOnASingleLine, FormatStyle::SFS_All);
   CHECK_PARSE("AllowShortFunctionsOnASingleLine: None",
               AllowShortFunctionsOnASingleLine, FormatStyle::SFS_None);
   CHECK_PARSE("AllowShortFunctionsOnASingleLine: Inline",
               AllowShortFunctionsOnASingleLine, FormatStyle::SFS_Inline);
   CHECK_PARSE("AllowShortFunctionsOnASingleLine: All",
+              AllowShortFunctionsOnASingleLine, FormatStyle::SFS_All);
+  // For backward compatibility:
+  CHECK_PARSE("AllowShortFunctionsOnASingleLine: false",
+              AllowShortFunctionsOnASingleLine, FormatStyle::SFS_None);
+  CHECK_PARSE("AllowShortFunctionsOnASingleLine: true",
               AllowShortFunctionsOnASingleLine, FormatStyle::SFS_All);
 
   Style.SpaceBeforeParens = FormatStyle::SBPO_Always;
@@ -8791,7 +8804,10 @@ TEST_F(FormatTest, ConstructorInitializerIndentWidth) {
       ": aaaaaaaaaaaaa(aaaaaaaaaaaaaa), aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
       "  aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}",
       Style);
+}
 
+TEST_F(FormatTest, BreakConstructorInitializersBeforeComma) {
+  FormatStyle Style = getLLVMStyle();
   Style.BreakConstructorInitializersBeforeComma = true;
   Style.ConstructorInitializerIndentWidth = 4;
   verifyFormat("SomeClass::Constructor()\n"
