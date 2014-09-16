@@ -1140,7 +1140,7 @@ pair<_InputIterator1, _InputIterator2>
 mismatch(_InputIterator1 __first1, _InputIterator1 __last1,
          _InputIterator2 __first2, _BinaryPredicate __pred)
 {
-    for (; __first1 != __last1; ++__first1, ++__first2)
+    for (; __first1 != __last1; ++__first1, (void) ++__first2)
         if (!__pred(*__first1, *__first2))
             break;
     return pair<_InputIterator1, _InputIterator2>(__first1, __first2);
@@ -1164,7 +1164,7 @@ mismatch(_InputIterator1 __first1, _InputIterator1 __last1,
          _InputIterator2 __first2, _InputIterator2 __last2,
          _BinaryPredicate __pred)
 {
-    for (; __first1 != __last1 && __first2 != __last2; ++__first1, ++__first2)
+    for (; __first1 != __last1 && __first2 != __last2; ++__first1, (void) ++__first2)
         if (!__pred(*__first1, *__first2))
             break;
     return pair<_InputIterator1, _InputIterator2>(__first1, __first2);
