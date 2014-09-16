@@ -70,8 +70,8 @@ void test() {
   if (pid) {
     // parent
     __atomic_store_n(&done, 1, __ATOMIC_RELAXED);
-    usleep(1000000);
-    kill(pid, SIGKILL);
+    pid_t p;
+    while ((p = wait(NULL)) == -1) {  }
   } else {
     // child
     child();
