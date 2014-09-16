@@ -3029,8 +3029,12 @@ static StructorCodegen getCodegenToUse(CodeGenModule &CGM,
   if (!llvm::GlobalAlias::isValidLinkage(Linkage))
     return StructorCodegen::RAUW;
 
-  if (llvm::GlobalValue::isWeakForLinker(Linkage))
-    return StructorCodegen::COMDAT;
+  if (llvm::GlobalValue::isWeakForLinker(Linkage)) {
+    // Only ELF supports COMDATs with arbitrary names (C5/D5).
+    if (CGM.getTarget().getTriple().isOSBinFormatELF())
+      return StructorCodegen::COMDAT;
+    return StructorCodegen::Emit;
+  }
 
   return StructorCodegen::Alias;
 }

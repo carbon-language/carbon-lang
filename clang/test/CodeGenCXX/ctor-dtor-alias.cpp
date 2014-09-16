@@ -8,6 +8,8 @@
 // RUN: FileCheck --check-prefix=CHECK5 --input-file=%t %s
 // RUN: FileCheck --check-prefix=CHECK6 --input-file=%t %s
 
+// RUN: %clang_cc1 %s -triple i686-pc-windows-gnu -emit-llvm -o - -mconstructor-aliases -O1 -disable-llvm-optzns | FileCheck --check-prefix=COFF %s
+
 namespace test1 {
 // Test that we produce the apropriate comdats when creating aliases to
 // weak_odr constructors and destructors.
@@ -18,6 +20,9 @@ namespace test1 {
 // CHECK1: define weak_odr void @_ZN5test16foobarIvED2Ev({{.*}} comdat $_ZN5test16foobarIvED5Ev
 // CHECK1: define weak_odr void @_ZN5test16foobarIvED0Ev({{.*}} comdat $_ZN5test16foobarIvED5Ev
 // CHECK1-NOT: comdat
+
+// COFF doesn't support comdats with arbitrary names (C5/D5).
+// COFF-NOT: comdat
 
 template <typename T>
 struct foobar {
