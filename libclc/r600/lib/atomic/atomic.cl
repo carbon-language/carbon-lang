@@ -33,3 +33,13 @@ ATOMIC_FUNC_DEFINE(signed, signed, int, atomic_max, atomic_max, global, 1)
 ATOMIC_FUNC_DEFINE(signed, signed, int, atomic_max, atomic_max, local, 3)
 ATOMIC_FUNC_DEFINE(unsigned, unsigned, int, atomic_max, atomic_umax, global, 1)
 ATOMIC_FUNC_DEFINE(unsigned, unsigned, int, atomic_max, atomic_umax, local, 3)
+
+_CLC_DECL signed int __clc_atomic_min_addr1(volatile global signed int*, signed int);
+_CLC_DECL signed int __clc_atomic_min_addr3(volatile local signed int*, signed int);
+_CLC_DECL uint __clc_atomic_umin_addr1(volatile global uint*, uint);
+_CLC_DECL uint __clc_atomic_umin_addr3(volatile local uint*, uint);
+
+ATOMIC_FUNC_DEFINE(signed, signed, int, atomic_min, atomic_min, global, 1)
+ATOMIC_FUNC_DEFINE(signed, signed, int, atomic_min, atomic_min, local, 3)
+ATOMIC_FUNC_DEFINE(unsigned, unsigned, int, atomic_min, atomic_umin, global, 1)
+ATOMIC_FUNC_DEFINE(unsigned, unsigned, int, atomic_min, atomic_umin, local, 3)
