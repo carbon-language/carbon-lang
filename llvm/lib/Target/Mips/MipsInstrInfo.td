@@ -1436,6 +1436,8 @@ def : MipsInstAlias<"bal $offset", (BGEZAL ZERO, brtarget:$offset), 0>,
       ISA_MIPS1_NOT_32R6_64R6;
 def : MipsInstAlias<"addu $rs, $rt, $imm",
                     (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;
+def : MipsInstAlias<"addu $rs, $imm",
+                    (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm), 0>;
 def : MipsInstAlias<"add $rs, $rt, $imm",
                     (ADDi GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>,
                     ISA_MIPS1_NOT_32R6_64R6;
