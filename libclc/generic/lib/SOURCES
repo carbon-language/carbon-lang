@@ -4,10 +4,12 @@ cl_khr_global_int32_base_atomics/atom_add.cl
 cl_khr_global_int32_base_atomics/atom_dec.cl
 cl_khr_global_int32_base_atomics/atom_inc.cl
 cl_khr_global_int32_base_atomics/atom_sub.cl
+cl_khr_global_int32_extended_atomics/atom_max.cl
 cl_khr_local_int32_base_atomics/atom_add.cl
 cl_khr_local_int32_base_atomics/atom_dec.cl
 cl_khr_local_int32_base_atomics/atom_inc.cl
 cl_khr_local_int32_base_atomics/atom_sub.cl
+cl_khr_local_int32_extended_atomics/atom_max.cl
 convert.cl
 common/sign.cl
 geometric/cross.cl
