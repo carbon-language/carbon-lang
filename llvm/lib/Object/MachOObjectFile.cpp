@@ -58,6 +58,17 @@ getSegmentLoadCommandNumSections(const MachOObjectFile *O,
   return S.nsects;
 }
 
+static bool isPageZeroSegment(const MachOObjectFile *O,
+                              const MachOObjectFile::LoadCommandInfo &L) {
+  if (O->is64Bit()) {
+    MachO::segment_command_64 S = O->getSegment64LoadCommand(L);
+    return StringRef("__PAGEZERO").equals(S.segname);
+  }
+  MachO::segment_command S = O->getSegmentLoadCommand(L);
+  return StringRef("__PAGEZERO").equals(S.segname);
+}
+
+
 static const char *
 getSectionPtr(const MachOObjectFile *O, MachOObjectFile::LoadCommandInfo L,
               unsigned Sec) {
@@ -229,7 +240,8 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
                                  bool Is64bits, std::error_code &EC)
     : ObjectFile(getMachOType(IsLittleEndian, Is64bits), Object),
       SymtabLoadCmd(nullptr), DysymtabLoadCmd(nullptr),
-      DataInCodeLoadCmd(nullptr), DyldInfoLoadCmd(nullptr) {
+      DataInCodeLoadCmd(nullptr), DyldInfoLoadCmd(nullptr),
+      HasPageZeroSegment(false) {
   uint32_t LoadCommandCount = this->getHeader().ncmds;
   MachO::LoadCommandType SegmentLoadType = is64Bit() ?
     MachO::LC_SEGMENT_64 : MachO::LC_SEGMENT;
@@ -255,6 +267,8 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
         const char *Sec = getSectionPtr(this, Load, J);
         Sections.push_back(Sec);
       }
+      if (isPageZeroSegment(this, Load))
+        HasPageZeroSegment = true;
     } else if (Load.C.cmd == MachO::LC_LOAD_DYLIB ||
                Load.C.cmd == MachO::LC_LOAD_WEAK_DYLIB ||
                Load.C.cmd == MachO::LC_LAZY_LOAD_DYLIB ||
@@ -1858,6 +1872,272 @@ MachOObjectFile::rebaseTable(ArrayRef<uint8_t> Opcodes, bool is64) {
 
 iterator_range<rebase_iterator> MachOObjectFile::rebaseTable() const {
   return rebaseTable(getDyldInfoRebaseOpcodes(), is64Bit());
+}
+
+
+MachOBindEntry::MachOBindEntry(ArrayRef<uint8_t> Bytes, bool is64Bit,
+                               Kind BK)
+    : Opcodes(Bytes), Ptr(Bytes.begin()), SegmentOffset(0), SegmentIndex(0),
+      Ordinal(0), Flags(0), Addend(0), RemainingLoopCount(0), AdvanceAmount(0),
+      BindType(0), PointerSize(is64Bit ? 8 : 4),
+      TableKind(BK), Malformed(false), Done(false) {}
+
+void MachOBindEntry::moveToFirst() {
+  Ptr = Opcodes.begin();
+  moveNext();
+}
+
+void MachOBindEntry::moveToEnd() {
+  Ptr = Opcodes.end();
+  RemainingLoopCount = 0;
+  Done = true;
+}
+
+void MachOBindEntry::moveNext() {
+  // If in the middle of some loop, move to next binding in loop.
+  SegmentOffset += AdvanceAmount;
+  if (RemainingLoopCount) {
+    --RemainingLoopCount;
+    return;
+  }
+  if (Ptr == Opcodes.end()) {
+    Done = true;
+    return;
+  }
+  bool More = true;
+  while (More && !Malformed) {
+    // Parse next opcode and set up next loop.
+    uint8_t Byte = *Ptr++;
+    uint8_t ImmValue = Byte & MachO::BIND_IMMEDIATE_MASK;
+    uint8_t Opcode = Byte & MachO::BIND_OPCODE_MASK;
+    int8_t SignExtended;
+    const uint8_t *SymStart;
+    switch (Opcode) {
+    case MachO::BIND_OPCODE_DONE:
+      if (TableKind == Kind::Lazy) {
+        // Lazying bindings have a DONE opcode between entries.  Need to ignore
+        // it to advance to next entry.  But need not if this is last entry.
+        bool NotLastEntry = false;
+        for (const uint8_t *P = Ptr; P < Opcodes.end(); ++P) {
+          if (*P) {
+            NotLastEntry = true;
+          }
+        }
+        if (NotLastEntry)
+          break;
+      }
+      More = false;
+      Done = true;
+      moveToEnd();
+      DEBUG_WITH_TYPE("mach-o-bind", llvm::dbgs() << "BIND_OPCODE_DONE\n");
+      break;
+    case MachO::BIND_OPCODE_SET_DYLIB_ORDINAL_IMM:
+      Ordinal = ImmValue;
+      DEBUG_WITH_TYPE(
+          "mach-o-bind",
+          llvm::dbgs() << "BIND_OPCODE_SET_DYLIB_ORDINAL_IMM: "
+                       << "Ordinal=" << Ordinal << "\n");
+      break;
+    case MachO::BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB:
+      Ordinal = readULEB128();
+      DEBUG_WITH_TYPE(
+          "mach-o-bind",
+          llvm::dbgs() << "BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB: "
+                       << "Ordinal=" << Ordinal << "\n");
+      break;
+    case MachO::BIND_OPCODE_SET_DYLIB_SPECIAL_IMM:
+      if (ImmValue) {
+        SignExtended = MachO::BIND_OPCODE_MASK | ImmValue;
+        Ordinal = SignExtended;
+      } else
+        Ordinal = 0;
+      DEBUG_WITH_TYPE(
+          "mach-o-bind",
+          llvm::dbgs() << "BIND_OPCODE_SET_DYLIB_SPECIAL_IMM: "
+                       << "Ordinal=" << Ordinal << "\n");
+      break;
+    case MachO::BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM:
+      Flags = ImmValue;
+      SymStart = Ptr;
+      while (*Ptr) {
+        ++Ptr;
+      }
+      ++Ptr;
+      SymbolName = StringRef(reinterpret_cast<const char*>(SymStart),
+                             Ptr-SymStart);
+      DEBUG_WITH_TYPE(
+          "mach-o-bind",
+          llvm::dbgs() << "BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM: "
+                       << "SymbolName=" << SymbolName << "\n");
+      if (TableKind == Kind::Weak) {
+        if (ImmValue & MachO::BIND_SYMBOL_FLAGS_NON_WEAK_DEFINITION)
+          return;
+      }
+      break;
+    case MachO::BIND_OPCODE_SET_TYPE_IMM:
+      BindType = ImmValue;
+      DEBUG_WITH_TYPE(
+          "mach-o-bind",
+          llvm::dbgs() << "BIND_OPCODE_SET_TYPE_IMM: "
+                       << "BindType=" << (int)BindType << "\n");
+      break;
+    case MachO::BIND_OPCODE_SET_ADDEND_SLEB:
+      Addend = readSLEB128();
+      if (TableKind == Kind::Lazy)
+        Malformed = true;
+      DEBUG_WITH_TYPE(
+          "mach-o-bind",
+          llvm::dbgs() << "BIND_OPCODE_SET_ADDEND_SLEB: "
+                       << "Addend=" << Addend << "\n");
+      break;
+    case MachO::BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB:
+      SegmentIndex = ImmValue;
+      SegmentOffset = readULEB128();
+      DEBUG_WITH_TYPE(
+          "mach-o-bind",
+          llvm::dbgs() << "BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB: "
+                       << "SegmentIndex=" << SegmentIndex << ", "
+                       << format("SegmentOffset=0x%06X", SegmentOffset)
+                       << "\n");
+      break;
+    case MachO::BIND_OPCODE_ADD_ADDR_ULEB:
+      SegmentOffset += readULEB128();
+      DEBUG_WITH_TYPE("mach-o-bind",
+                      llvm::dbgs() << "BIND_OPCODE_ADD_ADDR_ULEB: "
+                                   << format("SegmentOffset=0x%06X",
+                                             SegmentOffset) << "\n");
+      break;
+    case MachO::BIND_OPCODE_DO_BIND:
+      AdvanceAmount = PointerSize;
+      RemainingLoopCount = 0;
+      DEBUG_WITH_TYPE("mach-o-bind",
+                      llvm::dbgs() << "BIND_OPCODE_DO_BIND: "
+                                   << format("SegmentOffset=0x%06X",
+                                             SegmentOffset) << "\n");
+      return;
+     case MachO::BIND_OPCODE_DO_BIND_ADD_ADDR_ULEB:
+      AdvanceAmount = readULEB128();
+      RemainingLoopCount = 0;
+      if (TableKind == Kind::Lazy)
+        Malformed = true;
+      DEBUG_WITH_TYPE(
+          "mach-o-bind",
+          llvm::dbgs() << "BIND_OPCODE_DO_BIND_IMM_TIMES: "
+                       << format("SegmentOffset=0x%06X", SegmentOffset)
+                       << ", AdvanceAmount=" << AdvanceAmount
+                       << ", RemainingLoopCount=" << RemainingLoopCount
+                       << "\n");
+      return;
+    case MachO::BIND_OPCODE_DO_BIND_ADD_ADDR_IMM_SCALED:
+      AdvanceAmount = ImmValue * PointerSize;
+      RemainingLoopCount = 0;
+      if (TableKind == Kind::Lazy)
+        Malformed = true;
+      DEBUG_WITH_TYPE("mach-o-bind",
+                      llvm::dbgs()
+                      << "BIND_OPCODE_DO_BIND_ADD_ADDR_IMM_SCALED: "
+                      << format("SegmentOffset=0x%06X",
+                                             SegmentOffset) << "\n");
+      return;
+    case MachO::BIND_OPCODE_DO_BIND_ULEB_TIMES_SKIPPING_ULEB:
+      RemainingLoopCount = readULEB128() - 1;
+      AdvanceAmount = readULEB128() + PointerSize;
+      if (TableKind == Kind::Lazy)
+        Malformed = true;
+      DEBUG_WITH_TYPE(
+          "mach-o-bind",
+          llvm::dbgs() << "BIND_OPCODE_DO_BIND_ULEB_TIMES_SKIPPING_ULEB: "
+                       << format("SegmentOffset=0x%06X", SegmentOffset)
+                       << ", AdvanceAmount=" << AdvanceAmount
+                       << ", RemainingLoopCount=" << RemainingLoopCount
+                       << "\n");
+      return;
+    default:
+      Malformed = true;
+    }
+  }
+}
+
+uint64_t MachOBindEntry::readULEB128() {
+  unsigned Count;
+  uint64_t Result = decodeULEB128(Ptr, &Count);
+  Ptr += Count;
+  if (Ptr > Opcodes.end()) {
+    Ptr = Opcodes.end();
+    Malformed = true;
+  }
+  return Result;
+}
+
+int64_t MachOBindEntry::readSLEB128() {
+  unsigned Count;
+  int64_t Result = decodeSLEB128(Ptr, &Count);
+  Ptr += Count;
+  if (Ptr > Opcodes.end()) {
+    Ptr = Opcodes.end();
+    Malformed = true;
+  }
+  return Result;
+}
+
+
+uint32_t MachOBindEntry::segmentIndex() const { return SegmentIndex; }
+
+uint64_t MachOBindEntry::segmentOffset() const { return SegmentOffset; }
+
+StringRef MachOBindEntry::typeName() const {
+  switch (BindType) {
+  case MachO::BIND_TYPE_POINTER:
+    return "pointer";
+  case MachO::BIND_TYPE_TEXT_ABSOLUTE32:
+    return "text abs32";
+  case MachO::BIND_TYPE_TEXT_PCREL32:
+    return "text rel32";
+  }
+  return "unknown";
+}
+
+StringRef MachOBindEntry::symbolName() const { return SymbolName; }
+
+int64_t MachOBindEntry::addend() const { return Addend; }
+
+uint32_t MachOBindEntry::flags() const { return Flags; }
+
+int MachOBindEntry::ordinal() const { return Ordinal; }
+
+bool MachOBindEntry::operator==(const MachOBindEntry &Other) const {
+  assert(Opcodes == Other.Opcodes && "compare iterators of different files");
+  return (Ptr == Other.Ptr) &&
+         (RemainingLoopCount == Other.RemainingLoopCount) &&
+         (Done == Other.Done);
+}
+
+iterator_range<bind_iterator>
+MachOObjectFile::bindTable(ArrayRef<uint8_t> Opcodes, bool is64,
+                           MachOBindEntry::Kind BKind) {
+  MachOBindEntry Start(Opcodes, is64, BKind);
+  Start.moveToFirst();
+
+  MachOBindEntry Finish(Opcodes, is64, BKind);
+  Finish.moveToEnd();
+
+  return iterator_range<bind_iterator>(bind_iterator(Start),
+                                       bind_iterator(Finish));
+}
+
+iterator_range<bind_iterator> MachOObjectFile::bindTable() const {
+  return bindTable(getDyldInfoBindOpcodes(), is64Bit(),
+                   MachOBindEntry::Kind::Regular);
+}
+
+iterator_range<bind_iterator> MachOObjectFile::lazyBindTable() const {
+  return bindTable(getDyldInfoLazyBindOpcodes(), is64Bit(),
+                   MachOBindEntry::Kind::Lazy);
+}
+
+iterator_range<bind_iterator> MachOObjectFile::weakBindTable() const {
+  return bindTable(getDyldInfoWeakBindOpcodes(), is64Bit(),
+                   MachOBindEntry::Kind::Weak);
 }
 
 StringRef

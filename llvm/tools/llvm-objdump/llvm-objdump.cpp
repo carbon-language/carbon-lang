@@ -85,6 +85,15 @@ static cl::opt<bool>
 Rebase("rebase", cl::desc("Display mach-o rebasing info"));
 
 static cl::opt<bool>
+Bind("bind", cl::desc("Display mach-o binding info"));
+
+static cl::opt<bool>
+LazyBind("lazy-bind", cl::desc("Display mach-o lazy binding info"));
+
+static cl::opt<bool>
+WeakBind("weak-bind", cl::desc("Display mach-o weak binding info"));
+
+static cl::opt<bool>
 MachOOpt("macho", cl::desc("Use MachO specific object file parser"));
 static cl::alias
 MachOm("m", cl::desc("Alias for --macho"), cl::aliasopt(MachOOpt));
@@ -736,6 +745,38 @@ static void printRebaseTable(const ObjectFile *o) {
   }
 }
 
+static void printBindTable(const ObjectFile *o) {
+  outs() << "Bind table:\n";
+  if (const MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
+    printMachOBindTable(MachO);
+  else {
+    errs() << "This operation is only currently supported "
+              "for Mach-O executable files.\n";
+    return;
+  }
+}
+
+static void printLazyBindTable(const ObjectFile *o) {
+  outs() << "Lazy bind table:\n";
+  if (const MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
+    printMachOLazyBindTable(MachO);
+  else {
+    errs() << "This operation is only currently supported "
+              "for Mach-O executable files.\n";
+    return;
+  }
+}
+
+static void printWeakBindTable(const ObjectFile *o) {
+  outs() << "Weak bind table:\n";
+  if (const MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
+    printMachOWeakBindTable(MachO);
+  else {
+    errs() << "This operation is only currently supported "
+              "for Mach-O executable files.\n";
+    return;
+  }
+}
 
 static void printPrivateFileHeader(const ObjectFile *o) {
   if (o->isELF()) {
@@ -770,6 +811,12 @@ static void DumpObject(const ObjectFile *o) {
     printExportsTrie(o);
   if (Rebase)
     printRebaseTable(o);
+  if (Bind)
+    printBindTable(o);
+  if (LazyBind)
+    printLazyBindTable(o);
+  if (WeakBind)
+    printWeakBindTable(o);
 }
 
 /// @brief Dump each object file in \a a;
@@ -853,7 +900,10 @@ int main(int argc, char **argv) {
       && !UnwindInfo
       && !PrivateHeaders
       && !ExportsTrie
-      && !Rebase) {
+      && !Rebase
+      && !Bind
+      && !LazyBind
+      && !WeakBind) {
     cl::PrintHelpMessage();
     return 2;
   }

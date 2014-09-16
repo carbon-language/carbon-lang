@@ -2178,7 +2178,7 @@ private:
 
 SegInfo::SegInfo(const object::MachOObjectFile *Obj) {
   // Build table of sections so segIndex/offset pairs can be translated.
-  uint32_t CurSegIndex = 0;
+  uint32_t CurSegIndex = Obj->hasPageZeroSegment() ? 1 : 0;
   StringRef CurSegName;
   uint64_t CurSegAddress;
   for (const SectionRef &Section : Obj->sections()) {
@@ -2253,3 +2253,118 @@ void llvm::printMachORebaseTable(const object::MachOObjectFile *Obj) {
                      Entry.typeName().str().c_str());
   }
 }
+
+static StringRef ordinalName(const object::MachOObjectFile *Obj, int Ordinal) {
+  StringRef DylibName;
+  switch (Ordinal) {
+  case MachO::BIND_SPECIAL_DYLIB_SELF:
+    return "this-image";
+  case MachO::BIND_SPECIAL_DYLIB_MAIN_EXECUTABLE:
+    return "main-executable";
+  case MachO::BIND_SPECIAL_DYLIB_FLAT_LOOKUP:
+    return "flat-namespace";
+  default:
+    Obj->getLibraryShortNameByIndex(Ordinal-1, DylibName);
+    return DylibName;
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// bind table dumping
+//===----------------------------------------------------------------------===//
+
+void llvm::printMachOBindTable(const object::MachOObjectFile *Obj) {
+  // Build table of sections so names can used in final output.
+  SegInfo sectionTable(Obj);
+
+  outs() << "segment  section            address     type     "
+            "addend   dylib               symbol\n";
+  for (const llvm::object::MachOBindEntry &Entry : Obj->bindTable()) {
+    uint32_t SegIndex = Entry.segmentIndex();
+    uint64_t OffsetInSeg = Entry.segmentOffset();
+    StringRef SegmentName = sectionTable.segmentName(SegIndex);
+    StringRef SectionName = sectionTable.sectionName(SegIndex, OffsetInSeg);
+    uint64_t Address = sectionTable.address(SegIndex, OffsetInSeg);
+
+    // Table lines look like:
+    //  __DATA  __got  0x00012010    pointer   0 libSystem ___stack_chk_guard
+    outs() << format("%-8s %-18s 0x%08" PRIX64 "  %-8s %-8" PRId64 " %-20s",
+                     SegmentName.str().c_str(),
+                     SectionName.str().c_str(),
+                     Address,
+                     Entry.typeName().str().c_str(),
+                     Entry.addend(),
+                     ordinalName(Obj, Entry.ordinal()))
+           << Entry.symbolName();
+    if (Entry.flags() & MachO::BIND_SYMBOL_FLAGS_WEAK_IMPORT)
+      outs() << " (weak_import)\n";
+    else
+      outs() << "\n";
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// lazy bind table dumping
+//===----------------------------------------------------------------------===//
+
+void llvm::printMachOLazyBindTable(const object::MachOObjectFile *Obj) {
+  // Build table of sections so names can used in final output.
+  SegInfo sectionTable(Obj);
+
+  outs() << "segment  section            address      "
+            "dylib               symbol\n";
+  for (const llvm::object::MachOBindEntry &Entry : Obj->lazyBindTable()) {
+    uint32_t SegIndex = Entry.segmentIndex();
+    uint64_t OffsetInSeg = Entry.segmentOffset();
+    StringRef SegmentName = sectionTable.segmentName(SegIndex);
+    StringRef SectionName = sectionTable.sectionName(SegIndex, OffsetInSeg);
+    uint64_t Address = sectionTable.address(SegIndex, OffsetInSeg);
+
+    // Table lines look like:
+    //  __DATA  __got  0x00012010 libSystem ___stack_chk_guard
+    outs() << format("%-8s %-18s 0x%08" PRIX64 "   %-20s",
+                     SegmentName.str().c_str(),
+                     SectionName.str().c_str(),
+                     Address,
+                     ordinalName(Obj, Entry.ordinal()))
+           << Entry.symbolName() << "\n";
+  }
+}
+
+
+//===----------------------------------------------------------------------===//
+// weak bind table dumping
+//===----------------------------------------------------------------------===//
+
+void llvm::printMachOWeakBindTable(const object::MachOObjectFile *Obj) {
+  // Build table of sections so names can used in final output.
+  SegInfo sectionTable(Obj);
+
+  outs() << "segment  section            address      "
+            "type     addend   symbol\n";
+  for (const llvm::object::MachOBindEntry &Entry : Obj->weakBindTable()) {
+    // Strong symbols don't have a location to update.
+    if (Entry.flags() & MachO::BIND_SYMBOL_FLAGS_NON_WEAK_DEFINITION) {
+      outs() << "                                          strong            "
+             << Entry.symbolName() << "\n";
+      continue;
+    }
+    uint32_t SegIndex = Entry.segmentIndex();
+    uint64_t OffsetInSeg = Entry.segmentOffset();
+    StringRef SegmentName = sectionTable.segmentName(SegIndex);
+    StringRef SectionName = sectionTable.sectionName(SegIndex, OffsetInSeg);
+    uint64_t Address = sectionTable.address(SegIndex, OffsetInSeg);
+
+    // Table lines look like:
+    // __DATA  __data  0x00001000  pointer    0   _foo
+    outs() << format("%-8s %-18s 0x%08" PRIX64 "   %-8s %-8" PRId64 " ",
+                     SegmentName.str().c_str(),
+                     SectionName.str().c_str(),
+                     Address,
+                     Entry.typeName().str().c_str(),
+                     Entry.addend())
+           << Entry.symbolName() << "\n";
+  }
+}
+
+
