@@ -802,7 +802,11 @@ void AsmPrinter::EmitFunctionBody() {
     MCInst Noop;
     TM.getSubtargetImpl()->getInstrInfo()->getNoopForMachoTarget(Noop);
     OutStreamer.AddComment("avoids zero-length function");
-    OutStreamer.EmitInstruction(Noop, getSubtargetInfo());
+
+    // Targets can opt-out of emitting the noop here by leaving the opcode
+    // unspecified.
+    if (Noop.getOpcode())
+      OutStreamer.EmitInstruction(Noop, getSubtargetInfo());
   }
 
   const Function *F = MF->getFunction();
