@@ -22,6 +22,7 @@ ATOMIC_FUNC(atomic_add)
 ATOMIC_FUNC(atomic_and)
 ATOMIC_FUNC(atomic_or)
 ATOMIC_FUNC(atomic_sub)
+ATOMIC_FUNC(atomic_xchg)
 ATOMIC_FUNC(atomic_xor)
 
 _CLC_DECL signed int __clc_atomic_max_addr1(volatile global signed int*, signed int);
