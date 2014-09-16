@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mcpu=corei7 | FileCheck %s -check-prefix=SSE -check-prefix=CHECK
+; RUN: llc < %s -march=x86-64 -mcpu=core2 | FileCheck %s -check-prefix=SSE -check-prefix=CHECK
 ; RUN: llc < %s -march=x86-64 -mcpu=corei7-avx | FileCheck %s -check-prefix=AVX -check-prefix=CHECK
 
 ; Test ADDSUB ISel patterns.

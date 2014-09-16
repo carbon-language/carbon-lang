@@ -19987,6 +19987,55 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// \brief Try to combine a shuffle into a target-specific add-sub node.
+///
+/// We combine this directly on the abstract vector shuffle nodes so it is
+/// easier to generically match. We also insert dummy vector shuffle nodes for
+/// the operands which explicitly discard the lanes which are unused by this
+/// operation to try to flow through the rest of the combiner the fact that
+/// they're unused.
+static SDValue combineShuffleToAddSub(SDNode *N, SelectionDAG &DAG) {
+  SDLoc DL(N);
+
+  // We only handle target-independent shuffles.
+  // FIXME: It would be easy and harmless to use the target shuffle mask
+  // extraction tool to support more.
+  if (N->getOpcode() != ISD::VECTOR_SHUFFLE)
+    return SDValue();
+
+  auto *SVN = cast<ShuffleVectorSDNode>(N);
+  ArrayRef<int> Mask = SVN->getMask();
+  SDValue V1 = N->getOperand(0);
+  SDValue V2 = N->getOperand(1);
+
+  // We require the first shuffle operand to be the SUB node, and the second to
+  // be the ADD node.
+  // FIXME: We should support the commuted patterns.
+  if (V1->getOpcode() != ISD::FSUB || V2->getOpcode() != ISD::FADD)
+    return SDValue();
+
+  // If there are other uses of these operations we can't fold them.
+  if (!V1->hasOneUse() || !V2->hasOneUse())
+    return SDValue();
+
+  // Ensure that both operations have the same operands. Note that we can
+  // commute the FADD operands.
+  SDValue LHS = V1->getOperand(0), RHS = V1->getOperand(1);
+  if ((V2->getOperand(0) != LHS || V2->getOperand(1) != RHS) &&
+      (V2->getOperand(0) != RHS || V2->getOperand(1) != LHS))
+    return SDValue();
+
+  // We're looking for blends between FADD and FSUB nodes. We insist on these
+  // nodes being lined up in a specific expected pattern.
+  if (!isShuffleEquivalent(Mask, 0, 5, 2, 7))
+    return SDValue();
+
+  // FIXME: Munge the inputs through no-op shuffles that drop the undef lanes to
+  // allow nuking any instructions that feed only those lanes.
+
+  return DAG.getNode(X86ISD::ADDSUB, DL, N->getValueType(0), LHS, RHS);
+}
+
 /// PerformShuffleCombine - Performs several different shuffle combines.
 static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
                                      TargetLowering::DAGCombinerInfo &DCI,
@@ -20000,6 +20049,12 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   if (!DCI.isBeforeLegalize() && !TLI.isTypeLegal(VT.getVectorElementType()))
     return SDValue();
+
+  // If we have legalized the vector types, look for blends of FADD and FSUB
+  // nodes that we can fuse into an ADDSUB node.
+  if (TLI.isTypeLegal(VT) && Subtarget->hasSSE3())
+    if (SDValue AddSub = combineShuffleToAddSub(N, DAG))
+      return AddSub;
 
   // Combine 256-bit vector shuffles. This is only profitable when in AVX mode
   if (Subtarget->hasFp256() && VT.is256BitVector() &&
