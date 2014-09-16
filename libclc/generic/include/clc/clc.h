@@ -141,6 +141,7 @@
 
 /* 6.11.11 Atomic Functions */
 #include <clc/atomic/atomic_add.h>
+#include <clc/atomic/atomic_and.h>
 #include <clc/atomic/atomic_dec.h>
 #include <clc/atomic/atomic_inc.h>
 #include <clc/atomic/atomic_max.h>
@@ -153,6 +154,7 @@
 #include <clc/cl_khr_global_int32_base_atomics/atom_sub.h>
 
 /* cl_khr_global_int32_extended_atomics Extension Functions */
+#include <clc/cl_khr_global_int32_extended_atomics/atom_and.h>
 #include <clc/cl_khr_global_int32_extended_atomics/atom_max.h>
 
 /* cl_khr_local_int32_base_atomics Extension Functions */
@@ -162,6 +164,7 @@
 #include <clc/cl_khr_local_int32_base_atomics/atom_sub.h>
 
 /* cl_khr_local_int32_extended_atomics Extension Functions */
+#include <clc/cl_khr_local_int32_extended_atomics/atom_and.h>
 #include <clc/cl_khr_local_int32_extended_atomics/atom_max.h>
 
 /* libclc internal defintions */
