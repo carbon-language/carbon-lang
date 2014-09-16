@@ -6485,11 +6485,6 @@ static SDValue matchAddSub(const BuildVectorSDNode *BV, SelectionDAG &DAG,
   assert((VT == MVT::v8f32 || VT == MVT::v4f64 || VT == MVT::v4f32 ||
           VT == MVT::v2f64) && "build_vector with an invalid type found!");
 
-  // Don't try to emit a VSELECT that cannot be lowered into a blend.
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  if (!TLI.isOperationLegalOrCustom(ISD::VSELECT, VT))
-    return SDValue();
-
   // Odd-numbered elements in the input build vector are obtained from
   // adding two integer/float elements.
   // Even-numbered elements in the input build vector are obtained from
@@ -6562,8 +6557,7 @@ static SDValue matchAddSub(const BuildVectorSDNode *BV, SelectionDAG &DAG,
     std::swap(ExpectedOpcode, NextExpectedOpcode);
   }
 
-  // Don't try to fold this build_vector into a VSELECT if it has
-  // too many UNDEF operands.
+  // Don't try to fold this build_vector into an ADDSUB if the inputs are undef.
   if (AddFound && SubFound && InVec0.getOpcode() != ISD::UNDEF &&
       InVec1.getOpcode() != ISD::UNDEF)
     return DAG.getNode(X86ISD::ADDSUB, DL, VT, InVec0, InVec1);

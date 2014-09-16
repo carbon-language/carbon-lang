@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mtriple=x86_64-unknown-linux-gnu -mcpu=corei7 | FileCheck %s -check-prefix=CHECK -check-prefix=SSE
+; RUN: llc < %s -march=x86-64 -mtriple=x86_64-unknown-linux-gnu -mcpu=core2 | FileCheck %s -check-prefix=CHECK -check-prefix=SSE
 ; RUN: llc < %s -march=x86-64 -mtriple=x86_64-unknown-linux-gnu -mcpu=corei7-avx | FileCheck %s -check-prefix=CHECK -check-prefix=AVX
 
 
