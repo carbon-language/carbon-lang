@@ -20036,7 +20036,7 @@ static SDValue combineShuffleToAddSub(SDNode *N, SelectionDAG &DAG) {
   // FIXME: Munge the inputs through no-op shuffles that drop the undef lanes to
   // allow nuking any instructions that feed only those lanes.
 
-  return DAG.getNode(X86ISD::ADDSUB, DL, N->getValueType(0), LHS, RHS);
+  return DAG.getNode(X86ISD::ADDSUB, DL, VT, LHS, RHS);
 }
 
 /// PerformShuffleCombine - Performs several different shuffle combines.
