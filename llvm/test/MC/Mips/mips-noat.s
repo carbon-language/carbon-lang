@@ -12,7 +12,7 @@ test1:
 
 test2:
         .set noat
-        lw      $2, 65536($2) # ERROR: mips-noat.s:[[@LINE]]:9: error: Pseudo instruction requires $at, which is not available
+        lw      $2, 65536($2) # ERROR: mips-noat.s:[[@LINE]]:9: error: pseudo-instruction requires $at, which is not available
 
 
 # Can we switch it back on successfully?
@@ -26,4 +26,4 @@ test3:
 
 test4:
         .set at=$0
-        lw      $2, 65536($2) # ERROR: mips-noat.s:[[@LINE]]:9: error: Pseudo instruction requires $at, which is not available
+        lw      $2, 65536($2) # ERROR: mips-noat.s:[[@LINE]]:9: error: pseudo-instruction requires $at, which is not available

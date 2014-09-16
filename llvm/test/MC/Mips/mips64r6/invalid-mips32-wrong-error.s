@@ -6,15 +6,15 @@
 # RUN: FileCheck %s < %t1
 
         .set noat
-        bc1fl $fcc1,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
-        bc1fl 4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
-        bc1tl $fcc1,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
-        bc1tl 4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
-        bc2f  $fcc0,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
-        bc2f  4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
-        bc2fl $fcc1,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
-        bc2fl 4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
-        bc2t  $fcc0,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
-        bc2t  4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
-        bc2tl $fcc1,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
-        bc2tl 4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: Unknown instruction
+        bc1fl $fcc1,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
+        bc1fl 4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
+        bc1tl $fcc1,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
+        bc1tl 4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
+        bc2f  $fcc0,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
+        bc2f  4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
+        bc2fl $fcc1,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
+        bc2fl 4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
+        bc2t  $fcc0,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
+        bc2t  4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
+        bc2tl $fcc1,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
+        bc2tl 4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction

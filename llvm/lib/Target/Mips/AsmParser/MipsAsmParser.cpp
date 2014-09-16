@@ -1141,7 +1141,7 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
     return expandLoadImm(Inst, IDLoc, Instructions);
   case Mips::LoadImm64Reg:
     if (!isGP64bit()) {
-      Error(IDLoc, "instruction requires a CPU feature not currently enabled");
+      Error(IDLoc, "instruction requires a 64-bit architecture");
       return true;
     }
     return expandLoadImm(Inst, IDLoc, Instructions);
@@ -1223,7 +1223,7 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     createShiftOr<0, false>(ImmValue, RegOp.getReg(), IDLoc, Instructions);
   } else if ((ImmValue & (0xffffLL << 48)) == 0) {
     if (!isGP64bit()) {
-      Error(IDLoc, "instruction requires a CPU feature not currently enabled");
+      Error(IDLoc, "instruction requires a 64-bit architecture");
       return true;
     }
 
@@ -1250,7 +1250,7 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     createShiftOr<0, true>(ImmValue, RegOp.getReg(), IDLoc, Instructions);
   } else {
     if (!isGP64bit()) {
-      Error(IDLoc, "instruction requires a CPU feature not currently enabled");
+      Error(IDLoc, "instruction requires a 64-bit architecture");
       return true;
     }
 
@@ -1611,9 +1611,9 @@ void MipsAsmParser::warnIfAssemblerTemporary(int RegIndex, SMLoc Loc) {
   if ((RegIndex != 0) && 
       ((int)AssemblerOptions.back()->getATRegNum() == RegIndex)) {
     if (RegIndex == 1)
-      Warning(Loc, "Used $at without \".set noat\"");
+      Warning(Loc, "used $at without \".set noat\"");
     else
-      Warning(Loc, Twine("Used $") + Twine(RegIndex) + " with \".set at=$" +
+      Warning(Loc, Twine("used $") + Twine(RegIndex) + " with \".set at=$" +
                        Twine(RegIndex) + "\"");
   }
 }
@@ -1762,7 +1762,7 @@ int MipsAsmParser::getATReg(SMLoc Loc) {
   int AT = AssemblerOptions.back()->getATRegNum();
   if (AT == 0)
     reportParseError(Loc,
-                     "Pseudo instruction requires $at, which is not available");
+                     "pseudo-instruction requires $at, which is not available");
   return AT;
 }
 
@@ -1882,7 +1882,7 @@ const MCExpr *MipsAsmParser::evaluateRelocExpr(const MCExpr *Expr,
       Val = ((MCE->getValue() + 0x800080008000LL) >> 48) & 0xffff;
       break;
     default:
-      report_fatal_error("Unsupported reloc value!");
+      report_fatal_error("unsupported reloc value");
     }
     return MCConstantExpr::Create(Val, getContext());
   }
@@ -2459,7 +2459,7 @@ bool MipsAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   // Check if we have valid mnemonic
   if (!mnemonicIsValid(Name, 0)) {
     Parser.eatToEndOfStatement();
-    return Error(NameLoc, "Unknown instruction");
+    return Error(NameLoc, "unknown instruction");
   }
   // First operand in MCInst is instruction mnemonic.
   Operands.push_back(MipsOperand::CreateToken(Name, NameLoc, *this));
@@ -2520,7 +2520,7 @@ bool MipsAsmParser::parseSetNoAtDirective() {
   Parser.Lex();
   // If this is not the end of the statement, report an error.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    reportParseError("unexpected token in statement");
+    reportParseError("unexpected token, expected end of statement");
     return false;
   }
   Parser.Lex(); // Consume the EndOfStatement.
@@ -2539,7 +2539,7 @@ bool MipsAsmParser::parseSetAtDirective() {
   } else if (getLexer().is(AsmToken::Equal)) {
     getParser().Lex(); // Eat the '='.
     if (getLexer().isNot(AsmToken::Dollar)) {
-      reportParseError("unexpected token in statement");
+      reportParseError("unexpected token, expected dollar sign '$'");
       return false;
     }
     Parser.Lex(); // Eat the '$'.
@@ -2549,7 +2549,7 @@ bool MipsAsmParser::parseSetAtDirective() {
     } else if (Reg.is(AsmToken::Integer)) {
       AtRegNo = Reg.getIntVal();
     } else {
-      reportParseError("unexpected token in statement");
+      reportParseError("unexpected token, expected identifier or integer");
       return false;
     }
 
@@ -2559,13 +2559,13 @@ bool MipsAsmParser::parseSetAtDirective() {
     }
 
     if (!AssemblerOptions.back()->setATReg(AtRegNo)) {
-      reportParseError("unexpected token in statement");
+      reportParseError("invalid register");
       return false;
     }
     getParser().Lex(); // Eat the register.
 
     if (getLexer().isNot(AsmToken::EndOfStatement)) {
-      reportParseError("unexpected token in statement");
+      reportParseError("unexpected token, expected end of statement");
       return false;
     }
     Parser.Lex(); // Consume the EndOfStatement.
@@ -2580,7 +2580,7 @@ bool MipsAsmParser::parseSetReorderDirective() {
   Parser.Lex();
   // If this is not the end of the statement, report an error.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    reportParseError("unexpected token in statement");
+    reportParseError("unexpected token, expected end of statement");
     return false;
   }
   AssemblerOptions.back()->setReorder();
@@ -2593,7 +2593,7 @@ bool MipsAsmParser::parseSetNoReorderDirective() {
   Parser.Lex();
   // If this is not the end of the statement, report an error.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    reportParseError("unexpected token in statement");
+    reportParseError("unexpected token, expected end of statement");
     return false;
   }
   AssemblerOptions.back()->setNoReorder();
@@ -2606,7 +2606,7 @@ bool MipsAsmParser::parseSetMacroDirective() {
   Parser.Lex();
   // If this is not the end of the statement, report an error.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    reportParseError("unexpected token in statement");
+    reportParseError("unexpected token, expected end of statement");
     return false;
   }
   AssemblerOptions.back()->setMacro();
@@ -2618,7 +2618,7 @@ bool MipsAsmParser::parseSetNoMacroDirective() {
   Parser.Lex();
   // If this is not the end of the statement, report an error.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    reportParseError("`noreorder' must be set before `nomacro'");
+    reportParseError("unexpected token, expected end of statement");
     return false;
   }
   if (AssemblerOptions.back()->isReorder()) {
@@ -2635,7 +2635,7 @@ bool MipsAsmParser::parseSetMsaDirective() {
 
   // If this is not the end of the statement, report an error.
   if (getLexer().isNot(AsmToken::EndOfStatement))
-    return reportParseError("unexpected token in statement");
+    return reportParseError("unexpected token, expected end of statement");
 
   setFeatureBits(Mips::FeatureMSA, "msa");
   getTargetStreamer().emitDirectiveSetMsa();
@@ -2647,7 +2647,7 @@ bool MipsAsmParser::parseSetNoMsaDirective() {
 
   // If this is not the end of the statement, report an error.
   if (getLexer().isNot(AsmToken::EndOfStatement))
-    return reportParseError("unexpected token in statement");
+    return reportParseError("unexpected token, expected end of statement");
 
   clearFeatureBits(Mips::FeatureMSA, "msa");
   getTargetStreamer().emitDirectiveSetNoMsa();
@@ -2658,7 +2658,7 @@ bool MipsAsmParser::parseSetNoMips16Directive() {
   Parser.Lex();
   // If this is not the end of the statement, report an error.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    reportParseError("unexpected token in statement");
+    reportParseError("unexpected token, expected end of statement");
     return false;
   }
   // For now do nothing.
@@ -2674,7 +2674,7 @@ bool MipsAsmParser::parseSetFpDirective() {
   Parser.Lex(); // Eat fp token
   AsmToken Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Equal)) {
-    reportParseError("unexpected token in statement");
+    reportParseError("unexpected token, expected equals sign '='");
     return false;
   }
   Parser.Lex(); // Eat '=' token.
@@ -2684,7 +2684,7 @@ bool MipsAsmParser::parseSetFpDirective() {
     return false;
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    reportParseError("unexpected token in statement");
+    reportParseError("unexpected token, expected end of statement");
     return false;
   }
   getTargetStreamer().emitDirectiveSetFp(FpAbiVal);
@@ -2732,7 +2732,7 @@ bool MipsAsmParser::parseSetAssignment() {
     reportParseError("expected identifier after .set");
 
   if (getLexer().isNot(AsmToken::Comma))
-    return reportParseError("unexpected token in .set directive");
+    return reportParseError("unexpected token, expected comma");
   Lex(); // Eat comma
 
   if (Parser.parseExpression(Value))
@@ -2799,7 +2799,7 @@ bool MipsAsmParser::parseSetArchDirective() {
 bool MipsAsmParser::parseSetFeature(uint64_t Feature) {
   Parser.Lex();
   if (getLexer().isNot(AsmToken::EndOfStatement))
-    return reportParseError("unexpected token in .set directive");
+    return reportParseError("unexpected token, expected end of statement");
 
   switch (Feature) {
   default:
@@ -2919,7 +2919,7 @@ bool MipsAsmParser::parseDirectiveCPSetup() {
   FuncReg = FuncRegOpnd.getGPR32Reg();
   TmpReg.clear();
 
-  if (!eatComma("expected comma parsing directive"))
+  if (!eatComma("unexpected token, expected comma"))
     return true;
 
   ResTy = parseAnyRegister(TmpReg);
@@ -2944,7 +2944,7 @@ bool MipsAsmParser::parseDirectiveCPSetup() {
     Save = SaveOpnd.getGPR32Reg();
   }
 
-  if (!eatComma("expected comma parsing directive"))
+  if (!eatComma("unexpected token, expected comma"))
     return true;
 
   StringRef Name;
@@ -3064,9 +3064,8 @@ bool MipsAsmParser::parseDataDirective(unsigned Size, SMLoc L) {
       if (getLexer().is(AsmToken::EndOfStatement))
         break;
 
-      // FIXME: Improve diagnostic.
       if (getLexer().isNot(AsmToken::Comma))
-        return Error(L, "unexpected token in directive");
+        return Error(L, "unexpected token, expected comma");
       Parser.Lex();
     }
   }
@@ -3086,7 +3085,8 @@ bool MipsAsmParser::parseDirectiveGpWord() {
   getParser().getStreamer().EmitGPRel32Value(Value);
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
-    return Error(getLexer().getLoc(), "unexpected token in directive");
+    return Error(getLexer().getLoc(), 
+                "unexpected token, expected end of statement");
   Parser.Lex(); // Eat EndOfStatement token.
   return false;
 }
@@ -3102,7 +3102,8 @@ bool MipsAsmParser::parseDirectiveGpDWord() {
   getParser().getStreamer().EmitGPRel64Value(Value);
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
-    return Error(getLexer().getLoc(), "unexpected token in directive");
+    return Error(getLexer().getLoc(), 
+                "unexpected token, expected end of statement");
   Parser.Lex(); // Eat EndOfStatement token.
   return false;
 }
@@ -3112,7 +3113,7 @@ bool MipsAsmParser::parseDirectiveOption() {
   AsmToken Tok = Parser.getTok();
   // At the moment only identifiers are supported.
   if (Tok.isNot(AsmToken::Identifier)) {
-    Error(Parser.getTok().getLoc(), "unexpected token in .option directive");
+    Error(Parser.getTok().getLoc(), "unexpected token, expected identifier");
     Parser.eatToEndOfStatement();
     return false;
   }
@@ -3124,7 +3125,7 @@ bool MipsAsmParser::parseDirectiveOption() {
     Parser.Lex();
     if (Parser.getTok().isNot(AsmToken::EndOfStatement)) {
       Error(Parser.getTok().getLoc(),
-            "unexpected token in .option pic0 directive");
+            "unexpected token, expected end of statement");
       Parser.eatToEndOfStatement();
     }
     return false;
@@ -3135,14 +3136,15 @@ bool MipsAsmParser::parseDirectiveOption() {
     Parser.Lex();
     if (Parser.getTok().isNot(AsmToken::EndOfStatement)) {
       Error(Parser.getTok().getLoc(),
-            "unexpected token in .option pic2 directive");
+            "unexpected token, expected end of statement");
       Parser.eatToEndOfStatement();
     }
     return false;
   }
 
   // Unknown option.
-  Warning(Parser.getTok().getLoc(), "unknown option in .option directive");
+  Warning(Parser.getTok().getLoc(), 
+          "unknown option, expected 'pic0' or 'pic2'");
   Parser.eatToEndOfStatement();
   return false;
 }
@@ -3170,7 +3172,7 @@ bool MipsAsmParser::parseDirectiveModule() {
       clearFeatureBits(Mips::FeatureNoOddSPReg, "nooddspreg");
 
       if (getLexer().isNot(AsmToken::EndOfStatement)) {
-        reportParseError("Expected end of statement");
+        reportParseError("unexpected token, expected end of statement");
         return false;
       }
 
@@ -3185,7 +3187,7 @@ bool MipsAsmParser::parseDirectiveModule() {
       setFeatureBits(Mips::FeatureNoOddSPReg, "nooddspreg");
 
       if (getLexer().isNot(AsmToken::EndOfStatement)) {
-        reportParseError("Expected end of statement");
+        reportParseError("unexpected token, expected end of statement");
         return false;
       }
 
@@ -3208,7 +3210,7 @@ bool MipsAsmParser::parseDirectiveModuleFP() {
   MCAsmLexer &Lexer = getLexer();
 
   if (Lexer.isNot(AsmToken::Equal)) {
-    reportParseError("unexpected token in statement");
+    reportParseError("unexpected token, expected equals sign '='");
     return false;
   }
   Parser.Lex(); // Eat '=' token.
@@ -3218,7 +3220,7 @@ bool MipsAsmParser::parseDirectiveModuleFP() {
     return false;
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    reportParseError("unexpected token in statement");
+    reportParseError("unexpected token, expected end of statement");
     return false;
   }
 
@@ -3518,7 +3520,8 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   if (IDVal == ".abicalls") {
     getTargetStreamer().emitDirectiveAbiCalls();
     if (Parser.getTok().isNot(AsmToken::EndOfStatement)) {
-      Error(Parser.getTok().getLoc(), "unexpected token in directive");
+      Error(Parser.getTok().getLoc(), 
+            "unexpected token, expected end of statement");
       // Clear line
       Parser.eatToEndOfStatement();
     }

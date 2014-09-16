@@ -2,5 +2,5 @@
 # RUN: FileCheck %s < %t1
 
         .text
-        li $5, 0x100000000 # CHECK: :[[@LINE]]:9: error: instruction requires a CPU feature not currently enabled
-        dli $5, 1 # CHECK: :[[@LINE]]:9: error: instruction requires a CPU feature not currently enabled
+        li $5, 0x100000000 # CHECK: :[[@LINE]]:9: error: instruction requires a 64-bit architecture
+        dli $5, 1 # CHECK: :[[@LINE]]:9: error: instruction requires a 64-bit architecture
