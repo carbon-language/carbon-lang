@@ -39,6 +39,14 @@ int main()
                                     input_iterator<const int*> >(
                             input_iterator<const int*>(ia+3),
                             input_iterator<const int*>(ib+3))));
+    assert(std::mismatch(comma_iterator<const int*>(ia),
+                         comma_iterator<const int*>(ia + sa),
+                         comma_iterator<const int*>(ib),
+                         std::equal_to<int>()) ==
+                         (std::pair<comma_iterator<const int*>,
+                                    comma_iterator<const int*> >(
+                            comma_iterator<const int*>(ia+3),
+                            comma_iterator<const int*>(ib+3))));
 #ifdef HAS_FOUR_ITERATOR_VERSION
     assert(std::mismatch(input_iterator<const int*>(ia),
                          input_iterator<const int*>(ia + sa),
