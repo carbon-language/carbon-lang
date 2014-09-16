@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
   // CHECK: {{    #1 0x.* in main .*shared-lib-test.cc:}}[[@LINE-4]]
   return 0;
 }
-#else  // SHARED_LIBS
+#else  // SHARED_LIB
 #include <stdio.h>
 #include <string.h>
 
@@ -54,4 +54,4 @@ extern "C"
 void inc2(int *a, int index) {
   a[index]++;
 }
-#endif  // SHARED_LIBS
+#endif  // SHARED_LIB
