@@ -198,6 +198,10 @@ void CodeGenModule::createCUDARuntime() {
   CUDARuntime = CreateNVCUDARuntime(*this);
 }
 
+void CodeGenModule::addReplacement(StringRef Name, llvm::Constant *C) {
+  Replacements[Name] = C;
+}
+
 void CodeGenModule::applyReplacements() {
   for (ReplacementsTy::iterator I = Replacements.begin(),
                                 E = Replacements.end();

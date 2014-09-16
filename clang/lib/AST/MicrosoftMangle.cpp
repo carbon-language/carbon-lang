@@ -854,6 +854,8 @@ void MicrosoftCXXNameMangler::mangleCXXDtorType(CXXDtorType T) {
   // <operator-name> ::= ?_E # vector deleting destructor
   // FIXME: Add a vector deleting dtor type.  It goes in the vtable, so we need
   // it.
+  case Dtor_Comdat:
+    llvm_unreachable("not expecting a COMDAT");
   }
   llvm_unreachable("Unsupported dtor type?");
 }

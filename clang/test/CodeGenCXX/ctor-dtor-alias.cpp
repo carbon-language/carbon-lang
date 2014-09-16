@@ -6,18 +6,23 @@
 // RUN: FileCheck --check-prefix=CHECK3 --input-file=%t %s
 // RUN: FileCheck --check-prefix=CHECK4 --input-file=%t %s
 // RUN: FileCheck --check-prefix=CHECK5 --input-file=%t %s
+// RUN: FileCheck --check-prefix=CHECK6 --input-file=%t %s
 
 namespace test1 {
-// test that we don't produce an alias when the destructor is weak_odr. The
-// reason to avoid it that another TU might have no explicit template
-// instantiation definition or declaration, causing it to to output only
-// one of the destructors as linkonce_odr, producing a different comdat.
+// Test that we produce the apropriate comdats when creating aliases to
+// weak_odr constructors and destructors.
 
-// CHECK1: define weak_odr void @_ZN5test16foobarIvEC2Ev
-// CHECK1: define weak_odr void @_ZN5test16foobarIvEC1Ev
+// CHECK1: @_ZN5test16foobarIvEC1Ev = weak_odr alias void {{.*}} @_ZN5test16foobarIvEC2Ev
+// CHECK1: @_ZN5test16foobarIvED1Ev = weak_odr alias void (%"struct.test1::foobar"*)* @_ZN5test16foobarIvED2Ev
+// CHECK1: define weak_odr void @_ZN5test16foobarIvEC2Ev({{.*}} comdat $_ZN5test16foobarIvEC5Ev
+// CHECK1: define weak_odr void @_ZN5test16foobarIvED2Ev({{.*}} comdat $_ZN5test16foobarIvED5Ev
+// CHECK1: define weak_odr void @_ZN5test16foobarIvED0Ev({{.*}} comdat $_ZN5test16foobarIvED5Ev
+// CHECK1-NOT: comdat
 
-template <typename T> struct foobar {
+template <typename T>
+struct foobar {
   foobar() {}
+  virtual ~foobar() {}
 };
 
 template struct foobar<void>;
@@ -186,4 +191,39 @@ class C : B<char> {
 void
 fn1() {
   new C;
+}
+
+namespace test10 {
+// Test that if a destructor is in a comdat, we don't try to emit is as an
+// alias to a base class destructor.
+struct bar {
+  ~bar();
+};
+bar::~bar() {
+}
+} // closing the namespace causes ~bar to be sent to CodeGen
+namespace test10 {
+template <typename T>
+struct foo : public bar {
+  ~foo();
+};
+template <typename T>
+foo<T>::~foo() {}
+template class foo<int>;
+// CHECK5: define weak_odr void @_ZN6test103fooIiED2Ev({{.*}} comdat $_ZN6test103fooIiED5Ev
+}
+
+namespace test11 {
+// Test that when we don't have to worry about COMDATs we produce an alias
+// from complate to base and from base to base class base.
+struct bar {
+  ~bar();
+};
+bar::~bar() {}
+struct foo : public bar {
+  ~foo();
+};
+foo::~foo() {}
+// CHECK6: @_ZN6test113fooD2Ev = alias {{.*}} @_ZN6test113barD2Ev
+// CHECK6: @_ZN6test113fooD1Ev = alias {{.*}} @_ZN6test113fooD2Ev
 }

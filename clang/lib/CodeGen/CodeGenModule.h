@@ -1058,8 +1058,16 @@ public:
   void setFunctionDefinitionAttributes(const FunctionDecl *D,
                                        llvm::Function *F);
 
-private:
   llvm::GlobalValue *GetGlobalValue(StringRef Ref);
+
+  /// Set attributes which are common to any form of a global definition (alias,
+  /// Objective-C method, function, global variable).
+  ///
+  /// NOTE: This should only be called for definitions.
+  void SetCommonAttributes(const Decl *D, llvm::GlobalValue *GV);
+
+  void addReplacement(StringRef Name, llvm::Constant *C);
+private:
 
   llvm::Constant *
   GetOrCreateLLVMFunction(StringRef MangledName, llvm::Type *Ty, GlobalDecl D,
@@ -1069,12 +1077,6 @@ private:
   llvm::Constant *GetOrCreateLLVMGlobal(StringRef MangledName,
                                         llvm::PointerType *PTy,
                                         const VarDecl *D);
-
-  /// Set attributes which are common to any form of a global definition (alias,
-  /// Objective-C method, function, global variable).
-  ///
-  /// NOTE: This should only be called for definitions.
-  void SetCommonAttributes(const Decl *D, llvm::GlobalValue *GV);
 
   void setNonAliasAttributes(const Decl *D, llvm::GlobalObject *GO);
 

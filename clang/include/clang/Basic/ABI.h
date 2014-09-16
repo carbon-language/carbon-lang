@@ -24,14 +24,15 @@ namespace clang {
 enum CXXCtorType {
     Ctor_Complete,          ///< Complete object ctor
     Ctor_Base,              ///< Base object ctor
-    Ctor_CompleteAllocating ///< Complete object allocating ctor
+    Ctor_Comdat             ///< The COMDAT used for ctors
 };
 
 /// \brief C++ destructor types.
 enum CXXDtorType {
     Dtor_Deleting, ///< Deleting dtor
     Dtor_Complete, ///< Complete object dtor
-    Dtor_Base      ///< Base object dtor
+    Dtor_Base,     ///< Base object dtor
+    Dtor_Comdat    ///< The COMDAT used for dtors
 };
 
 /// \brief A return adjustment.

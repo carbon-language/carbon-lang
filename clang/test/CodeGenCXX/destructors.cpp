@@ -204,18 +204,14 @@ namespace test3 {
   // CHECK4: call void @_ZN5test312_GLOBAL__N_11DD0Ev(
   // CHECK4: ret void
 
-  // CHECK4-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
-  // CHECK4: getelementptr inbounds i8* {{.*}}, i64 -8
-  // CHECK4: call void @_ZN5test312_GLOBAL__N_11CD2Ev(
-  // CHECK4: ret void
+  // CHECK4-LABEL: declare void @_ZN5test31BD2Ev(
+  // CHECK4-LABEL: declare void @_ZN5test31AD2Ev(
 
   // CHECK4-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(%"struct.test3::(anonymous namespace)::C"* %this) unnamed_addr
   // CHECK4: invoke void @_ZN5test31BD2Ev(
   // CHECK4: call void @_ZN5test31AD2Ev(
   // CHECK4: ret void
 
-  // CHECK4: declare void @_ZN5test31BD2Ev(
-  // CHECK4: declare void @_ZN5test31AD2Ev(
 
   // CHECK4-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD0Ev(%"struct.test3::(anonymous namespace)::C"* %this) unnamed_addr
   // CHECK4: invoke void @_ZN5test312_GLOBAL__N_11CD2Ev(
@@ -225,6 +221,11 @@ namespace test3 {
   // CHECK4-NEXT: cleanup
   // CHECK4: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK4: resume { i8*, i32 }
+
+  // CHECK4-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
+  // CHECK4: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK4: call void @_ZN5test312_GLOBAL__N_11CD2Ev(
+  // CHECK4: ret void
 
   // CHECK4-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD0Ev(
   // CHECK4: getelementptr inbounds i8* {{.*}}, i64 -8

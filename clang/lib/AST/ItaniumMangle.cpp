@@ -150,6 +150,8 @@ public:
   void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
                      raw_ostream &) override;
 
+  void mangleCXXCtorComdat(const CXXConstructorDecl *D, raw_ostream &) override;
+  void mangleCXXDtorComdat(const CXXDestructorDecl *D, raw_ostream &) override;
   void mangleStaticGuardVariable(const VarDecl *D, raw_ostream &) override;
   void mangleDynamicInitializer(const VarDecl *D, raw_ostream &Out) override;
   void mangleDynamicAtExitDestructor(const VarDecl *D,
@@ -3249,8 +3251,8 @@ void CXXNameMangler::mangleFunctionParam(const ParmVarDecl *parm) {
 void CXXNameMangler::mangleCXXCtorType(CXXCtorType T) {
   // <ctor-dtor-name> ::= C1  # complete object constructor
   //                  ::= C2  # base object constructor
-  //                  ::= C3  # complete object allocating constructor
   //
+  // In addition, C5 is a comdat name with C1 and C2 in it.
   switch (T) {
   case Ctor_Complete:
     Out << "C1";
@@ -3258,8 +3260,8 @@ void CXXNameMangler::mangleCXXCtorType(CXXCtorType T) {
   case Ctor_Base:
     Out << "C2";
     break;
-  case Ctor_CompleteAllocating:
-    Out << "C3";
+  case Ctor_Comdat:
+    Out << "C5";
     break;
   }
 }
@@ -3269,6 +3271,7 @@ void CXXNameMangler::mangleCXXDtorType(CXXDtorType T) {
   //                  ::= D1  # complete object destructor
   //                  ::= D2  # base object destructor
   //
+  // In addition, D5 is a comdat name with D1, D2 and, if virtual, D0 in it.
   switch (T) {
   case Dtor_Deleting:
     Out << "D0";
@@ -3278,6 +3281,9 @@ void CXXNameMangler::mangleCXXDtorType(CXXDtorType T) {
     break;
   case Dtor_Base:
     Out << "D2";
+    break;
+  case Dtor_Comdat:
+    Out << "D5";
     break;
   }
 }
@@ -3686,6 +3692,18 @@ void ItaniumMangleContextImpl::mangleCXXDtor(const CXXDestructorDecl *D,
                                              CXXDtorType Type,
                                              raw_ostream &Out) {
   CXXNameMangler Mangler(*this, Out, D, Type);
+  Mangler.mangle(D);
+}
+
+void ItaniumMangleContextImpl::mangleCXXCtorComdat(const CXXConstructorDecl *D,
+                                                   raw_ostream &Out) {
+  CXXNameMangler Mangler(*this, Out, D, Ctor_Comdat);
+  Mangler.mangle(D);
+}
+
+void ItaniumMangleContextImpl::mangleCXXDtorComdat(const CXXDestructorDecl *D,
+                                                   raw_ostream &Out) {
+  CXXNameMangler Mangler(*this, Out, D, Dtor_Comdat);
   Mangler.mangle(D);
 }
 

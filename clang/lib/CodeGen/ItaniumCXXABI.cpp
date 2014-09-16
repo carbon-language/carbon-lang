@@ -2999,35 +2999,102 @@ ItaniumCXXABI::RTTIUniquenessKind ItaniumCXXABI::classifyRTTIUniqueness(
   return RUK_NonUniqueVisible;
 }
 
-static void emitCXXConstructor(CodeGenModule &CGM,
-                               const CXXConstructorDecl *ctor,
-                               StructorType ctorType) {
-  if (!ctor->getParent()->getNumVBases() &&
-      (ctorType == StructorType::Complete || ctorType == StructorType::Base)) {
-    // The complete constructor is equivalent to the base constructor
-    // for classes with no virtual bases.  Try to emit it as an alias.
-    bool ProducedAlias = !CGM.TryEmitDefinitionAsAlias(
-        GlobalDecl(ctor, Ctor_Complete), GlobalDecl(ctor, Ctor_Base), true);
-    if (ctorType == StructorType::Complete && ProducedAlias)
-      return;
-  }
+// Find out how to codegen the complete destructor and constructor
+namespace {
+enum class StructorCodegen { Emit, RAUW, Alias, COMDAT };
+}
+static StructorCodegen getCodegenToUse(CodeGenModule &CGM,
+                                       const CXXMethodDecl *MD) {
+  if (!CGM.getCodeGenOpts().CXXCtorDtorAliases)
+    return StructorCodegen::Emit;
 
-  CGM.codegenCXXStructor(ctor, ctorType);
+  // The complete and base structors are not equivalent if there are any virtual
+  // bases, so emit separate functions.
+  if (MD->getParent()->getNumVBases())
+    return StructorCodegen::Emit;
+
+  GlobalDecl AliasDecl;
+  if (const auto *DD = dyn_cast<CXXDestructorDecl>(MD)) {
+    AliasDecl = GlobalDecl(DD, Dtor_Complete);
+  } else {
+    const auto *CD = cast<CXXConstructorDecl>(MD);
+    AliasDecl = GlobalDecl(CD, Ctor_Complete);
+  }
+  llvm::GlobalValue::LinkageTypes Linkage = CGM.getFunctionLinkage(AliasDecl);
+
+  if (llvm::GlobalValue::isDiscardableIfUnused(Linkage))
+    return StructorCodegen::RAUW;
+
+  // FIXME: Should we allow available_externally aliases?
+  if (!llvm::GlobalAlias::isValidLinkage(Linkage))
+    return StructorCodegen::RAUW;
+
+  if (llvm::GlobalValue::isWeakForLinker(Linkage))
+    return StructorCodegen::COMDAT;
+
+  return StructorCodegen::Alias;
 }
 
-static void emitCXXDestructor(CodeGenModule &CGM, const CXXDestructorDecl *dtor,
-                              StructorType dtorType) {
-  // The complete destructor is equivalent to the base destructor for
-  // classes with no virtual bases, so try to emit it as an alias.
-  if (!dtor->getParent()->getNumVBases() &&
-      (dtorType == StructorType::Complete || dtorType == StructorType::Base)) {
-    bool ProducedAlias = !CGM.TryEmitDefinitionAsAlias(
-        GlobalDecl(dtor, Dtor_Complete), GlobalDecl(dtor, Dtor_Base), true);
-    if (ProducedAlias) {
-      if (dtorType == StructorType::Complete)
-        return;
-      if (dtor->isVirtual())
-        CGM.getVTables().EmitThunks(GlobalDecl(dtor, Dtor_Complete));
+static void emitConstructorDestructorAlias(CodeGenModule &CGM,
+                                           GlobalDecl AliasDecl,
+                                           GlobalDecl TargetDecl) {
+  llvm::GlobalValue::LinkageTypes Linkage = CGM.getFunctionLinkage(AliasDecl);
+
+  StringRef MangledName = CGM.getMangledName(AliasDecl);
+  llvm::GlobalValue *Entry = CGM.GetGlobalValue(MangledName);
+  if (Entry && !Entry->isDeclaration())
+    return;
+
+  auto *Aliasee = cast<llvm::GlobalValue>(CGM.GetAddrOfGlobal(TargetDecl));
+  llvm::PointerType *AliasType = Aliasee->getType();
+
+  // Create the alias with no name.
+  auto *Alias = llvm::GlobalAlias::create(
+      AliasType->getElementType(), 0, Linkage, "", Aliasee, &CGM.getModule());
+
+  // Switch any previous uses to the alias.
+  if (Entry) {
+    assert(Entry->getType() == AliasType &&
+           "declaration exists with different type");
+    Alias->takeName(Entry);
+    Entry->replaceAllUsesWith(Alias);
+    Entry->eraseFromParent();
+  } else {
+    Alias->setName(MangledName);
+  }
+
+  // Finally, set up the alias with its proper name and attributes.
+  CGM.SetCommonAttributes(cast<NamedDecl>(AliasDecl.getDecl()), Alias);
+}
+
+void ItaniumCXXABI::emitCXXStructor(const CXXMethodDecl *MD,
+                                    StructorType Type) {
+  auto *CD = dyn_cast<CXXConstructorDecl>(MD);
+  const CXXDestructorDecl *DD = CD ? nullptr : cast<CXXDestructorDecl>(MD);
+
+  StructorCodegen CGType = getCodegenToUse(CGM, MD);
+
+  if (Type == StructorType::Complete) {
+    GlobalDecl CompleteDecl;
+    GlobalDecl BaseDecl;
+    if (CD) {
+      CompleteDecl = GlobalDecl(CD, Ctor_Complete);
+      BaseDecl = GlobalDecl(CD, Ctor_Base);
+    } else {
+      CompleteDecl = GlobalDecl(DD, Dtor_Complete);
+      BaseDecl = GlobalDecl(DD, Dtor_Base);
+    }
+
+    if (CGType == StructorCodegen::Alias || CGType == StructorCodegen::COMDAT) {
+      emitConstructorDestructorAlias(CGM, CompleteDecl, BaseDecl);
+      return;
+    }
+
+    if (CGType == StructorCodegen::RAUW) {
+      StringRef MangledName = CGM.getMangledName(CompleteDecl);
+      auto *Aliasee = cast<llvm::GlobalValue>(CGM.GetAddrOfGlobal(BaseDecl));
+      CGM.addReplacement(MangledName, Aliasee);
+      return;
     }
   }
 
@@ -3035,17 +3102,20 @@ static void emitCXXDestructor(CodeGenModule &CGM, const CXXDestructorDecl *dtor,
   // base class if there is exactly one non-virtual base class with a
   // non-trivial destructor, there are no fields with a non-trivial
   // destructor, and the body of the destructor is trivial.
-  if (dtorType == StructorType::Base && !CGM.TryEmitBaseDestructorAsAlias(dtor))
+  if (DD && Type == StructorType::Base && CGType != StructorCodegen::COMDAT &&
+      !CGM.TryEmitBaseDestructorAsAlias(DD))
     return;
 
-  CGM.codegenCXXStructor(dtor, dtorType);
-}
+  llvm::Function *Fn = CGM.codegenCXXStructor(MD, Type);
 
-void ItaniumCXXABI::emitCXXStructor(const CXXMethodDecl *MD,
-                                    StructorType Type) {
-  if (auto *CD = dyn_cast<CXXConstructorDecl>(MD)) {
-    emitCXXConstructor(CGM, CD, Type);
-    return;
+  if (CGType == StructorCodegen::COMDAT) {
+    SmallString<256> Buffer;
+    llvm::raw_svector_ostream Out(Buffer);
+    if (DD)
+      getMangleContext().mangleCXXDtorComdat(DD, Out);
+    else
+      getMangleContext().mangleCXXCtorComdat(CD, Out);
+    llvm::Comdat *C = CGM.getModule().getOrInsertComdat(Out.str());
+    Fn->setComdat(C);
   }
-  emitCXXDestructor(CGM, cast<CXXDestructorDecl>(MD), Type);
 }
