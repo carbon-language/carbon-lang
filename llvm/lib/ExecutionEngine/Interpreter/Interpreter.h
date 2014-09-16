@@ -41,18 +41,13 @@ class AllocaHolder {
 
 public:
   AllocaHolder() {}
-  // Make this type move-only.
-#if defined(_MSC_VER) && _MSC_VER < 1800
-  // Hack around bugs in MSVC 2012. It always tries to copy this class.
-  AllocaHolder(const AllocaHolder &RHS)
-      : Allocations(std::move(const_cast<AllocaHolder &>(RHS).Allocations)) {}
-  AllocaHolder &operator=(const AllocaHolder &RHS) {
-    Allocations = std::move(const_cast<AllocaHolder &>(RHS).Allocations);
+
+  // Make this type move-only. Define explicit move special members for MSVC.
+  AllocaHolder(AllocaHolder &&RHS) : Allocations(std::move(RHS.Allocations)) {}
+  AllocaHolder &operator=(AllocaHolder &&RHS) {
+    Allocations = std::move(RHS.Allocations);
     return *this;
   }
-#else
-  AllocaHolder(AllocaHolder &&RHS) : Allocations(std::move(RHS.Allocations)) {}
-#endif
 
   ~AllocaHolder() {
     for (void *Allocation : Allocations)
@@ -71,11 +66,28 @@ struct ExecutionContext {
   Function             *CurFunction;// The currently executing function
   BasicBlock           *CurBB;      // The currently executing BB
   BasicBlock::iterator  CurInst;    // The next instruction to execute
-  std::map<Value *, GenericValue> Values; // LLVM values used in this invocation
-  std::vector<GenericValue>  VarArgs; // Values passed through an ellipsis
   CallSite             Caller;     // Holds the call that called subframes.
                                    // NULL if main func or debugger invoked fn
+  std::map<Value *, GenericValue> Values; // LLVM values used in this invocation
+  std::vector<GenericValue>  VarArgs; // Values passed through an ellipsis
   AllocaHolder Allocas;            // Track memory allocated by alloca
+
+  ExecutionContext() : CurFunction(nullptr), CurBB(nullptr), CurInst(nullptr) {}
+
+  ExecutionContext(ExecutionContext &&O)
+      : CurFunction(O.CurFunction), CurBB(O.CurBB), CurInst(O.CurInst),
+        Caller(O.Caller), Values(std::move(O.Values)),
+        VarArgs(std::move(O.VarArgs)), Allocas(std::move(O.Allocas)) {}
+
+  ExecutionContext &operator=(ExecutionContext &&O) {
+    CurFunction = O.CurFunction;
+    CurBB = O.CurBB;
+    CurInst = O.CurInst;
+    Caller = O.Caller;
+    Values = std::move(O.Values);
+    VarArgs = std::move(O.VarArgs);
+    Allocas = std::move(O.Allocas);
+  }
 };
 
 // Interpreter - This class represents the entirety of the interpreter.
