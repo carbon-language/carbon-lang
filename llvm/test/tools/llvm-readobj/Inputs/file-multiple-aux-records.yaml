@@ -6,7 +6,7 @@ symbols:
   - !Symbol
     Name: .file
     Value: 0
-    SectionNumber: 65534
+    SectionNumber: -2
     SimpleType: IMAGE_SYM_TYPE_NULL
     ComplexType: IMAGE_SYM_DTYPE_NULL
     StorageClass: IMAGE_SYM_CLASS_FILE
@@ -14,7 +14,7 @@ symbols:
   - !Symbol
     Name: '@comp.id'
     Value: 13485607
-    SectionNumber: 65535
+    SectionNumber: -1
     SimpleType: IMAGE_SYM_TYPE_NULL
     ComplexType: IMAGE_SYM_DTYPE_NULL
     StorageClass: IMAGE_SYM_CLASS_STATIC

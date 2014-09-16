@@ -36,6 +36,18 @@ struct COFFParser {
     StringTable.append(4, char(0));
   }
 
+  bool useBigObj() const {
+    return Obj.Sections.size() > COFF::MaxNumberOfSections16;
+  }
+
+  unsigned getHeaderSize() const {
+    return useBigObj() ? COFF::Header32Size : COFF::Header16Size;
+  }
+
+  unsigned getSymbolSize() const {
+    return useBigObj() ? COFF::Symbol32Size : COFF::Symbol16Size;
+  }
+
   bool parseSections() {
     for (std::vector<COFFYAML::Section>::iterator i = Obj.Sections.begin(),
            e = Obj.Sections.end(); i != e; ++i) {
@@ -121,7 +133,7 @@ static bool layoutCOFF(COFFParser &CP) {
 
   // The section table starts immediately after the header, including the
   // optional header.
-  SectionTableStart = COFF::Header16Size + CP.Obj.Header.SizeOfOptionalHeader;
+  SectionTableStart = CP.getHeaderSize() + CP.Obj.Header.SizeOfOptionalHeader;
   SectionTableSize = COFF::SectionSize * CP.Obj.Sections.size();
 
   uint32_t CurrentSectionDataOffset = SectionTableStart + SectionTableSize;
@@ -163,7 +175,7 @@ static bool layoutCOFF(COFFParser &CP) {
       NumberOfAuxSymbols += 1;
     if (!i->File.empty())
       NumberOfAuxSymbols +=
-          (i->File.size() + COFF::Symbol16Size - 1) / COFF::Symbol16Size;
+          (i->File.size() + CP.getSymbolSize() - 1) / CP.getSymbolSize();
     if (i->SectionDefinition)
       NumberOfAuxSymbols += 1;
     if (i->CLRToken)
@@ -222,14 +234,46 @@ zeros_impl<sizeof(T)> zeros(const T &) {
   return zeros_impl<sizeof(T)>();
 }
 
+struct num_zeros_impl {
+  size_t N;
+  num_zeros_impl(size_t N) : N(N) {}
+};
+
+raw_ostream &operator<<(raw_ostream &OS, const num_zeros_impl &NZI) {
+  for (size_t I = 0; I != NZI.N; ++I)
+    OS.write(0);
+  return OS;
+}
+
+num_zeros_impl num_zeros(size_t N) {
+  num_zeros_impl NZI(N);
+  return NZI;
+}
+
 bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
-  OS << binary_le(CP.Obj.Header.Machine)
-     << binary_le(static_cast<int16_t>(CP.Obj.Header.NumberOfSections))
-     << binary_le(CP.Obj.Header.TimeDateStamp)
-     << binary_le(CP.Obj.Header.PointerToSymbolTable)
-     << binary_le(CP.Obj.Header.NumberOfSymbols)
-     << binary_le(CP.Obj.Header.SizeOfOptionalHeader)
-     << binary_le(CP.Obj.Header.Characteristics);
+  if (CP.useBigObj()) {
+    OS << binary_le(static_cast<uint16_t>(COFF::IMAGE_FILE_MACHINE_UNKNOWN))
+       << binary_le(static_cast<uint16_t>(0xffff))
+       << binary_le(static_cast<uint16_t>(COFF::BigObjHeader::MinBigObjectVersion))
+       << binary_le(CP.Obj.Header.Machine)
+       << binary_le(CP.Obj.Header.TimeDateStamp);
+    OS.write(COFF::BigObjMagic, sizeof(COFF::BigObjMagic));
+    OS << zeros(uint32_t(0))
+       << zeros(uint32_t(0))
+       << zeros(uint32_t(0))
+       << zeros(uint32_t(0))
+       << binary_le(CP.Obj.Header.NumberOfSections)
+       << binary_le(CP.Obj.Header.PointerToSymbolTable)
+       << binary_le(CP.Obj.Header.NumberOfSymbols);
+  } else {
+    OS << binary_le(CP.Obj.Header.Machine)
+       << binary_le(static_cast<int16_t>(CP.Obj.Header.NumberOfSections))
+       << binary_le(CP.Obj.Header.TimeDateStamp)
+       << binary_le(CP.Obj.Header.PointerToSymbolTable)
+       << binary_le(CP.Obj.Header.NumberOfSymbols)
+       << binary_le(CP.Obj.Header.SizeOfOptionalHeader)
+       << binary_le(CP.Obj.Header.Characteristics);
+  }
 
   // Output section table.
   for (std::vector<COFFYAML::Section>::iterator i = CP.Obj.Sections.begin(),
@@ -276,9 +320,12 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
                                                      e = CP.Obj.Symbols.end();
                                                      i != e; ++i) {
     OS.write(i->Header.Name, COFF::NameSize);
-    OS << binary_le(i->Header.Value)
-       << binary_le(static_cast<int16_t>(i->Header.SectionNumber))
-       << binary_le(i->Header.Type)
+    OS << binary_le(i->Header.Value);
+    if (CP.useBigObj())
+       OS << binary_le(i->Header.SectionNumber);
+    else
+       OS << binary_le(static_cast<int16_t>(i->Header.SectionNumber));
+    OS << binary_le(i->Header.Type)
        << binary_le(i->Header.StorageClass)
        << binary_le(i->Header.NumberOfAuxSymbols);
 
@@ -287,25 +334,28 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
          << binary_le(i->FunctionDefinition->TotalSize)
          << binary_le(i->FunctionDefinition->PointerToLinenumber)
          << binary_le(i->FunctionDefinition->PointerToNextFunction)
-         << zeros(i->FunctionDefinition->unused);
+         << zeros(i->FunctionDefinition->unused)
+         << num_zeros(CP.getSymbolSize() - COFF::Symbol16Size);
     if (i->bfAndefSymbol)
       OS << zeros(i->bfAndefSymbol->unused1)
          << binary_le(i->bfAndefSymbol->Linenumber)
          << zeros(i->bfAndefSymbol->unused2)
          << binary_le(i->bfAndefSymbol->PointerToNextFunction)
-         << zeros(i->bfAndefSymbol->unused3);
+         << zeros(i->bfAndefSymbol->unused3)
+         << num_zeros(CP.getSymbolSize() - COFF::Symbol16Size);
     if (i->WeakExternal)
       OS << binary_le(i->WeakExternal->TagIndex)
          << binary_le(i->WeakExternal->Characteristics)
-         << zeros(i->WeakExternal->unused);
+         << zeros(i->WeakExternal->unused)
+         << num_zeros(CP.getSymbolSize() - COFF::Symbol16Size);
     if (!i->File.empty()) {
+      unsigned SymbolSize = CP.getSymbolSize();
       uint32_t NumberOfAuxRecords =
-          (i->File.size() + COFF::Symbol16Size - 1) / COFF::Symbol16Size;
-      uint32_t NumberOfAuxBytes = NumberOfAuxRecords * COFF::Symbol16Size;
+          (i->File.size() + SymbolSize - 1) / SymbolSize;
+      uint32_t NumberOfAuxBytes = NumberOfAuxRecords * SymbolSize;
       uint32_t NumZeros = NumberOfAuxBytes - i->File.size();
       OS.write(i->File.data(), i->File.size());
-      for (uint32_t Padding = 0; Padding < NumZeros; ++Padding)
-        OS.write(0);
+      OS << num_zeros(NumZeros);
     }
     if (i->SectionDefinition)
       OS << binary_le(i->SectionDefinition->Length)
@@ -315,12 +365,14 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
          << binary_le(static_cast<int16_t>(i->SectionDefinition->Number))
          << binary_le(i->SectionDefinition->Selection)
          << zeros(i->SectionDefinition->unused)
-         << binary_le(static_cast<int16_t>(i->SectionDefinition->Number >> 16));
+         << binary_le(static_cast<int16_t>(i->SectionDefinition->Number >> 16))
+         << num_zeros(CP.getSymbolSize() - COFF::Symbol16Size);
     if (i->CLRToken)
       OS << binary_le(i->CLRToken->AuxType)
          << zeros(i->CLRToken->unused1)
          << binary_le(i->CLRToken->SymbolTableIndex)
-         << zeros(i->CLRToken->unused2);
+         << zeros(i->CLRToken->unused2)
+         << num_zeros(CP.getSymbolSize() - COFF::Symbol16Size);
   }
 
   // Output string table.

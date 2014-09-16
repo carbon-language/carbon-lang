@@ -63,7 +63,7 @@ namespace COFF {
   };
 
   struct BigObjHeader {
-    enum { MinBigObjectVersion = 2 };
+    enum : uint16_t { MinBigObjectVersion = 2 };
 
     uint16_t Sig1; ///< Must be IMAGE_FILE_MACHINE_UNKNOWN (0).
     uint16_t Sig2; ///< Must be 0xFFFF.
