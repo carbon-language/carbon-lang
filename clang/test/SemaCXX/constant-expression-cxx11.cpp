@@ -1326,6 +1326,49 @@ namespace MutableMembers {
   struct C { B b; };
   constexpr C c[3] = {};
   constexpr int k = c[1].b.a.n; // expected-error {{constant expression}} expected-note {{mutable}}
+
+  struct D { int x; mutable int y; }; // expected-note {{here}}
+  constexpr D d1 = { 1, 2 };
+  int l = ++d1.y;
+  constexpr D d2 = d1; // expected-error {{constant}} expected-note {{mutable}} expected-note {{in call}}
+
+  struct E {
+    union {
+      int a;
+      mutable int b; // expected-note {{here}}
+    };
+  };
+  constexpr E e1 = {{1}};
+  constexpr E e2 = e1; // expected-error {{constant}} expected-note {{mutable}} expected-note {{in call}}
+
+  struct F {
+    union U { };
+    mutable U u;
+    struct X { };
+    mutable X x;
+    struct Y : X { X x; U u; };
+    mutable Y y;
+    int n;
+  };
+  // This is OK; we don't actually read any mutable state here.
+  constexpr F f1 = {};
+  constexpr F f2 = f1;
+
+  struct G {
+    struct X {};
+    union U { X a; };
+    mutable U u; // expected-note {{here}}
+  };
+  constexpr G g1 = {};
+  constexpr G g2 = g1; // expected-error {{constant}} expected-note {{mutable}} expected-note {{in call}}
+  constexpr G::U gu1 = {};
+  constexpr G::U gu2 = gu1;
+
+  union H {
+    mutable G::X gx; // expected-note {{here}}
+  };
+  constexpr H h1 = {};
+  constexpr H h2 = h1; // expected-error {{constant}} expected-note {{mutable}} expected-note {{in call}}
 }
 
 namespace Fold {
