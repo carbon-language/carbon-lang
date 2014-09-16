@@ -1073,22 +1073,25 @@ void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
             nFile.bindingInfo.push_back(bind);
           }
         }
-        if (_archHandler.isLazyPointer(*ref)) {
-            BindLocation bind;
-            bind.segIndex = segmentIndex;
-            bind.segOffset = segmentOffset;
-            bind.kind = llvm::MachO::BIND_TYPE_POINTER;
-            bind.canBeNull = false; //sa->canBeNullAtRuntime();
-            bind.ordinal = 1; // FIXME
-            bind.symbolName = targ->name();
-            bind.addend = ref->addend();
-            nFile.lazyBindingInfo.push_back(bind);
+        else if (_archHandler.isLazyPointer(*ref)) {
+          BindLocation bind;
+          if (const SharedLibraryAtom *sa = dyn_cast<SharedLibraryAtom>(targ)) {
+            bind.ordinal = dylibOrdinal(sa);
+          } else {
+            bind.ordinal = llvm::MachO::BIND_SPECIAL_DYLIB_SELF;
+          }
+          bind.segIndex = segmentIndex;
+          bind.segOffset = segmentOffset;
+          bind.kind = llvm::MachO::BIND_TYPE_POINTER;
+          bind.canBeNull = false; //sa->canBeNullAtRuntime();
+          bind.symbolName = targ->name();
+          bind.addend = ref->addend();
+          nFile.lazyBindingInfo.push_back(bind);
         }
       }
     }
   }
 }
-
 
 void Util::addExportInfo(const lld::File &atomFile, NormalizedFile &nFile) {
   if (_context.outputMachOType() == llvm::MachO::MH_OBJECT)

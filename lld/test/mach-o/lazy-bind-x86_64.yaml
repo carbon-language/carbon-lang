@@ -1,0 +1,94 @@
+# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 %s -o %t  \
+# RUN:   %p/Inputs/libSystem.yaml \
+# RUN:  && llvm-objdump -lazy-bind %t | FileCheck %s \
+# RUN:  && llvm-nm -m %t | FileCheck --check-prefix=CHECK-NM %s
+#
+# Test that correct two-level namespace ordinals are used for lazy bindings.
+#
+
+--- !mach-o
+arch:            x86_64
+file-type:       MH_OBJECT
+flags:           [ MH_SUBSECTIONS_VIA_SYMBOLS ]
+sections:
+  - segment:         __TEXT
+    section:         __text
+    type:            S_REGULAR
+    attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
+    address:         0x0000000000000000
+    content:         [ 0x55, 0x48, 0x89, 0xE5, 0x31, 0xC0, 0xE8, 0x00,
+                       0x00, 0x00, 0x00, 0x31, 0xC0, 0xE8, 0x00, 0x00,
+                       0x00, 0x00, 0x31, 0xC0, 0xE8, 0x00, 0x00, 0x00,
+                       0x00, 0x31, 0xC0, 0x5D, 0xC3 ]
+    relocations:
+      - offset:          0x00000015
+        type:            X86_64_RELOC_BRANCH
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          3
+      - offset:          0x0000000E
+        type:            X86_64_RELOC_BRANCH
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          2
+      - offset:          0x00000007
+        type:            X86_64_RELOC_BRANCH
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          1
+global-symbols:
+  - name:            _main
+    type:            N_SECT
+    scope:           [ N_EXT ]
+    sect:            1
+    value:           0x0000000000000000
+undefined-symbols:
+  - name:            _bar
+    type:            N_UNDF
+    scope:           [ N_EXT ]
+    value:           0x0000000000000000
+  - name:            _baz
+    type:            N_UNDF
+    scope:           [ N_EXT ]
+    value:           0x0000000000000000
+  - name:            _foo
+    type:            N_UNDF
+    scope:           [ N_EXT ]
+    value:           0x0000000000000000
+
+--- !mach-o
+arch:            x86_64
+file-type:       MH_DYLIB
+install-name:    /usr/lib/libbar.dylib
+exports:
+  - name:            _bar
+
+--- !mach-o
+arch:            x86_64
+file-type:       MH_DYLIB
+install-name:    /usr/lib/libfoo.dylib
+exports:
+  - name:            _foo
+
+--- !mach-o
+arch:            x86_64
+file-type:       MH_DYLIB
+install-name:    /usr/lib/libbaz.dylib
+exports:
+  - name:            _baz
+
+...
+
+
+# CHECK:    libbar.dylib        _bar
+# CHECK:    libbaz.dylib        _baz
+# CHECK:    libfoo.dylib        _foo
+
+
+# CHECK-NM:   (undefined) external _bar (from libbar)
+# CHECK-NM:   (undefined) external _baz (from libbaz)
+# CHECK-NM:   (undefined) external _foo (from libfoo)
+
