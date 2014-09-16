@@ -301,6 +301,7 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
     .setErrorStr(&error_string)
     .setRelocationModel(relocModel)
     .setJITMemoryManager(new MemoryManager(*this))
+    .setCodeModel(codeModel)
     .setOptLevel(llvm::CodeGenOpt::Less);
 
     llvm::StringRef mArch;

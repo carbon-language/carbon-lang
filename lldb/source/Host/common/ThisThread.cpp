@@ -28,12 +28,12 @@ ThisThread::SetName(llvm::StringRef name, int max_length)
     // off leads to a lot of similar named threads.  Go through the thread name
     // and search for the last dot and use that.
 
-    if (max_length > 0 && truncated_name.length() > max_length)
+    if (max_length > 0 && truncated_name.length() > static_cast<size_t>(max_length))
     {
         // First see if we can get lucky by removing any initial or final braces.
         std::string::size_type begin = truncated_name.find_first_not_of("(<");
         std::string::size_type end = truncated_name.find_last_not_of(")>.");
-        if (end - begin > max_length)
+        if (end - begin > static_cast<size_t>(max_length))
         {
             // We're still too long.  Since this is a dotted component, use everything after the last
             // dot, up to a maximum of |length| characters.

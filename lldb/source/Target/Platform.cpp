@@ -541,6 +541,7 @@ RecurseCopy_Callback (void *baton,
             return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
             break;
     }
+    llvm_unreachable("Unhandled FileSpec::FileType!");
 }
 
 Error

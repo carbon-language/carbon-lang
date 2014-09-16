@@ -113,6 +113,7 @@ NativeThreadLinux::GetStopReason (ThreadStopInfo &stop_info)
         }
         return false;
     }
+    llvm_unreachable("unhandled StateType!");
 }
 
 lldb_private::NativeRegisterContextSP

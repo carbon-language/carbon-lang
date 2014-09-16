@@ -52,8 +52,6 @@ class BreakpointLocation :
     public StoppointLocation
 {
 public:
-    friend class BreakpointLocationList;
-
     ~BreakpointLocation ();
 
     //------------------------------------------------------------------

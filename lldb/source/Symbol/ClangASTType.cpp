@@ -1789,7 +1789,7 @@ ClangASTType::GetMemberFunctionAtIndex (size_t idx,
                     {
                         auto method_iter = cxx_record_decl->method_begin();
                         auto method_end = cxx_record_decl->method_end();
-                        if (idx < std::distance(method_iter, method_end))
+                        if (idx < static_cast<size_t>(std::distance(method_iter, method_end)))
                         {
                             std::advance(method_iter, idx);
                             auto method_decl = method_iter->getCanonicalDecl();
