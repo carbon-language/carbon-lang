@@ -82,6 +82,13 @@ public:
     pos_type tellg();
     basic_istream& seekg(pos_type);
     basic_istream& seekg(off_type, ios_base::seekdir);
+protected:
+    basic_istream(const basic_istream& rhs) = delete;
+    basic_istream(basic_istream&& rhs);
+    // 27.7.2.1.2 Assign/swap:
+    basic_istream& operator=(const basic_istream& rhs) = delete;
+    basic_istream& operator=(basic_istream&& rhs);
+    void swap(basic_istream& rhs);
 };
 
 // 27.7.1.2.3 character extraction templates:
@@ -184,13 +191,21 @@ protected:
     _LIBCPP_INLINE_VISIBILITY
     basic_istream(basic_istream&& __rhs);
 #endif
-
     // 27.7.1.1.2 Assign/swap:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     basic_istream& operator=(basic_istream&& __rhs);
 #endif
     void swap(basic_istream& __rhs);
+
+#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+    basic_istream           (basic_istream& __rhs) = delete;
+    basic_istream& operator=(basic_istream& __rhs) = delete;
+#else
+private:
+    basic_istream           (basic_istream& __rhs);
+    basic_istream& operator=(basic_istream& __rhs);
+#endif
 public:
 
     // 27.7.1.1.3 Prefix/suffix:

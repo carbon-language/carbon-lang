@@ -67,6 +67,13 @@ public:
     pos_type tellp();
     basic_ostream& seekp(pos_type);
     basic_ostream& seekp(off_type, ios_base::seekdir);
+protected:
+    basic_ostream(const basic_ostream& rhs) = delete;
+    basic_ostream(basic_ostream&& rhs);
+    // 27.7.3.3 Assign/swap
+    basic_ostream& operator=(basic_ostream& rhs) = delete;
+    basic_ostream& operator=(const basic_ostream&& rhs);
+    void swap(basic_ostream& rhs);
 };
 
 // 27.7.2.6.4 character inserters
@@ -170,6 +177,15 @@ protected:
     basic_ostream& operator=(basic_ostream&& __rhs);
 #endif
     void swap(basic_ostream& __rhs);
+
+#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+    basic_ostream           (basic_ostream& __rhs) = delete;
+    basic_ostream& operator=(basic_ostream& __rhs) = delete;
+#else
+private:
+    basic_ostream           (basic_ostream& __rhs);
+    basic_ostream& operator=(basic_ostream& __rhs);
+#endif
 public:
 
     // 27.7.2.4 Prefix/suffix:
