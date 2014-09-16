@@ -1,6 +1,6 @@
-# RUN: llvm-objdump -macho -bind -arch x86_64 \
-# RUN:   %p/Inputs/bind.macho-x86_64 > %t \
-# RUN: &&  FileCheck %s < %t || cat %t
+# RUN: llvm-objdump -macho -bind -arch x86_64 %p/Inputs/bind.macho-x86_64 > %t 
+# RUN: cat %t
+# RUN: FileCheck %s < %t 
 
 
 # CHECK:__DATA   __data             0x00001028  pointer  0        flat-namespace      _any
