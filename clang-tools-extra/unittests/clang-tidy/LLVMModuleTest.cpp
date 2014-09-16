@@ -88,9 +88,12 @@ TEST(NamespaceCommentCheckTest, FixWrongComments) {
 
 // FIXME: It seems this might be incompatible to dos path. Investigating.
 #if !defined(_WIN32)
-static std::string runHeaderGuardCheck(StringRef Code, const Twine &Filename) {
-  return test::runCheckOnCode<LLVMHeaderGuardCheck>(
-      Code, /*Errors=*/nullptr, Filename, std::string("-xc++-header"));
+static std::string runHeaderGuardCheck(StringRef Code, const Twine &Filename,
+                                       unsigned NumWarnings = 1) {
+  std::vector<ClangTidyError> Errors;
+  std::string Result = test::runCheckOnCode<LLVMHeaderGuardCheck>(
+      Code, &Errors, Filename, std::string("-xc++-header"));
+  return Errors.size() == NumWarnings ? Result : "invalid error count";
 }
 
 namespace {
@@ -102,9 +105,12 @@ struct WithEndifComment : public LLVMHeaderGuardCheck {
 } // namespace
 
 static std::string runHeaderGuardCheckWithEndif(StringRef Code,
-                                                const Twine &Filename) {
-  return test::runCheckOnCode<WithEndifComment>(
-      Code, /*Errors=*/nullptr, Filename, std::string("-xc++-header"));
+                                                const Twine &Filename,
+                                                unsigned NumWarnings = 1) {
+  std::vector<ClangTidyError> Errors;
+  std::string Result = test::runCheckOnCode<WithEndifComment>(
+      Code, &Errors, Filename, std::string("-xc++-header"));
+  return Errors.size() == NumWarnings ? Result : "invalid error count";
 }
 
 TEST(LLVMHeaderGuardCheckTest, FixHeaderGuards) {
@@ -116,7 +122,7 @@ TEST(LLVMHeaderGuardCheckTest, FixHeaderGuards) {
   EXPECT_EQ("#ifndef LLVM_ADT_FOO_H_\n#define LLVM_ADT_FOO_H_\n#endif\n",
             runHeaderGuardCheck(
                 "#ifndef LLVM_ADT_FOO_H_\n#define LLVM_ADT_FOO_H_\n#endif\n",
-                "include/llvm/ADT/foo.h"));
+                "include/llvm/ADT/foo.h", 0));
 
   EXPECT_EQ("#ifndef LLVM_CLANG_C_BAR_H\n#define LLVM_CLANG_C_BAR_H\n\n\n#endif\n",
             runHeaderGuardCheck("", "./include/clang-c/bar.h"));
@@ -157,14 +163,14 @@ TEST(LLVMHeaderGuardCheckTest, FixHeaderGuards) {
             runHeaderGuardCheckWithEndif("#ifndef LLVM_ADT_FOO_H\n#define "
                                          "LLVM_ADT_FOO_H\n"
                                          "#endif /* LLVM_ADT_FOO_H */\n",
-                                         "include/llvm/ADT/foo.h"));
+                                         "include/llvm/ADT/foo.h", 0));
 
   EXPECT_EQ("#ifndef LLVM_ADT_FOO_H_\n#define LLVM_ADT_FOO_H_\n#endif "
             "// LLVM_ADT_FOO_H_\n",
             runHeaderGuardCheckWithEndif(
                 "#ifndef LLVM_ADT_FOO_H_\n#define "
                 "LLVM_ADT_FOO_H_\n#endif // LLVM_ADT_FOO_H_\n",
-                "include/llvm/ADT/foo.h"));
+                "include/llvm/ADT/foo.h", 0));
 
   EXPECT_EQ(
       "#ifndef LLVM_ADT_FOO_H\n#define LLVM_ADT_FOO_H\n#endif  // "
@@ -178,14 +184,14 @@ TEST(LLVMHeaderGuardCheckTest, FixHeaderGuards) {
             runHeaderGuardCheckWithEndif("#ifndef LLVM_ADT_FOO_H\n#define "
                                          "LLVM_ADT_FOO_H\n#endif \\ \n// "
                                          "LLVM_ADT_FOO_H\n",
-                                         "include/llvm/ADT/foo.h"));
+                                         "include/llvm/ADT/foo.h", 0));
 
   EXPECT_EQ("#ifndef LLVM_ADT_FOO_H\n#define LLVM_ADT_FOO_H\n#endif  /* "
             "LLVM_ADT_FOO_H\\ \n FOO */",
             runHeaderGuardCheckWithEndif(
                 "#ifndef LLVM_ADT_FOO_H\n#define LLVM_ADT_FOO_H\n#endif  /* "
                 "LLVM_ADT_FOO_H\\ \n FOO */",
-                "include/llvm/ADT/foo.h"));
+                "include/llvm/ADT/foo.h", 0));
 }
 #endif
 
