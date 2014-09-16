@@ -2446,9 +2446,15 @@ static StringRef ordinalName(const object::MachOObjectFile *Obj, int Ordinal) {
   case MachO::BIND_SPECIAL_DYLIB_FLAT_LOOKUP:
     return "flat-namespace";
   default:
-    Obj->getLibraryShortNameByIndex(Ordinal-1, DylibName);
-    return DylibName;
+    if (Ordinal > 0) {
+      std::error_code EC = Obj->getLibraryShortNameByIndex(Ordinal-1, 
+                                                           DylibName);
+      if (EC)
+        return "<<ordinal too big>>";
+      return DylibName;
+    }
   }
+  return "<<unknown special ordinal>>";
 }
 
 //===----------------------------------------------------------------------===//
