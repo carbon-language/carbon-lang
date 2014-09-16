@@ -87,6 +87,7 @@ struct ExecutionContext {
     Values = std::move(O.Values);
     VarArgs = std::move(O.VarArgs);
     Allocas = std::move(O.Allocas);
+    return *this;
   }
 };
 
