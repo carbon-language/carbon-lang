@@ -2096,8 +2096,7 @@ bool AArch64FastISel::fastLowerArguments() {
   if (CC != CallingConv::C)
     return false;
 
-  // Only handle simple cases like i1/i8/i16/i32/i64/f32/f64 of up to 8 GPR and
-  // FPR each.
+  // Only handle simple cases of up to 8 GPR and FPR each.
   unsigned GPRCnt = 0;
   unsigned FPRCnt = 0;
   unsigned Idx = 0;
@@ -2111,32 +2110,34 @@ bool AArch64FastISel::fastLowerArguments() {
       return false;
 
     Type *ArgTy = Arg.getType();
-    if (ArgTy->isStructTy() || ArgTy->isArrayTy() || ArgTy->isVectorTy())
+    if (ArgTy->isStructTy() || ArgTy->isArrayTy())
       return false;
 
     EVT ArgVT = TLI.getValueType(ArgTy);
-    if (!ArgVT.isSimple()) return false;
-    switch (ArgVT.getSimpleVT().SimpleTy) {
-    default: return false;
-    case MVT::i1:
-    case MVT::i8:
-    case MVT::i16:
-    case MVT::i32:
-    case MVT::i64:
+    if (!ArgVT.isSimple())
+      return false;
+
+    MVT VT = ArgVT.getSimpleVT().SimpleTy;
+    if (VT.isFloatingPoint() && !Subtarget->hasFPARMv8())
+      return false;
+
+    if (VT.isVector() &&
+        (!Subtarget->hasNEON() || !Subtarget->isLittleEndian()))
+      return false;
+
+    if (VT >= MVT::i1 && VT <= MVT::i64)
       ++GPRCnt;
-      break;
-    case MVT::f16:
-    case MVT::f32:
-    case MVT::f64:
+    else if ((VT >= MVT::f16 && VT <= MVT::f64) || VT.is64BitVector() ||
+             VT.is128BitVector())
       ++FPRCnt;
-      break;
-    }
+    else
+      return false;
 
     if (GPRCnt > 8 || FPRCnt > 8)
       return false;
   }
 
-  static const MCPhysReg Registers[5][8] = {
+  static const MCPhysReg Registers[6][8] = {
     { AArch64::W0, AArch64::W1, AArch64::W2, AArch64::W3, AArch64::W4,
       AArch64::W5, AArch64::W6, AArch64::W7 },
     { AArch64::X0, AArch64::X1, AArch64::X2, AArch64::X3, AArch64::X4,
@@ -2146,7 +2147,9 @@ bool AArch64FastISel::fastLowerArguments() {
     { AArch64::S0, AArch64::S1, AArch64::S2, AArch64::S3, AArch64::S4,
       AArch64::S5, AArch64::S6, AArch64::S7 },
     { AArch64::D0, AArch64::D1, AArch64::D2, AArch64::D3, AArch64::D4,
-      AArch64::D5, AArch64::D6, AArch64::D7 }
+      AArch64::D5, AArch64::D6, AArch64::D7 },
+    { AArch64::Q0, AArch64::Q1, AArch64::Q2, AArch64::Q3, AArch64::Q4,
+      AArch64::Q5, AArch64::Q6, AArch64::Q7 }
   };
 
   unsigned GPRIdx = 0;
@@ -2154,29 +2157,28 @@ bool AArch64FastISel::fastLowerArguments() {
   for (auto const &Arg : F->args()) {
     MVT VT = TLI.getSimpleValueType(Arg.getType());
     unsigned SrcReg;
-    const TargetRegisterClass *RC = nullptr;
-    switch (VT.SimpleTy) {
-    default: llvm_unreachable("Unexpected value type.");
-    case MVT::i1:
-    case MVT::i8:
-    case MVT::i16: VT = MVT::i32; // fall-through
-    case MVT::i32:
-      SrcReg = Registers[0][GPRIdx++]; RC = &AArch64::GPR32RegClass; break;
-    case MVT::i64:
-      SrcReg = Registers[1][GPRIdx++]; RC = &AArch64::GPR64RegClass; break;
-    case MVT::f16:
-      SrcReg = Registers[2][FPRIdx++]; RC = &AArch64::FPR16RegClass; break;
-    case MVT::f32:
-      SrcReg = Registers[3][FPRIdx++]; RC = &AArch64::FPR32RegClass; break;
-    case MVT::f64:
-      SrcReg = Registers[4][FPRIdx++]; RC = &AArch64::FPR64RegClass; break;
-    }
-
-    // Skip unused arguments.
-    if (Arg.use_empty()) {
-      updateValueMap(&Arg, 0);
-      continue;
-    }
+    const TargetRegisterClass *RC;
+    if (VT >= MVT::i1 && VT <= MVT::i32) {
+      SrcReg = Registers[0][GPRIdx++];
+      RC = &AArch64::GPR32RegClass;
+      VT = MVT::i32;
+    } else if (VT == MVT::i64) {
+      SrcReg = Registers[1][GPRIdx++];
+      RC = &AArch64::GPR64RegClass;
+    } else if (VT == MVT::f16) {
+      SrcReg = Registers[2][FPRIdx++];
+      RC = &AArch64::FPR16RegClass;
+    } else if (VT ==  MVT::f32) {
+      SrcReg = Registers[3][FPRIdx++];
+      RC = &AArch64::FPR32RegClass;
+    } else if ((VT == MVT::f64) || VT.is64BitVector()) {
+      SrcReg = Registers[4][FPRIdx++];
+      RC = &AArch64::FPR64RegClass;
+    } else if (VT.is128BitVector()) {
+      SrcReg = Registers[5][FPRIdx++];
+      RC = &AArch64::FPR128RegClass;
+    } else
+      llvm_unreachable("Unexpected value type.");
 
     unsigned DstReg = FuncInfo.MF->addLiveIn(SrcReg, RC);
     // FIXME: Unfortunately it's necessary to emit a copy from the livein copy.
