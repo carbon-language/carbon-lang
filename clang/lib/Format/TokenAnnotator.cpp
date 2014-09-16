@@ -1653,6 +1653,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
     return !Line.First->isOneOf(tok::kw_case, tok::kw_default) &&
            Tok.getNextNonComment() && Tok.Type != TT_ObjCMethodExpr &&
            !Tok.Previous->is(tok::question) &&
+           !(Tok.Type == TT_InlineASMColon &&
+             Tok.Previous->is(tok::coloncolon)) &&
            (Tok.Type != TT_DictLiteral || Style.SpacesInContainerLiterals);
   if (Tok.Previous->Type == TT_UnaryOperator)
     return Tok.Type == TT_BinaryOperator;
