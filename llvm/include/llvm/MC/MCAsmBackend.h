@@ -1,4 +1,4 @@
-//===-- llvm/MC/MCAsmBack.h - MC Asm Backend --------------------*- C++ -*-===//
+//===-- llvm/MC/MCAsmBackend.h - MC Asm Backend -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -146,7 +146,7 @@ public:
 
   /// \brief Generate the compact unwind encoding for the CFI instructions.
   virtual uint32_t
-  generateCompactUnwindEncoding(ArrayRef<MCCFIInstruction>) const {
+      generateCompactUnwindEncoding(ArrayRef<MCCFIInstruction>) const {
     return 0;
   }
 };
