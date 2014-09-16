@@ -20033,9 +20033,6 @@ static SDValue combineShuffleToAddSub(SDNode *N, SelectionDAG &DAG) {
           VT == MVT::v4f64) &&
          "Unknown vector type encountered!");
 
-  // FIXME: Munge the inputs through no-op shuffles that drop the undef lanes to
-  // allow nuking any instructions that feed only those lanes.
-
   return DAG.getNode(X86ISD::ADDSUB, DL, VT, LHS, RHS);
 }
 
