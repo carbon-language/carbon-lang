@@ -400,7 +400,7 @@ namespace __sanitizer {
   unsigned struct_sioc_vif_req_sz = sizeof(struct sioc_vif_req);
 #endif
 
-  unsigned IOCTL_NOT_PRESENT = 0;
+  const unsigned IOCTL_NOT_PRESENT = 0;
 
   unsigned IOCTL_FIOASYNC = FIOASYNC;
   unsigned IOCTL_FIOCLEX = FIOCLEX;
