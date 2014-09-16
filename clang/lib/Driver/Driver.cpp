@@ -1863,10 +1863,9 @@ std::string Driver::GetProgramPath(const char *Name,
   std::string TargetSpecificExecutable(DefaultTargetTriple + "-" + Name);
   // Respect a limited subset of the '-Bprefix' functionality in GCC by
   // attempting to use this prefix when looking for program paths.
-  for (Driver::prefix_list::const_iterator it = PrefixDirs.begin(),
-       ie = PrefixDirs.end(); it != ie; ++it) {
-    if (llvm::sys::fs::is_directory(*it)) {
-      SmallString<128> P(*it);
+  for (const auto &PrefixDir : PrefixDirs) {
+    if (llvm::sys::fs::is_directory(PrefixDir)) {
+      SmallString<128> P(PrefixDir);
       llvm::sys::path::append(P, TargetSpecificExecutable);
       if (llvm::sys::fs::can_execute(Twine(P)))
         return P.str();
@@ -1875,16 +1874,15 @@ std::string Driver::GetProgramPath(const char *Name,
       if (llvm::sys::fs::can_execute(Twine(P)))
         return P.str();
     } else {
-      SmallString<128> P(*it + Name);
+      SmallString<128> P(PrefixDir + Name);
       if (llvm::sys::fs::can_execute(Twine(P)))
         return P.str();
     }
   }
 
   const ToolChain::path_list &List = TC.getProgramPaths();
-  for (ToolChain::path_list::const_iterator
-         it = List.begin(), ie = List.end(); it != ie; ++it) {
-    SmallString<128> P(*it);
+  for (const auto &Path : List) {
+    SmallString<128> P(Path);
     llvm::sys::path::append(P, TargetSpecificExecutable);
     if (llvm::sys::fs::can_execute(Twine(P)))
       return P.str();
