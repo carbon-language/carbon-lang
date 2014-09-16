@@ -323,6 +323,12 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
   if (NumRegs <= 1)
     return false;
 
+  // For Thumb1 targets, it might be necessary to clobber the CPSR to merge.
+  // Compute liveness information for that register to make the decision.
+  bool SafeToClobberCPSR = !isThumb1 ||
+    (MBB.computeRegisterLiveness(TRI, ARM::CPSR, std::prev(MBBI), 15) ==
+     MachineBasicBlock::LQR_Dead);
+
   ARM_AM::AMSubMode Mode = ARM_AM::ia;
   // VFP and Thumb2 do not support IB or DA modes. Thumb1 only supports IA.
   bool isNotVFP = isi32Load(Opcode) || isi32Store(Opcode);
@@ -344,6 +350,11 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
     // But only do so if it is cost effective, i.e. merging more than two
     // loads / stores.
     if (NumRegs <= 2)
+      return false;
+
+    // On Thumb1, it's not worth materializing a new base register without
+    // clobbering the CPSR (i.e. not using ADDS/SUBS).
+    if (!SafeToClobberCPSR)
       return false;
 
     unsigned NewBase;
@@ -377,10 +388,10 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
 
     if (isThumb1) {
       // Thumb1: depending on immediate size, use either
-      //   ADD NewBase, Base, #imm3
+      //   ADDS NewBase, Base, #imm3
       // or
-      //   MOV NewBase, Base
-      //   ADD NewBase, #imm8.
+      //   MOV  NewBase, Base
+      //   ADDS NewBase, #imm8.
       if (Base != NewBase && Offset >= 8) {
         // Need to insert a MOV to the new base first.
         BuildMI(MBB, MBBI, dl, TII->get(ARM::tMOVr), NewBase)
@@ -390,7 +401,7 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
         Base = NewBase;
         BaseKill = false;
       }
-      AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII->get(BaseOpc), NewBase))
+      AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII->get(BaseOpc), NewBase), true)
         .addReg(Base, getKillRegState(BaseKill)).addImm(Offset)
         .addImm(Pred).addReg(PredReg);
     } else {
