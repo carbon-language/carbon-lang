@@ -19,4 +19,5 @@ _CLC_OVERLOAD _CLC_DEF SIGN TYPE FUNCTION (volatile CL_ADDRSPACE SIGN TYPE *p, S
 
 ATOMIC_FUNC(atomic_add)
 ATOMIC_FUNC(atomic_and)
+ATOMIC_FUNC(atomic_or)
 ATOMIC_FUNC(atomic_sub)
