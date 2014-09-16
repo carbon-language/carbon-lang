@@ -452,9 +452,6 @@ def : MipsInstAlias<"daddu $rs, $imm",
 def : MipsInstAlias<"dadd $rs, $imm",
                     (DADDi GPR64Opnd:$rs, GPR64Opnd:$rs, simm16_64:$imm),
                     0>, ISA_MIPS3_NOT_32R6_64R6;
-def : MipsInstAlias<"add $rs, $imm",
-                    (ADDi GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm),
-                    0>;
 def : MipsInstAlias<"addu $rs, $imm",
                     (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm),
                     0>;

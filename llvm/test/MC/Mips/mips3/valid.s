@@ -6,6 +6,8 @@
         abs.d     $f7,$f25             # CHECK: encoding:
         abs.s     $f9,$f16
         add       $s7,$s2,$a1
+        add       $9,$14,15176         # CHECK: addi $9, $14, 15176   # encoding: [0x21,0xc9,0x3b,0x48]
+        add       $24,-7193            # CHECK: addi $24, $24, -7193  # encoding: [0x23,0x18,0xe3,0xe7]
         add.d     $f1,$f7,$f29
         add.s     $f8,$f21,$f24
         addi      $13,$9,26322
@@ -175,6 +177,8 @@
         srlv      $25,$s4,$a0          # CHECK: srlv $25, $20, $4      # encoding: [0x00,0x94,0xc8,0x06]
         ssnop                          # CHECK: ssnop                  # encoding: [0x00,0x00,0x00,0x40]
         sub       $s6,$s3,$12
+        sub       $22,$17,-3126        # CHECK: addi $22, $17, 3126    # encoding: [0x22,0x36,0x0c,0x36]
+        sub       $13,6512             # CHECK: addi $13, $13, -6512   # encoding: [0x21,0xad,0xe6,0x90]
         sub.d     $f18,$f3,$f17
         sub.s     $f23,$f22,$f22
         subu      $sp,$s6,$s6
