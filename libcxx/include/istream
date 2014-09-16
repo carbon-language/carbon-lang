@@ -199,12 +199,12 @@ protected:
     void swap(basic_istream& __rhs);
 
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
-    basic_istream           (basic_istream& __rhs) = delete;
-    basic_istream& operator=(basic_istream& __rhs) = delete;
+    basic_istream           (const basic_istream& __rhs) = delete;
+    basic_istream& operator=(const basic_istream& __rhs) = delete;
 #else
 private:
-    basic_istream           (basic_istream& __rhs);
-    basic_istream& operator=(basic_istream& __rhs);
+    basic_istream           (const basic_istream& __rhs);
+    basic_istream& operator=(const basic_istream& __rhs);
 #endif
 public:
 
