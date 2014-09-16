@@ -1,0 +1,4 @@
+// RUN: llvm-objdump -d -m %p/Inputs/hello.obj.macho-x86_64 | FileCheck %s
+
+CHECK: leaq	L_.str(%rip), %rax
+CHECK: callq	_printf

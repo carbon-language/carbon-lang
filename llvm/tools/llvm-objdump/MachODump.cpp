@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-objdump.h"
+#include "llvm-c/Disassembler.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
@@ -224,6 +225,171 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
   DisassembleInputMachO2(Filename, MachOOF.get());
 }
 
+// The block of info used by the Symbolizer call backs.
+struct DisassembleInfo {
+  bool verbose;
+  MachOObjectFile *O;
+  SectionRef S;
+};
+
+// SymbolizerGetOpInfo() is the operand information call back function.
+// This is called to get the symbolic information for operand(s) of an
+// instruction when it is being done.  This routine does this from
+// the relocation information, symbol table, etc. That block of information
+// is a pointer to the struct DisassembleInfo that was passed when the
+// disassembler context was created and passed to back to here when
+// called back by the disassembler for instruction operands that could have
+// relocation information. The address of the instruction containing operand is
+// at the Pc parameter.  The immediate value the operand has is passed in
+// op_info->Value and is at Offset past the start of the instruction and has a
+// byte Size of 1, 2 or 4. The symbolc information is returned in TagBuf is the
+// LLVMOpInfo1 struct defined in the header "llvm-c/Disassembler.h" as symbol
+// names and addends of the symbolic expression to add for the operand.  The
+// value of TagType is currently 1 (for the LLVMOpInfo1 struct). If symbolic
+// information is returned then this function returns 1 else it returns 0.
+int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
+                        uint64_t Size, int TagType, void *TagBuf) {
+  struct DisassembleInfo *info = (struct DisassembleInfo *)DisInfo;
+  struct LLVMOpInfo1 *op_info = (struct LLVMOpInfo1 *)TagBuf;
+  unsigned int value = op_info->Value;
+
+  // Make sure all fields returned are zero if we don't set them.
+  memset((void *)op_info, '\0', sizeof(struct LLVMOpInfo1));
+  op_info->Value = value;
+
+  // If the TagType is not the value 1 which it code knows about or if no
+  // verbose symbolic information is wanted then just return 0, indicating no
+  // information is being returned.
+  if (TagType != 1 || info->verbose == false)
+    return 0;
+
+  unsigned int Arch = info->O->getArch();
+  if (Arch == Triple::x86) {
+    return 0;
+  } else if (Arch == Triple::x86_64) {
+    if (Size != 1 && Size != 2 && Size != 4 && Size != 0)
+      return 0;
+    // First search the section's relocation entries (if any) for an entry
+    // for this section offset.
+    uint64_t sect_addr;
+    info->S.getAddress(sect_addr);
+    uint64_t sect_offset = (Pc + Offset) - sect_addr;
+    bool reloc_found = false;
+    DataRefImpl Rel;
+    MachO::any_relocation_info RE;
+    bool isExtern = false;
+    SymbolRef Symbol;
+    for (const RelocationRef &Reloc : info->S.relocations()) {
+      uint64_t RelocOffset;
+      Reloc.getOffset(RelocOffset);
+      if (RelocOffset == sect_offset) {
+        Rel = Reloc.getRawDataRefImpl();
+        RE = info->O->getRelocation(Rel);
+        // NOTE: Scattered relocations don't exist on x86_64.
+        isExtern = info->O->getPlainRelocationExternal(RE);
+        if (isExtern) {
+          symbol_iterator RelocSym = Reloc.getSymbol();
+          Symbol = *RelocSym;
+        }
+        reloc_found = true;
+        break;
+      }
+    }
+    if (reloc_found && isExtern) {
+      // The Value passed in will be adjusted by the Pc if the instruction
+      // adds the Pc.  But for x86_64 external relocation entries the Value
+      // is the offset from the external symbol.
+      if (info->O->getAnyRelocationPCRel(RE))
+        op_info->Value -= Pc + Offset + Size;
+      // SymbolRef Symbol = (*info->Relocs)[Idx].second;
+      StringRef SymName;
+      Symbol.getName(SymName);
+      const char *name = SymName.data();
+      unsigned Type = info->O->getAnyRelocationType(RE);
+      if (Type == MachO::X86_64_RELOC_SUBTRACTOR) {
+        DataRefImpl RelNext = Rel;
+        info->O->moveRelocationNext(RelNext);
+        MachO::any_relocation_info RENext = info->O->getRelocation(RelNext);
+        unsigned TypeNext = info->O->getAnyRelocationType(RENext);
+        bool isExternNext = info->O->getPlainRelocationExternal(RENext);
+        unsigned SymbolNum = info->O->getPlainRelocationSymbolNum(RENext);
+        if (TypeNext == MachO::X86_64_RELOC_UNSIGNED && isExternNext) {
+          op_info->SubtractSymbol.Present = 1;
+          op_info->SubtractSymbol.Name = name;
+          symbol_iterator RelocSymNext = info->O->getSymbolByIndex(SymbolNum);
+          Symbol = *RelocSymNext;
+          StringRef SymNameNext;
+          Symbol.getName(SymNameNext);
+          name = SymNameNext.data();
+        }
+      }
+      // TODO: add the VariantKinds to op_info->VariantKind for relocation types
+      // like: X86_64_RELOC_TLV, X86_64_RELOC_GOT_LOAD and X86_64_RELOC_GOT.
+      op_info->AddSymbol.Present = 1;
+      op_info->AddSymbol.Name = name;
+      return 1;
+    }
+    // TODO:
+    // Second search the external relocation entries of a fully linked image
+    // (if any) for an entry that matches this segment offset.
+    //uint64_t seg_offset = (Pc + Offset);
+    return 0;
+  } else if (Arch == Triple::arm) {
+    return 0;
+  } else if (Arch == Triple::aarch64) {
+    return 0;
+  } else {
+    return 0;
+  }
+}
+
+// SymbolizerSymbolLookUp is the symbol lookup function passed when creating
+// the Symbolizer.  It looks up the SymbolValue using the info passed via the
+// pointer to the struct DisassembleInfo that was passed when MCSymbolizer
+// is created and returns the symbol name that matches the ReferenceValue or
+// nullptr if none.  The ReferenceType is passed in for the IN type of
+// reference the instruction is making from the values in defined in the header
+// "llvm-c/Disassembler.h".  On return the ReferenceType can set to a specific
+// Out type and the ReferenceName will also be set which is added as a comment
+// to the disassembled instruction.
+//
+// If the symbol name is a C++ mangled name then the demangled name is
+// returned through ReferenceName and ReferenceType is set to
+// LLVMDisassembler_ReferenceType_DeMangled_Name .
+//
+// When this is called to get a symbol name for a branch target then the
+// ReferenceType will be LLVMDisassembler_ReferenceType_In_Branch and then
+// SymbolValue will be looked for in the indirect symbol table to determine if
+// it is an address for a symbol stub.  If so then the symbol name for that
+// stub is returned indirectly through ReferenceName and then ReferenceType is
+// set to LLVMDisassembler_ReferenceType_Out_SymbolStub.
+//
+// When this is called with an value loaded via a PC relative load then 
+// ReferenceType will be LLVMDisassembler_ReferenceType_In_PCrel_Load then the
+// SymbolValue is checked to be an address of literal pointer, symbol pointer,
+// or an Objective-C meta data reference.  If so the output ReferenceType is
+// set to correspond to that as well as ReferenceName.
+const char *SymbolizerSymbolLookUp(void *DisInfo, uint64_t ReferenceValue,
+                                   uint64_t *ReferenceType,
+                                   uint64_t ReferencePC,
+                                   const char **ReferenceName) {
+  struct DisassembleInfo *info = (struct DisassembleInfo *)DisInfo;
+  *ReferenceName = nullptr;
+  *ReferenceType = LLVMDisassembler_ReferenceType_InOut_None;
+  unsigned int Arch = info->O->getArch();
+  if (Arch == Triple::x86) {
+    return nullptr;
+  } else if (Arch == Triple::x86_64) {
+    return nullptr;
+  } else if (Arch == Triple::arm) {
+    return nullptr;
+  } else if (Arch == Triple::aarch64) {
+    return nullptr;
+  } else {
+    return nullptr;
+  }
+}
+
 static void DisassembleInputMachO2(StringRef Filename,
                                    MachOObjectFile *MachOOF) {
   const char *McpuDefault = nullptr;
@@ -264,8 +430,18 @@ static void DisassembleInputMachO2(StringRef Filename,
   std::unique_ptr<const MCSubtargetInfo> STI(
       TheTarget->createMCSubtargetInfo(TripleName, MCPU, FeaturesStr));
   MCContext Ctx(AsmInfo.get(), MRI.get(), nullptr);
-  std::unique_ptr<const MCDisassembler> DisAsm(
+  std::unique_ptr<MCDisassembler> DisAsm(
       TheTarget->createMCDisassembler(*STI, Ctx));
+  std::unique_ptr<MCSymbolizer> Symbolizer;
+  struct DisassembleInfo SymbolizerInfo;
+  std::unique_ptr<MCRelocationInfo> RelInfo(
+      TheTarget->createMCRelocationInfo(TripleName, Ctx));
+  if (RelInfo) {
+    Symbolizer.reset(TheTarget->createMCSymbolizer(
+        TripleName, SymbolizerGetOpInfo, SymbolizerSymbolLookUp,
+        &SymbolizerInfo, &Ctx, RelInfo.release()));
+    DisAsm->setSymbolizer(std::move(Symbolizer));
+  }
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
   std::unique_ptr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
       AsmPrinterVariant, *AsmInfo, *InstrInfo, *MRI, *STI));
@@ -291,6 +467,7 @@ static void DisassembleInputMachO2(StringRef Filename,
         ThumbTarget->createMCSubtargetInfo(ThumbTripleName, MCPU, FeaturesStr));
     ThumbCtx.reset(new MCContext(ThumbAsmInfo.get(), ThumbMRI.get(), nullptr));
     ThumbDisAsm.reset(ThumbTarget->createMCDisassembler(*ThumbSTI, *ThumbCtx));
+// TODO: add MCSymbolizer here for the ThumbTarget like above for TheTarget.
     int ThumbAsmPrinterVariant = ThumbAsmInfo->getAssemblerDialect();
     ThumbIP.reset(ThumbTarget->createMCInstPrinter(
         ThumbAsmPrinterVariant, *ThumbAsmInfo, *ThumbInstrInfo, *ThumbMRI,
@@ -403,6 +580,11 @@ static void DisassembleInputMachO2(StringRef Filename,
       Relocs.push_back(std::make_pair(RelocOffset, *RelocSym));
     }
     array_pod_sort(Relocs.begin(), Relocs.end());
+
+    // Set up the block of info used by the Symbolizer call backs.
+    SymbolizerInfo.verbose = true;
+    SymbolizerInfo.O = MachOOF;
+    SymbolizerInfo.S = Sections[SectIdx];
 
     // Disassemble symbol by symbol.
     for (unsigned SymIdx = 0; SymIdx != Symbols.size(); SymIdx++) {
