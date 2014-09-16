@@ -1,3 +1,4 @@
+; RUN: opt < %s  -cost-model -analyze -mtriple=x86_64-apple-macosx10.8.0 -mcpu=knl | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AVX512
 ; RUN: opt < %s  -cost-model -analyze -mtriple=x86_64-apple-macosx10.8.0 -mcpu=core-avx2 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AVX2
 ; RUN: opt < %s  -cost-model -analyze -mtriple=x86_64-apple-macosx10.8.0 -mcpu=corei7-avx | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AVX
 
@@ -83,6 +84,19 @@ define i32 @zext_sext(<8 x i1> %in) {
   ;CHECK-AVX: cost of 4 {{.*}} zext
   %D = zext <4 x i32> undef to <4 x i64>
 
+  ;CHECK-AVX512: cost of 3 {{.*}} %D1 = zext
+  %D1 = zext <16 x i32> undef to <16 x i64>
+
+  ;CHECK-AVX512: cost of 3 {{.*}} %D2 = sext
+  %D2 = sext <16 x i32> undef to <16 x i64>
+
+  ;CHECK-AVX512: cost of 1 {{.*}} %D3 = zext
+  %D3 = zext <16 x i16> undef to <16 x i32>
+  ;CHECK-AVX512: cost of 1 {{.*}} %D4 = zext
+  %D4 = zext <16 x i8> undef to <16 x i32>
+  ;CHECK-AVX512: cost of 2 {{.*}} %D5 = zext
+  %D5 = zext <16 x i1> undef to <16 x i32>
+
   ;CHECK-AVX2: cost of 2 {{.*}} trunc
   ;CHECK-AVX: cost of 4 {{.*}} trunc
   %E = trunc <4 x i64> undef to <4 x i32>
@@ -101,7 +115,11 @@ define i32 @zext_sext(<8 x i1> %in) {
 
   ;CHECK-AVX2: cost of 4 {{.*}} trunc
   ;CHECK-AVX: cost of 9 {{.*}} trunc
+  ;CHECK_AVX512: cost of 1 {{.*}} G = trunc
   %G = trunc <8 x i64> undef to <8 x i32>
+
+  ;CHECK-AVX512: cost of 4 {{.*}} %G1 = trunc
+  %G1 = trunc <16 x i64> undef to <16 x i32>
 
   ret i32 undef
 }
@@ -209,5 +227,26 @@ define void @uitofp8(<8 x i1> %a, <8 x i8> %b, <8 x i16> %c, <8 x i32> %d) {
 
   ; CHECK: cost of 9 {{.*}} uitofp
   %D1 = uitofp <8 x i32> %d to <8 x float>
+  ret void
+}
+
+define void @fp_conv(<8 x float> %a, <16 x float>%b) {
+;CHECK-LABEL: for function 'fp_conv'
+  ; CHECK-AVX512: cost of 1 {{.*}} fpext
+  %A1 = fpext <8 x float> %a to <8 x double>
+
+  ; CHECK-AVX512: cost of 3 {{.*}} fpext
+  %A2 = fpext <16 x float> %b to <16 x double>
+
+  ; CHECK-AVX2:   cost of 3 {{.*}} %A3 = fpext
+  ; CHECK-AVX512: cost of 1 {{.*}} %A3 = fpext
+  %A3 = fpext <8 x float> %a to <8 x double>
+
+  ; CHECK-AVX2:   cost of 3 {{.*}} %A4 = fptrunc
+  ; CHECK-AVX512: cost of 1 {{.*}} %A4 = fptrunc
+  %A4 = fptrunc <8 x double> undef to <8 x float>
+
+  ; CHECK-AVX512: cost of 3 {{.*}} %A5 = fptrunc
+  %A5 = fptrunc <16 x double> undef to <16 x float>
   ret void
 }

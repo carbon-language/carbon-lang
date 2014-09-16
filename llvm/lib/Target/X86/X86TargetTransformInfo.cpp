@@ -225,6 +225,15 @@ unsigned X86TTI::getArithmeticInstrCost(
       return LT.first * AVX2UniformConstCostTable[Idx].Cost;
   }
 
+  static const CostTblEntry<MVT::SimpleValueType> AVX512CostTable[] = {
+    { ISD::SHL,     MVT::v16i32,    1 },
+    { ISD::SRL,     MVT::v16i32,    1 },
+    { ISD::SRA,     MVT::v16i32,    1 },
+    { ISD::SHL,     MVT::v8i64,    1 },
+    { ISD::SRL,     MVT::v8i64,    1 },
+    { ISD::SRA,     MVT::v8i64,    1 },
+  };
+
   static const CostTblEntry<MVT::SimpleValueType> AVX2CostTable[] = {
     // Shifts on v4i64/v8i32 on AVX2 is legal even though we declare to
     // customize them to detect the cases where shift amount is a scalar one.
@@ -260,6 +269,11 @@ unsigned X86TTI::getArithmeticInstrCost(
     { ISD::UDIV,  MVT::v4i64,  4*20 },
   };
 
+  if (ST->hasAVX512()) {
+    int Idx = CostTableLookup(AVX512CostTable, ISD, LT.second);
+    if (Idx != -1)
+      return LT.first * AVX512CostTable[Idx].Cost;
+  }
   // Look for AVX2 lowering tricks.
   if (ST->hasAVX2()) {
     if (ISD == ISD::SHL && LT.second == MVT::v16i16 &&
@@ -580,6 +594,38 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
       return LTSrc.first * SSE2ConvTbl[Idx].Cost;
   }
 
+  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
+  AVX512ConversionTbl[] = {
+    { ISD::FP_EXTEND, MVT::v8f64,   MVT::v8f32,  1 },
+    { ISD::FP_EXTEND, MVT::v8f64,   MVT::v16f32, 3 },
+    { ISD::FP_ROUND,  MVT::v8f32,   MVT::v8f64,  1 },
+    { ISD::FP_ROUND,  MVT::v16f32,  MVT::v8f64,  3 },
+
+    { ISD::TRUNCATE,  MVT::v16i8,   MVT::v16i32, 1 },
+    { ISD::TRUNCATE,  MVT::v16i16,  MVT::v16i32, 1 },
+    { ISD::TRUNCATE,  MVT::v8i16,   MVT::v8i64,  1 },
+    { ISD::TRUNCATE,  MVT::v8i32,   MVT::v8i64,  1 },
+    { ISD::TRUNCATE,  MVT::v16i32,  MVT::v8i64,  4 },
+
+    // v16i1 -> v16i32 - load + broadcast
+    { ISD::SIGN_EXTEND, MVT::v16i32, MVT::v16i1,  2 },
+    { ISD::ZERO_EXTEND, MVT::v16i32, MVT::v16i1,  2 },
+
+    { ISD::SIGN_EXTEND, MVT::v16i32, MVT::v16i8,  1 },
+    { ISD::ZERO_EXTEND, MVT::v16i32, MVT::v16i8,  1 },
+    { ISD::SIGN_EXTEND, MVT::v16i32, MVT::v16i16, 1 },
+    { ISD::ZERO_EXTEND, MVT::v16i32, MVT::v16i16, 1 },
+    { ISD::SIGN_EXTEND, MVT::v8i64,  MVT::v16i32, 3 },
+    { ISD::ZERO_EXTEND, MVT::v8i64,  MVT::v16i32, 3 },
+
+  };
+
+  if (ST->hasAVX512()) {
+    int Idx = ConvertCostTableLookup(AVX512ConversionTbl, ISD, LTDest.second,
+                                     LTSrc.second);
+    if (Idx != -1)
+      return AVX512ConversionTbl[Idx].Cost;
+  }
   EVT SrcTy = TLI->getValueType(Src);
   EVT DstTy = TLI->getValueType(Dst);
 
@@ -612,6 +658,9 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
     { ISD::TRUNCATE,    MVT::v8i8,   MVT::v8i32,  2 },
     { ISD::TRUNCATE,    MVT::v8i16,  MVT::v8i32,  2 },
     { ISD::TRUNCATE,    MVT::v8i32,  MVT::v8i64,  4 },
+
+    { ISD::FP_EXTEND,   MVT::v8f64,  MVT::v8f32,  3 },
+    { ISD::FP_ROUND,    MVT::v8f32,  MVT::v8f64,  3 },
   };
 
   static const TypeConversionCostTblEntry<MVT::SimpleValueType>
@@ -737,6 +786,19 @@ unsigned X86TTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
     { ISD::SETCC,   MVT::v16i16,  1 },
     { ISD::SETCC,   MVT::v32i8,   1 },
   };
+
+  static const CostTblEntry<MVT::SimpleValueType> AVX512CostTbl[] = {
+    { ISD::SETCC,   MVT::v8i64,   1 },
+    { ISD::SETCC,   MVT::v16i32,  1 },
+    { ISD::SETCC,   MVT::v8f64,   1 },
+    { ISD::SETCC,   MVT::v16f32,  1 },
+  };
+
+  if (ST->hasAVX512()) {
+    int Idx = CostTableLookup(AVX512CostTbl, ISD, MTy);
+    if (Idx != -1)
+      return LT.first * AVX512CostTbl[Idx].Cost;
+  }
 
   if (ST->hasAVX2()) {
     int Idx = CostTableLookup(AVX2CostTbl, ISD, MTy);
