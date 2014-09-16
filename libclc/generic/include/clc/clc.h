@@ -147,6 +147,7 @@
 #include <clc/atomic/atomic_max.h>
 #include <clc/atomic/atomic_or.h>
 #include <clc/atomic/atomic_sub.h>
+#include <clc/atomic/atomic_xor.h>
 
 /* cl_khr_global_int32_base_atomics Extension Functions */
 #include <clc/cl_khr_global_int32_base_atomics/atom_add.h>
@@ -158,6 +159,7 @@
 #include <clc/cl_khr_global_int32_extended_atomics/atom_and.h>
 #include <clc/cl_khr_global_int32_extended_atomics/atom_max.h>
 #include <clc/cl_khr_global_int32_extended_atomics/atom_or.h>
+#include <clc/cl_khr_global_int32_extended_atomics/atom_xor.h>
 
 /* cl_khr_local_int32_base_atomics Extension Functions */
 #include <clc/cl_khr_local_int32_base_atomics/atom_add.h>
@@ -169,6 +171,7 @@
 #include <clc/cl_khr_local_int32_extended_atomics/atom_and.h>
 #include <clc/cl_khr_local_int32_extended_atomics/atom_max.h>
 #include <clc/cl_khr_local_int32_extended_atomics/atom_or.h>
+#include <clc/cl_khr_local_int32_extended_atomics/atom_xor.h>
 
 /* libclc internal defintions */
 #ifdef __CLC_INTERNAL
