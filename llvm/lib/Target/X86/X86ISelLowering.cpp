@@ -19990,6 +19990,7 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
 /// they're unused.
 static SDValue combineShuffleToAddSub(SDNode *N, SelectionDAG &DAG) {
   SDLoc DL(N);
+  EVT VT = N->getValueType(0);
 
   // We only handle target-independent shuffles.
   // FIXME: It would be easy and harmless to use the target shuffle mask
@@ -20021,8 +20022,16 @@ static SDValue combineShuffleToAddSub(SDNode *N, SelectionDAG &DAG) {
 
   // We're looking for blends between FADD and FSUB nodes. We insist on these
   // nodes being lined up in a specific expected pattern.
-  if (!isShuffleEquivalent(Mask, 0, 5, 2, 7))
+  if (!(isShuffleEquivalent(Mask, 0, 3) ||
+        isShuffleEquivalent(Mask, 0, 5, 2, 7) ||
+        isShuffleEquivalent(Mask, 0, 9, 2, 11, 4, 13, 6, 15)))
     return SDValue();
+
+  // Only specific types are legal at this point, assert so we notice if and
+  // when these change.
+  assert((VT == MVT::v4f32 || VT == MVT::v2f64 || VT == MVT::v8f32 ||
+          VT == MVT::v4f64) &&
+         "Unknown vector type encountered!");
 
   // FIXME: Munge the inputs through no-op shuffles that drop the undef lanes to
   // allow nuking any instructions that feed only those lanes.
