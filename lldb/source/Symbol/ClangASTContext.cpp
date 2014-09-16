@@ -11,6 +11,7 @@
 
 // C Includes
 // C++ Includes
+#include <mutex>
 #include <string>
 
 // Other libraries and framework includes
@@ -62,6 +63,7 @@
 #include "lldb/Core/Flags.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/RegularExpression.h"
+#include "lldb/Core/ThreadSafeDenseMap.h"
 #include "lldb/Core/UniqueCStringMap.h"
 #include "lldb/Expression/ASTDumper.h"
 #include "lldb/Symbol/ClangExternalASTSourceCommon.h"
@@ -79,13 +81,17 @@ using namespace lldb_private;
 using namespace llvm;
 using namespace clang;
 
-typedef llvm::DenseMap<clang::ASTContext *, ClangASTContext*> ClangASTMap;
+typedef lldb_private::ThreadSafeDenseMap<clang::ASTContext *, ClangASTContext*> ClangASTMap;
 
 static ClangASTMap &
 GetASTMap()
 {
-    static ClangASTMap g_map;
-    return g_map;
+    static ClangASTMap *g_map_ptr = nullptr;
+    static std::once_flag g_once_flag;
+    std::call_once(g_once_flag,  []() {
+        g_map_ptr = new ClangASTMap(); // leaked on purpose to avoid spins
+    });
+    return *g_map_ptr;
 }
 
 
@@ -303,7 +309,7 @@ ClangASTContext::~ClangASTContext()
 {
     if (m_ast_ap.get())
     {
-        GetASTMap().erase(m_ast_ap.get());
+        GetASTMap().Erase(m_ast_ap.get());
     }
 
     m_builtins_ap.reset();
@@ -409,7 +415,7 @@ ClangASTContext::getASTContext()
         
         m_ast_ap->getDiagnostics().setClient(getDiagnosticConsumer(), false);
         
-        GetASTMap().insert(std::make_pair(m_ast_ap.get(), this));
+        GetASTMap().Insert(m_ast_ap.get(), this);
     }
     return m_ast_ap.get();
 }
@@ -417,7 +423,7 @@ ClangASTContext::getASTContext()
 ClangASTContext*
 ClangASTContext::GetASTContext (clang::ASTContext* ast)
 {
-    ClangASTContext *clang_ast = GetASTMap().lookup(ast);
+    ClangASTContext *clang_ast = GetASTMap().Lookup(ast);
     return clang_ast;
 }
 
