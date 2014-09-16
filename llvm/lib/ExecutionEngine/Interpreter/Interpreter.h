@@ -42,11 +42,17 @@ class AllocaHolder {
 public:
   AllocaHolder() {}
   // Make this type move-only.
-  AllocaHolder(AllocaHolder &&RHS) : Allocations(std::move(RHS.Allocations)) {}
-  AllocaHolder &operator=(AllocaHolder &&RHS) {
-    Allocations = std::move(RHS.Allocations);
+#if defined(_MSC_VER) && _MSC_VER < 1800
+  // Hack around bugs in MSVC 2012. It always tries to copy this class.
+  AllocaHolder(const AllocaHolder &RHS)
+      : Allocations(std::move(const_cast<AllocaHolder &>(RHS).Allocations)) {}
+  AllocaHolder &operator=(const AllocaHolder &RHS) {
+    Allocations = std::move(const_cast<AllocaHolder &>(RHS).Allocations);
     return *this;
   }
+#else
+  AllocaHolder(AllocaHolder &&RHS) = default;
+#endif
 
   ~AllocaHolder() {
     for (void *Allocation : Allocations)
