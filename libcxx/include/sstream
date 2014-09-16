@@ -325,11 +325,16 @@ basic_stringbuf<_CharT, _Traits, _Allocator>::operator=(basic_stringbuf&& __rhs)
     __p = const_cast<char_type*>(__str_.data());
     if (__binp != -1)
         this->setg(__p + __binp, __p + __ninp, __p + __einp);
+    else
+        this->setg(nullptr, nullptr, nullptr);
     if (__bout != -1)
     {
         this->setp(__p + __bout, __p + __eout);
         this->pbump(__nout);
     }
+    else
+        this->setp(nullptr, nullptr);
+
     __hm_ = __hm == -1 ? nullptr : __p + __hm;
     __mode_ = __rhs.__mode_;
     __p = const_cast<char_type*>(__rhs.__str_.data());
