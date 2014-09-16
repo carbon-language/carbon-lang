@@ -554,12 +554,12 @@ public:
         _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
         tuple(_Up&&... __u)
             _NOEXCEPT_((
-                is_nothrow_constructible<
+                is_nothrow_constructible<base(
                     typename __make_tuple_indices<sizeof...(_Up)>::type,
                     typename __make_tuple_types<tuple, sizeof...(_Up)>::type,
                     typename __make_tuple_indices<sizeof...(_Tp), sizeof...(_Up)>::type,
                     typename __make_tuple_types<tuple, sizeof...(_Tp), sizeof...(_Up)>::type,
-                    _Up...
+                    _Up...)
                 >::value
             ))
             : base_(typename __make_tuple_indices<sizeof...(_Up)>::type(),
