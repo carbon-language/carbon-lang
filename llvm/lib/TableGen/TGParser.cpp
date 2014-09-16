@@ -1264,6 +1264,9 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
       NewRec->resolveReferences();
       Records.addDef(NewRec);
     } else {
+      // This needs to get resolved once the multiclass template arguments are
+      // known before any use.
+      NewRec->setResolveFirst(true);
       // Otherwise, we're inside a multiclass, add it to the multiclass.
       CurMultiClass->DefPrototypes.push_back(NewRec);
 
@@ -2602,6 +2605,12 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
       if (ResolveMulticlassDef(*MC, CurRec, DefProto, DefmLoc))
         return Error(SubClassLoc, "could not instantiate def");
 
+      // Defs that can be used by other definitions should be fully resolved
+      // before any use.
+      if (DefProto->isResolveFirst() && !CurMultiClass) {
+        CurRec->resolveReferences();
+        CurRec->setResolveFirst(false);
+      }
       NewRecDefs.push_back(CurRec);
     }
 

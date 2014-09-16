@@ -1401,6 +1401,18 @@ class Record {
   DefInit *TheInit;
   bool IsAnonymous;
 
+  // Class-instance values can be used by other defs.  For example, Struct<i>
+  // is used here as a template argument to another class:
+  //
+  //   multiclass MultiClass<int i> {
+  //     def Def : Class<Struct<i>>;
+  //
+  // These need to get fully resolved before instantiating any other
+  // definitions that usie them (e.g. Def).  However, inside a multiclass they
+  // can't be immediately resolved so we mark them ResolveFirst to fully
+  // resolve them later as soon as the multiclass is instantiated.
+  bool ResolveFirst;
+
   void init();
   void checkName();
 
@@ -1409,13 +1421,15 @@ public:
   explicit Record(const std::string &N, ArrayRef<SMLoc> locs,
                   RecordKeeper &records, bool Anonymous = false) :
     ID(LastID++), Name(StringInit::get(N)), Locs(locs.begin(), locs.end()),
-    TrackedRecords(records), TheInit(nullptr), IsAnonymous(Anonymous) {
+    TrackedRecords(records), TheInit(nullptr), IsAnonymous(Anonymous),
+    ResolveFirst(false) {
     init();
   }
   explicit Record(Init *N, ArrayRef<SMLoc> locs, RecordKeeper &records,
                   bool Anonymous = false) :
     ID(LastID++), Name(N), Locs(locs.begin(), locs.end()),
-    TrackedRecords(records), TheInit(nullptr), IsAnonymous(Anonymous) {
+    TrackedRecords(records), TheInit(nullptr), IsAnonymous(Anonymous),
+    ResolveFirst(false) {
     init();
   }
 
@@ -1425,7 +1439,8 @@ public:
     ID(LastID++), Name(O.Name), Locs(O.Locs), TemplateArgs(O.TemplateArgs),
     Values(O.Values), SuperClasses(O.SuperClasses),
     SuperClassRanges(O.SuperClassRanges), TrackedRecords(O.TrackedRecords),
-    TheInit(O.TheInit), IsAnonymous(O.IsAnonymous) { }
+    TheInit(O.TheInit), IsAnonymous(O.IsAnonymous),
+    ResolveFirst(O.ResolveFirst) { }
 
   ~Record() {}
 
@@ -1551,6 +1566,14 @@ public:
 
   bool isAnonymous() const {
     return IsAnonymous;
+  }
+
+  bool isResolveFirst() const {
+    return ResolveFirst;
+  }
+
+  void setResolveFirst(bool b) {
+    ResolveFirst = b;
   }
 
   void dump() const;
