@@ -36,13 +36,14 @@ public:
   /// same section this Unit originated from.
   virtual DWARFUnit *getUnitForOffset(uint32_t Offset) const = 0;
 
-  virtual ~DWARFUnitSectionBase() {}
+protected:
+  ~DWARFUnitSectionBase() {}
 };
 
 /// Concrete instance of DWARFUnitSection, specialized for one Unit type.
 template<typename UnitType>
-class DWARFUnitSection : public SmallVector<std::unique_ptr<UnitType>, 1>,
-                         public DWARFUnitSectionBase {
+class DWARFUnitSection final : public SmallVector<std::unique_ptr<UnitType>, 1>,
+                               public DWARFUnitSectionBase {
 
   struct UnitOffsetComparator {
     bool operator()(const std::unique_ptr<UnitType> &LHS,
