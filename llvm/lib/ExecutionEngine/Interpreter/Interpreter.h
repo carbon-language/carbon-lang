@@ -51,7 +51,7 @@ public:
     return *this;
   }
 #else
-  AllocaHolder(AllocaHolder &&RHS) = default;
+  AllocaHolder(AllocaHolder &&RHS) : Allocations(std::move(RHS.Allocations)) {}
 #endif
 
   ~AllocaHolder() {
