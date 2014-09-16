@@ -12581,6 +12581,10 @@ static void MarkExprReferenced(Sema &SemaRef, SourceLocation Loc,
   CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(ME->getMemberDecl());
   if (!MD)
     return;
+  // Only attempt to devirtualize if this is truly a virtual call.
+  bool IsVirtualCall = MD->isVirtual() && !ME->hasQualifier();
+  if (!IsVirtualCall)
+    return;
   const Expr *Base = ME->getBase();
   const CXXRecordDecl *MostDerivedClassDecl = Base->getBestDynamicClassType();
   if (!MostDerivedClassDecl)
