@@ -113,6 +113,11 @@ public:
   StringTable();
   size_t size() const;
   size_t insert(StringRef String);
+  void clear() {
+    Map.clear();
+    Data.resize(4);
+    update_length();
+  }  
 };
 
 class WinCOFFObjectWriter : public MCObjectWriter {
@@ -139,6 +144,17 @@ public:
   bool UseBigObj;
 
   WinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW, raw_ostream &OS);
+  
+  void reset() override {
+    memset(&Header, 0, sizeof(Header));
+    Header.Machine = TargetObjectWriter->getMachine();
+    Sections.clear();
+    Symbols.clear();
+    Strings.clear();
+    SectionMap.clear();
+    SymbolMap.clear();
+    MCObjectWriter::reset();
+  }
 
   COFFSymbol *createSymbol(StringRef Name);
   COFFSymbol *GetOrCreateCOFFSymbol(const MCSymbol * Symbol);
