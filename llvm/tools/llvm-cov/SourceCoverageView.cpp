@@ -63,17 +63,16 @@ void SourceCoverageView::renderLine(raw_ostream &OS, StringRef Line,
   }
 }
 
-void SourceCoverageView::renderOffset(raw_ostream &OS, unsigned I) {
-  for (unsigned J = 0; J < I; ++J)
+void SourceCoverageView::renderIndent(raw_ostream &OS, unsigned Level) {
+  for (unsigned I = 0; I < Level; ++I)
     OS << "  |";
 }
 
-void SourceCoverageView::renderViewDivider(unsigned Offset, unsigned Length,
+void SourceCoverageView::renderViewDivider(unsigned Level, unsigned Length,
                                            raw_ostream &OS) {
-  for (unsigned J = 1; J < Offset; ++J)
-    OS << "  |";
-  if (Offset != 0)
-    OS.indent(2);
+  assert(Level != 0 && "Cannot render divider at top level");
+  renderIndent(OS, Level - 1);
+  OS.indent(2);
   for (unsigned I = 0; I < Length; ++I)
     OS << "-";
 }
@@ -228,7 +227,7 @@ gatherLineSubViews(size_t &CurrentIdx,
   return Items.slice(PrevIdx, CurrentIdx - PrevIdx);
 }
 
-void SourceCoverageView::render(raw_ostream &OS, unsigned Offset) {
+void SourceCoverageView::render(raw_ostream &OS, unsigned IndentLevel) {
   // Make sure that the children are in sorted order.
   sortChildren();
 
@@ -256,7 +255,7 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned Offset) {
     // Gather the child subviews that are visible on this line.
     auto LineSubViews = gatherLineSubViews(CurrentChild, Children, LineNo);
 
-    renderOffset(OS, Offset);
+    renderIndent(OS, IndentLevel);
     if (Options.ShowLineStats)
       renderLineCoverageColumn(OS, LineStats[I]);
     if (Options.ShowLineNumbers)
@@ -290,7 +289,7 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned Offset) {
                        LineStats[I].hasMultipleRegions();
     auto LineMarkers = gatherLineItems(CurrentRegionMarker, Markers, LineNo);
     if (ShowMarkers && !LineMarkers.empty()) {
-      renderOffset(OS, Offset);
+      renderIndent(OS, IndentLevel);
       OS.indent(CombinedColumnWidth);
       renderRegionMarkers(OS, LineMarkers);
     }
@@ -299,14 +298,14 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned Offset) {
     bool FirstChildExpansion = true;
     if (LineSubViews.empty())
       continue;
-    unsigned NewOffset = Offset + 1;
-    renderViewDivider(NewOffset, DividerWidth, OS);
+    unsigned NestedIndent = IndentLevel + 1;
+    renderViewDivider(NestedIndent, DividerWidth, OS);
     OS << "\n";
     for (const auto &Child : LineSubViews) {
       // If this subview shows a function instantiation, render the function's
       // name.
       if (Child->isInstantiationSubView()) {
-        renderOffset(OS, NewOffset);
+        renderIndent(OS, NestedIndent);
         OS << ' ';
         Options.colored_ostream(OS, raw_ostream::CYAN) << Child->FunctionName
                                                        << ":";
@@ -319,17 +318,17 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned Offset) {
           insertHighlightRange(LineHighlightRanges,
                                Child->getExpansionHighlightRange(),
                                AdjustedLineHighlightRanges);
-          renderOffset(OS, Offset);
-          OS.indent(CombinedColumnWidth + (Offset == 0 ? 0 : 1));
+          renderIndent(OS, IndentLevel);
+          OS.indent(CombinedColumnWidth + (IndentLevel == 0 ? 0 : 1));
           renderLine(OS, Line, AdjustedLineHighlightRanges);
-          renderViewDivider(NewOffset, DividerWidth, OS);
+          renderViewDivider(NestedIndent, DividerWidth, OS);
           OS << "\n";
         } else
           FirstChildExpansion = false;
       }
       // Render the child subview
-      Child->render(OS, NewOffset);
-      renderViewDivider(NewOffset, DividerWidth, OS);
+      Child->render(OS, NestedIndent);
+      renderViewDivider(NestedIndent, DividerWidth, OS);
       OS << "\n";
     }
   }

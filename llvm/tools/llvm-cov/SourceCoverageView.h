@@ -141,7 +141,7 @@ private:
   void renderLine(raw_ostream &OS, StringRef Line,
                   ArrayRef<HighlightRange> Ranges);
 
-  void renderOffset(raw_ostream &OS, unsigned I);
+  void renderIndent(raw_ostream &OS, unsigned Level);
 
   void renderViewDivider(unsigned Offset, unsigned Length, raw_ostream &OS);
 
@@ -192,7 +192,7 @@ public:
 
   /// \brief Print the code coverage information for a specific
   /// portion of a source file to the output stream.
-  void render(raw_ostream &OS, unsigned Offset = 0);
+  void render(raw_ostream &OS, unsigned IndentLevel = 0);
 
   /// \brief Load the coverage information required for rendering
   /// from the mapping regions in the data manager.
