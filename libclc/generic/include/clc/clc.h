@@ -151,6 +151,12 @@
 #include <clc/cl_khr_global_int32_base_atomics/atom_inc.h>
 #include <clc/cl_khr_global_int32_base_atomics/atom_sub.h>
 
+#include <clc/cl_khr_local_int32_base_atomics/atom_add.h>
+#include <clc/cl_khr_local_int32_base_atomics/atom_dec.h>
+#include <clc/cl_khr_local_int32_base_atomics/atom_inc.h>
+#include <clc/cl_khr_local_int32_base_atomics/atom_sub.h>
+
+
 /* libclc internal defintions */
 #ifdef __CLC_INTERNAL
 #include <math/clc_nextafter.h>
