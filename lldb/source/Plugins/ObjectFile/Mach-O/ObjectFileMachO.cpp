@@ -5349,6 +5349,7 @@ ObjectFileMachO::SaveCore (const lldb::ProcessSP &process_sp,
                     // and the size of all LC_THREAD load command
                     for (const auto &LC_THREAD_data : LC_THREAD_datas)
                     {
+                        ++mach_header.ncmds;
                         mach_header.sizeofcmds += 8 + LC_THREAD_data.GetSize();
                     }
 
