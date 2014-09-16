@@ -957,15 +957,6 @@ static void AddFilter  (TypeCategoryImpl::SharedPointer category_sp,
     else
         category_sp->GetTypeFiltersContainer()->Add(type_name,filter_sp);
 }
-
-static void AddEmptyFilter  (TypeCategoryImpl::SharedPointer category_sp,
-                             const char* description,
-                             ConstString type_name,
-                             ScriptedSyntheticChildren::Flags flags,
-                             bool regex = false)
-{
-    AddFilter(category_sp, {}, description, type_name, flags, regex);
-}
 #endif
 
 void
