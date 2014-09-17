@@ -936,6 +936,10 @@ bool WidenIV::WidenLoopCompare(NarrowIVDefUse DU) {
   if (!Cmp)
     return false;
 
+  bool IsSigned = CmpInst::isSigned(Cmp->getPredicate());
+  if (!IsSigned)
+    return false;
+
   Value *Op = Cmp->getOperand(Cmp->getOperand(0) == DU.NarrowDef ? 1 : 0);
   unsigned CastWidth = SE->getTypeSizeInBits(Op->getType());
   unsigned IVWidth = SE->getTypeSizeInBits(WideType);
@@ -947,7 +951,6 @@ bool WidenIV::WidenLoopCompare(NarrowIVDefUse DU) {
 
   // Widen the other operand of the compare, if necessary.
   if (CastWidth < IVWidth) {
-    bool IsSigned = CmpInst::isSigned(Cmp->getPredicate());
     Value *ExtOp = getExtend(Op, WideType, IsSigned, Cmp);
     DU.NarrowUse->replaceUsesOfWith(Op, ExtOp);
   }
