@@ -1,7 +1,7 @@
 // Check that UAR mode can handle very deep recusrion.
 // export ASAN_OPTIONS=detect_stack_use_after_return=1
 // RUN: %clangxx_asan -O2 %s -o %t && \
-// RUN:   %run %t 2>&1 | FileCheck %s
+// RUN:   (ulimit -s 4096; %run %t) 2>&1 | FileCheck %s
 // Also check that use_sigaltstack+verbosity doesn't crash.
 // RUN: env ASAN_OPTIONS=verbosity=1:use_sigaltstack=1 %run %t  | FileCheck %s
 #include <stdio.h>
@@ -17,9 +17,9 @@ void RecursiveFunc(int depth, int *ptr) {
 }
 
 int main(int argc, char **argv) {
-  RecursiveFunc(40000, 0);
+  RecursiveFunc(15000, 0);
   return 0;
 }
-// CHECK: [40000] ptr:
-// CHECK: [20000] ptr:
-// CHECK: [00000] ptr
+// CHECK: [15000] ptr:
+// CHECK: [07000] ptr:
+// CHECK: [00000] ptr:
