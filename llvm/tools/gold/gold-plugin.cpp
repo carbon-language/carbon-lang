@@ -578,10 +578,12 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
     if (!GV)
       continue; // Asm symbol.
 
-    if (GV->hasCommonLinkage()) {
+    if (Resolution != LDPR_PREVAILING_DEF_IRONLY && GV->hasCommonLinkage()) {
       // Common linkage is special. There is no single symbol that wins the
       // resolution. Instead we have to collect the maximum alignment and size.
       // The IR linker does that for us if we just pass it every common GV.
+      // We still have to keep track of LDPR_PREVAILING_DEF_IRONLY so we
+      // internalize once the IR linker has done its job.
       continue;
     }
 
