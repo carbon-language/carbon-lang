@@ -1686,15 +1686,54 @@ bool AArch64FastISel::selectBranch(const Instruction *I) {
 
   AArch64CC::CondCode CC = AArch64CC::NE;
   if (const CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
-    if (CI->hasOneUse() && (CI->getParent() == I->getParent())) {
-      // We may not handle every CC for now.
-      CC = getCompareCC(CI->getPredicate());
-      if (CC == AArch64CC::AL)
-        return false;
+    if (CI->hasOneUse() && isValueAvailable(CI)) {
+      // Try to optimize or fold the cmp.
+      CmpInst::Predicate Predicate = optimizeCmpPredicate(CI);
+      switch (Predicate) {
+      default:
+        break;
+      case CmpInst::FCMP_FALSE:
+        fastEmitBranch(FBB, DbgLoc);
+        return true;
+      case CmpInst::FCMP_TRUE:
+        fastEmitBranch(TBB, DbgLoc);
+        return true;
+      }
+
+      // Try to take advantage of fallthrough opportunities.
+      if (FuncInfo.MBB->isLayoutSuccessor(TBB)) {
+        std::swap(TBB, FBB);
+        Predicate = CmpInst::getInversePredicate(Predicate);
+      }
 
       // Emit the cmp.
       if (!emitCmp(CI->getOperand(0), CI->getOperand(1), CI->isUnsigned()))
         return false;
+
+      // FCMP_UEQ and FCMP_ONE cannot be checked with a single branch
+      // instruction.
+      CC = getCompareCC(Predicate);
+      AArch64CC::CondCode ExtraCC = AArch64CC::AL;
+      switch (Predicate) {
+      default:
+        break;
+      case CmpInst::FCMP_UEQ:
+        ExtraCC = AArch64CC::EQ;
+        CC = AArch64CC::VS;
+        break;
+      case CmpInst::FCMP_ONE:
+        ExtraCC = AArch64CC::MI;
+        CC = AArch64CC::GT;
+        break;
+      }
+      assert((CC != AArch64CC::AL) && "Unexpected condition code.");
+
+      // Emit the extra branch for FCMP_UEQ and FCMP_ONE.
+      if (ExtraCC != AArch64CC::AL) {
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::Bcc))
+            .addImm(ExtraCC)
+            .addMBB(TBB);
+      }
 
       // Emit the branch.
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::Bcc))
@@ -1713,8 +1752,8 @@ bool AArch64FastISel::selectBranch(const Instruction *I) {
     }
   } else if (TruncInst *TI = dyn_cast<TruncInst>(BI->getCondition())) {
     MVT SrcVT;
-    if (TI->hasOneUse() && TI->getParent() == I->getParent() &&
-        (isTypeSupported(TI->getOperand(0)->getType(), SrcVT))) {
+    if (TI->hasOneUse() && isValueAvailable(TI) &&
+        isTypeSupported(TI->getOperand(0)->getType(), SrcVT)) {
       unsigned CondReg = getRegForValue(TI->getOperand(0));
       if (!CondReg)
         return false;
@@ -1749,8 +1788,7 @@ bool AArch64FastISel::selectBranch(const Instruction *I) {
       fastEmitBranch(FBB, DbgLoc);
       return true;
     }
-  } else if (const ConstantInt *CI =
-                 dyn_cast<ConstantInt>(BI->getCondition())) {
+  } else if (const auto *CI = dyn_cast<ConstantInt>(BI->getCondition())) {
     uint64_t Imm = CI->getZExtValue();
     MachineBasicBlock *Target = (Imm == 0) ? FBB : TBB;
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::B))
@@ -2534,7 +2572,7 @@ bool AArch64FastISel::foldXALUIntrinsic(AArch64CC::CondCode &CC,
   }
 
   // Check if both instructions are in the same basic block.
-  if (II->getParent() != I->getParent())
+  if (!isValueAvailable(II))
     return false;
 
   // Make sure nothing is in the way
