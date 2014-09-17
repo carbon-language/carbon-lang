@@ -11,6 +11,7 @@
 #define ITERATORS_H
 
 #include <iterator>
+#include <cassert>
 
 template <class It>
 class output_iterator
