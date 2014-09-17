@@ -501,6 +501,8 @@ const char macho_dynamic_linker[] = "\xfe\xed\xfa\xce..........\x00\x07";
 const char macho_bundle[] = "\xfe\xed\xfa\xce..........\x00\x08";
 const char macho_dsym_companion[] = "\xfe\xed\xfa\xce..........\x00\x0a";
 const char windows_resource[] = "\x00\x00\x00\x00\x020\x00\x00\x00\xff";
+const char macho_dynamically_linked_shared_lib_stub[] =
+    "\xfe\xed\xfa\xce..........\x00\x09";
 
 TEST_F(FileSystemTest, Magic) {
   struct type {
@@ -526,6 +528,7 @@ TEST_F(FileSystemTest, Magic) {
     DEFINE(macho_dynamically_linked_shared_lib),
     DEFINE(macho_dynamic_linker),
     DEFINE(macho_bundle),
+    DEFINE(macho_dynamically_linked_shared_lib_stub),
     DEFINE(macho_dsym_companion),
     DEFINE(windows_resource)
 #undef DEFINE

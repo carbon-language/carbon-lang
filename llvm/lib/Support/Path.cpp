@@ -999,7 +999,7 @@ file_magic identify_magic(StringRef Magic) {
         case 6: return file_magic::macho_dynamically_linked_shared_lib;
         case 7: return file_magic::macho_dynamic_linker;
         case 8: return file_magic::macho_bundle;
-        case 9: return file_magic::macho_dynamic_linker;
+        case 9: return file_magic::macho_dynamically_linked_shared_lib_stub;
         case 10: return file_magic::macho_dsym_companion;
       }
       break;
