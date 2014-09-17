@@ -380,11 +380,11 @@ for.body48:                                       ; preds = %for.inc221, %for.bo
 
 for.body65.lr.ph:                                 ; preds = %for.body48
   %0 = load i32* undef, align 4
+  %1 = sext i32 %0 to i64
   br label %for.body65.us
 
 for.body65.us:                                    ; preds = %for.inc219.us, %for.body65.lr.ph
-  %k.09.us = phi i32 [ %inc.us, %for.inc219.us ], [ 1, %for.body65.lr.ph ]
-  %idxprom66.us = sext i32 %k.09.us to i64
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc219.us ], [ 1, %for.body65.lr.ph ]
   br i1 undef, label %for.inc219.us, label %if.end72.us
 
 if.end72.us:                                      ; preds = %for.body65.us
@@ -406,8 +406,8 @@ for.cond152.us:                                   ; preds = %for.cond152.us, %fo
   br i1 undef, label %for.cond139.loopexit.us, label %for.cond152.us
 
 for.inc219.us:                                    ; preds = %for.cond139.loopexit.us, %if.end110.us, %if.end93.us, %for.body65.us
-  %inc.us = add nsw i32 %k.09.us, 1
-  %cmp64.us = icmp sgt i32 %inc.us, %0
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %cmp64.us = icmp sgt i64 %indvars.iv.next, %1
   br i1 %cmp64.us, label %for.inc221, label %for.body65.us
 
 for.cond139.loopexit.us:                          ; preds = %for.cond152.us

@@ -229,10 +229,11 @@ entry:
 ; loop and the OR instruction is replaced by an ADD keeping the result
 ; equivalent.
 ;
+; CHECK: sext
 ; CHECK: loop:
 ; CHECK: phi i64
 ; CHECK-NOT: sext
-; CHECK: icmp slt i32
+; CHECK: icmp slt i64
 ; CHECK: exit:
 ; CHECK: add i64
 loop:

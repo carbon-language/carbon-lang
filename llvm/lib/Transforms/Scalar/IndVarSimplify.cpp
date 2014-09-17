@@ -762,6 +762,8 @@ protected:
 
   Instruction *WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter);
 
+  bool WidenLoopCompare(NarrowIVDefUse DU);
+
   void pushNarrowIVUsers(Instruction *NarrowDef, Instruction *WideDef);
 };
 } // anonymous namespace
@@ -926,6 +928,32 @@ static void truncateIVUse(NarrowIVDefUse DU, DominatorTree *DT) {
   DU.NarrowUse->replaceUsesOfWith(DU.NarrowDef, Trunc);
 }
 
+/// If the narrow use is a compare instruction, then widen the compare
+//  (and possibly the other operand).  The extend operation is hoisted into the
+// loop preheader as far as possible.
+bool WidenIV::WidenLoopCompare(NarrowIVDefUse DU) {
+  ICmpInst *Cmp = dyn_cast<ICmpInst>(DU.NarrowUse);
+  if (!Cmp)
+    return false;
+
+  Value *Op = Cmp->getOperand(Cmp->getOperand(0) == DU.NarrowDef ? 1 : 0);
+  unsigned CastWidth = SE->getTypeSizeInBits(Op->getType());
+  unsigned IVWidth = SE->getTypeSizeInBits(WideType);
+  assert (CastWidth <= IVWidth && "Unexpected width while widening compare.");
+
+  // Widen the compare instruction.
+  IRBuilder<> Builder(getInsertPointForUses(DU.NarrowUse, DU.NarrowDef, DT));
+  DU.NarrowUse->replaceUsesOfWith(DU.NarrowDef, DU.WideDef);
+
+  // Widen the other operand of the compare, if necessary.
+  if (CastWidth < IVWidth) {
+    bool IsSigned = CmpInst::isSigned(Cmp->getPredicate());
+    Value *ExtOp = getExtend(Op, WideType, IsSigned, Cmp);
+    DU.NarrowUse->replaceUsesOfWith(Op, ExtOp);
+  }
+  return true;
+}
+
 /// WidenIVUse - Determine whether an individual user of the narrow IV can be
 /// widened. If so, return the wide clone of the user.
 Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
@@ -993,10 +1021,15 @@ Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
 
   // Does this user itself evaluate to a recurrence after widening?
   const SCEVAddRecExpr *WideAddRec = GetWideRecurrence(DU.NarrowUse);
+  if (!WideAddRec)
+    WideAddRec = GetExtendedOperandRecurrence(DU);
+
   if (!WideAddRec) {
-      WideAddRec = GetExtendedOperandRecurrence(DU);
-  }
-  if (!WideAddRec) {
+    // If use is a loop condition, try to promote the condition instead of
+    // truncating the IV first.
+    if (WidenLoopCompare(DU))
+      return nullptr;
+
     // This user does not evaluate to a recurence after widening, so don't
     // follow it. Instead insert a Trunc to kill off the original use,
     // eventually isolating the original narrow IV so it can be removed.
