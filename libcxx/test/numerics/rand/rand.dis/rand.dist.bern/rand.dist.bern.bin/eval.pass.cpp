@@ -322,6 +322,17 @@ int main()
         assert(std::abs((kurtosis - x_kurtosis) / x_kurtosis) < 0.01);
     }
     {
+        const int N = 100000;
+        std::mt19937 gen1;
+        std::mt19937 gen2;
+
+        std::binomial_distribution<>         dist1(5, 0.1);
+        std::binomial_distribution<unsigned> dist2(5, 0.1);
+
+        for(int i = 0; i < N; ++i)
+            assert(dist1(gen1) == dist2(gen2));
+    }
+    {
         typedef std::binomial_distribution<> D;
         typedef std::mt19937 G;
         G g;
