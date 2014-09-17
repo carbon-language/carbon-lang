@@ -75,21 +75,25 @@ SUnit* R600SchedStrategy::pickNode(bool &IsTopNode) {
     float ALUFetchRationEstimate =
         (AluInstCount + AvailablesAluCount() + Pending[IDAlu].size()) /
         (FetchInstCount + Available[IDFetch].size());
-    unsigned NeededWF = 62.5f / ALUFetchRationEstimate;
-    DEBUG( dbgs() << NeededWF << " approx. Wavefronts Required\n" );
-    // We assume the local GPR requirements to be "dominated" by the requirement
-    // of the TEX clause (which consumes 128 bits regs) ; ALU inst before and
-    // after TEX are indeed likely to consume or generate values from/for the
-    // TEX clause.
-    // Available[IDFetch].size() * 2 : GPRs required in the Fetch clause
-    // We assume that fetch instructions are either TnXYZW = TEX TnXYZW (need
-    // one GPR) or TmXYZW = TnXYZW (need 2 GPR).
-    // (TODO : use RegisterPressure)
-    // If we are going too use too many GPR, we flush Fetch instruction to lower
-    // register pressure on 128 bits regs.
-    unsigned NearRegisterRequirement = 2 * Available[IDFetch].size();
-    if (NeededWF > getWFCountLimitedByGPR(NearRegisterRequirement))
+    if (ALUFetchRationEstimate == 0) {
       AllowSwitchFromAlu = true;
+    } else {
+      unsigned NeededWF = 62.5f / ALUFetchRationEstimate;
+      DEBUG( dbgs() << NeededWF << " approx. Wavefronts Required\n" );
+      // We assume the local GPR requirements to be "dominated" by the requirement
+      // of the TEX clause (which consumes 128 bits regs) ; ALU inst before and
+      // after TEX are indeed likely to consume or generate values from/for the
+      // TEX clause.
+      // Available[IDFetch].size() * 2 : GPRs required in the Fetch clause
+      // We assume that fetch instructions are either TnXYZW = TEX TnXYZW (need
+      // one GPR) or TmXYZW = TnXYZW (need 2 GPR).
+      // (TODO : use RegisterPressure)
+      // If we are going too use too many GPR, we flush Fetch instruction to lower
+      // register pressure on 128 bits regs.
+      unsigned NearRegisterRequirement = 2 * Available[IDFetch].size();
+      if (NeededWF > getWFCountLimitedByGPR(NearRegisterRequirement))
+        AllowSwitchFromAlu = true;
+    }
   }
 
   if (!SU && ((AllowSwitchToAlu && CurInstKind != IDAlu) ||
