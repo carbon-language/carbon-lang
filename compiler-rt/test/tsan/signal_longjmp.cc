@@ -1,7 +1,7 @@
 // RUN: %clang_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
 
 // Test case for longjumping out of signal handler:
-// https://code.google.com/p/thread-sanitizer/issues/detail?id=71
+// https://code.google.com/p/thread-sanitizer/issues/detail?id=75
 
 #include <setjmp.h>
 #include <signal.h>
