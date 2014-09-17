@@ -49,7 +49,7 @@ entry:
 
 ; FUNC-LABEL: @uint_to_fp_i1_f32:
 ; SI: V_CMP_EQ_I32_e64 [[CMP:s\[[0-9]+:[0-9]\]]],
-; SI-NEXT: V_CNDMASK_B32_e64 [[RESULT:v[0-9]+]], 0, 1.000000e+00, [[CMP]]
+; SI-NEXT: V_CNDMASK_B32_e64 [[RESULT:v[0-9]+]], 0, 1.0, [[CMP]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
 ; SI: S_ENDPGM
 define void @uint_to_fp_i1_f32(float addrspace(1)* %out, i32 %in) {
@@ -60,7 +60,7 @@ define void @uint_to_fp_i1_f32(float addrspace(1)* %out, i32 %in) {
 }
 
 ; FUNC-LABEL: @uint_to_fp_i1_f32_load:
-; SI: V_CNDMASK_B32_e64 [[RESULT:v[0-9]+]], 0, 1.000000e+00
+; SI: V_CNDMASK_B32_e64 [[RESULT:v[0-9]+]], 0, 1.0
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
 ; SI: S_ENDPGM
 define void @uint_to_fp_i1_f32_load(float addrspace(1)* %out, i1 %in) {

@@ -49,7 +49,7 @@ define void @insertelement_v4i32_0(<4 x i32> addrspace(1)* %out, <4 x i32> %a) n
 }
 
 ; SI-LABEL: @dynamic_insertelement_v2f32:
-; SI: V_MOV_B32_e32 [[CONST:v[0-9]+]], 5.000000e+00
+; SI: V_MOV_B32_e32 [[CONST:v[0-9]+]], 0x40a00000
 ; SI: V_MOVRELD_B32_e32 v[[LOW_RESULT_REG:[0-9]+]], [[CONST]]
 ; SI: BUFFER_STORE_DWORDX2 {{v\[}}[[LOW_RESULT_REG]]:
 define void @dynamic_insertelement_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %a, i32 %b) nounwind {
@@ -59,7 +59,7 @@ define void @dynamic_insertelement_v2f32(<2 x float> addrspace(1)* %out, <2 x fl
 }
 
 ; SI-LABEL: @dynamic_insertelement_v4f32:
-; SI: V_MOV_B32_e32 [[CONST:v[0-9]+]], 5.000000e+00
+; SI: V_MOV_B32_e32 [[CONST:v[0-9]+]], 0x40a00000
 ; SI: V_MOVRELD_B32_e32 v[[LOW_RESULT_REG:[0-9]+]], [[CONST]]
 ; SI: BUFFER_STORE_DWORDX4 {{v\[}}[[LOW_RESULT_REG]]:
 define void @dynamic_insertelement_v4f32(<4 x float> addrspace(1)* %out, <4 x float> %a, i32 %b) nounwind {

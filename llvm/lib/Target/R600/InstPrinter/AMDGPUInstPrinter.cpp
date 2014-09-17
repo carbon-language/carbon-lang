@@ -182,19 +182,27 @@ void AMDGPUInstPrinter::printImmediate(uint32_t Imm, raw_ostream &O) {
     return;
   }
 
-  if (Imm == FloatToBits(1.0f) ||
-      Imm == FloatToBits(-1.0f) ||
-      Imm == FloatToBits(0.5f) ||
-      Imm == FloatToBits(-0.5f) ||
-      Imm == FloatToBits(2.0f) ||
-      Imm == FloatToBits(-2.0f) ||
-      Imm == FloatToBits(4.0f) ||
-      Imm == FloatToBits(-4.0f)) {
-    O << BitsToFloat(Imm);
-    return;
+  if (Imm == FloatToBits(0.0f))
+    O << "0.0";
+  else if (Imm == FloatToBits(1.0f))
+    O << "1.0";
+  else if (Imm == FloatToBits(-1.0f))
+    O << "-1.0";
+  else if (Imm == FloatToBits(0.5f))
+    O << "0.5";
+  else if (Imm == FloatToBits(-0.5f))
+    O << "-0.5";
+  else if (Imm == FloatToBits(2.0f))
+    O << "2.0";
+  else if (Imm == FloatToBits(-2.0f))
+    O << "-2.0";
+  else if (Imm == FloatToBits(4.0f))
+    O << "4.0";
+  else if (Imm == FloatToBits(-4.0f))
+    O << "-4.0";
+  else {
+    O << formatHex(static_cast<uint64_t>(Imm));
   }
-
-  O << formatHex(static_cast<uint64_t>(Imm));
 }
 
 void AMDGPUInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
@@ -214,7 +222,12 @@ void AMDGPUInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   } else if (Op.isImm()) {
     printImmediate(Op.getImm(), O);
   } else if (Op.isFPImm()) {
-    O << Op.getFPImm();
+
+    // We special case 0.0 because otherwise it will be printed as an integer.
+    if (Op.getFPImm() == 0.0)
+      O << "0.0";
+    else
+      printImmediate(FloatToBits(Op.getFPImm()), O);
   } else if (Op.isExpr()) {
     const MCExpr *Exp = Op.getExpr();
     Exp->print(O);
