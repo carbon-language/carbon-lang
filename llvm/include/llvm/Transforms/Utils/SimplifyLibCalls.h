@@ -40,6 +40,10 @@ public:
   LibCallSimplifier(const DataLayout *TD, const TargetLibraryInfo *TLI,
                     bool UnsafeFPShrink);
 
+  /// ~LibCallSimplifier - Adding the virtual destructor back in to satisfy
+  /// -Wnon-virtual-dtor. This class is used polymorphically by InstCombine.
+  virtual ~LibCallSimplifier() {}
+
   /// optimizeCall - Take the given call instruction and return a more
   /// optimal value to replace the instruction with or 0 if a more
   /// optimal form can't be found.  Note that the returned value may
