@@ -393,6 +393,7 @@ namespace llvm {
         Type *Ty, CallingConv::ID CallConv, bool isVarArg) const override;
 
     bool hasLoadLinkedStoreConditional() const override;
+    Instruction *makeDMB(IRBuilder<> &Builder, ARM_MB::MemBOpt Domain) const;
     Value *emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
                           AtomicOrdering Ord) const override;
     Value *emitStoreConditional(IRBuilder<> &Builder, Value *Val,
