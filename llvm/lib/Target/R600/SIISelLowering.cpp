@@ -1666,10 +1666,10 @@ static bool isNodeChanged(const SDNode *Node, const std::vector<SDValue> &Ops) {
   return false;
 }
 
-/// \brief Try to fold the Nodes operands into the Node
-SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
-                                       SelectionDAG &DAG) const {
-
+/// \brief Try to commute instructions and insert copies in order to satisfy the
+/// operand constraints.
+SDNode *SITargetLowering::legalizeOperands(MachineSDNode *Node,
+                                           SelectionDAG &DAG) const {
   // Original encoding (either e32 or e64)
   int Opcode = Node->getMachineOpcode();
   const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
@@ -1685,13 +1685,6 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
 
   assert(!DescRev || DescRev->getNumDefs() == NumDefs);
   assert(!DescRev || DescRev->getNumOperands() == NumOps);
-
-  // e64 version if available, -1 otherwise
-  int OpcodeE64 = AMDGPU::getVOPe64(Opcode);
-  const MCInstrDesc *DescE64 = OpcodeE64 == -1 ? nullptr : &TII->get(OpcodeE64);
-  int InputModifiers[3] = {0};
-
-  assert(!DescE64 || DescE64->getNumDefs() == NumDefs);
 
   int32_t Immediate = Desc->getSize() == 4 ? 0 : -1;
   bool HaveVSrc = false, HaveSSrc = false;
@@ -1724,7 +1717,6 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
 
   // Second go over the operands and try to fold them
   std::vector<SDValue> Ops;
-  bool Promote2e64 = false;
   for (unsigned i = 0, e = Node->getNumOperands(), Op = NumDefs;
        i != e && Op < NumOps; ++i, ++Op) {
 
@@ -1772,50 +1764,6 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
         DescRev = nullptr;
         continue;
       }
-    }
-
-    if (Immediate)
-      continue;
-
-    if (DescE64) {
-      // Test if it makes sense to switch to e64 encoding
-      unsigned OtherRegClass = DescE64->OpInfo[Op].RegClass;
-      if (!isVSrc(OtherRegClass) && !isSSrc(OtherRegClass))
-        continue;
-
-      int32_t TmpImm = -1;
-      if (foldImm(Ops[i], TmpImm, ScalarSlotUsed) ||
-          (!fitsRegClass(DAG, Ops[i], RegClass) &&
-           fitsRegClass(DAG, Ops[1], OtherRegClass))) {
-
-        // Switch to e64 encoding
-        Immediate = -1;
-        Promote2e64 = true;
-        Desc = DescE64;
-        DescE64 = nullptr;
-      }
-    }
-
-    if (!DescE64 && !Promote2e64)
-      continue;
-    if (!Operand.isMachineOpcode())
-      continue;
-  }
-
-  if (Promote2e64) {
-    std::vector<SDValue> OldOps(Ops);
-    Ops.clear();
-    bool HasModifiers = TII->hasModifiers(Desc->Opcode);
-    for (unsigned i = 0; i < OldOps.size(); ++i) {
-      // src_modifier
-      if (HasModifiers)
-        Ops.push_back(DAG.getTargetConstant(InputModifiers[i], MVT::i32));
-      Ops.push_back(OldOps[i]);
-    }
-    // Add the modifier flags while promoting
-    if (HasModifiers) {
-      for (unsigned i = 0; i < 2; ++i)
-        Ops.push_back(DAG.getTargetConstant(0, MVT::i32));
     }
   }
 
@@ -1935,7 +1883,7 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
   if (TII->isMIMG(Node->getMachineOpcode()))
     adjustWritemask(Node, DAG);
 
-  return foldOperands(Node, DAG);
+  return legalizeOperands(Node, DAG);
 }
 
 /// \brief Assign the register class depending on the number of
