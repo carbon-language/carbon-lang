@@ -83,9 +83,9 @@ exports:
 ...
 
 
-# CHECK:    libbar.dylib        _bar
-# CHECK:    libbaz.dylib        _baz
-# CHECK:    libfoo.dylib        _foo
+# CHECK:    libbar        _bar
+# CHECK:    libbaz        _baz
+# CHECK:    libfoo        _foo
 
 
 # CHECK-NM:   (undefined) external _bar (from libbar)
