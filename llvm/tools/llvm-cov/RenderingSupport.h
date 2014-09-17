@@ -49,7 +49,7 @@ inline raw_ostream &operator<<(const ColoredRawOstream &OS, T &&Value) {
 /// is true. Returns an object that resets the color when destroyed.
 inline ColoredRawOstream colored_ostream(raw_ostream &OS,
                                          raw_ostream::Colors Color,
-                                         bool IsColorUsed = false) {
+                                         bool IsColorUsed = true) {
   if (IsColorUsed)
     OS.changeColor(Color);
   return ColoredRawOstream(OS, IsColorUsed);
