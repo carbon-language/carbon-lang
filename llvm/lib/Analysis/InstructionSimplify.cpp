@@ -1171,10 +1171,12 @@ static Value *SimplifyRem(Instruction::BinaryOps Opcode, Value *Op0, Value *Op1,
   if (Op0 == Op1)
     return Constant::getNullValue(Op0->getType());
 
-  // ((X % Y) % Y) -> (X % Y)
-  if (match(Op0, m_SRem(m_Value(), m_Specific(Op1)))) {
+  // (X % Y) % Y -> X % Y
+  if ((Opcode == Instruction::SRem &&
+       match(Op0, m_SRem(m_Value(), m_Specific(Op1)))) ||
+      (Opcode == Instruction::URem &&
+       match(Op0, m_URem(m_Value(), m_Specific(Op1)))))
     return Op0;
-  }
 
   // If the operation is with the result of a select instruction, check whether
   // operating on either branch of the select always yields the same value.
