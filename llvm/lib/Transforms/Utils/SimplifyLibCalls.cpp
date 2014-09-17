@@ -52,7 +52,7 @@ static bool ignoreCallingConv(LibFunc::Func Func) {
   default:
     return false;
   }
-  llvm_unreachable();
+  llvm_unreachable("All cases should be covered in the switch.");
 }
 
 /// isOnlyUsedInZeroEqualityComparison - Return true if it only matters that the
