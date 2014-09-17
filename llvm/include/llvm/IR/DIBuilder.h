@@ -521,6 +521,15 @@ namespace llvm {
                          DITypeRef Ty, bool isLocalToUnit, llvm::Value *Val,
                          MDNode *Decl = nullptr);
 
+    /// createTempStaticVariableFwdDecl - Identical to createStaticVariable
+    /// except that the resulting DbgNode is temporary and meant to be RAUWed.
+    DIGlobalVariable
+    createTempStaticVariableFwdDecl(DIDescriptor Context, StringRef Name,
+                                    StringRef LinkageName, DIFile File,
+                                    unsigned LineNo, DITypeRef Ty,
+                                    bool isLocalToUnit, llvm::Value *Val,
+                                    MDNode *Decl = nullptr);
+
 
     /// createLocalVariable - Create a new descriptor for the specified
     /// local variable.
@@ -598,6 +607,21 @@ namespace llvm {
                                 Function *Fn = nullptr,
                                 MDNode *TParam = nullptr,
                                 MDNode *Decl = nullptr);
+
+    /// createTempFunctionFwdDecl - Identical to createFunction,
+    /// except that the resulting DbgNode is meant to be RAUWed.
+    DISubprogram createTempFunctionFwdDecl(DIDescriptor Scope, StringRef Name,
+                                           StringRef LinkageName,
+                                           DIFile File, unsigned LineNo,
+                                           DICompositeType Ty, bool isLocalToUnit,
+                                           bool isDefinition,
+                                           unsigned ScopeLine,
+                                           unsigned Flags = 0,
+                                           bool isOptimized = false,
+                                           Function *Fn = nullptr,
+                                           MDNode *TParam = nullptr,
+                                           MDNode *Decl = nullptr);
+
 
     /// FIXME: this is added for dragonegg. Once we update dragonegg
     /// to call resolve function, this will be removed.
@@ -731,7 +755,6 @@ namespace llvm {
     Instruction *insertDbgValueIntrinsic(llvm::Value *Val, uint64_t Offset,
                                          DIVariable VarInfo,
                                          Instruction *InsertBefore);
-
   };
 } // end namespace llvm
 
