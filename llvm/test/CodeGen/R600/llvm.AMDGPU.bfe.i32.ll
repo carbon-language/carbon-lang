@@ -1,6 +1,9 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=redwood -show-mc-encoding -verify-machineinstrs < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
+; http://llvm.org/bugs/show_bug.cgi?id=20982
+; REQUIRES: not_ubsan
+
 declare i32 @llvm.AMDGPU.bfe.i32(i32, i32, i32) nounwind readnone
 
 ; FUNC-LABEL: @bfe_i32_arg_arg_arg
