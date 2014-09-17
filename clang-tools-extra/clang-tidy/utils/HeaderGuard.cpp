@@ -125,15 +125,16 @@ public:
         if (CurHeaderGuard != NewGuard) {
           auto D = Check->diag(Ifndef,
                                "header guard does not follow preferred style");
-          for (const FixItHint Fix : FixIts)
-            D.AddFixItHint(Fix);
+          for (FixItHint &Fix : FixIts)
+            D.AddFixItHint(std::move(Fix));
         } else {
           auto D = Check->diag(EndIf, "#endif for a header guard should "
                                       "reference the guard macro in a comment");
-          for (const FixItHint Fix : FixIts)
-            D.AddFixItHint(Fix);
+          for (FixItHint &Fix : FixIts)
+            D.AddFixItHint(std::move(Fix));
         }
       }
+      FixIts.clear();
     }
 
     // Emit warnings for headers that are missing guards.
@@ -144,7 +145,6 @@ public:
     Files.clear();
     Ifndefs.clear();
     EndIfs.clear();
-    FixIts.clear();
   }
 
   bool wouldFixEndifComment(StringRef FileName, SourceLocation EndIf,
