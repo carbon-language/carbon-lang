@@ -153,7 +153,6 @@ void invoke_free_hook(void *ptr) {
 
 void *internal_alloc(MBlockType typ, uptr sz) {
   ThreadState *thr = cur_thread();
-  CHECK_LE(sz, InternalSizeClassMap::kMaxSize);
   if (thr->nomalloc) {
     thr->nomalloc = 0;  // CHECK calls internal_malloc().
     CHECK(0);

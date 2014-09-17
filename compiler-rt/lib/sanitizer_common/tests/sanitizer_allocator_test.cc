@@ -629,9 +629,9 @@ TEST(Allocator, Stress) {
   }
 }
 
-TEST(Allocator, InternalAllocFailure) {
-  EXPECT_DEATH(Ident(InternalAlloc(10 << 20)),
-               "Unexpected mmap in InternalAllocator!");
+TEST(Allocator, LargeAlloc) {
+  void *p = InternalAlloc(10 << 20);
+  InternalFree(p);
 }
 
 TEST(Allocator, ScopedBuffer) {

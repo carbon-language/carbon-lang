@@ -42,20 +42,8 @@ typedef SizeClassAllocator32<
 typedef SizeClassAllocatorLocalCache<PrimaryInternalAllocator>
     InternalAllocatorCache;
 
-// We don't want our internal allocator to do any map/unmap operations from
-// LargeMmapAllocator.
-struct CrashOnMapUnmap {
-  void OnMap(uptr p, uptr size) const {
-    RAW_CHECK_MSG(0, "Unexpected mmap in InternalAllocator!\n");
-  }
-  void OnUnmap(uptr p, uptr size) const {
-    RAW_CHECK_MSG(0, "Unexpected munmap in InternalAllocator!\n");
-  }
-};
-
 typedef CombinedAllocator<PrimaryInternalAllocator, InternalAllocatorCache,
-                          LargeMmapAllocator<CrashOnMapUnmap> >
-    InternalAllocator;
+                          LargeMmapAllocator<> > InternalAllocator;
 
 void *InternalAlloc(uptr size, InternalAllocatorCache *cache = 0);
 void InternalFree(void *p, InternalAllocatorCache *cache = 0);
