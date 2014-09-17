@@ -1,5 +1,5 @@
-# RUN: llvm-objdump -macho -weak-bind -arch x86_64 \
-# RUN:   %p/Inputs/weak-bind.macho-x86_64 | FileCheck %s
+# RUN: llvm-objdump -macho -weak-bind  %p/Inputs/weak-bind.macho-x86_64 \
+# RUN:   | FileCheck %s
 
 
 # CHECK: __DATA   __data             0x100001018   pointer  0        __ZTISt12out_of_range
