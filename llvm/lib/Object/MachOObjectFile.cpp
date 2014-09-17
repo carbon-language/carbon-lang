@@ -1957,9 +1957,9 @@ void MachOBindEntry::moveNext() {
       while (*Ptr) {
         ++Ptr;
       }
-      ++Ptr;
       SymbolName = StringRef(reinterpret_cast<const char*>(SymStart),
                              Ptr-SymStart);
+      ++Ptr;
       DEBUG_WITH_TYPE(
           "mach-o-bind",
           llvm::dbgs() << "BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM: "
