@@ -339,6 +339,16 @@ define i32 @load_shift_offreg_1(i64 %a) {
   ret i32 %3
 }
 
+define i32 @load_mul_offreg_1(i64 %a) {
+; CHECK-LABEL: load_mul_offreg_1
+; CHECK:       lsl [[REG:x[0-9]+]], x0, #2
+; CHECK:       ldr {{w[0-9]+}}, {{\[}}[[REG]]{{\]}}
+  %1 = mul i64 %a, 4
+  %2 = inttoptr i64 %1 to i32*
+  %3 = load i32* %2
+  ret i32 %3
+}
+
 ; Load Base Register + Scaled Register Offset
 define i32 @load_breg_shift_offreg_1(i64 %a, i64 %b) {
 ; CHECK-LABEL: load_breg_shift_offreg_1
@@ -405,6 +415,15 @@ define i32 @load_breg_shift_offreg_5(i64 %a, i64 %b) {
   ret i32 %5
 }
 
+define i32 @load_breg_mul_offreg_1(i64 %a, i64 %b) {
+; CHECK-LABEL: load_breg_mul_offreg_1
+; CHECK:       ldr {{w[0-9]+}}, [x1, x0, lsl #2]
+  %1 = mul i64 %a, 4
+  %2 = add i64 %1, %b
+  %3 = inttoptr i64 %2 to i32*
+  %4 = load i32* %3
+  ret i32 %4
+}
 
 ; Load Base Register + Scaled Register Offset + Sign/Zero extension
 define i32 @load_breg_zext_shift_offreg_1(i32 %a, i64 %b) {
@@ -429,6 +448,17 @@ define i32 @load_breg_zext_shift_offreg_2(i32 %a, i64 %b) {
   ret i32 %5
 }
 
+define i32 @load_breg_zext_mul_offreg_1(i32 %a, i64 %b) {
+; CHECK-LABEL: load_breg_zext_mul_offreg_1
+; CHECK:       ldr {{w[0-9]+}}, [x1, w0, uxtw #2]
+  %1 = zext i32 %a to i64
+  %2 = mul i64 %1, 4
+  %3 = add i64 %2, %b
+  %4 = inttoptr i64 %3 to i32*
+  %5 = load i32* %4
+  ret i32 %5
+}
+
 define i32 @load_breg_sext_shift_offreg_1(i32 %a, i64 %b) {
 ; CHECK-LABEL: load_breg_sext_shift_offreg_1
 ; CHECK:       ldr {{w[0-9]+}}, [x1, w0, sxtw #2]
@@ -446,6 +476,17 @@ define i32 @load_breg_sext_shift_offreg_2(i32 %a, i64 %b) {
   %1 = sext i32 %a to i64
   %2 = shl i64 %1, 2
   %3 = add i64 %b, %2
+  %4 = inttoptr i64 %3 to i32*
+  %5 = load i32* %4
+  ret i32 %5
+}
+
+define i32 @load_breg_sext_mul_offreg_1(i32 %a, i64 %b) {
+; CHECK-LABEL: load_breg_sext_mul_offreg_1
+; CHECK:       ldr {{w[0-9]+}}, [x1, w0, sxtw #2]
+  %1 = sext i32 %a to i64
+  %2 = mul i64 %1, 4
+  %3 = add i64 %2, %b
   %4 = inttoptr i64 %3 to i32*
   %5 = load i32* %4
   ret i32 %5

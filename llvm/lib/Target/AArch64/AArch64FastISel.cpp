@@ -425,6 +425,19 @@ unsigned AArch64FastISel::fastMaterializeFloatZero(const ConstantFP* CFP) {
   return fastEmitInst_r(Opc, TLI.getRegClassFor(VT), ZReg, /*IsKill=*/true);
 }
 
+/// \brief Check if the multiply is by a power-of-2 constant.
+static bool isMulPowOf2(const Value *I) {
+  if (const auto *MI = dyn_cast<MulOperator>(I)) {
+    if (const auto *C = dyn_cast<ConstantInt>(MI->getOperand(0)))
+      if (C->getValue().isPowerOf2())
+        return true;
+    if (const auto *C = dyn_cast<ConstantInt>(MI->getOperand(1)))
+      if (C->getValue().isPowerOf2())
+        return true;
+  }
+  return false;
+}
+
 // Computes the address to get to an object.
 bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
 {
@@ -589,7 +602,64 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
       return true;
     }
     break;
+  case Instruction::Mul: {
+    if (Addr.getOffsetReg())
+      break;
+
+    if (!isMulPowOf2(U))
+      break;
+
+    const Value *LHS = U->getOperand(0);
+    const Value *RHS = U->getOperand(1);
+
+    // Canonicalize power-of-2 value to the RHS.
+    if (const auto *C = dyn_cast<ConstantInt>(LHS))
+      if (C->getValue().isPowerOf2())
+        std::swap(LHS, RHS);
+
+    assert(isa<ConstantInt>(RHS) && "Expected an ConstantInt.");
+    const auto *C = cast<ConstantInt>(RHS);
+    unsigned Val = C->getValue().logBase2();
+    if (Val < 1 || Val > 3)
+      break;
+
+    uint64_t NumBytes = 0;
+    if (Ty && Ty->isSized()) {
+      uint64_t NumBits = DL.getTypeSizeInBits(Ty);
+      NumBytes = NumBits / 8;
+      if (!isPowerOf2_64(NumBits))
+        NumBytes = 0;
+    }
+
+    if (NumBytes != (1ULL << Val))
+      break;
+
+    Addr.setShift(Val);
+    Addr.setExtendType(AArch64_AM::LSL);
+
+    if (const auto *I = dyn_cast<Instruction>(LHS))
+      if (FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB)
+        U = I;
+
+    if (const auto *ZE = dyn_cast<ZExtInst>(U))
+      if (ZE->getOperand(0)->getType()->isIntegerTy(32)) {
+        Addr.setExtendType(AArch64_AM::UXTW);
+        LHS = U->getOperand(0);
+      }
+
+    if (const auto *SE = dyn_cast<SExtInst>(U))
+      if (SE->getOperand(0)->getType()->isIntegerTy(32)) {
+        Addr.setExtendType(AArch64_AM::SXTW);
+        LHS = U->getOperand(0);
+      }
+
+    unsigned Reg = getRegForValue(LHS);
+    if (!Reg)
+      return false;
+    Addr.setOffsetReg(Reg);
+    return true;
   }
+  } // end switch
 
   if (Addr.getReg()) {
     if (!Addr.getOffsetReg()) {
