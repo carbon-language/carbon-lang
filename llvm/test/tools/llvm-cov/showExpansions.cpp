@@ -23,9 +23,9 @@ int main(int argc, const char *argv[]) {
   return 0;
 }
 
-// CHECK: Expansion of {{[0-9]+}}:13 -> 18 @ {{[0-9]+}}, 22:5
-// CHECK: Expansion of {{[0-9]+}}:4 -> 5 @ {{[0-9]+}}, 15:7
-// CHECK: Expansion of {{[0-9]+}}:7 -> 10 @ {{[0-9]+}}, 17:7
+// CHECK: Expansion at line 22, 5 -> 17
+// CHECK: Expansion at line 15, 7 -> 24
+// CHECK: Expansion at line 17, 7 -> 20
 
 // llvm-cov doesn't work on big endian yet
 // XFAIL: powerpc64-, s390x, mips-, mips64-, sparc

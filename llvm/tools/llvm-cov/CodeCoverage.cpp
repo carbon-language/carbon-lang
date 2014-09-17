@@ -190,22 +190,6 @@ CodeCoverageTool::getSourceFile(StringRef SourceFile) {
   return *LoadedSourceFiles.back().second;
 }
 
-/// \brief Return a line start - line end range which contains
-/// all the mapping regions of a given function with a particular file id.
-std::pair<unsigned, unsigned>
-findExpandedFileInterestingLineRange(unsigned FileID,
-                                     const FunctionCoverageMapping &Function) {
-  unsigned LineStart = std::numeric_limits<unsigned>::max();
-  unsigned LineEnd = 0;
-  for (const auto &CR : Function.CountedRegions) {
-    if (CR.FileID != FileID)
-      continue;
-    LineStart = std::min(CR.LineStart, LineStart);
-    LineEnd = std::max(CR.LineEnd, LineEnd);
-  }
-  return std::make_pair(LineStart, LineEnd);
-}
-
 bool CodeCoverageTool::equivalentFiles(StringRef A, StringRef B) {
   if (CompareFilenamesOnly)
     return sys::path::filename(A).equals_lower(sys::path::filename(B));
@@ -270,14 +254,6 @@ CodeCoverageTool::findMainViewFileID(const FunctionCoverageMapping &Function,
 void CodeCoverageTool::createExpansionSubView(
     const CountedRegion &ExpandedRegion,
     const FunctionCoverageMapping &Function, SourceCoverageView &Parent) {
-  auto ExpandedLines = findExpandedFileInterestingLineRange(
-      ExpandedRegion.ExpandedFileID, Function);
-  if (ViewOpts.Debug)
-    llvm::errs() << "Expansion of " << ExpandedRegion.ExpandedFileID << ":"
-                 << ExpandedLines.first << " -> " << ExpandedLines.second
-                 << " @ " << ExpandedRegion.FileID << ", "
-                 << ExpandedRegion.LineStart << ":"
-                 << ExpandedRegion.ColumnStart << "\n";
   auto SourceBuffer =
       getSourceFile(Function.Filenames[ExpandedRegion.ExpandedFileID]);
   if (!SourceBuffer)

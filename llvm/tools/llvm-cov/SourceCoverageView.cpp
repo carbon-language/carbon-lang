@@ -235,6 +235,10 @@ void SourceCoverageView::render(raw_ostream &OS, bool WholeFile,
         OS << "\n";
       }
       // Render the child subview
+      if (Options.Debug)
+        errs() << "Expansion at line " << NextESV->getLine() << ", "
+               << NextESV->getStartCol() << " -> " << NextESV->getEndCol()
+               << "\n";
       NextESV->View->render(OS, false, NestedIndent);
       RenderedSubView = true;
     }
