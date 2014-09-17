@@ -3119,6 +3119,9 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy(),
                                          OpFlags);
+  } else if (Subtarget->isTarget64BitILP32() && Callee->getValueType(0) == MVT::i32) {
+    // Zero-extend the 32-bit Callee address into a 64-bit according to x32 ABI
+    Callee = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i64, Callee);
   }
 
   // Returns a chain & a flag for retval copy to use.

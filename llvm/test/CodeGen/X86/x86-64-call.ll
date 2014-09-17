@@ -6,8 +6,8 @@
 
 define i32 @far() nounwind uwtable {
 entry:
-; CHECK: callq
-; IA32: calll
+; CHECK: callq foo
+; IA32: calll foo
   tail call void @foo() nounwind
   ret i32 0
 }
