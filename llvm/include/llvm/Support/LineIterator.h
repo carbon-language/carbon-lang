@@ -18,20 +18,22 @@ namespace llvm {
 
 class MemoryBuffer;
 
-/// \brief A forward iterator which reads non-blank text lines from a buffer.
+/// \brief A forward iterator which reads text lines from a buffer.
 ///
 /// This class provides a forward iterator interface for reading one line at
 /// a time from a buffer. When default constructed the iterator will be the
 /// "end" iterator.
 ///
-/// The iterator also is aware of what line number it is currently processing
-/// and can strip comment lines given the comment-starting character.
+/// The iterator is aware of what line number it is currently processing. It
+/// strips blank lines by default, and comment lines given a comment-starting
+/// character.
 ///
 /// Note that this iterator requires the buffer to be nul terminated.
 class line_iterator
     : public std::iterator<std::forward_iterator_tag, StringRef> {
   const MemoryBuffer *Buffer;
   char CommentMarker;
+  bool SkipBlanks;
 
   unsigned LineNumber;
   StringRef CurrentLine;
@@ -41,7 +43,8 @@ public:
   line_iterator() : Buffer(nullptr) {}
 
   /// \brief Construct a new iterator around some memory buffer.
-  explicit line_iterator(const MemoryBuffer &Buffer, char CommentMarker = '\0');
+  explicit line_iterator(const MemoryBuffer &Buffer, bool SkipBlanks = true,
+                         char CommentMarker = '\0');
 
   /// \brief Return true if we've reached EOF or are an "end" iterator.
   bool is_at_eof() const { return !Buffer; }

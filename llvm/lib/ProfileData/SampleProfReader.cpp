@@ -159,7 +159,7 @@ bool SampleProfileReader::loadText() {
     return false;
   }
   MemoryBuffer &Buffer = *BufferOrErr.get();
-  line_iterator LineIt(Buffer, '#');
+  line_iterator LineIt(Buffer, /*SkipBlanks=*/true, '#');
 
   // Read the profile of each function. Since each function may be
   // mentioned more than once, and we are collecting flat profiles,

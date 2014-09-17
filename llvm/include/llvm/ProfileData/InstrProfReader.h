@@ -120,7 +120,7 @@ private:
     LLVM_DELETED_FUNCTION;
 public:
   TextInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer_)
-      : DataBuffer(std::move(DataBuffer_)), Line(*DataBuffer, '#') {}
+      : DataBuffer(std::move(DataBuffer_)), Line(*DataBuffer, true, '#') {}
 
   /// Read the header.
   std::error_code readHeader() override { return success(); }

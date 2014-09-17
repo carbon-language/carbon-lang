@@ -206,7 +206,7 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned IndentLevel) {
   size_t CurrentHighlightRange = 0;
   size_t CurrentRegionMarker = 0;
 
-  line_iterator Lines(File);
+  line_iterator Lines(File, /*SkipBlanks=*/false);
   // Advance the line iterator to the first line.
   while (Lines.line_number() < LineOffset)
     ++Lines;
@@ -228,8 +228,9 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned IndentLevel) {
   auto NextISV = InstantiationSubViews.begin();
   auto EndISV = InstantiationSubViews.end();
 
-  for (size_t I = 0, E = LineStats.size(); I < E; ++I) {
-    unsigned LineNo = I + LineOffset;
+  for (size_t I = 0, E = LineStats.size(); I < E && !Lines.is_at_eof();
+       ++I, ++Lines) {
+    unsigned LineNo = Lines.line_number();
 
     renderIndent(OS, IndentLevel);
     if (Options.ShowLineStats)
@@ -252,11 +253,6 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned IndentLevel) {
 
     // Display the source code for the current line.
     StringRef Line = *Lines;
-    // Check if the line is empty, as line_iterator skips blank lines.
-    if (LineNo < Lines.line_number())
-      Line = "";
-    else if (!Lines.is_at_eof())
-      ++Lines;
     renderLine(OS, Line, LineRanges);
 
     // Show the region markers.
