@@ -285,7 +285,7 @@ void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   UseMovt = hasV6T2Ops() && ArmUseMOVT;
 
   if (isTargetMachO()) {
-    IsR9Reserved = ReserveR9 | !HasV6Ops;
+    IsR9Reserved = ReserveR9 || !HasV6Ops;
     SupportsTailCall = !isTargetIOS() || !getTargetTriple().isOSVersionLT(5, 0);
   } else {
     IsR9Reserved = ReserveR9;
