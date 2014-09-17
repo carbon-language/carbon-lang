@@ -53,6 +53,7 @@ void MCStreamer::reset() {
     delete WinFrameInfos[i];
   WinFrameInfos.clear();
   CurrentWinFrameInfo = nullptr;
+  SymbolOrdering.clear();
   SectionStack.clear();
   SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
 }
