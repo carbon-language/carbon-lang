@@ -3749,15 +3749,54 @@ bool AArch64FastISel::selectRem(const Instruction *I, unsigned ISDOpcode) {
 }
 
 bool AArch64FastISel::selectMul(const Instruction *I) {
-  EVT SrcEVT = TLI.getValueType(I->getOperand(0)->getType(), true);
-  if (!SrcEVT.isSimple())
+  MVT VT;
+  if (!isTypeSupported(I->getType(), VT, /*IsVectorAllowed=*/true))
     return false;
-  MVT SrcVT = SrcEVT.getSimpleVT();
 
-  // Must be simple value type.  Don't handle vectors.
-  if (SrcVT != MVT::i64 && SrcVT != MVT::i32 && SrcVT != MVT::i16 &&
-      SrcVT != MVT::i8)
-    return false;
+  if (VT.isVector())
+    return selectBinaryOp(I, ISD::MUL);
+
+  const Value *Src0 = I->getOperand(0);
+  const Value *Src1 = I->getOperand(1);
+  if (const auto *C = dyn_cast<ConstantInt>(Src0))
+    if (C->getValue().isPowerOf2())
+      std::swap(Src0, Src1);
+
+  // Try to simplify to a shift instruction.
+  if (const auto *C = dyn_cast<ConstantInt>(Src1))
+    if (C->getValue().isPowerOf2()) {
+      uint64_t ShiftVal = C->getValue().logBase2();
+      MVT SrcVT = VT;
+      bool IsZExt = true;
+      if (const auto *ZExt = dyn_cast<ZExtInst>(Src0)) {
+        MVT VT;
+        if (isValueAvailable(ZExt) && isTypeSupported(ZExt->getSrcTy(), VT)) {
+          SrcVT = VT;
+          IsZExt = true;
+          Src0 = ZExt->getOperand(0);
+        }
+      } else if (const auto *SExt = dyn_cast<SExtInst>(Src0)) {
+        MVT VT;
+        if (isValueAvailable(SExt) && isTypeSupported(SExt->getSrcTy(), VT)) {
+          SrcVT = VT;
+          IsZExt = false;
+          Src0 = SExt->getOperand(0);
+        }
+      }
+
+      unsigned Src0Reg = getRegForValue(Src0);
+      if (!Src0Reg)
+        return false;
+      bool Src0IsKill = hasTrivialKill(Src0);
+
+      unsigned ResultReg =
+          emitLSL_ri(VT, SrcVT, Src0Reg, Src0IsKill, ShiftVal, IsZExt);
+
+      if (ResultReg) {
+        updateValueMap(I, ResultReg);
+        return true;
+      }
+    }
 
   unsigned Src0Reg = getRegForValue(I->getOperand(0));
   if (!Src0Reg)
@@ -3769,8 +3808,7 @@ bool AArch64FastISel::selectMul(const Instruction *I) {
     return false;
   bool Src1IsKill = hasTrivialKill(I->getOperand(1));
 
-  unsigned ResultReg =
-      emitMul_rr(SrcVT, Src0Reg, Src0IsKill, Src1Reg, Src1IsKill);
+  unsigned ResultReg = emitMul_rr(VT, Src0Reg, Src0IsKill, Src1Reg, Src1IsKill);
 
   if (!ResultReg)
     return false;
@@ -3950,9 +3988,7 @@ bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
   case Instruction::Sub:
     return selectAddSub(I);
   case Instruction::Mul:
-    if (!selectBinaryOp(I, ISD::MUL))
-      return selectMul(I);
-    return true;
+    return selectMul(I);
   case Instruction::SRem:
     if (!selectBinaryOp(I, ISD::SREM))
       return selectRem(I, ISD::SREM);
