@@ -112,12 +112,13 @@ public:
       // the #ifndef and #define.
       StringRef CurHeaderGuard =
           MacroEntry.first.getIdentifierInfo()->getName();
+      std::vector<FixItHint> FixIts;
       std::string NewGuard = checkHeaderGuardDefinition(
-          Ifndef, Define, EndIf, FileName, CurHeaderGuard);
+          Ifndef, Define, EndIf, FileName, CurHeaderGuard, FixIts);
 
       // Now look at the #endif. We want a comment with the header guard. Fix it
       // at the slightest deviation.
-      checkEndifComment(FileName, EndIf, NewGuard);
+      checkEndifComment(FileName, EndIf, NewGuard, FixIts);
 
       // Bundle all fix-its into one warning. The message depends on whether we
       // changed the header guard or not.
@@ -134,7 +135,6 @@ public:
             D.AddFixItHint(std::move(Fix));
         }
       }
-      FixIts.clear();
     }
 
     // Emit warnings for headers that are missing guards.
@@ -177,7 +177,8 @@ public:
                                          SourceLocation Define,
                                          SourceLocation EndIf,
                                          StringRef FileName,
-                                         StringRef CurHeaderGuard) {
+                                         StringRef CurHeaderGuard,
+                                         std::vector<FixItHint> &FixIts) {
     std::string CPPVar = Check->getHeaderGuard(FileName, CurHeaderGuard);
     std::string CPPVarUnder = CPPVar + '_';
 
@@ -202,7 +203,8 @@ public:
   /// \brief Checks the comment after the #endif of a header guard and fixes it
   /// if it doesn't match \c HeaderGuard.
   void checkEndifComment(StringRef FileName, SourceLocation EndIf,
-                         StringRef HeaderGuard) {
+                         StringRef HeaderGuard,
+                         std::vector<FixItHint> &FixIts) {
     size_t EndIfLen;
     if (wouldFixEndifComment(FileName, EndIf, HeaderGuard, &EndIfLen)) {
       std::string Correct = "endif  // " + HeaderGuard.str();
@@ -270,7 +272,6 @@ private:
   std::map<const IdentifierInfo *, std::pair<SourceLocation, SourceLocation>>
       Ifndefs;
   std::map<SourceLocation, SourceLocation> EndIfs;
-  std::vector<FixItHint> FixIts;
 
   Preprocessor *PP;
   HeaderGuardCheck *Check;
