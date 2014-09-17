@@ -3972,9 +3972,8 @@ public:
 
     StringRef CPUArch = getCPUDefineSuffix(CPU);
     unsigned int CPUArchVer;
-    if(CPUArch.substr(0, 1).getAsInteger<unsigned int>(10, CPUArchVer)) {
+    if (CPUArch.substr(0, 1).getAsInteger<unsigned int>(10, CPUArchVer))
       llvm_unreachable("Invalid char for architecture version number");
-    }
     Builder.defineMacro("__ARM_ARCH_" + CPUArch + "__");
 
     // ACLE 6.4.1 ARM/Thumb instruction set architecture
