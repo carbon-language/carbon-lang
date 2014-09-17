@@ -1899,6 +1899,9 @@ public:
   }
   bool validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &info) const override;
+
+  bool validateInputSize(StringRef Constraint, unsigned Size) const override;
+
   std::string convertConstraint(const char *&Constraint) const override;
   const char *getClobbers() const override {
     return "~{dirflag},~{fpsr},~{flags}";
@@ -3049,6 +3052,21 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
   }
 }
 
+bool X86TargetInfo::validateInputSize(StringRef Constraint,
+                                      unsigned Size) const {
+  switch (Constraint[0]) {
+  default: break;
+  case 'y':
+    return Size <= 64;
+  case 'x':
+  case 'f':
+  case 't':
+  case 'u':
+    return Size <= 128;
+  }
+
+  return true;
+}
 
 std::string
 X86TargetInfo::convertConstraint(const char *&Constraint) const {
@@ -3109,14 +3127,21 @@ public:
                          unsigned Size) const override {
     switch (Constraint[0]) {
     default: break;
+    case 'R':
+    case 'q':
+    case 'Q':
     case 'a':
     case 'b':
     case 'c':
     case 'd':
+    case 'S':
+    case 'D':
       return Size <= 32;
+    case 'A':
+      return Size <= 64;
     }
 
-    return true;
+    return X86TargetInfo::validateInputSize(Constraint, Size);
   }
 };
 } // end anonymous namespace
