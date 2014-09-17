@@ -36,6 +36,9 @@ private:
   const TargetLibraryInfo *TLI;
   bool UnsafeFPShrink;
 
+protected:
+  ~LibCallSimplifier() {}
+
 public:
   LibCallSimplifier(const DataLayout *TD, const TargetLibraryInfo *TLI,
                     bool UnsafeFPShrink);
