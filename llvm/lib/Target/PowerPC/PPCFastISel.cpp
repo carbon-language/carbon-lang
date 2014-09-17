@@ -1547,7 +1547,7 @@ bool PPCFastISel::SelectRet(const Instruction *I) {
 
     // Special case for returning a constant integer of any size.
     // Materialize the constant as an i64 and copy it to the return
-    // register.  This avoids an unnecessary extend or truncate.
+    // register. This avoids an unnecessary extend or truncate.
     if (isa<ConstantInt>(*RV)) {
       const Constant *C = cast<Constant>(RV);
       unsigned SrcReg = PPCMaterializeInt(C, MVT::i64);
