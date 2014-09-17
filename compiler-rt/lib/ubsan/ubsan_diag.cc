@@ -222,9 +222,13 @@ static void renderMemorySnippet(const Decorator &Decor, MemoryLocation Loc,
     Min = __sanitizer::Min(Max - BytesToShow, OrigMin);
   Max = addNoOverflow(Min, BytesToShow);
 
+  if (!IsAccessibleMemoryRange(Min, Max - Min)) {
+    Printf("<memory cannot be printed>\n");
+    return;
+  }
+
   // Emit data.
   for (uptr P = Min; P != Max; ++P) {
-    // FIXME: Check that the address is readable before printing it.
     unsigned char C = *reinterpret_cast<const unsigned char*>(P);
     Printf("%s%02x", (P % 8 == 0) ? "  " : " ", C);
   }

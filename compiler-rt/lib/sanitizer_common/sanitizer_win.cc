@@ -522,6 +522,11 @@ bool IsDeadlySignal(int signum) {
   return false;
 }
 
+bool IsAccessibleMemoryRange(uptr beg, uptr size) {
+  // FIXME: Actually implement this function.
+  return true;
+}
+
 }  // namespace __sanitizer
 
 #endif  // _WIN32

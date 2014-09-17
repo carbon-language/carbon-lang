@@ -8,6 +8,9 @@
 // RUN: %run %t n1 2>&1 | FileCheck %s --check-prefix=CHECK-NEW
 // RUN: UBSAN_OPTIONS=print_stacktrace=1 %run %t l1 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD --check-prefix=CHECK-%os-STACK-LOAD
 
+// RUN: %clangxx -fsanitize=alignment -fno-sanitize-recover %s -O3 -o %t
+// RUN: not %run %t w1 2>&1 | FileCheck %s --check-prefix=CHECK-WILD
+
 #include <new>
 
 struct S {
@@ -22,6 +25,8 @@ int main(int, char **argv) {
   // Pointer value may be unspecified here, but behavior is not undefined.
   int *p = (int*)&c[4 + argv[1][1] - '0'];
   S *s = (S*)p;
+
+  void *wild = reinterpret_cast<void *>(0x123L);
 
   (void)*p; // ok!
 
@@ -74,5 +79,11 @@ int main(int, char **argv) {
     // CHECK-NEW-NEXT: {{^ 00 00 00 01 02 03 04  05}}
     // CHECK-NEW-NEXT: {{^             \^}}
     return (new (s) S)->k && 0;
+
+  case 'w':
+    // CHECK-WILD: misaligned.cpp:[[@LINE+3]]:35: runtime error: member access within misaligned address 0x000000000123 for type 'S', which requires 4 byte alignment
+    // CHECK-WILD-NEXT: 0x000000000123: note: pointer points here
+    // CHECK-WILD-NEXT: <memory cannot be printed>
+    return static_cast<S*>(wild)->k;
   }
 }

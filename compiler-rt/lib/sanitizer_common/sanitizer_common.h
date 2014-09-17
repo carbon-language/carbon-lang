@@ -167,6 +167,8 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
 void *MapFileToMemory(const char *file_name, uptr *buff_size);
 void *MapWritableFileToMemory(void *addr, uptr size, uptr fd, uptr offset);
 
+bool IsAccessibleMemoryRange(uptr beg, uptr size);
+
 // Error report formatting.
 const char *StripPathPrefix(const char *filepath,
                             const char *strip_file_prefix);

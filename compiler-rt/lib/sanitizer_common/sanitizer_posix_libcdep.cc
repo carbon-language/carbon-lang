@@ -166,6 +166,28 @@ void InstallDeadlySignalHandlers(SignalHandlerType handler) {
 }
 #endif  // SANITIZER_GO
 
+bool IsAccessibleMemoryRange(uptr beg, uptr size) {
+  uptr page_size = GetPageSizeCached();
+  // Checking too large memory ranges is slow.
+  CHECK_LT(size, page_size * 10);
+  int sock_pair[2];
+  if (pipe(sock_pair))
+    return false;
+  uptr bytes_written =
+      internal_write(sock_pair[1], reinterpret_cast<void *>(beg), size);
+  int write_errno;
+  bool result;
+  if (internal_iserror(bytes_written, &write_errno)) {
+    CHECK_EQ(EFAULT, write_errno);
+    result = false;
+  } else {
+    result = (bytes_written == size);
+  }
+  internal_close(sock_pair[0]);
+  internal_close(sock_pair[1]);
+  return result;
+}
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_POSIX
