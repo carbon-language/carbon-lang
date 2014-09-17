@@ -22,6 +22,10 @@ set(DD_HEADERS
   dd_rtl.h
 )
 
+set(DD_LINKLIBS)
+append_if(COMPILER_RT_HAS_LIBDL dl DD_LINKLIBS)
+append_if(COMPILER_RT_HAS_LIBPTHREAD pthread DD_LINKLIBS)
+
 add_custom_target(dd)
 # Deadlock detector is currently supported on 64-bit Linux only.
 if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE AND NOT ANDROID)
@@ -43,7 +47,7 @@ if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE AND NOT ANDROID)
             $<TARGET_OBJECTS:RTInterception.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>)
-  target_link_libraries(clang_rt.dyndd-${arch} pthread dl)
+  target_link_libraries(clang_rt.dyndd-${arch} ${DD_LINKLIBS})
 endif()
 
 add_dependencies(compiler-rt dd)
