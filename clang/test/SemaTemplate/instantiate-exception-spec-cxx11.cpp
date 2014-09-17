@@ -137,3 +137,37 @@ namespace PR12763 {
   };
   void X::g() {} // expected-note {{in instantiation of}}
 }
+
+namespace Variadic {
+  template<bool B> void check() { static_assert(B, ""); }
+  template<bool B, bool B2, bool ...Bs> void check() { static_assert(B, ""); check<B2, Bs...>(); }
+
+  template<typename ...T> void consume(T...);
+
+  template<typename ...T> void f(void (*...p)() throw (T)) {
+    void (*q[])() = { p... };
+    consume((p(),0)...);
+  }
+  template<bool ...B> void g(void (*...p)() noexcept (B)) {
+    consume((p(),0)...);
+    check<noexcept(p()) == B ...>();
+  }
+  template<typename ...T> void i() {
+    consume([]() throw(T) {} ...);
+    consume([]() noexcept(sizeof(T) == 4) {} ...);
+  }
+  template<bool ...B> void j() {
+    consume([](void (*p)() noexcept(B)) {
+      void (*q)() noexcept = p; // expected-error {{not superset of source}}
+    } ...);
+  }
+
+  void z() {
+    f<int, char, double>(nullptr, nullptr, nullptr);
+    g<true, false, true>(nullptr, nullptr, nullptr);
+    i<int, long, short>();
+    j<true, true>();
+    j<true, false>(); // expected-note {{in instantiation of}}
+  }
+
+}

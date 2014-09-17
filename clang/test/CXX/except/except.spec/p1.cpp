@@ -77,5 +77,12 @@ namespace PR11084 {
     static int f() noexcept(1/X) { return 10; }  // expected-error{{argument to noexcept specifier must be a constant expression}} expected-note{{division by zero}}
   };
 
-  void g() { A<0>::f(); } // expected-note{{in instantiation of exception specification for 'f' requested here}}
+  template<int X> void f() {
+    int (*p)() noexcept(1/X); // expected-error{{argument to noexcept specifier must be a constant expression}} expected-note{{division by zero}}
+  };
+
+  void g() {
+    A<0>::f(); // expected-note{{in instantiation of exception specification for 'f'}}
+    f<0>(); // expected-note{{in instantiation of function template specialization}}
+  }
 }

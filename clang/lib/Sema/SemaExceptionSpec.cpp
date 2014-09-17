@@ -720,10 +720,11 @@ static bool CheckSpecForTypesEquivalent(Sema &S,
 /// assignment and override compatibility check. We do not check the parameters
 /// of parameter function pointers recursively, as no sane programmer would
 /// even be able to write such a function type.
-bool Sema::CheckParamExceptionSpec(const PartialDiagnostic & NoteID,
-    const FunctionProtoType *Target, SourceLocation TargetLoc,
-    const FunctionProtoType *Source, SourceLocation SourceLoc)
-{
+bool Sema::CheckParamExceptionSpec(const PartialDiagnostic &NoteID,
+                                   const FunctionProtoType *Target,
+                                   SourceLocation TargetLoc,
+                                   const FunctionProtoType *Source,
+                                   SourceLocation SourceLoc) {
   if (CheckSpecForTypesEquivalent(
           *this, PDiag(diag::err_deep_exception_specs_differ) << 0, PDiag(),
           Target->getReturnType(), TargetLoc, Source->getReturnType(),
@@ -744,23 +745,30 @@ bool Sema::CheckParamExceptionSpec(const PartialDiagnostic & NoteID,
   return false;
 }
 
-bool Sema::CheckExceptionSpecCompatibility(Expr *From, QualType ToType)
-{
+bool Sema::CheckExceptionSpecCompatibility(Expr *From, QualType ToType) {
   // First we check for applicability.
   // Target type must be a function, function pointer or function reference.
   const FunctionProtoType *ToFunc = GetUnderlyingFunction(ToType);
-  if (!ToFunc)
+  if (!ToFunc || ToFunc->hasDependentExceptionSpec())
     return false;
 
   // SourceType must be a function or function pointer.
   const FunctionProtoType *FromFunc = GetUnderlyingFunction(From->getType());
-  if (!FromFunc)
+  if (!FromFunc || FromFunc->hasDependentExceptionSpec())
     return false;
 
   // Now we've got the correct types on both sides, check their compatibility.
   // This means that the source of the conversion can only throw a subset of
   // the exceptions of the target, and any exception specs on arguments or
   // return types must be equivalent.
+  //
+  // FIXME: If there is a nested dependent exception specification, we should
+  // not be checking it here. This is fine:
+  //   template<typename T> void f() {
+  //     void (*p)(void (*) throw(T));
+  //     void (*q)(void (*) throw(int)) = p;
+  //   }
+  // ... because it might be instantiated with T=int.
   return CheckExceptionSpecSubset(PDiag(diag::err_incompatible_exception_specs),
                                   PDiag(), ToFunc, 
                                   From->getSourceRange().getBegin(),
