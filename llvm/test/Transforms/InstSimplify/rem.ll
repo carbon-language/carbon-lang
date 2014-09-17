@@ -15,3 +15,12 @@ define i32 @select2(i32 %x, i1 %b) {
   ret i32 %rem
 ; CHECK: ret i32 0
 }
+
+define i32 @select3(i32 %x, i32 %n) {
+; CHECK-LABEL: @select3(
+; CHECK-NEXT: %mod = srem i32 %x, %n
+; CHECK-NEXT: ret i32 %mod
+ %mod = srem i32 %x, %n
+ %mod1 = srem i32 %mod, %n
+ ret i32 %mod1
+}
