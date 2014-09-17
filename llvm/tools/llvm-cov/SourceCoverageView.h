@@ -22,12 +22,46 @@
 
 namespace llvm {
 
+class SourceCoverageView;
+
+/// \brief A view that represents a macro or include expansion
+struct ExpansionView {
+  coverage::CounterMappingRegion Region;
+  std::unique_ptr<SourceCoverageView> View;
+
+  ExpansionView(const coverage::CounterMappingRegion &Region,
+                std::unique_ptr<SourceCoverageView> View)
+      : Region(Region), View(std::move(View)) {}
+
+  unsigned getLine() const { return Region.LineStart; }
+  unsigned getStartCol() const { return Region.ColumnStart; }
+  unsigned getEndCol() const { return Region.ColumnEnd; }
+
+  friend bool operator<(const ExpansionView &LHS, const ExpansionView &RHS) {
+    return LHS.Region.startLoc() < RHS.Region.startLoc();
+  }
+};
+
+/// \brief A view that represents a function instantiation
+struct InstantiationView {
+  StringRef FunctionName;
+  unsigned Line;
+  std::unique_ptr<SourceCoverageView> View;
+
+  InstantiationView(StringRef FunctionName, unsigned Line,
+                    std::unique_ptr<SourceCoverageView> View)
+      : FunctionName(FunctionName), Line(Line), View(std::move(View)) {}
+
+  friend bool operator<(const InstantiationView &LHS,
+                        const InstantiationView &RHS) {
+    return LHS.Line < RHS.Line;
+  }
+};
+
 /// \brief A code coverage view of a specific source file.
 /// It can have embedded coverage views.
 class SourceCoverageView {
 public:
-  enum SubViewKind { View, ExpansionView, InstantiationView };
-
   /// \brief Coverage information for a single line.
   struct LineCoverageInfo {
     uint64_t ExecutionCount;
@@ -111,13 +145,11 @@ private:
   const MemoryBuffer &File;
   const CoverageViewOptions &Options;
   unsigned LineOffset;
-  SubViewKind Kind;
-  coverage::CounterMappingRegion ExpansionRegion;
-  std::vector<std::unique_ptr<SourceCoverageView>> Children;
+  std::vector<ExpansionView> ExpansionSubViews;
+  std::vector<InstantiationView> InstantiationSubViews;
   std::vector<LineCoverageInfo> LineStats;
   std::vector<HighlightRange> HighlightRanges;
   std::vector<RegionMarker> Markers;
-  StringRef FunctionName;
 
   /// \brief Initialize the visible source range for this view.
   void setUpVisibleRange(SourceCoverageDataManager &Data);
@@ -130,12 +162,6 @@ private:
 
   /// \brief Create the region markers using the coverage data.
   void createRegionMarkers(SourceCoverageDataManager &Data);
-
-  /// \brief Sort children by the starting location.
-  void sortChildren();
-
-  /// \brief Return a highlight range for the expansion region of this view.
-  HighlightRange getExpansionHighlightRange() const;
 
   /// \brief Render a source line with highlighting.
   void renderLine(raw_ostream &OS, StringRef Line,
@@ -160,34 +186,20 @@ private:
 public:
   SourceCoverageView(const MemoryBuffer &File,
                      const CoverageViewOptions &Options)
-      : File(File), Options(Options), LineOffset(0), Kind(View),
-        ExpansionRegion(coverage::Counter(), 0, 0, 0, 0, 0) {}
-
-  SourceCoverageView(SourceCoverageView &Parent, StringRef FunctionName)
-      : File(Parent.File), Options(Parent.Options), LineOffset(0),
-        Kind(InstantiationView),
-        ExpansionRegion(coverage::Counter(), 0, 0, 0, 0, 0),
-        FunctionName(FunctionName) {}
-
-  SourceCoverageView(const MemoryBuffer &File,
-                     const CoverageViewOptions &Options,
-                     const coverage::CounterMappingRegion &ExpansionRegion)
-      : File(File), Options(Options), LineOffset(0), Kind(ExpansionView),
-        ExpansionRegion(ExpansionRegion) {}
+      : File(File), Options(Options), LineOffset(0) {}
 
   const CoverageViewOptions &getOptions() const { return Options; }
 
-  bool isExpansionSubView() const { return Kind == ExpansionView; }
-
-  bool isInstantiationSubView() const { return Kind == InstantiationView; }
-
-  /// \brief Return the line number after which the subview expansion is shown.
-  unsigned getSubViewsExpansionLine() const {
-    return ExpansionRegion.LineStart;
+  /// \brief Add an expansion subview to this view.
+  void addExpansion(const coverage::CounterMappingRegion &Region,
+                    std::unique_ptr<SourceCoverageView> View) {
+    ExpansionSubViews.emplace_back(Region, std::move(View));
   }
 
-  void addChild(std::unique_ptr<SourceCoverageView> View) {
-    Children.push_back(std::move(View));
+  /// \brief Add a function instantiation subview to this view.
+  void addInstantiation(StringRef FunctionName, unsigned Line,
+                        std::unique_ptr<SourceCoverageView> View) {
+    InstantiationSubViews.emplace_back(FunctionName, Line, std::move(View));
   }
 
   /// \brief Print the code coverage information for a specific

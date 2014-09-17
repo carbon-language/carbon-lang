@@ -140,10 +140,12 @@ void SourceCoverageView::renderRegionMarkers(raw_ostream &OS,
 
 /// \brief Insert a new highlighting range into the line's highlighting ranges
 /// Return line's new highlighting ranges in result.
-static void insertHighlightRange(
+static void insertExpansionHighlightRange(
     ArrayRef<SourceCoverageView::HighlightRange> Ranges,
-    SourceCoverageView::HighlightRange RangeToInsert,
+    unsigned Line, unsigned StartCol, unsigned EndCol,
     SmallVectorImpl<SourceCoverageView::HighlightRange> &Result) {
+  auto RangeToInsert = SourceCoverageView::HighlightRange(
+      Line, StartCol, EndCol, SourceCoverageView::HighlightRange::Expanded);
   Result.clear();
   size_t I = 0;
   auto E = Ranges.size();
@@ -189,22 +191,6 @@ static void insertHighlightRange(
     Result.push_back(Ranges[I]);
 }
 
-void SourceCoverageView::sortChildren() {
-  for (auto &I : Children)
-    I->sortChildren();
-  std::sort(Children.begin(), Children.end(),
-            [](const std::unique_ptr<SourceCoverageView> &LHS,
-               const std::unique_ptr<SourceCoverageView> &RHS) {
-    return LHS->ExpansionRegion < RHS->ExpansionRegion;
-  });
-}
-
-SourceCoverageView::HighlightRange
-SourceCoverageView::getExpansionHighlightRange() const {
-  return HighlightRange(ExpansionRegion.LineStart, ExpansionRegion.ColumnStart,
-                        ExpansionRegion.ColumnEnd, HighlightRange::Expanded);
-}
-
 template <typename T>
 ArrayRef<T> gatherLineItems(size_t &CurrentIdx, const std::vector<T> &Items,
                             unsigned LineNo) {
@@ -215,24 +201,8 @@ ArrayRef<T> gatherLineItems(size_t &CurrentIdx, const std::vector<T> &Items,
   return ArrayRef<T>(Items.data() + PrevIdx, CurrentIdx - PrevIdx);
 }
 
-ArrayRef<std::unique_ptr<SourceCoverageView>>
-gatherLineSubViews(size_t &CurrentIdx,
-                   ArrayRef<std::unique_ptr<SourceCoverageView>> Items,
-                   unsigned LineNo) {
-  auto PrevIdx = CurrentIdx;
-  auto E = Items.size();
-  while (CurrentIdx < E &&
-         Items[CurrentIdx]->getSubViewsExpansionLine() == LineNo)
-    ++CurrentIdx;
-  return Items.slice(PrevIdx, CurrentIdx - PrevIdx);
-}
-
 void SourceCoverageView::render(raw_ostream &OS, unsigned IndentLevel) {
-  // Make sure that the children are in sorted order.
-  sortChildren();
-
   SmallVector<HighlightRange, 8> AdjustedLineHighlightRanges;
-  size_t CurrentChild = 0;
   size_t CurrentHighlightRange = 0;
   size_t CurrentRegionMarker = 0;
 
@@ -249,11 +219,17 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned IndentLevel) {
   // subviews.
   unsigned DividerWidth = CombinedColumnWidth + 4;
 
+  // We need the expansions and instantiations sorted so we can go through them
+  // while we iterate lines.
+  std::sort(ExpansionSubViews.begin(), ExpansionSubViews.end());
+  std::sort(InstantiationSubViews.begin(), InstantiationSubViews.end());
+  auto NextESV = ExpansionSubViews.begin();
+  auto EndESV = ExpansionSubViews.end();
+  auto NextISV = InstantiationSubViews.begin();
+  auto EndISV = InstantiationSubViews.end();
+
   for (size_t I = 0, E = LineStats.size(); I < E; ++I) {
     unsigned LineNo = I + LineOffset;
-
-    // Gather the child subviews that are visible on this line.
-    auto LineSubViews = gatherLineSubViews(CurrentChild, Children, LineNo);
 
     renderIndent(OS, IndentLevel);
     if (Options.ShowLineStats)
@@ -267,11 +243,10 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned IndentLevel) {
     auto LineRanges = LineHighlightRanges;
     // Highlight the expansion range if there is an expansion subview on this
     // line.
-    if (!LineSubViews.empty() && LineSubViews.front()->isExpansionSubView() &&
-        Options.Colors) {
-      insertHighlightRange(LineHighlightRanges,
-                           LineSubViews.front()->getExpansionHighlightRange(),
-                           AdjustedLineHighlightRanges);
+    if (NextESV != EndESV && NextESV->getLine() == LineNo && Options.Colors) {
+      insertExpansionHighlightRange(
+          LineHighlightRanges, NextESV->getLine(), NextESV->getStartCol(),
+          NextESV->getEndCol(), AdjustedLineHighlightRanges);
       LineRanges = AdjustedLineHighlightRanges;
     }
 
@@ -294,40 +269,40 @@ void SourceCoverageView::render(raw_ostream &OS, unsigned IndentLevel) {
       renderRegionMarkers(OS, LineMarkers);
     }
 
-    // Show the line's expanded child subviews.
-    bool FirstChildExpansion = true;
-    if (LineSubViews.empty())
-      continue;
+    // Show the expansions and instantiations for this line.
     unsigned NestedIndent = IndentLevel + 1;
-    renderViewDivider(NestedIndent, DividerWidth, OS);
-    OS << "\n";
-    for (const auto &Child : LineSubViews) {
-      // If this subview shows a function instantiation, render the function's
-      // name.
-      if (Child->isInstantiationSubView()) {
-        renderIndent(OS, NestedIndent);
-        OS << ' ';
-        Options.colored_ostream(OS, raw_ostream::CYAN) << Child->FunctionName
-                                                       << ":";
+    bool RenderedSubView = false;
+    for (; NextESV != EndESV && NextESV->getLine() == LineNo; ++NextESV) {
+      renderViewDivider(NestedIndent, DividerWidth, OS);
+      OS << "\n";
+      if (RenderedSubView) {
+        // Re-render the current line and highlight the expansion range for
+        // this subview.
+        insertExpansionHighlightRange(
+            LineHighlightRanges, NextESV->getLine(), NextESV->getStartCol(),
+            NextESV->getEndCol(), AdjustedLineHighlightRanges);
+        renderIndent(OS, IndentLevel);
+        OS.indent(CombinedColumnWidth + (IndentLevel == 0 ? 0 : 1));
+        renderLine(OS, Line, AdjustedLineHighlightRanges);
+        renderViewDivider(NestedIndent, DividerWidth, OS);
         OS << "\n";
-      } else {
-        if (!FirstChildExpansion) {
-          // Re-render the current line and highlight the expansion range for
-          // this
-          // subview.
-          insertHighlightRange(LineHighlightRanges,
-                               Child->getExpansionHighlightRange(),
-                               AdjustedLineHighlightRanges);
-          renderIndent(OS, IndentLevel);
-          OS.indent(CombinedColumnWidth + (IndentLevel == 0 ? 0 : 1));
-          renderLine(OS, Line, AdjustedLineHighlightRanges);
-          renderViewDivider(NestedIndent, DividerWidth, OS);
-          OS << "\n";
-        } else
-          FirstChildExpansion = false;
       }
       // Render the child subview
-      Child->render(OS, NestedIndent);
+      NextESV->View->render(OS, NestedIndent);
+      RenderedSubView = true;
+    }
+    for (; NextISV != EndISV && NextISV->Line == LineNo; ++NextISV) {
+      renderViewDivider(NestedIndent, DividerWidth, OS);
+      OS << "\n";
+      renderIndent(OS, NestedIndent);
+      OS << ' ';
+      Options.colored_ostream(OS, raw_ostream::CYAN) << NextISV->FunctionName
+                                                     << ":";
+      OS << "\n";
+      NextISV->View->render(OS, NestedIndent);
+      RenderedSubView = true;
+    }
+    if (RenderedSubView) {
       renderViewDivider(NestedIndent, DividerWidth, OS);
       OS << "\n";
     }
