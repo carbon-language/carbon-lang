@@ -2908,7 +2908,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 }
 
 namespace {
-class InstCombinerLibCallSimplifier final : public LibCallSimplifier {
+class InstCombinerLibCallSimplifier : public LibCallSimplifier {
   InstCombiner *IC;
 public:
   InstCombinerLibCallSimplifier(const DataLayout *DL,
