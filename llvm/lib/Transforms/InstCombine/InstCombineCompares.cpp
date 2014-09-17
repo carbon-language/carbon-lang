@@ -1085,29 +1085,33 @@ Instruction *InstCombiner::FoldICmpCstShrCst(ICmpInst &I, Value *Op, Value *A,
     return getICmp(I.ICMP_EQ, A, ConstantInt::getNullValue(A->getType()));
   }
 
+  bool IsNegative = false;
   if (IsAShr) {
     if (AP1.isNegative() != AP2.isNegative()) {
       // Arithmetic shift will never change the sign.
       return getConstant(false);
     }
-    // Both the constants are negative, take their positive to calculate
-    // log.
+    // Both the constants are negative, take their positive to calculate log.
     if (AP1.isNegative()) {
-      AP1 = -AP1;
-      AP2 = -AP2;
+      if (AP1.slt(AP2))
+        // Right-shifting won't increase the magnitude.
+        return getConstant(false);
+      IsNegative = true;
     }
   }
 
-  if (AP1.ugt(AP2)) {
+  if (!IsNegative && AP1.ugt(AP2))
     // Right-shifting will not increase the value.
     return getConstant(false);
-  }
 
   // Get the distance between the highest bit that's set.
-  int Shift = AP2.logBase2() - AP1.logBase2();
+  int Shift;
+  if (IsNegative)
+    Shift = (-AP2).logBase2() - (-AP1).logBase2();
+  else
+    Shift = AP2.logBase2() - AP1.logBase2();
 
-  // Use lshr here, since we've canonicalized to +ve numbers.
-  if (AP1 == AP2.lshr(Shift))
+  if (IsAShr ? AP1 == AP2.ashr(Shift) : AP1 == AP2.lshr(Shift))
     return getICmp(I.ICMP_EQ, A, ConstantInt::get(A->getType(), Shift));
 
   // Shifting const2 will never be equal to const1.
