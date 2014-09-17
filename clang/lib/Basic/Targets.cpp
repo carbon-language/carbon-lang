@@ -3569,6 +3569,14 @@ class ARMTargetInfo : public TargetInfo {
   unsigned CRC : 1;
   unsigned Crypto : 1;
 
+  // ACLE 6.5.1 Hardware floating point
+  enum {
+    HW_FP_HP = (1 << 1), /// half (16-bit)
+    HW_FP_SP = (1 << 2), /// single (32-bit)
+    HW_FP_DP = (1 << 3), /// double (64-bit)
+  };
+  uint32_t HW_FP;
+
   static const Builtin::Info BuiltinInfo[];
 
   static bool shouldUseInlineAtomic(const llvm::Triple &T) {
@@ -3730,7 +3738,7 @@ class ARMTargetInfo : public TargetInfo {
 public:
   ARMTargetInfo(const llvm::Triple &Triple, bool IsBigEndian)
       : TargetInfo(Triple), CPU("arm1136j-s"), FPMath(FP_Default),
-        IsAAPCS(true) {
+        IsAAPCS(true), HW_FP(0) {
     BigEndian = IsBigEndian;
 
     switch (getTriple().getOS()) {
@@ -3843,28 +3851,36 @@ public:
     HWDiv = 0;
 
     for (const auto &Feature : Features) {
-      if (Feature == "+soft-float")
+      if (Feature == "+soft-float") {
         SoftFloat = true;
-      else if (Feature == "+soft-float-abi")
+      } else if (Feature == "+soft-float-abi") {
         SoftFloatABI = true;
-      else if (Feature == "+vfp2")
+      } else if (Feature == "+vfp2") {
         FPU |= VFP2FPU;
-      else if (Feature == "+vfp3")
+        HW_FP = HW_FP_SP | HW_FP_DP;
+      } else if (Feature == "+vfp3") {
         FPU |= VFP3FPU;
-      else if (Feature == "+vfp4")
+        HW_FP = HW_FP_SP | HW_FP_DP;
+      } else if (Feature == "+vfp4") {
         FPU |= VFP4FPU;
-      else if (Feature == "+fp-armv8")
+        HW_FP = HW_FP_SP | HW_FP_DP | HW_FP_HP;
+      } else if (Feature == "+fp-armv8") {
         FPU |= FPARMV8;
-      else if (Feature == "+neon")
+        HW_FP = HW_FP_SP | HW_FP_DP | HW_FP_HP;
+      } else if (Feature == "+neon") {
         FPU |= NeonFPU;
-      else if (Feature == "+hwdiv")
+        HW_FP = HW_FP_SP | HW_FP_DP;
+      } else if (Feature == "+hwdiv") {
         HWDiv |= HWDivThumb;
-      else if (Feature == "+hwdiv-arm")
+      } else if (Feature == "+hwdiv-arm") {
         HWDiv |= HWDivARM;
-      else if (Feature == "+crc")
+      } else if (Feature == "+crc") {
         CRC = 1;
-      else if (Feature == "+crypto")
+      } else if (Feature == "+crypto") {
         Crypto = 1;
+      } else if (Feature == "+fp-only-sp") {
+        HW_FP &= ~HW_FP_DP;
+      }
     }
 
     if (!(FPU & NeonFPU) && FPMath == FP_Neon) {
@@ -4011,6 +4027,10 @@ public:
     // __ARM_ARCH_PROFILE is defined as 'A', 'R', 'M' or 'S', or unset.
     if (!CPUProfile.empty())
       Builder.defineMacro("__ARM_ARCH_PROFILE", "'" + CPUProfile + "'");
+
+    // ACLE 6.5.1 Hardware Floating Point
+    if (HW_FP)
+      Builder.defineMacro("__ARM_FP", std::to_string(HW_FP));
 
     // ACLE predefines.
     Builder.defineMacro("__ARM_ACLE", "200");
