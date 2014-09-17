@@ -108,6 +108,22 @@ define i64 @and_rs_i64(i64 %a, i64 %b) {
   ret i64 %2
 }
 
+define i32 @and_mul_i32(i32 %a, i32 %b) {
+; CHECK-LABEL: and_mul_i32
+; CHECK:       and w0, w0, w1, lsl #2
+  %1 = mul i32 %b, 4
+  %2 = and i32 %a, %1
+  ret i32 %2
+}
+
+define i64 @and_mul_i64(i64 %a, i64 %b) {
+; CHECK-LABEL: and_mul_i64
+; CHECK:       and x0, x0, x1, lsl #2
+  %1 = mul i64 %b, 4
+  %2 = and i64 %a, %1
+  ret i64 %2
+}
+
 ; OR
 define zeroext i1 @or_rr_i1(i1 signext %a, i1 signext %b) {
 ; CHECK-LABEL: or_rr_i1
@@ -210,6 +226,22 @@ define i64 @or_rs_i64(i64 %a, i64 %b) {
   ret i64 %2
 }
 
+define i32 @or_mul_i32(i32 %a, i32 %b) {
+; CHECK-LABEL: or_mul_i32
+; CHECK:       orr w0, w0, w1, lsl #2
+  %1 = mul i32 %b, 4
+  %2 = or i32 %a, %1
+  ret i32 %2
+}
+
+define i64 @or_mul_i64(i64 %a, i64 %b) {
+; CHECK-LABEL: or_mul_i64
+; CHECK:       orr x0, x0, x1, lsl #2
+  %1 = mul i64 %b, 4
+  %2 = or i64 %a, %1
+  ret i64 %2
+}
+
 ; XOR
 define zeroext i1 @xor_rr_i1(i1 signext %a, i1 signext %b) {
 ; CHECK-LABEL: xor_rr_i1
@@ -308,6 +340,22 @@ define i64 @xor_rs_i64(i64 %a, i64 %b) {
 ; CHECK-LABEL: xor_rs_i64
 ; CHECK:       eor x0, x0, x1, lsl #8
   %1 = shl i64 %b, 8
+  %2 = xor i64 %a, %1
+  ret i64 %2
+}
+
+define i32 @xor_mul_i32(i32 %a, i32 %b) {
+; CHECK-LABEL: xor_mul_i32
+; CHECK:       eor w0, w0, w1, lsl #2
+  %1 = mul i32 %b, 4
+  %2 = xor i32 %a, %1
+  ret i32 %2
+}
+
+define i64 @xor_mul_i64(i64 %a, i64 %b) {
+; CHECK-LABEL: xor_mul_i64
+; CHECK:       eor x0, x0, x1, lsl #2
+  %1 = mul i64 %b, 4
   %2 = xor i64 %a, %1
   ret i64 %2
 }

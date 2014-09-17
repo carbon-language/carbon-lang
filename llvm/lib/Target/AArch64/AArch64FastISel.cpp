@@ -949,8 +949,13 @@ unsigned AArch64FastISel::emitAddSub(bool UseAdd, MVT RetVT, const Value *LHS,
   if (UseAdd && isa<ConstantInt>(LHS) && !isa<ConstantInt>(RHS))
     std::swap(LHS, RHS);
 
+  // Canonicalize mul by power of 2 to the RHS.
+  if (UseAdd && LHS->hasOneUse() && isValueAvailable(LHS))
+    if (isMulPowOf2(LHS))
+      std::swap(LHS, RHS);
+
   // Canonicalize shift immediate to the RHS.
-  if (UseAdd && isValueAvailable(LHS))
+  if (UseAdd && LHS->hasOneUse() && isValueAvailable(LHS))
     if (const auto *SI = dyn_cast<BinaryOperator>(LHS))
       if (isa<ConstantInt>(SI->getOperand(1)))
         if (SI->getOpcode() == Instruction::Shl  ||
@@ -980,7 +985,8 @@ unsigned AArch64FastISel::emitAddSub(bool UseAdd, MVT RetVT, const Value *LHS,
     return ResultReg;
 
   // Only extend the RHS within the instruction if there is a valid extend type.
-  if (ExtendType != AArch64_AM::InvalidShiftExtend && isValueAvailable(RHS)) {
+  if (ExtendType != AArch64_AM::InvalidShiftExtend && RHS->hasOneUse() &&
+      isValueAvailable(RHS)) {
     if (const auto *SI = dyn_cast<BinaryOperator>(RHS))
       if (const auto *C = dyn_cast<ConstantInt>(SI->getOperand(1)))
         if ((SI->getOpcode() == Instruction::Shl) && (C->getZExtValue() < 4)) {
@@ -1000,8 +1006,28 @@ unsigned AArch64FastISel::emitAddSub(bool UseAdd, MVT RetVT, const Value *LHS,
                          ExtendType, 0, SetFlags, WantResult);
   }
 
+  // Check if the mul can be folded into the instruction.
+  if (RHS->hasOneUse() && isValueAvailable(RHS))
+    if (isMulPowOf2(RHS)) {
+      const Value *MulLHS = cast<MulOperator>(RHS)->getOperand(0);
+      const Value *MulRHS = cast<MulOperator>(RHS)->getOperand(1);
+
+      if (const auto *C = dyn_cast<ConstantInt>(MulLHS))
+        if (C->getValue().isPowerOf2())
+          std::swap(MulLHS, MulRHS);
+
+      assert(isa<ConstantInt>(MulRHS) && "Expected a ConstantInt.");
+      uint64_t ShiftVal = cast<ConstantInt>(MulRHS)->getValue().logBase2();
+      unsigned RHSReg = getRegForValue(MulLHS);
+      if (!RHSReg)
+        return 0;
+      bool RHSIsKill = hasTrivialKill(MulLHS);
+      return emitAddSub_rs(UseAdd, RetVT, LHSReg, LHSIsKill, RHSReg, RHSIsKill,
+                           AArch64_AM::LSL, ShiftVal, SetFlags, WantResult);
+    }
+
   // Check if the shift can be folded into the instruction.
-  if (isValueAvailable(RHS))
+  if (RHS->hasOneUse() && isValueAvailable(RHS))
     if (const auto *SI = dyn_cast<BinaryOperator>(RHS)) {
       if (const auto *C = dyn_cast<ConstantInt>(SI->getOperand(1))) {
         AArch64_AM::ShiftExtendType ShiftType = AArch64_AM::InvalidShiftExtend;
@@ -1296,12 +1322,16 @@ unsigned AArch64FastISel::emitLogicalOp(unsigned ISDOpc, MVT RetVT,
   if (isa<ConstantInt>(LHS) && !isa<ConstantInt>(RHS))
     std::swap(LHS, RHS);
 
+  // Canonicalize mul by power-of-2 to the RHS.
+  if (LHS->hasOneUse() && isValueAvailable(LHS))
+    if (isMulPowOf2(LHS))
+      std::swap(LHS, RHS);
+
   // Canonicalize shift immediate to the RHS.
-  if (isValueAvailable(LHS))
-    if (const auto *SI = dyn_cast<BinaryOperator>(LHS))
+  if (LHS->hasOneUse() && isValueAvailable(LHS))
+    if (const auto *SI = dyn_cast<ShlOperator>(LHS))
       if (isa<ConstantInt>(SI->getOperand(1)))
-        if (SI->getOpcode() == Instruction::Shl)
-          std::swap(LHS, RHS);
+        std::swap(LHS, RHS);
 
   unsigned LHSReg = getRegForValue(LHS);
   if (!LHSReg)
@@ -1316,19 +1346,39 @@ unsigned AArch64FastISel::emitLogicalOp(unsigned ISDOpc, MVT RetVT,
   if (ResultReg)
     return ResultReg;
 
+  // Check if the mul can be folded into the instruction.
+  if (RHS->hasOneUse() && isValueAvailable(RHS))
+    if (isMulPowOf2(RHS)) {
+      const Value *MulLHS = cast<MulOperator>(RHS)->getOperand(0);
+      const Value *MulRHS = cast<MulOperator>(RHS)->getOperand(1);
+
+      if (const auto *C = dyn_cast<ConstantInt>(MulLHS))
+        if (C->getValue().isPowerOf2())
+          std::swap(MulLHS, MulRHS);
+
+      assert(isa<ConstantInt>(MulRHS) && "Expected a ConstantInt.");
+      uint64_t ShiftVal = cast<ConstantInt>(MulRHS)->getValue().logBase2();
+
+      unsigned RHSReg = getRegForValue(MulLHS);
+      if (!RHSReg)
+        return 0;
+      bool RHSIsKill = hasTrivialKill(MulLHS);
+      return emitLogicalOp_rs(ISDOpc, RetVT, LHSReg, LHSIsKill, RHSReg,
+                              RHSIsKill, ShiftVal);
+    }
+
   // Check if the shift can be folded into the instruction.
-  if (isValueAvailable(RHS))
-    if (const auto *SI = dyn_cast<BinaryOperator>(RHS))
-      if (const auto *C = dyn_cast<ConstantInt>(SI->getOperand(1)))
-        if (SI->getOpcode() == Instruction::Shl) {
-          uint64_t ShiftVal = C->getZExtValue();
-          unsigned RHSReg = getRegForValue(SI->getOperand(0));
-          if (!RHSReg)
-            return 0;
-          bool RHSIsKill = hasTrivialKill(SI->getOperand(0));
-          return emitLogicalOp_rs(ISDOpc, RetVT, LHSReg, LHSIsKill, RHSReg,
-                                  RHSIsKill, ShiftVal);
-        }
+  if (RHS->hasOneUse() && isValueAvailable(RHS))
+    if (const auto *SI = dyn_cast<ShlOperator>(RHS))
+      if (const auto *C = dyn_cast<ConstantInt>(SI->getOperand(1))) {
+        uint64_t ShiftVal = C->getZExtValue();
+        unsigned RHSReg = getRegForValue(SI->getOperand(0));
+        if (!RHSReg)
+          return 0;
+        bool RHSIsKill = hasTrivialKill(SI->getOperand(0));
+        return emitLogicalOp_rs(ISDOpc, RetVT, LHSReg, LHSIsKill, RHSReg,
+                                RHSIsKill, ShiftVal);
+      }
 
   unsigned RHSReg = getRegForValue(RHS);
   if (!RHSReg)
