@@ -3841,28 +3841,29 @@ public:
     Crypto = 0;
     SoftFloat = SoftFloatABI = false;
     HWDiv = 0;
-    for (unsigned i = 0, e = Features.size(); i != e; ++i) {
-      if (Features[i] == "+soft-float")
+
+    for (const auto &Feature : Features) {
+      if (Feature == "+soft-float")
         SoftFloat = true;
-      else if (Features[i] == "+soft-float-abi")
+      else if (Feature == "+soft-float-abi")
         SoftFloatABI = true;
-      else if (Features[i] == "+vfp2")
+      else if (Feature == "+vfp2")
         FPU |= VFP2FPU;
-      else if (Features[i] == "+vfp3")
+      else if (Feature == "+vfp3")
         FPU |= VFP3FPU;
-      else if (Features[i] == "+vfp4")
+      else if (Feature == "+vfp4")
         FPU |= VFP4FPU;
-      else if (Features[i] == "+fp-armv8")
+      else if (Feature == "+fp-armv8")
         FPU |= FPARMV8;
-      else if (Features[i] == "+neon")
+      else if (Feature == "+neon")
         FPU |= NeonFPU;
-      else if (Features[i] == "+hwdiv")
+      else if (Feature == "+hwdiv")
         HWDiv |= HWDivThumb;
-      else if (Features[i] == "+hwdiv-arm")
+      else if (Feature == "+hwdiv-arm")
         HWDiv |= HWDivARM;
-      else if (Features[i] == "+crc")
+      else if (Feature == "+crc")
         CRC = 1;
-      else if (Features[i] == "+crypto")
+      else if (Feature == "+crypto")
         Crypto = 1;
     }
 
@@ -3877,13 +3878,13 @@ public:
       Features.push_back("-neonfp");
 
     // Remove front-end specific options which the backend handles differently.
-    std::vector<std::string>::iterator it;
-    it = std::find(Features.begin(), Features.end(), "+soft-float");
-    if (it != Features.end())
-      Features.erase(it);
-    it = std::find(Features.begin(), Features.end(), "+soft-float-abi");
-    if (it != Features.end())
-      Features.erase(it);
+    const StringRef FrontEndFeatures[] = { "+soft-float", "+soft-float-abi" };
+    for (const auto &FEFeature : FrontEndFeatures) {
+      auto Feature = std::find(Features.begin(), Features.end(), FEFeature);
+      if (Feature != Features.end())
+        Features.erase(Feature);
+    }
+
     return true;
   }
 
