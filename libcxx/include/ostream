@@ -169,9 +169,6 @@ protected:
 #endif
 
     // 27.7.2.3 Assign/swap
-#if _LIBCPP_STD_VER > 11
-    basic_ostream& operator=(const basic_ostream&) = delete;
-#endif
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     basic_ostream& operator=(basic_ostream&& __rhs);
@@ -182,9 +179,8 @@ protected:
     basic_ostream           (const basic_ostream& __rhs) = delete;
     basic_ostream& operator=(const basic_ostream& __rhs) = delete;
 #else
-private:
-    basic_ostream           (const basic_ostream& __rhs);
-    basic_ostream& operator=(const basic_ostream& __rhs);
+    basic_ostream           (const basic_ostream& __rhs); // not defined
+    basic_ostream& operator=(const basic_ostream& __rhs); // not defined
 #endif
 public:
 
