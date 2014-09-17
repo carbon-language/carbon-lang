@@ -133,6 +133,7 @@ private:
   bool selectShift(const Instruction *I);
   bool selectBitCast(const Instruction *I);
   bool selectFRem(const Instruction *I);
+  bool selectSDiv(const Instruction *I);
 
   // Utility helper routines.
   bool isTypeLegal(Type *Ty, MVT &VT);
@@ -3980,6 +3981,75 @@ bool AArch64FastISel::selectFRem(const Instruction *I) {
   return true;
 }
 
+bool AArch64FastISel::selectSDiv(const Instruction *I) {
+  MVT VT;
+  if (!isTypeLegal(I->getType(), VT))
+    return false;
+
+  if (!isa<ConstantInt>(I->getOperand(1)))
+    return selectBinaryOp(I, ISD::SDIV);
+
+  const APInt &C = cast<ConstantInt>(I->getOperand(1))->getValue();
+  if ((VT != MVT::i32 && VT != MVT::i64) || !C ||
+      !(C.isPowerOf2() || (-C).isPowerOf2()))
+    return selectBinaryOp(I, ISD::SDIV);
+
+  unsigned Lg2 = C.countTrailingZeros();
+  unsigned Src0Reg = getRegForValue(I->getOperand(0));
+  if (!Src0Reg)
+    return false;
+  bool Src0IsKill = hasTrivialKill(I->getOperand(0));
+
+  if (cast<BinaryOperator>(I)->isExact()) {
+    unsigned ResultReg = emitASR_ri(VT, VT, Src0Reg, Src0IsKill, Lg2);
+    if (!ResultReg)
+      return false;
+    updateValueMap(I, ResultReg);
+    return true;
+  }
+
+  unsigned Pow2MinusOne = (1 << Lg2) - 1;
+  unsigned AddReg = emitAddSub_ri(/*UseAdd=*/true, VT, Src0Reg,
+                                  /*IsKill=*/false, Pow2MinusOne);
+  if (!AddReg)
+    return false;
+
+  // (Src0 < 0) ? Pow2 - 1 : 0;
+  if (!emitICmp_ri(VT, Src0Reg, /*IsKill=*/false, 0))
+    return false;
+
+  unsigned SelectOpc;
+  const TargetRegisterClass *RC;
+  if (VT == MVT::i64) {
+    SelectOpc = AArch64::CSELXr;
+    RC = &AArch64::GPR64RegClass;
+  } else {
+    SelectOpc = AArch64::CSELWr;
+    RC = &AArch64::GPR32RegClass;
+  }
+  unsigned SelectReg =
+      fastEmitInst_rri(SelectOpc, RC, AddReg, /*IsKill=*/true, Src0Reg,
+                       Src0IsKill, AArch64CC::LT);
+  if (!SelectReg)
+    return false;
+
+  // Divide by Pow2 --> ashr. If we're dividing by a negative value we must also
+  // negate the result.
+  unsigned ZeroReg = (VT == MVT::i64) ? AArch64::XZR : AArch64::WZR;
+  unsigned ResultReg;
+  if (C.isNegative())
+    ResultReg = emitAddSub_rs(/*UseAdd=*/false, VT, ZeroReg, /*IsKill=*/true,
+                              SelectReg, /*IsKill=*/true, AArch64_AM::ASR, Lg2);
+  else
+    ResultReg = emitASR_ri(VT, VT, SelectReg, /*IsKill=*/true, Lg2);
+
+  if (!ResultReg)
+    return false;
+
+  updateValueMap(I, ResultReg);
+  return true;
+}
+
 bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
   switch (I->getOpcode()) {
   default:
@@ -3989,6 +4059,8 @@ bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
     return selectAddSub(I);
   case Instruction::Mul:
     return selectMul(I);
+  case Instruction::SDiv:
+    return selectSDiv(I);
   case Instruction::SRem:
     if (!selectBinaryOp(I, ISD::SREM))
       return selectRem(I, ISD::SREM);
