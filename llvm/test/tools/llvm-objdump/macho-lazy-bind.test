@@ -3,6 +3,6 @@
 # RUN: && FileCheck %s < %t || cat %t
 
 
-# CHECK: __DATA   __la_symbol_ptr    0x100001010   libfoo.dylib        _foo
-# CHECK: __DATA   __la_symbol_ptr    0x100001018   libbar.dylib        _bar
-# CHECK: __DATA   __la_symbol_ptr    0x100001020   libSystem.B.dylib   _malloc
+# CHECK: __DATA   __la_symbol_ptr    0x100001010   libfoo          _foo
+# CHECK: __DATA   __la_symbol_ptr    0x100001018   libbar          _bar
+# CHECK: __DATA   __la_symbol_ptr    0x100001020   libSystem       _malloc

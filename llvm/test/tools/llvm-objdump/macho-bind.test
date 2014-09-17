@@ -6,6 +6,6 @@
 # CHECK:__DATA   __data             0x00001028  pointer  0        flat-namespace      _any
 # CHECK:__DATA   __data             0x00001020  pointer  0        main-executable     _fromApp
 # CHECK:__DATA   __data             0x00001018  pointer  0        this-image          _myfunc
-# CHECK:__DATA   __data             0x00001000  pointer  0        libfoo.dylib        _foo
-# CHECK:__DATA   __data             0x00001008  pointer  0        libbar.dylib        _bar
-# CHECK:__DATA   __data             0x00001010  pointer  0        libSystem.B.dylib   _malloc
+# CHECK:__DATA   __data             0x00001000  pointer  0        libfoo              _foo
+# CHECK:__DATA   __data             0x00001008  pointer  0        libbar              _bar
+# CHECK:__DATA   __data             0x00001010  pointer  0        libSystem           _malloc

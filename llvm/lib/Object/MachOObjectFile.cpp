@@ -1184,27 +1184,22 @@ std::error_code MachOObjectFile::getLibraryShortNameByIndex(unsigned Index,
   if (Index >= Libraries.size())
     return object_error::parse_failed;
 
-  MachO::dylib_command D =
-    getStruct<MachO::dylib_command>(this, Libraries[Index]);
-  if (D.dylib.name >= D.cmdsize)
-    return object_error::parse_failed;
-
   // If the cache of LibrariesShortNames is not built up do that first for
   // all the Libraries.
   if (LibrariesShortNames.size() == 0) {
     for (unsigned i = 0; i < Libraries.size(); i++) {
       MachO::dylib_command D =
         getStruct<MachO::dylib_command>(this, Libraries[i]);
-      if (D.dylib.name >= D.cmdsize) {
-        LibrariesShortNames.push_back(StringRef());
-        continue;
-      }
+      if (D.dylib.name >= D.cmdsize)
+        return object_error::parse_failed;
       const char *P = (const char *)(Libraries[i]) + D.dylib.name;
       StringRef Name = StringRef(P);
+      if (D.dylib.name+Name.size() >= D.cmdsize)
+        return object_error::parse_failed;
       StringRef Suffix;
       bool isFramework;
       StringRef shortName = guessLibraryShortName(Name, isFramework, Suffix);
-      if (shortName == StringRef())
+      if (shortName.empty())
         LibrariesShortNames.push_back(Name);
       else
         LibrariesShortNames.push_back(shortName);

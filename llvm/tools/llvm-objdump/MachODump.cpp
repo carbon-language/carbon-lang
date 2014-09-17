@@ -2482,7 +2482,7 @@ void llvm::printMachOBindTable(const object::MachOObjectFile *Obj) {
                      Address,
                      Entry.typeName().str().c_str(),
                      Entry.addend(),
-                     ordinalName(Obj, Entry.ordinal()))
+                     ordinalName(Obj, Entry.ordinal()).str().c_str())
            << Entry.symbolName();
     if (Entry.flags() & MachO::BIND_SYMBOL_FLAGS_WEAK_IMPORT)
       outs() << " (weak_import)\n";
@@ -2514,7 +2514,7 @@ void llvm::printMachOLazyBindTable(const object::MachOObjectFile *Obj) {
                      SegmentName.str().c_str(),
                      SectionName.str().c_str(),
                      Address,
-                     ordinalName(Obj, Entry.ordinal()))
+                     ordinalName(Obj, Entry.ordinal()).str().c_str())
            << Entry.symbolName() << "\n";
   }
 }
