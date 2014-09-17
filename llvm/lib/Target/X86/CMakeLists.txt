@@ -14,7 +14,6 @@ add_public_tablegen_target(X86CommonTableGen)
 
 set(sources
   X86AsmPrinter.cpp
-  X86AtomicExpandPass.cpp
   X86FastISel.cpp
   X86FloatingPoint.cpp
   X86FrameLowering.cpp

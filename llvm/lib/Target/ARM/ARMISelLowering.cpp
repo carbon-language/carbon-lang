@@ -10982,6 +10982,8 @@ bool ARMTargetLowering::shouldConvertConstantLoadToIntImm(const APInt &Imm,
   return true;
 }
 
+bool ARMTargetLowering::hasLoadLinkedStoreConditional() const { return true; }
+
 static void makeDMB(IRBuilder<> &Builder, ARM_MB::MemBOpt Domain) {
   Module *M = Builder.GetInsertBlock()->getParent()->getParent();
   Function *DMB = llvm::Intrinsic::getDeclaration(M, Intrinsic::arm_dmb);

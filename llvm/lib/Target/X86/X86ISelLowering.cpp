@@ -16819,6 +16819,68 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
   }
 }
 
+/// Returns true if the operand type is exactly twice the native width, and
+/// the corresponding cmpxchg8b or cmpxchg16b instruction is available.
+/// Used to know whether to use cmpxchg8/16b when expanding atomic operations
+/// (otherwise we leave them alone to become __sync_fetch_and_... calls).
+bool X86TargetLowering::needsCmpXchgNb(const Type *MemType) const {
+  const X86Subtarget &Subtarget =
+      getTargetMachine().getSubtarget<X86Subtarget>();
+  unsigned OpWidth = MemType->getPrimitiveSizeInBits();
+
+  if (OpWidth == 64)
+    return !Subtarget.is64Bit(); // FIXME this should be Subtarget.hasCmpxchg8b
+  else if (OpWidth == 128)
+    return Subtarget.hasCmpxchg16b();
+  else
+    return false;
+}
+
+bool X86TargetLowering::shouldExpandAtomicStoreInIR(StoreInst *SI) const {
+  return needsCmpXchgNb(SI->getValueOperand()->getType());
+}
+
+bool X86TargetLowering::shouldExpandAtomicLoadInIR(LoadInst *SI) const {
+  return false; // FIXME, currently these are expanded separately in this file.
+}
+
+bool X86TargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
+  const X86Subtarget &Subtarget =
+      getTargetMachine().getSubtarget<X86Subtarget>();
+  unsigned NativeWidth = Subtarget.is64Bit() ? 64 : 32;
+  const Type *MemType = AI->getType();
+
+  // If the operand is too big, we must see if cmpxchg8/16b is available
+  // and default to library calls otherwise.
+  if (MemType->getPrimitiveSizeInBits() > NativeWidth)
+    return needsCmpXchgNb(MemType);
+
+  AtomicRMWInst::BinOp Op = AI->getOperation();
+  switch (Op) {
+  default:
+    llvm_unreachable("Unknown atomic operation");
+  case AtomicRMWInst::Xchg:
+  case AtomicRMWInst::Add:
+  case AtomicRMWInst::Sub:
+    // It's better to use xadd, xsub or xchg for these in all cases.
+    return false;
+  case AtomicRMWInst::Or:
+  case AtomicRMWInst::And:
+  case AtomicRMWInst::Xor:
+    // If the atomicrmw's result isn't actually used, we can just add a "lock"
+    // prefix to a normal instruction for these operations.
+    return !AI->use_empty();
+  case AtomicRMWInst::Nand:
+  case AtomicRMWInst::Max:
+  case AtomicRMWInst::Min:
+  case AtomicRMWInst::UMax:
+  case AtomicRMWInst::UMin:
+    // These always require a non-trivial set of data operations on x86. We must
+    // use a cmpxchg loop.
+    return true;
+  }
+}
+
 static SDValue LowerATOMIC_FENCE(SDValue Op, const X86Subtarget *Subtarget,
                                  SelectionDAG &DAG) {
   SDLoc dl(Op);
@@ -17338,7 +17400,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   case ISD::ATOMIC_LOAD_UMIN:
   case ISD::ATOMIC_LOAD_UMAX:
     // Delegate to generic TypeLegalization. Situations we can really handle
-    // should have already been dealt with by X86AtomicExpandPass.cpp.
+    // should have already been dealt with by AtomicExpandPass.cpp.
     break;
   case ISD::ATOMIC_LOAD: {
     ReplaceATOMIC_LOAD(N, Results, DAG);

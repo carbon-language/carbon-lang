@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file contains a pass (at IR level) to replace atomic instructions with
-// appropriate (intrinsic-based) ldrex/strex loops.
+// either (intrinsic-based) ldrex/strex loops or AtomicCmpXchg.
 //
 //===----------------------------------------------------------------------===//
 
@@ -44,6 +44,8 @@ namespace {
     bool expandAtomicLoad(LoadInst *LI);
     bool expandAtomicStore(StoreInst *SI);
     bool expandAtomicRMW(AtomicRMWInst *AI);
+    bool expandAtomicRMWToLLSC(AtomicRMWInst *AI);
+    bool expandAtomicRMWToCmpXchg(AtomicRMWInst *AI);
     bool expandAtomicCmpXchg(AtomicCmpXchgInst *CI);
   };
 }
@@ -88,7 +90,7 @@ bool AtomicExpand::runOnFunction(Function &F) {
       MadeChange |= expandAtomicStore(SI);
     } else if (RMWI && TargetLowering->shouldExpandAtomicRMWInIR(RMWI)) {
       MadeChange |= expandAtomicRMW(RMWI);
-    } else if (CASI) {
+    } else if (CASI && TargetLowering->hasLoadLinkedStoreConditional()) {
       MadeChange |= expandAtomicCmpXchg(CASI);
     }
   }
@@ -127,9 +129,12 @@ bool AtomicExpand::expandAtomicLoad(LoadInst *LI) {
 }
 
 bool AtomicExpand::expandAtomicStore(StoreInst *SI) {
-  // The only atomic 64-bit store on ARM is an strexd that succeeds, which means
-  // we need a loop and the entire instruction is essentially an "atomicrmw
-  // xchg" that ignores the value loaded.
+  // This function is only called on atomic stores that are too large to be
+  // atomic if implemented as a native store. So we replace them by an
+  // atomic swap, that can be implemented for example as a ldrex/strex on ARM
+  // or lock cmpxchg8/16b on X86, as these are atomic for larger sizes.
+  // It is the responsibility of the target to only return true in
+  // shouldExpandAtomicRMW in cases where this is required and possible.
   IRBuilder<> Builder(SI);
   AtomicRMWInst *AI =
       Builder.CreateAtomicRMW(AtomicRMWInst::Xchg, SI->getPointerOperand(),
@@ -141,8 +146,54 @@ bool AtomicExpand::expandAtomicStore(StoreInst *SI) {
 }
 
 bool AtomicExpand::expandAtomicRMW(AtomicRMWInst *AI) {
+  if (TM->getSubtargetImpl()
+          ->getTargetLowering()
+          ->hasLoadLinkedStoreConditional())
+    return expandAtomicRMWToLLSC(AI);
+  else
+    return expandAtomicRMWToCmpXchg(AI);
+}
+
+/// Emit IR to implement the given atomicrmw operation on values in registers,
+/// returning the new value.
+static Value *performAtomicOp(AtomicRMWInst::BinOp Op, IRBuilder<> &Builder,
+                              Value *Loaded, Value *Inc) {
+  Value *NewVal;
+  switch (Op) {
+  case AtomicRMWInst::Xchg:
+    return Inc;
+  case AtomicRMWInst::Add:
+    return Builder.CreateAdd(Loaded, Inc, "new");
+  case AtomicRMWInst::Sub:
+    return Builder.CreateSub(Loaded, Inc, "new");
+  case AtomicRMWInst::And:
+    return Builder.CreateAnd(Loaded, Inc, "new");
+  case AtomicRMWInst::Nand:
+    return Builder.CreateNot(Builder.CreateAnd(Loaded, Inc), "new");
+  case AtomicRMWInst::Or:
+    return Builder.CreateOr(Loaded, Inc, "new");
+  case AtomicRMWInst::Xor:
+    return Builder.CreateXor(Loaded, Inc, "new");
+  case AtomicRMWInst::Max:
+    NewVal = Builder.CreateICmpSGT(Loaded, Inc);
+    return Builder.CreateSelect(NewVal, Loaded, Inc, "new");
+  case AtomicRMWInst::Min:
+    NewVal = Builder.CreateICmpSLE(Loaded, Inc);
+    return Builder.CreateSelect(NewVal, Loaded, Inc, "new");
+  case AtomicRMWInst::UMax:
+    NewVal = Builder.CreateICmpUGT(Loaded, Inc);
+    return Builder.CreateSelect(NewVal, Loaded, Inc, "new");
+  case AtomicRMWInst::UMin:
+    NewVal = Builder.CreateICmpULE(Loaded, Inc);
+    return Builder.CreateSelect(NewVal, Loaded, Inc, "new");
+  default:
+    llvm_unreachable("Unknown atomic op");
+  }
+}
+
+bool AtomicExpand::expandAtomicRMWToLLSC(AtomicRMWInst *AI) {
   auto TLI = TM->getSubtargetImpl()->getTargetLowering();
-  AtomicOrdering Order = AI->getOrdering();
+  AtomicOrdering FenceOrder = AI->getOrdering();
   Value *Addr = AI->getPointerOperand();
   BasicBlock *BB = AI->getParent();
   Function *F = BB->getParent();
@@ -152,7 +203,7 @@ bool AtomicExpand::expandAtomicRMW(AtomicRMWInst *AI) {
   // of everything. Otherwise, emitLeading/TrailingFence are no-op and we
   // should preserve the ordering.
   AtomicOrdering MemOpOrder =
-      TLI->getInsertFencesForAtomic() ? Monotonic : Order;
+      TLI->getInsertFencesForAtomic() ? Monotonic : FenceOrder;
 
   // Given: atomicrmw some_op iN* %addr, iN %incr ordering
   //
@@ -179,56 +230,15 @@ bool AtomicExpand::expandAtomicRMW(AtomicRMWInst *AI) {
   // the branch entirely.
   std::prev(BB->end())->eraseFromParent();
   Builder.SetInsertPoint(BB);
-  TLI->emitLeadingFence(Builder, Order, /*IsStore=*/true, /*IsLoad=*/true);
+  TLI->emitLeadingFence(Builder, FenceOrder, /*IsStore=*/true, /*IsLoad=*/true);
   Builder.CreateBr(LoopBB);
 
   // Start the main loop block now that we've taken care of the preliminaries.
   Builder.SetInsertPoint(LoopBB);
   Value *Loaded = TLI->emitLoadLinked(Builder, Addr, MemOpOrder);
 
-  Value *NewVal;
-  switch (AI->getOperation()) {
-  case AtomicRMWInst::Xchg:
-    NewVal = AI->getValOperand();
-    break;
-  case AtomicRMWInst::Add:
-    NewVal = Builder.CreateAdd(Loaded, AI->getValOperand(), "new");
-    break;
-  case AtomicRMWInst::Sub:
-    NewVal = Builder.CreateSub(Loaded, AI->getValOperand(), "new");
-    break;
-  case AtomicRMWInst::And:
-    NewVal = Builder.CreateAnd(Loaded, AI->getValOperand(), "new");
-    break;
-  case AtomicRMWInst::Nand:
-    NewVal = Builder.CreateNot(Builder.CreateAnd(Loaded, AI->getValOperand()),
-                               "new");
-    break;
-  case AtomicRMWInst::Or:
-    NewVal = Builder.CreateOr(Loaded, AI->getValOperand(), "new");
-    break;
-  case AtomicRMWInst::Xor:
-    NewVal = Builder.CreateXor(Loaded, AI->getValOperand(), "new");
-    break;
-  case AtomicRMWInst::Max:
-    NewVal = Builder.CreateICmpSGT(Loaded, AI->getValOperand());
-    NewVal = Builder.CreateSelect(NewVal, Loaded, AI->getValOperand(), "new");
-    break;
-  case AtomicRMWInst::Min:
-    NewVal = Builder.CreateICmpSLE(Loaded, AI->getValOperand());
-    NewVal = Builder.CreateSelect(NewVal, Loaded, AI->getValOperand(), "new");
-    break;
-  case AtomicRMWInst::UMax:
-    NewVal = Builder.CreateICmpUGT(Loaded, AI->getValOperand());
-    NewVal = Builder.CreateSelect(NewVal, Loaded, AI->getValOperand(), "new");
-    break;
-  case AtomicRMWInst::UMin:
-    NewVal = Builder.CreateICmpULE(Loaded, AI->getValOperand());
-    NewVal = Builder.CreateSelect(NewVal, Loaded, AI->getValOperand(), "new");
-    break;
-  default:
-    llvm_unreachable("Unknown atomic op");
-  }
+  Value *NewVal =
+      performAtomicOp(AI->getOperation(), Builder, Loaded, AI->getValOperand());
 
   Value *StoreSuccess =
       TLI->emitStoreConditional(Builder, NewVal, Addr, MemOpOrder);
@@ -237,9 +247,80 @@ bool AtomicExpand::expandAtomicRMW(AtomicRMWInst *AI) {
   Builder.CreateCondBr(TryAgain, LoopBB, ExitBB);
 
   Builder.SetInsertPoint(ExitBB, ExitBB->begin());
-  TLI->emitTrailingFence(Builder, Order, /*IsStore=*/true, /*IsLoad=*/true);
+  TLI->emitTrailingFence(Builder, FenceOrder, /*IsStore=*/true, /*IsLoad=*/true);
 
   AI->replaceAllUsesWith(Loaded);
+  AI->eraseFromParent();
+
+  return true;
+}
+
+bool AtomicExpand::expandAtomicRMWToCmpXchg(AtomicRMWInst *AI) {
+  auto TargetLowering = TM->getSubtargetImpl()->getTargetLowering();
+  AtomicOrdering FenceOrder =
+      AI->getOrdering() == Unordered ? Monotonic : AI->getOrdering();
+  AtomicOrdering MemOpOrder =
+      TargetLowering->getInsertFencesForAtomic() ? Monotonic : FenceOrder;
+  Value *Addr = AI->getPointerOperand();
+  BasicBlock *BB = AI->getParent();
+  Function *F = BB->getParent();
+  LLVMContext &Ctx = F->getContext();
+
+  // Given: atomicrmw some_op iN* %addr, iN %incr ordering
+  //
+  // The standard expansion we produce is:
+  //     [...]
+  //     %init_loaded = load atomic iN* %addr
+  //     br label %loop
+  // loop:
+  //     %loaded = phi iN [ %init_loaded, %entry ], [ %new_loaded, %loop ]
+  //     %new = some_op iN %loaded, %incr
+  //     %pair = cmpxchg iN* %addr, iN %loaded, iN %new
+  //     %new_loaded = extractvalue { iN, i1 } %pair, 0
+  //     %success = extractvalue { iN, i1 } %pair, 1
+  //     br i1 %success, label %atomicrmw.end, label %loop
+  // atomicrmw.end:
+  //     [...]
+  BasicBlock *ExitBB = BB->splitBasicBlock(AI, "atomicrmw.end");
+  BasicBlock *LoopBB = BasicBlock::Create(Ctx, "atomicrmw.start", F, ExitBB);
+
+  // This grabs the DebugLoc from AI.
+  IRBuilder<> Builder(AI);
+
+  // The split call above "helpfully" added a branch at the end of BB (to the
+  // wrong place), but we want a load. It's easiest to just remove
+  // the branch entirely.
+  std::prev(BB->end())->eraseFromParent();
+  Builder.SetInsertPoint(BB);
+  TargetLowering->emitLeadingFence(Builder, FenceOrder,
+                                   /*IsStore=*/true, /*IsLoad=*/true);
+  LoadInst *InitLoaded = Builder.CreateLoad(Addr);
+  // Atomics require at least natural alignment.
+  InitLoaded->setAlignment(AI->getType()->getPrimitiveSizeInBits());
+  Builder.CreateBr(LoopBB);
+
+  // Start the main loop block now that we've taken care of the preliminaries.
+  Builder.SetInsertPoint(LoopBB);
+  PHINode *Loaded = Builder.CreatePHI(AI->getType(), 2, "loaded");
+  Loaded->addIncoming(InitLoaded, BB);
+
+  Value *NewVal =
+      performAtomicOp(AI->getOperation(), Builder, Loaded, AI->getValOperand());
+
+  Value *Pair = Builder.CreateAtomicCmpXchg(
+      Addr, Loaded, NewVal, MemOpOrder,
+      AtomicCmpXchgInst::getStrongestFailureOrdering(MemOpOrder));
+  Value *NewLoaded = Builder.CreateExtractValue(Pair, 0, "newloaded");
+  Loaded->addIncoming(NewLoaded, LoopBB);
+
+  Value *Success = Builder.CreateExtractValue(Pair, 1, "success");
+  Builder.CreateCondBr(Success, ExitBB, LoopBB);
+
+  Builder.SetInsertPoint(ExitBB, ExitBB->begin());
+  TargetLowering->emitTrailingFence(Builder, FenceOrder,
+                                    /*IsStore=*/true, /*IsLoad=*/true);
+
+  AI->replaceAllUsesWith(NewLoaded);
   AI->eraseFromParent();
 
   return true;

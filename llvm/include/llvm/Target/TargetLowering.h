@@ -936,6 +936,10 @@ public:
   /// \name Helpers for atomic expansion.
   /// @{
 
+  /// True if AtomicExpandPass should use emitLoadLinked/emitStoreConditional
+  /// and expand AtomicCmpXchgInst.
+  virtual bool hasLoadLinkedStoreConditional() const { return false; }
+
   /// Perform a load-linked operation on Addr, returning a "Value *" with the
   /// corresponding pointee type. This may entail some non-trivial operations to
   /// truncate or reconstruct types that will be illegal in the backend. See

@@ -8571,6 +8571,10 @@ bool AArch64TargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
   return Size <= 128;
 }
 
+bool AArch64TargetLowering::hasLoadLinkedStoreConditional() const {
+  return true;
+}
+
 Value *AArch64TargetLowering::emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
                                              AtomicOrdering Ord) const {
   Module *M = Builder.GetInsertBlock()->getParent()->getParent();
