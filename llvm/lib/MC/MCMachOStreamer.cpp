@@ -55,6 +55,12 @@ public:
       : MCObjectStreamer(Context, MAB, OS, Emitter),
         LabelSections(label) {}
 
+  /// state management
+  void reset() override {
+    HasSectionLabel.clear();
+    MCObjectStreamer::reset();
+  }
+
   /// @name MCStreamer Interface
   /// @{
 

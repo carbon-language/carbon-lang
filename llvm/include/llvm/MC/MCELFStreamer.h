@@ -41,6 +41,14 @@ public:
 
   virtual ~MCELFStreamer();
 
+  /// state management
+  void reset() override {
+    LocalCommons.clear();
+    BindingExplicitlySet.clear();
+    SeenIdent = false;
+    MCObjectStreamer::reset();
+  }
+
   /// @name MCStreamer Interface
   /// @{
 

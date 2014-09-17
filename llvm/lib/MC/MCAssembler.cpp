@@ -364,11 +364,16 @@ void MCAssembler::reset() {
   SymbolMap.clear();
   IndirectSymbols.clear();
   DataRegions.clear();
+  LinkerOptions.clear();
+  FileNames.clear();
   ThumbFuncs.clear();
+  BundleAlignSize = 0;
   RelaxAll = false;
   NoExecStack = false;
   SubsectionsViaSymbols = false;
   ELFHeaderEFlags = 0;
+  LOHContainer.reset();
+  VersionMinInfo.Major = 0;
 
   // reset objects owned by us
   getBackend().reset();
