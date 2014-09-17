@@ -89,18 +89,19 @@ bool SIInstrInfo::areLoadsFromSameBasePtr(SDNode *Load0, SDNode *Load1,
   if (isDS(Opc0) && isDS(Opc1)) {
     assert(getNumOperandsNoGlue(Load0) == getNumOperandsNoGlue(Load1));
 
-    // TODO: Also shouldn't see read2st
-    assert(Opc0 != AMDGPU::DS_READ2_B32 &&
-           Opc0 != AMDGPU::DS_READ2_B64 &&
-           Opc1 != AMDGPU::DS_READ2_B32 &&
-           Opc1 != AMDGPU::DS_READ2_B64);
-
     // Check base reg.
     if (Load0->getOperand(1) != Load1->getOperand(1))
       return false;
 
     // Check chain.
     if (findChainOperand(Load0) != findChainOperand(Load1))
+      return false;
+
+    // Skip read2 / write2 variants for simplicity.
+    // TODO: We should report true if the used offsets are adjacent (excluded
+    // st64 versions).
+    if (AMDGPU::getNamedOperandIdx(Opc0, AMDGPU::OpName::data1) != -1 ||
+        AMDGPU::getNamedOperandIdx(Opc1, AMDGPU::OpName::data1) != -1)
       return false;
 
     Offset0 = cast<ConstantSDNode>(Load0->getOperand(2))->getZExtValue();
