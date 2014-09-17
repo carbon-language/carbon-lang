@@ -70,6 +70,10 @@ public:
                             unsigned &BaseReg, unsigned &Offset,
                             const TargetRegisterInfo *TRI) const final;
 
+  bool shouldClusterLoads(MachineInstr *FirstLdSt,
+                          MachineInstr *SecondLdSt,
+                          unsigned NumLoads) const final;
+
   void copyPhysReg(MachineBasicBlock &MBB,
                    MachineBasicBlock::iterator MI, DebugLoc DL,
                    unsigned DestReg, unsigned SrcReg,

@@ -260,6 +260,28 @@ bool SIInstrInfo::getLdStBaseRegImmOfs(MachineInstr *LdSt,
   return false;
 }
 
+bool SIInstrInfo::shouldClusterLoads(MachineInstr *FirstLdSt,
+                                     MachineInstr *SecondLdSt,
+                                     unsigned NumLoads) const {
+  unsigned Opc0 = FirstLdSt->getOpcode();
+  unsigned Opc1 = SecondLdSt->getOpcode();
+
+  // TODO: This needs finer tuning
+  if (NumLoads > 4)
+    return false;
+
+  if (isDS(Opc0) && isDS(Opc1))
+    return true;
+
+  if (isSMRD(Opc0) && isSMRD(Opc1))
+    return true;
+
+  if ((isMUBUF(Opc0) || isMTBUF(Opc0)) && (isMUBUF(Opc1) || isMTBUF(Opc1)))
+    return true;
+
+  return false;
+}
+
 void
 SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                          MachineBasicBlock::iterator MI, DebugLoc DL,
