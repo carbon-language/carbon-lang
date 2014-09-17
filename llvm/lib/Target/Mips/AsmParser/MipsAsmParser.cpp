@@ -192,6 +192,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseSetNoMacroDirective();
   bool parseSetMsaDirective();
   bool parseSetNoMsaDirective();
+  bool parseSetNoDspDirective();
   bool parseSetReorderDirective();
   bool parseSetNoReorderDirective();
   bool parseSetNoMips16Directive();
@@ -2654,6 +2655,20 @@ bool MipsAsmParser::parseSetNoMsaDirective() {
   return false;
 }
 
+bool MipsAsmParser::parseSetNoDspDirective() {
+  Parser.Lex(); // Eat "nodsp".
+
+  // If this is not the end of the statement, report an error.
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    reportParseError("unexpected token, expected end of statement");
+    return false;
+  }
+
+  clearFeatureBits(Mips::FeatureDSP, "dsp");
+  getTargetStreamer().emitDirectiveSetNoDsp();
+  return false;
+}
+
 bool MipsAsmParser::parseSetNoMips16Directive() {
   Parser.Lex();
   // If this is not the end of the statement, report an error.
@@ -3037,6 +3052,8 @@ bool MipsAsmParser::parseDirectiveSet() {
     return parseSetFeature(Mips::FeatureMips64r6);
   } else if (Tok.getString() == "dsp") {
     return parseSetFeature(Mips::FeatureDSP);
+  } else if (Tok.getString() == "nodsp") {
+    return parseSetNoDspDirective();
   } else if (Tok.getString() == "msa") {
     return parseSetMsaDirective();
   } else if (Tok.getString() == "nomsa") {

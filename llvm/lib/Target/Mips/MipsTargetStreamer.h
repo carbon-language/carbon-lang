@@ -62,6 +62,7 @@ public:
   virtual void emitDirectiveSetMips64R2();
   virtual void emitDirectiveSetMips64R6();
   virtual void emitDirectiveSetDsp();
+  virtual void emitDirectiveSetNoDsp();
   virtual void emitDirectiveSetPop();
   virtual void emitDirectiveSetPush();
 
@@ -165,6 +166,7 @@ public:
   void emitDirectiveSetMips64R2() override;
   void emitDirectiveSetMips64R6() override;
   void emitDirectiveSetDsp() override;
+  void emitDirectiveSetNoDsp() override;
   void emitDirectiveSetPop() override;
   void emitDirectiveSetPush() override;
 

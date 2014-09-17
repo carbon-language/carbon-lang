@@ -74,6 +74,7 @@ void MipsTargetStreamer::emitDirectiveSetMips64R6() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetPop() {}
 void MipsTargetStreamer::emitDirectiveSetPush() {}
 void MipsTargetStreamer::emitDirectiveSetDsp() { forbidModuleDirective(); }
+void MipsTargetStreamer::emitDirectiveSetNoDsp() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveCpload(unsigned RegNo) {}
 void MipsTargetStreamer::emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                                               const MCSymbol &Sym, bool IsReg) {
@@ -245,6 +246,11 @@ void MipsTargetAsmStreamer::emitDirectiveSetMips64R6() {
 void MipsTargetAsmStreamer::emitDirectiveSetDsp() {
   OS << "\t.set\tdsp\n";
   MipsTargetStreamer::emitDirectiveSetDsp();
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetNoDsp() {
+  OS << "\t.set\tnodsp\n";
+  MipsTargetStreamer::emitDirectiveSetNoDsp();
 }
 
 void MipsTargetAsmStreamer::emitDirectiveSetPop() { OS << "\t.set\tpop\n"; }
