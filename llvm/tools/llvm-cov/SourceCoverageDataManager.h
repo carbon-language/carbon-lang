@@ -19,19 +19,33 @@
 
 namespace llvm {
 
+struct CoverageSegment {
+  unsigned Line;
+  unsigned Col;
+  bool IsRegionEntry;
+  uint64_t Count;
+  bool HasCount;
+
+  CoverageSegment(unsigned Line, unsigned Col, bool IsRegionEntry)
+      : Line(Line), Col(Col), IsRegionEntry(IsRegionEntry),
+        Count(0), HasCount(false) {}
+  void setCount(uint64_t NewCount) {
+    Count = NewCount;
+    HasCount = true;
+  }
+};
+
 /// \brief Partions mapping regions by their kind and sums
 /// the execution counts of the regions that start at the same location.
 class SourceCoverageDataManager {
   std::vector<coverage::CountedRegion> Regions;
-  bool Uniqued;
+  std::vector<CoverageSegment> Segments;
 
 public:
-  SourceCoverageDataManager() : Uniqued(false) {}
-
   void insert(const coverage::CountedRegion &CR);
 
-  /// \brief Return the source regions in order of first to last occurring.
-  ArrayRef<coverage::CountedRegion> getSourceRegions();
+  /// \brief Return a sequence of non-overlapping coverage segments.
+  ArrayRef<CoverageSegment> getCoverageSegments();
 };
 
 } // namespace llvm

@@ -77,7 +77,7 @@ struct InstantiationView {
 /// \brief A code coverage view of a specific source file.
 /// It can have embedded coverage views.
 class SourceCoverageView {
-public:
+private:
   /// \brief Coverage information for a single line.
   struct LineCoverageInfo {
     uint64_t ExecutionCount;
@@ -98,90 +98,22 @@ public:
 
     void addRegionCount(uint64_t Count) {
       Mapped = true;
-      ExecutionCount = Count;
+      if (!RegionCount)
+        ExecutionCount = Count;
     }
   };
 
-  /// \brief A marker that points at the start
-  /// of a specific mapping region.
-  struct RegionMarker {
-    unsigned Line, Column;
-    uint64_t ExecutionCount;
-
-    RegionMarker(unsigned Line, unsigned Column, uint64_t Value)
-        : Line(Line), Column(Column), ExecutionCount(Value) {}
-  };
-
-  /// \brief A single line source range used to
-  /// render highlighted text.
-  struct HighlightRange {
-    enum HighlightKind {
-      /// The code that wasn't executed.
-      NotCovered,
-
-      /// The region of code that was expanded.
-      Expanded
-    };
-    HighlightKind Kind;
-    unsigned Line;
-    unsigned ColumnStart;
-    unsigned ColumnEnd;
-
-    HighlightRange(unsigned Line, unsigned ColumnStart, unsigned ColumnEnd,
-                   HighlightKind Kind = NotCovered)
-        : Kind(Kind), Line(Line), ColumnStart(ColumnStart),
-          ColumnEnd(ColumnEnd) {}
-
-    bool operator<(const HighlightRange &Other) const {
-      if (Line == Other.Line)
-        return ColumnStart < Other.ColumnStart;
-      return Line < Other.Line;
-    }
-
-    bool columnStartOverlaps(const HighlightRange &Other) const {
-      return ColumnStart <= Other.ColumnStart && ColumnEnd > Other.ColumnStart;
-    }
-    bool columnEndOverlaps(const HighlightRange &Other) const {
-      return ColumnEnd >= Other.ColumnEnd && ColumnStart < Other.ColumnEnd;
-    }
-    bool contains(const HighlightRange &Other) const {
-      if (Line != Other.Line)
-        return false;
-      return ColumnStart <= Other.ColumnStart && ColumnEnd >= Other.ColumnEnd;
-    }
-
-    bool overlaps(const HighlightRange &Other) const {
-      if (Line != Other.Line)
-        return false;
-      return columnStartOverlaps(Other) || columnEndOverlaps(Other);
-    }
-  };
-
-private:
   const MemoryBuffer &File;
   const CoverageViewOptions &Options;
-  unsigned LineOffset;
+  std::unique_ptr<SourceCoverageDataManager> RegionManager;
   std::vector<ExpansionView> ExpansionSubViews;
   std::vector<InstantiationView> InstantiationSubViews;
-  std::vector<LineCoverageInfo> LineStats;
-  std::vector<HighlightRange> HighlightRanges;
-  std::vector<RegionMarker> Markers;
-
-  /// \brief Initialize the visible source range for this view.
-  void setUpVisibleRange(SourceCoverageDataManager &Data);
-
-  /// \brief Create the line coverage information using the coverage data.
-  void createLineCoverageInfo(SourceCoverageDataManager &Data);
-
-  /// \brief Create the line highlighting ranges using the coverage data.
-  void createHighlightRanges(SourceCoverageDataManager &Data);
-
-  /// \brief Create the region markers using the coverage data.
-  void createRegionMarkers(SourceCoverageDataManager &Data);
 
   /// \brief Render a source line with highlighting.
-  void renderLine(raw_ostream &OS, StringRef Line,
-                  ArrayRef<HighlightRange> Ranges);
+  void renderLine(raw_ostream &OS, StringRef Line, int64_t LineNumber,
+                  const CoverageSegment *WrappedSegment,
+                  ArrayRef<const CoverageSegment *> Segments,
+                  unsigned ExpansionCol);
 
   void renderIndent(raw_ostream &OS, unsigned Level);
 
@@ -194,7 +126,8 @@ private:
   void renderLineNumberColumn(raw_ostream &OS, unsigned LineNo);
 
   /// \brief Render all the region's execution counts on a line.
-  void renderRegionMarkers(raw_ostream &OS, ArrayRef<RegionMarker> Regions);
+  void renderRegionMarkers(raw_ostream &OS,
+                           ArrayRef<const CoverageSegment *> Segments);
 
   static const unsigned LineCoverageColumnWidth = 7;
   static const unsigned LineNumberColumnWidth = 5;
@@ -202,7 +135,7 @@ private:
 public:
   SourceCoverageView(const MemoryBuffer &File,
                      const CoverageViewOptions &Options)
-      : File(File), Options(Options), LineOffset(0) {}
+      : File(File), Options(Options) {}
 
   const CoverageViewOptions &getOptions() const { return Options; }
 
@@ -220,11 +153,13 @@ public:
 
   /// \brief Print the code coverage information for a specific
   /// portion of a source file to the output stream.
-  void render(raw_ostream &OS, unsigned IndentLevel = 0);
+  void render(raw_ostream &OS, bool WholeFile, unsigned IndentLevel = 0);
 
   /// \brief Load the coverage information required for rendering
   /// from the mapping regions in the data manager.
-  void load(SourceCoverageDataManager &Data);
+  void load(std::unique_ptr<SourceCoverageDataManager> Data) {
+    RegionManager = std::move(Data);
+  }
 };
 
 } // namespace llvm
