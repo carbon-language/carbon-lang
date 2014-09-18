@@ -17,12 +17,14 @@ class AsanTestCase(TestBase):
     # self.useBuiltClang() to use clang from the llvm-build directory instead
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipIfRemote
     @dsym_test
     def test_with_dsym (self):
         compiler = self.findBuiltClang ()
         self.buildDsym (None, compiler)
         self.asan_tests ()
 
+    @skipIfRemote
     @dwarf_test
     def test_with_dwarf (self):
         compiler = self.findBuiltClang ()

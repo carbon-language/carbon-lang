@@ -20,6 +20,7 @@ class SBBreakpointCallbackCase(TestBase):
 
     @unittest2.expectedFailure # llvm.org/pr16000: SBBreakpoint.SetCallback() does nothing
     @skipIfi386
+    @skipIfRemote
     @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
     def test_breakpoint_callback(self):
         """Test the that SBBreakpoint callback is invoked when a breakpoint is hit. """
@@ -27,6 +28,7 @@ class SBBreakpointCallbackCase(TestBase):
                             'test_breakpoint_callback')
 
     @skipIfi386
+    @skipIfRemote
     @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
     def test_sb_api_listener_event_description(self):
         """ Test the description of an SBListener breakpoint event is valid."""
@@ -35,6 +37,7 @@ class SBBreakpointCallbackCase(TestBase):
         pass
 
     @skipIfi386
+    @skipIfRemote
     @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
     def test_sb_api_listener_event_process_state(self):
         """ Test that a registered SBListener receives events when a process
@@ -46,6 +49,7 @@ class SBBreakpointCallbackCase(TestBase):
 
 
     @skipIfi386
+    @skipIfRemote
     @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
     def test_sb_api_listener_resume(self):
         """ Test that a process can be resumed from a non-main thread. """

@@ -75,12 +75,14 @@ class Radar10449092DataFormatterTestCase(TestBase):
 
         self.runCmd("type summary add -s \"${var.first%X} and ${var.second%X}\" foo")
         self.runCmd("next")
+        self.runCmd("next")
         self.expect('frame variable mine',
                     substrs = ['(foo) mine = 0xAABBCCDD and 0x1122BB44'])
 
         self.runCmd("type summary add -s \"${var.first%x} and ${var.second%X}\" foo")
         self.expect('frame variable mine',
                     substrs = ['(foo) mine = 0xaabbccdd and 0x1122BB44'])
+        self.runCmd("next")
         self.runCmd("next")
         self.runCmd("type summary add -s \"${var.first%x} and ${var.second%x}\" foo")
         self.expect('frame variable mine',

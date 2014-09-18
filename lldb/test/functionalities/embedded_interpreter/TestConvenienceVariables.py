@@ -11,6 +11,7 @@ class ConvenienceVariablesCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
+    @skipIfRemote
     def test_with_dsym_and_run_command(self):
         """Test convenience variables lldb.debugger, lldb.target, lldb.process, lldb.thread, and lldb.frame."""
         self.buildDsym()
@@ -18,6 +19,7 @@ class ConvenienceVariablesCase(TestBase):
 
     @dwarf_test
     @skipIfFreeBSD # llvm.org/pr17228
+    @skipIfRemote
     @expectedFailureLinux("llvm.org/pr20276") # intermittent failure on Linux
     def test_with_dwarf_and_run_commands(self):
         """Test convenience variables lldb.debugger, lldb.target, lldb.process, lldb.thread, and lldb.frame."""
