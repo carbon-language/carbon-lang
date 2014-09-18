@@ -728,7 +728,7 @@ global variable. The operand fields are:
 * *unnamed_addr*: If present and non-zero, indicates that the variable has
   ``unnamed_addr``
 
-.. _dllstorageclass:
+.. _bcdllstorageclass:
 
 * *dllstorageclass*: If present, an encoding of the DLL storage class of this variable:
 
@@ -787,7 +787,8 @@ function. The operand fields are:
 * *prefix*: If non-zero, the value index of the prefix data for this function,
   plus 1.
 
-* *dllstorageclass*: An encoding of the `dllstorageclass`_ of this function
+* *dllstorageclass*: An encoding of the
+  :ref:`dllstorageclass<bcdllstorageclass>` of this function
 
 MODULE_CODE_ALIAS Record
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -805,7 +806,8 @@ fields are
 
 * *visibility*: If present, an encoding of the `visibility`_ of the alias
 
-* *dllstorageclass*: If present, an encoding of the `dllstorageclass`_ of the alias
+* *dllstorageclass*: If present, an encoding of the
+  :ref:`dllstorageclass<bcdllstorageclass>` of the alias
 
 MODULE_CODE_PURGEVALS Record
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
