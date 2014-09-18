@@ -28,6 +28,7 @@
 
 namespace llvm {
 
+class Function;
 class GlobalValue;
 class Loop;
 class Type;
@@ -227,7 +228,8 @@ public:
   /// \brief Get target-customized preferences for the generic loop unrolling
   /// transformation. The caller will initialize UP with the current
   /// target-independent defaults.
-  virtual void getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const;
+  virtual void getUnrollingPreferences(const Function *F, Loop *L,
+                                       UnrollingPreferences &UP) const;
 
   /// @}
 

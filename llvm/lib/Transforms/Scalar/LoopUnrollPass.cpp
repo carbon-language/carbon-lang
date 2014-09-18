@@ -15,6 +15,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/AssumptionTracker.h"
 #include "llvm/Analysis/CodeMetrics.h"
+#include "llvm/Analysis/FunctionTargetTransformInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -113,6 +114,7 @@ namespace {
       AU.addRequired<ScalarEvolution>();
       AU.addPreserved<ScalarEvolution>();
       AU.addRequired<TargetTransformInfo>();
+      AU.addRequired<FunctionTargetTransformInfo>();
       // FIXME: Loop unroll requires LCSSA. And LCSSA requires dom info.
       // If loop unroll does not preserve dom info then LCSSA pass on next
       // loop will receive invalid dom info.
@@ -122,7 +124,7 @@ namespace {
 
     // Fill in the UnrollingPreferences parameter with values from the
     // TargetTransformationInfo.
-    void getUnrollingPreferences(Loop *L, const TargetTransformInfo &TTI,
+    void getUnrollingPreferences(Loop *L, const FunctionTargetTransformInfo &FTTI,
                                  TargetTransformInfo::UnrollingPreferences &UP) {
       UP.Threshold = CurrentThreshold;
       UP.OptSizeThreshold = OptSizeUnrollThreshold;
@@ -132,7 +134,7 @@ namespace {
       UP.MaxCount = UINT_MAX;
       UP.Partial = CurrentAllowPartial;
       UP.Runtime = CurrentRuntime;
-      TTI.getUnrollingPreferences(L, UP);
+      FTTI.getUnrollingPreferences(L, UP);
     }
 
     // Select and return an unroll count based on parameters from
@@ -185,6 +187,7 @@ char LoopUnroll::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopUnroll, "loop-unroll", "Unroll loops", false, false)
 INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
 INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
+INITIALIZE_PASS_DEPENDENCY(FunctionTargetTransformInfo)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
@@ -358,6 +361,8 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   LoopInfo *LI = &getAnalysis<LoopInfo>();
   ScalarEvolution *SE = &getAnalysis<ScalarEvolution>();
   const TargetTransformInfo &TTI = getAnalysis<TargetTransformInfo>();
+  const FunctionTargetTransformInfo &FTTI =
+      getAnalysis<FunctionTargetTransformInfo>();
   AssumptionTracker *AT = &getAnalysis<AssumptionTracker>();
 
   BasicBlock *Header = L->getHeader();
@@ -372,7 +377,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   bool HasPragma = PragmaFullUnroll || PragmaCount > 0;
 
   TargetTransformInfo::UnrollingPreferences UP;
-  getUnrollingPreferences(L, TTI, UP);
+  getUnrollingPreferences(L, FTTI, UP);
 
   // Find trip count and trip multiple if count is not available
   unsigned TripCount = 0;

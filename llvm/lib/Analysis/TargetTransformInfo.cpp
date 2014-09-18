@@ -87,9 +87,10 @@ bool TargetTransformInfo::isLoweredToCall(const Function *F) const {
   return PrevTTI->isLoweredToCall(F);
 }
 
-void TargetTransformInfo::getUnrollingPreferences(Loop *L,
-                            UnrollingPreferences &UP) const {
-  PrevTTI->getUnrollingPreferences(L, UP);
+void
+TargetTransformInfo::getUnrollingPreferences(const Function *F, Loop *L,
+                                             UnrollingPreferences &UP) const {
+  PrevTTI->getUnrollingPreferences(F, L, UP);
 }
 
 bool TargetTransformInfo::isLegalAddImmediate(int64_t Imm) const {
@@ -487,8 +488,8 @@ struct NoTTI final : ImmutablePass, TargetTransformInfo {
     return true;
   }
 
-  void getUnrollingPreferences(Loop *, UnrollingPreferences &) const override {
-  }
+  void getUnrollingPreferences(const Function *, Loop *,
+                               UnrollingPreferences &) const override {}
 
   bool isLegalAddImmediate(int64_t Imm) const override {
     return false;

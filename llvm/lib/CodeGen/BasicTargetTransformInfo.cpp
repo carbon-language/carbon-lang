@@ -92,7 +92,7 @@ public:
   unsigned getJumpBufSize() const override;
   bool shouldBuildLookupTables() const override;
   bool haveFastSqrt(Type *Ty) const override;
-  void getUnrollingPreferences(Loop *L,
+  void getUnrollingPreferences(const Function *F, Loop *L,
                                UnrollingPreferences &UP) const override;
 
   /// @}
@@ -199,7 +199,7 @@ bool BasicTTI::haveFastSqrt(Type *Ty) const {
   return TLI->isTypeLegal(VT) && TLI->isOperationLegalOrCustom(ISD::FSQRT, VT);
 }
 
-void BasicTTI::getUnrollingPreferences(Loop *L,
+void BasicTTI::getUnrollingPreferences(const Function *F, Loop *L,
                                        UnrollingPreferences &UP) const {
   // This unrolling functionality is target independent, but to provide some
   // motivation for its intended use, for x86:
@@ -225,7 +225,7 @@ void BasicTTI::getUnrollingPreferences(Loop *L,
   // until someone finds a case where it matters in practice.
 
   unsigned MaxOps;
-  const TargetSubtargetInfo *ST = &TM->getSubtarget<TargetSubtargetInfo>();
+  const TargetSubtargetInfo *ST = &TM->getSubtarget<TargetSubtargetInfo>(F);
   if (PartialUnrollingThreshold.getNumOccurrences() > 0)
     MaxOps = PartialUnrollingThreshold;
   else if (ST->getSchedModel().LoopMicroOpBufferSize > 0)

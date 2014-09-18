@@ -74,7 +74,7 @@ public:
 
   bool hasBranchDivergence() const override;
 
-  void getUnrollingPreferences(Loop *L,
+  void getUnrollingPreferences(const Function *F, Loop *L,
                                UnrollingPreferences &UP) const override;
 
   PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) const override;
@@ -99,7 +99,7 @@ llvm::createAMDGPUTargetTransformInfoPass(const AMDGPUTargetMachine *TM) {
 
 bool AMDGPUTTI::hasBranchDivergence() const { return true; }
 
-void AMDGPUTTI::getUnrollingPreferences(Loop *L,
+void AMDGPUTTI::getUnrollingPreferences(const Function *, Loop *L,
                                         UnrollingPreferences &UP) const {
   UP.Threshold = 300; // Twice the default.
   UP.Count = UINT_MAX;
