@@ -7439,6 +7439,12 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
             lowerVectorShuffleAsBlend(DL, MVT::v2i64, V1, V2, Mask, DAG))
       return Blend;
 
+  // Try to use rotation instructions if available.
+  if (Subtarget->hasSSSE3())
+    if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
+            DL, MVT::v2i64, V1, V2, Mask, DAG))
+      return Rotate;
+
   // We implement this with SHUFPD which is pretty lame because it will likely
   // incur 2 cycles of stall for integer vectors on Nehalem and older chips.
   // However, all the alternatives are still more cycles and newer chips don't
@@ -7731,6 +7737,12 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (SDValue Blend =
             lowerVectorShuffleAsBlend(DL, MVT::v4i32, V1, V2, Mask, DAG))
       return Blend;
+
+  // Try to use rotation instructions if available.
+  if (Subtarget->hasSSSE3())
+    if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
+            DL, MVT::v4i32, V1, V2, Mask, DAG))
+      return Rotate;
 
   // We implement this with SHUFPS because it can blend from two vectors.
   // Because we're going to eventually use SHUFPS, we use SHUFPS even to build

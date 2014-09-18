@@ -21,10 +21,16 @@ define <8 x i16> @shuffle_v8i16_67452301(<8 x i16> %a, <8 x i16> %b) {
   ret <8 x i16> %shuffle
 }
 define <8 x i16> @shuffle_v8i16_456789AB(<8 x i16> %a, <8 x i16> %b) {
-; ALL-LABEL: @shuffle_v8i16_456789AB
-; ALL:       # BB#0:
-; ALL:         shufpd {{.*}} # xmm0 = xmm0[1],xmm1[0]
-; ALL-NEXT:    retq
+; SSE2-LABEL: @shuffle_v8i16_456789AB
+; SSE2:       # BB#0:
+; SSE2-NEXT:    shufpd {{.*}} # xmm0 = xmm0[1],xmm1[0]
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: @shuffle_v8i16_456789AB
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr {{.*}} # xmm1 = xmm0[8,9,10,11,12,13,14,15],xmm1[0,1,2,3,4,5,6,7]
+; SSSE3-NEXT:    movdqa %xmm1, %xmm0
+; SSSE3-NEXT:    retq
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11>
   ret <8 x i16> %shuffle
 }
