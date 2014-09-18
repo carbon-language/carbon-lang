@@ -130,6 +130,8 @@ private:
   llvm::Value *createOpBoolean(__isl_take isl_ast_expr *Expr);
   llvm::Value *createId(__isl_take isl_ast_expr *Expr);
   llvm::Value *createInt(__isl_take isl_ast_expr *Expr);
+  llvm::Value *createOpAddressOf(__isl_take isl_ast_expr *Expr);
+  llvm::Value *createAccessAddress(__isl_take isl_ast_expr *Expr);
 };
 }
 

@@ -91,7 +91,7 @@ Value *IslExprBuilder::createOpNAry(__isl_take isl_ast_expr *Expr) {
   return V;
 }
 
-Value *IslExprBuilder::createOpAccess(isl_ast_expr *Expr) {
+Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
   assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_op &&
          "isl ast expression not of type isl_ast_op");
   assert(isl_ast_expr_get_op_type(Expr) == isl_ast_op_access &&
@@ -138,6 +138,12 @@ Value *IslExprBuilder::createOpAccess(isl_ast_expr *Expr) {
 
   isl_ast_expr_free(Expr);
   return Access;
+}
+
+Value *IslExprBuilder::createOpAccess(isl_ast_expr *Expr) {
+  Value *Addr = createAccessAddress(Expr);
+  assert(Addr && "Could not create op access address");
+  return Builder.CreateLoad(Addr, Addr->getName() + ".load");
 }
 
 Value *IslExprBuilder::createOpBin(__isl_take isl_ast_expr *Expr) {
@@ -355,7 +361,6 @@ Value *IslExprBuilder::createOp(__isl_take isl_ast_expr *Expr) {
   case isl_ast_op_or_else:
   case isl_ast_op_call:
   case isl_ast_op_member:
-  case isl_ast_op_address_of:
     llvm_unreachable("Unsupported isl ast expression");
   case isl_ast_op_access:
     return createOpAccess(Expr);
@@ -383,9 +388,29 @@ Value *IslExprBuilder::createOp(__isl_take isl_ast_expr *Expr) {
   case isl_ast_op_ge:
   case isl_ast_op_gt:
     return createOpICmp(Expr);
+  case isl_ast_op_address_of:
+    return createOpAddressOf(Expr);
   }
 
   llvm_unreachable("Unsupported isl_ast_expr_op kind.");
+}
+
+Value *IslExprBuilder::createOpAddressOf(__isl_take isl_ast_expr *Expr) {
+  assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_op &&
+         "Expected an isl_ast_expr_op expression.");
+  assert(isl_ast_expr_get_op_n_arg(Expr) == 1 && "Address of should be unary.");
+
+  isl_ast_expr *Op = isl_ast_expr_get_op_arg(Expr, 0);
+  assert(isl_ast_expr_get_type(Op) == isl_ast_expr_op &&
+         "Expected address of operator to be an isl_ast_expr_op expression.");
+  assert(isl_ast_expr_get_op_type(Op) == isl_ast_op_access &&
+         "Expected address of operator to be an access expression.");
+
+  Value *V = createAccessAddress(Op);
+
+  isl_ast_expr_free(Expr);
+
+  return V;
 }
 
 Value *IslExprBuilder::createId(__isl_take isl_ast_expr *Expr) {

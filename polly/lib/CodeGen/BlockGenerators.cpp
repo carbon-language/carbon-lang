@@ -186,6 +186,7 @@ Value *BlockGenerator::getNewAccessOperand(const MemoryAccess &MA) {
   PWAccRel = isl_pw_multi_aff_pullback_pw_multi_aff(PWAccRel, PWSchedule);
 
   Expr = isl_ast_build_access_from_pw_multi_aff(Build, PWAccRel);
+  Expr = isl_ast_expr_address_of(Expr);
 
   return ExprBuilder->create(Expr);
 }
