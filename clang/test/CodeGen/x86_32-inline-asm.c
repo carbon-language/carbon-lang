@@ -12,9 +12,11 @@ typedef u_int64_t uint64_t;
 
 typedef float __m128 __attribute__ ((vector_size (16)));
 typedef float __m256 __attribute__ ((vector_size (32)));
+typedef float __m512 __attribute__ ((vector_size (64)));
 
 __m128 val128;
 __m256 val256;
+__m512 val512;
 
 int func1() {
   // Error out if size is > 32-bits.
@@ -43,6 +45,8 @@ int func1() {
   __asm__ volatile("foo1 %0" : : "f" (val256)); // expected-error {{invalid input size for constraint 'f'}}
   __asm__ volatile("foo1 %0" : : "t" (val256)); // expected-error {{invalid input size for constraint 't'}}
   __asm__ volatile("foo1 %0" : : "u" (val256)); // expected-error {{invalid input size for constraint 'u'}}
+  __asm__ volatile("foo1 %0" : : "x" (val256)); // No error.
+  __asm__ volatile("foo1 %0" : : "x" (val512)); // expected-error {{invalid input size for constraint 'x'}}
 
   __asm__ volatile("foo1 %0" : "=R" (val)); // expected-error {{invalid output size for constraint '=R'}}
   __asm__ volatile("foo1 %0" : "=q" (val)); // expected-error {{invalid output size for constraint '=q'}}
@@ -56,4 +60,6 @@ int func1() {
   __asm__ volatile("foo1 %0" : "=A" (val128)); // expected-error {{invalid output size for constraint '=A'}}
   __asm__ volatile("foo1 %0" : "=t" (val256)); // expected-error {{invalid output size for constraint '=t'}}
   __asm__ volatile("foo1 %0" : "=u" (val256)); // expected-error {{invalid output size for constraint '=u'}}
+  __asm__ volatile("foo1 %0" : "=x" (val256)); // No error.
+  __asm__ volatile("foo1 %0" : "=x" (val512)); // expected-error {{invalid output size for constraint '=x'}}
 }

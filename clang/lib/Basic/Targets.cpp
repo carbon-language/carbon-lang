@@ -3079,11 +3079,12 @@ bool X86TargetInfo::validateOperandSize(StringRef Constraint,
   default: break;
   case 'y':
     return Size <= 64;
-  case 'x':
   case 'f':
   case 't':
   case 'u':
     return Size <= 128;
+  case 'x':
+    return Size <= 256;
   }
 
   return true;
