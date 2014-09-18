@@ -215,10 +215,31 @@ void Test19(void)
         strlcpy(buf, b, sizeof(b)); // expected-warning {{size argument in 'strlcpy' call appears to be size of the source; expected the size of the destination}} \\
                                     // expected-note {{change size argument to be the size of the destination}}
         __builtin___strlcpy_chk(buf, b, sizeof(b), __builtin_object_size(buf, 0)); // expected-warning {{size argument in '__builtin___strlcpy_chk' call appears to be size of the source; expected the size of the destination}} \
-                                    // expected-note {{change size argument to be the size of the destination}}
+                                    // expected-note {{change size argument to be the size of the destination}} \
+				    // expected-warning {{'__builtin___strlcpy_chk' will always overflow destination buffer}}
 
         strlcat(buf, b, sizeof(b)); // expected-warning {{size argument in 'strlcat' call appears to be size of the source; expected the size of the destination}} \
                                     // expected-note {{change size argument to be the size of the destination}}
+				    
         __builtin___strlcat_chk(buf, b, sizeof(b), __builtin_object_size(buf, 0)); // expected-warning {{size argument in '__builtin___strlcat_chk' call appears to be size of the source; expected the size of the destination}} \
-                                                                                   // expected-note {{change size argument to be the size of the destination}}
+                                                                                   // expected-note {{change size argument to be the size of the destination}} \
+				                                                   // expected-warning {{'__builtin___strlcat_chk' will always overflow destination buffer}}
+}
+
+// rdar://11076881
+char * Test20(char *p, const char *in, unsigned n)
+{
+    static char buf[10];
+
+    __builtin___memcpy_chk (&buf[6], in, 5, __builtin_object_size (&buf[6], 0)); // expected-warning {{'__builtin___memcpy_chk' will always overflow destination buffer}}
+
+    __builtin___memcpy_chk (p, "abcde", n, __builtin_object_size (p, 0));
+
+    __builtin___memcpy_chk (&buf[5], "abcde", 5, __builtin_object_size (&buf[5], 0));
+
+    __builtin___memcpy_chk (&buf[5], "abcde", n, __builtin_object_size (&buf[5], 0));
+
+    __builtin___memcpy_chk (&buf[6], "abcde", 5, __builtin_object_size (&buf[6], 0)); // expected-warning {{'__builtin___memcpy_chk' will always overflow destination buffer}}
+
+    return buf;
 }
