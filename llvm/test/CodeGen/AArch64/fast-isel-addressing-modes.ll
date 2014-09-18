@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=aarch64-apple-darwin                      -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK --check-prefix=SDAG
-; RUN: llc -mtriple=aarch64-apple-darwin -O0 -fast-isel-abort -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK --check-prefix=FAST
+; RUN: llc -mtriple=aarch64-apple-darwin                             -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK --check-prefix=SDAG
+; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel -fast-isel-abort -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK --check-prefix=FAST
 
 ; Load / Store Base Register only
 define zeroext i1 @load_breg_i1(i1* %a) {
@@ -423,6 +423,49 @@ define i32 @load_breg_mul_offreg_1(i64 %a, i64 %b) {
   %3 = inttoptr i64 %2 to i32*
   %4 = load i32* %3
   ret i32 %4
+}
+
+define zeroext i8 @load_breg_and_offreg_1(i64 %a, i64 %b) {
+; CHECK-LABEL: load_breg_and_offreg_1
+; CHECK:       ldrb {{w[0-9]+}}, [x1, w0, uxtw]
+  %1 = and i64 %a, 4294967295
+  %2 = add i64 %1, %b
+  %3 = inttoptr i64 %2 to i8*
+  %4 = load i8* %3
+  ret i8 %4
+}
+
+define zeroext i16 @load_breg_and_offreg_2(i64 %a, i64 %b) {
+; CHECK-LABEL: load_breg_and_offreg_2
+; CHECK:       ldrh {{w[0-9]+}}, [x1, w0, uxtw #1]
+  %1 = and i64 %a, 4294967295
+  %2 = shl i64 %1, 1
+  %3 = add i64 %2, %b
+  %4 = inttoptr i64 %3 to i16*
+  %5 = load i16* %4
+  ret i16 %5
+}
+
+define i32 @load_breg_and_offreg_3(i64 %a, i64 %b) {
+; CHECK-LABEL: load_breg_and_offreg_3
+; CHECK:       ldr {{w[0-9]+}}, [x1, w0, uxtw #2]
+  %1 = and i64 %a, 4294967295
+  %2 = shl i64 %1, 2
+  %3 = add i64 %2, %b
+  %4 = inttoptr i64 %3 to i32*
+  %5 = load i32* %4
+  ret i32 %5
+}
+
+define i64 @load_breg_and_offreg_4(i64 %a, i64 %b) {
+; CHECK-LABEL: load_breg_and_offreg_4
+; CHECK:       ldr {{x[0-9]+}}, [x1, w0, uxtw #3]
+  %1 = and i64 %a, 4294967295
+  %2 = shl i64 %1, 3
+  %3 = add i64 %2, %b
+  %4 = inttoptr i64 %3 to i64*
+  %5 = load i64* %4
+  ret i64 %5
 }
 
 ; Load Base Register + Scaled Register Offset + Sign/Zero extension

@@ -596,6 +596,29 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
         if (SE->getOperand(0)->getType()->isIntegerTy(32))
           Addr.setExtendType(AArch64_AM::SXTW);
 
+      if (const auto *AI = dyn_cast<BinaryOperator>(U))
+        if (AI->getOpcode() == Instruction::And) {
+          const Value *LHS = AI->getOperand(0);
+          const Value *RHS = AI->getOperand(1);
+
+          if (const auto *C = dyn_cast<ConstantInt>(LHS))
+            if (C->getValue() == 0xffffffff)
+              std::swap(LHS, RHS);
+
+          if (const auto *C = cast<ConstantInt>(RHS))
+            if (C->getValue() == 0xffffffff) {
+              Addr.setExtendType(AArch64_AM::UXTW);
+              unsigned Reg = getRegForValue(LHS);
+              if (!Reg)
+                return false;
+              bool RegIsKill = hasTrivialKill(LHS);
+              Reg = fastEmitInst_extractsubreg(MVT::i32, Reg, RegIsKill,
+                                               AArch64::sub_32);
+              Addr.setOffsetReg(Reg);
+              return true;
+            }
+        }
+
       unsigned Reg = getRegForValue(U->getOperand(0));
       if (!Reg)
         return false;
@@ -659,6 +682,37 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
       return false;
     Addr.setOffsetReg(Reg);
     return true;
+  }
+  case Instruction::And: {
+    if (Addr.getOffsetReg())
+      break;
+
+    if (DL.getTypeSizeInBits(Ty) != 8)
+      break;
+
+    const Value *LHS = U->getOperand(0);
+    const Value *RHS = U->getOperand(1);
+
+    if (const auto *C = dyn_cast<ConstantInt>(LHS))
+      if (C->getValue() == 0xffffffff)
+        std::swap(LHS, RHS);
+
+    if (const auto *C = cast<ConstantInt>(RHS))
+      if (C->getValue() == 0xffffffff) {
+        Addr.setShift(0);
+        Addr.setExtendType(AArch64_AM::LSL);
+        Addr.setExtendType(AArch64_AM::UXTW);
+
+        unsigned Reg = getRegForValue(LHS);
+        if (!Reg)
+          return false;
+        bool RegIsKill = hasTrivialKill(LHS);
+        Reg = fastEmitInst_extractsubreg(MVT::i32, Reg, RegIsKill,
+                                         AArch64::sub_32);
+        Addr.setOffsetReg(Reg);
+        return true;
+      }
+    break;
   }
   } // end switch
 
