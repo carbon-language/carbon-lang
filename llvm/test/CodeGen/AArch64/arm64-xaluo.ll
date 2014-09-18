@@ -587,6 +587,23 @@ continue:
   ret i1 true
 }
 
+define zeroext i1 @smulo2.br.i64(i64 %v1) {
+entry:
+; CHECK-LABEL:  smulo2.br.i64
+; CHECK:        cmn  x0, x0
+; CHECK-NEXT:   b.vc
+  %t = call {i64, i1} @llvm.smul.with.overflow.i64(i64 %v1, i64 2)
+  %val = extractvalue {i64, i1} %t, 0
+  %obit = extractvalue {i64, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
 define zeroext i1 @umulo.br.i32(i32 %v1, i32 %v2) {
 entry:
 ; CHECK-LABEL:  umulo.br.i32
@@ -611,6 +628,23 @@ entry:
 ; CHECK:        umulh   [[REG:x[0-9]+]], x0, x1
 ; CHECK-NEXT:   {{cbz|cmp}}
   %t = call {i64, i1} @llvm.umul.with.overflow.i64(i64 %v1, i64 %v2)
+  %val = extractvalue {i64, i1} %t, 0
+  %obit = extractvalue {i64, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @umulo2.br.i64(i64 %v1) {
+entry:
+; CHECK-LABEL:  umulo2.br.i64
+; CHECK:        cmn  x0, x0
+; CHECK-NEXT:   b.lo
+  %t = call {i64, i1} @llvm.umul.with.overflow.i64(i64 %v1, i64 2)
   %val = extractvalue {i64, i1} %t, 0
   %obit = extractvalue {i64, i1} %t, 1
   br i1 %obit, label %overflow, label %continue

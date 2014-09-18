@@ -2833,15 +2833,49 @@ bool AArch64FastISel::foldXALUIntrinsic(AArch64CC::CondCode &CC,
   if (RetVT != MVT::i32 && RetVT != MVT::i64)
     return false;
 
+  const Value *LHS = II->getArgOperand(0);
+  const Value *RHS = II->getArgOperand(1);
+
+  // Canonicalize immediate to the RHS.
+  if (isa<ConstantInt>(LHS) && !isa<ConstantInt>(RHS) &&
+      isCommutativeIntrinsic(II))
+    std::swap(LHS, RHS);
+
+  // Simplify multiplies.
+  unsigned IID = II->getIntrinsicID();
+  switch (IID) {
+  default:
+    break;
+  case Intrinsic::smul_with_overflow:
+    if (const auto *C = dyn_cast<ConstantInt>(RHS))
+      if (C->getValue() == 2)
+        IID = Intrinsic::sadd_with_overflow;
+    break;
+  case Intrinsic::umul_with_overflow:
+    if (const auto *C = dyn_cast<ConstantInt>(RHS))
+      if (C->getValue() == 2)
+        IID = Intrinsic::uadd_with_overflow;
+    break;
+  }
+
   AArch64CC::CondCode TmpCC;
-  switch (II->getIntrinsicID()) {
-    default: return false;
-    case Intrinsic::sadd_with_overflow:
-    case Intrinsic::ssub_with_overflow: TmpCC = AArch64CC::VS; break;
-    case Intrinsic::uadd_with_overflow: TmpCC = AArch64CC::HS; break;
-    case Intrinsic::usub_with_overflow: TmpCC = AArch64CC::LO; break;
-    case Intrinsic::smul_with_overflow:
-    case Intrinsic::umul_with_overflow: TmpCC = AArch64CC::NE; break;
+  switch (IID) {
+  default:
+    return false;
+  case Intrinsic::sadd_with_overflow:
+  case Intrinsic::ssub_with_overflow:
+    TmpCC = AArch64CC::VS;
+    break;
+  case Intrinsic::uadd_with_overflow:
+    TmpCC = AArch64CC::HS;
+    break;
+  case Intrinsic::usub_with_overflow:
+    TmpCC = AArch64CC::LO;
+    break;
+  case Intrinsic::smul_with_overflow:
+  case Intrinsic::umul_with_overflow:
+    TmpCC = AArch64CC::NE;
+    break;
   }
 
   // Check if both instructions are in the same basic block.
