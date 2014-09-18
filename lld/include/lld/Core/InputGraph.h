@@ -242,8 +242,7 @@ public:
   /// \brief create an error string for printing purposes
   virtual std::string errStr(std::error_code errc) {
     std::string msg = errc.message();
-    Twine twine = Twine("Cannot open ") + _path + ": " + msg;
-    return twine.str();
+    return (Twine("Cannot open ") + _path + ": " + msg).str();
   }
 
   /// \brief Get the list of files

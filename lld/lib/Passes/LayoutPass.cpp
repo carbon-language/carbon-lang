@@ -26,9 +26,8 @@ static bool compareAtoms(const LayoutPass::SortKey &,
 #ifndef NDEBUG
 // Return "reason (leftval, rightval)"
 static std::string formatReason(StringRef reason, int leftVal, int rightVal) {
-  Twine msg =
-      Twine(reason) + " (" + Twine(leftVal) + ", " + Twine(rightVal) + ")";
-  return msg.str();
+  return (Twine(reason) + " (" + Twine(leftVal) + ", " + Twine(rightVal) + ")")
+      .str();
 }
 
 // Less-than relationship of two atoms must be transitive, which is, if a < b
@@ -107,17 +106,19 @@ static void checkReachabilityFromRoot(AtomToAtomT &followOnRoots,
   if (!atom) return;
   auto i = followOnRoots.find(atom);
   if (i == followOnRoots.end()) {
-    Twine msg(Twine("Atom <") + atomToDebugString(atom)
-              + "> has no follow-on root!");
-    llvm_unreachable(msg.str().c_str());
+    llvm_unreachable(((Twine("Atom <") + atomToDebugString(atom) +
+                       "> has no follow-on root!"))
+                         .str()
+                         .c_str());
   }
   const DefinedAtom *ap = i->second;
   while (true) {
     const DefinedAtom *next = followOnRoots[ap];
     if (!next) {
-      Twine msg(Twine("Atom <" + atomToDebugString(atom)
-                      + "> is not reachable from its root!"));
-      llvm_unreachable(msg.str().c_str());
+      llvm_unreachable((Twine("Atom <" + atomToDebugString(atom) +
+                              "> is not reachable from its root!"))
+                           .str()
+                           .c_str());
     }
     if (next == ap)
       return;
