@@ -346,14 +346,15 @@ StringExtractorGDBRemote::GetError ()
 size_t
 StringExtractorGDBRemote::GetEscapedBinaryData (std::string &str)
 {
+    // Just get the data bytes in the string as GDBRemoteCommunication::CheckForPacket()
+    // already removes any 0x7d escaped characters. If any 0x7d characters are left in
+    // the packet, then they are supposed to be there...
     str.clear();
-    char ch;
-    while (GetBytesLeft())
+    const size_t bytes_left = GetBytesLeft();
+    if (bytes_left > 0)
     {
-        ch = GetChar();
-        if (ch == 0x7d)
-            ch = (GetChar() ^ 0x20);
-        str.append(1,ch);
+        str.assign(m_packet, m_index, bytes_left);
+        m_index += bytes_left;
     }
     return str.size();
 }
