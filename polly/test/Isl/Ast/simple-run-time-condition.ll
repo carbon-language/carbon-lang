@@ -18,7 +18,11 @@ target triple = "x86_64-unknown-linux-gnu"
 ; for the delinearization is simplified such that conditions that would not
 ; cause any code to be executed are not generated.
 
-; CHECK: if ((q == 100 && o <= 0) || (q == 0 && o >= 1) ? 1 : 0)
+; CHECK: if (
+; CHECK: ({{(q == 100 && o <= 0|o <= 0 && q == 100)}})
+; CHECK: ||
+; CHECK: ({{(q == 0 && o >= 1)|(o >= 1 && q == 0)}})
+; CHECK: ? 1 : 0)
 
 ; CHECK:     if (o >= 1) {
 ; CHECK:       for (int c1 = 0; c1 < n; c1 += 1)

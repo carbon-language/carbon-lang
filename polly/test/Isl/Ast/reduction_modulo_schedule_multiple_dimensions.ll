@@ -8,7 +8,7 @@
 ; CHECK:          for (int c3 = 0; c3 <= 1023; c3 += 1)
 ; CHECK:            Stmt_for_body3(c1, c3);
 ; CHECK:      } else
-; CHECK:        for (int c1 = 0; c1 < 2 * n - 1; c1 += 2)
+; CHECK:        for (int c1 = 0; c1 < 2 * n; c1 += 2)
 ; CHECK:          #pragma simd reduction
 ; CHECK:          for (int c3 = 0; c3 <= 1023; c3 += 1)
 ; CHECK:            Stmt_for_body3(c1, c3);

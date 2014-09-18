@@ -352,6 +352,7 @@ Value *IslExprBuilder::createOp(__isl_take isl_ast_expr *Expr) {
   case isl_ast_op_or_else:
   case isl_ast_op_call:
   case isl_ast_op_member:
+  case isl_ast_op_address_of:
     llvm_unreachable("Unsupported isl ast expression");
   case isl_ast_op_access:
     return createOpAccess(Expr);

@@ -2,7 +2,7 @@
 ;
 ;        void f(int *restrict A, int *restrict B, int *restrict C, int *restrict D,
 ;               int *restrict E, int N) {
-; CHECK:   #pragma minimal dependence distance: (-35 + N >= 0) ? (1) : (-17 + N >= 0 && 34 - N >= 0) ? (2) : 5
+; CHECK:   #pragma minimal dependence distance: N >= 35 ? 1 : N >= 17 && N <= 34 ? 2 : 5
 ;          for (int i = 0; i < N; i++) {
 ;            A[i] = A[100 - 2 * i] + 1;
 ;            B[i] = B[100 - 3 * i] + 1;
