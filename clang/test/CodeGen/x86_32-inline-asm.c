@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple i386-apple-darwin9 -verify %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -target-feature +avx -verify %s
 
 // <rdar://problem/12415959>
 // rdar://problem/11846140
@@ -45,7 +46,6 @@ int func1() {
   __asm__ volatile("foo1 %0" : : "f" (val256)); // expected-error {{invalid input size for constraint 'f'}}
   __asm__ volatile("foo1 %0" : : "t" (val256)); // expected-error {{invalid input size for constraint 't'}}
   __asm__ volatile("foo1 %0" : : "u" (val256)); // expected-error {{invalid input size for constraint 'u'}}
-  __asm__ volatile("foo1 %0" : : "x" (val256)); // No error.
   __asm__ volatile("foo1 %0" : : "x" (val512)); // expected-error {{invalid input size for constraint 'x'}}
 
   __asm__ volatile("foo1 %0" : "=R" (val)); // expected-error {{invalid output size for constraint '=R'}}
@@ -60,6 +60,13 @@ int func1() {
   __asm__ volatile("foo1 %0" : "=A" (val128)); // expected-error {{invalid output size for constraint '=A'}}
   __asm__ volatile("foo1 %0" : "=t" (val256)); // expected-error {{invalid output size for constraint '=t'}}
   __asm__ volatile("foo1 %0" : "=u" (val256)); // expected-error {{invalid output size for constraint '=u'}}
-  __asm__ volatile("foo1 %0" : "=x" (val256)); // No error.
   __asm__ volatile("foo1 %0" : "=x" (val512)); // expected-error {{invalid output size for constraint '=x'}}
+
+#ifdef __AVX__
+  __asm__ volatile("foo1 %0" : : "x" (val256)); // No error.
+  __asm__ volatile("foo1 %0" : "=x" (val256));  // No error.
+#else
+  __asm__ volatile("foo1 %0" : : "x" (val256)); // expected-error {{invalid input size for constraint 'x'}}
+  __asm__ volatile("foo1 %0" : "=x" (val256)); // expected-error {{invalid output size for constraint '=x'}}
+#endif
 }
