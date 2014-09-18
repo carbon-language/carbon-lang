@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/mman.h>
 
 sigjmp_buf fault_jmp;
 volatile int fault_expected;
@@ -45,15 +46,20 @@ int main() {
     exit(1);
   }
 
-  MUST_FAULT(((volatile int *volatile)0)[0] = 0);
-  MUST_FAULT(((volatile int *volatile)0)[1] = 1);
-  MUST_FAULT(((volatile int *volatile)0)[3] = 1);
+  void *mem = mmap(0, 4096, PROT_NONE, MAP_PRIVATE | MAP_ANON,
+      -1, 0);
+
+  MUST_FAULT(((volatile int *volatile)mem)[0] = 0);
+  MUST_FAULT(((volatile int *volatile)mem)[1] = 1);
+  MUST_FAULT(((volatile int *volatile)mem)[3] = 1);
 
   // Ensure that tsan does not think that we are
   // in a signal handler.
   void *volatile p = malloc(10);
   ((volatile int*)p)[1] = 1;
   free((void*)p);
+
+  munmap(p, 4096);
 
   fprintf(stderr, "DONE\n");
   return 0;
