@@ -1,9 +1,19 @@
-// RUN: %clang_cc1 -std=c++11 -fno-rtti -emit-llvm %s -o - -triple=i386-pc-win32 -fms-extensions | FileCheck %s
-// RUN: %clang_cc1 -std=c++11 -fno-rtti -emit-llvm %s -o - -triple=x86_64-pc-win32 -fms-extensions | FileCheck %s -check-prefix=X64
-// RUN: %clang_cc1 -std=c++11 -fno-rtti -emit-llvm %s -o - -triple=i386-pc-win32 -DINCOMPLETE_VIRTUAL -fms-extensions -verify
-// RUN: %clang_cc1 -std=c++11 -fno-rtti -emit-llvm %s -o - -triple=i386-pc-win32 -DINCOMPLETE_VIRTUAL -DMEMFUN -fms-extensions -verify
-// FIXME: Test x86_64 member pointers when codegen no longer asserts on records
-// with virtual bases.
+// RUN: %clang_cc1 -std=c++11 -Wno-uninitialized -fno-rtti -emit-llvm %s -o - -triple=i386-pc-win32 -fms-extensions | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -Wno-uninitialized -fno-rtti -emit-llvm %s -o - -triple=x86_64-pc-win32 -fms-extensions | FileCheck %s -check-prefix=X64
+// RUN: %clang_cc1 -std=c++11 -Wno-uninitialized -fno-rtti -emit-llvm %s -o - -triple=i386-pc-win32 -DINCOMPLETE_VIRTUAL -fms-extensions -verify
+// RUN: %clang_cc1 -std=c++11 -Wno-uninitialized -fno-rtti -emit-llvm %s -o - -triple=i386-pc-win32 -DINCOMPLETE_VIRTUAL -DMEMFUN -fms-extensions -verify
+
+namespace PR20947 {
+struct A;
+int A::**a = nullptr;
+// CHECK: %[[opaque0:.*]] = type opaque
+// CHECK: %[[opaque1:.*]] = type opaque
+// CHECK: @"\01?a@PR20947@@3PAPQA@1@HA" = global %[[opaque0]]* null, align 4
+
+struct B;
+int B::*&b = b;
+// CHECK: @"\01?b@PR20947@@3AAPQB@1@HA" = global %[[opaque1]]* null, align 4
+}
 
 #ifndef INCOMPLETE_VIRTUAL
 struct B1 {

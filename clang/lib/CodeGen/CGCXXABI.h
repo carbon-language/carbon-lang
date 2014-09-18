@@ -161,6 +161,10 @@ public:
     return true;
   }
 
+  virtual bool isTypeInfoCalculable(QualType Ty) const {
+    return !Ty->isIncompleteType();
+  }
+
   /// Create a null member pointer of the given type.
   virtual llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT);
 

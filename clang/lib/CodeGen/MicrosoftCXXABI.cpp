@@ -488,7 +488,18 @@ public:
 
   bool isMemberPointerConvertible(const MemberPointerType *MPT) const override {
     const CXXRecordDecl *RD = MPT->getMostRecentCXXRecordDecl();
-    return RD->getAttr<MSInheritanceAttr>() != nullptr;
+    return RD->hasAttr<MSInheritanceAttr>();
+  }
+
+  virtual bool isTypeInfoCalculable(QualType Ty) const {
+    if (!CGCXXABI::isTypeInfoCalculable(Ty))
+      return false;
+    if (const auto *MPT = Ty->getAs<MemberPointerType>()) {
+      const CXXRecordDecl *RD = MPT->getMostRecentCXXRecordDecl();
+      if (!RD->hasAttr<MSInheritanceAttr>())
+        return false;
+    }
+    return true;
   }
 
   llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT) override;

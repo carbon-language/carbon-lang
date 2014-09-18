@@ -79,6 +79,17 @@ CodeGenFunction::~CodeGenFunction() {
   }
 }
 
+LValue CodeGenFunction::MakeNaturalAlignAddrLValue(llvm::Value *V, QualType T) {
+  CharUnits Alignment;
+  if (CGM.getCXXABI().isTypeInfoCalculable(T)) {
+    Alignment = getContext().getTypeAlignInChars(T);
+    unsigned MaxAlign = getContext().getLangOpts().MaxTypeAlign;
+    if (MaxAlign && Alignment.getQuantity() > MaxAlign &&
+        !getContext().isAlignmentRequired(T))
+      Alignment = CharUnits::fromQuantity(MaxAlign);
+  }
+  return LValue::MakeAddr(V, T, Alignment, getContext(), CGM.getTBAAInfo(T));
+}
 
 llvm::Type *CodeGenFunction::ConvertTypeForMem(QualType T) {
   return CGM.getTypes().ConvertTypeForMem(T);
