@@ -94,7 +94,7 @@ static void Init() {
   if (sigdelset(&g_suspend_handler_mask, kSigRestart) != 0)
     fail("sigdelset failed");
   if (sem_init(&g_thread_suspend_ack_sem, 0, 0) != 0)
-    fail("sem_init failed");;
+    fail("sem_init failed");
 
   struct sigaction act = {};
   act.sa_flags = SA_RESTART;
