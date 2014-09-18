@@ -20,6 +20,7 @@
 #include "SourceCoverageView.h"
 #include "CoverageSummary.h"
 #include "CoverageReport.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallSet.h"
@@ -37,49 +38,35 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include <functional>
 #include <system_error>
-#include <unordered_map>
 
 using namespace llvm;
 using namespace coverage;
 
 namespace {
 /// \brief Distribute the functions into instantiation sets.
-/// An instantiation set is a collection of functions
-/// that have the same source code, e.g.
-/// template functions specializations.
+///
+/// An instantiation set is a collection of functions that have the same source
+/// code, ie, template functions specializations.
 class FunctionInstantiationSetCollector {
-  ArrayRef<FunctionCoverageMapping> FunctionMappings;
-  typedef uint64_t KeyType;
-  typedef std::vector<const FunctionCoverageMapping *> SetType;
-  std::unordered_map<uint64_t, SetType> InstantiatedFunctions;
-
-  static KeyType getKey(const CountedRegion &R) {
-    return uint64_t(R.LineStart) | uint64_t(R.ColumnStart) << 32;
-  }
+  typedef DenseMap<std::pair<unsigned, unsigned>,
+                   std::vector<const FunctionCoverageMapping *>> MapT;
+  MapT InstantiatedFunctions;
 
 public:
   void insert(const FunctionCoverageMapping &Function, unsigned FileID) {
-    KeyType Key = 0;
-    for (const auto &R : Function.CountedRegions) {
-      if (R.FileID == FileID) {
-        Key = getKey(R);
-        break;
-      }
-    }
-    auto I = InstantiatedFunctions.find(Key);
-    if (I == InstantiatedFunctions.end()) {
-      SetType Set;
-      Set.push_back(&Function);
-      InstantiatedFunctions.insert(std::make_pair(Key, Set));
-    } else
-      I->second.push_back(&Function);
+    auto I = Function.CountedRegions.begin(), E = Function.CountedRegions.end();
+    while (I != E && I->FileID != FileID)
+      ++I;
+    assert(I != E && "function does not cover the given file");
+    auto &Functions = InstantiatedFunctions[I->startLoc()];
+    Functions.push_back(&Function);
   }
 
-  std::unordered_map<KeyType, SetType>::iterator begin() {
+  MapT::iterator begin() {
     return InstantiatedFunctions.begin();
   }
 
-  std::unordered_map<KeyType, SetType>::iterator end() {
+  MapT::iterator end() {
     return InstantiatedFunctions.end();
   }
 };
