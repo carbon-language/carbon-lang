@@ -5,8 +5,8 @@ vec256 foo(vec256 in) {
   vec256 out;
 
   asm("something %0" : : "y"(in)); // expected-error {{invalid input size for constraint 'y'}}
-  asm("something %0" : "=y"(out)); // expected-error {{invalid type 'vec256' (vector of 8 'int' values) in asm input for constraint 'y'}}
-  asm("something %0, %0" : "+y"(out)); // expected-error {{invalid type 'vec256' (vector of 8 'int' values) in asm input for constraint 'y'}}
+  asm("something %0" : "=y"(out));
+  asm("something %0, %0" : "+y"(out));
 
   return out;
 }
