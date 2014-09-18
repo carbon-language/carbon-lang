@@ -31,7 +31,9 @@ namespace threadSafety {
 enum ProtectedOperationKind {
   POK_VarDereference, ///< Dereferencing a variable (e.g. p in *p = 5;)
   POK_VarAccess, ///< Reading or writing a variable (e.g. x in x = 5;)
-  POK_FunctionCall ///< Making a function call (e.g. fool())
+  POK_FunctionCall, ///< Making a function call (e.g. fool())
+  POK_PassByRef, ///< Passing a guarded variable by reference.
+  POK_PtPassByRef,  ///< Passing a pt-guarded variable by reference.
 };
 
 /// This enum distinguishes between different kinds of lock actions. For

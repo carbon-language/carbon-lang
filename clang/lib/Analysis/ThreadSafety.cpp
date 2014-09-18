@@ -1285,8 +1285,10 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
   void warnIfMutexHeld(const NamedDecl *D, const Expr *Exp, Expr *MutexExp,
                        StringRef DiagKind);
 
-  void checkAccess(const Expr *Exp, AccessKind AK);
-  void checkPtAccess(const Expr *Exp, AccessKind AK);
+  void checkAccess(const Expr *Exp, AccessKind AK,
+                   ProtectedOperationKind POK = POK_VarAccess);
+  void checkPtAccess(const Expr *Exp, AccessKind AK,
+                     ProtectedOperationKind POK = POK_VarAccess);
 
   void handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD = nullptr);
 
@@ -1395,7 +1397,8 @@ void BuildLockset::warnIfMutexHeld(const NamedDecl *D, const Expr *Exp,
 /// marked with guarded_by, we must ensure the appropriate mutexes are held.
 /// Similarly, we check if the access is to an expression that dereferences
 /// a pointer marked with pt_guarded_by.
-void BuildLockset::checkAccess(const Expr *Exp, AccessKind AK) {
+void BuildLockset::checkAccess(const Expr *Exp, AccessKind AK,
+                               ProtectedOperationKind POK) {
   Exp = Exp->IgnoreParenCasts();
 
   SourceLocation Loc = Exp->getExprLoc();
@@ -1418,20 +1421,20 @@ void BuildLockset::checkAccess(const Expr *Exp, AccessKind AK) {
   if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(Exp)) {
     // For dereferences
     if (UO->getOpcode() == clang::UO_Deref)
-      checkPtAccess(UO->getSubExpr(), AK);
+      checkPtAccess(UO->getSubExpr(), AK, POK);
     return;
   }
 
   if (const ArraySubscriptExpr *AE = dyn_cast<ArraySubscriptExpr>(Exp)) {
-    checkPtAccess(AE->getLHS(), AK);
+    checkPtAccess(AE->getLHS(), AK, POK);
     return;
   }
 
   if (const MemberExpr *ME = dyn_cast<MemberExpr>(Exp)) {
     if (ME->isArrow())
-      checkPtAccess(ME->getBase(), AK);
+      checkPtAccess(ME->getBase(), AK, POK);
     else
-      checkAccess(ME->getBase(), AK);
+      checkAccess(ME->getBase(), AK, POK);
   }
 
   const ValueDecl *D = getValueDecl(Exp);
@@ -1439,18 +1442,19 @@ void BuildLockset::checkAccess(const Expr *Exp, AccessKind AK) {
     return;
 
   if (D->hasAttr<GuardedVarAttr>() && FSet.isEmpty(Analyzer->FactMan)) {
-    Analyzer->Handler.handleNoMutexHeld("mutex", D, POK_VarAccess, AK,
-                                        Loc);
+    Analyzer->Handler.handleNoMutexHeld("mutex", D, POK, AK, Loc);
   }
 
   for (const auto *I : D->specific_attrs<GuardedByAttr>())
-    warnIfMutexNotHeld(D, Exp, AK, I->getArg(), POK_VarAccess,
+    warnIfMutexNotHeld(D, Exp, AK, I->getArg(), POK,
                        ClassifyDiagnostic(I), Loc);
 }
 
 
 /// \brief Checks pt_guarded_by and pt_guarded_var attributes.
-void BuildLockset::checkPtAccess(const Expr *Exp, AccessKind AK) {
+/// POK is the same  operationKind that was passed to checkAccess.
+void BuildLockset::checkPtAccess(const Expr *Exp, AccessKind AK,
+                                 ProtectedOperationKind POK) {
   while (true) {
     if (const ParenExpr *PE = dyn_cast<ParenExpr>(Exp)) {
       Exp = PE->getSubExpr();
@@ -1460,7 +1464,7 @@ void BuildLockset::checkPtAccess(const Expr *Exp, AccessKind AK) {
       if (CE->getCastKind() == CK_ArrayToPointerDecay) {
         // If it's an actual array, and not a pointer, then it's elements
         // are protected by GUARDED_BY, not PT_GUARDED_BY;
-        checkAccess(CE->getSubExpr(), AK);
+        checkAccess(CE->getSubExpr(), AK, POK);
         return;
       }
       Exp = CE->getSubExpr();
@@ -1469,16 +1473,20 @@ void BuildLockset::checkPtAccess(const Expr *Exp, AccessKind AK) {
     break;
   }
 
+  // Pass by reference warnings are under a different flag.
+  ProtectedOperationKind PtPOK = POK_VarDereference;
+  if (POK == POK_PassByRef) PtPOK = POK_PtPassByRef;
+
   const ValueDecl *D = getValueDecl(Exp);
   if (!D || !D->hasAttrs())
     return;
 
   if (D->hasAttr<PtGuardedVarAttr>() && FSet.isEmpty(Analyzer->FactMan))
-    Analyzer->Handler.handleNoMutexHeld("mutex", D, POK_VarDereference, AK,
+    Analyzer->Handler.handleNoMutexHeld("mutex", D, PtPOK, AK,
                                         Exp->getExprLoc());
 
   for (auto const *I : D->specific_attrs<PtGuardedByAttr>())
-    warnIfMutexNotHeld(D, Exp, AK, I->getArg(), POK_VarDereference,
+    warnIfMutexNotHeld(D, Exp, AK, I->getArg(), PtPOK,
                        ClassifyDiagnostic(I), Exp->getExprLoc());
 }
 
@@ -1668,6 +1676,9 @@ void BuildLockset::VisitCastExpr(CastExpr *CE) {
 
 
 void BuildLockset::VisitCallExpr(CallExpr *Exp) {
+  bool ExamineArgs = true;
+  bool OperatorFun = false;
+
   if (CXXMemberCallExpr *CE = dyn_cast<CXXMemberCallExpr>(Exp)) {
     MemberExpr *ME = dyn_cast<MemberExpr>(CE->getCallee());
     // ME can be null when calling a method pointer
@@ -1688,8 +1699,12 @@ void BuildLockset::VisitCallExpr(CallExpr *Exp) {
       }
     }
   } else if (CXXOperatorCallExpr *OE = dyn_cast<CXXOperatorCallExpr>(Exp)) {
-    switch (OE->getOperator()) {
+    OperatorFun = true;
+
+    auto OEop = OE->getOperator();
+    switch (OEop) {
       case OO_Equal: {
+        ExamineArgs = false;
         const Expr *Target = OE->getArg(0);
         const Expr *Source = OE->getArg(1);
         checkAccess(Target, AK_Written);
@@ -1701,16 +1716,53 @@ void BuildLockset::VisitCallExpr(CallExpr *Exp) {
       case OO_Subscript: {
         const Expr *Obj = OE->getArg(0);
         checkAccess(Obj, AK_Read);
-        checkPtAccess(Obj, AK_Read);
+        if (!(OEop == OO_Star && OE->getNumArgs() > 1)) {
+          // Grrr.  operator* can be multiplication...
+          checkPtAccess(Obj, AK_Read);
+        }
         break;
       }
       default: {
+        // TODO: get rid of this, and rely on pass-by-ref instead.
         const Expr *Obj = OE->getArg(0);
         checkAccess(Obj, AK_Read);
         break;
       }
     }
   }
+
+
+  if (ExamineArgs) {
+    if (FunctionDecl *FD = Exp->getDirectCallee()) {
+      unsigned Fn = FD->getNumParams();
+      unsigned Cn = Exp->getNumArgs();
+      unsigned Skip = 0;
+
+      unsigned i = 0;
+      if (OperatorFun) {
+        if (isa<CXXMethodDecl>(FD)) {
+          // First arg in operator call is implicit self argument,
+          // and doesn't appear in the FunctionDecl.
+          Skip = 1;
+          Cn--;
+        } else {
+          // Ignore the first argument of operators; it's been checked above.
+          i = 1;
+        }
+      }
+      // Ignore default arguments
+      unsigned n = (Fn < Cn) ? Fn : Cn;
+
+      for (; i < n; ++i) {
+        ParmVarDecl* Pvd = FD->getParamDecl(i);
+        Expr* Arg = Exp->getArg(i+Skip);
+        QualType Qt = Pvd->getType();
+        if (Qt->isReferenceType())
+          checkAccess(Arg, AK_Read, POK_PassByRef);
+      }
+    }
+  }
+
   NamedDecl *D = dyn_cast_or_null<NamedDecl>(Exp->getCalleeDecl());
   if(!D || !D->hasAttrs())
     return;

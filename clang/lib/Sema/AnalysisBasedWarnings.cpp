@@ -1475,6 +1475,20 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
     return ONS;
   }
 
+  OptionalNotes getNotes(const PartialDiagnosticAt &Note1,
+                         const PartialDiagnosticAt &Note2) const {
+    OptionalNotes ONS;
+    ONS.push_back(Note1);
+    ONS.push_back(Note2);
+    if (Verbose && CurrentFunction) {
+      PartialDiagnosticAt FNote(CurrentFunction->getBody()->getLocStart(),
+                                S.PDiag(diag::note_thread_warning_in_fun)
+                                    << CurrentFunction->getNameAsString());
+      ONS.push_back(FNote);
+    }
+    return ONS;
+  }
+
   // Helper functions
   void warnLockMismatch(unsigned DiagID, StringRef Kind, Name LockName,
                         SourceLocation Loc) {
@@ -1605,13 +1619,25 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
         case POK_FunctionCall:
           DiagID = diag::warn_fun_requires_lock_precise;
           break;
+        case POK_PassByRef:
+          DiagID = diag::warn_guarded_pass_by_reference;
+          break;
+        case POK_PtPassByRef:
+          DiagID = diag::warn_pt_guarded_pass_by_reference;
+          break;
       }
       PartialDiagnosticAt Warning(Loc, S.PDiag(DiagID) << Kind
                                                        << D->getNameAsString()
                                                        << LockName << LK);
       PartialDiagnosticAt Note(Loc, S.PDiag(diag::note_found_mutex_near_match)
                                         << *PossibleMatch);
-      Warnings.push_back(DelayedDiag(Warning, getNotes(Note)));
+      if (Verbose && POK == POK_VarAccess) {
+        PartialDiagnosticAt VNote(D->getLocation(),
+                                 S.PDiag(diag::note_guarded_by_declared_here)
+                                     << D->getNameAsString());
+        Warnings.push_back(DelayedDiag(Warning, getNotes(Note, VNote)));
+      } else
+        Warnings.push_back(DelayedDiag(Warning, getNotes(Note)));
     } else {
       switch (POK) {
         case POK_VarAccess:
@@ -1622,6 +1648,12 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
           break;
         case POK_FunctionCall:
           DiagID = diag::warn_fun_requires_lock;
+          break;
+        case POK_PassByRef:
+          DiagID = diag::warn_guarded_pass_by_reference;
+          break;
+        case POK_PtPassByRef:
+          DiagID = diag::warn_pt_guarded_pass_by_reference;
           break;
       }
       PartialDiagnosticAt Warning(Loc, S.PDiag(DiagID) << Kind
@@ -1636,6 +1668,7 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
         Warnings.push_back(DelayedDiag(Warning, getNotes()));
     }
   }
+
 
   virtual void handleNegativeNotHeld(StringRef Kind, Name LockName, Name Neg,
                                      SourceLocation Loc) {

@@ -4739,4 +4739,112 @@ class Foo {
 
 
 
+namespace PassByRefTest {
+
+class Foo {
+public:
+  Foo() : a(0), b(0) { }
+
+  int a;
+  int b;
+
+  void operator+(const Foo& f);
+
+  void operator[](const Foo& g);
+};
+
+template<class T>
+T&& mymove(T& f);
+
+
+// test top-level functions
+void copy(Foo f);
+void write1(Foo& f);
+void write2(int a, Foo& f);
+void read1(const Foo& f);
+void read2(int a, const Foo& f);
+void destroy(Foo&& f);
+
+void operator/(const Foo& f, const Foo& g);
+void operator*(const Foo& f, const Foo& g);
+
+
+
+
+class Bar {
+public:
+  Mutex mu;
+  Foo           foo   GUARDED_BY(mu);
+  Foo           foo2  GUARDED_BY(mu);
+  Foo*          foop  PT_GUARDED_BY(mu);
+  SmartPtr<Foo> foosp PT_GUARDED_BY(mu);
+
+  // test methods.
+  void mwrite1(Foo& f);
+  void mwrite2(int a, Foo& f);
+  void mread1(const Foo& f);
+  void mread2(int a, const Foo& f);
+
+  // static methods
+  static void smwrite1(Foo& f);
+  static void smwrite2(int a, Foo& f);
+  static void smread1(const Foo& f);
+  static void smread2(int a, const Foo& f);
+
+  void operator<<(const Foo& f);
+
+  void test1() {
+    copy(foo);             // expected-warning {{reading variable 'foo' requires holding mutex 'mu'}}
+    write1(foo);           // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    write2(10, foo);       // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    read1(foo);            // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    read2(10, foo);        // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    destroy(mymove(foo));  // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+
+    mwrite1(foo);           // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    mwrite2(10, foo);       // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    mread1(foo);            // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    mread2(10, foo);        // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+
+    smwrite1(foo);           // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    smwrite2(10, foo);       // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    smread1(foo);            // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+    smread2(10, foo);        // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+
+    foo + foo2;              // expected-warning {{reading variable 'foo' requires holding mutex 'mu'}} \
+                             // expected-warning {{passing variable 'foo2' by reference requires holding mutex 'mu'}}
+    foo / foo2;              // expected-warning {{reading variable 'foo' requires holding mutex 'mu'}} \
+                             // expected-warning {{passing variable 'foo2' by reference requires holding mutex 'mu'}}
+    foo * foo2;              // expected-warning {{reading variable 'foo' requires holding mutex 'mu'}} \
+                             // expected-warning {{passing variable 'foo2' by reference requires holding mutex 'mu'}}
+    foo[foo2];               // expected-warning {{reading variable 'foo' requires holding mutex 'mu'}} \
+                             // expected-warning {{passing variable 'foo2' by reference requires holding mutex 'mu'}}
+    (*this) << foo;          // expected-warning {{passing variable 'foo' by reference requires holding mutex 'mu'}}
+
+    copy(*foop);             // expected-warning {{reading the value pointed to by 'foop' requires holding mutex 'mu'}}
+    write1(*foop);           // expected-warning {{passing the value that 'foop' points to by reference requires holding mutex 'mu'}}
+    write2(10, *foop);       // expected-warning {{passing the value that 'foop' points to by reference requires holding mutex 'mu'}}
+    read1(*foop);            // expected-warning {{passing the value that 'foop' points to by reference requires holding mutex 'mu'}}
+    read2(10, *foop);        // expected-warning {{passing the value that 'foop' points to by reference requires holding mutex 'mu'}}
+    destroy(mymove(*foop));  // expected-warning {{passing the value that 'foop' points to by reference requires holding mutex 'mu'}}
+
+    copy(*foosp);             // expected-warning {{reading the value pointed to by 'foosp' requires holding mutex 'mu'}}
+    write1(*foosp);           // expected-warning {{reading the value pointed to by 'foosp' requires holding mutex 'mu'}}
+    write2(10, *foosp);       // expected-warning {{reading the value pointed to by 'foosp' requires holding mutex 'mu'}}
+    read1(*foosp);            // expected-warning {{reading the value pointed to by 'foosp' requires holding mutex 'mu'}}
+    read2(10, *foosp);        // expected-warning {{reading the value pointed to by 'foosp' requires holding mutex 'mu'}}
+    destroy(mymove(*foosp));  // expected-warning {{reading the value pointed to by 'foosp' requires holding mutex 'mu'}}
+
+    // TODO -- these requires better smart pointer handling.
+    copy(*foosp.get());
+    write1(*foosp.get());
+    write2(10, *foosp.get());
+    read1(*foosp.get());
+    read2(10, *foosp.get());
+    destroy(mymove(*foosp.get()));
+  }
+};
+
+
+}  // end namespace PassByRefTest
 
