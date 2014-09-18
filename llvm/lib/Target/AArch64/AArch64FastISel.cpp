@@ -3050,9 +3050,30 @@ bool AArch64FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
         isCommutativeIntrinsic(II))
       std::swap(LHS, RHS);
 
+    // Simplify multiplies.
+    unsigned IID = II->getIntrinsicID();
+    switch (IID) {
+    default:
+      break;
+    case Intrinsic::smul_with_overflow:
+      if (const auto *C = dyn_cast<ConstantInt>(RHS))
+        if (C->getValue() == 2) {
+          IID = Intrinsic::sadd_with_overflow;
+          RHS = LHS;
+        }
+      break;
+    case Intrinsic::umul_with_overflow:
+      if (const auto *C = dyn_cast<ConstantInt>(RHS))
+        if (C->getValue() == 2) {
+          IID = Intrinsic::uadd_with_overflow;
+          RHS = LHS;
+        }
+      break;
+    }
+
     unsigned ResultReg1 = 0, ResultReg2 = 0, MulReg = 0;
     AArch64CC::CondCode CC = AArch64CC::Invalid;
-    switch (II->getIntrinsicID()) {
+    switch (IID) {
     default: llvm_unreachable("Unexpected intrinsic!");
     case Intrinsic::sadd_with_overflow:
       ResultReg1 = emitAdd(VT, LHS, RHS, /*SetFlags=*/true);
