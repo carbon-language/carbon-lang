@@ -66,21 +66,14 @@ static cl::opt<OptimizerChoice> Optimizer(
     cl::Hidden, cl::init(OPTIMIZER_ISL), cl::ZeroOrMore,
     cl::cat(PollyCategory));
 
-enum CodeGenChoice {
-#ifdef CLOOG_FOUND
-  CODEGEN_CLOOG,
-#endif
-  CODEGEN_ISL,
-  CODEGEN_NONE
-};
-
 #ifdef CLOOG_FOUND
 enum CodeGenChoice DefaultCodeGen = CODEGEN_CLOOG;
 #else
 enum CodeGenChoice DefaultCodeGen = CODEGEN_ISL;
 #endif
 
-static cl::opt<CodeGenChoice> CodeGenerator(
+CodeGenChoice polly::PollyCodeGenChoice;
+static cl::opt<CodeGenChoice, true> XCodeGenerator(
     "polly-code-generator", cl::desc("Select the code generator"),
     cl::values(
 #ifdef CLOOG_FOUND
@@ -88,8 +81,8 @@ static cl::opt<CodeGenChoice> CodeGenerator(
 #endif
         clEnumValN(CODEGEN_ISL, "isl", "isl code generator"),
         clEnumValN(CODEGEN_NONE, "none", "no code generation"), clEnumValEnd),
-    cl::Hidden, cl::init(DefaultCodeGen), cl::ZeroOrMore,
-    cl::cat(PollyCategory));
+    cl::Hidden, cl::location(PollyCodeGenChoice), cl::init(DefaultCodeGen),
+    cl::ZeroOrMore, cl::cat(PollyCategory));
 
 VectorizerChoice polly::PollyVectorizerChoice;
 static cl::opt<polly::VectorizerChoice, true> Vectorizer(
@@ -238,7 +231,7 @@ static void registerPollyPasses(llvm::PassManagerBase &PM) {
   if (ExportJScop)
     PM.add(polly::createJSONExporterPass());
 
-  switch (CodeGenerator) {
+  switch (PollyCodeGenChoice) {
 #ifdef CLOOG_FOUND
   case CODEGEN_CLOOG:
     PM.add(polly::createCodeGenerationPass());

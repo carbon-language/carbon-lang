@@ -51,6 +51,7 @@
 #include "polly/ScopDetection.h"
 #include "polly/Support/SCEVValidator.h"
 #include "polly/Support/ScopHelper.h"
+#include "polly/CodeGen/CodeGeneration.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -100,6 +101,13 @@ static cl::opt<bool>
                    cl::desc("Ignore possible aliasing of the array bases"),
                    cl::Hidden, cl::init(false), cl::ZeroOrMore,
                    cl::cat(PollyCategory));
+
+bool polly::PollyUseRuntimeAliasChecks;
+static cl::opt<bool, true> XPollyUseRuntimeAliasChecks(
+    "polly-use-runtime-alias-checks",
+    cl::desc("Use runtime alias checks to resolve possible aliasing."),
+    cl::location(PollyUseRuntimeAliasChecks), cl::Hidden, cl::ZeroOrMore,
+    cl::init(true), cl::cat(PollyCategory));
 
 static cl::opt<bool>
     ReportLevel("polly-report",
@@ -183,6 +191,31 @@ void DiagnosticScopFound::print(DiagnosticPrinter &DP) const {
 
 //===----------------------------------------------------------------------===//
 // ScopDetection.
+
+ScopDetection::ScopDetection() : FunctionPass(ID) {
+  if (!PollyUseRuntimeAliasChecks)
+    return;
+
+  if (PollyDelinearize) {
+    DEBUG(errs() << "WARNING: We disable runtime alias checks as "
+                    "delinearization is enabled.\n");
+    PollyUseRuntimeAliasChecks = false;
+  }
+
+  if (AllowNonAffine) {
+    DEBUG(errs() << "WARNING: We disable runtime alias checks as non affine "
+                    "accesses are enabled.\n");
+    PollyUseRuntimeAliasChecks = false;
+  }
+
+#ifdef CLOOG_FOUND
+  if (PollyCodeGenChoice == CODEGEN_CLOOG) {
+    DEBUG(errs() << "WARNING: We disable runtime alias checks as the cloog "
+                    "code generation cannot emit them.\n");
+    PollyUseRuntimeAliasChecks = false;
+  }
+#endif
+}
 
 template <class RR, typename... Args>
 inline bool ScopDetection::invalid(DetectionContext &Context, bool Assert,
@@ -499,7 +532,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   if (IntToPtrInst *Inst = dyn_cast<IntToPtrInst>(BaseValue))
     return invalid<ReportIntToPtr>(Context, /*Assert=*/true, Inst);
 
-  if (IgnoreAliasing)
+  if (PollyUseRuntimeAliasChecks || IgnoreAliasing)
     return true;
 
   // Check if the base pointer of the memory access does alias with

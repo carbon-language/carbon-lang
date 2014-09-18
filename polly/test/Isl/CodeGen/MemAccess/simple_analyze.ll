@@ -43,5 +43,5 @@ for.inc11:                                        ; preds = %for.body7
 for.end14:                                        ; preds = %for.cond4
   ret i32 0
 }
-; CHECK: New access function '{ Stmt_for_body7[i0] -> MemRef_B[0] }'detected in JSCOP file
-; CHECK: New access function '{ Stmt_for_body[i0] -> MemRef_A[0] }'detected in JSCOP file
+; CHECK-DAG: New access function '{ Stmt_for_body7[i0] -> MemRef_B[0] }'detected in JSCOP file
+; CHECK-DAG: New access function '{ Stmt_for_body[i0] -> MemRef_A[0] }'detected in JSCOP file

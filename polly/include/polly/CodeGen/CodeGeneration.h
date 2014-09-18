@@ -27,6 +27,15 @@ enum VectorizerChoice {
 };
 extern VectorizerChoice PollyVectorizerChoice;
 
+enum CodeGenChoice {
+#ifdef CLOOG_FOUND
+  CODEGEN_CLOOG,
+#endif
+  CODEGEN_ISL,
+  CODEGEN_NONE
+};
+extern CodeGenChoice PollyCodeGenChoice;
+
 static inline int getNumberOfIterations(__isl_take isl_set *Domain) {
   int Dim = isl_set_dim(Domain, isl_dim_set);
 

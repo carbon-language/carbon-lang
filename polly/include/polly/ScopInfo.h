@@ -47,6 +47,7 @@ struct isl_union_set;
 struct isl_union_map;
 struct isl_space;
 struct isl_constraint;
+struct isl_pw_multi_aff;
 
 namespace polly {
 
@@ -493,7 +494,17 @@ static inline raw_ostream &operator<<(raw_ostream &O, const ScopStmt &S) {
 ///   This context contains information about the values the parameters
 ///   can take and relations between different parameters.
 class Scop {
-  //===-------------------------------------------------------------------===//
+public:
+  /// @brief Type to represent a pair of minimal/maximal access to an array.
+  using MinMaxAccessTy = std::pair<isl_pw_multi_aff *, isl_pw_multi_aff *>;
+
+  /// @brief Vector of minimal/maximal accesses to different arrays.
+  using MinMaxVectorTy = SmallVector<MinMaxAccessTy, 4>;
+
+  /// @brief Vector of minimal/maximal access vectors one for each alias group.
+  using MinMaxVectorVectorTy = SmallVector<MinMaxVectorTy *, 4>;
+
+private:
   Scop(const Scop &) LLVM_DELETED_FUNCTION;
   const Scop &operator=(const Scop &) LLVM_DELETED_FUNCTION;
 
@@ -532,6 +543,21 @@ class Scop {
   /// this scop and that need to be code generated as a run-time test.
   isl_set *AssumedContext;
 
+  /// @brief The set of minimal/maximal accesses for each alias group.
+  ///
+  /// When building runtime alias checks we look at all memory instructions and
+  /// build so called alias groups. Each group contains a set of accesses to
+  /// different base arrays which might alias with each other. However, between
+  /// alias groups there is no aliasing possible.
+  ///
+  /// In a program with int and float pointers annotated with tbaa information
+  /// we would probably generate two alias groups, one for the int pointers and
+  /// one for the float pointers.
+  ///
+  /// During code generation we will create a runtime alias check for each alias
+  /// group to ensure the SCoP is executed in an alias free environment.
+  MinMaxVectorVectorTy MinMaxAliasGroups;
+
   /// Create the static control part with a region, max loop depth of this
   /// region and parameters used in this region.
   Scop(TempScop &TempScop, LoopInfo &LI, ScalarEvolution &SE, isl_ctx *ctx);
@@ -563,9 +589,13 @@ class Scop {
                  // The scattering numbers
                  SmallVectorImpl<unsigned> &Scatter, LoopInfo &LI);
 
-  /// Helper function for printing the Scop.
+  /// @name Helper function for printing the Scop.
+  ///
+  ///{
   void printContext(raw_ostream &OS) const;
   void printStatements(raw_ostream &OS) const;
+  void printAliasAssumptions(raw_ostream &OS) const;
+  ///}
 
   friend class ScopInfo;
 
@@ -660,6 +690,14 @@ public:
   /// @param Set A set describing relations between parameters that are assumed
   ///            to hold.
   void addAssumption(__isl_take isl_set *Set);
+
+  /// @brief Build all alias groups for this SCoP.
+  void buildAliasGroups(AliasAnalysis &AA);
+
+  /// @brief Return all alias groups for this SCoP.
+  const MinMaxVectorVectorTy &getAliasGroups() const {
+    return MinMaxAliasGroups;
+  }
 
   /// @brief Get an isl string representing the context.
   std::string getContextStr() const;

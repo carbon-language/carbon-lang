@@ -333,8 +333,10 @@ Value *IslExprBuilder::createOpBoolean(__isl_take isl_ast_expr *Expr) {
   //
   // TODO: Document in isl itself, that the unconditionally evaluating the
   // second part of '||' or '&&' expressions is safe.
-  assert(LHS->getType() == Builder.getInt1Ty() && "Expected i1 type");
-  assert(RHS->getType() == Builder.getInt1Ty() && "Expected i1 type");
+  if (!LHS->getType()->isIntegerTy(1))
+    LHS = Builder.CreateIsNotNull(LHS);
+  if (!RHS->getType()->isIntegerTy(1))
+    RHS = Builder.CreateIsNotNull(RHS);
 
   switch (OpType) {
   default:

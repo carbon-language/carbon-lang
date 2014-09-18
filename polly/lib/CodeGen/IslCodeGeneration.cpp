@@ -591,7 +591,9 @@ public:
   Value *buildRTC(PollyIRBuilder &Builder, IslExprBuilder &ExprBuilder) {
     Builder.SetInsertPoint(Builder.GetInsertBlock()->getTerminator());
     Value *RTC = ExprBuilder.create(AI->getRunCondition());
-    return Builder.CreateIsNotNull(RTC);
+    if (!RTC->getType()->isIntegerTy(1))
+      RTC = Builder.CreateIsNotNull(RTC);
+    return RTC;
   }
 
   bool runOnScop(Scop &S) {

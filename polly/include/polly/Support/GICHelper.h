@@ -65,6 +65,12 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+                                     __isl_keep isl_pw_multi_aff *PMA) {
+  OS << polly::stringFromIslObj(PMA);
+  return OS;
+}
+
 /// @brief Return @p Prefix + @p Val->getName() + @p Suffix but Isl compatible.
 std::string getIslCompatibleName(std::string Prefix, const llvm::Value *Val,
                                  std::string Suffix);

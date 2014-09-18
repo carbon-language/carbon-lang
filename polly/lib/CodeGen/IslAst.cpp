@@ -310,6 +310,34 @@ void IslAst::buildRunCondition(__isl_keep isl_ast_build *Build) {
   isl_pw_aff *Cond = isl_pw_aff_union_max(PwOne, PwZero);
 
   RunCondition = isl_ast_build_expr_from_pw_aff(Build, Cond);
+
+  // Create the alias checks from the minimal/maximal accesses in each alias
+  // group. This operation is by construction quadratic in the number of
+  // elements in each alias group.
+  isl_ast_expr *NonAliasGroup, *MinExpr, *MaxExpr;
+  for (const Scop::MinMaxVectorTy *MinMaxAccesses : S->getAliasGroups()) {
+    auto AccEnd = MinMaxAccesses->end();
+    for (auto AccIt0 = MinMaxAccesses->begin(); AccIt0 != AccEnd; ++AccIt0) {
+      for (auto AccIt1 = AccIt0 + 1; AccIt1 != AccEnd; ++AccIt1) {
+        MinExpr =
+            isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
+                Build, isl_pw_multi_aff_copy(AccIt0->first)));
+        MaxExpr =
+            isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
+                Build, isl_pw_multi_aff_copy(AccIt1->second)));
+        NonAliasGroup = isl_ast_expr_le(MaxExpr, MinExpr);
+        MinExpr =
+            isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
+                Build, isl_pw_multi_aff_copy(AccIt1->first)));
+        MaxExpr =
+            isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
+                Build, isl_pw_multi_aff_copy(AccIt0->second)));
+        NonAliasGroup =
+            isl_ast_expr_or(NonAliasGroup, isl_ast_expr_le(MaxExpr, MinExpr));
+        RunCondition = isl_ast_expr_and(RunCondition, NonAliasGroup);
+      }
+    }
+  }
 }
 
 IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {

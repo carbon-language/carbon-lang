@@ -109,6 +109,7 @@ typedef std::map<const SCEVUnknown *, const SCEV *> BaseToElSize;
 
 extern bool PollyTrackFailures;
 extern bool PollyDelinearize;
+extern bool PollyUseRuntimeAliasChecks;
 
 /// @brief A function attribute which will cause Polly to skip the function
 extern llvm::StringRef PollySkipFnAttr;
@@ -278,7 +279,7 @@ class ScopDetection : public FunctionPass {
 
 public:
   static char ID;
-  explicit ScopDetection() : FunctionPass(ID) {}
+  explicit ScopDetection();
 
   /// @brief Get the RegionInfo stored in this pass.
   ///
