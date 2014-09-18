@@ -169,22 +169,22 @@ static void buildSearchPath(SmallString<128> &path, StringRef dir,
 
 ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
   bool hasColonPrefix = libName[0] == ':';
-  Twine soName =
-      hasColonPrefix ? libName.drop_front() : Twine("lib", libName) + ".so";
-  Twine archiveName =
-      hasColonPrefix ? libName.drop_front() : Twine("lib", libName) + ".a";
   SmallString<128> path;
   for (StringRef dir : _inputSearchPaths) {
     // Search for dynamic library
     if (!_isStaticExecutable) {
       buildSearchPath(path, dir, _sysrootPath);
-      llvm::sys::path::append(path, soName);
+      llvm::sys::path::append(path, hasColonPrefix
+                                        ? libName.drop_front()
+                                        : Twine("lib", libName) + ".so");
       if (llvm::sys::fs::exists(path.str()))
         return StringRef(*new (_allocator) std::string(path.str()));
     }
     // Search for static libraries too
     buildSearchPath(path, dir, _sysrootPath);
-    llvm::sys::path::append(path, archiveName);
+    llvm::sys::path::append(path, hasColonPrefix
+                                      ? libName.drop_front()
+                                      : Twine("lib", libName) + ".a");
     if (llvm::sys::fs::exists(path.str()))
       return StringRef(*new (_allocator) std::string(path.str()));
   }
