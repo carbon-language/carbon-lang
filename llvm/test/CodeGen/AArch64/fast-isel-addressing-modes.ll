@@ -154,12 +154,9 @@ define i32 @load_breg_immoff_3(i64 %a) {
 
 ; Min un-supported unscaled offset
 define i32 @load_breg_immoff_4(i64 %a) {
-; SDAG-LABEL: load_breg_immoff_4
-; SDAG:       add [[REG:x[0-9]+]], x0, #257
-; SDAG-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]]{{\]}}
-; FAST-LABEL: load_breg_immoff_4
-; FAST:       add [[REG:x[0-9]+]], x0, {{x[0-9]+}}
-; FAST-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]]{{\]}}
+; CHECK-LABEL: load_breg_immoff_4
+; CHECK:       add [[REG:x[0-9]+]], x0, #257
+; CHECK-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]]{{\]}}
   %1 = add i64 %a, 257
   %2 = inttoptr i64 %1 to i32*
   %3 = load i32* %2
@@ -178,12 +175,9 @@ define i32 @load_breg_immoff_5(i64 %a) {
 
 ; Min un-supported scaled offset
 define i32 @load_breg_immoff_6(i64 %a) {
-; SDAG-LABEL: load_breg_immoff_6
-; SDAG:       add [[REG:x[0-9]+]], x0, #4, lsl #12
-; SDAG-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]]{{\]}}
-; FAST-LABEL: load_breg_immoff_6
-; FAST:       add [[REG:x[0-9]+]], x0, {{x[0-9]+}}
-; FAST-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]]{{\]}}
+; CHECK-LABEL: load_breg_immoff_6
+; CHECK:       add [[REG:x[0-9]+]], x0, #4, lsl #12
+; CHECK-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]]{{\]}}
   %1 = add i64 %a, 16384
   %2 = inttoptr i64 %1 to i32*
   %3 = load i32* %2
@@ -226,12 +220,9 @@ define void @store_breg_immoff_3(i64 %a) {
 
 ; Min un-supported unscaled offset
 define void @store_breg_immoff_4(i64 %a) {
-; SDAG-LABEL: store_breg_immoff_4
-; SDAG:       add [[REG:x[0-9]+]], x0, #257
-; SDAG-NEXT:  str wzr, {{\[}}[[REG]]{{\]}}
-; FAST-LABEL: store_breg_immoff_4
-; FAST:       add [[REG:x[0-9]+]], x0, {{x[0-9]+}}
-; FAST-NEXT:  str wzr, {{\[}}[[REG]]{{\]}}
+; CHECK-LABEL: store_breg_immoff_4
+; CHECK:       add [[REG:x[0-9]+]], x0, #257
+; CHECK-NEXT:  str wzr, {{\[}}[[REG]]{{\]}}
   %1 = add i64 %a, 257
   %2 = inttoptr i64 %1 to i32*
   store i32 0, i32* %2
@@ -250,12 +241,9 @@ define void @store_breg_immoff_5(i64 %a) {
 
 ; Min un-supported scaled offset
 define void @store_breg_immoff_6(i64 %a) {
-; SDAG-LABEL: store_breg_immoff_6
-; SDAG:       add [[REG:x[0-9]+]], x0, #4, lsl #12
-; SDAG-NEXT:  str wzr, {{\[}}[[REG]]{{\]}}
-; FAST-LABEL: store_breg_immoff_6
-; FAST:       add [[REG:x[0-9]+]], x0, {{x[0-9]+}}
-; FAST-NEXT:  str wzr, {{\[}}[[REG]]{{\]}}
+; CHECK-LABEL: store_breg_immoff_6
+; CHECK:       add [[REG:x[0-9]+]], x0, #4, lsl #12
+; CHECK-NEXT:  str wzr, {{\[}}[[REG]]{{\]}}
   %1 = add i64 %a, 16384
   %2 = inttoptr i64 %1 to i32*
   store i32 0, i32* %2
@@ -319,7 +307,7 @@ define i64 @load_breg_offreg_immoff_2(i64 %a, i64 %b) {
 ; SDAG-NEXT:  add [[REG2:x[0-9]+]], [[REG1]], #15, lsl #12
 ; SDAG-NEXT:  ldr x0, {{\[}}[[REG2]]{{\]}}
 ; FAST-LABEL: load_breg_offreg_immoff_2
-; FAST:       add [[REG:x[0-9]+]], x0, {{x[0-9]+}}
+; FAST:       add [[REG:x[0-9]+]], x0, #15, lsl #12
 ; FAST-NEXT:  ldr x0, {{\[}}[[REG]], x1{{\]}}
   %1 = add i64 %a, %b
   %2 = add i64 %1, 61440

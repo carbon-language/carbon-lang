@@ -918,10 +918,16 @@ bool AArch64FastISel::simplifyAddress(Address &Addr, MVT VT) {
   // reg+offset into a register.
   if (ImmediateOffsetNeedsLowering) {
     unsigned ResultReg = 0;
-    if (Addr.getReg())
-      ResultReg = fastEmit_ri_(MVT::i64, ISD::ADD, Addr.getReg(),
-                               /*IsKill=*/false, Offset, MVT::i64);
-    else
+    if (Addr.getReg()) {
+      // Try to fold the immediate into the add instruction.
+      ResultReg = emitAddSub_ri(/*UseAdd=*/true, MVT::i64, Addr.getReg(),
+                                /*IsKill=*/false, Offset);
+      if (!ResultReg) {
+        unsigned ImmReg = fastEmit_i(MVT::i64, MVT::i64, ISD::Constant, Offset);
+        ResultReg = emitAddSub_rr(/*UseAdd=*/true, MVT::i64, Addr.getReg(),
+                                  /*IsKill=*/false, ImmReg, /*IsKill=*/true);
+      }
+    } else
       ResultReg = fastEmit_i(MVT::i64, MVT::i64, ISD::Constant, Offset);
 
     if (!ResultReg)
