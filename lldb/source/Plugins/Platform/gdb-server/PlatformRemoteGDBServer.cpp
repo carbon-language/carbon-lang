@@ -488,10 +488,16 @@ PlatformRemoteGDBServer::DebugProcess (lldb_private::ProcessLaunchInfo &launch_i
                                                                 port + port_offset);
                         assert (connect_url_len < (int)sizeof(connect_url));
                         error = process_sp->ConnectRemote (NULL, connect_url);
+                        // Retry the connect remote one time...
+                        if (error.Fail())
+                            error = process_sp->ConnectRemote (NULL, connect_url);
                         if (error.Success())
                             error = process_sp->Launch(launch_info);
                         else if (debugserver_pid != LLDB_INVALID_PROCESS_ID)
+                        {
+                            printf ("error: connect remote failed (%s)\n", error.AsCString());
                             m_gdb_client.KillSpawnedProcess(debugserver_pid);
+                        }
                     }
                 }
             }
