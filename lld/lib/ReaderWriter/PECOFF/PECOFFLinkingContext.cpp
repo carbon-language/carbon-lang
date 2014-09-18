@@ -74,12 +74,6 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     return false;
   }
 
-  // /safeseh is only valid for x86.
-  if (getMachineType() != llvm::COFF::IMAGE_FILE_MACHINE_I386 && noSEH()) {
-    diagnostics << "/SAFESEH:NO is only valid for x86.\n";
-    return false;
-  }
-
   // Architectures other than x86/x64 is not supported yet.
   if (_machineType != llvm::COFF::IMAGE_FILE_MACHINE_I386 &&
       _machineType != llvm::COFF::IMAGE_FILE_MACHINE_AMD64) {

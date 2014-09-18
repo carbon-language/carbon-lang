@@ -7,10 +7,3 @@
 # RUN: FileCheck -check-prefix=INCOMPAT %s < %t1.err
 
 INCOMPAT: /SAFESEH is specified, but {{.*}} is not compatible with SEH.
-
-# RUN: yaml2obj %p/Inputs/seh.obj.yaml > %t2.obj
-# RUN: not lld -flavor link /machine:x64 /safeseh:no /out:%t2.exe \
-# RUN:   /subsystem:console -- %t2.obj 2> %t2.err
-# RUN: FileCheck -check-prefix=X64 %s < %t2.err
-
-X64: /SAFESEH:NO is only valid for x86.
