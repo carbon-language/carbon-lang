@@ -130,8 +130,8 @@ struct SignalDesc {
 
 struct SignalContext {
   int int_signal_send;
-  bool in_blocking_func;
-  bool have_pending_signals;
+  atomic_uintptr_t in_blocking_func;
+  atomic_uintptr_t have_pending_signals;
   SignalDesc pending_signals[kSigCount];
 };
 
@@ -226,22 +226,30 @@ ScopedInterceptor::~ScopedInterceptor() {
 
 struct BlockingCall {
   explicit BlockingCall(ThreadState *thr)
-      : ctx(SigCtx(thr)) {
-    ctx->in_blocking_func = true;
+      : thr(thr)
+      , ctx(SigCtx(thr)) {
+    for (;;) {
+      atomic_store(&ctx->in_blocking_func, 1, memory_order_relaxed);
+      if (atomic_load(&ctx->have_pending_signals, memory_order_relaxed) == 0)
+        break;
+      atomic_store(&ctx->in_blocking_func, 0, memory_order_relaxed);
+      ProcessPendingSignals(thr);
+    }
+    // When we are in a "blocking call", we process signals asynchronously
+    // (right when they arrive). In this context we do not expect to be
+    // executing any user/runtime code. The known interceptor sequence when
+    // this is not true is: pthread_join -> munmap(stack). It's fine
+    // to ignore munmap in this case -- we handle stack shadow separately.
+    thr->ignore_interceptors++;
   }
 
   ~BlockingCall() {
-    ctx->in_blocking_func = false;
+    thr->ignore_interceptors--;
+    atomic_store(&ctx->in_blocking_func, 0, memory_order_relaxed);
   }
 
+  ThreadState *thr;
   SignalContext *ctx;
-
-  // When we are in a "blocking call", we process signals asynchronously
-  // (right when they arrive). In this context we do not expect to be
-  // executing any user/runtime code. The known interceptor sequence when
-  // this is not true is: pthread_join -> munmap(stack). It's fine
-  // to ignore munmap in this case -- we handle stack shadow separately.
-  ScopedIgnoreInterceptors ignore_interceptors;
 };
 
 TSAN_INTERCEPTOR(unsigned, sleep, unsigned sec) {
@@ -392,7 +400,9 @@ static void SetJmp(ThreadState *thr, uptr sp, uptr mangled_sp) {
   buf->shadow_stack_pos = thr->shadow_stack_pos;
   SignalContext *sctx = SigCtx(thr);
   buf->int_signal_send = sctx ? sctx->int_signal_send : 0;
-  buf->in_blocking_func = sctx ? sctx->in_blocking_func : false;
+  buf->in_blocking_func = sctx ?
+      atomic_load(&sctx->in_blocking_func, memory_order_relaxed) :
+      false;
   buf->in_signal_handler = atomic_load(&thr->in_signal_handler,
       memory_order_relaxed);
 }
@@ -410,7 +420,8 @@ static void LongJmp(ThreadState *thr, uptr *env) {
       SignalContext *sctx = SigCtx(thr);
       if (sctx) {
         sctx->int_signal_send = buf->int_signal_send;
-        sctx->in_blocking_func = buf->in_blocking_func;
+        atomic_store(&sctx->in_blocking_func, buf->in_blocking_func,
+            memory_order_relaxed);
       }
       atomic_store(&thr->in_signal_handler, buf->in_signal_handler,
           memory_order_relaxed);
@@ -1751,9 +1762,10 @@ static void CallUserSignalHandler(ThreadState *thr, bool sync, bool acquire,
 
 void ProcessPendingSignals(ThreadState *thr) {
   SignalContext *sctx = SigCtx(thr);
-  if (sctx == 0 || !sctx->have_pending_signals)
+  if (sctx == 0 ||
+      atomic_load(&sctx->have_pending_signals, memory_order_relaxed) == 0)
     return;
-  sctx->have_pending_signals = false;
+  atomic_store(&sctx->have_pending_signals, 0, memory_order_relaxed);
   atomic_fetch_add(&thr->in_signal_handler, 1, memory_order_relaxed);
   // These are too big for stack.
   static THREADLOCAL __sanitizer_sigset_t emptyset, oldset;
@@ -1797,17 +1809,17 @@ void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
       // If we are in blocking function, we can safely process it now
       // (but check if we are in a recursive interceptor,
       // i.e. pthread_join()->munmap()).
-      (sctx && sctx->in_blocking_func)) {
+      (sctx && atomic_load(&sctx->in_blocking_func, memory_order_relaxed))) {
     atomic_fetch_add(&thr->in_signal_handler, 1, memory_order_relaxed);
-    if (sctx && sctx->in_blocking_func) {
+    if (sctx && atomic_load(&sctx->in_blocking_func, memory_order_relaxed)) {
       // We ignore interceptors in blocking functions,
       // temporary enbled them again while we are calling user function.
       int const i = thr->ignore_interceptors;
       thr->ignore_interceptors = 0;
-      sctx->in_blocking_func = false;
+      atomic_store(&sctx->in_blocking_func, 0, memory_order_relaxed);
       CallUserSignalHandler(thr, sync, true, sigact, sig, info, ctx);
       thr->ignore_interceptors = i;
-      sctx->in_blocking_func = true;
+      atomic_store(&sctx->in_blocking_func, 1, memory_order_relaxed);
     } else {
       // Be very conservative with when we do acquire in this case.
       // It's unsafe to do acquire in async handlers, because ThreadState
@@ -1831,7 +1843,7 @@ void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
       internal_memcpy(&signal->siginfo, info, sizeof(*info));
     if (ctx)
       internal_memcpy(&signal->ctx, ctx, sizeof(signal->ctx));
-    sctx->have_pending_signals = true;
+    atomic_store(&sctx->have_pending_signals, 1, memory_order_relaxed);
   }
 }
 
