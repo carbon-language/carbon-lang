@@ -475,8 +475,6 @@ std::string ReportAlias::formatInvalidAlias(std::string Prefix,
 
   OS << Prefix;
 
-  std::sort(Pointers.begin(), Pointers.end());
-
   for (PointerSnapshotTy::const_iterator PI = Pointers.begin(),
                                          PE = Pointers.end();
        ;) {
