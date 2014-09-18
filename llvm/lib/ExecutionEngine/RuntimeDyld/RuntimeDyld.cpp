@@ -50,7 +50,7 @@ static void dumpSectionMemory(const SectionEntry &S, StringRef State) {
   uint8_t *DataAddr = S.Address;
   uint64_t LoadAddr = S.LoadAddress;
 
-  unsigned StartPadding = LoadAddr & 7;
+  unsigned StartPadding = LoadAddr & (ColsPerRow - 1);
   unsigned BytesRemaining = S.Size;
 
   if (StartPadding) {
