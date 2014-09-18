@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=SSE2
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse3 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=SSE3
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+ssse3 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=SSSE3
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse4.1 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=SSE41
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=AVX1
 
@@ -143,6 +144,10 @@ define <4 x float> @shuffle_v4f32_0022(<4 x float> %a, <4 x float> %b) {
 ; SSE3:         movsldup {{.*}} # xmm0 = xmm0[0,0,2,2]
 ; SSE3-NEXT:    retq
 ;
+; SSSE3-LABEL: @shuffle_v4f32_0022
+; SSSE3:         movsldup {{.*}} # xmm0 = xmm0[0,0,2,2]
+; SSSE3-NEXT:    retq
+;
 ; SSE41-LABEL: @shuffle_v4f32_0022
 ; SSE41:         movsldup {{.*}} # xmm0 = xmm0[0,0,2,2]
 ; SSE41-NEXT:    retq
@@ -161,6 +166,10 @@ define <4 x float> @shuffle_v4f32_1133(<4 x float> %a, <4 x float> %b) {
 ; SSE3-LABEL: @shuffle_v4f32_1133
 ; SSE3:         movshdup {{.*}} # xmm0 = xmm0[1,1,3,3]
 ; SSE3-NEXT:    retq
+;
+; SSSE3-LABEL: @shuffle_v4f32_1133
+; SSSE3:         movshdup {{.*}} # xmm0 = xmm0[1,1,3,3]
+; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: @shuffle_v4f32_1133
 ; SSE41:         movshdup {{.*}} # xmm0 = xmm0[1,1,3,3]
@@ -183,6 +192,11 @@ define <4 x i32> @shuffle_v4i32_0124(<4 x i32> %a, <4 x i32> %b) {
 ; SSE3:         shufps {{.*}} # xmm1 = xmm1[0,0],xmm0[2,0]
 ; SSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,1],xmm1[2,0]
 ; SSE3-NEXT:    retq
+;
+; SSSE3-LABEL: @shuffle_v4i32_0124
+; SSSE3:         shufps {{.*}} # xmm1 = xmm1[0,0],xmm0[2,0]
+; SSSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,1],xmm1[2,0]
+; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: @shuffle_v4i32_0124
 ; SSE41:         insertps {{.*}} # xmm0 = xmm0[0,1,2],xmm1[0]
@@ -215,6 +229,12 @@ define <4 x i32> @shuffle_v4i32_0412(<4 x i32> %a, <4 x i32> %b) {
 ; SSE3-NEXT:    movaps %xmm1, %xmm0
 ; SSE3-NEXT:    retq
 ;
+; SSSE3-LABEL: @shuffle_v4i32_0412
+; SSSE3:         shufps {{.*}} # xmm1 = xmm1[0,0],xmm0[0,0]
+; SSSE3-NEXT:    shufps {{.*}} # xmm1 = xmm1[2,0],xmm0[1,2]
+; SSSE3-NEXT:    movaps %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+;
 ; SSE41-LABEL: @shuffle_v4i32_0412
 ; SSE41:         shufps {{.*}} # xmm1 = xmm1[0,0],xmm0[0,0]
 ; SSE41-NEXT:    shufps {{.*}} # xmm1 = xmm1[2,0],xmm0[1,2]
@@ -240,6 +260,12 @@ define <4 x i32> @shuffle_v4i32_4012(<4 x i32> %a, <4 x i32> %b) {
 ; SSE3-NEXT:    shufps {{.*}} # xmm1 = xmm1[0,2],xmm0[1,2]
 ; SSE3-NEXT:    movaps %xmm1, %xmm0
 ; SSE3-NEXT:    retq
+;
+; SSSE3-LABEL: @shuffle_v4i32_4012
+; SSSE3:         shufps {{.*}} # xmm1 = xmm1[0,0],xmm0[0,0]
+; SSSE3-NEXT:    shufps {{.*}} # xmm1 = xmm1[0,2],xmm0[1,2]
+; SSSE3-NEXT:    movaps %xmm1, %xmm0
+; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: @shuffle_v4i32_4012
 ; SSE41:         shufps {{.*}} # xmm1 = xmm1[0,0],xmm0[0,0]
@@ -280,6 +306,11 @@ define <4 x i32> @shuffle_v4i32_4501(<4 x i32> %a, <4 x i32> %b) {
 ; SSE3-NEXT:    movdqa %xmm1, %xmm0
 ; SSE3-NEXT:    retq
 ;
+; SSSE3-LABEL: @shuffle_v4i32_4501
+; SSSE3:         punpcklqdq {{.*}} # xmm1 = xmm1[0],xmm0[0]
+; SSSE3-NEXT:    movdqa %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+;
 ; SSE41-LABEL: @shuffle_v4i32_4501
 ; SSE41:         punpcklqdq {{.*}} # xmm1 = xmm1[0],xmm0[0]
 ; SSE41-NEXT:    movdqa %xmm1, %xmm0
@@ -313,6 +344,12 @@ define <4 x float> @shuffle_v4f32_4zzz(<4 x float> %a) {
 ; SSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,2],[[X]][2,3]
 ; SSE3-NEXT:    retq
 ;
+; SSSE3-LABEL: @shuffle_v4f32_4zzz
+; SSSE3:         xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,0],[[X]][1,0]
+; SSSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,2],[[X]][2,3]
+; SSSE3-NEXT:    retq
+;
 ; SSE41-LABEL: @shuffle_v4f32_4zzz
 ; SSE41:         xorps %[[X:xmm[0-9]+]], %[[X]]
 ; SSE41-NEXT:    blendps {{.*}} # [[X]] = xmm0[0],[[X]][1,2,3]
@@ -340,6 +377,12 @@ define <4 x float> @shuffle_v4f32_z4zz(<4 x float> %a) {
 ; SSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[2,0],[[X]][3,0]
 ; SSE3-NEXT:    retq
 ;
+; SSSE3-LABEL: @shuffle_v4f32_z4zz
+; SSSE3:         xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,0],[[X]][2,0]
+; SSSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[2,0],[[X]][3,0]
+; SSSE3-NEXT:    retq
+;
 ; SSE41-LABEL: @shuffle_v4f32_z4zz
 ; SSE41:         insertps {{.*}} # xmm0 = zero,xmm0[0],zero,zero
 ; SSE41-NEXT:    retq
@@ -366,6 +409,13 @@ define <4 x float> @shuffle_v4f32_zz4z(<4 x float> %a) {
 ; SSE3-NEXT:    movaps %[[X]], %xmm0
 ; SSE3-NEXT:    retq
 ;
+; SSSE3-LABEL: @shuffle_v4f32_zz4z
+; SSSE3:         xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,0],[[X]][0,0]
+; SSSE3-NEXT:    shufps {{.*}} # [[X]] = [[X]][0,0],xmm0[0,2]
+; SSSE3-NEXT:    movaps %[[X]], %xmm0
+; SSSE3-NEXT:    retq
+;
 ; SSE41-LABEL: @shuffle_v4f32_zz4z
 ; SSE41:         insertps {{.*}} # xmm0 = zero,zero,xmm0[0],zero
 ; SSE41-NEXT:    retq
@@ -389,6 +439,12 @@ define <4 x float> @shuffle_v4f32_zuu4(<4 x float> %a) {
 ; SSE3-NEXT:    shufps {{.*}} # [[X]] = [[X]][0,1],xmm0[2,0]
 ; SSE3-NEXT:    movaps %[[X]], %xmm0
 ; SSE3-NEXT:    retq
+;
+; SSSE3-LABEL: @shuffle_v4f32_zuu4
+; SSSE3:         xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSSE3-NEXT:    shufps {{.*}} # [[X]] = [[X]][0,1],xmm0[2,0]
+; SSSE3-NEXT:    movaps %[[X]], %xmm0
+; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: @shuffle_v4f32_zuu4
 ; SSE41:         insertps {{.*}} # xmm0 = zero,zero,zero,xmm0[0]
@@ -416,6 +472,13 @@ define <4 x float> @shuffle_v4f32_zzz7(<4 x float> %a) {
 ; SSE3-NEXT:    movaps %[[X]], %xmm0
 ; SSE3-NEXT:    retq
 ;
+; SSSE3-LABEL: @shuffle_v4f32_zzz7
+; SSSE3:         xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[3,0],[[X]][2,0]
+; SSSE3-NEXT:    shufps {{.*}} # [[X]] = [[X]][0,1],xmm0[2,0]
+; SSSE3-NEXT:    movaps %[[X]], %xmm0
+; SSSE3-NEXT:    retq
+;
 ; SSE41-LABEL: @shuffle_v4f32_zzz7
 ; SSE41:         xorps %[[X:xmm[0-9]+]], %[[X]]
 ; SSE41-NEXT:    blendps {{.*}} # [[X]] = [[X]][0,1,2],xmm0[3]
@@ -442,6 +505,12 @@ define <4 x float> @shuffle_v4f32_z6zz(<4 x float> %a) {
 ; SSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[2,0],[[X]][0,0]
 ; SSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[2,0],[[X]][2,3]
 ; SSE3-NEXT:    retq
+;
+; SSSE3-LABEL: @shuffle_v4f32_z6zz
+; SSSE3:         xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[2,0],[[X]][0,0]
+; SSSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[2,0],[[X]][2,3]
+; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: @shuffle_v4f32_z6zz
 ; SSE41:         insertps {{.*}} # xmm0 = zero,xmm0[2],zero,zero
