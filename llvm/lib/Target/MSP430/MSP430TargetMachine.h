@@ -32,6 +32,7 @@ public:
                       Reloc::Model RM, CodeModel::Model CM,
                       CodeGenOpt::Level OL);
 
+  using LLVMTargetMachine::getSubtargetImpl;
   const MSP430Subtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }

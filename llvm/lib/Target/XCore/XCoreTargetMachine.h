@@ -27,6 +27,7 @@ public:
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL);
 
+  using LLVMTargetMachine::getSubtargetImpl;
   const XCoreSubtarget *getSubtargetImpl() const override { return &Subtarget; }
 
   // Pass Pipeline Configuration

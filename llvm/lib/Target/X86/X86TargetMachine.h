@@ -31,6 +31,8 @@ public:
                    StringRef CPU, StringRef FS, const TargetOptions &Options,
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL);
+
+  using LLVMTargetMachine::getSubtargetImpl;
   const X86Subtarget *getSubtargetImpl() const override { return &Subtarget; }
 
   /// \brief Register X86 analysis passes with a pass manager.
