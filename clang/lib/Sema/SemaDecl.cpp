@@ -4066,13 +4066,16 @@ Decl *Sema::BuildMicrosoftCAnonymousStruct(Scope *S, DeclSpec &DS,
   TypeSourceInfo *TInfo = GetTypeForDeclarator(Dc, S);
   assert(TInfo && "couldn't build declarator info for anonymous struct");
 
+  auto *ParentDecl = cast<RecordDecl>(CurContext);
+  QualType RecTy = Context.getTypeDeclType(Record);
+
   // Create a declaration for this anonymous struct.
   NamedDecl *Anon = FieldDecl::Create(Context,
-                             cast<RecordDecl>(CurContext),
+                             ParentDecl,
                              DS.getLocStart(),
                              DS.getLocStart(),
                              /*IdentifierInfo=*/nullptr,
-                             Context.getTypeDeclType(Record),
+                             RecTy,
                              TInfo,
                              /*BitWidth=*/nullptr, /*Mutable=*/false,
                              /*InitStyle=*/ICIS_NoInit);
@@ -4088,10 +4091,13 @@ Decl *Sema::BuildMicrosoftCAnonymousStruct(Scope *S, DeclSpec &DS,
   Chain.push_back(Anon);
 
   RecordDecl *RecordDef = Record->getDefinition();
-  if (!RecordDef || InjectAnonymousStructOrUnionMembers(*this, S, CurContext,
-                                                        RecordDef, AS_none,
-                                                        Chain, true))
+  if (RequireCompleteType(Anon->getLocation(), RecTy,
+                          diag::err_field_incomplete) ||
+      InjectAnonymousStructOrUnionMembers(*this, S, CurContext, RecordDef,
+                                          AS_none, Chain, true)) {
     Anon->setInvalidDecl();
+    ParentDecl->setInvalidDecl();
+  }
 
   return Anon;
 }

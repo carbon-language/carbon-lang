@@ -104,6 +104,14 @@ typedef struct {
   AA; // expected-warning {{anonymous structs are a Microsoft extension}}
 } BB;
 
+struct anon_fault {
+  struct undefined; // expected-warning {{anonymous structs are a Microsoft extension}}
+                    // expected-error@-1 {{field has incomplete type 'struct undefined'}}
+                    // expected-note@-2 {{forward declaration of 'struct undefined'}}
+};
+
+const int anon_falt_size = sizeof(struct anon_fault);
+
 __declspec(deprecated("This is deprecated")) enum DE1 { one, two } e1; // expected-note {{'e1' has been explicitly marked deprecated here}}
 struct __declspec(deprecated) DS1 { int i; float f; }; // expected-note {{'DS1' has been explicitly marked deprecated here}}
 
