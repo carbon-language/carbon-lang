@@ -10,6 +10,7 @@ add_clang_library(clangTidyGoogleModule
   NamedParameterCheck.cpp
   OverloadedUnaryAndCheck.cpp
   StringReferenceMemberCheck.cpp
+  TodoCommentCheck.cpp
   UnnamedNamespaceInHeaderCheck.cpp
   UsingNamespaceDirectiveCheck.cpp
 
