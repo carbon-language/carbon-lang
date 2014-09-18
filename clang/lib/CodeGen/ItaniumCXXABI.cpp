@@ -1666,6 +1666,13 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
     // If the variable is thread-local, so is its guard variable.
     guard->setThreadLocalMode(var->getThreadLocalMode());
 
+    // The ABI says: It is suggested that it be emitted in the same COMDAT group
+    // as the associated data object
+    if (var->isWeakForLinker() && CGM.supportsCOMDAT()) {
+      llvm::Comdat *C = CGM.getModule().getOrInsertComdat(var->getName());
+      guard->setComdat(C);
+    }
+
     CGM.setStaticLocalDeclGuardAddress(&D, guard);
   }
 
