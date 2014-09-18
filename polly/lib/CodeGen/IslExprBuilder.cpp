@@ -264,34 +264,37 @@ Value *IslExprBuilder::createOpICmp(__isl_take isl_ast_expr *Expr) {
   LHS = create(isl_ast_expr_get_op_arg(Expr, 0));
   RHS = create(isl_ast_expr_get_op_arg(Expr, 1));
 
-  Type *MaxType = LHS->getType();
-  MaxType = getWidestType(MaxType, RHS->getType());
+  bool IsPtrType = LHS->getType()->isPointerTy();
+  assert((!IsPtrType || RHS->getType()->isPointerTy()) &&
+         "Both ICmp operators should be pointer types or none of them");
 
-  if (MaxType != RHS->getType())
-    RHS = Builder.CreateSExt(RHS, MaxType);
+  if (!IsPtrType) {
+    Type *MaxType = LHS->getType();
+    MaxType = getWidestType(MaxType, RHS->getType());
 
-  if (MaxType != LHS->getType())
-    LHS = Builder.CreateSExt(LHS, MaxType);
+    if (MaxType != RHS->getType())
+      RHS = Builder.CreateSExt(RHS, MaxType);
 
-  switch (isl_ast_expr_get_op_type(Expr)) {
-  default:
-    llvm_unreachable("Unsupported ICmp isl ast expression");
-  case isl_ast_op_eq:
-    Res = Builder.CreateICmpEQ(LHS, RHS);
-    break;
-  case isl_ast_op_le:
-    Res = Builder.CreateICmpSLE(LHS, RHS);
-    break;
-  case isl_ast_op_lt:
-    Res = Builder.CreateICmpSLT(LHS, RHS);
-    break;
-  case isl_ast_op_ge:
-    Res = Builder.CreateICmpSGE(LHS, RHS);
-    break;
-  case isl_ast_op_gt:
-    Res = Builder.CreateICmpSGT(LHS, RHS);
-    break;
+    if (MaxType != LHS->getType())
+      LHS = Builder.CreateSExt(LHS, MaxType);
   }
+
+  isl_ast_op_type OpType = isl_ast_expr_get_op_type(Expr);
+  assert(OpType >= isl_ast_op_eq && OpType <= isl_ast_op_gt &&
+         "Unsupported ICmp isl ast expression");
+  assert(isl_ast_op_eq + 4 == isl_ast_op_gt &&
+         "Isl ast op type interface changed");
+
+  CmpInst::Predicate Predicates[5][2] = {
+      {CmpInst::ICMP_EQ, CmpInst::ICMP_EQ},
+      {CmpInst::ICMP_SLE, CmpInst::ICMP_ULE},
+      {CmpInst::ICMP_SLT, CmpInst::ICMP_ULT},
+      {CmpInst::ICMP_SGE, CmpInst::ICMP_UGE},
+      {CmpInst::ICMP_SGT, CmpInst::ICMP_UGT},
+  };
+
+  Res = Builder.CreateICmp(Predicates[OpType - isl_ast_op_eq][IsPtrType], LHS,
+                           RHS);
 
   isl_ast_expr_free(Expr);
   return Res;
