@@ -1681,6 +1681,9 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
       VariableSpecDIE = &createAndAddDIE(dwarf::DW_TAG_variable, UnitDie);
       addDIEEntry(*VariableSpecDIE, dwarf::DW_AT_specification, *VariableDIE);
       addBlock(*VariableSpecDIE, dwarf::DW_AT_location, Loc);
+      // A static member's declaration is already flagged as such.
+      if (!SDMDecl.Verify())
+        addFlag(*VariableDIE, dwarf::DW_AT_declaration);
     } else {
       addBlock(*VariableDIE, dwarf::DW_AT_location, Loc);
     }
