@@ -449,7 +449,6 @@ ifeq ($(HOST_OS),MingW)
   endif
 endif
 
-CXX.Flags     += -Woverloaded-virtual
 CPP.BaseFlags += $(CPP.Defines)
 AR.Flags      := cru
 
