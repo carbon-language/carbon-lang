@@ -15,6 +15,10 @@ void foo() {
   for (int i = 0; i < 10; ++i)
     ;
 #pragma omp parallel
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i)
+    ;
+#pragma omp parallel
 #pragma omp sections
   {
     bar();
@@ -93,6 +97,12 @@ void foo() {
 #pragma omp simd
   for (int i = 0; i < 10; ++i) {
 #pragma omp simd // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp for simd // expected-error {{OpenMP constructs may not be nested inside a simd region}}
     for (int i = 0; i < 10; ++i)
       ;
   }
@@ -198,6 +208,12 @@ void foo() {
 #pragma omp for
   for (int i = 0; i < 10; ++i) {
 #pragma omp simd
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp for
+  for (int i = 0; i < 10; ++i) {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'for' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
     for (int i = 0; i < 10; ++i)
       ;
   }
@@ -316,6 +332,117 @@ void foo() {
     ++a;
   }
 
+// FOR SIMD DIRECTIVE
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp for // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp simd // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp for simd // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp parallel // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp sections // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    {
+      bar();
+    }
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp section // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    {
+      bar();
+    }
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp single // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    {
+      bar();
+    }
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp master // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    {
+      bar();
+    }
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp critical // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    {
+      bar();
+    }
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp parallel for // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp parallel sections // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    {
+      bar();
+    }
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp task // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    {
+      bar();
+    }
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp taskyield // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp barrier // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp taskwait // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp flush // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp ordered // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp atomic // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    ++a;
+  }
+
 // SECTIONS DIRECTIVE
 #pragma omp sections
   {
@@ -326,6 +453,12 @@ void foo() {
 #pragma omp sections
   {
 #pragma omp simd
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp sections
+  {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'sections' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
     for (int i = 0; i < 10; ++i)
       ;
   }
@@ -478,6 +611,15 @@ void foo() {
   {
 #pragma omp section
     {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'section' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
+      for (int i = 0; i < 10; ++i)
+        ;
+    }
+  }
+#pragma omp sections
+  {
+#pragma omp section
+    {
 #pragma omp parallel
       for (int i = 0; i < 10; ++i)
         ;
@@ -526,6 +668,9 @@ void foo() {
           bar();
         }
 #pragma omp for // OK
+        for (int i = 0; i < 10; ++i)
+          ;
+#pragma omp for simd // OK
         for (int i = 0; i < 10; ++i)
           ;
 #pragma omp sections // OK
@@ -626,6 +771,12 @@ void foo() {
   }
 #pragma omp single
   {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'single' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp single
+  {
 #pragma omp parallel
     for (int i = 0; i < 10; ++i)
       ;
@@ -667,6 +818,9 @@ void foo() {
         bar();
       }
 #pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp for simd // OK
       for (int i = 0; i < 10; ++i)
         ;
 #pragma omp sections // OK
@@ -741,6 +895,12 @@ void foo() {
   }
 #pragma omp master
   {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'master' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp master
+  {
 #pragma omp parallel
     for (int i = 0; i < 10; ++i)
       ;
@@ -782,6 +942,9 @@ void foo() {
         bar();
       }
 #pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp for simd // OK
       for (int i = 0; i < 10; ++i)
         ;
 #pragma omp sections // OK
@@ -856,6 +1019,12 @@ void foo() {
   }
 #pragma omp critical
   {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'critical' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp critical
+  {
 #pragma omp parallel
     for (int i = 0; i < 10; ++i)
       ;
@@ -897,6 +1066,9 @@ void foo() {
         bar();
       }
 #pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp for simd // OK
       for (int i = 0; i < 10; ++i)
         ;
 #pragma omp sections // OK
@@ -985,6 +1157,12 @@ void foo() {
   }
 #pragma omp parallel for
   for (int i = 0; i < 10; ++i) {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'parallel for' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp parallel for
+  for (int i = 0; i < 10; ++i) {
 #pragma omp parallel
     for (int i = 0; i < 10; ++i)
       ;
@@ -1036,6 +1214,9 @@ void foo() {
         bar();
       }
 #pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp for simd // OK
       for (int i = 0; i < 10; ++i)
         ;
 #pragma omp sections // OK
@@ -1115,6 +1296,12 @@ void foo() {
   }
 #pragma omp parallel sections
   {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'parallel sections' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp parallel sections
+  {
 #pragma omp parallel
     for (int i = 0; i < 10; ++i)
       ;
@@ -1166,6 +1353,9 @@ void foo() {
         bar();
       }
 #pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp for simd // OK
       for (int i = 0; i < 10; ++i)
         ;
 #pragma omp sections // OK
@@ -1228,6 +1418,10 @@ void foo() {
     ;
 #pragma omp task
 #pragma omp simd
+  for (int i = 0; i < 10; ++i)
+    ;
+#pragma omp task
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'task' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
   for (int i = 0; i < 10; ++i)
     ;
 #pragma omp task
@@ -1305,6 +1499,12 @@ void foo() {
 #pragma omp ordered
   {
 #pragma omp simd
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp ordered
+  {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'ordered' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
     for (int i = 0; i < 10; ++i)
       ;
   }
@@ -1415,6 +1615,13 @@ void foo() {
 // expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp simd // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  {
+#pragma omp for simd // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     for (int i = 0; i < 10; ++i)
       ;
   }
@@ -1538,6 +1745,10 @@ void foo() {
   for (int i = 0; i < 10; ++i)
     ;
 #pragma omp parallel
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i)
+    ;
+#pragma omp parallel
 #pragma omp sections
   {
     bar();
@@ -1616,6 +1827,12 @@ void foo() {
 #pragma omp simd
   for (int i = 0; i < 10; ++i) {
 #pragma omp simd // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp for simd // expected-error {{OpenMP constructs may not be nested inside a simd region}}
     for (int i = 0; i < 10; ++i)
       ;
   }
@@ -1719,6 +1936,12 @@ void foo() {
   }
 #pragma omp for
   for (int i = 0; i < 10; ++i) {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'for' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp for
+  for (int i = 0; i < 10; ++i) {
 #pragma omp parallel
     for (int i = 0; i < 10; ++i)
       ;
@@ -1755,6 +1978,9 @@ void foo() {
         bar();
       }
 #pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp for simd // OK
       for (int i = 0; i < 10; ++i)
         ;
 #pragma omp sections // OK
@@ -1819,6 +2045,110 @@ void foo() {
     ++a;
   }
 
+// FOR SIMD DIRECTIVE
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp for // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp simd // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp for simd // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp parallel // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp sections // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    {
+      bar();
+    }
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp section // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    {
+      bar();
+    }
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp single // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+#pragma omp master // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp single // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+#pragma omp critical // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp parallel for // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp parallel sections // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    {
+      bar();
+    }
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp task // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    {
+      bar();
+    }
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp taskyield // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp barrier // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp taskwait // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp flush // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp ordered // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp for simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp atomic // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    ++a;
+  }
+
 // SECTIONS DIRECTIVE
 #pragma omp sections
   {
@@ -1829,6 +2159,12 @@ void foo() {
 #pragma omp sections
   {
 #pragma omp simd
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp sections
+  {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'sections' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
     for (int i = 0; i < 10; ++i)
       ;
   }
@@ -1870,6 +2206,9 @@ void foo() {
         bar();
       }
 #pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp for simd // OK
       for (int i = 0; i < 10; ++i)
         ;
 #pragma omp sections // OK
@@ -1953,6 +2292,15 @@ void foo() {
   {
 #pragma omp section
     {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'section' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
+      for (int i = 0; i < 10; ++i)
+        ;
+    }
+  }
+#pragma omp sections
+  {
+#pragma omp section
+    {
 #pragma omp parallel
       for (int i = 0; i < 10; ++i)
         ;
@@ -2001,6 +2349,9 @@ void foo() {
           bar();
         }
 #pragma omp for // OK
+        for (int i = 0; i < 10; ++i)
+          ;
+#pragma omp for simd // OK
         for (int i = 0; i < 10; ++i)
           ;
 #pragma omp sections // OK
@@ -2103,6 +2454,12 @@ void foo() {
   }
 #pragma omp single
   {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'single' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp single
+  {
 #pragma omp parallel
     for (int i = 0; i < 10; ++i)
       ;
@@ -2134,6 +2491,9 @@ void foo() {
         bar();
       }
 #pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp for simd // OK
       for (int i = 0; i < 10; ++i)
         ;
 #pragma omp sections // OK
@@ -2208,6 +2568,12 @@ void foo() {
   }
 #pragma omp master
   {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'master' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp master
+  {
 #pragma omp parallel
     for (int i = 0; i < 10; ++i)
       ;
@@ -2249,6 +2615,9 @@ void foo() {
         bar();
       }
 #pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp for simd // OK
       for (int i = 0; i < 10; ++i)
         ;
 #pragma omp sections // OK
@@ -2323,6 +2692,12 @@ void foo() {
   }
 #pragma omp critical
   {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'critical' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp critical
+  {
 #pragma omp parallel
     for (int i = 0; i < 10; ++i)
       ;
@@ -2364,6 +2739,9 @@ void foo() {
         bar();
       }
 #pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp for simd // OK
       for (int i = 0; i < 10; ++i)
         ;
 #pragma omp sections // OK
@@ -2457,6 +2835,13 @@ void foo() {
   }
 #pragma omp parallel for
   for (int i = 0; i < 10; ++i) {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'parallel for' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+
+#pragma omp parallel for
+  for (int i = 0; i < 10; ++i) {
 #pragma omp parallel
     for (int i = 0; i < 10; ++i)
       ;
@@ -2507,6 +2892,9 @@ void foo() {
         bar();
       }
 #pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp for simd // OK
       for (int i = 0; i < 10; ++i)
         ;
 #pragma omp sections // OK
@@ -2586,6 +2974,12 @@ void foo() {
   }
 #pragma omp parallel sections
   {
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'parallel sections' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp parallel sections
+  {
 #pragma omp parallel
     for (int i = 0; i < 10; ++i)
       ;
@@ -2633,6 +3027,9 @@ void foo() {
         bar();
       }
 #pragma omp for // OK
+      for (int i = 0; i < 10; ++i)
+        ;
+#pragma omp for simd // OK
       for (int i = 0; i < 10; ++i)
         ;
 #pragma omp sections // OK
@@ -2695,6 +3092,10 @@ void foo() {
     ;
 #pragma omp task
 #pragma omp simd
+  for (int i = 0; i < 10; ++i)
+    ;
+#pragma omp task
+#pragma omp for simd // expected-error {{region cannot be closely nested inside 'task' region; perhaps you forget to enclose 'omp for simd' directive into a parallel region?}}
   for (int i = 0; i < 10; ++i)
     ;
 #pragma omp task
@@ -2773,6 +3174,13 @@ void foo() {
 // expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp simd // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
+    for (int i = 0; i < 10; ++i)
+      ;
+  }
+#pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  {
+#pragma omp for simd // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     for (int i = 0; i < 10; ++i)
       ;
   }

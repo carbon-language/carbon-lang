@@ -1866,6 +1866,11 @@ void ASTStmtWriter::VisitOMPForDirective(OMPForDirective *D) {
   Code = serialization::STMT_OMP_FOR_DIRECTIVE;
 }
 
+void ASTStmtWriter::VisitOMPForSimdDirective(OMPForSimdDirective *D) {
+  VisitOMPLoopDirective(D);
+  Code = serialization::STMT_OMP_FOR_SIMD_DIRECTIVE;
+}
+
 void ASTStmtWriter::VisitOMPSectionsDirective(OMPSectionsDirective *D) {
   VisitStmt(D);
   Record.push_back(D->getNumClauses());

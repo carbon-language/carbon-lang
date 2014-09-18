@@ -1985,6 +1985,10 @@ void ASTStmtReader::VisitOMPForDirective(OMPForDirective *D) {
   VisitOMPLoopDirective(D);
 }
 
+void ASTStmtReader::VisitOMPForSimdDirective(OMPForSimdDirective *D) {
+  VisitOMPLoopDirective(D);
+}
+
 void ASTStmtReader::VisitOMPSectionsDirective(OMPSectionsDirective *D) {
   VisitStmt(D);
   // The NumClauses field was read in ReadStmtFromStream.
@@ -2563,6 +2567,14 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       unsigned CollapsedNum = Record[ASTStmtReader::NumStmtFields + 1];
       S = OMPForDirective::CreateEmpty(Context, NumClauses, CollapsedNum,
                                        Empty);
+      break;
+    }
+
+    case STMT_OMP_FOR_SIMD_DIRECTIVE: {
+      unsigned NumClauses = Record[ASTStmtReader::NumStmtFields];
+      unsigned CollapsedNum = Record[ASTStmtReader::NumStmtFields + 1];
+      S = OMPForSimdDirective::CreateEmpty(Context, NumClauses, CollapsedNum,
+                                           Empty);
       break;
     }
 

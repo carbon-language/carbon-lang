@@ -26,23 +26,30 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 static OpenMPDirectiveKind ParseOpenMPDirectiveKind(Parser &P) {
+  // Array of foldings: F[i][0] F[i][1] ===> F[i][2].
+  // E.g.: OMPD_for OMPD_simd ===> OMPD_for_simd
+  // TODO: add other combined directives in topological order.
+  const OpenMPDirectiveKind F[][3] = {
+    { OMPD_for, OMPD_simd, OMPD_for_simd },
+    { OMPD_parallel, OMPD_for, OMPD_parallel_for },
+    { OMPD_parallel, OMPD_sections, OMPD_parallel_sections }
+  };
   auto Tok = P.getCurToken();
   auto DKind =
       Tok.isAnnotation()
           ? OMPD_unknown
           : getOpenMPDirectiveKind(P.getPreprocessor().getSpelling(Tok));
-  if (DKind == OMPD_parallel) {
-    Tok = P.getPreprocessor().LookAhead(0);
-    auto SDKind =
-        Tok.isAnnotation()
-            ? OMPD_unknown
-            : getOpenMPDirectiveKind(P.getPreprocessor().getSpelling(Tok));
-    if (SDKind == OMPD_for) {
-      P.ConsumeToken();
-      DKind = OMPD_parallel_for;
-    } else if (SDKind == OMPD_sections) {
-      P.ConsumeToken();
-      DKind = OMPD_parallel_sections;
+  for (unsigned i = 0; i < llvm::array_lengthof(F); ++i) {
+    if (DKind == F[i][0]) {
+      Tok = P.getPreprocessor().LookAhead(0);
+      auto SDKind =
+          Tok.isAnnotation()
+              ? OMPD_unknown
+              : getOpenMPDirectiveKind(P.getPreprocessor().getSpelling(Tok));
+      if (SDKind == F[i][1]) {
+        P.ConsumeToken();
+        DKind = F[i][2];
+      }
     }
   }
   return DKind;
@@ -88,6 +95,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
   case OMPD_taskwait:
   case OMPD_flush:
   case OMPD_for:
+  case OMPD_for_simd:
   case OMPD_sections:
   case OMPD_section:
   case OMPD_single:
@@ -115,7 +123,8 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
 ///         annot_pragma_openmp 'parallel' | 'simd' | 'for' | 'sections' |
 ///         'section' | 'single' | 'master' | 'critical' [ '(' <name> ')' ] |
 ///         'parallel for' | 'parallel sections' | 'task' | 'taskyield' |
-///         'barrier' | 'taskwait' | 'flush' | 'ordered' | 'atomic' {clause}
+///         'barrier' | 'taskwait' | 'flush' | 'ordered' | 'atomic' |
+///         'for simd' {clause}
 ///         annot_pragma_openmp_end
 ///
 StmtResult
@@ -172,6 +181,7 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
   case OMPD_parallel:
   case OMPD_simd:
   case OMPD_for:
+  case OMPD_for_simd:
   case OMPD_sections:
   case OMPD_single:
   case OMPD_section:

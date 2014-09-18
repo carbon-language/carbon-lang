@@ -801,6 +801,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::OMPParallelDirectiveClass:
     case Stmt::OMPSimdDirectiveClass:
     case Stmt::OMPForDirectiveClass:
+    case Stmt::OMPForSimdDirectiveClass:
     case Stmt::OMPSectionsDirectiveClass:
     case Stmt::OMPSectionDirectiveClass:
     case Stmt::OMPSingleDirectiveClass:

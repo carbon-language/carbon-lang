@@ -2309,6 +2309,9 @@ DEF_TRAVERSE_STMT(OMPSimdDirective,
 DEF_TRAVERSE_STMT(OMPForDirective,
                   { TRY_TO(TraverseOMPExecutableDirective(S)); })
 
+DEF_TRAVERSE_STMT(OMPForSimdDirective,
+                  { TRY_TO(TraverseOMPExecutableDirective(S)); })
+
 DEF_TRAVERSE_STMT(OMPSectionsDirective,
                   { TRY_TO(TraverseOMPExecutableDirective(S)); })
 

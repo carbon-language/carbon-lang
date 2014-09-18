@@ -30,6 +30,9 @@
 #ifndef OPENMP_FOR_CLAUSE
 #  define OPENMP_FOR_CLAUSE(Name)
 #endif
+#ifndef OPENMP_FOR_SIMD_CLAUSE
+#  define OPENMP_FOR_SIMD_CLAUSE(Name)
+#endif
 #ifndef OPENMP_SECTIONS_CLAUSE
 #  define OPENMP_SECTIONS_CLAUSE(Name)
 #endif
@@ -77,6 +80,7 @@ OPENMP_DIRECTIVE(ordered)
 OPENMP_DIRECTIVE(atomic)
 OPENMP_DIRECTIVE_EXT(parallel_for, "parallel for")
 OPENMP_DIRECTIVE_EXT(parallel_sections, "parallel sections")
+OPENMP_DIRECTIVE_EXT(for_simd, "for simd")
 
 // OpenMP clauses.
 OPENMP_CLAUSE(if, OMPIfClause)
@@ -136,6 +140,18 @@ OPENMP_FOR_CLAUSE(collapse)
 OPENMP_FOR_CLAUSE(schedule)
 OPENMP_FOR_CLAUSE(ordered)
 OPENMP_FOR_CLAUSE(nowait)
+
+// Clauses allowed for directive 'omp for simd'.
+OPENMP_FOR_SIMD_CLAUSE(private)
+OPENMP_FOR_SIMD_CLAUSE(firstprivate)
+OPENMP_FOR_SIMD_CLAUSE(lastprivate)
+OPENMP_FOR_SIMD_CLAUSE(reduction)
+OPENMP_FOR_SIMD_CLAUSE(schedule)
+OPENMP_FOR_SIMD_CLAUSE(collapse)
+OPENMP_FOR_SIMD_CLAUSE(nowait)
+OPENMP_FOR_SIMD_CLAUSE(safelen)
+OPENMP_FOR_SIMD_CLAUSE(linear)
+OPENMP_FOR_SIMD_CLAUSE(aligned)
 
 // Clauses allowed for OpenMP directive 'omp sections'.
 OPENMP_SECTIONS_CLAUSE(private)
@@ -225,4 +241,5 @@ OPENMP_ATOMIC_CLAUSE(seq_cst)
 #undef OPENMP_ATOMIC_CLAUSE
 #undef OPENMP_SIMD_CLAUSE
 #undef OPENMP_FOR_CLAUSE
+#undef OPENMP_FOR_SIMD_CLAUSE
 

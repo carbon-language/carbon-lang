@@ -7400,6 +7400,12 @@ public:
       ArrayRef<OMPClause *> Clauses, Stmt *AStmt, SourceLocation StartLoc,
       SourceLocation EndLoc,
       llvm::DenseMap<VarDecl *, Expr *> &VarsWithImplicitDSA);
+  /// \brief Called on well-formed '\#pragma omp for simd' after parsing
+  /// of the associated statement.
+  StmtResult ActOnOpenMPForSimdDirective(
+      ArrayRef<OMPClause *> Clauses, Stmt *AStmt, SourceLocation StartLoc,
+      SourceLocation EndLoc,
+      llvm::DenseMap<VarDecl *, Expr *> &VarsWithImplicitDSA);
   /// \brief Called on well-formed '\#pragma omp sections' after parsing
   /// of the associated statement.
   StmtResult ActOnOpenMPSectionsDirective(ArrayRef<OMPClause *> Clauses,
