@@ -382,7 +382,7 @@ class SymbolizationLoop(object):
       if not line:
         break
       processed = self.process_line(line)
-      print ''.join(processed)
+      print '\n'.join(processed)
 
   def process_line(self, line):
     self.current_line = line.rstrip()
