@@ -481,7 +481,7 @@ TODO: Generate this from tblgen. Define one anchor per warning group.
    Warn about an unusable copy constructor when binding a reference to a
    temporary.
 
-   This option, which defaults to on, enables warnings about binding a
+   This option enables warnings about binding a
    reference to a temporary when the temporary doesn't have a usable
    copy constructor. For example:
 

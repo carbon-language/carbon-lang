@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wbind-to-temporary-copy %s
 
 // Make sure we don't produce invalid IR.
 // RUN: %clang_cc1 -emit-llvm-only %s

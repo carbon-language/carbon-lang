@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wc++98-compat -verify %s
-// RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wc++98-compat -Wno-bind-to-temporary-copy -Wno-unnamed-type-template-args -Wno-local-type-template-args -Werror %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wc++98-compat-pedantic -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wc++98-compat-pedantic -Wno-bind-to-temporary-copy -Wno-unnamed-type-template-args -Wno-local-type-template-args -Werror %s
 
 template<typename T> int TemplateFn(T) { return 0; }
 void LocalTemplateArg() {

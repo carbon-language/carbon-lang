@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -Wbind-to-temporary-copy -verify %s 
 class X { 
 public:
   operator bool();

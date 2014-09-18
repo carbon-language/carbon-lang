@@ -1118,7 +1118,7 @@ def ext_ms_using_declaration_inaccessible : ExtWarn<
 def err_access_ctor : Error<
   "calling a %select{private|protected}0 constructor of class %2">, 
   AccessControl;
-def ext_rvalue_to_reference_access_ctor : ExtWarn<
+def ext_rvalue_to_reference_access_ctor : Extension<
   "C++98 requires an accessible copy constructor for class %2 when binding "
   "a reference to a temporary; was %select{private|protected}0">,
   AccessControl, InGroup<BindToTemporaryCopy>;
@@ -1545,7 +1545,7 @@ def err_temp_copy_no_viable : Error<
   "returning object|throwing object|copying member subobject|copying array "
   "element|allocating object|copying temporary|initializing base subobject|"
   "initializing vector element|capturing value}0 of type %1">;
-def ext_rvalue_to_reference_temp_copy_no_viable : ExtWarn<
+def ext_rvalue_to_reference_temp_copy_no_viable : Extension<
   "no viable constructor %select{copying variable|copying parameter|"
   "returning object|throwing object|copying member subobject|copying array "
   "element|allocating object|copying temporary|initializing base subobject|"
