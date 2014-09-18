@@ -641,7 +641,7 @@ unsigned DataLayout::getAlignment(Type *Ty, bool abi_or_pref) const {
             ? getPointerABIAlignment(0)
             : getPointerPrefAlignment(0));
   case Type::PointerTyID: {
-    unsigned AS = dyn_cast<PointerType>(Ty)->getAddressSpace();
+    unsigned AS = cast<PointerType>(Ty)->getAddressSpace();
     return (abi_or_pref
             ? getPointerABIAlignment(AS)
             : getPointerPrefAlignment(AS));
