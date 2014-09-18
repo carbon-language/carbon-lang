@@ -1673,12 +1673,11 @@ FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> params,
 bool FunctionProtoType::hasDependentExceptionSpec() const {
   if (Expr *NE = getNoexceptExpr())
     return NE->isValueDependent();
-  for (unsigned I = 0, N = getNumExceptions(); I != N; ++I)
+  for (QualType ET : exceptions())
     // A pack expansion with a non-dependent pattern is still dependent,
     // because we don't know whether the pattern is in the exception spec
     // or not (that depends on whether the pack has 0 expansions).
-    if (getExceptionType(I)->isDependentType() ||
-        getExceptionType(I)->getAs<PackExpansionType>())
+    if (ET->isDependentType() || ET->getAs<PackExpansionType>())
       return true;
   return false;
 }
