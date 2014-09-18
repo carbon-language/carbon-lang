@@ -1796,7 +1796,7 @@ static AArch64CC::CondCode getCompareCC(CmpInst::Predicate Pred) {
 
 /// \brief Check if the comparison against zero and the following branch can be
 /// folded into a single instruction (CBZ or CBNZ).
-static bool canFoldZeroIntoBranch(const CmpInst *CI) {
+static bool canFoldZeroCheckIntoBranch(const CmpInst *CI) {
   CmpInst::Predicate Predicate = CI->getPredicate();
   if ((Predicate != CmpInst::ICMP_EQ) && (Predicate != CmpInst::ICMP_NE))
     return false;
@@ -1854,7 +1854,7 @@ bool AArch64FastISel::selectBranch(const Instruction *I) {
       }
 
       // Try to optimize comparisons against zero.
-      if (canFoldZeroIntoBranch(CI)) {
+      if (canFoldZeroCheckIntoBranch(CI)) {
         const Value *LHS = CI->getOperand(0);
         const Value *RHS = CI->getOperand(1);
 
@@ -1863,12 +1863,33 @@ bool AArch64FastISel::selectBranch(const Instruction *I) {
           if (C->isNullValue())
             std::swap(LHS, RHS);
 
-        static const unsigned OpcTable[2][2] = {
-          {AArch64::CBZW,  AArch64::CBZX }, {AArch64::CBNZW, AArch64::CBNZX}
+        int TestBit = -1;
+        if (const auto *AI = dyn_cast<BinaryOperator>(LHS))
+          if (AI->getOpcode() == Instruction::And) {
+            const Value *AndLHS = AI->getOperand(0);
+            const Value *AndRHS = AI->getOperand(1);
+
+            if (const auto *C = dyn_cast<ConstantInt>(AndLHS))
+              if (C->getValue().isPowerOf2())
+                std::swap(AndLHS, AndRHS);
+
+            if (const auto *C = dyn_cast<ConstantInt>(AndRHS))
+              if (C->getValue().isPowerOf2()) {
+                TestBit = C->getValue().logBase2();
+                LHS = AndLHS;
+              }
+          }
+
+        static const unsigned OpcTable[2][2][2] = {
+          { {AArch64::CBZW,  AArch64::CBZX },
+            {AArch64::CBNZW, AArch64::CBNZX} },
+          { {AArch64::TBZW,  AArch64::TBZX },
+            {AArch64::TBNZW, AArch64::TBNZX} }
         };
+        bool IsBitTest = TestBit != -1;
         bool IsCmpNE = Predicate == CmpInst::ICMP_NE;
         bool Is64Bit = LHS->getType()->isIntegerTy(64);
-        unsigned Opc = OpcTable[IsCmpNE][Is64Bit];
+        unsigned Opc = OpcTable[IsBitTest][IsCmpNE][Is64Bit];
 
         unsigned SrcReg = getRegForValue(LHS);
         if (!SrcReg)
@@ -1876,9 +1897,12 @@ bool AArch64FastISel::selectBranch(const Instruction *I) {
         bool SrcIsKill = hasTrivialKill(LHS);
 
         // Emit the combined compare and branch instruction.
-        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc))
-            .addReg(SrcReg, getKillRegState(SrcIsKill))
-            .addMBB(TBB);
+        MachineInstrBuilder MIB =
+            BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc))
+                .addReg(SrcReg, getKillRegState(SrcIsKill));
+        if (IsBitTest)
+          MIB.addImm(TestBit);
+        MIB.addMBB(TBB);
 
         // Obtain the branch weight and add the TrueBB to the successor list.
         uint32_t BranchWeight = 0;
