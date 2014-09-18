@@ -10984,11 +10984,33 @@ bool ARMTargetLowering::shouldConvertConstantLoadToIntImm(const APInt &Imm,
 
 bool ARMTargetLowering::hasLoadLinkedStoreConditional() const { return true; }
 
-static void makeDMB(IRBuilder<> &Builder, ARM_MB::MemBOpt Domain) {
+Instruction* ARMTargetLowering::makeDMB(IRBuilder<> &Builder,
+                                        ARM_MB::MemBOpt Domain) const {
   Module *M = Builder.GetInsertBlock()->getParent()->getParent();
-  Function *DMB = llvm::Intrinsic::getDeclaration(M, Intrinsic::arm_dmb);
-  Constant *CDomain = Builder.getInt32(Domain);
-  Builder.CreateCall(DMB, CDomain);
+
+  // First, if the target has no DMB, see what fallback we can use.
+  if (!Subtarget->hasDataBarrier()) {
+    // Some ARMv6 cpus can support data barriers with an mcr instruction.
+    // Thumb1 and pre-v6 ARM mode use a libcall instead and should never get
+    // here.
+    if (Subtarget->hasV6Ops() && !Subtarget->isThumb()) {
+      Function *MCR = llvm::Intrinsic::getDeclaration(M, Intrinsic::arm_mcr);
+      Value* args[6] = {Builder.getInt32(15), Builder.getInt32(0),
+                        Builder.getInt32(0), Builder.getInt32(7),
+                        Builder.getInt32(10), Builder.getInt32(5)};
+      return Builder.CreateCall(MCR, args);
+    } else {
+      // Instead of using barriers, atomic accesses on these subtargets use
+      // libcalls.
+      llvm_unreachable("makeDMB on a target so old that it has no barriers");
+    }
+  } else {
+    Function *DMB = llvm::Intrinsic::getDeclaration(M, Intrinsic::arm_dmb);
+    // Only a full system barrier exists in the M-class architectures.
+    Domain = Subtarget->isMClass() ? ARM_MB::SY : Domain;
+    Constant *CDomain = Builder.getInt32(Domain);
+    return Builder.CreateCall(DMB, CDomain);
+  }
 }
 
 // Based on http://www.cl.cam.ac.uk/~pes20/cpp/cpp0xmappings.html
