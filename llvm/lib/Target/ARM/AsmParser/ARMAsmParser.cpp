@@ -8473,12 +8473,12 @@ void ARMAsmParser::onLabelParsed(MCSymbol *Symbol) {
 /// parseDirectiveThumbFunc
 ///  ::= .thumbfunc symbol_name
 bool ARMAsmParser::parseDirectiveThumbFunc(SMLoc L) {
-  const MCAsmInfo *MAI = getParser().getStreamer().getContext().getAsmInfo();
-  bool isMachO = MAI->hasSubsectionsViaSymbols();
+  const auto Format = getContext().getObjectFileInfo()->getObjectFileType();
+  bool IsMachO = Format == MCObjectFileInfo::IsMachO;
 
   // Darwin asm has (optionally) function name after .thumb_func direction
   // ELF doesn't
-  if (isMachO) {
+  if (IsMachO) {
     const AsmToken &Tok = Parser.getTok();
     if (Tok.isNot(AsmToken::EndOfStatement)) {
       if (Tok.isNot(AsmToken::Identifier) && Tok.isNot(AsmToken::String)) {
@@ -8495,7 +8495,8 @@ bool ARMAsmParser::parseDirectiveThumbFunc(SMLoc L) {
   }
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    Error(L, "unexpected token in directive");
+    Error(Parser.getTok().getLoc(), "unexpected token in directive");
+    Parser.eatToEndOfStatement();
     return false;
   }
 
