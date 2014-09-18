@@ -29,6 +29,8 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/MC/SubtargetFeature.h"
+#include "llvm/Object/IRObjectFile.h"
+#include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
@@ -44,6 +46,7 @@
 #include "llvm/Transforms/Utils/GlobalStatus.h"
 #include <system_error>
 using namespace llvm;
+using namespace llvm::object;
 
 LTOModule::LTOModule(std::unique_ptr<object::IRObjectFile> Obj,
                      llvm::TargetMachine *TM)
@@ -51,23 +54,31 @@ LTOModule::LTOModule(std::unique_ptr<object::IRObjectFile> Obj,
 
 /// isBitcodeFile - Returns 'true' if the file (or memory contents) is LLVM
 /// bitcode.
-bool LTOModule::isBitcodeFile(const void *mem, size_t length) {
-  return sys::fs::identify_magic(StringRef((const char *)mem, length)) ==
-         sys::fs::file_magic::bitcode;
+bool LTOModule::isBitcodeFile(const void *Mem, size_t Length) {
+  ErrorOr<MemoryBufferRef> BCData = IRObjectFile::findBitcodeInMemBuffer(
+      MemoryBufferRef(StringRef((const char *)Mem, Length), "<mem>"));
+  return bool(BCData);
 }
 
-bool LTOModule::isBitcodeFile(const char *path) {
-  sys::fs::file_magic type;
-  if (sys::fs::identify_magic(path, type))
+bool LTOModule::isBitcodeFile(const char *Path) {
+  ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
+      MemoryBuffer::getFile(Path);
+  if (!BufferOrErr)
     return false;
-  return type == sys::fs::file_magic::bitcode;
+
+  ErrorOr<MemoryBufferRef> BCData = IRObjectFile::findBitcodeInMemBuffer(
+      BufferOrErr.get()->getMemBufferRef());
+  return bool(BCData);
 }
 
-bool LTOModule::isBitcodeForTarget(MemoryBuffer *buffer,
-                                   StringRef triplePrefix) {
-  std::string Triple =
-      getBitcodeTargetTriple(buffer->getMemBufferRef(), getGlobalContext());
-  return StringRef(Triple).startswith(triplePrefix);
+bool LTOModule::isBitcodeForTarget(MemoryBuffer *Buffer,
+                                   StringRef TriplePrefix) {
+  ErrorOr<MemoryBufferRef> BCOrErr =
+      IRObjectFile::findBitcodeInMemBuffer(Buffer->getMemBufferRef());
+  if (!BCOrErr)
+    return false;
+  std::string Triple = getBitcodeTargetTriple(*BCOrErr, getGlobalContext());
+  return StringRef(Triple).startswith(TriplePrefix);
 }
 
 LTOModule *LTOModule::createFromFile(const char *path, TargetOptions options,
@@ -113,7 +124,13 @@ LTOModule *LTOModule::createFromBuffer(const void *mem, size_t length,
 LTOModule *LTOModule::makeLTOModule(MemoryBufferRef Buffer,
                                     TargetOptions options,
                                     std::string &errMsg) {
-  ErrorOr<Module *> MOrErr = parseBitcodeFile(Buffer, getGlobalContext());
+  ErrorOr<MemoryBufferRef> MBOrErr =
+      IRObjectFile::findBitcodeInMemBuffer(Buffer);
+  if (std::error_code EC = MBOrErr.getError()) {
+    errMsg = EC.message();
+    return nullptr;
+  }
+  ErrorOr<Module *> MOrErr = parseBitcodeFile(*MBOrErr, getGlobalContext());
   if (std::error_code EC = MOrErr.getError()) {
     errMsg = EC.message();
     return nullptr;

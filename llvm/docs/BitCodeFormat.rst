@@ -28,8 +28,9 @@ Unlike XML, the bitstream format is a binary encoding, and unlike XML it
 provides a mechanism for the file to self-describe "abbreviations", which are
 effectively size optimizations for the content.
 
-LLVM IR files may be optionally embedded into a `wrapper`_ structure that makes
-it easy to embed extra data along with LLVM IR files.
+LLVM IR files may be optionally embedded into a `wrapper`_ structure, or in a
+`native object file`_. Both of these mechanisms make it easy to embed extra
+data along with LLVM IR files.
 
 This document first describes the LLVM bitstream format, describes the wrapper
 format, then describes the record structure used by LLVM IR files.
@@ -459,6 +460,19 @@ the version is currently always ``0``.  The Offset field is the offset in bytes
 to the start of the bitcode stream in the file, and the Size field is the size
 in bytes of the stream. CPUType is a target-specific value that can be used to
 encode the CPU of the target.
+
+.. _native object file:
+
+Native Object File Wrapper Format
+=================================
+
+Bitcode files for LLVM IR may also be wrapped in a native object file
+(i.e. ELF, COFF, Mach-O).  The bitcode must be stored in a section of the
+object file named ``.llvmbc``.  This wrapper format is useful for accommodating
+LTO in compilation pipelines where intermediate objects must be native object
+files which contain metadata in other sections.
+
+Not all tools support this format.
 
 .. _encoding of LLVM IR:
 

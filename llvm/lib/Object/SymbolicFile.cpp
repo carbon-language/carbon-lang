@@ -40,11 +40,9 @@ ErrorOr<std::unique_ptr<SymbolicFile>> SymbolicFile::createSymbolicFile(
   case sys::fs::file_magic::macho_universal_binary:
   case sys::fs::file_magic::windows_resource:
     return object_error::invalid_file_type;
-  case sys::fs::file_magic::elf_relocatable:
   case sys::fs::file_magic::elf_executable:
   case sys::fs::file_magic::elf_shared_object:
   case sys::fs::file_magic::elf_core:
-  case sys::fs::file_magic::macho_object:
   case sys::fs::file_magic::macho_executable:
   case sys::fs::file_magic::macho_fixed_virtual_memory_shared_lib:
   case sys::fs::file_magic::macho_core:
@@ -54,10 +52,26 @@ ErrorOr<std::unique_ptr<SymbolicFile>> SymbolicFile::createSymbolicFile(
   case sys::fs::file_magic::macho_bundle:
   case sys::fs::file_magic::macho_dynamically_linked_shared_lib_stub:
   case sys::fs::file_magic::macho_dsym_companion:
-  case sys::fs::file_magic::coff_object:
   case sys::fs::file_magic::coff_import_library:
   case sys::fs::file_magic::pecoff_executable:
     return ObjectFile::createObjectFile(Object, Type);
+  case sys::fs::file_magic::elf_relocatable:
+  case sys::fs::file_magic::macho_object:
+  case sys::fs::file_magic::coff_object: {
+    ErrorOr<std::unique_ptr<ObjectFile>> Obj =
+        ObjectFile::createObjectFile(Object, Type);
+    if (!Obj || !Context)
+      return std::move(Obj);
+
+    ErrorOr<MemoryBufferRef> BCData =
+        IRObjectFile::findBitcodeInObject(*Obj->get());
+    if (!BCData)
+      return std::move(Obj);
+
+    return IRObjectFile::createIRObjectFile(
+        MemoryBufferRef(BCData->getBuffer(), Object.getBufferIdentifier()),
+        *Context);
+  }
   }
   llvm_unreachable("Unexpected Binary File Type");
 }

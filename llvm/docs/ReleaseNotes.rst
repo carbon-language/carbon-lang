@@ -43,6 +43,9 @@ Non-comprehensive list of changes in this release
 
 * Support for AuroraUX has been removed.
 
+* Added support for a `native object file-based bitcode wrapper format
+  <BitCodeFormat.html#native-object-file>`_.
+
 * ... next change ...
 
 .. NOTE

@@ -149,6 +149,9 @@ cl::list<std::string> SegSect("s", cl::Positional, cl::ZeroOrMore,
 cl::opt<bool> FormatMachOasHex("x", cl::desc("Print symbol entry in hex, "
                                              "Mach-O only"));
 
+cl::opt<bool> NoLLVMBitcode("no-llvm-bc",
+                            cl::desc("Disable LLVM bitcode reader"));
+
 bool PrintAddress = true;
 
 bool MultipleFiles = false;
@@ -1009,8 +1012,8 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
     return;
 
   LLVMContext &Context = getGlobalContext();
-  ErrorOr<std::unique_ptr<Binary>> BinaryOrErr =
-      createBinary(BufferOrErr.get()->getMemBufferRef(), &Context);
+  ErrorOr<std::unique_ptr<Binary>> BinaryOrErr = createBinary(
+      BufferOrErr.get()->getMemBufferRef(), NoLLVMBitcode ? nullptr : &Context);
   if (error(BinaryOrErr.getError(), Filename))
     return;
   Binary &Bin = *BinaryOrErr.get();

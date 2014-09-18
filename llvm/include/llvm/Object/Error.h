@@ -26,7 +26,8 @@ enum class object_error {
   arch_not_found,
   invalid_file_type,
   parse_failed,
-  unexpected_eof
+  unexpected_eof,
+  bitcode_section_not_found,
 };
 
 inline std::error_code make_error_code(object_error e) {
