@@ -1,9 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=redwood -show-mc-encoding -verify-machineinstrs < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
-; http://llvm.org/bugs/show_bug.cgi?id=20982
-; REQUIRES: not_ubsan
-
 declare i32 @llvm.AMDGPU.bfe.i32(i32, i32, i32) nounwind readnone
 
 ; FUNC-LABEL: @bfe_i32_arg_arg_arg
@@ -373,12 +370,13 @@ define void @bfe_i32_constant_fold_test_15(i32 addrspace(1)* %out) nounwind {
   ret void
 }
 
+; FIXME: This should fold to something
 ; FUNC-LABEL: @bfe_i32_constant_fold_test_16
-; SI-NOT: BFE
-; SI: V_MOV_B32_e32 [[VREG:v[0-9]+]], -1
+; SI: S_BFE_I32 [[SREG:s[0-9]+]], -1, 0x70001
+; SI: V_MOV_B32_e32 [[VREG:v[0-9]+]], [[SREG]]
 ; SI: BUFFER_STORE_DWORD [[VREG]],
 ; SI: S_ENDPGM
-; EG-NOT: BFE
+
 define void @bfe_i32_constant_fold_test_16(i32 addrspace(1)* %out) nounwind {
   %bfe_i32 = call i32 @llvm.AMDGPU.bfe.i32(i32 4294967295, i32 1, i32 7) nounwind readnone
   store i32 %bfe_i32, i32 addrspace(1)* %out, align 4
