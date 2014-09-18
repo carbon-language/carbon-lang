@@ -1,0 +1,14 @@
+# RUN: yaml2obj %p/Inputs/hello.obj.yaml > %t1.obj
+# RUN: yaml2obj %p/Inputs/tlsused.obj.yaml > %t2.obj
+
+# RUN: lld -flavor link /out:%t1.exe /subsystem:console /force -- %t1.obj
+# RUN: llvm-readobj -file-headers %t1.exe | FileCheck -check-prefix=NOTLS %s
+
+# RUN: lld -flavor link /out:%t2.exe /subsystem:console /force -- %t1.obj %t2.obj
+# RUN: llvm-readobj -file-headers %t2.exe | FileCheck -check-prefix=TLS %s
+
+NOTLS: TLSTableRVA: 0x0
+NOTLS: TLSTableSize: 0x0
+
+TLS: TLSTableRVA: 0x1014
+TLS: TLSTableSize: 0x18

@@ -885,6 +885,9 @@ private:
   // The size of the image on disk. This is basically the sum of all chunks in
   // the output file with paddings between them.
   uint32_t _imageSizeOnDisk;
+
+  // The map from atom to its relative virtual address.
+  std::map<const Atom *, uint64_t> _atomRva;
 };
 
 StringRef customSectionName(const DefinedAtom *atom) {
@@ -933,6 +936,13 @@ void groupAtoms(const PECOFFLinkingContext &ctx, const File &file,
   }
 }
 
+static const DefinedAtom *findTLSUsedSymbol(const File &file) {
+  for (const DefinedAtom *atom : file.defined())
+    if (atom->name() == "__tls_used")
+      return atom;
+  return nullptr;
+}
+
 // Create all chunks that consist of the output file.
 template <class PEHeader>
 void PECOFFWriter::build(const File &linkedFile) {
@@ -949,6 +959,7 @@ void PECOFFWriter::build(const File &linkedFile) {
   addChunk(dataDirectory);
   addChunk(sectionTable);
 
+  // Create sections and add the atoms to them.
   for (auto i : atoms) {
     StringRef sectionName = i.first;
     std::vector<const DefinedAtom *> &contents = i.second;
@@ -957,9 +968,14 @@ void PECOFFWriter::build(const File &linkedFile) {
       addSectionChunk(section, sectionTable);
   }
 
-  // Now that we know the addresses of all defined atoms that needs to be
-  // relocated. So we can create the ".reloc" section which contains all the
-  // relocation sites.
+  // Build atom to its RVA map.
+  for (std::unique_ptr<Chunk> &cp : _chunks)
+    if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
+      chunk->buildAtomRvaMap(_atomRva);
+
+  // We know the addresses of all defined atoms that needs to be
+  // relocated. So we can create the ".reloc" section which contains
+  // all the relocation sites.
   if (_ctx.getBaseRelocationEnabled()) {
     BaseRelocChunk *baseReloc = new BaseRelocChunk(_chunks, _ctx);
     if (baseReloc->size()) {
@@ -1014,6 +1030,11 @@ void PECOFFWriter::build(const File &linkedFile) {
                               section->getVirtualAddress(), section->size());
   }
 
+  if (const DefinedAtom *atom = findTLSUsedSymbol(linkedFile)) {
+    dataDirectory->setField(DataDirectoryIndex::TLS_TABLE,
+                            _atomRva[atom], 0x18);
+  }
+
   // Now that we know the size and file offset of sections. Set the file
   // header accordingly.
   peHeader->setSizeOfCode(calcSizeOfCode());
@@ -1057,27 +1078,20 @@ std::error_code PECOFFWriter::writeFile(const File &linkedFile,
 /// address. In the second pass, we visit all relocation references to fix
 /// up addresses in the buffer.
 void PECOFFWriter::applyAllRelocations(uint8_t *bufferStart) {
-  std::map<const Atom *, uint64_t> atomRva;
+  // Create the list of section start addresses. It's needed for
+  // relocations of SECREL type.
   std::vector<uint64_t> sectionRva;
-
-  // Create the list of section start addresses.
   for (auto &cp : _chunks)
     if (SectionChunk *section = dyn_cast<SectionChunk>(&*cp))
       sectionRva.push_back(section->getVirtualAddress());
 
-  // Pass 1
-  for (auto &cp : _chunks)
-    if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
-      chunk->buildAtomRvaMap(atomRva);
-
-  // Pass 2
   uint64_t base = _ctx.getBaseAddress();
   for (auto &cp : _chunks) {
     if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp)) {
       if (_ctx.is64Bit()) {
-        chunk->applyRelocations64(bufferStart, atomRva, sectionRva, base);
+        chunk->applyRelocations64(bufferStart, _atomRva, sectionRva, base);
       } else {
-        chunk->applyRelocations32(bufferStart, atomRva, sectionRva, base);
+        chunk->applyRelocations32(bufferStart, _atomRva, sectionRva, base);
       }
     }
   }
