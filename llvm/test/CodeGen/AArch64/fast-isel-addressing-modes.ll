@@ -130,12 +130,9 @@ define i32 @load_breg_immoff_1(i64 %a) {
 
 ; Min not-supported negative offset
 define i32 @load_breg_immoff_2(i64 %a) {
-; SDAG-LABEL: load_breg_immoff_2
-; SDAG:       sub [[REG:x[0-9]+]], x0, #257
-; SDAG-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]]{{\]}}
-; FAST-LABEL: load_breg_immoff_2
-; FAST:       add [[REG:x[0-9]+]], x0, {{x[0-9]+}}
-; FAST-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]]{{\]}}
+; CHECK-LABEL: load_breg_immoff_2
+; CHECK:       sub [[REG:x[0-9]+]], x0, #257
+; CHECK-NEXT:  ldr {{w[0-9]+}}, {{\[}}[[REG]]{{\]}}
   %1 = add i64 %a, -257
   %2 = inttoptr i64 %1 to i32*
   %3 = load i32* %2
@@ -196,12 +193,9 @@ define void @store_breg_immoff_1(i64 %a) {
 
 ; Min not-supported negative offset
 define void @store_breg_immoff_2(i64 %a) {
-; SDAG-LABEL: store_breg_immoff_2
-; SDAG:       sub [[REG:x[0-9]+]], x0, #257
-; SDAG-NEXT:  str wzr, {{\[}}[[REG]]{{\]}}
-; FAST-LABEL: store_breg_immoff_2
-; FAST:       add [[REG:x[0-9]+]], x0, {{x[0-9]+}}
-; FAST-NEXT:  str wzr, {{\[}}[[REG]]{{\]}}
+; CHECK-LABEL: store_breg_immoff_2
+; CHECK:       sub [[REG:x[0-9]+]], x0, #257
+; CHECK-NEXT:  str wzr, {{\[}}[[REG]]{{\]}}
   %1 = add i64 %a, -257
   %2 = inttoptr i64 %1 to i32*
   store i32 0, i32* %2
