@@ -43,4 +43,17 @@ int func1() {
   __asm__ volatile("foo1 %0" : : "f" (val256)); // expected-error {{invalid input size for constraint 'f'}}
   __asm__ volatile("foo1 %0" : : "t" (val256)); // expected-error {{invalid input size for constraint 't'}}
   __asm__ volatile("foo1 %0" : : "u" (val256)); // expected-error {{invalid input size for constraint 'u'}}
+
+  __asm__ volatile("foo1 %0" : "=R" (val)); // expected-error {{invalid output size for constraint '=R'}}
+  __asm__ volatile("foo1 %0" : "=q" (val)); // expected-error {{invalid output size for constraint '=q'}}
+  __asm__ volatile("foo1 %0" : "=Q" (val)); // expected-error {{invalid output size for constraint '=Q'}}
+  __asm__ volatile("foo1 %0" : "=a" (val)); // expected-error {{invalid output size for constraint '=a'}}
+  __asm__ volatile("foo1 %0" : "=b" (val)); // expected-error {{invalid output size for constraint '=b'}}
+  __asm__ volatile("foo1 %0" : "=c" (val)); // expected-error {{invalid output size for constraint '=c'}}
+  __asm__ volatile("foo1 %0" : "=d" (val)); // expected-error {{invalid output size for constraint '=d'}}
+  __asm__ volatile("foo1 %0" : "=S" (val)); // expected-error {{invalid output size for constraint '=S'}}
+  __asm__ volatile("foo1 %0" : "=D" (val)); // expected-error {{invalid output size for constraint '=D'}}
+  __asm__ volatile("foo1 %0" : "=A" (val128)); // expected-error {{invalid output size for constraint '=A'}}
+  __asm__ volatile("foo1 %0" : "=t" (val256)); // expected-error {{invalid output size for constraint '=t'}}
+  __asm__ volatile("foo1 %0" : "=u" (val256)); // expected-error {{invalid output size for constraint '=u'}}
 }

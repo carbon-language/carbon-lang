@@ -121,6 +121,20 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
       return StmtError();
 
     OutputConstraintInfos.push_back(Info);
+
+    const Type *Ty = OutputExpr->getType().getTypePtr();
+
+    // If this is a dependent type, just continue. We don't know the size of a
+    // dependent type.
+    if (Ty->isDependentType())
+      continue;
+
+    unsigned Size = Context.getTypeSize(Ty);
+    if (!Context.getTargetInfo().validateOutputSize(Literal->getString(),
+                                                    Size))
+      return StmtError(Diag(OutputExpr->getLocStart(),
+                            diag::err_asm_invalid_output_size)
+                       << Info.getConstraintStr());
   }
 
   SmallVector<TargetInfo::ConstraintInfo, 4> InputConstraintInfos;

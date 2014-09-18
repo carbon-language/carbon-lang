@@ -577,6 +577,12 @@ public:
   bool validateInputConstraint(ConstraintInfo *OutputConstraints,
                                unsigned NumOutputs,
                                ConstraintInfo &info) const;
+
+  virtual bool validateOutputSize(StringRef /*Constraint*/,
+                                  unsigned /*Size*/) const {
+    return true;
+  }
+
   virtual bool validateInputSize(StringRef /*Constraint*/,
                                  unsigned /*Size*/) const {
     return true;
