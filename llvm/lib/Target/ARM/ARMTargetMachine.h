@@ -32,7 +32,6 @@ public:
                        CodeGenOpt::Level OL,
                        bool isLittle);
 
-  using LLVMTargetMachine::getSubtargetImpl;
   const ARMSubtarget *getSubtargetImpl() const override { return &Subtarget; }
 
   /// \brief Register ARM analysis passes with a pass manager.

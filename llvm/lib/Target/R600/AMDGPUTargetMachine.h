@@ -33,8 +33,6 @@ public:
                       StringRef CPU, TargetOptions Options, Reloc::Model RM,
                       CodeModel::Model CM, CodeGenOpt::Level OL);
   ~AMDGPUTargetMachine();
-
-  using LLVMTargetMachine::getSubtargetImpl;
   const AMDGPUSubtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }

@@ -28,7 +28,6 @@ public:
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL, bool is64bit);
 
-  using LLVMTargetMachine::getSubtargetImpl;
   const SparcSubtarget *getSubtargetImpl() const override { return &Subtarget; }
 
   // Pass Pipeline Configuration

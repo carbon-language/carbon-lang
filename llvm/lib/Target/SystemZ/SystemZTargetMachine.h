@@ -32,7 +32,6 @@ public:
                        CodeGenOpt::Level OL);
 
   // Override TargetMachine.
-  using LLVMTargetMachine::getSubtargetImpl;
   const SystemZSubtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }

@@ -35,7 +35,6 @@ public:
                      const TargetOptions &Options, Reloc::Model RM,
                      CodeModel::Model CM, CodeGenOpt::Level OP, bool is64bit);
 
-  using LLVMTargetMachine::getSubtargetImpl;
   const NVPTXSubtarget *getSubtargetImpl() const override { return &Subtarget; }
 
   ManagedStringPool *getManagedStrPool() const {

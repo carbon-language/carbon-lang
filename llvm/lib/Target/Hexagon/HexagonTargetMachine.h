@@ -31,7 +31,6 @@ public:
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);
 
-  using LLVMTargetMachine::getSubtargetImpl;
   const HexagonSubtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }

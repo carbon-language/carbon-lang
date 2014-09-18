@@ -39,7 +39,6 @@ public:
 
   void addAnalysisPasses(PassManagerBase &PM) override;
 
-  using LLVMTargetMachine::getSubtargetImpl;
   const MipsSubtarget *getSubtargetImpl() const override {
     if (Subtarget)
       return Subtarget;
