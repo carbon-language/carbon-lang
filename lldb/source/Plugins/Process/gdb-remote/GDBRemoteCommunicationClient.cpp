@@ -1643,7 +1643,9 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                     }
                     else if (name.compare("triple") == 0)
                     {
-                        triple.swap(value);
+                        extractor.GetStringRef ().swap (value);
+                        extractor.SetFilePos(0);
+                        extractor.GetHexByteString (triple);
                         ++num_keys_decoded;
                     }
                     else if (name.compare ("distribution_id") == 0)
@@ -2331,6 +2333,10 @@ GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemot
             }
             else if (name.compare("triple") == 0)
             {
+                StringExtractor extractor;
+                extractor.GetStringRef().swap(value);
+                extractor.SetFilePos(0);
+                extractor.GetHexByteString (value);
                 process_info.GetArchitecture ().SetTriple (value.c_str());
             }
             else if (name.compare("name") == 0)
@@ -2447,7 +2453,10 @@ GDBRemoteCommunicationClient::GetCurrentProcessInfo ()
                 }
                 else if (name.compare("triple") == 0)
                 {
-                    triple = value;
+                    StringExtractor extractor;
+                    extractor.GetStringRef().swap(value);
+                    extractor.SetFilePos(0);
+                    extractor.GetHexByteString (triple);
                     ++num_keys_decoded;
                 }
                 else if (name.compare("ostype") == 0)
