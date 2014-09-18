@@ -21,9 +21,13 @@ namespace readability {
 /// Corresponding cpplint.py check: readability/todo
 class TodoCommentCheck : public ClangTidyCheck {
 public:
-  TodoCommentCheck(StringRef Name, ClangTidyContext *Context)
-      : ClangTidyCheck(Name, Context) {}
+  TodoCommentCheck(StringRef Name, ClangTidyContext *Context);
+  ~TodoCommentCheck();
   void registerPPCallbacks(CompilerInstance &Compiler) override;
+
+private:
+  class TodoCommentHandler;
+  std::unique_ptr<TodoCommentHandler> Handler;
 };
 
 } // namespace readability

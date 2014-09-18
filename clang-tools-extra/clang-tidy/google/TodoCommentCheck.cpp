@@ -15,8 +15,7 @@ namespace clang {
 namespace tidy {
 namespace readability {
 
-namespace {
-class TodoCommentHandler : public CommentHandler {
+class TodoCommentCheck::TodoCommentHandler : public CommentHandler {
 public:
   explicit TodoCommentHandler(TodoCommentCheck &Check)
       : Check(Check), TodoMatch("^// *TODO(\\(.*\\))?:?( )?(.*)$") {}
@@ -54,10 +53,15 @@ private:
   TodoCommentCheck &Check;
   llvm::Regex TodoMatch;
 };
-} // namespace
+
+TodoCommentCheck::TodoCommentCheck(StringRef Name, ClangTidyContext *Context)
+    : ClangTidyCheck(Name, Context),
+      Handler(llvm::make_unique<TodoCommentHandler>(*this)) {}
+
+TodoCommentCheck::~TodoCommentCheck() {}
 
 void TodoCommentCheck::registerPPCallbacks(CompilerInstance &Compiler) {
-  Compiler.getPreprocessor().addCommentHandler(new TodoCommentHandler(*this));
+  Compiler.getPreprocessor().addCommentHandler(Handler.get());
 }
 
 } // namespace readability
