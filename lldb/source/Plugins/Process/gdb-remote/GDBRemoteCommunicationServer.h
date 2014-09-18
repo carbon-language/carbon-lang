@@ -514,9 +514,9 @@ private:
         return !m_is_platform;
     }
 
-    /// Launch a process from lldb-gdbserver
+    /// Launch an inferior process from lldb-gdbserver
     lldb_private::Error
-    LaunchDebugServerProcess ();
+    LaunchProcessForDebugging ();
 
     /// Launch a process from lldb-platform
     lldb_private::Error

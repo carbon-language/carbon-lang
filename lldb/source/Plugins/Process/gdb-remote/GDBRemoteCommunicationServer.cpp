@@ -478,13 +478,13 @@ GDBRemoteCommunicationServer::LaunchProcess ()
     // FIXME This looks an awful lot like we could override this in
     // derived classes, one for lldb-platform, the other for lldb-gdbserver.
     if (IsGdbServer ())
-        return LaunchDebugServerProcess ();
+        return LaunchProcessForDebugging ();
     else
         return LaunchPlatformProcess ();
 }
 
 lldb_private::Error
-GDBRemoteCommunicationServer::LaunchDebugServerProcess ()
+GDBRemoteCommunicationServer::LaunchProcessForDebugging ()
 {
     Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
 
@@ -530,33 +530,10 @@ GDBRemoteCommunicationServer::LaunchDebugServerProcess ()
     if ((pid = m_process_launch_info.GetProcessID ()) != LLDB_INVALID_PROCESS_ID)
     {
         // add to spawned pids
-        {
-            Mutex::Locker locker (m_spawned_pids_mutex);
-            // On an lldb-gdbserver, we would expect there to be only one.
-            assert (m_spawned_pids.empty () && "lldb-gdbserver adding tracked process but one already existed");
-            m_spawned_pids.insert (pid);
-        }
-    }
-
-    if (error.Success ())
-    {
-        if (log)
-            log->Printf ("GDBRemoteCommunicationServer::%s beginning check to wait for launched application to hit first stop", __FUNCTION__);
-
-        int iteration = 0;
-        // Wait for the process to hit its first stop state.
-        while (!StateIsStoppedState (m_debugged_process_sp->GetState (), false))
-        {
-            if (log)
-                log->Printf ("GDBRemoteCommunicationServer::%s waiting for launched process to hit first stop (%d)...", __FUNCTION__, iteration++);
-
-            // FIXME use a finer granularity.
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
-
-        if (log)
-            log->Printf ("GDBRemoteCommunicationServer::%s launched application has hit first stop", __FUNCTION__);
-
+        Mutex::Locker locker (m_spawned_pids_mutex);
+        // On an lldb-gdbserver, we would expect there to be only one.
+        assert (m_spawned_pids.empty () && "lldb-gdbserver adding tracked process but one already existed");
+        m_spawned_pids.insert (pid);
     }
 
     return error;
