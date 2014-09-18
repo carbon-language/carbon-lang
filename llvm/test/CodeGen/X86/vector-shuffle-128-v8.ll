@@ -845,3 +845,133 @@ define <8 x i16> @shuffle_v8i16_zzBzzzzz(i16 %i) {
   %shuffle = shufflevector <8 x i16> zeroinitializer, <8 x i16> %a, <8 x i32> <i32 0, i32 1, i32 11, i32 3, i32 4, i32 5, i32 6, i32 7>
   ret <8 x i16> %shuffle
 }
+
+define <8 x i16> @shuffle_v8i16_def01234(<8 x i16> %a, <8 x i16> %b) {
+; SSSE3-LABEL: @shuffle_v8i16_def01234
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr $10, {{.*}} # xmm0 = xmm1[10,11,12,13,14,15],xmm0[0,1,2,3,4,5,6,7,8,9]
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 13, i32 14, i32 15, i32 0, i32 1, i32 2, i32 3, i32 4>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_ueuu123u(<8 x i16> %a, <8 x i16> %b) {
+; SSSE3-LABEL: @shuffle_v8i16_ueuu123u
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr $10, {{.*}} # xmm0 = xmm1[10,11,12,13,14,15],xmm0[0,1,2,3,4,5,6,7,8,9]
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 undef, i32 14, i32 undef, i32 undef, i32 1, i32 2, i32 3, i32 undef>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_56701234(<8 x i16> %a, <8 x i16> %b) {
+; SSSE3-LABEL: @shuffle_v8i16_56701234
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr $10, {{.*}} # xmm0 = xmm0[10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9]
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3, i32 4>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_u6uu123u(<8 x i16> %a, <8 x i16> %b) {
+; SSSE3-LABEL: @shuffle_v8i16_u6uu123u
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr $10, {{.*}} # xmm0 = xmm0[10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9]
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 undef, i32 6, i32 undef, i32 undef, i32 1, i32 2, i32 3, i32 undef>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_uuuu123u(<8 x i16> %a, <8 x i16> %b) {
+; SSSE3-LABEL: @shuffle_v8i16_uuuu123u
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr $10, {{.*}} # xmm0 = xmm0[10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9]
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 1, i32 2, i32 3, i32 undef>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_bcdef012(<8 x i16> %a, <8 x i16> %b) {
+; SSSE3-LABEL: @shuffle_v8i16_bcdef012
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr $6, {{.*}} # xmm0 = xmm1[6,7,8,9,10,11,12,13,14,15],xmm0[0,1,2,3,4,5]
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 11, i32 12, i32 13, i32 14, i32 15, i32 0, i32 1, i32 2>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_ucdeuu1u(<8 x i16> %a, <8 x i16> %b) {
+; SSSE3-LABEL: @shuffle_v8i16_ucdeuu1u
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr $6, {{.*}} # xmm0 = xmm1[6,7,8,9,10,11,12,13,14,15],xmm0[0,1,2,3,4,5]
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 undef, i32 12, i32 13, i32 14, i32 undef, i32 undef, i32 1, i32 undef>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_34567012(<8 x i16> %a, <8 x i16> %b) {
+; SSSE3-LABEL: @shuffle_v8i16_34567012
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr $6, {{.*}} # xmm0 = xmm0[6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5]
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 3, i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_u456uu1u(<8 x i16> %a, <8 x i16> %b) {
+; SSSE3-LABEL: @shuffle_v8i16_u456uu1u
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr $6, {{.*}} # xmm0 = xmm0[6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5]
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 undef, i32 4, i32 5, i32 6, i32 undef, i32 undef, i32 1, i32 undef>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_u456uuuu(<8 x i16> %a, <8 x i16> %b) {
+; SSSE3-LABEL: @shuffle_v8i16_u456uuuu
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr $6, {{.*}} # xmm0 = xmm0[6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5]
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 undef, i32 4, i32 5, i32 6, i32 undef, i32 undef, i32 undef, i32 undef>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_3456789a(<8 x i16> %a, <8 x i16> %b) {
+; SSSE3-LABEL: @shuffle_v8i16_3456789a
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr $6, {{.*}} # xmm1 = xmm0[6,7,8,9,10,11,12,13,14,15],xmm1[0,1,2,3,4,5]
+; SSSE3-NEXT:    movdqa %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_u456uu9u(<8 x i16> %a, <8 x i16> %b) {
+; SSSE3-LABEL: @shuffle_v8i16_u456uu9u
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr $6, {{.*}} # xmm1 = xmm0[6,7,8,9,10,11,12,13,14,15],xmm1[0,1,2,3,4,5]
+; SSSE3-NEXT:    movdqa %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 undef, i32 4, i32 5, i32 6, i32 undef, i32 undef, i32 9, i32 undef>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_56789abc(<8 x i16> %a, <8 x i16> %b) {
+; SSSE3-LABEL: @shuffle_v8i16_56789abc
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr $10, {{.*}} # xmm1 = xmm0[10,11,12,13,14,15],xmm1[0,1,2,3,4,5,6,7,8,9]
+; SSSE3-NEXT:    movdqa %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12>
+  ret <8 x i16> %shuffle
+}
+
+define <8 x i16> @shuffle_v8i16_u6uu9abu(<8 x i16> %a, <8 x i16> %b) {
+; SSSE3-LABEL: @shuffle_v8i16_u6uu9abu
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    palignr $10, {{.*}} # xmm1 = xmm0[10,11,12,13,14,15],xmm1[0,1,2,3,4,5,6,7,8,9]
+; SSSE3-NEXT:    movdqa %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 undef, i32 6, i32 undef, i32 undef, i32 9, i32 10, i32 11, i32 undef>
+  ret <8 x i16> %shuffle
+}

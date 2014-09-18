@@ -7256,6 +7256,103 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
                                  DAG.getConstant(BlendMask, MVT::i8)));
 }
 
+/// \brief Try to lower a vector shuffle as a byte rotation.
+///
+/// We have a generic PALIGNR instruction in x86 that will do an arbitrary
+/// byte-rotation of a the concatentation of two vectors. This routine will
+/// try to generically lower a vector shuffle through such an instruction. It
+/// does not check for the availability of PALIGNR-based lowerings, only the
+/// applicability of this strategy to the given mask. This matches shuffle
+/// vectors that look like:
+/// 
+///   v8i16 [11, 12, 13, 14, 15, 0, 1, 2]
+/// 
+/// Essentially it concatenates V1 and V2, shifts right by some number of
+/// elements, and takes the low elements as the result. Note that while this is
+/// specified as a *right shift* because x86 is little-endian, it is a *left
+/// rotate* of the vector lanes.
+///
+/// Note that this only handles 128-bit vector widths currently.
+static SDValue lowerVectorShuffleAsByteRotate(SDLoc DL, MVT VT, SDValue V1,
+                                              SDValue V2,
+                                              ArrayRef<int> Mask,
+                                              SelectionDAG &DAG) {
+  assert(!isNoopShuffleMask(Mask) && "We shouldn't lower no-op shuffles!");
+
+  // We need to detect various ways of spelling a rotation:
+  //   [11, 12, 13, 14, 15,  0,  1,  2]
+  //   [-1, 12, 13, 14, -1, -1,  1, -1]
+  //   [-1, -1, -1, -1, -1, -1,  1,  2]
+  //   [ 3,  4,  5,  6,  7,  8,  9, 10]
+  //   [-1,  4,  5,  6, -1, -1,  9, -1]
+  //   [-1,  4,  5,  6, -1, -1, -1, -1]
+  int Rotation = 0;
+  SDValue Lo, Hi;
+  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
+    if (Mask[i] == -1)
+      continue;
+    assert(Mask[i] >= 0 && "Only -1 is a valid negative mask element!");
+
+    // Based on the mod-Size value of this mask element determine where
+    // a rotated vector would have started.
+    int StartIdx = i - (Mask[i] % Size);
+    if (StartIdx == 0)
+      // The identity rotation isn't interesting, stop.
+      return SDValue();
+
+    // If we found the tail of a vector the rotation must be the missing
+    // front. If we found the head of a vector, it must be how much of the head.
+    int CandidateRotation = StartIdx < 0 ? -StartIdx : Size - StartIdx;
+
+    if (Rotation == 0)
+      Rotation = CandidateRotation;
+    else if (Rotation != CandidateRotation)
+      // The rotations don't match, so we can't match this mask.
+      return SDValue();
+
+    // Compute which value this mask is pointing at.
+    SDValue MaskV = Mask[i] < Size ? V1 : V2;
+
+    // Compute which of the two target values this index should be assigned to.
+    // This reflects whether the high elements are remaining or the low elements
+    // are remaining.
+    SDValue &TargetV = StartIdx < 0 ? Hi : Lo;
+
+    // Either set up this value if we've not encountered it before, or check
+    // that it remains consistent.
+    if (!TargetV)
+      TargetV = MaskV;
+    else if (TargetV != MaskV)
+      // This may be a rotation, but it pulls from the inputs in some
+      // unsupported interleaving.
+      return SDValue();
+  }
+
+  // Check that we successfully analyzed the mask, and normalize the results.
+  assert(Rotation != 0 && "Failed to locate a viable rotation!");
+  assert((Lo || Hi) && "Failed to find a rotated input vector!");
+  if (!Lo)
+    Lo = Hi;
+  else if (!Hi)
+    Hi = Lo;
+
+  // Cast the inputs to v16i8 to match PALIGNR.
+  Lo = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Lo);
+  Hi = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Hi);
+
+  assert(VT.getSizeInBits() == 128 &&
+         "Rotate-based lowering only supports 128-bit lowering!");
+  assert(Mask.size() <= 16 &&
+         "Can shuffle at most 16 bytes in a 128-bit vector!");
+  // The actual rotate instruction rotates bytes, so we need to scale the
+  // rotation based on how many bytes are in the vector.
+  int Scale = 16 / Mask.size();
+
+  return DAG.getNode(ISD::BITCAST, DL, VT,
+                     DAG.getNode(X86ISD::PALIGNR, DL, MVT::v16i8, Hi, Lo,
+                                 DAG.getConstant(Rotation * Scale, MVT::i8)));
+}
+
 /// \brief Handle lowering of 2-lane 64-bit floating point shuffles.
 ///
 /// This is the basis function for the 2-lane 64-bit shuffles as we have full
@@ -7691,6 +7788,12 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8i16, V, V);
   if (isShuffleEquivalent(Mask, 4, 4, 5, 5, 6, 6, 7, 7))
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8i16, V, V);
+
+  // Try to use rotation instructions if available.
+  if (Subtarget->hasSSSE3())
+    if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
+            DL, MVT::v8i16, V, V, Mask, DAG))
+      return Rotate;
 
   // Simplify the 1-into-3 and 3-into-1 cases with a single pshufd. For all
   // such inputs we can swap two of the dwords across the half mark and end up
@@ -8298,6 +8401,11 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
             lowerVectorShuffleAsBlend(DL, MVT::v8i16, V1, V2, Mask, DAG))
       return Blend;
 
+  // Try to use rotation instructions if available.
+  if (Subtarget->hasSSSE3())
+    if (SDValue Rotate = lowerVectorShuffleAsByteRotate(DL, MVT::v8i16, V1, V2, Mask, DAG))
+      return Rotate;
+
   if (NumV1Inputs + NumV2Inputs <= 4)
     return lowerV8I16BasicBlendVectorShuffle(DL, V1, V2, Mask, Subtarget, DAG);
 
@@ -8426,6 +8534,13 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   ArrayRef<int> OrigMask = SVOp->getMask();
   assert(OrigMask.size() == 16 && "Unexpected mask size for v16 shuffle!");
+
+  // Try to use rotation instructions if available.
+  if (Subtarget->hasSSSE3())
+    if (SDValue Rotate = lowerVectorShuffleAsByteRotate(DL, MVT::v16i8, V1, V2,
+                                                        OrigMask, DAG))
+      return Rotate;
+
   int MaskStorage[16] = {
       OrigMask[0],  OrigMask[1],  OrigMask[2],  OrigMask[3],
       OrigMask[4],  OrigMask[5],  OrigMask[6],  OrigMask[7],
