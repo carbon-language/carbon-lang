@@ -2168,8 +2168,9 @@ bool RecursiveASTVisitor<Derived>::TraverseLambdaExpr(LambdaExpr *S) {
     }
 
     auto *T = Proto.getTypePtr();
-    for (const auto &E : T->exceptions())
+    for (const auto &E : T->exceptions()) {
       TRY_TO(TraverseType(E));
+    }
 
     if (Expr *NE = T->getNoexceptExpr())
       TRY_TO(TraverseStmt(NE));
