@@ -135,6 +135,8 @@ class ARMAsmParser : public MCTargetAsmParser {
   UnwindContext UC;
 
   ARMTargetStreamer &getTargetStreamer() {
+    assert(getParser().getStreamer().getTargetStreamer() &&
+           "do not have a target streamer");
     MCTargetStreamer &TS = *getParser().getStreamer().getTargetStreamer();
     return static_cast<ARMTargetStreamer &>(TS);
   }
@@ -8313,6 +8315,7 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
   const MCObjectFileInfo::Environment Format =
     getContext().getObjectFileInfo()->getObjectFileType();
   bool IsMachO = Format == MCObjectFileInfo::IsMachO;
+  bool IsCOFF = Format == MCObjectFileInfo::IsCOFF;
 
   StringRef IDVal = DirectiveID.getIdentifier();
   if (IDVal == ".word")
@@ -8364,7 +8367,7 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
   else if (IDVal == ".thumb_set")
     return parseDirectiveThumbSet(DirectiveID.getLoc());
 
-  if (!IsMachO) {
+  if (!IsMachO && !IsCOFF) {
     if (IDVal == ".arch")
       return parseDirectiveArch(DirectiveID.getLoc());
     else if (IDVal == ".cpu")
