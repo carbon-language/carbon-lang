@@ -58,6 +58,13 @@ namespace dr1330_example {
     S().f<S>(); // ok
     S().f<int>(); // expected-note {{instantiation of exception spec}}
   }
+
+  template<typename T>
+  struct U {
+    void f() noexcept(T::error);
+    void (g)() noexcept(T::error);
+  };
+  U<int> uint; // ok
 }
 
 namespace core_19754_example {

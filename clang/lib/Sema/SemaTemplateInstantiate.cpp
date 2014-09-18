@@ -1577,8 +1577,8 @@ TypeSourceInfo *Sema::SubstFunctionDeclType(TypeSourceInfo *T,
 
   QualType Result;
 
-  // FIXME: What if the function type is parenthesized?
-  if (FunctionProtoTypeLoc Proto = TL.getAs<FunctionProtoTypeLoc>()) {
+  if (FunctionProtoTypeLoc Proto =
+          TL.IgnoreParens().getAs<FunctionProtoTypeLoc>()) {
     // Instantiate the type, other than its exception specification. The
     // exception specification is instantiated in InitFunctionInstantiation
     // once we've built the FunctionDecl.
