@@ -87,9 +87,6 @@ public:
   /// \brief Return a memory buffer for the given source file.
   ErrorOr<const MemoryBuffer &> getSourceFile(StringRef SourceFile);
 
-  /// \brief Return true if two filepaths refer to the same file.
-  bool equivalentFiles(StringRef A, StringRef B);
-
   /// \brief Collect a set of function's file ids which correspond to the
   /// given source file. Return false if the set is empty.
   bool gatherInterestingFileIDs(StringRef SourceFile,
@@ -148,7 +145,20 @@ public:
       LoadedSourceFiles;
   std::vector<FunctionCoverageMapping> FunctionMappingRecords;
   bool CompareFilenamesOnly;
+  StringMap<std::string> RemappedFilenames;
 };
+}
+
+static std::vector<StringRef>
+getUniqueFilenames(ArrayRef<FunctionCoverageMapping> FunctionMappingRecords) {
+  std::vector<StringRef> Filenames;
+  for (const auto &Function : FunctionMappingRecords)
+    for (const auto &Filename : Function.Filenames)
+      Filenames.push_back(Filename);
+  std::sort(Filenames.begin(), Filenames.end());
+  auto Last = std::unique(Filenames.begin(), Filenames.end());
+  Filenames.erase(Last, Filenames.end());
+  return Filenames;
 }
 
 void CodeCoverageTool::error(const Twine &Message, StringRef Whence) {
@@ -160,27 +170,23 @@ void CodeCoverageTool::error(const Twine &Message, StringRef Whence) {
 
 ErrorOr<const MemoryBuffer &>
 CodeCoverageTool::getSourceFile(StringRef SourceFile) {
-  SmallString<256> Path(SourceFile);
-  sys::fs::make_absolute(Path);
-  for (const auto &Files : LoadedSourceFiles) {
-    if (equivalentFiles(Path.str(), Files.first)) {
-      return *Files.second;
-    }
+  // If we've remapped filenames, look up the real location for this file.
+  if (!RemappedFilenames.empty()) {
+    auto Loc = RemappedFilenames.find(SourceFile);
+    if (Loc != RemappedFilenames.end())
+      SourceFile = Loc->second;
   }
+  for (const auto &Files : LoadedSourceFiles)
+    if (sys::fs::equivalent(SourceFile, Files.first))
+      return *Files.second;
   auto Buffer = MemoryBuffer::getFile(SourceFile);
   if (auto EC = Buffer.getError()) {
     error(EC.message(), SourceFile);
     return EC;
   }
-  LoadedSourceFiles.push_back(std::make_pair(
-      std::string(Path.begin(), Path.end()), std::move(Buffer.get())));
+  LoadedSourceFiles.push_back(
+      std::make_pair(SourceFile, std::move(Buffer.get())));
   return *LoadedSourceFiles.back().second;
-}
-
-bool CodeCoverageTool::equivalentFiles(StringRef A, StringRef B) {
-  if (CompareFilenamesOnly)
-    return sys::path::filename(A).equals_lower(sys::path::filename(B));
-  return sys::fs::equivalent(A, B);
 }
 
 bool CodeCoverageTool::gatherInterestingFileIDs(
@@ -188,7 +194,7 @@ bool CodeCoverageTool::gatherInterestingFileIDs(
     SmallSet<unsigned, 8> &InterestingFileIDs) {
   bool Interesting = false;
   for (unsigned I = 0, E = Function.Filenames.size(); I < E; ++I) {
-    if (equivalentFiles(SourceFile, Function.Filenames[I])) {
+    if (SourceFile == Function.Filenames[I]) {
       InterestingFileIDs.insert(I);
       Interesting = true;
     }
@@ -204,7 +210,7 @@ CodeCoverageTool::findMainViewFileID(StringRef SourceFile,
   llvm::SmallVector<bool, 8> FilenameEquivalence(Function.Filenames.size(),
                                                  false);
   for (unsigned I = 0, E = Function.Filenames.size(); I < E; ++I) {
-    if (equivalentFiles(SourceFile, Function.Filenames[I]))
+    if (SourceFile == Function.Filenames[I])
       FilenameEquivalence[I] = true;
   }
   for (const auto &CR : Function.CountedRegions) {
@@ -394,6 +400,20 @@ bool CodeCoverageTool::load() {
 
     FunctionMappingRecords.push_back(Function);
   }
+
+  if (CompareFilenamesOnly) {
+    auto CoveredFiles = getUniqueFilenames(FunctionMappingRecords);
+    for (auto &SF : SourceFiles) {
+      StringRef SFBase = sys::path::filename(SF);
+      for (const auto &CF : CoveredFiles)
+        if (SFBase == sys::path::filename(CF)) {
+          RemappedFilenames[CF] = SF;
+          SF = CF;
+          break;
+        }
+    }
+  }
+
   return false;
 }
 
@@ -416,7 +436,8 @@ int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
 
   cl::opt<bool> FilenameEquivalence(
       "filename-equivalence", cl::Optional,
-      cl::desc("Compare the filenames instead of full filepaths"));
+      cl::desc("Treat source files as equivalent to paths in the coverage data "
+               "when the file names match, even if the full paths do not"));
 
   cl::OptionCategory FilteringCategory("Function filtering options");
 
@@ -495,7 +516,14 @@ int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
       Filters.push_back(std::unique_ptr<CoverageFilter>(StatFilterer));
     }
 
-    SourceFiles = InputSourceFiles;
+    for (const auto &File : InputSourceFiles) {
+      SmallString<128> Path(File);
+      if (std::error_code EC = sys::fs::make_absolute(Path)) {
+        errs() << "error: " << File << ": " << EC.message();
+        return 1;
+      }
+      SourceFiles.push_back(Path.str());
+    }
     return 0;
   };
 
@@ -599,16 +627,10 @@ int CodeCoverageTool::show(int argc, const char **argv,
   // Show files
   bool ShowFilenames = SourceFiles.size() != 1;
 
-  if (SourceFiles.empty()) {
+  if (SourceFiles.empty())
     // Get the source files from the function coverage mapping
-    std::set<StringRef> UniqueFilenames;
-    for (const auto &Function : FunctionMappingRecords) {
-      for (const auto &Filename : Function.Filenames)
-        UniqueFilenames.insert(Filename);
-    }
-    for (const auto &Filename : UniqueFilenames)
+    for (StringRef Filename : getUniqueFilenames(FunctionMappingRecords))
       SourceFiles.push_back(Filename);
-  }
 
   for (const auto &SourceFile : SourceFiles) {
     auto SourceBuffer = getSourceFile(SourceFile);
