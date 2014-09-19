@@ -864,6 +864,16 @@ namespace lldb {
         eMemberFunctionKindStaticMethod     // A function that applies to a type rather than any instance
     } MemberFunctionKind;
 
+
+    //----------------------------------------------------------------------
+    // String matching algorithm used by SBTarget
+    //----------------------------------------------------------------------
+    typedef enum MatchType {
+        eMatchTypeNormal,
+        eMatchTypeRegex,
+        eMatchTypeStartsWith
+    } MatchType;
+
 } // namespace lldb
 
 

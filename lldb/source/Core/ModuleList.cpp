@@ -484,6 +484,26 @@ ModuleList::FindFunctionSymbols (const ConstString &name,
     return sc_list.GetSize() - old_size;
 }
 
+
+size_t
+ModuleList::FindFunctions(const RegularExpression &name,
+                          bool include_symbols,
+                          bool include_inlines,
+                          bool append,
+                          SymbolContextList& sc_list)
+{
+    const size_t old_size = sc_list.GetSize();
+
+    Mutex::Locker locker(m_modules_mutex);
+    collection::const_iterator pos, end = m_modules.end();
+    for (pos = m_modules.begin(); pos != end; ++pos)
+    {
+        (*pos)->FindFunctions (name, include_symbols, include_inlines, append, sc_list);
+    }
+
+    return sc_list.GetSize() - old_size;
+}
+
 size_t
 ModuleList::FindCompileUnits (const FileSpec &path, 
                               bool append, 

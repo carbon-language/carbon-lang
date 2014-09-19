@@ -58,6 +58,7 @@
 
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "../source/Commands/CommandObjectBreakpoint.h"
+#include "llvm/Support/Regex.h"
 
 
 using namespace lldb;
@@ -2154,6 +2155,34 @@ SBTarget::FindFunctions (const char *name, uint32_t name_type_mask)
     return sb_sc_list;
 }
 
+lldb::SBSymbolContextList 
+SBTarget::FindGlobalFunctions(const char *name, uint32_t max_matches, MatchType matchtype)
+{
+    lldb::SBSymbolContextList sb_sc_list;
+    if (name && name[0])
+    {
+        TargetSP target_sp(GetSP());
+        if (target_sp)
+        {
+            std::string regexstr;
+            switch (matchtype)
+            {
+            case eMatchTypeRegex:
+                target_sp->GetImages().FindFunctions(RegularExpression(name), true, true, true, *sb_sc_list);
+                break;
+            case eMatchTypeStartsWith:
+                regexstr = llvm::Regex::escape(name) + ".*";
+                target_sp->GetImages().FindFunctions(RegularExpression(regexstr.c_str()), true, true, true, *sb_sc_list);
+                break;
+            default:
+                target_sp->GetImages().FindFunctions(ConstString(name), eFunctionNameTypeAny, true, true, true, *sb_sc_list);
+                break;
+            }
+        }
+    }
+    return sb_sc_list;
+}
+
 lldb::SBType
 SBTarget::FindFirstType (const char* typename_cstr)
 {
@@ -2320,6 +2349,61 @@ SBTarget::FindGlobalVariables (const char *name, uint32_t max_matches)
 
     return sb_value_list;
 }
+
+SBValueList
+SBTarget::FindGlobalVariables(const char *name, uint32_t max_matches, MatchType matchtype)
+{
+    SBValueList sb_value_list;
+
+    TargetSP target_sp(GetSP());
+    if (name && target_sp)
+    {
+        VariableList variable_list;
+        const bool append = true;
+
+        std::string regexstr;
+        uint32_t match_count;
+        switch (matchtype)
+        {
+        case eMatchTypeNormal:
+            match_count = target_sp->GetImages().FindGlobalVariables(ConstString(name),
+                append,
+                max_matches,
+                variable_list);
+            break;
+        case eMatchTypeRegex:
+            match_count = target_sp->GetImages().FindGlobalVariables(RegularExpression(name),
+                append,
+                max_matches,
+                variable_list);
+            break;
+        case eMatchTypeStartsWith:
+            regexstr = llvm::Regex::escape(name) + ".*";
+            match_count = target_sp->GetImages().FindGlobalVariables(RegularExpression(regexstr.c_str()),
+                append,
+                max_matches,
+                variable_list);
+            break;
+        }
+
+
+        if (match_count > 0)
+        {
+            ExecutionContextScope *exe_scope = target_sp->GetProcessSP().get();
+            if (exe_scope == NULL)
+                exe_scope = target_sp.get();
+            for (uint32_t i = 0; i<match_count; ++i)
+            {
+                lldb::ValueObjectSP valobj_sp(ValueObjectVariable::Create(exe_scope, variable_list.GetVariableAtIndex(i)));
+                if (valobj_sp)
+                    sb_value_list.Append(SBValue(valobj_sp));
+            }
+        }
+    }
+
+    return sb_value_list;
+}
+
 
 lldb::SBValue
 SBTarget::FindFirstGlobalVariable (const char* name)

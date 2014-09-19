@@ -683,7 +683,47 @@ public:
     //------------------------------------------------------------------
     lldb::SBValue
     FindFirstGlobalVariable (const char* name);
+
+    //------------------------------------------------------------------
+    /// Find global and static variables by pattern.
+    ///
+    /// @param[in] name
+    ///     The pattern to search for global or static variables
+    ///
+    /// @param[in] max_matches
+    ///     Allow the number of matches to be limited to \a max_matches.
+    /// 
+    /// @param[in] matchtype
+    ///     The match type to use.    
+    ///
+    /// @return
+    ///     A list of matched variables in an SBValueList.
+    //------------------------------------------------------------------
+    lldb::SBValueList
+        FindGlobalVariables(const char *name,
+                            uint32_t max_matches,
+                            MatchType matchtype);
     
+    //------------------------------------------------------------------
+    /// Find global functions by their name with pattern matching.
+    ///
+    /// @param[in] name
+    ///     The pattern to search for global or static variables
+    ///
+    /// @param[in] max_matches
+    ///     Allow the number of matches to be limited to \a max_matches.
+    /// 
+    /// @param[in] matchtype
+    ///     The match type to use.    
+    ///
+    /// @return
+    ///     A list of matched variables in an SBValueList.
+    //------------------------------------------------------------------
+    lldb::SBSymbolContextList
+        FindGlobalFunctions(const char *name,
+                           uint32_t max_matches,
+                           MatchType matchtype);
+
     void
     Clear ();
 
