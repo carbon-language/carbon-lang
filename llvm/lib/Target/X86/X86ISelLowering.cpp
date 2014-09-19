@@ -7841,6 +7841,13 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                        getV4X86ShuffleImm8ForMask(Mask, DAG));
   }
 
+  // Whenever we can lower this as a zext, that instruction is strictly faster
+  // than any alternative.
+  if (Subtarget->hasSSE41())
+    if (SDValue ZExt =
+            lowerVectorShuffleAsZeroExtend(DL, MVT::v4i32, V1, V2, Mask, DAG))
+      return ZExt;
+
   // Use dedicated unpack instructions for masks that match their pattern.
   if (isShuffleEquivalent(Mask, 0, 4, 1, 5))
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v4i32, V1, V2);
@@ -8516,7 +8523,6 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (SDValue ZExt = lowerVectorShuffleAsZeroExtend(DL, MVT::v8i16, V1, V2,
                                                       OrigMask, DAG))
       return ZExt;
-
 
   auto isV1 = [](int M) { return M >= 0 && M < 8; };
   auto isV2 = [](int M) { return M >= 8; };

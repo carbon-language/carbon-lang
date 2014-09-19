@@ -765,3 +765,47 @@ define <4 x i32> @shuffle_v4i32_3456(<4 x i32> %a, <4 x i32> %b) {
   %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 3, i32 4, i32 5, i32 6>
   ret <4 x i32> %shuffle
 }
+
+define <4 x i32> @shuffle_v4i32_0u1u(<4 x i32> %a, <4 x i32> %b) {
+; ALL-LABEL: @shuffle_v4i32_0u1u
+; ALL:       # BB#0:
+; ALL-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,0,1,1]
+; ALL-NEXT:    retq
+  %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 undef, i32 1, i32 undef>
+  ret <4 x i32> %shuffle
+}
+
+define <4 x i32> @shuffle_v4i32_0z1z(<4 x i32> %a) {
+; SSE2-LABEL: @shuffle_v4i32_0z1z
+; SSE2:       # BB#0:
+; SSE2-NEXT:    xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSE2-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,1],[[X]][1,3]
+; SSE2-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,2,1,3]
+; SSE2-NEXT:    retq
+;
+; SSE3-LABEL: @shuffle_v4i32_0z1z
+; SSE3:       # BB#0:
+; SSE3-NEXT:    xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,1],[[X]][1,3]
+; SSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,2,1,3]
+; SSE3-NEXT:    retq
+;
+; SSSE3-LABEL: @shuffle_v4i32_0z1z
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,1],[[X]][1,3]
+; SSSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,2,1,3]
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: @shuffle_v4i32_0z1z
+; SSE41:       # BB#0:
+; SSE41-NEXT:    pmovzxdq %xmm0, %xmm0
+; SSE41-NEXT:    retq
+;
+; AVX1-LABEL: @shuffle_v4i32_0z1z
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vpmovzxdq %xmm0, %xmm0
+; AVX1-NEXT:    retq
+  %shuffle = shufflevector <4 x i32> %a, <4 x i32> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 1, i32 7>
+  ret <4 x i32> %shuffle
+}
