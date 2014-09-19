@@ -60,13 +60,15 @@
 ; CHECK: NULL
 
 
-; FIXME: llvm-dwarfdump should detect the relocations here and realize that the
-; first two "end of list" are really just unrelocated values describing the two
-; functions in the CU.
 ; CHECK: .debug_ranges contents:
+
+; ... some addresses (depends on platform (such as platforms with function
+; reordering in the linker), and looks wonky on platforms with zero values
+; written in relocation places (dumper needs to	be fixed to read the
+; relocations rather than interpret that as the end of a range list))
+
 ; CHECK: 00000000 <End of list>
-; CHECK: 00000010 <End of list>
-; CHECK: 00000020 <End of list>
+
 
 ; Check that we don't emit any pubnames or pubtypes under -gmlt
 ; CHECK: .debug_pubnames contents:
