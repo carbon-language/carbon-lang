@@ -19,6 +19,7 @@
 #include "X86MachineFunctionInfo.h"
 #include "X86TargetMachine.h"
 #include "X86TargetObjectFile.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -7353,6 +7354,125 @@ static SDValue lowerVectorShuffleAsByteRotate(SDLoc DL, MVT VT, SDValue V1,
                                  DAG.getConstant(Rotation * Scale, MVT::i8)));
 }
 
+/// \brief Compute whether each element of a shuffle is zeroable.
+///
+/// A "zeroable" vector shuffle element is one which can be lowered to zero.
+/// Either it is an undef element in the shuffle mask, the element of the input
+/// referenced is undef, or the element of the input referenced is known to be
+/// zero. Many x86 shuffles can zero lanes cheaply and we often want to handle
+/// as many lanes with this technique as possible to simplify the remaining
+/// shuffle.
+static SmallBitVector computeZeroableShuffleElements(ArrayRef<int> Mask,
+                                                     SDValue V1, SDValue V2) {
+  SmallBitVector Zeroable(Mask.size(), false);
+
+  bool V1IsZero = ISD::isBuildVectorAllZeros(V1.getNode());
+  bool V2IsZero = ISD::isBuildVectorAllZeros(V2.getNode());
+
+  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
+    int M = Mask[i];
+    // Handle the easy cases.
+    if (M < 0 || (M >= 0 && M < Size && V1IsZero) || (M >= Size && V2IsZero)) {
+      Zeroable[i] = true;
+      continue;
+    }
+
+    // If this is an index into a build_vector node, dig out the input value and
+    // use it.
+    SDValue V = M < Size ? V1 : V2;
+    if (V.getOpcode() != ISD::BUILD_VECTOR)
+      continue;
+
+    SDValue Input = V.getOperand(M % Size);
+    // The UNDEF opcode check really should be dead code here, but not quite
+    // worth asserting on (it isn't invalid, just unexpected).
+    if (Input.getOpcode() == ISD::UNDEF || X86::isZeroNode(Input))
+      Zeroable[i] = true;
+  }
+
+  return Zeroable;
+}
+
+/// \brief Try to lower a vector shuffle as a zero extension.
+///
+/// This tries to use the SSE4.1 PMOVZX instruction family to lower a vector
+/// shuffle throuh a zero extension. It doesn't check for the availability or
+/// profitability of this lowering though, it tries to aggressively match this
+/// pattern. It handles both blends with all-zero inputs to explicitly
+/// zero-extend and undef-lanes (sometimes undef due to masking out later).
+static SDValue lowerVectorShuffleAsZeroExtend(SDLoc DL, MVT VT, SDValue V1,
+                                              SDValue V2, ArrayRef<int> Mask,
+                                              SelectionDAG &DAG) {
+  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
+
+  int Bits = VT.getSizeInBits();
+  int EltBits = VT.getScalarSizeInBits();
+  int NumElements = Mask.size();
+
+  // Define a helper function to check a particular zext-stride and lower to it
+  // if valid.
+  auto LowerWithStride = [&](int Stride) -> SDValue {
+    SDValue InputV;
+    for (int i = 0; i < NumElements; ++i) {
+      if (Mask[i] == -1)
+        continue; // Valid anywhere but doesn't tell us anything.
+      if (i % Stride != 0) {
+        // Each of the extend elements needs to be zeroable.
+        if (!Zeroable[i])
+          return SDValue();
+        else
+          continue;
+      }
+
+      // Each of the base elements needs to be consecutive indices into the
+      // same input vector.
+      SDValue V = Mask[i] < NumElements ? V1 : V2;
+      if (!InputV)
+        InputV = V;
+      else if (InputV != V)
+        return SDValue(); // Flip-flopping inputs.
+
+      if (Mask[i] % NumElements != i / Stride)
+        return SDValue(); // Non-consecutive strided elemenst.
+    }
+
+    // If we fail to find an input, we have a zero-shuffle which should always
+    // have already been handled.
+    // FIXME: Maybe handle this here in case during blending we end up with one?
+    if (!InputV)
+      return SDValue();
+
+    // Found a valid lowering! Compute all the types and the operation. We force
+    // everything to integer types here as that's the only way zext makes sense.
+    MVT InputVT = MVT::getVectorVT(MVT::getIntegerVT(EltBits), NumElements);
+    MVT ExtVT = MVT::getVectorVT(MVT::getIntegerVT(EltBits * Stride),
+                                 NumElements / Stride);
+
+    InputV = DAG.getNode(ISD::BITCAST, DL, InputVT, InputV);
+    return DAG.getNode(ISD::BITCAST, DL, VT,
+                       DAG.getNode(X86ISD::VZEXT, DL, ExtVT, InputV));
+  };
+
+  // The widest stride possible for zero extending is to a 64-bit integer.
+  assert(Bits % 64 == 0 &&
+         "The number of bits in a vector must be divisible by 64 on x86!");
+  int NumExtElements = Bits / 64;
+
+  // Each iteration, try extending the elements half as much, but into twice as
+  // many elements.
+  for (; NumExtElements < NumElements; NumExtElements *= 2) {
+    assert(
+        NumElements % NumExtElements == 0 &&
+        "The input vector size must be divisble by the extended size.");
+    int Stride = NumElements / NumExtElements;
+    if (SDValue V = LowerWithStride(Stride))
+      return V;
+  }
+
+  // No viable zext lowering found.
+  return SDValue();
+}
+
 /// \brief Handle lowering of 2-lane 64-bit floating point shuffles.
 ///
 /// This is the basis function for the 2-lane 64-bit shuffles as we have full
@@ -8390,6 +8510,14 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
 
+  // Whenever we can lower this as a zext, that instruction is strictly faster
+  // than any alternative.
+  if (Subtarget->hasSSE41())
+    if (SDValue ZExt = lowerVectorShuffleAsZeroExtend(DL, MVT::v8i16, V1, V2,
+                                                      OrigMask, DAG))
+      return ZExt;
+
+
   auto isV1 = [](int M) { return M >= 0 && M < 8; };
   auto isV2 = [](int M) { return M >= 8; };
 
@@ -8552,6 +8680,12 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (SDValue Rotate = lowerVectorShuffleAsByteRotate(DL, MVT::v16i8, V1, V2,
                                                         OrigMask, DAG))
       return Rotate;
+
+  // Try to use a zext lowering.
+  if (Subtarget->hasSSE41())
+    if (SDValue ZExt = lowerVectorShuffleAsZeroExtend(DL, MVT::v16i8, V1, V2,
+                                                      OrigMask, DAG))
+      return ZExt;
 
   int MaskStorage[16] = {
       OrigMask[0],  OrigMask[1],  OrigMask[2],  OrigMask[3],
