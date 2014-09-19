@@ -1482,6 +1482,7 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie) {
   if (!SP.getName().empty())
     addString(SPDie, dwarf::DW_AT_name, SP.getName());
 
+  // Skip the rest of the attributes under -gmlt to save space.
   if(getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly)
     return;
 
