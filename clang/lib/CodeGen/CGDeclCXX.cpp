@@ -298,11 +298,6 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
   llvm::Function *Fn =
       CreateGlobalInitOrDestructFunction(*this, FTy, FnName.str());
 
-  if (Addr->isWeakForLinker() && supportsCOMDAT()) {
-    llvm::Comdat *C = TheModule.getOrInsertComdat(Addr->getName());
-    Fn->setComdat(C);
-  }
-
   auto *ISA = D->getAttr<InitSegAttr>();
   CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D, Addr,
                                                           PerformInit);

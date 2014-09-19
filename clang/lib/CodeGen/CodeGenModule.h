@@ -599,9 +599,6 @@ public:
   DiagnosticsEngine &getDiags() const { return Diags; }
   const llvm::DataLayout &getDataLayout() const { return TheDataLayout; }
   const TargetInfo &getTarget() const { return Target; }
-  const llvm::Triple &getTriple() const;
-  bool supportsCOMDAT() const;
-
   CGCXXABI &getCXXABI() const { return *ABI; }
   llvm::LLVMContext &getLLVMContext() { return VMContext; }
 
