@@ -13,6 +13,7 @@
 
 #include "llvm/Object/Error.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ManagedStatic.h"
 
 using namespace llvm;
 using namespace object;
@@ -48,7 +49,8 @@ std::string _object_error_category::message(int EV) const {
                    "defined.");
 }
 
+static ManagedStatic<_object_error_category> error_category;
+
 const std::error_category &object::object_category() {
-  static _object_error_category o;
-  return o;
+  return *error_category;
 }
