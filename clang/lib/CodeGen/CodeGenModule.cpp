@@ -786,6 +786,16 @@ void CodeGenModule::SetCommonAttributes(const Decl *D,
     addUsedGlobal(GV);
 }
 
+void CodeGenModule::setAliasAttributes(const Decl *D,
+                                       llvm::GlobalValue *GV) {
+  SetCommonAttributes(D, GV);
+
+  // Process the dllexport attribute based on whether the original definition
+  // (not necessarily the aliasee) was exported.
+  if (D->hasAttr<DLLExportAttr>())
+    GV->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
+}
+
 void CodeGenModule::setNonAliasAttributes(const Decl *D,
                                           llvm::GlobalObject *GO) {
   SetCommonAttributes(D, GO);

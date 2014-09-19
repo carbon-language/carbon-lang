@@ -3077,7 +3077,7 @@ static void emitConstructorDestructorAlias(CodeGenModule &CGM,
   }
 
   // Finally, set up the alias with its proper name and attributes.
-  CGM.SetCommonAttributes(cast<NamedDecl>(AliasDecl.getDecl()), Alias);
+  CGM.setAliasAttributes(cast<NamedDecl>(AliasDecl.getDecl()), Alias);
 }
 
 void ItaniumCXXABI::emitCXXStructor(const CXXMethodDecl *MD,

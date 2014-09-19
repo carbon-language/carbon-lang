@@ -1069,6 +1069,12 @@ public:
   /// NOTE: This should only be called for definitions.
   void SetCommonAttributes(const Decl *D, llvm::GlobalValue *GV);
 
+  /// Set attributes which must be preserved by an alias. This includes common
+  /// attributes (i.e. it includes a call to SetCommonAttributes).
+  ///
+  /// NOTE: This should only be called for definitions.
+  void setAliasAttributes(const Decl *D, llvm::GlobalValue *GV);
+
   void addReplacement(StringRef Name, llvm::Constant *C);
 private:
 
