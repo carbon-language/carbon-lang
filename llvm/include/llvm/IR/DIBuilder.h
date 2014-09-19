@@ -232,32 +232,6 @@ namespace llvm {
     /// @param OffsetInBits Member offset.
     /// @param Flags        Flags to encode member attribute, e.g. private
     /// @param Ty           Parent type.
-    /// @param PropertyName Name of the Objective C property associated with
-    ///                     this ivar.
-    /// @param PropertyGetterName Name of the Objective C property getter
-    ///                           selector.
-    /// @param PropertySetterName Name of the Objective C property setter
-    ///                           selector.
-    /// @param PropertyAttributes Objective C property attributes.
-    DIDerivedType createObjCIVar(StringRef Name, DIFile File,
-                                 unsigned LineNo, uint64_t SizeInBits,
-                                 uint64_t AlignInBits, uint64_t OffsetInBits,
-                                 unsigned Flags, DIType Ty,
-                                 StringRef PropertyName = StringRef(),
-                                 StringRef PropertyGetterName = StringRef(),
-                                 StringRef PropertySetterName = StringRef(),
-                                 unsigned PropertyAttributes = 0);
-
-    /// createObjCIVar - Create debugging information entry for Objective-C
-    /// instance variable.
-    /// @param Name         Member name.
-    /// @param File         File where this member is defined.
-    /// @param LineNo       Line number.
-    /// @param SizeInBits   Member size.
-    /// @param AlignInBits  Member alignment.
-    /// @param OffsetInBits Member offset.
-    /// @param Flags        Flags to encode member attribute, e.g. private
-    /// @param Ty           Parent type.
     /// @param PropertyNode Property associated with this ivar.
     DIDerivedType createObjCIVar(StringRef Name, DIFile File,
                                  unsigned LineNo, uint64_t SizeInBits,

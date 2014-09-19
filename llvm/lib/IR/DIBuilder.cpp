@@ -469,34 +469,6 @@ DIBuilder::createStaticMemberType(DIDescriptor Scope, StringRef Name,
 
 /// createObjCIVar - Create debugging information entry for Objective-C
 /// instance variable.
-DIDerivedType
-DIBuilder::createObjCIVar(StringRef Name, DIFile File, unsigned LineNumber,
-                          uint64_t SizeInBits, uint64_t AlignInBits,
-                          uint64_t OffsetInBits, unsigned Flags, DIType Ty,
-                          StringRef PropertyName, StringRef GetterName,
-                          StringRef SetterName, unsigned PropertyAttributes) {
-  // TAG_member is encoded in DIDerivedType format.
-  Value *Elts[] = {
-    GetTagConstant(VMContext, dwarf::DW_TAG_member),
-    File.getFileNode(),
-    getNonCompileUnitScope(File),
-    MDString::get(VMContext, Name),
-    ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
-    ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
-    ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
-    ConstantInt::get(Type::getInt64Ty(VMContext), OffsetInBits),
-    ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
-    Ty,
-    MDString::get(VMContext, PropertyName),
-    MDString::get(VMContext, GetterName),
-    MDString::get(VMContext, SetterName),
-    ConstantInt::get(Type::getInt32Ty(VMContext), PropertyAttributes)
-  };
-  return DIDerivedType(MDNode::get(VMContext, Elts));
-}
-
-/// createObjCIVar - Create debugging information entry for Objective-C
-/// instance variable.
 DIDerivedType DIBuilder::createObjCIVar(StringRef Name, DIFile File,
                                         unsigned LineNumber,
                                         uint64_t SizeInBits,
