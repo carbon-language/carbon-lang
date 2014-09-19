@@ -1896,7 +1896,8 @@ template <typename IntTy>
 static SDValue constantFoldBFE(SelectionDAG &DAG, IntTy Src0,
                                uint32_t Offset, uint32_t Width) {
   if (Width + Offset < 32) {
-    IntTy Result = (Src0 << (32 - Offset - Width)) >> (32 - Width);
+    uint32_t Shl = static_cast<uint32_t>(Src0) << (32 - Offset - Width);
+    IntTy Result = static_cast<IntTy>(Shl) >> (32 - Width);
     return DAG.getConstant(Result, MVT::i32);
   }
 
@@ -2053,12 +2054,8 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
         // Avoid undefined left shift of a negative in the constant fold.
         // TODO: I'm not sure what the behavior of the hardware is, this should
         // probably follow that instead.
-        int32_t Val = CVal->getSExtValue();
-        if (Val < 0)
-          return SDValue();
-
         return constantFoldBFE<int32_t>(DAG,
-                                        Val,
+                                        CVal->getSExtValue(),
                                         OffsetVal,
                                         WidthVal);
       }

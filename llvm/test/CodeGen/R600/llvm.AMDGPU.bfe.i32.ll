@@ -370,13 +370,12 @@ define void @bfe_i32_constant_fold_test_15(i32 addrspace(1)* %out) nounwind {
   ret void
 }
 
-; FIXME: This should fold to something
 ; FUNC-LABEL: @bfe_i32_constant_fold_test_16
-; SI: S_BFE_I32 [[SREG:s[0-9]+]], -1, 0x70001
-; SI: V_MOV_B32_e32 [[VREG:v[0-9]+]], [[SREG]]
+; SI-NOT: BFE
+; SI: V_MOV_B32_e32 [[VREG:v[0-9]+]], -1
 ; SI: BUFFER_STORE_DWORD [[VREG]],
 ; SI: S_ENDPGM
-
+; EG-NOT: BFE
 define void @bfe_i32_constant_fold_test_16(i32 addrspace(1)* %out) nounwind {
   %bfe_i32 = call i32 @llvm.AMDGPU.bfe.i32(i32 4294967295, i32 1, i32 7) nounwind readnone
   store i32 %bfe_i32, i32 addrspace(1)* %out, align 4
