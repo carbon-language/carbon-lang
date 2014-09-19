@@ -11,6 +11,7 @@
 #define liblldb_ConnectionFileDescriptor_h_
 
 // C++ Includes
+#include <atomic>
 #include <memory>
 
 #include "lldb/lldb-forward.h"

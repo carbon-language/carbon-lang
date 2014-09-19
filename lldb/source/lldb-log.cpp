@@ -11,6 +11,7 @@
 
 // C Includes
 // C++ Includes
+#include <atomic>
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Interpreter/Args.h"

@@ -12,6 +12,7 @@
 
 // C Includes
 // C++ Includes
+#include <atomic>
 #include <string>
 
 // Other libraries and framework includes
