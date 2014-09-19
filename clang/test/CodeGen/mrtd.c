@@ -1,4 +1,9 @@
-// RUN: %clang_cc1 -mrtd -triple i386-unknown-unknown -std=c89 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -mrtd -triple i386-unknown-unknown -std=c89 -Wsystem-headers  -Wno-error=missing-prototype-for-cc -emit-llvm -o - %s 2>&1 | FileCheck %s
+
+// prototype-less __stdcall functions are only allowed in system headers.
+# 1 "fake_system_header.h" 1 3 4
+
+// CHECK: fake_system_header.h:9:3: warning: function with no prototype cannot use stdcall calling convention
 
 void baz(int arg);
 

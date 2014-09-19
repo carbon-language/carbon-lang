@@ -7937,15 +7937,19 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
 
   // Semantic checking for this function declaration (in isolation).
 
-  // Diagnose the use of X86 fastcall on unprototyped functions.
+  // Diagnose the use of callee-cleanup calls on unprototyped functions.
   QualType NewQType = Context.getCanonicalType(NewFD->getType());
   const FunctionType *NewType = cast<FunctionType>(NewQType);
   if (isa<FunctionNoProtoType>(NewType)) {
     FunctionType::ExtInfo NewTypeInfo = NewType->getExtInfo();
-    if (NewTypeInfo.getCC() == CC_X86FastCall)
-      Diag(NewFD->getLocation(), diag::err_cconv_knr)
-          << FunctionType::getNameForCallConv(CC_X86FastCall);
-    // TODO: Also diagnose unprototyped stdcall functions?
+    if (isCalleeCleanup(NewTypeInfo.getCC())) {
+      // Windows system headers sometimes accidentally use stdcall without
+      // (void) parameters, so use a default-error warning in this case :-/
+      int DiagID = NewTypeInfo.getCC() == CC_X86StdCall
+          ? diag::warn_cconv_knr : diag::err_cconv_knr;
+      Diag(NewFD->getLocation(), DiagID)
+          << FunctionType::getNameForCallConv(NewTypeInfo.getCC());
+    }
   }
 
   if (getLangOpts().CPlusPlus) {
