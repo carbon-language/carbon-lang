@@ -1654,7 +1654,7 @@ NativeProcessLinux::Launch(LaunchArgs *args)
                 else
                 {
                     if (log)
-                        log->Printf ("NativeProcessLinux::%s disbling ASLR: SUCCESS", __FUNCTION__);
+                        log->Printf ("NativeProcessLinux::%s disabling ASLR: SUCCESS", __FUNCTION__);
 
                 }
             }

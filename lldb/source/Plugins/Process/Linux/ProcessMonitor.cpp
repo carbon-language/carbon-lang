@@ -1392,7 +1392,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
                 else
                 {
                     if (log)
-                        log->Printf ("ProcessMonitor::%s disbling ASLR: SUCCESS", __FUNCTION__);
+                        log->Printf ("ProcessMonitor::%s disabling ASLR: SUCCESS", __FUNCTION__);
 
                 }
             }
