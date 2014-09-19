@@ -112,16 +112,6 @@ public:
     
     void
     SetDetachOnError(bool enable);
-    
-    lldb::SBValueList
-        FindGlobalVariables(const char *name,
-                            uint32_t max_matches,
-                            MatchType matchtype);
-
-    lldb::SBSymbolContextList
-        FindGlobalFunctions(const char *name,
-                           uint32_t max_matches,
-                           MatchType matchtype);
 };
 
 class SBAttachInfo
@@ -671,6 +661,17 @@ public:
     ") FindFirstGlobalVariable;
     lldb::SBValue
     FindFirstGlobalVariable (const char* name);
+
+    
+    lldb::SBValueList
+    FindGlobalVariables(const char *name,
+                        uint32_t max_matches,
+                        MatchType matchtype);
+
+    lldb::SBSymbolContextList
+    FindGlobalFunctions(const char *name,
+                        uint32_t max_matches,
+                        MatchType matchtype);
 
     void
     Clear ();
