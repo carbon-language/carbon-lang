@@ -21,8 +21,6 @@
 ; CHECK:   DW_TAG_subprogram
 ; CHECK-NEXT:     DW_AT_low_pc
 ; CHECK-NEXT:     DW_AT_high_pc
-; FIXME: We don't need the DW_AT_frame_base for -gmlt.
-; CHECK-NEXT:     DW_AT_frame_base
 ; CHECK-NEXT:     DW_AT_name
 ; CHECK-NOT: DW_AT
 ; CHECK: {{DW_TAG|NULL}}
