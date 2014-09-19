@@ -796,7 +796,7 @@ static const GlobalValue *getComdatGVForCOFF(const GlobalValue *GV) {
 
   if (ComdatGV->getComdat() != C)
     report_fatal_error("Associative COMDAT symbol '" + ComdatGVName +
-                       "' is not a key for it's COMDAT.");
+                       "' is not a key for its COMDAT.");
 
   return ComdatGV;
 }
