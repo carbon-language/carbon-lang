@@ -281,3 +281,11 @@
 
 // NO3DNOWPRFCHW: #define __PRFCHW__ 1
 
+// RUN: %clang -target i386-unknown-unknown -march=atom -madx -x c -E -dM -o - %s | FileCheck --check-prefix=ADX %s
+
+// ADX: #define __ADX__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=atom -mrdseed -x c -E -dM -o - %s | FileCheck --check-prefix=RDSEED %s
+
+// RDSEED: #define __RDSEED__ 1
+
