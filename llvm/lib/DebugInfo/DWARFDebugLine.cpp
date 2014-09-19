@@ -644,6 +644,7 @@ bool DWARFDebugLine::LineTable::lookupAddressRange(
 
 bool
 DWARFDebugLine::LineTable::getFileNameByIndex(uint64_t FileIndex,
+                                              const char *CompDir,
                                               FileLineInfoKind Kind,
                                               std::string &Result) const {
   if (FileIndex == 0 || FileIndex > Prologue.FileNames.size() ||
@@ -656,15 +657,42 @@ DWARFDebugLine::LineTable::getFileNameByIndex(uint64_t FileIndex,
     Result = FileName;
     return true;
   }
+
   SmallString<16> FilePath;
   uint64_t IncludeDirIndex = Entry.DirIdx;
+  const char *IncludeDir = "";
   // Be defensive about the contents of Entry.
   if (IncludeDirIndex > 0 &&
-      IncludeDirIndex <= Prologue.IncludeDirectories.size()) {
-    const char *IncludeDir = Prologue.IncludeDirectories[IncludeDirIndex - 1];
-    sys::path::append(FilePath, IncludeDir);
-  }
-  sys::path::append(FilePath, FileName);
+      IncludeDirIndex <= Prologue.IncludeDirectories.size())
+    IncludeDir = Prologue.IncludeDirectories[IncludeDirIndex - 1];
+
+  // We may still need to append compilation directory of compile unit.
+  // We know that FileName is not absolute, the only way to have an
+  // absolute path at this point would be if IncludeDir is absolute.
+  if (CompDir && Kind == FileLineInfoKind::AbsoluteFilePath &&
+      sys::path::is_relative(IncludeDir))
+    sys::path::append(FilePath, CompDir);
+
+  // sys::path::append skips empty strings.
+  sys::path::append(FilePath, IncludeDir, FileName);
   Result = FilePath.str();
+  return true;
+}
+
+bool
+DWARFDebugLine::LineTable::getFileLineInfoForAddress(uint64_t Address,
+                                                     const char *CompDir,
+                                                     FileLineInfoKind Kind,
+                                                     DILineInfo &Result) const {
+  // Get the index of row we're looking for in the line table.
+  uint32_t RowIndex = lookupAddress(Address);
+  if (RowIndex == -1U)
+    return false;
+  // Take file number and line/column from the row.
+  const auto &Row = Rows[RowIndex];
+  if (!getFileNameByIndex(Row.File, CompDir, Kind, Result.FileName))
+    return false;
+  Result.Line = Row.Line;
+  Result.Column = Row.Column;
   return true;
 }

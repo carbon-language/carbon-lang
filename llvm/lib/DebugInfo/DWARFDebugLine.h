@@ -179,9 +179,15 @@ public:
 
     // Extracts filename by its index in filename table in prologue.
     // Returns true on success.
-    bool getFileNameByIndex(uint64_t FileIndex,
+    bool getFileNameByIndex(uint64_t FileIndex, const char *CompDir,
                             DILineInfoSpecifier::FileLineInfoKind Kind,
                             std::string &Result) const;
+
+    // Fills the Result argument with the file and line information
+    // corresponding to Address. Returns true on success.
+    bool getFileLineInfoForAddress(uint64_t Address, const char *CompDir, 
+                                   DILineInfoSpecifier::FileLineInfoKind Kind,
+                                   DILineInfo &Result) const;
 
     void dump(raw_ostream &OS) const;
     void clear();
