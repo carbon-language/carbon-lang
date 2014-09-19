@@ -53,6 +53,13 @@ public:
     return ASTNodeKind(KindToKindId<T>::Id);
   }
 
+  /// \{
+  /// \brief Construct an identifier for the dynamic type of the node
+  static ASTNodeKind getFromNode(const Decl &D);
+  static ASTNodeKind getFromNode(const Stmt &S);
+  static ASTNodeKind getFromNode(const Type &T);
+  /// \}
+
   /// \brief Returns \c true if \c this and \c Other represent the same kind.
   bool isSame(ASTNodeKind Other) const;
 
@@ -241,7 +248,7 @@ private:
     }
     static DynTypedNode create(const BaseT &Node) {
       DynTypedNode Result;
-      Result.NodeKind = ASTNodeKind::getFromNodeKind<T>();
+      Result.NodeKind = ASTNodeKind::getFromNode(Node);
       Result.MemoizationData = &Node;
       new (Result.Storage.buffer) const BaseT * (&Node);
       return Result;
