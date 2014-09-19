@@ -40,10 +40,10 @@ entry:
 ; CHECK-DAG: S_MOV_B32 s[[SLO:[0-9]+]], 0
 ; CHECK-DAG: S_MOV_B32 s[[SHI:[0-9]+]], 4
 ; FIXME: We don't need to copy these values to VGPRs
-; CHECK-DAG: V_MOV_B32_e32 v[[VHI:[0-9]+]], s[[SHI]]
 ; CHECK-DAG: V_MOV_B32_e32 v[[VLO:[0-9]+]], s[[SLO]]
+; CHECK-DAG: V_MOV_B32_e32 v[[VHI:[0-9]+]], s[[SHI]]
 ; FIXME: We should be able to use S_LOAD_DWORD here
-; CHECK: BUFFER_LOAD_DWORD v{{[0-9]+}}, v{{\[}}[[VLO]]:[[VHI]]{{\]}}, s[{{[0-9]+:[0-9]+}}], 0
+; CHECK: BUFFER_LOAD_DWORD v{{[0-9]+}}, v{{\[}}[[VLO]]:[[VHI]]{{\]}}, s[{{[0-9]+:[0-9]+}}], 0 addr64
 ; CHECK: S_ENDPGM
 define void @smrd3(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
 entry:
