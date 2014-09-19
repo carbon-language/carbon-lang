@@ -630,6 +630,9 @@ void ReportSIGSEGV(const char *description, uptr pc, uptr sp, uptr bp,
       " (pc %p bp %p sp %p T%d)\n",
       description, (void *)addr, (void *)pc, (void *)bp, (void *)sp,
       GetCurrentTidOrInvalid());
+  if (pc < GetPageSizeCached()) {
+    Report("Hint: pc points to the zero page.\n");
+  }
   Printf("%s", d.EndWarning());
   GET_STACK_TRACE_SIGNAL(pc, bp, context);
   stack.Print();
