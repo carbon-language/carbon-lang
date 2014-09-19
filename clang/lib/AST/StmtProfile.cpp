@@ -457,6 +457,10 @@ void StmtProfiler::VisitOMPAtomicDirective(const OMPAtomicDirective *S) {
   VisitOMPExecutableDirective(S);
 }
 
+void StmtProfiler::VisitOMPTargetDirective(const OMPTargetDirective *S) {
+  VisitOMPExecutableDirective(S);
+}
+
 void StmtProfiler::VisitExpr(const Expr *S) {
   VisitStmt(S);
 }

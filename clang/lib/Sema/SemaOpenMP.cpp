@@ -1132,6 +1132,14 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
                              Params);
     break;
   }
+  case OMPD_target: {
+    Sema::CapturedParamNameType Params[] = {
+        std::make_pair(StringRef(), QualType()) // __context with shared vars
+    };
+    ActOnCapturedRegionStart(DSAStack->getConstructLoc(), CurScope, CR_OpenMP,
+                             Params);
+    break;
+  }
   case OMPD_threadprivate:
     llvm_unreachable("OpenMP Directive is not allowed");
   case OMPD_unknown:
@@ -1165,6 +1173,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | parallel         | flush           | *                                  |
   // | parallel         | ordered         | +                                  |
   // | parallel         | atomic          | *                                  |
+  // | parallel         | target          | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | for              | parallel        | *                                  |
   // | for              | for             | +                                  |
@@ -1184,6 +1193,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | for              | flush           | *                                  |
   // | for              | ordered         | * (if construct is ordered)        |
   // | for              | atomic          | *                                  |
+  // | for              | target          | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | master           | parallel        | *                                  |
   // | master           | for             | +                                  |
@@ -1203,6 +1213,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | master           | flush           | *                                  |
   // | master           | ordered         | +                                  |
   // | master           | atomic          | *                                  |
+  // | master           | target          | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | critical         | parallel        | *                                  |
   // | critical         | for             | +                                  |
@@ -1221,6 +1232,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | critical         | taskwait        | *                                  |
   // | critical         | ordered         | +                                  |
   // | critical         | atomic          | *                                  |
+  // | critical         | target          | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | simd             | parallel        |                                    |
   // | simd             | for             |                                    |
@@ -1240,6 +1252,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | simd             | flush           |                                    |
   // | simd             | ordered         |                                    |
   // | simd             | atomic          |                                    |
+  // | simd             | target          |                                    |
   // +------------------+-----------------+------------------------------------+
   // | for simd         | parallel        |                                    |
   // | for simd         | for             |                                    |
@@ -1259,6 +1272,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | for simd         | flush           |                                    |
   // | for simd         | ordered         |                                    |
   // | for simd         | atomic          |                                    |
+  // | for simd         | target          |                                    |
   // +------------------+-----------------+------------------------------------+
   // | sections         | parallel        | *                                  |
   // | sections         | for             | +                                  |
@@ -1278,6 +1292,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | sections         | flush           | *                                  |
   // | sections         | ordered         | +                                  |
   // | sections         | atomic          | *                                  |
+  // | sections         | target          | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | section          | parallel        | *                                  |
   // | section          | for             | +                                  |
@@ -1297,6 +1312,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | section          | flush           | *                                  |
   // | section          | ordered         | +                                  |
   // | section          | atomic          | *                                  |
+  // | section          | target          | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | single           | parallel        | *                                  |
   // | single           | for             | +                                  |
@@ -1316,6 +1332,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | single           | flush           | *                                  |
   // | single           | ordered         | +                                  |
   // | single           | atomic          | *                                  |
+  // | single           | target          | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | parallel for     | parallel        | *                                  |
   // | parallel for     | for             | +                                  |
@@ -1335,6 +1352,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | parallel for     | flush           | *                                  |
   // | parallel for     | ordered         | * (if construct is ordered)        |
   // | parallel for     | atomic          | *                                  |
+  // | parallel for     | target          | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | parallel sections| parallel        | *                                  |
   // | parallel sections| for             | +                                  |
@@ -1354,6 +1372,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | parallel sections| flush           | *                                  |
   // | parallel sections| ordered         | +                                  |
   // | parallel sections| atomic          | *                                  |
+  // | parallel sections| target          | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | task             | parallel        | *                                  |
   // | task             | for             | +                                  |
@@ -1373,6 +1392,7 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | task             | flush           | *                                  |
   // | task             | ordered         | +                                  |
   // | task             | atomic          | *                                  |
+  // | task             | target          | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | ordered          | parallel        | *                                  |
   // | ordered          | for             | +                                  |
@@ -1392,6 +1412,47 @@ static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | ordered          | flush           | *                                  |
   // | ordered          | ordered         | +                                  |
   // | ordered          | atomic          | *                                  |
+  // | ordered          | target          | *                                  |
+  // +------------------+-----------------+------------------------------------+
+  // | atomic           | parallel        |                                    |
+  // | atomic           | for             |                                    |
+  // | atomic           | for simd        |                                    |
+  // | atomic           | master          |                                    |
+  // | atomic           | critical        |                                    |
+  // | atomic           | simd            |                                    |
+  // | atomic           | sections        |                                    |
+  // | atomic           | section         |                                    |
+  // | atomic           | single          |                                    |
+  // | atomic           | parallel for    |                                    |
+  // | atomic           |parallel sections|                                    |
+  // | atomic           | task            |                                    |
+  // | atomic           | taskyield       |                                    |
+  // | atomic           | barrier         |                                    |
+  // | atomic           | taskwait        |                                    |
+  // | atomic           | flush           |                                    |
+  // | atomic           | ordered         |                                    |
+  // | atomic           | atomic          |                                    |
+  // | atomic           | target          |                                    |
+  // +------------------+-----------------+------------------------------------+
+  // | target           | parallel        | *                                  |
+  // | target           | for             | *                                  |
+  // | target           | for simd        | *                                  |
+  // | target           | master          | *                                  |
+  // | target           | critical        | *                                  |
+  // | target           | simd            | *                                  |
+  // | target           | sections        | *                                  |
+  // | target           | section         | *                                  |
+  // | target           | single          | *                                  |
+  // | target           | parallel for    | *                                  |
+  // | target           |parallel sections| *                                  |
+  // | target           | task            | *                                  |
+  // | target           | taskyield       | *                                  |
+  // | target           | barrier         | *                                  |
+  // | target           | taskwait        | *                                  |
+  // | target           | flush           | *                                  |
+  // | target           | ordered         | *                                  |
+  // | target           | atomic          | *                                  |
+  // | target           | target          | *                                  |
   // +------------------+-----------------+------------------------------------+
   if (Stack->getCurScope()) {
     auto ParentRegion = Stack->getParentDirective();
@@ -1628,6 +1689,10 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
     break;
   case OMPD_atomic:
     Res = ActOnOpenMPAtomicDirective(ClausesWithImplicit, AStmt, StartLoc,
+                                     EndLoc);
+    break;
+  case OMPD_target:
+    Res = ActOnOpenMPTargetDirective(ClausesWithImplicit, AStmt, StartLoc,
                                      EndLoc);
     break;
   case OMPD_threadprivate:
@@ -2510,6 +2575,17 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
   getCurFunction()->setHasBranchProtectedScope();
 
   return OMPAtomicDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt);
+}
+
+StmtResult Sema::ActOnOpenMPTargetDirective(ArrayRef<OMPClause *> Clauses,
+                                            Stmt *AStmt,
+                                            SourceLocation StartLoc,
+                                            SourceLocation EndLoc) {
+  assert(AStmt && isa<CapturedStmt>(AStmt) && "Captured statement expected");
+
+  getCurFunction()->setHasBranchProtectedScope();
+
+  return OMPTargetDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt);
 }
 
 OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,

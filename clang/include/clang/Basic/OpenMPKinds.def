@@ -51,6 +51,9 @@
 #ifndef OPENMP_ATOMIC_CLAUSE
 #  define OPENMP_ATOMIC_CLAUSE(Name)
 #endif
+#ifndef OPENMP_TARGET_CLAUSE
+#  define OPENMP_TARGET_CLAUSE(Name)
+#endif
 #ifndef OPENMP_DEFAULT_KIND
 #  define OPENMP_DEFAULT_KIND(Name)
 #endif
@@ -78,6 +81,7 @@ OPENMP_DIRECTIVE(taskwait)
 OPENMP_DIRECTIVE(flush)
 OPENMP_DIRECTIVE(ordered)
 OPENMP_DIRECTIVE(atomic)
+OPENMP_DIRECTIVE(target)
 OPENMP_DIRECTIVE_EXT(parallel_for, "parallel for")
 OPENMP_DIRECTIVE_EXT(parallel_sections, "parallel sections")
 OPENMP_DIRECTIVE_EXT(for_simd, "for simd")
@@ -226,6 +230,10 @@ OPENMP_ATOMIC_CLAUSE(update)
 OPENMP_ATOMIC_CLAUSE(capture)
 OPENMP_ATOMIC_CLAUSE(seq_cst)
 
+// Clauses allowed for OpenMP directive 'target'.
+// TODO More clauses for 'target' directive.
+OPENMP_TARGET_CLAUSE(if)
+
 #undef OPENMP_SCHEDULE_KIND
 #undef OPENMP_PROC_BIND_KIND
 #undef OPENMP_DEFAULT_KIND
@@ -239,6 +247,7 @@ OPENMP_ATOMIC_CLAUSE(seq_cst)
 #undef OPENMP_PARALLEL_SECTIONS_CLAUSE
 #undef OPENMP_TASK_CLAUSE
 #undef OPENMP_ATOMIC_CLAUSE
+#undef OPENMP_TARGET_CLAUSE
 #undef OPENMP_SIMD_CLAUSE
 #undef OPENMP_FOR_CLAUSE
 #undef OPENMP_FOR_SIMD_CLAUSE

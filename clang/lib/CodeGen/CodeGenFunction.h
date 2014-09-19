@@ -1943,6 +1943,7 @@ public:
   void EmitOMPFlushDirective(const OMPFlushDirective &S);
   void EmitOMPOrderedDirective(const OMPOrderedDirective &S);
   void EmitOMPAtomicDirective(const OMPAtomicDirective &S);
+  void EmitOMPTargetDirective(const OMPTargetDirective &S);
 
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission
