@@ -139,7 +139,6 @@ private:
   std::error_code getSectionContents(StringRef sectionName,
                                      ArrayRef<uint8_t> &result);
   std::error_code getReferenceArch(Reference::KindArch &result);
-  std::error_code is64(bool &result);
   std::error_code addRelocationReferenceToAtoms();
   std::error_code findSection(StringRef name, const coff_section *&result);
   StringRef ArrayRefToString(ArrayRef<uint8_t> array);
@@ -190,7 +189,6 @@ private:
   _definedAtomLocations;
 
   uint64_t _ordinal;
-  bool _is64;
 };
 
 class BumpPtrStringSaver : public llvm::cl::StringSaver {
@@ -314,8 +312,6 @@ FileCOFF::FileCOFF(std::unique_ptr<MemoryBuffer> mb, std::error_code &ec)
 
 std::error_code FileCOFF::parse() {
   if (std::error_code ec = getReferenceArch(_referenceArch))
-    return ec;
-  if (std::error_code ec = is64(_is64))
     return ec;
 
   // Read the symbol table and atomize them if possible. Defined atoms
@@ -831,11 +827,6 @@ std::error_code FileCOFF::getReferenceArch(Reference::KindArch &result) {
   return llvm::object::object_error::parse_failed;
 }
 
-std::error_code FileCOFF::is64(bool &result) {
-  result = (_obj->getMachine() == llvm::COFF::IMAGE_FILE_MACHINE_AMD64);
-  return std::error_code();
-}
-
 /// Add relocation information to atoms.
 std::error_code FileCOFF::addRelocationReferenceToAtoms() {
   // Relocation entries are defined for each section.
@@ -894,10 +885,21 @@ std::error_code FileCOFF::maybeCreateSXDataAtoms() {
     if (std::error_code ec = getAtomBySymbolIndex(symbolIndex[i], handlerFunc))
       return ec;
     int offsetInAtom = i * sizeof(uint32_t);
+
+    uint16_t rtype;
+    switch (_obj->getMachine()) {
+    case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
+      rtype = llvm::COFF::IMAGE_REL_AMD64_ADDR32;
+      break;
+    case llvm::COFF::IMAGE_FILE_MACHINE_I386:
+      rtype = llvm::COFF::IMAGE_REL_I386_DIR32;
+      break;
+    default:
+      llvm_unreachable("unsupported machine type");
+    }
+
     atom->addReference(std::unique_ptr<COFFReference>(new COFFReference(
-        handlerFunc, offsetInAtom, _is64 ? llvm::COFF::IMAGE_REL_AMD64_ADDR32
-                                         : llvm::COFF::IMAGE_REL_I386_DIR32,
-        _referenceArch)));
+        handlerFunc, offsetInAtom, rtype, _referenceArch)));
   }
 
   _definedAtoms._atoms.push_back(atom);
