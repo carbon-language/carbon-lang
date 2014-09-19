@@ -246,7 +246,7 @@ class ELFObjectWriter : public MCObjectWriter {
     /// \param NumRegularSections - Number of non-relocation sections.
     void computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
                             const SectionIndexMapTy &SectionIndexMap,
-                            RevGroupMapTy RevGroupMap,
+                            const RevGroupMapTy &RevGroupMap,
                             unsigned NumRegularSections);
 
     void ComputeIndexMap(MCAssembler &Asm,
@@ -991,7 +991,7 @@ void ELFObjectWriter::ComputeIndexMap(MCAssembler &Asm,
 void
 ELFObjectWriter::computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
                                     const SectionIndexMapTy &SectionIndexMap,
-                                    RevGroupMapTy RevGroupMap,
+                                    const RevGroupMapTy &RevGroupMap,
                                     unsigned NumRegularSections) {
   // FIXME: Is this the correct place to do this?
   // FIXME: Why is an undefined reference to _GLOBAL_OFFSET_TABLE_ needed?
@@ -1037,7 +1037,7 @@ ELFObjectWriter::computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
       MSD.SectionIndex = ELF::SHN_COMMON;
     } else if (BaseSymbol->isUndefined()) {
       if (isSignature && !Used)
-        MSD.SectionIndex = SectionIndexMap.lookup(RevGroupMap[&Symbol]);
+        MSD.SectionIndex = SectionIndexMap.lookup(RevGroupMap.lookup(&Symbol));
       else
         MSD.SectionIndex = ELF::SHN_UNDEF;
       if (!Used && WeakrefUsed)
