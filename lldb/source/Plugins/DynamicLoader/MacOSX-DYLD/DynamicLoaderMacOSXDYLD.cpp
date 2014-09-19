@@ -1350,7 +1350,13 @@ DynamicLoaderMacOSXDYLD::UpdateImageInfosHeaderAndLoadCommands(DYLDImageInfo::co
                                                             get_dependent_images);
 
                 if (dyld_module_sp)
-                    target.GetImages().AppendIfNeeded (dyld_module_sp);
+                {
+                   if(target.GetImages().AppendIfNeeded (dyld_module_sp))
+                   {
+                        // Also add it to the section list.
+                        UpdateImageLoadAddress(dyld_module_sp.get(), m_dyld);
+                   }
+                }
             }
         }
     }
