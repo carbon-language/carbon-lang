@@ -28,6 +28,7 @@
 #ifndef __ADXINTRIN_H
 #define __ADXINTRIN_H
 
+/* Intrinsics that are available only if __ADX__ defined */
 #ifdef __ADX__
 static __inline unsigned char __attribute__((__always_inline__, __nodebug__))
 _addcarryx_u32(unsigned char __cf, unsigned int __x, unsigned int __y,
@@ -44,6 +45,39 @@ _addcarryx_u64(unsigned char __cf, unsigned long __x, unsigned long __y,
   return __builtin_ia32_addcarryx_u64(__cf, __x, __y, __p);
 }
 #endif
+#endif
+
+/* Intrinsics that are also available if __ADX__ undefined */
+static __inline unsigned char __attribute__((__always_inline__, __nodebug__))
+_addcarry_u32(unsigned char __cf, unsigned int __x, unsigned int __y,
+              unsigned int *__p)
+{
+  return __builtin_ia32_addcarry_u32(__cf, __x, __y, __p);
+}
+
+#ifdef __x86_64__
+static __inline unsigned char __attribute__((__always_inline__, __nodebug__))
+_addcarry_u64(unsigned char __cf, unsigned long __x, unsigned long __y,
+              unsigned long long  *__p)
+{
+  return __builtin_ia32_addcarry_u64(__cf, __x, __y, __p);
+}
+#endif
+
+static __inline unsigned char __attribute__((__always_inline__, __nodebug__))
+_subborrow_u32(unsigned char __cf, unsigned int __x, unsigned int __y,
+              unsigned int *__p)
+{
+  return __builtin_ia32_subborrow_u32(__cf, __x, __y, __p);
+}
+
+#ifdef __x86_64__
+static __inline unsigned char __attribute__((__always_inline__, __nodebug__))
+_subborrow_u64(unsigned char __cf, unsigned long __x, unsigned long __y,
+              unsigned long long  *__p)
+{
+  return __builtin_ia32_subborrow_u64(__cf, __x, __y, __p);
+}
 #endif
 
 #endif /* __ADXINTRIN_H */
