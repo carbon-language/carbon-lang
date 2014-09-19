@@ -25,6 +25,8 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ManagedStatic.h"
+
 using namespace llvm;
 
 enum {
@@ -3502,9 +3504,10 @@ class BitcodeErrorCategoryType : public std::error_category {
 };
 }
 
+static ManagedStatic<BitcodeErrorCategoryType> ErrorCategory;
+
 const std::error_category &llvm::BitcodeErrorCategory() {
-  static BitcodeErrorCategoryType O;
-  return O;
+  return *ErrorCategory;
 }
 
 //===----------------------------------------------------------------------===//
