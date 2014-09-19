@@ -1,6 +1,5 @@
-; XFAIL: *
-; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; XUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
 
 @a = internal addrspace(2) constant [1 x i8] [ i8 7 ], align 1
@@ -32,7 +31,7 @@ define void @test_i16( i32 %s, i16 addrspace(1)* %out) #3 {
 %struct.bar = type { float, [5 x i8] }
 
 ; The illegal i8s aren't handled
-@struct_bar_gv = internal addrspace(2) unnamed_addr constant [1 x %struct.bar] [ %struct.bar { float 16.0, [5 x i8] [i8 0, i8 1, i8 2, i8 3, i8 4] } ]
+@struct_bar_gv = internal addrspace(2) constant [1 x %struct.bar] [ %struct.bar { float 16.0, [5 x i8] [i8 0, i8 1, i8 2, i8 3, i8 4] } ]
 
 ; FUNC-LABEL: @struct_bar_gv_load
 define void @struct_bar_gv_load(i8 addrspace(1)* %out, i32 %index) {
