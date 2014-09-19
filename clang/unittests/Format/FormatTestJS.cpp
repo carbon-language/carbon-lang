@@ -81,6 +81,7 @@ TEST_F(FormatTestJS, UnderstandsJavaScriptOperators) {
                getGoogleJSStyleWithColumns(20));
 
   verifyFormat("var b = a.map((x) => x + 1);");
+  verifyFormat("return ('aaa') in bbbb;");
 }
 
 TEST_F(FormatTestJS, UnderstandsAmpAmp) {
