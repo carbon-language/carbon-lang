@@ -3831,12 +3831,9 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
                "    .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa<\n"
                "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>();");
 
-  // Prefer not to break after empty parentheses ...
+  // Prefer not to break after empty parentheses.
   verifyFormat("FirstToken->WhitespaceRange.getBegin().getLocWithOffset(\n"
                "    First->LastNewlineOffset);");
-  // ... unless nested.
-  verifyFormat("f(FirstToken->WhitespaceRange.getBegin()\n"
-               "      .getLocWithOffset(First->LastNewlineOffset));");
 }
 
 TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {
