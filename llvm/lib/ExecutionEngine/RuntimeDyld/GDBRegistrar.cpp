@@ -101,7 +101,7 @@ private:
 
 /// Lock used to serialize all jit registration events, since they
 /// modify global variables.
-llvm::sys::Mutex JITDebugLock;
+ManagedStatic<sys::Mutex> JITDebugLock;
 
 /// Do the registration.
 void NotifyDebugger(jit_code_entry* JITCodeEntry) {
@@ -121,7 +121,7 @@ void NotifyDebugger(jit_code_entry* JITCodeEntry) {
 
 GDBJITRegistrar::~GDBJITRegistrar() {
   // Free all registered object files.
-  llvm::MutexGuard locked(JITDebugLock);
+  llvm::MutexGuard locked(*JITDebugLock);
   for (RegisteredObjectBufferMap::iterator I = ObjectBufferMap.begin(), E = ObjectBufferMap.end();
        I != E; ++I) {
     // Call the private method that doesn't update the map so our iterator
@@ -137,7 +137,7 @@ void GDBJITRegistrar::registerObject(const ObjectBuffer &Object) {
   size_t      Size = Object.getBufferSize();
 
   assert(Buffer && "Attempt to register a null object with a debugger.");
-  llvm::MutexGuard locked(JITDebugLock);
+  llvm::MutexGuard locked(*JITDebugLock);
   assert(ObjectBufferMap.find(Buffer) == ObjectBufferMap.end() &&
          "Second attempt to perform debug registration.");
   jit_code_entry* JITCodeEntry = new jit_code_entry();
@@ -156,7 +156,7 @@ void GDBJITRegistrar::registerObject(const ObjectBuffer &Object) {
 
 bool GDBJITRegistrar::deregisterObject(const ObjectBuffer& Object) {
   const char *Buffer = Object.getBufferStart();
-  llvm::MutexGuard locked(JITDebugLock);
+  llvm::MutexGuard locked(*JITDebugLock);
   RegisteredObjectBufferMap::iterator I = ObjectBufferMap.find(Buffer);
 
   if (I != ObjectBufferMap.end()) {
