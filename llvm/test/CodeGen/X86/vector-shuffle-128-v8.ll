@@ -1007,23 +1007,15 @@ define <8 x i16> @shuffle_v8i16_0zzz1zzz(<8 x i16> %a) {
 ; SSE2-LABEL: @shuffle_v8i16_0zzz1zzz
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    pxor %[[X1:xmm[0-9]+]], %[[X1]]
-; SSE2-NEXT:    pxor %[[X2:xmm[0-9]+]], %[[X2]]
-; SSE2-NEXT:    punpcklwd {{.*}} # [[X2]] = [[X2]][0],xmm0[0],[[X2]][1],xmm0[1],[[X2]][2],xmm0[2],[[X2]][3],xmm0[3]
-; SSE2-NEXT:    pshufd {{.*}}    # xmm0 = [[X2]][0,3,2,1]
-; SSE2-NEXT:    pshufhw {{.*}}   # xmm0 = xmm0[0,1,2,3,4,7,6,7]
-; SSE2-NEXT:    pshufd {{.*}}    # xmm0 = xmm0[0,2,2,3]
-; SSE2-NEXT:    pshuflw {{.*}}   # xmm0 = xmm0[1,2,3,0,4,5,6,7]
 ; SSE2-NEXT:    punpcklwd {{.*}} # xmm0 = xmm0[0],[[X1]][0],xmm0[1],[[X1]][1],xmm0[2],[[X1]][2],xmm0[3],[[X1]][3]
+; SSE2-NEXT:    punpckldq {{.*}} # xmm0 = xmm0[0],[[X1]][0],xmm0[1],[[X1]][1]
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: @shuffle_v8i16_0zzz1zzz
 ; SSSE3:       # BB#0:
 ; SSSE3-NEXT:    pxor %[[X1:xmm[0-9]+]], %[[X1]]
-; SSSE3-NEXT:    pxor %[[X2:xmm[0-9]+]], %[[X2]]
-; SSSE3-NEXT:    punpcklwd {{.*}} # [[X2]] = [[X2]][0],xmm0[0],[[X2]][1],xmm0[1],[[X2]][2],xmm0[2],[[X2]][3],xmm0[3]
-; SSSE3-NEXT:    pshufb {{.*}} # [[X2]] = [[X2]][2,3,8,9,6,7,0,1,8,9,6,7,4,5,6,7]
-; SSSE3-NEXT:    punpcklwd {{.*}} # [[X2]] = [[X2]][0],[[X1]][0],[[X2]][1],[[X1]][1],[[X2]][2],[[X1]][2],[[X2]][3],[[X1]][3]
-; SSSE3-NEXT:    movdqa %[[X2]], %xmm0
+; SSSE3-NEXT:    punpcklwd {{.*}} # xmm0 = xmm0[0],[[X1]][0],xmm0[1],[[X1]][1],xmm0[2],[[X1]][2],xmm0[3],[[X1]][3]
+; SSSE3-NEXT:    punpckldq {{.*}} # xmm0 = xmm0[0],[[X1]][0],xmm0[1],[[X1]][1]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: @shuffle_v8i16_0zzz1zzz

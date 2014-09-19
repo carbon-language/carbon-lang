@@ -9,7 +9,7 @@ define <4 x i32> @zext_v4i8_to_v4i32(<4 x i8>* %ptr) {
 ; CHECK:      movd (%{{.*}}), %[[X:xmm[0-9]+]]
 ; CHECK-NEXT: pxor %[[Z:xmm[0-9]+]], %[[Z]]
 ; CHECK-NEXT: punpcklbw %[[Z]], %[[X]]
-; CHECK-NEXT: punpcklbw %[[Z]], %[[X]]
+; CHECK-NEXT: punpcklwd %[[Z]], %[[X]]
 ; CHECK-NEXT: ret
 
   %val = load <4 x i8>* %ptr

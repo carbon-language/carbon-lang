@@ -778,23 +778,20 @@ define <4 x i32> @shuffle_v4i32_0u1u(<4 x i32> %a, <4 x i32> %b) {
 define <4 x i32> @shuffle_v4i32_0z1z(<4 x i32> %a) {
 ; SSE2-LABEL: @shuffle_v4i32_0z1z
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    xorps %[[X:xmm[0-9]+]], %[[X]]
-; SSE2-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,1],[[X]][1,3]
-; SSE2-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,2,1,3]
+; SSE2-NEXT:    pxor %[[X:xmm[0-9]+]], %[[X]]
+; SSE2-NEXT:    punpckldq {{.*}} # xmm0 = xmm0[0],[[X]][0],xmm0[1],[[X]][1]
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: @shuffle_v4i32_0z1z
 ; SSE3:       # BB#0:
-; SSE3-NEXT:    xorps %[[X:xmm[0-9]+]], %[[X]]
-; SSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,1],[[X]][1,3]
-; SSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,2,1,3]
+; SSE3-NEXT:    pxor %[[X:xmm[0-9]+]], %[[X]]
+; SSE3-NEXT:    punpckldq {{.*}} # xmm0 = xmm0[0],[[X]][0],xmm0[1],[[X]][1]
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: @shuffle_v4i32_0z1z
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    xorps %[[X:xmm[0-9]+]], %[[X]]
-; SSSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,1],[[X]][1,3]
-; SSSE3-NEXT:    shufps {{.*}} # xmm0 = xmm0[0,2,1,3]
+; SSSE3-NEXT:    pxor %[[X:xmm[0-9]+]], %[[X]]
+; SSSE3-NEXT:    punpckldq {{.*}} # xmm0 = xmm0[0],[[X]][0],xmm0[1],[[X]][1]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: @shuffle_v4i32_0z1z
