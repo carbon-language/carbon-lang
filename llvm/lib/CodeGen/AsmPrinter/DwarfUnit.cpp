@@ -1482,6 +1482,9 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie) {
   if (!SP.getName().empty())
     addString(SPDie, dwarf::DW_AT_name, SP.getName());
 
+  if(getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly)
+    return;
+
   addSourceLine(SPDie, SP);
 
   // Add the prototype if we have a prototype and we have a C like
