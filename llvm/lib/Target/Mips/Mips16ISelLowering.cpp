@@ -120,7 +120,7 @@ static const Mips16IntrinsicHelperType Mips16IntrinsicHelper[] = {
   {"truncf", "__mips16_call_stub_sf_1"},
 };
 
-Mips16TargetLowering::Mips16TargetLowering(MipsTargetMachine &TM,
+Mips16TargetLowering::Mips16TargetLowering(const MipsTargetMachine &TM,
                                            const MipsSubtarget &STI)
     : MipsTargetLowering(TM, STI) {
 
@@ -153,7 +153,7 @@ Mips16TargetLowering::Mips16TargetLowering(MipsTargetMachine &TM,
 }
 
 const MipsTargetLowering *
-llvm::createMips16TargetLowering(MipsTargetMachine &TM,
+llvm::createMips16TargetLowering(const MipsTargetMachine &TM,
                                  const MipsSubtarget &STI) {
   return new Mips16TargetLowering(TM, STI);
 }

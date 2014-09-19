@@ -104,7 +104,7 @@ static std::string computeDataLayout(const MipsSubtarget &ST) {
 
 MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
                              const std::string &FS, bool little,
-                             MipsTargetMachine *_TM)
+                             const MipsTargetMachine *_TM)
     : MipsGenSubtargetInfo(TT, CPU, FS), MipsArchVersion(Mips32),
       MipsABI(UnknownABI), IsLittle(little), IsSingleFloat(false),
       IsFPXX(false), NoABICalls(false), IsFP64bit(false), UseOddSPReg(true),
