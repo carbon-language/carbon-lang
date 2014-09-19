@@ -8716,10 +8716,10 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     // FIXME: We should check for other patterns which can be widened into an
     // i16 shuffle as well.
     auto canWidenViaDuplication = [](ArrayRef<int> Mask) {
-      for (int i = 0; i < 16; i += 2) {
-        if (Mask[i] != Mask[i + 1])
+      for (int i = 0; i < 16; i += 2)
+        if (Mask[i] != -1 && Mask[i + 1] != -1 && Mask[i] != Mask[i + 1])
           return false;
-      }
+
       return true;
     };
     auto tryToWidenViaDuplication = [&]() -> SDValue {
