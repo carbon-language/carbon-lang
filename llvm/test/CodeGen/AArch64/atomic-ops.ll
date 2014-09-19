@@ -509,7 +509,7 @@ define i8 @test_atomic_load_min_i8(i8 %offset) nounwind {
 ; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK-NOT: dmb
 
-; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
+; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD_EXT]]
    ret i8 %old
 }
 
@@ -534,7 +534,7 @@ define i16 @test_atomic_load_min_i16(i16 %offset) nounwind {
 ; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK-NOT: dmb
 
-; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
+; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD_EXT]]
    ret i16 %old
 }
 
@@ -607,7 +607,7 @@ define i8 @test_atomic_load_max_i8(i8 %offset) nounwind {
 ; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK-NOT: dmb
 
-; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
+; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD_EXT]]
    ret i8 %old
 }
 
@@ -632,7 +632,7 @@ define i16 @test_atomic_load_max_i16(i16 %offset) nounwind {
 ; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK-NOT: dmb
 
-; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
+; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD_EXT]]
    ret i16 %old
 }
 

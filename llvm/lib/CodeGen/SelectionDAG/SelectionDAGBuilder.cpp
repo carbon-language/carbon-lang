@@ -646,8 +646,10 @@ namespace {
     /// specified value into the registers specified by this object.  This uses
     /// Chain/Flag as the input and updates them for the output Chain/Flag.
     /// If the Flag pointer is NULL, no flag is used.
-    void getCopyToRegs(SDValue Val, SelectionDAG &DAG, SDLoc dl,
-                       SDValue &Chain, SDValue *Flag, const Value *V) const;
+    void
+    getCopyToRegs(SDValue Val, SelectionDAG &DAG, SDLoc dl, SDValue &Chain,
+                  SDValue *Flag, const Value *V,
+                  ISD::NodeType PreferredExtendType = ISD::ANY_EXTEND) const;
 
     /// AddInlineAsmOperands - Add this value to the specified inlineasm node
     /// operand list.  This adds the code marker, matching input operand index
@@ -762,9 +764,10 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
 /// Chain/Flag as the input and updates them for the output Chain/Flag.
 /// If the Flag pointer is NULL, no flag is used.
 void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, SDLoc dl,
-                                 SDValue &Chain, SDValue *Flag,
-                                 const Value *V) const {
+                                 SDValue &Chain, SDValue *Flag, const Value *V,
+                                 ISD::NodeType PreferredExtendType) const {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  ISD::NodeType ExtendKind = PreferredExtendType;
 
   // Get the list of the values's legal parts.
   unsigned NumRegs = Regs.size();
@@ -773,8 +776,9 @@ void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, SDLoc dl,
     EVT ValueVT = ValueVTs[Value];
     unsigned NumParts = TLI.getNumRegisters(*DAG.getContext(), ValueVT);
     MVT RegisterVT = RegVTs[Value];
-    ISD::NodeType ExtendKind =
-      TLI.isZExtFree(Val, RegisterVT)? ISD::ZERO_EXTEND: ISD::ANY_EXTEND;
+
+    if (ExtendKind == ISD::ANY_EXTEND && TLI.isZExtFree(Val, RegisterVT))
+      ExtendKind = ISD::ZERO_EXTEND;
 
     getCopyToParts(DAG, dl, Val.getValue(Val.getResNo() + Value),
                    &Parts[Part], NumParts, RegisterVT, V, ExtendKind);
@@ -7429,7 +7433,12 @@ SelectionDAGBuilder::CopyValueToVirtualRegister(const Value *V, unsigned Reg) {
   const TargetLowering *TLI = TM.getSubtargetImpl()->getTargetLowering();
   RegsForValue RFV(V->getContext(), *TLI, Reg, V->getType());
   SDValue Chain = DAG.getEntryNode();
-  RFV.getCopyToRegs(Op, DAG, getCurSDLoc(), Chain, nullptr, V);
+
+  ISD::NodeType ExtendType = (FuncInfo.PreferredExtendType.find(V) ==
+                              FuncInfo.PreferredExtendType.end())
+                                 ? ISD::ANY_EXTEND
+                                 : FuncInfo.PreferredExtendType[V];
+  RFV.getCopyToRegs(Op, DAG, getCurSDLoc(), Chain, nullptr, V, ExtendType);
   PendingExports.push_back(Chain);
 }
 

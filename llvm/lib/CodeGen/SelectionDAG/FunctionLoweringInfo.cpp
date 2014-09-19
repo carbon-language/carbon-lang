@@ -56,6 +56,28 @@ static bool isUsedOutsideOfDefiningBlock(const Instruction *I) {
   return false;
 }
 
+static ISD::NodeType getPreferredExtendForValue(const Value *V) {
+  // For the users of the source value being used for compare instruction, if
+  // the number of signed predicate is greater than unsigned predicate, we
+  // prefer to use SIGN_EXTEND.
+  //
+  // With this optimization, we would be able to reduce some redundant sign or
+  // zero extension instruction, and eventually more machine CSE opportunities
+  // can be exposed.
+  ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
+  unsigned NumOfSigned = 0, NumOfUnsigned = 0;
+  for (const User *U : V->users()) {
+    if (const auto *CI = dyn_cast<CmpInst>(U)) {
+      NumOfSigned += CI->isSigned();
+      NumOfUnsigned += CI->isUnsigned();
+    }
+  }
+  if (NumOfSigned > NumOfUnsigned)
+    ExtendKind = ISD::SIGN_EXTEND;
+
+  return ExtendKind;
+}
+
 void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
                                SelectionDAG *DAG) {
   const TargetLowering *TLI = TM.getSubtargetImpl()->getTargetLowering();
@@ -182,6 +204,9 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
           }
         }
       }
+
+      // Decide the preferred extend type for a value.
+      PreferredExtendType[I] = getPreferredExtendForValue(I);
     }
 
   // Create an initial MachineBasicBlock for each LLVM BasicBlock in F.  This

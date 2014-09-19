@@ -21,6 +21,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -105,6 +106,10 @@ public:
     LiveOutInfo() : NumSignBits(0), IsValid(true), KnownOne(1, 0),
                     KnownZero(1, 0) {}
   };
+
+  /// Record the preferred extend type (ISD::SIGN_EXTEND or ISD::ZERO_EXTEND)
+  /// for a value.
+  DenseMap<const Value *, ISD::NodeType> PreferredExtendType;
 
   /// VisitedBBs - The set of basic blocks visited thus far by instruction
   /// selection.
