@@ -62,7 +62,7 @@ namespace lldb_private {
         /// or attaching to processes unless another platform is specified.
         //------------------------------------------------------------------
         static lldb::PlatformSP
-        GetDefaultPlatform ();
+        GetHostPlatform ();
 
         static lldb::PlatformSP
         GetPlatformForArchitecture (const ArchSpec &arch,
@@ -72,10 +72,14 @@ namespace lldb_private {
         GetHostPlatformName ();
 
         static void
-        SetDefaultPlatform (const lldb::PlatformSP &platform_sp);
+        SetHostPlatform (const lldb::PlatformSP &platform_sp);
+
+        // Find an existing platform plug-in by name
+        static lldb::PlatformSP
+        Find (const ConstString &name);
 
         static lldb::PlatformSP
-        Create (const char *platform_name, Error &error);
+        Create (const ConstString &name, Error &error);
 
         static lldb::PlatformSP
         Create (const ArchSpec &arch, ArchSpec *platform_arch_ptr, Error &error);
@@ -114,8 +118,8 @@ namespace lldb_private {
         ///     An optional name of a specific platform plug-in that
         ///     should be used. If NULL, pick the best plug-in.
         //------------------------------------------------------------------
-        static Platform*
-        FindPlugin (Process *process, const ConstString &plugin_name);
+//        static lldb::PlatformSP
+//        FindPlugin (Process *process, const ConstString &plugin_name);
 
         //------------------------------------------------------------------
         /// Set the target's executable based off of the existing 

@@ -170,7 +170,7 @@ TargetList::CreateTarget (Debugger &debugger,
                     
                     typedef std::vector<PlatformSP> PlatformList;
                     PlatformList platforms;
-                    PlatformSP host_platform_sp = Platform::GetDefaultPlatform();
+                    PlatformSP host_platform_sp = Platform::GetHostPlatform();
                     for (size_t i=0; i<num_specs; ++i)
                     {
                         ModuleSpec module_spec;

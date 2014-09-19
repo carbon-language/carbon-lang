@@ -269,7 +269,8 @@ SBPlatform::SBPlatform (const char *platform_name) :
     m_opaque_sp ()
 {
     Error error;
-    m_opaque_sp = Platform::Create (platform_name, error);
+    if (platform_name && platform_name[0])
+        m_opaque_sp = Platform::Create (ConstString(platform_name), error);
 }
 
 SBPlatform::~SBPlatform()

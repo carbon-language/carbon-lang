@@ -33,7 +33,7 @@ OptionGroupPlatform::CreatePlatformWithOptions (CommandInterpreter &interpreter,
     
     if (!m_platform_name.empty())
     {
-        platform_sp = Platform::Create (m_platform_name.c_str(), error);
+        platform_sp = Platform::Create (ConstString(m_platform_name.c_str()), error);
         if (platform_sp)
         {
             if (platform_arch.IsValid() && !platform_sp->IsCompatibleArchitecture(arch, false, &platform_arch))

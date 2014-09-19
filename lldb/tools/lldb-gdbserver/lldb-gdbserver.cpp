@@ -142,12 +142,12 @@ dump_available_platforms (FILE *output_file)
         fprintf (output_file, "%s\t%s\n", plugin_name, plugin_desc);
     }
 
-    if ( Platform::GetDefaultPlatform () )
+    if ( Platform::GetHostPlatform () )
     {
         // add this since the default platform doesn't necessarily get registered by
         // the plugin name (e.g. 'host' doesn't show up as a
         // registered platform plugin even though it's the default).
-        fprintf (output_file, "%s\tDefault platform for this host.\n", Platform::GetDefaultPlatform ()->GetPluginName ().AsCString ());
+        fprintf (output_file, "%s\tDefault platform for this host.\n", Platform::GetHostPlatform ()->GetPluginName ().AsCString ());
     }
 }
 
@@ -174,7 +174,7 @@ setup_platform (const std::string platform_name)
     if (platform_name.empty())
     {
         printf ("using the default platform: ");
-        platform_sp = Platform::GetDefaultPlatform ();
+        platform_sp = Platform::GetHostPlatform ();
         printf ("%s\n", platform_sp->GetPluginName ().AsCString ());
         return platform_sp;
     }
@@ -186,9 +186,9 @@ setup_platform (const std::string platform_name)
         // the host platform isn't registered with that name (at
         // least, not always.  Check if the given name matches
         // the default platform name.  If so, use it.
-        if ( Platform::GetDefaultPlatform () && ( Platform::GetDefaultPlatform ()->GetPluginName () == ConstString (platform_name.c_str()) ) )
+        if ( Platform::GetHostPlatform () && ( Platform::GetHostPlatform ()->GetPluginName () == ConstString (platform_name.c_str()) ) )
         {
-            platform_sp = Platform::GetDefaultPlatform ();
+            platform_sp = Platform::GetHostPlatform ();
         }
         else
         {

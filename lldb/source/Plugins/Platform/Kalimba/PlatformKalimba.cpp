@@ -32,7 +32,7 @@ using namespace lldb_private;
 
 static uint32_t g_initialize_count = 0;
 
-Platform *
+PlatformSP
 PlatformKalimba::CreateInstance (bool force, const ArchSpec *arch)
 {
     bool create = force;
@@ -50,8 +50,8 @@ PlatformKalimba::CreateInstance (bool force, const ArchSpec *arch)
         }
     }
     if (create)
-        return new PlatformKalimba(false);
-    return NULL;
+        return PlatformSP(new PlatformKalimba(false));
+    return PlatformSP();
 }
 
 lldb_private::ConstString

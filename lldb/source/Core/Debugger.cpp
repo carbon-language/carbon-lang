@@ -645,7 +645,7 @@ Debugger::Debugger(lldb::LogOutputCallback log_callback, void *baton) :
         m_log_callback_stream_sp.reset (new StreamCallback (log_callback, baton));
     m_command_interpreter_ap->Initialize ();
     // Always add our default platform to the platform list
-    PlatformSP default_platform_sp (Platform::GetDefaultPlatform());
+    PlatformSP default_platform_sp (Platform::GetHostPlatform());
     assert (default_platform_sp.get());
     m_platform_list.Append (default_platform_sp, true);
     

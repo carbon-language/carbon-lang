@@ -467,7 +467,8 @@ DynamicLoaderDarwinKernel::DynamicLoaderDarwinKernel (Process* process, lldb::ad
     m_mutex(Mutex::eMutexTypeRecursive),
     m_break_id (LLDB_INVALID_BREAK_ID)
 {
-    PlatformSP platform_sp(Platform::FindPlugin (process, PlatformDarwinKernel::GetPluginNameStatic ()));
+    Error error;
+    PlatformSP platform_sp(Platform::Create(PlatformDarwinKernel::GetPluginNameStatic(), error));
     // Only select the darwin-kernel Platform if we've been asked to load kexts.
     // It can take some time to scan over all of the kext info.plists and that
     // shouldn't be done if kext loading is explicitly disabled.

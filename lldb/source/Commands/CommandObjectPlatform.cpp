@@ -302,7 +302,7 @@ protected:
         Stream &ostrm = result.GetOutputStream();
         ostrm.Printf("Available platforms:\n");
         
-        PlatformSP host_platform_sp (Platform::GetDefaultPlatform());
+        PlatformSP host_platform_sp (Platform::GetHostPlatform());
         ostrm.Printf ("%s: %s\n", 
                       host_platform_sp->GetPluginName().GetCString(),
                       host_platform_sp->GetDescription());

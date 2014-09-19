@@ -56,7 +56,7 @@ PlatformRemoteGDBServer::Terminate ()
     }
 }
 
-Platform* 
+PlatformSP
 PlatformRemoteGDBServer::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
 {
     bool create = force;
@@ -65,8 +65,8 @@ PlatformRemoteGDBServer::CreateInstance (bool force, const lldb_private::ArchSpe
         create = !arch->TripleVendorWasSpecified() && !arch->TripleOSWasSpecified();
     }
     if (create)
-        return new PlatformRemoteGDBServer ();
-    return NULL;
+        return PlatformSP(new PlatformRemoteGDBServer());
+    return PlatformSP();
 }
 
 

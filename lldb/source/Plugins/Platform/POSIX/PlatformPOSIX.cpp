@@ -699,7 +699,7 @@ PlatformPOSIX::ConnectRemote (Args& args)
     else
     {
         if (!m_remote_platform_sp)
-            m_remote_platform_sp = Platform::Create ("remote-gdb-server", error);
+            m_remote_platform_sp = Platform::Create (ConstString("remote-gdb-server"), error);
 
         if (m_remote_platform_sp && error.Success())
             error = m_remote_platform_sp->ConnectRemote (args);

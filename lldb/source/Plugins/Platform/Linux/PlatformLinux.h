@@ -39,7 +39,7 @@ namespace lldb_private {
         //------------------------------------------------------------
         // lldb_private::PluginInterface functions
         //------------------------------------------------------------
-        static Platform *
+        static lldb::PlatformSP
         CreateInstance (bool force, const lldb_private::ArchSpec *arch);
 
         static lldb_private::ConstString

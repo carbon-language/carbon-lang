@@ -71,7 +71,7 @@ namespace
 //----------------------------------------------------------------------
 GDBRemoteCommunicationServer::GDBRemoteCommunicationServer(bool is_platform) :
     GDBRemoteCommunication ("gdb-remote.server", "gdb-remote.server.rx_packet", is_platform),
-    m_platform_sp (Platform::GetDefaultPlatform ()),
+    m_platform_sp (Platform::GetHostPlatform ()),
     m_async_thread (LLDB_INVALID_HOST_THREAD),
     m_process_launch_info (),
     m_process_launch_error (),

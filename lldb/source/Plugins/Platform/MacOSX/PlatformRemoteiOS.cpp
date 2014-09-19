@@ -83,7 +83,7 @@ PlatformRemoteiOS::Terminate ()
     }
 }
 
-Platform* 
+PlatformSP
 PlatformRemoteiOS::CreateInstance (bool force, const ArchSpec *arch)
 {
     bool create = force;
@@ -144,8 +144,8 @@ PlatformRemoteiOS::CreateInstance (bool force, const ArchSpec *arch)
     }
 
     if (create)
-        return new PlatformRemoteiOS ();
-    return NULL;
+        return lldb::PlatformSP(new PlatformRemoteiOS ());
+    return lldb::PlatformSP();
 }
 
 

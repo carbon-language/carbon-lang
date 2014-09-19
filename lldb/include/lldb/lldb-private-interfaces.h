@@ -30,7 +30,7 @@ namespace lldb_private
     typedef OperatingSystem* (*OperatingSystemCreateInstance) (Process *process, bool force);
     typedef LanguageRuntime *(*LanguageRuntimeCreateInstance) (Process *process, lldb::LanguageType language);
     typedef SystemRuntime *(*SystemRuntimeCreateInstance) (Process *process);
-    typedef Platform* (*PlatformCreateInstance) (bool force, const ArchSpec *arch);
+    typedef lldb::PlatformSP (*PlatformCreateInstance) (bool force, const ArchSpec *arch);
     typedef lldb::ProcessSP (*ProcessCreateInstance) (Target &target, Listener &listener, const FileSpec *crash_file_path);
     typedef SymbolFile* (*SymbolFileCreateInstance) (ObjectFile* obj_file);
     typedef SymbolVendor* (*SymbolVendorCreateInstance) (const lldb::ModuleSP &module_sp, lldb_private::Stream *feedback_strm);   // Module can be NULL for default system symbol vendor

@@ -118,7 +118,7 @@ PlatformLinux::DebuggerInitialize (lldb_private::Debugger &debugger)
 
 //------------------------------------------------------------------
 
-Platform *
+PlatformSP
 PlatformLinux::CreateInstance (bool force, const ArchSpec *arch)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
@@ -183,13 +183,13 @@ PlatformLinux::CreateInstance (bool force, const ArchSpec *arch)
     {
         if (log)
             log->Printf ("PlatformLinux::%s() creating remote-linux platform", __FUNCTION__);
-        return new PlatformLinux(false);
+        return PlatformSP(new PlatformLinux(false));
     }
 
     if (log)
         log->Printf ("PlatformLinux::%s() aborting creation of remote-linux platform", __FUNCTION__);
 
-    return NULL;
+    return PlatformSP();
 }
 
 
@@ -231,7 +231,7 @@ PlatformLinux::Initialize ()
 #if defined(__linux__)
         PlatformSP default_platform_sp (new PlatformLinux(true));
         default_platform_sp->SetSystemArchitecture(HostInfo::GetArchitecture());
-        Platform::SetDefaultPlatform (default_platform_sp);
+        Platform::SetHostPlatform (default_platform_sp);
 #endif
         PluginManager::RegisterPlugin(PlatformLinux::GetPluginNameStatic(false),
                                       PlatformLinux::GetPluginDescriptionStatic(false),

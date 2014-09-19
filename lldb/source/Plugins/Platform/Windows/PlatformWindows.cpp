@@ -66,7 +66,7 @@ namespace
     };
 }
 
-Platform *
+PlatformSP
 PlatformWindows::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
 {
     // The only time we create an instance is when we are creating a remote
@@ -109,8 +109,8 @@ PlatformWindows::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
         }
     }
     if (create)
-        return new PlatformWindows (is_host);
-    return NULL;
+        return PlatformSP(new PlatformWindows (is_host));
+    return PlatformSP();
 
 }
 
@@ -154,7 +154,7 @@ PlatformWindows::Initialize(void)
         // Force a host flag to true for the default platform object.
         PlatformSP default_platform_sp (new PlatformWindows(true));
         default_platform_sp->SetSystemArchitecture(HostInfo::GetArchitecture());
-        Platform::SetDefaultPlatform (default_platform_sp);
+        Platform::SetHostPlatform (default_platform_sp);
 #endif
         PluginManager::RegisterPlugin(PlatformWindows::GetPluginNameStatic(false),
                                       PlatformWindows::GetPluginDescriptionStatic(false),
@@ -417,7 +417,7 @@ PlatformWindows::ConnectRemote (Args& args)
     else
     {
         if (!m_remote_platform_sp)
-            m_remote_platform_sp = Platform::Create ("remote-gdb-server", error);
+            m_remote_platform_sp = Platform::Create (ConstString("remote-gdb-server"), error);
 
         if (m_remote_platform_sp)
         {

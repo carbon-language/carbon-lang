@@ -36,6 +36,8 @@ class TestImageListMultiArchitecture(TestBase):
 
             self.runCmd("file {}".format(file_name))
             self.match("image list -t -A", [expected_triple_and_arch_regex])
+        # Revert to the host platform after all of this is done
+        self.runCmd("platform select host")
 
 if __name__ == '__main__':
     import atexit

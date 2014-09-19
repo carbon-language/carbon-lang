@@ -72,14 +72,14 @@ PlatformDarwinKernel::Terminate ()
     }
 }
 
-Platform*
+PlatformSP
 PlatformDarwinKernel::CreateInstance (bool force, const ArchSpec *arch)
 {
     // This is a special plugin that we don't want to activate just based on an ArchSpec for normal
     // userlnad debugging.  It is only useful in kernel debug sessions and the DynamicLoaderDarwinPlugin
     // (or a user doing 'platform select') will force the creation of this Platform plugin.
     if (force == false)
-        return NULL;
+        return PlatformSP();
 
     bool create = force;
     LazyBool is_ios_debug_session = eLazyBoolCalculate;
@@ -143,8 +143,8 @@ PlatformDarwinKernel::CreateInstance (bool force, const ArchSpec *arch)
         }
     }
     if (create)
-        return new PlatformDarwinKernel (is_ios_debug_session);
-    return NULL;
+        return PlatformSP(new PlatformDarwinKernel (is_ios_debug_session));
+    return PlatformSP();
 }
 
 

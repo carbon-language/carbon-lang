@@ -1039,7 +1039,7 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     Error error;
     char exe_path[PATH_MAX];
 
-    PlatformSP host_platform_sp (Platform::GetDefaultPlatform ());
+    PlatformSP host_platform_sp (Platform::GetHostPlatform ());
 
     const ArchSpec &arch_spec = launch_info.GetArchitecture();
 

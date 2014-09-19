@@ -45,7 +45,7 @@ PlatformMacOSX::Initialize ()
 #if defined (__APPLE__)
         PlatformSP default_platform_sp (new PlatformMacOSX(true));
         default_platform_sp->SetSystemArchitecture(HostInfo::GetArchitecture());
-        Platform::SetDefaultPlatform (default_platform_sp);
+        Platform::SetHostPlatform (default_platform_sp);
 #endif        
         PluginManager::RegisterPlugin (PlatformMacOSX::GetPluginNameStatic(false),
                                        PlatformMacOSX::GetDescriptionStatic(false),
@@ -66,7 +66,7 @@ PlatformMacOSX::Terminate ()
     }
 }
 
-Platform* 
+PlatformSP
 PlatformMacOSX::CreateInstance (bool force, const ArchSpec *arch)
 {
     // The only time we create an instance is when we are creating a remote
@@ -117,8 +117,8 @@ PlatformMacOSX::CreateInstance (bool force, const ArchSpec *arch)
         }
     }
     if (create)
-        return new PlatformMacOSX (is_host);
-    return NULL;
+        return PlatformSP(new PlatformMacOSX (is_host));
+    return PlatformSP();
 }
 
 lldb_private::ConstString

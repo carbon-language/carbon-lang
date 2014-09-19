@@ -61,7 +61,7 @@ PlatformiOSSimulator::Terminate ()
     }
 }
 
-Platform* 
+PlatformSP
 PlatformiOSSimulator::CreateInstance (bool force, const ArchSpec *arch)
 {
     bool create = force;
@@ -120,8 +120,8 @@ PlatformiOSSimulator::CreateInstance (bool force, const ArchSpec *arch)
         }
     }
     if (create)
-        return new PlatformiOSSimulator ();
-    return NULL;
+        return PlatformSP(new PlatformiOSSimulator ());
+    return PlatformSP();
 }
 
 

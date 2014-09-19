@@ -37,7 +37,7 @@ public:
     //------------------------------------------------------------
     // lldb_private::PluginInterface functions
     //------------------------------------------------------------
-    static lldb_private::Platform*
+    static lldb::PlatformSP
     CreateInstance (bool force, const lldb_private::ArchSpec *arch);
 
 
