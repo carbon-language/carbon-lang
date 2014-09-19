@@ -10,6 +10,10 @@
 #
 # RUN: lld -flavor link /force /out:%t3.exe -- %t3.obj
 # RUN: llvm-objdump -d %t3.exe | FileCheck -check-prefix=CHECK3 %s
+#
+# RUN: lld -flavor link /force /out:%t4.exe /alternatename:_main=_foo \
+# RUN:   /alternatename:_xyz=_foo -- %t1.obj
+# RUN: llvm-objdump -d %t4.exe | FileCheck -check-prefix=CHECK4 %s
 
 CHECK1:      nop
 CHECK1-NEXT: nop
@@ -28,3 +32,9 @@ CHECK3-NEXT: nop
 CHECK3-NEXT: nop
 CHECK3-NEXT: nop
 CHECK3-NOT:  int3
+
+CHECK4:      nop
+CHECK4-NEXT: nop
+CHECK4-NEXT: nop
+CHECK4-NEXT: nop
+CHECK4-NOT:  int3

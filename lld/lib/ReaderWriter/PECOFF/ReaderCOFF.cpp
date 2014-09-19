@@ -88,7 +88,8 @@ public:
     return _absoluteAtoms;
   }
 
-  void addDefinedAtom(const DefinedAtom *atom) {
+  void addDefinedAtom(AliasAtom *atom) {
+    atom->setOrdinal(_ordinal++);
     _definedAtoms._atoms.push_back(atom);
   }
 
@@ -1068,13 +1069,13 @@ private:
 
   // Iterates over defined atoms and create alias atoms if needed.
   void createAlternateNameAtoms(FileCOFF &file) const {
-    std::vector<const DefinedAtom *> aliases;
+    std::vector<AliasAtom *> aliases;
     for (const DefinedAtom *atom : file.defined()) {
       auto it = _ctx.alternateNames().find(atom->name());
       if (it != _ctx.alternateNames().end())
         aliases.push_back(createAlias(file, it->second, atom));
     }
-    for (const DefinedAtom *alias : aliases) {
+    for (AliasAtom *alias : aliases) {
       file.addDefinedAtom(alias);
     }
   }
