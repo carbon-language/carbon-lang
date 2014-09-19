@@ -856,12 +856,14 @@ void DwarfDebug::finishSubprogramDefinitions() {
           // If this subprogram has an abstract definition, reference that
           SPCU->addDIEEntry(*D, dwarf::DW_AT_abstract_origin, *AbsSPDIE);
       } else {
-        if (!D)
+        if (!D && TheCU.getEmissionKind() != DIBuilder::LineTablesOnly)
           // Lazily construct the subprogram if we didn't see either concrete or
-          // inlined versions during codegen.
+          // inlined versions during codegen. (except in -gmlt ^ where we want
+          // to omit these entirely)
           D = SPCU->getOrCreateSubprogramDIE(SP);
-        // And attach the attributes
-        SPCU->applySubprogramAttributesToDefinition(SP, *D);
+        if (D)
+          // And attach the attributes
+          SPCU->applySubprogramAttributesToDefinition(SP, *D);
       }
     }
   }
@@ -1690,6 +1692,24 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
   DwarfCompileUnit &TheCU = *SPMap.lookup(FnScope->getScopeNode());
 
+  // Add the range of this function to the list of ranges for the CU.
+  TheCU.addRange(RangeSpan(FunctionBeginSym, FunctionEndSym));
+
+  // Under -gmlt, skip building the subprogram if there are no inlined
+  // subroutines inside it.
+  if (TheCU.getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly &&
+      LScopes.getAbstractScopesList().empty()) {
+    assert(ScopeVariables.empty());
+    assert(CurrentFnArguments.empty());
+    assert(DbgValues.empty());
+    assert(AbstractVariables.empty());
+    LabelsBeforeInsn.clear();
+    LabelsAfterInsn.clear();
+    PrevLabel = nullptr;
+    CurFn = nullptr;
+    return;
+  }
+
   // Construct abstract scopes.
   for (LexicalScope *AScope : LScopes.getAbstractScopesList()) {
     DISubprogram SP(AScope->getScopeNode());
@@ -1709,10 +1729,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   DIE &CurFnDIE = constructSubprogramScopeDIE(TheCU, FnScope);
   if (!CurFn->getTarget().Options.DisableFramePointerElim(*CurFn))
     TheCU.addFlag(CurFnDIE, dwarf::DW_AT_APPLE_omit_frame_ptr);
-
-  // Add the range of this function to the list of ranges for the CU.
-  RangeSpan Span(FunctionBeginSym, FunctionEndSym);
-  TheCU.addRange(std::move(Span));
 
   // Clear debug info
   // Ownership of DbgVariables is a bit subtle - ScopeVariables owns all the
