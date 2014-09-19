@@ -130,7 +130,8 @@ Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
   }
 
   Indices.push_back(IndexOp);
-  assert((PtrElTy->isIntOrIntVectorTy() || PtrElTy->isFPOrFPVectorTy()) &&
+  assert((PtrElTy->isIntOrIntVectorTy() || PtrElTy->isFPOrFPVectorTy() ||
+          PtrElTy->isPtrOrPtrVectorTy()) &&
          "We do not yet change the type of the access base during code "
          "generation.");
 
@@ -274,15 +275,23 @@ Value *IslExprBuilder::createOpICmp(__isl_take isl_ast_expr *Expr) {
   assert((!IsPtrType || RHS->getType()->isPointerTy()) &&
          "Both ICmp operators should be pointer types or none of them");
 
-  if (!IsPtrType) {
-    Type *MaxType = LHS->getType();
-    MaxType = getWidestType(MaxType, RHS->getType());
+  if (LHS->getType() != RHS->getType()) {
+    if (IsPtrType) {
+      Type *I8PtrTy = Builder.getInt8PtrTy();
+      if (LHS->getType() != I8PtrTy)
+        LHS = Builder.CreateBitCast(LHS, I8PtrTy);
+      if (RHS->getType() != I8PtrTy)
+        RHS = Builder.CreateBitCast(RHS, I8PtrTy);
+    } else {
+      Type *MaxType = LHS->getType();
+      MaxType = getWidestType(MaxType, RHS->getType());
 
-    if (MaxType != RHS->getType())
-      RHS = Builder.CreateSExt(RHS, MaxType);
+      if (MaxType != RHS->getType())
+        RHS = Builder.CreateSExt(RHS, MaxType);
 
-    if (MaxType != LHS->getType())
-      LHS = Builder.CreateSExt(LHS, MaxType);
+      if (MaxType != LHS->getType())
+        LHS = Builder.CreateSExt(LHS, MaxType);
+    }
   }
 
   isl_ast_op_type OpType = isl_ast_expr_get_op_type(Expr);
