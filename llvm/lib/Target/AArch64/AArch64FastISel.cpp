@@ -561,7 +561,7 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
 
     break;
   }
-  case Instruction::Shl:
+  case Instruction::Shl: {
     if (Addr.getOffsetReg())
       break;
 
@@ -584,19 +584,24 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
       Addr.setShift(Val);
       Addr.setExtendType(AArch64_AM::LSL);
 
-      if (const auto *I = dyn_cast<Instruction>(U->getOperand(0)))
+      const Value *Src = U->getOperand(0);
+      if (const auto *I = dyn_cast<Instruction>(Src))
         if (FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB)
-          U = I;
+          Src = I;
 
-      if (const auto *ZE = dyn_cast<ZExtInst>(U))
-        if (ZE->getOperand(0)->getType()->isIntegerTy(32))
+      if (const auto *ZE = dyn_cast<ZExtInst>(Src)) {
+        if (ZE->getOperand(0)->getType()->isIntegerTy(32)) {
           Addr.setExtendType(AArch64_AM::UXTW);
-
-      if (const auto *SE = dyn_cast<SExtInst>(U))
-        if (SE->getOperand(0)->getType()->isIntegerTy(32))
+          Src = ZE->getOperand(0);
+        }
+      } else if (const auto *SE = dyn_cast<SExtInst>(Src)) {
+        if (SE->getOperand(0)->getType()->isIntegerTy(32)) {
           Addr.setExtendType(AArch64_AM::SXTW);
+          Src = SE->getOperand(0);
+        }
+      }
 
-      if (const auto *AI = dyn_cast<BinaryOperator>(U))
+      if (const auto *AI = dyn_cast<BinaryOperator>(Src))
         if (AI->getOpcode() == Instruction::And) {
           const Value *LHS = AI->getOperand(0);
           const Value *RHS = AI->getOperand(1);
@@ -605,7 +610,7 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
             if (C->getValue() == 0xffffffff)
               std::swap(LHS, RHS);
 
-          if (const auto *C = cast<ConstantInt>(RHS))
+          if (const auto *C = dyn_cast<ConstantInt>(RHS))
             if (C->getValue() == 0xffffffff) {
               Addr.setExtendType(AArch64_AM::UXTW);
               unsigned Reg = getRegForValue(LHS);
@@ -619,13 +624,14 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
             }
         }
 
-      unsigned Reg = getRegForValue(U->getOperand(0));
+      unsigned Reg = getRegForValue(Src);
       if (!Reg)
         return false;
       Addr.setOffsetReg(Reg);
       return true;
     }
     break;
+  }
   case Instruction::Mul: {
     if (Addr.getOffsetReg())
       break;
@@ -661,23 +667,24 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
     Addr.setShift(Val);
     Addr.setExtendType(AArch64_AM::LSL);
 
-    if (const auto *I = dyn_cast<Instruction>(LHS))
+    const Value *Src = LHS;
+    if (const auto *I = dyn_cast<Instruction>(Src))
       if (FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB)
-        U = I;
+        Src = I;
 
-    if (const auto *ZE = dyn_cast<ZExtInst>(U))
+    if (const auto *ZE = dyn_cast<ZExtInst>(Src)) {
       if (ZE->getOperand(0)->getType()->isIntegerTy(32)) {
         Addr.setExtendType(AArch64_AM::UXTW);
-        LHS = U->getOperand(0);
+        Src = ZE->getOperand(0);
       }
-
-    if (const auto *SE = dyn_cast<SExtInst>(U))
+    } else if (const auto *SE = dyn_cast<SExtInst>(Src)) {
       if (SE->getOperand(0)->getType()->isIntegerTy(32)) {
         Addr.setExtendType(AArch64_AM::SXTW);
-        LHS = U->getOperand(0);
+        Src = SE->getOperand(0);
       }
+    }
 
-    unsigned Reg = getRegForValue(LHS);
+    unsigned Reg = getRegForValue(Src);
     if (!Reg)
       return false;
     Addr.setOffsetReg(Reg);
@@ -697,7 +704,7 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
       if (C->getValue() == 0xffffffff)
         std::swap(LHS, RHS);
 
-    if (const auto *C = cast<ConstantInt>(RHS))
+    if (const auto *C = dyn_cast<ConstantInt>(RHS))
       if (C->getValue() == 0xffffffff) {
         Addr.setShift(0);
         Addr.setExtendType(AArch64_AM::LSL);

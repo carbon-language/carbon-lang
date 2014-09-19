@@ -450,6 +450,30 @@ define i64 @load_breg_and_offreg_4(i64 %a, i64 %b) {
   ret i64 %5
 }
 
+; Not all 'and' instructions have immediates.
+define i64 @load_breg_and_offreg_5(i64 %a, i64 %b, i64 %c) {
+; CHECK-LABEL: load_breg_and_offreg_5
+; CHECK:       and [[REG:x[0-9]+]], x0, x2
+; CHECK-NEXT:  ldr {{x[0-9]+}}, {{\[}}[[REG]], x1{{\]}}
+  %1 = and i64 %a, %c
+  %2 = add i64 %1, %b
+  %3 = inttoptr i64 %2 to i64*
+  %4 = load i64* %3
+  ret i64 %4
+}
+
+define i64 @load_breg_and_offreg_6(i64 %a, i64 %b, i64 %c) {
+; CHECK-LABEL: load_breg_and_offreg_6
+; CHECK:       and [[REG:x[0-9]+]], x0, x2
+; CHECK-NEXT:  ldr {{x[0-9]+}}, {{\[}}x1, [[REG]], lsl #3{{\]}}
+  %1 = and i64 %a, %c
+  %2 = shl i64 %1, 3
+  %3 = add i64 %2, %b
+  %4 = inttoptr i64 %3 to i64*
+  %5 = load i64* %4
+  ret i64 %5
+}
+
 ; Load Base Register + Scaled Register Offset + Sign/Zero extension
 define i32 @load_breg_zext_shift_offreg_1(i32 %a, i64 %b) {
 ; CHECK-LABEL: load_breg_zext_shift_offreg_1
@@ -505,6 +529,21 @@ define i32 @load_breg_sext_shift_offreg_2(i32 %a, i64 %b) {
   %5 = load i32* %4
   ret i32 %5
 }
+
+; Make sure that we don't drop the first 'add' instruction.
+define i32 @load_breg_sext_shift_offreg_3(i32 %a, i64 %b) {
+; CHECK-LABEL: load_breg_sext_shift_offreg_3
+; CHECK:       add [[REG:w[0-9]+]], w0, #4
+; CHECK:       ldr {{w[0-9]+}}, {{\[}}x1, [[REG]], sxtw #2{{\]}}
+  %1 = add i32 %a, 4
+  %2 = sext i32 %1 to i64
+  %3 = shl i64 %2, 2
+  %4 = add i64 %b, %3
+  %5 = inttoptr i64 %4 to i32*
+  %6 = load i32* %5
+  ret i32 %6
+}
+
 
 define i32 @load_breg_sext_mul_offreg_1(i32 %a, i64 %b) {
 ; CHECK-LABEL: load_breg_sext_mul_offreg_1
