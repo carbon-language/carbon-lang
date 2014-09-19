@@ -17,23 +17,16 @@
 
 namespace __ubsan {
 
-static const char *GetRuntimeFlagsFromCompileDefinition() {
-#ifdef UBSAN_DEFAULT_OPTIONS
-// Stringize the macro value
-# define UBSAN_STRINGIZE(x) #x
-# define UBSAN_STRINGIZE_OPTIONS(options) UBSAN_STRINGIZE(options)
-  return UBSAN_STRINGIZE_OPTIONS(UBSAN_DEFAULT_OPTIONS);
-#else
-  return "";
-#endif
+static const char *MaybeCallUbsanDefaultOptions() {
+  return (&__ubsan_default_options) ? __ubsan_default_options() : "";
 }
 
 void InitializeCommonFlags() {
   CommonFlags *cf = common_flags();
   SetCommonFlagsDefaults(cf);
   cf->print_summary = false;
-  // Override from compile definition.
-  ParseCommonFlagsFromString(cf, GetRuntimeFlagsFromCompileDefinition());
+  // Override from user-specified string.
+  ParseCommonFlagsFromString(cf, MaybeCallUbsanDefaultOptions());
   // Override from environment variable.
   ParseCommonFlagsFromString(cf, GetEnv("UBSAN_OPTIONS"));
 }
@@ -54,10 +47,17 @@ void InitializeFlags() {
   // Default values.
   f->halt_on_error = false;
   f->print_stacktrace = false;
-  // Override from compile definition.
-  ParseFlagsFromString(f, GetRuntimeFlagsFromCompileDefinition());
+  // Override from user-specified string.
+  ParseFlagsFromString(f, MaybeCallUbsanDefaultOptions());
   // Override from environment variable.
   ParseFlagsFromString(f, GetEnv("UBSAN_OPTIONS"));
 }
 
 }  // namespace __ubsan
+
+#if !SANITIZER_SUPPORTS_WEAK_HOOKS
+extern "C" {
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
+const char *__ubsan_default_options() { return ""; }
+}  // extern "C"
+#endif
