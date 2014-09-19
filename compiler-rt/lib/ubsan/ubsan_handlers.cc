@@ -43,10 +43,10 @@ static void handleTypeMismatchImpl(TypeMismatchData *Data, ValueHandle Pointer,
   if (ignoreReport(Loc.getSourceLocation(), Opts))
     return;
 
-  ScopedReport R(Opts);
-
   if (Data->Loc.isInvalid())
     Loc = FallbackLoc;
+
+  ScopedReport R(Opts, Loc);
 
   if (!Pointer)
     Diag(Loc, DL_Error, "%0 null pointer of type %1")
@@ -85,7 +85,7 @@ static void handleIntegerOverflowImpl(OverflowData *Data, ValueHandle LHS,
   if (ignoreReport(Loc, Opts))
     return;
 
-  ScopedReport R(Opts);
+  ScopedReport R(Opts, Loc);
 
   Diag(Loc, DL_Error, "%0 integer overflow: "
                       "%1 %2 %3 cannot be represented in type %4")
@@ -114,7 +114,7 @@ static void handleNegateOverflowImpl(OverflowData *Data, ValueHandle OldVal,
   if (ignoreReport(Loc, Opts))
     return;
 
-  ScopedReport R(Opts);
+  ScopedReport R(Opts, Loc);
 
   if (Data->Type.isSignedIntegerTy())
     Diag(Loc, DL_Error,
@@ -145,7 +145,7 @@ static void handleDivremOverflowImpl(OverflowData *Data, ValueHandle LHS,
   if (ignoreReport(Loc, Opts))
     return;
 
-  ScopedReport R(Opts);
+  ScopedReport R(Opts, Loc);
 
   Value LHSVal(Data->Type, LHS);
   Value RHSVal(Data->Type, RHS);
@@ -177,7 +177,7 @@ static void handleShiftOutOfBoundsImpl(ShiftOutOfBoundsData *Data,
   if (ignoreReport(Loc, Opts))
     return;
 
-  ScopedReport R(Opts);
+  ScopedReport R(Opts, Loc);
 
   Value LHSVal(Data->LHSType, LHS);
   Value RHSVal(Data->RHSType, RHS);
@@ -216,7 +216,7 @@ static void handleOutOfBoundsImpl(OutOfBoundsData *Data, ValueHandle Index,
   if (ignoreReport(Loc, Opts))
     return;
 
-  ScopedReport R(Opts);
+  ScopedReport R(Opts, Loc);
 
   Value IndexVal(Data->IndexType, Index);
   Diag(Loc, DL_Error, "index %0 out of bounds for type %1")
@@ -237,7 +237,7 @@ void __ubsan::__ubsan_handle_out_of_bounds_abort(OutOfBoundsData *Data,
 
 static void handleBuiltinUnreachableImpl(UnreachableData *Data,
                                          ReportOptions Opts) {
-  ScopedReport R(Opts);
+  ScopedReport R(Opts, Data->Loc);
   Diag(Data->Loc, DL_Error, "execution reached a __builtin_unreachable() call");
 }
 
@@ -248,7 +248,7 @@ void __ubsan::__ubsan_handle_builtin_unreachable(UnreachableData *Data) {
 }
 
 static void handleMissingReturnImpl(UnreachableData *Data, ReportOptions Opts) {
-  ScopedReport R(Opts);
+  ScopedReport R(Opts, Data->Loc);
   Diag(Data->Loc, DL_Error,
        "execution reached the end of a value-returning function "
        "without returning a value");
@@ -266,7 +266,7 @@ static void handleVLABoundNotPositive(VLABoundData *Data, ValueHandle Bound,
   if (ignoreReport(Loc, Opts))
     return;
 
-  ScopedReport R(Opts);
+  ScopedReport R(Opts, Loc);
 
   Diag(Loc, DL_Error, "variable length array bound evaluates to "
                       "non-positive value %0")
@@ -288,11 +288,12 @@ void __ubsan::__ubsan_handle_vla_bound_not_positive_abort(VLABoundData *Data,
 static void handleFloatCastOverflow(FloatCastOverflowData *Data,
                                     ValueHandle From, ReportOptions Opts) {
   // TODO: Add deduplication once a SourceLocation is generated for this check.
-  ScopedReport R(Opts);
+  Location Loc = getCallerLocation();
+  ScopedReport R(Opts, Loc);
 
-  Diag(getCallerLocation(), DL_Error,
+  Diag(Loc, DL_Error,
        "value %0 is outside the range of representable values of type %2")
-    << Value(Data->FromType, From) << Data->FromType << Data->ToType;
+      << Value(Data->FromType, From) << Data->FromType << Data->ToType;
 }
 
 void __ubsan::__ubsan_handle_float_cast_overflow(FloatCastOverflowData *Data,
@@ -314,7 +315,7 @@ static void handleLoadInvalidValue(InvalidValueData *Data, ValueHandle Val,
   if (ignoreReport(Loc, Opts))
     return;
 
-  ScopedReport R(Opts);
+  ScopedReport R(Opts, Loc);
 
   Diag(Loc, DL_Error,
        "load of value %0, which is not a valid value for type %1")
@@ -340,7 +341,7 @@ static void handleFunctionTypeMismatch(FunctionTypeMismatchData *Data,
 
   Location Loc = getFunctionLocation(Function, &FName);
 
-  ScopedReport R(Opts);
+  ScopedReport R(Opts, Loc);
 
   Diag(Data->Loc, DL_Error,
        "call to function %0 through pointer to incorrect function type %1")
@@ -367,7 +368,7 @@ static void handleNonNullReturn(NonNullReturnData *Data, ReportOptions Opts) {
   if (ignoreReport(Loc, Opts))
     return;
 
-  ScopedReport R(Opts);
+  ScopedReport R(Opts, Loc);
 
   Diag(Loc, DL_Error, "null pointer returned from function declared to never "
                       "return null");
@@ -391,7 +392,7 @@ static void handleNonNullArg(NonNullArgData *Data, ReportOptions Opts) {
   if (ignoreReport(Loc, Opts))
     return;
 
-  ScopedReport R(Opts);
+  ScopedReport R(Opts, Loc);
 
   Diag(Loc, DL_Error, "null pointer passed as argument %0, which is declared to "
        "never be null") << Data->ArgIndex;

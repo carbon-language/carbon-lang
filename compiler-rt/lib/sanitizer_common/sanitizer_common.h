@@ -250,7 +250,7 @@ const int kMaxSummaryLength = 1024;
 // and pass it to __sanitizer_report_error_summary.
 void ReportErrorSummary(const char *error_message);
 // Same as above, but construct error_message as:
-//   error_type: file:line function
+//   error_type file:line function
 void ReportErrorSummary(const char *error_type, const char *file,
                         int line, const char *function);
 void ReportErrorSummary(const char *error_type, StackTrace *trace);

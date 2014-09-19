@@ -38,6 +38,22 @@ static void MaybePrintStackTrace(uptr pc, uptr bp) {
   stack.Print();
 }
 
+static void MaybeReportErrorSummary(Location Loc) {
+  if (!common_flags()->print_summary)
+    return;
+  // Don't try to unwind the stack trace in UBSan summaries: just use the
+  // provided location.
+  if (Loc.isSourceLocation()) {
+    SourceLocation SLoc = Loc.getSourceLocation();
+    if (!SLoc.isInvalid()) {
+      ReportErrorSummary("runtime-error", SLoc.getFilename(), SLoc.getLine(),
+                         "");
+      return;
+    }
+  }
+  ReportErrorSummary("runtime-error");
+}
+
 namespace {
 class Decorator : public SanitizerCommonDecorator {
  public:
@@ -315,13 +331,15 @@ Diag::~Diag() {
                         NumRanges, Args);
 }
 
-ScopedReport::ScopedReport(ReportOptions Opts) : Opts(Opts) {
+ScopedReport::ScopedReport(ReportOptions Opts, Location SummaryLoc)
+    : Opts(Opts), SummaryLoc(SummaryLoc) {
   InitIfNecessary();
   CommonSanitizerReportMutex.Lock();
 }
 
 ScopedReport::~ScopedReport() {
   MaybePrintStackTrace(Opts.pc, Opts.bp);
+  MaybeReportErrorSummary(SummaryLoc);
   CommonSanitizerReportMutex.Unlock();
   if (Opts.DieAfterReport || flags()->halt_on_error)
     Die();

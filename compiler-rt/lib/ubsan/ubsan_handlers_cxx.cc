@@ -44,7 +44,7 @@ static void HandleDynamicTypeCacheMiss(
   if (Loc.isDisabled())
     return;
 
-  ScopedReport R(Opts);
+  ScopedReport R(Opts, Loc);
 
   Diag(Loc, DL_Error,
        "%0 address %1 which does not point to an object of type %2")

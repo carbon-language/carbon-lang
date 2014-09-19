@@ -223,9 +223,10 @@ struct ReportOptions {
 /// different sanitizers won't be mixed.
 class ScopedReport {
   ReportOptions Opts;
+  Location SummaryLoc;
 
 public:
-  ScopedReport(ReportOptions Opts);
+  ScopedReport(ReportOptions Opts, Location SummaryLoc);
   ~ScopedReport();
 };
 
