@@ -14,6 +14,7 @@
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
@@ -825,7 +826,8 @@ std::error_code FileCOFF::getReferenceArch(Reference::KindArch &result) {
     result = Reference::KindArch::all;
     return std::error_code();
   }
-  llvm::errs() << "Unsupported machine type: " << _obj->getMachine() << '\n';
+  llvm::errs() << "Unsupported machine type: 0x"
+               << llvm::utohexstr(_obj->getMachine()) << '\n';
   return llvm::object::object_error::parse_failed;
 }
 
