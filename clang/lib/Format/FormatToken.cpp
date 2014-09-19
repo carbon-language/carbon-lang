@@ -145,6 +145,9 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
   // trailing comments which are otherwise ignored for column alignment.
   SmallVector<unsigned, 8> EndOfLineItemLength;
 
+  unsigned MinItemLength = Style.ColumnLimit;
+  unsigned MaxItemLength = 0;
+
   for (unsigned i = 0, e = Commas.size() + 1; i != e; ++i) {
     // Skip comments on their own line.
     while (ItemBegin->HasUnescapedNewline && ItemBegin->isTrailingComment())
@@ -171,6 +174,9 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
       ItemEnd = Commas[i];
       // The comma is counted as part of the item when calculating the length.
       ItemLengths.push_back(CodePointsBetween(ItemBegin, ItemEnd));
+      MinItemLength = std::min(MinItemLength, ItemLengths.back());
+      MaxItemLength = std::max(MaxItemLength, ItemLengths.back());
+
       // Consume trailing comments so the are included in EndOfLineItemLength.
       if (ItemEnd->Next && !ItemEnd->Next->HasUnescapedNewline &&
           ItemEnd->Next->isTrailingComment())
@@ -186,8 +192,10 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
 
   // If this doesn't have a nested list, we require at least 6 elements in order
   // create a column layout. If it has a nested list, column layout ensures one
-  // list element per line.
-  if (HasNestedBracedList || Commas.size() < 5 || Token->NestingLevel != 0)
+  // list element per line. If the difference between the shortest and longest
+  // element is too large, column layout would create too much whitespace.
+  if (HasNestedBracedList || Commas.size() < 5 || Token->NestingLevel != 0 ||
+      MaxItemLength - MinItemLength > 10)
     return;
 
   // We can never place more than ColumnLimit / 3 items in a row (because of the
