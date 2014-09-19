@@ -163,6 +163,7 @@ void SourceCoverageView::render(raw_ostream &OS, bool WholeFile,
   auto NextSegment = CoverageSegments.begin();
   auto EndSegment = CoverageSegments.end();
 
+  unsigned FirstLine = NextSegment != EndSegment ? NextSegment->Line : 0;
   const CoverageSegment *WrappedSegment = nullptr;
   SmallVector<const CoverageSegment *, 8> LineSegments;
   for (line_iterator LI(File, /*SkipBlanks=*/false); !LI.is_at_eof(); ++LI) {
@@ -171,7 +172,7 @@ void SourceCoverageView::render(raw_ostream &OS, bool WholeFile,
     if (!WholeFile) {
       if (NextSegment == EndSegment)
         break;
-      else if (LI.line_number() < NextSegment->Line)
+      else if (LI.line_number() < FirstLine)
         continue;
     }
 
