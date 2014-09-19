@@ -389,12 +389,15 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(const MachineFunction &MF,
     RoundUpToAlignment(KernelInfo.ScratchSize * STM.getWavefrontSize(),
                        1 << ScratchAlignShift) >> ScratchAlignShift;
 
+  unsigned VGPRBlocks = (KernelInfo.NumVGPR - 1) / 4;
+  unsigned SGPRBlocks = (KernelInfo.NumSGPR - 1) / 8;
+
   if (MFI->getShaderType() == ShaderType::COMPUTE) {
     OutStreamer.EmitIntValue(R_00B848_COMPUTE_PGM_RSRC1, 4);
 
     const uint32_t ComputePGMRSrc1 =
-      S_00B848_VGPRS(KernelInfo.NumVGPR / 4) |
-      S_00B848_SGPRS(KernelInfo.NumSGPR / 8) |
+      S_00B848_VGPRS(VGPRBlocks) |
+      S_00B848_SGPRS(SGPRBlocks) |
       S_00B848_PRIORITY(KernelInfo.Priority) |
       S_00B848_FLOAT_MODE(KernelInfo.FloatMode) |
       S_00B848_PRIV(KernelInfo.Priv) |
@@ -418,8 +421,8 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(const MachineFunction &MF,
     // 0" comment but I don't see a corresponding field in the register spec.
   } else {
     OutStreamer.EmitIntValue(RsrcReg, 4);
-    OutStreamer.EmitIntValue(S_00B028_VGPRS(KernelInfo.NumVGPR / 4) |
-                             S_00B028_SGPRS(KernelInfo.NumSGPR / 8), 4);
+    OutStreamer.EmitIntValue(S_00B028_VGPRS(VGPRBlocks) |
+                             S_00B028_SGPRS(SGPRBlocks), 4);
   }
 
   if (MFI->getShaderType() == ShaderType::PIXEL) {
