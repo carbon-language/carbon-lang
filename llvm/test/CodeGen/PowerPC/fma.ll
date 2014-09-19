@@ -1,8 +1,12 @@
 ; RUN: llc < %s -march=ppc32 -fp-contract=fast | FileCheck %s
 
+declare double @dummy1(double) #0
+declare double @dummy2(double, double) #0
+declare double @dummy3(double, double, double) #0
+
 define double @test_FMADD1(double %A, double %B, double %C) {
 	%D = fmul double %A, %B		; <double> [#uses=1]
-	%E = fadd double %D, %C		; <double> [#uses=1]
+	%E = fadd double %C, %D		; <double> [#uses=1]
 	ret double %E
 ; CHECK-LABEL: test_FMADD1:
 ; CHECK: fmadd
@@ -18,13 +22,24 @@ define double @test_FMADD2(double %A, double %B, double %C) {
 ; CHECK-NEXT: blr
 }
 
-define double @test_FMSUB(double %A, double %B, double %C) {
+define double @test_FMSUB1(double %A, double %B, double %C) {
 	%D = fmul double %A, %B		; <double> [#uses=1]
 	%E = fsub double %D, %C		; <double> [#uses=1]
 	ret double %E
-; CHECK-LABEL: test_FMSUB:
+; CHECK-LABEL: test_FMSUB1:
 ; CHECK: fmsub
 ; CHECK-NEXT: blr
+}
+
+define double @test_FMSUB2(double %A, double %B, double %C, double %D) {
+	%E = fmul double %A, %B 	; <double> [#uses=2]
+	%F = fadd double %E, %C 	; <double> [#uses=1]
+	%G = fsub double %E, %D 	; <double> [#uses=1]
+	%H = call double @dummy2(double %F, double %G)      ; <double> [#uses=1]
+	ret double %H
+; CHECK-LABEL: test_FMSUB2:
+; CHECK: fmadd
+; CHECK-NEXT: fmsub
 }
 
 define double @test_FNMADD1(double %A, double %B, double %C) {

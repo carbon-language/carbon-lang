@@ -268,6 +268,13 @@ public:
     return HasFloatingPointExceptions;
   }
 
+  /// Return true if target always beneficiates from combining into FMA for a
+  /// given value type. This must typically return false on targets where FMA
+  /// takes more cycles to execute than FADD.
+  virtual bool enableAggressiveFMAFusion(EVT VT) const {
+    return false;
+  }
+
   /// Return the ValueType of the result of SETCC operations.  Also used to
   /// obtain the target's preferred type for the condition operand of SELECT and
   /// BRCOND nodes.  In the case of BRCOND the argument passed is MVT::Other

@@ -6684,13 +6684,15 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
       (!LegalOperations || TLI.isOperationLegalOrCustom(ISD::FMA, VT))) {
 
     // fold (fadd (fmul x, y), z) -> (fma x, y, z)
-    if (N0.getOpcode() == ISD::FMUL && N0->hasOneUse())
+    if (N0.getOpcode() == ISD::FMUL &&
+        (N0->hasOneUse() || TLI.enableAggressiveFMAFusion(VT)))
       return DAG.getNode(ISD::FMA, SDLoc(N), VT,
                          N0.getOperand(0), N0.getOperand(1), N1);
 
     // fold (fadd x, (fmul y, z)) -> (fma y, z, x)
     // Note: Commutes FADD operands.
-    if (N1.getOpcode() == ISD::FMUL && N1->hasOneUse())
+    if (N1.getOpcode() == ISD::FMUL &&
+        (N1->hasOneUse() || TLI.enableAggressiveFMAFusion(VT)))
       return DAG.getNode(ISD::FMA, SDLoc(N), VT,
                          N1.getOperand(0), N1.getOperand(1), N0);
   }
@@ -6762,14 +6764,16 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
       (!LegalOperations || TLI.isOperationLegalOrCustom(ISD::FMA, VT))) {
 
     // fold (fsub (fmul x, y), z) -> (fma x, y, (fneg z))
-    if (N0.getOpcode() == ISD::FMUL && N0->hasOneUse())
+    if (N0.getOpcode() == ISD::FMUL &&
+        (N0->hasOneUse() || TLI.enableAggressiveFMAFusion(VT)))
       return DAG.getNode(ISD::FMA, dl, VT,
                          N0.getOperand(0), N0.getOperand(1),
                          DAG.getNode(ISD::FNEG, dl, VT, N1));
 
     // fold (fsub x, (fmul y, z)) -> (fma (fneg y), z, x)
     // Note: Commutes FSUB operands.
-    if (N1.getOpcode() == ISD::FMUL && N1->hasOneUse())
+    if (N1.getOpcode() == ISD::FMUL &&
+        (N1->hasOneUse() || TLI.enableAggressiveFMAFusion(VT)))
       return DAG.getNode(ISD::FMA, dl, VT,
                          DAG.getNode(ISD::FNEG, dl, VT,
                          N1.getOperand(0)),
@@ -6778,7 +6782,8 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
     // fold (fsub (fneg (fmul, x, y)), z) -> (fma (fneg x), y, (fneg z))
     if (N0.getOpcode() == ISD::FNEG &&
         N0.getOperand(0).getOpcode() == ISD::FMUL &&
-        N0->hasOneUse() && N0.getOperand(0).hasOneUse()) {
+        ((N0->hasOneUse() && N0.getOperand(0).hasOneUse()) ||
+            TLI.enableAggressiveFMAFusion(VT))) {
       SDValue N00 = N0.getOperand(0).getOperand(0);
       SDValue N01 = N0.getOperand(0).getOperand(1);
       return DAG.getNode(ISD::FMA, dl, VT,

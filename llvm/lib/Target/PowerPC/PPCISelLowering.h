@@ -360,6 +360,11 @@ namespace llvm {
     /// getSetCCResultType - Return the ISD::SETCC ValueType
     EVT getSetCCResultType(LLVMContext &Context, EVT VT) const override;
 
+    /// Return true if target always beneficiates from combining into FMA for a
+    /// given value type. This must typically return false on targets where FMA
+    /// takes more cycles to execute than FADD.
+    bool enableAggressiveFMAFusion(EVT VT) const override;
+
     /// getPreIndexedAddressParts - returns true by value, base pointer and
     /// offset pointer and addressing mode by reference if the node's address
     /// can be legally represented as pre-indexed load / store address.

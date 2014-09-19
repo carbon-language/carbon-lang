@@ -826,6 +826,11 @@ EVT PPCTargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
   return VT.changeVectorElementTypeToInteger();
 }
 
+bool PPCTargetLowering::enableAggressiveFMAFusion(EVT VT) const {
+  assert(VT.isFloatingPoint() && "Non-floating-point FMA?");
+  return true;
+}
+
 //===----------------------------------------------------------------------===//
 // Node matching predicates, for use by the tblgen matching code.
 //===----------------------------------------------------------------------===//
