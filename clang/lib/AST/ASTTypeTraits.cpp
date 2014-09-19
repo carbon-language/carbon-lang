@@ -69,6 +69,7 @@ ASTNodeKind ASTNodeKind::getFromNode(const Decl &D) {
 #define ABSTRACT_DECL(D)
 #include "clang/AST/DeclNodes.inc"
   };
+  llvm_unreachable("invalid decl kind");
 }
 
 ASTNodeKind ASTNodeKind::getFromNode(const Stmt &S) {
@@ -79,6 +80,7 @@ ASTNodeKind ASTNodeKind::getFromNode(const Stmt &S) {
 #define ABSTRACT_STMT(S)
 #include "clang/AST/StmtNodes.inc"
   }
+  llvm_unreachable("invalid stmt kind");
 }
 
 ASTNodeKind ASTNodeKind::getFromNode(const Type &T) {
@@ -88,6 +90,7 @@ ASTNodeKind ASTNodeKind::getFromNode(const Type &T) {
 #define ABSTRACT_TYPE(Class, Base)
 #include "clang/AST/TypeNodes.def"
   }
+  llvm_unreachable("invalid type kind");
 }
 
 void DynTypedNode::print(llvm::raw_ostream &OS,
