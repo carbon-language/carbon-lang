@@ -37,6 +37,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/ManagedStatic.h"
 
 using namespace llvm;
 
@@ -61,12 +62,12 @@ void SpillPlacement::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 namespace {
-static BlockFrequency Threshold;
+static ManagedStatic<BlockFrequency> Threshold;
 }
 
 /// Decision threshold. A node gets the output value 0 if the weighted sum of
 /// its inputs falls in the open interval (-Threshold;Threshold).
-static BlockFrequency getThreshold() { return Threshold; }
+static BlockFrequency getThreshold() { return *Threshold; }
 
 /// \brief Set the threshold for a given entry frequency.
 ///
@@ -78,7 +79,7 @@ static void setThreshold(const BlockFrequency &Entry) {
   // it.  Divide by 2^13, rounding as appropriate.
   uint64_t Freq = Entry.getFrequency();
   uint64_t Scaled = (Freq >> 13) + bool(Freq & (1 << 12));
-  Threshold = std::max(UINT64_C(1), Scaled);
+  *Threshold = std::max(UINT64_C(1), Scaled);
 }
 
 /// Node - Each edge bundle corresponds to a Hopfield node.
