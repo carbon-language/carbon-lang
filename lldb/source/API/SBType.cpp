@@ -267,12 +267,7 @@ SBType::GetMemberFunctionAtIndex (uint32_t idx)
 {
     SBTypeMemberFunction sb_func_type;
     if (IsValid())
-    {
-        lldb::MemberFunctionKind kind;
-        std::string name;
-        ClangASTType func_type(m_opaque_sp->GetClangASTType(true).GetMemberFunctionAtIndex(idx,name,kind));
-        sb_func_type.reset(new TypeMemberFunctionImpl(func_type,name,kind));
-    }
+        sb_func_type.reset(new TypeMemberFunctionImpl(m_opaque_sp->GetClangASTType(true).GetMemberFunctionAtIndex(idx)));
     return sb_func_type;
 }
 
@@ -754,7 +749,36 @@ SBTypeMemberFunction::GetType ()
         sb_type.SetSP(lldb::TypeImplSP(new TypeImpl(m_opaque_sp->GetType())));
     }
     return sb_type;
-    
+}
+
+lldb::SBType
+SBTypeMemberFunction::GetReturnType ()
+{
+    SBType sb_type;
+    if (m_opaque_sp)
+    {
+        sb_type.SetSP(lldb::TypeImplSP(new TypeImpl(m_opaque_sp->GetReturnType())));
+    }
+    return sb_type;
+}
+
+uint32_t
+SBTypeMemberFunction::GetNumberOfArguments ()
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetNumArguments();
+    return 0;
+}
+
+lldb::SBType
+SBTypeMemberFunction::GetArgumentTypeAtIndex (uint32_t i)
+{
+    SBType sb_type;
+    if (m_opaque_sp)
+    {
+        sb_type.SetSP(lldb::TypeImplSP(new TypeImpl(m_opaque_sp->GetArgumentAtIndex(i))));
+    }
+    return sb_type;
 }
 
 lldb::MemberFunctionKind

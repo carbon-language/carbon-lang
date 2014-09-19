@@ -37,7 +37,7 @@ class SBTypeMemberFunctionsTest(TestBase):
         # We'll use the test method name as the exe_name.
         self.exe_name = self.testMethodName
         # Find the line number to break at.
-        self.source = 'main.cpp'
+        self.source = 'main.mm'
         self.line = line_number(self.source, '// set breakpoint here')
 
     def type_api(self, exe_name):
@@ -76,6 +76,15 @@ class SBTypeMemberFunctionsTest(TestBase):
         self.assertTrue(Base.GetMemberFunctionAtIndex(2).GetType().GetFunctionArgumentTypes().GetSize() == 0, "Base::dat takes no arguments")
         self.assertTrue(Base.GetMemberFunctionAtIndex(1).GetType().GetFunctionArgumentTypes().GetTypeAtIndex(1).GetName() == "char", "Base::bar takes a second 'char' argument")
         self.assertTrue(Base.GetMemberFunctionAtIndex(1).GetName() == "bar", "Base::bar not found")
+        
+        variable = frame0.FindVariable("thingy")
+        Thingy = variable.GetType()
+        
+        self.assertTrue(Thingy.GetNumberOfMemberFunctions() == 2, "Thingy declares two methods")
+        
+        self.assertTrue(Thingy.GetMemberFunctionAtIndex(0).GetReturnType().GetName() == "id", "Thingy::init returns an id")
+        self.assertTrue(Thingy.GetMemberFunctionAtIndex(1).GetNumberOfArguments() == 2, "Thingy::foo takes two arguments")
+        self.assertTrue(Thingy.GetMemberFunctionAtIndex(1).GetArgumentTypeAtIndex(0).GetName() == "int", "Thingy::foo takes an int")
 
 if __name__ == '__main__':
     import atexit

@@ -1,5 +1,5 @@
 LEVEL = ../../make
 
-CXX_SOURCES := main.cpp
+OBJCXX_SOURCES := main.mm
 
 include $(LEVEL)/Makefile.rules

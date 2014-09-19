@@ -86,6 +86,15 @@ public:
     lldb::SBType
     GetType ();
     
+    lldb::SBType
+    GetReturnType ();
+    
+    uint32_t
+    GetNumberOfArguments ();
+    
+    lldb::SBType
+    GetArgumentTypeAtIndex (uint32_t);
+    
     lldb::MemberFunctionKind
     GetKind();
     

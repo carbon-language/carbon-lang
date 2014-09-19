@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#import <Foundation/Foundation.h>
+
 class Base {
 public:
     int foo(int x, int y) { return 1; }
@@ -22,7 +24,24 @@ public:
     float baz(float b) { return b + 1.0; }
 };
 
+@interface Thingy: NSObject {
+}
+- (id)init;
+- (id)fooWithBar: (int)bar andBaz:(id)baz;
+@end
+
+@implementation Thingy {
+}
+- (id)init {
+    return (self = [super init]);
+}
+- (id)fooWithBar: (int)bar andBaz:(id)baz {
+    return nil;
+}
+@end
+
 int main() {
     Derived d;
+    Thingy *thingy = [[Thingy alloc] init];
     return 0; // set breakpoint here
 }
