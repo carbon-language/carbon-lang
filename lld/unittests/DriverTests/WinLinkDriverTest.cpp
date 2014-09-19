@@ -221,9 +221,8 @@ TEST_F(WinLinkParserTest, MachineX64) {
 }
 
 TEST_F(WinLinkParserTest, MachineArm) {
-  EXPECT_FALSE(parse("link.exe", "/machine:arm", "a.obj", nullptr));
-  EXPECT_TRUE(StringRef(errorMessage()).startswith(
-      "Machine type other than x86/x64 is not supported"));
+  EXPECT_TRUE(parse("link.exe", "/machine:arm", "a.obj", nullptr));
+  EXPECT_EQ(llvm::COFF::IMAGE_FILE_MACHINE_ARMNT, _context.getMachineType());
 }
 
 TEST_F(WinLinkParserTest, MajorImageVersion) {
