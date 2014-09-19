@@ -52,7 +52,7 @@ static ManagedStatic<sys::Mutex> FunctionsLock;
 typedef GenericValue (*ExFunc)(FunctionType *,
                                const std::vector<GenericValue> &);
 static ManagedStatic<std::map<const Function *, ExFunc> > ExportedFunctions;
-static std::map<std::string, ExFunc> FuncNames;
+static ManagedStatic<std::map<std::string, ExFunc> > FuncNames;
 
 #ifdef USE_LIBFFI
 typedef void (*RawFunc)();
@@ -98,9 +98,9 @@ static ExFunc lookupFunction(const Function *F) {
   ExtName += "_" + F->getName().str();
 
   sys::ScopedLock Writer(*FunctionsLock);
-  ExFunc FnPtr = FuncNames[ExtName];
+  ExFunc FnPtr = (*FuncNames)[ExtName];
   if (!FnPtr)
-    FnPtr = FuncNames["lle_X_" + F->getName().str()];
+    FnPtr = (*FuncNames)["lle_X_" + F->getName().str()];
   if (!FnPtr)  // Try calling a generic function... if it exists...
     FnPtr = (ExFunc)(intptr_t)
       sys::DynamicLibrary::SearchForAddressOfSymbol("lle_X_" +
@@ -498,15 +498,15 @@ static GenericValue lle_X_memcpy(FunctionType *FT,
 
 void Interpreter::initializeExternalFunctions() {
   sys::ScopedLock Writer(*FunctionsLock);
-  FuncNames["lle_X_atexit"]       = lle_X_atexit;
-  FuncNames["lle_X_exit"]         = lle_X_exit;
-  FuncNames["lle_X_abort"]        = lle_X_abort;
+  (*FuncNames)["lle_X_atexit"]       = lle_X_atexit;
+  (*FuncNames)["lle_X_exit"]         = lle_X_exit;
+  (*FuncNames)["lle_X_abort"]        = lle_X_abort;
 
-  FuncNames["lle_X_printf"]       = lle_X_printf;
-  FuncNames["lle_X_sprintf"]      = lle_X_sprintf;
-  FuncNames["lle_X_sscanf"]       = lle_X_sscanf;
-  FuncNames["lle_X_scanf"]        = lle_X_scanf;
-  FuncNames["lle_X_fprintf"]      = lle_X_fprintf;
-  FuncNames["lle_X_memset"]       = lle_X_memset;
-  FuncNames["lle_X_memcpy"]       = lle_X_memcpy;
+  (*FuncNames)["lle_X_printf"]       = lle_X_printf;
+  (*FuncNames)["lle_X_sprintf"]      = lle_X_sprintf;
+  (*FuncNames)["lle_X_sscanf"]       = lle_X_sscanf;
+  (*FuncNames)["lle_X_scanf"]        = lle_X_scanf;
+  (*FuncNames)["lle_X_fprintf"]      = lle_X_fprintf;
+  (*FuncNames)["lle_X_memset"]       = lle_X_memset;
+  (*FuncNames)["lle_X_memcpy"]       = lle_X_memcpy;
 }
