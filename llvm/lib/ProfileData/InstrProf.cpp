@@ -14,6 +14,7 @@
 
 #include "llvm/ProfileData/InstrProf.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ManagedStatic.h"
 
 using namespace llvm;
 
@@ -55,7 +56,8 @@ class InstrProfErrorCategoryType : public std::error_category {
 };
 }
 
+static ManagedStatic<InstrProfErrorCategoryType> ErrorCategory;
+
 const std::error_category &llvm::instrprof_category() {
-  static InstrProfErrorCategoryType C;
-  return C;
+  return *ErrorCategory;
 }
