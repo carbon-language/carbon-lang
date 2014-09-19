@@ -536,8 +536,8 @@ public:
   /// Apply the DW_AT_stmt_list from this compile unit to the specified DIE.
   void applyStmtList(DIE &D);
 
-  /// createGlobalVariableDIE - create global variable DIE.
-  void createGlobalVariableDIE(DIGlobalVariable GV);
+  /// getOrCreateGlobalVariableDIE - get or create global variable DIE.
+  DIE *getOrCreateGlobalVariableDIE(DIGlobalVariable GV);
 
   /// addLabelAddress - Add a dwarf label attribute data and value using
   /// either DW_FORM_addr or DW_FORM_GNU_addr_index.

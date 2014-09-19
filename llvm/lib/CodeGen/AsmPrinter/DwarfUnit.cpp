@@ -1596,11 +1596,11 @@ static const ConstantExpr *getMergedGlobalExpr(const Value *V) {
   return CE;
 }
 
-/// createGlobalVariableDIE - create global variable DIE.
-void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
+/// getOrCreateGlobalVariableDIE - get or create global variable DIE.
+DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
   // Check for pre-existence.
-  if (getDIE(GV))
-    return;
+  if (DIE *Die = getDIE(GV))
+    return Die;
 
   assert(GV.isGlobalVariable());
 
@@ -1725,18 +1725,19 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
     addBlock(*VariableDIE, dwarf::DW_AT_location, Loc);
   }
 
+  DIE *ResultDIE = VariableSpecDIE ? VariableSpecDIE : VariableDIE;
+
   if (addToAccelTable) {
-    DIE &AddrDIE = VariableSpecDIE ? *VariableSpecDIE : *VariableDIE;
-    DD->addAccelName(GV.getName(), AddrDIE);
+    DD->addAccelName(GV.getName(), *ResultDIE);
 
     // If the linkage name is different than the name, go ahead and output
     // that as well into the name table.
     if (GV.getLinkageName() != "" && GV.getName() != GV.getLinkageName())
-      DD->addAccelName(GV.getLinkageName(), AddrDIE);
+      DD->addAccelName(GV.getLinkageName(), *ResultDIE);
   }
 
-  addGlobalName(GV.getName(), VariableSpecDIE ? *VariableSpecDIE : *VariableDIE,
-                GV.getContext());
+  addGlobalName(GV.getName(), *ResultDIE, GV.getContext());
+  return ResultDIE;
 }
 
 /// constructSubrangeDIE - Construct subrange DIE from DISubrange.
