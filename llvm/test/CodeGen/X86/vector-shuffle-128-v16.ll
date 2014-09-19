@@ -547,6 +547,15 @@ define <16 x i8> @shuffle_v16i8_00_zz_zz_zz_zz_zz_zz_zz_01_zz_zz_zz_zz_zz_zz_zz(
 }
 
 define <16 x i8> @shuffle_v16i8_00_uu_uu_uu_01_uu_uu_uu_02_uu_uu_uu_03_uu_uu_uu(<16 x i8> %a) {
+; SSE2-LABEL: @shuffle_v16i8_00_uu_uu_uu_01_uu_uu_uu_02_uu_uu_uu_03_uu_uu_uu
+; SSE2:       # BB#0:
+; SSE2-NEXT:    pxor %[[X1:xmm[0-9]+]], %[[X1]]
+; SSE2-NEXT:    punpcklbw {{.*}} # xmm0 = xmm0[0],[[X1]][0],xmm0[1],[[X1]][1],xmm0[2],[[X1]][2],xmm0[3],[[X1]][3],xmm0[4],[[X1]][4],xmm0[5],[[X1]][5],xmm0[6],[[X1]][6],xmm0[7],[[X1]][7]
+; SSE2-NEXT:    punpcklwd {{.*}} # xmm0 = xmm0[0,0,1,1,2,2,3,3]
+; SSE2-NEXT:    packuswb %xmm0, %xmm0
+; SSE2-NEXT:    punpcklbw {{.*}} # xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
+; SSE2-NEXT:    retq
+;
 ; SSSE3-LABEL: @shuffle_v16i8_00_uu_uu_uu_01_uu_uu_uu_02_uu_uu_uu_03_uu_uu_uu
 ; SSSE3:       # BB#0:
 ; SSSE3-NEXT:    pshufb {{.*}}    # xmm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,zero,zero,zero,zero,zero,zero,zero,zero
@@ -562,6 +571,13 @@ define <16 x i8> @shuffle_v16i8_00_uu_uu_uu_01_uu_uu_uu_02_uu_uu_uu_03_uu_uu_uu(
 }
 
 define <16 x i8> @shuffle_v16i8_00_zz_zz_zz_01_zz_zz_zz_02_zz_zz_zz_03_zz_zz_zz(<16 x i8> %a) {
+; SSE2-LABEL: @shuffle_v16i8_00_zz_zz_zz_01_zz_zz_zz_02_zz_zz_zz_03_zz_zz_zz
+; SSE2:       # BB#0:
+; SSE2-NEXT:    pxor %[[X1:xmm[0-9]+]], %[[X1]]
+; SSE2-NEXT:    punpcklbw {{.*}} # xmm0 = xmm0[0],[[X1]][0],xmm0[1],[[X1]][1],xmm0[2],[[X1]][2],xmm0[3],[[X1]][3],xmm0[4],[[X1]][4],xmm0[5],[[X1]][5],xmm0[6],[[X1]][6],xmm0[7],[[X1]][7]
+; SSE2-NEXT:    punpcklbw {{.*}} # xmm0 = xmm0[0],[[X1]][0],xmm0[1],[[X1]][1],xmm0[2],[[X1]][2],xmm0[3],[[X1]][3],xmm0[4],[[X1]][4],xmm0[5],[[X1]][5],xmm0[6],[[X1]][6],xmm0[7],[[X1]][7]
+; SSE2-NEXT:    retq
+;
 ; SSSE3-LABEL: @shuffle_v16i8_00_zz_zz_zz_01_zz_zz_zz_02_zz_zz_zz_03_zz_zz_zz
 ; SSSE3:       # BB#0:
 ; SSSE3-NEXT:    pxor %[[X1:xmm[0-9]+]], %[[X1]]
@@ -578,6 +594,11 @@ define <16 x i8> @shuffle_v16i8_00_zz_zz_zz_01_zz_zz_zz_02_zz_zz_zz_03_zz_zz_zz(
 }
 
 define <16 x i8> @shuffle_v16i8_00_uu_01_uu_02_uu_03_uu_04_uu_05_uu_06_uu_07_uu(<16 x i8> %a) {
+; SSE2-LABEL: @shuffle_v16i8_00_uu_01_uu_02_uu_03_uu_04_uu_05_uu_06_uu_07_uu
+; SSE2:       # BB#0:
+; SSE2-NEXT:    punpcklbw {{.*}} # xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
+; SSE2-NEXT:    retq
+;
 ; SSSE3-LABEL: @shuffle_v16i8_00_uu_01_uu_02_uu_03_uu_04_uu_05_uu_06_uu_07_uu
 ; SSSE3:       # BB#0:
 ; SSSE3-NEXT:    punpcklbw {{.*}} # xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
@@ -592,6 +613,12 @@ define <16 x i8> @shuffle_v16i8_00_uu_01_uu_02_uu_03_uu_04_uu_05_uu_06_uu_07_uu(
 }
 
 define <16 x i8> @shuffle_v16i8_00_zz_01_zz_02_zz_03_zz_04_zz_05_zz_06_zz_07_zz(<16 x i8> %a) {
+; SSE2-LABEL: @shuffle_v16i8_00_zz_01_zz_02_zz_03_zz_04_zz_05_zz_06_zz_07_zz
+; SSE2:       # BB#0:
+; SSE2-NEXT:    pxor %[[X1:xmm[0-9]+]], %[[X1]]
+; SSE2-NEXT:    punpcklbw {{.*}} # xmm0 = xmm0[0],[[X1]][0],xmm0[1],[[X1]][1],xmm0[2],[[X1]][2],xmm0[3],[[X1]][3],xmm0[4],[[X1]][4],xmm0[5],[[X1]][5],xmm0[6],[[X1]][6],xmm0[7],[[X1]][7]
+; SSE2-NEXT:    retq
+;
 ; SSSE3-LABEL: @shuffle_v16i8_00_zz_01_zz_02_zz_03_zz_04_zz_05_zz_06_zz_07_zz
 ; SSSE3:       # BB#0:
 ; SSSE3-NEXT:    pxor %[[X1:xmm[0-9]+]], %[[X1]]
