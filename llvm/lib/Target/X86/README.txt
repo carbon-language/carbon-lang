@@ -2,17 +2,6 @@
 // Random ideas for the X86 backend.
 //===---------------------------------------------------------------------===//
 
-This should be one DIV/IDIV instruction, not a libcall:
-
-unsigned test(unsigned long long X, unsigned Y) {
-        return X/Y;
-}
-
-This can be done trivially with a custom legalizer.  What about overflow 
-though?  http://gcc.gnu.org/bugzilla/show_bug.cgi?id=14224
-
-//===---------------------------------------------------------------------===//
-
 Improvements to the multiply -> shift/add algorithm:
 http://gcc.gnu.org/ml/gcc-patches/2004-08/msg01590.html
 
@@ -80,43 +69,6 @@ the coalescer how to deal with it though.
 //===---------------------------------------------------------------------===//
 
 It appears icc use push for parameter passing. Need to investigate.
-
-//===---------------------------------------------------------------------===//
-
-This:
-
-void foo(void);
-void bar(int x, int *P) { 
-  x >>= 2;
-  if (x) 
-    foo();
-  *P = x;
-}
-
-compiles into:
-
-	movq	%rsi, %rbx
-	movl	%edi, %r14d
-	sarl	$2, %r14d
-	testl	%r14d, %r14d
-	je	LBB0_2
-
-Instead of doing an explicit test, we can use the flags off the sar.  This
-occurs in a bigger testcase like this, which is pretty common:
-
-#include <vector>
-int test1(std::vector<int> &X) {
-  int Sum = 0;
-  for (long i = 0, e = X.size(); i != e; ++i)
-    X[i] = 0;
-  return Sum;
-}
-
-//===---------------------------------------------------------------------===//
-
-Only use inc/neg/not instructions on processors where they are faster than
-add/sub/xor.  They are slower on the P4 due to only updating some processor
-flags.
 
 //===---------------------------------------------------------------------===//
 
@@ -303,42 +255,6 @@ opposed to two cycles for the movl+lea variant.
 
 //===---------------------------------------------------------------------===//
 
-__builtin_ffs codegen is messy.
-
-int ffs_(unsigned X) { return __builtin_ffs(X); }
-
-llvm produces:
-ffs_:
-        movl    4(%esp), %ecx
-        bsfl    %ecx, %eax
-        movl    $32, %edx
-        cmove   %edx, %eax
-        incl    %eax
-        xorl    %edx, %edx
-        testl   %ecx, %ecx
-        cmove   %edx, %eax
-        ret
-
-vs gcc:
-
-_ffs_:
-        movl    $-1, %edx
-        bsfl    4(%esp), %eax
-        cmove   %edx, %eax
-        addl    $1, %eax
-        ret
-
-Another example of __builtin_ffs (use predsimplify to eliminate a select):
-
-int foo (unsigned long j) {
-  if (j)
-    return __builtin_ffs (j) - 1;
-  else
-    return 0;
-}
-
-//===---------------------------------------------------------------------===//
-
 It appears gcc place string data with linkonce linkage in
 .section __TEXT,__const_coal,coalesced instead of
 .section __DATA,__const_coal,coalesced.
@@ -463,85 +379,6 @@ int f(char *p) {
 //===---------------------------------------------------------------------===//
 
 We should inline lrintf and probably other libc functions.
-
-//===---------------------------------------------------------------------===//
-
-Use the FLAGS values from arithmetic instructions more.  For example, compile:
-
-int add_zf(int *x, int y, int a, int b) {
-     if ((*x += y) == 0)
-          return a;
-     else
-          return b;
-}
-
-to:
-       addl    %esi, (%rdi)
-       movl    %edx, %eax
-       cmovne  %ecx, %eax
-       ret
-instead of:
-
-_add_zf:
-        addl (%rdi), %esi
-        movl %esi, (%rdi)
-        testl %esi, %esi
-        cmove %edx, %ecx
-        movl %ecx, %eax
-        ret
-
-As another example, compile function f2 in test/CodeGen/X86/cmp-test.ll
-without a test instruction.
-
-//===---------------------------------------------------------------------===//
-
-These two functions have identical effects:
-
-unsigned int f(unsigned int i, unsigned int n) {++i; if (i == n) ++i; return i;}
-unsigned int f2(unsigned int i, unsigned int n) {++i; i += i == n; return i;}
-
-We currently compile them to:
-
-_f:
-        movl 4(%esp), %eax
-        movl %eax, %ecx
-        incl %ecx
-        movl 8(%esp), %edx
-        cmpl %edx, %ecx
-        jne LBB1_2      #UnifiedReturnBlock
-LBB1_1: #cond_true
-        addl $2, %eax
-        ret
-LBB1_2: #UnifiedReturnBlock
-        movl %ecx, %eax
-        ret
-_f2:
-        movl 4(%esp), %eax
-        movl %eax, %ecx
-        incl %ecx
-        cmpl 8(%esp), %ecx
-        sete %cl
-        movzbl %cl, %ecx
-        leal 1(%ecx,%eax), %eax
-        ret
-
-both of which are inferior to GCC's:
-
-_f:
-        movl    4(%esp), %edx
-        leal    1(%edx), %eax
-        addl    $2, %edx
-        cmpl    8(%esp), %eax
-        cmove   %edx, %eax
-        ret
-_f2:
-        movl    4(%esp), %eax
-        addl    $1, %eax
-        xorl    %edx, %edx
-        cmpl    8(%esp), %eax
-        sete    %dl
-        addl    %edx, %eax
-        ret
 
 //===---------------------------------------------------------------------===//
 
@@ -1395,20 +1232,6 @@ like the following:
 	ret
 
 A similar code sequence works for division.
-
-//===---------------------------------------------------------------------===//
-
-These should compile to the same code, but the later codegen's to useless
-instructions on X86. This may be a trivial dag combine (GCC PR7061):
-
-struct s1 { unsigned char a, b; };
-unsigned long f1(struct s1 x) {
-    return x.a + x.b;
-}
-struct s2 { unsigned a: 8, b: 8; };
-unsigned long f2(struct s2 x) {
-    return x.a + x.b;
-}
 
 //===---------------------------------------------------------------------===//
 
