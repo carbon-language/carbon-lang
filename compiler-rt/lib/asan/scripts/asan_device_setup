@@ -160,13 +160,19 @@ cp "$ASAN_RT_PATH/$ASAN_RT" "$TMPDIR/"
 # FIXME: alloc_dealloc_mismatch=0 prevents a failure in libdvm startup,
 # which may or may not be a real bug (probably not).
 ASAN_OPTIONS=start_deactivated=1,alloc_dealloc_mismatch=0
+
+# On Android-L not allowing user segv handler breaks some applications.
+if $ADB shell 'echo $LD_PRELOAD' | grep libsigchain.so >&/dev/null; then
+    ASAN_OPTIONS="$ASAN_OPTIONS,allow_user_segv_handler=1"
+fi
+
 if [[ x$extra_options != x ]] ; then
     ASAN_OPTIONS="$ASAN_OPTIONS,$extra_options"
 fi
 
 # Zygote wrapper.
 cat <<EOF >"$TMPDIR/app_process.wrap"
-#!/system/bin/sh
+#!/system/bin/sh-from-zygote
 ASAN_OPTIONS=$ASAN_OPTIONS \\
 LD_PRELOAD=\$LD_PRELOAD:libclang_rt.asan-arm-android.so \\
 exec /system/bin/app_process32 \$@
@@ -200,6 +206,13 @@ if ! ( cd "$TMPDIRBASE" && diff -qr old/ new/ ) ; then
     $ADB shell chmod 755 \
         /system/bin/app_process.wrap \
         /system/bin/asanwrapper
+
+    # Make SELinux happy by keeping app_process wrapper and the shell
+    # it runs on in zygote domain.
+    $ADB shell cp /system/bin/sh /system/bin/sh-from-zygote
+    $ADB shell chcon u:object_r:zygote_exec:s0 \
+        /system/bin/sh-from-zygote \
+        /system/bin/app_process.wrap
 
     echo '>> Restarting shell (asynchronous)'
     $ADB shell stop
