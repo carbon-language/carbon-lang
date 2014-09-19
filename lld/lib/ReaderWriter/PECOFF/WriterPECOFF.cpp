@@ -936,9 +936,11 @@ void groupAtoms(const PECOFFLinkingContext &ctx, const File &file,
   }
 }
 
-static const DefinedAtom *findTLSUsedSymbol(const File &file) {
+static const DefinedAtom *findTLSUsedSymbol(const PECOFFLinkingContext &ctx,
+                                            const File &file) {
+  StringRef sym = ctx.decorateSymbol("_tls_used");
   for (const DefinedAtom *atom : file.defined())
-    if (atom->name() == "__tls_used")
+    if (atom->name() == sym)
       return atom;
   return nullptr;
 }
@@ -1030,9 +1032,9 @@ void PECOFFWriter::build(const File &linkedFile) {
                               section->getVirtualAddress(), section->size());
   }
 
-  if (const DefinedAtom *atom = findTLSUsedSymbol(linkedFile)) {
-    dataDirectory->setField(DataDirectoryIndex::TLS_TABLE,
-                            _atomRva[atom], 0x18);
+  if (const DefinedAtom *atom = findTLSUsedSymbol(_ctx, linkedFile)) {
+    dataDirectory->setField(DataDirectoryIndex::TLS_TABLE, _atomRva[atom],
+                            0x18);
   }
 
   // Now that we know the size and file offset of sections. Set the file
