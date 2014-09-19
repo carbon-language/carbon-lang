@@ -123,4 +123,8 @@ _xtest(void)
 #include <shaintrin.h>
 #endif
 
+/* Some intrinsics inside adxintrin.h are available only if __ADX__ defined,
+ * whereas others are also available if __ADX__ undefined */
+#include <adxintrin.h>
+
 #endif /* __IMMINTRIN_H */

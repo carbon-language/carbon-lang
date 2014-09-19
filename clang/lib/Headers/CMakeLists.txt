@@ -1,4 +1,5 @@
 set(files
+  adxintrin.h
   altivec.h
   ammintrin.h
   arm_acle.h
