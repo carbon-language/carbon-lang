@@ -7549,6 +7549,80 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
   return SDValue();
 }
 
+/// \brief Try to lower insertion of a single element into a zero vector.
+///
+/// This is a common pattern that we have especially efficient patterns to lower
+/// across all subtarget feature sets.
+static SDValue lowerIntegerElementInsertionVectorShuffle(
+    MVT VT, SDLoc DL, SDValue V1, SDValue V2, ArrayRef<int> Mask,
+    const X86Subtarget *Subtarget, SelectionDAG &DAG) {
+  int V2Index = std::find_if(Mask.begin(), Mask.end(),
+                             [&Mask](int M) { return M >= (int)Mask.size(); }) -
+                Mask.begin();
+
+  // Check for a single input from a SCALAR_TO_VECTOR node.
+  // FIXME: All of this should be canonicalized into INSERT_VECTOR_ELT and
+  // all the smarts here sunk into that routine. However, the current
+  // lowering of BUILD_VECTOR makes that nearly impossible until the old
+  // vector shuffle lowering is dead.
+  if (!((V2.getOpcode() == ISD::SCALAR_TO_VECTOR &&
+         Mask[V2Index] == (int)Mask.size()) ||
+        V2.getOpcode() == ISD::BUILD_VECTOR))
+    return SDValue();
+
+  SDValue V2S = V2.getOperand(Mask[V2Index] - Mask.size());
+
+  if (V1.getOpcode() == ISD::BUILD_VECTOR) {
+    for (int M : Mask) {
+      if (M < 0 || M >= (int)Mask.size())
+        continue;
+      SDValue Input = V1.getOperand(M);
+      if (Input.getOpcode() != ISD::UNDEF && !X86::isZeroNode(Input))
+        // A non-zero input!
+        return SDValue();
+    }
+  } else if (!ISD::isBuildVectorAllZeros(V1.getNode())) {
+    return SDValue();
+  }
+
+  // First, we need to zext the scalar if it is smaller than an i32.
+  MVT EltVT = VT.getVectorElementType();
+  assert(EltVT == V2S.getSimpleValueType() &&
+         "Different scalar and element types!");
+  MVT ExtVT = VT;
+  if (EltVT == MVT::i8 || EltVT == MVT::i16) {
+    // Zero-extend directly to i32.
+    ExtVT = MVT::v4i32;
+    V2S = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i32, V2S);
+  }
+
+  V2 = DAG.getNode(X86ISD::VZEXT_MOVL, DL, ExtVT,
+                   DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, ExtVT, V2S));
+  if (ExtVT != VT)
+    V2 = DAG.getNode(ISD::BITCAST, DL, VT, V2);
+
+  if (V2Index != 0) {
+    // If we have 4 or fewer lanes we can cheaply shuffle the element into
+    // the desired position. Otherwise it is more efficient to do a vector
+    // shift left. We know that we can do a vector shift left because all
+    // the inputs are zero.
+    if (VT.isFloatingPoint() || VT.getVectorNumElements() <= 4) {
+      SmallVector<int, 4> V2Shuffle(Mask.size(), 1);
+      V2Shuffle[V2Index] = 0;
+      V2 = DAG.getVectorShuffle(VT, DL, V2, DAG.getUNDEF(VT), V2Shuffle);
+    } else {
+      V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, V2);
+      V2 = DAG.getNode(
+          X86ISD::VSHLDQ, DL, MVT::v2i64, V2,
+          DAG.getConstant(
+              V2Index * EltVT.getSizeInBits(),
+              DAG.getTargetLoweringInfo().getScalarShiftAmountTy(MVT::v2i64)));
+      V2 = DAG.getNode(ISD::BITCAST, DL, VT, V2);
+    }
+  }
+  return V2;
+}
+
 /// \brief Handle lowering of 2-lane 64-bit floating point shuffles.
 ///
 /// This is the basis function for the 2-lane 64-bit shuffles as we have full
@@ -7805,81 +7879,6 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   }
   return DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f32, LowV, HighV,
                      getV4X86ShuffleImm8ForMask(NewMask, DAG));
-}
-
-static SDValue lowerIntegerElementInsertionVectorShuffle(
-    MVT VT, SDLoc DL, SDValue V1, SDValue V2, ArrayRef<int> Mask,
-    const X86Subtarget *Subtarget, SelectionDAG &DAG) {
-  int V2Index = std::find_if(Mask.begin(), Mask.end(),
-                             [&Mask](int M) { return M >= (int)Mask.size(); }) -
-                Mask.begin();
-
-  // Check for a single input from a SCALAR_TO_VECTOR node.
-  // FIXME: All of this should be canonicalized into INSERT_VECTOR_ELT and
-  // all the smarts here sunk into that routine. However, the current
-  // lowering of BUILD_VECTOR makes that nearly impossible until the old
-  // vector shuffle lowering is dead.
-  if ((Mask[V2Index] == (int)Mask.size() &&
-       V2.getOpcode() == ISD::SCALAR_TO_VECTOR) ||
-      V2.getOpcode() == ISD::BUILD_VECTOR) {
-    SDValue V2S = V2.getOperand(Mask[V2Index] - Mask.size());
-
-    bool V1IsAllZero = false;
-    if (ISD::isBuildVectorAllZeros(V1.getNode())) {
-      V1IsAllZero = true;
-    } else if (V1.getOpcode() == ISD::BUILD_VECTOR) {
-      V1IsAllZero = true;
-      for (int M : Mask) {
-        if (M < 0 || M >= (int)Mask.size())
-          continue;
-        SDValue Input = V1.getOperand(M);
-        if (Input.getOpcode() != ISD::UNDEF && !X86::isZeroNode(Input)) {
-          // A non-zero input!
-          V1IsAllZero = false;
-          break;
-        }
-      }
-    }
-    if (V1IsAllZero) {
-      // First, we need to zext the scalar if it is smaller than an i32.
-      MVT EltVT = VT.getVectorElementType();
-      assert(EltVT == V2S.getSimpleValueType() &&
-             "Different scalar and element types!");
-      MVT ExtVT = VT;
-      if (EltVT == MVT::i8 || EltVT == MVT::i16) {
-        // Zero-extend directly to i32.
-        ExtVT = MVT::v4i32;
-        V2S = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i32, V2S);
-      }
-
-      V2 = DAG.getNode(X86ISD::VZEXT_MOVL, DL, ExtVT,
-                       DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, ExtVT, V2S));
-      if (ExtVT != VT)
-        V2 = DAG.getNode(ISD::BITCAST, DL, VT, V2);
-
-      if (V2Index != 0) {
-        // If we have 4 or fewer lanes we can cheaply shuffle the element into
-        // the desired position. Otherwise it is more efficient to do a vector
-        // shift left. We know that we can do a vector shift left because all
-        // the inputs are zero.
-        if (VT.getVectorNumElements() <= 4) {
-          SmallVector<int, 4> V2Shuffle(Mask.size(), 1);
-          V2Shuffle[V2Index] = 0;
-          V2 = DAG.getVectorShuffle(VT, DL, V2, DAG.getUNDEF(VT), V2Shuffle);
-        } else {
-          V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, V2);
-          V2 = DAG.getNode(
-              X86ISD::VSHLDQ, DL, MVT::v2i64, V2,
-              DAG.getConstant(
-                  V2Index * EltVT.getSizeInBits(),
-                  DAG.getTargetLoweringInfo().getScalarShiftAmountTy(MVT::v2i64)));
-          V2 = DAG.getNode(ISD::BITCAST, DL, VT, V2);
-        }
-      }
-      return V2;
-    }
-  }
-  return SDValue();
 }
 
 /// \brief Lower 4-lane i32 vector shuffles.
