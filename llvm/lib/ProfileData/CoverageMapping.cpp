@@ -183,6 +183,20 @@ CoverageMapping::load(ObjectFileCoverageMappingReader &CoverageReader,
   return std::move(Coverage);
 }
 
+ErrorOr<std::unique_ptr<CoverageMapping>>
+CoverageMapping::load(StringRef ObjectFilename, StringRef ProfileFilename) {
+  auto CounterMappingBuff = MemoryBuffer::getFileOrSTDIN(ObjectFilename);
+  if (auto EC = CounterMappingBuff.getError())
+    return EC;
+  ObjectFileCoverageMappingReader CoverageReader(CounterMappingBuff.get());
+  if (auto EC = CoverageReader.readHeader())
+    return EC;
+  std::unique_ptr<IndexedInstrProfReader> ProfileReader;
+  if (auto EC = IndexedInstrProfReader::create(ProfileFilename, ProfileReader))
+    return EC;
+  return load(CoverageReader, *ProfileReader);
+}
+
 namespace {
 /// \brief Distributes functions into instantiation sets.
 ///

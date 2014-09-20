@@ -196,24 +196,7 @@ CodeCoverageTool::createSourceFileView(StringRef SourceFile,
 }
 
 std::unique_ptr<CoverageMapping> CodeCoverageTool::load() {
-  auto CounterMappingBuff = MemoryBuffer::getFileOrSTDIN(ObjectFilename);
-  if (auto EC = CounterMappingBuff.getError()) {
-    error(EC.message(), ObjectFilename);
-    return nullptr;
-  }
-  ObjectFileCoverageMappingReader MappingReader(CounterMappingBuff.get());
-  if (auto EC = MappingReader.readHeader()) {
-    error(EC.message(), ObjectFilename);
-    return nullptr;
-  }
-
-  std::unique_ptr<IndexedInstrProfReader> PGOReader;
-  if (auto EC = IndexedInstrProfReader::create(PGOFilename, PGOReader)) {
-    error(EC.message(), PGOFilename);
-    return nullptr;
-  }
-
-  auto CoverageOrErr = CoverageMapping::load(MappingReader, *PGOReader);
+  auto CoverageOrErr = CoverageMapping::load(ObjectFilename, PGOFilename);
   if (std::error_code EC = CoverageOrErr.getError()) {
     colored_ostream(errs(), raw_ostream::RED)
         << "error: Failed to load coverage: " << EC.message();

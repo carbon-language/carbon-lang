@@ -318,10 +318,14 @@ class CoverageMapping {
   CoverageMapping() : MismatchedFunctionCount(0) {}
 
 public:
-  /// Load the coverage mapping using the given readers.
+  /// \brief Load the coverage mapping using the given readers.
   static ErrorOr<std::unique_ptr<CoverageMapping>>
   load(ObjectFileCoverageMappingReader &CoverageReader,
        IndexedInstrProfReader &ProfileReader);
+
+  /// \brief Load the coverage mapping from the given files.
+  static ErrorOr<std::unique_ptr<CoverageMapping>>
+  load(StringRef ObjectFilename, StringRef ProfileFilename);
 
   /// \brief The number of functions that couldn't have their profiles mapped.
   ///
