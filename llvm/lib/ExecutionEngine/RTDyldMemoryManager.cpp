@@ -267,6 +267,8 @@ uint64_t RTDyldMemoryManager::getSymbolAddress(const std::string &Name) {
   // name, try again without demangling.
   if (void *Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr))
     return (uint64_t)Ptr;
+
+  return 0;
 }
 
 void *RTDyldMemoryManager::getPointerToNamedFunction(const std::string &Name,
