@@ -761,7 +761,7 @@ getCOFFSectionFlags(SectionKind K) {
       COFF::IMAGE_SCN_MEM_EXECUTE |
       COFF::IMAGE_SCN_MEM_READ |
       COFF::IMAGE_SCN_CNT_CODE;
-  else if (K.isBSS ())
+  else if (K.isBSS())
     Flags |=
       COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA |
       COFF::IMAGE_SCN_MEM_READ |
@@ -771,7 +771,7 @@ getCOFFSectionFlags(SectionKind K) {
       COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
       COFF::IMAGE_SCN_MEM_READ |
       COFF::IMAGE_SCN_MEM_WRITE;
-  else if (K.isReadOnly())
+  else if (K.isReadOnly() || K.isReadOnlyWithRel())
     Flags |=
       COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
       COFF::IMAGE_SCN_MEM_READ;
