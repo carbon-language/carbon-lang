@@ -381,17 +381,6 @@ bool CodeCoverageTool::load() {
     bool RegionError = false;
     CounterMappingContext Ctx(I.Expressions, Counts);
     for (const auto &R : I.MappingRegions) {
-      // Compute the values of mapped regions
-      if (ViewOpts.Debug) {
-        errs() << "File " << R.FileID << "| " << R.LineStart << ":"
-               << R.ColumnStart << " -> " << R.LineEnd << ":" << R.ColumnEnd
-               << " = ";
-        Ctx.dump(R.Count);
-        if (R.Kind == CounterMappingRegion::ExpansionRegion) {
-          errs() << " (Expanded file id = " << R.ExpandedFileID << ") ";
-        }
-        errs() << "\n";
-      }
       ErrorOr<int64_t> ExecutionCount = Ctx.evaluate(R.Count);
       if (ExecutionCount) {
         Function.CountedRegions.push_back(CountedRegion(R, *ExecutionCount));
