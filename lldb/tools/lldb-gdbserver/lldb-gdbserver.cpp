@@ -152,7 +152,7 @@ dump_available_platforms (FILE *output_file)
 }
 
 static void
-run_lldb_commands (const lldb::DebuggerSP &debugger_sp, const std::vector<std::string> lldb_commands)
+run_lldb_commands (const lldb::DebuggerSP &debugger_sp, const std::vector<std::string> &lldb_commands)
 {
     for (const auto &lldb_command : lldb_commands)
     {
@@ -167,7 +167,7 @@ run_lldb_commands (const lldb::DebuggerSP &debugger_sp, const std::vector<std::s
 }
 
 static lldb::PlatformSP
-setup_platform (const std::string platform_name)
+setup_platform (const std::string &platform_name)
 {
     lldb::PlatformSP platform_sp;
 
@@ -180,7 +180,7 @@ setup_platform (const std::string platform_name)
     }
 
     Error error;
-    platform_sp = Platform::Create (platform_name.c_str(), error);
+    platform_sp = Platform::Create (lldb_private::ConstString(platform_name), error);
     if (error.Fail ())
     {
         // the host platform isn't registered with that name (at
