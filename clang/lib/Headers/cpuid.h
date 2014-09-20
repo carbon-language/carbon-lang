@@ -92,24 +92,7 @@
 #define bit_SMEP        0x00000080
 #define bit_ENH_MOVSB   0x00000200
 
-/* PIC on i386 uses %ebx, so preserve it. */
 #if __i386__
-#define __cpuid(__level, __eax, __ebx, __ecx, __edx) \
-    __asm("  pushl  %%ebx\n" \
-          "  cpuid\n" \
-          "  mov    %%ebx,%1\n" \
-          "  popl   %%ebx" \
-        : "=a"(__eax), "=r" (__ebx), "=c"(__ecx), "=d"(__edx) \
-        : "0"(__level))
-
-#define __cpuid_count(__level, __count, __eax, __ebx, __ecx, __edx) \
-    __asm("  pushl  %%ebx\n" \
-          "  cpuid\n" \
-          "  mov    %%ebx,%1\n" \
-          "  popl   %%ebx" \
-        : "=a"(__eax), "=r" (__ebx), "=c"(__ecx), "=d"(__edx) \
-        : "0"(__level), "2"(__count))
-#else
 #define __cpuid(__level, __eax, __ebx, __ecx, __edx) \
     __asm("cpuid" : "=a"(__eax), "=b" (__ebx), "=c"(__ecx), "=d"(__edx) \
                   : "0"(__level))
@@ -117,6 +100,21 @@
 #define __cpuid_count(__level, __count, __eax, __ebx, __ecx, __edx) \
     __asm("cpuid" : "=a"(__eax), "=b" (__ebx), "=c"(__ecx), "=d"(__edx) \
                   : "0"(__level), "2"(__count))
+#else
+/* x86-64 uses %rbx as the base register, so preserve it. */
+#define __cpuid(__level, __eax, __ebx, __ecx, __edx) \
+    __asm("  xchgq  %%rbx,%q1\n" \
+          "  cpuid\n" \
+          "  xchgq  %%rbx,%q1" \
+        : "=a"(__eax), "=r" (__ebx), "=c"(__ecx), "=d"(__edx) \
+        : "0"(__level))
+
+#define __cpuid_count(__level, __count, __eax, __ebx, __ecx, __edx) \
+    __asm("  xchgq  %%rbx,%q1\n" \
+          "  cpuid\n" \
+          "  xchgq  %%rbx,%q1" \
+        : "=a"(__eax), "=r" (__ebx), "=c"(__ecx), "=d"(__edx) \
+        : "0"(__level), "2"(__count))
 #endif
 
 static __inline int __get_cpuid (unsigned int __level, unsigned int *__eax,
