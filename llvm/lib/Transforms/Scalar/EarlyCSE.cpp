@@ -26,7 +26,7 @@
 #include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include <vector>
+#include <deque>
 using namespace llvm;
 
 #define DEBUG_TYPE "early-cse"
@@ -560,7 +560,11 @@ bool EarlyCSE::runOnFunction(Function &F) {
   if (skipOptnoneFunction(F))
     return false;
 
-  std::vector<StackNode *> nodesToProcess;
+  // Note, deque is being used here because there is significant performance gains
+  // over vector when the container becomes very large due to the specific access
+  // patterns. For more information see the mailing list discussion on this:
+  // http://lists.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20120116/135228.html
+  std::deque<StackNode *> nodesToProcess;
 
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   DL = DLP ? &DLP->getDataLayout() : nullptr;
