@@ -7772,11 +7772,19 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   int NumV2Elements =
       std::count_if(Mask.begin(), Mask.end(), [](int M) { return M >= 4; });
 
-  if (NumV2Elements == 0)
-    // Straight shuffle of a single input vector. We pass the input vector to
-    // both operands to simulate this with a SHUFPS.
+  if (NumV2Elements == 0) {
+    if (Subtarget->hasAVX()) {
+      // If we have AVX, we can use VPERMILPS which will allow folding a load
+      // into the shuffle.
+      return DAG.getNode(X86ISD::VPERMILP, DL, MVT::v4f32, V1,
+                         getV4X86ShuffleImm8ForMask(Mask, DAG));
+    }
+
+    // Otherwise, use a straight shuffle of a single input vector. We pass the
+    // input vector to both operands to simulate this with a SHUFPS.
     return DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f32, V1, V1,
                        getV4X86ShuffleImm8ForMask(Mask, DAG));
+  }
 
   // Use dedicated unpack instructions for masks that match their pattern.
   if (isShuffleEquivalent(Mask, 0, 4, 1, 5))
