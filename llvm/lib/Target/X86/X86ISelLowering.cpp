@@ -7802,35 +7802,25 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       // When using INSERTPS we can zero any lane of the destination. Collect
       // the zero inputs into a mask and drop them from the lanes of V1 which
       // actually need to be present as inputs to the INSERTPS.
-      unsigned ZMask = 0;
-      if (ISD::isBuildVectorAllZeros(V1.getNode())) {
-        ZMask = 0xF ^ (1 << V2Index);
-      } else if (V1.getOpcode() == ISD::BUILD_VECTOR) {
-        for (int i = 0; i < 4; ++i) {
-          int M = Mask[i];
-          if (M >= 4)
-            continue;
-          if (M > -1) {
-            SDValue Input = V1.getOperand(M);
-            if (Input.getOpcode() != ISD::UNDEF &&
-                !X86::isZeroNode(Input)) {
-              // A non-zero input!
-              ZMask = 0;
-              break;
-            }
-          }
-          ZMask |= 1 << i;
-        }
-      }
+      SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
 
       // Synthesize a shuffle mask for the non-zero and non-v2 inputs.
-      int InsertShuffleMask[4] = {-1, -1, -1, -1};
+      bool InsertNeedsShuffle = false;
+      unsigned ZMask = 0;
       for (int i = 0; i < 4; ++i)
-        if (i != V2Index && (ZMask & (1 << i)) == 0)
-          InsertShuffleMask[i] = Mask[i];
+        if (i != V2Index) {
+          if (Zeroable[i]) {
+            ZMask |= 1 << i;
+          } else if (Mask[i] != i) {
+            InsertNeedsShuffle = true;
+            break;
+          }
+        }
 
-      if (isNoopShuffleMask(InsertShuffleMask)) {
-        // Replace V1 with undef if nothing from V1 survives the INSERTPS.
+      // We don't want to use INSERTPS or other insertion techniques if it will
+      // require shuffling anyways.
+      if (!InsertNeedsShuffle) {
+        // If all of V1 is zeroable, replace it with undef.
         if ((ZMask | 1 << V2Index) == 0xF)
           V1 = DAG.getUNDEF(MVT::v4f32);
 
