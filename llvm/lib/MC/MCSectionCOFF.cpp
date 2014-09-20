@@ -47,18 +47,22 @@ void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
   }
 
   OS << "\t.section\t" << getSectionName() << ",\"";
-  if (getKind().isText())
+  if (getCharacteristics() & COFF::IMAGE_SCN_MEM_EXECUTE)
     OS << 'x';
-  else if (getKind().isBSS())
-    OS << 'b';
-  if (getKind().isWriteable() && !getKind().isReadOnlyWithRel())
+  if (getCharacteristics() & COFF::IMAGE_SCN_MEM_WRITE)
     OS << 'w';
-  else
+  else if (getCharacteristics() & COFF::IMAGE_SCN_MEM_READ)
     OS << 'r';
-  if (getCharacteristics() & COFF::IMAGE_SCN_MEM_DISCARDABLE)
-    OS << 'n';
+  else
+    OS << 'y';
   if (getCharacteristics() & COFF::IMAGE_SCN_CNT_INITIALIZED_DATA)
     OS << 'd';
+  if (getCharacteristics() & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
+    OS << 'b';
+  if (getCharacteristics() & COFF::IMAGE_SCN_LNK_REMOVE)
+    OS << 'n';
+  if (getCharacteristics() & COFF::IMAGE_SCN_MEM_SHARED)
+    OS << 's';
   OS << '"';
 
   if (getCharacteristics() & COFF::IMAGE_SCN_LNK_COMDAT) {
