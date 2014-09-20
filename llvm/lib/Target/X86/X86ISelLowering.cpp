@@ -7556,9 +7556,15 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
 static SDValue lowerIntegerElementInsertionVectorShuffle(
     MVT VT, SDLoc DL, SDValue V1, SDValue V2, ArrayRef<int> Mask,
     const X86Subtarget *Subtarget, SelectionDAG &DAG) {
+  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
+
   int V2Index = std::find_if(Mask.begin(), Mask.end(),
                              [&Mask](int M) { return M >= (int)Mask.size(); }) -
                 Mask.begin();
+
+  for (int i = 0, Size = Mask.size(); i < Size; ++i)
+    if (i != V2Index && !Zeroable[i])
+      return SDValue(); // Not inserting into a zero vector.
 
   // Check for a single input from a SCALAR_TO_VECTOR node.
   // FIXME: All of this should be canonicalized into INSERT_VECTOR_ELT and
@@ -7571,19 +7577,6 @@ static SDValue lowerIntegerElementInsertionVectorShuffle(
     return SDValue();
 
   SDValue V2S = V2.getOperand(Mask[V2Index] - Mask.size());
-
-  if (V1.getOpcode() == ISD::BUILD_VECTOR) {
-    for (int M : Mask) {
-      if (M < 0 || M >= (int)Mask.size())
-        continue;
-      SDValue Input = V1.getOperand(M);
-      if (Input.getOpcode() != ISD::UNDEF && !X86::isZeroNode(Input))
-        // A non-zero input!
-        return SDValue();
-    }
-  } else if (!ISD::isBuildVectorAllZeros(V1.getNode())) {
-    return SDValue();
-  }
 
   // First, we need to zext the scalar if it is smaller than an i32.
   MVT EltVT = VT.getVectorElementType();
