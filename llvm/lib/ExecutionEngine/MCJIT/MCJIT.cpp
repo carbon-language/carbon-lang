@@ -351,9 +351,13 @@ uint64_t MCJIT::getFunctionAddress(const std::string &Name) {
 void *MCJIT::getPointerToFunction(Function *F) {
   MutexGuard locked(lock);
 
+  Mangler Mang(TM->getSubtargetImpl()->getDataLayout());
+  SmallString<128> Name;
+  TM->getNameWithPrefix(Name, F, Mang);
+
   if (F->isDeclaration() || F->hasAvailableExternallyLinkage()) {
     bool AbortOnFailure = !F->hasExternalWeakLinkage();
-    void *Addr = getPointerToNamedFunction(F->getName(), AbortOnFailure);
+    void *Addr = getPointerToNamedFunction(Name, AbortOnFailure);
     addGlobalMapping(F, Addr);
     return Addr;
   }
@@ -364,17 +368,18 @@ void *MCJIT::getPointerToFunction(Function *F) {
   // Make sure the relevant module has been compiled and loaded.
   if (HasBeenAddedButNotLoaded)
     generateCodeForModule(M);
-  else if (!OwnedModules.hasModuleBeenLoaded(M))
+  else if (!OwnedModules.hasModuleBeenLoaded(M)) {
     // If this function doesn't belong to one of our modules, we're done.
+    // FIXME: Asking for the pointer to a function that hasn't been registered,
+    //        and isn't a declaration (which is handled above) should probably
+    //        be an assertion.
     return nullptr;
+  }
 
   // FIXME: Should the Dyld be retaining module information? Probably not.
   //
   // This is the accessor for the target address, so make sure to check the
   // load address of the symbol, not the local address.
-  Mangler Mang(TM->getSubtargetImpl()->getDataLayout());
-  SmallString<128> Name;
-  TM->getNameWithPrefix(Name, F, Mang);
   return (void*)Dyld.getSymbolLoadAddress(Name);
 }
 

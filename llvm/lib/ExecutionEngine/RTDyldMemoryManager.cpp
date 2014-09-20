@@ -253,19 +253,20 @@ uint64_t RTDyldMemoryManager::getSymbolAddress(const std::string &Name) {
   // is called before ExecutionEngine::runFunctionAsMain() is called.
   if (Name == "__main") return (uint64_t)&jit_noop;
 
-  const char *NameStr = Name.c_str();
-  void *Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr);
-  if (Ptr)
-    return (uint64_t)Ptr;
+  // Try to demangle Name before looking it up in the process, otherwise symbol
+  // '_<Name>' (if present) will shadow '<Name>', and there will be no way to
+  // refer to the latter.
 
-  // If it wasn't found and if it starts with an underscore ('_') character,
-  // try again without the underscore.
-  if (NameStr[0] == '_') {
-    Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr+1);
-    if (Ptr)
+  const char *NameStr = Name.c_str();
+
+  if (NameStr[0] == '_')
+    if (void *Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr + 1))
       return (uint64_t)Ptr;
-  }
-  return 0;
+
+  // If we Name did not require demangling, or we failed to find the demangled
+  // name, try again without demangling.
+  if (void *Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr))
+    return (uint64_t)Ptr;
 }
 
 void *RTDyldMemoryManager::getPointerToNamedFunction(const std::string &Name,
