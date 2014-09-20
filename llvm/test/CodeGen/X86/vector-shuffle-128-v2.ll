@@ -1,7 +1,8 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=SSE2
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse3 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=SSE3
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+ssse3 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=SSSE3
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse4.1 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=SSE41
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE2
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse3 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE3
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+ssse3 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSSE3
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse4.1 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE41
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX1
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-unknown"
@@ -106,17 +107,25 @@ define <2 x double> @shuffle_v2f64_22(<2 x double> %a, <2 x double> %b) {
   ret <2 x double> %shuffle
 }
 define <2 x double> @shuffle_v2f64_32(<2 x double> %a, <2 x double> %b) {
-; ALL-LABEL: @shuffle_v2f64_32
-; ALL:         pshufd {{.*}} # xmm0 = xmm1[2,3,0,1]
-; ALL-NEXT:    retq
+; SSE-LABEL: @shuffle_v2f64_32
+; SSE:         pshufd {{.*}} # xmm0 = xmm1[2,3,0,1]
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: @shuffle_v2f64_32
+; AVX:         vshufpd {{.*}} # xmm0 = xmm1[1,0]
+; AVX-NEXT:    retq
   %shuffle = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 3, i32 2>
   ret <2 x double> %shuffle
 }
 define <2 x double> @shuffle_v2f64_33(<2 x double> %a, <2 x double> %b) {
-; ALL-LABEL: @shuffle_v2f64_33
-; ALL:         movhlps {{.*}} # xmm1 = xmm1[1,1]
-; ALL-NEXT:    movaps %xmm1, %xmm0
-; ALL-NEXT:    retq
+; SSE-LABEL: @shuffle_v2f64_33
+; SSE:         movhlps {{.*}} # xmm1 = xmm1[1,1]
+; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: @shuffle_v2f64_33
+; AVX:         vmovhlps {{.*}} # xmm0 = xmm1[1,1]
+; AVX-NEXT:    retq
   %shuffle = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 3, i32 3>
   ret <2 x double> %shuffle
 }
@@ -172,10 +181,14 @@ define <2 x i64> @shuffle_v2i64_02(<2 x i64> %a, <2 x i64> %b) {
   ret <2 x i64> %shuffle
 }
 define <2 x i64> @shuffle_v2i64_02_copy(<2 x i64> %nonce, <2 x i64> %a, <2 x i64> %b) {
-; ALL-LABEL: @shuffle_v2i64_02_copy
-; ALL:         punpcklqdq {{.*}} # xmm1 = xmm1[0],xmm2[0]
-; ALL-NEXT:    movdqa %xmm1, %xmm0
-; ALL-NEXT:    retq
+; SSE-LABEL: @shuffle_v2i64_02_copy
+; SSE:         punpcklqdq {{.*}} # xmm1 = xmm1[0],xmm2[0]
+; SSE-NEXT:    movdqa %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: @shuffle_v2i64_02_copy
+; AVX:         punpcklqdq {{.*}} # xmm0 = xmm1[0],xmm2[0]
+; AVX-NEXT:    retq
   %shuffle = shufflevector <2 x i64> %a, <2 x i64> %b, <2 x i32> <i32 0, i32 2>
   ret <2 x i64> %shuffle
 }
@@ -273,26 +286,38 @@ define <2 x i64> @shuffle_v2i64_13(<2 x i64> %a, <2 x i64> %b) {
   ret <2 x i64> %shuffle
 }
 define <2 x i64> @shuffle_v2i64_13_copy(<2 x i64> %nonce, <2 x i64> %a, <2 x i64> %b) {
-; ALL-LABEL: @shuffle_v2i64_13_copy
-; ALL:         punpckhqdq {{.*}} # xmm1 = xmm1[1],xmm2[1]
-; ALL-NEXT:    movdqa %xmm1, %xmm0
-; ALL-NEXT:    retq
+; SSE-LABEL: @shuffle_v2i64_13_copy
+; SSE:         punpckhqdq {{.*}} # xmm1 = xmm1[1],xmm2[1]
+; SSE-NEXT:    movdqa %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: @shuffle_v2i64_13_copy
+; AVX:         punpckhqdq {{.*}} # xmm0 = xmm1[1],xmm2[1]
+; AVX-NEXT:    retq
   %shuffle = shufflevector <2 x i64> %a, <2 x i64> %b, <2 x i32> <i32 1, i32 3>
   ret <2 x i64> %shuffle
 }
 define <2 x i64> @shuffle_v2i64_20(<2 x i64> %a, <2 x i64> %b) {
-; ALL-LABEL: @shuffle_v2i64_20
-; ALL:         punpcklqdq {{.*}} # xmm1 = xmm1[0],xmm0[0]
-; ALL-NEXT:    movdqa %xmm1, %xmm0
-; ALL-NEXT:    retq
+; SSE-LABEL: @shuffle_v2i64_20
+; SSE:         punpcklqdq {{.*}} # xmm1 = xmm1[0],xmm0[0]
+; SSE-NEXT:    movdqa %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: @shuffle_v2i64_20
+; AVX:         vpunpcklqdq {{.*}} # xmm0 = xmm1[0],xmm0[0]
+; AVX-NEXT:    retq
   %shuffle = shufflevector <2 x i64> %a, <2 x i64> %b, <2 x i32> <i32 2, i32 0>
   ret <2 x i64> %shuffle
 }
 define <2 x i64> @shuffle_v2i64_20_copy(<2 x i64> %nonce, <2 x i64> %a, <2 x i64> %b) {
-; ALL-LABEL: @shuffle_v2i64_20_copy
-; ALL:         punpcklqdq {{.*}} # xmm2 = xmm2[0],xmm1[0]
-; ALL-NEXT:    movdqa %xmm2, %xmm0
-; ALL-NEXT:    retq
+; SSE-LABEL: @shuffle_v2i64_20_copy
+; SSE:         punpcklqdq {{.*}} # xmm2 = xmm2[0],xmm1[0]
+; SSE-NEXT:    movdqa %xmm2, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: @shuffle_v2i64_20_copy
+; AVX:         vpunpcklqdq {{.*}} # xmm0 = xmm2[0],xmm1[0]
+; AVX-NEXT:    retq
   %shuffle = shufflevector <2 x i64> %a, <2 x i64> %b, <2 x i32> <i32 2, i32 0>
   ret <2 x i64> %shuffle
 }
@@ -383,27 +408,39 @@ define <2 x i64> @shuffle_v2i64_30_copy(<2 x i64> %nonce, <2 x i64> %a, <2 x i64
   ret <2 x i64> %shuffle
 }
 define <2 x i64> @shuffle_v2i64_31(<2 x i64> %a, <2 x i64> %b) {
-; ALL-LABEL: @shuffle_v2i64_31
-; ALL:         punpckhqdq {{.*}} # xmm1 = xmm1[1],xmm0[1]
-; ALL-NEXT:    movdqa %xmm1, %xmm0
-; ALL-NEXT:    retq
+; SSE-LABEL: @shuffle_v2i64_31
+; SSE:         punpckhqdq {{.*}} # xmm1 = xmm1[1],xmm0[1]
+; SSE-NEXT:    movdqa %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: @shuffle_v2i64_31
+; AVX:         vpunpckhqdq {{.*}} # xmm0 = xmm1[1],xmm0[1]
+; AVX-NEXT:    retq
   %shuffle = shufflevector <2 x i64> %a, <2 x i64> %b, <2 x i32> <i32 3, i32 1>
   ret <2 x i64> %shuffle
 }
 define <2 x i64> @shuffle_v2i64_31_copy(<2 x i64> %nonce, <2 x i64> %a, <2 x i64> %b) {
-; ALL-LABEL: @shuffle_v2i64_31_copy
-; ALL:         punpckhqdq {{.*}} # xmm2 = xmm2[1],xmm1[1]
-; ALL-NEXT:    movdqa %xmm2, %xmm0
-; ALL-NEXT:    retq
+; SSE-LABEL: @shuffle_v2i64_31_copy
+; SSE:         punpckhqdq {{.*}} # xmm2 = xmm2[1],xmm1[1]
+; SSE-NEXT:    movdqa %xmm2, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: @shuffle_v2i64_31_copy
+; AVX:         vpunpckhqdq {{.*}} # xmm0 = xmm2[1],xmm1[1]
+; AVX-NEXT:    retq
   %shuffle = shufflevector <2 x i64> %a, <2 x i64> %b, <2 x i32> <i32 3, i32 1>
   ret <2 x i64> %shuffle
 }
 
 
 define <2 x i64> @insert_reg_and_zero_v2i64(i64 %a) {
-; ALL-LABEL: @insert_reg_and_zero_v2i64
-; ALL:         movd %rdi, %xmm0
-; ALL-NEXT:    retq
+; SSE-LABEL: @insert_reg_and_zero_v2i64
+; SSE:         movd %rdi, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: @insert_reg_and_zero_v2i64
+; AVX:         vmovq %rdi, %xmm0
+; AVX-NEXT:    retq
   %v = insertelement <2 x i64> undef, i64 %a, i32 0
   %shuffle = shufflevector <2 x i64> %v, <2 x i64> zeroinitializer, <2 x i32> <i32 0, i32 3>
   ret <2 x i64> %shuffle
