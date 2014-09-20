@@ -3307,6 +3307,12 @@ void SelectionDAGBuilder::visitInsertValue(const InsertValueInst &I) {
   unsigned NumValValues = ValValueVTs.size();
   SmallVector<SDValue, 4> Values(NumAggValues);
 
+  // Ignore an insertvalue that produces an empty object
+  if (!NumAggValues) {
+    setValue(&I, DAG.getUNDEF(MVT(MVT::Other)));
+    return;
+  }
+
   SDValue Agg = getValue(Op0);
   unsigned i = 0;
   // Copy the beginning value(s) from the original aggregate.
