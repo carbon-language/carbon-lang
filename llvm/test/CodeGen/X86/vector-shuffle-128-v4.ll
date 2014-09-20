@@ -806,3 +806,74 @@ define <4 x i32> @shuffle_v4i32_0z1z(<4 x i32> %a) {
   %shuffle = shufflevector <4 x i32> %a, <4 x i32> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 1, i32 7>
   ret <4 x i32> %shuffle
 }
+
+define <4 x i32> @insert_reg_and_zero_v4i32(i32 %a) {
+; ALL-LABEL: @insert_reg_and_zero_v4i32
+; ALL:       # BB#0:
+; ALL-NEXT:    movd %edi, %xmm0
+; ALL-NEXT:    retq
+  %v = insertelement <4 x i32> undef, i32 %a, i32 0
+  %shuffle = shufflevector <4 x i32> %v, <4 x i32> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
+  ret <4 x i32> %shuffle
+}
+
+define <4 x i32> @insert_mem_and_zero_v4i32(i32* %ptr) {
+; ALL-LABEL: @insert_mem_and_zero_v4i32
+; ALL:       # BB#0:
+; ALL-NEXT:    movd (%rdi), %xmm0
+; ALL-NEXT:    retq
+  %a = load i32* %ptr
+  %v = insertelement <4 x i32> undef, i32 %a, i32 0
+  %shuffle = shufflevector <4 x i32> %v, <4 x i32> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
+  ret <4 x i32> %shuffle
+}
+
+define <4 x float> @insert_reg_and_zero_v4f32(float %a) {
+; SSE2-LABEL: @insert_reg_and_zero_v4f32
+; SSE2:       # BB#0:
+; SSE2-NEXT:    xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSE2-NEXT:    movss %xmm0, %[[X]]
+; SSE2-NEXT:    movaps %[[X]], %xmm0
+; SSE2-NEXT:    retq
+;
+; SSE3-LABEL: @insert_reg_and_zero_v4f32
+; SSE3:       # BB#0:
+; SSE3-NEXT:    xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSE3-NEXT:    movss %xmm0, %[[X]]
+; SSE3-NEXT:    movaps %[[X]], %xmm0
+; SSE3-NEXT:    retq
+;
+; SSSE3-LABEL: @insert_reg_and_zero_v4f32
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSSE3-NEXT:    movss %xmm0, %[[X]]
+; SSSE3-NEXT:    movaps %[[X]], %xmm0
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: @insert_reg_and_zero_v4f32
+; SSE41:       # BB#0:
+; SSE41-NEXT:    xorps %[[X:xmm[0-9]+]], %[[X]]
+; SSE41-NEXT:    movss %xmm0, %[[X]]
+; SSE41-NEXT:    movaps %[[X]], %xmm0
+; SSE41-NEXT:    retq
+;
+; AVX1-LABEL: @insert_reg_and_zero_v4f32
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vxorps %[[X:xmm[0-9]+]], %[[X]], %[[X]]
+; AVX1-NEXT:    vmovss %xmm0, %[[X]], %xmm0
+; AVX1-NEXT:    retq
+  %v = insertelement <4 x float> undef, float %a, i32 0
+  %shuffle = shufflevector <4 x float> %v, <4 x float> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
+  ret <4 x float> %shuffle
+}
+
+define <4 x float> @insert_mem_and_zero_v4f32(float* %ptr) {
+; ALL-LABEL: @insert_mem_and_zero_v4f32
+; ALL:       # BB#0:
+; ALL-NEXT:    movss (%rdi), %xmm0
+; ALL-NEXT:    retq
+  %a = load float* %ptr
+  %v = insertelement <4 x float> undef, float %a, i32 0
+  %shuffle = shufflevector <4 x float> %v, <4 x float> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
+  ret <4 x float> %shuffle
+}

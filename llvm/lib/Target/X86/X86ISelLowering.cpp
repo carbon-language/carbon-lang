@@ -7784,6 +7784,16 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   if (isShuffleEquivalent(Mask, 2, 6, 3, 7))
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v4f32, V1, V2);
 
+  // There are special ways we can lower some single-element blends. However, we
+  // have custom ways we can lower more complex single-element blends below that
+  // we defer to if both this and BLENDPS fail to match, so restrict this to
+  // when the V2 input is targeting element 0 of the mask -- that is the fast
+  // case here.
+  if (NumV2Elements == 1 && Mask[0] >= 4)
+    if (SDValue V = lowerVectorShuffleAsElementInsertion(MVT::v4f32, DL, V1, V2,
+                                                         Mask, Subtarget, DAG))
+      return V;
+
   if (Subtarget->hasSSE41())
     if (SDValue Blend =
             lowerVectorShuffleAsBlend(DL, MVT::v4f32, V1, V2, Mask, DAG))
