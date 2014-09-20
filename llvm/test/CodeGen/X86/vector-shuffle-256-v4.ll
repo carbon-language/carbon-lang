@@ -129,7 +129,7 @@ define <4 x double> @shuffle_v4f64_0300(<4 x double> %a, <4 x double> %b) {
 define <4 x double> @shuffle_v4f64_1000(<4 x double> %a, <4 x double> %b) {
 ; AVX1-LABEL: @shuffle_v4f64_1000
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vshufpd {{.*}} # xmm1 = xmm0[1,0]
+; AVX1-NEXT:    vpermilpd {{.*}} # xmm1 = xmm0[1,0]
 ; AVX1-NEXT:    vunpcklpd {{.*}} # xmm0 = xmm0[0,0]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX1-NEXT:    retq
@@ -162,8 +162,8 @@ define <4 x double> @shuffle_v4f64_3210(<4 x double> %a, <4 x double> %b) {
 ; AVX1-LABEL: @shuffle_v4f64_3210
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX1-NEXT:    vshufpd {{.*}} # xmm1 = xmm1[1,0]
-; AVX1-NEXT:    vshufpd {{.*}} # xmm0 = xmm0[1,0]
+; AVX1-NEXT:    vpermilpd {{.*}} # xmm1 = xmm1[1,0]
+; AVX1-NEXT:    vpermilpd {{.*}} # xmm0 = xmm0[1,0]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX1-NEXT:    retq
   %shuffle = shufflevector <4 x double> %a, <4 x double> %b, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
