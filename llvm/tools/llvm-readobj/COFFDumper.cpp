@@ -715,6 +715,24 @@ void COFFDumper::printSymbols() {
 
 void COFFDumper::printDynamicSymbols() { ListScope Group(W, "DynamicSymbols"); }
 
+static StringRef getSectionName(const llvm::object::COFFObjectFile *Obj,
+                                COFFSymbolRef Symbol,
+                                const coff_section *Section) {
+  if (Section) {
+    StringRef SectionName;
+    Obj->getSectionName(Section, SectionName);
+    return SectionName;
+  }
+  int32_t SectionNumber = Symbol.getSectionNumber();
+  if (SectionNumber == llvm::COFF::IMAGE_SYM_DEBUG)
+    return "IMAGE_SYM_DEBUG";
+  if (SectionNumber == llvm::COFF::IMAGE_SYM_ABSOLUTE)
+    return "IMAGE_SYM_ABSOLUTE";
+  if (SectionNumber == llvm::COFF::IMAGE_SYM_UNDEFINED)
+    return "IMAGE_SYM_UNDEFINED";
+  return "";
+}
+
 void COFFDumper::printSymbol(const SymbolRef &Sym) {
   DictScope D(W, "Symbol");
 
@@ -730,9 +748,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
   if (Obj->getSymbolName(Symbol, SymbolName))
     SymbolName = "";
 
-  StringRef SectionName = "";
-  if (Section)
-    Obj->getSectionName(Section, SectionName);
+  StringRef SectionName = getSectionName(Obj, Symbol, Section);
 
   W.printString("Name", SymbolName);
   W.printNumber("Value", Symbol.getValue());

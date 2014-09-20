@@ -7,7 +7,7 @@ COFF:      Symbols [
 COFF-NEXT:   Symbol {
 COFF-NEXT:     Name: @comp.id
 COFF-NEXT:    Value: 14766605
-COFF-NEXT:    Section:  (-1)
+COFF-NEXT:    Section:  IMAGE_SYM_ABSOLUTE (-1)
 COFF-NEXT:     BaseType: Null (0x0)
 COFF-NEXT:     ComplexType: Null (0x0)
 COFF-NEXT:    StorageClass: Static (0x3)
@@ -16,7 +16,7 @@ COFF-NEXT:   }
 COFF-NEXT:   Symbol {
 COFF-NEXT:    Name: @feat.00
 COFF-NEXT:    Value: 2147484049
-COFF-NEXT:     Section:  (-1)
+COFF-NEXT:     Section:  IMAGE_SYM_ABSOLUTE (-1)
 COFF-NEXT:     BaseType: Null (0x0)
 COFF-NEXT:    ComplexType: Null (0x0)
 COFF-NEXT:    StorageClass: Static (0x3)

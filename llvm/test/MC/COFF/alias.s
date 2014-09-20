@@ -48,7 +48,7 @@ weak_aliased_to_external = external2
 // CHECK-NEXT:   Symbol {
 // CHECK:          Name: global_aliased_to_external
 // CHECK-NEXT:     Value: 0
-// CHECK-NEXT:     Section:  (0)
+// CHECK-NEXT:     Section: IMAGE_SYM_UNDEFINED (0)
 // CHECK-NEXT:     BaseType: Null (0x0)
 // CHECK-NEXT:     ComplexType: Null (0x0)
 // CHECK-NEXT:     StorageClass: External (0x2)
@@ -57,7 +57,7 @@ weak_aliased_to_external = external2
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: external1
 // CHECK-NEXT:     Value: 0
-// CHECK-NEXT:     Section:  (0)
+// CHECK-NEXT:     Section: IMAGE_SYM_UNDEFINED (0)
 // CHECK-NEXT:     BaseType: Null (0x0)
 // CHECK-NEXT:     ComplexType: Null (0x0)
 // CHECK-NEXT:     StorageClass: External (0x2)
@@ -84,7 +84,7 @@ weak_aliased_to_external = external2
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: weak_aliased_to_external
 // CHECK-NEXT:     Value: 0
-// CHECK-NEXT:     Section:  (0)
+// CHECK-NEXT:     Section: IMAGE_SYM_UNDEFINED (0)
 // CHECK-NEXT:     BaseType: Null (0x0)
 // CHECK-NEXT:     ComplexType: Null (0x0)
 // CHECK-NEXT:     StorageClass: WeakExternal (0x69)
@@ -97,7 +97,7 @@ weak_aliased_to_external = external2
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: external2
 // CHECK-NEXT:     Value: 0
-// CHECK-NEXT:     Section:  (0)
+// CHECK-NEXT:     Section: IMAGE_SYM_UNDEFINED (0)
 // CHECK-NEXT:     BaseType: Null (0x0)
 // CHECK-NEXT:     ComplexType: Null (0x0)
 // CHECK-NEXT:     StorageClass: External (0x2)

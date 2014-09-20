@@ -148,7 +148,7 @@ _main:                                  # @main
 // CHECK:   Symbol {
 // CHECK:     Name:                      _printf
 // CHECK:     Value:                     0
-// CHECK:     Section:                   (0)
+// CHECK:     Section:                   IMAGE_SYM_UNDEFINED (0)
 // CHECK:     BaseType:                  Null
 // CHECK:     ComplexType:               Null
 // CHECK:     StorageClass:              External
@@ -157,7 +157,7 @@ _main:                                  # @main
 // CHECK:   Symbol {
 // CHECK:     Name:                      _puts
 // CHECK:     Value:                     0
-// CHECK:     Section:                   (0)
+// CHECK:     Section:                   IMAGE_SYM_UNDEFINED (0)
 // CHECK:     BaseType:                  Null
 // CHECK:     ComplexType:               Null
 // CHECK:     StorageClass:              External

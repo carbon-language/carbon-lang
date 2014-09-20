@@ -17,7 +17,7 @@
 // CHECK:       Symbol {
 // CHECK:         Name: _b
 // CHECK-NEXT:    Value: 4
-// CHECK-NEXT:    Section:  (0)
+// CHECK-NEXT:    Section:  IMAGE_SYM_UNDEFINED (0)
 // CHECK-NEXT:    BaseType: Null
 // CHECK-NEXT:    ComplexType: Null
 // CHECK-NEXT:    StorageClass: External

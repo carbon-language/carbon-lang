@@ -9,7 +9,7 @@ CHECK:      Symbols [
 CHECK:        Symbol {
 CHECK:          Name: ?PerAppDomain@@$$Q3HA
 CHECK-NEXT:     Value: 4
-CHECK-NEXT:     Section:  (-1)
+CHECK-NEXT:     Section:  IMAGE_SYM_ABSOLUTE (-1)
 CHECK-NEXT:     BaseType: Null (0x0)
 CHECK-NEXT:     ComplexType: Null (0x0)
 CHECK-NEXT:     StorageClass: External (0x2)
@@ -27,7 +27,7 @@ CHECK-NEXT:   }
 CHECK:        Symbol {
 CHECK:          Name: 04000001
 CHECK-NEXT:     Value: 4
-CHECK-NEXT:     Section:  (-1)
+CHECK-NEXT:     Section:  IMAGE_SYM_ABSOLUTE (-1)
 CHECK-NEXT:     BaseType: Null (0x0)
 CHECK-NEXT:     ComplexType: Null (0x0)
 CHECK-NEXT:     StorageClass: CLRToken (0x6B)
