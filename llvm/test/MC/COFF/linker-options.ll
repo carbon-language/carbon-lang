@@ -14,7 +14,7 @@ define dllexport void @foo() {
   ret void
 }
 
-; CHECK: .section        .drectve,"r"
+; CHECK: .section        .drectve,"yn"
 ; CHECK: .ascii   " /DEFAULTLIB:msvcrt.lib"
 ; CHECK: .ascii   " /DEFAULTLIB:msvcrt.lib"
 ; CHECK: .ascii   " /DEFAULTLIB:secur32.lib"
