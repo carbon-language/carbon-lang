@@ -15,7 +15,6 @@
 #define LLVM_COV_SOURCECOVERAGEVIEW_H
 
 #include "CoverageViewOptions.h"
-#include "SourceCoverageDataManager.h"
 #include "llvm/ProfileData/CoverageMapping.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <vector>
@@ -105,14 +104,14 @@ private:
 
   const MemoryBuffer &File;
   const CoverageViewOptions &Options;
-  std::unique_ptr<SourceCoverageDataManager> RegionManager;
+  coverage::CoverageData CoverageInfo;
   std::vector<ExpansionView> ExpansionSubViews;
   std::vector<InstantiationView> InstantiationSubViews;
 
   /// \brief Render a source line with highlighting.
   void renderLine(raw_ostream &OS, StringRef Line, int64_t LineNumber,
-                  const CoverageSegment *WrappedSegment,
-                  ArrayRef<const CoverageSegment *> Segments,
+                  const coverage::CoverageSegment *WrappedSegment,
+                  ArrayRef<const coverage::CoverageSegment *> Segments,
                   unsigned ExpansionCol);
 
   void renderIndent(raw_ostream &OS, unsigned Level);
@@ -126,16 +125,18 @@ private:
   void renderLineNumberColumn(raw_ostream &OS, unsigned LineNo);
 
   /// \brief Render all the region's execution counts on a line.
-  void renderRegionMarkers(raw_ostream &OS,
-                           ArrayRef<const CoverageSegment *> Segments);
+  void
+  renderRegionMarkers(raw_ostream &OS,
+                      ArrayRef<const coverage::CoverageSegment *> Segments);
 
   static const unsigned LineCoverageColumnWidth = 7;
   static const unsigned LineNumberColumnWidth = 5;
 
 public:
   SourceCoverageView(const MemoryBuffer &File,
-                     const CoverageViewOptions &Options)
-      : File(File), Options(Options) {}
+                     const CoverageViewOptions &Options,
+                     coverage::CoverageData &&CoverageInfo)
+      : File(File), Options(Options), CoverageInfo(std::move(CoverageInfo)) {}
 
   const CoverageViewOptions &getOptions() const { return Options; }
 
@@ -154,12 +155,6 @@ public:
   /// \brief Print the code coverage information for a specific
   /// portion of a source file to the output stream.
   void render(raw_ostream &OS, bool WholeFile, unsigned IndentLevel = 0);
-
-  /// \brief Load the coverage information required for rendering
-  /// from the mapping regions in the data manager.
-  void load(std::unique_ptr<SourceCoverageDataManager> Data) {
-    RegionManager = std::move(Data);
-  }
 };
 
 } // namespace llvm

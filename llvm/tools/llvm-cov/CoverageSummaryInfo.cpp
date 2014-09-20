@@ -18,7 +18,7 @@ using namespace llvm;
 using namespace coverage;
 
 FunctionCoverageSummary
-FunctionCoverageSummary::get(const FunctionCoverageMapping &Function) {
+FunctionCoverageSummary::get(const coverage::FunctionRecord &Function) {
   // Compute the region coverage
   size_t NumCodeRegions = 0, CoveredRegions = 0;
   for (auto &CR : Function.CountedRegions) {

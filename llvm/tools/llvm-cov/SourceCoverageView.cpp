@@ -18,11 +18,11 @@
 
 using namespace llvm;
 
-void SourceCoverageView::renderLine(raw_ostream &OS, StringRef Line,
-                                    int64_t LineNumber,
-                                    const CoverageSegment *WrappedSegment,
-                                    ArrayRef<const CoverageSegment *> Segments,
-                                    unsigned ExpansionCol) {
+void SourceCoverageView::renderLine(
+    raw_ostream &OS, StringRef Line, int64_t LineNumber,
+    const coverage::CoverageSegment *WrappedSegment,
+    ArrayRef<const coverage::CoverageSegment *> Segments,
+    unsigned ExpansionCol) {
   Optional<raw_ostream::Colors> Highlight;
   SmallVector<std::pair<unsigned, unsigned>, 2> HighlightedRanges;
 
@@ -110,7 +110,7 @@ void SourceCoverageView::renderLineNumberColumn(raw_ostream &OS,
 }
 
 void SourceCoverageView::renderRegionMarkers(
-    raw_ostream &OS, ArrayRef<const CoverageSegment *> Segments) {
+    raw_ostream &OS, ArrayRef<const coverage::CoverageSegment *> Segments) {
   SmallString<32> Buffer;
   raw_svector_ostream BufferOS(Buffer);
 
@@ -158,14 +158,12 @@ void SourceCoverageView::render(raw_ostream &OS, bool WholeFile,
   auto EndISV = InstantiationSubViews.end();
 
   // Get the coverage information for the file.
-  auto CoverageSegments = RegionManager->getCoverageSegments();
-  assert(CoverageSegments.size() && "View with no coverage?");
-  auto NextSegment = CoverageSegments.begin();
-  auto EndSegment = CoverageSegments.end();
+  auto NextSegment = CoverageInfo.begin();
+  auto EndSegment = CoverageInfo.end();
 
   unsigned FirstLine = NextSegment != EndSegment ? NextSegment->Line : 0;
-  const CoverageSegment *WrappedSegment = nullptr;
-  SmallVector<const CoverageSegment *, 8> LineSegments;
+  const coverage::CoverageSegment *WrappedSegment = nullptr;
+  SmallVector<const coverage::CoverageSegment *, 8> LineSegments;
   for (line_iterator LI(File, /*SkipBlanks=*/false); !LI.is_at_eof(); ++LI) {
     // If we aren't rendering the whole file, we need to filter out the prologue
     // and epilogue.

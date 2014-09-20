@@ -101,7 +101,7 @@ struct FunctionCoverageSummary {
   /// \brief Compute the code coverage summary for the given function coverage
   /// mapping record.
   static FunctionCoverageSummary
-  get(const coverage::FunctionCoverageMapping &Function);
+  get(const coverage::FunctionRecord &Function);
 };
 
 /// \brief A summary of file's code coverage.

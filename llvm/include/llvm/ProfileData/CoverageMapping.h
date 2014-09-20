@@ -21,8 +21,12 @@
 #include <system_error>
 
 namespace llvm {
+class IndexedInstrProfReader;
 namespace coverage {
 
+class ObjectFileCoverageMappingReader;
+
+class CoverageMapping;
 struct CounterExpressions;
 
 enum CoverageMappingVersion { CoverageMappingVersion1 };
@@ -217,7 +221,7 @@ public:
 };
 
 /// \brief Code coverage information for a single function.
-struct FunctionCoverageMapping {
+struct FunctionRecord {
   /// \brief Raw function name.
   std::string Name;
   /// \brief Associated files.
@@ -225,8 +229,132 @@ struct FunctionCoverageMapping {
   /// \brief Regions in the function along with their counts.
   std::vector<CountedRegion> CountedRegions;
 
-  FunctionCoverageMapping(StringRef Name, ArrayRef<StringRef> Filenames)
+  FunctionRecord(StringRef Name, ArrayRef<StringRef> Filenames)
       : Name(Name), Filenames(Filenames.begin(), Filenames.end()) {}
+};
+
+/// \brief Coverage information for a macro expansion or #included file.
+///
+/// When covered code has pieces that can be expanded for more detail, such as a
+/// preprocessor macro use and its definition, these are represented as
+/// expansions whose coverage can be looked up independently.
+struct ExpansionRecord {
+  /// \brief The abstract file this expansion covers.
+  unsigned FileID;
+  /// \brief The region that expands to this record.
+  const CountedRegion &Region;
+  /// \brief Coverage for the expansion.
+  const FunctionRecord &Function;
+
+  ExpansionRecord(const CountedRegion &Region,
+                  const FunctionRecord &Function)
+      : FileID(Region.ExpandedFileID), Region(Region), Function(Function) {}
+};
+
+/// \brief The execution count information starting at a point in a file.
+///
+/// A sequence of CoverageSegments gives execution counts for a file in format
+/// that's simple to iterate through for processing.
+struct CoverageSegment {
+  /// \brief The line where this segment begins.
+  unsigned Line;
+  /// \brief The column where this segment begins.
+  unsigned Col;
+  /// \brief The execution count, or zero if no count was recorded.
+  uint64_t Count;
+  /// \brief When false, the segment was uninstrumented or skipped.
+  bool HasCount;
+  /// \brief Whether this enters a new region or returns to a previous count.
+  bool IsRegionEntry;
+
+  CoverageSegment(unsigned Line, unsigned Col, bool IsRegionEntry)
+      : Line(Line), Col(Col), Count(0), HasCount(false),
+        IsRegionEntry(IsRegionEntry) {}
+  void setCount(uint64_t NewCount) {
+    Count = NewCount;
+    HasCount = true;
+  }
+};
+
+/// \brief Coverage information to be processed or displayed.
+///
+/// This represents the coverage of an entire file, expansion, or function. It
+/// provides a sequence of CoverageSegments to iterate through, as well as the
+/// list of expansions that can be further processed.
+class CoverageData {
+  std::string Filename;
+  std::vector<CoverageSegment> Segments;
+  std::vector<ExpansionRecord> Expansions;
+  friend class CoverageMapping;
+
+public:
+  CoverageData() {}
+
+  CoverageData(StringRef Filename) : Filename(Filename) {}
+
+  CoverageData(CoverageData &&RHS)
+      : Filename(std::move(RHS.Filename)), Segments(std::move(RHS.Segments)),
+        Expansions(std::move(RHS.Expansions)) {}
+
+  /// \brief Get the name of the file this data covers.
+  StringRef getFilename() { return Filename; }
+
+  std::vector<CoverageSegment>::iterator begin() { return Segments.begin(); }
+  std::vector<CoverageSegment>::iterator end() { return Segments.end(); }
+  bool empty() { return Segments.empty(); }
+
+  /// \brief Expansions that can be further processed.
+  std::vector<ExpansionRecord> getExpansions() { return Expansions; }
+};
+
+/// \brief The mapping of profile information to coverage data.
+///
+/// This is the main interface to get coverage information, using a profile to
+/// fill out execution counts.
+class CoverageMapping {
+  std::vector<FunctionRecord> Functions;
+  unsigned MismatchedFunctionCount;
+
+  CoverageMapping() : MismatchedFunctionCount(0) {}
+
+public:
+  /// Load the coverage mapping using the given readers.
+  static ErrorOr<std::unique_ptr<CoverageMapping>>
+  load(ObjectFileCoverageMappingReader &CoverageReader,
+       IndexedInstrProfReader &ProfileReader);
+
+  /// \brief The number of functions that couldn't have their profiles mapped.
+  ///
+  /// This is a count of functions whose profile is out of date or otherwise
+  /// can't be associated with any coverage information.
+  unsigned getMismatchedCount() { return MismatchedFunctionCount; }
+
+  /// \brief Returns the list of files that are covered.
+  std::vector<StringRef> getUniqueSourceFiles();
+
+  /// \brief Get the coverage for a particular file.
+  ///
+  /// The given filename must be the name as recorded in the coverage
+  /// information. That is, only names returned from getUniqueSourceFiles will
+  /// yield a result.
+  CoverageData getCoverageForFile(StringRef Filename);
+
+  /// \brief Gets all of the functions covered by this profile.
+  ArrayRef<FunctionRecord> getCoveredFunctions() {
+    return ArrayRef<FunctionRecord>(Functions.data(), Functions.size());
+  }
+
+  /// \brief Get the list of function instantiations in the file.
+  ///
+  /// Fucntions that are instantiated more than once, such as C++ template
+  /// specializations, have distinct coverage records for each instantiation.
+  std::vector<const FunctionRecord *> getInstantiations(StringRef Filename);
+
+  /// \brief Get the coverage for a particular function.
+  CoverageData getCoverageForFunction(const FunctionRecord &Function);
+
+  /// \brief Get the coverage for an expansion within a coverage set.
+  CoverageData getCoverageForExpansion(const ExpansionRecord &Expansion);
 };
 
 } // end namespace coverage

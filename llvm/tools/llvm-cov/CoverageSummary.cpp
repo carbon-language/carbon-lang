@@ -27,8 +27,8 @@ unsigned CoverageSummary::getFileID(StringRef Filename) {
   return Filenames.size() - 1;
 }
 
-void CoverageSummary::createSummaries(
-    ArrayRef<coverage::FunctionCoverageMapping> Functions) {
+void
+CoverageSummary::createSummaries(ArrayRef<coverage::FunctionRecord> Functions) {
   std::vector<std::pair<unsigned, size_t>> FunctionFileIDs;
 
   FunctionFileIDs.resize(Functions.size());
