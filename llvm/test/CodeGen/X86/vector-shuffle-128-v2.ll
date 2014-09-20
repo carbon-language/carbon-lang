@@ -400,6 +400,44 @@ define <2 x i64> @shuffle_v2i64_31_copy(<2 x i64> %nonce, <2 x i64> %a, <2 x i64
 }
 
 
+define <2 x i64> @insert_reg_and_zero_v2i64(i64 %a) {
+; ALL-LABEL: @insert_reg_and_zero_v2i64
+; ALL:         movd %rdi, %xmm0
+; ALL-NEXT:    retq
+  %v = insertelement <2 x i64> undef, i64 %a, i32 0
+  %shuffle = shufflevector <2 x i64> %v, <2 x i64> zeroinitializer, <2 x i32> <i32 0, i32 3>
+  ret <2 x i64> %shuffle
+}
+
+define <2 x i64> @insert_mem_and_zero_v2i64(i64* %ptr) {
+; ALL-LABEL: @insert_mem_and_zero_v2i64
+; ALL:         movq (%rdi), %xmm0
+; ALL-NEXT:    retq
+  %a = load i64* %ptr
+  %v = insertelement <2 x i64> undef, i64 %a, i32 0
+  %shuffle = shufflevector <2 x i64> %v, <2 x i64> zeroinitializer, <2 x i32> <i32 0, i32 3>
+  ret <2 x i64> %shuffle
+}
+
+define <2 x double> @insert_reg_and_zero_v2f64(double %a) {
+; ALL-LABEL: @insert_reg_and_zero_v2f64
+; ALL:         movq %xmm0, %xmm0
+; ALL-NEXT:    retq
+  %v = insertelement <2 x double> undef, double %a, i32 0
+  %shuffle = shufflevector <2 x double> %v, <2 x double> zeroinitializer, <2 x i32> <i32 0, i32 3>
+  ret <2 x double> %shuffle
+}
+
+define <2 x double> @insert_mem_and_zero_v2f64(double* %ptr) {
+; ALL-LABEL: @insert_mem_and_zero_v2f64
+; ALL:         movsd (%rdi), %xmm0
+; ALL-NEXT:    retq
+  %a = load double* %ptr
+  %v = insertelement <2 x double> undef, double %a, i32 0
+  %shuffle = shufflevector <2 x double> %v, <2 x double> zeroinitializer, <2 x i32> <i32 0, i32 3>
+  ret <2 x double> %shuffle
+}
+
 define <2 x double> @insert_dup_reg_v2f64(double %a) {
 ; SSE2-LABEL: @insert_dup_reg_v2f64
 ; SSE2:         movlhps {{.*}} # xmm0 = xmm0[0,0]
