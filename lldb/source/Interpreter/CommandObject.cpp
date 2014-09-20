@@ -236,19 +236,34 @@ CommandObject::CheckRequirements (CommandReturnObject &result)
 
         if ((flags & eFlagRequiresProcess) && !m_exe_ctx.HasProcessScope())
         {
-            result.AppendError (GetInvalidProcessDescription());
+            if (!m_exe_ctx.HasTargetScope())
+                result.AppendError (GetInvalidTargetDescription());
+            else
+                result.AppendError (GetInvalidProcessDescription());
             return false;
         }
         
         if ((flags & eFlagRequiresThread) && !m_exe_ctx.HasThreadScope())
         {
-            result.AppendError (GetInvalidThreadDescription());
+            if (!m_exe_ctx.HasTargetScope())
+                result.AppendError (GetInvalidTargetDescription());
+            else if (!m_exe_ctx.HasProcessScope())
+                result.AppendError (GetInvalidProcessDescription());
+            else 
+                result.AppendError (GetInvalidThreadDescription());
             return false;
         }
         
         if ((flags & eFlagRequiresFrame) && !m_exe_ctx.HasFrameScope())
         {
-            result.AppendError (GetInvalidFrameDescription());
+            if (!m_exe_ctx.HasTargetScope())
+                result.AppendError (GetInvalidTargetDescription());
+            else if (!m_exe_ctx.HasProcessScope())
+                result.AppendError (GetInvalidProcessDescription());
+            else if (!m_exe_ctx.HasThreadScope())
+                result.AppendError (GetInvalidThreadDescription());
+            else
+                result.AppendError (GetInvalidFrameDescription());
             return false;
         }
         
