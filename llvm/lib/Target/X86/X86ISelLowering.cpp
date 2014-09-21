@@ -9129,6 +9129,20 @@ static bool is128BitLaneCrossingShuffleMask(MVT VT, ArrayRef<int> Mask) {
   return false;
 }
 
+/// \brief Test whether a shuffle mask is equivalent within each 128-bit lane.
+///
+/// This checks a shuffle mask to see if it is performing the same
+/// 128-bit lane-relative shuffle in each 128-bit lane. This trivially implies
+/// that it is also not lane-crossing.
+static bool is128BitLaneRepeatedShuffleMask(MVT VT, ArrayRef<int> Mask) {
+  int LaneSize = 128 / VT.getScalarSizeInBits();
+  int Size = Mask.size();
+  for (int i = LaneSize; i < Size; ++i)
+    if (Mask[i] >= 0 && Mask[i] != (Mask[i % LaneSize] + (i / LaneSize) * LaneSize))
+      return false;
+  return true;
+}
+
 /// \brief Generic routine to split a 256-bit vector shuffle into 128-bit
 /// shuffles.
 ///
@@ -9316,13 +9330,25 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
 
-  if (is128BitLaneCrossingShuffleMask(MVT::v8f32, Mask) ||
-      isSingleInputShuffleMask(Mask))
+  if (is128BitLaneCrossingShuffleMask(MVT::v8f32, Mask))
     return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
 
   if (SDValue Blend =
           lowerVectorShuffleAsBlend(DL, MVT::v8f32, V1, V2, Mask, DAG))
     return Blend;
+
+  // If the shuffle mask is repeated in each 128-bit lane, we have many more
+  // options to efficiently lower the shuffle.
+  if (is128BitLaneRepeatedShuffleMask(MVT::v8f32, Mask)) {
+    ArrayRef<int> LoMask = Mask.slice(0, 4);
+    if (isSingleInputShuffleMask(Mask))
+      return DAG.getNode(X86ISD::VPERMILP, DL, MVT::v8f32, V1,
+                         getV4X86ShuffleImm8ForMask(LoMask, DAG));
+  }
+
+  if (isSingleInputShuffleMask(Mask))
+    // FIXME: We can do better than just falling back blindly.
+    return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
 
   // Shuffle the input elements into the desired positions in V1 and V2 and
   // blend them together.
