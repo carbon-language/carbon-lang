@@ -9199,10 +9199,6 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 4 && "Unexpected mask size for v4 shuffle!");
 
-  // FIXME: If we have AVX2, we should delegate to generic code as crossing
-  // shuffles aren't a problem and FP and int have the same patterns.
-
-  // FIXME: We can handle these more cleverly than splitting for v4f64.
   if (is128BitLaneCrossingShuffleMask(MVT::v4f64, Mask))
     return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
 
@@ -9221,8 +9217,6 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v4f64, V1, V2);
   if (isShuffleEquivalent(Mask, 1, 5, 3, 7))
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v4f64, V1, V2);
-  // FIXME: It would be nice to find a way to get canonicalization to commute
-  // these patterns.
   if (isShuffleEquivalent(Mask, 4, 0, 6, 2))
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v4f64, V2, V1);
   if (isShuffleEquivalent(Mask, 5, 1, 7, 3))
