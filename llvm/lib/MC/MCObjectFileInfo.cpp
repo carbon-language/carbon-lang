@@ -595,9 +595,7 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
 void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
   bool IsWoA = T.getArch() == Triple::arm || T.getArch() == Triple::thumb;
 
-  // The object file format cannot represent common symbols with explicit
-  // alignments.
-  CommDirectiveSupportsAlignment = false;
+  CommDirectiveSupportsAlignment = true;
 
   // COFF
   BSSSection =
