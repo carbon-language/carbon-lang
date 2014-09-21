@@ -9106,13 +9106,16 @@ static SDValue lower128BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   }
 }
 
-static bool isHalfCrossingShuffleMask(ArrayRef<int> Mask) {
+/// \brief Test whether there are elements crossing 128-bit lanes in this
+/// shuffle mask.
+///
+/// X86 divides up its shuffles into in-lane and cross-lane shuffle operations
+/// and we routinely test for these.
+static bool is128BitLaneCrossingShuffleMask(MVT VT, ArrayRef<int> Mask) {
+  int LaneSize = 128 / VT.getScalarSizeInBits();
   int Size = Mask.size();
-  for (int M : Mask.slice(0, Size / 2))
-    if (M >= 0 && (M % Size) >= Size / 2)
-      return true;
-  for (int M : Mask.slice(Size / 2, Size / 2))
-    if (M >= 0 && (M % Size) < Size / 2)
+  for (int i = 0; i < Size; ++i)
+    if (Mask[i] >= 0 && (Mask[i] % Size) / LaneSize != i / LaneSize)
       return true;
   return false;
 }
@@ -9200,7 +9203,7 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // shuffles aren't a problem and FP and int have the same patterns.
 
   // FIXME: We can handle these more cleverly than splitting for v4f64.
-  if (isHalfCrossingShuffleMask(Mask))
+  if (is128BitLaneCrossingShuffleMask(MVT::v4f64, Mask))
     return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
 
   if (isSingleInputShuffleMask(Mask)) {
@@ -9281,7 +9284,7 @@ static SDValue lowerV4I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // FIXME: If we have AVX2, we should delegate to generic code as crossing
   // shuffles aren't a problem and FP and int have the same patterns.
 
-  if (isHalfCrossingShuffleMask(Mask))
+  if (is128BitLaneCrossingShuffleMask(MVT::v4i64, Mask))
     return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
 
   // AVX1 doesn't provide any facilities for v4i64 shuffles, bitcast and
@@ -9306,7 +9309,7 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
 
-  if (isHalfCrossingShuffleMask(Mask) ||
+  if (is128BitLaneCrossingShuffleMask(MVT::v8f32, Mask) ||
       isSingleInputShuffleMask(Mask))
     return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
 
