@@ -38,32 +38,32 @@ class TargetRegisterInfo;
     const TargetRegisterInfo *TRI;
     const RegisterClassInfo &RegClassInfo;
 
-    /// AllocatableSet - The set of allocatable registers.
+    /// The set of allocatable registers.
     /// We'll be ignoring anti-dependencies on non-allocatable registers,
     /// because they may not be safe to break.
     const BitVector AllocatableSet;
 
-    /// Classes - For live regs that are only used in one register class in a
+    /// For live regs that are only used in one register class in a
     /// live range, the register class. If the register is not live, the
     /// corresponding value is null. If the register is live but used in
     /// multiple register classes, the corresponding value is -1 casted to a
     /// pointer.
     std::vector<const TargetRegisterClass*> Classes;
 
-    /// RegRefs - Map registers to all their references within a live range.
+    /// Map registers to all their references within a live range.
     std::multimap<unsigned, MachineOperand *> RegRefs;
     typedef std::multimap<unsigned, MachineOperand *>::const_iterator
       RegRefIter;
 
-    /// KillIndices - The index of the most recent kill (proceeding bottom-up),
+    /// The index of the most recent kill (proceeding bottom-up),
     /// or ~0u if the register is not live.
     std::vector<unsigned> KillIndices;
 
-    /// DefIndices - The index of the most recent complete def (proceeding
+    /// The index of the most recent complete def (proceeding
     /// bottom up), or ~0u if the register is live.
     std::vector<unsigned> DefIndices;
 
-    /// KeepRegs - A set of registers which are live and cannot be changed to
+    /// A set of registers which are live and cannot be changed to
     /// break anti-dependencies.
     BitVector KeepRegs;
 
@@ -71,26 +71,23 @@ class TargetRegisterInfo;
     CriticalAntiDepBreaker(MachineFunction& MFi, const RegisterClassInfo&);
     ~CriticalAntiDepBreaker();
 
-    /// Start - Initialize anti-dep breaking for a new basic block.
+    /// Initialize anti-dep breaking for a new basic block.
     void StartBlock(MachineBasicBlock *BB) override;
 
-    /// BreakAntiDependencies - Identifiy anti-dependencies along the critical
-    /// path
+    /// Identifiy anti-dependencies along the critical path
     /// of the ScheduleDAG and break them by renaming registers.
-    ///
     unsigned BreakAntiDependencies(const std::vector<SUnit>& SUnits,
                                    MachineBasicBlock::iterator Begin,
                                    MachineBasicBlock::iterator End,
                                    unsigned InsertPosIndex,
                                    DbgValueVector &DbgValues) override;
 
-    /// Observe - Update liveness information to account for the current
+    /// Update liveness information to account for the current
     /// instruction, which will not be scheduled.
-    ///
     void Observe(MachineInstr *MI, unsigned Count,
                  unsigned InsertPosIndex) override;
 
-    /// Finish - Finish anti-dep breaking for a basic block.
+    /// Finish anti-dep breaking for a basic block.
     void FinishBlock() override;
 
   private:
