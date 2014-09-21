@@ -7238,6 +7238,7 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
   case MVT::v2f64:
   case MVT::v4f32:
   case MVT::v4f64:
+  case MVT::v8f32:
     return DAG.getNode(X86ISD::BLENDI, DL, VT, V1, V2,
                        DAG.getConstant(BlendMask, MVT::i8));
 
@@ -9318,6 +9319,10 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   if (is128BitLaneCrossingShuffleMask(MVT::v8f32, Mask) ||
       isSingleInputShuffleMask(Mask))
     return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
+
+  if (SDValue Blend =
+          lowerVectorShuffleAsBlend(DL, MVT::v8f32, V1, V2, Mask, DAG))
+    return Blend;
 
   // Shuffle the input elements into the desired positions in V1 and V2 and
   // blend them together.
