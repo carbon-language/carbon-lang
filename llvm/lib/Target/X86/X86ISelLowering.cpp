@@ -7166,8 +7166,6 @@ bool isShuffleEquivalentImpl(ArrayRef<int> Mask, ArrayRef<const int *> Args) {
     return false;
   for (int i = 0, e = Mask.size(); i < e; ++i) {
     assert(*Args[i] >= 0 && "Arguments must be positive integers!");
-    assert(*Args[i] < (int)Args.size() * 2 &&
-           "Argument outside the range of possible shuffle inputs!");
     if (Mask[i] != -1 && Mask[i] != *Args[i])
       return false;
   }
@@ -9344,6 +9342,12 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (isSingleInputShuffleMask(Mask))
       return DAG.getNode(X86ISD::VPERMILP, DL, MVT::v8f32, V1,
                          getV4X86ShuffleImm8ForMask(LoMask, DAG));
+
+    // Use dedicated unpack instructions for masks that match their pattern.
+    if (isShuffleEquivalent(LoMask, 0, 8, 1, 9))
+      return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8f32, V1, V2);
+    if (isShuffleEquivalent(LoMask, 2, 10, 3, 11))
+      return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8f32, V1, V2);
   }
 
   if (isSingleInputShuffleMask(Mask))
