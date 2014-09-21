@@ -240,12 +240,12 @@ void AMDGPUInstPrinter::printOperandAndMods(const MCInst *MI, unsigned OpNo,
                                             raw_ostream &O) {
   unsigned InputModifiers = MI->getOperand(OpNo).getImm();
   if (InputModifiers & 0x1)
-    O << "-";
+    O << '-';
   if (InputModifiers & 0x2)
-    O << "|";
+    O << '|';
   printOperand(MI, OpNo + 1, O);
   if (InputModifiers & 0x2)
-    O << "|";
+    O << '|';
 }
 
 void AMDGPUInstPrinter::printInterpSlot(const MCInst *MI, unsigned OpNum,
@@ -359,7 +359,7 @@ void AMDGPUInstPrinter::printSel(const MCInst *MI, unsigned OpNo,
     sel -= 512;
     int cb = sel >> 12;
     sel &= 4095;
-    O << cb << "[" << sel << "]";
+    O << cb << '[' << sel << ']';
   } else if (sel >= 448) {
     sel -= 448;
     O << sel;
@@ -368,7 +368,7 @@ void AMDGPUInstPrinter::printSel(const MCInst *MI, unsigned OpNo,
   }
 
   if (sel >= 0)
-    O << "." << chans[chan];
+    O << '.' << chans[chan];
 }
 
 void AMDGPUInstPrinter::printBankSwizzle(const MCInst *MI, unsigned OpNo,
@@ -401,25 +401,25 @@ void AMDGPUInstPrinter::printRSel(const MCInst *MI, unsigned OpNo,
   unsigned Sel = MI->getOperand(OpNo).getImm();
   switch (Sel) {
   case 0:
-    O << "X";
+    O << 'X';
     break;
   case 1:
-    O << "Y";
+    O << 'Y';
     break;
   case 2:
-    O << "Z";
+    O << 'Z';
     break;
   case 3:
-    O << "W";
+    O << 'W';
     break;
   case 4:
-    O << "0";
+    O << '0';
     break;
   case 5:
-    O << "1";
+    O << '1';
     break;
   case 7:
-    O << "_";
+    O << '_';
     break;
   default:
     break;
@@ -431,10 +431,10 @@ void AMDGPUInstPrinter::printCT(const MCInst *MI, unsigned OpNo,
   unsigned CT = MI->getOperand(OpNo).getImm();
   switch (CT) {
   case 0:
-    O << "U";
+    O << 'U';
     break;
   case 1:
-    O << "N";
+    O << 'N';
     break;
   default:
     break;
@@ -446,10 +446,10 @@ void AMDGPUInstPrinter::printKCache(const MCInst *MI, unsigned OpNo,
   int KCacheMode = MI->getOperand(OpNo).getImm();
   if (KCacheMode > 0) {
     int KCacheBank = MI->getOperand(OpNo - 2).getImm();
-    O << "CB" << KCacheBank <<":";
+    O << "CB" << KCacheBank << ':';
     int KCacheAddr = MI->getOperand(OpNo + 2).getImm();
-    int LineSize = (KCacheMode == 1)?16:32;
-    O << KCacheAddr * 16 << "-" << KCacheAddr * 16 + LineSize;
+    int LineSize = (KCacheMode == 1) ? 16 : 32;
+    O << KCacheAddr * 16 << '-' << KCacheAddr * 16 + LineSize;
   }
 }
 
@@ -498,7 +498,7 @@ void AMDGPUInstPrinter::printWaitFlag(const MCInst *MI, unsigned OpNo,
   if (Expcnt != 0x7)
     O << "expcnt(" << Expcnt << ") ";
   if (Lgkmcnt != 0x7)
-    O << "lgkmcnt(" << Lgkmcnt << ")";
+    O << "lgkmcnt(" << Lgkmcnt << ')';
 }
 
 #include "AMDGPUGenAsmWriter.inc"
