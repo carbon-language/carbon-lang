@@ -563,3 +563,52 @@ define <4 x i64> @stress_test1(<4 x i64> %a, <4 x i64> %b) {
 
   ret <4 x i64> %f
 }
+
+define <4 x i64> @insert_reg_and_zero_v4i64(i64 %a) {
+; ALL-LABEL: @insert_reg_and_zero_v4i64
+; ALL:       # BB#0:
+; ALL-NEXT:    vmovq %rdi, %xmm0
+; ALL-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
+; ALL-NEXT:    vblendpd {{.*}} # ymm0 = ymm0[0],ymm1[1,2,3]
+; ALL-NEXT:    retq
+  %v = insertelement <4 x i64> undef, i64 %a, i64 0
+  %shuffle = shufflevector <4 x i64> %v, <4 x i64> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
+  ret <4 x i64> %shuffle
+}
+
+define <4 x i64> @insert_mem_and_zero_v4i64(i64* %ptr) {
+; ALL-LABEL: @insert_mem_and_zero_v4i64
+; ALL:       # BB#0:
+; ALL-NEXT:    vmovq (%rdi), %xmm0
+; ALL-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
+; ALL-NEXT:    vblendpd {{.*}} # ymm0 = ymm0[0],ymm1[1,2,3]
+; ALL-NEXT:    retq
+  %a = load i64* %ptr
+  %v = insertelement <4 x i64> undef, i64 %a, i64 0
+  %shuffle = shufflevector <4 x i64> %v, <4 x i64> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
+  ret <4 x i64> %shuffle
+}
+
+define <4 x double> @insert_reg_and_zero_v4f64(double %a) {
+; ALL-LABEL: @insert_reg_and_zero_v4f64
+; ALL:       # BB#0:
+; ALL:         vxorpd %ymm1, %ymm1, %ymm1
+; ALL-NEXT:    vblendpd {{.*}} # ymm0 = ymm0[0],ymm1[1,2,3]
+; ALL-NEXT:    retq
+  %v = insertelement <4 x double> undef, double %a, i32 0
+  %shuffle = shufflevector <4 x double> %v, <4 x double> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
+  ret <4 x double> %shuffle
+}
+
+define <4 x double> @insert_mem_and_zero_v4f64(double* %ptr) {
+; ALL-LABEL: @insert_mem_and_zero_v4f64
+; ALL:       # BB#0:
+; ALL-NEXT:    vmovsd (%rdi), %xmm0
+; ALL-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
+; ALL-NEXT:    vblendpd {{.*}} # ymm0 = ymm0[0],ymm1[1,2,3]
+; ALL-NEXT:    retq
+  %a = load double* %ptr
+  %v = insertelement <4 x double> undef, double %a, i32 0
+  %shuffle = shufflevector <4 x double> %v, <4 x double> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
+  ret <4 x double> %shuffle
+}
