@@ -7489,8 +7489,7 @@ SDValue PPCTargetLowering::DAGCombineFastRecip(SDValue Op,
   return SDValue();
 }
 
-SDValue PPCTargetLowering::DAGCombineFastRecipFSQRT(SDValue Op,
-                                             DAGCombinerInfo &DCI) const {
+SDValue PPCTargetLowering::BuildRSQRTE(SDValue Op, DAGCombinerInfo &DCI) const {
   if (DCI.isAfterLegalizeVectorOps())
     return SDValue();
 
@@ -8289,43 +8288,6 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
     assert(TM.Options.UnsafeFPMath &&
            "Reciprocal estimates require UnsafeFPMath");
 
-    if (N->getOperand(1).getOpcode() == ISD::FSQRT) {
-      SDValue RV =
-        DAGCombineFastRecipFSQRT(N->getOperand(1).getOperand(0), DCI);
-      if (RV.getNode()) {
-        DCI.AddToWorklist(RV.getNode());
-        return DAG.getNode(ISD::FMUL, dl, N->getValueType(0),
-                           N->getOperand(0), RV);
-      }
-    } else if (N->getOperand(1).getOpcode() == ISD::FP_EXTEND &&
-               N->getOperand(1).getOperand(0).getOpcode() == ISD::FSQRT) {
-      SDValue RV =
-        DAGCombineFastRecipFSQRT(N->getOperand(1).getOperand(0).getOperand(0),
-                                 DCI);
-      if (RV.getNode()) {
-        DCI.AddToWorklist(RV.getNode());
-        RV = DAG.getNode(ISD::FP_EXTEND, SDLoc(N->getOperand(1)),
-                         N->getValueType(0), RV);
-        DCI.AddToWorklist(RV.getNode());
-        return DAG.getNode(ISD::FMUL, dl, N->getValueType(0),
-                           N->getOperand(0), RV);
-      }
-    } else if (N->getOperand(1).getOpcode() == ISD::FP_ROUND &&
-               N->getOperand(1).getOperand(0).getOpcode() == ISD::FSQRT) {
-      SDValue RV =
-        DAGCombineFastRecipFSQRT(N->getOperand(1).getOperand(0).getOperand(0),
-                                 DCI);
-      if (RV.getNode()) {
-        DCI.AddToWorklist(RV.getNode());
-        RV = DAG.getNode(ISD::FP_ROUND, SDLoc(N->getOperand(1)),
-                         N->getValueType(0), RV,
-                         N->getOperand(1).getOperand(1));
-        DCI.AddToWorklist(RV.getNode());
-        return DAG.getNode(ISD::FMUL, dl, N->getValueType(0),
-                           N->getOperand(0), RV);
-      }
-    }
-
     SDValue RV = DAGCombineFastRecip(N->getOperand(1), DCI);
     if (RV.getNode()) {
       DCI.AddToWorklist(RV.getNode());
@@ -8341,7 +8303,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
 
     // Compute this as 1/(1/sqrt(X)), which is the reciprocal of the
     // reciprocal sqrt.
-    SDValue RV = DAGCombineFastRecipFSQRT(N->getOperand(0), DCI);
+    SDValue RV = BuildRSQRTE(N->getOperand(0), DCI);
     if (RV.getNode()) {
       DCI.AddToWorklist(RV.getNode());
       RV = DAGCombineFastRecip(RV, DCI);

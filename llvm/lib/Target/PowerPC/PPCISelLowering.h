@@ -696,7 +696,7 @@ namespace llvm {
     SDValue DAGCombineExtBoolTrunc(SDNode *N, DAGCombinerInfo &DCI) const;
     SDValue DAGCombineTruncBoolExt(SDNode *N, DAGCombinerInfo &DCI) const;
     SDValue DAGCombineFastRecip(SDValue Op, DAGCombinerInfo &DCI) const;
-    SDValue DAGCombineFastRecipFSQRT(SDValue Op, DAGCombinerInfo &DCI) const;
+    SDValue BuildRSQRTE(SDValue Op, DAGCombinerInfo &DCI) const;
 
     CCAssignFn *useFastISelCCs(unsigned Flag) const;
   };

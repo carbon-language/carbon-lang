@@ -326,6 +326,7 @@ namespace {
     SDValue BuildSDIV(SDNode *N);
     SDValue BuildSDIVPow2(SDNode *N);
     SDValue BuildUDIV(SDNode *N);
+    SDValue BuildRSQRTE(SDNode *N);
     SDValue MatchBSwapHWordLow(SDNode *N, SDValue N0, SDValue N1,
                                bool DemandHighBits = true);
     SDValue MatchBSwapHWord(SDNode *N, SDValue N0, SDValue N1);
@@ -6987,23 +6988,29 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
   if (N0CFP && N1CFP)
     return DAG.getNode(ISD::FDIV, SDLoc(N), VT, N0, N1);
 
-  // fold (fdiv X, c2) -> fmul X, 1/c2 if losing precision is acceptable.
-  if (N1CFP && Options.UnsafeFPMath) {
-    // Compute the reciprocal 1.0 / c2.
-    APFloat N1APF = N1CFP->getValueAPF();
-    APFloat Recip(N1APF.getSemantics(), 1); // 1.0
-    APFloat::opStatus st = Recip.divide(N1APF, APFloat::rmNearestTiesToEven);
-    // Only do the transform if the reciprocal is a legal fp immediate that
-    // isn't too nasty (eg NaN, denormal, ...).
-    if ((st == APFloat::opOK || st == APFloat::opInexact) && // Not too nasty
-        (!LegalOperations ||
-         // FIXME: custom lowering of ConstantFP might fail (see e.g. ARM
-         // backend)... we should handle this gracefully after Legalize.
-         // TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT) ||
-         TLI.isOperationLegal(llvm::ISD::ConstantFP, VT) ||
-         TLI.isFPImmLegal(Recip, VT)))
-      return DAG.getNode(ISD::FMUL, SDLoc(N), VT, N0,
-                         DAG.getConstantFP(Recip, VT));
+  if (Options.UnsafeFPMath) {
+    // fold (fdiv X, c2) -> fmul X, 1/c2 if losing precision is acceptable.
+    if (N1CFP) {
+      // Compute the reciprocal 1.0 / c2.
+      APFloat N1APF = N1CFP->getValueAPF();
+      APFloat Recip(N1APF.getSemantics(), 1); // 1.0
+      APFloat::opStatus st = Recip.divide(N1APF, APFloat::rmNearestTiesToEven);
+      // Only do the transform if the reciprocal is a legal fp immediate that
+      // isn't too nasty (eg NaN, denormal, ...).
+      if ((st == APFloat::opOK || st == APFloat::opInexact) && // Not too nasty
+          (!LegalOperations ||
+           // FIXME: custom lowering of ConstantFP might fail (see e.g. ARM
+           // backend)... we should handle this gracefully after Legalize.
+           // TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT) ||
+           TLI.isOperationLegal(llvm::ISD::ConstantFP, VT) ||
+           TLI.isFPImmLegal(Recip, VT)))
+        return DAG.getNode(ISD::FMUL, SDLoc(N), VT, N0,
+                           DAG.getConstantFP(Recip, VT));
+    }
+    // If this FDIV is part of a reciprocal square root, it may be folded
+    // into a target-specific square root estimate instruction.
+    if (SDValue SqrtOp = BuildRSQRTE(N))
+      return SqrtOp;
   }
 
   // (fdiv (fneg X), (fneg Y)) -> (fdiv X, Y)
@@ -11693,6 +11700,44 @@ SDValue DAGCombiner::BuildUDIV(SDNode *N) {
   for (SDNode *N : Built)
     AddToWorklist(N);
   return S;
+}
+
+/// Given an ISD::FDIV node with either a direct or indirect ISD::FSQRT operand,
+/// generate a DAG expression using a reciprocal square root estimate op.
+SDValue DAGCombiner::BuildRSQRTE(SDNode *N) {
+  // Expose the DAG combiner to the target combiner implementations.
+  TargetLowering::DAGCombinerInfo DCI(DAG, Level, false, this);
+  SDLoc DL(N);
+  EVT VT = N->getValueType(0);
+  SDValue N1 = N->getOperand(1);
+
+  if (N1.getOpcode() == ISD::FSQRT) {
+    SDValue RV = TLI.BuildRSQRTE(N1.getOperand(0), DCI);
+    if (RV.getNode()) {
+      DCI.AddToWorklist(RV.getNode());
+      return DAG.getNode(ISD::FMUL, DL, VT, N->getOperand(0), RV);
+    }
+  } else if (N1.getOpcode() == ISD::FP_EXTEND &&
+             N1.getOperand(0).getOpcode() == ISD::FSQRT) {
+    SDValue RV = TLI.BuildRSQRTE(N1.getOperand(0).getOperand(0), DCI);
+    if (RV.getNode()) {
+      DCI.AddToWorklist(RV.getNode());
+      RV = DAG.getNode(ISD::FP_EXTEND, SDLoc(N1), VT, RV);
+      DCI.AddToWorklist(RV.getNode());
+      return DAG.getNode(ISD::FMUL, DL, VT, N->getOperand(0), RV);
+    }
+  } else if (N1.getOpcode() == ISD::FP_ROUND &&
+             N1.getOperand(0).getOpcode() == ISD::FSQRT) {
+    SDValue RV = TLI.BuildRSQRTE(N1.getOperand(0).getOperand(0), DCI);
+    if (RV.getNode()) {
+      DCI.AddToWorklist(RV.getNode());
+      RV = DAG.getNode(ISD::FP_ROUND, SDLoc(N1), VT, RV, N1.getOperand(1));
+      DCI.AddToWorklist(RV.getNode());
+      return DAG.getNode(ISD::FMUL, DL, VT, N->getOperand(0), RV);
+    }
+  }
+
+  return SDValue();
 }
 
 /// Return true if base is a frame index, which is known not to alias with
