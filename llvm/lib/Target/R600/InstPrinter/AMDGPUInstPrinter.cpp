@@ -232,7 +232,7 @@ void AMDGPUInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     const MCExpr *Exp = Op.getExpr();
     Exp->print(O);
   } else {
-    assert(!"unknown operand type in printOperand");
+    llvm_unreachable("unknown operand type in printOperand");
   }
 }
 
@@ -259,7 +259,7 @@ void AMDGPUInstPrinter::printInterpSlot(const MCInst *MI, unsigned OpNum,
   } else if (Imm == 0) {
     O << "P10";
   } else {
-    assert(!"Invalid interpolation parameter slot");
+    llvm_unreachable("Invalid interpolation parameter slot");
   }
 }
 
