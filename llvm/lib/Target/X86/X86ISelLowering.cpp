@@ -7800,7 +7800,7 @@ static SDValue lowerVectorShuffleWithSHUPFS(SDLoc DL, MVT VT,
       // To make this work, blend them together as the first step.
       int V1Index = V2AdjIndex;
       int BlendMask[4] = {Mask[V2Index] - 4, 0, Mask[V1Index], 0};
-      V2 = DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f32, V2, V1,
+      V2 = DAG.getNode(X86ISD::SHUFP, DL, VT, V2, V1,
                        getV4X86ShuffleImm8ForMask(BlendMask, DAG));
 
       // Now proceed to reconstruct the final blend as we have the necessary
@@ -7831,7 +7831,7 @@ static SDValue lowerVectorShuffleWithSHUPFS(SDLoc DL, MVT VT,
                           Mask[2] < 4 ? Mask[2] : Mask[3],
                           (Mask[0] >= 4 ? Mask[0] : Mask[1]) - 4,
                           (Mask[2] >= 4 ? Mask[2] : Mask[3]) - 4};
-      V1 = DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f32, V1, V2,
+      V1 = DAG.getNode(X86ISD::SHUFP, DL, VT, V1, V2,
                        getV4X86ShuffleImm8ForMask(BlendMask, DAG));
 
       // Now we do a normal shuffle of V1 by giving V1 as both operands to
@@ -7843,7 +7843,7 @@ static SDValue lowerVectorShuffleWithSHUPFS(SDLoc DL, MVT VT,
       NewMask[3] = Mask[2] < 4 ? 3 : 1;
     }
   }
-  return DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f32, LowV, HighV,
+  return DAG.getNode(X86ISD::SHUFP, DL, VT, LowV, HighV,
                      getV4X86ShuffleImm8ForMask(NewMask, DAG));
 }
 
@@ -9385,6 +9385,14 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8f32, V1, V2);
     if (isShuffleEquivalent(LoMask, 2, 10, 3, 11))
       return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8f32, V1, V2);
+
+    // Otherwise, fall back to a SHUFPS sequence. Here it is important that we
+    // have already handled any direct blends.
+    int SHUFPSMask[] = {Mask[0], Mask[1], Mask[2], Mask[3]};
+    for (int &M : SHUFPSMask)
+      if (M >= 8)
+        M -= 4;
+    return lowerVectorShuffleWithSHUPFS(DL, MVT::v8f32, SHUFPSMask, V1, V2, DAG);
   }
 
   if (isSingleInputShuffleMask(Mask))
@@ -9531,7 +9539,9 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
     return DAG.getCommutedVectorShuffle(*SVOp);
 
   // When the number of V1 and V2 elements are the same, try to minimize the
-  // number of uses of V2 in the low half of the vector.
+  // number of uses of V2 in the low half of the vector. When that is tied,
+  // ensure that the sum of indices for V1 is equal to or lower than the sum
+  // indices for V2.
   if (NumV1Elements == NumV2Elements) {
     int LowV1Elements = 0, LowV2Elements = 0;
     for (int M : SVOp->getMask().slice(0, NumElements / 2))
@@ -9540,6 +9550,15 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
       else if (M >= 0)
         ++LowV1Elements;
     if (LowV2Elements > LowV1Elements)
+      return DAG.getCommutedVectorShuffle(*SVOp);
+
+    int SumV1Indices = 0, SumV2Indices = 0;
+    for (int i = 0, Size = SVOp->getMask().size(); i < Size; ++i)
+      if (SVOp->getMask()[i] >= NumElements)
+        SumV2Indices += i;
+      else if (SVOp->getMask()[i] >= 0)
+        SumV1Indices += i;
+    if (SumV2Indices < SumV1Indices)
       return DAG.getCommutedVectorShuffle(*SVOp);
   }
 
