@@ -643,6 +643,8 @@ bool MachOLinkingContext::exportSymbolNamed(StringRef sym) const {
     return _exportedSymbols.count(sym);
   case ExportMode::blackList:
     return !_exportedSymbols.count(sym);
+  default:
+    llvm_unreachable("_exportMode unknown enum value");
   }
 }
 

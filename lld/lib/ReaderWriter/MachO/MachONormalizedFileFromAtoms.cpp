@@ -719,6 +719,9 @@ std::error_code Util::getSymbolTableRegion(const DefinedAtom* atom,
       return std::error_code();
     }
     break;
+  default:
+    llvm_unreachable("atom->scope() unknown enum value");
+    return std::error_code();
   }
 }
 
