@@ -7237,6 +7237,7 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
   switch (VT.SimpleTy) {
   case MVT::v2f64:
   case MVT::v4f32:
+  case MVT::v4f64:
     return DAG.getNode(X86ISD::BLENDI, DL, VT, V1, V2,
                        DAG.getConstant(BlendMask, MVT::i8));
 
@@ -9228,6 +9229,10 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v4f64, V2, V1);
   if (isShuffleEquivalent(Mask, 5, 1, 7, 3))
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v4f64, V2, V1);
+
+  if (SDValue Blend =
+          lowerVectorShuffleAsBlend(DL, MVT::v4f64, V1, V2, Mask, DAG))
+    return Blend;
 
   // Check if the blend happens to exactly fit that of SHUFPD.
   if (Mask[0] < 4 && (Mask[1] == -1 || Mask[1] >= 4) &&
