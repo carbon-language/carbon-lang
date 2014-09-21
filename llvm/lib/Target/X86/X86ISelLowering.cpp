@@ -7234,27 +7234,34 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
     if (Mask[i] >= 0 && Mask[i] != i)
       return SDValue(); // Shuffled V1 input!
   }
-  if (VT == MVT::v4f32 || VT == MVT::v2f64)
+  switch (VT.SimpleTy) {
+  case MVT::v2f64:
+  case MVT::v4f32:
     return DAG.getNode(X86ISD::BLENDI, DL, VT, V1, V2,
                        DAG.getConstant(BlendMask, MVT::i8));
-  assert(!VT.isFloatingPoint() && "Only v4f32 and v2f64 are supported!");
 
-  // For integer shuffles we need to expand the mask and cast the inputs to
-  // v8i16s prior to blending.
-  assert((VT == MVT::v8i16 || VT == MVT::v4i32 || VT == MVT::v2i64) &&
-         "Not a supported integer vector type!");
-  int Scale = 8 / VT.getVectorNumElements();
-  BlendMask = 0;
-  for (int i = 0, Size = Mask.size(); i < Size; ++i)
-    if (Mask[i] >= Size)
-      for (int j = 0; j < Scale; ++j)
-        BlendMask |= 1u << (i * Scale + j);
+  case MVT::v8i16:
+  case MVT::v4i32:
+  case MVT::v2i64: {
+    // For integer shuffles we need to expand the mask and cast the inputs to
+    // v8i16s prior to blending.
+    int Scale = 8 / VT.getVectorNumElements();
+    BlendMask = 0;
+    for (int i = 0, Size = Mask.size(); i < Size; ++i)
+      if (Mask[i] >= Size)
+        for (int j = 0; j < Scale; ++j)
+          BlendMask |= 1u << (i * Scale + j);
 
-  V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V1);
-  V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V2);
-  return DAG.getNode(ISD::BITCAST, DL, VT,
-                     DAG.getNode(X86ISD::BLENDI, DL, MVT::v8i16, V1, V2,
-                                 DAG.getConstant(BlendMask, MVT::i8)));
+    V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V1);
+    V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V2);
+    return DAG.getNode(ISD::BITCAST, DL, VT,
+                       DAG.getNode(X86ISD::BLENDI, DL, MVT::v8i16, V1, V2,
+                                   DAG.getConstant(BlendMask, MVT::i8)));
+  }
+
+  default:
+    llvm_unreachable("Not a supported integer vector type!");
+  }
 }
 
 /// \brief Try to lower a vector shuffle as a byte rotation.
