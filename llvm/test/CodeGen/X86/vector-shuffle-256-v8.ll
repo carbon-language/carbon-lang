@@ -381,10 +381,9 @@ define <8 x float> @shuffle_v8f32_10225466(<8 x float> %a, <8 x float> %b) {
 define <8 x float> @shuffle_v8f32_00015444(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: @shuffle_v8f32_00015444
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermilps {{.*}} # xmm1 = xmm0[0,0,0,1]
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; ALL-NEXT:    vpermilps {{.*}} # xmm0 = xmm0[1,0,0,0]
-; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[1,0,0,0,5,4,4,4]
+; ALL-NEXT:    vpermilps {{.*}} # ymm0 = ymm0[0,0,0,1,4,4,4,5]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 0, i32 0, i32 1, i32 5, i32 4, i32 4, i32 4>
   ret <8 x float> %shuffle
@@ -393,10 +392,9 @@ define <8 x float> @shuffle_v8f32_00015444(<8 x float> %a, <8 x float> %b) {
 define <8 x float> @shuffle_v8f32_00204644(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: @shuffle_v8f32_00204644
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermilps {{.*}} # xmm1 = xmm0[0,0,2,0]
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; ALL-NEXT:    vpermilps {{.*}} # xmm0 = xmm0[0,2,0,0]
-; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[0,2,0,0,4,6,4,4]
+; ALL-NEXT:    vpermilps {{.*}} # ymm0 = ymm0[0,0,2,0,4,4,6,4]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 0, i32 2, i32 0, i32 4, i32 6, i32 4, i32 4>
   ret <8 x float> %shuffle
@@ -405,10 +403,9 @@ define <8 x float> @shuffle_v8f32_00204644(<8 x float> %a, <8 x float> %b) {
 define <8 x float> @shuffle_v8f32_03004474(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: @shuffle_v8f32_03004474
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermilps {{.*}} # xmm1 = xmm0[0,3,0,0]
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; ALL-NEXT:    vpermilps {{.*}} # xmm0 = xmm0[0,0,3,0]
-; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[0,0,3,0,4,4,7,4]
+; ALL-NEXT:    vpermilps {{.*}} # ymm0 = ymm0[0,3,0,0,4,7,4,4]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 3, i32 0, i32 0, i32 4, i32 4, i32 7, i32 4>
   ret <8 x float> %shuffle
@@ -417,10 +414,9 @@ define <8 x float> @shuffle_v8f32_03004474(<8 x float> %a, <8 x float> %b) {
 define <8 x float> @shuffle_v8f32_10004444(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: @shuffle_v8f32_10004444
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermilps {{.*}} # xmm1 = xmm0[1,0,0,0]
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; ALL-NEXT:    vpermilps {{.*}} # xmm0 = xmm0[0,0,0,0]
-; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[0,0,0,0,4,4,4,4]
+; ALL-NEXT:    vpermilps {{.*}} # ymm0 = ymm0[1,0,0,0,5,4,4,4]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 1, i32 0, i32 0, i32 0, i32 4, i32 4, i32 4, i32 4>
   ret <8 x float> %shuffle
@@ -429,10 +425,9 @@ define <8 x float> @shuffle_v8f32_10004444(<8 x float> %a, <8 x float> %b) {
 define <8 x float> @shuffle_v8f32_22006446(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: @shuffle_v8f32_22006446
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermilps {{.*}} # xmm1 = xmm0[2,2,0,0]
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; ALL-NEXT:    vpermilps {{.*}} # xmm0 = xmm0[2,0,0,2]
-; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[2,0,0,2,6,4,4,6]
+; ALL-NEXT:    vpermilps {{.*}} # ymm0 = ymm0[2,2,0,0,6,6,4,4]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 2, i32 2, i32 0, i32 0, i32 6, i32 4, i32 4, i32 6>
   ret <8 x float> %shuffle
@@ -441,10 +436,9 @@ define <8 x float> @shuffle_v8f32_22006446(<8 x float> %a, <8 x float> %b) {
 define <8 x float> @shuffle_v8f32_33307474(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: @shuffle_v8f32_33307474
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermilps {{.*}} # xmm1 = xmm0[3,3,3,0]
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; ALL-NEXT:    vpermilps {{.*}} # xmm0 = xmm0[3,0,3,0]
-; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[3,0,3,0,7,4,7,4]
+; ALL-NEXT:    vpermilps {{.*}} # ymm0 = ymm0[3,3,3,0,7,7,7,4]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 3, i32 3, i32 3, i32 0, i32 7, i32 4, i32 7, i32 4>
   ret <8 x float> %shuffle
@@ -453,9 +447,8 @@ define <8 x float> @shuffle_v8f32_33307474(<8 x float> %a, <8 x float> %b) {
 define <8 x float> @shuffle_v8f32_32104567(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: @shuffle_v8f32_32104567
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermilps {{.*}} # xmm1 = xmm0[3,2,1,0]
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[3,2,1,0,7,6,5,4]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm1[0,1,2,3],ymm0[4,5,6,7]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 3, i32 2, i32 1, i32 0, i32 4, i32 5, i32 6, i32 7>
   ret <8 x float> %shuffle
@@ -464,10 +457,9 @@ define <8 x float> @shuffle_v8f32_32104567(<8 x float> %a, <8 x float> %b) {
 define <8 x float> @shuffle_v8f32_00236744(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: @shuffle_v8f32_00236744
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermilps {{.*}} # xmm1 = xmm0[0,0,2,3]
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; ALL-NEXT:    vpermilps {{.*}} # xmm0 = xmm0[2,3,0,0]
-; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[2,3,0,0,6,7,4,4]
+; ALL-NEXT:    vpermilps {{.*}} # ymm0 = ymm0[0,0,2,3,4,4,6,7]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 0, i32 2, i32 3, i32 6, i32 7, i32 4, i32 4>
   ret <8 x float> %shuffle
@@ -476,10 +468,9 @@ define <8 x float> @shuffle_v8f32_00236744(<8 x float> %a, <8 x float> %b) {
 define <8 x float> @shuffle_v8f32_00226644(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: @shuffle_v8f32_00226644
 ; ALL:       # BB#0:
-; ALL-NEXT:    vmovsldup {{.*}} # xmm1 = xmm0[0,0,2,2]
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; ALL-NEXT:    vpermilps {{.*}} # xmm0 = xmm0[2,2,0,0]
-; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[2,2,0,0,6,6,4,4]
+; ALL-NEXT:    vpermilps {{.*}} # ymm0 = ymm0[0,0,2,2,4,4,6,6]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 0, i32 2, i32 2, i32 6, i32 6, i32 4, i32 4>
   ret <8 x float> %shuffle
@@ -488,9 +479,8 @@ define <8 x float> @shuffle_v8f32_00226644(<8 x float> %a, <8 x float> %b) {
 define <8 x float> @shuffle_v8f32_10324567(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: @shuffle_v8f32_10324567
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermilps {{.*}} # xmm1 = xmm0[1,0,3,2]
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[1,0,3,2,5,4,7,6]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm1[0,1,2,3],ymm0[4,5,6,7]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 1, i32 0, i32 3, i32 2, i32 4, i32 5, i32 6, i32 7>
   ret <8 x float> %shuffle
@@ -499,9 +489,8 @@ define <8 x float> @shuffle_v8f32_10324567(<8 x float> %a, <8 x float> %b) {
 define <8 x float> @shuffle_v8f32_11334567(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: @shuffle_v8f32_11334567
 ; ALL:       # BB#0:
-; ALL-NEXT:    vmovshdup {{.*}} # xmm1 = xmm0[1,1,3,3]
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[1,1,3,3,5,5,7,7]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm1[0,1,2,3],ymm0[4,5,6,7]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 1, i32 1, i32 3, i32 3, i32 4, i32 5, i32 6, i32 7>
   ret <8 x float> %shuffle
@@ -510,9 +499,8 @@ define <8 x float> @shuffle_v8f32_11334567(<8 x float> %a, <8 x float> %b) {
 define <8 x float> @shuffle_v8f32_01235467(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: @shuffle_v8f32_01235467
 ; ALL:       # BB#0:
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; ALL-NEXT:    vpermilps {{.*}} # xmm1 = xmm1[1,0,2,3]
-; ALL-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[1,0,2,3,5,4,6,7]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 5, i32 4, i32 6, i32 7>
   ret <8 x float> %shuffle
@@ -521,10 +509,71 @@ define <8 x float> @shuffle_v8f32_01235467(<8 x float> %a, <8 x float> %b) {
 define <8 x float> @shuffle_v8f32_01235466(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: @shuffle_v8f32_01235466
 ; ALL:       # BB#0:
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; ALL-NEXT:    vpermilps {{.*}} # xmm1 = xmm1[1,0,2,2]
-; ALL-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[1,0,2,2,5,4,6,6]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 5, i32 4, i32 6, i32 6>
+  ret <8 x float> %shuffle
+}
+
+define <8 x float> @shuffle_v8f32_002u6u44(<8 x float> %a, <8 x float> %b) {
+; ALL-LABEL: @shuffle_v8f32_002u6u44
+; ALL:       # BB#0:
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[2,1,0,0,6,5,4,4]
+; ALL-NEXT:    vpermilps {{.*}} # ymm0 = ymm0[0,0,2,3,4,4,6,7]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
+; ALL-NEXT:    retq
+  %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 0, i32 2, i32 undef, i32 6, i32 undef, i32 4, i32 4>
+  ret <8 x float> %shuffle
+}
+
+define <8 x float> @shuffle_v8f32_00uu66uu(<8 x float> %a, <8 x float> %b) {
+; ALL-LABEL: @shuffle_v8f32_00uu66uu
+; ALL:       # BB#0:
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[2,2,2,3,6,6,6,7]
+; ALL-NEXT:    vpermilps {{.*}} # ymm0 = ymm0[0,0,2,3,4,4,6,7]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
+; ALL-NEXT:    retq
+  %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 0, i32 undef, i32 undef, i32 6, i32 6, i32 undef, i32 undef>
+  ret <8 x float> %shuffle
+}
+
+define <8 x float> @shuffle_v8f32_103245uu(<8 x float> %a, <8 x float> %b) {
+; ALL-LABEL: @shuffle_v8f32_103245uu
+; ALL:       # BB#0:
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[1,0,3,2,5,4,7,6]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm1[0,1,2,3],ymm0[4,5,6,7]
+; ALL-NEXT:    retq
+  %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 1, i32 0, i32 3, i32 2, i32 4, i32 5, i32 undef, i32 undef>
+  ret <8 x float> %shuffle
+}
+
+define <8 x float> @shuffle_v8f32_1133uu67(<8 x float> %a, <8 x float> %b) {
+; ALL-LABEL: @shuffle_v8f32_1133uu67
+; ALL:       # BB#0:
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[1,1,3,3,5,5,7,7]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm1[0,1,2,3],ymm0[4,5,6,7]
+; ALL-NEXT:    retq
+  %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 1, i32 1, i32 3, i32 3, i32 undef, i32 undef, i32 6, i32 7>
+  ret <8 x float> %shuffle
+}
+
+define <8 x float> @shuffle_v8f32_0uu354uu(<8 x float> %a, <8 x float> %b) {
+; ALL-LABEL: @shuffle_v8f32_0uu354uu
+; ALL:       # BB#0:
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[1,0,2,3,5,4,6,7]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
+; ALL-NEXT:    retq
+  %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 undef, i32 undef, i32 3, i32 5, i32 4, i32 undef, i32 undef>
+  ret <8 x float> %shuffle
+}
+
+define <8 x float> @shuffle_v8f32_uuu3uu66(<8 x float> %a, <8 x float> %b) {
+; ALL-LABEL: @shuffle_v8f32_uuu3uu66
+; ALL:       # BB#0:
+; ALL-NEXT:    vpermilps {{.*}} # ymm1 = ymm0[0,1,2,2,4,5,6,6]
+; ALL-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
+; ALL-NEXT:    retq
+  %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 undef, i32 undef, i32 undef, i32 3, i32 undef, i32 undef, i32 6, i32 6>
   ret <8 x float> %shuffle
 }
