@@ -19,7 +19,6 @@ class LibcxxMapDataFormatterTestCase(TestBase):
         self.buildDsym()
         self.data_formatter_commands()
 
-    @skipIfFreeBSD # llvm.org/pr17231
     @skipIfLinux # No standard locations for libc++ on Linux, so skip for now 
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
