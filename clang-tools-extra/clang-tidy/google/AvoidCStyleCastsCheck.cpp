@@ -78,6 +78,10 @@ void AvoidCStyleCastsCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
+  // The rest of this check is only relevant to C++.
+  if (!Result.Context->getLangOpts().CPlusPlus)
+    return;
+
   std::string DestTypeString = CastExpr->getTypeAsWritten().getAsString();
 
   auto diag_builder =

@@ -14,6 +14,10 @@ CHECK_TO_RUN=$2
 TEMPORARY_FILE=$3.cpp
 # Feed the rest arguments to clang-tidy after --.
 shift 3
+CLANG_TIDY_ARGS=--std=c++11
+if (($# > 0)) ; then
+  CLANG_TIDY_ARGS=$*
+fi
 
 set -o errexit
 
@@ -23,7 +27,7 @@ set -o errexit
 sed 's#// *CHECK-[A-Z-]*:.*#//#' ${INPUT_FILE} > ${TEMPORARY_FILE}
 
 clang-tidy ${TEMPORARY_FILE} -fix --checks="-*,${CHECK_TO_RUN}" \
-  -- --std=c++11 $* > ${TEMPORARY_FILE}.msg 2>&1
+  -- ${CLANG_TIDY_ARGS} > ${TEMPORARY_FILE}.msg 2>&1
 
 FileCheck -input-file=${TEMPORARY_FILE} ${INPUT_FILE} \
   -check-prefix=CHECK-FIXES -strict-whitespace
