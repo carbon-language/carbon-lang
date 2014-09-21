@@ -9292,6 +9292,44 @@ static SDValue lowerV4I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                      lowerV4F64VectorShuffle(Op, V1, V2, Subtarget, DAG));
 }
 
+/// \brief Handle lowering of 8-lane 32-bit floating point shuffles.
+///
+/// Also ends up handling lowering of 8-lane 32-bit integer shuffles when AVX2
+/// isn't available.
+static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+                                       const X86Subtarget *Subtarget,
+                                       SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  assert(V1.getSimpleValueType() == MVT::v8f32 && "Bad operand type!");
+  assert(V2.getSimpleValueType() == MVT::v8f32 && "Bad operand type!");
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> Mask = SVOp->getMask();
+  assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
+
+  if (isHalfCrossingShuffleMask(Mask) ||
+      isSingleInputShuffleMask(Mask))
+    return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
+
+  // Shuffle the input elements into the desired positions in V1 and V2 and
+  // blend them together.
+  int V1Mask[] = {-1, -1, -1, -1, -1, -1, -1, -1};
+  int V2Mask[] = {-1, -1, -1, -1, -1, -1, -1, -1};
+  unsigned BlendMask = 0;
+  for (int i = 0; i < 8; ++i)
+    if (Mask[i] >= 0 && Mask[i] < 8) {
+      V1Mask[i] = Mask[i];
+    } else if (Mask[i] >= 8) {
+      V2Mask[i] = Mask[i] - 8;
+      BlendMask |= 1 << i;
+    }
+
+  V1 = DAG.getVectorShuffle(MVT::v8f32, DL, V1, DAG.getUNDEF(MVT::v8f32), V1Mask);
+  V2 = DAG.getVectorShuffle(MVT::v8f32, DL, V2, DAG.getUNDEF(MVT::v8f32), V2Mask);
+
+  return DAG.getNode(X86ISD::BLENDI, DL, MVT::v8f32, V1, V2,
+                     DAG.getConstant(BlendMask, MVT::i8));
+}
+
 /// \brief High-level routine to lower various 256-bit x86 vector shuffles.
 ///
 /// This routine either breaks down the specific type of a 256-bit x86 vector
@@ -9305,8 +9343,9 @@ static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return lowerV4F64VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v4i64:
     return lowerV4I64VectorShuffle(Op, V1, V2, Subtarget, DAG);
-  case MVT::v8i32:
   case MVT::v8f32:
+    return lowerV8F32VectorShuffle(Op, V1, V2, Subtarget, DAG);
+  case MVT::v8i32:
   case MVT::v16i16:
   case MVT::v32i8:
     // Fall back to the basic pattern of extracting the high half and forming
