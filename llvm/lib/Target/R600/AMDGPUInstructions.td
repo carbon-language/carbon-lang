@@ -380,6 +380,14 @@ def mskor_flat : PatFrag<(ops node:$val, node:$ptr),
   return dyn_cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::FLAT_ADDRESS;
 }]>;
 
+class global_binary_atomic_op<SDNode atomic_op> : PatFrag<
+  (ops node:$ptr, node:$value),
+  (atomic_op node:$ptr, node:$value),
+  [{return cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS;}]
+>;
+
+def atomic_add_global : global_binary_atomic_op<atomic_load_add>;
+
 //===----------------------------------------------------------------------===//
 // Misc Pattern Fragments
 //===----------------------------------------------------------------------===//
