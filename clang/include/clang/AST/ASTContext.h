@@ -2355,9 +2355,9 @@ static inline Selector GetUnarySelector(StringRef name, ASTContext& Ctx) {
 /// // Specific alignment
 /// IntegerLiteral *Ex2 = new (Context, 4) IntegerLiteral(arguments);
 /// @endcode
-/// Please note that you cannot use delete on the pointer; it must be
-/// deallocated using an explicit destructor call followed by
-/// @c Context.Deallocate(Ptr).
+/// Memory allocated through this placement new operator does not need to be
+/// explicitly freed, as ASTContext will free all of this memory when it gets
+/// destroyed. Please note that you cannot use delete on the pointer.
 ///
 /// @param Bytes The number of bytes to allocate. Calculated by the compiler.
 /// @param C The ASTContext that provides the allocator.
@@ -2392,9 +2392,9 @@ inline void operator delete(void *Ptr, const clang::ASTContext &C, size_t) {
 /// // Specific alignment
 /// char *data = new (Context, 4) char[10];
 /// @endcode
-/// Please note that you cannot use delete on the pointer; it must be
-/// deallocated using an explicit destructor call followed by
-/// @c Context.Deallocate(Ptr).
+/// Memory allocated through this placement new[] operator does not need to be
+/// explicitly freed, as ASTContext will free all of this memory when it gets
+/// destroyed. Please note that you cannot use delete on the pointer.
 ///
 /// @param Bytes The number of bytes to allocate. Calculated by the compiler.
 /// @param C The ASTContext that provides the allocator.
