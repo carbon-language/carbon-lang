@@ -22,6 +22,7 @@ RUN: echo "%p/Inputs/arange-overlap.elf-x86_64 0x714" >> %t.input
 RUN: cp %p/Inputs/split-dwarf-test.dwo %T
 RUN: echo "%p/Inputs/split-dwarf-test 0x4004d0" >> %t.input
 RUN: echo "%p/Inputs/split-dwarf-test 0x4004c0" >> %t.input
+RUN: echo "%p/Inputs/cross-cu-inlining.x86_64-macho.o 0x17" >> %t.input
 
 RUN: llvm-symbolizer --functions=linkage --inlining --demangle=false \
 RUN:    --default-arch=i386 < %t.input | FileCheck %s
@@ -110,6 +111,13 @@ CHECK-NEXT: {{.*}}split-dwarf-test.cc
 
 CHECK: _Z3fooi
 CHECK-NEXT: {{.*}}split-dwarf-test.cc
+
+; func has been inlined into main by LTO. Check that the symbolizer is able
+; to resolve the cross-cu reference and retrieve func's name
+CHECK: func
+CHECK-NEXT: /tmp{{[/\\]}}cross-cu-inlining.c:16:3
+CHECK-NEXT: main
+CHECK-NEXT: /tmp{{[/\\]}}cross-cu-inlining.c:11:0
 
 RUN: echo "unexisting-file 0x1234" > %t.input2
 RUN: llvm-symbolizer < %t.input2

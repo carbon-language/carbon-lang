@@ -20,6 +20,17 @@ using namespace llvm;
 using namespace dwarf;
 typedef DILineInfoSpecifier::FunctionNameKind FunctionNameKind;
 
+// Small helper to extract a DIE pointed by a reference
+// attribute. It looks up the Unit containing the DIE and calls
+// DIE.extractFast with the right unit. Returns new unit on success,
+// nullptr otherwise.
+static const DWARFUnit *findUnitAndExtractFast(DWARFDebugInfoEntryMinimal &DIE,
+                                               const DWARFUnit *Unit,
+                                               uint32_t *Offset) {
+  Unit = Unit->getUnitSection().getUnitForOffset(*Offset);
+  return (Unit && DIE.extractFast(Unit, Offset)) ? Unit : nullptr;
+}
+
 void DWARFDebugInfoEntryMinimal::dump(raw_ostream &OS, const DWARFUnit *u,
                                       unsigned recurseDepth,
                                       unsigned indent) const {
@@ -315,8 +326,8 @@ DWARFDebugInfoEntryMinimal::getSubroutineName(const DWARFUnit *U,
       getAttributeValueAsReference(U, DW_AT_specification, -1U);
   if (spec_ref != -1U) {
     DWARFDebugInfoEntryMinimal spec_die;
-    if (spec_die.extractFast(U, &spec_ref)) {
-      if (const char *name = spec_die.getSubroutineName(U, Kind))
+    if (const DWARFUnit *RefU = findUnitAndExtractFast(spec_die, U, &spec_ref)) {
+      if (const char *name = spec_die.getSubroutineName(RefU, Kind))
         return name;
     }
   }
@@ -325,8 +336,9 @@ DWARFDebugInfoEntryMinimal::getSubroutineName(const DWARFUnit *U,
       getAttributeValueAsReference(U, DW_AT_abstract_origin, -1U);
   if (abs_origin_ref != -1U) {
     DWARFDebugInfoEntryMinimal abs_origin_die;
-    if (abs_origin_die.extractFast(U, &abs_origin_ref)) {
-      if (const char *name = abs_origin_die.getSubroutineName(U, Kind))
+    if (const DWARFUnit *RefU = findUnitAndExtractFast(abs_origin_die, U,
+                                                       &abs_origin_ref)) {
+      if (const char *name = abs_origin_die.getSubroutineName(RefU, Kind))
         return name;
     }
   }
