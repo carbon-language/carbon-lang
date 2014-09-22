@@ -27,6 +27,7 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/ValueHandle.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetLibraryInfo.h"
@@ -36,6 +37,20 @@ using namespace llvm;
 using namespace PatternMatch;
 
 #define DEBUG_TYPE "lazy-value-info"
+
+// Experimentally derived threshold for the number of basic blocks lowered for
+// lattice value overdefined.
+static cl::opt<unsigned>
+OverdefinedBBThreshold("lvi-overdefined-BB-threshold",
+    cl::init(1500), cl::Hidden,
+    cl::desc("Threshold of the number of basic blocks lowered for lattice value"
+             "'overdefined'."));
+
+// Experimentally derived threshold for additional lowering lattice values
+// overdefined per block.
+static cl::opt<unsigned>
+OverdefinedThreshold("lvi-overdefined-threshold", cl::init(10), cl::Hidden,
+    cl::desc("Threshold of lowering lattice value 'overdefined'."));
 
 char LazyValueInfo::ID = 0;
 INITIALIZE_PASS_BEGIN(LazyValueInfo, "lazy-value-info",
@@ -348,6 +363,9 @@ namespace {
     const DataLayout *DL;
     /// An optional DT pointer.
     DominatorTree *DT;
+    /// A counter to record how many times Overdefined has been tried to be
+    /// lowered.
+    DenseMap<BasicBlock *, unsigned> LoweringOverdefinedTimes;
     
     friend struct LVIValueHandle;
     
@@ -480,6 +498,9 @@ void LazyValueInfoCache::eraseBlock(BasicBlock *BB) {
 }
 
 void LazyValueInfoCache::solve() {
+  // Reset the counter of lowering overdefined value.
+  LoweringOverdefinedTimes.clear();
+
   while (!BlockValueStack.empty()) {
     std::pair<BasicBlock*, Value*> &e = BlockValueStack.top();
     if (solveBlockValue(e.second, e.first)) {
@@ -539,8 +560,16 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
   // BB2. So we should have to follow data flow propagation algorithm to get the
   // value on edge BB1->BB2 propagated to BB2, and finally %v on BB2 has a
   // constant range describing a negative value.
+  //
+  // In the mean time, limit the number of additional lowering lattice value to
+  // avoid unjustified memory grows.
 
-  if (!BBLV.isUndefined() && !BBLV.isOverdefined()) {
+  if (LoweringOverdefinedTimes.count(BB) == 0)
+    LoweringOverdefinedTimes.insert(std::make_pair(BB, 0));
+  if ((!BBLV.isUndefined() && !BBLV.isOverdefined()) ||
+      (BBLV.isOverdefined() &&
+       (LoweringOverdefinedTimes[BB] > OverdefinedThreshold ||
+        LoweringOverdefinedTimes.size() > OverdefinedBBThreshold))) {
     DEBUG(dbgs() << "  reuse BB '" << BB->getName() << "' val=" << BBLV <<'\n');
     
     // Since we're reusing a cached value here, we don't need to update the 
@@ -554,6 +583,7 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
   // lattice value to overdefined, so that cycles will terminate and be
   // conservatively correct.
   BBLV.markOverdefined();
+  ++LoweringOverdefinedTimes[BB];
   
   Instruction *BBI = dyn_cast<Instruction>(Val);
   if (!BBI || BBI->getParent() != BB) {
