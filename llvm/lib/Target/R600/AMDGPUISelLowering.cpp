@@ -1515,8 +1515,8 @@ SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
   // e is rounding error.
   SDValue RCP = DAG.getNode(AMDGPUISD::URECIP, DL, VT, Den);
 
-  // RCP_LO = umulo(RCP, Den) */
-  SDValue RCP_LO = DAG.getNode(ISD::UMULO, DL, VT, RCP, Den);
+  // RCP_LO = mul(RCP, Den) */
+  SDValue RCP_LO = DAG.getNode(ISD::MUL, DL, VT, RCP, Den);
 
   // RCP_HI = mulhu (RCP, Den) */
   SDValue RCP_HI = DAG.getNode(ISD::MULHU, DL, VT, RCP, Den);
@@ -1547,7 +1547,7 @@ SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
   SDValue Quotient = DAG.getNode(ISD::MULHU, DL, VT, Tmp0, Num);
 
   // Num_S_Remainder = Quotient * Den
-  SDValue Num_S_Remainder = DAG.getNode(ISD::UMULO, DL, VT, Quotient, Den);
+  SDValue Num_S_Remainder = DAG.getNode(ISD::MUL, DL, VT, Quotient, Den);
 
   // Remainder = Num - Num_S_Remainder
   SDValue Remainder = DAG.getNode(ISD::SUB, DL, VT, Num, Num_S_Remainder);
