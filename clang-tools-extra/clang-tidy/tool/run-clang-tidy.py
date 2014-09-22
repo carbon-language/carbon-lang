@@ -131,8 +131,11 @@ def main():
   args = parser.parse_args()
 
   try:
-    print subprocess.check_output([args.clang_tidy_binary, '-list-checks',
-                                   '-checks='+args.checks, 'dummy'])
+    invocation = [args.clang_tidy_binary, '-list-checks']
+    if args.checks:
+      invocation.append('-checks='+args.checks)
+    invocation.append('-')
+    print subprocess.check_output(invocation)
   except:
     print >>sys.stderr, "Unable to run clang-tidy."
     sys.exit(1)
