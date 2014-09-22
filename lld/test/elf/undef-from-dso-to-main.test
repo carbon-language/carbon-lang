@@ -1,7 +1,0 @@
-# Tests that a reference from a DSO to a regular object
-# forces the final executable to export the symbol.
-
-RUN: lld -flavor gnu  -target x86_64 %p/Inputs/defobj.o -L%p/Inputs -lundef2 -o %t1
-RUN: llvm-readobj -dyn-symbols %t1 | FileCheck -check-prefix CHECKSYMS %s
-
-CHECKSYMS: myexportedsymbol

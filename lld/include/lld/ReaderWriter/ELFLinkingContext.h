@@ -262,8 +262,8 @@ public:
 
   void setCreateSeparateROSegment() { _mergeRODataToTextSegment = false; }
 
-  bool hasCoalescedSharedLibPair(StringRef name) const {
-    return _sharedLibCoalescedSymbols.count(name) != 0;
+  bool hasCoalescedWeakPair(StringRef name) const {
+    return _weakCoalescedSymbols.count(name) != 0;
   }
 
 private:
@@ -300,7 +300,7 @@ protected:
   StringRefVector _rpathList;
   StringRefVector _rpathLinkList;
   std::map<std::string, uint64_t> _absoluteSymbols;
-  llvm::StringSet<> _sharedLibCoalescedSymbols;
+  llvm::StringSet<> _weakCoalescedSymbols;
 };
 } // end namespace lld
 
