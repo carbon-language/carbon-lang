@@ -9309,44 +9309,6 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                      DAG.getConstant(BlendMask, MVT::i8));
 }
 
-/// \brief Handle lowering of 4-lane 64-bit integer shuffles.
-///
-/// Largely delegates to common code when we have AVX2 and to the floating-point
-/// code when we only have AVX.
-static SDValue lowerV4I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
-                                       const X86Subtarget *Subtarget,
-                                       SelectionDAG &DAG) {
-  SDLoc DL(Op);
-  assert(Op.getSimpleValueType() == MVT::v4i64 && "Bad shuffle type!");
-  assert(V1.getSimpleValueType() == MVT::v4i64 && "Bad operand type!");
-  assert(V2.getSimpleValueType() == MVT::v4i64 && "Bad operand type!");
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
-  ArrayRef<int> Mask = SVOp->getMask();
-  assert(Mask.size() == 4 && "Unexpected mask size for v4 shuffle!");
-
-  // FIXME: If we have AVX2, we should delegate to generic code as crossing
-  // shuffles aren't a problem and FP and int have the same patterns.
-
-  if (is128BitLaneCrossingShuffleMask(MVT::v4i64, Mask))
-    return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
-
-  // If we have a single input to the zero element, insert that into V1 if we
-  // can do so cheaply.
-  int NumV2Elements =
-      std::count_if(Mask.begin(), Mask.end(), [](int M) { return M >= 4; });
-  if (NumV2Elements == 1 && Mask[0] >= 4)
-    if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
-            MVT::v4i64, DL, V1, V2, Mask, Subtarget, DAG))
-      return Insertion;
-
-  // AVX1 doesn't provide any facilities for v4i64 shuffles, bitcast and
-  // delegate to floating point code.
-  V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v4f64, V1);
-  V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v4f64, V2);
-  return DAG.getNode(ISD::BITCAST, DL, MVT::v4i64,
-                     lowerV4F64VectorShuffle(Op, V1, V2, Subtarget, DAG));
-}
-
 /// \brief Handle lowering of 8-lane 32-bit floating point shuffles.
 ///
 /// Also ends up handling lowering of 8-lane 32-bit integer shuffles when AVX2
@@ -9442,21 +9404,42 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                                         MVT VT, const X86Subtarget *Subtarget,
                                         SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> Mask = SVOp->getMask();
+
+  // There is a really nice hard cut-over between AVX1 and AVX2 that means we can
+  // check for those subtargets here and avoid much of the subtarget querying in
+  // the per-vector-type lowering routines. With AVX1 we have essentially *zero*
+  // ability to manipulate a 256-bit vector with integer types. Since we'll use
+  // floating point types there eventually, just immediately cast everything to
+  // a float and operate entirely in that domain.
+  // FIXME: Actually test for AVX2 when we have implemented it.
+  if (VT.isInteger()) {
+    int ElementBits = VT.getScalarSizeInBits();
+    if (ElementBits < 32)
+      // No floating point type available, decompose into 128-bit vectors.
+      return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
+
+    MVT FpVT = MVT::getVectorVT(MVT::getFloatingPointVT(ElementBits),
+                                VT.getVectorNumElements());
+    V1 = DAG.getNode(ISD::BITCAST, DL, FpVT, V1);
+    V2 = DAG.getNode(ISD::BITCAST, DL, FpVT, V2);
+    return DAG.getNode(ISD::BITCAST, DL, VT,
+                       DAG.getVectorShuffle(FpVT, DL, V1, V2, Mask));
+  }
+
   switch (VT.SimpleTy) {
   case MVT::v4f64:
     return lowerV4F64VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v4i64:
-    return lowerV4I64VectorShuffle(Op, V1, V2, Subtarget, DAG);
+    llvm_unreachable("AVX2 integer support not yet implemented!");
   case MVT::v8f32:
     return lowerV8F32VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v8i32:
   case MVT::v16i16:
   case MVT::v32i8:
-    // Fall back to the basic pattern of extracting the high half and forming
-    // a 4-way blend.
-    // FIXME: Add targeted lowering for each type that can document rationale
-    // for delegating to this when necessary.
-    return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
+    llvm_unreachable("AVX2 integer support not yet implemented!");
 
   default:
     llvm_unreachable("Not a valid 256-bit x86 vector type!");
