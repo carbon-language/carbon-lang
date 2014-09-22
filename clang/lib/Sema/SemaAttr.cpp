@@ -384,7 +384,7 @@ bool Sema::UnifySection(StringRef SectionName,
   if (auto A = OtherDecl->getAttr<SectionAttr>())
     if (A->isImplicit())
       Diag(A->getLocation(), diag::note_pragma_entered_here);
-  return false;
+  return true;
 }
 
 bool Sema::UnifySection(StringRef SectionName,
