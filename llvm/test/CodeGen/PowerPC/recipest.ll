@@ -8,7 +8,6 @@ declare float @llvm.sqrt.f32(float)
 declare <4 x float> @llvm.sqrt.v4f32(<4 x float>)
 
 define double @foo(double %a, double %b) nounwind {
-entry:
   %x = call double @llvm.sqrt.f64(double %b)
   %r = fdiv double %a, %x
   ret double %r
@@ -32,7 +31,6 @@ entry:
 }
 
 define double @foof(double %a, float %b) nounwind {
-entry:
   %x = call float @llvm.sqrt.f32(float %b)
   %y = fpext float %x to double
   %r = fdiv double %a, %y
@@ -54,7 +52,6 @@ entry:
 }
 
 define float @food(float %a, double %b) nounwind {
-entry:
   %x = call double @llvm.sqrt.f64(double %b)
   %y = fptrunc double %x to float
   %r = fdiv float %a, %y
@@ -80,7 +77,6 @@ entry:
 }
 
 define float @goo(float %a, float %b) nounwind {
-entry:
   %x = call float @llvm.sqrt.f32(float %b)
   %r = fdiv float %a, %x
   ret float %r
@@ -101,7 +97,6 @@ entry:
 }
 
 define <4 x float> @hoo(<4 x float> %a, <4 x float> %b) nounwind {
-entry:
   %x = call <4 x float> @llvm.sqrt.v4f32(<4 x float> %b)
   %r = fdiv <4 x float> %a, %x
   ret <4 x float> %r
@@ -115,7 +110,6 @@ entry:
 }
 
 define double @foo2(double %a, double %b) nounwind {
-entry:
   %r = fdiv double %a, %b
   ret double %r
 
@@ -134,7 +128,6 @@ entry:
 }
 
 define float @goo2(float %a, float %b) nounwind {
-entry:
   %r = fdiv float %a, %b
   ret float %r
 
@@ -151,7 +144,6 @@ entry:
 }
 
 define <4 x float> @hoo2(<4 x float> %a, <4 x float> %b) nounwind {
-entry:
   %r = fdiv <4 x float> %a, %b
   ret <4 x float> %r
 
@@ -164,7 +156,6 @@ entry:
 }
 
 define double @foo3(double %a) nounwind {
-entry:
   %r = call double @llvm.sqrt.f64(double %a)
   ret double %r
 
@@ -191,7 +182,6 @@ entry:
 }
 
 define float @goo3(float %a) nounwind {
-entry:
   %r = call float @llvm.sqrt.f32(float %a)
   ret float %r
 
@@ -213,7 +203,6 @@ entry:
 }
 
 define <4 x float> @hoo3(<4 x float> %a) nounwind {
-entry:
   %r = call <4 x float> @llvm.sqrt.v4f32(<4 x float> %a)
   ret <4 x float> %r
 
