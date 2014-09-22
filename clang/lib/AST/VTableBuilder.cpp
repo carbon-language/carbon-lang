@@ -3162,16 +3162,9 @@ void MicrosoftVTableContext::computeVTablePaths(bool ForVBTables,
     Paths.push_back(new VPtrInfo(RD));
 
   // Recursive case: get all the vbtables from our bases and remove anything
-  // that shares a virtual base.  Look at non-virtual bases first so we get
-  // longer inheritance paths from the derived class to the virtual bases.
-  llvm::SmallVector<CXXBaseSpecifier, 10> Bases;
-  std::copy_if(RD->bases_begin(), RD->bases_end(), std::back_inserter(Bases),
-               [](CXXBaseSpecifier bs) { return !bs.isVirtual(); });
-  std::copy_if(RD->bases_begin(), RD->bases_end(), std::back_inserter(Bases),
-               [](CXXBaseSpecifier bs) { return bs.isVirtual(); });
-
+  // that shares a virtual base.
   llvm::SmallPtrSet<const CXXRecordDecl*, 4> VBasesSeen;
-  for (const auto &B : Bases) {
+  for (const auto &B : RD->bases()) {
     const CXXRecordDecl *Base = B.getType()->getAsCXXRecordDecl();
     if (B.isVirtual() && VBasesSeen.count(Base))
       continue;
@@ -3195,10 +3188,6 @@ void MicrosoftVTableContext::computeVTablePaths(bool ForVBTables,
       // wasn't already extended with Base.
       if (P->MangledPath.empty() || P->MangledPath.back() != Base)
         P->NextBaseToMangle = Base;
-
-      // Keep track of the full path.
-      // FIXME: Why do we need this?
-      P->PathToBaseWithVPtr.insert(P->PathToBaseWithVPtr.begin(), Base);
 
       // Keep track of which vtable the derived class is going to extend with
       // new methods or bases.  We append to either the vftable of our primary
@@ -3287,6 +3276,59 @@ MicrosoftVTableContext::~MicrosoftVTableContext() {
   llvm::DeleteContainerSeconds(VBaseInfo);
 }
 
+static bool
+findPathForVPtr(ASTContext &Context, const ASTRecordLayout &MostDerivedLayout,
+                const CXXRecordDecl *RD, CharUnits Offset,
+                llvm::SmallPtrSetImpl<const CXXRecordDecl *> &VBasesSeen,
+                VPtrInfo::BasePath &FullPath, VPtrInfo *Info) {
+  if (RD == Info->BaseWithVPtr && Offset == Info->FullOffsetInMDC) {
+    Info->PathToBaseWithVPtr = FullPath;
+    return true;
+  }
+
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+
+  // Recurse with non-virtual bases first.
+  // FIXME: Does this need to be in layout order? Virtual bases will be in base
+  // specifier order, which isn't necessarily layout order.
+  SmallVector<CXXBaseSpecifier, 4> Bases(RD->bases_begin(), RD->bases_end());
+  std::stable_partition(Bases.begin(), Bases.end(),
+                        [](CXXBaseSpecifier bs) { return !bs.isVirtual(); });
+
+  for (const auto &B : Bases) {
+    const CXXRecordDecl *Base = B.getType()->getAsCXXRecordDecl();
+    CharUnits NewOffset;
+    if (!B.isVirtual())
+      NewOffset = Offset + Layout.getBaseClassOffset(Base);
+    else {
+      if (VBasesSeen.count(Base))
+        return false;
+      VBasesSeen.insert(Base);
+      NewOffset = MostDerivedLayout.getVBaseClassOffset(Base);
+    }
+    FullPath.push_back(Base);
+    if (findPathForVPtr(Context, MostDerivedLayout, Base, NewOffset, VBasesSeen,
+                        FullPath, Info))
+      return true;
+    FullPath.pop_back();
+  }
+  return false;
+}
+
+static void computeFullPathsForVFTables(ASTContext &Context,
+                                        const CXXRecordDecl *RD,
+                                        VPtrInfoVector &Paths) {
+  llvm::SmallPtrSet<const CXXRecordDecl*, 4> VBasesSeen;
+  const ASTRecordLayout &MostDerivedLayout = Context.getASTRecordLayout(RD);
+  VPtrInfo::BasePath FullPath;
+  for (VPtrInfo *Info : Paths) {
+    findPathForVPtr(Context, MostDerivedLayout, RD, CharUnits::Zero(),
+                    VBasesSeen, FullPath, Info);
+    VBasesSeen.clear();
+    FullPath.clear();
+  }
+}
+
 void MicrosoftVTableContext::computeVTableRelatedInformation(
     const CXXRecordDecl *RD) {
   assert(RD->isDynamicClass());
@@ -3299,6 +3341,7 @@ void MicrosoftVTableContext::computeVTableRelatedInformation(
 
   VPtrInfoVector *VFPtrs = new VPtrInfoVector();
   computeVTablePaths(/*ForVBTables=*/false, RD, *VFPtrs);
+  computeFullPathsForVFTables(Context, RD, *VFPtrs);
   VFPtrLocations[RD] = VFPtrs;
 
   MethodVFTableLocationsTy NewMethodLocations;

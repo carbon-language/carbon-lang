@@ -573,16 +573,16 @@ struct Q {
 
 // PR19172: Yet another diamond we miscompiled.
 struct R : virtual Q, X {
-  // CHECK-LABEL: VFTable for 'vdtors::X' in 'vdtors::R' (2 entries).
-  // CHECK-NEXT: 0 | vdtors::R::~R() [scalar deleting]
-  // CHECK-NEXT: 1 | void vdtors::X::zzz()
-
   // CHECK-LABEL: VFTable for 'vdtors::Q' in 'vdtors::R' (1 entry).
   // CHECK-NEXT: 0 | vdtors::R::~R() [scalar deleting]
   // CHECK-NEXT:     [this adjustment: -8 non-virtual]
 
   // CHECK-LABEL: Thunks for 'vdtors::R::~R()' (1 entry).
   // CHECK-NEXT: 0 | [this adjustment: -8 non-virtual]
+
+  // CHECK-LABEL: VFTable for 'vdtors::X' in 'vdtors::R' (2 entries).
+  // CHECK-NEXT: 0 | vdtors::R::~R() [scalar deleting]
+  // CHECK-NEXT: 1 | void vdtors::X::zzz()
 
   // CHECK-LABEL: VFTable indices for 'vdtors::R' (1 entry).
   // CHECK-NEXT: 0 | vdtors::R::~R() [scalar deleting]
@@ -694,10 +694,10 @@ struct X : virtual B {};
 
 struct Y : virtual X, B {
   Y();
-  // CHECK-LABEL: VFTable for 'B' in 'pr19066::Y' (1 entry).
+  // CHECK-LABEL: VFTable for 'B' in 'pr19066::X' in 'pr19066::Y' (1 entry).
   // CHECK-NEXT:  0 | void B::g()
 
-  // CHECK-LABEL: VFTable for 'B' in 'pr19066::X' in 'pr19066::Y' (1 entry).
+  // CHECK-LABEL: VFTable for 'B' in 'pr19066::Y' (1 entry).
   // CHECK-NEXT:  0 | void B::g()
 };
 
@@ -771,4 +771,37 @@ struct __declspec(dllexport) A {
   // CHECK-NEXT:   0 | void Test13::A::f() [deleted]
   virtual void f() = delete;
 };
+}
+
+namespace pr21031_1 {
+// This ordering of base specifiers regressed in r202425.
+struct A { virtual void f(void); };
+struct B : virtual A { virtual void g(void); };
+struct C : virtual A, B { C(); };
+C::C() {}
+
+// CHECK-LABEL: VFTable for 'pr21031_1::A' in 'pr21031_1::B' in 'pr21031_1::C' (1 entry)
+// CHECK-NEXT:   0 | void pr21031_1::A::f()
+
+// CHECK-LABEL: VFTable for 'pr21031_1::B' in 'pr21031_1::C' (1 entry)
+// CHECK-NEXT:   0 | void pr21031_1::B::g()
+
+// MANGLING-DAG: @"\01??_7C@pr21031_1@@6BB@1@@" = {{.*}} constant [1 x i8*]
+// MANGLING-DAG: @"\01??_7C@pr21031_1@@6B@" = {{.*}} constant [1 x i8*]
+}
+
+namespace pr21031_2 {
+struct A { virtual void f(void); };
+struct B : virtual A { virtual void g(void); };
+struct C : B, virtual A { C(); };
+C::C() {}
+
+// CHECK-LABEL: VFTable for 'pr21031_2::B' in 'pr21031_2::C' (1 entry)
+// CHECK-NEXT:   0 | void pr21031_2::B::g()
+
+// CHECK-LABEL: VFTable for 'pr21031_2::A' in 'pr21031_2::B' in 'pr21031_2::C' (1 entry)
+// CHECK-NEXT:   0 | void pr21031_2::A::f()
+
+// MANGLING-DAG: @"\01??_7C@pr21031_2@@6BA@1@@" = {{.*}} constant [1 x i8*]
+// MANGLING-DAG: @"\01??_7C@pr21031_2@@6BB@1@@" = {{.*}} constant [1 x i8*]
 }
