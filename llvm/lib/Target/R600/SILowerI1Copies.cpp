@@ -127,11 +127,7 @@ bool SILowerI1Copies::runOnMachineFunction(MachineFunction &MF) {
                 .addOperand(MI.getOperand(0))
                 .addImm(0)
                 .addImm(-1)
-                .addOperand(MI.getOperand(1))
-                .addImm(0)
-                .addImm(0)
-                .addImm(0)
-                .addImm(0);
+                .addOperand(MI.getOperand(1));
         MI.eraseFromParent();
       } else if (TRI->getCommonSubClass(DstRC, &AMDGPU::SGPR_64RegClass) &&
                  SrcRC == &AMDGPU::VReg_1RegClass) {

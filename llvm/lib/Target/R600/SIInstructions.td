@@ -1317,9 +1317,8 @@ def V_CNDMASK_B32_e32 : VOP2 <0x00000000, (outs VReg_32:$dst),
 }
 
 def V_CNDMASK_B32_e64 : VOP3 <0x00000100, (outs VReg_32:$dst),
-  (ins VSrc_32:$src0, VSrc_32:$src1, SSrc_64:$src2,
-   InstFlag:$abs, InstFlag:$clamp, InstFlag:$omod, InstFlag:$neg),
-  "V_CNDMASK_B32_e64 $dst, $src0, $src1, $src2, $abs, $clamp, $omod, $neg",
+  (ins VSrc_32:$src0, VSrc_32:$src1, SSrc_64:$src2),
+  "V_CNDMASK_B32_e64 $dst, $src0, $src1, $src2",
   [(set i32:$dst, (select i1:$src2, i32:$src1, i32:$src0))]
 > {
   let src0_modifiers = 0;
