@@ -544,3 +544,12 @@ void label3() {
   // CHECK-LABEL: define void @label3
   // CHECK: call void asm sideeffect inteldialect "{{.*}}__MSASMLABEL_.3__label:\0A\09mov eax, {{.*}}__MSASMLABEL_.3__label", "~{eax},~{dirflag},~{fpsr},~{flags}"()
 }
+
+void label4() {
+  __asm {
+    label:
+    mov eax, [label]
+  }
+  // CHECK-LABEL: define void @label4
+  // CHECK: call void asm sideeffect inteldialect "{{.*}}__MSASMLABEL_.4__label:\0A\09mov eax, {{.*}}__MSASMLABEL_.4__label", "~{eax},~{dirflag},~{fpsr},~{flags}"()
+}
