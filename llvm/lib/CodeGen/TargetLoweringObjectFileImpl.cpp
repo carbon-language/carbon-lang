@@ -865,9 +865,9 @@ static const char *getCOFFSectionNameForUniqueGlobal(SectionKind Kind) {
     return ".bss";
   if (Kind.isThreadLocal())
     return ".tls$";
-  if (Kind.isWriteable())
-    return ".data";
-  return ".rdata";
+  if (Kind.isReadOnly() || Kind.isReadOnlyWithRel())
+    return ".rdata";
+  return ".data";
 }
 
 
@@ -915,7 +915,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (Kind.isThreadLocal())
     return TLSDataSection;
 
-  if (Kind.isReadOnly())
+  if (Kind.isReadOnly() || Kind.isReadOnlyWithRel())
     return ReadOnlySection;
 
   // Note: we claim that common symbols are put in BSSSection, but they are
