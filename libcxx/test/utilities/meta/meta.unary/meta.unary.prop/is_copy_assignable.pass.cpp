@@ -52,6 +52,11 @@ class B
     B& operator=(const B&);
 };
 
+struct C
+{
+    void operator=(C&);  // not const
+};
+
 int main()
 {
     test_is_copy_assignable<int> ();
@@ -71,4 +76,5 @@ int main()
     test_is_not_copy_assignable<B> ();
 #endif
     test_is_not_copy_assignable<void> ();
+    test_is_not_copy_assignable<C> ();
 }

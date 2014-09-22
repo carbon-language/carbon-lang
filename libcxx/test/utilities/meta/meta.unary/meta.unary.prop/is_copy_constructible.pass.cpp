@@ -58,6 +58,12 @@ class B
     B(const B&);
 };
 
+struct C
+{
+    C(C&);  // not const
+    void operator=(C&);  // not const
+};
+
 int main()
 {
     test_is_copy_constructible<A>();
@@ -75,6 +81,7 @@ int main()
     test_is_not_copy_constructible<char[]>();
     test_is_not_copy_constructible<void>();
     test_is_not_copy_constructible<Abstract>();
+    test_is_not_copy_constructible<C>();
 #if __has_feature(cxx_access_control_sfinae) 
     test_is_not_copy_constructible<B>();
 #endif

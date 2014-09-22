@@ -34,6 +34,11 @@ struct B
     void operator=(A);
 };
 
+struct C
+{
+    void operator=(C&);  // not const
+};
+
 int main()
 {
     test_is_trivially_assignable<int&, int&> ();
@@ -44,4 +49,5 @@ int main()
     test_is_not_trivially_assignable<int, int> ();
     test_is_not_trivially_assignable<B, A> ();
     test_is_not_trivially_assignable<A, B> ();
+    test_is_not_trivially_assignable<C&, C&> ();
 }

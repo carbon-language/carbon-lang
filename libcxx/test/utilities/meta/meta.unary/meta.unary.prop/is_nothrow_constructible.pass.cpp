@@ -70,6 +70,12 @@ struct A
     A(const A&);
 };
 
+struct C
+{
+    C(C&);  // not const
+    void operator=(C&);  // not const
+};
+
 int main()
 {
     test_is_nothrow_constructible<int> ();
@@ -80,4 +86,5 @@ int main()
     test_is_not_nothrow_constructible<A, int> ();
     test_is_not_nothrow_constructible<A, int, double> ();
     test_is_not_nothrow_constructible<A> ();
+    test_is_not_nothrow_constructible<C> ();
 }

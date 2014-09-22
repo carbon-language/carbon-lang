@@ -1523,7 +1523,7 @@ struct is_assignable
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_copy_assignable
     : public is_assignable<typename add_lvalue_reference<_Tp>::type,
-                     const typename add_lvalue_reference<_Tp>::type> {};
+                  typename add_lvalue_reference<typename add_const<_Tp>::type>::type> {};
 
 // is_move_assignable
 
@@ -2637,8 +2637,8 @@ struct _LIBCPP_TYPE_VIS_ONLY is_default_constructible
 
 template <class _Tp>
 struct _LIBCPP_TYPE_VIS_ONLY is_copy_constructible
-    : public is_constructible<_Tp, const typename add_lvalue_reference<_Tp>::type>
-    {};
+    : public is_constructible<_Tp, 
+                  typename add_lvalue_reference<typename add_const<_Tp>::type>::type> {};
 
 // is_move_constructible
 
@@ -2842,8 +2842,7 @@ struct is_trivially_assignable<_Tp&, _Tp&&>
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_copy_assignable
     : public is_trivially_assignable<typename add_lvalue_reference<_Tp>::type,
-                               const typename add_lvalue_reference<_Tp>::type>
-    {};
+                  typename add_lvalue_reference<typename add_const<_Tp>::type>::type> {};
 
 // is_trivially_move_assignable
 
@@ -3034,8 +3033,8 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_default_constructib
 // is_nothrow_copy_constructible
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_copy_constructible
-    : public is_nothrow_constructible<_Tp, const typename add_lvalue_reference<_Tp>::type>
-    {};
+    : public is_nothrow_constructible<_Tp,
+                  typename add_lvalue_reference<typename add_const<_Tp>::type>::type> {};
 
 // is_nothrow_move_constructible
 
@@ -3119,8 +3118,7 @@ struct is_nothrow_assignable<_Tp&, _Tp&&>
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_copy_assignable
     : public is_nothrow_assignable<typename add_lvalue_reference<_Tp>::type,
-                               const typename add_lvalue_reference<_Tp>::type>
-    {};
+                  typename add_lvalue_reference<typename add_const<_Tp>::type>::type> {};
 
 // is_nothrow_move_assignable
 

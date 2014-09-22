@@ -34,6 +34,11 @@ struct B
     void operator=(A);
 };
 
+struct C
+{
+    void operator=(C&);  // not const
+};
+
 int main()
 {
     test_is_nothrow_assignable<int&, int&> ();
@@ -46,4 +51,5 @@ int main()
     test_is_not_nothrow_assignable<int, int> ();
     test_is_not_nothrow_assignable<B, A> ();
     test_is_not_nothrow_assignable<A, B> ();
+    test_is_not_nothrow_assignable<C, C&> ();
 }
