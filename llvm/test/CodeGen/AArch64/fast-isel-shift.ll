@@ -1,5 +1,53 @@
 ; RUN: llc -fast-isel -fast-isel-abort -mtriple=arm64-apple-darwin -verify-machineinstrs < %s | FileCheck %s
 
+; CHECK-LABEL: lsl_zext_i1_i16
+; CHECK:       ubfiz {{w[0-9]*}}, {{w[0-9]*}}, #4, #1
+define zeroext i16 @lsl_zext_i1_i16(i1 %b) {
+  %1 = zext i1 %b to i16
+  %2 = shl i16 %1, 4
+  ret i16 %2
+}
+
+; CHECK-LABEL: lsl_sext_i1_i16
+; CHECK:       sbfiz {{w[0-9]*}}, {{w[0-9]*}}, #4, #1
+define signext i16 @lsl_sext_i1_i16(i1 %b) {
+  %1 = sext i1 %b to i16
+  %2 = shl i16 %1, 4
+  ret i16 %2
+}
+
+; CHECK-LABEL: lsl_zext_i1_i32
+; CHECK:       ubfiz {{w[0-9]*}}, {{w[0-9]*}}, #4, #1
+define i32 @lsl_zext_i1_i32(i1 %b) {
+  %1 = zext i1 %b to i32
+  %2 = shl i32 %1, 4
+  ret i32 %2
+}
+
+; CHECK-LABEL: lsl_sext_i1_i32
+; CHECK:       sbfiz {{w[0-9]*}}, {{w[0-9]*}}, #4, #1
+define i32 @lsl_sext_i1_i32(i1 %b) {
+  %1 = sext i1 %b to i32
+  %2 = shl i32 %1, 4
+  ret i32 %2
+}
+
+; CHECK-LABEL: lsl_zext_i1_i64
+; CHECK:       ubfiz {{x[0-9]*}}, {{x[0-9]*}}, #4, #1
+define i64 @lsl_zext_i1_i64(i1 %b) {
+  %1 = zext i1 %b to i64
+  %2 = shl i64 %1, 4
+  ret i64 %2
+}
+
+; CHECK-LABEL: lsl_sext_i1_i64
+; CHECK:       sbfiz {{x[0-9]*}}, {{x[0-9]*}}, #4, #1
+define i64 @lsl_sext_i1_i64(i1 %b) {
+  %1 = sext i1 %b to i64
+  %2 = shl i64 %1, 4
+  ret i64 %2
+}
+
 ; CHECK-LABEL: lslv_i8
 ; CHECK:       and [[REG1:w[0-9]+]], w1, #0xff
 ; CHECK-NEXT:  lsl [[REG2:w[0-9]+]], w0, [[REG1]]
