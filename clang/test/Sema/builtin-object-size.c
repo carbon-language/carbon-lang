@@ -26,3 +26,20 @@ void f4(const char *fmt, ...) {
  __builtin___vsnprintf_chk (0, 42, 0, 11, fmt, args); // expected-warning {{'__builtin___vsnprintf_chk' will always overflow destination buffer}}
 }
 
+// rdar://18334276
+typedef unsigned long size_t;
+void * memcset(void *restrict dst, int src, size_t n);
+void * memcpy(void *restrict dst, const void *restrict src, size_t n);
+
+#define memset(dest, src, len) __builtin___memset_chk(dest, src, len, __builtin_object_size(dest, 0))
+#define memcpy(dest, src, len) __builtin___memcpy_chk(dest, src, len, __builtin_object_size(dest, 0))
+#define memcpy1(dest, src, len) __builtin___memcpy_chk(dest, src, len, __builtin_object_size(dest, 4))
+#define NULL ((void *)0)
+
+void f5(void)
+{
+  char buf[10];
+  memset((void *)0x100000000ULL, 0, 0x1000);
+  memcpy((char *)NULL + 0x10000, buf, 0x10);
+  memcpy1((char *)NULL + 0x10000, buf, 0x10); // expected-error {{argument should be a value from 0 to 3}}
+}

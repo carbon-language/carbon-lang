@@ -6052,8 +6052,20 @@ bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E) {
       return false;
   }
 
-  // If we can prove the base is null, lower to zero now.
-  if (!Base.getLValueBase()) return Success(0, E);
+  if (!Base.getLValueBase()) {
+    // It is not possible to determine which objects ptr points to at compile time,
+    // __builtin_object_size should return (size_t) -1 for type 0 or 1
+    // and (size_t) 0 for type 2 or 3.
+    llvm::APSInt TypeIntVaue;
+    const Expr *ExprType = E->getArg(1);
+    if (!ExprType->EvaluateAsInt(TypeIntVaue, Info.Ctx))
+      return false;
+    if (TypeIntVaue == 0 || TypeIntVaue == 1)
+      return Success(-1, E);
+    if (TypeIntVaue == 2 || TypeIntVaue == 3)
+      return Success(0, E);
+    return Error(E);
+  }
 
   QualType T = GetObjectType(Base.getLValueBase());
   if (T.isNull() ||
