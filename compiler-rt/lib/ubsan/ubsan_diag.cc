@@ -46,12 +46,12 @@ static void MaybeReportErrorSummary(Location Loc) {
   if (Loc.isSourceLocation()) {
     SourceLocation SLoc = Loc.getSourceLocation();
     if (!SLoc.isInvalid()) {
-      ReportErrorSummary("runtime-error", SLoc.getFilename(), SLoc.getLine(),
-                         "");
+      ReportErrorSummary("undefined-behavior", SLoc.getFilename(),
+                         SLoc.getLine(), "");
       return;
     }
   }
-  ReportErrorSummary("runtime-error");
+  ReportErrorSummary("undefined-behavior");
 }
 
 namespace {

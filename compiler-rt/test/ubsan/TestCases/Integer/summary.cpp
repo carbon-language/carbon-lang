@@ -5,6 +5,6 @@
 
 int main() {
   (void)(uint64_t(10000000000000000000ull) + uint64_t(9000000000000000000ull));
-  // CHECK: SUMMARY: AddressSanitizer: runtime-error {{.*}}summary.cpp:[[@LINE-1]]
+  // CHECK: SUMMARY: AddressSanitizer: undefined-behavior {{.*}}summary.cpp:[[@LINE-1]]
   return 0;
 }
