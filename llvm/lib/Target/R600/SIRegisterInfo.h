@@ -80,7 +80,11 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
     TGID_Y,
     TGID_Z,
     SCRATCH_WAVE_OFFSET,
-    SCRATCH_PTR
+    SCRATCH_PTR,
+    INPUT_PTR,
+    TIDIG_X,
+    TIDIG_Y,
+    TIDIG_Z
   };
 
   /// \brief Returns the physical register that \p Value is stored in.

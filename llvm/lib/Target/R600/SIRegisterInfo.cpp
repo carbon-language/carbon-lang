@@ -306,6 +306,14 @@ unsigned SIRegisterInfo::getPreloadedValue(const MachineFunction &MF,
     return AMDGPU::SReg_32RegClass.getRegister(MFI->NumUserSGPRs + 4);
   case SIRegisterInfo::SCRATCH_PTR:
     return AMDGPU::SGPR2_SGPR3;
+  case SIRegisterInfo::INPUT_PTR:
+    return AMDGPU::SGPR0_SGPR1;
+  case SIRegisterInfo::TIDIG_X:
+    return AMDGPU::VGPR0;
+  case SIRegisterInfo::TIDIG_Y:
+    return AMDGPU::VGPR1;
+  case SIRegisterInfo::TIDIG_Z:
+    return AMDGPU::VGPR2;
   }
   llvm_unreachable("unexpected preloaded value type");
 }

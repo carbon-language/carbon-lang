@@ -233,6 +233,25 @@ namespace AMDGPU {
 
 } // End namespace AMDGPU
 
+namespace SI {
+namespace KernelInputOffsets {
+
+/// Offsets in bytes from the start of the input buffer
+enum Offsets {
+  NGROUPS_X = 0,
+  NGROUPS_Y = 4,
+  NGROUPS_Z = 8,
+  GLOBAL_SIZE_X = 12,
+  GLOBAL_SIZE_Y = 16,
+  GLOBAL_SIZE_Z = 20,
+  LOCAL_SIZE_X = 24,
+  LOCAL_SIZE_Y = 28,
+  LOCAL_SIZE_Z = 32
+};
+
+} // End namespace KernelInputOffsets
+} // End namespace SI
+
 } // End namespace llvm
 
 namespace SIInstrFlags {

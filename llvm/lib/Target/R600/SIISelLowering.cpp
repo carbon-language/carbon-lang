@@ -375,13 +375,17 @@ SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
                                          SDLoc SL, SDValue Chain,
                                          unsigned Offset, bool Signed) const {
   const DataLayout *DL = getDataLayout();
+  MachineFunction &MF = DAG.getMachineFunction();
+  const SIRegisterInfo *TRI =
+      static_cast<const SIRegisterInfo*>(Subtarget->getRegisterInfo());
+  unsigned InputPtrReg = TRI->getPreloadedValue(MF, SIRegisterInfo::INPUT_PTR);
 
   Type *Ty = VT.getTypeForEVT(*DAG.getContext());
 
   MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
   PointerType *PtrTy = PointerType::get(Ty, AMDGPUAS::CONSTANT_ADDRESS);
   SDValue BasePtr =  DAG.getCopyFromReg(Chain, SL,
-                           MRI.getLiveInVirtReg(AMDGPU::SGPR0_SGPR1), MVT::i64);
+                           MRI.getLiveInVirtReg(InputPtrReg), MVT::i64);
   SDValue Ptr = DAG.getNode(ISD::ADD, SL, MVT::i64, BasePtr,
                                              DAG.getConstant(Offset, MVT::i64));
   SDValue PtrOffset = DAG.getUNDEF(getPointerTy(AMDGPUAS::CONSTANT_ADDRESS));
@@ -403,8 +407,9 @@ SDValue SITargetLowering::LowerFormalArguments(
                                       SDLoc DL, SelectionDAG &DAG,
                                       SmallVectorImpl<SDValue> &InVals) const {
 
-  const TargetRegisterInfo *TRI =
-      getTargetMachine().getSubtargetImpl()->getRegisterInfo();
+  const TargetMachine &TM = getTargetMachine();
+  const SIRegisterInfo *TRI =
+      static_cast<const SIRegisterInfo*>(TM.getSubtargetImpl()->getRegisterInfo());
 
   MachineFunction &MF = DAG.getMachineFunction();
   FunctionType *FType = MF.getFunction()->getFunctionType();
@@ -472,12 +477,27 @@ SDValue SITargetLowering::LowerFormalArguments(
 	// The pointer to the scratch buffer is stored in SGPR2, SGPR3
   if (Info->getShaderType() == ShaderType::COMPUTE) {
     Info->NumUserSGPRs = 4;
-    CCInfo.AllocateReg(AMDGPU::SGPR0);
-    CCInfo.AllocateReg(AMDGPU::SGPR1);
-    CCInfo.AllocateReg(AMDGPU::SGPR2);
-    CCInfo.AllocateReg(AMDGPU::SGPR3);
-    MF.addLiveIn(AMDGPU::SGPR0_SGPR1, &AMDGPU::SReg_64RegClass);
-    MF.addLiveIn(AMDGPU::SGPR2_SGPR3, &AMDGPU::SReg_64RegClass);
+
+    unsigned InputPtrReg =
+        TRI->getPreloadedValue(MF, SIRegisterInfo::INPUT_PTR);
+    unsigned InputPtrRegLo =
+        TRI->getPhysRegSubReg(InputPtrReg, &AMDGPU::SReg_32RegClass, 0);
+    unsigned InputPtrRegHi =
+        TRI->getPhysRegSubReg(InputPtrReg, &AMDGPU::SReg_32RegClass, 1);
+
+    unsigned ScratchPtrReg =
+        TRI->getPreloadedValue(MF, SIRegisterInfo::SCRATCH_PTR);
+    unsigned ScratchPtrRegLo =
+        TRI->getPhysRegSubReg(ScratchPtrReg, &AMDGPU::SReg_32RegClass, 0);
+    unsigned ScratchPtrRegHi =
+        TRI->getPhysRegSubReg(ScratchPtrReg, &AMDGPU::SReg_32RegClass, 1);
+
+    CCInfo.AllocateReg(InputPtrRegLo);
+    CCInfo.AllocateReg(InputPtrRegHi);
+    CCInfo.AllocateReg(ScratchPtrRegLo);
+    CCInfo.AllocateReg(ScratchPtrRegHi);
+    MF.addLiveIn(InputPtrReg, &AMDGPU::SReg_64RegClass);
+    MF.addLiveIn(ScratchPtrReg, &AMDGPU::SReg_64RegClass);
   }
 
   if (Info->getShaderType() == ShaderType::COMPUTE) {
@@ -874,7 +894,8 @@ SDValue SITargetLowering::LowerGlobalAddress(AMDGPUMachineFunction *MFI,
 SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                                   SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
-  SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+  const SIRegisterInfo *TRI =
+      static_cast<const SIRegisterInfo*>(MF.getSubtarget().getRegisterInfo());
 
   EVT VT = Op.getValueType();
   SDLoc DL(Op);
@@ -882,41 +903,50 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
   switch (IntrinsicID) {
   case Intrinsic::r600_read_ngroups_x:
-    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(), 0, false);
+    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
+                          SI::KernelInputOffsets::NGROUPS_X, false);
   case Intrinsic::r600_read_ngroups_y:
-    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(), 4, false);
+    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
+                          SI::KernelInputOffsets::NGROUPS_Y, false);
   case Intrinsic::r600_read_ngroups_z:
-    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(), 8, false);
+    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
+                          SI::KernelInputOffsets::NGROUPS_Z, false);
   case Intrinsic::r600_read_global_size_x:
-    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(), 12, false);
+    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
+                          SI::KernelInputOffsets::GLOBAL_SIZE_X, false);
   case Intrinsic::r600_read_global_size_y:
-    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(), 16, false);
+    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
+                          SI::KernelInputOffsets::GLOBAL_SIZE_Y, false);
   case Intrinsic::r600_read_global_size_z:
-    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(), 20, false);
+    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
+                          SI::KernelInputOffsets::GLOBAL_SIZE_Z, false);
   case Intrinsic::r600_read_local_size_x:
-    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(), 24, false);
+    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
+                          SI::KernelInputOffsets::LOCAL_SIZE_X, false);
   case Intrinsic::r600_read_local_size_y:
-    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(), 28, false);
+    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
+                          SI::KernelInputOffsets::LOCAL_SIZE_Y, false);
   case Intrinsic::r600_read_local_size_z:
-    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(), 32, false);
+    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
+                          SI::KernelInputOffsets::LOCAL_SIZE_Z, false);
   case Intrinsic::r600_read_tgid_x:
     return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
-      AMDGPU::SReg_32RegClass.getRegister(MFI->NumUserSGPRs + 0), VT);
+      TRI->getPreloadedValue(MF, SIRegisterInfo::TGID_X), VT);
   case Intrinsic::r600_read_tgid_y:
     return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
-      AMDGPU::SReg_32RegClass.getRegister(MFI->NumUserSGPRs + 1), VT);
+      TRI->getPreloadedValue(MF, SIRegisterInfo::TGID_Y), VT);
   case Intrinsic::r600_read_tgid_z:
     return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
-      AMDGPU::SReg_32RegClass.getRegister(MFI->NumUserSGPRs + 2), VT);
+      TRI->getPreloadedValue(MF, SIRegisterInfo::TGID_Z), VT);
   case Intrinsic::r600_read_tidig_x:
     return CreateLiveInRegister(DAG, &AMDGPU::VReg_32RegClass,
-                                AMDGPU::VGPR0, VT);
+      TRI->getPreloadedValue(MF, SIRegisterInfo::TIDIG_X), VT);
   case Intrinsic::r600_read_tidig_y:
     return CreateLiveInRegister(DAG, &AMDGPU::VReg_32RegClass,
-                                AMDGPU::VGPR1, VT);
+      TRI->getPreloadedValue(MF, SIRegisterInfo::TIDIG_Y), VT);
   case Intrinsic::r600_read_tidig_z:
     return CreateLiveInRegister(DAG, &AMDGPU::VReg_32RegClass,
-                                AMDGPU::VGPR2, VT);
+      TRI->getPreloadedValue(MF, SIRegisterInfo::TIDIG_Z), VT);
   case AMDGPUIntrinsic::SI_load_const: {
     SDValue Ops[] = {
       Op.getOperand(1),
