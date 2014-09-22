@@ -555,7 +555,7 @@ EndStmt:
         std::make_pair(ELFSection, std::make_pair(nullptr, nullptr)));
     if (InsertResult.second) {
       if (getContext().getDwarfVersion() <= 2)
-        Error(loc, "DWARF2 only supports one section per compilation unit");
+        Warning(loc, "DWARF2 only supports one section per compilation unit");
 
       MCSymbol *SectionStartSymbol = getContext().CreateTempSymbol();
       getStreamer().EmitLabel(SectionStartSymbol);
