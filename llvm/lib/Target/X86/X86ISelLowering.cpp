@@ -9328,6 +9328,28 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                      DAG.getConstant(BlendMask, MVT::i8));
 }
 
+/// \brief Handle lowering of 4-lane 64-bit integer shuffles.
+///
+/// This routine is only called when we have AVX2 and thus a reasonable
+/// instruction set for v4i64 shuffling..
+static SDValue lowerV4I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+                                       const X86Subtarget *Subtarget,
+                                       SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  assert(V1.getSimpleValueType() == MVT::v4i64 && "Bad operand type!");
+  assert(V2.getSimpleValueType() == MVT::v4i64 && "Bad operand type!");
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> Mask = SVOp->getMask();
+  assert(Mask.size() == 4 && "Unexpected mask size for v4 shuffle!");
+  assert(Subtarget->hasAVX2() && "We can only lower v4i64 with AVX2!");
+
+  // FIXME: Actually implement this using AVX2!!!
+  V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v4f64, V1);
+  V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v4f64, V2);
+  return DAG.getNode(ISD::BITCAST, DL, MVT::v4i64,
+                     DAG.getVectorShuffle(MVT::v4f64, DL, V1, V2, Mask));
+}
+
 /// \brief Handle lowering of 8-lane 32-bit floating point shuffles.
 ///
 /// Also ends up handling lowering of 8-lane 32-bit integer shuffles when AVX2
@@ -9415,6 +9437,66 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                      DAG.getConstant(BlendMask, MVT::i8));
 }
 
+/// \brief Handle lowering of 8-lane 32-bit integer shuffles.
+///
+/// This routine is only called when we have AVX2 and thus a reasonable
+/// instruction set for v8i32 shuffling..
+static SDValue lowerV8I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+                                       const X86Subtarget *Subtarget,
+                                       SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  assert(V1.getSimpleValueType() == MVT::v8i32 && "Bad operand type!");
+  assert(V2.getSimpleValueType() == MVT::v8i32 && "Bad operand type!");
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> Mask = SVOp->getMask();
+  assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
+  assert(Subtarget->hasAVX2() && "We can only lower v8i32 with AVX2!");
+
+  // FIXME: Actually implement this using AVX2!!!
+  V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8f32, V1);
+  V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v8f32, V2);
+  return DAG.getNode(ISD::BITCAST, DL, MVT::v8i32,
+                     DAG.getVectorShuffle(MVT::v8f32, DL, V1, V2, Mask));
+}
+
+/// \brief Handle lowering of 16-lane 16-bit integer shuffles.
+///
+/// This routine is only called when we have AVX2 and thus a reasonable
+/// instruction set for v16i16 shuffling..
+static SDValue lowerV16I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+                                        const X86Subtarget *Subtarget,
+                                        SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  assert(V1.getSimpleValueType() == MVT::v16i16 && "Bad operand type!");
+  assert(V2.getSimpleValueType() == MVT::v16i16 && "Bad operand type!");
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> Mask = SVOp->getMask();
+  assert(Mask.size() == 16 && "Unexpected mask size for v16 shuffle!");
+  assert(Subtarget->hasAVX2() && "We can only lower v16i16 with AVX2!");
+
+  // FIXME: Actually implement this using AVX2!!!
+  return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
+}
+
+/// \brief Handle lowering of 32-lane 8-bit integer shuffles.
+///
+/// This routine is only called when we have AVX2 and thus a reasonable
+/// instruction set for v32i8 shuffling..
+static SDValue lowerV32I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+                                       const X86Subtarget *Subtarget,
+                                       SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  assert(V1.getSimpleValueType() == MVT::v32i8 && "Bad operand type!");
+  assert(V2.getSimpleValueType() == MVT::v32i8 && "Bad operand type!");
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> Mask = SVOp->getMask();
+  assert(Mask.size() == 32 && "Unexpected mask size for v32 shuffle!");
+  assert(Subtarget->hasAVX2() && "We can only lower v32i8 with AVX2!");
+
+  // FIXME: Actually implement this using AVX2!!!
+  return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
+}
+
 /// \brief High-level routine to lower various 256-bit x86 vector shuffles.
 ///
 /// This routine either breaks down the specific type of a 256-bit x86 vector
@@ -9433,8 +9515,7 @@ static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // ability to manipulate a 256-bit vector with integer types. Since we'll use
   // floating point types there eventually, just immediately cast everything to
   // a float and operate entirely in that domain.
-  // FIXME: Actually test for AVX2 when we have implemented it.
-  if (VT.isInteger()) {
+  if (VT.isInteger() && !Subtarget->hasAVX2()) {
     int ElementBits = VT.getScalarSizeInBits();
     if (ElementBits < 32)
       // No floating point type available, decompose into 128-bit vectors.
@@ -9452,13 +9533,15 @@ static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   case MVT::v4f64:
     return lowerV4F64VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v4i64:
-    llvm_unreachable("AVX2 integer support not yet implemented!");
+    return lowerV4I64VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v8f32:
     return lowerV8F32VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v8i32:
+    return lowerV8I32VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v16i16:
+    return lowerV16I16VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v32i8:
-    llvm_unreachable("AVX2 integer support not yet implemented!");
+    return lowerV32I8VectorShuffle(Op, V1, V2, Subtarget, DAG);
 
   default:
     llvm_unreachable("Not a valid 256-bit x86 vector type!");
