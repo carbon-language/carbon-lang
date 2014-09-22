@@ -34,6 +34,7 @@ CGOpenMPRuntime::CGOpenMPRuntime(CodeGenModule &CGM)
   llvm::Type *MicroParams[] = {llvm::PointerType::getUnqual(CGM.Int32Ty),
                                llvm::PointerType::getUnqual(CGM.Int32Ty)};
   Kmpc_MicroTy = llvm::FunctionType::get(CGM.VoidTy, MicroParams, true);
+  KmpCriticalNameTy = llvm::ArrayType::get(CGM.Int32Ty, /*NumElements*/ 8);
 }
 
 llvm::Value *
@@ -196,6 +197,66 @@ CGOpenMPRuntime::CreateRuntimeFunction(OpenMPRTLFunction Function) {
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_global_thread_num");
     break;
   }
+  case OMPRTL__kmpc_critical: {
+    // Build void __kmpc_critical(ident_t ∗loc, kmp_int32 global_tid,
+    // kmp_critical_name ∗crit);
+    llvm::Type *TypeParams[] = {
+        getIdentTyPointerTy(), CGM.Int32Ty,
+        llvm::PointerType::getUnqual(KmpCriticalNameTy)};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg*/ false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_critical");
+    break;
+  }
+  case OMPRTL__kmpc_end_critical: {
+    // Build void __kmpc_end_critical(ident_t ∗loc, kmp_int32 global_tid,
+    // kmp_critical_name ∗crit);
+    llvm::Type *TypeParams[] = {
+        getIdentTyPointerTy(), CGM.Int32Ty,
+        llvm::PointerType::getUnqual(KmpCriticalNameTy)};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg*/ false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_end_critical");
+    break;
+  }
   }
   return RTLFn;
+}
+
+llvm::Value *CGOpenMPRuntime::GetCriticalRegionLock(StringRef CriticalName) {
+  SmallString<256> Buffer;
+  llvm::raw_svector_ostream Out(Buffer);
+  Out << ".gomp_critical_user_" << CriticalName << ".var";
+  auto RuntimeCriticalName = Out.str();
+  auto &Elem = CriticalRegionVarNames.GetOrCreateValue(RuntimeCriticalName);
+  if (Elem.getValue() != nullptr)
+    return Elem.getValue();
+
+  auto Lock = new llvm::GlobalVariable(
+      CGM.getModule(), KmpCriticalNameTy, /*IsConstant*/ false,
+      llvm::GlobalValue::CommonLinkage,
+      llvm::Constant::getNullValue(KmpCriticalNameTy), Elem.getKey());
+  Elem.setValue(Lock);
+  return Lock;
+}
+
+void CGOpenMPRuntime::EmitOMPCriticalRegionStart(CodeGenFunction &CGF,
+                                                 llvm::Value *RegionLock,
+                                                 SourceLocation Loc) {
+  // Prepare other arguments and build a call to __kmpc_critical
+  llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc),
+                         GetOpenMPGlobalThreadNum(CGF, Loc), RegionLock};
+  auto RTLFn = CreateRuntimeFunction(CGOpenMPRuntime::OMPRTL__kmpc_critical);
+  CGF.EmitRuntimeCall(RTLFn, Args);
+}
+
+void CGOpenMPRuntime::EmitOMPCriticalRegionEnd(CodeGenFunction &CGF,
+                                               llvm::Value *RegionLock,
+                                               SourceLocation Loc) {
+  // Prepare other arguments and build a call to __kmpc_critical
+  llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc),
+                         GetOpenMPGlobalThreadNum(CGF, Loc), RegionLock};
+  auto RTLFn =
+      CreateRuntimeFunction(CGOpenMPRuntime::OMPRTL__kmpc_end_critical);
+  CGF.EmitRuntimeCall(RTLFn, Args);
 }

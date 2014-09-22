@@ -16,6 +16,7 @@
 
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 
@@ -27,6 +28,7 @@ class Constant;
 class Function;
 class Module;
 class StructLayout;
+class ArrayType;
 class FunctionType;
 class StructType;
 class Type;
@@ -67,8 +69,14 @@ public:
     // Call to void __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro
     // microtask, ...);
     OMPRTL__kmpc_fork_call,
-    // Call to kmp_int32 kmpc_global_thread_num(ident_t *loc);
-    OMPRTL__kmpc_global_thread_num
+    // Call to __kmpc_int32 kmpc_global_thread_num(ident_t *loc);
+    OMPRTL__kmpc_global_thread_num,
+    // Call to void __kmpc_critical(ident_t ∗loc, kmp_int32 global_tid,
+    // kmp_critical_name ∗crit);
+    OMPRTL__kmpc_critical,
+    // Call to void __kmpc_end_critical(ident_t ∗loc, kmp_int32 global_tid,
+    // kmp_critical_name ∗crit);
+    OMPRTL__kmpc_end_critical
   };
 
 private:
@@ -134,10 +142,15 @@ private:
   /// \brief Map of local gtid and functions.
   typedef llvm::DenseMap<llvm::Function *, llvm::Value *> OpenMPGtidMapTy;
   OpenMPGtidMapTy OpenMPGtidMap;
+  /// \brief Type kmp_critical_name, originally defined as typedef kmp_int32
+  /// kmp_critical_name[8];
+  llvm::ArrayType *KmpCriticalNameTy;
+  /// \brief Map of critical regions names and the corresponding lock objects.
+  llvm::StringMap<llvm::Value *, llvm::BumpPtrAllocator> CriticalRegionVarNames;
 
 public:
   explicit CGOpenMPRuntime(CodeGenModule &CGM);
-  ~CGOpenMPRuntime() {}
+  virtual ~CGOpenMPRuntime() {}
 
   /// \brief Cleans up references to the objects in finished function.
   /// \param CGF Reference to finished CodeGenFunction.
@@ -170,6 +183,31 @@ public:
   /// \param Function OpenMP runtime function.
   /// \return Specified function.
   llvm::Constant *CreateRuntimeFunction(OpenMPRTLFunction Function);
+
+  /// \brief Returns corresponding lock object for the specified critical region
+  /// name. If the lock object does not exist it is created, otherwise the
+  /// reference to the existing copy is returned.
+  llvm::Value *GetCriticalRegionLock(StringRef CriticalName);
+
+  /// \brief Emits start of the critical region by calling void
+  /// __kmpc_critical(ident_t ∗loc, kmp_int32 global_tid, kmp_critical_name
+  /// ∗\a RegionLock)
+  /// \param CGF Reference to current CodeGenFunction.
+  /// \param RegionLock The lock object for critical region.
+  /// \param Loc Location of the construct.
+  virtual void EmitOMPCriticalRegionStart(CodeGenFunction &CGF,
+                                          llvm::Value *RegionLock,
+                                          SourceLocation Loc);
+
+  /// \brief Emits end of the critical region by calling void
+  /// __kmpc_end_critical(ident_t ∗loc, kmp_int32 global_tid, kmp_critical_name
+  /// ∗\a RegionLock)
+  /// \param CGF Reference to current CodeGenFunction.
+  /// \param RegionLock The lock object for critical region.
+  /// \param Loc Location of the construct.
+  virtual void EmitOMPCriticalRegionEnd(CodeGenFunction &CGF,
+                                        llvm::Value *RegionLock,
+                                        SourceLocation Loc);
 };
 } // namespace CodeGen
 } // namespace clang

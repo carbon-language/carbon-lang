@@ -98,8 +98,22 @@ void CodeGenFunction::EmitOMPMasterDirective(const OMPMasterDirective &) {
   llvm_unreachable("CodeGen for 'omp master' is not supported yet.");
 }
 
-void CodeGenFunction::EmitOMPCriticalDirective(const OMPCriticalDirective &) {
-  llvm_unreachable("CodeGen for 'omp critical' is not supported yet.");
+void CodeGenFunction::EmitOMPCriticalDirective(const OMPCriticalDirective &S) {
+  // __kmpc_critical();
+  // <captured_body>
+  // __kmpc_end_critical();
+  //
+
+  auto Lock = CGM.getOpenMPRuntime().GetCriticalRegionLock(
+      S.getDirectiveName().getAsString());
+  CGM.getOpenMPRuntime().EmitOMPCriticalRegionStart(*this, Lock,
+                                                    S.getLocStart());
+  {
+    RunCleanupsScope Scope(*this);
+    EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
+    EnsureInsertPoint();
+  }
+  CGM.getOpenMPRuntime().EmitOMPCriticalRegionEnd(*this, Lock, S.getLocEnd());
 }
 
 void
