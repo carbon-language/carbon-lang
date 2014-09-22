@@ -10,6 +10,7 @@ add_extra_unittest(ClangTidyTests
   ClangTidyDiagnosticConsumerTest.cpp
   ClangTidyOptionsTest.cpp
   LLVMModuleTest.cpp
+  ReadabilityChecksTest.cpp
   GoogleModuleTest.cpp
   MiscModuleTest.cpp)
 
@@ -22,5 +23,6 @@ target_link_libraries(ClangTidyTests
   clangTidyGoogleModule
   clangTidyLLVMModule
   clangTidyMiscModule
+  clangTidyReadability
   clangTooling
   )

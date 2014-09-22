@@ -12,7 +12,7 @@
 #include "../ClangTidyModuleRegistry.h"
 #include "HeaderGuardCheck.h"
 #include "IncludeOrderCheck.h"
-#include "NamespaceCommentCheck.h"
+#include "../readability/NamespaceCommentCheck.h"
 #include "TwineLocalCheck.h"
 
 namespace clang {
@@ -23,7 +23,7 @@ public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
     CheckFactories.registerCheck<LLVMHeaderGuardCheck>("llvm-header-guard");
     CheckFactories.registerCheck<IncludeOrderCheck>("llvm-include-order");
-    CheckFactories.registerCheck<NamespaceCommentCheck>(
+    CheckFactories.registerCheck<readability::NamespaceCommentCheck>(
         "llvm-namespace-comment");
     CheckFactories.registerCheck<TwineLocalCheck>("llvm-twine-local");
   }

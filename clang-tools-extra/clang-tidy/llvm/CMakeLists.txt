@@ -4,7 +4,6 @@ add_clang_library(clangTidyLLVMModule
   HeaderGuardCheck.cpp
   IncludeOrderCheck.cpp
   LLVMTidyModule.cpp
-  NamespaceCommentCheck.cpp
   TwineLocalCheck.cpp
 
   LINK_LIBS
@@ -13,6 +12,7 @@ add_clang_library(clangTidyLLVMModule
   clangBasic
   clangLex
   clangTidy
+  clangTidyReadability
   clangTidyUtils
   clangTooling
   )

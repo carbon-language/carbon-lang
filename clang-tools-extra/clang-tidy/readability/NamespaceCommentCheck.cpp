@@ -17,6 +17,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
+namespace readability {
 
 NamespaceCommentCheck::NamespaceCommentCheck(StringRef Name,
                                              ClangTidyContext *Context)
@@ -25,7 +26,8 @@ NamespaceCommentCheck::NamespaceCommentCheck(StringRef Name,
                               "namespace( +([a-zA-Z0-9_]+))? *(\\*/)?$",
                               llvm::Regex::IgnoreCase),
       ShortNamespaceLines(Options.get("ShortNamespaceLines", 1u)),
-      SpacesBeforeComments(Options.get("SpacesBeforeComments", 1u)) {}
+      SpacesBeforeComments(Options.get("SpacesBeforeComments",
+                                       Name.startswith("google") ? 2u : 1u)) {}
 
 void NamespaceCommentCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
   Options.store(Opts, "ShortNamespaceLines", ShortNamespaceLines);
@@ -42,12 +44,10 @@ bool locationsInSameFile(const SourceManager &Sources, SourceLocation Loc1,
          Sources.getFileID(Loc1) == Sources.getFileID(Loc2);
 }
 
-std::string getNamespaceComment(const NamespaceDecl *ND, bool InsertLineBreak,
-                                unsigned SpacesBeforeComments) {
+std::string getNamespaceComment(const NamespaceDecl *ND, bool InsertLineBreak) {
   std::string Fix = "// namespace";
   if (!ND->isAnonymousNamespace())
-    Fix.append(std::string(SpacesBeforeComments, ' '))
-        .append(ND->getNameAsString());
+    Fix.append(" ").append(ND->getNameAsString());
   if (InsertLineBreak)
     Fix.append("\n");
   return Fix;
@@ -105,8 +105,7 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
       diag(Loc, "namespace closing comment refers to a wrong namespace '%0'")
           << NamespaceNameInComment
           << FixItHint::CreateReplacement(
-                 OldCommentRange,
-                 getNamespaceComment(ND, NeedLineBreak, SpacesBeforeComments));
+                 OldCommentRange, getNamespaceComment(ND, NeedLineBreak));
       return;
     }
 
@@ -118,10 +117,11 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
   }
 
   diag(ND->getLocation(), "namespace not terminated with a closing comment")
-      << FixItHint::CreateInsertion(
-          AfterRBrace,
-          " " + getNamespaceComment(ND, NeedLineBreak, SpacesBeforeComments));
+      << FixItHint::CreateInsertion(AfterRBrace,
+                                    std::string(SpacesBeforeComments, ' ') +
+                                        getNamespaceComment(ND, NeedLineBreak));
 }
 
+} // namespace readability
 } // namespace tidy
 } // namespace clang
