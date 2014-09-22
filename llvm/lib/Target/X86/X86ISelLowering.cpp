@@ -9491,7 +9491,7 @@ static SDValue lowerV32I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(V2.getSimpleValueType() == MVT::v32i8 && "Bad operand type!");
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   ArrayRef<int> Mask = SVOp->getMask();
-  assert(.size() == 32 && "Unexpected mask size for v32 shuffle!");
+  assert(Mask.size() == 32 && "Unexpected mask size for v32 shuffle!");
   assert(Subtarget->hasAVX2() && "We can only lower v32i8 with AVX2!");
 
   // FIXME: Actually implement this using AVX2!!!
