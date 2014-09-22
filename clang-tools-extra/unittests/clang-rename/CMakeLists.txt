@@ -15,19 +15,9 @@ add_extra_unittest(ClangRenameTests
   )
 
 target_link_libraries(ClangRenameTests
-  clangAnalysis
   clangAST
   clangBasic
-  clangDriver
-  clangEdit
   clangFrontend
-  clangFrontendTool
   clangIndex
-  clangLex
-  clangParse
-  clangRewrite
-  clangRewriteFrontend
-  clangSerialization
-  clangSema
   clangTooling
   )
