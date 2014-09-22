@@ -1,7 +1,9 @@
 ; RUN: llc < %s -mcpu=generic -mtriple=i686-linux -verify-machineinstrs | FileCheck %s -check-prefix=X32
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux -verify-machineinstrs | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux-gnux32 -verify-machineinstrs | FileCheck %s -check-prefix=X32ABI
 ; RUN: llc < %s -mcpu=generic -mtriple=i686-linux -filetype=obj
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux -filetype=obj
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux-gnux32 -filetype=obj
 
 ; Just to prevent the alloca from being optimized away
 declare void @dummy_use(i32*, i32)
@@ -60,6 +62,26 @@ false:
 ; X64:      movq %{{.*}}, %rdi
 ; X64-NEXT: callq __morestack_allocate_stack_space
 ; X64:      movq %rax, %rdi
+
+; X32ABI-LABEL:      test_basic:
+
+; X32ABI:      cmpl %fs:64, %esp
+; X32ABI-NEXT: ja      .LBB0_2
+
+; X32ABI:      movl $24, %r10d
+; X32ABI-NEXT: movl $0, %r11d
+; X32ABI-NEXT: callq __morestack
+; X32ABI-NEXT: ret
+
+; X32ABI:      movl %esp, %[[EDI:edi|eax]]
+; X32ABI:      subl %{{.*}}, %[[EDI]]
+; X32ABI-NEXT: cmpl %[[EDI]], %fs:64
+
+; X32ABI:      movl %[[EDI]], %esp
+
+; X32ABI:      movl %{{.*}}, %edi
+; X32ABI-NEXT: callq __morestack_allocate_stack_space
+; X32ABI:      movl %eax, %edi
 
 }
 

@@ -226,6 +226,7 @@ def CC_X86_64_C : CallingConv<[
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
   // The 'nest' parameter, if any, is passed in R10.
+  CCIfNest<CCIfSubtarget<"isTarget64BitILP32()", CCAssignToReg<[R10D]>>>,
   CCIfNest<CCAssignToReg<[R10]>>,
 
   // The first 6 integer arguments are passed in integer registers.

@@ -1315,7 +1315,7 @@ HasNestArgument(const MachineFunction *MF) {
 /// and the properties of the function either one or two registers will be
 /// needed. Set primary to true for the first register, false for the second.
 static unsigned
-GetScratchRegister(bool Is64Bit, const MachineFunction &MF, bool Primary) {
+GetScratchRegister(bool Is64Bit, bool IsLP64, const MachineFunction &MF, bool Primary) {
   CallingConv::ID CallingConvention = MF.getFunction()->getCallingConv();
 
   // Erlang stuff.
@@ -1326,8 +1326,12 @@ GetScratchRegister(bool Is64Bit, const MachineFunction &MF, bool Primary) {
       return Primary ? X86::EBX : X86::EDI;
   }
 
-  if (Is64Bit)
-    return Primary ? X86::R11 : X86::R12;
+  if (Is64Bit) {
+    if (IsLP64)
+      return Primary ? X86::R11 : X86::R12;
+    else
+      return Primary ? X86::R11D : X86::R12D;
+  }
 
   bool IsNested = HasNestArgument(&MF);
 
@@ -1355,10 +1359,11 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   uint64_t StackSize;
   const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
   bool Is64Bit = STI.is64Bit();
+  const bool IsLP64 = STI.isTarget64BitLP64();
   unsigned TlsReg, TlsOffset;
   DebugLoc DL;
 
-  unsigned ScratchReg = GetScratchRegister(Is64Bit, MF, true);
+  unsigned ScratchReg = GetScratchRegister(Is64Bit, IsLP64, MF, true);
   assert(!MF.getRegInfo().isLiveIn(ScratchReg) &&
          "Scratch register is live-in");
 
@@ -1396,7 +1401,7 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   }
 
   if (IsNested)
-    allocMBB->addLiveIn(X86::R10);
+    allocMBB->addLiveIn(IsLP64 ? X86::R10 : X86::R10D);
 
   MF.push_front(allocMBB);
   MF.push_front(checkMBB);
@@ -1409,7 +1414,7 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   if (Is64Bit) {
     if (STI.isTargetLinux()) {
       TlsReg = X86::FS;
-      TlsOffset = 0x70;
+      TlsOffset = IsLP64 ? 0x70 : 0x40;
     } else if (STI.isTargetDarwin()) {
       TlsReg = X86::GS;
       TlsOffset = 0x60 + 90*8; // See pthread_machdep.h. Steal TLS slot 90.
@@ -1424,12 +1429,12 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
     }
 
     if (CompareStackPointer)
-      ScratchReg = X86::RSP;
+      ScratchReg = IsLP64 ? X86::RSP : X86::ESP;
     else
-      BuildMI(checkMBB, DL, TII.get(X86::LEA64r), ScratchReg).addReg(X86::RSP)
+      BuildMI(checkMBB, DL, TII.get(IsLP64 ? X86::LEA64r : X86::LEA64_32r), ScratchReg).addReg(X86::RSP)
         .addImm(1).addReg(0).addImm(-StackSize).addReg(0);
 
-    BuildMI(checkMBB, DL, TII.get(X86::CMP64rm)).addReg(ScratchReg)
+    BuildMI(checkMBB, DL, TII.get(IsLP64 ? X86::CMP64rm : X86::CMP32rm)).addReg(ScratchReg)
       .addReg(0).addImm(1).addReg(0).addImm(TlsOffset).addReg(TlsReg);
   } else {
     if (STI.isTargetLinux()) {
@@ -1463,11 +1468,11 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
       bool SaveScratch2;
       if (CompareStackPointer) {
         // The primary scratch register is available for holding the TLS offset.
-        ScratchReg2 = GetScratchRegister(Is64Bit, MF, true);
+        ScratchReg2 = GetScratchRegister(Is64Bit, IsLP64, MF, true);
         SaveScratch2 = false;
       } else {
         // Need to use a second register to hold the TLS offset
-        ScratchReg2 = GetScratchRegister(Is64Bit, MF, false);
+        ScratchReg2 = GetScratchRegister(Is64Bit, IsLP64, MF, false);
 
         // Unfortunately, with fastcc the second scratch register may hold an
         // argument.
@@ -1505,15 +1510,21 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
     // Functions with nested arguments use R10, so it needs to be saved across
     // the call to _morestack
 
-    if (IsNested)
-      BuildMI(allocMBB, DL, TII.get(X86::MOV64rr), X86::RAX).addReg(X86::R10);
+    const unsigned RegAX = IsLP64 ? X86::RAX : X86::EAX;
+    const unsigned Reg10 = IsLP64 ? X86::R10 : X86::R10D;
+    const unsigned Reg11 = IsLP64 ? X86::R11 : X86::R11D;
+    const unsigned MOVrr = IsLP64 ? X86::MOV64rr : X86::MOV32rr;
+    const unsigned MOVri = IsLP64 ? X86::MOV64ri : X86::MOV32ri;
 
-    BuildMI(allocMBB, DL, TII.get(X86::MOV64ri), X86::R10)
+    if (IsNested)
+      BuildMI(allocMBB, DL, TII.get(MOVrr), RegAX).addReg(Reg10);
+
+    BuildMI(allocMBB, DL, TII.get(MOVri), Reg10)
       .addImm(StackSize);
-    BuildMI(allocMBB, DL, TII.get(X86::MOV64ri), X86::R11)
+    BuildMI(allocMBB, DL, TII.get(MOVri), Reg11)
       .addImm(X86FI->getArgumentStackSize());
-    MF.getRegInfo().setPhysRegUsed(X86::R10);
-    MF.getRegInfo().setPhysRegUsed(X86::R11);
+    MF.getRegInfo().setPhysRegUsed(Reg10);
+    MF.getRegInfo().setPhysRegUsed(Reg11);
   } else {
     BuildMI(allocMBB, DL, TII.get(X86::PUSHi32))
       .addImm(X86FI->getArgumentStackSize());
@@ -1567,6 +1578,7 @@ void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
           ->getSlotSize();
   const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
   const bool Is64Bit = STI.is64Bit();
+  const bool IsLP64 = STI.isTarget64BitLP64();
   DebugLoc DL;
   // HiPE-specific values
   const unsigned HipeLeafWords = 24;
@@ -1660,7 +1672,7 @@ void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
       SPLimitOffset = 0x4c;
     }
 
-    ScratchReg = GetScratchRegister(Is64Bit, MF, true);
+    ScratchReg = GetScratchRegister(Is64Bit, IsLP64, MF, true);
     assert(!MF.getRegInfo().isLiveIn(ScratchReg) &&
            "HiPE prologue scratch register is live-in");
 

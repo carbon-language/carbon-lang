@@ -14933,7 +14933,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   EVT VT = Op.getNode()->getValueType(0);
 
   bool Is64Bit = Subtarget->is64Bit();
-  EVT SPTy = Is64Bit ? MVT::i64 : MVT::i32;
+  EVT SPTy = getPointerTy();
 
   if (SplitStack) {
     MachineRegisterInfo &MRI = MF.getRegInfo();
@@ -14951,7 +14951,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
     }
 
     const TargetRegisterClass *AddrRegClass =
-      getRegClassFor(Subtarget->is64Bit() ? MVT::i64:MVT::i32);
+      getRegClassFor(getPointerTy());
     unsigned Vreg = MRI.createVirtualRegister(AddrRegClass);
     Chain = DAG.getCopyToReg(Chain, dl, Vreg, Size);
     SDValue Value = DAG.getNode(X86ISD::SEG_ALLOCA, dl, SPTy, Chain,
@@ -14960,7 +14960,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
     return DAG.getMergeValues(Ops1, dl);
   } else {
     SDValue Flag;
-    unsigned Reg = (Subtarget->is64Bit() ? X86::RAX : X86::EAX);
+    const unsigned Reg = (Subtarget->isTarget64BitLP64() ? X86::RAX : X86::EAX);
 
     Chain = DAG.getCopyToReg(Chain, dl, Reg, Size, Flag);
     Flag = Chain.getValue(1);
@@ -18966,8 +18966,8 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
 }
 
 MachineBasicBlock *
-X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
-                                        bool Is64Bit) const {
+X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI,
+                                        MachineBasicBlock *BB) const {
   MachineFunction *MF = BB->getParent();
   const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
@@ -18975,8 +18975,11 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
 
   assert(MF->shouldSplitStack());
 
-  unsigned TlsReg = Is64Bit ? X86::FS : X86::GS;
-  unsigned TlsOffset = Is64Bit ? 0x70 : 0x30;
+  const bool Is64Bit = Subtarget->is64Bit();
+  const bool IsLP64 = Subtarget->isTarget64BitLP64();
+
+  const unsigned TlsReg = Is64Bit ? X86::FS : X86::GS;
+  const unsigned TlsOffset = IsLP64 ? 0x70 : Is64Bit ? 0x40 : 0x30;
 
   // BB:
   //  ... [Till the alloca]
@@ -19000,14 +19003,14 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
 
   MachineRegisterInfo &MRI = MF->getRegInfo();
   const TargetRegisterClass *AddrRegClass =
-    getRegClassFor(Is64Bit ? MVT::i64:MVT::i32);
+    getRegClassFor(getPointerTy());
 
   unsigned mallocPtrVReg = MRI.createVirtualRegister(AddrRegClass),
     bumpSPPtrVReg = MRI.createVirtualRegister(AddrRegClass),
     tmpSPVReg = MRI.createVirtualRegister(AddrRegClass),
     SPLimitVReg = MRI.createVirtualRegister(AddrRegClass),
     sizeVReg = MI->getOperand(1).getReg(),
-    physSPReg = Is64Bit ? X86::RSP : X86::ESP;
+    physSPReg = IsLP64 || Subtarget->isTargetNaCl64() ? X86::RSP : X86::ESP;
 
   MachineFunction::iterator MBBIter = BB;
   ++MBBIter;
@@ -19023,9 +19026,9 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
   // Add code to the main basic block to check if the stack limit has been hit,
   // and if so, jump to mallocMBB otherwise to bumpMBB.
   BuildMI(BB, DL, TII->get(TargetOpcode::COPY), tmpSPVReg).addReg(physSPReg);
-  BuildMI(BB, DL, TII->get(Is64Bit ? X86::SUB64rr:X86::SUB32rr), SPLimitVReg)
+  BuildMI(BB, DL, TII->get(IsLP64 ? X86::SUB64rr:X86::SUB32rr), SPLimitVReg)
     .addReg(tmpSPVReg).addReg(sizeVReg);
-  BuildMI(BB, DL, TII->get(Is64Bit ? X86::CMP64mr:X86::CMP32mr))
+  BuildMI(BB, DL, TII->get(IsLP64 ? X86::CMP64mr:X86::CMP32mr))
     .addReg(0).addImm(1).addReg(0).addImm(TlsOffset).addReg(TlsReg)
     .addReg(SPLimitVReg);
   BuildMI(BB, DL, TII->get(X86::JG_4)).addMBB(mallocMBB);
@@ -19043,7 +19046,7 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
                                 .getSubtargetImpl()
                                 ->getRegisterInfo()
                                 ->getCallPreservedMask(CallingConv::C);
-  if (Is64Bit) {
+  if (IsLP64) {
     BuildMI(mallocMBB, DL, TII->get(X86::MOV64rr), X86::RDI)
       .addReg(sizeVReg);
     BuildMI(mallocMBB, DL, TII->get(X86::CALL64pcrel32))
@@ -19051,6 +19054,14 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
       .addRegMask(RegMask)
       .addReg(X86::RDI, RegState::Implicit)
       .addReg(X86::RAX, RegState::ImplicitDefine);
+  } else if (Is64Bit) {
+    BuildMI(mallocMBB, DL, TII->get(X86::MOV32rr), X86::EDI)
+      .addReg(sizeVReg);
+    BuildMI(mallocMBB, DL, TII->get(X86::CALL64pcrel32))
+      .addExternalSymbol("__morestack_allocate_stack_space")
+      .addRegMask(RegMask)
+      .addReg(X86::EDI, RegState::Implicit)
+      .addReg(X86::EAX, RegState::ImplicitDefine);
   } else {
     BuildMI(mallocMBB, DL, TII->get(X86::SUB32ri), physSPReg).addReg(physSPReg)
       .addImm(12);
@@ -19066,7 +19077,7 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
       .addImm(16);
 
   BuildMI(mallocMBB, DL, TII->get(TargetOpcode::COPY), mallocPtrVReg)
-    .addReg(Is64Bit ? X86::RAX : X86::EAX);
+    .addReg(IsLP64 ? X86::RAX : X86::EAX);
   BuildMI(mallocMBB, DL, TII->get(X86::JMP_4)).addMBB(continueMBB);
 
   // Set up the CFG correctly.
@@ -19500,9 +19511,8 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::WIN_ALLOCA:
     return EmitLoweredWinAlloca(MI, BB);
   case X86::SEG_ALLOCA_32:
-    return EmitLoweredSegAlloca(MI, BB, false);
   case X86::SEG_ALLOCA_64:
-    return EmitLoweredSegAlloca(MI, BB, true);
+    return EmitLoweredSegAlloca(MI, BB);
   case X86::TLSCall_32:
   case X86::TLSCall_64:
     return EmitLoweredTLSCall(MI, BB);

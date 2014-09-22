@@ -101,8 +101,8 @@ void X86InstrInfo::anchor() {}
 
 X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     : X86GenInstrInfo(
-          (STI.is64Bit() ? X86::ADJCALLSTACKDOWN64 : X86::ADJCALLSTACKDOWN32),
-          (STI.is64Bit() ? X86::ADJCALLSTACKUP64 : X86::ADJCALLSTACKUP32)),
+          (STI.isTarget64BitLP64() ? X86::ADJCALLSTACKDOWN64 : X86::ADJCALLSTACKDOWN32),
+          (STI.isTarget64BitLP64() ? X86::ADJCALLSTACKUP64 : X86::ADJCALLSTACKUP32)),
       Subtarget(STI), RI(STI) {
 
   static const X86OpTblEntry OpTbl2Addr[] = {

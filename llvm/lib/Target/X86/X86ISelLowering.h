@@ -998,8 +998,7 @@ namespace llvm {
                                               MachineBasicBlock *BB) const;
 
     MachineBasicBlock *EmitLoweredSegAlloca(MachineInstr *MI,
-                                            MachineBasicBlock *BB,
-                                            bool Is64Bit) const;
+                                            MachineBasicBlock *BB) const;
 
     MachineBasicBlock *EmitLoweredTLSCall(MachineInstr *MI,
                                           MachineBasicBlock *BB) const;

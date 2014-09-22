@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mcpu=generic -mtriple=i686-linux -verify-machineinstrs | FileCheck %s -check-prefix=X32-Linux
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux  -verify-machineinstrs | FileCheck %s -check-prefix=X64-Linux
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux-gnux32 -verify-machineinstrs | FileCheck %s -check-prefix=X32ABI
 ; RUN: llc < %s -mcpu=generic -mtriple=i686-darwin -verify-machineinstrs | FileCheck %s -check-prefix=X32-Darwin
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-darwin -verify-machineinstrs | FileCheck %s -check-prefix=X64-Darwin
 ; RUN: llc < %s -mcpu=generic -mtriple=i686-mingw32 -verify-machineinstrs | FileCheck %s -check-prefix=X32-MinGW
@@ -9,6 +10,7 @@
 ; We used to crash with filetype=obj
 ; RUN: llc < %s -mcpu=generic -mtriple=i686-linux -filetype=obj
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux -filetype=obj
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux-gnux32 -filetype=obj
 ; RUN: llc < %s -mcpu=generic -mtriple=i686-darwin -filetype=obj
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-darwin -filetype=obj
 ; RUN: llc < %s -mcpu=generic -mtriple=i686-mingw32 -filetype=obj
@@ -50,6 +52,16 @@ define void @test_basic() #0 {
 ; X64-Linux-NEXT:  movabsq $0, %r11
 ; X64-Linux-NEXT:  callq __morestack
 ; X64-Linux-NEXT:  ret
+
+; X32ABI-LABEL:       test_basic:
+
+; X32ABI:       cmpl %fs:64, %esp
+; X32ABI-NEXT:  ja      .LBB0_2
+
+; X32ABI:       movl $40, %r10d
+; X32ABI-NEXT:  movl $0, %r11d
+; X32ABI-NEXT:  callq __morestack
+; X32ABI-NEXT:  ret
 
 ; X32-Darwin-LABEL:      test_basic:
 
@@ -129,6 +141,16 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
 ; X64-Linux-NEXT:  ret
 ; X64-Linux-NEXT:  movq %rax, %r10
 
+; X32ABI:       cmpl %fs:64, %esp
+; X32ABI-NEXT:  ja      .LBB1_2
+
+; X32ABI:       movl %r10d, %eax
+; X32ABI-NEXT:  movl $56, %r10d
+; X32ABI-NEXT:  movl $0, %r11d
+; X32ABI-NEXT:  callq __morestack
+; X32ABI-NEXT:  ret
+; X32ABI-NEXT:  movq %rax, %r10
+
 ; X32-Darwin:      movl $432, %edx
 ; X32-Darwin-NEXT: cmpl %gs:(%edx), %esp
 ; X32-Darwin-NEXT: ja      LBB1_2
@@ -201,6 +223,15 @@ define void @test_large() #0 {
 ; X64-Linux-NEXT:  movabsq $0, %r11
 ; X64-Linux-NEXT:  callq __morestack
 ; X64-Linux-NEXT:  ret
+
+; X32ABI:       leal -40008(%rsp), %r11d
+; X32ABI-NEXT:  cmpl %fs:64, %r11d
+; X32ABI-NEXT:  ja      .LBB2_2
+
+; X32ABI:       movl $40008, %r10d
+; X32ABI-NEXT:  movl $0, %r11d
+; X32ABI-NEXT:  callq __morestack
+; X32ABI-NEXT:  ret
 
 ; X32-Darwin:      leal -40012(%esp), %ecx
 ; X32-Darwin-NEXT: movl $432, %eax
@@ -275,6 +306,16 @@ define fastcc void @test_fastcc() #0 {
 ; X64-Linux-NEXT:  movabsq $0, %r11
 ; X64-Linux-NEXT:  callq __morestack
 ; X64-Linux-NEXT:  ret
+
+; X32ABI-LABEL:       test_fastcc:
+
+; X32ABI:       cmpl %fs:64, %esp
+; X32ABI-NEXT:  ja      .LBB3_2
+
+; X32ABI:       movl $40, %r10d
+; X32ABI-NEXT:  movl $0, %r11d
+; X32ABI-NEXT:  callq __morestack
+; X32ABI-NEXT:  ret
 
 ; X32-Darwin-LABEL:      test_fastcc:
 
@@ -355,6 +396,17 @@ define fastcc void @test_fastcc_large() #0 {
 ; X64-Linux-NEXT:  movabsq $0, %r11
 ; X64-Linux-NEXT:  callq __morestack
 ; X64-Linux-NEXT:  ret
+
+; X32ABI-LABEL:       test_fastcc_large:
+
+; X32ABI:       leal -40008(%rsp), %r11d
+; X32ABI-NEXT:  cmpl %fs:64, %r11d
+; X32ABI-NEXT:  ja      .LBB4_2
+
+; X32ABI:       movl $40008, %r10d
+; X32ABI-NEXT:  movl $0, %r11d
+; X32ABI-NEXT:  callq __morestack
+; X32ABI-NEXT:  ret
 
 ; X32-Darwin-LABEL:      test_fastcc_large:
 
@@ -445,6 +497,9 @@ define void @test_nostack() #0 {
 
 ; X64-Linux-LABEL: test_nostack:
 ; X32-Linux-NOT:   callq __morestack
+
+; X32ABI-LABEL: test_nostack:
+; X32ABI-NOT:   callq __morestack
 
 ; X32-Darwin-LABEL: test_nostack:
 ; X32-Darwin-NOT:   calll __morestack
