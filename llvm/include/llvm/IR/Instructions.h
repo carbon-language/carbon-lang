@@ -651,7 +651,7 @@ public:
     Sub,
     /// *p = old & v
     And,
-    /// *p = ~old & v
+    /// *p = ~(old & v)
     Nand,
     /// *p = old | v
     Or,
