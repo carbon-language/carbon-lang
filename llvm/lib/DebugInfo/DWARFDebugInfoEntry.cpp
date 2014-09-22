@@ -31,7 +31,7 @@ static const DWARFUnit *findUnitAndExtractFast(DWARFDebugInfoEntryMinimal &DIE,
   return (Unit && DIE.extractFast(Unit, Offset)) ? Unit : nullptr;
 }
 
-void DWARFDebugInfoEntryMinimal::dump(raw_ostream &OS, const DWARFUnit *u,
+void DWARFDebugInfoEntryMinimal::dump(raw_ostream &OS, DWARFUnit *u,
                                       unsigned recurseDepth,
                                       unsigned indent) const {
   DataExtractor debug_info_data = u->getDebugInfoExtractor();
@@ -74,7 +74,7 @@ void DWARFDebugInfoEntryMinimal::dump(raw_ostream &OS, const DWARFUnit *u,
 }
 
 void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
-                                               const DWARFUnit *u,
+                                               DWARFUnit *u,
                                                uint32_t *offset_ptr,
                                                uint16_t attr, uint16_t form,
                                                unsigned indent) const {
@@ -99,7 +99,17 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
   OS << "\t(";
   
   const char *Name = nullptr;
-  if (Optional<uint64_t> Val = formValue.getAsUnsignedConstant())
+  std::string File;
+  if (attr == DW_AT_decl_file || attr == DW_AT_call_file) {
+    if (const auto *LT = u->getContext().getLineTableForUnit(u))
+      if (LT->getFileNameByIndex(
+             formValue.getAsUnsignedConstant().getValue(),
+             u->getCompilationDir(),
+             DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath, File)) {
+        File = '"' + File + '"';
+        Name = File.c_str();
+      }
+  } else if (Optional<uint64_t> Val = formValue.getAsUnsignedConstant())
     Name = AttributeValueString(attr, *Val);
 
   if (Name) {

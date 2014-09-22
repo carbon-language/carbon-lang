@@ -38,9 +38,9 @@ public:
   DWARFDebugInfoEntryMinimal()
     : Offset(0), SiblingIdx(0), AbbrevDecl(nullptr) {}
 
-  void dump(raw_ostream &OS, const DWARFUnit *u, unsigned recurseDepth,
+  void dump(raw_ostream &OS, DWARFUnit *u, unsigned recurseDepth,
             unsigned indent = 0) const;
-  void dumpAttribute(raw_ostream &OS, const DWARFUnit *u, uint32_t *offset_ptr,
+  void dumpAttribute(raw_ostream &OS, DWARFUnit *u, uint32_t *offset_ptr,
                      uint16_t attr, uint16_t form, unsigned indent = 0) const;
 
   /// Extracts a debug info entry, which is a child of a given unit,

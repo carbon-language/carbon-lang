@@ -50,7 +50,7 @@ _x:	.long 1
 
 // CHECK:    DW_TAG_label [2] *
 // CHECK:      DW_AT_name [DW_FORM_string]	("bar")
-// CHECK:      DW_AT_decl_file [DW_FORM_data4]	(0x00000001)
+// CHECK:      DW_AT_decl_file [DW_FORM_data4]	([[FILE:".*gen-dwarf.s"]])
 // CHECK:      DW_AT_decl_line [DW_FORM_data4]	(5)
 // CHECK:      DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
 // CHECK:      DW_AT_prototyped [DW_FORM_flag]	(0x00)
@@ -61,7 +61,7 @@ _x:	.long 1
 
 // CHECK:    DW_TAG_label [2] *
 // CHECK:      DW_AT_name [DW_FORM_string]	("foo")
-// CHECK:      DW_AT_decl_file [DW_FORM_data4]	(0x00000001)
+// CHECK:      DW_AT_decl_file [DW_FORM_data4]	([[FILE]])
 // CHECK:      DW_AT_decl_line [DW_FORM_data4]	(9)
 // CHECK:      DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000007)
 // CHECK:      DW_AT_prototyped [DW_FORM_flag]	(0x00)
@@ -72,7 +72,7 @@ _x:	.long 1
 
 // CHECK:    DW_TAG_label [2] *
 // CHECK:      DW_AT_name [DW_FORM_string]	("baz")
-// CHECK:      DW_AT_decl_file [DW_FORM_data4]	(0x00000001)
+// CHECK:      DW_AT_decl_file [DW_FORM_data4]	([[FILE]])
 // CHECK:      DW_AT_decl_line [DW_FORM_data4]	(10)
 // CHECK:      DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000007)
 // CHECK:      DW_AT_prototyped [DW_FORM_flag]	(0x00)
