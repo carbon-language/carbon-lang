@@ -42,9 +42,14 @@ Optimizations</span></h2>
   <div class="submenu2">
   <label>polyhedral.info news</label>
   <script language="JavaScript"
-  src="http://itde.vccs.edu/rss2js/feed2js.php?src=http%3A%2F%2Fpolyhedral.info%2Frss.xml&chan=n&num=5&desc=0&date=y&targ=n"
-  type="text/javascript"></script>
-  </div>
+  src="http://feed2js.org//feed2js.php?src=http%3A%2F%2Fpolyhedral.info%2Frss.xml&num=5&utf=y"
+  charset="UTF-8" type="text/javascript"></script>
+
+  <noscript>
+  <a
+  href="http://feed2js.org//feed2js.php?src=http%3A%2F%2Fpolyhedral.info%2Frss.xml&num=5&utf=y&html=y">View
+  RSS feed</a>
+  </noscript>
 </div>
 
 <script type="text/javascript">
