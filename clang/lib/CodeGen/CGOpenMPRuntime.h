@@ -71,11 +71,11 @@ public:
     OMPRTL__kmpc_fork_call,
     // Call to __kmpc_int32 kmpc_global_thread_num(ident_t *loc);
     OMPRTL__kmpc_global_thread_num,
-    // Call to void __kmpc_critical(ident_t ∗loc, kmp_int32 global_tid,
-    // kmp_critical_name ∗crit);
+    // Call to void __kmpc_critical(ident_t *loc, kmp_int32 global_tid,
+    // kmp_critical_name *crit);
     OMPRTL__kmpc_critical,
-    // Call to void __kmpc_end_critical(ident_t ∗loc, kmp_int32 global_tid,
-    // kmp_critical_name ∗crit);
+    // Call to void __kmpc_end_critical(ident_t *loc, kmp_int32 global_tid,
+    // kmp_critical_name *crit);
     OMPRTL__kmpc_end_critical
   };
 
@@ -190,8 +190,8 @@ public:
   llvm::Value *GetCriticalRegionLock(StringRef CriticalName);
 
   /// \brief Emits start of the critical region by calling void
-  /// __kmpc_critical(ident_t ∗loc, kmp_int32 global_tid, kmp_critical_name
-  /// ∗\a RegionLock)
+  /// __kmpc_critical(ident_t *loc, kmp_int32 global_tid, kmp_critical_name
+  /// * \a RegionLock)
   /// \param CGF Reference to current CodeGenFunction.
   /// \param RegionLock The lock object for critical region.
   /// \param Loc Location of the construct.
@@ -200,8 +200,8 @@ public:
                                           SourceLocation Loc);
 
   /// \brief Emits end of the critical region by calling void
-  /// __kmpc_end_critical(ident_t ∗loc, kmp_int32 global_tid, kmp_critical_name
-  /// ∗\a RegionLock)
+  /// __kmpc_end_critical(ident_t *loc, kmp_int32 global_tid, kmp_critical_name
+  /// * \a RegionLock)
   /// \param CGF Reference to current CodeGenFunction.
   /// \param RegionLock The lock object for critical region.
   /// \param Loc Location of the construct.
