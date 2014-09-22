@@ -392,9 +392,6 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setIntDivIsCheap(false);
   setPow2SDivIsCheap(false);
 
-  // TODO: Investigate this when 64-bit divides are implemented.
-  addBypassSlowDiv(64, 32);
-
   // FIXME: Need to really handle these.
   MaxStoresPerMemcpy  = 4096;
   MaxStoresPerMemmove = 4096;
