@@ -86,15 +86,24 @@ class Decorator: public __sanitizer::SanitizerCommonDecorator {
     }
   }
   const char *EndShadowByte() { return Default(); }
+  const char *MemoryByte() { return Magenta(); }
+  const char *EndMemoryByte() { return Default(); }
 };
 
 // ---------------------- Helper functions ----------------------- {{{1
 
-static void PrintShadowByte(InternalScopedString *str, const char *before,
-                            u8 byte, const char *after = "\n") {
+static void PrintMemoryByte(InternalScopedString *str, const char *before,
+    u8 byte, bool in_shadow, const char *after = "\n") {
   Decorator d;
-  str->append("%s%s%x%x%s%s", before, d.ShadowByte(byte), byte >> 4, byte & 15,
-              d.EndShadowByte(), after);
+  str->append("%s%s%x%x%s%s", before,
+              in_shadow ? d.ShadowByte(byte) : d.MemoryByte(),
+              byte >> 4, byte & 15,
+              in_shadow ? d.EndShadowByte() : d.EndMemoryByte(), after);
+}
+
+static void PrintShadowByte(InternalScopedString *str, const char *before,
+    u8 byte, const char *after = "\n") {
+  PrintMemoryByte(str, before, byte, /*in_shadow*/true, after);
 }
 
 static void PrintShadowBytes(InternalScopedString *str, const char *before,
@@ -147,6 +156,22 @@ static void PrintLegend(InternalScopedString *str) {
   PrintShadowByte(str, "  Array cookie:            ",
                   kAsanArrayCookieMagic);
   PrintShadowByte(str, "  ASan internal:           ", kAsanInternalHeapMagic);
+}
+
+void MaybeDumpInstructionBytes(uptr pc) {
+  if (!flags()->dump_instruction_bytes || (pc < GetPageSizeCached()))
+    return;
+  InternalScopedString str(1024);
+  str.append("First 16 instruction bytes at pc: ");
+  if (IsAccessibleMemoryRange(pc, 16)) {
+    for (int i = 0; i < 16; ++i) {
+      PrintMemoryByte(&str, "", ((u8 *)pc)[i], /*in_shadow*/false, " ");
+    }
+    str.append("\n");
+  } else {
+    str.append("unaccessible\n");
+  }
+  Report("%s", str.data());
 }
 
 static void PrintShadowMemoryForAddress(uptr addr) {
@@ -636,6 +661,7 @@ void ReportSIGSEGV(const char *description, uptr pc, uptr sp, uptr bp,
   Printf("%s", d.EndWarning());
   GET_STACK_TRACE_SIGNAL(pc, bp, context);
   stack.Print();
+  MaybeDumpInstructionBytes(pc);
   Printf("AddressSanitizer can not provide additional info.\n");
   ReportErrorSummary("SEGV", &stack);
 }

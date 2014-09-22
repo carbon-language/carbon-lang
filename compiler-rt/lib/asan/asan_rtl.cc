@@ -230,6 +230,9 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
             "If >=2, detect violation of One-Definition-Rule (ODR); "
             "If ==1, detect ODR-violation only if the two variables "
             "have different sizes");
+
+  ParseFlag(str, &f->dump_instruction_bytes, "dump_instruction_bytes",
+      "If true, dump 16 bytes starting at the instruction that caused SEGV");
 }
 
 void InitializeFlags(Flags *f, const char *env) {
@@ -283,6 +286,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->detect_invalid_pointer_pairs = 0;
   f->detect_container_overflow = true;
   f->detect_odr_violation = 2;
+  f->dump_instruction_bytes = false;
 
   // Override from compile definition.
   ParseFlagsFromString(f, MaybeUseAsanDefaultOptionsCompileDefinition());
