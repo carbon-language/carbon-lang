@@ -35,6 +35,7 @@ public:
   void *OpDecl;
   bool IsVarDecl;
   unsigned Length, Size, Type;
+  StringRef InternalName;
 
   void clear() {
     OpDecl = nullptr;
@@ -42,6 +43,7 @@ public:
     Length = 1;
     Size = 0;
     Type = 0;
+    InternalName = "";
   }
 };
 
@@ -52,6 +54,9 @@ public:
   virtual void *LookupInlineAsmIdentifier(StringRef &LineBuf,
                                           InlineAsmIdentifierInfo &Info,
                                           bool IsUnevaluatedContext) = 0;
+  virtual StringRef LookupInlineAsmLabel(StringRef Identifier, SourceMgr &SM,
+                                         SMLoc Location, bool Create)
+  { return nullptr; }
 
   virtual bool LookupInlineAsmField(StringRef Base, StringRef Member,
                                     unsigned &Offset) = 0;

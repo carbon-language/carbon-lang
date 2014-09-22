@@ -238,7 +238,8 @@ public:
 
 private:
 
-  bool parseStatement(ParseStatementInfo &Info);
+  bool parseStatement(ParseStatementInfo &Info,
+                      MCAsmParserSemaCallback *SI);
   void eatToEndOfLine();
   bool parseCppHashLineFilenameComment(const SMLoc &L);
 
@@ -640,7 +641,7 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
   // While we have input, parse each statement.
   while (Lexer.isNot(AsmToken::Eof)) {
     ParseStatementInfo Info;
-    if (!parseStatement(Info))
+    if (!parseStatement(Info, nullptr))
       continue;
 
     // We had an error, validate that one was emitted and recover by skipping to
@@ -1185,7 +1186,8 @@ bool AsmParser::parseBinOpRHS(unsigned Precedence, const MCExpr *&Res,
 ///   ::= EndOfStatement
 ///   ::= Label* Directive ...Operands... EndOfStatement
 ///   ::= Label* Identifier OperandList* EndOfStatement
-bool AsmParser::parseStatement(ParseStatementInfo &Info) {
+bool AsmParser::parseStatement(ParseStatementInfo &Info,
+                               MCAsmParserSemaCallback *SI) {
   if (Lexer.is(AsmToken::EndOfStatement)) {
     Out.AddBlankLine();
     Lex();
@@ -1295,9 +1297,16 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info) {
     // FIXME: This doesn't diagnose assignment to a symbol which has been
     // implicitly marked as external.
     MCSymbol *Sym;
-    if (LocalLabelVal == -1)
+    if (LocalLabelVal == -1) {
+      if (ParsingInlineAsm && SI) {
+        StringRef RewrittenLabel = SI->LookupInlineAsmLabel(IDVal, getSourceManager(), IDLoc, true);
+        assert(RewrittenLabel.size() && "We should have an internal name here.");
+        Info.AsmRewrites->push_back(AsmRewrite(AOK_Label, IDLoc,
+                                               IDVal.size(), RewrittenLabel));
+        IDVal = RewrittenLabel;
+      }
       Sym = getContext().GetOrCreateSymbol(IDVal);
-    else
+    } else
       Sym = Ctx.CreateDirectionalLocalSymbol(LocalLabelVal);
     if (!Sym->isUndefined() || Sym->isVariable())
       return Error(IDLoc, "invalid symbol redefinition");
@@ -4541,7 +4550,7 @@ bool AsmParser::parseMSInlineAsm(
   unsigned OutputIdx = 0;
   while (getLexer().isNot(AsmToken::Eof)) {
     ParseStatementInfo Info(&AsmStrRewrites);
-    if (parseStatement(Info))
+    if (parseStatement(Info, &SI))
       return true;
 
     if (Info.ParseError)
@@ -4666,6 +4675,9 @@ bool AsmParser::parseMSInlineAsm(
       break;
     case AOK_ImmPrefix:
       OS << "$$";
+      break;
+    case AOK_Label:
+      OS << Ctx.getAsmInfo()->getPrivateGlobalPrefix() << AR.Label;
       break;
     case AOK_Input:
       OS << '$' << InputIdx++;
