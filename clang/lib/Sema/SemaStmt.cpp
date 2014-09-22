@@ -432,7 +432,11 @@ Sema::ActOnLabelStmt(SourceLocation IdentLoc, LabelDecl *TheDecl,
   TheDecl->setStmt(LS);
   if (!TheDecl->isGnuLocal()) {
     TheDecl->setLocStart(IdentLoc);
-    TheDecl->setLocation(IdentLoc);
+    if (!TheDecl->isMSAsmLabel()) {
+      // Don't update the location of MS ASM labels.  These will result in
+      // a diagnostic, and changing the location here will mess that up.
+      TheDecl->setLocation(IdentLoc);
+    }
   }
   return LS;
 }

@@ -93,6 +93,15 @@ public:
     return Info.OpDecl;
   }
 
+  StringRef LookupInlineAsmLabel(StringRef Identifier, llvm::SourceMgr &LSM,
+                                 llvm::SMLoc Location,
+                                 bool Create) override {
+    SourceLocation Loc = translateLocation(LSM, Location);
+    LabelDecl *Label =
+      TheParser.getActions().GetOrCreateMSAsmLabel(Identifier, Loc, Create);
+    return Label->getMSAsmLabel();
+  }
+
   bool LookupInlineAsmField(StringRef Base, StringRef Member,
                             unsigned &Offset) override {
     return TheParser.getActions().LookupInlineAsmField(Base, Member, Offset,
@@ -133,14 +142,13 @@ private:
     }
   }
 
-  void handleDiagnostic(const llvm::SMDiagnostic &D) {
+  SourceLocation translateLocation(const llvm::SourceMgr &LSM, llvm::SMLoc SMLoc) {
     // Compute an offset into the inline asm buffer.
     // FIXME: This isn't right if .macro is involved (but hopefully, no
     // real-world code does that).
-    const llvm::SourceMgr &LSM = *D.getSourceMgr();
     const llvm::MemoryBuffer *LBuf =
-        LSM.getMemoryBuffer(LSM.FindBufferContainingLoc(D.getLoc()));
-    unsigned Offset = D.getLoc().getPointer() - LBuf->getBufferStart();
+        LSM.getMemoryBuffer(LSM.FindBufferContainingLoc(SMLoc));
+    unsigned Offset = SMLoc.getPointer() - LBuf->getBufferStart();
 
     // Figure out which token that offset points into.
     const unsigned *TokOffsetPtr =
@@ -157,6 +165,12 @@ private:
       Loc = Tok.getLocation();
       Loc = Loc.getLocWithOffset(Offset - TokOffset);
     }
+    return Loc;
+  }
+
+  void handleDiagnostic(const llvm::SMDiagnostic &D) {
+    const llvm::SourceMgr &LSM = *D.getSourceMgr();
+    SourceLocation Loc = translateLocation(LSM, D.getLoc());
     TheParser.Diag(Loc, diag::err_inline_ms_asm_parsing) << D.getMessage();
   }
 };

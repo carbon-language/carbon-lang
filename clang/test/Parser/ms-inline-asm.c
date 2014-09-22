@@ -48,6 +48,9 @@ void t10() {
 void t11() {
   do { __asm mov eax, 0 __asm { __asm mov edx, 1 } } while(0);
 }
+void t12() {
+  __asm jmp label // expected-error {{use of undeclared label 'label'}}
+}
 int t_fail() { // expected-note {{to match this}}
   __asm 
   __asm { // expected-error 2 {{expected}} expected-note {{to match this}}

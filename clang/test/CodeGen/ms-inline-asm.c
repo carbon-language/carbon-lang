@@ -240,7 +240,7 @@ void t23() {
   the_label:
   }
 // CHECK: t23
-// CHECK: call void asm sideeffect inteldialect "the_label:", "~{dirflag},~{fpsr},~{flags}"()
+// CHECK: call void asm sideeffect inteldialect "{{.*}}__MSASMLABEL_.0__the_label:", "~{dirflag},~{fpsr},~{flags}"()
 }
 
 void t24_helper(void) {}
@@ -517,3 +517,30 @@ void xgetbv() {
 }
 // CHECK-LABEL: define void @xgetbv()
 // CHECK: call void asm sideeffect inteldialect "xgetbv", "~{eax},~{edx},~{dirflag},~{fpsr},~{flags}"()
+
+void label1() {
+  __asm {
+    label:
+    jmp label
+  }
+  // CHECK-LABEL: define void @label1
+  // CHECK: call void asm sideeffect inteldialect "{{.*}}__MSASMLABEL_.1__label:\0A\09jmp {{.*}}__MSASMLABEL_.1__label", "~{dirflag},~{fpsr},~{flags}"()
+}
+
+void label2() {
+  __asm {
+    jmp label
+    label:
+  }
+  // CHECK-LABEL: define void @label2
+  // CHECK: call void asm sideeffect inteldialect "jmp {{.*}}__MSASMLABEL_.2__label\0A\09{{.*}}__MSASMLABEL_.2__label:", "~{dirflag},~{fpsr},~{flags}"()
+}
+
+void label3() {
+  __asm {
+    label:
+    mov eax, label
+  }
+  // CHECK-LABEL: define void @label3
+  // CHECK: call void asm sideeffect inteldialect "{{.*}}__MSASMLABEL_.3__label:\0A\09mov eax, {{.*}}__MSASMLABEL_.3__label", "~{eax},~{dirflag},~{fpsr},~{flags}"()
+}

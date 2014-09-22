@@ -308,6 +308,8 @@ inline raw_ostream &operator<<(raw_ostream &OS, const NamedDecl &ND) {
 class LabelDecl : public NamedDecl {
   void anchor() override;
   LabelStmt *TheStmt;
+  StringRef MSAsmName;
+  bool MSAsmNameResolved;
   /// LocStart - For normal labels, this is the same as the main declaration
   /// label, i.e., the location of the identifier; for GNU local labels,
   /// this is the location of the __label__ keyword.
@@ -315,7 +317,10 @@ class LabelDecl : public NamedDecl {
 
   LabelDecl(DeclContext *DC, SourceLocation IdentL, IdentifierInfo *II,
             LabelStmt *S, SourceLocation StartL)
-    : NamedDecl(Label, DC, IdentL, II), TheStmt(S), LocStart(StartL) {}
+    : NamedDecl(Label, DC, IdentL, II),
+      TheStmt(S),
+      MSAsmNameResolved(false),
+      LocStart(StartL) {}
 
 public:
   static LabelDecl *Create(ASTContext &C, DeclContext *DC,
@@ -334,6 +339,12 @@ public:
   SourceRange getSourceRange() const override LLVM_READONLY {
     return SourceRange(LocStart, getLocation());
   }
+
+  bool isMSAsmLabel() const { return MSAsmName.size() != 0; }
+  bool isResolvedMSAsmLabel() const { return isMSAsmLabel() && MSAsmNameResolved; }
+  void setMSAsmLabel(StringRef Name);
+  StringRef getMSAsmLabel() const { return MSAsmName; }
+  void setMSAsmLabelResolved() { MSAsmNameResolved = true; }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

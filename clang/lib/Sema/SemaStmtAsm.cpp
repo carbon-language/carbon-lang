@@ -15,6 +15,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Scope.h"
@@ -520,10 +521,39 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
                                 ArrayRef<Expr*> Exprs,
                                 SourceLocation EndLoc) {
   bool IsSimple = (NumOutputs != 0 || NumInputs != 0);
+  getCurFunction()->setHasBranchProtectedScope();
   MSAsmStmt *NS =
     new (Context) MSAsmStmt(Context, AsmLoc, LBraceLoc, IsSimple,
                             /*IsVolatile*/ true, AsmToks, NumOutputs, NumInputs,
                             Constraints, Exprs, AsmString,
                             Clobbers, EndLoc);
   return NS;
+}
+
+LabelDecl *Sema::GetOrCreateMSAsmLabel(StringRef ExternalLabelName,
+                                       SourceLocation Location,
+                                       bool AlwaysCreate) {
+  LabelDecl* Label = LookupOrCreateLabel(PP.getIdentifierInfo(ExternalLabelName),
+                                         Location);
+
+  if (!Label->isMSAsmLabel()) {
+    // Otherwise, insert it, but only resolve it if we have seen the label itself.
+    std::string InternalName;
+    llvm::raw_string_ostream OS(InternalName);
+    // Create an internal name for the label.  The name should not be a valid mangled
+    // name, and should be unique.  We use a dot to make the name an invalid mangled
+    // name.
+    OS << "__MSASMLABEL_." << MSAsmLabelNameCounter++ << "__" << ExternalLabelName;
+    Label->setMSAsmLabel(OS.str());
+  }
+  if (AlwaysCreate) {
+    // The label might have been created implicitly from a previously encountered
+    // goto statement.  So, for both newly created and looked up labels, we mark
+    // them as resolved.
+    Label->setMSAsmLabelResolved();
+  }
+  // Adjust their location for being able to generate accurate diagnostics.
+  Label->setLocation(Location);
+
+  return Label;
 }

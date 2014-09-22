@@ -4133,6 +4133,10 @@ def warn_missing_braces : Warning<
 
 def err_redefinition_of_label : Error<"redefinition of label %0">;
 def err_undeclared_label_use : Error<"use of undeclared label %0">;
+def err_goto_ms_asm_label : Error<
+  "cannot jump from this goto statement to label %0 inside an inline assembly block">;
+def note_goto_ms_asm_label : Note<
+  "inline assembly label %0 declared here">;
 def warn_unused_label : Warning<"unused label %0">,
   InGroup<UnusedLabel>, DefaultIgnore;
 

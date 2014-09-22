@@ -699,7 +699,10 @@ public:
 
   /// \brief will hold 'respondsToSelector:'
   Selector RespondsToSelectorSel;
-  
+
+  /// \brief counter for internal MS Asm label names.
+  unsigned MSAsmLabelNameCounter;
+
   /// A flag to remember whether the implicit forms of operator new and delete
   /// have been declared.
   bool GlobalNewDeleteDeclared;
@@ -3156,6 +3159,9 @@ public:
                             ArrayRef<StringRef> Clobbers,
                             ArrayRef<Expr*> Exprs,
                             SourceLocation EndLoc);
+  LabelDecl *GetOrCreateMSAsmLabel(StringRef ExternalLabelName,
+                                   SourceLocation Location,
+                                   bool AlwaysCreate);
 
   VarDecl *BuildObjCExceptionDecl(TypeSourceInfo *TInfo, QualType ExceptionType,
                                   SourceLocation StartLoc,

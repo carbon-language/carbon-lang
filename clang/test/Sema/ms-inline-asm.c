@@ -29,7 +29,7 @@ void f() {
   }
   f();
   __asm {
-    mov eax, TYPE bar // expected-error {{unable to lookup expression}}
+    mov eax, TYPE bar // expected-error {{unable to lookup expression}} expected-error {{use of undeclared label 'bar'}}
   }
 }
 
@@ -80,9 +80,10 @@ typedef struct {
 } A;
 
 void t3() {
-  __asm { mov eax, [eax] UndeclaredId } // expected-error {{unknown token in expression}}
+  __asm { mov eax, [eax] UndeclaredId } // expected-error {{unknown token in expression}} expected-error {{use of undeclared label 'UndeclaredId'}}
 
   // FIXME: Only emit one diagnostic here.
+  // expected-error@+3 {{use of undeclared label 'A'}}
   // expected-error@+2 {{unexpected type name 'A': expected expression}}
   // expected-error@+1 {{unknown token in expression}}
   __asm { mov eax, [eax] A }
@@ -105,7 +106,7 @@ void test_operand_size() {
 }
 
 __declspec(naked) int t5(int x) { // expected-note {{attribute is here}}
-  asm { movl eax, x } // expected-error {{parameter references not allowed in naked functions}}
+  asm { movl eax, x } // expected-error {{parameter references not allowed in naked functions}} expected-error {{use of undeclared label 'x'}}
   asm { retl }
 }
 
@@ -113,4 +114,37 @@ int y;
 __declspec(naked) int t6(int x) {
   asm { mov eax, y } // No error.
   asm { ret }
+}
+
+void t7() {
+  __asm {
+    foo: // expected-note {{inline assembly label 'foo' declared here}}
+    mov eax, 0
+  }
+  goto foo; // expected-error {{cannot jump from this goto statement to label 'foo' inside an inline assembly block}}
+}
+
+void t8() {
+  __asm foo: // expected-note {{inline assembly label 'foo' declared here}}
+  __asm mov eax, 0
+  goto foo; // expected-error {{cannot jump from this goto statement to label 'foo' inside an inline assembly block}}
+}
+
+void t9() {
+  goto foo; // expected-error {{cannot jump from this goto statement to label 'foo' inside an inline assembly block}}
+  __asm {
+    foo: // expected-note {{inline assembly label 'foo' declared here}}
+    mov eax, 0
+  }
+}
+
+void t10() {
+  goto foo; // expected-error {{cannot jump from this goto statement to label 'foo' inside an inline assembly block}}
+  __asm foo: // expected-note {{inline assembly label 'foo' declared here}}
+  __asm mov eax, 0
+}
+
+void t11() {
+foo:
+  __asm mov eax, foo // expected-error {{use of undeclared label 'foo'}}
 }

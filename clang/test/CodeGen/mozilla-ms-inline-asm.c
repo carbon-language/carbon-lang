@@ -3,6 +3,8 @@
 
 // Some test cases for MS inline asm support from Mozilla code base.
 
+void invoke_copy_to_stack() {}
+
 void invoke(void* that, unsigned methodIndex,
             unsigned paramCount, void* params)
 {
@@ -18,24 +20,25 @@ void invoke(void* that, unsigned methodIndex,
 // CHECK: call void asm sideeffect inteldialect
 // CHECK: mov edx,dword ptr $1
 // CHECK: test edx,edx
-// CHECK: jz noparams
+// CHECK: jz {{[^_]*}}__MSASMLABEL_.0__noparams
+//             ^ Can't use {{.*}} here because the matching is greedy.
 // CHECK: mov eax,edx
 // CHECK: shl eax,$$3
 // CHECK: sub esp,eax
 // CHECK: mov ecx,esp
 // CHECK: push dword ptr $0
-// CHECK: call invoke_copy_to_stack
-// CHECK: noparams:
-// CHECK: mov ecx,dword ptr $2
+// CHECK: call dword ptr $2
+// CHECK: {{.*}}__MSASMLABEL_.0__noparams:
+// CHECK: mov ecx,dword ptr $3
 // CHECK: push ecx
 // CHECK: mov edx,[ecx]
-// CHECK: mov eax,dword ptr $3
+// CHECK: mov eax,dword ptr $4
 // CHECK: call dword ptr[edx+eax*$$4]
 // CHECK: mov esp,ebp
 // CHECK: pop ebp
 // CHECK: ret
-// CHECK: "=*m,*m,*m,*m,~{eax},~{ebp},~{ecx},~{edx},~{flags},~{esp},~{dirflag},~{fpsr},~{flags}"
-// CHECK: (i8** %8, i32* %7, i8** %5, i32* %6)
+// CHECK: "=*m,*m,*m,*m,*m,~{eax},~{ebp},~{ecx},~{edx},~{flags},~{esp},~{dirflag},~{fpsr},~{flags}"
+// CHECK: (i8** %8, i32* %7, void (...)* bitcast (void ()* @invoke_copy_to_stack to void (...)*), i8** %5, i32* %6)
 // CHECK: ret void
     __asm {
         mov     edx,paramCount

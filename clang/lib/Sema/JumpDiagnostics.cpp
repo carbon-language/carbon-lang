@@ -84,6 +84,7 @@ private:
   void CheckJump(Stmt *From, Stmt *To, SourceLocation DiagLoc,
                  unsigned JumpDiag, unsigned JumpDiagWarning,
                  unsigned JumpDiagCXX98Compat);
+  void CheckGotoStmt(GotoStmt *GS);
 
   unsigned GetDeepestCommonScope(unsigned A, unsigned B);
 };
@@ -489,10 +490,14 @@ void JumpScopeChecker::VerifyJumps() {
 
     // With a goto,
     if (GotoStmt *GS = dyn_cast<GotoStmt>(Jump)) {
-      CheckJump(GS, GS->getLabel()->getStmt(), GS->getGotoLoc(),
-                diag::err_goto_into_protected_scope,
-                diag::ext_goto_into_protected_scope,
-                diag::warn_cxx98_compat_goto_into_protected_scope);
+      // The label may not have a statement if it's coming from inline MS ASM.
+      if (GS->getLabel()->getStmt()) {
+        CheckJump(GS, GS->getLabel()->getStmt(), GS->getGotoLoc(),
+                  diag::err_goto_into_protected_scope,
+                  diag::ext_goto_into_protected_scope,
+                  diag::warn_cxx98_compat_goto_into_protected_scope);
+      }
+      CheckGotoStmt(GS);
       continue;
     }
 
@@ -786,6 +791,15 @@ void JumpScopeChecker::CheckJump(Stmt *From, Stmt *To, SourceLocation DiagLoc,
   if (ToScopesError.empty() && !ToScopesCXX98Compat.empty()) {
     S.Diag(DiagLoc, JumpDiagCXX98Compat);
     NoteJumpIntoScopes(ToScopesCXX98Compat);
+  }
+}
+
+void JumpScopeChecker::CheckGotoStmt(GotoStmt *GS) {
+  if (GS->getLabel()->isMSAsmLabel()) {
+    S.Diag(GS->getGotoLoc(), diag::err_goto_ms_asm_label)
+        << GS->getLabel()->getIdentifier();
+    S.Diag(GS->getLabel()->getLocation(), diag::note_goto_ms_asm_label)
+        << GS->getLabel()->getIdentifier();
   }
 }
 
