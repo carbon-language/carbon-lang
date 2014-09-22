@@ -15,7 +15,7 @@ TEMPORARY_FILE=$3.cpp
 # Feed the rest arguments to clang-tidy after --.
 shift 3
 CLANG_TIDY_ARGS=--std=c++11
-if (($# > 0)) ; then
+if [ "$#" -gt 0 ] ; then
   CLANG_TIDY_ARGS=$*
 fi
 
