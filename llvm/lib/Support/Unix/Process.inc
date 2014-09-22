@@ -14,6 +14,7 @@
 #include "Unix.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/Support/TimeValue.h"
@@ -263,11 +264,12 @@ extern "C" int del_curterm(struct term *termp);
 extern "C" int tigetnum(char *capname);
 #endif
 
+static ManagedStatic<sys::Mutex> TermColorMutex;
+
 static bool terminalHasColors(int fd) {
 #ifdef HAVE_TERMINFO
   // First, acquire a global lock because these C routines are thread hostile.
-  static sys::Mutex M;
-  MutexGuard G(M);
+  MutexGuard G(*TermColorMutex);
 
   int errret = 0;
   if (setupterm((char *)nullptr, fd, &errret) != 0)
