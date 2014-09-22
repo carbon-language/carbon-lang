@@ -3557,7 +3557,7 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::MOVSD:
   case X86ISD::UNPCKL:
   case X86ISD::UNPCKH:
-  case X86ISD::VPERMILP:
+  case X86ISD::VPERMILPI:
   case X86ISD::VPERM2X128:
   case X86ISD::VPERMI:
     return true;
@@ -3583,7 +3583,7 @@ static SDValue getTargetShuffleNode(unsigned Opc, SDLoc dl, EVT VT,
   case X86ISD::PSHUFD:
   case X86ISD::PSHUFHW:
   case X86ISD::PSHUFLW:
-  case X86ISD::VPERMILP:
+  case X86ISD::VPERMILPI:
   case X86ISD::VPERMI:
     return DAG.getNode(Opc, dl, VT, V1, DAG.getConstant(TargetMask, MVT::i8));
   }
@@ -5314,7 +5314,7 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
     DecodePALIGNRMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
     break;
   case X86ISD::PSHUFD:
-  case X86ISD::VPERMILP:
+  case X86ISD::VPERMILPI:
     ImmN = N->getOperand(N->getNumOperands()-1);
     DecodePSHUFMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
     IsUnary = true;
@@ -7687,7 +7687,7 @@ static SDValue lowerV2F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (Subtarget->hasAVX()) {
       // If we have AVX, we can use VPERMILPS which will allow folding a load
       // into the shuffle.
-      return DAG.getNode(X86ISD::VPERMILP, DL, MVT::v2f64, V1,
+      return DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v2f64, V1,
                          DAG.getConstant(SHUFPDMask, MVT::i8));
     }
 
@@ -7889,7 +7889,7 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (Subtarget->hasAVX()) {
       // If we have AVX, we can use VPERMILPS which will allow folding a load
       // into the shuffle.
-      return DAG.getNode(X86ISD::VPERMILP, DL, MVT::v4f32, V1,
+      return DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v4f32, V1,
                          getV4X86ShuffleImm8ForMask(Mask, DAG));
     }
 
@@ -9266,7 +9266,7 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     // interleaved permutation.
     unsigned VPERMILPMask = (Mask[0] == 1) | ((Mask[1] == 1) << 1) |
                             ((Mask[2] == 3) << 2) | ((Mask[3] == 3) << 3);
-    return DAG.getNode(X86ISD::VPERMILP, DL, MVT::v4f64, V1,
+    return DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v4f64, V1,
                        DAG.getConstant(VPERMILPMask, MVT::i8));
   }
 
@@ -9376,7 +9376,7 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   if (is128BitLaneRepeatedShuffleMask(MVT::v8f32, Mask)) {
     ArrayRef<int> LoMask = Mask.slice(0, 4);
     if (isSingleInputShuffleMask(Mask))
-      return DAG.getNode(X86ISD::VPERMILP, DL, MVT::v8f32, V1,
+      return DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v8f32, V1,
                          getV4X86ShuffleImm8ForMask(LoMask, DAG));
 
     // Use dedicated unpack instructions for masks that match their pattern.
@@ -9407,10 +9407,10 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
         M -= 4;
     SDValue Lo = V1, Hi = V1;
     if (!isNoopShuffleMask(LoMask))
-      Lo = DAG.getNode(X86ISD::VPERMILP, DL, MVT::v8f32, Lo,
+      Lo = DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v8f32, Lo,
                        getV4X86ShuffleImm8ForMask(LoMask, DAG));
     if (!isNoopShuffleMask(HiMask))
-      Hi = DAG.getNode(X86ISD::VPERMILP, DL, MVT::v8f32, Hi,
+      Hi = DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v8f32, Hi,
                        getV4X86ShuffleImm8ForMask(HiMask, DAG));
     unsigned BlendMask = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7;
     return DAG.getNode(X86ISD::BLENDI, DL, MVT::v8f32, Lo, Hi,
@@ -11021,7 +11021,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
       return getTargetShuffleNode(X86ISD::PSHUFD, dl, VT, V1, TargetMask, DAG);
 
     if (HasFp256 && (VT == MVT::v4f32 || VT == MVT::v2f64))
-      return getTargetShuffleNode(X86ISD::VPERMILP, dl, VT, V1, TargetMask,
+      return getTargetShuffleNode(X86ISD::VPERMILPI, dl, VT, V1, TargetMask,
                                   DAG);
 
     return getTargetShuffleNode(X86ISD::SHUFP, dl, VT, V1, V1,
@@ -11203,7 +11203,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     if ((HasInt256 && VT == MVT::v8i32) || VT == MVT::v16i32)
       return getTargetShuffleNode(X86ISD::PSHUFD, dl, VT, V1,
                                   getShuffleSHUFImmediate(SVOp), DAG);
-    return getTargetShuffleNode(X86ISD::VPERMILP, dl, VT, V1,
+    return getTargetShuffleNode(X86ISD::VPERMILPI, dl, VT, V1,
                                 getShuffleSHUFImmediate(SVOp), DAG);
   }
 
@@ -18203,7 +18203,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VBROADCAST:         return "X86ISD::VBROADCAST";
   case X86ISD::VBROADCASTM:        return "X86ISD::VBROADCASTM";
   case X86ISD::VEXTRACT:           return "X86ISD::VEXTRACT";
-  case X86ISD::VPERMILP:           return "X86ISD::VPERMILP";
+  case X86ISD::VPERMILPI:          return "X86ISD::VPERMILPI";
   case X86ISD::VPERM2X128:         return "X86ISD::VPERM2X128";
   case X86ISD::VPERMV:             return "X86ISD::VPERMV";
   case X86ISD::VPERMV3:            return "X86ISD::VPERMV3";
@@ -23889,7 +23889,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::PSHUFLW:
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
-  case X86ISD::VPERMILP:
+  case X86ISD::VPERMILPI:
   case X86ISD::VPERM2X128:
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, DCI,Subtarget);
   case ISD::FMA:            return PerformFMACombine(N, DAG, Subtarget);

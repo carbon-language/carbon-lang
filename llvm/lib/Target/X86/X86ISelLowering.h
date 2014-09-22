@@ -343,7 +343,7 @@ namespace llvm {
       MOVSS,
       UNPCKL,
       UNPCKH,
-      VPERMILP,
+      VPERMILPI,
       VPERMV,
       VPERMV3,
       VPERMIV3,

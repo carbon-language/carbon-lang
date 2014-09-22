@@ -2843,17 +2843,17 @@ defm VPSHUFDZ : avx512_pshuf_imm<0x70, "vpshufd", VR512, X86PShufd, memopv16i32,
                       i512mem, v16i32>, PD, EVEX_V512, EVEX_CD8<32, CD8VF>;
 
 let ExeDomain = SSEPackedSingle in
-defm VPERMILPSZ : avx512_pshuf_imm<0x04, "vpermilps", VR512, X86VPermilp,
+defm VPERMILPSZ : avx512_pshuf_imm<0x04, "vpermilps", VR512, X86VPermilpi,
                       memopv16f32, i512mem, v16f32>, TAPD, EVEX_V512,
                       EVEX_CD8<32, CD8VF>;
 let ExeDomain = SSEPackedDouble in
-defm VPERMILPDZ : avx512_pshuf_imm<0x05, "vpermilpd", VR512, X86VPermilp,
+defm VPERMILPDZ : avx512_pshuf_imm<0x05, "vpermilpd", VR512, X86VPermilpi,
                       memopv8f64, i512mem, v8f64>, TAPD, EVEX_V512,
                       VEX_W, EVEX_CD8<32, CD8VF>;
 
-def : Pat<(v16i32 (X86VPermilp VR512:$src1, (i8 imm:$imm))),
+def : Pat<(v16i32 (X86VPermilpi VR512:$src1, (i8 imm:$imm))),
           (VPERMILPSZri VR512:$src1, imm:$imm)>;
-def : Pat<(v8i64 (X86VPermilp VR512:$src1, (i8 imm:$imm))),
+def : Pat<(v8i64 (X86VPermilpi VR512:$src1, (i8 imm:$imm))),
           (VPERMILPDZri VR512:$src1, imm:$imm)>;
 
 //===----------------------------------------------------------------------===//
