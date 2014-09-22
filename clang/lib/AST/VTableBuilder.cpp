@@ -2539,8 +2539,9 @@ private:
                   BasesSetVectorTy &VisitedBases);
 
   void LayoutVFTable() {
-    // FIXME: add support for RTTI when we have proper LLVM support for symbols
-    // pointing to the middle of a section.
+    // RTTI data goes before all other entries.
+    if (HasRTTIComponent)
+      Components.push_back(VTableComponent::MakeRTTI(MostDerivedClass));
 
     BasesSetVectorTy VisitedBases;
     AddMethods(BaseSubobject(MostDerivedClass, CharUnits::Zero()), 0, nullptr,
@@ -2579,8 +2580,6 @@ public:
     // definition of the vftable.
     HasRTTIComponent = Context.getLangOpts().RTTIData &&
                        !MostDerivedClass->hasAttr<DLLImportAttr>();
-    if (HasRTTIComponent)
-      Components.push_back(VTableComponent::MakeRTTI(MostDerivedClass));
 
     LayoutVFTable();
 
