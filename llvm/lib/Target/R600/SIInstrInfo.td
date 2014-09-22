@@ -196,10 +196,8 @@ def DS64Bit4ByteAligned : ComplexPattern<i32, 3, "SelectDS64Bit4ByteAligned">;
 
 def MUBUFAddr32 : ComplexPattern<i64, 9, "SelectMUBUFAddr32">;
 def MUBUFAddr64 : ComplexPattern<i64, 3, "SelectMUBUFAddr64">;
-def MUBUFAddr64Atomic : ComplexPattern<i64, 4, "SelectMUBUFAddr64">;
 def MUBUFScratch : ComplexPattern<i64, 4, "SelectMUBUFScratch">;
 def MUBUFOffset : ComplexPattern<i64, 6, "SelectMUBUFOffset">;
-def MUBUFOffsetAtomic : ComplexPattern<i64, 4, "SelectMUBUFOffset">;
 
 def VOP3Mods0 : ComplexPattern<untyped, 4, "SelectVOP3Mods0">;
 def VOP3Mods  : ComplexPattern<untyped, 2, "SelectVOP3Mods">;
@@ -931,10 +929,9 @@ class DS_1A1D_NORET <bits<8> op, string asm, RegisterClass rc, string noRetOp = 
   let mayLoad = 1;
 }
 
-class MUBUFAddr64Table <bit is_addr64, string suffix = ""> {
+class MUBUFAddr64Table <bit is_addr64> {
 
   bit IsAddr64 = is_addr64;
-  string OpName = NAME # suffix;
 }
 
 class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBUF <
@@ -948,80 +945,6 @@ class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBU
   []> {
   let mayStore = 1;
   let mayLoad = 0;
-}
-
-class MUBUFAtomicAddr64 <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern>
-    : MUBUF <op, outs, ins, asm, pattern> {
-
-  let offen = 0;
-  let idxen = 0;
-  let addr64 = 1;
-  let tfe = 0;
-  let lds = 0;
-  let soffset = 128;
-}
-
-class MUBUFAtomicOffset <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern>
-    : MUBUF <op, outs, ins, asm, pattern> {
-
-  let offen = 0;
-  let idxen = 0;
-  let addr64 = 0;
-  let tfe = 0;
-  let lds = 0;
-  let vaddr = 0;
-}
-
-multiclass MUBUF_Atomic <bits<7> op, string name, RegisterClass rc,
-                         ValueType vt, SDPatternOperator atomic> {
-
-  let mayStore = 1, mayLoad = 1 in {
-
-    // No return variants
-    let glc = 0 in {
-
-      def _ADDR64 : MUBUFAtomicAddr64 <
-        op, (outs),
-        (ins rc:$vdata, SReg_128:$srsrc, VReg_64:$vaddr,
-             mbuf_offset:$offset, slc:$slc),
-        name#" $vdata, $vaddr, $srsrc, 0 addr64"#"$offset"#"$slc", []
-      >, MUBUFAddr64Table<1>, AtomicNoRet<NAME#"_ADDR64", 0>;
-
-      def _OFFSET : MUBUFAtomicOffset <
-        op, (outs),
-        (ins rc:$vdata, SReg_128:$srsrc, mbuf_offset:$offset,
-             SSrc_32:$soffset, slc:$slc),
-        name#" $vdata, $srsrc, $soffset"#"$offset"#"$slc", []
-      >, MUBUFAddr64Table<0>, AtomicNoRet<NAME#"_OFFSET", 0>;
-    } // glc = 0
-
-    // Variant that return values
-    let glc = 1, Constraints = "$vdata = $vdata_in",
-        DisableEncoding = "$vdata_in"  in {
-
-      def _RTN_ADDR64 : MUBUFAtomicAddr64 <
-        op, (outs rc:$vdata),
-        (ins rc:$vdata_in, SReg_128:$srsrc, VReg_64:$vaddr,
-             mbuf_offset:$offset, slc:$slc),
-        name#" $vdata, $vaddr, $srsrc, 0 addr64"#"$offset"#" glc"#"$slc",
-        [(set vt:$vdata,
-         (atomic (MUBUFAddr64Atomic v4i32:$srsrc, i64:$vaddr, i16:$offset,
-                                    i1:$slc), vt:$vdata_in))]
-      >, MUBUFAddr64Table<1, "_RTN">, AtomicNoRet<NAME#"_ADDR64", 1>;
-
-      def _RTN_OFFSET : MUBUFAtomicOffset <
-        op, (outs rc:$vdata),
-        (ins rc:$vdata_in, SReg_128:$srsrc, mbuf_offset:$offset,
-             SSrc_32:$soffset, slc:$slc),
-        name#" $vdata, $srsrc, $soffset"#"$offset"#" glc $slc",
-        [(set vt:$vdata,
-         (atomic (MUBUFOffsetAtomic v4i32:$srsrc, i32:$soffset, i16:$offset,
-                                    i1:$slc), vt:$vdata_in))]
-      >, MUBUFAddr64Table<0, "_RTN">, AtomicNoRet<NAME#"_OFFSET", 1>;
-
-    } // glc = 1
-
-  } // mayStore = 1, mayLoad = 1
 }
 
 multiclass MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass,
@@ -1369,7 +1292,7 @@ def getMCOpcode : InstrMapping {
 
 def getAddr64Inst : InstrMapping {
   let FilterClass = "MUBUFAddr64Table";
-  let RowFields = ["OpName"];
+  let RowFields = ["NAME"];
   let ColFields = ["IsAddr64"];
   let KeyCol = ["0"];
   let ValueCols = [["1"]];
