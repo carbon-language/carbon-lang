@@ -247,9 +247,8 @@ void DecodePSHUFBMask(const ConstantDataSequential *C,
     if (Element & (1 << 7))
       ShuffleMask.push_back(SM_SentinelZero);
     else {
-      int Index = Base + Element;
-      assert((Index >= 0 && Index < NumElements) &&
-             "Out of bounds shuffle index for pshub instruction!");
+      // Only the least significant 4 bits of the byte are used.
+      int Index = Base + (Element & 0xf);
       ShuffleMask.push_back(Index);
     }
   }
@@ -266,9 +265,8 @@ void DecodePSHUFBMask(ArrayRef<uint64_t> RawMask,
     if (M & (1 << 7))
       ShuffleMask.push_back(SM_SentinelZero);
     else {
-      int Index = Base + M;
-      assert((Index >= 0 && (unsigned)Index < RawMask.size()) &&
-             "Out of bounds shuffle index for pshub instruction!");
+      // Only the least significant 4 bits of the byte are used.
+      int Index = Base + (M & 0xf);
       ShuffleMask.push_back(Index);
     }
   }
