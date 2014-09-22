@@ -241,11 +241,6 @@ std::unique_ptr<File> ELFLinkingContext::createUndefinedSymbolFile() const {
   return std::move(undefinedSymFile);
 }
 
-static bool isSharedWeakAtom(const UndefinedAtom *ua) {
-  return ua->canBeNull() != UndefinedAtom::canBeNullNever &&
-         isa<SharedLibraryFile>(ua->file());
-}
-
 void ELFLinkingContext::notifySymbolTableCoalesce(const Atom *existingAtom,
                                                   const Atom *newAtom,
                                                   bool &useNew) {
@@ -259,11 +254,12 @@ void ELFLinkingContext::notifySymbolTableCoalesce(const Atom *existingAtom,
     ua = dyn_cast<UndefinedAtom>(existingAtom);
   }
 
-  if (da && ua && da->scope() == Atom::scopeGlobal && isSharedWeakAtom(ua))
-    // If strong defined atom coalesces away weak atom declared
-    // in the shared object the strong atom needs to be dynamicaly exported.
+  if (da && ua && da->scope() == Atom::scopeGlobal &&
+      isa<SharedLibraryFile>(ua->file()))
+    // If strong defined atom coalesces away an atom declared
+    // in the shared object the strong atom needs to be dynamically exported.
     // Save its name.
-    _weakCoalescedSymbols.insert(ua->name());
+    _sharedLibCoalescedSymbols.insert(ua->name());
 }
 
 } // end namespace lld
