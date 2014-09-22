@@ -38,6 +38,7 @@ enum class Kind {
   kw_library,
   kw_name,
   kw_noname,
+  kw_private,
   kw_stacksize,
   kw_version,
 };

@@ -35,6 +35,8 @@ createModuleDefinitionFile(const PECOFFLinkingContext &ctx) {
       os << " NONAME";
     if (desc.isData)
       os << " DATA";
+    if (desc.isPrivate)
+      os << " PRIVATE";
     os << "\n";
   }
   os.flush();

@@ -3,4 +3,4 @@
 EXPORTS
   exportfn1 @5   ; foo
   exportfn2
-  exportfn5=exportfn6
+  exportfn5=exportfn6 PRIVATE

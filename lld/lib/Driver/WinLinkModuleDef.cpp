@@ -54,16 +54,17 @@ Token Lexer::lex() {
           "0123456789_.*~+!@#$%^&*()/");
       StringRef word = _buffer.substr(0, end);
       Kind kind = llvm::StringSwitch<Kind>(word)
-          .Case("BASE", Kind::kw_base)
-          .Case("DATA", Kind::kw_data)
-          .Case("EXPORTS", Kind::kw_exports)
-          .Case("HEAPSIZE", Kind::kw_heapsize)
-          .Case("LIBRARY", Kind::kw_library)
-          .Case("NAME", Kind::kw_name)
-          .Case("NONAME", Kind::kw_noname)
-          .Case("STACKSIZE", Kind::kw_stacksize)
-          .Case("VERSION", Kind::kw_version)
-          .Default(Kind::identifier);
+                      .Case("BASE", Kind::kw_base)
+                      .Case("DATA", Kind::kw_data)
+                      .Case("EXPORTS", Kind::kw_exports)
+                      .Case("HEAPSIZE", Kind::kw_heapsize)
+                      .Case("LIBRARY", Kind::kw_library)
+                      .Case("NAME", Kind::kw_name)
+                      .Case("NONAME", Kind::kw_noname)
+                      .Case("PRIVATE", Kind::kw_private)
+                      .Case("STACKSIZE", Kind::kw_stacksize)
+                      .Case("VERSION", Kind::kw_version)
+                      .Default(Kind::identifier);
       _buffer = (end == _buffer.npos) ? "" : _buffer.drop_front(end);
       return Token(kind, word);
     }
@@ -222,6 +223,10 @@ bool Parser::parseExport(PECOFFLinkingContext::ExportDesc &result) {
     }
     if (_tok._kind == Kind::kw_data) {
       result.isData = true;
+      continue;
+    }
+    if (_tok._kind == Kind::kw_private) {
+      result.isPrivate = true;
       continue;
     }
     ungetToken();

@@ -61,7 +61,8 @@ public:
   };
 
   struct ExportDesc {
-    ExportDesc() : ordinal(-1), noname(false), isData(false) {}
+    ExportDesc()
+        : ordinal(-1), noname(false), isData(false), isPrivate(false) {}
     bool operator<(const ExportDesc &other) const {
       return name.compare(other.name) < 0;
     }
@@ -71,6 +72,7 @@ public:
     int ordinal;
     bool noname;
     bool isData;
+    bool isPrivate;
   };
 
   /// \brief Casting support
