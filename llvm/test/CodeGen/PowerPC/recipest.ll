@@ -40,10 +40,10 @@ define double @foof(double %a, float %b) nounwind {
 ; CHECK-DAG: frsqrtes
 ; CHECK-DAG: fnmsubs
 ; CHECK: fmuls
-; CHECK: fmadds
-; CHECK: fmuls
-; CHECK: fmul
-; CHECK: blr
+; CHECK-NEXT: fmadds
+; CHECK-NEXT: fmuls
+; CHECK-NEXT: fmul
+; CHECK-NEXT: blr
 
 ; CHECK-SAFE: @foof
 ; CHECK-SAFE: fsqrts
@@ -61,14 +61,14 @@ define float @food(float %a, double %b) nounwind {
 ; CHECK-DAG: frsqrte
 ; CHECK-DAG: fnmsub
 ; CHECK: fmul
-; CHECK: fmadd
-; CHECK: fmul
-; CHECK: fmul
-; CHECK: fmadd
-; CHECK: fmul
-; CHECK: frsp
-; CHECK: fmuls
-; CHECK: blr
+; CHECK-NEXT: fmadd
+; CHECK-NEXT: fmul
+; CHECK-NEXT: fmul
+; CHECK-NEXT: fmadd
+; CHECK-NEXT: fmul
+; CHECK-NEXT: frsp
+; CHECK-NEXT: fmuls
+; CHECK-NEXT: blr
 
 ; CHECK-SAFE: @foo
 ; CHECK-SAFE: fsqrt
