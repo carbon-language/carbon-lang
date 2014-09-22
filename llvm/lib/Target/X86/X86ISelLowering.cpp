@@ -5996,7 +5996,10 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
 /// or SDValue() otherwise.
 static SDValue LowerVectorBroadcast(SDValue Op, const X86Subtarget* Subtarget,
                                     SelectionDAG &DAG) {
-  if (!Subtarget->hasFp256())
+  // VBROADCAST requires AVX.
+  // TODO: Splats could be generated for non-AVX CPUs using SSE
+  // instructions, but there's less potential gain for only 128-bit vectors.
+  if (!Subtarget->hasAVX())
     return SDValue();
 
   MVT VT = Op.getSimpleValueType();
@@ -6073,17 +6076,34 @@ static SDValue LowerVectorBroadcast(SDValue Op, const X86Subtarget* Subtarget,
     }
   }
 
+  unsigned ScalarSize = Ld.getValueType().getSizeInBits();
   bool IsGE256 = (VT.getSizeInBits() >= 256);
 
-  // Handle the broadcasting a single constant scalar from the constant pool
-  // into a vector. On Sandybridge it is still better to load a constant vector
+  // When optimizing for size, generate up to 5 extra bytes for a broadcast
+  // instruction to save 8 or more bytes of constant pool data.
+  // TODO: If multiple splats are generated to load the same constant,
+  // it may be detrimental to overall size. There needs to be a way to detect
+  // that condition to know if this is truly a size win.
+  const Function *F = DAG.getMachineFunction().getFunction();
+  bool OptForSize = F->getAttributes().
+    hasAttribute(AttributeSet::FunctionIndex, Attribute::OptimizeForSize);
+
+  // Handle broadcasting a single constant scalar from the constant pool
+  // into a vector.
+  // On Sandybridge (no AVX2), it is still better to load a constant vector
   // from the constant pool and not to broadcast it from a scalar.
-  if (ConstSplatVal && Subtarget->hasInt256()) {
+  // But override that restriction when optimizing for size.
+  // TODO: Check if splatting is recommended for other AVX-capable CPUs.
+  if (ConstSplatVal && (Subtarget->hasAVX2() || OptForSize)) {
     EVT CVT = Ld.getValueType();
     assert(!CVT.isVector() && "Must not broadcast a vector type");
-    unsigned ScalarSize = CVT.getSizeInBits();
 
-    if (ScalarSize == 32 || (IsGE256 && ScalarSize == 64)) {
+    // Splat f32, i32, v4f64, v4i64 in all cases with AVX2.
+    // For size optimization, also splat v2f64 and v2i64, and for size opt
+    // with AVX2, also splat i8 and i16.
+    // With pattern matching, the VBROADCAST node may become a VMOVDDUP.
+    if (ScalarSize == 32 || (IsGE256 && ScalarSize == 64) ||
+        (OptForSize && (ScalarSize == 64 || Subtarget->hasAVX2()))) {
       const Constant *C = nullptr;
       if (ConstantSDNode *CI = dyn_cast<ConstantSDNode>(Ld))
         C = CI->getConstantIntValue();
@@ -6104,7 +6124,6 @@ static SDValue LowerVectorBroadcast(SDValue Op, const X86Subtarget* Subtarget,
   }
 
   bool IsLoad = ISD::isNormalLoad(Ld.getNode());
-  unsigned ScalarSize = Ld.getValueType().getSizeInBits();
 
   // Handle AVX2 in-register broadcasts.
   if (!IsLoad && Subtarget->hasInt256() &&
