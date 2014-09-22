@@ -35,7 +35,6 @@ public:
   void *OpDecl;
   bool IsVarDecl;
   unsigned Length, Size, Type;
-  StringRef InternalName;
 
   void clear() {
     OpDecl = nullptr;
@@ -43,7 +42,6 @@ public:
     Length = 1;
     Size = 0;
     Type = 0;
-    InternalName = "";
   }
 };
 

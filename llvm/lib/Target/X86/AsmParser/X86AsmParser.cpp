@@ -1047,12 +1047,6 @@ std::unique_ptr<X86Operand> X86AsmParser::CreateMemForInlineAsm(
         InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_SizeDirective, Start,
                                                     /*Len=*/0, Size));
     }
-    if (!Info.InternalName.empty()) {
-      // Push a rewrite for replacing the identifier name with the internal name.
-      InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Label, Start,
-                                                  End.getPointer() - Start.getPointer(),
-                                                  Info.InternalName));
-    }
   }
 
   // When parsing inline assembly we set the base register to a non-zero value
@@ -1347,9 +1341,14 @@ bool X86AsmParser::ParseIntelIdentifier(const MCExpr *&Val,
   // If the identifier lookup was unsuccessful, assume that we are dealing with
   // a label.
   if (!Result) {
-    Identifier = SemaCallback->LookupInlineAsmLabel(Identifier, getSourceManager(), Loc, false);
-    assert(Identifier.size() && "We should have an internal name here.");
-    Info.InternalName = Identifier;
+    StringRef InternalName =
+      SemaCallback->LookupInlineAsmLabel(Identifier, getSourceManager(),
+                                         Loc, false);
+    assert(InternalName.size() && "We should have an internal name here.");
+    // Push a rewrite for replacing the identifier name with the internal name.
+    InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Label, Loc,
+                                                Identifier.size(),
+                                                InternalName));
   }
 
   // Create the symbol reference.
