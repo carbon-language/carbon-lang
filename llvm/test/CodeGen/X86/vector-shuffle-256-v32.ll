@@ -1138,11 +1138,11 @@ define <32 x i8> @shuffle_v32i8_32_32_32_32_32_32_32_32_08_08_10_10_12_12_14_14_
 ; AVX2-NEXT:    vextracti128 $1, %ymm1, %xmm4
 ; AVX2-NEXT:    vpunpcklbw {{.*}} # xmm4 = xmm4[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
 ; AVX2-NEXT:    vpshuflw {{.*}} # xmm4 = xmm4[0,0,0,0,4,5,6,7]
-; AVX2-NEXT:    vpblendw {{.*}} # xmm2 = xmm4[0,1,2,3],xmm2[4,5,6,7]
+; AVX2-NEXT:    vpblendd $-16, %xmm2, %xmm4, %xmm2
 ; AVX2-NEXT:    vpshufb %xmm3, %xmm0, %xmm0
 ; AVX2-NEXT:    vpunpcklbw {{.*}} # xmm1 = xmm1[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
 ; AVX2-NEXT:    vpshuflw {{.*}} # xmm1 = xmm1[0,0,0,0,4,5,6,7]
-; AVX2-NEXT:    vpblendw {{.*}} # xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
+; AVX2-NEXT:    vpblendd $-16, %xmm0, %xmm1, %xmm0
 ; AVX2-NEXT:    vinserti128 $1, %xmm2, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <32 x i8> %a, <32 x i8> %b, <32 x i32> <i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 8, i32 8, i32 10, i32 10, i32 12, i32 12, i32 14, i32 14, i32 48, i32 48, i32 48, i32 48, i32 48, i32 48, i32 48, i32 48, i32 24, i32 24, i32 26, i32 26, i32 28, i32 28, i32 30, i32 30>
@@ -1173,10 +1173,10 @@ define <32 x i8> @shuffle_v32i8_38_38_36_36_34_34_32_32_14_14_12_12_10_10_08_08_
 ; AVX2-NEXT:    vextracti128 $1, %ymm1, %xmm4
 ; AVX2-NEXT:    vmovdqa .LCPI50_1(%rip), %xmm5
 ; AVX2-NEXT:    vpshufb %xmm5, %xmm4, %xmm4
-; AVX2-NEXT:    vpblendw {{.*}} # xmm2 = xmm4[0,1,2,3],xmm2[4,5,6,7]
+; AVX2-NEXT:    vpblendd $-16, %xmm2, %xmm4, %xmm2
 ; AVX2-NEXT:    vpshufb %xmm3, %xmm0, %xmm0
 ; AVX2-NEXT:    vpshufb %xmm5, %xmm1, %xmm1
-; AVX2-NEXT:    vpblendw {{.*}} # xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
+; AVX2-NEXT:    vpblendd $-16, %xmm0, %xmm1, %xmm0
 ; AVX2-NEXT:    vinserti128 $1, %xmm2, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <32 x i8> %a, <32 x i8> %b, <32 x i32> <i32 38, i32 38, i32 36, i32 36, i32 34, i32 34, i32 32, i32 32, i32 14, i32 14, i32 12, i32 12, i32 10, i32 10, i32 8, i32 8, i32 54, i32 54, i32 52, i32 52, i32 50, i32 50, i32 48, i32 48, i32 30, i32 30, i32 28, i32 28, i32 26, i32 26, i32 24, i32 24>
@@ -1207,10 +1207,10 @@ define <32 x i8> @shuffle_v32i8_38_38_36_36_34_34_32_32_06_06_04_04_02_02_00_00_
 ; AVX2-NEXT:    vextracti128 $1, %ymm1, %xmm4
 ; AVX2-NEXT:    vmovdqa .LCPI51_1(%rip), %xmm5
 ; AVX2-NEXT:    vpshufb %xmm5, %xmm4, %xmm4
-; AVX2-NEXT:    vpblendw {{.*}} # xmm2 = xmm4[0,1,2,3],xmm2[4,5,6,7]
+; AVX2-NEXT:    vpblendd $-16, %xmm2, %xmm4, %xmm2
 ; AVX2-NEXT:    vpshufb %xmm3, %xmm0, %xmm0
 ; AVX2-NEXT:    vpshufb %xmm5, %xmm1, %xmm1
-; AVX2-NEXT:    vpblendw {{.*}} # xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
+; AVX2-NEXT:    vpblendd $-16, %xmm0, %xmm1, %xmm0
 ; AVX2-NEXT:    vinserti128 $1, %xmm2, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <32 x i8> %a, <32 x i8> %b, <32 x i32> <i32 38, i32 38, i32 36, i32 36, i32 34, i32 34, i32 32, i32 32, i32 6, i32 6, i32 4, i32 4, i32 2, i32 2, i32 0, i32 0, i32 54, i32 54, i32 52, i32 52, i32 50, i32 50, i32 48, i32 48, i32 22, i32 22, i32 20, i32 20, i32 18, i32 18, i32 16, i32 16>

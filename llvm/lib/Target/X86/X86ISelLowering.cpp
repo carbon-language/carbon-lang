@@ -7243,6 +7243,7 @@ static SDValue getV4X86ShuffleImm8ForMask(ArrayRef<int> Mask,
 /// that the shuffle mask is in fact a blend.
 static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
                                          SDValue V2, ArrayRef<int> Mask,
+                                         const X86Subtarget *Subtarget,
                                          SelectionDAG &DAG) {
 
   unsigned BlendMask = 0;
@@ -7264,9 +7265,27 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
     return DAG.getNode(X86ISD::BLENDI, DL, VT, V1, V2,
                        DAG.getConstant(BlendMask, MVT::i8));
 
-  case MVT::v8i16:
+  case MVT::v2i64:
   case MVT::v4i32:
-  case MVT::v2i64: {
+    // If we have AVX2 it is faster to use VPBLENDD when the shuffle fits into
+    // that instruction.
+    if (Subtarget->hasAVX2()) {
+      int Scale = 8 / VT.getVectorNumElements();
+      BlendMask = 0;
+      for (int i = 0, Size = Mask.size(); i < Size; ++i)
+        if (Mask[i] >= Size)
+          for (int j = 0; j < Scale; ++j)
+            BlendMask |= 1u << (i * Scale + j);
+
+      MVT BlendVT = VT.getSizeInBits() > 128 ? MVT::v8i32 : MVT::v4i32;
+      V1 = DAG.getNode(ISD::BITCAST, DL, BlendVT, V1);
+      V2 = DAG.getNode(ISD::BITCAST, DL, BlendVT, V2);
+      return DAG.getNode(ISD::BITCAST, DL, VT,
+                         DAG.getNode(X86ISD::BLENDI, DL, BlendVT, V1, V2,
+                                     DAG.getConstant(BlendMask, MVT::i8)));
+    }
+    // FALLTHROUGH
+  case MVT::v8i16: {
     // For integer shuffles we need to expand the mask and cast the inputs to
     // v8i16s prior to blending.
     int Scale = 8 / VT.getVectorNumElements();
@@ -7715,8 +7734,8 @@ static SDValue lowerV2F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       return Insertion;
 
   if (Subtarget->hasSSE41())
-    if (SDValue Blend =
-            lowerVectorShuffleAsBlend(DL, MVT::v2f64, V1, V2, Mask, DAG))
+    if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v2f64, V1, V2, Mask,
+                                                  Subtarget, DAG))
       return Blend;
 
   unsigned SHUFPDMask = (Mask[0] == 1) | (((Mask[1] - 2) == 1) << 1);
@@ -7769,8 +7788,8 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       return Insertion;
 
   if (Subtarget->hasSSE41())
-    if (SDValue Blend =
-            lowerVectorShuffleAsBlend(DL, MVT::v2i64, V1, V2, Mask, DAG))
+    if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v2i64, V1, V2, Mask,
+                                                  Subtarget, DAG))
       return Blend;
 
   // Try to use rotation instructions if available.
@@ -7921,8 +7940,8 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       return V;
 
   if (Subtarget->hasSSE41())
-    if (SDValue Blend =
-            lowerVectorShuffleAsBlend(DL, MVT::v4f32, V1, V2, Mask, DAG))
+    if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v4f32, V1, V2, Mask,
+                                                  Subtarget, DAG))
       return Blend;
 
   // Check for whether we can use INSERTPS to perform the blend. We only use
@@ -8026,8 +8045,8 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       return V;
 
   if (Subtarget->hasSSE41())
-    if (SDValue Blend =
-            lowerVectorShuffleAsBlend(DL, MVT::v4i32, V1, V2, Mask, DAG))
+    if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v4i32, V1, V2, Mask,
+                                                  Subtarget, DAG))
       return Blend;
 
   // Try to use rotation instructions if available.
@@ -8707,8 +8726,8 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       return V;
 
   if (Subtarget->hasSSE41())
-    if (SDValue Blend =
-            lowerVectorShuffleAsBlend(DL, MVT::v8i16, V1, V2, Mask, DAG))
+    if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v8i16, V1, V2, Mask,
+                                                  Subtarget, DAG))
       return Blend;
 
   // Try to use rotation instructions if available.
@@ -9291,8 +9310,8 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
             MVT::v4f64, DL, V1, V2, Mask, Subtarget, DAG))
       return Insertion;
 
-  if (SDValue Blend =
-          lowerVectorShuffleAsBlend(DL, MVT::v4f64, V1, V2, Mask, DAG))
+  if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v4f64, V1, V2, Mask,
+                                                Subtarget, DAG))
     return Blend;
 
   // Check if the blend happens to exactly fit that of SHUFPD.
@@ -9372,8 +9391,8 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   if (is128BitLaneCrossingShuffleMask(MVT::v8f32, Mask))
     return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
 
-  if (SDValue Blend =
-          lowerVectorShuffleAsBlend(DL, MVT::v8f32, V1, V2, Mask, DAG))
+  if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v8f32, V1, V2, Mask,
+                                                Subtarget, DAG))
     return Blend;
 
   // If the shuffle mask is repeated in each 128-bit lane, we have many more
