@@ -86,6 +86,7 @@ public:
     return *getPPCTargetMachine().getSubtargetImpl();
   }
 
+  void addIRPasses() override;
   bool addPreISel() override;
   bool addILPOpts() override;
   bool addInstSelector() override;
@@ -97,6 +98,11 @@ public:
 
 TargetPassConfig *PPCTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new PPCPassConfig(this, PM);
+}
+
+void PPCPassConfig::addIRPasses() {
+  addPass(createAtomicExpandPass(&getPPCTargetMachine()));
+  TargetPassConfig::addIRPasses();
 }
 
 bool PPCPassConfig::addPreISel() {

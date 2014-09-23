@@ -1704,8 +1704,13 @@ let isCodeGenOnly = 1 in {
   }
 }
 
-def : Pat<(int_ppc_sync), (SYNC 0)>, Requires<[IsNotBookE]>;
-def : Pat<(int_ppc_sync), (MSYNC)>, Requires<[IsBookE]>;
+// FIXME: We should use a specific flag to check for the presence of the sync
+// instruction instead of relying on IsBookE.
+// For example, the PPC A2 supports SYNC despite being a BookE processor.
+def : Pat<(int_ppc_sync),   (SYNC 0)>, Requires<[IsNotBookE]>;
+def : Pat<(int_ppc_lwsync), (SYNC 1)>, Requires<[IsNotBookE]>;
+def : Pat<(int_ppc_sync),   (MSYNC)>, Requires<[IsBookE]>;
+def : Pat<(int_ppc_lwsync), (MSYNC)>, Requires<[IsBookE]>;
 
 //===----------------------------------------------------------------------===//
 // PPC32 Arithmetic Instructions.

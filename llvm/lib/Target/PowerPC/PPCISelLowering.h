@@ -413,6 +413,11 @@ namespace llvm {
                                        const SelectionDAG &DAG,
                                        unsigned Depth = 0) const override;
 
+    Instruction* emitLeadingFence(IRBuilder<> &Builder, AtomicOrdering Ord,
+                                  bool IsStore, bool IsLoad) const override;
+    Instruction* emitTrailingFence(IRBuilder<> &Builder, AtomicOrdering Ord,
+                                   bool IsStore, bool IsLoad) const override;
+
     MachineBasicBlock *
       EmitInstrWithCustomInserter(MachineInstr *MI,
                                   MachineBasicBlock *MBB) const override;

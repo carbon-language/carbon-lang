@@ -6538,6 +6538,38 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
 //  Other Lowering Code
 //===----------------------------------------------------------------------===//
 
+static Instruction* callIntrinsic(IRBuilder<> &Builder, Intrinsic::ID Id) {
+  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
+  Function *Func = Intrinsic::getDeclaration(M, Id);
+  return Builder.CreateCall(Func);
+}
+
+// The mappings for emitLeading/TrailingFence is taken from
+// http://www.cl.cam.ac.uk/~pes20/cpp/cpp0xmappings.html
+Instruction* PPCTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
+                                         AtomicOrdering Ord, bool IsStore,
+                                         bool IsLoad) const {
+  if (Ord == SequentiallyConsistent)
+    return callIntrinsic(Builder, Intrinsic::ppc_sync);
+  else if (isAtLeastRelease(Ord))
+    return callIntrinsic(Builder, Intrinsic::ppc_lwsync);
+  else
+    return nullptr;
+}
+
+Instruction* PPCTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
+                                          AtomicOrdering Ord, bool IsStore,
+                                          bool IsLoad) const {
+  if (IsLoad && isAtLeastAcquire(Ord))
+    return callIntrinsic(Builder, Intrinsic::ppc_lwsync);
+  // FIXME: this is too conservative, a dependent branch + isync is enough.
+  // See http://www.cl.cam.ac.uk/~pes20/cpp/cpp0xmappings.html and
+  // http://www.rdrop.com/users/paulmck/scalability/paper/N2745r.2011.03.04a.html
+  // and http://www.cl.cam.ac.uk/~pes20/cppppc/ for justification.
+  else
+    return nullptr;
+}
+
 MachineBasicBlock *
 PPCTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
                                     bool is64bit, unsigned BinOpcode) const {
