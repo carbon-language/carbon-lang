@@ -263,24 +263,18 @@ uint32_t PECOFFLinkingContext::getSectionAttributes(StringRef sectionName,
   return (flags | setMask) & ~clearMask;
 }
 
-// Returns true if two export descriptors have conflicting contents,
-// e.g. different export ordinals.
-static bool exportConflicts(const PECOFFLinkingContext::ExportDesc &a,
-                            const PECOFFLinkingContext::ExportDesc &b) {
-  return (a.ordinal > 0 && b.ordinal > 0 && a.ordinal != b.ordinal) ||
-         a.noname != b.noname || a.isData != b.isData;
+// Returns true if two export descriptors are the same.
+static bool sameExportDesc(const PECOFFLinkingContext::ExportDesc &a,
+                           const PECOFFLinkingContext::ExportDesc &b) {
+  return a.ordinal == b.ordinal && a.ordinal == b.ordinal &&
+         a.noname == b.noname && a.isData == b.isData;
 }
 
 void PECOFFLinkingContext::addDllExport(ExportDesc &desc) {
   addInitialUndefinedSymbol(allocate(desc.name));
   auto existing = _dllExports.insert(desc);
-  if (existing.second)
+  if (existing.second || sameExportDesc(*existing.first, desc))
     return;
-  if (!exportConflicts(*existing.first, desc)) {
-    _dllExports.erase(existing.first);
-    _dllExports.insert(desc);
-    return;
-  }
   llvm::errs() << "Export symbol '" << desc.name
                << "' specified more than once.\n";
 }

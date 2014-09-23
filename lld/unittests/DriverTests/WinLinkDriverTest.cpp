@@ -188,13 +188,13 @@ TEST_F(WinLinkParserTest, ExportWithOptions) {
 
 TEST_F(WinLinkParserTest, ExportDuplicateExports) {
   EXPECT_TRUE(
-      parse("link.exe", "/export:foo,@1", "/export:foo,@2", "a.out", nullptr));
+      parse("link.exe", "/export:foo", "/export:foo,@2", "a.out", nullptr));
   const std::set<PECOFFLinkingContext::ExportDesc> &exports =
       _context.getDllExports();
   EXPECT_EQ(1U, exports.size());
   auto it = exports.begin();
   EXPECT_EQ("_foo", it->name);
-  EXPECT_EQ(1, it->ordinal);
+  EXPECT_EQ(-1, it->ordinal);
 }
 
 TEST_F(WinLinkParserTest, ExportDuplicateOrdinals) {

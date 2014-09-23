@@ -10,7 +10,7 @@ CHECK1-NOT: Export symbol '_exportfn1' specified more than once.
 # RUN:   /export:exportfn1 /export:exportfn1,@5 -- %t.obj 2> %t2.log
 # RUN: echo >> %t2.log
 # RUN: FileCheck -check-prefix=CHECK2 %s < %t2.log
-CHECK2-NOT: Export symbol '_exportfn1' specified more than once.
+CHECK2: Export symbol '_exportfn1' specified more than once.
 
 # RUN: lld -flavor link /out:%t3.dll /dll /entry:init \
 # RUN:   /export:exportfn1,@8 /export:exportfn1,@5 -- %t.obj 2> %t3.log
