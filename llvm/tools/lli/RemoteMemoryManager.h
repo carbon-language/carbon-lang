@@ -18,14 +18,14 @@
 #include "RemoteTarget.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ExecutionEngine/JITMemoryManager.h"
+#include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Memory.h"
 #include <utility>
 
 namespace llvm {
 
-class RemoteMemoryManager : public JITMemoryManager {
+class RemoteMemoryManager : public RTDyldMemoryManager {
 public:
   // Notice that this structure takes ownership of the memory allocated.
   struct Allocation {
@@ -93,22 +93,6 @@ public:
 
   // This is a non-interface function used by lli
   void setRemoteTarget(RemoteTarget *T) { Target = T; }
-
-  // The following obsolete JITMemoryManager calls are stubbed out for
-  // this model.
-  void setMemoryWritable() override;
-  void setMemoryExecutable() override;
-  void setPoisonMemory(bool poison) override;
-  void AllocateGOT() override;
-  uint8_t *getGOTBase() const override;
-  uint8_t *startFunctionBody(const Function *F, uintptr_t &ActualSize) override;
-  uint8_t *allocateStub(const GlobalValue* F, unsigned StubSize,
-                        unsigned Alignment) override;
-  void endFunctionBody(const Function *F, uint8_t *FunctionStart,
-                       uint8_t *FunctionEnd) override;
-  uint8_t *allocateSpace(intptr_t Size, unsigned Alignment) override;
-  uint8_t *allocateGlobal(uintptr_t Size, unsigned Alignment) override;
-  void deallocateFunctionBody(void *Body) override;
 };
 
 } // end namespace llvm

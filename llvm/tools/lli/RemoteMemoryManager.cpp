@@ -172,36 +172,3 @@ bool RemoteMemoryManager::finalizeMemory(std::string *ErrMsg) {
 
   return false;
 }
-
-void RemoteMemoryManager::setMemoryWritable() { llvm_unreachable("Unexpected!"); }
-void RemoteMemoryManager::setMemoryExecutable() { llvm_unreachable("Unexpected!"); }
-void RemoteMemoryManager::setPoisonMemory(bool poison) { llvm_unreachable("Unexpected!"); }
-void RemoteMemoryManager::AllocateGOT() { llvm_unreachable("Unexpected!"); }
-uint8_t *RemoteMemoryManager::getGOTBase() const {
-  llvm_unreachable("Unexpected!");
-  return nullptr;
-}
-uint8_t *RemoteMemoryManager::startFunctionBody(const Function *F, uintptr_t &ActualSize){
-  llvm_unreachable("Unexpected!");
-  return nullptr;
-}
-uint8_t *RemoteMemoryManager::allocateStub(const GlobalValue* F, unsigned StubSize,
-                                              unsigned Alignment) {
-  llvm_unreachable("Unexpected!");
-  return nullptr;
-}
-void RemoteMemoryManager::endFunctionBody(const Function *F, uint8_t *FunctionStart,
-                                             uint8_t *FunctionEnd) {
-  llvm_unreachable("Unexpected!");
-}
-uint8_t *RemoteMemoryManager::allocateSpace(intptr_t Size, unsigned Alignment) {
-  llvm_unreachable("Unexpected!");
-  return nullptr;
-}
-uint8_t *RemoteMemoryManager::allocateGlobal(uintptr_t Size, unsigned Alignment) {
-  llvm_unreachable("Unexpected!");
-  return nullptr;
-}
-void RemoteMemoryManager::deallocateFunctionBody(void *Body) {
-  llvm_unreachable("Unexpected!");
-}

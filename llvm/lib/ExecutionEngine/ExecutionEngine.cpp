@@ -17,6 +17,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
+#include "llvm/ExecutionEngine/ObjectBuffer.h"
 #include "llvm/ExecutionEngine/ObjectCache.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -401,7 +402,6 @@ void EngineBuilder::InitEngine() {
   ErrorStr = nullptr;
   OptLevel = CodeGenOpt::Default;
   MCJMM = nullptr;
-  JMM = nullptr;
   Options = TargetOptions();
   RelocModel = Reloc::Default;
   CMModel = CodeModel::JITDefault;
@@ -422,13 +422,11 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
   // to the function tells DynamicLibrary to load the program, not a library.
   if (sys::DynamicLibrary::LoadLibraryPermanently(nullptr, ErrorStr))
     return nullptr;
-
-  assert(!(JMM && MCJMM));
   
   // If the user specified a memory manager but didn't specify which engine to
   // create, we assume they only want the JIT, and we fail if they only want
   // the interpreter.
-  if (JMM || MCJMM) {
+  if (MCJMM) {
     if (WhichEngine & EngineKind::JIT)
       WhichEngine = EngineKind::JIT;
     else {
@@ -450,8 +448,8 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
 
     ExecutionEngine *EE = nullptr;
     if (ExecutionEngine::MCJITCtor)
-      EE = ExecutionEngine::MCJITCtor(std::move(M), ErrorStr,
-                                      MCJMM ? MCJMM : JMM, std::move(TheTM));
+      EE = ExecutionEngine::MCJITCtor(std::move(M), ErrorStr, MCJMM,
+                                      std::move(TheTM));
     if (EE) {
       EE->setVerifyModules(VerifyModules);
       return EE;
