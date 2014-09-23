@@ -535,8 +535,8 @@ void ELFAArch64AsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
   // store fixups in .eh_frame section in big endian order
   if (!IsLittleEndian && Fixup.getKind() == FK_Data_4) {
     const MCSection *Sec = Fixup.getValue()->FindAssociatedSection();
-    const MCSectionELF *SecELF = static_cast<const MCSectionELF *>(Sec);
-    if (SecELF->getSectionName() == ".eh_frame")
+    const MCSectionELF *SecELF = dyn_cast_or_null<const MCSectionELF>(Sec);
+    if (SecELF && SecELF->getSectionName() == ".eh_frame")
       Value = ByteSwap_32(unsigned(Value));
   }
   AArch64AsmBackend::applyFixup (Fixup, Data, DataSize, Value, IsPCRel);
