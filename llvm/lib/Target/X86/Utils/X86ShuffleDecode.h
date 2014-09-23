@@ -84,6 +84,10 @@ void DecodeVPERM2X128Mask(MVT VT, unsigned Imm,
 /// No VT provided since it only works on 256-bit, 4 element vectors.
 void DecodeVPERMMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
+/// \brief Decode a VPERMILP variable mask from an IR-level vector constant.
+void DecodeVPERMILPMask(const ConstantDataSequential *C,
+                        SmallVectorImpl<int> &ShuffleMask);
+
 } // llvm namespace
 
 #endif

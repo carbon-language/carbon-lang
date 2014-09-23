@@ -9395,26 +9395,15 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   }
 
   // If we have a single input shuffle with different shuffle patterns in the
-  // two 128-bit lanes, just do two shuffles and blend them together. This will
-  // be faster than extracting the high 128-bit lane, shuffling it, and
-  // re-inserting it. Especially on newer processors where blending is *the*
-  // fastest operation.
+  // two 128-bit lanes use the variable mask to VPERMILPS.
   if (isSingleInputShuffleMask(Mask)) {
-    int LoMask[4] = {Mask[0], Mask[1], Mask[2], Mask[3]};
-    int HiMask[4] = {Mask[4], Mask[5], Mask[6], Mask[7]};
-    for (int &M : HiMask)
-      if (M >= 0)
-        M -= 4;
-    SDValue Lo = V1, Hi = V1;
-    if (!isNoopShuffleMask(LoMask))
-      Lo = DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v8f32, Lo,
-                       getV4X86ShuffleImm8ForMask(LoMask, DAG));
-    if (!isNoopShuffleMask(HiMask))
-      Hi = DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v8f32, Hi,
-                       getV4X86ShuffleImm8ForMask(HiMask, DAG));
-    unsigned BlendMask = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7;
-    return DAG.getNode(X86ISD::BLENDI, DL, MVT::v8f32, Lo, Hi,
-                       DAG.getConstant(BlendMask, MVT::i8));
+    SDValue VPermMask[8];
+    for (int i = 0; i < 8; ++i)
+      VPermMask[i] = Mask[i] < 0 ? DAG.getUNDEF(MVT::i32)
+                                 : DAG.getConstant(Mask[i], MVT::i32);
+    return DAG.getNode(
+        X86ISD::VPERMILPV, DL, MVT::v8f32, V1,
+        DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i32, VPermMask));
   }
 
   // Shuffle the input elements into the desired positions in V1 and V2 and

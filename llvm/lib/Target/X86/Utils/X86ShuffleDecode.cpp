@@ -287,4 +287,27 @@ void DecodeVPERMMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
   }
 }
 
+void DecodeVPERMILPMask(const ConstantDataSequential *C,
+                        SmallVectorImpl<int> &ShuffleMask) {
+  Type *MaskTy = C->getType();
+  assert(MaskTy->isVectorTy() && "Expected a vector constant mask!");
+  assert(MaskTy->getVectorElementType()->isIntegerTy() &&
+         "Expected integer constant mask elements!");
+  int ElementBits = MaskTy->getScalarSizeInBits();
+  int NumElements = MaskTy->getVectorNumElements();
+  assert((NumElements == 2 || NumElements == 4 || NumElements == 8) &&
+         "Unexpected number of vector elements.");
+  assert((unsigned)NumElements == C->getNumElements() &&
+         "Constant mask has a different number of elements!");
+
+  ShuffleMask.reserve(NumElements);
+  for (int i = 0; i < NumElements; ++i) {
+    int Base = (i * ElementBits / 128) * (128 / ElementBits);
+    uint64_t Element = C->getElementAsInteger(i);
+    // Only the least significant 2 bits of the integer are used.
+    int Index = Base + (Element & 0x3);
+    ShuffleMask.push_back(Index);
+  }
+}
+
 } // llvm namespace

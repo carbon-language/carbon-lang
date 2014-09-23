@@ -8418,6 +8418,15 @@ let ExeDomain = SSEPackedDouble in {
 }
 
 let Predicates = [HasAVX] in {
+def : Pat<(v8f32 (X86VPermilpv VR256:$src1, (v8i32 VR256:$src2))),
+          (VPERMILPSYrr VR256:$src1, VR256:$src2)>;
+def : Pat<(v8f32 (X86VPermilpv VR256:$src1, (bc_v8i32 (loadv4i64 addr:$src2)))),
+          (VPERMILPSYrm VR256:$src1, addr:$src2)>;
+def : Pat<(v4f64 (X86VPermilpv VR256:$src1, (v4i64 VR256:$src2))),
+          (VPERMILPDYrr VR256:$src1, VR256:$src2)>;
+def : Pat<(v4f64 (X86VPermilpv VR256:$src1, (loadv4i64 addr:$src2))),
+          (VPERMILPDYrm VR256:$src1, addr:$src2)>;
+
 def : Pat<(v8i32 (X86VPermilpi VR256:$src1, (i8 imm:$imm))),
           (VPERMILPSYri VR256:$src1, imm:$imm)>;
 def : Pat<(v4i64 (X86VPermilpi VR256:$src1, (i8 imm:$imm))),
@@ -8427,6 +8436,15 @@ def : Pat<(v8i32 (X86VPermilpi (bc_v8i32 (loadv4i64 addr:$src1)),
           (VPERMILPSYmi addr:$src1, imm:$imm)>;
 def : Pat<(v4i64 (X86VPermilpi (loadv4i64 addr:$src1), (i8 imm:$imm))),
           (VPERMILPDYmi addr:$src1, imm:$imm)>;
+
+def : Pat<(v4f32 (X86VPermilpv VR128:$src1, (v4i32 VR128:$src2))),
+          (VPERMILPSrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v4f32 (X86VPermilpv VR128:$src1, (bc_v4i32 (loadv2i64 addr:$src2)))),
+          (VPERMILPSrm VR128:$src1, addr:$src2)>;
+def : Pat<(v2f64 (X86VPermilpv VR128:$src1, (v2i64 VR128:$src2))),
+          (VPERMILPDrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v2f64 (X86VPermilpv VR128:$src1, (loadv2i64 addr:$src2))),
+          (VPERMILPDrm VR128:$src1, addr:$src2)>;
 
 def : Pat<(v2i64 (X86VPermilpi VR128:$src1, (i8 imm:$imm))),
           (VPERMILPDri VR128:$src1, imm:$imm)>;
