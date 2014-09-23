@@ -68,12 +68,21 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
                             unsigned Channel) const;
 
   /// \returns True if operands defined with this register class can accept
-  /// inline immediates.
-  bool regClassCanUseImmediate(int RCID) const;
+  /// a literal constant (i.e. any 32-bit immediate).
+  bool regClassCanUseLiteralConstant(int RCID) const;
 
   /// \returns True if operands defined with this register class can accept
-  /// inline immediates.
-  bool regClassCanUseImmediate(const TargetRegisterClass *RC) const;
+  /// a literal constant (i.e. any 32-bit immediate).
+  bool regClassCanUseLiteralConstant(const TargetRegisterClass *RC) const;
+
+  /// \returns True if operands defined with this register class can accept
+  /// an inline constant. i.e. An integer value in the range (-16, 64) or
+  /// -4.0f, -2.0f, -1.0f, -0.5f, 0.0f, 0.5f, 1.0f, 2.0f, 4.0f. 
+  bool regClassCanUseInlineConstant(int RCID) const;
+
+  /// \returns True if operands defined with this register class can accept
+  /// a literal constant. i.e. A value in the range (-16, 64).
+  bool regClassCanUseInlineConstant(const TargetRegisterClass *RC) const;
 
   enum PreloadedValue {
     TGID_X,

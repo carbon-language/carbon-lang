@@ -747,7 +747,7 @@ bool SIInstrInfo::isImmOperandLegal(const MachineInstr *MI, unsigned OpNo,
                                  const MachineOperand &MO) const {
   const MCOperandInfo &OpInfo = get(MI->getOpcode()).OpInfo[OpNo];
 
-  assert(MO.isImm() || MO.isFPImm());
+  assert(MO.isImm() || MO.isFPImm() || MO.isTargetIndex() || MO.isFI());
 
   if (OpInfo.OperandType == MCOI::OPERAND_IMMEDIATE)
     return true;
@@ -755,7 +755,10 @@ bool SIInstrInfo::isImmOperandLegal(const MachineInstr *MI, unsigned OpNo,
   if (OpInfo.RegClass < 0)
     return false;
 
-  return RI.regClassCanUseImmediate(OpInfo.RegClass);
+  if (isLiteralConstant(MO))
+    return RI.regClassCanUseLiteralConstant(OpInfo.RegClass);
+
+  return RI.regClassCanUseInlineConstant(OpInfo.RegClass);
 }
 
 bool SIInstrInfo::canFoldOffset(unsigned OffsetSize, unsigned AS) {
@@ -792,9 +795,41 @@ bool SIInstrInfo::hasModifiers(unsigned Opcode) const {
                                     AMDGPU::OpName::src0_modifiers) != -1;
 }
 
+bool SIInstrInfo::usesConstantBus(const MachineRegisterInfo &MRI,
+                                  const MachineOperand &MO) const {
+  // Literal constants use the constant bus.
+  if (isLiteralConstant(MO))
+    return true;
+
+  if (!MO.isReg() || !MO.isUse())
+    return false;
+
+  if (TargetRegisterInfo::isVirtualRegister(MO.getReg()))
+    return RI.isSGPRClass(MRI.getRegClass(MO.getReg()));
+
+  // FLAT_SCR is just an SGPR pair.
+  if (!MO.isImplicit() && (MO.getReg() == AMDGPU::FLAT_SCR))
+    return true;
+
+  // EXEC register uses the constant bus.
+  if (!MO.isImplicit() && MO.getReg() == AMDGPU::EXEC)
+    return true;
+
+  // SGPRs use the constant bus
+  if (MO.getReg() == AMDGPU::M0 || MO.getReg() == AMDGPU::VCC ||
+      (!MO.isImplicit() &&
+      (AMDGPU::SGPR_32RegClass.contains(MO.getReg()) ||
+       AMDGPU::SGPR_64RegClass.contains(MO.getReg())))) {
+    return true;
+  }
+
+  return false;
+}
+
 bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
                                     StringRef &ErrInfo) const {
   uint16_t Opcode = MI->getOpcode();
+  const MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
   int Src0Idx = AMDGPU::getNamedOperandIdx(Opcode, AMDGPU::OpName::src0);
   int Src1Idx = AMDGPU::getNamedOperandIdx(Opcode, AMDGPU::OpName::src1);
   int Src2Idx = AMDGPU::getNamedOperandIdx(Opcode, AMDGPU::OpName::src2);
@@ -811,19 +846,12 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
   for (int i = 0, e = Desc.getNumOperands(); i != e; ++i) {
     switch (Desc.OpInfo[i].OperandType) {
     case MCOI::OPERAND_REGISTER: {
-      int RegClass = Desc.OpInfo[i].RegClass;
-      if (!RI.regClassCanUseImmediate(RegClass) &&
-          (MI->getOperand(i).isImm() || MI->getOperand(i).isFPImm())) {
-        // Handle some special cases:
-        // Src0 can of VOP1, VOP2, VOPC can be an immediate no matter what
-        // the register class.
-        if (i != Src0Idx || (!isVOP1(Opcode) && !isVOP2(Opcode) &&
-                                  !isVOPC(Opcode))) {
-          ErrInfo = "Expected register, but got immediate";
+      if ((MI->getOperand(i).isImm() || MI->getOperand(i).isFPImm()) &&
+          !isImmOperandLegal(MI, i, MI->getOperand(i))) {
+          ErrInfo = "Illegal immediate value for operand.";
           return false;
         }
       }
-    }
       break;
     case MCOI::OPERAND_IMMEDIATE:
       // Check if this operand is an immediate.
@@ -863,31 +891,15 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
     unsigned SGPRUsed = AMDGPU::NoRegister;
     for (int i = 0, e = MI->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = MI->getOperand(i);
-      if (MO.isReg() && MO.isUse() &&
-          !TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
-
-        // EXEC register uses the constant bus.
-        if (!MO.isImplicit() && MO.getReg() == AMDGPU::EXEC)
-          ++ConstantBusCount;
-
-        // FLAT_SCR is just an SGPR pair.
-        if (!MO.isImplicit() && (MO.getReg() == AMDGPU::FLAT_SCR))
-          ++ConstantBusCount;
-
-        // SGPRs use the constant bus
-        if (MO.getReg() == AMDGPU::M0 || MO.getReg() == AMDGPU::VCC ||
-            (!MO.isImplicit() &&
-            (AMDGPU::SGPR_32RegClass.contains(MO.getReg()) ||
-            AMDGPU::SGPR_64RegClass.contains(MO.getReg())))) {
-          if (SGPRUsed != MO.getReg()) {
+      if (usesConstantBus(MRI, MO)) {
+        if (MO.isReg()) {
+          if (MO.getReg() != SGPRUsed)
             ++ConstantBusCount;
-            SGPRUsed = MO.getReg();
-          }
+          SGPRUsed = MO.getReg();
+        } else {
+          ++ConstantBusCount;
         }
       }
-      // Literal constants use the constant bus.
-      if (isLiteralConstant(MO))
-        ++ConstantBusCount;
     }
     if (ConstantBusCount > 1) {
       ErrInfo = "VOP* instruction uses the constant bus more than once";
@@ -1136,6 +1148,18 @@ bool SIInstrInfo::isOperandLegal(const MachineInstr *MI, unsigned OpIdx,
   if (!MO)
     MO = &MI->getOperand(OpIdx);
 
+  if (usesConstantBus(MRI, *MO)) {
+    unsigned SGPRUsed = MO->isReg() ? MO->getReg() : AMDGPU::NoRegister;
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      if (i == OpIdx)
+        continue;
+      if (usesConstantBus(MRI, MI->getOperand(i)) &&
+          MI->getOperand(i).isReg() && MI->getOperand(i).getReg() != SGPRUsed) {
+        return false;
+      }
+    }
+  }
+
   if (MO->isReg()) {
     assert(DefinedRC);
     const TargetRegisterClass *RC = MRI.getRegClass(MO->getReg());
@@ -1151,7 +1175,7 @@ bool SIInstrInfo::isOperandLegal(const MachineInstr *MI, unsigned OpIdx,
     return true;
   }
 
-  return RI.regClassCanUseImmediate(DefinedRC);
+  return isImmOperandLegal(MI, OpIdx, *MO);
 }
 
 void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {

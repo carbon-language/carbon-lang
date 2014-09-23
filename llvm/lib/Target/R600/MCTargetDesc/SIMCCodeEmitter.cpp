@@ -85,21 +85,13 @@ MCCodeEmitter *llvm::createSIMCCodeEmitter(const MCInstrInfo &MCII,
 
 bool SIMCCodeEmitter::isSrcOperand(const MCInstrDesc &Desc,
                                    unsigned OpNo) const {
-  // FIXME: We need a better way to figure out which operands can be immediate
-  // values
-  //
-  // Some VOP* instructions like ADDC use VReg32 as the register class
-  // for source 0, because they read VCC and can't take an SGPR as an
-  // argument due to constant bus restrictions.
-  if (OpNo == 1 && (Desc.TSFlags & (SIInstrFlags::VOP1 | SIInstrFlags::VOP2 |
-                                    SIInstrFlags::VOPC)))
-    return true;
-
   unsigned RegClass = Desc.OpInfo[OpNo].RegClass;
   return (AMDGPU::SSrc_32RegClassID == RegClass) ||
          (AMDGPU::SSrc_64RegClassID == RegClass) ||
          (AMDGPU::VSrc_32RegClassID == RegClass) ||
-         (AMDGPU::VSrc_64RegClassID == RegClass);
+         (AMDGPU::VSrc_64RegClassID == RegClass) ||
+	 (AMDGPU::VCSrc_32RegClassID == RegClass) ||
+	 (AMDGPU::VCSrc_64RegClassID == RegClass);
 }
 
 uint32_t SIMCCodeEmitter::getLitEncoding(const MCOperand &MO) const {

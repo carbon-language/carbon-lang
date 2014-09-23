@@ -1498,8 +1498,14 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
 
 /// \brief Test if RegClass is one of the VSrc classes
 static bool isVSrc(unsigned RegClass) {
-  return AMDGPU::VSrc_32RegClassID == RegClass ||
-         AMDGPU::VSrc_64RegClassID == RegClass;
+  switch(RegClass) {
+    default: return false;
+    case AMDGPU::VSrc_32RegClassID:
+    case AMDGPU::VCSrc_32RegClassID:
+    case AMDGPU::VSrc_64RegClassID:
+    case AMDGPU::VCSrc_64RegClassID:
+      return true;
+  }
 }
 
 /// \brief Test if RegClass is one of the SSrc classes
@@ -1611,10 +1617,9 @@ const TargetRegisterClass *SITargetLowering::getRegClassForNode(
     // If the COPY_TO_REGCLASS instruction is copying to a VSrc register
     // class, then the register class for the value could be either a
     // VReg or and SReg.  In order to get a more accurate
-    if (OpClassID == AMDGPU::VSrc_32RegClassID ||
-        OpClassID == AMDGPU::VSrc_64RegClassID) {
+    if (isVSrc(OpClassID))
       return getRegClassForNode(DAG, Op.getOperand(0));
-    }
+
     return TRI.getRegClass(OpClassID);
   case AMDGPU::EXTRACT_SUBREG: {
     int SubIdx = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
@@ -1648,13 +1653,22 @@ void SITargetLowering::ensureSRegLimit(SelectionDAG &DAG, SDValue &Operand,
                                        unsigned RegClass,
                                        bool &ScalarSlotUsed) const {
 
-  // First map the operands register class to a destination class
-  if (RegClass == AMDGPU::VSrc_32RegClassID)
-    RegClass = AMDGPU::VReg_32RegClassID;
-  else if (RegClass == AMDGPU::VSrc_64RegClassID)
-    RegClass = AMDGPU::VReg_64RegClassID;
-  else
+  if (!isVSrc(RegClass))
     return;
+
+  // First map the operands register class to a destination class
+  switch (RegClass) {
+    case AMDGPU::VSrc_32RegClassID:
+    case AMDGPU::VCSrc_32RegClassID:
+      RegClass = AMDGPU::VReg_32RegClassID;
+      break;
+    case AMDGPU::VSrc_64RegClassID:
+    case AMDGPU::VCSrc_64RegClassID:
+      RegClass = AMDGPU::VReg_64RegClassID;
+      break;
+   default:
+    llvm_unreachable("Unknown vsrc reg class");
+  }
 
   // Nothing to do if they fit naturally
   if (fitsRegClass(DAG, Operand, RegClass))
@@ -1744,6 +1758,15 @@ SDNode *SITargetLowering::legalizeOperands(MachineSDNode *Node,
 
   // No scalar allowed when we have both VSrc and SSrc
   bool ScalarSlotUsed = HaveVSrc && HaveSSrc;
+
+  // If this instruction has an implicit use of VCC, then it can't use the
+  // constant bus.
+  for (unsigned i = 0, e = Desc->getNumImplicitUses(); i != e; ++i) {
+    if (Desc->ImplicitUses[i] == AMDGPU::VCC) {
+      ScalarSlotUsed = true;
+      break;
+    }
+  }
 
   // Second go over the operands and try to fold them
   std::vector<SDValue> Ops;

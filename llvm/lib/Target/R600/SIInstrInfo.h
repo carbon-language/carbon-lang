@@ -132,6 +132,10 @@ public:
   /// This function will return false if you pass it a 32-bit instruction.
   bool hasVALU32BitEncoding(unsigned Opcode) const;
 
+  /// \brief Returns true if this operand uses the constant bus.
+  bool usesConstantBus(const MachineRegisterInfo &MRI,
+                       const MachineOperand &MO) const;
+
   /// \brief Return true if this instruction has any modifiers.
   ///  e.g. src[012]_mod, omod, clamp.
   bool hasModifiers(unsigned Opcode) const;

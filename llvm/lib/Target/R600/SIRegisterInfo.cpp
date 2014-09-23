@@ -275,7 +275,7 @@ unsigned SIRegisterInfo::getPhysRegSubReg(unsigned Reg,
   return SubRC->getRegister(Index + Channel);
 }
 
-bool SIRegisterInfo::regClassCanUseImmediate(int RCID) const {
+bool SIRegisterInfo::regClassCanUseLiteralConstant(int RCID) const {
   switch (RCID) {
   default: return false;
   case AMDGPU::SSrc_32RegClassID:
@@ -286,10 +286,28 @@ bool SIRegisterInfo::regClassCanUseImmediate(int RCID) const {
   }
 }
 
-bool SIRegisterInfo::regClassCanUseImmediate(
+bool SIRegisterInfo::regClassCanUseLiteralConstant(
                              const TargetRegisterClass *RC) const {
-  return regClassCanUseImmediate(RC->getID());
+  return regClassCanUseLiteralConstant(RC->getID());
 }
+
+bool SIRegisterInfo::regClassCanUseInlineConstant(int RCID) const {
+  if (regClassCanUseLiteralConstant(RCID))
+    return true;
+
+  switch (RCID) {
+  default: return false;
+  case AMDGPU::VCSrc_32RegClassID:
+  case AMDGPU::VCSrc_64RegClassID:
+    return true;
+  }
+}
+
+bool SIRegisterInfo::regClassCanUseInlineConstant(
+                            const TargetRegisterClass *RC) const {
+  return regClassCanUseInlineConstant(RC->getID());
+}
+
 
 unsigned SIRegisterInfo::getPreloadedValue(const MachineFunction &MF,
                                            enum PreloadedValue Value) const {
