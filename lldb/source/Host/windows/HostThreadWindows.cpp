@@ -36,21 +36,21 @@ Error
 HostThreadWindows::Join(lldb::thread_result_t *result)
 {
     Error error;
-    if (WAIT_OBJECT_0 != ::WaitForSingleObject(m_thread, INFINITE))
+    if (IsJoinable())
     {
-        error.SetError(::GetLastError(), lldb::eErrorTypeWin32);
-        return error;
+        DWORD wait_result = ::WaitForSingleObject(m_thread, INFINITE);
+        if (WAIT_OBJECT_0 == wait_result && result)
+        {
+            DWORD exit_code = 0;
+            if (!::GetExitCodeThread(m_thread, &exit_code))
+                *result = 0;
+            *result = exit_code;
+        }
+        else if (WAIT_OBJECT_0 != wait_result)
+            error.SetError(::GetLastError(), eErrorTypeWin32);
     }
-
-    m_state = (m_state == eThreadStateCancelling) ? eThreadStateCancelled : eThreadStateExited;
-
-    if (result)
-    {
-        DWORD dword_result = 0;
-        if (!::GetExitCodeThread(m_thread, &dword_result))
-            *result = 0;
-        *result = dword_result;
-    }
+    else
+        error.SetError(ERROR_INVALID_HANDLE, eErrorTypeWin32);
     return error;
 }
 

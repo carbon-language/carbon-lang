@@ -19,28 +19,14 @@ using namespace lldb_private;
 
 HostNativeThreadBase::HostNativeThreadBase()
     : m_thread(LLDB_INVALID_HOST_THREAD)
-    , m_state(eThreadStateInvalid)
     , m_result(0)
 {
 }
 
 HostNativeThreadBase::HostNativeThreadBase(thread_t thread)
     : m_thread(thread)
-    , m_state((thread == LLDB_INVALID_HOST_THREAD) ? eThreadStateInvalid : eThreadStateRunning)
     , m_result(0)
 {
-}
-
-void
-HostNativeThreadBase::SetState(ThreadState state)
-{
-    m_state = state;
-}
-
-ThreadState
-HostNativeThreadBase::GetState() const
-{
-    return m_state;
 }
 
 lldb::thread_t
@@ -55,11 +41,16 @@ HostNativeThreadBase::GetResult() const
     return m_result;
 }
 
+bool
+HostNativeThreadBase::IsJoinable() const
+{
+    return m_thread != LLDB_INVALID_HOST_THREAD;
+}
+
 void
 HostNativeThreadBase::Reset()
 {
     m_thread = LLDB_INVALID_HOST_THREAD;
-    m_state = eThreadStateInvalid;
     m_result = 0;
 }
 
@@ -68,7 +59,6 @@ HostNativeThreadBase::Release()
 {
     lldb::thread_t result = m_thread;
     m_thread = LLDB_INVALID_HOST_THREAD;
-    m_state = eThreadStateInvalid;
     m_result = 0;
 
     return result;

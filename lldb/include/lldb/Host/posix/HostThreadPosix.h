@@ -1,4 +1,4 @@
-//===-- HostThreadWindows.h -------------------------------------*- C++ -*-===//
+//===-- HostThreadPosix.h -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

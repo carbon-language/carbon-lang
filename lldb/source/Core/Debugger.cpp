@@ -3336,19 +3336,18 @@ Debugger::EventHandlerThread (lldb::thread_arg_t arg)
 bool
 Debugger::StartEventHandlerThread()
 {
-    if (m_event_handler_thread.GetState() != eThreadStateRunning)
+    if (!m_event_handler_thread.IsJoinable())
         m_event_handler_thread = ThreadLauncher::LaunchThread("lldb.debugger.event-handler", EventHandlerThread, this, NULL);
-    return m_event_handler_thread.GetState() == eThreadStateRunning;
+    return m_event_handler_thread.IsJoinable();
 }
 
 void
 Debugger::StopEventHandlerThread()
 {
-    if (m_event_handler_thread.GetState() == eThreadStateRunning)
+    if (m_event_handler_thread.IsJoinable())
     {
         GetCommandInterpreter().BroadcastEvent(CommandInterpreter::eBroadcastBitQuitCommandReceived);
         m_event_handler_thread.Join(nullptr);
-        m_event_handler_thread.Reset();
     }
 }
 
@@ -3365,20 +3364,19 @@ Debugger::IOHandlerThread (lldb::thread_arg_t arg)
 bool
 Debugger::StartIOHandlerThread()
 {
-    if (m_io_handler_thread.GetState() != eThreadStateRunning)
+    if (!m_io_handler_thread.IsJoinable())
         m_io_handler_thread = ThreadLauncher::LaunchThread("lldb.debugger.io-handler", IOHandlerThread, this, NULL);
-    return m_io_handler_thread.GetState() == eThreadStateRunning;
+    return m_io_handler_thread.IsJoinable();
 }
 
 void
 Debugger::StopIOHandlerThread()
 {
-    if (m_io_handler_thread.GetState() == eThreadStateRunning)
+    if (m_io_handler_thread.IsJoinable())
     {
         if (m_input_file_sp)
             m_input_file_sp->GetFile().Close();
         m_io_handler_thread.Join(nullptr);
-        m_io_handler_thread.Reset();
     }
 }
 

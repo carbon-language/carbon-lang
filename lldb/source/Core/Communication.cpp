@@ -233,7 +233,7 @@ Communication::StartReadThread (Error *error_ptr)
     if (error_ptr)
         error_ptr->Clear();
 
-    if (m_read_thread.GetState() == eThreadStateRunning)
+    if (m_read_thread.IsJoinable())
         return true;
 
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
@@ -245,7 +245,7 @@ Communication::StartReadThread (Error *error_ptr)
 
     m_read_thread_enabled = true;
     m_read_thread = ThreadLauncher::LaunchThread(thread_name, Communication::ReadThread, this, error_ptr);
-    if (m_read_thread.GetState() != eThreadStateRunning)
+    if (!m_read_thread.IsJoinable())
         m_read_thread_enabled = false;
     return m_read_thread_enabled;
 }
@@ -253,7 +253,7 @@ Communication::StartReadThread (Error *error_ptr)
 bool
 Communication::StopReadThread (Error *error_ptr)
 {
-    if (m_read_thread.GetState() != eThreadStateRunning)
+    if (!m_read_thread.IsJoinable())
         return true;
 
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
@@ -266,18 +266,16 @@ Communication::StopReadThread (Error *error_ptr)
     // error = m_read_thread.Cancel();
 
     Error error = m_read_thread.Join(nullptr);
-    m_read_thread.Reset();
     return error.Success();
 }
 
 bool
 Communication::JoinReadThread (Error *error_ptr)
 {
-    if (m_read_thread.GetState() != eThreadStateRunning)
+    if (!m_read_thread.IsJoinable())
         return true;
 
     Error error = m_read_thread.Join(nullptr);
-    m_read_thread.Reset();
     return error.Success();
 }
 

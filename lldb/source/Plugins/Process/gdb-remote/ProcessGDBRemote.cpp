@@ -1432,7 +1432,7 @@ ProcessGDBRemote::DoResume ()
             TimeValue timeout;
             timeout = TimeValue::Now();
             timeout.OffsetWithSeconds (5);
-            if (m_async_thread.GetState() != eThreadStateRunning)
+            if (!m_async_thread.IsJoinable())
             {
                 error.SetErrorString ("Trying to resume but the async thread is dead.");
                 if (log)
@@ -2891,22 +2891,17 @@ ProcessGDBRemote::StartAsyncThread ()
         log->Printf ("ProcessGDBRemote::%s ()", __FUNCTION__);
     
     Mutex::Locker start_locker(m_async_thread_state_mutex);
-    if (m_async_thread.GetState() != eThreadStateRunning)
+    if (!m_async_thread.IsJoinable())
     {
         // Create a thread that watches our internal state and controls which
         // events make it to clients (into the DCProcess event queue).
 
         m_async_thread = ThreadLauncher::LaunchThread("<lldb.process.gdb-remote.async>", ProcessGDBRemote::AsyncThread, this, NULL);
     }
-    else
-    {
-        // Somebody tried to start the async thread while it was either being started or stopped.  If the former, and
-        // it started up successfully, then say all's well.  Otherwise it is an error, since we aren't going to restart it.
-        if (log)
-            log->Printf("ProcessGDBRemote::%s () - Called when Async thread was in state: %d.", __FUNCTION__, m_async_thread.GetState());
-    }
+    else if (log)
+        log->Printf("ProcessGDBRemote::%s () - Called when Async thread was already running.", __FUNCTION__);
 
-    return (m_async_thread.GetState() == eThreadStateRunning);
+    return m_async_thread.IsJoinable();
 }
 
 void
@@ -2918,7 +2913,7 @@ ProcessGDBRemote::StopAsyncThread ()
         log->Printf ("ProcessGDBRemote::%s ()", __FUNCTION__);
 
     Mutex::Locker start_locker(m_async_thread_state_mutex);
-    if (m_async_thread.GetState() == eThreadStateRunning)
+    if (m_async_thread.IsJoinable())
     {
         m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncThreadShouldExit);
         
@@ -2928,11 +2923,8 @@ ProcessGDBRemote::StopAsyncThread ()
         // Stop the stdio thread
         m_async_thread.Join(nullptr);
     }
-    else
-    {
-        if (log)
-            log->Printf("ProcessGDBRemote::%s () - Called when Async thread was in state: %d.", __FUNCTION__, m_async_thread.GetState());
-    }
+    else if (log)
+        log->Printf("ProcessGDBRemote::%s () - Called when Async thread was not running.", __FUNCTION__);
 }
 
 

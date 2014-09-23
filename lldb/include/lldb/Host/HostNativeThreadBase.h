@@ -13,7 +13,6 @@
 #include "lldb/Core/Error.h"
 #include "lldb/lldb-defines.h"
 #include "lldb/lldb-types.h"
-#include "lldb/lldb-private-enumerations.h"
 
 namespace lldb_private
 {
@@ -36,11 +35,10 @@ class HostNativeThreadBase
 
     virtual Error Join(lldb::thread_result_t *result) = 0;
     virtual Error Cancel() = 0;
+    virtual bool IsJoinable() const;
     virtual void Reset();
     lldb::thread_t Release();
 
-    void SetState(ThreadState state);
-    ThreadState GetState() const;
     lldb::thread_t GetSystemHandle() const;
     lldb::thread_result_t GetResult() const;
 
@@ -48,7 +46,6 @@ class HostNativeThreadBase
     static lldb::thread_result_t THREAD_ROUTINE ThreadCreateTrampoline(lldb::thread_arg_t arg);
 
     lldb::thread_t m_thread;
-    ThreadState m_state;
     lldb::thread_result_t m_result;
 };
 }

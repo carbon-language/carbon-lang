@@ -3008,7 +3008,7 @@ protected:
     bool
     PrivateStateThreadIsValid () const
     {
-        return m_private_state_thread.GetState() != eThreadStateInvalid;
+        return m_private_state_thread.IsJoinable();
     }
     
     void

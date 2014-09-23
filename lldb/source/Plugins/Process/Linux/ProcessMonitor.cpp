@@ -1199,7 +1199,7 @@ WAIT_AGAIN:
     // Finally, start monitoring the child process for change in state.
     m_monitor_thread = Host::StartMonitoringChildProcess(
         ProcessMonitor::MonitorCallback, this, GetPID(), true);
-    if (m_monitor_thread.GetState() != eThreadStateRunning)
+    if (!m_monitor_thread.IsJoinable())
     {
         error.SetErrorToGenericError();
         error.SetErrorString("Process launch failed.");
@@ -1250,7 +1250,7 @@ WAIT_AGAIN:
     // Finally, start monitoring the child process for change in state.
     m_monitor_thread = Host::StartMonitoringChildProcess(
         ProcessMonitor::MonitorCallback, this, GetPID(), true);
-    if (m_monitor_thread.GetState() != eThreadStateRunning)
+    if (!m_monitor_thread.IsJoinable())
     {
         error.SetErrorToGenericError();
         error.SetErrorString("Process attach failed.");
@@ -1270,7 +1270,7 @@ ProcessMonitor::StartLaunchOpThread(LaunchArgs *args, Error &error)
 {
     static const char *g_thread_name = "lldb.process.linux.operation";
 
-    if (m_operation_thread.GetState() == eThreadStateRunning)
+    if (m_operation_thread.IsJoinable())
         return;
 
     m_operation_thread = ThreadLauncher::LaunchThread(g_thread_name, LaunchOpThread, args, &error);
@@ -1493,7 +1493,7 @@ ProcessMonitor::StartAttachOpThread(AttachArgs *args, lldb_private::Error &error
 {
     static const char *g_thread_name = "lldb.process.linux.operation";
 
-    if (m_operation_thread.GetState() == eThreadStateRunning)
+    if (m_operation_thread.IsJoinable())
         return;
 
     m_operation_thread = ThreadLauncher::LaunchThread(g_thread_name, AttachOpThread, args, &error);
@@ -2466,11 +2466,10 @@ ProcessMonitor::DupDescriptor(const char *path, int fd, int flags)
 void
 ProcessMonitor::StopMonitoringChildProcess()
 {
-    if (m_monitor_thread.GetState() == eThreadStateRunning)
+    if (m_monitor_thread.IsJoinable())
     {
         m_monitor_thread.Cancel();
         m_monitor_thread.Join(nullptr);
-        m_monitor_thread.Reset();
     }
 }
 
@@ -2491,10 +2490,9 @@ ProcessMonitor::StopMonitor()
 void
 ProcessMonitor::StopOpThread()
 {
-    if (m_operation_thread.GetState() != eThreadStateRunning)
+    if (!m_operation_thread.IsJoinable())
         return;
 
     m_operation_thread.Cancel();
     m_operation_thread.Join(nullptr);
-    m_operation_thread.Reset();
 }

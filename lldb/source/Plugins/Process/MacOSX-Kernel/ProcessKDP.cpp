@@ -469,7 +469,7 @@ ProcessKDP::DoResume ()
     Error error;
     Log *log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PROCESS));
     // Only start the async thread if we try to do any process control
-    if (m_async_thread.GetState() != eThreadStateRunning)
+    if (!m_async_thread.IsJoinable())
         StartAsyncThread();
 
     bool resume = false;
@@ -870,11 +870,11 @@ ProcessKDP::StartAsyncThread ()
     if (log)
         log->Printf ("ProcessKDP::StartAsyncThread ()");
 
-    if (m_async_thread.GetState() == eThreadStateRunning)
+    if (m_async_thread.IsJoinable())
         return true;
 
     m_async_thread = ThreadLauncher::LaunchThread("<lldb.process.kdp-remote.async>", ProcessKDP::AsyncThread, this, NULL);
-    return m_async_thread.GetState() == eThreadStateRunning;
+    return m_async_thread.IsJoinable();
 }
 
 void
@@ -888,11 +888,8 @@ ProcessKDP::StopAsyncThread ()
     m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncThreadShouldExit);
     
     // Stop the stdio thread
-    if (m_async_thread.GetState() == eThreadStateRunning)
-    {
+    if (m_async_thread.IsJoinable())
         m_async_thread.Join(nullptr);
-        m_async_thread.Reset();
-    }
 }
 
 

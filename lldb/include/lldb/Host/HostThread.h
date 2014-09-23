@@ -40,8 +40,7 @@ class HostThread
     void Reset();
     lldb::thread_t Release();
 
-    void SetState(ThreadState state);
-    ThreadState GetState() const;
+    bool IsJoinable() const;
     HostNativeThreadBase &GetNativeThread();
     const HostNativeThreadBase &GetNativeThread() const;
     lldb::thread_result_t GetResult() const;

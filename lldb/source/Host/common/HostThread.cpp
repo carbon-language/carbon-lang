@@ -47,16 +47,10 @@ HostThread::Release()
     return m_native_thread->Release();
 }
 
-void
-HostThread::SetState(ThreadState state)
+bool
+HostThread::IsJoinable() const
 {
-    m_native_thread->SetState(state);
-}
-
-ThreadState
-HostThread::GetState() const
-{
-    return m_native_thread->GetState();
+    return m_native_thread->IsJoinable();
 }
 
 HostNativeThreadBase &

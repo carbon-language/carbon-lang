@@ -365,7 +365,7 @@ public:
     bool
     IsHandlingEvents () const
     {
-        return m_event_handler_thread.GetState() == eThreadStateRunning;
+        return m_event_handler_thread.IsJoinable();
     }
 
 protected:

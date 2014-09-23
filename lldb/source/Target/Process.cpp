@@ -3867,7 +3867,7 @@ Process::StartPrivateStateThread (bool force)
 
     // Create the private state thread, and start it running.
     m_private_state_thread = ThreadLauncher::LaunchThread(thread_name, Process::PrivateStateThread, this, NULL);
-    if (m_private_state_thread.GetState() == eThreadStateRunning)
+    if (m_private_state_thread.IsJoinable())
     {
         ResumePrivateStateThread();
         return true;
@@ -3917,7 +3917,7 @@ Process::ControlPrivateStateThread (uint32_t signal)
     // thread starts exiting since the private state thread will NULL this out
     // when it exits
     HostThread private_state_thread(m_private_state_thread);
-    if (private_state_thread.GetState() == eThreadStateRunning)
+    if (private_state_thread.IsJoinable())
     {
         TimeValue timeout_time;
         bool timed_out;
@@ -5578,7 +5578,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         }  // END WAIT LOOP
 
         // If we had to start up a temporary private state thread to run this thread plan, shut it down now.
-        if (backup_private_state_thread.GetState() != eThreadStateInvalid)
+        if (backup_private_state_thread.IsJoinable())
         {
             StopPrivateStateThread();
             Error error;
