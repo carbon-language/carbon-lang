@@ -41,7 +41,7 @@ using namespace sys;
 
 static DenseSet<HMODULE> *OpenedHandles;
 
-extern "C" static BOOL CALLBACK
+static BOOL CALLBACK
 ELM_Callback(WIN32_ELMCB_PCSTR ModuleName, ULONG_PTR ModuleBase,
              ULONG ModuleSize, PVOID UserContext) {
   OpenedHandles->insert((HMODULE)ModuleBase);
