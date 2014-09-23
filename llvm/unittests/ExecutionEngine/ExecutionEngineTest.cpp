@@ -12,9 +12,12 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
+
+static llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
 namespace {
 
