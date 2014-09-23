@@ -69,10 +69,10 @@ public:
 
 enum class Flavor {
   invalid,
-  gnu_ld,       // -flavor gnu
-  win_link,     // -flavor link
-  darwin_ld,    // -flavor darwin
-  core          // -flavor core OR -core
+  gnu_ld,    // -flavor gnu
+  win_link,  // -flavor link
+  darwin_ld, // -flavor darwin
+  core       // -flavor core OR -core
 };
 
 struct ProgramNameParts {
@@ -107,7 +107,7 @@ static ProgramNameParts parseProgramName(StringRef programName) {
 
   // Find the flavor component.
   auto flIter = std::find_if(components.begin(), components.end(),
-                             [](StringRef str)->bool {
+                             [](StringRef str) -> bool {
     return strToFlavor(str) != Flavor::invalid;
   });
 
@@ -123,8 +123,27 @@ static ProgramNameParts parseProgramName(StringRef programName) {
   return ret;
 }
 
+// Removes the argument from argv along with its value, if exists, and updates
+// argc.
+static void removeArg(llvm::opt::Arg *arg, int &argc, const char **&argv) {
+  unsigned int numToRemove = arg->getNumValues() + 1;
+  unsigned int argIndex = arg->getIndex() + 1;
+
+  std::rotate(&argv[argIndex], &argv[argIndex + numToRemove], argv + argc);
+  argc -= numToRemove;
+}
+
 static Flavor getFlavor(int &argc, const char **&argv,
                         std::unique_ptr<llvm::opt::InputArgList> &parsedArgs) {
+  if (llvm::opt::Arg *argCore = parsedArgs->getLastArg(OPT_core)) {
+    removeArg(argCore, argc, argv);
+    return Flavor::core;
+  }
+  if (llvm::opt::Arg *argFlavor = parsedArgs->getLastArg(OPT_flavor)) {
+    removeArg(argFlavor, argc, argv);
+    return strToFlavor(argFlavor->getValue());
+  }
+
 #if LLVM_ON_UNIX
   if (llvm::sys::path::filename(argv[0]).equals("ld")) {
 #if __APPLE__
@@ -135,16 +154,7 @@ static Flavor getFlavor(int &argc, const char **&argv,
     return Flavor::gnu_ld;
   }
 #endif
-  if (parsedArgs->getLastArg(OPT_core)) {
-    argc--;
-    argv++;
-    return Flavor::core;
-  }
-  if (llvm::opt::Arg *argFlavor = parsedArgs->getLastArg(OPT_flavor)) {
-    argc -= 2;
-    argv += 2;
-    return strToFlavor(argFlavor->getValue());
-  }
+
   StringRef name = llvm::sys::path::stem(argv[0]);
   return strToFlavor(parseProgramName(name)._flavor);
 }
@@ -174,7 +184,7 @@ bool UniversalDriver::link(int argc, const char *argv[],
 
   // Handle --help
   if (parsedArgs->getLastArg(OPT_help)) {
-    table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
+    table.PrintHelp(llvm::outs(), programName.data(), "LLVM Linker", false);
     return true;
   }
 
