@@ -221,7 +221,8 @@ UNUSED static void RunStrChrTest(PointerToStrChr2 StrChr) {
 
 TEST(AddressSanitizer, StrChrAndIndexOOBTest) {
   RunStrChrTest(&strchr);
-#if !defined(_WIN32)  // no index() on Windows.
+// No index() on Windows and on Android L.
+#if !defined(_WIN32) && !defined(__ANDROID__)
   RunStrChrTest(&index);
 #endif
 }
