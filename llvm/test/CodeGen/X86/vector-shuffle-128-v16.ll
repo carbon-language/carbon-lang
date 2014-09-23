@@ -301,12 +301,12 @@ define <16 x i8> @trunc_v4i32_shuffle(<16 x i8> %a) {
 ;
 ; SSSE3-LABEL: @trunc_v4i32_shuffle
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    pshufb {{.*}} # xmm0 = xmm0[0,4,8,12],zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero
+; SSSE3-NEXT:    pshufb {{.*}} # xmm0 = xmm0[0,4,8,12,u,u,u,u,u,u,u,u,u,u,u,u]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: @trunc_v4i32_shuffle
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    pshufb {{.*}} # xmm0 = xmm0[0,4,8,12],zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero
+; SSE41-NEXT:    pshufb {{.*}} # xmm0 = xmm0[0,4,8,12,u,u,u,u,u,u,u,u,u,u,u,u]
 ; SSE41-NEXT:    retq
   %shuffle = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 0, i32 4, i32 8, i32 12, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <16 x i8> %shuffle

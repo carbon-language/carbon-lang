@@ -1060,8 +1060,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
       Type *MaskTy = MaskConstantEntry.getType();
       (void)MaskTy;
       if (!MaskConstantEntry.isMachineConstantPoolEntry())
-        if (auto *C = dyn_cast<ConstantDataSequential>(
-                MaskConstantEntry.Val.ConstVal)) {
+        if (auto *C = dyn_cast<Constant>(MaskConstantEntry.Val.ConstVal)) {
           assert(MaskTy == C->getType() &&
                  "Expected a constant of the same type!");
 
@@ -1077,8 +1076,9 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
             DecodeVPERMILPMask(C, Mask);
           }
 
-          assert(Mask.size() == MaskTy->getVectorNumElements() &&
-                 "Shuffle mask has a different size than its type!");
+          assert(
+              (Mask.empty() || Mask.size() == MaskTy->getVectorNumElements()) &&
+              "Shuffle mask has a different size than its type!");
         }
     }
 
@@ -1104,7 +1104,10 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
             InSrc = true;
             CS << SrcName << "[";
           }
-          CS << M;
+          if (M == SM_SentinelUndef)
+            CS << "u";
+          else
+            CS << M;
         }
       }
       if (InSrc)

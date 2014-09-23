@@ -628,14 +628,16 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     const char *SrcName = isSrc1 ? Src1Name : Src2Name;
     OS << (SrcName ? SrcName : "mem") << '[';
     bool IsFirst = true;
-    while (i != e &&
-           (int)ShuffleMask[i] >= 0 &&
+    while (i != e && (int)ShuffleMask[i] != SM_SentinelZero &&
            (ShuffleMask[i] < (int)ShuffleMask.size()) == isSrc1) {
       if (!IsFirst)
         OS << ',';
       else
         IsFirst = false;
-      OS << ShuffleMask[i] % ShuffleMask.size();
+      if (ShuffleMask[i] == SM_SentinelUndef)
+        OS << "u";
+      else
+        OS << ShuffleMask[i] % ShuffleMask.size();
       ++i;
     }
     OS << ']';

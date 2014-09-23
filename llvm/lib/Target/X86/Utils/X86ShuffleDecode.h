@@ -23,12 +23,10 @@
 //===----------------------------------------------------------------------===//
 
 namespace llvm {
-class ConstantDataSequential;
+class Constant;
 class MVT;
 
-enum {
-  SM_SentinelZero = -1
-};
+enum { SM_SentinelZero = -1, SM_SentinelUndef = -2 };
 
 void DecodeINSERTPSMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
@@ -66,8 +64,7 @@ void DecodeUNPCKHMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
 void DecodeUNPCKLMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
 
 /// \brief Decode a PSHUFB mask from an IR-level vector constant.
-void DecodePSHUFBMask(const ConstantDataSequential *C,
-                      SmallVectorImpl<int> &ShuffleMask);
+void DecodePSHUFBMask(const Constant *C, SmallVectorImpl<int> &ShuffleMask);
 
 /// \brief Decode a PSHUFB mask from a raw array of constants such as from
 /// BUILD_VECTOR.
@@ -85,8 +82,7 @@ void DecodeVPERM2X128Mask(MVT VT, unsigned Imm,
 void DecodeVPERMMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
 /// \brief Decode a VPERMILP variable mask from an IR-level vector constant.
-void DecodeVPERMILPMask(const ConstantDataSequential *C,
-                        SmallVectorImpl<int> &ShuffleMask);
+void DecodeVPERMILPMask(const Constant *C, SmallVectorImpl<int> &ShuffleMask);
 
 } // llvm namespace
 

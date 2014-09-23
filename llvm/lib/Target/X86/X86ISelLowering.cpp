@@ -5347,7 +5347,12 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
 
       SmallVector<uint64_t, 32> RawMask;
       for (int i = 0, e = MaskNode->getNumOperands(); i < e; ++i) {
-        auto *CN = dyn_cast<ConstantSDNode>(MaskNode->getOperand(i));
+        SDValue Op = MaskNode->getOperand(i);
+        if (Op->getOpcode() == ISD::UNDEF) {
+          RawMask.push_back((uint64_t)SM_SentinelUndef);
+          continue;
+        }
+        auto *CN = dyn_cast<ConstantSDNode>(Op.getNode());
         if (!CN)
           return false;
         APInt MaskElement = CN->getAPIntValue();
@@ -5377,13 +5382,13 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
     if (!MaskCP || MaskCP->isMachineConstantPoolEntry())
       return false;
 
-    if (auto *C = dyn_cast<ConstantDataSequential>(MaskCP->getConstVal())) {
+    if (auto *C = dyn_cast<Constant>(MaskCP->getConstVal())) {
       // FIXME: Support AVX-512 here.
-      if (!C->getType()->isVectorTy() ||
-          (C->getNumElements() != 16 && C->getNumElements() != 32))
+      Type *Ty = C->getType();
+      if (!Ty->isVectorTy() || (Ty->getVectorNumElements() != 16 &&
+                                Ty->getVectorNumElements() != 32))
         return false;
 
-      assert(C->getType()->isVectorTy() && "Expected a vector constant.");
       DecodePSHUFBMask(C, Mask);
       break;
     }
@@ -8994,7 +8999,7 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     SDValue V2Mask[16];
     for (int i = 0; i < 16; ++i)
       if (Mask[i] == -1) {
-        V1Mask[i] = V2Mask[i] = DAG.getConstant(0x80, MVT::i8);
+        V1Mask[i] = V2Mask[i] = DAG.getUNDEF(MVT::i8);
       } else {
         V1Mask[i] = DAG.getConstant(Mask[i] < 16 ? Mask[i] : 0x80, MVT::i8);
         V2Mask[i] =
@@ -20167,6 +20172,10 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
     assert(Mask.size() <= 16 && "Can't shuffle elements smaller than bytes!");
     int Ratio = 16 / Mask.size();
     for (unsigned i = 0; i < 16; ++i) {
+      if (Mask[i / Ratio] == SM_SentinelUndef) {
+        PSHUFBMask.push_back(DAG.getUNDEF(MVT::i8));
+        continue;
+      }
       int M = Mask[i / Ratio] != SM_SentinelZero
                   ? Ratio * Mask[i / Ratio] + i % Ratio
                   : 255;
@@ -20277,17 +20286,18 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
   // for this order is that we are recursing up the operation chain.
   for (int i = 0, e = std::max(OpMask.size(), RootMask.size()); i < e; ++i) {
     int RootIdx = i / RootRatio;
-    if (RootMask[RootIdx] == SM_SentinelZero) {
-      // This is a zero-ed lane, we're done.
-      Mask.push_back(SM_SentinelZero);
+    if (RootMask[RootIdx] < 0) {
+      // This is a zero or undef lane, we're done.
+      Mask.push_back(RootMask[RootIdx]);
       continue;
     }
 
     int RootMaskedIdx = RootMask[RootIdx] * RootRatio + i % RootRatio;
     int OpIdx = RootMaskedIdx / OpRatio;
-    if (OpMask[OpIdx] == SM_SentinelZero) {
-      // The incoming lanes are zero, it doesn't matter which ones we are using.
-      Mask.push_back(SM_SentinelZero);
+    if (OpMask[OpIdx] < 0) {
+      // The incoming lanes are zero or undef, it doesn't matter which ones we
+      // are using.
+      Mask.push_back(OpMask[OpIdx]);
       continue;
     }
 
