@@ -41,7 +41,6 @@ class Function;
 class GlobalVariable;
 class GlobalValue;
 class JITEventListener;
-class JITMemoryManager;
 class MachineCodeInfo;
 class MutexGuard;
 class ObjectCache;
@@ -523,8 +522,7 @@ public:
   /// is only appropriate for the MCJIT; setting this and configuring the builder
   /// to create anything other than MCJIT will cause a runtime error. If create()
   /// is called and is successful, the created engine takes ownership of the
-  /// memory manager. This option defaults to NULL. Using this option nullifies
-  /// the setJITMemoryManager() option.
+  /// memory manager. This option defaults to NULL.
   EngineBuilder &setMCJITMemoryManager(RTDyldMemoryManager *mcjmm) {
     MCJMM = mcjmm;
     return *this;

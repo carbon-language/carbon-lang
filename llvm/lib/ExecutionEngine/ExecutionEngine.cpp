@@ -16,7 +16,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/ExecutionEngine/ObjectBuffer.h"
 #include "llvm/ExecutionEngine/ObjectCache.h"
 #include "llvm/IR/Constants.h"

@@ -119,10 +119,6 @@ protected:
       return;
     }
 
-    // FIXME: This is using the default legacy JITMemoryManager because it
-    // supports poison memory.  At some point, we'll need to update this to
-    // use an MCJIT-specific memory manager.  It might be nice to have the
-    // poison memory option there too.
     RTDyldMemoryManager *MemMgr = new SectionMemoryManager();
     if (!MemMgr) {
       errs() << "Unable to create memory manager.";
@@ -155,7 +151,6 @@ protected:
   }
 
   LLVMContext Context; // Global ownership
-  JITMemoryManager *JMM; // Owned by ExecutionEngine.
   std::unique_ptr<ExecutionEngine> TheJIT;
 
 public:
