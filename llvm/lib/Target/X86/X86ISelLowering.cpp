@@ -7270,12 +7270,17 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
     return DAG.getNode(X86ISD::BLENDI, DL, VT, V1, V2,
                        DAG.getConstant(BlendMask, MVT::i8));
 
+  case MVT::v4i64:
+  case MVT::v8i32:
+    assert(Subtarget->hasAVX2() && "256-bit integer blends require AVX2!");
+    // FALLTHROUGH
   case MVT::v2i64:
   case MVT::v4i32:
     // If we have AVX2 it is faster to use VPBLENDD when the shuffle fits into
     // that instruction.
     if (Subtarget->hasAVX2()) {
-      int Scale = 4 / VT.getVectorNumElements();
+      // Scale the blend by the number of 32-bit dwords per element.
+      int Scale =  VT.getScalarSizeInBits() / 32;
       BlendMask = 0;
       for (int i = 0, Size = Mask.size(); i < Size; ++i)
         if (Mask[i] >= Size)
@@ -9372,11 +9377,57 @@ static SDValue lowerV4I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(Mask.size() == 4 && "Unexpected mask size for v4 shuffle!");
   assert(Subtarget->hasAVX2() && "We can only lower v4i64 with AVX2!");
 
-  // FIXME: Actually implement this using AVX2!!!
-  V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v4f64, V1);
-  V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v4f64, V2);
-  return DAG.getNode(ISD::BITCAST, DL, MVT::v4i64,
-                     DAG.getVectorShuffle(MVT::v4f64, DL, V1, V2, Mask));
+  if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v4i64, V1, V2, Mask,
+                                                Subtarget, DAG))
+    return Blend;
+
+  // When the shuffle is mirrored between the 128-bit lanes of the unit, we can
+  // use lower latency instructions that will operate on both 128-bit lanes.
+  if (is128BitLaneRepeatedShuffleMask(MVT::v4i64, Mask)) {
+    if (isSingleInputShuffleMask(Mask)) {
+      int PSHUFDMask[] = {-1, -1, -1, -1};
+      for (int i = 0; i < 2; ++i)
+        if (Mask[i] >= 0) {
+          PSHUFDMask[2 * i] = 2 * Mask[i];
+          PSHUFDMask[2 * i + 1] = 2 * Mask[i] + 1;
+        }
+      return DAG.getNode(
+          ISD::BITCAST, DL, MVT::v4i64,
+          DAG.getNode(X86ISD::PSHUFD, DL, MVT::v8i32,
+                      DAG.getNode(ISD::BITCAST, DL, MVT::v8i32, V1),
+                      getV4X86ShuffleImm8ForMask(PSHUFDMask, DAG)));
+    }
+
+    // Use dedicated unpack instructions for masks that match their pattern.
+    if (isShuffleEquivalent(Mask, 0, 4, 2, 6))
+      return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v4i64, V1, V2);
+    if (isShuffleEquivalent(Mask, 1, 5, 3, 7))
+      return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v4i64, V1, V2);
+  }
+
+  // AVX2 provides a direct instruction for permuting a single input across
+  // lanes.
+  if (isSingleInputShuffleMask(Mask))
+    return DAG.getNode(X86ISD::VPERMI, DL, MVT::v4i64, V1,
+                       getV4X86ShuffleImm8ForMask(Mask, DAG));
+
+  // Shuffle the input elements into the desired positions in V1 and V2 and
+  // blend them together.
+  int V1Mask[] = {-1, -1, -1, -1};
+  int V2Mask[] = {-1, -1, -1, -1};
+  int BlendMask[] = {-1, -1, -1, -1};
+  for (int i = 0; i < 4; ++i)
+    if (Mask[i] >= 0 && Mask[i] < 4) {
+      V1Mask[i] = Mask[i];
+      BlendMask[i] = i;
+    } else if (Mask[i] >= 4) {
+      V2Mask[i] = Mask[i] - 4;
+      BlendMask[i] = i + 4;
+    }
+
+  V1 = DAG.getVectorShuffle(MVT::v4i64, DL, V1, DAG.getUNDEF(MVT::v4i64), V1Mask);
+  V2 = DAG.getVectorShuffle(MVT::v4i64, DL, V2, DAG.getUNDEF(MVT::v4i64), V2Mask);
+  return DAG.getVectorShuffle(MVT::v4i64, DL, V1, V2, BlendMask);
 }
 
 /// \brief Handle lowering of 8-lane 32-bit floating point shuffles.

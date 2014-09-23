@@ -645,10 +645,15 @@ define <8 x i32> @shuffle_v8i32_70000000(<8 x i32> %a, <8 x i32> %b) {
 }
 
 define <8 x i32> @shuffle_v8i32_01014545(<8 x i32> %a, <8 x i32> %b) {
-; ALL-LABEL: @shuffle_v8i32_01014545
-; ALL:       # BB#0:
-; ALL-NEXT:    vpermilpd {{.*}} # ymm0 = ymm0[0,0,2,2]
-; ALL-NEXT:    retq
+; AVX1-LABEL: @shuffle_v8i32_01014545
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vpermilpd {{.*}} # ymm0 = ymm0[0,0,2,2]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: @shuffle_v8i32_01014545
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpshufd {{.*}} # ymm0 = ymm0[0,1,0,1,4,5,4,5]
+; AVX2-NEXT:    retq
   %shuffle = shufflevector <8 x i32> %a, <8 x i32> %b, <8 x i32> <i32 0, i32 1, i32 0, i32 1, i32 4, i32 5, i32 4, i32 5>
   ret <8 x i32> %shuffle
 }
