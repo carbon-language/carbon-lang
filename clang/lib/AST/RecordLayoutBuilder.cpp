@@ -2181,8 +2181,9 @@ public:
     FieldOffsets.push_back(FieldOffset);
   }
   /// \brief Compute the set of virtual bases for which vtordisps are required.
-  llvm::SmallPtrSet<const CXXRecordDecl *, 2>
-  computeVtorDispSet(const CXXRecordDecl *RD);
+  void computeVtorDispSet(
+      llvm::SmallPtrSetImpl<const CXXRecordDecl *> &HasVtorDispSet,
+      const CXXRecordDecl *RD) const;
   const ASTContext &Context;
   /// \brief The size of the record being laid out.
   CharUnits Size;
@@ -2605,14 +2606,14 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
   }
   VtorDispAlignment = std::max(VtorDispAlignment, RequiredAlignment);
   // Compute the vtordisp set.
-  llvm::SmallPtrSet<const CXXRecordDecl *, 2> HasVtordispSet =
-      computeVtorDispSet(RD);
+  llvm::SmallPtrSet<const CXXRecordDecl *, 2> HasVtorDispSet;
+  computeVtorDispSet(HasVtorDispSet, RD);
   // Iterate through the virtual bases and lay them out.
   const ASTRecordLayout *PreviousBaseLayout = nullptr;
   for (const CXXBaseSpecifier &VBase : RD->vbases()) {
     const CXXRecordDecl *BaseDecl = VBase.getType()->getAsCXXRecordDecl();
     const ASTRecordLayout &BaseLayout = Context.getASTRecordLayout(BaseDecl);
-    bool HasVtordisp = HasVtordispSet.count(BaseDecl);
+    bool HasVtordisp = HasVtorDispSet.count(BaseDecl) > 0;
     // Insert padding between two bases if the left first one is zero sized or
     // contains a zero sized subobject and the right is zero sized or one leads
     // with a zero sized base.  The padding between virtual bases is 4
@@ -2671,10 +2672,9 @@ RequiresVtordisp(const llvm::SmallPtrSetImpl<const CXXRecordDecl *> &
   return false;
 }
 
-llvm::SmallPtrSet<const CXXRecordDecl *, 2>
-MicrosoftRecordLayoutBuilder::computeVtorDispSet(const CXXRecordDecl *RD) {
-  llvm::SmallPtrSet<const CXXRecordDecl *, 2> HasVtordispSet;
-
+void MicrosoftRecordLayoutBuilder::computeVtorDispSet(
+    llvm::SmallPtrSetImpl<const CXXRecordDecl *> &HasVtordispSet,
+    const CXXRecordDecl *RD) const {
   // /vd2 or #pragma vtordisp(2): Always use vtordisps for virtual bases with
   // vftables.
   if (RD->getMSVtorDispMode() == MSVtorDispAttr::ForVFTable) {
@@ -2684,7 +2684,7 @@ MicrosoftRecordLayoutBuilder::computeVtorDispSet(const CXXRecordDecl *RD) {
       if (Layout.hasExtendableVFPtr())
         HasVtordispSet.insert(BaseDecl);
     }
-    return HasVtordispSet;
+    return;
   }
 
   // If any of our bases need a vtordisp for this type, so do we.  Check our
@@ -2701,7 +2701,7 @@ MicrosoftRecordLayoutBuilder::computeVtorDispSet(const CXXRecordDecl *RD) {
   // * #pragma vtordisp(0) or the /vd0 flag are in use.
   if ((!RD->hasUserDeclaredConstructor() && !RD->hasUserDeclaredDestructor()) ||
       RD->getMSVtorDispMode() == MSVtorDispAttr::Never)
-    return HasVtordispSet;
+    return;
   // /vd1 or #pragma vtordisp(1): Try to guess based on whether we think it's
   // possible for a partially constructed object with virtual base overrides to
   // escape a non-trivial constructor.
@@ -2712,9 +2712,9 @@ MicrosoftRecordLayoutBuilder::computeVtorDispSet(const CXXRecordDecl *RD) {
   // vtordisp.
   llvm::SmallPtrSet<const CXXMethodDecl *, 8> Work;
   llvm::SmallPtrSet<const CXXRecordDecl *, 2> BasesWithOverriddenMethods;
-  // Seed the working set with our non-destructor virtual methods.
+  // Seed the working set with our non-destructor, non-pure virtual methods.
   for (const CXXMethodDecl *MD : RD->methods())
-    if (MD->isVirtual() && !isa<CXXDestructorDecl>(MD))
+    if (MD->isVirtual() && !isa<CXXDestructorDecl>(MD) && !MD->isPure())
       Work.insert(MD);
   while (!Work.empty()) {
     const CXXMethodDecl *MD = *Work.begin();
@@ -2736,7 +2736,6 @@ MicrosoftRecordLayoutBuilder::computeVtorDispSet(const CXXRecordDecl *RD) {
         RequiresVtordisp(BasesWithOverriddenMethods, BaseDecl))
       HasVtordispSet.insert(BaseDecl);
   }
-  return HasVtordispSet;
 }
 
 /// \brief Get or compute information about the layout of the specified record

@@ -416,6 +416,31 @@ struct HC : virtual HB {};
 // CHECK-X64-NEXT:      | [sizeof=32, align=8
 // CHECK-X64-NEXT:      |  nvsize=8, nvalign=8]
 
+struct IA {
+  virtual void f();
+};
+struct __declspec(dllexport) IB : virtual IA {
+  virtual void f() = 0;
+  IB() {}
+};
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct IB
+// CHECK-NEXT:    0 |   (IB vbtable pointer)
+// CHECK-NEXT:    4 |   struct IA (virtual base)
+// CHECK-NEXT:    4 |     (IA vftable pointer)
+// CHECK-NEXT:      | [sizeof=8, align=4
+// CHECK-NEXT:      |  nvsize=4, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct IB
+// CHECK-X64-NEXT:    0 |   (IB vbtable pointer)
+// CHECK-X64-NEXT:    8 |   struct IA (virtual base)
+// CHECK-X64-NEXT:    8 |     (IA vftable pointer)
+// CHECK-X64-NEXT:      | [sizeof=16, align=8
+// CHECK-X64-NEXT:      |  nvsize=8, nvalign=8]
+
 int a[
 sizeof(A)+
 sizeof(C)+
@@ -428,4 +453,5 @@ sizeof(pragma_test3::C)+
 sizeof(pragma_test4::C)+
 sizeof(GD)+
 sizeof(HC)+
+sizeof(IB)+
 0];
