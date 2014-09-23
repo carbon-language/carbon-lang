@@ -206,6 +206,9 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::OMPParallelForDirectiveClass:
     EmitOMPParallelForDirective(cast<OMPParallelForDirective>(*S));
     break;
+  case Stmt::OMPParallelForSimdDirectiveClass:
+    EmitOMPParallelForSimdDirective(cast<OMPParallelForSimdDirective>(*S));
+    break;
   case Stmt::OMPParallelSectionsDirectiveClass:
     EmitOMPParallelSectionsDirective(cast<OMPParallelSectionsDirective>(*S));
     break;

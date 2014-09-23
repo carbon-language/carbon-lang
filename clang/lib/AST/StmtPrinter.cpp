@@ -876,6 +876,12 @@ void StmtPrinter::VisitOMPParallelForDirective(OMPParallelForDirective *Node) {
   PrintOMPExecutableDirective(Node);
 }
 
+void StmtPrinter::VisitOMPParallelForSimdDirective(
+    OMPParallelForSimdDirective *Node) {
+  Indent() << "#pragma omp parallel for simd ";
+  PrintOMPExecutableDirective(Node);
+}
+
 void StmtPrinter::VisitOMPParallelSectionsDirective(
     OMPParallelSectionsDirective *Node) {
   Indent() << "#pragma omp parallel sections ";

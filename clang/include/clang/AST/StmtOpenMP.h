@@ -274,7 +274,8 @@ public:
     return T->getStmtClass() == OMPSimdDirectiveClass ||
            T->getStmtClass() == OMPForDirectiveClass ||
            T->getStmtClass() == OMPForSimdDirectiveClass ||
-           T->getStmtClass() == OMPParallelForDirectiveClass;
+           T->getStmtClass() == OMPParallelForDirectiveClass ||
+           T->getStmtClass() == OMPParallelForSimdDirectiveClass;
   }
 };
 
@@ -801,6 +802,74 @@ public:
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPParallelForDirectiveClass;
+  }
+};
+
+/// \brief This represents '#pragma omp parallel for simd' directive.
+///
+/// \code
+/// #pragma omp parallel for simd private(a,b) linear(i,j:s) reduction(+:c,d)
+/// \endcode
+/// In this example directive '#pragma omp parallel for simd' has clauses
+/// 'private' with the variables 'a' and 'b', 'linear' with variables 'i', 'j'
+/// and linear step 's', 'reduction' with operator '+' and variables 'c' and
+/// 'd'.
+///
+class OMPParallelForSimdDirective : public OMPLoopDirective {
+  friend class ASTStmtReader;
+  /// \brief Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  /// \param CollapsedNum Number of collapsed nested loops.
+  /// \param NumClauses Number of clauses.
+  ///
+  OMPParallelForSimdDirective(SourceLocation StartLoc, SourceLocation EndLoc,
+                              unsigned CollapsedNum, unsigned NumClauses)
+      : OMPLoopDirective(this, OMPParallelForSimdDirectiveClass,
+                         OMPD_parallel_for_simd, StartLoc, EndLoc, CollapsedNum,
+                         NumClauses) {}
+
+  /// \brief Build an empty directive.
+  ///
+  /// \param CollapsedNum Number of collapsed nested loops.
+  /// \param NumClauses Number of clauses.
+  ///
+  explicit OMPParallelForSimdDirective(unsigned CollapsedNum,
+                                       unsigned NumClauses)
+      : OMPLoopDirective(this, OMPParallelForSimdDirectiveClass,
+                         OMPD_parallel_for_simd, SourceLocation(),
+                         SourceLocation(), CollapsedNum, NumClauses) {}
+
+public:
+  /// \brief Creates directive with a list of \a Clauses.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  /// \param CollapsedNum Number of collapsed loops.
+  /// \param Clauses List of clauses.
+  /// \param AssociatedStmt Statement, associated with the directive.
+  ///
+  static OMPParallelForSimdDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+         unsigned CollapsedNum, ArrayRef<OMPClause *> Clauses,
+         Stmt *AssociatedStmt);
+
+  /// \brief Creates an empty directive with the place
+  /// for \a NumClauses clauses.
+  ///
+  /// \param C AST context.
+  /// \param CollapsedNum Number of collapsed nested loops.
+  /// \param NumClauses Number of clauses.
+  ///
+  static OMPParallelForSimdDirective *CreateEmpty(const ASTContext &C,
+                                                  unsigned NumClauses,
+                                                  unsigned CollapsedNum,
+                                                  EmptyShell);
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPParallelForSimdDirectiveClass;
   }
 };
 

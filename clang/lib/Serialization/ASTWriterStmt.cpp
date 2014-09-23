@@ -1909,6 +1909,12 @@ void ASTStmtWriter::VisitOMPParallelForDirective(OMPParallelForDirective *D) {
   Code = serialization::STMT_OMP_PARALLEL_FOR_DIRECTIVE;
 }
 
+void ASTStmtWriter::VisitOMPParallelForSimdDirective(
+    OMPParallelForSimdDirective *D) {
+  VisitOMPLoopDirective(D);
+  Code = serialization::STMT_OMP_PARALLEL_FOR_SIMD_DIRECTIVE;
+}
+
 void ASTStmtWriter::VisitOMPParallelSectionsDirective(
     OMPParallelSectionsDirective *D) {
   VisitStmt(D);

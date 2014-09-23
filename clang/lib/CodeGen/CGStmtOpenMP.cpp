@@ -121,6 +121,11 @@ CodeGenFunction::EmitOMPParallelForDirective(const OMPParallelForDirective &) {
   llvm_unreachable("CodeGen for 'omp parallel for' is not supported yet.");
 }
 
+void CodeGenFunction::EmitOMPParallelForSimdDirective(
+    const OMPParallelForSimdDirective &) {
+  llvm_unreachable("CodeGen for 'omp parallel for simd' is not supported yet.");
+}
+
 void CodeGenFunction::EmitOMPParallelSectionsDirective(
     const OMPParallelSectionsDirective &) {
   llvm_unreachable("CodeGen for 'omp parallel sections' is not supported yet.");

@@ -2023,6 +2023,11 @@ void ASTStmtReader::VisitOMPParallelForDirective(OMPParallelForDirective *D) {
   VisitOMPLoopDirective(D);
 }
 
+void ASTStmtReader::VisitOMPParallelForSimdDirective(
+    OMPParallelForSimdDirective *D) {
+  VisitOMPLoopDirective(D);
+}
+
 void ASTStmtReader::VisitOMPParallelSectionsDirective(
     OMPParallelSectionsDirective *D) {
   VisitStmt(D);
@@ -2612,6 +2617,14 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       unsigned CollapsedNum = Record[ASTStmtReader::NumStmtFields + 1];
       S = OMPParallelForDirective::CreateEmpty(Context, NumClauses,
                                                CollapsedNum, Empty);
+      break;
+    }
+
+    case STMT_OMP_PARALLEL_FOR_SIMD_DIRECTIVE: {
+      unsigned NumClauses = Record[ASTStmtReader::NumStmtFields];
+      unsigned CollapsedNum = Record[ASTStmtReader::NumStmtFields + 1];
+      S = OMPParallelForSimdDirective::CreateEmpty(Context, NumClauses,
+                                                   CollapsedNum, Empty);
       break;
     }
 

@@ -32,6 +32,7 @@ static OpenMPDirectiveKind ParseOpenMPDirectiveKind(Parser &P) {
   const OpenMPDirectiveKind F[][3] = {
     { OMPD_for, OMPD_simd, OMPD_for_simd },
     { OMPD_parallel, OMPD_for, OMPD_parallel_for },
+    { OMPD_parallel_for, OMPD_simd, OMPD_parallel_for_simd },
     { OMPD_parallel, OMPD_sections, OMPD_parallel_sections }
   };
   auto Tok = P.getCurToken();
@@ -103,6 +104,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
   case OMPD_ordered:
   case OMPD_critical:
   case OMPD_parallel_for:
+  case OMPD_parallel_for_simd:
   case OMPD_parallel_sections:
   case OMPD_atomic:
   case OMPD_target:
@@ -125,7 +127,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
 ///         'section' | 'single' | 'master' | 'critical' [ '(' <name> ')' ] |
 ///         'parallel for' | 'parallel sections' | 'task' | 'taskyield' |
 ///         'barrier' | 'taskwait' | 'flush' | 'ordered' | 'atomic' |
-///         'for simd' | 'target' {clause}
+///         'for simd' | 'parallel for simd' | 'target' {clause}
 ///         annot_pragma_openmp_end
 ///
 StmtResult
@@ -189,6 +191,7 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
   case OMPD_master:
   case OMPD_critical:
   case OMPD_parallel_for:
+  case OMPD_parallel_for_simd:
   case OMPD_parallel_sections:
   case OMPD_task:
   case OMPD_ordered:

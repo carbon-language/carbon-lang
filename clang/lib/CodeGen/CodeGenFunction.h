@@ -1935,6 +1935,7 @@ public:
   void EmitOMPMasterDirective(const OMPMasterDirective &S);
   void EmitOMPCriticalDirective(const OMPCriticalDirective &S);
   void EmitOMPParallelForDirective(const OMPParallelForDirective &S);
+  void EmitOMPParallelForSimdDirective(const OMPParallelForSimdDirective &S);
   void EmitOMPParallelSectionsDirective(const OMPParallelSectionsDirective &S);
   void EmitOMPTaskDirective(const OMPTaskDirective &S);
   void EmitOMPTaskyieldDirective(const OMPTaskyieldDirective &S);

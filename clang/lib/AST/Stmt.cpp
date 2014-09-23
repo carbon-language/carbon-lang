@@ -1627,6 +1627,32 @@ OMPParallelForDirective::CreateEmpty(const ASTContext &C, unsigned NumClauses,
   return new (Mem) OMPParallelForDirective(CollapsedNum, NumClauses);
 }
 
+OMPParallelForSimdDirective *OMPParallelForSimdDirective::Create(
+    const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+    unsigned CollapsedNum, ArrayRef<OMPClause *> Clauses,
+    Stmt *AssociatedStmt) {
+  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPParallelForSimdDirective),
+                                           llvm::alignOf<OMPClause *>());
+  void *Mem =
+      C.Allocate(Size + sizeof(OMPClause *) * Clauses.size() + sizeof(Stmt *));
+  OMPParallelForSimdDirective *Dir = new (Mem) OMPParallelForSimdDirective(
+      StartLoc, EndLoc, CollapsedNum, Clauses.size());
+  Dir->setClauses(Clauses);
+  Dir->setAssociatedStmt(AssociatedStmt);
+  return Dir;
+}
+
+OMPParallelForSimdDirective *
+OMPParallelForSimdDirective::CreateEmpty(const ASTContext &C,
+                                         unsigned NumClauses,
+                                         unsigned CollapsedNum, EmptyShell) {
+  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPParallelForSimdDirective),
+                                           llvm::alignOf<OMPClause *>());
+  void *Mem =
+      C.Allocate(Size + sizeof(OMPClause *) * NumClauses + sizeof(Stmt *));
+  return new (Mem) OMPParallelForSimdDirective(CollapsedNum, NumClauses);
+}
+
 OMPParallelSectionsDirective *OMPParallelSectionsDirective::Create(
     const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
     ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt) {

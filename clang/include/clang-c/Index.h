@@ -2213,9 +2213,13 @@ enum CXCursorKind {
    */
   CXCursor_OMPForSimdDirective           = 250,
 
+  /** \brief OpenMP parallel for simd directive.
+   */
+  CXCursor_OMPParallelForSimdDirective   = 251,
+
   /** \brief OpenMP target directive.
    */
-  CXCursor_OMPTargetDirective            = 251,
+  CXCursor_OMPTargetDirective            = 252,
 
   CXCursor_LastStmt                      = CXCursor_OMPTargetDirective,
 

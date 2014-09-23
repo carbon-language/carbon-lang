@@ -808,6 +808,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::OMPMasterDirectiveClass:
     case Stmt::OMPCriticalDirectiveClass:
     case Stmt::OMPParallelForDirectiveClass:
+    case Stmt::OMPParallelForSimdDirectiveClass:
     case Stmt::OMPParallelSectionsDirectiveClass:
     case Stmt::OMPTaskDirectiveClass:
     case Stmt::OMPTaskyieldDirectiveClass:
