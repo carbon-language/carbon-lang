@@ -968,9 +968,13 @@ public:
   ///   AtomicRMW/AtomicCmpXchg/AtomicStore/AtomicLoad.
   /// RMW and CmpXchg set both IsStore and IsLoad to true.
   /// Backends with !getInsertFencesForAtomic() should keep a no-op here.
-  virtual void emitLeadingFence(IRBuilder<> &Builder, AtomicOrdering Ord,
+  /// This function should either return a nullptr, or a pointer to an IR-level
+  ///   Instruction*. Even complex fence sequences can be represented by a
+  ///   single Instruction* through an intrinsic to be lowered later.
+  virtual Instruction* emitLeadingFence(IRBuilder<> &Builder, AtomicOrdering Ord,
           bool IsStore, bool IsLoad) const {
     assert(!getInsertFencesForAtomic());
+    return nullptr;
   }
 
   /// Inserts in the IR a target-specific intrinsic specifying a fence.
@@ -978,9 +982,13 @@ public:
   ///   AtomicRMW/AtomicCmpXchg/AtomicStore/AtomicLoad.
   /// RMW and CmpXchg set both IsStore and IsLoad to true.
   /// Backends with !getInsertFencesForAtomic() should keep a no-op here.
-  virtual void emitTrailingFence(IRBuilder<> &Builder, AtomicOrdering Ord,
+  /// This function should either return a nullptr, or a pointer to an IR-level
+  ///   Instruction*. Even complex fence sequences can be represented by a
+  ///   single Instruction* through an intrinsic to be lowered later.
+  virtual Instruction* emitTrailingFence(IRBuilder<> &Builder, AtomicOrdering Ord,
           bool IsStore, bool IsLoad) const {
     assert(!getInsertFencesForAtomic());
+    return nullptr;
   }
 
   /// Returns true if the given (atomic) store should be expanded by the

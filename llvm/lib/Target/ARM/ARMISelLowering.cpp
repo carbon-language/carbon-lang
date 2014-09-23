@@ -11024,11 +11024,11 @@ Instruction* ARMTargetLowering::makeDMB(IRBuilder<> &Builder,
 }
 
 // Based on http://www.cl.cam.ac.uk/~pes20/cpp/cpp0xmappings.html
-void ARMTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
+Instruction* ARMTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
                                          AtomicOrdering Ord, bool IsStore,
                                          bool IsLoad) const {
   if (!getInsertFencesForAtomic())
-    return;
+    return nullptr;
 
   switch (Ord) {
   case NotAtomic:
@@ -11036,27 +11036,27 @@ void ARMTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
     llvm_unreachable("Invalid fence: unordered/non-atomic");
   case Monotonic:
   case Acquire:
-    return; // Nothing to do
+    return nullptr; // Nothing to do
   case SequentiallyConsistent:
     if (!IsStore)
-      return; // Nothing to do
-              /*FALLTHROUGH*/
+      return nullptr; // Nothing to do
+    /*FALLTHROUGH*/
   case Release:
   case AcquireRelease:
     if (Subtarget->isSwift())
-      makeDMB(Builder, ARM_MB::ISHST);
+      return makeDMB(Builder, ARM_MB::ISHST);
     // FIXME: add a comment with a link to documentation justifying this.
     else
-      makeDMB(Builder, ARM_MB::ISH);
-    return;
+      return makeDMB(Builder, ARM_MB::ISH);
   }
+  llvm_unreachable("Unknown fence ordering in emitLeadingFence");
 }
 
-void ARMTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
+Instruction* ARMTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
                                           AtomicOrdering Ord, bool IsStore,
                                           bool IsLoad) const {
   if (!getInsertFencesForAtomic())
-    return;
+    return nullptr;
 
   switch (Ord) {
   case NotAtomic:
@@ -11064,13 +11064,13 @@ void ARMTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
     llvm_unreachable("Invalid fence: unordered/not-atomic");
   case Monotonic:
   case Release:
-    return; // Nothing to do
+    return nullptr; // Nothing to do
   case Acquire:
   case AcquireRelease:
-    case SequentiallyConsistent:
-    makeDMB(Builder, ARM_MB::ISH);
-    return;
+  case SequentiallyConsistent:
+    return makeDMB(Builder, ARM_MB::ISH);
   }
+  llvm_unreachable("Unknown fence ordering in emitTrailingFence");
 }
 
 // Loads and stores less than 64-bits are already atomic; ones above that

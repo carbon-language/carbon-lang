@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file contains a pass (at IR level) to replace atomic instructions with
-// either (intrinsic-based) ldrex/strex loops or AtomicCmpXchg.
+// either (intrinsic-based) load-linked/store-conditional loops or AtomicCmpXchg.
 //
 //===----------------------------------------------------------------------===//
 
@@ -41,6 +41,8 @@ namespace {
     bool runOnFunction(Function &F) override;
 
   private:
+    bool bracketInstWithFences(Instruction *I, AtomicOrdering Order,
+                               bool IsStore, bool IsLoad);
     bool expandAtomicLoad(LoadInst *LI);
     bool expandAtomicStore(StoreInst *SI);
     bool expandAtomicRMW(AtomicRMWInst *AI);
@@ -80,9 +82,44 @@ bool AtomicExpand::runOnFunction(Function &F) {
     auto SI = dyn_cast<StoreInst>(I);
     auto RMWI = dyn_cast<AtomicRMWInst>(I);
     auto CASI = dyn_cast<AtomicCmpXchgInst>(I);
-
     assert((LI || SI || RMWI || CASI || isa<FenceInst>(I)) &&
            "Unknown atomic instruction");
+
+    auto FenceOrdering = Monotonic;
+    bool IsStore, IsLoad;
+    if (TargetLowering->getInsertFencesForAtomic()) {
+      if (LI && isAtLeastAcquire(LI->getOrdering())) {
+        FenceOrdering = LI->getOrdering();
+        LI->setOrdering(Monotonic);
+        IsStore = false;
+        IsLoad = true;
+      } else if (SI && isAtLeastRelease(SI->getOrdering())) {
+        FenceOrdering = SI->getOrdering();
+        SI->setOrdering(Monotonic);
+        IsStore = true;
+        IsLoad = false;
+      } else if (RMWI && (isAtLeastRelease(RMWI->getOrdering()) ||
+                          isAtLeastAcquire(RMWI->getOrdering()))) {
+        FenceOrdering = RMWI->getOrdering();
+        RMWI->setOrdering(Monotonic);
+        IsStore = IsLoad = true;
+      } else if (CASI && !TargetLowering->hasLoadLinkedStoreConditional() &&
+                    (isAtLeastRelease(CASI->getSuccessOrdering()) ||
+                     isAtLeastAcquire(CASI->getSuccessOrdering()))) {
+        // If a compare and swap is lowered to LL/SC, we can do smarter fence
+        // insertion, with a stronger one on the success path than on the
+        // failure path. As a result, fence insertion is directly done by
+        // expandAtomicCmpXchg in that case.
+        FenceOrdering = CASI->getSuccessOrdering();
+        CASI->setSuccessOrdering(Monotonic);
+        CASI->setFailureOrdering(Monotonic);
+        IsStore = IsLoad = true;
+      }
+
+      if (FenceOrdering != Monotonic) {
+        MadeChange |= bracketInstWithFences(I, FenceOrdering, IsStore, IsLoad);
+      }
+    }
 
     if (LI && TargetLowering->shouldExpandAtomicLoadInIR(LI)) {
       MadeChange |= expandAtomicLoad(LI);
@@ -97,30 +134,40 @@ bool AtomicExpand::runOnFunction(Function &F) {
   return MadeChange;
 }
 
+bool AtomicExpand::bracketInstWithFences(Instruction *I, AtomicOrdering Order,
+                                         bool IsStore, bool IsLoad) {
+  IRBuilder<> Builder(I);
+
+  auto LeadingFence =
+      TM->getSubtargetImpl()->getTargetLowering()->emitLeadingFence(
+      Builder, Order, IsStore, IsLoad);
+
+  auto TrailingFence =
+      TM->getSubtargetImpl()->getTargetLowering()->emitTrailingFence(
+      Builder, Order, IsStore, IsLoad);
+  // The trailing fence is emitted before the instruction instead of after
+  // because there is no easy way of setting Builder insertion point after
+  // an instruction. So we must erase it from the BB, and insert it back
+  // in the right place.
+  // We have a guard here because not every atomic operation generates a
+  // trailing fence.
+  if (TrailingFence) {
+    TrailingFence->removeFromParent();
+    TrailingFence->insertAfter(I);
+  }
+
+  return (LeadingFence || TrailingFence);
+}
+
 bool AtomicExpand::expandAtomicLoad(LoadInst *LI) {
   auto TLI = TM->getSubtargetImpl()->getTargetLowering();
-  // If getInsertFencesForAtomic() returns true, then the target does not want
-  // to deal with memory orders, and emitLeading/TrailingFence should take care
-  // of everything. Otherwise, emitLeading/TrailingFence are no-op and we
-  // should preserve the ordering.
-  AtomicOrdering MemOpOrder =
-      TLI->getInsertFencesForAtomic() ? Monotonic : LI->getOrdering();
   IRBuilder<> Builder(LI);
 
-  // Note that although no fence is required before atomic load on ARM, it is
-  // required before SequentiallyConsistent loads for the recommended Power
-  // mapping (see http://www.cl.cam.ac.uk/~pes20/cpp/cpp0xmappings.html).
-  // So we let the target choose what to emit.
-  TLI->emitLeadingFence(Builder, LI->getOrdering(),
-                        /*IsStore=*/false, /*IsLoad=*/true);
-
-  // The only 64-bit load guaranteed to be single-copy atomic by ARM is
-  // an ldrexd (A3.5.3).
+  // On some architectures, load-linked instructions are atomic for larger
+  // sizes than normal loads. For example, the only 64-bit load guaranteed
+  // to be single-copy atomic by ARM is an ldrexd (A3.5.3).
   Value *Val =
-      TLI->emitLoadLinked(Builder, LI->getPointerOperand(), MemOpOrder);
-
-  TLI->emitTrailingFence(Builder, LI->getOrdering(),
-                         /*IsStore=*/false, /*IsLoad=*/true);
+      TLI->emitLoadLinked(Builder, LI->getPointerOperand(), LI->getOrdering());
 
   LI->replaceAllUsesWith(Val);
   LI->eraseFromParent();
@@ -193,17 +240,11 @@ static Value *performAtomicOp(AtomicRMWInst::BinOp Op, IRBuilder<> &Builder,
 
 bool AtomicExpand::expandAtomicRMWToLLSC(AtomicRMWInst *AI) {
   auto TLI = TM->getSubtargetImpl()->getTargetLowering();
-  AtomicOrdering FenceOrder = AI->getOrdering();
+  AtomicOrdering MemOpOrder = AI->getOrdering();
   Value *Addr = AI->getPointerOperand();
   BasicBlock *BB = AI->getParent();
   Function *F = BB->getParent();
   LLVMContext &Ctx = F->getContext();
-  // If getInsertFencesForAtomic() returns true, then the target does not want
-  // to deal with memory orders, and emitLeading/TrailingFence should take care
-  // of everything. Otherwise, emitLeading/TrailingFence are no-op and we
-  // should preserve the ordering.
-  AtomicOrdering MemOpOrder =
-      TLI->getInsertFencesForAtomic() ? Monotonic : FenceOrder;
 
   // Given: atomicrmw some_op iN* %addr, iN %incr ordering
   //
@@ -230,7 +271,6 @@ bool AtomicExpand::expandAtomicRMWToLLSC(AtomicRMWInst *AI) {
   // the branch entirely.
   std::prev(BB->end())->eraseFromParent();
   Builder.SetInsertPoint(BB);
-  TLI->emitLeadingFence(Builder, FenceOrder, /*IsStore=*/true, /*IsLoad=*/true);
   Builder.CreateBr(LoopBB);
 
   // Start the main loop block now that we've taken care of the preliminaries.
@@ -247,7 +287,6 @@ bool AtomicExpand::expandAtomicRMWToLLSC(AtomicRMWInst *AI) {
   Builder.CreateCondBr(TryAgain, LoopBB, ExitBB);
 
   Builder.SetInsertPoint(ExitBB, ExitBB->begin());
-  TLI->emitTrailingFence(Builder, FenceOrder, /*IsStore=*/true, /*IsLoad=*/true);
 
   AI->replaceAllUsesWith(Loaded);
   AI->eraseFromParent();
@@ -256,11 +295,8 @@ bool AtomicExpand::expandAtomicRMWToLLSC(AtomicRMWInst *AI) {
 }
 
 bool AtomicExpand::expandAtomicRMWToCmpXchg(AtomicRMWInst *AI) {
-  auto TargetLowering = TM->getSubtargetImpl()->getTargetLowering();
-  AtomicOrdering FenceOrder =
-      AI->getOrdering() == Unordered ? Monotonic : AI->getOrdering();
   AtomicOrdering MemOpOrder =
-      TargetLowering->getInsertFencesForAtomic() ? Monotonic : FenceOrder;
+      AI->getOrdering() == Unordered ? Monotonic : AI->getOrdering();
   Value *Addr = AI->getPointerOperand();
   BasicBlock *BB = AI->getParent();
   Function *F = BB->getParent();
@@ -292,8 +328,6 @@ bool AtomicExpand::expandAtomicRMWToCmpXchg(AtomicRMWInst *AI) {
   // the branch entirely.
   std::prev(BB->end())->eraseFromParent();
   Builder.SetInsertPoint(BB);
-  TargetLowering->emitLeadingFence(Builder, FenceOrder,
-                                   /*IsStore=*/true, /*IsLoad=*/true);
   LoadInst *InitLoaded = Builder.CreateLoad(Addr);
   // Atomics require at least natural alignment.
   InitLoaded->setAlignment(AI->getType()->getPrimitiveSizeInBits());
@@ -317,8 +351,6 @@ bool AtomicExpand::expandAtomicRMWToCmpXchg(AtomicRMWInst *AI) {
   Builder.CreateCondBr(Success, ExitBB, LoopBB);
 
   Builder.SetInsertPoint(ExitBB, ExitBB->begin());
-  TargetLowering->emitTrailingFence(Builder, FenceOrder,
-                                    /*IsStore=*/true, /*IsLoad=*/true);
 
   AI->replaceAllUsesWith(NewLoaded);
   AI->eraseFromParent();
