@@ -370,23 +370,29 @@ _func:
         add w11, w13, w15, lsl #0
         add w9, w3, wzr, lsl #10
         add w17, w29, w20, lsl #31
+        add w17, w29, w20, lsl #(31-2)
 // CHECK: add      w11, w13, w15              // encoding: [0xab,0x01,0x0f,0x0b]
 // CHECK: add      w9, w3, wzr, lsl #10       // encoding: [0x69,0x28,0x1f,0x0b]
 // CHECK: add      w17, w29, w20, lsl #31     // encoding: [0xb1,0x7f,0x14,0x0b]
+// CHECK: add      w17, w29, w20, lsl #29     // encoding: [0xb1,0x77,0x14,0x0b]
 
         add w21, w22, w23, lsr #0
         add w24, w25, w26, lsr #18
         add w27, w28, w29, lsr #31
+        add w27, w28, w29, lsr #(31-2)
 // CHECK: add      w21, w22, w23, lsr #0      // encoding: [0xd5,0x02,0x57,0x0b]
 // CHECK: add      w24, w25, w26, lsr #18     // encoding: [0x38,0x4b,0x5a,0x0b]
 // CHECK: add      w27, w28, w29, lsr #31     // encoding: [0x9b,0x7f,0x5d,0x0b]
+// CHECK: add      w27, w28, w29, lsr #29     // encoding: [0x9b,0x77,0x5d,0x0b]
 
         add w2, w3, w4, asr #0
         add w5, w6, w7, asr #21
         add w8, w9, w10, asr #31
+        add w8, w9, w10, asr #(31-2)
 // CHECK: add      w2, w3, w4, asr #0         // encoding: [0x62,0x00,0x84,0x0b]
 // CHECK: add      w5, w6, w7, asr #21        // encoding: [0xc5,0x54,0x87,0x0b]
 // CHECK: add      w8, w9, w10, asr #31       // encoding: [0x28,0x7d,0x8a,0x0b]
+// CHECK: add      w8, w9, w10, asr #29       // encoding: [0x28,0x75,0x8a,0x0b]
 
         add x3, x5, x7
         add xzr, x3, x5
@@ -400,23 +406,29 @@ _func:
         add x11, x13, x15, lsl #0
         add x9, x3, xzr, lsl #10
         add x17, x29, x20, lsl #63
+        add x17, x29, x20, lsl #(63-5)
 // CHECK: add      x11, x13, x15              // encoding: [0xab,0x01,0x0f,0x8b]
 // CHECK: add      x9, x3, xzr, lsl #10       // encoding: [0x69,0x28,0x1f,0x8b]
 // CHECK: add      x17, x29, x20, lsl #63     // encoding: [0xb1,0xff,0x14,0x8b]
+// CHECK: add	   x17, x29, x20, lsl #58     // encoding: [0xb1,0xeb,0x14,0x8b]
 
         add x21, x22, x23, lsr #0
         add x24, x25, x26, lsr #18
         add x27, x28, x29, lsr #63
+        add x17, x29, x20, lsr #(63-5)
 // CHECK: add      x21, x22, x23, lsr #0      // encoding: [0xd5,0x02,0x57,0x8b]
 // CHECK: add      x24, x25, x26, lsr #18     // encoding: [0x38,0x4b,0x5a,0x8b]
 // CHECK: add      x27, x28, x29, lsr #63     // encoding: [0x9b,0xff,0x5d,0x8b]
+// CHECK: add	   x17, x29, x20, lsr #58     // encoding: [0xb1,0xeb,0x54,0x8b]
 
         add x2, x3, x4, asr #0
         add x5, x6, x7, asr #21
         add x8, x9, x10, asr #63
+        add x17, x29, x20, asr #(63-5)
 // CHECK: add      x2, x3, x4, asr #0         // encoding: [0x62,0x00,0x84,0x8b]
 // CHECK: add      x5, x6, x7, asr #21        // encoding: [0xc5,0x54,0x87,0x8b]
 // CHECK: add      x8, x9, x10, asr #63       // encoding: [0x28,0xfd,0x8a,0x8b]
+// CHECK: add	   x17, x29, x20, asr #58     // encoding: [0xb1,0xeb,0x94,0x8b]
 
         adds w3, w5, w7
         adds wzr, w3, w5
