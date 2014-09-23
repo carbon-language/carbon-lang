@@ -52,6 +52,12 @@
 }
 
 {
+   We don't care if sed leaks
+   Memcheck:Leak
+   obj:/bin/sed
+}
+
+{
    We don't care about anything ld.so does.
    Memcheck:Cond
    obj:/lib/ld*.so
