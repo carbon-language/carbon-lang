@@ -11712,27 +11712,24 @@ SDValue DAGCombiner::BuildRSQRTE(SDNode *N) {
   SDValue N1 = N->getOperand(1);
 
   if (N1.getOpcode() == ISD::FSQRT) {
-    SDValue RV = TLI.BuildRSQRTE(N1.getOperand(0), DCI);
-    if (RV.getNode()) {
-      DCI.AddToWorklist(RV.getNode());
+    if (SDValue RV = TLI.BuildRSQRTE(N1.getOperand(0), DCI)) {
+      AddToWorklist(RV.getNode());
       return DAG.getNode(ISD::FMUL, DL, VT, N->getOperand(0), RV);
     }
   } else if (N1.getOpcode() == ISD::FP_EXTEND &&
              N1.getOperand(0).getOpcode() == ISD::FSQRT) {
-    SDValue RV = TLI.BuildRSQRTE(N1.getOperand(0).getOperand(0), DCI);
-    if (RV.getNode()) {
+    if (SDValue RV = TLI.BuildRSQRTE(N1.getOperand(0).getOperand(0), DCI)) {
       DCI.AddToWorklist(RV.getNode());
       RV = DAG.getNode(ISD::FP_EXTEND, SDLoc(N1), VT, RV);
-      DCI.AddToWorklist(RV.getNode());
+      AddToWorklist(RV.getNode());
       return DAG.getNode(ISD::FMUL, DL, VT, N->getOperand(0), RV);
     }
   } else if (N1.getOpcode() == ISD::FP_ROUND &&
              N1.getOperand(0).getOpcode() == ISD::FSQRT) {
-    SDValue RV = TLI.BuildRSQRTE(N1.getOperand(0).getOperand(0), DCI);
-    if (RV.getNode()) {
+    if (SDValue RV = TLI.BuildRSQRTE(N1.getOperand(0).getOperand(0), DCI)) {
       DCI.AddToWorklist(RV.getNode());
       RV = DAG.getNode(ISD::FP_ROUND, SDLoc(N1), VT, RV, N1.getOperand(1));
-      DCI.AddToWorklist(RV.getNode());
+      AddToWorklist(RV.getNode());
       return DAG.getNode(ISD::FMUL, DL, VT, N->getOperand(0), RV);
     }
   }
