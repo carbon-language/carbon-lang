@@ -124,6 +124,10 @@ macro(setup_abi_lib abipathvar abidefines abilibs abifiles abidirs)
         file(COPY "${incpath}/${fpath}"
           DESTINATION "${CMAKE_BINARY_DIR}/include/${dstdir}"
           )
+        install(FILES "${CMAKE_BINARY_DIR}/include/${fpath}"
+          DESTINATION include/c++/v1/${dstdir}
+          PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+          )
         list(APPEND abilib_headers "${CMAKE_BINARY_DIR}/include/${fpath}")
       endif()
     endforeach()
@@ -135,10 +139,6 @@ macro(setup_abi_lib abipathvar abidefines abilibs abifiles abidirs)
   add_custom_target(LIBCXX_CXX_ABI_DEPS DEPENDS ${abilib_headers})
   include_directories("${CMAKE_BINARY_DIR}/include")
 
-  install(FILES ${abilib_headers}
-    DESTINATION include/c++/v1
-    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-    )
 endmacro()
 
 if ("${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "libstdc++" OR
