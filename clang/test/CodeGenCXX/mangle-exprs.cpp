@@ -56,6 +56,18 @@ namespace Casts {
   void static_(typename enable_if< O <= static_cast<unsigned>(4) >::type* = 0) {
   }
 
+  template <unsigned O, typename T>
+  void reinterpret_(typename enable_if<O <= sizeof(reinterpret_cast<T *>(0))>::type * = 0) {
+  }
+
+  template <typename T, T *p>
+  void const_(typename enable_if<0 <= sizeof(const_cast<T *>(p))>::type * = 0) {
+  }
+
+  template <typename T, T *p>
+  void dynamic_(typename enable_if<0 <= sizeof(dynamic_cast<T *>(p))>::type * = 0) {
+  }
+
   template< typename T >
   void auto_(decltype(new auto(T()))) {
   }
@@ -64,11 +76,12 @@ namespace Casts {
   void scalar_(decltype(T(), int())) {
   }
 
-  // FIXME: Test const_cast, reinterpret_cast, dynamic_cast, which are
-  // a bit harder to use in template arguments.
   template <unsigned N> struct T {};
 
   template <int N> T<N> f() { return T<N>(); }
+
+  extern int i;
+  extern struct S {} s;
   
   // CHECK-LABEL: define weak_odr void @_ZN5Casts8implicitILj4EEEvPN9enable_ifIXleT_Li4EEvE4typeE
   template void implicit<4>(void*);
@@ -76,8 +89,14 @@ namespace Casts {
   template void cstyle<4>(void*);
   // CHECK-LABEL: define weak_odr void @_ZN5Casts10functionalILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
   template void functional<4>(void*);
-  // CHECK-LABEL: define weak_odr void @_ZN5Casts7static_ILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
+  // CHECK-LABEL: define weak_odr void @_ZN5Casts7static_ILj4EEEvPN9enable_ifIXleT_scjLi4EEvE4typeE
   template void static_<4>(void*);
+  // CHECK-LABEL: define weak_odr void @_ZN5Casts12reinterpret_ILj4EiEEvPN9enable_ifIXleT_szrcPT0_Li0EEvE4typeE
+  template void reinterpret_<4, int>(void*);
+  // CHECK-LABEL: define weak_odr void @_ZN5Casts6const_IiXadL_ZNS_1iEEEEEvPN9enable_ifIXleLi0EszccPT_T0_EvE4typeE
+  template void const_<int, &i>(void*);
+  // CHECK-LABEL: define weak_odr void @_ZN5Casts8dynamic_INS_1SEXadL_ZNS_1sEEEEEvPN9enable_ifIXleLi0EszdcPT_T0_EvE4typeE
+  template void dynamic_<struct S, &s>(void*);
 
   // CHECK-LABEL: define weak_odr void @_ZN5Casts1fILi6EEENS_1TIXT_EEEv
   template T<6> f<6>();
