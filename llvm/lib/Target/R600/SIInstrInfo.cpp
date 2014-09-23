@@ -1146,9 +1146,10 @@ bool SIInstrInfo::isOperandLegal(const MachineInstr *MI, unsigned OpIdx,
   // Handle non-register types that are treated like immediates.
   assert(MO->isImm() || MO->isFPImm() || MO->isTargetIndex() || MO->isFI());
 
-  if (!DefinedRC)
-    // This opperand expects an immediate
+  if (!DefinedRC) {
+    // This operand expects an immediate.
     return true;
+  }
 
   return RI.regClassCanUseImmediate(DefinedRC);
 }
