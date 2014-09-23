@@ -17,11 +17,12 @@
 
 using namespace llvm;
 
-static llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
-
 namespace {
 
 class ExecutionEngineTest : public testing::Test {
+private:
+  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
+
 protected:
   ExecutionEngineTest() {
     auto Owner = make_unique<Module>("<main>", getGlobalContext());
