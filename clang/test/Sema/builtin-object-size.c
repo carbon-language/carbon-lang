@@ -27,7 +27,7 @@ void f4(const char *fmt, ...) {
 }
 
 // rdar://18334276
-typedef unsigned long size_t;
+typedef __typeof__(sizeof(int)) size_t;
 void * memcset(void *restrict dst, int src, size_t n);
 void * memcpy(void *restrict dst, const void *restrict src, size_t n);
 
