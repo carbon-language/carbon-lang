@@ -89,6 +89,12 @@ class AsanTestCase(TestBase):
         self.assertEqual(history_thread.frames[1].GetLineEntry().GetFileSpec().GetFilename(), "main.c")
         self.assertEqual(history_thread.frames[1].GetLineEntry().GetLine(), self.line_free)
 
+        # let's free the container (SBThreadCollection) and see if the SBThreads still live
+        threads = None
+        self.assertTrue(history_thread.num_frames >= 2)
+        self.assertEqual(history_thread.frames[1].GetLineEntry().GetFileSpec().GetFilename(), "main.c")
+        self.assertEqual(history_thread.frames[1].GetLineEntry().GetLine(), self.line_free)
+
         # now let's break when an ASan report occurs and try the API then
         self.runCmd("breakpoint set -n __asan_report_error")
 

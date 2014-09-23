@@ -107,6 +107,38 @@ memory_history_asan_command_format = R"(
     t;
 )";
 
+static void CreateHistoryThreadFromValueObject(ProcessSP process_sp, ValueObjectSP return_value_sp, const char *type, const char *thread_name, HistoryThreads & result)
+{
+    std::string count_path = "." + std::string(type) + "_count";
+    std::string tid_path = "." + std::string(type) + "_tid";
+    std::string trace_path = "." + std::string(type) + "_trace";
+
+    int count = return_value_sp->GetValueForExpressionPath(count_path.c_str())->GetValueAsUnsigned(0);
+    tid_t tid = return_value_sp->GetValueForExpressionPath(tid_path.c_str())->GetValueAsUnsigned(0);
+
+    if (count <= 0)
+        return;
+
+    ValueObjectSP trace_sp = return_value_sp->GetValueForExpressionPath(trace_path.c_str());
+
+    std::vector<lldb::addr_t> pcs;
+    for (int i = 0; i < count; i++)
+    {
+        addr_t pc = trace_sp->GetChildAtIndex(i, true)->GetValueAsUnsigned(0);
+        if (pc == 0 || pc == 1 || pc == LLDB_INVALID_ADDRESS)
+            continue;
+        pcs.push_back(pc);
+    }
+    
+    HistoryThread *history_thread = new HistoryThread(*process_sp, tid, pcs, 0, false);
+    ThreadSP new_thread_sp(history_thread);
+    // let's use thread name for the type of history thread, since history threads don't have names anyway
+    history_thread->SetThreadName(thread_name);
+    // Save this in the Process' ExtendedThreadList so a strong pointer retains the object
+    process_sp->GetExtendedThreadList().AddThread (new_thread_sp);
+    result.push_back(new_thread_sp);
+}
+
 #define GET_STACK_FUNCTION_TIMEOUT_USEC 2*1000*1000
 
 HistoryThreads
@@ -143,43 +175,9 @@ MemoryHistoryASan::GetHistoryThreads(lldb::addr_t address)
     }
     
     HistoryThreads result;
-    
-    int alloc_count = return_value_sp->GetValueForExpressionPath(".alloc_count")->GetValueAsUnsigned(0);
-    int free_count = return_value_sp->GetValueForExpressionPath(".free_count")->GetValueAsUnsigned(0);
-    tid_t alloc_tid = return_value_sp->GetValueForExpressionPath(".alloc_tid")->GetValueAsUnsigned(0);
-    tid_t free_tid = return_value_sp->GetValueForExpressionPath(".free_tid")->GetValueAsUnsigned(0);
-    
-    if (alloc_count > 0)
-    {
-        std::vector<lldb::addr_t> pcs;
-        ValueObjectSP trace_sp = return_value_sp->GetValueForExpressionPath(".alloc_trace");
-        for (int i = 0; i < alloc_count; i++) {
-            addr_t pc = trace_sp->GetChildAtIndex(i, true)->GetValueAsUnsigned(0);
-            pcs.push_back(pc);
-        }
-        
-        HistoryThread *history_thread = new HistoryThread(*process_sp, alloc_tid, pcs, 0, false);
-        ThreadSP new_thread_sp(history_thread);
-        // let's use thread name for the type of history thread, since history threads don't have names anyway
-        history_thread->SetThreadName("Memory allocated at");
-        result.push_back(new_thread_sp);
-    }
-    
-    if (free_count > 0)
-    {
-        std::vector<lldb::addr_t> pcs;
-        ValueObjectSP trace_sp = return_value_sp->GetValueForExpressionPath(".free_trace");
-        for (int i = 0; i < free_count; i++) {
-            addr_t pc = trace_sp->GetChildAtIndex(i, true)->GetValueAsUnsigned(0);
-            pcs.push_back(pc);
-        }
-        
-        HistoryThread *history_thread = new HistoryThread(*process_sp, free_tid, pcs, 0, false);
-        ThreadSP new_thread_sp(history_thread);
-        // let's use thread name for the type of history thread, since history threads don't have names anyway
-        history_thread->SetThreadName("Memory deallocated at");
-        result.push_back(new_thread_sp);
-    }
+
+    CreateHistoryThreadFromValueObject(process_sp, return_value_sp, "alloc", "Memory allocated at", result);
+    CreateHistoryThreadFromValueObject(process_sp, return_value_sp, "free", "Memory deallocated at", result);
     
     return result;
 }
