@@ -1668,7 +1668,8 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
 
     // The ABI says: It is suggested that it be emitted in the same COMDAT group
     // as the associated data object
-    if (!D.isLocalVarDecl() && var->isWeakForLinker() && CGM.supportsCOMDAT()) {
+    if (!D.isLocalVarDecl() && var->isWeakForLinker() &&
+        CGM.supportsCOMDATInitializers()) {
       llvm::Comdat *C = CGM.getModule().getOrInsertComdat(var->getName());
       guard->setComdat(C);
       var->setComdat(C);

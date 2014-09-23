@@ -302,7 +302,7 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
   CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D, Addr,
                                                           PerformInit);
 
-  llvm::GlobalVariable *Key = supportsCOMDAT() ? Addr : nullptr;
+  llvm::GlobalVariable *Key = supportsCOMDATInitializers() ? Addr : nullptr;
 
   if (D->getTLSKind()) {
     // FIXME: Should we support init_priority for thread_local?

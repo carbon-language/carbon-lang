@@ -601,6 +601,7 @@ public:
   const TargetInfo &getTarget() const { return Target; }
   const llvm::Triple &getTriple() const;
   bool supportsCOMDAT() const;
+  bool supportsCOMDATInitializers() const;
 
   CGCXXABI &getCXXABI() const { return *ABI; }
   llvm::LLVMContext &getLLVMContext() { return VMContext; }

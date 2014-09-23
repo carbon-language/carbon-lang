@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -std=c++1y -triple=x86_64-pc-linux -emit-llvm -o - | FileCheck --check-prefix=ELF --check-prefix=ALL %s
+// RUN: %clang_cc1 %s -std=c++1y -triple=x86_64-pc-linux -fuse-init-array -emit-llvm -o - | FileCheck --check-prefix=ELF --check-prefix=ALL %s
 // RUN: %clang_cc1 %s -std=c++1y -triple=x86_64-apple-darwin -emit-llvm -o - | FileCheck --check-prefix=MACHO --check-prefix=ALL %s
 
 // ALL: ; ModuleID
