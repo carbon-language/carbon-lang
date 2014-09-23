@@ -7,13 +7,13 @@
 ; D:\input.c:
 ;  1 void g(void);
 ;  2
-;  3 void f() {
+;  3 void f(void) {
 ;  4 #line 1 "one.c"
-;  5   g(void);
+;  5   g();
 ;  6 #line 2 "two.c"
-;  7   g(void);
+;  7   g();
 ;  8 #line 7 "one.c"
-;  9   g(void);
+;  9   g();
 ; 10 }
 
 ; X86-LABEL: _f:
