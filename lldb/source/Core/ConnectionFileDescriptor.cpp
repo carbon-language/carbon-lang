@@ -174,9 +174,6 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
 #ifndef LLDB_DISABLE_POSIX
         else if (strstr(s, "fd://") == s)
         {
-            if (error_ptr)
-                error_ptr->SetErrorStringWithFormat ("Protocol is not supported on non-posix hosts '%s'", s);
-            return eConnectionStatusError;
             // Just passing a native file descriptor within this current process
             // that is already opened (possibly from a service or other source).
             s += strlen ("fd://");
