@@ -602,7 +602,7 @@ struct A { constexpr A(int a, int b) : k(a + b) {} int k; };
 constexpr int fn(const A &a) { return a.k; }
 static_assert(fn(A(4,5)) == 9, "");
 
-struct B { int n; int m; } constexpr b = { 0, b.n }; // expected-warning {{uninitialized}}
+struct B { int n; int m; } constexpr b = { 0, b.n };
 struct C {
   constexpr C(C *this_) : m(42), n(this_->m) {} // ok
   int m, n;

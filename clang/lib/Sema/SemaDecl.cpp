@@ -8240,6 +8240,8 @@ namespace {
     bool isPODType;
     bool isReferenceType;
 
+    bool isInitList;
+    llvm::SmallVector<unsigned, 4> InitFieldIndex;
   public:
     typedef EvaluatedExprVisitor<SelfReferenceChecker> Inherited;
 
@@ -8248,11 +8250,84 @@ namespace {
       isPODType = false;
       isRecordType = false;
       isReferenceType = false;
+      isInitList = false;
       if (ValueDecl *VD = dyn_cast<ValueDecl>(OrigDecl)) {
         isPODType = VD->getType().isPODType(S.Context);
         isRecordType = VD->getType()->isRecordType();
         isReferenceType = VD->getType()->isReferenceType();
       }
+    }
+
+    // For most expressions, just call the visitor.  For initializer lists,
+    // track the index of the field being initialized since fields are
+    // initialized in order allowing use of previously initialized fields.
+    void CheckExpr(Expr *E) {
+      InitListExpr *InitList = dyn_cast<InitListExpr>(E);
+      if (!InitList) {
+        Visit(E);
+        return;
+      }
+
+      // Track and increment the index here.
+      isInitList = true;
+      InitFieldIndex.push_back(0);
+      for (auto Child : InitList->children()) {
+        CheckExpr(cast<Expr>(Child));
+        ++InitFieldIndex.back();
+      }
+      InitFieldIndex.pop_back();
+    }
+
+    // Returns true if MemberExpr is checked and no futher checking is needed.
+    // Returns false if additional checking is required.
+    bool CheckInitListMemberExpr(MemberExpr *E, bool CheckReference) {
+      llvm::SmallVector<FieldDecl*, 4> Fields;
+      Expr *Base = E;
+      bool ReferenceField = false;
+
+      // Get the field memebers used.
+      while (MemberExpr *ME = dyn_cast<MemberExpr>(Base)) {
+        FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl());
+        if (!FD)
+          return false;
+        Fields.push_back(FD);
+        if (FD->getType()->isReferenceType())
+          ReferenceField = true;
+        Base = ME->getBase()->IgnoreParenImpCasts();
+      }
+
+      // Keep checking only if the base Decl is the same.
+      DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Base);
+      if (!DRE || DRE->getDecl() != OrigDecl)
+        return false;
+
+      // A reference field can be bound to an unininitialized field.
+      if (CheckReference && !ReferenceField)
+        return true;
+
+      // Convert FieldDecls to their index number.
+      llvm::SmallVector<unsigned, 4> UsedFieldIndex;
+      for (auto I = Fields.rbegin(), E = Fields.rend(); I != E; ++I) {
+        UsedFieldIndex.push_back((*I)->getFieldIndex());
+      }
+
+      // See if a warning is needed by checking the first difference in index
+      // numbers.  If field being used has index less than the field being
+      // initialized, then the use is safe.
+      for (auto UsedIter = UsedFieldIndex.begin(),
+                UsedEnd = UsedFieldIndex.end(),
+                OrigIter = InitFieldIndex.begin(),
+                OrigEnd = InitFieldIndex.end();
+           UsedIter != UsedEnd && OrigIter != OrigEnd; ++UsedIter, ++OrigIter) {
+        if (*UsedIter < *OrigIter)
+          return true;
+        if (*UsedIter > *OrigIter)
+          break;
+      }
+
+      // TODO: Add a different warning which will print the field names.
+      HandleDeclRefExpr(DRE);
+      return true;
     }
 
     // For most expressions, the cast is directly above the DeclRefExpr.
@@ -8290,6 +8365,12 @@ namespace {
       }
 
       if (isa<MemberExpr>(E)) {
+        if (isInitList) {
+          if (CheckInitListMemberExpr(cast<MemberExpr>(E),
+                                      false /*CheckReference*/))
+            return;
+        }
+
         Expr *Base = E->IgnoreParenImpCasts();
         while (MemberExpr *ME = dyn_cast<MemberExpr>(Base)) {
           // Check for static member variables and don't warn on them.
@@ -8323,6 +8404,11 @@ namespace {
     }
 
     void VisitMemberExpr(MemberExpr *E) {
+      if (isInitList) {
+        if (CheckInitListMemberExpr(E, true /*CheckReference*/))
+          return;
+      }
+
       // Don't warn on arrays since they can be treated as pointers.
       if (E->getType()->canDecayToPointerType()) return;
 
@@ -8439,7 +8525,7 @@ namespace {
             if (DRE->getDecl() == OrigDecl)
               return;
 
-    SelfReferenceChecker(S, OrigDecl).Visit(E);
+    SelfReferenceChecker(S, OrigDecl).CheckExpr(E);
   }
 }
 
