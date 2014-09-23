@@ -3539,6 +3539,7 @@ static bool MayFoldIntoStore(SDValue Op) {
 static bool isTargetShuffle(unsigned Opcode) {
   switch(Opcode) {
   default: return false;
+  case X86ISD::BLENDI:
   case X86ISD::PSHUFB:
   case X86ISD::PSHUFD:
   case X86ISD::PSHUFHW:
@@ -5288,6 +5289,10 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
   IsUnary = false;
   bool IsFakeUnary = false;
   switch(N->getOpcode()) {
+  case X86ISD::BLENDI:
+    ImmN = N->getOperand(N->getNumOperands()-1);
+    DecodeBLENDMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    break;
   case X86ISD::SHUFP:
     ImmN = N->getOperand(N->getNumOperands()-1);
     DecodeSHUFPMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
@@ -7270,7 +7275,7 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
     // If we have AVX2 it is faster to use VPBLENDD when the shuffle fits into
     // that instruction.
     if (Subtarget->hasAVX2()) {
-      int Scale = 8 / VT.getVectorNumElements();
+      int Scale = 4 / VT.getVectorNumElements();
       BlendMask = 0;
       for (int i = 0, Size = Mask.size(); i < Size; ++i)
         if (Mask[i] >= Size)
