@@ -54,7 +54,7 @@ static void dumpSectionMemory(const SectionEntry &S, StringRef State) {
   unsigned BytesRemaining = S.Size;
 
   if (StartPadding) {
-    dbgs() << "\n" << format("0x%08x", LoadAddr & ~(ColsPerRow - 1)) << ":";
+    dbgs() << "\n" << format("0x%016" PRIx64, LoadAddr & ~(ColsPerRow - 1)) << ":";
     while (StartPadding--)
       dbgs() << "   ";
   }
@@ -695,8 +695,8 @@ void RuntimeDyldImpl::reassignSectionAddress(unsigned SectionID,
   // "big enough" type.
   DEBUG(dbgs() << "Reassigning address for section "
                << SectionID << " (" << Sections[SectionID].Name << "): "
-               << format("0x%016x", Sections[SectionID].LoadAddress) << " -> "
-               << format("0x%016x", Addr) << "\n");
+               << format("0x%016" PRIx64, Sections[SectionID].LoadAddress) << " -> "
+               << format("0x%016" PRIx64, Addr) << "\n");
   Sections[SectionID].LoadAddress = Addr;
 }
 
