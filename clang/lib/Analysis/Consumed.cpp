@@ -1360,7 +1360,7 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
 
   determineExpectedReturnState(AC, D);
 
-  PostOrderCFGView *SortedGraph = AC.getAnalysis<ReversePostOrderCFGView>();
+  PostOrderCFGView *SortedGraph = AC.getAnalysis<PostOrderCFGView>();
   // AC.getCFG()->viewCFG(LangOptions());
   
   BlockInfo = ConsumedBlockInfo(CFGraph->getNumBlockIDs(), SortedGraph);

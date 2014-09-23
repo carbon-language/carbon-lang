@@ -142,7 +142,7 @@ public:
     if (!dyn_cast_or_null<NamedDecl>(AC.getDecl()))
       return false;
 
-    SortedGraph = AC.getAnalysis<ReversePostOrderCFGView>();
+    SortedGraph = AC.getAnalysis<PostOrderCFGView>();
     if (!SortedGraph)
       return false;
 

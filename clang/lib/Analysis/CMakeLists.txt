@@ -13,7 +13,6 @@ add_clang_library(clangAnalysis
   Consumed.cpp
   CodeInjector.cpp
   Dominators.cpp
-  DataflowWorklist.cpp
   FormatString.cpp
   LiveVariables.cpp
   ObjCNoReturn.cpp

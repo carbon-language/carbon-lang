@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements post order views of the blocks in a CFG.
+// This file implements post order view of the blocks in a CFG.
 //
 //===----------------------------------------------------------------------===//
 
@@ -68,7 +68,8 @@ public:
     }
   };
 
-protected:
+private:
+  typedef llvm::po_iterator<const CFG*, CFGBlockSet, true>  po_iterator;
   std::vector<const CFGBlock*> Blocks;
 
   typedef llvm::DenseMap<const CFGBlock *, unsigned> BlockOrderTy;
@@ -106,15 +107,6 @@ public:
   static const void *getTag();
 
   static PostOrderCFGView *create(AnalysisDeclContext &analysisContext);
-
-protected:
-  PostOrderCFGView() {}
-};
-
-class ReversePostOrderCFGView : public PostOrderCFGView {
-public:
-  ReversePostOrderCFGView(const CFG *cfg);
-  static ReversePostOrderCFGView *create(AnalysisDeclContext &analysisContext);
 };
 
 } // end clang namespace
