@@ -6877,14 +6877,6 @@ bool CodeGenModule::supportsCOMDAT() const {
   return !getTriple().isOSBinFormatMachO();
 }
 
-bool CodeGenModule::supportsCOMDATInitializers() const {
-  // We can only put initializers in comdat groups on ELF with .init_array and
-  // COFF with .CRT$XCU.
-  return supportsCOMDAT() &&
-         ((getTriple().isOSBinFormatELF() && getCodeGenOpts().UseInitArray) ||
-          (getTriple().isWindowsMSVCEnvironment()));
-}
-
 const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   if (TheTargetCodeGenInfo)
     return *TheTargetCodeGenInfo;

@@ -1,8 +1,6 @@
-// RUN: %clang_cc1 -triple x86_64-pc-linux -emit-llvm -fuse-init-array -o - %s | FileCheck %s
-// RUN: %clang_cc1 -triple x86_64-pc-linux -emit-llvm -o - %s | \
-// RUN:     FileCheck %s --check-prefix=CTORS
+// RUN: %clang_cc1 -triple x86_64-pc-linux -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm -o - %s | \
-// RUN:     FileCheck --check-prefix=MACHO %s
+// RUN: FileCheck --check-prefix=MACHO %s
 
 // CHECK: @_ZN5test11A1aE = constant i32 10, align 4
 // CHECK: @_ZN5test212_GLOBAL__N_11AIiE1xE = internal global i32 0, align 4
@@ -10,8 +8,6 @@
 // CHECK: @_ZGVN5test31AIiE1xE = weak_odr global i64 0, comdat $_ZN5test31AIiE1xE
 // MACHO: @_ZGVN5test31AIiE1xE = weak_odr global i64 0
 // MACHO-NOT: comdat
-// CTORS: @_ZGVN5test31AIiE1xE = weak_odr global i64 0
-// CTORS-NOT: comdat
 
 // CHECK: _ZN5test51U2k0E = global i32 0
 // CHECK: _ZN5test51U2k1E = global i32 0
@@ -71,8 +67,6 @@ namespace test3 {
   // CHECK-LABEL: define internal void @__cxx_global_var_init1() {{.*}} comdat $_ZN5test31AIiE1xE
   // MACHO-LABEL: define internal void @__cxx_global_var_init1()
   // MACHO-NOT: comdat
-  // CTORS-LABEL: define internal void @__cxx_global_var_init1()
-  // CTORS-NOT: comdat
   // CHECK:      [[GUARDBYTE:%.*]] = load i8* bitcast (i64* @_ZGVN5test31AIiE1xE to i8*)
   // CHECK-NEXT: [[UNINITIALIZED:%.*]] = icmp eq i8 [[GUARDBYTE]], 0
   // CHECK-NEXT: br i1 [[UNINITIALIZED]]
