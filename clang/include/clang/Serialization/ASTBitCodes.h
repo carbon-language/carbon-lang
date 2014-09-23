@@ -1339,7 +1339,7 @@ namespace clang {
       STMT_SEH_FINALLY,           // SEHFinallyStmt
       STMT_SEH_TRY,               // SEHTryStmt
 
-      // OpenMP drectives
+      // OpenMP directives
       STMT_OMP_PARALLEL_DIRECTIVE,
       STMT_OMP_SIMD_DIRECTIVE,
       STMT_OMP_FOR_DIRECTIVE,
