@@ -8,6 +8,7 @@ define void @test_store_release(i32* %p, i32 %v) {
 ; CHECK: dmb ishst
 ; CHECK: str
 
+; CHECK-STRICT-ATOMIC-LABEL: test_store_release:
 ; CHECK-STRICT-ATOMIC: dmb {{ish$}}
   store atomic i32 %v, i32* %p release, align 4
   ret void
@@ -24,7 +25,11 @@ define i32 @test_seq_cst(i32* %p, i32 %v) {
 ; CHECK: ldr
 ; CHECK: dmb {{ish$}}
 
+; CHECK-STRICT-ATOMIC-LABEL: test_seq_cst:
 ; CHECK-STRICT-ATOMIC: dmb {{ish$}}
+; CHECK-STRICT-ATOMIC: str
+; CHECK-STRICT-ATOMIC: dmb {{ish$}}
+; CHECK-STRICT-ATOMIC: ldr
 ; CHECK-STRICT-ATOMIC: dmb {{ish$}}
 
   store atomic i32 %v, i32* %p seq_cst, align 4
@@ -39,6 +44,7 @@ define i32 @test_acq(i32* %addr) {
 ; CHECK: ldr
 ; CHECK: dmb {{ish$}}
 
+; CHECK-STRICT-ATOMIC-LABEL: test_acq:
 ; CHECK-STRICT-ATOMIC: dmb {{ish$}}
   %val = load atomic i32* %addr acquire, align 4
   ret i32 %val
