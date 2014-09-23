@@ -106,3 +106,8 @@ namespace pr16225add {
   { };
 
 }
+
+namespace PR18793 {
+  template<typename T, T> struct S {};
+  template<typename T> int g(S<T, (T())> *);
+}

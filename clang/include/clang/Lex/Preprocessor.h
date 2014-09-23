@@ -1361,6 +1361,7 @@ public:
 private:
 
   void PushIncludeMacroStack() {
+    assert(CurLexerKind != CLK_CachingLexer && "cannot push a caching lexer");
     IncludeMacroStack.push_back(IncludeStackInfo(
         CurLexerKind, CurSubmodule, std::move(CurLexer), std::move(CurPTHLexer),
         CurPPLexer, std::move(CurTokenLexer), CurDirLookup));

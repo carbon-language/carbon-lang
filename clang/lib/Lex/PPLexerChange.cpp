@@ -190,6 +190,25 @@ void Preprocessor::EnterMacro(Token &Tok, SourceLocation ILEnd,
 void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks,
                                     bool DisableMacroExpansion,
                                     bool OwnsTokens) {
+  if (CurLexerKind == CLK_CachingLexer) {
+    if (CachedLexPos < CachedTokens.size()) {
+      // We're entering tokens into the middle of our cached token stream. We
+      // can't represent that, so just insert the tokens into the buffer.
+      CachedTokens.insert(CachedTokens.begin() + CachedLexPos,
+                          Toks, Toks + NumToks);
+      if (OwnsTokens)
+        delete [] Toks;
+      return;
+    }
+
+    // New tokens are at the end of the cached token sequnece; insert the
+    // token stream underneath the caching lexer.
+    ExitCachingLexMode();
+    EnterTokenStream(Toks, NumToks, DisableMacroExpansion, OwnsTokens);
+    EnterCachingLexMode();
+    return;
+  }
+
   // Create a macro expander to expand from the specified token stream.
   std::unique_ptr<TokenLexer> TokLexer;
   if (NumCachedTokenLexers == 0) {
