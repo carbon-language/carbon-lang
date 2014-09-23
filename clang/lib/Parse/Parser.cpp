@@ -1431,31 +1431,13 @@ Parser::TryAnnotateName(bool IsAddressOfOperand,
 }
 
 bool Parser::TryKeywordIdentFallback(bool DisableKeyword) {
-  assert(!Tok.is(tok::identifier) && !Tok.isAnnotation());
+  assert(Tok.isNot(tok::identifier));
   Diag(Tok, diag::ext_keyword_as_ident)
     << PP.getSpelling(Tok)
     << DisableKeyword;
-  if (DisableKeyword) {
-    IdentifierInfo *II = Tok.getIdentifierInfo();
-    ContextualKeywords[II] = Tok.getKind();
-    II->RevertTokenIDToIdentifier();
-  }
+  if (DisableKeyword)
+    Tok.getIdentifierInfo()->RevertTokenIDToIdentifier();
   Tok.setKind(tok::identifier);
-  return true;
-}
-
-bool Parser::TryIdentKeywordUpgrade() {
-  assert(Tok.is(tok::identifier));
-  const IdentifierInfo *II = Tok.getIdentifierInfo();
-  assert(II->hasRevertedTokenIDToIdentifier());
-  // If we find that this is in fact the name of a type trait,
-  // update the token kind in place and parse again to treat it as
-  // the appropriate kind of type trait.
-  llvm::SmallDenseMap<const IdentifierInfo *, tok::TokenKind>::iterator Known =
-      ContextualKeywords.find(II);
-  if (Known == ContextualKeywords.end())
-    return false;
-  Tok.setKind(Known->second);
   return true;
 }
 
