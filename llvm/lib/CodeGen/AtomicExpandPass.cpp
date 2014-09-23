@@ -44,6 +44,8 @@ namespace {
     bool bracketInstWithFences(Instruction *I, AtomicOrdering Order,
                                bool IsStore, bool IsLoad);
     bool expandAtomicLoad(LoadInst *LI);
+    bool expandAtomicLoadToLL(LoadInst *LI);
+    bool expandAtomicLoadToCmpXchg(LoadInst *LI);
     bool expandAtomicStore(StoreInst *SI);
     bool expandAtomicRMW(AtomicRMWInst *AI);
     bool expandAtomicRMWToLLSC(AtomicRMWInst *AI);
@@ -160,6 +162,15 @@ bool AtomicExpand::bracketInstWithFences(Instruction *I, AtomicOrdering Order,
 }
 
 bool AtomicExpand::expandAtomicLoad(LoadInst *LI) {
+   if (TM->getSubtargetImpl()
+          ->getTargetLowering()
+          ->hasLoadLinkedStoreConditional())
+    return expandAtomicLoadToLL(LI);
+  else
+    return expandAtomicLoadToCmpXchg(LI);
+}
+
+bool AtomicExpand::expandAtomicLoadToLL(LoadInst *LI) {
   auto TLI = TM->getSubtargetImpl()->getTargetLowering();
   IRBuilder<> Builder(LI);
 
@@ -170,6 +181,24 @@ bool AtomicExpand::expandAtomicLoad(LoadInst *LI) {
       TLI->emitLoadLinked(Builder, LI->getPointerOperand(), LI->getOrdering());
 
   LI->replaceAllUsesWith(Val);
+  LI->eraseFromParent();
+
+  return true;
+}
+
+bool AtomicExpand::expandAtomicLoadToCmpXchg(LoadInst *LI) {
+  IRBuilder<> Builder(LI);
+  AtomicOrdering Order = LI->getOrdering();
+  Value *Addr = LI->getPointerOperand();
+  Type *Ty = cast<PointerType>(Addr->getType())->getElementType();
+  Constant *DummyVal = Constant::getNullValue(Ty);
+
+  Value *Pair = Builder.CreateAtomicCmpXchg(
+      Addr, DummyVal, DummyVal, Order,
+      AtomicCmpXchgInst::getStrongestFailureOrdering(Order));
+  Value *Loaded = Builder.CreateExtractValue(Pair, 0, "loaded");
+
+  LI->replaceAllUsesWith(Loaded);
   LI->eraseFromParent();
 
   return true;

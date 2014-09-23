@@ -17477,8 +17477,11 @@ bool X86TargetLowering::shouldExpandAtomicStoreInIR(StoreInst *SI) const {
   return needsCmpXchgNb(SI->getValueOperand()->getType());
 }
 
-bool X86TargetLowering::shouldExpandAtomicLoadInIR(LoadInst *SI) const {
-  return false; // FIXME, currently these are expanded separately in this file.
+// Note: this turns large loads into lock cmpxchg8b/16b.
+// FIXME: On 32 bits x86, fild/movq might be faster than lock cmpxchg8b.
+bool X86TargetLowering::shouldExpandAtomicLoadInIR(LoadInst *LI) const {
+  auto PTy = cast<PointerType>(LI->getPointerOperand()->getType());
+  return needsCmpXchgNb(PTy->getElementType());
 }
 
 bool X86TargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
@@ -17855,29 +17858,6 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   }
 }
 
-static void ReplaceATOMIC_LOAD(SDNode *Node,
-                               SmallVectorImpl<SDValue> &Results,
-                               SelectionDAG &DAG) {
-  SDLoc dl(Node);
-  EVT VT = cast<AtomicSDNode>(Node)->getMemoryVT();
-
-  // Convert wide load -> cmpxchg8b/cmpxchg16b
-  // FIXME: On 32-bit, load -> fild or movq would be more efficient
-  //        (The only way to get a 16-byte load is cmpxchg16b)
-  // FIXME: 16-byte ATOMIC_CMP_SWAP isn't actually hooked up at the moment.
-  SDValue Zero = DAG.getConstant(0, VT);
-  SDVTList VTs = DAG.getVTList(VT, MVT::i1, MVT::Other);
-  SDValue Swap =
-      DAG.getAtomicCmpSwap(ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS, dl, VT, VTs,
-                           Node->getOperand(0), Node->getOperand(1), Zero, Zero,
-                           cast<AtomicSDNode>(Node)->getMemOperand(),
-                           cast<AtomicSDNode>(Node)->getOrdering(),
-                           cast<AtomicSDNode>(Node)->getOrdering(),
-                           cast<AtomicSDNode>(Node)->getSynchScope());
-  Results.push_back(Swap.getValue(0));
-  Results.push_back(Swap.getValue(2));
-}
-
 /// ReplaceNodeResults - Replace a node with an illegal result type
 /// with a new node built out of custom code.
 void X86TargetLowering::ReplaceNodeResults(SDNode *N,
@@ -18036,12 +18016,10 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   case ISD::ATOMIC_LOAD_MAX:
   case ISD::ATOMIC_LOAD_UMIN:
   case ISD::ATOMIC_LOAD_UMAX:
+  case ISD::ATOMIC_LOAD: {
     // Delegate to generic TypeLegalization. Situations we can really handle
     // should have already been dealt with by AtomicExpandPass.cpp.
     break;
-  case ISD::ATOMIC_LOAD: {
-    ReplaceATOMIC_LOAD(N, Results, DAG);
-    return;
   }
   case ISD::BITCAST: {
     assert(Subtarget->hasSSE2() && "Requires at least SSE2!");
