@@ -24,5 +24,6 @@ target_link_libraries(ClangTidyTests
   clangTidyLLVMModule
   clangTidyMiscModule
   clangTidyReadability
+  clangTidyUtils
   clangTooling
   )
