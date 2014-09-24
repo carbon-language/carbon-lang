@@ -76,6 +76,9 @@ void LPPassManager::deleteLoopFromQueue(Loop *L) {
 
   LI->updateUnloop(L);
 
+  // Notify passes that the loop is being deleted.
+  deleteSimpleAnalysisLoop(L);
+
   // If L is current loop then skip rest of the passes and let
   // runOnFunction remove L from LQ. Otherwise, remove L from LQ now
   // and continue applying other passes on CurrentLoop.
@@ -161,6 +164,14 @@ void LPPassManager::deleteSimpleAnalysisValue(Value *V, Loop *L) {
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     LoopPass *LP = getContainedPass(Index);
     LP->deleteAnalysisValue(V, L);
+  }
+}
+
+/// Invoke deleteAnalysisLoop hook for all passes.
+void LPPassManager::deleteSimpleAnalysisLoop(Loop *L) {
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
+    LoopPass *LP = getContainedPass(Index);
+    LP->deleteAnalysisLoop(L);
   }
 }
 
