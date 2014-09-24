@@ -3278,6 +3278,10 @@ FieldDecl *Expr::getSourceBitField() {
       return BinOp->getRHS()->getSourceBitField();
   }
 
+  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(E))
+    if (UnOp->isPrefix() && UnOp->isIncrementDecrementOp())
+      return UnOp->getSubExpr()->getSourceBitField();
+
   return nullptr;
 }
 

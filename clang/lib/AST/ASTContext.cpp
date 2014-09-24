@@ -4421,7 +4421,11 @@ unsigned ASTContext::getIntegerRank(const Type *T) const {
 QualType ASTContext::isPromotableBitField(Expr *E) const {
   if (E->isTypeDependent() || E->isValueDependent())
     return QualType();
-  
+
+  // FIXME: We should not do this unless E->refersToBitField() is true. This
+  // matters in C where getSourceBitField() will find bit-fields for various
+  // cases where the source expression is not a bit-field designator.
+
   FieldDecl *Field = E->getSourceBitField(); // FIXME: conditional bit-fields?
   if (!Field)
     return QualType();
@@ -4430,9 +4434,20 @@ QualType ASTContext::isPromotableBitField(Expr *E) const {
 
   uint64_t BitWidth = Field->getBitWidthValue(*this);
   uint64_t IntSize = getTypeSize(IntTy);
-  // GCC extension compatibility: if the bit-field size is less than or equal
-  // to the size of int, it gets promoted no matter what its type is.
-  // For instance, unsigned long bf : 4 gets promoted to signed int.
+  // C++ [conv.prom]p5:
+  //   A prvalue for an integral bit-field can be converted to a prvalue of type
+  //   int if int can represent all the values of the bit-field; otherwise, it
+  //   can be converted to unsigned int if unsigned int can represent all the
+  //   values of the bit-field. If the bit-field is larger yet, no integral
+  //   promotion applies to it.
+  // C11 6.3.1.1/2:
+  //   [For a bit-field of type _Bool, int, signed int, or unsigned int:]
+  //   If an int can represent all values of the original type (as restricted by
+  //   the width, for a bit-field), the value is converted to an int; otherwise,
+  //   it is converted to an unsigned int.
+  //
+  // FIXME: C does not permit promotion of a 'long : 3' bitfield to int.
+  //        We perform that promotion here to match GCC and C++.
   if (BitWidth < IntSize)
     return IntTy;
 
@@ -4440,9 +4455,10 @@ QualType ASTContext::isPromotableBitField(Expr *E) const {
     return FT->isSignedIntegerType() ? IntTy : UnsignedIntTy;
 
   // Types bigger than int are not subject to promotions, and therefore act
-  // like the base type.
-  // FIXME: This doesn't quite match what gcc does, but what gcc does here
-  // is ridiculous.
+  // like the base type. GCC has some weird bugs in this area that we
+  // deliberately do not follow (GCC follows a pre-standard resolution to
+  // C's DR315 which treats bit-width as being part of the type, and this leaks
+  // into their semantics in some cases).
   return QualType();
 }
 

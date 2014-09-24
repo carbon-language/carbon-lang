@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify 
+// RUN: %clang_cc1 %s -fsyntax-only -verify -std=c11
 enum e0; // expected-note{{forward declaration of 'enum e0'}}
 
 struct a {
@@ -54,3 +54,22 @@ void test4(struct Test4 *t) {
   (void) sizeof(t->var ? t->bitX : t->bitY); // not a bitfield designator in C
   (void) sizeof(t->var ? t->bitX : t->bitX); // not a bitfield designator in C
 }
+
+typedef unsigned Unsigned;
+typedef signed Signed;
+
+struct Test5 { unsigned n : 2; } t5;
+typedef __typeof__(t5.n) Unsigned; // Bitfield is unsigned
+typedef __typeof__(+t5.n) Signed;  // ... but promotes to signed.
+
+typedef __typeof__(t5.n + 0) Signed; // Arithmetic promotes.
+
+typedef __typeof__(+(t5.n = 0)) Signed;  // FIXME: Assignment should not; the result
+typedef __typeof__(+(t5.n += 0)) Signed; // is a non-bit-field lvalue of type unsigned.
+typedef __typeof__(+(t5.n *= 0)) Signed;
+
+typedef __typeof__(+(++t5.n)) Signed; // FIXME: Increment is equivalent to compound-assignment.
+typedef __typeof__(+(--t5.n)) Signed; // This should not promote to signed.
+
+typedef __typeof__(+(t5.n++)) Unsigned; // Post-increment is underspecified, but seems to
+typedef __typeof__(+(t5.n--)) Unsigned; // also act like compound-assignment.
