@@ -2655,7 +2655,6 @@ recurse:
   case Expr::ArrayTypeTraitExprClass:
   case Expr::ExpressionTraitExprClass:
   case Expr::VAArgExprClass:
-  case Expr::CXXUuidofExprClass:
   case Expr::CUDAKernelCallExprClass:
   case Expr::AsTypeExprClass:
   case Expr::PseudoObjectExprClass:
@@ -2667,6 +2666,20 @@ recurse:
                                      "cannot yet mangle expression type %0");
     Diags.Report(E->getExprLoc(), DiagID)
       << E->getStmtClassName() << E->getSourceRange();
+    break;
+  }
+
+  case Expr::CXXUuidofExprClass: {
+    const CXXUuidofExpr *UE = cast<CXXUuidofExpr>(E);
+    if (UE->isTypeOperand()) {
+      QualType UuidT = UE->getTypeOperand(Context.getASTContext());
+      Out << "u8__uuidoft";
+      mangleType(UuidT);
+    } else {
+      Expr *UuidExp = UE->getExprOperand();
+      Out << "u8__uuidofz";
+      mangleExpression(UuidExp, Arity);
+    }
     break;
   }
 
