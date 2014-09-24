@@ -674,6 +674,10 @@ bool SIInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     MI->eraseFromParent();
     break;
   }
+  case AMDGPU::SGPR_USE:
+    // This is just a placeholder for register allocation.
+    MI->eraseFromParent();
+    break;
   }
   return true;
 }

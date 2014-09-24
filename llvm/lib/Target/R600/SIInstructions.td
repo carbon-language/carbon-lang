@@ -1652,6 +1652,10 @@ def V_XOR_I1 : InstSI <
   [(set i1:$dst, (xor i1:$src0, i1:$src1))]
 >;
 
+let hasSideEffects = 1 in {
+def SGPR_USE : InstSI <(outs),(ins), "", []>;
+}
+
 // SI pseudo instructions. These are used by the CFG structurizer pass
 // and should be lowered to ISA instructions prior to codegen.
 
