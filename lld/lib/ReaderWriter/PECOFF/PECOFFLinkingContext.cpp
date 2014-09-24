@@ -272,11 +272,23 @@ static bool sameExportDesc(const PECOFFLinkingContext::ExportDesc &a,
 
 void PECOFFLinkingContext::addDllExport(ExportDesc &desc) {
   addInitialUndefinedSymbol(allocate(desc.name));
-  auto existing = _dllExports.insert(desc);
-  if (existing.second || sameExportDesc(*existing.first, desc))
+
+  // Scan the vector to look for existing entry. It's not very fast,
+  // but because the number of exported symbol is usually not that
+  // much, it should be okay.
+  ExportDesc *existing = nullptr;
+  for (ExportDesc &e : _dllExports) {
+    if (e.name == desc.name) {
+      existing = &e;
+      break;
+    }
+  }
+  if (existing && !sameExportDesc(*existing, desc)) {
+    llvm::errs() << "Export symbol '" << desc.name
+                 << "' specified more than once.\n";
     return;
-  llvm::errs() << "Export symbol '" << desc.name
-               << "' specified more than once.\n";
+  }
+  _dllExports.push_back(desc);
 }
 
 std::string PECOFFLinkingContext::getOutputImportLibraryPath() const {

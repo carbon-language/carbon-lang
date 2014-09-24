@@ -252,8 +252,8 @@ public:
   ArrayRef<uint8_t> getDosStub() const { return _dosStub; }
 
   void addDllExport(ExportDesc &desc);
-  std::set<ExportDesc> &getDllExports() { return _dllExports; }
-  const std::set<ExportDesc> &getDllExports() const { return _dllExports; }
+  std::vector<ExportDesc> &getDllExports() { return _dllExports; }
+  const std::vector<ExportDesc> &getDllExports() const { return _dllExports; }
 
   StringRef allocate(StringRef ref) const {
     _allocMutex.lock();
@@ -385,7 +385,7 @@ private:
   std::map<std::string, uint32_t> _sectionClearMask;
 
   // DLLExport'ed symbols.
-  std::set<ExportDesc> _dllExports;
+  std::vector<ExportDesc> _dllExports;
 
   // List of files that will be removed on destruction.
   std::vector<std::unique_ptr<llvm::FileRemover> > _tempFiles;
