@@ -4,8 +4,8 @@ define void @foo(i32* %A) #0 {
 entry:
 ; CHECK-LABEL: foo:
 ; CHECK: push {r7, lr}
-; CHECK: ldr
-; CHECK-NEXT: ldr
+; CHECK: ldm
+; CHECK-NEXT: subs
 ; CHECK-NEXT: bl
   %0 = load i32* %A, align 4
   %arrayidx1 = getelementptr inbounds i32* %A, i32 1
