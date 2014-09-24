@@ -8359,9 +8359,11 @@ namespace {
       }
 
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
-        if (BO->getOpcode() == BO_Comma)
+        if (BO->getOpcode() == BO_Comma) {
+          Visit(BO->getLHS());
           HandleValue(BO->getRHS());
-        return;
+          return;
+        }
       }
 
       if (isa<MemberExpr>(E)) {
