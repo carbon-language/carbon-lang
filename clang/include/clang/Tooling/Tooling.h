@@ -203,7 +203,9 @@ class ToolInvocation {
   ~ToolInvocation();
 
   /// \brief Set a \c DiagnosticConsumer to use during parsing.
-  void setDiagnosticConsumer(DiagnosticConsumer *DiagConsumer);
+  void setDiagnosticConsumer(DiagnosticConsumer *DiagConsumer) {
+    this->DiagConsumer = DiagConsumer;
+  }
 
   /// \brief Map a virtual file to be used while running the tool.
   ///
@@ -250,24 +252,18 @@ class ClangTool {
   ClangTool(const CompilationDatabase &Compilations,
             ArrayRef<std::string> SourcePaths);
 
-  virtual ~ClangTool() { clearArgumentsAdjusters(); }
+  ~ClangTool();
 
   /// \brief Set a \c DiagnosticConsumer to use during parsing.
-  void setDiagnosticConsumer(DiagnosticConsumer *DiagConsumer);
+  void setDiagnosticConsumer(DiagnosticConsumer *DiagConsumer) {
+    this->DiagConsumer = DiagConsumer;
+  }
 
   /// \brief Map a virtual file to be used while running the tool.
   ///
   /// \param FilePath The path at which the content will be mapped.
   /// \param Content A null terminated buffer of the file's content.
   void mapVirtualFile(StringRef FilePath, StringRef Content);
-
-  /// \brief Install command line arguments adjuster.
-  ///
-  /// \param Adjuster Command line arguments adjuster.
-  //
-  /// FIXME: Function is deprecated. Use (clear/append)ArgumentsAdjuster instead.
-  /// Remove it once all callers are gone.
-  void setArgumentsAdjuster(ArgumentsAdjuster *Adjuster);
 
   /// \brief Append a command line arguments adjuster to the adjuster chain.
   ///
@@ -300,7 +296,7 @@ class ClangTool {
   // Contains a list of pairs (<file name>, <file content>).
   std::vector< std::pair<StringRef, StringRef> > MappedFileContents;
 
-  SmallVector<ArgumentsAdjuster *, 2> ArgsAdjusters;
+  SmallVector<std::unique_ptr<ArgumentsAdjuster>, 2> ArgsAdjusters;
 
   DiagnosticConsumer *DiagConsumer;
 };
