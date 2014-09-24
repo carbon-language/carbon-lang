@@ -9544,11 +9544,56 @@ static SDValue lowerV8I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
   assert(Subtarget->hasAVX2() && "We can only lower v8i32 with AVX2!");
 
-  // FIXME: Actually implement this using AVX2!!!
-  V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8f32, V1);
-  V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v8f32, V2);
-  return DAG.getNode(ISD::BITCAST, DL, MVT::v8i32,
-                     DAG.getVectorShuffle(MVT::v8f32, DL, V1, V2, Mask));
+  if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v8i32, V1, V2, Mask,
+                                                Subtarget, DAG))
+    return Blend;
+
+  // If the shuffle mask is repeated in each 128-bit lane we can use more
+  // efficient instructions that mirror the shuffles across the two 128-bit
+  // lanes.
+  SmallVector<int, 4> RepeatedMask;
+  if (is128BitLaneRepeatedShuffleMask(MVT::v8i32, Mask, RepeatedMask)) {
+    assert(RepeatedMask.size() == 4 && "Unexpected repeated mask size!");
+    if (isSingleInputShuffleMask(Mask))
+      return DAG.getNode(X86ISD::PSHUFD, DL, MVT::v8i32, V1,
+                         getV4X86ShuffleImm8ForMask(RepeatedMask, DAG));
+
+    // Use dedicated unpack instructions for masks that match their pattern.
+    if (isShuffleEquivalent(Mask, 0, 8, 1, 9))
+      return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8i32, V1, V2);
+    if (isShuffleEquivalent(Mask, 2, 10, 3, 11))
+      return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8i32, V1, V2);
+  }
+
+  // If the shuffle patterns aren't repeated but it is a single input, directly
+  // generate a cross-lane VPERMD instruction.
+  if (isSingleInputShuffleMask(Mask)) {
+    SDValue VPermMask[8];
+    for (int i = 0; i < 8; ++i)
+      VPermMask[i] = Mask[i] < 0 ? DAG.getUNDEF(MVT::i32)
+                                 : DAG.getConstant(Mask[i], MVT::i32);
+    return DAG.getNode(
+        X86ISD::VPERMV, DL, MVT::v8i32,
+        DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i32, VPermMask), V1);
+  }
+
+  // Shuffle the input elements into the desired positions in V1 and V2 and
+  // blend them together.
+  int V1Mask[] = {-1, -1, -1, -1, -1, -1, -1, -1};
+  int V2Mask[] = {-1, -1, -1, -1, -1, -1, -1, -1};
+  int BlendMask[] = {-1, -1, -1, -1, -1, -1, -1, -1};
+  for (int i = 0; i < 8; ++i)
+    if (Mask[i] >= 0 && Mask[i] < 8) {
+      V1Mask[i] = Mask[i];
+      BlendMask[i] = i;
+    } else if (Mask[i] >= 8) {
+      V2Mask[i] = Mask[i] - 8;
+      BlendMask[i] = i + 8;
+    }
+
+  V1 = DAG.getVectorShuffle(MVT::v8i32, DL, V1, DAG.getUNDEF(MVT::v8i32), V1Mask);
+  V2 = DAG.getVectorShuffle(MVT::v8i32, DL, V2, DAG.getUNDEF(MVT::v8i32), V2Mask);
+  return DAG.getVectorShuffle(MVT::v8i32, DL, V1, V2, BlendMask);
 }
 
 /// \brief Handle lowering of 16-lane 16-bit integer shuffles.
