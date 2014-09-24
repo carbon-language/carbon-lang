@@ -1281,7 +1281,8 @@ bool SIInstrInfo::isOperandLegal(const MachineInstr *MI, unsigned OpIdx,
     MO = &MI->getOperand(OpIdx);
 
   if (usesConstantBus(MRI, *MO)) {
-    unsigned SGPRUsed = MO->isReg() ? MO->getReg() : AMDGPU::NoRegister;
+    unsigned SGPRUsed =
+        MO->isReg() ? MO->getReg() : (unsigned)AMDGPU::NoRegister;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       if (i == OpIdx)
         continue;
