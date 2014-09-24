@@ -33,12 +33,9 @@ def isCI : Predicate<"Subtarget.getGeneration() "
                       ">= AMDGPUSubtarget::SEA_ISLANDS">;
 def HasFlatAddressSpace : Predicate<"Subtarget.hasFlatAddressSpace()">;
 
-def isCFDepth0 : Predicate<"isCFDepth0()">;
-
 def WAIT_FLAG : InstFlag<"printWaitFlag">;
 
 let SubtargetPredicate = isSI in {
-let OtherPredicates  = [isCFDepth0] in {
 
 //===----------------------------------------------------------------------===//
 // SMRD Instructions
@@ -364,8 +361,6 @@ def S_SETREG_B32 : SOPK_32 <0x00000013, "S_SETREG_B32", []>;
 def S_GETREG_REGRD_B32 : SOPK_32 <0x00000014, "S_GETREG_REGRD_B32", []>;
 //def S_SETREG_IMM32_B32 : SOPK_32 <0x00000015, "S_SETREG_IMM32_B32", []>;
 //def EXP : EXP_ <0x00000000, "EXP", []>;
-
-} // End let OtherPredicates = [isCFDepth0]
 
 //===----------------------------------------------------------------------===//
 // SOPP Instructions
@@ -1944,8 +1939,6 @@ def : Pat <
 // SOP1 Patterns
 //===----------------------------------------------------------------------===//
 
-let Predicates = [isSI, isCFDepth0] in {
-
 def : Pat <
   (i64 (ctpop i64:$src)),
   (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
@@ -1963,8 +1956,6 @@ def : Pat <
   (i32 (addc i32:$src0, i32:$src1)),
   (S_ADD_U32 $src0, $src1)
 >;
-
-} // Predicates = [isSI, isCFDepth0]
 
 let  Predicates = [isSI] in {
 

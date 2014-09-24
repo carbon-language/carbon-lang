@@ -79,11 +79,6 @@ private:
   bool isLocalLoad(const LoadSDNode *N) const;
   bool isRegionLoad(const LoadSDNode *N) const;
 
-  /// \returns True if the current basic block being selected is at control
-  ///          flow depth 0.  Meaning that the current block dominates the
-  //           exit block.
-  bool isCFDepth0() const;
-
   const TargetRegisterClass *getOperandRegClass(SDNode *N, unsigned OpNo) const;
   bool SelectGlobalValueConstantOffset(SDValue Addr, SDValue& IntPtr);
   bool SelectGlobalValueVariableOffset(SDValue Addr, SDValue &BaseReg,
@@ -605,14 +600,6 @@ bool AMDGPUDAGToDAGISel::isPrivateLoad(const LoadSDNode *N) const {
   return false;
 }
 
-bool AMDGPUDAGToDAGISel::isCFDepth0() const {
-  // FIXME: Figure out a way to use DominatorTree analysis here.
-  const BasicBlock *CurBlock = FuncInfo->MBB->getBasicBlock();
-  const Function *Fn = FuncInfo->Fn;
-  return &Fn->front() == CurBlock || &Fn->back() == CurBlock;
-}
-
-
 const char *AMDGPUDAGToDAGISel::getPassName() const {
   return "AMDGPU DAG->DAG Pattern Instruction Selection";
 }
@@ -717,11 +704,6 @@ SDNode *AMDGPUDAGToDAGISel::SelectADD_SUB_I64(SDNode *N) {
 
   unsigned Opc = IsAdd ? AMDGPU::S_ADD_U32 : AMDGPU::S_SUB_U32;
   unsigned CarryOpc = IsAdd ? AMDGPU::S_ADDC_U32 : AMDGPU::S_SUBB_U32;
-
-  if (!isCFDepth0()) {
-    Opc = IsAdd ? AMDGPU::V_ADD_I32_e32 : AMDGPU::V_SUB_I32_e32;
-    CarryOpc = IsAdd ? AMDGPU::V_ADDC_U32_e32 : AMDGPU::V_SUBB_U32_e32;
-  }
 
   SDNode *AddLo = CurDAG->getMachineNode( Opc, DL, VTList, AddLoArgs);
   SDValue Carry(AddLo, 1);

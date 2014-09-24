@@ -136,8 +136,7 @@ define void @vector_not_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in0, i64 
 ; use an SALU instruction for this.
 
 ; SI-CHECK-LABEL: @xor_cf
-; SI-CHECK: V_XOR
-; SI-CHECK: V_XOR
+; SI-CHECK: S_XOR_B64
 define void @xor_cf(i64 addrspace(1)* %out, i64 addrspace(1)* %in, i64 %a, i64 %b) {
 entry:
   %0 = icmp eq i64 %a, 0

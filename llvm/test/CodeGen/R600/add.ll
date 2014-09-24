@@ -141,12 +141,10 @@ entry:
   ret void
 }
 
-; Test i64 add inside a branch.  We don't allow SALU instructions inside of
-; branches.
-; FIXME: We are being conservative here.  We could allow this in some cases.
+; Test i64 add inside a branch.
 ; FUNC-LABEL: @add64_in_branch
-; SI-CHECK-NOT: S_ADD_I32
-; SI-CHECK-NOT: S_ADDC_U32
+; SI-CHECK: S_ADD_U32
+; SI-CHECK: S_ADDC_U32
 define void @add64_in_branch(i64 addrspace(1)* %out, i64 addrspace(1)* %in, i64 %a, i64 %b, i64 %c) {
 entry:
   %0 = icmp eq i64 %a, 0

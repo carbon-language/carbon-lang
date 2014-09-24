@@ -155,7 +155,7 @@ define void @v_mul_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr, i64 addr
 }
 
 ; FUNC-LABEL: @mul32_in_branch
-; SI: V_MUL_LO_I32
+; SI: S_MUL_I32
 define void @mul32_in_branch(i32 addrspace(1)* %out, i32 addrspace(1)* %in, i32 %a, i32 %b, i32 %c) {
 entry:
   %0 = icmp eq i32 %a, 0
@@ -176,7 +176,7 @@ endif:
 }
 
 ; FUNC-LABEL: @mul64_in_branch
-; SI-DAG: V_MUL_LO_I32
+; SI-DAG: S_MUL_I32
 ; SI-DAG: V_MUL_HI_U32
 ; SI: S_ENDPGM
 define void @mul64_in_branch(i64 addrspace(1)* %out, i64 addrspace(1)* %in, i64 %a, i64 %b, i64 %c) {

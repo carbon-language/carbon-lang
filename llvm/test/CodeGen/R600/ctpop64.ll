@@ -94,29 +94,28 @@ define void @v_ctpop_v4i64(<4 x i32> addrspace(1)* noalias %out, <4 x i64> addrs
 ; but there are some cases when the should be allowed.
 
 ; FUNC-LABEL: @ctpop_i64_in_br
-; SI: V_BCNT_U32_B32_e64 [[BCNT_LO:v[0-9]+]], v{{[0-9]+}}, 0
-; SI: V_BCNT_U32_B32_e32 v[[BCNT:[0-9]+]], v{{[0-9]+}}, [[BCNT_LO]]
-; SI: V_MOV_B32_e32 v[[ZERO:[0-9]+]], 0
-; SI: BUFFER_STORE_DWORDX2 v[
-; SI: [[BCNT]]:[[ZERO]]]
+; SI: S_LOAD_DWORDX2 s{{\[}}[[LOVAL:[0-9]+]]:[[HIVAL:[0-9]+]]{{\]}}, s[{{[0-9]+:[0-9]+}}], 0xd
+; SI: S_BCNT1_I32_B64 [[RESULT:s[0-9]+]], {{s\[}}[[LOVAL]]:[[HIVAL]]{{\]}}
+; SI: V_MOV_B32_e32 v[[VLO:[0-9]+]], [[RESULT]]
+; SI: V_MOV_B32_e32 v[[VHI:[0-9]+]], s[[HIVAL]]
+; SI: BUFFER_STORE_DWORDX2 {{v\[}}[[VLO]]:[[VHI]]{{\]}}
 ; SI: S_ENDPGM
-define void @ctpop_i64_in_br(i64 addrspace(1)* %out, i64 addrspace(1)* %in, i32 %cond) {
+define void @ctpop_i64_in_br(i64 addrspace(1)* %out, i64 addrspace(1)* %in, i64 %ctpop_arg, i32 %cond) {
 entry:
-  %0 = icmp eq i32 %cond, 0
-  br i1 %0, label %if, label %else
+  %tmp0 = icmp eq i32 %cond, 0
+  br i1 %tmp0, label %if, label %else
 
 if:
-  %1 = load i64 addrspace(1)* %in
-  %2 = call i64 @llvm.ctpop.i64(i64 %1)
+  %tmp2 = call i64 @llvm.ctpop.i64(i64 %ctpop_arg)
   br label %endif
 
 else:
-  %3 = getelementptr i64 addrspace(1)* %in, i32 1
-  %4 = load i64 addrspace(1)* %3
+  %tmp3 = getelementptr i64 addrspace(1)* %in, i32 1
+  %tmp4 = load i64 addrspace(1)* %tmp3
   br label %endif
 
 endif:
-  %5 = phi i64 [%2, %if], [%4, %else]
-  store i64 %5, i64 addrspace(1)* %out
+  %tmp5 = phi i64 [%tmp2, %if], [%tmp4, %else]
+  store i64 %tmp5, i64 addrspace(1)* %out
   ret void
 }
