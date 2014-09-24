@@ -54,6 +54,8 @@
 {
    We don't care if sed leaks
    Memcheck:Leak
+   fun:calloc
+   fun:malloc
    obj:/bin/sed
 }
 
