@@ -1069,11 +1069,9 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
   // Verify misc. restrictions on specific instructions.
   if (Desc.getOpcode() == AMDGPU::V_DIV_SCALE_F32 ||
       Desc.getOpcode() == AMDGPU::V_DIV_SCALE_F64) {
-    MI->dump();
-
-    const MachineOperand &Src0 = MI->getOperand(2);
-    const MachineOperand &Src1 = MI->getOperand(3);
-    const MachineOperand &Src2 = MI->getOperand(4);
+    const MachineOperand &Src0 = MI->getOperand(Src0Idx);
+    const MachineOperand &Src1 = MI->getOperand(Src1Idx);
+    const MachineOperand &Src2 = MI->getOperand(Src2Idx);
     if (Src0.isReg() && Src1.isReg() && Src2.isReg()) {
       if (!compareMachineOp(Src0, Src1) &&
           !compareMachineOp(Src0, Src2)) {
