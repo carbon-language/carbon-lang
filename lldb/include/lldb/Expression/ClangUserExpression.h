@@ -30,8 +30,6 @@
 #include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Target/ExecutionContext.h"
 
-#include "llvm/ExecutionEngine/JITMemoryManager.h"
-
 namespace lldb_private 
 {
 

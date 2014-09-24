@@ -25,7 +25,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/DataBufferHeap.h"
-#include "llvm/ExecutionEngine/JITMemoryManager.h"
+#include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/IRMemoryMap.h"
@@ -56,7 +56,7 @@ class Error;
 /// then be used as input to the IR interpreter, or the address of the
 /// executable code can be passed to a thread plan to run in the target.
 /// 
-/// This class creates a subclass of LLVM's JITMemoryManager, because that is
+/// This class creates a subclass of LLVM's SectionMemoryManager, because that is
 /// how the JIT emits code.  Because LLDB needs to move JIT-compiled code
 /// into the target process, the IRExecutionUnit knows how to copy the
 /// emitted code into the target process.
@@ -207,101 +207,12 @@ private:
     DisassembleFunction (Stream &stream,
                          lldb::ProcessSP &process_sp);
 
-    class MemoryManager : public llvm::JITMemoryManager
+    class MemoryManager : public llvm::SectionMemoryManager
     {
     public:
         MemoryManager (IRExecutionUnit &parent);
         
         virtual ~MemoryManager();
-        //------------------------------------------------------------------
-        /// Passthrough interface stub
-        //------------------------------------------------------------------
-        virtual void setMemoryWritable ();
-        
-        //------------------------------------------------------------------
-        /// Passthrough interface stub
-        //------------------------------------------------------------------
-        virtual void setMemoryExecutable ();
-        
-        //------------------------------------------------------------------
-        /// Passthrough interface stub
-        //------------------------------------------------------------------
-        virtual void setPoisonMemory (bool poison)
-        {
-            m_default_mm_ap->setPoisonMemory (poison);
-        }
-        
-        //------------------------------------------------------------------
-        /// Passthrough interface stub
-        //------------------------------------------------------------------
-        virtual void AllocateGOT()
-        {
-            m_default_mm_ap->AllocateGOT();
-        }
-        
-        //------------------------------------------------------------------
-        /// Passthrough interface stub
-        //------------------------------------------------------------------
-        virtual uint8_t *getGOTBase() const
-        {
-            return m_default_mm_ap->getGOTBase();
-        }
-        
-        //------------------------------------------------------------------
-        /// Passthrough interface stub
-        //------------------------------------------------------------------
-        virtual uint8_t *startFunctionBody(const llvm::Function *F,
-                                           uintptr_t &ActualSize);
-        
-        //------------------------------------------------------------------
-        /// Allocate room for a dyld stub for a lazy-referenced function,
-        /// and add it to the m_stubs map
-        ///
-        /// @param[in] F
-        ///     The function being referenced.
-        ///
-        /// @param[in] StubSize
-        ///     The size of the stub.
-        ///
-        /// @param[in] Alignment
-        ///     The required alignment of the stub.
-        ///
-        /// @return
-        ///     Allocated space for the stub.
-        //------------------------------------------------------------------
-        virtual uint8_t *allocateStub(const llvm::GlobalValue* F,
-                                      unsigned StubSize,
-                                      unsigned Alignment);
-        
-        //------------------------------------------------------------------
-        /// Complete the body of a function, and add it to the m_functions map
-        ///
-        /// @param[in] F
-        ///     The function being completed.
-        ///
-        /// @param[in] FunctionStart
-        ///     The first instruction of the function.
-        ///
-        /// @param[in] FunctionEnd
-        ///     The last byte of the last instruction of the function.
-        //------------------------------------------------------------------
-        virtual void endFunctionBody(const llvm::Function *F,
-                                     uint8_t *FunctionStart,
-                                     uint8_t *FunctionEnd);
-        //------------------------------------------------------------------
-        /// Allocate space for an unspecified purpose, and add it to the
-        /// m_spaceBlocks map
-        ///
-        /// @param[in] Size
-        ///     The size of the area.
-        ///
-        /// @param[in] Alignment
-        ///     The required alignment of the area.
-        ///
-        /// @return
-        ///     Allocated space.
-        //------------------------------------------------------------------
-        virtual uint8_t *allocateSpace(intptr_t Size, unsigned Alignment);
         
         //------------------------------------------------------------------
         /// Allocate space for executable code, and add it to the
@@ -347,22 +258,6 @@ private:
                                              bool IsReadOnly);
         
         //------------------------------------------------------------------
-        /// Allocate space for a global variable, and add it to the
-        /// m_spaceBlocks map
-        ///
-        /// @param[in] Size
-        ///     The size of the variable.
-        ///
-        /// @param[in] Alignment
-        ///     The required alignment of the variable.
-        ///
-        /// @return
-        ///     Allocated space for the global.
-        //------------------------------------------------------------------
-        virtual uint8_t *allocateGlobal(uintptr_t Size,
-                                        unsigned Alignment);
-        
-        //------------------------------------------------------------------
         /// Called when object loading is complete and section page
         /// permissions can be applied. Currently unimplemented for LLDB.
         ///
@@ -380,50 +275,6 @@ private:
             return false;
         }
         
-        //------------------------------------------------------------------
-        /// Passthrough interface stub
-        //------------------------------------------------------------------
-        virtual void deallocateFunctionBody(void *Body);
-        
-        //------------------------------------------------------------------
-        /// Passthrough interface stub
-        //------------------------------------------------------------------
-        virtual size_t GetDefaultCodeSlabSize() {
-            return m_default_mm_ap->GetDefaultCodeSlabSize();
-        }
-        
-        //------------------------------------------------------------------
-        /// Passthrough interface stub
-        //------------------------------------------------------------------
-        virtual size_t GetDefaultDataSlabSize() {
-            return m_default_mm_ap->GetDefaultDataSlabSize();
-        }
-        
-        virtual size_t GetDefaultStubSlabSize() {
-            return m_default_mm_ap->GetDefaultStubSlabSize();
-        }
-        
-        //------------------------------------------------------------------
-        /// Passthrough interface stub
-        //------------------------------------------------------------------
-        virtual unsigned GetNumCodeSlabs() {
-            return m_default_mm_ap->GetNumCodeSlabs();
-        }
-        
-        //------------------------------------------------------------------
-        /// Passthrough interface stub
-        //------------------------------------------------------------------
-        virtual unsigned GetNumDataSlabs() {
-            return m_default_mm_ap->GetNumDataSlabs();
-        }
-        
-        //------------------------------------------------------------------
-        /// Passthrough interface stub
-        //------------------------------------------------------------------
-        virtual unsigned GetNumStubSlabs() {
-            return m_default_mm_ap->GetNumStubSlabs();
-        }
-        
         virtual void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size) {
             return m_default_mm_ap->registerEHFrames(Addr, LoadAddr, Size);
         }
@@ -436,7 +287,7 @@ private:
             return m_default_mm_ap->getPointerToNamedFunction(Name, AbortOnFailure);
         }
     private:
-        std::unique_ptr<JITMemoryManager>    m_default_mm_ap;    ///< The memory allocator to use in actually creating space.  All calls are passed through to it.
+        std::unique_ptr<SectionMemoryManager>    m_default_mm_ap;    ///< The memory allocator to use in actually creating space.  All calls are passed through to it.
         IRExecutionUnit                    &m_parent;           ///< The execution unit this is a proxy for.
     };
     
