@@ -221,6 +221,11 @@ TEST_F(WinLinkParserTest, MachineArm) {
   EXPECT_EQ(llvm::COFF::IMAGE_FILE_MACHINE_ARMNT, _context.getMachineType());
 }
 
+TEST_F(WinLinkParserTest, MachineUnknown) {
+  EXPECT_FALSE(parse("link.exe", "/machine:nosucharch", "a.obj", nullptr));
+  EXPECT_EQ("error: unknown machine type: nosucharch\n", errorMessage());
+}
+
 TEST_F(WinLinkParserTest, MajorImageVersion) {
   EXPECT_TRUE(parse("link.exe", "/version:7", "foo.o", nullptr));
   EXPECT_EQ(7, _context.getImageVersion().majorVersion);

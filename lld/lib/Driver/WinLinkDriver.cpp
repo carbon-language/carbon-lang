@@ -192,7 +192,6 @@ static llvm::COFF::MachineTypes stringToMachineType(StringRef str) {
   // However, given that LLVM only supports ARM NT, default to that for now.
   return llvm::StringSwitch<llvm::COFF::MachineTypes>(str.lower())
       .Case("arm", llvm::COFF::IMAGE_FILE_MACHINE_ARMNT)
-      .Case("ebc", llvm::COFF::IMAGE_FILE_MACHINE_EBC)
       .Case("x64", llvm::COFF::IMAGE_FILE_MACHINE_AMD64)
       .Case("x86", llvm::COFF::IMAGE_FILE_MACHINE_I386)
       .Default(llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN);

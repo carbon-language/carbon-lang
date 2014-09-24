@@ -74,16 +74,6 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     return false;
   }
 
-  switch (_machineType) {
-  case llvm::COFF::IMAGE_FILE_MACHINE_I386:
-  case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
-  case llvm::COFF::IMAGE_FILE_MACHINE_ARMNT:
-    break;
-  default:
-    diagnostics << "Machine type other than arm/x86/x86_64 is not supported.\n";
-    return false;
-  }
-
   _writer = createWriterPECOFF(*this);
   return true;
 }
