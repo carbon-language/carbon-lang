@@ -46,7 +46,20 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
   const TargetRegisterClass *getPhysRegClass(unsigned Reg) const;
 
   /// \returns true if this class contains only SGPR registers
-  bool isSGPRClass(const TargetRegisterClass *RC) const;
+  bool isSGPRClass(const TargetRegisterClass *RC) const {
+    if (!RC)
+      return false;
+
+    return !hasVGPRs(RC);
+  }
+
+  /// \returns true if this class ID contains only SGPR registers
+  bool isSGPRClassID(unsigned RCID) const {
+    if (static_cast<int>(RCID) == -1)
+      return false;
+
+    return isSGPRClass(getRegClass(RCID));
+  }
 
   /// \returns true if this class contains VGPR registers.
   bool hasVGPRs(const TargetRegisterClass *RC) const;

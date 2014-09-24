@@ -288,13 +288,6 @@ const TargetRegisterClass *SIRegisterInfo::getPhysRegClass(unsigned Reg) const {
   return nullptr;
 }
 
-bool SIRegisterInfo::isSGPRClass(const TargetRegisterClass *RC) const {
-  if (!RC) {
-    return false;
-  }
-  return !hasVGPRs(RC);
-}
-
 bool SIRegisterInfo::hasVGPRs(const TargetRegisterClass *RC) const {
   return getCommonSubClass(&AMDGPU::VReg_32RegClass, RC) ||
          getCommonSubClass(&AMDGPU::VReg_64RegClass, RC) ||
