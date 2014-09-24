@@ -343,7 +343,6 @@ unsigned SIRegisterInfo::getPhysRegSubReg(unsigned Reg,
         case 1: return AMDGPU::VCC_HI;
         default: llvm_unreachable("Invalid SubIdx for VCC");
       }
-      break;
 
   case AMDGPU::FLAT_SCR:
     switch (Channel) {
@@ -366,6 +365,16 @@ unsigned SIRegisterInfo::getPhysRegSubReg(unsigned Reg,
       llvm_unreachable("Invalid SubIdx for EXEC");
     }
     break;
+  }
+
+  const TargetRegisterClass *RC = getPhysRegClass(Reg);
+  // 32-bit registers don't have sub-registers, so we can just return the
+  // Reg.  We need to have this check here, because the calculation below
+  // using getHWRegIndex() will fail with special 32-bit registers like
+  // VCC_LO, VCC_HI, EXEC_LO, EXEC_HI and M0.
+  if (RC->getSize() == 4) {
+    assert(Channel == 0);
+    return Reg;
   }
 
   unsigned Index = getHWRegIndex(Reg);
