@@ -1229,22 +1229,55 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   if (TagType == DeclSpec::TST_struct &&
       !Tok.is(tok::identifier) &&
       Tok.getIdentifierInfo() &&
-      (Tok.is(tok::kw___is_arithmetic) ||
+      (Tok.is(tok::kw___is_abstract) ||
+       Tok.is(tok::kw___is_arithmetic) ||
+       Tok.is(tok::kw___is_array) ||
+       Tok.is(tok::kw___is_base_of) ||
+       Tok.is(tok::kw___is_class) ||
+       Tok.is(tok::kw___is_complete_type) ||
+       Tok.is(tok::kw___is_compound) ||
+       Tok.is(tok::kw___is_const) ||
+       Tok.is(tok::kw___is_constructible) ||
        Tok.is(tok::kw___is_convertible) ||
+       Tok.is(tok::kw___is_convertible_to) ||
+       Tok.is(tok::kw___is_destructible) ||
        Tok.is(tok::kw___is_empty) ||
+       Tok.is(tok::kw___is_enum) ||
        Tok.is(tok::kw___is_floating_point) ||
+       Tok.is(tok::kw___is_final) ||
        Tok.is(tok::kw___is_function) ||
        Tok.is(tok::kw___is_fundamental) ||
        Tok.is(tok::kw___is_integral) ||
+       Tok.is(tok::kw___is_interface_class) ||
+       Tok.is(tok::kw___is_literal) ||
+       Tok.is(tok::kw___is_lvalue_expr) ||
+       Tok.is(tok::kw___is_lvalue_reference) ||
        Tok.is(tok::kw___is_member_function_pointer) ||
+       Tok.is(tok::kw___is_member_object_pointer) ||
        Tok.is(tok::kw___is_member_pointer) ||
+       Tok.is(tok::kw___is_nothrow_assignable) ||
+       Tok.is(tok::kw___is_nothrow_constructible) ||
+       Tok.is(tok::kw___is_nothrow_destructible) ||
+       Tok.is(tok::kw___is_object) ||
        Tok.is(tok::kw___is_pod) ||
        Tok.is(tok::kw___is_pointer) ||
+       Tok.is(tok::kw___is_polymorphic) ||
+       Tok.is(tok::kw___is_reference) ||
+       Tok.is(tok::kw___is_rvalue_expr) ||
+       Tok.is(tok::kw___is_rvalue_reference) ||
        Tok.is(tok::kw___is_same) ||
        Tok.is(tok::kw___is_scalar) ||
+       Tok.is(tok::kw___is_sealed) ||
        Tok.is(tok::kw___is_signed) ||
+       Tok.is(tok::kw___is_standard_layout) ||
+       Tok.is(tok::kw___is_trivial) ||
+       Tok.is(tok::kw___is_trivially_assignable) ||
+       Tok.is(tok::kw___is_trivially_constructible) ||
+       Tok.is(tok::kw___is_trivially_copyable) ||
+       Tok.is(tok::kw___is_union) ||
        Tok.is(tok::kw___is_unsigned) ||
-       Tok.is(tok::kw___is_void)))
+       Tok.is(tok::kw___is_void) ||
+       Tok.is(tok::kw___is_volatile)))
     // GNU libstdc++ 4.2 and libc++ use certain intrinsic names as the
     // name of struct templates, but some are keywords in GCC >= 4.3
     // and Clang. Therefore, when we see the token sequence "struct
