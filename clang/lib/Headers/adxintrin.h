@@ -39,8 +39,8 @@ _addcarryx_u32(unsigned char __cf, unsigned int __x, unsigned int __y,
 
 #ifdef __x86_64__
 static __inline unsigned char __attribute__((__always_inline__, __nodebug__))
-_addcarryx_u64(unsigned char __cf, unsigned long __x, unsigned long __y,
-               unsigned long long  *__p)
+_addcarryx_u64(unsigned char __cf, unsigned long long __x,
+               unsigned long long __y, unsigned long long  *__p)
 {
   return __builtin_ia32_addcarryx_u64(__cf, __x, __y, __p);
 }
@@ -57,8 +57,8 @@ _addcarry_u32(unsigned char __cf, unsigned int __x, unsigned int __y,
 
 #ifdef __x86_64__
 static __inline unsigned char __attribute__((__always_inline__, __nodebug__))
-_addcarry_u64(unsigned char __cf, unsigned long __x, unsigned long __y,
-              unsigned long long  *__p)
+_addcarry_u64(unsigned char __cf, unsigned long long __x,
+              unsigned long long __y, unsigned long long  *__p)
 {
   return __builtin_ia32_addcarry_u64(__cf, __x, __y, __p);
 }
@@ -73,8 +73,8 @@ _subborrow_u32(unsigned char __cf, unsigned int __x, unsigned int __y,
 
 #ifdef __x86_64__
 static __inline unsigned char __attribute__((__always_inline__, __nodebug__))
-_subborrow_u64(unsigned char __cf, unsigned long __x, unsigned long __y,
-              unsigned long long  *__p)
+_subborrow_u64(unsigned char __cf, unsigned long long __x,
+               unsigned long long __y, unsigned long long  *__p)
 {
   return __builtin_ia32_subborrow_u64(__cf, __x, __y, __p);
 }

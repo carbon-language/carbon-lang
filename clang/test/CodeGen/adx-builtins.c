@@ -9,8 +9,9 @@ unsigned char test_addcarryx_u32(unsigned char __cf, unsigned int __x,
   return _addcarryx_u32(__cf, __x, __y, __p);
 }
 
-unsigned char test_addcarryx_u64(unsigned char __cf, unsigned long __x,
-                                 unsigned long __y, unsigned long long *__p) {
+unsigned char test_addcarryx_u64(unsigned char __cf, unsigned long long __x,
+                                 unsigned long long __y,
+                                 unsigned long long *__p) {
 // CHECK-LABEL: test_addcarryx_u64
 // CHECK: call i8 @llvm.x86.addcarryx.u64
   return _addcarryx_u64(__cf, __x, __y, __p);
