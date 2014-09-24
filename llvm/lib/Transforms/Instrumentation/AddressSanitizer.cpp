@@ -71,7 +71,7 @@ static const uintptr_t kRetiredStackFrameMagic = 0x45E0360E;
 
 static const char *const kAsanModuleCtorName = "asan.module_ctor";
 static const char *const kAsanModuleDtorName = "asan.module_dtor";
-static const int         kAsanCtorAndDtorPriority = 1;
+static const uint64_t    kAsanCtorAndDtorPriority = 1;
 static const char *const kAsanReportErrorTemplate = "__asan_report_";
 static const char *const kAsanReportLoadN = "__asan_report_load_n";
 static const char *const kAsanReportStoreN = "__asan_report_store_n";
@@ -928,10 +928,12 @@ void AddressSanitizerModule::createInitializerPoisonCalls(
     ConstantStruct *CS = cast<ConstantStruct>(OP);
 
     // Must have a function or null ptr.
-    // (CS->getOperand(0) is the init priority.)
     if (Function* F = dyn_cast<Function>(CS->getOperand(1))) {
-      if (F->getName() != kAsanModuleCtorName)
-        poisonOneInitializer(*F, ModuleName);
+      if (F->getName() == kAsanModuleCtorName) continue;
+      ConstantInt *Priority = dyn_cast<ConstantInt>(CS->getOperand(0));
+      // Don't instrument CTORs that will run before asan.module_ctor.
+      if (Priority->getLimitedValue() <= kAsanCtorAndDtorPriority) continue;
+      poisonOneInitializer(*F, ModuleName);
     }
   }
 }
