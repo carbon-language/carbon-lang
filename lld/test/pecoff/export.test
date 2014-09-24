@@ -50,3 +50,12 @@ CHECK5:      Export Table:
 CHECK5:      DLL name: export.test.tmp5.dll
 CHECK5:       Ordinal      RVA  Name
 CHECK5-NEXT:        1   0x2010  exportfn7
+
+# RUN: lld -flavor link /out:%t6.dll /dll /entry:init \
+# RUN:   /export:exportfn8 -- %t.obj
+# RUN: llvm-objdump -p %t6.dll | FileCheck -check-prefix=CHECK6 %s
+
+CHECK6:      Export Table:
+CHECK6:      DLL name: export.test.tmp6.dll
+CHECK6:       Ordinal      RVA  Name
+CHECK6-NEXT:        1   0x2010  exportfn8

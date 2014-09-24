@@ -217,12 +217,12 @@ private:
 //
 // DLLExported symbols can be specified using a module definition file. In a
 // file, one can write an EXPORT directive followed by symbol names. Such
-// symbols may not be fully decorated -- one can omit "@" and the following
-// number suffix for the stdcall function.
+// symbols may not be fully decorated.
 //
 // If a symbol FOO is specified to be dllexported by a module definition file,
-// linker has to search not only for FOO but also for FOO@[0-9]+. This ambiguous
-// matching semantics does not fit well with Resolver.
+// linker has to search not only for /FOO/ but also for /FOO@[0-9]+/ for stdcall
+// and for /\?FOO@@.+/ for C++. This ambiguous matching semantics does not fit
+// well with Resolver.
 //
 // We could probably modify Resolver to resolve ambiguous symbols, but I think
 // we don't want to do that because it'd be rarely used, and only this Windows
@@ -255,7 +255,7 @@ public:
     if (it == _exportedSyms.end())
       return nullptr;
     std::string replace;
-    if (!findSymbolWithAtsignSuffix(sym.str(), replace))
+    if (!findDecoratedSymbol(sym.str(), replace))
       return nullptr;
     it->second->name = replace;
     if (_ctx->deadStrip())
@@ -264,23 +264,33 @@ public:
   }
 
 private:
-
-  // Find a symbol that starts with a given symbol name followed
-  // by @number suffix.
-  bool findSymbolWithAtsignSuffix(std::string sym, std::string &res) const {
-    sym.append("@");
+  // Find decorated symbol, namely /sym@[0-9]+/ or /\?sym@@.+/.
+  bool findDecoratedSymbol(std::string sym, std::string &res) const {
     const std::set<std::string> &defined = _syms->defined();
-    auto it = defined.lower_bound(sym);
-    for (auto e = defined.end(); it != e; ++it) {
-      if (!StringRef(*it).startswith(sym))
-        return false;
-      if (it->size() == sym.size())
-        continue;
-      StringRef suffix = StringRef(*it).substr(sym.size());
-      if (suffix.find_first_not_of("0123456789") != StringRef::npos)
-        continue;
-      res = *it;
-      return true;
+    // Search for /sym@[0-9]+/
+    {
+      std::string s = sym + '@';
+      auto it = defined.lower_bound(s);
+      for (auto e = defined.end(); it != e; ++it) {
+        if (!StringRef(*it).startswith(s))
+          break;
+        if (it->size() == s.size())
+          continue;
+        StringRef suffix = StringRef(*it).substr(s.size());
+        if (suffix.find_first_not_of("0123456789") != StringRef::npos)
+          continue;
+        res = *it;
+        return true;
+      }
+    }
+    // Search for /\?sym@@.+/
+    {
+      std::string s = "?" + _ctx->undecorateSymbol(sym).str() + "@@";
+      auto it = defined.lower_bound(s);
+      if (it != defined.end() && StringRef(*it).startswith(s)) {
+        res = *it;
+        return true;
+      }
     }
     return false;
   }
