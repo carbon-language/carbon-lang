@@ -1,4 +1,4 @@
- //===- llvm/Support/Unix/Host.inc -------------------------------*- C++ -*-===//
+//===- llvm/Support/Unix/Host.inc -------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
