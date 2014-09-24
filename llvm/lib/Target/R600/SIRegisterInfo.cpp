@@ -34,6 +34,11 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(AMDGPU::EXEC);
   Reserved.set(AMDGPU::INDIRECT_BASE_ADDR);
   Reserved.set(AMDGPU::FLAT_SCR);
+
+  // Reserve some VGPRs to use as temp registers in case we have to spill VGPRs
+  Reserved.set(AMDGPU::VGPR255);
+  Reserved.set(AMDGPU::VGPR254);
+
   return Reserved;
 }
 
@@ -51,18 +56,31 @@ static unsigned getNumSubRegsForSpillOp(unsigned Op) {
   switch (Op) {
   case AMDGPU::SI_SPILL_S512_SAVE:
   case AMDGPU::SI_SPILL_S512_RESTORE:
+  case AMDGPU::SI_SPILL_V512_SAVE:
+  case AMDGPU::SI_SPILL_V512_RESTORE:
     return 16;
   case AMDGPU::SI_SPILL_S256_SAVE:
   case AMDGPU::SI_SPILL_S256_RESTORE:
+  case AMDGPU::SI_SPILL_V256_SAVE:
+  case AMDGPU::SI_SPILL_V256_RESTORE:
     return 8;
   case AMDGPU::SI_SPILL_S128_SAVE:
   case AMDGPU::SI_SPILL_S128_RESTORE:
+  case AMDGPU::SI_SPILL_V128_SAVE:
+  case AMDGPU::SI_SPILL_V128_RESTORE:
     return 4;
+  case AMDGPU::SI_SPILL_V96_SAVE:
+  case AMDGPU::SI_SPILL_V96_RESTORE:
+    return 3;
   case AMDGPU::SI_SPILL_S64_SAVE:
   case AMDGPU::SI_SPILL_S64_RESTORE:
+  case AMDGPU::SI_SPILL_V64_SAVE:
+  case AMDGPU::SI_SPILL_V64_RESTORE:
     return 2;
   case AMDGPU::SI_SPILL_S32_SAVE:
   case AMDGPU::SI_SPILL_S32_RESTORE:
+  case AMDGPU::SI_SPILL_V32_SAVE:
+  case AMDGPU::SI_SPILL_V32_RESTORE:
     return 1;
   default: llvm_unreachable("Invalid spill opcode");
   }
@@ -139,6 +157,81 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
       break;
     }
 
+    // VGPR register spill
+    case AMDGPU::SI_SPILL_V512_SAVE:
+    case AMDGPU::SI_SPILL_V256_SAVE:
+    case AMDGPU::SI_SPILL_V128_SAVE:
+    case AMDGPU::SI_SPILL_V96_SAVE:
+    case AMDGPU::SI_SPILL_V64_SAVE:
+    case AMDGPU::SI_SPILL_V32_SAVE: {
+      unsigned NumSubRegs = getNumSubRegsForSpillOp(MI->getOpcode());
+      unsigned SrcReg = MI->getOperand(0).getReg();
+      int64_t Offset = FrameInfo->getObjectOffset(Index);
+      unsigned Size = NumSubRegs * 4;
+      unsigned TmpReg = RS->scavengeRegister(&AMDGPU::VGPR_32RegClass, MI, 0);
+
+      for (unsigned i = 0, e = NumSubRegs; i != e; ++i) {
+        unsigned SubReg = NumSubRegs > 1 ?
+            getPhysRegSubReg(SrcReg, &AMDGPU::VGPR_32RegClass, i) :
+            SrcReg;
+        Offset += (i * 4);
+        MFI->LDSWaveSpillSize = std::max((unsigned)Offset + 4, (unsigned)MFI->LDSWaveSpillSize);
+
+        unsigned AddrReg = TII->calculateLDSSpillAddress(*MBB, MI, RS, TmpReg,
+                                                         Offset, Size);
+
+        if (AddrReg == AMDGPU::NoRegister) {
+           LLVMContext &Ctx = MF->getFunction()->getContext();
+           Ctx.emitError("Ran out of VGPRs for spilling VGPRS");
+           AddrReg = AMDGPU::VGPR0;
+        }
+
+        // Store the value in LDS
+        BuildMI(*MBB, MI, DL, TII->get(AMDGPU::DS_WRITE_B32))
+                .addImm(0) // gds
+                .addReg(AddrReg, RegState::Kill) // addr
+                .addReg(SubReg) // data0
+                .addImm(0); // offset
+      }
+
+      MI->eraseFromParent();
+      break;
+    }
+    case AMDGPU::SI_SPILL_V32_RESTORE:
+    case AMDGPU::SI_SPILL_V64_RESTORE:
+    case AMDGPU::SI_SPILL_V128_RESTORE:
+    case AMDGPU::SI_SPILL_V256_RESTORE:
+    case AMDGPU::SI_SPILL_V512_RESTORE: {
+      unsigned NumSubRegs = getNumSubRegsForSpillOp(MI->getOpcode());
+      unsigned DstReg = MI->getOperand(0).getReg();
+      int64_t Offset = FrameInfo->getObjectOffset(Index);
+      unsigned Size = NumSubRegs * 4;
+      unsigned TmpReg = RS->scavengeRegister(&AMDGPU::VGPR_32RegClass, MI, 0);
+
+      // FIXME: We could use DS_READ_B64 here to optimize for larger registers.
+      for (unsigned i = 0, e = NumSubRegs; i != e; ++i) {
+        unsigned SubReg = NumSubRegs > 1 ?
+            getPhysRegSubReg(DstReg, &AMDGPU::VGPR_32RegClass, i) :
+            DstReg;
+
+        Offset += (i * 4);
+        unsigned AddrReg = TII->calculateLDSSpillAddress(*MBB, MI, RS, TmpReg,
+                                                          Offset, Size);
+        if (AddrReg == AMDGPU::NoRegister) {
+           LLVMContext &Ctx = MF->getFunction()->getContext();
+           Ctx.emitError("Ran out of VGPRs for spilling VGPRs");
+           AddrReg = AMDGPU::VGPR0;
+        }
+
+        BuildMI(*MBB, MI, DL, TII->get(AMDGPU::DS_READ_B32), SubReg)
+                .addImm(0) // gds
+                .addReg(AddrReg, RegState::Kill) // addr
+                .addImm(0); //offset
+      }
+      MI->eraseFromParent();
+      break;
+    }
+
     default: {
       int64_t Offset = FrameInfo->getObjectOffset(Index);
       FIOp.ChangeToImmediate(Offset);
@@ -173,8 +266,12 @@ const TargetRegisterClass *SIRegisterInfo::getPhysRegClass(unsigned Reg) const {
     &AMDGPU::SReg_32RegClass,
     &AMDGPU::VReg_64RegClass,
     &AMDGPU::SReg_64RegClass,
+    &AMDGPU::VReg_96RegClass,
+    &AMDGPU::VReg_128RegClass,
     &AMDGPU::SReg_128RegClass,
-    &AMDGPU::SReg_256RegClass
+    &AMDGPU::VReg_256RegClass,
+    &AMDGPU::SReg_256RegClass,
+    &AMDGPU::VReg_512RegClass
   };
 
   for (const TargetRegisterClass *BaseClass : BaseClasses) {
@@ -335,3 +432,19 @@ unsigned SIRegisterInfo::getPreloadedValue(const MachineFunction &MF,
   }
   llvm_unreachable("unexpected preloaded value type");
 }
+
+/// \brief Returns a register that is not used at any point in the function.
+///        If all registers are used, then this function will return
+//         AMDGPU::NoRegister.
+unsigned SIRegisterInfo::findUnusedVGPR(const MachineRegisterInfo &MRI) const {
+
+  const TargetRegisterClass *RC = &AMDGPU::VGPR_32RegClass;
+
+  for (TargetRegisterClass::iterator I = RC->begin(), E = RC->end();
+       I != E; ++I) {
+    if (!MRI.isPhysRegUsed(*I))
+      return *I;
+  }
+  return AMDGPU::NoRegister;
+}
+

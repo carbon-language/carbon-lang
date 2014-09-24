@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Function.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/MC/MCInstrDesc.h"
 
 using namespace llvm;
@@ -433,6 +434,19 @@ unsigned SIInstrInfo::commuteOpcode(unsigned Opcode) const {
   return Opcode;
 }
 
+static bool shouldTryToSpillVGPRs(MachineFunction *MF) {
+
+  SIMachineFunctionInfo *MFI = MF->getInfo<SIMachineFunctionInfo>();
+  const TargetMachine &TM = MF->getTarget();
+
+  // FIXME: Even though it can cause problems, we need to enable
+  // spilling at -O0, since the fast register allocator always
+  // spills registers that are live at the end of blocks.
+  return MFI->getShaderType() == ShaderType::COMPUTE &&
+         TM.getOptLevel() == CodeGenOpt::None;
+
+}
+
 void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                       MachineBasicBlock::iterator MI,
                                       unsigned SrcReg, bool isKill,
@@ -442,32 +456,41 @@ void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   MachineFunction *MF = MBB.getParent();
   MachineFrameInfo *FrameInfo = MF->getFrameInfo();
   DebugLoc DL = MBB.findDebugLoc(MI);
+  int Opcode = -1;
 
-  if (RI.hasVGPRs(RC)) {
-    LLVMContext &Ctx = MF->getFunction()->getContext();
-    Ctx.emitError("SIInstrInfo::storeRegToStackSlot - Can't spill VGPR!");
-    BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), AMDGPU::VGPR0)
-            .addReg(SrcReg);
-  } else if (RI.isSGPRClass(RC)) {
+  if (RI.isSGPRClass(RC)) {
     // We are only allowed to create one new instruction when spilling
     // registers, so we need to use pseudo instruction for spilling
     // SGPRs.
-    unsigned Opcode;
     switch (RC->getSize() * 8) {
-    case 32:  Opcode = AMDGPU::SI_SPILL_S32_SAVE;  break;
-    case 64:  Opcode = AMDGPU::SI_SPILL_S64_SAVE;  break;
-    case 128: Opcode = AMDGPU::SI_SPILL_S128_SAVE; break;
-    case 256: Opcode = AMDGPU::SI_SPILL_S256_SAVE; break;
-    case 512: Opcode = AMDGPU::SI_SPILL_S512_SAVE; break;
-    default: llvm_unreachable("Cannot spill register class");
+      case 32:  Opcode = AMDGPU::SI_SPILL_S32_SAVE;  break;
+      case 64:  Opcode = AMDGPU::SI_SPILL_S64_SAVE;  break;
+      case 128: Opcode = AMDGPU::SI_SPILL_S128_SAVE; break;
+      case 256: Opcode = AMDGPU::SI_SPILL_S256_SAVE; break;
+      case 512: Opcode = AMDGPU::SI_SPILL_S512_SAVE; break;
     }
+  } else if(shouldTryToSpillVGPRs(MF) && RI.hasVGPRs(RC)) {
+    switch(RC->getSize() * 8) {
+      case 32: Opcode = AMDGPU::SI_SPILL_V32_SAVE; break;
+      case 64: Opcode = AMDGPU::SI_SPILL_V64_SAVE; break;
+      case 96: Opcode = AMDGPU::SI_SPILL_V96_SAVE; break;
+      case 128: Opcode = AMDGPU::SI_SPILL_V128_SAVE; break;
+      case 256: Opcode = AMDGPU::SI_SPILL_V256_SAVE; break;
+      case 512: Opcode = AMDGPU::SI_SPILL_V512_SAVE; break;
+    }
+  }
 
+  if (Opcode != -1) {
     FrameInfo->setObjectAlignment(FrameIndex, 4);
     BuildMI(MBB, MI, DL, get(Opcode))
             .addReg(SrcReg)
             .addFrameIndex(FrameIndex);
   } else {
-    llvm_unreachable("VGPR spilling not supported");
+    LLVMContext &Ctx = MF->getFunction()->getContext();
+    Ctx.emitError("SIInstrInfo::storeRegToStackSlot - Do not know how to"
+                  " spill register");
+    BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), AMDGPU::VGPR0)
+            .addReg(SrcReg);
   }
 }
 
@@ -479,29 +502,136 @@ void SIInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   MachineFunction *MF = MBB.getParent();
   MachineFrameInfo *FrameInfo = MF->getFrameInfo();
   DebugLoc DL = MBB.findDebugLoc(MI);
+  int Opcode = -1;
 
-  if (RI.hasVGPRs(RC)) {
-    LLVMContext &Ctx = MF->getFunction()->getContext();
-    Ctx.emitError("SIInstrInfo::loadRegToStackSlot - Can't retrieve spilled VGPR!");
-    BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DestReg)
-            .addImm(0);
-  } else if (RI.isSGPRClass(RC)){
-    unsigned Opcode;
+  if (RI.isSGPRClass(RC)){
     switch(RC->getSize() * 8) {
-    case 32:  Opcode = AMDGPU::SI_SPILL_S32_RESTORE; break;
-    case 64:  Opcode = AMDGPU::SI_SPILL_S64_RESTORE;  break;
-    case 128: Opcode = AMDGPU::SI_SPILL_S128_RESTORE; break;
-    case 256: Opcode = AMDGPU::SI_SPILL_S256_RESTORE; break;
-    case 512: Opcode = AMDGPU::SI_SPILL_S512_RESTORE; break;
-    default: llvm_unreachable("Cannot spill register class");
+      case 32:  Opcode = AMDGPU::SI_SPILL_S32_RESTORE; break;
+      case 64:  Opcode = AMDGPU::SI_SPILL_S64_RESTORE;  break;
+      case 128: Opcode = AMDGPU::SI_SPILL_S128_RESTORE; break;
+      case 256: Opcode = AMDGPU::SI_SPILL_S256_RESTORE; break;
+      case 512: Opcode = AMDGPU::SI_SPILL_S512_RESTORE; break;
     }
+  } else if(shouldTryToSpillVGPRs(MF) && RI.hasVGPRs(RC)) {
+    switch(RC->getSize() * 8) {
+      case 32: Opcode = AMDGPU::SI_SPILL_V32_RESTORE; break;
+      case 64: Opcode = AMDGPU::SI_SPILL_V64_RESTORE; break;
+      case 96: Opcode = AMDGPU::SI_SPILL_V96_RESTORE; break;
+      case 128: Opcode = AMDGPU::SI_SPILL_V128_RESTORE; break;
+      case 256: Opcode = AMDGPU::SI_SPILL_V256_RESTORE; break;
+      case 512: Opcode = AMDGPU::SI_SPILL_V512_RESTORE; break;
+    }
+  }
 
+  if (Opcode != -1) {
     FrameInfo->setObjectAlignment(FrameIndex, 4);
     BuildMI(MBB, MI, DL, get(Opcode), DestReg)
             .addFrameIndex(FrameIndex);
   } else {
-    llvm_unreachable("VGPR spilling not supported");
+    LLVMContext &Ctx = MF->getFunction()->getContext();
+    Ctx.emitError("SIInstrInfo::loadRegFromStackSlot - Do not know how to"
+                  " restore register");
+    BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DestReg)
+            .addReg(AMDGPU::VGPR0);
   }
+}
+
+/// \param @Offset Offset in bytes of the FrameIndex being spilled
+unsigned SIInstrInfo::calculateLDSSpillAddress(MachineBasicBlock &MBB,
+                                               MachineBasicBlock::iterator MI,
+                                               RegScavenger *RS, unsigned TmpReg,
+                                               unsigned FrameOffset,
+                                               unsigned Size) const {
+  MachineFunction *MF = MBB.getParent();
+  SIMachineFunctionInfo *MFI = MF->getInfo<SIMachineFunctionInfo>();
+  const AMDGPUSubtarget &ST = MF->getTarget().getSubtarget<AMDGPUSubtarget>();
+  const SIRegisterInfo *TRI =
+      static_cast<const SIRegisterInfo*>(ST.getRegisterInfo());
+  DebugLoc DL = MBB.findDebugLoc(MI);
+  unsigned WorkGroupSize = MFI->getMaximumWorkGroupSize(*MF);
+  unsigned WavefrontSize = ST.getWavefrontSize();
+
+  unsigned TIDReg = MFI->getTIDReg();
+  if (!MFI->hasCalculatedTID()) {
+    MachineBasicBlock &Entry = MBB.getParent()->front();
+    MachineBasicBlock::iterator Insert = Entry.front();
+    DebugLoc DL = Insert->getDebugLoc();
+
+    TIDReg = RI.findUnusedVGPR(MF->getRegInfo());
+    if (TIDReg == AMDGPU::NoRegister)
+      return TIDReg;
+
+
+    if (MFI->getShaderType() == ShaderType::COMPUTE &&
+        WorkGroupSize > WavefrontSize) {
+
+      unsigned TIDIGXReg = TRI->getPreloadedValue(*MF, SIRegisterInfo::TIDIG_X);
+      unsigned TIDIGYReg = TRI->getPreloadedValue(*MF, SIRegisterInfo::TIDIG_Y);
+      unsigned TIDIGZReg = TRI->getPreloadedValue(*MF, SIRegisterInfo::TIDIG_Z);
+      unsigned InputPtrReg =
+          TRI->getPreloadedValue(*MF, SIRegisterInfo::INPUT_PTR);
+      static const unsigned TIDIGRegs[3] = {
+        TIDIGXReg, TIDIGYReg, TIDIGZReg
+      };
+      for (unsigned Reg : TIDIGRegs) {
+        if (!Entry.isLiveIn(Reg))
+          Entry.addLiveIn(Reg);
+      }
+
+      RS->enterBasicBlock(&Entry);
+      unsigned STmp0 = RS->scavengeRegister(&AMDGPU::SGPR_32RegClass, 0);
+      unsigned STmp1 = RS->scavengeRegister(&AMDGPU::SGPR_32RegClass, 0);
+      BuildMI(Entry, Insert, DL, get(AMDGPU::S_LOAD_DWORD_IMM), STmp0)
+              .addReg(InputPtrReg)
+              .addImm(SI::KernelInputOffsets::NGROUPS_Z);
+      BuildMI(Entry, Insert, DL, get(AMDGPU::S_LOAD_DWORD_IMM), STmp1)
+              .addReg(InputPtrReg)
+              .addImm(SI::KernelInputOffsets::NGROUPS_Y);
+
+      // NGROUPS.X * NGROUPS.Y
+      BuildMI(Entry, Insert, DL, get(AMDGPU::S_MUL_I32), STmp1)
+              .addReg(STmp1)
+              .addReg(STmp0);
+      // (NGROUPS.X * NGROUPS.Y) * TIDIG.X
+      BuildMI(Entry, Insert, DL, get(AMDGPU::V_MUL_U32_U24_e32), TIDReg)
+              .addReg(STmp1)
+              .addReg(TIDIGXReg);
+      // NGROUPS.Z * TIDIG.Y + (NGROUPS.X * NGROPUS.Y * TIDIG.X)
+      BuildMI(Entry, Insert, DL, get(AMDGPU::V_MAD_U32_U24), TIDReg)
+              .addReg(STmp0)
+              .addReg(TIDIGYReg)
+              .addReg(TIDReg);
+      // (NGROUPS.Z * TIDIG.Y + (NGROUPS.X * NGROPUS.Y * TIDIG.X)) + TIDIG.Z
+      BuildMI(Entry, Insert, DL, get(AMDGPU::V_ADD_I32_e32), TIDReg)
+              .addReg(TIDReg)
+              .addReg(TIDIGZReg);
+    } else {
+      // Get the wave id
+      BuildMI(Entry, Insert, DL, get(AMDGPU::V_MBCNT_LO_U32_B32_e64),
+              TIDReg)
+              .addImm(-1)
+              .addImm(0);
+
+      BuildMI(Entry, Insert, DL, get(AMDGPU::V_MBCNT_HI_U32_B32_e32),
+              TIDReg)
+              .addImm(-1)
+              .addReg(TIDReg);
+    }
+
+    BuildMI(Entry, Insert, DL, get(AMDGPU::V_LSHLREV_B32_e32),
+            TIDReg)
+            .addImm(2)
+            .addReg(TIDReg);
+    MFI->setTIDReg(TIDReg);
+  }
+
+  // Add FrameIndex to LDS offset
+  unsigned LDSOffset = MFI->LDSSize + (FrameOffset * WorkGroupSize);
+  BuildMI(MBB, MI, DL, get(AMDGPU::V_ADD_I32_e32), TmpReg)
+          .addImm(LDSOffset)
+          .addReg(TIDReg);
+
+  return TmpReg;
 }
 
 void SIInstrInfo::insertNOPs(MachineBasicBlock::iterator MI,

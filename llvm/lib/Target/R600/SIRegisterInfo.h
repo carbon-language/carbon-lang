@@ -100,6 +100,7 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
   unsigned getPreloadedValue(const MachineFunction &MF,
                              enum PreloadedValue Value) const;
 
+  unsigned findUnusedVGPR(const MachineRegisterInfo &MRI) const;
 };
 
 } // End namespace llvm

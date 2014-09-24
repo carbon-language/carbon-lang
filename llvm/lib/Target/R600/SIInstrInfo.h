@@ -79,6 +79,13 @@ public:
                    unsigned DestReg, unsigned SrcReg,
                    bool KillSrc) const override;
 
+  unsigned calculateLDSSpillAddress(MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator MI,
+                                    RegScavenger *RS,
+                                    unsigned TmpReg,
+                                    unsigned Offset,
+                                    unsigned Size) const;
+
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI,
                            unsigned SrcReg, bool isKill, int FrameIndex,

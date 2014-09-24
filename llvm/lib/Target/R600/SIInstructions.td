@@ -1826,6 +1826,27 @@ defm SI_SPILL_S128 : SI_SPILL_SGPR <SReg_128>;
 defm SI_SPILL_S256 : SI_SPILL_SGPR <SReg_256>;
 defm SI_SPILL_S512 : SI_SPILL_SGPR <SReg_512>;
 
+multiclass SI_SPILL_VGPR <RegisterClass vgpr_class> {
+  def _SAVE : InstSI <
+    (outs),
+    (ins vgpr_class:$src, i32imm:$frame_idx),
+    "", []
+  >;
+
+  def _RESTORE : InstSI <
+    (outs vgpr_class:$dst),
+    (ins i32imm:$frame_idx),
+    "", []
+  >;
+}
+
+defm SI_SPILL_V32  : SI_SPILL_VGPR <VReg_32>;
+defm SI_SPILL_V64  : SI_SPILL_VGPR <VReg_64>;
+defm SI_SPILL_V96  : SI_SPILL_VGPR <VReg_96>;
+defm SI_SPILL_V128 : SI_SPILL_VGPR <VReg_128>;
+defm SI_SPILL_V256 : SI_SPILL_VGPR <VReg_256>;
+defm SI_SPILL_V512 : SI_SPILL_VGPR <VReg_512>;
+
 let Defs = [SCC] in {
 
 def SI_CONSTDATA_PTR : InstSI <
