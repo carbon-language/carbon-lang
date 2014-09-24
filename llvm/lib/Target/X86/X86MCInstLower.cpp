@@ -864,49 +864,33 @@ PrevCrossBBInst(MachineBasicBlock::const_iterator MBBI) {
   return --MBBI;
 }
 
-static std::string getShuffleComment(int Opcode, const MachineOperand &DstOp,
-                                     const MachineOperand &SrcOp,
-                                     const MachineOperand &MaskOp,
-                                     ArrayRef<MachineConstantPoolEntry> Constants) {
-  std::string Comment;
-  SmallVector<int, 16> Mask;
-
+static const Constant *getShuffleMaskConstant(const MachineInstr &MI,
+                                              const MachineOperand &DstOp,
+                                              const MachineOperand &SrcOp,
+                                              const MachineOperand &MaskOp) {
   if (!MaskOp.isCPI())
-    return Comment;
+    return nullptr;
 
+  ArrayRef<MachineConstantPoolEntry> Constants =
+      MI.getParent()->getParent()->getConstantPool()->getConstants();
   const MachineConstantPoolEntry &MaskConstantEntry =
       Constants[MaskOp.getIndex()];
 
   // Bail if this is a machine constant pool entry, we won't be able to dig out
   // anything useful.
   if (MaskConstantEntry.isMachineConstantPoolEntry())
-    return Comment;
+    return nullptr;
 
   auto *C = dyn_cast<Constant>(MaskConstantEntry.Val.ConstVal);
-  if (!C)
-    return Comment;
-
-  assert(MaskConstantEntry.getType() == C->getType() &&
+  assert((!C || MaskConstantEntry.getType() == C->getType()) &&
          "Expected a constant of the same type!");
+  return C;
+}
 
-  switch (Opcode) {
-  case X86::PSHUFBrm:
-  case X86::VPSHUFBrm:
-    DecodePSHUFBMask(C, Mask);
-    break;
-  case X86::VPERMILPSrm:
-  case X86::VPERMILPDrm:
-  case X86::VPERMILPSYrm:
-  case X86::VPERMILPDYrm:
-    DecodeVPERMILPMask(C, Mask);
-    break;
-  }
-
-  if (Mask.empty())
-    return Comment;
-
-  assert(Mask.size() == C->getType()->getVectorNumElements() &&
-         "Shuffle mask has a different size than its type!");
+static std::string getShuffleComment(const MachineOperand &DstOp,
+                                     const MachineOperand &SrcOp,
+                                     ArrayRef<int> Mask) {
+  std::string Comment;
 
   // Compute the name for a register. This is really goofy because we have
   // multiple instruction printers that could (in theory) use different
@@ -1116,25 +1100,41 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // a constant shuffle mask. We won't be able to do this at the MC layer
     // because the mask isn't an immediate.
   case X86::PSHUFBrm:
-  case X86::VPSHUFBrm:
-  case X86::VPERMILPSrm:
-  case X86::VPERMILPDrm:
-  case X86::VPERMILPSYrm:
-  case X86::VPERMILPDYrm: {
+  case X86::VPSHUFBrm: {
     if (!OutStreamer.isVerboseAsm())
       break;
-    // All of these instructions accept a constant pool operand as their fifth.
     assert(MI->getNumOperands() > 5 &&
            "We should always have at least 5 operands!");
     const MachineOperand &DstOp = MI->getOperand(0);
     const MachineOperand &SrcOp = MI->getOperand(1);
     const MachineOperand &MaskOp = MI->getOperand(5);
 
-    std::string Comment = getShuffleComment(
-        MI->getOpcode(), DstOp, SrcOp, MaskOp,
-        MI->getParent()->getParent()->getConstantPool()->getConstants());
-    if (!Comment.empty())
-      OutStreamer.AddComment(Comment);
+    if (auto *C = getShuffleMaskConstant(*MI, DstOp, SrcOp, MaskOp)) {
+      SmallVector<int, 16> Mask;
+      DecodePSHUFBMask(C, Mask);
+      if (!Mask.empty())
+        OutStreamer.AddComment(getShuffleComment(DstOp, SrcOp, Mask));
+    }
+    break;
+  }
+  case X86::VPERMILPSrm:
+  case X86::VPERMILPDrm:
+  case X86::VPERMILPSYrm:
+  case X86::VPERMILPDYrm: {
+    if (!OutStreamer.isVerboseAsm())
+      break;
+    assert(MI->getNumOperands() > 5 &&
+           "We should always have at least 5 operands!");
+    const MachineOperand &DstOp = MI->getOperand(0);
+    const MachineOperand &SrcOp = MI->getOperand(1);
+    const MachineOperand &MaskOp = MI->getOperand(5);
+
+    if (auto *C = getShuffleMaskConstant(*MI, DstOp, SrcOp, MaskOp)) {
+      SmallVector<int, 16> Mask;
+      DecodeVPERMILPMask(C, Mask);
+      if (!Mask.empty())
+        OutStreamer.AddComment(getShuffleComment(DstOp, SrcOp, Mask));
+    }
     break;
   }
   }
