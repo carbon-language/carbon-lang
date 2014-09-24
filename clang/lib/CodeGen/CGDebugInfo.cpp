@@ -3347,3 +3347,11 @@ void CGDebugInfo::finalize() {
 
   DBuilder.finalize();
 }
+
+void CGDebugInfo::EmitExplicitCastType(QualType Ty) {
+  if (CGM.getCodeGenOpts().getDebugInfo() < CodeGenOptions::LimitedDebugInfo)
+    return;
+  llvm::DIType DieTy = getOrCreateType(Ty, getOrCreateMainFile());
+  // Don't ignore in case of explicit cast where it is referenced indirectly.
+  DBuilder.retainType(DieTy);
+}

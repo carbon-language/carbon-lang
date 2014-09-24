@@ -283,6 +283,9 @@ public:
   /// \brief - Emit C++ using directive.
   void EmitUsingDirective(const UsingDirectiveDecl &UD);
 
+  /// EmitExplicitCastType - Emit the type explicitly casted to.
+  void EmitExplicitCastType(QualType Ty);
+
   /// \brief - Emit C++ using declaration.
   void EmitUsingDecl(const UsingDecl &UD);
 
