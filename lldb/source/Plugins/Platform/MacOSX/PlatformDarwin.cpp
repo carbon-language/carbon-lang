@@ -1212,17 +1212,6 @@ PlatformDarwin::SetThreadCreationBreakpoint (Target &target)
     return bp_sp;
 }
 
-size_t
-PlatformDarwin::GetEnvironment (StringList &env)
-{
-    if (IsRemote())
-    {
-        if (m_remote_platform_sp)
-            return m_remote_platform_sp->GetEnvironment(env);
-        return 0;
-    }
-    return Host::GetEnvironment(env);
-}
 
 int32_t
 PlatformDarwin::GetResumeCountForLaunchInfo (ProcessLaunchInfo &launch_info)

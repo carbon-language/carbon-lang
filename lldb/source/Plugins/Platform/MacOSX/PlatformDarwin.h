@@ -78,9 +78,6 @@ public:
     virtual bool
     ModuleIsExcludedForNonModuleSpecificSearches (lldb_private::Target &target, const lldb::ModuleSP &module_sp);
     
-    virtual size_t
-    GetEnvironment (lldb_private::StringList &environment);
-
     bool
     ARMGetSupportedArchitectureAtIndex (uint32_t idx, lldb_private::ArchSpec &arch);
     

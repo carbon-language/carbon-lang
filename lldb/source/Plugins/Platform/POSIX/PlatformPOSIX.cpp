@@ -634,6 +634,18 @@ PlatformPOSIX::GetRemoteOSBuildString (std::string &s)
     return false;
 }
 
+size_t
+PlatformPOSIX::GetEnvironment (StringList &env)
+{
+    if (IsRemote())
+    {
+        if (m_remote_platform_sp)
+            return m_remote_platform_sp->GetEnvironment(env);
+        return 0;
+    }
+    return Host::GetEnvironment(env);
+}
+
 bool
 PlatformPOSIX::GetRemoteOSKernelDescription (std::string &s)
 {

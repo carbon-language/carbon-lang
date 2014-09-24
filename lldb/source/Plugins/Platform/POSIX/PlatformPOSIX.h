@@ -101,6 +101,9 @@ public:
     lldb_private::ArchSpec
     GetRemoteSystemArchitecture () override;
 
+    size_t
+    GetEnvironment (lldb_private::StringList &environment) override;
+
     bool
     IsConnected () const override;
 
