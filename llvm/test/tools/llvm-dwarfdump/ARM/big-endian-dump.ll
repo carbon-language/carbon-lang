@@ -1,5 +1,7 @@
 ; RUN: llc -O0 -filetype=obj -o %t1 < %s
-; RUN: llvm-dwarfdump %t1
+; RUN: llvm-dwarfdump %t1 | FileCheck %s
+
+; CHECK: file format ELF32-arm-big
 
 target datalayout = "E-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
 target triple = "armebv8-none--eabi"
