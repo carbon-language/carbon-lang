@@ -33,6 +33,14 @@
 }
 
 {
+   We don't care if bash leaks
+   Memcheck:Leak
+   fun:malloc
+   fun:xmalloc
+   obj:/bin/bash
+}
+
+{
    We don't care of cmp
    Memcheck:Cond
    obj:/usr/bin/cmp
