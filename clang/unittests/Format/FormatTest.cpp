@@ -4672,6 +4672,8 @@ TEST_F(FormatTest, UnderstandsTemplateParameters) {
   EXPECT_EQ("A<::A<int>> a;", format("A< ::A<int>> a;", getGoogleStyle()));
   EXPECT_EQ("A<::A<int>> a;", format("A<::A<int> > a;", getGoogleStyle()));
 
+  verifyFormat("A<A>> a;", getChromiumStyle(FormatStyle::LK_Cpp));
+
   verifyFormat("test >> a >> b;");
   verifyFormat("test << a >> b;");
 

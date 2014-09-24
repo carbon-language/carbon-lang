@@ -430,7 +430,6 @@ FormatStyle getChromiumStyle(FormatStyle::LanguageKind Language) {
   ChromiumStyle.AllowShortLoopsOnASingleLine = false;
   ChromiumStyle.BinPackParameters = false;
   ChromiumStyle.DerivePointerAlignment = false;
-  ChromiumStyle.Standard = FormatStyle::LS_Cpp03;
   return ChromiumStyle;
 }
 
