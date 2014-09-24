@@ -864,25 +864,23 @@ PrevCrossBBInst(MachineBasicBlock::const_iterator MBBI) {
   return --MBBI;
 }
 
-static const Constant *getShuffleMaskConstant(const MachineInstr &MI,
-                                              const MachineOperand &DstOp,
-                                              const MachineOperand &SrcOp,
-                                              const MachineOperand &MaskOp) {
-  if (!MaskOp.isCPI())
+static const Constant *getConstantFromPool(const MachineInstr &MI,
+                                           const MachineOperand &Op) {
+  if (!Op.isCPI())
     return nullptr;
 
   ArrayRef<MachineConstantPoolEntry> Constants =
       MI.getParent()->getParent()->getConstantPool()->getConstants();
-  const MachineConstantPoolEntry &MaskConstantEntry =
-      Constants[MaskOp.getIndex()];
+  const MachineConstantPoolEntry &ConstantEntry =
+      Constants[Op.getIndex()];
 
   // Bail if this is a machine constant pool entry, we won't be able to dig out
   // anything useful.
-  if (MaskConstantEntry.isMachineConstantPoolEntry())
+  if (ConstantEntry.isMachineConstantPoolEntry())
     return nullptr;
 
-  auto *C = dyn_cast<Constant>(MaskConstantEntry.Val.ConstVal);
-  assert((!C || MaskConstantEntry.getType() == C->getType()) &&
+  auto *C = dyn_cast<Constant>(ConstantEntry.Val.ConstVal);
+  assert((!C || ConstantEntry.getType() == C->getType()) &&
          "Expected a constant of the same type!");
   return C;
 }
@@ -1109,7 +1107,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MachineOperand &SrcOp = MI->getOperand(1);
     const MachineOperand &MaskOp = MI->getOperand(5);
 
-    if (auto *C = getShuffleMaskConstant(*MI, DstOp, SrcOp, MaskOp)) {
+    if (auto *C = getConstantFromPool(*MI, MaskOp)) {
       SmallVector<int, 16> Mask;
       DecodePSHUFBMask(C, Mask);
       if (!Mask.empty())
@@ -1129,7 +1127,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MachineOperand &SrcOp = MI->getOperand(1);
     const MachineOperand &MaskOp = MI->getOperand(5);
 
-    if (auto *C = getShuffleMaskConstant(*MI, DstOp, SrcOp, MaskOp)) {
+    if (auto *C = getConstantFromPool(*MI, MaskOp)) {
       SmallVector<int, 16> Mask;
       DecodeVPERMILPMask(C, Mask);
       if (!Mask.empty())
@@ -1137,6 +1135,74 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     break;
   }
+
+    // For loads from a constant pool to a vector register, print the constant
+    // loaded.
+  case X86::MOVAPDrm:
+  case X86::VMOVAPDrm:
+  case X86::VMOVAPDYrm:
+  case X86::MOVUPDrm:
+  case X86::VMOVUPDrm:
+  case X86::VMOVUPDYrm:
+  case X86::MOVAPSrm:
+  case X86::VMOVAPSrm:
+  case X86::VMOVAPSYrm:
+  case X86::MOVUPSrm:
+  case X86::VMOVUPSrm:
+  case X86::VMOVUPSYrm:
+  case X86::MOVDQArm:
+  case X86::VMOVDQArm:
+  case X86::VMOVDQAYrm:
+  case X86::MOVDQUrm:
+  case X86::VMOVDQUrm:
+  case X86::VMOVDQUYrm:
+    if (!OutStreamer.isVerboseAsm())
+      break;
+    if (MI->getNumOperands() > 4)
+    if (auto *C = getConstantFromPool(*MI, MI->getOperand(4))) {
+      std::string Comment;
+      raw_string_ostream CS(Comment);
+      const MachineOperand &DstOp = MI->getOperand(0);
+      CS << X86ATTInstPrinter::getRegisterName(DstOp.getReg()) << " = ";
+      if (auto *CDS = dyn_cast<ConstantDataSequential>(C)) {
+        CS << "[";
+        for (int i = 0, NumElements = CDS->getNumElements(); i < NumElements; ++i) {
+          if (i != 0)
+            CS << ",";
+          if (CDS->getElementType()->isIntegerTy())
+            CS << CDS->getElementAsInteger(i);
+          else if (CDS->getElementType()->isFloatTy())
+            CS << CDS->getElementAsFloat(i);
+          else if (CDS->getElementType()->isDoubleTy())
+            CS << CDS->getElementAsDouble(i);
+          else
+            CS << "?";
+        }
+        CS << "]";
+        OutStreamer.AddComment(CS.str());
+      } else if (auto *CV = dyn_cast<ConstantVector>(C)) {
+        CS << "<";
+        for (int i = 0, NumOperands = CV->getNumOperands(); i < NumOperands; ++i) {
+          if (i != 0)
+            CS << ",";
+          Constant *COp = CV->getOperand(i);
+          if (isa<UndefValue>(COp)) {
+            CS << "u";
+          } else if (auto *CI = dyn_cast<ConstantInt>(COp)) {
+            CS << CI->getZExtValue();
+          } else if (auto *CF = dyn_cast<ConstantFP>(COp)) {
+            SmallString<32> Str;
+            CF->getValueAPF().toString(Str);
+            CS << Str;
+          } else {
+            CS << "?";
+          }
+        }
+        CS << ">";
+        OutStreamer.AddComment(CS.str());
+      }
+    }
+    break;
   }
 
   MCInst TmpInst;
