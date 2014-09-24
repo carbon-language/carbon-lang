@@ -17,8 +17,9 @@ namespace readability {
 
 class TodoCommentCheck::TodoCommentHandler : public CommentHandler {
 public:
-  explicit TodoCommentHandler(TodoCommentCheck &Check)
-      : Check(Check), TodoMatch("^// *TODO(\\(.*\\))?:?( )?(.*)$") {}
+  TodoCommentHandler(TodoCommentCheck &Check, llvm::Optional<std::string> User)
+      : Check(Check), User(User ? *User : "unknown"),
+        TodoMatch("^// *TODO(\\(.*\\))?:?( )?(.*)$") {}
 
   bool HandleComment(Preprocessor &PP, SourceRange Range) override {
     StringRef Text =
@@ -35,12 +36,6 @@ public:
     if (!Username.empty())
       return false;
 
-    // If the username is missing put in the current user's name. Not ideal but
-    // works for running tidy locally.
-    // FIXME: Can we get this from a more reliable source?
-    const char *User = std::getenv("USER");
-    if (!User)
-      User = "unknown";
     std::string NewText = ("// TODO(" + Twine(User) + "): " + Comment).str();
 
     Check.diag(Range.getBegin(), "missing username/bug in TODO")
@@ -51,14 +46,14 @@ public:
 
 private:
   TodoCommentCheck &Check;
+  std::string User;
   llvm::Regex TodoMatch;
 };
 
 TodoCommentCheck::TodoCommentCheck(StringRef Name, ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context),
-      Handler(llvm::make_unique<TodoCommentHandler>(*this)) {}
-
-TodoCommentCheck::~TodoCommentCheck() {}
+      Handler(llvm::make_unique<TodoCommentHandler>(
+          *this, Context->getOptions().User)) {}
 
 void TodoCommentCheck::registerPPCallbacks(CompilerInstance &Compiler) {
   Compiler.getPreprocessor().addCommentHandler(Handler.get());

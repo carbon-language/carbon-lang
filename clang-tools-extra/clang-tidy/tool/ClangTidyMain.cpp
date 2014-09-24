@@ -17,6 +17,7 @@
 
 #include "../ClangTidy.h"
 #include "clang/Tooling/CommonOptionsParser.h"
+#include "llvm/Support/Process.h"
 
 using namespace clang::ast_matchers;
 using namespace clang::driver;
@@ -143,10 +144,14 @@ int clangTidyMain(int argc, const char **argv) {
     return 1;
   }
 
-  ClangTidyOptions FallbackOptions;
-  FallbackOptions.Checks = DefaultChecks;
-  FallbackOptions.HeaderFilterRegex = HeaderFilter;
-  FallbackOptions.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
+  ClangTidyOptions DefaultOptions;
+  DefaultOptions.Checks = DefaultChecks;
+  DefaultOptions.HeaderFilterRegex = HeaderFilter;
+  DefaultOptions.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
+  DefaultOptions.User = llvm::sys::Process::GetEnv("USER");
+  // USERNAME is used on Windows.
+  if (!DefaultOptions.User)
+    DefaultOptions.User = llvm::sys::Process::GetEnv("USERNAME");
 
   ClangTidyOptions OverrideOptions;
   if (Checks.getNumOccurrences() > 0)
@@ -157,7 +162,7 @@ int clangTidyMain(int argc, const char **argv) {
     OverrideOptions.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
 
   auto OptionsProvider = llvm::make_unique<FileOptionsProvider>(
-      GlobalOptions, FallbackOptions, OverrideOptions);
+      GlobalOptions, DefaultOptions, OverrideOptions);
 
   std::string FileName = OptionsParser.getSourcePathList().front();
   ClangTidyOptions EffectiveOptions = OptionsProvider->getOptions(FileName);

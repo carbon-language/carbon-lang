@@ -55,6 +55,7 @@ struct ClangTidyOptions {
     Options.Checks = "";
     Options.HeaderFilterRegex = "";
     Options.AnalyzeTemporaryDtors = false;
+    Options.User = llvm::None;
     return Options;
   }
 
@@ -71,6 +72,12 @@ struct ClangTidyOptions {
 
   /// \brief Turns on temporary destructor-based analysis.
   llvm::Optional<bool> AnalyzeTemporaryDtors;
+
+  /// \brief Specifies the name or e-mail of the user running clang-tidy.
+  ///
+  /// This option is used, for example, to place the correct user name in TODO()
+  /// comments in the relevant check.
+  llvm::Optional<std::string> User;
 
   typedef std::pair<std::string, std::string> StringPair;
   typedef std::map<std::string, std::string> OptionMap;
@@ -121,19 +128,19 @@ public:
   /// \param GlobalOptions are just stored and returned to the caller of
   /// \c getGlobalOptions.
   ///
-  /// \param FallbackOptions are used in case there's no corresponding
+  /// \param DefaultOptions are used for all settings not specified in a
   /// .clang-tidy file.
   ///
   /// If any of the \param OverrideOptions fields are set, they will override
   /// whatever options are read from the configuration file.
   FileOptionsProvider(const ClangTidyGlobalOptions &GlobalOptions,
-                      const ClangTidyOptions &FallbackOptions,
+                      const ClangTidyOptions &DefaultOptions,
                       const ClangTidyOptions &OverrideOptions);
   const ClangTidyOptions &getOptions(llvm::StringRef FileName) override;
 
 private:
   /// \brief Try to read configuration file from \p Directory. If \p Directory
-  /// is empty, use the fallback value.
+  /// is empty, use the default value.
   llvm::ErrorOr<ClangTidyOptions> TryReadConfigFile(llvm::StringRef Directory);
 
   llvm::StringMap<ClangTidyOptions> CachedOptions;
@@ -144,9 +151,9 @@ private:
 std::error_code parseLineFilter(llvm::StringRef LineFilter,
                                 ClangTidyGlobalOptions &Options);
 
-/// \brief Parses configuration from JSON and stores it to the \p Options.
-std::error_code parseConfiguration(llvm::StringRef Config,
-                                   ClangTidyOptions &Options);
+/// \brief Parses configuration from JSON and returns \c ClangTidyOptions or an
+/// error.
+llvm::ErrorOr<ClangTidyOptions> parseConfiguration(llvm::StringRef Config);
 
 /// \brief Serializes configuration to a YAML-encoded string.
 std::string configurationAsText(const ClangTidyOptions &Options);

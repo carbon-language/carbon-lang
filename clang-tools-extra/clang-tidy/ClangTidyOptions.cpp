@@ -85,6 +85,7 @@ template <> struct MappingTraits<ClangTidyOptions> {
     IO.mapOptional("Checks", Options.Checks);
     IO.mapOptional("HeaderFilterRegex", Options.HeaderFilterRegex);
     IO.mapOptional("AnalyzeTemporaryDtors", Options.AnalyzeTemporaryDtors);
+    IO.mapOptional("User", Options.User);
     IO.mapOptional("CheckOptions", NOpts->Options);
   }
 };
@@ -109,6 +110,8 @@ ClangTidyOptions::mergeWith(const ClangTidyOptions &Other) const {
     Result.HeaderFilterRegex = Other.HeaderFilterRegex;
   if (Other.AnalyzeTemporaryDtors)
     Result.AnalyzeTemporaryDtors = Other.AnalyzeTemporaryDtors;
+  if (Other.User)
+    Result.User = Other.User;
 
   for (const auto &KeyValue : Other.CheckOptions)
     Result.CheckOptions[KeyValue.first] = KeyValue.second;
@@ -118,11 +121,11 @@ ClangTidyOptions::mergeWith(const ClangTidyOptions &Other) const {
 
 FileOptionsProvider::FileOptionsProvider(
     const ClangTidyGlobalOptions &GlobalOptions,
-    const ClangTidyOptions &FallbackOptions,
+    const ClangTidyOptions &DefaultOptions,
     const ClangTidyOptions &OverrideOptions)
-    : DefaultOptionsProvider(GlobalOptions, FallbackOptions),
+    : DefaultOptionsProvider(GlobalOptions, DefaultOptions),
       OverrideOptions(OverrideOptions) {
-  CachedOptions[""] = FallbackOptions.mergeWith(OverrideOptions);
+  CachedOptions[""] = DefaultOptions.mergeWith(OverrideOptions);
 }
 
 static const char ConfigFileName[] = ".clang-tidy";
@@ -177,7 +180,6 @@ llvm::ErrorOr<ClangTidyOptions>
 FileOptionsProvider::TryReadConfigFile(StringRef Directory) {
   assert(!Directory.empty());
 
-  ClangTidyOptions Options = DefaultOptionsProvider::getOptions(Directory);
   if (!llvm::sys::fs::is_directory(Directory))
     return make_error_code(llvm::errc::not_a_directory);
 
@@ -201,9 +203,15 @@ FileOptionsProvider::TryReadConfigFile(StringRef Directory) {
   // redirection.
   if ((*Text)->getBuffer().empty())
     return make_error_code(llvm::errc::no_such_file_or_directory);
-  if (std::error_code EC = parseConfiguration((*Text)->getBuffer(), Options))
-    return EC;
-  return Options.mergeWith(OverrideOptions);
+  llvm::ErrorOr<ClangTidyOptions> ParsedOptions =
+      parseConfiguration((*Text)->getBuffer());
+  if (ParsedOptions) {
+    ClangTidyOptions Defaults = DefaultOptionsProvider::getOptions(Directory);
+    // Only use checks from the config file.
+    Defaults.Checks = None;
+    return Defaults.mergeWith(*ParsedOptions).mergeWith(OverrideOptions);
+  }
+  return ParsedOptions.getError();
 }
 
 /// \brief Parses -line-filter option and stores it to the \c Options.
@@ -214,11 +222,13 @@ std::error_code parseLineFilter(StringRef LineFilter,
   return Input.error();
 }
 
-std::error_code parseConfiguration(StringRef Config,
-                                   clang::tidy::ClangTidyOptions &Options) {
+llvm::ErrorOr<ClangTidyOptions> parseConfiguration(StringRef Config) {
   llvm::yaml::Input Input(Config);
+  ClangTidyOptions Options;
   Input >> Options;
-  return Input.error();
+  if (Input.error())
+    return Input.error();
+  return Options;
 }
 
 std::string configurationAsText(const ClangTidyOptions &Options) {
