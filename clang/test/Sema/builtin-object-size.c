@@ -43,3 +43,12 @@ void f5(void)
   memcpy((char *)NULL + 0x10000, buf, 0x10);
   memcpy1((char *)NULL + 0x10000, buf, 0x10); // expected-error {{argument should be a value from 0 to 3}}
 }
+
+// rdar://18431336
+void f6(void)
+{
+  char b[5];
+  char buf[10];
+  __builtin___memccpy_chk (buf, b, '\0', sizeof(b), __builtin_object_size (buf, 0));
+  __builtin___memccpy_chk (b, buf, '\0', sizeof(buf), __builtin_object_size (b, 0));  // expected-warning {{'__builtin___memccpy_chk' will always overflow destination buffer}}
+}

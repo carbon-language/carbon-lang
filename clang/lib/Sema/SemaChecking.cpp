@@ -365,7 +365,6 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
   // check secure string manipulation functions where overflows
   // are detectable at compile time
   case Builtin::BI__builtin___memcpy_chk:
-  case Builtin::BI__builtin___memccpy_chk:
   case Builtin::BI__builtin___memmove_chk:
   case Builtin::BI__builtin___memset_chk:
   case Builtin::BI__builtin___strlcat_chk:
@@ -374,6 +373,9 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
   case Builtin::BI__builtin___strncpy_chk:
   case Builtin::BI__builtin___stpncpy_chk:
     SemaBuiltinMemChkCall(*this, FDecl, TheCall, 2, 3);
+    break;
+  case Builtin::BI__builtin___memccpy_chk:
+    SemaBuiltinMemChkCall(*this, FDecl, TheCall, 3, 4);
     break;
   case Builtin::BI__builtin___snprintf_chk:
   case Builtin::BI__builtin___vsnprintf_chk:
