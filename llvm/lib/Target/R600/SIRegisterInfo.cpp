@@ -32,6 +32,12 @@ SIRegisterInfo::SIRegisterInfo(const AMDGPUSubtarget &st)
 BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   Reserved.set(AMDGPU::EXEC);
+
+  // EXEC_LO and EXEC_HI could be allocated and used as regular register,
+  // but this seems likely to result in bugs, so I'm marking them as reserved.
+  Reserved.set(AMDGPU::EXEC_LO);
+  Reserved.set(AMDGPU::EXEC_HI);
+
   Reserved.set(AMDGPU::INDIRECT_BASE_ADDR);
   Reserved.set(AMDGPU::FLAT_SCR);
 
