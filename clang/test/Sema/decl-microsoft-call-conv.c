@@ -19,11 +19,3 @@ void __pascal CrcGenerateTableNoProtoPascal() {} // expected-error{{function wit
 
 // Regular calling convention is fine.
 void CrcGenerateTableNoProto() {}
-
-
-// In system headers, the stdcall version should be a warning.
-# 1 "fake_system_header.h" 1 3 4
-void __fastcall SystemHeaderFastcall() {} // expected-error{{function with no prototype cannot use the callee-cleanup fastcall calling convention}}
-void __stdcall SystemHeaderStdcall() {}
-void __thiscall SystemHeaderThiscall() {} // expected-error{{function with no prototype cannot use the callee-cleanup thiscall calling convention}}
-void __pascal SystemHeaderPascal() {} // expected-error{{function with no prototype cannot use the callee-cleanup pascal calling convention}}

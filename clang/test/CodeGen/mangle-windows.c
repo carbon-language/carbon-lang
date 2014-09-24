@@ -1,9 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-win32 | FileCheck %s
 // RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-mingw32 | FileCheck %s
 
-// prototype-less __stdcall functions are only allowed in system headers.
-# 1 "fake_system_header.h" 1 3 4
-
 void __stdcall f1(void) {}
 // CHECK: define x86_stdcallcc void @"\01_f1@0"
 
