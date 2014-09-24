@@ -14,6 +14,12 @@ void QMap<Key, T>::insert(const Key &, const T &avalue)
   v = avalue;
 }
 
+struct Rec {
+  union { // expected-warning-re {{variable sized type '{{.*}}' not at the end of a struct or class is a GNU extension}}
+    int u0[];
+  };
+  int x;
+} rec;
 
 struct inotify_event
 {
