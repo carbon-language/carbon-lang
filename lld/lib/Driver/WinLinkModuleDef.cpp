@@ -197,13 +197,13 @@ bool Parser::parseExport(PECOFFLinkingContext::ExportDesc &result) {
     return false;
   }
   result.name = _tok._range;
+  result.externalName = result.name;
 
   consumeToken();
   if (_tok._kind == Kind::equal) {
     consumeToken();
     if (_tok._kind != Kind::identifier)
       return false;
-    result.externalName = result.name;
     result.name = _tok._range;
   } else {
     ungetToken();

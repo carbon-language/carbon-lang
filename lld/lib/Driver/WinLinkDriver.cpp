@@ -370,6 +370,7 @@ static bool parseExport(StringRef option,
   if (name.empty())
     return false;
   ret.name = name;
+  ret.externalName = name;
 
   for (;;) {
     if (rest.empty())

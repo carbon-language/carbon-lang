@@ -55,12 +55,6 @@ static StringRef removeStdcallSuffix(StringRef sym) {
   return sym;
 }
 
-static StringRef removeLeadingUnderscore(StringRef sym) {
-  if (sym.startswith("_"))
-    return sym.substr(1);
-  return sym;
-}
-
 static bool getExportedAtoms(PECOFFLinkingContext &ctx, MutableFile *file,
                              std::vector<TableEntry> &ret) {
   std::map<StringRef, const DefinedAtom *> definedAtoms;
@@ -79,12 +73,7 @@ static bool getExportedAtoms(PECOFFLinkingContext &ctx, MutableFile *file,
     // One can export a symbol with a different name than the symbol
     // name used in DLL. If such name is specified, use it in the
     // .edata section.
-    StringRef exportName =
-        desc.externalName.empty() ? desc.name : desc.externalName;
-    ret.push_back(TableEntry(exportName, desc.ordinal, atom, desc.noname));
-
-    if (desc.externalName.empty())
-      desc.externalName = removeLeadingUnderscore(atom->name());
+    ret.push_back(TableEntry(desc.externalName, desc.ordinal, atom, desc.noname));
   }
   std::sort(ret.begin(), ret.end(),
             [](const TableEntry &a, const TableEntry &b) {
