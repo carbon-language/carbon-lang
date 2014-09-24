@@ -864,22 +864,16 @@ PrevCrossBBInst(MachineBasicBlock::const_iterator MBBI) {
   return --MBBI;
 }
 
-static std::string getShuffleComment(const MachineInstr &MI) {
+static std::string getShuffleComment(int Opcode, const MachineOperand &DstOp,
+                                     const MachineOperand &SrcOp,
+                                     const MachineOperand &MaskOp,
+                                     ArrayRef<MachineConstantPoolEntry> Constants) {
   std::string Comment;
   SmallVector<int, 16> Mask;
-
-  // All of these instructions accept a constant pool operand as their fifth.
-  assert(MI.getNumOperands() > 5 &&
-         "We should always have at least 5 operands!");
-  const MachineOperand &DstOp = MI.getOperand(0);
-  const MachineOperand &SrcOp = MI.getOperand(1);
-  const MachineOperand &MaskOp = MI.getOperand(5);
 
   if (!MaskOp.isCPI())
     return Comment;
 
-  ArrayRef<MachineConstantPoolEntry> Constants =
-      MI.getParent()->getParent()->getConstantPool()->getConstants();
   const MachineConstantPoolEntry &MaskConstantEntry =
       Constants[MaskOp.getIndex()];
 
@@ -895,7 +889,7 @@ static std::string getShuffleComment(const MachineInstr &MI) {
   assert(MaskConstantEntry.getType() == C->getType() &&
          "Expected a constant of the same type!");
 
-  switch (MI.getOpcode()) {
+  switch (Opcode) {
   case X86::PSHUFBrm:
   case X86::VPSHUFBrm:
     DecodePSHUFBMask(C, Mask);
@@ -1118,17 +1112,27 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
 
+    // Lower PSHUFB and VPERMILP normally but add a comment if we can find
+    // a constant shuffle mask. We won't be able to do this at the MC layer
+    // because the mask isn't an immediate.
   case X86::PSHUFBrm:
   case X86::VPSHUFBrm:
   case X86::VPERMILPSrm:
   case X86::VPERMILPDrm:
   case X86::VPERMILPSYrm:
   case X86::VPERMILPDYrm: {
-    // Lower PSHUFB and VPERMILP normally but add a comment if we can find
-    // a constant shuffle mask. We won't be able to do this at the MC layer
-    // because the mask isn't an immediate.
-    std::string Comment = getShuffleComment(*MI);
-    OutStreamer.AddComment(Comment);
+    // All of these instructions accept a constant pool operand as their fifth.
+    assert(MI->getNumOperands() > 5 &&
+           "We should always have at least 5 operands!");
+    const MachineOperand &DstOp = MI->getOperand(0);
+    const MachineOperand &SrcOp = MI->getOperand(1);
+    const MachineOperand &MaskOp = MI->getOperand(5);
+
+    std::string Comment = getShuffleComment(
+        MI->getOpcode(), DstOp, SrcOp, MaskOp,
+        MI->getParent()->getParent()->getConstantPool()->getConstants());
+    if (!Comment.empty())
+      OutStreamer.AddComment(Comment);
     break;
   }
   }
