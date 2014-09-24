@@ -1,4 +1,7 @@
-// RUN: llvm-objdump -d -m %p/Inputs/hello.obj.macho-x86_64 | FileCheck %s
+// RUN: llvm-objdump -d -m -no-show-raw-insn -full-leading-addr -print-imm-hex %p/Inputs/hello.obj.macho-x86_64 | FileCheck %s -check-prefix=OBJ
+// RUN: llvm-objdump -d -m -no-show-raw-insn -full-leading-addr -print-imm-hex %p/Inputs/hello.exe.macho-x86_64 | FileCheck %s -check-prefix=EXE
 
-CHECK: leaq	L_.str(%rip), %rax
-CHECK: callq	_printf
+OBJ: 0000000000000008	leaq	L_.str(%rip), %rax      ## literal pool for: "Hello world\n"
+OBJ: 0000000000000026	callq	_printf
+
+EXE: 0000000100000f38	leaq	0x4f(%rip), %rax        ## literal pool for: "Hello world\n"

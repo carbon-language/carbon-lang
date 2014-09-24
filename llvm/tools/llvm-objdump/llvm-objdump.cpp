@@ -128,9 +128,10 @@ llvm::MAttrs("mattr",
   cl::desc("Target specific attributes"),
   cl::value_desc("a1,+a2,-a3,..."));
 
-static cl::opt<bool>
-NoShowRawInsn("no-show-raw-insn", cl::desc("When disassembling instructions, "
-                                           "do not print the instruction bytes."));
+cl::opt<bool>
+llvm::NoShowRawInsn("no-show-raw-insn", cl::desc("When disassembling "
+                                                 "instructions, do not print "
+                                                 "the instruction bytes."));
 
 static cl::opt<bool>
 UnwindInfo("unwind-info", cl::desc("Display unwind information"));
