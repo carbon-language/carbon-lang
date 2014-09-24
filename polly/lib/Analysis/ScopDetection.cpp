@@ -532,7 +532,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   if (IntToPtrInst *Inst = dyn_cast<IntToPtrInst>(BaseValue))
     return invalid<ReportIntToPtr>(Context, /*Assert=*/true, Inst);
 
-  if (PollyUseRuntimeAliasChecks || IgnoreAliasing)
+  if (IgnoreAliasing)
     return true;
 
   // Check if the base pointer of the memory access does alias with
@@ -548,8 +548,26 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   // alias, if -basicaa is not available. They actually do not, but as we can
   // not proof this without -basicaa we would fail. We disable this check to
   // not cause irrelevant verification failures.
-  if (!AS.isMustAlias())
+  if (!AS.isMustAlias()) {
+    if (PollyUseRuntimeAliasChecks) {
+      bool CanBuildRunTimeCheck = true;
+      // The run-time alias check places code that involves the base pointer at
+      // the beginning of the SCoP. This breaks if the base pointer is defined
+      // inside the scop. Hence, we can only create a run-time check if we are
+      // sure the base pointer is not an instruction defined inside the scop.
+      for (const auto &Ptr : AS) {
+        Instruction *Inst = dyn_cast<Instruction>(Ptr.getValue());
+        if (Inst && Context.CurRegion.contains(Inst)) {
+          CanBuildRunTimeCheck = false;
+          break;
+        }
+      }
+
+      if (CanBuildRunTimeCheck)
+        return true;
+    }
     return invalid<ReportAlias>(Context, /*Assert=*/false, &Inst, AS);
+  }
 
   return true;
 }
