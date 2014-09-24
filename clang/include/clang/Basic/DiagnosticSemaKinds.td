@@ -2235,10 +2235,10 @@ def err_cconv_change : Error<
 def warn_cconv_ignored : Warning<
   "calling convention %0 ignored for this target">, InGroup<IgnoredAttributes>;
 def err_cconv_knr : Error<
-  "function with no prototype cannot use %0 calling convention">;
+  "function with no prototype cannot use the callee-cleanup %0 calling convention">;
 def warn_cconv_knr : Warning<
-  "function with no prototype cannot use %0 calling convention">,
-  DefaultError, InGroup<DiagGroup<"missing-prototype-for-cc">>;
+  "function with no prototype cannot use the callee-cleanup %0 calling convention">,
+  InGroup<DiagGroup<"missing-prototype-for-cc">>;
 def err_cconv_varargs : Error<
   "variadic function cannot use %0 calling convention">;
 def warn_cconv_varargs : Warning<

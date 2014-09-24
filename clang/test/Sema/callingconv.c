@@ -10,7 +10,7 @@ void __attribute__((stdcall)) bar(float *a) {
 void __attribute__((fastcall(1))) baz(float *a) { // expected-error {{'fastcall' attribute takes no arguments}}
 }
 
-void __attribute__((fastcall)) test0() { // expected-error {{function with no prototype cannot use fastcall calling convention}}
+void __attribute__((fastcall)) test0() { // expected-error {{function with no prototype cannot use the callee-cleanup fastcall calling convention}}
 }
 
 void __attribute__((fastcall)) test1(void) {

@@ -3,7 +3,7 @@
 // prototype-less __stdcall functions are only allowed in system headers.
 # 1 "fake_system_header.h" 1 3 4
 
-// CHECK: fake_system_header.h:9:3: warning: function with no prototype cannot use stdcall calling convention
+// CHECK: fake_system_header.h:9:3: warning: function with no prototype cannot use the callee-cleanup stdcall calling convention
 
 void baz(int arg);
 

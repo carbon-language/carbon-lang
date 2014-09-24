@@ -12,10 +12,10 @@ void __thiscall CrcGenerateTableThiscall() {}
 void __pascal CrcGenerateTablePascal(void);
 void __pascal CrcGenerateTablePascal() {}
 
-void __fastcall CrcGenerateTableNoProtoFastcall() {} // expected-error{{function with no prototype cannot use fastcall calling convention}}
-void __stdcall CrcGenerateTableNoProtoStdcall() {} // expected-error{{function with no prototype cannot use stdcall calling convention}}
-void __thiscall CrcGenerateTableNoProtoThiscall() {} // expected-error{{function with no prototype cannot use thiscall calling convention}}
-void __pascal CrcGenerateTableNoProtoPascal() {} // expected-error{{function with no prototype cannot use pascal calling convention}}
+void __fastcall CrcGenerateTableNoProtoFastcall() {} // expected-error{{function with no prototype cannot use the callee-cleanup fastcall calling convention}}
+void __stdcall CrcGenerateTableNoProtoStdcall() {} // expected-warning{{function with no prototype cannot use the callee-cleanup stdcall calling convention}}
+void __thiscall CrcGenerateTableNoProtoThiscall() {} // expected-error{{function with no prototype cannot use the callee-cleanup thiscall calling convention}}
+void __pascal CrcGenerateTableNoProtoPascal() {} // expected-error{{function with no prototype cannot use the callee-cleanup pascal calling convention}}
 
 // Regular calling convention is fine.
 void CrcGenerateTableNoProto() {}
@@ -23,7 +23,7 @@ void CrcGenerateTableNoProto() {}
 
 // In system headers, the stdcall version should be a warning.
 # 1 "fake_system_header.h" 1 3 4
-void __fastcall SystemHeaderFastcall() {} // expected-error{{function with no prototype cannot use fastcall calling convention}}
+void __fastcall SystemHeaderFastcall() {} // expected-error{{function with no prototype cannot use the callee-cleanup fastcall calling convention}}
 void __stdcall SystemHeaderStdcall() {}
-void __thiscall SystemHeaderThiscall() {} // expected-error{{function with no prototype cannot use thiscall calling convention}}
-void __pascal SystemHeaderPascal() {} // expected-error{{function with no prototype cannot use pascal calling convention}}
+void __thiscall SystemHeaderThiscall() {} // expected-error{{function with no prototype cannot use the callee-cleanup thiscall calling convention}}
+void __pascal SystemHeaderPascal() {} // expected-error{{function with no prototype cannot use the callee-cleanup pascal calling convention}}
