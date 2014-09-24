@@ -164,6 +164,8 @@ class SOP2 <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let mayStore = 0;
   let hasSideEffects = 0;
   let SALU = 1;
+
+  let UseNamedOperandTable = 1;
 }
 
 class SOPC <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
@@ -174,6 +176,8 @@ class SOPC <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let mayStore = 0;
   let hasSideEffects = 0;
   let SALU = 1;
+
+  let UseNamedOperandTable = 1;
 }
 
 class SOPK <bits<5> op, dag outs, dag ins, string asm, list<dag> pattern> :
@@ -183,6 +187,8 @@ class SOPK <bits<5> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let mayStore = 0;
   let hasSideEffects = 0;
   let SALU = 1;
+
+  let UseNamedOperandTable = 1;
 }
 
 class SOPP <bits<7> op, dag ins, string asm, list<dag> pattern> :
@@ -192,6 +198,8 @@ class SOPP <bits<7> op, dag ins, string asm, list<dag> pattern> :
   let mayStore = 0;
   let hasSideEffects = 0;
   let SALU = 1;
+
+  let UseNamedOperandTable = 1;
 }
 
 class SMRD <bits<5> op, bits<1> imm, dag outs, dag ins, string asm,
