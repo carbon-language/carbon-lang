@@ -7317,6 +7317,36 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
   }
 }
 
+/// \brief Generic routine to lower a shuffle and blend as a decomposed set of
+/// unblended shuffles followed by an unshuffled blend.
+///
+/// This matches the extremely common pattern for handling combined
+/// shuffle+blend operations on newer X86 ISAs where we have very fast blend
+/// operations.
+static SDValue lowerVectorShuffleAsDecomposedShuffleBlend(SDLoc DL, MVT VT,
+                                                          SDValue V1,
+                                                          SDValue V2,
+                                                          ArrayRef<int> Mask,
+                                                          SelectionDAG &DAG) {
+  // Shuffle the input elements into the desired positions in V1 and V2 and
+  // blend them together.
+  SmallVector<int, 32> V1Mask(Mask.size(), -1);
+  SmallVector<int, 32> V2Mask(Mask.size(), -1);
+  SmallVector<int, 32> BlendMask(Mask.size(), -1);
+  for (int i = 0, Size = Mask.size(); i < Size; ++i)
+    if (Mask[i] >= 0 && Mask[i] < Size) {
+      V1Mask[i] = Mask[i];
+      BlendMask[i] = i;
+    } else if (Mask[i] >= Size) {
+      V2Mask[i] = Mask[i] - Size;
+      BlendMask[i] = i + Size;
+    }
+
+  V1 = DAG.getVectorShuffle(VT, DL, V1, DAG.getUNDEF(VT), V1Mask);
+  V2 = DAG.getVectorShuffle(VT, DL, V2, DAG.getUNDEF(VT), V2Mask);
+  return DAG.getVectorShuffle(VT, DL, V1, V2, BlendMask);
+}
+
 /// \brief Try to lower a vector shuffle as a byte rotation.
 ///
 /// We have a generic PALIGNR instruction in x86 that will do an arbitrary
@@ -9362,26 +9392,9 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                        DAG.getConstant(SHUFPDMask, MVT::i8));
   }
 
-  // Shuffle the input elements into the desired positions in V1 and V2 and
-  // blend them together.
-  int V1Mask[] = {-1, -1, -1, -1};
-  int V2Mask[] = {-1, -1, -1, -1};
-  for (int i = 0; i < 4; ++i)
-    if (Mask[i] >= 0 && Mask[i] < 4)
-      V1Mask[i] = Mask[i];
-    else if (Mask[i] >= 4)
-      V2Mask[i] = Mask[i] - 4;
-
-  V1 = DAG.getVectorShuffle(MVT::v4f64, DL, V1, DAG.getUNDEF(MVT::v4f64), V1Mask);
-  V2 = DAG.getVectorShuffle(MVT::v4f64, DL, V2, DAG.getUNDEF(MVT::v4f64), V2Mask);
-
-  unsigned BlendMask = 0;
-  for (int i = 0; i < 4; ++i)
-    if (Mask[i] >= 4)
-      BlendMask |= 1 << i;
-
-  return DAG.getNode(X86ISD::BLENDI, DL, MVT::v4f64, V1, V2,
-                     DAG.getConstant(BlendMask, MVT::i8));
+  // Otherwise fall back on generic blend lowering.
+  return lowerVectorShuffleAsDecomposedShuffleBlend(DL, MVT::v4f64, V1, V2,
+                                                    Mask, DAG);
 }
 
 /// \brief Handle lowering of 4-lane 64-bit integer shuffles.
@@ -9434,23 +9447,9 @@ static SDValue lowerV4I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return DAG.getNode(X86ISD::VPERMI, DL, MVT::v4i64, V1,
                        getV4X86ShuffleImm8ForMask(Mask, DAG));
 
-  // Shuffle the input elements into the desired positions in V1 and V2 and
-  // blend them together.
-  int V1Mask[] = {-1, -1, -1, -1};
-  int V2Mask[] = {-1, -1, -1, -1};
-  int BlendMask[] = {-1, -1, -1, -1};
-  for (int i = 0; i < 4; ++i)
-    if (Mask[i] >= 0 && Mask[i] < 4) {
-      V1Mask[i] = Mask[i];
-      BlendMask[i] = i;
-    } else if (Mask[i] >= 4) {
-      V2Mask[i] = Mask[i] - 4;
-      BlendMask[i] = i + 4;
-    }
-
-  V1 = DAG.getVectorShuffle(MVT::v4i64, DL, V1, DAG.getUNDEF(MVT::v4i64), V1Mask);
-  V2 = DAG.getVectorShuffle(MVT::v4i64, DL, V2, DAG.getUNDEF(MVT::v4i64), V2Mask);
-  return DAG.getVectorShuffle(MVT::v4i64, DL, V1, V2, BlendMask);
+  // Otherwise fall back on generic blend lowering.
+  return lowerVectorShuffleAsDecomposedShuffleBlend(DL, MVT::v4i64, V1, V2,
+                                                    Mask, DAG);
 }
 
 /// \brief Handle lowering of 8-lane 32-bit floating point shuffles.
@@ -9509,24 +9508,9 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
         DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i32, VPermMask));
   }
 
-  // Shuffle the input elements into the desired positions in V1 and V2 and
-  // blend them together.
-  int V1Mask[] = {-1, -1, -1, -1, -1, -1, -1, -1};
-  int V2Mask[] = {-1, -1, -1, -1, -1, -1, -1, -1};
-  unsigned BlendMask = 0;
-  for (int i = 0; i < 8; ++i)
-    if (Mask[i] >= 0 && Mask[i] < 8) {
-      V1Mask[i] = Mask[i];
-    } else if (Mask[i] >= 8) {
-      V2Mask[i] = Mask[i] - 8;
-      BlendMask |= 1 << i;
-    }
-
-  V1 = DAG.getVectorShuffle(MVT::v8f32, DL, V1, DAG.getUNDEF(MVT::v8f32), V1Mask);
-  V2 = DAG.getVectorShuffle(MVT::v8f32, DL, V2, DAG.getUNDEF(MVT::v8f32), V2Mask);
-
-  return DAG.getNode(X86ISD::BLENDI, DL, MVT::v8f32, V1, V2,
-                     DAG.getConstant(BlendMask, MVT::i8));
+  // Otherwise fall back on generic blend lowering.
+  return lowerVectorShuffleAsDecomposedShuffleBlend(DL, MVT::v8f32, V1, V2,
+                                                    Mask, DAG);
 }
 
 /// \brief Handle lowering of 8-lane 32-bit integer shuffles.
@@ -9577,23 +9561,9 @@ static SDValue lowerV8I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
         DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i32, VPermMask), V1);
   }
 
-  // Shuffle the input elements into the desired positions in V1 and V2 and
-  // blend them together.
-  int V1Mask[] = {-1, -1, -1, -1, -1, -1, -1, -1};
-  int V2Mask[] = {-1, -1, -1, -1, -1, -1, -1, -1};
-  int BlendMask[] = {-1, -1, -1, -1, -1, -1, -1, -1};
-  for (int i = 0; i < 8; ++i)
-    if (Mask[i] >= 0 && Mask[i] < 8) {
-      V1Mask[i] = Mask[i];
-      BlendMask[i] = i;
-    } else if (Mask[i] >= 8) {
-      V2Mask[i] = Mask[i] - 8;
-      BlendMask[i] = i + 8;
-    }
-
-  V1 = DAG.getVectorShuffle(MVT::v8i32, DL, V1, DAG.getUNDEF(MVT::v8i32), V1Mask);
-  V2 = DAG.getVectorShuffle(MVT::v8i32, DL, V2, DAG.getUNDEF(MVT::v8i32), V2Mask);
-  return DAG.getVectorShuffle(MVT::v8i32, DL, V1, V2, BlendMask);
+  // Otherwise fall back on generic blend lowering.
+  return lowerVectorShuffleAsDecomposedShuffleBlend(DL, MVT::v8i32, V1, V2,
+                                                    Mask, DAG);
 }
 
 /// \brief Handle lowering of 16-lane 16-bit integer shuffles.
