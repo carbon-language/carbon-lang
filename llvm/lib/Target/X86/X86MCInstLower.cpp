@@ -864,6 +864,104 @@ PrevCrossBBInst(MachineBasicBlock::const_iterator MBBI) {
   return --MBBI;
 }
 
+static std::string getShuffleComment(const MachineInstr &MI) {
+  std::string Comment;
+  SmallVector<int, 16> Mask;
+
+  // All of these instructions accept a constant pool operand as their fifth.
+  assert(MI.getNumOperands() > 5 &&
+         "We should always have at least 5 operands!");
+  const MachineOperand &DstOp = MI.getOperand(0);
+  const MachineOperand &SrcOp = MI.getOperand(1);
+  const MachineOperand &MaskOp = MI.getOperand(5);
+
+  if (!MaskOp.isCPI())
+    return Comment;
+
+  ArrayRef<MachineConstantPoolEntry> Constants =
+      MI.getParent()->getParent()->getConstantPool()->getConstants();
+  const MachineConstantPoolEntry &MaskConstantEntry =
+      Constants[MaskOp.getIndex()];
+
+  // Bail if this is a machine constant pool entry, we won't be able to dig out
+  // anything useful.
+  if (MaskConstantEntry.isMachineConstantPoolEntry())
+    return Comment;
+
+  auto *C = dyn_cast<Constant>(MaskConstantEntry.Val.ConstVal);
+  if (!C)
+    return Comment;
+
+  assert(MaskConstantEntry.getType() == C->getType() &&
+         "Expected a constant of the same type!");
+
+  switch (MI.getOpcode()) {
+  case X86::PSHUFBrm:
+  case X86::VPSHUFBrm:
+    DecodePSHUFBMask(C, Mask);
+    break;
+  case X86::VPERMILPSrm:
+  case X86::VPERMILPDrm:
+  case X86::VPERMILPSYrm:
+  case X86::VPERMILPDYrm:
+    DecodeVPERMILPMask(C, Mask);
+    break;
+  }
+
+  if (Mask.empty())
+    return Comment;
+
+  assert(Mask.size() == C->getType()->getVectorNumElements() &&
+         "Shuffle mask has a different size than its type!");
+
+  // Compute the name for a register. This is really goofy because we have
+  // multiple instruction printers that could (in theory) use different
+  // names. Fortunately most people use the ATT style (outside of Windows)
+  // and they actually agree on register naming here. Ultimately, this is
+  // a comment, and so its OK if it isn't perfect.
+  auto GetRegisterName = [](unsigned RegNum) -> StringRef {
+    return X86ATTInstPrinter::getRegisterName(RegNum);
+  };
+
+  StringRef DstName = DstOp.isReg() ? GetRegisterName(DstOp.getReg()) : "mem";
+  StringRef SrcName = SrcOp.isReg() ? GetRegisterName(SrcOp.getReg()) : "mem";
+
+  raw_string_ostream CS(Comment);
+  CS << DstName << " = ";
+  bool NeedComma = false;
+  bool InSrc = false;
+  for (int M : Mask) {
+    // Wrap up any prior entry...
+    if (M == SM_SentinelZero && InSrc) {
+      InSrc = false;
+      CS << "]";
+    }
+    if (NeedComma)
+      CS << ",";
+    else
+      NeedComma = true;
+
+    // Print this shuffle...
+    if (M == SM_SentinelZero) {
+      CS << "zero";
+    } else {
+      if (!InSrc) {
+        InSrc = true;
+        CS << SrcName << "[";
+      }
+      if (M == SM_SentinelUndef)
+        CS << "u";
+      else
+        CS << M;
+    }
+  }
+  if (InSrc)
+    CS << "]";
+  CS.flush();
+
+  return Comment;
+}
+
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   X86MCInstLower MCInstLowering(*MF, *this);
   const X86RegisterInfo *RI = static_cast<const X86RegisterInfo *>(
@@ -1025,97 +1123,14 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case X86::VPERMILPSrm:
   case X86::VPERMILPDrm:
   case X86::VPERMILPSYrm:
-  case X86::VPERMILPDYrm:
+  case X86::VPERMILPDYrm: {
     // Lower PSHUFB and VPERMILP normally but add a comment if we can find
     // a constant shuffle mask. We won't be able to do this at the MC layer
     // because the mask isn't an immediate.
-    std::string Comment;
-    raw_string_ostream CS(Comment);
-    SmallVector<int, 16> Mask;
-
-    // All of these instructions accept a constant pool operand as their fifth.
-    assert(MI->getNumOperands() > 5 && "We should always have at least 5 operands!");
-    const MachineOperand &DstOp = MI->getOperand(0);
-    const MachineOperand &SrcOp = MI->getOperand(1);
-    const MachineOperand &MaskOp = MI->getOperand(5);
-
-    // Compute the name for a register. This is really goofy because we have
-    // multiple instruction printers that could (in theory) use different
-    // names. Fortunately most people use the ATT style (outside of Windows)
-    // and they actually agree on register naming here. Ultimately, this is
-    // a comment, and so its OK if it isn't perfect.
-    auto GetRegisterName = [](unsigned RegNum) -> StringRef {
-      return X86ATTInstPrinter::getRegisterName(RegNum);
-    };
-
-    StringRef DstName = DstOp.isReg() ? GetRegisterName(DstOp.getReg()) : "mem";
-    StringRef SrcName = SrcOp.isReg() ? GetRegisterName(SrcOp.getReg()) : "mem";
-    CS << DstName << " = ";
-
-    if (MaskOp.isCPI()) {
-      ArrayRef<MachineConstantPoolEntry> Constants =
-          MI->getParent()->getParent()->getConstantPool()->getConstants();
-      const MachineConstantPoolEntry &MaskConstantEntry =
-          Constants[MaskOp.getIndex()];
-      Type *MaskTy = MaskConstantEntry.getType();
-      (void)MaskTy;
-      if (!MaskConstantEntry.isMachineConstantPoolEntry())
-        if (auto *C = dyn_cast<Constant>(MaskConstantEntry.Val.ConstVal)) {
-          assert(MaskTy == C->getType() &&
-                 "Expected a constant of the same type!");
-
-          switch (MI->getOpcode()) {
-          case X86::PSHUFBrm:
-          case X86::VPSHUFBrm:
-            DecodePSHUFBMask(C, Mask);
-            break;
-          case X86::VPERMILPSrm:
-          case X86::VPERMILPDrm:
-          case X86::VPERMILPSYrm:
-          case X86::VPERMILPDYrm:
-            DecodeVPERMILPMask(C, Mask);
-          }
-
-          assert(
-              (Mask.empty() || Mask.size() == MaskTy->getVectorNumElements()) &&
-              "Shuffle mask has a different size than its type!");
-        }
-    }
-
-    if (!Mask.empty()) {
-      bool NeedComma = false;
-      bool InSrc = false;
-      for (int M : Mask) {
-        // Wrap up any prior entry...
-        if (M == SM_SentinelZero && InSrc) {
-          InSrc = false;
-          CS << "]";
-        }
-        if (NeedComma)
-          CS << ",";
-        else
-          NeedComma = true;
-
-        // Print this shuffle...
-        if (M == SM_SentinelZero) {
-          CS << "zero";
-        } else {
-          if (!InSrc) {
-            InSrc = true;
-            CS << SrcName << "[";
-          }
-          if (M == SM_SentinelUndef)
-            CS << "u";
-          else
-            CS << M;
-        }
-      }
-      if (InSrc)
-        CS << "]";
-
-      OutStreamer.AddComment(CS.str());
-    }
+    std::string Comment = getShuffleComment(*MI);
+    OutStreamer.AddComment(Comment);
     break;
+  }
   }
 
   MCInst TmpInst;
