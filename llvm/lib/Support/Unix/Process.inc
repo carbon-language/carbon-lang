@@ -264,7 +264,9 @@ extern "C" int del_curterm(struct term *termp);
 extern "C" int tigetnum(char *capname);
 #endif
 
+#ifdef HAVE_TERMINFO
 static ManagedStatic<sys::Mutex> TermColorMutex;
+#endif
 
 static bool terminalHasColors(int fd) {
 #ifdef HAVE_TERMINFO
