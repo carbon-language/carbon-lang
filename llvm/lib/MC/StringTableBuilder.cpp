@@ -12,17 +12,25 @@
 
 using namespace llvm;
 
+static bool compareBySuffix(StringRef a, StringRef b) {
+  size_t sizeA = a.size();
+  size_t sizeB = b.size();
+  size_t len = std::min(sizeA, sizeB);
+  for (size_t i = 0; i < len; ++i) {
+    char ca = a[sizeA - i - 1];
+    char cb = b[sizeB - i - 1];
+    if (ca != cb)
+      return ca > cb;
+  }
+  return sizeA > sizeB;
+}
+
 void StringTableBuilder::finalize() {
   SmallVector<StringRef, 8> Strings;
   for (auto i = StringIndexMap.begin(), e = StringIndexMap.end(); i != e; ++i)
     Strings.push_back(i->getKey());
 
-  // Sort the vector so a string is sorted above its suffixes.
-  std::sort(Strings.begin(), Strings.end(), [](StringRef A, StringRef B) {
-    typedef std::reverse_iterator<StringRef::iterator> Reverse;
-    return !std::lexicographical_compare(Reverse(A.end()), Reverse(A.begin()),
-                                         Reverse(B.end()), Reverse(B.begin()));
-  });
+  std::sort(Strings.begin(), Strings.end(), compareBySuffix);
 
   // FIXME: Starting with a null byte is ELF specific. Generalize this so we
   // can use the class with other object formats.
