@@ -413,6 +413,7 @@ public:
     _PLT0->addReferenceELF_AArch64(R_AARCH64_LD64_GOT_LO12_NC, 8, _got1, 0);
     _PLT0->addReferenceELF_AArch64(ADD_AARCH64_GOTRELINDEX, 12, _got1, 0);
 #ifndef NDEBUG
+    _PLT0->_name = "__PLT0";
     _got0->_name = "__got0";
     _got1->_name = "__got1";
 #endif
@@ -432,7 +433,7 @@ public:
     pa->addReferenceELF_AArch64(R_AARCH64_NONE, 12, getPLT0(), 0);
     // Set the starting address of the got entry to the first instruction in
     // the plt0 entry.
-    ga->addReferenceELF_AArch64(R_AARCH64_ABS32, 0, pa, 0);
+    ga->addReferenceELF_AArch64(R_AARCH64_ABS32, 0, getPLT0(), 0);
 #ifndef NDEBUG
     ga->_name = "__got_";
     ga->_name += a->name();
