@@ -855,6 +855,7 @@ uint8_t ELFObjectFile<ELFT>::getBytesInAddress() const {
 
 template <class ELFT>
 StringRef ELFObjectFile<ELFT>::getFileFormatName() const {
+  bool IsLittleEndian = ELFT::TargetEndianness == support::little;
   switch (EF.getHeader()->e_ident[ELF::EI_CLASS]) {
   case ELF::ELFCLASS32:
     switch (EF.getHeader()->e_machine) {
@@ -863,7 +864,7 @@ StringRef ELFObjectFile<ELFT>::getFileFormatName() const {
     case ELF::EM_X86_64:
       return "ELF32-x86-64";
     case ELF::EM_ARM:
-      return "ELF32-arm";
+      return (IsLittleEndian ? "ELF32-arm-little" : "ELF32-arm-big");
     case ELF::EM_HEXAGON:
       return "ELF32-hexagon";
     case ELF::EM_MIPS:
@@ -883,7 +884,7 @@ StringRef ELFObjectFile<ELFT>::getFileFormatName() const {
     case ELF::EM_X86_64:
       return "ELF64-x86-64";
     case ELF::EM_AARCH64:
-      return "ELF64-aarch64";
+      return (IsLittleEndian ? "ELF64-aarch64-little" : "ELF64-aarch64-big");
     case ELF::EM_PPC64:
       return "ELF64-ppc64";
     case ELF::EM_S390:
