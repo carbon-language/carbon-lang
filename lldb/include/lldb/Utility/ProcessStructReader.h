@@ -63,7 +63,7 @@ namespace lldb_private {
                 // no support for things larger than a uint64_t (yet)
                 if (size > 8)
                     return;
-                m_fields[ConstString(name.c_str())] = FieldImpl{field_type,bit_offset/8,size};
+                m_fields[ConstString(name.c_str())] = FieldImpl{field_type,static_cast<size_t>(bit_offset/8),static_cast<size_t>(size)};
             }
             size_t total_size = struct_type.GetByteSize();
             lldb::DataBufferSP buffer_sp(new DataBufferHeap(total_size,0));
