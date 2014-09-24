@@ -206,9 +206,10 @@ FunctionPass *createReassociatePass();
 //===----------------------------------------------------------------------===//
 //
 // JumpThreading - Thread control through mult-pred/multi-succ blocks where some
-// preds always go to some succ.
+// preds always go to some succ. Thresholds other than minus one override the
+// internal BB duplication default threshold.
 //
-FunctionPass *createJumpThreadingPass();
+FunctionPass *createJumpThreadingPass(int Threshold = -1);
 
 //===----------------------------------------------------------------------===//
 //
