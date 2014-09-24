@@ -3,6 +3,7 @@
 ; have buildbots. We can't set all archs, since some bots don't build all
 ; back-ends.
 ; RUN: llc -filetype=obj -O0 < %s | llvm-dwarfdump - 2>&1 | FileCheck %s
+; XFAIL: i686, i386, hexagon
 
 ; CHECK-NOT: failed to compute relocation
 
