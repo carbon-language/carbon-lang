@@ -238,14 +238,66 @@ bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
 
         // If a PHI node defines an SGPR and any of its operands are VGPRs,
         // then we need to move it to the VALU.
+        //
+        // Also, if a PHI node defines an SGPR and has all SGPR operands
+        // we must move it to the VALU, because the SGPR operands will
+        // all end up being assigned the same register, which means
+        // there is a potential for a conflict if different threads take
+	// different control flow paths.
+        //
+        // For Example:
+        //
+        // sgpr0 = def;
+        // ...
+        // sgpr1 = def;
+        // ...
+        // sgpr2 = PHI sgpr0, sgpr1
+        // use sgpr2;
+        //
+        // Will Become:
+        //
+        // sgpr2 = def;
+        // ...
+        // sgpr2 = def;
+        // ...
+        // use sgpr2
+        //
+        // FIXME: This is OK if the branching decision is made based on an
+        // SGPR value.
+        bool SGPRBranch = false;
+
+        // The one exception to this rule is when one of the operands
+        // is defined by a SI_BREAK, SI_IF_BREAK, or SI_ELSE_BREAK
+        // instruction.  In this case, there we know the program will
+        // never enter the second block (the loop) without entering
+        // the first block (where the condition is computed), so there
+        // is no chance for values to be over-written.
+
+        bool HasBreakDef = false;
         for (unsigned i = 1; i < MI.getNumOperands(); i+=2) {
           unsigned Reg = MI.getOperand(i).getReg();
           if (TRI->hasVGPRs(MRI.getRegClass(Reg))) {
             TII->moveToVALU(MI);
             break;
           }
+          MachineInstr *DefInstr = MRI.getUniqueVRegDef(Reg);
+          assert(DefInstr);
+          switch(DefInstr->getOpcode()) {
+
+          case AMDGPU::SI_BREAK:
+          case AMDGPU::SI_IF_BREAK:
+          case AMDGPU::SI_ELSE_BREAK:
+          // If we see a PHI instruction that defines an SGPR, then that PHI
+          // instruction has already been considered and should have
+          // a *_BREAK as an operand.
+          case AMDGPU::PHI:
+            HasBreakDef = true;
+            break;
+          }
         }
 
+        if (!SGPRBranch && !HasBreakDef)
+          TII->moveToVALU(MI);
         break;
       }
       case AMDGPU::REG_SEQUENCE: {
