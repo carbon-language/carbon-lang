@@ -22,7 +22,6 @@
 #include <sys/utsname.h>
 #include <cctype>
 #include <string>
-#include <cstdlib> // ::getenv
 
 using namespace llvm;
 
