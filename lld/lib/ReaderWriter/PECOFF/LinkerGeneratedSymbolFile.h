@@ -246,16 +246,18 @@ public:
                            std::shared_ptr<ResolvableSymbols> syms)
       : VirtualArchiveLibraryFile("<export>"), _syms(syms),
         _ctx(const_cast<PECOFFLinkingContext *>(&ctx)) {
-    for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports())
-      _exportedSyms.insert(desc.name);
+    for (PECOFFLinkingContext::ExportDesc &desc : _ctx->getDllExports())
+      _exportedSyms[desc.name] = &desc;
   }
 
   const File *find(StringRef sym, bool dataSymbolOnly) const override {
-    if (_exportedSyms.count(sym) == 0)
+    auto it = _exportedSyms.find(sym);
+    if (it == _exportedSyms.end())
       return nullptr;
     std::string replace;
     if (!findSymbolWithAtsignSuffix(sym.str(), replace))
       return nullptr;
+    it->second->name = replace;
     if (_ctx->deadStrip())
       _ctx->addDeadStripRoot(_ctx->allocate(replace));
     return new (_alloc) impl::SymbolRenameFile(sym, replace);
@@ -283,7 +285,7 @@ private:
     return false;
   }
 
-  std::set<std::string> _exportedSyms;
+  std::map<std::string, PECOFFLinkingContext::ExportDesc *> _exportedSyms;
   std::shared_ptr<ResolvableSymbols> _syms;
   mutable llvm::BumpPtrAllocator _alloc;
   mutable PECOFFLinkingContext *_ctx;
