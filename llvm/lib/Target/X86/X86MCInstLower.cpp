@@ -1121,6 +1121,8 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case X86::VPERMILPDrm:
   case X86::VPERMILPSYrm:
   case X86::VPERMILPDYrm: {
+    if (!OutStreamer.isVerboseAsm())
+      break;
     // All of these instructions accept a constant pool operand as their fifth.
     assert(MI->getNumOperands() > 5 &&
            "We should always have at least 5 operands!");
