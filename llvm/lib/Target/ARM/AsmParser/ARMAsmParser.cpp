@@ -5514,6 +5514,8 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
     Operands.push_back(ARMOperand::CreateImm(
           MCConstantExpr::Create(ProcessorIMod, getContext()),
                                  NameLoc, NameLoc));
+  } else if (Mnemonic == "cps" && isMClass()) {
+    return Error(NameLoc, "instruction 'cps' requires effect for M-class");
   }
 
   // Add the remaining tokens in the mnemonic.

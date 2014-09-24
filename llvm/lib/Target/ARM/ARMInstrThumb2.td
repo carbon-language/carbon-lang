@@ -3674,7 +3674,8 @@ let isBranch = 1, isTerminator = 1 in {
 // operands, create 3 versions of the same instruction. Once there's a clean
 // framework to represent optional operands, change this behavior.
 class t2CPS<dag iops, string asm_op> : T2XI<(outs), iops, NoItinerary,
-            !strconcat("cps", asm_op), []> {
+            !strconcat("cps", asm_op), []>,
+          Requires<[IsThumb2, IsNotMClass]> {
   bits<2> imod;
   bits<3> iflags;
   bits<5> mode;
