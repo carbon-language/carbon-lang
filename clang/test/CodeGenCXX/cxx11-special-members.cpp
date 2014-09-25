@@ -28,5 +28,19 @@ void f2(B &x, B &y) {
 // CHECK: define {{.*}} @_ZN1BaSEOS_(
 // CHECK: call {{.*}} @_ZN1AaSERKS_(
 
+// rdar://18309639 {
+template<int> struct C { C() = default; };
+struct D {
+  C<0> c;
+  D() { }
+};
+template struct C<0>; // was asserting
+void f3() {
+  C<0> a;
+  D b;
+}
+// CHECK: define {{.*}} @_ZN1CILi0EEC1Ev
+// CHECK: define {{.*}} @_ZN1DC1Ev
+
 // CHECK: define {{.*}} @_ZN1BC2EOS_(
 // CHECK: call {{.*}} @_ZN1AC1ERKS_(
