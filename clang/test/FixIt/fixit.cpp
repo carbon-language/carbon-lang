@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -pedantic -Wall -Wno-comment -verify -fcxx-exceptions -x c++ %s
-// RUN: not %clang_cc1 -fsyntax-only -fdiagnostics-parseable-fixits -x c++ %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -fsyntax-only -fdiagnostics-parseable-fixits -x c++ -std=c++11 %s 2>&1 | FileCheck %s
 // RUN: cp %s %t
 // RUN: not %clang_cc1 -pedantic -Wall -Wno-comment -fcxx-exceptions -fixit -x c++ %t
 // RUN: %clang_cc1 -fsyntax-only -pedantic -Wall -Werror -Wno-comment -fcxx-exceptions -x c++ %t
@@ -346,4 +346,38 @@ namespace PR15045 {
     Cl0 c;
     return c->a;  // expected-error {{member reference type 'PR15045::Cl0' is not a pointer; maybe you meant to use '.'?}}
   }
+}
+
+namespace curly_after_base_clause {
+struct A { void f(); };
+struct B : A // expected-error{{expected '{' after base class list}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:13-[[@LINE-1]]:13}:" {"
+  int i;
+};
+struct C : A // expected-error{{expected '{' after base class list}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:13-[[@LINE-1]]:13}:" {"
+  using A::f;
+};
+struct D : A // expected-error{{expected '{' after base class list}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:13-[[@LINE-1]]:13}:" {"
+    protected:
+};
+struct E : A  // expected-error{{expected '{' after base class list}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:13-[[@LINE-1]]:13}:" {"
+  template<typename T> struct inner { };
+};
+struct F : A  // expected-error{{expected '{' after base class list}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:13-[[@LINE-1]]:13}:" {"
+  F() { }
+};
+#if __cplusplus >= 201103L
+struct G : A  // expected-error{{expected '{' after base class list}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:13-[[@LINE-1]]:13}:" {"
+  constexpr G(int) { }
+};
+struct H : A  // expected-error{{expected '{' after base class list}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:13-[[@LINE-1]]:13}:" {"
+  static_assert(true, "");
+};
+#endif
 }

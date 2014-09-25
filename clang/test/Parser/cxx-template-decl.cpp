@@ -210,3 +210,18 @@ void Instantiate() {
 }
 
 }
+
+namespace broken_baseclause {
+template<typename T>
+struct base { };
+
+struct t1 : base<int,
+  public:  // expected-error {{expected expression}}
+};  // expected-error {{expected class name}}
+// expected-error@-1 {{expected '{' after base class list}}
+struct t2 : base<int,
+  public  // expected-error {{expected expression}}
+};  // expected-error {{expected class name}}
+// expected-error@-1 {{expected '{' after base class list}}
+
+}
