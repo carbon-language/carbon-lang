@@ -73,7 +73,9 @@ macro(clang_compiler_add_cxx_check)
     add_custom_target(CompilerRTUnitTestCheckCxx
       COMMAND bash -c "${CMD}"
       COMMENT "Checking that just-built clang can find C++ headers..."
-      DEPENDS clang
       VERBATIM)
+    if (TARGET clang)
+      ADD_DEPENDENCIES(CompilerRTUnitTestCheckCxx clang)
+    endif()
   endif()
 endmacro()
