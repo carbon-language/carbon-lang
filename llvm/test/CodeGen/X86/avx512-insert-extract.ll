@@ -12,9 +12,9 @@ define <16 x float> @test1(<16 x float> %x, float* %br, float %y) nounwind {
 }
 
 ;CHECK-LABEL: test2:
-;CHECK: vinsertf32x4
-;CHECK: vextractf32x4
-;CHECK: vinsertf32x4
+;CHECK: vinsertf32x4 $0
+;CHECK: vextractf32x4 $3
+;CHECK: vinsertf32x4 $3
 ;CHECK: ret
 define <8 x double> @test2(<8 x double> %x, double* %br, double %y) nounwind {
   %rrr = load double* %br
@@ -24,8 +24,8 @@ define <8 x double> @test2(<8 x double> %x, double* %br, double %y) nounwind {
 }
 
 ;CHECK-LABEL: test3:
-;CHECK: vextractf32x4
-;CHECK: vinsertf32x4
+;CHECK: vextractf32x4 $1
+;CHECK: vinsertf32x4 $0
 ;CHECK: ret
 define <16 x float> @test3(<16 x float> %x) nounwind {
   %eee = extractelement <16 x float> %x, i32 4
@@ -34,8 +34,8 @@ define <16 x float> @test3(<16 x float> %x) nounwind {
 }
 
 ;CHECK-LABEL: test4:
-;CHECK: vextracti32x4
-;CHECK: vinserti32x4
+;CHECK: vextracti32x4 $2
+;CHECK: vinserti32x4 $0
 ;CHECK: ret
 define <8 x i64> @test4(<8 x i64> %x) nounwind {
   %eee = extractelement <8 x i64> %x, i32 4
