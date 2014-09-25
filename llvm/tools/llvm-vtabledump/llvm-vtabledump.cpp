@@ -137,10 +137,8 @@ static void dumpVTables(const ObjectFile *Obj) {
 }
 
 static void dumpArchive(const Archive *Arc) {
-  for (Archive::child_iterator ArcI = Arc->child_begin(),
-                               ArcE = Arc->child_end();
-       ArcI != ArcE; ++ArcI) {
-    ErrorOr<std::unique_ptr<Binary>> ChildOrErr = ArcI->getAsBinary();
+  for (const Archive::Child &ArcC : Arc->children()) {
+    ErrorOr<std::unique_ptr<Binary>> ChildOrErr = ArcC.getAsBinary();
     if (std::error_code EC = ChildOrErr.getError()) {
       // Ignore non-object files.
       if (EC != object_error::invalid_file_type)
