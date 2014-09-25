@@ -273,7 +273,7 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_Mips_CALL_LO16: return "CALL_LO16";
   case VK_Mips_PCREL_HI16: return "PCREL_HI16";
   case VK_Mips_PCREL_LO16: return "PCREL_LO16";
-  case VK_COFF_IMGREL32: return "IMGREL32";
+  case VK_COFF_IMGREL32: return "IMGREL";
   }
   llvm_unreachable("Invalid variant kind");
 }

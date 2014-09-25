@@ -606,7 +606,7 @@ mov rcx, qword ptr [_g0 + 8]
 fadd   dword ptr "?half@?0??bar@@YAXXZ@4NA"
 fadd   dword ptr "?half@?0??bar@@YAXXZ@4NA"@IMGREL
 // CHECK: fadds   "?half@?0??bar@@YAXXZ@4NA"
-// CHECK: fadds   "?half@?0??bar@@YAXXZ@4NA"@IMGREL32
+// CHECK: fadds   "?half@?0??bar@@YAXXZ@4NA"@IMGREL
 
 inc qword ptr [rax]
 inc dword ptr [rax]
