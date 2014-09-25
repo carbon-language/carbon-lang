@@ -422,10 +422,12 @@ multiclass vextract_for_size<int Opcode,
                              SDNodeXForm EXTRACT_get_vextract_imm> {
   let hasSideEffects = 0, ExeDomain = To.ExeDomain in {
     def rr : AVX512AIi8<Opcode, MRMDestReg, (outs To.RC:$dst),
-            (ins VR512:$src1, i8imm:$src2),
-            "vextract" # To.EltTypeName # "x4\t{$src2, $src1, $dst|"
-                                               "$dst, $src1, $src2}",
-            []>, EVEX, EVEX_V512;
+            (ins VR512:$src1, i8imm:$idx),
+            "vextract" # To.EltTypeName # "x4\t{$idx, $src1, $dst|"
+                                               "$dst, $src1, $idx}",
+            [(set To.RC:$dst, (vextract_extract:$idx (From.VT VR512:$src1),
+                                                     (iPTR imm)))]>,
+            EVEX, EVEX_V512;
     let mayStore = 1 in
     def rm : AVX512AIi8<Opcode, MRMDestMem, (outs),
             (ins To.MemOp:$dst, VR512:$src1, i8imm:$src2),
@@ -433,11 +435,6 @@ multiclass vextract_for_size<int Opcode,
                                                "$dst, $src1, $src2}",
             []>, EVEX, EVEX_V512, EVEX_CD8<To.EltSize, CD8VT4>;
   }
-
-  // Codegen pattern, e.g. v16i32 -> v4i32 for vextracti32x4
-  def : Pat<(vextract_extract:$ext (From.VT VR512:$src1), (iPTR imm)),
-            (To.VT (!cast<Instruction>(NAME # To.EltSize # "x4rr") VR512:$src1,
-                      (EXTRACT_get_vextract_imm To.RC:$ext)))>;
 
   // Codegen pattern with the alternative types, e.g. v8i64 -> v2i64 for
   // vextracti32x4
