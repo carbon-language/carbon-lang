@@ -7389,9 +7389,11 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
 
     V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v32i8, V1);
     V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v32i8, V2);
-    return DAG.getNode(ISD::BITCAST, DL, VT, DAG.getNode(
-        X86ISD::BLENDV, DL, MVT::v32i8, V1, V2,
-        DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v32i8, PBLENDVMask)));
+    return DAG.getNode(
+        ISD::BITCAST, DL, VT,
+        DAG.getNode(ISD::VSELECT, DL, MVT::v32i8,
+                    DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v32i8, PBLENDVMask),
+                    V1, V2));
   }
 
   default:
