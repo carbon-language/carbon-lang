@@ -187,9 +187,6 @@ namespace llvm {
       /// PSIGN - Copy integer sign.
       PSIGN,
 
-      /// BLENDV - Blend where the selector is a register.
-      BLENDV,
-
       /// BLENDI - Blend where the selector is an immediate.
       BLENDI,
 
