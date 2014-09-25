@@ -458,7 +458,7 @@ def : Pat<(vextract128_extract:$ext (v16f32 VR512:$src1), (iPTR imm)),
                   (EXTRACT_get_vextract128_imm VR128X:$ext)))>;
 
 def : Pat<(vextract128_extract:$ext VR512:$src1, (iPTR imm)),
-          (v4i32 (VEXTRACTF32x4rr VR512:$src1,
+          (v4i32 (VEXTRACTI32x4rr VR512:$src1,
                   (EXTRACT_get_vextract128_imm VR128X:$ext)))>;
 
 def : Pat<(vextract128_extract:$ext (v8f64 VR512:$src1), (iPTR imm)),
