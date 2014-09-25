@@ -142,7 +142,7 @@ if(MSVC)
   # Visual Studio 2012 only supports up to 8 template parameters in
   # std::tr1::tuple by default, but gtest requires 10
   if(MSVC_VERSION EQUAL 1700)
-    add_definitions(-D_VARIADIC_MAX=10)
+    list(APPEND COMPILER_RT_GTEST_CFLAGS -D_VARIADIC_MAX=10)
   endif()
 endif()
 
