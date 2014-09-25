@@ -1008,6 +1008,20 @@ public:
     return false;
   }
 
+  /// On some platforms, an AtomicRMW that never actually modifies the value
+  /// (such as fetch_add of 0) can be turned into a fence followed by an
+  /// atomic load. This may sound useless, but it makes it possible for the
+  /// processor to keep the cacheline shared, dramatically improving
+  /// performance. And such idempotent RMWs are useful for implementing some
+  /// kinds of locks, see for example (justification + benchmarks):
+  /// http://www.hpl.hp.com/techreports/2012/HPL-2012-68.pdf
+  /// This method tries doing that transformation, returning the atomic load if
+  /// it succeeds, and nullptr otherwise.
+  /// If shouldExpandAtomicLoadInIR returns true on that load, it will undergo
+  /// another round of expansion.
+  virtual LoadInst *lowerIdempotentRMWIntoFencedLoad(AtomicRMWInst *RMWI) const {
+    return nullptr;
+  }
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by
   // the derived class constructor to configure this object for the target.

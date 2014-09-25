@@ -51,6 +51,8 @@ namespace {
     bool expandAtomicRMWToLLSC(AtomicRMWInst *AI);
     bool expandAtomicRMWToCmpXchg(AtomicRMWInst *AI);
     bool expandAtomicCmpXchg(AtomicCmpXchgInst *CI);
+    bool isIdempotentRMW(AtomicRMWInst *AI);
+    bool simplifyIdempotentRMW(AtomicRMWInst *AI);
   };
 }
 
@@ -127,8 +129,15 @@ bool AtomicExpand::runOnFunction(Function &F) {
       MadeChange |= expandAtomicLoad(LI);
     } else if (SI && TargetLowering->shouldExpandAtomicStoreInIR(SI)) {
       MadeChange |= expandAtomicStore(SI);
-    } else if (RMWI && TargetLowering->shouldExpandAtomicRMWInIR(RMWI)) {
-      MadeChange |= expandAtomicRMW(RMWI);
+    } else if (RMWI) {
+      // There are two different ways of expanding RMW instructions:
+      // - into a load if it is idempotent
+      // - into a Cmpxchg/LL-SC loop otherwise
+      // we try them in that order.
+      MadeChange |= (isIdempotentRMW(RMWI) &&
+                        simplifyIdempotentRMW(RMWI)) ||
+                    (TargetLowering->shouldExpandAtomicRMWInIR(RMWI) &&
+                        expandAtomicRMW(RMWI));
     } else if (CASI && TargetLowering->hasLoadLinkedStoreConditional()) {
       MadeChange |= expandAtomicCmpXchg(CASI);
     }
@@ -519,4 +528,36 @@ bool AtomicExpand::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
 
   CI->eraseFromParent();
   return true;
+}
+
+bool AtomicExpand::isIdempotentRMW(AtomicRMWInst* RMWI) {
+  auto C = dyn_cast<ConstantInt>(RMWI->getValOperand());
+  if(!C)
+    return false;
+
+  AtomicRMWInst::BinOp Op = RMWI->getOperation();
+  switch(Op) {
+    case AtomicRMWInst::Add:
+    case AtomicRMWInst::Sub:
+    case AtomicRMWInst::Or:
+    case AtomicRMWInst::Xor:
+      return C->isZero();
+    case AtomicRMWInst::And:
+      return C->isMinusOne();
+    // FIXME: we could also treat Min/Max/UMin/UMax by the INT_MIN/INT_MAX/...
+    default:
+      return false;
+  }
+}
+
+bool AtomicExpand::simplifyIdempotentRMW(AtomicRMWInst* RMWI) {
+  auto TLI = TM->getSubtargetImpl()->getTargetLowering();
+
+  if (auto ResultingLoad = TLI->lowerIdempotentRMWIntoFencedLoad(RMWI)) {
+    if (TLI->shouldExpandAtomicLoadInIR(ResultingLoad))
+      expandAtomicLoad(ResultingLoad);
+    return true;
+  }
+
+  return false;
 }

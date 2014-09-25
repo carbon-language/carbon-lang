@@ -17802,6 +17802,74 @@ bool X86TargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
   }
 }
 
+static bool hasMFENCE(const X86Subtarget& Subtarget) {
+  // Use mfence if we have SSE2 or we're on x86-64 (even if we asked for
+  // no-sse2). There isn't any reason to disable it if the target processor
+  // supports it.
+  return Subtarget.hasSSE2() || Subtarget.is64Bit();
+}
+
+LoadInst *
+X86TargetLowering::lowerIdempotentRMWIntoFencedLoad(AtomicRMWInst *AI) const {
+  const X86Subtarget &Subtarget =
+      getTargetMachine().getSubtarget<X86Subtarget>();
+  unsigned NativeWidth = Subtarget.is64Bit() ? 64 : 32;
+  const Type *MemType = AI->getType();
+  // Accesses larger than the native width are turned into cmpxchg/libcalls, so
+  // there is no benefit in turning such RMWs into loads, and it is actually
+  // harmful as it introduces a mfence.
+  if (MemType->getPrimitiveSizeInBits() > NativeWidth)
+    return nullptr;
+
+  auto Builder = IRBuilder<>(AI);
+  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
+  auto SynchScope = AI->getSynchScope();
+  // We must restrict the ordering to avoid generating loads with Release or
+  // ReleaseAcquire orderings.
+  auto Order = AtomicCmpXchgInst::getStrongestFailureOrdering(AI->getOrdering());
+  auto Ptr = AI->getPointerOperand();
+
+  // Before the load we need a fence. Here is an example lifted from
+  // http://www.hpl.hp.com/techreports/2012/HPL-2012-68.pdf showing why a fence
+  // is required:
+  // Thread 0:
+  //   x.store(1, relaxed);
+  //   r1 = y.fetch_add(0, release);
+  // Thread 1:
+  //   y.fetch_add(42, acquire);
+  //   r2 = x.load(relaxed);
+  // r1 = r2 = 0 is impossible, but becomes possible if the idempotent rmw is
+  // lowered to just a load without a fence. A mfence flushes the store buffer,
+  // making the optimization clearly correct.
+  // FIXME: it is required if isAtLeastRelease(Order) but it is not clear
+  // otherwise, we might be able to be more agressive on relaxed idempotent
+  // rmw. In practice, they do not look useful, so we don't try to be
+  // especially clever.
+  if (SynchScope == SingleThread) {
+    // FIXME: we could just insert an X86ISD::MEMBARRIER here, except we are at
+    // the IR level, so we must wrap it in an intrinsic.
+    return nullptr;
+  } else if (hasMFENCE(Subtarget)) {
+    Function *MFence = llvm::Intrinsic::getDeclaration(M,
+            Intrinsic::x86_sse2_mfence);
+    Builder.CreateCall(MFence);
+  } else {
+    // FIXME: it might make sense to use a locked operation here but on a
+    // different cache-line to prevent cache-line bouncing. In practice it
+    // is probably a small win, and x86 processors without mfence are rare
+    // enough that we do not bother.
+    return nullptr;
+  }
+
+  // Finally we can emit the atomic load.
+  LoadInst *Loaded = Builder.CreateAlignedLoad(Ptr,
+          AI->getType()->getPrimitiveSizeInBits());
+  Loaded->setAtomic(Order, SynchScope);
+  AI->replaceAllUsesWith(Loaded);
+  AI->eraseFromParent();
+  return Loaded;
+}
+
 static SDValue LowerATOMIC_FENCE(SDValue Op, const X86Subtarget *Subtarget,
                                  SelectionDAG &DAG) {
   SDLoc dl(Op);
@@ -17813,10 +17881,7 @@ static SDValue LowerATOMIC_FENCE(SDValue Op, const X86Subtarget *Subtarget,
   // The only fence that needs an instruction is a sequentially-consistent
   // cross-thread fence.
   if (FenceOrdering == SequentiallyConsistent && FenceScope == CrossThread) {
-    // Use mfence if we have SSE2 or we're on x86-64 (even if we asked for
-    // no-sse2). There isn't any reason to disable it if the target processor
-    // supports it.
-    if (Subtarget->hasSSE2() || Subtarget->is64Bit())
+    if (hasMFENCE(*Subtarget))
       return DAG.getNode(X86ISD::MFENCE, dl, MVT::Other, Op.getOperand(0));
 
     SDValue Chain = Op.getOperand(0);

@@ -965,6 +965,9 @@ namespace llvm {
     bool shouldExpandAtomicStoreInIR(StoreInst *SI) const override;
     bool shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const override;
 
+    LoadInst *
+    lowerIdempotentRMWIntoFencedLoad(AtomicRMWInst *AI) const override;
+
     bool needsCmpXchgNb(const Type *MemType) const;
 
     /// Utility function to emit atomic-load-arith operations (and, or, xor,
