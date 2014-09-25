@@ -1,6 +1,16 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck %s --check-prefix=EG --check-prefix=FUNC
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck %s --check-prefix=SI --check-prefix=FUNC
 
+; FUNC-LABEL: @fp_to_sint_i32
+; EG: FLT_TO_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
+; SI: V_CVT_I32_F32_e32
+; SI: S_ENDPGM
+define void @fp_to_sint_i32 (i32 addrspace(1)* %out, float %in) {
+  %conv = fptosi float %in to i32
+  store i32 %conv, i32 addrspace(1)* %out
+  ret void
+}
+
 ; FUNC-LABEL: @fp_to_sint_v2i32
 ; EG: FLT_TO_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
 ; EG: FLT_TO_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
