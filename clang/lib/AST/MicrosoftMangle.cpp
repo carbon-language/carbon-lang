@@ -27,7 +27,6 @@
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/MathExtras.h"
 
 using namespace clang;
@@ -191,8 +190,8 @@ class MicrosoftCXXNameMangler {
   const NamedDecl *Structor;
   unsigned StructorType;
 
-  typedef llvm::StringMap<unsigned> BackRefMap;
-  BackRefMap NameBackReferences;
+  typedef llvm::SmallVector<std::string, 10> BackRefVec;
+  BackRefVec NameBackReferences;
 
   typedef llvm::DenseMap<void *, unsigned> ArgBackRefMap;
   ArgBackRefMap TypeBackReferences;
@@ -994,22 +993,14 @@ void MicrosoftCXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO,
 
 void MicrosoftCXXNameMangler::mangleSourceName(StringRef Name) {
   // <source name> ::= <identifier> @
-  BackRefMap::iterator Found;
-  if (NameBackReferences.size() < 10) {
-    size_t Size = NameBackReferences.size();
-    bool Inserted;
-    std::tie(Found, Inserted) =
-        NameBackReferences.insert(std::make_pair(Name, Size));
-    if (Inserted)
-      Found = NameBackReferences.end();
-  } else {
-    Found = NameBackReferences.find(Name);
-  }
-
+  BackRefVec::iterator Found =
+      std::find(NameBackReferences.begin(), NameBackReferences.end(), Name);
   if (Found == NameBackReferences.end()) {
+    if (NameBackReferences.size() < 10)
+      NameBackReferences.push_back(Name);
     Out << Name << '@';
   } else {
-    Out << Found->second;
+    Out << (Found - NameBackReferences.begin());
   }
 }
 
@@ -1025,7 +1016,7 @@ void MicrosoftCXXNameMangler::mangleTemplateInstantiationName(
 
   // Templates have their own context for back references.
   ArgBackRefMap OuterArgsContext;
-  BackRefMap OuterTemplateContext;
+  BackRefVec OuterTemplateContext;
   NameBackReferences.swap(OuterTemplateContext);
   TypeBackReferences.swap(OuterArgsContext);
 
