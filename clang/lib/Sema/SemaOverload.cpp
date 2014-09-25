@@ -5977,6 +5977,15 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, DeclAccessPair FoundDecl,
     }
   }
 
+  // (CUDA B.1): Check for invalid calls between targets.
+  if (getLangOpts().CUDA)
+    if (const FunctionDecl *Caller = dyn_cast<FunctionDecl>(CurContext))
+      if (CheckCUDATarget(Caller, Method)) {
+        Candidate.Viable = false;
+        Candidate.FailureKind = ovl_fail_bad_target;
+        return;
+      }
+
   // Determine the implicit conversion sequences for each of the
   // arguments.
   for (unsigned ArgIdx = 0; ArgIdx < Args.size(); ++ArgIdx) {
@@ -11597,6 +11606,18 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   CXXMemberCallExpr *TheCall =
     new (Context) CXXMemberCallExpr(Context, MemExprE, Args,
                                     ResultType, VK, RParenLoc);
+
+  // (CUDA B.1): Check for invalid calls between targets.
+  if (getLangOpts().CUDA) {
+    if (const FunctionDecl *Caller = dyn_cast<FunctionDecl>(CurContext)) {
+      if (CheckCUDATarget(Caller, Method)) {
+        Diag(MemExpr->getMemberLoc(), diag::err_ref_bad_target)
+            << IdentifyCUDATarget(Method) << Method->getIdentifier()
+            << IdentifyCUDATarget(Caller);
+        return ExprError();
+      }
+    }
+  }
 
   // Check for a valid return type.
   if (CheckCallReturnType(Method->getReturnType(), MemExpr->getMemberLoc(),
