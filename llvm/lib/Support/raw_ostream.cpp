@@ -20,6 +20,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
 #include <cctype>
@@ -393,6 +394,62 @@ raw_ostream &raw_ostream::operator<<(const format_object_base &Fmt) {
     NextBufferSize = BytesUsed;
   }
 }
+
+raw_ostream &raw_ostream::operator<<(const FormattedString &FS) {
+  unsigned Len = FS.Str.size(); 
+  int PadAmount = FS.Width - Len;
+  if (FS.RightJustify && (PadAmount > 0))
+    this->indent(PadAmount);
+  this->operator<<(FS.Str);
+  if (!FS.RightJustify && (PadAmount > 0))
+    this->indent(PadAmount);
+  return *this;
+}
+
+raw_ostream &raw_ostream::operator<<(const FormattedNumber &FN) {
+  if (FN.Hex) {
+    unsigned Nibbles = (64 - countLeadingZeros(FN.HexValue)+3)/4;
+    unsigned Width = (FN.Width > Nibbles+2) ? FN.Width : Nibbles+2;
+        
+    char NumberBuffer[20] = "0x0000000000000000";
+    char *EndPtr = NumberBuffer+Width;
+    char *CurPtr = EndPtr;
+    const char A = FN.Upper ? 'A' : 'a';
+    unsigned long long N = FN.HexValue;
+    while (N) {
+      uintptr_t x = N % 16;
+      *--CurPtr = (x < 10 ? '0' + x : A + x - 10);
+      N /= 16;
+    }
+
+    return write(NumberBuffer, Width);
+  } else {
+    // Zero is a special case.
+    if (FN.DecValue == 0) {
+      this->indent(FN.Width-1);
+      return *this << '0';
+    }
+    char NumberBuffer[32];
+    char *EndPtr = NumberBuffer+sizeof(NumberBuffer);
+    char *CurPtr = EndPtr;
+    bool Neg = (FN.DecValue < 0);
+    uint64_t N = Neg ? -FN.DecValue : FN.DecValue;
+    while (N) {
+      *--CurPtr = '0' + char(N % 10);
+      N /= 10;
+    }
+    int Len = EndPtr - CurPtr;
+    int Pad = FN.Width - Len;
+    if (Neg) 
+      --Pad;
+    if (Pad > 0)
+      this->indent(Pad);
+    if (Neg)
+      *this << '-';
+    return write(CurPtr, Len);
+  }
+}
+
 
 /// indent - Insert 'NumSpaces' spaces.
 raw_ostream &raw_ostream::indent(unsigned NumSpaces) {

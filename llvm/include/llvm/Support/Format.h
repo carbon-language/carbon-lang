@@ -23,6 +23,8 @@
 #ifndef LLVM_SUPPORT_FORMAT_H
 #define LLVM_SUPPORT_FORMAT_H
 
+#include "llvm/ADT/StringRef.h"
+
 #include <cassert>
 #include <cstdio>
 #ifdef _MSC_VER
@@ -224,6 +226,66 @@ format(const char *Fmt, const T1 &Val1, const T2 &Val2, const T3 &Val3,
   return format_object6<T1, T2, T3, T4, T5, T6>(Fmt, Val1, Val2, Val3, Val4,
                                                 Val5, Val6);
 }
+
+/// This is a helper class used for left_justify() and right_justify().
+class FormattedString {
+  StringRef Str;
+  unsigned Width;
+  bool RightJustify;
+  friend class raw_ostream;
+public:
+    FormattedString(StringRef S, unsigned W, bool R)
+      : Str(S), Width(W), RightJustify(R) { }
+};
+
+/// left_justify - append spaces after string so total output is
+/// \p Width characters.  If \p Str is larger that \p Width, full string
+/// is written with no padding.
+inline FormattedString left_justify(StringRef Str, unsigned Width) {
+  return FormattedString(Str, Width, false);
+}
+
+/// right_justify - add spaces before string so total output is
+/// \p Width characters.  If \p Str is larger that \p Width, full string
+/// is written with no padding.
+inline FormattedString right_justify(StringRef Str, unsigned Width) {
+  return FormattedString(Str, Width, true);
+}
+
+/// This is a helper class used for format_hex() and format_decimal().
+class FormattedNumber {
+  uint64_t HexValue;
+  int64_t DecValue;
+  unsigned Width;
+  bool Hex;
+  bool Upper;
+  friend class raw_ostream;
+public:
+    FormattedNumber(uint64_t HV, int64_t DV, unsigned W, bool H, bool U)
+      : HexValue(HV), DecValue(DV), Width(W), Hex(H), Upper(U) { }
+};
+
+/// format_hex - Output \p N as a fixed width hexadecimal. If number will not
+/// fit in width, full number is still printed.  Examples:
+///   OS << format_hex(255, 4)        => 0xff
+///   OS << format_hex(255, 4, true)  => 0xFF
+///   OS << format_hex(255, 6)        => 0x00ff
+///   OS << format_hex(255, 2)        => 0xff
+inline FormattedNumber format_hex(uint64_t N, unsigned Width, bool Upper=false) {
+  assert(Width <= 18 && "hex width must be <= 18");
+  return FormattedNumber(N, 0, Width, true, Upper);
+}
+
+/// format_decimal - Output \p N as a right justified, fixed-width decimal. If 
+/// number will not fit in width, full number is still printed.  Examples:
+///   OS << format_decimal(0, 5)     => "    0"
+///   OS << format_decimal(255, 5)   => "  255"
+///   OS << format_decimal(-1, 3)    => " -1"
+///   OS << format_decimal(12345, 3) => "12345"
+inline FormattedNumber format_decimal(int64_t N, unsigned Width) {
+  return FormattedNumber(0, N, Width, false, false);
+}
+
 
 } // end namespace llvm
 

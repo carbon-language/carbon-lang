@@ -21,6 +21,8 @@
 
 namespace llvm {
   class format_object_base;
+  class FormattedString;
+  class FormattedNumber;
   template <typename T>
   class SmallVectorImpl;
 
@@ -211,6 +213,12 @@ public:
   // Formatted output, see the format() function in Support/Format.h.
   raw_ostream &operator<<(const format_object_base &Fmt);
 
+  // Formatted output, see the leftJustify() function in Support/Format.h.
+  raw_ostream &operator<<(const FormattedString &);
+  
+  // Formatted output, see the formatHex() function in Support/Format.h.
+  raw_ostream &operator<<(const FormattedNumber &);
+  
   /// indent - Insert 'NumSpaces' spaces.
   raw_ostream &indent(unsigned NumSpaces);
 
