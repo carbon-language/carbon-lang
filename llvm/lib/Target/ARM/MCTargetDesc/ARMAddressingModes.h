@@ -575,6 +575,53 @@ namespace ARM_AM {
     return Val;
   }
 
+  // Generic validation for single-byte immediate (0X00, 00X0, etc).
+  static inline bool isNEONBytesplat(unsigned Value, unsigned Size) {
+    assert(Size >= 1 && Size <= 4 && "Invalid size");
+    unsigned count = 0;
+    for (unsigned i = 0; i < Size; ++i) {
+      if (Value & 0xff) count++;
+      Value >>= 8;
+    }
+    return count == 1;
+  }
+
+  /// Checks if Value is a correct immediate for instructions like VBIC/VORR.
+  static inline bool isNEONi16splat(unsigned Value) {
+    if (Value > 0xffff)
+      return false;
+    // i16 value with set bits only in one byte X0 or 0X.
+    return Value == 0 || isNEONBytesplat(Value, 2);
+  }
+
+  // Encode NEON 16 bits Splat immediate for instructions like VBIC/VORR
+  static inline unsigned encodeNEONi16splat(unsigned Value) {
+    assert(isNEONi16splat(Value) && "Invalid NEON splat value");
+    if (Value >= 0x100)
+      Value = (Value >> 8) | 0xa00;
+    else
+      Value |= 0x800;
+    return Value;
+  }
+
+  /// Checks if Value is a correct immediate for instructions like VBIC/VORR.
+  static inline bool isNEONi32splat(unsigned Value) {
+    // i32 value with set bits only in one byte X000, 0X00, 00X0, or 000X.
+    return Value == 0 || isNEONBytesplat(Value, 4);
+  }
+
+  /// Encode NEON 32 bits Splat immediate for instructions like VBIC/VORR.
+  static inline unsigned encodeNEONi32splat(unsigned Value) {
+    assert(isNEONi32splat(Value) && "Invalid NEON splat value");
+    if (Value >= 0x100 && Value <= 0xff00)
+      Value = (Value >> 8) | 0x200;
+    else if (Value > 0xffff && Value <= 0xff0000)
+      Value = (Value >> 16) | 0x400;
+    else if (Value > 0xffffff)
+      Value = (Value >> 24) | 0x600;
+    return Value;
+  }
+
   AMSubMode getLoadStoreMultipleSubMode(int Opcode);
 
   //===--------------------------------------------------------------------===//
