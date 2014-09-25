@@ -96,11 +96,16 @@ private:
                    SDValue &TFE) const;
   bool SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc, SDValue &VAddr,
                          SDValue &Offset) const;
+  bool SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc,
+                         SDValue &VAddr, SDValue &Offset,
+                         SDValue &SLC) const;
   bool SelectMUBUFScratch(SDValue Addr, SDValue &RSrc, SDValue &VAddr,
                           SDValue &SOffset, SDValue &ImmOffset) const;
   bool SelectMUBUFOffset(SDValue Addr, SDValue &SRsrc, SDValue &SOffset,
                          SDValue &Offset, SDValue &GLC, SDValue &SLC,
                          SDValue &TFE) const;
+  bool SelectMUBUFOffset(SDValue Addr, SDValue &SRsrc, SDValue &Soffset,
+                         SDValue &Offset, SDValue &GLC) const;
   SDNode *SelectAddrSpaceCast(SDNode *N);
   bool SelectVOP3Mods(SDValue In, SDValue &Src, SDValue &SrcMods) const;
   bool SelectVOP3Mods0(SDValue In, SDValue &Src, SDValue &SrcMods,
@@ -891,6 +896,14 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc,
   return false;
 }
 
+bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc,
+                                           SDValue &VAddr, SDValue &Offset,
+                                           SDValue &SLC) const {
+  SLC = CurDAG->getTargetConstant(0, MVT::i1);
+
+  return SelectMUBUFAddr64(Addr, SRsrc, VAddr, Offset);
+}
+
 static SDValue buildRSRC(SelectionDAG *DAG, SDLoc DL, SDValue Ptr,
                          uint32_t RsrcDword1, uint64_t RsrcDword2And3) {
 
@@ -999,6 +1012,14 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFOffset(SDValue Addr, SDValue &SRsrc,
     return true;
   }
   return false;
+}
+
+bool AMDGPUDAGToDAGISel::SelectMUBUFOffset(SDValue Addr, SDValue &SRsrc,
+                                           SDValue &Soffset, SDValue &Offset,
+                                           SDValue &GLC) const {
+  SDValue SLC, TFE;
+
+  return SelectMUBUFOffset(Addr, SRsrc, Soffset, Offset, GLC, SLC, TFE);
 }
 
 // FIXME: This is incorrect and only enough to be able to compile.
