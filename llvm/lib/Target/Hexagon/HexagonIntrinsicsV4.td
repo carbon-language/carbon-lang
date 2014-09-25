@@ -217,12 +217,13 @@ def Hexagon_A4_combineri : di_ALU32_sis8  <"combine", int_hexagon_A4_combineri>;
 // ALU32 / PRED / Conditional Sign Extend.
 // ALU32 / PRED / Conditional Zero Extend.
 // ALU32 / PRED / Compare.
-def Hexagon_C4_cmpneq  : qi_neg_ALU32_sisi  <"cmp.eq", int_hexagon_C4_cmpneq>;
-def Hexagon_C4_cmpneqi : qi_neg_ALU32_sis10 <"cmp.eq", int_hexagon_C4_cmpneqi>;
-def Hexagon_C4_cmplte  : qi_neg_ALU32_sisi  <"cmp.gt", int_hexagon_C4_cmplte>;
 def Hexagon_C4_cmpltei : qi_neg_ALU32_sis10 <"cmp.gt", int_hexagon_C4_cmpltei>;
+def Hexagon_C4_cmplte  : qi_neg_ALU32_sisi  <"cmp.gt", int_hexagon_C4_cmplte>;
 def Hexagon_C4_cmplteu : qi_neg_ALU32_sisi  <"cmp.gtu",int_hexagon_C4_cmplteu>;
-def Hexagon_C4_cmplteui: qi_neg_ALU32_siu9  <"cmp.gtu",int_hexagon_C4_cmplteui>;
+
+def: T_RI_pat<C4_cmpneqi, int_hexagon_C4_cmpneqi>;
+def: T_RI_pat<C4_cmpltei, int_hexagon_C4_cmpltei>;
+def: T_RI_pat<C4_cmplteui, int_hexagon_C4_cmplteui>;
 
 // ALU32 / PRED / cmpare To General Register.
 def Hexagon_A4_rcmpneq : si_neg_ALU32_sisi <"cmp.eq", int_hexagon_A4_rcmpneq>;

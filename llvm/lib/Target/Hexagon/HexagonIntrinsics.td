@@ -1843,6 +1843,11 @@ class si_MInst_didi<string opc, Intrinsic IntID>
              !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
              [(set IntRegs:$dst, (IntID DoubleRegs:$src1, DoubleRegs:$src2))]>;
 
+
+class T_RI_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat<(IntID (i32 IntRegs:$Rs), imm:$It),
+        (MI IntRegs:$Rs, imm:$It)>;
+
 //
 // LDInst classes.
 //
