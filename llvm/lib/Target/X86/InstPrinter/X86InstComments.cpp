@@ -102,6 +102,17 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
+  case X86::VPBLENDWYrri:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::VPBLENDWYrmi:
+    if(MI->getOperand(MI->getNumOperands()-1).isImm())
+      DecodeBLENDMask(MVT::v16i16,
+                      MI->getOperand(MI->getNumOperands()-1).getImm(),
+                      ShuffleMask);
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    DestName = getRegName(MI->getOperand(0).getReg());
+    break;
 
   case X86::VPBLENDDrri:
     Src2Name = getRegName(MI->getOperand(2).getReg());

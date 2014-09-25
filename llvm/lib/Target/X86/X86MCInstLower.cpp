@@ -1098,7 +1098,8 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // a constant shuffle mask. We won't be able to do this at the MC layer
     // because the mask isn't an immediate.
   case X86::PSHUFBrm:
-  case X86::VPSHUFBrm: {
+  case X86::VPSHUFBrm:
+  case X86::VPSHUFBYrm: {
     if (!OutStreamer.isVerboseAsm())
       break;
     assert(MI->getNumOperands() > 5 &&

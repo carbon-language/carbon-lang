@@ -301,11 +301,18 @@ void DecodePSHUFBMask(ArrayRef<uint64_t> RawMask,
   }
 }
 
-void DecodeBLENDMask(MVT VT, unsigned Imm,
-                       SmallVectorImpl<int> &ShuffleMask) {
+void DecodeBLENDMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
+  int ElementBits = VT.getScalarSizeInBits();
   int NumElements = VT.getVectorNumElements();
-  for (int i = 0; i < NumElements; ++i)
-    ShuffleMask.push_back(((Imm >> i) & 1) ? NumElements + i : i);
+  for (int i = 0; i < NumElements; ++i) {
+    // If there are more than 8 elements in the vector, then any immediate blend
+    // mask applies to each 128-bit lane. There can never be more than
+    // 8 elements in a 128-bit lane with an immediate blend.
+    int Bit = NumElements > 8 ? i % (128 / ElementBits) : i;
+    assert(Bit < 8 &&
+           "Immediate blends only operate over 8 elements at a time!");
+    ShuffleMask.push_back(((Imm >> Bit) & 1) ? NumElements + i : i);
+  }
 }
 
 /// DecodeVPERMMask - this decodes the shuffle masks for VPERMQ/VPERMPD.
