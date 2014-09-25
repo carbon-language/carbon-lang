@@ -69,6 +69,7 @@
 		233B007F1960CB280090E598 /* ProcessLaunchInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B007E1960CB280090E598 /* ProcessLaunchInfo.cpp */; };
 		236124A41986B4E2004EFC37 /* IOObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 236124A21986B4E2004EFC37 /* IOObject.cpp */; };
 		236124A51986B4E2004EFC37 /* Socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 236124A31986B4E2004EFC37 /* Socket.cpp */; };
+		23CDD8FB19D47B3600461DDC /* ThreadStateCoordinator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23CDD8E819D3E13200461DDC /* ThreadStateCoordinator.cpp */; };
 		23DDF226196C3EE600BB8417 /* CommandOptionValidators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23DDF224196C3EE600BB8417 /* CommandOptionValidators.cpp */; };
 		23EDE33319269E7C00F6A132 /* NativeRegisterContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23EDE3301926839700F6A132 /* NativeRegisterContext.cpp */; };
 		23EFE389193D1ABC00E54E54 /* SBTypeEnumMember.h in Headers */ = {isa = PBXBuildFile; fileRef = 23EFE388193D1ABC00E54E54 /* SBTypeEnumMember.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -980,6 +981,8 @@
 		23AB0530199FF639003B8084 /* ProcessFreeBSD.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProcessFreeBSD.h; sourceTree = "<group>"; };
 		23AB0531199FF639003B8084 /* ProcessMonitor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessMonitor.cpp; sourceTree = "<group>"; };
 		23AB0532199FF639003B8084 /* ProcessMonitor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProcessMonitor.h; sourceTree = "<group>"; };
+		23B6FF4119D38D48004CC8C3 /* ThreadStateCoordinator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreadStateCoordinator.h; sourceTree = "<group>"; };
+		23CDD8E819D3E13200461DDC /* ThreadStateCoordinator.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadStateCoordinator.cpp; sourceTree = "<group>"; };
 		23DDF224196C3EE600BB8417 /* CommandOptionValidators.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandOptionValidators.cpp; path = source/Interpreter/CommandOptionValidators.cpp; sourceTree = "<group>"; };
 		23EDE3301926839700F6A132 /* NativeRegisterContext.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = NativeRegisterContext.cpp; path = source/Target/NativeRegisterContext.cpp; sourceTree = "<group>"; };
 		23EDE3311926843600F6A132 /* NativeRegisterContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NativeRegisterContext.h; path = include/lldb/Target/NativeRegisterContext.h; sourceTree = "<group>"; };
@@ -2370,6 +2373,8 @@
 				233B009319610B1F0090E598 /* ProcessMonitor.h */,
 				233B00A2196113730090E598 /* ProcFileReader.h */,
 				233B00A1196113730090E598 /* ProcFileReader.cpp */,
+				23B6FF4119D38D48004CC8C3 /* ThreadStateCoordinator.h */,
+				23CDD8E819D3E13200461DDC /* ThreadStateCoordinator.cpp */,
 			);
 			path = Linux;
 			sourceTree = "<group>";
@@ -5255,6 +5260,7 @@
 				AF26703B1852D01E00B6CC36 /* QueueList.cpp in Sources */,
 				267C012B136880DF006E963E /* OptionGroupValueObjectDisplay.cpp in Sources */,
 				26BCFC521368AE38006DC050 /* OptionGroupFormat.cpp in Sources */,
+				23CDD8FB19D47B3600461DDC /* ThreadStateCoordinator.cpp in Sources */,
 				AF81DEFA1828A23F0042CF19 /* SystemRuntime.cpp in Sources */,
 				267C01371368C49C006E963E /* OptionGroupOutputFile.cpp in Sources */,
 				260E07C6136FA69E00CF21D3 /* OptionGroupUUID.cpp in Sources */,
