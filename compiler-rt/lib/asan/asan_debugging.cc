@@ -17,9 +17,69 @@
 #include "asan_flags.h"
 #include "asan_internal.h"
 #include "asan_mapping.h"
+#include "asan_report.h"
 #include "asan_thread.h"
 
 namespace __asan {
+
+void GetInfoForStackVar(uptr addr, AddressDescription *descr, AsanThread *t) {
+  descr->name[0] = 0;
+  descr->region_address = 0;
+  descr->region_size = 0;
+  descr->region_kind = "stack";
+
+  uptr offset = 0;
+  uptr frame_pc = 0;
+  const char *frame_descr = t->GetFrameNameByAddr(addr, &offset, &frame_pc);
+  InternalMmapVector<StackVarDescr> vars(16);
+  if (!ParseFrameDescription(frame_descr, &vars)) {
+    return;
+  }
+
+  for (uptr i = 0; i < vars.size(); i++) {
+    if (offset <= vars[i].beg + vars[i].size) {
+      internal_strncat(descr->name, vars[i].name_pos,
+                       Min(descr->name_size, vars[i].name_len));
+      descr->region_address = addr - (offset - vars[i].beg);
+      descr->region_size = vars[i].size;
+      return;
+    }
+  }
+}
+
+void GetInfoForHeapAddress(uptr addr, AddressDescription *descr) {
+  AsanChunkView chunk = FindHeapChunkByAddress(addr);
+
+  descr->name[0] = 0;
+  descr->region_address = 0;
+  descr->region_size = 0;
+
+  if (!chunk.IsValid()) {
+    descr->region_kind = "heap-invalid";
+    return;
+  }
+
+  descr->region_address = chunk.Beg();
+  descr->region_size = chunk.UsedSize();
+  descr->region_kind = "heap";
+}
+
+void AsanLocateAddress(uptr addr, AddressDescription *descr) {
+  if (DescribeAddressIfShadow(addr, descr, /* print */ false)) {
+    return;
+  }
+  if (GetInfoForAddressIfGlobal(addr, descr)) {
+    return;
+  }
+  asanThreadRegistry().Lock();
+  AsanThread *thread = FindThreadByStackAddress(addr);
+  asanThreadRegistry().Unlock();
+  if (thread) {
+    GetInfoForStackVar(addr, descr, thread);
+    return;
+  }
+  GetInfoForHeapAddress(addr, descr);
+}
 
 uptr AsanGetStack(uptr addr, uptr *trace, uptr size, u32 *thread_id,
                   bool alloc_stack) {
@@ -54,6 +114,16 @@ uptr AsanGetStack(uptr addr, uptr *trace, uptr size, u32 *thread_id,
 }  // namespace __asan
 
 using namespace __asan;
+
+SANITIZER_INTERFACE_ATTRIBUTE
+const char *__asan_locate_address(uptr addr, char *name, uptr name_size,
+                                  uptr *region_address, uptr *region_size) {
+  AddressDescription descr = { name, name_size, 0, 0, 0 };
+  AsanLocateAddress(addr, &descr);
+  if (region_address) *region_address = descr.region_address;
+  if (region_size) *region_size = descr.region_size;
+  return descr.region_kind;
+}
 
 SANITIZER_INTERFACE_ATTRIBUTE
 uptr __asan_get_alloc_stack(uptr addr, uptr *trace, uptr size, u32 *thread_id) {

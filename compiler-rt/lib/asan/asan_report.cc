@@ -31,6 +31,19 @@ static char *error_message_buffer = 0;
 static uptr error_message_buffer_pos = 0;
 static uptr error_message_buffer_size = 0;
 
+struct ReportData {
+  uptr pc;
+  uptr sp;
+  uptr bp;
+  uptr addr;
+  bool is_write;
+  uptr access_size;
+  const char *description;
+};
+
+static bool report_happened = false;
+static ReportData report_data = {};
+
 void AppendToErrorMessageBuffer(const char *buffer) {
   if (error_message_buffer) {
     uptr length = internal_strlen(buffer);
@@ -262,9 +275,7 @@ static void PrintGlobalLocation(InternalScopedString *str,
 
 bool DescribeAddressRelativeToGlobal(uptr addr, uptr size,
                                      const __asan_global &g) {
-  static const uptr kMinimalDistanceFromAnotherGlobal = 64;
-  if (addr <= g.beg - kMinimalDistanceFromAnotherGlobal) return false;
-  if (addr >= g.beg + g.size_with_redzone) return false;
+  if (!IsAddressNearGlobal(addr, g)) return false;
   InternalScopedString str(4096);
   Decorator d;
   str.append("%s", d.Location());
@@ -290,21 +301,20 @@ bool DescribeAddressRelativeToGlobal(uptr addr, uptr size,
   return true;
 }
 
-bool DescribeAddressIfShadow(uptr addr) {
+bool DescribeAddressIfShadow(uptr addr, AddressDescription *descr, bool print) {
   if (AddrIsInMem(addr))
     return false;
-  static const char kAddrInShadowReport[] =
-      "Address %p is located in the %s.\n";
-  if (AddrIsInShadowGap(addr)) {
-    Printf(kAddrInShadowReport, addr, "shadow gap area");
-    return true;
-  }
-  if (AddrIsInHighShadow(addr)) {
-    Printf(kAddrInShadowReport, addr, "high shadow area");
-    return true;
-  }
-  if (AddrIsInLowShadow(addr)) {
-    Printf(kAddrInShadowReport, addr, "low shadow area");
+  const char *area_type = nullptr;
+  if (AddrIsInShadowGap(addr)) area_type = "shadow gap";
+  else if (AddrIsInHighShadow(addr)) area_type = "high shadow";
+  else if (AddrIsInLowShadow(addr)) area_type = "low shadow";
+  if (area_type != nullptr) {
+    if (print) {
+      Printf("Address %p is located in the %s area.\n", addr, area_type);
+    } else {
+      CHECK(descr);
+      descr->region_kind = area_type;
+    }
     return true;
   }
   CHECK(0 && "Address is not in memory and not in shadow?");
@@ -582,7 +592,7 @@ void DescribeThread(AsanThreadContext *context) {
 // immediately after printing error report.
 class ScopedInErrorReport {
  public:
-  ScopedInErrorReport() {
+  explicit ScopedInErrorReport(ReportData *report = nullptr) {
     static atomic_uint32_t num_calls;
     static u32 reporting_thread_tid;
     if (atomic_fetch_add(&num_calls, 1, memory_order_relaxed) != 0) {
@@ -602,6 +612,8 @@ class ScopedInErrorReport {
       // Die() to bypass any additional checks.
       internal__exit(flags()->exitcode);
     }
+    if (report) report_data = *report;
+    report_happened = true;
     ASAN_ON_ERROR();
     // Make sure the registry and sanitizer report mutexes are locked while
     // we're printing an error report.
@@ -922,8 +934,6 @@ using namespace __asan;  // NOLINT
 
 void __asan_report_error(uptr pc, uptr bp, uptr sp, uptr addr, int is_write,
                          uptr access_size) {
-  ScopedInErrorReport in_report;
-
   // Determine the error type.
   const char *bug_descr = "unknown-crash";
   if (AddrIsInMem(addr)) {
@@ -971,6 +981,11 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp, uptr addr, int is_write,
         break;
     }
   }
+
+  ReportData report = { pc, sp, bp, addr, (bool)is_write, access_size,
+                        bug_descr };
+  ScopedInErrorReport in_report(&report);
+
   Decorator d;
   Printf("%s", d.Warning());
   Report("ERROR: AddressSanitizer: %s on address "
@@ -1010,6 +1025,38 @@ void __asan_describe_address(uptr addr) {
   asanThreadRegistry().Lock();
   DescribeAddress(addr, 1);
   asanThreadRegistry().Unlock();
+}
+
+int __asan_report_present() {
+  return report_happened ? 1 : 0;
+}
+
+uptr __asan_get_report_pc() {
+  return report_data.pc;
+}
+
+uptr __asan_get_report_bp() {
+  return report_data.bp;
+}
+
+uptr __asan_get_report_sp() {
+  return report_data.sp;
+}
+
+uptr __asan_get_report_address() {
+  return report_data.addr;
+}
+
+int __asan_get_report_access_type() {
+  return report_data.is_write ? 1 : 0;
+}
+
+uptr __asan_get_report_access_size() {
+  return report_data.access_size;
+}
+
+const char *__asan_get_report_description() {
+  return report_data.description;
 }
 
 extern "C" {
