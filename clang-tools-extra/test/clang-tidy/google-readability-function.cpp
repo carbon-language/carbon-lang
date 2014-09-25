@@ -103,3 +103,22 @@ Z &operator--(Z&) {}
 Z &operator--(Z&, int) {}
 // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: all parameters should be named in a function
 // CHECK-FIXES: Z &operator--(Z& /*unused*/, int) {}
+
+namespace testing {
+namespace internal {
+class IgnoredValue {
+ public:
+  template <typename T>
+  IgnoredValue(const T& /* ignored */) {}
+};
+}
+typedef internal::IgnoredValue Unused;
+}
+
+using ::testing::Unused;
+
+void MockFunction(Unused, int q, Unused) {
+  ++q;
+  ++q;
+  ++q;
+}

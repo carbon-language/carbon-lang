@@ -60,6 +60,11 @@ void NamedParameterCheck::check(const MatchFinder::MatchResult &Result) {
         !SM.isWrittenInSameFile(Parm->getLocStart(), Parm->getLocation()))
       continue;
 
+    // Skip gmock testing::Unused parameters.
+    if (auto Typedef = Parm->getType()->getAs<clang::TypedefType>())
+      if (Typedef->getDecl()->getQualifiedNameAsString() == "testing::Unused")
+        continue;
+
     // Look for comments. We explicitly want to allow idioms like
     // void foo(int /*unused*/)
     const char *Begin = SM.getCharacterData(Parm->getLocStart());
