@@ -59,3 +59,13 @@ CHECK6:      Export Table:
 CHECK6:      DLL name: export.test.tmp6.dll
 CHECK6:       Ordinal      RVA  Name
 CHECK6-NEXT:        1   0x2010  exportfn8
+
+# RUN: lld -flavor link /out:%t6.dll /dll /entry:init \
+# RUN:   /export:exportfn8 /export:exportfn8 -- %t.obj
+# RUN: llvm-objdump -p %t6.dll | FileCheck -check-prefix=DUP %s
+
+DUP:      Export Table:
+DUP:      DLL name: export.test.tmp6.dll
+DUP:       Ordinal      RVA  Name
+DUP:            1   0x2010  exportfn8
+DUP-NOT:        1   0x2010  exportfn8
