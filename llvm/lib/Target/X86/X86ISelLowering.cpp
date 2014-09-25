@@ -9617,35 +9617,6 @@ static SDValue lowerV16I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(Mask.size() == 16 && "Unexpected mask size for v16 shuffle!");
   assert(Subtarget->hasAVX2() && "We can only lower v16i16 with AVX2!");
 
-  if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v16i16, V1, V2, Mask,
-                                                Subtarget, DAG))
-    return Blend;
-
-  // If the shuffle mask is repeated in each 128-bit lane we can use more
-  // efficient instructions that mirror the shuffles across the two 128-bit
-  // lanes.
-  SmallVector<int, 4> RepeatedMask;
-  if (is128BitLaneRepeatedShuffleMask(MVT::v16i16, Mask, RepeatedMask)) {
-    assert(RepeatedMask.size() == 8 && "Unexpected repeated mask size!");
-    // FIXME: It might be worth it to call into the (terribly complex) v8i16
-    // lowering here.
-
-    // Use dedicated unpack instructions for masks that match their pattern.
-    //
-    if (isShuffleEquivalent(Mask,
-                            // First 128-bit lane:
-                            0, 16, 1, 17, 2, 18, 3, 19,
-                            // Second 128-bit lane:
-                            8, 24, 9, 25, 10, 26, 11, 27))
-      return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i16, V1, V2);
-    if (isShuffleEquivalent(Mask,
-                            // First 128-bit lane:
-                            4,  20, 5,  21, 6, 22, 7, 23,
-                            // Second 128-bit lane:
-                            12, 28, 13, 29, 14, 30, 15, 31))
-      return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i16, V1, V2);
-  }
-
   // There are no generalized cross-lane shuffle operations available on i16
   // element types.
   // FIXME: We should teach the "split and lower" path to do something more
@@ -9660,6 +9631,24 @@ static SDValue lowerV16I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // VPERMD to produce a non-lane-crossing shuffle.
   if (is128BitLaneCrossingShuffleMask(MVT::v16i16, Mask))
     return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
+
+  if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v16i16, V1, V2, Mask,
+                                                Subtarget, DAG))
+    return Blend;
+
+  // Use dedicated unpack instructions for masks that match their pattern.
+  if (isShuffleEquivalent(Mask,
+                          // First 128-bit lane:
+                          0, 16, 1, 17, 2, 18, 3, 19,
+                          // Second 128-bit lane:
+                          8, 24, 9, 25, 10, 26, 11, 27))
+    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i16, V1, V2);
+  if (isShuffleEquivalent(Mask,
+                          // First 128-bit lane:
+                          4, 20, 5, 21, 6, 22, 7, 23,
+                          // Second 128-bit lane:
+                          12, 28, 13, 29, 14, 30, 15, 31))
+    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i16, V1, V2);
 
   if (isSingleInputShuffleMask(Mask)) {
     SDValue PSHUFBMask[32];
