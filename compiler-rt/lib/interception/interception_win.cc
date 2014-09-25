@@ -182,7 +182,10 @@ bool OverrideFunction(uptr old_func, uptr new_func, uptr *orig_old_func) {
 }
 
 static const void **InterestingDLLsAvailable() {
-  const char *InterestingDLLs[] = { "kernel32.dll", "msvcr120.dll", NULL };
+  const char *InterestingDLLs[] = {"kernel32.dll",
+                                   "msvcr110.dll", // VS2012
+                                   "msvcr120.dll", // VS2013
+                                   NULL};
   static void *result[ARRAY_SIZE(InterestingDLLs)] = { 0 };
   if (!result[0]) {
     for (size_t i = 0, j = 0; InterestingDLLs[i]; ++i) {
