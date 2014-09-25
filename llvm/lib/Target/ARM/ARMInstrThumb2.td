@@ -3632,7 +3632,7 @@ def t2IT : Thumb2XI<(outs), (ins it_pred:$cc, it_mask:$mask),
 // Branch and Exchange Jazelle -- for disassembly only
 // Rm = Inst{19-16}
 def t2BXJ : T2I<(outs), (ins rGPR:$func), NoItinerary, "bxj", "\t$func", []>,
-    Sched<[WriteBr]> {
+    Sched<[WriteBr]>, Requires<[IsThumb2, IsNotMClass, PreV8]> {
   bits<4> func;
   let Inst{31-27} = 0b11110;
   let Inst{26} = 0;
