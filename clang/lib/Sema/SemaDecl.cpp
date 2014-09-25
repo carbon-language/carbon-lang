@@ -8452,6 +8452,12 @@ namespace {
           HandleValue(E->getSubExpr());
         return;
       }
+
+      if (E->isIncrementDecrementOp()) {
+        HandleValue(E->getSubExpr());
+        return;
+      }
+
       Inherited::VisitUnaryOperator(E);
     }
 
@@ -8478,6 +8484,16 @@ namespace {
       }
 
       Inherited::VisitCallExpr(E);
+    }
+
+    void VisitBinaryOperator(BinaryOperator *E) {
+      if (E->isCompoundAssignmentOp()) {
+        HandleValue(E->getLHS());
+        Visit(E->getRHS());
+        return;
+      }
+
+      Inherited::VisitBinaryOperator(E);
     }
 
     // A custom visitor for BinaryConditionalOperator is needed because the

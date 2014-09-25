@@ -16,6 +16,7 @@ int bar(int* x);
 int boo(int& x);
 int far(const int& x);
 int moved(int&& x);
+int &ref(int x);
 
 // Test self-references within initializers which are guaranteed to be
 // uninitialized.
@@ -44,6 +45,11 @@ int s = r ?: s; // expected-warning {{variable 's' is uninitialized when used wi
 int t = t ?: s; // expected-warning {{variable 't' is uninitialized when used within its own initialization}}
 int u = (foo(u), s); // expected-warning {{variable 'u' is uninitialized when used within its own initialization}}
 int v = (u += v); // expected-warning {{variable 'v' is uninitialized when used within its own initialization}}
+int w = (w += 10); // expected-warning {{variable 'w' is uninitialized when used within its own initialization}}
+int x = x++; // expected-warning {{variable 'x' is uninitialized when used within its own initialization}}
+int y = ((s ? (y, v) : (77, y))++, sizeof(y)); // expected-warning {{variable 'y' is uninitialized when used within its own initialization}}
+int z = ++ref(z); // expected-warning {{variable 'z' is uninitialized when used within its own initialization}}
+int aa = (ref(aa) += 10); // expected-warning {{variable 'aa' is uninitialized when used within its own initialization}}
 
 void test_stuff () {
   int a = a; // no-warning: used to signal intended lack of initialization.
@@ -72,6 +78,11 @@ void test_stuff () {
   int t = t ?: s; // expected-warning {{variable 't' is uninitialized when used within its own initialization}}
   int u = (foo(u), s); // expected-warning {{variable 'u' is uninitialized when used within its own initialization}}
   int v = (u += v); // expected-warning {{variable 'v' is uninitialized when used within its own initialization}}
+  int w = (w += 10); // expected-warning {{variable 'w' is uninitialized when used within its own initialization}}
+  int x = x++; // expected-warning {{variable 'x' is uninitialized when used within its own initialization}}
+  int y = ((s ? (y, v) : (77, y))++, sizeof(y)); // expected-warning {{variable 'y' is uninitialized when used within its own initialization}}
+  int z = ++ref(z);                              // expected-warning {{variable 'z' is uninitialized when used within its own initialization}}
+  int aa = (ref(aa) += 10); // expected-warning {{variable 'aa' is uninitialized when used within its own initialization}}
 
   for (;;) {
     int a = a; // no-warning: used to signal intended lack of initialization.
@@ -100,6 +111,11 @@ void test_stuff () {
     int t = t ?: s; // expected-warning {{variable 't' is uninitialized when used within its own initialization}}
     int u = (foo(u), s); // expected-warning {{variable 'u' is uninitialized when used within its own initialization}}
     int v = (u += v); // expected-warning {{variable 'v' is uninitialized when used within its own initialization}}
+    int w = (w += 10); // expected-warning {{variable 'w' is uninitialized when used within its own initialization}}
+    int x = x++; // expected-warning {{variable 'x' is uninitialized when used within its own initialization}}
+    int y = ((s ? (y, v) : (77, y))++, sizeof(y)); // expected-warning {{variable 'y' is uninitialized when used within its own initialization}}
+    int z = ++ref(z);                              // expected-warning {{variable 'z' is uninitialized when used within its own initialization}}
+    int aa = (ref(aa) += 10); // expected-warning {{variable 'aa' is uninitialized when used within its own initialization}}
   }
 }
 
@@ -176,7 +192,7 @@ void setupA(bool x) {
   A a35 = std::move(x ? a34 : (37, a35));  // expected-warning {{variable 'a35' is uninitialized when used within its own initialization}}
 }
 
-bool x;
+bool cond;
 
 A a1;
 A a2(a1.get());
@@ -196,8 +212,8 @@ A a14 = A(a14);  // expected-warning {{variable 'a14' is uninitialized when used
 A a15 = getA(a15.num);  // expected-warning {{variable 'a15' is uninitialized when used within its own initialization}}
 A a16(&a16.num);  // expected-warning {{variable 'a16' is uninitialized when used within its own initialization}}
 A a17(a17.get2());  // expected-warning {{variable 'a17' is uninitialized when used within its own initialization}}
-A a18 = x ? a18 : a17;  // expected-warning {{variable 'a18' is uninitialized when used within its own initialization}}
-A a19 = getA(x ? a19 : a17);  // expected-warning {{variable 'a19' is uninitialized when used within its own initialization}}
+A a18 = cond ? a18 : a17;  // expected-warning {{variable 'a18' is uninitialized when used within its own initialization}}
+A a19 = getA(cond ? a19 : a17);  // expected-warning {{variable 'a19' is uninitialized when used within its own initialization}}
 A a20{a20};  // expected-warning {{variable 'a20' is uninitialized when used within its own initialization}}
 A a21 = {a21};  // expected-warning {{variable 'a21' is uninitialized when used within its own initialization}}
 
@@ -328,6 +344,11 @@ struct S {
 
   S(char (*)[7]) : x(0), y((foo(y), x)) {} // expected-warning {{field 'y' is uninitialized when used here}}
   S(char (*)[8]) : x(0), y(x += y) {} // expected-warning {{field 'y' is uninitialized when used here}}
+  S(char (*)[9]) : x(x += 10) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(char (*)[10]) : x(x++) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(char (*)[11]) : x(0), y(((x ? (y, x) : (77, y))++, sizeof(y))) {} // expected-warning {{field 'y' is uninitialized when used here}}
+  S(char (*)[12]) : x(++ref(x)) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(char (*)[13]) : x(ref(x) += 10) {} // expected-warning {{field 'x' is uninitialized when used here}}
 };
 
 struct C { char a[100], *e; } car = { .e = car.a };
@@ -496,6 +517,11 @@ namespace statics {
   static int t = t ?: s; // expected-warning {{variable 't' is uninitialized when used within its own initialization}}
   static int u = (foo(u), s); // expected-warning {{variable 'u' is uninitialized when used within its own initialization}}
   static int v = (u += v); // expected-warning {{variable 'v' is uninitialized when used within its own initialization}}
+  static int w = (w += 10); // expected-warning {{variable 'w' is uninitialized when used within its own initialization}}
+  static int x = x++; // expected-warning {{variable 'x' is uninitialized when used within its own initialization}}
+  static int y = ((s ? (y, v) : (77, y))++, sizeof(y)); // expected-warning {{variable 'y' is uninitialized when used within its own initialization}}
+  static int z = ++ref(z); // expected-warning {{variable 'z' is uninitialized when used within its own initialization}}
+  static int aa = (ref(aa) += 10); // expected-warning {{variable 'aa' is uninitialized when used within its own initialization}}
 
   void test() {
     static int a = a; // no-warning: used to signal intended lack of initialization.
@@ -524,6 +550,11 @@ namespace statics {
     static int t = t ?: s;  // expected-warning {{static variable 't' is suspiciously used within its own initialization}}
     static int u = (foo(u), s);  // expected-warning {{static variable 'u' is suspiciously used within its own initialization}}
     static int v = (u += v);  // expected-warning {{static variable 'v' is suspiciously used within its own initialization}}
+    static int w = (w += 10);  // expected-warning {{static variable 'w' is suspiciously used within its own initialization}}
+    static int x = x++;  // expected-warning {{static variable 'x' is suspiciously used within its own initialization}}
+    static int y = ((s ? (y, v) : (77, y))++, sizeof(y));  // expected-warning {{static variable 'y' is suspiciously used within its own initialization}}
+    static int z = ++ref(z); // expected-warning {{static variable 'z' is suspiciously used within its own initialization}}
+    static int aa = (ref(aa) += 10); // expected-warning {{static variable 'aa' is suspiciously used within its own initialization}}
    for (;;) {
       static int a = a; // no-warning: used to signal intended lack of initialization.
       static int b = b + 1; // expected-warning {{static variable 'b' is suspiciously used within its own initialization}}
@@ -551,6 +582,11 @@ namespace statics {
       static int t = t ?: s;  // expected-warning {{static variable 't' is suspiciously used within its own initialization}}
       static int u = (foo(u), s);  // expected-warning {{static variable 'u' is suspiciously used within its own initialization}}
       static int v = (u += v);  // expected-warning {{static variable 'v' is suspiciously used within its own initialization}}
+      static int w = (w += 10);  // expected-warning {{static variable 'w' is suspiciously used within its own initialization}}
+      static int x = x++;  // expected-warning {{static variable 'x' is suspiciously used within its own initialization}}
+      static int y = ((s ? (y, v) : (77, y))++, sizeof(y));  // expected-warning {{static variable 'y' is suspiciously used within its own initialization}}
+      static int z = ++ref(z); // expected-warning {{static variable 'z' is suspiciously used within its own initialization}}
+      static int aa = (ref(aa) += 10); // expected-warning {{static variable 'aa' is suspiciously used within its own initialization}}
     }
   }
 }
