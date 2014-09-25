@@ -9428,17 +9428,24 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 4 && "Unexpected mask size for v4 shuffle!");
 
-  if (is128BitLaneCrossingShuffleMask(MVT::v4f64, Mask))
+  if (isSingleInputShuffleMask(Mask)) {
+    if (!is128BitLaneCrossingShuffleMask(MVT::v4f64, Mask)) {
+      // Non-half-crossing single input shuffles can be lowerid with an
+      // interleaved permutation.
+      unsigned VPERMILPMask = (Mask[0] == 1) | ((Mask[1] == 1) << 1) |
+                              ((Mask[2] == 3) << 2) | ((Mask[3] == 3) << 3);
+      return DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v4f64, V1,
+                         DAG.getConstant(VPERMILPMask, MVT::i8));
+    }
+
+    // With AVX2 we have direct support for this permutation.
+    if (Subtarget->hasAVX2())
+      return DAG.getNode(X86ISD::VPERMI, DL, MVT::v4f64, V1,
+                         getV4X86ShuffleImm8ForMask(Mask, DAG));
+
+    // Otherwise, fall back.
     return lowerVectorShuffleAsLanePermuteAndBlend(DL, MVT::v4f64, V1, V2, Mask,
                                                    DAG);
-
-  if (isSingleInputShuffleMask(Mask)) {
-    // Non-half-crossing single input shuffles can be lowerid with an
-    // interleaved permutation.
-    unsigned VPERMILPMask = (Mask[0] == 1) | ((Mask[1] == 1) << 1) |
-                            ((Mask[2] == 3) << 2) | ((Mask[3] == 3) << 3);
-    return DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v4f64, V1,
-                       DAG.getConstant(VPERMILPMask, MVT::i8));
   }
 
   // X86 has dedicated unpack instructions that can handle specific blend
@@ -9551,10 +9558,6 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
 
-  if (is128BitLaneCrossingShuffleMask(MVT::v8f32, Mask))
-    return lowerVectorShuffleAsLanePermuteAndBlend(DL, MVT::v8f32, V1, V2, Mask,
-                                                   DAG);
-
   if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v8f32, V1, V2, Mask,
                                                 Subtarget, DAG))
     return Blend;
@@ -9589,9 +9592,21 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     for (int i = 0; i < 8; ++i)
       VPermMask[i] = Mask[i] < 0 ? DAG.getUNDEF(MVT::i32)
                                  : DAG.getConstant(Mask[i], MVT::i32);
-    return DAG.getNode(
-        X86ISD::VPERMILPV, DL, MVT::v8f32, V1,
-        DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i32, VPermMask));
+    if (!is128BitLaneCrossingShuffleMask(MVT::v8f32, Mask))
+      return DAG.getNode(
+          X86ISD::VPERMILPV, DL, MVT::v8f32, V1,
+          DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i32, VPermMask));
+
+    if (Subtarget->hasAVX2())
+      return DAG.getNode(X86ISD::VPERMV, DL, MVT::v8f32,
+                         DAG.getNode(ISD::BITCAST, DL, MVT::v8f32,
+                                     DAG.getNode(ISD::BUILD_VECTOR, DL,
+                                                 MVT::v8i32, VPermMask)),
+                         V1);
+
+    // Otherwise, fall back.
+    return lowerVectorShuffleAsLanePermuteAndBlend(DL, MVT::v8f32, V1, V2, Mask,
+                                                   DAG);
   }
 
   // Otherwise fall back on generic blend lowering.
