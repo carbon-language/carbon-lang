@@ -67,11 +67,11 @@
 /* Begin PBXLegacyTarget section */
 		23CDD8F319D4790700461DDC /* gtest */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "$(ACTION)";
+			buildArgumentsString = "do-gtest.py $(ACTION)";
 			buildConfigurationList = 23CDD8F619D4790700461DDC /* Build configuration list for PBXLegacyTarget "gtest" */;
 			buildPhases = (
 			);
-			buildToolPath = /usr/bin/make;
+			buildToolPath = /usr/bin/python;
 			buildWorkingDirectory = .;
 			dependencies = (
 			);
