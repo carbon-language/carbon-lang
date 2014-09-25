@@ -29,8 +29,6 @@ define void @fp_to_uint_v4i32(<4 x i32> addrspace(1)* %out, <4 x float> addrspac
   store <4 x i32> %result, <4 x i32> addrspace(1)* %out
   ret void
 }
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck --check-prefix=SI --check-prefix=FUNC %s
-; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck --check-prefix=EG --check-prefix=FUNC %s
 
 ; FUNC: @fp_to_uint_i64
 ; EG-DAG: AND_INT
