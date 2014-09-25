@@ -19,10 +19,13 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ProfileData/CoverageMappingReader.h"
 #include "llvm/ProfileData/InstrProfReader.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 using namespace coverage;
+
+#define DEBUG_TYPE "coverage-mapping"
 
 CounterExpressionBuilder::CounterExpressionBuilder(unsigned NumCounterValues) {
   Terms.resize(NumCounterValues);
@@ -228,6 +231,7 @@ class SegmentBuilder {
 
   /// Start a segment with no count specified.
   void startSegment(unsigned Line, unsigned Col) {
+    DEBUG(dbgs() << "Top level segment at " << Line << ":" << Col << "\n");
     Segments.emplace_back(Line, Col, /*IsRegionEntry=*/false);
   }
 
@@ -242,9 +246,13 @@ class SegmentBuilder {
       Segments.emplace_back(Line, Col, IsRegionEntry);
       S = Segments.back();
     }
+    DEBUG(dbgs() << "Segment at " << Line << ":" << Col);
     // Set this region's count.
-    if (Region.Kind != coverage::CounterMappingRegion::SkippedRegion)
+    if (Region.Kind != coverage::CounterMappingRegion::SkippedRegion) {
+      DEBUG(dbgs() << " with count " << Region.ExecutionCount);
       Segments.back().setCount(Region.ExecutionCount);
+    }
+    DEBUG(dbgs() << "\n");
   }
 
   /// Start a segment for the given region.
@@ -272,9 +280,15 @@ public:
       while (!ActiveRegions.empty() &&
              ActiveRegions.back()->endLoc() <= Region.startLoc())
         popRegion();
-      // Add this region to the stack.
-      ActiveRegions.push_back(&Region);
-      startSegment(Region);
+      if (Segments.size() && Segments.back().Line == Region.LineStart &&
+          Segments.back().Col == Region.ColumnStart) {
+        if (Region.Kind != coverage::CounterMappingRegion::SkippedRegion)
+          Segments.back().addCount(Region.ExecutionCount);
+      } else {
+        // Add this region to the stack.
+        ActiveRegions.push_back(&Region);
+        startSegment(Region);
+      }
     }
     // Pop any regions that are left in the stack.
     while (!ActiveRegions.empty())

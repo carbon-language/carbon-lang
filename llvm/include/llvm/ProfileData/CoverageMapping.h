@@ -274,6 +274,7 @@ struct CoverageSegment {
     Count = NewCount;
     HasCount = true;
   }
+  void addCount(uint64_t NewCount) { setCount(Count + NewCount); }
 };
 
 /// \brief Coverage information to be processed or displayed.
