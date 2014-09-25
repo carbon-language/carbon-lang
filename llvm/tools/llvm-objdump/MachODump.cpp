@@ -555,11 +555,11 @@ const char *SymbolizerSymbolLookUp(void *DisInfo, uint64_t ReferenceValue,
 // generally not linked at address zero.
 //
 class DisasmMemoryObject : public MemoryObject {
-  uint8_t *Bytes;
+  const uint8_t *Bytes;
   uint64_t Size;
   uint64_t BasePC;
 public:
-  DisasmMemoryObject(uint8_t *bytes, uint64_t size, uint64_t basePC) :
+  DisasmMemoryObject(const uint8_t *bytes, uint64_t size, uint64_t basePC) :
                      Bytes(bytes), Size(size), BasePC(basePC) {}
 
   uint64_t getBase() const override { return BasePC; }
@@ -788,7 +788,7 @@ static void DisassembleInputMachO2(StringRef Filename,
     Sections[SectIdx].getContents(Bytes);
     uint64_t SectAddress = 0;
     Sections[SectIdx].getAddress(SectAddress);
-    DisasmMemoryObject MemoryObject((uint8_t *)Bytes.data(), Bytes.size(),
+    DisasmMemoryObject MemoryObject((const uint8_t *)Bytes.data(), Bytes.size(),
                                     SectAddress);
     bool symbolTableWorked = false;
 
