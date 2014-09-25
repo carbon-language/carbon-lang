@@ -64,6 +64,13 @@ class X86VectorVTInfo<int NumElts, ValueType EltVT, RegisterClass rc,
 
   // The string to specify embedded broadcast in assembly.
   string BroadcastStr = "{1to" # NumElts # "}";
+
+  SubRegIndex SubRegIdx = !if (!eq (Size, 128), sub_xmm,
+                          !if (!eq (Size, 256), sub_ymm, ?));
+
+  Domain ExeDomain = !if (!eq (EltTypeName, "f32"), SSEPackedSingle,
+                     !if (!eq (EltTypeName, "f64"), SSEPackedDouble,
+                     SSEPackedInt));
 }
 
 def v64i8_info  : X86VectorVTInfo<64,  i8, VR512, "b">;
@@ -407,106 +414,70 @@ def VINSERTPSzrm: AVX512AIi8<0x21, MRMSrcMem, (outs VR128X:$dst),
 //===----------------------------------------------------------------------===//
 // AVX-512 VECTOR EXTRACT
 //---
-let hasSideEffects = 0, ExeDomain = SSEPackedSingle in {
-// -- 32x4 form --
-def VEXTRACTF32x4rr : AVX512AIi8<0x19, MRMDestReg, (outs VR128X:$dst),
-          (ins VR512:$src1, i8imm:$src2),
-          "vextractf32x4\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-          []>, EVEX, EVEX_V512;
-def VEXTRACTF32x4mr : AVX512AIi8<0x19, MRMDestMem, (outs),
-          (ins f128mem:$dst, VR512:$src1, i8imm:$src2),
-          "vextractf32x4\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-          []>, EVEX, EVEX_V512, EVEX_CD8<32, CD8VT4>;
 
-// -- 64x4 form --
-def VEXTRACTF64x4rr : AVX512AIi8<0x1b, MRMDestReg, (outs VR256X:$dst),
-          (ins VR512:$src1, i8imm:$src2),
-          "vextractf64x4\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-          []>, EVEX, EVEX_V512, VEX_W;
-let mayStore = 1 in
-def VEXTRACTF64x4mr : AVX512AIi8<0x1b, MRMDestMem, (outs),
-          (ins f256mem:$dst, VR512:$src1, i8imm:$src2),
-          "vextractf64x4\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-          []>, EVEX, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT4>;
+multiclass vextract_for_size<int Opcode,
+                             X86VectorVTInfo From, X86VectorVTInfo To,
+                             X86VectorVTInfo AltFrom, X86VectorVTInfo AltTo,
+                             PatFrag vextract_extract,
+                             SDNodeXForm EXTRACT_get_vextract_imm> {
+  let hasSideEffects = 0, ExeDomain = To.ExeDomain in {
+    def rr : AVX512AIi8<Opcode, MRMDestReg, (outs To.RC:$dst),
+            (ins VR512:$src1, i8imm:$src2),
+            "vextract" # To.EltTypeName # "x4\t{$src2, $src1, $dst|"
+                                               "$dst, $src1, $src2}",
+            []>, EVEX, EVEX_V512;
+    let mayStore = 1 in
+    def rm : AVX512AIi8<Opcode, MRMDestMem, (outs),
+            (ins To.MemOp:$dst, VR512:$src1, i8imm:$src2),
+            "vextract" # To.EltTypeName # "x4\t{$src2, $src1, $dst|"
+                                               "$dst, $src1, $src2}",
+            []>, EVEX, EVEX_V512, EVEX_CD8<To.EltSize, CD8VT4>;
+  }
+
+  // Codegen pattern, e.g. v16i32 -> v4i32 for vextracti32x4
+  def : Pat<(vextract_extract:$ext (From.VT VR512:$src1), (iPTR imm)),
+            (To.VT (!cast<Instruction>(NAME # To.EltSize # "x4rr") VR512:$src1,
+                      (EXTRACT_get_vextract_imm To.RC:$ext)))>;
+
+  // Codegen pattern with the alternative types, e.g. v8i64 -> v2i64 for
+  // vextracti32x4
+  def : Pat<(vextract_extract:$ext (AltFrom.VT VR512:$src1), (iPTR imm)),
+            (AltTo.VT (!cast<Instruction>(NAME # To.EltSize # "x4rr")
+                          VR512:$src1,
+                          (EXTRACT_get_vextract_imm To.RC:$ext)))>;
+
+  // A 128/256-bit subvector extract from the first 512-bit vector position is
+  // a subregister copy that needs no instruction.
+  def : Pat<(To.VT (extract_subvector (From.VT VR512:$src), (iPTR 0))),
+            (To.VT
+               (EXTRACT_SUBREG (From.VT VR512:$src), To.SubRegIdx))>;
+
+  // And for the alternative types.
+  def : Pat<(AltTo.VT (extract_subvector (AltFrom.VT VR512:$src), (iPTR 0))),
+            (AltTo.VT
+               (EXTRACT_SUBREG (AltFrom.VT VR512:$src), AltTo.SubRegIdx))>;
 }
 
-let hasSideEffects = 0 in {
-// -- 32x4 form --
-def VEXTRACTI32x4rr : AVX512AIi8<0x39, MRMDestReg, (outs VR128X:$dst),
-          (ins VR512:$src1, i8imm:$src2),
-          "vextracti32x4\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-          []>, EVEX, EVEX_V512;
-def VEXTRACTI32x4mr : AVX512AIi8<0x39, MRMDestMem, (outs),
-          (ins i128mem:$dst, VR512:$src1, i8imm:$src2),
-          "vextracti32x4\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-          []>, EVEX, EVEX_V512, EVEX_CD8<32, CD8VT4>;
-
-// -- 64x4 form --
-def VEXTRACTI64x4rr : AVX512AIi8<0x3b, MRMDestReg, (outs VR256X:$dst),
-          (ins VR512:$src1, i8imm:$src2),
-          "vextracti64x4\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-          []>, EVEX, EVEX_V512, VEX_W;
-let mayStore = 1 in
-def VEXTRACTI64x4mr : AVX512AIi8<0x3b, MRMDestMem, (outs),
-          (ins i256mem:$dst, VR512:$src1, i8imm:$src2),
-          "vextracti64x4\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-          []>, EVEX, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT4>;
+multiclass vextract_for_type<ValueType EltVT32, int Opcode32,
+                             ValueType EltVT64, int Opcode64> {
+  defm NAME # "32x4" : vextract_for_size<Opcode32,
+                                 X86VectorVTInfo<16, EltVT32, VR512>,
+                                 X86VectorVTInfo< 4, EltVT32, VR128X>,
+                                 X86VectorVTInfo< 8, EltVT64, VR512>,
+                                 X86VectorVTInfo< 2, EltVT64, VR128X>,
+                                 vextract128_extract,
+                                 EXTRACT_get_vextract128_imm>;
+  defm NAME # "64x4" : vextract_for_size<Opcode64,
+                                 X86VectorVTInfo< 8, EltVT64, VR512>,
+                                 X86VectorVTInfo< 4, EltVT64, VR256X>,
+                                 X86VectorVTInfo<16, EltVT32, VR512>,
+                                 X86VectorVTInfo< 8, EltVT32, VR256>,
+                                 vextract256_extract,
+                                 EXTRACT_get_vextract256_imm>, VEX_W;
 }
 
-def : Pat<(vextract128_extract:$ext (v16f32 VR512:$src1), (iPTR imm)),
-          (v4f32 (VEXTRACTF32x4rr VR512:$src1,
-                  (EXTRACT_get_vextract128_imm VR128X:$ext)))>;
-
-def : Pat<(vextract128_extract:$ext VR512:$src1, (iPTR imm)),
-          (v4i32 (VEXTRACTI32x4rr VR512:$src1,
-                  (EXTRACT_get_vextract128_imm VR128X:$ext)))>;
-
-def : Pat<(vextract128_extract:$ext (v8f64 VR512:$src1), (iPTR imm)),
-          (v2f64 (VEXTRACTF32x4rr VR512:$src1,
-                  (EXTRACT_get_vextract128_imm VR128X:$ext)))>;
-
-def : Pat<(vextract128_extract:$ext (v8i64 VR512:$src1), (iPTR imm)),
-          (v2i64 (VEXTRACTI32x4rr VR512:$src1,
-                  (EXTRACT_get_vextract128_imm VR128X:$ext)))>;
-
-
-def : Pat<(vextract256_extract:$ext (v16f32 VR512:$src1), (iPTR imm)),
-          (v8f32 (VEXTRACTF64x4rr VR512:$src1,
-                  (EXTRACT_get_vextract256_imm VR256X:$ext)))>;
-
-def : Pat<(vextract256_extract:$ext (v16i32 VR512:$src1), (iPTR imm)),
-          (v8i32 (VEXTRACTI64x4rr VR512:$src1,
-                    (EXTRACT_get_vextract256_imm VR256X:$ext)))>;
-
-def : Pat<(vextract256_extract:$ext (v8f64 VR512:$src1), (iPTR imm)),
-          (v4f64 (VEXTRACTF64x4rr VR512:$src1,
-                  (EXTRACT_get_vextract256_imm VR256X:$ext)))>;
-
-def : Pat<(vextract256_extract:$ext (v8i64 VR512:$src1), (iPTR imm)),
-          (v4i64 (VEXTRACTI64x4rr VR512:$src1,
-                  (EXTRACT_get_vextract256_imm VR256X:$ext)))>;
-
-// A 256-bit subvector extract from the first 512-bit vector position
-// is a subregister copy that needs no instruction.
-def : Pat<(v8i32 (extract_subvector (v16i32 VR512:$src), (iPTR 0))),
-          (v8i32 (EXTRACT_SUBREG (v16i32 VR512:$src), sub_ymm))>;
-def : Pat<(v8f32 (extract_subvector (v16f32 VR512:$src), (iPTR 0))),
-          (v8f32 (EXTRACT_SUBREG (v16f32 VR512:$src), sub_ymm))>;
-def : Pat<(v4i64 (extract_subvector (v8i64 VR512:$src), (iPTR 0))),
-          (v4i64 (EXTRACT_SUBREG (v8i64 VR512:$src), sub_ymm))>;
-def : Pat<(v4f64 (extract_subvector (v8f64 VR512:$src), (iPTR 0))),
-          (v4f64 (EXTRACT_SUBREG (v8f64 VR512:$src), sub_ymm))>;
-
-// zmm -> xmm
-def : Pat<(v4i32 (extract_subvector (v16i32 VR512:$src), (iPTR 0))),
-          (v4i32 (EXTRACT_SUBREG (v16i32 VR512:$src), sub_xmm))>;
-def : Pat<(v2i64 (extract_subvector (v8i64 VR512:$src), (iPTR 0))),
-          (v2i64 (EXTRACT_SUBREG (v8i64 VR512:$src), sub_xmm))>;
-def : Pat<(v2f64 (extract_subvector (v8f64 VR512:$src), (iPTR 0))),
-          (v2f64 (EXTRACT_SUBREG (v8f64 VR512:$src), sub_xmm))>;
-def : Pat<(v4f32 (extract_subvector (v16f32 VR512:$src), (iPTR 0))),
-          (v4f32 (EXTRACT_SUBREG (v16f32 VR512:$src), sub_xmm))>;
-
+defm VEXTRACTF : vextract_for_type<f32, 0x19, f64, 0x1b>;
+defm VEXTRACTI : vextract_for_type<i32, 0x39, i64, 0x3b>;
 
 // A 128-bit subvector insert to the first 512-bit vector position
 // is a subregister copy that needs no instruction.
