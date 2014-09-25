@@ -425,6 +425,8 @@ name is specified.  This allows, for example, all debug information for
 instruction scheduling to be enabled with ``-debug-only=InstrSched``, even if
 the source lives in multiple files.
 
+For performance reasons, -debug-only is not available in optimized build (``--enable-optimized``) of LLVM.
+
 The ``DEBUG_WITH_TYPE`` macro is also available for situations where you would
 like to set ``DEBUG_TYPE``, but only for one specific ``DEBUG`` statement.  It
 takes an additional first parameter, which is the type to use.  For example, the
