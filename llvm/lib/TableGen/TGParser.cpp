@@ -232,16 +232,14 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
        i != iend;
        ++i) {
     // Clone the def and add it to the current multiclass
-    Record *NewDef = new Record(**i);
+    auto NewDef = make_unique<Record>(**i);
 
     // Add all of the values in the superclass into the current def.
     for (unsigned i = 0, e = MCVals.size(); i != e; ++i)
-      if (AddValue(NewDef, SubMultiClass.RefRange.Start, MCVals[i])) {
-        delete NewDef;
+      if (AddValue(NewDef.get(), SubMultiClass.RefRange.Start, MCVals[i]))
         return true;
-      }
 
-    CurMC->DefPrototypes.push_back(NewDef);
+    CurMC->DefPrototypes.push_back(NewDef.release());
   }
 
   const std::vector<Init *> &SMCTArgs = SMC->Rec.getTemplateArgs();
