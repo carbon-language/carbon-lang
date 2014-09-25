@@ -32,3 +32,22 @@ entry:
   ret <4 x i64> %1
 }
 
+; Check that there is a pattern (v2f64 (X86VBroadcast f64:$src)).
+
+; CHECK-LABEL: _vbroadcast_v128_f64
+; CHECK: vmovsd LCPI{{[0-9]+}}_0(%rip), %xmm[[R0:[0-9]+]]
+; CHECK: vmovddup %xmm[[R0]], %xmm{{[0-9]+}}
+
+@E1 = external global [5 x double], align 16
+@.str3 = external unnamed_addr constant [44 x i8], align 1
+
+define void @vbroadcast_v128_f64() #0 {
+entry:
+  store <2 x double> <double -1.000000e+00, double -1.000000e+00>, <2 x double>* bitcast (double* getelementptr inbounds ([5 x double]* @E1, i64 0, i64 2) to <2 x double>*), align 16
+  tail call void @foo1(double -1.000000e+00)
+  ret void
+}
+
+declare void @foo1(double)
+
+attributes #0 = { optsize }

@@ -8775,6 +8775,9 @@ let Predicates = [HasAVX] in {
               (VPSHUFDri (COPY_TO_REGCLASS GR64:$src, VR128), 0x44), sub_xmm),
               (VPSHUFDri (COPY_TO_REGCLASS GR64:$src, VR128), 0x44), 1)>;
   }
+
+  def : Pat<(v2f64 (X86VBroadcast f64:$src)),
+            (VMOVDDUPrr (COPY_TO_REGCLASS FR64:$src, VR128))>;
 }
 
 //===----------------------------------------------------------------------===//
