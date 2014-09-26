@@ -5674,6 +5674,48 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
     }
   }
 
+  // If first 2 operands of a 3 operand instruction are the same
+  // then transform to 2 operand version of the same instruction
+  // e.g. 'adds r0, r0, #1' transforms to 'adds r0, #1'
+  // FIXME: We would really like to be able to tablegen'erate this.
+  if (isThumbOne() && Operands.size() == 6 &&
+       (Mnemonic == "add" || Mnemonic == "sub" || Mnemonic == "and" ||
+        Mnemonic == "eor" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
+        Mnemonic == "asr" || Mnemonic == "adc" || Mnemonic == "sbc" ||
+        Mnemonic == "ror" || Mnemonic == "orr" || Mnemonic == "bic")) {
+      ARMOperand &Op3 = static_cast<ARMOperand &>(*Operands[3]);
+      ARMOperand &Op4 = static_cast<ARMOperand &>(*Operands[4]);
+      ARMOperand &Op5 = static_cast<ARMOperand &>(*Operands[5]);
+
+      // If both registers are the same then remove one of them from
+      // the operand list.
+      if (Op3.isReg() && Op4.isReg() && Op3.getReg() == Op4.getReg()) {
+          // If 3rd operand (variable Op5) is a register and the instruction is adds/sub
+          // then do not transform as the backend already handles this instruction
+          // correctly.
+          if (!Op5.isReg() || !((Mnemonic == "add" && CarrySetting) || Mnemonic == "sub")) {
+              Operands.erase(Operands.begin() + 3);
+              if (Mnemonic == "add" && !CarrySetting) {
+                  // Special case for 'add' (not 'adds') instruction must
+                  // remove the CCOut operand as well.
+                  Operands.erase(Operands.begin() + 1);
+              }
+          }
+      }
+  }
+
+  // If instruction is 'add' and first two register operands
+  // use SP register, then remove one of the SP registers from
+  // the instruction.
+  // FIXME: We would really like to be able to tablegen'erate this.
+  if (isThumbOne() && Operands.size() == 5 && Mnemonic == "add" && !CarrySetting) {
+      ARMOperand &Op2 = static_cast<ARMOperand &>(*Operands[2]);
+      ARMOperand &Op3 = static_cast<ARMOperand &>(*Operands[3]);
+      if (Op2.isReg() && Op3.isReg() && Op2.getReg() == ARM::SP && Op3.getReg() == ARM::SP) {
+          Operands.erase(Operands.begin() + 2);
+      }
+  }
+
   // GNU Assembler extension (compatibility)
   if ((Mnemonic == "ldrd" || Mnemonic == "strd")) {
     ARMOperand &Op2 = static_cast<ARMOperand &>(*Operands[2]);
@@ -8180,7 +8222,7 @@ unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
   }
   // Some high-register supporting Thumb1 encodings only allow both registers
   // to be from r0-r7 when in Thumb2.
-  else if (Opc == ARM::tADDhirr && isThumbOne() &&
+  else if (Opc == ARM::tADDhirr && isThumbOne() && !hasV6MOps() &&
            isARMLowRegister(Inst.getOperand(1).getReg()) &&
            isARMLowRegister(Inst.getOperand(2).getReg()))
     return Match_RequiresThumb2;
