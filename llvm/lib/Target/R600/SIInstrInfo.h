@@ -103,7 +103,10 @@ public:
   unsigned commuteOpcode(unsigned Opcode) const;
 
   MachineInstr *commuteInstruction(MachineInstr *MI,
-                                   bool NewMI=false) const override;
+                                   bool NewMI = false) const override;
+  bool findCommutedOpIndices(MachineInstr *MI,
+                             unsigned &SrcOpIdx1,
+                             unsigned &SrcOpIdx2) const override;
 
   bool isTriviallyReMaterializable(const MachineInstr *MI,
                                    AliasAnalysis *AA = nullptr) const;

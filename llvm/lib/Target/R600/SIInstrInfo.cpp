@@ -740,6 +740,38 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
   return MI;
 }
 
+// This needs to be implemented because the source modifiers may be inserted
+// between the true commutable operands, and the base
+// TargetInstrInfo::commuteInstruction uses it.
+bool SIInstrInfo::findCommutedOpIndices(MachineInstr *MI,
+                                        unsigned &SrcOpIdx1,
+                                        unsigned &SrcOpIdx2) const {
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (!MCID.isCommutable())
+    return false;
+
+  unsigned Opc = MI->getOpcode();
+  int Src0Idx = AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src0);
+  if (Src0Idx == -1)
+    return false;
+
+  // FIXME: Workaround TargetInstrInfo::commuteInstruction asserting on
+  // immediate.
+  if (!MI->getOperand(Src0Idx).isReg())
+    return false;
+
+  int Src1Idx = AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src1);
+  if (Src1Idx == -1)
+    return false;
+
+  if (!MI->getOperand(Src1Idx).isReg())
+    return false;
+
+  SrcOpIdx1 = Src0Idx;
+  SrcOpIdx2 = Src1Idx;
+  return true;
+}
+
 MachineInstr *SIInstrInfo::buildMovInstr(MachineBasicBlock *MBB,
                                          MachineBasicBlock::iterator I,
                                          unsigned DstReg,
