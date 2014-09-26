@@ -2616,6 +2616,7 @@ public:
   ObjCProtocolDecl *LookupProtocol(IdentifierInfo *II, SourceLocation IdLoc,
                                    RedeclarationKind Redecl
                                      = NotForRedeclaration);
+  void LookupInSuper(LookupResult &R, CXXRecordDecl *Class);
 
   void LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
                                     QualType T1, QualType T2,
@@ -4482,16 +4483,26 @@ public:
 
   /// \brief The parser has parsed a global nested-name-specifier '::'.
   ///
-  /// \param S The scope in which this nested-name-specifier occurs.
-  ///
   /// \param CCLoc The location of the '::'.
   ///
   /// \param SS The nested-name-specifier, which will be updated in-place
   /// to reflect the parsed nested-name-specifier.
   ///
   /// \returns true if an error occurred, false otherwise.
-  bool ActOnCXXGlobalScopeSpecifier(Scope *S, SourceLocation CCLoc,
-                                    CXXScopeSpec &SS);
+  bool ActOnCXXGlobalScopeSpecifier(SourceLocation CCLoc, CXXScopeSpec &SS);
+
+  /// \brief The parser has parsed a '__super' nested-name-specifier.
+  ///
+  /// \param SuperLoc The location of the '__super' keyword.
+  ///
+  /// \param ColonColonLoc The location of the '::'.
+  ///
+  /// \param SS The nested-name-specifier, which will be updated in-place
+  /// to reflect the parsed nested-name-specifier.
+  ///
+  /// \returns true if an error occurred, false otherwise.
+  bool ActOnSuperScopeSpecifier(SourceLocation SuperLoc,
+                                SourceLocation ColonColonLoc, CXXScopeSpec &SS);
 
   bool isAcceptableNestedNameSpecifier(const NamedDecl *SD);
   NamedDecl *FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS);

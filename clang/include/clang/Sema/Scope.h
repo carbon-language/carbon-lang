@@ -300,6 +300,9 @@ public:
     return ErrorTrap.hasUnrecoverableErrorOccurred();
   }
 
+  /// isFunctionScope() - Return true if this scope is a function scope.
+  bool isFunctionScope() const { return (getFlags() & Scope::FnScope); }
+
   /// isClassScope - Return true if this scope is a class/struct/union scope.
   bool isClassScope() const {
     return (getFlags() & Scope::ClassScope);

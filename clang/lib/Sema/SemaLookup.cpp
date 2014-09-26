@@ -1824,6 +1824,26 @@ bool Sema::LookupParsedName(LookupResult &R, Scope *S, CXXScopeSpec *SS,
   return LookupName(R, S, AllowBuiltinCreation);
 }
 
+/// \brief Perform qualified name lookup into all base classes of the given
+/// class.
+///
+/// \param R captures both the lookup criteria and any lookup results found.
+///
+/// \param Class The context in which qualified name lookup will
+/// search. Name lookup will search in all base classes merging the results.
+void Sema::LookupInSuper(LookupResult &R, CXXRecordDecl *Class) {
+  for (const auto &BaseSpec : Class->bases()) {
+    CXXRecordDecl *RD = cast<CXXRecordDecl>(
+        BaseSpec.getType()->castAs<RecordType>()->getDecl());
+    LookupResult Result(*this, R.getLookupNameInfo(), R.getLookupKind());
+	Result.setBaseObjectType(Context.getRecordType(Class));
+    LookupQualifiedName(Result, RD);
+    for (auto *Decl : Result)
+      R.addDecl(Decl);
+  }
+
+  R.resolveKind();
+}
 
 /// \brief Produce a diagnostic describing the ambiguity that resulted
 /// from name lookup.
@@ -3296,6 +3316,7 @@ static void getNestedNameSpecifierIdentifiers(
     break;
 
   case NestedNameSpecifier::Global:
+  case NestedNameSpecifier::Super:
     return;
   }
 

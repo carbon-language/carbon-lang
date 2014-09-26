@@ -5245,6 +5245,10 @@ void ASTWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
     case NestedNameSpecifier::Global:
       // Don't need to write an associated value.
       break;
+
+    case NestedNameSpecifier::Super:
+      AddDeclRef(NNS->getAsRecordDecl(), Record);
+      break;
     }
   }
 }
@@ -5293,6 +5297,11 @@ void ASTWriter::AddNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS,
 
     case NestedNameSpecifier::Global:
       AddSourceLocation(NNS.getLocalSourceRange().getEnd(), Record);
+      break;
+
+    case NestedNameSpecifier::Super:
+      AddDeclRef(NNS.getNestedNameSpecifier()->getAsRecordDecl(), Record);
+      AddSourceRange(NNS.getLocalSourceRange(), Record);
       break;
     }
   }

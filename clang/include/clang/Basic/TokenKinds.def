@@ -459,6 +459,7 @@ KEYWORD(__fastcall                  , KEYALL)
 KEYWORD(__thiscall                  , KEYALL)
 KEYWORD(__forceinline               , KEYMS)
 KEYWORD(__unaligned                 , KEYMS)
+KEYWORD(__super                     , KEYMS)
 
 // OpenCL address space qualifiers
 KEYWORD(__global                    , KEYOPENCL)

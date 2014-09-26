@@ -129,6 +129,7 @@ void IndexingContext::indexNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS,
   switch (NNS.getNestedNameSpecifier()->getKind()) {
   case NestedNameSpecifier::Identifier:
   case NestedNameSpecifier::Global:
+  case NestedNameSpecifier::Super:
     break;
 
   case NestedNameSpecifier::Namespace:

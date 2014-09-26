@@ -814,6 +814,9 @@ void CXXNameMangler::mangleUnresolvedPrefix(NestedNameSpecifier *qualifier,
     // We never want an 'E' here.
     return;
 
+  case NestedNameSpecifier::Super:
+    llvm_unreachable("Can't mangle __super specifier");
+
   case NestedNameSpecifier::Namespace:
     if (qualifier->getPrefix())
       mangleUnresolvedPrefix(qualifier->getPrefix(), firstQualifierLookup,
@@ -1461,6 +1464,9 @@ void CXXNameMangler::manglePrefix(NestedNameSpecifier *qualifier) {
   case NestedNameSpecifier::Global:
     // nothing
     return;
+
+  case NestedNameSpecifier::Super:
+    llvm_unreachable("Can't mangle __super specifier");
 
   case NestedNameSpecifier::Namespace:
     mangleName(qualifier->getAsNamespace());

@@ -368,6 +368,8 @@ def err_function_definition_not_allowed : Error<
   "function definition is not allowed here">;
 def err_expected_end_of_enumerator : Error<
   "expected '= constant-expression' or end of enumerator definition">;
+def err_expected_coloncolon_after_super : Error<
+  "expected '::' after '__super'">;
 
 /// Objective-C parser diagnostics
 def err_expected_minus_or_plus : Error<
@@ -521,6 +523,8 @@ def ext_abstract_pack_declarator_parens : ExtWarn<
   InGroup<DiagGroup<"anonymous-pack-parens">>;
 def err_function_is_not_record : Error<
   "unexpected %0 in function call; perhaps remove the %0?">;
+def err_super_in_using_declaration : Error<
+  "'__super' cannot be used with a using declaration">;
 
 // C++ derived classes
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;
