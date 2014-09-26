@@ -1648,57 +1648,6 @@ bool SITargetLowering::fitsRegClass(SelectionDAG &DAG, const SDValue &Op,
   return TRI->getRegClass(RegClass)->hasSubClassEq(RC);
 }
 
-/// \brief Make sure that we don't exeed the number of allowed scalars
-void SITargetLowering::ensureSRegLimit(SelectionDAG &DAG, SDValue &Operand,
-                                       unsigned RegClass,
-                                       bool &ScalarSlotUsed) const {
-
-  if (!isVSrc(RegClass))
-    return;
-
-  // First map the operands register class to a destination class
-  switch (RegClass) {
-    case AMDGPU::VSrc_32RegClassID:
-    case AMDGPU::VCSrc_32RegClassID:
-      RegClass = AMDGPU::VReg_32RegClassID;
-      break;
-    case AMDGPU::VSrc_64RegClassID:
-    case AMDGPU::VCSrc_64RegClassID:
-      RegClass = AMDGPU::VReg_64RegClassID;
-      break;
-   default:
-    llvm_unreachable("Unknown vsrc reg class");
-  }
-
-  // Nothing to do if they fit naturally
-  if (fitsRegClass(DAG, Operand, RegClass))
-    return;
-
-  // If the scalar slot isn't used yet use it now
-  if (!ScalarSlotUsed) {
-    ScalarSlotUsed = true;
-    return;
-  }
-
-  // This is a conservative aproach. It is possible that we can't determine the
-  // correct register class and copy too often, but better safe than sorry.
-
-  SDNode *Node;
-  // We can't use COPY_TO_REGCLASS with FrameIndex arguments.
-  if (isa<FrameIndexSDNode>(Operand) ||
-      isa<GlobalAddressSDNode>(Operand)) {
-    unsigned Opcode = Operand.getValueType() == MVT::i32 ?
-                      AMDGPU::S_MOV_B32 : AMDGPU::S_MOV_B64;
-    Node = DAG.getMachineNode(Opcode, SDLoc(), Operand.getValueType(),
-                              Operand);
-  } else {
-    SDValue RC = DAG.getTargetConstant(RegClass, MVT::i32);
-    Node = DAG.getMachineNode(TargetOpcode::COPY_TO_REGCLASS, SDLoc(),
-                              Operand.getValueType(), Operand, RC);
-  }
-  Operand = SDValue(Node, 0);
-}
-
 /// \returns true if \p Node's operands are different from the SDValue list
 /// \p Ops
 static bool isNodeChanged(const SDNode *Node, const std::vector<SDValue> &Ops) {
@@ -1710,8 +1659,9 @@ static bool isNodeChanged(const SDNode *Node, const std::vector<SDValue> &Ops) {
   return false;
 }
 
-/// \brief Try to commute instructions and insert copies in order to satisfy the
-/// operand constraints.
+/// TODO: This needs to be removed. It's current primary purpose is to fold
+/// immediates into operands when legal. The legalization parts are redundant
+/// with SIInstrInfo::legalizeOperands which is called in a post-isel hook.
 SDNode *SITargetLowering::legalizeOperands(MachineSDNode *Node,
                                            SelectionDAG &DAG) const {
   // Original encoding (either e32 or e64)
@@ -1784,11 +1734,9 @@ SDNode *SITargetLowering::legalizeOperands(MachineSDNode *Node,
     // Is this a VSrc or SSrc operand?
     unsigned RegClass = Desc->OpInfo[Op].RegClass;
     if (isVSrc(RegClass) || isSSrc(RegClass)) {
-      // Try to fold the immediates
-      if (!foldImm(Ops[i], Immediate, ScalarSlotUsed)) {
-        // Folding didn't work, make sure we don't hit the SReg limit.
-        ensureSRegLimit(DAG, Ops[i], RegClass, ScalarSlotUsed);
-      }
+      // Try to fold the immediates. If this ends up with multiple constant bus
+      // uses, it will be legalized later.
+      foldImm(Ops[i], Immediate, ScalarSlotUsed);
       continue;
     }
 
@@ -1937,6 +1885,8 @@ void SITargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
                                                      SDNode *Node) const {
   const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
       getTargetMachine().getSubtargetImpl()->getInstrInfo());
+
+  TII->legalizeOperands(MI);
 
   if (TII->isMIMG(MI->getOpcode())) {
     unsigned VReg = MI->getOperand(0).getReg();

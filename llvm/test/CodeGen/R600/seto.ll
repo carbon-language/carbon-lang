@@ -1,8 +1,8 @@
-;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
+; RUN: llc -march=r600 -mcpu=verde -verify-machineinstrs < %s | FileCheck %s
 
-;CHECK-LABEL: @main
-;CHECK: V_CMP_O_F32_e32 vcc, {{[sv][0-9]+, v[0-9]+}}
-
+; CHECK-LABEL: @main
+; CHECK: V_CMP_O_F32_e64 [[CMP:s\[[0-9]+:[0-9]+\]]], [[SREG:s[0-9]+]], [[SREG]]
+; CHECK-NEXT: V_CNDMASK_B32_e64 {{v[0-9]+}}, 0, 1.0, [[CMP]]
 define void @main(float %p) {
 main_body:
   %c = fcmp oeq float %p, %p

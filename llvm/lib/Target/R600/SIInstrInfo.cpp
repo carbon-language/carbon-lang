@@ -1394,19 +1394,38 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
 
     int VOP3Idx[3] = { Src0Idx, Src1Idx, Src2Idx };
 
-    // First we need to consider the instruction's operand requirements before
-    // legalizing. Some operands are required to be SGPRs, but we are still
-    // bound by the constant bus requirement to only use one.
-    //
-    // If the operand's class is an SGPR, we can never move it.
-    for (unsigned i = 0; i < 3; ++i) {
-      int Idx = VOP3Idx[i];
-      if (Idx == -1)
-        break;
+    for (const MachineOperand &MO : MI->implicit_operands()) {
+      // We only care about reads.
+      if (MO.isDef())
+        continue;
 
-      if (RI.isSGPRClassID(Desc.OpInfo[Idx].RegClass)) {
-        SGPRReg = MI->getOperand(Idx).getReg();
+      if (MO.getReg() == AMDGPU::VCC) {
+        SGPRReg = AMDGPU::VCC;
         break;
+      }
+
+      if (MO.getReg() == AMDGPU::FLAT_SCR) {
+        SGPRReg = AMDGPU::FLAT_SCR;
+        break;
+      }
+    }
+
+
+    if (SGPRReg == AMDGPU::NoRegister) {
+      // First we need to consider the instruction's operand requirements before
+      // legalizing. Some operands are required to be SGPRs, but we are still
+      // bound by the constant bus requirement to only use one.
+      //
+      // If the operand's class is an SGPR, we can never move it.
+      for (unsigned i = 0; i < 3; ++i) {
+        int Idx = VOP3Idx[i];
+        if (Idx == -1)
+          break;
+
+        if (RI.isSGPRClassID(Desc.OpInfo[Idx].RegClass)) {
+          SGPRReg = MI->getOperand(Idx).getReg();
+          break;
+        }
       }
     }
 

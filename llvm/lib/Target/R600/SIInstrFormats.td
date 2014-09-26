@@ -42,6 +42,10 @@ class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
   let TSFlags{10} = MUBUF;
   let TSFlags{11} = MTBUF;
   let TSFlags{12} = FLAT;
+
+  // Most instructions require adjustments after selection to satisfy
+  // operand requirements.
+  let hasPostISelHook = 1;
 }
 
 class Enc32 {

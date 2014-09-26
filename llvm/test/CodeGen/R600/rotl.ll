@@ -8,7 +8,7 @@
 
 ; SI: S_SUB_I32 [[SDST:s[0-9]+]], 32, {{[s][0-9]+}}
 ; SI: V_MOV_B32_e32 [[VDST:v[0-9]+]], [[SDST]]
-; SI: V_ALIGNBIT_B32 {{v[0-9]+, [s][0-9]+, v[0-9]+}}, [[VDST]]
+; SI: V_ALIGNBIT_B32 {{v[0-9]+, [s][0-9]+, s[0-9]+}}, [[VDST]]
 define void @rotl_i32(i32 addrspace(1)* %in, i32 %x, i32 %y) {
 entry:
   %0 = shl i32 %x, %y

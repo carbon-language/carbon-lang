@@ -59,7 +59,7 @@ define void @fneg_free_f32(float addrspace(1)* %out, i32 %in) {
 ; FUNC-LABEL: @fneg_fold
 ; SI: S_LOAD_DWORD [[NEG_VALUE:s[0-9]+]], s[{{[0-9]+:[0-9]+}}], 0xb
 ; SI-NOT: XOR
-; SI: V_MUL_F32_e64 v{{[0-9]+}}, -[[NEG_VALUE]], v{{[0-9]+}}
+; SI: V_MUL_F32_e64 v{{[0-9]+}}, -[[NEG_VALUE]], [[NEG_VALUE]]
 define void @fneg_fold_f32(float addrspace(1)* %out, float %in) {
   %fsub = fsub float -0.0, %in
   %fmul = fmul float %fsub, %in
