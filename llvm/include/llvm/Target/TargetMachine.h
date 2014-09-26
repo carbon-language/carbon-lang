@@ -99,7 +99,7 @@ public:
   virtual const TargetSubtargetInfo *getSubtargetImpl() const {
     return nullptr;
   }
-  virtual const TargetSubtargetInfo *getSubtargetImpl(const Function *) const {
+  virtual const TargetSubtargetInfo *getSubtargetImpl(const Function &) const {
     return getSubtargetImpl();
   }
 

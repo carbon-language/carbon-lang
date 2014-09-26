@@ -85,7 +85,7 @@ MipselTargetMachine(const Target &T, StringRef TT,
   : MipsTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
 
 const MipsSubtarget *
-MipsTargetMachine::getSubtargetImpl(const Function &F) const override {
+MipsTargetMachine::getSubtargetImpl(const Function &F) const {
   AttributeSet FnAttrs = F.getAttributes();
   Attribute CPUAttr =
       FnAttrs.getAttribute(AttributeSet::FunctionIndex, "target-cpu");
@@ -124,7 +124,7 @@ MipsTargetMachine::getSubtargetImpl(const Function &F) const override {
 void MipsTargetMachine::resetSubtarget(MachineFunction *MF) {
   DEBUG(dbgs() << "resetSubtarget\n");
 
-  Subtarget = const_cast<MipsSubtarget*>(getSubtargetImpl(MF->getFunction()));
+  Subtarget = const_cast<MipsSubtarget *>(getSubtargetImpl(*MF->getFunction()));
   MF->setSubtarget(Subtarget);
   return;
 }
