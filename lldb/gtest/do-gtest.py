@@ -41,7 +41,11 @@ def line_combine_printer(file, previous_data, new_line_subn_result):
             return ("", 0)
 
         if len(accumulated_line) > 0:
-            new_line = accumulated_line + ", " + incoming_line
+            if accumulated_line[-2:] != ": ":
+                # Need to add a comma
+                new_line = accumulated_line + ", " + incoming_line
+            else:
+                new_line = accumulated_line + incoming_line
         else:
             new_line = incoming_line
 
