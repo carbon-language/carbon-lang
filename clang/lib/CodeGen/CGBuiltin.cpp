@@ -241,6 +241,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 
     return RValue::get(Result);
   }
+  case Builtin::BI__builtin_fmod:
+  case Builtin::BI__builtin_fmodf:
+  case Builtin::BI__builtin_fmodl: {
+    Value *Arg1 = EmitScalarExpr(E->getArg(0));
+    Value *Arg2 = EmitScalarExpr(E->getArg(1));
+    Value *Result = Builder.CreateFRem(Arg1, Arg2, "fmod");
+    return RValue::get(Result);
+  }
 
   case Builtin::BI__builtin_conj:
   case Builtin::BI__builtin_conjf:
