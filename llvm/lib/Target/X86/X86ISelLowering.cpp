@@ -9096,11 +9096,16 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                        MVT::v16i8, V1, V1);
 
       int PostDupI16Shuffle[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
-      for (int i = 0; i < 16; i += 2) {
-        if (Mask[i] != -1)
-          PostDupI16Shuffle[i / 2] = LaneMap[Mask[i]] - (TargetLo ? 0 : 8);
-        assert(PostDupI16Shuffle[i / 2] < 8 && "Invalid v8 shuffle mask!");
-      }
+      for (int i = 0; i < 16; ++i)
+        if (Mask[i] != -1) {
+          int MappedMask = LaneMap[Mask[i]] - (TargetLo ? 0 : 8);
+          assert(MappedMask < 8 && "Invalid v8 shuffle mask!");
+          if (PostDupI16Shuffle[i / 2] == -1)
+            PostDupI16Shuffle[i / 2] = MappedMask;
+          else
+            assert(PostDupI16Shuffle[i / 2] == MappedMask &&
+                   "Conflicting entrties in the original shuffle!");
+        }
       return DAG.getNode(
           ISD::BITCAST, DL, MVT::v16i8,
           DAG.getVectorShuffle(MVT::v8i16, DL,

@@ -637,3 +637,31 @@ define <16 x i8> @shuffle_v16i8_00_zz_01_zz_02_zz_03_zz_04_zz_05_zz_06_zz_07_zz(
   %shuffle = shufflevector <16 x i8> %a, <16 x i8> zeroinitializer, <16 x i32> <i32 0, i32 17, i32 1, i32 19, i32 2, i32 21, i32 3, i32 23, i32 4, i32 25, i32 5, i32 27, i32 6, i32 29, i32 7, i32 31>
   ret <16 x i8> %shuffle
 }
+
+define <16 x i8> @shuffle_v16i8_uu_10_02_07_22_14_07_02_18_03_01_14_18_09_11_00(<16 x i8> %a, <16 x i8> %b) {
+; SSSE3-LABEL: @shuffle_v16i8_uu_10_02_07_22_14_07_02_18_03_01_14_18_09_11_00
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    movdqa %xmm0, %[[X:xmm[0-9]+]]
+; SSSE3-NEXT:    pshufb {{.*}} # [[X]] = [[X]][2,7,1,11,u,u,u,u,u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    pshufb {{.*}} # xmm1 = xmm1[6,6,2,2,2,2,3,3,4,4,5,5,6,6,7,7]
+; SSSE3-NEXT:    punpcklbw {{.*}} # xmm1 = xmm1[0],[[X]][0],xmm1[1],[[X]][1],xmm1[2],[[X]][2],xmm1[3],[[X]][3],xmm1[4],[[X]][4],xmm1[5],[[X]][5],xmm1[6],[[X]][6],xmm1[7],[[X]][7]
+; SSSE3-NEXT:    pshufb {{.*}} # xmm0 = xmm0[10,7,14,2,3,14,9,0,u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    punpcklbw {{.*}} # xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3],xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
+; SSSE3-NEXT:    movdqa %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: @shuffle_v16i8_uu_10_02_07_22_14_07_02_18_03_01_14_18_09_11_00
+; SSE41:       # BB#0:
+; SSE41-NEXT:    movdqa %xmm0, %[[X:xmm[0-9]+]]
+; SSE41-NEXT:    pshufb {{.*}} # [[X]] = [[X]][2,7,1,11,u,u,u,u,u,u,u,u,u,u,u,u]
+; SSE41-NEXT:    pshufb {{.*}} # xmm1 = xmm1[6,6,2,2,2,2,3,3,4,4,5,5,6,6,7,7]
+; SSE41-NEXT:    punpcklbw {{.*}} # xmm1 = xmm1[0],[[X]][0],xmm1[1],[[X]][1],xmm1[2],[[X]][2],xmm1[3],[[X]][3],xmm1[4],[[X]][4],xmm1[5],[[X]][5],xmm1[6],[[X]][6],xmm1[7],[[X]][7]
+; SSE41-NEXT:    pshufb {{.*}} # xmm0 = xmm0[10,7,14,2,3,14,9,0,u,u,u,u,u,u,u,u]
+; SSE41-NEXT:    punpcklbw {{.*}} # xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3],xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
+; SSE41-NEXT:    movdqa %xmm1, %xmm0
+; SSE41-NEXT:    retq
+entry:
+  %shuffle = shufflevector <16 x i8> %a, <16 x i8> %b, <16 x i32> <i32 undef, i32 10, i32 2, i32 7, i32 22, i32 14, i32 7, i32 2, i32 18, i32 3, i32 1, i32 14, i32 18, i32 9, i32 11, i32 0>
+
+  ret <16 x i8> %shuffle
+}
