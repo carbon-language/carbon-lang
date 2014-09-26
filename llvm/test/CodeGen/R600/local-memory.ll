@@ -1,32 +1,30 @@
-; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK %s
-; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK %s
-; RUN: llc < %s -march=r600 -mcpu=bonaire -verify-machineinstrs | FileCheck --check-prefix=CI-CHECK %s
+; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=verde -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -check-prefix=CI -check-prefix=FUNC %s
 
 @local_memory.local_mem = internal unnamed_addr addrspace(3) global [128 x i32] zeroinitializer, align 4
 
-; EG-CHECK-LABEL: @local_memory
-; SI-CHECK-LABEL: @local_memory
-; CI-CHECK-LABEL: @local_memory
+; FUNC-LABEL: @local_memory
 
 ; Check that the LDS size emitted correctly
-; EG-CHECK: .long 166120
-; EG-CHECK-NEXT: .long 128
-; SI-CHECK: .long 47180
-; SI-CHECK-NEXT: .long 65536
-; CI-CHECK: .long 47180
-; CI-CHECK-NEXT: .long 32768
+; EG: .long 166120
+; EG-NEXT: .long 128
+; SI: .long 47180
+; SI-NEXT: .long 65536
+; CI: .long 47180
+; CI-NEXT: .long 32768
 
-; EG-CHECK: LDS_WRITE
-; SI-CHECK-NOT: S_WQM_B64
-; SI-CHECK: DS_WRITE_B32
+; EG: LDS_WRITE
+; SI-NOT: S_WQM_B64
+; SI: DS_WRITE_B32
 
 ; GROUP_BARRIER must be the last instruction in a clause
-; EG-CHECK: GROUP_BARRIER
-; EG-CHECK-NEXT: ALU clause
-; SI-CHECK: S_BARRIER
+; EG: GROUP_BARRIER
+; EG-NEXT: ALU clause
+; SI: S_BARRIER
 
-; EG-CHECK: LDS_READ_RET
-; SI-CHECK: DS_READ_B32 {{v[0-9]+}},
+; EG: LDS_READ_RET
+; SI: DS_READ_B32 {{v[0-9]+}},
 
 define void @local_memory(i32 addrspace(1)* %out) {
 entry:
