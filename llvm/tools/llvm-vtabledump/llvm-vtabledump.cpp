@@ -303,7 +303,9 @@ static void dumpVTables(const ObjectFile *Obj) {
       AlwaysZero |= Data;
     outs() << TDName << "[AlwaysZero]: " << AlwaysZero << '\n';
     outs() << TDName << "[MangledName]: ";
-    outs().write_escaped(TD.MangledName, /*UseHexEscapes=*/true) << '\n';
+    outs().write_escaped(TD.MangledName.rtrim(StringRef("\0", 1)),
+                         /*UseHexEscapes=*/true)
+        << '\n';
   }
 }
 

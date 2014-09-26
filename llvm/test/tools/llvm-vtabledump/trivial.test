@@ -44,7 +44,7 @@ CHECK-NEXT: ??_R1A@?0A@EA@S@@8[Flags]: 64
 CHECK-NEXT: ??_R1A@?0A@EA@S@@8[ClassHierarchyDescriptor]: ??_R3S@@8
 CHECK-NEXT: ??_R0?AUA@@@8[VFPtr]: ??_7type_info@@6B@
 CHECK-NEXT: ??_R0?AUA@@@8[AlwaysZero]: 0
-CHECK-NEXT: ??_R0?AUA@@@8[MangledName]: .?AUA@@\x00
+CHECK-NEXT: ??_R0?AUA@@@8[MangledName]: .?AUA@@
 CHECK-NEXT: ??_R0?AUS@@@8[VFPtr]: ??_7type_info@@6B@
 CHECK-NEXT: ??_R0?AUS@@@8[AlwaysZero]: 0
-CHECK-NEXT: ??_R0?AUS@@@8[MangledName]: .?AUS@@\x00
+CHECK-NEXT: ??_R0?AUS@@@8[MangledName]: .?AUS@@
