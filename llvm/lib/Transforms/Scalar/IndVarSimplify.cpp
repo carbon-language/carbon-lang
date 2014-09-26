@@ -650,7 +650,7 @@ namespace {
   struct WideIVInfo {
     PHINode *NarrowIV;
     Type *WidestNativeType; // Widest integer type created [sz]ext
-    bool IsSigned;          // Was an sext user seen before a zext?
+    bool IsSigned;          // Was a sext user seen before a zext?
 
     WideIVInfo() : NarrowIV(nullptr), WidestNativeType(nullptr),
                    IsSigned(false) {}
@@ -936,7 +936,11 @@ bool WidenIV::WidenLoopCompare(NarrowIVDefUse DU) {
   if (!Cmp)
     return false;
 
-  bool IsSigned = CmpInst::isSigned(Cmp->getPredicate());
+  // Must be a signed compare.
+  if (!CmpInst::isSigned(Cmp->getPredicate()))
+    return false;
+
+  // Must be a signed IV user.
   if (!IsSigned)
     return false;
 

@@ -136,3 +136,29 @@ for.body:
 for.end:
   ret i32 %sum.0
 }
+
+declare i32 @fn1(i8 signext)
+
+; PR21030
+; CHECK-LABEL: @test4
+; CHECK: for.body:
+; CHECK: phi i32
+; CHECK: icmp sgt i8
+
+define i32 @test4(i32 %a) {
+entry:
+  br label %for.body
+
+for.body:
+  %c.07 = phi i8 [ -3, %entry ], [ %dec, %for.body ]
+  %conv6 = zext i8 %c.07 to i32
+  %or = or i32 %a, %conv6
+  %conv3 = trunc i32 %or to i8
+  %call = call i32 @fn1(i8 signext %conv3)
+  %dec = add i8 %c.07, -1
+  %cmp = icmp sgt i8 %dec, -14
+  br i1 %cmp, label %for.body, label %for.end
+
+for.end:
+  ret i32 0
+}
