@@ -1397,7 +1397,7 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
     for (unsigned i = 0; i < 3; ++i) {
       int Idx = VOP3Idx[i];
       if (Idx == -1)
-        continue;
+        break;
       MachineOperand &MO = MI->getOperand(Idx);
 
       if (MO.isReg()) {
