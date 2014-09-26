@@ -10,7 +10,7 @@
 @z3 = common global i32 0, align 4
 @z4 = common global i32 0, align 4
 
-define void @calc_seleq() nounwind "target-cpu"="mips32" "target-features"="+o32,+mips32" {
+define void @calc_seleq() nounwind {
 entry:
   %0 = load i32* @a, align 4
   %1 = load i32* @b, align 4

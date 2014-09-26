@@ -25,10 +25,13 @@ class formatted_raw_ostream;
 class MipsRegisterInfo;
 
 class MipsTargetMachine : public LLVMTargetMachine {
+  bool isLittle;
   MipsSubtarget *Subtarget;
   MipsSubtarget DefaultSubtarget;
   MipsSubtarget NoMips16Subtarget;
   MipsSubtarget Mips16Subtarget;
+
+  mutable StringMap<std::unique_ptr<MipsSubtarget>> SubtargetMap;
 
 public:
   MipsTargetMachine(const Target &T, StringRef TT, StringRef CPU, StringRef FS,
@@ -44,6 +47,8 @@ public:
       return Subtarget;
     return &DefaultSubtarget;
   }
+
+  const MipsSubtarget *getSubtargetImpl(const Function &F) const override;
 
   /// \brief Reset the subtarget for the Mips target.
   void resetSubtarget(MachineFunction *MF);
