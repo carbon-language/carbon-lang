@@ -42,3 +42,26 @@ int test4(int *a, int b) {
   return a[0];
 }
 
+int *m1() __attribute__((assume_aligned(64)));
+
+// CHECK-LABEL: @test5
+int test5() {
+  return *m1();
+// CHECK: %ptrint = ptrtoint
+// CHECK: %maskedptr = and i64 %ptrint, 63
+// CHECK: %maskcond = icmp eq i64 %maskedptr, 0
+// CHECK: call void @llvm.assume(i1 %maskcond)
+}
+
+int *m2() __attribute__((assume_aligned(64, 12)));
+
+// CHECK-LABEL: @test6
+int test6() {
+  return *m2();
+// CHECK: %ptrint = ptrtoint
+// CHECK: %offsetptr = sub i64 %ptrint, 12
+// CHECK: %maskedptr = and i64 %offsetptr, 63
+// CHECK: %maskcond = icmp eq i64 %maskedptr, 0
+// CHECK: call void @llvm.assume(i1 %maskcond)
+}
+

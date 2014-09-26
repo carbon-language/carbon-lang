@@ -154,6 +154,30 @@ def ReleaseCapabilityDocs : Documentation {
 Marks a function as releasing a capability.
   }];
 }
+
+def AssumeAlignedDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Use ``__attribute__((assume_aligned(<alignment>[,<offset>]))`` on a function
+declaration to specify that the return value of the function (which must be a
+pointer type) has the specified offset, in bytes, from an address with the
+specified alignment. The offset is taken to be zero if omitted.
+
+.. code-block:: c++
+
+  // The returned pointer value has 32-byte alignment.
+  void *a() __attribute__((assume_aligned (32)));
+
+  // The returned pointer value is 4 bytes greater than an address having
+  // 32-byte alignment.
+  void *b() __attribute__((assume_aligned (32, 4)));
+
+Note that this attribute provides information to the compiler regarding a
+condition that the code already ensures is true. It does not cause the compiler
+to enforce the provided alignment assumption.
+  }];
+}
+
 def EnableIfDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{

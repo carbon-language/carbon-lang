@@ -877,7 +877,7 @@ static void CheckNonNullArguments(Sema &S,
     if (!NonNull->args_size()) {
       // Easy case: all pointer arguments are nonnull.
       for (const auto *Arg : Args)
-        if (S.isValidNonNullAttrType(Arg->getType()))
+        if (S.isValidPointerAttrType(Arg->getType()))
           CheckNonNullArgument(S, Arg, CallSiteLoc);
       return;
     }

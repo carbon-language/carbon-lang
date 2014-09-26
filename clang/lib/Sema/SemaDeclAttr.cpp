@@ -29,6 +29,7 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Scope.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/MathExtras.h"
 using namespace clang;
 using namespace sema;
 
@@ -1125,11 +1126,16 @@ static void handleIBOutletCollection(Sema &S, Decl *D,
                                     Attr.getAttributeSpellingListIndex()));
 }
 
-bool Sema::isValidNonNullAttrType(QualType T) {
-  T = T.getNonReferenceType();
+bool Sema::isValidPointerAttrType(QualType T, bool RefOkay) {
+  if (RefOkay) {
+    if (T->isReferenceType())
+      return true;
+  } else {
+    T = T.getNonReferenceType();
+  }
 
-  // The nonnull attribute can be applied to a transparent union that
-  // contains a pointer type.
+  // The nonnull attribute, and other similar attributes, can be applied to a
+  // transparent union that contains a pointer type.
   if (const RecordType *UT = T->getAsUnionType()) {
     if (UT && UT->getDecl()->hasAttr<TransparentUnionAttr>()) {
       RecordDecl *UD = UT->getDecl();
@@ -1146,13 +1152,13 @@ bool Sema::isValidNonNullAttrType(QualType T) {
 
 static bool attrNonNullArgCheck(Sema &S, QualType T, const AttributeList &Attr,
                                 SourceRange AttrParmRange,
-                                SourceRange NonNullTypeRange,
+                                SourceRange TypeRange,
                                 bool isReturnValue = false) {
-  if (!S.isValidNonNullAttrType(T)) {
+  if (!S.isValidPointerAttrType(T)) {
     S.Diag(Attr.getLoc(), isReturnValue
                               ? diag::warn_attribute_return_pointers_only
                               : diag::warn_attribute_pointers_only)
-        << Attr.getName() << AttrParmRange << NonNullTypeRange;
+        << Attr.getName() << AttrParmRange << TypeRange;
     return false;
   }
   return true;
@@ -1186,7 +1192,7 @@ static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     for (unsigned I = 0, E = getFunctionOrMethodNumParams(D);
          I != E && !AnyPointers; ++I) {
       QualType T = getFunctionOrMethodParamType(D, I);
-      if (T->isDependentType() || S.isValidNonNullAttrType(T))
+      if (T->isDependentType() || S.isValidPointerAttrType(T))
         AnyPointers = true;
     }
 
@@ -1235,6 +1241,65 @@ static void handleReturnsNonNullAttr(Sema &S, Decl *D,
   D->addAttr(::new (S.Context)
             ReturnsNonNullAttr(Attr.getRange(), S.Context,
                                Attr.getAttributeSpellingListIndex()));
+}
+
+static void handleAssumeAlignedAttr(Sema &S, Decl *D,
+                                    const AttributeList &Attr) {
+  Expr *E = Attr.getArgAsExpr(0),
+       *OE = Attr.getNumArgs() > 1 ? Attr.getArgAsExpr(1) : nullptr;
+  S.AddAssumeAlignedAttr(Attr.getRange(), D, E, OE,
+                         Attr.getAttributeSpellingListIndex());
+}
+
+void Sema::AddAssumeAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
+                                Expr *OE, unsigned SpellingListIndex) {
+  QualType ResultType = getFunctionOrMethodResultType(D);
+  SourceRange SR = getFunctionOrMethodResultSourceRange(D);
+
+  AssumeAlignedAttr TmpAttr(AttrRange, Context, E, OE, SpellingListIndex);
+  SourceLocation AttrLoc = AttrRange.getBegin();
+
+  if (!isValidPointerAttrType(ResultType, /* RefOkay */ true)) {
+    Diag(AttrLoc, diag::warn_attribute_return_pointers_refs_only)
+      << &TmpAttr << AttrRange << SR;
+    return;
+  }
+
+  if (!E->isValueDependent()) {
+    llvm::APSInt I(64);
+    if (!E->isIntegerConstantExpr(I, Context)) {
+      if (OE)
+        Diag(AttrLoc, diag::err_attribute_argument_n_type)
+          << &TmpAttr << 1 << AANT_ArgumentIntegerConstant
+          << E->getSourceRange();
+      else
+        Diag(AttrLoc, diag::err_attribute_argument_type)
+          << &TmpAttr << AANT_ArgumentIntegerConstant
+          << E->getSourceRange();
+      return;
+    }
+
+    if (!I.isPowerOf2()) {
+      Diag(AttrLoc, diag::err_alignment_not_power_of_two)
+        << E->getSourceRange();
+      return;
+    }
+  }
+
+  if (OE) {
+    if (!OE->isValueDependent()) {
+      llvm::APSInt I(64);
+      if (!OE->isIntegerConstantExpr(I, Context)) {
+        Diag(AttrLoc, diag::err_attribute_argument_n_type)
+          << &TmpAttr << 2 << AANT_ArgumentIntegerConstant
+          << OE->getSourceRange();
+        return;
+      }
+    }
+  }
+
+  D->addAttr(::new (Context)
+            AssumeAlignedAttr(AttrRange, Context, E, OE, SpellingListIndex));
 }
 
 static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
@@ -4211,6 +4276,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_ReturnsNonNull:
     handleReturnsNonNullAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_AssumeAligned:
+    handleAssumeAlignedAttr(S, D, Attr);
     break;
   case AttributeList::AT_Overloadable:
     handleSimpleAttribute<OverloadableAttr>(S, D, Attr);

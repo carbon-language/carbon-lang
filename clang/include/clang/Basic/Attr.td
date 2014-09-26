@@ -864,6 +864,13 @@ def ReturnsNonNull : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
+def AssumeAligned : InheritableAttr {
+  let Spellings = [GCC<"assume_aligned">];
+  let Subjects = SubjectList<[ObjCMethod, Function]>;
+  let Args = [ExprArgument<"Alignment">, ExprArgument<"Offset", 1>];
+  let Documentation = [AssumeAlignedDocs];
+}
+
 def NoReturn : InheritableAttr {
   let Spellings = [GCC<"noreturn">, Declspec<"noreturn">];
   // FIXME: Does GCC allow this on the function instead?

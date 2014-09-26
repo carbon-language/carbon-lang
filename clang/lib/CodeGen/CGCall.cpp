@@ -3163,75 +3163,92 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   // lexical order, so deactivate it and run it manually here.
   CallArgs.freeArgumentMemory(*this);
 
-  switch (RetAI.getKind()) {
-  case ABIArgInfo::InAlloca:
-  case ABIArgInfo::Indirect:
-    return convertTempToRValue(SRetPtr, RetTy, SourceLocation());
+  RValue Ret = [&] {
+    switch (RetAI.getKind()) {
+    case ABIArgInfo::InAlloca:
+    case ABIArgInfo::Indirect:
+      return convertTempToRValue(SRetPtr, RetTy, SourceLocation());
 
-  case ABIArgInfo::Ignore:
-    // If we are ignoring an argument that had a result, make sure to
-    // construct the appropriate return value for our caller.
-    return GetUndefRValue(RetTy);
+    case ABIArgInfo::Ignore:
+      // If we are ignoring an argument that had a result, make sure to
+      // construct the appropriate return value for our caller.
+      return GetUndefRValue(RetTy);
 
-  case ABIArgInfo::Extend:
-  case ABIArgInfo::Direct: {
-    llvm::Type *RetIRTy = ConvertType(RetTy);
-    if (RetAI.getCoerceToType() == RetIRTy && RetAI.getDirectOffset() == 0) {
-      switch (getEvaluationKind(RetTy)) {
-      case TEK_Complex: {
-        llvm::Value *Real = Builder.CreateExtractValue(CI, 0);
-        llvm::Value *Imag = Builder.CreateExtractValue(CI, 1);
-        return RValue::getComplex(std::make_pair(Real, Imag));
-      }
-      case TEK_Aggregate: {
-        llvm::Value *DestPtr = ReturnValue.getValue();
-        bool DestIsVolatile = ReturnValue.isVolatile();
-
-        if (!DestPtr) {
-          DestPtr = CreateMemTemp(RetTy, "agg.tmp");
-          DestIsVolatile = false;
+    case ABIArgInfo::Extend:
+    case ABIArgInfo::Direct: {
+      llvm::Type *RetIRTy = ConvertType(RetTy);
+      if (RetAI.getCoerceToType() == RetIRTy && RetAI.getDirectOffset() == 0) {
+        switch (getEvaluationKind(RetTy)) {
+        case TEK_Complex: {
+          llvm::Value *Real = Builder.CreateExtractValue(CI, 0);
+          llvm::Value *Imag = Builder.CreateExtractValue(CI, 1);
+          return RValue::getComplex(std::make_pair(Real, Imag));
         }
-        BuildAggStore(*this, CI, DestPtr, DestIsVolatile, false);
-        return RValue::getAggregate(DestPtr);
+        case TEK_Aggregate: {
+          llvm::Value *DestPtr = ReturnValue.getValue();
+          bool DestIsVolatile = ReturnValue.isVolatile();
+
+          if (!DestPtr) {
+            DestPtr = CreateMemTemp(RetTy, "agg.tmp");
+            DestIsVolatile = false;
+          }
+          BuildAggStore(*this, CI, DestPtr, DestIsVolatile, false);
+          return RValue::getAggregate(DestPtr);
+        }
+        case TEK_Scalar: {
+          // If the argument doesn't match, perform a bitcast to coerce it.  This
+          // can happen due to trivial type mismatches.
+          llvm::Value *V = CI;
+          if (V->getType() != RetIRTy)
+            V = Builder.CreateBitCast(V, RetIRTy);
+          return RValue::get(V);
+        }
+        }
+        llvm_unreachable("bad evaluation kind");
       }
-      case TEK_Scalar: {
-        // If the argument doesn't match, perform a bitcast to coerce it.  This
-        // can happen due to trivial type mismatches.
-        llvm::Value *V = CI;
-        if (V->getType() != RetIRTy)
-          V = Builder.CreateBitCast(V, RetIRTy);
-        return RValue::get(V);
+
+      llvm::Value *DestPtr = ReturnValue.getValue();
+      bool DestIsVolatile = ReturnValue.isVolatile();
+
+      if (!DestPtr) {
+        DestPtr = CreateMemTemp(RetTy, "coerce");
+        DestIsVolatile = false;
       }
+
+      // If the value is offset in memory, apply the offset now.
+      llvm::Value *StorePtr = DestPtr;
+      if (unsigned Offs = RetAI.getDirectOffset()) {
+        StorePtr = Builder.CreateBitCast(StorePtr, Builder.getInt8PtrTy());
+        StorePtr = Builder.CreateConstGEP1_32(StorePtr, Offs);
+        StorePtr = Builder.CreateBitCast(StorePtr,
+                           llvm::PointerType::getUnqual(RetAI.getCoerceToType()));
       }
-      llvm_unreachable("bad evaluation kind");
+      CreateCoercedStore(CI, StorePtr, DestIsVolatile, *this);
+
+      return convertTempToRValue(DestPtr, RetTy, SourceLocation());
     }
 
-    llvm::Value *DestPtr = ReturnValue.getValue();
-    bool DestIsVolatile = ReturnValue.isVolatile();
-
-    if (!DestPtr) {
-      DestPtr = CreateMemTemp(RetTy, "coerce");
-      DestIsVolatile = false;
+    case ABIArgInfo::Expand:
+      llvm_unreachable("Invalid ABI kind for return argument");
     }
 
-    // If the value is offset in memory, apply the offset now.
-    llvm::Value *StorePtr = DestPtr;
-    if (unsigned Offs = RetAI.getDirectOffset()) {
-      StorePtr = Builder.CreateBitCast(StorePtr, Builder.getInt8PtrTy());
-      StorePtr = Builder.CreateConstGEP1_32(StorePtr, Offs);
-      StorePtr = Builder.CreateBitCast(StorePtr,
-                         llvm::PointerType::getUnqual(RetAI.getCoerceToType()));
-    }
-    CreateCoercedStore(CI, StorePtr, DestIsVolatile, *this);
+    llvm_unreachable("Unhandled ABIArgInfo::Kind");
+  } ();
 
-    return convertTempToRValue(DestPtr, RetTy, SourceLocation());
+  if (Ret.isScalar() && TargetDecl) {
+    if (const auto *AA = TargetDecl->getAttr<AssumeAlignedAttr>()) {
+      llvm::Value *OffsetValue = nullptr;
+      if (const auto *Offset = AA->getOffset())
+        OffsetValue = EmitScalarExpr(Offset);
+
+      llvm::Value *Alignment = EmitScalarExpr(AA->getAlignment());
+      llvm::ConstantInt *AlignmentCI = cast<llvm::ConstantInt>(Alignment);
+      EmitAlignmentAssumption(Ret.getScalarVal(), AlignmentCI->getZExtValue(),
+                              OffsetValue);
+    }
   }
 
-  case ABIArgInfo::Expand:
-    llvm_unreachable("Invalid ABI kind for return argument");
-  }
-
-  llvm_unreachable("Unhandled ABIArgInfo::Kind");
+  return Ret;
 }
 
 /* VarArg handling */

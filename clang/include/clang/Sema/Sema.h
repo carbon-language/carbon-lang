@@ -2715,8 +2715,11 @@ public:
 
   void checkUnusedDeclAttributes(Declarator &D);
 
-  /// Determine if type T is a valid subject for a nonnull attribute.
-  bool isValidNonNullAttrType(QualType T);
+  /// Determine if type T is a valid subject for a nonnull and similar
+  /// attributes. By default, we look through references (the behavior used by
+  /// nonnull), but if the second parameter is true, then we treat a reference
+  /// type as valid.
+  bool isValidPointerAttrType(QualType T, bool RefOkay = false);
 
   bool CheckRegparmAttr(const AttributeList &attr, unsigned &value);
   bool CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC, 
@@ -7354,6 +7357,11 @@ public:
                       unsigned SpellingListIndex, bool IsPackExpansion);
   void AddAlignedAttr(SourceRange AttrRange, Decl *D, TypeSourceInfo *T,
                       unsigned SpellingListIndex, bool IsPackExpansion);
+
+  /// AddAssumeAlignedAttr - Adds an assume_aligned attribute to a particular
+  /// declaration.
+  void AddAssumeAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E, Expr *OE,
+                            unsigned SpellingListIndex);
 
   // OpenMP directives and clauses.
 private:

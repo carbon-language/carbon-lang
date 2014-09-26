@@ -43,3 +43,18 @@ int test8(int *a, int j) {
   return a[0];
 }
 
+void test_void_assume_aligned(void) __attribute__((assume_aligned(32))); // expected-warning {{'assume_aligned' attribute only applies to return values that are pointers}}
+int test_int_assume_aligned(void) __attribute__((assume_aligned(16))); // expected-warning {{'assume_aligned' attribute only applies to return values that are pointers}}
+void *test_ptr_assume_aligned(void) __attribute__((assume_aligned(64))); // no-warning
+
+int j __attribute__((assume_aligned(8))); // expected-warning {{'assume_aligned' attribute only applies to functions and methods}}
+void *test_no_fn_proto() __attribute__((assume_aligned(32))); // no-warning
+void *test_with_fn_proto(void) __attribute__((assume_aligned(128))); // no-warning
+
+void *test_no_fn_proto() __attribute__((assume_aligned(31))); // expected-error {{requested alignment is not a power of 2}}
+void *test_no_fn_proto() __attribute__((assume_aligned(32, 73))); // no-warning
+
+void *test_no_fn_proto() __attribute__((assume_aligned)); // expected-error {{'assume_aligned' attribute takes at least 1 argument}}
+void *test_no_fn_proto() __attribute__((assume_aligned())); // expected-error {{'assume_aligned' attribute takes at least 1 argument}}
+void *test_no_fn_proto() __attribute__((assume_aligned(32, 45, 37))); // expected-error {{'assume_aligned' attribute takes no more than 2 arguments}}
+
