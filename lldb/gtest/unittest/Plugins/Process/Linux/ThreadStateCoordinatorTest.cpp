@@ -110,3 +110,52 @@ TEST(ThreadStateCoordinatorTest, CallAfterThreadsStopFiresWhenOnePendingStop)
     ASSERT_EQ (true, call_after_fired);
     ASSERT_EQ (TRIGGERING_TID, reported_firing_tid);
 }
+
+TEST(ThreadStateCoordinatorTest, CallAfterThreadsStopFiresWhenPendingAlreadyStopped)
+{
+    ThreadStateCoordinator coordinator(NOPLogger);
+
+    const lldb::tid_t TRIGGERING_TID = 4105;
+    const lldb::tid_t PENDING_STOP_TID = 3;
+
+    ThreadStateCoordinator::ThreadIDSet pending_stop_tids { PENDING_STOP_TID };
+
+    // Tell coordinator the pending stop tid is already stopped.
+    coordinator.NotifyThreadStop (PENDING_STOP_TID);
+    ASSERT_EQ (true, coordinator.ProcessNextEvent ());
+
+    // Now fire the deferred thread stop notification, indicating that the pending thread
+    // must be stopped before we notify.
+    bool call_after_fired = false;
+    lldb::tid_t reported_firing_tid = 0;
+
+    bool request_thread_stop_called = false;
+    lldb::tid_t request_thread_stop_tid = 0;
+
+    // Notify we have a trigger that needs to be fired when all threads in the wait tid set have stopped.
+    coordinator.CallAfterThreadsStop (TRIGGERING_TID,
+                                      pending_stop_tids,
+                                      [&](lldb::tid_t tid) {
+                                          request_thread_stop_called = true;
+                                          request_thread_stop_tid = tid;
+
+                                      },
+                                      [&](lldb::tid_t tid) {
+                                          call_after_fired = true;
+                                          reported_firing_tid = tid;
+                                      });
+
+    // Neither trigger should have gone off yet.
+    ASSERT_EQ (false, call_after_fired);
+    ASSERT_EQ (false, request_thread_stop_called);
+
+    // Process next event.
+    ASSERT_EQ (true, coordinator.ProcessNextEvent ());
+
+    // The pending stop should *not* fire because the coordinator knows it has already stopped.
+    ASSERT_EQ (false, request_thread_stop_called);
+
+    // The deferred signal notification should have fired since all requirements were met.
+    ASSERT_EQ (true, call_after_fired);
+    ASSERT_EQ (TRIGGERING_TID, reported_firing_tid);
+}

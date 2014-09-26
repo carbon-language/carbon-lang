@@ -94,12 +94,27 @@ public:
     bool
     ProcessEvent(ThreadStateCoordinator &coordinator) override
     {
-        // Request a stop for all the thread stops that are needed.
-        // In the future, we can keep track of which stops we're
-        // still waiting for, and can not re-issue for already
-        // requested stops.
+        // Request a stop for all the thread stops that need to be stopped
+        // and are not already known to be stopped.  Keep a list of all the
+        // threads from which we still need to hear a stop reply.
+
+        ThreadIDSet sent_tids;
         for (auto tid : m_wait_for_stop_tids)
-            m_request_thread_stop_func (tid);
+        {
+            // If we don't know about the thread's stop state or we
+            // know it is not stopped, we need to send it a stop request.
+            auto find_it = coordinator.m_tid_stop_map.find (tid);
+            if ((find_it == coordinator.m_tid_stop_map.end ()) || !find_it->second)
+            {
+                m_request_thread_stop_func (tid);
+                sent_tids.insert (tid);
+            }
+        }
+
+        // We only need to wait for the sent_tids - so swap our wait set
+        // to the sent tids.  The rest are already stopped and we won't
+        // be receiving stop notifications for them.
+        m_wait_for_stop_tids.swap (sent_tids);
 
         if (m_wait_for_stop_tids.empty ())
         {
