@@ -117,6 +117,7 @@ defm : SBWriteResPair<WriteFAdd,   SBPort1, 3>;
 defm : SBWriteResPair<WriteFMul,   SBPort0, 5>;
 defm : SBWriteResPair<WriteFDiv,   SBPort0, 12>; // 10-14 cycles.
 defm : SBWriteResPair<WriteFRcp,   SBPort0, 5>;
+defm : SBWriteResPair<WriteFRsqrt, SBPort0, 5>;
 defm : SBWriteResPair<WriteFSqrt,  SBPort0, 15>;
 defm : SBWriteResPair<WriteCvtF2I, SBPort1, 3>;
 defm : SBWriteResPair<WriteCvtI2F, SBPort1, 4>;

@@ -129,6 +129,7 @@ defm : HWWriteResPair<WriteFAdd,   HWPort1, 3>;
 defm : HWWriteResPair<WriteFMul,   HWPort0, 5>;
 defm : HWWriteResPair<WriteFDiv,   HWPort0, 12>; // 10-14 cycles.
 defm : HWWriteResPair<WriteFRcp,   HWPort0, 5>;
+defm : HWWriteResPair<WriteFRsqrt, HWPort0, 5>;
 defm : HWWriteResPair<WriteFSqrt,  HWPort0, 15>;
 defm : HWWriteResPair<WriteCvtF2I, HWPort1, 3>;
 defm : HWWriteResPair<WriteCvtI2F, HWPort1, 4>;

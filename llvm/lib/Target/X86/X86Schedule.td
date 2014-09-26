@@ -63,12 +63,13 @@ def WriteZero : SchedWrite;
 defm WriteJump : X86SchedWritePair;
 
 // Floating point. This covers both scalar and vector operations.
-defm WriteFAdd  : X86SchedWritePair; // Floating point add/sub/compare.
-defm WriteFMul  : X86SchedWritePair; // Floating point multiplication.
-defm WriteFDiv  : X86SchedWritePair; // Floating point division.
-defm WriteFSqrt : X86SchedWritePair; // Floating point square root.
-defm WriteFRcp  : X86SchedWritePair; // Floating point reciprocal.
-defm WriteFMA   : X86SchedWritePair; // Fused Multiply Add.
+defm WriteFAdd   : X86SchedWritePair; // Floating point add/sub/compare.
+defm WriteFMul   : X86SchedWritePair; // Floating point multiplication.
+defm WriteFDiv   : X86SchedWritePair; // Floating point division.
+defm WriteFSqrt  : X86SchedWritePair; // Floating point square root.
+defm WriteFRcp   : X86SchedWritePair; // Floating point reciprocal estimate.
+defm WriteFRsqrt : X86SchedWritePair; // Floating point reciprocal square root estimate.
+defm WriteFMA    : X86SchedWritePair; // Fused Multiply Add.
 defm WriteFShuffle  : X86SchedWritePair; // Floating point vector shuffles.
 defm WriteFBlend  : X86SchedWritePair; // Floating point vector blends.
 defm WriteFVarBlend  : X86SchedWritePair; // Fp vector variable blends.
@@ -313,6 +314,11 @@ def IIC_SSE_SQRTPD_RR : InstrItinClass;
 def IIC_SSE_SQRTPD_RM : InstrItinClass;
 def IIC_SSE_SQRTSD_RR : InstrItinClass;
 def IIC_SSE_SQRTSD_RM : InstrItinClass;
+
+def IIC_SSE_RSQRTPS_RR : InstrItinClass;
+def IIC_SSE_RSQRTPS_RM : InstrItinClass;
+def IIC_SSE_RSQRTSS_RR : InstrItinClass;
+def IIC_SSE_RSQRTSS_RM : InstrItinClass;
 
 def IIC_SSE_RCPP_RR : InstrItinClass;
 def IIC_SSE_RCPP_RM : InstrItinClass;

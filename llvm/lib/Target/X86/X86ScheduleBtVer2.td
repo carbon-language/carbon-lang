@@ -163,15 +163,15 @@ defm : JWriteResIntPair<WriteJump,  JALU01, 1>;
 // FIXME: should we bother splitting JFPU pipe + unit stages for fast instructions?
 // FIXME: Double precision latencies
 // FIXME: SS vs PS latencies
-// FIXME: RSQRT latencies
 // FIXME: ymm latencies
 ////////////////////////////////////////////////////////////////////////////////
 
-defm : JWriteResFpuPair<WriteFAdd,      JFPU0,  3>;
-defm : JWriteResFpuPair<WriteFMul,      JFPU1,  2>;
-defm : JWriteResFpuPair<WriteFRcp,      JFPU1,  2>;
-defm : JWriteResFpuPair<WriteFShuffle, JFPU01,  1>;
-defm : JWriteResFpuPair<WriteFBlend,   JFPU01,  1>;
+defm : JWriteResFpuPair<WriteFAdd,        JFPU0,  3>;
+defm : JWriteResFpuPair<WriteFMul,        JFPU1,  2>;
+defm : JWriteResFpuPair<WriteFRcp,        JFPU1,  2>;
+defm : JWriteResFpuPair<WriteFRsqrt,      JFPU1,  2>;
+defm : JWriteResFpuPair<WriteFShuffle,   JFPU01,  1>;
+defm : JWriteResFpuPair<WriteFBlend,     JFPU01,  1>;
 defm : JWriteResFpuPair<WriteFShuffle256, JFPU01, 1>;
 
 def : WriteRes<WriteFSqrt, [JFPU1, JLAGU, JFPM]> {

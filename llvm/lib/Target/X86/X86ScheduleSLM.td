@@ -101,6 +101,7 @@ def : WriteRes<WriteIDivLd, [MEC_RSV, IEC_RSV01, SMDivider]> {
 // Scalar and vector floating point.
 defm : SMWriteResPair<WriteFAdd,   FPC_RSV1, 3>;
 defm : SMWriteResPair<WriteFRcp,   FPC_RSV0, 5>;
+defm : SMWriteResPair<WriteFRsqrt, FPC_RSV0, 5>;
 defm : SMWriteResPair<WriteFSqrt,  FPC_RSV0, 15>;
 defm : SMWriteResPair<WriteCvtF2I, FPC_RSV01, 4>;
 defm : SMWriteResPair<WriteCvtI2F, FPC_RSV01, 4>;
