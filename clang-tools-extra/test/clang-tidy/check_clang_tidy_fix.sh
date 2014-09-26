@@ -3,7 +3,7 @@
 # Run clang-tidy in fix mode and verify the result.
 # Usage:
 #   check_clang_tidy_fix.sh <source-file> <check-name> <temp-file> \
-#     [optional compiler arguments]
+#     [optional clang-tidy arguments]
 #
 # Example:
 #   // RUN: $(dirname %s)/check_clang_tidy_fix.sh %s llvm-include-order %t -- -isystem $(dirname %s)/Inputs/Headers
