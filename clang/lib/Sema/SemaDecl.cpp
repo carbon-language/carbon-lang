@@ -8348,6 +8348,7 @@ namespace {
       }
 
       if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E)) {
+        Visit(CO->getCond());
         HandleValue(CO->getTrueExpr());
         HandleValue(CO->getFalseExpr());
         return;

@@ -50,6 +50,7 @@ int x = x++; // expected-warning {{variable 'x' is uninitialized when used withi
 int y = ((s ? (y, v) : (77, y))++, sizeof(y)); // expected-warning {{variable 'y' is uninitialized when used within its own initialization}}
 int z = ++ref(z); // expected-warning {{variable 'z' is uninitialized when used within its own initialization}}
 int aa = (ref(aa) += 10); // expected-warning {{variable 'aa' is uninitialized when used within its own initialization}}
+int bb = bb ? x : y; // expected-warning {{variable 'bb' is uninitialized when used within its own initialization}}
 
 void test_stuff () {
   int a = a; // no-warning: used to signal intended lack of initialization.
@@ -83,6 +84,8 @@ void test_stuff () {
   int y = ((s ? (y, v) : (77, y))++, sizeof(y)); // expected-warning {{variable 'y' is uninitialized when used within its own initialization}}
   int z = ++ref(z);                              // expected-warning {{variable 'z' is uninitialized when used within its own initialization}}
   int aa = (ref(aa) += 10); // expected-warning {{variable 'aa' is uninitialized when used within its own initialization}}
+  int bb = bb ? x : y; // expected-warning {{variable 'bb' is uninitialized when used within its own initialization}}
+
 
   for (;;) {
     int a = a; // no-warning: used to signal intended lack of initialization.
@@ -116,6 +119,8 @@ void test_stuff () {
     int y = ((s ? (y, v) : (77, y))++, sizeof(y)); // expected-warning {{variable 'y' is uninitialized when used within its own initialization}}
     int z = ++ref(z);                              // expected-warning {{variable 'z' is uninitialized when used within its own initialization}}
     int aa = (ref(aa) += 10); // expected-warning {{variable 'aa' is uninitialized when used within its own initialization}}
+    int bb = bb ? x : y; // expected-warning {{variable 'bb' is uninitialized when used within its own initialization}}
+
   }
 }
 
@@ -522,6 +527,8 @@ namespace statics {
   static int y = ((s ? (y, v) : (77, y))++, sizeof(y)); // expected-warning {{variable 'y' is uninitialized when used within its own initialization}}
   static int z = ++ref(z); // expected-warning {{variable 'z' is uninitialized when used within its own initialization}}
   static int aa = (ref(aa) += 10); // expected-warning {{variable 'aa' is uninitialized when used within its own initialization}}
+  static int bb = bb ? x : y; // expected-warning {{variable 'bb' is uninitialized when used within its own initialization}}
+
 
   void test() {
     static int a = a; // no-warning: used to signal intended lack of initialization.
@@ -555,7 +562,9 @@ namespace statics {
     static int y = ((s ? (y, v) : (77, y))++, sizeof(y));  // expected-warning {{static variable 'y' is suspiciously used within its own initialization}}
     static int z = ++ref(z); // expected-warning {{static variable 'z' is suspiciously used within its own initialization}}
     static int aa = (ref(aa) += 10); // expected-warning {{static variable 'aa' is suspiciously used within its own initialization}}
-   for (;;) {
+    static int bb = bb ? x : y; // expected-warning {{static variable 'bb' is suspiciously used within its own initialization}}
+
+    for (;;) {
       static int a = a; // no-warning: used to signal intended lack of initialization.
       static int b = b + 1; // expected-warning {{static variable 'b' is suspiciously used within its own initialization}}
       static int c = (c + c); // expected-warning 2{{static variable 'c' is suspiciously used within its own initialization}}
@@ -587,6 +596,7 @@ namespace statics {
       static int y = ((s ? (y, v) : (77, y))++, sizeof(y));  // expected-warning {{static variable 'y' is suspiciously used within its own initialization}}
       static int z = ++ref(z); // expected-warning {{static variable 'z' is suspiciously used within its own initialization}}
       static int aa = (ref(aa) += 10); // expected-warning {{static variable 'aa' is suspiciously used within its own initialization}}
+      static int bb = bb ? x : y; // expected-warning {{static variable 'bb' is suspiciously used within its own initialization}}
     }
   }
 }
