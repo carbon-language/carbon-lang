@@ -84,6 +84,15 @@ ListChecks("list-checks",
                     "-checks='*' to list all available checks."),
            cl::init(false), cl::cat(ClangTidyCategory));
 
+static cl::opt<std::string> Config(
+    "config",
+    cl::desc("Specifies a configuration in YAML/JSON format:\n"
+             "  -config=\"{Checks: '*', CheckOptions: {key: x, value: y}}\"\n"
+             "When the value is empty, clang-tidy will attempt to find\n"
+             "a file named .clang-tidy for each sorce file in its parent\n"
+             "directories."),
+    cl::init(""), cl::cat(ClangTidyCategory));
+
 static cl::opt<bool>
 DumpConfig("dump-config",
            cl::desc("Dumps configuration in the YAML format to stdout."),
@@ -134,14 +143,12 @@ static void printStats(const ClangTidyStats &Stats) {
   }
 }
 
-int clangTidyMain(int argc, const char **argv) {
-  CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory);
-
+std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider() {
   ClangTidyGlobalOptions GlobalOptions;
   if (std::error_code Err = parseLineFilter(LineFilter, GlobalOptions)) {
     llvm::errs() << "Invalid LineFilter: " << Err.message() << "\n\nUsage:\n";
     llvm::cl::PrintHelpMessage(/*Hidden=*/false, /*Categorized=*/true);
-    return 1;
+    return nullptr;
   }
 
   ClangTidyOptions DefaultOptions;
@@ -161,8 +168,30 @@ int clangTidyMain(int argc, const char **argv) {
   if (AnalyzeTemporaryDtors.getNumOccurrences() > 0)
     OverrideOptions.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
 
-  auto OptionsProvider = llvm::make_unique<FileOptionsProvider>(
-      GlobalOptions, DefaultOptions, OverrideOptions);
+  if (!Config.empty()) {
+    if (llvm::ErrorOr<ClangTidyOptions> ParsedConfig =
+            parseConfiguration(Config)) {
+      return llvm::make_unique<DefaultOptionsProvider>(
+          GlobalOptions, ClangTidyOptions::getDefaults()
+                             .mergeWith(DefaultOptions)
+                             .mergeWith(*ParsedConfig)
+                             .mergeWith(OverrideOptions));
+    } else {
+      llvm::errs() << "Error: invalid configuration specified.\n"
+                   << ParsedConfig.getError().message() << "\n";
+      return nullptr;
+    }
+  }
+  return llvm::make_unique<FileOptionsProvider>(GlobalOptions, DefaultOptions,
+                                                OverrideOptions);
+}
+
+int clangTidyMain(int argc, const char **argv) {
+  CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory);
+
+  auto OptionsProvider = createOptionsProvider();
+  if (!OptionsProvider)
+    return 1;
 
   std::string FileName = OptionsParser.getSourcePathList().front();
   ClangTidyOptions EffectiveOptions = OptionsProvider->getOptions(FileName);
