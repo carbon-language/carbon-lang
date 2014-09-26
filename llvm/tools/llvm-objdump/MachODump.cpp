@@ -413,6 +413,94 @@ const char *GuessCstringPointer(uint64_t ReferenceValue,
   return nullptr;
 }
 
+// GuessIndirectSymbol returns the name of the indirect symbol for the
+// ReferenceValue passed in or nullptr.  This is used when ReferenceValue maybe
+// an address of a symbol stub or a lazy or non-lazy pointer to associate the
+// symbol name being referenced by the stub or pointer.
+static const char *GuessIndirectSymbol(uint64_t ReferenceValue,
+                                       struct DisassembleInfo *info) {
+  uint32_t LoadCommandCount = info->O->getHeader().ncmds;
+  MachOObjectFile::LoadCommandInfo Load = info->O->getFirstLoadCommandInfo();
+  MachO::dysymtab_command Dysymtab = info->O->getDysymtabLoadCommand();
+  MachO::symtab_command Symtab = info->O->getSymtabLoadCommand();
+  for (unsigned I = 0;; ++I) {
+    if (Load.C.cmd == MachO::LC_SEGMENT_64) {
+      MachO::segment_command_64 Seg = info->O->getSegment64LoadCommand(Load);
+      for (unsigned J = 0; J < Seg.nsects; ++J) {
+        MachO::section_64 Sec = info->O->getSection64(Load, J);
+        uint32_t section_type = Sec.flags & MachO::SECTION_TYPE;
+        if ((section_type == MachO::S_NON_LAZY_SYMBOL_POINTERS ||
+             section_type == MachO::S_LAZY_SYMBOL_POINTERS ||
+             section_type == MachO::S_LAZY_DYLIB_SYMBOL_POINTERS ||
+             section_type == MachO::S_THREAD_LOCAL_VARIABLE_POINTERS ||
+             section_type == MachO::S_SYMBOL_STUBS) &&
+            ReferenceValue >= Sec.addr &&
+            ReferenceValue < Sec.addr + Sec.size) {
+          uint32_t stride;
+          if (section_type == MachO::S_SYMBOL_STUBS)
+            stride = Sec.reserved2;
+          else
+            stride = 8;
+          if (stride == 0)
+            return nullptr;
+          uint32_t index = Sec.reserved1 + (ReferenceValue - Sec.addr) / stride;
+          if (index < Dysymtab.nindirectsyms) {
+            uint32_t indirect_symbol =
+              info->O->getIndirectSymbolTableEntry(Dysymtab, index);
+            if (indirect_symbol < Symtab.nsyms) {
+              symbol_iterator Sym = info->O->getSymbolByIndex(indirect_symbol);
+              SymbolRef Symbol = *Sym;
+              StringRef SymName;
+              Symbol.getName(SymName);
+              const char *name = SymName.data();
+              return name;
+            }
+          }
+        }
+      }
+    } else if (Load.C.cmd == MachO::LC_SEGMENT) {
+      MachO::segment_command Seg = info->O->getSegmentLoadCommand(Load);
+      for (unsigned J = 0; J < Seg.nsects; ++J) {
+        MachO::section Sec = info->O->getSection(Load, J);
+        uint32_t section_type = Sec.flags & MachO::SECTION_TYPE;
+        if ((section_type == MachO::S_NON_LAZY_SYMBOL_POINTERS ||
+             section_type == MachO::S_LAZY_SYMBOL_POINTERS ||
+             section_type == MachO::S_LAZY_DYLIB_SYMBOL_POINTERS ||
+             section_type == MachO::S_THREAD_LOCAL_VARIABLE_POINTERS ||
+             section_type == MachO::S_SYMBOL_STUBS) &&
+            ReferenceValue >= Sec.addr &&
+            ReferenceValue < Sec.addr + Sec.size) {
+          uint32_t stride;
+          if (section_type == MachO::S_SYMBOL_STUBS)
+            stride = Sec.reserved2;
+          else
+            stride = 4;
+          if (stride == 0)
+            return nullptr;
+          uint32_t index = Sec.reserved1 + (ReferenceValue - Sec.addr) / stride;
+          if (index < Dysymtab.nindirectsyms) {
+            uint32_t indirect_symbol =
+              info->O->getIndirectSymbolTableEntry(Dysymtab, index);
+            if (indirect_symbol < Symtab.nsyms) {
+              symbol_iterator Sym = info->O->getSymbolByIndex(indirect_symbol);
+              SymbolRef Symbol = *Sym;
+              StringRef SymName;
+              Symbol.getName(SymName);
+              const char *name = SymName.data();
+              return name;
+            }
+          }
+        }
+      }
+    }
+    if (I == LoadCommandCount - 1)
+      break;
+    else
+      Load = info->O->getNextLoadCommandInfo(Load);
+  }
+  return nullptr;
+}
+
 // GuessLiteralPointer returns a string which for the item in the Mach-O file
 // for the address passed in as ReferenceValue for printing as a comment with
 // the instruction and also returns the corresponding type of that item
@@ -531,7 +619,14 @@ const char *SymbolizerSymbolLookUp(void *DisInfo, uint64_t ReferenceValue,
   if (!name.empty())
     SymbolName = name.data();
 
-  if (*ReferenceType == LLVMDisassembler_ReferenceType_In_PCrel_Load) {
+  if (*ReferenceType == LLVMDisassembler_ReferenceType_In_Branch) {
+    *ReferenceName = GuessIndirectSymbol(ReferenceValue, info);
+    if (*ReferenceName)
+      *ReferenceType = LLVMDisassembler_ReferenceType_Out_SymbolStub;
+    else
+      *ReferenceType = LLVMDisassembler_ReferenceType_InOut_None;
+  }
+  else if (*ReferenceType == LLVMDisassembler_ReferenceType_In_PCrel_Load) {
     *ReferenceName = GuessLiteralPointer(ReferenceValue, ReferencePC,
                                          ReferenceType, info);
     if (*ReferenceName == nullptr)

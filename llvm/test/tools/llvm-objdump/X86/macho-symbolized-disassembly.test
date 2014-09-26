@@ -5,3 +5,4 @@ OBJ: 0000000000000008	leaq	L_.str(%rip), %rax      ## literal pool for: "Hello w
 OBJ: 0000000000000026	callq	_printf
 
 EXE: 0000000100000f38	leaq	0x4f(%rip), %rax        ## literal pool for: "Hello world\n"
+EXE: 0000000100000f56	callq	0x100000f6c             ## symbol stub for: _printf
