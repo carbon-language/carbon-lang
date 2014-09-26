@@ -68,9 +68,67 @@ static void reportError(StringRef Input, std::error_code EC) {
   reportError(Input, EC.message());
 }
 
+static bool collectRelocatedSymbols(const ObjectFile *Obj,
+                                    object::section_iterator SecI, StringRef *I,
+                                    StringRef *E) {
+  for (const object::RelocationRef &Reloc : SecI->relocations()) {
+    if (I == E)
+      break;
+    const object::symbol_iterator RelocSymI = Reloc.getSymbol();
+    if (RelocSymI == Obj->symbol_end())
+      continue;
+    StringRef RelocSymName;
+    if (error(RelocSymI->getName(RelocSymName)))
+      return true;
+    *I = RelocSymName;
+    ++I;
+  }
+  return false;
+}
+
+static bool collectRelocationOffsets(
+    const ObjectFile *Obj, object::section_iterator SecI, StringRef SymName,
+    std::map<std::pair<StringRef, uint64_t>, StringRef> &Collection) {
+  for (const object::RelocationRef &Reloc : SecI->relocations()) {
+    const object::symbol_iterator RelocSymI = Reloc.getSymbol();
+    if (RelocSymI == Obj->symbol_end())
+      continue;
+    StringRef RelocSymName;
+    if (error(RelocSymI->getName(RelocSymName)))
+      return true;
+    uint64_t Offset;
+    if (error(Reloc.getOffset(Offset)))
+      return true;
+    Collection[std::make_pair(SymName, Offset)] = RelocSymName;
+  }
+  return false;
+}
+
 static void dumpVTables(const ObjectFile *Obj) {
+  struct CompleteObjectLocator {
+    StringRef Symbols[2];
+    ArrayRef<aligned_little32_t> Data;
+  };
+  struct ClassHierarchyDescriptor {
+    StringRef Symbols[1];
+    ArrayRef<aligned_little32_t> Data;
+  };
+  struct BaseClassDescriptor {
+    StringRef Symbols[2];
+    ArrayRef<aligned_little32_t> Data;
+  };
+  struct TypeDescriptor {
+    StringRef Symbols[1];
+    ArrayRef<aligned_little32_t> Data;
+    StringRef MangledName;
+  };
   std::map<std::pair<StringRef, uint64_t>, StringRef> VFTableEntries;
   std::map<StringRef, ArrayRef<aligned_little32_t>> VBTables;
+  std::map<StringRef, CompleteObjectLocator> COLs;
+  std::map<StringRef, ClassHierarchyDescriptor> CHDs;
+  std::map<std::pair<StringRef, uint64_t>, StringRef> BCAEntries;
+  std::map<StringRef, BaseClassDescriptor> BCDs;
+  std::map<StringRef, TypeDescriptor> TDs;
   for (const object::SymbolRef &Sym : Obj->symbols()) {
     StringRef SymName;
     if (error(Sym.getName(SymName)))
@@ -86,18 +144,7 @@ static void dumpVTables(const ObjectFile *Obj) {
         continue;
       // Each relocation either names a virtual method or a thunk.  We note the
       // offset into the section and the symbol used for the relocation.
-      for (const object::RelocationRef &Reloc : SecI->relocations()) {
-        const object::symbol_iterator RelocSymI = Reloc.getSymbol();
-        if (RelocSymI == Obj->symbol_end())
-          continue;
-        StringRef RelocSymName;
-        if (error(RelocSymI->getName(RelocSymName)))
-          return;
-        uint64_t Offset;
-        if (error(Reloc.getOffset(Offset)))
-          return;
-        VFTableEntries[std::make_pair(SymName, Offset)] = RelocSymName;
-      }
+      collectRelocationOffsets(Obj, SecI, SymName, VFTableEntries);
     }
     // VBTables in the MS-ABI start with '??_8' and are filled with 32-bit
     // offsets of virtual bases.
@@ -116,10 +163,88 @@ static void dumpVTables(const ObjectFile *Obj) {
           SecContents.size() / sizeof(aligned_little32_t));
       VBTables[SymName] = VBTableData;
     }
+    // Complete object locators in the MS-ABI start with '??_R4'
+    else if (SymName.startswith("??_R4")) {
+      object::section_iterator SecI(Obj->section_begin());
+      if (error(Sym.getSection(SecI)))
+        return;
+      StringRef SecContents;
+      if (error(SecI->getContents(SecContents)))
+        return;
+      CompleteObjectLocator COL;
+      COL.Data = ArrayRef<aligned_little32_t>(
+          reinterpret_cast<const aligned_little32_t *>(SecContents.data()), 3);
+      StringRef *I = std::begin(COL.Symbols), *E = std::end(COL.Symbols);
+      if (collectRelocatedSymbols(Obj, SecI, I, E))
+        return;
+      COLs[SymName] = COL;
+    }
+    // Class hierarchy descriptors in the MS-ABI start with '??_R3'
+    else if (SymName.startswith("??_R3")) {
+      object::section_iterator SecI(Obj->section_begin());
+      if (error(Sym.getSection(SecI)))
+        return;
+      StringRef SecContents;
+      if (error(SecI->getContents(SecContents)))
+        return;
+      ClassHierarchyDescriptor CHD;
+      CHD.Data = ArrayRef<aligned_little32_t>(
+          reinterpret_cast<const aligned_little32_t *>(SecContents.data()), 3);
+      StringRef *I = std::begin(CHD.Symbols), *E = std::end(CHD.Symbols);
+      if (collectRelocatedSymbols(Obj, SecI, I, E))
+        return;
+      CHDs[SymName] = CHD;
+    }
+    // Class hierarchy descriptors in the MS-ABI start with '??_R2'
+    else if (SymName.startswith("??_R2")) {
+      object::section_iterator SecI(Obj->section_begin());
+      if (error(Sym.getSection(SecI)))
+        return;
+      if (SecI == Obj->section_end())
+        continue;
+      // Each relocation names a base class descriptor.  We note the offset into
+      // the section and the symbol used for the relocation.
+      collectRelocationOffsets(Obj, SecI, SymName, BCAEntries);
+    }
+    // Base class descriptors in the MS-ABI start with '??_R1'
+    else if (SymName.startswith("??_R1")) {
+      object::section_iterator SecI(Obj->section_begin());
+      if (error(Sym.getSection(SecI)))
+        return;
+      StringRef SecContents;
+      if (error(SecI->getContents(SecContents)))
+        return;
+      BaseClassDescriptor BCD;
+      BCD.Data = ArrayRef<aligned_little32_t>(
+          reinterpret_cast<const aligned_little32_t *>(SecContents.data()) + 1,
+          5);
+      StringRef *I = std::begin(BCD.Symbols), *E = std::end(BCD.Symbols);
+      if (collectRelocatedSymbols(Obj, SecI, I, E))
+        return;
+      BCDs[SymName] = BCD;
+    }
+    // Type descriptors in the MS-ABI start with '??_R0'
+    else if (SymName.startswith("??_R0")) {
+      object::section_iterator SecI(Obj->section_begin());
+      if (error(Sym.getSection(SecI)))
+        return;
+      StringRef SecContents;
+      if (error(SecI->getContents(SecContents)))
+        return;
+      TypeDescriptor TD;
+      TD.Data = makeArrayRef(
+          reinterpret_cast<const aligned_little32_t *>(
+              SecContents.drop_front(Obj->getBytesInAddress()).data()),
+          Obj->getBytesInAddress() / sizeof(aligned_little32_t));
+      TD.MangledName = SecContents.drop_front(Obj->getBytesInAddress() * 2);
+      StringRef *I = std::begin(TD.Symbols), *E = std::end(TD.Symbols);
+      if (collectRelocatedSymbols(Obj, SecI, I, E))
+        return;
+      TDs[SymName] = TD;
+    }
   }
-  for (
-      const std::pair<std::pair<StringRef, uint64_t>, StringRef> &VFTableEntry :
-      VFTableEntries) {
+  for (const std::pair<std::pair<StringRef, uint64_t>, StringRef> &VFTableEntry :
+       VFTableEntries) {
     StringRef VFTableName = VFTableEntry.first.first;
     uint64_t Offset = VFTableEntry.first.second;
     StringRef SymName = VFTableEntry.second;
@@ -133,6 +258,52 @@ static void dumpVTables(const ObjectFile *Obj) {
       outs() << VBTableName << '[' << Idx << "]: " << Offset << '\n';
       Idx += sizeof(Offset);
     }
+  }
+  for (const std::pair<StringRef, CompleteObjectLocator> &COLPair : COLs) {
+    StringRef COLName = COLPair.first;
+    const CompleteObjectLocator &COL = COLPair.second;
+    outs() << COLName << "[IsImageRelative]: " << COL.Data[0] << '\n';
+    outs() << COLName << "[OffsetToTop]: " << COL.Data[1] << '\n';
+    outs() << COLName << "[VFPtrOffset]: " << COL.Data[2] << '\n';
+    outs() << COLName << "[TypeDescriptor]: " << COL.Symbols[0] << '\n';
+    outs() << COLName << "[ClassHierarchyDescriptor]: " << COL.Symbols[1] << '\n';
+  }
+  for (const std::pair<StringRef, ClassHierarchyDescriptor> &CHDPair : CHDs) {
+    StringRef CHDName = CHDPair.first;
+    const ClassHierarchyDescriptor &CHD = CHDPair.second;
+    outs() << CHDName << "[AlwaysZero]: " << CHD.Data[0] << '\n';
+    outs() << CHDName << "[Flags]: " << CHD.Data[1] << '\n';
+    outs() << CHDName << "[NumClasses]: " << CHD.Data[2] << '\n';
+    outs() << CHDName << "[BaseClassArray]: " << CHD.Symbols[0] << '\n';
+  }
+  for (const std::pair<std::pair<StringRef, uint64_t>, StringRef> &BCAEntry :
+       BCAEntries) {
+    StringRef BCAName = BCAEntry.first.first;
+    uint64_t Offset = BCAEntry.first.second;
+    StringRef SymName = BCAEntry.second;
+    outs() << BCAName << '[' << Offset << "]: " << SymName << '\n';
+  }
+  for (const std::pair<StringRef, BaseClassDescriptor> &BCDPair : BCDs) {
+    StringRef BCDName = BCDPair.first;
+    const BaseClassDescriptor &BCD = BCDPair.second;
+    outs() << BCDName << "[TypeDescriptor]: " << BCD.Symbols[0] << '\n';
+    outs() << BCDName << "[NumBases]: " << BCD.Data[0] << '\n';
+    outs() << BCDName << "[OffsetInVBase]: " << BCD.Data[1] << '\n';
+    outs() << BCDName << "[VBPtrOffset]: " << BCD.Data[2] << '\n';
+    outs() << BCDName << "[OffsetInVBTable]: " << BCD.Data[3] << '\n';
+    outs() << BCDName << "[Flags]: " << BCD.Data[4] << '\n';
+    outs() << BCDName << "[ClassHierarchyDescriptor]: " << BCD.Symbols[1] << '\n';
+  }
+  for (const std::pair<StringRef, TypeDescriptor> &TDPair : TDs) {
+    StringRef TDName = TDPair.first;
+    const TypeDescriptor &TD = TDPair.second;
+    outs() << TDName << "[VFPtr]: " << TD.Symbols[0] << '\n';
+    uint32_t AlwaysZero = 0;
+    for (aligned_little32_t Data : TD.Data)
+      AlwaysZero |= Data;
+    outs() << TDName << "[AlwaysZero]: " << AlwaysZero << '\n';
+    outs() << TDName << "[MangledName]: ";
+    outs().write_escaped(TD.MangledName, /*UseHexEscapes=*/true) << '\n';
   }
 }
 
