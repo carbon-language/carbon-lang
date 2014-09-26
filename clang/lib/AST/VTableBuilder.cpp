@@ -2546,7 +2546,8 @@ private:
     BasesSetVectorTy VisitedBases;
     AddMethods(BaseSubobject(MostDerivedClass, CharUnits::Zero()), 0, nullptr,
                VisitedBases);
-    assert(Components.size() && "vftable can't be empty");
+    assert((HasRTTIComponent ? Components.size() - 1 : Components.size()) &&
+           "vftable can't be empty");
 
     assert(MethodVFTableLocations.empty());
     for (MethodInfoMapTy::const_iterator I = MethodInfoMap.begin(),
