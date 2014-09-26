@@ -81,6 +81,8 @@ def err_deleted_non_function : Error<
   "only functions can have deleted definitions">;
 def err_module_not_found : Error<"module '%0' not found">, DefaultFatal;
 def err_module_not_built : Error<"could not build module '%0'">, DefaultFatal;
+def err_module_lock_failure : Error<
+  "could not acquire lock file for module '%0'">, DefaultFatal;
 def err_module_cycle : Error<"cyclic dependency in module '%0': %1">, 
   DefaultFatal;
 def note_pragma_entered_here : Note<"#pragma entered here">;  
