@@ -107,23 +107,23 @@ static bool collectRelocationOffsets(
 static void dumpVTables(const ObjectFile *Obj) {
   struct CompleteObjectLocator {
     StringRef Symbols[2];
-    ArrayRef<aligned_little32_t> Data;
+    ArrayRef<little32_t> Data;
   };
   struct ClassHierarchyDescriptor {
     StringRef Symbols[1];
-    ArrayRef<aligned_little32_t> Data;
+    ArrayRef<little32_t> Data;
   };
   struct BaseClassDescriptor {
     StringRef Symbols[2];
-    ArrayRef<aligned_little32_t> Data;
+    ArrayRef<little32_t> Data;
   };
   struct TypeDescriptor {
     StringRef Symbols[1];
-    ArrayRef<aligned_little32_t> Data;
+    uint64_t AlwaysZero;
     StringRef MangledName;
   };
   std::map<std::pair<StringRef, uint64_t>, StringRef> VFTableEntries;
-  std::map<StringRef, ArrayRef<aligned_little32_t>> VBTables;
+  std::map<StringRef, ArrayRef<little32_t>> VBTables;
   std::map<StringRef, CompleteObjectLocator> COLs;
   std::map<StringRef, ClassHierarchyDescriptor> CHDs;
   std::map<std::pair<StringRef, uint64_t>, StringRef> BCAEntries;
@@ -158,9 +158,9 @@ static void dumpVTables(const ObjectFile *Obj) {
       if (error(SecI->getContents(SecContents)))
         return;
 
-      ArrayRef<aligned_little32_t> VBTableData(
-          reinterpret_cast<const aligned_little32_t *>(SecContents.data()),
-          SecContents.size() / sizeof(aligned_little32_t));
+      ArrayRef<little32_t> VBTableData(
+          reinterpret_cast<const little32_t *>(SecContents.data()),
+          SecContents.size() / sizeof(little32_t));
       VBTables[SymName] = VBTableData;
     }
     // Complete object locators in the MS-ABI start with '??_R4'
@@ -172,8 +172,8 @@ static void dumpVTables(const ObjectFile *Obj) {
       if (error(SecI->getContents(SecContents)))
         return;
       CompleteObjectLocator COL;
-      COL.Data = ArrayRef<aligned_little32_t>(
-          reinterpret_cast<const aligned_little32_t *>(SecContents.data()), 3);
+      COL.Data = ArrayRef<little32_t>(
+          reinterpret_cast<const little32_t *>(SecContents.data()), 3);
       StringRef *I = std::begin(COL.Symbols), *E = std::end(COL.Symbols);
       if (collectRelocatedSymbols(Obj, SecI, I, E))
         return;
@@ -188,8 +188,8 @@ static void dumpVTables(const ObjectFile *Obj) {
       if (error(SecI->getContents(SecContents)))
         return;
       ClassHierarchyDescriptor CHD;
-      CHD.Data = ArrayRef<aligned_little32_t>(
-          reinterpret_cast<const aligned_little32_t *>(SecContents.data()), 3);
+      CHD.Data = ArrayRef<little32_t>(
+          reinterpret_cast<const little32_t *>(SecContents.data()), 3);
       StringRef *I = std::begin(CHD.Symbols), *E = std::end(CHD.Symbols);
       if (collectRelocatedSymbols(Obj, SecI, I, E))
         return;
@@ -215,8 +215,8 @@ static void dumpVTables(const ObjectFile *Obj) {
       if (error(SecI->getContents(SecContents)))
         return;
       BaseClassDescriptor BCD;
-      BCD.Data = ArrayRef<aligned_little32_t>(
-          reinterpret_cast<const aligned_little32_t *>(SecContents.data()) + 1,
+      BCD.Data = ArrayRef<little32_t>(
+          reinterpret_cast<const little32_t *>(SecContents.data()) + 1,
           5);
       StringRef *I = std::begin(BCD.Symbols), *E = std::end(BCD.Symbols);
       if (collectRelocatedSymbols(Obj, SecI, I, E))
@@ -231,11 +231,14 @@ static void dumpVTables(const ObjectFile *Obj) {
       StringRef SecContents;
       if (error(SecI->getContents(SecContents)))
         return;
+      uint8_t BytesInAddress = Obj->getBytesInAddress();
+      const char *DataPtr =
+          SecContents.drop_front(Obj->getBytesInAddress()).data();
       TypeDescriptor TD;
-      TD.Data = makeArrayRef(
-          reinterpret_cast<const aligned_little32_t *>(
-              SecContents.drop_front(Obj->getBytesInAddress()).data()),
-          Obj->getBytesInAddress() / sizeof(aligned_little32_t));
+      if (BytesInAddress == 8)
+        TD.AlwaysZero = *reinterpret_cast<const little64_t *>(DataPtr);
+      else
+        TD.AlwaysZero = *reinterpret_cast<const little32_t *>(DataPtr);
       TD.MangledName = SecContents.drop_front(Obj->getBytesInAddress() * 2);
       StringRef *I = std::begin(TD.Symbols), *E = std::end(TD.Symbols);
       if (collectRelocatedSymbols(Obj, SecI, I, E))
@@ -250,11 +253,11 @@ static void dumpVTables(const ObjectFile *Obj) {
     StringRef SymName = VFTableEntry.second;
     outs() << VFTableName << '[' << Offset << "]: " << SymName << '\n';
   }
-  for (const std::pair<StringRef, ArrayRef<aligned_little32_t>> &VBTable :
+  for (const std::pair<StringRef, ArrayRef<little32_t>> &VBTable :
        VBTables) {
     StringRef VBTableName = VBTable.first;
     uint32_t Idx = 0;
-    for (aligned_little32_t Offset : VBTable.second) {
+    for (little32_t Offset : VBTable.second) {
       outs() << VBTableName << '[' << Idx << "]: " << Offset << '\n';
       Idx += sizeof(Offset);
     }
@@ -298,10 +301,7 @@ static void dumpVTables(const ObjectFile *Obj) {
     StringRef TDName = TDPair.first;
     const TypeDescriptor &TD = TDPair.second;
     outs() << TDName << "[VFPtr]: " << TD.Symbols[0] << '\n';
-    uint32_t AlwaysZero = 0;
-    for (aligned_little32_t Data : TD.Data)
-      AlwaysZero |= Data;
-    outs() << TDName << "[AlwaysZero]: " << AlwaysZero << '\n';
+    outs() << TDName << "[AlwaysZero]: " << TD.AlwaysZero << '\n';
     outs() << TDName << "[MangledName]: ";
     outs().write_escaped(TD.MangledName.rtrim(StringRef("\0", 1)),
                          /*UseHexEscapes=*/true)
