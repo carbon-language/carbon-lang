@@ -7986,9 +7986,17 @@ static SDValue lowerVectorShuffleWithSHUPFS(SDLoc DL, MVT VT,
   } else if (NumV2Elements == 2) {
     if (Mask[0] < 4 && Mask[1] < 4) {
       // Handle the easy case where we have V1 in the low lanes and V2 in the
-      // high lanes. We never see this reversed because we sort the shuffle.
+      // high lanes.
       NewMask[2] -= 4;
       NewMask[3] -= 4;
+    } else if (Mask[2] < 4 && Mask[3] < 4) {
+      // We also handle the reversed case because this utility may get called
+      // when we detect a SHUFPS pattern but can't easily commute the shuffle to
+      // arrange things in the right direction.
+      NewMask[0] -= 4;
+      NewMask[1] -= 4;
+      HighV = V1;
+      LowV = V2;
     } else {
       // We have a mixture of V1 and V2 in both low and high lanes. Rather than
       // trying to place elements directly, just blend them and set up the final
@@ -9392,7 +9400,7 @@ static SDValue lowerVectorShuffleAsLanePermuteAndBlend(SDLoc DL, MVT VT,
     SmallVector<int, 32> FlippedBlendMask;
     for (int i = 0, Size = Mask.size(); i < Size; ++i)
       FlippedBlendMask.push_back(
-          Mask[i] < 0 ? -1 : ((Mask[i] / LaneSize == i / LaneSize)
+          Mask[i] < 0 ? -1 : (((Mask[i] % Size) / LaneSize == i / LaneSize)
                                   ? Mask[i]
                                   : Mask[i] % LaneSize +
                                         (i / LaneSize) * LaneSize + Size));
@@ -9469,15 +9477,19 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return Blend;
 
   // Check if the blend happens to exactly fit that of SHUFPD.
-  if (Mask[0] < 4 && (Mask[1] == -1 || Mask[1] >= 4) &&
-      Mask[2] < 4 && (Mask[3] == -1 || Mask[3] >= 4)) {
+  if ((Mask[0] == -1 || Mask[0] < 2) &&
+      (Mask[1] == -1 || (Mask[1] >= 4 && Mask[1] < 6)) &&
+      (Mask[2] == -1 || (Mask[2] >= 2 && Mask[2] < 4)) &&
+      (Mask[3] == -1 || Mask[3] >= 6)) {
     unsigned SHUFPDMask = (Mask[0] == 1) | ((Mask[1] == 5) << 1) |
                           ((Mask[2] == 3) << 2) | ((Mask[3] == 7) << 3);
     return DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f64, V1, V2,
                        DAG.getConstant(SHUFPDMask, MVT::i8));
   }
-  if ((Mask[0] == -1 || Mask[0] >= 4) && Mask[1] < 4 &&
-      (Mask[2] == -1 || Mask[2] >= 4) && Mask[3] < 4) {
+  if ((Mask[0] == -1 || (Mask[0] >= 4 && Mask[0] < 6)) &&
+      (Mask[1] == -1 || Mask[1] < 2) &&
+      (Mask[2] == -1 || Mask[2] >= 6) &&
+      (Mask[3] == -1 || (Mask[3] >= 2 && Mask[3] < 4))) {
     unsigned SHUFPDMask = (Mask[0] == 5) | ((Mask[1] == 1) << 1) |
                           ((Mask[2] == 7) << 2) | ((Mask[3] == 3) << 3);
     return DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f64, V2, V1,
@@ -9564,8 +9576,10 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   // If the shuffle mask is repeated in each 128-bit lane, we have many more
   // options to efficiently lower the shuffle.
-  SmallVector<int, 2> RepeatedMask;
+  SmallVector<int, 4> RepeatedMask;
   if (is128BitLaneRepeatedShuffleMask(MVT::v8f32, Mask, RepeatedMask)) {
+    assert(RepeatedMask.size() == 4 &&
+           "Repeated masks must be half the mask width!");
     if (isSingleInputShuffleMask(Mask))
       return DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v8f32, V1,
                          getV4X86ShuffleImm8ForMask(RepeatedMask, DAG));
@@ -9577,12 +9591,12 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8f32, V1, V2);
 
     // Otherwise, fall back to a SHUFPS sequence. Here it is important that we
-    // have already handled any direct blends.
-    int SHUFPSMask[] = {Mask[0], Mask[1], Mask[2], Mask[3]};
-    for (int &M : SHUFPSMask)
-      if (M >= 8)
-        M -= 4;
-    return lowerVectorShuffleWithSHUPFS(DL, MVT::v8f32, SHUFPSMask, V1, V2, DAG);
+    // have already handled any direct blends. We also need to squash the
+    // repeated mask into a simulated v4f32 mask.
+    for (int i = 0; i < 4; ++i)
+      if (RepeatedMask[i] >= 8)
+        RepeatedMask[i] -= 4;
+    return lowerVectorShuffleWithSHUPFS(DL, MVT::v8f32, RepeatedMask, V1, V2, DAG);
   }
 
   // If we have a single input shuffle with different shuffle patterns in the
