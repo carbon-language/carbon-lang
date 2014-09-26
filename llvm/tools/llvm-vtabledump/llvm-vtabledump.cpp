@@ -133,15 +133,25 @@ static void dumpVTables(const ObjectFile *Obj) {
     StringRef SymName;
     if (error(Sym.getName(SymName)))
       return;
+    object::section_iterator SecI(Obj->section_begin());
+    if (error(Sym.getSection(SecI)))
+      return;
+    // Skip external symbols.
+    if (SecI == Obj->section_end())
+      continue;
+    bool IsBSS, IsVirtual;
+    if (error(SecI->isBSS(IsBSS)) || error(SecI->isVirtual(IsVirtual)))
+      break;
+    // Skip virtual or BSS sections.
+    if (IsBSS || IsVirtual)
+      continue;
+    StringRef SecContents;
+    if (error(SecI->getContents(SecContents)))
+      return;
     // VFTables in the MS-ABI start with '??_7' and are contained within their
     // own COMDAT section.  We then determine the contents of the VFTable by
     // looking at each relocation in the section.
     if (SymName.startswith("??_7")) {
-      object::section_iterator SecI(Obj->section_begin());
-      if (error(Sym.getSection(SecI)))
-        return;
-      if (SecI == Obj->section_end())
-        continue;
       // Each relocation either names a virtual method or a thunk.  We note the
       // offset into the section and the symbol used for the relocation.
       collectRelocationOffsets(Obj, SecI, SymName, VFTableEntries);
@@ -149,15 +159,6 @@ static void dumpVTables(const ObjectFile *Obj) {
     // VBTables in the MS-ABI start with '??_8' and are filled with 32-bit
     // offsets of virtual bases.
     else if (SymName.startswith("??_8")) {
-      object::section_iterator SecI(Obj->section_begin());
-      if (error(Sym.getSection(SecI)))
-        return;
-      if (SecI == Obj->section_end())
-        continue;
-      StringRef SecContents;
-      if (error(SecI->getContents(SecContents)))
-        return;
-
       ArrayRef<little32_t> VBTableData(
           reinterpret_cast<const little32_t *>(SecContents.data()),
           SecContents.size() / sizeof(little32_t));
@@ -165,12 +166,6 @@ static void dumpVTables(const ObjectFile *Obj) {
     }
     // Complete object locators in the MS-ABI start with '??_R4'
     else if (SymName.startswith("??_R4")) {
-      object::section_iterator SecI(Obj->section_begin());
-      if (error(Sym.getSection(SecI)))
-        return;
-      StringRef SecContents;
-      if (error(SecI->getContents(SecContents)))
-        return;
       CompleteObjectLocator COL;
       COL.Data = ArrayRef<little32_t>(
           reinterpret_cast<const little32_t *>(SecContents.data()), 3);
@@ -181,12 +176,6 @@ static void dumpVTables(const ObjectFile *Obj) {
     }
     // Class hierarchy descriptors in the MS-ABI start with '??_R3'
     else if (SymName.startswith("??_R3")) {
-      object::section_iterator SecI(Obj->section_begin());
-      if (error(Sym.getSection(SecI)))
-        return;
-      StringRef SecContents;
-      if (error(SecI->getContents(SecContents)))
-        return;
       ClassHierarchyDescriptor CHD;
       CHD.Data = ArrayRef<little32_t>(
           reinterpret_cast<const little32_t *>(SecContents.data()), 3);
@@ -197,23 +186,12 @@ static void dumpVTables(const ObjectFile *Obj) {
     }
     // Class hierarchy descriptors in the MS-ABI start with '??_R2'
     else if (SymName.startswith("??_R2")) {
-      object::section_iterator SecI(Obj->section_begin());
-      if (error(Sym.getSection(SecI)))
-        return;
-      if (SecI == Obj->section_end())
-        continue;
       // Each relocation names a base class descriptor.  We note the offset into
       // the section and the symbol used for the relocation.
       collectRelocationOffsets(Obj, SecI, SymName, BCAEntries);
     }
     // Base class descriptors in the MS-ABI start with '??_R1'
     else if (SymName.startswith("??_R1")) {
-      object::section_iterator SecI(Obj->section_begin());
-      if (error(Sym.getSection(SecI)))
-        return;
-      StringRef SecContents;
-      if (error(SecI->getContents(SecContents)))
-        return;
       BaseClassDescriptor BCD;
       BCD.Data = ArrayRef<little32_t>(
           reinterpret_cast<const little32_t *>(SecContents.data()) + 1,
@@ -225,12 +203,6 @@ static void dumpVTables(const ObjectFile *Obj) {
     }
     // Type descriptors in the MS-ABI start with '??_R0'
     else if (SymName.startswith("??_R0")) {
-      object::section_iterator SecI(Obj->section_begin());
-      if (error(Sym.getSection(SecI)))
-        return;
-      StringRef SecContents;
-      if (error(SecI->getContents(SecContents)))
-        return;
       uint8_t BytesInAddress = Obj->getBytesInAddress();
       const char *DataPtr =
           SecContents.drop_front(Obj->getBytesInAddress()).data();
