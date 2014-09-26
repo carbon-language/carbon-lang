@@ -301,3 +301,10 @@
 // CHECK-LSAN-ASAN-LINUX-NOT: libclang_rt.lsan
 // CHECK-LSAN-ASAN-LINUX: libclang_rt.asan-x86_64
 // CHECK-LSAN-ASAN-LINUX-NOT: libclang_rt.lsan
+
+// RUN: %clang -nostdlib -fsanitize=address %s -### -o %t.o 2>&1 \
+// RUN:     -target x86_64-unknown-linux \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-NOSTDLIB %s
+// CHECK-NOSTDLIB: "{{.*}}ld{{(.exe)?}}"
+// CHECK-NOSTDLIB-NOT: libclang_rt.asan
