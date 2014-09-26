@@ -40,9 +40,9 @@ function(explicit_llvm_config executable)
 
   llvm_map_components_to_libnames(LIBRARIES ${link_components})
   get_target_property(t ${executable} TYPE)
-  if("${t}" STREQUAL "STATIC_LIBRARY")
+  if("x${t}" STREQUAL "xSTATIC_LIBRARY")
     target_link_libraries(${executable} ${cmake_2_8_12_INTERFACE} ${LIBRARIES})
-  elseif("${t}" STREQUAL "SHARED_LIBRARY" OR "${t}" STREQUAL "MODULE_LIBRARY")
+  elseif("x${t}" STREQUAL "xSHARED_LIBRARY" OR "x${t}" STREQUAL "xMODULE_LIBRARY")
     target_link_libraries(${executable} ${cmake_2_8_12_PRIVATE} ${LIBRARIES})
   else()
     # Use plain form for legacy user.
