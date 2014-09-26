@@ -705,7 +705,7 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
 
   if (Src1Idx != -1 && !MI->getOperand(Src1Idx).isReg()) {
     // XXX: Commute instructions with FPImm operands
-    if (NewMI || MI->getOperand(Src1Idx).isFPImm() ||
+    if (NewMI || !MI->getOperand(Src1Idx).isImm() ||
        (!isVOP2(MI->getOpcode()) && !isVOP3(MI->getOpcode()))) {
       return nullptr;
     }
