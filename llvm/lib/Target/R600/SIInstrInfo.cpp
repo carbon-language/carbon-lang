@@ -1357,8 +1357,27 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
   // XXX - Do any VOP3 instructions read VCC?
   // Legalize VOP3
   if (isVOP3(MI->getOpcode())) {
-    int VOP3Idx[3] = {Src0Idx, Src1Idx, Src2Idx};
+    const MCInstrDesc &Desc = get(MI->getOpcode());
     unsigned SGPRReg = AMDGPU::NoRegister;
+
+    int VOP3Idx[3] = { Src0Idx, Src1Idx, Src2Idx };
+
+    // First we need to consider the instruction's operand requirements before
+    // legalizing. Some operands are required to be SGPRs, but we are still
+    // bound by the constant bus requirement to only use one.
+    //
+    // If the operand's class is an SGPR, we can never move it.
+    for (unsigned i = 0; i < 3; ++i) {
+      int Idx = VOP3Idx[i];
+      if (Idx == -1)
+        break;
+
+      if (RI.isSGPRClassID(Desc.OpInfo[Idx].RegClass)) {
+        SGPRReg = MI->getOperand(Idx).getReg();
+        break;
+      }
+    }
+
     for (unsigned i = 0; i < 3; ++i) {
       int Idx = VOP3Idx[i];
       if (Idx == -1)
