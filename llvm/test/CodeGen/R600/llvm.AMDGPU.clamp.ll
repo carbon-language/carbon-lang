@@ -6,7 +6,7 @@ declare float @llvm.AMDIL.clamp.f32(float, float, float) nounwind readnone
 
 ; FUNC-LABEL: @clamp_0_1_f32
 ; SI: S_LOAD_DWORD [[ARG:s[0-9]+]],
-; SI: V_ADD_F32_e64 [[RESULT:v[0-9]+]], [[ARG]], 0, 1, 0
+; SI: V_ADD_F32_e64 [[RESULT:v[0-9]+]], 0, [[ARG]], 1, 0
 ; SI: BUFFER_STORE_DWORD [[RESULT]]
 ; SI: S_ENDPGM
 
@@ -19,7 +19,7 @@ define void @clamp_0_1_f32(float addrspace(1)* %out, float %src) nounwind {
 
 ; FUNC-LABEL: @clamp_0_1_amdil_legacy_f32
 ; SI: S_LOAD_DWORD [[ARG:s[0-9]+]],
-; SI: V_ADD_F32_e64 [[RESULT:v[0-9]+]], [[ARG]], 0, 1, 0
+; SI: V_ADD_F32_e64 [[RESULT:v[0-9]+]], 0, [[ARG]], 1, 0
 ; SI: BUFFER_STORE_DWORD [[RESULT]]
 define void @clamp_0_1_amdil_legacy_f32(float addrspace(1)* %out, float %src) nounwind {
   %clamp = call float @llvm.AMDIL.clamp.f32(float %src, float 0.0, float 1.0) nounwind readnone

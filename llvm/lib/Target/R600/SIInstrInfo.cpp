@@ -684,19 +684,28 @@ bool SIInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
 
 MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
                                               bool NewMI) const {
-
-  if (MI->getNumOperands() < 3 || !MI->getOperand(1).isReg())
+  if (MI->getNumOperands() < 3)
     return nullptr;
+
+  int Src0Idx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
+                                           AMDGPU::OpName::src0);
+  assert(Src0Idx != -1 && "Should always have src0 operand");
+
+  if (!MI->getOperand(Src0Idx).isReg())
+    return nullptr;
+
+  int Src1Idx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
+                                           AMDGPU::OpName::src1);
 
   // Make sure it s legal to commute operands for VOP2.
-  if (isVOP2(MI->getOpcode()) &&
-      (!isOperandLegal(MI, 1, &MI->getOperand(2)) ||
-       !isOperandLegal(MI, 2, &MI->getOperand(1))))
+  if ((Src1Idx != -1) && isVOP2(MI->getOpcode()) &&
+      (!isOperandLegal(MI, Src0Idx, &MI->getOperand(Src1Idx)) ||
+       !isOperandLegal(MI, Src1Idx, &MI->getOperand(Src0Idx))))
     return nullptr;
 
-  if (!MI->getOperand(2).isReg()) {
+  if (Src1Idx != -1 && !MI->getOperand(Src1Idx).isReg()) {
     // XXX: Commute instructions with FPImm operands
-    if (NewMI || MI->getOperand(2).isFPImm() ||
+    if (NewMI || MI->getOperand(Src1Idx).isFPImm() ||
        (!isVOP2(MI->getOpcode()) && !isVOP3(MI->getOpcode()))) {
       return nullptr;
     }
@@ -716,11 +725,11 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
         (Src2Mods && Src2Mods->getImm()))
       return nullptr;
 
-    unsigned Reg = MI->getOperand(1).getReg();
-    unsigned SubReg = MI->getOperand(1).getSubReg();
-    MI->getOperand(1).ChangeToImmediate(MI->getOperand(2).getImm());
-    MI->getOperand(2).ChangeToRegister(Reg, false);
-    MI->getOperand(2).setSubReg(SubReg);
+    unsigned Reg = MI->getOperand(Src0Idx).getReg();
+    unsigned SubReg = MI->getOperand(Src0Idx).getSubReg();
+    MI->getOperand(Src0Idx).ChangeToImmediate(MI->getOperand(Src1Idx).getImm());
+    MI->getOperand(Src1Idx).ChangeToRegister(Reg, false);
+    MI->getOperand(Src1Idx).setSubReg(SubReg);
   } else {
     MI = TargetInstrInfo::commuteInstruction(MI, NewMI);
   }
