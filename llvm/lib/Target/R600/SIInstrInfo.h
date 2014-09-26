@@ -55,6 +55,8 @@ private:
 
   void addDescImplicitUseDef(const MCInstrDesc &Desc, MachineInstr *MI) const;
 
+  unsigned findUsedSGPR(const MachineInstr *MI, int OpIndices[3]) const;
+
 public:
   explicit SIInstrInfo(const AMDGPUSubtarget &st);
 

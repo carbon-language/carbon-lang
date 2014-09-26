@@ -1389,72 +1389,10 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
   // XXX - Do any VOP3 instructions read VCC?
   // Legalize VOP3
   if (isVOP3(MI->getOpcode())) {
-    const MCInstrDesc &Desc = get(MI->getOpcode());
-
     int VOP3Idx[3] = { Src0Idx, Src1Idx, Src2Idx };
 
     // Find the one SGPR operand we are allowed to use.
-    unsigned SGPRReg = AMDGPU::NoRegister;
-
-    for (const MachineOperand &MO : MI->implicit_operands()) {
-      // We only care about reads.
-      if (MO.isDef())
-        continue;
-
-      if (MO.getReg() == AMDGPU::VCC) {
-        SGPRReg = AMDGPU::VCC;
-        break;
-      }
-
-      if (MO.getReg() == AMDGPU::FLAT_SCR) {
-        SGPRReg = AMDGPU::FLAT_SCR;
-        break;
-      }
-    }
-
-    if (SGPRReg == AMDGPU::NoRegister) {
-      unsigned UsedSGPRs[3] = { AMDGPU::NoRegister };
-
-      // First we need to consider the instruction's operand requirements before
-      // legalizing. Some operands are required to be SGPRs, but we are still
-      // bound by the constant bus requirement to only use one.
-      //
-      // If the operand's class is an SGPR, we can never move it.
-      for (unsigned i = 0; i < 3; ++i) {
-        int Idx = VOP3Idx[i];
-        if (Idx == -1)
-          break;
-
-        const MachineOperand &MO = MI->getOperand(Idx);
-        if (RI.isSGPRClassID(Desc.OpInfo[Idx].RegClass))
-          SGPRReg = MO.getReg();
-
-        if (MO.isReg() && RI.isSGPRClass(MRI.getRegClass(MO.getReg())))
-          UsedSGPRs[i] = MO.getReg();
-      }
-
-      if (SGPRReg == AMDGPU::NoRegister) {
-        // We don't have a required SGPR operand, so we have a bit more freedom in
-        // selecting operands to move.
-
-        // Try to select the most used SGPR. If an SGPR is equal to one of the
-        // others, we choose that.
-        //
-        // e.g.
-        // V_FMA_F32 v0, s0, s0, s0 -> No moves
-        // V_FMA_F32 v0, s0, s1, s0 -> Move s1
-
-        if (UsedSGPRs[0] != AMDGPU::NoRegister) {
-          if (UsedSGPRs[0] == UsedSGPRs[1] || UsedSGPRs[0] == UsedSGPRs[2])
-            SGPRReg = UsedSGPRs[0];
-        }
-
-        if (SGPRReg == AMDGPU::NoRegister && UsedSGPRs[1] != AMDGPU::NoRegister) {
-          if (UsedSGPRs[1] == UsedSGPRs[2])
-            SGPRReg = UsedSGPRs[1];
-        }
-      }
-    }
+    unsigned SGPRReg = findUsedSGPR(MI, VOP3Idx);
 
     for (unsigned i = 0; i < 3; ++i) {
       int Idx = VOP3Idx[i];
@@ -2213,6 +2151,74 @@ void SIInstrInfo::addDescImplicitUseDef(const MCInstrDesc &NewDesc,
       Inst->addOperand(MachineOperand::CreateReg(Reg, true, true));
     }
   }
+}
+
+unsigned SIInstrInfo::findUsedSGPR(const MachineInstr *MI,
+                                   int OpIndices[3]) const {
+  const MCInstrDesc &Desc = get(MI->getOpcode());
+
+  // Find the one SGPR operand we are allowed to use.
+  unsigned SGPRReg = AMDGPU::NoRegister;
+
+  // First we need to consider the instruction's operand requirements before
+  // legalizing. Some operands are required to be SGPRs, such as implicit uses
+  // of VCC, but we are still bound by the constant bus requirement to only use
+  // one.
+  //
+  // If the operand's class is an SGPR, we can never move it.
+
+  for (const MachineOperand &MO : MI->implicit_operands()) {
+    // We only care about reads.
+    if (MO.isDef())
+      continue;
+
+    if (MO.getReg() == AMDGPU::VCC)
+      return AMDGPU::VCC;
+
+    if (MO.getReg() == AMDGPU::FLAT_SCR)
+      return AMDGPU::FLAT_SCR;
+  }
+
+  unsigned UsedSGPRs[3] = { AMDGPU::NoRegister };
+  const MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
+
+  for (unsigned i = 0; i < 3; ++i) {
+    int Idx = OpIndices[i];
+    if (Idx == -1)
+      break;
+
+    const MachineOperand &MO = MI->getOperand(Idx);
+    if (RI.isSGPRClassID(Desc.OpInfo[Idx].RegClass))
+      SGPRReg = MO.getReg();
+
+    if (MO.isReg() && RI.isSGPRClass(MRI.getRegClass(MO.getReg())))
+      UsedSGPRs[i] = MO.getReg();
+  }
+
+  if (SGPRReg != AMDGPU::NoRegister)
+    return SGPRReg;
+
+  // We don't have a required SGPR operand, so we have a bit more freedom in
+  // selecting operands to move.
+
+  // Try to select the most used SGPR. If an SGPR is equal to one of the
+  // others, we choose that.
+  //
+  // e.g.
+  // V_FMA_F32 v0, s0, s0, s0 -> No moves
+  // V_FMA_F32 v0, s0, s1, s0 -> Move s1
+
+  if (UsedSGPRs[0] != AMDGPU::NoRegister) {
+    if (UsedSGPRs[0] == UsedSGPRs[1] || UsedSGPRs[0] == UsedSGPRs[2])
+      SGPRReg = UsedSGPRs[0];
+  }
+
+  if (SGPRReg == AMDGPU::NoRegister && UsedSGPRs[1] != AMDGPU::NoRegister) {
+    if (UsedSGPRs[1] == UsedSGPRs[2])
+      SGPRReg = UsedSGPRs[1];
+  }
+
+  return SGPRReg;
 }
 
 MachineInstrBuilder SIInstrInfo::buildIndirectWrite(
