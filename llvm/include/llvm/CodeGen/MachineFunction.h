@@ -168,7 +168,7 @@ public:
   /// getSubtarget - Return the subtarget for which this machine code is being
   /// compiled.
   const TargetSubtargetInfo &getSubtarget() const { return *STI; }
-  void setSubtarget(TargetSubtargetInfo *ST) { STI = ST; }
+  void setSubtarget(const TargetSubtargetInfo *ST) { STI = ST; }
 
   /// getRegInfo - Return information about the registers currently in use.
   ///
