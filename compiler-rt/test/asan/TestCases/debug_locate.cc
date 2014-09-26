@@ -73,5 +73,7 @@ int main() {
   type = __asan_locate_address((void *)shadow_gap, NULL, 0, NULL, NULL);
   assert(0 == strcmp(type, "shadow gap"));
 
+  free(heap_ptr);
+
   return 0;
 }
