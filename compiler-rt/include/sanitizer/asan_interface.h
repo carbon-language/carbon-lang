@@ -62,32 +62,6 @@ extern "C" {
   // Print the description of addr (useful when debugging in gdb).
   void __asan_describe_address(void *addr);
 
-  // Useful for calling from a debugger to get information about an ASan error.
-  // Returns 1 if an error has been (or is being) reported, otherwise returns 0.
-  int __asan_report_present();
-
-  // Useful for calling from a debugger to get information about an ASan error.
-  // If an error has been (or is being) reported, the following functions return
-  // the pc, bp, sp, address, access type (0 = read, 1 = write), access size and
-  // bug description (e.g. "heap-use-after-free"). Otherwise they return 0.
-  void *__asan_get_report_pc();
-  void *__asan_get_report_bp();
-  void *__asan_get_report_sp();
-  void *__asan_get_report_address();
-  int __asan_get_report_access_type();
-  size_t __asan_get_report_access_size();
-  const char *__asan_get_report_description();
-
-  // Useful for calling from the debugger to get information about a pointer.
-  // Returns the category of the given pointer as a constant string.
-  // Possible return values are "global", "stack", "stack-fake", "heap",
-  // "heap-invalid", "shadow-low", "shadow-gap", "shadow-high", "unknown".
-  // If global or stack, tries to also return the variable name, address and
-  // size. If heap, tries to return the chunk address and size. 'name' should
-  // point to an allocated buffer of size 'name_size'.
-  const char *__asan_locate_address(void *addr, char *name, size_t name_size,
-                                    void **region_address, size_t *region_size);
-
   // Useful for calling from the debugger to get the allocation stack trace
   // and thread ID for a heap address. Stores up to 'size' frames into 'trace',
   // returns the number of stored frames or 0 on error.

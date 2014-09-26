@@ -25,24 +25,13 @@ struct StackVarDescr {
   uptr name_len;
 };
 
-struct AddressDescription {
-  char *name;
-  uptr name_size;
-  uptr region_address;
-  uptr region_size;
-  const char *region_kind;
-};
-
 // The following functions prints address description depending
 // on the memory type (shadow/heap/stack/global).
 void DescribeHeapAddress(uptr addr, uptr access_size);
 bool DescribeAddressIfGlobal(uptr addr, uptr access_size);
 bool DescribeAddressRelativeToGlobal(uptr addr, uptr access_size,
                                      const __asan_global &g);
-bool IsAddressNearGlobal(uptr addr, const __asan_global &g);
-bool GetInfoForAddressIfGlobal(uptr addr, AddressDescription *descr);
-bool DescribeAddressIfShadow(uptr addr, AddressDescription *descr = nullptr,
-                             bool print = true);
+bool DescribeAddressIfShadow(uptr addr);
 bool ParseFrameDescription(const char *frame_descr,
                            InternalMmapVector<StackVarDescr> *vars);
 bool DescribeAddressIfStack(uptr addr, uptr access_size);
