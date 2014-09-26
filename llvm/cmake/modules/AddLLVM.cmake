@@ -310,6 +310,12 @@ function(llvm_add_library name)
   endif()
 
   if(ARG_MODULE OR ARG_SHARED)
+    # Do not add -Dname_EXPORTS to the command-line when building files in this
+    # target. Doing so is actively harmful for the modules build because it
+    # creates extra module variants, and not useful because we don't use these
+    # macros.
+    set_target_properties( ${name} PROPERTIES DEFINE_SYMBOL "" )
+
     if (LLVM_EXPORTED_SYMBOL_FILE)
       add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )
     endif()
@@ -434,6 +440,12 @@ macro(add_llvm_executable name)
   endif()
   llvm_update_compile_flags(${name})
   add_dead_strip( ${name} )
+
+  # Do not add -Dname_EXPORTS to the command-line when building files in this
+  # target. Doing so is actively harmful for the modules build because it
+  # creates extra module variants, and not useful because we don't use these
+  # macros.
+  set_target_properties( ${name} PROPERTIES DEFINE_SYMBOL "" )
 
   if (LLVM_EXPORTED_SYMBOL_FILE)
     add_llvm_symbol_exports( ${name} ${LLVM_EXPORTED_SYMBOL_FILE} )

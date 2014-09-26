@@ -332,6 +332,25 @@ elseif( LLVM_COMPILER_IS_GCC_COMPATIBLE )
       message(FATAL_ERROR "LLVM requires C++11 support but the '-std=c++11' flag isn't supported.")
     endif()
   endif()
+  if (LLVM_ENABLE_MODULES)
+    set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -fmodules -fcxx-modules")
+    # Check that we can build code with modules enabled, and that repeatedly
+    # including <cassert> still manages to respect NDEBUG properly.
+    CHECK_CXX_SOURCE_COMPILES("#undef NDEBUG
+                               #include <cassert>
+                               #define NDEBUG
+                               #include <cassert>
+                               int main() { assert(this code is not compiled); }"
+                               CXX_SUPPORTS_MODULES)
+    set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
+    if (CXX_SUPPORTS_MODULES)
+      append_if(CXX_SUPPORTS_MODULES "-fmodules" CMAKE_C_FLAGS)
+      append_if(CXX_SUPPORTS_MODULES "-fmodules -fcxx-modules" CMAKE_CXX_FLAGS)
+    else()
+      message(FATAL_ERROR "LLVM_ENABLE_MODULES is not supported by this compiler")
+    endif()
+  endif(LLVM_ENABLE_MODULES)
 endif( MSVC )
 
 macro(append_common_sanitizer_flags)
