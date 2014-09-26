@@ -17,10 +17,43 @@ def find_makefile_dirs():
     return makefile_dirs
 
 _TESTDIR_RELATIVE_REGEX = re.compile(r"^([^/:]+:\d+:)")
+_COMBINER_TERMINATION_REGEX = re.compile(r"^.+FAILED.+$")
 
 def filter_run_line(sub_expr, line):
-    return _TESTDIR_RELATIVE_REGEX.sub(sub_expr, line)
- 
+    return _TESTDIR_RELATIVE_REGEX.subn(sub_expr, line)
+
+def line_combine_printer(file, previous_data, new_line_subn_result):
+    (accumulated_line, combine_lines_left) = previous_data
+    (incoming_line, sub_match_count) = new_line_subn_result
+
+    if sub_match_count > 0:
+        # New line was a match.  Don't print yet, start an accumulation.
+        if len(accumulated_line) > 0:
+            # Flush anything previously there.
+            print(accumulated_line, file=file)
+        return (incoming_line + ": ", 3)
+    else:
+        # If we're combining and incoming is a "[  FAILED ]" line, we've gone too far on a combine.
+        if (len(accumulated_line) > 0) and _COMBINER_TERMINATION_REGEX.match(incoming_line):
+            # Stop the combine.
+            print(accumulated_line, file=file)
+            print(incoming_line, file=file)
+            return ("", 0)
+
+        if len(accumulated_line) > 0:
+            new_line = accumulated_line + ", " + incoming_line
+        else:
+            new_line = incoming_line
+
+        remaining_count = combine_lines_left - 1
+        if remaining_count > 0:
+            return (new_line, remaining_count)
+        else:
+            # Time to write it out.
+            if len(new_line) > 0:
+                print(new_line, file=file)
+            return ("", 0)
+
 def call_make(makefile_dir, extra_args=None):
     command = ["make", "-C", makefile_dir]
     if extra_args:
@@ -31,6 +64,9 @@ def call_make(makefile_dir, extra_args=None):
 
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+    stdout_data = ("", 0)
+    stderr_data = ("", 0)
+
     while True:
         reads = [proc.stdout.fileno(), proc.stderr.fileno()]
         select_result = select.select(reads, [], [])
@@ -38,10 +74,10 @@ def call_make(makefile_dir, extra_args=None):
         for fd in select_result[0]:
             if fd == proc.stdout.fileno():
                 line = proc.stdout.readline()
-                print(filter_run_line(sub_expr, line.rstrip()))
+                stdout_data = line_combine_printer(sys.stdout, stdout_data, filter_run_line(sub_expr, line.rstrip()))
             elif fd == proc.stderr.fileno():
                 line = proc.stderr.readline()
-                print(filter_run_line(sub_expr, line.rstrip()), file=sys.stderr)
+                stderr_data = line_combine_printer(sys.stderr, stderr_data, filter_run_line(sub_expr, line.rstrip()))
 
         proc_retval = proc.poll()
         if proc_retval != None:
@@ -49,17 +85,17 @@ def call_make(makefile_dir, extra_args=None):
 
             # Drain stdout.
             while True:
-                line = proc.stdout.readline()
-                if line:
-                    print(filter_run_line(sub_expr, line.rstrip()))
+                line = proc.stdout.readline().rstrip()
+                if line and len(line) > 0:
+                    stdout_data = line_combine_printer(sys.stdout, stdout_data, filter_run_line(sub_expr, line))
                 else:
                     break
 
             # Drain stderr.
             while True:
-                line = proc.stderr.readline()
-                if line:
-                    print(filter_run_line(sub_expr, line.rstrip()), file=sys.stderr)
+                line = proc.stderr.readline().rstrip()
+                if line and len(line) > 0:
+                    stderr_data = line_combine_printer(sys.stderr, stderr_data, filter_run_line(sub_expr, line))
                 else:
                     break
 
