@@ -1790,14 +1790,6 @@ SDNode *SITargetLowering::legalizeOperands(MachineSDNode *Node,
         ensureSRegLimit(DAG, Ops[i], RegClass, ScalarSlotUsed);
       }
       continue;
-    } else {
-      // If it's not a VSrc or SSrc operand check if we have a GlobalAddress.
-      // These will be lowered to immediates, so we will need to insert a MOV.
-      if (isa<GlobalAddressSDNode>(Ops[i])) {
-        SDNode *Node = DAG.getMachineNode(AMDGPU::V_MOV_B32_e32, SDLoc(),
-                                    Operand.getValueType(), Operand);
-        Ops[i] = SDValue(Node, 0);
-      }
     }
 
     if (i == 1 && DescRev && fitsRegClass(DAG, Ops[0], RegClass)) {
