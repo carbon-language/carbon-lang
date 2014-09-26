@@ -677,17 +677,24 @@ void CXXRecordDecl::addedMember(Decl *D) {
     //
     // Automatic Reference Counting: the presence of a member of Objective-C pointer type
     // that does not explicitly have no lifetime makes the class a non-POD.
-    // However, we delay setting PlainOldData to false in this case so that
-    // Sema has a chance to diagnostic causes where the same class will be
-    // non-POD with Automatic Reference Counting but a POD without ARC.
-    // In this case, the class will become a non-POD class when we complete
-    // the definition.
     ASTContext &Context = getASTContext();
     QualType T = Context.getBaseElementType(Field->getType());
     if (T->isObjCRetainableType() || T.isObjCGCStrong()) {
-      if (!Context.getLangOpts().ObjCAutoRefCount ||
-          T.getObjCLifetime() != Qualifiers::OCL_ExplicitNone)
+      if (!Context.getLangOpts().ObjCAutoRefCount) {
         setHasObjectMember(true);
+      } else if (T.getObjCLifetime() != Qualifiers::OCL_ExplicitNone) {
+        // Objective-C Automatic Reference Counting:
+        //   If a class has a non-static data member of Objective-C pointer
+        //   type (or array thereof), it is a non-POD type and its
+        //   default constructor (if any), copy constructor, move constructor,
+        //   copy assignment operator, move assignment operator, and destructor are
+        //   non-trivial.
+        setHasObjectMember(true);
+        struct DefinitionData &Data = data();
+        Data.PlainOldData = false;
+        Data.HasTrivialSpecialMembers = 0;
+        Data.HasIrrelevantDestructor = false;
+      }
     } else if (!T.isCXX98PODType(Context))
       data().PlainOldData = false;
     
@@ -1276,19 +1283,6 @@ void CXXRecordDecl::completeDefinition() {
 
 void CXXRecordDecl::completeDefinition(CXXFinalOverriderMap *FinalOverriders) {
   RecordDecl::completeDefinition();
-  
-  if (hasObjectMember() && getASTContext().getLangOpts().ObjCAutoRefCount) {
-    // Objective-C Automatic Reference Counting:
-    //   If a class has a non-static data member of Objective-C pointer
-    //   type (or array thereof), it is a non-POD type and its
-    //   default constructor (if any), copy constructor, move constructor,
-    //   copy assignment operator, move assignment operator, and destructor are
-    //   non-trivial.
-    struct DefinitionData &Data = data();
-    Data.PlainOldData = false;
-    Data.HasTrivialSpecialMembers = 0;
-    Data.HasIrrelevantDestructor = false;
-  }
   
   // If the class may be abstract (but hasn't been marked as such), check for
   // any pure final overriders.
