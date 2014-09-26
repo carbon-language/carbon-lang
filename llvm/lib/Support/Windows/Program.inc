@@ -428,15 +428,15 @@ ProcessInfo sys::Wait(const ProcessInfo &PI, unsigned SecondsToWait,
   return WaitResult;
 }
 
-  std::error_code sys::ChangeStdinToBinary(){
-  int result = _setmode( _fileno(stdin), _O_BINARY );
+std::error_code sys::ChangeStdinToBinary() {
+  int result = _setmode(_fileno(stdin), _O_BINARY);
   if (result == -1)
     return std::error_code(errno, std::generic_category());
   return std::error_code();
 }
 
-  std::error_code sys::ChangeStdoutToBinary(){
-  int result = _setmode( _fileno(stdout), _O_BINARY );
+std::error_code sys::ChangeStdoutToBinary() {
+  int result = _setmode(_fileno(stdout), _O_BINARY);
   if (result == -1)
     return std::error_code(errno, std::generic_category());
   return std::error_code();
