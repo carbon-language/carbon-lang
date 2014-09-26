@@ -89,7 +89,7 @@ static cl::opt<std::string> Config(
     cl::desc("Specifies a configuration in YAML/JSON format:\n"
              "  -config=\"{Checks: '*', CheckOptions: {key: x, value: y}}\"\n"
              "When the value is empty, clang-tidy will attempt to find\n"
-             "a file named .clang-tidy for each sorce file in its parent\n"
+             "a file named .clang-tidy for each source file in its parent\n"
              "directories."),
     cl::init(""), cl::cat(ClangTidyCategory));
 
