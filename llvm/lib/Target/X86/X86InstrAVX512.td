@@ -167,10 +167,8 @@ multiclass AVX512_masking_3src<bits<8> O, Format F, dag Outs, dag NonTiedIns,
                                RegisterClass RC, RegisterClass KRC> :
    AVX512_masking_common<O, F, Outs,
                          !con((ins RC:$src1), NonTiedIns),
-                         !con((ins RC:$src1), !con((ins KRC:$mask),
-                                                    NonTiedIns)),
-                         !con((ins RC:$src1), !con((ins KRC:$mask),
-                                                    NonTiedIns)),
+                         !con((ins RC:$src1, KRC:$mask), NonTiedIns),
+                         !con((ins RC:$src1, KRC:$mask), NonTiedIns),
                          OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
                          (vselect KRC:$mask, RHS, RC:$src1), OpVT, RC, KRC>;
 
