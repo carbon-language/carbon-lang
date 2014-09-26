@@ -493,12 +493,26 @@ void AMDGPUInstPrinter::printWaitFlag(const MCInst *MI, unsigned OpNo,
   unsigned Vmcnt = SImm16 & 0xF;
   unsigned Expcnt = (SImm16 >> 4) & 0xF;
   unsigned Lgkmcnt = (SImm16 >> 8) & 0xF;
-  if (Vmcnt != 0xF)
-    O << "vmcnt(" << Vmcnt << ") ";
-  if (Expcnt != 0x7)
-    O << "expcnt(" << Expcnt << ") ";
-  if (Lgkmcnt != 0x7)
+
+  bool NeedSpace = false;
+
+  if (Vmcnt != 0xF) {
+    O << "vmcnt(" << Vmcnt << ')';
+    NeedSpace = true;
+  }
+
+  if (Expcnt != 0x7) {
+    if (NeedSpace)
+      O << ' ';
+    O << "expcnt(" << Expcnt << ')';
+    NeedSpace = true;
+  }
+
+  if (Lgkmcnt != 0x7) {
+    if (NeedSpace)
+      O << ' ';
     O << "lgkmcnt(" << Lgkmcnt << ')';
+  }
 }
 
 #include "AMDGPUGenAsmWriter.inc"

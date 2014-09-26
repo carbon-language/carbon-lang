@@ -1,11 +1,11 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -strict-whitespace %s
 
 ; CHECK-LABEL: @main
 ; CHECK: S_LOAD_DWORDX4
 ; CHECK: S_LOAD_DWORDX4
-; CHECK: S_WAITCNT lgkmcnt(0)
-; CHECK: S_WAITCNT vmcnt(0)
-; CHECK: S_WAITCNT expcnt(0) lgkmcnt(0)
+; CHECK: S_WAITCNT lgkmcnt(0){{$}}
+; CHECK: S_WAITCNT vmcnt(0){{$}}
+; CHECK: S_WAITCNT expcnt(0) lgkmcnt(0){{$}}
 define void @main(<16 x i8> addrspace(2)* inreg %arg, <16 x i8> addrspace(2)* inreg %arg1, <32 x i8> addrspace(2)* inreg %arg2, <16 x i8> addrspace(2)* inreg %arg3, <16 x i8> addrspace(2)* inreg %arg4, i32 inreg %arg5, i32 %arg6, i32 %arg7, i32 %arg8, i32 %arg9, float addrspace(2)* inreg %constptr) #0 {
 main_body:
   %tmp = getelementptr <16 x i8> addrspace(2)* %arg3, i32 0
