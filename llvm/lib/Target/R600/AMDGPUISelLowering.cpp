@@ -825,6 +825,12 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       // first parameter must be the same as the first instruction.
       SDValue Numerator = Op.getOperand(1);
       SDValue Denominator = Op.getOperand(2);
+
+      // Note this order is opposite of the machine instruction's operations,
+      // which is s0.f = Quotient, s1.f = Denominator, s2.f = Numerator. The
+      // intrinsic has the numerator as the first operand to match a normal
+      // division operation.
+
       SDValue Src0 = Param->isAllOnesValue() ? Numerator : Denominator;
 
       return DAG.getNode(AMDGPUISD::DIV_SCALE, DL, Op->getVTList(), Src0,
