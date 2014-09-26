@@ -669,6 +669,30 @@ define <8 x float> @shuffle_v8f32_c348cda0(<8 x float> %a, <8 x float> %b) {
   ret <8 x float> %shuffle
 }
 
+define <8 x float> @shuffle_v8f32_f511235a(<8 x float> %a, <8 x float> %b) {
+; AVX1-LABEL: @shuffle_v8f32_f511235a
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vperm2f128 {{.*}} # ymm2 = ymm0[2,3,0,1]
+; AVX1-NEXT:    vpermilps {{.*}} # ymm2 = ymm2[u,1,u,u,6,7,u,u]
+; AVX1-NEXT:    vpermilps {{.*}} # ymm0 = ymm0[0,1,1,1,4,5,5,5]
+; AVX1-NEXT:    vblendps {{.*}} # ymm0 = ymm0[0],ymm2[1],ymm0[2,3],ymm2[4,5],ymm0[6,7]
+; AVX1-NEXT:    vperm2f128 {{.*}} # ymm1 = ymm1[2,3,0,1]
+; AVX1-NEXT:    vpermilps {{.*}} # ymm1 = ymm1[3,1,2,2,7,5,6,6]
+; AVX1-NEXT:    vblendps {{.*}} # ymm0 = ymm1[0],ymm0[1,2,3,4,5,6],ymm1[7]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: @shuffle_v8f32_f511235a
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vmovaps {{.*}} # ymm2 = <7,u,u,u,u,u,u,2>
+; AVX2-NEXT:    vpermps %ymm1, %ymm2, %ymm1
+; AVX2-NEXT:    vmovaps {{.*}} # ymm2 = <u,5,1,1,2,3,5,u>
+; AVX2-NEXT:    vpermps %ymm0, %ymm2, %ymm0
+; AVX2-NEXT:    vblendps {{.*}} # ymm0 = ymm1[0],ymm0[1,2,3,4,5,6],ymm1[7]
+; AVX2-NEXT:    retq
+  %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 15, i32 5, i32 1, i32 1, i32 2, i32 3, i32 5, i32 10>
+  ret <8 x float> %shuffle
+}
+
 define <8 x i32> @shuffle_v8i32_00000000(<8 x i32> %a, <8 x i32> %b) {
 ; AVX1-LABEL: @shuffle_v8i32_00000000
 ; AVX1:       # BB#0:

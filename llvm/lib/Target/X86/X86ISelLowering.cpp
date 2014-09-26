@@ -9959,17 +9959,18 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
         ++LowV2Elements;
       else if (M >= 0)
         ++LowV1Elements;
-    if (LowV2Elements > LowV1Elements)
+    if (LowV2Elements > LowV1Elements) {
       return DAG.getCommutedVectorShuffle(*SVOp);
-
-    int SumV1Indices = 0, SumV2Indices = 0;
-    for (int i = 0, Size = SVOp->getMask().size(); i < Size; ++i)
-      if (SVOp->getMask()[i] >= NumElements)
-        SumV2Indices += i;
-      else if (SVOp->getMask()[i] >= 0)
-        SumV1Indices += i;
-    if (SumV2Indices < SumV1Indices)
-      return DAG.getCommutedVectorShuffle(*SVOp);
+    } else if (LowV2Elements == LowV1Elements) {
+      int SumV1Indices = 0, SumV2Indices = 0;
+      for (int i = 0, Size = SVOp->getMask().size(); i < Size; ++i)
+        if (SVOp->getMask()[i] >= NumElements)
+          SumV2Indices += i;
+        else if (SVOp->getMask()[i] >= 0)
+          SumV1Indices += i;
+      if (SumV2Indices < SumV1Indices)
+        return DAG.getCommutedVectorShuffle(*SVOp);
+    }
   }
 
   // For each vector width, delegate to a specialized lowering routine.
