@@ -266,11 +266,16 @@ void MachODumper::printSections(const MachOObjectFile *Obj) {
     }
 
     if (opts::SectionData) {
-      StringRef Data;
-      if (error(Section.getContents(Data)))
+      bool IsBSS;
+      if (error(Section.isBSS(IsBSS)))
         break;
+      if (!IsBSS) {
+        StringRef Data;
+        if (error(Section.getContents(Data)))
+          break;
 
-      W.printBinaryBlock("SectionData", Data);
+        W.printBinaryBlock("SectionData", Data);
+      }
     }
   }
 }

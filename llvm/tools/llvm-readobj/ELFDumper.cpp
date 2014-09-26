@@ -604,7 +604,7 @@ void ELFDumper<ELFT>::printSections() {
       }
     }
 
-    if (opts::SectionData) {
+    if (opts::SectionData && Section->sh_type != ELF::SHT_NOBITS) {
       ArrayRef<uint8_t> Data = errorOrDefault(Obj->getSectionContents(Section));
       W.printBinaryBlock("SectionData",
                          StringRef((const char *)Data.data(), Data.size()));

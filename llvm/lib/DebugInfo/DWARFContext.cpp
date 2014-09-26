@@ -565,6 +565,15 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile &Obj)
   for (const SectionRef &Section : Obj.sections()) {
     StringRef name;
     Section.getName(name);
+    // Skip BSS and Virtual sections, they aren't interesting.
+    bool IsBSS;
+    Section.isBSS(IsBSS);
+    if (IsBSS)
+      continue;
+    bool IsVirtual;
+    Section.isVirtual(IsVirtual);
+    if (IsVirtual)
+      continue;
     StringRef data;
     Section.getContents(data);
 

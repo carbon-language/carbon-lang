@@ -635,7 +635,8 @@ void COFFDumper::printSections() {
     if (Name == ".debug$S" && opts::CodeViewLineTables)
       printCodeViewLineTables(Sec);
 
-    if (opts::SectionData) {
+    if (opts::SectionData &&
+        !(Section->Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)) {
       StringRef Data;
       if (error(Sec.getContents(Data)))
         break;

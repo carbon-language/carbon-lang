@@ -19,4 +19,3 @@
 // CHECK-NEXT:     Info: 0
 // CHECK-NEXT:     AddressAlignment: 16
 // CHECK-NEXT:     EntrySize: 0
-// CHECK-NEXT:     SectionData (
