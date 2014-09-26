@@ -25,7 +25,7 @@ uptr StackTrace::GetPreviousInstructionPc(uptr pc) {
 #if defined(__powerpc__) || defined(__powerpc64__)
   // PCs are always 4 byte aligned.
   return pc - 4;
-#elif defined(__sparc__)
+#elif defined(__sparc__) || defined(__mips__)
   return pc - 8;
 #else
   return pc - 1;

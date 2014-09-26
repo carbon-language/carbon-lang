@@ -14,6 +14,7 @@
 
 // This test assumes float and double are IEEE-754 single- and double-precision.
 
+#include <endian.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -41,12 +42,20 @@ int main(int argc, char **argv) {
   unsigned Zero = NearlyMinusOne; // ok
 
   // Build a '+Inf'.
+#if __BYTE_ORDER == __LITTLE_ENDIAN
   char InfVal[] = { 0x00, 0x00, 0x80, 0x7f };
+#else
+  char InfVal[] = { 0x7f, 0x80, 0x00, 0x00 };
+#endif
   float Inf;
   memcpy(&Inf, InfVal, 4);
 
   // Build a 'NaN'.
+#if __BYTE_ORDER == __LITTLE_ENDIAN
   char NaNVal[] = { 0x01, 0x00, 0x80, 0x7f };
+#else
+  char NaNVal[] = { 0x7f, 0x80, 0x00, 0x01 };
+#endif
   float NaN;
   memcpy(&NaN, NaNVal, 4);
 
