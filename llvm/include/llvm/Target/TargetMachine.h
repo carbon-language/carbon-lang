@@ -114,6 +114,8 @@ public:
   }
 
   /// \brief Reset the target options based on the function's attributes.
+  // FIXME: Remove TargetOptions that affect per-function code generation
+  // from TargetMachine.
   void resetTargetOptions(const Function &F) const;
 
   /// getMCAsmInfo - Return target specific asm information.
