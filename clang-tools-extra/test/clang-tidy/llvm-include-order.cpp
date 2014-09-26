@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s llvm-include-order %t -isystem %S/Inputs/Headers
+// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s llvm-include-order %t -- -isystem %S/Inputs/Headers
 // REQUIRES: shell
 
 // FIXME: Investigating.

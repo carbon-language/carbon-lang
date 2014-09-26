@@ -6,17 +6,17 @@
 #     [optional compiler arguments]
 #
 # Example:
-#   // RUN: $(dirname %s)/check_clang_tidy_fix.sh %s llvm-include-order %t -isystem $(dirname %s)/Inputs/Headers
+#   // RUN: $(dirname %s)/check_clang_tidy_fix.sh %s llvm-include-order %t -- -isystem $(dirname %s)/Inputs/Headers
 #   // REQUIRES: shell
 
 INPUT_FILE=$1
 CHECK_TO_RUN=$2
 TEMPORARY_FILE=$3.cpp
-# Feed the rest arguments to clang-tidy after --.
+# Feed the rest arguments to clang-tidy.
 shift 3
-CLANG_TIDY_ARGS=--std=c++11
-if [ "$#" -gt 0 ] ; then
-  CLANG_TIDY_ARGS=$*
+if [ "$#" -eq 0 ] ; then
+  # Default to -- --std=c++11
+  set - -- --std=c++11
 fi
 
 set -o errexit
@@ -26,8 +26,8 @@ set -o errexit
 # lines which could potentially trigger formatting-related checks.
 sed 's#// *CHECK-[A-Z-]*:.*#//#' ${INPUT_FILE} > ${TEMPORARY_FILE}
 
-clang-tidy ${TEMPORARY_FILE} -fix --checks="-*,${CHECK_TO_RUN}" \
-  -- ${CLANG_TIDY_ARGS} > ${TEMPORARY_FILE}.msg 2>&1
+clang-tidy ${TEMPORARY_FILE} -fix --checks="-*,${CHECK_TO_RUN}" "$@" \
+  > ${TEMPORARY_FILE}.msg 2>&1
 
 FileCheck -input-file=${TEMPORARY_FILE} ${INPUT_FILE} \
   -check-prefix=CHECK-FIXES -strict-whitespace

@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s google-readability-casting %t -x c
+// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s google-readability-casting %t -- -x c
 // REQUIRES: shell
 
 void f(const char *cpc) {
