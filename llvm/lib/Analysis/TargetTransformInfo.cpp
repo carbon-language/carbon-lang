@@ -392,6 +392,7 @@ struct NoTTI final : ImmutablePass, TargetTransformInfo {
       // FIXME: This is wrong for libc intrinsics.
       return TCC_Basic;
 
+    case Intrinsic::annotation:
     case Intrinsic::assume:
     case Intrinsic::dbg_declare:
     case Intrinsic::dbg_value:
