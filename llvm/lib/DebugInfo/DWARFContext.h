@@ -30,7 +30,7 @@ namespace llvm {
 class DWARFContext : public DIContext {
 
   DWARFUnitSection<DWARFCompileUnit> CUs;
-  SmallVector<DWARFUnitSection<DWARFTypeUnit>,1> TUs;
+  DWARFUnitSection<DWARFTypeUnit> TUs;
   std::unique_ptr<DWARFDebugAbbrev> Abbrev;
   std::unique_ptr<DWARFDebugLoc> Loc;
   std::unique_ptr<DWARFDebugAranges> Aranges;
@@ -38,7 +38,7 @@ class DWARFContext : public DIContext {
   std::unique_ptr<DWARFDebugFrame> DebugFrame;
 
   DWARFUnitSection<DWARFCompileUnit> DWOCUs;
-  SmallVector<DWARFUnitSection<DWARFTypeUnit>,1> DWOTUs;
+  DWARFUnitSection<DWARFTypeUnit> DWOTUs;
   std::unique_ptr<DWARFDebugAbbrev> AbbrevDWO;
   std::unique_ptr<DWARFDebugLocDWO> LocDWO;
 
@@ -77,7 +77,6 @@ public:
 
   typedef DWARFUnitSection<DWARFCompileUnit>::iterator_range cu_iterator_range;
   typedef DWARFUnitSection<DWARFTypeUnit>::iterator_range tu_iterator_range;
-  typedef iterator_range<SmallVectorImpl<DWARFUnitSection<DWARFTypeUnit>>::iterator> tu_section_iterator_range;
 
   /// Get compile units in this context.
   cu_iterator_range compile_units() {
@@ -86,9 +85,9 @@ public:
   }
 
   /// Get type units in this context.
-  tu_section_iterator_range type_unit_sections() {
+  tu_iterator_range type_units() {
     parseTypeUnits();
-    return tu_section_iterator_range(TUs.begin(), TUs.end());
+    return tu_iterator_range(TUs.begin(), TUs.end());
   }
 
   /// Get compile units in the DWO context.
@@ -98,9 +97,9 @@ public:
   }
 
   /// Get type units in the DWO context.
-  tu_section_iterator_range dwo_type_unit_sections() {
+  tu_iterator_range dwo_type_units() {
     parseDWOTypeUnits();
-    return tu_section_iterator_range(DWOTUs.begin(), DWOTUs.end());
+    return tu_iterator_range(DWOTUs.begin(), DWOTUs.end());
   }
 
   /// Get the number of compile units in this context.
