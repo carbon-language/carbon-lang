@@ -865,6 +865,7 @@ let canFoldAsLoad = 1, isReMaterializable = IsReMaterializable in
            Sched<[WriteLoad]>;
 }
 
+let Predicates = [HasAVX, NoVLX] in {
 defm VMOVAPS : sse12_mov_packed<0x28, VR128, f128mem, alignedloadv4f32,
                               "movaps", SSEPackedSingle, SSE_MOVA_ITINS>,
                               PS, VEX;
@@ -890,20 +891,26 @@ defm VMOVUPSY : sse12_mov_packed<0x10, VR256, f256mem, loadv8f32,
 defm VMOVUPDY : sse12_mov_packed<0x10, VR256, f256mem, loadv4f64,
                               "movupd", SSEPackedDouble, SSE_MOVU_ITINS, 0>,
                               PD, VEX, VEX_L;
+}
+
+let Predicates = [UseSSE1] in {
 defm MOVAPS : sse12_mov_packed<0x28, VR128, f128mem, alignedloadv4f32,
                               "movaps", SSEPackedSingle, SSE_MOVA_ITINS>,
                               PS;
-defm MOVAPD : sse12_mov_packed<0x28, VR128, f128mem, alignedloadv2f64,
-                              "movapd", SSEPackedDouble, SSE_MOVA_ITINS>,
-                              PD;
 defm MOVUPS : sse12_mov_packed<0x10, VR128, f128mem, loadv4f32,
                               "movups", SSEPackedSingle, SSE_MOVU_ITINS>,
                               PS;
+}
+let Predicates = [UseSSE2] in {
+defm MOVAPD : sse12_mov_packed<0x28, VR128, f128mem, alignedloadv2f64,
+                              "movapd", SSEPackedDouble, SSE_MOVA_ITINS>,
+                              PD;
 defm MOVUPD : sse12_mov_packed<0x10, VR128, f128mem, loadv2f64,
                               "movupd", SSEPackedDouble, SSE_MOVU_ITINS, 0>,
                               PD;
+}
 
-let SchedRW = [WriteStore] in {
+let SchedRW = [WriteStore], Predicates = [HasAVX, NoVLX]  in {
 def VMOVAPSmr : VPSI<0x29, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    "movaps\t{$src, $dst|$dst, $src}",
                    [(alignedstore (v4f32 VR128:$src), addr:$dst)],
@@ -1047,7 +1054,7 @@ let Predicates = [UseSSE2] in
             (MOVUPDmr addr:$dst, VR128:$src)>;
 
 // Use vmovaps/vmovups for AVX integer load/store.
-let Predicates = [HasAVX] in {
+let Predicates = [HasAVX, NoVLX] in {
   // 128-bit load/store
   def : Pat<(alignedloadv2i64 addr:$src),
             (VMOVAPSrm addr:$src)>;
