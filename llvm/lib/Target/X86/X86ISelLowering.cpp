@@ -7939,7 +7939,7 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 /// This is a helper routine dedicated to lowering vector shuffles using SHUFPS.
 /// It makes no assumptions about whether this is the *best* lowering, it simply
 /// uses it.
-static SDValue lowerVectorShuffleWithSHUPFS(SDLoc DL, MVT VT,
+static SDValue lowerVectorShuffleWithSHUFPS(SDLoc DL, MVT VT,
                                             ArrayRef<int> Mask, SDValue V1,
                                             SDValue V2, SelectionDAG &DAG) {
   SDValue LowV = V1, HighV = V2;
@@ -8122,7 +8122,7 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   }
 
   // Otherwise fall back to a SHUFPS lowering strategy.
-  return lowerVectorShuffleWithSHUPFS(DL, MVT::v4f32, Mask, V1, V2, DAG);
+  return lowerVectorShuffleWithSHUFPS(DL, MVT::v4f32, Mask, V1, V2, DAG);
 }
 
 /// \brief Lower 4-lane i32 vector shuffles.
@@ -9596,7 +9596,7 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     for (int i = 0; i < 4; ++i)
       if (RepeatedMask[i] >= 8)
         RepeatedMask[i] -= 4;
-    return lowerVectorShuffleWithSHUPFS(DL, MVT::v8f32, RepeatedMask, V1, V2, DAG);
+    return lowerVectorShuffleWithSHUFPS(DL, MVT::v8f32, RepeatedMask, V1, V2, DAG);
   }
 
   // If we have a single input shuffle with different shuffle patterns in the
