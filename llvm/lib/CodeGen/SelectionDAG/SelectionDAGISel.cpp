@@ -421,7 +421,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   LibInfo = &getAnalysis<TargetLibraryInfo>();
   GFI = Fn.hasGC() ? &getAnalysis<GCModuleInfo>().getFunctionInfo(Fn) : nullptr;
 
-  TM.resetTargetOptions(MF);
+  TM.resetTargetOptions(Fn);
 
   // Reset OptLevel to None for optnone functions.
   CodeGenOpt::Level NewOptLevel = OptLevel;

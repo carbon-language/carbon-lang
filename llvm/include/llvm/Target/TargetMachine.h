@@ -114,7 +114,7 @@ public:
   }
 
   /// \brief Reset the target options based on the function's attributes.
-  void resetTargetOptions(const MachineFunction *MF) const;
+  void resetTargetOptions(const Function &F) const;
 
   /// getMCAsmInfo - Return target specific asm information.
   ///
