@@ -9884,11 +9884,11 @@ static bool canWidenShuffleElements(ArrayRef<int> Mask,
 
     // Check for an undef mask and a mask value properly aligned to fit with
     // a pair of values. If we find such a case, use the non-undef mask's value.
-    if (Mask[i] == -1 && Mask[i + 1] % 2 == 1) {
+    if (Mask[i] == -1 && Mask[i + 1] >= 0 && Mask[i + 1] % 2 == 1) {
       WidenedMask.push_back(Mask[i + 1] / 2);
       continue;
     }
-    if (Mask[i + 1] == -1 && Mask[i] % 2 == 0) {
+    if (Mask[i + 1] == -1 && Mask[i] >= 0 && Mask[i] % 2 == 0) {
       WidenedMask.push_back(Mask[i] / 2);
       continue;
     }
