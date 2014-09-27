@@ -1047,23 +1047,17 @@ void FilterChooser::emitBinaryParser(raw_ostream &o, unsigned &Indentation,
                                      const OperandInfo &OpInfo) const {
   const std::string &Decoder = OpInfo.Decoder;
 
-  if (OpInfo.numFields() == 1) {
-    OperandInfo::const_iterator OI = OpInfo.begin();
-    o.indent(Indentation) << "tmp = fieldFromInstruction"
-                          << "(insn, " << OI->Base << ", " << OI->Width
-                          << ")";
-    if (OI->Offset)
-      o << " << " << OI->Offset;
-    o << ";\n";
-
-  } else {
+  if (OpInfo.numFields() != 1)
     o.indent(Indentation) << "tmp = 0;\n";
-    for (OperandInfo::const_iterator OI = OpInfo.begin(), OE = OpInfo.end();
-         OI != OE; ++OI) {
-      o.indent(Indentation) << "tmp |= (fieldFromInstruction"
-                            << "(insn, " << OI->Base << ", " << OI->Width
-                            << ") << " << OI->Offset << ");\n";
-    }
+
+  for (const EncodingField &EF : OpInfo) {
+    o.indent(Indentation) << "tmp ";
+    if (OpInfo.numFields() != 1) o << '|';
+    o << "= fieldFromInstruction"
+      << "(insn, " << EF.Base << ", " << EF.Width << ')';
+    if (OpInfo.numFields() != 1 || EF.Offset != 0)
+      o << " << " << EF.Offset;
+    o << ";\n";
   }
 
   if (Decoder != "")
