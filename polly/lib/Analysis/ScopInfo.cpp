@@ -64,6 +64,11 @@ static cl::opt<bool> DisableMultiplicativeReductions(
     cl::desc("Disable multiplicative reductions"), cl::Hidden, cl::ZeroOrMore,
     cl::init(false), cl::cat(PollyCategory));
 
+static cl::opt<unsigned> RunTimeChecksMaxParameters(
+    "polly-rtc-max-parameters",
+    cl::desc("The maximal number of parameters allowed in RTCs."), cl::Hidden,
+    cl::ZeroOrMore, cl::init(8), cl::cat(PollyCategory));
+
 /// Translate a 'const SCEV *' expression in an isl_pw_aff.
 struct SCEVAffinator : public SCEVVisitor<SCEVAffinator, isl_pw_aff *> {
 public:
@@ -1137,6 +1142,32 @@ static int buildMinMaxAccess(__isl_take isl_set *Set, void *User) {
   isl_aff *OneAff;
   unsigned Pos;
 
+  // Restrict the number of parameters involved in the access as the lexmin/
+  // lexmax computation will take too long if this number is high.
+  //
+  // Experiments with a simple test case using an i7 4800MQ:
+  //
+  //  #Parameters involved | Time (in sec)
+  //            6          |     0.01
+  //            7          |     0.04
+  //            8          |     0.12
+  //            9          |     0.40
+  //           10          |     1.54
+  //           11          |     6.78
+  //           12          |    30.38
+  //
+  if (isl_set_n_param(Set) > RunTimeChecksMaxParameters) {
+    unsigned InvolvedParams = 0;
+    for (unsigned u = 0, e = isl_set_n_param(Set); u < e; u++)
+      if (isl_set_involves_dims(Set, isl_dim_param, u, 1))
+        InvolvedParams++;
+
+    if (InvolvedParams > RunTimeChecksMaxParameters) {
+      isl_set_free(Set);
+      return -1;
+    }
+  }
+
   MinPMA = isl_set_lexmin_pw_multi_aff(isl_set_copy(Set));
   MaxPMA = isl_set_lexmax_pw_multi_aff(isl_set_copy(Set));
 
@@ -1160,7 +1191,7 @@ static int buildMinMaxAccess(__isl_take isl_set *Set, void *User) {
   return 0;
 }
 
-void Scop::buildAliasGroups(AliasAnalysis &AA) {
+bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   // To create sound alias checks we perform the following steps:
   //   o) Use the alias analysis and an alias set tracker to build alias sets
   //      for all memory accesses inside the SCoP.
@@ -1207,6 +1238,7 @@ void Scop::buildAliasGroups(AliasAnalysis &AA) {
       I = AliasGroups.erase(I);
   }
 
+  bool Valid = true;
   for (AliasGroupTy &AG : AliasGroups) {
     MinMaxVectorTy *MinMaxAccesses = new MinMaxVectorTy();
     MinMaxAccesses->reserve(AG.size());
@@ -1220,11 +1252,16 @@ void Scop::buildAliasGroups(AliasAnalysis &AA) {
     Locations = isl_union_set_intersect_params(Locations, getAssumedContext());
     Locations = isl_union_set_coalesce(Locations);
     Locations = isl_union_set_detect_equalities(Locations);
-    isl_union_set_foreach_set(Locations, buildMinMaxAccess, MinMaxAccesses);
+    Valid = (0 == isl_union_set_foreach_set(Locations, buildMinMaxAccess,
+                                            MinMaxAccesses));
     isl_union_set_free(Locations);
-
     MinMaxAliasGroups.push_back(MinMaxAccesses);
+
+    if (!Valid)
+      break;
   }
+
+  return Valid;
 }
 
 Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
@@ -1566,9 +1603,28 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
 
   scop = new Scop(*tempScop, LI, SE, ctx);
 
-  if (PollyUseRuntimeAliasChecks)
-    scop->buildAliasGroups(AA);
+  if (!PollyUseRuntimeAliasChecks)
+    return false;
 
+  // If a problem occurs while building the alias groups we need to delete
+  // this SCoP and pretend it wasn't valid in the first place.
+  if (scop->buildAliasGroups(AA))
+    return false;
+
+  --ScopFound;
+  if (tempScop->getMaxLoopDepth() > 0)
+    --RichScopFound;
+
+  DEBUG(dbgs()
+        << "\n\nNOTE: Run time checks for " << scop->getNameStr()
+        << " could not be created as the number of parameters involved is too "
+           "high. The SCoP will be "
+           "dismissed.\nUse:\n\t--polly-rtc-max-parameters=X\nto adjust the "
+           "maximal number of parameters but be advised that the compile time "
+           "might increase exponentially.\n\n");
+
+  delete scop;
+  scop = nullptr;
   return false;
 }
 

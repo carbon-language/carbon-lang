@@ -692,7 +692,9 @@ public:
   void addAssumption(__isl_take isl_set *Set);
 
   /// @brief Build all alias groups for this SCoP.
-  void buildAliasGroups(AliasAnalysis &AA);
+  ///
+  /// @returns True if __no__ error occurred, false otherwise.
+  bool buildAliasGroups(AliasAnalysis &AA);
 
   /// @brief Return all alias groups for this SCoP.
   const MinMaxVectorVectorTy &getAliasGroups() const {
