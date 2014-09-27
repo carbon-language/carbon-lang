@@ -36,6 +36,7 @@ add_llvm_library(LLVMSupport
   Locale.cpp
   LockFileManager.cpp
   ManagedStatic.cpp
+  MathExtras.cpp
   MemoryBuffer.cpp
   MemoryObject.cpp
   MD5.cpp
