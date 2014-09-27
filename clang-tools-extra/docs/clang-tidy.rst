@@ -69,7 +69,7 @@ supported by corresponding checks.
 
 An overview of all the command-line options:
 
-.. code-block:: bash
+.. code-block::
 
   $ clang-tidy -help
   USAGE: clang-tidy [options] <source0> [... <sourceN>]
