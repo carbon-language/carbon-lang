@@ -133,13 +133,33 @@ public:
         return true;
     }
 
+    // Return true if still pending thread stops waiting; false if no more stops.
+    // If no more pending stops, signal.
+    bool
+    RemoveThreadStopRequirementAndMaybeSignal (lldb::tid_t tid)
+    {
+        // Remove this tid if it was in it.
+        m_wait_for_stop_tids.erase (tid);
+
+        // Fire pending notification if no pending thread stops remain.
+        if (m_wait_for_stop_tids.empty ())
+        {
+            // Fire the pending notification now.
+            NotifyNow ();
+            return false;
+        }
+
+        // Still have pending thread stops.
+        return true;
+    }
+
+private:
+
     void
     NotifyNow ()
     {
         m_call_after_func (m_triggering_tid);
     }
-
-private:
 
     const lldb::tid_t m_triggering_tid;
     ThreadIDSet m_wait_for_stop_tids;
@@ -166,6 +186,33 @@ public:
     ProcessEvent(ThreadStateCoordinator &coordinator) override
     {
         coordinator.ThreadDidStop (m_tid);
+        return true;
+    }
+
+private:
+
+    const lldb::tid_t m_tid;
+};
+
+//===----------------------------------------------------------------------===//
+
+class ThreadStateCoordinator::EventThreadDeath : public ThreadStateCoordinator::EventBase
+{
+public:
+    EventThreadDeath (lldb::tid_t tid):
+    EventBase (),
+    m_tid (tid)
+    {
+    }
+
+    ~EventThreadDeath () override
+    {
+    }
+
+    bool
+    ProcessEvent(ThreadStateCoordinator &coordinator) override
+    {
+        coordinator.ThreadDidDie (m_tid);
         return true;
     }
 
@@ -253,17 +300,31 @@ ThreadStateCoordinator::ThreadDidStop (lldb::tid_t tid)
     // If we have a pending notification, remove this from the set.
     if (m_pending_notification_sp)
     {
-        EventCallAfterThreadsStop *call_after_event = static_cast<EventCallAfterThreadsStop*> (m_pending_notification_sp.get ());
-
-        ThreadIDSet &remaining_stop_tids = call_after_event->GetRemainingWaitTIDs ();
-
-        // Remove this tid if it was in it.
-        remaining_stop_tids.erase (tid);
-        if (remaining_stop_tids.empty ())
+        EventCallAfterThreadsStop *const call_after_event = static_cast<EventCallAfterThreadsStop*> (m_pending_notification_sp.get ());
+        const bool pending_stops_remain = call_after_event->RemoveThreadStopRequirementAndMaybeSignal (tid);
+        if (!pending_stops_remain)
         {
-            // Fire the pending notification now.
-            call_after_event->NotifyNow ();
+            // Clear the pending notification now.
+            m_pending_notification_sp.reset ();
+        }
+    }
+}
 
+void
+ThreadStateCoordinator::ThreadDidDie (lldb::tid_t tid)
+{
+    // Update the global list of known thread states.  While this one is stopped, it is also dead.
+    // So stop tracking it.  We assume the user of this coordinator will not keep trying to add
+    // dependencies on a thread after it is known to be dead.
+    m_tid_stop_map.erase (tid);
+
+    // If we have a pending notification, remove this from the set.
+    if (m_pending_notification_sp)
+    {
+        EventCallAfterThreadsStop *const call_after_event = static_cast<EventCallAfterThreadsStop*> (m_pending_notification_sp.get ());
+        const bool pending_stops_remain = call_after_event->RemoveThreadStopRequirementAndMaybeSignal (tid);
+        if (!pending_stops_remain)
+        {
             // Clear the pending notification now.
             m_pending_notification_sp.reset ();
         }
@@ -285,6 +346,12 @@ void
 ThreadStateCoordinator::NotifyThreadStop (lldb::tid_t tid)
 {
     EnqueueEvent (EventBaseSP (new EventThreadStopped (tid)));
+}
+
+void
+ThreadStateCoordinator::NotifyThreadDeath (lldb::tid_t tid)
+{
+    EnqueueEvent (EventBaseSP (new EventThreadDeath (tid)));
 }
 
 void
