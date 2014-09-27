@@ -374,17 +374,32 @@ the check implements and what the current values are (e.g. for the
 .. code-block:: c++
 
   class MyCheck : public ClangTidyCheck {
-    const unsigned SomeOption;
+    const unsigned SomeOption1;
+    const std::string SomeOption2;
   
   public:
     MyCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context),
-        SomeOption(Options.get("SomeOption", -1U)) {}
+        SomeOption(Options.get("SomeOption1", -1U)),
+        SomeOption(Options.get("SomeOption2", "some default")) {}
 
     void storeOptions(ClangTidyOptions::OptionMap &Opts) {
-      Options.store(Opts, "SomeOption", SomeOption);
+      Options.store(Opts, "SomeOption1", SomeOption1);
+      Options.store(Opts, "SomeOption2", SomeOption2);
     }
     ...
+
+Assuming the check is registered with the name "my-check", the option can then
+be set in a ``.clang-tidy`` file in the following way:
+
+.. code-block:: yaml
+
+  CheckOptions: {
+    - key: my-check.SomeOption1
+      value: 123
+    - key: my-check.SomeOption2
+      value: 'some other value'
+  }
 
 
 Running clang-tidy on LLVM
