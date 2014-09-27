@@ -1051,7 +1051,11 @@ void FilterChooser::emitBinaryParser(raw_ostream &o, unsigned &Indentation,
     OperandInfo::const_iterator OI = OpInfo.begin();
     o.indent(Indentation) << "tmp = fieldFromInstruction"
                           << "(insn, " << OI->Base << ", " << OI->Width
-                          << ");\n";
+                          << ")";
+    if (OI->Offset)
+      o << " << " << OI->Offset;
+    o << ";\n";
+
   } else {
     o.indent(Indentation) << "tmp = 0;\n";
     for (OperandInfo::const_iterator OI = OpInfo.begin(), OE = OpInfo.end();
