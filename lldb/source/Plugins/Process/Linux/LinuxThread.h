@@ -11,7 +11,7 @@
 #define liblldb_LinuxThread_H_
 
 // Other libraries and framework includes
-#include "POSIXThread.h"
+#include "Plugins/Process/POSIX/POSIXThread.h"
 
 //------------------------------------------------------------------------------
 // @class LinuxThread

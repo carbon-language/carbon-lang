@@ -31,18 +31,17 @@
 #include "POSIXThread.h"
 #include "ProcessPOSIX.h"
 #include "ProcessPOSIXLog.h"
-#include "ProcessMonitor.h"
+#include "Plugins/Process/Linux/ProcessMonitor.h"
 #include "RegisterContextPOSIXProcessMonitor_arm64.h"
 #include "RegisterContextPOSIXProcessMonitor_mips64.h"
 #include "RegisterContextPOSIXProcessMonitor_x86.h"
-#include "RegisterContextLinux_arm64.h"
-#include "RegisterContextLinux_i386.h"
-#include "RegisterContextLinux_x86_64.h"
-#include "RegisterContextFreeBSD_i386.h"
-#include "RegisterContextFreeBSD_mips64.h"
-#include "RegisterContextFreeBSD_x86_64.h"
-
-#include "UnwindLLDB.h"
+#include "Plugins/Process/Utility/RegisterContextLinux_arm64.h"
+#include "Plugins/Process/Utility/RegisterContextLinux_i386.h"
+#include "Plugins/Process/Utility/RegisterContextLinux_x86_64.h"
+#include "Plugins/Process/Utility/RegisterContextFreeBSD_i386.h"
+#include "Plugins/Process/Utility/RegisterContextFreeBSD_mips64.h"
+#include "Plugins/Process/Utility/RegisterContextFreeBSD_x86_64.h"
+#include "Plugins/Process/Utility/UnwindLLDB.h"
 
 using namespace lldb;
 using namespace lldb_private;

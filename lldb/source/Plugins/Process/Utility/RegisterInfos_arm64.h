@@ -15,8 +15,8 @@
 #include "lldb/lldb-defines.h"
 #include "lldb/lldb-enumerations.h"
 
-#include "ARM64_GCC_Registers.h"
-#include "ARM64_DWARF_Registers.h"
+#include "Utility/ARM64_GCC_Registers.h"
+#include "Utility/ARM64_DWARF_Registers.h"
 
 #ifndef GPR_OFFSET
 #error GPR_OFFSET must be defined before including this header file

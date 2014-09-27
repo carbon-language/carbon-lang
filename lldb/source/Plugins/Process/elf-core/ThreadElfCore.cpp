@@ -16,10 +16,10 @@
 
 #include "ThreadElfCore.h"
 #include "ProcessElfCore.h"
-#include "RegisterContextLinux_x86_64.h"
-#include "RegisterContextFreeBSD_i386.h"
-#include "RegisterContextFreeBSD_mips64.h"
-#include "RegisterContextFreeBSD_x86_64.h"
+#include "Plugins/Process/Utility/RegisterContextLinux_x86_64.h"
+#include "Plugins/Process/Utility/RegisterContextFreeBSD_i386.h"
+#include "Plugins/Process/Utility/RegisterContextFreeBSD_mips64.h"
+#include "Plugins/Process/Utility/RegisterContextFreeBSD_x86_64.h"
 #include "RegisterContextPOSIXCore_mips64.h"
 #include "RegisterContextPOSIXCore_x86_64.h"
 

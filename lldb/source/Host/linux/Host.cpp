@@ -14,7 +14,9 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <fcntl.h>
+#ifndef __ANDROID__
 #include <execinfo.h>
+#endif
 
 // C++ Includes
 // Other libraries and framework includes
@@ -375,6 +377,7 @@ Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 void
 Host::Backtrace (Stream &strm, uint32_t max_frames)
 {
+#ifndef __ANDROID__
     if (max_frames > 0)
     {
         std::vector<void *> frame_buffer (max_frames, NULL);
@@ -388,6 +391,9 @@ Host::Backtrace (Stream &strm, uint32_t max_frames)
             ::free (strs);
         }
     }
+#else
+    assert(false && "::backtrace() not supported on Android");
+#endif
 }
 
 size_t

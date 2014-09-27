@@ -19,7 +19,9 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/ValueObjectRegister.h"
+#ifndef LLDB_DISABLE_LIBEDIT
 #include "lldb/Host/Editline.h"
+#endif
 #include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/Block.h"
@@ -339,7 +341,9 @@ IOHandlerEditline::IOHandlerEditline (Debugger &debugger,
                                       uint32_t line_number_start,
                                       IOHandlerDelegate &delegate) :
     IOHandler (debugger, input_sp, output_sp, error_sp, flags),
+#ifndef LLDB_DISABLE_LIBEDIT
     m_editline_ap (),
+#endif
     m_delegate (delegate),
     m_prompt (),
     m_base_line_number (line_number_start),
@@ -347,6 +351,7 @@ IOHandlerEditline::IOHandlerEditline (Debugger &debugger,
 {
     SetPrompt(prompt);
 
+#ifndef LLDB_DISABLE_LIBEDIT
     bool use_editline = false;
     
 #ifndef _MSC_VER
@@ -369,24 +374,28 @@ IOHandlerEditline::IOHandlerEditline (Debugger &debugger,
         m_editline_ap->SetLineCompleteCallback (LineCompletedCallback, this);
         m_editline_ap->SetAutoCompleteCallback (AutoCompleteCallback, this);
     }
-    
+#endif
 }
 
 IOHandlerEditline::~IOHandlerEditline ()
 {
+#ifndef LLDB_DISABLE_LIBEDIT
     m_editline_ap.reset();
+#endif
 }
 
 
 bool
 IOHandlerEditline::GetLine (std::string &line, bool &interrupted)
 {
+#ifndef LLDB_DISABLE_LIBEDIT
     if (m_editline_ap)
     {
         return m_editline_ap->GetLine(line, interrupted).Success();
     }
     else
     {
+#endif
         line.clear();
 
         FILE *in = GetInputFILE();
@@ -452,10 +461,13 @@ IOHandlerEditline::GetLine (std::string &line, bool &interrupted)
             SetIsDone(true);
         }
         return false;
+#ifndef LLDB_DISABLE_LIBEDIT
     }
+#endif
 }
 
 
+#ifndef LLDB_DISABLE_LIBEDIT
 LineStatus
 IOHandlerEditline::LineCompletedCallback (Editline *editline,
                                           StringList &lines,
@@ -487,14 +499,24 @@ IOHandlerEditline::AutoCompleteCallback (const char *current_line,
                                                               matches);
     return 0;
 }
+#endif
 
 const char *
 IOHandlerEditline::GetPrompt ()
 {
+#ifndef LLDB_DISABLE_LIBEDIT
     if (m_editline_ap)
+    {
         return m_editline_ap->GetPrompt ();
-    else if (m_prompt.empty())
-        return NULL;
+    }
+    else
+    {
+#endif
+        if (m_prompt.empty())
+            return NULL;
+#ifndef LLDB_DISABLE_LIBEDIT
+    }
+#endif
     return m_prompt.c_str();
 }
 
@@ -505,8 +527,10 @@ IOHandlerEditline::SetPrompt (const char *p)
         m_prompt = p;
     else
         m_prompt.clear();
+#ifndef LLDB_DISABLE_LIBEDIT
     if (m_editline_ap)
         m_editline_ap->SetPrompt (m_prompt.empty() ? NULL : m_prompt.c_str());
+#endif
     return true;
 }
 
@@ -514,14 +538,17 @@ void
 IOHandlerEditline::SetBaseLineNumber (uint32_t line)
 {
     m_base_line_number = line;
+#ifndef LLDB_DISABLE_LIBEDIT
     if (m_editline_ap)
         m_editline_ap->ShowLineNumbers (true, line);
+#endif
     
 }
 bool
 IOHandlerEditline::GetLines (StringList &lines, bool &interrupted)
 {
     bool success = false;
+#ifndef LLDB_DISABLE_LIBEDIT
     if (m_editline_ap)
     {
         std::string end_token;
@@ -529,6 +556,7 @@ IOHandlerEditline::GetLines (StringList &lines, bool &interrupted)
     }
     else
     {
+#endif
         LineStatus lines_status = LineStatus::Success;
         Error error;
 
@@ -567,7 +595,9 @@ IOHandlerEditline::GetLines (StringList &lines, bool &interrupted)
         m_delegate.IOHandlerLinesUpdated(*this, lines, UINT32_MAX, error);
 
         success = lines.GetSize() > 0;
+#ifndef LLDB_DISABLE_LIBEDIT
     }
+#endif
     return success;
 }
 
@@ -619,20 +649,24 @@ IOHandlerEditline::Run ()
 void
 IOHandlerEditline::Hide ()
 {
+#ifndef LLDB_DISABLE_LIBEDIT
     if (m_editline_ap)
         m_editline_ap->Hide();
+#endif
 }
 
 
 void
 IOHandlerEditline::Refresh ()
 {
+#ifndef LLDB_DISABLE_LIBEDIT
     if (m_editline_ap)
     {
         m_editline_ap->Refresh();
     }
     else
     {
+#endif
         const char *prompt = GetPrompt();
         if (prompt && prompt[0])
         {
@@ -643,14 +677,18 @@ IOHandlerEditline::Refresh ()
                 ::fflush(out);
             }
         }
+#ifndef LLDB_DISABLE_LIBEDIT
     }
+#endif
 }
 
 void
 IOHandlerEditline::Cancel ()
 {
+#ifndef LLDB_DISABLE_LIBEDIT
     if (m_editline_ap)
         m_editline_ap->Interrupt ();
+#endif
 }
 
 bool
@@ -660,16 +698,20 @@ IOHandlerEditline::Interrupt ()
     if (m_delegate.IOHandlerInterrupt(*this))
         return true;
 
+#ifndef LLDB_DISABLE_LIBEDIT
     if (m_editline_ap)
         return m_editline_ap->Interrupt();
+#endif
     return false;
 }
 
 void
 IOHandlerEditline::GotEOF()
 {
+#ifndef LLDB_DISABLE_LIBEDIT
     if (m_editline_ap)
         m_editline_ap->Interrupt();
+#endif
 }
 
 // we may want curses to be disabled for some builds

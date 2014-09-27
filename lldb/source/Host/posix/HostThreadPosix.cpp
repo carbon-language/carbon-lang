@@ -50,8 +50,12 @@ Error
 HostThreadPosix::Cancel()
 {
     Error error;
+#ifndef __ANDROID__
     int err = ::pthread_cancel(m_thread);
     error.SetError(err, eErrorTypePOSIX);
+#else
+    error.SetErrorString("HostThreadPosix::Cancel() not supported on Android");
+#endif
 
     return error;
 }

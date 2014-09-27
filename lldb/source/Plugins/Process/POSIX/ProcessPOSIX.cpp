@@ -28,7 +28,7 @@
 #include "ProcessPOSIX.h"
 #include "ProcessPOSIXLog.h"
 #include "Plugins/Process/Utility/InferiorCallPOSIX.h"
-#include "ProcessMonitor.h"
+#include "Plugins/Process/Linux/ProcessMonitor.h"
 #include "POSIXThread.h"
 
 using namespace lldb;

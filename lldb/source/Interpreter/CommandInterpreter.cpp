@@ -49,7 +49,9 @@
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/Timer.h"
 
+#ifndef LLDB_DISABLE_LIBEDIT
 #include "lldb/Host/Editline.h"
+#endif
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
 

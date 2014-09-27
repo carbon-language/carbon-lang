@@ -14,7 +14,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #ifndef LLDB_DISABLE_POSIX
-#include <spawn.h>
 #include <netinet/in.h>
 #include <sys/mman.h>       // for mmap
 #endif

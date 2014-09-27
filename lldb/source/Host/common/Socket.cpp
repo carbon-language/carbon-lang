@@ -40,6 +40,13 @@ typedef void * get_socket_option_arg_type;
 const NativeSocket Socket::kInvalidSocketValue = -1;
 #endif // #if defined(_WIN32)
 
+#ifdef __ANDROID__ 
+// Android does not have SUN_LEN
+#ifndef SUN_LEN
+#define SUN_LEN(ptr) ((size_t) (((struct sockaddr_un *) 0)->sun_path) + strlen((ptr)->sun_path))
+#endif
+#endif // #ifdef __ANDROID__
+
 Socket::Socket(NativeSocket socket, SocketProtocol protocol, bool should_close)
     : IOObject(eFDTypeSocket, should_close)
     , m_protocol(protocol)

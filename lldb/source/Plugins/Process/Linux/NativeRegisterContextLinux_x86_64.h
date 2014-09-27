@@ -12,8 +12,8 @@
 #define lldb_NativeRegisterContextLinux_x86_64_h
 
 #include "lldb/Target/NativeRegisterContextRegisterInfo.h"
-#include "RegisterContext_x86.h"
-#include "lldb-x86-register-enums.h"
+#include "Plugins/Process/Utility/RegisterContext_x86.h"
+#include "Plugins/Process/Utility/lldb-x86-register-enums.h"
 
 namespace lldb_private
 {

@@ -9,10 +9,6 @@
 
 #include "lldb/Host/Config.h"
 
-#ifndef LLDB_DISABLE_POSIX
-#include <spawn.h>
-#endif
-
 #include "lldb/Target/ProcessLaunchInfo.h"
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/Target.h"

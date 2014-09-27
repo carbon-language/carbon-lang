@@ -20,7 +20,7 @@
 #include "lldb/Target/Target.h"
 
 #include "ProcessLinux.h"
-#include "ProcessPOSIXLog.h"
+#include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 #include "Plugins/Process/Utility/InferiorCallPOSIX.h"
 #include "Plugins/Process/Utility/LinuxSignals.h"
 #include "ProcessMonitor.h"

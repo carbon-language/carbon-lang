@@ -17,7 +17,9 @@
 #include <unistd.h>
 #include <elf.h>
 #include <sys/personality.h>
+#ifndef __ANDROID__
 #include <sys/procfs.h>
+#endif
 #include <sys/ptrace.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
@@ -39,10 +41,15 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Utility/PseudoTerminal.h"
 
-#include "POSIXThread.h"
+#include "Plugins/Process/POSIX/POSIXThread.h"
 #include "ProcessLinux.h"
-#include "ProcessPOSIXLog.h"
+#include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 #include "ProcessMonitor.h"
+
+#ifdef __ANDROID__
+#define __ptrace_request int
+#define PT_DETACH PTRACE_DETACH
+#endif
 
 #define DEBUG_PTRACE_MAXBYTES 20
 

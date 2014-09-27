@@ -10,10 +10,10 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Core/RegisterValue.h"
 
-#include "RegisterContextPOSIX_mips64.h"
+#include "Plugins/Process/Utility/RegisterContextPOSIX_mips64.h"
 #include "ProcessPOSIX.h"
 #include "RegisterContextPOSIXProcessMonitor_mips64.h"
-#include "ProcessMonitor.h"
+#include "Plugins/Process/Linux/ProcessMonitor.h"
 
 using namespace lldb_private;
 using namespace lldb;

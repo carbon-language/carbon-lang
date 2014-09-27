@@ -457,6 +457,7 @@ namespace lldb_private {
         SetBaseLineNumber (uint32_t line);
         
     private:
+#ifndef LLDB_DISABLE_LIBEDIT
         static LineStatus
         LineCompletedCallback (Editline *editline,
                                StringList &lines,
@@ -471,9 +472,12 @@ namespace lldb_private {
                                          int max_matches,
                                          StringList &matches,
                                          void *baton);
+#endif
 
     protected:
+#ifndef LLDB_DISABLE_LIBEDIT
         std::unique_ptr<Editline> m_editline_ap;
+#endif
         IOHandlerDelegate &m_delegate;
         std::string m_prompt;
         uint32_t m_base_line_number; // If non-zero, then show line numbers in prompt

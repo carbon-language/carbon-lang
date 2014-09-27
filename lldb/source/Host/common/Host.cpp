@@ -27,8 +27,8 @@
 #include <sys/stat.h>
 #endif
 
-#if !defined (__GNU__) && !defined (_WIN32)
-// Does not exist under GNU/HURD or Windows
+#if !defined (__GNU__) && !defined (_WIN32) && !defined (__ANDROID__)
+// Does not exist under GNU/HURD, or Windows, or Android
 #include <sys/sysctl.h>
 #endif
 
@@ -39,7 +39,9 @@
 #endif
 
 #if defined (__linux__) || defined (__FreeBSD__) || defined (__FreeBSD_kernel__) || defined (__APPLE__) || defined(__NetBSD__)
+#ifndef __ANDROID__
 #include <spawn.h>
+#endif
 #include <sys/wait.h>
 #include <sys/syscall.h>
 #endif
@@ -127,6 +129,7 @@ Host::StartMonitoringChildProcess(Host::MonitorChildProcessCallback callback, vo
     return ThreadLauncher::LaunchThread(thread_name, MonitorChildProcessThreadFunction, info_ptr, NULL);
 }
 
+#ifndef __ANDROID__
 //------------------------------------------------------------------
 // Scoped class that will disable thread canceling when it is
 // constructed, and exception safely restore the previous value it
@@ -154,6 +157,7 @@ public:
 private:
     int m_old_state;    // Save the old cancelability state.
 };
+#endif
 
 static thread_result_t
 MonitorChildProcessThreadFunction (void *arg)
@@ -187,10 +191,14 @@ MonitorChildProcessThreadFunction (void *arg)
             log->Printf("%s ::wait_pid (pid = %" PRIi32 ", &status, options = %i)...", function, pid, options);
 
         // Wait for all child processes
+#ifndef __ANDROID__
         ::pthread_testcancel ();
+#endif
         // Get signals from all children with same process group of pid
         const ::pid_t wait_pid = ::waitpid (pid, &status, options);
+#ifndef __ANDROID__
         ::pthread_testcancel ();
+#endif
 
         if (wait_pid == -1)
         {
@@ -236,7 +244,9 @@ MonitorChildProcessThreadFunction (void *arg)
 
             // Scope for pthread_cancel_disabler
             {
+#ifndef __ANDROID__
                 ScopedPThreadCancelDisabler pthread_cancel_disabler;
+#endif
 
                 log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
                 if (log)
@@ -464,12 +474,16 @@ FileSpec
 Host::GetModuleFileSpecForHostAddress (const void *host_addr)
 {
     FileSpec module_filespec;
+#ifndef __ANDROID__
     Dl_info info;
     if (::dladdr (host_addr, &info))
     {
         if (info.dli_fname)
             module_filespec.SetFile(info.dli_fname, true);
     }
+#else
+    assert(false && "dladdr() not supported on Android");
+#endif
     return module_filespec;
 }
 
@@ -705,6 +719,7 @@ Host::RunShellCommand (const char *command,
 short
 Host::GetPosixspawnFlags (ProcessLaunchInfo &launch_info)
 {
+#ifndef __ANDROID__
     short flags = POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_SETSIGMASK;
 
 #if defined (__APPLE__)
@@ -747,12 +762,17 @@ Host::GetPosixspawnFlags (ProcessLaunchInfo &launch_info)
 #endif
 #endif // #if defined (__APPLE__)
     return flags;
+#else
+    assert(false *&& "Host::GetPosixspawnFlags() not supported on Android");
+    return 0;
+#endif
 }
 
 Error
 Host::LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t &pid)
 {
     Error error;
+#ifndef __ANDROID__
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
 
     posix_spawnattr_t attr;
@@ -955,6 +975,9 @@ Host::LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_i
         }
 #endif
     }
+#else
+    error.SetErrorString("Host::LaunchProcessPosixSpawn() not supported on Android");
+#endif
 
     return error;
 }
@@ -962,6 +985,7 @@ Host::LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_i
 bool
 Host::AddPosixSpawnFileAction(void *_file_actions, const FileAction *info, Log *log, Error &error)
 {
+#ifndef __ANDROID__
     if (info == NULL)
         return false;
 
@@ -1024,6 +1048,10 @@ Host::AddPosixSpawnFileAction(void *_file_actions, const FileAction *info, Log *
             break;
     }
     return error.Success();
+#else
+    error.SetErrorString("Host::AddPosixSpawnFileAction() not supported on Android");
+    return false;
+#endif
 }
 
 #endif // LaunchProcedssPosixSpawn: Apple, Linux, FreeBSD and other GLIBC systems
