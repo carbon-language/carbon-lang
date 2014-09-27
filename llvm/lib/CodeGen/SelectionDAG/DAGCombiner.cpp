@@ -9858,6 +9858,17 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
     }
   }
 
+  // If this is a store followed by a store with the same value to the same
+  // location, then the store is dead/noop.
+  if (StoreSDNode *ST1 = dyn_cast<StoreSDNode>(Chain)) {
+    if (ST1->getBasePtr() == Ptr && ST->getMemoryVT() == ST1->getMemoryVT() &&
+        ST1->getValue() == Value && ST->isUnindexed() && !ST->isVolatile() &&
+        ST1->isUnindexed() && !ST1->isVolatile()) {
+      // The store is dead, remove it.
+      return Chain;
+    }
+  }
+
   // If this is an FP_ROUND or TRUNC followed by a store, fold this into a
   // truncating store.  We can do this even if this is already a truncstore.
   if ((Value.getOpcode() == ISD::FP_ROUND || Value.getOpcode() == ISD::TRUNCATE)
