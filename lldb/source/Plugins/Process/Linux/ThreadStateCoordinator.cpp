@@ -255,7 +255,7 @@ ThreadStateCoordinator::ThreadDidStop (lldb::tid_t tid)
     {
         EventCallAfterThreadsStop *call_after_event = static_cast<EventCallAfterThreadsStop*> (m_pending_notification_sp.get ());
 
-        auto remaining_stop_tids = call_after_event->GetRemainingWaitTIDs ();
+        ThreadIDSet &remaining_stop_tids = call_after_event->GetRemainingWaitTIDs ();
 
         // Remove this tid if it was in it.
         remaining_stop_tids.erase (tid);
