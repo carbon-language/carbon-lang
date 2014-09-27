@@ -69,6 +69,6 @@ def bum : Instruction {
 
 // CHECK: tmp = fieldFromInstruction(insn, 8, 7);
 // CHECK: tmp = fieldFromInstruction(insn, 8, 8) << 3;
-// CHECK: tmp |= (fieldFromInstruction(insn, 8, 4) << 7);
-// CHECK: tmp |= (fieldFromInstruction(insn, 12, 4) << 3);
+// CHECK: tmp |= fieldFromInstruction(insn, 8, 4) << 7;
+// CHECK: tmp |= fieldFromInstruction(insn, 12, 4) << 3;
 // CHECK: tmp = fieldFromInstruction(insn, 8, 8) << 4;
