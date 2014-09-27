@@ -17,7 +17,7 @@ with if you set up a compile command database for your project (for an example
 of how to do this see `How To Setup Tooling For LLVM`_). You can also specify
 compilation options on the command line after ``--``:
 
-.. code-block:: bash
+.. code-block:: console
 
   $ clang-tidy test.cpp -- -Imy_project/include -DMY_DEFINES ...
 
@@ -27,7 +27,7 @@ checks. Each check has a name and the checks to run can be chosen using the
 negative (prefixed with ``-``) globs. Positive globs add subsets of checks,
 negative globs remove them. For example,
 
-.. code-block:: bash
+.. code-block:: console
 
   $ clang-tidy test.cpp -checks='-*,clang-analyzer-*,-clang-analyzer-alpha*'
 
@@ -69,7 +69,7 @@ supported by corresponding checks.
 
 An overview of all the command-line options:
 
-.. code-block::
+.. code-block:: console
 
   $ clang-tidy -help
   USAGE: clang-tidy [options] <source0> [... <sourceN>]
