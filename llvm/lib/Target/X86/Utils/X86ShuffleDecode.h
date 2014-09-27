@@ -26,7 +26,7 @@ namespace llvm {
 class Constant;
 class MVT;
 
-enum { SM_SentinelZero = -1, SM_SentinelUndef = -2 };
+enum { SM_SentinelUndef = -1, SM_SentinelZero = -2 };
 
 void DecodeINSERTPSMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
