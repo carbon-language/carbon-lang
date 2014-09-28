@@ -79,6 +79,7 @@ namespace lldb_private
         class EventCallAfterThreadsStop;
         class EventStopCoordinator;
         class EventThreadStopped;
+        class EventThreadCreate;
         class EventThreadDeath;
 
         typedef std::shared_ptr<EventBase> EventBaseSP;
@@ -100,6 +101,9 @@ namespace lldb_private
 
         void
         ThreadDidStop (lldb::tid_t tid);
+
+        void
+        ThreadWasCreated (lldb::tid_t tid);
 
         void
         ThreadDidDie (lldb::tid_t tid);

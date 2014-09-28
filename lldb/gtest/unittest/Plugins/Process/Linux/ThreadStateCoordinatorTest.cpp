@@ -318,7 +318,7 @@ TEST(ThreadStateCoordinatorTest, CallAfterThreadsStopFiresWhenOnePendingThreadDi
     ASSERT_EQ (true, request_thread_stop_called);
     ASSERT_EQ (PENDING_STOP_TID, request_thread_stop_tid);
 
-    // But we still shouldn't have the deferred signal call go off yet.  Need to wait for the stop to be reported.
+    // But we still shouldn't have the deferred signal call go off yet.  Need to wait for the death to be reported.
     ASSERT_EQ (false, call_after_fired);
 
     // Now report the that the thread with pending stop dies.
@@ -328,6 +328,74 @@ TEST(ThreadStateCoordinatorTest, CallAfterThreadsStopFiresWhenOnePendingThreadDi
     ASSERT_EQ (false, call_after_fired);
 
     // Process next event.
+    ASSERT_EQ (true, coordinator.ProcessNextEvent ());
+
+    // Deferred signal notification should have fired now.
+    ASSERT_EQ (true, call_after_fired);
+    ASSERT_EQ (TRIGGERING_TID, reported_firing_tid);
+}
+
+TEST(ThreadStateCoordinatorTest, ExistingPendingNotificationRequiresStopFromNewThread)
+{
+    ThreadStateCoordinator coordinator(NOPLogger);
+
+    const lldb::tid_t TRIGGERING_TID = 4105;
+    const lldb::tid_t PENDING_STOP_TID = 3;
+
+    ThreadStateCoordinator::ThreadIDSet pending_stop_tids { PENDING_STOP_TID };
+
+    bool call_after_fired = false;
+    lldb::tid_t reported_firing_tid = 0;
+
+    int request_thread_stop_calls = 0;
+    ThreadStateCoordinator::ThreadIDSet request_thread_stop_tids;
+
+    // Notify we have a trigger that needs to be fired when all threads in the wait tid set have stopped.
+    coordinator.CallAfterThreadsStop (TRIGGERING_TID,
+                                      pending_stop_tids,
+                                      [&](lldb::tid_t tid) {
+                                          ++request_thread_stop_calls;
+                                          request_thread_stop_tids.insert (tid);
+
+                                      },
+                                      [&](lldb::tid_t tid) {
+                                          call_after_fired = true;
+                                          reported_firing_tid = tid;
+                                      });
+
+    // Neither trigger should have gone off yet.
+    ASSERT_EQ (false, call_after_fired);
+    ASSERT_EQ (0, request_thread_stop_calls);
+
+    // Process next event.
+    ASSERT_EQ (true, coordinator.ProcessNextEvent ());
+
+    // Now the request thread stop should have been called for the pending stop.
+    ASSERT_EQ (1, request_thread_stop_calls);
+    ASSERT_EQ (true, request_thread_stop_tids.count (PENDING_STOP_TID));
+
+    // But we still shouldn't have the deferred signal call go off yet.
+    ASSERT_EQ (false, call_after_fired);
+
+    // Indicate a new thread has just been created.
+    const lldb::tid_t NEW_THREAD_TID = 1234;
+
+    coordinator.NotifyThreadCreate (NEW_THREAD_TID);
+    ASSERT_EQ (true, coordinator.ProcessNextEvent ());
+
+    // We should have just received a stop request for the new thread id.
+    ASSERT_EQ (2, request_thread_stop_calls);
+    ASSERT_EQ (true, request_thread_stop_tids.count (NEW_THREAD_TID));
+
+    // Now report the original pending tid stopped.  This should no longer
+    // trigger the pending notification because we should now require the
+    // new thread to stop too.
+    coordinator.NotifyThreadStop (PENDING_STOP_TID);
+    ASSERT_EQ (true, coordinator.ProcessNextEvent ());
+    ASSERT_EQ (false, call_after_fired);
+
+    // Now notify the new thread stopped.
+    coordinator.NotifyThreadStop (NEW_THREAD_TID);
     ASSERT_EQ (true, coordinator.ProcessNextEvent ());
 
     // Deferred signal notification should have fired now.

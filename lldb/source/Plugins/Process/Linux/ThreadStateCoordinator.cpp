@@ -153,6 +153,17 @@ public:
         return true;
     }
 
+    void
+    AddThreadStopRequirement (lldb::tid_t tid)
+    {
+        // Add this tid.
+        auto insert_result = m_wait_for_stop_tids.insert (tid);
+
+        // If it was really added, send the stop request to it.
+        if (insert_result.second)
+            m_request_thread_stop_func (tid);
+    }
+
 private:
 
     void
@@ -186,6 +197,33 @@ public:
     ProcessEvent(ThreadStateCoordinator &coordinator) override
     {
         coordinator.ThreadDidStop (m_tid);
+        return true;
+    }
+
+private:
+
+    const lldb::tid_t m_tid;
+};
+
+//===----------------------------------------------------------------------===//
+
+class ThreadStateCoordinator::EventThreadCreate : public ThreadStateCoordinator::EventBase
+{
+public:
+    EventThreadCreate (lldb::tid_t tid):
+    EventBase (),
+    m_tid (tid)
+    {
+    }
+
+    ~EventThreadCreate () override
+    {
+    }
+
+    bool
+    ProcessEvent(ThreadStateCoordinator &coordinator) override
+    {
+        coordinator.ThreadWasCreated (m_tid);
         return true;
     }
 
@@ -311,6 +349,22 @@ ThreadStateCoordinator::ThreadDidStop (lldb::tid_t tid)
 }
 
 void
+ThreadStateCoordinator::ThreadWasCreated (lldb::tid_t tid)
+{
+    // Add the new thread to the stop map.
+    // We assume a created thread is not stopped.
+    m_tid_stop_map[tid] = false;
+
+    if (m_pending_notification_sp)
+    {
+        // Tell the pending notification that we need to wait
+        // for this new thread to stop.
+        EventCallAfterThreadsStop *const call_after_event = static_cast<EventCallAfterThreadsStop*> (m_pending_notification_sp.get ());
+        call_after_event->AddThreadStopRequirement (tid);
+    }
+}
+
+void
 ThreadStateCoordinator::ThreadDidDie (lldb::tid_t tid)
 {
     // Update the global list of known thread states.  While this one is stopped, it is also dead.
@@ -346,6 +400,12 @@ void
 ThreadStateCoordinator::NotifyThreadStop (lldb::tid_t tid)
 {
     EnqueueEvent (EventBaseSP (new EventThreadStopped (tid)));
+}
+
+void
+ThreadStateCoordinator::NotifyThreadCreate (lldb::tid_t tid)
+{
+    EnqueueEvent (EventBaseSP (new EventThreadCreate (tid)));
 }
 
 void
