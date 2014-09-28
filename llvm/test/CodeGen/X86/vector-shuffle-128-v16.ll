@@ -665,3 +665,40 @@ entry:
 
   ret <16 x i8> %shuffle
 }
+
+define <16 x i8> @stress_test2(<16 x i8> %s.0.0, <16 x i8> %s.0.1, <16 x i8> %s.0.2) {
+; SSSE3-LABEL: @stress_test2
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    pshufb {{.*}} # xmm0 = zero,zero,xmm0[2],zero,zero,zero,xmm0[11],zero,zero,xmm0[3,4,5],zero,zero,xmm0[15,5]
+; SSSE3-NEXT:    movdqa  %xmm1, %[[X1:xmm[0-9]+]]
+; SSSE3-NEXT:    pshufb {{.*}} # [[X1]] = [[X1]][13,14],zero,[[X1]][0,10,5],zero,[[X1]][10,10],zero,zero,zero,[[X1]][14,12],zero,zero
+; SSSE3-NEXT:    por     %xmm0, %[[X1]]
+; SSSE3-NEXT:    movdqa  %xmm2, %xmm0
+; SSSE3-NEXT:    pshufb {{.*}} # xmm0 = zero,zero,zero,zero,zero,zero,xmm0[1,6,u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    movdqa  %xmm1, %[[X2:xmm[0-9]+]]
+; SSSE3-NEXT:    pshufb {{.*}} # [[X2]] = [[X2]][1,12,5,9,1,5],zero,zero,[[X2]][u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    por     %xmm0, %[[X2]]
+; SSSE3-NEXT:    pshufb {{.*}} # xmm1 = zero,zero,zero,xmm1[2],zero,zero,xmm1[6,15,u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    pshufb {{.*}} # xmm2 = xmm2[15,8,12],zero,xmm2[13,15],zero,zero,xmm2[u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    por     %xmm1, %xmm2
+; SSSE3-NEXT:    punpcklbw {{.*}} # xmm2 = xmm2[0],[[X2]][0],xmm2[1],[[X2]][1],xmm2[2],[[X2]][2],xmm2[3],[[X2]][3],xmm2[4],[[X2]][4],xmm2[5],[[X2]][5],xmm2[6],[[X2]][6],xmm2[7],[[X2]][7]
+; SSSE3-NEXT:    movdqa  %xmm2, %[[X3:xmm[0-9]+]]
+; SSSE3-NEXT:    pshufb {{.*}} # [[X3]] = [[X3]][6],zero,[[X3]][14,14],zero,zero,[[X3]][11,0,u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    movdqa  %[[X1]], %xmm0
+; SSSE3-NEXT:    pshufb {{.*}} # xmm0 = zero,xmm0[12],zero,zero,xmm0[1,14],zero,zero,xmm0[u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    por     %[[X3]], %xmm0
+; SSSE3-NEXT:    pshufb {{.*}} # xmm2 = zero,xmm2[u,2,3,u,u,u,u,u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    movdqa  %[[X1]], %[[X3]]
+; SSSE3-NEXT:    pshufb {{.*}} # [[X3]] = [[X3]][3,u],zero,zero,[[X3]][u,u,u,u,u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    por     %xmm2, %[[X3]]
+; SSSE3-NEXT:    pshufb {{.*}} # [[X1]] = [[X1]][1,4,10,13,u,u,u,u,u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    punpcklbw {{.*}} # [[X1]] = [[X1]][0],[[X3]][0],[[X1]][1],[[X3]][1],[[X1]][2],[[X3]][2],[[X1]][3],[[X3]][3],[[X1]][4],[[X3]][4],[[X1]][5],[[X3]][5],[[X1]][6],[[X3]][6],[[X1]][7],[[X3]][7]
+; SSSE3-NEXT:    punpcklbw {{.*}} # xmm0 = xmm0[0],[[X1]][0],xmm0[1],[[X1]][1],xmm0[2],[[X1]][2],xmm0[3],[[X1]][3],xmm0[4],[[X1]][4],xmm0[5],[[X1]][5],xmm0[6],[[X1]][6],xmm0[7],[[X1]][7]
+; SSSE3-NEXT:    retq
+entry:
+  %s.1.0 = shufflevector <16 x i8> %s.0.0, <16 x i8> %s.0.1, <16 x i32> <i32 29, i32 30, i32 2, i32 16, i32 26, i32 21, i32 11, i32 26, i32 26, i32 3, i32 4, i32 5, i32 30, i32 28, i32 15, i32 5>
+  %s.1.1 = shufflevector <16 x i8> %s.0.1, <16 x i8> %s.0.2, <16 x i32> <i32 31, i32 1, i32 24, i32 12, i32 28, i32 5, i32 2, i32 9, i32 29, i32 1, i32 31, i32 5, i32 6, i32 17, i32 15, i32 22>
+  %s.2.0 = shufflevector <16 x i8> %s.1.0, <16 x i8> %s.1.1, <16 x i32> <i32 22, i32 1, i32 12, i32 3, i32 30, i32 4, i32 30, i32 undef, i32 1, i32 10, i32 14, i32 18, i32 27, i32 13, i32 16, i32 19>
+
+  ret <16 x i8> %s.2.0
+}

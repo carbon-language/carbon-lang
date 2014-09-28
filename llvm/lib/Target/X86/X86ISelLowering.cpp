@@ -9875,27 +9875,36 @@ static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 static bool canWidenShuffleElements(ArrayRef<int> Mask,
                                     SmallVectorImpl<int> &WidenedMask) {
   for (int i = 0, Size = Mask.size(); i < Size; i += 2) {
-    // Check for any of the sentinel values (negative) and if they are the same,
-    // we can widen to that.
-    if (Mask[i] < 0 && Mask[i] == Mask[i + 1]) {
-      WidenedMask.push_back(Mask[i]);
+    // If both elements are undef, its trivial.
+    if (Mask[i] == SM_SentinelUndef && Mask[i + 1] == SM_SentinelUndef) {
+      WidenedMask.push_back(SM_SentinelUndef);
       continue;
     }
 
     // Check for an undef mask and a mask value properly aligned to fit with
     // a pair of values. If we find such a case, use the non-undef mask's value.
-    if (Mask[i] == -1 && Mask[i + 1] >= 0 && Mask[i + 1] % 2 == 1) {
+    if (Mask[i] == SM_SentinelUndef && Mask[i + 1] >= 0 && Mask[i + 1] % 2 == 1) {
       WidenedMask.push_back(Mask[i + 1] / 2);
       continue;
     }
-    if (Mask[i + 1] == -1 && Mask[i] >= 0 && Mask[i] % 2 == 0) {
+    if (Mask[i + 1] == SM_SentinelUndef && Mask[i] >= 0 && Mask[i] % 2 == 0) {
       WidenedMask.push_back(Mask[i] / 2);
       continue;
     }
 
+    // When zeroing, we need to spread the zeroing across both lanes to widen.
+    if (Mask[i] == SM_SentinelZero || Mask[i + 1] == SM_SentinelZero) {
+      if ((Mask[i] == SM_SentinelZero || Mask[i] == SM_SentinelUndef) &&
+          (Mask[i + 1] == SM_SentinelZero || Mask[i + 1] == SM_SentinelUndef)) {
+        WidenedMask.push_back(SM_SentinelZero);
+        continue;
+      }
+      return false;
+    }
+
     // Finally check if the two mask values are adjacent and aligned with
     // a pair.
-    if (Mask[i] != -1 && Mask[i] % 2 == 0 && Mask[i] + 1 == Mask[i + 1]) {
+    if (Mask[i] != SM_SentinelUndef && Mask[i] % 2 == 0 && Mask[i] + 1 == Mask[i + 1]) {
       WidenedMask.push_back(Mask[i] / 2);
       continue;
     }
