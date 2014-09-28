@@ -99,6 +99,32 @@ define <8 x i16> @shuffle_v8i16_44440000(<8 x i16> %a, <8 x i16> %b) {
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 4, i32 4, i32 4, i32 4, i32 0, i32 0, i32 0, i32 0>
   ret <8 x i16> %shuffle
 }
+define <8 x i16> @shuffle_v8i16_23016745(<8 x i16> %a, <8 x i16> %b) {
+; ALL-LABEL: @shuffle_v8i16_23016745
+; ALL:       # BB#0:
+; ALL-NEXT:    pshufd {{.*}} # xmm0 = xmm0[1,0,3,2]
+; ALL-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 2, i32 3, i32 0, i32 1, i32 6, i32 7, i32 4, i32 5>
+  ret <8 x i16> %shuffle
+}
+define <8 x i16> @shuffle_v8i16_23026745(<8 x i16> %a, <8 x i16> %b) {
+; ALL-LABEL: @shuffle_v8i16_23026745
+; ALL:       # BB#0:
+; ALL-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[2,3,0,2,4,5,6,7]
+; ALL-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,1,3,2]
+; ALL-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 2, i32 3, i32 0, i32 2, i32 6, i32 7, i32 4, i32 5>
+  ret <8 x i16> %shuffle
+}
+define <8 x i16> @shuffle_v8i16_23016747(<8 x i16> %a, <8 x i16> %b) {
+; ALL-LABEL: @shuffle_v8i16_23016747
+; ALL:       # BB#0:
+; ALL-NEXT:    pshufd {{.*}} # xmm0 = xmm0[1,0,2,3]
+; ALL-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,6,7,4,7]
+; ALL-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 2, i32 3, i32 0, i32 1, i32 6, i32 7, i32 4, i32 7>
+  ret <8 x i16> %shuffle
+}
 define <8 x i16> @shuffle_v8i16_75643120(<8 x i16> %a, <8 x i16> %b) {
 ; SSE2-LABEL: @shuffle_v8i16_75643120
 ; SSE2:       # BB#0:
