@@ -26,7 +26,7 @@ fn2(C *) {
 
 // We end up using an opaque type for 'append' to avoid circular references.
 // CHECK: %class.A = type { {}* }
-// CHECK: %class.C = type { %class.D*, %class.B }
+// CHECK: %class.C = type <{ %class.D*, %class.B, [3 x i8] }>
 // CHECK: %class.D = type { %class.C.base, [3 x i8] }
 // CHECK: %class.C.base = type <{ %class.D*, %class.B }>
 // CHECK: %class.B = type { i8 }
