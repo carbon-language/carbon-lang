@@ -7379,22 +7379,34 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
     // FALLTHROUGH
   case MVT::v32i8: {
     assert(Subtarget->hasAVX2() && "256-bit integer blends require AVX2!");
-    SDValue PBLENDVMask[32];
     // Scale the blend by the number of bytes per element.
     int Scale =  VT.getScalarSizeInBits() / 8;
     assert(Mask.size() * Scale == 32 && "Not a 256-bit vector!");
+
+    // Compute the VSELECT mask. Note that VSELECT is really confusing in the
+    // mix of LLVM's code generator and the x86 backend. We tell the code
+    // generator that boolean values in the elements of an x86 vector register
+    // are -1 for true and 0 for false. We then use the LLVM semantics of 'true'
+    // mapping a select to operand #1, and 'false' mapping to operand #2. The
+    // reality in x86 is that vector masks (pre-AVX-512) use only the high bit
+    // of the element (the remaining are ignored) and 0 in that high bit would
+    // mean operand #1 while 1 in the high bit would mean operand #2. So while
+    // the LLVM model for boolean values in vector elements gets the relevant
+    // bit set, it is set backwards and over constrained relative to x86's
+    // actual model.
+    SDValue VSELECTMask[32];
     for (int i = 0, Size = Mask.size(); i < Size; ++i)
       for (int j = 0; j < Scale; ++j)
-        PBLENDVMask[Scale * i + j] =
+        VSELECTMask[Scale * i + j] =
             Mask[i] < 0 ? DAG.getUNDEF(MVT::i8)
-                        : DAG.getConstant(Mask[i] < Size ? 0 : 0x80, MVT::i8);
+                        : DAG.getConstant(Mask[i] < Size ? -1 : 0, MVT::i8);
 
     V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v32i8, V1);
     V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v32i8, V2);
     return DAG.getNode(
         ISD::BITCAST, DL, VT,
         DAG.getNode(ISD::VSELECT, DL, MVT::v32i8,
-                    DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v32i8, PBLENDVMask),
+                    DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v32i8, VSELECTMask),
                     V1, V2));
   }
 
