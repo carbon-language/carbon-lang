@@ -127,7 +127,7 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
   if (GuardBB)
     DT.changeImmediateDominator(ExitBB, GuardBB);
   else
-    DT.changeImmediateDominator(ExitBB, BeforeBB);
+    DT.changeImmediateDominator(ExitBB, HeaderBB);
 
   // The loop body should be added here.
   Builder.SetInsertPoint(HeaderBB->getFirstNonPHI());
