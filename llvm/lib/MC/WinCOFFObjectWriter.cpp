@@ -28,6 +28,7 @@
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TimeValue.h"
 #include <cstdio>
@@ -196,12 +197,9 @@ public:
 };
 }
 
-static inline void write_uint32_le(void *Data, uint32_t const &Value) {
-  uint8_t *Ptr = reinterpret_cast<uint8_t *>(Data);
-  Ptr[0] = (Value & 0x000000FF) >>  0;
-  Ptr[1] = (Value & 0x0000FF00) >>  8;
-  Ptr[2] = (Value & 0x00FF0000) >> 16;
-  Ptr[3] = (Value & 0xFF000000) >> 24;
+static inline void write_uint32_le(void *Data, uint32_t Value) {
+  support::endian::write<uint32_t, support::little, support::unaligned>(Data,
+                                                                        Value);
 }
 
 //------------------------------------------------------------------------------
