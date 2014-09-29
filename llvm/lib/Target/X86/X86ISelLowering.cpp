@@ -9326,23 +9326,21 @@ static SDValue lower128BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   }
 }
 
-/// \brief Generic routine to split a 256-bit vector shuffle into 128-bit
-/// shuffles.
+/// \brief Generic routine to split ector shuffle into half-sized shuffles.
 ///
-/// There is a severely limited set of shuffles available in AVX1 for 256-bit
-/// vectors resulting in routinely needing to split the shuffle into two 128-bit
-/// shuffles. This can be done generically for any 256-bit vector shuffle and so
-/// we encode the logic here for specific shuffle lowering routines to bail to
-/// when they exhaust the features avaible to more directly handle the shuffle.
-static SDValue splitAndLower256BitVectorShuffle(SDLoc DL, MVT VT, SDValue V1,
-                                                SDValue V2, ArrayRef<int> Mask,
-                                                SelectionDAG &DAG) {
-  assert(VT.getSizeInBits() == 256 && "Only for 256-bit vector shuffles!");
+/// This routine just extracts two subvectors, shuffles them independently, and
+/// then concatenates them back together. This should work effectively with all
+/// AVX vector shuffle types.
+static SDValue splitAndLowerVectorShuffle(SDLoc DL, MVT VT, SDValue V1,
+                                          SDValue V2, ArrayRef<int> Mask,
+                                          SelectionDAG &DAG) {
+  assert(VT.getSizeInBits() >= 256 &&
+         "Only for 256-bit or wider vector shuffles!");
   assert(V1.getSimpleValueType() == VT && "Bad operand type!");
   assert(V2.getSimpleValueType() == VT && "Bad operand type!");
 
-  ArrayRef<int> LoMask = Mask.slice(0, Mask.size()/2);
-  ArrayRef<int> HiMask = Mask.slice(Mask.size()/2);
+  ArrayRef<int> LoMask = Mask.slice(0, Mask.size() / 2);
+  ArrayRef<int> HiMask = Mask.slice(Mask.size() / 2);
 
   int NumElements = VT.getVectorNumElements();
   int SplitNumElements = NumElements / 2;
@@ -9360,7 +9358,7 @@ static SDValue splitAndLower256BitVectorShuffle(SDLoc DL, MVT VT, SDValue V1,
 
   // Now create two 4-way blends of these half-width vectors.
   auto HalfBlend = [&](ArrayRef<int> HalfMask) {
-    SmallVector<int, 16> V1BlendMask, V2BlendMask, BlendMask;
+    SmallVector<int, 32> V1BlendMask, V2BlendMask, BlendMask;
     for (int i = 0; i < SplitNumElements; ++i) {
       int M = HalfMask[i];
       if (M >= NumElements) {
@@ -9377,8 +9375,10 @@ static SDValue splitAndLower256BitVectorShuffle(SDLoc DL, MVT VT, SDValue V1,
         BlendMask.push_back(-1);
       }
     }
-    SDValue V1Blend = DAG.getVectorShuffle(SplitVT, DL, LoV1, HiV1, V1BlendMask);
-    SDValue V2Blend = DAG.getVectorShuffle(SplitVT, DL, LoV2, HiV2, V2BlendMask);
+    SDValue V1Blend =
+        DAG.getVectorShuffle(SplitVT, DL, LoV1, HiV1, V1BlendMask);
+    SDValue V2Blend =
+        DAG.getVectorShuffle(SplitVT, DL, LoV2, HiV2, V2BlendMask);
     return DAG.getVectorShuffle(SplitVT, DL, V1Blend, V2Blend, BlendMask);
   };
   SDValue Lo = HalfBlend(LoMask);
@@ -9411,7 +9411,7 @@ static SDValue lowerVectorShuffleAsLanePermuteAndBlend(SDLoc DL, MVT VT,
     if (Mask[i] >= 0 && (Mask[i] % Size) / LaneSize != i / LaneSize)
       LaneCrossing[(Mask[i] % Size) / LaneSize] = true;
   if (!LaneCrossing[0] || !LaneCrossing[1])
-    return splitAndLower256BitVectorShuffle(DL, VT, V1, V2, Mask, DAG);
+    return splitAndLowerVectorShuffle(DL, VT, V1, V2, Mask, DAG);
 
   if (isSingleInputShuffleMask(Mask)) {
     SmallVector<int, 32> FlippedBlendMask;
@@ -9846,7 +9846,7 @@ static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     int ElementBits = VT.getScalarSizeInBits();
     if (ElementBits < 32)
       // No floating point type available, decompose into 128-bit vectors.
-      return splitAndLower256BitVectorShuffle(DL, VT, V1, V2, Mask, DAG);
+      return splitAndLowerVectorShuffle(DL, VT, V1, V2, Mask, DAG);
 
     MVT FpVT = MVT::getVectorVT(MVT::getFloatingPointVT(ElementBits),
                                 VT.getVectorNumElements());
