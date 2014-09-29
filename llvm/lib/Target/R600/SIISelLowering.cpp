@@ -226,6 +226,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::FDIV, MVT::f32, Custom);
 
+  setTargetDAGCombine(ISD::FADD);
   setTargetDAGCombine(ISD::FSUB);
   setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::SETCC);
@@ -1418,6 +1419,40 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::UINT_TO_FP: {
     return performUCharToFloatCombine(N, DCI);
 
+  case ISD::FADD: {
+    if (DCI.getDAGCombineLevel() < AfterLegalizeDAG)
+      break;
+
+    EVT VT = N->getValueType(0);
+    if (VT != MVT::f32)
+      break;
+
+    SDValue LHS = N->getOperand(0);
+    SDValue RHS = N->getOperand(1);
+
+    // These should really be instruction patterns, but writing patterns with
+    // source modiifiers is a pain.
+
+    // fadd (fadd (a, a), b) -> mad 2.0, a, b
+    if (LHS.getOpcode() == ISD::FADD) {
+      SDValue A = LHS.getOperand(0);
+      if (A == LHS.getOperand(1)) {
+        const SDValue Two = DAG.getTargetConstantFP(2.0, MVT::f32);
+        return DAG.getNode(AMDGPUISD::MAD, DL, VT, Two, A, RHS);
+      }
+    }
+
+    // fadd (b, fadd (a, a)) -> mad 2.0, a, b
+    if (RHS.getOpcode() == ISD::FADD) {
+      SDValue A = RHS.getOperand(0);
+      if (A == RHS.getOperand(1)) {
+        const SDValue Two = DAG.getTargetConstantFP(2.0, MVT::f32);
+        return DAG.getNode(AMDGPUISD::MAD, DL, VT, Two, A, LHS);
+      }
+    }
+
+    break;
+  }
   case ISD::FSUB: {
     if (DCI.getDAGCombineLevel() < AfterLegalizeDAG)
       break;
