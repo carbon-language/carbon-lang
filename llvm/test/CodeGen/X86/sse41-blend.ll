@@ -10,7 +10,7 @@ define <4 x float> @vsel_float(<4 x float> %v1, <4 x float> %v2) {
 
 
 ;CHECK-LABEL: vsel_4xi8:
-;CHECK: blendps
+;CHECK: blendw
 ;CHECK: ret
 define <4 x i8> @vsel_4xi8(<4 x i8> %v1, <4 x i8> %v2) {
   %vsel = select <4 x i1> <i1 true, i1 true, i1 false, i1 true>, <4 x i8> %v1, <4 x i8> %v2
@@ -18,7 +18,7 @@ define <4 x i8> @vsel_4xi8(<4 x i8> %v1, <4 x i8> %v2) {
 }
 
 ;CHECK-LABEL: vsel_4xi16:
-;CHECK: blendps
+;CHECK: blendw
 ;CHECK: ret
 define <4 x i16> @vsel_4xi16(<4 x i16> %v1, <4 x i16> %v2) {
   %vsel = select <4 x i1> <i1 true, i1 false, i1 true, i1 true>, <4 x i16> %v1, <4 x i16> %v2
@@ -27,7 +27,7 @@ define <4 x i16> @vsel_4xi16(<4 x i16> %v1, <4 x i16> %v2) {
 
 
 ;CHECK-LABEL: vsel_i32:
-;CHECK: blendps
+;CHECK: blendw
 ;CHECK: ret
 define <4 x i32> @vsel_i32(<4 x i32> %v1, <4 x i32> %v2) {
   %vsel = select <4 x i1> <i1 true, i1 true, i1 false, i1 true>, <4 x i32> %v1, <4 x i32> %v2

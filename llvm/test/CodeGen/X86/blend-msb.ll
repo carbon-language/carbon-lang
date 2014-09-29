@@ -22,17 +22,7 @@ define <4 x i8> @vsel_4xi8(<4 x i8> %v1, <4 x i8> %v2) {
 }
 
 ;CHECK-LABEL: vsel_8xi16:
-; The select mask is
-; <i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false>
-; which translates into the boolean mask (big endian representation):
-; 00010001 = 17.
-; '1' means takes the first argument, '0' means takes the second argument.
-; This is the opposite of the intel syntax, thus we expect
-; the inverted mask: 11101110 = 238.
-; According to the ABI:
-; v1 is in xmm0 => first argument is xmm0.
-; v2 is in xmm1 => second argument is xmm1.
-;CHECK: pblendw $238, %xmm1, %xmm0
+;CHECK: pblendw {{.*}} ## xmm0 = xmm0[0],xmm1[1,2,3],xmm0[4],xmm1[5,6,7]
 ;CHECK: ret
 define <8 x i16> @vsel_8xi16(<8 x i16> %v1, <8 x i16> %v2) {
   %vsel = select <8 x i1> <i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false>, <8 x i16> %v1, <8 x i16> %v2
