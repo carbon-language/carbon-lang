@@ -948,44 +948,8 @@ DISubrange DIBuilder::getOrCreateSubrange(int64_t Lo, int64_t Count) {
   return DISubrange(MDNode::get(VMContext, Elts));
 }
 
-/// \brief Create a new descriptor for the specified global.
-DIGlobalVariable DIBuilder::createGlobalVariable(StringRef Name,
-                                                 StringRef LinkageName,
-                                                 DIFile F, unsigned LineNumber,
-                                                 DITypeRef Ty, bool isLocalToUnit,
-                                                 Value *Val) {
-  Value *Elts[] = {
-    GetTagConstant(VMContext, dwarf::DW_TAG_variable),
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
-    nullptr, // TheCU,
-    MDString::get(VMContext, Name),
-    MDString::get(VMContext, Name),
-    MDString::get(VMContext, LinkageName),
-    F,
-    ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
-    Ty,
-    ConstantInt::get(Type::getInt32Ty(VMContext), isLocalToUnit),
-    ConstantInt::get(Type::getInt32Ty(VMContext), 1), /* isDefinition*/
-    Val,
-    DIDescriptor()
-  };
-  MDNode *Node = MDNode::get(VMContext, Elts);
-  AllGVs.push_back(Node);
-  return DIGlobalVariable(Node);
-}
-
-/// \brief Create a new descriptor for the specified global.
-DIGlobalVariable DIBuilder::createGlobalVariable(StringRef Name, DIFile F,
-                                                 unsigned LineNumber,
-                                                 DITypeRef Ty,
-                                                 bool isLocalToUnit,
-                                                 Value *Val) {
-  return createGlobalVariable(Name, Name, F, LineNumber, Ty, isLocalToUnit,
-                              Val);
-}
-
 static DIGlobalVariable
-createStaticVariableHelper(LLVMContext &VMContext, DIDescriptor Context,
+createGlobalVariableHelper(LLVMContext &VMContext, DIDescriptor Context,
                            StringRef Name, StringRef LinkageName, DIFile F,
                            unsigned LineNumber, DITypeRef Ty, bool isLocalToUnit,
                            Value *Val, MDNode *Decl, bool isDefinition,
@@ -1009,16 +973,16 @@ createStaticVariableHelper(LLVMContext &VMContext, DIDescriptor Context,
   return DIGlobalVariable(CreateFunc(Elts));
 }
 
-/// createStaticVariable - Create a new descriptor for the specified
+/// createGlobalVariable - Create a new descriptor for the specified
 /// variable.
-DIGlobalVariable DIBuilder::createStaticVariable(DIDescriptor Context,
+DIGlobalVariable DIBuilder::createGlobalVariable(DIDescriptor Context,
                                                  StringRef Name,
                                                  StringRef LinkageName,
                                                  DIFile F, unsigned LineNumber,
                                                  DITypeRef Ty,
                                                  bool isLocalToUnit,
                                                  Value *Val, MDNode *Decl) {
-  return createStaticVariableHelper(VMContext, Context, Name, LinkageName, F,
+  return createGlobalVariableHelper(VMContext, Context, Name, LinkageName, F,
                                     LineNumber, Ty, isLocalToUnit, Val, Decl, true,
                                     [&] (ArrayRef<Value *> Elts) -> MDNode * {
                                       MDNode *Node = MDNode::get(VMContext, Elts);
@@ -1027,17 +991,17 @@ DIGlobalVariable DIBuilder::createStaticVariable(DIDescriptor Context,
                                     });
 }
 
-/// createTempStaticVariableFwdDecl - Create a new temporary descriptor for the
+/// createTempGlobalVariableFwdDecl - Create a new temporary descriptor for the
 /// specified variable declarartion.
 DIGlobalVariable
-DIBuilder::createTempStaticVariableFwdDecl(DIDescriptor Context,
+DIBuilder::createTempGlobalVariableFwdDecl(DIDescriptor Context,
                                            StringRef Name,
                                            StringRef LinkageName,
                                            DIFile F, unsigned LineNumber,
                                            DITypeRef Ty,
                                            bool isLocalToUnit,
                                            Value *Val, MDNode *Decl) {
-  return createStaticVariableHelper(VMContext, Context, Name, LinkageName, F,
+  return createGlobalVariableHelper(VMContext, Context, Name, LinkageName, F,
                                     LineNumber, Ty, isLocalToUnit, Val, Decl, false,
                                     [&] (ArrayRef<Value *> Elts) {
                                       return MDNode::getTemporary(VMContext, Elts);

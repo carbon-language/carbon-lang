@@ -451,33 +451,8 @@ namespace llvm {
     /// implicitly uniques the values returned.
     DISubrange getOrCreateSubrange(int64_t Lo, int64_t Count);
 
-    /// createGlobalVariable - Create a new descriptor for the specified global.
-    /// @param Name        Name of the variable.
-    /// @param File        File where this variable is defined.
-    /// @param LineNo      Line number.
-    /// @param Ty          Variable Type.
-    /// @param isLocalToUnit Boolean flag indicate whether this variable is
-    ///                      externally visible or not.
-    /// @param Val         llvm::Value of the variable.
-    DIGlobalVariable
-    createGlobalVariable(StringRef Name, DIFile File, unsigned LineNo,
-                         DITypeRef Ty, bool isLocalToUnit, llvm::Value *Val);
 
-    /// \brief Create a new descriptor for the specified global.
-    /// @param Name        Name of the variable.
-    /// @param LinkageName Mangled variable name.
-    /// @param File        File where this variable is defined.
-    /// @param LineNo      Line number.
-    /// @param Ty          Variable Type.
-    /// @param isLocalToUnit Boolean flag indicate whether this variable is
-    ///                      externally visible or not.
-    /// @param Val         llvm::Value of the variable.
-    DIGlobalVariable
-    createGlobalVariable(StringRef Name, StringRef LinkageName, DIFile File,
-                         unsigned LineNo, DITypeRef Ty, bool isLocalToUnit,
-                         llvm::Value *Val);
-
-    /// createStaticVariable - Create a new descriptor for the specified
+    /// createGlobalVariable - Create a new descriptor for the specified
     /// variable.
     /// @param Context     Variable scope.
     /// @param Name        Name of the variable.
@@ -490,15 +465,15 @@ namespace llvm {
     /// @param Val         llvm::Value of the variable.
     /// @param Decl        Reference to the corresponding declaration.
     DIGlobalVariable
-    createStaticVariable(DIDescriptor Context, StringRef Name,
+    createGlobalVariable(DIDescriptor Context, StringRef Name,
                          StringRef LinkageName, DIFile File, unsigned LineNo,
                          DITypeRef Ty, bool isLocalToUnit, llvm::Value *Val,
                          MDNode *Decl = nullptr);
 
-    /// createTempStaticVariableFwdDecl - Identical to createStaticVariable
+    /// createTempGlobalVariableFwdDecl - Identical to createGlobalVariable
     /// except that the resulting DbgNode is temporary and meant to be RAUWed.
     DIGlobalVariable
-    createTempStaticVariableFwdDecl(DIDescriptor Context, StringRef Name,
+    createTempGlobalVariableFwdDecl(DIDescriptor Context, StringRef Name,
                                     StringRef LinkageName, DIFile File,
                                     unsigned LineNo, DITypeRef Ty,
                                     bool isLocalToUnit, llvm::Value *Val,
