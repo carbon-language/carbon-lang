@@ -28,6 +28,7 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -57,7 +58,7 @@ STATISTIC(NumRuntimeUnrolled,
 static void ConnectProlog(Loop *L, Value *TripCount, unsigned Count,
                           BasicBlock *LastPrologBB, BasicBlock *PrologEnd,
                           BasicBlock *OrigPH, BasicBlock *NewPH,
-                          ValueToValueMapTy &LVMap, Pass *P) {
+                          ValueToValueMapTy &VMap, Pass *P) {
   BasicBlock *Latch = L->getLoopLatch();
   assert(Latch && "Loop must have a latch");
 
@@ -86,7 +87,7 @@ static void ConnectProlog(Loop *L, Value *TripCount, unsigned Count,
       Value *V = PN->getIncomingValueForBlock(Latch);
       if (Instruction *I = dyn_cast<Instruction>(V)) {
         if (L->contains(I)) {
-          V = LVMap[I];
+          V = VMap[I];
         }
       }
       // Adding a value to the new PHI node from the last prolog block
@@ -127,76 +128,122 @@ static void ConnectProlog(Loop *L, Value *TripCount, unsigned Count,
 }
 
 /// Create a clone of the blocks in a loop and connect them together.
-/// This function doesn't create a clone of the loop structure.
+/// If UnrollProlog is true, loop structure will not be cloned, otherwise a new
+/// loop will be created including all cloned blocks, and the iterator of it
+/// switches to count NewIter down to 0.
 ///
-/// There are two value maps that are defined and used.  VMap is
-/// for the values in the current loop instance.  LVMap contains
-/// the values from the last loop instance.  We need the LVMap values
-/// to update the initial values for the current loop instance.
-///
-static void CloneLoopBlocks(Loop *L,
-                            bool FirstCopy,
-                            BasicBlock *InsertTop,
-                            BasicBlock *InsertBot,
+static void CloneLoopBlocks(Loop *L, Value *NewIter, const bool UnrollProlog,
+                            BasicBlock *InsertTop, BasicBlock *InsertBot,
                             std::vector<BasicBlock *> &NewBlocks,
-                            LoopBlocksDFS &LoopBlocks,
-                            ValueToValueMapTy &VMap,
-                            ValueToValueMapTy &LVMap,
+                            LoopBlocksDFS &LoopBlocks, ValueToValueMapTy &VMap,
                             LoopInfo *LI) {
-
   BasicBlock *Preheader = L->getLoopPreheader();
   BasicBlock *Header = L->getHeader();
   BasicBlock *Latch = L->getLoopLatch();
   Function *F = Header->getParent();
   LoopBlocksDFS::RPOIterator BlockBegin = LoopBlocks.beginRPO();
   LoopBlocksDFS::RPOIterator BlockEnd = LoopBlocks.endRPO();
+  Loop *NewLoop = 0;
+  Loop *ParentLoop = L->getParentLoop();
+  if (!UnrollProlog) {
+    NewLoop = new Loop();
+    if (ParentLoop)
+      ParentLoop->addChildLoop(NewLoop);
+    else
+      LI->addTopLevelLoop(NewLoop);
+  }
+
   // For each block in the original loop, create a new copy,
   // and update the value map with the newly created values.
   for (LoopBlocksDFS::RPOIterator BB = BlockBegin; BB != BlockEnd; ++BB) {
-    BasicBlock *NewBB = CloneBasicBlock(*BB, VMap, ".unr", F);
+    BasicBlock *NewBB = CloneBasicBlock(*BB, VMap, ".prol", F);
     NewBlocks.push_back(NewBB);
 
-    if (Loop *ParentLoop = L->getParentLoop())
+    if (NewLoop)
+      NewLoop->addBasicBlockToLoop(NewBB, LI->getBase());
+    else if (ParentLoop)
       ParentLoop->addBasicBlockToLoop(NewBB, LI->getBase());
 
     VMap[*BB] = NewBB;
     if (Header == *BB) {
       // For the first block, add a CFG connection to this newly
-      // created block
+      // created block.
       InsertTop->getTerminator()->setSuccessor(0, NewBB);
 
-      // Change the incoming values to the ones defined in the
-      // previously cloned loop.
-      for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
-        PHINode *NewPHI = cast<PHINode>(VMap[I]);
-        if (FirstCopy) {
-          // We replace the first phi node with the value from the preheader
-          VMap[I] = NewPHI->getIncomingValueForBlock(Preheader);
-          NewBB->getInstList().erase(NewPHI);
-        } else {
-          // Update VMap with values from the previous block
-          unsigned idx = NewPHI->getBasicBlockIndex(Latch);
-          Value *InVal = NewPHI->getIncomingValue(idx);
-          if (Instruction *I = dyn_cast<Instruction>(InVal))
-            if (L->contains(I))
-              InVal = LVMap[InVal];
-          NewPHI->setIncomingValue(idx, InVal);
-          NewPHI->setIncomingBlock(idx, InsertTop);
+    }
+    if (Latch == *BB) {
+      // For the last block, if UnrollProlog is true, create a direct jump to
+      // InsertBot. If not, create a loop back to cloned head.
+      VMap.erase((*BB)->getTerminator());
+      BasicBlock *FirstLoopBB = cast<BasicBlock>(VMap[Header]);
+      BranchInst *LatchBR = cast<BranchInst>(NewBB->getTerminator());
+      if (UnrollProlog) {
+        LatchBR->eraseFromParent();
+        BranchInst::Create(InsertBot, NewBB);
+      } else {
+        PHINode *NewIdx = PHINode::Create(NewIter->getType(), 2, "prol.iter",
+                                          FirstLoopBB->getFirstNonPHI());
+        IRBuilder<> Builder(LatchBR);
+        Value *IdxSub =
+            Builder.CreateSub(NewIdx, ConstantInt::get(NewIdx->getType(), 1),
+                              NewIdx->getName() + ".sub");
+        Value *IdxCmp =
+            Builder.CreateIsNotNull(IdxSub, NewIdx->getName() + ".cmp");
+        BranchInst::Create(FirstLoopBB, InsertBot, IdxCmp, NewBB);
+        NewIdx->addIncoming(NewIter, InsertTop);
+        NewIdx->addIncoming(IdxSub, NewBB);
+        LatchBR->eraseFromParent();
+      }
+    }
+  }
+
+  // Change the incoming values to the ones defined in the preheader or
+  // cloned loop.
+  for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
+    PHINode *NewPHI = cast<PHINode>(VMap[I]);
+    if (UnrollProlog) {
+      VMap[I] = NewPHI->getIncomingValueForBlock(Preheader);
+      cast<BasicBlock>(VMap[Header])->getInstList().erase(NewPHI);
+    } else {
+      unsigned idx = NewPHI->getBasicBlockIndex(Preheader);
+      NewPHI->setIncomingBlock(idx, InsertTop);
+      BasicBlock *NewLatch = cast<BasicBlock>(VMap[Latch]);
+      idx = NewPHI->getBasicBlockIndex(Latch);
+      Value *InVal = NewPHI->getIncomingValue(idx);
+      NewPHI->setIncomingBlock(idx, NewLatch);
+      if (VMap[InVal])
+        NewPHI->setIncomingValue(idx, VMap[InVal]);
+    }
+  }
+  if (NewLoop) {
+    // Add unroll disable metadata to disable future unrolling for this loop.
+    SmallVector<Value *, 4> Vals;
+    // Reserve first location for self reference to the LoopID metadata node.
+    Vals.push_back(nullptr);
+    MDNode *LoopID = NewLoop->getLoopID();
+    if (LoopID) {
+      // First remove any existing loop unrolling metadata.
+      for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i) {
+        bool IsUnrollMetadata = false;
+        MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(i));
+        if (MD) {
+          const MDString *S = dyn_cast<MDString>(MD->getOperand(0));
+          IsUnrollMetadata = S && S->getString().startswith("llvm.loop.unroll.");
         }
+        if (!IsUnrollMetadata) Vals.push_back(LoopID->getOperand(i));
       }
     }
 
-    if (Latch == *BB) {
-      VMap.erase((*BB)->getTerminator());
-      NewBB->getTerminator()->eraseFromParent();
-      BranchInst::Create(InsertBot, NewBB);
-    }
-  }
-  // LastValueMap is updated with the values for the current loop
-  // which are used the next time this function is called.
-  for (ValueToValueMapTy::iterator VI = VMap.begin(), VE = VMap.end();
-       VI != VE; ++VI) {
-    LVMap[VI->first] = VI->second;
+    LLVMContext &Context = NewLoop->getHeader()->getContext();
+    SmallVector<Value *, 1> DisableOperands;
+    DisableOperands.push_back(MDString::get(Context, "llvm.loop.unroll.disable"));
+    MDNode *DisableNode = MDNode::get(Context, DisableOperands);
+    Vals.push_back(DisableNode);
+
+    MDNode *NewLoopID = MDNode::get(Context, Vals);
+    // Set operand 0 to refer to the loop id itself.
+    NewLoopID->replaceOperandWith(0, NewLoopID);
+    NewLoop->setLoopID(NewLoopID);
   }
 }
 
@@ -212,18 +259,16 @@ static void CloneLoopBlocks(Loop *L,
 /// instruction in SimplifyCFG.cpp.  Then, the backend decides how code for
 /// the switch instruction is generated.
 ///
-///    extraiters = tripcount % loopfactor
-///    if (extraiters == 0) jump Loop:
-///    if (extraiters == loopfactor) jump L1
-///    if (extraiters == loopfactor-1) jump L2
-///    ...
-///    L1:  LoopBody;
-///    L2:  LoopBody;
-///    ...
-///    if tripcount < loopfactor jump End
-///    Loop:
-///    ...
-///    End:
+///        extraiters = tripcount % loopfactor
+///        if (extraiters == 0) jump Loop:
+///        else jump Prol
+/// Prol:  LoopBody;
+///        extraiters -= 1                 // Omitted if unroll factor is 2.
+///        if (extraiters != 0) jump Prol: // Omitted if unroll factor is 2.
+///        if (tripcount < loopfactor) jump End
+/// Loop:
+/// ...
+/// End:
 ///
 bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
                                    LPPassManager *LPM) {
@@ -284,26 +329,21 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
   IRBuilder<> B(PreHeaderBR);
   Value *ModVal = B.CreateAnd(TripCount, Count - 1, "xtraiter");
 
-  // Check if for no extra iterations, then jump to unrolled loop.  We have to
-  // check that the trip count computation didn't overflow when adding one to
-  // the backedge taken count.
+  // Check if for no extra iterations, then jump to cloned/unrolled loop.
+  // We have to check that the trip count computation didn't overflow when
+  // adding one to the backedge taken count.
   Value *LCmp = B.CreateIsNotNull(ModVal, "lcmp.mod");
   Value *OverflowCheck = B.CreateIsNull(TripCount, "lcmp.overflow");
   Value *BranchVal = B.CreateOr(OverflowCheck, LCmp, "lcmp.or");
 
-  // Branch to either the extra iterations or the unrolled loop
+  // Branch to either the extra iterations or the cloned/unrolled loop
   // We will fix up the true branch label when adding loop body copies
   BranchInst::Create(PEnd, PEnd, BranchVal, PreHeaderBR);
   assert(PreHeaderBR->isUnconditional() &&
          PreHeaderBR->getSuccessor(0) == PEnd &&
          "CFG edges in Preheader are not correct");
   PreHeaderBR->eraseFromParent();
-
-  ValueToValueMapTy LVMap;
   Function *F = Header->getParent();
-  // These variables are used to update the CFG links in each iteration
-  BasicBlock *CompareBB = nullptr;
-  BasicBlock *LastLoopBB = PH;
   // Get an ordered list of blocks in the loop to help with the ordering of the
   // cloned blocks in the prolog code
   LoopBlocksDFS LoopBlocks(L);
@@ -314,62 +354,34 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
   // and generate a condition that branches to the copy depending on the
   // number of 'left over' iterations.
   //
-  for (unsigned leftOverIters = Count-1; leftOverIters > 0; --leftOverIters) {
-    std::vector<BasicBlock*> NewBlocks;
-    ValueToValueMapTy VMap;
+  std::vector<BasicBlock *> NewBlocks;
+  ValueToValueMapTy VMap;
 
-    // Clone all the basic blocks in the loop, but we don't clone the loop
-    // This function adds the appropriate CFG connections.
-    CloneLoopBlocks(L, (leftOverIters == Count-1), LastLoopBB, PEnd, NewBlocks,
-                    LoopBlocks, VMap, LVMap, LI);
-    LastLoopBB = cast<BasicBlock>(VMap[Latch]);
+  // Clone all the basic blocks in the loop. If Count is 2, we don't clone
+  // the loop, otherwise we create a cloned loop to execute the extra
+  // iterations. This function adds the appropriate CFG connections.
+  CloneLoopBlocks(L, ModVal, Count == 2, PH, PEnd, NewBlocks, LoopBlocks, VMap,
+                  LI);
 
-    // Insert the cloned blocks into function just before the original loop
-    F->getBasicBlockList().splice(PEnd, F->getBasicBlockList(),
-                                  NewBlocks[0], F->end());
+  // Insert the cloned blocks into function just before the original loop
+  F->getBasicBlockList().splice(PEnd, F->getBasicBlockList(), NewBlocks[0],
+                                F->end());
 
-    // Generate the code for the comparison which determines if the loop
-    // prolog code needs to be executed.
-    if (leftOverIters == Count-1) {
-      // There is no compare block for the fall-thru case when for the last
-      // left over iteration
-      CompareBB = NewBlocks[0];
-    } else {
-      // Create a new block for the comparison
-      BasicBlock *NewBB = BasicBlock::Create(CompareBB->getContext(), "unr.cmp",
-                                             F, CompareBB);
-      if (Loop *ParentLoop = L->getParentLoop()) {
-        // Add the new block to the parent loop, if needed
-        ParentLoop->addBasicBlockToLoop(NewBB, LI->getBase());
-      }
-
-      // The comparison w/ the extra iteration value and branch
-      Type *CountTy = TripCount->getType();
-      Value *BranchVal = new ICmpInst(*NewBB, ICmpInst::ICMP_EQ, ModVal,
-                                      ConstantInt::get(CountTy, leftOverIters),
-                                      "un.tmp");
-      // Branch to either the extra iterations or the unrolled loop
-      BranchInst::Create(NewBlocks[0], CompareBB,
-                         BranchVal, NewBB);
-      CompareBB = NewBB;
-      PH->getTerminator()->setSuccessor(0, NewBB);
-      VMap[NewPH] = CompareBB;
-    }
-
-    // Rewrite the cloned instruction operands to use the values
-    // created when the clone is created.
-    for (unsigned i = 0, e = NewBlocks.size(); i != e; ++i) {
-      for (BasicBlock::iterator I = NewBlocks[i]->begin(),
-             E = NewBlocks[i]->end(); I != E; ++I) {
-        RemapInstruction(I, VMap,
-                         RF_NoModuleLevelChanges|RF_IgnoreMissingEntries);
-      }
+  // Rewrite the cloned instruction operands to use the values
+  // created when the clone is created.
+  for (unsigned i = 0, e = NewBlocks.size(); i != e; ++i) {
+    for (BasicBlock::iterator I = NewBlocks[i]->begin(),
+                              E = NewBlocks[i]->end();
+         I != E; ++I) {
+      RemapInstruction(I, VMap,
+                       RF_NoModuleLevelChanges | RF_IgnoreMissingEntries);
     }
   }
 
   // Connect the prolog code to the original loop and update the
   // PHI functions.
-  ConnectProlog(L, TripCount, Count, LastLoopBB, PEnd, PH, NewPH, LVMap,
+  BasicBlock *LastLoopBB = cast<BasicBlock>(VMap[Latch]);
+  ConnectProlog(L, TripCount, Count, LastLoopBB, PEnd, PH, NewPH, VMap,
                 LPM->getAsPass());
   NumRuntimeUnrolled++;
   return true;

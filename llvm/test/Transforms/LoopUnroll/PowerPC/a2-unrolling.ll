@@ -41,8 +41,7 @@ for.end:                                          ; preds = %for.body, %entry
 }
 
 ; CHECK-LABEL: @test
-; CHECK: unr.cmp{{.*}}:
-; CHECK: for.body.unr{{.*}}:
+; CHECK: for.body.prol{{.*}}:
 ; CHECK: for.body:
 ; CHECK: br i1 %exitcond.7, label %for.end.loopexit{{.*}}, label %for.body
 

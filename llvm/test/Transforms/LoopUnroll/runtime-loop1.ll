@@ -1,11 +1,11 @@
-; RUN: opt < %s -S -loop-unroll -unroll-runtime -unroll-count=4 | FileCheck %s
+; RUN: opt < %s -S -loop-unroll -unroll-runtime -unroll-count=2 | FileCheck %s
 
 ; This tests that setting the unroll count works
 
-; CHECK: unr.cmp:
-; CHECK: for.body.unr:
+; CHECK: for.body.prol:
+; CHECK: br label %for.body.preheader.split
 ; CHECK: for.body:
-; CHECK: br i1 %exitcond.3, label %for.end.loopexit{{.*}}, label %for.body
+; CHECK: br i1 %exitcond.1, label %for.end.loopexit.unr-lcssa, label %for.body
 ; CHECK-NOT: br i1 %exitcond.4, label %for.end.loopexit{{.*}}, label %for.body
 
 define i32 @test(i32* nocapture %a, i32 %n) nounwind uwtable readonly {
