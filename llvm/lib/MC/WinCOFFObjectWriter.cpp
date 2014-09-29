@@ -26,6 +26,7 @@
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
@@ -102,25 +103,6 @@ public:
   static size_t size();
 };
 
-// This class holds the COFF string table.
-class StringTable {
-  typedef StringMap<size_t> map;
-  map Map;
-
-  void update_length();
-public:
-  std::vector<char> Data;
-
-  StringTable();
-  size_t size() const;
-  size_t insert(StringRef String);
-  void clear() {
-    Map.clear();
-    Data.resize(4);
-    update_length();
-  }  
-};
-
 class WinCOFFObjectWriter : public MCObjectWriter {
 public:
 
@@ -136,7 +118,7 @@ public:
   COFF::header Header;
   sections     Sections;
   symbols      Symbols;
-  StringTable  Strings;
+  StringTableBuilder Strings;
 
   // Maps used during object file creation.
   section_map SectionMap;
@@ -168,8 +150,8 @@ public:
   void DefineSymbol(MCSymbolData const &SymbolData, MCAssembler &Assembler,
                     const MCAsmLayout &Layout);
 
-  void MakeSymbolReal(COFFSymbol &S, size_t Index);
-  void MakeSectionReal(COFFSection &S, size_t Number);
+  void SetSymbolName(COFFSymbol &S);
+  void SetSectionName(COFFSection &S);
 
   bool ExportSymbol(const MCSymbol &Symbol, MCAssembler &Asm);
 
@@ -262,49 +244,6 @@ COFFSection::COFFSection(StringRef name)
 
 size_t COFFSection::size() {
   return COFF::SectionSize;
-}
-
-//------------------------------------------------------------------------------
-// StringTable class implementation
-
-/// Write the length of the string table into Data.
-/// The length of the string table includes uint32 length header.
-void StringTable::update_length() {
-  write_uint32_le(&Data.front(), Data.size());
-}
-
-StringTable::StringTable() {
-  // The string table data begins with the length of the entire string table
-  // including the length header. Allocate space for this header.
-  Data.resize(4);
-  update_length();
-}
-
-size_t StringTable::size() const {
-  return Data.size();
-}
-
-/// Add String to the table iff it is not already there.
-/// @returns the index into the string table where the string is now located.
-size_t StringTable::insert(StringRef String) {
-  map::iterator i = Map.find(String);
-
-  if (i != Map.end())
-    return i->second;
-
-  size_t Offset = Data.size();
-
-  // Insert string data into string table.
-  Data.insert(Data.end(), String.begin(), String.end());
-  Data.push_back('\0');
-
-  // Put a reference to it in the map.
-  Map[String] = Offset;
-
-  // Update the internal length field.
-  update_length();
-
-  return Offset;
 }
 
 //------------------------------------------------------------------------------
@@ -521,11 +460,9 @@ static void encodeBase64StringEntry(char* Buffer, uint64_t Value) {
   }
 }
 
-/// making a section real involves assigned it a number and putting
-/// name into the string table if needed
-void WinCOFFObjectWriter::MakeSectionReal(COFFSection &S, size_t Number) {
+void WinCOFFObjectWriter::SetSectionName(COFFSection &S) {
   if (S.Name.size() > COFF::NameSize) {
-    uint64_t StringTableEntry = Strings.insert(S.Name.c_str());
+    uint64_t StringTableEntry = Strings.getOffset(S.Name);
 
     if (StringTableEntry <= Max6DecimalOffset) {
       std::sprintf(S.Header.Name, "/%d", unsigned(StringTableEntry));
@@ -543,20 +480,13 @@ void WinCOFFObjectWriter::MakeSectionReal(COFFSection &S, size_t Number) {
     }
   } else
     std::memcpy(S.Header.Name, S.Name.c_str(), S.Name.size());
-
-  S.Number = Number;
-  S.Symbol->Data.SectionNumber = S.Number;
-  S.Symbol->Aux[0].Aux.SectionDefinition.Number = S.Number;
 }
 
-void WinCOFFObjectWriter::MakeSymbolReal(COFFSymbol &S, size_t Index) {
-  if (S.Name.size() > COFF::NameSize) {
-    size_t StringTableEntry = Strings.insert(S.Name.c_str());
-
-    S.set_name_offset(StringTableEntry);
-  } else
+void WinCOFFObjectWriter::SetSymbolName(COFFSymbol &S) {
+  if (S.Name.size() > COFF::NameSize)
+    S.set_name_offset(Strings.getOffset(S.Name));
+  else
     std::memcpy(S.Data.Name, S.Name.c_str(), S.Name.size());
-  S.Index = Index;
 }
 
 bool WinCOFFObjectWriter::ExportSymbol(const MCSymbol &Symbol,
@@ -860,10 +790,14 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
 
   DenseMap<COFFSection *, int32_t> SectionIndices(
       NextPowerOf2(NumberOfSections));
+
+  // Assign section numbers.
   size_t Number = 1;
   for (const auto &Section : Sections) {
     SectionIndices[Section.get()] = Number;
-    MakeSectionReal(*Section, Number);
+    Section->Number = Number;
+    Section->Symbol->Data.SectionNumber = Number;
+    Section->Symbol->Aux[0].Aux.SectionDefinition.Number = Number;
     ++Number;
   }
 
@@ -903,16 +837,30 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
     // Update section number & offset for symbols that have them.
     if (Symbol->Section)
       Symbol->Data.SectionNumber = Symbol->Section->Number;
-
     if (Symbol->should_keep()) {
-      MakeSymbolReal(*Symbol, Header.NumberOfSymbols++);
-
+      Symbol->Index = Header.NumberOfSymbols++;
       // Update auxiliary symbol info.
       Symbol->Data.NumberOfAuxSymbols = Symbol->Aux.size();
       Header.NumberOfSymbols += Symbol->Data.NumberOfAuxSymbols;
     } else
       Symbol->Index = -1;
   }
+
+  // Build string table.
+  for (const auto &S : Sections)
+    if (S->Name.size() > COFF::NameSize)
+      Strings.add(S->Name);
+  for (const auto &S : Symbols)
+    if (S->should_keep() && S->Name.size() > COFF::NameSize)
+      Strings.add(S->Name);
+  Strings.finalize(StringTableBuilder::WinCOFF);
+
+  // Set names.
+  for (const auto &S : Sections)
+    SetSectionName(*S);
+  for (auto &S : Symbols)
+    if (S->should_keep())
+      SetSymbolName(*S);
 
   // Fixup weak external references.
   for (auto & Symbol : Symbols) {
@@ -1076,7 +1024,7 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
     if (Symbol->Index != -1)
       WriteSymbol(*Symbol);
 
-  OS.write((char const *)&Strings.Data.front(), Strings.Data.size());
+  OS.write(Strings.data().data(), Strings.data().size());
 }
 
 MCWinCOFFObjectTargetWriter::MCWinCOFFObjectTargetWriter(unsigned Machine_) :

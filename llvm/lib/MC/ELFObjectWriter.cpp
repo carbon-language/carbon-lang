@@ -1073,7 +1073,7 @@ ELFObjectWriter::computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
   for (auto i = Asm.file_names_begin(), e = Asm.file_names_end(); i != e; ++i)
     StrTabBuilder.add(*i);
 
-  StrTabBuilder.finalize();
+  StrTabBuilder.finalize(StringTableBuilder::ELF);
 
   for (auto i = Asm.file_names_begin(), e = Asm.file_names_end(); i != e; ++i)
     FileSymbolData.push_back(StrTabBuilder.getOffset(*i));
@@ -1446,7 +1446,7 @@ void ELFObjectWriter::CreateMetadataSections(MCAssembler &Asm,
       static_cast<const MCSectionELF&>(it->getSection());
     ShStrTabBuilder.add(Section.getSectionName());
   }
-  ShStrTabBuilder.finalize();
+  ShStrTabBuilder.finalize(StringTableBuilder::ELF);
   F->getContents().append(ShStrTabBuilder.data().begin(),
                           ShStrTabBuilder.data().end());
 }
