@@ -7143,6 +7143,87 @@ static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
 }
 
 
+/// \brief Try to lower a VSELECT instruction to an immediate-controlled blend
+/// instruction.
+static SDValue lowerVSELECTtoBLENDI(SDLoc DL, SDValue Cond, SDValue LHS,
+                                    SDValue RHS, const X86Subtarget *Subtarget,
+                                    SelectionDAG &DAG) {
+  MVT VT = LHS.getSimpleValueType();
+  MVT EltVT = VT.getVectorElementType();
+
+  // There is no blend with immediate in AVX-512.
+  if (VT.is512BitVector())
+    return SDValue();
+
+  // No blend instruction before SSE4.1.
+  if (!Subtarget->hasSSE41())
+    return SDValue();
+  // There is no byte-blend immediate controlled instruction.
+  if (EltVT == MVT::i8)
+    return SDValue();
+
+  if (!ISD::isBuildVectorOfConstantSDNodes(Cond.getNode()))
+    return SDValue();
+
+  auto *CondBV = cast<BuildVectorSDNode>(Cond);
+
+  unsigned BlendMask = 0;
+  MVT BlendVT = VT;
+  if (VT == MVT::v16i16) {
+    // v16i16 blends are completely special. We can only do them when we have
+    // a repeated blend across the two 128-bit halves and we have AVX2.
+    if (!Subtarget->hasAVX2())
+      return SDValue();
+
+    for (int i = 0; i < 8; ++i) {
+      SDValue Lo = CondBV->getOperand(i);
+      SDValue Hi = CondBV->getOperand(i + 8);
+      bool IsLoZero = X86::isZeroNode(Lo);
+      bool IsHiZero = X86::isZeroNode(Hi);
+      if (Lo->getOpcode() != ISD::UNDEF && Hi->getOpcode() != ISD::UNDEF &&
+          IsLoZero != IsHiZero)
+        // Asymmetric blends, bail.
+        return SDValue();
+      BlendMask |= (unsigned)(IsLoZero || IsHiZero) << i;
+    }
+  } else {
+    // Everything else uses a generic blend mask computation with a custom type.
+    if (VT.isInteger()) {
+      if (VT.is256BitVector())
+        // We cast to floating point types if integer blends aren't available,
+        // and we coerce integer blends when available to occur on the v8i32
+        // type.
+        BlendVT = Subtarget->hasAVX2()
+                      ? MVT::v8i32
+                      : MVT::getVectorVT(
+                            MVT::getFloatingPointVT(VT.getScalarSizeInBits()),
+                            VT.getVectorNumElements());
+      else
+        // For 128-bit vectors we do the blend on v8i16 types.
+        BlendVT = MVT::v8i16;
+    }
+    assert(BlendVT.getVectorNumElements() <= 8 &&
+           "Cannot blend more than 8 elements with an immediate!");
+    // Scale the blend mask based on the number of elements in the selected
+    // blend type.
+    int Scale = BlendVT.getVectorNumElements() / VT.getVectorNumElements();
+    for (int i = 0, e = CondBV->getNumOperands(); i < e; ++i) {
+      SDValue CondElement = CondBV->getOperand(i);
+      if (CondElement->getOpcode() != ISD::UNDEF &&
+          X86::isZeroNode(CondElement))
+        for (int j = 0; j < Scale; ++j)
+          BlendMask |= 1u << (i * Scale + j);
+    }
+  }
+
+  LHS = DAG.getNode(ISD::BITCAST, DL, BlendVT, LHS);
+  RHS = DAG.getNode(ISD::BITCAST, DL, BlendVT, RHS);
+
+  return DAG.getNode(ISD::BITCAST, DL, VT,
+                     DAG.getNode(X86ISD::BLENDI, DL, BlendVT, LHS, RHS,
+                                 DAG.getConstant(BlendMask, MVT::i8)));
+}
+
 //===----------------------------------------------------------------------===//
 // Vector shuffle lowering
 //
@@ -7300,119 +7381,48 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
                                          SDValue V2, ArrayRef<int> Mask,
                                          const X86Subtarget *Subtarget,
                                          SelectionDAG &DAG) {
-
-  unsigned BlendMask = 0;
+  // Compute the VSELECT mask. Note that VSELECT is really confusing in the
+  // mix of LLVM's code generator and the x86 backend. We tell the code
+  // generator that boolean values in the elements of an x86 vector register
+  // are -1 for true and 0 for false. We then use the LLVM semantics of 'true'
+  // mapping a select to operand #1, and 'false' mapping to operand #2. The
+  // reality in x86 is that vector masks (pre-AVX-512) use only the high bit
+  // of the element (the remaining are ignored) and 0 in that high bit would
+  // mean operand #1 while 1 in the high bit would mean operand #2. So while
+  // the LLVM model for boolean values in vector elements gets the relevant
+  // bit set, it is set backwards and over constrained relative to x86's
+  // actual model.
+  SmallVector<SDValue, 32> VSELECTMask;
+  MVT MaskEltVT = MVT::getIntegerVT(VT.getScalarSizeInBits());
+  MVT MaskVT = MVT::getVectorVT(MaskEltVT, VT.getVectorNumElements());
+  SDValue TrueVal = DAG.getConstant(-1, MaskEltVT);
+  SDValue FalseVal = DAG.getConstant(0, MaskEltVT);
   for (int i = 0, Size = Mask.size(); i < Size; ++i) {
-    if (Mask[i] >= Size) {
+    if (Mask[i] < 0) {
+      VSELECTMask.push_back(DAG.getUNDEF(MaskEltVT));
+    } else if (Mask[i] < Size) {
+      if (Mask[i] != i)
+        return SDValue(); // Shuffled V1 input!
+      VSELECTMask.push_back(TrueVal);
+    } else {
       if (Mask[i] != i + Size)
-        return SDValue(); // Shuffled V2 input!
-      BlendMask |= 1u << i;
-      continue;
-    }
-    if (Mask[i] >= 0 && Mask[i] != i)
-      return SDValue(); // Shuffled V1 input!
-  }
-  switch (VT.SimpleTy) {
-  case MVT::v2f64:
-  case MVT::v4f32:
-  case MVT::v4f64:
-  case MVT::v8f32:
-    return DAG.getNode(X86ISD::BLENDI, DL, VT, V1, V2,
-                       DAG.getConstant(BlendMask, MVT::i8));
-
-  case MVT::v4i64:
-  case MVT::v8i32:
-    assert(Subtarget->hasAVX2() && "256-bit integer blends require AVX2!");
-    // FALLTHROUGH
-  case MVT::v2i64:
-  case MVT::v4i32:
-    // If we have AVX2 it is faster to use VPBLENDD when the shuffle fits into
-    // that instruction.
-    if (Subtarget->hasAVX2()) {
-      // Scale the blend by the number of 32-bit dwords per element.
-      int Scale =  VT.getScalarSizeInBits() / 32;
-      BlendMask = 0;
-      for (int i = 0, Size = Mask.size(); i < Size; ++i)
-        if (Mask[i] >= Size)
-          for (int j = 0; j < Scale; ++j)
-            BlendMask |= 1u << (i * Scale + j);
-
-      MVT BlendVT = VT.getSizeInBits() > 128 ? MVT::v8i32 : MVT::v4i32;
-      V1 = DAG.getNode(ISD::BITCAST, DL, BlendVT, V1);
-      V2 = DAG.getNode(ISD::BITCAST, DL, BlendVT, V2);
-      return DAG.getNode(ISD::BITCAST, DL, VT,
-                         DAG.getNode(X86ISD::BLENDI, DL, BlendVT, V1, V2,
-                                     DAG.getConstant(BlendMask, MVT::i8)));
-    }
-    // FALLTHROUGH
-  case MVT::v8i16: {
-    // For integer shuffles we need to expand the mask and cast the inputs to
-    // v8i16s prior to blending.
-    int Scale = 8 / VT.getVectorNumElements();
-    BlendMask = 0;
-    for (int i = 0, Size = Mask.size(); i < Size; ++i)
-      if (Mask[i] >= Size)
-        for (int j = 0; j < Scale; ++j)
-          BlendMask |= 1u << (i * Scale + j);
-
-    V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V1);
-    V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V2);
-    return DAG.getNode(ISD::BITCAST, DL, VT,
-                       DAG.getNode(X86ISD::BLENDI, DL, MVT::v8i16, V1, V2,
-                                   DAG.getConstant(BlendMask, MVT::i8)));
-  }
-
-  case MVT::v16i16: {
-    assert(Subtarget->hasAVX2() && "256-bit integer blends require AVX2!");
-    SmallVector<int, 8> RepeatedMask;
-    if (is128BitLaneRepeatedShuffleMask(MVT::v16i16, Mask, RepeatedMask)) {
-      // We can lower these with PBLENDW which is mirrored across 128-bit lanes.
-      assert(RepeatedMask.size() == 8 && "Repeated mask size doesn't match!");
-      BlendMask = 0;
-      for (int i = 0; i < 8; ++i)
-        if (RepeatedMask[i] >= 16)
-          BlendMask |= 1u << i;
-      return DAG.getNode(X86ISD::BLENDI, DL, MVT::v16i16, V1, V2,
-                         DAG.getConstant(BlendMask, MVT::i8));
+        return SDValue(); // Shuffled V2 input!;
+      VSELECTMask.push_back(FalseVal);
     }
   }
-    // FALLTHROUGH
-  case MVT::v32i8: {
-    assert(Subtarget->hasAVX2() && "256-bit integer blends require AVX2!");
-    // Scale the blend by the number of bytes per element.
-    int Scale =  VT.getScalarSizeInBits() / 8;
-    assert(Mask.size() * Scale == 32 && "Not a 256-bit vector!");
 
-    // Compute the VSELECT mask. Note that VSELECT is really confusing in the
-    // mix of LLVM's code generator and the x86 backend. We tell the code
-    // generator that boolean values in the elements of an x86 vector register
-    // are -1 for true and 0 for false. We then use the LLVM semantics of 'true'
-    // mapping a select to operand #1, and 'false' mapping to operand #2. The
-    // reality in x86 is that vector masks (pre-AVX-512) use only the high bit
-    // of the element (the remaining are ignored) and 0 in that high bit would
-    // mean operand #1 while 1 in the high bit would mean operand #2. So while
-    // the LLVM model for boolean values in vector elements gets the relevant
-    // bit set, it is set backwards and over constrained relative to x86's
-    // actual model.
-    SDValue VSELECTMask[32];
-    for (int i = 0, Size = Mask.size(); i < Size; ++i)
-      for (int j = 0; j < Scale; ++j)
-        VSELECTMask[Scale * i + j] =
-            Mask[i] < 0 ? DAG.getUNDEF(MVT::i8)
-                        : DAG.getConstant(Mask[i] < Size ? -1 : 0, MVT::i8);
+  // We have to manually attempt to lower this via BLENDI because at this phase
+  // of legalization we may end up legalizing the BUILD_VECTOR past where it can
+  // be analyzed prior to legalizing the VSELECT.
+  // FIXME: At some point, the legalizer should work more like the DAG combiner
+  // where it evaluates replacement nodes eagerly rather than risking proceeding
+  // to their (now shared) operands.
+  SDValue Cond = DAG.getNode(ISD::BUILD_VECTOR, DL, MaskVT, VSELECTMask);
+  if (SDValue BlendI = lowerVSELECTtoBLENDI(DL, Cond, V1, V2, Subtarget, DAG))
+    return BlendI;
 
-    V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v32i8, V1);
-    V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v32i8, V2);
-    return DAG.getNode(
-        ISD::BITCAST, DL, VT,
-        DAG.getNode(ISD::VSELECT, DL, MVT::v32i8,
-                    DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v32i8, VSELECTMask),
-                    V1, V2));
-  }
-
-  default:
-    llvm_unreachable("Not a supported integer vector type!");
-  }
+  // Otherwise fall back on the generic VSELECT lowering.
+  return DAG.getNode(ISD::VSELECT, DL, VT, Cond, V1, V2);
 }
 
 /// \brief Generic routine to lower a shuffle and blend as a decomposed set of
@@ -11797,91 +11807,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   return SDValue();
 }
 
-/// \brief Try to lower a VSELECT instruction to an immediate-controlled blend
-/// instruction.
-static SDValue lowerVSELECTtoBLENDI(SDValue Op, const X86Subtarget *Subtarget,
-                                    SelectionDAG &DAG) {
-  SDValue Cond = Op.getOperand(0);
-  SDValue LHS = Op.getOperand(1);
-  SDValue RHS = Op.getOperand(2);
-  SDLoc DL(Op);
-  MVT VT = Op.getSimpleValueType();
-  MVT EltVT = VT.getVectorElementType();
-
-  // There is no blend with immediate in AVX-512.
-  if (VT.is512BitVector())
-    return SDValue();
-
-  // No blend instruction before SSE4.1.
-  if (!Subtarget->hasSSE41())
-    return SDValue();
-  // There is no byte-blend immediate controlled instruction.
-  if (EltVT == MVT::i8)
-    return SDValue();
-
-  if (!ISD::isBuildVectorOfConstantSDNodes(Cond.getNode()))
-    return SDValue();
-
-  auto *CondBV = cast<BuildVectorSDNode>(Cond);
-
-  unsigned BlendMask = 0;
-  MVT BlendVT = VT;
-  if (VT == MVT::v16i16) {
-    // v16i16 blends are completely special. We can only do them when we have
-    // a repeated blend across the two 128-bit halves and we have AVX2.
-    if (!Subtarget->hasAVX2())
-      return SDValue();
-
-    for (int i = 0; i < 8; ++i) {
-      SDValue Lo = CondBV->getOperand(i);
-      SDValue Hi = CondBV->getOperand(i + 8);
-      bool IsLoZero = X86::isZeroNode(Lo);
-      bool IsHiZero = X86::isZeroNode(Hi);
-      if (Lo->getOpcode() != ISD::UNDEF && Hi->getOpcode() != ISD::UNDEF &&
-          IsLoZero != IsHiZero)
-        // Asymmetric blends, bail.
-        return SDValue();
-      BlendMask |= (unsigned)(IsLoZero || IsHiZero) << i;
-    }
-  } else {
-    // Everything else uses a generic blend mask computation with a custom type.
-    if (VT.isInteger()) {
-      if (VT.is256BitVector())
-        // We cast to floating point types if integer blends aren't available,
-        // and we coerce integer blends when available to occur on the v8i32
-        // type.
-        BlendVT = Subtarget->hasAVX2()
-                      ? MVT::v8i32
-                      : MVT::getVectorVT(
-                            MVT::getFloatingPointVT(VT.getScalarSizeInBits()),
-                            VT.getVectorNumElements());
-      else
-        // For 128-bit vectors we do the blend on v8i16 types.
-        BlendVT = MVT::v8i16;
-    }
-    assert(BlendVT.getVectorNumElements() <= 8 &&
-           "Cannot blend more than 8 elements with an immediate!");
-    // Scale the blend mask based on the number of elements in the selected
-    // blend type.
-    int Scale = BlendVT.getVectorNumElements() / VT.getVectorNumElements();
-    for (int i = 0, e = CondBV->getNumOperands(); i < e; ++i) {
-      SDValue CondElement = CondBV->getOperand(i);
-      if (CondElement->getOpcode() != ISD::UNDEF &&
-          X86::isZeroNode(CondElement))
-        for (int j = 0; j < Scale; ++j)
-          BlendMask |= 1u << (i * Scale + j);
-    }
-  }
-
-  LHS = DAG.getNode(ISD::BITCAST, DL, BlendVT, LHS);
-  RHS = DAG.getNode(ISD::BITCAST, DL, BlendVT, RHS);
-
-  return DAG.getNode(ISD::BITCAST, DL, VT,
-                     DAG.getNode(X86ISD::BLENDI, DL, BlendVT, LHS, RHS,
-                                 DAG.getConstant(BlendMask, MVT::i8)));
-}
-
 SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc DL(Op);
   // A vselect where all conditions and data are constants can be optimized into
   // a single vector load by SelectionDAGLegalize::ExpandBUILD_VECTOR().
   if (ISD::isBuildVectorOfConstantSDNodes(Op.getOperand(0).getNode()) &&
@@ -11889,22 +11816,48 @@ SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
       ISD::isBuildVectorOfConstantSDNodes(Op.getOperand(2).getNode()))
     return SDValue();
 
-  SDValue BlendOp = lowerVSELECTtoBLENDI(Op, Subtarget, DAG);
+  SDValue Cond = Op.getOperand(0);
+  SDValue LHS = Op.getOperand(1);
+  SDValue RHS = Op.getOperand(2);
+  SDValue BlendOp = lowerVSELECTtoBLENDI(DL, Cond, LHS, RHS, Subtarget, DAG);
   if (BlendOp.getNode())
     return BlendOp;
 
-  // Some types for vselect were previously set to Expand, not Legal or
-  // Custom. Return an empty SDValue so we fall-through to Expand, after
-  // the Custom lowering phase.
+  // If the condition vector type is different from the input vector types, bail
+  // to the TD patterns. This should only happen with vNi1 conditions.
+  if (Op.getSimpleValueType() != Op->getOperand(0).getSimpleValueType())
+    return Op;
+
+  // Check for types that need to be mapped in order to lower.
   MVT VT = Op.getSimpleValueType();
   switch (VT.SimpleTy) {
   default:
     break;
+  case MVT::v4i64:
+  case MVT::v8i32:
+    // If we don't have AVX2 we don't want to drop to a v32i8 which will require
+    // splitting the vector. Instead, let the patterns for v4f64 and v8f32 lower
+    // these blends.
+    if (!Subtarget->hasAVX2())
+      break;
+    // FALL THROUGH
+
+  case MVT::v2i64:
+  case MVT::v4i32:
   case MVT::v8i16:
   case MVT::v16i16:
     if (Subtarget->hasBWI() && Subtarget->hasVLX())
       break;
-    return SDValue();
+
+    // We need to phrase these as i8 blends. Bitcasting the condition is fine
+    // because true is defined as -1 which will set *all* of the bits to one.
+    MVT BlendVT = MVT::getVectorVT(MVT::i8, (VT.getScalarSizeInBits() / 8) *
+                                                VT.getVectorNumElements());
+    Cond = DAG.getNode(ISD::BITCAST, DL, BlendVT, Op->getOperand(0));
+    LHS = DAG.getNode(ISD::BITCAST, DL, BlendVT, Op->getOperand(1));
+    RHS = DAG.getNode(ISD::BITCAST, DL, BlendVT, Op->getOperand(2));
+    return DAG.getNode(ISD::BITCAST, DL, VT,
+                       DAG.getNode(ISD::VSELECT, DL, BlendVT, Cond, LHS, RHS));
   }
 
   // We couldn't create a "Blend with immediate" node.
