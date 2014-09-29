@@ -59,6 +59,14 @@ namespace lldb_private
         void
         NotifyThreadDeath (lldb::tid_t tid);
 
+        // Indicate the calling process did an exec and that the thread state
+        // should be 100% cleared.
+        //
+        // Note this will clear out any pending notifications, but will not stop
+        // a notification currently in progress via ProcessNextEvent().
+        void
+        ResetForExec ();
+
         // Indicate when the coordinator should shut down.
         void
         StopCoordinator ();
@@ -77,10 +85,12 @@ namespace lldb_private
         class EventBase;
 
         class EventCallAfterThreadsStop;
-        class EventStopCoordinator;
         class EventThreadStopped;
         class EventThreadCreate;
         class EventThreadDeath;
+
+        class EventStopCoordinator;
+        class EventReset;
 
         typedef std::shared_ptr<EventBase> EventBaseSP;
 
@@ -109,6 +119,9 @@ namespace lldb_private
         ThreadDidDie (lldb::tid_t tid);
 
         void
+        ResetNow ();
+
+        void
         Log (const char *format, ...);
 
         // Member variables.
@@ -116,7 +129,7 @@ namespace lldb_private
 
         QueueType m_event_queue;
         // For now we do simple read/write lock strategy with efficient wait-for-data.
-        // We can replace with entirely non-blocking queue later but we still want the
+        // We can replace with an entirely non-blocking queue later but we still want the
         // reader to sleep when nothing is available - this will be a bursty but infrequent
         // event mechanism.
         std::condition_variable m_queue_condition;

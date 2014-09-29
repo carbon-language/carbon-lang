@@ -49,10 +49,6 @@ public:
     {
     }
 
-    ~EventStopCoordinator () override
-    {
-    }
-
     bool
     ProcessEvent(ThreadStateCoordinator &coordinator) override
     {
@@ -74,10 +70,6 @@ public:
     m_wait_for_stop_tids (wait_for_stop_tids),
     m_request_thread_stop_func (request_thread_stop_func),
     m_call_after_func (call_after_func)
-    {
-    }
-
-    ~EventCallAfterThreadsStop () override
     {
     }
 
@@ -181,16 +173,30 @@ private:
 
 //===----------------------------------------------------------------------===//
 
+class ThreadStateCoordinator::EventReset : public ThreadStateCoordinator::EventBase
+{
+public:
+    EventReset ():
+    EventBase ()
+    {
+    }
+
+    bool
+    ProcessEvent(ThreadStateCoordinator &coordinator) override
+    {
+        coordinator.ResetNow ();
+        return true;
+    }
+};
+
+//===----------------------------------------------------------------------===//
+
 class ThreadStateCoordinator::EventThreadStopped : public ThreadStateCoordinator::EventBase
 {
 public:
     EventThreadStopped (lldb::tid_t tid):
     EventBase (),
     m_tid (tid)
-    {
-    }
-
-    ~EventThreadStopped () override
     {
     }
 
@@ -217,10 +223,6 @@ public:
     {
     }
 
-    ~EventThreadCreate () override
-    {
-    }
-
     bool
     ProcessEvent(ThreadStateCoordinator &coordinator) override
     {
@@ -241,10 +243,6 @@ public:
     EventThreadDeath (lldb::tid_t tid):
     EventBase (),
     m_tid (tid)
-    {
-    }
-
-    ~EventThreadDeath () override
     {
     }
 
@@ -387,6 +385,19 @@ ThreadStateCoordinator::ThreadDidDie (lldb::tid_t tid)
 }
 
 void
+ThreadStateCoordinator::ResetNow ()
+{
+    // Clear the pending notification if there was one.
+    m_pending_notification_sp.reset ();
+
+    // Clear the stop map - we no longer know anything about any thread state.
+    // The caller is expected to reset thread states for all threads, and we
+    // will assume anything we haven't heard about is running and requires a
+    // stop.
+    m_tid_stop_map.clear ();
+}
+
+void
 ThreadStateCoordinator::Log (const char *format, ...)
 {
     va_list args;
@@ -413,6 +424,26 @@ void
 ThreadStateCoordinator::NotifyThreadDeath (lldb::tid_t tid)
 {
     EnqueueEvent (EventBaseSP (new EventThreadDeath (tid)));
+}
+
+void
+ThreadStateCoordinator::ResetForExec ()
+{
+    std::lock_guard<std::mutex> lock (m_queue_mutex);
+
+    // Remove everything from the queue.  This is the only
+    // state mutation that takes place outside the processing
+    // loop.
+    QueueType empty_queue;
+    m_event_queue.swap (empty_queue);
+
+    // Do the real clear behavior on the the queue to eliminate
+    // the chance that processing of a dequeued earlier event is
+    // overlapping with the clearing of state here.  Push it
+    // directly because we need to have this happen with the lock,
+    // and so far I only have this one place that needs a no-lock
+    // variant.
+    m_event_queue.push (EventBaseSP (new EventReset ()));
 }
 
 void

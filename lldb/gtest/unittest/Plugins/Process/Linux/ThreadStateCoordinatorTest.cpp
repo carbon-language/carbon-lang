@@ -403,3 +403,33 @@ TEST(ThreadStateCoordinatorTest, ExistingPendingNotificationRequiresStopFromNewT
     ASSERT_EQ (TRIGGERING_TID, reported_firing_tid);
 }
 
+TEST(ThreadStateCoordinatorTest, DeferredNotificationRemovedByResetForExec)
+{
+    ThreadStateCoordinator coordinator(NOPLogger);
+
+    const lldb::tid_t TRIGGERING_TID = 4105;
+    bool call_after_fired = false;
+    lldb::tid_t reported_firing_tid = 0;
+
+    // Notify we have a trigger that needs to be fired when all threads in the wait tid set have stopped.
+    coordinator.CallAfterThreadsStop (TRIGGERING_TID,
+                                      EMPTY_THREAD_ID_SET,
+                                      [](lldb::tid_t tid) {},
+                                      [&](lldb::tid_t tid) {
+                                          call_after_fired = true;
+                                          reported_firing_tid = tid;
+                                      });
+
+    // Notification trigger shouldn't go off yet.
+    ASSERT_EQ (false, call_after_fired);
+
+    // Now indicate an exec occurred, which will invalidate all state about the process and threads.
+    coordinator.ResetForExec ();
+
+    // Verify the deferred stop notification does *not* fire with the next
+    // process.  It will handle the reset and not the deferred signaling, which
+    // should now be removed.
+    ASSERT_EQ (true, coordinator.ProcessNextEvent ());
+    ASSERT_EQ (false, call_after_fired);
+}
+
