@@ -15,6 +15,8 @@ void test(X x) {
   // X86: %[[argmem:[^ ]*]] = alloca inalloca <{ %struct.X }>
   // X86: call void (<{ %struct.X }>*, ...)* bitcast (void (...)* @"\01?vararg@@YAXZZ" to void (<{ %struct.X }>*, ...)*)(<{ %struct.X }>* inalloca %[[argmem]])
 
+  // X64: alloca %struct.X
+
   // X64: %[[agg:[^ ]*]] = alloca %struct.X
   // X64: %[[valptr:[^ ]*]] = getelementptr %struct.X* %[[agg]], i32 0, i32 0
   // X64: %[[val:[^ ]*]] = load i32* %[[valptr]]
