@@ -16,6 +16,7 @@
 
 #include "ThreadStateCoordinator.h"
 #include <memory>
+#include <cstdarg>
 
 using namespace lldb_private;
 
