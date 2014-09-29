@@ -406,6 +406,9 @@ public:
 
   bool isVariadic() const { return Required.allowsOptionalArgs(); }
   RequiredArgs getRequiredArgs() const { return Required; }
+  unsigned getNumRequiredArgs() const {
+    return isVariadic() ? getRequiredArgs().getNumRequiredArgs() : arg_size();
+  }
 
   bool isInstanceMethod() const { return InstanceMethod; }
 

@@ -1053,12 +1053,8 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
   }
 
   // Add in all of the required arguments.
-  CGFunctionInfo::const_arg_iterator it = FI.arg_begin(), ie;
-  if (FI.isVariadic()) {
-    ie = it + FI.getRequiredArgs().getNumRequiredArgs();
-  } else {
-    ie = FI.arg_end();
-  }
+  CGFunctionInfo::const_arg_iterator it = FI.arg_begin(),
+                                     ie = it + FI.getNumRequiredArgs();
   for (; it != ie; ++it) {
     const ABIArgInfo &argAI = it->info;
 
