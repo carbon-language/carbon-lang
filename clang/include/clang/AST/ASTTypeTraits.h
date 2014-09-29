@@ -191,6 +191,8 @@ public:
     return BaseConverter<T>::get(NodeKind, Storage.buffer);
   }
 
+  ASTNodeKind getNodeKind() const { return NodeKind; }
+
   /// \brief Returns a pointer that identifies the stored AST node.
   ///
   /// Note that this is not supported by all AST nodes. For AST nodes

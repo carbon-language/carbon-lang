@@ -53,7 +53,7 @@ static const unsigned MaxMemoizationEntries = 10000;
 // FIXME: Benchmark whether memoization of non-pointer typed nodes
 // provides enough benefit for the additional amount of code.
 struct MatchKey {
-  uint64_t MatcherID;
+  DynTypedMatcher::MatcherIDType MatcherID;
   ast_type_traits::DynTypedNode Node;
   BoundNodesTreeBuilder BoundNodes;
 
