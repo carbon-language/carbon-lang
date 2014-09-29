@@ -113,7 +113,7 @@ MipsTargetMachine::getSubtargetImpl(const Function &F) const {
   Attribute SFAttr =
       FnAttrs.getAttribute(AttributeSet::FunctionIndex, "use-soft-float");
   bool softFloat = !SFAttr.hasAttribute(Attribute::None)
-                       ? (SFAttr.getValueAsString() == "true" ? true : false)
+                       ? SFAttr.getValueAsString() == "true"
                        : Options.UseSoftFloat;
 
   if (hasMips16Attr)
