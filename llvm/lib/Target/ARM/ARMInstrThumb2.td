@@ -3309,7 +3309,8 @@ def t2LDREXD : T2I_ldrex<0b0111, (outs rGPR:$Rt, rGPR:$Rt2),
                          (ins addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
                          "ldrexd", "\t$Rt, $Rt2, $addr", "",
-                         [], {?, ?, ?, ?}> {
+                         [], {?, ?, ?, ?}>,
+               Requires<[IsThumb2, IsNotMClass]> {
   bits<4> Rt2;
   let Inst{11-8} = Rt2;
 }
@@ -3385,7 +3386,8 @@ def t2STREXD : T2I_strex<0b0111, (outs rGPR:$Rd),
                          (ins rGPR:$Rt, rGPR:$Rt2, addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
                          "strexd", "\t$Rd, $Rt, $Rt2, $addr", "", [],
-                         {?, ?, ?, ?}> {
+                         {?, ?, ?, ?}>,
+               Requires<[IsThumb2, IsNotMClass]> {
   bits<4> Rt2;
   let Inst{11-8} = Rt2;
 }
