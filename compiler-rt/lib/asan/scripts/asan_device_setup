@@ -129,6 +129,12 @@ $ADB root
 $ADB wait-for-device
 $ADB remount
 
+RELEASE=$($ADB shell getprop ro.build.version.release)
+PRE_L=0
+if echo "$RELEASE" | grep '^4\.' >&/dev/null; then
+    PRE_L=1
+fi
+
 if ! $ADB shell readlink /system/bin/app_process | grep 'app_process' >&/dev/null; then
 
     if $ADB pull /system/bin/app_process.real /dev/null >&/dev/null; then
@@ -209,10 +215,29 @@ if ! ( cd "$TMPDIRBASE" && diff -qr old/ new/ ) ; then
 
     # Make SELinux happy by keeping app_process wrapper and the shell
     # it runs on in zygote domain.
+    ENFORCING=0
+    if $ADB shell getenforce | grep Enforcing >/dev/null; then
+        # Sometimes shell is not allowed to change file contexts.
+        # Temporarily switch to permissive.
+        ENFORCING=1
+        $ADB shell setenforce 0
+    fi
+
     $ADB shell cp /system/bin/sh /system/bin/sh-from-zygote
-    $ADB shell chcon u:object_r:zygote_exec:s0 \
+
+    if [[ PRE_L -eq 1 ]]; then
+        CTX=u:object_r:system_file:s0
+    else
+        CTX=u:object_r:zygote_exec:s0
+    fi
+    $ADB shell chcon $CTX \
         /system/bin/sh-from-zygote \
-        /system/bin/app_process.wrap
+        /system/bin/app_process.wrap \
+        /system/bin/app_process32
+
+    if [ $ENFORCING == 1 ]; then
+        $ADB shell setenforce 1
+    fi
 
     echo '>> Restarting shell (asynchronous)'
     $ADB shell stop
