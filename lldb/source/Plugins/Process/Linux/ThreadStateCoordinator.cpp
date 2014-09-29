@@ -260,6 +260,48 @@ private:
 
 //===----------------------------------------------------------------------===//
 
+class ThreadStateCoordinator::EventRequestResume : public ThreadStateCoordinator::EventBase
+{
+public:
+    EventRequestResume (lldb::tid_t tid, const ThreadIDFunc &request_thread_resume_func):
+    EventBase (),
+    m_tid (tid),
+    m_request_thread_resume_func (request_thread_resume_func)
+    {
+    }
+
+    bool
+    ProcessEvent(ThreadStateCoordinator &coordinator) override
+    {
+        // Tell the thread to resume if we don't already think it is running.
+        auto find_it = coordinator.m_tid_stop_map.find (m_tid);
+        if (find_it == coordinator.m_tid_stop_map.end ())
+        {
+            // Skip the resume call - we think it is already running because we don't know anything about the thread.
+            coordinator.Log ("EventRequestResume::%s skipping resume request because we don't know about tid %" PRIu64 " and we therefore assume it is running.", __FUNCTION__, m_tid);
+            return true;
+        }
+        else if (!find_it->second)
+        {
+            // Skip the resume call - we have tracked it to be running.
+            coordinator.Log ("EventRequestResume::%s skipping resume request because tid %" PRIu64 " is already running according to our state tracking.", __FUNCTION__, m_tid);
+            return true;
+        }
+
+        // Request a resume.  We expect this to be synchronous and the system
+        // to reflect it is running after this completes.
+        m_request_thread_resume_func (m_tid);
+        return true;
+    }
+
+private:
+
+    const lldb::tid_t m_tid;
+    ThreadIDFunc m_request_thread_resume_func;
+};
+
+//===----------------------------------------------------------------------===//
+
 ThreadStateCoordinator::ThreadStateCoordinator (const LogFunc &log_func) :
     m_log_func (log_func),
     m_event_queue (),
@@ -412,6 +454,12 @@ void
 ThreadStateCoordinator::NotifyThreadStop (lldb::tid_t tid)
 {
     EnqueueEvent (EventBaseSP (new EventThreadStopped (tid)));
+}
+
+void
+ThreadStateCoordinator::RequestThreadResume (lldb::tid_t tid, const ThreadIDFunc &request_thread_resume_func)
+{
+    EnqueueEvent (EventBaseSP (new EventRequestResume (tid, request_thread_resume_func)));
 }
 
 void

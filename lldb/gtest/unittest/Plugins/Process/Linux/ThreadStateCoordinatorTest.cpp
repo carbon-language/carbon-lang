@@ -14,6 +14,14 @@ namespace
     {
         // Do nothing.
     }
+
+    void
+    StdoutLogger (const char *format, va_list args)
+    {
+        // Print to stdout.
+        vprintf (format, args);
+        printf ("\n");
+    }
 }
 
 TEST(ThreadStateCoordinatorTest, StopCoordinatorWorksNoPriorEvents)
@@ -433,3 +441,61 @@ TEST(ThreadStateCoordinatorTest, DeferredNotificationRemovedByResetForExec)
     ASSERT_EQ (false, call_after_fired);
 }
 
+
+TEST(ThreadStateCoordinatorTest, RequestThreadResumeCallsCallbackWhenThreadIsStopped)
+{
+    ThreadStateCoordinator coordinator(NOPLogger);
+
+    // Initialize thread to be in stopped state.
+    const lldb::tid_t TEST_TID = 1234;
+
+    coordinator.NotifyThreadStop (TEST_TID);
+    ASSERT_EQ (true, coordinator.ProcessNextEvent ());
+
+    // Request a resume.
+    lldb::tid_t resumed_tid = 0;
+    int resume_call_count = 0;
+
+    coordinator.RequestThreadResume (TEST_TID,
+                                     [&](lldb::tid_t tid)
+                                     {
+                                         ++resume_call_count;
+                                         resumed_tid = tid;
+                                     });
+
+    // Shouldn't be called yet.
+    ASSERT_EQ (0, resume_call_count);
+
+    // Process next event.  After that, the resume request call should have fired.
+    ASSERT_EQ (true, coordinator.ProcessNextEvent ());
+    ASSERT_EQ (1, resume_call_count);
+    ASSERT_EQ (TEST_TID, resumed_tid);
+}
+
+TEST(ThreadStateCoordinatorTest, RequestThreadResumeIgnoresCallbackWhenThreadIsRunning)
+{
+    ThreadStateCoordinator coordinator(StdoutLogger);
+
+    // This thread will be assumed running (i.e. unknown, assumed running until marked stopped.)
+    const lldb::tid_t TEST_TID = 1234;
+
+    // Request a resume.
+    lldb::tid_t resumed_tid = 0;
+    int resume_call_count = 0;
+
+    coordinator.RequestThreadResume (TEST_TID,
+                                     [&](lldb::tid_t tid)
+                                     {
+                                         ++resume_call_count;
+                                         resumed_tid = tid;
+                                     });
+
+    // Shouldn't be called yet.
+    ASSERT_EQ (0, resume_call_count);
+
+    // Process next event.
+    ASSERT_EQ (true, coordinator.ProcessNextEvent ());
+
+    // The resume request should not have gone off because we think it is already running.
+    ASSERT_EQ (0, resume_call_count);
+}

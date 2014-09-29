@@ -51,7 +51,7 @@ namespace lldb_private
         NotifyThreadStop (lldb::tid_t tid);
 
         void
-        NotifyThreadResume (lldb::tid_t tid);
+        RequestThreadResume (lldb::tid_t tid, const ThreadIDFunc &request_thread_resume_func);
 
         void
         NotifyThreadCreate (lldb::tid_t tid);
@@ -88,6 +88,7 @@ namespace lldb_private
         class EventThreadStopped;
         class EventThreadCreate;
         class EventThreadDeath;
+        class EventRequestResume;
 
         class EventStopCoordinator;
         class EventReset;
