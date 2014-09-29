@@ -1484,6 +1484,28 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
 
         return DAG.getNode(AMDGPUISD::MAD, DL, VT, A, B, C);
       }
+
+      if (LHS.getOpcode() == ISD::FADD) {
+        // (fsub (fadd a, a), c) -> mad 2.0, a, (fneg c)
+
+        SDValue A = LHS.getOperand(0);
+        if (A == LHS.getOperand(1)) {
+          const SDValue Two = DAG.getTargetConstantFP(2.0, MVT::f32);
+          SDValue NegRHS = DAG.getNode(ISD::FNEG, DL, VT, RHS);
+
+          return DAG.getNode(AMDGPUISD::MAD, DL, VT, Two, A, NegRHS);
+        }
+      }
+
+      if (RHS.getOpcode() == ISD::FADD) {
+        // (fsub c, (fadd a, a)) -> mad -2.0, a, c
+
+        SDValue A = RHS.getOperand(0);
+        if (A == RHS.getOperand(1)) {
+          const SDValue NegTwo = DAG.getTargetConstantFP(-2.0, MVT::f32);
+          return DAG.getNode(AMDGPUISD::MAD, DL, VT, NegTwo, A, LHS);
+        }
+      }
     }
 
     break;

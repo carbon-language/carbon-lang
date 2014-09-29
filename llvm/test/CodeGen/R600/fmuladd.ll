@@ -175,3 +175,25 @@ define void @fmuladd_2.0_neg_a_b_f32(float addrspace(1)* %out, float addrspace(1
   store float %r3, float addrspace(1)* %gep.out
   ret void
 }
+
+
+; CHECK-LABEL: @fmuladd_2.0_a_neg_b_f32
+; CHECK-DAG: BUFFER_LOAD_DWORD [[R1:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
+; CHECK-DAG: BUFFER_LOAD_DWORD [[R2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x4
+; CHECK: V_MAD_F32 [[RESULT:v[0-9]+]], 2.0, [[R1]], -[[R2]]
+; CHECK: BUFFER_STORE_DWORD [[RESULT]]
+define void @fmuladd_2.0_a_neg_b_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
+  %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
+  %gep.0 = getelementptr float addrspace(1)* %out, i32 %tid
+  %gep.1 = getelementptr float addrspace(1)* %gep.0, i32 1
+  %gep.out = getelementptr float addrspace(1)* %out, i32 %tid
+
+  %r1 = load float addrspace(1)* %gep.0
+  %r2 = load float addrspace(1)* %gep.1
+
+  %r2.fneg = fsub float -0.000000e+00, %r2
+
+  %r3 = tail call float @llvm.fmuladd.f32(float 2.0, float %r1, float %r2.fneg)
+  store float %r3, float addrspace(1)* %gep.out
+  ret void
+}
