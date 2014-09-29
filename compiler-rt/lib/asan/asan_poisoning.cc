@@ -252,7 +252,8 @@ uptr __asan_load_cxx_array_cookie(uptr *p) {
            "expect a double-free report\n");
     return 0;
   }
-  // FIXME: apparently it can be something else; need to find a reproducer.
+  // The cookie may remain unpoisoned if e.g. it comes from a custom
+  // operator new defined inside a class.
   return *p;
 }
 
