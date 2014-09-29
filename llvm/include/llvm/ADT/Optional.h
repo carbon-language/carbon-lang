@@ -120,7 +120,7 @@ public:
   T& operator*() LLVM_LVALUE_FUNCTION { assert(hasVal); return *getPointer(); }
 
   template <typename U>
-  constexpr T getValueOr(U &&value) const LLVM_LVALUE_FUNCTION {
+  LLVM_CONSTEXPR T getValueOr(U &&value) const LLVM_LVALUE_FUNCTION {
     return hasValue() ? getValue() : std::forward<U>(value);
   }
 
