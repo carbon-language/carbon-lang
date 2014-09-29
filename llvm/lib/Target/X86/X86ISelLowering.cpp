@@ -11834,9 +11834,10 @@ static bool BUILD_VECTORtoBlendMask(BuildVectorSDNode *BuildVector,
   return true;
 }
 
-// Try to lower a vselect node into a simple blend instruction.
-static SDValue LowerVSELECTtoBlend(SDValue Op, const X86Subtarget *Subtarget,
-                                   SelectionDAG &DAG) {
+/// \brief Try to lower a VSELECT instruction to an immediate-controlled blend
+/// instruction.
+static SDValue lowerVSELECTtoBLENDI(SDValue Op, const X86Subtarget *Subtarget,
+                                    SelectionDAG &DAG) {
   SDValue Cond = Op.getOperand(0);
   SDValue LHS = Op.getOperand(1);
   SDValue RHS = Op.getOperand(2);
@@ -11884,8 +11885,8 @@ SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
       ISD::isBuildVectorOfConstantSDNodes(Op.getOperand(1).getNode()) &&
       ISD::isBuildVectorOfConstantSDNodes(Op.getOperand(2).getNode()))
     return SDValue();
-  
-  SDValue BlendOp = LowerVSELECTtoBlend(Op, Subtarget, DAG);
+
+  SDValue BlendOp = lowerVSELECTtoBLENDI(Op, Subtarget, DAG);
   if (BlendOp.getNode())
     return BlendOp;
 
