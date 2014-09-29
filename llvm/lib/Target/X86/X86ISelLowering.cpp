@@ -11841,41 +11841,80 @@ static SDValue lowerVSELECTtoBLENDI(SDValue Op, const X86Subtarget *Subtarget,
   SDValue Cond = Op.getOperand(0);
   SDValue LHS = Op.getOperand(1);
   SDValue RHS = Op.getOperand(2);
-  SDLoc dl(Op);
+  SDLoc DL(Op);
   MVT VT = Op.getSimpleValueType();
   MVT EltVT = VT.getVectorElementType();
-  unsigned NumElems = VT.getVectorNumElements();
 
   // There is no blend with immediate in AVX-512.
   if (VT.is512BitVector())
     return SDValue();
 
-  if (!Subtarget->hasSSE41() || EltVT == MVT::i8)
+  // No blend instruction before SSE4.1.
+  if (!Subtarget->hasSSE41())
     return SDValue();
-  if (!Subtarget->hasInt256() && VT == MVT::v16i16)
+  // There is no byte-blend immediate controlled instruction.
+  if (EltVT == MVT::i8)
     return SDValue();
 
   if (!ISD::isBuildVectorOfConstantSDNodes(Cond.getNode()))
     return SDValue();
 
-  // Check the mask for BLEND and build the value.
-  unsigned MaskValue = 0;
-  if (!BUILD_VECTORtoBlendMask(cast<BuildVectorSDNode>(Cond), MaskValue))
-    return SDValue();
+  auto *CondBV = cast<BuildVectorSDNode>(Cond);
 
-  // Convert i32 vectors to floating point if it is not AVX2.
-  // AVX2 introduced VPBLENDD instruction for 128 and 256-bit vectors.
+  unsigned BlendMask = 0;
   MVT BlendVT = VT;
-  if (EltVT == MVT::i64 || (EltVT == MVT::i32 && !Subtarget->hasInt256())) {
-    BlendVT = MVT::getVectorVT(MVT::getFloatingPointVT(EltVT.getSizeInBits()),
-                               NumElems);
-    LHS = DAG.getNode(ISD::BITCAST, dl, VT, LHS);
-    RHS = DAG.getNode(ISD::BITCAST, dl, VT, RHS);
+  if (VT == MVT::v16i16) {
+    // v16i16 blends are completely special. We can only do them when we have
+    // a repeated blend across the two 128-bit halves and we have AVX2.
+    if (!Subtarget->hasAVX2())
+      return SDValue();
+
+    for (int i = 0; i < 8; ++i) {
+      SDValue Lo = CondBV->getOperand(i);
+      SDValue Hi = CondBV->getOperand(i + 8);
+      bool IsLoZero = X86::isZeroNode(Lo);
+      bool IsHiZero = X86::isZeroNode(Hi);
+      if (Lo->getOpcode() != ISD::UNDEF && Hi->getOpcode() != ISD::UNDEF &&
+          IsLoZero != IsHiZero)
+        // Asymmetric blends, bail.
+        return SDValue();
+      BlendMask |= (unsigned)(IsLoZero || IsHiZero) << i;
+    }
+  } else {
+    // Everything else uses a generic blend mask computation with a custom type.
+    if (VT.isInteger()) {
+      if (VT.is256BitVector()) {
+        // The 256-bit integer blend instructions are only available on AVX2.
+        if (!Subtarget->hasAVX2())
+          return SDValue();
+
+        // We do the blend on v8i32 for 256-bit integer types.
+        BlendVT = MVT::v8i32;
+      } else {
+        // For 128-bit vectors we do the blend on v8i16 types.
+        BlendVT = MVT::v8i16;
+      }
+    }
+    assert(BlendVT.getVectorNumElements() <= 8 &&
+           "Cannot blend more than 8 elements with an immediate!");
+    // Scale the blend mask based on the number of elements in the selected
+    // blend type.
+    int Scale = BlendVT.getVectorNumElements() / VT.getVectorNumElements();
+    for (int i = 0, e = CondBV->getNumOperands(); i < e; ++i) {
+      SDValue CondElement = CondBV->getOperand(i);
+      if (CondElement->getOpcode() != ISD::UNDEF &&
+          X86::isZeroNode(CondElement))
+        for (int j = 0; j < Scale; ++j)
+          BlendMask |= 1u << (i * Scale + j);
+    }
   }
 
-  SDValue Ret = DAG.getNode(X86ISD::BLENDI, dl, BlendVT, LHS, RHS,
-                            DAG.getConstant(MaskValue, MVT::i32));
-  return DAG.getNode(ISD::BITCAST, dl, VT, Ret);
+  LHS = DAG.getNode(ISD::BITCAST, DL, BlendVT, LHS);
+  RHS = DAG.getNode(ISD::BITCAST, DL, BlendVT, RHS);
+
+  return DAG.getNode(ISD::BITCAST, DL, VT,
+                     DAG.getNode(X86ISD::BLENDI, DL, BlendVT, LHS, RHS,
+                                 DAG.getConstant(BlendMask, MVT::i8)));
 }
 
 SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
