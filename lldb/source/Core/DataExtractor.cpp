@@ -132,7 +132,8 @@ DataExtractor::DataExtractor () :
     m_end       (NULL),
     m_byte_order(lldb::endian::InlHostByteOrder()),
     m_addr_size (4),
-    m_data_sp   ()
+    m_data_sp   (),
+    m_target_byte_size(1)
 {
 }
 
@@ -140,12 +141,13 @@ DataExtractor::DataExtractor () :
 // This constructor allows us to use data that is owned by someone else.
 // The data must stay around as long as this object is valid.
 //----------------------------------------------------------------------
-DataExtractor::DataExtractor (const void* data, offset_t length, ByteOrder endian, uint32_t addr_size) :
+DataExtractor::DataExtractor (const void* data, offset_t length, ByteOrder endian, uint32_t addr_size, uint32_t target_byte_size/*=1*/) :
     m_start     ((uint8_t*)data),
     m_end       ((uint8_t*)data + length),
     m_byte_order(endian),
     m_addr_size (addr_size),
-    m_data_sp   ()
+    m_data_sp   (),
+    m_target_byte_size(target_byte_size)
 {
 }
 
@@ -156,12 +158,13 @@ DataExtractor::DataExtractor (const void* data, offset_t length, ByteOrder endia
 // as long as any DataExtractor objects exist that have a reference to
 // this data.
 //----------------------------------------------------------------------
-DataExtractor::DataExtractor (const DataBufferSP& data_sp, ByteOrder endian, uint32_t addr_size) :
+DataExtractor::DataExtractor (const DataBufferSP& data_sp, ByteOrder endian, uint32_t addr_size, uint32_t target_byte_size/*=1*/) :
     m_start     (NULL),
     m_end       (NULL),
     m_byte_order(endian),
     m_addr_size (addr_size),
-    m_data_sp   ()
+    m_data_sp   (),
+    m_target_byte_size(target_byte_size)
 {
     SetData (data_sp);
 }
@@ -173,12 +176,13 @@ DataExtractor::DataExtractor (const DataBufferSP& data_sp, ByteOrder endian, uin
 // as any object contains a reference to that data. The endian
 // swap and address size settings are copied from "data".
 //----------------------------------------------------------------------
-DataExtractor::DataExtractor (const DataExtractor& data, offset_t offset, offset_t length) :
+DataExtractor::DataExtractor (const DataExtractor& data, offset_t offset, offset_t length, uint32_t target_byte_size/*=1*/) :
     m_start(NULL),
     m_end(NULL),
     m_byte_order(data.m_byte_order),
     m_addr_size(data.m_addr_size),
-    m_data_sp()
+    m_data_sp(),
+    m_target_byte_size(target_byte_size)
 {
     if (data.ValidOffset(offset))
     {
@@ -194,7 +198,8 @@ DataExtractor::DataExtractor (const DataExtractor& rhs) :
     m_end (rhs.m_end),
     m_byte_order (rhs.m_byte_order),
     m_addr_size (rhs.m_addr_size),
-    m_data_sp (rhs.m_data_sp)
+    m_data_sp (rhs.m_data_sp),
+    m_target_byte_size(rhs.m_target_byte_size)
 {
 }
 
@@ -1480,7 +1485,9 @@ DataExtractor::Dump (Stream *s,
                 s->EOL();
             }
             if (base_addr != LLDB_INVALID_ADDRESS)
-                s->Printf ("0x%8.8" PRIx64 ": ", (uint64_t)(base_addr + (offset - start_offset)));
+                s->Printf ("0x%8.8" PRIx64 ": ",
+                    (uint64_t)(base_addr + (offset - start_offset)/m_target_byte_size  ));
+
             line_start_offset = offset;
         }
         else
@@ -1535,6 +1542,7 @@ DataExtractor::Dump (Stream *s,
             {
                 s->Printf ("%2.2x", GetU8(&offset));
             }
+
             // Put an extra space between the groups of bytes if more than one
             // is being dumped in a group (item_byte_size is more than 1).
             if (item_byte_size > 1)

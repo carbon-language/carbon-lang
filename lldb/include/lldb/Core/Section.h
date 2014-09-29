@@ -120,7 +120,8 @@ public:
              lldb::offset_t file_offset,
              lldb::offset_t file_size,
              uint32_t log2align,
-             uint32_t flags);
+             uint32_t flags,
+             uint32_t target_byte_size = 1);
 
     // Create a section that is a child of parent_section_sp
     Section (const lldb::SectionSP &parent_section_sp,    // NULL for top level sections, non-NULL for child sections
@@ -134,7 +135,8 @@ public:
              lldb::offset_t file_offset,
              lldb::offset_t file_size,
              uint32_t log2align,
-             uint32_t flags);
+             uint32_t flags,
+             uint32_t target_byte_size = 1);
 
     ~Section ();
 
@@ -297,6 +299,12 @@ public:
         m_log2align = align;
     }
 
+    // Get the number of host bytes required to hold a target byte
+    uint32_t
+    GetTargetByteSize() const
+    {
+        return m_target_byte_size; 
+    }     
 
 protected:
 
@@ -317,6 +325,8 @@ protected:
                                         // hits unless the children contain the address.
                     m_encrypted:1,      // Set to true if the contents are encrypted
                     m_thread_specific:1;// This section is thread specific
+    uint32_t        m_target_byte_size; // Some architectures have non-8-bit byte size. This is specified as
+                                        // as a multiple number of a host bytes   
 private:
     DISALLOW_COPY_AND_ASSIGN (Section);
 };

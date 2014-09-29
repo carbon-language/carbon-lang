@@ -267,10 +267,14 @@ kalimbaVariantFromElfFlags(const elf::elf_word e_flags)
     {
         // TODO(mg11) Support more variants
         case 10:
-            kal_arch_variant = 3;
+            kal_arch_variant = llvm::Triple::KalimbaSubArch_v3;
             break;
         case 14:
-            kal_arch_variant = 4;
+            kal_arch_variant = llvm::Triple::KalimbaSubArch_v4;
+            break;
+        case 17:
+        case 20:
+            kal_arch_variant = llvm::Triple::KalimbaSubArch_v5;
             break;
         default:
             break;           
@@ -285,6 +289,27 @@ subTypeFromElfHeader(const elf::ELFHeader& header)
         llvm::ELF::EM_CSR_KALIMBA == header.e_machine ?
         kalimbaVariantFromElfFlags(header.e_flags) :
         LLDB_INVALID_CPUTYPE;
+}
+
+//! brief kalimbaSectionType
+//! The kalimba toolchain identifies a code section as being
+//! one with the SHT_PROGBITS set in the section sh_type and the top
+//! bit in the 32-bit address field set.
+static lldb::SectionType
+kalimbaSectionType(
+    const elf::ELFHeader& header,
+    const elf::ELFSectionHeader& sect_hdr)
+{
+    if (
+        llvm::ELF::EM_CSR_KALIMBA != header.e_machine ||
+        llvm::ELF::SHT_PROGBITS != sect_hdr.sh_type)
+    {
+        return eSectionTypeOther;
+    }
+
+    const lldb::addr_t KAL_CODE_BIT = 1 << 31;
+    return KAL_CODE_BIT & sect_hdr.sh_addr ?
+         eSectionTypeCode  : eSectionTypeData;
 }
 
 // Arbitrary constant used as UUID prefix for core files.
@@ -1592,6 +1617,20 @@ ObjectFileELF::CreateSections(SectionList &unified_section_list)
                     break;
             }
 
+            if (eSectionTypeOther == sect_type)
+            {
+                // the kalimba toolchain assumes that ELF section names are free-form. It does
+                // supports linkscripts which (can) give rise to various arbitarily named
+                // sections being "Code" or "Data". 
+                sect_type = kalimbaSectionType(m_header, header);
+            }
+
+            const uint32_t target_bytes_size =
+                eSectionTypeData == sect_type ? 
+                m_arch_spec.GetDataByteSize() :
+                    eSectionTypeCode == sect_type ?
+                    m_arch_spec.GetCodeByteSize() : 1;
+
             elf::elf_xword log2align = (header.sh_addralign==0)
                                         ? 0
                                         : llvm::Log2_64(header.sh_addralign);
@@ -1605,7 +1644,8 @@ ObjectFileELF::CreateSections(SectionList &unified_section_list)
                                               header.sh_offset,   // Offset of this section in the file.
                                               file_size,          // Size of the section as found in the file.
                                               log2align,          // Alignment of the section
-                                              header.sh_flags));  // Flags for this section.
+                                              header.sh_flags,    // Flags for this section.
+                                              target_bytes_size));// Number of host bytes per target byte
 
             if (is_thread_specific)
                 section_sp->SetIsThreadSpecific (is_thread_specific);

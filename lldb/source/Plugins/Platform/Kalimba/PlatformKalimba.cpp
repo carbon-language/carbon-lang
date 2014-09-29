@@ -250,7 +250,17 @@ PlatformKalimba::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
     if (idx == 0)
     {
-        arch = ArchSpec("kalimba-csr-unknown");
+        arch = ArchSpec("kalimba3-csr-unknown");
+        return true;
+    }
+    if (idx == 1)
+    {
+        arch = ArchSpec("kalimba4-csr-unknown");
+        return true;
+    }
+    if (idx == 2)
+    {
+        arch = ArchSpec("kalimba5-csr-unknown");
         return true;
     }
     return false;

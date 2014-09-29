@@ -614,7 +614,16 @@ protected:
         }
 
         size_t item_count = m_format_options.GetCountValue().GetCurrentValue();
-        size_t item_byte_size = m_format_options.GetByteSizeValue().GetCurrentValue();
+
+        // TODO For non-8-bit byte addressable architectures this needs to be
+        // revisited to fully support all lldb's range of formatting options.
+        // Furthermore code memory reads (for those architectures) will not
+        // be correctly formatted even w/o formatting options.
+        size_t item_byte_size =
+            target->GetArchitecture().GetDataByteSize() > 1 ?
+            target->GetArchitecture().GetDataByteSize() :
+            m_format_options.GetByteSizeValue().GetCurrentValue();
+
         const size_t num_per_line = m_memory_options.m_num_per_line.GetCurrentValue();
 
         if (total_byte_size == 0)
@@ -661,7 +670,7 @@ protected:
             total_byte_size = end_addr - addr;
             item_count = total_byte_size / item_byte_size;
         }
-        
+
         uint32_t max_unforced_size = target->GetMaximumMemReadSize();
         
         if (total_byte_size > max_unforced_size && !m_memory_options.m_force)
@@ -858,7 +867,8 @@ protected:
         result.SetStatus(eReturnStatusSuccessFinishResult);
         DataExtractor data (data_sp, 
                             target->GetArchitecture().GetByteOrder(), 
-                            target->GetArchitecture().GetAddressByteSize());
+                            target->GetArchitecture().GetAddressByteSize(),
+                            target->GetArchitecture().GetDataByteSize());
         
         Format format = m_format_options.GetFormat();
         if ( ( (format == eFormatChar) || (format == eFormatCharPrintable) )
@@ -892,7 +902,7 @@ protected:
                                          format,
                                          item_byte_size,
                                          item_count,
-                                         num_per_line,
+                                         num_per_line / target->GetArchitecture().GetDataByteSize(),
                                          addr,
                                          0,
                                          0,
