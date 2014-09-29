@@ -413,6 +413,29 @@ unsigned AArch64TTI::getArithmeticInstrCost(
 
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
 
+  if (ISD == ISD::SDIV &&
+      Opd2Info == TargetTransformInfo::OK_UniformConstantValue &&
+      Opd2PropInfo == TargetTransformInfo::OP_PowerOf2) {
+    // On AArch64, scalar signed division by constants power-of-two are
+    // normally expanded to the sequence ADD + CMP + SELECT + SRA.
+    // The OperandValue properties many not be same as that of previous
+    // operation; conservatively assume OP_None.
+    unsigned Cost =
+      getArithmeticInstrCost(Instruction::Add, Ty, Opd1Info, Opd2Info,
+                             TargetTransformInfo::OP_None,
+                             TargetTransformInfo::OP_None);
+    Cost += getArithmeticInstrCost(Instruction::Sub, Ty, Opd1Info, Opd2Info,
+                                   TargetTransformInfo::OP_None,
+                                   TargetTransformInfo::OP_None);
+    Cost += getArithmeticInstrCost(Instruction::Select, Ty, Opd1Info, Opd2Info,
+                                   TargetTransformInfo::OP_None,
+                                   TargetTransformInfo::OP_None);
+    Cost += getArithmeticInstrCost(Instruction::AShr, Ty, Opd1Info, Opd2Info,
+                                   TargetTransformInfo::OP_None,
+                                   TargetTransformInfo::OP_None);
+    return Cost;
+  }
+
   switch (ISD) {
   default:
     return TargetTransformInfo::getArithmeticInstrCost(
