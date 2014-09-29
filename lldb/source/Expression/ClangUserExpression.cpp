@@ -885,16 +885,16 @@ ClangUserExpression::Execute (Stream &error_stream,
 
             args.push_back(struct_address);
          
-            ThreadPlanCallUserExpression *user_expression_plan = 
-                    new ThreadPlanCallUserExpression (exe_ctx.GetThreadRef(),
-                                                      wrapper_address, 
-                                                      args,
-                                                      options,
-                                                      shared_ptr_to_me);
-            lldb::ThreadPlanSP call_plan_sp(user_expression_plan);
+            lldb::ThreadPlanSP call_plan_sp(new ThreadPlanCallUserExpression (exe_ctx.GetThreadRef(),
+                                                                              wrapper_address,
+                                                                              args,
+                                                                              options,
+                                                                              shared_ptr_to_me));
 
             if (!call_plan_sp || !call_plan_sp->ValidatePlan (&error_stream))
                 return lldb::eExpressionSetupError;
+
+            ThreadPlanCallUserExpression *user_expression_plan = static_cast<ThreadPlanCallUserExpression *>(call_plan_sp.get());
 
             lldb::addr_t function_stack_pointer = user_expression_plan->GetFunctionStackPointer();
 

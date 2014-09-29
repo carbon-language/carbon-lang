@@ -223,6 +223,7 @@ namespace lldb_private {
 //------------------------------------------------------------------
 
 class ThreadPlan :
+    public std::enable_shared_from_this<ThreadPlan>,
     public UserID
 {
 public:
@@ -241,6 +242,7 @@ public:
         eKindNull,
         eKindBase,
         eKindCallFunction,
+        eKindPython,
         eKindStepInstruction,
         eKindStepOut,
         eKindStepOverBreakpoint,
@@ -687,7 +689,8 @@ protected:
     
     virtual lldb::StateType
     GetPlanRunState ();
-    
+
+    DISALLOW_COPY_AND_ASSIGN(ThreadPlanNull);
 };
 
 

@@ -43,6 +43,12 @@ SBEvent::SBEvent (EventSP &event_sp) :
 {
 }
 
+SBEvent::SBEvent (Event *event_ptr) :
+    m_event_sp (),
+    m_opaque_ptr (event_ptr)
+{
+}
+
 SBEvent::SBEvent (const SBEvent &rhs) :
     m_event_sp (rhs.m_event_sp),
     m_opaque_ptr (rhs.m_opaque_ptr)

@@ -104,6 +104,12 @@ public:
                                                         const char *session_dictionary_name,
                                                         const lldb::ValueObjectSP& valobj_sp);
 
+    typedef void* (*SWIGPythonCreateScriptedThreadPlan) (const char *python_class_name,
+                                                        const char *session_dictionary_name,
+                                                        const lldb::ThreadPlanSP& thread_plan_sp);
+
+    typedef bool (*SWIGPythonCallThreadPlan) (void *implementor, const char *method_name, Event *event_sp, bool &got_error);
+
     typedef void* (*SWIGPythonCreateOSPlugin) (const char *python_class_name,
                                                const char *session_dictionary_name,
                                                const lldb::ProcessSP& process_sp);
@@ -348,6 +354,39 @@ public:
     }
     
     virtual lldb::ScriptInterpreterObjectSP
+    CreateScriptedThreadPlan (const char *class_name,
+                              lldb::ThreadPlanSP thread_plan_sp)
+    {
+        return lldb::ScriptInterpreterObjectSP();
+    }
+
+    virtual bool
+    ScriptedThreadPlanExplainsStop (lldb::ScriptInterpreterObjectSP implementor_sp,
+                                    Event *event,
+                                    bool &script_error)
+    {
+        script_error = true;
+        return true;
+    }
+
+    virtual bool
+    ScriptedThreadPlanShouldStop (lldb::ScriptInterpreterObjectSP implementor_sp,
+                                  Event *event,
+                                  bool &script_error)
+    {
+        script_error = true;
+        return true;
+    }
+
+    virtual lldb::StateType
+    ScriptedThreadPlanGetRunState (lldb::ScriptInterpreterObjectSP implementor_sp,
+                                   bool &script_error)
+    {
+        script_error = true;
+        return lldb::eStateStepping;
+    }
+
+    virtual lldb::ScriptInterpreterObjectSP
     LoadPluginModule (const FileSpec& file_spec,
                      lldb_private::Error& error)
     {
@@ -573,7 +612,9 @@ public:
                            SWIGPythonScriptKeyword_Thread swig_run_script_keyword_thread,
                            SWIGPythonScriptKeyword_Target swig_run_script_keyword_target,
                            SWIGPythonScriptKeyword_Frame swig_run_script_keyword_frame,
-                           SWIGPython_GetDynamicSetting swig_plugin_get);
+                           SWIGPython_GetDynamicSetting swig_plugin_get,
+                           SWIGPythonCreateScriptedThreadPlan swig_thread_plan_script,
+                           SWIGPythonCallThreadPlan swig_call_thread_plan);
 
     virtual void
     ResetOutputFileHandle (FILE *new_fh) { } //By default, do nothing.

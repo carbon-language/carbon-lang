@@ -44,7 +44,8 @@ ThreadPlanStepRange::ThreadPlanStepRange (ThreadPlanKind kind,
                                           Thread &thread, 
                                           const AddressRange &range, 
                                           const SymbolContext &addr_context, 
-                                          lldb::RunMode stop_others) :
+                                          lldb::RunMode stop_others,
+                                          bool given_ranges_only) :
     ThreadPlan (kind, name, thread, eVoteNoOpinion, eVoteNoOpinion),
     m_addr_context (addr_context),
     m_address_ranges (),
@@ -53,7 +54,8 @@ ThreadPlanStepRange::ThreadPlanStepRange (ThreadPlanKind kind,
     m_parent_stack_id(),
     m_no_more_plans (false),
     m_first_run_event (true),
-    m_use_fast_step(false)
+    m_use_fast_step(false),
+    m_given_ranges_only (given_ranges_only)
 {
     m_use_fast_step = GetTarget().GetUseFastStepping();
     AddRange(range);
@@ -149,7 +151,7 @@ ThreadPlanStepRange::InRange ()
             break;
     }
     
-    if (!ret_value)
+    if (!ret_value && !m_given_ranges_only)
     {
         // See if we've just stepped to another part of the same line number...
         StackFrame *frame = m_thread.GetStackFrameAtIndex(0).get();

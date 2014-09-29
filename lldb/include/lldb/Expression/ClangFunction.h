@@ -285,9 +285,9 @@ public:
     ///     True if the thread plan may simply be discarded if an error occurs.
     ///
     /// @return
-    ///     A ThreadPlan for executing the function.
+    ///     A ThreadPlan shared pointer for executing the function.
     //------------------------------------------------------------------
-    ThreadPlan *
+    lldb::ThreadPlanSP
     GetThreadPlanToCallFunction (ExecutionContext &exe_ctx, 
                                  lldb::addr_t args_addr,
                                  const EvaluateExpressionOptions &options,

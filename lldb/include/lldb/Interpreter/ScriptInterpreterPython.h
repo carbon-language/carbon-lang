@@ -80,6 +80,22 @@ public:
     lldb::ScriptInterpreterObjectSP
     CreateSyntheticScriptedProvider (const char *class_name,
                                      lldb::ValueObjectSP valobj);
+
+    lldb::ScriptInterpreterObjectSP
+    virtual CreateScriptedThreadPlan (const char *class_name,
+                                      lldb::ThreadPlanSP thread_plan);
+
+    virtual bool
+    ScriptedThreadPlanExplainsStop (lldb::ScriptInterpreterObjectSP implementor_sp,
+                                    Event *event,
+                                    bool &script_error);
+    virtual bool
+    ScriptedThreadPlanShouldStop (lldb::ScriptInterpreterObjectSP implementor_sp,
+                                  Event *event,
+                                  bool &script_error);
+    virtual lldb::StateType
+    ScriptedThreadPlanGetRunState (lldb::ScriptInterpreterObjectSP implementor_sp,
+                                   bool &script_error);
     
     virtual lldb::ScriptInterpreterObjectSP
     OSPlugin_CreatePluginObject (const char *class_name,
@@ -275,7 +291,9 @@ public:
                            SWIGPythonScriptKeyword_Thread swig_run_script_keyword_thread,
                            SWIGPythonScriptKeyword_Target swig_run_script_keyword_target,
                            SWIGPythonScriptKeyword_Frame swig_run_script_keyword_frame,
-                           SWIGPython_GetDynamicSetting swig_plugin_get);
+                           SWIGPython_GetDynamicSetting swig_plugin_get,
+                           SWIGPythonCreateScriptedThreadPlan swig_thread_plan_script,
+                           SWIGPythonCallThreadPlan swig_call_thread_plan);
 
     const char *
     GetDictionaryName ()

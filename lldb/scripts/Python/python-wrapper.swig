@@ -419,6 +419,118 @@ LLDBSwigPythonCreateSyntheticProvider
         Py_RETURN_NONE;
 }
 
+SWIGEXPORT void*
+LLDBSwigPythonCreateScriptedThreadPlan
+(
+    const char *python_class_name,
+    const char *session_dictionary_name,
+    const lldb::ThreadPlanSP& thread_plan_sp
+)
+{
+    PyObject* retval = NULL;
+
+    if (python_class_name == NULL || python_class_name[0] == '\0' || !session_dictionary_name)
+        Py_RETURN_NONE;
+
+    // I do not want the SBThreadPlan to be deallocated when going out of scope because python
+    // has ownership of it and will manage memory for this object by itself
+    lldb::SBThreadPlan *tp_value = new lldb::SBThreadPlan(thread_plan_sp);
+
+    PyObject *ThreadPlan_PyObj = SBTypeToSWIGWrapper(tp_value);
+
+    if (ThreadPlan_PyObj == NULL)
+        Py_RETURN_NONE;
+    
+    {
+        PyErr_Cleaner py_err_cleaner(true);
+        
+        PyCallable pfunc = PyCallable::FindWithFunctionName(python_class_name, session_dictionary_name);
+        
+        if (!pfunc)
+            return retval;
+        
+        Py_INCREF(ThreadPlan_PyObj);
+        
+        PyObject* session_dict = NULL;
+        session_dict = FindSessionDictionary(session_dictionary_name);
+        retval = pfunc(tp_value, session_dict);
+
+        // FIXME: At this point we should check that the class we found supports all the methods
+        // that we need.
+        
+        Py_XINCREF (session_dict);
+        
+        Py_XINCREF(retval);
+    }
+
+    if (retval)
+        return retval;
+    else
+        Py_RETURN_NONE;
+}
+
+SWIGEXPORT bool
+LLDBSWIGPythonCallThreadPlan
+(
+    void *implementor,
+    const char *method_name,
+    lldb_private::Event *event,
+    bool &got_error
+)
+{
+    bool ret_val = false;
+    got_error = false;
+
+
+    PyErr_Cleaner py_err_cleaner(false);
+    
+    PyCallable pfunc = PyCallable::FindWithMemberFunction((PyObject *) implementor, method_name);
+    
+    if (!pfunc)
+    {
+        return ret_val;
+    }
+
+    PyObject* py_return = Py_None;
+
+    if (event != NULL)
+    {
+        lldb::SBEvent sb_event(event);
+
+        PyObject *py_obj_event = SBTypeToSWIGWrapper(sb_event);
+
+        py_return = pfunc(py_obj_event);
+    }
+    else
+    {
+        py_return = pfunc();
+    }
+
+    if (PyErr_Occurred())
+    {
+        got_error = true;
+        printf ("Return value was neither false nor true for call to %s.\n", method_name);
+        PyErr_Print();
+    }
+    else
+    {
+        if (py_return == Py_True)
+            ret_val = true;
+        else if (py_return == Py_False)
+            ret_val = false;
+        else
+        {
+            // Somebody returned the wrong thing...
+            got_error = true;
+            printf ("Wrong return value type for call to %s.\n", method_name);
+        }
+    }
+    
+    Py_XDECREF(py_return);
+
+    return ret_val;
+}
+
 // wrapper that calls an optional instance member of an object taking no arguments
 static PyObject*
 LLDBSwigPython_CallOptionalMember

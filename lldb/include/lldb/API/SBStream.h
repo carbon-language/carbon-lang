@@ -85,6 +85,7 @@ protected:
     friend class SBSymbolContextList;
     friend class SBTarget;
     friend class SBThread;
+    friend class SBThreadPlan;
     friend class SBType;
     friend class SBTypeEnumMember;
     friend class SBTypeMemberFunction;

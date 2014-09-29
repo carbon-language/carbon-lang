@@ -89,10 +89,10 @@ AppleThreadPlanStepThroughObjCTrampoline::InitializeClangFunction ()
         options.SetIgnoreBreakpoints(true);
         options.SetStopOthers(m_stop_others);
         m_thread.CalculateExecutionContext(exc_ctx);
-        m_func_sp.reset(m_impl_function->GetThreadPlanToCallFunction (exc_ctx,
-                                                                      m_args_addr,
-                                                                      options,
-                                                                      errors));
+        m_func_sp = m_impl_function->GetThreadPlanToCallFunction (exc_ctx,
+                                                                  m_args_addr,
+                                                                  options,
+                                                                  errors);
         m_func_sp->SetOkayToDiscard(true);
         m_thread.QueueThreadPlan (m_func_sp, false);
     }

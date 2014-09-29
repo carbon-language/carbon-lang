@@ -32,6 +32,7 @@
 #include "lldb/Target/ThreadPlan.h"
 #include "lldb/Target/ThreadPlanCallFunction.h"
 #include "lldb/Target/ThreadPlanBase.h"
+#include "lldb/Target/ThreadPlanPython.h"
 #include "lldb/Target/ThreadPlanStepInstruction.h"
 #include "lldb/Target/ThreadPlanStepOut.h"
 #include "lldb/Target/ThreadPlanStepOverBreakpoint.h"
@@ -652,17 +653,18 @@ Thread::SetupForResume ()
 
                 if (cur_plan->GetKind() != ThreadPlan::eKindStepOverBreakpoint)
                 {
-                    ThreadPlanStepOverBreakpoint *step_bp_plan = new ThreadPlanStepOverBreakpoint (*this);
-                    if (step_bp_plan)
+                    ThreadPlanSP step_bp_plan_sp (new ThreadPlanStepOverBreakpoint (*this));
+                    if (step_bp_plan_sp)
                     {
-                        ThreadPlanSP step_bp_plan_sp;
-                        step_bp_plan->SetPrivate (true);
+                        ;
+                        step_bp_plan_sp->SetPrivate (true);
 
                         if (GetCurrentPlan()->RunState() != eStateStepping)
                         {
+                            ThreadPlanStepOverBreakpoint *step_bp_plan
+                                    = static_cast<ThreadPlanStepOverBreakpoint *>(step_bp_plan_sp.get());
                             step_bp_plan->SetAutoContinue(true);
                         }
-                        step_bp_plan_sp.reset (step_bp_plan);
                         QueueThreadPlan (step_bp_plan_sp, false);
                     }
                 }
@@ -1290,6 +1292,36 @@ Thread::SetTracer (lldb::ThreadPlanTracerSP &tracer_sp)
         m_plan_stack[i]->SetThreadPlanTracer(tracer_sp);
 }
 
+bool
+Thread::DiscardUserThreadPlansUpToIndex (uint32_t thread_index)
+{
+    // Count the user thread plans from the back end to get the number of the one we want
+    // to discard:
+
+    uint32_t idx = 0;
+    ThreadPlan *up_to_plan_ptr = nullptr;
+
+    for (ThreadPlanSP plan_sp : m_plan_stack)
+    {
+        if (plan_sp->GetPrivate())
+            continue;
+        if (idx == thread_index)
+        {
+            up_to_plan_ptr = plan_sp.get();
+            break;
+        }
+        else
+            idx++;
+    }
+
+    if (up_to_plan_ptr == nullptr)
+        return false;
+
+    DiscardThreadPlansUpToPlan(up_to_plan_ptr);
+    return true;
+}
+    
+
 void
 Thread::DiscardThreadPlansUpToPlan (lldb::ThreadPlanSP &up_to_plan_sp)
 {
@@ -1483,18 +1515,16 @@ Thread::QueueThreadPlanForStepInRange
     LazyBool step_out_avoids_code_without_debug_info
 )
 {
-    ThreadPlanSP thread_plan_sp;
-    ThreadPlanStepInRange *plan = new ThreadPlanStepInRange (*this,
+    ThreadPlanSP thread_plan_sp (new ThreadPlanStepInRange (*this,
                                                              range,
                                                              addr_context,
                                                              stop_other_threads,
                                                              step_in_avoids_code_without_debug_info,
-                                                             step_out_avoids_code_without_debug_info);
+                                                             step_out_avoids_code_without_debug_info));
+    ThreadPlanStepInRange *plan = static_cast<ThreadPlanStepInRange *>(thread_plan_sp.get());
     
     if (step_in_target)
         plan->SetStepInTarget(step_in_target);
-    
-    thread_plan_sp.reset (plan);
 
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
     return thread_plan_sp;
@@ -1546,17 +1576,18 @@ Thread::QueueThreadPlanForStepOutNoShouldStop
     uint32_t frame_idx
 )
 {
-    ThreadPlanStepOut *new_plan = new ThreadPlanStepOut (*this,
+    ThreadPlanSP thread_plan_sp(new ThreadPlanStepOut (*this,
                                                         addr_context, 
                                                         first_insn, 
                                                         stop_other_threads, 
                                                         stop_vote, 
                                                         run_vote, 
                                                         frame_idx,
-                                                        eLazyBoolNo);
+                                                        eLazyBoolNo));
+
+    ThreadPlanStepOut *new_plan = static_cast<ThreadPlanStepOut *>(thread_plan_sp.get());
     new_plan->ClearShouldStopHereCallbacks();
-    ThreadPlanSP thread_plan_sp(new_plan);
-    
+
     if (thread_plan_sp->ValidatePlan(NULL))
     {
         QueueThreadPlan (thread_plan_sp, abort_other_plans);
@@ -1602,61 +1633,105 @@ Thread::QueueThreadPlanForStepUntil (bool abort_other_plans,
 
 }
 
+lldb::ThreadPlanSP
+Thread::QueueThreadPlanForStepScripted (bool abort_other_plans,
+                                        const char *class_name,
+                                        bool stop_other_threads)
+{
+    ThreadPlanSP thread_plan_sp (new ThreadPlanPython (*this, class_name));
+    QueueThreadPlan (thread_plan_sp, abort_other_plans);
+    // This seems a little funny, but I don't want to have to split up the constructor and the
+    // DidPush in the scripted plan, that seems annoying.
+    // That means the constructor has to be in DidPush.
+    // So I have to validate the plan AFTER pushing it, and then take it off again...
+    if (!thread_plan_sp->ValidatePlan(nullptr))
+    {
+        DiscardThreadPlansUpToPlan(thread_plan_sp);
+        return ThreadPlanSP();
+    }
+    else
+        return thread_plan_sp;
+
+}
+
 uint32_t
 Thread::GetIndexID () const
 {
     return m_index_id;
 }
 
-void
-Thread::DumpThreadPlans (lldb_private::Stream *s) const
+static void
+PrintPlanElement (Stream *s, const ThreadPlanSP &plan, lldb::DescriptionLevel desc_level, int32_t elem_idx)
 {
-    uint32_t stack_size = m_plan_stack.size();
-    int i;
-    s->Indent();
-    s->Printf ("Plan Stack for thread #%u: tid = 0x%4.4" PRIx64 ", stack_size = %d\n", GetIndexID(), GetID(), stack_size);
-    for (i = stack_size - 1; i >= 0; i--)
-    {
         s->IndentMore();
         s->Indent();
-        s->Printf ("Element %d: ", i);
-        m_plan_stack[i]->GetDescription (s, eDescriptionLevelFull);
+        s->Printf ("Element %d: ", elem_idx);
+        plan->GetDescription (s, desc_level);
         s->EOL();
         s->IndentLess();
+}
+
+static void
+PrintPlanStack (Stream *s, const std::vector<lldb::ThreadPlanSP> &plan_stack, lldb::DescriptionLevel desc_level, bool include_internal)
+{
+    int32_t print_idx = 0;
+    for (ThreadPlanSP plan_sp : plan_stack)
+    {
+        if (include_internal || !plan_sp->GetPrivate())
+        {
+            PrintPlanElement (s, plan_sp, desc_level, print_idx++);
+        }
     }
+}
+
+void
+Thread::DumpThreadPlans (Stream *s,
+                         lldb::DescriptionLevel desc_level,
+                         bool include_internal,
+                         bool ignore_boring_threads) const
+{
+    uint32_t stack_size = m_plan_stack.size();
+
+    if (ignore_boring_threads)
+    {
+        uint32_t stack_size = m_plan_stack.size();
+        uint32_t completed_stack_size = m_completed_plan_stack.size();
+        uint32_t discarded_stack_size = m_discarded_plan_stack.size();
+        if (stack_size == 1 && completed_stack_size == 0 && discarded_stack_size == 0)
+        {
+            s->Printf ("thread #%u: tid = 0x%4.4" PRIx64 "\n", GetIndexID(), GetID());
+            s->IndentMore();
+            s->Indent();
+            s->Printf("No active thread plans\n");
+            s->IndentLess();
+            return;
+        }
+    }
+
+    s->Indent();
+    s->Printf ("thread #%u: tid = 0x%4.4" PRIx64 ":\n", GetIndexID(), GetID());
+    s->IndentMore();
+    s->Indent();
+    s->Printf ("Active plan stack:\n");
+    PrintPlanStack (s, m_plan_stack, desc_level, include_internal);
 
     stack_size = m_completed_plan_stack.size();
     if (stack_size > 0)
     {
         s->Indent();
-        s->Printf ("Completed Plan Stack: %d elements.\n", stack_size);
-        for (i = stack_size - 1; i >= 0; i--)
-        {
-            s->IndentMore();
-            s->Indent();
-            s->Printf ("Element %d: ", i);
-            m_completed_plan_stack[i]->GetDescription (s, eDescriptionLevelFull);
-            s->EOL();
-            s->IndentLess();
-        }
+        s->Printf ("Completed Plan Stack:\n");
+        PrintPlanStack (s, m_completed_plan_stack, desc_level, include_internal);
     }
 
     stack_size = m_discarded_plan_stack.size();
     if (stack_size > 0)
     {
         s->Indent();
-        s->Printf ("Discarded Plan Stack: %d elements.\n", stack_size);
-        for (i = stack_size - 1; i >= 0; i--)
-        {
-            s->IndentMore();
-            s->Indent();
-            s->Printf ("Element %d: ", i);
-            m_discarded_plan_stack[i]->GetDescription (s, eDescriptionLevelFull);
-            s->EOL();
-            s->IndentLess();
-        }
+        s->Printf ("Discarded Plan Stack:\n");
+        PrintPlanStack (s, m_discarded_plan_stack, desc_level, include_internal);
     }
 
+    s->IndentLess();
 }
 
 TargetSP

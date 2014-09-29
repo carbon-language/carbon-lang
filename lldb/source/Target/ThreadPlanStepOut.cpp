@@ -54,7 +54,6 @@ ThreadPlanStepOut::ThreadPlanStepOut
     m_return_addr (LLDB_INVALID_ADDRESS),
     m_stop_others (stop_others),
     m_immediate_step_from_function(NULL)
-
 {
     SetFlagsToDefault();
     SetupAvoidNoDebug(step_out_avoids_code_without_debug_info);
@@ -90,6 +89,7 @@ ThreadPlanStepOut::ThreadPlanStepOut
                                                             frame_idx - 1,
                                                             eLazyBoolNo));
             static_cast<ThreadPlanStepOut *>(m_step_out_to_inline_plan_sp.get())->SetShouldStopHereCallbacks(nullptr, nullptr);
+            m_step_out_to_inline_plan_sp->SetPrivate(true);
         }
         else
         {
@@ -177,10 +177,34 @@ ThreadPlanStepOut::GetDescription (Stream *s, lldb::DescriptionLevel level)
         else if (m_step_through_inline_plan_sp)
             s->Printf ("Stepping out by stepping through inlined function.");
         else
-            s->Printf ("Stepping out from address 0x%" PRIx64 " to return address 0x%" PRIx64 " using breakpoint site %d",
-                       (uint64_t)m_step_from_insn,
-                       (uint64_t)m_return_addr,
-                       m_return_bp_id);
+        {
+            s->Printf ("Stepping out from ");
+            Address tmp_address;
+            if (tmp_address.SetLoadAddress (m_step_from_insn, &GetTarget()))
+            {
+                tmp_address.Dump(s, &GetThread(), Address::DumpStyleResolvedDescription, Address::DumpStyleLoadAddress);
+            }
+            else
+            {
+                s->Printf ("address 0x%" PRIx64 "", (uint64_t)m_step_from_insn);
+            }
+
+            // FIXME: find some useful way to present the m_return_id, since there may be multiple copies of the
+            // same function on the stack.
+
+            s->Printf ("returning to frame at ");
+            if (tmp_address.SetLoadAddress (m_return_addr, &GetTarget()))
+            {
+                tmp_address.Dump(s, &GetThread(), Address::DumpStyleResolvedDescription, Address::DumpStyleLoadAddress);
+            }
+            else
+            {
+                s->Printf ("address 0x%" PRIx64 "", (uint64_t)m_return_addr);
+            }
+
+            if (level == eDescriptionLevelVerbose)
+                s->Printf(" using breakpoint site %d", m_return_bp_id);
+        }
     }
 }
 
@@ -474,11 +498,16 @@ ThreadPlanStepOut::QueueInlinedStepPlan (bool queue_now)
                 inlined_sc.target_sp = GetTarget().shared_from_this();
                 RunMode run_mode = m_stop_others ? lldb::eOnlyThisThread : lldb::eAllThreads;
                 const LazyBool avoid_no_debug = eLazyBoolNo;
-                ThreadPlanStepOverRange *step_through_inline_plan_ptr = new ThreadPlanStepOverRange(m_thread, 
-                                                                                                    inline_range, 
-                                                                                                    inlined_sc, 
-                                                                                                    run_mode,
-                                                                                                    avoid_no_debug);
+
+                m_step_through_inline_plan_sp.reset (new ThreadPlanStepOverRange(m_thread, 
+                                                                                 inline_range, 
+                                                                                 inlined_sc, 
+                                                                                 run_mode,
+                                                                                 avoid_no_debug));
+                ThreadPlanStepOverRange *step_through_inline_plan_ptr
+                        = static_cast<ThreadPlanStepOverRange *>(m_step_through_inline_plan_sp.get());
+                m_step_through_inline_plan_sp->SetPrivate(true);
+                        
                 step_through_inline_plan_ptr->SetOkayToDiscard(true);                                                                                    
                 StreamString errors;
                 if (!step_through_inline_plan_ptr->ValidatePlan(&errors))
@@ -493,7 +522,7 @@ ThreadPlanStepOut::QueueInlinedStepPlan (bool queue_now)
                     if (inlined_block->GetRangeAtIndex (i, inline_range))
                         step_through_inline_plan_ptr->AddRange (inline_range);
                 }
-                m_step_through_inline_plan_sp.reset (step_through_inline_plan_ptr);
+
                 if (queue_now)
                     m_thread.QueueThreadPlan (m_step_through_inline_plan_sp, false);
                 return true;

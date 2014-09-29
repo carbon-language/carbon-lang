@@ -22,7 +22,8 @@ typedef enum StepType
     eStepTypeTraceOver, ///< Single step one instruction, stepping over.
     eStepTypeInto,      ///< Single step into a specified context.
     eStepTypeOver,      ///< Single step over a specified context.
-    eStepTypeOut        ///< Single step out a specified context.
+    eStepTypeOut,       ///< Single step out a specified context.
+    eStepTypeScripted   ///< A step type implemented by the script interpreter.
 } StepType;
 
 //----------------------------------------------------------------------

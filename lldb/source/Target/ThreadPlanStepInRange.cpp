@@ -128,17 +128,31 @@ void
 ThreadPlanStepInRange::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
     if (level == lldb::eDescriptionLevelBrief)
-        s->Printf("step in");
-    else
     {
-        s->Printf ("Stepping through range (stepping into functions): ");
-        DumpRanges(s);
-        const char *step_into_target = m_step_into_target.AsCString();
-        if (step_into_target && step_into_target[0] != '\0')
-            s->Printf (" targeting %s.", m_step_into_target.AsCString());
-        else
-            s->PutChar('.');
+        s->Printf("step in");
+        return;
     }
+
+    s->Printf ("Stepping in");
+    bool printed_line_info = false;
+    if (m_addr_context.line_entry.IsValid())
+    {
+        s->Printf (" through line ");
+        m_addr_context.line_entry.DumpStopContext (s, false);
+        printed_line_info = true;
+    }
+
+    const char *step_into_target = m_step_into_target.AsCString();
+    if (step_into_target && step_into_target[0] != '\0')
+        s->Printf (" targeting %s", m_step_into_target.AsCString());
+
+    if (!printed_line_info || level == eDescriptionLevelVerbose)
+    {
+        s->Printf (" using ranges:");
+        DumpRanges(s);
+    }
+
+    s->PutChar('.');
 }
 
 bool
@@ -303,6 +317,7 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
     else
     {
         m_no_more_plans = false;
+        m_sub_plan_sp->SetPrivate(true);
         return false;
     }
 }

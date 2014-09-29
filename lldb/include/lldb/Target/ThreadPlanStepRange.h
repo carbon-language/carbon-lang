@@ -30,7 +30,8 @@ public:
                          Thread &thread,
                          const AddressRange &range,
                          const SymbolContext &addr_context,
-                         lldb::RunMode stop_others);
+                         lldb::RunMode stop_others,
+                         bool given_ranges_only = false);
 
     virtual ~ThreadPlanStepRange ();
 
@@ -83,6 +84,7 @@ protected:
     bool                      m_first_run_event; // We want to broadcast only one running event, our first.
     lldb::BreakpointSP        m_next_branch_bp_sp;
     bool                      m_use_fast_step;
+    bool                      m_given_ranges_only;
 
 private:
     std::vector<lldb::DisassemblerSP> m_instruction_ranges;

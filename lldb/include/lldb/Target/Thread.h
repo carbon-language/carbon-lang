@@ -912,6 +912,11 @@ public:
                                  bool stop_others,
                                  uint32_t frame_idx);
 
+    virtual lldb::ThreadPlanSP
+    QueueThreadPlanForStepScripted (bool abort_other_plans,
+                                    const char *class_name,
+                                    bool stop_other_threads);
+
     //------------------------------------------------------------------
     // Thread Plan accessors:
     //------------------------------------------------------------------
@@ -1041,6 +1046,20 @@ public:
 
     void
     DiscardThreadPlansUpToPlan (ThreadPlan *up_to_plan_ptr);
+
+    //------------------------------------------------------------------
+    /// Discards the plans queued on the plan stack of the current thread up to and
+    /// including the plan in that matches \a thread_index counting only
+    /// the non-Private plans.
+    ///
+    /// @param[in] up_to_plan_sp
+    ///   Discard all plans up to and including this user plan given by this index.
+    ///
+    /// @return
+    ///    \b true if there was a thread plan with that user index, \b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    DiscardUserThreadPlansUpToIndex (uint32_t thread_index);
     
     //------------------------------------------------------------------
     /// Prints the current plan stack.
@@ -1050,7 +1069,10 @@ public:
     ///
     //------------------------------------------------------------------
     void
-    DumpThreadPlans (Stream *s) const;
+    DumpThreadPlans (Stream *s,
+                     lldb::DescriptionLevel desc_level = lldb::eDescriptionLevelVerbose,
+                     bool include_internal = true,
+                     bool ignore_boring = false) const;
     
     virtual bool
     CheckpointThreadState (ThreadStateCheckpoint &saved_state);

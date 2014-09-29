@@ -613,6 +613,10 @@
 		49DCF6FE170E6B4A0092F75E /* IRMemoryMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DCF6FD170E6B4A0092F75E /* IRMemoryMap.cpp */; };
 		49DCF702170E70120092F75E /* Materializer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DCF700170E70120092F75E /* Materializer.cpp */; };
 		4C3ADCD61810D88B00357218 /* BreakpointResolverFileRegex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CAA56141422D986001FFA01 /* BreakpointResolverFileRegex.cpp */; };
+		4C56543119D1EFAA002E9C44 /* ThreadPlanPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C56543019D1EFAA002E9C44 /* ThreadPlanPython.cpp */; };
+		4C56543319D1EFB6002E9C44 /* ThreadPlanPython.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C56543219D1EFB5002E9C44 /* ThreadPlanPython.h */; };
+		4C56543519D2297A002E9C44 /* SBThreadPlan.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C56543419D2297A002E9C44 /* SBThreadPlan.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		4C56543719D22B32002E9C44 /* SBThreadPlan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C56543619D22B32002E9C44 /* SBThreadPlan.cpp */; };
 		4C6649A014EEE7F100B0316F /* StreamCallback.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C66499F14EEE7F100B0316F /* StreamCallback.h */; };
 		4C6649A314EEE81000B0316F /* StreamCallback.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C6649A214EEE81000B0316F /* StreamCallback.cpp */; };
 		4C73152219B7D71700F865A4 /* Iterable.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C73152119B7D71700F865A4 /* Iterable.h */; };
@@ -1893,6 +1897,11 @@
 		4C43DF8611069BFD00E55CBF /* ThreadPlanStepOverRange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanStepOverRange.h; path = include/lldb/Target/ThreadPlanStepOverRange.h; sourceTree = "<group>"; };
 		4C43DF8911069C3200E55CBF /* ThreadPlanStepInRange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanStepInRange.cpp; path = source/Target/ThreadPlanStepInRange.cpp; sourceTree = "<group>"; };
 		4C43DF8A11069C3200E55CBF /* ThreadPlanStepOverRange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanStepOverRange.cpp; path = source/Target/ThreadPlanStepOverRange.cpp; sourceTree = "<group>"; };
+		4C56543019D1EFAA002E9C44 /* ThreadPlanPython.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanPython.cpp; path = source/Target/ThreadPlanPython.cpp; sourceTree = "<group>"; };
+		4C56543219D1EFB5002E9C44 /* ThreadPlanPython.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanPython.h; path = include/lldb/Target/ThreadPlanPython.h; sourceTree = "<group>"; };
+		4C56543419D2297A002E9C44 /* SBThreadPlan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBThreadPlan.h; path = include/lldb/API/SBThreadPlan.h; sourceTree = "<group>"; };
+		4C56543619D22B32002E9C44 /* SBThreadPlan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBThreadPlan.cpp; path = source/API/SBThreadPlan.cpp; sourceTree = "<group>"; };
+		4C56543819D22FD9002E9C44 /* SBThreadPlan.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBThreadPlan.i; sourceTree = "<group>"; };
 		4C5DBBC611E3FEC60035160F /* CommandObjectCommands.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectCommands.cpp; path = source/Commands/CommandObjectCommands.cpp; sourceTree = "<group>"; };
 		4C5DBBC711E3FEC60035160F /* CommandObjectCommands.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectCommands.h; path = source/Commands/CommandObjectCommands.h; sourceTree = "<group>"; };
 		4C626533130F1B0A00C889F6 /* StreamTee.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StreamTee.h; path = include/lldb/Core/StreamTee.h; sourceTree = "<group>"; };
@@ -2669,6 +2678,7 @@
 				2611FF0E142D83060017FEA3 /* SBSymbolContextList.i */,
 				2611FF0F142D83060017FEA3 /* SBTarget.i */,
 				2611FF10142D83060017FEA3 /* SBThread.i */,
+				4C56543819D22FD9002E9C44 /* SBThreadPlan.i */,
 				8CCB018419BA54930009FD44 /* SBThreadCollection.i */,
 				2611FF11142D83060017FEA3 /* SBType.i */,
 				9475C18A14E5EA1C001BFC6D /* SBTypeCategory.i */,
@@ -2786,6 +2796,8 @@
 				9A9831091125FC5800A56CB0 /* SBThread.cpp */,
 				8CCB018119BA4E210009FD44 /* SBThreadCollection.h */,
 				8CCB017F19BA4DD00009FD44 /* SBThreadCollection.cpp */,
+				4C56543419D2297A002E9C44 /* SBThreadPlan.h */,
+				4C56543619D22B32002E9C44 /* SBThreadPlan.cpp */,
 				2617447911685869005ADD65 /* SBType.h */,
 				261744771168585B005ADD65 /* SBType.cpp */,
 				9475C18514E5E9C5001BFC6D /* SBTypeCategory.h */,
@@ -3805,6 +3817,8 @@
 				49EC3E98118F90AC00B1265E /* ThreadPlanCallFunction.cpp */,
 				4C7CF7E31295E10E00B4FBB5 /* ThreadPlanCallUserExpression.h */,
 				4C7CF7E51295E12B00B4FBB5 /* ThreadPlanCallUserExpression.cpp */,
+				4C56543219D1EFB5002E9C44 /* ThreadPlanPython.h */,
+				4C56543019D1EFAA002E9C44 /* ThreadPlanPython.cpp */,
 				4C43DEF9110641F300E55CBF /* ThreadPlanShouldStopHere.h */,
 				4C43DEFA110641F300E55CBF /* ThreadPlanShouldStopHere.cpp */,
 				260C848010F50F0A00BB2B04 /* ThreadPlanStepInstruction.h */,
@@ -4403,6 +4417,7 @@
 				268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */,
 				2668022C115FD13D008E1FE4 /* SBTarget.h in Headers */,
 				2668022E115FD13D008E1FE4 /* SBThread.h in Headers */,
+				4C56543519D2297A002E9C44 /* SBThreadPlan.h in Headers */,
 				263C493A178B50CF0070F12D /* SBModuleSpec.h in Headers */,
 				2617447A11685869005ADD65 /* SBType.h in Headers */,
 				9475C18914E5EA08001BFC6D /* SBTypeCategory.h in Headers */,
@@ -4495,6 +4510,7 @@
 				26DAED6015D327A200E15819 /* OptionValuePathMappings.h in Headers */,
 				26ACEC2815E077AE00E94760 /* Property.h in Headers */,
 				26491E3B15E1DB8600CBFFC2 /* OptionValueRegex.h in Headers */,
+				4C56543319D1EFB6002E9C44 /* ThreadPlanPython.h in Headers */,
 				2697A39515E404BA003E682C /* OptionValueArch.h in Headers */,
 				26474CBF18D0CB2D0073DEBA /* RegisterContextMach_i386.h in Headers */,
 				26474CC118D0CB2D0073DEBA /* RegisterContextMach_x86_64.h in Headers */,
@@ -4899,6 +4915,7 @@
 				9443B122140C18C40013457C /* SBData.cpp in Sources */,
 				4CF52AF8142829390051E832 /* SBFileSpecList.cpp in Sources */,
 				23059A101958B319007B8189 /* SBUnixSignals.cpp in Sources */,
+				4C56543719D22B32002E9C44 /* SBThreadPlan.cpp in Sources */,
 				8CCB018319BA51BF0009FD44 /* SBThreadCollection.cpp in Sources */,
 				26B82840142D020F002DBC64 /* SBSection.cpp in Sources */,
 				B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */,
@@ -5176,6 +5193,7 @@
 				268900E613353E6F00698AC0 /* Variable.cpp in Sources */,
 				268900E713353E6F00698AC0 /* VariableList.cpp in Sources */,
 				268900E813353E6F00698AC0 /* ABI.cpp in Sources */,
+				4C56543119D1EFAA002E9C44 /* ThreadPlanPython.cpp in Sources */,
 				26AB92121819D74600E63F3E /* DWARFDataExtractor.cpp in Sources */,
 				268900E913353E6F00698AC0 /* CPPLanguageRuntime.cpp in Sources */,
 				268900EA13353E6F00698AC0 /* DynamicLoader.cpp in Sources */,

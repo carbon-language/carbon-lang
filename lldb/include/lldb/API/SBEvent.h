@@ -30,6 +30,10 @@ public:
     // Make an event that contains a C string.
     SBEvent (uint32_t event, const char *cstr, uint32_t cstr_len);
 
+    SBEvent (lldb::EventSP &event_sp);
+
+    SBEvent (lldb_private::Event *event_sp);
+
     ~SBEvent();
 
     const SBEvent &
@@ -76,8 +80,6 @@ protected:
     friend class SBProcess;
     friend class SBThread;
     friend class SBWatchpoint;
-
-    SBEvent (lldb::EventSP &event_sp);
 
     lldb::EventSP &
     GetSP () const;
