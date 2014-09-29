@@ -612,6 +612,23 @@ getTypeExpansion(QualType Ty, const ASTContext &Context) {
   return llvm::make_unique<NoExpansion>();
 }
 
+static int getExpansionSize(QualType Ty, const ASTContext &Context) {
+  auto Exp = getTypeExpansion(Ty, Context);
+  if (auto CAExp = dyn_cast<ConstantArrayExpansion>(Exp.get())) {
+    return CAExp->NumElts * getExpansionSize(CAExp->EltTy, Context);
+  }
+  if (auto RExp = dyn_cast<RecordExpansion>(Exp.get())) {
+    int Res = 0;
+    for (auto FD : RExp->Fields)
+      Res += getExpansionSize(FD->getType(), Context);
+    return Res;
+  }
+  if (isa<ComplexExpansion>(Exp.get()))
+    return 2;
+  assert(isa<NoExpansion>(Exp.get()));
+  return 1;
+}
+
 void CodeGenTypes::GetExpandedTypes(QualType type,
                      SmallVectorImpl<llvm::Type*> &expandedTypes) {
   auto Exp = getTypeExpansion(type, Context);
@@ -1222,12 +1239,7 @@ void ClangToLLVMArgMapping::construct(CodeGenModule &CGM,
       IRArgs.NumberOfArgs = 0;
       break;
     case ABIArgInfo::Expand: {
-      SmallVector<llvm::Type*, 8> Types;
-      // FIXME: This is rather inefficient. Do we ever actually need to do
-      // anything here? The result should be just reconstructed on the other
-      // side, so extension should be a non-issue.
-      CGM.getTypes().GetExpandedTypes(ArgType, Types);
-      IRArgs.NumberOfArgs = Types.size();
+      IRArgs.NumberOfArgs = getExpansionSize(ArgType, CGM.getContext());
       break;
     }
     }
