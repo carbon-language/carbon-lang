@@ -86,15 +86,17 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
 
   if ((DumpType == DIDT_All || DumpType == DIDT_Types) && getNumTypeUnits()) {
     OS << "\n.debug_types contents:\n";
-    for (const auto &TU : type_units())
-      TU->dump(OS);
+    for (const auto &TUS : type_unit_sections())
+      for (const auto &TU : TUS)
+        TU->dump(OS);
   }
 
   if ((DumpType == DIDT_All || DumpType == DIDT_TypesDwo) &&
       getNumDWOTypeUnits()) {
     OS << "\n.debug_types.dwo contents:\n";
-    for (const auto &DWOTU : dwo_type_units())
-      DWOTU->dump(OS);
+    for (const auto &DWOTUS : dwo_type_unit_sections())
+      for (const auto &DWOTU : DWOTUS)
+        DWOTU->dump(OS);
   }
 
   if (DumpType == DIDT_All || DumpType == DIDT_Loc) {
@@ -337,15 +339,17 @@ void DWARFContext::parseTypeUnits() {
     uint32_t offset = 0;
     const DataExtractor &DIData =
         DataExtractor(I.second.Data, isLittleEndian(), 0);
+    TUs.push_back(DWARFUnitSection<DWARFTypeUnit>());
+    auto &TUS = TUs.back();
     while (DIData.isValidOffset(offset)) {
       std::unique_ptr<DWARFTypeUnit> TU(new DWARFTypeUnit(*this,
            getDebugAbbrev(), I.second.Data, getRangeSection(),
            getStringSection(), StringRef(), getAddrSection(),
-           &I.second.Relocs, isLittleEndian(), TUs));
+           &I.second.Relocs, isLittleEndian(), TUS));
       if (!TU->extract(DIData, &offset))
         break;
-      TUs.push_back(std::move(TU));
-      offset = TUs.back()->getNextUnitOffset();
+      TUS.push_back(std::move(TU));
+      offset = TUS.back()->getNextUnitOffset();
     }
   }
 }
@@ -376,15 +380,17 @@ void DWARFContext::parseDWOTypeUnits() {
     uint32_t offset = 0;
     const DataExtractor &DIData =
         DataExtractor(I.second.Data, isLittleEndian(), 0);
+    DWOTUs.push_back(DWARFUnitSection<DWARFTypeUnit>());
+    auto &TUS = DWOTUs.back();
     while (DIData.isValidOffset(offset)) {
       std::unique_ptr<DWARFTypeUnit> TU(new DWARFTypeUnit(*this,
           getDebugAbbrevDWO(), I.second.Data, getRangeDWOSection(),
           getStringDWOSection(), getStringOffsetDWOSection(), getAddrSection(),
-          &I.second.Relocs, isLittleEndian(), DWOTUs));
+          &I.second.Relocs, isLittleEndian(), TUS));
       if (!TU->extract(DIData, &offset))
         break;
-      DWOTUs.push_back(std::move(TU));
-      offset = DWOTUs.back()->getNextUnitOffset();
+      TUS.push_back(std::move(TU));
+      offset = TUS.back()->getNextUnitOffset();
     }
   }
 }

@@ -53,6 +53,10 @@ class DWARFUnitSection final : public SmallVector<std::unique_ptr<UnitType>, 1>,
   };
 
 public:
+  DWARFUnitSection() {}
+  DWARFUnitSection(DWARFUnitSection &&DUS) :
+    SmallVector<std::unique_ptr<UnitType>, 1>(std::move(DUS)) {}
+
   typedef llvm::SmallVectorImpl<std::unique_ptr<UnitType>> UnitVector;
   typedef typename UnitVector::iterator iterator;
   typedef llvm::iterator_range<typename UnitVector::iterator> iterator_range;
