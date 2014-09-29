@@ -249,6 +249,19 @@ TEST_F(FormatTestJS, MultipleFunctionLiterals) {
                "               doFoo();\n"
                "               doBaz();\n"
                "             });\n");
+
+  verifyFormat("getSomeLongPromise()\n"
+               "    .then(function(value) { body(); })\n"
+               "    .thenCatch(function(error) { body(); });");
+  verifyFormat("getSomeLongPromise()\n"
+               "    .then(function(value) {\n"
+               "      body();\n"
+               "      body();\n"
+               "    })\n"
+               "    .thenCatch(function(error) {\n"
+               "      body();\n"
+               "      body();\n"
+               "    });");
 }
 
 TEST_F(FormatTestJS, ReturnStatements) {

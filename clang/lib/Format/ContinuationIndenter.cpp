@@ -656,7 +656,10 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     }
     if (Current.TokenText == "function")
       State.Stack.back().JSFunctionInlined =
-          !Newline && Previous && Previous->Type != TT_DictLiteral;
+          !Newline && Previous && Previous->Type != TT_DictLiteral &&
+          // If the unnamed function is the only parameter to another function,
+          // we can likely inline it and come up with a good format.
+          (Previous->isNot(tok::l_paren) || Previous->ParameterCount > 1);
   }
 
   moveStatePastFakeLParens(State, Newline);
