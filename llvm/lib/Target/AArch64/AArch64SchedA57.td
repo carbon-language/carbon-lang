@@ -12,8 +12,17 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// The Cortex-A57 is a traditional superscaler microprocessor with a
+// conservative 3-wide in-order stage for decode and dispatch. Combined with the
+// much wider out-of-order issue stage, this produced a need to carefully
+// schedule micro-ops so that all three decoded each cycle are successfully
+// issued as the reservation station(s) simply don't stay occupied for long.
+// Therefore, IssueWidth is set to the narrower of the two at three, while still
+// modeling the machine as out-of-order.
+
 def CortexA57Model : SchedMachineModel {
-  let IssueWidth        =   8; // 3-way decode and 8-way issue
+  let IssueWidth        =   3; // 3-way decode and dispatch
   let MicroOpBufferSize = 128; // 128 micro-op re-order buffer
   let LoadLatency       =   4; // Optimistic load latency
   let MispredictPenalty =  14; // Fetch + Decode/Rename/Dispatch + Branch
@@ -24,17 +33,16 @@ def CortexA57Model : SchedMachineModel {
 // Cortex A-57 has 8 pipelines that each has its own 8-entry queue where
 // micro-ops wait for their operands and then issue out-of-order.
 
-def A57UnitB : ProcResource<1> { let BufferSize = 8; }  // Type B micro-ops
-def A57UnitI : ProcResource<2> { let BufferSize = 8; }  // Type I micro-ops
-def A57UnitM : ProcResource<1> { let BufferSize = 8; }  // Type M micro-ops
-def A57UnitL : ProcResource<1> { let BufferSize = 8; }  // Type L micro-ops
-def A57UnitS : ProcResource<1> { let BufferSize = 8; }  // Type S micro-ops
-def A57UnitX : ProcResource<1> { let BufferSize = 8; }  // Type X micro-ops
-def A57UnitW : ProcResource<1> { let BufferSize = 8; }  // Type W micro-ops
+def A57UnitB : ProcResource<1>;  // Type B micro-ops
+def A57UnitI : ProcResource<2>;  // Type I micro-ops
+def A57UnitM : ProcResource<1>;  // Type M micro-ops
+def A57UnitL : ProcResource<1>;  // Type L micro-ops
+def A57UnitS : ProcResource<1>;  // Type S micro-ops
+def A57UnitX : ProcResource<1>;  // Type X micro-ops
+def A57UnitW : ProcResource<1>;  // Type W micro-ops
 let SchedModel = CortexA57Model in {
   def A57UnitV : ProcResGroup<[A57UnitX, A57UnitW]>;    // Type V micro-ops
 }
-
 
 let SchedModel = CortexA57Model in {
 
@@ -71,7 +79,7 @@ def : SchedAlias<WriteSTIdx, A57Write_1cyc_1I_1S>;
 def : SchedAlias<WriteF,     A57Write_3cyc_1V>;
 def : SchedAlias<WriteFCmp,  A57Write_3cyc_1V>;
 def : SchedAlias<WriteFCvt,  A57Write_5cyc_1V>;
-def : SchedAlias<WriteFCopy, A57Write_3cyc_1V>;
+def : SchedAlias<WriteFCopy, A57Write_5cyc_1L>;
 def : SchedAlias<WriteFImm,  A57Write_3cyc_1V>;
 def : SchedAlias<WriteFMul,  A57Write_5cyc_1V>;
 def : SchedAlias<WriteFDiv,  A57Write_18cyc_1X>;
@@ -85,13 +93,12 @@ def : WriteRes<WriteHint,    []> { let Latency = 1; }
 
 def : WriteRes<WriteLDHi,    []> { let Latency = 4; }
 
-// Forwarding logic is not [yet] explicitly modeled beyond what is captured
-// in the latencies of the A57 Generic SchedWriteRes's.
+// Forwarding logic is only modeled for multiply and accumulate
 def : ReadAdvance<ReadI,       0>;
 def : ReadAdvance<ReadISReg,   0>;
 def : ReadAdvance<ReadIEReg,   0>;
 def : ReadAdvance<ReadIM,      0>;
-def : ReadAdvance<ReadIMA,     0>;
+def : ReadAdvance<ReadIMA,     2, [WriteIM32, WriteIM64]>;
 def : ReadAdvance<ReadID,      0>;
 def : ReadAdvance<ReadExtrHi,  0>;
 def : ReadAdvance<ReadAdrBase, 0>;
@@ -134,7 +141,13 @@ def : InstRW<[A57Write_2cyc_1M],    (instregex "BFM")>;
 // Cryptography Extensions
 // -----------------------------------------------------------------------------
 
-def : InstRW<[A57Write_3cyc_1W], (instregex "CRC32")>;
+def : InstRW<[A57Write_3cyc_1W], (instregex "^AES")>;
+def : InstRW<[A57Write_6cyc_2V], (instregex "^SHA1SU0")>;
+def : InstRW<[A57Write_3cyc_1W], (instregex "^SHA1(H|SU1)")>;
+def : InstRW<[A57Write_6cyc_2W], (instregex "^SHA1[CMP]")>;
+def : InstRW<[A57Write_3cyc_1W], (instregex "^SHA256SU0")>;
+def : InstRW<[A57Write_6cyc_2W], (instregex "^SHA256(H|H2|SU1)")>;
+def : InstRW<[A57Write_3cyc_1W], (instregex "^CRC32")>;
 
 
 // Vector Load
@@ -300,5 +313,331 @@ def : InstRW<[A57Write_8cyc_8S_4V],           (instregex "ST4Fourv(16b|8h|4s)$")
 def : InstRW<[A57Write_8cyc_8S_4V, WriteAdr], (instregex "ST4Fourv(16b|8h|4s)_POST$")>;
 def : InstRW<[A57Write_8cyc_8S],                (instregex "ST4Fourv(2d)$")>;
 def : InstRW<[A57Write_8cyc_8S, WriteAdr],      (instregex "ST4Fourv(2d)_POST$")>;
+
+// Vector - Integer
+// -----------------------------------------------------------------------------
+
+// Reference for forms in this group
+//   D form - v8i8, v4i16, v2i32
+//   Q form - v16i8, v8i16, v4i32
+//   D form - v1i8, v1i16, v1i32, v1i64
+//   Q form - v16i8, v8i16, v4i32, v2i64
+//   D form - v8i8_v8i16, v4i16_v4i32, v2i32_v2i64
+//   Q form - v16i8_v8i16, v8i16_v4i32, v4i32_v2i64
+
+// ASIMD absolute diff accum, D-form
+def : InstRW<[A57Write_4cyc_1X], (instregex "^[SU]ABA(v8i8|v4i16|v2i32)$")>;
+// ASIMD absolute diff accum, Q-form
+def : InstRW<[A57Write_5cyc_2X], (instregex "^[SU]ABA(v16i8|v8i16|v4i32)$")>;
+// ASIMD absolute diff accum long
+def : InstRW<[A57Write_4cyc_1X], (instregex "^[SU]ABAL")>;
+
+// ASIMD arith, reduce, 4H/4S
+def : InstRW<[A57Write_4cyc_1X], (instregex "^[SU]?ADDL?V(v8i8|v4i16|v2i32)v$")>;
+// ASIMD arith, reduce, 8B/8H
+def : InstRW<[A57Write_7cyc_1V_1X], (instregex "^[SU]?ADDL?V(v8i16|v4i32)v$")>;
+// ASIMD arith, reduce, 16B
+def : InstRW<[A57Write_8cyc_2X], (instregex "^[SU]?ADDL?Vv16i8v$")>;
+
+// ASIMD max/min, reduce, 4H/4S
+def : InstRW<[A57Write_4cyc_1X], (instregex "^[SU](MIN|MAX)V(v4i16|v4i32)v$")>;
+// ASIMD max/min, reduce, 8B/8H
+def : InstRW<[A57Write_7cyc_1V_1X], (instregex "^[SU](MIN|MAX)V(v8i8|v8i16)v$")>;
+// ASIMD max/min, reduce, 16B
+def : InstRW<[A57Write_8cyc_2X], (instregex "^[SU](MIN|MAX)Vv16i8v$")>;
+
+// ASIMD multiply, D-form
+def : InstRW<[A57Write_5cyc_1W], (instregex "^(P?MUL|SQR?DMULH)(v8i8|v4i16|v2i32|v1i8|v1i16|v1i32|v1i64)(_indexed)?$")>;
+// ASIMD multiply, Q-form
+def : InstRW<[A57Write_6cyc_2W], (instregex "^(P?MUL|SQR?DMULH)(v16i8|v8i16|v4i32)(_indexed)?$")>;
+
+// ASIMD multiply accumulate, D-form
+def : InstRW<[A57Write_5cyc_1W], (instregex "^ML[AS](v8i8|v4i16|v2i32)(_indexed)?$")>;
+// ASIMD multiply accumulate, Q-form
+def : InstRW<[A57Write_6cyc_2W], (instregex "^ML[AS](v16i8|v8i16|v4i32)(_indexed)?$")>;
+
+// ASIMD multiply accumulate long
+// ASIMD multiply accumulate saturating long
+def A57WriteIVMA   : SchedWriteRes<[A57UnitW]> { let Latency = 5;  }
+def A57ReadIVMA4   : SchedReadAdvance<4, [A57WriteIVMA]>;
+def : InstRW<[A57WriteIVMA, A57ReadIVMA4], (instregex "^(S|U|SQD)ML[AS]L")>;
+
+// ASIMD multiply long
+def : InstRW<[A57Write_5cyc_1W], (instregex "^(S|U|SQD)MULL")>;
+def : InstRW<[A57Write_5cyc_1W], (instregex "^PMULL(v8i8|v16i8)")>;
+def : InstRW<[A57Write_3cyc_1W], (instregex "^PMULL(v1i64|v2i64)")>;
+
+// ASIMD pairwise add and accumulate
+// ASIMD shift accumulate
+def A57WriteIVA    : SchedWriteRes<[A57UnitX]> { let Latency = 4;  }
+def A57ReadIVA3    : SchedReadAdvance<3, [A57WriteIVA]>;
+def : InstRW<[A57WriteIVA, A57ReadIVA3], (instregex "^[SU]ADALP")>;
+def : InstRW<[A57WriteIVA, A57ReadIVA3], (instregex "^(S|SR|U|UR)SRA")>;
+
+// ASIMD shift by immed, complex
+def : InstRW<[A57Write_4cyc_1X], (instregex "^[SU]?(Q|R){1,2}SHR")>;
+def : InstRW<[A57Write_4cyc_1X], (instregex "^SQSHLU")>;
+
+
+// ASIMD shift by register, basic, Q-form
+def : InstRW<[A57Write_4cyc_2X], (instregex "^[SU]SHL(v16i8|v8i16|v4i32|v2i64)")>;
+
+// ASIMD shift by register, complex, D-form
+def : InstRW<[A57Write_4cyc_1X], (instregex "^[SU][QR]{1,2}SHL(v1i8|v1i16|v1i32|v1i64|v8i8|v4i16|v2i32|b|d|h|s)")>;
+
+// ASIMD shift by register, complex, Q-form
+def : InstRW<[A57Write_5cyc_2X], (instregex "^[SU][QR]{1,2}SHL(v16i8|v8i16|v4i32|v2i64)")>;
+
+
+// Vector - Floating Point
+// -----------------------------------------------------------------------------
+
+// Reference for forms in this group
+//   D form - v2f32
+//   Q form - v4f32, v2f64
+//   D form - 32, 64
+//   D form - v1i32, v1i64
+//   D form - v2i32
+//   Q form - v4i32, v2i64
+
+// ASIMD FP arith, normal, D-form
+def : InstRW<[A57Write_5cyc_1V], (instregex "^(FABD|FADD|FSUB)(v2f32|32|64|v2i32p)")>;
+// ASIMD FP arith, normal, Q-form
+def : InstRW<[A57Write_5cyc_2V], (instregex "^(FABD|FADD|FSUB)(v4f32|v2f64|v2i64p)")>;
+
+// ASIMD FP arith, pairwise, D-form
+def : InstRW<[A57Write_5cyc_1V], (instregex "^FADDP(v2f32|32|64|v2i32)")>;
+// ASIMD FP arith, pairwise, Q-form
+def : InstRW<[A57Write_9cyc_3V], (instregex "^FADDP(v4f32|v2f64|v2i64)")>;
+
+// ASIMD FP compare, D-form
+def : InstRW<[A57Write_5cyc_1V], (instregex "^(FACGE|FACGT|FCMEQ|FCMGE|FCMGT|FCMLE|FCMLT)(v2f32|32|64|v1i32|v2i32|v1i64)")>;
+// ASIMD FP compare, Q-form
+def : InstRW<[A57Write_5cyc_2V], (instregex "^(FACGE|FACGT|FCMEQ|FCMGE|FCMGT|FCMLE|FCMLT)(v4f32|v2f64|v4i32|v2i64)")>;
+
+// ASIMD FP convert, long and narrow
+def : InstRW<[A57Write_8cyc_3V], (instregex "^FCVT(L|N|XN)v")>;
+// ASIMD FP convert, other, D-form
+def : InstRW<[A57Write_5cyc_1V], (instregex "^[FVSU]CVT([AMNPZ][SU])?(_Int)?(v2f32|v1i32|v2i32|v1i64)")>;
+// ASIMD FP convert, other, Q-form
+def : InstRW<[A57Write_5cyc_2V], (instregex "^[FVSU]CVT([AMNPZ][SU])?(_Int)?(v4f32|v2f64|v4i32|v2i64)")>;
+
+// ASIMD FP divide, D-form, F32
+def : InstRW<[A57Write_18cyc_1X], (instregex "FDIVv2f32")>;
+// ASIMD FP divide, Q-form, F32
+def : InstRW<[A57Write_36cyc_2X], (instregex "FDIVv4f32")>;
+// ASIMD FP divide, Q-form, F64
+def : InstRW<[A57Write_64cyc_2X], (instregex "FDIVv2f64")>;
+
+// Note: These were simply duplicated from ASIMD FDIV because of missing documentation
+// ASIMD FP square root, D-form, F32
+def : InstRW<[A57Write_18cyc_1X], (instregex "FSQRTv2f32")>;
+// ASIMD FP square root, Q-form, F32
+def : InstRW<[A57Write_36cyc_2X], (instregex "FSQRTv4f32")>;
+// ASIMD FP square root, Q-form, F64
+def : InstRW<[A57Write_64cyc_2X], (instregex "FSQRTv2f64")>;
+
+// ASIMD FP max/min, normal, D-form
+def : InstRW<[A57Write_5cyc_1V], (instregex "^(FMAX|FMIN)(NM)?(v2f32)")>;
+// ASIMD FP max/min, normal, Q-form
+def : InstRW<[A57Write_5cyc_2V], (instregex "^(FMAX|FMIN)(NM)?(v4f32|v2f64)")>;
+// ASIMD FP max/min, pairwise, D-form
+def : InstRW<[A57Write_5cyc_1V], (instregex "^(FMAX|FMIN)(NM)?P(v2f32|v2i32)")>;
+// ASIMD FP max/min, pairwise, Q-form
+def : InstRW<[A57Write_9cyc_3V], (instregex "^(FMAX|FMIN)(NM)?P(v4f32|v2f64|v2i64)")>;
+// ASIMD FP max/min, reduce
+def : InstRW<[A57Write_10cyc_3V], (instregex "^(FMAX|FMIN)(NM)?Vv")>;
+
+// ASIMD FP multiply, D-form, FZ
+def : InstRW<[A57Write_5cyc_1V], (instregex "^FMULX?(v2f32|v1i32|v2i32|v1i64|32|64)")>;
+// ASIMD FP multiply, Q-form, FZ
+def : InstRW<[A57Write_5cyc_2V], (instregex "^FMULX?(v4f32|v2f64|v4i32|v2i64)")>;
+
+// ASIMD FP multiply accumulate, D-form, FZ
+// ASIMD FP multiply accumulate, Q-form, FZ
+def A57WriteFPVMAD : SchedWriteRes<[A57UnitV]> { let Latency = 9;  }
+def A57WriteFPVMAQ : SchedWriteRes<[A57UnitV, A57UnitV]> { let Latency = 10;  }
+def A57ReadFPVMA5  : SchedReadAdvance<5, [A57WriteFPVMAD, A57WriteFPVMAQ]>;
+def : InstRW<[A57WriteFPVMAD, A57ReadFPVMA5], (instregex "^FML[AS](v2f32|v1i32|v2i32|v1i64)")>;
+def : InstRW<[A57WriteFPVMAQ, A57ReadFPVMA5], (instregex "^FML[AS](v4f32|v2f64|v4i32|v2i64)")>;
+
+// ASIMD FP round, D-form
+def : InstRW<[A57Write_5cyc_1V], (instregex "^FRINT[AIMNPXZ](v2f32)")>;
+// ASIMD FP round, Q-form
+def : InstRW<[A57Write_5cyc_2V], (instregex "^FRINT[AIMNPXZ](v4f32|v2f64)")>;
+
+
+// Vector - Miscellaneous
+// -----------------------------------------------------------------------------
+
+// Reference for forms in this group
+//   D form - v8i8, v4i16, v2i32
+//   Q form - v16i8, v8i16, v4i32
+//   D form - v1i8, v1i16, v1i32, v1i64
+//   Q form - v16i8, v8i16, v4i32, v2i64
+
+// ASIMD bitwise insert, Q-form
+def : InstRW<[A57Write_3cyc_2V], (instregex "^(BIF|BIT|BSL)v16i8")>;
+
+// ASIMD duplicate, gen reg, D-form and Q-form
+def : InstRW<[A57Write_8cyc_1L_1V], (instregex "^CPY")>;
+def : InstRW<[A57Write_8cyc_1L_1V], (instregex "^DUPv.+gpr")>;
+
+// ASIMD move, saturating
+def : InstRW<[A57Write_4cyc_1X], (instregex "^[SU]QXTU?N")>;
+
+// ASIMD reciprocal estimate, D-form
+def : InstRW<[A57Write_5cyc_1V], (instregex "^[FU](RECP|RSQRT)(E|X)(v2f32|v1i32|v2i32|v1i64)")>;
+// ASIMD reciprocal estimate, Q-form
+def : InstRW<[A57Write_5cyc_2V], (instregex "^[FU](RECP|RSQRT)(E|X)(v2f64|v4f32|v4i32)")>;
+
+// ASIMD reciprocal step, D-form, FZ
+def : InstRW<[A57Write_9cyc_1V], (instregex "^F(RECP|RSQRT)S(v2f32|v1i32|v2i32|v1i64|32|64)")>;
+// ASIMD reciprocal step, Q-form, FZ
+def : InstRW<[A57Write_9cyc_2V], (instregex "^F(RECP|RSQRT)S(v2f64|v4f32|v4i32)")>;
+
+// ASIMD table lookup, D-form
+def : InstRW<[A57Write_3cyc_1V], (instregex "^TB[LX]v8i8One")>;
+def : InstRW<[A57Write_6cyc_2V], (instregex "^TB[LX]v8i8Two")>;
+def : InstRW<[A57Write_9cyc_3V], (instregex "^TB[LX]v8i8Three")>;
+def : InstRW<[A57Write_12cyc_4V], (instregex "^TB[LX]v8i8Four")>;
+// ASIMD table lookup, Q-form
+def : InstRW<[A57Write_6cyc_3V], (instregex "^TB[LX]v16i8One")>;
+def : InstRW<[A57Write_9cyc_5V], (instregex "^TB[LX]v16i8Two")>;
+def : InstRW<[A57Write_12cyc_7V], (instregex "^TB[LX]v16i8Three")>;
+def : InstRW<[A57Write_15cyc_9V], (instregex "^TB[LX]v16i8Four")>;
+
+// ASIMD transfer, element to gen reg
+def : InstRW<[A57Write_6cyc_1I_1L], (instregex "^[SU]MOVv")>;
+
+// ASIMD transfer, gen reg to element
+def : InstRW<[A57Write_8cyc_1L_1V], (instregex "^INSv")>;
+
+// ASIMD unzip/zip, Q-form
+def : InstRW<[A57Write_6cyc_3V], (instregex "^(UZP|ZIP)(1|2)(v16i8|v8i16|v4i32|v2i64)")>;
+
+
+// Remainder
+// -----------------------------------------------------------------------------
+
+def : InstRW<[A57Write_5cyc_1V], (instregex "^F(ADD|SUB)[DS]rr")>;
+
+def A57WriteFPMA  : SchedWriteRes<[A57UnitV]> { let Latency = 9;  }
+def A57ReadFPMA5  : SchedReadAdvance<5, [A57WriteFPMA]>;
+def A57ReadFPM    : SchedReadAdvance<0>;
+def : InstRW<[A57WriteFPMA, A57ReadFPM, A57ReadFPM, A57ReadFPMA5], (instregex "^FN?M(ADD|SUB)[DS]rrr")>;
+
+def : InstRW<[A57Write_10cyc_1L_1V], (instregex "^[FSU]CVT[AMNPZ][SU](_Int)?[SU]?[XW]?[DS]?[rds]i?")>;
+def : InstRW<[A57Write_10cyc_1L_1V], (instregex "^[SU]CVTF")>;
+
+def : InstRW<[A57Write_32cyc_1X], (instrs FDIVDrr)>;
+def : InstRW<[A57Write_18cyc_1X], (instrs FDIVSrr)>;
+
+def : InstRW<[A57Write_5cyc_1V], (instregex "^F(MAX|MIN).+rr")>;
+
+def : InstRW<[A57Write_5cyc_1V], (instregex "^FRINT.+r")>;
+
+def : InstRW<[A57Write_32cyc_1X], (instrs FSQRTDr)>;
+def : InstRW<[A57Write_18cyc_1X], (instrs FSQRTSr)>;
+
+def : InstRW<[A57Write_5cyc_1L, WriteLDHi], (instrs LDNPDi)>;
+def : InstRW<[A57Write_6cyc_2L, WriteLDHi], (instrs LDNPQi)>;
+def : InstRW<[A57Write_5cyc_1L, WriteLDHi], (instrs LDNPSi)>;
+def : InstRW<[A57Write_5cyc_1L, WriteLDHi], (instrs LDPDi)>;
+def : InstRW<[A57Write_5cyc_1L, WriteLDHi, WriteAdr], (instrs LDPDpost)>;
+def : InstRW<[A57Write_5cyc_1L, WriteLDHi, WriteAdr], (instrs LDPDpre)>;
+def : InstRW<[A57Write_6cyc_2L, WriteLDHi], (instrs LDPQi)>;
+def : InstRW<[A57Write_6cyc_2L, WriteLDHi, WriteAdr], (instrs LDPQpost)>;
+def : InstRW<[A57Write_6cyc_2L, WriteLDHi, WriteAdr], (instrs LDPQpre)>;
+def : InstRW<[A57Write_5cyc_1I_2L, WriteLDHi], (instrs LDPSWi)>;
+def : InstRW<[A57Write_5cyc_1I_2L, WriteLDHi, WriteAdr], (instrs LDPSWpost)>;
+def : InstRW<[A57Write_5cyc_1I_2L, WriteLDHi, WriteAdr], (instrs LDPSWpre)>;
+def : InstRW<[A57Write_5cyc_1L, WriteLDHi], (instrs LDPSi)>;
+def : InstRW<[A57Write_5cyc_1L, WriteLDHi, WriteAdr], (instrs LDPSpost)>;
+def : InstRW<[A57Write_5cyc_1L, WriteLDHi, WriteAdr], (instrs LDPSpre)>;
+def : InstRW<[A57Write_5cyc_1L, WriteI], (instrs LDRBpost)>;
+def : InstRW<[A57Write_5cyc_1L, WriteAdr], (instrs LDRBpre)>;
+def : InstRW<[A57Write_5cyc_1L, ReadAdrBase], (instrs LDRBroW)>;
+def : InstRW<[A57Write_5cyc_1L, ReadAdrBase], (instrs LDRBroX)>;
+def : InstRW<[A57Write_5cyc_1L], (instrs LDRBui)>;
+def : InstRW<[A57Write_5cyc_1L], (instrs LDRDl)>;
+def : InstRW<[A57Write_5cyc_1L, WriteI], (instrs LDRDpost)>;
+def : InstRW<[A57Write_5cyc_1L, WriteAdr], (instrs LDRDpre)>;
+def : InstRW<[A57Write_5cyc_1L, ReadAdrBase], (instrs LDRDroW)>;
+def : InstRW<[A57Write_5cyc_1L, ReadAdrBase], (instrs LDRDroX)>;
+def : InstRW<[A57Write_5cyc_1L], (instrs LDRDui)>;
+def : InstRW<[A57Write_5cyc_1I_1L, ReadAdrBase], (instrs LDRHHroW)>;
+def : InstRW<[A57Write_5cyc_1I_1L, ReadAdrBase], (instrs LDRHHroX)>;
+def : InstRW<[A57Write_5cyc_1L, WriteI], (instrs LDRHpost)>;
+def : InstRW<[A57Write_5cyc_1L, WriteAdr], (instrs LDRHpre)>;
+def : InstRW<[A57Write_6cyc_1I_1L, ReadAdrBase], (instrs LDRHroW)>;
+def : InstRW<[A57Write_6cyc_1I_1L, ReadAdrBase], (instrs LDRHroX)>;
+def : InstRW<[A57Write_5cyc_1L], (instrs LDRHui)>;
+def : InstRW<[A57Write_5cyc_1L], (instrs LDRQl)>;
+def : InstRW<[A57Write_5cyc_1L, WriteI], (instrs LDRQpost)>;
+def : InstRW<[A57Write_5cyc_1L, WriteAdr], (instrs LDRQpre)>;
+def : InstRW<[A57Write_6cyc_1I_1L, ReadAdrBase], (instrs LDRQroW)>;
+def : InstRW<[A57Write_6cyc_1I_1L, ReadAdrBase], (instrs LDRQroX)>;
+def : InstRW<[A57Write_5cyc_1L], (instrs LDRQui)>;
+def : InstRW<[A57Write_5cyc_1I_1L, ReadAdrBase], (instrs LDRSHWroW)>;
+def : InstRW<[A57Write_5cyc_1I_1L, ReadAdrBase], (instrs LDRSHWroX)>;
+def : InstRW<[A57Write_5cyc_1I_1L, ReadAdrBase], (instrs LDRSHXroW)>;
+def : InstRW<[A57Write_5cyc_1I_1L, ReadAdrBase], (instrs LDRSHXroX)>;
+def : InstRW<[A57Write_5cyc_1L], (instrs LDRSl)>;
+def : InstRW<[A57Write_5cyc_1L, WriteI], (instrs LDRSpost)>;
+def : InstRW<[A57Write_5cyc_1L, WriteAdr], (instrs LDRSpre)>;
+def : InstRW<[A57Write_5cyc_1L, ReadAdrBase], (instrs LDRSroW)>;
+def : InstRW<[A57Write_5cyc_1L, ReadAdrBase], (instrs LDRSroX)>;
+def : InstRW<[A57Write_5cyc_1L], (instrs LDRSui)>;
+def : InstRW<[A57Write_5cyc_1L], (instrs LDURBi)>;
+def : InstRW<[A57Write_5cyc_1L], (instrs LDURDi)>;
+def : InstRW<[A57Write_5cyc_1L], (instrs LDURHi)>;
+def : InstRW<[A57Write_5cyc_1L], (instrs LDURQi)>;
+def : InstRW<[A57Write_5cyc_1L], (instrs LDURSi)>;
+
+def : InstRW<[A57Write_2cyc_2S], (instrs STNPDi)>;
+def : InstRW<[A57Write_4cyc_1I_4S], (instrs STNPQi)>;
+def : InstRW<[A57Write_2cyc_2S], (instrs STNPXi)>;
+def : InstRW<[A57Write_2cyc_2S], (instrs STPDi)>;
+def : InstRW<[WriteAdr, A57Write_2cyc_1I_2S], (instrs STPDpost)>;
+def : InstRW<[WriteAdr, A57Write_2cyc_1I_2S], (instrs STPDpre)>;
+def : InstRW<[A57Write_4cyc_1I_4S], (instrs STPQi)>;
+def : InstRW<[WriteAdr, A57Write_4cyc_1I_4S], (instrs STPQpost)>;
+def : InstRW<[WriteAdr, A57Write_4cyc_2I_4S], (instrs STPQpre)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S], (instrs STPSpost)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S], (instrs STPSpre)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S], (instrs STPWpost)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S], (instrs STPWpre)>;
+def : InstRW<[A57Write_2cyc_2S], (instrs STPXi)>;
+def : InstRW<[WriteAdr, A57Write_2cyc_1I_2S], (instrs STPXpost)>;
+def : InstRW<[WriteAdr, A57Write_2cyc_1I_2S], (instrs STPXpre)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S, ReadAdrBase], (instrs STRBBpost)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S, ReadAdrBase], (instrs STRBBpre)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S, ReadAdrBase], (instrs STRBpost)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S], (instrs STRBpre)>;
+def : InstRW<[A57Write_3cyc_1I_1S, ReadAdrBase], (instrs STRBroW)>;
+def : InstRW<[A57Write_3cyc_1I_1S, ReadAdrBase], (instrs STRBroX)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S, ReadAdrBase], (instrs STRDpost)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S], (instrs STRDpre)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S, ReadAdrBase], (instrs STRHHpost)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S, ReadAdrBase], (instrs STRHHpre)>;
+def : InstRW<[A57Write_3cyc_1I_1S, ReadAdrBase], (instrs STRHHroW)>;
+def : InstRW<[A57Write_3cyc_1I_1S, ReadAdrBase], (instrs STRHHroX)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S, ReadAdrBase], (instrs STRHpost)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S], (instrs STRHpre)>;
+def : InstRW<[A57Write_3cyc_1I_1S, ReadAdrBase], (instrs STRHroW)>;
+def : InstRW<[A57Write_3cyc_1I_1S, ReadAdrBase], (instrs STRHroX)>;
+def : InstRW<[WriteAdr, A57Write_2cyc_1I_2S, ReadAdrBase], (instrs STRQpost)>;
+def : InstRW<[WriteAdr, A57Write_2cyc_1I_2S], (instrs STRQpre)>;
+def : InstRW<[A57Write_2cyc_1I_2S, ReadAdrBase], (instrs STRQroW)>;
+def : InstRW<[A57Write_2cyc_1I_2S, ReadAdrBase], (instrs STRQroX)>;
+def : InstRW<[A57Write_2cyc_1I_2S], (instrs STRQui)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S, ReadAdrBase], (instrs STRSpost)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S], (instrs STRSpre)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S, ReadAdrBase], (instrs STRWpost)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S, ReadAdrBase], (instrs STRWpre)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S, ReadAdrBase], (instrs STRXpost)>;
+def : InstRW<[WriteAdr, A57Write_1cyc_1I_1S, ReadAdrBase], (instrs STRXpre)>;
+def : InstRW<[A57Write_2cyc_2S], (instrs STURQi)>;
 
 } // SchedModel = CortexA57Model
