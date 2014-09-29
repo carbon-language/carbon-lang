@@ -147,7 +147,7 @@ static bool isSoftFloatABI(const ArgList &Args) {
                            options::OPT_mfloat_abi_EQ);
   if (!A)
     return false;
- 
+
   return A->getOption().matches(options::OPT_msoft_float) ||
          (A->getOption().matches(options::OPT_mfloat_abi_EQ) &&
           A->getValue() == StringRef("soft"));
