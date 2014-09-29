@@ -169,6 +169,14 @@ TEST_F(OptionalTest, NullCopyConstructionTest) {
   EXPECT_EQ(0u, NonDefaultConstructible::Destructions);
 }
 
+TEST_F(OptionalTest, GetValueOr) {
+  Optional<int> A;
+  EXPECT_EQ(42, A.getValueOr(42));
+
+  A = 5;
+  EXPECT_EQ(5, A.getValueOr(42));
+}
+
 struct MoveOnly {
   static unsigned MoveConstructions;
   static unsigned Destructions;
@@ -277,6 +285,27 @@ TEST_F(OptionalTest, MoveOnlyAssigningAssignment) {
   EXPECT_EQ(1u, MoveOnly::MoveAssignments);
   EXPECT_EQ(1u, MoveOnly::Destructions);
 }
+
+#if LLVM_HAS_RVALUE_REFERENCE_THIS
+
+TEST_F(OptionalTest, MoveGetValueOr) {
+  Optional<MoveOnly> A;
+
+  MoveOnly::ResetCounts();
+  EXPECT_EQ(42, std::move(A).getValueOr(MoveOnly(42)).val);
+  EXPECT_EQ(1u, MoveOnly::MoveConstructions);
+  EXPECT_EQ(0u, MoveOnly::MoveAssignments);
+  EXPECT_EQ(2u, MoveOnly::Destructions);
+
+  A = MoveOnly(5);
+  MoveOnly::ResetCounts();
+  EXPECT_EQ(5, std::move(A).getValueOr(MoveOnly(42)).val);
+  EXPECT_EQ(1u, MoveOnly::MoveConstructions);
+  EXPECT_EQ(0u, MoveOnly::MoveAssignments);
+  EXPECT_EQ(2u, MoveOnly::Destructions);
+}
+
+#endif // LLVM_HAS_RVALUE_REFERENCE_THIS
 
 } // end anonymous namespace
 
