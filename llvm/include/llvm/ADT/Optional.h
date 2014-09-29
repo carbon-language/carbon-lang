@@ -29,6 +29,8 @@ class Optional {
   AlignedCharArrayUnion<T> storage;
   bool hasVal;
 public:
+  typedef T value_type;
+
   Optional(NoneType) : hasVal(false) {}
   explicit Optional() : hasVal(false) {}
   Optional(const T &y) : hasVal(true) {
