@@ -12242,8 +12242,12 @@ NamedDecl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
     }
 
     // Mark templated-scope function declarations as unsupported.
-    if (FD->getNumTemplateParameterLists())
+    if (FD->getNumTemplateParameterLists() && SS.isValid()) {
+      Diag(FD->getLocation(), diag::warn_template_qualified_friend_unsupported)
+        << SS.getScopeRep() << SS.getRange()
+        << cast<CXXRecordDecl>(CurContext);
       FrD->setUnsupportedFriend(true);
+    }
   }
 
   return ND;

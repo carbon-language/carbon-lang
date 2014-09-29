@@ -20,7 +20,7 @@ namespace test1 {
 
   class C {
     static void foo();
-    template <class T> friend void A<T>::f();
+    template <class T> friend void A<T>::f(); // expected-warning {{not supported}}
   };
 
   template <class T> struct A {
@@ -42,7 +42,7 @@ namespace test2 {
 
   class C {
     static void foo();
-    template <class T> friend void A<T>::g();
+    template <class T> friend void A<T>::g(); // expected-warning {{not supported}}
   };
 
   template <class T> struct A {
@@ -86,7 +86,7 @@ namespace test4 {
     
     template <class V>
     template <class U>
-    friend void X<V>::operator+=(U);
+    friend void X<V>::operator+=(U); // expected-warning {{not supported}}
   };
 
   void test() {   
@@ -96,7 +96,7 @@ namespace test4 {
 
 namespace test5 {
   template<template <class> class T> struct A {
-    template<template <class> class U> friend void A<U>::foo();
+    template<template <class> class U> friend void A<U>::foo(); // expected-warning {{not supported}}
   };
 
   template <class> struct B {};
