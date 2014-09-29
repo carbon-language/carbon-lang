@@ -629,24 +629,25 @@ static int getExpansionSize(QualType Ty, const ASTContext &Context) {
   return 1;
 }
 
-void CodeGenTypes::GetExpandedTypes(QualType type,
-                     SmallVectorImpl<llvm::Type*> &expandedTypes) {
-  auto Exp = getTypeExpansion(type, Context);
+void
+CodeGenTypes::getExpandedTypes(QualType Ty,
+                               SmallVectorImpl<llvm::Type *>::iterator &TI) {
+  auto Exp = getTypeExpansion(Ty, Context);
   if (auto CAExp = dyn_cast<ConstantArrayExpansion>(Exp.get())) {
     for (int i = 0, n = CAExp->NumElts; i < n; i++) {
-      GetExpandedTypes(CAExp->EltTy, expandedTypes);
+      getExpandedTypes(CAExp->EltTy, TI);
     }
   } else if (auto RExp = dyn_cast<RecordExpansion>(Exp.get())) {
     for (auto FD : RExp->Fields) {
-      GetExpandedTypes(FD->getType(), expandedTypes);
+      getExpandedTypes(FD->getType(), TI);
     }
   } else if (auto CExp = dyn_cast<ComplexExpansion>(Exp.get())) {
     llvm::Type *EltTy = ConvertType(CExp->EltTy);
-    expandedTypes.push_back(EltTy);
-    expandedTypes.push_back(EltTy);
+    *TI++ = EltTy;
+    *TI++ = EltTy;
   } else {
     assert(isa<NoExpansion>(Exp.get()));
-    expandedTypes.push_back(ConvertType(type));
+    *TI++ = ConvertType(Ty);
   }
 }
 
@@ -958,6 +959,145 @@ static void CreateCoercedStore(llvm::Value *Src,
   }
 }
 
+namespace {
+
+/// Encapsulates information about the way function arguments from
+/// CGFunctionInfo should be passed to actual LLVM IR function.
+class ClangToLLVMArgMapping {
+  static const unsigned InvalidIndex = ~0U;
+  unsigned InallocaArgNo;
+  unsigned SRetArgNo;
+  unsigned TotalIRArgs;
+
+  /// Arguments of LLVM IR function corresponding to single Clang argument.
+  struct IRArgs {
+    unsigned PaddingArgIndex;
+    // Argument is expanded to IR arguments at positions
+    // [FirstArgIndex, FirstArgIndex + NumberOfArgs).
+    unsigned FirstArgIndex;
+    unsigned NumberOfArgs;
+
+    IRArgs()
+        : PaddingArgIndex(InvalidIndex), FirstArgIndex(InvalidIndex),
+          NumberOfArgs(0) {}
+  };
+
+  SmallVector<IRArgs, 8> ArgInfo;
+
+public:
+  ClangToLLVMArgMapping(const ASTContext &Context, const CGFunctionInfo &FI,
+                        bool OnlyRequiredArgs = false)
+      : InallocaArgNo(InvalidIndex), SRetArgNo(InvalidIndex), TotalIRArgs(0),
+        ArgInfo(OnlyRequiredArgs ? FI.getNumRequiredArgs() : FI.arg_size()) {
+    construct(Context, FI, OnlyRequiredArgs);
+  }
+
+  bool hasInallocaArg() const { return InallocaArgNo != InvalidIndex; }
+  unsigned getInallocaArgNo() const {
+    assert(hasInallocaArg());
+    return InallocaArgNo;
+  }
+
+  bool hasSRetArg() const { return SRetArgNo != InvalidIndex; }
+  unsigned getSRetArgNo() const {
+    assert(hasSRetArg());
+    return SRetArgNo;
+  }
+
+  unsigned totalIRArgs() const { return TotalIRArgs; }
+
+  bool hasPaddingArg(unsigned ArgNo) const {
+    assert(ArgNo < ArgInfo.size());
+    return ArgInfo[ArgNo].PaddingArgIndex != InvalidIndex;
+  }
+  unsigned getPaddingArgNo(unsigned ArgNo) const {
+    assert(hasPaddingArg(ArgNo));
+    return ArgInfo[ArgNo].PaddingArgIndex;
+  }
+
+  /// Returns index of first IR argument corresponding to ArgNo, and their
+  /// quantity.
+  std::pair<unsigned, unsigned> getIRArgs(unsigned ArgNo) const {
+    assert(ArgNo < ArgInfo.size());
+    return std::make_pair(ArgInfo[ArgNo].FirstArgIndex,
+                          ArgInfo[ArgNo].NumberOfArgs);
+  }
+
+private:
+  void construct(const ASTContext &Context, const CGFunctionInfo &FI,
+                 bool OnlyRequiredArgs);
+};
+
+void ClangToLLVMArgMapping::construct(const ASTContext &Context,
+                                      const CGFunctionInfo &FI,
+                                      bool OnlyRequiredArgs) {
+  unsigned IRArgNo = 0;
+  bool SwapThisWithSRet = false;
+  const ABIArgInfo &RetAI = FI.getReturnInfo();
+
+  if (RetAI.getKind() == ABIArgInfo::Indirect) {
+    SwapThisWithSRet = RetAI.isSRetAfterThis();
+    SRetArgNo = SwapThisWithSRet ? 1 : IRArgNo++;
+  }
+
+  unsigned ArgNo = 0;
+  unsigned NumArgs = OnlyRequiredArgs ? FI.getNumRequiredArgs() : FI.arg_size();
+  for (CGFunctionInfo::const_arg_iterator I = FI.arg_begin(); ArgNo < NumArgs;
+       ++I, ++ArgNo) {
+    assert(I != FI.arg_end());
+    QualType ArgType = I->type;
+    const ABIArgInfo &AI = I->info;
+    // Collect data about IR arguments corresponding to Clang argument ArgNo.
+    auto &IRArgs = ArgInfo[ArgNo];
+
+    if (AI.getPaddingType())
+      IRArgs.PaddingArgIndex = IRArgNo++;
+
+    switch (AI.getKind()) {
+    case ABIArgInfo::Extend:
+    case ABIArgInfo::Direct: {
+      // FIXME: handle sseregparm someday...
+      llvm::StructType *STy = dyn_cast<llvm::StructType>(AI.getCoerceToType());
+      if (AI.isDirect() && AI.getCanBeFlattened() && STy) {
+        IRArgs.NumberOfArgs = STy->getNumElements();
+      } else {
+        IRArgs.NumberOfArgs = 1;
+      }
+      break;
+    }
+    case ABIArgInfo::Indirect:
+      IRArgs.NumberOfArgs = 1;
+      break;
+    case ABIArgInfo::Ignore:
+    case ABIArgInfo::InAlloca:
+      // ignore and inalloca doesn't have matching LLVM parameters.
+      IRArgs.NumberOfArgs = 0;
+      break;
+    case ABIArgInfo::Expand: {
+      IRArgs.NumberOfArgs = getExpansionSize(ArgType, Context);
+      break;
+    }
+    }
+
+    if (IRArgs.NumberOfArgs > 0) {
+      IRArgs.FirstArgIndex = IRArgNo;
+      IRArgNo += IRArgs.NumberOfArgs;
+    }
+
+    // Skip over the sret parameter when it comes second.  We already handled it
+    // above.
+    if (IRArgNo == 1 && SwapThisWithSRet)
+      IRArgNo++;
+  }
+  assert(ArgNo == ArgInfo.size());
+
+  if (FI.usesInAlloca())
+    InallocaArgNo = IRArgNo++;
+
+  TotalIRArgs = IRArgNo;
+}
+}  // namespace
+
 /***/
 
 bool CodeGenModule::ReturnTypeUsesSRet(const CGFunctionInfo &FI) {
@@ -1004,14 +1144,11 @@ llvm::FunctionType *CodeGenTypes::GetFunctionType(GlobalDecl GD) {
 
 llvm::FunctionType *
 CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
-  
+
   bool Inserted = FunctionsBeingProcessed.insert(&FI); (void)Inserted;
   assert(Inserted && "Recursively being processed?");
-  
-  bool SwapThisWithSRet = false;
-  SmallVector<llvm::Type*, 8> argTypes;
-  llvm::Type *resultType = nullptr;
 
+  llvm::Type *resultType = nullptr;
   const ABIArgInfo &retAI = FI.getReturnInfo();
   switch (retAI.getKind()) {
   case ABIArgInfo::Expand:
@@ -1037,13 +1174,6 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
   case ABIArgInfo::Indirect: {
     assert(!retAI.getIndirectAlign() && "Align unused on indirect return.");
     resultType = llvm::Type::getVoidTy(getLLVMContext());
-
-    QualType ret = FI.getReturnType();
-    llvm::Type *ty = ConvertType(ret);
-    unsigned addressSpace = Context.getTargetAddressSpace(ret);
-    argTypes.push_back(llvm::PointerType::get(ty, addressSpace));
-
-    SwapThisWithSRet = retAI.isSRetAfterThis();
     break;
   }
 
@@ -1052,25 +1182,51 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
     break;
   }
 
+  ClangToLLVMArgMapping IRFunctionArgs(getContext(), FI, true);
+  SmallVector<llvm::Type*, 8> ArgTypes(IRFunctionArgs.totalIRArgs());
+
+  // Add type for sret argument.
+  if (IRFunctionArgs.hasSRetArg()) {
+    QualType Ret = FI.getReturnType();
+    llvm::Type *Ty = ConvertType(Ret);
+    unsigned AddressSpace = Context.getTargetAddressSpace(Ret);
+    ArgTypes[IRFunctionArgs.getSRetArgNo()] =
+        llvm::PointerType::get(Ty, AddressSpace);
+  }
+
+  // Add type for inalloca argument.
+  if (IRFunctionArgs.hasInallocaArg()) {
+    auto ArgStruct = FI.getArgStruct();
+    assert(ArgStruct);
+    ArgTypes[IRFunctionArgs.getInallocaArgNo()] = ArgStruct->getPointerTo();
+  }
+
   // Add in all of the required arguments.
+  unsigned ArgNo = 0;
   CGFunctionInfo::const_arg_iterator it = FI.arg_begin(),
                                      ie = it + FI.getNumRequiredArgs();
-  for (; it != ie; ++it) {
-    const ABIArgInfo &argAI = it->info;
+  for (; it != ie; ++it, ++ArgNo) {
+    const ABIArgInfo &ArgInfo = it->info;
 
     // Insert a padding type to ensure proper alignment.
-    if (llvm::Type *PaddingType = argAI.getPaddingType())
-      argTypes.push_back(PaddingType);
+    if (IRFunctionArgs.hasPaddingArg(ArgNo))
+      ArgTypes[IRFunctionArgs.getPaddingArgNo(ArgNo)] =
+          ArgInfo.getPaddingType();
 
-    switch (argAI.getKind()) {
+    unsigned FirstIRArg, NumIRArgs;
+    std::tie(FirstIRArg, NumIRArgs) = IRFunctionArgs.getIRArgs(ArgNo);
+
+    switch (ArgInfo.getKind()) {
     case ABIArgInfo::Ignore:
     case ABIArgInfo::InAlloca:
+      assert(NumIRArgs == 0);
       break;
 
     case ABIArgInfo::Indirect: {
+      assert(NumIRArgs == 1);
       // indirect arguments are always on the stack, which is addr space #0.
       llvm::Type *LTy = ConvertTypeForMem(it->type);
-      argTypes.push_back(LTy->getPointerTo());
+      ArgTypes[FirstIRArg] = LTy->getPointerTo();
       break;
     }
 
@@ -1078,34 +1234,31 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
     case ABIArgInfo::Direct: {
       // Fast-isel and the optimizer generally like scalar values better than
       // FCAs, so we flatten them if this is safe to do for this argument.
-      llvm::Type *argType = argAI.getCoerceToType();
+      llvm::Type *argType = ArgInfo.getCoerceToType();
       llvm::StructType *st = dyn_cast<llvm::StructType>(argType);
-      if (st && argAI.isDirect() && argAI.getCanBeFlattened()) {
+      if (st && ArgInfo.isDirect() && ArgInfo.getCanBeFlattened()) {
+        assert(NumIRArgs == st->getNumElements());
         for (unsigned i = 0, e = st->getNumElements(); i != e; ++i)
-          argTypes.push_back(st->getElementType(i));
+          ArgTypes[FirstIRArg + i] = st->getElementType(i);
       } else {
-        argTypes.push_back(argType);
+        assert(NumIRArgs == 1);
+        ArgTypes[FirstIRArg] = argType;
       }
       break;
     }
 
     case ABIArgInfo::Expand:
-      GetExpandedTypes(it->type, argTypes);
+      auto ArgTypesIter = ArgTypes.begin() + FirstIRArg;
+      getExpandedTypes(it->type, ArgTypesIter);
+      assert(ArgTypesIter == ArgTypes.begin() + FirstIRArg + NumIRArgs);
       break;
     }
   }
 
-  // Add the inalloca struct as the last parameter type.
-  if (llvm::StructType *ArgStruct = FI.getArgStruct())
-    argTypes.push_back(ArgStruct->getPointerTo());
-
-  if (SwapThisWithSRet)
-    std::swap(argTypes[0], argTypes[1]);
-
   bool Erased = FunctionsBeingProcessed.erase(&FI); (void)Erased;
   assert(Erased && "Not in set?");
-  
-  return llvm::FunctionType::get(resultType, argTypes, FI.isVariadic());
+
+  return llvm::FunctionType::get(resultType, ArgTypes, FI.isVariadic());
 }
 
 llvm::Type *CodeGenTypes::GetFunctionTypeForVTable(GlobalDecl GD) {
@@ -1123,141 +1276,6 @@ llvm::Type *CodeGenTypes::GetFunctionTypeForVTable(GlobalDecl GD) {
     Info = &arrangeCXXMethodDeclaration(MD);
   return GetFunctionType(*Info);
 }
-
-namespace {
-
-/// Encapsulates information about the way function arguments from
-/// CGFunctionInfo should be passed to actual LLVM IR function.
-class ClangToLLVMArgMapping {
-  static const unsigned InvalidIndex = ~0U;
-  unsigned InallocaArgNo;
-  unsigned SRetArgNo;
-  unsigned TotalIRArgs;
-
-  /// Arguments of LLVM IR function corresponding to single Clang argument.
-  struct IRArgs {
-    unsigned PaddingArgIndex;
-    // Argument is expanded to IR arguments at positions
-    // [FirstArgIndex, FirstArgIndex + NumberOfArgs).
-    unsigned FirstArgIndex;
-    unsigned NumberOfArgs;
-
-    IRArgs()
-        : PaddingArgIndex(InvalidIndex), FirstArgIndex(InvalidIndex),
-          NumberOfArgs(0) {}
-  };
-
-  SmallVector<IRArgs, 8> ArgInfo;
-
-public:
-  ClangToLLVMArgMapping(CodeGenModule &CGM, const CGFunctionInfo &FI)
-      : InallocaArgNo(InvalidIndex), SRetArgNo(InvalidIndex), TotalIRArgs(0),
-        ArgInfo(FI.arg_size()) {
-    construct(CGM, FI);
-  }
-
-  bool hasInallocaArg() const { return InallocaArgNo != InvalidIndex; }
-  unsigned getInallocaArgNo() const {
-    assert(hasInallocaArg());
-    return InallocaArgNo;
-  }
-
-  bool hasSRetArg() const { return SRetArgNo != InvalidIndex; }
-  unsigned getSRetArgNo() const {
-    assert(hasSRetArg());
-    return SRetArgNo;
-  }
-
-  unsigned totalIRArgs() const { return TotalIRArgs; }
-
-  bool hasPaddingArg(unsigned ArgNo) const {
-    assert(ArgNo < ArgInfo.size());
-    return ArgInfo[ArgNo].PaddingArgIndex != InvalidIndex;
-  }
-  unsigned getPaddingArgNo(unsigned ArgNo) const {
-    assert(hasPaddingArg(ArgNo));
-    return ArgInfo[ArgNo].PaddingArgIndex;
-  }
-
-  /// Returns index of first IR argument corresponding to ArgNo, and their
-  /// quantity.
-  std::pair<unsigned, unsigned> getIRArgs(unsigned ArgNo) const {
-    assert(ArgNo < ArgInfo.size());
-    return std::make_pair(ArgInfo[ArgNo].FirstArgIndex,
-                          ArgInfo[ArgNo].NumberOfArgs);
-  }
-
-private:
-  void construct(CodeGenModule &CGM, const CGFunctionInfo &FI);
-};
-
-void ClangToLLVMArgMapping::construct(CodeGenModule &CGM,
-                                      const CGFunctionInfo &FI) {
-  unsigned IRArgNo = 0;
-  bool SwapThisWithSRet = false;
-  const ABIArgInfo &RetAI = FI.getReturnInfo();
-
-  if (RetAI.getKind() == ABIArgInfo::Indirect) {
-    SwapThisWithSRet = RetAI.isSRetAfterThis();
-    SRetArgNo = SwapThisWithSRet ? 1 : IRArgNo++;
-  }
-
-  unsigned ArgNo = 0;
-  for (CGFunctionInfo::const_arg_iterator I = FI.arg_begin(),
-                                          E = FI.arg_end();
-       I != E; ++I, ++ArgNo) {
-    QualType ArgType = I->type;
-    const ABIArgInfo &AI = I->info;
-    // Collect data about IR arguments corresponding to Clang argument ArgNo.
-    auto &IRArgs = ArgInfo[ArgNo];
-
-    if (AI.getPaddingType())
-      IRArgs.PaddingArgIndex = IRArgNo++;
-
-    switch (AI.getKind()) {
-    case ABIArgInfo::Extend:
-    case ABIArgInfo::Direct: {
-      // FIXME: handle sseregparm someday...
-      llvm::StructType *STy = dyn_cast<llvm::StructType>(AI.getCoerceToType());
-      if (AI.isDirect() && AI.getCanBeFlattened() && STy) {
-        IRArgs.NumberOfArgs = STy->getNumElements();
-      } else {
-        IRArgs.NumberOfArgs = 1;
-      }
-      break;
-    }
-    case ABIArgInfo::Indirect:
-      IRArgs.NumberOfArgs = 1;
-      break;
-    case ABIArgInfo::Ignore:
-    case ABIArgInfo::InAlloca:
-      // ignore and inalloca doesn't have matching LLVM parameters.
-      IRArgs.NumberOfArgs = 0;
-      break;
-    case ABIArgInfo::Expand: {
-      IRArgs.NumberOfArgs = getExpansionSize(ArgType, CGM.getContext());
-      break;
-    }
-    }
-
-    if (IRArgs.NumberOfArgs > 0) {
-      IRArgs.FirstArgIndex = IRArgNo;
-      IRArgNo += IRArgs.NumberOfArgs;
-    }
-
-    // Skip over the sret parameter when it comes second.  We already handled it
-    // above.
-    if (IRArgNo == 1 && SwapThisWithSRet)
-      IRArgNo++;
-  }
-  assert(ArgNo == FI.arg_size());
-
-  if (FI.usesInAlloca())
-    InallocaArgNo = IRArgNo++;
-
-  TotalIRArgs = IRArgNo;
-}
-}  // namespace
 
 void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
                                            const Decl *TargetDecl,
@@ -1353,7 +1371,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       FuncAttrs.addAttribute("no-realign-stack");
   }
 
-  ClangToLLVMArgMapping IRFunctionArgs(*this, FI);
+  ClangToLLVMArgMapping IRFunctionArgs(getContext(), FI);
 
   QualType RetTy = FI.getReturnType();
   const ABIArgInfo &RetAI = FI.getReturnInfo();
@@ -1570,7 +1588,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   // FIXME: We no longer need the types from FunctionArgList; lift up and
   // simplify.
 
-  ClangToLLVMArgMapping IRFunctionArgs(CGM, FI);
+  ClangToLLVMArgMapping IRFunctionArgs(CGM.getContext(), FI);
   // Flattened function arguments.
   SmallVector<llvm::Argument *, 16> FnArgs;
   FnArgs.reserve(IRFunctionArgs.totalIRArgs());
@@ -2855,7 +2873,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     ArgMemory = AI;
   }
 
-  ClangToLLVMArgMapping IRFunctionArgs(CGM, CallInfo);
+  ClangToLLVMArgMapping IRFunctionArgs(CGM.getContext(), CallInfo);
   SmallVector<llvm::Value *, 16> IRCallArgs(IRFunctionArgs.totalIRArgs());
 
   // If the call returns a temporary with struct return, create a temporary
