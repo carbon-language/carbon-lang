@@ -201,4 +201,3 @@ uses hard-float), Clang will pick the ``armv7l-linux-gnueabi-ld``
 The same is true if you're compiling for different ABIs, like ``gnueabi``
 and ``androideabi``, and might even link and run, but produce run-time
 errors, which are much harder to track down and fix.
-
