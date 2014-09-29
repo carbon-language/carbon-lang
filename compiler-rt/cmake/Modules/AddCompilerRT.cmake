@@ -43,7 +43,8 @@ endmacro()
 # add_compiler_rt_runtime(<name> <arch> {STATIC,SHARED}
 #                         SOURCES <source files>
 #                         CFLAGS <compile flags>
-#                         DEFS <compile definitions>)
+#                         DEFS <compile definitions>
+#                         OUTPUT_NAME <output library name>)
 macro(add_compiler_rt_runtime name arch type)
   if(CAN_TARGET_${arch})
     parse_arguments(LIB "SOURCES;CFLAGS;DEFS;OUTPUT_NAME" "" ${ARGN})
@@ -59,7 +60,10 @@ macro(add_compiler_rt_runtime name arch type)
     set_target_properties(${name} PROPERTIES
       ARCHIVE_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR}
       LIBRARY_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
-    if (LIB_OUTPUT_NAME)
+    if ("${LIB_OUTPUT_NAME}" STREQUAL "")
+      set_target_properties(${name} PROPERTIES
+        OUTPUT_NAME ${name}${COMPILER_RT_OS_SUFFIX})
+    else()
       set_target_properties(${name} PROPERTIES
         OUTPUT_NAME ${LIB_OUTPUT_NAME})
     endif()

@@ -121,14 +121,6 @@ if(APPLE)
       DEFS ${SANITIZER_COMMON_DEFINITIONS})
     list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.${os})
   endforeach()
-elseif(ANDROID)
-  add_library(RTSanitizerCommon.arm.android OBJECT
-    ${SANITIZER_SOURCES} ${SANITIZER_LIBCDEP_SOURCES})
-  set_target_compile_flags(RTSanitizerCommon.arm.android
-    ${SANITIZER_CFLAGS})
-  set_property(TARGET RTSanitizerCommon.arm.android APPEND PROPERTY
-    COMPILE_DEFINITIONS ${SANITIZER_COMMON_DEFINITIONS})
-  list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.arm.android)
 else()
   # Otherwise, build separate libraries for each target.
   foreach(arch ${SANITIZER_COMMON_SUPPORTED_ARCH})

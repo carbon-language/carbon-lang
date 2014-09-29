@@ -79,16 +79,47 @@ macro(test_target_arch arch)
               CMAKE_FLAGS "-DCMAKE_EXE_LINKER_FLAGS:STRING=${argstring}")
   if(${CAN_TARGET_${arch}})
     list(APPEND COMPILER_RT_SUPPORTED_ARCH ${arch})
-  elseif("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "${arch}" OR
-         "${arch}" STREQUAL "arm_android")
+  elseif("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "${arch}")
     # Bail out if we cannot target the architecture we plan to test.
     message(FATAL_ERROR "Cannot compile for ${arch}:\n${TARGET_${arch}_OUTPUT}")
   endif()
 endmacro()
 
+# Add $arch as supported with no additional flags.
+macro(add_default_target_arch arch)
+  set(TARGET_${arch}_CFLAGS "")
+  set(CAN_TARGET_${arch} 1)
+  list(APPEND COMPILER_RT_SUPPORTED_ARCH ${arch})
+endmacro()
+
+macro(detect_target_arch)
+  check_symbol_exists(__arm__ "" __ARM)
+  check_symbol_exists(__aarch64__ "" __AARCH64)
+  check_symbol_exists(__x86_64__ "" __X86_64)
+  check_symbol_exists(__i386__ "" __I386)
+  check_symbol_exists(__mips__ "" __MIPS)
+  check_symbol_exists(__mips64__ "" __MIPS64)
+  if(__ARM)
+    add_default_target_arch(arm)
+  elseif(__AARCH64)
+    add_default_target_arch(aarch64)
+  elseif(__X86_64)
+    add_default_target_arch(x86_64)
+  elseif(__I386)
+    add_default_target_arch(i386)
+  elseif(__MIPS64) # must be checked before __MIPS
+    add_default_target_arch(mips64)
+  elseif(__MIPS)
+    add_default_target_arch(mips)
+  endif()
+endmacro()
+
 # Generate the COMPILER_RT_SUPPORTED_ARCH list.
 if(ANDROID)
-  test_target_arch(arm_android "")
+  # Can't rely on LLVM_NATIVE_ARCH in cross-compilation.
+  # Examine compiler output instead.
+  detect_target_arch()
+  set(COMPILER_RT_OS_SUFFIX "-android")
 else()
   if("${LLVM_NATIVE_ARCH}" STREQUAL "X86")
     if (NOT MSVC)
@@ -105,7 +136,10 @@ else()
     test_target_arch(arm "-march=armv7-a")
     test_target_arch(aarch64 "-march=armv8-a")
   endif()
+  set(COMPILER_RT_OS_SUFFIX "")
 endif()
+
+message("Compiler-RT supported architectures: ${COMPILER_RT_SUPPORTED_ARCH}")
 
 # Takes ${ARGN} and puts only supported architectures in @out_var list.
 function(filter_available_targets out_var)
@@ -120,11 +154,10 @@ function(filter_available_targets out_var)
 endfunction()
 
 # Arhcitectures supported by compiler-rt libraries.
-# FIXME: add arm_android here
 filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
-  x86_64 i386 powerpc64 arm aarch64 mips arm_android)
+  x86_64 i386 powerpc64 arm aarch64 mips)
 filter_available_targets(ASAN_SUPPORTED_ARCH
-  x86_64 i386 powerpc64 arm mips arm_android)
+  x86_64 i386 powerpc64 arm mips)
 filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(LSAN_SUPPORTED_ARCH x86_64)
 # LSan common files should be available on all architectures supported
@@ -173,7 +206,7 @@ else()
 endif()
 
 if (COMPILER_RT_HAS_SANITIZER_COMMON AND LSAN_COMMON_SUPPORTED_ARCH AND
-    OS_NAME MATCHES "Darwin|Linux|FreeBSD")
+    OS_NAME MATCHES "Darwin|Linux|FreeBSD|Android")
   set(COMPILER_RT_HAS_LSAN_COMMON TRUE)
 else()
   set(COMPILER_RT_HAS_LSAN_COMMON FALSE)
