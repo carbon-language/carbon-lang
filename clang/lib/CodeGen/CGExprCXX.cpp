@@ -110,7 +110,15 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
     assert(DevirtualizedMethod);
     const CXXRecordDecl *DevirtualizedClass = DevirtualizedMethod->getParent();
     const Expr *Inner = Base->ignoreParenBaseCasts();
-    if (getCXXRecord(Inner) == DevirtualizedClass)
+    if (DevirtualizedMethod->getReturnType().getCanonicalType() !=
+        MD->getReturnType().getCanonicalType())
+      // If the return types are not the same, this might be a case where more
+      // code needs to run to compensate for it. For example, the derived
+      // method might return a type that inherits form from the return
+      // type of MD and has a prefix.
+      // For now we just avoid devirtualizing these covariant cases.
+      DevirtualizedMethod = nullptr;
+    else if (getCXXRecord(Inner) == DevirtualizedClass)
       // If the class of the Inner expression is where the dynamic method
       // is defined, build the this pointer from it.
       Base = Inner;
@@ -121,15 +129,6 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
       // we don't have support for that yet, so do a virtual call.
       DevirtualizedMethod = nullptr;
     }
-    // If the return types are not the same, this might be a case where more
-    // code needs to run to compensate for it. For example, the derived
-    // method might return a type that inherits form from the return
-    // type of MD and has a prefix.
-    // For now we just avoid devirtualizing these covariant cases.
-    if (DevirtualizedMethod &&
-        DevirtualizedMethod->getReturnType().getCanonicalType() !=
-            MD->getReturnType().getCanonicalType())
-      DevirtualizedMethod = nullptr;
   }
 
   llvm::Value *This;

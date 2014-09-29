@@ -178,9 +178,12 @@ namespace Test9 {
   A *f(RC *x) {
     // FIXME: It should be possible to devirtualize this case, but that is
     // not implemented yet.
-    // CHECK: getelementptr
-    // CHECK-NEXT: %[[FUNC:.*]] = load
-    // CHECK-NEXT: bitcast
+    // CHECK: load
+    // CHECK: bitcast
+    // CHECK: [[F_PTR_RA:%.+]] = bitcast
+    // CHECK: [[VTABLE:%.+]] = load {{.+}} [[F_PTR_RA]]
+    // CHECK: [[VFN:%.+]] = getelementptr inbounds {{.+}} [[VTABLE]], i{{[0-9]+}} 0
+    // CHECK-NEXT: %[[FUNC:.*]] = load {{.+}} [[VFN]]
     // CHECK-NEXT: = call {{.*}} %[[FUNC]]
     return static_cast<RA*>(x)->f();
   }
