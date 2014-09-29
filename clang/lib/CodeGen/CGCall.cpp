@@ -508,13 +508,75 @@ CGFunctionInfo *CGFunctionInfo::create(unsigned llvmCC,
 
 /***/
 
-void CodeGenTypes::GetExpandedTypes(QualType type,
-                     SmallVectorImpl<llvm::Type*> &expandedTypes) {
-  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(type)) {
-    uint64_t NumElts = AT->getSize().getZExtValue();
-    for (uint64_t Elt = 0; Elt < NumElts; ++Elt)
-      GetExpandedTypes(AT->getElementType(), expandedTypes);
-  } else if (const RecordType *RT = type->getAs<RecordType>()) {
+namespace {
+// ABIArgInfo::Expand implementation.
+
+// Specifies the way QualType passed as ABIArgInfo::Expand is expanded.
+struct TypeExpansion {
+  enum TypeExpansionKind {
+    // Elements of constant arrays are expanded recursively.
+    TEK_ConstantArray,
+    // Record fields are expanded recursively (but if record is a union, only
+    // the field with the largest size is expanded).
+    TEK_Record,
+    // For complex types, real and imaginary parts are expanded recursively.
+    TEK_Complex,
+    // All other types are not expandable.
+    TEK_None
+  };
+
+  const TypeExpansionKind Kind;
+
+  TypeExpansion(TypeExpansionKind K) : Kind(K) {}
+  virtual ~TypeExpansion() {}
+};
+
+struct ConstantArrayExpansion : TypeExpansion {
+  QualType EltTy;
+  uint64_t NumElts;
+
+  ConstantArrayExpansion(QualType EltTy, uint64_t NumElts)
+      : TypeExpansion(TEK_ConstantArray), EltTy(EltTy), NumElts(NumElts) {}
+  static bool classof(const TypeExpansion *TE) {
+    return TE->Kind == TEK_ConstantArray;
+  }
+};
+
+struct RecordExpansion : TypeExpansion {
+  SmallVector<const FieldDecl *, 1> Fields;
+
+  RecordExpansion(SmallVector<const FieldDecl *, 1> &&Fields)
+      : TypeExpansion(TEK_Record), Fields(Fields) {}
+  static bool classof(const TypeExpansion *TE) {
+    return TE->Kind == TEK_Record;
+  }
+};
+
+struct ComplexExpansion : TypeExpansion {
+  QualType EltTy;
+
+  ComplexExpansion(QualType EltTy) : TypeExpansion(TEK_Complex), EltTy(EltTy) {}
+  static bool classof(const TypeExpansion *TE) {
+    return TE->Kind == TEK_Complex;
+  }
+};
+
+struct NoExpansion : TypeExpansion {
+  NoExpansion() : TypeExpansion(TEK_None) {}
+  static bool classof(const TypeExpansion *TE) {
+    return TE->Kind == TEK_None;
+  }
+};
+}  // namespace
+
+static std::unique_ptr<TypeExpansion>
+getTypeExpansion(QualType Ty, const ASTContext &Context) {
+  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty)) {
+    return llvm::make_unique<ConstantArrayExpansion>(
+        AT->getElementType(), AT->getSize().getZExtValue());
+  }
+  if (const RecordType *RT = Ty->getAs<RecordType>()) {
+    SmallVector<const FieldDecl *, 1> Fields;
     const RecordDecl *RD = RT->getDecl();
     assert(!RD->hasFlexibleArrayMember() &&
            "Cannot expand structure with flexible array.");
@@ -527,27 +589,48 @@ void CodeGenTypes::GetExpandedTypes(QualType type,
       for (const auto *FD : RD->fields()) {
         assert(!FD->isBitField() &&
                "Cannot expand structure with bit-field members.");
-        CharUnits FieldSize = getContext().getTypeSizeInChars(FD->getType());
+        CharUnits FieldSize = Context.getTypeSizeInChars(FD->getType());
         if (UnionSize < FieldSize) {
           UnionSize = FieldSize;
           LargestFD = FD;
         }
       }
       if (LargestFD)
-        GetExpandedTypes(LargestFD->getType(), expandedTypes);
+        Fields.push_back(LargestFD);
     } else {
-      for (const auto *I : RD->fields()) {
-        assert(!I->isBitField() &&
+      for (const auto *FD : RD->fields()) {
+        assert(!FD->isBitField() &&
                "Cannot expand structure with bit-field members.");
-        GetExpandedTypes(I->getType(), expandedTypes);
+        Fields.push_back(FD);
       }
     }
-  } else if (const ComplexType *CT = type->getAs<ComplexType>()) {
-    llvm::Type *EltTy = ConvertType(CT->getElementType());
+    return llvm::make_unique<RecordExpansion>(std::move(Fields));
+  }
+  if (const ComplexType *CT = Ty->getAs<ComplexType>()) {
+    return llvm::make_unique<ComplexExpansion>(CT->getElementType());
+  }
+  return llvm::make_unique<NoExpansion>();
+}
+
+void CodeGenTypes::GetExpandedTypes(QualType type,
+                     SmallVectorImpl<llvm::Type*> &expandedTypes) {
+  auto Exp = getTypeExpansion(type, Context);
+  if (auto CAExp = dyn_cast<ConstantArrayExpansion>(Exp.get())) {
+    for (int i = 0, n = CAExp->NumElts; i < n; i++) {
+      GetExpandedTypes(CAExp->EltTy, expandedTypes);
+    }
+  } else if (auto RExp = dyn_cast<RecordExpansion>(Exp.get())) {
+    for (auto FD : RExp->Fields) {
+      GetExpandedTypes(FD->getType(), expandedTypes);
+    }
+  } else if (auto CExp = dyn_cast<ComplexExpansion>(Exp.get())) {
+    llvm::Type *EltTy = ConvertType(CExp->EltTy);
     expandedTypes.push_back(EltTy);
     expandedTypes.push_back(EltTy);
-  } else
+  } else {
+    assert(isa<NoExpansion>(Exp.get()));
     expandedTypes.push_back(ConvertType(type));
+  }
 }
 
 void CodeGenFunction::ExpandTypeFromArgs(
@@ -555,57 +638,68 @@ void CodeGenFunction::ExpandTypeFromArgs(
   assert(LV.isSimple() &&
          "Unexpected non-simple lvalue during struct expansion.");
 
-  if (const ConstantArrayType *AT = getContext().getAsConstantArrayType(Ty)) {
-    unsigned NumElts = AT->getSize().getZExtValue();
-    QualType EltTy = AT->getElementType();
-    for (unsigned Elt = 0; Elt < NumElts; ++Elt) {
-      llvm::Value *EltAddr = Builder.CreateConstGEP2_32(LV.getAddress(), 0, Elt);
-      LValue LV = MakeAddrLValue(EltAddr, EltTy);
-      ExpandTypeFromArgs(EltTy, LV, AI);
+  auto Exp = getTypeExpansion(Ty, getContext());
+  if (auto CAExp = dyn_cast<ConstantArrayExpansion>(Exp.get())) {
+    for (int i = 0, n = CAExp->NumElts; i < n; i++) {
+      llvm::Value *EltAddr = Builder.CreateConstGEP2_32(LV.getAddress(), 0, i);
+      LValue LV = MakeAddrLValue(EltAddr, CAExp->EltTy);
+      ExpandTypeFromArgs(CAExp->EltTy, LV, AI);
     }
-    return;
-  }
-  if (const RecordType *RT = Ty->getAs<RecordType>()) {
-    RecordDecl *RD = RT->getDecl();
-    if (RD->isUnion()) {
-      // Unions can be here only in degenerative cases - all the fields are same
-      // after flattening. Thus we have to use the "largest" field.
-      const FieldDecl *LargestFD = nullptr;
-      CharUnits UnionSize = CharUnits::Zero();
-
-      for (const auto *FD : RD->fields()) {
-        assert(!FD->isBitField() &&
-               "Cannot expand structure with bit-field members.");
-        CharUnits FieldSize = getContext().getTypeSizeInChars(FD->getType());
-        if (UnionSize < FieldSize) {
-          UnionSize = FieldSize;
-          LargestFD = FD;
-        }
-      }
-      if (LargestFD) {
-        // FIXME: What are the right qualifiers here?
-        LValue SubLV = EmitLValueForField(LV, LargestFD);
-        ExpandTypeFromArgs(LargestFD->getType(), SubLV, AI);
-      }
-    } else {
-      for (const auto *FD : RD->fields()) {
-        QualType FT = FD->getType();
-        // FIXME: What are the right qualifiers here?
-        LValue SubLV = EmitLValueForField(LV, FD);
-        ExpandTypeFromArgs(FT, SubLV, AI);
-      }
+  } else if (auto RExp = dyn_cast<RecordExpansion>(Exp.get())) {
+    for (auto FD : RExp->Fields) {
+      // FIXME: What are the right qualifiers here?
+      LValue SubLV = EmitLValueForField(LV, FD);
+      ExpandTypeFromArgs(FD->getType(), SubLV, AI);
     }
-    return;
-  }
-  if (const ComplexType *CT = Ty->getAs<ComplexType>()) {
-    QualType EltTy = CT->getElementType();
+  } else if (auto CExp = dyn_cast<ComplexExpansion>(Exp.get())) {
     llvm::Value *RealAddr = Builder.CreateStructGEP(LV.getAddress(), 0, "real");
-    EmitStoreThroughLValue(RValue::get(*AI++), MakeAddrLValue(RealAddr, EltTy));
+    EmitStoreThroughLValue(RValue::get(*AI++),
+                           MakeAddrLValue(RealAddr, CExp->EltTy));
     llvm::Value *ImagAddr = Builder.CreateStructGEP(LV.getAddress(), 1, "imag");
-    EmitStoreThroughLValue(RValue::get(*AI++), MakeAddrLValue(ImagAddr, EltTy));
-    return;
+    EmitStoreThroughLValue(RValue::get(*AI++),
+                           MakeAddrLValue(ImagAddr, CExp->EltTy));
+  } else {
+    assert(isa<NoExpansion>(Exp.get()));
+    EmitStoreThroughLValue(RValue::get(*AI++), LV);
   }
-  EmitStoreThroughLValue(RValue::get(*AI++), LV);
+}
+
+void CodeGenFunction::ExpandTypeToArgs(
+    QualType Ty, RValue RV, llvm::FunctionType *IRFuncTy,
+    SmallVectorImpl<llvm::Value *> &IRCallArgs, unsigned &IRCallArgPos) {
+  auto Exp = getTypeExpansion(Ty, getContext());
+  if (auto CAExp = dyn_cast<ConstantArrayExpansion>(Exp.get())) {
+    llvm::Value *Addr = RV.getAggregateAddr();
+    for (int i = 0, n = CAExp->NumElts; i < n; i++) {
+      llvm::Value *EltAddr = Builder.CreateConstGEP2_32(Addr, 0, i);
+      RValue EltRV =
+          convertTempToRValue(EltAddr, CAExp->EltTy, SourceLocation());
+      ExpandTypeToArgs(CAExp->EltTy, EltRV, IRFuncTy, IRCallArgs, IRCallArgPos);
+    }
+  } else if (auto RExp = dyn_cast<RecordExpansion>(Exp.get())) {
+    LValue LV = MakeAddrLValue(RV.getAggregateAddr(), Ty);
+    for (auto FD : RExp->Fields) {
+      RValue FldRV = EmitRValueForField(LV, FD, SourceLocation());
+      ExpandTypeToArgs(FD->getType(), FldRV, IRFuncTy, IRCallArgs,
+                       IRCallArgPos);
+    }
+  } else if (isa<ComplexExpansion>(Exp.get())) {
+    ComplexPairTy CV = RV.getComplexVal();
+    IRCallArgs[IRCallArgPos++] = CV.first;
+    IRCallArgs[IRCallArgPos++] = CV.second;
+  } else {
+    assert(isa<NoExpansion>(Exp.get()));
+    assert(RV.isScalar() &&
+           "Unexpected non-scalar rvalue during struct expansion.");
+
+    // Insert a bitcast as needed.
+    llvm::Value *V = RV.getScalarVal();
+    if (IRCallArgPos < IRFuncTy->getNumParams() &&
+        V->getType() != IRFuncTy->getParamType(IRCallArgPos))
+      V = Builder.CreateBitCast(V, IRFuncTy->getParamType(IRCallArgPos));
+
+    IRCallArgs[IRCallArgPos++] = V;
+  }
 }
 
 /// EnterStructPointerForCoercedAccess - Given a struct pointer that we are
@@ -2702,65 +2796,6 @@ CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
     AddObjCARCExceptionMetadata(Inst);
 
   return Inst;
-}
-
-void CodeGenFunction::ExpandTypeToArgs(
-    QualType Ty, RValue RV, llvm::FunctionType *IRFuncTy,
-    SmallVectorImpl<llvm::Value *> &IRCallArgs, unsigned &IRCallArgPos) {
-  if (const ConstantArrayType *AT = getContext().getAsConstantArrayType(Ty)) {
-    unsigned NumElts = AT->getSize().getZExtValue();
-    QualType EltTy = AT->getElementType();
-    llvm::Value *Addr = RV.getAggregateAddr();
-    for (unsigned Elt = 0; Elt < NumElts; ++Elt) {
-      llvm::Value *EltAddr = Builder.CreateConstGEP2_32(Addr, 0, Elt);
-      RValue EltRV = convertTempToRValue(EltAddr, EltTy, SourceLocation());
-      ExpandTypeToArgs(EltTy, EltRV, IRFuncTy, IRCallArgs, IRCallArgPos);
-    }
-  } else if (const RecordType *RT = Ty->getAs<RecordType>()) {
-    RecordDecl *RD = RT->getDecl();
-    assert(RV.isAggregate() && "Unexpected rvalue during struct expansion");
-    LValue LV = MakeAddrLValue(RV.getAggregateAddr(), Ty);
-
-    if (RD->isUnion()) {
-      const FieldDecl *LargestFD = nullptr;
-      CharUnits UnionSize = CharUnits::Zero();
-
-      for (const auto *FD : RD->fields()) {
-        assert(!FD->isBitField() &&
-               "Cannot expand structure with bit-field members.");
-        CharUnits FieldSize = getContext().getTypeSizeInChars(FD->getType());
-        if (UnionSize < FieldSize) {
-          UnionSize = FieldSize;
-          LargestFD = FD;
-        }
-      }
-      if (LargestFD) {
-        RValue FldRV = EmitRValueForField(LV, LargestFD, SourceLocation());
-        ExpandTypeToArgs(LargestFD->getType(), FldRV, IRFuncTy, IRCallArgs,
-                         IRCallArgPos);
-      }
-    } else {
-      for (const auto *FD : RD->fields()) {
-        RValue FldRV = EmitRValueForField(LV, FD, SourceLocation());
-        ExpandTypeToArgs(FD->getType(), FldRV, IRFuncTy, IRCallArgs, IRCallArgPos);
-      }
-    }
-  } else if (Ty->isAnyComplexType()) {
-    ComplexPairTy CV = RV.getComplexVal();
-    IRCallArgs[IRCallArgPos++] = CV.first;
-    IRCallArgs[IRCallArgPos++] = CV.second;
-  } else {
-    assert(RV.isScalar() &&
-           "Unexpected non-scalar rvalue during struct expansion.");
-
-    // Insert a bitcast as needed.
-    llvm::Value *V = RV.getScalarVal();
-    if (IRCallArgPos < IRFuncTy->getNumParams() &&
-        V->getType() != IRFuncTy->getParamType(IRCallArgPos))
-      V = Builder.CreateBitCast(V, IRFuncTy->getParamType(IRCallArgPos));
-
-    IRCallArgs[IRCallArgPos++] = V;
-  }
 }
 
 /// \brief Store a non-aggregate value to an address to initialize it.  For
