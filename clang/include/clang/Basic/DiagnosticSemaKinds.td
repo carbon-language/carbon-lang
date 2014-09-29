@@ -586,7 +586,8 @@ def warn_property_attribute : Warning<
   "'%1' attribute on property %0 does not match the property inherited from %2">,
   InGroup<PropertyAttr>;
 def warn_property_types_are_incompatible : Warning<
-  "property type %0 is incompatible with type %1 inherited from %2">;
+  "property type %0 is incompatible with type %1 inherited from %2">,
+  InGroup<DiagGroup<"incompatible-property-type">>;
 def warn_protocol_property_mismatch : Warning<
   "property of type %0 was selected for synthesis">,
   InGroup<DiagGroup<"protocol-property-synthesis-ambiguity">>;
