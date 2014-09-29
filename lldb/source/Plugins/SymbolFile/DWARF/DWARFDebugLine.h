@@ -75,6 +75,7 @@ public:
         uint16_t    version;        // Version identifier for the statement information format.
         uint32_t    prologue_length;// The number of bytes following the prologue_length field to the beginning of the first byte of the statement program itself.
         uint8_t     min_inst_length;// The size in bytes of the smallest target machine instruction. Statement program opcodes that alter the address register first multiply their operands by this value.
+        uint8_t     maximum_operations_per_instruction; // New in DWARF4. The maximum number of individual operations that may be encoded in an instruction.
         uint8_t     default_is_stmt;// The initial value of theis_stmtregister.
         int8_t      line_base;      // This parameter affects the meaning of the special opcodes. See below.
         uint8_t     line_range;     // This parameter affects the meaning of the special opcodes. See below.

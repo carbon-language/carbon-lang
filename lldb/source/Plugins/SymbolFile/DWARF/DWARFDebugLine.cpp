@@ -424,6 +424,10 @@ DWARFDebugLine::ParsePrologue(const DWARFDataExtractor& debug_line_data, lldb::o
     prologue->prologue_length   = debug_line_data.GetDWARFOffset(offset_ptr);
     const lldb::offset_t end_prologue_offset = prologue->prologue_length + *offset_ptr;
     prologue->min_inst_length   = debug_line_data.GetU8(offset_ptr);
+    if (prologue->version >= 4)
+        prologue->maximum_operations_per_instruction = debug_line_data.GetU8(offset_ptr);
+    else
+        prologue->maximum_operations_per_instruction = 1;
     prologue->default_is_stmt   = debug_line_data.GetU8(offset_ptr);
     prologue->line_base         = debug_line_data.GetU8(offset_ptr);
     prologue->line_range        = debug_line_data.GetU8(offset_ptr);
@@ -490,9 +494,12 @@ DWARFDebugLine::ParseSupportFiles (const lldb::ModuleSP &module_sp,
       return false;
 
     const dw_offset_t end_prologue_offset = debug_line_data.GetDWARFOffset(&offset) + offset;
-    // Skip instruction length, default is stmt, line base, line range and
-    // opcode base, and all opcode lengths
+    // Skip instruction length, default is stmt, line base, line range
     offset += 4;
+    // For DWARF4, skip maximum operations per instruction
+    if (version >= 4)
+        offset += 1;
+    // Skip opcode base, and all opcode lengths
     const uint8_t opcode_base = debug_line_data.GetU8(&offset);
     offset += opcode_base - 1;
     std::vector<std::string> include_directories;
