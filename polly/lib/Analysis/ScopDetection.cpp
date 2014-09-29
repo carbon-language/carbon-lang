@@ -196,6 +196,12 @@ ScopDetection::ScopDetection() : FunctionPass(ID) {
   if (!PollyUseRuntimeAliasChecks)
     return;
 
+  // Disable runtime alias checks if we ignore aliasing all together.
+  if (IgnoreAliasing) {
+    PollyUseRuntimeAliasChecks = false;
+    return;
+  }
+
   if (PollyDelinearize) {
     DEBUG(errs() << "WARNING: We disable runtime alias checks as "
                     "delinearization is enabled.\n");
