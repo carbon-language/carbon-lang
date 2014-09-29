@@ -7737,6 +7737,7 @@ public:
     VAK_Valid,
     VAK_ValidInCXX11,
     VAK_Undefined,
+    VAK_MSVCUndefined,
     VAK_Invalid
   };
 

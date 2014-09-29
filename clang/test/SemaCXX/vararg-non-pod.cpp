@@ -1,5 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -fblocks %s -Wno-error=non-pod-varargs
 
+// Check that the warning is still there under -fms-compatibility.
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks %s -Wno-error=non-pod-varargs -fms-compatibility
+
 extern char version[];
 
 class C {
