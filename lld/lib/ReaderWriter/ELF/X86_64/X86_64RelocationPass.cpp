@@ -50,6 +50,12 @@ const uint8_t x86_64PltAtomContent[16] = {
   0xe9, 0x00, 0x00, 0x00, 0x00        // jmpq plt[-1]
 };
 
+// TLS GD Entry
+static const uint8_t x86_64GotTlsGdAtomContent[] = {
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+
 /// \brief Atoms that are used by X86_64 dynamic linking
 class X86_64GOTAtom : public GOTAtom {
 public:
@@ -57,6 +63,16 @@ public:
 
   ArrayRef<uint8_t> rawContent() const override {
     return ArrayRef<uint8_t>(x86_64GotAtomContent, 8);
+  }
+};
+
+/// \brief X86_64 GOT TLS GD entry.
+class GOTTLSGdAtom : public X86_64GOTAtom {
+public:
+  GOTTLSGdAtom(const File &f, StringRef secName) : X86_64GOTAtom(f, secName) {}
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(x86_64GotTlsGdAtomContent);
   }
 };
 
@@ -116,6 +132,9 @@ template <class Derived> class RelocationPass : public Pass {
       break;
     case R_X86_64_GOTTPOFF: // GOT Thread Pointer Offset
       static_cast<Derived *>(this)->handleGOTTPOFF(ref);
+      break;
+    case R_X86_64_TLSGD:
+      static_cast<Derived *>(this)->handleTLSGd(ref);
       break;
     }
   }
@@ -180,6 +199,11 @@ protected:
     const_cast<Reference &>(ref).setKindValue(R_X86_64_PC32);
   }
 
+  /// \brief Create a TLS GOT entry with DTPMOD64/DTPOFF64 dynamic relocations.
+  void handleTLSGd(const Reference &ref) {
+    const_cast<Reference &>(ref).setTarget(getTLSGdGOTEntry(ref.target()));
+  }
+
   /// \brief Create a GOT entry containing 0.
   const GOTAtom *getNullGOT() {
     if (!_null) {
@@ -205,6 +229,21 @@ protected:
       return g;
     }
     return got->second;
+  }
+
+  const GOTAtom *getTLSGdGOTEntry(const Atom *a) {
+    auto got = _gotTLSGdMap.find(a);
+    if (got != _gotTLSGdMap.end())
+      return got->second;
+
+    auto ga = new (_file._alloc) GOTTLSGdAtom(_file, ".got");
+    _gotTLSGdMap[a] = ga;
+
+    _tlsGotVector.push_back(ga);
+    ga->addReferenceELF_x86_64(R_X86_64_DTPMOD64, 0, a, 0);
+    ga->addReferenceELF_x86_64(R_X86_64_DTPOFF64, 8, a, 0);
+
+    return ga;
   }
 
 public:
@@ -251,6 +290,10 @@ public:
       got->setOrdinal(ordinal++);
       mf->addAtom(*got);
     }
+    for (auto &got : _tlsGotVector) {
+      got->setOrdinal(ordinal++);
+      mf->addAtom(*got);
+    }
     for (auto obj : _objectVector) {
       obj->setOrdinal(ordinal++);
       mf->addAtom(*obj);
@@ -268,6 +311,9 @@ protected:
   /// \brief Map Atoms to their PLT entries.
   llvm::DenseMap<const Atom *, PLTAtom *> _pltMap;
 
+  /// \brief Map Atoms to TLS GD GOT entries.
+  llvm::DenseMap<const Atom *, GOTAtom *> _gotTLSGdMap;
+
   /// \brief Map Atoms to their Object entries.
   llvm::DenseMap<const Atom *, ObjectAtom *> _objectMap;
 
@@ -275,6 +321,9 @@ protected:
   std::vector<GOTAtom *> _gotVector;
   std::vector<PLTAtom *> _pltVector;
   std::vector<ObjectAtom *> _objectVector;
+
+  /// \brief the list of TLS GOT atoms.
+  std::vector<GOTAtom *> _tlsGotVector;
 
   /// \brief GOT entry that is always 0. Used for undefined weaks.
   GOTAtom *_null;
@@ -414,7 +463,10 @@ public:
             dyn_cast_or_null<const DefinedAtom>(ref.target()))
       if (da->contentType() == DefinedAtom::typeResolver)
         return handleIFUNC(ref);
-    if (isa<const SharedLibraryAtom>(ref.target()))
+    // If it is undefined at link time, push the work to the dynamic linker by
+    // creating a PLT entry
+    if (isa<SharedLibraryAtom>(ref.target()) ||
+        isa<UndefinedAtom>(ref.target()))
       const_cast<Reference &>(ref).setTarget(getPLTEntry(ref.target()));
     return std::error_code();
   }

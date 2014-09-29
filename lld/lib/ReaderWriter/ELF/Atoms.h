@@ -820,31 +820,6 @@ public:
   ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 };
 
-class TLSGETADDRAtom : public SimpleELFDefinedAtom {
-public:
-  TLSGETADDRAtom(const File &f) : SimpleELFDefinedAtom(f) {}
-
-  StringRef name() const override { return "__tls_get_addr"; }
-
-  Scope scope() const override { return scopeGlobal; }
-
-  Merge merge() const override { return mergeAsWeak; }
-
-  SectionChoice sectionChoice() const override { return sectionCustomRequired; }
-
-  StringRef customSectionName() const override { return ".text"; }
-
-  ContentType contentType() const override { return typeCode; }
-
-  uint64_t size() const override { return 0; }
-
-  ContentPermissions permissions() const override { return permR_X; }
-
-  Alignment alignment() const override { return Alignment(0); }
-
-  ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
-};
-
 class DYNAMICAtom : public SimpleELFDefinedAtom {
 public:
   DYNAMICAtom(const File &f) : SimpleELFDefinedAtom(f) {}

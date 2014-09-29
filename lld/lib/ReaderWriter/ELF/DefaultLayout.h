@@ -21,6 +21,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -296,6 +297,10 @@ public:
     return 0;
   }
 
+  bool isReferencedByDefinedAtom(const SharedLibraryAtom *sla) const {
+    return _referencedDynAtoms.count(sla);
+  }
+
 protected:
   /// \brief Allocate a new section.
   virtual AtomSection<ELFT> *createSection(
@@ -317,6 +322,7 @@ protected:
   LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _dynamicRelocationTable;
   LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _pltRelocationTable;
   std::vector<lld::AtomLayout *> _absoluteAtoms;
+  llvm::DenseSet<const SharedLibraryAtom *> _referencedDynAtoms;
   const ELFLinkingContext &_context;
 };
 
@@ -556,11 +562,14 @@ ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) 
     AtomSection<ELFT> *section =
         getSection(sectionName, contentType, permissions);
     // Add runtime relocations to the .rela section.
-    for (const auto &reloc : *definedAtom)
+    for (const auto &reloc : *definedAtom) {
       if (_context.isDynamicRelocation(*definedAtom, *reloc))
         getDynamicRelocationTable()->addRelocation(*definedAtom, *reloc);
       else if (_context.isPLTRelocation(*definedAtom, *reloc))
         getPLTRelocationTable()->addRelocation(*definedAtom, *reloc);
+      if (const auto *sla = dyn_cast<SharedLibraryAtom>(reloc->target()))
+        _referencedDynAtoms.insert(sla);
+    }
     return section->appendAtom(atom);
   } else if (const AbsoluteAtom *absoluteAtom = dyn_cast<AbsoluteAtom>(atom)) {
     // Absolute atoms are not part of any section, they are global for the whole

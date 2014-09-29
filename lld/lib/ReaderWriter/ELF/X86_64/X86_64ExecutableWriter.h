@@ -56,7 +56,6 @@ bool X86_64ExecutableWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   ExecutableWriter<ELFT>::createImplicitFiles(result);
   _gotFile->addAtom(*new (_gotFile->_alloc) GLOBAL_OFFSET_TABLEAtom(*_gotFile));
-  _gotFile->addAtom(*new (_gotFile->_alloc) TLSGETADDRAtom(*_gotFile));
   if (_context.isDynamic())
     _gotFile->addAtom(*new (_gotFile->_alloc) DYNAMICAtom(*_gotFile));
   result.push_back(std::move(_gotFile));

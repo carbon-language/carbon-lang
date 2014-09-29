@@ -110,7 +110,7 @@ protected:
 
   /// \brief Create entry in the dynamic symbols table for this atom.
   virtual bool isDynSymEntryRequired(const SharedLibraryAtom *sla) const {
-    return true;
+    return _layout.isReferencedByDefinedAtom(sla);
   }
 
   /// \brief Create DT_NEEDED dynamic tage for the shared library.
@@ -183,7 +183,7 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
       for (const auto &atom : section->atoms()) {
         const DefinedAtom *da = dyn_cast<const DefinedAtom>(atom->_atom);
         if (da && (da->dynamicExport() == DefinedAtom::dynamicExportAlways ||
-                   _context.hasCoalescedSharedLibPair(da->name())))
+                   _context.isDynamicallyExportedSymbol(da->name())))
           _dynamicSymbolTable->addSymbol(atom->_atom, section->ordinal(),
                                          atom->_virtualAddr, atom);
       }

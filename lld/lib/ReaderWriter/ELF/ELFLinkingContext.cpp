@@ -259,7 +259,7 @@ void ELFLinkingContext::notifySymbolTableCoalesce(const Atom *existingAtom,
     // If strong defined atom coalesces away an atom declared
     // in the shared object the strong atom needs to be dynamically exported.
     // Save its name.
-    _sharedLibCoalescedSymbols.insert(ua->name());
+    _dynamicallyExportedSymbols.insert(ua->name());
 }
 
 } // end namespace lld

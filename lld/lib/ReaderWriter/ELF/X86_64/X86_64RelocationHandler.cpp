@@ -88,6 +88,10 @@ std::error_code X86_64TargetRelocationHandler::applyRelocation(
     }
     break;
   }
+  case R_X86_64_TLSGD: {
+    relocPC32(location, relocVAddress, targetVAddress, ref.addend());
+    break;
+  }
   case R_X86_64_TLSLD: {
     // Rewrite to move %fs:0 into %rax. Technically we should verify that the
     // next relocation is a PC32 to __tls_get_addr...
@@ -115,6 +119,8 @@ std::error_code X86_64TargetRelocationHandler::applyRelocation(
   case R_X86_64_IRELATIVE:
   case R_X86_64_JUMP_SLOT:
   case R_X86_64_GLOB_DAT:
+  case R_X86_64_DTPMOD64:
+  case R_X86_64_DTPOFF64:
     break;
   default: {
     std::string str;
