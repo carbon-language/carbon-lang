@@ -105,12 +105,24 @@ MipsTargetMachine::getSubtargetImpl(const Function &F) const {
       !FnAttrs.getAttribute(AttributeSet::FunctionIndex, "nomips16")
            .hasAttribute(Attribute::None);
 
+  // FIXME: This is related to the code below to reset the target options,
+  // we need to know whether or not the soft float flag is set on the
+  // function before we can generate a subtarget. We also need to use
+  // it as a key for the subtarget since that can be the only difference
+  // between two functions.
+  Attribute SFAttr =
+      FnAttrs.getAttribute(AttributeSet::FunctionIndex, "use-soft-float");
+  bool softFloat = !SFAttr.hasAttribute(Attribute::None)
+                       ? (SFAttr.getValueAsString() == "true" ? true : false)
+                       : Options.UseSoftFloat;
+
   if (hasMips16Attr)
     FS += FS.empty() ? "+mips16" : ",+mips16";
   else if (hasNoMips16Attr)
     FS += FS.empty() ? "-mips16" : ",-mips16";
 
-  auto &I = SubtargetMap[CPU + FS];
+  auto &I = SubtargetMap[CPU + FS + (softFloat ? "use-soft-float=true"
+                                               : "use-soft-float=false")];
   if (!I) {
     // This needs to be done before we create a new subtarget since any
     // creation will depend on the TM and the code generation flags on the
