@@ -270,20 +270,4 @@ enum Offsets {
 
 } // End namespace llvm
 
-namespace SIInstrFlags {
-  enum Flags {
-    // First 4 bits are the instruction encoding
-    VM_CNT = 1 << 0,
-    EXP_CNT = 1 << 1,
-    LGKM_CNT = 1 << 2
-  };
-}
-
-namespace SISrcMods {
-  enum {
-   NEG = 1 << 0,
-   ABS = 1 << 1
-  };
-}
-
 #endif

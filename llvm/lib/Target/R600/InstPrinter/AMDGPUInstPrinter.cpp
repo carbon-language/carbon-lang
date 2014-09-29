@@ -9,6 +9,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPUInstPrinter.h"
+#include "SIDefines.h"
+
 #include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -239,12 +241,12 @@ void AMDGPUInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 void AMDGPUInstPrinter::printOperandAndMods(const MCInst *MI, unsigned OpNo,
                                             raw_ostream &O) {
   unsigned InputModifiers = MI->getOperand(OpNo).getImm();
-  if (InputModifiers & 0x1)
+  if (InputModifiers & SISrcMods::NEG)
     O << '-';
-  if (InputModifiers & 0x2)
+  if (InputModifiers & SISrcMods::ABS)
     O << '|';
   printOperand(MI, OpNo + 1, O);
-  if (InputModifiers & 0x2)
+  if (InputModifiers & SISrcMods::ABS)
     O << '|';
 }
 
