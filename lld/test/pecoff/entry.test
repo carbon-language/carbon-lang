@@ -31,3 +31,8 @@ WWINMAIN: _wWinMainCRTStartup
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=MAINADDR %s
 
 MAINADDR: AddressOfEntryPoint: 0x1004
+
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /entry:baz -- %t.obj
+# RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=MANGLE %s
+
+MANGLE: AddressOfEntryPoint: 0x1004

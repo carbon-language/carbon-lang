@@ -298,7 +298,7 @@ private:
     _firstTime = false;
 
     if (_ctx->hasEntry()) {
-      StringRef entrySym = _ctx->allocate(_ctx->decorateSymbol(getEntry()));
+      StringRef entrySym = _ctx->allocate(getEntry());
       _undefinedAtoms._atoms.push_back(
           new (_alloc) SimpleUndefinedAtom(*this, entrySym));
       _ctx->setHasEntry(true);
@@ -313,9 +313,16 @@ private:
   // subsystem if it's unknown.
   std::string getEntry() const {
     StringRef opt = _ctx->getEntrySymbolName();
-    if (!opt.empty())
-      return opt;
+    if (!opt.empty()) {
+      std::string mangled;
+      if (findDecoratedSymbol(_ctx, _syms.get(), opt, mangled))
+        return mangled;
+      return _ctx->decorateSymbol(opt);
+    }
+    return _ctx->decorateSymbol(getDefaultEntry());
+  }
 
+  std::string getDefaultEntry() const {
     const std::string wWinMainCRTStartup = "wWinMainCRTStartup";
     const std::string WinMainCRTStartup = "WinMainCRTStartup";
     const std::string wmainCRTStartup = "wmainCRTStartup";
