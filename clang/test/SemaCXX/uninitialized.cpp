@@ -150,6 +150,7 @@ A getA(int x) { return A(); }
 A getA(A* a) { return A(); }
 A getA(A a) { return A(); }
 A moveA(A&& a) { return A(); }
+A const_refA(const A& a) { return A(); }
 
 void setupA(bool x) {
   A a1;
@@ -195,6 +196,13 @@ void setupA(bool x) {
   A a33 = A(std::move(a33));   // expected-warning {{variable 'a33' is uninitialized when used within its own initialization}}
   A a34(std::move(a34));   // expected-warning {{variable 'a34' is uninitialized when used within its own initialization}}
   A a35 = std::move(x ? a34 : (37, a35));  // expected-warning {{variable 'a35' is uninitialized when used within its own initialization}}
+
+  A a36 = const_refA(a36);
+  A a37(const_refA(a37));
+
+  A a38({a38});  // expected-warning {{variable 'a38' is uninitialized when used within its own initialization}}
+  A a39 = {a39};  // expected-warning {{variable 'a39' is uninitialized when used within its own initialization}}
+  A a40 = A({a40});  // expected-warning {{variable 'a40' is uninitialized when used within its own initialization}}
 }
 
 bool cond;
@@ -239,6 +247,14 @@ A a32 = moveA(std::move(a32));  // expected-warning {{variable 'a32' is uninitia
 A a33 = A(std::move(a33));   // expected-warning {{variable 'a33' is uninitialized when used within its own initialization}}
 A a34(std::move(a34));   // expected-warning {{variable 'a34' is uninitialized when used within its own initialization}}
 A a35 = std::move(x ? a34 : (37, a35));  // expected-warning {{variable 'a35' is uninitialized when used within its own initialization}}
+
+A a36 = const_refA(a36);
+A a37(const_refA(a37));
+
+A a38({a38});  // expected-warning {{variable 'a38' is uninitialized when used within its own initialization}}
+A a39 = {a39};  // expected-warning {{variable 'a39' is uninitialized when used within its own initialization}}
+A a40 = A({a40});  // expected-warning {{variable 'a40' is uninitialized when used within its own initialization}}
+
 struct B {
   // POD struct.
   int x;
