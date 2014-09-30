@@ -14,7 +14,17 @@
 
 // This test assumes float and double are IEEE-754 single- and double-precision.
 
-#include <endian.h>
+#if defined(__APPLE__)
+# include <machine/endian.h>
+# define BYTE_ORDER __DARWIN_BYTE_ORDER
+# define BIG_ENDIAN __DARWIN_BIG_ENDIAN
+# define LITTLE_ENDIAN __DARWIN_LITTLE_ENDIAN
+#else
+# include <endian.h>
+# define BYTE_ORDER __BYTE_ORDER
+# define BIG_ENDIAN __BIG_ENDIAN
+# define LITTLE_ENDIAN __LITTLE_ENDIAN
+#endif  // __APPLE__
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -42,7 +52,7 @@ int main(int argc, char **argv) {
   unsigned Zero = NearlyMinusOne; // ok
 
   // Build a '+Inf'.
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if BYTE_ORDER == LITTLE_ENDIAN
   char InfVal[] = { 0x00, 0x00, 0x80, 0x7f };
 #else
   char InfVal[] = { 0x7f, 0x80, 0x00, 0x00 };
@@ -51,7 +61,7 @@ int main(int argc, char **argv) {
   memcpy(&Inf, InfVal, 4);
 
   // Build a 'NaN'.
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if BYTE_ORDER == LITTLE_ENDIAN
   char NaNVal[] = { 0x01, 0x00, 0x80, 0x7f };
 #else
   char NaNVal[] = { 0x7f, 0x80, 0x00, 0x01 };
