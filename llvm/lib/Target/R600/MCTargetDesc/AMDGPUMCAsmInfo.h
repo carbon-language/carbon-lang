@@ -1,4 +1,4 @@
-//===-- MCTargetDesc/AMDGPUMCAsmInfo.h - AMDGPU MCAsm Interface  ----------===//
+//===-- MCTargetDesc/AMDGPUMCAsmInfo.h - AMDGPU MCAsm Interface -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
