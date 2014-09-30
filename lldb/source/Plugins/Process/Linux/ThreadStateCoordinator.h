@@ -125,6 +125,9 @@ namespace lldb_private
         void
         Log (const char *format, ...);
 
+        EventCallAfterThreadsStop *
+        GetPendingThreadStopNotification ();
+
         // Member variables.
         LogFunc m_log_func;
 

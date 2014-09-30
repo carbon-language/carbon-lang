@@ -499,3 +499,81 @@ TEST(ThreadStateCoordinatorTest, RequestThreadResumeIgnoresCallbackWhenThreadIsR
     // The resume request should not have gone off because we think it is already running.
     ASSERT_EQ (0, resume_call_count);
 }
+
+TEST(ThreadStateCoordinatorTest, ResumedThreadAlreadyMarkedDoesNotHoldUpPendingStopNotification)
+{
+    // We're going to test this scenario:
+    //   * Deferred notification waiting on two threads, A and B.  A and B currently running.
+    //   * Thread A stops.
+    //   * Thread A resumes.
+    //   * Thread B stops.
+    //
+    //   Here we could have forced A to stop again (after the Thread A resumes) because we had a pending stop nofication awaiting
+    //   all those threads to stop.  However, we are going to explicitly not try to restop A - somehow
+    //   that seems wrong and possibly buggy since for that to happen, we would have intentionally called
+    //   a resume after the stop.  Instead, we'll just log and indicate this looks suspicous.  We can revisit
+    //   that decision after we see if/when that happens.
+
+    ThreadStateCoordinator coordinator(StdoutLogger);
+
+    const lldb::tid_t TRIGGERING_TID = 4105;
+    const lldb::tid_t PENDING_TID_A = 2;
+    const lldb::tid_t PENDING_TID_B = 89;
+
+    ThreadStateCoordinator::ThreadIDSet pending_stop_tids { PENDING_TID_A, PENDING_TID_B };
+
+    bool call_after_fired = false;
+    lldb::tid_t reported_firing_tid = 0;
+
+    int request_thread_stop_calls = 0;
+    ThreadStateCoordinator::ThreadIDSet request_thread_stop_tids;
+
+    // Notify we have a trigger that needs to be fired when all threads in the wait tid set have stopped.
+    coordinator.CallAfterThreadsStop (TRIGGERING_TID,
+                                      pending_stop_tids,
+                                      [&](lldb::tid_t tid) {
+                                          ++request_thread_stop_calls;
+                                          request_thread_stop_tids.insert (tid);
+
+                                      },
+                                      [&](lldb::tid_t tid) {
+                                          call_after_fired = true;
+                                          reported_firing_tid = tid;
+                                      });
+
+    // Neither trigger should have gone off yet.
+    ASSERT_EQ (false, call_after_fired);
+    ASSERT_EQ (0, request_thread_stop_calls);
+
+    // Execute CallAfterThreadsStop.
+    ASSERT_EQ (true, coordinator.ProcessNextEvent ());
+
+    // Both TID A and TID B should have had stop requests made.
+    ASSERT_EQ (2, request_thread_stop_calls);
+    ASSERT_EQ (1, request_thread_stop_tids.count (PENDING_TID_A));
+
+    // But we still shouldn't have the deferred signal call go off yet.
+    ASSERT_EQ (false, call_after_fired);
+
+    // Report thread A stopped.
+    coordinator.NotifyThreadStop (PENDING_TID_A);
+    ASSERT_EQ (true, coordinator.ProcessNextEvent ());
+    ASSERT_EQ (false, call_after_fired);
+
+    // Now report thread A is resuming.  Ensure the resume is called.
+    bool resume_called = false;
+    coordinator.RequestThreadResume (PENDING_TID_A, [&](lldb::tid_t tid) { resume_called = true; } );
+    ASSERT_EQ (false, resume_called);
+    ASSERT_EQ (true, coordinator.ProcessNextEvent ());
+    ASSERT_EQ (true, resume_called);
+
+    // Report thread B stopped.
+    coordinator.NotifyThreadStop (PENDING_TID_B);
+    ASSERT_EQ (false, call_after_fired);
+    ASSERT_EQ (true, coordinator.ProcessNextEvent ());
+
+    // After notifying thread b stopped, we now have thread a resumed but thread b stopped.
+    // However, since thread a had stopped, we now have had both requirements stopped at some point.
+    // For now we'll expect this will fire the pending deferred stop notification.
+    ASSERT_EQ (true, call_after_fired);
+}

@@ -68,6 +68,7 @@ public:
     EventBase (),
     m_triggering_tid (triggering_tid),
     m_wait_for_stop_tids (wait_for_stop_tids),
+    m_original_wait_for_stop_tids (wait_for_stop_tids),
     m_request_thread_stop_func (request_thread_stop_func),
     m_call_after_func (call_after_func)
     {
@@ -82,6 +83,19 @@ public:
     GetRemainingWaitTIDs ()
     {
         return m_wait_for_stop_tids;
+    }
+
+    const ThreadIDSet &
+    GetRemainingWaitTIDs () const
+    {
+        return m_wait_for_stop_tids;
+    }
+
+
+    const ThreadIDSet &
+    GetInitialWaitTIDs () const
+    {
+        return m_original_wait_for_stop_tids;
     }
 
     bool
@@ -167,6 +181,7 @@ private:
 
     const lldb::tid_t m_triggering_tid;
     ThreadIDSet m_wait_for_stop_tids;
+    const ThreadIDSet m_original_wait_for_stop_tids;
     ThreadIDFunc m_request_thread_stop_func;
     ThreadIDFunc m_call_after_func;
 };
@@ -288,9 +303,36 @@ public:
             return true;
         }
 
+        // Before we do the resume below, first check if we have a pending
+        // stop notification this is currently or was previously waiting for
+        // this thread to stop.  This is potentially a buggy situation since
+        // we're ostensibly waiting for threads to stop before we send out the
+        // pending notification, and here we are resuming one before we send
+        // out the pending stop notification.
+        const EventCallAfterThreadsStop *const pending_stop_notification = coordinator.GetPendingThreadStopNotification ();
+        if (pending_stop_notification)
+        {
+            if (pending_stop_notification->GetRemainingWaitTIDs ().count (m_tid) > 0)
+            {
+                coordinator.Log ("EventRequestResume::%s about to resume tid %" PRIu64 " per explicit request but we have a pending stop notification (tid %" PRIu64 ") that is actively waiting for this thread to stop. Valid sequence of events?", __FUNCTION__, m_tid, pending_stop_notification->GetTriggeringTID ());
+            }
+            else if (pending_stop_notification->GetInitialWaitTIDs ().count (m_tid) > 0)
+            {
+                coordinator.Log ("EventRequestResume::%s about to resume tid %" PRIu64 " per explicit request but we have a pending stop notification (tid %" PRIu64 ") that hasn't fired yet and this is one of the threads we had been waiting on (and already marked satisfied for this tid). Valid sequence of events?", __FUNCTION__, m_tid, pending_stop_notification->GetTriggeringTID ());
+                for (auto tid : pending_stop_notification->GetRemainingWaitTIDs ())
+                {
+                    coordinator.Log ("EventRequestResume::%s tid %" PRIu64 " deferred stop notification still waiting on tid  %" PRIu64,
+                                     __FUNCTION__,
+                                     pending_stop_notification->GetTriggeringTID (),
+                                     tid);
+                }
+            }
+        }
+
         // Request a resume.  We expect this to be synchronous and the system
         // to reflect it is running after this completes.
         m_request_thread_resume_func (m_tid);
+
         return true;
     }
 
@@ -343,10 +385,9 @@ ThreadStateCoordinator::SetPendingNotification (const EventBaseSP &event_sp)
 
     const EventCallAfterThreadsStop *new_call_after_event = static_cast<EventCallAfterThreadsStop*> (event_sp.get ());
 
-    if (m_pending_notification_sp)
+    EventCallAfterThreadsStop *const prev_call_after_event = GetPendingThreadStopNotification ();
+    if (prev_call_after_event)
     {
-        const EventCallAfterThreadsStop *prev_call_after_event = static_cast<EventCallAfterThreadsStop*> (m_pending_notification_sp.get ());
-
         // Yikes - we've already got a pending signal notification in progress.
         // Log this info.  We lose the pending notification here.
         Log ("ThreadStateCoordinator::%s dropping existing pending signal notification for tid %" PRIu64 ", to be replaced with signal for tid %" PRIu64,
@@ -377,9 +418,9 @@ ThreadStateCoordinator::ThreadDidStop (lldb::tid_t tid)
     m_tid_stop_map[tid] = true;
 
     // If we have a pending notification, remove this from the set.
-    if (m_pending_notification_sp)
+    EventCallAfterThreadsStop *const call_after_event = GetPendingThreadStopNotification ();
+    if (call_after_event)
     {
-        EventCallAfterThreadsStop *const call_after_event = static_cast<EventCallAfterThreadsStop*> (m_pending_notification_sp.get ());
         const bool pending_stops_remain = call_after_event->RemoveThreadStopRequirementAndMaybeSignal (tid);
         if (!pending_stops_remain)
         {
@@ -396,11 +437,11 @@ ThreadStateCoordinator::ThreadWasCreated (lldb::tid_t tid)
     // We assume a created thread is not stopped.
     m_tid_stop_map[tid] = false;
 
-    if (m_pending_notification_sp)
+    EventCallAfterThreadsStop *const call_after_event = GetPendingThreadStopNotification ();
+    if (call_after_event)
     {
         // Tell the pending notification that we need to wait
         // for this new thread to stop.
-        EventCallAfterThreadsStop *const call_after_event = static_cast<EventCallAfterThreadsStop*> (m_pending_notification_sp.get ());
         call_after_event->AddThreadStopRequirement (tid);
     }
 }
@@ -414,9 +455,9 @@ ThreadStateCoordinator::ThreadDidDie (lldb::tid_t tid)
     m_tid_stop_map.erase (tid);
 
     // If we have a pending notification, remove this from the set.
-    if (m_pending_notification_sp)
+    EventCallAfterThreadsStop *const call_after_event = GetPendingThreadStopNotification ();
+    if (call_after_event)
     {
-        EventCallAfterThreadsStop *const call_after_event = static_cast<EventCallAfterThreadsStop*> (m_pending_notification_sp.get ());
         const bool pending_stops_remain = call_after_event->RemoveThreadStopRequirementAndMaybeSignal (tid);
         if (!pending_stops_remain)
         {
@@ -504,4 +545,10 @@ bool
 ThreadStateCoordinator::ProcessNextEvent ()
 {
     return DequeueEventWithWait()->ProcessEvent (*this);
+}
+
+ThreadStateCoordinator::EventCallAfterThreadsStop *
+ThreadStateCoordinator::GetPendingThreadStopNotification ()
+{
+    return static_cast<EventCallAfterThreadsStop*> (m_pending_notification_sp.get ());
 }
