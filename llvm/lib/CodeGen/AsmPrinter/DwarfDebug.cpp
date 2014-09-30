@@ -317,6 +317,8 @@ DIE &DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
   DIE *SPDie = SPCU.getOrCreateSubprogramDIE(SP);
 
   attachLowHighPC(SPCU, *SPDie, FunctionBeginSym, FunctionEndSym);
+  if (!CurFn->getTarget().Options.DisableFramePointerElim(*CurFn))
+    SPCU.addFlag(*SPDie, dwarf::DW_AT_APPLE_omit_frame_ptr);
 
   // Only include DW_AT_frame_base in full debug info
   if (SPCU.getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly) {
@@ -529,7 +531,7 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
     SPCU.addDIEEntry(*AbsDef, dwarf::DW_AT_object_pointer, *ObjectPointer);
 }
 
-DIE &DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
+void DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
                                              LexicalScope *Scope) {
   assert(Scope && Scope->getScopeNode());
   assert(!Scope->getInlinedAt());
@@ -569,8 +571,6 @@ DIE &DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
 
   if (ObjectPointer)
     TheCU.addDIEEntry(ScopeDIE, dwarf::DW_AT_object_pointer, *ObjectPointer);
-
-  return ScopeDIE;
 }
 
 // Construct a DIE for this scope.
@@ -1725,9 +1725,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     constructAbstractSubprogramScopeDIE(TheCU, AScope);
   }
 
-  DIE &CurFnDIE = constructSubprogramScopeDIE(TheCU, FnScope);
-  if (!CurFn->getTarget().Options.DisableFramePointerElim(*CurFn))
-    TheCU.addFlag(CurFnDIE, dwarf::DW_AT_APPLE_omit_frame_ptr);
+  constructSubprogramScopeDIE(TheCU, FnScope);
 
   // Clear debug info
   // Ownership of DbgVariables is a bit subtle - ScopeVariables owns all the

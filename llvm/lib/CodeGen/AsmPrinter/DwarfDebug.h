@@ -382,7 +382,7 @@ class DwarfDebug : public AsmPrinterHandler {
   void constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
                                            LexicalScope *Scope);
   /// \brief Construct a DIE for this subprogram scope.
-  DIE &constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
+  void constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
                                    LexicalScope *Scope);
   /// A helper function to create children of a Scope DIE.
   DIE *createScopeChildrenDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope,
