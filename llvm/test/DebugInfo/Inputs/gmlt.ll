@@ -50,7 +50,6 @@
 ; the absence of high_pc/low_pc/ranges and know that they just need it for
 ; retrieving the name of a concrete inlined instance
 
-; CHECK-NEXT:     DW_AT_inline
 ; CHECK-NOT: {{DW_TAG|DW_AT|NULL}}
 
 ; Check that we only provide the minimal attributes on a subprogram to save space.

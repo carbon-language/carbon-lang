@@ -526,7 +526,8 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
                                  DIDescriptor());
   SPCU.applySubprogramAttributesToDefinition(SP, *AbsDef);
 
-  SPCU.addUInt(*AbsDef, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
+  if (TheCU.getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly)
+    SPCU.addUInt(*AbsDef, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
   if (DIE *ObjectPointer = createAndAddScopeChildren(SPCU, Scope, *AbsDef))
     SPCU.addDIEEntry(*AbsDef, dwarf::DW_AT_object_pointer, *ObjectPointer);
 }
