@@ -1,7 +1,15 @@
 # RUN: yaml2obj %p/Inputs/hello.obj.yaml > %t.obj
 #
-# RUN: not lld -flavor link /out:%t2.exe /include:__imp__nosuchsym %t.obj \
-# RUN:   >& %t2.log
-# RUN: FileCheck %s < %t2.log
+# RUN: not lld -flavor link /out:%t.exe /include:__imp__nosuchsym %t.obj \
+# RUN:   >& %t.log
+# RUN: FileCheck -check-prefix=X86 %s < %t.log
 
-CHECK: Undefined symbol: __imp__nosuchsym: _nosuchsym
+X86: Undefined symbol: __imp__nosuchsym: _nosuchsym
+
+# RUN: yaml2obj %p/Inputs/hello64.obj.yaml > %t2.obj
+#
+# RUN: not lld -flavor link /out:%t2.exe /include:__imp__nosuchsym %t2.obj \
+# RUN:   /machine:x64 >& %t2.log
+# RUN: FileCheck -check-prefix=X64 %s < %t2.log
+
+X64: Undefined symbol: __imp__nosuchsym: _nosuchsym

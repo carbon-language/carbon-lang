@@ -132,15 +132,16 @@ private:
   COFFAbsoluteAtom _imageBaseAtom;
 };
 
-// A LocallyImporteSymbolFile is an archive file containing _imp_
+// A LocallyImporteSymbolFile is an archive file containing __imp_
 // symbols for local use.
 //
 // For each defined symbol, linker creates an implicit defined symbol
-// by appending "_imp_" prefix to the original name. The content of
+// by appending "__imp_" prefix to the original name. The content of
 // the implicit symbol is a pointer to the original symbol
 // content. This feature allows one to compile and link the following
 // code without error, although _imp__hello is not defined in the
-// code.
+// code. (the leading "_" in this example is automatically appended,
+// assuming it's x86.)
 //
 //   void hello() { printf("Hello\n"); }
 //   extern void (*_imp__hello)();
@@ -153,19 +154,18 @@ private:
 class LocallyImportedSymbolFile : public impl::VirtualArchiveLibraryFile {
 public:
   LocallyImportedSymbolFile(const PECOFFLinkingContext &ctx)
-      : VirtualArchiveLibraryFile("__imp_"),
-        _prefix(ctx.decorateSymbol("_imp_")), _is64(ctx.is64Bit()),
+      : VirtualArchiveLibraryFile("__imp_"), _is64(ctx.is64Bit()),
         _ordinal(0) {}
 
   const File *find(StringRef sym, bool dataSymbolOnly) const override {
-    if (!sym.startswith(_prefix))
+    std::string prefix = "__imp_";
+    if (!sym.startswith(prefix))
       return nullptr;
-    StringRef undef = sym.substr(_prefix.size());
+    StringRef undef = sym.substr(prefix.size());
     return new (_alloc) impl::ImpSymbolFile(sym, undef, _ordinal++, _is64);
   }
 
 private:
-  std::string _prefix;
   bool _is64;
   mutable uint64_t _ordinal;
   mutable llvm::BumpPtrAllocator _alloc;
