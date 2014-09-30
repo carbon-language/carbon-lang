@@ -39,7 +39,7 @@ define void @fneg_v4f64(<4 x double> addrspace(1)* nocapture %out, <4 x double> 
 
 ; FUNC-LABEL: @fneg_free_f64
 ; FIXME: Unnecessary copy to VGPRs
-; SI: V_ADD_F64 {{v\[[0-9]+:[0-9]+\]}}, {{v\[[0-9]+:[0-9]+\]}}, -{{v\[[0-9]+:[0-9]+\]}}, 0, 0
+; SI: V_ADD_F64 {{v\[[0-9]+:[0-9]+\]}}, {{v\[[0-9]+:[0-9]+\]}}, -{{v\[[0-9]+:[0-9]+\]$}}
 define void @fneg_free_f64(double addrspace(1)* %out, i64 %in) {
   %bc = bitcast i64 %in to double
   %fsub = fsub double 0.0, %bc

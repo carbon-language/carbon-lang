@@ -52,6 +52,8 @@ private:
                          StringRef Asm, StringRef Default = "");
   static void printAbs(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   static void printClamp(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  static void printClampSI(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  static void printOModSI(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   static void printLiteral(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   static void printLast(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   static void printNeg(const MCInst *MI, unsigned OpNo, raw_ostream &O);

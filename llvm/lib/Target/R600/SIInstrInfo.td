@@ -185,6 +185,14 @@ def tfe : Operand <i1> {
   let PrintMethod = "printTFE";
 }
 
+def omod : Operand <i32> {
+  let PrintMethod = "printOModSI";
+}
+
+def ClampMod : Operand <i1> {
+  let PrintMethod = "printClampSI";
+}
+
 } // End OperandType = "OPERAND_IMMEDIATE"
 
 //===----------------------------------------------------------------------===//
@@ -399,7 +407,7 @@ class getIns64 <RegisterClass Src0RC, RegisterClass Src1RC,
       !if (!eq(HasModifiers, 1),
         // VOP1 with modifiers
         (ins InputModsNoDefault:$src0_modifiers, Src0RC:$src0,
-             i32imm:$clamp, i32imm:$omod)
+             ClampMod:$clamp, omod:$omod)
       /* else */,
         // VOP1 without modifiers
         (ins Src0RC:$src0)
@@ -409,7 +417,7 @@ class getIns64 <RegisterClass Src0RC, RegisterClass Src1RC,
         // VOP 2 with modifiers
         (ins InputModsNoDefault:$src0_modifiers, Src0RC:$src0,
              InputModsNoDefault:$src1_modifiers, Src1RC:$src1,
-             i32imm:$clamp, i32imm:$omod)
+             ClampMod:$clamp, omod:$omod)
       /* else */,
         // VOP2 without modifiers
         (ins Src0RC:$src0, Src1RC:$src1)
@@ -420,7 +428,7 @@ class getIns64 <RegisterClass Src0RC, RegisterClass Src1RC,
         (ins InputModsNoDefault:$src0_modifiers, Src0RC:$src0,
              InputModsNoDefault:$src1_modifiers, Src1RC:$src1,
              InputModsNoDefault:$src2_modifiers, Src2RC:$src2,
-             i32imm:$clamp, i32imm:$omod)
+             ClampMod:$clamp, omod:$omod)
       /* else */,
         // VOP3 without modifiers
         (ins Src0RC:$src0, Src1RC:$src1, Src2RC:$src2)
@@ -442,12 +450,14 @@ class getAsm32 <int NumSrcArgs> {
 // instruction.
 class getAsm64 <int NumSrcArgs, bit HasModifiers> {
   string src0 = "$src0_modifiers,";
-  string src1 = !if(!eq(NumSrcArgs, 1), "", " $src1_modifiers,");
-  string src2 = !if(!eq(NumSrcArgs, 3), " $src2_modifiers,", "");
+  string src1 = !if(!eq(NumSrcArgs, 1), "",
+                   !if(!eq(NumSrcArgs, 2), " $src1_modifiers",
+                                           " $src1_modifiers,"));
+  string src2 = !if(!eq(NumSrcArgs, 3), " $src2_modifiers", "");
   string ret =
   !if(!eq(HasModifiers, 0),
       getAsm32<NumSrcArgs>.ret,
-      " $dst, "#src0#src1#src2#" $clamp, $omod");
+      " $dst, "#src0#src1#src2#"$clamp"#"$omod");
 }
 
 
@@ -632,7 +642,7 @@ multiclass VOP1Inst <bits<8> op, string opName, VOPProfile P,
   P.Ins64, P.Asm64,
   !if(P.HasModifiers,
       [(set P.DstVT:$dst, (node (P.Src0VT (VOP3Mods0 P.Src0VT:$src0,
-                                i32:$src0_modifiers, i32:$clamp, i32:$omod))))],
+                                i32:$src0_modifiers, i1:$clamp, i32:$omod))))],
       [(set P.DstVT:$dst, (node P.Src0VT:$src0))]),
   P.HasModifiers
 >;
@@ -664,7 +674,7 @@ multiclass VOP2Inst <bits<6> op, string opName, VOPProfile P,
   !if(P.HasModifiers,
       [(set P.DstVT:$dst,
            (node (P.Src0VT (VOP3Mods0 P.Src0VT:$src0, i32:$src0_modifiers,
-                                      i32:$clamp, i32:$omod)),
+                                      i1:$clamp, i32:$omod)),
                  (P.Src1VT (VOP3Mods P.Src1VT:$src1, i32:$src1_modifiers))))],
       [(set P.DstVT:$dst, (node P.Src0VT:$src0, P.Src1VT:$src1))]),
   revOp, P.HasModifiers
@@ -692,7 +702,7 @@ multiclass VOP2bInst <bits<6> op, string opName, VOPProfile P,
   !if(P.HasModifiers,
       [(set P.DstVT:$dst,
            (node (P.Src0VT (VOP3Mods0 P.Src0VT:$src0, i32:$src0_modifiers,
-                                      i32:$clamp, i32:$omod)),
+                                      i1:$clamp, i32:$omod)),
                  (P.Src1VT (VOP3Mods P.Src1VT:$src1, i32:$src1_modifiers))))],
       [(set P.DstVT:$dst, (node P.Src0VT:$src0, P.Src1VT:$src1))]),
   revOp, P.HasModifiers
@@ -719,7 +729,7 @@ multiclass VOPCInst <bits<8> op, string opName,
   !if(P.HasModifiers,
       [(set i1:$dst,
           (setcc (P.Src0VT (VOP3Mods0 P.Src0VT:$src0, i32:$src0_modifiers,
-                                      i32:$clamp, i32:$omod)),
+                                      i1:$clamp, i32:$omod)),
                  (P.Src1VT (VOP3Mods P.Src1VT:$src1, i32:$src1_modifiers)),
                  cond))],
       [(set i1:$dst, (setcc P.Src0VT:$src0, P.Src1VT:$src1, cond))]),
@@ -767,7 +777,7 @@ multiclass VOP3Inst <bits<9> op, string opName, VOPProfile P,
     !if(P.HasModifiers,
         [(set P.DstVT:$dst,
             (node (P.Src0VT (VOP3Mods0 P.Src0VT:$src0, i32:$src0_modifiers,
-                                       i32:$clamp, i32:$omod)),
+                                       i1:$clamp, i32:$omod)),
                   (P.Src1VT (VOP3Mods P.Src1VT:$src1, i32:$src1_modifiers)),
                   (P.Src2VT (VOP3Mods P.Src2VT:$src2, i32:$src2_modifiers))))],
         [(set P.DstVT:$dst, (node P.Src0VT:$src0, P.Src1VT:$src1,
@@ -776,14 +786,14 @@ multiclass VOP3Inst <bits<9> op, string opName, VOPProfile P,
     !if(P.HasModifiers,
         [(set P.DstVT:$dst,
             (node (P.Src0VT (VOP3Mods0 P.Src0VT:$src0, i32:$src0_modifiers,
-                                       i32:$clamp, i32:$omod)),
+                                       i1:$clamp, i32:$omod)),
                   (P.Src1VT (VOP3Mods P.Src1VT:$src1, i32:$src1_modifiers))))],
         [(set P.DstVT:$dst, (node P.Src0VT:$src0, P.Src1VT:$src1))])
   /* P.NumSrcArgs == 1 */,
     !if(P.HasModifiers,
         [(set P.DstVT:$dst,
             (node (P.Src0VT (VOP3Mods0 P.Src0VT:$src0, i32:$src0_modifiers,
-                                       i32:$clamp, i32:$omod))))],
+                                       i1:$clamp, i32:$omod))))],
         [(set P.DstVT:$dst, (node P.Src0VT:$src0))]))),
   P.NumSrcArgs, P.HasModifiers
 >;
@@ -795,8 +805,8 @@ multiclass VOP3b_Helper <bits<9> op, RegisterClass vrc, RegisterClass arc,
       (ins InputModsNoDefault:$src0_modifiers, arc:$src0,
            InputModsNoDefault:$src1_modifiers, arc:$src1,
            InputModsNoDefault:$src2_modifiers, arc:$src2,
-           i32imm:$clamp, i32imm:$omod),
-  opName#" $dst0, $dst1, $src0_modifiers, $src1_modifiers, $src2_modifiers, $clamp, $omod", pattern,
+           ClampMod:$clamp, i32imm:$omod),
+  opName#" $dst0, $dst1, $src0_modifiers, $src1_modifiers, $src2_modifiers"#"$clamp"#"$omod", pattern,
   opName, opName, 1, 1
 >;
 
@@ -808,13 +818,13 @@ multiclass VOP3b_32 <bits<9> op, string opName, list<dag> pattern> :
 
 
 class Vop3ModPat<Instruction Inst, VOPProfile P, SDPatternOperator node> : Pat<
-  (node (P.Src0VT (VOP3Mods0 P.Src0VT:$src0, i32:$src0_modifiers, i32:$clamp, i32:$omod)),
+  (node (P.Src0VT (VOP3Mods0 P.Src0VT:$src0, i32:$src0_modifiers, i1:$clamp, i32:$omod)),
         (P.Src1VT (VOP3Mods P.Src1VT:$src1, i32:$src1_modifiers)),
         (P.Src2VT (VOP3Mods P.Src2VT:$src2, i32:$src2_modifiers))),
   (Inst i32:$src0_modifiers, P.Src0VT:$src0,
         i32:$src1_modifiers, P.Src1VT:$src1,
         i32:$src2_modifiers, P.Src2VT:$src2,
-        i32:$clamp,
+        i1:$clamp,
         i32:$omod)>;
 
 //===----------------------------------------------------------------------===//
