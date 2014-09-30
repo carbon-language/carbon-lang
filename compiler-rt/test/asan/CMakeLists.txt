@@ -19,7 +19,7 @@ endmacro()
 # TODO: merge with non-ANDROID case
 if(ANDROID)
   foreach(arch ${ASAN_SUPPORTED_ARCH})
-    set(ASAN_TEST_TARGET_CC ${COMPILER_RT_TEST_COMPILER})
+    set(ASAN_TEST_TARGET_CC ${CMAKE_CXX_COMPILER})
     set(ASAN_TEST_TARGET_CFLAGS ${COMPILER_RT_TEST_COMPILER_CFLAGS})
     set(ASAN_TEST_CONFIG_SUFFIX "-${arch}-android")
     get_bits_for_arch(${arch} ASAN_TEST_BITS)
