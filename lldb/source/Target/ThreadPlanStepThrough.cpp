@@ -87,7 +87,10 @@ ThreadPlanStepThrough::DidPush ()
 void
 ThreadPlanStepThrough::LookForPlanToStepThroughFromCurrentPC()
 {
-    m_sub_plan_sp = m_thread.GetProcess()->GetDynamicLoader()->GetStepThroughTrampolinePlan (m_thread, m_stop_others);
+    DynamicLoader *loader = m_thread.GetProcess()->GetDynamicLoader();
+    if (loader)
+        m_sub_plan_sp = loader->GetStepThroughTrampolinePlan (m_thread, m_stop_others);
+        
     // If that didn't come up with anything, try the ObjC runtime plugin:
     if (!m_sub_plan_sp.get())
     {
