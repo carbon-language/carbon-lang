@@ -48,6 +48,12 @@ Sema::CUDAFunctionTarget Sema::IdentifyCUDATarget(const FunctionDecl *D) {
     if (D->hasAttr<CUDAHostAttr>())
       return CFT_HostDevice;
     return CFT_Device;
+  } else if (D->hasAttr<CUDAHostAttr>()) {
+    return CFT_Host;
+  } else if (D->isImplicit()) {
+    // Some implicit declarations (like intrinsic functions) are not marked.
+    // Set the most lenient target on them for maximal flexibility.
+    return CFT_HostDevice;
   }
 
   return CFT_Host;
