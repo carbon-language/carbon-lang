@@ -474,7 +474,7 @@ std::string Intrinsic::getName(ID id, ArrayRef<Type*> Tys) {
 ///
 /// NOTE: This must be kept in synch with the copy in TblGen/IntrinsicEmitter!
 enum IIT_Info {
-  // Common values should be encoded with 0-15.
+  // Common values should be encoded with 0-16.
   IIT_Done = 0,
   IIT_I1   = 1,
   IIT_I8   = 2,
@@ -489,23 +489,24 @@ enum IIT_Info {
   IIT_V8   = 11,
   IIT_V16  = 12,
   IIT_V32  = 13,
-  IIT_PTR  = 14,
-  IIT_ARG  = 15,
+  IIT_V64  = 14,
+  IIT_PTR  = 15,
+  IIT_ARG  = 16,
 
-  // Values from 16+ are only encodable with the inefficient encoding.
-  IIT_MMX  = 16,
-  IIT_METADATA = 17,
-  IIT_EMPTYSTRUCT = 18,
-  IIT_STRUCT2 = 19,
-  IIT_STRUCT3 = 20,
-  IIT_STRUCT4 = 21,
-  IIT_STRUCT5 = 22,
-  IIT_EXTEND_ARG = 23,
-  IIT_TRUNC_ARG = 24,
-  IIT_ANYPTR = 25,
-  IIT_V1   = 26,
-  IIT_VARARG = 27,
-  IIT_HALF_VEC_ARG = 28
+  // Values from 17+ are only encodable with the inefficient encoding.
+  IIT_MMX  = 17,
+  IIT_METADATA = 18,
+  IIT_EMPTYSTRUCT = 19,
+  IIT_STRUCT2 = 20,
+  IIT_STRUCT3 = 21,
+  IIT_STRUCT4 = 22,
+  IIT_STRUCT5 = 23,
+  IIT_EXTEND_ARG = 24,
+  IIT_TRUNC_ARG = 25,
+  IIT_ANYPTR = 26,
+  IIT_V1   = 27,
+  IIT_VARARG = 28,
+  IIT_HALF_VEC_ARG = 29
 };
 
 
@@ -574,6 +575,10 @@ static void DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
     return;
   case IIT_V32:
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 32));
+    DecodeIITType(NextElt, Infos, OutputTable);
+    return;
+  case IIT_V64:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 64));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
   case IIT_PTR:
