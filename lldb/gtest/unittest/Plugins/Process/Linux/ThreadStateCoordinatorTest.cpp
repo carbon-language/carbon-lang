@@ -551,6 +551,7 @@ TEST(ThreadStateCoordinatorTest, ResumedThreadAlreadyMarkedDoesNotHoldUpPendingS
     // Both TID A and TID B should have had stop requests made.
     ASSERT_EQ (2, request_thread_stop_calls);
     ASSERT_EQ (1, request_thread_stop_tids.count (PENDING_TID_A));
+    ASSERT_EQ (1, request_thread_stop_tids.count (PENDING_TID_B));
 
     // But we still shouldn't have the deferred signal call go off yet.
     ASSERT_EQ (false, call_after_fired);
