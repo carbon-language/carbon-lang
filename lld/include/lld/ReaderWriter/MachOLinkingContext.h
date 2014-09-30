@@ -214,6 +214,9 @@ public:
   // GOT creation Pass should be run.
   bool needsGOTPass() const;
 
+  /// Pass to transform __compact_unwind into __unwind_info should be run.
+  bool needsCompactUnwindPass() const;
+
   /// Magic symbol name stubs will need to help lazy bind.
   StringRef binderSymbolName() const;
 

@@ -137,6 +137,7 @@ public:
     typeDTraceDOF,          // runtime data for Dtrace [Darwin]
     typeTempLTO,            // temporary atom for bitcode reader
     typeCompactUnwindInfo,  // runtime data for unwinder [Darwin]
+    typeProcessedUnwindInfo,// compressed compact unwind info [Darwin]
     typeThunkTLV,           // thunk used to access a TLV [Darwin]
     typeTLVInitialData,     // initial data for a TLV [Darwin]
     typeTLVInitialZeroFill, // TLV initial zero fill data [Darwin]

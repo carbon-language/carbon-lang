@@ -43,7 +43,10 @@ global-symbols:
 # CHECK:     Name: __text
 # CHECK:     Segment: __TEXT
 # CHECK:     Size: 0x1
-# CHECK:     Offset: 4095
+# CHECK:     Offset: 4027
+
+# CHECK-LABEL: Section {
+# CHECK:     Name: __unwind_info
 
 # CHECK-LABEL: Section {
 # CHECK:     Name: __data

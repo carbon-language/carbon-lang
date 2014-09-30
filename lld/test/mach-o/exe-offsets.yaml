@@ -54,6 +54,9 @@ global-symbols:
 # CHECK:     Offset: 0
 
 # CHECK-LABEL: Section {
+# CHECK:     Name: __unwind_info
+
+# CHECK-LABEL: Section {
 # CHECK:     Name: __data
 # CHECK:     Segment: __DATA
 # CHECK:     Size: 0x5

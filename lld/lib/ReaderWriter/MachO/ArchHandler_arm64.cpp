@@ -76,6 +76,17 @@ public:
   bool isCallSite(const Reference &) override;
   bool isPointer(const Reference &) override;
   bool isPairedReloc(const normalized::Relocation &) override;
+
+  bool needsCompactUnwind() override {
+    return false;
+  }
+  Reference::KindValue imageOffsetKind() override {
+    return invalid;
+  }
+  Reference::KindValue imageOffsetKindIndirect() override {
+    return invalid;
+  }
+
   std::error_code getReferenceInfo(const normalized::Relocation &reloc,
                                    const DefinedAtom *inAtom,
                                    uint32_t offsetInAtom,
@@ -103,6 +114,7 @@ public:
 
   void generateAtomContent(const DefinedAtom &atom, bool relocatable,
                            FindAddressForAtom findAddress,
+                           uint64_t imageBaseAddress,
                            uint8_t *atomContentBuffer) override;
 
   void appendSectionRelocations(const DefinedAtom &atom,
@@ -440,6 +452,7 @@ std::error_code ArchHandler_arm64::getPairReferenceInfo(
 void ArchHandler_arm64::generateAtomContent(const DefinedAtom &atom,
                                             bool relocatable,
                                             FindAddressForAtom findAddress,
+                                            uint64_t imageBaseAddress,
                                             uint8_t *atomContentBuffer) {
   // Copy raw bytes.
   memcpy(atomContentBuffer, atom.rawContent().data(), atom.size());

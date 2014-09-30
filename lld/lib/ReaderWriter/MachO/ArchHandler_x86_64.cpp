@@ -46,6 +46,9 @@ public:
     case ripRel32Got:
       canBypassGOT = false;
       return true;
+    case imageOffsetGot:
+      canBypassGOT = false;
+      return true;
     default:
       return false;
     }
@@ -55,8 +58,30 @@ public:
   void updateReferenceToGOT(const Reference *ref, bool targetNowGOT) override {
     assert(ref->kindNamespace() == Reference::KindNamespace::mach_o);
     assert(ref->kindArch() == Reference::KindArch::x86_64);
-    const_cast<Reference *>(ref)
+
+    switch (ref->kindValue()) {
+    case ripRel32Got:
+      assert(targetNowGOT && "target must be GOT");
+    case ripRel32GotLoad:
+      const_cast<Reference *>(ref)
         ->setKindValue(targetNowGOT ? ripRel32 : ripRel32GotLoadNowLea);
+      break;
+    case imageOffsetGot:
+      const_cast<Reference *>(ref)->setKindValue(imageOffset);
+      break;
+    default:
+      llvm_unreachable("unknown GOT reference kind");
+    }
+  }
+
+  bool needsCompactUnwind() override {
+    return true;
+  }
+  Reference::KindValue imageOffsetKind() override {
+    return imageOffset;
+  }
+  Reference::KindValue imageOffsetKindIndirect() override {
+    return imageOffsetGot;
   }
 
   const StubInfo &stubInfo() override { return _sStubInfo; }
@@ -64,6 +89,7 @@ public:
   bool isCallSite(const Reference &) override;
   bool isPointer(const Reference &) override;
   bool isPairedReloc(const normalized::Relocation &) override;
+
   std::error_code getReferenceInfo(const normalized::Relocation &reloc,
                                    const DefinedAtom *inAtom,
                                    uint32_t offsetInAtom,
@@ -91,6 +117,7 @@ public:
 
   void generateAtomContent(const DefinedAtom &atom, bool relocatable,
                            FindAddressForAtom findAddress,
+                           uint64_t imageBase,
                            uint8_t *atomContentBuffer) override;
 
   void appendSectionRelocations(const DefinedAtom &atom,
@@ -130,6 +157,11 @@ private:
                            /// to "leaq _foo(%rip), %rax
     lazyPointer,           /// Location contains a lazy pointer.
     lazyImmediateLocation, /// Location contains immediate value used in stub.
+
+    imageOffset,           /// Location contains offset of atom in final image
+    imageOffsetGot,        /// Location contains offset of GOT entry for atom in
+                           /// final image (typically personality function).
+
   };
 
   Reference::KindValue kindFromReloc(const normalized::Relocation &reloc);
@@ -138,7 +170,7 @@ private:
 
   void applyFixupFinal(const Reference &ref, uint8_t *location,
                        uint64_t fixupAddress, uint64_t targetAddress,
-                       uint64_t inAtomAddress);
+                       uint64_t inAtomAddress, uint64_t imageBaseAddress);
 
   void applyFixupRelocatable(const Reference &ref, uint8_t *location,
                              uint64_t fixupAddress,
@@ -165,6 +197,7 @@ const Registry::KindStrings ArchHandler_x86_64::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(pointer64), LLD_KIND_STRING_ENTRY(pointer64Anon),
   LLD_KIND_STRING_ENTRY(delta32), LLD_KIND_STRING_ENTRY(delta64),
   LLD_KIND_STRING_ENTRY(delta32Anon), LLD_KIND_STRING_ENTRY(delta64Anon),
+  LLD_KIND_STRING_ENTRY(imageOffset), LLD_KIND_STRING_ENTRY(imageOffsetGot),
   LLD_KIND_STRING_END
 };
 
@@ -382,6 +415,7 @@ ArchHandler_x86_64::getPairReferenceInfo(const normalized::Relocation &reloc1,
 void ArchHandler_x86_64::generateAtomContent(const DefinedAtom &atom,
                                              bool relocatable,
                                              FindAddressForAtom findAddress,
+                                             uint64_t imageBaseAddress,
                                              uint8_t *atomContentBuffer) {
   // Copy raw bytes.
   memcpy(atomContentBuffer, atom.rawContent().data(), atom.size());
@@ -400,8 +434,8 @@ void ArchHandler_x86_64::generateAtomContent(const DefinedAtom &atom,
                                         atomAddress);
     } else {
       applyFixupFinal(*ref, &atomContentBuffer[offset],
-                                  fixupAddress, targetAddress,
-                                  atomAddress);
+                      fixupAddress, targetAddress,
+                      atomAddress, imageBaseAddress);
     }
   }
 }
@@ -410,7 +444,8 @@ void ArchHandler_x86_64::applyFixupFinal(const Reference &ref,
                                          uint8_t *location,
                                          uint64_t fixupAddress,
                                          uint64_t targetAddress,
-                                         uint64_t inAtomAddress) {
+                                         uint64_t inAtomAddress,
+                                         uint64_t imageBaseAddress) {
   if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return;
   assert(ref.kindArch() == Reference::KindArch::x86_64);
@@ -454,6 +489,10 @@ void ArchHandler_x86_64::applyFixupFinal(const Reference &ref,
   case lazyPointer:
   case lazyImmediateLocation:
     // do nothing
+    return;
+  case imageOffset:
+  case imageOffsetGot:
+    write32(*loc32, _swap, (targetAddress - imageBaseAddress) + ref.addend());
     return;
   case invalid:
     // Fall into llvm_unreachable().
@@ -513,6 +552,10 @@ void ArchHandler_x86_64::applyFixupRelocatable(const Reference &ref,
   case lazyPointer:
   case lazyImmediateLocation:
     llvm_unreachable("lazy reference kind implies Stubs pass was run");
+    return;
+  case imageOffset:
+  case imageOffsetGot:
+    llvm_unreachable("image offset implies __unwind_info");
     return;
   case invalid:
     // Fall into llvm_unreachable().
@@ -604,6 +647,10 @@ void ArchHandler_x86_64::appendSectionRelocations(
   case lazyPointer:
   case lazyImmediateLocation:
     llvm_unreachable("lazy reference kind implies Stubs pass was run");
+    return;
+  case imageOffset:
+  case imageOffsetGot:
+    llvm_unreachable("__unwind_info references should have been resolved");
     return;
   case invalid:
     // Fall into llvm_unreachable().

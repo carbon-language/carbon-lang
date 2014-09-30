@@ -220,6 +220,7 @@ const MachOFinalSectionFromAtomType sectsToAtomType[] = {
   ENTRY("__TEXT", "__stub_helper",    S_REGULAR,          typeStubHelper),
   ENTRY("__TEXT", "__gcc_except_tab", S_REGULAR,          typeLSDA),
   ENTRY("__TEXT", "__eh_frame",       S_COALESCED,        typeCFI),
+  ENTRY("__TEXT", "__unwind_info",    S_REGULAR,          typeProcessedUnwindInfo),
   ENTRY("__DATA", "__data",           S_REGULAR,          typeData),
   ENTRY("__DATA", "__const",          S_REGULAR,          typeConstData),
   ENTRY("__DATA", "__cfstring",       S_REGULAR,          typeCFString),
@@ -565,7 +566,8 @@ void Util::copySectionContent(NormalizedFile &file) {
     for (AtomInfo &ai : si->atomsAndOffsets) {
       uint8_t *atomContent = reinterpret_cast<uint8_t*>
                                           (&sectionContent[ai.offsetInSection]);
-      _archHandler.generateAtomContent(*ai.atom, r, addrForAtom, atomContent);
+      _archHandler.generateAtomContent(*ai.atom, r, addrForAtom,
+                                       _context.baseAddress(), atomContent);
     }
   }
 }

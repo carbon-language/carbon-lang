@@ -1,0 +1,71 @@
+# RUN: lld -flavor darwin -arch x86_64 %s -o %t -e _main %p/Inputs/libSystem.yaml
+# RUN: llvm-objdump -unwind-info %t | FileCheck %s
+
+# CHECK: Contents of __unwind_info section:
+# CHECK:   Version:                                   0x1
+# CHECK:   Common encodings array section offset:     0x1c
+# CHECK:   Number of common encodings in array:       0x0
+# CHECK:   Personality function array section offset: 0x1c
+# CHECK:   Number of personality functions in array:  0x1
+# CHECK:   Index array section offset:                0x20
+# CHECK:   Number of indices in array:                0x2
+# CHECK:   Common encodings: (count = 0)
+# CHECK:   Personality functions: (count = 1)
+# CHECK:     personality[1]: 0x00001000
+# CHECK:   Top level indices: (count = 2)
+# CHECK:     [0]: function offset=0x00000f7e, 2nd level page offset=0x00000040, LSDA offset=0x00000038
+# CHECK:     [1]: function offset=0x00000f80, 2nd level page offset=0x00000000, LSDA offset=0x00000040
+# CHECK:   LSDA descriptors:
+# CHECK:     [0]: function offset=0x00000f7e, LSDA offset=0x00000f80
+# CHECK:   Second level indices:
+# CHECK:     Second level index[0]: offset in section=0x00000040, base function offset=0x00000f7e
+# CHECK:       [0]: function offset=0x00000f7e, encoding=0x51000000
+# CHECK:       [1]: function offset=0x00000f7f, encoding=0x01000000
+
+--- !native
+path:            '<linker-internal>'
+defined-atoms:
+  - name:            GCC_except_table1
+    type:            unwind-lsda
+    content:         [ FF, 9B, A2, 80, 80, 00, 03, 1A, 08, 00, 00, 00,
+                       05, 00, 00, 00, 1A, 00, 00, 00, 01, 0D, 00, 00,
+                       00, 64, 00, 00, 00, 00, 00, 00, 00, 00, 01, 00,
+                       04, 00, 00, 00 ]
+  - type:            compact-unwind
+    content:         [ 40, 00, 00, 00, 00, 00, 00, 00, 01, 00, 00, 00,
+                       00, 00, 00, 41, 00, 00, 00, 00, 00, 00, 00, 00,
+                       E0, 00, 00, 00, 00, 00, 00, 00 ]
+    references:
+      - kind:            pointer64Anon
+        offset:          0
+        target:          __Z3barv
+      - kind:            pointer64
+        offset:          16
+        target:          ___gxx_personality_v0
+      - kind:            pointer64Anon
+        offset:          24
+        target:          GCC_except_table1
+  - type:            compact-unwind
+    content:         [ C0, 00, 00, 00, 00, 00, 00, 00, 01, 00, 00, 00,
+                       00, 00, 00, 01, 00, 00, 00, 00, 00, 00, 00, 00,
+                       00, 00, 00, 00, 00, 00, 00, 00 ]
+    references:
+      - kind:            pointer64Anon
+        offset:          0
+        target:          _main
+
+  - name:            __Z3barv
+    scope:           global
+    content:         [ C3 ]
+  - name:            _main
+    scope:           global
+    content:         [ C3 ]
+    references:
+      - kind:            branch32
+        offset:          9
+        target:          __Z3barv
+
+shared-library-atoms:
+  - name:            ___gxx_personality_v0
+    load-name:       '/usr/lib/libc++abi.dylib'
+    type:            unknown

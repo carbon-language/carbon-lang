@@ -281,6 +281,16 @@ bool MachOLinkingContext::needsGOTPass() const {
   }
 }
 
+bool MachOLinkingContext::needsCompactUnwindPass() const {
+  switch (_outputMachOType) {
+  case MH_EXECUTE:
+  case MH_DYLIB:
+  case MH_BUNDLE:
+    return archHandler().needsCompactUnwind();
+  default:
+    return false;
+  }
+}
 
 StringRef MachOLinkingContext::binderSymbolName() const {
   return archHandler().stubInfo().binderSymbolName;
@@ -511,6 +521,8 @@ void MachOLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));
   if (needsStubsPass())
     mach_o::addStubsPass(pm, *this);
+  if (needsCompactUnwindPass())
+    mach_o::addCompactUnwindPass(pm, *this);
   if (needsGOTPass())
     mach_o::addGOTPass(pm, *this);
 }

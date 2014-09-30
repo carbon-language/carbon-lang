@@ -53,6 +53,20 @@ public:
   /// Used by GOTPass to update GOT References
   virtual void updateReferenceToGOT(const Reference *, bool targetIsNowGOT) {}
 
+  /// Does this architecture make use of __unwind_info sections for exception
+  /// handling? If so, it will need a separate pass to create them.
+  virtual bool needsCompactUnwind() = 0;
+
+  /// Returns the kind of reference to use to synthesize a 32-bit image-offset
+  /// value, used in the __unwind_info section.
+  virtual Reference::KindValue imageOffsetKind() = 0;
+
+  /// Returns the kind of reference to use to synthesize a 32-bit image-offset
+  /// indirect value. Used for personality functions in the __unwind_info
+  /// section.
+  virtual Reference::KindValue imageOffsetKindIndirect() = 0;
+
+
   /// Used by normalizedFromAtoms() to know where to generated rebasing and 
   /// binding info in final executables.
   virtual bool isPointer(const Reference &) = 0;
@@ -126,6 +140,7 @@ public:
   /// Copy raw content then apply all fixup References on an Atom.
   virtual void generateAtomContent(const DefinedAtom &atom, bool relocatable,
                                    FindAddressForAtom findAddress,
+                                   uint64_t imageBaseAddress,
                                    uint8_t *atomContentBuffer) = 0;
 
   /// Used in -r mode to convert a Reference to a mach-o relocation.

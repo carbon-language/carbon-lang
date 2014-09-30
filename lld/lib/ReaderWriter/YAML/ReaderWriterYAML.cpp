@@ -439,6 +439,7 @@ template <> struct ScalarEnumerationTraits<lld::DefinedAtom::ContentType> {
     io.enumCase(value, "dtraceDOF",       DefinedAtom::typeDTraceDOF);
     io.enumCase(value, "lto-temp",        DefinedAtom::typeTempLTO);
     io.enumCase(value, "compact-unwind",  DefinedAtom::typeCompactUnwindInfo);
+    io.enumCase(value, "unwind-info",     DefinedAtom::typeProcessedUnwindInfo);
     io.enumCase(value, "tlv-thunk",       DefinedAtom::typeThunkTLV);
     io.enumCase(value, "tlv-data",        DefinedAtom::typeTLVInitialData);
     io.enumCase(value, "tlv-zero-fill",   DefinedAtom::typeTLVInitialZeroFill);
