@@ -16,7 +16,9 @@ declare void @custom1(i32 %a, i32 %b)
 
 declare i32 @custom2(i32 %a, i32 %b)
 
-declare void @custom3(...)
+declare void @custom3(i32 %a, ...)
+
+declare i32 @custom4(i32 %a, ...)
 
 declare void @customcb(i32 (i32)* %cb)
 
@@ -35,9 +37,11 @@ define void @f() {
   ; CHECK: call void @__dfsw_customcb({{.*}} @"dfst0$customcb", i8* bitcast ({{.*}} @"dfs$cb" to i8*), i16 0)
   call void @customcb(i32 (i32)* @cb)
 
-  ; CHECK: call void @__dfsan_unimplemented
-  ; CHECK: call void (...)* @custom3()
-  call void (...)* @custom3()
+  ; CHECK: call void (i32, ...)* @__dfsw_custom3(i32 1, i32 2, i32 3, i16 0, i16 0, i16 0)
+  call void (i32, ...)* @custom3(i32 1, i32 2, i32 3)
+
+  ; CHECK: call i32 (i32, ...)* @__dfsw_custom4(i32 1, i32 2, i32 3, i16 0, i16 0, i16 0, i16* %[[LABELRETURN]])
+  call i32 (i32, ...)* @custom4(i32 1, i32 2, i32 3)
 
   ret void
 }
@@ -71,6 +75,8 @@ define i32 (i32, i32)* @g(i32) {
 
 ; CHECK: declare void @__dfsw_custom1(i32, i32, i16, i16)
 ; CHECK: declare i32 @__dfsw_custom2(i32, i32, i16, i16, i16*)
+; CHECK: declare void @__dfsw_custom3(i32, ...)
+; CHECK: declare i32 @__dfsw_custom4(i32, ...)
 
 ; CHECK-LABEL: define linkonce_odr i32 @"dfst0$customcb"(i32 (i32)*, i32, i16, i16*)
 ; CHECK: %[[BC:.*]] = bitcast i32 (i32)* %0 to { i32, i16 } (i32, i16)*
