@@ -5338,7 +5338,7 @@ namespace {
       IntPtrType = SignedInt;
       PtrDiffType = SignedInt;
       SigAtomicType = SignedLong;
-      DescriptionString = "e-m:e-p:16:16-i32:16:32-n8:16";
+      DescriptionString = "e-m:e-p:16:16-i32:16:32-a:16-n8:16";
     }
     void getTargetDefines(const LangOptions &Opts,
                           MacroBuilder &Builder) const override {

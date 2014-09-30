@@ -152,7 +152,7 @@
 
 // RUN: %clang_cc1 -triple msp430-unknown -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=MSP430
-// MSP430: target datalayout = "e-m:e-p:16:16-i32:16:32-n8:16"
+// MSP430: target datalayout = "e-m:e-p:16:16-i32:16:32-a:16-n8:16"
 
 // RUN: %clang_cc1 -triple tce-unknown -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=TCE
