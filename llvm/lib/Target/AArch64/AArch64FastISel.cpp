@@ -255,6 +255,26 @@ public:
 
 #include "AArch64GenCallingConv.inc"
 
+/// \brief Determine the implicit scale factor that is applied by a memory
+/// operation for a given value type.
+static unsigned getImplicitScaleFactor(MVT VT) {
+  switch (VT.SimpleTy) {
+  default:
+    return 0;    // invalid
+  case MVT::i1:  // fall-through
+  case MVT::i8:
+    return 1;
+  case MVT::i16:
+    return 2;
+  case MVT::i32: // fall-through
+  case MVT::f32:
+    return 4;
+  case MVT::i64: // fall-through
+  case MVT::f64:
+    return 8;
+  }
+}
+
 CCAssignFn *AArch64FastISel::CCAssignFnForCall(CallingConv::ID CC) const {
   if (CC == CallingConv::WebKit_JS)
     return CC_AArch64_WebKit_JS;
@@ -839,17 +859,9 @@ bool AArch64FastISel::isValueAvailable(const Value *V) const {
 }
 
 bool AArch64FastISel::simplifyAddress(Address &Addr, MVT VT) {
-  unsigned ScaleFactor;
-  switch (VT.SimpleTy) {
-  default: return false;
-  case MVT::i1:  // fall-through
-  case MVT::i8:  ScaleFactor = 1; break;
-  case MVT::i16: ScaleFactor = 2; break;
-  case MVT::i32: // fall-through
-  case MVT::f32: ScaleFactor = 4; break;
-  case MVT::i64: // fall-through
-  case MVT::f64: ScaleFactor = 8; break;
-  }
+  unsigned ScaleFactor = getImplicitScaleFactor(VT);
+  if (!ScaleFactor)
+    return false;
 
   bool ImmediateOffsetNeedsLowering = false;
   bool RegisterOffsetNeedsLowering = false;
@@ -1561,17 +1573,9 @@ bool AArch64FastISel::emitLoad(MVT VT, unsigned &ResultReg, Address Addr,
   if (!simplifyAddress(Addr, VT))
     return false;
 
-  unsigned ScaleFactor;
-  switch (VT.SimpleTy) {
-  default: llvm_unreachable("Unexpected value type.");
-  case MVT::i1:  // fall-through
-  case MVT::i8:  ScaleFactor = 1; break;
-  case MVT::i16: ScaleFactor = 2; break;
-  case MVT::i32: // fall-through
-  case MVT::f32: ScaleFactor = 4; break;
-  case MVT::i64: // fall-through
-  case MVT::f64: ScaleFactor = 8; break;
-  }
+  unsigned ScaleFactor = getImplicitScaleFactor(VT);
+  if (!ScaleFactor)
+    llvm_unreachable("Unexpected value type.");
 
   // Negative offsets require unscaled, 9-bit, signed immediate offsets.
   // Otherwise, we try using scaled, 12-bit, unsigned immediate offsets.
@@ -1711,17 +1715,9 @@ bool AArch64FastISel::emitStore(MVT VT, unsigned SrcReg, Address Addr,
   if (!simplifyAddress(Addr, VT))
     return false;
 
-  unsigned ScaleFactor;
-  switch (VT.SimpleTy) {
-  default: llvm_unreachable("Unexpected value type.");
-  case MVT::i1:  // fall-through
-  case MVT::i8:  ScaleFactor = 1; break;
-  case MVT::i16: ScaleFactor = 2; break;
-  case MVT::i32: // fall-through
-  case MVT::f32: ScaleFactor = 4; break;
-  case MVT::i64: // fall-through
-  case MVT::f64: ScaleFactor = 8; break;
-  }
+  unsigned ScaleFactor = getImplicitScaleFactor(VT);
+  if (!ScaleFactor)
+    llvm_unreachable("Unexpected value type.");
 
   // Negative offsets require unscaled, 9-bit, signed immediate offsets.
   // Otherwise, we try using scaled, 12-bit, unsigned immediate offsets.
@@ -1730,7 +1726,6 @@ bool AArch64FastISel::emitStore(MVT VT, unsigned SrcReg, Address Addr,
     UseScaled = false;
     ScaleFactor = 1;
   }
-
 
   static const unsigned OpcTable[4][6] = {
     { AArch64::STURBBi,  AArch64::STURHHi,  AArch64::STURWi,  AArch64::STURXi,
@@ -1741,7 +1736,6 @@ bool AArch64FastISel::emitStore(MVT VT, unsigned SrcReg, Address Addr,
       AArch64::STRSroX,  AArch64::STRDroX },
     { AArch64::STRBBroW, AArch64::STRHHroW, AArch64::STRWroW, AArch64::STRXroW,
       AArch64::STRSroW,  AArch64::STRDroW }
-
   };
 
   unsigned Opc;
