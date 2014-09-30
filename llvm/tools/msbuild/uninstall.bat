@@ -6,8 +6,8 @@ REM CD to the directory of this batch file.
 cd /d %~dp0
 
 set PLATFORM=None
-:START
-IF %PLATFORM% == x64 GOTO END
+:LOOPHEAD
+IF %PLATFORM% == x64 GOTO LOOPEND
 IF %PLATFORM% == Win32 SET PLATFORM=x64
 IF %PLATFORM% == None SET PLATFORM=Win32
 
@@ -67,7 +67,7 @@ IF EXIST %D%\LLVM-vs2014_xp del %D%\LLVM-vs2014_xp\toolset.targets
 IF EXIST %D%\LLVM-vs2014_xp rmdir %D%\LLVM-vs2014_xp
 
 
-GOTO START
+GOTO LOOPHEAD
 
-:END
+:LOOPEND
 echo Done!
