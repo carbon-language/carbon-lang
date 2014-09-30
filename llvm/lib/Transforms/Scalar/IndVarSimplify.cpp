@@ -936,12 +936,8 @@ bool WidenIV::WidenLoopCompare(NarrowIVDefUse DU) {
   if (!Cmp)
     return false;
 
-  // Must be a signed compare.
-  if (!CmpInst::isSigned(Cmp->getPredicate()))
-    return false;
-
-  // Must be a signed IV user.
-  if (!IsSigned)
+  // Sign of IV user and compare must match.
+  if (IsSigned != CmpInst::isSigned(Cmp->getPredicate()))
     return false;
 
   Value *Op = Cmp->getOperand(Cmp->getOperand(0) == DU.NarrowDef ? 1 : 0);
