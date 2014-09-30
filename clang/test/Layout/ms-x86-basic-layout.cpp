@@ -816,6 +816,36 @@ struct RecordArrayTypedef {
 // CHECK-X64-NEXT:      | [sizeof=16, align=4
 // CHECK-X64-NEXT:      |  nvsize=16, nvalign=4]
 
+struct EmptyIntMemb {
+  int FlexArrayMemb[0];
+};
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct EmptyIntMemb
+// CHECK-NEXT:    0 |   int [0] FlexArrayMemb
+// CHECK-NEXT:      | [sizeof=1, align=4
+// CHECK-NEXT:      |  nvsize=0, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct EmptyIntMemb
+// CHECK-X64-NEXT:    0 |   int [0] FlexArrayMemb
+// CHECK-X64-NEXT:      | [sizeof=4, align=4
+// CHECK-X64-NEXT:      |  nvsize=0, nvalign=4]
+
+struct EmptyLongLongMemb {
+  long long FlexArrayMemb[0];
+};
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct EmptyLongLongMemb
+// CHECK-NEXT:    0 |   long long [0] FlexArrayMemb
+// CHECK-NEXT:      | [sizeof=1, align=8
+// CHECK-NEXT:      |  nvsize=0, nvalign=8]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct EmptyLongLongMemb
+// CHECK-X64-NEXT:    0 |   long long [0] FlexArrayMemb
+// CHECK-X64-NEXT:      | [sizeof=8, align=8
+// CHECK-X64-NEXT:      |  nvsize=0, nvalign=8]
+
 int a[
 sizeof(TestF0)+
 sizeof(TestF1)+
@@ -840,4 +870,6 @@ sizeof(F6)+
 sizeof(ArrayFieldOfRecords)+
 sizeof(ArrayOfArrayFieldOfRecords)+
 sizeof(RecordArrayTypedef)+
+sizeof(EmptyIntMemb)+
+sizeof(EmptyLongLongMemb)+
 0];

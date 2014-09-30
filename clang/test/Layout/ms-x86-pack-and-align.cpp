@@ -769,6 +769,38 @@ struct QD {
 // CHECK-X64-NEXT:      | [sizeof=8, align=4
 // CHECK-X64-NEXT:      |  nvsize=8, nvalign=4]
 
+struct __declspec(align(4)) EmptyAlignedLongLongMemb {
+  long long FlexArrayMemb[0];
+};
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct EmptyAlignedLongLongMemb
+// CHECK-NEXT:    0 |   long long [0] FlexArrayMemb
+// CHECK-NEXT:      | [sizeof=8, align=8
+// CHECK-NEXT:      |  nvsize=0, nvalign=8]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct EmptyAlignedLongLongMemb
+// CHECK-X64-NEXT:    0 |   long long [0] FlexArrayMemb
+// CHECK-X64-NEXT:      | [sizeof=8, align=8
+// CHECK-X64-NEXT:      |  nvsize=0, nvalign=8]
+
+#pragma pack(1)
+struct __declspec(align(4)) EmptyPackedAlignedLongLongMemb {
+  long long FlexArrayMemb[0];
+};
+#pragma pack()
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct EmptyPackedAlignedLongLongMemb
+// CHECK-NEXT:    0 |   long long [0] FlexArrayMemb
+// CHECK-NEXT:      | [sizeof=4, align=4
+// CHECK-NEXT:      |  nvsize=0, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct EmptyPackedAlignedLongLongMemb
+// CHECK-X64-NEXT:    0 |   long long [0] FlexArrayMemb
+// CHECK-X64-NEXT:      | [sizeof=4, align=4
+// CHECK-X64-NEXT:      |  nvsize=0, nvalign=4]
+
 int a[
 sizeof(X)+
 sizeof(Y)+
@@ -800,4 +832,6 @@ sizeof(PE)+
 sizeof(QB)+
 sizeof(QC)+
 sizeof(QD)+
+sizeof(EmptyAlignedLongLongMemb)+
+sizeof(EmptyPackedAlignedLongLongMemb)+
 0];
