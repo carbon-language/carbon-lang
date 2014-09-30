@@ -68,18 +68,15 @@ struct SourceMappingRegion {
   /// \brief The region's ending location.
   SourceLocation LocEnd, AlternativeLocEnd;
   unsigned Flags;
-  CounterMappingRegion::RegionKind Kind;
 
   SourceMappingRegion(FileID File, FileID MacroArgumentFile, Counter Count,
                       const Stmt *UnreachableInitiator, const Stmt *Group,
                       SourceLocation LocStart, SourceLocation LocEnd,
-                      unsigned Flags = 0,
-                      CounterMappingRegion::RegionKind Kind =
-                          CounterMappingRegion::CodeRegion)
+                      unsigned Flags = 0)
       : File(File), MacroArgumentFile(MacroArgumentFile), Count(Count),
         UnreachableInitiator(UnreachableInitiator), Group(Group),
         LocStart(LocStart), LocEnd(LocEnd), AlternativeLocEnd(LocStart),
-        Flags(Flags), Kind(Kind) {}
+        Flags(Flags) {}
 
   bool hasFlag(RegionFlags Flag) const { return (Flags & Flag) != 0; }
 
@@ -91,7 +88,7 @@ struct SourceMappingRegion {
   bool isMergeable(SourceMappingRegion &R) {
     return File == R.File && MacroArgumentFile == R.MacroArgumentFile &&
            Count == R.Count && UnreachableInitiator == R.UnreachableInitiator &&
-           Group == R.Group && Kind == R.Kind;
+           Group == R.Group;
   }
 
   /// \brief Merge two regions by extending the 'this' region to cover the
