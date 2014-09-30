@@ -2842,6 +2842,11 @@ ExprResult Sema::VerifyPositiveIntegerConstantInClause(Expr *E,
         << getOpenMPClauseName(CKind) << E->getSourceRange();
     return ExprError();
   }
+  if (CKind == OMPC_aligned && !Result.isPowerOf2()) {
+    Diag(E->getExprLoc(), diag::warn_omp_alignment_not_power_of_two)
+        << E->getSourceRange();
+    return ExprError();
+  }
   return ICE;
 }
 

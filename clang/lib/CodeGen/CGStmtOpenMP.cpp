@@ -16,6 +16,7 @@
 #include "CodeGenModule.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/StmtOpenMP.h"
+#include "TargetInfo.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -48,6 +49,32 @@ void CodeGenFunction::EmitOMPParallelDirective(const OMPParallelDirective &S) {
   EmitRuntimeCall(RTLFn, Args);
 }
 
+static void EmitOMPAlignedClause(CodeGenFunction &CGF, CodeGenModule &CGM,
+                                 const OMPAlignedClause &Clause) {
+  unsigned ClauseAlignment = 0;
+  if (auto AlignmentExpr = Clause.getAlignment()) {
+    auto AlignmentCI =
+        cast<llvm::ConstantInt>(CGF.EmitScalarExpr(AlignmentExpr));
+    ClauseAlignment = static_cast<unsigned>(AlignmentCI->getZExtValue());
+  }
+  for (auto E : Clause.varlists()) {
+    unsigned Alignment = ClauseAlignment;
+    if (Alignment == 0) {
+      // OpenMP [2.8.1, Description]
+      // If no optional parameter isspecified, implementation-defined default
+      // alignments for SIMD instructions on the target platforms are assumed.
+      Alignment = CGM.getTargetCodeGenInfo().getOpenMPSimdDefaultAlignment(
+          E->getType());
+    }
+    assert((Alignment == 0 || llvm::isPowerOf2_32(Alignment)) &&
+           "alignment is not power of 2");
+    if (Alignment != 0) {
+      llvm::Value *PtrValue = CGF.EmitScalarExpr(E);
+      CGF.EmitAlignmentAssumption(PtrValue, Alignment);
+    }
+  }
+}
+
 void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
   const CapturedStmt *CS = cast<CapturedStmt>(S.getAssociatedStmt());
   const Stmt *Body = CS->getCapturedStmt();
@@ -66,6 +93,9 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
       LoopStack.setParallel(false);
       break;
     }
+    case OMPC_aligned:
+      EmitOMPAlignedClause(*this, CGM, cast<OMPAlignedClause>(*C));
+      break;
     default:
       // Not handled yet
       ;

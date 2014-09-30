@@ -39,6 +39,7 @@ void test_aligned_colons(int *&rp)
   // expected-error@+1 {{expected variable name}}
   #pragma omp simd aligned(B::bfoo())
   for (int i = 0; i < 10; ++i) ;
+  // expected-warning@+1 {{aligned clause will be ignored because the requested alignment is not a power of 2}}
   #pragma omp simd aligned(B::ib,B:C1+C2)
   for (int i = 0; i < 10; ++i) ;
 }
@@ -122,7 +123,7 @@ template<class I, class C> int foomain(I argc, C **argv) {
   for (I k = 0; k < argc; ++k) ++k;
   #pragma omp simd aligned (argc > 0 ? argv[1] : argv[2]) // expected-error {{expected variable name}}
   for (I k = 0; k < argc; ++k) ++k;
-  #pragma omp simd aligned (argc : 5)
+  #pragma omp simd aligned (argc : 5) // expected-warning {{aligned clause will be ignored because the requested alignment is not a power of 2}}
   for (I k = 0; k < argc; ++k) ++k;
   #pragma omp simd aligned (S1) // expected-error {{'S1' does not refer to a value}}
   for (I k = 0; k < argc; ++k) ++k;

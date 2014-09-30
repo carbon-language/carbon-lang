@@ -1,10 +1,22 @@
-// RUN: %clang_cc1 -fopenmp=libiomp5 -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -fopenmp=libiomp5 -triple x86_64-unknown-unknown -emit-llvm %s -o - | FileCheck %s
 
-void h1(float *c, float *a, float *b, int size)
+void h1(float *c, float *a, double b[], int size)
 {
 // CHECK-LABEL: define void @h1
   int t = 0;
-#pragma omp simd safelen(16) linear(t)
+#pragma omp simd safelen(16) linear(t) aligned(c:32) aligned(a,b)
+// CHECK:         [[C_PTRINT:%.+]] = ptrtoint
+// CHECK-NEXT:    [[C_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[C_PTRINT]], 31
+// CHECK-NEXT:    [[C_MASKCOND:%.+]] = icmp eq i{{[0-9]+}} [[C_MASKEDPTR]], 0
+// CHECK-NEXT:    call void @llvm.assume(i1 [[C_MASKCOND]])
+// CHECK:         [[A_PTRINT:%.+]] = ptrtoint
+// CHECK-NEXT:    [[A_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[A_PTRINT]], 15
+// CHECK-NEXT:    [[A_MASKCOND:%.+]] = icmp eq i{{[0-9]+}} [[A_MASKEDPTR]], 0
+// CHECK-NEXT:    call void @llvm.assume(i1 [[A_MASKCOND]])
+// CHECK:         [[B_PTRINT:%.+]] = ptrtoint
+// CHECK-NEXT:    [[B_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[B_PTRINT]], 15
+// CHECK-NEXT:    [[B_MASKCOND:%.+]] = icmp eq i{{[0-9]+}} [[B_MASKEDPTR]], 0
+// CHECK-NEXT:    call void @llvm.assume(i1 [[B_MASKCOND]])
   for (int i = 0; i < size; ++i) {
     c[i] = a[i] * a[i] + b[i] * b[t];
     ++t;
