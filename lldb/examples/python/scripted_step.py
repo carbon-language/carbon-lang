@@ -86,7 +86,7 @@ class SimpleStep:
     def __init__ (self, thread_plan, dict):
         self.thread_plan = thread_plan
         self.start_address = thread_plan.GetThread().GetFrameAtIndex(0).GetPC()
-
+        
     def explains_stop (self, event):
         # We are stepping, so if we stop for any other reason, it isn't
         # because of us.
@@ -94,13 +94,13 @@ class SimpleStep:
             return True
         else:
             return False
-
+        
     def should_stop (self, event):
         cur_pc = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPC()
-
+        
         if cur_pc < self.start_address or cur_pc >= self.start_address + 20:
             self.thread_plan.SetPlanComplete(True)
-                return True
+            return True
         else:
             return False
 
@@ -109,22 +109,22 @@ class SimpleStep:
 
 class StepWithPlan:
     def__init__ (self,thread_plan, dict):
-    self.thread_plan = thread_plan
-    self.start_address = thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
-    self.step_thread_plan =thread_plan.QueueThreadPlanForStepOverRange(self.start_address, 20);
+        self.thread_plan = thread_plan
+        self.start_address = thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
+        self.step_thread_plan =thread_plan.QueueThreadPlanForStepOverRange(self.start_address, 20);
 
-    defexplains_stop (self, event):
-    # Since all I'm doing is running a plan, I will only ever get askedthis
-    # if myplan doesn't explain the stop, and in that caseI don'teither.
+    def explains_stop (self, event):
+        # Since all I'm doing is running a plan, I will only ever get askedthis
+        # if myplan doesn't explain the stop, and in that caseI don'teither.
         return False
 
-defshould_stop (self, event):
-if self.step_thread_plan.IsPlanComplete():
+    def should_stop (self, event):
+        if self.step_thread_plan.IsPlanComplete():
             self.thread_plan.SetPlanComplete(True)
             return True
-else:
-        return False
+        else:
+            return False
 
-defshould_step (self):
-return False
+    def should_step (self):
+        return False
 
