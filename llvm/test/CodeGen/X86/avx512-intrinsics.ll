@@ -645,3 +645,35 @@ define void @test_mask_store_ss(i8* %ptr, <4 x float> %data, i8 %mask) {
 }
 
 declare void @llvm.x86.avx512.mask.store.ss(i8*, <4 x float>, i8 )
+
+define i16 @test_pcmpeq_d(<16 x i32> %a, <16 x i32> %b) {
+; CHECK-LABEL: test_pcmpeq_d
+; CHECK: vpcmpeqd %zmm1, %zmm0, %k0 ##
+  %res = call i16 @llvm.x86.avx512.mask.pcmpeq.d.512(<16 x i32> %a, <16 x i32> %b, i16 -1)
+  ret i16 %res
+}
+
+define i16 @test_mask_pcmpeq_d(<16 x i32> %a, <16 x i32> %b, i16 %mask) {
+; CHECK-LABEL: test_mask_pcmpeq_d
+; CHECK: vpcmpeqd %zmm1, %zmm0, %k0 {%k1} ##
+  %res = call i16 @llvm.x86.avx512.mask.pcmpeq.d.512(<16 x i32> %a, <16 x i32> %b, i16 %mask)
+  ret i16 %res
+}
+
+declare i16 @llvm.x86.avx512.mask.pcmpeq.d.512(<16 x i32>, <16 x i32>, i16)
+
+define i8 @test_pcmpeq_q(<8 x i64> %a, <8 x i64> %b) {
+; CHECK-LABEL: test_pcmpeq_q
+; CHECK: vpcmpeqq %zmm1, %zmm0, %k0 ##
+  %res = call i8 @llvm.x86.avx512.mask.pcmpeq.q.512(<8 x i64> %a, <8 x i64> %b, i8 -1)
+  ret i8 %res
+}
+
+define i8 @test_mask_pcmpeq_q(<8 x i64> %a, <8 x i64> %b, i8 %mask) {
+; CHECK-LABEL: test_mask_pcmpeq_q
+; CHECK: vpcmpeqq %zmm1, %zmm0, %k0 {%k1} ##
+  %res = call i8 @llvm.x86.avx512.mask.pcmpeq.q.512(<8 x i64> %a, <8 x i64> %b, i8 %mask)
+  ret i8 %res
+}
+
+declare i8 @llvm.x86.avx512.mask.pcmpeq.q.512(<8 x i64>, <8 x i64>, i8)

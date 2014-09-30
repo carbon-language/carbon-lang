@@ -15859,7 +15859,8 @@ static SDValue getTargetVShiftNode(unsigned Opc, SDLoc dl, MVT VT,
   return DAG.getNode(Opc, dl, VT, SrcOp, ShAmt);
 }
 
-/// \brief Return (vselect \p Mask, \p Op, \p PreservedSrc) along with the
+/// \brief Return (and \p Op, \p Mask) for compare instructions or
+/// (vselect \p Mask, \p Op, \p PreservedSrc) for others along with the
 /// necessary casting for \p Mask when lowering masking intrinsics.
 static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
                                     SDValue PreservedSrc, SelectionDAG &DAG) {
@@ -15869,6 +15870,20 @@ static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
     SDLoc dl(Op);
 
     assert(MaskVT.isSimple() && "invalid mask type");
+
+    if (isAllOnes(Mask))
+      return Op;
+
+    switch (Op.getOpcode()) {
+      default: break;
+      case X86ISD::PCMPEQM:
+      case X86ISD::PCMPGTM:
+      case X86ISD::CMPM:
+      case X86ISD::CMPMU:
+        return DAG.getNode(ISD::AND, dl, VT, Op,
+                           DAG.getNode(ISD::BITCAST, dl, MaskVT, Mask));
+    }
+
     return DAG.getNode(ISD::VSELECT, dl, VT,
                        DAG.getNode(ISD::BITCAST, dl, MaskVT, Mask),
                        Op, PreservedSrc);
@@ -15937,6 +15952,16 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     case INTR_TYPE_3OP:
       return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(), Op.getOperand(1),
         Op.getOperand(2), Op.getOperand(3));
+    case CMP_MASK: {
+      EVT VT = Op.getOperand(1).getValueType();
+      EVT MaskVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
+                                    VT.getVectorNumElements());
+      SDValue Cmp = DAG.getNode(IntrData->Opc0, dl, MaskVT,
+                                Op.getOperand(1), Op.getOperand(2));
+      SDValue Res = getVectorMaskingNode(Cmp, Op.getOperand(3),
+                                         DAG.getTargetConstant(0, MaskVT), DAG);
+      return DAG.getNode(ISD::BITCAST, dl, Op.getValueType(), Res);
+    }
     case COMI: { // Comparison intrinsics
       ISD::CondCode CC = (ISD::CondCode)IntrData->Opc1;
       SDValue LHS = Op.getOperand(1);
