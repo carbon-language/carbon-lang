@@ -17,7 +17,6 @@ entry:
 ; CHECK: ldrh w0, [sp, #12]
 ; CHECK: strb w0, [sp, #15]
 ; CHECK: ldrb w0, [sp, #15]
-; CHECK: uxtb w0, w0
 ; CHECK: add sp, sp, #16
 ; CHECK: ret
   %a.addr = alloca i8, align 1
@@ -51,14 +50,11 @@ entry:
 ; CHECK: str w2, [sp, #8]
 ; CHECK: str x3, [sp]
 ; CHECK: ldrb w0, [sp, #15]
-; CHECK: uxtb w0, w0
 ; CHECK: strh w0, [sp, #12]
 ; CHECK: ldrh w0, [sp, #12]
-; CHECK: uxth w0, w0
 ; CHECK: str w0, [sp, #8]
 ; CHECK: ldr w0, [sp, #8]
 ; CHECK: mov x3, x0
-; CHECK: ubfx x3, x3, #0, #32
 ; CHECK: str x3, [sp]
 ; CHECK: ldr x0, [sp]
 ; CHECK: ret
@@ -109,15 +105,11 @@ entry:
 ; CHECK: strh w1, [sp, #12]
 ; CHECK: str w2, [sp, #8]
 ; CHECK: str x3, [sp]
-; CHECK: ldrb w0, [sp, #15]
-; CHECK: sxtb w0, w0
+; CHECK: ldrsb w0, [sp, #15]
 ; CHECK: strh w0, [sp, #12]
-; CHECK: ldrh w0, [sp, #12]
-; CHECK: sxth w0, w0
+; CHECK: ldrsh w0, [sp, #12]
 ; CHECK: str w0, [sp, #8]
-; CHECK: ldr w0, [sp, #8]
-; CHECK: mov x3, x0
-; CHECK: sxtw x3, w3
+; CHECK: ldrsw x3, [sp, #8]
 ; CHECK: str x3, [sp]
 ; CHECK: ldr x0, [sp]
 ; CHECK: ret
