@@ -677,3 +677,35 @@ define i8 @test_mask_pcmpeq_q(<8 x i64> %a, <8 x i64> %b, i8 %mask) {
 }
 
 declare i8 @llvm.x86.avx512.mask.pcmpeq.q.512(<8 x i64>, <8 x i64>, i8)
+
+define i16 @test_pcmpgt_d(<16 x i32> %a, <16 x i32> %b) {
+; CHECK-LABEL: test_pcmpgt_d
+; CHECK: vpcmpgtd %zmm1, %zmm0, %k0 ##
+  %res = call i16 @llvm.x86.avx512.mask.pcmpgt.d.512(<16 x i32> %a, <16 x i32> %b, i16 -1)
+  ret i16 %res
+}
+
+define i16 @test_mask_pcmpgt_d(<16 x i32> %a, <16 x i32> %b, i16 %mask) {
+; CHECK-LABEL: test_mask_pcmpgt_d
+; CHECK: vpcmpgtd %zmm1, %zmm0, %k0 {%k1} ##
+  %res = call i16 @llvm.x86.avx512.mask.pcmpgt.d.512(<16 x i32> %a, <16 x i32> %b, i16 %mask)
+  ret i16 %res
+}
+
+declare i16 @llvm.x86.avx512.mask.pcmpgt.d.512(<16 x i32>, <16 x i32>, i16)
+
+define i8 @test_pcmpgt_q(<8 x i64> %a, <8 x i64> %b) {
+; CHECK-LABEL: test_pcmpgt_q
+; CHECK: vpcmpgtq %zmm1, %zmm0, %k0 ##
+  %res = call i8 @llvm.x86.avx512.mask.pcmpgt.q.512(<8 x i64> %a, <8 x i64> %b, i8 -1)
+  ret i8 %res
+}
+
+define i8 @test_mask_pcmpgt_q(<8 x i64> %a, <8 x i64> %b, i8 %mask) {
+; CHECK-LABEL: test_mask_pcmpgt_q
+; CHECK: vpcmpgtq %zmm1, %zmm0, %k0 {%k1} ##
+  %res = call i8 @llvm.x86.avx512.mask.pcmpgt.q.512(<8 x i64> %a, <8 x i64> %b, i8 %mask)
+  ret i8 %res
+}
+
+declare i8 @llvm.x86.avx512.mask.pcmpgt.q.512(<8 x i64>, <8 x i64>, i8)
