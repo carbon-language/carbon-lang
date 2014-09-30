@@ -361,10 +361,10 @@ static bool parseManifestUAC(StringRef option,
   }
 }
 
-// Parse /export:entryname[=internalname][,@ordinal[,NONAME]][,DATA].
+// Parse /export:entryname[=internalname][,@ordinal[,NONAME]][,DATA][,PRIVATE].
 //
-// MSDN doesn't say anything about /export:foo=bar style option,
-// but link.exe actually accepts it.
+// MSDN doesn't say anything about /export:foo=bar style option or PRIVATE
+// attribtute, but link.exe actually accepts them.
 static bool parseExport(StringRef option,
                         PECOFFLinkingContext::ExportDesc &ret) {
   StringRef name;
@@ -394,6 +394,10 @@ static bool parseExport(StringRef option,
     }
     if (arg.equals_lower("data")) {
       ret.isData = true;
+      continue;
+    }
+    if (arg.equals_lower("private")) {
+      ret.isPrivate = true;
       continue;
     }
     if (arg.startswith("@")) {
