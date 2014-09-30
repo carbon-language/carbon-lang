@@ -167,7 +167,9 @@ CoverageMapping::load(ObjectFileCoverageMappingReader &CoverageReader,
       continue;
     }
 
-    FunctionRecord Function(Record.FunctionName, Record.Filenames);
+    assert(Counts.size() != 0 && "Function's counts are empty");
+    FunctionRecord Function(Record.FunctionName, Record.Filenames,
+                            Counts.front());
     CounterMappingContext Ctx(Record.Expressions, Counts);
     for (const auto &Region : Record.MappingRegions) {
       ErrorOr<int64_t> ExecutionCount = Ctx.evaluate(Region.Count);

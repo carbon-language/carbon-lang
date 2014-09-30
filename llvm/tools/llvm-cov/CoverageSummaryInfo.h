@@ -69,33 +69,34 @@ struct LineCoverageInfo {
 
 /// \brief Provides information about function coverage for a file.
 struct FunctionCoverageInfo {
-  /// \brief The number of functions that have full
-  /// region coverage.
-  size_t FullyCovered;
+  /// \brief The number of functions that were executed.
+  size_t Executed;
 
   /// \brief The total number of functions in this file.
   size_t NumFunctions;
 
-  FunctionCoverageInfo(size_t FullyCovered, size_t NumFunctions)
-      : FullyCovered(FullyCovered), NumFunctions(NumFunctions) {}
+  FunctionCoverageInfo(size_t Executed, size_t NumFunctions)
+      : Executed(Executed), NumFunctions(NumFunctions) {}
 
-  bool isFullyCovered() const { return FullyCovered == NumFunctions; }
+  bool isFullyCovered() const { return Executed == NumFunctions; }
 
   double getPercentCovered() const {
-    return double(FullyCovered) / double(NumFunctions) * 100.0;
+    return double(Executed) / double(NumFunctions) * 100.0;
   }
 };
 
 /// \brief A summary of function's code coverage.
 struct FunctionCoverageSummary {
   StringRef Name;
+  uint64_t ExecutionCount;
   RegionCoverageInfo RegionCoverage;
   LineCoverageInfo LineCoverage;
 
-  FunctionCoverageSummary(StringRef Name,
+  FunctionCoverageSummary(StringRef Name, uint64_t ExecutionCount,
                           const RegionCoverageInfo &RegionCoverage,
                           const LineCoverageInfo &LineCoverage)
-      : Name(Name), RegionCoverage(RegionCoverage), LineCoverage(LineCoverage) {
+      : Name(Name), ExecutionCount(ExecutionCount),
+        RegionCoverage(RegionCoverage), LineCoverage(LineCoverage) {
   }
 
   /// \brief Compute the code coverage summary for the given function coverage

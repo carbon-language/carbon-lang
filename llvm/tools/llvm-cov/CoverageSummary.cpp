@@ -72,7 +72,7 @@ CoverageSummary::createSummaries(ArrayRef<coverage::FunctionRecord> Functions) {
 FileCoverageSummary CoverageSummary::getCombinedFileSummaries() {
   size_t NumRegions = 0, CoveredRegions = 0;
   size_t NumLines = 0, NonCodeLines = 0, CoveredLines = 0;
-  size_t NumFunctionsCovered = 0, NumFunctions = 0;
+  size_t NumFunctionsExecuted = 0, NumFunctions = 0;
   for (const auto &File : FileSummaries) {
     NumRegions += File.RegionCoverage.NumRegions;
     CoveredRegions += File.RegionCoverage.Covered;
@@ -81,12 +81,12 @@ FileCoverageSummary CoverageSummary::getCombinedFileSummaries() {
     NonCodeLines += File.LineCoverage.NonCodeLines;
     CoveredLines += File.LineCoverage.Covered;
 
-    NumFunctionsCovered += File.FunctionCoverage.FullyCovered;
+    NumFunctionsExecuted += File.FunctionCoverage.Executed;
     NumFunctions += File.FunctionCoverage.NumFunctions;
   }
   return FileCoverageSummary(
       "TOTAL", RegionCoverageInfo(CoveredRegions, NumRegions),
       LineCoverageInfo(CoveredLines, NonCodeLines, NumLines),
-      FunctionCoverageInfo(NumFunctionsCovered, NumFunctions),
+      FunctionCoverageInfo(NumFunctionsExecuted, NumFunctions),
       None);
 }

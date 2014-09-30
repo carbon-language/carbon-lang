@@ -85,7 +85,7 @@ static Column column(StringRef Str, unsigned Width, const T &Value) {
   return Column(Str, Width).set(Value);
 }
 
-static const unsigned FileReportColumns[] = {25, 10, 8, 8, 10, 8};
+static const unsigned FileReportColumns[] = {25, 10, 8, 8, 10, 10};
 static const unsigned FunctionReportColumns[] = {25, 10, 8, 8, 10, 8, 8};
 
 /// \brief Prints a horizontal divider which spans across the given columns.
@@ -178,8 +178,8 @@ void CoverageReport::renderFunctionReports(raw_ostream &OS) {
       render(Function, OS);
     renderDivider(FunctionReportColumns, OS);
     OS << "\n";
-    render(FunctionCoverageSummary("TOTAL", File.RegionCoverage,
-                                   File.LineCoverage),
+    render(FunctionCoverageSummary("TOTAL", /*ExecutionCount=*/0,
+                                   File.RegionCoverage, File.LineCoverage),
            OS);
   }
 }
@@ -190,7 +190,8 @@ void CoverageReport::renderFileReports(raw_ostream &OS) {
      << column("Miss", FileReportColumns[2], Column::RightAlignment)
      << column("Cover", FileReportColumns[3], Column::RightAlignment)
      << column("Functions", FileReportColumns[4], Column::RightAlignment)
-     << column("Cover", FileReportColumns[5], Column::RightAlignment) << "\n";
+     << column("Executed", FileReportColumns[5], Column::RightAlignment)
+     << "\n";
   renderDivider(FileReportColumns, OS);
   OS << "\n";
   for (const auto &File : Summary.getFileSummaries())

@@ -65,7 +65,8 @@ FunctionCoverageSummary::get(const coverage::FunctionRecord &Function) {
     NumLines += LineCount;
   }
   return FunctionCoverageSummary(
-      Function.Name, RegionCoverageInfo(CoveredRegions, NumCodeRegions),
+      Function.Name, Function.ExecutionCount,
+      RegionCoverageInfo(CoveredRegions, NumCodeRegions),
       LineCoverageInfo(CoveredLines, 0, NumLines));
 }
 
@@ -74,7 +75,7 @@ FileCoverageSummary::get(StringRef Name,
                          ArrayRef<FunctionCoverageSummary> FunctionSummaries) {
   size_t NumRegions = 0, CoveredRegions = 0;
   size_t NumLines = 0, NonCodeLines = 0, CoveredLines = 0;
-  size_t NumFunctionsCovered = 0;
+  size_t NumFunctionsExecuted = 0;
   for (const auto &Func : FunctionSummaries) {
     CoveredRegions += Func.RegionCoverage.Covered;
     NumRegions += Func.RegionCoverage.NumRegions;
@@ -83,13 +84,13 @@ FileCoverageSummary::get(StringRef Name,
     NonCodeLines += Func.LineCoverage.NonCodeLines;
     NumLines += Func.LineCoverage.NumLines;
 
-    if (Func.RegionCoverage.isFullyCovered())
-      ++NumFunctionsCovered;
+    if (Func.ExecutionCount != 0)
+      ++NumFunctionsExecuted;
   }
 
   return FileCoverageSummary(
       Name, RegionCoverageInfo(CoveredRegions, NumRegions),
       LineCoverageInfo(CoveredLines, NonCodeLines, NumLines),
-      FunctionCoverageInfo(NumFunctionsCovered, FunctionSummaries.size()),
+      FunctionCoverageInfo(NumFunctionsExecuted, FunctionSummaries.size()),
       FunctionSummaries);
 }
