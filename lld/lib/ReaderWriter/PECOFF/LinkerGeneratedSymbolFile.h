@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/PECOFF/LinkerGeneratedSymbolFile.cpp --------------===//
+//===- lib/ReaderWriter/PECOFF/LinkerGeneratedSymbolFile.h ----------------===//
 //
 //                             The LLVM Linker
 //
@@ -20,6 +20,10 @@ using llvm::COFF::WindowsSubsystem;
 
 namespace lld {
 namespace pecoff {
+
+class ResolvableSymbols;
+bool findDecoratedSymbol(PECOFFLinkingContext *ctx, ResolvableSymbols *syms,
+                         std::string sym, std::string &res);
 
 namespace impl {
 
@@ -255,7 +259,7 @@ public:
     if (it == _exportedSyms.end())
       return nullptr;
     std::string replace;
-    if (!findDecoratedSymbol(sym.str(), replace))
+    if (!findDecoratedSymbol(_ctx, _syms.get(), sym.str(), replace))
       return nullptr;
     it->second->name = replace;
     if (_ctx->deadStrip())
@@ -264,37 +268,6 @@ public:
   }
 
 private:
-  // Find decorated symbol, namely /sym@[0-9]+/ or /\?sym@@.+/.
-  bool findDecoratedSymbol(std::string sym, std::string &res) const {
-    const std::set<std::string> &defined = _syms->defined();
-    // Search for /sym@[0-9]+/
-    {
-      std::string s = sym + '@';
-      auto it = defined.lower_bound(s);
-      for (auto e = defined.end(); it != e; ++it) {
-        if (!StringRef(*it).startswith(s))
-          break;
-        if (it->size() == s.size())
-          continue;
-        StringRef suffix = StringRef(*it).substr(s.size());
-        if (suffix.find_first_not_of("0123456789") != StringRef::npos)
-          continue;
-        res = *it;
-        return true;
-      }
-    }
-    // Search for /\?sym@@.+/
-    {
-      std::string s = "?" + _ctx->undecorateSymbol(sym).str() + "@@";
-      auto it = defined.lower_bound(s);
-      if (it != defined.end() && StringRef(*it).startswith(s)) {
-        res = *it;
-        return true;
-      }
-    }
-    return false;
-  }
-
   std::map<std::string, PECOFFLinkingContext::ExportDesc *> _exportedSyms;
   std::shared_ptr<ResolvableSymbols> _syms;
   mutable llvm::BumpPtrAllocator _alloc;

@@ -1,6 +1,7 @@
 add_lld_library(lldPECOFF
   EdataPass.cpp
   IdataPass.cpp
+  LinkerGeneratedSymbolFile.cpp
   LoadConfigPass.cpp
   PECOFFLinkingContext.cpp
   Pass.cpp
