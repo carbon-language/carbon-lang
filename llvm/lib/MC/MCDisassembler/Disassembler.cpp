@@ -33,10 +33,11 @@ using namespace llvm;
 // functions can all be passed as NULL.  If successful, this returns a
 // disassembler context.  If not, it returns NULL.
 //
-LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
-                                         void *DisInfo, int TagType,
-                                         LLVMOpInfoCallback GetOpInfo,
-                                         LLVMSymbolLookupCallback SymbolLookUp){
+LLVMDisasmContextRef
+LLVMCreateDisasmCPUFeatures(const char *Triple, const char *CPU,
+                            const char *Features, void *DisInfo, int TagType,
+                            LLVMOpInfoCallback GetOpInfo,
+                            LLVMSymbolLookupCallback SymbolLookUp) {
   // Get the target.
   std::string Error;
   const Target *TheTarget = TargetRegistry::lookupTarget(Triple, Error);
@@ -56,11 +57,8 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
   if (!MII)
     return nullptr;
 
-  // Package up features to be passed to target/subtarget
-  std::string FeaturesStr;
-
   const MCSubtargetInfo *STI = TheTarget->createMCSubtargetInfo(Triple, CPU,
-                                                                FeaturesStr);
+                                                                Features);
   if (!STI)
     return nullptr;
 
@@ -101,11 +99,19 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
   return DC;
 }
 
+LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
+                                         void *DisInfo, int TagType,
+                                         LLVMOpInfoCallback GetOpInfo,
+                                         LLVMSymbolLookupCallback SymbolLookUp){
+  return LLVMCreateDisasmCPUFeatures(Triple, CPU, "", DisInfo, TagType,
+                                     GetOpInfo, SymbolLookUp);
+}
+
 LLVMDisasmContextRef LLVMCreateDisasm(const char *Triple, void *DisInfo,
                                       int TagType, LLVMOpInfoCallback GetOpInfo,
                                       LLVMSymbolLookupCallback SymbolLookUp) {
-  return LLVMCreateDisasmCPU(Triple, "", DisInfo, TagType, GetOpInfo,
-                             SymbolLookUp);
+  return LLVMCreateDisasmCPUFeatures(Triple, "", "", DisInfo, TagType,
+                                     GetOpInfo, SymbolLookUp);
 }
 
 //
