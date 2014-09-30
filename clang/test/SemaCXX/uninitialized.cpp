@@ -124,6 +124,46 @@ void test_stuff () {
   }
 }
 
+// Also test similar constructs in a field's initializer.
+struct S {
+  int x;
+  int y;
+  const int z = 5;
+  void *ptr;
+
+  S(bool (*)[1]) : x(x) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(bool (*)[2]) : x(x + 1) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(bool (*)[3]) : x(x + x) {} // expected-warning 2{{field 'x' is uninitialized when used here}}
+  S(bool (*)[4]) : x(static_cast<long>(x) + 1) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(bool (*)[5]) : x(foo(x)) {} // expected-warning {{field 'x' is uninitialized when used here}}
+
+  // These don't actually require the value of x and so shouldn't warn.
+  S(char (*)[1]) : x(sizeof(x)) {} // rdar://8610363
+  S(char (*)[2]) : ptr(&ptr) {}
+  S(char (*)[3]) : x(bar(&x)) {}
+  S(char (*)[4]) : x(boo(x)) {}
+  S(char (*)[5]) : x(far(x)) {}
+  S(char (*)[6]) : x(__alignof__(x)) {}
+
+  S(int (*)[1]) : x(0), y(x ? y : y) {} // expected-warning 2{{field 'y' is uninitialized when used here}}
+  S(int (*)[2]) : x(0), y(1 + (x ? y : y)) {} // expected-warning 2{{field 'y' is uninitialized when used here}}
+  S(int (*)[3]) : x(-x) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(int (*)[4]) : x(std::move(x)) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(int (*)[5]) : z(std::move(z)) {} // expected-warning {{field 'z' is uninitialized when used here}}
+  S(int (*)[6]) : x(moved(std::move(x))) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(int (*)[7]) : x(0), y(std::move((x ? x : (18, y)))) {} // expected-warning {{field 'y' is uninitialized when used here}}
+  S(int (*)[8]) : x(0), y(x ?: y) {} // expected-warning {{field 'y' is uninitialized when used here}}
+  S(int (*)[9]) : x(0), y(y ?: x) {} // expected-warning {{field 'y' is uninitialized when used here}}
+  S(int (*)[10]) : x(0), y((foo(y), x)) {} // expected-warning {{field 'y' is uninitialized when used here}}
+  S(int (*)[11]) : x(0), y(x += y) {} // expected-warning {{field 'y' is uninitialized when used here}}
+  S(int (*)[12]) : x(x += 10) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(int (*)[13]) : x(x++) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(int (*)[14]) : x(0), y(((x ? (y, x) : (77, y))++, sizeof(y))) {} // expected-warning {{field 'y' is uninitialized when used here}}
+  S(int (*)[15]) : x(++ref(x)) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(int (*)[16]) : x((ref(x) += 10)) {} // expected-warning {{field 'x' is uninitialized when used here}}
+  S(int (*)[17]) : x(0), y(y ? x : x) {} // expected-warning {{field 'y' is uninitialized when used here}}
+};
+
 // Test self-references with record types.
 class A {
   // Non-POD class.
@@ -342,35 +382,6 @@ B b21 = std::move(b21);  // expected-warning {{variable 'b21' is uninitialized w
 B b22 = moveB(std::move(b22));  // expected-warning {{variable 'b22' is uninitialized when used within its own initialization}}
 B b23 = B(std::move(b23));   // expected-warning {{variable 'b23' is uninitialized when used within its own initialization}}
 B b24 = std::move(x ? b23 : (18, b24));  // expected-warning {{variable 'b24' is uninitialized when used within its own initialization}}
-
-// Also test similar constructs in a field's initializer.
-struct S {
-  int x;
-  int y;
-  void *ptr;
-
-  S(bool (*)[1]) : x(x) {} // expected-warning {{field 'x' is uninitialized when used here}}
-  S(bool (*)[2]) : x(x + 1) {} // expected-warning {{field 'x' is uninitialized when used here}}
-  S(bool (*)[3]) : x(x + x) {} // expected-warning 2{{field 'x' is uninitialized when used here}}
-  S(bool (*)[4]) : x(static_cast<long>(x) + 1) {} // expected-warning {{field 'x' is uninitialized when used here}}
-  S(bool (*)[5]) : x(foo(x)) {} // expected-warning {{field 'x' is uninitialized when used here}}
-
-  // These don't actually require the value of x and so shouldn't warn.
-  S(char (*)[1]) : x(sizeof(x)) {} // rdar://8610363
-  S(char (*)[2]) : ptr(&ptr) {}
-  S(char (*)[3]) : x(__alignof__(x)) {}
-  S(char (*)[4]) : x(bar(&x)) {}
-  S(char (*)[5]) : x(boo(x)) {}
-  S(char (*)[6]) : x(far(x)) {}
-
-  S(char (*)[7]) : x(0), y((foo(y), x)) {} // expected-warning {{field 'y' is uninitialized when used here}}
-  S(char (*)[8]) : x(0), y(x += y) {} // expected-warning {{field 'y' is uninitialized when used here}}
-  S(char (*)[9]) : x(x += 10) {} // expected-warning {{field 'x' is uninitialized when used here}}
-  S(char (*)[10]) : x(x++) {} // expected-warning {{field 'x' is uninitialized when used here}}
-  S(char (*)[11]) : x(0), y(((x ? (y, x) : (77, y))++, sizeof(y))) {} // expected-warning {{field 'y' is uninitialized when used here}}
-  S(char (*)[12]) : x(++ref(x)) {} // expected-warning {{field 'x' is uninitialized when used here}}
-  S(char (*)[13]) : x(ref(x) += 10) {} // expected-warning {{field 'x' is uninitialized when used here}}
-};
 
 struct C { char a[100], *e; } car = { .e = car.a };
 
