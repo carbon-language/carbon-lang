@@ -361,7 +361,10 @@ static bool parseManifestUAC(StringRef option,
   }
 }
 
-// Parse /export:name[,@ordinal[,NONAME]][,DATA].
+// Parse /export:entryname[=internalname][,@ordinal[,NONAME]][,DATA].
+//
+// MSDN doesn't say anything about /export:foo=bar style option,
+// but link.exe actually accepts it.
 static bool parseExport(StringRef option,
                         PECOFFLinkingContext::ExportDesc &ret) {
   StringRef name;
@@ -369,8 +372,14 @@ static bool parseExport(StringRef option,
   std::tie(name, rest) = option.split(",");
   if (name.empty())
     return false;
-  ret.name = name;
-  ret.externalName = name;
+  if (name.find('=') == StringRef::npos) {
+    ret.name = name;
+    ret.externalName = name;
+  } else {
+    std::tie(ret.externalName, ret.name) = name.split("=");
+    if (ret.name.empty())
+      return false;
+  }
 
   for (;;) {
     if (rest.empty())
