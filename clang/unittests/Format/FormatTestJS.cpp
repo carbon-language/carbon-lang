@@ -172,7 +172,9 @@ TEST_F(FormatTestJS, FormatsFreestandingFunctions) {
 TEST_F(FormatTestJS, FunctionLiterals) {
   verifyFormat("doFoo(function() {});");
   verifyFormat("doFoo(function() { return 1; });");
-  verifyFormat("var func = function() { return 1; };");
+  verifyFormat("var func = function() {\n"
+               "  return 1;\n"
+               "};");
   verifyFormat("return {\n"
                "  body: {\n"
                "    setAttribute: function(key, val) { this[key] = val; },\n"
@@ -180,7 +182,14 @@ TEST_F(FormatTestJS, FunctionLiterals) {
                "    style: {direction: ''}\n"
                "  }\n"
                "};");
-  EXPECT_EQ("abc = xyz ? function() { return 1; } : function() { return -1; };",
+  // FIXME: The formatting here probably isn't ideal.
+  EXPECT_EQ("abc = xyz ?\n"
+            "          function() {\n"
+            "            return 1;\n"
+            "          } :\n"
+            "          function() {\n"
+            "  return -1;\n"
+            "};",
             format("abc=xyz?function(){return 1;}:function(){return -1;};"));
 
   verifyFormat("var closure = goog.bind(\n"
@@ -216,6 +225,57 @@ TEST_F(FormatTestJS, FunctionLiterals) {
                "    return 1;\n"
                "  }\n"
                "};");
+}
+
+TEST_F(FormatTestJS, InliningFunctionLiterals) {
+  FormatStyle Style = getGoogleStyle(FormatStyle::LK_JavaScript);
+  Style.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Inline;
+  verifyFormat("var func = function() {\n"
+               "  return 1;\n"
+               "};",
+               Style);
+  verifyFormat("var func = doSomething(function() { return 1; });", Style);
+  verifyFormat("var outer = function() {\n"
+               "  var inner = function() { return 1; }\n"
+               "};",
+               Style);
+  verifyFormat("function outer1(a, b) {\n"
+               "  function inner1(a, b) { return a; }\n"
+               "}",
+               Style);
+
+  Style.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_All;
+  verifyFormat("var func = function() { return 1; };", Style);
+  verifyFormat("var func = doSomething(function() { return 1; });", Style);
+  verifyFormat(
+      "var outer = function() { var inner = function() { return 1; } };",
+      Style);
+  verifyFormat("function outer1(a, b) {\n"
+               "  function inner1(a, b) { return a; }\n"
+               "}",
+               Style);
+
+  Style.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_None;
+  verifyFormat("var func = function() {\n"
+               "  return 1;\n"
+               "};",
+               Style);
+  verifyFormat("var func = doSomething(function() {\n"
+               "  return 1;\n"
+               "});",
+               Style);
+  verifyFormat("var outer = function() {\n"
+               "  var inner = function() {\n"
+               "    return 1;\n"
+               "  }\n"
+               "};",
+               Style);
+  verifyFormat("function outer1(a, b) {\n"
+               "  function inner1(a, b) {\n"
+               "    return a;\n"
+               "  }\n"
+               "}",
+               Style);
 }
 
 TEST_F(FormatTestJS, MultipleFunctionLiterals) {
@@ -265,7 +325,9 @@ TEST_F(FormatTestJS, MultipleFunctionLiterals) {
 }
 
 TEST_F(FormatTestJS, ReturnStatements) {
-  verifyFormat("function() { return [hello, world]; }");
+  verifyFormat("function() {\n"
+               "  return [hello, world];\n"
+               "}");
 }
 
 TEST_F(FormatTestJS, ClosureStyleComments) {
