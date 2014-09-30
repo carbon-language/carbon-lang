@@ -10423,6 +10423,10 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   // operations.  If so, and if the EXTRACT_VECTOR_ELT vector inputs come from
   // at most two distinct vectors, turn this into a shuffle node.
 
+  // Only type-legal BUILD_VECTOR nodes are converted to shuffle nodes.
+  if (!isTypeLegal(VT))
+    return SDValue();
+
   // May only combine to shuffle after legalize if shuffle is legal.
   if (LegalOperations && !TLI.isOperationLegal(ISD::VECTOR_SHUFFLE, VT))
     return SDValue();
@@ -10513,10 +10517,6 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     if (VecIn2.getValueType() != VecIn1.getValueType() ||
         VecIn1.getValueType() != VT)
           return SDValue();
-
-    // Only type-legal BUILD_VECTOR nodes are converted to shuffle nodes.
-    if (!isTypeLegal(VT))
-      return SDValue();
 
     // Return the new VECTOR_SHUFFLE node.
     SDValue Ops[2];
