@@ -1,7 +1,5 @@
 ; REQUIRES: object-emission
 ; RUN: %llc_dwarf -O0 -filetype=obj < %s | llvm-dwarfdump - | FileCheck %s
-; RUN: %llc_dwarf -O0 -filetype=obj < %s -mtriple x86_64-apple-darwin | llvm-dwarfdump - \
-; RUN:     | FileCheck --check-prefix=CHECK --check-prefix=DARWIN %s
 
 ; Generated from the following source compiled with clang++ -gmlt:
 ; void f1() {}
