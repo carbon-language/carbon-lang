@@ -21,7 +21,7 @@ define <4 x float> @vsel_float(<4 x float> %v1, <4 x float> %v2) {
 
 
 ;CHECK-LABEL: vsel_i32:
-;CHECK: vpblendw {{.*}} ## xmm0 = xmm0[0,1],xmm1[2,3],xmm0[4,5],xmm1[6,7]
+;CHECK: vblendps   $10, %xmm1, %xmm0, %xmm0
 ;CHECK: ret
 define <4 x i32> @vsel_i32(<4 x i32> %v1, <4 x i32> %v2) {
   %vsel = select <4 x i1> <i1 true, i1 false, i1 true, i1 false>, <4 x i32> %v1, <4 x i32> %v2
@@ -61,7 +61,13 @@ define <16 x i8> @vsel_i8(<16 x i8> %v1, <16 x i8> %v2) {
 
 ;CHECK-LABEL: vsel_float8:
 ;CHECK-NOT: vinsertf128
-;CHECK: vblendps {{.*}} ## ymm0 = ymm0[0],ymm1[1,2,3],ymm0[4],ymm1[5,6,7]
+; <i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false>
+; which translates into the boolean mask (big endian representation):
+; 00010001 = 17.
+; '1' means takes the first argument, '0' means takes the second argument.
+; This is the opposite of the intel syntax, thus we expect
+; the inverted mask: 11101110 = 238.
+;CHECK: vblendps    $238, %ymm1, %ymm0, %ymm0
 ;CHECK: ret
 define <8 x float> @vsel_float8(<8 x float> %v1, <8 x float> %v2) {
   %vsel = select <8 x i1> <i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false>, <8 x float> %v1, <8 x float> %v2
@@ -70,7 +76,7 @@ define <8 x float> @vsel_float8(<8 x float> %v1, <8 x float> %v2) {
 
 ;CHECK-LABEL: vsel_i328:
 ;CHECK-NOT: vinsertf128
-;CHECK: vblendps {{.*}} ## ymm0 = ymm0[0],ymm1[1,2,3],ymm0[4],ymm1[5,6,7]
+;CHECK: vblendps    $238, %ymm1, %ymm0, %ymm0
 ;CHECK-NEXT: ret
 define <8 x i32> @vsel_i328(<8 x i32> %v1, <8 x i32> %v2) {
   %vsel = select <8 x i1> <i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false>, <8 x i32> %v1, <8 x i32> %v2

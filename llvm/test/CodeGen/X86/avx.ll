@@ -3,7 +3,7 @@
 
 define <4 x i32> @blendvb_fallback_v4i32(<4 x i1> %mask, <4 x i32> %x, <4 x i32> %y) {
 ; CHECK-LABEL: @blendvb_fallback_v4i32
-; CHECK: vpblendvb
+; CHECK: vblendvps
 ; CHECK: ret
   %ret = select <4 x i1> %mask, <4 x i32> %x, <4 x i32> %y
   ret <4 x i32> %ret
