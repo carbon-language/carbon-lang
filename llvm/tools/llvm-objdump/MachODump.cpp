@@ -2829,8 +2829,8 @@ void llvm::printMachOBindTable(const object::MachOObjectFile *Obj) {
   // Build table of sections so names can used in final output.
   SegInfo sectionTable(Obj);
 
-  outs() << "segment  section            address     type     "
-            "addend   dylib               symbol\n";
+  outs() << "segment  section            address    type       "
+            "addend dylib            symbol\n";
   for (const llvm::object::MachOBindEntry &Entry : Obj->bindTable()) {
     uint32_t SegIndex = Entry.segmentIndex();
     uint64_t OffsetInSeg = Entry.segmentOffset();
@@ -2840,18 +2840,17 @@ void llvm::printMachOBindTable(const object::MachOObjectFile *Obj) {
 
     // Table lines look like:
     //  __DATA  __got  0x00012010    pointer   0 libSystem ___stack_chk_guard
-    outs() << format("%-8s %-18s 0x%08" PRIX64 "  %-8s %-8" PRId64 " %-20s",
-                     SegmentName.str().c_str(),
-                     SectionName.str().c_str(),
-                     Address,
-                     Entry.typeName().str().c_str(),
-                     Entry.addend(),
-                     ordinalName(Obj, Entry.ordinal()).str().c_str())
-           << Entry.symbolName();
+    StringRef Attr;
     if (Entry.flags() & MachO::BIND_SYMBOL_FLAGS_WEAK_IMPORT)
-      outs() << " (weak_import)\n";
-    else
-      outs() << "\n";
+      Attr = " (weak_import)";
+    outs() << left_justify(SegmentName, 8)  << " "
+           << left_justify(SectionName, 18) << " "
+           << format_hex(Address, 10, true) << " "
+           << left_justify(Entry.typeName(), 8) << " "
+           << format_decimal(Entry.addend(), 8)  << " "  
+           << left_justify(ordinalName(Obj, Entry.ordinal()), 16) << " "
+           << Entry.symbolName() 
+           << Attr << "\n";
   }
 }
 
@@ -2863,8 +2862,8 @@ void llvm::printMachOLazyBindTable(const object::MachOObjectFile *Obj) {
   // Build table of sections so names can used in final output.
   SegInfo sectionTable(Obj);
 
-  outs() << "segment  section            address      "
-            "dylib               symbol\n";
+  outs() << "segment  section            address     "
+            "dylib            symbol\n";
   for (const llvm::object::MachOBindEntry &Entry : Obj->lazyBindTable()) {
     uint32_t SegIndex = Entry.segmentIndex();
     uint64_t OffsetInSeg = Entry.segmentOffset();
@@ -2874,11 +2873,10 @@ void llvm::printMachOLazyBindTable(const object::MachOObjectFile *Obj) {
 
     // Table lines look like:
     //  __DATA  __got  0x00012010 libSystem ___stack_chk_guard
-    outs() << format("%-8s %-18s 0x%08" PRIX64 "   %-20s",
-                     SegmentName.str().c_str(),
-                     SectionName.str().c_str(),
-                     Address,
-                     ordinalName(Obj, Entry.ordinal()).str().c_str())
+    outs() << left_justify(SegmentName, 8)  << " "
+           << left_justify(SectionName, 18) << " "
+           << format_hex(Address, 10, true) << " "
+           << left_justify(ordinalName(Obj, Entry.ordinal()), 16) << " "
            << Entry.symbolName() << "\n";
   }
 }
@@ -2892,12 +2890,12 @@ void llvm::printMachOWeakBindTable(const object::MachOObjectFile *Obj) {
   // Build table of sections so names can used in final output.
   SegInfo sectionTable(Obj);
 
-  outs() << "segment  section            address      "
-            "type     addend   symbol\n";
+  outs() << "segment  section            address     "
+            "type       addend   symbol\n";
   for (const llvm::object::MachOBindEntry &Entry : Obj->weakBindTable()) {
     // Strong symbols don't have a location to update.
     if (Entry.flags() & MachO::BIND_SYMBOL_FLAGS_NON_WEAK_DEFINITION) {
-      outs() << "                                          strong            "
+      outs() << "                                        strong              "
              << Entry.symbolName() << "\n";
       continue;
     }
@@ -2909,12 +2907,11 @@ void llvm::printMachOWeakBindTable(const object::MachOObjectFile *Obj) {
 
     // Table lines look like:
     // __DATA  __data  0x00001000  pointer    0   _foo
-    outs() << format("%-8s %-18s 0x%08" PRIX64 "   %-8s %-8" PRId64 " ",
-                     SegmentName.str().c_str(),
-                     SectionName.str().c_str(),
-                     Address,
-                     Entry.typeName().str().c_str(),
-                     Entry.addend())
+    outs() << left_justify(SegmentName, 8)  << " "
+           << left_justify(SectionName, 18) << " "
+           << format_hex(Address, 10, true) << " "
+           << left_justify(Entry.typeName(), 8) << " "
+           << format_decimal(Entry.addend(), 8)  << "   "  
            << Entry.symbolName() << "\n";
   }
 }
