@@ -393,7 +393,8 @@ bool Resolver::checkUndefines() {
       foundUndefines = true;
       if (_context.printRemainingUndefines()) {
         llvm::errs() << "Undefined symbol: " << undefAtom->file().path()
-                     << ": " << undefAtom->name() << "\n";
+                     << ": " << _context.demangle(undefAtom->name())
+                     << "\n";
       }
     }
     if (foundUndefines) {

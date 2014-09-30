@@ -66,6 +66,8 @@ public:
 
   void addPasses(PassManager &pm) override;
   bool validateImpl(raw_ostream &diagnostics) override;
+  std::string demangle(StringRef symbolName) const override;
+
   bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) const override;
 
   uint32_t getCPUType() const;
@@ -95,6 +97,9 @@ public:
 
   bool keepPrivateExterns() const { return _keepPrivateExterns; }
   void setKeepPrivateExterns(bool v) { _keepPrivateExterns = v; }
+  bool demangleSymbols() const { return _demangle; }
+  void setDemangleSymbols(bool d) { _demangle = d; }
+
 
   bool minOS(StringRef mac, StringRef iOS) const;
   void setDoNothing(bool value) { _doNothing = value; }
@@ -289,6 +294,7 @@ private:
   bool _printAtoms;
   bool _testingFileUsage;
   bool _keepPrivateExterns;
+  bool _demangle;
   StringRef _bundleLoader;
   mutable std::unique_ptr<mach_o::ArchHandler> _archHandler;
   mutable std::unique_ptr<Writer> _writer;

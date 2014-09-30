@@ -270,6 +270,11 @@ public:
   /// \returns true if there is an error with the current settings.
   bool validate(raw_ostream &diagnostics);
 
+  /// Formats symbol name for use in error messages.
+  virtual std::string demangle(StringRef symbolName) const {
+    return symbolName;
+  }
+
   /// @}
   /// \name Methods used by Driver::link()
   /// @{

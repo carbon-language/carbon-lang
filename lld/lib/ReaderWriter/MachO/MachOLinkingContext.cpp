@@ -23,12 +23,17 @@
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Config/config.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/Path.h"
 
 #include <algorithm>
+
+#if HAVE_CXXABI_H
+#include <cxxabi.h>
+#endif
 
 using lld::mach_o::ArchHandler;
 using lld::mach_o::MachODylibFile;
@@ -137,7 +142,8 @@ MachOLinkingContext::MachOLinkingContext()
       _osMinVersion(0), _pageZeroSize(0), _pageSize(4096), _baseAddress(0),
       _compatibilityVersion(0), _currentVersion(0), _deadStrippableDylib(false),
       _printAtoms(false), _testingFileUsage(false), _keepPrivateExterns(false),
-      _archHandler(nullptr), _exportMode(ExportMode::globals) {}
+      _demangle(false), _archHandler(nullptr),
+      _exportMode(ExportMode::globals) {}
 
 MachOLinkingContext::~MachOLinkingContext() {}
 
@@ -657,6 +663,33 @@ bool MachOLinkingContext::exportSymbolNamed(StringRef sym) const {
     return !_exportedSymbols.count(sym);
   }
   llvm_unreachable("_exportMode unknown enum value");
+}
+
+std::string MachOLinkingContext::demangle(StringRef symbolName) const {
+  // Only try to demangle symbols if -demangle on command line
+  if (!_demangle)
+    return symbolName;
+
+  // Only try to demangle symbols that look like C++ symbols
+  if (!symbolName.startswith("__Z"))
+    return symbolName;
+
+#if HAVE_CXXABI_H
+  SmallString<256> symBuff;
+  StringRef nullTermSym = Twine(symbolName).toNullTerminatedStringRef(symBuff);
+  // Mach-O has extra leading underscore that needs to be removed.
+  const char *cstr = nullTermSym.data() + 1;
+  int status;
+  char *demangled = abi::__cxa_demangle(cstr, nullptr, nullptr, &status);
+  if (demangled != NULL) {
+    std::string result(demangled);
+    // __cxa_demangle() always uses a malloc'ed buffer to return the result.
+    free(demangled);
+    return result;
+  }
+#endif
+
+  return symbolName;
 }
 
 

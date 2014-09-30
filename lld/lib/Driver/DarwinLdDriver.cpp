@@ -425,6 +425,10 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   if (parsedArgs->getLastArg(OPT_t))
     ctx.setLogInputFiles(true);
 
+  // Handle -demangle option.
+  if (parsedArgs->getLastArg(OPT_demangle))
+    ctx.setDemangleSymbols(true);
+
   // Handle -keep_private_externs
   if (parsedArgs->getLastArg(OPT_keep_private_externs)) {
     ctx.setKeepPrivateExterns(true);

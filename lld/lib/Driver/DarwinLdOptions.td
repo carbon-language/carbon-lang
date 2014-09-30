@@ -144,6 +144,8 @@ def sectalign : MultiArg<["-"], "sectalign", 3>,
      HelpText<"alignment for segment/section">;
 def image_base : Separate<["-"], "image_base">;
 def seg1addr : Separate<["-"], "seg1addr">, Alias<image_base>;
+def demangle : Flag<["-"], "demangle">,
+     HelpText<"Demangles symbol names in errors and warnings">;
 
 def t : Flag<["-"], "t">,
      HelpText<"Print the names of the input files as ld processes them">;
