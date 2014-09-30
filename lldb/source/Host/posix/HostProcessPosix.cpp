@@ -100,6 +100,9 @@ lldb::pid_t HostProcessPosix::GetProcessId() const
 
 bool HostProcessPosix::IsRunning() const
 {
+    if (m_process == kInvalidPosixProcess)
+        return false;
+
     // Send this process the null signal.  If it succeeds the process is running.
     Error error = Signal(0);
     return error.Success();

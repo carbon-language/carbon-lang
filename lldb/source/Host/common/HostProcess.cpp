@@ -23,6 +23,10 @@ HostProcess::HostProcess(lldb::process_t process)
 {
 }
 
+HostProcess::~HostProcess()
+{
+}
+
 Error HostProcess::Terminate()
 {
     return m_native_process->Terminate();

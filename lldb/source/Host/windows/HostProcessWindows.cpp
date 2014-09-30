@@ -17,6 +17,11 @@
 
 using namespace lldb_private;
 
+HostProcessWindows::HostProcessWindows()
+    : HostNativeProcessBase()
+{
+}
+
 HostProcessWindows::HostProcessWindows(lldb::process_t process)
     : HostNativeProcessBase(process)
 {
