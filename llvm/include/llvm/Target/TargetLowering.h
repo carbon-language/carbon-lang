@@ -2624,21 +2624,37 @@ public:
     return SDValue();
   }
 
-  /// Hooks for building estimates in place of, for example, slower divisions
-  /// and square roots. These are not builder functions themselves, just the
-  /// target-specific variables needed for building the estimate algorithm.
-
-  /// Return an estimate value for the input opcode and input operand.
-  /// The RefinementSteps output is the number of refinement iterations
-  /// required to generate a sufficient (though not necessarily IEEE-754
-  /// compliant) estimate for the value type.
+  /// Hooks for building estimates in place of slower divisions and square
+  /// roots.
+  
+  /// Return a reciprocal square root estimate value for the input operand.
+  /// The RefinementSteps output is the number of Newton-Raphson refinement
+  /// iterations required to generate a sufficient (though not necessarily
+  /// IEEE-754 compliant) estimate for the value type.
+  /// A target may choose to implement its own refinement within this function.
+  /// If that's true, then return '0' as the number of RefinementSteps to avoid
+  /// any further refinement of the estimate.
   /// An empty SDValue return means no estimate sequence can be created.
-  virtual SDValue getEstimate(unsigned Opcode, SDValue Operand,
+  virtual SDValue getRsqrtEstimate(SDValue Operand,
                               DAGCombinerInfo &DCI,
                               unsigned &RefinementSteps) const {
     return SDValue();
   }
-  
+
+  /// Return a reciprocal estimate value for the input operand.
+  /// The RefinementSteps output is the number of Newton-Raphson refinement
+  /// iterations required to generate a sufficient (though not necessarily
+  /// IEEE-754 compliant) estimate for the value type.
+  /// A target may choose to implement its own refinement within this function.
+  /// If that's true, then return '0' as the number of RefinementSteps to avoid
+  /// any further refinement of the estimate.
+  /// An empty SDValue return means no estimate sequence can be created.
+  virtual SDValue getRecipEstimate(SDValue Operand,
+                                   DAGCombinerInfo &DCI,
+                                   unsigned &RefinementSteps) const {
+    return SDValue();
+  }
+
   //===--------------------------------------------------------------------===//
   // Legalization utility functions
   //

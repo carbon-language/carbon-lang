@@ -11779,7 +11779,7 @@ SDValue DAGCombiner::BuildReciprocalEstimate(SDValue Op) {
   TargetLowering::DAGCombinerInfo DCI(DAG, Level, false, this);
 
   unsigned Iterations;
-  if (SDValue Est = TLI.getEstimate(ISD::FDIV, Op, DCI, Iterations)) {
+  if (SDValue Est = TLI.getRecipEstimate(Op, DCI, Iterations)) {
     // Newton iteration for a function: F(X) is X_{i+1} = X_i - F(X_i)/F'(X_i)
     // For the reciprocal, we need to find the zero of the function:
     //   F(X) = A X - 1 [which has a zero at X = 1/A]
@@ -11820,7 +11820,7 @@ SDValue DAGCombiner::BuildRsqrtEstimate(SDValue Op) {
   // Expose the DAG combiner to the target combiner implementations.
   TargetLowering::DAGCombinerInfo DCI(DAG, Level, false, this);
   unsigned Iterations;
-  if (SDValue Est = TLI.getEstimate(ISD::FSQRT, Op, DCI, Iterations)) {
+  if (SDValue Est = TLI.getRsqrtEstimate(Op, DCI, Iterations)) {
     // Newton iteration for a function: F(X) is X_{i+1} = X_i - F(X_i)/F'(X_i)
     // For the reciprocal sqrt, we need to find the zero of the function:
     //   F(X) = 1/X^2 - A [which has a zero at X = 1/sqrt(A)]

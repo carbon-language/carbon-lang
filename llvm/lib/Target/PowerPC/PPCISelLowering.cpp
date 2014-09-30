@@ -7458,25 +7458,14 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 // Target Optimization Hooks
 //===----------------------------------------------------------------------===//
 
-SDValue PPCTargetLowering::getEstimate(unsigned Opcode, SDValue Operand,
-                                       DAGCombinerInfo &DCI,
-                                       unsigned &RefinementSteps) const {
+SDValue PPCTargetLowering::getRsqrtEstimate(SDValue Operand,
+                                            DAGCombinerInfo &DCI,
+                                            unsigned &RefinementSteps) const {
   EVT VT = Operand.getValueType();
-  SDValue RV;
-  if (Opcode == ISD::FSQRT) {
-    if ((VT == MVT::f32 && Subtarget.hasFRSQRTES()) ||
-        (VT == MVT::f64 && Subtarget.hasFRSQRTE())  ||
-        (VT == MVT::v4f32 && Subtarget.hasAltivec()) ||
-        (VT == MVT::v2f64 && Subtarget.hasVSX()))
-      RV = DCI.DAG.getNode(PPCISD::FRSQRTE, SDLoc(Operand), VT, Operand);
-  } else if (Opcode == ISD::FDIV) {
-    if ((VT == MVT::f32 && Subtarget.hasFRES()) ||
-        (VT == MVT::f64 && Subtarget.hasFRE())  ||
-        (VT == MVT::v4f32 && Subtarget.hasAltivec()) ||
-        (VT == MVT::v2f64 && Subtarget.hasVSX()))
-      RV = DCI.DAG.getNode(PPCISD::FRE, SDLoc(Operand), VT, Operand);
-  }
-  if (RV.getNode()) {
+  if ((VT == MVT::f32 && Subtarget.hasFRSQRTES()) ||
+      (VT == MVT::f64 && Subtarget.hasFRSQRTE())  ||
+      (VT == MVT::v4f32 && Subtarget.hasAltivec()) ||
+      (VT == MVT::v2f64 && Subtarget.hasVSX())) {
     // Convergence is quadratic, so we essentially double the number of digits
     // correct after every iteration. For both FRE and FRSQRTE, the minimum
     // architected relative accuracy is 2^-5. When hasRecipPrec(), this is
@@ -7484,8 +7473,29 @@ SDValue PPCTargetLowering::getEstimate(unsigned Opcode, SDValue Operand,
     RefinementSteps = Subtarget.hasRecipPrec() ? 1 : 3;
     if (VT.getScalarType() == MVT::f64)
       ++RefinementSteps;
+    return DCI.DAG.getNode(PPCISD::FRSQRTE, SDLoc(Operand), VT, Operand);
   }
-  return RV;
+  return SDValue();
+}
+
+SDValue PPCTargetLowering::getRecipEstimate(SDValue Operand,
+                                            DAGCombinerInfo &DCI,
+                                            unsigned &RefinementSteps) const {
+  EVT VT = Operand.getValueType();
+  if ((VT == MVT::f32 && Subtarget.hasFRES()) ||
+      (VT == MVT::f64 && Subtarget.hasFRE())  ||
+      (VT == MVT::v4f32 && Subtarget.hasAltivec()) ||
+      (VT == MVT::v2f64 && Subtarget.hasVSX())) {
+    // Convergence is quadratic, so we essentially double the number of digits
+    // correct after every iteration. For both FRE and FRSQRTE, the minimum
+    // architected relative accuracy is 2^-5. When hasRecipPrec(), this is
+    // 2^-14. IEEE float has 23 digits and double has 52 digits.
+    RefinementSteps = Subtarget.hasRecipPrec() ? 1 : 3;
+    if (VT.getScalarType() == MVT::f64)
+      ++RefinementSteps;
+    return DCI.DAG.getNode(PPCISD::FRE, SDLoc(Operand), VT, Operand);
+  }
+  return SDValue();
 }
 
 static bool isConsecutiveLSLoc(SDValue Loc, EVT VT, LSBaseSDNode *Base,

@@ -701,9 +701,10 @@ namespace llvm {
     SDValue DAGCombineExtBoolTrunc(SDNode *N, DAGCombinerInfo &DCI) const;
     SDValue DAGCombineTruncBoolExt(SDNode *N, DAGCombinerInfo &DCI) const;
 
-    SDValue getEstimate(unsigned Opcode, SDValue Operand,
-                        DAGCombinerInfo &DCI,
-                        unsigned &RefinementSteps) const override;
+    SDValue getRsqrtEstimate(SDValue Operand, DAGCombinerInfo &DCI,
+                             unsigned &RefinementSteps) const override;
+    SDValue getRecipEstimate(SDValue Operand, DAGCombinerInfo &DCI,
+                             unsigned &RefinementSteps) const override;
 
     CCAssignFn *useFastISelCCs(unsigned Flag) const;
   };
