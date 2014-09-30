@@ -1,6 +1,8 @@
 // Test that we do not poison the array cookie if the operator new is defined
 // inside the class.
 // RUN: %clangxx_asan  %s -o %t && %run %t
+//
+// XFAIL: android
 #include <new>
 #include <stdlib.h>
 #include <stdint.h>
@@ -31,4 +33,5 @@ int main() {
   assert(reinterpret_cast<uintptr_t>(foo) ==
          reinterpret_cast<uintptr_t>(Foo::allocated) + sizeof(void*));
   *reinterpret_cast<uintptr_t*>(Foo::allocated) = 42;
+  return 0;
 }
