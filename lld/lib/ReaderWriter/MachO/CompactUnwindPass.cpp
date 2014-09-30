@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-/// \file
+/// \file A pass to convert MachO's __compact_unwind sections into the final
+/// __unwind_info format used during runtime. See
+/// mach-o/compact_unwind_encoding.h for more details on the formats involved.
 ///
 //===----------------------------------------------------------------------===//
 
