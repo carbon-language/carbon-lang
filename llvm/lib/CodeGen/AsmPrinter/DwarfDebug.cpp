@@ -171,6 +171,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
       GlobalRangeCount(0), InfoHolder(A, "info_string", DIEValueAllocator),
       UsedNonDefaultText(false),
       SkeletonHolder(A, "skel_string", DIEValueAllocator),
+      IsDarwin(Triple(A->getTargetTriple()).isOSDarwin()),
       AccelNames(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
                                        dwarf::DW_FORM_data4)),
       AccelObjC(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
@@ -190,8 +191,6 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 
   // Turn on accelerator tables for Darwin by default, pubnames by
   // default for non-Darwin, and handle split dwarf.
-  bool IsDarwin = Triple(A->getTargetTriple()).isOSDarwin();
-
   if (DwarfAccelTables == Default)
     HasDwarfAccelTables = IsDarwin;
   else
@@ -1698,7 +1697,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   // Under -gmlt, skip building the subprogram if there are no inlined
   // subroutines inside it.
   if (TheCU.getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly &&
-      LScopes.getAbstractScopesList().empty()) {
+      LScopes.getAbstractScopesList().empty() && !IsDarwin) {
     assert(ScopeVariables.empty());
     assert(CurrentFnArguments.empty());
     assert(DbgValues.empty());

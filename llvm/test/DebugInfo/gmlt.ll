@@ -1,5 +1,7 @@
 ; REQUIRES: object-emission
 ; RUN: %llc_dwarf -O0 -filetype=obj < %s | llvm-dwarfdump - | FileCheck %s
+; RUN: %llc_dwarf -O0 -filetype=obj < %s -mtriple x86_64-apple-darwin | llvm-dwarfdump - \
+; RUN:     | FileCheck --check-prefix=CHECK --check-prefix=DARWIN %s
 
 ; Generated from the following source compiled with clang++ -gmlt:
 ; void f1() {}
@@ -16,6 +18,25 @@
 ; CHECK: DW_TAG_compile_unit
 ; CHECK:   DW_AT_ranges [DW_FORM_sec_offset] (0x00000000)
 ; CHECK-NOT: {{DW_TAG|NULL}}
+
+; Omitting the subprograms without inlined subroutines is not possible
+; currently on Darwin as dsymutil will drop the whole CU if it has no subprograms
+; (which happens with this optimization if there are no inlined subroutines).
+
+; DARWIN:  DW_TAG_subprogram
+; DARWIN-NOT: DW_TAG
+; DARWIN:    DW_AT_name {{.*}} "f1"
+; DARWIN-NOT: {{DW_TAG|NULL}}
+; DARWIN:  DW_TAG_subprogram
+; DARWIN-NOT: DW_TAG
+; DARWIN:    DW_AT_name {{.*}} "f2"
+; DARWIN-NOT: {{DW_TAG|NULL}}
+; DARWIN:  DW_TAG_subprogram
+; DARWIN-NOT: DW_TAG
+; Can't check the abstract_origin value across the DARWIN/CHECK checking and
+; ordering, so don't bother - just trust me, it refers to f3 down there.
+; DARWIN:    DW_AT_abstract_origin
+; DARWIN-NOT: {{DW_TAG|NULL}}
 
 
 ; FIXME: Emitting separate abstract definitions is inefficient when we could

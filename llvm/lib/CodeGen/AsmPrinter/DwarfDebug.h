@@ -319,6 +319,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   // True iff there are multiple CUs in this module.
   bool SingleCU;
+  bool IsDarwin;
 
   AddressPool AddrPool;
 
