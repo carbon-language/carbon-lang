@@ -588,7 +588,7 @@ static DecodeStatus DecodeFixedPointScaleImm32(llvm::MCInst &Inst, unsigned Imm,
                                                uint64_t Addr,
                                                const void *Decoder) {
   // scale{5} is asserted as 1 in tblgen.
-  Imm |= 0x20;  
+  Imm |= 0x20;
   Inst.addOperand(MCOperand::CreateImm(64 - Imm));
   return Success;
 }
@@ -1526,7 +1526,7 @@ static DecodeStatus DecodeSystemPStateInstruction(llvm::MCInst &Inst,
 
   bool ValidNamed;
   (void)AArch64PState::PStateMapper().toString(pstate_field, ValidNamed);
-  
+
   return ValidNamed ? Success : Fail;
 }
 
