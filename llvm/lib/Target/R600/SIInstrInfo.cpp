@@ -711,8 +711,6 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
     }
 
     // XXX: Commute VOP3 instructions with abs and neg set .
-    const MachineOperand *Abs = getNamedOperand(*MI, AMDGPU::OpName::abs);
-    const MachineOperand *Neg = getNamedOperand(*MI, AMDGPU::OpName::neg);
     const MachineOperand *Src0Mods = getNamedOperand(*MI,
                                           AMDGPU::OpName::src0_modifiers);
     const MachineOperand *Src1Mods = getNamedOperand(*MI,
@@ -720,8 +718,8 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
     const MachineOperand *Src2Mods = getNamedOperand(*MI,
                                           AMDGPU::OpName::src2_modifiers);
 
-    if ((Abs && Abs->getImm()) || (Neg && Neg->getImm()) ||
-        (Src0Mods && Src0Mods->getImm()) || (Src1Mods && Src1Mods->getImm()) ||
+    if ((Src0Mods && Src0Mods->getImm()) ||
+        (Src1Mods && Src1Mods->getImm()) ||
         (Src2Mods && Src2Mods->getImm()))
       return nullptr;
 

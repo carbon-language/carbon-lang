@@ -792,9 +792,11 @@ multiclass VOP3b_Helper <bits<9> op, RegisterClass vrc, RegisterClass arc,
                     string opName, list<dag> pattern> :
   VOP3b_2_m <
   op, (outs vrc:$dst0, SReg_64:$dst1),
-  (ins arc:$src0, arc:$src1, arc:$src2,
-   InstFlag:$abs, InstFlag:$clamp, InstFlag:$omod, InstFlag:$neg),
-  opName#" $dst0, $dst1, $src0, $src1, $src2, $abs, $clamp, $omod, $neg", pattern,
+      (ins InputModsNoDefault:$src0_modifiers, arc:$src0,
+           InputModsNoDefault:$src1_modifiers, arc:$src1,
+           InputModsNoDefault:$src2_modifiers, arc:$src2,
+           i32imm:$clamp, i32imm:$omod),
+  opName#" $dst0, $dst1, $src0_modifiers, $src1_modifiers, $src2_modifiers, $clamp, $omod", pattern,
   opName, opName, 1, 1
 >;
 

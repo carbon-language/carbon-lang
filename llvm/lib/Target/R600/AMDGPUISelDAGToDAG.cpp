@@ -736,15 +736,16 @@ SDNode *AMDGPUDAGToDAGISel::SelectDIV_SCALE(SDNode *N) {
     = (VT == MVT::f64) ? AMDGPU::V_DIV_SCALE_F64 : AMDGPU::V_DIV_SCALE_F32;
 
   const SDValue Zero = CurDAG->getTargetConstant(0, MVT::i32);
-
+  const SDValue False = CurDAG->getTargetConstant(0, MVT::i1);
   SDValue Ops[] = {
-    N->getOperand(0),
-    N->getOperand(1),
-    N->getOperand(2),
-    Zero,
-    Zero,
-    Zero,
-    Zero
+    Zero,             // src0_modifiers
+    N->getOperand(0), // src0
+    Zero,             // src1_modifiers
+    N->getOperand(1), // src1
+    Zero,             // src2_modifiers
+    N->getOperand(2), // src2
+    False,            // clamp
+    Zero              // omod
   };
 
   return CurDAG->SelectNodeTo(N, Opc, VT, MVT::i1, Ops);
