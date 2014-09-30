@@ -44,6 +44,7 @@ add_lldb_library(lldbAPI
   SBTarget.cpp
   SBThread.cpp
   SBThreadCollection.cpp
+  SBThreadPlan.cpp
   SBType.cpp
   SBTypeCategory.cpp
   SBTypeEnumMember.cpp
