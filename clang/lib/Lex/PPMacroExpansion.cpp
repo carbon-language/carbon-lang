@@ -49,7 +49,10 @@ void Preprocessor::appendMacroDirective(IdentifierInfo *II, MacroDirective *MD){
   MacroDirective *&StoredMD = Macros[II];
   MD->setPrevious(StoredMD);
   StoredMD = MD;
-  II->setHasMacroDefinition(MD->isDefined());
+  // Setup the identifier as having associated macro history.
+  II->setHasMacroDefinition(true);
+  if (!MD->isDefined())
+    II->setHasMacroDefinition(false);
   bool isImportedMacro = isa<DefMacroDirective>(MD) &&
                          cast<DefMacroDirective>(MD)->isImported();
   if (II->isFromAST() && !isImportedMacro)

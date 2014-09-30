@@ -2575,11 +2575,12 @@ CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
     const MacroDirective *MD = PP.getMacroDirectiveHistory(Macro);
     assert(MD && "Not a macro?");
     const MacroInfo *MI = MD->getMacroInfo();
+    assert((!MD->isDefined() || MI) && "missing MacroInfo for define");
 
     Result.AddTypedTextChunk(
                             Result.getAllocator().CopyString(Macro->getName()));
 
-    if (!MI->isFunctionLike())
+    if (!MI || !MI->isFunctionLike())
       return Result.TakeString();
     
     // Format a function-like macro with placeholders for the arguments.
