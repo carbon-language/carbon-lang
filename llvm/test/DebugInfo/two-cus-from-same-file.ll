@@ -23,14 +23,14 @@ declare i32 @puts(i8* nocapture) nounwind
 
 define i32 @main(i32 %argc, i8** nocapture %argv) nounwind {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i32 %argc}, i64 0, metadata !21), !dbg !26
-  tail call void @llvm.dbg.value(metadata !{i8** %argv}, i64 0, metadata !22), !dbg !27
+  tail call void @llvm.dbg.value(metadata !{i32 %argc}, i64 0, metadata !21, metadata !{}), !dbg !26
+  tail call void @llvm.dbg.value(metadata !{i8** %argv}, i64 0, metadata !22, metadata !{}), !dbg !27
   %puts = tail call i32 @puts(i8* getelementptr inbounds ([6 x i8]* @str1, i32 0, i32 0)), !dbg !28
   tail call void @foo() nounwind, !dbg !30
   ret i32 0, !dbg !31
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0, !9}
 !llvm.module.flags = !{!33}

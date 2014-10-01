@@ -22,20 +22,20 @@ define void @_ZN1A6setFooEv(%class.A* %this) unnamed_addr #0 align 2 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !32), !dbg !34
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !32, metadata !{}), !dbg !34
   %this1 = load %class.A** %this.addr
   ret void, !dbg !35
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind
 define i32 @_ZN1A6getFooEv(%class.A* %this) unnamed_addr #0 align 2 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !36), !dbg !37
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !36, metadata !{}), !dbg !37
   %this1 = load %class.A** %this.addr
   ret i32 1, !dbg !38
 }

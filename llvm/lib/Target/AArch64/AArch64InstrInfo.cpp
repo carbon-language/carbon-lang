@@ -1444,16 +1444,15 @@ bool AArch64InstrInfo::shouldScheduleAdjacent(MachineInstr *First,
   }
 }
 
-MachineInstr *AArch64InstrInfo::emitFrameIndexDebugValue(MachineFunction &MF,
-                                                         int FrameIx,
-                                                         uint64_t Offset,
-                                                         const MDNode *MDPtr,
-                                                         DebugLoc DL) const {
+MachineInstr *AArch64InstrInfo::emitFrameIndexDebugValue(
+    MachineFunction &MF, int FrameIx, uint64_t Offset, const MDNode *Var,
+    const MDNode *Expr, DebugLoc DL) const {
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(AArch64::DBG_VALUE))
                                 .addFrameIndex(FrameIx)
                                 .addImm(0)
                                 .addImm(Offset)
-                                .addMetadata(MDPtr);
+                                .addMetadata(Var)
+                                .addMetadata(Expr);
   return &*MIB;
 }
 

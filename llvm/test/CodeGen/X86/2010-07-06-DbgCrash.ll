@@ -23,9 +23,9 @@
 
 define i32 @main() nounwind ssp {
 bb.nph:
-  tail call void @llvm.dbg.declare(metadata !101, metadata !102), !dbg !107
+  tail call void @llvm.dbg.declare(metadata !101, metadata !102, metadata !{}), !dbg !107
   ret i32 0, !dbg !107
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 

@@ -16,7 +16,7 @@ for.body:                                         ; preds = %for.body, %entry
   %add53 = add nsw i64 %n1, 0, !dbg !52
   %add55 = add nsw i64 %n1, 0, !dbg !53
   %mul63 = mul nsw i64 %add53, -20995, !dbg !54
-  tail call void @llvm.dbg.value(metadata !{i64 %mul63}, i64 0, metadata !30), !dbg !55
+  tail call void @llvm.dbg.value(metadata !{i64 %mul63}, i64 0, metadata !30, metadata !{}), !dbg !55
   %mul65 = mul nsw i64 %add55, -3196, !dbg !56
   %add67 = add nsw i64 0, %mul65, !dbg !57
   %add80 = add i64 0, 1024, !dbg !58
@@ -35,7 +35,7 @@ for.body:                                         ; preds = %for.body, %entry
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata) #1
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
 
 attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

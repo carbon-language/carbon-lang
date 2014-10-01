@@ -85,7 +85,6 @@ namespace llvm {
 
     public:
     explicit DIBuilder(Module &M);
-    enum ComplexAddrKind { OpPlus=1, OpDeref, OpPiece };
     enum DebugEmissionKind { FullDebug=1, LineTablesOnly };
 
     /// finalize - Construct any deferred debug info descriptors.
@@ -501,33 +500,18 @@ namespace llvm {
                                    unsigned Flags = 0,
                                    unsigned ArgNo = 0);
 
-
-    /// createComplexVariable - Create a new descriptor for the specified
+    /// createExpression - Create a new descriptor for the specified
     /// variable which has a complex address expression for its address.
-    /// @param Tag         Dwarf TAG. Usually DW_TAG_auto_variable or
-    ///                    DW_TAG_arg_variable.
-    /// @param Scope       Variable scope.
-    /// @param Name        Variable name.
-    /// @param F           File where this variable is defined.
-    /// @param LineNo      Line number.
-    /// @param Ty          Variable Type
     /// @param Addr        An array of complex address operations.
-    /// @param ArgNo       If this variable is an argument then this argument's
-    ///                    number. 1 indicates 1st argument.
-    DIVariable createComplexVariable(unsigned Tag, DIDescriptor Scope,
-                                     StringRef Name, DIFile F, unsigned LineNo,
-                                     DITypeRef Ty, ArrayRef<Value *> Addr,
-                                     unsigned ArgNo = 0);
+    DIExpression createExpression(ArrayRef<Value *> Addr = None);
 
-    /// createVariablePiece - Create a descriptor to describe one part
+    /// createPieceExpression - Create a descriptor to describe one part
     /// of aggregate variable that is fragmented across multiple Values.
     ///
-    /// @param Variable      Variable that is partially represented by this.
     /// @param OffsetInBytes Offset of the piece in bytes.
     /// @param SizeInBytes   Size of the piece in bytes.
-    DIVariable createVariablePiece(DIVariable Variable,
-                                   unsigned OffsetInBytes,
-                                   unsigned SizeInBytes);
+    DIExpression createPieceExpression(unsigned OffsetInBytes,
+                                       unsigned SizeInBytes);
 
     /// createFunction - Create a new descriptor for the specified subprogram.
     /// See comments in DISubprogram for descriptions of these fields.
@@ -675,34 +659,37 @@ namespace llvm {
     /// insertDeclare - Insert a new llvm.dbg.declare intrinsic call.
     /// @param Storage     llvm::Value of the variable
     /// @param VarInfo     Variable's debug info descriptor.
+    /// @param Expr         A complex location expression.
     /// @param InsertAtEnd Location for the new intrinsic.
     Instruction *insertDeclare(llvm::Value *Storage, DIVariable VarInfo,
-                               BasicBlock *InsertAtEnd);
+                               DIExpression Expr, BasicBlock *InsertAtEnd);
 
     /// insertDeclare - Insert a new llvm.dbg.declare intrinsic call.
     /// @param Storage      llvm::Value of the variable
     /// @param VarInfo      Variable's debug info descriptor.
+    /// @param Expr         A complex location expression.
     /// @param InsertBefore Location for the new intrinsic.
     Instruction *insertDeclare(llvm::Value *Storage, DIVariable VarInfo,
-                               Instruction *InsertBefore);
-
+                               DIExpression Expr, Instruction *InsertBefore);
 
     /// insertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
     /// @param Val          llvm::Value of the variable
     /// @param Offset       Offset
     /// @param VarInfo      Variable's debug info descriptor.
+    /// @param Expr         A complex location expression.
     /// @param InsertAtEnd Location for the new intrinsic.
     Instruction *insertDbgValueIntrinsic(llvm::Value *Val, uint64_t Offset,
-                                         DIVariable VarInfo,
+                                         DIVariable VarInfo, DIExpression Expr,
                                          BasicBlock *InsertAtEnd);
 
     /// insertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
     /// @param Val          llvm::Value of the variable
     /// @param Offset       Offset
     /// @param VarInfo      Variable's debug info descriptor.
+    /// @param Expr         A complex location expression.
     /// @param InsertBefore Location for the new intrinsic.
     Instruction *insertDbgValueIntrinsic(llvm::Value *Val, uint64_t Offset,
-                                         DIVariable VarInfo,
+                                         DIVariable VarInfo, DIExpression Expr,
                                          Instruction *InsertBefore);
   };
 } // end namespace llvm

@@ -15,9 +15,9 @@ target triple = "thumbv7-apple-macosx10.6.7"
 
 define i32 @inlineprinter(i8* %ptr, float %val, i8 zeroext %c) nounwind optsize ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i8* %ptr}, i64 0, metadata !8), !dbg !24
-  tail call void @llvm.dbg.value(metadata !{float %val}, i64 0, metadata !10), !dbg !25
-  tail call void @llvm.dbg.value(metadata !{i8 %c}, i64 0, metadata !12), !dbg !26
+  tail call void @llvm.dbg.value(metadata !{i8* %ptr}, i64 0, metadata !8, metadata !{}), !dbg !24
+  tail call void @llvm.dbg.value(metadata !{float %val}, i64 0, metadata !10, metadata !{}), !dbg !25
+  tail call void @llvm.dbg.value(metadata !{i8 %c}, i64 0, metadata !12, metadata !{}), !dbg !26
   %conv = fpext float %val to double, !dbg !27
   %conv3 = zext i8 %c to i32, !dbg !27
   %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0), i8* %ptr, double %conv, i32 %conv3) nounwind optsize, !dbg !27
@@ -28,9 +28,9 @@ declare i32 @printf(i8* nocapture, ...) nounwind optsize
 
 define i32 @printer(i8* %ptr, float %val, i8 zeroext %c) nounwind optsize noinline ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i8* %ptr}, i64 0, metadata !14), !dbg !30
-  tail call void @llvm.dbg.value(metadata !{float %val}, i64 0, metadata !15), !dbg !31
-  tail call void @llvm.dbg.value(metadata !{i8 %c}, i64 0, metadata !16), !dbg !32
+  tail call void @llvm.dbg.value(metadata !{i8* %ptr}, i64 0, metadata !14, metadata !{}), !dbg !30
+  tail call void @llvm.dbg.value(metadata !{float %val}, i64 0, metadata !15, metadata !{}), !dbg !31
+  tail call void @llvm.dbg.value(metadata !{i8 %c}, i64 0, metadata !16, metadata !{}), !dbg !32
   %conv = fpext float %val to double, !dbg !33
   %conv3 = zext i8 %c to i32, !dbg !33
   %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0), i8* %ptr, double %conv, i32 %conv3) nounwind optsize, !dbg !33
@@ -39,19 +39,19 @@ entry:
 
 define i32 @main(i32 %argc, i8** nocapture %argv) nounwind optsize ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i32 %argc}, i64 0, metadata !17), !dbg !36
-  tail call void @llvm.dbg.value(metadata !{i8** %argv}, i64 0, metadata !18), !dbg !37
+  tail call void @llvm.dbg.value(metadata !{i32 %argc}, i64 0, metadata !17, metadata !{}), !dbg !36
+  tail call void @llvm.dbg.value(metadata !{i8** %argv}, i64 0, metadata !18, metadata !{}), !dbg !37
   %conv = sitofp i32 %argc to double, !dbg !38
   %add = fadd double %conv, 5.555552e+05, !dbg !38
   %conv1 = fptrunc double %add to float, !dbg !38
-  tail call void @llvm.dbg.value(metadata !{float %conv1}, i64 0, metadata !22), !dbg !38
+  tail call void @llvm.dbg.value(metadata !{float %conv1}, i64 0, metadata !22, metadata !{}), !dbg !38
   %call = tail call i32 @puts(i8* getelementptr inbounds ([6 x i8]* @.str1, i32 0, i32 0)) nounwind optsize, !dbg !39
   %add.ptr = getelementptr i8* bitcast (i32 (i32, i8**)* @main to i8*), i32 %argc, !dbg !40
   %add5 = add nsw i32 %argc, 97, !dbg !40
   %conv6 = trunc i32 %add5 to i8, !dbg !40
-  tail call void @llvm.dbg.value(metadata !{i8* %add.ptr}, i64 0, metadata !8) nounwind, !dbg !41
-  tail call void @llvm.dbg.value(metadata !{float %conv1}, i64 0, metadata !10) nounwind, !dbg !42
-  tail call void @llvm.dbg.value(metadata !{i8 %conv6}, i64 0, metadata !12) nounwind, !dbg !43
+  tail call void @llvm.dbg.value(metadata !{i8* %add.ptr}, i64 0, metadata !8, metadata !{}) nounwind, !dbg !41
+  tail call void @llvm.dbg.value(metadata !{float %conv1}, i64 0, metadata !10, metadata !{}) nounwind, !dbg !42
+  tail call void @llvm.dbg.value(metadata !{i8 %conv6}, i64 0, metadata !12, metadata !{}) nounwind, !dbg !43
   %conv.i = fpext float %conv1 to double, !dbg !44
   %conv3.i = and i32 %add5, 255, !dbg !44
   %call.i = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0), i8* %add.ptr, double %conv.i, i32 %conv3.i) nounwind optsize, !dbg !44
@@ -61,7 +61,7 @@ entry:
 
 declare i32 @puts(i8* nocapture) nounwind optsize
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!53}

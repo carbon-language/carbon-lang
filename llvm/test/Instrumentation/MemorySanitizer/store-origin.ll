@@ -11,14 +11,14 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: nounwind
 define void @Store(i32* nocapture %p, i32 %x) #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i32* %p}, i64 0, metadata !11), !dbg !16
-  tail call void @llvm.dbg.value(metadata !{i32 %x}, i64 0, metadata !12), !dbg !16
+  tail call void @llvm.dbg.value(metadata !{i32* %p}, i64 0, metadata !11, metadata !{}), !dbg !16
+  tail call void @llvm.dbg.value(metadata !{i32 %x}, i64 0, metadata !12, metadata !{}), !dbg !16
   store i32 %x, i32* %p, align 4, !dbg !17, !tbaa !18
   ret void, !dbg !22
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata) #1
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
 
 attributes #0 = { nounwind sanitize_memory "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

@@ -25,19 +25,19 @@ define void @_Z4topA2EA(i32 %sa) #0 {
 entry:
   %sa.addr = alloca i32, align 4
   store i32 %sa, i32* %sa.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %sa.addr}, metadata !22), !dbg !23
+  call void @llvm.dbg.declare(metadata !{i32* %sa.addr}, metadata !22, metadata !{}), !dbg !23
   ret void, !dbg !24
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind ssp uwtable
 define void @_Z4topB2EA(i32 %sa) #0 {
 entry:
   %sa.addr = alloca i32, align 4
   store i32 %sa, i32* %sa.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %sa.addr}, metadata !25), !dbg !26
+  call void @llvm.dbg.declare(metadata !{i32* %sa.addr}, metadata !25, metadata !{}), !dbg !26
   ret void, !dbg !27
 }
 

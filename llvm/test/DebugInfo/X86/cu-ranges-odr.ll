@@ -35,9 +35,9 @@ entry:
   %this.addr = alloca %class.A*, align 8
   %i.addr = alloca i32, align 4
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !27), !dbg !29
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !27, metadata !{}), !dbg !29
   store i32 %i, i32* %i.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %i.addr}, metadata !30), !dbg !31
+  call void @llvm.dbg.declare(metadata !{i32* %i.addr}, metadata !30, metadata !{}), !dbg !31
   %this1 = load %class.A** %this.addr
   %a = getelementptr inbounds %class.A* %this1, i32 0, i32 0, !dbg !31
   %0 = load i32* %i.addr, align 4, !dbg !31
@@ -46,7 +46,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 define internal void @_GLOBAL__I_a() section ".text.startup" {
 entry:

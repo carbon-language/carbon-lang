@@ -13,13 +13,13 @@ define i32 @f(i32 %a) {
 entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %a.addr}, metadata !11), !dbg !12
+  call void @llvm.dbg.declare(metadata !{i32* %a.addr}, metadata !11, metadata !{}), !dbg !12
   %0 = load i32* %a.addr, align 4, !dbg !12
   %add = add nsw i32 %0, 1, !dbg !12
   ret i32 %add, !dbg !12
 }
 
-declare void @llvm.dbg.declare(metadata, metadata)
+declare void @llvm.dbg.declare(metadata, metadata, metadata)
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!9, !10}

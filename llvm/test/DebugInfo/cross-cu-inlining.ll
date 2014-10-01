@@ -65,7 +65,7 @@ entry:
   %1 = bitcast i32* %x.addr.i to i8*
   call void @llvm.lifetime.start(i64 4, i8* %1)
   store i32 %0, i32* %x.addr.i, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %x.addr.i}, metadata !20), !dbg !21
+  call void @llvm.dbg.declare(metadata !{i32* %x.addr.i}, metadata !20, metadata !{}), !dbg !21
   %2 = load i32* %x.addr.i, align 4, !dbg !22
   %mul.i = mul nsw i32 %2, 2, !dbg !22
   %3 = bitcast i32* %x.addr.i to i8*, !dbg !22
@@ -78,14 +78,14 @@ define i32 @_Z4funci(i32 %x) #1 {
 entry:
   %x.addr = alloca i32, align 4
   store i32 %x, i32* %x.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %x.addr}, metadata !20), !dbg !23
+  call void @llvm.dbg.declare(metadata !{i32* %x.addr}, metadata !20, metadata !{}), !dbg !23
   %0 = load i32* %x.addr, align 4, !dbg !24
   %mul = mul nsw i32 %0, 2, !dbg !24
   ret i32 %mul, !dbg !24
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #2
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #2
 
 ; Function Attrs: nounwind
 declare void @llvm.lifetime.start(i64, i8* nocapture) #3

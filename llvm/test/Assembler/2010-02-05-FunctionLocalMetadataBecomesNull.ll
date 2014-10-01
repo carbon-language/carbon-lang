@@ -12,7 +12,7 @@ target triple = "x86_64-apple-darwin10.2"
 
 define i32 @main() nounwind readonly {
   %diff1 = alloca i64                             ; <i64*> [#uses=2]
-  call void @llvm.dbg.declare(metadata !{i64* %diff1}, metadata !0)
+  call void @llvm.dbg.declare(metadata !{i64* %diff1}, metadata !0, metadata !{})
   store i64 72, i64* %diff1, align 8
   %v1 = load %struct.test** @TestArrayPtr, align 8 ; <%struct.test*> [#uses=1]
   %v2 = ptrtoint %struct.test* %v1 to i64 ; <i64> [#uses=1]
@@ -21,7 +21,7 @@ define i32 @main() nounwind readonly {
   ret i32 4
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 !7 = metadata !{metadata !1}
 !6 = metadata !{i32 786449, metadata !8, i32 12, metadata !"clang version 3.0 (trunk 131941)", i1 true, metadata !"", i32 0, metadata !9, metadata !9, metadata !7, null, null, metadata !""} ; [ DW_TAG_compile_unit ]

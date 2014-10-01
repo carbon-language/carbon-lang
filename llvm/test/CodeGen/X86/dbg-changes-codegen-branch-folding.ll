@@ -52,48 +52,48 @@ define void @_Z3barii(i32 %param1, i32 %param2) #0 {
 entry:
   %var1 = alloca %struct.AAA3, align 1
   %var2 = alloca %struct.AAA3, align 1
-  tail call void @llvm.dbg.value(metadata !{i32 %param1}, i64 0, metadata !30), !dbg !47
-  tail call void @llvm.dbg.value(metadata !{i32 %param2}, i64 0, metadata !31), !dbg !47
-  tail call void @llvm.dbg.value(metadata !48, i64 0, metadata !32), !dbg !49
+  tail call void @llvm.dbg.value(metadata !{i32 %param1}, i64 0, metadata !30, metadata !{}), !dbg !47
+  tail call void @llvm.dbg.value(metadata !{i32 %param2}, i64 0, metadata !31, metadata !{}), !dbg !47
+  tail call void @llvm.dbg.value(metadata !48, i64 0, metadata !32, metadata !{}), !dbg !49
   %tobool = icmp eq i32 %param2, 0, !dbg !50
   br i1 %tobool, label %if.end, label %if.then, !dbg !50
 
 if.then:                                          ; preds = %entry
   %call = tail call i8* @_Z5i2stri(i32 %param2), !dbg !52
-  tail call void @llvm.dbg.value(metadata !{i8* %call}, i64 0, metadata !32), !dbg !49
+  tail call void @llvm.dbg.value(metadata !{i8* %call}, i64 0, metadata !32, metadata !{}), !dbg !49
   br label %if.end, !dbg !54
 
 if.end:                                           ; preds = %entry, %if.then
-  tail call void @llvm.dbg.value(metadata !{%struct.AAA3* %var1}, i64 0, metadata !33), !dbg !55
-  tail call void @llvm.dbg.value(metadata !{%struct.AAA3* %var1}, i64 0, metadata !56), !dbg !57
-  tail call void @llvm.dbg.value(metadata !58, i64 0, metadata !59), !dbg !60
+  tail call void @llvm.dbg.value(metadata !{%struct.AAA3* %var1}, i64 0, metadata !33, metadata !{}), !dbg !55
+  tail call void @llvm.dbg.value(metadata !{%struct.AAA3* %var1}, i64 0, metadata !56, metadata !{}), !dbg !57
+  tail call void @llvm.dbg.value(metadata !58, i64 0, metadata !59, metadata !{}), !dbg !60
   %arraydecay.i = getelementptr inbounds %struct.AAA3* %var1, i64 0, i32 0, i64 0, !dbg !61
   call void @_Z3fooPcjPKc(i8* %arraydecay.i, i32 4, i8* getelementptr inbounds ([1 x i8]* @.str, i64 0, i64 0)), !dbg !61
-  call void @llvm.dbg.value(metadata !{%struct.AAA3* %var2}, i64 0, metadata !34), !dbg !63
-  call void @llvm.dbg.value(metadata !{%struct.AAA3* %var2}, i64 0, metadata !64), !dbg !65
-  call void @llvm.dbg.value(metadata !58, i64 0, metadata !66), !dbg !67
+  call void @llvm.dbg.value(metadata !{%struct.AAA3* %var2}, i64 0, metadata !34, metadata !{}), !dbg !63
+  call void @llvm.dbg.value(metadata !{%struct.AAA3* %var2}, i64 0, metadata !64, metadata !{}), !dbg !65
+  call void @llvm.dbg.value(metadata !58, i64 0, metadata !66, metadata !{}), !dbg !67
   %arraydecay.i5 = getelementptr inbounds %struct.AAA3* %var2, i64 0, i32 0, i64 0, !dbg !68
   call void @_Z3fooPcjPKc(i8* %arraydecay.i5, i32 4, i8* getelementptr inbounds ([1 x i8]* @.str, i64 0, i64 0)), !dbg !68
   %tobool1 = icmp eq i32 %param1, 0, !dbg !69
-  call void @llvm.dbg.value(metadata !{%struct.AAA3* %var2}, i64 0, metadata !34), !dbg !63
+  call void @llvm.dbg.value(metadata !{%struct.AAA3* %var2}, i64 0, metadata !34, metadata !{}), !dbg !63
   br i1 %tobool1, label %if.else, label %if.then2, !dbg !69
 
 if.then2:                                         ; preds = %if.end
-  call void @llvm.dbg.value(metadata !{%struct.AAA3* %var2}, i64 0, metadata !71), !dbg !73
-  call void @llvm.dbg.value(metadata !74, i64 0, metadata !75), !dbg !76
+  call void @llvm.dbg.value(metadata !{%struct.AAA3* %var2}, i64 0, metadata !71, metadata !{}), !dbg !73
+  call void @llvm.dbg.value(metadata !74, i64 0, metadata !75, metadata !{}), !dbg !76
   call void @_Z3fooPcjPKc(i8* %arraydecay.i5, i32 4, i8* getelementptr inbounds ([2 x i8]* @.str1, i64 0, i64 0)), !dbg !76
   br label %if.end3, !dbg !72
 
 if.else:                                          ; preds = %if.end
-  call void @llvm.dbg.value(metadata !{%struct.AAA3* %var2}, i64 0, metadata !77), !dbg !79
-  call void @llvm.dbg.value(metadata !80, i64 0, metadata !81), !dbg !82
+  call void @llvm.dbg.value(metadata !{%struct.AAA3* %var2}, i64 0, metadata !77, metadata !{}), !dbg !79
+  call void @llvm.dbg.value(metadata !80, i64 0, metadata !81, metadata !{}), !dbg !82
   call void @_Z3fooPcjPKc(i8* %arraydecay.i5, i32 4, i8* getelementptr inbounds ([2 x i8]* @.str2, i64 0, i64 0)), !dbg !82
   br label %if.end3
 
 if.end3:                                          ; preds = %if.else, %if.then2
-  call void @llvm.dbg.value(metadata !{%struct.AAA3* %var1}, i64 0, metadata !33), !dbg !55
-  call void @llvm.dbg.value(metadata !{%struct.AAA3* %var1}, i64 0, metadata !83), !dbg !85
-  call void @llvm.dbg.value(metadata !58, i64 0, metadata !86), !dbg !87
+  call void @llvm.dbg.value(metadata !{%struct.AAA3* %var1}, i64 0, metadata !33, metadata !{}), !dbg !55
+  call void @llvm.dbg.value(metadata !{%struct.AAA3* %var1}, i64 0, metadata !83, metadata !{}), !dbg !85
+  call void @llvm.dbg.value(metadata !58, i64 0, metadata !86, metadata !{}), !dbg !87
   call void @_Z3fooPcjPKc(i8* %arraydecay.i, i32 4, i8* getelementptr inbounds ([1 x i8]* @.str, i64 0, i64 0)), !dbg !87
   ret void, !dbg !88
 }
@@ -103,7 +103,7 @@ declare i8* @_Z5i2stri(i32) #1
 declare void @_Z3fooPcjPKc(i8*, i32, i8*) #1
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata) #2
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #2
 
 attributes #0 = { uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }

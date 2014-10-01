@@ -66,20 +66,20 @@ entry:
   %otherBitmap.addr = alloca %0*, align 8
   %length.addr = alloca i64, align 8
   store %0* %self, %0** %self.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%0** %self.addr}, metadata !28), !dbg !29
+  call void @llvm.dbg.declare(metadata !{%0** %self.addr}, metadata !28, metadata !{}), !dbg !29
   store i8* %_cmd, i8** %_cmd.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i8** %_cmd.addr}, metadata !30), !dbg !29
+  call void @llvm.dbg.declare(metadata !{i8** %_cmd.addr}, metadata !30, metadata !{}), !dbg !29
   store %0* %otherBitmap, %0** %otherBitmap.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%0** %otherBitmap.addr}, metadata !32), !dbg !29
-  call void @llvm.dbg.declare(metadata !{%struct.ImageInfo* %info}, metadata !33), !dbg !34
+  call void @llvm.dbg.declare(metadata !{%0** %otherBitmap.addr}, metadata !32, metadata !{}), !dbg !29
+  call void @llvm.dbg.declare(metadata !{%struct.ImageInfo* %info}, metadata !33, metadata !{}), !dbg !34
   store i64 %length, i64* %length.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i64* %length.addr}, metadata !35), !dbg !36
+  call void @llvm.dbg.declare(metadata !{i64* %length.addr}, metadata !35, metadata !{}), !dbg !36
   %0 = load i8** %retval, !dbg !37
   ret i8* %0, !dbg !37
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 attributes #0 = { ssp uwtable }
 attributes #1 = { nounwind readnone }

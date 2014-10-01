@@ -82,6 +82,8 @@ const char *llvm::dwarf::TagString(unsigned Tag) {
   case DW_TAG_hi_user:                   return "DW_TAG_hi_user";
   case DW_TAG_auto_variable:             return "DW_TAG_auto_variable";
   case DW_TAG_arg_variable:              return "DW_TAG_arg_variable";
+  case DW_TAG_expression:
+    return "DW_TAG_expression";
   case DW_TAG_rvalue_reference_type:     return "DW_TAG_rvalue_reference_type";
   case DW_TAG_template_alias:            return "DW_TAG_template_alias";
   case DW_TAG_coarray_type:              return "DW_TAG_coarray_type";

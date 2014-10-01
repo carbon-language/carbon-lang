@@ -63,18 +63,18 @@
 ; ModuleID = 'llvm/tools/clang/test/CodeGenObjC/debug-info-block-captured-self.m'
 %0 = type opaque
 %struct.__block_descriptor = type { i64, i64 }
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 define internal void @"__24-[Main initWithContext:]_block_invoke"(i8* %.block_descriptor, i8* %obj) #0 {
   %block = bitcast i8* %.block_descriptor to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !84
   %block.captured-self = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %block, i32 0, i32 5, !dbg !84
-  call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %block}, metadata !86), !dbg !87
+  call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %block}, metadata !86, metadata !110), !dbg !87
   ret void, !dbg !87
 }
 
 define internal void @"__24-[Main initWithContext:]_block_invoke_2"(i8* %.block_descriptor, i8* %object) #0 {
   %block = bitcast i8* %.block_descriptor to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !103
   %block.captured-self = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %block, i32 0, i32 5, !dbg !103
-  call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %block}, metadata !105), !dbg !106
+  call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %block}, metadata !105, metadata !109), !dbg !106
   ret void, !dbg !106
 }
 
@@ -101,12 +101,12 @@ define internal void @"__24-[Main initWithContext:]_block_invoke_2"(i8* %.block_
 !41 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, null} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from ]
 !42 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"__24-[Main initWithContext:]_block_invoke_2", metadata !"__24-[Main initWithContext:]_block_invoke_2", metadata !"", i32 35, metadata !39, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i8*, i8*)* @"__24-[Main initWithContext:]_block_invoke_2", null, null, metadata !15, i32 35} ; [ DW_TAG_subprogram ] [line 35] [local] [def] [__24-[Main initWithContext:]_block_invoke_2]
 !84 = metadata !{i32 33, i32 0, metadata !38, null}
-!86 = metadata !{i32 786688, metadata !38, metadata !"self", metadata !1, i32 41, metadata !34, i32 0, i32 0, metadata !110} ; [ DW_TAG_auto_variable ] [self] [line 41]
+!86 = metadata !{i32 786688, metadata !38, metadata !"self", metadata !1, i32 41, metadata !34, i32 0, i32 0} ;; [ DW_TAG_auto_variable ] [self] [line 41]
 !87 = metadata !{i32 41, i32 0, metadata !38, null}
 !103 = metadata !{i32 35, i32 0, metadata !42, null}
-!105 = metadata !{i32 786688, metadata !42, metadata !"self", metadata !1, i32 40, metadata !34, i32 0, i32 0, metadata !109} ; [ DW_TAG_auto_variable ] [self] [line 40]
+!105 = metadata !{i32 786688, metadata !42, metadata !"self", metadata !1, i32 40, metadata !34, i32 0, i32 0} ;; [ DW_TAG_auto_variable ] [self] [line 40]
 !106 = metadata !{i32 40, i32 0, metadata !42, null}
 !107 = metadata !{metadata !"llvm/tools/clang/test/CodeGenObjC/debug-info-block-captured-self.m", metadata !""}
 !108 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
-!109 = metadata !{i64 1, i64 32}
-!110 = metadata !{i64 1, i64 32}
+!109 = metadata !{i32 786690, i64 34, i64 32} ; [DW_OP_plus 32]
+!110 = metadata !{i32 786690, i64 34, i64 32} ; [DW_OP_plus 32]

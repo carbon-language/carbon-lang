@@ -25,7 +25,7 @@ for.cond968.preheader:                            ; preds = %for.cond968.prehead
 for.end1042:                                      ; preds = %for.cond968.preheader, %for.cond964.preheader, %entry
   %0 = phi i32 [ undef, %for.cond964.preheader ], [ undef, %for.cond968.preheader ], [ undef, %entry ]
   %1 = load i32* getelementptr inbounds ([3 x i32]* @grid_points, i64 0, i64 0), align 4, !dbg !443, !tbaa !444
-  tail call void @llvm.dbg.value(metadata !447, i64 0, metadata !119), !dbg !448
+  tail call void @llvm.dbg.value(metadata !447, i64 0, metadata !119, metadata !{}), !dbg !448
   %sub10454270 = add nsw i32 %0, -1, !dbg !448
   %cmp10464271 = icmp sgt i32 %sub10454270, 1, !dbg !448
   %sub11134263 = add nsw i32 %1, -1, !dbg !450
@@ -46,7 +46,7 @@ for.cond1816.preheader.for.inc1898_crit_edge:     ; preds = %for.cond1816.prehea
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata) #1
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
 
 attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

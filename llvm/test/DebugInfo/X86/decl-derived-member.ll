@@ -37,7 +37,7 @@ define linkonce_odr void @_ZN3fooC2Ev(%struct.foo* %this) unnamed_addr #0 align 
 entry:
   %this.addr = alloca %struct.foo*, align 8
   store %struct.foo* %this, %struct.foo** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.foo** %this.addr}, metadata !36), !dbg !38
+  call void @llvm.dbg.declare(metadata !{%struct.foo** %this.addr}, metadata !36, metadata !{}), !dbg !38
   %this1 = load %struct.foo** %this.addr
   %b = getelementptr inbounds %struct.foo* %this1, i32 0, i32 0, !dbg !39
   call void @_ZN4baseC2Ev(%struct.base* %b) #2, !dbg !39
@@ -49,7 +49,7 @@ define linkonce_odr void @_ZN3fooD2Ev(%struct.foo* %this) unnamed_addr #1 align 
 entry:
   %this.addr = alloca %struct.foo*, align 8
   store %struct.foo* %this, %struct.foo** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.foo** %this.addr}, metadata !40), !dbg !41
+  call void @llvm.dbg.declare(metadata !{%struct.foo** %this.addr}, metadata !40, metadata !{}), !dbg !41
   %this1 = load %struct.foo** %this.addr
   %b = getelementptr inbounds %struct.foo* %this1, i32 0, i32 0, !dbg !42
   call void @_ZN4baseD1Ev(%struct.base* %b), !dbg !42
@@ -60,7 +60,7 @@ entry:
 declare i32 @__cxa_atexit(void (i8*)*, i8*, i8*) #2
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #3
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #3
 
 declare void @_ZN4baseD1Ev(%struct.base*) #4
 
@@ -69,7 +69,7 @@ define linkonce_odr void @_ZN4baseC2Ev(%struct.base* %this) unnamed_addr #0 alig
 entry:
   %this.addr = alloca %struct.base*, align 8
   store %struct.base* %this, %struct.base** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.base** %this.addr}, metadata !45), !dbg !47
+  call void @llvm.dbg.declare(metadata !{%struct.base** %this.addr}, metadata !45, metadata !{}), !dbg !47
   %this1 = load %struct.base** %this.addr
   %0 = bitcast %struct.base* %this1 to i8***, !dbg !48
   store i8** getelementptr inbounds ([4 x i8*]* @_ZTV4base, i64 0, i64 2), i8*** %0, !dbg !48

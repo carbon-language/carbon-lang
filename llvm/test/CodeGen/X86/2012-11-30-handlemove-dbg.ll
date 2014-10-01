@@ -12,11 +12,11 @@
 %struct.hgstruct.2.29 = type { %struct.bnode.1.28*, [3 x double], double, [3 x double] }
 %struct.bnode.1.28 = type { i16, double, [3 x double], i32, i32, [3 x double], [3 x double], [3 x double], double, %struct.bnode.1.28*, %struct.bnode.1.28* }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define signext i16 @subdivp(%struct.node.0.27* nocapture %p, double %dsq, double %tolsq, %struct.hgstruct.2.29* nocapture byval align 8 %hg) nounwind uwtable readonly ssp {
 entry:
-  call void @llvm.dbg.declare(metadata !{%struct.hgstruct.2.29* %hg}, metadata !4)
+  call void @llvm.dbg.declare(metadata !{%struct.hgstruct.2.29* %hg}, metadata !4, metadata !{})
   %type = getelementptr inbounds %struct.node.0.27* %p, i64 0, i32 0
   %0 = load i16* %type, align 2
   %cmp = icmp eq i16 %0, 1
@@ -33,7 +33,7 @@ return:                                           ; preds = %for.cond.preheader,
   ret i16 %retval.0
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!12}

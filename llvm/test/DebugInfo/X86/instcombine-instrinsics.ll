@@ -30,7 +30,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 ; Function Attrs: nounwind ssp uwtable
 define void @init() #0 {
   %p = alloca %struct.i14*, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.i14** %p}, metadata !11), !dbg !18
+  call void @llvm.dbg.declare(metadata !{%struct.i14** %p}, metadata !11, metadata !{}), !dbg !18
   store %struct.i14* null, %struct.i14** %p, align 8, !dbg !18
   %1 = call i32 @foo(%struct.i14** %p), !dbg !19
   %2 = load %struct.i14** %p, align 8, !dbg !20
@@ -43,7 +43,7 @@ define void @init() #0 {
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 declare i32 @foo(%struct.i14**)
 

@@ -26,8 +26,8 @@ define i32 @foo2() {
 
 define void @bar2(i32* %foo)  {
   store i32 0, i32* %foo, align 4
-  tail call void @llvm.dbg.value(metadata !{}, i64 0, metadata !{})
+  tail call void @llvm.dbg.value(metadata !{}, i64 0, metadata !{}, metadata !{})
   ret void
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone

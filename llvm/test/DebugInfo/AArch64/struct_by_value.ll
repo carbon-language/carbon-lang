@@ -32,14 +32,14 @@ target triple = "arm64-apple-ios3.0.0"
 ; Function Attrs: nounwind ssp
 define i32 @return_five_int(%struct.five* %f) #0 {
 entry:
-  call void @llvm.dbg.declare(metadata !{%struct.five* %f}, metadata !17), !dbg !18
+  call void @llvm.dbg.declare(metadata !{%struct.five* %f}, metadata !17, metadata !{}), !dbg !18
   %a = getelementptr inbounds %struct.five* %f, i32 0, i32 0, !dbg !19
   %0 = load i32* %a, align 4, !dbg !19
   ret i32 %0, !dbg !19
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 attributes #0 = { nounwind ssp }
 attributes #1 = { nounwind readnone }

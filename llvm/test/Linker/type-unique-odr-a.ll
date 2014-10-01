@@ -59,12 +59,12 @@ entry:
 define internal void @_ZL3barv() #0 {
 entry:
   %a = alloca %class.A, align 4
-  call void @llvm.dbg.declare(metadata !{%class.A* %a}, metadata !24), !dbg !25
+  call void @llvm.dbg.declare(metadata !{%class.A* %a}, metadata !24, metadata !{}), !dbg !25
   ret void, !dbg !26
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 attributes #0 = { nounwind }
 attributes #1 = { nounwind readnone }

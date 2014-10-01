@@ -48,12 +48,12 @@
 
 define void @Proc8(i32* nocapture %Array1Par, [51 x i32]* nocapture %Array2Par, i32 %IntParI1, i32 %IntParI2) nounwind optsize {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i32* %Array1Par}, i64 0, metadata !23), !dbg !64
-  tail call void @llvm.dbg.value(metadata !{[51 x i32]* %Array2Par}, i64 0, metadata !24), !dbg !65
-  tail call void @llvm.dbg.value(metadata !{i32 %IntParI1}, i64 0, metadata !25), !dbg !66
-  tail call void @llvm.dbg.value(metadata !{i32 %IntParI2}, i64 0, metadata !26), !dbg !67
+  tail call void @llvm.dbg.value(metadata !{i32* %Array1Par}, i64 0, metadata !23, metadata !{}), !dbg !64
+  tail call void @llvm.dbg.value(metadata !{[51 x i32]* %Array2Par}, i64 0, metadata !24, metadata !{}), !dbg !65
+  tail call void @llvm.dbg.value(metadata !{i32 %IntParI1}, i64 0, metadata !25, metadata !{}), !dbg !66
+  tail call void @llvm.dbg.value(metadata !{i32 %IntParI2}, i64 0, metadata !26, metadata !{}), !dbg !67
   %add = add i32 %IntParI1, 5, !dbg !68
-  tail call void @llvm.dbg.value(metadata !{i32 %add}, i64 0, metadata !27), !dbg !68
+  tail call void @llvm.dbg.value(metadata !{i32 %add}, i64 0, metadata !27, metadata !{}), !dbg !68
   %idxprom = sext i32 %add to i64, !dbg !69
   %arrayidx = getelementptr inbounds i32* %Array1Par, i64 %idxprom, !dbg !69
   store i32 %IntParI2, i32* %arrayidx, align 4, !dbg !69
@@ -65,7 +65,7 @@ entry:
   %idxprom7 = sext i32 %add6 to i64, !dbg !74
   %arrayidx8 = getelementptr inbounds i32* %Array1Par, i64 %idxprom7, !dbg !74
   store i32 %add, i32* %arrayidx8, align 4, !dbg !74
-  tail call void @llvm.dbg.value(metadata !{i32 %add}, i64 0, metadata !28), !dbg !75
+  tail call void @llvm.dbg.value(metadata !{i32 %add}, i64 0, metadata !28, metadata !{}), !dbg !75
   br label %for.body, !dbg !75
 
 for.body:                                         ; preds = %entry, %for.body
@@ -74,7 +74,7 @@ for.body:                                         ; preds = %entry, %for.body
   %arrayidx13 = getelementptr inbounds [51 x i32]* %Array2Par, i64 %idxprom, i64 %indvars.iv, !dbg !77
   store i32 %add, i32* %arrayidx13, align 4, !dbg !77
   %inc = add nsw i32 %IntIndex.046, 1, !dbg !75
-  tail call void @llvm.dbg.value(metadata !{i32 %inc}, i64 0, metadata !28), !dbg !75
+  tail call void @llvm.dbg.value(metadata !{i32 %inc}, i64 0, metadata !28, metadata !{}), !dbg !75
   %cmp = icmp sgt i32 %inc, %add3, !dbg !75
   %indvars.iv.next = add i64 %indvars.iv, 1, !dbg !75
   br i1 %cmp, label %for.end, label %for.body, !dbg !75
@@ -95,7 +95,7 @@ for.end:                                          ; preds = %for.body
   ret void, !dbg !81
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 attributes #0 = { nounwind optsize ssp uwtable }
 attributes #1 = { nounwind readnone }

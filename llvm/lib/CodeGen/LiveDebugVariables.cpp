@@ -110,7 +110,8 @@ public:
 namespace {
 class LDVImpl;
 class UserValue {
-  const MDNode *variable; ///< The debug info variable we are part of.
+  const MDNode *Variable;   ///< The debug info variable we are part of.
+  const MDNode *Expression; ///< Any complex address expression.
   unsigned offset;        ///< Byte offset into variable.
   bool IsIndirect;        ///< true if this is a register-indirect+offset value.
   DebugLoc dl;            ///< The debug location for the variable. This is
@@ -140,11 +141,10 @@ class UserValue {
 
 public:
   /// UserValue - Create a new UserValue.
-  UserValue(const MDNode *var, unsigned o, bool i, DebugLoc L,
-            LocMap::Allocator &alloc)
-    : variable(var), offset(o), IsIndirect(i), dl(L), leader(this),
-      next(nullptr), locInts(alloc)
-  {}
+  UserValue(const MDNode *var, const MDNode *expr, unsigned o, bool i,
+            DebugLoc L, LocMap::Allocator &alloc)
+      : Variable(var), Expression(expr), offset(o), IsIndirect(i), dl(L),
+        leader(this), next(nullptr), locInts(alloc) {}
 
   /// getLeader - Get the leader of this value's equivalence class.
   UserValue *getLeader() {
@@ -158,8 +158,10 @@ public:
   UserValue *getNext() const { return next; }
 
   /// match - Does this UserValue match the parameters?
-  bool match(const MDNode *Var, unsigned Offset, bool indirect) const {
-    return Var == variable && Offset == offset && indirect == IsIndirect;
+  bool match(const MDNode *Var, const MDNode *Expr, unsigned Offset,
+             bool indirect) const {
+    return Var == Variable && Expr == Expression && Offset == offset &&
+           indirect == IsIndirect;
   }
 
   /// merge - Merge equivalence classes.
@@ -307,8 +309,8 @@ class LDVImpl {
   UVMap userVarMap;
 
   /// getUserValue - Find or create a UserValue.
-  UserValue *getUserValue(const MDNode *Var, unsigned Offset,
-                          bool IsIndirect, DebugLoc DL);
+  UserValue *getUserValue(const MDNode *Var, const MDNode *Expr,
+                          unsigned Offset, bool IsIndirect, DebugLoc DL);
 
   /// lookupVirtReg - Find the EC leader for VirtReg or null.
   UserValue *lookupVirtReg(unsigned VirtReg);
@@ -361,7 +363,7 @@ public:
 } // namespace
 
 void UserValue::print(raw_ostream &OS, const TargetMachine *TM) {
-  DIVariable DV(variable);
+  DIVariable DV(Variable);
   OS << "!\"";
   DV.printExtendedName(OS);
   OS << "\"\t";
@@ -422,19 +424,20 @@ void UserValue::mapVirtRegs(LDVImpl *LDV) {
       LDV->mapVirtReg(locations[i].getReg(), this);
 }
 
-UserValue *LDVImpl::getUserValue(const MDNode *Var, unsigned Offset,
-                                 bool IsIndirect, DebugLoc DL) {
+UserValue *LDVImpl::getUserValue(const MDNode *Var, const MDNode *Expr,
+                                 unsigned Offset, bool IsIndirect,
+                                 DebugLoc DL) {
   UserValue *&Leader = userVarMap[Var];
   if (Leader) {
     UserValue *UV = Leader->getLeader();
     Leader = UV;
     for (; UV; UV = UV->getNext())
-      if (UV->match(Var, Offset, IsIndirect))
+      if (UV->match(Var, Expr, Offset, IsIndirect))
         return UV;
   }
 
   userValues.push_back(
-      make_unique<UserValue>(Var, Offset, IsIndirect, DL, allocator));
+      make_unique<UserValue>(Var, Expr, Offset, IsIndirect, DL, allocator));
   UserValue *UV = userValues.back().get();
   Leader = UserValue::merge(Leader, UV);
   return UV;
@@ -454,7 +457,7 @@ UserValue *LDVImpl::lookupVirtReg(unsigned VirtReg) {
 
 bool LDVImpl::handleDebugValue(MachineInstr *MI, SlotIndex Idx) {
   // DBG_VALUE loc, offset, variable
-  if (MI->getNumOperands() != 3 ||
+  if (MI->getNumOperands() != 4 ||
       !(MI->getOperand(1).isReg() || MI->getOperand(1).isImm()) ||
       !MI->getOperand(2).isMetadata()) {
     DEBUG(dbgs() << "Can't handle " << *MI);
@@ -464,9 +467,11 @@ bool LDVImpl::handleDebugValue(MachineInstr *MI, SlotIndex Idx) {
   // Get or create the UserValue for (variable,offset).
   bool IsIndirect = MI->isIndirectDebugValue();
   unsigned Offset = IsIndirect ? MI->getOperand(1).getImm() : 0;
-  const MDNode *Var = MI->getOperand(2).getMetadata();
+  const MDNode *Var = MI->getDebugVariable();
+  const MDNode *Expr = MI->getDebugExpression();
   //here.
-  UserValue *UV = getUserValue(Var, Offset, IsIndirect, MI->getDebugLoc());
+  UserValue *UV =
+      getUserValue(Var, Expr, Offset, IsIndirect, MI->getDebugLoc());
   UV->addDef(Idx, MI->getOperand(0));
   return true;
 }
@@ -951,10 +956,13 @@ void UserValue::insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx,
 
   if (Loc.isReg())
     BuildMI(*MBB, I, findDebugLoc(), TII.get(TargetOpcode::DBG_VALUE),
-            IsIndirect, Loc.getReg(), offset, variable);
+            IsIndirect, Loc.getReg(), offset, Variable, Expression);
   else
     BuildMI(*MBB, I, findDebugLoc(), TII.get(TargetOpcode::DBG_VALUE))
-      .addOperand(Loc).addImm(offset).addMetadata(variable);
+        .addOperand(Loc)
+        .addImm(offset)
+        .addMetadata(Variable)
+        .addMetadata(Expression);
 }
 
 void UserValue::emitDebugValues(VirtRegMap *VRM, LiveIntervals &LIS,

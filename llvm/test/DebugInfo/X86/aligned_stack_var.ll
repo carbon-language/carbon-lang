@@ -18,11 +18,11 @@
 define void @_Z3runv() nounwind uwtable {
 entry:
   %x = alloca i32, align 32
-  call void @llvm.dbg.declare(metadata !{i32* %x}, metadata !9), !dbg !12
+  call void @llvm.dbg.declare(metadata !{i32* %x}, metadata !9, metadata !{}), !dbg !12
   ret void, !dbg !13
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!15}

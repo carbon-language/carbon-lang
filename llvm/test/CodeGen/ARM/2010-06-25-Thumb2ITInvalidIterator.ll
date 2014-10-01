@@ -7,16 +7,16 @@ target triple = "thumbv7-apple-darwin3.0.0-iphoneos"
 
 define void @x0(i8* nocapture %buf, i32 %nbytes) nounwind optsize {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i8* %buf}, i64 0, metadata !0), !dbg !15
-  tail call void @llvm.dbg.value(metadata !{i32 %nbytes}, i64 0, metadata !8), !dbg !16
+  tail call void @llvm.dbg.value(metadata !{i8* %buf}, i64 0, metadata !0, metadata !{}), !dbg !15
+  tail call void @llvm.dbg.value(metadata !{i32 %nbytes}, i64 0, metadata !8, metadata !{}), !dbg !16
   %tmp = load i32* @length, !dbg !17              ; <i32> [#uses=3]
   %cmp = icmp eq i32 %tmp, -1, !dbg !17           ; <i1> [#uses=1]
   %cmp.not = xor i1 %cmp, true                    ; <i1> [#uses=1]
   %cmp3 = icmp ult i32 %tmp, %nbytes, !dbg !17    ; <i1> [#uses=1]
   %or.cond = and i1 %cmp.not, %cmp3               ; <i1> [#uses=1]
-  tail call void @llvm.dbg.value(metadata !{i32 %tmp}, i64 0, metadata !8), !dbg !17
+  tail call void @llvm.dbg.value(metadata !{i32 %tmp}, i64 0, metadata !8, metadata !{}), !dbg !17
   %nbytes.addr.0 = select i1 %or.cond, i32 %tmp, i32 %nbytes ; <i32> [#uses=1]
-  tail call void @llvm.dbg.value(metadata !18, i64 0, metadata !10), !dbg !19
+  tail call void @llvm.dbg.value(metadata !18, i64 0, metadata !10, metadata !{}), !dbg !19
   br label %while.cond, !dbg !20
 
 while.cond:                                       ; preds = %while.body, %entry
@@ -42,7 +42,7 @@ while.end:                                        ; preds = %land.rhs, %while.co
 
 declare i32 @x1() optsize
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 !llvm.dbg.lv.fn = !{!0, !8, !10, !12}
 !llvm.dbg.gv = !{!14}

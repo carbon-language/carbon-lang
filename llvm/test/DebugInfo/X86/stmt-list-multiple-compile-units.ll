@@ -60,19 +60,19 @@ define i32 @test(i32 %a) nounwind uwtable ssp {
 entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %a.addr}, metadata !15), !dbg !16
+  call void @llvm.dbg.declare(metadata !{i32* %a.addr}, metadata !15, metadata !{}), !dbg !16
   %0 = load i32* %a.addr, align 4, !dbg !17
   %call = call i32 @fn(i32 %0), !dbg !17
   ret i32 %call, !dbg !17
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define i32 @fn(i32 %a) nounwind uwtable ssp {
 entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %a.addr}, metadata !19), !dbg !20
+  call void @llvm.dbg.declare(metadata !{i32* %a.addr}, metadata !19, metadata !{}), !dbg !20
   %0 = load i32* %a.addr, align 4, !dbg !21
   ret i32 %0, !dbg !21
 }

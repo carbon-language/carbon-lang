@@ -38,20 +38,20 @@ define void @_ZN1AD2Ev(%struct.A* %this) unnamed_addr #0 align 2 {
 entry:
   %this.addr = alloca %struct.A*, align 8
   store %struct.A* %this, %struct.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.A** %this.addr}, metadata !26), !dbg !28
+  call void @llvm.dbg.declare(metadata !{%struct.A** %this.addr}, metadata !26, metadata !{}), !dbg !28
   %this1 = load %struct.A** %this.addr
   ret void, !dbg !29
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind ssp uwtable
 define void @_ZN1AD1Ev(%struct.A* %this) unnamed_addr #0 align 2 {
 entry:
   %this.addr = alloca %struct.A*, align 8
   store %struct.A* %this, %struct.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.A** %this.addr}, metadata !30), !dbg !31
+  call void @llvm.dbg.declare(metadata !{%struct.A** %this.addr}, metadata !30, metadata !{}), !dbg !31
   %this1 = load %struct.A** %this.addr
   call void @_ZN1AD2Ev(%struct.A* %this1), !dbg !32
   ret void, !dbg !33
@@ -61,7 +61,7 @@ entry:
 define void @_Z3foov() #2 {
 entry:
   %a = alloca %struct.A, align 1
-  call void @llvm.dbg.declare(metadata !{%struct.A* %a}, metadata !34), !dbg !35
+  call void @llvm.dbg.declare(metadata !{%struct.A* %a}, metadata !34, metadata !{}), !dbg !35
   call void @_ZN1AC1Ei(%struct.A* %a, i32 1), !dbg !35
   call void @_ZN1AD1Ev(%struct.A* %a), !dbg !36
   ret void, !dbg !36

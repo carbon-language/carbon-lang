@@ -107,8 +107,8 @@ public:
                               MachineInstr *Second) const override;
 
   MachineInstr *emitFrameIndexDebugValue(MachineFunction &MF, int FrameIx,
-                                         uint64_t Offset, const MDNode *MDPtr,
-                                         DebugLoc DL) const;
+                                         uint64_t Offset, const MDNode *Var,
+                                         const MDNode *Expr, DebugLoc DL) const;
   void copyPhysRegTuple(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                         DebugLoc DL, unsigned DestReg, unsigned SrcReg,
                         bool KillSrc, unsigned Opcode,

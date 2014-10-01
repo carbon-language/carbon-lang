@@ -39,13 +39,13 @@
 define void @_Z4funcv() #0 {
 entry:
   %b = alloca i32, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %b}, metadata !20), !dbg !22
+  call void @llvm.dbg.declare(metadata !{i32* %b}, metadata !20, metadata !{}), !dbg !22
   store i32 0, i32* %b, align 4, !dbg !22
   ret void, !dbg !23
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

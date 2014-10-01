@@ -9,7 +9,7 @@
 
 %struct.btCompoundLeafCallback = type { i32, i32 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define void @test() unnamed_addr uwtable ssp align 2 {
 entry:
@@ -20,7 +20,7 @@ if.then:                                          ; preds = %entry
   unreachable
 
 if.end:                                           ; preds = %entry
-  call void @llvm.dbg.declare(metadata !{%struct.btCompoundLeafCallback* %callback}, metadata !3)
+  call void @llvm.dbg.declare(metadata !{%struct.btCompoundLeafCallback* %callback}, metadata !3, metadata !{})
   %m = getelementptr inbounds %struct.btCompoundLeafCallback* %callback, i64 0, i32 1
   store i32 0, i32* undef, align 8
   %cmp12447 = icmp sgt i32 undef, 0

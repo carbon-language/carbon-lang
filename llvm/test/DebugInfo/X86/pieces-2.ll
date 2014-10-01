@@ -31,23 +31,23 @@ target triple = "x86_64-apple-macosx10.9.0"
 ; Function Attrs: nounwind ssp uwtable
 define i32 @foo(%struct.Outer* byval align 8 %outer) #0 {
 entry:
-  call void @llvm.dbg.declare(metadata !{%struct.Outer* %outer}, metadata !25), !dbg !26
+  call void @llvm.dbg.declare(metadata !{%struct.Outer* %outer}, metadata !25, metadata !{}), !dbg !26
   %i1.sroa.0.0..sroa_idx = getelementptr inbounds %struct.Outer* %outer, i64 0, i32 0, i64 1, i32 0, !dbg !27
   %i1.sroa.0.0.copyload = load i32* %i1.sroa.0.0..sroa_idx, align 8, !dbg !27
-  call void @llvm.dbg.value(metadata !{i32 %i1.sroa.0.0.copyload}, i64 0, metadata !28), !dbg !27
+  call void @llvm.dbg.value(metadata !{i32 %i1.sroa.0.0.copyload}, i64 0, metadata !28, metadata !29), !dbg !27
   %i1.sroa.2.0..sroa_raw_cast = bitcast %struct.Outer* %outer to i8*, !dbg !27
   %i1.sroa.2.0..sroa_raw_idx = getelementptr inbounds i8* %i1.sroa.2.0..sroa_raw_cast, i64 20, !dbg !27
   ret i32 %i1.sroa.0.0.copyload, !dbg !32
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture readonly, i64, i32, i1) #2
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata) #1
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
 
 attributes #0 = { nounwind ssp uwtable }
 attributes #1 = { nounwind readnone }
@@ -85,8 +85,8 @@ attributes #2 = { nounwind }
 !25 = metadata !{i32 786689, metadata !4, metadata !"outer", metadata !5, i32 16777226, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [outer] [line 10]
 !26 = metadata !{i32 10, i32 0, metadata !4, null}
 !27 = metadata !{i32 11, i32 0, metadata !4, null}
-!28 = metadata !{i32 786688, metadata !4, metadata !"i1", metadata !5, i32 11, metadata !14, i32 0, i32 0, metadata !29} ; [ DW_TAG_auto_variable ] [i1] [line 11] [piece, size 4, offset 0]
-!29 = metadata !{i32 3, i32 0, i32 4}
+!28 = metadata !{i32 786688, metadata !4, metadata !"i1", metadata !5, i32 11, metadata !14, i32 0, i32 0} ;; [ DW_TAG_auto_variable ] [i1] [line 11]
+!29 = metadata !{i32 786690, i32 147, i32 0, i32 4} ; [DW_OP_piece 0 4] [piece, size 4, offset 0]
 !30 = metadata !{i32 786688, metadata !4, metadata !"i1", metadata !5, i32 11, metadata !14, i32 0, i32 0, metadata !31} ; [ DW_TAG_auto_variable ] [i1] [line 11] [piece, size 12, offset 0]
 !31 = metadata !{i32 3, i32 0, i32 12}
 !32 = metadata !{i32 12, i32 0, metadata !4, null}

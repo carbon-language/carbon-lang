@@ -299,7 +299,8 @@ void RAFast::spillVirtReg(MachineBasicBlock::iterator MI,
       LiveDbgValueMap[LRI->VirtReg];
     for (unsigned li = 0, le = LRIDbgValues.size(); li != le; ++li) {
       MachineInstr *DBG = LRIDbgValues[li];
-      const MDNode *MDPtr = DBG->getOperand(2).getMetadata();
+      const MDNode *Var = DBG->getDebugVariable();
+      const MDNode *Expr = DBG->getDebugExpression();
       bool IsIndirect = DBG->isIndirectDebugValue();
       uint64_t Offset = IsIndirect ? DBG->getOperand(1).getImm() : 0;
       DebugLoc DL;
@@ -311,7 +312,10 @@ void RAFast::spillVirtReg(MachineBasicBlock::iterator MI,
         DL = MI->getDebugLoc();
       MachineInstr *NewDV =
           BuildMI(*MBB, MI, DL, TII->get(TargetOpcode::DBG_VALUE))
-              .addFrameIndex(FI).addImm(Offset).addMetadata(MDPtr);
+              .addFrameIndex(FI)
+              .addImm(Offset)
+              .addMetadata(Var)
+              .addMetadata(Expr);
       assert(NewDV->getParent() == MBB && "dangling parent pointer");
       (void)NewDV;
       DEBUG(dbgs() << "Inserting debug info due to spill:" << "\n" << *NewDV);
@@ -863,13 +867,16 @@ void RAFast::AllocateBasicBlock() {
               // Modify DBG_VALUE now that the value is in a spill slot.
               bool IsIndirect = MI->isIndirectDebugValue();
               uint64_t Offset = IsIndirect ? MI->getOperand(1).getImm() : 0;
-              const MDNode *MDPtr =
-                MI->getOperand(MI->getNumOperands()-1).getMetadata();
+              const MDNode *Var = MI->getDebugVariable();
+              const MDNode *Expr = MI->getDebugExpression();
               DebugLoc DL = MI->getDebugLoc();
               MachineBasicBlock *MBB = MI->getParent();
               MachineInstr *NewDV = BuildMI(*MBB, MBB->erase(MI), DL,
                                             TII->get(TargetOpcode::DBG_VALUE))
-                  .addFrameIndex(SS).addImm(Offset).addMetadata(MDPtr);
+                                        .addFrameIndex(SS)
+                                        .addImm(Offset)
+                                        .addMetadata(Var)
+                                        .addMetadata(Expr);
               DEBUG(dbgs() << "Modifying debug info due to spill:"
                            << "\t" << *NewDV);
               // Scan NewDV operands from the beginning.

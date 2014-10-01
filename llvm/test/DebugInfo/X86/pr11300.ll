@@ -18,19 +18,19 @@ define void @_Z3zedP3foo(%struct.foo* %x) uwtable {
 entry:
   %x.addr = alloca %struct.foo*, align 8
   store %struct.foo* %x, %struct.foo** %x.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.foo** %x.addr}, metadata !23), !dbg !24
+  call void @llvm.dbg.declare(metadata !{%struct.foo** %x.addr}, metadata !23, metadata !{}), !dbg !24
   %0 = load %struct.foo** %x.addr, align 8, !dbg !25
   call void @_ZN3foo3barEv(%struct.foo* %0), !dbg !25
   ret void, !dbg !27
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define linkonce_odr void @_ZN3foo3barEv(%struct.foo* %this) nounwind uwtable align 2 {
 entry:
   %this.addr = alloca %struct.foo*, align 8
   store %struct.foo* %this, %struct.foo** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.foo** %this.addr}, metadata !28), !dbg !29
+  call void @llvm.dbg.declare(metadata !{%struct.foo** %this.addr}, metadata !28, metadata !{}), !dbg !29
   %this1 = load %struct.foo** %this.addr
   ret void, !dbg !30
 }

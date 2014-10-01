@@ -16,12 +16,12 @@ entry:
   %value.addr = alloca float, align 4
   %tempValue = alloca %"union.PR15637::Value", align 4
   store float %value, float* %value.addr, align 4
-  call void @llvm.dbg.declare(metadata !{float* %value.addr}, metadata !23), !dbg !24
-  call void @llvm.dbg.declare(metadata !{%"union.PR15637::Value"* %tempValue}, metadata !25), !dbg !26
+  call void @llvm.dbg.declare(metadata !{float* %value.addr}, metadata !23, metadata !{}), !dbg !24
+  call void @llvm.dbg.declare(metadata !{%"union.PR15637::Value"* %tempValue}, metadata !25, metadata !{}), !dbg !26
   ret void, !dbg !27
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 attributes #0 = { nounwind }
 attributes #1 = { nounwind readnone }

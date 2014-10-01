@@ -52,14 +52,14 @@
 define linkonce_odr i32 @_Z4funci(i32 %i) #0 {
   %1 = alloca i32, align 4
   store i32 %i, i32* %1, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %1}, metadata !22), !dbg !23
+  call void @llvm.dbg.declare(metadata !{i32* %1}, metadata !22, metadata !{}), !dbg !23
   %2 = load i32* %1, align 4, !dbg !24
   %3 = mul nsw i32 %2, 2, !dbg !24
   ret i32 %3, !dbg !24
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 attributes #0 = { inlinehint nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

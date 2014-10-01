@@ -17,21 +17,21 @@ entry:
   %.addr = alloca i32, align 4
   %a = alloca %class.A, align 4
   store i32 %0, i32* %.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %.addr}, metadata !36), !dbg !35
-  call void @llvm.dbg.declare(metadata !{%class.A* %a}, metadata !21), !dbg !23
+  call void @llvm.dbg.declare(metadata !{i32* %.addr}, metadata !36, metadata !{}), !dbg !35
+  call void @llvm.dbg.declare(metadata !{%class.A* %a}, metadata !21, metadata !{}), !dbg !23
   call void @_ZN1AC1Ev(%class.A* %a), !dbg !24
   %m_a = getelementptr inbounds %class.A* %a, i32 0, i32 0, !dbg !25
   %1 = load i32* %m_a, align 4, !dbg !25
   ret i32 %1, !dbg !25
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define linkonce_odr void @_ZN1AC1Ev(%class.A* %this) unnamed_addr nounwind uwtable ssp align 2 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !26), !dbg !28
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !26, metadata !{}), !dbg !28
   %this1 = load %class.A** %this.addr
   call void @_ZN1AC2Ev(%class.A* %this1), !dbg !29
   ret void, !dbg !29
@@ -41,7 +41,7 @@ define linkonce_odr void @_ZN1AC2Ev(%class.A* %this) unnamed_addr nounwind uwtab
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !30), !dbg !31
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !30, metadata !{}), !dbg !31
   %this1 = load %class.A** %this.addr
   %m_a = getelementptr inbounds %class.A* %this1, i32 0, i32 0, !dbg !32
   store i32 0, i32* %m_a, align 4, !dbg !32

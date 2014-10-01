@@ -152,12 +152,12 @@ define void @_ZN1A1B2f1Ei(i32) #0 {
 entry:
   %.addr = alloca i32, align 4
   store i32 %0, i32* %.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %.addr}, metadata !42), !dbg !43
+  call void @llvm.dbg.declare(metadata !{i32* %.addr}, metadata !42, metadata !{}), !dbg !43
   ret void, !dbg !43
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind uwtable
 define i32 @_Z4funcb(i1 zeroext %b) #0 {
@@ -167,7 +167,7 @@ entry:
   %x = alloca %"struct.A::B::bar", align 1
   %frombool = zext i1 %b to i8
   store i8 %frombool, i8* %b.addr, align 1
-  call void @llvm.dbg.declare(metadata !{i8* %b.addr}, metadata !44), !dbg !45
+  call void @llvm.dbg.declare(metadata !{i8* %b.addr}, metadata !44, metadata !{}), !dbg !45
   %0 = load i8* %b.addr, align 1, !dbg !46
   %tobool = trunc i8 %0 to i1, !dbg !46
   br i1 %tobool, label %if.then, label %if.end, !dbg !46
@@ -178,7 +178,7 @@ if.then:                                          ; preds = %entry
   br label %return, !dbg !47
 
 if.end:                                           ; preds = %entry
-  call void @llvm.dbg.declare(metadata !{%"struct.A::B::bar"* %x}, metadata !48), !dbg !49
+  call void @llvm.dbg.declare(metadata !{%"struct.A::B::bar"* %x}, metadata !48, metadata !{}), !dbg !49
   %2 = load i32* @_ZN1A1B1iE, align 4, !dbg !50
   %3 = load i32* @_ZN1A1B1iE, align 4, !dbg !50
   %add = add nsw i32 %2, %3, !dbg !50

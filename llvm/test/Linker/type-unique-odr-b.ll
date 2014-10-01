@@ -26,13 +26,13 @@ define void @_ZN1A6getFooEv(%class.A* %this) #0 align 2 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !24), !dbg !26
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !24, metadata !{}), !dbg !26
   %this1 = load %class.A** %this.addr
   ret void, !dbg !27
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind
 define void @_Z1fv() #0 {

@@ -49,7 +49,7 @@ bool DIDescriptor::Verify() const {
           DIObjCProperty(DbgNode).Verify() ||
           DITemplateTypeParameter(DbgNode).Verify() ||
           DITemplateValueParameter(DbgNode).Verify() ||
-          DIImportedEntity(DbgNode).Verify());
+          DIImportedEntity(DbgNode).Verify() || DIExpression(DbgNode).Verify());
 }
 
 static Value *getField(const MDNode *DbgNode, unsigned Elt) {
@@ -138,32 +138,8 @@ void DIDescriptor::replaceFunctionField(unsigned Elt, Function *F) {
   }
 }
 
-uint64_t DIVariable::getAddrElement(unsigned Idx) const {
-  DIDescriptor ComplexExpr = getDescriptorField(8);
-  if (Idx < ComplexExpr->getNumOperands())
-    if (auto *CI = dyn_cast_or_null<ConstantInt>(ComplexExpr->getOperand(Idx)))
-      return CI->getZExtValue();
-
-  assert(false && "non-existing complex address element requested");
-  return 0;
-}
-
 /// getInlinedAt - If this variable is inlined then return inline location.
 MDNode *DIVariable::getInlinedAt() const { return getNodeField(DbgNode, 7); }
-
-bool DIVariable::isVariablePiece() const {
-  return hasComplexAddress() && getAddrElement(0) == DIBuilder::OpPiece;
-}
-
-uint64_t DIVariable::getPieceOffset() const {
-  assert(isVariablePiece());
-  return getAddrElement(1);
-}
-
-uint64_t DIVariable::getPieceSize() const {
-  assert(isVariablePiece());
-  return getAddrElement(2);
-}
 
 /// Return the size reported by the variable's type.
 unsigned DIVariable::getSizeInBits(const DITypeIdentifierMap &Map) {
@@ -178,8 +154,29 @@ unsigned DIVariable::getSizeInBits(const DITypeIdentifierMap &Map) {
   return Ty.getSizeInBits();
 }
 
+uint64_t DIExpression::getElement(unsigned Idx) const {
+  unsigned I = Idx + 1;
+  if (I < DbgNode->getNumOperands())
+    if (auto *CI = dyn_cast_or_null<ConstantInt>(DbgNode->getOperand(I)))
+      return CI->getZExtValue();
 
+  assert(false && "non-existing complex address element requested");
+  return 0;
+}
 
+bool DIExpression::isVariablePiece() const {
+  return getNumElements() && getElement(0) == dwarf::DW_OP_piece;
+}
+
+uint64_t DIExpression::getPieceOffset() const {
+  assert(isVariablePiece());
+  return getElement(1);
+}
+
+uint64_t DIExpression::getPieceSize() const {
+  assert(isVariablePiece());
+  return getElement(2);
+}
 
 //===----------------------------------------------------------------------===//
 // Predicates
@@ -355,6 +352,12 @@ bool DIDescriptor::isObjCProperty() const {
 bool DIDescriptor::isImportedEntity() const {
   return DbgNode && (getTag() == dwarf::DW_TAG_imported_module ||
                      getTag() == dwarf::DW_TAG_imported_declaration);
+}
+
+/// \brief Return true if the specified tag is DW_TAG_imported_module or
+/// DW_TAG_imported_declaration.
+bool DIDescriptor::isExpression() const {
+  return DbgNode && (getTag() == dwarf::DW_TAG_expression);
 }
 
 //===----------------------------------------------------------------------===//
@@ -596,13 +599,15 @@ bool DIVariable::Verify() const {
   if (!fieldIsTypeRef(DbgNode, 5))
     return false;
 
-  // Variable without a complex expression.
-  if (DbgNode->getNumOperands() == 8)
+  // Variable without an inline location.
+  if (DbgNode->getNumOperands() == 7)
     return true;
 
-  // Make sure the complex expression is an MDNode.
-  return (DbgNode->getNumOperands() == 9 && fieldIsMDNode(DbgNode, 8));
+  return DbgNode->getNumOperands() == 8;
 }
+
+/// Verify - Verify that a variable descriptor is well formed.
+bool DIExpression::Verify() const { return isExpression(); }
 
 /// Verify - Verify that a location descriptor is well formed.
 bool DILocation::Verify() const {
@@ -934,19 +939,6 @@ DIVariable llvm::cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext) {
     i == 7 ? Elts.push_back(Constant::getNullValue(Type::getInt32Ty(VMContext)))
            : Elts.push_back(DV->getOperand(i));
   return DIVariable(MDNode::get(VMContext, Elts));
-}
-
-
-/// getEntireVariable - Remove OpPiece exprs from the variable.
-DIVariable llvm::getEntireVariable(DIVariable DV) {
-  if (!DV.isVariablePiece())
-    return DV;
-
-  SmallVector<Value *, 8> Elts;
-  for (unsigned i = 0; i < 8; ++i)
-    Elts.push_back(DV->getOperand(i));
-
-  return DIVariable(MDNode::get(DV->getContext(), Elts));
 }
 
 /// getDISubprogram - Find subprogram that is enclosing this scope.
@@ -1293,6 +1285,8 @@ void DIDescriptor::print(raw_ostream &OS) const {
     DINameSpace(DbgNode).printInternal(OS);
   } else if (this->isScope()) {
     DIScope(DbgNode).printInternal(OS);
+  } else if (this->isExpression()) {
+    DIExpression(DbgNode).printInternal(OS);
   }
 }
 
@@ -1442,10 +1436,28 @@ void DIVariable::printInternal(raw_ostream &OS) const {
     OS << " [" << Res << ']';
 
   OS << " [line " << getLineNumber() << ']';
+}
 
-  if (isVariablePiece())
-    OS << " [piece, size " << getPieceSize()
-       << ", offset " << getPieceOffset() << ']';
+void DIExpression::printInternal(raw_ostream &OS) const {
+  for (unsigned I = 0; I < getNumElements(); ++I) {
+    uint64_t OpCode = getElement(I);
+    OS << " [" << OperationEncodingString(OpCode);
+    switch (OpCode) {
+    case DW_OP_plus: {
+      OS << " " << getElement(++I);
+      break;
+    }
+    case DW_OP_piece: {
+      unsigned Offset = getElement(++I);
+      unsigned Size = getElement(++I);
+      OS << " offset=" << Offset << ", size= " << Size;
+      break;
+    }
+    default:
+      break;
+    }
+    OS << "]";
+  }
 }
 
 void DIObjCProperty::printInternal(raw_ostream &OS) const {

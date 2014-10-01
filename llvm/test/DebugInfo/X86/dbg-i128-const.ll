@@ -5,12 +5,12 @@
 
 define i128 @__foo(i128 %a, i128 %b) nounwind {
 entry:
-  tail call void @llvm.dbg.value(metadata !0, i64 0, metadata !1), !dbg !11
+  tail call void @llvm.dbg.value(metadata !0, i64 0, metadata !1, metadata !{}), !dbg !11
   %add = add i128 %a, %b, !dbg !11
   ret i128 %add, !dbg !11
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!5}
 !llvm.module.flags = !{!16}

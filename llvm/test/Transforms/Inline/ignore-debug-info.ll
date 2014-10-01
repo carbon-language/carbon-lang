@@ -7,16 +7,16 @@
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
-declare void @llvm.dbg.declare(metadata, metadata) #1
-declare void @llvm.dbg.value(metadata, i64, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
 
 define <4 x float> @inner_vectors(<4 x float> %a, <4 x float> %b) {
 entry:
-  call void @llvm.dbg.value(metadata !{}, i64 0, metadata !{})
+  call void @llvm.dbg.value(metadata !{}, i64 0, metadata !{}, metadata !{})
   %mul = fmul <4 x float> %a, <float 3.000000e+00, float 3.000000e+00, float 3.000000e+00, float 3.000000e+00>
-  call void @llvm.dbg.value(metadata !{}, i64 0, metadata !{})
+  call void @llvm.dbg.value(metadata !{}, i64 0, metadata !{}, metadata !{})
   %mul1 = fmul <4 x float> %b, <float 5.000000e+00, float 5.000000e+00, float 5.000000e+00, float 5.000000e+00>
-  call void @llvm.dbg.value(metadata !{}, i64 0, metadata !{})
+  call void @llvm.dbg.value(metadata !{}, i64 0, metadata !{}, metadata !{})
   %add = fadd <4 x float> %mul, %mul1
   ret <4 x float> %add
 }
@@ -27,10 +27,10 @@ define float @outer_vectors(<4 x float> %a, <4 x float> %b) {
 ; CHECK: ret float
 
 entry:
-  call void @llvm.dbg.value(metadata !{}, i64 0, metadata !{})
-  call void @llvm.dbg.value(metadata !{}, i64 0, metadata !{})
+  call void @llvm.dbg.value(metadata !{}, i64 0, metadata !{}, metadata !{})
+  call void @llvm.dbg.value(metadata !{}, i64 0, metadata !{}, metadata !{})
   %call = call <4 x float> @inner_vectors(<4 x float> %a, <4 x float> %b)
-  call void @llvm.dbg.value(metadata !{}, i64 0, metadata !{})
+  call void @llvm.dbg.value(metadata !{}, i64 0, metadata !{}, metadata !{})
   %vecext = extractelement <4 x float> %call, i32 0
   %vecext1 = extractelement <4 x float> %call, i32 1
   %add = fadd float %vecext, %vecext1

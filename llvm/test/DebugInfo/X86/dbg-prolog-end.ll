@@ -8,8 +8,8 @@ entry:
   %i.addr = alloca i32, align 4
   %j = alloca i32, align 4
   store i32 %i, i32* %i.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %i.addr}, metadata !7), !dbg !8
-  call void @llvm.dbg.declare(metadata !{i32* %j}, metadata !9), !dbg !11
+  call void @llvm.dbg.declare(metadata !{i32* %i.addr}, metadata !7, metadata !{}), !dbg !8
+  call void @llvm.dbg.declare(metadata !{i32* %j}, metadata !9, metadata !{}), !dbg !11
   store i32 2, i32* %j, align 4, !dbg !12
   %tmp = load i32* %j, align 4, !dbg !13
   %inc = add nsw i32 %tmp, 1, !dbg !13
@@ -22,7 +22,7 @@ entry:
   ret i32 %tmp3, !dbg !15
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define i32 @main() nounwind ssp {
 entry:

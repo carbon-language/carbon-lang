@@ -9,14 +9,14 @@ define void @_Z3fooOi(i32* %i) uwtable ssp {
 entry:
   %i.addr = alloca i32*, align 8
   store i32* %i, i32** %i.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i32** %i.addr}, metadata !11), !dbg !12
+  call void @llvm.dbg.declare(metadata !{i32** %i.addr}, metadata !11, metadata !{}), !dbg !12
   %0 = load i32** %i.addr, align 8, !dbg !13
   %1 = load i32* %0, align 4, !dbg !13
   %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i32 %1), !dbg !13
   ret void, !dbg !15
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 declare i32 @printf(i8*, ...)
 

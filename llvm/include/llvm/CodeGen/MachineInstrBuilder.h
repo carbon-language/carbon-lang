@@ -170,6 +170,8 @@ public:
 
   const MachineInstrBuilder &addMetadata(const MDNode *MD) const {
     MI->addOperand(*MF, MachineOperand::CreateMetadata(MD));
+    assert((MI->isDebugValue() ? MI->getDebugVariable().Verify() : true) &&
+           "first MDNode argument of a DBG_VALUE not a DIVariable");
     return *this;
   }
 
@@ -345,24 +347,25 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
 /// address.  The convention is that a DBG_VALUE is indirect iff the
 /// second operand is an immediate.
 ///
-inline MachineInstrBuilder BuildMI(MachineFunction &MF,
-                                   DebugLoc DL,
-                                   const MCInstrDesc &MCID,
-                                   bool IsIndirect,
-                                   unsigned Reg,
-                                   unsigned Offset,
-                                   const MDNode *MD) {
+inline MachineInstrBuilder BuildMI(MachineFunction &MF, DebugLoc DL,
+                                   const MCInstrDesc &MCID, bool IsIndirect,
+                                   unsigned Reg, unsigned Offset,
+                                   const MDNode *Variable, const MDNode *Expr) {
+  assert(DIVariable(Variable).Verify() && "not a DIVariable");
+  assert(DIExpression(Expr).Verify() && "not a DIExpression");
   if (IsIndirect)
     return BuildMI(MF, DL, MCID)
-      .addReg(Reg, RegState::Debug)
-      .addImm(Offset)
-      .addMetadata(MD);
+        .addReg(Reg, RegState::Debug)
+        .addImm(Offset)
+        .addMetadata(Variable)
+        .addMetadata(Expr);
   else {
     assert(Offset == 0 && "A direct address cannot have an offset.");
     return BuildMI(MF, DL, MCID)
-      .addReg(Reg, RegState::Debug)
-      .addReg(0U, RegState::Debug)
-      .addMetadata(MD);
+        .addReg(Reg, RegState::Debug)
+        .addReg(0U, RegState::Debug)
+        .addMetadata(Variable)
+        .addMetadata(Expr);
   }
 }
 
@@ -371,15 +374,15 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF,
 /// address and inserts it at position I.
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
-                                   MachineBasicBlock::iterator I,
-                                   DebugLoc DL,
-                                   const MCInstrDesc &MCID,
-                                   bool IsIndirect,
-                                   unsigned Reg,
-                                   unsigned Offset,
-                                   const MDNode *MD) {
+                                   MachineBasicBlock::iterator I, DebugLoc DL,
+                                   const MCInstrDesc &MCID, bool IsIndirect,
+                                   unsigned Reg, unsigned Offset,
+                                   const MDNode *Variable, const MDNode *Expr) {
+  assert(DIVariable(Variable).Verify() && "not a DIVariable");
+  assert(DIExpression(Expr).Verify() && "not a DIExpression");
   MachineFunction &MF = *BB.getParent();
-  MachineInstr *MI = BuildMI(MF, DL, MCID, IsIndirect, Reg, Offset, MD);
+  MachineInstr *MI =
+      BuildMI(MF, DL, MCID, IsIndirect, Reg, Offset, Variable, Expr);
   BB.insert(I, MI);
   return MachineInstrBuilder(MF, MI);
 }

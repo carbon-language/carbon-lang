@@ -31,8 +31,8 @@
 ; Function Attrs: nounwind uwtable
 define void @_Z4func3fooS_(%struct.foo* %f, %struct.foo* %g) #0 {
 entry:
-  call void @llvm.dbg.declare(metadata !{%struct.foo* %f}, metadata !19), !dbg !20
-  call void @llvm.dbg.declare(metadata !{%struct.foo* %g}, metadata !21), !dbg !20
+  call void @llvm.dbg.declare(metadata !{%struct.foo* %f}, metadata !19, metadata !{}), !dbg !20
+  call void @llvm.dbg.declare(metadata !{%struct.foo* %g}, metadata !21, metadata !{}), !dbg !20
   %i = getelementptr inbounds %struct.foo* %f, i32 0, i32 0, !dbg !22
   %0 = load i32* %i, align 4, !dbg !22
   %inc = add nsw i32 %0, 1, !dbg !22
@@ -41,7 +41,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf"="true" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

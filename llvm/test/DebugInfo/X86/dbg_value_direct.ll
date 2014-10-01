@@ -53,7 +53,7 @@ entry:
   %19 = inttoptr i64 %18 to i8*
   %20 = load i8* %19
   %21 = icmp ne i8 %20, 0
-  call void @llvm.dbg.declare(metadata !{i32* %3}, metadata !23)
+  call void @llvm.dbg.declare(metadata !{i32* %3}, metadata !23, metadata !28)
   br i1 %21, label %22, label %28
 
 ; <label>:22                                      ; preds = %entry
@@ -70,7 +70,7 @@ entry:
 
 ; <label>:28                                      ; preds = %22, %entry
   store i32 %0, i32* %3, align 4
-  call void @llvm.dbg.declare(metadata !{%struct.A* %agg.result}, metadata !24), !dbg !25
+  call void @llvm.dbg.declare(metadata !{%struct.A* %agg.result}, metadata !24, metadata !{}), !dbg !25
   call void @_ZN1AC1Ev(%struct.A* %agg.result), !dbg !25
   store i64 1172321806, i64* %4, !dbg !26
   %29 = inttoptr i64 %10 to i32*, !dbg !26
@@ -85,7 +85,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 declare void @_ZN1AC1Ev(%struct.A*) #2
 
@@ -170,9 +170,9 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !20 = metadata !{i32 786468}
 !21 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !22 = metadata !{i32 2, metadata !"Dwarf Version", i32 3}
-!23 = metadata !{i32 786689, metadata !4, metadata !"", metadata !5, i32 16777222, metadata !21, i32 0, i32 0, metadata !28} ; [ DW_TAG_arg_variable ] [line 6]
+!23 = metadata !{i32 786689, metadata !4, metadata !"", metadata !5, i32 16777222, metadata !21, i32 0, i32 0} ;; [ DW_TAG_arg_variable ] [line 6]
 !24 = metadata !{i32 786688, metadata !4, metadata !"a", metadata !5, i32 7, metadata !8, i32 8192, i32 0} ; [ DW_TAG_auto_variable ] [a] [line 7]
 !25 = metadata !{i32 7, i32 0, metadata !4, null}
 !26 = metadata !{i32 8, i32 0, metadata !4, null} ; [ DW_TAG_imported_declaration ]
 !27 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
-!28 = metadata !{i64 2}
+!28 = metadata !{i32 786690, i64 6} ; [DW_OP_deref]

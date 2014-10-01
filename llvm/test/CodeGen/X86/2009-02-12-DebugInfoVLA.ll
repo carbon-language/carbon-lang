@@ -14,9 +14,9 @@ entry:
   %2 = alloca i64                                 ; <i64*> [#uses=1]
   %3 = alloca i64                                 ; <i64*> [#uses=6]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata !{i8** %s1_addr}, metadata !0), !dbg !7
+  call void @llvm.dbg.declare(metadata !{i8** %s1_addr}, metadata !0, metadata !{}), !dbg !7
   store i8* %s1, i8** %s1_addr
-  call void @llvm.dbg.declare(metadata !{[0 x i8]** %str.0}, metadata !8), !dbg !7
+  call void @llvm.dbg.declare(metadata !{[0 x i8]** %str.0}, metadata !8, metadata !{}), !dbg !7
   %4 = call i8* @llvm.stacksave(), !dbg !7        ; <i8*> [#uses=1]
   store i8* %4, i8** %saved_stack.1, align 8, !dbg !7
   %5 = load i8** %s1_addr, align 8, !dbg !13      ; <i8*> [#uses=1]
@@ -58,7 +58,7 @@ return:                                           ; preds = %entry
   ret i8 %retval12, !dbg !16
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 declare i8* @llvm.stacksave() nounwind
 
