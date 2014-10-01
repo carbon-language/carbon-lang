@@ -81,6 +81,7 @@ private:
   bool SelectIntExt(const Instruction *I);
   bool SelectTrunc(const Instruction *I);
   bool SelectFPExt(const Instruction *I);
+  bool SelectFPTrunc(const Instruction *I);
 
   bool isTypeLegal(Type *Ty, MVT &VT);
   bool isLoadTypeLegal(Type *Ty, MVT &VT);
@@ -406,6 +407,28 @@ bool MipsFastISel::SelectFPExt(const Instruction *I) {
   return true;
 }
 
+// Attempt to fast-select a floating-point truncate instruction.
+bool MipsFastISel::SelectFPTrunc(const Instruction *I) {
+  Value *Src = I->getOperand(0);
+  EVT SrcVT = TLI.getValueType(Src->getType(), true);
+  EVT DestVT = TLI.getValueType(I->getType(), true);
+
+  if (SrcVT != MVT::f64 || DestVT != MVT::f32)
+    return false;
+
+  unsigned SrcReg = getRegForValue(Src);
+  if (!SrcReg)
+    return false;
+
+  unsigned DestReg = createResultReg(&Mips::FGR32RegClass);
+  if (!DestReg)
+    return false;
+
+  EmitInst(Mips::CVT_S_D32, DestReg).addReg(SrcReg);
+  updateValueMap(I, DestReg);
+  return true;
+}
+
 bool MipsFastISel::SelectIntExt(const Instruction *I) {
   Type *DestTy = I->getType();
   Value *Src = I->getOperand(0);
@@ -475,6 +498,8 @@ bool MipsFastISel::fastSelectInstruction(const Instruction *I) {
   case Instruction::ZExt:
   case Instruction::SExt:
     return SelectIntExt(I);
+  case Instruction::FPTrunc:
+    return SelectFPTrunc(I);
   case Instruction::FPExt:
     return SelectFPExt(I);
   }
