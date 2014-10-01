@@ -45,6 +45,11 @@ void RuntimeDyldImpl::deregisterEHFrames() {}
 static void dumpSectionMemory(const SectionEntry &S, StringRef State) {
   dbgs() << "----- Contents of section " << S.Name << " " << State << " -----";
 
+  if (S.Address == nullptr) {
+    dbgs() << "\n          <section not emitted>\n";
+    return;
+  }
+
   const unsigned ColsPerRow = 16;
 
   uint8_t *DataAddr = S.Address;
