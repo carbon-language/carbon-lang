@@ -132,35 +132,13 @@ void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);
 
-  // Make sure 64-bit features are available when CPUname is generic
-  std::string FullFS = FS;
-
-  // If we are generating code for ppc64, verify that options make sense.
-  if (IsPPC64) {
-    Has64BitSupport = true;
-    // Silently force 64-bit register use on ppc64.
-    Use64BitRegs = true;
-    if (!FullFS.empty())
-      FullFS = "+64bit," + FullFS;
-    else
-      FullFS = "+64bit";
-  }
-
-  // At -O2 and above, track CR bits as individual registers.
-  if (OptLevel >= CodeGenOpt::Default) {
-    if (!FullFS.empty())
-      FullFS = "+crbits," + FullFS;
-    else
-      FullFS = "+crbits";
-  }
-
   // Parse features string.
-  ParseSubtargetFeatures(CPUName, FullFS);
+  ParseSubtargetFeatures(CPUName, FS);
 
   // If the user requested use of 64-bit regs, but the cpu selected doesn't
   // support it, ignore.
-  if (use64BitRegs() && !has64BitSupport())
-    Use64BitRegs = false;
+  if (IsPPC64 && has64BitSupport())
+    Use64BitRegs = true;
 
   // Set up darwin-specific properties.
   if (isDarwin())

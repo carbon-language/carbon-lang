@@ -37,12 +37,39 @@ extern "C" void LLVMInitializePowerPCTarget() {
   RegisterTargetMachine<PPC64TargetMachine> C(ThePPC64LETarget);
 }
 
+static std::string computeFSAdditions(StringRef FS, CodeGenOpt::Level OL, StringRef TT) {
+  std::string FullFS = FS;
+  Triple TargetTriple(TT);
+
+  // Make sure 64-bit features are available when CPUname is generic
+  if (TargetTriple.getArch() == Triple::ppc64 ||
+      TargetTriple.getArch() == Triple::ppc64le) {
+    if (!FullFS.empty())
+      FullFS = "+64bit," + FullFS;
+    else
+      FullFS = "+64bit";
+  }
+
+  if (OL >= CodeGenOpt::Default) {
+    if (!FullFS.empty())
+      FullFS = "+crbits," + FullFS;
+    else
+      FullFS = "+crbits";
+  }
+  return FullFS;
+}
+
+// The FeatureString here is a little subtle. We are modifying the feature string
+// with what are (currently) non-function specific overrides as it goes into the
+// LLVMTargetMachine constructor and then using the stored value in the
+// Subtarget constructor below it.
 PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT, StringRef CPU,
                                    StringRef FS, const TargetOptions &Options,
                                    Reloc::Model RM, CodeModel::Model CM,
                                    CodeGenOpt::Level OL)
-    : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-      Subtarget(TT, CPU, FS, *this, OL) {
+    : LLVMTargetMachine(T, TT, CPU, computeFSAdditions(FS, OL, TT), Options, RM,
+                        CM, OL),
+      Subtarget(TT, CPU, TargetFS, *this, OL) {
   initAsmInfo();
 }
 
