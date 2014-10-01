@@ -69,7 +69,7 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT, StringRef CPU,
                                    CodeGenOpt::Level OL)
     : LLVMTargetMachine(T, TT, CPU, computeFSAdditions(FS, OL, TT), Options, RM,
                         CM, OL),
-      Subtarget(TT, CPU, TargetFS, *this, OL) {
+      Subtarget(TT, CPU, TargetFS, *this) {
   initAsmInfo();
 }
 
