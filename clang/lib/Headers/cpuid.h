@@ -27,9 +27,9 @@
 
 /* Responses identification request with %eax 0 */
 /* AMD:     "AuthenticAMD" */
-#define signature_AMD_ebx 0x68747541,
-#define signature_AMD_edx 0x69746e65,
-#define signature_AMD_ecx 0x444d4163,
+#define signature_AMD_ebx 0x68747541
+#define signature_AMD_edx 0x69746e65
+#define signature_AMD_ecx 0x444d4163
 /* CENTAUR: "CentaurHauls" */
 #define signature_CENTAUR_ebx 0x746e6543
 #define signature_CENTAUR_edx 0x48727561
