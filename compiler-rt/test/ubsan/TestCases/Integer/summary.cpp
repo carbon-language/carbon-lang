@@ -1,7 +1,5 @@
 // RUN: %clangxx -fsanitize=integer %s -o %t && %t 2>&1 | FileCheck %s
 // REQUIRES: ubsan-asan
-// ubsan-asan doesn't work on Darwin yet.
-// XFAIL: darwin
 
 #include <stdint.h>
 
