@@ -13678,12 +13678,24 @@ static SDValue LowerFP_EXTEND(SDValue Op, SelectionDAG &DAG) {
                                  In, DAG.getUNDEF(SVT)));
 }
 
-// The only differences between FABS and FNEG are the mask and the logic op.
+/// The only differences between FABS and FNEG are the mask and the logic op.
+/// FNEG also has a folding opportunity for FNEG(FABS(x)).
 static SDValue LowerFABSorFNEG(SDValue Op, SelectionDAG &DAG) {
   assert((Op.getOpcode() == ISD::FABS || Op.getOpcode() == ISD::FNEG) &&
          "Wrong opcode for lowering FABS or FNEG.");
 
   bool IsFABS = (Op.getOpcode() == ISD::FABS);
+
+  // If this is a FABS and it has an FNEG user, bail out to fold the combination
+  // into an FNABS. We'll lower the FABS after that if it is still in use.
+  if (IsFABS)
+    for (SDNode *User : Op->uses())
+      if (User->getOpcode() == ISD::FNEG)
+        return Op;
+
+  SDValue Op0 = Op.getOperand(0);
+  bool IsFNABS = !IsFABS && (Op0.getOpcode() == ISD::FABS);
+
   SDLoc dl(Op);
   MVT VT = Op.getSimpleValueType();
   // Assume scalar op for initialization; update for vector if needed.
@@ -13719,15 +13731,19 @@ static SDValue LowerFABSorFNEG(SDValue Op, SelectionDAG &DAG) {
     // For a vector, cast operands to a vector type, perform the logic op,
     // and cast the result back to the original value type.
     MVT VecVT = MVT::getVectorVT(MVT::i64, VT.getSizeInBits() / 64);
-    SDValue Op0Casted = DAG.getNode(ISD::BITCAST, dl, VecVT, Op.getOperand(0));
     SDValue MaskCasted = DAG.getNode(ISD::BITCAST, dl, VecVT, Mask);
-    unsigned LogicOp = IsFABS ? ISD::AND : ISD::XOR;
+    SDValue Operand = IsFNABS ?
+      DAG.getNode(ISD::BITCAST, dl, VecVT, Op0.getOperand(0)) :
+      DAG.getNode(ISD::BITCAST, dl, VecVT, Op0);
+    unsigned BitOp = IsFABS ? ISD::AND : IsFNABS ? ISD::OR : ISD::XOR;
     return DAG.getNode(ISD::BITCAST, dl, VT,
-                       DAG.getNode(LogicOp, dl, VecVT, Op0Casted, MaskCasted));
+                       DAG.getNode(BitOp, dl, VecVT, Operand, MaskCasted));
   }
+  
   // If not vector, then scalar.
-  unsigned LogicOp = IsFABS ? X86ISD::FAND : X86ISD::FXOR;
-  return DAG.getNode(LogicOp, dl, VT, Op.getOperand(0), Mask);
+  unsigned BitOp = IsFABS ? X86ISD::FAND : IsFNABS ? X86ISD::FOR : X86ISD::FXOR;
+  SDValue Operand = IsFNABS ? Op0.getOperand(0) : Op0;
+  return DAG.getNode(BitOp, dl, VT, Operand, Mask);
 }
 
 static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
