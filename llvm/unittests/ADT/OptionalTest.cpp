@@ -183,10 +183,10 @@ struct MultiArgConstructor {
   explicit MultiArgConstructor(int x, bool positive)
     : x(x), y(positive ? x : -x) {}
 
-  MultiArgConstructor(const MultiArgConstructor &) = delete;
-  MultiArgConstructor(MultiArgConstructor &&) = delete;
-  MultiArgConstructor &operator=(const MultiArgConstructor &) = delete;
-  MultiArgConstructor &operator=(MultiArgConstructor &&) = delete;
+  MultiArgConstructor(const MultiArgConstructor &) LLVM_DELETED_FUNCTION;
+  MultiArgConstructor(MultiArgConstructor &&) LLVM_DELETED_FUNCTION;
+  MultiArgConstructor &operator=(const MultiArgConstructor &) LLVM_DELETED_FUNCTION;
+  MultiArgConstructor &operator=(MultiArgConstructor &&) LLVM_DELETED_FUNCTION;
 
   static unsigned Destructions;
   ~MultiArgConstructor() {
