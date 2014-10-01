@@ -185,7 +185,7 @@ public:
 
   virtual ~CFLAliasAnalysis() {}
 
-  void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AliasAnalysis::getAnalysisUsage(AU);
   }
 
