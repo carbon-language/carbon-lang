@@ -333,6 +333,14 @@ Enter your Python command(s). Type 'DONE' to end.
           <font color=green>"""This command takes a lot of options and does many fancy things"""</font>    
           <font color=green># Your code goes here</font>
         </tt></pre></code>
+        
+      Starting with SVN revision 218834, LLDB Python commands can also take an SBExecutionContext as an argument.
+      This is useful in cases where the command's notion of <i>where to act</i> is independent of the currently-selected entities in the debugger.<br/>
+      This feature is enabled if the command-implementing function can be recognized as taking 5 arguments, or a variable number of arguments, and it alters the signature as such:
+      <code><pre><tt>def command_function(<b>debugger</b>, <b>command</b>, <b>exe_ctx</b>, <b>result</b>, <b>internal_dict</b>):
+        <font color=green># Your code goes here</font>
+      </tt></pre></code>
+      
 
         <p><table class="stats" width="620" cellspacing="0">
         <tr>
@@ -363,6 +371,18 @@ Enter your Python command(s). Type 'DONE' to end.
                 A python string containing all arguments for your command. If you need to chop up the arguments
                 try using the <b>shlex</b> module's <code>shlex.split(command)</code> to properly extract the
                 arguments.
+            </td>
+        </tr>
+        <tr>
+            <td class="content">
+                <b>exe_ctx</b>
+            </td>
+            <td class="content">
+                <b>lldb.SBExecutionContext</b>
+            </td>
+            <td class="content">
+                An execution context object carrying around information on the inferior process' context in which the command is expected to act
+                <br/><i>Optional since SVN r218834, unavailable before</i>
             </td>
         </tr>
         <tr>
