@@ -3,6 +3,7 @@
 
 bool g() { return false; }
 
+enum Enum { Enum1 };
 struct X {};
 struct Y : public X {};
 
@@ -13,39 +14,38 @@ void f(int a, double b, const char *cpc, const void *cpv, X *pX) {
 
   char *pc = (char*)cpc;
   // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: C-style casts are discouraged. Use const_cast. {{.*}}
-  // CHECK-FIXES: char *pc = const_cast<char *>(cpc);
+  // CHECK-FIXES: char *pc = const_cast<char*>(cpc);
 
   char *pc2 = (char*)(cpc + 33);
   // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: C-style casts are discouraged. Use const_cast. {{.*}}
-  // CHECK-FIXES: char *pc2 = const_cast<char *>(cpc + 33);
+  // CHECK-FIXES: char *pc2 = const_cast<char*>(cpc + 33);
 
   const char &crc = *cpc;
   char &rc = (char&)crc;
   // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: C-style casts are discouraged. Use const_cast. {{.*}}
-  // CHECK-FIXES: char &rc = const_cast<char &>(crc);
+  // CHECK-FIXES: char &rc = const_cast<char&>(crc);
 
   char &rc2 = (char&)*cpc;
   // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: C-style casts are discouraged. Use const_cast. {{.*}}
-  // CHECK-FIXES: char &rc2 = const_cast<char &>(*cpc);
+  // CHECK-FIXES: char &rc2 = const_cast<char&>(*cpc);
 
   char ** const* const* ppcpcpc;
   char ****ppppc = (char****)ppcpcpc;
   // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: C-style casts are discouraged. Use const_cast. {{.*}}
-  // CHECK-FIXES: char ****ppppc = const_cast<char ****>(ppcpcpc);
+  // CHECK-FIXES: char ****ppppc = const_cast<char****>(ppcpcpc);
 
   char ***pppc = (char***)*(ppcpcpc);
   // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: C-style casts are discouraged. Use const_cast. {{.*}}
-  // CHECK-FIXES: char ***pppc = const_cast<char ***>(*(ppcpcpc));
+  // CHECK-FIXES: char ***pppc = const_cast<char***>(*(ppcpcpc));
 
   char ***pppc2 = (char***)(*ppcpcpc);
   // CHECK-MESSAGES: :[[@LINE-1]]:19: warning: C-style casts are discouraged. Use const_cast. {{.*}}
-  // CHECK-FIXES: char ***pppc2 = const_cast<char ***>(*ppcpcpc);
+  // CHECK-FIXES: char ***pppc2 = const_cast<char***>(*ppcpcpc);
 
   char *pc5 = (char*)(const char*)(cpv);
   // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: C-style casts are discouraged. Use const_cast. {{.*}}
   // CHECK-MESSAGES: :[[@LINE-2]]:22: warning: C-style casts are discouraged. Use reinterpret_cast. {{.*}}
-  // CHECK-FIXES: char *pc5 = const_cast<char *>(reinterpret_cast<const char *>(cpv));
-
+  // CHECK-FIXES: char *pc5 = const_cast<char*>(reinterpret_cast<const char*>(cpv));
 
   int b1 = (int)b;
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: C-style casts are discouraged. Use static_cast. [google-readability-casting]
@@ -58,11 +58,19 @@ void f(int a, double b, const char *cpc, const void *cpv, X *pX) {
 
   const char *pc3 = (const char*)cpv;
   // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: C-style casts are discouraged. Use reinterpret_cast. [google-readability-casting]
-  // CHECK-FIXES: const char *pc3 = reinterpret_cast<const char *>(cpv);
+  // CHECK-FIXES: const char *pc3 = reinterpret_cast<const char*>(cpv);
 
   char *pc4 = (char*)cpv;
   // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: C-style casts are discouraged. Use static_cast/const_cast/reinterpret_cast. [google-readability-casting]
   // CHECK-FIXES: char *pc4 = (char*)cpv;
+
+  b1 = (int)Enum1;
+  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: C-style casts are discouraged. Use static_cast. [google-readability-casting]
+  // CHECK-FIXES: b1 = static_cast<int>(Enum1);
+
+  Enum e = (Enum)b1;
+  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: C-style casts are discouraged. Use static_cast. [google-readability-casting]
+  // CHECK-FIXES: Enum e = static_cast<Enum>(b1);
 
   // CHECK-MESSAGES-NOT: warning:
   int b2 = int(b);

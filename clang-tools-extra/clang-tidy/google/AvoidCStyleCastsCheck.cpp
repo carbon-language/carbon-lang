@@ -82,7 +82,12 @@ void AvoidCStyleCastsCheck::check(const MatchFinder::MatchResult &Result) {
   if (!Result.Context->getLangOpts().CPlusPlus)
     return;
 
-  std::string DestTypeString = CastExpr->getTypeAsWritten().getAsString();
+  // Leave type spelling exactly as it was.
+  StringRef DestTypeString = Lexer::getSourceText(
+      CharSourceRange::getTokenRange(
+          CastExpr->getLParenLoc().getLocWithOffset(1),
+          CastExpr->getRParenLoc().getLocWithOffset(-1)),
+      *Result.SourceManager, Result.Context->getLangOpts());
 
   auto diag_builder =
       diag(CastExpr->getLocStart(), "C-style casts are discouraged. %0");
@@ -117,7 +122,13 @@ void AvoidCStyleCastsCheck::check(const MatchFinder::MatchResult &Result) {
       ReplaceWithCast("const_cast");
       return;
     }
-    if (SourceType->isBuiltinType() && DestType->isBuiltinType()) {
+    // FALLTHROUGH
+  case clang::CK_IntegralCast:
+    // Convert integral and no-op casts between builtin types and enums to
+    // static_cast. A cast from enum to integer may be unnecessary, but it's
+    // still retained.
+    if ((SourceType->isBuiltinType() || SourceType->isEnumeralType()) &&
+        (DestType->isBuiltinType() || DestType->isEnumeralType())) {
       ReplaceWithCast("static_cast");
       return;
     }
