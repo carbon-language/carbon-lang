@@ -125,15 +125,15 @@ multiclass AVX512_masking_common<bits<8> O, Format F, X86VectorVTInfo _,
                                  dag RHS, dag MaskingRHS,
                                  string MaskingConstraint = ""> {
   def NAME: AVX512<O, F, Outs, Ins,
-                       OpcodeStr#" \t{"#AttSrcAsm#", $dst|"#
-                                      "$dst, "#IntelSrcAsm#"}",
+                       OpcodeStr#"\t{"#AttSrcAsm#", $dst|"#
+                                     "$dst, "#IntelSrcAsm#"}",
                        [(set _.RC:$dst, RHS)]>;
 
   // Prefer over VMOV*rrk Pat<>
   let AddedComplexity = 20 in
     def NAME#k: AVX512<O, F, Outs, MaskingIns,
-                       OpcodeStr#" \t{"#AttSrcAsm#", $dst {${mask}}|"#
-                                      "$dst {${mask}}, "#IntelSrcAsm#"}",
+                       OpcodeStr#"\t{"#AttSrcAsm#", $dst {${mask}}|"#
+                                     "$dst {${mask}}, "#IntelSrcAsm#"}",
                        [(set _.RC:$dst, MaskingRHS)]>,
               EVEX_K {
       // In case of the 3src subclass this is overridden with a let.
@@ -141,8 +141,8 @@ multiclass AVX512_masking_common<bits<8> O, Format F, X86VectorVTInfo _,
   }
   let AddedComplexity = 30 in // Prefer over VMOV*rrkz Pat<>
     def NAME#kz: AVX512<O, F, Outs, ZeroMaskingIns,
-                       OpcodeStr#" \t{"#AttSrcAsm#", $dst {${mask}} {z}|"#
-                                      "$dst {${mask}} {z}, "#IntelSrcAsm#"}",
+                       OpcodeStr#"\t{"#AttSrcAsm#", $dst {${mask}} {z}|"#
+                                     "$dst {${mask}} {z}, "#IntelSrcAsm#"}",
                        [(set _.RC:$dst,
                              (vselect _.KRCWM:$mask, RHS,
                                       (_.VT (bitconvert
