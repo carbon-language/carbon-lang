@@ -28,6 +28,7 @@ class TestImageListMultiArchitecture(TestBase):
             "hello-ubuntu-14.04-x86_64-gcc-4.8.2": re.compile(r"x86_64-(unknown)?-linux x86_64"),
             "hello-ubuntu-14.04-x86_64-clang-3.5pre": re.compile(r"x86_64-(unknown)?-linux x86_64"),
             "hello-unknown-kalimba_arch4-kcc-36": re.compile(r"kalimba4-csr-unknown kalimba"),
+            "hello-unknown-kalimba_arch5-kcc-39": re.compile(r"kalimba5-csr-unknown kalimba"),
         }
 
         for image_name in images:
