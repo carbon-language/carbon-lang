@@ -3,10 +3,10 @@
 // RUN: %clangxx_asan -O2 %s -o %t
 // RUN: %run %t 20 16
 // RUN: %run %t 30 1000000
-// RUN: env ASAN_OPTIONS=mmap_limit_mb=150 %run %t 20 16
-// RUN: env ASAN_OPTIONS=mmap_limit_mb=150 %run %t 20 1000000
-// RUN: env ASAN_OPTIONS=mmap_limit_mb=150 not %run %t 500 16 2>&1 | FileCheck %s
-// RUN: env ASAN_OPTIONS=mmap_limit_mb=150 not %run %t 500 1000000 2>&1 | FileCheck %s
+// RUN: env ASAN_OPTIONS=mmap_limit_mb=300 %run %t 20 16
+// RUN: env ASAN_OPTIONS=mmap_limit_mb=300 %run %t 20 1000000
+// RUN: env ASAN_OPTIONS=mmap_limit_mb=300 not %run %t 500 16 2>&1 | FileCheck %s
+// RUN: env ASAN_OPTIONS=mmap_limit_mb=300 not %run %t 500 1000000 2>&1 | FileCheck %s
 // XFAIL: arm-linux-gnueabi
 
 #include <assert.h>
