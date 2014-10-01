@@ -1198,17 +1198,22 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   //   o) For each alias set we then map the aliasing pointers back to the
   //      memory accesses we know, thus obtain groups of memory accesses which
   //      might alias.
-  //   o) For each group with more then one base pointer we then compute minimal
+  //   o) We split groups such that they contain at most one read only base
+  //      address.
+  //   o) For each group with more than one base pointer we then compute minimal
   //      and maximal accesses to each array in this group.
   using AliasGroupTy = SmallVector<MemoryAccess *, 4>;
 
   AliasSetTracker AST(AA);
 
   DenseMap<Value *, MemoryAccess *> PtrToAcc;
+  DenseSet<Value *> HasWriteAccess;
   for (ScopStmt *Stmt : *this) {
     for (MemoryAccess *MA : *Stmt) {
       if (MA->isScalar())
         continue;
+      if (!MA->isRead())
+        HasWriteAccess.insert(MA->getBaseAddr());
       Instruction *Acc = MA->getAccessInstruction();
       PtrToAcc[getPointerOperand(*Acc)] = MA;
       AST.add(Acc);
@@ -1227,19 +1232,54 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     AliasGroups.push_back(std::move(AG));
   }
 
-  SmallPtrSet<const Value *, 4> BaseValues;
-  for (auto I = AliasGroups.begin(); I != AliasGroups.end();) {
-    BaseValues.clear();
-    for (MemoryAccess *MA : *I)
-      BaseValues.insert(MA->getBaseAddr());
-    if (BaseValues.size() > 1)
-      I++;
-    else
-      I = AliasGroups.erase(I);
+  DenseMap<const Value *, SmallPtrSet<MemoryAccess *, 8>> ReadOnlyPairs;
+  SmallPtrSet<const Value *, 4> NonReadOnlyBaseValues;
+  for (AliasGroupTy &AG : AliasGroups) {
+    NonReadOnlyBaseValues.clear();
+    ReadOnlyPairs.clear();
+
+    for (auto II = AG.begin(); II != AG.end();) {
+      Value *BaseAddr = (*II)->getBaseAddr();
+      if (HasWriteAccess.count(BaseAddr)) {
+        NonReadOnlyBaseValues.insert(BaseAddr);
+        II++;
+      } else {
+        ReadOnlyPairs[BaseAddr].insert(*II);
+        II = AG.erase(II);
+      }
+    }
+
+    // If we don't have read only pointers check if there are at least two
+    // non read only pointers, otherwise clear the alias group.
+    if (ReadOnlyPairs.empty()) {
+      if (NonReadOnlyBaseValues.size() <= 1)
+        AG.clear();
+      continue;
+    }
+
+    // If we don't have non read only pointers clear the alias group.
+    if (NonReadOnlyBaseValues.empty()) {
+      AG.clear();
+      continue;
+    }
+
+    // If we have both read only and non read only base pointers we combine
+    // the non read only ones with exactly one read only one at a time into a
+    // new alias group and clear the old alias group in the end.
+    for (const auto &ReadOnlyPair : ReadOnlyPairs) {
+      AliasGroupTy AGNonReadOnly = AG;
+      for (MemoryAccess *MA : ReadOnlyPair.second)
+        AGNonReadOnly.push_back(MA);
+      AliasGroups.push_back(std::move(AGNonReadOnly));
+    }
+    AG.clear();
   }
 
   bool Valid = true;
   for (AliasGroupTy &AG : AliasGroups) {
+    if (AG.empty())
+      continue;
+
     MinMaxVectorTy *MinMaxAccesses = new MinMaxVectorTy();
     MinMaxAccesses->reserve(AG.size());
 

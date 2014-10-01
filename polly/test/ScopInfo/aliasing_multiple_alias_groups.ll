@@ -39,14 +39,25 @@ for.end:                                          ; preds = %for.body
 !4 = metadata !{metadata !5, metadata !5, i64 0}
 !5 = metadata !{metadata !"float", metadata !2, i64 0}
 
-; NOAA: Alias Groups (1):
+; NOAA: Alias Groups (2):
+; NOAA-NEXT: {{\[\[}}
 ; NOAA-DAG:      <{ MemRef_Int0[(0)] }, { MemRef_Int0[(1024)] }>
-; NOAA-DAG:      <{ MemRef_Int1[(0)] }, { MemRef_Int1[(1024)] }>
+; NOAA-DAG:      <{ MemRef_{{(Int|Float)}}1[(0)] }, { MemRef_{{(Int|Float)}}1[(1024)] }>
 ; NOAA-DAG:      <{ MemRef_Float0[(0)] }, { MemRef_Float0[(1024)] }>
-; NOAA-DAG:      <{ MemRef_Float1[(0)] }, { MemRef_Float1[(1024)] }>
+; NOAA:      {{\]\]}}
+; NOAA-NEXT: {{\[\[}}
+; NOAA-DAG:      <{ MemRef_Int0[(0)] }, { MemRef_Int0[(1024)] }>
+; NOAA-DAG:      <{ MemRef_Float0[(0)] }, { MemRef_Float0[(1024)] }>
+; NOAA-DAG:      <{ MemRef_{{(Int|Float)}}1[(0)] }, { MemRef_{{(Int|Float)}}1[(1024)] }>
+; NOAA:      {{\]\]}}
 
-; TBAA-DAG: Alias Groups (2):
+
+; TBAA: Alias Groups (2):
+; TBAA-NEXT: {{\[\[}}
 ; TBAA-DAG:      <{ MemRef_Int0[(0)] }, { MemRef_Int0[(1024)] }>
 ; TBAA-DAG:      <{ MemRef_Int1[(0)] }, { MemRef_Int1[(1024)] }>
+; TBAA:      {{\]\]}}
+; TBAA-NEXT: {{\[\[}}
 ; TBAA-DAG:      <{ MemRef_Float0[(0)] }, { MemRef_Float0[(1024)] }>
 ; TBAA-DAG:      <{ MemRef_Float1[(0)] }, { MemRef_Float1[(1024)] }>
+; TBBA:      {{\]\]}}

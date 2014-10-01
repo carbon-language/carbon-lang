@@ -12,9 +12,8 @@
 ; NOAA-DAG:    &MemRef_Float0[1024] <= &MemRef_Int0[0] || &MemRef_Int0[1024] <= &MemRef_Float0[0]
 ; NOAA-DAG:    &MemRef_Float1[1024] <= &MemRef_Int0[0] || &MemRef_Int0[1024] <= &MemRef_Float1[0]
 ; NOAA-DAG:    &MemRef_Int1[1024] <= &MemRef_Int0[0] || &MemRef_Int0[1024] <= &MemRef_Int1[0]
-; NOAA-DAG:    &MemRef_Float1[1024] <= &MemRef_Float0[0] || &MemRef_Float0[1024] <= &MemRef_Float1[0]
+; NOAA-DAG:    &MemRef_Float0[1024] <= &MemRef_Float1[0] || &MemRef_Float1[1024] <= &MemRef_Float0[0]
 ; NOAA-DAG:    &MemRef_Int1[1024] <= &MemRef_Float0[0] || &MemRef_Float0[1024] <= &MemRef_Int1[0]
-; NOAA-DAG:    &MemRef_Int1[1024] <= &MemRef_Float1[0] || &MemRef_Float1[1024] <= &MemRef_Int1[0]
 ; NOAA:      ))
 ;
 ; TBAA:      if (1 && (
