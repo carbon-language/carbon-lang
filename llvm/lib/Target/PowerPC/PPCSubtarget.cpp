@@ -74,7 +74,7 @@ PPCSubtarget &PPCSubtarget::initializeSubtargetDependencies(StringRef CPU,
 }
 
 PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
-                           const std::string &FS, PPCTargetMachine &TM)
+                           const std::string &FS, const PPCTargetMachine &TM)
     : PPCGenSubtargetInfo(TT, CPU, FS), TargetTriple(TT),
       DL(getDataLayoutString(TargetTriple)),
       IsPPC64(TargetTriple.getArch() == Triple::ppc64 ||

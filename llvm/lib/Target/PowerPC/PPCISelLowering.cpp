@@ -64,7 +64,7 @@ static TargetLoweringObjectFile *createTLOF(const Triple &TT) {
   return new PPC64LinuxTargetObjectFile();
 }
 
-PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
+PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM)
     : TargetLowering(TM, createTLOF(Triple(TM.getTargetTriple()))),
       Subtarget(*TM.getSubtargetImpl()) {
   setPow2SDivIsCheap();
