@@ -101,26 +101,19 @@ public:
 
   /// \brief Return true if two regions can be merged together.
   bool isMergeable(SourceMappingRegion &R) {
+    // FIXME: We allow merging regions with a gap in between them. Should we?
     return File == R.File && MacroArgumentFile == R.MacroArgumentFile &&
            Count == R.Count && UnreachableInitiator == R.UnreachableInitiator &&
            Group == R.Group;
   }
 
-  bool isMergeable(FileID File, FileID MacroArgumentFile, Counter Count,
-                   const Stmt *UnreachableInitiator, const Stmt *Group) {
-    return this->File == File && this->MacroArgumentFile == MacroArgumentFile &&
-           this->Count == Count &&
-           this->UnreachableInitiator == UnreachableInitiator &&
-           this->Group == Group;
-  }
-
-  /// \brief Merge two regions by extending the 'this' region to cover the
-  /// given region.
-  void mergeByExtendingTo(SourceMappingRegion &R) {
-    LocEnd = R.LocEnd;
-    AlternativeLocEnd = R.LocStart;
-    if (hasFlag(IgnoreIfNotExtended))
-      clearFlag(IgnoreIfNotExtended);
+  /// \brief A comparison that sorts such that mergeable regions are adjacent.
+  friend bool operator<(const SourceMappingRegion &LHS,
+                        const SourceMappingRegion &RHS) {
+    return std::tie(LHS.File, LHS.MacroArgumentFile, LHS.Count,
+                    LHS.UnreachableInitiator, LHS.Group) <
+           std::tie(RHS.File, RHS.MacroArgumentFile, RHS.Count,
+                    RHS.UnreachableInitiator, RHS.Group);
   }
 };
 
@@ -169,7 +162,7 @@ public:
   /// \brief The coverage mapping regions for this function
   llvm::SmallVector<CounterMappingRegion, 32> MappingRegions;
   /// \brief The source mapping regions for this function.
-  llvm::SmallVector<SourceMappingRegion, 32> SourceRegions;
+  std::vector<SourceMappingRegion> SourceRegions;
 
   CoverageMappingBuilder(CoverageMappingModuleGen &CVM, SourceManager &SM,
                          const LangOptions &LangOpts)
@@ -327,23 +320,6 @@ public:
   /// \brief Exit the current source region group.
   void endSourceRegionGroup() { CurrentSourceGroup = nullptr; }
 
-  /// \brief Brings a region that has the same counter and file to the back
-  /// of the source regions array.
-  void bringSimilarRegionBack(Counter Count, FileID File,
-                              FileID MacroArgumentFile,
-                              const Stmt *UnreachableInitiator,
-                              const Stmt *SourceGroup) {
-    for (size_t I = SourceRegions.size(); I != 0;) {
-      --I;
-      if (SourceRegions[I].isMergeable(File, MacroArgumentFile, Count,
-                                       UnreachableInitiator, SourceGroup)) {
-        if (I != SourceRegions.size() - 1)
-          std::swap(SourceRegions[I], SourceRegions.back());
-        return;
-      }
-    }
-  }
-
   /// \brief Associate a counter with a given source code range.
   void mapSourceCodeRange(SourceLocation LocStart, SourceLocation LocEnd,
                           Counter Count, const Stmt *UnreachableInitiator,
@@ -370,15 +346,9 @@ public:
     // Make sure that the file id is valid.
     if (File.isInvalid())
       return;
-    bringSimilarRegionBack(Count, File, MacroArgumentFile, UnreachableInitiator,
-                           SourceGroup);
-    SourceMappingRegion R(File, MacroArgumentFile, Count, UnreachableInitiator,
-                          SourceGroup, LocStart, LocEnd, Flags);
-    if (SourceRegions.empty() || !SourceRegions.back().isMergeable(R)) {
-      SourceRegions.push_back(R);
-      return;
-    }
-    SourceRegions.back().mergeByExtendingTo(R);
+    SourceRegions.emplace_back(File, MacroArgumentFile, Count,
+                               UnreachableInitiator, SourceGroup, LocStart,
+                               LocEnd, Flags);
   }
 
   void mapSourceCodeRange(SourceLocation LocStart, SourceLocation LocEnd,
@@ -399,14 +369,26 @@ public:
   /// \brief Generate the coverage counter mapping regions from collected
   /// source regions.
   void emitSourceRegions() {
-    for (const auto &R : SourceRegions) {
-      SourceLocation LocStart = R.getStartLoc();
-      SourceLocation LocEnd = R.getEndLoc(SM);
+    std::sort(SourceRegions.begin(), SourceRegions.end());
 
-      if (R.hasFlag(SourceMappingRegion::IgnoreIfNotExtended) &&
-          LocStart == LocEnd)
+    for (auto I = SourceRegions.begin(), E = SourceRegions.end(); I != E; ++I) {
+      // Keep the original start location of this region.
+      SourceLocation LocStart = I->getStartLoc();
+      SourceLocation LocEnd = I->getEndLoc(SM);
+
+      bool Ignore = I->hasFlag(SourceMappingRegion::IgnoreIfNotExtended);
+      // We need to handle mergeable regions together.
+      for (auto Next = I + 1; Next != E && Next->isMergeable(*I); ++Next) {
+        ++I;
+        LocStart = std::min(LocStart, I->getStartLoc());
+        LocEnd = std::max(LocEnd, I->getEndLoc(SM));
+        // FIXME: Should we && together the Ignore flag of multiple regions?
+        Ignore = false;
+      }
+      if (Ignore)
         continue;
 
+      // Find the spilling locations for the mapping region.
       LocEnd = getPreciseTokenLocEnd(LocEnd);
       unsigned LineStart = SM.getSpellingLineNumber(LocStart);
       unsigned ColumnStart = SM.getSpellingColumnNumber(LocStart);
@@ -415,13 +397,13 @@ public:
 
       auto SpellingFile = SM.getDecomposedSpellingLoc(LocStart).first;
       unsigned CovFileID;
-      if (getCoverageFileID(LocStart, R.getFile(), SpellingFile, CovFileID))
+      if (getCoverageFileID(LocStart, I->getFile(), SpellingFile, CovFileID))
         continue;
 
       assert(LineStart <= LineEnd);
       MappingRegions.push_back(CounterMappingRegion(
-          R.getCounter(), CovFileID, LineStart, ColumnStart, LineEnd, ColumnEnd,
-          false, CounterMappingRegion::CodeRegion));
+          I->getCounter(), CovFileID, LineStart, ColumnStart, LineEnd,
+          ColumnEnd, false, CounterMappingRegion::CodeRegion));
     }
   }
 };
