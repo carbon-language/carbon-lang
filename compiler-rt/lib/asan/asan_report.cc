@@ -341,16 +341,15 @@ const char *ThreadNameWithParenthesis(u32 tid, char buff[],
   return ThreadNameWithParenthesis(t, buff, buff_len);
 }
 
-void PrintAccessAndVarIntersection(const char *var_name,
-                                   uptr var_beg, uptr var_size,
-                                   uptr addr, uptr access_size,
-                                   uptr prev_var_end, uptr next_var_beg) {
-  uptr var_end = var_beg + var_size;
+static void PrintAccessAndVarIntersection(const StackVarDescr &var, uptr addr,
+                                          uptr access_size, uptr prev_var_end,
+                                          uptr next_var_beg) {
+  uptr var_end = var.beg + var.size;
   uptr addr_end = addr + access_size;
   const char *pos_descr = 0;
-  // If the variable [var_beg, var_end) is the nearest variable to the
+  // If the variable [var.beg, var_end) is the nearest variable to the
   // current memory access, indicate it in the log.
-  if (addr >= var_beg) {
+  if (addr >= var.beg) {
     if (addr_end <= var_end)
       pos_descr = "is inside";  // May happen if this is a use-after-return.
     else if (addr < var_end)
@@ -359,14 +358,20 @@ void PrintAccessAndVarIntersection(const char *var_name,
              next_var_beg - addr_end >= addr - var_end)
       pos_descr = "overflows";
   } else {
-    if (addr_end > var_beg)
+    if (addr_end > var.beg)
       pos_descr = "partially underflows";
     else if (addr >= prev_var_end &&
-             addr - prev_var_end >= var_beg - addr_end)
+             addr - prev_var_end >= var.beg - addr_end)
       pos_descr = "underflows";
   }
   InternalScopedString str(1024);
-  str.append("    [%zd, %zd) '%s'", var_beg, var_beg + var_size, var_name);
+  str.append("    [%zd, %zd)", var.beg, var_end);
+  // Render variable name.
+  str.append(" '");
+  for (uptr i = 0; i < var.name_len; ++i) {
+    str.append("%c", var.name_pos[i]);
+  }
+  str.append("'");
   if (pos_descr) {
     Decorator d;
     // FIXME: we may want to also print the size of the access here,
@@ -455,16 +460,11 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   Printf("  This frame has %zu object(s):\n", n_objects);
 
   // Report all objects in this frame.
-  const uptr kBufSize = 4095;
-  char buf[kBufSize];
   for (uptr i = 0; i < n_objects; i++) {
-    buf[0] = 0;
-    internal_strncat(buf, vars[i].name_pos,
-                     static_cast<uptr>(Min(kBufSize, vars[i].name_len)));
     uptr prev_var_end = i ? vars[i - 1].beg + vars[i - 1].size : 0;
     uptr next_var_beg = i + 1 < n_objects ? vars[i + 1].beg : ~(0UL);
-    PrintAccessAndVarIntersection(buf, vars[i].beg, vars[i].size, access.offset,
-                                  access_size, prev_var_end, next_var_beg);
+    PrintAccessAndVarIntersection(vars[i], access.offset, access_size,
+                                  prev_var_end, next_var_beg);
   }
   Printf("HINT: this may be a false positive if your program uses "
          "some custom stack unwind mechanism or swapcontext\n");
