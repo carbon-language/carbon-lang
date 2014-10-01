@@ -71,7 +71,12 @@ class AsanThread {
   AsanThreadContext *context() { return context_; }
   void set_context(AsanThreadContext *context) { context_ = context; }
 
-  const char *GetFrameNameByAddr(uptr addr, uptr *offset, uptr *frame_pc);
+  struct StackFrameAccess {
+    uptr offset;
+    uptr frame_pc;
+    const char *frame_descr;
+  };
+  bool GetStackFrameAccessByAddr(uptr addr, StackFrameAccess *access);
 
   bool AddrIsInStack(uptr addr) {
     return addr >= stack_bottom_ && addr < stack_top_;

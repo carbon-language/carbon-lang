@@ -28,19 +28,19 @@ void GetInfoForStackVar(uptr addr, AddressDescription *descr, AsanThread *t) {
   descr->region_size = 0;
   descr->region_kind = "stack";
 
-  uptr offset = 0;
-  uptr frame_pc = 0;
-  const char *frame_descr = t->GetFrameNameByAddr(addr, &offset, &frame_pc);
+  AsanThread::StackFrameAccess access;
+  if (!t->GetStackFrameAccessByAddr(addr, &access))
+    return;
   InternalMmapVector<StackVarDescr> vars(16);
-  if (!ParseFrameDescription(frame_descr, &vars)) {
+  if (!ParseFrameDescription(access.frame_descr, &vars)) {
     return;
   }
 
   for (uptr i = 0; i < vars.size(); i++) {
-    if (offset <= vars[i].beg + vars[i].size) {
+    if (access.offset <= vars[i].beg + vars[i].size) {
       internal_strncat(descr->name, vars[i].name_pos,
                        Min(descr->name_size, vars[i].name_len));
-      descr->region_address = addr - (offset - vars[i].beg);
+      descr->region_address = addr - (access.offset - vars[i].beg);
       descr->region_size = vars[i].size;
       return;
     }
