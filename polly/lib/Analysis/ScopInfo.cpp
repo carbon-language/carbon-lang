@@ -1191,6 +1191,12 @@ static int buildMinMaxAccess(__isl_take isl_set *Set, void *User) {
   return 0;
 }
 
+static __isl_give isl_set *getAccessDomain(MemoryAccess *MA) {
+  isl_set *Domain = MA->getStatement()->getDomain();
+  Domain = isl_set_project_out(Domain, isl_dim_set, 0, isl_set_n_dim(Domain));
+  return isl_set_reset_tuple_id(Domain);
+}
+
 bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   // To create sound alias checks we perform the following steps:
   //   o) Use the alias analysis and an alias set tracker to build alias sets
@@ -1198,6 +1204,10 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   //   o) For each alias set we then map the aliasing pointers back to the
   //      memory accesses we know, thus obtain groups of memory accesses which
   //      might alias.
+  //   o) We divide each group based on the domains of the minimal/maximal
+  //      accesses. That means two minimal/maximal accesses are only in a group
+  //      if their access domains intersect, otherwise they are in different
+  //      ones.
   //   o) We split groups such that they contain at most one read only base
   //      address.
   //   o) For each group with more than one base pointer we then compute minimal
@@ -1232,11 +1242,39 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     AliasGroups.push_back(std::move(AG));
   }
 
+  // Split the alias groups based on their domain.
+  for (unsigned u = 0; u < AliasGroups.size(); u++) {
+    AliasGroupTy NewAG;
+    AliasGroupTy &AG = AliasGroups[u];
+    AliasGroupTy::iterator AGI = AG.begin();
+    isl_set *AGDomain = getAccessDomain(*AGI);
+    while (AGI != AG.end()) {
+      MemoryAccess *MA = *AGI;
+      isl_set *MADomain = getAccessDomain(MA);
+      if (isl_set_is_disjoint(AGDomain, MADomain)) {
+        NewAG.push_back(MA);
+        AGI = AG.erase(AGI);
+        isl_set_free(MADomain);
+      } else {
+        AGDomain = isl_set_union(AGDomain, MADomain);
+        AGI++;
+      }
+    }
+    if (NewAG.size() > 1)
+      AliasGroups.push_back(std::move(NewAG));
+    isl_set_free(AGDomain);
+  }
+
   DenseMap<const Value *, SmallPtrSet<MemoryAccess *, 8>> ReadOnlyPairs;
   SmallPtrSet<const Value *, 4> NonReadOnlyBaseValues;
   for (AliasGroupTy &AG : AliasGroups) {
     NonReadOnlyBaseValues.clear();
     ReadOnlyPairs.clear();
+
+    if (AG.size() < 2) {
+      AG.clear();
+      continue;
+    }
 
     for (auto II = AG.begin(); II != AG.end();) {
       Value *BaseAddr = (*II)->getBaseAddr();
