@@ -866,6 +866,48 @@ private:
   };
   SmallVector<BreakContinue, 8> BreakContinueStack;
 
+  /// \brief The scope used to remap some variables as private in the OpenMP
+  /// loop body (or other captured region emitted without outlining), and to
+  /// restore old vars back on exit.
+  class OMPPrivateScope : public RunCleanupsScope {
+    DeclMapTy SavedLocals;
+
+  private:
+    OMPPrivateScope(const OMPPrivateScope &) LLVM_DELETED_FUNCTION;
+    void operator=(const OMPPrivateScope &) LLVM_DELETED_FUNCTION;
+
+  public:
+    /// \brief Enter a new OpenMP private scope.
+    explicit OMPPrivateScope(CodeGenFunction &CGF) : RunCleanupsScope(CGF) {}
+
+    /// \brief Add and remap private variables (without initialization).
+    /// \param Vars - a range of DeclRefExprs for the private variables.
+    template <class IT> void addPrivates(IT Vars) {
+      assert(PerformCleanup && "adding private to dead scope");
+      for (auto E : Vars) {
+        auto D = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
+        assert(!SavedLocals.lookup(D) && "remapping a var twice");
+        SavedLocals[D] = CGF.LocalDeclMap.lookup(D);
+        CGF.LocalDeclMap.erase(D);
+        // Emit var without initialization.
+        auto VarEmission = CGF.EmitAutoVarAlloca(*D);
+        CGF.EmitAutoVarCleanups(VarEmission);
+      }
+    }
+
+    void ForceCleanup() {
+      RunCleanupsScope::ForceCleanup();
+      // Remap vars back to the original values.
+      for (auto I : SavedLocals) {
+        CGF.LocalDeclMap[I.first] = I.second;
+      }
+      SavedLocals.clear();
+    }
+
+    /// \brief Exit scope - all the mapped variables are restored.
+    ~OMPPrivateScope() { ForceCleanup(); }
+  };
+
   CodeGenPGO PGO;
 
 public:
@@ -1945,6 +1987,12 @@ public:
   void EmitOMPOrderedDirective(const OMPOrderedDirective &S);
   void EmitOMPAtomicDirective(const OMPAtomicDirective &S);
   void EmitOMPTargetDirective(const OMPTargetDirective &S);
+
+  /// Helpers for 'omp simd' directive.
+  void EmitOMPSimdBody(const OMPLoopDirective &Directive, bool SeparateIter);
+  void EmitOMPSimdLoop(const OMPLoopDirective &S, OMPPrivateScope &LoopScope,
+                       bool SeparateIter);
+  void EmitOMPSimdFinal(const OMPLoopDirective &S);
 
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission

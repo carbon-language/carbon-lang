@@ -7217,6 +7217,9 @@ def err_omp_loop_incr_not_compatible : Error<
   "on each iteration of OpenMP for loop">;
 def note_omp_loop_cond_requres_compatible_incr : Note<
   "loop step is expected to be %select{negative|positive}0 due to this condition">;
+def err_omp_loop_diff_cxx : Error<
+  "could not calculate number of iterations calling 'operator-' with "
+  "upper and lower loop bounds">;
 def err_omp_loop_cannot_use_stmt : Error<
   "'%0' statement cannot be used in OpenMP for loop">;
 def err_omp_simd_region_cannot_use_stmt : Error<

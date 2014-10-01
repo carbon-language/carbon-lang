@@ -246,6 +246,41 @@ class OMPLoopDirective : public OMPExecutableDirective {
   /// \brief Number of collapsed loops as specified by 'collapse' clause.
   unsigned CollapsedNum;
 
+  /// \brief Offsets to the stored exprs.
+  enum {
+    AssociatedStmtOffset = 0,
+    IterationVariableOffset = 1,
+    LastIterationOffset = 2,
+    CalcLastIterationOffset = 3,
+    PreConditionOffset = 4,
+    CondOffset = 5,
+    SeparatedCondOffset = 6,
+    InitOffset = 7,
+    IncOffset = 8,
+    ArraysOffset = 9
+  };
+
+  /// \brief Get the counters storage.
+  MutableArrayRef<Expr *> getCounters() {
+    Expr **Storage =
+        reinterpret_cast<Expr **>(&(*(std::next(child_begin(), ArraysOffset))));
+    return MutableArrayRef<Expr *>(Storage, CollapsedNum);
+  }
+
+  /// \brief Get the updates storage.
+  MutableArrayRef<Expr *> getUpdates() {
+    Expr **Storage = reinterpret_cast<Expr **>(
+        &*std::next(child_begin(), ArraysOffset + CollapsedNum));
+    return MutableArrayRef<Expr *>(Storage, CollapsedNum);
+  }
+
+  /// \brief Get the final counter updates storage.
+  MutableArrayRef<Expr *> getFinals() {
+    Expr **Storage = reinterpret_cast<Expr **>(
+        &*std::next(child_begin(), ArraysOffset + 2 * CollapsedNum));
+    return MutableArrayRef<Expr *>(Storage, CollapsedNum);
+  }
+
 protected:
   /// \brief Build instance of loop directive of class \a Kind.
   ///
@@ -263,12 +298,98 @@ protected:
                    unsigned CollapsedNum, unsigned NumClauses,
                    unsigned NumSpecialChildren = 0)
       : OMPExecutableDirective(That, SC, Kind, StartLoc, EndLoc, NumClauses,
-                               1 + NumSpecialChildren),
+                               numLoopChildren(CollapsedNum) +
+                                   NumSpecialChildren),
         CollapsedNum(CollapsedNum) {}
+
+  /// \brief Children number.
+  static unsigned numLoopChildren(unsigned CollapsedNum) {
+    return ArraysOffset + 3 * CollapsedNum; // Counters, Updates and Finals
+  }
+
+  void setIterationVariable(Expr *IV) {
+    *std::next(child_begin(), IterationVariableOffset) = IV;
+  }
+  void setLastIteration(Expr *LI) {
+    *std::next(child_begin(), LastIterationOffset) = LI;
+  }
+  void setCalcLastIteration(Expr *CLI) {
+    *std::next(child_begin(), CalcLastIterationOffset) = CLI;
+  }
+  void setPreCond(Expr *PC) {
+    *std::next(child_begin(), PreConditionOffset) = PC;
+  }
+  void setCond(Expr *Cond, Expr *SeparatedCond) {
+    *std::next(child_begin(), CondOffset) = Cond;
+    *std::next(child_begin(), SeparatedCondOffset) = SeparatedCond;
+  }
+  void setInit(Expr *Init) { *std::next(child_begin(), InitOffset) = Init; }
+  void setInc(Expr *Inc) { *std::next(child_begin(), IncOffset) = Inc; }
+  void setCounters(ArrayRef<Expr *> A);
+  void setUpdates(ArrayRef<Expr *> A);
+  void setFinals(ArrayRef<Expr *> A);
 
 public:
   /// \brief Get number of collapsed loops.
   unsigned getCollapsedNumber() const { return CollapsedNum; }
+
+  Expr *getIterationVariable() const {
+    return const_cast<Expr *>(reinterpret_cast<const Expr *>(
+        *std::next(child_begin(), IterationVariableOffset)));
+  }
+  Expr *getLastIteration() const {
+    return const_cast<Expr *>(reinterpret_cast<const Expr *>(
+        *std::next(child_begin(), LastIterationOffset)));
+  }
+  Expr *getCalcLastIteration() const {
+    return const_cast<Expr *>(reinterpret_cast<const Expr *>(
+        *std::next(child_begin(), CalcLastIterationOffset)));
+  }
+  Expr *getPreCond() const {
+    return const_cast<Expr *>(reinterpret_cast<const Expr *>(
+        *std::next(child_begin(), PreConditionOffset)));
+  }
+  Expr *getCond(bool SeparateIter) const {
+    return const_cast<Expr *>(reinterpret_cast<const Expr *>(
+        *std::next(child_begin(),
+                   (SeparateIter ? SeparatedCondOffset : CondOffset))));
+  }
+  Expr *getInit() const {
+    return const_cast<Expr *>(
+        reinterpret_cast<const Expr *>(*std::next(child_begin(), InitOffset)));
+  }
+  Expr *getInc() const {
+    return const_cast<Expr *>(
+        reinterpret_cast<const Expr *>(*std::next(child_begin(), IncOffset)));
+  }
+  const Stmt *getBody() const {
+    // This relies on the loop form is already checked by Sema.
+    Stmt *Body = getAssociatedStmt()->IgnoreContainers(true);
+    Body = cast<ForStmt>(Body)->getBody();
+    for (unsigned Cnt = 1; Cnt < CollapsedNum; ++Cnt) {
+      Body = Body->IgnoreContainers();
+      Body = cast<ForStmt>(Body)->getBody();
+    }
+    return Body;
+  }
+
+  ArrayRef<Expr *> counters() { return getCounters(); }
+
+  ArrayRef<Expr *> counters() const {
+    return const_cast<OMPLoopDirective *>(this)->getCounters();
+  }
+
+  ArrayRef<Expr *> updates() { return getUpdates(); }
+
+  ArrayRef<Expr *> updates() const {
+    return const_cast<OMPLoopDirective *>(this)->getUpdates();
+  }
+
+  ArrayRef<Expr *> finals() { return getFinals(); }
+
+  ArrayRef<Expr *> finals() const {
+    return const_cast<OMPLoopDirective *>(this)->getFinals();
+  }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPSimdDirectiveClass ||
@@ -321,11 +442,24 @@ public:
   /// \param CollapsedNum Number of collapsed loops.
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
+  /// \param IV Loop iteration variable for CodeGen.
+  /// \param LastIteration Loop last iteration number for CodeGen.
+  /// \param CalcLastIteration Calculation of last iteration.
+  /// \param PreCond Pre-condition.
+  /// \param Cond Condition.
+  /// \param SeparatedCond Condition with 1 iteration separated.
+  /// \param Inc Loop increment.
+  /// \param Counters Loop counters.
+  /// \param Updates Expressions for loop counters update for CodeGen.
+  /// \param Finals Final loop counter values for GodeGen.
   ///
-  static OMPSimdDirective *Create(const ASTContext &C, SourceLocation StartLoc,
-                                  SourceLocation EndLoc, unsigned CollapsedNum,
-                                  ArrayRef<OMPClause *> Clauses,
-                                  Stmt *AssociatedStmt);
+  static OMPSimdDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+         unsigned CollapsedNum, ArrayRef<OMPClause *> Clauses,
+         Stmt *AssociatedStmt, Expr *IV, Expr *LastIteration,
+         Expr *CalcLastIteration, Expr *PreCond, Expr *Cond,
+         Expr *SeparatedCond, Expr *Init, Expr *Inc, ArrayRef<Expr *> Counters,
+         ArrayRef<Expr *> Updates, ArrayRef<Expr *> Finals);
 
   /// \brief Creates an empty directive with the place
   /// for \a NumClauses clauses.
@@ -383,11 +517,24 @@ public:
   /// \param CollapsedNum Number of collapsed loops.
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
+  /// \param IV Loop iteration variable for CodeGen.
+  /// \param LastIteration Loop last iteration number for CodeGen.
+  /// \param CalcLastIteration Calculation of last iteration.
+  /// \param PreCond Pre-condition.
+  /// \param Cond Condition.
+  /// \param SeparatedCond Condition with 1 iteration separated.
+  /// \param Inc Loop increment.
+  /// \param Counters Loop counters.
+  /// \param Updates Expressions for loop counters update for CodeGen.
+  /// \param Finals Final loop counter values for GodeGen.
   ///
-  static OMPForDirective *Create(const ASTContext &C, SourceLocation StartLoc,
-                                 SourceLocation EndLoc, unsigned CollapsedNum,
-                                 ArrayRef<OMPClause *> Clauses,
-                                 Stmt *AssociatedStmt);
+  static OMPForDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+         unsigned CollapsedNum, ArrayRef<OMPClause *> Clauses,
+         Stmt *AssociatedStmt, Expr *IV, Expr *LastIteration,
+         Expr *CalcLastIteration, Expr *PreCond, Expr *Cond,
+         Expr *SeparatedCond, Expr *Init, Expr *Inc, ArrayRef<Expr *> Counters,
+         ArrayRef<Expr *> Updates, ArrayRef<Expr *> Finals);
 
   /// \brief Creates an empty directive with the place
   /// for \a NumClauses clauses.
@@ -446,11 +593,24 @@ public:
   /// \param CollapsedNum Number of collapsed loops.
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
+  /// \param IV Loop iteration variable for CodeGen.
+  /// \param LastIteration Loop last iteration number for CodeGen.
+  /// \param CalcLastIteration Calculation of last iteration.
+  /// \param PreCond Pre-condition.
+  /// \param Cond Condition.
+  /// \param SeparatedCond Condition with 1 iteration separated.
+  /// \param Inc Loop increment.
+  /// \param Counters Loop counters.
+  /// \param Updates Expressions for loop counters update for CodeGen.
+  /// \param Finals Final loop counter values for GodeGen.
   ///
   static OMPForSimdDirective *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
          unsigned CollapsedNum, ArrayRef<OMPClause *> Clauses,
-         Stmt *AssociatedStmt);
+         Stmt *AssociatedStmt, Expr *IV, Expr *LastIteration,
+         Expr *CalcLastIteration, Expr *PreCond, Expr *Cond,
+         Expr *SeparatedCond, Expr *Init, Expr *Inc, ArrayRef<Expr *> Counters,
+         ArrayRef<Expr *> Updates, ArrayRef<Expr *> Finals);
 
   /// \brief Creates an empty directive with the place
   /// for \a NumClauses clauses.
@@ -782,11 +942,24 @@ public:
   /// \param CollapsedNum Number of collapsed loops.
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
+  /// \param IV Loop iteration variable for CodeGen.
+  /// \param LastIteration Loop last iteration number for CodeGen.
+  /// \param CalcLastIteration Calculation of last iteration.
+  /// \param PreCond Pre-condition.
+  /// \param Cond Condition.
+  /// \param SeparatedCond Condition with 1 iteration separated.
+  /// \param Inc Loop increment.
+  /// \param Counters Loop counters.
+  /// \param Updates Expressions for loop counters update for CodeGen.
+  /// \param Finals Final loop counter values for GodeGen.
   ///
   static OMPParallelForDirective *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
          unsigned CollapsedNum, ArrayRef<OMPClause *> Clauses,
-         Stmt *AssociatedStmt);
+         Stmt *AssociatedStmt, Expr *IV, Expr *LastIteration,
+         Expr *CalcLastIteration, Expr *PreCond, Expr *Cond,
+         Expr *SeparatedCond, Expr *Init, Expr *Inc, ArrayRef<Expr *> Counters,
+         ArrayRef<Expr *> Updates, ArrayRef<Expr *> Finals);
 
   /// \brief Creates an empty directive with the place
   /// for \a NumClauses clauses.
@@ -850,11 +1023,24 @@ public:
   /// \param CollapsedNum Number of collapsed loops.
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
+  /// \param IV Loop iteration variable for CodeGen.
+  /// \param LastIteration Loop last iteration number for CodeGen.
+  /// \param CalcLastIteration Calculation of last iteration.
+  /// \param PreCond Pre-condition.
+  /// \param Cond Condition.
+  /// \param SeparatedCond Condition with 1 iteration separated.
+  /// \param Inc Loop increment.
+  /// \param Counters Loop counters.
+  /// \param Updates Expressions for loop counters update for CodeGen.
+  /// \param Finals Final loop counter values for GodeGen.
   ///
   static OMPParallelForSimdDirective *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
          unsigned CollapsedNum, ArrayRef<OMPClause *> Clauses,
-         Stmt *AssociatedStmt);
+         Stmt *AssociatedStmt, Expr *IV, Expr *LastIteration,
+         Expr *CalcLastIteration, Expr *PreCond, Expr *Cond,
+         Expr *SeparatedCond, Expr *Init, Expr *Inc, ArrayRef<Expr *> Counters,
+         ArrayRef<Expr *> Updates, ArrayRef<Expr *> Finals);
 
   /// \brief Creates an empty directive with the place
   /// for \a NumClauses clauses.

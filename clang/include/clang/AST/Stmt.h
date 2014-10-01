@@ -393,6 +393,10 @@ public:
   /// statement, such as ExprWithCleanups or ImplicitCastExpr nodes.
   Stmt *IgnoreImplicit();
 
+  /// \brief Skip no-op (attributed, compound) container stmts and skip captured
+  /// stmt at the top, if \a IgnoreCaptured is true.
+  Stmt *IgnoreContainers(bool IgnoreCaptured = false);
+
   const Stmt *stripLabelLikeStatements() const;
   Stmt *stripLabelLikeStatements() {
     return const_cast<Stmt*>(

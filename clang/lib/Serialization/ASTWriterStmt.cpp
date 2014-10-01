@@ -1847,6 +1847,23 @@ void ASTStmtWriter::VisitOMPLoopDirective(OMPLoopDirective *D) {
   Record.push_back(D->getNumClauses());
   Record.push_back(D->getCollapsedNumber());
   VisitOMPExecutableDirective(D);
+  Writer.AddStmt(D->getIterationVariable());
+  Writer.AddStmt(D->getLastIteration());
+  Writer.AddStmt(D->getCalcLastIteration());
+  Writer.AddStmt(D->getPreCond());
+  Writer.AddStmt(D->getCond(/* SeparateIter */ false));
+  Writer.AddStmt(D->getCond(/* SeparateIter */ true));
+  Writer.AddStmt(D->getInit());
+  Writer.AddStmt(D->getInc());
+  for (auto I : D->counters()) {
+    Writer.AddStmt(I);
+  }
+  for (auto I : D->updates()) {
+    Writer.AddStmt(I);
+  }
+  for (auto I : D->finals()) {
+    Writer.AddStmt(I);
+  }
 }
 
 void ASTStmtWriter::VisitOMPParallelDirective(OMPParallelDirective *D) {

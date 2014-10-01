@@ -49,6 +49,89 @@ void CodeGenFunction::EmitOMPParallelDirective(const OMPParallelDirective &S) {
   EmitRuntimeCall(RTLFn, Args);
 }
 
+void CodeGenFunction::EmitOMPSimdBody(const OMPLoopDirective &S,
+                                      bool SeparateIter) {
+  RunCleanupsScope BodyScope(*this);
+  // Update counters values on current iteration.
+  for (auto I : S.updates()) {
+    EmitIgnoredExpr(I);
+  }
+  // On a continue in the body, jump to the end.
+  auto Continue = getJumpDestInCurrentScope("simd.continue");
+  BreakContinueStack.push_back(BreakContinue(JumpDest(), Continue));
+  // Emit loop body.
+  EmitStmt(S.getBody());
+  // The end (updates/cleanups).
+  EmitBlock(Continue.getBlock());
+  BreakContinueStack.pop_back();
+  if (SeparateIter) {
+    // TODO: Update lastprivates if the SeparateIter flag is true.
+    // This will be implemented in a follow-up OMPLastprivateClause patch, but
+    // result should be still correct without it, as we do not make these
+    // variables private yet.
+  }
+}
+
+void CodeGenFunction::EmitOMPSimdLoop(const OMPLoopDirective &S,
+                                      OMPPrivateScope &LoopScope,
+                                      bool SeparateIter) {
+  auto LoopExit = getJumpDestInCurrentScope("simd.for.end");
+  auto Cnt = getPGORegionCounter(&S);
+
+  // Start the loop with a block that tests the condition.
+  auto CondBlock = createBasicBlock("simd.for.cond");
+  EmitBlock(CondBlock);
+  LoopStack.push(CondBlock);
+
+  // If there are any cleanups between here and the loop-exit scope,
+  // create a block to stage a loop exit along.
+  auto ExitBlock = LoopExit.getBlock();
+  if (LoopScope.requiresCleanups())
+    ExitBlock = createBasicBlock("simd.for.cond.cleanup");
+
+  auto LoopBody = createBasicBlock("simd.for.body");
+
+  // Emit condition: "IV < LastIteration + 1 [ - 1]"
+  // ("- 1" when lastprivate clause is present - separate one iteration).
+  llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond(SeparateIter));
+  Builder.CreateCondBr(BoolCondVal, LoopBody, ExitBlock,
+                       PGO.createLoopWeights(S.getCond(SeparateIter), Cnt));
+
+  if (ExitBlock != LoopExit.getBlock()) {
+    EmitBlock(ExitBlock);
+    EmitBranchThroughCleanup(LoopExit);
+  }
+
+  EmitBlock(LoopBody);
+  Cnt.beginRegion(Builder);
+
+  // Create a block for the increment.
+  auto Continue = getJumpDestInCurrentScope("simd.for.inc");
+  BreakContinueStack.push_back(BreakContinue(LoopExit, Continue));
+
+  EmitOMPSimdBody(S, /* SeparateIter */ false);
+  EmitStopPoint(&S);
+
+  // Emit "IV = IV + 1" and a back-edge to the condition block.
+  EmitBlock(Continue.getBlock());
+  EmitIgnoredExpr(S.getInc());
+  BreakContinueStack.pop_back();
+  EmitBranch(CondBlock);
+  LoopStack.pop();
+  // Emit the fall-through block.
+  EmitBlock(LoopExit.getBlock());
+}
+
+void CodeGenFunction::EmitOMPSimdFinal(const OMPLoopDirective &S) {
+  auto IC = S.counters().begin();
+  for (auto F : S.finals()) {
+    if (LocalDeclMap.lookup(cast<DeclRefExpr>((*IC))->getDecl())) {
+      EmitIgnoredExpr(F);
+    }
+    ++IC;
+  }
+}
+
 static void EmitOMPAlignedClause(CodeGenFunction &CGF, CodeGenModule &CGM,
                                  const OMPAlignedClause &Clause) {
   unsigned ClauseAlignment = 0;
@@ -76,8 +159,23 @@ static void EmitOMPAlignedClause(CodeGenFunction &CGF, CodeGenModule &CGM,
 }
 
 void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
-  const CapturedStmt *CS = cast<CapturedStmt>(S.getAssociatedStmt());
-  const Stmt *Body = CS->getCapturedStmt();
+  // Pragma 'simd' code depends on presence of 'lastprivate'.
+  // If present, we have to separate last iteration of the loop:
+  //
+  // if (LastIteration != 0) {
+  //   for (IV in 0..LastIteration-1) BODY;
+  //   BODY with updates of lastprivate vars;
+  //   <Final counter/linear vars updates>;
+  // }
+  //
+  // otherwise (when there's no lastprivate):
+  //
+  //   for (IV in 0..LastIteration) BODY;
+  //   <Final counter/linear vars updates>;
+  //
+
+  // Walk clauses and process safelen/lastprivate.
+  bool SeparateIter = false;
   LoopStack.setParallel();
   LoopStack.setVectorizerEnable(true);
   for (auto C : S.clauses()) {
@@ -96,12 +194,66 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     case OMPC_aligned:
       EmitOMPAlignedClause(*this, CGM, cast<OMPAlignedClause>(*C));
       break;
+    case OMPC_lastprivate:
+      SeparateIter = true;
+      break;
     default:
       // Not handled yet
       ;
     }
   }
-  EmitStmt(Body);
+
+  RunCleanupsScope DirectiveScope(*this);
+
+  CGDebugInfo *DI = getDebugInfo();
+  if (DI)
+    DI->EmitLexicalBlockStart(Builder, S.getSourceRange().getBegin());
+
+  // Emit the loop iteration variable.
+  const Expr *IVExpr = S.getIterationVariable();
+  const VarDecl *IVDecl = cast<VarDecl>(cast<DeclRefExpr>(IVExpr)->getDecl());
+  EmitVarDecl(*IVDecl);
+  EmitIgnoredExpr(S.getInit());
+
+  // Emit the iterations count variable.
+  // If it is not a variable, Sema decided to calculate iterations count on each
+  // iteration (e.g., it is foldable into a constant).
+  if (auto LIExpr = dyn_cast<DeclRefExpr>(S.getLastIteration())) {
+    EmitVarDecl(*cast<VarDecl>(LIExpr->getDecl()));
+    // Emit calculation of the iterations count.
+    EmitIgnoredExpr(S.getCalcLastIteration());
+  }
+
+  if (SeparateIter) {
+    // Emit: if (LastIteration > 0) - begin.
+    RegionCounter Cnt = getPGORegionCounter(&S);
+    auto ThenBlock = createBasicBlock("simd.if.then");
+    auto ContBlock = createBasicBlock("simd.if.end");
+    EmitBranchOnBoolExpr(S.getPreCond(), ThenBlock, ContBlock, Cnt.getCount());
+    EmitBlock(ThenBlock);
+    Cnt.beginRegion(Builder);
+    // Emit 'then' code.
+    {
+      OMPPrivateScope LoopScope(*this);
+      LoopScope.addPrivates(S.counters());
+      EmitOMPSimdLoop(S, LoopScope, /* SeparateIter */ true);
+      EmitOMPSimdBody(S, /* SeparateIter */ true);
+    }
+    EmitOMPSimdFinal(S);
+    // Emit: if (LastIteration != 0) - end.
+    EmitBranch(ContBlock);
+    EmitBlock(ContBlock, true);
+  } else {
+    {
+      OMPPrivateScope LoopScope(*this);
+      LoopScope.addPrivates(S.counters());
+      EmitOMPSimdLoop(S, LoopScope, /* SeparateIter */ false);
+    }
+    EmitOMPSimdFinal(S);
+  }
+
+  if (DI)
+    DI->EmitLexicalBlockEnd(Builder, S.getSourceRange().getEnd());
 }
 
 void CodeGenFunction::EmitOMPForDirective(const OMPForDirective &) {

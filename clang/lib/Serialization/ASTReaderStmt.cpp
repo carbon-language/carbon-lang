@@ -1968,6 +1968,29 @@ void ASTStmtReader::VisitOMPLoopDirective(OMPLoopDirective *D) {
   // Two fields (NumClauses and CollapsedNum) were read in ReadStmtFromStream.
   Idx += 2;
   VisitOMPExecutableDirective(D);
+  D->setIterationVariable(Reader.ReadSubExpr());
+  D->setLastIteration(Reader.ReadSubExpr());
+  D->setCalcLastIteration(Reader.ReadSubExpr());
+  D->setPreCond(Reader.ReadSubExpr());
+  auto Fst = Reader.ReadSubExpr();
+  auto Snd = Reader.ReadSubExpr();
+  D->setCond(Fst, Snd);
+  D->setInit(Reader.ReadSubExpr());
+  D->setInc(Reader.ReadSubExpr());
+  SmallVector<Expr *, 4> Sub;
+  unsigned CollapsedNum = D->getCollapsedNumber();
+  Sub.reserve(CollapsedNum);
+  for (unsigned i = 0; i < CollapsedNum; ++i)
+    Sub.push_back(Reader.ReadSubExpr());
+  D->setCounters(Sub);
+  Sub.clear();
+  for (unsigned i = 0; i < CollapsedNum; ++i)
+    Sub.push_back(Reader.ReadSubExpr());
+  D->setUpdates(Sub);
+  Sub.clear();
+  for (unsigned i = 0; i < CollapsedNum; ++i)
+    Sub.push_back(Reader.ReadSubExpr());
+  D->setFinals(Sub);
 }
 
 void ASTStmtReader::VisitOMPParallelDirective(OMPParallelDirective *D) {
