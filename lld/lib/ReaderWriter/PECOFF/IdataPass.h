@@ -83,7 +83,7 @@ private:
 
 class ImportTableEntryAtom : public IdataAtom {
 public:
-  ImportTableEntryAtom(Context &ctx, uint32_t contents, StringRef sectionName)
+  ImportTableEntryAtom(Context &ctx, uint64_t contents, StringRef sectionName)
       : IdataAtom(ctx, assembleRawContent(contents, ctx.is64)),
         _sectionName(sectionName) {}
 
@@ -92,7 +92,7 @@ public:
   };
 
 private:
-  std::vector<uint8_t> assembleRawContent(uint32_t contents, bool is64);
+  std::vector<uint8_t> assembleRawContent(uint64_t contents, bool is64);
   StringRef _sectionName;
 };
 

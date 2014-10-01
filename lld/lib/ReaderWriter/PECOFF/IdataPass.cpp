@@ -51,7 +51,7 @@ std::vector<uint8_t> HintNameAtom::assembleRawContent(uint16_t hint,
 }
 
 std::vector<uint8_t>
-ImportTableEntryAtom::assembleRawContent(uint32_t rva, bool is64) {
+ImportTableEntryAtom::assembleRawContent(uint64_t rva, bool is64) {
   // The element size of the import table is 32 bit in PE and 64 bit
   // in PE+. In PE+, bits 62-31 are filled with zero.
   if (is64) {
@@ -99,7 +99,8 @@ std::vector<ImportTableEntryAtom *> ImportDirectoryAtom::createImportTableAtoms(
     ImportTableEntryAtom *entry = nullptr;
     if (atom->importName().empty()) {
       // Import by ordinal
-      uint32_t hint = (1U << 31) | atom->hint();
+      uint64_t hint = atom->hint();
+      hint |= _is64 ? (uint64_t(1) << 63) : (uint64_t(1) << 31);
       entry = new (_alloc) ImportTableEntryAtom(context, hint, sectionName);
     } else {
       // Import by name
