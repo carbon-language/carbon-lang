@@ -32,7 +32,8 @@ void CoverageSourceInfo::SourceRangeSkipped(SourceRange Range) {
 namespace {
 
 /// \brief A region of source code that can be mapped to a counter.
-struct SourceMappingRegion {
+class SourceMappingRegion {
+public:
   enum RegionFlags {
     /// \brief This region won't be emitted if it wasn't extended.
     /// This is useful so that we won't emit source ranges for single tokens
@@ -41,6 +42,7 @@ struct SourceMappingRegion {
     IgnoreIfNotExtended = 0x0001,
   };
 
+private:
   FileID File, MacroArgumentFile;
 
   Counter Count;
@@ -69,6 +71,7 @@ struct SourceMappingRegion {
   SourceLocation LocEnd, AlternativeLocEnd;
   unsigned Flags;
 
+public:
   SourceMappingRegion(FileID File, FileID MacroArgumentFile, Counter Count,
                       const Stmt *UnreachableInitiator, const Stmt *Group,
                       SourceLocation LocStart, SourceLocation LocEnd,
@@ -77,6 +80,18 @@ struct SourceMappingRegion {
         UnreachableInitiator(UnreachableInitiator), Group(Group),
         LocStart(LocStart), LocEnd(LocEnd), AlternativeLocEnd(LocStart),
         Flags(Flags) {}
+
+  const FileID &getFile() const { return File; }
+
+  const Counter &getCounter() const { return Count; }
+
+  const SourceLocation &getStartLoc() const { return LocStart; }
+
+  const SourceLocation &getEndLoc(const SourceManager &SM) const {
+    if (SM.getFileID(LocEnd) != File)
+      return AlternativeLocEnd;
+    return LocEnd;
+  }
 
   bool hasFlag(RegionFlags Flag) const { return (Flags & Flag) != 0; }
 
@@ -89,6 +104,14 @@ struct SourceMappingRegion {
     return File == R.File && MacroArgumentFile == R.MacroArgumentFile &&
            Count == R.Count && UnreachableInitiator == R.UnreachableInitiator &&
            Group == R.Group;
+  }
+
+  bool isMergeable(FileID File, FileID MacroArgumentFile, Counter Count,
+                   const Stmt *UnreachableInitiator, const Stmt *Group) {
+    return this->File == File && this->MacroArgumentFile == MacroArgumentFile &&
+           this->Count == Count &&
+           this->UnreachableInitiator == UnreachableInitiator &&
+           this->Group == Group;
   }
 
   /// \brief Merge two regions by extending the 'this' region to cover the
@@ -312,10 +335,8 @@ public:
                               const Stmt *SourceGroup) {
     for (size_t I = SourceRegions.size(); I != 0;) {
       --I;
-      if (SourceRegions[I].Count == Count && SourceRegions[I].File == File &&
-          SourceRegions[I].MacroArgumentFile == MacroArgumentFile &&
-          SourceRegions[I].UnreachableInitiator == UnreachableInitiator &&
-          SourceRegions[I].Group == SourceGroup) {
+      if (SourceRegions[I].isMergeable(File, MacroArgumentFile, Count,
+                                       UnreachableInitiator, SourceGroup)) {
         if (I != SourceRegions.size() - 1)
           std::swap(SourceRegions[I], SourceRegions.back());
         return;
@@ -379,10 +400,8 @@ public:
   /// source regions.
   void emitSourceRegions() {
     for (const auto &R : SourceRegions) {
-      SourceLocation LocStart = R.LocStart;
-      SourceLocation LocEnd = R.LocEnd;
-      if (SM.getFileID(LocEnd) != R.File)
-        LocEnd = R.AlternativeLocEnd;
+      SourceLocation LocStart = R.getStartLoc();
+      SourceLocation LocEnd = R.getEndLoc(SM);
 
       if (R.hasFlag(SourceMappingRegion::IgnoreIfNotExtended) &&
           LocStart == LocEnd)
@@ -394,14 +413,14 @@ public:
       unsigned LineEnd = SM.getSpellingLineNumber(LocEnd);
       unsigned ColumnEnd = SM.getSpellingColumnNumber(LocEnd);
 
-      auto SpellingFile = SM.getDecomposedSpellingLoc(R.LocStart).first;
+      auto SpellingFile = SM.getDecomposedSpellingLoc(LocStart).first;
       unsigned CovFileID;
-      if (getCoverageFileID(R.LocStart, R.File, SpellingFile, CovFileID))
+      if (getCoverageFileID(LocStart, R.getFile(), SpellingFile, CovFileID))
         continue;
 
       assert(LineStart <= LineEnd);
       MappingRegions.push_back(CounterMappingRegion(
-          R.Count, CovFileID, LineStart, ColumnStart, LineEnd, ColumnEnd,
+          R.getCounter(), CovFileID, LineStart, ColumnStart, LineEnd, ColumnEnd,
           false, CounterMappingRegion::CodeRegion));
     }
   }
