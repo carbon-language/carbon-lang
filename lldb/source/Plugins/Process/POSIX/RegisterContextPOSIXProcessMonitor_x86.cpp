@@ -14,7 +14,7 @@
 #include "RegisterContextPOSIXProcessMonitor_x86.h"
 #if defined(__FreeBSD__)
 #include "Plugins/Process/FreeBSD/ProcessMonitor.h"
-#elif defined(__linux__)
+#else
 #include "Plugins/Process/Linux/ProcessMonitor.h"
 #endif
 
