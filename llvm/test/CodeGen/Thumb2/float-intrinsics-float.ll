@@ -1,7 +1,9 @@
-; RUN: llc < %s -mtriple=thumbv7-none-eabi   -mcpu=cortex-m3 | FileCheck %s -check-prefix=CHECK -check-prefix=SOFT -check-prefix=NONE
-; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-m4 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=SP
-; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-m7 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP -check-prefix=VFP
-; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-a7 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP -check-prefix=NEON
+; RUN: llc < %s -mtriple=thumbv7-none-eabi   -mcpu=cortex-m3                    | FileCheck %s -check-prefix=CHECK -check-prefix=SOFT -check-prefix=NONE
+; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-m4                    | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=SP -check-prefix=VMLA
+; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-m7                    | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP -check-prefix=VFP  -check-prefix=FP-ARMv8  -check-prefix=VMLA
+; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-m7 -mattr=+fp-only-sp | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=SP -check-prefix=FP-ARMv8 -check-prefix=VMLA
+; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-a7                    | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP -check-prefix=NEON -check-prefix=VFP4 -check-prefix=NO-VMLA
+; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-a57                   | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP -check-prefix=NEON -check-prefix=FP-ARMv8 -check-prefix=VMLA
 
 declare float     @llvm.sqrt.f32(float %Val)
 define float @sqrt_f(float %a) {
@@ -130,7 +132,8 @@ declare float     @llvm.floor.f32(float %Val)
 define float @floor_f(float %a) {
 ; CHECK-LABEL: floor_f:
 ; SOFT: bl floorf
-; HARD: b floorf
+; VFP4: b floorf
+; FP-ARMv8: vrintm.f32
   %1 = call float @llvm.floor.f32(float %a)
   ret float %1
 }
@@ -139,7 +142,8 @@ declare float     @llvm.ceil.f32(float %Val)
 define float @ceil_f(float %a) {
 ; CHECK-LABEL: ceil_f:
 ; SOFT: bl ceilf
-; HARD: b ceilf
+; VFP4: b ceilf
+; FP-ARMv8: vrintp.f32
   %1 = call float @llvm.ceil.f32(float %a)
   ret float %1
 }
@@ -148,7 +152,8 @@ declare float     @llvm.trunc.f32(float %Val)
 define float @trunc_f(float %a) {
 ; CHECK-LABEL: trunc_f:
 ; SOFT: bl truncf
-; HARD: b truncf
+; VFP4: b truncf
+; FP-ARMv8: vrintz.f32
   %1 = call float @llvm.trunc.f32(float %a)
   ret float %1
 }
@@ -157,7 +162,8 @@ declare float     @llvm.rint.f32(float %Val)
 define float @rint_f(float %a) {
 ; CHECK-LABEL: rint_f:
 ; SOFT: bl rintf
-; HARD: b rintf
+; VFP4: b rintf
+; FP-ARMv8: vrintx.f32
   %1 = call float @llvm.rint.f32(float %a)
   ret float %1
 }
@@ -166,7 +172,8 @@ declare float     @llvm.nearbyint.f32(float %Val)
 define float @nearbyint_f(float %a) {
 ; CHECK-LABEL: nearbyint_f:
 ; SOFT: bl nearbyintf
-; HARD: b nearbyintf
+; VFP4: b nearbyintf
+; FP-ARMv8: vrintr.f32
   %1 = call float @llvm.nearbyint.f32(float %a)
   ret float %1
 }
@@ -175,7 +182,8 @@ declare float     @llvm.round.f32(float %Val)
 define float @round_f(float %a) {
 ; CHECK-LABEL: round_f:
 ; SOFT: bl roundf
-; HARD: b roundf
+; VFP4: b roundf
+; FP-ARMv8: vrinta.f32
   %1 = call float @llvm.round.f32(float %a)
   ret float %1
 }
@@ -187,10 +195,9 @@ define float @fmuladd_f(float %a, float %b, float %c) {
 ; CHECK-LABEL: fmuladd_f:
 ; SOFT: bl __aeabi_fmul
 ; SOFT: bl __aeabi_fadd
-; SP: vmla.f32
-; VFP: vmla.f32
-; NEON: vmul.f32
-; NEON: vadd.f32
+; VMLA: vmla.f32
+; NO-VMLA: vmul.f32
+; NO-VMLA: vadd.f32
   %1 = call float @llvm.fmuladd.f32(float %a, float %b, float %c)
   ret float %1
 }
@@ -199,7 +206,7 @@ declare i16 @llvm.convert.to.fp16.f32(float %a)
 define i16 @f_to_h(float %a) {
 ; CHECK-LABEL: f_to_h:
 ; SOFT: bl __gnu_f2h_ieee
-; HARD: vcvtb.f16.f32
+; HARD: vcvt{{[bt]}}.f16.f32
   %1 = call i16 @llvm.convert.to.fp16.f32(float %a)
   ret i16 %1
 }
@@ -208,7 +215,7 @@ declare float @llvm.convert.from.fp16.f32(i16 %a)
 define float @h_to_f(i16 %a) {
 ; CHECK-LABEL: h_to_f:
 ; SOFT: bl __gnu_h2f_ieee
-; HARD: vcvtb.f32.f16
+; HARD: vcvt{{[bt]}}.f32.f16
   %1 = call float @llvm.convert.from.fp16.f32(i16 %a)
   ret float %1
 }
