@@ -639,6 +639,7 @@
 		8CCB018219BA4E270009FD44 /* SBThreadCollection.h in Headers */ = {isa = PBXBuildFile; fileRef = 8CCB018119BA4E210009FD44 /* SBThreadCollection.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8CCB018319BA51BF0009FD44 /* SBThreadCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CCB017F19BA4DD00009FD44 /* SBThreadCollection.cpp */; };
 		94094C6B163B6F840083A547 /* ValueObjectCast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94094C69163B6CD90083A547 /* ValueObjectCast.cpp */; };
+		940B02F619DC96E700AD0F52 /* SBExecutionContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940B02F519DC96E700AD0F52 /* SBExecutionContext.cpp */; };
 		94145431175E63B500284436 /* lldb-versioning.h in Headers */ = {isa = PBXBuildFile; fileRef = 94145430175D7FDE00284436 /* lldb-versioning.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		941BCC7F14E48C4000BB969C /* SBTypeFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568614E355F2003A195C /* SBTypeFilter.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		941BCC8014E48C4000BB969C /* SBTypeFormat.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568714E355F2003A195C /* SBTypeFormat.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -1970,6 +1971,9 @@
 		94031A9F13CF5B3D00DCFF3C /* PriorityPointerPair.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PriorityPointerPair.h; path = include/lldb/Utility/PriorityPointerPair.h; sourceTree = "<group>"; };
 		94094C68163B6CCC0083A547 /* ValueObjectCast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectCast.h; path = include/lldb/Core/ValueObjectCast.h; sourceTree = "<group>"; };
 		94094C69163B6CD90083A547 /* ValueObjectCast.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectCast.cpp; path = source/Core/ValueObjectCast.cpp; sourceTree = "<group>"; };
+		940B02F419DC96CB00AD0F52 /* SBExecutionContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBExecutionContext.h; path = include/lldb/API/SBExecutionContext.h; sourceTree = "<group>"; };
+		940B02F519DC96E700AD0F52 /* SBExecutionContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBExecutionContext.cpp; path = source/API/SBExecutionContext.cpp; sourceTree = "<group>"; };
+		940B02F719DC970900AD0F52 /* SBExecutionContext.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBExecutionContext.i; sourceTree = "<group>"; };
 		94145430175D7FDE00284436 /* lldb-versioning.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-versioning.h"; path = "include/lldb/lldb-versioning.h"; sourceTree = "<group>"; };
 		94380B8019940B0300BFE4A8 /* StringLexer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = StringLexer.h; path = include/lldb/Utility/StringLexer.h; sourceTree = "<group>"; };
 		94380B8119940B0A00BFE4A8 /* StringLexer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringLexer.cpp; path = source/Utility/StringLexer.cpp; sourceTree = "<group>"; };
@@ -2653,6 +2657,7 @@
 				9452573616262CD000325455 /* SBDeclaration.i */,
 				2611FEFA142D83060017FEA3 /* SBError.i */,
 				2611FEFB142D83060017FEA3 /* SBEvent.i */,
+				940B02F719DC970900AD0F52 /* SBExecutionContext.i */,
 				2611FEFC142D83060017FEA3 /* SBFileSpec.i */,
 				2611FEFD142D83060017FEA3 /* SBFileSpecList.i */,
 				2611FEFE142D83060017FEA3 /* SBFrame.i */,
@@ -2744,6 +2749,8 @@
 				2682F284115EF3A700CCFF99 /* SBError.cpp */,
 				9A9830FE1125FC5800A56CB0 /* SBEvent.h */,
 				9A9830FD1125FC5800A56CB0 /* SBEvent.cpp */,
+				940B02F419DC96CB00AD0F52 /* SBExecutionContext.h */,
+				940B02F519DC96E700AD0F52 /* SBExecutionContext.cpp */,
 				4CE4F672162C971A00F75CB3 /* SBExpressionOptions.h */,
 				4CE4F674162C973F00F75CB3 /* SBExpressionOptions.cpp */,
 				26022531115F27FA00A601A2 /* SBFileSpec.h */,
@@ -4876,6 +4883,7 @@
 				9461569B14E358A6003A195C /* SBTypeFormat.cpp in Sources */,
 				262F12B51835468600AEB384 /* SBPlatform.cpp in Sources */,
 				9461569C14E358A6003A195C /* SBTypeSummary.cpp in Sources */,
+				940B02F619DC96E700AD0F52 /* SBExecutionContext.cpp in Sources */,
 				9461569D14E358A6003A195C /* SBTypeSynthetic.cpp in Sources */,
 				26680324116005D9008E1FE4 /* SBThread.cpp in Sources */,
 				26680326116005DB008E1FE4 /* SBTarget.cpp in Sources */,

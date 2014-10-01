@@ -206,6 +206,7 @@ public:
 protected:
 
     friend class SBBlock;
+    friend class SBExecutionContext;
     friend class SBInstruction;
     friend class SBThread;
     friend class SBValue;

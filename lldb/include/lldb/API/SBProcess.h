@@ -326,6 +326,7 @@ protected:
     friend class SBBreakpointLocation;
     friend class SBCommandInterpreter;
     friend class SBDebugger;
+    friend class SBExecutionContext;
     friend class SBFunction;
     friend class SBModule;
     friend class SBTarget;

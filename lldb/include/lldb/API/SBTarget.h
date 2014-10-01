@@ -933,6 +933,7 @@ protected:
     friend class SBAddress;
     friend class SBBlock;
     friend class SBDebugger;
+    friend class SBExecutionContext;
     friend class SBFunction;
     friend class SBInstruction;
     friend class SBModule;
