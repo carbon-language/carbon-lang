@@ -63,6 +63,25 @@
 // CHECK-FP4-SP-D16: "-target-feature" "+fp-only-sp"
 // CHECK-FP4-SP-D16: "-target-feature" "-neon"
 
+// RUN: %clang -target arm-linux-eabi -mfpu=fp5-sp-d16 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-FP5-SP-D16 %s
+// RUN: %clang -target arm-linux-eabi -mfpu=fpv5-sp-d16 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-FP5-SP-D16 %s
+// CHECK-FP5-SP-D16: "-target-feature" "+fp-armv8"
+// CHECK-FP5-SP-D16: "-target-feature" "+fp-only-sp"
+// CHECK-FP5-SP-D16: "-target-feature" "+d16"
+// CHECK-FP5-SP-D16: "-target-feature" "-neon"
+// CHECK-FP5-SP-D16: "-target-feature" "-crypto"
+
+// RUN: %clang -target arm-linux-eabi -mfpu=fp5-dp-d16 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-FP5-DP-D16 %s
+// RUN: %clang -target arm-linux-eabi -mfpu=fpv5-dp-d16 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-FP5-DP-D16 %s
+// CHECK-FP5-DP-D16: "-target-feature" "+fp-armv8"
+// CHECK-FP5-DP-D16: "-target-feature" "+d16"
+// CHECK-FP5-DP-D16: "-target-feature" "-neon"
+// CHECK-FP5-DP-D16: "-target-feature" "-crypto"
+
 // RUN: %clang -target arm-linux-eabi -mfpu=neon %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NEON %s
 // CHECK-NEON: "-target-feature" "+neon"

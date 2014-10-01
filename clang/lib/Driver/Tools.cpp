@@ -544,6 +544,18 @@ static void getARMFPUFeatures(const Driver &D, const Arg *A,
     Features.push_back("+d16");
     Features.push_back("+fp-only-sp");
     Features.push_back("-neon");
+  } else if (FPU == "fp5-sp-d16" || FPU == "fpv5-sp-d16") {
+    Features.push_back("+fp-armv8");
+    Features.push_back("+fp-only-sp");
+    Features.push_back("+d16");
+    Features.push_back("-neon");
+    Features.push_back("-crypto");
+  } else if (FPU == "fp5-dp-d16" || FPU == "fpv5-dp-d16" ||
+             FPU == "fp5-d16" || FPU == "fpv5-d16") {
+    Features.push_back("+fp-armv8");
+    Features.push_back("+d16");
+    Features.push_back("-neon");
+    Features.push_back("-crypto");
   } else if (FPU == "fp-armv8") {
     Features.push_back("+fp-armv8");
     Features.push_back("-neon");
@@ -5340,7 +5352,7 @@ const char *arm::getLLVMArchSuffixForARM(StringRef CPU) {
     .Cases("cortex-r4", "cortex-r5", "v7r")
     .Case("cortex-m0", "v6m")
     .Case("cortex-m3", "v7m")
-    .Case("cortex-m4", "v7em")
+    .Cases("cortex-m4", "cortex-m7", "v7em")
     .Case("swift", "v7s")
     .Case("cyclone", "v8")
     .Cases("cortex-a53", "cortex-a57", "v8")

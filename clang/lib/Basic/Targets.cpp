@@ -3917,7 +3917,7 @@ public:
                ArchName == "thumbebv8a" || ArchName == "thumbebv8") {
       Features["hwdiv"] = true;
       Features["hwdiv-arm"] = true;
-    } else if (CPU == "cortex-m3" || CPU == "cortex-m4") {
+    } else if (CPU == "cortex-m3" || CPU == "cortex-m4" || CPU == "cortex-m7") {
       Features["hwdiv"] = true;
     }
   }
@@ -4017,7 +4017,7 @@ public:
       .Case("swift", "7S")
       .Case("cyclone", "8A")
       .Case("cortex-m3", "7M")
-      .Case("cortex-m4", "7EM")
+      .Cases("cortex-m4", "cortex-m7", "7EM")
       .Case("cortex-m0", "6M")
       .Cases("cortex-a53", "cortex-a57", "8A")
       .Default(nullptr);
@@ -4027,7 +4027,7 @@ public:
       .Cases("cortex-a5", "cortex-a7", "cortex-a8", "A")
       .Cases("cortex-a9", "cortex-a12", "cortex-a15", "krait", "A")
       .Cases("cortex-a53", "cortex-a57", "A")
-      .Cases("cortex-m3", "cortex-m4", "cortex-m0", "M")
+      .Cases("cortex-m3", "cortex-m4", "cortex-m0", "cortex-m7", "M")
       .Cases("cortex-r4", "cortex-r5", "R")
       .Default("");
   }
