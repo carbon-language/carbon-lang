@@ -8214,6 +8214,13 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 4 && "Unexpected mask size for v4 shuffle!");
 
+  // Whenever we can lower this as a zext, that instruction is strictly faster
+  // than any alternative. It also allows us to fold memory operansd into the
+  // shuffle in many cases.
+  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(DL, MVT::v4i32, V1, V2,
+                                                         Mask, Subtarget, DAG))
+    return ZExt;
+
   int NumV2Elements =
       std::count_if(Mask.begin(), Mask.end(), [](int M) { return M >= 4; });
 
@@ -8238,12 +8245,6 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return DAG.getNode(X86ISD::PSHUFD, DL, MVT::v4i32, V1,
                        getV4X86ShuffleImm8ForMask(Mask, DAG));
   }
-
-  // Whenever we can lower this as a zext, that instruction is strictly faster
-  // than any alternative.
-  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(DL, MVT::v4i32, V1, V2,
-                                                         Mask, Subtarget, DAG))
-    return ZExt;
 
   // Use dedicated unpack instructions for masks that match their pattern.
   if (isShuffleEquivalent(Mask, 0, 4, 1, 5))
