@@ -31,27 +31,27 @@ namespace lldb_private
         // Protocols.
 
 
-        // Callback definitions.
-        typedef std::function<void (lldb::tid_t tid)> ThreadIDFunc;
-        typedef std::function<void (const char *format, va_list args)> LogFunc;
+        // Callback/block definitions.
+        typedef std::function<void (lldb::tid_t tid)> ThreadIDFunction;
+        typedef std::function<void (const char *format, va_list args)> LogFunction;
 
         // constructors
-        ThreadStateCoordinator (const LogFunc &log_func);
+        ThreadStateCoordinator (const LogFunction &log_function);
 
         // The main purpose of the class: triggering an action after
         // a given set of threads stop.
         void
         CallAfterThreadsStop (lldb::tid_t triggering_tid,
                               const ThreadIDSet &wait_for_stop_tids,
-                              const ThreadIDFunc &request_thread_stop_func,
-                              const ThreadIDFunc &call_after_func);
+                              const ThreadIDFunction &request_thread_stop_function,
+                              const ThreadIDFunction &call_after_function);
 
         // Notifications called when various state changes occur.
         void
         NotifyThreadStop (lldb::tid_t tid);
 
         void
-        RequestThreadResume (lldb::tid_t tid, const ThreadIDFunc &request_thread_resume_func);
+        RequestThreadResume (lldb::tid_t tid, const ThreadIDFunction &request_thread_resume_func);
 
         void
         NotifyThreadCreate (lldb::tid_t tid);
@@ -129,7 +129,7 @@ namespace lldb_private
         GetPendingThreadStopNotification ();
 
         // Member variables.
-        LogFunc m_log_func;
+        LogFunction m_log_function;
 
         QueueType m_event_queue;
         // For now we do simple read/write lock strategy with efficient wait-for-data.

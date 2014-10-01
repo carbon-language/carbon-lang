@@ -63,14 +63,14 @@ class ThreadStateCoordinator::EventCallAfterThreadsStop : public ThreadStateCoor
 public:
     EventCallAfterThreadsStop (lldb::tid_t triggering_tid,
                                const ThreadIDSet &wait_for_stop_tids,
-                               const ThreadIDFunc &request_thread_stop_func,
-                               const ThreadIDFunc &call_after_func):
+                               const ThreadIDFunction &request_thread_stop_function,
+                               const ThreadIDFunction &call_after_function):
     EventBase (),
     m_triggering_tid (triggering_tid),
     m_wait_for_stop_tids (wait_for_stop_tids),
     m_original_wait_for_stop_tids (wait_for_stop_tids),
-    m_request_thread_stop_func (request_thread_stop_func),
-    m_call_after_func (call_after_func)
+    m_request_thread_stop_function (request_thread_stop_function),
+    m_call_after_function (call_after_function)
     {
     }
 
@@ -113,7 +113,7 @@ public:
             auto find_it = coordinator.m_tid_stop_map.find (tid);
             if ((find_it == coordinator.m_tid_stop_map.end ()) || !find_it->second)
             {
-                m_request_thread_stop_func (tid);
+                m_request_thread_stop_function (tid);
                 sent_tids.insert (tid);
             }
         }
@@ -168,7 +168,7 @@ public:
 
         // If it was really added, send the stop request to it.
         if (insert_result.second)
-            m_request_thread_stop_func (tid);
+            m_request_thread_stop_function (tid);
     }
 
 private:
@@ -176,14 +176,14 @@ private:
     void
     NotifyNow ()
     {
-        m_call_after_func (m_triggering_tid);
+        m_call_after_function (m_triggering_tid);
     }
 
     const lldb::tid_t m_triggering_tid;
     ThreadIDSet m_wait_for_stop_tids;
     const ThreadIDSet m_original_wait_for_stop_tids;
-    ThreadIDFunc m_request_thread_stop_func;
-    ThreadIDFunc m_call_after_func;
+    ThreadIDFunction m_request_thread_stop_function;
+    ThreadIDFunction m_call_after_function;
 };
 
 //===----------------------------------------------------------------------===//
@@ -278,10 +278,10 @@ private:
 class ThreadStateCoordinator::EventRequestResume : public ThreadStateCoordinator::EventBase
 {
 public:
-    EventRequestResume (lldb::tid_t tid, const ThreadIDFunc &request_thread_resume_func):
+    EventRequestResume (lldb::tid_t tid, const ThreadIDFunction &request_thread_resume_function):
     EventBase (),
     m_tid (tid),
-    m_request_thread_resume_func (request_thread_resume_func)
+    m_request_thread_resume_function (request_thread_resume_function)
     {
     }
 
@@ -331,7 +331,7 @@ public:
 
         // Request a resume.  We expect this to be synchronous and the system
         // to reflect it is running after this completes.
-        m_request_thread_resume_func (m_tid);
+        m_request_thread_resume_function (m_tid);
 
         return true;
     }
@@ -339,13 +339,13 @@ public:
 private:
 
     const lldb::tid_t m_tid;
-    ThreadIDFunc m_request_thread_resume_func;
+    ThreadIDFunction m_request_thread_resume_function;
 };
 
 //===----------------------------------------------------------------------===//
 
-ThreadStateCoordinator::ThreadStateCoordinator (const LogFunc &log_func) :
-    m_log_func (log_func),
+ThreadStateCoordinator::ThreadStateCoordinator (const LogFunction &log_function) :
+    m_log_function (log_function),
     m_event_queue (),
     m_queue_condition (),
     m_queue_mutex (),
@@ -402,13 +402,13 @@ ThreadStateCoordinator::SetPendingNotification (const EventBaseSP &event_sp)
 void
 ThreadStateCoordinator::CallAfterThreadsStop (const lldb::tid_t triggering_tid,
                                               const ThreadIDSet &wait_for_stop_tids,
-                                              const ThreadIDFunc &request_thread_stop_func,
-                                              const ThreadIDFunc &call_after_func)
+                                              const ThreadIDFunction &request_thread_stop_function,
+                                              const ThreadIDFunction &call_after_function)
 {
     EnqueueEvent (EventBaseSP (new EventCallAfterThreadsStop (triggering_tid,
                                                               wait_for_stop_tids,
-                                                              request_thread_stop_func,
-                                                              call_after_func)));
+                                                              request_thread_stop_function,
+                                                              call_after_function)));
 }
 
 void
@@ -486,7 +486,7 @@ ThreadStateCoordinator::Log (const char *format, ...)
     va_list args;
     va_start (args, format);
 
-    m_log_func (format, args);
+    m_log_function (format, args);
 
     va_end (args);
 }
@@ -498,9 +498,9 @@ ThreadStateCoordinator::NotifyThreadStop (lldb::tid_t tid)
 }
 
 void
-ThreadStateCoordinator::RequestThreadResume (lldb::tid_t tid, const ThreadIDFunc &request_thread_resume_func)
+ThreadStateCoordinator::RequestThreadResume (lldb::tid_t tid, const ThreadIDFunction &request_thread_resume_function)
 {
-    EnqueueEvent (EventBaseSP (new EventRequestResume (tid, request_thread_resume_func)));
+    EnqueueEvent (EventBaseSP (new EventRequestResume (tid, request_thread_resume_function)));
 }
 
 void
