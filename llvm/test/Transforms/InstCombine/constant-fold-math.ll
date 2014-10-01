@@ -7,6 +7,7 @@ declare <4 x float> @llvm.fma.v4f32(<4 x float>, <4 x float>, <4 x float>) #0
 declare double @llvm.fma.f64(double, double, double) #0
 declare double @llvm.fmuladd.f64(double, double, double) #0
 
+declare double @llvm.sqrt.f64(double) #0
 
 
 ; CHECK-LABEL: @constant_fold_fma_f32
@@ -41,6 +42,14 @@ define double @constant_fold_fma_f64() #0 {
 ; CHECK-NEXT: ret double 6.000000e+00
 define double @constant_fold_fmuladd_f64() #0 {
   %x = call double @llvm.fmuladd.f64(double 1.0, double 2.0, double 4.0) #0
+  ret double %x
+}
+
+; The sqrt intrinsic is undefined for negative inputs besides -0.0.
+; CHECK-LABEL: @bad_sqrt
+; CHECK-NEXT: ret double undef
+define double @bad_sqrt() {
+  %x = call double @llvm.sqrt.f64(double -2.000000e+00)
   ret double %x
 }
 

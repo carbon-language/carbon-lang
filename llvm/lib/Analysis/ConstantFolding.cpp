@@ -1520,8 +1520,14 @@ static Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID,
                  (Ty->isHalfTy() || Ty->isFloatTy() || Ty->isDoubleTy())) {
           if (V >= -0.0)
             return ConstantFoldFP(sqrt, V, Ty);
-          else // Undefined
-            return Constant::getNullValue(Ty);
+          else {
+            // Unlike the sqrt definitions in C/C++, POSIX, and IEEE-754 - which
+            // all guarantee or favor returning NaN - the square root of a
+            // negative number is not defined for the LLVM sqrt intrinsic.
+            // This is because the intrinsic should only be emitted in place of
+            // libm's sqrt function when using "no-nans-fp-math".
+            return UndefValue::get(Ty);
+          }
         }
         break;
       case 's':
