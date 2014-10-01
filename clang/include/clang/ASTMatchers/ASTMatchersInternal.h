@@ -367,7 +367,10 @@ public:
   Matcher(const Matcher<From> &Other,
           typename std::enable_if<std::is_base_of<From, T>::value &&
                                   !std::is_same<From, T>::value>::type * = 0)
-      : Matcher(Other.Implementation) {}
+      : Implementation(restrictMatcher(Other.Implementation)) {
+    assert(Implementation.getSupportedKind().isSame(
+        ast_type_traits::ASTNodeKind::getFromNodeKind<T>()));
+  }
 
   /// \brief Implicitly converts \c Matcher<Type> to \c Matcher<QualType>.
   ///
@@ -432,9 +435,12 @@ public:
 private:
   template <typename U> friend class Matcher;
 
+  static DynTypedMatcher restrictMatcher(const DynTypedMatcher &Other) {
+    return Other.dynCastTo(ast_type_traits::ASTNodeKind::getFromNodeKind<T>());
+  }
+
   explicit Matcher(const DynTypedMatcher &Implementation)
-      : Implementation(Implementation.dynCastTo(
-            ast_type_traits::ASTNodeKind::getFromNodeKind<T>())) {
+      : Implementation(restrictMatcher(Implementation)) {
     assert(this->Implementation.getSupportedKind()
                .isSame(ast_type_traits::ASTNodeKind::getFromNodeKind<T>()));
   }
