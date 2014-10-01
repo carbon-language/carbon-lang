@@ -180,7 +180,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseSetMips0Directive();
   bool parseSetArchDirective();
   bool parseSetFeature(uint64_t Feature);
-  bool parseDirectiveCPLoad(SMLoc Loc);
+  bool parseDirectiveCpLoad(SMLoc Loc);
   bool parseDirectiveCPSetup();
   bool parseDirectiveNaN();
   bool parseDirectiveSet();
@@ -2888,7 +2888,7 @@ bool MipsAsmParser::eatComma(StringRef ErrorStr) {
   return true;
 }
 
-bool MipsAsmParser::parseDirectiveCPLoad(SMLoc Loc) {
+bool MipsAsmParser::parseDirectiveCpLoad(SMLoc Loc) {
   if (AssemblerOptions.back()->isReorder())
     Warning(Loc, ".cpload in reorder section");
 
@@ -2907,7 +2907,7 @@ bool MipsAsmParser::parseDirectiveCPLoad(SMLoc Loc) {
     return false;
   }
 
-  getTargetStreamer().emitDirectiveCpload(RegOpnd.getGPR32Reg());
+  getTargetStreamer().emitDirectiveCpLoad(RegOpnd.getGPR32Reg());
   return false;
 }
 
@@ -3298,7 +3298,7 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   StringRef IDVal = DirectiveID.getString();
 
   if (IDVal == ".cpload")
-    return parseDirectiveCPLoad(DirectiveID.getLoc());
+    return parseDirectiveCpLoad(DirectiveID.getLoc());
   if (IDVal == ".dword") {
     parseDataDirective(8, DirectiveID.getLoc());
     return false;

@@ -75,7 +75,7 @@ void MipsTargetStreamer::emitDirectiveSetPop() {}
 void MipsTargetStreamer::emitDirectiveSetPush() {}
 void MipsTargetStreamer::emitDirectiveSetDsp() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetNoDsp() { forbidModuleDirective(); }
-void MipsTargetStreamer::emitDirectiveCpload(unsigned RegNo) {}
+void MipsTargetStreamer::emitDirectiveCpLoad(unsigned RegNo) {}
 void MipsTargetStreamer::emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                                               const MCSymbol &Sym, bool IsReg) {
 }
@@ -278,7 +278,7 @@ void MipsTargetAsmStreamer::emitFMask(unsigned FPUBitmask,
   OS << "," << FPUTopSavedRegOff << '\n';
 }
 
-void MipsTargetAsmStreamer::emitDirectiveCpload(unsigned RegNo) {
+void MipsTargetAsmStreamer::emitDirectiveCpLoad(unsigned RegNo) {
   OS << "\t.cpload\t$"
      << StringRef(MipsInstPrinter::getRegisterName(RegNo)).lower() << "\n";
   forbidModuleDirective();
@@ -597,7 +597,7 @@ void MipsTargetELFStreamer::emitFMask(unsigned FPUBitmask,
   FPROffset = FPUTopSavedRegOff;
 }
 
-void MipsTargetELFStreamer::emitDirectiveCpload(unsigned RegNo) {
+void MipsTargetELFStreamer::emitDirectiveCpLoad(unsigned RegNo) {
   // .cpload $reg
   // This directive expands to:
   // lui   $gp, %hi(_gp_disp)
