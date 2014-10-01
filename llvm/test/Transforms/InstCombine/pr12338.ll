@@ -2,11 +2,11 @@
 
 define void @entry() nounwind {
 entry:
+; CHECK: br label %for.cond
   br label %for.cond
 
 for.cond:
   %local = phi <1 x i32> [ <i32 0>, %entry ], [ %phi2, %cond.end47 ]
-; CHECK: sub <1 x i32> <i32 92>, %local
   %phi3 = sub <1 x i32> zeroinitializer, %local
   br label %cond.end
 
