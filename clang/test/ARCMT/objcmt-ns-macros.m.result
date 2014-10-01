@@ -31,7 +31,7 @@ typedef NS_ENUM(NSInteger, UIViewAnimationTransition) {
     UIViewAnimationTransitionFlipFromRight,
     UIViewAnimationTransitionCurlUp,
     UIViewAnimationTransitionCurlDown,
-} ;
+};
 
 typedef NS_OPTIONS(NSUInteger, UITableView) {
     UIViewOne   = 0,
@@ -41,7 +41,7 @@ typedef NS_OPTIONS(NSUInteger, UITableView) {
     UIViewFive  = 1 << 3,
     UIViewSix   = 1 << 4,
     UIViewSeven = 1 << 5
-} ;
+};
 
 typedef NS_OPTIONS(NSUInteger, UI) {
   UIOne = 0,
@@ -55,7 +55,7 @@ typedef NS_OPTIONS(NSUInteger, UIPOWER2) {
   UIP2Two = 0x1,
   UIP2three = 0x8,
   UIP2Four = 0x100
-} ;
+};
 
 enum {
   UNOne,
@@ -73,7 +73,7 @@ typedef NS_ENUM(NSInteger, NSTickMarkPosition)  {
     NSTickMarkAbove = 1,
     NSTickMarkLeft = NSTickMarkAbove,
     NSTickMarkRight = NSTickMarkBelow
-} ;
+};
 
 typedef NS_OPTIONS(NSUInteger, UITableStyle) {
     UIViewNone         = 0x0,
@@ -144,7 +144,7 @@ typedef NS_ENUM(NSInteger, UIP) {
   UIP0Three = 2,
   UIP0Four = 10,
   UIP0Last = 0x100
-} ;
+};
 
 typedef NS_OPTIONS(NSUInteger, UIP_3) {
   UIPZero = 0x0,
@@ -152,7 +152,7 @@ typedef NS_OPTIONS(NSUInteger, UIP_3) {
   UIPTwo = 0x2,
   UIP10 = 0x10,
   UIPHundred = 0x100
-} ;
+};
 
 typedef NS_ENUM(NSInteger, UIP4_3) {
   UIP4Zero = 0x0,
@@ -160,14 +160,14 @@ typedef NS_ENUM(NSInteger, UIP4_3) {
   UIP4Two = 0x2,
   UIP410 = 0x10,
   UIP4Hundred = 100
-} ;
+};
 
 typedef NS_OPTIONS(NSUInteger, UIP5_3) {
   UIP5Zero = 0x0,
   UIP5Two = 0x2,
   UIP510 = 0x3,
   UIP5Hundred = 0x4
-} ;
+};
 
 typedef NS_ENUM(NSInteger, UIP6_3) {
   UIP6Zero = 0x0,
@@ -175,7 +175,7 @@ typedef NS_ENUM(NSInteger, UIP6_3) {
   UIP6Two = 0x2,
   UIP610 = 10,
   UIP6Hundred = 0x100
-} ;
+};
 
 typedef NS_ENUM(NSInteger, UIP7_3) {
   UIP7Zero = 0x0,
@@ -183,7 +183,7 @@ typedef NS_ENUM(NSInteger, UIP7_3) {
   UIP7Two = 0x2,
   UIP710 = 10,
   UIP7Hundred = 100
-} ;
+};
 
 
 typedef NS_ENUM(NSInteger, UIP8_3) {
@@ -194,7 +194,7 @@ typedef NS_ENUM(NSInteger, UIP8_3) {
   Random4 = 0x3444444,
   Random5 = 0xbadbeef,
   Random6
-} ;
+};
 
 // rdar://15200602
 #define NS_AVAILABLE_MAC(X)  __attribute__((availability(macosx,introduced=X)))
@@ -284,4 +284,21 @@ typedef enum : NSUInteger {
    ThingTwo,
    ThingThree,
 } Thing;
+
+// rdar://18498539
+typedef NS_ENUM(NSInteger, NumericEnum) {
+    one = 1
+};
+
+typedef NS_ENUM(NSInteger, NumericEnum2) {
+    Two = 2
+};
+
+typedef NS_ENUM(NSInteger, NumericEnum3) {
+    Three = 3
+};
+
+typedef NS_OPTIONS(NSUInteger, NumericEnum4) {
+    Four = 4
+};
 

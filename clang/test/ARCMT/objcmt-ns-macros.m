@@ -302,3 +302,23 @@ typedef enum : NSUInteger {
    ThingThree,
 } Thing;
 
+// rdar://18498539
+typedef enum {
+    one = 1
+} NumericEnum;
+
+typedef enum {
+    Two = 2
+}NumericEnum2;
+
+typedef enum {
+    Three = 3
+}
+NumericEnum3;
+
+typedef enum {
+    Four = 4
+}
+
+  NumericEnum4;
+
