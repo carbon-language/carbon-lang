@@ -105,7 +105,32 @@ FindSessionDictionary(const char *session_dictionary_name)
 class PyCallable
 {
 public:
-    
+    struct argc {
+        size_t num_args;
+        bool varargs : 1;
+        bool kwargs : 1;
+    };
+
+    argc
+    GetNumArguments ()
+    {
+        if (m_callable && PyFunction_Check(m_callable))
+        {
+            PyCodeObject* code = (PyCodeObject*)PyFunction_GET_CODE(m_callable);
+            if (code)
+            {
+                size_t args = code->co_argcount;
+                bool va=false,kw=false;
+                if ((code->co_flags & 4) == 4)
+                    va = true;
+                if ((code->co_flags & 8) == 8)
+                    kw = true;
+                return {args,va,kw};
+            }
+        }
+        return {SIZE_MAX,false,false};
+    }
+
     operator
     bool ()
     {
