@@ -848,6 +848,14 @@ void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
                      /* OverwriteExisting= */ false);
     break;
 
+  // FPV5_D16 is identical to FP_ARMV8 except for the number of D registers, so
+  // uses the FP_ARMV8_D16 build attribute.
+  case ARM::FPV5_D16:
+    setAttributeItem(ARMBuildAttrs::FP_arch,
+                     ARMBuildAttrs::AllowFPARMv8B,
+                     /* OverwriteExisting= */ false);
+    break;
+
   case ARM::NEON:
     setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv3A,

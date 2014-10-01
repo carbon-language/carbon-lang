@@ -392,6 +392,12 @@ def : ProcNoItin<"cortex-m4",       [HasV7Ops,
                                      FeatureT2XtPk, FeatureVFP4,
                                      FeatureVFPOnlySP, FeatureD16,
                                      FeatureMClass]>;
+def : ProcNoItin<"cortex-m7",       [HasV7Ops,
+                                     FeatureThumb2, FeatureNoARM, FeatureDB,
+                                     FeatureHWDiv, FeatureDSPThumb2,
+                                     FeatureT2XtPk, FeatureFPARMv8,
+                                     FeatureD16, FeatureMClass]>;
+
 
 // Swift uArch Processors.
 def : ProcessorModel<"swift",       SwiftModel,

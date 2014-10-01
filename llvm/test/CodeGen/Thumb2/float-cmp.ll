@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=thumbv7-none-eabi   -mcpu=cortex-m3 | FileCheck %s -check-prefix=CHECK -check-prefix=NONE
 ; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-m4 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=SP
+; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-m7 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP
 ; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-a8 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP
 
 

@@ -26,6 +26,9 @@
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m3 | FileCheck %s --check-prefix=CORTEX-M3
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 -float-abi=soft | FileCheck %s --check-prefix=CORTEX-M4-SOFT
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 -float-abi=hard | FileCheck %s --check-prefix=CORTEX-M4-HARD
+; RUN: llc < %s -mtriple=thumbv7em-linux-gnueabi -mcpu=cortex-m7 -mattr=-vfp2 | FileCheck %s --check-prefix=CORTEX-M7 --check-prefix=CORTEX-M7-SOFT
+; RUN: llc < %s -mtriple=thumbv7em-linux-gnueabi -mcpu=cortex-m7 -mattr=+fp-only-sp | FileCheck %s --check-prefix=CORTEX-M7 --check-prefix=CORTEX-M7-SINGLE
+; RUN: llc < %s -mtriple=thumbv7em-linux-gnueabi -mcpu=cortex-m7 | FileCheck %s --check-prefix=CORTEX-M7 --check-prefix=CORTEX-M7-DOUBLE
 ; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r5 | FileCheck %s --check-prefix=CORTEX-R5
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a53 | FileCheck %s --check-prefix=CORTEX-A53
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a57 | FileCheck %s --check-prefix=CORTEX-A57
@@ -409,6 +412,26 @@
 ; CORTEX-M4-HARD-NOT:  .eabi_attribute 42
 ; CORTEX-M4-HARD-NOT:  .eabi_attribute 44
 ; CORTEX-M4-HARD-NOT:  .eabi_attribute 68
+
+; CORTEX-M7:  .cpu    cortex-m7
+; CORTEX-M7:  .eabi_attribute 6, 13
+; CORTEX-M7:  .eabi_attribute 7, 77
+; CORTEX-M7:  .eabi_attribute 8, 0
+; CORTEX-M7:  .eabi_attribute 9, 2
+; CORTEX-M7-SOFT-NOT: .fpu
+; CORTEX-M7-SINGLE:  .fpu fpv5-d16
+; CORTEX-M7-DOUBLE:  .fpu fpv5-d16
+; CORTEX-M7:  .eabi_attribute 17, 1
+; CORTEX-M7:  .eabi_attribute 20, 1
+; CORTEX-M7:  .eabi_attribute 21, 1
+; CORTEX-M7:  .eabi_attribute 23, 3
+; CORTEX-M7:  .eabi_attribute 24, 1
+; CORTEX-M7:  .eabi_attribute 25, 1
+; CORTEX-M7-SOFT-NOT: .eabi_attribute 27
+; CORTEX-M7-SINGLE:  .eabi_attribute 27, 1
+; CORTEX-M7-DOUBLE-NOT: .eabi_attribute 27
+; CORTEX-M7:  .eabi_attribute 36, 1
+; CORTEX-M7:  .eabi_attribute 14, 0
 
 ; CORTEX-R5:  .cpu cortex-r5
 ; CORTEX-R5:  .eabi_attribute 6, 10

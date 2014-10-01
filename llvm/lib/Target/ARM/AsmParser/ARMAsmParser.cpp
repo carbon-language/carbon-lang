@@ -8844,6 +8844,8 @@ static const struct {
       {ARM::VFPV3_D16, ARM::FeatureVFP3 | ARM::FeatureD16, ARM::FeatureNEON},
       {ARM::VFPV4, ARM::FeatureVFP4, ARM::FeatureNEON},
       {ARM::VFPV4_D16, ARM::FeatureVFP4 | ARM::FeatureD16, ARM::FeatureNEON},
+      {ARM::FPV5_D16, ARM::FeatureFPARMv8 | ARM::FeatureD16,
+       ARM::FeatureNEON | ARM::FeatureCrypto},
       {ARM::FP_ARMV8, ARM::FeatureFPARMv8,
        ARM::FeatureNEON | ARM::FeatureCrypto},
       {ARM::NEON, ARM::FeatureNEON, 0},

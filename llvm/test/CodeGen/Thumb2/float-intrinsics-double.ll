@@ -1,6 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv7-none-eabi   -mcpu=cortex-m3 | FileCheck %s -check-prefix=CHECK -check-prefix=SOFT -check-prefix=NONE
 ; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-m4 | FileCheck %s -check-prefix=CHECK -check-prefix=SOFT -check-prefix=SP
-; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-a7 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP
+; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-m7 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP -check-prefix=VFP
+; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-a7 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP -check-prefix=NEON
 
 declare double     @llvm.sqrt.f64(double %Val)
 define double @sqrt_d(double %a) {
@@ -119,9 +120,11 @@ define double @copysign_d(double %a, double %b) {
 ; CHECK-LABEL: copysign_d:
 ; SOFT: lsrs [[REG:r[0-9]+]], r3, #31
 ; SOFT: bfi r1, [[REG]], #31, #1
-; HARD: vmov.i32 [[REG:d[0-9]+]], #0x80000000
-; HARD: vshl.i64 [[REG]], [[REG]], #32
-; HARD: vbsl [[REG]], d
+; VFP: lsrs [[REG:r[0-9]+]], r3, #31
+; VFP: bfi r1, [[REG]], #31, #1
+; NEON: vmov.i32 [[REG:d[0-9]+]], #0x80000000
+; NEON: vshl.i64 [[REG]], [[REG]], #32
+; NEON: vbsl [[REG]], d
   %1 = call double @llvm.copysign.f64(double %a, double %b)
   ret double %1
 }
@@ -185,8 +188,9 @@ define double @fmuladd_d(double %a, double %b, double %c) {
 ; CHECK-LABEL: fmuladd_d:
 ; SOFT: bl __aeabi_dmul
 ; SOFT: bl __aeabi_dadd
-; HARD: vmul.f64
-; HARD: vadd.f64
+; NEON: vmul.f64
+; NEON: vadd.f64
+; VFP: vmla.f64
   %1 = call double @llvm.fmuladd.f64(double %a, double %b, double %c)
   ret double %1
 }

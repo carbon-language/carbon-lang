@@ -1,6 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv7-none-eabi   -mcpu=cortex-m3 | FileCheck %s -check-prefix=CHECK -check-prefix=NONE
-; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-m4 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=SP
-; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-a8 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP
+; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-m4 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=SP -check-prefix=VFP4-ALL
+; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-m7 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP -check-prefix=FP-ARMv8
+; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-a8 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP -check-prefix=VFP4-ALL -check-prefix=VFP4-DP
 
 define float @add_f(float %a, float %b) {
 entry:
@@ -263,8 +264,9 @@ define float @select_f(float %a, float %b, i1 %c) {
 ; NONE: tst.w   r2, #1
 ; NONE: moveq   r0, r1
 ; HARD: tst.w   r0, #1
-; HARD: vmovne.f32      s1, s0
-; HARD: vmov.f32        s0, s1
+; VFP4-ALL: vmovne.f32      s1, s0
+; VFP4-ALL: vmov.f32        s0, s1
+; FP-ARMv8: vseleq.f32 s0, s1, s0
   %1 = select i1 %c, float %a, float %b
   ret float %1
 }
@@ -283,8 +285,9 @@ define double @select_d(double %a, double %b, i1 %c) {
 ; SP-DAG: movne [[BHI]], [[AHI]]
 ; SP: vmov d0, [[BLO]], [[BHI]]
 ; DP: tst.w   r0, #1
-; DP: vmovne.f64      d1, d0
-; DP: vmov.f64        d0, d1
+; VFP4-DP: vmovne.f64      d1, d0
+; VFP4-DP: vmov.f64        d0, d1
+; FP-ARMV8: vseleq.f64      d0, d1, d0
   %1 = select i1 %c, double %a, double %b
   ret double %1
 }

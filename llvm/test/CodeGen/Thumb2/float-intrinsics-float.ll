@@ -1,6 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv7-none-eabi   -mcpu=cortex-m3 | FileCheck %s -check-prefix=CHECK -check-prefix=SOFT -check-prefix=NONE
 ; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-m4 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=SP
-; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-a7 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP
+; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-m7 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP -check-prefix=VFP
+; RUN: llc < %s -mtriple=thumbv7-none-eabihf -mcpu=cortex-a7 | FileCheck %s -check-prefix=CHECK -check-prefix=HARD -check-prefix=DP -check-prefix=NEON
 
 declare float     @llvm.sqrt.f32(float %Val)
 define float @sqrt_f(float %a) {
@@ -117,8 +118,10 @@ define float @copysign_f(float %a, float %b) {
 ; NONE: bfi r{{[0-9]+}}, [[REG]], #31, #1
 ; SP: lsrs [[REG:r[0-9]+]], r{{[0-9]+}}, #31
 ; SP: bfi r{{[0-9]+}}, [[REG]], #31, #1
-; DP: vmov.i32 [[REG:d[0-9]+]], #0x80000000
-; DP: vbsl [[REG]], d
+; VFP: lsrs [[REG:r[0-9]+]], r{{[0-9]+}}, #31
+; VFP: bfi r{{[0-9]+}}, [[REG]], #31, #1
+; NEON: vmov.i32 [[REG:d[0-9]+]], #0x80000000
+; NEON: vbsl [[REG]], d
   %1 = call float @llvm.copysign.f32(float %a, float %b)
   ret float %1
 }
@@ -185,8 +188,9 @@ define float @fmuladd_f(float %a, float %b, float %c) {
 ; SOFT: bl __aeabi_fmul
 ; SOFT: bl __aeabi_fadd
 ; SP: vmla.f32
-; DP: vmul.f32
-; DP: vadd.f32
+; VFP: vmla.f32
+; NEON: vmul.f32
+; NEON: vadd.f32
   %1 = call float @llvm.fmuladd.f32(float %a, float %b, float %c)
   ret float %1
 }
