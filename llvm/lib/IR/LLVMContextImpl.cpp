@@ -40,6 +40,7 @@ LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
   InlineAsmDiagContext = nullptr;
   DiagnosticHandler = nullptr;
   DiagnosticContext = nullptr;
+  RespectDiagnosticFilters = false;
   YieldCallback = nullptr;
   YieldOpaqueHandle = nullptr;
   NamedStructTypesUniqueID = 0;

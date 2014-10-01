@@ -99,12 +99,14 @@ public:
   /// setDiagnosticHandler - This method sets a handler that is invoked
   /// when the backend needs to report anything to the user.  The first
   /// argument is a function pointer and the second is a context pointer that
-  /// gets passed into the DiagHandler.
+  /// gets passed into the DiagHandler.  The third argument should be set to
+  /// true if the handler only expects enabled diagnostics.
   ///
   /// LLVMContext doesn't take ownership or interpret either of these
   /// pointers.
   void setDiagnosticHandler(DiagnosticHandlerTy DiagHandler,
-                            void *DiagContext = nullptr);
+                            void *DiagContext = nullptr,
+                            bool RespectFilters = false);
 
   /// getDiagnosticHandler - Return the diagnostic handler set by
   /// setDiagnosticHandler.
