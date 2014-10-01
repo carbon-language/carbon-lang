@@ -1115,14 +1115,13 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
   // "deref" operation to a list of address elements, as new llvm.dbg.declare
   // will take a value storing address of the memory for variable, not
   // alloca itself.
-  Type *Int64Ty = Type::getInt64Ty(AI->getContext());
-  SmallVector<Value *, 4> NewDIExpr;
+  SmallVector<int64_t, 4> NewDIExpr;
   if (DIExpr) {
     for (unsigned i = 0, n = DIExpr.getNumElements(); i < n; ++i) {
-      NewDIExpr.push_back(ConstantInt::get(Int64Ty, DIExpr.getElement(i)));
+      NewDIExpr.push_back(DIExpr.getElement(i));
     }
   }
-  NewDIExpr.push_back(ConstantInt::get(Int64Ty, dwarf::DW_OP_deref));
+  NewDIExpr.push_back(dwarf::DW_OP_deref);
 
   // Insert llvm.dbg.declare in the same basic block as the original alloca,
   // and remove old llvm.dbg.declare.

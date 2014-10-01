@@ -1045,10 +1045,14 @@ DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
 /// createExpression - Create a new descriptor for the specified
 /// variable which has a complex address expression for its address.
 /// @param Addr        An array of complex address operations.
-DIExpression DIBuilder::createExpression(ArrayRef<Value *> Addr) {
+DIExpression DIBuilder::createExpression(ArrayRef<int64_t> Addr) {
   SmallVector<llvm::Value *, 16> Elts;
   Elts.push_back(GetTagConstant(VMContext, DW_TAG_expression));
-  Elts.insert(Elts.end(), Addr.begin(), Addr.end());
+
+  llvm::Type *Int64Ty = Type::getInt64Ty(VMContext);
+  for (int64_t I : Addr)
+    Elts.push_back(ConstantInt::get(Int64Ty, I));
+
   return DIExpression(MDNode::get(VMContext, Elts));
 }
 

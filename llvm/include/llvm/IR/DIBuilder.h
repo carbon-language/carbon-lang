@@ -503,7 +503,7 @@ namespace llvm {
     /// createExpression - Create a new descriptor for the specified
     /// variable which has a complex address expression for its address.
     /// @param Addr        An array of complex address operations.
-    DIExpression createExpression(ArrayRef<Value *> Addr = None);
+    DIExpression createExpression(ArrayRef<int64_t> Addr = None);
 
     /// createPieceExpression - Create a descriptor to describe one part
     /// of aggregate variable that is fragmented across multiple Values.
