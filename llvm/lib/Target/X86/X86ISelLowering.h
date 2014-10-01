@@ -528,7 +528,7 @@ namespace llvm {
   //  X86 Implementation of the TargetLowering interface
   class X86TargetLowering final : public TargetLowering {
   public:
-    explicit X86TargetLowering(X86TargetMachine &TM);
+    explicit X86TargetLowering(const X86TargetMachine &TM);
 
     unsigned getJumpTableEncoding() const override;
 

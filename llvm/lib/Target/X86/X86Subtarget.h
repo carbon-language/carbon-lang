@@ -252,7 +252,7 @@ public:
   /// of the specified triple.
   ///
   X86Subtarget(const std::string &TT, const std::string &CPU,
-               const std::string &FS, X86TargetMachine &TM,
+               const std::string &FS, const X86TargetMachine &TM,
                unsigned StackAlignOverride);
 
   const X86TargetLowering *getTargetLowering() const override {
