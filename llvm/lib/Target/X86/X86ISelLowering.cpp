@@ -8209,7 +8209,7 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(Mask.size() == 4 && "Unexpected mask size for v4 shuffle!");
 
   // Whenever we can lower this as a zext, that instruction is strictly faster
-  // than any alternative. It also allows us to fold memory operansd into the
+  // than any alternative. It also allows us to fold memory operands into the
   // shuffle in many cases.
   if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(DL, MVT::v4i32, V1, V2,
                                                          Mask, Subtarget, DAG))
