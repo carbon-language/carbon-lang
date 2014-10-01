@@ -3,11 +3,11 @@
 
 #include "vector"
 
-class Collection {
-  template <class T> struct Address { };
-};
+template <class T>
+struct Address {};
 
-template <> struct Collection::Address<std::vector<bool> >
-   : public Collection::Address<std::vector<bool>::iterator> { };
+template <>
+struct Address<std::vector<bool>>
+    : Address<std::vector<bool>::iterator> {};
 
 #endif

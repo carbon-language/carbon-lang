@@ -1,25 +1,13 @@
-namespace std
-{
-  template<typename _Iterator>
-  class reverse_iterator {};
+namespace std {
+struct reverse_iterator {};
 
-  template<typename _Iterator>
-  inline int*
-  operator-(const int& __x, const reverse_iterator<_Iterator>& __y) {};
+inline void
+operator-(int __x, reverse_iterator __y) {}
 
-  template<typename _Tp>
-  struct _Rb_tree_iterator
-  {
-    typedef _Rb_tree_iterator<_Tp>        _Self;
-  };
+template <typename _Key>
+struct map {
+  typedef int iterator;
 
-  template <typename _Key, typename _Tp >
-  class map
-  {
-  public:
-    typedef _Rb_tree_iterator<int>        iterator;
-
-    template<typename _K1, typename _T1>
-    friend bool operator<(const map<_K1, _T1>&, const map<_K1, _T1>&);
-  };
+  friend bool operator<(const map &, const map &);
+};
 } // namespace std

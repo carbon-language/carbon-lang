@@ -5,13 +5,10 @@
 
 #include "stl_map.h"
 #include "vector"
-struct A {
-   typedef std::map<int, int*>::iterator el;
-};
+typedef std::map<int>::iterator el;
 
-struct B {
-  ~B() {}
-  std::vector<int> fvec; // Cannot replace with simple mockup
-};
+inline void func() {
+  std::vector<int>::func();
+}
 
 #endif
