@@ -64,12 +64,6 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
   BasicBlock *PreHeaderBB =
       BasicBlock::Create(Context, "polly.loop_preheader", F);
 
-  if (Annotator) {
-    Annotator->Begin(HeaderBB);
-    if (Parallel)
-      Annotator->SetCurrentParallel();
-  }
-
   // Update LoopInfo
   Loop *OuterLoop = LI.getLoopFor(BeforeBB);
   Loop *NewLoop = new Loop();
@@ -85,6 +79,11 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
     OuterLoop->addBasicBlockToLoop(PreHeaderBB, LI.getBase());
 
   NewLoop->addBasicBlockToLoop(HeaderBB, LI.getBase());
+
+  // Notify the annotator (if present) that we have a new loop, but only
+  // after the header block is set.
+  if (Annotator)
+    Annotator->pushLoop(NewLoop, Parallel);
 
   // ExitBB
   ExitBB = SplitBlock(BeforeBB, Builder.GetInsertPoint()++, P);
@@ -122,7 +121,12 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
   UB = Builder.CreateSub(UB, Stride, "polly.adjust_ub");
   LoopCondition = Builder.CreateICmp(Predicate, IV, UB);
   LoopCondition->setName("polly.loop_cond");
-  Builder.CreateCondBr(LoopCondition, HeaderBB, ExitBB);
+
+  // Create the loop latch and annotate it as such.
+  BranchInst *B = Builder.CreateCondBr(LoopCondition, HeaderBB, ExitBB);
+  if (Annotator)
+    Annotator->annotateLoopLatch(B, NewLoop, Parallel);
+
   IV->addIncoming(IncrementedIV, HeaderBB);
   if (GuardBB)
     DT.changeImmediateDominator(ExitBB, GuardBB);

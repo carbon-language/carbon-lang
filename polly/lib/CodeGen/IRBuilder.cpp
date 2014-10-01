@@ -13,48 +13,66 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/CodeGen/IRBuilder.h"
-#include "llvm/Analysis/LoopInfo.h"
+
 #include "llvm/IR/Metadata.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
 using namespace polly;
 
-llvm::MDNode *polly::PollyLoopInfo::GetLoopID() const {
-  if (LoopID)
-    return LoopID;
-
-  llvm::Value *Args[] = {0};
-  LoopID = llvm::MDNode::get(Header->getContext(), Args);
+/// @brief Get the loop id metadata node.
+///
+/// Each loop is identified by a self referencing metadata node of the form:
+///
+///    '!n = metadata !{metadata !n}'
+///
+/// This functions creates such metadata on demand if not yet available.
+///
+/// @return The loop id metadata node.
+static MDNode *getLoopID(Loop *L) {
+  Value *Args[] = {0};
+  MDNode *LoopID = MDNode::get(L->getHeader()->getContext(), Args);
   LoopID->replaceOperandWith(0, LoopID);
   return LoopID;
 }
 
-void polly::LoopAnnotator::Begin(llvm::BasicBlock *Header) {
-  Active.push_back(PollyLoopInfo(Header));
-}
-
-void polly::LoopAnnotator::End() { Active.pop_back(); }
-
-void polly::LoopAnnotator::SetCurrentParallel() {
-  Active.back().SetParallel(true);
-}
-
-void polly::LoopAnnotator::Annotate(llvm::Instruction *Inst) {
-  if (Active.empty())
+void polly::LoopAnnotator::pushLoop(Loop *L, bool IsParallel) {
+  ActiveLoops.push_back(L);
+  if (!IsParallel)
     return;
 
-  const PollyLoopInfo &L = Active.back();
-  if (!L.IsParallel())
+  BasicBlock *Header = L->getHeader();
+  MDNode *Id = getLoopID(L);
+  Value *Args[] = {Id};
+  MDNode *Ids = ParallelLoops.empty()
+                    ? MDNode::get(Header->getContext(), Args)
+                    : MDNode::concatenate(ParallelLoops.back(), Id);
+  ParallelLoops.push_back(Ids);
+}
+
+void polly::LoopAnnotator::popLoop(bool IsParallel) {
+  ActiveLoops.pop_back();
+  if (!IsParallel)
     return;
 
-  if (TerminatorInst *TI = dyn_cast<llvm::TerminatorInst>(Inst)) {
-    for (unsigned i = 0, ie = TI->getNumSuccessors(); i != ie; ++i)
-      if (TI->getSuccessor(i) == L.GetHeader()) {
-        TI->setMetadata("llvm.loop", L.GetLoopID());
-        break;
-      }
-  } else if (Inst->mayReadOrWriteMemory()) {
-    Inst->setMetadata("llvm.mem.parallel_loop_access", L.GetLoopID());
-  }
+  assert(!ParallelLoops.empty() && "Expected a parallel loop to pop");
+  ParallelLoops.pop_back();
+}
+
+void polly::LoopAnnotator::annotateLoopLatch(BranchInst *B, Loop *L,
+                                             bool IsParallel) const {
+  if (!IsParallel)
+    return;
+
+  assert(!ParallelLoops.empty() && "Expected a parallel loop to annotate");
+  MDNode *Ids = ParallelLoops.back();
+  MDNode *Id = cast<MDNode>(Ids->getOperand(Ids->getNumOperands() - 1));
+  B->setMetadata("llvm.loop", Id);
+}
+
+void polly::LoopAnnotator::annotate(Instruction *Inst) {
+  if (!Inst->mayReadOrWriteMemory() || ParallelLoops.empty())
+    return;
+
+  Inst->setMetadata("llvm.mem.parallel_loop_access", ParallelLoops.back());
 }

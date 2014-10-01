@@ -16,54 +16,35 @@
 #define POLLY_CODEGEN_IRBUILDER_H
 
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/Analysis/LoopInfo.h"
+
 namespace polly {
 
-/// @brief Keeps information about generated loops.
-class PollyLoopInfo {
-public:
-  PollyLoopInfo(llvm::BasicBlock *Header)
-      : LoopID(0), Header(Header), Parallel(false) {}
-
-  /// @brief Get the loop id metadata node.
-  ///
-  /// Each loop is identified by a self referencing metadata node of the form:
-  ///
-  ///    '!n = metadata !{metadata !n}'
-  ///
-  /// This functions creates such metadata on demand if not yet available.
-  ///
-  /// @return The loop id metadata node.
-  llvm::MDNode *GetLoopID() const;
-
-  /// @brief Get the head basic block of this loop.
-  llvm::BasicBlock *GetHeader() const { return Header; }
-
-  /// @brief Check if the loop is parallel.
-  ///
-  /// @return True, if the loop is parallel.
-  bool IsParallel() const { return Parallel; }
-
-  /// @brief Set a loop as parallel.
-  ///
-  /// @IsParallel True, if the loop is to be marked as parallel. False, if the
-  //              loop should be marked sequential.
-  void SetParallel(bool IsParallel = true) { Parallel = IsParallel; }
-
-private:
-  mutable llvm::MDNode *LoopID;
-  llvm::BasicBlock *Header;
-  bool Parallel;
-};
-
+/// @brief Helper class to annotate newly generated loops with metadata.
+///
+/// This stack-like structure will keep track of all loops, and annotate
+/// memory instructions and loop headers according to all parallel loops.
 class LoopAnnotator {
 public:
-  void Begin(llvm::BasicBlock *Header);
-  void SetCurrentParallel();
-  void End();
-  void Annotate(llvm::Instruction *I);
+  /// @brief Add a new loop @p L which is parallel if @p IsParallel is true.
+  void pushLoop(llvm::Loop *L, bool IsParallel);
+
+  /// @brief Remove the last added loop.
+  void popLoop(bool isParallel);
+
+  /// @brief Annotate the new instruction @p I for all parallel loops.
+  void annotate(llvm::Instruction *I);
+
+  /// @brief Annotate the loop latch @p B wrt. @p L.
+  void annotateLoopLatch(llvm::BranchInst *B, llvm::Loop *L,
+                         bool IsParallel) const;
 
 private:
-  std::vector<PollyLoopInfo> Active;
+  /// @brief All loops currently under construction.
+  llvm::SmallVector<llvm::Loop *, 8> ActiveLoops;
+
+  /// @brief Metadata pointing to parallel loops currently under construction.
+  llvm::SmallVector<llvm::MDNode *, 8> ParallelLoops;
 };
 
 /// @brief Add Polly specifics when running IRBuilder.
@@ -84,7 +65,7 @@ protected:
     llvm::IRBuilderDefaultInserter<PreserveNames>::InsertHelper(I, Name, BB,
                                                                 InsertPt);
     if (Annotator)
-      Annotator->Annotate(I);
+      Annotator->annotate(I);
   }
 
 private:
