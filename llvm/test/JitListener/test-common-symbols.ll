@@ -34,7 +34,7 @@ if.then:                                          ; preds = %entry
   br label %if.end, !dbg !24
 
 if.end:                                           ; preds = %if.then, %entry
-  call void @llvm.dbg.declare(metadata !{i32* %i}, metadata !25, metadata !{}), !dbg !27
+  call void @llvm.dbg.declare(metadata !{i32* %i}, metadata !25), !dbg !27
   store i32 1, i32* %i, align 4, !dbg !28
   br label %for.cond, !dbg !28
 
@@ -73,7 +73,7 @@ for.end:                                          ; preds = %for.cond
   ret i32 %cond, !dbg !33
 }
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!35}

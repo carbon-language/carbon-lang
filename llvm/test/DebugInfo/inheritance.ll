@@ -16,7 +16,7 @@ entry:
   %0 = alloca i32                                 ; <i32*> [#uses=2]
   %tst = alloca %struct.test1                     ; <%struct.test1*> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata !{%struct.test1* %tst}, metadata !0, metadata !{}), !dbg !21
+  call void @llvm.dbg.declare(metadata !{%struct.test1* %tst}, metadata !0), !dbg !21
   call void @_ZN5test1C1Ev(%struct.test1* %tst) nounwind, !dbg !22
   store i32 0, i32* %0, align 4, !dbg !23
   %1 = load i32* %0, align 4, !dbg !23            ; <i32> [#uses=1]
@@ -32,7 +32,7 @@ define linkonce_odr void @_ZN5test1C1Ev(%struct.test1* %this) nounwind ssp align
 entry:
   %this_addr = alloca %struct.test1*              ; <%struct.test1**> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata !{%struct.test1** %this_addr}, metadata !24, metadata !{}), !dbg !28
+  call void @llvm.dbg.declare(metadata !{%struct.test1** %this_addr}, metadata !24), !dbg !28
   store %struct.test1* %this, %struct.test1** %this_addr
   %0 = load %struct.test1** %this_addr, align 8, !dbg !28 ; <%struct.test1*> [#uses=1]
   %1 = getelementptr inbounds %struct.test1* %0, i32 0, i32 0, !dbg !28 ; <i32 (...)***> [#uses=1]
@@ -43,13 +43,13 @@ return:                                           ; preds = %entry
   ret void, !dbg !29
 }
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 define linkonce_odr void @_ZN5test1D1Ev(%struct.test1* %this) nounwind ssp align 2 {
 entry:
   %this_addr = alloca %struct.test1*              ; <%struct.test1**> [#uses=3]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata !{%struct.test1** %this_addr}, metadata !32, metadata !{}), !dbg !34
+  call void @llvm.dbg.declare(metadata !{%struct.test1** %this_addr}, metadata !32), !dbg !34
   store %struct.test1* %this, %struct.test1** %this_addr
   %0 = load %struct.test1** %this_addr, align 8, !dbg !35 ; <%struct.test1*> [#uses=1]
   %1 = getelementptr inbounds %struct.test1* %0, i32 0, i32 0, !dbg !35 ; <i32 (...)***> [#uses=1]
@@ -78,7 +78,7 @@ define linkonce_odr void @_ZN5test1D0Ev(%struct.test1* %this) nounwind ssp align
 entry:
   %this_addr = alloca %struct.test1*              ; <%struct.test1**> [#uses=3]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata !{%struct.test1** %this_addr}, metadata !38, metadata !{}), !dbg !40
+  call void @llvm.dbg.declare(metadata !{%struct.test1** %this_addr}, metadata !38), !dbg !40
   store %struct.test1* %this, %struct.test1** %this_addr
   %0 = load %struct.test1** %this_addr, align 8, !dbg !41 ; <%struct.test1*> [#uses=1]
   %1 = getelementptr inbounds %struct.test1* %0, i32 0, i32 0, !dbg !41 ; <i32 (...)***> [#uses=1]

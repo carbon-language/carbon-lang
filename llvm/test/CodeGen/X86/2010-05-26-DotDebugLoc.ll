@@ -9,7 +9,7 @@ target triple = "x86_64-apple-darwin10"
 
 define i8* @bar(%struct.a* %myvar) nounwind optsize noinline ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata !{%struct.a* %myvar}, i64 0, metadata !8, metadata !{})
+  tail call void @llvm.dbg.value(metadata !{%struct.a* %myvar}, i64 0, metadata !8)
   %0 = getelementptr inbounds %struct.a* %myvar, i64 0, i32 0, !dbg !28 ; <i32*> [#uses=1]
   %1 = load i32* %0, align 8, !dbg !28            ; <i32> [#uses=1]
   tail call void @foo(i32 %1) nounwind optsize noinline ssp, !dbg !28
@@ -19,7 +19,7 @@ entry:
 
 declare void @foo(i32) nounwind optsize noinline ssp
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!38}

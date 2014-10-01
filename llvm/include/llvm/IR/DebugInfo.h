@@ -150,7 +150,6 @@ public:
   bool isTemplateValueParameter() const;
   bool isObjCProperty() const;
   bool isImportedEntity() const;
-  bool isExpression() const;
 
   /// print - print descriptor.
   void print(raw_ostream &OS) const;
@@ -721,6 +720,20 @@ public:
   /// Verify - Verify that a variable descriptor is well formed.
   bool Verify() const;
 
+  /// HasComplexAddr - Return true if the variable has a complex address.
+  bool hasComplexAddress() const { return getNumAddrElements() > 0; }
+
+  /// \brief Return the size of this variable's complex address or
+  /// zero if there is none.
+  unsigned getNumAddrElements() const {
+    if (DbgNode->getNumOperands() < 9)
+      return 0;
+    return getDescriptorField(8)->getNumOperands();
+  }
+
+  /// \brief return the Idx'th complex address element.
+  uint64_t getAddrElement(unsigned Idx) const;
+
   /// isBlockByrefVariable - Return true if the variable was declared as
   /// a "__block" variable (Apple Blocks).
   bool isBlockByrefVariable(const DITypeIdentifierMap &Map) const {
@@ -731,35 +744,6 @@ public:
   /// information for an inlined function arguments.
   bool isInlinedFnArgument(const Function *CurFn);
 
-  /// Return the size reported by the variable's type.
-  unsigned getSizeInBits(const DITypeIdentifierMap &Map);
-
-  void printExtendedName(raw_ostream &OS) const;
-};
-
-/// DIExpression - A complex location expression.
-class DIExpression : public DIDescriptor {
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
-
-public:
-  explicit DIExpression(const MDNode *N = nullptr) : DIDescriptor(N) {}
-
-  /// Verify - Verify that a variable descriptor is well formed.
-  bool Verify() const;
-
-  /// \brief Return the number of elements in the complex expression.
-  unsigned getNumElements() const {
-    if (!DbgNode)
-      return 0;
-    unsigned N = DbgNode->getNumOperands();
-    assert(N > 0 && "missing tag");
-    return N - 1;
-  }
-
-  /// \brief return the Idx'th complex address element.
-  uint64_t getElement(unsigned Idx) const;
-
   /// isVariablePiece - Return whether this is a piece of an aggregate
   /// variable.
   bool isVariablePiece() const;
@@ -767,6 +751,11 @@ public:
   uint64_t getPieceOffset() const;
   /// getPieceSize - Return the size of this piece in bytes.
   uint64_t getPieceSize() const;
+
+  /// Return the size reported by the variable's type.
+  unsigned getSizeInBits(const DITypeIdentifierMap &Map);
+
+  void printExtendedName(raw_ostream &OS) const;
 };
 
 /// DILocation - This object holds location information. This object
@@ -882,6 +871,9 @@ DIVariable createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
 
 /// cleanseInlinedVariable - Remove inlined scope from the variable.
 DIVariable cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext);
+
+/// getEntireVariable - Remove OpPiece exprs from the variable.
+DIVariable getEntireVariable(DIVariable DV);
 
 /// Construct DITypeIdentifierMap by going through retained types of each CU.
 DITypeIdentifierMap generateDITypeIdentifierMap(const NamedMDNode *CU_Nodes);

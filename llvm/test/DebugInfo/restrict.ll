@@ -21,12 +21,12 @@ define void @_Z3fooPv(i8* noalias %dst) #0 {
 entry:
   %dst.addr = alloca i8*, align 8
   store i8* %dst, i8** %dst.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i8** %dst.addr}, metadata !13, metadata !{}), !dbg !14
+  call void @llvm.dbg.declare(metadata !{i8** %dst.addr}, metadata !13), !dbg !14
   ret void, !dbg !15
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata) #1
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

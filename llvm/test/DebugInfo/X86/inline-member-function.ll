@@ -45,9 +45,9 @@ entry:
   store i32 0, i32* %retval
   %0 = load i32* @i, align 4, !dbg !23
   store %struct.foo* %tmp, %struct.foo** %this.addr.i, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.foo** %this.addr.i}, metadata !24, metadata !{}), !dbg !26
+  call void @llvm.dbg.declare(metadata !{%struct.foo** %this.addr.i}, metadata !24), !dbg !26
   store i32 %0, i32* %x.addr.i, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %x.addr.i}, metadata !27, metadata !{}), !dbg !28
+  call void @llvm.dbg.declare(metadata !{i32* %x.addr.i}, metadata !27), !dbg !28
   %this1.i = load %struct.foo** %this.addr.i
   %1 = load i32* %x.addr.i, align 4, !dbg !28
   %add.i = add nsw i32 %1, 2, !dbg !28
@@ -55,7 +55,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata) #1
 
 attributes #0 = { uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

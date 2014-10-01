@@ -2249,10 +2249,8 @@ bool X86FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
     const MCInstrDesc &II = TII.get(TargetOpcode::DBG_VALUE);
     // FIXME may need to add RegState::Debug to any registers produced,
     // although ESP/EBP should be the only ones at the moment.
-    addFullAddress(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II), AM)
-        .addImm(0)
-        .addMetadata(DI->getVariable())
-        .addMetadata(DI->getExpression());
+    addFullAddress(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II), AM).
+      addImm(0).addMetadata(DI->getVariable());
     return true;
   }
   case Intrinsic::trap: {

@@ -984,18 +984,15 @@ public:
 
   /// getDbgValue - Creates a SDDbgValue node.
   ///
-  /// SDNode
-  SDDbgValue *getDbgValue(MDNode *Var, MDNode *Expr, SDNode *N, unsigned R,
-                          bool IsIndirect, uint64_t Off, DebugLoc DL,
-                          unsigned O);
-
-  /// Constant
-  SDDbgValue *getConstantDbgValue(MDNode *Var, MDNode *Expr, const Value *C,
-                                  uint64_t Off, DebugLoc DL, unsigned O);
-
-  /// FrameIndex
-  SDDbgValue *getFrameIndexDbgValue(MDNode *Var, MDNode *Expr, unsigned FI,
-                                    uint64_t Off, DebugLoc DL, unsigned O);
+  SDDbgValue *getDbgValue(MDNode *MDPtr, SDNode *N, unsigned R,
+			  bool IsIndirect, uint64_t Off,
+                          DebugLoc DL, unsigned O);
+  /// Constant.
+  SDDbgValue *getConstantDbgValue(MDNode *MDPtr, const Value *C, uint64_t Off,
+				  DebugLoc DL, unsigned O);
+  /// Frame index.
+  SDDbgValue *getFrameIndexDbgValue(MDNode *MDPtr, unsigned FI, uint64_t Off,
+				    DebugLoc DL, unsigned O);
 
   /// RemoveDeadNode - Remove the specified node from the system. If any of its
   /// operands then becomes dead, remove them as well. Inform UpdateListener

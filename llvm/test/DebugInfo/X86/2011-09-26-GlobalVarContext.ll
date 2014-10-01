@@ -7,14 +7,14 @@
 
 define i32 @f() nounwind {
   %LOC = alloca i32, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %LOC}, metadata !15, metadata !{}), !dbg !17
+  call void @llvm.dbg.declare(metadata !{i32* %LOC}, metadata !15), !dbg !17
   %1 = load i32* @GLB, align 4, !dbg !18
   store i32 %1, i32* %LOC, align 4, !dbg !18
   %2 = load i32* @GLB, align 4, !dbg !19
   ret i32 %2, !dbg !19
 }
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!21}

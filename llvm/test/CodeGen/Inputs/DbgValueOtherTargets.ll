@@ -3,13 +3,13 @@
 define i32 @main() nounwind ssp {
 entry:
 ; CHECK: DEBUG_VALUE
-  call void @llvm.dbg.value(metadata !6, i64 0, metadata !7, metadata !{}), !dbg !9
+  call void @llvm.dbg.value(metadata !6, i64 0, metadata !7), !dbg !9
   ret i32 0, !dbg !10
 }
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!13}

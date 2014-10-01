@@ -2,11 +2,11 @@
 
 define void @baz(i32 %i) nounwind ssp {
 entry:
-  call void @llvm.dbg.declare(metadata !0, metadata !1, metadata !{}), !dbg !0
+  call void @llvm.dbg.declare(metadata !0, metadata !1), !dbg !0
   ret void, !dbg !0
 }
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!5}
 !llvm.module.flags = !{!22}

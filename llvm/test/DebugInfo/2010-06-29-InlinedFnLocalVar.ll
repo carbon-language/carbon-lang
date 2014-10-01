@@ -7,15 +7,15 @@
 
 @i = common global i32 0                          ; <i32*> [#uses=2]
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 define i32 @bar() nounwind ssp {
 entry:
   %0 = load i32* @i, align 4, !dbg !17            ; <i32> [#uses=2]
-  tail call void @llvm.dbg.value(metadata !{i32 %0}, i64 0, metadata !9, metadata !{}), !dbg !19
-  tail call void @llvm.dbg.declare(metadata !29, metadata !10, metadata !{}), !dbg !21
+  tail call void @llvm.dbg.value(metadata !{i32 %0}, i64 0, metadata !9), !dbg !19
+  tail call void @llvm.dbg.declare(metadata !29, metadata !10), !dbg !21
   %1 = mul nsw i32 %0, %0, !dbg !22               ; <i32> [#uses=2]
   store i32 %1, i32* @i, align 4, !dbg !17
   ret i32 %1, !dbg !23

@@ -11,10 +11,10 @@
 
 define hidden %0 @__divsc3(float %a, float %b, float %c, float %d) nounwind readnone {
 entry:
-  tail call void @llvm.dbg.value(metadata !{float %a}, i64 0, metadata !0, metadata !{})
-  tail call void @llvm.dbg.value(metadata !{float %b}, i64 0, metadata !11, metadata !{})
-  tail call void @llvm.dbg.value(metadata !{float %c}, i64 0, metadata !12, metadata !{})
-  tail call void @llvm.dbg.value(metadata !{float %d}, i64 0, metadata !13, metadata !{})
+  tail call void @llvm.dbg.value(metadata !{float %a}, i64 0, metadata !0)
+  tail call void @llvm.dbg.value(metadata !{float %b}, i64 0, metadata !11)
+  tail call void @llvm.dbg.value(metadata !{float %c}, i64 0, metadata !12)
+  tail call void @llvm.dbg.value(metadata !{float %d}, i64 0, metadata !13)
   %0 = tail call float @fabsf(float %c) nounwind readnone, !dbg !19 ; <float> [#uses=1]
   %1 = tail call float @fabsf(float %d) nounwind readnone, !dbg !19 ; <float> [#uses=1]
   %2 = fcmp olt float %0, %1, !dbg !19            ; <i1> [#uses=1]
@@ -22,34 +22,34 @@ entry:
 
 bb:                                               ; preds = %entry
   %3 = fdiv float %c, %d, !dbg !20                ; <float> [#uses=3]
-  tail call void @llvm.dbg.value(metadata !{float %3}, i64 0, metadata !16, metadata !{}), !dbg !20
+  tail call void @llvm.dbg.value(metadata !{float %3}, i64 0, metadata !16), !dbg !20
   %4 = fmul float %3, %c, !dbg !21                ; <float> [#uses=1]
   %5 = fadd float %4, %d, !dbg !21                ; <float> [#uses=2]
-  tail call void @llvm.dbg.value(metadata !{float %5}, i64 0, metadata !14, metadata !{}), !dbg !21
+  tail call void @llvm.dbg.value(metadata !{float %5}, i64 0, metadata !14), !dbg !21
   %6 = fmul float %3, %a, !dbg !22                ; <float> [#uses=1]
   %7 = fadd float %6, %b, !dbg !22                ; <float> [#uses=1]
   %8 = fdiv float %7, %5, !dbg !22                ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata !{float %8}, i64 0, metadata !17, metadata !{}), !dbg !22
+  tail call void @llvm.dbg.value(metadata !{float %8}, i64 0, metadata !17), !dbg !22
   %9 = fmul float %3, %b, !dbg !23                ; <float> [#uses=1]
   %10 = fsub float %9, %a, !dbg !23               ; <float> [#uses=1]
   %11 = fdiv float %10, %5, !dbg !23              ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata !{float %11}, i64 0, metadata !18, metadata !{}), !dbg !23
+  tail call void @llvm.dbg.value(metadata !{float %11}, i64 0, metadata !18), !dbg !23
   br label %bb2, !dbg !23
 
 bb1:                                              ; preds = %entry
   %12 = fdiv float %d, %c, !dbg !24               ; <float> [#uses=3]
-  tail call void @llvm.dbg.value(metadata !{float %12}, i64 0, metadata !16, metadata !{}), !dbg !24
+  tail call void @llvm.dbg.value(metadata !{float %12}, i64 0, metadata !16), !dbg !24
   %13 = fmul float %12, %d, !dbg !25              ; <float> [#uses=1]
   %14 = fadd float %13, %c, !dbg !25              ; <float> [#uses=2]
-  tail call void @llvm.dbg.value(metadata !{float %14}, i64 0, metadata !14, metadata !{}), !dbg !25
+  tail call void @llvm.dbg.value(metadata !{float %14}, i64 0, metadata !14), !dbg !25
   %15 = fmul float %12, %b, !dbg !26              ; <float> [#uses=1]
   %16 = fadd float %15, %a, !dbg !26              ; <float> [#uses=1]
   %17 = fdiv float %16, %14, !dbg !26             ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata !{float %17}, i64 0, metadata !17, metadata !{}), !dbg !26
+  tail call void @llvm.dbg.value(metadata !{float %17}, i64 0, metadata !17), !dbg !26
   %18 = fmul float %12, %a, !dbg !27              ; <float> [#uses=1]
   %19 = fsub float %b, %18, !dbg !27              ; <float> [#uses=1]
   %20 = fdiv float %19, %14, !dbg !27             ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata !{float %20}, i64 0, metadata !18, metadata !{}), !dbg !27
+  tail call void @llvm.dbg.value(metadata !{float %20}, i64 0, metadata !18), !dbg !27
   br label %bb2, !dbg !27
 
 bb2:                                              ; preds = %bb1, %bb
@@ -75,9 +75,9 @@ bb6:                                              ; preds = %bb4
 bb8:                                              ; preds = %bb6
   %27 = tail call float @copysignf(float 0x7FF0000000000000, float %c) nounwind readnone, !dbg !30 ; <float> [#uses=2]
   %28 = fmul float %27, %a, !dbg !30              ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata !{float %28}, i64 0, metadata !17, metadata !{}), !dbg !30
+  tail call void @llvm.dbg.value(metadata !{float %28}, i64 0, metadata !17), !dbg !30
   %29 = fmul float %27, %b, !dbg !31              ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata !{float %29}, i64 0, metadata !18, metadata !{}), !dbg !31
+  tail call void @llvm.dbg.value(metadata !{float %29}, i64 0, metadata !18), !dbg !31
   br label %bb46, !dbg !31
 
 bb9:                                              ; preds = %bb6, %bb4
@@ -107,24 +107,24 @@ bb15:                                             ; preds = %bb14
 bb16:                                             ; preds = %bb15
   %iftmp.0.0 = select i1 %33, float 1.000000e+00, float 0.000000e+00 ; <float> [#uses=1]
   %42 = tail call float @copysignf(float %iftmp.0.0, float %a) nounwind readnone, !dbg !33 ; <float> [#uses=2]
-  tail call void @llvm.dbg.value(metadata !{float %42}, i64 0, metadata !0, metadata !{}), !dbg !33
+  tail call void @llvm.dbg.value(metadata !{float %42}, i64 0, metadata !0), !dbg !33
   %43 = fcmp ord float %b, 0.000000e+00           ; <i1> [#uses=1]
   %44 = fsub float %b, %b, !dbg !34               ; <float> [#uses=1]
   %45 = fcmp uno float %44, 0.000000e+00          ; <i1> [#uses=1]
   %46 = and i1 %43, %45, !dbg !34                 ; <i1> [#uses=1]
   %iftmp.1.0 = select i1 %46, float 1.000000e+00, float 0.000000e+00 ; <float> [#uses=1]
   %47 = tail call float @copysignf(float %iftmp.1.0, float %b) nounwind readnone, !dbg !34 ; <float> [#uses=2]
-  tail call void @llvm.dbg.value(metadata !{float %47}, i64 0, metadata !11, metadata !{}), !dbg !34
+  tail call void @llvm.dbg.value(metadata !{float %47}, i64 0, metadata !11), !dbg !34
   %48 = fmul float %42, %c, !dbg !35              ; <float> [#uses=1]
   %49 = fmul float %47, %d, !dbg !35              ; <float> [#uses=1]
   %50 = fadd float %48, %49, !dbg !35             ; <float> [#uses=1]
   %51 = fmul float %50, 0x7FF0000000000000, !dbg !35 ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata !{float %51}, i64 0, metadata !17, metadata !{}), !dbg !35
+  tail call void @llvm.dbg.value(metadata !{float %51}, i64 0, metadata !17), !dbg !35
   %52 = fmul float %47, %c, !dbg !36              ; <float> [#uses=1]
   %53 = fmul float %42, %d, !dbg !36              ; <float> [#uses=1]
   %54 = fsub float %52, %53, !dbg !36             ; <float> [#uses=1]
   %55 = fmul float %54, 0x7FF0000000000000, !dbg !36 ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata !{float %55}, i64 0, metadata !18, metadata !{}), !dbg !36
+  tail call void @llvm.dbg.value(metadata !{float %55}, i64 0, metadata !18), !dbg !36
   br label %bb46, !dbg !36
 
 bb27:                                             ; preds = %bb15, %bb14, %bb11
@@ -155,24 +155,24 @@ bb34:                                             ; preds = %bb33, %bb30
 bb35:                                             ; preds = %bb34
   %iftmp.2.0 = select i1 %59, float 1.000000e+00, float 0.000000e+00 ; <float> [#uses=1]
   %67 = tail call float @copysignf(float %iftmp.2.0, float %c) nounwind readnone, !dbg !38 ; <float> [#uses=2]
-  tail call void @llvm.dbg.value(metadata !{float %67}, i64 0, metadata !12, metadata !{}), !dbg !38
+  tail call void @llvm.dbg.value(metadata !{float %67}, i64 0, metadata !12), !dbg !38
   %68 = fcmp ord float %d, 0.000000e+00           ; <i1> [#uses=1]
   %69 = fsub float %d, %d, !dbg !39               ; <float> [#uses=1]
   %70 = fcmp uno float %69, 0.000000e+00          ; <i1> [#uses=1]
   %71 = and i1 %68, %70, !dbg !39                 ; <i1> [#uses=1]
   %iftmp.3.0 = select i1 %71, float 1.000000e+00, float 0.000000e+00 ; <float> [#uses=1]
   %72 = tail call float @copysignf(float %iftmp.3.0, float %d) nounwind readnone, !dbg !39 ; <float> [#uses=2]
-  tail call void @llvm.dbg.value(metadata !{float %72}, i64 0, metadata !13, metadata !{}), !dbg !39
+  tail call void @llvm.dbg.value(metadata !{float %72}, i64 0, metadata !13), !dbg !39
   %73 = fmul float %67, %a, !dbg !40              ; <float> [#uses=1]
   %74 = fmul float %72, %b, !dbg !40              ; <float> [#uses=1]
   %75 = fadd float %73, %74, !dbg !40             ; <float> [#uses=1]
   %76 = fmul float %75, 0.000000e+00, !dbg !40    ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata !{float %76}, i64 0, metadata !17, metadata !{}), !dbg !40
+  tail call void @llvm.dbg.value(metadata !{float %76}, i64 0, metadata !17), !dbg !40
   %77 = fmul float %67, %b, !dbg !41              ; <float> [#uses=1]
   %78 = fmul float %72, %a, !dbg !41              ; <float> [#uses=1]
   %79 = fsub float %77, %78, !dbg !41             ; <float> [#uses=1]
   %80 = fmul float %79, 0.000000e+00, !dbg !41    ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata !{float %80}, i64 0, metadata !18, metadata !{}), !dbg !41
+  tail call void @llvm.dbg.value(metadata !{float %80}, i64 0, metadata !18), !dbg !41
   br label %bb46, !dbg !41
 
 bb46:                                             ; preds = %bb35, %bb34, %bb33, %bb30, %bb16, %bb8, %bb2
@@ -196,7 +196,7 @@ declare float @fabsf(float)
 
 declare float @copysignf(float, float) nounwind readnone
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!48}

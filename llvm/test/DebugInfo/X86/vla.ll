@@ -27,13 +27,13 @@ entry:
   %saved_stack = alloca i8*
   %cleanup.dest.slot = alloca i32
   store i32 %n, i32* %n.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %n.addr}, metadata !15, metadata !{}), !dbg !16
+  call void @llvm.dbg.declare(metadata !{i32* %n.addr}, metadata !15), !dbg !16
   %0 = load i32* %n.addr, align 4, !dbg !17
   %1 = zext i32 %0 to i64, !dbg !17
   %2 = call i8* @llvm.stacksave(), !dbg !17
   store i8* %2, i8** %saved_stack, !dbg !17
   %vla = alloca i32, i64 %1, align 16, !dbg !17
-  call void @llvm.dbg.declare(metadata !{i32* %vla}, metadata !18, metadata !{}), !dbg !17
+  call void @llvm.dbg.declare(metadata !{i32* %vla}, metadata !18), !dbg !17
   %arrayidx = getelementptr inbounds i32* %vla, i64 0, !dbg !22
   store i32 42, i32* %arrayidx, align 4, !dbg !22
   %3 = load i32* %n.addr, align 4, !dbg !23
@@ -48,7 +48,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 ; Function Attrs: nounwind
 declare i8* @llvm.stacksave() nounwind
@@ -64,9 +64,9 @@ entry:
   %argv.addr = alloca i8**, align 8
   store i32 0, i32* %retval
   store i32 %argc, i32* %argc.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %argc.addr}, metadata !25, metadata !{}), !dbg !26
+  call void @llvm.dbg.declare(metadata !{i32* %argc.addr}, metadata !25), !dbg !26
   store i8** %argv, i8*** %argv.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i8*** %argv.addr}, metadata !27, metadata !{}), !dbg !26
+  call void @llvm.dbg.declare(metadata !{i8*** %argv.addr}, metadata !27), !dbg !26
   %0 = load i32* %argc.addr, align 4, !dbg !28
   %call = call i32 @vla(i32 %0), !dbg !28
   ret i32 %call, !dbg !28

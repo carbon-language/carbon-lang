@@ -56,14 +56,14 @@ entry:
   %self.addr = alloca %0*, align 8
   %_cmd.addr = alloca i8*, align 8
   store %0* %self, %0** %self.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%0** %self.addr}, metadata !24, metadata !{}), !dbg !26
+  call void @llvm.dbg.declare(metadata !{%0** %self.addr}, metadata !24), !dbg !26
   store i8* %_cmd, i8** %_cmd.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i8** %_cmd.addr}, metadata !27, metadata !{}), !dbg !26
+  call void @llvm.dbg.declare(metadata !{i8** %_cmd.addr}, metadata !27), !dbg !26
   ret void, !dbg !29
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata) #1
 
 attributes #0 = { ssp uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

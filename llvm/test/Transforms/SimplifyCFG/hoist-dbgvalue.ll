@@ -1,8 +1,8 @@
 ; RUN: opt -simplifycfg -S < %s | FileCheck %s
 
 define i32 @foo(i32 %i) nounwind ssp {
-  call void @llvm.dbg.value(metadata !{i32 %i}, i64 0, metadata !6, metadata !{}), !dbg !7
-  call void @llvm.dbg.value(metadata !8, i64 0, metadata !9, metadata !{}), !dbg !11
+  call void @llvm.dbg.value(metadata !{i32 %i}, i64 0, metadata !6), !dbg !7
+  call void @llvm.dbg.value(metadata !8, i64 0, metadata !9), !dbg !11
   %1 = icmp ne i32 %i, 0, !dbg !12
 ;CHECK: call i32 (...)* @bar()
 ;CHECK-NEXT: llvm.dbg.value
@@ -10,12 +10,12 @@ define i32 @foo(i32 %i) nounwind ssp {
 
 ; <label>:2                                       ; preds = %0
   %3 = call i32 (...)* @bar(), !dbg !13
-  call void @llvm.dbg.value(metadata !{i32 %3}, i64 0, metadata !9, metadata !{}), !dbg !13
+  call void @llvm.dbg.value(metadata !{i32 %3}, i64 0, metadata !9), !dbg !13
   br label %6, !dbg !15
 
 ; <label>:4                                       ; preds = %0
   %5 = call i32 (...)* @bar(), !dbg !16
-  call void @llvm.dbg.value(metadata !{i32 %5}, i64 0, metadata !9, metadata !{}), !dbg !16
+  call void @llvm.dbg.value(metadata !{i32 %5}, i64 0, metadata !9), !dbg !16
   br label %6, !dbg !18
 
 ; <label>:6                                       ; preds = %4, %2
@@ -23,11 +23,11 @@ define i32 @foo(i32 %i) nounwind ssp {
   ret i32 %k.0, !dbg !19
 }
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 declare i32 @bar(...)
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.module.flags = !{!21}
 !llvm.dbg.sp = !{!0}

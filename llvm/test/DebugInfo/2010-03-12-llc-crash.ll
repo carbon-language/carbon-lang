@@ -1,11 +1,11 @@
 ; RUN: llc -O0 < %s -o /dev/null
 ; llc should not crash on this invalid input.
 ; PR6588
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 define void @foo() {
 entry:
-  call void @llvm.dbg.declare(metadata !{i32* undef}, metadata !0, metadata !{})
+  call void @llvm.dbg.declare(metadata !{i32* undef}, metadata !0)
   ret void
 }
 

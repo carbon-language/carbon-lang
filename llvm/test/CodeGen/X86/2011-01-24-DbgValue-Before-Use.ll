@@ -22,8 +22,8 @@ target triple = "x86_64-apple-darwin10.0.0"
 
 define i64 @gcd(i64 %a, i64 %b) nounwind readnone optsize noinline ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i64 %a}, i64 0, metadata !10, metadata !{}), !dbg !18
-  tail call void @llvm.dbg.value(metadata !{i64 %b}, i64 0, metadata !11, metadata !{}), !dbg !19
+  tail call void @llvm.dbg.value(metadata !{i64 %a}, i64 0, metadata !10), !dbg !18
+  tail call void @llvm.dbg.value(metadata !{i64 %b}, i64 0, metadata !11), !dbg !19
   br label %while.body, !dbg !20
 
 while.body:                                       ; preds = %while.body, %entry
@@ -34,14 +34,14 @@ while.body:                                       ; preds = %while.body, %entry
   br i1 %cmp, label %if.then, label %while.body, !dbg !23
 
 if.then:                                          ; preds = %while.body
-  tail call void @llvm.dbg.value(metadata !{i64 %rem}, i64 0, metadata !12, metadata !{}), !dbg !21
+  tail call void @llvm.dbg.value(metadata !{i64 %rem}, i64 0, metadata !12), !dbg !21
   ret i64 %b.addr.0, !dbg !23
 }
 
 define i32 @main() nounwind optsize ssp {
 entry:
   %call = tail call i32 @rand() nounwind optsize, !dbg !24
-  tail call void @llvm.dbg.value(metadata !{i32 %call}, i64 0, metadata !14, metadata !{}), !dbg !24
+  tail call void @llvm.dbg.value(metadata !{i32 %call}, i64 0, metadata !14), !dbg !24
   %cmp = icmp ugt i32 %call, 21, !dbg !25
   br i1 %cmp, label %cond.true, label %cond.end, !dbg !25
 
@@ -51,7 +51,7 @@ cond.true:                                        ; preds = %entry
 
 cond.end:                                         ; preds = %entry, %cond.true
   %cond = phi i32 [ %call1, %cond.true ], [ %call, %entry ], !dbg !25
-  tail call void @llvm.dbg.value(metadata !{i32 %cond}, i64 0, metadata !17, metadata !{}), !dbg !25
+  tail call void @llvm.dbg.value(metadata !{i32 %cond}, i64 0, metadata !17), !dbg !25
   %conv = sext i32 %cond to i64, !dbg !26
   %conv5 = zext i32 %call to i64, !dbg !26
   %call6 = tail call i64 @gcd(i64 %conv, i64 %conv5) optsize, !dbg !26
@@ -71,7 +71,7 @@ declare i32 @rand() optsize
 
 declare i32 @printf(i8* nocapture, ...) nounwind optsize
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 declare i32 @puts(i8* nocapture) nounwind
 

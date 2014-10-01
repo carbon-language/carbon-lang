@@ -20,7 +20,7 @@ entry:
   %agg.tmp4 = alloca %class.function, align 1
   %agg.tmp5 = alloca %class.anon.0, align 1
   store %class.BPLFunctionWriter* %this, %class.BPLFunctionWriter** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.BPLFunctionWriter** %this.addr}, metadata !133, metadata !{}), !dbg !135
+  call void @llvm.dbg.declare(metadata !{%class.BPLFunctionWriter** %this.addr}, metadata !133), !dbg !135
   %this1 = load %class.BPLFunctionWriter** %this.addr
   %MW = getelementptr inbounds %class.BPLFunctionWriter* %this1, i32 0, i32 0, !dbg !136
   %0 = load %struct.BPLModuleWriter** %MW, align 8, !dbg !136
@@ -33,7 +33,7 @@ entry:
   ret void, !dbg !139
 }
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 declare void @_ZN15BPLModuleWriter14writeIntrinsicE8functionIFvvEE(%struct.BPLModuleWriter*)
 
@@ -42,8 +42,8 @@ entry:
   %this.addr = alloca %class.function*, align 8
   %__f = alloca %class.anon.0, align 1
   store %class.function* %this, %class.function** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.function** %this.addr}, metadata !140, metadata !{}), !dbg !142
-  call void @llvm.dbg.declare(metadata !{%class.anon.0* %__f}, metadata !143, metadata !{}), !dbg !144
+  call void @llvm.dbg.declare(metadata !{%class.function** %this.addr}, metadata !140), !dbg !142
+  call void @llvm.dbg.declare(metadata !{%class.anon.0* %__f}, metadata !143), !dbg !144
   %this1 = load %class.function** %this.addr
   call void @"_ZN13_Base_manager21_M_not_empty_functionIZN17BPLFunctionWriter9writeExprEvE3$_1_0EEvRKT_"(%class.anon.0* %__f), !dbg !145
   ret void, !dbg !147
@@ -61,8 +61,8 @@ entry:
   %this.addr = alloca %class.function*, align 8
   %__f = alloca %class.anon, align 1
   store %class.function* %this, %class.function** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.function** %this.addr}, metadata !150, metadata !{}), !dbg !151
-  call void @llvm.dbg.declare(metadata !{%class.anon* %__f}, metadata !152, metadata !{}), !dbg !153
+  call void @llvm.dbg.declare(metadata !{%class.function** %this.addr}, metadata !150), !dbg !151
+  call void @llvm.dbg.declare(metadata !{%class.anon* %__f}, metadata !152), !dbg !153
   %this1 = load %class.function** %this.addr
   call void @"_ZN13_Base_manager21_M_not_empty_functionIZN17BPLFunctionWriter9writeExprEvE3$_0EEvRKT_"(%class.anon* %__f), !dbg !154
   ret void, !dbg !156

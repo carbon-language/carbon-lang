@@ -43,7 +43,7 @@ entry:
   %b.i3 = alloca i8, align 1
   %retval.i = alloca i32, align 4
   %b.i = alloca i8, align 1
-  call void @llvm.dbg.declare(metadata !{i8* %b.i}, metadata !16, metadata !{}), !dbg !19
+  call void @llvm.dbg.declare(metadata !{i8* %b.i}, metadata !16), !dbg !19
   %call.i = call zeroext i1 @_Z1fv(), !dbg !19
   %frombool.i = zext i1 %call.i to i8, !dbg !19
   store i8 %frombool.i, i8* %b.i, align 1, !dbg !19
@@ -61,7 +61,7 @@ if.end.i:                                         ; preds = %entry
 
 _Z2f1v.exit:                                      ; preds = %if.then.i, %if.end.i
   %1 = load i32* %retval.i, !dbg !23
-  call void @llvm.dbg.declare(metadata !{i8* %b.i3}, metadata !24, metadata !{}), !dbg !27
+  call void @llvm.dbg.declare(metadata !{i8* %b.i3}, metadata !24), !dbg !27
   %call.i4 = call zeroext i1 @_Z1fv(), !dbg !27
   %frombool.i5 = zext i1 %call.i4 to i8, !dbg !27
   store i8 %frombool.i5, i8* %b.i3, align 1, !dbg !27
@@ -83,7 +83,7 @@ _Z2f2v.exit:                                      ; preds = %if.then.i7, %if.end
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata) #1
 
 declare zeroext i1 @_Z1fv() #2
 

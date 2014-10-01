@@ -993,7 +993,6 @@ static bool LdStHasDebugValue(DIVariable &DIVar, Instruction *I) {
 bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                            StoreInst *SI, DIBuilder &Builder) {
   DIVariable DIVar(DDI->getVariable());
-  DIExpression DIExpr(DDI->getExpression());
   assert((!DIVar || DIVar.isVariable()) &&
          "Variable in DbgDeclareInst should be either null or a DIVariable.");
   if (!DIVar)
@@ -1011,10 +1010,9 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
   if (SExtInst *SExt = dyn_cast<SExtInst>(SI->getOperand(0)))
     ExtendedArg = dyn_cast<Argument>(SExt->getOperand(0));
   if (ExtendedArg)
-    DbgVal = Builder.insertDbgValueIntrinsic(ExtendedArg, 0, DIVar, DIExpr, SI);
+    DbgVal = Builder.insertDbgValueIntrinsic(ExtendedArg, 0, DIVar, SI);
   else
-    DbgVal = Builder.insertDbgValueIntrinsic(SI->getOperand(0), 0, DIVar,
-                                             DIExpr, SI);
+    DbgVal = Builder.insertDbgValueIntrinsic(SI->getOperand(0), 0, DIVar, SI);
   DbgVal->setDebugLoc(DDI->getDebugLoc());
   return true;
 }
@@ -1024,7 +1022,6 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
 bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                            LoadInst *LI, DIBuilder &Builder) {
   DIVariable DIVar(DDI->getVariable());
-  DIExpression DIExpr(DDI->getExpression());
   assert((!DIVar || DIVar.isVariable()) &&
          "Variable in DbgDeclareInst should be either null or a DIVariable.");
   if (!DIVar)
@@ -1034,7 +1031,8 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
     return true;
 
   Instruction *DbgVal =
-      Builder.insertDbgValueIntrinsic(LI->getOperand(0), 0, DIVar, DIExpr, LI);
+    Builder.insertDbgValueIntrinsic(LI->getOperand(0), 0,
+                                    DIVar, LI);
   DbgVal->setDebugLoc(DDI->getDebugLoc());
   return true;
 }
@@ -1077,11 +1075,11 @@ bool llvm::LowerDbgDeclare(Function &F) {
 	  // This is a call by-value or some other instruction that
 	  // takes a pointer to the variable. Insert a *value*
 	  // intrinsic that describes the alloca.
-          auto DbgVal = DIB.insertDbgValueIntrinsic(
-              AI, 0, DIVariable(DDI->getVariable()),
-              DIExpression(DDI->getExpression()), CI);
-          DbgVal->setDebugLoc(DDI->getDebugLoc());
-        }
+	  auto DbgVal =
+	    DIB.insertDbgValueIntrinsic(AI, 0,
+					DIVariable(DDI->getVariable()), CI);
+	  DbgVal->setDebugLoc(DDI->getDebugLoc());
+	}
       DDI->eraseFromParent();
     }
   }
@@ -1105,7 +1103,6 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
   if (!DDI)
     return false;
   DIVariable DIVar(DDI->getVariable());
-  DIExpression DIExpr(DDI->getExpression());
   assert((!DIVar || DIVar.isVariable()) &&
          "Variable in DbgDeclareInst should be either null or a DIVariable.");
   if (!DIVar)
@@ -1116,19 +1113,23 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
   // will take a value storing address of the memory for variable, not
   // alloca itself.
   Type *Int64Ty = Type::getInt64Ty(AI->getContext());
-  SmallVector<Value *, 4> NewDIExpr;
-  if (DIExpr) {
-    for (unsigned i = 0, n = DIExpr.getNumElements(); i < n; ++i) {
-      NewDIExpr.push_back(ConstantInt::get(Int64Ty, DIExpr.getElement(i)));
+  SmallVector<Value*, 4> NewDIVarAddress;
+  if (DIVar.hasComplexAddress()) {
+    for (unsigned i = 0, n = DIVar.getNumAddrElements(); i < n; ++i) {
+      NewDIVarAddress.push_back(
+          ConstantInt::get(Int64Ty, DIVar.getAddrElement(i)));
     }
   }
-  NewDIExpr.push_back(ConstantInt::get(Int64Ty, dwarf::DW_OP_deref));
+  NewDIVarAddress.push_back(ConstantInt::get(Int64Ty, DIBuilder::OpDeref));
+  DIVariable NewDIVar = Builder.createComplexVariable(
+      DIVar.getTag(), DIVar.getContext(), DIVar.getName(),
+      DIVar.getFile(), DIVar.getLineNumber(), DIVar.getType(),
+      NewDIVarAddress, DIVar.getArgNumber());
 
   // Insert llvm.dbg.declare in the same basic block as the original alloca,
   // and remove old llvm.dbg.declare.
   BasicBlock *BB = AI->getParent();
-  Builder.insertDeclare(NewAllocaAddress, DIVar,
-                        Builder.createExpression(NewDIExpr), BB);
+  Builder.insertDeclare(NewAllocaAddress, NewDIVar, BB);
   DDI->eraseFromParent();
   return true;
 }

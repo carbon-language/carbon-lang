@@ -32,16 +32,16 @@ target triple = "x86_64-apple-macosx10.9.0"
 ; Function Attrs: nounwind ssp uwtable
 define i32 @foo(i64 %s.coerce0, i32 %s.coerce1) #0 {
 entry:
-  call void @llvm.dbg.value(metadata !{i64 %s.coerce0}, i64 0, metadata !20, metadata !24), !dbg !21
-  call void @llvm.dbg.value(metadata !{i32 %s.coerce1}, i64 0, metadata !22, metadata !27), !dbg !21
+  call void @llvm.dbg.value(metadata !{i64 %s.coerce0}, i64 0, metadata !20), !dbg !21
+  call void @llvm.dbg.value(metadata !{i32 %s.coerce1}, i64 0, metadata !22), !dbg !21
   ret i32 %s.coerce1, !dbg !23
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata) #1
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
+declare void @llvm.dbg.value(metadata, i64, metadata) #1
 
 attributes #0 = { nounwind ssp uwtable "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" }
 attributes #1 = { nounwind readnone }
@@ -70,10 +70,10 @@ attributes #1 = { nounwind readnone }
 !17 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
 !18 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
 !19 = metadata !{metadata !"clang version 3.5 "}
-!20 = metadata !{i32 786689, metadata !4, metadata !"s", metadata !5, i32 16777219, metadata !9, i32 0, i32 0} ;; [ DW_TAG_arg_variable ] [s] [line 3]
+!20 = metadata !{i32 786689, metadata !4, metadata !"s", metadata !5, i32 16777219, metadata !9, i32 0, i32 0, metadata !24} ; [ DW_TAG_arg_variable ] [s] [line 3] [piece, size 8, offset 0]
 !21 = metadata !{i32 3, i32 0, metadata !4, null}
-!22 = metadata !{i32 786689, metadata !4, metadata !"s", metadata !5, i32 16777219, metadata !9, i32 0, i32 0} ;; [ DW_TAG_arg_variable ] [s] [line 3]
+!22 = metadata !{i32 786689, metadata !4, metadata !"s", metadata !5, i32 16777219, metadata !9, i32 0, i32 0, metadata !27} ; [ DW_TAG_arg_variable ] [s] [line 3] [piece, size 4, offset 8]
 !23 = metadata !{i32 4, i32 0, metadata !4, null}
-!24 = metadata !{i32 786690, i64 147, i64 0, i64 8} ; [DW_OP_piece 0 8] [piece, size 8, offset 0]
+!24 = metadata !{i64 3, i64 0, i64 8}
 !25 = metadata !{}
-!27 = metadata !{i32 786690, i64 147, i64 8, i64 4} ; [DW_OP_piece 8 4] [piece, size 4, offset 8]
+!27 = metadata !{i64 3, i64 8, i64 4}

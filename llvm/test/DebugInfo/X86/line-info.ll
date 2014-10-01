@@ -18,14 +18,14 @@ define i32 @foo(i32 %x) #0 {
 entry:
   %x.addr = alloca i32, align 4
   store i32 %x, i32* %x.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %x.addr}, metadata !14, metadata !{}), !dbg !15
+  call void @llvm.dbg.declare(metadata !{i32* %x.addr}, metadata !14), !dbg !15
   %0 = load i32* %x.addr, align 4, !dbg !16
   %inc = add nsw i32 %0, 1, !dbg !16
   store i32 %inc, i32* %x.addr, align 4, !dbg !16
   ret i32 %inc, !dbg !16
 }
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata) #1
 
 define i32 @main() #0 {
 entry:

@@ -25,7 +25,7 @@ define void @_Z19getClosestDiagonal3ii(%0* noalias sret, i32, i32) nounwind {
   %storemerge = phi double [ -1.000000e+00, %4 ], [ 1.000000e+00, %3 ], [ 1.000000e+00, %3 ] ; <double> [#uses=1]
   %v_6 = icmp slt i32 %1, 2                         ; <i1> [#uses=1]
   %storemerge1 = select i1 %v_6, double 1.000000e+00, double -1.000000e+00 ; <double> [#uses=3]
-  call void @llvm.dbg.value(metadata !{double %storemerge}, i64 0, metadata !91, metadata !{}), !dbg !0
+  call void @llvm.dbg.value(metadata !{double %storemerge}, i64 0, metadata !91), !dbg !0
   %v_7 = icmp eq i32 %2, 1, !dbg !92                ; <i1> [#uses=1]
   %storemerge2 = select i1 %v_7, double 1.000000e+00, double -1.000000e+00 ; <double> [#uses=3]
   %v_8 = getelementptr inbounds %0* %0, i32 0, i32 0, i32 0 ; <double*> [#uses=1]
@@ -40,11 +40,11 @@ define void @_Z19getClosestDiagonal3ii(%0* noalias sret, i32, i32) nounwind {
   ret void, !dbg !98
 }
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 declare double @sqrt(double) nounwind readonly
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!5}
 !llvm.module.flags = !{!104}

@@ -40,16 +40,16 @@ target triple = "x86_64-apple-macosx10.9.0"
 ; Function Attrs: noinline nounwind ssp uwtable
 define void @doSomething(%struct.bar* nocapture readonly %b) #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata !{%struct.bar* %b}, i64 0, metadata !15, metadata !{}), !dbg !25
+  tail call void @llvm.dbg.value(metadata !{%struct.bar* %b}, i64 0, metadata !15), !dbg !25
   %a1 = getelementptr inbounds %struct.bar* %b, i64 0, i32 0, !dbg !26
   %0 = load i32* %a1, align 4, !dbg !26, !tbaa !27
-  tail call void @llvm.dbg.value(metadata !{i32 %0}, i64 0, metadata !16, metadata !{}), !dbg !26
+  tail call void @llvm.dbg.value(metadata !{i32 %0}, i64 0, metadata !16), !dbg !26
   %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32 %0) #4, !dbg !32
   ret void, !dbg !33
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata) #1
 
 ; Function Attrs: nounwind
 declare i32 @printf(i8* nocapture readonly, ...) #2
@@ -59,14 +59,14 @@ define i32 @main() #3 {
 entry:
   %myBar = alloca i64, align 8, !dbg !34
   %tmpcast = bitcast i64* %myBar to %struct.bar*, !dbg !34
-  tail call void @llvm.dbg.declare(metadata !{%struct.bar* %tmpcast}, metadata !21, metadata !{}), !dbg !34
+  tail call void @llvm.dbg.declare(metadata !{%struct.bar* %tmpcast}, metadata !21), !dbg !34
   store i64 17179869187, i64* %myBar, align 8, !dbg !34
   call void @doSomething(%struct.bar* %tmpcast), !dbg !35
   ret i32 0, !dbg !36
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
+declare void @llvm.dbg.value(metadata, i64, metadata) #1
 
 attributes #0 = { noinline nounwind ssp uwtable }
 attributes #1 = { nounwind readnone }

@@ -32,14 +32,14 @@ sw.bb735:                                         ; preds = %if.end511
   unreachable
 
 if.end41.i2210:                                   ; preds = %if.end511
-  call void @llvm.dbg.value(metadata !{x86_fp80 %src.sroa.0.0.src.sroa.0.0.2280}, i64 0, metadata !20, metadata !{})
+  call void @llvm.dbg.value(metadata !{x86_fp80 %src.sroa.0.0.src.sroa.0.0.2280}, i64 0, metadata !20)
   unreachable
 
 sw.bb992:                                         ; preds = %if.end511
   ret void
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
+declare void @llvm.dbg.value(metadata, i64, metadata)
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!24, !25}

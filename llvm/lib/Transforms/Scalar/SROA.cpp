@@ -891,8 +891,8 @@ public:
         continue;
       }
       Instruction *DbgVal =
-          DIB.insertDbgValueIntrinsic(Arg, 0, DIVariable(DVI->getVariable()),
-                                      DIExpression(DVI->getExpression()), Inst);
+        DIB.insertDbgValueIntrinsic(Arg, 0, DIVariable(DVI->getVariable()),
+                                     Inst);
       DbgVal->setDebugLoc(DVI->getDebugLoc());
     }
   }

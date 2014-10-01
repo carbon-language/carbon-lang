@@ -29,7 +29,7 @@ define void @f(i32* %p) #0 {
 entry:
   %p.addr = alloca i32*, align 8
   store i32* %p, i32** %p.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i32** %p.addr}, metadata !19, metadata !{}), !dbg !20
+  call void @llvm.dbg.declare(metadata !{i32** %p.addr}, metadata !19), !dbg !20
   %0 = load i32** %p.addr, align 8, !dbg !21
   %arrayidx = getelementptr inbounds i32* %0, i64 0, !dbg !21
   store i32 42, i32* %arrayidx, align 4, !dbg !21
@@ -37,7 +37,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata) #1
 
 ; Function Attrs: nounwind ssp uwtable
 define i32 @main(i32 %argc, i8** %argv) #0 {
@@ -48,10 +48,10 @@ entry:
   %array = alloca [4 x i32], align 16
   store i32 0, i32* %retval
   store i32 %argc, i32* %argc.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %argc.addr}, metadata !23, metadata !{}), !dbg !24
+  call void @llvm.dbg.declare(metadata !{i32* %argc.addr}, metadata !23), !dbg !24
   store i8** %argv, i8*** %argv.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i8*** %argv.addr}, metadata !25, metadata !{}), !dbg !24
-  call void @llvm.dbg.declare(metadata !{[4 x i32]* %array}, metadata !26, metadata !{}), !dbg !30
+  call void @llvm.dbg.declare(metadata !{i8*** %argv.addr}, metadata !25), !dbg !24
+  call void @llvm.dbg.declare(metadata !{[4 x i32]* %array}, metadata !26), !dbg !30
   %0 = bitcast [4 x i32]* %array to i8*, !dbg !30
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* bitcast ([4 x i32]* @main.array to i8*), i64 16, i32 16, i1 false), !dbg !30
   %arraydecay = getelementptr inbounds [4 x i32]* %array, i32 0, i32 0, !dbg !31

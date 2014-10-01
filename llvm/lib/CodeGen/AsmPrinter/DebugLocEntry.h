@@ -26,29 +26,24 @@ class DebugLocEntry {
 public:
   /// A single location or constant.
   struct Value {
-    Value(const MDNode *Var, const MDNode *Expr, int64_t i)
-        : Variable(Var), Expression(Expr), EntryKind(E_Integer) {
+    Value(const MDNode *Var, int64_t i)
+      : Variable(Var), EntryKind(E_Integer) {
       Constant.Int = i;
     }
-    Value(const MDNode *Var, const MDNode *Expr, const ConstantFP *CFP)
-        : Variable(Var), Expression(Expr), EntryKind(E_ConstantFP) {
+    Value(const MDNode *Var, const ConstantFP *CFP)
+      : Variable(Var), EntryKind(E_ConstantFP) {
       Constant.CFP = CFP;
     }
-    Value(const MDNode *Var, const MDNode *Expr, const ConstantInt *CIP)
-        : Variable(Var), Expression(Expr), EntryKind(E_ConstantInt) {
+    Value(const MDNode *Var, const ConstantInt *CIP)
+      : Variable(Var), EntryKind(E_ConstantInt) {
       Constant.CIP = CIP;
     }
-    Value(const MDNode *Var, const MDNode *Expr, MachineLocation Loc)
-        : Variable(Var), Expression(Expr), EntryKind(E_Location), Loc(Loc) {
-      assert(DIVariable(Var).Verify());
-      assert(DIExpression(Expr).Verify());
+    Value(const MDNode *Var, MachineLocation Loc)
+      : Variable(Var), EntryKind(E_Location), Loc(Loc) {
     }
 
     // The variable to which this location entry corresponds.
     const MDNode *Variable;
-
-    // Any complex address location expression for this Value.
-    const MDNode *Expression;
 
     // Type of entry that this represents.
     enum EntryType { E_Location, E_Integer, E_ConstantFP, E_ConstantInt };
@@ -74,8 +69,7 @@ public:
     MachineLocation getLoc() const { return Loc; }
     const MDNode *getVariableNode() const { return Variable; }
     DIVariable getVariable() const { return DIVariable(Variable); }
-    bool isVariablePiece() const { return getExpression().isVariablePiece(); }
-    DIExpression getExpression() const { return DIExpression(Expression); }
+    bool isVariablePiece() const { return getVariable().isVariablePiece(); }
     friend bool operator==(const Value &, const Value &);
     friend bool operator<(const Value &, const Value &);
   };
@@ -96,13 +90,11 @@ public:
   // list of values.
   // Return true if the merge was successful.
   bool MergeValues(const DebugLocEntry &Next) {
-    if (Begin == Next.Begin) {
-      DIExpression Expr(Values[0].Expression);
+    if (Begin == Next.Begin && Values.size() > 0 && Next.Values.size() > 0) {
       DIVariable Var(Values[0].Variable);
-      DIExpression NextExpr(Next.Values[0].Expression);
       DIVariable NextVar(Next.Values[0].Variable);
-      if (Var == NextVar && Expr.isVariablePiece() &&
-          NextExpr.isVariablePiece()) {
+      if (Var.getName() == NextVar.getName() &&
+          Var.isVariablePiece() && NextVar.isVariablePiece()) {
         addValues(Next.Values);
         End = Next.End;
         return true;
@@ -141,10 +133,8 @@ public:
     std::sort(Values.begin(), Values.end());
     Values.erase(std::unique(Values.begin(), Values.end(),
                              [](const Value &A, const Value &B) {
-                   return A.getVariable() == B.getVariable() &&
-                          A.getExpression() == B.getExpression();
-                 }),
-                 Values.end());
+                               return A.getVariable() == B.getVariable();
+                               }), Values.end());
   }
 };
 
@@ -154,10 +144,7 @@ inline bool operator==(const DebugLocEntry::Value &A,
   if (A.EntryKind != B.EntryKind)
     return false;
 
-  if (A.Expression != B.Expression)
-    return false;
-
-  if (A.Variable != B.Variable)
+  if (A.getVariable() != B.getVariable())
     return false;
 
   switch (A.EntryKind) {
@@ -176,8 +163,7 @@ inline bool operator==(const DebugLocEntry::Value &A,
 /// Compare two pieces based on their offset.
 inline bool operator<(const DebugLocEntry::Value &A,
                       const DebugLocEntry::Value &B) {
-  return A.getExpression().getPieceOffset() <
-         B.getExpression().getPieceOffset();
+  return A.getVariable().getPieceOffset() < B.getVariable().getPieceOffset();
 }
 
 }

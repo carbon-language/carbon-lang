@@ -23,11 +23,11 @@ target triple = "x86_64-apple-macosx10.7.0"
 
 define i32 @depth(double* nocapture %A, i32 %m) #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata !{double* %A}, i64 0, metadata !12, metadata !{}), !dbg !19
-  tail call void @llvm.dbg.value(metadata !{i32 %m}, i64 0, metadata !13, metadata !{}), !dbg !19
-  tail call void @llvm.dbg.value(metadata !20, i64 0, metadata !14, metadata !{}), !dbg !21
-  tail call void @llvm.dbg.value(metadata !22, i64 0, metadata !15, metadata !{}), !dbg !21
-  tail call void @llvm.dbg.value(metadata !2, i64 0, metadata !16, metadata !{}), !dbg !23
+  tail call void @llvm.dbg.value(metadata !{double* %A}, i64 0, metadata !12), !dbg !19
+  tail call void @llvm.dbg.value(metadata !{i32 %m}, i64 0, metadata !13), !dbg !19
+  tail call void @llvm.dbg.value(metadata !20, i64 0, metadata !14), !dbg !21
+  tail call void @llvm.dbg.value(metadata !22, i64 0, metadata !15), !dbg !21
+  tail call void @llvm.dbg.value(metadata !2, i64 0, metadata !16), !dbg !23
   %cmp8 = icmp sgt i32 %m, 0, !dbg !23
   br i1 %cmp8, label %for.body.lr.ph, label %for.end, !dbg !23
 
@@ -49,7 +49,7 @@ for.end:                                          ; preds = %for.body.lr.ph, %en
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
+declare void @llvm.dbg.value(metadata, i64, metadata) #1
 
 attributes #0 = { nounwind ssp uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf"="true" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

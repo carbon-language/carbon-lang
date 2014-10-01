@@ -649,18 +649,14 @@ MachineInstr *
 InstrEmitter::EmitDbgValue(SDDbgValue *SD,
                            DenseMap<SDValue, unsigned> &VRBaseMap) {
   uint64_t Offset = SD->getOffset();
-  MDNode *Var = SD->getVariable();
-  MDNode *Expr = SD->getExpression();
+  MDNode* MDPtr = SD->getMDPtr();
   DebugLoc DL = SD->getDebugLoc();
 
   if (SD->getKind() == SDDbgValue::FRAMEIX) {
     // Stack address; this needs to be lowered in target-dependent fashion.
     // EmitTargetCodeForFrameDebugValue is responsible for allocation.
     return BuildMI(*MF, DL, TII->get(TargetOpcode::DBG_VALUE))
-        .addFrameIndex(SD->getFrameIx())
-        .addImm(Offset)
-        .addMetadata(Var)
-        .addMetadata(Expr);
+        .addFrameIndex(SD->getFrameIx()).addImm(Offset).addMetadata(MDPtr);
   }
   // Otherwise, we're going to create an instruction here.
   const MCInstrDesc &II = TII->get(TargetOpcode::DBG_VALUE);
@@ -706,8 +702,7 @@ InstrEmitter::EmitDbgValue(SDDbgValue *SD,
     MIB.addReg(0U, RegState::Debug);
   }
 
-  MIB.addMetadata(Var);
-  MIB.addMetadata(Expr);
+  MIB.addMetadata(MDPtr);
 
   return &*MIB;
 }

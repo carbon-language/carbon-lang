@@ -11,12 +11,12 @@ if.then24:                                        ; preds = %entry
   unreachable
 
 if.else295:                                       ; preds = %entry
-  call void @llvm.dbg.declare(metadata !{i32* %do_tab_convert}, metadata !16, metadata !{}), !dbg !18
+  call void @llvm.dbg.declare(metadata !{i32* %do_tab_convert}, metadata !16), !dbg !18
   store i32 0, i32* %do_tab_convert, align 4, !dbg !19
   unreachable
 }
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 !llvm.dbg.gv = !{!0}
 !llvm.dbg.sp = !{!1, !7, !10, !11, !12}

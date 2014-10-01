@@ -64,20 +64,20 @@ define i32 @_Z3bari(i32 %b) #0 {
 entry:
   %b.addr = alloca i32, align 4
   store i32 %b, i32* %b.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %b.addr}, metadata !21, metadata !{}), !dbg !22
+  call void @llvm.dbg.declare(metadata !{i32* %b.addr}, metadata !21), !dbg !22
   %0 = load i32* %b.addr, align 4, !dbg !23
   %add = add nsw i32 %0, 4, !dbg !23
   ret i32 %add, !dbg !23
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata) #1
 
 define void @_Z3baz1A(%struct.A* %a) #2 {
 entry:
   %z = alloca i32, align 4
-  call void @llvm.dbg.declare(metadata !{%struct.A* %a}, metadata !24, metadata !{}), !dbg !25
-  call void @llvm.dbg.declare(metadata !{i32* %z}, metadata !26, metadata !{}), !dbg !27
+  call void @llvm.dbg.declare(metadata !{%struct.A* %a}, metadata !24), !dbg !25
+  call void @llvm.dbg.declare(metadata !{i32* %z}, metadata !26), !dbg !27
   store i32 2, i32* %z, align 4, !dbg !27
   %var = getelementptr inbounds %struct.A* %a, i32 0, i32 1, !dbg !28
   %0 = load i32* %var, align 4, !dbg !28

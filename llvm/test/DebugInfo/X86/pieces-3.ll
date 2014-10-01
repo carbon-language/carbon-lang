@@ -19,10 +19,10 @@
 ; CHECK-NEXT:   DW_AT_location [DW_FORM_data4]        ([[LOC:.*]])
 ; CHECK-NEXT:   DW_AT_name {{.*}}"outer"
 ; CHECK: DW_TAG_variable
-;                                                 rsi, piece 0x00000004
-; CHECK-NEXT:   DW_AT_location [DW_FORM_block1]       {{.*}} 54 93 04
+;                                                 rsi, piece 0x00000004, bit-piece 32 0
+; CHECK-NEXT:   DW_AT_location [DW_FORM_block1]       (<0x06> 54 93 04 9d 20 00 )
 ; CHECK-NEXT:   "i1"
-;
+
 ; CHECK: .debug_loc
 ; CHECK: [[LOC]]:
 ; CHECK: Beginning address offset: 0x0000000000000000
@@ -36,28 +36,28 @@ target triple = "x86_64-apple-macosx10.9.0"
 
 ; Function Attrs: nounwind ssp uwtable
 define i32 @foo(i64 %outer.coerce0, i64 %outer.coerce1) #0 {
-  call void @llvm.dbg.value(metadata !{i64 %outer.coerce0}, i64 0, metadata !24, metadata !25), !dbg !26
-  call void @llvm.dbg.declare(metadata !{null}, metadata !27, metadata !28), !dbg !26
-  call void @llvm.dbg.value(metadata !{i64 %outer.coerce1}, i64 0, metadata !29, metadata !30), !dbg !26
-  call void @llvm.dbg.declare(metadata !{null}, metadata !31, metadata !32), !dbg !26
+  call void @llvm.dbg.value(metadata !{i64 %outer.coerce0}, i64 0, metadata !24), !dbg !26
+  call void @llvm.dbg.declare(metadata !{null}, metadata !27), !dbg !26
+  call void @llvm.dbg.value(metadata !{i64 %outer.coerce1}, i64 0, metadata !29), !dbg !26
+  call void @llvm.dbg.declare(metadata !{null}, metadata !31), !dbg !26
   %outer.sroa.1.8.extract.trunc = trunc i64 %outer.coerce1 to i32, !dbg !33
-  call void @llvm.dbg.value(metadata !{i32 %outer.sroa.1.8.extract.trunc}, i64 0, metadata !34, metadata !35), !dbg !33
+  call void @llvm.dbg.value(metadata !{i32 %outer.sroa.1.8.extract.trunc}, i64 0, metadata !34), !dbg !33
   %outer.sroa.1.12.extract.shift = lshr i64 %outer.coerce1, 32, !dbg !33
   %outer.sroa.1.12.extract.trunc = trunc i64 %outer.sroa.1.12.extract.shift to i32, !dbg !33
-  call void @llvm.dbg.value(metadata !{i64 %outer.sroa.1.12.extract.shift}, i64 0, metadata !34, metadata !35), !dbg !33
-  call void @llvm.dbg.value(metadata !{i32 %outer.sroa.1.12.extract.trunc}, i64 0, metadata !34, metadata !35), !dbg !33
-  call void @llvm.dbg.declare(metadata !{null}, metadata !34, metadata !35), !dbg !33
+  call void @llvm.dbg.value(metadata !{i64 %outer.sroa.1.12.extract.shift}, i64 0, metadata !34), !dbg !33
+  call void @llvm.dbg.value(metadata !{i32 %outer.sroa.1.12.extract.trunc}, i64 0, metadata !34), !dbg !33
+  call void @llvm.dbg.declare(metadata !{null}, metadata !34), !dbg !33
   ret i32 %outer.sroa.1.8.extract.trunc, !dbg !36
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata) #1
 
 ; Function Attrs: nounwind
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture readonly, i64, i32, i1) #2
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
+declare void @llvm.dbg.value(metadata, i64, metadata) #1
 
 attributes #0 = { nounwind ssp uwtable "no-frame-pointer-elim"="true" }
 attributes #1 = { nounwind readnone }
@@ -91,16 +91,16 @@ attributes #2 = { nounwind }
 !21 = metadata !{i32 2, metadata !"Dwarf Version", i32 2}
 !22 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
 !23 = metadata !{metadata !"clang version 3.5.0 "}
-!24 = metadata !{i32 786689, metadata !4, metadata !"outer", metadata !5, i32 16777226, metadata !9, i32 0, i32 0} ;; [ DW_TAG_arg_variable ] [outer] [line 10]
-!25 = metadata !{i32 786690, i32 147, i32 0, i32 8} ; [DW_OP_piece 0 8] [piece, size 8, offset 0]
+!24 = metadata !{i32 786689, metadata !4, metadata !"outer", metadata !5, i32 16777226, metadata !9, i32 0, i32 0, metadata !25} ; [ DW_TAG_arg_variable ] [outer] [line 10] [piece, size 8, offset 0]
+!25 = metadata !{i32 3, i32 0, i32 8}
 !26 = metadata !{i32 10, i32 0, metadata !4, null}
-!27 = metadata !{i32 786689, metadata !4, metadata !"outer", metadata !5, i32 16777226, metadata !9, i32 0, i32 0} ;; [ DW_TAG_arg_variable ] [outer] [line 10]
-!28 = metadata !{i32 786690, i32 147, i32 8, i32 8} ; [DW_OP_piece 8 8] [piece, size 8, offset 8]
-!29 = metadata !{i32 786689, metadata !4, metadata !"outer", metadata !5, i32 16777226, metadata !9, i32 0, i32 0} ;; [ DW_TAG_arg_variable ] [outer] [line 10]
-!30 = metadata !{i32 786690, i32 147, i32 12, i32 4} ; [DW_OP_piece 12 4] [piece, size 4, offset 12]
-!31 = metadata !{i32 786689, metadata !4, metadata !"outer", metadata !5, i32 16777226, metadata !9, i32 0, i32 0} ;; [ DW_TAG_arg_variable ] [outer] [line 10]
-!32 = metadata !{i32 786690, i32 147, i32 8, i32 4} ; [DW_OP_piece 8 4] [piece, size 4, offset 8]
+!27 = metadata !{i32 786689, metadata !4, metadata !"outer", metadata !5, i32 16777226, metadata !9, i32 0, i32 0, metadata !28} ; [ DW_TAG_arg_variable ] [outer] [line 10] [piece, size 8, offset 8]
+!28 = metadata !{i32 3, i32 8, i32 8}
+!29 = metadata !{i32 786689, metadata !4, metadata !"outer", metadata !5, i32 16777226, metadata !9, i32 0, i32 0, metadata !30} ; [ DW_TAG_arg_variable ] [outer] [line 10] [piece, size 4, offset 12]
+!30 = metadata !{i32 3, i32 12, i32 4}
+!31 = metadata !{i32 786689, metadata !4, metadata !"outer", metadata !5, i32 16777226, metadata !9, i32 0, i32 0, metadata !32} ; [ DW_TAG_arg_variable ] [outer] [line 10] [piece, size 4, offset 8]
+!32 = metadata !{i32 3, i32 8, i32 4}
 !33 = metadata !{i32 11, i32 0, metadata !4, null}
-!34 = metadata !{i32 786688, metadata !4, metadata !"i1", metadata !5, i32 11, metadata !14, i32 0, i32 0} ;; [ DW_TAG_auto_variable ] [i1] [line 11]
-!35 = metadata !{i32 786690, i32 147, i32 0, i32 4} ; [DW_OP_piece 0 4] [piece, size 4, offset 0]
+!34 = metadata !{i32 786688, metadata !4, metadata !"i1", metadata !5, i32 11, metadata !14, i32 0, i32 0, metadata !35} ; [ DW_TAG_auto_variable ] [i1] [line 11] [piece, size 4, offset 0]
+!35 = metadata !{i32 3, i32 0, i32 4}
 !36 = metadata !{i32 12, i32 0, metadata !4, null}

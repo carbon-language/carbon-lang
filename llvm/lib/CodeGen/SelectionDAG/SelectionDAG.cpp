@@ -5764,24 +5764,26 @@ SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
 /// getDbgValue - Creates a SDDbgValue node.
 ///
 /// SDNode
-SDDbgValue *SelectionDAG::getDbgValue(MDNode *Var, MDNode *Expr, SDNode *N,
-                                      unsigned R, bool IsIndirect, uint64_t Off,
-                                      DebugLoc DL, unsigned O) {
-  return new (Allocator) SDDbgValue(Var, Expr, N, R, IsIndirect, Off, DL, O);
+SDDbgValue *
+SelectionDAG::getDbgValue(MDNode *MDPtr, SDNode *N, unsigned R,
+			  bool IsIndirect, uint64_t Off,
+                          DebugLoc DL, unsigned O) {
+  return new (Allocator) SDDbgValue(MDPtr, N, R, IsIndirect, Off, DL, O);
 }
 
 /// Constant
-SDDbgValue *SelectionDAG::getConstantDbgValue(MDNode *Var, MDNode *Expr,
-                                              const Value *C, uint64_t Off,
-                                              DebugLoc DL, unsigned O) {
-  return new (Allocator) SDDbgValue(Var, Expr, C, Off, DL, O);
+SDDbgValue *
+SelectionDAG::getConstantDbgValue(MDNode *MDPtr, const Value *C,
+				  uint64_t Off,
+				  DebugLoc DL, unsigned O) {
+  return new (Allocator) SDDbgValue(MDPtr, C, Off, DL, O);
 }
 
 /// FrameIndex
-SDDbgValue *SelectionDAG::getFrameIndexDbgValue(MDNode *Var, MDNode *Expr,
-                                                unsigned FI, uint64_t Off,
-                                                DebugLoc DL, unsigned O) {
-  return new (Allocator) SDDbgValue(Var, Expr, FI, Off, DL, O);
+SDDbgValue *
+SelectionDAG::getFrameIndexDbgValue(MDNode *MDPtr, unsigned FI, uint64_t Off,
+				    DebugLoc DL, unsigned O) {
+  return new (Allocator) SDDbgValue(MDPtr, FI, Off, DL, O);
 }
 
 namespace {
@@ -6187,10 +6189,10 @@ void SelectionDAG::TransferDbgValues(SDValue From, SDValue To) {
        I != E; ++I) {
     SDDbgValue *Dbg = *I;
     if (Dbg->getKind() == SDDbgValue::SDNODE) {
-      SDDbgValue *Clone =
-          getDbgValue(Dbg->getVariable(), Dbg->getExpression(), ToNode,
-                      To.getResNo(), Dbg->isIndirect(), Dbg->getOffset(),
-                      Dbg->getDebugLoc(), Dbg->getOrder());
+      SDDbgValue *Clone = getDbgValue(Dbg->getMDPtr(), ToNode, To.getResNo(),
+				      Dbg->isIndirect(),
+                                      Dbg->getOffset(), Dbg->getDebugLoc(),
+                                      Dbg->getOrder());
       ClonedDVs.push_back(Clone);
     }
   }

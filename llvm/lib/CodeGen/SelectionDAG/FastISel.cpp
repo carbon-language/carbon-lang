@@ -1125,14 +1125,13 @@ bool FastISel::selectIntrinsicCall(const IntrinsicInst *II) {
         Op->setIsDebug(true);
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                 TII.get(TargetOpcode::DBG_VALUE), false, Op->getReg(), 0,
-                DI->getVariable(), DI->getExpression());
+                DI->getVariable());
       } else
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                 TII.get(TargetOpcode::DBG_VALUE))
             .addOperand(*Op)
             .addImm(0)
-            .addMetadata(DI->getVariable())
-            .addMetadata(DI->getExpression());
+            .addMetadata(DI->getVariable());
     } else {
       // We can't yet handle anything else here because it would require
       // generating code, thus altering codegen because of debug info.
@@ -1151,32 +1150,28 @@ bool FastISel::selectIntrinsicCall(const IntrinsicInst *II) {
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II)
           .addReg(0U)
           .addImm(DI->getOffset())
-          .addMetadata(DI->getVariable())
-          .addMetadata(DI->getExpression());
+          .addMetadata(DI->getVariable());
     } else if (const auto *CI = dyn_cast<ConstantInt>(V)) {
       if (CI->getBitWidth() > 64)
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II)
             .addCImm(CI)
             .addImm(DI->getOffset())
-            .addMetadata(DI->getVariable())
-            .addMetadata(DI->getExpression());
+            .addMetadata(DI->getVariable());
       else
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II)
             .addImm(CI->getZExtValue())
             .addImm(DI->getOffset())
-            .addMetadata(DI->getVariable())
-            .addMetadata(DI->getExpression());
+            .addMetadata(DI->getVariable());
     } else if (const auto *CF = dyn_cast<ConstantFP>(V)) {
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II)
           .addFPImm(CF)
           .addImm(DI->getOffset())
-          .addMetadata(DI->getVariable())
-          .addMetadata(DI->getExpression());
+          .addMetadata(DI->getVariable());
     } else if (unsigned Reg = lookUpRegForValue(V)) {
       // FIXME: This does not handle register-indirect values at offset 0.
       bool IsIndirect = DI->getOffset() != 0;
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II, IsIndirect, Reg,
-              DI->getOffset(), DI->getVariable(), DI->getExpression());
+              DI->getOffset(), DI->getVariable());
     } else {
       // We can't yet handle anything else here because it would require
       // generating code, thus altering codegen because of debug info.

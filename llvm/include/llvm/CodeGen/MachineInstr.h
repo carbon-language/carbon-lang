@@ -244,22 +244,12 @@ public:
   ///
   DebugLoc getDebugLoc() const { return debugLoc; }
 
-  /// \brief Return the debug variable referenced by
+  /// getDebugVariable() - Return the debug variable referenced by
   /// this DBG_VALUE instruction.
   DIVariable getDebugVariable() const {
     assert(isDebugValue() && "not a DBG_VALUE");
-    DIVariable Var(getOperand(2).getMetadata());
-    assert(Var.Verify() && "not a DIVariable");
-    return Var;
-  }
-
-  /// \brief Return the complex address expression referenced by
-  /// this DBG_VALUE instruction.
-  DIExpression getDebugExpression() const {
-    assert(isDebugValue() && "not a DBG_VALUE");
-    DIExpression Expr(getOperand(3).getMetadata());
-    assert(Expr.Verify() && "not a DIExpression");
-    return Expr;
+    const MDNode *Var = getOperand(getNumOperands() - 1).getMetadata();
+    return DIVariable(Var);
   }
 
   /// emitError - Emit an error referring to the source location of this

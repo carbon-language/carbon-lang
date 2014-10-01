@@ -791,7 +791,7 @@ private:
   /// EmitFuncArgumentDbgValue - If V is an function argument then create
   /// corresponding DBG_VALUE machine instruction for it now. At the end of
   /// instruction selection, they will be inserted to the entry BB.
-  bool EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable, MDNode *Expr,
+  bool EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
                                 int64_t Offset, bool IsIndirect,
                                 const SDValue &N);
 };

@@ -11,11 +11,11 @@ target triple = "x86_64-apple-macosx10.7.0"
 define void @_Z3fooN2N11AE() nounwind uwtable ssp {
 entry:
   %mya = alloca %"class.N1::A", align 1
-  call void @llvm.dbg.declare(metadata !{%"class.N1::A"* %mya}, metadata !9, metadata !{}), !dbg !13
+  call void @llvm.dbg.declare(metadata !{%"class.N1::A"* %mya}, metadata !9), !dbg !13
   ret void, !dbg !14
 }
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!18}

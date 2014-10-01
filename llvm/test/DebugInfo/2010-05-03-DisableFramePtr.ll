@@ -6,7 +6,7 @@ define void @DisposeDMNotificationUPP(void (%struct.AppleEvent*)* %userUPP) "no-
 entry:
   %userUPP_addr = alloca void (%struct.AppleEvent*)* ; <void (%struct.AppleEvent*)**> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata !{void (%struct.AppleEvent*)** %userUPP_addr}, metadata !0, metadata !{}), !dbg !13
+  call void @llvm.dbg.declare(metadata !{void (%struct.AppleEvent*)** %userUPP_addr}, metadata !0), !dbg !13
   store void (%struct.AppleEvent*)* %userUPP, void (%struct.AppleEvent*)** %userUPP_addr
   br label %return, !dbg !14
 
@@ -14,7 +14,7 @@ return:                                           ; preds = %entry
   ret void, !dbg !14
 }
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!19}

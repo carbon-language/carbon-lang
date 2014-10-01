@@ -10,15 +10,15 @@
 ; Function Attrs: nounwind sspreq
 define i32 @_Z18read_response_sizev() #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata !22, i64 0, metadata !23, metadata !{}), !dbg !39
+  tail call void @llvm.dbg.value(metadata !22, i64 0, metadata !23), !dbg !39
   %0 = load i64* getelementptr inbounds ({ i64, [56 x i8] }* @a, i32 0, i32 0), align 8, !dbg !40
-  tail call void @llvm.dbg.value(metadata !63, i64 0, metadata !64, metadata !{}), !dbg !71
+  tail call void @llvm.dbg.value(metadata !63, i64 0, metadata !64), !dbg !71
   %1 = trunc i64 %0 to i32
   ret i32 %1
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
+declare void @llvm.dbg.value(metadata, i64, metadata)
 
 attributes #0 = { sspreq }
 

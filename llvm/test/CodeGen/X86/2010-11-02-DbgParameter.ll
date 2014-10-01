@@ -9,11 +9,11 @@ target triple = "i386-apple-darwin11.0.0"
 define i32 @foo(%struct.bar* nocapture %i) nounwind readnone optsize noinline ssp {
 ; CHECK: TAG_formal_parameter
 entry:
-  tail call void @llvm.dbg.value(metadata !{%struct.bar* %i}, i64 0, metadata !6, metadata !{}), !dbg !12
+  tail call void @llvm.dbg.value(metadata !{%struct.bar* %i}, i64 0, metadata !6), !dbg !12
   ret i32 1, !dbg !13
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!19}

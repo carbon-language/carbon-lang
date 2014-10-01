@@ -14,14 +14,14 @@ define i32 @_Z3fooP1A(%struct.A* %a) nounwind uwtable ssp {
 entry:
   %a.addr = alloca %struct.A*, align 8
   store %struct.A* %a, %struct.A** %a.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.A** %a.addr}, metadata !16, metadata !{}), !dbg !17
+  call void @llvm.dbg.declare(metadata !{%struct.A** %a.addr}, metadata !16), !dbg !17
   %0 = load %struct.A** %a.addr, align 8, !dbg !18
   %b = getelementptr inbounds %struct.A* %0, i32 0, i32 0, !dbg !18
   %1 = load i32* %b, align 4, !dbg !18
   ret i32 %1, !dbg !18
 }
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!21}

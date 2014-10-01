@@ -12,11 +12,11 @@ target triple = "x86_64-apple-macosx10.6.7"
 
 define i32 @foo() nounwind uwtable readnone optsize ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata !8, i64 0, metadata !6, metadata !{}), !dbg !9
+  tail call void @llvm.dbg.value(metadata !8, i64 0, metadata !6), !dbg !9
   ret i32 42, !dbg !10
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!15}

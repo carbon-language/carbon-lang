@@ -4,10 +4,10 @@
 
 define i32 @bar(%struct.a* nocapture %b) nounwind ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata !{%struct.a* %b}, i64 0, metadata !6, metadata !{}), !dbg !13
+  tail call void @llvm.dbg.value(metadata !{%struct.a* %b}, i64 0, metadata !6), !dbg !13
   %tmp1 = getelementptr inbounds %struct.a* %b, i64 0, i32 0, !dbg !14
   %tmp2 = load i32* %tmp1, align 4, !dbg !14
-  tail call void @llvm.dbg.value(metadata !{i32 %tmp2}, i64 0, metadata !11, metadata !{}), !dbg !14
+  tail call void @llvm.dbg.value(metadata !{i32 %tmp2}, i64 0, metadata !11), !dbg !14
   %call = tail call i32 (...)* @foo(i32 %tmp2) nounwind , !dbg !18
   %add = add nsw i32 %tmp2, 1, !dbg !19
   ret i32 %add, !dbg !19
@@ -15,7 +15,7 @@ entry:
 
 declare i32 @foo(...) 
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!24}

@@ -17,15 +17,15 @@
 %struct.__block_descriptor = type { i64, i64 }
 %struct.__block_literal_generic = type { i8*, i32, i32, i8*, %struct.__block_descriptor* }
 
-declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 define hidden void @__foo_block_invoke_0(i8* %.block_descriptor) uwtable ssp {
 entry:
   %exn.slot = alloca i8*
   %ehselector.slot = alloca i32
-  call void @llvm.dbg.value(metadata !{i8* %.block_descriptor}, i64 0, metadata !39, metadata !{}), !dbg !51
+  call void @llvm.dbg.value(metadata !{i8* %.block_descriptor}, i64 0, metadata !39), !dbg !51
   %block = bitcast i8* %.block_descriptor to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, void ()* }>*, !dbg !52
-  call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, void ()* }>* %block}, metadata !53, metadata !65), !dbg !54
+  call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, void ()* }>* %block}, metadata !53), !dbg !54
   %block.capture.addr = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, void ()* }>* %block, i32 0, i32 5, !dbg !55
   %0 = load void ()** %block.capture.addr, align 8, !dbg !55
   %block.literal = bitcast void ()* %0 to %struct.__block_literal_generic*, !dbg !55
@@ -58,7 +58,7 @@ catch:                                            ; preds = %lpad
   br label %eh.cont, !dbg !58
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 declare i8* @objc_begin_catch(i8*)
 
@@ -118,7 +118,7 @@ declare i32 @__objc_personality_v0(...)
 !50 = metadata !{i32 786445, metadata !63, metadata !6, metadata !"block", i32 7, i64 64, i64 64, i64 256, i32 0, metadata !9} ; [ DW_TAG_member ]
 !51 = metadata !{i32 7, i32 18, metadata !28, null}
 !52 = metadata !{i32 7, i32 19, metadata !28, null}
-!53 = metadata !{i32 786688, metadata !28, metadata !"block", metadata !6, i32 5, metadata !9, i32 0, i32 0} ;; [ DW_TAG_auto_variable ]
+!53 = metadata !{i32 786688, metadata !28, metadata !"block", metadata !6, i32 5, metadata !9, i32 0, i32 0, metadata !65} ; [ DW_TAG_auto_variable ]
 !54 = metadata !{i32 5, i32 27, metadata !28, null}
 !55 = metadata !{i32 8, i32 22, metadata !56, null}
 !56 = metadata !{i32 786443, metadata !6, metadata !57, i32 7, i32 26, i32 2} ; [ DW_TAG_lexical_block ]
@@ -130,4 +130,4 @@ declare i32 @__objc_personality_v0(...)
 !62 = metadata !{i32 9, i32 20, metadata !56, null}
 !63 = metadata !{metadata !"foo.m", metadata !"/Users/echristo"}
 !64 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
-!65 = metadata !{i32 786690, i64 34, i64 32} ; [DW_OP_plus 32]
+!65 = metadata !{i64 1, i64 32}

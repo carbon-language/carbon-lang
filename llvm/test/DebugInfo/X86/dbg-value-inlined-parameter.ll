@@ -45,8 +45,8 @@
 
 define i32 @foo(%struct.S1* nocapture %sp, i32 %nums) nounwind optsize ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata !{%struct.S1* %sp}, i64 0, metadata !9, metadata !{}), !dbg !20
-  tail call void @llvm.dbg.value(metadata !{i32 %nums}, i64 0, metadata !18, metadata !{}), !dbg !21
+  tail call void @llvm.dbg.value(metadata !{%struct.S1* %sp}, i64 0, metadata !9), !dbg !20
+  tail call void @llvm.dbg.value(metadata !{i32 %nums}, i64 0, metadata !18), !dbg !21
   %tmp2 = getelementptr inbounds %struct.S1* %sp, i64 0, i32 1, !dbg !22
   store i32 %nums, i32* %tmp2, align 4, !dbg !22
   %call = tail call float* @bar(i32 %nums) nounwind optsize, !dbg !27
@@ -61,15 +61,15 @@ declare float* @bar(i32) optsize
 
 define void @foobar() nounwind optsize ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata !30, i64 0, metadata !9, metadata !{}) nounwind, !dbg !31
-  tail call void @llvm.dbg.value(metadata !34, i64 0, metadata !18, metadata !{}) nounwind, !dbg !35
+  tail call void @llvm.dbg.value(metadata !30, i64 0, metadata !9) nounwind, !dbg !31
+  tail call void @llvm.dbg.value(metadata !34, i64 0, metadata !18) nounwind, !dbg !35
   store i32 1, i32* getelementptr inbounds (%struct.S1* @p, i64 0, i32 1), align 8, !dbg !36
   %call.i = tail call float* @bar(i32 1) nounwind optsize, !dbg !37
   store float* %call.i, float** getelementptr inbounds (%struct.S1* @p, i64 0, i32 0), align 8, !dbg !37
   ret void, !dbg !38
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!43}
