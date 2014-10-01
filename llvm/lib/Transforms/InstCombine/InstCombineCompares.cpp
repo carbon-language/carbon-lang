@@ -2442,7 +2442,7 @@ static bool swapMayExposeCSEOpportunities(const Value * Op0,
 bool InstCombiner::dominatesAllUses(const Instruction *DI,
                                     const Instruction *UI,
                                     const BasicBlock *DB) const {
-  assert(DI && DI->getParent() == UI->getParent() &&
+  assert(DI && UI && DI->getParent() == UI->getParent() &&
          "definition and use must be in the same block");
   // DominatorTree available?
   if (!DT)
@@ -2467,6 +2467,12 @@ static bool isChainSelectCmpBranch(const SelectInst *SI) {
     return false;
   auto *IC = dyn_cast<ICmpInst>(BI->getCondition());
   if (!IC || (IC->getOperand(0) != SI && IC->getOperand(1) != SI))
+    return false;
+  // FIXME: Conservatively suppress the optimization when the IC
+  // has a parent different from SI (including no parent). Otherwise
+  // the assertion in dominatesAllUses() fires and causes a build failure.
+  // Make the optimization safe w/o this condition.
+  if (SI->getParent() != IC->getParent())
     return false;
   return true;
 }
