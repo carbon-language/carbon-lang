@@ -28,36 +28,62 @@ namespace lldb_private
         // Typedefs.
         typedef std::unordered_set<lldb::tid_t> ThreadIDSet;
 
-        // Protocols.
-
+        enum EventLoopResult
+        {
+            eventLoopResultContinue,
+            eventLoopResultStop
+        };
 
         // Callback/block definitions.
         typedef std::function<void (lldb::tid_t tid)> ThreadIDFunction;
         typedef std::function<void (const char *format, va_list args)> LogFunction;
+        typedef std::function<void (const std::string &error_message)> ErrorFunction;
 
-        // constructors
+        // Constructors.
         ThreadStateCoordinator (const LogFunction &log_function);
 
-        // The main purpose of the class: triggering an action after
-        // a given set of threads stop.
+        // Notify the coordinator when a thread is created and/or starting to be
+        // tracked.  is_stopped should be true if the thread is currently stopped;
+        // otherwise, it should be set false if it is already running.  Will
+        // call the error function if the thread id is already tracked.
+        void
+        NotifyThreadCreate (lldb::tid_t tid,
+                            bool is_stopped,
+                            const ErrorFunction &error_function);
+
+        // Notify the coordinator when a previously-existing thread should no
+        // longer be tracked.  The error_function will trigger if the thread
+        // is not being tracked.
+        void
+        NotifyThreadDeath (lldb::tid_t tid,
+                           const ErrorFunction &error_function);
+
+
+        // This method is the main purpose of the class: triggering a deferred
+        // action after a given set of threads stop.  The triggering_tid is the
+        // thread id passed to the call_after_function.  The error_function will
+        // be fired if either the triggering tid or any of the wait_for_stop_tids
+        // are unknown at the time the method is processed.
         void
         CallAfterThreadsStop (lldb::tid_t triggering_tid,
                               const ThreadIDSet &wait_for_stop_tids,
                               const ThreadIDFunction &request_thread_stop_function,
-                              const ThreadIDFunction &call_after_function);
+                              const ThreadIDFunction &call_after_function,
+                              const ErrorFunction &error_function);
 
-        // Notifications called when various state changes occur.
+        // Notify the thread stopped.  Will trigger error at time of execution if we
+        // already think it is stopped.
         void
-        NotifyThreadStop (lldb::tid_t tid);
+        NotifyThreadStop (lldb::tid_t tid,
+                          const ErrorFunction &error_function);
 
+        // Request that the given thread id should have the request_thread_resume_function
+        // called.  Will trigger the error_function if the thread is thought to be running
+        // already at that point.
         void
-        RequestThreadResume (lldb::tid_t tid, const ThreadIDFunction &request_thread_resume_func);
-
-        void
-        NotifyThreadCreate (lldb::tid_t tid);
-
-        void
-        NotifyThreadDeath (lldb::tid_t tid);
+        RequestThreadResume (lldb::tid_t tid,
+                             const ThreadIDFunction &request_thread_resume_function,
+                             const ErrorFunction &error_function);
 
         // Indicate the calling process did an exec and that the thread state
         // should be 100% cleared.
@@ -76,7 +102,7 @@ namespace lldb_private
         // Expected usage is to run this in a separate thread until the function
         // returns false.  Always call this from the same thread.  The processing
         // logic assumes the execution of this is implicitly serialized.
-        bool
+        EventLoopResult
         ProcessNextEvent ();
 
     private:
@@ -111,10 +137,10 @@ namespace lldb_private
         SetPendingNotification (const EventBaseSP &event_sp);
 
         void
-        ThreadDidStop (lldb::tid_t tid);
+        ThreadDidStop (lldb::tid_t tid, ErrorFunction &error_function);
 
         void
-        ThreadWasCreated (lldb::tid_t tid);
+        ThreadWasCreated (lldb::tid_t tid, bool is_stopped);
 
         void
         ThreadDidDie (lldb::tid_t tid);
