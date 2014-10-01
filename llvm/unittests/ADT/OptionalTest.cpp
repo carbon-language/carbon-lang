@@ -177,6 +177,44 @@ TEST_F(OptionalTest, GetValueOr) {
   EXPECT_EQ(5, A.getValueOr(42));
 }
 
+struct MultiArgConstructor {
+  int x, y;
+  MultiArgConstructor(int x, int y) : x(x), y(y) {}
+  explicit MultiArgConstructor(int x, bool positive)
+    : x(x), y(positive ? x : -x) {}
+
+  MultiArgConstructor(const MultiArgConstructor &) = delete;
+  MultiArgConstructor(MultiArgConstructor &&) = delete;
+  MultiArgConstructor &operator=(const MultiArgConstructor &) = delete;
+  MultiArgConstructor &operator=(MultiArgConstructor &&) = delete;
+
+  static unsigned Destructions;
+  ~MultiArgConstructor() {
+    ++Destructions;
+  }
+  static void ResetCounts() {
+    Destructions = 0;
+  }
+};
+unsigned MultiArgConstructor::Destructions = 0;
+
+TEST_F(OptionalTest, Emplace) {
+  MultiArgConstructor::ResetCounts();
+  Optional<MultiArgConstructor> A;
+  
+  A.emplace(1, 2);
+  EXPECT_TRUE(A.hasValue());
+  EXPECT_EQ(1, A->x);
+  EXPECT_EQ(2, A->y);
+  EXPECT_EQ(0u, MultiArgConstructor::Destructions);
+
+  A.emplace(5, false);
+  EXPECT_TRUE(A.hasValue());
+  EXPECT_EQ(5, A->x);
+  EXPECT_EQ(-5, A->y);
+  EXPECT_EQ(1u, MultiArgConstructor::Destructions);
+}
+
 struct MoveOnly {
   static unsigned MoveConstructions;
   static unsigned Destructions;
@@ -284,6 +322,17 @@ TEST_F(OptionalTest, MoveOnlyAssigningAssignment) {
   EXPECT_EQ(0u, MoveOnly::MoveConstructions);
   EXPECT_EQ(1u, MoveOnly::MoveAssignments);
   EXPECT_EQ(1u, MoveOnly::Destructions);
+}
+
+TEST_F(OptionalTest, MoveOnlyEmplace) {
+  Optional<MoveOnly> A;
+  MoveOnly::ResetCounts();
+  A.emplace(4);
+  EXPECT_TRUE((bool)A);
+  EXPECT_EQ(4, A->val);
+  EXPECT_EQ(0u, MoveOnly::MoveConstructions);
+  EXPECT_EQ(0u, MoveOnly::MoveAssignments);
+  EXPECT_EQ(0u, MoveOnly::Destructions);
 }
 
 #if LLVM_HAS_RVALUE_REFERENCE_THIS
