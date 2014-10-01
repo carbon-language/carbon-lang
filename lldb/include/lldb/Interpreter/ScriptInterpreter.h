@@ -127,7 +127,8 @@ public:
                                                                  const char *session_dictionary_name,
                                                                  lldb::DebuggerSP& debugger,
                                                                  const char* args,
-                                                                 lldb_private::CommandReturnObject& cmd_retobj);
+                                                                 lldb_private::CommandReturnObject& cmd_retobj,
+                                                                 lldb::ExecutionContextRefSP exe_ctx_ref_sp);
     
     typedef bool            (*SWIGPythonCallModuleInit)         (const char *python_module_name,
                                                                  const char *session_dictionary_name,
@@ -502,7 +503,8 @@ public:
                            const char* args,
                            ScriptedCommandSynchronicity synchronicity,
                            lldb_private::CommandReturnObject& cmd_retobj,
-                           Error& error)
+                           Error& error,
+                           const lldb_private::ExecutionContext& exe_ctx)
     {
         return false;
     }

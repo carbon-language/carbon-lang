@@ -25,6 +25,8 @@ public:
     
     SBExecutionContext (const lldb::SBExecutionContext &rhs);
     
+    SBExecutionContext (lldb::ExecutionContextRefSP exe_ctx_ref_sp);
+    
     SBExecutionContext (const lldb::SBTarget &target);
     
     SBExecutionContext (const lldb::SBProcess &process);

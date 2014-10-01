@@ -770,13 +770,15 @@ LLDBSwigPythonCallCommand
     const char *session_dictionary_name,
     lldb::DebuggerSP& debugger,
     const char* args,
-    lldb_private::CommandReturnObject& cmd_retobj
+    lldb_private::CommandReturnObject& cmd_retobj,
+    lldb::ExecutionContextRefSP exe_ctx_ref_sp
 )
 {
 
     lldb::SBCommandReturnObject cmd_retobj_sb(&cmd_retobj);
     SBCommandReturnObjectReleaser cmd_retobj_sb_releaser(cmd_retobj_sb);
     lldb::SBDebugger debugger_sb(debugger);
+    lldb::SBExecutionContext exe_ctx_sb(exe_ctx_ref_sp);
 
     bool retval = false;
 
@@ -791,7 +793,12 @@ LLDBSwigPythonCallCommand
         // pass the pointer-to cmd_retobj_sb or watch the underlying object disappear from under you
         // see comment above for SBCommandReturnObjectReleaser for further details
         PyObject* pvalue = NULL;
-        pvalue = pfunc(debugger_sb, args, &cmd_retobj_sb, session_dict = FindSessionDictionary(session_dictionary_name));
+
+        PyCallable::argc argc = pfunc.GetNumArguments();
+        if (argc.num_args == 5 || argc.varargs == true)
+            pvalue = pfunc(debugger_sb, args, exe_ctx_sb, &cmd_retobj_sb, session_dict = FindSessionDictionary(session_dictionary_name));
+        else
+            pvalue = pfunc(debugger_sb, args, &cmd_retobj_sb, session_dict = FindSessionDictionary(session_dictionary_name));
         
         Py_XINCREF (session_dict);
         Py_XDECREF (pvalue);

@@ -1366,7 +1366,8 @@ protected:
                                                          raw_command_line,
                                                          m_synchro,
                                                          result,
-                                                         error) == false)
+                                                         error,
+                                                         m_exe_ctx) == false)
         {
             result.AppendError(error.AsCString());
             result.SetStatus(eReturnStatusFailed);

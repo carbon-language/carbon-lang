@@ -29,6 +29,11 @@ m_exe_ctx_sp(rhs.m_exe_ctx_sp)
 {
 }
 
+SBExecutionContext::SBExecutionContext (lldb::ExecutionContextRefSP exe_ctx_ref_sp) :
+m_exe_ctx_sp(exe_ctx_ref_sp)
+{
+}
+
 SBExecutionContext::SBExecutionContext (const lldb::SBTarget &target) :
 m_exe_ctx_sp(new ExecutionContextRef())
 {

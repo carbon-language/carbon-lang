@@ -2510,7 +2510,8 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
                                                const char* args,
                                                ScriptedCommandSynchronicity synchronicity,
                                                lldb_private::CommandReturnObject& cmd_retobj,
-                                               Error& error)
+                                               Error& error,
+                                               const lldb_private::ExecutionContext& exe_ctx)
 {
     if (!impl_function)
     {
@@ -2525,6 +2526,7 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
     }
     
     lldb::DebuggerSP debugger_sp = m_interpreter.GetDebugger().shared_from_this();
+    lldb::ExecutionContextRefSP exe_ctx_ref_sp(new ExecutionContextRef(exe_ctx));
     
     if (!debugger_sp.get())
     {
@@ -2548,7 +2550,8 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
                                              m_dictionary_name.c_str(),
                                              debugger_sp,
                                              args,
-                                             cmd_retobj);
+                                             cmd_retobj,
+                                             exe_ctx_ref_sp);
     }
     
     if (!ret_val)

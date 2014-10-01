@@ -30,3 +30,6 @@ def check_for_synchro(debugger, args, result, dict):
     if debugger.GetAsync() == False:
         print >>result,  ('I am running sync')
 
+def takes_exe_ctx(debugger, args, exe_ctx, result, dict):
+    print >>result, str(exe_ctx.GetTarget())
+

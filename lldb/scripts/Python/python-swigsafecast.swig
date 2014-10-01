@@ -126,3 +126,10 @@ SBTypeToSWIGWrapper (lldb::SBCommandReturnObject* cmd_ret_obj_sb)
 {
     return SWIG_NewPointerObj((void *) cmd_ret_obj_sb, SWIGTYPE_p_lldb__SBCommandReturnObject, 0);
 }
+
+template <>
+PyObject*
+SBTypeToSWIGWrapper (lldb::SBExecutionContext* ctx_sb)
+{
+    return SWIG_NewPointerObj((void *) ctx_sb, SWIGTYPE_p_lldb__SBExecutionContext, 0);
+}

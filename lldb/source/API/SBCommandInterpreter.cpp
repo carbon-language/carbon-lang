@@ -479,7 +479,8 @@ LLDBSwigPythonCallCommand (const char *python_function_name,
                            const char *session_dictionary_name,
                            lldb::DebuggerSP& debugger,
                            const char* args,
-                           lldb_private::CommandReturnObject &cmd_retobj);
+                           lldb_private::CommandReturnObject &cmd_retobj,
+                           lldb::ExecutionContextRefSP exe_ctx_ref_sp);
 
 extern "C" bool
 LLDBSwigPythonCallModuleInit (const char *python_module_name,

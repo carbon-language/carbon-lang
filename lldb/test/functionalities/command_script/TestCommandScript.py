@@ -40,6 +40,7 @@ class CmdPythonTestCase(TestBase):
             self.runCmd('command script delete tell_async', check=False)
             self.runCmd('command script delete tell_curr', check=False)
             self.runCmd('command script delete bug11569', check=False)
+            self.runCmd('command script delete takes_exe_ctx', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
@@ -108,6 +109,9 @@ class CmdPythonTestCase(TestBase):
                     substrs = ['running async'])
         self.expect("tell_curr",
                     substrs = ['I am running sync'])
+                    
+# check that the execution context is passed in to commands that ask for it
+        self.expect("takes_exe_ctx", substrs = ["a.out"])
 
         # Test that a python command can redefine itself
         self.expect('command script add -f foobar welcome -h "just some help"')

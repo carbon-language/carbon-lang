@@ -146,7 +146,8 @@ public:
                           const char* args,
                           ScriptedCommandSynchronicity synchronicity,
                           lldb_private::CommandReturnObject& cmd_retobj,
-                          Error& error);
+                          Error& error,
+                          const lldb_private::ExecutionContext& exe_ctx);
     
     Error
     GenerateFunction(const char *signature, const StringList &input);
