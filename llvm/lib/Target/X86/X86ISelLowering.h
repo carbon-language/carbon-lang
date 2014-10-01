@@ -354,9 +354,9 @@ namespace llvm {
       VINSERT,
       VEXTRACT,
 
-      // PMULUDQ - Vector multiply packed unsigned doubleword integers
+      // Vector multiply packed unsigned doubleword integers
       PMULUDQ,
-      // PMULUDQ - Vector multiply packed signed doubleword integers
+      // Vector multiply packed signed doubleword integers
       PMULDQ,
 
       // FMA nodes
@@ -367,20 +367,19 @@ namespace llvm {
       FMADDSUB,
       FMSUBADD,
 
-      // VASTART_SAVE_XMM_REGS - Save xmm argument registers to the stack,
-      // according to %al. An operator is needed so that this can be expanded
-      // with control flow.
+      // Save xmm argument registers to the stack, according to %al. An operator
+      // is needed so that this can be expanded with control flow.
       VASTART_SAVE_XMM_REGS,
 
-      // WIN_ALLOCA - Windows's _chkstk call to do stack probing.
+      // Windows's _chkstk call to do stack probing.
       WIN_ALLOCA,
 
-      // SEG_ALLOCA - For allocating variable amounts of stack space when using
+      // For allocating variable amounts of stack space when using
       // segmented stacks. Check if the current stacklet has enough space, and
       // falls back to heap allocation if not.
       SEG_ALLOCA,
 
-      // WIN_FTOL - Windows's _ftol2 runtime routine to do fptoui.
+      // Windows's _ftol2 runtime routine to do fptoui.
       WIN_FTOL,
 
       // Memory barrier
@@ -389,38 +388,37 @@ namespace llvm {
       SFENCE,
       LFENCE,
 
-      // FNSTSW16r - Store FP status word into i16 register.
+      // Store FP status word into i16 register.
       FNSTSW16r,
 
-      // SAHF - Store contents of %ah into %eflags.
+      // Store contents of %ah into %eflags.
       SAHF,
 
-      // RDRAND - Get a random integer and indicate whether it is valid in CF.
+      // Get a random integer and indicate whether it is valid in CF.
       RDRAND,
 
-      // RDSEED - Get a NIST SP800-90B & C compliant random integer and
+      // Get a NIST SP800-90B & C compliant random integer and
       // indicate whether it is valid in CF.
       RDSEED,
 
-      // PCMP*STRI
       PCMPISTRI,
       PCMPESTRI,
 
-      // XTEST - Test if in transactional execution.
+      // Test if in transactional execution.
       XTEST,
 
-      // LCMPXCHG_DAG, LCMPXCHG8_DAG, LCMPXCHG16_DAG - Compare and swap.
+      // Compare and swap.
       LCMPXCHG_DAG = ISD::FIRST_TARGET_MEMORY_OPCODE,
       LCMPXCHG8_DAG,
       LCMPXCHG16_DAG,
 
-      // VZEXT_LOAD - Load, scalar_to_vector, and zero extend.
+      // Load, scalar_to_vector, and zero extend.
       VZEXT_LOAD,
 
-      // FNSTCW16m - Store FP control world into i16 memory.
+      // Store FP control world into i16 memory.
       FNSTCW16m,
 
-      /// FP_TO_INT*_IN_MEM - This instruction implements FP_TO_SINT with the
+      /// This instruction implements FP_TO_SINT with the
       /// integer destination in memory and a FP reg source.  This corresponds
       /// to the X86::FIST*m instructions and the rounding mode change stuff. It
       /// has two inputs (token chain and address) and two outputs (int value
@@ -429,7 +427,7 @@ namespace llvm {
       FP_TO_INT32_IN_MEM,
       FP_TO_INT64_IN_MEM,
 
-      /// FILD, FILD_FLAG - This instruction implements SINT_TO_FP with the
+      /// This instruction implements SINT_TO_FP with the
       /// integer source in memory and FP reg result.  This corresponds to the
       /// X86::FILD*m instructions. It has three inputs (token chain, address,
       /// and source type) and two outputs (FP value and token chain). FILD_FLAG
@@ -437,19 +435,19 @@ namespace llvm {
       FILD,
       FILD_FLAG,
 
-      /// FLD - This instruction implements an extending load to FP stack slots.
+      /// This instruction implements an extending load to FP stack slots.
       /// This corresponds to the X86::FLD32m / X86::FLD64m. It takes a chain
       /// operand, ptr to load from, and a ValueType node indicating the type
       /// to load to.
       FLD,
 
-      /// FST - This instruction implements a truncating store to FP stack
+      /// This instruction implements a truncating store to FP stack
       /// slots. This corresponds to the X86::FST32m / X86::FST64m. It takes a
       /// chain operand, value to store, address, and a ValueType to store it
       /// as.
       FST,
 
-      /// VAARG_64 - This instruction grabs the address of the next argument
+      /// This instruction grabs the address of the next argument
       /// from a va_list. (reads and modifies the va_list in memory)
       VAARG_64
 
@@ -461,57 +459,56 @@ namespace llvm {
 
   /// Define some predicates that are used for node matching.
   namespace X86 {
-    /// isVEXTRACT128Index - Return true if the specified
+    /// Return true if the specified
     /// EXTRACT_SUBVECTOR operand specifies a vector extract that is
     /// suitable for input to VEXTRACTF128, VEXTRACTI128 instructions.
     bool isVEXTRACT128Index(SDNode *N);
 
-    /// isVINSERT128Index - Return true if the specified
+    /// Return true if the specified
     /// INSERT_SUBVECTOR operand specifies a subvector insert that is
     /// suitable for input to VINSERTF128, VINSERTI128 instructions.
     bool isVINSERT128Index(SDNode *N);
 
-    /// isVEXTRACT256Index - Return true if the specified
+    /// Return true if the specified
     /// EXTRACT_SUBVECTOR operand specifies a vector extract that is
     /// suitable for input to VEXTRACTF64X4, VEXTRACTI64X4 instructions.
     bool isVEXTRACT256Index(SDNode *N);
 
-    /// isVINSERT256Index - Return true if the specified
+    /// Return true if the specified
     /// INSERT_SUBVECTOR operand specifies a subvector insert that is
     /// suitable for input to VINSERTF64X4, VINSERTI64X4 instructions.
     bool isVINSERT256Index(SDNode *N);
 
-    /// getExtractVEXTRACT128Immediate - Return the appropriate
+    /// Return the appropriate
     /// immediate to extract the specified EXTRACT_SUBVECTOR index
     /// with VEXTRACTF128, VEXTRACTI128 instructions.
     unsigned getExtractVEXTRACT128Immediate(SDNode *N);
 
-    /// getInsertVINSERT128Immediate - Return the appropriate
+    /// Return the appropriate
     /// immediate to insert at the specified INSERT_SUBVECTOR index
     /// with VINSERTF128, VINSERT128 instructions.
     unsigned getInsertVINSERT128Immediate(SDNode *N);
 
-    /// getExtractVEXTRACT256Immediate - Return the appropriate
+    /// Return the appropriate
     /// immediate to extract the specified EXTRACT_SUBVECTOR index
     /// with VEXTRACTF64X4, VEXTRACTI64x4 instructions.
     unsigned getExtractVEXTRACT256Immediate(SDNode *N);
 
-    /// getInsertVINSERT256Immediate - Return the appropriate
+    /// Return the appropriate
     /// immediate to insert at the specified INSERT_SUBVECTOR index
     /// with VINSERTF64x4, VINSERTI64x4 instructions.
     unsigned getInsertVINSERT256Immediate(SDNode *N);
 
-    /// isZeroNode - Returns true if Elt is a constant zero or a floating point
-    /// constant +0.0.
+    /// Returns true if Elt is a constant zero or floating point constant +0.0.
     bool isZeroNode(SDValue Elt);
 
-    /// isOffsetSuitableForCodeModel - Returns true of the given offset can be
+    /// Returns true of the given offset can be
     /// fit into displacement field of the instruction.
     bool isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
                                       bool hasSymbolicDisplacement = true);
 
 
-    /// isCalleePop - Determines whether the callee is required to pop its
+    /// Determines whether the callee is required to pop its
     /// own arguments. Callee pop is necessary to support tail calls.
     bool isCalleePop(CallingConv::ID CallingConv,
                      bool is64Bit, bool IsVarArg, bool TailCallOpt);
@@ -528,7 +525,7 @@ namespace llvm {
   }
 
   //===--------------------------------------------------------------------===//
-  //  X86TargetLowering - X86 Implementation of the TargetLowering interface
+  //  X86 Implementation of the TargetLowering interface
   class X86TargetLowering final : public TargetLowering {
   public:
     explicit X86TargetLowering(X86TargetMachine &TM);
@@ -542,21 +539,20 @@ namespace llvm {
                               const MachineBasicBlock *MBB, unsigned uid,
                               MCContext &Ctx) const override;
 
-    /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
-    /// jumptable.
+    /// Returns relocation base for the given PIC jumptable.
     SDValue getPICJumpTableRelocBase(SDValue Table,
                                      SelectionDAG &DAG) const override;
     const MCExpr *
     getPICJumpTableRelocBaseExpr(const MachineFunction *MF,
                                  unsigned JTI, MCContext &Ctx) const override;
 
-    /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
+    /// Return the desired alignment for ByVal aggregate
     /// function arguments in the caller parameter area. For X86, aggregates
     /// that contains are placed at 16-byte boundaries while the rest are at
     /// 4-byte boundaries.
     unsigned getByValTypeAlignment(Type *Ty) const override;
 
-    /// getOptimalMemOpType - Returns the target specific optimal type for load
+    /// Returns the target specific optimal type for load
     /// and store operations as a result of memset, memcpy, and memmove
     /// lowering. If DstAlign is zero that means it's safe to destination
     /// alignment can satisfy any constraint. Similarly if SrcAlign is zero it
@@ -571,7 +567,7 @@ namespace llvm {
                             bool IsMemset, bool ZeroMemset, bool MemcpyStrSrc,
                             MachineFunction &MF) const override;
 
-    /// isSafeMemOpType - Returns true if it's safe to use load / store of the
+    /// Returns true if it's safe to use load / store of the
     /// specified type to expand memcpy / memset inline. This is mostly true
     /// for all types except for some special cases. For example, on X86
     /// targets without SSE2 f64 load / store are done with fldl / fstpl which
@@ -579,17 +575,17 @@ namespace llvm {
     /// legal as the hook is used before type legalization.
     bool isSafeMemOpType(MVT VT) const override;
 
-    /// allowsMisalignedMemoryAccesses - Returns true if the target allows
+    /// Returns true if the target allows
     /// unaligned memory accesses. of the specified type. Returns whether it
     /// is "fast" by reference in the second argument.
     bool allowsMisalignedMemoryAccesses(EVT VT, unsigned AS, unsigned Align,
                                        bool *Fast) const override;
 
-    /// LowerOperation - Provide custom lowering hooks for some operations.
+    /// Provide custom lowering hooks for some operations.
     ///
     SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
 
-    /// ReplaceNodeResults - Replace the results of node with an illegal result
+    /// Replace the results of node with an illegal result
     /// type with new values built out of custom code.
     ///
     void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue>&Results,
@@ -598,13 +594,13 @@ namespace llvm {
 
     SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
 
-    /// isTypeDesirableForOp - Return true if the target has native support for
+    /// Return true if the target has native support for
     /// the specified value type and it is 'desirable' to use the type for the
     /// given node type. e.g. On x86 i16 is legal, but undesirable since i16
     /// instruction encodings are longer and some i16 instructions are slow.
     bool isTypeDesirableForOp(unsigned Opc, EVT VT) const override;
 
-    /// isTypeDesirable - Return true if the target has native support for the
+    /// Return true if the target has native support for the
     /// specified value type and it is 'desirable' to use the type. e.g. On x86
     /// i16 is legal, but undesirable since i16 instruction encodings are longer
     /// and some i16 instructions are slow.
@@ -615,24 +611,21 @@ namespace llvm {
                                   MachineBasicBlock *MBB) const override;
 
 
-    /// getTargetNodeName - This method returns the name of a target specific
-    /// DAG node.
+    /// This method returns the name of a target specific DAG node.
     const char *getTargetNodeName(unsigned Opcode) const override;
 
-    /// getSetCCResultType - Return the value type to use for ISD::SETCC.
+    /// Return the value type to use for ISD::SETCC.
     EVT getSetCCResultType(LLVMContext &Context, EVT VT) const override;
 
-    /// computeKnownBitsForTargetNode - Determine which of the bits specified
-    /// in Mask are known to be either zero or one and return them in the
-    /// KnownZero/KnownOne bitsets.
+    /// Determine which of the bits specified in Mask are known to be either
+    /// zero or one and return them in the KnownZero/KnownOne bitsets.
     void computeKnownBitsForTargetNode(const SDValue Op,
                                        APInt &KnownZero,
                                        APInt &KnownOne,
                                        const SelectionDAG &DAG,
                                        unsigned Depth = 0) const override;
 
-    // ComputeNumSignBitsForTargetNode - Determine the number of bits in the
-    // operation that are sign bits.
+    /// Determine the number of bits in the operation that are sign bits.
     unsigned ComputeNumSignBitsForTargetNode(SDValue Op,
                                              const SelectionDAG &DAG,
                                              unsigned Depth) const override;
@@ -655,16 +648,15 @@ namespace llvm {
 
     const char *LowerXConstraint(EVT ConstraintVT) const override;
 
-    /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
-    /// vector.  If it is invalid, don't add anything to Ops. If hasMemory is
-    /// true it means one of the asm constraint of the inline asm instruction
-    /// being processed is 'm'.
+    /// Lower the specified operand into the Ops vector. If it is invalid, don't
+    /// add anything to Ops. If hasMemory is true it means one of the asm
+    /// constraint of the inline asm instruction being processed is 'm'.
     void LowerAsmOperandForConstraint(SDValue Op,
                                       std::string &Constraint,
                                       std::vector<SDValue> &Ops,
                                       SelectionDAG &DAG) const override;
 
-    /// getRegForInlineAsmConstraint - Given a physical register constraint
+    /// Given a physical register constraint
     /// (e.g. {edx}), return the register number and the register class for the
     /// register.  This should only be used for C_Register constraints.  On
     /// error, this returns a register number of 0.
@@ -672,17 +664,17 @@ namespace llvm {
       getRegForInlineAsmConstraint(const std::string &Constraint,
                                    MVT VT) const override;
 
-    /// isLegalAddressingMode - Return true if the addressing mode represented
+    /// Return true if the addressing mode represented
     /// by AM is legal for this target, for a load/store of the specified type.
     bool isLegalAddressingMode(const AddrMode &AM, Type *Ty) const override;
 
-    /// isLegalICmpImmediate - Return true if the specified immediate is legal
+    /// Return true if the specified immediate is legal
     /// icmp immediate, that is the target has icmp instructions which can
     /// compare a register against the immediate without having to materialize
     /// the immediate into a register.
     bool isLegalICmpImmediate(int64_t Imm) const override;
 
-    /// isLegalAddImmediate - Return true if the specified immediate is legal
+    /// Return true if the specified immediate is legal
     /// add immediate, that is the target has add instructions which can
     /// add a register and the immediate without having to materialize
     /// the immediate into a register.
@@ -697,7 +689,7 @@ namespace llvm {
 
     bool isVectorShiftByScalarCheap(Type *Ty) const override;
 
-    /// isTruncateFree - Return true if it's free to truncate a value of
+    /// Return true if it's free to truncate a value of
     /// type Ty1 to type Ty2. e.g. On x86 it's free to truncate a i32 value in
     /// register EAX to i16 by referencing its sub-register AX.
     bool isTruncateFree(Type *Ty1, Type *Ty2) const override;
@@ -705,7 +697,7 @@ namespace llvm {
 
     bool allowTruncateForTailCall(Type *Ty1, Type *Ty2) const override;
 
-    /// isZExtFree - Return true if any actual instruction that defines a
+    /// Return true if any actual instruction that defines a
     /// value of type Ty1 implicit zero-extends the value to Ty2 in the result
     /// register. This does not necessarily include registers defined in
     /// unknown ways, such as incoming arguments, or copies from unknown
@@ -717,37 +709,35 @@ namespace llvm {
     bool isZExtFree(EVT VT1, EVT VT2) const override;
     bool isZExtFree(SDValue Val, EVT VT2) const override;
 
-    /// isFMAFasterThanFMulAndFAdd - Return true if an FMA operation is faster
-    /// than a pair of fmul and fadd instructions. fmuladd intrinsics will be
-    /// expanded to FMAs when this method returns true, otherwise fmuladd is
-    /// expanded to fmul + fadd.
+    /// Return true if an FMA operation is faster than a pair of fmul and fadd
+    /// instructions. fmuladd intrinsics will be expanded to FMAs when this
+    /// method returns true, otherwise fmuladd is expanded to fmul + fadd.
     bool isFMAFasterThanFMulAndFAdd(EVT VT) const override;
 
-    /// isNarrowingProfitable - Return true if it's profitable to narrow
+    /// Return true if it's profitable to narrow
     /// operations of type VT1 to VT2. e.g. on x86, it's profitable to narrow
     /// from i32 to i8 but not from i32 to i16.
     bool isNarrowingProfitable(EVT VT1, EVT VT2) const override;
 
-    /// isFPImmLegal - Returns true if the target can instruction select the
+    /// Returns true if the target can instruction select the
     /// specified FP immediate natively. If false, the legalizer will
     /// materialize the FP immediate as a load from a constant pool.
     bool isFPImmLegal(const APFloat &Imm, EVT VT) const override;
 
-    /// isShuffleMaskLegal - Targets can use this to indicate that they only
-    /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
-    /// By default, if a target supports the VECTOR_SHUFFLE node, all mask
-    /// values are assumed to be legal.
+    /// Targets can use this to indicate that they only support *some*
+    /// VECTOR_SHUFFLE operations, those with specific masks. By default, if a
+    /// target supports the VECTOR_SHUFFLE node, all mask values are assumed to
+    /// be legal.
     bool isShuffleMaskLegal(const SmallVectorImpl<int> &Mask,
                             EVT VT) const override;
 
-    /// isVectorClearMaskLegal - Similar to isShuffleMaskLegal. This is
-    /// used by Targets can use this to indicate if there is a suitable
-    /// VECTOR_SHUFFLE that can be used to replace a VAND with a constant
-    /// pool entry.
+    /// Similar to isShuffleMaskLegal. This is used by Targets can use this to
+    /// indicate if there is a suitable VECTOR_SHUFFLE that can be used to
+    /// replace a VAND with a constant pool entry.
     bool isVectorClearMaskLegal(const SmallVectorImpl<int> &Mask,
                                 EVT VT) const override;
 
-    /// ShouldShrinkFPConstant - If true, then instruction selection should
+    /// If true, then instruction selection should
     /// seek to shrink the FP constant of the specified type to a smaller type
     /// in order to save space and / or reduce runtime.
     bool ShouldShrinkFPConstant(EVT VT) const override {
@@ -761,19 +751,18 @@ namespace llvm {
       return Subtarget;
     }
 
-    /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
-    /// computed in an SSE register, not on the X87 floating point stack.
+    /// Return true if the specified scalar FP type is computed in an SSE
+    /// register, not on the X87 floating point stack.
     bool isScalarFPTypeInSSEReg(EVT VT) const {
       return (VT == MVT::f64 && X86ScalarSSEf64) || // f64 is when SSE2
       (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
     }
 
-    /// isTargetFTOL - Return true if the target uses the MSVC _ftol2 routine
-    /// for fptoui.
+    /// Return true if the target uses the MSVC _ftol2 routine for fptoui.
     bool isTargetFTOL() const;
 
-    /// isIntegerTypeFTOL - Return true if the MSVC _ftol2 routine should be
-    /// used for fptoui to the given type.
+    /// Return true if the MSVC _ftol2 routine should be used for fptoui to the
+    /// given type.
     bool isIntegerTypeFTOL(EVT VT) const {
       return isTargetFTOL() && VT == MVT::i64;
     }
@@ -790,15 +779,14 @@ namespace llvm {
 
     unsigned getRegisterByName(const char* RegName, EVT VT) const override;
 
-    /// createFastISel - This method returns a target specific FastISel object,
+    /// This method returns a target specific FastISel object,
     /// or null if the target does not support "fast" ISel.
     FastISel *createFastISel(FunctionLoweringInfo &funcInfo,
                              const TargetLibraryInfo *libInfo) const override;
 
-    /// getStackCookieLocation - Return true if the target stores stack
-    /// protector cookies at a fixed offset in some non-standard address
-    /// space, and populates the address space and offset as
-    /// appropriate.
+    /// Return true if the target stores stack protector cookies at a fixed
+    /// offset in some non-standard address space, and populates the address
+    /// space and offset as appropriate.
     bool getStackCookieLocation(unsigned &AddressSpace,
                                 unsigned &Offset) const override;
 
@@ -819,7 +807,7 @@ namespace llvm {
     findRepresentativeClass(MVT VT) const override;
 
   private:
-    /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
+    /// Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
     const DataLayout *TD;
@@ -828,17 +816,16 @@ namespace llvm {
     /// the operation actions unless we have to.
     TargetOptions TO;
 
-    /// X86ScalarSSEf32, X86ScalarSSEf64 - Select between SSE or x87
-    /// floating point ops.
+    /// Select between SSE or x87 floating point ops.
     /// When SSE is available, use it for f32 operations.
     /// When SSE2 is available, use it for f64 operations.
     bool X86ScalarSSEf32;
     bool X86ScalarSSEf64;
 
-    /// LegalFPImmediates - A list of legal fp immediates.
+    /// A list of legal FP immediates.
     std::vector<APFloat> LegalFPImmediates;
 
-    /// addLegalFPImmediate - Indicate that this x86 target can instruction
+    /// Indicate that this x86 target can instruction
     /// select the specified FP immediate natively.
     void addLegalFPImmediate(const APFloat& Imm) {
       LegalFPImmediates.push_back(Imm);
@@ -862,9 +849,8 @@ namespace llvm {
 
     // Call lowering helpers.
 
-    /// IsEligibleForTailCallOptimization - Check whether the call is eligible
-    /// for tail call optimization. Targets which want to do tail call
-    /// optimization should implement this function.
+    /// Check whether the call is eligible for tail call optimization. Targets
+    /// that want to do tail call optimization should implement this function.
     bool IsEligibleForTailCallOptimization(SDValue Callee,
                                            CallingConv::ID CalleeCC,
                                            bool isVarArg,
