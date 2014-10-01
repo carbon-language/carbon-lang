@@ -7738,6 +7738,17 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
   return SDValue();
 }
 
+/// \brief Try to get a scalar value for a specific element of a vector.
+///
+/// Looks through BUILD_VECTOR and SCALAR_TO_VECTOR nodes to find a scalar.
+static SDValue getScalarValueForVectorElement(SDValue V, int Idx) {
+  if (V.getOpcode() == ISD::BUILD_VECTOR ||
+      (Idx == 0 && V.getOpcode() == ISD::SCALAR_TO_VECTOR))
+    return V.getOperand(Idx);
+
+  return SDValue();
+}
+
 /// \brief Try to lower insertion of a single element into a zero vector.
 ///
 /// This is a common pattern that we have especially efficient patterns to lower
@@ -7773,12 +7784,9 @@ static SDValue lowerVectorShuffleAsElementInsertion(
   // all the smarts here sunk into that routine. However, the current
   // lowering of BUILD_VECTOR makes that nearly impossible until the old
   // vector shuffle lowering is dead.
-  if (!((V2.getOpcode() == ISD::SCALAR_TO_VECTOR &&
-         Mask[V2Index] == (int)Mask.size()) ||
-        V2.getOpcode() == ISD::BUILD_VECTOR))
+  SDValue V2S = getScalarValueForVectorElement(V2, Mask[V2Index] - Mask.size());
+  if (!V2S)
     return SDValue();
-
-  SDValue V2S = V2.getOperand(Mask[V2Index] - Mask.size());
 
   // First, we need to zext the scalar if it is smaller than an i32.
   MVT ExtVT = VT;
@@ -7909,6 +7917,16 @@ static SDValue lowerV2F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
             MVT::v2f64, DL, V1, V2, Mask, Subtarget, DAG))
       return Insertion;
+
+  // Try to use one of the special instruction patterns to handle two common
+  // blend patterns if a zero-blend above didn't work.
+  if (isShuffleEquivalent(Mask, 0, 3) || isShuffleEquivalent(Mask, 1, 3))
+    if (SDValue V1S = getScalarValueForVectorElement(V1, Mask[0]))
+      // We can either use a special instruction to load over the low double or
+      // to move just the low double.
+      return DAG.getNode(ISD::isNON_EXTLoad(V1S.getNode()) ? X86ISD::MOVLPD
+                                                           : X86ISD::MOVSD,
+                         DL, MVT::v2f64, V2, V1S);
 
   if (Subtarget->hasSSE41())
     if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v2f64, V1, V2, Mask,
