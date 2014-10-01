@@ -233,6 +233,7 @@ add_lldb_library(liblldb
   API/SBDeclaration.cpp
   API/SBError.cpp
   API/SBEvent.cpp
+  API/SBExecutionContext.cpp
   API/SBExpressionOptions.cpp
   API/SBFileSpec.cpp
   API/SBFileSpecList.cpp
