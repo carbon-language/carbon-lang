@@ -24,7 +24,6 @@
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
-#include "llvm/CodeGen/MachinePostDominators.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -56,9 +55,8 @@ namespace {
   class MachineSinking : public MachineFunctionPass {
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
-    MachineRegisterInfo  *MRI;     // Machine register information
-    MachineDominatorTree *DT;      // Machine dominator tree
-    MachinePostDominatorTree *PDT; // Machine post dominator tree
+    MachineRegisterInfo  *MRI;  // Machine register information
+    MachineDominatorTree *DT;   // Machine dominator tree
     MachineLoopInfo *LI;
     const MachineBlockFrequencyInfo *MBFI;
     AliasAnalysis *AA;
@@ -84,10 +82,8 @@ namespace {
       MachineFunctionPass::getAnalysisUsage(AU);
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<MachineDominatorTree>();
-      AU.addRequired<MachinePostDominatorTree>();
       AU.addRequired<MachineLoopInfo>();
       AU.addPreserved<MachineDominatorTree>();
-      AU.addPreserved<MachinePostDominatorTree>();
       AU.addPreserved<MachineLoopInfo>();
       if (UseBlockFreqInfo)
         AU.addRequired<MachineBlockFrequencyInfo>();
@@ -255,7 +251,6 @@ bool MachineSinking::runOnMachineFunction(MachineFunction &MF) {
   TRI = TM.getSubtargetImpl()->getRegisterInfo();
   MRI = &MF.getRegInfo();
   DT = &getAnalysis<MachineDominatorTree>();
-  PDT = &getAnalysis<MachinePostDominatorTree>();
   LI = &getAnalysis<MachineLoopInfo>();
   MBFI = UseBlockFreqInfo ? &getAnalysis<MachineBlockFrequencyInfo>() : nullptr;
   AA = &getAnalysis<AliasAnalysis>();
@@ -474,6 +469,23 @@ static void collectDebugValues(MachineInstr *MI,
   }
 }
 
+/// isPostDominatedBy - Return true if A is post dominated by B.
+static bool isPostDominatedBy(MachineBasicBlock *A, MachineBasicBlock *B) {
+
+  // FIXME - Use real post dominator.
+  if (A->succ_size() != 2)
+    return false;
+  MachineBasicBlock::succ_iterator I = A->succ_begin();
+  if (B == *I)
+    ++I;
+  MachineBasicBlock *OtherSuccBlock = *I;
+  if (OtherSuccBlock->succ_size() != 1 ||
+      *(OtherSuccBlock->succ_begin()) != B)
+    return false;
+
+  return true;
+}
+
 /// isProfitableToSinkTo - Return true if it is profitable to sink MI.
 bool MachineSinking::isProfitableToSinkTo(unsigned Reg, MachineInstr *MI,
                                           MachineBasicBlock *MBB,
@@ -485,8 +497,8 @@ bool MachineSinking::isProfitableToSinkTo(unsigned Reg, MachineInstr *MI,
     return false;
 
   // It is profitable if SuccToSinkTo does not post dominate current block.
-  if (!PDT->dominates(SuccToSinkTo, MBB))
-    return true;
+  if (!isPostDominatedBy(MBB, SuccToSinkTo))
+      return true;
 
   // Check if only use in post dominated block is PHI instruction.
   bool NonPHIUse = false;
