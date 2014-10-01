@@ -18,6 +18,7 @@ add_lldb_library(lldbAPI
   SBDeclaration.cpp
   SBError.cpp
   SBEvent.cpp
+  SBExecutionContext.cpp
   SBExpressionOptions.cpp
   SBFileSpec.cpp
   SBFileSpecList.cpp
