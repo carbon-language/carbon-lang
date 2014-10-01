@@ -19,6 +19,7 @@
 
 #include "CodeGenDAGPatterns.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/TableGen/Error.h"
@@ -541,6 +542,17 @@ void FastISelMap::collectPatterns(CodeGenDAGPatterns &CGP) {
         continue;
     }
 
+    // Check if the operands match one of the patterns handled by FastISel.
+    std::string ManglingSuffix;
+    raw_string_ostream SuffixOS(ManglingSuffix);
+    Operands.PrintManglingSuffix(SuffixOS, ImmediatePredicates, true);
+    SuffixOS.flush();
+    if (!StringSwitch<bool>(ManglingSuffix)
+        .Cases("", "r", "rr", "ri", "rf", true)
+        .Cases("rri", "i", "f", true)
+        .Default(false))
+      continue;
+
     // Get the predicate that guards this pattern.
     std::string PredicateCheck = Pattern.getPredicateCheck();
 
@@ -803,7 +815,10 @@ void FastISelMap::printFunctionDefinitions(raw_ostream &OS) {
     if (!Operands.empty())
       OS << ", ";
     Operands.PrintParameters(OS);
-    OS << ") {\n";
+    OS << ") ";
+    if (!Operands.hasAnyImmediateCodes())
+      OS << "override ";
+    OS << "{\n";
 
     // If there are any forms of this signature available that operate on
     // constrained forms of the immediate (e.g., 32-bit sext immediate in a
