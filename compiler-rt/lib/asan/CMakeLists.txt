@@ -161,7 +161,7 @@ else()
       add_dependencies(asan clang_rt.asan-dynamic-${arch})
     endif()
 
-    if (UNIX AND NOT ${arch} STREQUAL "i386")
+    if (UNIX AND NOT ${arch} STREQUAL "i386" AND NOT ${arch} STREQUAL "i686")
       add_sanitizer_rt_symbols(clang_rt.asan_cxx-${arch})
       add_dependencies(asan clang_rt.asan_cxx-${arch}-symbols)
       add_sanitizer_rt_symbols(clang_rt.asan-${arch} asan.syms.extra)

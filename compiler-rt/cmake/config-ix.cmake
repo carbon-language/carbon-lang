@@ -96,6 +96,7 @@ macro(detect_target_arch)
   check_symbol_exists(__arm__ "" __ARM)
   check_symbol_exists(__aarch64__ "" __AARCH64)
   check_symbol_exists(__x86_64__ "" __X86_64)
+  check_symbol_exists(__i686__ "" __I686)
   check_symbol_exists(__i386__ "" __I386)
   check_symbol_exists(__mips__ "" __MIPS)
   check_symbol_exists(__mips64__ "" __MIPS64)
@@ -105,6 +106,8 @@ macro(detect_target_arch)
     add_default_target_arch(aarch64)
   elseif(__X86_64)
     add_default_target_arch(x86_64)
+  elseif(__I686)
+    add_default_target_arch(i686)
   elseif(__I386)
     add_default_target_arch(i386)
   elseif(__MIPS64) # must be checked before __MIPS
@@ -155,9 +158,9 @@ endfunction()
 
 # Arhcitectures supported by compiler-rt libraries.
 filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
-  x86_64 i386 powerpc64 arm aarch64 mips)
+  x86_64 i386 i686 powerpc64 arm aarch64 mips)
 filter_available_targets(ASAN_SUPPORTED_ARCH
-  x86_64 i386 powerpc64 arm mips)
+  x86_64 i386 i686 powerpc64 arm mips)
 filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(LSAN_SUPPORTED_ARCH x86_64)
 # LSan common files should be available on all architectures supported
@@ -165,9 +168,9 @@ filter_available_targets(LSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(LSAN_COMMON_SUPPORTED_ARCH
   ${SANITIZER_COMMON_SUPPORTED_ARCH})
 filter_available_targets(MSAN_SUPPORTED_ARCH x86_64)
-filter_available_targets(PROFILE_SUPPORTED_ARCH x86_64 i386 arm aarch64)
+filter_available_targets(PROFILE_SUPPORTED_ARCH x86_64 i386 i686 arm aarch64)
 filter_available_targets(TSAN_SUPPORTED_ARCH x86_64)
-filter_available_targets(UBSAN_SUPPORTED_ARCH x86_64 i386 arm aarch64 mips)
+filter_available_targets(UBSAN_SUPPORTED_ARCH x86_64 i386 i686 arm aarch64 mips)
 
 if(ANDROID)
   set(OS_NAME "Android")

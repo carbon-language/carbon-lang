@@ -163,6 +163,9 @@ set(i386_SOURCES
   i386/umoddi3.S
   ${GENERIC_SOURCES})
 
+set(i686_SOURCES
+  ${i386_SOURCES})
+
 set(arm_SOURCES
   arm/adddf3vfp.S
   arm/addsf3vfp.S
@@ -250,7 +253,7 @@ set(arm_SOURCES
 add_custom_target(builtins)
 
 if (NOT WIN32)
-  foreach (arch x86_64 i386 arm)
+  foreach (arch x86_64 i386 i686 arm)
     if (CAN_TARGET_${arch})
       # Filter out generic versions of routines that are re-implemented in
       # architecture specific manner.  This prevents multiple definitions of the

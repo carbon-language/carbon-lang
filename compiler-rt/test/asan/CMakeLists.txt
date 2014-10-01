@@ -5,6 +5,7 @@ set(ASAN_TESTSUITES)
 macro(get_bits_for_arch arch bits)
   if (${arch} STREQUAL "arm" OR
       ${arch} STREQUAL "i386" OR
+      ${arch} STREQUAL "i686" OR
       ${arch} STREQUAL "mips")
     set(bits 32)
   elseif (${arch} STREQUAL "aarch64" OR
