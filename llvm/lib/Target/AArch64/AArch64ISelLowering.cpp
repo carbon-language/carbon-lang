@@ -823,6 +823,7 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AArch64ISD::TC_RETURN:         return "AArch64ISD::TC_RETURN";
   case AArch64ISD::SITOF:             return "AArch64ISD::SITOF";
   case AArch64ISD::UITOF:             return "AArch64ISD::UITOF";
+  case AArch64ISD::NVCAST:            return "AArch64ISD::NVCAST";
   case AArch64ISD::SQSHL_I:           return "AArch64ISD::SQSHL_I";
   case AArch64ISD::UQSHL_I:           return "AArch64ISD::UQSHL_I";
   case AArch64ISD::SRSHR_I:           return "AArch64ISD::SRSHR_I";

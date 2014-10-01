@@ -377,9 +377,11 @@ define i16 @orr_modimm_t6() nounwind {
 declare i8 @f_v8i8(<8 x i8> %arg)
 declare i16 @f_v4i16(<4 x i16> %arg)
 declare i32 @f_v2i32(<2 x i32> %arg)
+declare i64 @f_v1i64(<1 x i64> %arg)
 declare i8 @f_v16i8(<16 x i8> %arg)
 declare i16 @f_v8i16(<8 x i16> %arg)
 declare i32 @f_v4i32(<4 x i32> %arg)
+declare i64 @f_v2i64(<2 x i64> %arg)
 
 ; CHECK-LABEL: modimm_t1_call:
 define void @modimm_t1_call() {
@@ -395,6 +397,9 @@ define void @modimm_t1_call() {
   ; CHECK-NEXT:    rev64   v{{[0-9]+}}.2s, v[[REG1]].2s
   ; CHECK-NEXT:    bl      f_v2i32
   call i32 @f_v2i32(<2 x i32> <i32 6, i32 6>)
+  ; CHECK:         movi    v{{[0-9]+}}.2s, #0x5
+  ; CHECK-NEXT:    bl      f_v1i64
+  call i64 @f_v1i64(<1 x i64> <i64 21474836485>)
   ; CHECK:         movi    v[[REG1:[0-9]+]].4s, #0x5
   ; CHECK-NEXT:    rev64   v[[REG2:[0-9]+]].16b, v[[REG1]].16b
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
@@ -410,6 +415,10 @@ define void @modimm_t1_call() {
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
   ; CHECK-NEXT:    bl      f_v4i32
   call i32 @f_v4i32(<4 x i32> <i32 3, i32 3, i32 3, i32 3>)
+  ; CHECK:         movi    v[[REG:[0-9]+]].4s, #0x2
+  ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
+  ; CHECK-NEXT:    bl      f_v2i64
+  call i64 @f_v2i64(<2 x i64> <i64 8589934594, i64 8589934594>)
 
   ret void
 }
@@ -428,6 +437,9 @@ define void @modimm_t2_call() {
   ; CHECK-NEXT:    rev64   v{{[0-9]+}}.2s, v[[REG1]].2s
   ; CHECK-NEXT:    bl      f_v2i32
   call i32 @f_v2i32(<2 x i32> <i32 1536, i32 1536>)
+  ; CHECK:         movi    v{{[0-9]+}}.2s, #0x5, lsl #8
+  ; CHECK-NEXT:    bl      f_v1i64
+  call i64 @f_v1i64(<1 x i64> <i64 5497558140160>)
   ; CHECK:         movi    v[[REG1:[0-9]+]].4s, #0x5, lsl #8
   ; CHECK-NEXT:    rev64   v[[REG2:[0-9]+]].16b, v[[REG1]].16b
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
@@ -443,6 +455,10 @@ define void @modimm_t2_call() {
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
   ; CHECK-NEXT:    bl      f_v4i32
   call i32 @f_v4i32(<4 x i32> <i32 768, i32 768, i32 768, i32 768>)
+  ; CHECK:         movi    v[[REG:[0-9]+]].4s, #0x2, lsl #8
+  ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
+  ; CHECK-NEXT:    bl      f_v2i64
+  call i64 @f_v2i64(<2 x i64> <i64 2199023256064, i64 2199023256064>)
 
   ret void
 }
@@ -461,6 +477,9 @@ define void @modimm_t3_call() {
   ; CHECK-NEXT:    rev64   v{{[0-9]+}}.2s, v[[REG1]].2s
   ; CHECK-NEXT:    bl      f_v2i32
   call i32 @f_v2i32(<2 x i32> <i32 393216, i32 393216>)
+  ; CHECK:         movi    v{{[0-9]+}}.2s, #0x5, lsl #16
+  ; CHECK-NEXT:    bl      f_v1i64
+  call i64 @f_v1i64(<1 x i64> <i64 1407374883880960>)
   ; CHECK:         movi    v[[REG1:[0-9]+]].4s, #0x5, lsl #16
   ; CHECK-NEXT:    rev64   v[[REG2:[0-9]+]].16b, v[[REG1]].16b
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
@@ -476,6 +495,10 @@ define void @modimm_t3_call() {
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
   ; CHECK-NEXT:    bl      f_v4i32
   call i32 @f_v4i32(<4 x i32> <i32 196608, i32 196608, i32 196608, i32 196608>)
+  ; CHECK:         movi    v[[REG:[0-9]+]].4s, #0x2, lsl #16
+  ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
+  ; CHECK-NEXT:    bl      f_v2i64
+  call i64 @f_v2i64(<2 x i64> <i64 562949953552384, i64 562949953552384>)
 
   ret void
 }
@@ -494,6 +517,9 @@ define void @modimm_t4_call() {
   ; CHECK-NEXT:    rev64   v{{[0-9]+}}.2s, v[[REG1]].2s
   ; CHECK-NEXT:    bl      f_v2i32
   call i32 @f_v2i32(<2 x i32> <i32 100663296, i32 100663296>)
+  ; CHECK:         movi    v{{[0-9]+}}.2s, #0x5, lsl #24
+  ; CHECK-NEXT:    bl      f_v1i64
+  call i64 @f_v1i64(<1 x i64> <i64 360287970273525760>)
   ; CHECK:         movi    v[[REG1:[0-9]+]].4s, #0x5, lsl #24
   ; CHECK-NEXT:    rev64   v[[REG2:[0-9]+]].16b, v[[REG1]].16b
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
@@ -509,6 +535,10 @@ define void @modimm_t4_call() {
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
   ; CHECK-NEXT:    bl      f_v4i32
   call i32 @f_v4i32(<4 x i32> <i32 50331648, i32 50331648, i32 50331648, i32 50331648>)
+  ; CHECK:         movi    v[[REG:[0-9]+]].4s, #0x2, lsl #24
+  ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
+  ; CHECK-NEXT:    bl      f_v2i64
+  call i64 @f_v2i64(<2 x i64> <i64 144115188109410304, i64 144115188109410304>)
 
   ret void
 }
@@ -527,6 +557,9 @@ define void @modimm_t5_call() {
   ; CHECK-NEXT:    rev64   v{{[0-9]+}}.2s, v[[REG1]].2s
   ; CHECK-NEXT:    bl      f_v2i32
   call i32 @f_v2i32(<2 x i32> <i32 393222, i32 393222>)
+  ; CHECK:         movi    v{{[0-9]+}}.4h, #0x5
+  ; CHECK-NEXT:    bl      f_v1i64
+  call i64 @f_v1i64(<1 x i64> <i64 1407396358717445>)
   ; CHECK:         movi    v[[REG1:[0-9]+]].8h, #0x5
   ; CHECK-NEXT:    rev64   v[[REG2:[0-9]+]].16b, v[[REG1]].16b
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
@@ -542,6 +575,10 @@ define void @modimm_t5_call() {
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
   ; CHECK-NEXT:    bl      f_v4i32
   call i32 @f_v4i32(<4 x i32> <i32 196611, i32 196611, i32 196611, i32 196611>)
+  ; CHECK:         movi    v[[REG:[0-9]+]].8h, #0x2
+  ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
+  ; CHECK-NEXT:    bl      f_v2i64
+  call i64 @f_v2i64(<2 x i64> <i64 562958543486978, i64 562958543486978>)
 
   ret void
 }
@@ -560,6 +597,9 @@ define void @modimm_t6_call() {
   ; CHECK-NEXT:    rev64   v{{[0-9]+}}.2s, v[[REG1]].2s
   ; CHECK-NEXT:    bl      f_v2i32
   call i32 @f_v2i32(<2 x i32> <i32 100664832, i32 100664832>)
+  ; CHECK:         movi    v{{[0-9]+}}.4h, #0x5, lsl #8
+  ; CHECK-NEXT:    bl      f_v1i64
+  call i64 @f_v1i64(<1 x i64> <i64 360293467831665920>)
   ; CHECK:         movi    v[[REG1:[0-9]+]].8h, #0x5, lsl #8
   ; CHECK-NEXT:    rev64   v[[REG2:[0-9]+]].16b, v[[REG1]].16b
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
@@ -575,6 +615,10 @@ define void @modimm_t6_call() {
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
   ; CHECK-NEXT:    bl      f_v4i32
   call i32 @f_v4i32(<4 x i32> <i32 50332416, i32 50332416, i32 50332416, i32 50332416>)
+  ; CHECK:         movi    v[[REG:[0-9]+]].8h, #0x2, lsl #8
+  ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
+  ; CHECK-NEXT:    bl      f_v2i64
+  call i64 @f_v2i64(<2 x i64> <i64 144117387132666368, i64 144117387132666368>)
 
   ret void
 }
@@ -593,6 +637,9 @@ define void @modimm_t7_call() {
   ; CHECK-NEXT:    rev64   v{{[0-9]+}}.2s, v[[REG1]].2s
   ; CHECK-NEXT:    bl      f_v2i32
   call i32 @f_v2i32(<2 x i32> <i32 1791, i32 1791>)
+  ; CHECK:         movi    v{{[0-9]+}}.2s, #0x5, msl #8
+  ; CHECK-NEXT:    bl      f_v1i64
+  call i64 @f_v1i64(<1 x i64> <i64 6592774800895>)
   ; CHECK:         movi    v[[REG1:[0-9]+]].4s, #0x5, msl #8
   ; CHECK-NEXT:    rev64   v[[REG2:[0-9]+]].16b, v[[REG1]].16b
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
@@ -608,6 +655,10 @@ define void @modimm_t7_call() {
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
   ; CHECK-NEXT:    bl      f_v4i32
   call i32 @f_v4i32(<4 x i32> <i32 1023, i32 1023, i32 1023, i32 1023>)
+  ; CHECK:         movi    v[[REG:[0-9]+]].4s, #0x2, msl #8
+  ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
+  ; CHECK-NEXT:    bl      f_v2i64
+  call i64 @f_v2i64(<2 x i64> <i64 3294239916799, i64 3294239916799>)
 
   ret void
 }
@@ -626,6 +677,9 @@ define void @modimm_t8_call() {
   ; CHECK-NEXT:    rev64   v{{[0-9]+}}.2s, v[[REG1]].2s
   ; CHECK-NEXT:    bl      f_v2i32
   call i32 @f_v2i32(<2 x i32> <i32 458751, i32 458751>)
+  ; CHECK:         movi    v{{[0-9]+}}.2s, #0x5, msl #16
+  ; CHECK-NEXT:    bl      f_v1i64
+  call i64 @f_v1i64(<1 x i64> <i64 1688845565689855>)
   ; CHECK:         movi    v[[REG1:[0-9]+]].4s, #0x5, msl #16
   ; CHECK-NEXT:    rev64   v[[REG2:[0-9]+]].16b, v[[REG1]].16b
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
@@ -641,6 +695,10 @@ define void @modimm_t8_call() {
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
   ; CHECK-NEXT:    bl      f_v4i32
   call i32 @f_v4i32(<4 x i32> <i32 262143, i32 262143, i32 262143, i32 262143>)
+  ; CHECK:         movi    v[[REG:[0-9]+]].4s, #0x2, msl #16
+  ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
+  ; CHECK-NEXT:    bl      f_v2i64
+  call i64 @f_v2i64(<2 x i64> <i64 844420635361279, i64 844420635361279>)
 
   ret void
 }
@@ -725,6 +783,9 @@ define void @modimm_t11_call() {
   ; CHECK-NEXT:    rev64   v{{[0-9]+}}.2s, v[[REG1]].2s
   ; CHECK-NEXT:    bl      f_v2i32
   call i32 @f_v2i32(<2 x i32> <i32 1080033280, i32 1080033280>)
+  ; CHECK:         fmov    v{{[0-9]+}}.2s, #0.39062500
+  ; CHECK-NEXT:    bl      f_v1i64
+  call i64 @f_v1i64(<1 x i64> <i64 4523865826746957824>)
   ; CHECK:         fmov    v[[REG1:[0-9]+]].4s, #3.25000000
   ; CHECK-NEXT:    rev64   v[[REG2:[0-9]+]].16b, v[[REG1]].16b
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
@@ -740,6 +801,10 @@ define void @modimm_t11_call() {
   ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
   ; CHECK-NEXT:    bl      f_v4i32
   call i32 @f_v4i32(<4 x i32> <i32 1076887552, i32 1076887552, i32 1076887552, i32 1076887552>)
+  ; CHECK:         fmov    v[[REG:[0-9]+]].4s, #2.5000000
+  ; CHECK-NEXT:    ext     v[[REG2]].16b, v[[REG2]].16b, v[[REG2]].16b, #8
+  ; CHECK-NEXT:    bl      f_v2i64
+  call i64 @f_v2i64(<2 x i64> <i64 4620693218757967872, i64 4620693218757967872>)
 
   ret void
 }
