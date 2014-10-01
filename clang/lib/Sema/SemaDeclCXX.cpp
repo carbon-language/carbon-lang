@@ -2221,13 +2221,16 @@ namespace {
                               llvm::SmallPtrSetImpl<ValueDecl*> &Decls)
       : Inherited(S.Context), S(S), Decls(Decls) { }
 
-    void HandleMemberExpr(MemberExpr *ME, bool CheckReferenceOnly) {
+    void HandleMemberExpr(MemberExpr *ME, bool CheckReferenceOnly,
+                          bool AddressOf) {
       if (isa<EnumConstantDecl>(ME->getMemberDecl()))
         return;
 
       // FieldME is the inner-most MemberExpr that is not an anonymous struct
       // or union.
       MemberExpr *FieldME = ME;
+
+      bool AllPODFields = FieldME->getType().isPODType(S.Context);
 
       Expr *Base = ME;
       while (isa<MemberExpr>(Base)) {
@@ -2240,10 +2243,16 @@ namespace {
           if (!FD->isAnonymousStructOrUnion())
             FieldME = ME;
 
-        Base = ME->getBase();
+        if (!FieldME->getType().isPODType(S.Context))
+          AllPODFields = false;
+
+        Base = ME->getBase()->IgnoreParenImpCasts();
       }
 
       if (!isa<CXXThisExpr>(Base))
+        return;
+
+      if (AddressOf && AllPODFields)
         return;
 
       ValueDecl* FoundVD = FieldME->getMemberDecl();
@@ -2254,7 +2263,7 @@ namespace {
       const bool IsReference = FoundVD->getType()->isReferenceType();
 
       // Prevent double warnings on use of unbounded references.
-      if (IsReference != CheckReferenceOnly)
+      if (CheckReferenceOnly && !IsReference)
         return;
 
       unsigned diag = IsReference
@@ -2268,44 +2277,51 @@ namespace {
 
     }
 
-    void HandleValue(Expr *E) {
+    void HandleValue(Expr *E, bool AddressOf) {
       E = E->IgnoreParens();
 
       if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
-        HandleMemberExpr(ME, false /*CheckReferenceOnly*/);
+        HandleMemberExpr(ME, false /*CheckReferenceOnly*/,
+                         AddressOf /*AddressOf*/);
         return;
       }
 
       if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E)) {
-        HandleValue(CO->getTrueExpr());
-        HandleValue(CO->getFalseExpr());
+        Visit(CO->getCond());
+        HandleValue(CO->getTrueExpr(), AddressOf);
+        HandleValue(CO->getFalseExpr(), AddressOf);
         return;
       }
 
       if (BinaryConditionalOperator *BCO =
               dyn_cast<BinaryConditionalOperator>(E)) {
-        HandleValue(BCO->getFalseExpr());
+        Visit(BCO->getCond());
+        HandleValue(BCO->getFalseExpr(), AddressOf);
         return;
       }
 
       if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(E)) {
-        HandleValue(OVE->getSourceExpr());
+        HandleValue(OVE->getSourceExpr(), AddressOf);
         return;
       }
 
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
         switch (BO->getOpcode()) {
         default:
-          return;
+          break;
         case(BO_PtrMemD):
         case(BO_PtrMemI):
-          HandleValue(BO->getLHS());
+          HandleValue(BO->getLHS(), AddressOf);
+          Visit(BO->getRHS());
           return;
         case(BO_Comma):
-          HandleValue(BO->getRHS());
+          Visit(BO->getLHS());
+          HandleValue(BO->getRHS(), AddressOf);
           return;
         }
       }
+
+      Visit(E);
     }
 
     void CheckInitializer(Expr *E, const CXXConstructorDecl *FieldConstructor,
@@ -2324,14 +2340,14 @@ namespace {
 
     void VisitMemberExpr(MemberExpr *ME) {
       // All uses of unbounded reference fields will warn.
-      HandleMemberExpr(ME, true /*CheckReferenceOnly*/);
-
-      Inherited::VisitMemberExpr(ME);
+      HandleMemberExpr(ME, true /*CheckReferenceOnly*/, false /*AddressOf*/);
     }
 
     void VisitImplicitCastExpr(ImplicitCastExpr *E) {
-      if (E->getCastKind() == CK_LValueToRValue)
-        HandleValue(E->getSubExpr());
+      if (E->getCastKind() == CK_LValueToRValue) {
+        HandleValue(E->getSubExpr(), false /*AddressOf*/);
+        return;
+      }
 
       Inherited::VisitImplicitCastExpr(E);
     }
@@ -2339,23 +2355,24 @@ namespace {
     void VisitCXXConstructExpr(CXXConstructExpr *E) {
       if (E->getConstructor()->isCopyConstructor()) {
         Expr *ArgExpr = E->getArg(0);
-        if (ImplicitCastExpr* ICE = dyn_cast<ImplicitCastExpr>(ArgExpr)) {
-          if (ICE->getCastKind() == CK_NoOp) {
+        if (InitListExpr *ILE = dyn_cast<InitListExpr>(ArgExpr))
+          if (ILE->getNumInits() == 1)
+            ArgExpr = ILE->getInit(0);
+        if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(ArgExpr))
+          if (ICE->getCastKind() == CK_NoOp)
             ArgExpr = ICE->getSubExpr();
-          }
-        }
-
-        if (MemberExpr *ME = dyn_cast<MemberExpr>(ArgExpr)) {
-          HandleMemberExpr(ME, false /*CheckReferenceOnly*/);
-        }
+        HandleValue(ArgExpr, false /*AddressOf*/);
+        return;
       }
       Inherited::VisitCXXConstructExpr(E);
     }
 
     void VisitCXXMemberCallExpr(CXXMemberCallExpr *E) {
       Expr *Callee = E->getCallee();
-      if (isa<MemberExpr>(Callee))
-        HandleValue(Callee);
+      if (isa<MemberExpr>(Callee)) {
+        HandleValue(Callee, false /*AddressOf*/);
+        return;
+      }
 
       Inherited::VisitCXXMemberCallExpr(E);
     }
@@ -2365,7 +2382,8 @@ namespace {
       if (E->getNumArgs() == 1) {
         if (FunctionDecl *FD = E->getDirectCallee()) {
           if (FD->getIdentifier() && FD->getIdentifier()->isStr("move")) {
-            HandleValue(E->getArg(0));
+            HandleValue(E->getArg(0), false /*AddressOf*/);
+            return;
           }
         }
       }
@@ -2383,15 +2401,25 @@ namespace {
               DeclsToRemove.push_back(FD);
 
       if (E->isCompoundAssignmentOp()) {
-        HandleValue(E->getLHS());
+        HandleValue(E->getLHS(), false /*AddressOf*/);
+        Visit(E->getRHS());
+        return;
       }
 
       Inherited::VisitBinaryOperator(E);
     }
 
     void VisitUnaryOperator(UnaryOperator *E) {
-      if (E->isIncrementDecrementOp())
-        HandleValue(E->getSubExpr());
+      if (E->isIncrementDecrementOp()) {
+        HandleValue(E->getSubExpr(), false /*AddressOf*/);
+        return;
+      }
+      if (E->getOpcode() == UO_AddrOf) {
+        if (MemberExpr *ME = dyn_cast<MemberExpr>(E->getSubExpr())) {
+          HandleValue(ME->getBase(), true /*AddressOf*/);
+          return;
+        }
+      }
 
       Inherited::VisitUnaryOperator(E);
     }

@@ -295,6 +295,61 @@ A a38({a38});  // expected-warning {{variable 'a38' is uninitialized when used w
 A a39 = {a39};  // expected-warning {{variable 'a39' is uninitialized when used within its own initialization}}
 A a40 = A({a40});  // expected-warning {{variable 'a40' is uninitialized when used within its own initialization}}
 
+class T {
+  A a, a2;
+  const A c_a;
+  A* ptr_a;
+
+  T() {}
+  T(bool (*)[1]) : a() {}
+  T(bool (*)[2]) : a2(a.get()) {}
+  T(bool (*)[3]) : a2(a) {}
+  T(bool (*)[4]) : a(&a) {}
+  T(bool (*)[5]) : a(a.zero()) {}
+  T(bool (*)[6]) : a(a.ONE) {}
+  T(bool (*)[7]) : a(getA()) {}
+  T(bool (*)[8]) : a2(getA(a.TWO)) {}
+  T(bool (*)[9]) : a(getA(&a)) {}
+  T(bool (*)[10]) : a(a.count) {}
+
+  T(bool (*)[11]) : a(a) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[12]) : a(a.get()) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[13]) : a(a.num) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[14]) : a(A(a)) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[15]) : a(getA(a.num)) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[16]) : a(&a.num) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[17]) : a(a.get2()) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[18]) : a2(cond ? a2 : a) {}  // expected-warning {{field 'a2' is uninitialized when used here}}
+  T(bool (*)[19]) : a2(cond ? a2 : a) {}  // expected-warning {{field 'a2' is uninitialized when used here}}
+  T(bool (*)[20]) : a{a} {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[21]) : a({a}) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+
+  T(bool (*)[22]) : ptr_a(new A(ptr_a->count)) {}
+  T(bool (*)[23]) : ptr_a(new A(ptr_a->ONE)) {}
+  T(bool (*)[24]) : ptr_a(new A(ptr_a->TWO)) {}
+  T(bool (*)[25]) : ptr_a(new A(ptr_a->zero())) {}
+
+  T(bool (*)[26]) : ptr_a(new A(ptr_a->get())) {}  // expected-warning {{field 'ptr_a' is uninitialized when used here}}
+  T(bool (*)[27]) : ptr_a(new A(ptr_a->get2())) {}  // expected-warning {{field 'ptr_a' is uninitialized when used here}}
+  T(bool (*)[28]) : ptr_a(new A(ptr_a->num)) {}  // expected-warning {{field 'ptr_a' is uninitialized when used here}}
+
+  T(bool (*)[29]) : c_a(c_a) {}  // expected-warning {{field 'c_a' is uninitialized when used here}}
+  T(bool (*)[30]) : c_a(A(c_a)) {}  // expected-warning {{field 'c_a' is uninitialized when used here}}
+
+  T(bool (*)[31]) : a(std::move(a)) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[32]) : a(moveA(std::move(a))) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[33]) : a(A(std::move(a))) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[34]) : a(A(std::move(a))) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[35]) : a2(std::move(x ? a : (37, a2))) {}  // expected-warning {{field 'a2' is uninitialized when used here}}
+
+  T(bool (*)[36]) : a(const_refA(a)) {}
+  T(bool (*)[37]) : a(A(const_refA(a))) {}
+
+  T(bool (*)[38]) : a({a}) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[39]) : a{a} {}  // expected-warning {{field 'a' is uninitialized when used here}}
+  T(bool (*)[40]) : a({a}) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+};
+
 struct B {
   // POD struct.
   int x;
@@ -382,6 +437,44 @@ B b21 = std::move(b21);  // expected-warning {{variable 'b21' is uninitialized w
 B b22 = moveB(std::move(b22));  // expected-warning {{variable 'b22' is uninitialized when used within its own initialization}}
 B b23 = B(std::move(b23));   // expected-warning {{variable 'b23' is uninitialized when used within its own initialization}}
 B b24 = std::move(x ? b23 : (18, b24));  // expected-warning {{variable 'b24' is uninitialized when used within its own initialization}}
+
+class U {
+  B b1, b2;
+  B *ptr1, *ptr2;
+  const B constb = {};
+
+  U() {}
+  U(bool (*)[1]) : b1() {}
+  U(bool (*)[2]) : b2(b1) {}
+  U(bool (*)[3]) : b1{ 5, &b1.x } {}
+  U(bool (*)[4]) : b1(getB()) {}
+  U(bool (*)[5]) : b1(getB(&b1)) {}
+  U(bool (*)[6]) : b1(getB(&b1.x)) {}
+
+  U(bool (*)[7]) : b1(b1) {}  // expected-warning {{field 'b1' is uninitialized when used here}}
+  U(bool (*)[8]) : b1(getB(b1.x)) {}  // expected-warning {{field 'b1' is uninitialized when used here}}
+  U(bool (*)[9]) : b1(getB(b1.y)) {}  // expected-warning {{field 'b1' is uninitialized when used here}}
+  U(bool (*)[10]) : b1(getB(-b1.x)) {}  // expected-warning {{field 'b1' is uninitialized when used here}}
+
+  U(bool (*)[11]) : ptr1(0) {}
+  U(bool (*)[12]) : ptr1(0), ptr2(ptr1) {}
+  U(bool (*)[13]) : ptr1(getPtrB()) {}
+  U(bool (*)[14]) : ptr1(getPtrB(&ptr1)) {}
+
+  U(bool (*)[15]) : ptr1(getPtrB(ptr1->x)) {}  // expected-warning {{field 'ptr1' is uninitialized when used here}}
+  U(bool (*)[16]) : ptr2(getPtrB(ptr2->y)) {}  // expected-warning {{field 'ptr2' is uninitialized when used here}}
+
+  U(bool (*)[17]) : b1 { b1.x = 5, b1.y = 0 } {}
+  U(bool (*)[18]) : b1 { b1.x + 1, b1.y } {}  // expected-warning 2{{field 'b1' is uninitialized when used here}}
+
+  U(bool (*)[19]) : constb(constb) {}  // expected-warning {{field 'constb' is uninitialized when used here}}
+  U(bool (*)[20]) : constb(B(constb)) {}  // expected-warning {{field 'constb' is uninitialized when used here}}
+
+  U(bool (*)[21]) : b1(std::move(b1)) {}  // expected-warning {{field 'b1' is uninitialized when used here}}
+  U(bool (*)[22]) : b1(moveB(std::move(b1))) {}  // expected-warning {{field 'b1' is uninitialized when used here}}
+  U(bool (*)[23]) : b1(B(std::move(b1))) {}  // expected-warning {{field 'b1' is uninitialized when used here}}
+  U(bool (*)[24]) : b2(std::move(x ? b1 : (18, b2))) {}  // expected-warning {{field 'b2' is uninitialized when used here}}
+};
 
 struct C { char a[100], *e; } car = { .e = car.a };
 
