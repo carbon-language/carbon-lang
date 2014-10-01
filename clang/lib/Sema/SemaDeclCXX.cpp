@@ -353,7 +353,9 @@ void Sema::ActOnParamDefaultArgumentError(Decl *param,
   Param->setInvalidDecl();
   UnparsedDefaultArgLocs.erase(Param);
   Param->setDefaultArg(new(Context)
-                       OpaqueValueExpr(EqualLoc, Param->getType(), VK_RValue));
+                       OpaqueValueExpr(EqualLoc,
+                                       Param->getType().getNonReferenceType(),
+                                       VK_RValue));
 }
 
 /// CheckExtraCXXDefaultArguments - Check for any extra default
