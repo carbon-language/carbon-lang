@@ -346,7 +346,7 @@ private:
 unsigned Immovable::Constructions = 0;
 unsigned Immovable::Destructions = 0;
 
-TEST_F(OptionalTest, MoveOnlyEmplace) {
+TEST_F(OptionalTest, ImmovableEmplace) {
   Optional<Immovable> A;
   Immovable::ResetCounts();
   A.emplace(4);
