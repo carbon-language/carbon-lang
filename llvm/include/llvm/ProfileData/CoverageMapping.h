@@ -63,6 +63,10 @@ public:
     return Kind == Other.Kind && ID == Other.ID;
   }
 
+  friend bool operator<(const Counter &LHS, const Counter &RHS) {
+    return std::tie(LHS.Kind, LHS.ID) < std::tie(RHS.Kind, RHS.ID);
+  }
+
   /// \brief Return the counter that represents the number zero.
   static Counter getZero() { return Counter(); }
 
