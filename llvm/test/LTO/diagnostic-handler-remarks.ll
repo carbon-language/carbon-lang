@@ -28,6 +28,8 @@
 ; NM-NOT: foo
 ; NM: main
 
+target triple = "x86_64-apple-darwin"
+
 define i32 @foo() {
   ret i32 7
 }
