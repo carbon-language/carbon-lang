@@ -26,6 +26,113 @@ void BoundNodesTreeBuilder::visitMatches(Visitor *ResultVisitor) {
   }
 }
 
+namespace {
+
+class VariadicMatcher : public DynMatcherInterface {
+ public:
+  VariadicMatcher(VariadicOperatorFunction Func,
+                  std::vector<DynTypedMatcher> InnerMatchers)
+      : Func(Func), InnerMatchers(std::move(InnerMatchers)) {}
+
+  bool dynMatches(const ast_type_traits::DynTypedNode &DynNode,
+                  ASTMatchFinder *Finder,
+                  BoundNodesTreeBuilder *Builder) const override {
+    return Func(DynNode, Finder, Builder, InnerMatchers);
+  }
+
+ private:
+  VariadicOperatorFunction Func;
+  std::vector<DynTypedMatcher> InnerMatchers;
+};
+
+class IdDynMatcher : public DynMatcherInterface {
+ public:
+  IdDynMatcher(StringRef ID,
+               const IntrusiveRefCntPtr<DynMatcherInterface> &InnerMatcher)
+      : ID(ID), InnerMatcher(InnerMatcher) {}
+
+  bool dynMatches(const ast_type_traits::DynTypedNode &DynNode,
+                  ASTMatchFinder *Finder,
+                  BoundNodesTreeBuilder *Builder) const override {
+    bool Result = InnerMatcher->dynMatches(DynNode, Finder, Builder);
+    if (Result) Builder->setBinding(ID, DynNode);
+    return Result;
+  }
+
+ private:
+  const std::string ID;
+  const IntrusiveRefCntPtr<DynMatcherInterface> InnerMatcher;
+};
+
+/// \brief Return the most derived type between \p Kind1 and \p Kind2.
+///
+/// Return the null type if they are not related.
+ast_type_traits::ASTNodeKind getMostDerivedType(
+    const ast_type_traits::ASTNodeKind Kind1,
+    const ast_type_traits::ASTNodeKind Kind2) {
+  if (Kind1.isBaseOf(Kind2)) return Kind2;
+  if (Kind2.isBaseOf(Kind1)) return Kind1;
+  return ast_type_traits::ASTNodeKind();
+}
+
+/// \brief Return the least derived type between \p Kind1 and \p Kind2.
+///
+/// Return the null type if they are not related.
+static ast_type_traits::ASTNodeKind getLeastDerivedType(
+    const ast_type_traits::ASTNodeKind Kind1,
+    const ast_type_traits::ASTNodeKind Kind2) {
+  if (Kind1.isBaseOf(Kind2)) return Kind1;
+  if (Kind2.isBaseOf(Kind1)) return Kind2;
+  return ast_type_traits::ASTNodeKind();
+}
+
+}  // namespace
+
+DynTypedMatcher DynTypedMatcher::constructVariadic(
+    VariadicOperatorFunction Func, std::vector<DynTypedMatcher> InnerMatchers) {
+  assert(InnerMatchers.size() > 0 && "Array must not be empty.");
+  DynTypedMatcher Result = InnerMatchers[0];
+  // Use the least derived type as the restriction for the wrapper.
+  // This allows mismatches to be resolved on the inner matchers.
+  for (const DynTypedMatcher &M : InnerMatchers) {
+    assert(Result.SupportedKind.isSame(M.SupportedKind) &&
+           "SupportedKind must match!");
+    Result.RestrictKind =
+        getLeastDerivedType(Result.RestrictKind, M.RestrictKind);
+  }
+  Result.Implementation = new VariadicMatcher(Func, std::move(InnerMatchers));
+  return Result;
+}
+
+DynTypedMatcher DynTypedMatcher::dynCastTo(
+    const ast_type_traits::ASTNodeKind Kind) const {
+  auto Copy = *this;
+  Copy.SupportedKind = Kind;
+  Copy.RestrictKind = getMostDerivedType(Kind, RestrictKind);
+  return Copy;
+}
+
+bool DynTypedMatcher::matches(const ast_type_traits::DynTypedNode &DynNode,
+                              ASTMatchFinder *Finder,
+                              BoundNodesTreeBuilder *Builder) const {
+  if (RestrictKind.isBaseOf(DynNode.getNodeKind()) &&
+      Implementation->dynMatches(DynNode, Finder, Builder)) {
+    return true;
+  }
+  // Delete all bindings when a matcher does not match.
+  // This prevents unexpected exposure of bound nodes in unmatches
+  // branches of the match tree.
+  Builder->removeBindings([](const BoundNodesMap &) { return true; });
+  return false;
+}
+
+llvm::Optional<DynTypedMatcher> DynTypedMatcher::tryBind(StringRef ID) const {
+  if (!AllowBind) return llvm::None;
+  auto Result = *this;
+  Result.Implementation = new IdDynMatcher(ID, Result.Implementation);
+  return Result;
+}
+
 bool DynTypedMatcher::canConvertTo(ast_type_traits::ASTNodeKind To) const {
   const auto From = getSupportedKind();
   auto QualKind = ast_type_traits::ASTNodeKind::getFromNodeKind<QualType>();
@@ -36,8 +143,6 @@ bool DynTypedMatcher::canConvertTo(ast_type_traits::ASTNodeKind To) const {
   /// - From Matcher<Base> to Matcher<Derived>
   return From.isBaseOf(To);
 }
-
-DynTypedMatcher::MatcherStorage::~MatcherStorage() {}
 
 void BoundNodesTreeBuilder::addMatch(const BoundNodesTreeBuilder &Other) {
   for (unsigned i = 0, e = Other.Bindings.size(); i != e; ++i) {
