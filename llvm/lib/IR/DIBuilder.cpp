@@ -1056,6 +1056,12 @@ DIExpression DIBuilder::createExpression(ArrayRef<int64_t> Addr) {
   return DIExpression(MDNode::get(VMContext, Elts));
 }
 
+DIExpression DIBuilder::createPieceExpression(unsigned OffsetInBytes,
+                                              unsigned SizeInBytes) {
+  int64_t Addr[] = {dwarf::DW_OP_piece, OffsetInBytes, SizeInBytes};
+  return createExpression(Addr);
+}
+
 /// createFunction - Create a new descriptor for the specified function.
 /// FIXME: this is added for dragonegg. Once we update dragonegg
 /// to call resolve function, this will be removed.
