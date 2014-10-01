@@ -166,6 +166,7 @@ public:
 
   struct VariableDbgInfo {
     TrackingVH<MDNode> Var;
+    TrackingVH<MDNode> Expr;
     unsigned Slot;
     DebugLoc Loc;
   };
@@ -390,8 +391,9 @@ public:
 
   /// setVariableDbgInfo - Collect information used to emit debugging
   /// information of a variable.
-  void setVariableDbgInfo(MDNode *N, unsigned Slot, DebugLoc Loc) {
-    VariableDbgInfo Info = { N, Slot, Loc };
+  void setVariableDbgInfo(MDNode *Var, MDNode *Expr, unsigned Slot,
+                          DebugLoc Loc) {
+    VariableDbgInfo Info = {Var, Expr, Slot, Loc};
     VariableDbgInfos.push_back(std::move(Info));
   }
 

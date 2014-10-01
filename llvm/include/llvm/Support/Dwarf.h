@@ -53,6 +53,7 @@ enum LLVMConstants : uint32_t {
 
   DW_TAG_auto_variable = 0x100, // Tag for local (auto) variables.
   DW_TAG_arg_variable = 0x101,  // Tag for argument variables.
+  DW_TAG_expression = 0x102,    // Tag for complex address expressions.
 
   DW_TAG_user_base = 0x1000, // Recommended base for user tags.
 

@@ -51,15 +51,15 @@ define void @_Z1biz(i32 %c, ...) #0 {
   %a = alloca %struct.A, align 1
   %fptr = alloca void (i32, ...)*, align 8
   store i32 %c, i32* %1, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %1}, metadata !21), !dbg !22
-  call void @llvm.dbg.declare(metadata !{%struct.A* %a}, metadata !23), !dbg !24
-  call void @llvm.dbg.declare(metadata !{void (i32, ...)** %fptr}, metadata !25), !dbg !27
+  call void @llvm.dbg.declare(metadata !{i32* %1}, metadata !21, metadata !{i32 786690}), !dbg !22
+  call void @llvm.dbg.declare(metadata !{%struct.A* %a}, metadata !23, metadata !{i32 786690}), !dbg !24
+  call void @llvm.dbg.declare(metadata !{void (i32, ...)** %fptr}, metadata !25, metadata !{i32 786690}), !dbg !27
   store void (i32, ...)* @_Z1biz, void (i32, ...)** %fptr, align 8, !dbg !27
   ret void, !dbg !28
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 attributes #0 = { nounwind ssp uwtable }
 attributes #1 = { nounwind readnone }

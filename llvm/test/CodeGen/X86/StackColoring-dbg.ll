@@ -5,7 +5,7 @@
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.8.0"
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define void @foo() nounwind uwtable ssp {
 entry:
@@ -17,7 +17,7 @@ entry:
 for.body:
   call void @llvm.lifetime.end(i64 -1, i8* %0) nounwind
   call void @llvm.lifetime.start(i64 -1, i8* %x.i) nounwind
-  call void @llvm.dbg.declare(metadata !{i8* %x.i}, metadata !22) nounwind
+  call void @llvm.dbg.declare(metadata !{i8* %x.i}, metadata !22, metadata !{i32 786690}) nounwind
   br label %for.body
 }
 

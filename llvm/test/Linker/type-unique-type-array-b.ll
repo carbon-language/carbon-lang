@@ -30,8 +30,8 @@ entry:
   %coerce.dive = getelementptr %struct.SA* %sa, i32 0, i32 0
   store i32 %sa.coerce, i32* %coerce.dive
   store %class.B* %b, %class.B** %b.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.B** %b.addr}, metadata !24), !dbg !25
-  call void @llvm.dbg.declare(metadata !{%struct.SA* %sa}, metadata !26), !dbg !27
+  call void @llvm.dbg.declare(metadata !{%class.B** %b.addr}, metadata !24, metadata !{i32 786690}), !dbg !25
+  call void @llvm.dbg.declare(metadata !{%struct.SA* %sa}, metadata !26, metadata !{i32 786690}), !dbg !27
   %0 = load %class.B** %b.addr, align 8, !dbg !28
   %1 = bitcast %struct.SA* %agg.tmp to i8*, !dbg !28
   %2 = bitcast %struct.SA* %sa to i8*, !dbg !28
@@ -43,7 +43,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind ssp uwtable
 define linkonce_odr void @_ZN1B5testBE2SA(%class.B* %this, i32 %sa.coerce) #2 align 2 {
@@ -53,8 +53,8 @@ entry:
   %coerce.dive = getelementptr %struct.SA* %sa, i32 0, i32 0
   store i32 %sa.coerce, i32* %coerce.dive
   store %class.B* %this, %class.B** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.B** %this.addr}, metadata !30), !dbg !31
-  call void @llvm.dbg.declare(metadata !{%struct.SA* %sa}, metadata !32), !dbg !33
+  call void @llvm.dbg.declare(metadata !{%class.B** %this.addr}, metadata !30, metadata !{i32 786690}), !dbg !31
+  call void @llvm.dbg.declare(metadata !{%struct.SA* %sa}, metadata !32, metadata !{i32 786690}), !dbg !33
   %this1 = load %class.B** %this.addr
   ret void, !dbg !34
 }

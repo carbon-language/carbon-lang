@@ -19,11 +19,11 @@ target triple = "thumbv7-apple-ios"
 @"OBJC_IVAR_$_MyWork._data" = external hidden global i32, section "__DATA, __objc_const", align 4
 @"\01L_OBJC_SELECTOR_REFERENCES_222" = external hidden global i8*, section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip"
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 declare i8* @objc_msgSend(i8*, i8*, ...)
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
 
@@ -31,22 +31,22 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
   %1 = alloca %0*, align 4
   %bounds = alloca %struct.CR, align 4
   %data = alloca %struct.CR, align 4
-  call void @llvm.dbg.value(metadata !{i8* %.block_descriptor}, i64 0, metadata !27), !dbg !129
+  call void @llvm.dbg.value(metadata !{i8* %.block_descriptor}, i64 0, metadata !27, metadata !{i32 786690}), !dbg !129
   store %0* %loadedMydata, %0** %1, align 4
-  call void @llvm.dbg.declare(metadata !{%0** %1}, metadata !130), !dbg !131
+  call void @llvm.dbg.declare(metadata !{%0** %1}, metadata !130, metadata !{i32 786690}), !dbg !131
   %2 = bitcast %struct.CR* %bounds to %1*
   %3 = getelementptr %1* %2, i32 0, i32 0
   store [4 x i32] %bounds.coerce0, [4 x i32]* %3
-  call void @llvm.dbg.declare(metadata !{%struct.CR* %bounds}, metadata !132), !dbg !133
+  call void @llvm.dbg.declare(metadata !{%struct.CR* %bounds}, metadata !132, metadata !{i32 786690}), !dbg !133
   %4 = bitcast %struct.CR* %data to %1*
   %5 = getelementptr %1* %4, i32 0, i32 0
   store [4 x i32] %data.coerce0, [4 x i32]* %5
-  call void @llvm.dbg.declare(metadata !{%struct.CR* %data}, metadata !134), !dbg !135
+  call void @llvm.dbg.declare(metadata !{%struct.CR* %data}, metadata !134, metadata !{i32 786690}), !dbg !135
   %6 = bitcast i8* %.block_descriptor to %2*
   %7 = getelementptr inbounds %2* %6, i32 0, i32 6
-  call void @llvm.dbg.declare(metadata !{%2* %6}, metadata !136), !dbg !137
-  call void @llvm.dbg.declare(metadata !{%2* %6}, metadata !138), !dbg !137
-  call void @llvm.dbg.declare(metadata !{%2* %6}, metadata !139), !dbg !140
+  call void @llvm.dbg.declare(metadata !{%2* %6}, metadata !136, metadata !163), !dbg !137
+  call void @llvm.dbg.declare(metadata !{%2* %6}, metadata !138, metadata !164), !dbg !137
+  call void @llvm.dbg.declare(metadata !{%2* %6}, metadata !139, metadata !165), !dbg !140
   %8 = load %0** %1, align 4, !dbg !141
   %9 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_13", !dbg !141
   %10 = bitcast %0* %8 to i8*, !dbg !141
@@ -231,10 +231,10 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !133 = metadata !{i32 609, i32 175, metadata !23, null}
 !134 = metadata !{i32 786689, metadata !23, metadata !"data", metadata !24, i32 67109473, metadata !108, i32 0, null} ; [ DW_TAG_arg_variable ]
 !135 = metadata !{i32 609, i32 190, metadata !23, null}
-!136 = metadata !{i32 786688, metadata !23, metadata !"mydata", metadata !24, i32 604, metadata !50, i32 0, null, metadata !163} ; [ DW_TAG_auto_variable ]
+!136 = metadata !{i32 786688, metadata !23, metadata !"mydata", metadata !24, i32 604, metadata !50, i32 0, null} ;; [ DW_TAG_auto_variable ]
 !137 = metadata !{i32 604, i32 49, metadata !23, null}
-!138 = metadata !{i32 786688, metadata !23, metadata !"self", metadata !40, i32 604, metadata !90, i32 0, null, metadata !164} ; [ DW_TAG_auto_variable ]
-!139 = metadata !{i32 786688, metadata !23, metadata !"semi", metadata !24, i32 607, metadata !125, i32 0, null, metadata !165} ; [ DW_TAG_auto_variable ]
+!138 = metadata !{i32 786688, metadata !23, metadata !"self", metadata !40, i32 604, metadata !90, i32 0, null} ;; [ DW_TAG_auto_variable ]
+!139 = metadata !{i32 786688, metadata !23, metadata !"semi", metadata !24, i32 607, metadata !125, i32 0, null} ;; [ DW_TAG_auto_variable ]
 !140 = metadata !{i32 607, i32 30, metadata !23, null}
 !141 = metadata !{i32 610, i32 17, metadata !142, null}
 !142 = metadata !{i32 786443, metadata !152, metadata !23, i32 609, i32 200, i32 94} ; [ DW_TAG_lexical_block ]
@@ -258,6 +258,6 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !160 = metadata !{metadata !"header.h", metadata !"/Volumes/Sandbox/llvm"}
 !161 = metadata !{metadata !"header2.h", metadata !"/Volumes/Sandbox/llvm"}
 !162 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
-!163 = metadata !{i64 1, i64 20, i64 2, i64 1, i64 4, i64 2, i64 1, i64 24}
-!164 = metadata !{i64 1, i64 24}
-!165 = metadata !{i64 1, i64 28}
+!163 = metadata !{i32 786690, i64 34, i64 20, i64 6, i64 34, i64 4, i64 6, i64 34, i64 24} ; [DW_OP_plus 20 DW_OP_deref DW_OP_plus 4 DW_OP_deref DW_OP_plus 24]
+!164 = metadata !{i32 786690, i64 34, i64 24} ; [DW_OP_plus 24]
+!165 = metadata !{i32 786690, i64 34, i64 28} ; [DW_OP_plus 28]

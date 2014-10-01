@@ -5,9 +5,9 @@ target triple = "hexagon"
 
 define void @foo(i32* nocapture %a, i32* nocapture %b) nounwind {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i32* %a}, i64 0, metadata !13), !dbg !17
-  tail call void @llvm.dbg.value(metadata !{i32* %b}, i64 0, metadata !14), !dbg !18
-  tail call void @llvm.dbg.value(metadata !30, i64 0, metadata !15), !dbg !19
+  tail call void @llvm.dbg.value(metadata !{i32* %a}, i64 0, metadata !13, metadata !{i32 786690}), !dbg !17
+  tail call void @llvm.dbg.value(metadata !{i32* %b}, i64 0, metadata !14, metadata !{i32 786690}), !dbg !18
+  tail call void @llvm.dbg.value(metadata !30, i64 0, metadata !15, metadata !{i32 786690}), !dbg !19
   br label %for.body, !dbg !19
 
 for.body:                                         ; preds = %for.body, %entry
@@ -18,11 +18,11 @@ for.body:                                         ; preds = %for.body, %entry
   %i.02 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %b.addr.01 = phi i32* [ %b, %entry ], [ %incdec.ptr, %for.body ]
   %incdec.ptr = getelementptr inbounds i32* %b.addr.01, i32 1, !dbg !21
-  tail call void @llvm.dbg.value(metadata !{i32* %incdec.ptr}, i64 0, metadata !14), !dbg !21
+  tail call void @llvm.dbg.value(metadata !{i32* %incdec.ptr}, i64 0, metadata !14, metadata !{i32 786690}), !dbg !21
   %0 = load i32* %b.addr.01, align 4, !dbg !21
   store i32 %0, i32* %arrayidx.phi, align 4, !dbg !21
   %inc = add nsw i32 %i.02, 1, !dbg !26
-  tail call void @llvm.dbg.value(metadata !{i32 %inc}, i64 0, metadata !15), !dbg !26
+  tail call void @llvm.dbg.value(metadata !{i32 %inc}, i64 0, metadata !15, metadata !{i32 786690}), !dbg !26
   %exitcond = icmp eq i32 %inc, 10, !dbg !19
   %arrayidx.inc = getelementptr i32* %arrayidx.phi, i32 1
   br i1 %exitcond, label %for.end, label %for.body, !dbg !19
@@ -31,7 +31,7 @@ for.end:                                          ; preds = %for.body
   ret void, !dbg !27
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 
 !llvm.dbg.cu = !{!0}

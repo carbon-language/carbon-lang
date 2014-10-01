@@ -28,7 +28,7 @@ define void @foo(i32 %map) #0 {
 entry:
   %map.addr = alloca i32, align 4
   store i32 %map, i32* %map.addr, align 4, !tbaa !15
-  call void @llvm.dbg.declare(metadata !{i32* %map.addr}, metadata !10), !dbg !14
+  call void @llvm.dbg.declare(metadata !{i32* %map.addr}, metadata !10, metadata !{i32 786690}), !dbg !14
   %call = call i32 (i32*, ...)* bitcast (i32 (...)* @lookup to i32 (i32*, ...)*)(i32* %map.addr) #3, !dbg !19
   ; Ensure that all dbg intrinsics have the same scope after
   ; LowerDbgDeclare is finished with them.
@@ -42,14 +42,14 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 declare i32 @lookup(...)
 
 declare i32 @verify(...)
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata) #1
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
 
 attributes #0 = { nounwind ssp uwtable }
 attributes #1 = { nounwind readnone }

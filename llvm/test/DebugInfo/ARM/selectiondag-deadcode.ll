@@ -13,11 +13,11 @@ _ZN7Vector39NormalizeEv.exit:                     ; preds = %1, %0
   ; and SelectionDAGISel crashes.  It should definitely not
   ; crash. Drop the dbg_value instead.
   ; CHECK-NOT: "matrix"
-  tail call void @llvm.dbg.declare(metadata !{%class.Matrix3.0.6.10* %agg.result}, metadata !45)
+  tail call void @llvm.dbg.declare(metadata !{%class.Matrix3.0.6.10* %agg.result}, metadata !45, metadata !{i32 786690})
   %2 = getelementptr inbounds %class.Matrix3.0.6.10* %agg.result, i32 0, i32 0, i32 8
   ret void
 }
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 declare arm_aapcscc void @_ZL4Sqrtd() #2
 !4 = metadata !{i32 786434, metadata !5, null, metadata !"Matrix3", i32 20, i64 288, i64 32, i32 0, i32 0, null, null, i32 0, null, null, metadata !"_ZTS7Matrix3"} ; [ DW_TAG_class_type ] [Matrix3] [line 20, size 288, align 32, offset 0] [def] [from ]
 !5 = metadata !{metadata !"test.ii", metadata !"/Volumes/Data/radar/15094721"}

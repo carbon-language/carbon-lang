@@ -13,15 +13,15 @@ target triple = "x86_64-apple-macosx10.9.0"
 %class.A = type { i8 }
 
 declare void @_Z3barR4SVal(%class.SVal* %v)
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 declare i32 @main()
 ; Function Attrs: nounwind ssp uwtable
 define linkonce_odr void @_ZN1A3fooE4SVal(%class.A* %this, %class.SVal* %v) nounwind ssp uwtable align 2 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !59), !dbg !61
-  call void @llvm.dbg.declare(metadata !{%class.SVal* %v}, metadata !62), !dbg !61
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !59, metadata !{i32 786690}), !dbg !61
+  call void @llvm.dbg.declare(metadata !{%class.SVal* %v}, metadata !62, metadata !{i32 786690}), !dbg !61
   %this1 = load %class.A** %this.addr
   call void @_Z3barR4SVal(%class.SVal* %v), !dbg !61
   ret void, !dbg !61

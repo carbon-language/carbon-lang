@@ -182,12 +182,12 @@
 define void @_Z3foov() #0 {
 entry:
   %b = alloca %struct.baz, align 1
-  call void @llvm.dbg.declare(metadata !{%struct.baz* %b}, metadata !46), !dbg !48
+  call void @llvm.dbg.declare(metadata !{%struct.baz* %b}, metadata !46, metadata !{i32 786690}), !dbg !48
   ret void, !dbg !49
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 define internal void @__cxx_global_var_init() section ".text.startup" {
 entry:
@@ -200,7 +200,7 @@ define internal void @_ZN12_GLOBAL__N_16walrusC2Ev(%"struct.<anonymous namespace
 entry:
   %this.addr = alloca %"struct.<anonymous namespace>::walrus"*, align 8
   store %"struct.<anonymous namespace>::walrus"* %this, %"struct.<anonymous namespace>::walrus"** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%"struct.<anonymous namespace>::walrus"** %this.addr}, metadata !51), !dbg !53
+  call void @llvm.dbg.declare(metadata !{%"struct.<anonymous namespace>::walrus"** %this.addr}, metadata !51, metadata !{i32 786690}), !dbg !53
   %this1 = load %"struct.<anonymous namespace>::walrus"** %this.addr
   ret void, !dbg !54
 }

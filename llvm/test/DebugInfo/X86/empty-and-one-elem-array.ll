@@ -9,8 +9,8 @@ define i32 @func() nounwind uwtable ssp {
 entry:
   %my_foo = alloca %struct.foo, align 4
   %my_bar = alloca %struct.bar, align 4
-  call void @llvm.dbg.declare(metadata !{%struct.foo* %my_foo}, metadata !10), !dbg !19
-  call void @llvm.dbg.declare(metadata !{%struct.bar* %my_bar}, metadata !20), !dbg !28
+  call void @llvm.dbg.declare(metadata !{%struct.foo* %my_foo}, metadata !10, metadata !{i32 786690}), !dbg !19
+  call void @llvm.dbg.declare(metadata !{%struct.bar* %my_bar}, metadata !20, metadata !{i32 786690}), !dbg !28
   %a = getelementptr inbounds %struct.foo* %my_foo, i32 0, i32 0, !dbg !29
   store i32 3, i32* %a, align 4, !dbg !29
   %a1 = getelementptr inbounds %struct.bar* %my_bar, i32 0, i32 0, !dbg !30
@@ -23,7 +23,7 @@ entry:
   ret i32 %add, !dbg !31
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 ; CHECK:      DW_TAG_base_type
 ; CHECK-NEXT: DW_AT_name [DW_FORM_strp]  ( .debug_str[{{.*}}] = "int")

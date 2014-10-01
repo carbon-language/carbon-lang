@@ -8,13 +8,13 @@ entry:
   %a.addr = alloca i32, align 4
   %t = alloca %struct.Base, align 8
   store i32 %a, i32* %a.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %a.addr}, metadata !20), !dbg !21
-  call void @llvm.dbg.declare(metadata !{%struct.Base* %t}, metadata !22), !dbg !23
+  call void @llvm.dbg.declare(metadata !{i32* %a.addr}, metadata !20, metadata !{i32 786690}), !dbg !21
+  call void @llvm.dbg.declare(metadata !{%struct.Base* %t}, metadata !22, metadata !{i32 786690}), !dbg !23
   ret void, !dbg !24
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: ssp uwtable
 define i32 @main() #2 {

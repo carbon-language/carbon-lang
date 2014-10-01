@@ -27,7 +27,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define void @_Z3fooPi(i32* %a) #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i32* %a}, i64 0, metadata !11), !dbg !15
+  tail call void @llvm.dbg.value(metadata !{i32* %a}, i64 0, metadata !11, metadata !{i32 786690}), !dbg !15
   %tobool = icmp eq i32* %a, null, !dbg !16
   br i1 %tobool, label %if.end, label %if.then, !dbg !16
 
@@ -40,7 +40,7 @@ if.end:                                           ; preds = %entry, %if.then
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata) #1
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" sanitize_address}
 attributes #1 = { nounwind readnone }

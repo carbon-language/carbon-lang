@@ -24,16 +24,16 @@
 
 ; Function Attrs: uwtable
 define void @_Z2f2v() #0 {
-  tail call void @llvm.dbg.value(metadata !15, i64 0, metadata !16), !dbg !18
-  tail call void @llvm.dbg.value(metadata !19, i64 0, metadata !20), !dbg !18
+  tail call void @llvm.dbg.value(metadata !15, i64 0, metadata !16, metadata !{i32 786690}), !dbg !18
+  tail call void @llvm.dbg.value(metadata !19, i64 0, metadata !20, metadata !{i32 786690}), !dbg !18
   tail call void @_Z2f3i(i32 2), !dbg !21
   ret void, !dbg !22
 }
 
 ; Function Attrs: uwtable
 define void @_Z2f1ii(i32 %x, i32 %y) #0 {
-  tail call void @llvm.dbg.value(metadata !{i32 %x}, i64 0, metadata !13), !dbg !23
-  tail call void @llvm.dbg.value(metadata !{i32 %y}, i64 0, metadata !14), !dbg !23
+  tail call void @llvm.dbg.value(metadata !{i32 %x}, i64 0, metadata !13, metadata !{i32 786690}), !dbg !23
+  tail call void @llvm.dbg.value(metadata !{i32 %y}, i64 0, metadata !14, metadata !{i32 786690}), !dbg !23
   tail call void @_Z2f3i(i32 %y), !dbg !24
   ret void, !dbg !25
 }
@@ -41,7 +41,7 @@ define void @_Z2f1ii(i32 %x, i32 %y) #0 {
 declare void @_Z2f3i(i32) #1
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata) #2
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #2
 
 attributes #0 = { uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }

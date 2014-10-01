@@ -6,8 +6,8 @@
 define i32 @_Z3fooi4SVal(i32 %i, %struct.SVal* noalias %location) nounwind ssp {
 entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.value(metadata !{i32 %i}, i64 0, metadata !23), !dbg !24
-  call void @llvm.dbg.value(metadata !{%struct.SVal* %location}, i64 0, metadata !25), !dbg !24
+  call void @llvm.dbg.value(metadata !{i32 %i}, i64 0, metadata !23, metadata !{i32 786690}), !dbg !24
+  call void @llvm.dbg.value(metadata !{%struct.SVal* %location}, i64 0, metadata !25, metadata !{i32 786690}), !dbg !24
   %0 = icmp ne i32 %i, 0, !dbg !27                ; <i1> [#uses=1]
   br i1 %0, label %bb, label %bb1, !dbg !27
 
@@ -34,7 +34,7 @@ return:                                           ; preds = %bb2
 define linkonce_odr void @_ZN4SValC1Ev(%struct.SVal* %this) nounwind ssp align 2  {
 entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.value(metadata !{%struct.SVal* %this}, i64 0, metadata !31), !dbg !34
+  call void @llvm.dbg.value(metadata !{%struct.SVal* %this}, i64 0, metadata !31, metadata !{i32 786690}), !dbg !34
   %0 = getelementptr inbounds %struct.SVal* %this, i32 0, i32 0, !dbg !34 ; <i8**> [#uses=1]
   store i8* null, i8** %0, align 8, !dbg !34
   %1 = getelementptr inbounds %struct.SVal* %this, i32 0, i32 1, !dbg !34 ; <i32*> [#uses=1]
@@ -45,14 +45,14 @@ return:                                           ; preds = %entry
   ret void, !dbg !35
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define i32 @main() nounwind ssp {
 entry:
   %0 = alloca %struct.SVal                        ; <%struct.SVal*> [#uses=3]
   %v = alloca %struct.SVal                        ; <%struct.SVal*> [#uses=4]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata !{%struct.SVal* %v}, metadata !38), !dbg !41
+  call void @llvm.dbg.declare(metadata !{%struct.SVal* %v}, metadata !38, metadata !{i32 786690}), !dbg !41
   call void @_ZN4SValC1Ev(%struct.SVal* %v) nounwind, !dbg !41
   %1 = getelementptr inbounds %struct.SVal* %v, i32 0, i32 1, !dbg !42 ; <i32*> [#uses=1]
   store i32 1, i32* %1, align 8, !dbg !42
@@ -65,14 +65,14 @@ entry:
   %7 = load i32* %6, align 8, !dbg !43            ; <i32> [#uses=1]
   store i32 %7, i32* %5, align 8, !dbg !43
   %8 = call i32 @_Z3fooi4SVal(i32 2, %struct.SVal* noalias %0) nounwind, !dbg !43 ; <i32> [#uses=0]
-  call void @llvm.dbg.value(metadata !{i32 %8}, i64 0, metadata !44), !dbg !43
+  call void @llvm.dbg.value(metadata !{i32 %8}, i64 0, metadata !44, metadata !{i32 786690}), !dbg !43
   br label %return, !dbg !45
 
 return:                                           ; preds = %entry
   ret i32 0, !dbg !45
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!49}

@@ -49,13 +49,13 @@ entry:
   %a.addr = alloca i32, align 4
   %t = alloca %struct.Base, align 8
   store i32 %a, i32* %a.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %a.addr}, metadata !17), !dbg !18
-  call void @llvm.dbg.declare(metadata !{%struct.Base* %t}, metadata !19), !dbg !20
+  call void @llvm.dbg.declare(metadata !{i32* %a.addr}, metadata !17, metadata !{i32 786690}), !dbg !18
+  call void @llvm.dbg.declare(metadata !{%struct.Base* %t}, metadata !19, metadata !{i32 786690}), !dbg !20
   ret void, !dbg !21
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 attributes #0 = { nounwind ssp uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

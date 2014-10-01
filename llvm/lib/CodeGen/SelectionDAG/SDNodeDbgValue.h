@@ -44,7 +44,8 @@ private:
     const Value *Const;     // valid for constants
     unsigned FrameIx;       // valid for stack objects
   } u;
-  MDNode *mdPtr;
+  MDNode *Var;
+  MDNode *Expr;
   bool IsIndirect;
   uint64_t Offset;
   DebugLoc DL;
@@ -52,29 +53,29 @@ private:
   bool Invalid;
 public:
   // Constructor for non-constants.
-  SDDbgValue(MDNode *mdP, SDNode *N, unsigned R,
-	     bool indir, uint64_t off, DebugLoc dl,
-             unsigned O) : mdPtr(mdP), IsIndirect(indir),
-			   Offset(off), DL(dl), Order(O),
-                           Invalid(false) {
+  SDDbgValue(MDNode *Var, MDNode *Expr, SDNode *N, unsigned R, bool indir,
+             uint64_t off, DebugLoc dl, unsigned O)
+      : Var(Var), Expr(Expr), IsIndirect(indir), Offset(off), DL(dl), Order(O),
+        Invalid(false) {
     kind = SDNODE;
     u.s.Node = N;
     u.s.ResNo = R;
   }
 
   // Constructor for constants.
-  SDDbgValue(MDNode *mdP, const Value *C, uint64_t off, DebugLoc dl,
-             unsigned O) : 
-    mdPtr(mdP), IsIndirect(false), Offset(off), DL(dl), Order(O),
-    Invalid(false) {
+  SDDbgValue(MDNode *Var, MDNode *Expr, const Value *C, uint64_t off,
+             DebugLoc dl, unsigned O)
+      : Var(Var), Expr(Expr), IsIndirect(false), Offset(off), DL(dl), Order(O),
+        Invalid(false) {
     kind = CONST;
     u.Const = C;
   }
 
   // Constructor for frame indices.
-  SDDbgValue(MDNode *mdP, unsigned FI, uint64_t off, DebugLoc dl, unsigned O) : 
-    mdPtr(mdP), IsIndirect(false), Offset(off), DL(dl), Order(O),
-    Invalid(false) {
+  SDDbgValue(MDNode *Var, MDNode *Expr, unsigned FI, uint64_t off, DebugLoc dl,
+             unsigned O)
+      : Var(Var), Expr(Expr), IsIndirect(false), Offset(off), DL(dl), Order(O),
+        Invalid(false) {
     kind = FRAMEIX;
     u.FrameIx = FI;
   }
@@ -82,8 +83,11 @@ public:
   // Returns the kind.
   DbgValueKind getKind() { return kind; }
 
-  // Returns the MDNode pointer.
-  MDNode *getMDPtr() { return mdPtr; }
+  // Returns the MDNode pointer for the variable.
+  MDNode *getVariable() { return Var; }
+
+  // Returns the MDNode pointer for the expression.
+  MDNode *getExpression() { return Expr; }
 
   // Returns the SDNode* for a register ref
   SDNode *getSDNode() { assert (kind==SDNODE); return u.s.Node; }

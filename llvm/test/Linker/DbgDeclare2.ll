@@ -11,10 +11,10 @@ entry:
   %argv.addr = alloca i8**, align 8
   %i = alloca i32, align 4
   store i32 %argc, i32* %argc.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %argc.addr}, metadata !14), !dbg !15
+  call void @llvm.dbg.declare(metadata !{i32* %argc.addr}, metadata !14, metadata !{i32 786690}), !dbg !15
   store i8** %argv, i8*** %argv.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i8*** %argv.addr}, metadata !16), !dbg !15
-  call void @llvm.dbg.declare(metadata !{i32* %i}, metadata !17), !dbg !20
+  call void @llvm.dbg.declare(metadata !{i8*** %argv.addr}, metadata !16, metadata !{i32 786690}), !dbg !15
+  call void @llvm.dbg.declare(metadata !{i32* %i}, metadata !17, metadata !{i32 786690}), !dbg !20
   store i32 0, i32* %i, align 4, !dbg !20
   br label %for.cond, !dbg !20
 
@@ -43,7 +43,7 @@ for.end:                                          ; preds = %for.cond
   ret void, !dbg !24
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 declare i32 @puts(i8*)
 

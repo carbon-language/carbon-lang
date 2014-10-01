@@ -74,10 +74,10 @@ land.end:                                         ; preds = %land.rhs, %entry
 
 cleanup.action:                                   ; preds = %land.end
   store %struct.C* %agg.tmp.ensured, %struct.C** %this.addr.i, align 8, !dbg !22
-  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr.i}, metadata !29), !dbg !31
+  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr.i}, metadata !29, metadata !{i32 786690}), !dbg !31
   %this1.i = load %struct.C** %this.addr.i, !dbg !22
   store %struct.C* %this1.i, %struct.C** %this.addr.i.i, align 8, !dbg !21
-  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr.i.i}, metadata !32), !dbg !33
+  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr.i.i}, metadata !32, metadata !{i32 786690}), !dbg !33
   %this1.i.i = load %struct.C** %this.addr.i.i, !dbg !21
   br label %cleanup.done, !dbg !22
 
@@ -91,10 +91,10 @@ entry:
   %this.addr.i = alloca %struct.C*, align 8, !dbg !37
   %this.addr = alloca %struct.C*, align 8
   store %struct.C* %this, %struct.C** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr}, metadata !29), !dbg !38
+  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr}, metadata !29, metadata !{i32 786690}), !dbg !38
   %this1 = load %struct.C** %this.addr
   store %struct.C* %this1, %struct.C** %this.addr.i, align 8, !dbg !37
-  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr.i}, metadata !32), !dbg !39
+  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr.i}, metadata !32, metadata !{i32 786690}), !dbg !39
   %this1.i = load %struct.C** %this.addr.i, !dbg !37
   ret void, !dbg !37
 }
@@ -104,13 +104,13 @@ define void @_ZN1CD2Ev(%struct.C* %this) unnamed_addr #1 align 2 {
 entry:
   %this.addr = alloca %struct.C*, align 8
   store %struct.C* %this, %struct.C** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr}, metadata !32), !dbg !40
+  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr}, metadata !32, metadata !{i32 786690}), !dbg !40
   %this1 = load %struct.C** %this.addr
   ret void, !dbg !41
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #2
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #2
 
 attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-realign-stack" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { alwaysinline nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-realign-stack" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }

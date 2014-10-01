@@ -24,11 +24,11 @@
 ; Function Attrs: uwtable
 define i32 @main() #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata !20, i64 0, metadata !10), !dbg !21
+  tail call void @llvm.dbg.value(metadata !20, i64 0, metadata !10, metadata !{i32 786690}), !dbg !21
   tail call void @_Z4funci(i32 42), !dbg !22
-  tail call void @llvm.dbg.value(metadata !23, i64 0, metadata !12), !dbg !24
+  tail call void @llvm.dbg.value(metadata !23, i64 0, metadata !12, metadata !{i32 786690}), !dbg !24
   tail call void @_Z4funcj(i32 117), !dbg !25
-  tail call void @llvm.dbg.value(metadata !26, i64 0, metadata !15), !dbg !27
+  tail call void @llvm.dbg.value(metadata !26, i64 0, metadata !15, metadata !{i32 786690}), !dbg !27
   tail call void @_Z4funcDs(i16 zeroext 7), !dbg !28
   ret i32 0, !dbg !29
 }
@@ -40,7 +40,7 @@ declare void @_Z4funcj(i32) #1
 declare void @_Z4funcDs(i16 zeroext) #1
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata) #2
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #2
 
 attributes #0 = { uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }

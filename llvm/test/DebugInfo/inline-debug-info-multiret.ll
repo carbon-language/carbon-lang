@@ -27,8 +27,8 @@ entry:
   %k.addr = alloca i32, align 4
   %k2 = alloca i32, align 4
   store i32 %k, i32* %k.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %k.addr}, metadata !13), !dbg !14
-  call void @llvm.dbg.declare(metadata !{i32* %k2}, metadata !15), !dbg !16
+  call void @llvm.dbg.declare(metadata !{i32* %k.addr}, metadata !13, metadata !{i32 786690}), !dbg !14
+  call void @llvm.dbg.declare(metadata !{i32* %k2}, metadata !15, metadata !{i32 786690}), !dbg !16
   %0 = load i32* %k.addr, align 4, !dbg !16
   %call = call i32 @_Z8test_exti(i32 %0), !dbg !16
   store i32 %call, i32* %k2, align 4, !dbg !16
@@ -53,7 +53,7 @@ return:                                           ; preds = %if.end, %if.then
 
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 declare i32 @_Z8test_exti(i32)
 
@@ -85,7 +85,7 @@ catch.dispatch:                                   ; preds = %lpad
   br i1 %matches, label %catch, label %eh.resume, !dbg !23
 
 catch:                                            ; preds = %catch.dispatch
-  call void @llvm.dbg.declare(metadata !{i32* %e}, metadata !24), !dbg !25
+  call void @llvm.dbg.declare(metadata !{i32* %e}, metadata !24, metadata !{i32 786690}), !dbg !25
   %exn = load i8** %exn.slot, !dbg !23
   %5 = call i8* @__cxa_begin_catch(i8* %exn) #2, !dbg !23
   %6 = bitcast i8* %5 to i32*, !dbg !23

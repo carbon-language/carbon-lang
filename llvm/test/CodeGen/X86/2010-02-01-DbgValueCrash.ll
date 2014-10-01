@@ -8,12 +8,12 @@
 
 define i32 @"main(tart.core.String[])->int32"(i32 %args) {
 entry:
-  tail call void @llvm.dbg.value(metadata !14, i64 0, metadata !8)
+  tail call void @llvm.dbg.value(metadata !14, i64 0, metadata !8, metadata !{i32 786690})
   tail call void @"tart.reflect.ComplexType.create->tart.core.Object"(%tart.reflect.ComplexType* @.type.SwitchStmtTest) ; <%tart.core.Object*> [#uses=2]
   ret i32 3
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 declare void @"tart.reflect.ComplexType.create->tart.core.Object"(%tart.reflect.ComplexType*) nounwind readnone
 
 !0 = metadata !{i32 458769, metadata !15, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, metadata !16, metadata !16, null, null, null, i32 0} ; [ DW_TAG_compile_unit ]

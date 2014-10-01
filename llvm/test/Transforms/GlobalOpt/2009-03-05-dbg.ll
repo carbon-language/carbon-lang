@@ -6,14 +6,14 @@
 define i32 @foo(i32 %i) nounwind ssp {
 entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.value(metadata !{i32 %i}, i64 0, metadata !3)
+  call void @llvm.dbg.value(metadata !{i32 %i}, i64 0, metadata !3, metadata !{})
   %0 = icmp eq i32 %i, 1, !dbg !7                 ; <i1> [#uses=1]
   br i1 %0, label %bb, label %bb1, !dbg !7
 
 bb:                                               ; preds = %entry
   store i32 0, i32* @Stop, align 4, !dbg !9
   %1 = mul nsw i32 %i, 42, !dbg !10               ; <i32> [#uses=1]
-  call void @llvm.dbg.value(metadata !{i32 %1}, i64 0, metadata !3), !dbg !10
+  call void @llvm.dbg.value(metadata !{i32 %1}, i64 0, metadata !3, metadata !{}), !dbg !10
   br label %bb2, !dbg !10
 
 bb1:                                              ; preds = %entry
@@ -28,7 +28,7 @@ return:                                           ; preds = %bb2
   ret i32 %i_addr.0, !dbg !12
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define i32 @bar() nounwind ssp {
 entry:
@@ -51,7 +51,7 @@ return:                                           ; preds = %bb2
   ret i32 %.0, !dbg !19
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 !llvm.dbg.gv = !{!0}
 

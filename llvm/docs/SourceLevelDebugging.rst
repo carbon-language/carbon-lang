@@ -571,7 +571,7 @@ Local variables
     metadata, ;; Reference to the type descriptor
     i32,      ;; flags
     metadata  ;; (optional) Reference to inline location
-    metadata  ;; (optional) Reference to a complex expression (see below)
+    metadata  ;; (optional) Reference to a complex expression.
   }
 
 These descriptors are used to define variables local to a sub program.  The
@@ -590,7 +590,20 @@ The context is either the subprogram or block where the variable is defined.
 Name the source variable name.  Context and line indicate where the variable
 was defined.  Type descriptor defines the declared type of the variable.
 
-The ``OpPiece`` operator is used for (typically larger aggregate)
+Complex Expressions
+^^^^^^^^^^^^^^^^^^^
+.. code-block:: llvm
+
+  !8 = metadata !{
+    i32,      ;; DW_TAG_expression
+    ...
+  }
+
+Complex expressions describe variable storage locations in terms of
+prefix-notated DWARF expressions. Currently the only supported
+operators are ``DW_OP_plus``, ``DW_OP_deref``, and ``DW_OP_piece``.
+
+The ``DW_OP_piece`` operator is used for (typically larger aggregate)
 variables that are fragmented across several locations. It takes two
 i32 arguments, an offset and a size in bytes to describe which piece
 of the variable is at this location.

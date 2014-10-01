@@ -27,7 +27,7 @@ namespace llvm {
 // In the other case, returns 0.
 static unsigned isDescribedByReg(const MachineInstr &MI) {
   assert(MI.isDebugValue());
-  assert(MI.getNumOperands() == 3);
+  assert(MI.getNumOperands() == 4);
   // If location of variable is described using a register (directly or
   // indirecltly), this register is always a first operand.
   return MI.getOperand(0).isReg() ? MI.getOperand(0).getReg() : 0;
@@ -37,7 +37,7 @@ void DbgValueHistoryMap::startInstrRange(const MDNode *Var,
                                          const MachineInstr &MI) {
   // Instruction range should start with a DBG_VALUE instruction for the
   // variable.
-  assert(MI.isDebugValue() && getEntireVariable(MI.getDebugVariable()) == Var);
+  assert(MI.isDebugValue() && "not a DBG_VALUE");
   auto &Ranges = VarInstrRanges[Var];
   if (!Ranges.empty() && Ranges.back().second == nullptr &&
       Ranges.back().first->isIdenticalTo(&MI)) {
@@ -193,7 +193,7 @@ void calculateDbgValueHistory(const MachineFunction *MF,
       // Use the base variable (without any DW_OP_piece expressions)
       // as index into History. The full variables including the
       // piece expressions are attached to the MI.
-      DIVariable Var = getEntireVariable(MI.getDebugVariable());
+      DIVariable Var = MI.getDebugVariable();
 
       if (unsigned PrevReg = Result.getRegisterForVar(Var))
         dropRegDescribedVar(RegVars, PrevReg, Var);

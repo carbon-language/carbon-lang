@@ -13,8 +13,8 @@ entry:
   %x.addr = alloca i32, align 4
   %y = alloca i32, align 4
   store i32 %x, i32* %x.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %x.addr}, metadata !12), !dbg !13
-  call void @llvm.dbg.declare(metadata !{i32* %y}, metadata !14), !dbg !16
+  call void @llvm.dbg.declare(metadata !{i32* %x.addr}, metadata !12, metadata !{i32 786690}), !dbg !13
+  call void @llvm.dbg.declare(metadata !{i32* %y}, metadata !14, metadata !{i32 786690}), !dbg !16
   %0 = load i32* %x.addr, align 4, !dbg !17
   %1 = load i32* %x.addr, align 4, !dbg !17
   %mul = mul nsw i32 %0, %1, !dbg !17
@@ -24,7 +24,7 @@ entry:
   ret i32 %sub, !dbg !18
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!20}

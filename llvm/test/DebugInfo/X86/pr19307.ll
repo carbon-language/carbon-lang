@@ -42,10 +42,10 @@ entry:
   %offset.addr = alloca i64*, align 8
   %limit.addr = alloca i64*, align 8
   store i64* %offset, i64** %offset.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i64** %offset.addr}, metadata !45), !dbg !46
+  call void @llvm.dbg.declare(metadata !{i64** %offset.addr}, metadata !45, metadata !{i32 786690}), !dbg !46
   store i64* %limit, i64** %limit.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i64** %limit.addr}, metadata !47), !dbg !46
-  call void @llvm.dbg.declare(metadata !{%"class.std::basic_string"* %range}, metadata !48), !dbg !49
+  call void @llvm.dbg.declare(metadata !{i64** %limit.addr}, metadata !47, metadata !{i32 786690}), !dbg !46
+  call void @llvm.dbg.declare(metadata !{%"class.std::basic_string"* %range}, metadata !48, metadata !{i32 786690}), !dbg !49
   %call = call i32 @_ZNKSs7compareEmmPKc(%"class.std::basic_string"* %range, i64 0, i64 6, i8* getelementptr inbounds ([7 x i8]* @.str, i32 0, i32 0)), !dbg !50
   %cmp = icmp ne i32 %call, 0, !dbg !50
   br i1 %cmp, label %if.then, label %lor.lhs.false, !dbg !50
@@ -70,7 +70,7 @@ if.end:                                           ; preds = %if.then, %lor.lhs.f
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 declare i32 @_ZNKSs7compareEmmPKc(%"class.std::basic_string"*, i64, i64, i8*) #2
 

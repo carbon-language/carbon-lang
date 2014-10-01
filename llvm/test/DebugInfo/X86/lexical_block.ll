@@ -25,7 +25,7 @@
 define void @_Z1bv() #0 {
 entry:
   %i = alloca i32, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %i}, metadata !11), !dbg !14
+  call void @llvm.dbg.declare(metadata !{i32* %i}, metadata !11, metadata !{i32 786690}), !dbg !14
   store i32 3, i32* %i, align 4, !dbg !14
   %0 = load i32* %i, align 4, !dbg !14
   %tobool = icmp ne i32 %0, 0, !dbg !14
@@ -39,7 +39,7 @@ if.end:                                           ; preds = %if.then, %entry
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

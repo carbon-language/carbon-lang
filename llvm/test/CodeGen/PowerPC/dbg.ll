@@ -6,13 +6,13 @@ target triple = "powerpc64-unknown-linux-gnu"
 
 define i32 @main(i32 %argc, i8** nocapture %argv) nounwind readnone {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i32 %argc}, i64 0, metadata !15), !dbg !17
-  tail call void @llvm.dbg.value(metadata !{i8** %argv}, i64 0, metadata !16), !dbg !18
+  tail call void @llvm.dbg.value(metadata !{i32 %argc}, i64 0, metadata !15, metadata !{i32 786690}), !dbg !17
+  tail call void @llvm.dbg.value(metadata !{i8** %argv}, i64 0, metadata !16, metadata !{i32 786690}), !dbg !18
   %add = add nsw i32 %argc, 1, !dbg !19
   ret i32 %add, !dbg !19
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!22}

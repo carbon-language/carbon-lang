@@ -12,11 +12,11 @@ entry:
   %retval = alloca i32, align 4
   %i = alloca [2 x i32], align 4
   store i32 0, i32* %retval
-  call void @llvm.dbg.declare(metadata !{[2 x i32]* %i}, metadata !10), !dbg !15
+  call void @llvm.dbg.declare(metadata !{[2 x i32]* %i}, metadata !10, metadata !{i32 786690}), !dbg !15
   ret i32 0, !dbg !16
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!18}

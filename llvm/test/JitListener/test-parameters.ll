@@ -46,18 +46,18 @@ entry:
   %l.addr = alloca i64, align 8
   %result = alloca double, align 8
   store float* %pf, float** %pf.addr, align 8
-  call void @llvm.dbg.declare(metadata !{float** %pf.addr}, metadata !48), !dbg !49
+  call void @llvm.dbg.declare(metadata !{float** %pf.addr}, metadata !48, metadata !{i32 786690}), !dbg !49
   store [2 x double]* %ppd, [2 x double]** %ppd.addr, align 8
-  call void @llvm.dbg.declare(metadata !{[2 x double]** %ppd.addr}, metadata !50), !dbg !49
+  call void @llvm.dbg.declare(metadata !{[2 x double]** %ppd.addr}, metadata !50, metadata !{i32 786690}), !dbg !49
   store %struct.char_struct* %s, %struct.char_struct** %s.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.char_struct** %s.addr}, metadata !51), !dbg !49
+  call void @llvm.dbg.declare(metadata !{%struct.char_struct** %s.addr}, metadata !51, metadata !{i32 786690}), !dbg !49
   store i32** %ppn, i32*** %ppn.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i32*** %ppn.addr}, metadata !52), !dbg !49
+  call void @llvm.dbg.declare(metadata !{i32*** %ppn.addr}, metadata !52, metadata !{i32 786690}), !dbg !49
   store i16 %us, i16* %us.addr, align 2
-  call void @llvm.dbg.declare(metadata !{i16* %us.addr}, metadata !53), !dbg !49
+  call void @llvm.dbg.declare(metadata !{i16* %us.addr}, metadata !53, metadata !{i32 786690}), !dbg !49
   store i64 %l, i64* %l.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i64* %l.addr}, metadata !54), !dbg !49
-  call void @llvm.dbg.declare(metadata !{double* %result}, metadata !55), !dbg !57
+  call void @llvm.dbg.declare(metadata !{i64* %l.addr}, metadata !54, metadata !{i32 786690}), !dbg !49
+  call void @llvm.dbg.declare(metadata !{double* %result}, metadata !55, metadata !{i32 786690}), !dbg !57
   %0 = load float** %pf.addr, align 8, !dbg !57
   %arrayidx = getelementptr inbounds float* %0, i64 0, !dbg !57
   %1 = load float* %arrayidx, align 4, !dbg !57
@@ -88,7 +88,7 @@ entry:
   ret double %8, !dbg !58
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define i32 @main(i32 %argc, i8** %argv) nounwind uwtable {
 entry:
@@ -101,13 +101,13 @@ entry:
   %result = alloca double, align 8
   store i32 0, i32* %retval
   store i32 %argc, i32* %argc.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %argc.addr}, metadata !59), !dbg !60
+  call void @llvm.dbg.declare(metadata !{i32* %argc.addr}, metadata !59, metadata !{i32 786690}), !dbg !60
   store i8** %argv, i8*** %argv.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i8*** %argv.addr}, metadata !61), !dbg !60
-  call void @llvm.dbg.declare(metadata !{%struct.char_struct* %s}, metadata !62), !dbg !64
-  call void @llvm.dbg.declare(metadata !{float* %f}, metadata !65), !dbg !66
+  call void @llvm.dbg.declare(metadata !{i8*** %argv.addr}, metadata !61, metadata !{i32 786690}), !dbg !60
+  call void @llvm.dbg.declare(metadata !{%struct.char_struct* %s}, metadata !62, metadata !{i32 786690}), !dbg !64
+  call void @llvm.dbg.declare(metadata !{float* %f}, metadata !65, metadata !{i32 786690}), !dbg !66
   store float 0.000000e+00, float* %f, align 4, !dbg !66
-  call void @llvm.dbg.declare(metadata !{[2 x [2 x double]]* %d}, metadata !67), !dbg !70
+  call void @llvm.dbg.declare(metadata !{[2 x [2 x double]]* %d}, metadata !67, metadata !{i32 786690}), !dbg !70
   %0 = bitcast [2 x [2 x double]]* %d to i8*, !dbg !70
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* bitcast ([2 x [2 x double]]* @_ZZ4mainE1d to i8*), i64 32, i32 16, i1 false), !dbg !70
   %c = getelementptr inbounds %struct.char_struct* %s, i32 0, i32 0, !dbg !71
@@ -118,7 +118,7 @@ entry:
   %c21 = getelementptr inbounds %struct.char_struct* %s, i32 0, i32 1, !dbg !73
   %arrayidx2 = getelementptr inbounds [2 x i8]* %c21, i32 0, i64 1, !dbg !73
   store i8 49, i8* %arrayidx2, align 1, !dbg !73
-  call void @llvm.dbg.declare(metadata !{double* %result}, metadata !74), !dbg !75
+  call void @llvm.dbg.declare(metadata !{double* %result}, metadata !74, metadata !{i32 786690}), !dbg !75
   %arraydecay = getelementptr inbounds [2 x [2 x double]]* %d, i32 0, i32 0, !dbg !75
   %call = call double @_Z15test_parametersPfPA2_dR11char_structPPitm(float* %f, [2 x double]* %arraydecay, %struct.char_struct* %s, i32** null, i16 zeroext 10, i64 42), !dbg !75
   store double %call, double* %result, align 8, !dbg !75

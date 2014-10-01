@@ -486,15 +486,14 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
                        "- add if needed");
       MachineInstr *Def = RegInfo->getVRegDef(LDI->second);
       MachineBasicBlock::iterator InsertPos = Def;
-      const MDNode *Variable =
-        MI->getOperand(MI->getNumOperands()-1).getMetadata();
+      const MDNode *Variable = MI->getDebugVariable();
+      const MDNode *Expr = MI->getDebugExpression();
       bool IsIndirect = MI->isIndirectDebugValue();
       unsigned Offset = IsIndirect ? MI->getOperand(1).getImm() : 0;
       // Def is never a terminator here, so it is ok to increment InsertPos.
       BuildMI(*EntryMBB, ++InsertPos, MI->getDebugLoc(),
-              TII.get(TargetOpcode::DBG_VALUE),
-              IsIndirect,
-              LDI->second, Offset, Variable);
+              TII.get(TargetOpcode::DBG_VALUE), IsIndirect, LDI->second, Offset,
+              Variable, Expr);
 
       // If this vreg is directly copied into an exported register then
       // that COPY instructions also need DBG_VALUE, if it is the only
@@ -513,11 +512,9 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
       }
       if (CopyUseMI) {
         MachineInstr *NewMI =
-          BuildMI(*MF, CopyUseMI->getDebugLoc(),
-                  TII.get(TargetOpcode::DBG_VALUE),
-                  IsIndirect,
-                  CopyUseMI->getOperand(0).getReg(),
-                  Offset, Variable);
+            BuildMI(*MF, CopyUseMI->getDebugLoc(),
+                    TII.get(TargetOpcode::DBG_VALUE), IsIndirect,
+                    CopyUseMI->getOperand(0).getReg(), Offset, Variable, Expr);
         MachineBasicBlock::iterator Pos = CopyUseMI;
         EntryMBB->insertAfter(Pos, NewMI);
       }

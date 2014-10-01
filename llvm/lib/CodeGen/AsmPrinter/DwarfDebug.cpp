@@ -901,7 +901,7 @@ void DwarfDebug::collectDeadVariables() {
         for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
           DIVariable DV(Variables.getElement(vi));
           assert(DV.isVariable());
-          DbgVariable NewVar(DV, this);
+          DbgVariable NewVar(DV, DIExpression(nullptr), this);
           auto VariableDie = SPCU->constructVariableDIE(NewVar);
           SPCU->applyVariableAttributes(NewVar, *VariableDie);
           SPDIE->addChild(std::move(VariableDie));
@@ -1121,7 +1121,7 @@ DbgVariable *DwarfDebug::getExistingAbstractVariable(const DIVariable &DV) {
 
 void DwarfDebug::createAbstractVariable(const DIVariable &Var,
                                         LexicalScope *Scope) {
-  auto AbsDbgVariable = make_unique<DbgVariable>(Var, this);
+  auto AbsDbgVariable = make_unique<DbgVariable>(Var, DIExpression(), this);
   addScopeVariable(Scope, AbsDbgVariable.get());
   AbstractVariables[Var] = std::move(AbsDbgVariable);
 }
@@ -1177,6 +1177,7 @@ void DwarfDebug::collectVariableInfoFromMMITable(
       continue;
     Processed.insert(VI.Var);
     DIVariable DV(VI.Var);
+    DIExpression Expr(VI.Expr);
     LexicalScope *Scope = LScopes.findLexicalScope(VI.Loc);
 
     // If variable scope is not found then skip this variable.
@@ -1184,7 +1185,7 @@ void DwarfDebug::collectVariableInfoFromMMITable(
       continue;
 
     ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
-    ConcreteVariables.push_back(make_unique<DbgVariable>(DV, this));
+    ConcreteVariables.push_back(make_unique<DbgVariable>(DV, Expr, this));
     DbgVariable *RegVar = ConcreteVariables.back().get();
     RegVar->setFrameIndex(VI.Slot);
     addScopeVariable(Scope, RegVar);
@@ -1193,9 +1194,10 @@ void DwarfDebug::collectVariableInfoFromMMITable(
 
 // Get .debug_loc entry for the instruction range starting at MI.
 static DebugLocEntry::Value getDebugLocValue(const MachineInstr *MI) {
+  const MDNode *Expr = MI->getDebugExpression();
   const MDNode *Var = MI->getDebugVariable();
 
-  assert(MI->getNumOperands() == 3);
+  assert(MI->getNumOperands() == 4);
   if (MI->getOperand(0).isReg()) {
     MachineLocation MLoc;
     // If the second operand is an immediate, this is a
@@ -1204,20 +1206,20 @@ static DebugLocEntry::Value getDebugLocValue(const MachineInstr *MI) {
       MLoc.set(MI->getOperand(0).getReg());
     else
       MLoc.set(MI->getOperand(0).getReg(), MI->getOperand(1).getImm());
-    return DebugLocEntry::Value(Var, MLoc);
+    return DebugLocEntry::Value(Var, Expr, MLoc);
   }
   if (MI->getOperand(0).isImm())
-    return DebugLocEntry::Value(Var, MI->getOperand(0).getImm());
+    return DebugLocEntry::Value(Var, Expr, MI->getOperand(0).getImm());
   if (MI->getOperand(0).isFPImm())
-    return DebugLocEntry::Value(Var, MI->getOperand(0).getFPImm());
+    return DebugLocEntry::Value(Var, Expr, MI->getOperand(0).getFPImm());
   if (MI->getOperand(0).isCImm())
-    return DebugLocEntry::Value(Var, MI->getOperand(0).getCImm());
+    return DebugLocEntry::Value(Var, Expr, MI->getOperand(0).getCImm());
 
-  llvm_unreachable("Unexpected 3 operand DBG_VALUE instruction!");
+  llvm_unreachable("Unexpected 4-operand DBG_VALUE instruction!");
 }
 
 /// Determine whether two variable pieces overlap.
-static bool piecesOverlap(DIVariable P1, DIVariable P2) {
+static bool piecesOverlap(DIExpression P1, DIExpression P2) {
   if (!P1.isVariablePiece() || !P2.isVariablePiece())
     return true;
   unsigned l1 = P1.getPieceOffset();
@@ -1268,11 +1270,11 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     }
 
     // If this piece overlaps with any open ranges, truncate them.
-    DIVariable DIVar = Begin->getDebugVariable();
+    DIExpression DIExpr = Begin->getDebugExpression();
     auto Last = std::remove_if(OpenRanges.begin(), OpenRanges.end(),
                                [&](DebugLocEntry::Value R) {
-                                 return piecesOverlap(DIVar, R.getVariable());
-                               });
+      return piecesOverlap(DIExpr, R.getExpression());
+    });
     OpenRanges.erase(Last, OpenRanges.end());
 
     const MCSymbol *StartLabel = getLabelBeforeInsn(Begin);
@@ -1294,7 +1296,7 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     bool couldMerge = false;
 
     // If this is a piece, it may belong to the current DebugLocEntry.
-    if (DIVar.isVariablePiece()) {
+    if (DIExpr.isVariablePiece()) {
       // Add this value to the list of open ranges.
       OpenRanges.push_back(Value);
 
@@ -1320,10 +1322,14 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     if (PrevEntry != DebugLoc.rend() && PrevEntry->MergeRanges(*CurEntry))
       DebugLoc.pop_back();
 
-    DEBUG(dbgs() << "Values:\n";
-          for (auto Value : CurEntry->getValues())
-            Value.getVariable()->dump();
-          dbgs() << "-----\n");
+    DEBUG({
+      dbgs() << CurEntry->getValues().size() << " Values:\n";
+      for (auto Value : CurEntry->getValues()) {
+        Value.getVariable()->dump();
+        Value.getExpression()->dump();
+      }
+      dbgs() << "-----\n";
+    });
   }
 }
 
@@ -1358,7 +1364,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSetImpl<const MDNode *> &Processed) {
     if (!Scope)
       continue;
 
-    Processed.insert(getEntireVariable(DV));
+    Processed.insert(DV);
     const MachineInstr *MInsn = Ranges.front().first;
     assert(MInsn->isDebugValue() && "History must begin with debug value");
     ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
@@ -1392,7 +1398,8 @@ DwarfDebug::collectVariableInfo(SmallPtrSetImpl<const MDNode *> &Processed) {
       continue;
     if (LexicalScope *Scope = LScopes.findLexicalScope(DV.getContext())) {
       ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
-      ConcreteVariables.push_back(make_unique<DbgVariable>(DV, this));
+      DIExpression NoExpr;
+      ConcreteVariables.push_back(make_unique<DbgVariable>(DV, NoExpr, this));
       addScopeVariable(Scope, ConcreteVariables.back().get());
     }
   }
@@ -1580,18 +1587,17 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
     // The first mention of a function argument gets the FunctionBeginSym
     // label, so arguments are visible when breaking at function entry.
-    DIVariable DV(Ranges.front().first->getDebugVariable());
-    if (DV.isVariable() && DV.getTag() == dwarf::DW_TAG_arg_variable &&
-        getDISubprogram(DV.getContext()).describes(MF->getFunction())) {
-      if (!DV.isVariablePiece())
-        LabelsBeforeInsn[Ranges.front().first] = FunctionBeginSym;
-      else {
+    DIVariable DIVar(Ranges.front().first->getDebugVariable());
+    if (DIVar.isVariable() && DIVar.getTag() == dwarf::DW_TAG_arg_variable &&
+        getDISubprogram(DIVar.getContext()).describes(MF->getFunction())) {
+      LabelsBeforeInsn[Ranges.front().first] = FunctionBeginSym;
+      if (Ranges.front().first->getDebugExpression().isVariablePiece()) {
         // Mark all non-overlapping initial pieces.
         for (auto I = Ranges.begin(); I != Ranges.end(); ++I) {
-          DIVariable Piece = I->first->getDebugVariable();
+          DIExpression Piece = I->first->getDebugExpression();
           if (std::all_of(Ranges.begin(), I,
-                          [&](DbgValueHistoryMap::InstrRange Pred){
-                return !piecesOverlap(Piece, Pred.first->getDebugVariable());
+                          [&](DbgValueHistoryMap::InstrRange Pred) {
+                return !piecesOverlap(Piece, Pred.first->getDebugExpression());
               }))
             LabelsBeforeInsn[I->first] = FunctionBeginSym;
           else
@@ -2089,9 +2095,9 @@ void DwarfDebug::emitLocPieces(ByteStreamer &Streamer,
 
   unsigned Offset = 0;
   for (auto Piece : Values) {
-    DIVariable Var = Piece.getVariable();
-    unsigned PieceOffset = Var.getPieceOffset();
-    unsigned PieceSize = Var.getPieceSize();
+    DIExpression Expr = Piece.getExpression();
+    unsigned PieceOffset = Expr.getPieceOffset();
+    unsigned PieceSize = Expr.getPieceSize();
     assert(Offset <= PieceOffset && "overlapping or duplicate pieces");
     if (Offset < PieceOffset) {
       // The DWARF spec seriously mandates pieces with no locations for gaps.
@@ -2102,8 +2108,9 @@ void DwarfDebug::emitLocPieces(ByteStreamer &Streamer,
     Offset += PieceSize;
 
     const unsigned SizeOfByte = 8;
-    assert(!Var.isIndirect() && "indirect address for piece");
 #ifndef NDEBUG
+    DIVariable Var = Piece.getVariable();
+    assert(!Var.isIndirect() && "indirect address for piece");
     unsigned VarSize = Var.getSizeInBits(Map);
     assert(PieceSize+PieceOffset <= VarSize/SizeOfByte
            && "piece is larger than or outside of variable");
@@ -2149,24 +2156,25 @@ void DwarfDebug::emitDebugLocValue(ByteStreamer &Streamer,
     }
   } else if (Value.isLocation()) {
     MachineLocation Loc = Value.getLoc();
-    if (!DV.hasComplexAddress())
+    DIExpression Expr = Value.getExpression();
+    if (!Expr)
       // Regular entry.
       Asm->EmitDwarfRegOp(Streamer, Loc, DV.isIndirect());
     else {
       // Complex address entry.
-      unsigned N = DV.getNumAddrElements();
+      unsigned N = Expr.getNumElements();
       unsigned i = 0;
-      if (N >= 2 && DV.getAddrElement(0) == DIBuilder::OpPlus) {
+      if (N >= 2 && Expr.getElement(0) == dwarf::DW_OP_plus) {
         if (Loc.getOffset()) {
           i = 2;
           Asm->EmitDwarfRegOp(Streamer, Loc, DV.isIndirect());
           Streamer.EmitInt8(dwarf::DW_OP_deref, "DW_OP_deref");
           Streamer.EmitInt8(dwarf::DW_OP_plus_uconst, "DW_OP_plus_uconst");
-          Streamer.EmitSLEB128(DV.getAddrElement(1));
+          Streamer.EmitSLEB128(Expr.getElement(1));
         } else {
           // If first address element is OpPlus then emit
           // DW_OP_breg + Offset instead of DW_OP_reg + Offset.
-          MachineLocation TLoc(Loc.getReg(), DV.getAddrElement(1));
+          MachineLocation TLoc(Loc.getReg(), Expr.getElement(1));
           Asm->EmitDwarfRegOp(Streamer, TLoc, DV.isIndirect());
           i = 2;
         }
@@ -2176,14 +2184,14 @@ void DwarfDebug::emitDebugLocValue(ByteStreamer &Streamer,
 
       // Emit remaining complex address elements.
       for (; i < N; ++i) {
-        uint64_t Element = DV.getAddrElement(i);
-        if (Element == DIBuilder::OpPlus) {
+        uint64_t Element = Expr.getElement(i);
+        if (Element == dwarf::DW_OP_plus) {
           Streamer.EmitInt8(dwarf::DW_OP_plus_uconst, "DW_OP_plus_uconst");
-          Streamer.EmitULEB128(DV.getAddrElement(++i));
-        } else if (Element == DIBuilder::OpDeref) {
+          Streamer.EmitULEB128(Expr.getElement(++i));
+        } else if (Element == dwarf::DW_OP_deref) {
           if (!Loc.isReg())
             Streamer.EmitInt8(dwarf::DW_OP_deref, "DW_OP_deref");
-        } else if (Element == DIBuilder::OpPiece) {
+        } else if (Element == dwarf::DW_OP_piece) {
           i += 3;
           // handled in emitDebugLocEntry.
         } else

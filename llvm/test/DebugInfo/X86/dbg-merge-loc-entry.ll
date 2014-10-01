@@ -14,8 +14,8 @@ target triple = "x86_64-apple-darwin8"
 
 define hidden i128 @__divti3(i128 %u, i128 %v) nounwind readnone {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i128 %u}, i64 0, metadata !14), !dbg !15
-  tail call void @llvm.dbg.value(metadata !16, i64 0, metadata !17), !dbg !21
+  tail call void @llvm.dbg.value(metadata !{i128 %u}, i64 0, metadata !14, metadata !{i32 786690}), !dbg !15
+  tail call void @llvm.dbg.value(metadata !16, i64 0, metadata !17, metadata !{i32 786690}), !dbg !21
   br i1 undef, label %bb2, label %bb4, !dbg !22
 
 bb2:                                              ; preds = %entry
@@ -31,9 +31,9 @@ __udivmodti4.exit:                                ; preds = %bb4
   ret i128 undef, !dbg !27
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 declare %0 @llvm.uadd.with.overflow.i64(i64, i64) nounwind readnone
 

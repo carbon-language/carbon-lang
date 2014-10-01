@@ -1124,9 +1124,9 @@ public:
       } else {
         continue;
       }
-      Instruction *DbgVal =
-        DIB->insertDbgValueIntrinsic(Arg, 0, DIVariable(DVI->getVariable()),
-                                     Inst);
+      Instruction *DbgVal = DIB->insertDbgValueIntrinsic(
+          Arg, 0, DIVariable(DVI->getVariable()),
+          DIExpression(DVI->getExpression()), Inst);
       DbgVal->setDebugLoc(DVI->getDebugLoc());
     }
   }

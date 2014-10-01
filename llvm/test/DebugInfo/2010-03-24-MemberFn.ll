@@ -8,7 +8,7 @@ entry:
   %0 = alloca i32                                 ; <i32*> [#uses=2]
   %s1 = alloca %struct.S                          ; <%struct.S*> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata !{%struct.S* %s1}, metadata !0), !dbg !16
+  call void @llvm.dbg.declare(metadata !{%struct.S* %s1}, metadata !0, metadata !{i32 786690}), !dbg !16
   %1 = call i32 @_ZN1S3fooEv(%struct.S* %s1) nounwind, !dbg !17 ; <i32> [#uses=1]
   store i32 %1, i32* %0, align 4, !dbg !17
   %2 = load i32* %0, align 4, !dbg !17            ; <i32> [#uses=1]
@@ -25,7 +25,7 @@ entry:
   %this_addr = alloca %struct.S*                  ; <%struct.S**> [#uses=1]
   %retval = alloca i32                            ; <i32*> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata !{%struct.S** %this_addr}, metadata !18), !dbg !21
+  call void @llvm.dbg.declare(metadata !{%struct.S** %this_addr}, metadata !18, metadata !{i32 786690}), !dbg !21
   store %struct.S* %this, %struct.S** %this_addr
   br label %return, !dbg !21
 
@@ -34,7 +34,7 @@ return:                                           ; preds = %entry
   ret i32 %retval1, !dbg !22
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!5}
 !llvm.module.flags = !{!28}

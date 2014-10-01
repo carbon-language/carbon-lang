@@ -28,14 +28,14 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: nounwind readnone uwtable
 define i32 @_Z3fooi(i32 %bar) #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i32 %bar}, i64 0, metadata !10), !dbg !20
+  tail call void @llvm.dbg.value(metadata !{i32 %bar}, i64 0, metadata !10, metadata !{i32 786690}), !dbg !20
   ret i32 %bar, !dbg !20
 }
 
 ; Function Attrs: nounwind readnone uwtable
 define i32 @_Z4foo2i(i32 %bar2) #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i32 %bar2}, i64 0, metadata !13), !dbg !21
+  tail call void @llvm.dbg.value(metadata !{i32 %bar2}, i64 0, metadata !13, metadata !{i32 786690}), !dbg !21
   ret i32 %bar2, !dbg !21
 }
 
@@ -51,7 +51,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata) #2
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #2
 
 attributes #0 = { nounwind readnone uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readonly uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }

@@ -25,7 +25,7 @@
 
 declare void @populate_array(i32*, i32) nounwind
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 declare i32 @sum_array(i32*, i32) nounwind
 
@@ -35,8 +35,8 @@ entry:
   %main_arr = alloca [100 x i32], align 4
   %val = alloca i32, align 4
   store volatile i32 0, i32* %retval
-  call void @llvm.dbg.declare(metadata !{[100 x i32]* %main_arr}, metadata !17), !dbg !22
-  call void @llvm.dbg.declare(metadata !{i32* %val}, metadata !23), !dbg !24
+  call void @llvm.dbg.declare(metadata !{[100 x i32]* %main_arr}, metadata !17, metadata !{i32 786690}), !dbg !22
+  call void @llvm.dbg.declare(metadata !{i32* %val}, metadata !23, metadata !{i32 786690}), !dbg !24
   %arraydecay = getelementptr inbounds [100 x i32]* %main_arr, i32 0, i32 0, !dbg !25
   call void @populate_array(i32* %arraydecay, i32 100), !dbg !25
   %arraydecay1 = getelementptr inbounds [100 x i32]* %main_arr, i32 0, i32 0, !dbg !26

@@ -23,9 +23,9 @@ entry:
   %this.addr = alloca %class.A*, align 8
   %i.addr = alloca i32, align 4
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !67), !dbg !69
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !67, metadata !{i32 786690}), !dbg !69
   store i32 %i, i32* %i.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %i.addr}, metadata !70), !dbg !71
+  call void @llvm.dbg.declare(metadata !{i32* %i.addr}, metadata !70, metadata !{i32 786690}), !dbg !71
   %this1 = load %class.A** %this.addr
   %0 = bitcast %class.A* %this1 to i8***, !dbg !72
   store i8** getelementptr inbounds ([4 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %0, !dbg !72
@@ -36,7 +36,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind uwtable
 define void @_ZN1AC2ERKS_(%class.A* %this, %class.A* %rhs) unnamed_addr #0 align 2 {
@@ -44,9 +44,9 @@ entry:
   %this.addr = alloca %class.A*, align 8
   %rhs.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !74), !dbg !75
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !74, metadata !{i32 786690}), !dbg !75
   store %class.A* %rhs, %class.A** %rhs.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %rhs.addr}, metadata !76), !dbg !77
+  call void @llvm.dbg.declare(metadata !{%class.A** %rhs.addr}, metadata !76, metadata !{i32 786690}), !dbg !77
   %this1 = load %class.A** %this.addr
   %0 = bitcast %class.A* %this1 to i8***, !dbg !78
   store i8** getelementptr inbounds ([4 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %0, !dbg !78
@@ -64,9 +64,9 @@ entry:
   %this.addr = alloca %class.A*, align 8
   %rhs.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !80), !dbg !81
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !80, metadata !{i32 786690}), !dbg !81
   store %class.A* %rhs, %class.A** %rhs.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %rhs.addr}, metadata !82), !dbg !83
+  call void @llvm.dbg.declare(metadata !{%class.A** %rhs.addr}, metadata !82, metadata !{i32 786690}), !dbg !83
   %this1 = load %class.A** %this.addr
   %0 = load %class.A** %rhs.addr, align 8, !dbg !84
   %m_int = getelementptr inbounds %class.A* %0, i32 0, i32 1, !dbg !84
@@ -81,7 +81,7 @@ define i32 @_ZN1A7get_intEv(%class.A* %this) #0 align 2 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !86), !dbg !87
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !86, metadata !{i32 786690}), !dbg !87
   %this1 = load %class.A** %this.addr
   %m_int = getelementptr inbounds %class.A* %this1, i32 0, i32 1, !dbg !88
   %0 = load i32* %m_int, align 4, !dbg !88
@@ -95,10 +95,10 @@ entry:
   %nrvo = alloca i1
   %cleanup.dest.slot = alloca i32
   store %class.B* %this, %class.B** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.B** %this.addr}, metadata !89), !dbg !91
+  call void @llvm.dbg.declare(metadata !{%class.B** %this.addr}, metadata !89, metadata !{i32 786690}), !dbg !91
   %this1 = load %class.B** %this.addr
   store i1 false, i1* %nrvo, !dbg !92
-  call void @llvm.dbg.declare(metadata !{%class.A* %agg.result}, metadata !93), !dbg !92
+  call void @llvm.dbg.declare(metadata !{%class.A* %agg.result}, metadata !93, metadata !{i32 786690}), !dbg !92
   call void @_ZN1AC1Ei(%class.A* %agg.result, i32 12), !dbg !92
   store i1 true, i1* %nrvo, !dbg !94
   store i32 1, i32* %cleanup.dest.slot
@@ -118,7 +118,7 @@ define linkonce_odr void @_ZN1AD2Ev(%class.A* %this) unnamed_addr #0 align 2 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !101), !dbg !102
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !101, metadata !{i32 786690}), !dbg !102
   %this1 = load %class.A** %this.addr
   ret void, !dbg !103
 }
@@ -138,12 +138,12 @@ entry:
   %cleanup.dest.slot = alloca i32
   store i32 0, i32* %retval
   store i32 %argc, i32* %argc.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %argc.addr}, metadata !104), !dbg !105
+  call void @llvm.dbg.declare(metadata !{i32* %argc.addr}, metadata !104, metadata !{i32 786690}), !dbg !105
   store i8** %argv, i8*** %argv.addr, align 8
-  call void @llvm.dbg.declare(metadata !{i8*** %argv.addr}, metadata !106), !dbg !105
-  call void @llvm.dbg.declare(metadata !{%class.B* %b}, metadata !107), !dbg !108
+  call void @llvm.dbg.declare(metadata !{i8*** %argv.addr}, metadata !106, metadata !{i32 786690}), !dbg !105
+  call void @llvm.dbg.declare(metadata !{%class.B* %b}, metadata !107, metadata !{i32 786690}), !dbg !108
   call void @_ZN1BC2Ev(%class.B* %b), !dbg !108
-  call void @llvm.dbg.declare(metadata !{i32* %return_val}, metadata !109), !dbg !110
+  call void @llvm.dbg.declare(metadata !{i32* %return_val}, metadata !109, metadata !{i32 786690}), !dbg !110
   call void @_ZN1B9AInstanceEv(%class.A* sret %temp.lvalue, %class.B* %b), !dbg !110
   %call = invoke i32 @_ZN1A7get_intEv(%class.A* %temp.lvalue)
           to label %invoke.cont unwind label %lpad, !dbg !110
@@ -151,7 +151,7 @@ entry:
 invoke.cont:                                      ; preds = %entry
   call void @_ZN1AD2Ev(%class.A* %temp.lvalue), !dbg !111
   store i32 %call, i32* %return_val, align 4, !dbg !111
-  call void @llvm.dbg.declare(metadata !{%class.A* %a}, metadata !113), !dbg !114
+  call void @llvm.dbg.declare(metadata !{%class.A* %a}, metadata !113, metadata !{i32 786690}), !dbg !114
   call void @_ZN1B9AInstanceEv(%class.A* sret %a, %class.B* %b), !dbg !114
   %0 = load i32* %return_val, align 4, !dbg !115
   store i32 %0, i32* %retval, !dbg !115
@@ -193,7 +193,7 @@ define linkonce_odr void @_ZN1BC2Ev(%class.B* %this) unnamed_addr #0 align 2 {
 entry:
   %this.addr = alloca %class.B*, align 8
   store %class.B* %this, %class.B** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.B** %this.addr}, metadata !123), !dbg !124
+  call void @llvm.dbg.declare(metadata !{%class.B** %this.addr}, metadata !123, metadata !{i32 786690}), !dbg !124
   %this1 = load %class.B** %this.addr
   ret void, !dbg !125
 }
@@ -218,7 +218,7 @@ entry:
   %exn.slot = alloca i8*
   %ehselector.slot = alloca i32
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !126), !dbg !127
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !126, metadata !{i32 786690}), !dbg !127
   %this1 = load %class.A** %this.addr
   invoke void @_ZN1AD2Ev(%class.A* %this1)
           to label %invoke.cont unwind label %lpad, !dbg !128

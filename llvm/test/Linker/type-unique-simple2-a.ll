@@ -48,7 +48,7 @@ define linkonce_odr void @_ZN1AC1Ev(%class.A* %this) unnamed_addr #2 align 2 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !39), !dbg !41
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !39, metadata !{i32 786690}), !dbg !41
   %this1 = load %class.A** %this.addr
   call void @_ZN1AC2Ev(%class.A* %this1) #1, !dbg !42
   ret void, !dbg !42
@@ -57,14 +57,14 @@ entry:
 declare i32 @_ZN1A6getFooEv(%class.A*)
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #4
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #4
 
 ; Function Attrs: inlinehint nounwind
 define linkonce_odr void @_ZN1AC2Ev(%class.A* %this) unnamed_addr #2 align 2 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !44), !dbg !45
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !44, metadata !{i32 786690}), !dbg !45
   %this1 = load %class.A** %this.addr
   %0 = bitcast %class.A* %this1 to i8***, !dbg !46
   store i8** getelementptr inbounds ([4 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %0, !dbg !46

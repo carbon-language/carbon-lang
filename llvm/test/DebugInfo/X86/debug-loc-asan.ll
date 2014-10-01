@@ -81,7 +81,7 @@ entry:
   %21 = inttoptr i64 %20 to i8*
   %22 = load i8* %21
   %23 = icmp ne i8 %22, 0
-  call void @llvm.dbg.declare(metadata !{i32* %8}, metadata !12)
+  call void @llvm.dbg.declare(metadata !{i32* %8}, metadata !12, metadata !14)
   br i1 %23, label %24, label %30
 
 ; <label>:24                                      ; preds = %5
@@ -147,7 +147,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 define internal void @asan.module_ctor() {
   call void @__asan_init_v3()
@@ -181,6 +181,6 @@ attributes #1 = { nounwind readnone }
 !9 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
 !10 = metadata !{i32 2, metadata !"Debug Info Version", i32 1}
 !11 = metadata !{metadata !"clang version 3.5.0 (209308)"}
-!12 = metadata !{i32 786689, metadata !4, metadata !"y", metadata !5, i32 16777217, metadata !8, i32 0, i32 0, metadata !14} ; [ DW_TAG_arg_variable ] [y] [line 1]
+!12 = metadata !{i32 786689, metadata !4, metadata !"y", metadata !5, i32 16777217, metadata !8, i32 0, i32 0} ;; [ DW_TAG_arg_variable ] [y] [line 1]
 !13 = metadata !{i32 2, i32 0, metadata !4, null}
-!14 = metadata !{i64 2}
+!14 = metadata !{i32 786690, i64 6} ; [DW_OP_deref]

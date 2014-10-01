@@ -4,11 +4,11 @@
 
 define void @CGRectStandardize(i32* sret %agg.result, i32* byval %rect) nounwind ssp {
 entry:
-  call void @llvm.dbg.declare(metadata !{i32* %rect}, metadata !23), !dbg !24
+  call void @llvm.dbg.declare(metadata !{i32* %rect}, metadata !23, metadata !{i32 786690}), !dbg !24
   ret void
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
 

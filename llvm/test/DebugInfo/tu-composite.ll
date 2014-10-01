@@ -91,13 +91,13 @@ define void @_ZN1C3fooEv(%struct.C* %this) unnamed_addr #0 align 2 {
 entry:
   %this.addr = alloca %struct.C*, align 8
   store %struct.C* %this, %struct.C** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr}, metadata !36), !dbg !38
+  call void @llvm.dbg.declare(metadata !{%struct.C** %this.addr}, metadata !36, metadata !{i32 786690}), !dbg !38
   %this1 = load %struct.C** %this.addr
   ret void, !dbg !39
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 ; Function Attrs: nounwind ssp uwtable
 define void @_Z4testv() #0 {
@@ -108,12 +108,12 @@ entry:
   %e = alloca %"struct.D::Nested", align 1
   %p = alloca %"struct.D::Nested2"*, align 8
   %t = alloca %"struct.D::virt", align 8
-  call void @llvm.dbg.declare(metadata !{%struct.bar* %B}, metadata !40), !dbg !42
-  call void @llvm.dbg.declare(metadata !{[3 x %struct.bar]* %A}, metadata !43), !dbg !47
-  call void @llvm.dbg.declare(metadata !{%struct.bar* %B2}, metadata !48), !dbg !50
-  call void @llvm.dbg.declare(metadata !{%"struct.D::Nested"* %e}, metadata !51), !dbg !52
-  call void @llvm.dbg.declare(metadata !{%"struct.D::Nested2"** %p}, metadata !53), !dbg !55
-  call void @llvm.dbg.declare(metadata !{%"struct.D::virt"* %t}, metadata !56), !dbg !57
+  call void @llvm.dbg.declare(metadata !{%struct.bar* %B}, metadata !40, metadata !{i32 786690}), !dbg !42
+  call void @llvm.dbg.declare(metadata !{[3 x %struct.bar]* %A}, metadata !43, metadata !{i32 786690}), !dbg !47
+  call void @llvm.dbg.declare(metadata !{%struct.bar* %B2}, metadata !48, metadata !{i32 786690}), !dbg !50
+  call void @llvm.dbg.declare(metadata !{%"struct.D::Nested"* %e}, metadata !51, metadata !{i32 786690}), !dbg !52
+  call void @llvm.dbg.declare(metadata !{%"struct.D::Nested2"** %p}, metadata !53, metadata !{i32 786690}), !dbg !55
+  call void @llvm.dbg.declare(metadata !{%"struct.D::virt"* %t}, metadata !56, metadata !{i32 786690}), !dbg !57
   ret void, !dbg !58
 }
 

@@ -614,8 +614,8 @@ static void emitKill(const MachineInstr *MI, AsmPrinter &AP) {
 /// of DBG_VALUE, returning true if it was able to do so.  A false return
 /// means the target will need to handle MI in EmitInstruction.
 static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
-  // This code handles only the 3-operand target-independent form.
-  if (MI->getNumOperands() != 3)
+  // This code handles only the 4-operand target-independent form.
+  if (MI->getNumOperands() != 4)
     return false;
 
   SmallString<128> Str;
@@ -629,9 +629,11 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
       OS << Name << ":";
   }
   OS << V.getName();
-  if (V.isVariablePiece())
-    OS << " [piece offset=" << V.getPieceOffset()
-       << " size="<<V.getPieceSize()<<"]";
+
+  DIExpression Expr = MI->getDebugExpression();
+  if (Expr.isVariablePiece())
+    OS << " [piece offset=" << Expr.getPieceOffset()
+       << " size=" << Expr.getPieceSize() << "]";
   OS << " <- ";
 
   // The second operand is only an offset if it's an immediate.

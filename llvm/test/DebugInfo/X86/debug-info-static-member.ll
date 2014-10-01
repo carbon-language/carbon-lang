@@ -47,14 +47,14 @@ entry:
   %retval = alloca i32, align 4
   %instance_C = alloca %class.C, align 4
   store i32 0, i32* %retval
-  call void @llvm.dbg.declare(metadata !{%class.C* %instance_C}, metadata !29), !dbg !30
+  call void @llvm.dbg.declare(metadata !{%class.C* %instance_C}, metadata !29, metadata !{i32 786690}), !dbg !30
   %d = getelementptr inbounds %class.C* %instance_C, i32 0, i32 0, !dbg !31
   store i32 8, i32* %d, align 4, !dbg !31
   %0 = load i32* @_ZN1C1cE, align 4, !dbg !32
   ret i32 %0, !dbg !32
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!34}

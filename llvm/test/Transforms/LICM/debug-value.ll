@@ -15,7 +15,7 @@ if.then:                                          ; preds = %for.body
 
 if.then27:                                        ; preds = %if.then
 ; CHECK: tail call void @llvm.dbg.value
-  tail call void @llvm.dbg.value(metadata !18, i64 0, metadata !19), !dbg !21
+  tail call void @llvm.dbg.value(metadata !18, i64 0, metadata !19, metadata !{}), !dbg !21
   br label %for.body61.us
 
 if.end.if.end.split_crit_edge.critedge:           ; preds = %if.then
@@ -31,7 +31,7 @@ for.end104:                                       ; preds = %for.cond.backedge
   ret void, !dbg !24
 }
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 !llvm.module.flags = !{!26}
 !llvm.dbg.sp = !{!0, !6, !9, !10}

@@ -1042,50 +1042,28 @@ DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
   return RetVar;
 }
 
-/// createComplexVariable - Create a new descriptor for the specified variable
-/// which has a complex address expression for its address.
-DIVariable DIBuilder::createComplexVariable(unsigned Tag, DIDescriptor Scope,
-                                            StringRef Name, DIFile F,
-                                            unsigned LineNo,
-                                            DITypeRef Ty,
-                                            ArrayRef<Value *> Addr,
-                                            unsigned ArgNo) {
-  assert(Addr.size() > 0 && "complex address is empty");
-  Value *Elts[] = {
-    GetTagConstant(VMContext, Tag),
-    getNonCompileUnitScope(Scope),
-    MDString::get(VMContext, Name),
-    F,
-    ConstantInt::get(Type::getInt32Ty(VMContext),
-                     (LineNo | (ArgNo << 24))),
-    Ty,
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
-    MDNode::get(VMContext, Addr)
-  };
-  return DIVariable(MDNode::get(VMContext, Elts));
+/// createExpression - Create a new descriptor for the specified
+/// variable which has a complex address expression for its address.
+/// @param Addr        An array of complex address operations.
+DIExpression DIBuilder::createExpression(ArrayRef<Value *> Addr) {
+  SmallVector<llvm::Value *, 16> Elts;
+  Elts.push_back(GetTagConstant(VMContext, DW_TAG_expression));
+  Elts.insert(Elts.end(), Addr.begin(), Addr.end());
+  return DIExpression(MDNode::get(VMContext, Elts));
 }
 
 /// createVariablePiece - Create a descriptor to describe one part
 /// of aggregate variable that is fragmented across multiple Values.
-DIVariable DIBuilder::createVariablePiece(DIVariable Variable,
-                                          unsigned OffsetInBytes,
-                                          unsigned SizeInBytes) {
+DIExpression DIBuilder::createPieceExpression(unsigned OffsetInBytes,
+                                              unsigned SizeInBytes) {
   assert(SizeInBytes > 0 && "zero-size piece");
   Value *Addr[] = {
-    ConstantInt::get(Type::getInt32Ty(VMContext), OpPiece),
-    ConstantInt::get(Type::getInt32Ty(VMContext), OffsetInBytes),
-    ConstantInt::get(Type::getInt32Ty(VMContext), SizeInBytes)
-  };
+      GetTagConstant(VMContext, DW_TAG_expression),
+      ConstantInt::get(Type::getInt64Ty(VMContext), dwarf::DW_OP_piece),
+      ConstantInt::get(Type::getInt64Ty(VMContext), OffsetInBytes),
+      ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBytes)};
 
-  assert((Variable->getNumOperands() == 8 || Variable.isVariablePiece()) &&
-         "variable already has a complex address");
-  SmallVector<Value *, 9> Elts;
-  for (unsigned i = 0; i < 8; ++i)
-    Elts.push_back(Variable->getOperand(i));
-
-  Elts.push_back(MDNode::get(VMContext, Addr));
-  return DIVariable(MDNode::get(VMContext, Elts));
+  return DIExpression(MDNode::get(VMContext, Addr));
 }
 
 /// createFunction - Create a new descriptor for the specified function.
@@ -1292,6 +1270,7 @@ DILexicalBlock DIBuilder::createLexicalBlock(DIDescriptor Scope, DIFile File,
 
 /// insertDeclare - Insert a new llvm.dbg.declare intrinsic call.
 Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
+                                      DIExpression Expr,
                                       Instruction *InsertBefore) {
   assert(Storage && "no storage passed to dbg.declare");
   assert(VarInfo.isVariable() &&
@@ -1299,12 +1278,13 @@ Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
-  Value *Args[] = { MDNode::get(Storage->getContext(), Storage), VarInfo };
+  Value *Args[] = {MDNode::get(Storage->getContext(), Storage), VarInfo, Expr};
   return CallInst::Create(DeclareFn, Args, "", InsertBefore);
 }
 
 /// insertDeclare - Insert a new llvm.dbg.declare intrinsic call.
 Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
+                                      DIExpression Expr,
                                       BasicBlock *InsertAtEnd) {
   assert(Storage && "no storage passed to dbg.declare");
   assert(VarInfo.isVariable() &&
@@ -1312,7 +1292,7 @@ Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
-  Value *Args[] = { MDNode::get(Storage->getContext(), Storage), VarInfo };
+  Value *Args[] = {MDNode::get(Storage->getContext(), Storage), VarInfo, Expr};
 
   // If this block already has a terminator then insert this intrinsic
   // before the terminator.
@@ -1325,6 +1305,7 @@ Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
 /// insertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
 Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
                                                 DIVariable VarInfo,
+                                                DIExpression Expr,
                                                 Instruction *InsertBefore) {
   assert(V && "no value passed to dbg.value");
   assert(VarInfo.isVariable() &&
@@ -1332,15 +1313,16 @@ Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
-  Value *Args[] = { MDNode::get(V->getContext(), V),
-                    ConstantInt::get(Type::getInt64Ty(V->getContext()), Offset),
-                    VarInfo };
+  Value *Args[] = {MDNode::get(V->getContext(), V),
+                   ConstantInt::get(Type::getInt64Ty(V->getContext()), Offset),
+                   VarInfo, Expr};
   return CallInst::Create(ValueFn, Args, "", InsertBefore);
 }
 
 /// insertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
 Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
                                                 DIVariable VarInfo,
+                                                DIExpression Expr,
                                                 BasicBlock *InsertAtEnd) {
   assert(V && "no value passed to dbg.value");
   assert(VarInfo.isVariable() &&
@@ -1348,8 +1330,8 @@ Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
-  Value *Args[] = { MDNode::get(V->getContext(), V),
-                    ConstantInt::get(Type::getInt64Ty(V->getContext()), Offset),
-                    VarInfo };
+  Value *Args[] = {MDNode::get(V->getContext(), V),
+                   ConstantInt::get(Type::getInt64Ty(V->getContext()), Offset),
+                   VarInfo, Expr};
   return CallInst::Create(ValueFn, Args, "", InsertAtEnd);
 }

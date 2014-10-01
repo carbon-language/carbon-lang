@@ -607,16 +607,20 @@ void DwarfUnit::addComplexAddress(const DbgVariable &DV, DIE &Die,
   unsigned N = DV.getNumAddrElements();
   unsigned i = 0;
   if (Location.isReg()) {
-    if (N >= 2 && DV.getAddrElement(0) == DIBuilder::OpPlus) {
+    if (N >= 2 && DV.getAddrElement(0) == dwarf::DW_OP_plus) {
+      assert(!DV.getVariable().isIndirect() &&
+             "double indirection not handled");
       // If first address element is OpPlus then emit
       // DW_OP_breg + Offset instead of DW_OP_reg + Offset.
       addRegisterOffset(*Loc, Location.getReg(), DV.getAddrElement(1));
       i = 2;
-    } else if (N >= 2 && DV.getAddrElement(0) == DIBuilder::OpDeref) {
-        addRegisterOpPiece(*Loc, Location.getReg(),
-                           DV.getVariable().getPieceSize(),
-                           DV.getVariable().getPieceOffset());
-        i = 3;
+    } else if (N >= 2 && DV.getAddrElement(0) == dwarf::DW_OP_deref) {
+      assert(!DV.getVariable().isIndirect() &&
+             "double indirection not handled");
+      addRegisterOpPiece(*Loc, Location.getReg(),
+                         DV.getExpression().getPieceSize(),
+                         DV.getExpression().getPieceOffset());
+      i = 3;
     } else
       addRegisterOpPiece(*Loc, Location.getReg());
   } else
@@ -624,15 +628,15 @@ void DwarfUnit::addComplexAddress(const DbgVariable &DV, DIE &Die,
 
   for (; i < N; ++i) {
     uint64_t Element = DV.getAddrElement(i);
-    if (Element == DIBuilder::OpPlus) {
+    if (Element == dwarf::DW_OP_plus) {
       addUInt(*Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
       addUInt(*Loc, dwarf::DW_FORM_udata, DV.getAddrElement(++i));
 
-    } else if (Element == DIBuilder::OpDeref) {
+    } else if (Element == dwarf::DW_OP_deref) {
       if (!Location.isReg())
         addUInt(*Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
 
-    } else if (Element == DIBuilder::OpPiece) {
+    } else if (Element == dwarf::DW_OP_piece) {
       const unsigned SizeOfByte = 8;
       unsigned PieceOffsetInBits = DV.getAddrElement(++i)*SizeOfByte;
       unsigned PieceSizeInBits = DV.getAddrElement(++i)*SizeOfByte;
@@ -1861,7 +1865,7 @@ std::unique_ptr<DIE> DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
 
   // Check if variable is described by a DBG_VALUE instruction.
   if (const MachineInstr *DVInsn = DV.getMInsn()) {
-    assert(DVInsn->getNumOperands() == 3);
+    assert(DVInsn->getNumOperands() == 4);
     if (DVInsn->getOperand(0).isReg()) {
       const MachineOperand RegOp = DVInsn->getOperand(0);
       // If the second operand is an immediate, this is an indirect value.

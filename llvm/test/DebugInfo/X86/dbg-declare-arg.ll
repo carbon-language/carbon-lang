@@ -14,8 +14,8 @@ entry:
   %nrvo = alloca i1
   %cleanup.dest.slot = alloca i32
   store i32 %i, i32* %i.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %i.addr}, metadata !26), !dbg !27
-  call void @llvm.dbg.declare(metadata !{i32* %j}, metadata !28), !dbg !30
+  call void @llvm.dbg.declare(metadata !{i32* %i.addr}, metadata !26, metadata !{i32 786690}), !dbg !27
+  call void @llvm.dbg.declare(metadata !{i32* %j}, metadata !28, metadata !{i32 786690}), !dbg !30
   store i32 0, i32* %j, align 4, !dbg !31
   %tmp = load i32* %i.addr, align 4, !dbg !32
   %cmp = icmp eq i32 %tmp, 42, !dbg !32
@@ -29,7 +29,7 @@ if.then:                                          ; preds = %entry
 
 if.end:                                           ; preds = %if.then, %entry
   store i1 false, i1* %nrvo, !dbg !36
-  call void @llvm.dbg.declare(metadata !{%class.A* %agg.result}, metadata !37), !dbg !39
+  call void @llvm.dbg.declare(metadata !{%class.A* %agg.result}, metadata !37, metadata !{i32 786690}), !dbg !39
   %tmp2 = load i32* %j, align 4, !dbg !40
   %x = getelementptr inbounds %class.A* %agg.result, i32 0, i32 0, !dbg !40
   store i32 %tmp2, i32* %x, align 4, !dbg !40
@@ -46,13 +46,13 @@ nrvo.skipdtor:                                    ; preds = %nrvo.unused, %if.en
   ret void, !dbg !42
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define linkonce_odr void @_ZN1AD1Ev(%class.A* %this) unnamed_addr ssp align 2 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !43), !dbg !44
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !43, metadata !{i32 786690}), !dbg !44
   %this1 = load %class.A** %this.addr
   call void @_ZN1AD2Ev(%class.A* %this1)
   ret void, !dbg !45
@@ -62,7 +62,7 @@ define linkonce_odr void @_ZN1AD2Ev(%class.A* %this) unnamed_addr nounwind ssp a
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !46), !dbg !47
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !46, metadata !{i32 786690}), !dbg !47
   %this1 = load %class.A** %this.addr
   %x = getelementptr inbounds %class.A* %this1, i32 0, i32 0, !dbg !48
   store i32 1, i32* %x, align 4, !dbg !48

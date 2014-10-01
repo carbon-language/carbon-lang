@@ -1,6 +1,6 @@
 ; RUN: opt -mem2reg < %s | llvm-dis | grep ".dbg " | count 7
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 declare void @foo(i32, i64, i8*)
 
@@ -11,14 +11,14 @@ entry:
   %z_addr.i = alloca i8*                          ; <i8**> [#uses=2]
   %a_addr = alloca i32                            ; <i32*> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata !{i32* %a_addr}, metadata !0), !dbg !7
+  call void @llvm.dbg.declare(metadata !{i32* %a_addr}, metadata !0, metadata !{}), !dbg !7
   store i32 %a, i32* %a_addr
   %0 = load i32* %a_addr, align 4, !dbg !8        ; <i32> [#uses=1]
-  call void @llvm.dbg.declare(metadata !{i32* %x_addr.i}, metadata !9) nounwind, !dbg !15
+  call void @llvm.dbg.declare(metadata !{i32* %x_addr.i}, metadata !9, metadata !{}) nounwind, !dbg !15
   store i32 %0, i32* %x_addr.i
-  call void @llvm.dbg.declare(metadata !{i64* %y_addr.i}, metadata !16) nounwind, !dbg !15
+  call void @llvm.dbg.declare(metadata !{i64* %y_addr.i}, metadata !16, metadata !{}) nounwind, !dbg !15
   store i64 55, i64* %y_addr.i
-  call void @llvm.dbg.declare(metadata !{i8** %z_addr.i}, metadata !17) nounwind, !dbg !15
+  call void @llvm.dbg.declare(metadata !{i8** %z_addr.i}, metadata !17, metadata !{}) nounwind, !dbg !15
   store i8* bitcast (void (i32)* @baz to i8*), i8** %z_addr.i
   %1 = load i32* %x_addr.i, align 4, !dbg !18     ; <i32> [#uses=1]
   %2 = load i64* %y_addr.i, align 8, !dbg !18     ; <i64> [#uses=1]

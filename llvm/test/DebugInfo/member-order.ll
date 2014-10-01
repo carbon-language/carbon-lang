@@ -29,13 +29,13 @@ define void @_ZN3foo2f1Ev(%struct.foo* %this) #0 align 2 {
 entry:
   %this.addr = alloca %struct.foo*, align 8
   store %struct.foo* %this, %struct.foo** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%struct.foo** %this.addr}, metadata !16), !dbg !18
+  call void @llvm.dbg.declare(metadata !{%struct.foo** %this.addr}, metadata !16, metadata !{i32 786690}), !dbg !18
   %this1 = load %struct.foo** %this.addr
   ret void, !dbg !19
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.declare(metadata, metadata) #1
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind readnone }

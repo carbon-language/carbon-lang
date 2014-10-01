@@ -70,6 +70,7 @@ public:
 /// \brief This class is used to track local variable information.
 class DbgVariable {
   DIVariable Var;             // Variable Descriptor.
+  DIExpression Expr;          // Complex address location expression.
   DIE *TheDIE;                // Variable DIE.
   unsigned DotDebugLocOffset; // Offset in DotDebugLocEntries.
   const MachineInstr *MInsn;  // DBG_VALUE instruction of the variable.
@@ -78,18 +79,22 @@ class DbgVariable {
 
 public:
   /// Construct a DbgVariable from a DIVariable.
-  DbgVariable(DIVariable V, DwarfDebug *DD)
-      : Var(V), TheDIE(nullptr), DotDebugLocOffset(~0U), MInsn(nullptr),
-        FrameIndex(~0), DD(DD) {}
+  DbgVariable(DIVariable V, DIExpression E, DwarfDebug *DD)
+      : Var(V), Expr(E), TheDIE(nullptr), DotDebugLocOffset(~0U),
+        MInsn(nullptr), FrameIndex(~0), DD(DD) {
+    assert(Var.Verify() && Expr.Verify());
+  }
 
   /// Construct a DbgVariable from a DEBUG_VALUE.
   /// AbstractVar may be NULL.
   DbgVariable(const MachineInstr *DbgValue, DwarfDebug *DD)
-      : Var(DbgValue->getDebugVariable()), TheDIE(nullptr),
-        DotDebugLocOffset(~0U), MInsn(DbgValue), FrameIndex(~0), DD(DD) {}
+      : Var(DbgValue->getDebugVariable()), Expr(DbgValue->getDebugExpression()),
+        TheDIE(nullptr), DotDebugLocOffset(~0U), MInsn(DbgValue),
+        FrameIndex(~0), DD(DD) {}
 
   // Accessors.
   DIVariable getVariable() const { return Var; }
+  DIExpression getExpression() const { return Expr; }
   void setDIE(DIE &D) { TheDIE = &D; }
   DIE *getDIE() const { return TheDIE; }
   void setDotDebugLocOffset(unsigned O) { DotDebugLocOffset = O; }
@@ -124,14 +129,14 @@ public:
 
   bool variableHasComplexAddress() const {
     assert(Var.isVariable() && "Invalid complex DbgVariable!");
-    return Var.hasComplexAddress();
+    return Expr.getNumElements() > 0;
   }
   bool isBlockByrefVariable() const;
   unsigned getNumAddrElements() const {
     assert(Var.isVariable() && "Invalid complex DbgVariable!");
-    return Var.getNumAddrElements();
+    return Expr.getNumElements();
   }
-  uint64_t getAddrElement(unsigned i) const { return Var.getAddrElement(i); }
+  uint64_t getAddrElement(unsigned i) const { return Expr.getElement(i); }
   DIType getType() const;
 
 private:

@@ -12,9 +12,9 @@ entry:
   %retval = alloca i32                            ; <i32*> [#uses=2]
   %0 = alloca i32                                 ; <i32*> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata !{%struct.X** %x_addr}, metadata !0), !dbg !13
+  call void @llvm.dbg.declare(metadata !{%struct.X** %x_addr}, metadata !0, metadata !{i32 786690}), !dbg !13
   store %struct.X* %x, %struct.X** %x_addr
-  call void @llvm.dbg.declare(metadata !{%struct.Y** %y_addr}, metadata !14), !dbg !13
+  call void @llvm.dbg.declare(metadata !{%struct.Y** %y_addr}, metadata !14, metadata !{i32 786690}), !dbg !13
   store %struct.Y* %y, %struct.Y** %y_addr
   store i32 0, i32* %0, align 4, !dbg !13
   %1 = load i32* %0, align 4, !dbg !13            ; <i32> [#uses=1]
@@ -26,7 +26,7 @@ return:                                           ; preds = %entry
   ret i32 %retval1, !dbg !15
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!20}

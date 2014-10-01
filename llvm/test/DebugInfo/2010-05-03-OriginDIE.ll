@@ -23,12 +23,12 @@ entry:
   %a10 = call i64 @llvm.bswap.i64(i64 %a9) nounwind ; <i64> [#uses=1]
   %a11 = getelementptr inbounds %struct.gpt_t* %gpt, i32 0, i32 8, !dbg !7 ; <i64*> [#uses=1]
   %a12 = load i64* %a11, align 4, !dbg !7         ; <i64> [#uses=1]
-  call void @llvm.dbg.declare(metadata !{i64* %data_addr.i17}, metadata !8) nounwind, !dbg !14
+  call void @llvm.dbg.declare(metadata !{i64* %data_addr.i17}, metadata !8, metadata !{i32 786690}) nounwind, !dbg !14
   store i64 %a12, i64* %data_addr.i17, align 8
-  call void @llvm.dbg.value(metadata !6, i64 0, metadata !15) nounwind
-  call void @llvm.dbg.value(metadata !18, i64 0, metadata !19) nounwind
-  call void @llvm.dbg.declare(metadata !6, metadata !23) nounwind
-  call void @llvm.dbg.value(metadata !{i64* %data_addr.i17}, i64 0, metadata !34) nounwind
+  call void @llvm.dbg.value(metadata !6, i64 0, metadata !15, metadata !{i32 786690}) nounwind
+  call void @llvm.dbg.value(metadata !18, i64 0, metadata !19, metadata !{i32 786690}) nounwind
+  call void @llvm.dbg.declare(metadata !6, metadata !23, metadata !{i32 786690}) nounwind
+  call void @llvm.dbg.value(metadata !{i64* %data_addr.i17}, i64 0, metadata !34, metadata !{i32 786690}) nounwind
   %a13 = load volatile i64* %data_addr.i17, align 8 ; <i64> [#uses=1]
   %a14 = call i64 @llvm.bswap.i64(i64 %a13) nounwind ; <i64> [#uses=2]
   %a15 = add i64 %a10, %a14, !dbg !7              ; <i64> [#uses=1]
@@ -38,9 +38,9 @@ entry:
   ret void, !dbg !7
 }
 
-declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
-declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 declare i32 @llvm.bswap.i32(i32) nounwind readnone
 
@@ -69,7 +69,7 @@ declare void @uuid_LtoB(i8*, i8*)
 !16 = metadata !{i32 524334, metadata !38, null, metadata !"OSReadSwapInt64", metadata !"OSReadSwapInt64", metadata !"OSReadSwapInt64", i32 95, metadata !5, i1 true, i1 true, i32 0, i32 0, null, i1 false, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !17 = metadata !{i32 524303, metadata !39, metadata !3, metadata !"", i32 0, i64 32, i64 32, i64 0, i32 0, null} ; [ DW_TAG_pointer_type ]
 !18 = metadata !{i32 0}
-!19 = metadata !{i32 524545, metadata !16, metadata !"byteOffset", metadata !10, i32 94, metadata !20} ; [ DW_TAG_arg_variable ]
+!19 = metadata !{i32 524545, metadata !16, metadata !"byteOffset", metadata !10, i32 94, metadata !20, i32 0} ; [ DW_TAG_arg_variable ]
 !20 = metadata !{i32 524310, metadata !37, metadata !3, metadata !"uintptr_t", i32 114, i64 0, i64 0, i64 0, i32 0, metadata !22} ; [ DW_TAG_typedef ]
 !21 = metadata !{i32 524329, metadata !"types.h", metadata !"/usr/include/ppc", metadata !4} ; [ DW_TAG_file_type ]
 !22 = metadata !{i32 524324, metadata !39, metadata !3, metadata !"long unsigned int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]

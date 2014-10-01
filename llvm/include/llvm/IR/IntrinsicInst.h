@@ -82,6 +82,7 @@ namespace llvm {
   public:
     Value *getAddress() const;
     MDNode *getVariable() const { return cast<MDNode>(getArgOperand(1)); }
+    MDNode *getExpression() const { return cast<MDNode>(getArgOperand(2)); }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const IntrinsicInst *I) {
@@ -103,6 +104,7 @@ namespace llvm {
                           const_cast<Value*>(getArgOperand(1)))->getZExtValue();
     }
     MDNode *getVariable() const { return cast<MDNode>(getArgOperand(2)); }
+    MDNode *getExpression() const { return cast<MDNode>(getArgOperand(3)); }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const IntrinsicInst *I) {
