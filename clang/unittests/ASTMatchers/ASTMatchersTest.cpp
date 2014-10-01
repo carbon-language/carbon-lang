@@ -725,7 +725,7 @@ public:
     EXPECT_EQ("", Name);
   }
 
-  virtual bool run(const BoundNodes *Nodes) {
+  virtual bool run(const BoundNodes *Nodes) override {
     const BoundNodes::IDToNodeMap &M = Nodes->getMap();
     if (Nodes->getNodeAs<T>(Id)) {
       ++Count;
@@ -747,7 +747,7 @@ public:
     return false;
   }
 
-  virtual bool run(const BoundNodes *Nodes, ASTContext *Context) {
+  virtual bool run(const BoundNodes *Nodes, ASTContext *Context) override {
     return run(Nodes);
   }
 

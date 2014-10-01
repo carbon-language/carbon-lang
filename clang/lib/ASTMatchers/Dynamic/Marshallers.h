@@ -564,7 +564,7 @@ public:
 
   virtual VariantMatcher create(const SourceRange &NameRange,
                                 ArrayRef<ParserValue> Args,
-                                Diagnostics *Error) const {
+                                Diagnostics *Error) const override {
     if (Args.size() < MinCount || MaxCount < Args.size()) {
       const std::string MaxStr =
           (MaxCount == UINT_MAX ? "" : Twine(MaxCount)).str();
@@ -587,14 +587,14 @@ public:
     return VariantMatcher::VariadicOperatorMatcher(Func, std::move(InnerArgs));
   }
 
-  bool isVariadic() const { return true; }
-  unsigned getNumArgs() const { return 0; }
+  bool isVariadic() const override { return true; }
+  unsigned getNumArgs() const override { return 0; }
   void getArgKinds(ast_type_traits::ASTNodeKind ThisKind, unsigned ArgNo,
-                   std::vector<ArgKind> &Kinds) const {
+                   std::vector<ArgKind> &Kinds) const override {
     Kinds.push_back(ThisKind);
   }
   bool isConvertibleTo(ast_type_traits::ASTNodeKind Kind, unsigned *Specificity,
-                       ast_type_traits::ASTNodeKind *LeastDerivedKind) const {
+                       ast_type_traits::ASTNodeKind *LeastDerivedKind) const override {
     if (Specificity)
       *Specificity = 1;
     if (LeastDerivedKind)

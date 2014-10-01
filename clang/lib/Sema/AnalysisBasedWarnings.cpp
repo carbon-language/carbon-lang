@@ -1671,7 +1671,7 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
 
 
   virtual void handleNegativeNotHeld(StringRef Kind, Name LockName, Name Neg,
-                                     SourceLocation Loc) {
+                                     SourceLocation Loc) override {
     PartialDiagnosticAt Warning(Loc,
         S.PDiag(diag::warn_acquire_requires_negative_cap)
         << Kind << LockName << Neg);

@@ -188,7 +188,7 @@ struct VerifyEndCallback : public SourceFileCallbacks {
     ++BeginCalled;
     return true;
   }
-  virtual void handleEndSource() {
+  virtual void handleEndSource() override {
     ++EndCalled;
   }
   std::unique_ptr<ASTConsumer> newASTConsumer() {

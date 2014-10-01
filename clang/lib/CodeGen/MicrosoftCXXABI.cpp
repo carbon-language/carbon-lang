@@ -491,7 +491,7 @@ public:
     return RD->hasAttr<MSInheritanceAttr>();
   }
 
-  virtual bool isTypeInfoCalculable(QualType Ty) const {
+  virtual bool isTypeInfoCalculable(QualType Ty) const override {
     if (!CGCXXABI::isTypeInfoCalculable(Ty))
       return false;
     if (const auto *MPT = Ty->getAs<MemberPointerType>()) {
