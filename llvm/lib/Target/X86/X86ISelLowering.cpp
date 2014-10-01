@@ -7850,27 +7850,21 @@ static SDValue lowerVectorShuffleAsBroadcast(MVT VT, SDLoc DL, SDValue V,
                                             "a sorted mask where the broadcast "
                                             "comes from V1.");
 
-  // Check if this is a broadcast of a scalar load -- those are more widely
-  // supported than broadcasting in-register values.
+  // Check if this is a broadcast of a scalar. We special case lowering for
+  // scalars so that we can more effectively fold with loads.
   if (V.getOpcode() == ISD::BUILD_VECTOR ||
         (V.getOpcode() == ISD::SCALAR_TO_VECTOR && BroadcastIdx == 0)) {
-    SDValue BroadcastV = V.getOperand(BroadcastIdx);
-    if (ISD::isNON_EXTLoad(BroadcastV.getNode())) {
-      // We can directly broadcast from memory.
-      return DAG.getNode(X86ISD::VBROADCAST, DL, VT, BroadcastV);
-    }
+    V = V.getOperand(BroadcastIdx);
+
+    // If the scalar isn't a load we can't broadcast from it in AVX1, only with
+    // AVX2.
+    if (!Subtarget->hasAVX2() && !ISD::isNON_EXTLoad(V.getNode()))
+      return SDValue();
+  } else if (BroadcastIdx != 0 || !Subtarget->hasAVX2()) {
+    // We can't broadcast from a vector register w/o AVX2, and we can only
+    // broadcast from the zero-element of a vector register.
+    return SDValue();
   }
-
-  // We can't broadcast from a register w/o AVX2.
-  if (!Subtarget->hasAVX2())
-    return SDValue();
-
-  // Check if this is a broadcast of a BUILD_VECTOR which we can always handle,
-  // or is a broadcast of the zero element.
-  if (V.getOpcode() == ISD::BUILD_VECTOR)
-    V = DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, VT, V.getOperand(BroadcastIdx));
-  else if (BroadcastIdx != 0)
-    return SDValue();
 
   return DAG.getNode(X86ISD::VBROADCAST, DL, VT, V);
 }
