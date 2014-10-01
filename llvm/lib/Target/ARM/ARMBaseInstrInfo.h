@@ -156,6 +156,13 @@ public:
   unsigned isStoreToStackSlotPostFE(const MachineInstr *MI,
                                     int &FrameIndex) const override;
 
+  void copyToCPSR(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                  unsigned SrcReg, bool KillSrc,
+                  const ARMSubtarget &Subtarget) const;
+  void copyFromCPSR(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                    unsigned DestReg, bool KillSrc,
+                    const ARMSubtarget &Subtarget) const;
+
   void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                    DebugLoc DL, unsigned DestReg, unsigned SrcReg,
                    bool KillSrc) const override;

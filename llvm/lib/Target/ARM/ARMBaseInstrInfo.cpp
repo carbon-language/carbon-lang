@@ -698,6 +698,49 @@ unsigned ARMBaseInstrInfo::getInstBundleLength(const MachineInstr *MI) const {
   return Size;
 }
 
+void ARMBaseInstrInfo::copyFromCPSR(MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator I,
+                                    unsigned DestReg, bool KillSrc,
+                                    const ARMSubtarget &Subtarget) const {
+  unsigned Opc = Subtarget.isThumb()
+                     ? (Subtarget.isMClass() ? ARM::t2MRS_M : ARM::t2MRS_AR)
+                     : ARM::MRS;
+
+  MachineInstrBuilder MIB =
+      BuildMI(MBB, I, I->getDebugLoc(), get(Opc), DestReg);
+
+  // There is only 1 A/R class MRS instruction, and it always refers to
+  // APSR. However, there are lots of other possibilities on M-class cores.
+  if (Subtarget.isMClass())
+    MIB.addImm(0x800);
+
+  AddDefaultPred(MIB);
+
+  MIB.addReg(ARM::CPSR, RegState::Implicit | getKillRegState(KillSrc));
+}
+
+void ARMBaseInstrInfo::copyToCPSR(MachineBasicBlock &MBB,
+                                  MachineBasicBlock::iterator I,
+                                  unsigned SrcReg, bool KillSrc,
+                                  const ARMSubtarget &Subtarget) const {
+  unsigned Opc = Subtarget.isThumb()
+                     ? (Subtarget.isMClass() ? ARM::t2MSR_M : ARM::t2MSR_AR)
+                     : ARM::MSR;
+
+  MachineInstrBuilder MIB = BuildMI(MBB, I, I->getDebugLoc(), get(Opc));
+
+  if (Subtarget.isMClass())
+    MIB.addImm(0x800);
+  else
+    MIB.addImm(8);
+
+  MIB.addReg(SrcReg, getKillRegState(KillSrc));
+
+  AddDefaultPred(MIB);
+
+  MIB.addReg(ARM::CPSR, RegState::Implicit | RegState::Define);
+}
+
 void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator I, DebugLoc DL,
                                    unsigned DestReg, unsigned SrcReg,
@@ -785,6 +828,12 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Opc = ARM::VMOVS;
     BeginIdx = ARM::ssub_0;
     SubRegs = 2;
+  } else if (SrcReg == ARM::CPSR) {
+    copyFromCPSR(MBB, I, DestReg, KillSrc, Subtarget);
+    return;
+  } else if (DestReg == ARM::CPSR) {
+    copyToCPSR(MBB, I, SrcReg, KillSrc, Subtarget);
+    return;
   }
 
   assert(Opc && "Impossible reg-to-reg copy");

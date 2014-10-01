@@ -182,7 +182,7 @@ ARMBaseRegisterInfo::getPointerRegClass(const MachineFunction &MF, unsigned Kind
 const TargetRegisterClass *
 ARMBaseRegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
   if (RC == &ARM::CCRRegClass)
-    return nullptr;  // Can't copy CCR registers.
+    return &ARM::rGPRRegClass;  // Can't copy CCR registers.
   return RC;
 }
 
