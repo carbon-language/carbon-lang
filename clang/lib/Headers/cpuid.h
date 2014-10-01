@@ -53,7 +53,7 @@
 #define bit_XSAVE       0x04000000
 #define bit_OSXSAVE     0x08000000
 #define bit_AVX         0x10000000
-#define bit_RDRAND      0x40000000
+#define bit_RDRND       0x40000000
 
 /* Features in %edx for level 1 */
 #define bit_FPU         0x00000001
