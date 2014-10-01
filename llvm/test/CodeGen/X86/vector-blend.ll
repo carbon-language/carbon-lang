@@ -11,6 +11,15 @@ define <4 x float> @vsel_float(<4 x float> %v1, <4 x float> %v2) {
   ret <4 x float> %vsel
 }
 
+define <4 x float> @vsel_float2(<4 x float> %v1, <4 x float> %v2) {
+; CHECK-LABEL: vsel_float2:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vmovss %xmm0, %xmm1, %xmm0
+; CHECK-NEXT:    retq
+  %vsel = select <4 x i1> <i1 true, i1 false, i1 false, i1 false>, <4 x float> %v1, <4 x float> %v2
+  ret <4 x float> %vsel
+}
+
 define <4 x i32> @vsel_i32(<4 x i32> %v1, <4 x i32> %v2) {
 ; CHECK-LABEL: vsel_i32:
 ; CHECK:       ## BB#0:
@@ -36,6 +45,15 @@ define <2 x i64> @vsel_i64(<2 x i64> %v1, <2 x i64> %v2) {
 ; CHECK-NEXT:    retq
   %vsel = select <2 x i1> <i1 true, i1 false>, <2 x i64> %v1, <2 x i64> %v2
   ret <2 x i64> %vsel
+}
+
+define <8 x i16> @vsel_8xi16(<8 x i16> %v1, <8 x i16> %v2) {
+; CHECK-LABEL: vsel_8xi16:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3],xmm0[4],xmm1[5,6,7]
+; CHECK-NEXT:    retq
+  %vsel = select <8 x i1> <i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false>, <8 x i16> %v1, <8 x i16> %v2
+  ret <8 x i16> %vsel
 }
 
 define <16 x i8> @vsel_i8(<16 x i8> %v1, <16 x i8> %v2) {
