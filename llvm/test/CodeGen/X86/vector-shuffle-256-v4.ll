@@ -12,7 +12,7 @@ define <4 x double> @shuffle_v4f64_0000(<4 x double> %a, <4 x double> %b) {
 ;
 ; AVX2-LABEL: shuffle_v4f64_0000:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[0,0,0,0]
+; AVX2-NEXT:    vbroadcastsd %xmm0, %ymm0
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <4 x double> %a, <4 x double> %b, <4 x i32> <i32 0, i32 0, i32 0, i32 0>
   ret <4 x double> %shuffle
@@ -184,11 +184,17 @@ define <4 x double> @shuffle_v4f64_1022(<4 x double> %a, <4 x double> %b) {
 }
 
 define <4 x double> @shuffle_v4f64_0423(<4 x double> %a, <4 x double> %b) {
-; ALL-LABEL: shuffle_v4f64_0423:
-; ALL:       # BB#0:
-; ALL-NEXT:    vpermilpd {{.*#+}} ymm1 = ymm1[0,0,2,2]
-; ALL-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2,3]
-; ALL-NEXT:    retq
+; AVX1-LABEL: shuffle_v4f64_0423:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vpermilpd {{.*#+}} ymm1 = ymm1[0,0,2,2]
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2,3]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: shuffle_v4f64_0423:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vbroadcastsd %xmm1, %ymm1
+; AVX2-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2,3]
+; AVX2-NEXT:    retq
   %shuffle = shufflevector <4 x double> %a, <4 x double> %b, <4 x i32> <i32 0, i32 4, i32 2, i32 3>
   ret <4 x double> %shuffle
 }
@@ -317,7 +323,7 @@ define <4 x i64> @shuffle_v4i64_0000(<4 x i64> %a, <4 x i64> %b) {
 ;
 ; AVX2-LABEL: shuffle_v4i64_0000:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,0,0,0]
+; AVX2-NEXT:    vbroadcastsd %xmm0, %ymm0
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 0, i32 0, i32 0, i32 0>
   ret <4 x i64> %shuffle
@@ -460,7 +466,7 @@ define <4 x i64> @shuffle_v4i64_0124(<4 x i64> %a, <4 x i64> %b) {
 ;
 ; AVX2-LABEL: shuffle_v4i64_0124:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpermq {{.*#+}} ymm1 = ymm1[0,1,2,0]
+; AVX2-NEXT:    vpbroadcastq %xmm1, %ymm1
 ; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1,2,3,4,5],ymm1[6,7]
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 0, i32 1, i32 2, i32 4>
@@ -477,8 +483,8 @@ define <4 x i64> @shuffle_v4i64_0142(<4 x i64> %a, <4 x i64> %b) {
 ;
 ; AVX2-LABEL: shuffle_v4i64_0142:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpermq {{.*#+}} ymm1 = ymm1[0,1,0,3]
 ; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,1,2,2]
+; AVX2-NEXT:    vpbroadcastq %xmm1, %ymm1
 ; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1,2,3],ymm1[4,5],ymm0[6,7]
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 0, i32 1, i32 4, i32 2>
@@ -497,8 +503,8 @@ define <4 x i64> @shuffle_v4i64_0412(<4 x i64> %a, <4 x i64> %b) {
 ;
 ; AVX2-LABEL: shuffle_v4i64_0412:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpshufd {{.*#+}} ymm1 = ymm1[0,1,0,1,4,5,4,5]
 ; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,1,1,2]
+; AVX2-NEXT:    vpbroadcastq %xmm1, %ymm1
 ; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3],ymm0[4,5,6,7]
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 0, i32 4, i32 1, i32 2>
@@ -730,4 +736,32 @@ define <4 x double> @insert_mem_and_zero_v4f64(double* %ptr) {
   %v = insertelement <4 x double> undef, double %a, i32 0
   %shuffle = shufflevector <4 x double> %v, <4 x double> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
   ret <4 x double> %shuffle
+}
+
+define <4 x double> @splat_mem_v4f64(double* %ptr) {
+; ALL-LABEL: splat_mem_v4f64:
+; ALL:       # BB#0:
+; ALL-NEXT:    vbroadcastsd (%rdi), %ymm0
+; ALL-NEXT:    retq
+  %a = load double* %ptr
+  %v = insertelement <4 x double> undef, double %a, i32 0
+  %shuffle = shufflevector <4 x double> %v, <4 x double> undef, <4 x i32> <i32 0, i32 0, i32 0, i32 0>
+  ret <4 x double> %shuffle
+}
+
+define <4 x i64> @splat_mem_v4i64(i64* %ptr) {
+; AVX1-LABEL: splat_mem_v4i64:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vmovddup (%rdi), %xmm0
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: splat_mem_v4i64:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vbroadcastsd (%rdi), %ymm0
+; AVX2-NEXT:    retq
+  %a = load i64* %ptr
+  %v = insertelement <4 x i64> undef, i64 %a, i64 0
+  %shuffle = shufflevector <4 x i64> %v, <4 x i64> undef, <4 x i32> <i32 0, i32 0, i32 0, i32 0>
+  ret <4 x i64> %shuffle
 }

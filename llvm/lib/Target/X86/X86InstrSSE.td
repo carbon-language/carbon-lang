@@ -8711,6 +8711,27 @@ let Predicates = [HasAVX2] in {
   def : Pat<(v4f64 (X86VBroadcast (v2f64 VR128:$src))),
           (VBROADCASTSDYrr VR128:$src)>;
 
+  // Provide aliases for broadcast from the same regitser class that
+  // automatically does the extract.
+  def : Pat<(v32i8 (X86VBroadcast (v32i8 VR256:$src))),
+            (VPBROADCASTBYrr (v16i8 (EXTRACT_SUBREG (v32i8 VR256:$src),
+                                                    sub_xmm)))>;
+  def : Pat<(v16i16 (X86VBroadcast (v16i16 VR256:$src))),
+            (VPBROADCASTWYrr (v8i16 (EXTRACT_SUBREG (v16i16 VR256:$src),
+                                                    sub_xmm)))>;
+  def : Pat<(v8i32 (X86VBroadcast (v8i32 VR256:$src))),
+            (VPBROADCASTDYrr (v4i32 (EXTRACT_SUBREG (v8i32 VR256:$src),
+                                                    sub_xmm)))>;
+  def : Pat<(v4i64 (X86VBroadcast (v4i64 VR256:$src))),
+            (VPBROADCASTQYrr (v2i64 (EXTRACT_SUBREG (v4i64 VR256:$src),
+                                                    sub_xmm)))>;
+  def : Pat<(v8f32 (X86VBroadcast (v8f32 VR256:$src))),
+            (VBROADCASTSSYrr (v4f32 (EXTRACT_SUBREG (v8f32 VR256:$src),
+                                                    sub_xmm)))>;
+  def : Pat<(v4f64 (X86VBroadcast (v4f64 VR256:$src))),
+            (VBROADCASTSDYrr (v2f64 (EXTRACT_SUBREG (v4f64 VR256:$src),
+                                                    sub_xmm)))>;
+
   // Provide fallback in case the load node that is used in the patterns above
   // is used by additional users, which prevents the pattern selection.
   let AddedComplexity = 20 in {

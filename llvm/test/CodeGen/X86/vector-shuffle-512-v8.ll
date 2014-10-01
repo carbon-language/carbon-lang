@@ -6,7 +6,7 @@ target triple = "x86_64-unknown-unknown"
 define <8 x double> @shuffle_v8f64_00000000(<8 x double> %a, <8 x double> %b) {
 ; ALL-LABEL: shuffle_v8f64_00000000:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[0,0,0,0]
+; ALL-NEXT:    vbroadcastsd %xmm0, %ymm0
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm0, %zmm0, %zmm0
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
@@ -16,7 +16,7 @@ define <8 x double> @shuffle_v8f64_00000000(<8 x double> %a, <8 x double> %b) {
 define <8 x double> @shuffle_v8f64_00000010(<8 x double> %a, <8 x double> %b) {
 ; ALL-LABEL: shuffle_v8f64_00000010:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermpd {{.*#+}} ymm1 = ymm0[0,0,0,0]
+; ALL-NEXT:    vbroadcastsd %xmm0, %ymm1
 ; ALL-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[0,0,1,0]
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
@@ -27,7 +27,7 @@ define <8 x double> @shuffle_v8f64_00000010(<8 x double> %a, <8 x double> %b) {
 define <8 x double> @shuffle_v8f64_00000200(<8 x double> %a, <8 x double> %b) {
 ; ALL-LABEL: shuffle_v8f64_00000200:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermpd {{.*#+}} ymm1 = ymm0[0,0,0,0]
+; ALL-NEXT:    vbroadcastsd %xmm0, %ymm1
 ; ALL-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[0,2,0,0]
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
@@ -38,7 +38,7 @@ define <8 x double> @shuffle_v8f64_00000200(<8 x double> %a, <8 x double> %b) {
 define <8 x double> @shuffle_v8f64_00003000(<8 x double> %a, <8 x double> %b) {
 ; ALL-LABEL: shuffle_v8f64_00003000:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermpd {{.*#+}} ymm1 = ymm0[0,0,0,0]
+; ALL-NEXT:    vbroadcastsd %xmm0, %ymm1
 ; ALL-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[3,0,0,0]
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
@@ -50,10 +50,9 @@ define <8 x double> @shuffle_v8f64_00040000(<8 x double> %a, <8 x double> %b) {
 ; ALL-LABEL: shuffle_v8f64_00040000:
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vextractf64x4 $1, %zmm0, %ymm1
-; ALL-NEXT:    vpermpd {{.*#+}} ymm1 = ymm1[0,1,2,0]
-; ALL-NEXT:    vpermpd {{.*#+}} ymm2 = ymm0[0,0,0,3]
-; ALL-NEXT:    vblendpd {{.*#+}} ymm1 = ymm2[0,1,2],ymm1[3]
-; ALL-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[0,0,0,0]
+; ALL-NEXT:    vbroadcastsd %xmm1, %ymm1
+; ALL-NEXT:    vbroadcastsd %xmm0, %ymm0
+; ALL-NEXT:    vblendpd {{.*#+}} ymm1 = ymm0[0,1,2],ymm1[3]
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 0, i32 0, i32 0, i32 4, i32 0, i32 0, i32 0, i32 0>
@@ -65,9 +64,8 @@ define <8 x double> @shuffle_v8f64_00500000(<8 x double> %a, <8 x double> %b) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vextractf64x4 $1, %zmm0, %ymm1
 ; ALL-NEXT:    vpermpd {{.*#+}} ymm1 = ymm1[0,1,1,3]
-; ALL-NEXT:    vpermpd {{.*#+}} ymm2 = ymm0[0,0,2,0]
-; ALL-NEXT:    vblendpd {{.*#+}} ymm1 = ymm2[0,1],ymm1[2],ymm2[3]
-; ALL-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[0,0,0,0]
+; ALL-NEXT:    vbroadcastsd %xmm0, %ymm0
+; ALL-NEXT:    vblendpd {{.*#+}} ymm1 = ymm0[0,1],ymm1[2],ymm0[3]
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 0, i32 0, i32 5, i32 0, i32 0, i32 0, i32 0, i32 0>
@@ -79,9 +77,8 @@ define <8 x double> @shuffle_v8f64_06000000(<8 x double> %a, <8 x double> %b) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vextractf64x4 $1, %zmm0, %ymm1
 ; ALL-NEXT:    vpermpd {{.*#+}} ymm1 = ymm1[0,2,2,3]
-; ALL-NEXT:    vpermpd {{.*#+}} ymm2 = ymm0[0,1,0,0]
-; ALL-NEXT:    vblendpd {{.*#+}} ymm1 = ymm2[0],ymm1[1],ymm2[2,3]
-; ALL-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[0,0,0,0]
+; ALL-NEXT:    vbroadcastsd %xmm0, %ymm0
+; ALL-NEXT:    vblendpd {{.*#+}} ymm1 = ymm0[0],ymm1[1],ymm0[2,3]
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 0, i32 6, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
@@ -93,7 +90,7 @@ define <8 x double> @shuffle_v8f64_70000000(<8 x double> %a, <8 x double> %b) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vextractf64x4 $1, %zmm0, %ymm1
 ; ALL-NEXT:    vpermpd {{.*#+}} ymm1 = ymm1[3,1,2,3]
-; ALL-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[0,0,0,0]
+; ALL-NEXT:    vbroadcastsd %xmm0, %ymm0
 ; ALL-NEXT:    vblendpd {{.*#+}} ymm1 = ymm1[0],ymm0[1,2,3]
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
@@ -127,7 +124,7 @@ define <8 x double> @shuffle_v8f64_00112233(<8 x double> %a, <8 x double> %b) {
 define <8 x double> @shuffle_v8f64_00001111(<8 x double> %a, <8 x double> %b) {
 ; ALL-LABEL: shuffle_v8f64_00001111:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermpd {{.*#+}} ymm1 = ymm0[0,0,0,0]
+; ALL-NEXT:    vbroadcastsd %xmm0, %ymm1
 ; ALL-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[1,1,1,1]
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
@@ -151,8 +148,8 @@ define <8 x double> @shuffle_v8f64_81a3c5e7(<8 x double> %a, <8 x double> %b) {
 define <8 x double> @shuffle_v8f64_08080808(<8 x double> %a, <8 x double> %b) {
 ; ALL-LABEL: shuffle_v8f64_08080808:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermpd {{.*#+}} ymm1 = ymm1[0,0,2,0]
-; ALL-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[0,1,0,3]
+; ALL-NEXT:    vbroadcastsd %xmm1, %ymm1
+; ALL-NEXT:    vbroadcastsd %xmm0, %ymm0
 ; ALL-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2],ymm1[3]
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm0, %zmm0, %zmm0
 ; ALL-NEXT:    retq
@@ -164,12 +161,12 @@ define <8 x double> @shuffle_v8f64_08084c4c(<8 x double> %a, <8 x double> %b) {
 ; ALL-LABEL: shuffle_v8f64_08084c4c:
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vextractf64x4 $1, %zmm1, %ymm2
-; ALL-NEXT:    vpermpd {{.*#+}} ymm2 = ymm2[0,0,2,0]
+; ALL-NEXT:    vbroadcastsd %xmm2, %ymm2
 ; ALL-NEXT:    vextractf64x4 $1, %zmm0, %ymm3
-; ALL-NEXT:    vpermpd {{.*#+}} ymm3 = ymm3[0,1,0,3]
+; ALL-NEXT:    vbroadcastsd %xmm3, %ymm3
 ; ALL-NEXT:    vblendpd {{.*#+}} ymm2 = ymm3[0],ymm2[1],ymm3[2],ymm2[3]
-; ALL-NEXT:    vpermpd {{.*#+}} ymm1 = ymm1[0,0,2,0]
-; ALL-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[0,1,0,3]
+; ALL-NEXT:    vbroadcastsd %xmm1, %ymm1
+; ALL-NEXT:    vbroadcastsd %xmm0, %ymm0
 ; ALL-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2],ymm1[3]
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm2, %zmm0, %zmm0
 ; ALL-NEXT:    retq
@@ -182,9 +179,9 @@ define <8 x double> @shuffle_v8f64_8823cc67(<8 x double> %a, <8 x double> %b) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vextractf64x4 $1, %zmm0, %ymm2
 ; ALL-NEXT:    vextractf64x4 $1, %zmm1, %ymm3
-; ALL-NEXT:    vpermilpd {{.*#+}} ymm3 = ymm3[0,0,2,2]
+; ALL-NEXT:    vbroadcastsd %xmm3, %ymm3
 ; ALL-NEXT:    vblendpd {{.*#+}} ymm2 = ymm3[0,1],ymm2[2,3]
-; ALL-NEXT:    vpermilpd {{.*#+}} ymm1 = ymm1[0,0,2,2]
+; ALL-NEXT:    vbroadcastsd %xmm1, %ymm1
 ; ALL-NEXT:    vblendpd {{.*#+}} ymm0 = ymm1[0,1],ymm0[2,3]
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm2, %zmm0, %zmm0
 ; ALL-NEXT:    retq
@@ -513,7 +510,7 @@ define <8 x double> @shuffle_v8f64_10004444(<8 x double> %a, <8 x double> %b) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vpermpd {{.*#+}} ymm1 = ymm0[1,0,0,0]
 ; ALL-NEXT:    vextractf64x4 $1, %zmm0, %ymm0
-; ALL-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[0,0,0,0]
+; ALL-NEXT:    vbroadcastsd %xmm0, %ymm0
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 1, i32 0, i32 0, i32 0, i32 4, i32 4, i32 4, i32 4>
@@ -638,7 +635,7 @@ define <8 x double> @shuffle_v8f64_002u6u44(<8 x double> %a, <8 x double> %b) {
 define <8 x double> @shuffle_v8f64_00uu66uu(<8 x double> %a, <8 x double> %b) {
 ; ALL-LABEL: shuffle_v8f64_00uu66uu:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermilpd {{.*#+}} ymm1 = ymm0[0,0,2,2]
+; ALL-NEXT:    vbroadcastsd %xmm0, %ymm1
 ; ALL-NEXT:    vextractf64x4 $1, %zmm0, %ymm0
 ; ALL-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[2,2,2,3]
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm0, %zmm1, %zmm0
@@ -694,16 +691,16 @@ define <8 x double> @shuffle_v8f64_uuu3uu66(<8 x double> %a, <8 x double> %b) {
 define <8 x double> @shuffle_v8f64_c348cda0(<8 x double> %a, <8 x double> %b) {
 ; ALL-LABEL: shuffle_v8f64_c348cda0:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vextractf64x4 $1, %zmm0, %ymm2
-; ALL-NEXT:    vpermpd {{.*#+}} ymm2 = ymm2[0,1,0,3]
-; ALL-NEXT:    vpermpd {{.*#+}} ymm3 = ymm0[0,3,2,3]
-; ALL-NEXT:    vblendpd {{.*#+}} ymm2 = ymm3[0,1],ymm2[2],ymm3[3]
+; ALL-NEXT:    vpermpd {{.*#+}} ymm2 = ymm0[0,3,2,3]
+; ALL-NEXT:    vextractf64x4 $1, %zmm0, %ymm3
+; ALL-NEXT:    vbroadcastsd %xmm3, %ymm3
+; ALL-NEXT:    vblendpd {{.*#+}} ymm2 = ymm2[0,1],ymm3[2],ymm2[3]
 ; ALL-NEXT:    vextractf64x4 $1, %zmm1, %ymm3
-; ALL-NEXT:    vpermpd {{.*#+}} ymm4 = ymm1[0,1,2,0]
+; ALL-NEXT:    vbroadcastsd %xmm1, %ymm4
 ; ALL-NEXT:    vblendpd {{.*#+}} ymm4 = ymm3[0,1,2],ymm4[3]
 ; ALL-NEXT:    vblendpd {{.*#+}} ymm2 = ymm4[0],ymm2[1,2],ymm4[3]
 ; ALL-NEXT:    vblendpd {{.*#+}} ymm1 = ymm3[0,1],ymm1[2],ymm3[3]
-; ALL-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[0,1,2,0]
+; ALL-NEXT:    vbroadcastsd %xmm0, %ymm0
 ; ALL-NEXT:    vblendpd {{.*#+}} ymm0 = ymm1[0,1,2],ymm0[3]
 ; ALL-NEXT:    vinsertf64x4 $1, %ymm0, %zmm2, %zmm0
 ; ALL-NEXT:    retq
@@ -734,7 +731,7 @@ define <8 x double> @shuffle_v8f64_f511235a(<8 x double> %a, <8 x double> %b) {
 define <8 x i64> @shuffle_v8i64_00000000(<8 x i64> %a, <8 x i64> %b) {
 ; ALL-LABEL: shuffle_v8i64_00000000:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,0,0,0]
+; ALL-NEXT:    vpbroadcastq %xmm0, %ymm0
 ; ALL-NEXT:    vinserti64x4 $1, %ymm0, %zmm0, %zmm0
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x i64> %a, <8 x i64> %b, <8 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
@@ -744,7 +741,7 @@ define <8 x i64> @shuffle_v8i64_00000000(<8 x i64> %a, <8 x i64> %b) {
 define <8 x i64> @shuffle_v8i64_00000010(<8 x i64> %a, <8 x i64> %b) {
 ; ALL-LABEL: shuffle_v8i64_00000010:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermq {{.*#+}} ymm1 = ymm0[0,0,0,0]
+; ALL-NEXT:    vpbroadcastq %xmm0, %ymm1
 ; ALL-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,0,1,0]
 ; ALL-NEXT:    vinserti64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
@@ -755,7 +752,7 @@ define <8 x i64> @shuffle_v8i64_00000010(<8 x i64> %a, <8 x i64> %b) {
 define <8 x i64> @shuffle_v8i64_00000200(<8 x i64> %a, <8 x i64> %b) {
 ; ALL-LABEL: shuffle_v8i64_00000200:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermq {{.*#+}} ymm1 = ymm0[0,0,0,0]
+; ALL-NEXT:    vpbroadcastq %xmm0, %ymm1
 ; ALL-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,0,0]
 ; ALL-NEXT:    vinserti64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
@@ -766,7 +763,7 @@ define <8 x i64> @shuffle_v8i64_00000200(<8 x i64> %a, <8 x i64> %b) {
 define <8 x i64> @shuffle_v8i64_00003000(<8 x i64> %a, <8 x i64> %b) {
 ; ALL-LABEL: shuffle_v8i64_00003000:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermq {{.*#+}} ymm1 = ymm0[0,0,0,0]
+; ALL-NEXT:    vpbroadcastq %xmm0, %ymm1
 ; ALL-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[3,0,0,0]
 ; ALL-NEXT:    vinserti64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
@@ -778,10 +775,9 @@ define <8 x i64> @shuffle_v8i64_00040000(<8 x i64> %a, <8 x i64> %b) {
 ; ALL-LABEL: shuffle_v8i64_00040000:
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; ALL-NEXT:    vpermq {{.*#+}} ymm1 = ymm1[0,1,2,0]
-; ALL-NEXT:    vpermq {{.*#+}} ymm2 = ymm0[0,0,0,3]
-; ALL-NEXT:    vpblendd {{.*#+}} ymm1 = ymm2[0,1,2,3,4,5],ymm1[6,7]
-; ALL-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,0,0,0]
+; ALL-NEXT:    vpbroadcastq %xmm1, %ymm1
+; ALL-NEXT:    vpbroadcastq %xmm0, %ymm0
+; ALL-NEXT:    vpblendd {{.*#+}} ymm1 = ymm0[0,1,2,3,4,5],ymm1[6,7]
 ; ALL-NEXT:    vinserti64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x i64> %a, <8 x i64> %b, <8 x i32> <i32 0, i32 0, i32 0, i32 4, i32 0, i32 0, i32 0, i32 0>
@@ -793,9 +789,8 @@ define <8 x i64> @shuffle_v8i64_00500000(<8 x i64> %a, <8 x i64> %b) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
 ; ALL-NEXT:    vpermq {{.*#+}} ymm1 = ymm1[0,1,1,3]
-; ALL-NEXT:    vpermq {{.*#+}} ymm2 = ymm0[0,0,2,0]
-; ALL-NEXT:    vpblendd {{.*#+}} ymm1 = ymm2[0,1,2,3],ymm1[4,5],ymm2[6,7]
-; ALL-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,0,0,0]
+; ALL-NEXT:    vpbroadcastq %xmm0, %ymm0
+; ALL-NEXT:    vpblendd {{.*#+}} ymm1 = ymm0[0,1,2,3],ymm1[4,5],ymm0[6,7]
 ; ALL-NEXT:    vinserti64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x i64> %a, <8 x i64> %b, <8 x i32> <i32 0, i32 0, i32 5, i32 0, i32 0, i32 0, i32 0, i32 0>
@@ -807,9 +802,8 @@ define <8 x i64> @shuffle_v8i64_06000000(<8 x i64> %a, <8 x i64> %b) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
 ; ALL-NEXT:    vpermq {{.*#+}} ymm1 = ymm1[0,2,2,3]
-; ALL-NEXT:    vpermq {{.*#+}} ymm2 = ymm0[0,1,0,0]
-; ALL-NEXT:    vpblendd {{.*#+}} ymm1 = ymm2[0,1],ymm1[2,3],ymm2[4,5,6,7]
-; ALL-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,0,0,0]
+; ALL-NEXT:    vpbroadcastq %xmm0, %ymm0
+; ALL-NEXT:    vpblendd {{.*#+}} ymm1 = ymm0[0,1],ymm1[2,3],ymm0[4,5,6,7]
 ; ALL-NEXT:    vinserti64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x i64> %a, <8 x i64> %b, <8 x i32> <i32 0, i32 6, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
@@ -821,7 +815,7 @@ define <8 x i64> @shuffle_v8i64_70000000(<8 x i64> %a, <8 x i64> %b) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
 ; ALL-NEXT:    vpermq {{.*#+}} ymm1 = ymm1[3,1,2,3]
-; ALL-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,0,0,0]
+; ALL-NEXT:    vpbroadcastq %xmm0, %ymm0
 ; ALL-NEXT:    vpblendd {{.*#+}} ymm1 = ymm1[0,1],ymm0[2,3,4,5,6,7]
 ; ALL-NEXT:    vinserti64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
@@ -855,7 +849,7 @@ define <8 x i64> @shuffle_v8i64_00112233(<8 x i64> %a, <8 x i64> %b) {
 define <8 x i64> @shuffle_v8i64_00001111(<8 x i64> %a, <8 x i64> %b) {
 ; ALL-LABEL: shuffle_v8i64_00001111:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermq {{.*#+}} ymm1 = ymm0[0,0,0,0]
+; ALL-NEXT:    vpbroadcastq %xmm0, %ymm1
 ; ALL-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[1,1,1,1]
 ; ALL-NEXT:    vinserti64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
@@ -879,8 +873,8 @@ define <8 x i64> @shuffle_v8i64_81a3c5e7(<8 x i64> %a, <8 x i64> %b) {
 define <8 x i64> @shuffle_v8i64_08080808(<8 x i64> %a, <8 x i64> %b) {
 ; ALL-LABEL: shuffle_v8i64_08080808:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermq {{.*#+}} ymm1 = ymm1[0,0,2,0]
-; ALL-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,1,0,3]
+; ALL-NEXT:    vpbroadcastq %xmm1, %ymm1
+; ALL-NEXT:    vpbroadcastq %xmm0, %ymm0
 ; ALL-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3],ymm0[4,5],ymm1[6,7]
 ; ALL-NEXT:    vinserti64x4 $1, %ymm0, %zmm0, %zmm0
 ; ALL-NEXT:    retq
@@ -892,12 +886,12 @@ define <8 x i64> @shuffle_v8i64_08084c4c(<8 x i64> %a, <8 x i64> %b) {
 ; ALL-LABEL: shuffle_v8i64_08084c4c:
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vextracti64x4 $1, %zmm1, %ymm2
-; ALL-NEXT:    vpermq {{.*#+}} ymm2 = ymm2[0,0,2,0]
+; ALL-NEXT:    vpbroadcastq %xmm2, %ymm2
 ; ALL-NEXT:    vextracti64x4 $1, %zmm0, %ymm3
-; ALL-NEXT:    vpermq {{.*#+}} ymm3 = ymm3[0,1,0,3]
+; ALL-NEXT:    vpbroadcastq %xmm3, %ymm3
 ; ALL-NEXT:    vpblendd {{.*#+}} ymm2 = ymm3[0,1],ymm2[2,3],ymm3[4,5],ymm2[6,7]
-; ALL-NEXT:    vpermq {{.*#+}} ymm1 = ymm1[0,0,2,0]
-; ALL-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,1,0,3]
+; ALL-NEXT:    vpbroadcastq %xmm1, %ymm1
+; ALL-NEXT:    vpbroadcastq %xmm0, %ymm0
 ; ALL-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3],ymm0[4,5],ymm1[6,7]
 ; ALL-NEXT:    vinserti64x4 $1, %ymm2, %zmm0, %zmm0
 ; ALL-NEXT:    retq
@@ -910,9 +904,9 @@ define <8 x i64> @shuffle_v8i64_8823cc67(<8 x i64> %a, <8 x i64> %b) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vextracti64x4 $1, %zmm0, %ymm2
 ; ALL-NEXT:    vextracti64x4 $1, %zmm1, %ymm3
-; ALL-NEXT:    vpshufd {{.*#+}} ymm3 = ymm3[0,1,0,1,4,5,4,5]
+; ALL-NEXT:    vpbroadcastq %xmm3, %ymm3
 ; ALL-NEXT:    vpblendd {{.*#+}} ymm2 = ymm3[0,1,2,3],ymm2[4,5,6,7]
-; ALL-NEXT:    vpshufd {{.*#+}} ymm1 = ymm1[0,1,0,1,4,5,4,5]
+; ALL-NEXT:    vpbroadcastq %xmm1, %ymm1
 ; ALL-NEXT:    vpblendd {{.*#+}} ymm0 = ymm1[0,1,2,3],ymm0[4,5,6,7]
 ; ALL-NEXT:    vinserti64x4 $1, %ymm2, %zmm0, %zmm0
 ; ALL-NEXT:    retq
@@ -1241,7 +1235,7 @@ define <8 x i64> @shuffle_v8i64_10004444(<8 x i64> %a, <8 x i64> %b) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vpermq {{.*#+}} ymm1 = ymm0[1,0,0,0]
 ; ALL-NEXT:    vextracti64x4 $1, %zmm0, %ymm0
-; ALL-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,0,0,0]
+; ALL-NEXT:    vpbroadcastq %xmm0, %ymm0
 ; ALL-NEXT:    vinserti64x4 $1, %ymm0, %zmm1, %zmm0
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x i64> %a, <8 x i64> %b, <8 x i32> <i32 1, i32 0, i32 0, i32 0, i32 4, i32 4, i32 4, i32 4>
@@ -1366,7 +1360,7 @@ define <8 x i64> @shuffle_v8i64_002u6u44(<8 x i64> %a, <8 x i64> %b) {
 define <8 x i64> @shuffle_v8i64_00uu66uu(<8 x i64> %a, <8 x i64> %b) {
 ; ALL-LABEL: shuffle_v8i64_00uu66uu:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpshufd {{.*#+}} ymm1 = ymm0[0,1,0,1,4,5,4,5]
+; ALL-NEXT:    vpbroadcastq %xmm0, %ymm1
 ; ALL-NEXT:    vextracti64x4 $1, %zmm0, %ymm0
 ; ALL-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[2,2,2,3]
 ; ALL-NEXT:    vinserti64x4 $1, %ymm0, %zmm1, %zmm0
@@ -1427,8 +1421,8 @@ define <8 x i64> @shuffle_v8i64_6caa87e5(<8 x i64> %a, <8 x i64> %b) {
 ; ALL-NEXT:    vextracti64x4 $1, %zmm0, %ymm0
 ; ALL-NEXT:    vpermq {{.*#+}} ymm4 = ymm0[0,3,2,1]
 ; ALL-NEXT:    vpblendd {{.*#+}} ymm3 = ymm3[0,1],ymm4[2,3],ymm3[4,5],ymm4[6,7]
-; ALL-NEXT:    vpshufd {{.*#+}} ymm2 = ymm2[0,1,0,1,4,5,4,5]
 ; ALL-NEXT:    vpshufd {{.*#+}} ymm1 = ymm1[0,1,0,1,4,5,4,5]
+; ALL-NEXT:    vpbroadcastq %xmm2, %ymm2
 ; ALL-NEXT:    vpblendd {{.*#+}} ymm1 = ymm1[0,1],ymm2[2,3],ymm1[4,5,6,7]
 ; ALL-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[2,1,2,3]
 ; ALL-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3,4,5,6,7]
