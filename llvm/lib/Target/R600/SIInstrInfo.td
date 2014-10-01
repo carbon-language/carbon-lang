@@ -256,6 +256,30 @@ class SIMCInstr <string pseudo, int subtarget> {
 }
 
 //===----------------------------------------------------------------------===//
+// EXP classes
+//===----------------------------------------------------------------------===//
+
+class EXPCommon : InstSI<
+  (outs),
+  (ins i32imm:$en, i32imm:$tgt, i32imm:$compr, i32imm:$done, i32imm:$vm,
+       VReg_32:$src0, VReg_32:$src1, VReg_32:$src2, VReg_32:$src3),
+  "EXP $en, $tgt, $compr, $done, $vm, $src0, $src1, $src2, $src3",
+  [] > {
+
+  let EXP_CNT = 1;
+  let Uses = [EXEC];
+}
+
+multiclass EXP_m {
+
+  let isPseudo = 1 in {
+    def "" : EXPCommon, SIMCInstr <"EXP", SISubtarget.NONE> ;
+  }
+
+  def _si : EXPCommon, SIMCInstr <"EXP", SISubtarget.SI>, EXPe;
+}
+
+//===----------------------------------------------------------------------===//
 // Scalar classes
 //===----------------------------------------------------------------------===//
 
