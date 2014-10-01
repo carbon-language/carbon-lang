@@ -27,8 +27,11 @@ final class LitTestEngine extends ArcanistUnitTestEngine {
             ArcanistUnitTestResult::RESULT_POSTPONED => 'yellow'
         );
 
-        $s = "[";
+        $s = "\t[\033[0;30m";
+        $number = -1;
         $lastColor = "";
+        $lastResult = "";
+        $lastNumber = "";
         foreach ($results as $result) {
             $color = $colors[$result->getResult()];
             if (!$color && $lastColor)
@@ -37,14 +40,29 @@ final class LitTestEngine extends ArcanistUnitTestEngine {
                 $s .= "<bg:$color>";
             elseif ($lastColor !== $color)
                 $s .= "</bg><bg:$color>";
+            if ($number <= 0)
+              $number = 1;
+            elseif ($lastResult == $result->getResult())
+              $number += 1;
+            else
+              $number = 1;
+            if ($number > 1 && $number <= 10)
+              $s = substr($s, 0, -1);
+            elseif ($number > 10 && $number <= 100)
+              $s = substr($s, 0, -2);
+            elseif ($number > 100 && $number <= 1000)
+              $s = substr($s, 0, -3);
+            $s .= "$number";
+            $lastNumber = $number;
+            $lastResult = $result->getResult();
             $lastColor = $color;
-            $s .= ".";
         }
         if ($lastColor)
             $s .= "</bg>";
+        $s .= "\033[0m";
         $c = count($results);
         if ($numTests)
-            $s .= str_repeat(" ", $numTests - $c) . " $c/$numTests]";
+          $s .=  " $c/$numTests]";
         else
             $s .= " $c]";
         return phutil_console_format($s);
@@ -99,9 +117,9 @@ final class LitTestEngine extends ArcanistUnitTestEngine {
                     $numTests = (int)$matches[1];
                 }
                 if ($res == ArcanistUnitTestResult::RESULT_FAIL)
-                    print "\033[1A";
+                    print "\033[0A";
                 if ($res != ArcanistUnitTestResult::RESULT_SKIP && $res != ArcanistUnitTestResult::RESULT_PASS)
-                    print "\r\033[K\033[1A".$line.self::progress($results, $numTests);
+                    print "\r\033[K\033[0A".$line.self::progress($results, $numTests);
                 if ($res == ArcanistUnitTestResult::RESULT_UNSOUND)
                     continue;
                 $result = new ArcanistUnitTestResult();
@@ -112,7 +130,7 @@ final class LitTestEngine extends ArcanistUnitTestEngine {
                 $lastTime = $newTime;
                 $results[] = $result;
                 $dots .= ".";
-                print "\r\033[K\033[1A".self::progress($results, $numTests);
+                print "\r\033[K\033[0A".self::progress($results, $numTests);
             }
         }
         list ($out1,$out2) = $litFuture->read();
@@ -122,7 +140,15 @@ final class LitTestEngine extends ArcanistUnitTestEngine {
         }
         print "\n";
 
-        return $results;
+        $timeThreshold = 0.050;
+        $interestingTests = array();
+        foreach ($results as $result) {
+          if ($result->getResult() != "pass")
+            $interestingTests[] = $result;
+          if ($result->getDuration() > $timeThreshold)
+            $interestingTests[] = $result;
+        }
+        return $interestingTests;
     }
 
     /**
