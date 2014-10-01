@@ -47,7 +47,7 @@ namespace llvm {
     getOpndList(SmallVectorImpl<SDValue> &Ops,
                 std::deque< std::pair<unsigned, SDValue> > &RegsToPass,
                 bool IsPICCall, bool GlobalOrExternal, bool InternalLinkage,
-                CallLoweringInfo &CLI, SDValue Callee,
+                bool IsCallReloc, CallLoweringInfo &CLI, SDValue Callee,
                 SDValue Chain) const override;
 
     MachineBasicBlock *emitSel16(unsigned Opc, MachineInstr *MI,

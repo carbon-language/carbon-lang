@@ -25,3 +25,11 @@ entry:
   ret void
 }
 
+define void @no_lazy(void (i32)* %pf) {
+
+; CHECK-LABEL:  no_lazy
+; CHECK-NOT:    gp_disp
+
+  tail call void %pf(i32 1)
+  ret void
+}

@@ -10,16 +10,19 @@
 
 ; CHECK-LABEL: readLumaCoeff8x8_CABAC
 
-; The check for "addiu" instruction is added so that we can match the correct "b" instruction.
+; The check for first "addiu" instruction is added so that we can match the correct "b" instruction.
 ; CHECK:           addiu ${{[0-9]+}}, $zero, -1
 ; CHECK:           b $[[BB0:BB[0-9_]+]]
+; CHECK-NEXT:      addiu ${{[0-9]+}}, $zero, 0
 
-; Check that sll instruction that writes to $1 starts basic block.
-; CHECK:       {{BB[0-9_#]+}}: 
+; Check that at the start of a fallthrough block there is a instruction that writes to $1.
+; CHECK-NEXT:  {{BB[0-9_#]+}}: 
+; CHECK-NEXT:      lw      $[[R1:[0-9]+]], %got(assignSE2partition)($[[R2:[0-9]+]])
 ; CHECK-NEXT:      sll $1, $[[R0:[0-9]+]], 4
 
-; Check that identical sll instruction starts another basic block.
+; Check that identical instructions are at the start of a target block.
 ; CHECK:       [[BB0]]:
+; CHECK-NEXT:      lw      $[[R1]], %got(assignSE2partition)($[[R2]])
 ; CHECK-NEXT:      sll $1, $[[R0]], 4
 
 

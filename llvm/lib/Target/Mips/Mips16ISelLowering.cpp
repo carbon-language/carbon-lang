@@ -424,7 +424,8 @@ void Mips16TargetLowering::
 getOpndList(SmallVectorImpl<SDValue> &Ops,
             std::deque< std::pair<unsigned, SDValue> > &RegsToPass,
             bool IsPICCall, bool GlobalOrExternal, bool InternalLinkage,
-            CallLoweringInfo &CLI, SDValue Callee, SDValue Chain) const {
+            bool IsCallReloc, CallLoweringInfo &CLI, SDValue Callee,
+            SDValue Chain) const {
   SelectionDAG &DAG = CLI.DAG;
   MachineFunction &MF = DAG.getMachineFunction();
   MipsFunctionInfo *FuncInfo = MF.getInfo<MipsFunctionInfo>();
@@ -514,7 +515,8 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
   Ops.push_back(JumpTarget);
 
   MipsTargetLowering::getOpndList(Ops, RegsToPass, IsPICCall, GlobalOrExternal,
-                                  InternalLinkage, CLI, Callee, Chain);
+                                  InternalLinkage, IsCallReloc, CLI, Callee,
+                                  Chain);
 }
 
 MachineBasicBlock *Mips16TargetLowering::

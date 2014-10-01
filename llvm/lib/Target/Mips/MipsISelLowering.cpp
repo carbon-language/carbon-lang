@@ -2466,13 +2466,19 @@ void MipsTargetLowering::
 getOpndList(SmallVectorImpl<SDValue> &Ops,
             std::deque< std::pair<unsigned, SDValue> > &RegsToPass,
             bool IsPICCall, bool GlobalOrExternal, bool InternalLinkage,
-            CallLoweringInfo &CLI, SDValue Callee, SDValue Chain) const {
+            bool IsCallReloc, CallLoweringInfo &CLI, SDValue Callee,
+            SDValue Chain) const {
   // Insert node "GP copy globalreg" before call to function.
   //
   // R_MIPS_CALL* operators (emitted when non-internal functions are called
   // in PIC mode) allow symbols to be resolved via lazy binding.
   // The lazy binding stub requires GP to point to the GOT.
-  if (IsPICCall && !InternalLinkage) {
+  // Note that we don't need GP to point to the GOT for indirect calls
+  // (when R_MIPS_CALL* is not used for the call) because Mips linker generates
+  // lazy binding stub for a function only when R_MIPS_CALL* are the only relocs
+  // used for the function (that is, Mips linker doesn't generate lazy binding
+  // stub for a function whose address is taken in the program).
+  if (IsPICCall && !InternalLinkage && IsCallReloc) {
     unsigned GPReg = Subtarget.isABI_N64() ? Mips::GP_64 : Mips::GP;
     EVT Ty = Subtarget.isABI_N64() ? MVT::i64 : MVT::i32;
     RegsToPass.push_back(std::make_pair(GPReg, getGlobalReg(CLI.DAG, Ty)));
@@ -2667,7 +2673,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   bool IsPICCall =
       (Subtarget.isABI_N64() || IsPIC); // true if calls are translated to
                                          // jalr $25
-  bool GlobalOrExternal = false, InternalLinkage = false;
+  bool GlobalOrExternal = false, InternalLinkage = false, IsCallReloc = false;
   SDValue CalleeLo;
   EVT Ty = Callee.getValueType();
 
@@ -2679,13 +2685,16 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       if (InternalLinkage)
         Callee = getAddrLocal(G, Ty, DAG,
                               Subtarget.isABI_N32() || Subtarget.isABI_N64());
-      else if (LargeGOT)
+      else if (LargeGOT) {
         Callee = getAddrGlobalLargeGOT(G, Ty, DAG, MipsII::MO_CALL_HI16,
                                        MipsII::MO_CALL_LO16, Chain,
                                        FuncInfo->callPtrInfo(Val));
-      else
+        IsCallReloc = true;
+      } else {
         Callee = getAddrGlobal(G, Ty, DAG, MipsII::MO_GOT_CALL, Chain,
                                FuncInfo->callPtrInfo(Val));
+        IsCallReloc = true;
+      }
     } else
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), DL, getPointerTy(), 0,
                                           MipsII::MO_NO_FLAG);
@@ -2697,13 +2706,16 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     if (!Subtarget.isABI_N64() && !IsPIC) // !N64 && static
       Callee = DAG.getTargetExternalSymbol(Sym, getPointerTy(),
                                             MipsII::MO_NO_FLAG);
-    else if (LargeGOT)
+    else if (LargeGOT) {
       Callee = getAddrGlobalLargeGOT(S, Ty, DAG, MipsII::MO_CALL_HI16,
                                      MipsII::MO_CALL_LO16, Chain,
                                      FuncInfo->callPtrInfo(Sym));
-    else // N64 || PIC
+      IsCallReloc = true;
+    } else { // N64 || PIC
       Callee = getAddrGlobal(S, Ty, DAG, MipsII::MO_GOT_CALL, Chain,
                              FuncInfo->callPtrInfo(Sym));
+      IsCallReloc = true;
+    }
 
     GlobalOrExternal = true;
   }
@@ -2712,7 +2724,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
 
   getOpndList(Ops, RegsToPass, IsPICCall, GlobalOrExternal, InternalLinkage,
-              CLI, Callee, Chain);
+              IsCallReloc, CLI, Callee, Chain);
 
   if (IsTailCall)
     return DAG.getNode(MipsISD::TailCall, DL, MVT::Other, Ops);
