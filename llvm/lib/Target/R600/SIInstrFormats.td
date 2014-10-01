@@ -555,8 +555,8 @@ class MUBUF <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let UseNamedOperandTable = 1;
 }
 
-class MTBUF <bits<3> op, dag outs, dag ins, string asm, list<dag> pattern> :
-    InstSI<outs, ins, asm, pattern>, MTBUFe <op> {
+class MTBUF <dag outs, dag ins, string asm, list<dag> pattern> :
+    InstSI<outs, ins, asm, pattern> {
 
   let VM_CNT = 1;
   let EXP_CNT = 1;
