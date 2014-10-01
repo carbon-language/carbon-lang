@@ -12,7 +12,11 @@
 
 #include "Plugins/Process/POSIX/ProcessPOSIX.h"
 #include "RegisterContextPOSIXProcessMonitor_x86.h"
+#if defined(__FreeBSD__)
+#include "Plugins/Process/FreeBSD/ProcessMonitor.h"
+#elif defined(__linux__)
 #include "Plugins/Process/Linux/ProcessMonitor.h"
+#endif
 
 using namespace lldb_private;
 using namespace lldb;
