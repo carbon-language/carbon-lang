@@ -7,8 +7,8 @@
 // CHECK: define {{.*}}_block_invoke
 // CHECK: %[[BLOCK:.*]] = bitcast i8* %.block_descriptor to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg
 // CHECK-NEXT: store <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %[[BLOCK]], <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** %[[ALLOCA:.*]], align
-// CHECK-NEXT: call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** %[[ALLOCA]]}, metadata ![[SELF:[0-9]+]])
-// CHECK-NEXT: call void @llvm.dbg.declare(metadata !{%1** %d}, metadata ![[D:[0-9]+]])
+// CHECK-NEXT: call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** %[[ALLOCA]]}, metadata ![[SELF:[0-9]+]], metadata !{{.*}})
+// CHECK-NEXT: call void @llvm.dbg.declare(metadata !{%1** %d}, metadata ![[D:[0-9]+]], metadata !{{.*}})
 
 // rdar://problem/14386148
 // Test that we don't emit bogus line numbers for the helper functions.
