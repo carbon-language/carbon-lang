@@ -210,7 +210,8 @@ ARM_MATH_IMPORTS(ARM_MATH_DECL)
 #undef ARM_MATH_DECL
 #endif
 
-uint64_t getSymbolAddress(const std::string &Name) {
+uint64_t
+RTDyldMemoryManager::getSymbolAddressInProcess(const std::string &Name) {
   // This implementation assumes that the host program is the target.
   // Clients generating code for a remote target should implement their own
   // memory manager.

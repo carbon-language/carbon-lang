@@ -24,8 +24,6 @@ namespace llvm {
 class ExecutionEngine;
 class ObjectImage;
 
-uint64_t getSymbolAddress(const std::string &Name);
-
 // RuntimeDyld clients often want to handle the memory management of
 // what gets placed where. For JIT clients, this is the subset of
 // JITMemoryManager required for dynamic loading of binaries.
@@ -78,10 +76,14 @@ public:
 
   virtual void deregisterEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size);
 
+  /// This method returns the address of the specified function or variable in
+  /// the current process.
+  static uint64_t getSymbolAddressInProcess(const std::string &Name);
+
   /// This method returns the address of the specified function or variable.
   /// It is used to resolve symbols during module linking.
   virtual uint64_t getSymbolAddress(const std::string &Name) {
-    return llvm::getSymbolAddress(Name);
+    return getSymbolAddressInProcess(Name);
   }
 
   /// This method returns the address of the specified function. As such it is
