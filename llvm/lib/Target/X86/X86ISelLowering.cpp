@@ -7768,13 +7768,6 @@ static SDValue lowerVectorShuffleAsElementInsertion(
         return SDValue(); // Not inserting into a zero vector.
   }
 
-  // Step over any bitcasts on either input so we can scan the actual
-  // BUILD_VECTOR nodes.
-  while (V1.getOpcode() == ISD::BITCAST)
-    V1 = V1.getOperand(0);
-  while (V2.getOpcode() == ISD::BITCAST)
-    V2 = V2.getOperand(0);
-
   // Check for a single input from a SCALAR_TO_VECTOR node.
   // FIXME: All of this should be canonicalized into INSERT_VECTOR_ELT and
   // all the smarts here sunk into that routine. However, the current
