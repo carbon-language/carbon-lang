@@ -7741,12 +7741,34 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
 /// \brief Try to get a scalar value for a specific element of a vector.
 ///
 /// Looks through BUILD_VECTOR and SCALAR_TO_VECTOR nodes to find a scalar.
-static SDValue getScalarValueForVectorElement(SDValue V, int Idx) {
+static SDValue getScalarValueForVectorElement(SDValue V, int Idx,
+                                              SelectionDAG &DAG) {
+  MVT VT = V.getSimpleValueType();
+  MVT EltVT = VT.getVectorElementType();
+  while (V.getOpcode() == ISD::BITCAST)
+    V = V.getOperand(0);
+  // If the bitcasts shift the element size, we can't extract an equivalent
+  // element from it.
+  MVT NewVT = V.getSimpleValueType();
+  if (!NewVT.isVector() || NewVT.getScalarSizeInBits() != VT.getScalarSizeInBits())
+    return SDValue();
+
   if (V.getOpcode() == ISD::BUILD_VECTOR ||
       (Idx == 0 && V.getOpcode() == ISD::SCALAR_TO_VECTOR))
-    return V.getOperand(Idx);
+    return DAG.getNode(ISD::BITCAST, SDLoc(V), EltVT, V.getOperand(Idx));
 
   return SDValue();
+}
+
+/// \brief Helper to test for a load that can be folded with x86 shuffles.
+///
+/// This is particularly important because the set of instructions varies
+/// significantly based on whether the operand is a load or not.
+static bool isShuffleFoldableLoad(SDValue V) {
+  while (V.getOpcode() == ISD::BITCAST)
+    V = V.getOperand(0);
+
+  return ISD::isNON_EXTLoad(V.getNode());
 }
 
 /// \brief Try to lower insertion of a single element into a zero vector.
@@ -7784,7 +7806,8 @@ static SDValue lowerVectorShuffleAsElementInsertion(
   // all the smarts here sunk into that routine. However, the current
   // lowering of BUILD_VECTOR makes that nearly impossible until the old
   // vector shuffle lowering is dead.
-  SDValue V2S = getScalarValueForVectorElement(V2, Mask[V2Index] - Mask.size());
+  SDValue V2S =
+      getScalarValueForVectorElement(V2, Mask[V2Index] - Mask.size(), DAG);
   if (!V2S)
     return SDValue();
 
@@ -7859,7 +7882,7 @@ static SDValue lowerVectorShuffleAsBroadcast(MVT VT, SDLoc DL, SDValue V,
 
     // If the scalar isn't a load we can't broadcast from it in AVX1, only with
     // AVX2.
-    if (!Subtarget->hasAVX2() && !ISD::isNON_EXTLoad(V.getNode()))
+    if (!Subtarget->hasAVX2() && !isShuffleFoldableLoad(V))
       return SDValue();
   } else if (BroadcastIdx != 0 || !Subtarget->hasAVX2()) {
     // We can't broadcast from a vector register w/o AVX2, and we can only
@@ -7921,12 +7944,13 @@ static SDValue lowerV2F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // Try to use one of the special instruction patterns to handle two common
   // blend patterns if a zero-blend above didn't work.
   if (isShuffleEquivalent(Mask, 0, 3) || isShuffleEquivalent(Mask, 1, 3))
-    if (SDValue V1S = getScalarValueForVectorElement(V1, Mask[0]))
+    if (SDValue V1S = getScalarValueForVectorElement(V1, Mask[0], DAG))
       // We can either use a special instruction to load over the low double or
       // to move just the low double.
-      return DAG.getNode(ISD::isNON_EXTLoad(V1S.getNode()) ? X86ISD::MOVLPD
-                                                           : X86ISD::MOVSD,
-                         DL, MVT::v2f64, V2, V1S);
+      return DAG.getNode(
+          isShuffleFoldableLoad(V1S) ? X86ISD::MOVLPD : X86ISD::MOVSD,
+          DL, MVT::v2f64, V2,
+          DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, MVT::v2f64, V1S));
 
   if (Subtarget->hasSSE41())
     if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v2f64, V1, V2, Mask,

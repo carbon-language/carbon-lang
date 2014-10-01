@@ -718,22 +718,19 @@ define <2 x i64> @insert_reg_lo_v2i64(i64 %a, <2 x i64> %b) {
 ; SSE2-LABEL: insert_reg_lo_v2i64:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movd %rdi, %xmm1
-; SSE2-NEXT:    shufpd {{.*#+}} xmm1 = xmm1[0],xmm0[1]
-; SSE2-NEXT:    movapd %xmm1, %xmm0
+; SSE2-NEXT:    movsd %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: insert_reg_lo_v2i64:
 ; SSE3:       # BB#0:
 ; SSE3-NEXT:    movd %rdi, %xmm1
-; SSE3-NEXT:    shufpd {{.*#+}} xmm1 = xmm1[0],xmm0[1]
-; SSE3-NEXT:    movapd %xmm1, %xmm0
+; SSE3-NEXT:    movsd %xmm1, %xmm0
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: insert_reg_lo_v2i64:
 ; SSSE3:       # BB#0:
 ; SSSE3-NEXT:    movd %rdi, %xmm1
-; SSSE3-NEXT:    shufpd {{.*#+}} xmm1 = xmm1[0],xmm0[1]
-; SSSE3-NEXT:    movapd %xmm1, %xmm0
+; SSSE3-NEXT:    movsd %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: insert_reg_lo_v2i64:
@@ -762,23 +759,17 @@ define <2 x i64> @insert_reg_lo_v2i64(i64 %a, <2 x i64> %b) {
 define <2 x i64> @insert_mem_lo_v2i64(i64* %ptr, <2 x i64> %b) {
 ; SSE2-LABEL: insert_mem_lo_v2i64:
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    movq (%rdi), %xmm1
-; SSE2-NEXT:    shufpd {{.*#+}} xmm1 = xmm1[0],xmm0[1]
-; SSE2-NEXT:    movapd %xmm1, %xmm0
+; SSE2-NEXT:    movlpd (%rdi), %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: insert_mem_lo_v2i64:
 ; SSE3:       # BB#0:
-; SSE3-NEXT:    movq (%rdi), %xmm1
-; SSE3-NEXT:    shufpd {{.*#+}} xmm1 = xmm1[0],xmm0[1]
-; SSE3-NEXT:    movapd %xmm1, %xmm0
+; SSE3-NEXT:    movlpd (%rdi), %xmm0
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: insert_mem_lo_v2i64:
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    movq (%rdi), %xmm1
-; SSSE3-NEXT:    shufpd {{.*#+}} xmm1 = xmm1[0],xmm0[1]
-; SSSE3-NEXT:    movapd %xmm1, %xmm0
+; SSSE3-NEXT:    movlpd (%rdi), %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: insert_mem_lo_v2i64:
