@@ -1056,20 +1056,6 @@ DIExpression DIBuilder::createExpression(ArrayRef<int64_t> Addr) {
   return DIExpression(MDNode::get(VMContext, Elts));
 }
 
-/// createVariablePiece - Create a descriptor to describe one part
-/// of aggregate variable that is fragmented across multiple Values.
-DIExpression DIBuilder::createPieceExpression(unsigned OffsetInBytes,
-                                              unsigned SizeInBytes) {
-  assert(SizeInBytes > 0 && "zero-size piece");
-  Value *Addr[] = {
-      GetTagConstant(VMContext, DW_TAG_expression),
-      ConstantInt::get(Type::getInt64Ty(VMContext), dwarf::DW_OP_piece),
-      ConstantInt::get(Type::getInt64Ty(VMContext), OffsetInBytes),
-      ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBytes)};
-
-  return DIExpression(MDNode::get(VMContext, Addr));
-}
-
 /// createFunction - Create a new descriptor for the specified function.
 /// FIXME: this is added for dragonegg. Once we update dragonegg
 /// to call resolve function, this will be removed.

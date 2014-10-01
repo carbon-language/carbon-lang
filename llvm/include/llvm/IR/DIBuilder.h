@@ -505,14 +505,6 @@ namespace llvm {
     /// @param Addr        An array of complex address operations.
     DIExpression createExpression(ArrayRef<int64_t> Addr = None);
 
-    /// createPieceExpression - Create a descriptor to describe one part
-    /// of aggregate variable that is fragmented across multiple Values.
-    ///
-    /// @param OffsetInBytes Offset of the piece in bytes.
-    /// @param SizeInBytes   Size of the piece in bytes.
-    DIExpression createPieceExpression(unsigned OffsetInBytes,
-                                       unsigned SizeInBytes);
-
     /// createFunction - Create a new descriptor for the specified subprogram.
     /// See comments in DISubprogram for descriptions of these fields.
     /// @param Scope         Function scope.
