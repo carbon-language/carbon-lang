@@ -82,7 +82,8 @@ void AvoidCStyleCastsCheck::check(const MatchFinder::MatchResult &Result) {
   if (!Result.Context->getLangOpts().CPlusPlus)
     return;
 
-  // Leave type spelling exactly as it was.
+  // Leave type spelling exactly as it was (unlike
+  // getTypeAsWritten().getAsString() which would spell enum types 'enum X').
   StringRef DestTypeString = Lexer::getSourceText(
       CharSourceRange::getTokenRange(
           CastExpr->getLParenLoc().getLocWithOffset(1),
