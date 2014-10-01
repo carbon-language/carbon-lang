@@ -17,6 +17,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm-c/Core.h"
 using namespace llvm;
 
 /// CloneModule - Return an exact copy of the specified module.  This is not as
@@ -121,4 +122,12 @@ Module *llvm::CloneModule(const Module *M, ValueToValueMapTy &VMap) {
   }
 
   return New;
+}
+
+extern "C" {
+
+LLVMModuleRef LLVMCloneModule(LLVMModuleRef M) {
+  return wrap(CloneModule(unwrap(M)));
+}
+
 }

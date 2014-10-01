@@ -560,6 +560,10 @@ LLVMModuleRef LLVMModuleCreateWithName(const char *ModuleID);
  */
 LLVMModuleRef LLVMModuleCreateWithNameInContext(const char *ModuleID,
                                                 LLVMContextRef C);
+/**
+ * Return an exact copy of the specified module.
+ */
+LLVMModuleRef LLVMCloneModule(LLVMModuleRef M);
 
 /**
  * Destroy a module instance.
