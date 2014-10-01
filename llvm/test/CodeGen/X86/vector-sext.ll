@@ -3,6 +3,9 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=x86-64 -mattr=+sse4.1 | FileCheck %s --check-prefix=SSE --check-prefix=SSE41
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=x86-64 -mattr=+avx | FileCheck %s --check-prefix=AVX --check-prefix=AVX1
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=x86-64 -mattr=+avx2 | FileCheck %s --check-prefix=AVX --check-prefix=AVX2
+;
+; Just one 32-bit run to make sure we do reasonable things there.
+; RUN: llc < %s -mtriple=i686-apple-darwin -mcpu=i686 -mattr=+sse4.1 | FileCheck %s --check-prefix=X32-SSE41
 
 define <8 x i32> @sext_8i16_to_8i32(<8 x i16> %A) nounwind uwtable readnone ssp {
 ; SSE2-LABEL: sext_8i16_to_8i32:
@@ -52,6 +55,17 @@ define <8 x i32> @sext_8i16_to_8i32(<8 x i16> %A) nounwind uwtable readnone ssp 
 ; AVX2:       ## BB#0:
 ; AVX2-NEXT:    vpmovsxwd %xmm0, %ymm0
 ; AVX2-NEXT:    retq
+;
+; X32-SSE41-LABEL: sext_8i16_to_8i32:
+; X32-SSE41:       ## BB#0:
+; X32-SSE41-NEXT:    movdqa %xmm0, %xmm1
+; X32-SSE41-NEXT:    pmovzxwd %xmm1, %xmm0
+; X32-SSE41-NEXT:    punpckhwd {{.*#+}} xmm1 = xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
+; X32-SSE41-NEXT:    pslld $16, %xmm1
+; X32-SSE41-NEXT:    psrad $16, %xmm1
+; X32-SSE41-NEXT:    pslld $16, %xmm0
+; X32-SSE41-NEXT:    psrad $16, %xmm0
+; X32-SSE41-NEXT:    retl
 
   %B = sext <8 x i16> %A to <8 x i32>
   ret <8 x i32>%B
@@ -137,6 +151,25 @@ define <4 x i64> @sext_4i32_to_4i64(<4 x i32> %A) nounwind uwtable readnone ssp 
 ; AVX2:       ## BB#0:
 ; AVX2-NEXT:    vpmovsxdq %xmm0, %ymm0
 ; AVX2-NEXT:    retq
+;
+; X32-SSE41-LABEL: sext_4i32_to_4i64:
+; X32-SSE41:       ## BB#0:
+; X32-SSE41-NEXT:    pmovzxdq %xmm0, %xmm2
+; X32-SSE41-NEXT:    movd %xmm2, %eax
+; X32-SSE41-NEXT:    sarl $31, %eax
+; X32-SSE41-NEXT:    pextrd $2, %xmm2, %ecx
+; X32-SSE41-NEXT:    pinsrd $1, %eax, %xmm2
+; X32-SSE41-NEXT:    sarl $31, %ecx
+; X32-SSE41-NEXT:    pinsrd $3, %ecx, %xmm2
+; X32-SSE41-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[2,0,3,0]
+; X32-SSE41-NEXT:    movd %xmm1, %eax
+; X32-SSE41-NEXT:    sarl $31, %eax
+; X32-SSE41-NEXT:    pextrd $2, %xmm1, %ecx
+; X32-SSE41-NEXT:    pinsrd $1, %eax, %xmm1
+; X32-SSE41-NEXT:    sarl $31, %ecx
+; X32-SSE41-NEXT:    pinsrd $3, %ecx, %xmm1
+; X32-SSE41-NEXT:    movdqa %xmm2, %xmm0
+; X32-SSE41-NEXT:    retl
 
   %B = sext <4 x i32> %A to <4 x i64>
   ret <4 x i64>%B
@@ -166,6 +199,12 @@ define <4 x i32> @load_sext_test1(<4 x i16> *%ptr) {
 ; AVX:       ## BB#0:
 ; AVX-NEXT:    vpmovsxwd (%rdi), %xmm0
 ; AVX-NEXT:    retq
+;
+; X32-SSE41-LABEL: load_sext_test1:
+; X32-SSE41:       ## BB#0:
+; X32-SSE41-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE41-NEXT:    pmovsxwd (%eax), %xmm0
+; X32-SSE41-NEXT:    retl
 
  %X = load <4 x i16>* %ptr
  %Y = sext <4 x i16> %X to <4 x i32>
@@ -205,6 +244,12 @@ define <4 x i32> @load_sext_test2(<4 x i8> *%ptr) {
 ; AVX:       ## BB#0:
 ; AVX-NEXT:    vpmovsxbd (%rdi), %xmm0
 ; AVX-NEXT:    retq
+;
+; X32-SSE41-LABEL: load_sext_test2:
+; X32-SSE41:       ## BB#0:
+; X32-SSE41-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE41-NEXT:    pmovsxbd (%eax), %xmm0
+; X32-SSE41-NEXT:    retl
  %X = load <4 x i8>* %ptr
  %Y = sext <4 x i8> %X to <4 x i32>
  ret <4 x i32>%Y
@@ -238,6 +283,12 @@ define <2 x i64> @load_sext_test3(<2 x i8> *%ptr) {
 ; AVX:       ## BB#0:
 ; AVX-NEXT:    vpmovsxbq (%rdi), %xmm0
 ; AVX-NEXT:    retq
+;
+; X32-SSE41-LABEL: load_sext_test3:
+; X32-SSE41:       ## BB#0:
+; X32-SSE41-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE41-NEXT:    pmovsxbq (%eax), %xmm0
+; X32-SSE41-NEXT:    retl
  %X = load <2 x i8>* %ptr
  %Y = sext <2 x i8> %X to <2 x i64>
  ret <2 x i64>%Y
@@ -271,6 +322,12 @@ define <2 x i64> @load_sext_test4(<2 x i16> *%ptr) {
 ; AVX:       ## BB#0:
 ; AVX-NEXT:    vpmovsxwq (%rdi), %xmm0
 ; AVX-NEXT:    retq
+;
+; X32-SSE41-LABEL: load_sext_test4:
+; X32-SSE41:       ## BB#0:
+; X32-SSE41-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE41-NEXT:    pmovsxwq (%eax), %xmm0
+; X32-SSE41-NEXT:    retl
  %X = load <2 x i16>* %ptr
  %Y = sext <2 x i16> %X to <2 x i64>
  ret <2 x i64>%Y
@@ -304,6 +361,12 @@ define <2 x i64> @load_sext_test5(<2 x i32> *%ptr) {
 ; AVX:       ## BB#0:
 ; AVX-NEXT:    vpmovsxdq (%rdi), %xmm0
 ; AVX-NEXT:    retq
+;
+; X32-SSE41-LABEL: load_sext_test5:
+; X32-SSE41:       ## BB#0:
+; X32-SSE41-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE41-NEXT:    pmovsxdq (%eax), %xmm0
+; X32-SSE41-NEXT:    retl
  %X = load <2 x i32>* %ptr
  %Y = sext <2 x i32> %X to <2 x i64>
  ret <2 x i64>%Y
@@ -333,6 +396,12 @@ define <8 x i16> @load_sext_test6(<8 x i8> *%ptr) {
 ; AVX:       ## BB#0:
 ; AVX-NEXT:    vpmovsxbw (%rdi), %xmm0
 ; AVX-NEXT:    retq
+;
+; X32-SSE41-LABEL: load_sext_test6:
+; X32-SSE41:       ## BB#0:
+; X32-SSE41-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE41-NEXT:    pmovsxbw (%eax), %xmm0
+; X32-SSE41-NEXT:    retl
  %X = load <8 x i8>* %ptr
  %Y = sext <8 x i8> %X to <8 x i16>
  ret <8 x i16>%Y
@@ -428,6 +497,27 @@ define <4 x i64> @sext_4i1_to_4i64(<4 x i1> %mask) {
 ; AVX2-NEXT:    vpsrad $31, %xmm0, %xmm0
 ; AVX2-NEXT:    vpmovsxdq %xmm0, %ymm0
 ; AVX2-NEXT:    retq
+;
+; X32-SSE41-LABEL: sext_4i1_to_4i64:
+; X32-SSE41:       ## BB#0:
+; X32-SSE41-NEXT:    pslld $31, %xmm0
+; X32-SSE41-NEXT:    psrad $31, %xmm0
+; X32-SSE41-NEXT:    pmovzxdq %xmm0, %xmm2
+; X32-SSE41-NEXT:    movd %xmm2, %eax
+; X32-SSE41-NEXT:    sarl $31, %eax
+; X32-SSE41-NEXT:    pextrd $2, %xmm2, %ecx
+; X32-SSE41-NEXT:    pinsrd $1, %eax, %xmm2
+; X32-SSE41-NEXT:    sarl $31, %ecx
+; X32-SSE41-NEXT:    pinsrd $3, %ecx, %xmm2
+; X32-SSE41-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[2,0,3,0]
+; X32-SSE41-NEXT:    movd %xmm1, %eax
+; X32-SSE41-NEXT:    sarl $31, %eax
+; X32-SSE41-NEXT:    pextrd $2, %xmm1, %ecx
+; X32-SSE41-NEXT:    pinsrd $1, %eax, %xmm1
+; X32-SSE41-NEXT:    sarl $31, %ecx
+; X32-SSE41-NEXT:    pinsrd $3, %ecx, %xmm1
+; X32-SSE41-NEXT:    movdqa %xmm2, %xmm0
+; X32-SSE41-NEXT:    retl
   %extmask = sext <4 x i1> %mask to <4 x i64>
   ret <4 x i64> %extmask
 }
@@ -482,6 +572,18 @@ define <16 x i16> @sext_16i8_to_16i16(<16 x i8> *%ptr) {
 ; AVX2-NEXT:    vmovdqa (%rdi), %xmm0
 ; AVX2-NEXT:    vpmovsxbw %xmm0, %ymm0
 ; AVX2-NEXT:    retq
+;
+; X32-SSE41-LABEL: sext_16i8_to_16i16:
+; X32-SSE41:       ## BB#0:
+; X32-SSE41-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE41-NEXT:    movdqa (%eax), %xmm1
+; X32-SSE41-NEXT:    pmovzxbw %xmm1, %xmm0
+; X32-SSE41-NEXT:    punpckhbw {{.*#+}} xmm1 = xmm1[8],xmm0[8],xmm1[9],xmm0[9],xmm1[10],xmm0[10],xmm1[11],xmm0[11],xmm1[12],xmm0[12],xmm1[13],xmm0[13],xmm1[14],xmm0[14],xmm1[15],xmm0[15]
+; X32-SSE41-NEXT:    psllw $8, %xmm1
+; X32-SSE41-NEXT:    psraw $8, %xmm1
+; X32-SSE41-NEXT:    psllw $8, %xmm0
+; X32-SSE41-NEXT:    psraw $8, %xmm0
+; X32-SSE41-NEXT:    retl
  %X = load <16 x i8>* %ptr
  %Y = sext <16 x i8> %X to <16 x i16>
  ret <16 x i16> %Y
@@ -577,6 +679,27 @@ define <4 x i64> @sext_4i8_to_4i64(<4 x i8> %mask) {
 ; AVX2-NEXT:    vpsrad $24, %xmm0, %xmm0
 ; AVX2-NEXT:    vpmovsxdq %xmm0, %ymm0
 ; AVX2-NEXT:    retq
+;
+; X32-SSE41-LABEL: sext_4i8_to_4i64:
+; X32-SSE41:       ## BB#0:
+; X32-SSE41-NEXT:    pslld $24, %xmm0
+; X32-SSE41-NEXT:    psrad $24, %xmm0
+; X32-SSE41-NEXT:    pmovzxdq %xmm0, %xmm2
+; X32-SSE41-NEXT:    movd %xmm2, %eax
+; X32-SSE41-NEXT:    sarl $31, %eax
+; X32-SSE41-NEXT:    pextrd $2, %xmm2, %ecx
+; X32-SSE41-NEXT:    pinsrd $1, %eax, %xmm2
+; X32-SSE41-NEXT:    sarl $31, %ecx
+; X32-SSE41-NEXT:    pinsrd $3, %ecx, %xmm2
+; X32-SSE41-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[2,0,3,0]
+; X32-SSE41-NEXT:    movd %xmm1, %eax
+; X32-SSE41-NEXT:    sarl $31, %eax
+; X32-SSE41-NEXT:    pextrd $2, %xmm1, %ecx
+; X32-SSE41-NEXT:    pinsrd $1, %eax, %xmm1
+; X32-SSE41-NEXT:    sarl $31, %ecx
+; X32-SSE41-NEXT:    pinsrd $3, %ecx, %xmm1
+; X32-SSE41-NEXT:    movdqa %xmm2, %xmm0
+; X32-SSE41-NEXT:    retl
   %extmask = sext <4 x i8> %mask to <4 x i64>
   ret <4 x i64> %extmask
 }
@@ -672,6 +795,35 @@ define <4 x i64> @load_sext_4i8_to_4i64(<4 x i8> *%ptr) {
 ; AVX2:       ## BB#0:
 ; AVX2-NEXT:    vpmovsxbq (%rdi), %ymm0
 ; AVX2-NEXT:    retq
+;
+; X32-SSE41-LABEL: load_sext_4i8_to_4i64:
+; X32-SSE41:       ## BB#0:
+; X32-SSE41-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE41-NEXT:    movd (%eax), %xmm0
+; X32-SSE41-NEXT:    pmovzxbd %xmm0, %xmm1
+; X32-SSE41-NEXT:    pmovzxbq %xmm0, %xmm2
+; X32-SSE41-NEXT:    movd %xmm2, %eax
+; X32-SSE41-NEXT:    movsbl %al, %eax
+; X32-SSE41-NEXT:    movd %eax, %xmm0
+; X32-SSE41-NEXT:    sarl $31, %eax
+; X32-SSE41-NEXT:    pinsrd $1, %eax, %xmm0
+; X32-SSE41-NEXT:    pextrd $2, %xmm2, %eax
+; X32-SSE41-NEXT:    movsbl %al, %eax
+; X32-SSE41-NEXT:    pinsrd $2, %eax, %xmm0
+; X32-SSE41-NEXT:    sarl $31, %eax
+; X32-SSE41-NEXT:    pinsrd $3, %eax, %xmm0
+; X32-SSE41-NEXT:    pshufd {{.*#+}} xmm2 = xmm1[2,0,3,0]
+; X32-SSE41-NEXT:    movd %xmm2, %eax
+; X32-SSE41-NEXT:    movsbl %al, %eax
+; X32-SSE41-NEXT:    movd %eax, %xmm1
+; X32-SSE41-NEXT:    sarl $31, %eax
+; X32-SSE41-NEXT:    pinsrd $1, %eax, %xmm1
+; X32-SSE41-NEXT:    pextrd $2, %xmm2, %eax
+; X32-SSE41-NEXT:    movsbl %al, %eax
+; X32-SSE41-NEXT:    pinsrd $2, %eax, %xmm1
+; X32-SSE41-NEXT:    sarl $31, %eax
+; X32-SSE41-NEXT:    pinsrd $3, %eax, %xmm1
+; X32-SSE41-NEXT:    retl
  %X = load <4 x i8>* %ptr
  %Y = sext <4 x i8> %X to <4 x i64>
  ret <4 x i64>%Y
@@ -761,6 +913,35 @@ define <4 x i64> @load_sext_4i16_to_4i64(<4 x i16> *%ptr) {
 ; AVX2:       ## BB#0:
 ; AVX2-NEXT:    vpmovsxwq (%rdi), %ymm0
 ; AVX2-NEXT:    retq
+;
+; X32-SSE41-LABEL: load_sext_4i16_to_4i64:
+; X32-SSE41:       ## BB#0:
+; X32-SSE41-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-SSE41-NEXT:    movsd (%eax), %xmm0
+; X32-SSE41-NEXT:    pmovzxwd %xmm0, %xmm1
+; X32-SSE41-NEXT:    pmovzxwq %xmm0, %xmm2
+; X32-SSE41-NEXT:    movd %xmm2, %eax
+; X32-SSE41-NEXT:    cwtl
+; X32-SSE41-NEXT:    movd %eax, %xmm0
+; X32-SSE41-NEXT:    sarl $31, %eax
+; X32-SSE41-NEXT:    pinsrd $1, %eax, %xmm0
+; X32-SSE41-NEXT:    pextrd $2, %xmm2, %eax
+; X32-SSE41-NEXT:    cwtl
+; X32-SSE41-NEXT:    pinsrd $2, %eax, %xmm0
+; X32-SSE41-NEXT:    sarl $31, %eax
+; X32-SSE41-NEXT:    pinsrd $3, %eax, %xmm0
+; X32-SSE41-NEXT:    pshufd {{.*#+}} xmm2 = xmm1[2,0,3,0]
+; X32-SSE41-NEXT:    movd %xmm2, %eax
+; X32-SSE41-NEXT:    cwtl
+; X32-SSE41-NEXT:    movd %eax, %xmm1
+; X32-SSE41-NEXT:    sarl $31, %eax
+; X32-SSE41-NEXT:    pinsrd $1, %eax, %xmm1
+; X32-SSE41-NEXT:    pextrd $2, %xmm2, %eax
+; X32-SSE41-NEXT:    cwtl
+; X32-SSE41-NEXT:    pinsrd $2, %eax, %xmm1
+; X32-SSE41-NEXT:    sarl $31, %eax
+; X32-SSE41-NEXT:    pinsrd $3, %eax, %xmm1
+; X32-SSE41-NEXT:    retl
  %X = load <4 x i16>* %ptr
  %Y = sext <4 x i16> %X to <4 x i64>
  ret <4 x i64>%Y
