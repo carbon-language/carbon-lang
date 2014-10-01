@@ -626,35 +626,19 @@ static DecodeStatus DecodeMemExtend(llvm::MCInst &Inst, unsigned Imm,
 static DecodeStatus DecodeMRSSystemRegister(llvm::MCInst &Inst, unsigned Imm,
                                             uint64_t Address,
                                             const void *Decoder) {
-  const AArch64Disassembler *Dis =
-      static_cast<const AArch64Disassembler *>(Decoder);
-  const MCSubtargetInfo &STI = Dis->getSubtargetInfo();
-
-  Imm |= 0x8000;
   Inst.addOperand(MCOperand::CreateImm(Imm));
 
-  bool ValidNamed;
-  (void)AArch64SysReg::MRSMapper(STI.getFeatureBits())
-      .toString(Imm, ValidNamed);
-
-  return ValidNamed ? Success : Fail;
+  // Every system register in the encoding space is valid with the syntax
+  // S<op0>_<op1>_<Cn>_<Cm>_<op2>, so decoding system registers always succeeds.
+  return Success;
 }
 
 static DecodeStatus DecodeMSRSystemRegister(llvm::MCInst &Inst, unsigned Imm,
                                             uint64_t Address,
                                             const void *Decoder) {
-  const AArch64Disassembler *Dis =
-      static_cast<const AArch64Disassembler *>(Decoder);
-  const MCSubtargetInfo &STI = Dis->getSubtargetInfo();
-
-  Imm |= 0x8000;
   Inst.addOperand(MCOperand::CreateImm(Imm));
 
-  bool ValidNamed;
-  (void)AArch64SysReg::MSRMapper(STI.getFeatureBits())
-      .toString(Imm, ValidNamed);
-
-  return ValidNamed ? Success : Fail;
+  return Success;
 }
 
 static DecodeStatus DecodeFMOVLaneInstruction(llvm::MCInst &Inst, unsigned Insn,

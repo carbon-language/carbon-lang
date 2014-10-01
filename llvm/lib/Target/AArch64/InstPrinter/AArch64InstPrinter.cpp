@@ -1276,24 +1276,20 @@ void AArch64InstPrinter::printMRSSystemRegister(const MCInst *MI, unsigned OpNo,
                                                 raw_ostream &O) {
   unsigned Val = MI->getOperand(OpNo).getImm();
 
-  bool Valid;
   auto Mapper = AArch64SysReg::MRSMapper(getAvailableFeatures());
-  std::string Name = Mapper.toString(Val, Valid);
+  std::string Name = Mapper.toString(Val);
 
-  if (Valid)
-    O << StringRef(Name).upper();
+  O << StringRef(Name).upper();
 }
 
 void AArch64InstPrinter::printMSRSystemRegister(const MCInst *MI, unsigned OpNo,
                                                 raw_ostream &O) {
   unsigned Val = MI->getOperand(OpNo).getImm();
 
-  bool Valid;
   auto Mapper = AArch64SysReg::MSRMapper(getAvailableFeatures());
-  std::string Name = Mapper.toString(Val, Valid);
+  std::string Name = Mapper.toString(Val);
 
-  if (Valid)
-    O << StringRef(Name).upper();
+  O << StringRef(Name).upper();
 }
 
 void AArch64InstPrinter::printSystemPStateField(const MCInst *MI, unsigned OpNo,

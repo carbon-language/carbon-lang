@@ -3679,25 +3679,25 @@
 // CHECK-ERROR-NEXT:                 ^
 
 // Now check some invalid generic names
-        mrs xzr, s2_5_c11_c13_2
         mrs x12, s3_8_c11_c13_2
-        mrs x13, s3_3_c12_c13_2
         mrs x19, s3_2_c15_c16_2
         mrs x30, s3_2_c15_c1_8
-// CHECK-ERROR-NEXT: error: expected readable system register
-// CHECK-ERROR-NEXT:         mrs xzr, s2_5_c11_c13_2
-// CHECK-ERROR-NEXT:                  ^
+        mrs x4, s4_7_c15_c15_7
+        mrs x14, s3_7_c16_c15_7
 // CHECK-ERROR-NEXT: error: expected readable system register
 // CHECK-ERROR-NEXT:         mrs x12, s3_8_c11_c13_2
-// CHECK-ERROR-NEXT:                  ^
-// CHECK-ERROR-NEXT: error: expected readable system register
-// CHECK-ERROR-NEXT:         mrs x13, s3_3_c12_c13_2
 // CHECK-ERROR-NEXT:                  ^
 // CHECK-ERROR-NEXT: error: expected readable system register
 // CHECK-ERROR-NEXT:         mrs x19, s3_2_c15_c16_2
 // CHECK-ERROR-NEXT:                  ^
 // CHECK-ERROR-NEXT: error: expected readable system register
 // CHECK-ERROR-NEXT:         mrs x30, s3_2_c15_c1_8
+// CHECK-ERROR-NEXT:                  ^
+// CHECK-ERROR-NEXT: error: expected readable system register
+// CHECK-ERROR-NEXT:         mrs x4, s4_7_c15_c15_7
+// CHECK-ERROR-NEXT:                 ^
+// CHECK-ERROR-NEXT: error: expected readable system register
+// CHECK-ERROR-NEXT:         mrs x14, s3_7_c16_c15_7
 // CHECK-ERROR-NEXT:                  ^
 
 //------------------------------------------------------------------------------

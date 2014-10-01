@@ -135,6 +135,8 @@ foo:
   msr VTTBR_EL2, x3
   msr SPSel, x3
   msr S3_2_C11_C6_4, x1
+  msr  S0_0_C0_C0_0, x0
+  msr  S1_2_C3_C4_5, x2
 ; CHECK: msr ACTLR_EL1, x3              ; encoding: [0x23,0x10,0x18,0xd5]
 ; CHECK: msr ACTLR_EL2, x3              ; encoding: [0x23,0x10,0x1c,0xd5]
 ; CHECK: msr ACTLR_EL3, x3              ; encoding: [0x23,0x10,0x1e,0xd5]
@@ -213,6 +215,8 @@ foo:
 ; CHECK: msr VTTBR_EL2, x3              ; encoding: [0x03,0x21,0x1c,0xd5]
 ; CHECK: msr  SPSEL, x3                 ; encoding: [0x03,0x42,0x18,0xd5]
 ; CHECK: msr  S3_2_C11_C6_4, x1         ; encoding: [0x81,0xb6,0x1a,0xd5]
+; CHECK: msr  S0_0_C0_C0_0, x0          ; encoding: [0x00,0x00,0x00,0xd5]
+; CHECK: msr  S1_2_C3_C4_5, x2          ; encoding: [0xa2,0x34,0x0a,0xd5]
 
   mrs x3, ACTLR_EL1
   mrs x3, ACTLR_EL2
