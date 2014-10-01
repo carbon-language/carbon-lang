@@ -19,7 +19,7 @@
 ; CHECK: DW_TAG_subrange_type
 ; CHECK-NEXT:                   DW_AT_type [DW_FORM_ref4]  (cu + 0x{{[0-9a-f]*}} => {[[BASE2:0x[0-9a-f]*]]})
 ; CHECK-NEXT:                   DW_AT_lower_bound [DW_FORM_data8]       (0xfffffffffffffffd)
-; CHECK-NEXT:                   DW_AT_upper_bound [DW_FORM_data1]       (0x26)
+; CHECK-NEXT:                   DW_AT_count [DW_FORM_data1]       (0x2a)
 
 ; CHECK: [[BASE]]: DW_TAG_base_type
 ; CHECK: [[BASE2]]: DW_TAG_base_type

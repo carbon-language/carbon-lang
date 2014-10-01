@@ -25,9 +25,6 @@ entry:
 
 declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
-; An empty array should not have an AT_upper_bound attribute. But an array of 1
-; should.
-
 ; CHECK:      DW_TAG_base_type
 ; CHECK-NEXT: DW_AT_name [DW_FORM_strp]  ( .debug_str[{{.*}}] = "int")
 ; CHECK-NEXT: DW_AT_encoding [DW_FORM_data1]   (DW_ATE_signed)
@@ -46,7 +43,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]
 ; CHECK:      DW_TAG_subrange_type [{{.*}}]
 ; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]
-; CHECK-NEXT: DW_AT_upper_bound [DW_FORM_data1]  (0x00)
+; CHECK-NEXT: DW_AT_count [DW_FORM_data1]  (0x01)
 
 ; int bar::b[0]:
 ; CHECK: DW_TAG_structure_type
@@ -59,9 +56,9 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; int[0]:
 ; CHECK:      DW_TAG_array_type [{{.*}}] *
 ; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]
-; CHECK:      DW_TAG_subrange_type [11]
+; CHECK:      DW_TAG_subrange_type
 ; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]
-; CHECK-NOT:  DW_AT_upper_bound
+; CHECK:      DW_AT_count [DW_FORM_data1]  (0x00)
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!33}

@@ -1748,9 +1748,7 @@ void DwarfUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy) {
   // The LowerBound value defines the lower bounds which is typically zero for
   // C/C++. The Count value is the number of elements.  Values are 64 bit. If
   // Count == -1 then the array is unbounded and we do not emit
-  // DW_AT_lower_bound and DW_AT_upper_bound attributes. If LowerBound == 0 and
-  // Count == 0, then the array has zero elements in which case we do not emit
-  // an upper bound.
+  // DW_AT_lower_bound and DW_AT_count attributes.
   int64_t LowerBound = SR.getLo();
   int64_t DefaultLowerBound = getDefaultLowerBound();
   int64_t Count = SR.getCount();
@@ -1758,11 +1756,10 @@ void DwarfUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy) {
   if (DefaultLowerBound == -1 || LowerBound != DefaultLowerBound)
     addUInt(DW_Subrange, dwarf::DW_AT_lower_bound, None, LowerBound);
 
-  if (Count != -1 && Count != 0)
+  if (Count != -1)
     // FIXME: An unbounded array should reference the expression that defines
     // the array.
-    addUInt(DW_Subrange, dwarf::DW_AT_upper_bound, None,
-            LowerBound + Count - 1);
+    addUInt(DW_Subrange, dwarf::DW_AT_count, None, Count);
 }
 
 /// constructArrayTypeDIE - Construct array type DIE from DICompositeType.
