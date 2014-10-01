@@ -25,6 +25,60 @@
 #error this header is for x86 only
 #endif
 
+/* Responses identification request with %eax 0 */
+/* AMD:     "AuthenticAMD" */
+#define signature_AMD_ebx 0x68747541,
+#define signature_AMD_edx 0x69746e65,
+#define signature_AMD_ecx 0x444d4163,
+/* CENTAUR: "CentaurHauls" */
+#define signature_CENTAUR_ebx 0x746e6543
+#define signature_CENTAUR_edx 0x48727561
+#define signature_CENTAUR_ecx 0x736c7561
+/* CYRIX:   "CyrixInstead" */
+#define signature_CYRIX_ebx 0x69727943
+#define signature_CYRIX_edx 0x736e4978
+#define signature_CYRIX_ecx 0x64616574
+/* INTEL:   "GenuineIntel" */
+#define signature_INTEL_ebx 0x756e6547
+#define signature_INTEL_edx 0x49656e69
+#define signature_INTEL_ecx 0x6c65746e
+/* TM1:     "TransmetaCPU" */
+#define signature_TM1_ebx 0x6e617254
+#define signature_TM1_edx 0x74656d73
+#define signature_TM1_ecx 0x55504361
+/* TM2:     "GenuineTMx86" */
+#define signature_TM2_ebx 0x756e6547
+#define signature_TM2_edx 0x54656e69
+#define signature_TM2_ecx 0x3638784d
+/* NSC:     "Geode by NSC" */
+#define signature_NSC_ebx 0x646f6547
+#define signature_NSC_edx 0x43534e20
+#define signature_NSC_ecx 0x79622065
+/* NEXGEN:  "NexGenDriven" */
+#define signature_NEXGEN_ebx 0x4778654e
+#define signature_NEXGEN_edx 0x72446e65
+#define signature_NEXGEN_ecx 0x6e657669
+/* RISE:    "RiseRiseRise" */
+#define signature_RISE_ebx 0x65736952
+#define signature_RISE_edx 0x65736952
+#define signature_RISE_ecx 0x65736952
+/* SIS:     "SiS SiS SiS " */
+#define signature_SIS_ebx 0x20536953
+#define signature_SIS_edx 0x20536953
+#define signature_SIS_ecx 0x20536953
+/* UMC:     "UMC UMC UMC " */
+#define signature_UMC_ebx 0x20434d55
+#define signature_UMC_edx 0x20434d55
+#define signature_UMC_ecx 0x20434d55
+/* VIA:     "VIA VIA VIA " */
+#define signature_VIA_ebx 0x20414956
+#define signature_VIA_edx 0x20414956
+#define signature_VIA_ecx 0x20414956
+/* VORTEX:  "Vortex86 SoC" */
+#define signature_VORTEX_ebx 0x74726f56
+#define signature_VORTEX_edx 0x36387865
+#define signature_VORTEX_ecx 0x436f5320
+
 /* Features in %ecx for level 1 */
 #define bit_SSE3        0x00000001
 #define bit_PCLMULQDQ   0x00000002
