@@ -7,7 +7,7 @@
 ; If the branch decision is made based on a value in an SGPR then all
 ; threads will execute the same code paths, so we don't need to worry
 ; about instructions in different blocks overwriting each other.
-; SI-LABEL: @sgpr_if_else_salu_br
+; SI-LABEL: {{^}}sgpr_if_else_salu_br:
 ; SI: S_ADD
 ; SI: S_ADD
 
@@ -34,7 +34,7 @@ endif:
 ; The two S_ADD instructions should write to different registers, since
 ; different threads will take different control flow paths.
 
-; SI-LABEL: @sgpr_if_else_valu_br
+; SI-LABEL: {{^}}sgpr_if_else_valu_br:
 ; SI: S_ADD_I32 [[SGPR:s[0-9]+]]
 ; SI-NOT: S_ADD_I32 [[SGPR]]
 

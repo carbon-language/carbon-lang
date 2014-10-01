@@ -2,7 +2,7 @@
 
 declare i32 @llvm.AMDGPU.brev(i32) nounwind readnone
 
-; FUNC-LABEL: @s_brev_i32:
+; FUNC-LABEL: {{^}}s_brev_i32:
 ; SI: S_LOAD_DWORD [[VAL:s[0-9]+]],
 ; SI: S_BREV_B32 [[SRESULT:s[0-9]+]], [[VAL]]
 ; SI: V_MOV_B32_e32 [[VRESULT:v[0-9]+]], [[SRESULT]]
@@ -14,7 +14,7 @@ define void @s_brev_i32(i32 addrspace(1)* noalias %out, i32 %val) nounwind {
   ret void
 }
 
-; FUNC-LABEL: @v_brev_i32:
+; FUNC-LABEL: {{^}}v_brev_i32:
 ; SI: BUFFER_LOAD_DWORD [[VAL:v[0-9]+]],
 ; SI: V_BFREV_B32_e32 [[RESULT:v[0-9]+]], [[VAL]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]],

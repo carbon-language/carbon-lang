@@ -12,7 +12,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck %s
 
 ; r700+ supports 16 fetches in a clause
-; CHECK: @fetch_limits_r700
+; CHECK: {{^}}fetch_limits_r700:
 ; CHECK: Fetch clause
 ; CHECK: Fetch clause
 

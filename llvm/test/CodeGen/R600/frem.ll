@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=SI -enable-misched < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
-; FUNC-LABEL: @frem_f32:
+; FUNC-LABEL: {{^}}frem_f32:
 ; SI-DAG: BUFFER_LOAD_DWORD [[X:v[0-9]+]], {{.*$}}
 ; SI-DAG: BUFFER_LOAD_DWORD [[Y:v[0-9]+]], {{.*}} offset:0x10
 ; SI-DAG: V_CMP
@@ -21,7 +21,7 @@ define void @frem_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
    ret void
 }
 
-; FUNC-LABEL: @unsafe_frem_f32:
+; FUNC-LABEL: {{^}}unsafe_frem_f32:
 ; SI: BUFFER_LOAD_DWORD [[Y:v[0-9]+]], {{.*}} offset:0x10
 ; SI: BUFFER_LOAD_DWORD [[X:v[0-9]+]], {{.*}}
 ; SI: V_RCP_F32_e32 [[INVY:v[0-9]+]], [[Y]]
@@ -43,7 +43,7 @@ define void @unsafe_frem_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
 ; TODO: This should check something when f64 fdiv is implemented
 ; correctly
 
-; FUNC-LABEL: @frem_f64:
+; FUNC-LABEL: {{^}}frem_f64:
 ; SI: S_ENDPGM
 define void @frem_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                       double addrspace(1)* %in2) #0 {
@@ -54,7 +54,7 @@ define void @frem_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
    ret void
 }
 
-; FUNC-LABEL: @unsafe_frem_f64:
+; FUNC-LABEL: {{^}}unsafe_frem_f64:
 ; SI: V_RCP_F64_e32
 ; SI: V_MUL_F64
 ; SI: V_BFE_I32

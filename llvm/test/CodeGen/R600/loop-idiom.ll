@@ -10,8 +10,8 @@ target triple = "r600--"
 ; implementations of these for R600.
 
 ; FUNC: @no_memcpy
-; R600-NOT: @llvm.memcpy
-; SI-NOT: @llvm.memcpy
+; R600-NOT: {{^}}llvm.memcpy
+; SI-NOT: {{^}}llvm.memcpy
 define void @no_memcpy(i8 addrspace(3)* %in, i32 %size) {
 entry:
   %dest = alloca i8, i32 32
@@ -32,10 +32,10 @@ for.end:
 }
 
 ; FUNC: @no_memset
-; R600-NOT: @llvm.memset
-; R600-NOT: @memset_pattern16
-; SI-NOT: @llvm.memset
-; SI-NOT: @memset_pattern16
+; R600-NOT: {{^}}llvm.memset
+; R600-NOT: {{^}}memset_pattern16:
+; SI-NOT: {{^}}llvm.memset
+; SI-NOT: {{^}}memset_pattern16:
 define void @no_memset(i32 %size) {
 entry:
   %dest = alloca i8, i32 32

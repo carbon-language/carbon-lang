@@ -1,6 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
-; CHECK: @main1
+; CHECK: {{^}}main1:
 ; CHECK: MOV * T{{[0-9]+\.[XYZW], KC0}}
 define void @main1() {
 main_body:
@@ -48,7 +48,7 @@ main_body:
   ret void
 }
 
-; CHECK: @main2
+; CHECK: {{^}}main2:
 ; CHECK-NOT: MOV
 define void @main2() {
 main_body:

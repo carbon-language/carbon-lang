@@ -7,7 +7,7 @@
 ; ISD::UINT_TO_FP and ISD::SINT_TO_FP opcodes.
 
 
-; CHECK: @sint
+; CHECK: {{^}}sint:
 ; CHECK: INT_TO_FLT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @sint(<4 x float> addrspace(1)* %out, i32 addrspace(1)* %in) {
@@ -21,7 +21,7 @@ entry:
   ret void
 }
 
-;CHECK: @uint
+;CHECK: {{^}}uint:
 ;CHECK: UINT_TO_FLT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @uint(<4 x float> addrspace(1)* %out, i32 addrspace(1)* %in) {

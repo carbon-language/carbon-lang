@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck --check-prefix=SI --check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck --check-prefix=EG --check-prefix=FUNC %s
 
-; FUNC-LABEL: @test_udivrem
+; FUNC-LABEL: {{^}}test_udivrem:
 ; EG: RECIP_UINT
 ; EG-DAG: MULHI
 ; EG-DAG: MULLO_INT
@@ -58,7 +58,7 @@ define void @test_udivrem(i32 addrspace(1)* %out, i32 %x, i32 %y) {
   ret void
 }
 
-; FUNC-LABEL: @test_udivrem_v2
+; FUNC-LABEL: {{^}}test_udivrem_v2:
 ; EG-DAG: RECIP_UINT
 ; EG-DAG: MULHI
 ; EG-DAG: MULLO_INT
@@ -162,7 +162,7 @@ define void @test_udivrem_v2(<2 x i32> addrspace(1)* %out, <2 x i32> %x, <2 x i3
 }
 
 
-; FUNC-LABEL: @test_udivrem_v4
+; FUNC-LABEL: {{^}}test_udivrem_v4:
 ; EG-DAG: RECIP_UINT
 ; EG-DAG: MULHI
 ; EG-DAG: MULLO_INT

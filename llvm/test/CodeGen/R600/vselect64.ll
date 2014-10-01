@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck  %s
 ; XXX: Merge this test into vselect.ll once SI supports 64-bit select.
 
-; CHECK-LABEL: @test_select_v4i64
+; CHECK-LABEL: {{^}}test_select_v4i64:
 ; Make sure the vectors aren't being stored on the stack.  We know they are
 ; being stored on the stack if the shaders uses at leat 10 registers.
 ; CHECK-NOT: {{\**}} MOV T{{[0-9][0-9]}}.X

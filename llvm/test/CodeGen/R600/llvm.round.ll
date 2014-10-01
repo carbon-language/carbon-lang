@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck %s --check-prefix=R600 --check-prefix=FUNC
 
-; FUNC-LABEL: @f32
+; FUNC-LABEL: {{^}}f32:
 ; R600: FRACT {{.*}}, [[ARG:KC[0-9]\[[0-9]+\]\.[XYZW]]]
 ; R600-DAG: ADD  {{.*}}, -0.5
 ; R600-DAG: CEIL {{.*}} [[ARG]]

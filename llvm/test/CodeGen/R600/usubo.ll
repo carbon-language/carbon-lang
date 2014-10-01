@@ -4,7 +4,7 @@
 declare { i32, i1 } @llvm.usub.with.overflow.i32(i32, i32) nounwind readnone
 declare { i64, i1 } @llvm.usub.with.overflow.i64(i64, i64) nounwind readnone
 
-; FUNC-LABEL: @usubo_i64_zext
+; FUNC-LABEL: {{^}}usubo_i64_zext:
 define void @usubo_i64_zext(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
   %usub = call { i64, i1 } @llvm.usub.with.overflow.i64(i64 %a, i64 %b) nounwind
   %val = extractvalue { i64, i1 } %usub, 0
@@ -15,7 +15,7 @@ define void @usubo_i64_zext(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
   ret void
 }
 
-; FUNC-LABEL: @s_usubo_i32
+; FUNC-LABEL: {{^}}s_usubo_i32:
 ; SI: S_SUB_I32
 define void @s_usubo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32 %a, i32 %b) nounwind {
   %usub = call { i32, i1 } @llvm.usub.with.overflow.i32(i32 %a, i32 %b) nounwind
@@ -26,7 +26,7 @@ define void @s_usubo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32
   ret void
 }
 
-; FUNC-LABEL: @v_usubo_i32
+; FUNC-LABEL: {{^}}v_usubo_i32:
 ; SI: V_SUBREV_I32_e32
 define void @v_usubo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr) nounwind {
   %a = load i32 addrspace(1)* %aptr, align 4
@@ -39,7 +39,7 @@ define void @v_usubo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32
   ret void
 }
 
-; FUNC-LABEL: @s_usubo_i64
+; FUNC-LABEL: {{^}}s_usubo_i64:
 ; SI: S_SUB_U32
 ; SI: S_SUBB_U32
 define void @s_usubo_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %carryout, i64 %a, i64 %b) nounwind {
@@ -51,7 +51,7 @@ define void @s_usubo_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %carryout, i64
   ret void
 }
 
-; FUNC-LABEL: @v_usubo_i64
+; FUNC-LABEL: {{^}}v_usubo_i64:
 ; SI: V_SUB_I32
 ; SI: V_SUBB_U32
 define void @v_usubo_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %carryout, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) nounwind {

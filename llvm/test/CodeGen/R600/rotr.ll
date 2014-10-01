@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck --check-prefix=R600 -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
-; FUNC-LABEL: @rotr_i32:
+; FUNC-LABEL: {{^}}rotr_i32:
 ; R600: BIT_ALIGN_INT
 
 ; SI: V_ALIGNBIT_B32
@@ -15,7 +15,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @rotr_v2i32:
+; FUNC-LABEL: {{^}}rotr_v2i32:
 ; R600: BIT_ALIGN_INT
 ; R600: BIT_ALIGN_INT
 
@@ -31,7 +31,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @rotr_v4i32:
+; FUNC-LABEL: {{^}}rotr_v4i32:
 ; R600: BIT_ALIGN_INT
 ; R600: BIT_ALIGN_INT
 ; R600: BIT_ALIGN_INT

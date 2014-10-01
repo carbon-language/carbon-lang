@@ -17,7 +17,7 @@
 ; BUG64-NOT: Applying bug work-around
 ; BUG32-NOT: Applying bug work-around
 ; NOBUG-NOT: Applying bug work-around
-; FUNC-LABEL: @nested3
+; FUNC-LABEL: {{^}}nested3:
 define void @nested3(i32 addrspace(1)* %out, i32 %cond) {
 entry:
   %0 = icmp sgt i32 %cond, 0
@@ -50,7 +50,7 @@ end:
 ; BUG64: Applying bug work-around
 ; BUG32-NOT: Applying bug work-around
 ; NOBUG-NOT: Applying bug work-around
-; FUNC-LABEL: @nested4
+; FUNC-LABEL: {{^}}nested4:
 define void @nested4(i32 addrspace(1)* %out, i32 %cond) {
 entry:
   %0 = icmp sgt i32 %cond, 0
@@ -91,7 +91,7 @@ end:
 ; BUG64: Applying bug work-around
 ; BUG32-NOT: Applying bug work-around
 ; NOBUG-NOT: Applying bug work-around
-; FUNC-LABEL: @nested7
+; FUNC-LABEL: {{^}}nested7:
 define void @nested7(i32 addrspace(1)* %out, i32 %cond) {
 entry:
   %0 = icmp sgt i32 %cond, 0
@@ -156,7 +156,7 @@ end:
 ; BUG64: Applying bug work-around
 ; BUG32: Applying bug work-around
 ; NOBUG-NOT: Applying bug work-around
-; FUNC-LABEL: @nested8
+; FUNC-LABEL: {{^}}nested8:
 define void @nested8(i32 addrspace(1)* %out, i32 %cond) {
 entry:
   %0 = icmp sgt i32 %cond, 0

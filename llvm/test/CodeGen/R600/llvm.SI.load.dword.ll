@@ -3,7 +3,7 @@
 ; Example of a simple geometry shader loading vertex attributes from the
 ; ESGS ring buffer
 
-; CHECK-LABEL: @main
+; CHECK-LABEL: {{^}}main:
 ; CHECK: BUFFER_LOAD_DWORD
 ; CHECK: BUFFER_LOAD_DWORD
 ; CHECK: BUFFER_LOAD_DWORD

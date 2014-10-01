@@ -8,7 +8,7 @@ declare i32 @llvm.r600.read.tidig.x() #1
 ; seems the only things areLoadsFromSameBasePtr is accomplishing is
 ; ordering the loads so that the lower address loads come first.
 
-; FUNC-LABEL: @cluster_global_arg_loads
+; FUNC-LABEL: {{^}}cluster_global_arg_loads:
 ; SI-DAG: BUFFER_LOAD_DWORD [[REG0:v[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0{{$}}
 ; SI-DAG: BUFFER_LOAD_DWORD [[REG1:v[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0 offset:0x4
 ; SI: BUFFER_STORE_DWORD [[REG0]]
@@ -24,7 +24,7 @@ define void @cluster_global_arg_loads(i32 addrspace(1)* %out0, i32 addrspace(1)*
 
 ; Test for a crach in SIInstrInfo::areLoadsFromSameBasePtr() when checking
 ; an MUBUF load which does not have a vaddr operand.
-; FUNC-LABEL: @same_base_ptr_crash
+; FUNC-LABEL: {{^}}same_base_ptr_crash:
 ; SI: BUFFER_LOAD_DWORD
 ; SI: BUFFER_LOAD_DWORD
 define void @same_base_ptr_crash(i32 addrspace(1)* %out, i32 addrspace(1)* %in, i32 %offset) {

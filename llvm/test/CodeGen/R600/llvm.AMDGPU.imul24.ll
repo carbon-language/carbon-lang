@@ -4,7 +4,7 @@
 
 declare i32 @llvm.AMDGPU.imul24(i32, i32) nounwind readnone
 
-; FUNC-LABEL: @test_imul24
+; FUNC-LABEL: {{^}}test_imul24:
 ; SI: V_MUL_I32_I24
 ; CM: MUL_INT24
 ; R600: MULLO_INT

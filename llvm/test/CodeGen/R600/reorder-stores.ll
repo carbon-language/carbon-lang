@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=SI %s
 
-; SI-LABEL: @no_reorder_v2f64_global_load_store
+; SI-LABEL: {{^}}no_reorder_v2f64_global_load_store:
 ; SI: BUFFER_LOAD_DWORDX2
 ; SI: BUFFER_LOAD_DWORDX2
 ; SI: BUFFER_LOAD_DWORDX2
@@ -18,7 +18,7 @@ define void @no_reorder_v2f64_global_load_store(<2 x double> addrspace(1)* nocap
   ret void
 }
 
-; SI-LABEL: @no_reorder_scalarized_v2f64_local_load_store
+; SI-LABEL: {{^}}no_reorder_scalarized_v2f64_local_load_store:
 ; SI: DS_READ_B64
 ; SI: DS_READ_B64
 ; SI: DS_WRITE_B64
@@ -32,7 +32,7 @@ define void @no_reorder_scalarized_v2f64_local_load_store(<2 x double> addrspace
   ret void
 }
 
-; SI-LABEL: @no_reorder_split_v8i32_global_load_store
+; SI-LABEL: {{^}}no_reorder_split_v8i32_global_load_store:
 ; SI: BUFFER_LOAD_DWORD
 ; SI: BUFFER_LOAD_DWORD
 ; SI: BUFFER_LOAD_DWORD
@@ -82,7 +82,7 @@ define void @no_reorder_split_v8i32_global_load_store(<8 x i32> addrspace(1)* no
   ret void
 }
 
-; SI-LABEL: @no_reorder_extload_64
+; SI-LABEL: {{^}}no_reorder_extload_64:
 ; SI: DS_READ_B64
 ; SI: DS_READ_B64
 ; SI: DS_WRITE_B64

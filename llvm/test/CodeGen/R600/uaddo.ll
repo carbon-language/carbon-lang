@@ -4,7 +4,7 @@
 declare { i32, i1 } @llvm.uadd.with.overflow.i32(i32, i32) nounwind readnone
 declare { i64, i1 } @llvm.uadd.with.overflow.i64(i64, i64) nounwind readnone
 
-; FUNC-LABEL: @uaddo_i64_zext
+; FUNC-LABEL: {{^}}uaddo_i64_zext:
 ; SI: ADD
 ; SI: ADDC
 ; SI: ADDC
@@ -18,7 +18,7 @@ define void @uaddo_i64_zext(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
   ret void
 }
 
-; FUNC-LABEL: @s_uaddo_i32
+; FUNC-LABEL: {{^}}s_uaddo_i32:
 ; SI: S_ADD_I32
 define void @s_uaddo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32 %a, i32 %b) nounwind {
   %uadd = call { i32, i1 } @llvm.uadd.with.overflow.i32(i32 %a, i32 %b) nounwind
@@ -29,7 +29,7 @@ define void @s_uaddo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32
   ret void
 }
 
-; FUNC-LABEL: @v_uaddo_i32
+; FUNC-LABEL: {{^}}v_uaddo_i32:
 ; SI: V_ADD_I32
 define void @v_uaddo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr) nounwind {
   %a = load i32 addrspace(1)* %aptr, align 4
@@ -42,7 +42,7 @@ define void @v_uaddo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32
   ret void
 }
 
-; FUNC-LABEL: @s_uaddo_i64
+; FUNC-LABEL: {{^}}s_uaddo_i64:
 ; SI: S_ADD_U32
 ; SI: S_ADDC_U32
 define void @s_uaddo_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %carryout, i64 %a, i64 %b) nounwind {
@@ -54,7 +54,7 @@ define void @s_uaddo_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %carryout, i64
   ret void
 }
 
-; FUNC-LABEL: @v_uaddo_i64
+; FUNC-LABEL: {{^}}v_uaddo_i64:
 ; SI: V_ADD_I32
 ; SI: V_ADDC_U32
 define void @v_uaddo_i64(i64 addrspace(1)* %out, i1 addrspace(1)* %carryout, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) nounwind {

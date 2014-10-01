@@ -1,7 +1,7 @@
 ;XUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs| FileCheck --check-prefix=SI --check-prefix=FUNC %s
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG --check-prefix=FUNC %s
 
-;FUNC-LABEL: @test_udiv
+;FUNC-LABEL: {{^}}test_udiv:
 ;EG: RECIP_UINT
 ;EG: LSHL {{.*}}, 1,
 ;EG: BFE_UINT
@@ -41,7 +41,7 @@ define void @test_udiv(i64 addrspace(1)* %out, i64 %x, i64 %y) {
   ret void
 }
 
-;FUNC-LABEL: @test_urem
+;FUNC-LABEL: {{^}}test_urem:
 ;EG: RECIP_UINT
 ;EG: BFE_UINT
 ;EG: BFE_UINT

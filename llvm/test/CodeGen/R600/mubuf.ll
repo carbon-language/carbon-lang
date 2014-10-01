@@ -7,7 +7,7 @@ declare i32 @llvm.r600.read.tidig.x() readnone
 ;;;==========================================================================;;;
 
 ; MUBUF load with an immediate byte offset that fits into 12-bits
-; CHECK-LABEL: @mubuf_load0
+; CHECK-LABEL: {{^}}mubuf_load0:
 ; CHECK: BUFFER_LOAD_DWORD v{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0 offset:0x4 ; encoding: [0x04,0x00,0x30,0xe0
 define void @mubuf_load0(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:
@@ -18,7 +18,7 @@ entry:
 }
 
 ; MUBUF load with the largest possible immediate offset
-; CHECK-LABEL: @mubuf_load1
+; CHECK-LABEL: {{^}}mubuf_load1:
 ; CHECK: BUFFER_LOAD_UBYTE v{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0 offset:0xfff ; encoding: [0xff,0x0f,0x20,0xe0
 define void @mubuf_load1(i8 addrspace(1)* %out, i8 addrspace(1)* %in) {
 entry:
@@ -29,7 +29,7 @@ entry:
 }
 
 ; MUBUF load with an immediate byte offset that doesn't fit into 12-bits
-; CHECK-LABEL: @mubuf_load2
+; CHECK-LABEL: {{^}}mubuf_load2:
 ; CHECK: BUFFER_LOAD_DWORD v{{[0-9]}}, v[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], 0 addr64 ; encoding: [0x00,0x80,0x30,0xe0
 define void @mubuf_load2(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:
@@ -40,7 +40,7 @@ entry:
 }
 
 ; MUBUF load with a 12-bit immediate offset and a register offset
-; CHECK-LABEL: @mubuf_load3
+; CHECK-LABEL: {{^}}mubuf_load3:
 ; CHECK-NOT: ADD
 ; CHECK: BUFFER_LOAD_DWORD v{{[0-9]}}, v[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], 0 addr64 offset:0x4 ; encoding: [0x04,0x80,0x30,0xe0
 define void @mubuf_load3(i32 addrspace(1)* %out, i32 addrspace(1)* %in, i64 %offset) {
@@ -57,7 +57,7 @@ entry:
 ;;;==========================================================================;;;
 
 ; MUBUF store with an immediate byte offset that fits into 12-bits
-; CHECK-LABEL: @mubuf_store0
+; CHECK-LABEL: {{^}}mubuf_store0:
 ; CHECK: BUFFER_STORE_DWORD v{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0 offset:0x4 ; encoding: [0x04,0x00,0x70,0xe0
 define void @mubuf_store0(i32 addrspace(1)* %out) {
 entry:
@@ -67,7 +67,7 @@ entry:
 }
 
 ; MUBUF store with the largest possible immediate offset
-; CHECK-LABEL: @mubuf_store1
+; CHECK-LABEL: {{^}}mubuf_store1:
 ; CHECK: BUFFER_STORE_BYTE v{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0 offset:0xfff ; encoding: [0xff,0x0f,0x60,0xe0
 
 define void @mubuf_store1(i8 addrspace(1)* %out) {
@@ -78,7 +78,7 @@ entry:
 }
 
 ; MUBUF store with an immediate byte offset that doesn't fit into 12-bits
-; CHECK-LABEL: @mubuf_store2
+; CHECK-LABEL: {{^}}mubuf_store2:
 ; CHECK: BUFFER_STORE_DWORD v{{[0-9]}}, v[{{[0-9]+:[0-9]+}}], s[{{[0-9]:[0-9]}}], 0 addr64 ; encoding: [0x00,0x80,0x70,0xe0
 define void @mubuf_store2(i32 addrspace(1)* %out) {
 entry:
@@ -88,7 +88,7 @@ entry:
 }
 
 ; MUBUF store with a 12-bit immediate offset and a register offset
-; CHECK-LABEL: @mubuf_store3
+; CHECK-LABEL: {{^}}mubuf_store3:
 ; CHECK-NOT: ADD
 ; CHECK: BUFFER_STORE_DWORD v{{[0-9]}}, v[{{[0-9]:[0-9]}}], s[{{[0-9]:[0-9]}}], 0 addr64 offset:0x4 ; encoding: [0x04,0x80,0x70,0xe0
 define void @mubuf_store3(i32 addrspace(1)* %out, i64 %offset) {
@@ -99,14 +99,14 @@ entry:
   ret void
 }
 
-; CHECK-LABEL: @store_sgpr_ptr
+; CHECK-LABEL: {{^}}store_sgpr_ptr:
 ; CHECK: BUFFER_STORE_DWORD v{{[0-9]+}}, s{{\[[0-9]+:[0-9]+\]}}, 0
 define void @store_sgpr_ptr(i32 addrspace(1)* %out) #0 {
   store i32 99, i32 addrspace(1)* %out, align 4
   ret void
 }
 
-; CHECK-LABEL: @store_sgpr_ptr_offset
+; CHECK-LABEL: {{^}}store_sgpr_ptr_offset:
 ; CHECK: BUFFER_STORE_DWORD v{{[0-9]+}}, s{{\[[0-9]+:[0-9]+\]}}, 0 offset:0x28
 define void @store_sgpr_ptr_offset(i32 addrspace(1)* %out) #0 {
   %out.gep = getelementptr i32 addrspace(1)* %out, i32 10
@@ -114,7 +114,7 @@ define void @store_sgpr_ptr_offset(i32 addrspace(1)* %out) #0 {
   ret void
 }
 
-; CHECK-LABEL: @store_sgpr_ptr_large_offset
+; CHECK-LABEL: {{^}}store_sgpr_ptr_large_offset:
 ; CHECK: BUFFER_STORE_DWORD v{{[0-9]+}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64
 define void @store_sgpr_ptr_large_offset(i32 addrspace(1)* %out) #0 {
   %out.gep = getelementptr i32 addrspace(1)* %out, i32 32768
@@ -122,7 +122,7 @@ define void @store_sgpr_ptr_large_offset(i32 addrspace(1)* %out) #0 {
   ret void
 }
 
-; CHECK-LABEL: @store_vgpr_ptr
+; CHECK-LABEL: {{^}}store_vgpr_ptr:
 ; CHECK: BUFFER_STORE_DWORD v{{[0-9]+}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64
 define void @store_vgpr_ptr(i32 addrspace(1)* %out) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() readnone

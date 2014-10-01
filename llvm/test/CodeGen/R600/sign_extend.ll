@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
 
-; SI-LABEL: @s_sext_i1_to_i32:
+; SI-LABEL: {{^}}s_sext_i1_to_i32:
 ; SI: V_CNDMASK_B32_e64
 ; SI: S_ENDPGM
 define void @s_sext_i1_to_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
@@ -10,7 +10,7 @@ define void @s_sext_i1_to_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
   ret void
 }
 
-; SI-LABEL: @test_s_sext_i32_to_i64:
+; SI-LABEL: {{^}}test_s_sext_i32_to_i64:
 ; SI: S_ASHR_I32
 ; SI: S_ENDPG
 define void @test_s_sext_i32_to_i64(i64 addrspace(1)* %out, i32 %a, i32 %b, i32 %c) nounwind {
@@ -22,7 +22,7 @@ entry:
   ret void
 }
 
-; SI-LABEL: @s_sext_i1_to_i64:
+; SI-LABEL: {{^}}s_sext_i1_to_i64:
 ; SI: V_CNDMASK_B32_e64
 ; SI: V_CNDMASK_B32_e64
 ; SI: S_ENDPGM
@@ -33,7 +33,7 @@ define void @s_sext_i1_to_i64(i64 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
   ret void
 }
 
-; SI-LABEL: @s_sext_i32_to_i64:
+; SI-LABEL: {{^}}s_sext_i32_to_i64:
 ; SI: S_ASHR_I32
 ; SI: S_ENDPGM
 define void @s_sext_i32_to_i64(i64 addrspace(1)* %out, i32 %a) nounwind {
@@ -42,7 +42,7 @@ define void @s_sext_i32_to_i64(i64 addrspace(1)* %out, i32 %a) nounwind {
   ret void
 }
 
-; SI-LABEL: @v_sext_i32_to_i64:
+; SI-LABEL: {{^}}v_sext_i32_to_i64:
 ; SI: V_ASHR
 ; SI: S_ENDPGM
 define void @v_sext_i32_to_i64(i64 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
@@ -52,7 +52,7 @@ define void @v_sext_i32_to_i64(i64 addrspace(1)* %out, i32 addrspace(1)* %in) no
   ret void
 }
 
-; SI-LABEL: @s_sext_i16_to_i64:
+; SI-LABEL: {{^}}s_sext_i16_to_i64:
 ; SI: S_ENDPGM
 define void @s_sext_i16_to_i64(i64 addrspace(1)* %out, i16 %a) nounwind {
   %sext = sext i16 %a to i64

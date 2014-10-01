@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck -check-prefix=SI %s
 
-; SI-LABEL: @vector_umax
+; SI-LABEL: {{^}}vector_umax:
 ; SI: V_MAX_U32_e32
 define void @vector_umax(i32 %p0, i32 %p1, i32 addrspace(1)* %in) #0 {
 main_body:
@@ -11,7 +11,7 @@ main_body:
   ret void
 }
 
-; SI-LABEL: @scalar_umax
+; SI-LABEL: {{^}}scalar_umax:
 ; SI: S_MAX_U32
 define void @scalar_umax(i32 %p0, i32 %p1) #0 {
 entry:
@@ -21,7 +21,7 @@ entry:
   ret void
 }
 
-; SI-LABEL: @trunc_zext_umax
+; SI-LABEL: {{^}}trunc_zext_umax:
 ; SI: BUFFER_LOAD_UBYTE [[VREG:v[0-9]+]],
 ; SI: V_MAX_U32_e32 [[RESULT:v[0-9]+]], 0, [[VREG]]
 ; SI-NOT: AND

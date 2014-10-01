@@ -2,7 +2,7 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=R600 -check-prefix=FUNC %s
 
 
-; FUNC-LABEL: @fmul_f32
+; FUNC-LABEL: {{^}}fmul_f32:
 ; R600: MUL_IEEE {{\** *}}{{T[0-9]+\.[XYZW]}}, KC0[2].Z, KC0[2].W
 
 ; SI: V_MUL_F32
@@ -17,7 +17,7 @@ declare float @llvm.R600.load.input(i32) readnone
 
 declare void @llvm.AMDGPU.store.output(float, i32)
 
-; FUNC-LABEL: @fmul_v2f32
+; FUNC-LABEL: {{^}}fmul_v2f32:
 ; R600: MUL_IEEE {{\** *}}T{{[0-9]+\.[XYZW]}}
 ; R600: MUL_IEEE {{\** *}}T{{[0-9]+\.[XYZW]}}
 
@@ -30,7 +30,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @fmul_v4f32
+; FUNC-LABEL: {{^}}fmul_v4f32:
 ; R600: MUL_IEEE {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; R600: MUL_IEEE {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; R600: MUL_IEEE {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
@@ -49,7 +49,7 @@ define void @fmul_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)
   ret void
 }
 
-; FUNC-LABEL: @test_mul_2_k
+; FUNC-LABEL: {{^}}test_mul_2_k:
 ; SI: V_MUL_F32
 ; SI-NOT: V_MUL_F32
 ; SI: S_ENDPGM
@@ -60,7 +60,7 @@ define void @test_mul_2_k(float addrspace(1)* %out, float %x) #0 {
   ret void
 }
 
-; FUNC-LABEL: @test_mul_2_k_inv
+; FUNC-LABEL: {{^}}test_mul_2_k_inv:
 ; SI: V_MUL_F32
 ; SI-NOT: V_MUL_F32
 ; SI-NOT: V_MAD_F32

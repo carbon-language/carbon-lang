@@ -3,7 +3,7 @@
 ; FIXME: Check something here. Currently it seems fabs + fneg aren't
 ; into 2 modifiers, although theoretically that should work.
 
-; FUNC-LABEL: @fneg_fabs_fadd_f64
+; FUNC-LABEL: {{^}}fneg_fabs_fadd_f64:
 ; SI: V_MOV_B32_e32 [[IMMREG:v[0-9]+]], 0x7fffffff
 ; SI: V_AND_B32_e32 v[[FABS:[0-9]+]], {{s[0-9]+}}, [[IMMREG]]
 ; SI: V_ADD_F64 {{v\[[0-9]+:[0-9]+\]}}, {{v\[[0-9]+:[0-9]+\]}}, -v{{\[[0-9]+}}:[[FABS]]{{\]}}
@@ -25,7 +25,7 @@ define void @v_fneg_fabs_fadd_f64(double addrspace(1)* %out, double addrspace(1)
   ret void
 }
 
-; FUNC-LABEL: @fneg_fabs_fmul_f64
+; FUNC-LABEL: {{^}}fneg_fabs_fmul_f64:
 ; SI: V_MUL_F64 {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, -|{{v\[[0-9]+:[0-9]+\]}}|
 define void @fneg_fabs_fmul_f64(double addrspace(1)* %out, double %x, double %y) {
   %fabs = call double @llvm.fabs.f64(double %x)
@@ -35,7 +35,7 @@ define void @fneg_fabs_fmul_f64(double addrspace(1)* %out, double %x, double %y)
   ret void
 }
 
-; FUNC-LABEL: @fneg_fabs_free_f64
+; FUNC-LABEL: {{^}}fneg_fabs_free_f64:
 define void @fneg_fabs_free_f64(double addrspace(1)* %out, i64 %in) {
   %bc = bitcast i64 %in to double
   %fabs = call double @llvm.fabs.f64(double %bc)
@@ -44,7 +44,7 @@ define void @fneg_fabs_free_f64(double addrspace(1)* %out, i64 %in) {
   ret void
 }
 
-; FUNC-LABEL: @fneg_fabs_fn_free_f64
+; FUNC-LABEL: {{^}}fneg_fabs_fn_free_f64:
 ; SI: V_MOV_B32_e32 [[IMMREG:v[0-9]+]], 0x80000000
 ; SI: V_OR_B32_e32 v{{[0-9]+}}, s{{[0-9]+}}, [[IMMREG]]
 define void @fneg_fabs_fn_free_f64(double addrspace(1)* %out, i64 %in) {
@@ -55,7 +55,7 @@ define void @fneg_fabs_fn_free_f64(double addrspace(1)* %out, i64 %in) {
   ret void
 }
 
-; FUNC-LABEL: @fneg_fabs_f64
+; FUNC-LABEL: {{^}}fneg_fabs_f64:
 ; SI: S_LOAD_DWORDX2
 ; SI: S_LOAD_DWORDX2 s{{\[}}[[LO_X:[0-9]+]]:[[HI_X:[0-9]+]]{{\]}}
 ; SI: V_MOV_B32_e32 [[IMMREG:v[0-9]+]], 0x80000000
@@ -69,7 +69,7 @@ define void @fneg_fabs_f64(double addrspace(1)* %out, double %in) {
   ret void
 }
 
-; FUNC-LABEL: @fneg_fabs_v2f64
+; FUNC-LABEL: {{^}}fneg_fabs_v2f64:
 ; SI: V_MOV_B32_e32 [[IMMREG:v[0-9]+]], 0x80000000
 ; SI-NOT: 0x80000000
 ; SI: V_OR_B32_e32 v{{[0-9]+}}, s{{[0-9]+}}, [[IMMREG]]
@@ -81,7 +81,7 @@ define void @fneg_fabs_v2f64(<2 x double> addrspace(1)* %out, <2 x double> %in) 
   ret void
 }
 
-; FUNC-LABEL: @fneg_fabs_v4f64
+; FUNC-LABEL: {{^}}fneg_fabs_v4f64:
 ; SI: V_MOV_B32_e32 [[IMMREG:v[0-9]+]], 0x80000000
 ; SI-NOT: 0x80000000
 ; SI: V_OR_B32_e32 v{{[0-9]+}}, s{{[0-9]+}}, [[IMMREG]]

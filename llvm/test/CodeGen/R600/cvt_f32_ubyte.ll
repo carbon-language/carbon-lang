@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
 
-; SI-LABEL: @load_i8_to_f32:
+; SI-LABEL: {{^}}load_i8_to_f32:
 ; SI: BUFFER_LOAD_UBYTE [[LOADREG:v[0-9]+]],
 ; SI-NOT: BFE
 ; SI-NOT: LSHR
@@ -13,7 +13,7 @@ define void @load_i8_to_f32(float addrspace(1)* noalias %out, i8 addrspace(1)* n
   ret void
 }
 
-; SI-LABEL: @load_v2i8_to_v2f32:
+; SI-LABEL: {{^}}load_v2i8_to_v2f32:
 ; SI: BUFFER_LOAD_USHORT [[LOADREG:v[0-9]+]],
 ; SI-NOT: BFE
 ; SI-NOT: LSHR
@@ -28,7 +28,7 @@ define void @load_v2i8_to_v2f32(<2 x float> addrspace(1)* noalias %out, <2 x i8>
   ret void
 }
 
-; SI-LABEL: @load_v3i8_to_v3f32:
+; SI-LABEL: {{^}}load_v3i8_to_v3f32:
 ; SI-NOT: BFE
 ; SI-NOT: V_CVT_F32_UBYTE3_e32
 ; SI-DAG: V_CVT_F32_UBYTE2_e32
@@ -42,7 +42,7 @@ define void @load_v3i8_to_v3f32(<3 x float> addrspace(1)* noalias %out, <3 x i8>
   ret void
 }
 
-; SI-LABEL: @load_v4i8_to_v4f32:
+; SI-LABEL: {{^}}load_v4i8_to_v4f32:
 ; We can't use BUFFER_LOAD_DWORD here, because the load is byte aligned, and
 ; BUFFER_LOAD_DWORD requires dword alignment.
 ; SI: BUFFER_LOAD_USHORT
@@ -66,7 +66,7 @@ define void @load_v4i8_to_v4f32(<4 x float> addrspace(1)* noalias %out, <4 x i8>
 ; for each component, but computeKnownBits doesn't handle vectors very
 ; well.
 
-; SI-LABEL: @load_v4i8_to_v4f32_2_uses:
+; SI-LABEL: {{^}}load_v4i8_to_v4f32_2_uses:
 ; SI: BUFFER_LOAD_UBYTE
 ; SI: BUFFER_LOAD_UBYTE
 ; SI: BUFFER_LOAD_UBYTE
@@ -93,7 +93,7 @@ define void @load_v4i8_to_v4f32_2_uses(<4 x float> addrspace(1)* noalias %out, <
 }
 
 ; Make sure this doesn't crash.
-; SI-LABEL: @load_v7i8_to_v7f32:
+; SI-LABEL: {{^}}load_v7i8_to_v7f32:
 ; SI: S_ENDPGM
 define void @load_v7i8_to_v7f32(<7 x float> addrspace(1)* noalias %out, <7 x i8> addrspace(1)* noalias %in) nounwind {
   %load = load <7 x i8> addrspace(1)* %in, align 1
@@ -102,7 +102,7 @@ define void @load_v7i8_to_v7f32(<7 x float> addrspace(1)* noalias %out, <7 x i8>
   ret void
 }
 
-; SI-LABEL: @load_v8i8_to_v8f32:
+; SI-LABEL: {{^}}load_v8i8_to_v8f32:
 ; SI: BUFFER_LOAD_DWORDX2 v{{\[}}[[LOLOAD:[0-9]+]]:[[HILOAD:[0-9]+]]{{\]}},
 ; SI-NOT: BFE
 ; SI-NOT: LSHR
@@ -131,7 +131,7 @@ define void @load_v8i8_to_v8f32(<8 x float> addrspace(1)* noalias %out, <8 x i8>
   ret void
 }
 
-; SI-LABEL: @i8_zext_inreg_i32_to_f32:
+; SI-LABEL: {{^}}i8_zext_inreg_i32_to_f32:
 ; SI: BUFFER_LOAD_DWORD [[LOADREG:v[0-9]+]],
 ; SI: V_ADD_I32_e32 [[ADD:v[0-9]+]], 2, [[LOADREG]]
 ; SI-NEXT: V_CVT_F32_UBYTE0_e32 [[CONV:v[0-9]+]], [[ADD]]
@@ -145,7 +145,7 @@ define void @i8_zext_inreg_i32_to_f32(float addrspace(1)* noalias %out, i32 addr
   ret void
 }
 
-; SI-LABEL: @i8_zext_inreg_hi1_to_f32:
+; SI-LABEL: {{^}}i8_zext_inreg_hi1_to_f32:
 define void @i8_zext_inreg_hi1_to_f32(float addrspace(1)* noalias %out, i32 addrspace(1)* noalias %in) nounwind {
   %load = load i32 addrspace(1)* %in, align 4
   %inreg = and i32 %load, 65280

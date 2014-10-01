@@ -4,7 +4,7 @@
 
 @local_memory.local_mem = internal unnamed_addr addrspace(3) global [128 x i32] zeroinitializer, align 4
 
-; FUNC-LABEL: @local_memory
+; FUNC-LABEL: {{^}}local_memory:
 
 ; Check that the LDS size emitted correctly
 ; EG: .long 166120

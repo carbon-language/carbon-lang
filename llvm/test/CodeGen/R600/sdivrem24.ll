@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
-; FUNC-LABEL: @sdiv24_i8
+; FUNC-LABEL: {{^}}sdiv24_i8:
 ; SI: V_CVT_F32_I32
 ; SI: V_CVT_F32_I32
 ; SI: V_RCP_F32
@@ -20,7 +20,7 @@ define void @sdiv24_i8(i8 addrspace(1)* %out, i8 addrspace(1)* %in) {
   ret void
 }
 
-; FUNC-LABEL: @sdiv24_i16
+; FUNC-LABEL: {{^}}sdiv24_i16:
 ; SI: V_CVT_F32_I32
 ; SI: V_CVT_F32_I32
 ; SI: V_RCP_F32
@@ -39,7 +39,7 @@ define void @sdiv24_i16(i16 addrspace(1)* %out, i16 addrspace(1)* %in) {
   ret void
 }
 
-; FUNC-LABEL: @sdiv24_i32
+; FUNC-LABEL: {{^}}sdiv24_i32:
 ; SI: V_CVT_F32_I32
 ; SI: V_CVT_F32_I32
 ; SI: V_RCP_F32
@@ -62,7 +62,7 @@ define void @sdiv24_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
   ret void
 }
 
-; FUNC-LABEL: @sdiv25_i32
+; FUNC-LABEL: {{^}}sdiv25_i32:
 ; SI-NOT: V_CVT_F32_I32
 ; SI-NOT: V_RCP_F32
 
@@ -81,7 +81,7 @@ define void @sdiv25_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
   ret void
 }
 
-; FUNC-LABEL: @test_no_sdiv24_i32_1
+; FUNC-LABEL: {{^}}test_no_sdiv24_i32_1:
 ; SI-NOT: V_CVT_F32_I32
 ; SI-NOT: V_RCP_F32
 
@@ -100,7 +100,7 @@ define void @test_no_sdiv24_i32_1(i32 addrspace(1)* %out, i32 addrspace(1)* %in)
   ret void
 }
 
-; FUNC-LABEL: @test_no_sdiv24_i32_2
+; FUNC-LABEL: {{^}}test_no_sdiv24_i32_2:
 ; SI-NOT: V_CVT_F32_I32
 ; SI-NOT: V_RCP_F32
 
@@ -119,7 +119,7 @@ define void @test_no_sdiv24_i32_2(i32 addrspace(1)* %out, i32 addrspace(1)* %in)
   ret void
 }
 
-; FUNC-LABEL: @srem24_i8
+; FUNC-LABEL: {{^}}srem24_i8:
 ; SI: V_CVT_F32_I32
 ; SI: V_CVT_F32_I32
 ; SI: V_RCP_F32
@@ -138,7 +138,7 @@ define void @srem24_i8(i8 addrspace(1)* %out, i8 addrspace(1)* %in) {
   ret void
 }
 
-; FUNC-LABEL: @srem24_i16
+; FUNC-LABEL: {{^}}srem24_i16:
 ; SI: V_CVT_F32_I32
 ; SI: V_CVT_F32_I32
 ; SI: V_RCP_F32
@@ -157,7 +157,7 @@ define void @srem24_i16(i16 addrspace(1)* %out, i16 addrspace(1)* %in) {
   ret void
 }
 
-; FUNC-LABEL: @srem24_i32
+; FUNC-LABEL: {{^}}srem24_i32:
 ; SI: V_CVT_F32_I32
 ; SI: V_CVT_F32_I32
 ; SI: V_RCP_F32
@@ -180,7 +180,7 @@ define void @srem24_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
   ret void
 }
 
-; FUNC-LABEL: @srem25_i32
+; FUNC-LABEL: {{^}}srem25_i32:
 ; SI-NOT: V_CVT_F32_I32
 ; SI-NOT: V_RCP_F32
 
@@ -199,7 +199,7 @@ define void @srem25_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
   ret void
 }
 
-; FUNC-LABEL: @test_no_srem24_i32_1
+; FUNC-LABEL: {{^}}test_no_srem24_i32_1:
 ; SI-NOT: V_CVT_F32_I32
 ; SI-NOT: V_RCP_F32
 
@@ -218,7 +218,7 @@ define void @test_no_srem24_i32_1(i32 addrspace(1)* %out, i32 addrspace(1)* %in)
   ret void
 }
 
-; FUNC-LABEL: @test_no_srem24_i32_2
+; FUNC-LABEL: {{^}}test_no_srem24_i32_2:
 ; SI-NOT: V_CVT_F32_I32
 ; SI-NOT: V_RCP_F32
 

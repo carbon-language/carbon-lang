@@ -6,7 +6,7 @@
 ; (fabs (f32 bitcast (i32 a))) => (f32 bitcast (and (i32 a), 0x7FFFFFFF))
 ; unless isFabsFree returns true
 
-; FUNC-LABEL: @fabs_fn_free
+; FUNC-LABEL: {{^}}fabs_fn_free:
 ; R600-NOT: AND
 ; R600: |PV.{{[XYZW]}}|
 
@@ -19,7 +19,7 @@ define void @fabs_fn_free(float addrspace(1)* %out, i32 %in) {
   ret void
 }
 
-; FUNC-LABEL: @fabs_free
+; FUNC-LABEL: {{^}}fabs_free:
 ; R600-NOT: AND
 ; R600: |PV.{{[XYZW]}}|
 
@@ -32,7 +32,7 @@ define void @fabs_free(float addrspace(1)* %out, i32 %in) {
   ret void
 }
 
-; FUNC-LABEL: @fabs_f32
+; FUNC-LABEL: {{^}}fabs_f32:
 ; R600: |{{(PV|T[0-9])\.[XYZW]}}|
 
 ; SI: V_AND_B32
@@ -42,7 +42,7 @@ define void @fabs_f32(float addrspace(1)* %out, float %in) {
   ret void
 }
 
-; FUNC-LABEL: @fabs_v2f32
+; FUNC-LABEL: {{^}}fabs_v2f32:
 ; R600: |{{(PV|T[0-9])\.[XYZW]}}|
 ; R600: |{{(PV|T[0-9])\.[XYZW]}}|
 
@@ -54,7 +54,7 @@ define void @fabs_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %in) {
   ret void
 }
 
-; FUNC-LABEL: @fabs_v4
+; FUNC-LABEL: {{^}}fabs_v4f32:
 ; R600: |{{(PV|T[0-9])\.[XYZW]}}|
 ; R600: |{{(PV|T[0-9])\.[XYZW]}}|
 ; R600: |{{(PV|T[0-9])\.[XYZW]}}|
@@ -70,7 +70,7 @@ define void @fabs_v4f32(<4 x float> addrspace(1)* %out, <4 x float> %in) {
   ret void
 }
 
-; SI-LABEL: @fabs_fn_fold
+; SI-LABEL: {{^}}fabs_fn_fold:
 ; SI: S_LOAD_DWORD [[ABS_VALUE:s[0-9]+]], s[{{[0-9]+:[0-9]+}}], 0xb
 ; SI-NOT: AND
 ; SI: V_MUL_F32_e64 v{{[0-9]+}}, |[[ABS_VALUE]]|, v{{[0-9]+}}
@@ -81,7 +81,7 @@ define void @fabs_fn_fold(float addrspace(1)* %out, float %in0, float %in1) {
   ret void
 }
 
-; SI-LABEL: @fabs_fold
+; SI-LABEL: {{^}}fabs_fold:
 ; SI: S_LOAD_DWORD [[ABS_VALUE:s[0-9]+]], s[{{[0-9]+:[0-9]+}}], 0xb
 ; SI-NOT: AND
 ; SI: V_MUL_F32_e64 v{{[0-9]+}}, |[[ABS_VALUE]]|, v{{[0-9]+}}

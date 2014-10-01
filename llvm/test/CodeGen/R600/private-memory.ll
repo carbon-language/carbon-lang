@@ -4,7 +4,7 @@
 
 declare i32 @llvm.r600.read.tidig.x() nounwind readnone
 
-; FUNC-LABEL: @mova_same_clause
+; FUNC-LABEL: {{^}}mova_same_clause:
 
 ; R600: LDS_WRITE
 ; R600: LDS_WRITE
@@ -45,7 +45,7 @@ entry:
 ; XXX: This generated code has unnecessary MOVs, we should be able to optimize
 ; this.
 
-; FUNC-LABEL: @multiple_structs
+; FUNC-LABEL: {{^}}multiple_structs:
 ; R600-NOT: MOVA_INT
 ; SI-NOT: V_MOVREL
 ; SI-NOT: V_MOVREL
@@ -76,7 +76,7 @@ entry:
 ; loads and stores should be lowered to copies, so there shouldn't be any
 ; MOVA instructions.
 
-; FUNC-LABEL: @direct_loop
+; FUNC-LABEL: {{^}}direct_loop:
 ; R600-NOT: MOVA_INT
 ; SI-NOT: V_MOVREL
 
@@ -112,7 +112,7 @@ for.end:
   ret void
 }
 
-; FUNC-LABEL: @short_array
+; FUNC-LABEL: {{^}}short_array:
 
 ; R600: MOVA_INT
 
@@ -133,7 +133,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @char_array
+; FUNC-LABEL: {{^}}char_array:
 
 ; R600: MOVA_INT
 
@@ -156,7 +156,7 @@ entry:
 
 ; Make sure we don't overwrite workitem information with private memory
 
-; FUNC-LABEL: @work_item_info
+; FUNC-LABEL: {{^}}work_item_info:
 ; R600-NOT: MOV T0.X
 ; Additional check in case the move ends up in the last slot
 ; R600-NOT: MOV * TO.X
@@ -179,7 +179,7 @@ entry:
 
 ; Test that two stack objects are not stored in the same register
 ; The second stack object should be in T3.X
-; FUNC-LABEL: @no_overlap
+; FUNC-LABEL: {{^}}no_overlap:
 ; R600_CHECK: MOV
 ; R600_CHECK: [[CHAN:[XYZW]]]+
 ; R600-NOT: [[CHAN]]+

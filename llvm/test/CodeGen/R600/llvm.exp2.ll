@@ -2,7 +2,7 @@
 ;RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck %s --check-prefix=CM-CHECK --check-prefix=FUNC
 ;RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s --check-prefix=SI-CHECK --check-prefix=FUNC
 
-;FUNC-LABEL: @test
+;FUNC-LABEL: {{^}}test:
 ;EG-CHECK: EXP_IEEE
 ;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
 ;CM-CHECK-DAG: EXP_IEEE T{{[0-9]+\.[XYZW]}} (MASKED)
@@ -17,7 +17,7 @@ entry:
    ret void
 }
 
-;FUNC-LABEL: @testv2
+;FUNC-LABEL: {{^}}testv2:
 ;EG-CHECK: EXP_IEEE
 ;EG-CHECK: EXP_IEEE
 ; FIXME: We should be able to merge these packets together on Cayman so we
@@ -40,7 +40,7 @@ entry:
   ret void
 }
 
-;FUNC-LABEL: @testv4
+;FUNC-LABEL: {{^}}testv4:
 ;EG-CHECK: EXP_IEEE
 ;EG-CHECK: EXP_IEEE
 ;EG-CHECK: EXP_IEEE

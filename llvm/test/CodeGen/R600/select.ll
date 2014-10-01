@@ -7,7 +7,7 @@
 ; In order to avoid the select_cc optimization, this test case calculates the
 ; condition for the select in a separate basic block.
 
-; FUNC-LABEL: @select
+; FUNC-LABEL: {{^}}select:
 ; EG-DAG: MEM_RAT_CACHELESS STORE_RAW T{{[0-9]+}}.X
 ; EG-DAG: MEM_RAT_CACHELESS STORE_RAW T{{[0-9]+}}.X
 ; EG-DAG: MEM_RAT_CACHELESS STORE_RAW T{{[0-9]+}}.XY

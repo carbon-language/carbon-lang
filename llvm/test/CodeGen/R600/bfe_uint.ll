@@ -2,7 +2,7 @@
 
 ; XFAIL: *
 
-; CHECK: @bfe_def
+; CHECK: {{^}}bfe_def:
 ; CHECK: BFE_UINT
 define void @bfe_def(i32 addrspace(1)* %out, i32 %x) {
 entry:
@@ -17,7 +17,7 @@ entry:
 ; implmented with a LSHR instruction, which is better, because LSHR has less
 ; operands and requires less constants.
 
-; CHECK: @bfe_shift
+; CHECK: {{^}}bfe_shift:
 ; CHECK-NOT: BFE_UINT
 define void @bfe_shift(i32 addrspace(1)* %out, i32 %x) {
 entry:

@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=R600 -check-prefix=FUNC %s
 
-; FUNC-LABEL: @fneg_fabs_fadd_f32
+; FUNC-LABEL: {{^}}fneg_fabs_fadd_f32:
 ; SI-NOT: AND
 ; SI: V_SUB_F32_e64 {{v[0-9]+}}, {{s[0-9]+}}, |{{v[0-9]+}}|
 define void @fneg_fabs_fadd_f32(float addrspace(1)* %out, float %x, float %y) {
@@ -12,7 +12,7 @@ define void @fneg_fabs_fadd_f32(float addrspace(1)* %out, float %x, float %y) {
   ret void
 }
 
-; FUNC-LABEL: @fneg_fabs_fmul_f32
+; FUNC-LABEL: {{^}}fneg_fabs_fmul_f32:
 ; SI-NOT: AND
 ; SI: V_MUL_F32_e64 {{v[0-9]+}}, {{s[0-9]+}}, -|{{v[0-9]+}}|
 ; SI-NOT: AND
@@ -28,7 +28,7 @@ define void @fneg_fabs_fmul_f32(float addrspace(1)* %out, float %x, float %y) {
 ; (fabs (f32 bitcast (i32 a))) => (f32 bitcast (and (i32 a), 0x7FFFFFFF))
 ; unless isFabsFree returns true
 
-; FUNC-LABEL: @fneg_fabs_free_f32
+; FUNC-LABEL: {{^}}fneg_fabs_free_f32:
 ; R600-NOT: AND
 ; R600: |PV.{{[XYZW]}}|
 ; R600: -PV
@@ -43,7 +43,7 @@ define void @fneg_fabs_free_f32(float addrspace(1)* %out, i32 %in) {
   ret void
 }
 
-; FUNC-LABEL: @fneg_fabs_fn_free_f32
+; FUNC-LABEL: {{^}}fneg_fabs_fn_free_f32:
 ; R600-NOT: AND
 ; R600: |PV.{{[XYZW]}}|
 ; R600: -PV
@@ -58,7 +58,7 @@ define void @fneg_fabs_fn_free_f32(float addrspace(1)* %out, i32 %in) {
   ret void
 }
 
-; FUNC-LABEL: @fneg_fabs_f32
+; FUNC-LABEL: {{^}}fneg_fabs_f32:
 ; SI: V_MOV_B32_e32 [[IMMREG:v[0-9]+]], 0x80000000
 ; SI: V_OR_B32_e32 v{{[0-9]+}}, s{{[0-9]+}}, [[IMMREG]]
 define void @fneg_fabs_f32(float addrspace(1)* %out, float %in) {
@@ -68,7 +68,7 @@ define void @fneg_fabs_f32(float addrspace(1)* %out, float %in) {
   ret void
 }
 
-; FUNC-LABEL: @v_fneg_fabs_f32
+; FUNC-LABEL: {{^}}v_fneg_fabs_f32:
 ; SI: V_OR_B32_e32 v{{[0-9]+}}, 0x80000000, v{{[0-9]+}}
 define void @v_fneg_fabs_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
   %val = load float addrspace(1)* %in, align 4
@@ -78,7 +78,7 @@ define void @v_fneg_fabs_f32(float addrspace(1)* %out, float addrspace(1)* %in) 
   ret void
 }
 
-; FUNC-LABEL: @fneg_fabs_v2f32
+; FUNC-LABEL: {{^}}fneg_fabs_v2f32:
 ; R600: |{{(PV|T[0-9])\.[XYZW]}}|
 ; R600: -PV
 ; R600: |{{(PV|T[0-9])\.[XYZW]}}|
@@ -97,7 +97,7 @@ define void @fneg_fabs_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %in) {
 }
 
 ; FIXME: SGPR should be used directly for first src operand.
-; FUNC-LABEL: @fneg_fabs_v4f32
+; FUNC-LABEL: {{^}}fneg_fabs_v4f32:
 ; SI: V_MOV_B32_e32 [[IMMREG:v[0-9]+]], 0x80000000
 ; SI-NOT: 0x80000000
 ; SI: V_OR_B32_e32 v{{[0-9]+}}, v{{[0-9]+}}, [[IMMREG]]

@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
-; FUNC-LABEL: @s_rotl_i64:
+; FUNC-LABEL: {{^}}s_rotl_i64:
 ; SI-DAG: S_LSHL_B64
 ; SI-DAG: S_SUB_I32
 ; SI-DAG: S_LSHR_B64
@@ -16,7 +16,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @v_rotl_i64:
+; FUNC-LABEL: {{^}}v_rotl_i64:
 ; SI-DAG: V_LSHL_B64
 ; SI-DAG: V_SUB_I32
 ; SI: V_LSHR_B64

@@ -1,6 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
-;CHECK-LABEL: @image_load
+;CHECK-LABEL: {{^}}image_load:
 ;CHECK: IMAGE_LOAD {{v\[[0-9]+:[0-9]+\]}}, 15, 0, 0, 0, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @image_load() #0 {
 main_body:
@@ -13,7 +13,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @image_load_mip
+;CHECK-LABEL: {{^}}image_load_mip:
 ;CHECK: IMAGE_LOAD_MIP {{v\[[0-9]+:[0-9]+\]}}, 15, 0, 0, 0, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @image_load_mip() #0 {
 main_body:
@@ -26,7 +26,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @getresinfo
+;CHECK-LABEL: {{^}}getresinfo:
 ;CHECK: IMAGE_GET_RESINFO {{v\[[0-9]+:[0-9]+\]}}, 15, 0, 0, 0, 0, 0, 0, 0, {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @getresinfo() #0 {
 main_body:

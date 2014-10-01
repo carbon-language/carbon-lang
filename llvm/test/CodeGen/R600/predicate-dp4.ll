@@ -1,6 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=cayman
 
-; CHECK-LABEL: @main
+; CHECK-LABEL: {{^}}main:
 ; CHECK: PRED_SETE_INT * Pred,
 ; CHECK: DOT4 T{{[0-9]+}}.X, T0.X, T0.X, Pred_sel_one
 define void @main(<4 x float> inreg) #0 {

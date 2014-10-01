@@ -5,7 +5,7 @@ declare i32 @llvm.cttz.i32(i32, i1) nounwind readnone
 declare <2 x i32> @llvm.cttz.v2i32(<2 x i32>, i1) nounwind readnone
 declare <4 x i32> @llvm.cttz.v4i32(<4 x i32>, i1) nounwind readnone
 
-; FUNC-LABEL: @s_cttz_zero_undef_i32:
+; FUNC-LABEL: {{^}}s_cttz_zero_undef_i32:
 ; SI: S_LOAD_DWORD [[VAL:s[0-9]+]],
 ; SI: S_FF1_I32_B32 [[SRESULT:s[0-9]+]], [[VAL]]
 ; SI: V_MOV_B32_e32 [[VRESULT:v[0-9]+]], [[SRESULT]]
@@ -19,7 +19,7 @@ define void @s_cttz_zero_undef_i32(i32 addrspace(1)* noalias %out, i32 %val) nou
   ret void
 }
 
-; FUNC-LABEL: @v_cttz_zero_undef_i32:
+; FUNC-LABEL: {{^}}v_cttz_zero_undef_i32:
 ; SI: BUFFER_LOAD_DWORD [[VAL:v[0-9]+]],
 ; SI: V_FFBL_B32_e32 [[RESULT:v[0-9]+]], [[VAL]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
@@ -33,7 +33,7 @@ define void @v_cttz_zero_undef_i32(i32 addrspace(1)* noalias %out, i32 addrspace
   ret void
 }
 
-; FUNC-LABEL: @v_cttz_zero_undef_v2i32:
+; FUNC-LABEL: {{^}}v_cttz_zero_undef_v2i32:
 ; SI: BUFFER_LOAD_DWORDX2
 ; SI: V_FFBL_B32_e32
 ; SI: V_FFBL_B32_e32
@@ -49,7 +49,7 @@ define void @v_cttz_zero_undef_v2i32(<2 x i32> addrspace(1)* noalias %out, <2 x 
   ret void
 }
 
-; FUNC-LABEL: @v_cttz_zero_undef_v4i32:
+; FUNC-LABEL: {{^}}v_cttz_zero_undef_v4i32:
 ; SI: BUFFER_LOAD_DWORDX4
 ; SI: V_FFBL_B32_e32
 ; SI: V_FFBL_B32_e32

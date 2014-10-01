@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck -check-prefix=SI %s
 
-; SI-LABEL: @vector_imax
+; SI-LABEL: {{^}}vector_imax:
 ; SI: V_MAX_I32_e32
 define void @vector_imax(i32 %p0, i32 %p1, i32 addrspace(1)* %in) #0 {
 main_body:
@@ -11,7 +11,7 @@ main_body:
   ret void
 }
 
-; SI-LABEL: @scalar_imax
+; SI-LABEL: {{^}}scalar_imax:
 ; SI: S_MAX_I32
 define void @scalar_imax(i32 %p0, i32 %p1) #0 {
 entry:

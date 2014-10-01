@@ -8,7 +8,7 @@ declare <4 x float> @llvm.trunc.v4f32(<4 x float>) nounwind readnone
 declare <8 x float> @llvm.trunc.v8f32(<8 x float>) nounwind readnone
 declare <16 x float> @llvm.trunc.v16f32(<16 x float>) nounwind readnone
 
-; FUNC-LABEL: @ftrunc_f32:
+; FUNC-LABEL: {{^}}ftrunc_f32:
 ; EG: TRUNC
 ; SI: V_TRUNC_F32_e32
 define void @ftrunc_f32(float addrspace(1)* %out, float %x) {
@@ -17,7 +17,7 @@ define void @ftrunc_f32(float addrspace(1)* %out, float %x) {
   ret void
 }
 
-; FUNC-LABEL: @ftrunc_v2f32:
+; FUNC-LABEL: {{^}}ftrunc_v2f32:
 ; EG: TRUNC
 ; EG: TRUNC
 ; SI: V_TRUNC_F32_e32
@@ -28,7 +28,7 @@ define void @ftrunc_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %x) {
   ret void
 }
 
-; FIXME-FUNC-LABEL: @ftrunc_v3f32:
+; FIXME-FUNC-LABEL: {{^}}ftrunc_v3f32:
 ; FIXME-EG: TRUNC
 ; FIXME-EG: TRUNC
 ; FIXME-EG: TRUNC
@@ -41,7 +41,7 @@ define void @ftrunc_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %x) {
 ;   ret void
 ; }
 
-; FUNC-LABEL: @ftrunc_v4f32:
+; FUNC-LABEL: {{^}}ftrunc_v4f32:
 ; EG: TRUNC
 ; EG: TRUNC
 ; EG: TRUNC
@@ -56,7 +56,7 @@ define void @ftrunc_v4f32(<4 x float> addrspace(1)* %out, <4 x float> %x) {
   ret void
 }
 
-; FUNC-LABEL: @ftrunc_v8f32:
+; FUNC-LABEL: {{^}}ftrunc_v8f32:
 ; EG: TRUNC
 ; EG: TRUNC
 ; EG: TRUNC
@@ -79,7 +79,7 @@ define void @ftrunc_v8f32(<8 x float> addrspace(1)* %out, <8 x float> %x) {
   ret void
 }
 
-; FUNC-LABEL: @ftrunc_v16f32:
+; FUNC-LABEL: {{^}}ftrunc_v16f32:
 ; EG: TRUNC
 ; EG: TRUNC
 ; EG: TRUNC

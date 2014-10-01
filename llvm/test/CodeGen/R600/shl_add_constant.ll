@@ -4,7 +4,7 @@ declare i32 @llvm.r600.read.tidig.x() #1
 
 ; Test with inline immediate
 
-; FUNC-LABEL: @shl_2_add_9_i32
+; FUNC-LABEL: {{^}}shl_2_add_9_i32:
 ; SI: V_LSHLREV_B32_e32  [[REG:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: V_ADD_I32_e32 [[RESULT:v[0-9]+]], 36, [[REG]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]]
@@ -19,7 +19,7 @@ define void @shl_2_add_9_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) #0 {
   ret void
 }
 
-; FUNC-LABEL: @shl_2_add_9_i32_2_add_uses
+; FUNC-LABEL: {{^}}shl_2_add_9_i32_2_add_uses:
 ; SI-DAG: V_ADD_I32_e32 [[ADDREG:v[0-9]+]], 9, {{v[0-9]+}}
 ; SI-DAG: V_LSHLREV_B32_e32 [[SHLREG:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI-DAG: BUFFER_STORE_DWORD [[ADDREG]]
@@ -38,7 +38,7 @@ define void @shl_2_add_9_i32_2_add_uses(i32 addrspace(1)* %out0, i32 addrspace(1
 
 ; Test with add literal constant
 
-; FUNC-LABEL: @shl_2_add_999_i32
+; FUNC-LABEL: {{^}}shl_2_add_999_i32:
 ; SI: V_LSHLREV_B32_e32  [[REG:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: V_ADD_I32_e32 [[RESULT:v[0-9]+]], 0xf9c, [[REG]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]]
@@ -53,7 +53,7 @@ define void @shl_2_add_999_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) #0
   ret void
 }
 
-; FUNC-LABEL: @test_add_shl_add_constant
+; FUNC-LABEL: {{^}}test_add_shl_add_constant:
 ; SI-DAG: S_LOAD_DWORD [[X:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI-DAG: S_LOAD_DWORD [[Y:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc
 ; SI: S_LSHL_B32 [[SHL3:s[0-9]+]], [[X]], 3
@@ -69,7 +69,7 @@ define void @test_add_shl_add_constant(i32 addrspace(1)* %out, i32 %x, i32 %y) #
   ret void
 }
 
-; FUNC-LABEL: @test_add_shl_add_constant_inv
+; FUNC-LABEL: {{^}}test_add_shl_add_constant_inv:
 ; SI-DAG: S_LOAD_DWORD [[X:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI-DAG: S_LOAD_DWORD [[Y:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc
 ; SI: S_LSHL_B32 [[SHL3:s[0-9]+]], [[X]], 3

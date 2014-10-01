@@ -3,7 +3,7 @@
 ; These tests make sure the compiler is optimizing branches using predicates
 ; when it is legal to do so.
 
-; CHECK: @simple_if
+; CHECK: {{^}}simple_if:
 ; CHECK: PRED_SET{{[EGN][ET]*}}_INT * Pred,
 ; CHECK: LSHL * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}, 1, Pred_sel
 define void @simple_if(i32 addrspace(1)* %out, i32 %in) {
@@ -21,7 +21,7 @@ ENDIF:
   ret void
 }
 
-; CHECK: @simple_if_else
+; CHECK: {{^}}simple_if_else:
 ; CHECK: PRED_SET{{[EGN][ET]*}}_INT * Pred,
 ; CHECK: LSH{{[LR] \* T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}, 1, Pred_sel
 ; CHECK: LSH{{[LR] \* T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}, 1, Pred_sel
@@ -44,7 +44,7 @@ ENDIF:
   ret void
 }
 
-; CHECK: @nested_if
+; CHECK: {{^}}nested_if:
 ; CHECK: ALU_PUSH_BEFORE
 ; CHECK: JUMP
 ; CHECK: POP
@@ -71,7 +71,7 @@ ENDIF:
   ret void
 }
 
-; CHECK: @nested_if_else
+; CHECK: {{^}}nested_if_else:
 ; CHECK: ALU_PUSH_BEFORE
 ; CHECK: JUMP
 ; CHECK: POP

@@ -3,7 +3,7 @@
 
 declare i32 @llvm.AMDGPU.bfm(i32, i32) nounwind readnone
 
-; FUNC-LABEL: @bfm_arg_arg
+; FUNC-LABEL: {{^}}bfm_arg_arg:
 ; SI: V_BFM
 ; EG: BFM_INT
 define void @bfm_arg_arg(i32 addrspace(1)* %out, i32 %src0, i32 %src1) nounwind {
@@ -12,7 +12,7 @@ define void @bfm_arg_arg(i32 addrspace(1)* %out, i32 %src0, i32 %src1) nounwind 
   ret void
 }
 
-; FUNC-LABEL: @bfm_arg_imm
+; FUNC-LABEL: {{^}}bfm_arg_imm:
 ; SI: V_BFM
 ; EG: BFM_INT
 define void @bfm_arg_imm(i32 addrspace(1)* %out, i32 %src0) nounwind {
@@ -21,7 +21,7 @@ define void @bfm_arg_imm(i32 addrspace(1)* %out, i32 %src0) nounwind {
   ret void
 }
 
-; FUNC-LABEL: @bfm_imm_arg
+; FUNC-LABEL: {{^}}bfm_imm_arg:
 ; SI: V_BFM
 ; EG: BFM_INT
 define void @bfm_imm_arg(i32 addrspace(1)* %out, i32 %src1) nounwind {
@@ -30,7 +30,7 @@ define void @bfm_imm_arg(i32 addrspace(1)* %out, i32 %src1) nounwind {
   ret void
 }
 
-; FUNC-LABEL: @bfm_imm_imm
+; FUNC-LABEL: {{^}}bfm_imm_imm:
 ; SI: V_BFM
 ; EG: BFM_INT
 define void @bfm_imm_imm(i32 addrspace(1)* %out) nounwind {

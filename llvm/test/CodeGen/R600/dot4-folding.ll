@@ -2,7 +2,7 @@
 
 ; Exactly one constant vector can be folded into dot4, which means exactly
 ; 4 MOV instructions
-; CHECK: @main
+; CHECK: {{^}}main:
 ; CHECK: MOV
 ; CHECK: MOV
 ; CHECK: MOV

@@ -4,7 +4,7 @@
 
 
 define void @test(i32 addrspace(1)* %g, i8 addrspace(3)* %l, i32 %x) nounwind {
-; CHECK-LABEL: @test:
+; CHECK-LABEL: {{^}}test:
 
 entry:
   switch i32 %x, label %sw.default [

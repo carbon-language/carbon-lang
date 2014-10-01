@@ -5,7 +5,7 @@
 @local_memory_two_objects.local_mem0 = internal unnamed_addr addrspace(3) global [4 x i32] zeroinitializer, align 4
 @local_memory_two_objects.local_mem1 = internal unnamed_addr addrspace(3) global [4 x i32] zeroinitializer, align 4
 
-; EG-CHECK: @local_memory_two_objects
+; EG-CHECK: {{^}}local_memory_two_objects:
 
 ; Check that the LDS size emitted correctly
 ; EG-CHECK: .long 166120

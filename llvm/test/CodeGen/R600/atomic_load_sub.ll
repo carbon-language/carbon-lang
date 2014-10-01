@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=R600 -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
-; FUNC-LABEL: @atomic_sub_local
+; FUNC-LABEL: {{^}}atomic_sub_local:
 ; R600: LDS_SUB *
 ; SI: DS_SUB_U32
 define void @atomic_sub_local(i32 addrspace(3)* %local) {
@@ -9,7 +9,7 @@ define void @atomic_sub_local(i32 addrspace(3)* %local) {
    ret void
 }
 
-; FUNC-LABEL: @atomic_sub_local_const_offset
+; FUNC-LABEL: {{^}}atomic_sub_local_const_offset:
 ; R600: LDS_SUB *
 ; SI: DS_SUB_U32 v{{[0-9]+}}, v{{[0-9]+}}, 0x10
 define void @atomic_sub_local_const_offset(i32 addrspace(3)* %local) {
@@ -18,7 +18,7 @@ define void @atomic_sub_local_const_offset(i32 addrspace(3)* %local) {
   ret void
 }
 
-; FUNC-LABEL: @atomic_sub_ret_local
+; FUNC-LABEL: {{^}}atomic_sub_ret_local:
 ; R600: LDS_SUB_RET *
 ; SI: DS_SUB_RTN_U32
 define void @atomic_sub_ret_local(i32 addrspace(1)* %out, i32 addrspace(3)* %local) {
@@ -27,7 +27,7 @@ define void @atomic_sub_ret_local(i32 addrspace(1)* %out, i32 addrspace(3)* %loc
   ret void
 }
 
-; FUNC-LABEL: @atomic_sub_ret_local_const_offset
+; FUNC-LABEL: {{^}}atomic_sub_ret_local_const_offset:
 ; R600: LDS_SUB_RET *
 ; SI: DS_SUB_RTN_U32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, 0x14
 define void @atomic_sub_ret_local_const_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %local) {

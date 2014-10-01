@@ -6,7 +6,7 @@
 ; RUN: llc -march=r600 -mcpu=SI -mattr=-fp32-denormals < %s | FileCheck -check-prefix=DEFAULT -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=SI -mattr=+fp64-denormals < %s | FileCheck -check-prefix=DEFAULT -check-prefix=FUNC %s
 
-; FUNC-LABEL: @test_kernel
+; FUNC-LABEL: {{^}}test_kernel:
 
 ; DEFAULT: FloatMode: 192
 ; DEFAULT: IeeeMode: 0

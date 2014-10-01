@@ -10,7 +10,7 @@
 ; This was fixed by adding an additional pattern in R600Instructions.td to
 ; match this pattern with a CNDGE_INT.
 
-; FUNC-LABEL: @sdiv_i32
+; FUNC-LABEL: {{^}}sdiv_i32:
 ; EG: CF_END
 define void @sdiv_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
   %den_ptr = getelementptr i32 addrspace(1)* %in, i32 1
@@ -21,7 +21,7 @@ define void @sdiv_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
   ret void
 }
 
-; FUNC-LABEL: @sdiv_i32_4
+; FUNC-LABEL: {{^}}sdiv_i32_4:
 define void @sdiv_i32_4(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
   %num = load i32 addrspace(1) * %in
   %result = sdiv i32 %num, 4
@@ -32,7 +32,7 @@ define void @sdiv_i32_4(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 ; Multiply by a weird constant to make sure setIntDivIsCheap is
 ; working.
 
-; FUNC-LABEL: @slow_sdiv_i32_3435
+; FUNC-LABEL: {{^}}slow_sdiv_i32_3435:
 ; SI: BUFFER_LOAD_DWORD [[VAL:v[0-9]+]],
 ; SI: V_MOV_B32_e32 [[MAGIC:v[0-9]+]], 0x98a1930b
 ; SI: V_MUL_HI_I32 [[TMP:v[0-9]+]], [[VAL]], [[MAGIC]]

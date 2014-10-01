@@ -10,7 +10,7 @@ declare double @llvm.AMDGPU.rcp.f64(double) nounwind readnone
 
 declare float @llvm.sqrt.f32(float) nounwind readnone
 
-; FUNC-LABEL: @rcp_f32
+; FUNC-LABEL: {{^}}rcp_f32:
 ; SI: V_RCP_F32_e32
 ; EG: RECIP_IEEE
 define void @rcp_f32(float addrspace(1)* %out, float %src) nounwind {
@@ -20,7 +20,7 @@ define void @rcp_f32(float addrspace(1)* %out, float %src) nounwind {
 }
 
 ; FIXME: Evergreen only ever does unsafe fp math.
-; FUNC-LABEL: @rcp_pat_f32
+; FUNC-LABEL: {{^}}rcp_pat_f32:
 
 ; SI-SAFE: V_RCP_F32_e32
 ; XSI-SAFE-SPDENORM-NOT: V_RCP_F32_e32
@@ -33,7 +33,7 @@ define void @rcp_pat_f32(float addrspace(1)* %out, float %src) nounwind {
   ret void
 }
 
-; FUNC-LABEL: @rsq_rcp_pat_f32
+; FUNC-LABEL: {{^}}rsq_rcp_pat_f32:
 ; SI-UNSAFE: V_RSQ_F32_e32
 ; SI-SAFE: V_SQRT_F32_e32
 ; SI-SAFE: V_RCP_F32_e32

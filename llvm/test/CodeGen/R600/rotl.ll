@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck --check-prefix=R600 -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
-; FUNC-LABEL: @rotl_i32:
+; FUNC-LABEL: {{^}}rotl_i32:
 ; R600: SUB_INT {{\** T[0-9]+\.[XYZW]}}, literal.x
 ; R600-NEXT: 32
 ; R600: BIT_ALIGN_INT {{T[0-9]+\.[XYZW]}}, KC0[2].Z, KC0[2].Z, PV.{{[XYZW]}}
@@ -19,7 +19,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @rotl_v2i32
+; FUNC-LABEL: {{^}}rotl_v2i32:
 ; SI-DAG: S_SUB_I32
 ; SI-DAG: S_SUB_I32
 ; SI-DAG: V_ALIGNBIT_B32
@@ -35,7 +35,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @rotl_v4i32
+; FUNC-LABEL: {{^}}rotl_v4i32:
 ; SI-DAG: S_SUB_I32
 ; SI-DAG: V_ALIGNBIT_B32
 ; SI-DAG: S_SUB_I32

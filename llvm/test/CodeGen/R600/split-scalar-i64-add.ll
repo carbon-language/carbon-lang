@@ -8,7 +8,7 @@ declare i32 @llvm.r600.read.tidig.x() readnone
 ; set in vcc, which is undefined since the low scalar half add sets
 ; scc instead.
 
-; FUNC-LABEL: @imp_def_vcc_split_i64_add_0
+; FUNC-LABEL: {{^}}imp_def_vcc_split_i64_add_0:
 define void @imp_def_vcc_split_i64_add_0(i64 addrspace(1)* %out, i32 %val) {
   %vec.0 = insertelement <2 x i32> undef, i32 %val, i32 0
   %vec.1 = insertelement <2 x i32> %vec.0, i32 999999, i32 1
@@ -18,7 +18,7 @@ define void @imp_def_vcc_split_i64_add_0(i64 addrspace(1)* %out, i32 %val) {
   ret void
 }
 
-; FUNC-LABEL: @imp_def_vcc_split_i64_add_1
+; FUNC-LABEL: {{^}}imp_def_vcc_split_i64_add_1:
 define void @imp_def_vcc_split_i64_add_1(i64 addrspace(1)* %out, i32 %val0, i64 %val1) {
   %vec.0 = insertelement <2 x i32> undef, i32 %val0, i32 0
   %vec.1 = insertelement <2 x i32> %vec.0, i32 99999, i32 1

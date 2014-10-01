@@ -5,7 +5,7 @@
 ; scheduler is scheduling the RECIP_IEEE and MUL_IEEE instructions in separate
 ; instruction groups.
 
-; FUNC-LABEL: @fdiv_f32
+; FUNC-LABEL: {{^}}fdiv_f32:
 ; R600-DAG: RECIP_IEEE * T{{[0-9]+\.[XYZW]}}, KC0[3].Z
 ; R600-DAG: RECIP_IEEE * T{{[0-9]+\.[XYZW]}}, KC0[3].Y
 ; R600-DAG: MUL_IEEE {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[3].X, PS
@@ -22,7 +22,7 @@ entry:
 
 
 
-; FUNC-LABEL: @fdiv_v2f32
+; FUNC-LABEL: {{^}}fdiv_v2f32:
 ; R600-DAG: RECIP_IEEE * T{{[0-9]+\.[XYZW]}}, KC0[3].Z
 ; R600-DAG: RECIP_IEEE * T{{[0-9]+\.[XYZW]}}, KC0[3].Y
 ; R600-DAG: MUL_IEEE {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[3].X, PS
@@ -39,7 +39,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @fdiv_v4f32
+; FUNC-LABEL: {{^}}fdiv_v4f32:
 ; R600-DAG: RECIP_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; R600-DAG: RECIP_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; R600-DAG: RECIP_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}

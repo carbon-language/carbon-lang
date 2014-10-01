@@ -9,7 +9,7 @@ declare void @llvm.AMDGPU.barrier.local() nounwind noduplicate
 ; 64-bit pointer add. This should work since private pointers should
 ; be 32-bits.
 
-; SI-LABEL: @test_private_array_ptr_calc:
+; SI-LABEL: {{^}}test_private_array_ptr_calc:
 
 ; FIXME: We end up with zero argument for ADD, because
 ; SIRegisterInfo::eliminateFrameIndex() blindly replaces the frame index

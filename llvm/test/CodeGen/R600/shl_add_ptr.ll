@@ -14,7 +14,7 @@ declare i32 @llvm.r600.read.tidig.x() #1
 
 ; Make sure the (add tid, 2) << 2 gets folded into the ds's offset as (tid << 2) + 8
 
-; SI-LABEL: @load_shl_base_lds_0
+; SI-LABEL: {{^}}load_shl_base_lds_0:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: DS_READ_B32 {{v[0-9]+}}, [[PTR]], 0x8, [M0]
 ; SI: S_ENDPGM
@@ -31,7 +31,7 @@ define void @load_shl_base_lds_0(float addrspace(1)* %out, i32 addrspace(1)* %ad
 ; Make sure once the first use is folded into the addressing mode, the
 ; remaining add use goes through the normal shl + add constant fold.
 
-; SI-LABEL: @load_shl_base_lds_1
+; SI-LABEL: {{^}}load_shl_base_lds_1:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: DS_READ_B32 [[RESULT:v[0-9]+]], [[PTR]], 0x8, [M0]
 ; SI: V_ADD_I32_e32 [[ADDUSE:v[0-9]+]], 8, v{{[0-9]+}}
@@ -51,7 +51,7 @@ define void @load_shl_base_lds_1(float addrspace(1)* %out, i32 addrspace(1)* %ad
 
 @maxlds = addrspace(3) global [65536 x i8] zeroinitializer, align 4
 
-; SI-LABEL: @load_shl_base_lds_max_offset
+; SI-LABEL: {{^}}load_shl_base_lds_max_offset:
 ; SI: DS_READ_U8 v{{[0-9]+}}, v{{[0-9]+}}, 0xffff
 ; SI: S_ENDPGM
 define void @load_shl_base_lds_max_offset(i8 addrspace(1)* %out, i8 addrspace(3)* %lds, i32 addrspace(1)* %add_use) #0 {
@@ -67,7 +67,7 @@ define void @load_shl_base_lds_max_offset(i8 addrspace(1)* %out, i8 addrspace(3)
 ; The two globals are placed adjacent in memory, so the same base
 ; pointer can be used with an offset into the second one.
 
-; SI-LABEL: @load_shl_base_lds_2
+; SI-LABEL: {{^}}load_shl_base_lds_2:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI-NEXT: DS_READ_B32 {{v[0-9]+}}, [[PTR]], 0x100, [M0]
 ; SI-NEXT: DS_READ_B32 {{v[0-9]+}}, [[PTR]], 0x900, [M0]
@@ -84,7 +84,7 @@ define void @load_shl_base_lds_2(float addrspace(1)* %out) #0 {
   ret void
 }
 
-; SI-LABEL: @store_shl_base_lds_0
+; SI-LABEL: {{^}}store_shl_base_lds_0:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: DS_WRITE_B32 [[PTR]], {{v[0-9]+}}, 0x8 [M0]
 ; SI: S_ENDPGM
@@ -114,7 +114,7 @@ define void @store_shl_base_lds_0(float addrspace(1)* %out, i32 addrspace(1)* %a
 ; }
 
 
-; SI-LABEL: @atomic_cmpxchg_shl_base_lds_0
+; SI-LABEL: {{^}}atomic_cmpxchg_shl_base_lds_0:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: DS_CMPST_RTN_B32 {{v[0-9]+}}, [[PTR]], {{v[0-9]+}}, {{v[0-9]+}}, 0x8
 ; SI: S_ENDPGM
@@ -129,7 +129,7 @@ define void @atomic_cmpxchg_shl_base_lds_0(i32 addrspace(1)* %out, i32 addrspace
   ret void
 }
 
-; SI-LABEL: @atomic_swap_shl_base_lds_0
+; SI-LABEL: {{^}}atomic_swap_shl_base_lds_0:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: DS_WRXCHG_RTN_B32 {{v[0-9]+}}, [[PTR]], {{v[0-9]+}}, 0x8
 ; SI: S_ENDPGM
@@ -143,7 +143,7 @@ define void @atomic_swap_shl_base_lds_0(i32 addrspace(1)* %out, i32 addrspace(1)
   ret void
 }
 
-; SI-LABEL: @atomic_add_shl_base_lds_0
+; SI-LABEL: {{^}}atomic_add_shl_base_lds_0:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: DS_ADD_RTN_U32 {{v[0-9]+}}, [[PTR]], {{v[0-9]+}}, 0x8
 ; SI: S_ENDPGM
@@ -157,7 +157,7 @@ define void @atomic_add_shl_base_lds_0(i32 addrspace(1)* %out, i32 addrspace(1)*
   ret void
 }
 
-; SI-LABEL: @atomic_sub_shl_base_lds_0
+; SI-LABEL: {{^}}atomic_sub_shl_base_lds_0:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: DS_SUB_RTN_U32 {{v[0-9]+}}, [[PTR]], {{v[0-9]+}}, 0x8
 ; SI: S_ENDPGM
@@ -171,7 +171,7 @@ define void @atomic_sub_shl_base_lds_0(i32 addrspace(1)* %out, i32 addrspace(1)*
   ret void
 }
 
-; SI-LABEL: @atomic_and_shl_base_lds_0
+; SI-LABEL: {{^}}atomic_and_shl_base_lds_0:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: DS_AND_RTN_B32 {{v[0-9]+}}, [[PTR]], {{v[0-9]+}}, 0x8
 ; SI: S_ENDPGM
@@ -185,7 +185,7 @@ define void @atomic_and_shl_base_lds_0(i32 addrspace(1)* %out, i32 addrspace(1)*
   ret void
 }
 
-; SI-LABEL: @atomic_or_shl_base_lds_0
+; SI-LABEL: {{^}}atomic_or_shl_base_lds_0:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: DS_OR_RTN_B32 {{v[0-9]+}}, [[PTR]], {{v[0-9]+}}, 0x8
 ; SI: S_ENDPGM
@@ -199,7 +199,7 @@ define void @atomic_or_shl_base_lds_0(i32 addrspace(1)* %out, i32 addrspace(1)* 
   ret void
 }
 
-; SI-LABEL: @atomic_xor_shl_base_lds_0
+; SI-LABEL: {{^}}atomic_xor_shl_base_lds_0:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: DS_XOR_RTN_B32 {{v[0-9]+}}, [[PTR]], {{v[0-9]+}}, 0x8
 ; SI: S_ENDPGM
@@ -223,7 +223,7 @@ define void @atomic_xor_shl_base_lds_0(i32 addrspace(1)* %out, i32 addrspace(1)*
 ;   ret void
 ; }
 
-; SI-LABEL: @atomic_min_shl_base_lds_0
+; SI-LABEL: {{^}}atomic_min_shl_base_lds_0:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: DS_MIN_RTN_I32 {{v[0-9]+}}, [[PTR]], {{v[0-9]+}}, 0x8
 ; SI: S_ENDPGM
@@ -237,7 +237,7 @@ define void @atomic_min_shl_base_lds_0(i32 addrspace(1)* %out, i32 addrspace(1)*
   ret void
 }
 
-; SI-LABEL: @atomic_max_shl_base_lds_0
+; SI-LABEL: {{^}}atomic_max_shl_base_lds_0:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: DS_MAX_RTN_I32 {{v[0-9]+}}, [[PTR]], {{v[0-9]+}}, 0x8
 ; SI: S_ENDPGM
@@ -251,7 +251,7 @@ define void @atomic_max_shl_base_lds_0(i32 addrspace(1)* %out, i32 addrspace(1)*
   ret void
 }
 
-; SI-LABEL: @atomic_umin_shl_base_lds_0
+; SI-LABEL: {{^}}atomic_umin_shl_base_lds_0:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: DS_MIN_RTN_U32 {{v[0-9]+}}, [[PTR]], {{v[0-9]+}}, 0x8
 ; SI: S_ENDPGM
@@ -265,7 +265,7 @@ define void @atomic_umin_shl_base_lds_0(i32 addrspace(1)* %out, i32 addrspace(1)
   ret void
 }
 
-; SI-LABEL: @atomic_umax_shl_base_lds_0
+; SI-LABEL: {{^}}atomic_umax_shl_base_lds_0:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: DS_MAX_RTN_U32 {{v[0-9]+}}, [[PTR]], {{v[0-9]+}}, 0x8
 ; SI: S_ENDPGM

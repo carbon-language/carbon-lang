@@ -6,7 +6,7 @@
 ; or
 ; ADD_INT literal.x KC0[2].Z, 5
 
-; CHECK: @i32_literal
+; CHECK: {{^}}i32_literal:
 ; CHECK: ADD_INT {{\** *}}T{{[0-9]\.[XYZW]}}, KC0[2].Z, literal.x
 ; CHECK-NEXT: LSHR
 ; CHECK-NEXT: 5
@@ -23,7 +23,7 @@ entry:
 ; or
 ; ADD literal.x KC0[2].Z, 5.0
 
-; CHECK: @float_literal
+; CHECK: {{^}}float_literal:
 ; CHECK: ADD {{\** *}}T{{[0-9]\.[XYZW]}}, KC0[2].Z, literal.x
 ; CHECK-NEXT: LSHR
 ; CHECK-NEXT: 1084227584(5.0
@@ -35,7 +35,7 @@ entry:
 }
 
 ; Make sure inline literals are folded into REG_SEQUENCE instructions.
-; CHECK: @inline_literal_reg_sequence
+; CHECK: {{^}}inline_literal_reg_sequence:
 ; CHECK: MOV {{\** *}}T[[GPR:[0-9]]].X, 0.0
 ; CHECK-NEXT: MOV {{\** *}}T[[GPR]].Y, 0.0
 ; CHECK-NEXT: MOV {{\** *}}T[[GPR]].Z, 0.0
@@ -47,7 +47,7 @@ entry:
   ret void
 }
 
-; CHECK: @inline_literal_dot4
+; CHECK: {{^}}inline_literal_dot4:
 ; CHECK: DOT4 T[[GPR:[0-9]]].X, 1.0
 ; CHECK-NEXT: DOT4 T[[GPR]].Y (MASKED), 1.0
 ; CHECK-NEXT: DOT4 T[[GPR]].Z (MASKED), 1.0

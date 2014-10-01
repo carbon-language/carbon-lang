@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
-; CHECK: @main
+; CHECK: {{^}}main:
 ; CHECK: MULADD_IEEE *
 ; CHECK-NOT: MULADD_IEEE *
 

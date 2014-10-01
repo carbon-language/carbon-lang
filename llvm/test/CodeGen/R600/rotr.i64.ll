@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
-; FUNC-LABEL: @s_rotr_i64
+; FUNC-LABEL: {{^}}s_rotr_i64:
 ; SI-DAG: S_SUB_I32
 ; SI-DAG: S_LSHR_B64
 ; SI-DAG: S_LSHL_B64
@@ -15,7 +15,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @v_rotr_i64
+; FUNC-LABEL: {{^}}v_rotr_i64:
 ; SI-DAG: V_SUB_I32
 ; SI-DAG: V_LSHR_B64
 ; SI-DAG: V_LSHL_B64
@@ -33,7 +33,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @s_rotr_v2i64
+; FUNC-LABEL: {{^}}s_rotr_v2i64:
 define void @s_rotr_v2i64(<2 x i64> addrspace(1)* %in, <2 x i64> %x, <2 x i64> %y) {
 entry:
   %tmp0 = sub <2 x i64> <i64 64, i64 64>, %y
@@ -44,7 +44,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @v_rotr_v2i64
+; FUNC-LABEL: {{^}}v_rotr_v2i64:
 define void @v_rotr_v2i64(<2 x i64> addrspace(1)* %in, <2 x i64> addrspace(1)* %xptr, <2 x i64> addrspace(1)* %yptr) {
 entry:
   %x = load <2 x i64> addrspace(1)* %xptr, align 8

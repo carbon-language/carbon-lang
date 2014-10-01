@@ -2,7 +2,7 @@
 
 declare i32 @llvm.SI.tid() readnone
 
-; SI-LABEL: @test_array_ptr_calc
+; SI-LABEL: {{^}}test_array_ptr_calc:
 ; SI: V_MUL_LO_I32
 ; SI: V_MUL_HI_I32
 define void @test_array_ptr_calc(i32 addrspace(1)* noalias %out, [1025 x i32] addrspace(1)* noalias %inA, i32 addrspace(1)* noalias %inB) {

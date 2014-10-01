@@ -1,11 +1,11 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK %s
 ;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK %s
 
-;EG-CHECK-LABEL: @ashr_v2i32
+;EG-CHECK-LABEL: {{^}}ashr_v2i32:
 ;EG-CHECK: ASHR {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG-CHECK: ASHR {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
-;SI-CHECK-LABEL: @ashr_v2i32
+;SI-CHECK-LABEL: {{^}}ashr_v2i32:
 ;SI-CHECK: V_ASHR_I32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 ;SI-CHECK: V_ASHR_I32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 
@@ -18,13 +18,13 @@ define void @ashr_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %i
   ret void
 }
 
-;EG-CHECK-LABEL: @ashr_v4i32
+;EG-CHECK-LABEL: {{^}}ashr_v4i32:
 ;EG-CHECK: ASHR {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG-CHECK: ASHR {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG-CHECK: ASHR {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG-CHECK: ASHR {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
-;SI-CHECK-LABEL: @ashr_v4i32
+;SI-CHECK-LABEL: {{^}}ashr_v4i32:
 ;SI-CHECK: V_ASHR_I32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 ;SI-CHECK: V_ASHR_I32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 ;SI-CHECK: V_ASHR_I32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
@@ -39,10 +39,10 @@ define void @ashr_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %i
   ret void
 }
 
-;EG-CHECK-LABEL: @ashr_i64
+;EG-CHECK-LABEL: {{^}}ashr_i64:
 ;EG-CHECK: ASHR
 
-;SI-CHECK-LABEL: @ashr_i64
+;SI-CHECK-LABEL: {{^}}ashr_i64:
 ;SI-CHECK: S_ASHR_I64 s[{{[0-9]}}:{{[0-9]}}], s[{{[0-9]}}:{{[0-9]}}], 8
 define void @ashr_i64(i64 addrspace(1)* %out, i32 %in) {
 entry:
@@ -52,7 +52,7 @@ entry:
   ret void
 }
 
-;EG-CHECK-LABEL: @ashr_i64_2
+;EG-CHECK-LABEL: {{^}}ashr_i64_2:
 ;EG-CHECK: SUB_INT {{\*? *}}[[COMPSH:T[0-9]+\.[XYZW]]], {{literal.[xy]}}, [[SHIFT:T[0-9]+\.[XYZW]]]
 ;EG-CHECK: LSHL {{\* *}}[[TEMP:T[0-9]+\.[XYZW]]], [[OPHI:T[0-9]+\.[XYZW]]], {{[[COMPSH]]|PV.[XYZW]}}
 ;EG-CHECK: LSHL {{\*? *}}[[OVERF:T[0-9]+\.[XYZW]]], {{[[TEMP]]|PV.[XYZW]}}, 1
@@ -66,7 +66,7 @@ entry:
 ;EG-CHECK-DAG: CNDE_INT {{\*? *}}[[RESLO:T[0-9]+\.[XYZW]]], {{T[0-9]+\.[XYZW]}}
 ;EG-CHECK-DAG: CNDE_INT {{\*? *}}[[RESHI:T[0-9]+\.[XYZW]]], {{T[0-9]+\.[XYZW]}}
 
-;SI-CHECK-LABEL: @ashr_i64_2
+;SI-CHECK-LABEL: {{^}}ashr_i64_2:
 ;SI-CHECK: V_ASHR_I64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
 define void @ashr_i64_2(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
 entry:
@@ -78,7 +78,7 @@ entry:
   ret void
 }
 
-;EG-CHECK-LABEL: @ashr_v2i64
+;EG-CHECK-LABEL: {{^}}ashr_v2i64:
 ;EG-CHECK-DAG: SUB_INT {{\*? *}}[[COMPSHA:T[0-9]+\.[XYZW]]], {{literal.[xy]}}, [[SHA:T[0-9]+\.[XYZW]]]
 ;EG-CHECK-DAG: SUB_INT {{\*? *}}[[COMPSHB:T[0-9]+\.[XYZW]]], {{literal.[xy]}}, [[SHB:T[0-9]+\.[XYZW]]]
 ;EG-CHECK-DAG: LSHL {{\*? *}}[[COMPSHA]]
@@ -104,7 +104,7 @@ entry:
 ;EG-CHECK-DAG: CNDE_INT
 ;EG-CHECK-DAG: CNDE_INT
 
-;SI-CHECK-LABEL: @ashr_v2i64
+;SI-CHECK-LABEL: {{^}}ashr_v2i64:
 ;SI-CHECK: V_ASHR_I64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
 ;SI-CHECK: V_ASHR_I64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
 
@@ -117,7 +117,7 @@ define void @ashr_v2i64(<2 x i64> addrspace(1)* %out, <2 x i64> addrspace(1)* %i
   ret void
 }
 
-;EG-CHECK-LABEL: @ashr_v4i64
+;EG-CHECK-LABEL: {{^}}ashr_v4i64:
 ;EG-CHECK-DAG: SUB_INT {{\*? *}}[[COMPSHA:T[0-9]+\.[XYZW]]], {{literal.[xy]}}, [[SHA:T[0-9]+\.[XYZW]]]
 ;EG-CHECK-DAG: SUB_INT {{\*? *}}[[COMPSHB:T[0-9]+\.[XYZW]]], {{literal.[xy]}}, [[SHB:T[0-9]+\.[XYZW]]]
 ;EG-CHECK-DAG: SUB_INT {{\*? *}}[[COMPSHC:T[0-9]+\.[XYZW]]], {{literal.[xy]}}, [[SHC:T[0-9]+\.[XYZW]]]
@@ -167,7 +167,7 @@ define void @ashr_v2i64(<2 x i64> addrspace(1)* %out, <2 x i64> addrspace(1)* %i
 ;EG-CHECK-DAG: CNDE_INT
 ;EG-CHECK-DAG: CNDE_INT
 
-;SI-CHECK-LABEL: @ashr_v4i64
+;SI-CHECK-LABEL: {{^}}ashr_v4i64:
 ;SI-CHECK: V_ASHR_I64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
 ;SI-CHECK: V_ASHR_I64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
 ;SI-CHECK: V_ASHR_I64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}

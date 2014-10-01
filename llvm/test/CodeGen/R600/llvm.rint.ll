@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck %s -check-prefix=R600 -check-prefix=FUNC
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
-; FUNC-LABEL: @rint_f32
+; FUNC-LABEL: {{^}}rint_f32:
 ; R600: RNDNE
 
 ; SI: V_RNDNE_F32_e32
@@ -12,7 +12,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @rint_v2f32
+; FUNC-LABEL: {{^}}rint_v2f32:
 ; R600: RNDNE
 ; R600: RNDNE
 
@@ -25,7 +25,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @rint_v4f32
+; FUNC-LABEL: {{^}}rint_v4f32:
 ; R600: RNDNE
 ; R600: RNDNE
 ; R600: RNDNE
@@ -42,7 +42,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @legacy_amdil_round_nearest_f32
+; FUNC-LABEL: {{^}}legacy_amdil_round_nearest_f32:
 ; R600: RNDNE
 
 ; SI: V_RNDNE_F32_e32

@@ -8,7 +8,7 @@ declare <4 x float> @llvm.ceil.v4f32(<4 x float>) nounwind readnone
 declare <8 x float> @llvm.ceil.v8f32(<8 x float>) nounwind readnone
 declare <16 x float> @llvm.ceil.v16f32(<16 x float>) nounwind readnone
 
-; FUNC-LABEL: @fceil_f32:
+; FUNC-LABEL: {{^}}fceil_f32:
 ; SI: V_CEIL_F32_e32
 ; EG: MEM_RAT_CACHELESS STORE_RAW [[RESULT:T[0-9]+\.[XYZW]]]
 ; EG: CEIL {{\*? *}}[[RESULT]]
@@ -18,7 +18,7 @@ define void @fceil_f32(float addrspace(1)* %out, float %x) {
   ret void
 }
 
-; FUNC-LABEL: @fceil_v2f32:
+; FUNC-LABEL: {{^}}fceil_v2f32:
 ; SI: V_CEIL_F32_e32
 ; SI: V_CEIL_F32_e32
 ; EG: MEM_RAT_CACHELESS STORE_RAW [[RESULT:T[0-9]+]]{{\.[XYZW]}}
@@ -30,7 +30,7 @@ define void @fceil_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %x) {
   ret void
 }
 
-; FUNC-LABEL: @fceil_v3f32:
+; FUNC-LABEL: {{^}}fceil_v3f32:
 ; FIXME-SI: V_CEIL_F32_e32
 ; FIXME-SI: V_CEIL_F32_e32
 ; FIXME-SI: V_CEIL_F32_e32
@@ -46,7 +46,7 @@ define void @fceil_v3f32(<3 x float> addrspace(1)* %out, <3 x float> %x) {
   ret void
 }
 
-; FUNC-LABEL: @fceil_v4f32:
+; FUNC-LABEL: {{^}}fceil_v4f32:
 ; SI: V_CEIL_F32_e32
 ; SI: V_CEIL_F32_e32
 ; SI: V_CEIL_F32_e32
@@ -62,7 +62,7 @@ define void @fceil_v4f32(<4 x float> addrspace(1)* %out, <4 x float> %x) {
   ret void
 }
 
-; FUNC-LABEL: @fceil_v8f32:
+; FUNC-LABEL: {{^}}fceil_v8f32:
 ; SI: V_CEIL_F32_e32
 ; SI: V_CEIL_F32_e32
 ; SI: V_CEIL_F32_e32
@@ -87,7 +87,7 @@ define void @fceil_v8f32(<8 x float> addrspace(1)* %out, <8 x float> %x) {
   ret void
 }
 
-; FUNC-LABEL: @fceil_v16f32:
+; FUNC-LABEL: {{^}}fceil_v16f32:
 ; SI: V_CEIL_F32_e32
 ; SI: V_CEIL_F32_e32
 ; SI: V_CEIL_F32_e32

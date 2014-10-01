@@ -8,7 +8,7 @@
 ; instructions, when only one is needed.
 ;
 
-; CHECK: @setcc_expand
+; CHECK: {{^}}setcc_expand:
 ; CHECK: SET
 ; CHECK-NOT: CND
 define void @setcc_expand(i32 addrspace(1)* %out, i32 %in) {

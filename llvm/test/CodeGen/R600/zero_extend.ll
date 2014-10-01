@@ -1,11 +1,11 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=R600-CHECK
 ; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s --check-prefix=SI-CHECK
 
-; R600-CHECK: @test
+; R600-CHECK: {{^}}test:
 ; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW
 ; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW
 
-; SI-CHECK: @test
+; SI-CHECK: {{^}}test:
 ; SI-CHECK: S_MOV_B32 [[ZERO:s[0-9]]], 0{{$}}
 ; SI-CHECK: V_MOV_B32_e32 v[[V_ZERO:[0-9]]], [[ZERO]]
 ; SI-CHECK: BUFFER_STORE_DWORDX2 v[0:[[V_ZERO]]{{\]}}
@@ -18,7 +18,7 @@ entry:
   ret void
 }
 
-; SI-CHECK-LABEL: @testi1toi32
+; SI-CHECK-LABEL: {{^}}testi1toi32:
 ; SI-CHECK: V_CNDMASK_B32
 define void @testi1toi32(i32 addrspace(1)* %out, i32 %a, i32 %b) {
 entry:
@@ -28,7 +28,7 @@ entry:
   ret void
 }
 
-; SI-CHECK-LABEL: @zext_i1_to_i64
+; SI-CHECK-LABEL: {{^}}zext_i1_to_i64:
 ; SI-CHECK: V_CMP_EQ_I32
 ; SI-CHECK: V_CNDMASK_B32
 ; SI-CHECK: S_MOV_B32 s{{[0-9]+}}, 0

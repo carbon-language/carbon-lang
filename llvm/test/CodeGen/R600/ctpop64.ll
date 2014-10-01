@@ -6,7 +6,7 @@ declare <4 x i64> @llvm.ctpop.v4i64(<4 x i64>) nounwind readnone
 declare <8 x i64> @llvm.ctpop.v8i64(<8 x i64>) nounwind readnone
 declare <16 x i64> @llvm.ctpop.v16i64(<16 x i64>) nounwind readnone
 
-; FUNC-LABEL: @s_ctpop_i64:
+; FUNC-LABEL: {{^}}s_ctpop_i64:
 ; SI: S_LOAD_DWORDX2 [[SVAL:s\[[0-9]+:[0-9]+\]]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI: S_BCNT1_I32_B64 [[SRESULT:s[0-9]+]], [[SVAL]]
 ; SI: V_MOV_B32_e32 [[VRESULT:v[0-9]+]], [[SRESULT]]
@@ -19,7 +19,7 @@ define void @s_ctpop_i64(i32 addrspace(1)* noalias %out, i64 %val) nounwind {
   ret void
 }
 
-; FUNC-LABEL: @v_ctpop_i64:
+; FUNC-LABEL: {{^}}v_ctpop_i64:
 ; SI: BUFFER_LOAD_DWORDX2 v{{\[}}[[LOVAL:[0-9]+]]:[[HIVAL:[0-9]+]]{{\]}},
 ; SI: V_MOV_B32_e32 [[VZERO:v[0-9]+]], 0
 ; SI: V_BCNT_U32_B32_e32 [[MIDRESULT:v[0-9]+]], v[[LOVAL]], [[VZERO]]
@@ -34,7 +34,7 @@ define void @v_ctpop_i64(i32 addrspace(1)* noalias %out, i64 addrspace(1)* noali
   ret void
 }
 
-; FUNC-LABEL: @s_ctpop_v2i64:
+; FUNC-LABEL: {{^}}s_ctpop_v2i64:
 ; SI: S_BCNT1_I32_B64
 ; SI: S_BCNT1_I32_B64
 ; SI: S_ENDPGM
@@ -45,7 +45,7 @@ define void @s_ctpop_v2i64(<2 x i32> addrspace(1)* noalias %out, <2 x i64> %val)
   ret void
 }
 
-; FUNC-LABEL: @s_ctpop_v4i64:
+; FUNC-LABEL: {{^}}s_ctpop_v4i64:
 ; SI: S_BCNT1_I32_B64
 ; SI: S_BCNT1_I32_B64
 ; SI: S_BCNT1_I32_B64
@@ -58,7 +58,7 @@ define void @s_ctpop_v4i64(<4 x i32> addrspace(1)* noalias %out, <4 x i64> %val)
   ret void
 }
 
-; FUNC-LABEL: @v_ctpop_v2i64:
+; FUNC-LABEL: {{^}}v_ctpop_v2i64:
 ; SI: V_BCNT_U32_B32
 ; SI: V_BCNT_U32_B32
 ; SI: V_BCNT_U32_B32
@@ -72,7 +72,7 @@ define void @v_ctpop_v2i64(<2 x i32> addrspace(1)* noalias %out, <2 x i64> addrs
   ret void
 }
 
-; FUNC-LABEL: @v_ctpop_v4i64:
+; FUNC-LABEL: {{^}}v_ctpop_v4i64:
 ; SI: V_BCNT_U32_B32
 ; SI: V_BCNT_U32_B32
 ; SI: V_BCNT_U32_B32
@@ -93,7 +93,7 @@ define void @v_ctpop_v4i64(<4 x i32> addrspace(1)* noalias %out, <4 x i64> addrs
 ; FIXME: We currently disallow SALU instructions in all branches,
 ; but there are some cases when the should be allowed.
 
-; FUNC-LABEL: @ctpop_i64_in_br
+; FUNC-LABEL: {{^}}ctpop_i64_in_br:
 ; SI: S_LOAD_DWORDX2 s{{\[}}[[LOVAL:[0-9]+]]:[[HIVAL:[0-9]+]]{{\]}}, s[{{[0-9]+:[0-9]+}}], 0xd
 ; SI: S_BCNT1_I32_B64 [[RESULT:s[0-9]+]], {{s\[}}[[LOVAL]]:[[HIVAL]]{{\]}}
 ; SI: V_MOV_B32_e32 v[[VLO:[0-9]+]], [[RESULT]]

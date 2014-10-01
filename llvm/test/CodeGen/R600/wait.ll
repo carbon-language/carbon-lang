@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -strict-whitespace %s
 
-; CHECK-LABEL: @main
+; CHECK-LABEL: {{^}}main:
 ; CHECK: S_LOAD_DWORDX4
 ; CHECK: S_LOAD_DWORDX4
 ; CHECK: S_WAITCNT lgkmcnt(0){{$}}

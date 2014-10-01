@@ -5,7 +5,7 @@ declare float @llvm.fma.f32(float, float, float) nounwind readnone
 declare <2 x float> @llvm.fma.v2f32(<2 x float>, <2 x float>, <2 x float>) nounwind readnone
 declare <4 x float> @llvm.fma.v4f32(<4 x float>, <4 x float>, <4 x float>) nounwind readnone
 
-; FUNC-LABEL: @fma_f32
+; FUNC-LABEL: {{^}}fma_f32:
 ; SI: V_FMA_F32 {{v[0-9]+, v[0-9]+, v[0-9]+, v[0-9]+}}
 define void @fma_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
                      float addrspace(1)* %in2, float addrspace(1)* %in3) {
@@ -17,7 +17,7 @@ define void @fma_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
    ret void
 }
 
-; FUNC-LABEL: @fma_v2f32
+; FUNC-LABEL: {{^}}fma_v2f32:
 ; SI: V_FMA_F32
 ; SI: V_FMA_F32
 define void @fma_v2f32(<2 x float> addrspace(1)* %out, <2 x float> addrspace(1)* %in1,
@@ -30,7 +30,7 @@ define void @fma_v2f32(<2 x float> addrspace(1)* %out, <2 x float> addrspace(1)*
    ret void
 }
 
-; FUNC-LABEL: @fma_v4f32
+; FUNC-LABEL: {{^}}fma_v4f32:
 ; SI: V_FMA_F32
 ; SI: V_FMA_F32
 ; SI: V_FMA_F32

@@ -5,9 +5,9 @@
 ;The goal of this test is to make sure the ISel doesn't fail when it gets
 ;a v2i32/v4i32 urem
 
-;EG-CHECK: @test2
+;EG-CHECK: {{^}}test2:
 ;EG-CHECK: CF_END
-;SI-CHECK: @test2
+;SI-CHECK: {{^}}test2:
 ;SI-CHECK: S_ENDPGM
 
 define void @test2(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
@@ -19,9 +19,9 @@ define void @test2(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
   ret void
 }
 
-;EG-CHECK: @test4
+;EG-CHECK: {{^}}test4:
 ;EG-CHECK: CF_END
-;SI-CHECK: @test4
+;SI-CHECK: {{^}}test4:
 ;SI-CHECK: S_ENDPGM
 
 define void @test4(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {

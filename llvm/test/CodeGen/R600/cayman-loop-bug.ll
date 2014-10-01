@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck %s
 
-; CHECK-LABEL: @main
+; CHECK-LABEL: {{^}}main:
 ; CHECK: LOOP_START_DX10
 ; CHECK: ALU_PUSH_BEFORE
 ; CHECK: LOOP_START_DX10

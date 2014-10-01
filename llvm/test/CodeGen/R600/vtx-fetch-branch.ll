@@ -6,7 +6,7 @@
 ; after the fetch clause.
 
 
-; CHECK-LABEL: @test
+; CHECK-LABEL: {{^}}test:
 ; CHECK-NOT: ALU_POP_AFTER
 ; CHECK: TEX
 ; CHECK-NEXT: POP

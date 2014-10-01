@@ -2,7 +2,7 @@
 
 declare float @llvm.AMDGPU.lrp(float, float, float) nounwind readnone
 
-; FUNC-LABEL: @test_lrp
+; FUNC-LABEL: {{^}}test_lrp:
 ; SI: V_SUB_F32
 ; SI: V_MAD_F32
 define void @test_lrp(float addrspace(1)* %out, float %src0, float %src1, float %src2) nounwind {

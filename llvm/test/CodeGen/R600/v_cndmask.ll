@@ -2,7 +2,7 @@
 
 declare i32 @llvm.r600.read.tidig.x() #1
 
-; SI-LABEL: @v_cnd_nan_nosgpr
+; SI-LABEL: {{^}}v_cnd_nan_nosgpr:
 ; SI: V_CNDMASK_B32_e64 v{{[0-9]}}, v{{[0-9]}}, -1, s{{\[[0-9]+:[0-9]+\]}}
 ; SI-DAG: v{{[0-9]}}
 ; All nan values are converted to 0xffffffff
@@ -22,7 +22,7 @@ define void @v_cnd_nan_nosgpr(float addrspace(1)* %out, i32 %c, float addrspace(
 ; single constant bus SGPR usage is the last operand, and it should
 ; never be moved.
 
-; SI-LABEL: @v_cnd_nan
+; SI-LABEL: {{^}}v_cnd_nan:
 ; SI: V_CNDMASK_B32_e64 v{{[0-9]}}, v{{[0-9]}}, -1, s{{\[[0-9]+:[0-9]+\]}}
 ; SI-DAG: v{{[0-9]}}
 ; All nan values are converted to 0xffffffff

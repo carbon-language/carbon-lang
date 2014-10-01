@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
-; SI-LABEL: @sext_bool_icmp_ne
+; SI-LABEL: {{^}}sext_bool_icmp_ne:
 ; SI: V_CMP_NE_I32
 ; SI-NEXT: V_CNDMASK_B32
 ; SI-NOT: V_CMP_NE_I32

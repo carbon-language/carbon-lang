@@ -6,7 +6,7 @@
 
 @float_gv = internal unnamed_addr addrspace(2) constant [5 x float] [float 0.0, float 1.0, float 2.0, float 3.0, float 4.0], align 4
 
-; FUNC-LABEL: @float
+; FUNC-LABEL: {{^}}float:
 ; FIXME: We should be using S_LOAD_DWORD here.
 ; SI: BUFFER_LOAD_DWORD
 
@@ -27,7 +27,7 @@ entry:
 
 @i32_gv = internal unnamed_addr addrspace(2) constant [5 x i32] [i32 0, i32 1, i32 2, i32 3, i32 4], align 4
 
-; FUNC-LABEL: @i32
+; FUNC-LABEL: {{^}}i32:
 
 ; FIXME: We should be using S_LOAD_DWORD here.
 ; SI: BUFFER_LOAD_DWORD
@@ -52,7 +52,7 @@ entry:
 
 @struct_foo_gv = internal unnamed_addr addrspace(2) constant [1 x %struct.foo] [ %struct.foo { float 16.0, [5 x i32] [i32 0, i32 1, i32 2, i32 3, i32 4] } ]
 
-; FUNC-LABEL: @struct_foo_gv_load
+; FUNC-LABEL: {{^}}struct_foo_gv_load:
 ; SI: S_LOAD_DWORD
 
 define void @struct_foo_gv_load(i32 addrspace(1)* %out, i32 %index) {
@@ -67,7 +67,7 @@ define void @struct_foo_gv_load(i32 addrspace(1)* %out, i32 %index) {
                                                                 <1 x i32> <i32 3>,
                                                                 <1 x i32> <i32 4> ]
 
-; FUNC-LABEL: @array_v1_gv_load
+; FUNC-LABEL: {{^}}array_v1_gv_load:
 ; FIXME: We should be using S_LOAD_DWORD here.
 ; SI: BUFFER_LOAD_DWORD
 define void @array_v1_gv_load(<1 x i32> addrspace(1)* %out, i32 %index) {

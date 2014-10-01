@@ -14,7 +14,7 @@ define void @trunc_select_i64(i32 addrspace(1)* %out, i64 %a, i64 %b, i32 %c) {
 }
 
 ; FIXME: Fix truncating store for local memory
-; SI-LABEL: @trunc_load_alloca_i64:
+; SI-LABEL: {{^}}trunc_load_alloca_i64:
 ; SI: V_MOVRELS_B32
 ; SI-NOT: V_MOVRELS_B32
 ; SI: S_ENDPGM

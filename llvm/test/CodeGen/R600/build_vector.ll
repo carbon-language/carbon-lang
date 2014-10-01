@@ -1,11 +1,11 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=R600-CHECK
 ; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s --check-prefix=SI-CHECK
 
-; R600-CHECK: @build_vector2
+; R600-CHECK: {{^}}build_vector2:
 ; R600-CHECK: MOV
 ; R600-CHECK: MOV
 ; R600-CHECK-NOT: MOV
-; SI-CHECK: @build_vector2
+; SI-CHECK: {{^}}build_vector2:
 ; SI-CHECK-DAG: V_MOV_B32_e32 v[[X:[0-9]]], 5
 ; SI-CHECK-DAG: V_MOV_B32_e32 v[[Y:[0-9]]], 6
 ; SI-CHECK: BUFFER_STORE_DWORDX2 v{{\[}}[[X]]:[[Y]]{{\]}}
@@ -15,13 +15,13 @@ entry:
   ret void
 }
 
-; R600-CHECK: @build_vector4
+; R600-CHECK: {{^}}build_vector4:
 ; R600-CHECK: MOV
 ; R600-CHECK: MOV
 ; R600-CHECK: MOV
 ; R600-CHECK: MOV
 ; R600-CHECK-NOT: MOV
-; SI-CHECK: @build_vector4
+; SI-CHECK: {{^}}build_vector4:
 ; SI-CHECK-DAG: V_MOV_B32_e32 v[[X:[0-9]]], 5
 ; SI-CHECK-DAG: V_MOV_B32_e32 v[[Y:[0-9]]], 6
 ; SI-CHECK-DAG: V_MOV_B32_e32 v[[Z:[0-9]]], 7

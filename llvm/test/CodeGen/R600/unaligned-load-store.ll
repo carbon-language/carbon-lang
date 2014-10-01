@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck -check-prefix=SI %s
 
 ; FIXME: This is probably wrong. This probably needs to expand to 8-bit reads and writes.
-; SI-LABEL: @unaligned_load_store_i32:
+; SI-LABEL: {{^}}unaligned_load_store_i32:
 ; SI: DS_READ_U16
 ; SI: DS_READ_U16
 ; SI: DS_WRITE_B32
@@ -12,7 +12,7 @@ define void @unaligned_load_store_i32(i32 addrspace(3)* %p, i32 addrspace(3)* %r
   ret void
 }
 
-; SI-LABEL: @unaligned_load_store_v4i32:
+; SI-LABEL: {{^}}unaligned_load_store_v4i32:
 ; SI: DS_READ_U16
 ; SI: DS_READ_U16
 ; SI: DS_READ_U16
@@ -32,7 +32,7 @@ define void @unaligned_load_store_v4i32(<4 x i32> addrspace(3)* %p, <4 x i32> ad
   ret void
 }
 
-; SI-LABEL: @load_lds_i64_align_4
+; SI-LABEL: {{^}}load_lds_i64_align_4:
 ; SI: DS_READ2_B32
 ; SI: S_ENDPGM
 define void @load_lds_i64_align_4(i64 addrspace(1)* nocapture %out, i64 addrspace(3)* %in) #0 {
@@ -41,7 +41,7 @@ define void @load_lds_i64_align_4(i64 addrspace(1)* nocapture %out, i64 addrspac
   ret void
 }
 
-; SI-LABEL: @load_lds_i64_align_4_with_offset
+; SI-LABEL: {{^}}load_lds_i64_align_4_with_offset:
 ; SI: DS_READ2_B32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]}}, 0x8, 0x9
 ; SI: S_ENDPGM
 define void @load_lds_i64_align_4_with_offset(i64 addrspace(1)* nocapture %out, i64 addrspace(3)* %in) #0 {
@@ -51,7 +51,7 @@ define void @load_lds_i64_align_4_with_offset(i64 addrspace(1)* nocapture %out, 
   ret void
 }
 
-; SI-LABEL: @load_lds_i64_align_4_with_split_offset
+; SI-LABEL: {{^}}load_lds_i64_align_4_with_split_offset:
 ; The tests for the case where the lo offset is 8-bits, but the hi offset is 9-bits
 ; SI: DS_READ2_B32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]}}, 0x0, 0x1
 ; SI: S_ENDPGM
@@ -71,7 +71,7 @@ define void @load_lds_i64_align_4_with_split_offset(i64 addrspace(1)* nocapture 
 ;   ret void
 ; }
 
-; SI-LABEL: @store_lds_i64_align_4
+; SI-LABEL: {{^}}store_lds_i64_align_4:
 ; SI: DS_WRITE2_B32
 ; SI: S_ENDPGM
 define void @store_lds_i64_align_4(i64 addrspace(3)* %out, i64 %val) #0 {
@@ -79,7 +79,7 @@ define void @store_lds_i64_align_4(i64 addrspace(3)* %out, i64 %val) #0 {
   ret void
 }
 
-; SI-LABEL: @store_lds_i64_align_4_with_offset
+; SI-LABEL: {{^}}store_lds_i64_align_4_with_offset:
 ; SI: DS_WRITE2_B32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, 0x8, 0x9
 ; SI: S_ENDPGM
 define void @store_lds_i64_align_4_with_offset(i64 addrspace(3)* %out) #0 {
@@ -88,7 +88,7 @@ define void @store_lds_i64_align_4_with_offset(i64 addrspace(3)* %out) #0 {
   ret void
 }
 
-; SI-LABEL: @store_lds_i64_align_4_with_split_offset
+; SI-LABEL: {{^}}store_lds_i64_align_4_with_split_offset:
 ; The tests for the case where the lo offset is 8-bits, but the hi offset is 9-bits
 ; SI: DS_WRITE2_B32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]}}, 0x0, 0x1
 ; SI: S_ENDPGM

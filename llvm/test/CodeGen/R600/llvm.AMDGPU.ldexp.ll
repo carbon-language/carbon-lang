@@ -3,7 +3,7 @@
 declare float @llvm.AMDGPU.ldexp.f32(float, i32) nounwind readnone
 declare double @llvm.AMDGPU.ldexp.f64(double, i32) nounwind readnone
 
-; SI-LABEL: @test_ldexp_f32:
+; SI-LABEL: {{^}}test_ldexp_f32:
 ; SI: V_LDEXP_F32
 ; SI: S_ENDPGM
 define void @test_ldexp_f32(float addrspace(1)* %out, float %a, i32 %b) nounwind {
@@ -12,7 +12,7 @@ define void @test_ldexp_f32(float addrspace(1)* %out, float %a, i32 %b) nounwind
   ret void
 }
 
-; SI-LABEL: @test_ldexp_f64:
+; SI-LABEL: {{^}}test_ldexp_f64:
 ; SI: V_LDEXP_F64
 ; SI: S_ENDPGM
 define void @test_ldexp_f64(double addrspace(1)* %out, double %a, i32 %b) nounwind {

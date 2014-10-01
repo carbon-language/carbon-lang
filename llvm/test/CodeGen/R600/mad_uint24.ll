@@ -2,7 +2,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck %s --check-prefix=EG --check-prefix=FUNC
 ; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s --check-prefix=SI --check-prefix=FUNC
 
-; FUNC-LABEL: @u32_mad24
+; FUNC-LABEL: {{^}}u32_mad24:
 ; EG: MULADD_UINT24
 ; SI: V_MAD_U32_U24
 
@@ -18,7 +18,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @i16_mad24
+; FUNC-LABEL: {{^}}i16_mad24:
 ; The order of A and B does not matter.
 ; EG: MULADD_UINT24 {{[* ]*}}T{{[0-9]}}.[[MAD_CHAN:[XYZW]]]
 ; The result must be sign-extended
@@ -36,7 +36,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @i8_mad24
+; FUNC-LABEL: {{^}}i8_mad24:
 ; EG: MULADD_UINT24 {{[* ]*}}T{{[0-9]}}.[[MAD_CHAN:[XYZW]]]
 ; The result must be sign-extended
 ; EG: BFE_INT {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[MAD_CHAN]], 0.0, literal.x
@@ -60,7 +60,7 @@ entry:
 ; 24-bit mad pattern wasn't being matched.
 
 ; Check that the select instruction is not deleted.
-; FUNC-LABEL: @i24_i32_i32_mad
+; FUNC-LABEL: {{^}}i24_i32_i32_mad:
 ; EG: CNDE_INT
 ; SI: V_CNDMASK
 define void @i24_i32_i32_mad(i32 addrspace(1)* %out, i32 %a, i32 %b, i32 %c, i32 %d) {

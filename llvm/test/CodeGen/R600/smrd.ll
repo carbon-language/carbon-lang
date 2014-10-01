@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=SI -show-mc-encoding -verify-machineinstrs | FileCheck %s
 
 ; SMRD load with an immediate offset.
-; CHECK-LABEL: @smrd0
+; CHECK-LABEL: {{^}}smrd0:
 ; CHECK: S_LOAD_DWORD s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0x1 ; encoding: [0x01
 define void @smrd0(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
 entry:
@@ -12,7 +12,7 @@ entry:
 }
 
 ; SMRD load with the largest possible immediate offset.
-; CHECK-LABEL: @smrd1
+; CHECK-LABEL: {{^}}smrd1:
 ; CHECK: S_LOAD_DWORD s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0xff ; encoding: [0xff
 define void @smrd1(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
 entry:
@@ -23,7 +23,7 @@ entry:
 }
 
 ; SMRD load with an offset greater than the largest possible immediate.
-; CHECK-LABEL: @smrd2
+; CHECK-LABEL: {{^}}smrd2:
 ; CHECK: S_MOV_B32 s[[OFFSET:[0-9]]], 0x400
 ; CHECK: S_LOAD_DWORD s{{[0-9]}}, s[{{[0-9]:[0-9]}}], s[[OFFSET]] ; encoding: [0x0[[OFFSET]]
 ; CHECK: S_ENDPGM
@@ -36,7 +36,7 @@ entry:
 }
 
 ; SMRD load with a 64-bit offset
-; CHECK-LABEL: @smrd3
+; CHECK-LABEL: {{^}}smrd3:
 ; CHECK-DAG: S_MOV_B32 s[[SLO:[0-9]+]], 0
 ; CHECK-DAG: S_MOV_B32 s[[SHI:[0-9]+]], 4
 ; FIXME: We don't need to copy these values to VGPRs
@@ -54,7 +54,7 @@ entry:
 }
 
 ; SMRD load using the load.const intrinsic with an immediate offset
-; CHECK-LABEL: @smrd_load_const0
+; CHECK-LABEL: {{^}}smrd_load_const0:
 ; CHECK: S_BUFFER_LOAD_DWORD s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0x4 ; encoding: [0x04
 define void @smrd_load_const0(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
@@ -67,7 +67,7 @@ main_body:
 
 ; SMRD load using the load.const intrinsic with the largest possible immediate
 ; offset.
-; CHECK-LABEL: @smrd_load_const1
+; CHECK-LABEL: {{^}}smrd_load_const1:
 ; CHECK: S_BUFFER_LOAD_DWORD s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0xff ; encoding: [0xff
 define void @smrd_load_const1(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
@@ -80,7 +80,7 @@ main_body:
 ; SMRD load using the load.const intrinsic with an offset greater than the
 ; largets possible immediate.
 ; immediate offset.
-; CHECK-LABEL: @smrd_load_const2
+; CHECK-LABEL: {{^}}smrd_load_const2:
 ; CHECK: S_MOV_B32 s[[OFFSET:[0-9]]], 0x400
 ; CHECK: S_BUFFER_LOAD_DWORD s{{[0-9]}}, s[{{[0-9]:[0-9]}}], s[[OFFSET]] ; encoding: [0x0[[OFFSET]]
 define void @smrd_load_const2(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {

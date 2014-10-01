@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
-; FUNC-LABEL: @test_barrier_local
+; FUNC-LABEL: {{^}}test_barrier_local:
 ; EG: GROUP_BARRIER
 ; SI: S_BARRIER
 

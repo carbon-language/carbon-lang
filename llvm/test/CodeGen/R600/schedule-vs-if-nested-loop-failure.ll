@@ -5,7 +5,7 @@
 declare void @llvm.AMDGPU.barrier.local() nounwind noduplicate
 
 
-; SI-LABEL: @main(
+; SI-LABEL: {{^}}main(
 define void @main(<4 x float> inreg %reg0, <4 x float> inreg %reg1) #0 {
 main_body:
   %0 = extractelement <4 x float> %reg1, i32 0

@@ -5,7 +5,7 @@ declare float @llvm.fmuladd.f32(float, float, float) #1
 declare i32 @llvm.AMDGPU.imad24(i32, i32, i32) #1
 
 
-; SI-LABEL: @test_sgpr_use_twice_binop:
+; SI-LABEL: {{^}}test_sgpr_use_twice_binop:
 ; SI: S_LOAD_DWORD [[SGPR:s[0-9]+]],
 ; SI: V_ADD_F32_e64 [[RESULT:v[0-9]+]], [[SGPR]], [[SGPR]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]]
@@ -15,7 +15,7 @@ define void @test_sgpr_use_twice_binop(float addrspace(1)* %out, float %a) #0 {
   ret void
 }
 
-; SI-LABEL: @test_sgpr_use_three_ternary_op:
+; SI-LABEL: {{^}}test_sgpr_use_three_ternary_op:
 ; SI: S_LOAD_DWORD [[SGPR:s[0-9]+]],
 ; SI: V_FMA_F32 [[RESULT:v[0-9]+]], [[SGPR]], [[SGPR]], [[SGPR]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]]
@@ -25,7 +25,7 @@ define void @test_sgpr_use_three_ternary_op(float addrspace(1)* %out, float %a) 
   ret void
 }
 
-; SI-LABEL: @test_sgpr_use_twice_ternary_op_a_a_b:
+; SI-LABEL: {{^}}test_sgpr_use_twice_ternary_op_a_a_b:
 ; SI: S_LOAD_DWORD [[SGPR0:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI: S_LOAD_DWORD [[SGPR1:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc
 ; SI: V_MOV_B32_e32 [[VGPR1:v[0-9]+]], [[SGPR1]]
@@ -37,7 +37,7 @@ define void @test_sgpr_use_twice_ternary_op_a_a_b(float addrspace(1)* %out, floa
   ret void
 }
 
-; SI-LABEL: @test_sgpr_use_twice_ternary_op_a_b_a:
+; SI-LABEL: {{^}}test_sgpr_use_twice_ternary_op_a_b_a:
 ; SI: S_LOAD_DWORD [[SGPR0:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI: S_LOAD_DWORD [[SGPR1:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc
 ; SI: V_MOV_B32_e32 [[VGPR1:v[0-9]+]], [[SGPR1]]
@@ -49,7 +49,7 @@ define void @test_sgpr_use_twice_ternary_op_a_b_a(float addrspace(1)* %out, floa
   ret void
 }
 
-; SI-LABEL: @test_sgpr_use_twice_ternary_op_b_a_a:
+; SI-LABEL: {{^}}test_sgpr_use_twice_ternary_op_b_a_a:
 ; SI: S_LOAD_DWORD [[SGPR0:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI: S_LOAD_DWORD [[SGPR1:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc
 ; SI: V_MOV_B32_e32 [[VGPR1:v[0-9]+]], [[SGPR1]]
@@ -61,7 +61,7 @@ define void @test_sgpr_use_twice_ternary_op_b_a_a(float addrspace(1)* %out, floa
   ret void
 }
 
-; SI-LABEL: @test_sgpr_use_twice_ternary_op_a_a_imm:
+; SI-LABEL: {{^}}test_sgpr_use_twice_ternary_op_a_a_imm:
 ; SI: S_LOAD_DWORD [[SGPR:s[0-9]+]]
 ; SI: V_FMA_F32 [[RESULT:v[0-9]+]], [[SGPR]], [[SGPR]], 2.0
 ; SI: BUFFER_STORE_DWORD [[RESULT]]
@@ -71,7 +71,7 @@ define void @test_sgpr_use_twice_ternary_op_a_a_imm(float addrspace(1)* %out, fl
   ret void
 }
 
-; SI-LABEL: @test_sgpr_use_twice_ternary_op_a_imm_a:
+; SI-LABEL: {{^}}test_sgpr_use_twice_ternary_op_a_imm_a:
 ; SI: S_LOAD_DWORD [[SGPR:s[0-9]+]]
 ; SI: V_FMA_F32 [[RESULT:v[0-9]+]], [[SGPR]], 2.0, [[SGPR]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]]
@@ -82,7 +82,7 @@ define void @test_sgpr_use_twice_ternary_op_a_imm_a(float addrspace(1)* %out, fl
 }
 
 ; Don't use fma since fma c, x, y is canonicalized to fma x, c, y
-; SI-LABEL: @test_sgpr_use_twice_ternary_op_imm_a_a:
+; SI-LABEL: {{^}}test_sgpr_use_twice_ternary_op_imm_a_a:
 ; SI: S_LOAD_DWORD [[SGPR:s[0-9]+]]
 ; SI: V_MAD_I32_I24 [[RESULT:v[0-9]+]], 2, [[SGPR]], [[SGPR]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]]

@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
-; FUNC-LABEL: @test_concat_v1i32
+; FUNC-LABEL: {{^}}test_concat_v1i32:
 ; 0x80f000 is the high 32 bits of the resource descriptor used by MUBUF
 ; instructions that access scratch memory.  Bit 23, which is the add_tid_enable
 ; bit, is only set for scratch access, so we can check for the absence of this
@@ -13,7 +13,7 @@ define void @test_concat_v1i32(<2 x i32> addrspace(1)* %out, <1 x i32> %a, <1 x 
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v2i32
+; FUNC-LABEL: {{^}}test_concat_v2i32:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v2i32(<4 x i32> addrspace(1)* %out, <2 x i32> %a, <2 x i32> %b) nounwind {
@@ -22,7 +22,7 @@ define void @test_concat_v2i32(<4 x i32> addrspace(1)* %out, <2 x i32> %a, <2 x 
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v4i32
+; FUNC-LABEL: {{^}}test_concat_v4i32:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v4i32(<8 x i32> addrspace(1)* %out, <4 x i32> %a, <4 x i32> %b) nounwind {
@@ -31,7 +31,7 @@ define void @test_concat_v4i32(<8 x i32> addrspace(1)* %out, <4 x i32> %a, <4 x 
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v8i32
+; FUNC-LABEL: {{^}}test_concat_v8i32:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v8i32(<16 x i32> addrspace(1)* %out, <8 x i32> %a, <8 x i32> %b) nounwind {
@@ -40,7 +40,7 @@ define void @test_concat_v8i32(<16 x i32> addrspace(1)* %out, <8 x i32> %a, <8 x
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v16i32
+; FUNC-LABEL: {{^}}test_concat_v16i32:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v16i32(<32 x i32> addrspace(1)* %out, <16 x i32> %a, <16 x i32> %b) nounwind {
@@ -49,7 +49,7 @@ define void @test_concat_v16i32(<32 x i32> addrspace(1)* %out, <16 x i32> %a, <1
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v1f32
+; FUNC-LABEL: {{^}}test_concat_v1f32:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v1f32(<2 x float> addrspace(1)* %out, <1 x float> %a, <1 x float> %b) nounwind {
@@ -58,7 +58,7 @@ define void @test_concat_v1f32(<2 x float> addrspace(1)* %out, <1 x float> %a, <
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v2f32
+; FUNC-LABEL: {{^}}test_concat_v2f32:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v2f32(<4 x float> addrspace(1)* %out, <2 x float> %a, <2 x float> %b) nounwind {
@@ -67,7 +67,7 @@ define void @test_concat_v2f32(<4 x float> addrspace(1)* %out, <2 x float> %a, <
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v4f32
+; FUNC-LABEL: {{^}}test_concat_v4f32:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v4f32(<8 x float> addrspace(1)* %out, <4 x float> %a, <4 x float> %b) nounwind {
@@ -76,7 +76,7 @@ define void @test_concat_v4f32(<8 x float> addrspace(1)* %out, <4 x float> %a, <
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v8f32
+; FUNC-LABEL: {{^}}test_concat_v8f32:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v8f32(<16 x float> addrspace(1)* %out, <8 x float> %a, <8 x float> %b) nounwind {
@@ -85,7 +85,7 @@ define void @test_concat_v8f32(<16 x float> addrspace(1)* %out, <8 x float> %a, 
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v16f32
+; FUNC-LABEL: {{^}}test_concat_v16f32:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v16f32(<32 x float> addrspace(1)* %out, <16 x float> %a, <16 x float> %b) nounwind {
@@ -94,7 +94,7 @@ define void @test_concat_v16f32(<32 x float> addrspace(1)* %out, <16 x float> %a
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v1i64
+; FUNC-LABEL: {{^}}test_concat_v1i64:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v1i64(<2 x double> addrspace(1)* %out, <1 x double> %a, <1 x double> %b) nounwind {
@@ -103,7 +103,7 @@ define void @test_concat_v1i64(<2 x double> addrspace(1)* %out, <1 x double> %a,
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v2i64
+; FUNC-LABEL: {{^}}test_concat_v2i64:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v2i64(<4 x double> addrspace(1)* %out, <2 x double> %a, <2 x double> %b) nounwind {
@@ -112,7 +112,7 @@ define void @test_concat_v2i64(<4 x double> addrspace(1)* %out, <2 x double> %a,
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v4i64
+; FUNC-LABEL: {{^}}test_concat_v4i64:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v4i64(<8 x double> addrspace(1)* %out, <4 x double> %a, <4 x double> %b) nounwind {
@@ -121,7 +121,7 @@ define void @test_concat_v4i64(<8 x double> addrspace(1)* %out, <4 x double> %a,
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v8i64
+; FUNC-LABEL: {{^}}test_concat_v8i64:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v8i64(<16 x double> addrspace(1)* %out, <8 x double> %a, <8 x double> %b) nounwind {
@@ -130,7 +130,7 @@ define void @test_concat_v8i64(<16 x double> addrspace(1)* %out, <8 x double> %a
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v16i64
+; FUNC-LABEL: {{^}}test_concat_v16i64:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v16i64(<32 x double> addrspace(1)* %out, <16 x double> %a, <16 x double> %b) nounwind {
@@ -139,7 +139,7 @@ define void @test_concat_v16i64(<32 x double> addrspace(1)* %out, <16 x double> 
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v1f64
+; FUNC-LABEL: {{^}}test_concat_v1f64:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v1f64(<2 x double> addrspace(1)* %out, <1 x double> %a, <1 x double> %b) nounwind {
@@ -148,7 +148,7 @@ define void @test_concat_v1f64(<2 x double> addrspace(1)* %out, <1 x double> %a,
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v2f64
+; FUNC-LABEL: {{^}}test_concat_v2f64:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v2f64(<4 x double> addrspace(1)* %out, <2 x double> %a, <2 x double> %b) nounwind {
@@ -157,7 +157,7 @@ define void @test_concat_v2f64(<4 x double> addrspace(1)* %out, <2 x double> %a,
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v4f64
+; FUNC-LABEL: {{^}}test_concat_v4f64:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v4f64(<8 x double> addrspace(1)* %out, <4 x double> %a, <4 x double> %b) nounwind {
@@ -166,7 +166,7 @@ define void @test_concat_v4f64(<8 x double> addrspace(1)* %out, <4 x double> %a,
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v8f64
+; FUNC-LABEL: {{^}}test_concat_v8f64:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v8f64(<16 x double> addrspace(1)* %out, <8 x double> %a, <8 x double> %b) nounwind {
@@ -175,7 +175,7 @@ define void @test_concat_v8f64(<16 x double> addrspace(1)* %out, <8 x double> %a
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v16f64
+; FUNC-LABEL: {{^}}test_concat_v16f64:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v16f64(<32 x double> addrspace(1)* %out, <16 x double> %a, <16 x double> %b) nounwind {
@@ -184,7 +184,7 @@ define void @test_concat_v16f64(<32 x double> addrspace(1)* %out, <16 x double> 
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v1i1
+; FUNC-LABEL: {{^}}test_concat_v1i1:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v1i1(<2 x i1> addrspace(1)* %out, <1 x i1> %a, <1 x i1> %b) nounwind {
@@ -193,7 +193,7 @@ define void @test_concat_v1i1(<2 x i1> addrspace(1)* %out, <1 x i1> %a, <1 x i1>
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v2i1
+; FUNC-LABEL: {{^}}test_concat_v2i1:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v2i1(<4 x i1> addrspace(1)* %out, <2 x i1> %a, <2 x i1> %b) nounwind {
@@ -202,7 +202,7 @@ define void @test_concat_v2i1(<4 x i1> addrspace(1)* %out, <2 x i1> %a, <2 x i1>
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v4i1
+; FUNC-LABEL: {{^}}test_concat_v4i1:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v4i1(<8 x i1> addrspace(1)* %out, <4 x i1> %a, <4 x i1> %b) nounwind {
@@ -211,7 +211,7 @@ define void @test_concat_v4i1(<8 x i1> addrspace(1)* %out, <4 x i1> %a, <4 x i1>
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v8i1
+; FUNC-LABEL: {{^}}test_concat_v8i1:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v8i1(<16 x i1> addrspace(1)* %out, <8 x i1> %a, <8 x i1> %b) nounwind {
@@ -220,7 +220,7 @@ define void @test_concat_v8i1(<16 x i1> addrspace(1)* %out, <8 x i1> %a, <8 x i1
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v16i1
+; FUNC-LABEL: {{^}}test_concat_v16i1:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v16i1(<32 x i1> addrspace(1)* %out, <16 x i1> %a, <16 x i1> %b) nounwind {
@@ -229,7 +229,7 @@ define void @test_concat_v16i1(<32 x i1> addrspace(1)* %out, <16 x i1> %a, <16 x
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v32i1
+; FUNC-LABEL: {{^}}test_concat_v32i1:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v32i1(<64 x i1> addrspace(1)* %out, <32 x i1> %a, <32 x i1> %b) nounwind {
@@ -238,7 +238,7 @@ define void @test_concat_v32i1(<64 x i1> addrspace(1)* %out, <32 x i1> %a, <32 x
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v1i16
+; FUNC-LABEL: {{^}}test_concat_v1i16:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v1i16(<2 x i16> addrspace(1)* %out, <1 x i16> %a, <1 x i16> %b) nounwind {
@@ -247,7 +247,7 @@ define void @test_concat_v1i16(<2 x i16> addrspace(1)* %out, <1 x i16> %a, <1 x 
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v2i16
+; FUNC-LABEL: {{^}}test_concat_v2i16:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v2i16(<4 x i16> addrspace(1)* %out, <2 x i16> %a, <2 x i16> %b) nounwind {
@@ -256,7 +256,7 @@ define void @test_concat_v2i16(<4 x i16> addrspace(1)* %out, <2 x i16> %a, <2 x 
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v4i16
+; FUNC-LABEL: {{^}}test_concat_v4i16:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v4i16(<8 x i16> addrspace(1)* %out, <4 x i16> %a, <4 x i16> %b) nounwind {
@@ -265,7 +265,7 @@ define void @test_concat_v4i16(<8 x i16> addrspace(1)* %out, <4 x i16> %a, <4 x 
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v8i16
+; FUNC-LABEL: {{^}}test_concat_v8i16:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v8i16(<16 x i16> addrspace(1)* %out, <8 x i16> %a, <8 x i16> %b) nounwind {
@@ -274,7 +274,7 @@ define void @test_concat_v8i16(<16 x i16> addrspace(1)* %out, <8 x i16> %a, <8 x
   ret void
 }
 
-; FUNC-LABEL: @test_concat_v16i16
+; FUNC-LABEL: {{^}}test_concat_v16i16:
 ; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v16i16(<32 x i16> addrspace(1)* %out, <16 x i16> %a, <16 x i16> %b) nounwind {

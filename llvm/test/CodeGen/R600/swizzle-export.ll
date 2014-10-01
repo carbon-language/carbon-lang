@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK %s
 
-;EG-CHECK: @main
+;EG-CHECK: {{^}}main:
 ;EG-CHECK: EXPORT T{{[0-9]+}}.XYXX
 ;EG-CHECK: EXPORT T{{[0-9]+}}.ZXXX
 ;EG-CHECK: EXPORT T{{[0-9]+}}.XXWX
@@ -92,7 +92,7 @@ main_body:
   ret void
 }
 
-; EG-CHECK: @main2
+; EG-CHECK: {{^}}main2:
 ; EG-CHECK: T{{[0-9]+}}.XY__
 ; EG-CHECK: T{{[0-9]+}}.ZXY0
 

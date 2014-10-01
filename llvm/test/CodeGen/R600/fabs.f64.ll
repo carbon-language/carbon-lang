@@ -7,7 +7,7 @@ declare double @llvm.fabs.f64(double) readnone
 declare <2 x double> @llvm.fabs.v2f64(<2 x double>) readnone
 declare <4 x double> @llvm.fabs.v4f64(<4 x double>) readnone
 
-; FUNC-LABEL: @v_fabs_f64
+; FUNC-LABEL: {{^}}v_fabs_f64:
 ; SI: V_AND_B32
 ; SI: S_ENDPGM
 define void @v_fabs_f64(double addrspace(1)* %out, double addrspace(1)* %in) {
@@ -20,7 +20,7 @@ define void @v_fabs_f64(double addrspace(1)* %out, double addrspace(1)* %in) {
   ret void
 }
 
-; FUNC-LABEL: @fabs_f64
+; FUNC-LABEL: {{^}}fabs_f64:
 ; SI: V_AND_B32
 ; SI-NOT: V_AND_B32
 ; SI: S_ENDPGM
@@ -30,7 +30,7 @@ define void @fabs_f64(double addrspace(1)* %out, double %in) {
   ret void
 }
 
-; FUNC-LABEL: @fabs_v2f64
+; FUNC-LABEL: {{^}}fabs_v2f64:
 ; SI: V_AND_B32
 ; SI: V_AND_B32
 ; SI: S_ENDPGM
@@ -40,7 +40,7 @@ define void @fabs_v2f64(<2 x double> addrspace(1)* %out, <2 x double> %in) {
   ret void
 }
 
-; FUNC-LABEL: @fabs_v4f64
+; FUNC-LABEL: {{^}}fabs_v4f64:
 ; SI: V_AND_B32
 ; SI: V_AND_B32
 ; SI: V_AND_B32
@@ -52,7 +52,7 @@ define void @fabs_v4f64(<4 x double> addrspace(1)* %out, <4 x double> %in) {
   ret void
 }
 
-; SI-LABEL: @fabs_fold_f64
+; SI-LABEL: {{^}}fabs_fold_f64:
 ; SI: S_LOAD_DWORDX2 [[ABS_VALUE:s\[[0-9]+:[0-9]+\]]], {{s\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI-NOT: AND
 ; SI: V_MUL_F64 {{v\[[0-9]+:[0-9]+\]}}, |[[ABS_VALUE]]|, {{v\[[0-9]+:[0-9]+\]}}
@@ -64,7 +64,7 @@ define void @fabs_fold_f64(double addrspace(1)* %out, double %in0, double %in1) 
   ret void
 }
 
-; SI-LABEL: @fabs_fn_fold_f64
+; SI-LABEL: {{^}}fabs_fn_fold_f64:
 ; SI: S_LOAD_DWORDX2 [[ABS_VALUE:s\[[0-9]+:[0-9]+\]]], {{s\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI-NOT: AND
 ; SI: V_MUL_F64 {{v\[[0-9]+:[0-9]+\]}}, |[[ABS_VALUE]]|, {{v\[[0-9]+:[0-9]+\]}}
@@ -76,7 +76,7 @@ define void @fabs_fn_fold_f64(double addrspace(1)* %out, double %in0, double %in
   ret void
 }
 
-; FUNC-LABEL: @fabs_free_f64
+; FUNC-LABEL: {{^}}fabs_free_f64:
 ; SI: V_AND_B32
 ; SI: S_ENDPGM
 define void @fabs_free_f64(double addrspace(1)* %out, i64 %in) {
@@ -86,7 +86,7 @@ define void @fabs_free_f64(double addrspace(1)* %out, i64 %in) {
   ret void
 }
 
-; FUNC-LABEL: @fabs_fn_free_f64
+; FUNC-LABEL: {{^}}fabs_fn_free_f64:
 ; SI: V_AND_B32
 ; SI: S_ENDPGM
 define void @fabs_fn_free_f64(double addrspace(1)* %out, i64 %in) {

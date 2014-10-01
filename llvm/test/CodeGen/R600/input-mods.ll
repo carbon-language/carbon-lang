@@ -1,9 +1,9 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=EG-CHECK
 ;RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck %s --check-prefix=CM-CHECK
 
-;EG-CHECK-LABEL: @test
+;EG-CHECK-LABEL: {{^}}test:
 ;EG-CHECK: EXP_IEEE *
-;CM-CHECK-LABEL: @test
+;CM-CHECK-LABEL: {{^}}test:
 ;CM-CHECK: EXP_IEEE T{{[0-9]+}}.X, -|T{{[0-9]+}}.X|
 ;CM-CHECK: EXP_IEEE T{{[0-9]+}}.Y (MASKED), -|T{{[0-9]+}}.X|
 ;CM-CHECK: EXP_IEEE T{{[0-9]+}}.Z (MASKED), -|T{{[0-9]+}}.X|

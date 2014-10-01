@@ -13,7 +13,7 @@
 ;
 ;
 
-; CHECK-LABEL: @branch_into_diamond
+; CHECK-LABEL: {{^}}branch_into_diamond:
 ; === entry block:
 ; CHECK: ALU_PUSH_BEFORE
 ; === Branch instruction (IF):

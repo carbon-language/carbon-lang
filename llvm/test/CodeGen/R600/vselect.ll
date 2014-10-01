@@ -1,11 +1,11 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK %s
 ;RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK %s
 
-;EG-CHECK: @test_select_v2i32
+;EG-CHECK: {{^}}test_select_v2i32:
 ;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
-;SI-CHECK: @test_select_v2i32
+;SI-CHECK: {{^}}test_select_v2i32:
 ;SI-CHECK: V_CNDMASK_B32_e64
 ;SI-CHECK: V_CNDMASK_B32_e64
 
@@ -19,11 +19,11 @@ entry:
   ret void
 }
 
-;EG-CHECK: @test_select_v2f32
+;EG-CHECK: {{^}}test_select_v2f32:
 ;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
-;SI-CHECK: @test_select_v2f32
+;SI-CHECK: {{^}}test_select_v2f32:
 ;SI-CHECK: V_CNDMASK_B32_e64
 ;SI-CHECK: V_CNDMASK_B32_e64
 
@@ -37,13 +37,13 @@ entry:
   ret void
 }
 
-;EG-CHECK: @test_select_v4i32
+;EG-CHECK: {{^}}test_select_v4i32:
 ;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
-;SI-CHECK: @test_select_v4i32
+;SI-CHECK: {{^}}test_select_v4i32:
 ;SI-CHECK: V_CNDMASK_B32_e64
 ;SI-CHECK: V_CNDMASK_B32_e64
 ;SI-CHECK: V_CNDMASK_B32_e64
@@ -59,7 +59,7 @@ entry:
   ret void
 }
 
-;EG-CHECK: @test_select_v4f32
+;EG-CHECK: {{^}}test_select_v4f32:
 ;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}

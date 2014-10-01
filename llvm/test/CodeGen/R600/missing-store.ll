@@ -5,7 +5,7 @@
 ; Make sure when the load from %ptr2 is folded the chain isn't lost,
 ; resulting in losing the store to gptr
 
-; FUNC-LABEL: @missing_store_reduced
+; FUNC-LABEL: {{^}}missing_store_reduced:
 ; SI: DS_READ_B64
 ; SI: BUFFER_STORE_DWORD
 ; SI: BUFFER_LOAD_DWORD

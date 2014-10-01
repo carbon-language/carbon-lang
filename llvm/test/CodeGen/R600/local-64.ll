@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck --check-prefix=SI --check-prefix=BOTH %s
 ; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs< %s | FileCheck --check-prefix=CI --check-prefix=BOTH %s
 
-; BOTH-LABEL: @local_i32_load
+; BOTH-LABEL: {{^}}local_i32_load:
 ; BOTH: DS_READ_B32 [[REG:v[0-9]+]], v{{[0-9]+}}, 0x1c, [M0]
 ; BOTH: BUFFER_STORE_DWORD [[REG]],
 define void @local_i32_load(i32 addrspace(1)* %out, i32 addrspace(3)* %in) nounwind {
@@ -11,7 +11,7 @@ define void @local_i32_load(i32 addrspace(1)* %out, i32 addrspace(3)* %in) nounw
   ret void
 }
 
-; BOTH-LABEL: @local_i32_load_0_offset
+; BOTH-LABEL: {{^}}local_i32_load_0_offset:
 ; BOTH: DS_READ_B32 [[REG:v[0-9]+]], v{{[0-9]+}}, 0x0, [M0]
 ; BOTH: BUFFER_STORE_DWORD [[REG]],
 define void @local_i32_load_0_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %in) nounwind {
@@ -20,7 +20,7 @@ define void @local_i32_load_0_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %
   ret void
 }
 
-; BOTH-LABEL: @local_i8_load_i16_max_offset
+; BOTH-LABEL: {{^}}local_i8_load_i16_max_offset:
 ; BOTH-NOT: ADD
 ; BOTH: DS_READ_U8 [[REG:v[0-9]+]], {{v[0-9]+}}, 0xffff, [M0]
 ; BOTH: BUFFER_STORE_BYTE [[REG]],
@@ -31,7 +31,7 @@ define void @local_i8_load_i16_max_offset(i8 addrspace(1)* %out, i8 addrspace(3)
   ret void
 }
 
-; BOTH-LABEL: @local_i8_load_over_i16_max_offset
+; BOTH-LABEL: {{^}}local_i8_load_over_i16_max_offset:
 ; The LDS offset will be 65536 bytes, which is larger than the size of LDS on
 ; SI, which is why it is being OR'd with the base pointer.
 ; SI: S_OR_B32 [[ADDR:s[0-9]+]], s{{[0-9]+}}, 0x10000
@@ -46,7 +46,7 @@ define void @local_i8_load_over_i16_max_offset(i8 addrspace(1)* %out, i8 addrspa
   ret void
 }
 
-; BOTH-LABEL: @local_i64_load
+; BOTH-LABEL: {{^}}local_i64_load:
 ; BOTH-NOT: ADD
 ; BOTH: DS_READ_B64 [[REG:v[[0-9]+:[0-9]+]]], v{{[0-9]+}}, 0x38, [M0]
 ; BOTH: BUFFER_STORE_DWORDX2 [[REG]],
@@ -57,7 +57,7 @@ define void @local_i64_load(i64 addrspace(1)* %out, i64 addrspace(3)* %in) nounw
   ret void
 }
 
-; BOTH-LABEL: @local_i64_load_0_offset
+; BOTH-LABEL: {{^}}local_i64_load_0_offset:
 ; BOTH: DS_READ_B64 [[REG:v\[[0-9]+:[0-9]+\]]], v{{[0-9]+}}, 0x0, [M0]
 ; BOTH: BUFFER_STORE_DWORDX2 [[REG]],
 define void @local_i64_load_0_offset(i64 addrspace(1)* %out, i64 addrspace(3)* %in) nounwind {
@@ -66,7 +66,7 @@ define void @local_i64_load_0_offset(i64 addrspace(1)* %out, i64 addrspace(3)* %
   ret void
 }
 
-; BOTH-LABEL: @local_f64_load
+; BOTH-LABEL: {{^}}local_f64_load:
 ; BOTH-NOT: ADD
 ; BOTH: DS_READ_B64 [[REG:v[[0-9]+:[0-9]+]]], v{{[0-9]+}}, 0x38, [M0]
 ; BOTH: BUFFER_STORE_DWORDX2 [[REG]],
@@ -77,7 +77,7 @@ define void @local_f64_load(double addrspace(1)* %out, double addrspace(3)* %in)
   ret void
 }
 
-; BOTH-LABEL: @local_f64_load_0_offset
+; BOTH-LABEL: {{^}}local_f64_load_0_offset:
 ; BOTH: DS_READ_B64 [[REG:v\[[0-9]+:[0-9]+\]]], v{{[0-9]+}}, 0x0, [M0]
 ; BOTH: BUFFER_STORE_DWORDX2 [[REG]],
 define void @local_f64_load_0_offset(double addrspace(1)* %out, double addrspace(3)* %in) nounwind {
@@ -86,7 +86,7 @@ define void @local_f64_load_0_offset(double addrspace(1)* %out, double addrspace
   ret void
 }
 
-; BOTH-LABEL: @local_i64_store
+; BOTH-LABEL: {{^}}local_i64_store:
 ; BOTH-NOT: ADD
 ; BOTH: DS_WRITE_B64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, 0x38 [M0]
 define void @local_i64_store(i64 addrspace(3)* %out) nounwind {
@@ -95,7 +95,7 @@ define void @local_i64_store(i64 addrspace(3)* %out) nounwind {
   ret void
 }
 
-; BOTH-LABEL: @local_i64_store_0_offset
+; BOTH-LABEL: {{^}}local_i64_store_0_offset:
 ; BOTH-NOT: ADD
 ; BOTH: DS_WRITE_B64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, 0x0 [M0]
 define void @local_i64_store_0_offset(i64 addrspace(3)* %out) nounwind {
@@ -103,7 +103,7 @@ define void @local_i64_store_0_offset(i64 addrspace(3)* %out) nounwind {
   ret void
 }
 
-; BOTH-LABEL: @local_f64_store
+; BOTH-LABEL: {{^}}local_f64_store:
 ; BOTH-NOT: ADD
 ; BOTH: DS_WRITE_B64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, 0x38 [M0]
 define void @local_f64_store(double addrspace(3)* %out) nounwind {
@@ -112,14 +112,14 @@ define void @local_f64_store(double addrspace(3)* %out) nounwind {
   ret void
 }
 
-; BOTH-LABEL: @local_f64_store_0_offset
+; BOTH-LABEL: {{^}}local_f64_store_0_offset:
 ; BOTH: DS_WRITE_B64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, 0x0 [M0]
 define void @local_f64_store_0_offset(double addrspace(3)* %out) nounwind {
   store double 20.0, double addrspace(3)* %out, align 8
   ret void
 }
 
-; BOTH-LABEL: @local_v2i64_store
+; BOTH-LABEL: {{^}}local_v2i64_store:
 ; BOTH-NOT: ADD
 ; BOTH-DAG: DS_WRITE_B64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, 0x78 [M0]
 ; BOTH-DAG: DS_WRITE_B64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, 0x70 [M0]
@@ -129,7 +129,7 @@ define void @local_v2i64_store(<2 x i64> addrspace(3)* %out) nounwind {
   ret void
 }
 
-; BOTH-LABEL: @local_v2i64_store_0_offset
+; BOTH-LABEL: {{^}}local_v2i64_store_0_offset:
 ; BOTH-NOT: ADD
 ; BOTH-DAG: DS_WRITE_B64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, 0x8 [M0]
 ; BOTH-DAG: DS_WRITE_B64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, 0x0 [M0]
@@ -138,7 +138,7 @@ define void @local_v2i64_store_0_offset(<2 x i64> addrspace(3)* %out) nounwind {
   ret void
 }
 
-; BOTH-LABEL: @local_v4i64_store
+; BOTH-LABEL: {{^}}local_v4i64_store:
 ; BOTH-NOT: ADD
 ; BOTH-DAG: DS_WRITE_B64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, 0xf8 [M0]
 ; BOTH-DAG: DS_WRITE_B64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, 0xf0 [M0]
@@ -150,7 +150,7 @@ define void @local_v4i64_store(<4 x i64> addrspace(3)* %out) nounwind {
   ret void
 }
 
-; BOTH-LABEL: @local_v4i64_store_0_offset
+; BOTH-LABEL: {{^}}local_v4i64_store_0_offset:
 ; BOTH-NOT: ADD
 ; BOTH-DAG: DS_WRITE_B64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, 0x18 [M0]
 ; BOTH-DAG: DS_WRITE_B64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, 0x10 [M0]

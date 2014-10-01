@@ -4,7 +4,7 @@
 ; the result of another VTX_READ instruction were being grouped in the
 ; same fetch clasue.
 
-; CHECK: @test
+; CHECK: {{^}}test:
 ; CHECK: Fetch clause
 ; CHECK: VTX_READ_32 [[IN0:T[0-9]+\.X]], [[IN0]], 0
 ; CHECK: Fetch clause

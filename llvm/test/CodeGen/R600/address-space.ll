@@ -7,7 +7,7 @@
 ; FIXME: Extra V_MOV from SGPR to VGPR for second read. The address is
 ; already in a VGPR after the first read.
 
-; CHECK-LABEL: @do_as_ptr_calcs:
+; CHECK-LABEL: {{^}}do_as_ptr_calcs:
 ; CHECK: S_LOAD_DWORD [[SREG1:s[0-9]+]],
 ; CHECK: V_MOV_B32_e32 [[VREG1:v[0-9]+]], [[SREG1]]
 ; CHECK-DAG: DS_READ_B32 v{{[0-9]+}}, [[VREG1]], 0xc

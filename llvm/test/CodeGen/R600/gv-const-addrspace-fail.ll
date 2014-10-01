@@ -4,7 +4,7 @@
 
 @a = internal addrspace(2) constant [1 x i8] [ i8 7 ], align 1
 
-; FUNC-LABEL: @test_i8
+; FUNC-LABEL: {{^}}test_i8:
 ; EG: CF_END
 ; SI: BUFFER_STORE_BYTE
 ; SI: S_ENDPGM
@@ -17,7 +17,7 @@ define void @test_i8( i32 %s, i8 addrspace(1)* %out) #3 {
 
 @b = internal addrspace(2) constant [1 x i16] [ i16 7 ], align 2
 
-; FUNC-LABEL: @test_i16
+; FUNC-LABEL: {{^}}test_i16:
 ; EG: CF_END
 ; SI: BUFFER_STORE_SHORT
 ; SI: S_ENDPGM
@@ -33,7 +33,7 @@ define void @test_i16( i32 %s, i16 addrspace(1)* %out) #3 {
 ; The illegal i8s aren't handled
 @struct_bar_gv = internal addrspace(2) constant [1 x %struct.bar] [ %struct.bar { float 16.0, [5 x i8] [i8 0, i8 1, i8 2, i8 3, i8 4] } ]
 
-; FUNC-LABEL: @struct_bar_gv_load
+; FUNC-LABEL: {{^}}struct_bar_gv_load:
 define void @struct_bar_gv_load(i8 addrspace(1)* %out, i32 %index) {
   %gep = getelementptr inbounds [1 x %struct.bar] addrspace(2)* @struct_bar_gv, i32 0, i32 0, i32 1, i32 %index
   %load = load i8 addrspace(2)* %gep, align 1
@@ -48,7 +48,7 @@ define void @struct_bar_gv_load(i8 addrspace(1)* %out, i32 %index) {
                                                                     <4 x i32> <i32 9, i32 10, i32 11, i32 12>,
                                                                     <4 x i32> <i32 13, i32 14, i32 15, i32 16> ]
 
-; FUNC-LABEL: @array_vector_gv_load
+; FUNC-LABEL: {{^}}array_vector_gv_load:
 define void @array_vector_gv_load(<4 x i32> addrspace(1)* %out, i32 %index) {
   %gep = getelementptr inbounds [4 x <4 x i32>] addrspace(2)* @array_vector_gv, i32 0, i32 %index
   %load = load <4 x i32> addrspace(2)* %gep, align 16

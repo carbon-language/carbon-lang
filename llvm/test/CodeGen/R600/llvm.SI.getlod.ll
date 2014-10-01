@@ -1,6 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
-;CHECK-LABEL: @getlod
+;CHECK-LABEL: {{^}}getlod:
 ;CHECK: IMAGE_GET_LOD {{v\[[0-9]+:[0-9]+\]}}, 3, 0, 0, -1, 0, 0, 0, 0, {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @getlod() #0 {
 main_body:
@@ -11,7 +11,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @getlod_v2
+;CHECK-LABEL: {{^}}getlod_v2:
 ;CHECK: IMAGE_GET_LOD {{v\[[0-9]+:[0-9]+\]}}, 3, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @getlod_v2() #0 {
 main_body:
@@ -22,7 +22,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @getlod_v4
+;CHECK-LABEL: {{^}}getlod_v4:
 ;CHECK: IMAGE_GET_LOD {{v\[[0-9]+:[0-9]+\]}}, 3, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @getlod_v4() #0 {
 main_body:

@@ -5,7 +5,7 @@
 ; specialize away generic pointer accesses.
 
 
-; CHECK-LABEL: @branch_use_flat_i32:
+; CHECK-LABEL: {{^}}branch_use_flat_i32:
 ; CHECK: FLAT_STORE_DWORD {{v[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, [M0, FLAT_SCRATCH]
 ; CHECK: S_ENDPGM
 define void @branch_use_flat_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* %gptr, i32 addrspace(3)* %lptr, i32 %x, i32 %c) #0 {
@@ -34,7 +34,7 @@ end:
 ; These testcases might become useless when there are optimizations to
 ; remove generic pointers.
 
-; CHECK-LABEL: @store_flat_i32:
+; CHECK-LABEL: {{^}}store_flat_i32:
 ; CHECK: V_MOV_B32_e32 v[[DATA:[0-9]+]], {{s[0-9]+}}
 ; CHECK: V_MOV_B32_e32 v[[LO_VREG:[0-9]+]], {{s[0-9]+}}
 ; CHECK: V_MOV_B32_e32 v[[HI_VREG:[0-9]+]], {{s[0-9]+}}
@@ -45,7 +45,7 @@ define void @store_flat_i32(i32 addrspace(1)* %gptr, i32 %x) #0 {
   ret void
 }
 
-; CHECK-LABEL: @store_flat_i64:
+; CHECK-LABEL: {{^}}store_flat_i64:
 ; CHECK: FLAT_STORE_DWORDX2
 define void @store_flat_i64(i64 addrspace(1)* %gptr, i64 %x) #0 {
   %fptr = addrspacecast i64 addrspace(1)* %gptr to i64 addrspace(4)*
@@ -53,7 +53,7 @@ define void @store_flat_i64(i64 addrspace(1)* %gptr, i64 %x) #0 {
   ret void
 }
 
-; CHECK-LABEL: @store_flat_v4i32:
+; CHECK-LABEL: {{^}}store_flat_v4i32:
 ; CHECK: FLAT_STORE_DWORDX4
 define void @store_flat_v4i32(<4 x i32> addrspace(1)* %gptr, <4 x i32> %x) #0 {
   %fptr = addrspacecast <4 x i32> addrspace(1)* %gptr to <4 x i32> addrspace(4)*
@@ -61,7 +61,7 @@ define void @store_flat_v4i32(<4 x i32> addrspace(1)* %gptr, <4 x i32> %x) #0 {
   ret void
 }
 
-; CHECK-LABEL: @store_flat_trunc_i16:
+; CHECK-LABEL: {{^}}store_flat_trunc_i16:
 ; CHECK: FLAT_STORE_SHORT
 define void @store_flat_trunc_i16(i16 addrspace(1)* %gptr, i32 %x) #0 {
   %fptr = addrspacecast i16 addrspace(1)* %gptr to i16 addrspace(4)*
@@ -70,7 +70,7 @@ define void @store_flat_trunc_i16(i16 addrspace(1)* %gptr, i32 %x) #0 {
   ret void
 }
 
-; CHECK-LABEL: @store_flat_trunc_i8:
+; CHECK-LABEL: {{^}}store_flat_trunc_i8:
 ; CHECK: FLAT_STORE_BYTE
 define void @store_flat_trunc_i8(i8 addrspace(1)* %gptr, i32 %x) #0 {
   %fptr = addrspacecast i8 addrspace(1)* %gptr to i8 addrspace(4)*
@@ -154,7 +154,7 @@ define void @zextload_flat_i16(i32 addrspace(1)* noalias %out, i16 addrspace(1)*
 ; scratch allocations again.
 
 ; Check for prologue initializing special SGPRs pointing to scratch.
-; CHECK-LABEL: @store_flat_scratch:
+; CHECK-LABEL: {{^}}store_flat_scratch:
 ; CHECK: S_MOVK_I32 flat_scratch_lo, 0
 ; CHECK-NO-PROMOTE: S_MOVK_I32 flat_scratch_hi, 40
 ; CHECK-PROMOTE: S_MOVK_I32 flat_scratch_hi, 0

@@ -4,7 +4,7 @@
 ; vector stores at the end of a basic block were not being added to the
 ; LegalizedNodes list, which triggered an assertion failure.
 
-; CHECK-LABEL: @test
+; CHECK-LABEL: {{^}}test:
 ; CHECK: MEM_RAT_CACHELESS STORE_RAW
 define void @test(<4 x i8> addrspace(1)* %out, i32 %cond, <4 x i8> %in) {
 entry:

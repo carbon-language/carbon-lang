@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
-; FUNC-LABEL: @fp_to_sint_f64_i32
+; FUNC-LABEL: {{^}}fp_to_sint_f64_i32:
 ; SI: V_CVT_I32_F64_e32
 define void @fp_to_sint_f64_i32(i32 addrspace(1)* %out, double %in) {
   %result = fptosi double %in to i32
@@ -8,7 +8,7 @@ define void @fp_to_sint_f64_i32(i32 addrspace(1)* %out, double %in) {
   ret void
 }
 
-; FUNC-LABEL: @fp_to_sint_v2f64_v2i32
+; FUNC-LABEL: {{^}}fp_to_sint_v2f64_v2i32:
 ; SI: V_CVT_I32_F64_e32
 ; SI: V_CVT_I32_F64_e32
 define void @fp_to_sint_v2f64_v2i32(<2 x i32> addrspace(1)* %out, <2 x double> %in) {
@@ -17,7 +17,7 @@ define void @fp_to_sint_v2f64_v2i32(<2 x i32> addrspace(1)* %out, <2 x double> %
   ret void
 }
 
-; FUNC-LABEL: @fp_to_sint_v4f64_v4i32
+; FUNC-LABEL: {{^}}fp_to_sint_v4f64_v4i32:
 ; SI: V_CVT_I32_F64_e32
 ; SI: V_CVT_I32_F64_e32
 ; SI: V_CVT_I32_F64_e32

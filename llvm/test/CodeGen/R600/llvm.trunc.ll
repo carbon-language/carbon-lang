@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
-; CHECK-LABEL: @trunc_f32
+; CHECK-LABEL: {{^}}trunc_f32:
 ; CHECK: TRUNC
 
 define void @trunc_f32(float addrspace(1)* %out, float %in) {

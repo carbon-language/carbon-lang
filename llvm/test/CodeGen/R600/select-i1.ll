@@ -2,7 +2,7 @@
 
 ; FIXME: This should go in existing select.ll test, except the current testcase there is broken on SI
 
-; FUNC-LABEL: @select_i1
+; FUNC-LABEL: {{^}}select_i1:
 ; SI: V_CNDMASK_B32
 ; SI-NOT: V_CNDMASK_B32
 define void @select_i1(i1 addrspace(1)* %out, i32 %cond, i1 %a, i1 %b) nounwind {

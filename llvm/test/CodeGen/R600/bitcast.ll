@@ -4,7 +4,7 @@
 
 declare void @llvm.SI.export(i32, i32, i32, i32, i32, float, float, float, float)
 
-; FUNC-LABEL: @v32i8_to_v8i32
+; FUNC-LABEL: {{^}}v32i8_to_v8i32:
 ; SI: S_ENDPGM
 define void @v32i8_to_v8i32(<32 x i8> addrspace(2)* inreg) #0 {
 entry:
@@ -17,7 +17,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @i8ptr_v16i8ptr
+; FUNC-LABEL: {{^}}i8ptr_v16i8ptr:
 ; SI: S_ENDPGM
 define void @i8ptr_v16i8ptr(<16 x i8> addrspace(1)* %out, i8 addrspace(1)* %in) {
 entry:
@@ -55,7 +55,7 @@ define void @i32_to_v4i8(<4 x i8> addrspace(1)* %out, i32 addrspace(1)* %in) nou
   ret void
 }
 
-; FUNC-LABEL: @bitcast_v2i32_to_f64
+; FUNC-LABEL: {{^}}bitcast_v2i32_to_f64:
 ; SI: S_ENDPGM
 define void @bitcast_v2i32_to_f64(double addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
   %val = load <2 x i32> addrspace(1)* %in, align 8
@@ -65,7 +65,7 @@ define void @bitcast_v2i32_to_f64(double addrspace(1)* %out, <2 x i32> addrspace
   ret void
 }
 
-; FUNC-LABEL: @bitcast_f64_to_v2i32
+; FUNC-LABEL: {{^}}bitcast_f64_to_v2i32:
 ; SI: S_ENDPGM
 define void @bitcast_f64_to_v2i32(<2 x i32> addrspace(1)* %out, double addrspace(1)* %in) {
   %val = load double addrspace(1)* %in, align 8

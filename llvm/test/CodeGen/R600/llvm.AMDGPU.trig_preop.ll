@@ -2,7 +2,7 @@
 
 declare double @llvm.AMDGPU.trig.preop.f64(double, i32) nounwind readnone
 
-; SI-LABEL: @test_trig_preop_f64:
+; SI-LABEL: {{^}}test_trig_preop_f64:
 ; SI-DAG: BUFFER_LOAD_DWORD [[SEG:v[0-9]+]]
 ; SI-DAG: BUFFER_LOAD_DWORDX2 [[SRC:v\[[0-9]+:[0-9]+\]]],
 ; SI: V_TRIG_PREOP_F64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[SRC]], [[SEG]]
@@ -16,7 +16,7 @@ define void @test_trig_preop_f64(double addrspace(1)* %out, double addrspace(1)*
   ret void
 }
 
-; SI-LABEL: @test_trig_preop_f64_imm_segment:
+; SI-LABEL: {{^}}test_trig_preop_f64_imm_segment:
 ; SI: BUFFER_LOAD_DWORDX2 [[SRC:v\[[0-9]+:[0-9]+\]]],
 ; SI: V_TRIG_PREOP_F64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[SRC]], 7
 ; SI: BUFFER_STORE_DWORDX2 [[RESULT]],

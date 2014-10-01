@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
 ; We want all MULLO_INT inst to be last in their instruction group
-;CHECK: @fill3d
+;CHECK: {{^}}fill3d:
 ;CHECK-NOT: MULLO_INT T[0-9]+
 
 ; ModuleID = 'radeon'

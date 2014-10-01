@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -check-prefix=CI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
-; FUNC-LABEL: @rint_f64
+; FUNC-LABEL: {{^}}rint_f64:
 ; CI: V_RNDNE_F64_e32
 
 ; SI-DAG: V_ADD_F64
@@ -17,7 +17,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @rint_v2f64
+; FUNC-LABEL: {{^}}rint_v2f64:
 ; CI: V_RNDNE_F64_e32
 ; CI: V_RNDNE_F64_e32
 define void @rint_v2f64(<2 x double> addrspace(1)* %out, <2 x double> %in) {
@@ -27,7 +27,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @rint_v4f64
+; FUNC-LABEL: {{^}}rint_v4f64:
 ; CI: V_RNDNE_F64_e32
 ; CI: V_RNDNE_F64_e32
 ; CI: V_RNDNE_F64_e32

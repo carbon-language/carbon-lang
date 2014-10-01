@@ -2,7 +2,7 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
 
-; FUNC-LABEL: @v_fsub_f32
+; FUNC-LABEL: {{^}}v_fsub_f32:
 ; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
 define void @v_fsub_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
   %b_ptr = getelementptr float addrspace(1)* %in, i32 1
@@ -13,7 +13,7 @@ define void @v_fsub_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
   ret void
 }
 
-; FUNC-LABEL: @s_fsub_f32
+; FUNC-LABEL: {{^}}s_fsub_f32:
 ; R600: ADD {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z, -KC0[2].W
 
 ; SI: V_SUB_F32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
@@ -27,7 +27,7 @@ declare float @llvm.R600.load.input(i32) readnone
 
 declare void @llvm.AMDGPU.store.output(float, i32)
 
-; FUNC-LABEL: @fsub_v2f32
+; FUNC-LABEL: {{^}}fsub_v2f32:
 ; R600-DAG: ADD {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[3].X, -KC0[3].Z
 ; R600-DAG: ADD {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].W, -KC0[3].Y
 
@@ -40,7 +40,7 @@ define void @fsub_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %a, <2 x flo
   ret void
 }
 
-; FUNC-LABEL: @v_fsub_v4f32
+; FUNC-LABEL: {{^}}v_fsub_v4f32:
 ; R600: ADD {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], -T[0-9]+\.[XYZW]}}
 ; R600: ADD {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], -T[0-9]+\.[XYZW]}}
 ; R600: ADD {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], -T[0-9]+\.[XYZW]}}
@@ -61,7 +61,7 @@ define void @v_fsub_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(
 
 ; FIXME: Should be using SGPR directly for first operand
 
-; FUNC-LABEL: @s_fsub_v4f32
+; FUNC-LABEL: {{^}}s_fsub_v4f32:
 ; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
 ; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
 ; SI: V_SUBREV_F32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}

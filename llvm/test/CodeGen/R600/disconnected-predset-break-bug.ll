@@ -4,7 +4,7 @@
 ; result.  This tests that there are no instructions between the PRED_SET*
 ; and the PREDICATE_BREAK in this loop.
 
-; CHECK: @loop_ge
+; CHECK: {{^}}loop_ge:
 ; CHECK: LOOP_START_DX10
 ; CHECK: ALU_PUSH_BEFORE
 ; CHECK-NEXT: JUMP

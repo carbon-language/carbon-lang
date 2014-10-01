@@ -7,7 +7,7 @@
 ;===------------------------------------------------------------------------===;
 
 ; Load an i8 value from the global address space.
-; FUNC-LABEL: @load_i8
+; FUNC-LABEL: {{^}}load_i8:
 ; R600-CHECK: VTX_READ_8 T{{[0-9]+\.X, T[0-9]+\.X}}
 
 ; SI-CHECK: BUFFER_LOAD_UBYTE v{{[0-9]+}},
@@ -18,7 +18,7 @@ define void @load_i8(i32 addrspace(1)* %out, i8 addrspace(1)* %in) {
   ret void
 }
 
-; FUNC-LABEL: @load_i8_sext
+; FUNC-LABEL: {{^}}load_i8_sext:
 ; R600-CHECK: VTX_READ_8 [[DST:T[0-9]\.[XYZW]]], [[DST]]
 ; R600-CHECK: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_CHAN:[XYZW]]], [[DST]]
 ; R600-CHECK: 24
@@ -33,7 +33,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v2i8
+; FUNC-LABEL: {{^}}load_v2i8:
 ; R600-CHECK: VTX_READ_8
 ; R600-CHECK: VTX_READ_8
 ; SI-CHECK: BUFFER_LOAD_UBYTE
@@ -46,7 +46,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v2i8_sext
+; FUNC-LABEL: {{^}}load_v2i8_sext:
 ; R600-CHECK-DAG: VTX_READ_8 [[DST_X:T[0-9]\.[XYZW]]], [[DST_X]]
 ; R600-CHECK-DAG: VTX_READ_8 [[DST_Y:T[0-9]\.[XYZW]]], [[DST_Y]]
 ; R600-CHECK-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_X_CHAN:[XYZW]]], [[DST_X]]
@@ -67,7 +67,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v4i8
+; FUNC-LABEL: {{^}}load_v4i8:
 ; R600-CHECK: VTX_READ_8
 ; R600-CHECK: VTX_READ_8
 ; R600-CHECK: VTX_READ_8
@@ -84,7 +84,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v4i8_sext
+; FUNC-LABEL: {{^}}load_v4i8_sext:
 ; R600-CHECK-DAG: VTX_READ_8 [[DST_X:T[0-9]\.[XYZW]]], [[DST_X]]
 ; R600-CHECK-DAG: VTX_READ_8 [[DST_Y:T[0-9]\.[XYZW]]], [[DST_Y]]
 ; R600-CHECK-DAG: VTX_READ_8 [[DST_Z:T[0-9]\.[XYZW]]], [[DST_Z]]
@@ -118,7 +118,7 @@ entry:
 }
 
 ; Load an i16 value from the global address space.
-; FUNC-LABEL: @load_i16
+; FUNC-LABEL: {{^}}load_i16:
 ; R600-CHECK: VTX_READ_16 T{{[0-9]+\.X, T[0-9]+\.X}}
 ; SI-CHECK: BUFFER_LOAD_USHORT
 define void @load_i16(i32 addrspace(1)* %out, i16 addrspace(1)* %in) {
@@ -129,7 +129,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_i16_sext
+; FUNC-LABEL: {{^}}load_i16_sext:
 ; R600-CHECK: VTX_READ_16 [[DST:T[0-9]\.[XYZW]]], [[DST]]
 ; R600-CHECK: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_CHAN:[XYZW]]], [[DST]]
 ; R600-CHECK: 16
@@ -144,7 +144,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v2i16
+; FUNC-LABEL: {{^}}load_v2i16:
 ; R600-CHECK: VTX_READ_16
 ; R600-CHECK: VTX_READ_16
 ; SI-CHECK: BUFFER_LOAD_USHORT
@@ -157,7 +157,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v2i16_sext
+; FUNC-LABEL: {{^}}load_v2i16_sext:
 ; R600-CHECK-DAG: VTX_READ_16 [[DST_X:T[0-9]\.[XYZW]]], [[DST_X]]
 ; R600-CHECK-DAG: VTX_READ_16 [[DST_Y:T[0-9]\.[XYZW]]], [[DST_Y]]
 ; R600-CHECK-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_X_CHAN:[XYZW]]], [[DST_X]]
@@ -178,7 +178,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v4i16
+; FUNC-LABEL: {{^}}load_v4i16:
 ; R600-CHECK: VTX_READ_16
 ; R600-CHECK: VTX_READ_16
 ; R600-CHECK: VTX_READ_16
@@ -195,7 +195,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v4i16_sext
+; FUNC-LABEL: {{^}}load_v4i16_sext:
 ; R600-CHECK-DAG: VTX_READ_16 [[DST_X:T[0-9]\.[XYZW]]], [[DST_X]]
 ; R600-CHECK-DAG: VTX_READ_16 [[DST_Y:T[0-9]\.[XYZW]]], [[DST_Y]]
 ; R600-CHECK-DAG: VTX_READ_16 [[DST_Z:T[0-9]\.[XYZW]]], [[DST_Z]]
@@ -229,7 +229,7 @@ entry:
 }
 
 ; load an i32 value from the global address space.
-; FUNC-LABEL: @load_i32
+; FUNC-LABEL: {{^}}load_i32:
 ; R600-CHECK: VTX_READ_32 T{{[0-9]+}}.X, T{{[0-9]+}}.X, 0
 
 ; SI-CHECK: BUFFER_LOAD_DWORD v{{[0-9]+}}
@@ -241,7 +241,7 @@ entry:
 }
 
 ; load a f32 value from the global address space.
-; FUNC-LABEL: @load_f32
+; FUNC-LABEL: {{^}}load_f32:
 ; R600-CHECK: VTX_READ_32 T{{[0-9]+}}.X, T{{[0-9]+}}.X, 0
 
 ; SI-CHECK: BUFFER_LOAD_DWORD v{{[0-9]+}}
@@ -253,7 +253,7 @@ entry:
 }
 
 ; load a v2f32 value from the global address space
-; FUNC-LABEL: @load_v2f32
+; FUNC-LABEL: {{^}}load_v2f32:
 ; R600-CHECK: MEM_RAT
 ; R600-CHECK: VTX_READ_64
 ; SI-CHECK: BUFFER_LOAD_DWORDX2
@@ -264,7 +264,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_i64
+; FUNC-LABEL: {{^}}load_i64:
 ; R600-CHECK: VTX_READ_64
 ; SI-CHECK: BUFFER_LOAD_DWORDX2
 define void @load_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
@@ -274,7 +274,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_i64_sext
+; FUNC-LABEL: {{^}}load_i64_sext:
 ; R600-CHECK: MEM_RAT
 ; R600-CHECK: MEM_RAT
 ; R600-CHECK: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, T{{[0-9]\.[XYZW]}},  literal.x
@@ -289,7 +289,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_i64_zext
+; FUNC-LABEL: {{^}}load_i64_zext:
 ; R600-CHECK: MEM_RAT
 ; R600-CHECK: MEM_RAT
 define void @load_i64_zext(i64 addrspace(1)* %out, i32 addrspace(1)* %in) {
@@ -300,7 +300,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v8i32
+; FUNC-LABEL: {{^}}load_v8i32:
 ; R600-CHECK: VTX_READ_128
 ; R600-CHECK: VTX_READ_128
 ; XXX: We should be using DWORDX4 instructions on SI.
@@ -319,7 +319,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v16i32
+; FUNC-LABEL: {{^}}load_v16i32:
 ; R600-CHECK: VTX_READ_128
 ; R600-CHECK: VTX_READ_128
 ; R600-CHECK: VTX_READ_128
@@ -353,7 +353,7 @@ entry:
 ;===------------------------------------------------------------------------===;
 
 ; Load a sign-extended i8 value
-; FUNC-LABEL: @load_const_i8_sext
+; FUNC-LABEL: {{^}}load_const_i8_sext:
 ; R600-CHECK: VTX_READ_8 [[DST:T[0-9]\.[XYZW]]], [[DST]]
 ; R600-CHECK: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_CHAN:[XYZW]]], [[DST]]
 ; R600-CHECK: 24
@@ -369,7 +369,7 @@ entry:
 }
 
 ; Load an aligned i8 value
-; FUNC-LABEL: @load_const_i8_aligned
+; FUNC-LABEL: {{^}}load_const_i8_aligned:
 ; R600-CHECK: VTX_READ_8 T{{[0-9]+\.X, T[0-9]+\.X}}
 ; SI-CHECK: BUFFER_LOAD_UBYTE v{{[0-9]+}},
 define void @load_const_i8_aligned(i32 addrspace(1)* %out, i8 addrspace(2)* %in) {
@@ -381,7 +381,7 @@ entry:
 }
 
 ; Load an un-aligned i8 value
-; FUNC-LABEL: @load_const_i8_unaligned
+; FUNC-LABEL: {{^}}load_const_i8_unaligned:
 ; R600-CHECK: VTX_READ_8 T{{[0-9]+\.X, T[0-9]+\.X}}
 ; SI-CHECK: BUFFER_LOAD_UBYTE v{{[0-9]+}},
 define void @load_const_i8_unaligned(i32 addrspace(1)* %out, i8 addrspace(2)* %in) {
@@ -394,7 +394,7 @@ entry:
 }
 
 ; Load a sign-extended i16 value
-; FUNC-LABEL: @load_const_i16_sext
+; FUNC-LABEL: {{^}}load_const_i16_sext:
 ; R600-CHECK: VTX_READ_16 [[DST:T[0-9]\.[XYZW]]], [[DST]]
 ; R600-CHECK: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_CHAN:[XYZW]]], [[DST]]
 ; R600-CHECK: 16
@@ -410,7 +410,7 @@ entry:
 }
 
 ; Load an aligned i16 value
-; FUNC-LABEL: @load_const_i16_aligned
+; FUNC-LABEL: {{^}}load_const_i16_aligned:
 ; R600-CHECK: VTX_READ_16 T{{[0-9]+\.X, T[0-9]+\.X}}
 ; SI-CHECK: BUFFER_LOAD_USHORT
 define void @load_const_i16_aligned(i32 addrspace(1)* %out, i16 addrspace(2)* %in) {
@@ -422,7 +422,7 @@ entry:
 }
 
 ; Load an un-aligned i16 value
-; FUNC-LABEL: @load_const_i16_unaligned
+; FUNC-LABEL: {{^}}load_const_i16_unaligned:
 ; R600-CHECK: VTX_READ_16 T{{[0-9]+\.X, T[0-9]+\.X}}
 ; SI-CHECK: BUFFER_LOAD_USHORT
 define void @load_const_i16_unaligned(i32 addrspace(1)* %out, i16 addrspace(2)* %in) {
@@ -435,7 +435,7 @@ entry:
 }
 
 ; Load an i32 value from the constant address space.
-; FUNC-LABEL: @load_const_addrspace_i32
+; FUNC-LABEL: {{^}}load_const_addrspace_i32:
 ; R600-CHECK: VTX_READ_32 T{{[0-9]+}}.X, T{{[0-9]+}}.X, 0
 
 ; SI-CHECK: S_LOAD_DWORD s{{[0-9]+}}
@@ -447,7 +447,7 @@ entry:
 }
 
 ; Load a f32 value from the constant address space.
-; FUNC-LABEL: @load_const_addrspace_f32
+; FUNC-LABEL: {{^}}load_const_addrspace_f32:
 ; R600-CHECK: VTX_READ_32 T{{[0-9]+}}.X, T{{[0-9]+}}.X, 0
 
 ; SI-CHECK: S_LOAD_DWORD s{{[0-9]+}}
@@ -462,7 +462,7 @@ define void @load_const_addrspace_f32(float addrspace(1)* %out, float addrspace(
 ;===------------------------------------------------------------------------===;
 
 ; Load an i8 value from the local address space.
-; FUNC-LABEL: @load_i8_local
+; FUNC-LABEL: {{^}}load_i8_local:
 ; R600-CHECK: LDS_UBYTE_READ_RET
 ; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: S_MOV_B32 m0
@@ -474,7 +474,7 @@ define void @load_i8_local(i32 addrspace(1)* %out, i8 addrspace(3)* %in) {
   ret void
 }
 
-; FUNC-LABEL: @load_i8_sext_local
+; FUNC-LABEL: {{^}}load_i8_sext_local:
 ; R600-CHECK: LDS_UBYTE_READ_RET
 ; R600-CHECK: ASHR
 ; SI-CHECK-NOT: S_WQM_B64
@@ -488,7 +488,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v2i8_local
+; FUNC-LABEL: {{^}}load_v2i8_local:
 ; R600-CHECK: LDS_UBYTE_READ_RET
 ; R600-CHECK: LDS_UBYTE_READ_RET
 ; SI-CHECK-NOT: S_WQM_B64
@@ -503,7 +503,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v2i8_sext_local
+; FUNC-LABEL: {{^}}load_v2i8_sext_local:
 ; R600-CHECK-DAG: LDS_UBYTE_READ_RET
 ; R600-CHECK-DAG: LDS_UBYTE_READ_RET
 ; R600-CHECK-DAG: ASHR
@@ -520,7 +520,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v4i8_local
+; FUNC-LABEL: {{^}}load_v4i8_local:
 ; R600-CHECK: LDS_UBYTE_READ_RET
 ; R600-CHECK: LDS_UBYTE_READ_RET
 ; R600-CHECK: LDS_UBYTE_READ_RET
@@ -539,7 +539,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v4i8_sext_local
+; FUNC-LABEL: {{^}}load_v4i8_sext_local:
 ; R600-CHECK-DAG: LDS_UBYTE_READ_RET
 ; R600-CHECK-DAG: LDS_UBYTE_READ_RET
 ; R600-CHECK-DAG: LDS_UBYTE_READ_RET
@@ -563,7 +563,7 @@ entry:
 }
 
 ; Load an i16 value from the local address space.
-; FUNC-LABEL: @load_i16_local
+; FUNC-LABEL: {{^}}load_i16_local:
 ; R600-CHECK: LDS_USHORT_READ_RET
 ; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: S_MOV_B32 m0
@@ -576,7 +576,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_i16_sext_local
+; FUNC-LABEL: {{^}}load_i16_sext_local:
 ; R600-CHECK: LDS_USHORT_READ_RET
 ; R600-CHECK: ASHR
 ; SI-CHECK-NOT: S_WQM_B64
@@ -590,7 +590,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v2i16_local
+; FUNC-LABEL: {{^}}load_v2i16_local:
 ; R600-CHECK: LDS_USHORT_READ_RET
 ; R600-CHECK: LDS_USHORT_READ_RET
 ; SI-CHECK-NOT: S_WQM_B64
@@ -605,7 +605,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v2i16_sext_local
+; FUNC-LABEL: {{^}}load_v2i16_sext_local:
 ; R600-CHECK-DAG: LDS_USHORT_READ_RET
 ; R600-CHECK-DAG: LDS_USHORT_READ_RET
 ; R600-CHECK-DAG: ASHR
@@ -622,7 +622,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v4i16_local
+; FUNC-LABEL: {{^}}load_v4i16_local:
 ; R600-CHECK: LDS_USHORT_READ_RET
 ; R600-CHECK: LDS_USHORT_READ_RET
 ; R600-CHECK: LDS_USHORT_READ_RET
@@ -641,7 +641,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @load_v4i16_sext_local
+; FUNC-LABEL: {{^}}load_v4i16_sext_local:
 ; R600-CHECK-DAG: LDS_USHORT_READ_RET
 ; R600-CHECK-DAG: LDS_USHORT_READ_RET
 ; R600-CHECK-DAG: LDS_USHORT_READ_RET
@@ -665,7 +665,7 @@ entry:
 }
 
 ; load an i32 value from the local address space.
-; FUNC-LABEL: @load_i32_local
+; FUNC-LABEL: {{^}}load_i32_local:
 ; R600-CHECK: LDS_READ_RET
 ; SI-CHECK-NOT: S_WQM_B64
 ; SI-CHECK: S_MOV_B32 m0
@@ -678,7 +678,7 @@ entry:
 }
 
 ; load a f32 value from the local address space.
-; FUNC-LABEL: @load_f32_local
+; FUNC-LABEL: {{^}}load_f32_local:
 ; R600-CHECK: LDS_READ_RET
 ; SI-CHECK: S_MOV_B32 m0
 ; SI-CHECK: DS_READ_B32
@@ -690,7 +690,7 @@ entry:
 }
 
 ; load a v2f32 value from the local address space
-; FUNC-LABEL: @load_v2f32_local
+; FUNC-LABEL: {{^}}load_v2f32_local:
 ; R600-CHECK: LDS_READ_RET
 ; R600-CHECK: LDS_READ_RET
 ; SI-CHECK: S_MOV_B32 m0

@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s
 
-; CHECK-LABEL: @select0
+; CHECK-LABEL: {{^}}select0:
 ; i64 select should be split into two i32 selects, and we shouldn't need
 ; to use a shfit to extract the hi dword of the input.
 ; CHECK-NOT: S_LSHR_B64
@@ -14,7 +14,7 @@ entry:
   ret void
 }
 
-; CHECK-LABEL: @select_trunc_i64
+; CHECK-LABEL: {{^}}select_trunc_i64:
 ; CHECK: V_CNDMASK_B32
 ; CHECK-NOT: V_CNDMASK_B32
 define void @select_trunc_i64(i32 addrspace(1)* %out, i32 %cond, i64 %in) nounwind {
@@ -25,7 +25,7 @@ define void @select_trunc_i64(i32 addrspace(1)* %out, i32 %cond, i64 %in) nounwi
   ret void
 }
 
-; CHECK-LABEL: @select_trunc_i64_2
+; CHECK-LABEL: {{^}}select_trunc_i64_2:
 ; CHECK: V_CNDMASK_B32
 ; CHECK-NOT: V_CNDMASK_B32
 define void @select_trunc_i64_2(i32 addrspace(1)* %out, i32 %cond, i64 %a, i64 %b) nounwind {
@@ -36,7 +36,7 @@ define void @select_trunc_i64_2(i32 addrspace(1)* %out, i32 %cond, i64 %a, i64 %
   ret void
 }
 
-; CHECK-LABEL: @v_select_trunc_i64_2
+; CHECK-LABEL: {{^}}v_select_trunc_i64_2:
 ; CHECK: V_CNDMASK_B32
 ; CHECK-NOT: V_CNDMASK_B32
 define void @v_select_trunc_i64_2(i32 addrspace(1)* %out, i32 %cond, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) nounwind {

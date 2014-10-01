@@ -5,7 +5,7 @@
 
 ; SI hits an assertion at -O0, evergreen hits a not implemented unreachable.
 
-; COMMON-LABEL: @branch_true:
+; COMMON-LABEL: {{^}}branch_true:
 define void @branch_true(i8 addrspace(1)* nocapture %main, i32 %main_stride) #0 {
 entry:
   br i1 true, label %for.end, label %for.body.lr.ph
@@ -39,7 +39,7 @@ for.end:                                          ; preds = %for.body, %entry
   ret void
 }
 
-; COMMON-LABEL: @branch_false:
+; COMMON-LABEL: {{^}}branch_false:
 ; SI: .text
 ; SI-NEXT: S_ENDPGM
 define void @branch_false(i8 addrspace(1)* nocapture %main, i32 %main_stride) #0 {
@@ -75,7 +75,7 @@ for.end:                                          ; preds = %for.body, %entry
   ret void
 }
 
-; COMMON-LABEL: @branch_undef:
+; COMMON-LABEL: {{^}}branch_undef:
 ; SI: .text
 ; SI-NEXT: S_ENDPGM
 define void @branch_undef(i8 addrspace(1)* nocapture %main, i32 %main_stride) #0 {

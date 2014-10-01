@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=cypress < %s | FileCheck -check-prefix=EG %s
 
-; EG-LABEL: @and_setcc_setcc_i32
+; EG-LABEL: {{^}}and_setcc_setcc_i32:
 ; EG: AND_INT
 ; EG-NEXT: SETE_INT
 define void @and_setcc_setcc_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) {
@@ -12,7 +12,7 @@ define void @and_setcc_setcc_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) {
   ret void
 }
 
-; EG-LABEL: @and_setcc_setcc_v4i32
+; EG-LABEL: {{^}}and_setcc_setcc_v4i32:
 ; EG: AND_INT
 ; EG: AND_INT
 ; EG: SETE_INT

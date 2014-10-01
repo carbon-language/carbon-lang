@@ -3,7 +3,7 @@
 
 declare i32 @llvm.r600.read.tidig.x() readnone
 
-;FUNC-LABEL: @test2
+;FUNC-LABEL: {{^}}test2:
 ;EG: SUB_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG: SUB_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
@@ -19,7 +19,7 @@ define void @test2(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
   ret void
 }
 
-;FUNC-LABEL: @test4
+;FUNC-LABEL: {{^}}test4:
 ;EG: SUB_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG: SUB_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG: SUB_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
@@ -39,7 +39,7 @@ define void @test4(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
   ret void
 }
 
-; FUNC-LABEL: @s_sub_i64:
+; FUNC-LABEL: {{^}}s_sub_i64:
 ; SI: S_SUB_U32
 ; SI: S_SUBB_U32
 
@@ -54,7 +54,7 @@ define void @s_sub_i64(i64 addrspace(1)* noalias %out, i64 %a, i64 %b) nounwind 
   ret void
 }
 
-; FUNC-LABEL: @v_sub_i64:
+; FUNC-LABEL: {{^}}v_sub_i64:
 ; SI: V_SUB_I32_e32
 ; SI: V_SUBB_U32_e32
 

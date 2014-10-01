@@ -3,7 +3,7 @@
 ; These tests check that the compiler won't crash when it needs to spill
 ; SGPRs.
 
-; CHECK-LABEL: @main
+; CHECK-LABEL: {{^}}main:
 ; Writing to M0 from an SMRD instruction will hang the GPU.
 ; CHECK-NOT: S_BUFFER_LOAD_DWORD m0
 ; CHECK: S_ENDPGM
@@ -688,7 +688,7 @@ attributes #4 = { nounwind readonly }
 
 !0 = metadata !{metadata !"const", null, i32 1}
 
-; CHECK-LABEL: @main1
+; CHECK-LABEL: {{^}}main1:
 ; CHECK: S_ENDPGM
 define void @main1([17 x <16 x i8>] addrspace(2)* byval, [32 x <16 x i8>] addrspace(2)* byval, [16 x <32 x i8>] addrspace(2)* byval, float inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:

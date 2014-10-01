@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=tahiti < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
-; FUNC-LABEL: @test_copy_v4i8
+; FUNC-LABEL: {{^}}test_copy_v4i8:
 ; SI: BUFFER_LOAD_DWORD [[REG:v[0-9]+]]
 ; SI: BUFFER_STORE_DWORD [[REG]]
 ; SI: S_ENDPGM
@@ -10,7 +10,7 @@ define void @test_copy_v4i8(<4 x i8> addrspace(1)* %out, <4 x i8> addrspace(1)* 
   ret void
 }
 
-; FUNC-LABEL: @test_copy_v4i8_x2
+; FUNC-LABEL: {{^}}test_copy_v4i8_x2:
 ; SI: BUFFER_LOAD_DWORD [[REG:v[0-9]+]]
 ; SI: BUFFER_STORE_DWORD [[REG]]
 ; SI: BUFFER_STORE_DWORD [[REG]]
@@ -22,7 +22,7 @@ define void @test_copy_v4i8_x2(<4 x i8> addrspace(1)* %out0, <4 x i8> addrspace(
   ret void
 }
 
-; FUNC-LABEL: @test_copy_v4i8_x3
+; FUNC-LABEL: {{^}}test_copy_v4i8_x3:
 ; SI: BUFFER_LOAD_DWORD [[REG:v[0-9]+]]
 ; SI: BUFFER_STORE_DWORD [[REG]]
 ; SI: BUFFER_STORE_DWORD [[REG]]
@@ -36,7 +36,7 @@ define void @test_copy_v4i8_x3(<4 x i8> addrspace(1)* %out0, <4 x i8> addrspace(
   ret void
 }
 
-; FUNC-LABEL: @test_copy_v4i8_x4
+; FUNC-LABEL: {{^}}test_copy_v4i8_x4:
 ; SI: BUFFER_LOAD_DWORD [[REG:v[0-9]+]]
 ; SI: BUFFER_STORE_DWORD [[REG]]
 ; SI: BUFFER_STORE_DWORD [[REG]]
@@ -52,7 +52,7 @@ define void @test_copy_v4i8_x4(<4 x i8> addrspace(1)* %out0, <4 x i8> addrspace(
   ret void
 }
 
-; FUNC-LABEL: @test_copy_v4i8_extra_use
+; FUNC-LABEL: {{^}}test_copy_v4i8_extra_use:
 ; SI: BUFFER_LOAD_UBYTE
 ; SI: BUFFER_LOAD_UBYTE
 ; SI: BUFFER_LOAD_UBYTE
@@ -88,7 +88,7 @@ define void @test_copy_v4i8_extra_use(<4 x i8> addrspace(1)* %out0, <4 x i8> add
   ret void
 }
 
-; FUNC-LABEL: @test_copy_v4i8_x2_extra_use
+; FUNC-LABEL: {{^}}test_copy_v4i8_x2_extra_use:
 ; SI: BUFFER_LOAD_UBYTE
 ; SI: BUFFER_LOAD_UBYTE
 ; SI: BUFFER_LOAD_UBYTE
@@ -127,7 +127,7 @@ define void @test_copy_v4i8_x2_extra_use(<4 x i8> addrspace(1)* %out0, <4 x i8> 
   ret void
 }
 
-; FUNC-LABEL: @test_copy_v3i8
+; FUNC-LABEL: {{^}}test_copy_v3i8:
 ; SI-NOT: BFE
 ; SI-NOT: BFI
 ; SI: S_ENDPGM
@@ -137,7 +137,7 @@ define void @test_copy_v3i8(<3 x i8> addrspace(1)* %out, <3 x i8> addrspace(1)* 
   ret void
 }
 
-; FUNC-LABEL: @test_copy_v4i8_volatile_load
+; FUNC-LABEL: {{^}}test_copy_v4i8_volatile_load:
 ; SI: BUFFER_LOAD_UBYTE
 ; SI: BUFFER_LOAD_UBYTE
 ; SI: BUFFER_LOAD_UBYTE
@@ -149,7 +149,7 @@ define void @test_copy_v4i8_volatile_load(<4 x i8> addrspace(1)* %out, <4 x i8> 
   ret void
 }
 
-; FUNC-LABEL: @test_copy_v4i8_volatile_store
+; FUNC-LABEL: {{^}}test_copy_v4i8_volatile_store:
 ; SI: BUFFER_LOAD_UBYTE
 ; SI: BUFFER_LOAD_UBYTE
 ; SI: BUFFER_LOAD_UBYTE

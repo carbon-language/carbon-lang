@@ -3,7 +3,7 @@
 
 declare i32 @llvm.r600.read.tidig.x() readnone
 
-; SI-LABEL: @test_i64_vreg:
+; SI-LABEL: {{^}}test_i64_vreg:
 ; SI: V_ADD_I32
 ; SI: V_ADDC_U32
 define void @test_i64_vreg(i64 addrspace(1)* noalias %out, i64 addrspace(1)* noalias %inA, i64 addrspace(1)* noalias %inB) {
@@ -18,7 +18,7 @@ define void @test_i64_vreg(i64 addrspace(1)* noalias %out, i64 addrspace(1)* noa
 }
 
 ; Check that the SGPR add operand is correctly moved to a VGPR.
-; SI-LABEL: @sgpr_operand:
+; SI-LABEL: {{^}}sgpr_operand:
 ; SI: V_ADD_I32
 ; SI: V_ADDC_U32
 define void @sgpr_operand(i64 addrspace(1)* noalias %out, i64 addrspace(1)* noalias %in, i64 addrspace(1)* noalias %in_bar, i64 %a) {
@@ -31,7 +31,7 @@ define void @sgpr_operand(i64 addrspace(1)* noalias %out, i64 addrspace(1)* noal
 ; Swap the arguments. Check that the SGPR -> VGPR copy works with the
 ; SGPR as other operand.
 ;
-; SI-LABEL: @sgpr_operand_reversed:
+; SI-LABEL: {{^}}sgpr_operand_reversed:
 ; SI: V_ADD_I32
 ; SI: V_ADDC_U32
 define void @sgpr_operand_reversed(i64 addrspace(1)* noalias %out, i64 addrspace(1)* noalias %in, i64 %a) {
@@ -42,7 +42,7 @@ define void @sgpr_operand_reversed(i64 addrspace(1)* noalias %out, i64 addrspace
 }
 
 
-; SI-LABEL: @test_v2i64_sreg:
+; SI-LABEL: {{^}}test_v2i64_sreg:
 ; SI: S_ADD_U32
 ; SI: S_ADDC_U32
 ; SI: S_ADD_U32
@@ -53,7 +53,7 @@ define void @test_v2i64_sreg(<2 x i64> addrspace(1)* noalias %out, <2 x i64> %a,
   ret void
 }
 
-; SI-LABEL: @test_v2i64_vreg:
+; SI-LABEL: {{^}}test_v2i64_vreg:
 ; SI: V_ADD_I32
 ; SI: V_ADDC_U32
 ; SI: V_ADD_I32
@@ -69,7 +69,7 @@ define void @test_v2i64_vreg(<2 x i64> addrspace(1)* noalias %out, <2 x i64> add
   ret void
 }
 
-; SI-LABEL: @trunc_i64_add_to_i32
+; SI-LABEL: {{^}}trunc_i64_add_to_i32:
 ; SI: S_LOAD_DWORD s[[SREG0:[0-9]+]]
 ; SI: S_LOAD_DWORD s[[SREG1:[0-9]+]]
 ; SI: S_ADD_I32 [[SRESULT:s[0-9]+]], s[[SREG1]], s[[SREG0]]

@@ -3,7 +3,7 @@
 
 declare float @llvm.AMDGPU.legacy.rsq(float) nounwind readnone
 
-; FUNC-LABEL: @rsq_legacy_f32
+; FUNC-LABEL: {{^}}rsq_legacy_f32:
 ; SI: V_RSQ_LEGACY_F32_e32
 ; EG: RECIPSQRT_IEEE
 define void @rsq_legacy_f32(float addrspace(1)* %out, float %src) nounwind {

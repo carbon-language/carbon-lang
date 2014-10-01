@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck %s -check-prefix=R600 -check-prefix=FUNC
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck %s -check-prefix=SI -check-prefix=FUNC
 
-; FUNC-LABEL: @fadd_f32
+; FUNC-LABEL: {{^}}fadd_f32:
 ; R600: ADD {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z, KC0[2].W
 ; SI: V_ADD_F32
 define void @fadd_f32(float addrspace(1)* %out, float %a, float %b) {
@@ -10,7 +10,7 @@ define void @fadd_f32(float addrspace(1)* %out, float %a, float %b) {
    ret void
 }
 
-; FUNC-LABEL: @fadd_v2f32
+; FUNC-LABEL: {{^}}fadd_v2f32:
 ; R600-DAG: ADD {{\** *}}T{{[0-9]\.[XYZW]}}, KC0[3].X, KC0[3].Z
 ; R600-DAG: ADD {{\** *}}T{{[0-9]\.[XYZW]}}, KC0[2].W, KC0[3].Y
 ; SI: V_ADD_F32
@@ -21,7 +21,7 @@ define void @fadd_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %a, <2 x flo
   ret void
 }
 
-; FUNC-LABEL: @fadd_v4f32
+; FUNC-LABEL: {{^}}fadd_v4f32:
 ; R600: ADD {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; R600: ADD {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; R600: ADD {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
@@ -39,7 +39,7 @@ define void @fadd_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)
   ret void
 }
 
-; FUNC-LABEL: @fadd_v8f32
+; FUNC-LABEL: {{^}}fadd_v8f32:
 ; R600: ADD
 ; R600: ADD
 ; R600: ADD

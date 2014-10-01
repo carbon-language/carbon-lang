@@ -1,6 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
-;CHECK-LABEL: @gather4_v2
+;CHECK-LABEL: {{^}}gather4_v2:
 ;CHECK: IMAGE_GATHER4 {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_v2() #0 {
 main_body:
@@ -13,7 +13,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4
+;CHECK-LABEL: {{^}}gather4:
 ;CHECK: IMAGE_GATHER4 {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4() #0 {
 main_body:
@@ -26,7 +26,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_cl
+;CHECK-LABEL: {{^}}gather4_cl:
 ;CHECK: IMAGE_GATHER4_CL {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_cl() #0 {
 main_body:
@@ -39,7 +39,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_l
+;CHECK-LABEL: {{^}}gather4_l:
 ;CHECK: IMAGE_GATHER4_L {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_l() #0 {
 main_body:
@@ -52,7 +52,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_b
+;CHECK-LABEL: {{^}}gather4_b:
 ;CHECK: IMAGE_GATHER4_B {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_b() #0 {
 main_body:
@@ -65,7 +65,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_b_cl
+;CHECK-LABEL: {{^}}gather4_b_cl:
 ;CHECK: IMAGE_GATHER4_B_CL {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_b_cl() #0 {
 main_body:
@@ -78,7 +78,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_b_cl_v8
+;CHECK-LABEL: {{^}}gather4_b_cl_v8:
 ;CHECK: IMAGE_GATHER4_B_CL {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_b_cl_v8() #0 {
 main_body:
@@ -91,7 +91,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_lz_v2
+;CHECK-LABEL: {{^}}gather4_lz_v2:
 ;CHECK: IMAGE_GATHER4_LZ {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_lz_v2() #0 {
 main_body:
@@ -104,7 +104,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_lz
+;CHECK-LABEL: {{^}}gather4_lz:
 ;CHECK: IMAGE_GATHER4_LZ {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_lz() #0 {
 main_body:
@@ -119,7 +119,7 @@ main_body:
 
 
 
-;CHECK-LABEL: @gather4_o
+;CHECK-LABEL: {{^}}gather4_o:
 ;CHECK: IMAGE_GATHER4_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_o() #0 {
 main_body:
@@ -132,7 +132,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_cl_o
+;CHECK-LABEL: {{^}}gather4_cl_o:
 ;CHECK: IMAGE_GATHER4_CL_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_cl_o() #0 {
 main_body:
@@ -145,7 +145,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_cl_o_v8
+;CHECK-LABEL: {{^}}gather4_cl_o_v8:
 ;CHECK: IMAGE_GATHER4_CL_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_cl_o_v8() #0 {
 main_body:
@@ -158,7 +158,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_l_o
+;CHECK-LABEL: {{^}}gather4_l_o:
 ;CHECK: IMAGE_GATHER4_L_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_l_o() #0 {
 main_body:
@@ -171,7 +171,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_l_o_v8
+;CHECK-LABEL: {{^}}gather4_l_o_v8:
 ;CHECK: IMAGE_GATHER4_L_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_l_o_v8() #0 {
 main_body:
@@ -184,7 +184,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_b_o
+;CHECK-LABEL: {{^}}gather4_b_o:
 ;CHECK: IMAGE_GATHER4_B_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_b_o() #0 {
 main_body:
@@ -197,7 +197,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_b_o_v8
+;CHECK-LABEL: {{^}}gather4_b_o_v8:
 ;CHECK: IMAGE_GATHER4_B_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_b_o_v8() #0 {
 main_body:
@@ -210,7 +210,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_b_cl_o
+;CHECK-LABEL: {{^}}gather4_b_cl_o:
 ;CHECK: IMAGE_GATHER4_B_CL_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_b_cl_o() #0 {
 main_body:
@@ -223,7 +223,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_lz_o
+;CHECK-LABEL: {{^}}gather4_lz_o:
 ;CHECK: IMAGE_GATHER4_LZ_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_lz_o() #0 {
 main_body:
@@ -238,7 +238,7 @@ main_body:
 
 
 
-;CHECK-LABEL: @gather4_c
+;CHECK-LABEL: {{^}}gather4_c:
 ;CHECK: IMAGE_GATHER4_C {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c() #0 {
 main_body:
@@ -251,7 +251,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_cl
+;CHECK-LABEL: {{^}}gather4_c_cl:
 ;CHECK: IMAGE_GATHER4_C_CL {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_cl() #0 {
 main_body:
@@ -264,7 +264,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_cl_v8
+;CHECK-LABEL: {{^}}gather4_c_cl_v8:
 ;CHECK: IMAGE_GATHER4_C_CL {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_cl_v8() #0 {
 main_body:
@@ -277,7 +277,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_l
+;CHECK-LABEL: {{^}}gather4_c_l:
 ;CHECK: IMAGE_GATHER4_C_L {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_l() #0 {
 main_body:
@@ -290,7 +290,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_l_v8
+;CHECK-LABEL: {{^}}gather4_c_l_v8:
 ;CHECK: IMAGE_GATHER4_C_L {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_l_v8() #0 {
 main_body:
@@ -303,7 +303,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_b
+;CHECK-LABEL: {{^}}gather4_c_b:
 ;CHECK: IMAGE_GATHER4_C_B {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_b() #0 {
 main_body:
@@ -316,7 +316,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_b_v8
+;CHECK-LABEL: {{^}}gather4_c_b_v8:
 ;CHECK: IMAGE_GATHER4_C_B {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_b_v8() #0 {
 main_body:
@@ -329,7 +329,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_b_cl
+;CHECK-LABEL: {{^}}gather4_c_b_cl:
 ;CHECK: IMAGE_GATHER4_C_B_CL {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_b_cl() #0 {
 main_body:
@@ -342,7 +342,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_lz
+;CHECK-LABEL: {{^}}gather4_c_lz:
 ;CHECK: IMAGE_GATHER4_C_LZ {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_lz() #0 {
 main_body:
@@ -357,7 +357,7 @@ main_body:
 
 
 
-;CHECK-LABEL: @gather4_c_o
+;CHECK-LABEL: {{^}}gather4_c_o:
 ;CHECK: IMAGE_GATHER4_C_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_o() #0 {
 main_body:
@@ -370,7 +370,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_o_v8
+;CHECK-LABEL: {{^}}gather4_c_o_v8:
 ;CHECK: IMAGE_GATHER4_C_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_o_v8() #0 {
 main_body:
@@ -383,7 +383,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_cl_o
+;CHECK-LABEL: {{^}}gather4_c_cl_o:
 ;CHECK: IMAGE_GATHER4_C_CL_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_cl_o() #0 {
 main_body:
@@ -396,7 +396,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_l_o
+;CHECK-LABEL: {{^}}gather4_c_l_o:
 ;CHECK: IMAGE_GATHER4_C_L_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_l_o() #0 {
 main_body:
@@ -409,7 +409,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_b_o
+;CHECK-LABEL: {{^}}gather4_c_b_o:
 ;CHECK: IMAGE_GATHER4_C_B_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_b_o() #0 {
 main_body:
@@ -422,7 +422,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_b_cl_o
+;CHECK-LABEL: {{^}}gather4_c_b_cl_o:
 ;CHECK: IMAGE_GATHER4_C_B_CL_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_b_cl_o() #0 {
 main_body:
@@ -435,7 +435,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_lz_o
+;CHECK-LABEL: {{^}}gather4_c_lz_o:
 ;CHECK: IMAGE_GATHER4_C_LZ_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_lz_o() #0 {
 main_body:
@@ -448,7 +448,7 @@ main_body:
   ret void
 }
 
-;CHECK-LABEL: @gather4_c_lz_o_v8
+;CHECK-LABEL: {{^}}gather4_c_lz_o_v8:
 ;CHECK: IMAGE_GATHER4_C_LZ_O {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @gather4_c_lz_o_v8() #0 {
 main_body:

@@ -8,7 +8,7 @@ declare <4 x double> @llvm.ceil.v4f64(<4 x double>) nounwind readnone
 declare <8 x double> @llvm.ceil.v8f64(<8 x double>) nounwind readnone
 declare <16 x double> @llvm.ceil.v16f64(<16 x double>) nounwind readnone
 
-; FUNC-LABEL: @fceil_f64:
+; FUNC-LABEL: {{^}}fceil_f64:
 ; CI: V_CEIL_F64_e32
 ; SI: S_BFE_I32 [[SEXP:s[0-9]+]], {{s[0-9]+}}, 0xb0014
 ; SI: S_ADD_I32 s{{[0-9]+}}, [[SEXP]], 0xfffffc01
@@ -34,7 +34,7 @@ define void @fceil_f64(double addrspace(1)* %out, double %x) {
   ret void
 }
 
-; FUNC-LABEL: @fceil_v2f64:
+; FUNC-LABEL: {{^}}fceil_v2f64:
 ; CI: V_CEIL_F64_e32
 ; CI: V_CEIL_F64_e32
 define void @fceil_v2f64(<2 x double> addrspace(1)* %out, <2 x double> %x) {
@@ -43,7 +43,7 @@ define void @fceil_v2f64(<2 x double> addrspace(1)* %out, <2 x double> %x) {
   ret void
 }
 
-; FIXME-FUNC-LABEL: @fceil_v3f64:
+; FIXME-FUNC-LABEL: {{^}}fceil_v3f64:
 ; FIXME-CI: V_CEIL_F64_e32
 ; FIXME-CI: V_CEIL_F64_e32
 ; FIXME-CI: V_CEIL_F64_e32
@@ -53,7 +53,7 @@ define void @fceil_v2f64(<2 x double> addrspace(1)* %out, <2 x double> %x) {
 ;   ret void
 ; }
 
-; FUNC-LABEL: @fceil_v4f64:
+; FUNC-LABEL: {{^}}fceil_v4f64:
 ; CI: V_CEIL_F64_e32
 ; CI: V_CEIL_F64_e32
 ; CI: V_CEIL_F64_e32
@@ -64,7 +64,7 @@ define void @fceil_v4f64(<4 x double> addrspace(1)* %out, <4 x double> %x) {
   ret void
 }
 
-; FUNC-LABEL: @fceil_v8f64:
+; FUNC-LABEL: {{^}}fceil_v8f64:
 ; CI: V_CEIL_F64_e32
 ; CI: V_CEIL_F64_e32
 ; CI: V_CEIL_F64_e32
@@ -79,7 +79,7 @@ define void @fceil_v8f64(<8 x double> addrspace(1)* %out, <8 x double> %x) {
   ret void
 }
 
-; FUNC-LABEL: @fceil_v16f64:
+; FUNC-LABEL: {{^}}fceil_v16f64:
 ; CI: V_CEIL_F64_e32
 ; CI: V_CEIL_F64_e32
 ; CI: V_CEIL_F64_e32

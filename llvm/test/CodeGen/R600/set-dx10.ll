@@ -4,7 +4,7 @@
 ; to store integer true (-1) and false (0) values are lowered to one of the
 ; SET*DX10 instructions.
 
-; CHECK: @fcmp_une_select_fptosi
+; CHECK: {{^}}fcmp_une_select_fptosi:
 ; CHECK: SETNE_DX10 {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: LSHR
 ; CHECK-NEXT: 1084227584(5.000000e+00)
@@ -18,7 +18,7 @@ entry:
   ret void
 }
 
-; CHECK: @fcmp_une_select_i32
+; CHECK: {{^}}fcmp_une_select_i32:
 ; CHECK: SETNE_DX10 {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: LSHR
 ; CHECK-NEXT: 1084227584(5.000000e+00)
@@ -30,7 +30,7 @@ entry:
   ret void
 }
 
-; CHECK: @fcmp_oeq_select_fptosi
+; CHECK: {{^}}fcmp_oeq_select_fptosi:
 ; CHECK: SETE_DX10 {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: LSHR
 ; CHECK-NEXT: 1084227584(5.000000e+00)
@@ -44,7 +44,7 @@ entry:
   ret void
 }
 
-; CHECK: @fcmp_oeq_select_i32
+; CHECK: {{^}}fcmp_oeq_select_i32:
 ; CHECK: SETE_DX10 {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: LSHR
 ; CHECK-NEXT: 1084227584(5.000000e+00)
@@ -56,7 +56,7 @@ entry:
   ret void
 }
 
-; CHECK: @fcmp_ogt_select_fptosi
+; CHECK: {{^}}fcmp_ogt_select_fptosi:
 ; CHECK: SETGT_DX10 {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: LSHR
 ; CHECK-NEXT: 1084227584(5.000000e+00)
@@ -70,7 +70,7 @@ entry:
   ret void
 }
 
-; CHECK: @fcmp_ogt_select_i32
+; CHECK: {{^}}fcmp_ogt_select_i32:
 ; CHECK: SETGT_DX10 {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: LSHR
 ; CHECK-NEXT: 1084227584(5.000000e+00)
@@ -82,7 +82,7 @@ entry:
   ret void
 }
 
-; CHECK: @fcmp_oge_select_fptosi
+; CHECK: {{^}}fcmp_oge_select_fptosi:
 ; CHECK: SETGE_DX10 {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: LSHR
 ; CHECK-NEXT: 1084227584(5.000000e+00)
@@ -96,7 +96,7 @@ entry:
   ret void
 }
 
-; CHECK: @fcmp_oge_select_i32
+; CHECK: {{^}}fcmp_oge_select_i32:
 ; CHECK: SETGE_DX10 {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: LSHR
 ; CHECK-NEXT: 1084227584(5.000000e+00)
@@ -108,7 +108,7 @@ entry:
   ret void
 }
 
-; CHECK: @fcmp_ole_select_fptosi
+; CHECK: {{^}}fcmp_ole_select_fptosi:
 ; CHECK: SETGE_DX10 {{\** *}}T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z,
 ; CHECK-NEXT: LSHR
 ; CHECK-NEXT: 1084227584(5.000000e+00)
@@ -122,7 +122,7 @@ entry:
   ret void
 }
 
-; CHECK: @fcmp_ole_select_i32
+; CHECK: {{^}}fcmp_ole_select_i32:
 ; CHECK: SETGE_DX10 {{\** *}}T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z,
 ; CHECK-NEXT: LSHR
 ; CHECK-NEXT: 1084227584(5.000000e+00)
@@ -134,7 +134,7 @@ entry:
   ret void
 }
 
-; CHECK: @fcmp_olt_select_fptosi
+; CHECK: {{^}}fcmp_olt_select_fptosi:
 ; CHECK: SETGT_DX10 {{\** *}}T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z,
 ; CHECK-NEXT: LSHR
 ; CHECK-NEXT: 1084227584(5.000000e+00)
@@ -148,7 +148,7 @@ entry:
   ret void
 }
 
-; CHECK: @fcmp_olt_select_i32
+; CHECK: {{^}}fcmp_olt_select_i32:
 ; CHECK: SETGT_DX10 {{\** *}}T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z,
 ; CHECK-NEXT: LSHR
 ; CHECK-NEXT: 1084227584(5.000000e+00)

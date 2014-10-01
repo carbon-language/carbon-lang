@@ -2,7 +2,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck %s --check-prefix=CM --check-prefix=FUNC
 ; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s --check-prefix=SI --check-prefix=FUNC
 
-; FUNC-LABEL: @i32_mad24
+; FUNC-LABEL: {{^}}i32_mad24:
 ; Signed 24-bit multiply is not supported on pre-Cayman GPUs.
 ; EG: MULLO_INT
 ; Make sure we aren't masking the inputs.

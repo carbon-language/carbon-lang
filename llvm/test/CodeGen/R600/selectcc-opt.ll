@@ -2,7 +2,7 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
 
-; FUNC-LABEL: @test_a
+; FUNC-LABEL: {{^}}test_a:
 ; EG-NOT: CND
 ; EG: SET{{[NEQGTL]+}}_DX10
 
@@ -30,7 +30,7 @@ ENDIF:
 ; Same as test_a, but the branch labels are swapped to produce the inverse cc
 ; for the icmp instruction
 
-; EG-LABEL: @test_b
+; EG-LABEL: {{^}}test_b:
 ; EG: SET{{[GTEQN]+}}_DX10
 ; EG-NEXT: PRED_
 ; EG-NEXT: ALU clause starting
@@ -56,7 +56,7 @@ ENDIF:
 }
 
 ; Test a CND*_INT instruction with float true/false values
-; EG-LABEL: @test_c
+; EG-LABEL: {{^}}test_c:
 ; EG: CND{{[GTE]+}}_INT
 define void @test_c(float addrspace(1)* %out, i32 %in) {
 entry:
@@ -66,7 +66,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @selectcc_bool
+; FUNC-LABEL: {{^}}selectcc_bool:
 ; SI: V_CMP_NE_I32
 ; SI-NEXT: V_CNDMASK_B32_e64
 ; SI-NOT: CMP

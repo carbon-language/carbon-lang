@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -check-prefix=CI -check-prefix=FUNC %s
 
-; FUNC-LABEL: @lds_atomic_cmpxchg_ret_i32_offset:
+; FUNC-LABEL: {{^}}lds_atomic_cmpxchg_ret_i32_offset:
 ; SI: S_LOAD_DWORD [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI: S_LOAD_DWORD [[SWAP:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc
 ; SI-DAG: V_MOV_B32_e32 [[VCMP:v[0-9]+]], 7
@@ -17,7 +17,7 @@ define void @lds_atomic_cmpxchg_ret_i32_offset(i32 addrspace(1)* %out, i32 addrs
   ret void
 }
 
-; FUNC-LABEL: @lds_atomic_cmpxchg_ret_i64_offset:
+; FUNC-LABEL: {{^}}lds_atomic_cmpxchg_ret_i64_offset:
 ; SI: S_LOAD_DWORD [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI: S_LOAD_DWORDX2 s{{\[}}[[LOSWAP:[0-9]+]]:[[HISWAP:[0-9]+]]{{\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0xd
 ; SI: S_MOV_B64  s{{\[}}[[LOSCMP:[0-9]+]]:[[HISCMP:[0-9]+]]{{\]}}, 7
@@ -37,7 +37,7 @@ define void @lds_atomic_cmpxchg_ret_i64_offset(i64 addrspace(1)* %out, i64 addrs
   ret void
 }
 
-; FUNC-LABEL: @lds_atomic_cmpxchg_ret_i32_bad_si_offset
+; FUNC-LABEL: {{^}}lds_atomic_cmpxchg_ret_i32_bad_si_offset:
 ; SI: DS_CMPST_RTN_B32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, 0x0
 ; CI: DS_CMPST_RTN_B32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, 0x10
 ; SI: S_ENDPGM
@@ -51,7 +51,7 @@ define void @lds_atomic_cmpxchg_ret_i32_bad_si_offset(i32 addrspace(1)* %out, i3
   ret void
 }
 
-; FUNC-LABEL: @lds_atomic_cmpxchg_noret_i32_offset:
+; FUNC-LABEL: {{^}}lds_atomic_cmpxchg_noret_i32_offset:
 ; SI: S_LOAD_DWORD [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0x9
 ; SI: S_LOAD_DWORD [[SWAP:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xa
 ; SI-DAG: V_MOV_B32_e32 [[VCMP:v[0-9]+]], 7
@@ -66,7 +66,7 @@ define void @lds_atomic_cmpxchg_noret_i32_offset(i32 addrspace(3)* %ptr, i32 %sw
   ret void
 }
 
-; FUNC-LABEL: @lds_atomic_cmpxchg_noret_i64_offset:
+; FUNC-LABEL: {{^}}lds_atomic_cmpxchg_noret_i64_offset:
 ; SI: S_LOAD_DWORD [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0x9
 ; SI: S_LOAD_DWORDX2 s{{\[}}[[LOSWAP:[0-9]+]]:[[HISWAP:[0-9]+]]{{\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI: S_MOV_B64  s{{\[}}[[LOSCMP:[0-9]+]]:[[HISCMP:[0-9]+]]{{\]}}, 7

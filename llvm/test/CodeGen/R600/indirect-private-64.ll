@@ -4,7 +4,7 @@
 
 declare void @llvm.AMDGPU.barrier.local() noduplicate nounwind
 
-; SI-LABEL: @private_access_f64_alloca:
+; SI-LABEL: {{^}}private_access_f64_alloca:
 
 ; SI-ALLOCA: BUFFER_STORE_DWORDX2
 ; SI-ALLOCA: BUFFER_LOAD_DWORDX2
@@ -22,7 +22,7 @@ define void @private_access_f64_alloca(double addrspace(1)* noalias %out, double
   ret void
 }
 
-; SI-LABEL: @private_access_v2f64_alloca:
+; SI-LABEL: {{^}}private_access_v2f64_alloca:
 
 ; SI-ALLOCA: BUFFER_STORE_DWORDX4
 ; SI-ALLOCA: BUFFER_LOAD_DWORDX4
@@ -46,7 +46,7 @@ define void @private_access_v2f64_alloca(<2 x double> addrspace(1)* noalias %out
   ret void
 }
 
-; SI-LABEL: @private_access_i64_alloca:
+; SI-LABEL: {{^}}private_access_i64_alloca:
 
 ; SI-ALLOCA: BUFFER_STORE_DWORDX2
 ; SI-ALLOCA: BUFFER_LOAD_DWORDX2
@@ -64,7 +64,7 @@ define void @private_access_i64_alloca(i64 addrspace(1)* noalias %out, i64 addrs
   ret void
 }
 
-; SI-LABEL: @private_access_v2i64_alloca:
+; SI-LABEL: {{^}}private_access_v2i64_alloca:
 
 ; SI-ALLOCA: BUFFER_STORE_DWORDX4
 ; SI-ALLOCA: BUFFER_LOAD_DWORDX4

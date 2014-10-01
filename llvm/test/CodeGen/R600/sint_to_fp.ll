@@ -2,7 +2,7 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=R600 -check-prefix=FUNC %s
 
 
-; FUNC-LABEL: @s_sint_to_fp_i32_to_f32
+; FUNC-LABEL: {{^}}s_sint_to_fp_i32_to_f32:
 ; R600: INT_TO_FLT * T{{[0-9]+\.[XYZW]}}, KC0[2].Z
 ; SI: V_CVT_F32_I32_e32 {{v[0-9]+}}, {{s[0-9]+$}}
 define void @s_sint_to_fp_i32_to_f32(float addrspace(1)* %out, i32 %in) {
@@ -11,7 +11,7 @@ define void @s_sint_to_fp_i32_to_f32(float addrspace(1)* %out, i32 %in) {
   ret void
 }
 
-; FUNC-LABEL: @sint_to_fp_v2i32
+; FUNC-LABEL: {{^}}sint_to_fp_v2i32:
 ; R600-DAG: INT_TO_FLT * T{{[0-9]+\.[XYZW]}}, KC0[2].W
 ; R600-DAG: INT_TO_FLT * T{{[0-9]+\.[XYZW]}}, KC0[3].X
 
@@ -23,7 +23,7 @@ define void @sint_to_fp_v2i32(<2 x float> addrspace(1)* %out, <2 x i32> %in) {
   ret void
 }
 
-; FUNC-LABEL: @sint_to_fp_v4i32
+; FUNC-LABEL: {{^}}sint_to_fp_v4i32:
 ; R600: INT_TO_FLT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; R600: INT_TO_FLT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; R600: INT_TO_FLT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
@@ -40,7 +40,7 @@ define void @sint_to_fp_v4i32(<4 x float> addrspace(1)* %out, <4 x i32> addrspac
   ret void
 }
 
-; FUNC-LABEL: @sint_to_fp_i1_f32:
+; FUNC-LABEL: {{^}}sint_to_fp_i1_f32:
 ; SI: V_CMP_EQ_I32_e64 [[CMP:s\[[0-9]+:[0-9]\]]],
 ; SI-NEXT: V_CNDMASK_B32_e64 [[RESULT:v[0-9]+]], 0, 1.0, [[CMP]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
@@ -52,7 +52,7 @@ define void @sint_to_fp_i1_f32(float addrspace(1)* %out, i32 %in) {
   ret void
 }
 
-; FUNC-LABEL: @sint_to_fp_i1_f32_load:
+; FUNC-LABEL: {{^}}sint_to_fp_i1_f32_load:
 ; SI: V_CNDMASK_B32_e64 [[RESULT:v[0-9]+]], 0, -1.0
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
 ; SI: S_ENDPGM

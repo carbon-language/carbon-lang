@@ -2,7 +2,7 @@
 
 declare i16 @llvm.convert.to.fp16.f32(float) nounwind readnone
 
-; SI-LABEL: @test_convert_fp32_to_fp16:
+; SI-LABEL: {{^}}test_convert_fp32_to_fp16:
 ; SI: BUFFER_LOAD_DWORD [[VAL:v[0-9]+]]
 ; SI: V_CVT_F16_F32_e32 [[RESULT:v[0-9]+]], [[VAL]]
 ; SI: BUFFER_STORE_SHORT [[RESULT]]

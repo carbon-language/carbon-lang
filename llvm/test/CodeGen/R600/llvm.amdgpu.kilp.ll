@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=verde -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
 
-; SI-LABEL: @kilp_gs_const
+; SI-LABEL: {{^}}kilp_gs_const:
 ; SI: S_MOV_B64 exec, 0
 define void @kilp_gs_const() #0 {
 main_body:

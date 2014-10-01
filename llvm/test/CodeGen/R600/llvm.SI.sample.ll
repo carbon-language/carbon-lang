@@ -135,7 +135,7 @@ define void @test(i32 %a1, i32 %a2, i32 %a3, i32 %a4) #0 {
    ret void
 }
 
-; CHECK: @v1
+; CHECK: {{^}}v1:
 ; CHECK: IMAGE_SAMPLE {{v\[[0-9]+:[0-9]+\]}}, 15
 define void @v1(i32 %a1) #0 {
 entry:

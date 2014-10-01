@@ -99,7 +99,7 @@ void AMDGPUAsmPrinter::EmitEndOfAsmFile(Module &M) {
 bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
 
-  OutStreamer.emitRawComment(Twine('@') + MF.getName() + Twine(':'));
+  EmitFunctionHeader();
 
   MCContext &Context = getObjFileLowering().getContext();
   const MCSectionELF *ConfigSection = Context.getELFSection(".AMDGPU.config",

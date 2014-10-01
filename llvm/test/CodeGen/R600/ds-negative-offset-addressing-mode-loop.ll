@@ -5,7 +5,7 @@ declare i32 @llvm.r600.read.tidig.x() #0
 declare void @llvm.AMDGPU.barrier.local() #1
 
 ; Function Attrs: nounwind
-; CHECK-LABEL: @signed_ds_offset_addressing_loop
+; CHECK-LABEL: {{^}}signed_ds_offset_addressing_loop:
 ; CHECK: BB0_1:
 ; CHECK: V_ADD_I32_e32 [[VADDR:v[0-9]+]],
 ; SI-DAG: DS_READ_B32 v{{[0-9]+}}, [[VADDR]], 0x0

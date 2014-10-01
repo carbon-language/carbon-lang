@@ -19,7 +19,7 @@ define void @sin_f32(float addrspace(1)* %out, float %x) #1 {
    ret void
 }
 
-; FUNC-LABEL: @sin_3x_f32
+; FUNC-LABEL: {{^}}sin_3x_f32:
 ; SI-UNSAFE-NOT: V_ADD_F32
 ; SI-UNSAFE: 0x3ef47644
 ; SI-UNSAFE: V_MUL_F32
@@ -35,7 +35,7 @@ define void @sin_3x_f32(float addrspace(1)* %out, float %x) #1 {
   ret void
 }
 
-; FUNC-LABEL: @sin_2x_f32
+; FUNC-LABEL: {{^}}sin_2x_f32:
 ; SI-UNSAFE-NOT: V_ADD_F32
 ; SI-UNSAFE: 0x3ea2f983
 ; SI-UNSAFE: V_MUL_F32
@@ -51,7 +51,7 @@ define void @sin_2x_f32(float addrspace(1)* %out, float %x) #1 {
   ret void
 }
 
-; FUNC-LABEL: @test_2sin_f32
+; FUNC-LABEL: {{^}}test_2sin_f32:
 ; SI-UNSAFE: 0x3ea2f983
 ; SI-UNSAFE: V_MUL_F32
 ; SI-SAFE: V_ADD_F32
@@ -66,7 +66,7 @@ define void @test_2sin_f32(float addrspace(1)* %out, float %x) #1 {
    ret void
 }
 
-; FUNC-LABEL: @sin_v4f32
+; FUNC-LABEL: {{^}}sin_v4f32:
 ; EG: SIN * T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
 ; EG: SIN * T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
 ; EG: SIN * T{{[0-9]+\.[XYZW], PV\.[XYZW]}}

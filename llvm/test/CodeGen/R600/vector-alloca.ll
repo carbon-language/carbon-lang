@@ -2,7 +2,7 @@
 ; RUN: llc -march=r600 -mcpu=verde -mattr=-promote-alloca -verify-machineinstrs < %s | FileCheck -check-prefix=SI-ALLOCA -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=verde -mattr=+promote-alloca -verify-machineinstrs < %s | FileCheck -check-prefix=SI-PROMOTE -check-prefix=SI -check-prefix=FUNC %s
 
-; FUNC-LABEL: @vector_read
+; FUNC-LABEL: {{^}}vector_read:
 ; EG: MOV
 ; EG: MOV
 ; EG: MOV
@@ -25,7 +25,7 @@ entry:
   ret void
 }
 
-; FUNC-LABEL: @vector_write
+; FUNC-LABEL: {{^}}vector_write:
 ; EG: MOV
 ; EG: MOV
 ; EG: MOV
@@ -53,7 +53,7 @@ entry:
 
 ; This test should be optimize to:
 ; store i32 0, i32 addrspace(1)* %out
-; FUNC-LABEL: @bitcast_gep
+; FUNC-LABEL: {{^}}bitcast_gep:
 ; EG: STORE_RAW
 define void @bitcast_gep(i32 addrspace(1)* %out, i32 %w_index, i32 %r_index) {
 entry:

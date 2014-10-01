@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
 
-; FUNC-LABEL: @scalar_to_vector_v2i32
+; FUNC-LABEL: {{^}}scalar_to_vector_v2i32:
 ; SI: BUFFER_LOAD_DWORD [[VAL:v[0-9]+]],
 ; SI: V_LSHRREV_B32_e32 [[RESULT:v[0-9]+]], 16, [[VAL]]
 ; SI: BUFFER_STORE_SHORT [[RESULT]]
@@ -17,7 +17,7 @@ define void @scalar_to_vector_v2i32(<4 x i16> addrspace(1)* %out, i32 addrspace(
   ret void
 }
 
-; FUNC-LABEL: @scalar_to_vector_v2f32
+; FUNC-LABEL: {{^}}scalar_to_vector_v2f32:
 ; SI: BUFFER_LOAD_DWORD [[VAL:v[0-9]+]],
 ; SI: V_LSHRREV_B32_e32 [[RESULT:v[0-9]+]], 16, [[VAL]]
 ; SI: BUFFER_STORE_SHORT [[RESULT]]

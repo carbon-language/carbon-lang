@@ -7,7 +7,7 @@
 ; sgpr register pair and use that for the pointer operand
 ; (low 64-bits of srsrc).
 
-; CHECK-LABEL: @mubuf
+; CHECK-LABEL: {{^}}mubuf:
 
 ; Make sure we aren't using VGPRs for the source operand of S_MOV_B64
 ; CHECK-NOT: S_MOV_B64 s[{{[0-9]+:[0-9]+}}], v
@@ -49,7 +49,7 @@ attributes #1 = { nounwind readnone }
 
 ; Test moving an SMRD instruction to the VALU
 
-; CHECK-LABEL: @smrd_valu
+; CHECK-LABEL: {{^}}smrd_valu:
 ; CHECK: BUFFER_LOAD_DWORD [[OUT:v[0-9]+]]
 ; CHECK: BUFFER_STORE_DWORD [[OUT]]
 
@@ -77,7 +77,7 @@ endif:
 
 ; Test moving ann SMRD with an immediate offset to the VALU
 
-; CHECK-LABEL: @smrd_valu2
+; CHECK-LABEL: {{^}}smrd_valu2:
 ; CHECK: BUFFER_LOAD_DWORD
 define void @smrd_valu2(i32 addrspace(1)* %out, [8 x i32] addrspace(2)* %in) {
 entry:
@@ -89,7 +89,7 @@ entry:
   ret void
 }
 
-; CHECK-LABEL: @s_load_imm_v8i32
+; CHECK-LABEL: {{^}}s_load_imm_v8i32:
 ; CHECK: BUFFER_LOAD_DWORDX4
 ; CHECK: BUFFER_LOAD_DWORDX4
 define void @s_load_imm_v8i32(<8 x i32> addrspace(1)* %out, i32 addrspace(2)* nocapture readonly %in) {
@@ -102,7 +102,7 @@ entry:
   ret void
 }
 
-; CHECK-LABEL: @s_load_imm_v16i32
+; CHECK-LABEL: {{^}}s_load_imm_v16i32:
 ; CHECK: BUFFER_LOAD_DWORDX4
 ; CHECK: BUFFER_LOAD_DWORDX4
 ; CHECK: BUFFER_LOAD_DWORDX4
