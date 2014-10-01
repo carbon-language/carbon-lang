@@ -88,7 +88,7 @@ std::unique_ptr<File> PECOFFLinkingContext::createUndefinedSymbolFile() const {
 }
 
 bool PECOFFLinkingContext::createImplicitFiles(
-    std::vector<std::unique_ptr<File>> &) const {
+    std::vector<std::unique_ptr<File>> &) {
   // Create a file for __ImageBase.
   std::unique_ptr<SimpleFileNode> fileNode(
       new SimpleFileNode("Implicit Files"));

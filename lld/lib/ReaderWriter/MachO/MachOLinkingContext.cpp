@@ -539,8 +539,8 @@ Writer &MachOLinkingContext::writer() const {
   return *_writer;
 }
 
-MachODylibFile* MachOLinkingContext::loadIndirectDylib(StringRef path) const {
-  std::unique_ptr<MachOFileNode> node(new MachOFileNode(path, false));
+MachODylibFile* MachOLinkingContext::loadIndirectDylib(StringRef path) {
+  std::unique_ptr<MachOFileNode> node(new MachOFileNode(path, false, *this));
   std::error_code ec = node->parse(*this, llvm::errs());
   if (ec)
     return nullptr;
@@ -558,7 +558,7 @@ MachODylibFile* MachOLinkingContext::loadIndirectDylib(StringRef path) const {
 }
 
 
-MachODylibFile* MachOLinkingContext::findIndirectDylib(StringRef path) const {
+MachODylibFile* MachOLinkingContext::findIndirectDylib(StringRef path) {
   // See if already loaded.
   auto pos = _pathToDylibMap.find(path);
   if (pos != _pathToDylibMap.end())
@@ -593,7 +593,7 @@ MachODylibFile* MachOLinkingContext::findIndirectDylib(StringRef path) const {
 }
 
 bool MachOLinkingContext::createImplicitFiles(
-                            std::vector<std::unique_ptr<File> > &result) const {
+                            std::vector<std::unique_ptr<File> > &result) {
   // Add indirect dylibs by asking each linked dylib to add its indirects.
   // Iterate until no more dylibs get loaded.
   size_t dylibCount = 0;

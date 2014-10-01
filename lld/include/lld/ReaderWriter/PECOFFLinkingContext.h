@@ -84,7 +84,7 @@ public:
   void addPasses(PassManager &pm) override;
 
   bool createImplicitFiles(
-      std::vector<std::unique_ptr<File> > &result) const override;
+      std::vector<std::unique_ptr<File> > &result) override;
 
   bool is64Bit() const {
     return _machineType == llvm::COFF::IMAGE_FILE_MACHINE_AMD64;

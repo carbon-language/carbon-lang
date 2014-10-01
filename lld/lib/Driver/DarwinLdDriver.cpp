@@ -85,9 +85,9 @@ static std::string canonicalizePath(StringRef path) {
 }
 
 static void addFile(StringRef path, std::unique_ptr<InputGraph> &inputGraph,
-                    bool forceLoad) {
+                    bool forceLoad, MachOLinkingContext &ctx) {
    inputGraph->addInputElement(std::unique_ptr<InputElement>(
-                                          new MachOFileNode(path, forceLoad)));
+                                      new MachOFileNode(path, forceLoad, ctx)));
 }
 
 // Export lists are one symbol per line.  Blank lines are ignored.
@@ -163,7 +163,7 @@ static std::error_code parseFileList(StringRef fileListPath,
     if (ctx.testingFileUsage()) {
       diagnostics << "Found filelist entry " << canonicalizePath(path) << '\n';
     }
-    addFile(path, inputGraph, forceLoad);
+    addFile(path, inputGraph, forceLoad, ctx);
     buffer = lineAndRest.second;
   }
   return std::error_code();
@@ -631,7 +631,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     default:
       continue;
     case OPT_INPUT:
-      addFile(arg->getValue(), inputGraph, globalWholeArchive);
+      addFile(arg->getValue(), inputGraph, globalWholeArchive, ctx);
       break;
     case OPT_l:
       resolvedPath = ctx.searchLibrary(arg->getValue());
@@ -642,7 +642,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
        diagnostics << "Found library "
                    << canonicalizePath(resolvedPath.get()) << '\n';
       }
-      addFile(resolvedPath.get(), inputGraph, globalWholeArchive);
+      addFile(resolvedPath.get(), inputGraph, globalWholeArchive, ctx);
       break;
     case OPT_framework:
       resolvedPath = ctx.findPathForFramework(arg->getValue());
@@ -653,7 +653,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
         diagnostics << "Found framework "
                     << canonicalizePath(resolvedPath.get()) << '\n';
       }
-      addFile(resolvedPath.get(), inputGraph, globalWholeArchive);
+      addFile(resolvedPath.get(), inputGraph, globalWholeArchive, ctx);
       break;
     case OPT_filelist:
       if (std::error_code ec = parseFileList(arg->getValue(), inputGraph,

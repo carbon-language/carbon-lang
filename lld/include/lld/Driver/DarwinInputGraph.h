@@ -18,14 +18,15 @@
 #define LLD_DRIVER_DARWIN_INPUT_GRAPH_H
 
 #include "lld/Core/InputGraph.h"
+#include "lld/ReaderWriter/MachOLinkingContext.h"
 
 namespace lld {
 
 /// \brief Represents a MachO File
 class MachOFileNode : public FileNode {
 public:
-  MachOFileNode(StringRef path, bool isWholeArchive)
-      : FileNode(path), _isWholeArchive(isWholeArchive) {}
+  MachOFileNode(StringRef path, bool isWholeArchive, MachOLinkingContext &ctx)
+      : FileNode(path), _context(ctx), _isWholeArchive(isWholeArchive) {}
 
   /// \brief Parse the input file to lld::File.
   std::error_code parse(const LinkingContext &ctx,
@@ -42,6 +43,7 @@ public:
   }
 
 private:
+  MachOLinkingContext &_context;
   bool _isWholeArchive;
 };
 

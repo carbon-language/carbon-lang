@@ -68,7 +68,7 @@ public:
   bool validateImpl(raw_ostream &diagnostics) override;
   std::string demangle(StringRef symbolName) const override;
 
-  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) const override;
+  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
   uint32_t getCPUType() const;
   uint32_t getCPUSubType() const;
@@ -231,7 +231,7 @@ public:
   /// Used to find indirect dylibs. Instantiates a MachODylibFile if one
   /// has not already been made for the requested dylib.  Uses -L and -F
   /// search paths to allow indirect dylibs to be overridden.
-  mach_o::MachODylibFile* findIndirectDylib(StringRef path) const;
+  mach_o::MachODylibFile* findIndirectDylib(StringRef path);
 
   /// Creates a copy (owned by this MachOLinkingContext) of a string.
   StringRef copy(StringRef str) { return str.copy(_allocator); }
@@ -252,7 +252,7 @@ public:
 
 private:
   Writer &writer() const override;
-  mach_o::MachODylibFile* loadIndirectDylib(StringRef path) const;
+  mach_o::MachODylibFile* loadIndirectDylib(StringRef path);
   void checkExportWhiteList(const DefinedAtom *atom) const;
   void checkExportBlackList(const DefinedAtom *atom) const;
 

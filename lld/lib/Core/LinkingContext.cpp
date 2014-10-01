@@ -38,7 +38,7 @@ std::error_code LinkingContext::writeFile(const File &linkedFile) const {
 }
 
 bool LinkingContext::createImplicitFiles(
-    std::vector<std::unique_ptr<File> > &result) const {
+    std::vector<std::unique_ptr<File> > &result) {
   return this->writer().createImplicitFiles(result);
 }
 
