@@ -250,6 +250,11 @@ def DSTOMOD {
 //
 //===----------------------------------------------------------------------===//
 
+class SIMCInstr <string pseudo, int subtarget> {
+  string PseudoInstr = pseudo;
+  int Subtarget = subtarget;
+}
+
 //===----------------------------------------------------------------------===//
 // Scalar classes
 //===----------------------------------------------------------------------===//
@@ -307,18 +312,43 @@ class SOPK_64 <bits<5> op, string opName, list<dag> pattern> : SOPK <
   opName#" $dst, $src0", pattern
 >;
 
-multiclass SMRD_Helper <bits<5> op, string asm, RegisterClass baseClass,
+//===----------------------------------------------------------------------===//
+// SMRD classes
+//===----------------------------------------------------------------------===//
+
+class SMRD_Pseudo <string opName, dag outs, dag ins, list<dag> pattern> :
+  SMRD <outs, ins, "", pattern>,
+  SIMCInstr<opName, SISubtarget.NONE> {
+  let isPseudo = 1;
+}
+
+class SMRD_Real_si <bits<5> op, string opName, bit imm, dag outs, dag ins,
+                    string asm> :
+  SMRD <outs, ins, asm, []>,
+  SMRDe <op, imm>,
+  SIMCInstr<opName, SISubtarget.SI>;
+
+multiclass SMRD_m <bits<5> op, string opName, bit imm, dag outs, dag ins,
+                   string asm, list<dag> pattern> {
+
+  def "" : SMRD_Pseudo <opName, outs, ins, pattern>;
+
+  def _si : SMRD_Real_si <op, opName, imm, outs, ins, asm>;
+
+}
+
+multiclass SMRD_Helper <bits<5> op, string opName, RegisterClass baseClass,
                         RegisterClass dstClass> {
-  def _IMM : SMRD <
-    op, 1, (outs dstClass:$dst),
+  defm _IMM : SMRD_m <
+    op, opName#"_IMM", 1, (outs dstClass:$dst),
     (ins baseClass:$sbase, u32imm:$offset),
-    asm#" $dst, $sbase, $offset", []
+    opName#" $dst, $sbase, $offset", []
   >;
 
-  def _SGPR : SMRD <
-    op, 0, (outs dstClass:$dst),
+  defm _SGPR : SMRD_m <
+    op, opName#"_SGPR", 0, (outs dstClass:$dst),
     (ins baseClass:$sbase, SReg_32:$soff),
-    asm#" $dst, $sbase, $soff", []
+    opName#" $dst, $sbase, $soff", []
   >;
 }
 
@@ -529,11 +559,6 @@ class VOP2_REV <string revOp, bit isOrig> {
 class AtomicNoRet <string noRetOp, bit isRet> {
   string NoRetOp = noRetOp;
   bit IsRet = isRet;
-}
-
-class SIMCInstr <string pseudo, int subtarget> {
-  string PseudoInstr = pseudo;
-  int Subtarget = subtarget;
 }
 
 class VOP3DisableFields <bit HasSrc1, bit HasSrc2, bit HasModifiers> {

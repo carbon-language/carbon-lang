@@ -206,8 +206,8 @@ class SOPP <bits<7> op, dag ins, string asm, list<dag> pattern> :
   let UseNamedOperandTable = 1;
 }
 
-class SMRD <bits<5> op, bits<1> imm, dag outs, dag ins, string asm,
-            list<dag> pattern> : InstSI<outs, ins, asm, pattern>, SMRDe<op, imm> {
+class SMRD <dag outs, dag ins, string asm, list<dag> pattern> :
+    InstSI<outs, ins, asm, pattern> {
 
   let LGKM_CNT = 1;
   let SMRD = 1;
