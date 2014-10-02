@@ -339,6 +339,12 @@ bool SymbolTable::AtomMappingInfo::isEqual(const DefinedAtom * const l,
     return false;
   if (l->size() != r->size())
     return false;
+  if (l->sectionChoice() != r->sectionChoice())
+    return false;
+  if (l->sectionChoice() == DefinedAtom::sectionCustomRequired) {
+    if (!l->customSectionName().equals(r->customSectionName()))
+      return false;
+  }
   ArrayRef<uint8_t> lc = l->rawContent();
   ArrayRef<uint8_t> rc = r->rawContent();
   return memcmp(lc.data(), rc.data(), lc.size()) == 0;
