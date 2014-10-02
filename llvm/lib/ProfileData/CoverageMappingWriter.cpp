@@ -76,19 +76,6 @@ public:
 };
 }
 
-/// \brief Return the number of regions that have the given FileID.
-static unsigned countFileIDs(ArrayRef<CounterMappingRegion> Regions,
-                             unsigned FileID) {
-  unsigned Result = 0;
-  for (const auto &I : Regions) {
-    if (I.FileID == FileID)
-      ++Result;
-    if (I.FileID > FileID)
-      break;
-  }
-  return Result;
-}
-
 /// \brief Encode the counter.
 ///
 /// The encoding uses the following format:
@@ -142,55 +129,58 @@ void CoverageMappingWriter::write(raw_ostream &OS) {
   // Split the regions into subarrays where each region in a
   // subarray has a fileID which is the index of that subarray.
   unsigned PrevLineStart = 0;
-  unsigned CurrentFileID = MappingRegions.front().FileID;
-  assert(CurrentFileID == 0);
-  encodeULEB128(countFileIDs(MappingRegions, CurrentFileID), OS);
-  for (const auto &I : MappingRegions) {
-    if (I.FileID != CurrentFileID) {
+  unsigned CurrentFileID = ~0U;
+  for (auto I = MappingRegions.begin(), E = MappingRegions.end(); I != E; ++I) {
+    if (I->FileID != CurrentFileID) {
       // Ensure that all file ids have at least one mapping region.
-      assert(I.FileID == (CurrentFileID + 1));
+      assert(I->FileID == (CurrentFileID + 1));
+      // Find the number of regions with this file id.
+      unsigned RegionCount = 1;
+      for (auto J = I + 1; J != E && I->FileID == J->FileID; ++J)
+        ++RegionCount;
       // Start a new region sub-array.
-      CurrentFileID = I.FileID;
-      encodeULEB128(countFileIDs(MappingRegions, CurrentFileID), OS);
+      encodeULEB128(RegionCount, OS);
+
+      CurrentFileID = I->FileID;
       PrevLineStart = 0;
     }
-    Counter Count = Minimizer.adjust(I.Count);
-    switch (I.Kind) {
+    Counter Count = Minimizer.adjust(I->Count);
+    switch (I->Kind) {
     case CounterMappingRegion::CodeRegion:
       writeCounter(MinExpressions, Count, OS);
       break;
     case CounterMappingRegion::ExpansionRegion: {
       assert(Count.isZero());
-      assert(I.ExpandedFileID <=
+      assert(I->ExpandedFileID <=
              (std::numeric_limits<unsigned>::max() >>
               Counter::EncodingCounterTagAndExpansionRegionTagBits));
       // Mark an expansion region with a set bit that follows the counter tag,
       // and pack the expanded file id into the remaining bits.
       unsigned EncodedTagExpandedFileID =
           (1 << Counter::EncodingTagBits) |
-          (I.ExpandedFileID
+          (I->ExpandedFileID
            << Counter::EncodingCounterTagAndExpansionRegionTagBits);
       encodeULEB128(EncodedTagExpandedFileID, OS);
       break;
     }
     case CounterMappingRegion::SkippedRegion:
       assert(Count.isZero());
-      encodeULEB128(unsigned(I.Kind)
+      encodeULEB128(unsigned(I->Kind)
                         << Counter::EncodingCounterTagAndExpansionRegionTagBits,
                     OS);
       break;
     }
-    assert(I.LineStart >= PrevLineStart);
-    encodeULEB128(I.LineStart - PrevLineStart, OS);
+    assert(I->LineStart >= PrevLineStart);
+    encodeULEB128(I->LineStart - PrevLineStart, OS);
     uint64_t CodeBeforeColumnStart =
-        uint64_t(I.HasCodeBefore) |
-        (uint64_t(I.ColumnStart)
+        uint64_t(I->HasCodeBefore) |
+        (uint64_t(I->ColumnStart)
          << CounterMappingRegion::EncodingHasCodeBeforeBits);
     encodeULEB128(CodeBeforeColumnStart, OS);
-    assert(I.LineEnd >= I.LineStart);
-    encodeULEB128(I.LineEnd - I.LineStart, OS);
-    encodeULEB128(I.ColumnEnd, OS);
-    PrevLineStart = I.LineStart;
+    assert(I->LineEnd >= I->LineStart);
+    encodeULEB128(I->LineEnd - I->LineStart, OS);
+    encodeULEB128(I->ColumnEnd, OS);
+    PrevLineStart = I->LineStart;
   }
   // Ensure that all file ids have at least one mapping region.
   assert(CurrentFileID == (VirtualFileMapping.size() - 1));
