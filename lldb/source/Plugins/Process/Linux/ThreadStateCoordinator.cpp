@@ -105,7 +105,7 @@ public:
     ProcessEvent(ThreadStateCoordinator &coordinator) override
     {
         // Validate we know about the deferred trigger thread.
-        if (auto find_it = coordinator.m_tid_stop_map.find (m_triggering_tid) == coordinator.m_tid_stop_map.end ())
+        if (coordinator.m_tid_stop_map.find (m_triggering_tid) == coordinator.m_tid_stop_map.end ())
         {
             // We don't know about this thread.  This is an error condition.
             std::ostringstream error_message;
