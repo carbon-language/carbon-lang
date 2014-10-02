@@ -20,7 +20,7 @@ class PlatformCommandTestCase(TestBase):
 
     def test_process_list(self):
         self.expect("platform process list",
-            substrs = ['PID', 'ARCH', 'NAME'])
+            substrs = ['PID', 'TRIPLE', 'NAME'])
 
     def test_process_info_with_no_arg(self):
         """This is expected to fail and to return a proper error message."""
