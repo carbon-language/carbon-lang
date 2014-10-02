@@ -46,9 +46,9 @@ static MDNode *getID(LLVMContext &Ctx, Value *arg0 = nullptr,
   return ID;
 }
 
-LoopAnnotator::LoopAnnotator() : SE(nullptr), AliasScopeDomain(nullptr) {}
+ScopAnnotator::ScopAnnotator() : SE(nullptr), AliasScopeDomain(nullptr) {}
 
-void LoopAnnotator::buildAliasScopes(Scop &S) {
+void ScopAnnotator::buildAliasScopes(Scop &S) {
   SE = S.getSE();
 
   LLVMContext &Ctx = SE->getContext();
@@ -83,7 +83,7 @@ void LoopAnnotator::buildAliasScopes(Scop &S) {
   }
 }
 
-void polly::LoopAnnotator::pushLoop(Loop *L, bool IsParallel) {
+void ScopAnnotator::pushLoop(Loop *L, bool IsParallel) {
 
   ActiveLoops.push_back(L);
   if (!IsParallel)
@@ -98,7 +98,7 @@ void polly::LoopAnnotator::pushLoop(Loop *L, bool IsParallel) {
   ParallelLoops.push_back(Ids);
 }
 
-void polly::LoopAnnotator::popLoop(bool IsParallel) {
+void ScopAnnotator::popLoop(bool IsParallel) {
   ActiveLoops.pop_back();
   if (!IsParallel)
     return;
@@ -107,8 +107,8 @@ void polly::LoopAnnotator::popLoop(bool IsParallel) {
   ParallelLoops.pop_back();
 }
 
-void polly::LoopAnnotator::annotateLoopLatch(BranchInst *B, Loop *L,
-                                             bool IsParallel) const {
+void ScopAnnotator::annotateLoopLatch(BranchInst *B, Loop *L,
+                                      bool IsParallel) const {
   if (!IsParallel)
     return;
 
@@ -118,7 +118,7 @@ void polly::LoopAnnotator::annotateLoopLatch(BranchInst *B, Loop *L,
   B->setMetadata("llvm.loop", Id);
 }
 
-void polly::LoopAnnotator::annotate(Instruction *Inst) {
+void ScopAnnotator::annotate(Instruction *Inst) {
   if (!Inst->mayReadOrWriteMemory())
     return;
 

@@ -56,7 +56,7 @@ using namespace llvm;
 
 class IslNodeBuilder {
 public:
-  IslNodeBuilder(PollyIRBuilder &Builder, LoopAnnotator &Annotator, Pass *P,
+  IslNodeBuilder(PollyIRBuilder &Builder, ScopAnnotator &Annotator, Pass *P,
                  LoopInfo &LI, ScalarEvolution &SE, DominatorTree &DT)
       : Builder(Builder), Annotator(Annotator), ExprBuilder(Builder, IDToValue),
         P(P), LI(LI), SE(SE), DT(DT) {}
@@ -69,7 +69,7 @@ public:
 
 private:
   PollyIRBuilder &Builder;
-  LoopAnnotator &Annotator;
+  ScopAnnotator &Annotator;
   IslExprBuilder ExprBuilder;
   Pass *P;
   LoopInfo &LI;
@@ -580,7 +580,7 @@ public:
   ///}
 
   /// @brief The loop annotator to generate llvm.loop metadata.
-  LoopAnnotator Annotator;
+  ScopAnnotator Annotator;
 
   /// @brief Build the runtime condition.
   ///

@@ -40,8 +40,8 @@ using namespace llvm;
 /// @param DT         The dominator tree we need to update
 /// @param ExitBlock  The block the loop will exit to.
 /// @param Predicate  The predicate used to generate the upper loop bound.
-/// @param Annotator  This function can (optionally) take a LoopAnnotator which
-///                   tracks the loop structure.
+/// @param Annotator  This function can (optionally) take a ScopAnnotator which
+///                   annotates loops and alias information in the SCoP.
 /// @param Parallel   If this loop should be marked parallel in the Annotator.
 /// @param UseGuard   Create a guard in front of the header to check if the
 ///                   loop is executed at least once, otherwise just assume it.
@@ -51,7 +51,7 @@ Value *createLoop(Value *LowerBound, Value *UpperBound, Value *Stride,
                   PollyIRBuilder &Builder, Pass *P, LoopInfo &LI,
                   DominatorTree &DT, BasicBlock *&ExitBlock,
                   ICmpInst::Predicate Predicate,
-                  LoopAnnotator *Annotator = NULL, bool Parallel = false,
+                  ScopAnnotator *Annotator = NULL, bool Parallel = false,
                   bool UseGuard = true);
 
 class OMPGenerator {

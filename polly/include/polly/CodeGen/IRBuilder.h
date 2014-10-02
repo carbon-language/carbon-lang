@@ -39,9 +39,9 @@ class Scop;
 ///      These alias scopes live in a new alias domain only used in this SCoP.
 ///      Each base pointer has its own alias scope and is annotated to not
 ///      alias with any access to different base pointers.
-class LoopAnnotator {
+class ScopAnnotator {
 public:
-  LoopAnnotator();
+  ScopAnnotator();
 
   /// @brief Build all alias scopes for the given SCoP.
   void buildAliasScopes(Scop &S);
@@ -88,7 +88,7 @@ class PollyBuilderInserter
     : protected llvm::IRBuilderDefaultInserter<PreserveNames> {
 public:
   PollyBuilderInserter() : Annotator(0) {}
-  PollyBuilderInserter(class LoopAnnotator &A) : Annotator(&A) {}
+  PollyBuilderInserter(class ScopAnnotator &A) : Annotator(&A) {}
 
 protected:
   void InsertHelper(llvm::Instruction *I, const llvm::Twine &Name,
@@ -101,7 +101,7 @@ protected:
   }
 
 private:
-  class LoopAnnotator *Annotator;
+  class ScopAnnotator *Annotator;
 };
 
 // TODO: We should not name instructions in NDEBUG builds.
@@ -113,7 +113,7 @@ typedef llvm::IRBuilder<true, llvm::ConstantFolder, IRInserter> PollyIRBuilder;
 
 /// @brief Return an IR builder pointed before the @p BB terminator.
 static inline PollyIRBuilder createPollyIRBuilder(llvm::BasicBlock *BB,
-                                                  LoopAnnotator &LA) {
+                                                  ScopAnnotator &LA) {
   PollyIRBuilder Builder(BB->getContext(), llvm::ConstantFolder(),
                          polly::IRInserter(LA));
   Builder.SetInsertPoint(BB->getTerminator());

@@ -48,7 +48,7 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
                          PollyIRBuilder &Builder, Pass *P, LoopInfo &LI,
                          DominatorTree &DT, BasicBlock *&ExitBB,
                          ICmpInst::Predicate Predicate,
-                         LoopAnnotator *Annotator, bool Parallel,
+                         ScopAnnotator *Annotator, bool Parallel,
                          bool UseGuard) {
   Function *F = Builder.GetInsertBlock()->getParent();
   LLVMContext &Context = F->getContext();
