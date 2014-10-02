@@ -8,6 +8,15 @@ import select
 import subprocess
 import sys
 
+# Wrapping this rather than os.devnull since os.devnull does not seeem to implement 'write'.
+class NullWriter(object):
+    def write (self, *args):
+        pass
+    def writelines (self, *args):
+        pass
+    def close (self, *args):
+        pass
+
 def find_makefile_dirs():
     makefile_dirs = []
     for root, dirs, files in os.walk("."):
@@ -58,7 +67,7 @@ def line_combine_printer(file, previous_data, new_line_subn_result):
                 print(new_line, file=file)
             return ("", 0)
 
-def call_make(makefile_dir, extra_args=None):
+def call_make(makefile_dir, extra_args=None, stdout=sys.stdout, stderr=sys.stderr):
     command = ["make", "-C", makefile_dir]
     if extra_args:
         command.extend(extra_args)
@@ -78,10 +87,10 @@ def call_make(makefile_dir, extra_args=None):
         for fd in select_result[0]:
             if fd == proc.stdout.fileno():
                 line = proc.stdout.readline()
-                stdout_data = line_combine_printer(sys.stdout, stdout_data, filter_run_line(sub_expr, line.rstrip()))
+                stdout_data = line_combine_printer(stdout, stdout_data, filter_run_line(sub_expr, line.rstrip()))
             elif fd == proc.stderr.fileno():
                 line = proc.stderr.readline()
-                stderr_data = line_combine_printer(sys.stderr, stderr_data, filter_run_line(sub_expr, line.rstrip()))
+                stderr_data = line_combine_printer(stderr, stderr_data, filter_run_line(sub_expr, line.rstrip()))
 
         proc_retval = proc.poll()
         if proc_retval != None:
@@ -91,7 +100,7 @@ def call_make(makefile_dir, extra_args=None):
             while True:
                 line = proc.stdout.readline().rstrip()
                 if line and len(line) > 0:
-                    stdout_data = line_combine_printer(sys.stdout, stdout_data, filter_run_line(sub_expr, line))
+                    stdout_data = line_combine_printer(stdout, stdout_data, filter_run_line(sub_expr, line))
                 else:
                     break
 
@@ -99,7 +108,7 @@ def call_make(makefile_dir, extra_args=None):
             while True:
                 line = proc.stderr.readline().rstrip()
                 if line and len(line) > 0:
-                    stderr_data = line_combine_printer(sys.stderr, stderr_data, filter_run_line(sub_expr, line))
+                    stderr_data = line_combine_printer(stderr, stderr_data, filter_run_line(sub_expr, line))
                 else:
                     break
 
@@ -107,16 +116,19 @@ def call_make(makefile_dir, extra_args=None):
 
 
 global_retval = 0
-extra_args = None
 
-if len(sys.argv) > 1:
-    if sys.argv[1] == 'clean':
-        extra_args = ['clean']
+do_clean_only = ('clean' in sys.argv)
 
 for makefile_dir in find_makefile_dirs():
-    print("found makefile dir: {}".format(makefile_dir))
-    retval = call_make(makefile_dir, extra_args)
-    if retval != 0:
-        global_retval = retval
+    # If we're not only cleaning, we do the normal build.
+    if not do_clean_only:
+        print("making: {}".format(makefile_dir))
+        retval = call_make(makefile_dir)
+        # Remember any errors that happen here.
+        if retval != 0:
+            global_retval = retval
+
+    # Now clean
+    call_make(makefile_dir, ['clean'], stdout=NullWriter(), stderr=NullWriter())
         
 sys.exit(global_retval)
