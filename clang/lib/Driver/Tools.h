@@ -614,7 +614,8 @@ namespace visualstudio {
 
 namespace arm {
   StringRef getARMFloatABI(const Driver &D, const llvm::opt::ArgList &Args,
-                         const llvm::Triple &Triple);
+                           const llvm::Triple &Triple,
+                           bool *ExplicitNoFloat = NULL);
 }
 namespace XCore {
   // For XCore, we do not need to instantiate tools for PreProcess, PreCompile and Compile.

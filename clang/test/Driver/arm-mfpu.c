@@ -122,12 +122,12 @@
 
 // RUN: %clang -target armv8-linux-gnueabi -mfpu=none %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NO-FP %s
+// CHECK-NO-FP: "-target-feature" "-neon"
+// CHECK-NO-FP: "-target-feature" "-crypto"
 // CHECK-NO-FP: "-target-feature" "-vfp2"
 // CHECK-NO-FP: "-target-feature" "-vfp3"
 // CHECK-NO-FP: "-target-feature" "-vfp4"
 // CHECK-NO-FP: "-target-feature" "-fp-armv8"
-// CHECK-NO-FP: "-target-feature" "-crypto"
-// CHECK-NO-FP: "-target-feature" "-neon"
 
 // RUN: %clang -target arm-linux-gnueabihf %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-HF %s
@@ -136,3 +136,114 @@
 // RUN: %clang -target armv7-apple-darwin -x assembler %s -### -c 2>&1 \
 // RUN:   | FileCheck --check-prefix=ASM %s
 // ASM-NOT: -target-feature
+
+// RUN: %clang -target armv8-linux-gnueabi -mfpu=none -mfloat-abi=soft %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv7-linux-gnueabi -mfpu=none -mfloat-abi=soft %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv6-linux-gnueabi -mfpu=none -mfloat-abi=soft %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv5-linux-gnueabi -mfpu=none -mfloat-abi=soft %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv4-linux-gnueabi -mfpu=none -mfloat-abi=soft %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv8-linux-gnueabi -mfpu=none -msoft-float %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv7-linux-gnueabi -mfpu=none -msoft-float %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv6-linux-gnueabi -mfpu=none -msoft-float %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv5-linux-gnueabi -mfpu=none -msoft-float %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv4-linux-gnueabi -mfpu=none -msoft-float %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv8-linux-gnueabi -mfloat-abi=soft %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv7-linux-gnueabi -mfloat-abi=soft %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv6-linux-gnueabi -mfloat-abi=soft %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv5-linux-gnueabi -mfloat-abi=soft %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv4-linux-gnueabi -mfloat-abi=soft %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv8-linux-gnueabi -msoft-float %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv7-linux-gnueabi -msoft-float %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv6-linux-gnueabi -msoft-float %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv5-linux-gnueabi -msoft-float %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv4-linux-gnueabi -msoft-float %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv8-linux-gnueabi -mfpu=none %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv7-linux-gnueabi -mfpu=none %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv6-linux-gnueabi -mfpu=none %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv5-linux-gnueabi -mfpu=none %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// RUN: %clang -target armv4-linux-gnueabi -mfpu=none %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI-FP %s
+// SOFT-ABI-FP-NOT: error:
+// SOFT-ABI-FP-NOT: warning:
+// SOFT-ABI-FP-NOT: "-target-feature" "+{{[^ ]*fp[^ ]*}}"
+// SOFT-ABI-FP: "-target-feature" "-neon"
+// SOFT-ABI-FP: "-target-feature" "-crypto"
+// SOFT-ABI-FP: "-target-feature" "-vfp2"
+// SOFT-ABI-FP: "-target-feature" "-vfp3"
+// SOFT-ABI-FP: "-target-feature" "-vfp4"
+// SOFT-ABI-FP: "-target-feature" "-fp-armv8"
+// SOFT-ABI-FP-NOT: "-target-feature" "+{{[^ ]*fp[^ ]*}}"
+// SOFT-ABI-FP: "-msoft-float"
+// SOFT-ABI-FP: "-mfloat-abi" "soft"
+// SOFT-ABI-FP-NOT: "-target-feature" "+{{[^ ]*fp[^ ]*}}"
+
+// RUN: %clang -target armv8-linux-gnueabi -mfpu=none -mfloat-abi=softfp %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=ABI-IGNORE %s
+// ABI-IGNORE: warning: -mfpu=none implies soft-float, ignoring conflicting option '-mfloat-abi=softfp'
+
+// RUN: %clang -target armv8-linux-gnueabi -mfpu=none -mfloat-abi=hard %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=ABI-ERROR %s
+// ABI-ERROR: error: -mfpu=none implies soft-float, which conflicts with option '-mfloat-abi=hard'
+
+// RUN: %clang -target armv8-linux-gnueabi -mfpu=none -mhard-float %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=FP-ERROR %s
+// FP-ERROR: error: -mfpu=none implies soft-float, which conflicts with option '-mhard-float'
+
+// RUN: %clang -target armv8-linux-gnueabi -mfpu=vfp4 -mfloat-abi=soft %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI %s
+// RUN: %clang -target armv8-linux-gnueabi -mfpu=vfp4 -mfloat-abi=softfp %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI %s
+// RUN: %clang -target armv8-freebsd-gnueabi -mfpu=vfp4 %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=SOFT-ABI %s
+// SOFT-ABI-NOT: error:
+// SOFT-ABI-NOT: warning:
+// SOFT-ABI-NOT: "-msoft-float"
+// SOFT-ABI: "-target-feature" "+vfp4"
+// SOFT-ABI-NOT: "-msoft-float"
+// SOFT-ABI: "-mfloat-abi" "soft"
+// SOFT-ABI-NOT: "-msoft-float"
+
+// Floating point features should be disabled only when explicitly requested,
+// otherwise we must respect target inferred defaults.
+//
+// RUN: %clang -target armv8-freebsd-gnueabi %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=DEFAULT-FP %s
+// DEAFULT-FP-NOT: error:
+// DEFAULT-FP-NOT: warning:
+// DEFAULT-FP-NOT: "-target-feature" "-{{[^ ]*fp[^ ]*}}"
+// DEFAULT-FP: "-msoft-float" "-mfloat-abi" "soft"
+// DEFAULT-FP-NOT: "-target-feature" "-{{[^ ]*fp[^ ]*}}"
+
+// RUN: %clang -target armv8-linux-gnueabi -mfpu=vfp4 -mfloat-abi=hard %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=VFP-ABI %s
+// VFP-ABI-NOT: error:
+// VFP-ABI-NOT: warning:
+// VFP-ABI-NOT: "-msoft-float"
+// VFP-ABI: "-target-feature" "+vfp4"
+// VFP-ABI-NOT: "-msoft-float"
+// VFP-ABI: "-mfloat-abi" "hard"
+// VFP-ABI-NOT: "-msoft-float"

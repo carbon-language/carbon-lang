@@ -146,6 +146,12 @@ def warn_drv_clang_unsupported : Warning<
   "the clang compiler does not support '%0'">;
 def warn_drv_assuming_mfloat_abi_is : Warning<
   "unknown platform, assuming -mfloat-abi=%0">;
+def warn_drv_implied_soft_float_assumed : Warning<
+  "%0 implies soft-float, ignoring conflicting option '%1'">,
+  InGroup<DiagGroup<"implied-soft-float-assumed">>;
+def warn_drv_implied_soft_float_conflict : Warning<
+  "%0 implies soft-float, which conflicts with option '%1'">,
+  InGroup<DiagGroup<"implied-soft-float-conflict">>, DefaultError;
 def warn_ignoring_ftabstop_value : Warning<
   "ignoring invalid -ftabstop value '%0', using default value %1">;
 def warn_drv_overriding_flag_option : Warning<
