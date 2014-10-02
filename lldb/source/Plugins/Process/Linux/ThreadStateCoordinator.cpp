@@ -337,7 +337,7 @@ public:
     EventLoopResult
     ProcessEvent(ThreadStateCoordinator &coordinator) override
     {
-        coordinator.ThreadWasCreated (m_tid, m_is_stopped);
+        coordinator.ThreadWasCreated (m_tid, m_is_stopped, m_error_function);
         return eventLoopResultContinue;
     }
 
@@ -364,7 +364,7 @@ public:
     EventLoopResult
     ProcessEvent(ThreadStateCoordinator &coordinator) override
     {
-        coordinator.ThreadDidDie (m_tid);
+        coordinator.ThreadDidDie (m_tid, m_error_function);
         return eventLoopResultContinue;
     }
 
@@ -568,8 +568,19 @@ ThreadStateCoordinator::ThreadDidStop (lldb::tid_t tid, ErrorFunction &error_fun
 }
 
 void
-ThreadStateCoordinator::ThreadWasCreated (lldb::tid_t tid, bool is_stopped)
+ThreadStateCoordinator::ThreadWasCreated (lldb::tid_t tid, bool is_stopped, ErrorFunction &error_function)
 {
+    // Ensure we don't already know about the thread.
+    auto find_it = m_tid_stop_map.find (tid);
+    if (find_it != m_tid_stop_map.end ())
+    {
+        // We already know about this thread.  This is an error condition.
+        std::ostringstream error_message;
+        error_message << "error: notified tid " << tid << " created but we already know about this thread";
+        error_function (error_message.str ());
+        return;
+    }
+
     // Add the new thread to the stop map.
     m_tid_stop_map[tid] = is_stopped;
 
@@ -583,12 +594,23 @@ ThreadStateCoordinator::ThreadWasCreated (lldb::tid_t tid, bool is_stopped)
 }
 
 void
-ThreadStateCoordinator::ThreadDidDie (lldb::tid_t tid)
+ThreadStateCoordinator::ThreadDidDie (lldb::tid_t tid, ErrorFunction &error_function)
 {
+    // Ensure we know about the thread.
+    auto find_it = m_tid_stop_map.find (tid);
+    if (find_it == m_tid_stop_map.end ())
+    {
+        // We don't know about this thread.  This is an error condition.
+        std::ostringstream error_message;
+        error_message << "error: notified tid " << tid << " died but tid is unknown";
+        error_function (error_message.str ());
+        return;
+    }
+
     // Update the global list of known thread states.  While this one is stopped, it is also dead.
     // So stop tracking it.  We assume the user of this coordinator will not keep trying to add
     // dependencies on a thread after it is known to be dead.
-    m_tid_stop_map.erase (tid);
+    m_tid_stop_map.erase (find_it);
 
     // If we have a pending notification, remove this from the set.
     EventCallAfterThreadsStop *const call_after_event = GetPendingThreadStopNotification ();

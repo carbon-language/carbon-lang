@@ -150,10 +150,10 @@ namespace lldb_private
         ThreadDidStop (lldb::tid_t tid, ErrorFunction &error_function);
 
         void
-        ThreadWasCreated (lldb::tid_t tid, bool is_stopped);
+        ThreadWasCreated (lldb::tid_t tid, bool is_stopped, ErrorFunction &error_function);
 
         void
-        ThreadDidDie (lldb::tid_t tid);
+        ThreadDidDie (lldb::tid_t tid, ErrorFunction &error_function);
 
         void
         ResetNow ();
