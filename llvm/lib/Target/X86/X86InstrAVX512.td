@@ -319,7 +319,7 @@ def VINSERTF64x4rr : AVX512AIi8<0x1a, MRMSrcReg, (outs VR512:$dst),
           []>, EVEX_4V, EVEX_V512, VEX_W;
 let mayLoad = 1 in
 def VINSERTF64x4rm : AVX512AIi8<0x1a, MRMSrcMem, (outs VR512:$dst),
-          (ins VR512:$src1, i256mem:$src2, i8imm:$src3),
+          (ins VR512:$src1, f256mem:$src2, i8imm:$src3),
           "vinsertf64x4\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
           []>, EVEX_4V, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT4>;
 }
