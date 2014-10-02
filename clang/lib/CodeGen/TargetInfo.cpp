@@ -1695,10 +1695,25 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
   }
 
   if (Ty->isMemberPointerType()) {
-    if (Ty->isMemberFunctionPointerType() && Has64BitPointers)
-      Lo = Hi = Integer;
-    else
+    if (Ty->isMemberFunctionPointerType()) {
+      if (Has64BitPointers) {
+        // If Has64BitPointers, this is an {i64, i64}, so classify both
+        // Lo and Hi now.
+        Lo = Hi = Integer;
+      } else {
+        // Otherwise, with 32-bit pointers, this is an {i32, i32}. If that
+        // straddles an eightbyte boundary, Hi should be classified as well.
+        uint64_t EB_FuncPtr = (OffsetBase) / 64;
+        uint64_t EB_ThisAdj = (OffsetBase + 64 - 1) / 64;
+        if (EB_FuncPtr != EB_ThisAdj) {
+          Lo = Hi = Integer;
+        } else {
+          Current = Integer;
+        }
+      }
+    } else {
       Current = Integer;
+    }
     return;
   }
 
