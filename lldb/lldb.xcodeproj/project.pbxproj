@@ -752,6 +752,7 @@
 		AF9107EF168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF9107EC168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp */; };
 		AF9B8F33182DB52900DA866F /* SystemRuntimeMacOSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF9B8F31182DB52900DA866F /* SystemRuntimeMacOSX.cpp */; };
 		AF9B8F34182DB52900DA866F /* SystemRuntimeMacOSX.h in Headers */ = {isa = PBXBuildFile; fileRef = AF9B8F32182DB52900DA866F /* SystemRuntimeMacOSX.h */; };
+		AFDCDBCB19DD0F42005EA55E /* SBExecutionContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 940B02F419DC96CB00AD0F52 /* SBExecutionContext.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AFEC3362194A8ABA00FF05C6 /* StructuredData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFEC3361194A8ABA00FF05C6 /* StructuredData.cpp */; };
 		AFF87C87150FF669000E1742 /* com.apple.debugserver.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFF87C86150FF669000E1742 /* com.apple.debugserver.plist */; };
 		AFF87C89150FF672000E1742 /* com.apple.debugserver-secure.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFF87C88150FF672000E1742 /* com.apple.debugserver-secure.plist */; };
@@ -4402,6 +4403,7 @@
 				AF0EBBEC185941360059E52F /* SBQueue.h in Headers */,
 				26680222115FD13D008E1FE4 /* SBError.h in Headers */,
 				26680223115FD13D008E1FE4 /* SBEvent.h in Headers */,
+				AFDCDBCB19DD0F42005EA55E /* SBExecutionContext.h in Headers */,
 				26680224115FD13D008E1FE4 /* SBFileSpec.h in Headers */,
 				4CF52AF51428291E0051E832 /* SBFileSpecList.h in Headers */,
 				26680225115FD13D008E1FE4 /* SBFrame.h in Headers */,
