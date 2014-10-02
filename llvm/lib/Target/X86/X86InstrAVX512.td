@@ -309,7 +309,10 @@ multiclass vinsert_for_size<int Opcode,
                (ins VR512:$src1, From.RC:$src2, i8imm:$src3),
                "vinsert" # From.EltTypeName # "x4\t{$src3, $src2, $src1, $dst|"
                                                    "$dst, $src1, $src2, $src3}",
-               []>, EVEX_4V, EVEX_V512;
+               [(set To.RC:$dst, (vinsert_insert:$src3 (To.VT VR512:$src1),
+                                                       (From.VT From.RC:$src2),
+                                                       (iPTR imm)))]>,
+             EVEX_4V, EVEX_V512;
 
     let mayLoad = 1 in
     def rm : AVX512AIi8<Opcode, MRMSrcMem, (outs VR512:$dst),
@@ -318,13 +321,6 @@ multiclass vinsert_for_size<int Opcode,
                                                    "$dst, $src1, $src2, $src3}",
                []>, EVEX_4V, EVEX_V512, EVEX_CD8<From.EltSize, CD8VT4>;
   }
-
-  // Codegen pattern, e.g. v4i32 -> v16i32 for vinserti32x4
-  def : Pat<(vinsert_insert:$ins
-               (To.VT VR512:$src1), (From.VT From.RC:$src2), (iPTR imm)),
-            (To.VT (!cast<Instruction>(NAME # From.EltSize # "x4rr")
-                          VR512:$src1, From.RC:$src2,
-                          (INSERT_get_vinsert_imm VR512:$ins)))>;
 
   // Codegen pattern with the alternative types, e.g. v2i64 -> v8i64 for
   // vinserti32x4
