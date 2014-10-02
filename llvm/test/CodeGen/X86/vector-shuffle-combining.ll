@@ -1,11 +1,10 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=CHECK-SSE2
+; RUN: llc < %s -mcpu=x86-64 -mattr=+sse2 | FileCheck %s --check-prefix=CHECK-SSE2
 ;
 ; Verify that the DAG combiner correctly folds bitwise operations across
 ; shuffles, nested shuffles with undef, pairs of nested shuffles, and other
 ; basic and always-safe patterns. Also test that the DAG combiner will combine
 ; target-specific shuffle instructions where reasonable.
 
-target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-unknown"
 
 declare <4 x i32> @llvm.x86.sse2.pshuf.d(<4 x i32>, i8)
