@@ -775,6 +775,9 @@ def err_lambda_missing_parens : Error<
 // Availability attribute
 def err_expected_version : Error<
   "expected a version of the form 'major[.minor[.subminor]]'">;
+def warn_expected_consistent_version_separator : Warning<
+  "use same version number separators '_' or '.'; as in "
+  "'major[.minor[.subminor]]'">, InGroup<Availability>;
 def err_zero_version : Error<
   "version number must have non-zero major, minor, or sub-minor version">;
 def err_availability_expected_platform : Error<

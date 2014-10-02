@@ -688,7 +688,8 @@ VersionTuple Parser::ParseVersionTuple(SourceRange &Range) {
     return VersionTuple(Major);
   }
 
-  if (!VersionNumberSeparator(ThisTokBegin[AfterMajor])
+  const char AfterMajorSeparator = ThisTokBegin[AfterMajor];
+  if (!VersionNumberSeparator(AfterMajorSeparator)
       || (AfterMajor + 1 == ActualLength)) {
     Diag(Tok, diag::err_expected_version);
     SkipUntil(tok::comma, tok::r_paren,
@@ -716,13 +717,17 @@ VersionTuple Parser::ParseVersionTuple(SourceRange &Range) {
     return VersionTuple(Major, Minor);
   }
 
+  const char AfterMinorSeparator = ThisTokBegin[AfterMinor];
   // If what follows is not a '.' or '_', we have a problem.
-  if (!VersionNumberSeparator(ThisTokBegin[AfterMinor])) {
+  if (!VersionNumberSeparator(AfterMinorSeparator)) {
     Diag(Tok, diag::err_expected_version);
     SkipUntil(tok::comma, tok::r_paren,
               StopAtSemi | StopBeforeMatch | StopAtCodeCompletion);
     return VersionTuple();
   }
+  
+  if (AfterMajorSeparator != AfterMinorSeparator)
+    Diag(Tok, diag::warn_expected_consistent_version_separator);
 
   // Parse the subminor version.
   unsigned AfterSubminor = AfterMinor + 1;

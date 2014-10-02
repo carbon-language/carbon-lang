@@ -90,3 +90,8 @@ id NSNibOwner, topNibObjects;
 }
 
 @end
+
+@interface Mixed
+- (void)Meth1 __attribute__((availability(macosx,introduced=10.3_0))); // expected-warning {{use same version number separators '_' or '.'}}
+- (void)Meth2 __attribute__((availability(macosx,introduced=10_3.1))); // expected-warning {{use same version number separators '_' or '.'}}
+@end
