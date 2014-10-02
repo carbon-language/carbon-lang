@@ -49,6 +49,15 @@ void test_op_ignore (void) // CHECK-LABEL: define void @test_op_ignore
   (void) __sync_fetch_and_xor (&sll, 1); // CHECK: atomicrmw xor i64
   (void) __sync_fetch_and_xor (&ull, 1); // CHECK: atomicrmw xor i64
 
+  (void) __sync_fetch_and_nand (&sc, 1); // CHECK: atomicrmw nand i8
+  (void) __sync_fetch_and_nand (&uc, 1); // CHECK: atomicrmw nand i8
+  (void) __sync_fetch_and_nand (&ss, 1); // CHECK: atomicrmw nand i16
+  (void) __sync_fetch_and_nand (&us, 1); // CHECK: atomicrmw nand i16
+  (void) __sync_fetch_and_nand (&si, 1); // CHECK: atomicrmw nand i32
+  (void) __sync_fetch_and_nand (&ui, 1); // CHECK: atomicrmw nand i32
+  (void) __sync_fetch_and_nand (&sll, 1); // CHECK: atomicrmw nand i64
+  (void) __sync_fetch_and_nand (&ull, 1); // CHECK: atomicrmw nand i64
+
   (void) __sync_fetch_and_and (&sc, 1); // CHECK: atomicrmw and i8
   (void) __sync_fetch_and_and (&uc, 1); // CHECK: atomicrmw and i8
   (void) __sync_fetch_and_and (&ss, 1); // CHECK: atomicrmw and i16
@@ -98,6 +107,15 @@ void test_fetch_and_op (void) // CHECK-LABEL: define void @test_fetch_and_op
   sll = __sync_fetch_and_xor (&sll, 11); // CHECK: atomicrmw xor
   ull = __sync_fetch_and_xor (&ull, 11); // CHECK: atomicrmw xor
 
+  sc = __sync_fetch_and_nand (&sc, 11); // CHECK: atomicrmw nand
+  uc = __sync_fetch_and_nand (&uc, 11); // CHECK: atomicrmw nand
+  ss = __sync_fetch_and_nand (&ss, 11); // CHECK: atomicrmw nand
+  us = __sync_fetch_and_nand (&us, 11); // CHECK: atomicrmw nand
+  si = __sync_fetch_and_nand (&si, 11); // CHECK: atomicrmw nand
+  ui = __sync_fetch_and_nand (&ui, 11); // CHECK: atomicrmw nand
+  sll = __sync_fetch_and_nand (&sll, 11); // CHECK: atomicrmw nand
+  ull = __sync_fetch_and_nand (&ull, 11); // CHECK: atomicrmw nand
+
   sc = __sync_fetch_and_and (&sc, 11); // CHECK: atomicrmw and
   uc = __sync_fetch_and_and (&uc, 11); // CHECK: atomicrmw and
   ss = __sync_fetch_and_and (&ss, 11); // CHECK: atomicrmw and
@@ -146,6 +164,31 @@ void test_op_and_fetch (void)
   ui = __sync_xor_and_fetch (&ui, uc); // CHECK: atomicrmw xor
   sll = __sync_xor_and_fetch (&sll, uc); // CHECK: atomicrmw xor
   ull = __sync_xor_and_fetch (&ull, uc); // CHECK: atomicrmw xor
+
+  sc = __sync_nand_and_fetch (&sc, uc); // CHECK: atomicrmw nand
+                                        // CHECK: and
+                                        // CHECK: xor
+  uc = __sync_nand_and_fetch (&uc, uc); // CHECK: atomicrmw nand
+                                        // CHECK: and
+                                        // CHECK: xor
+  ss = __sync_nand_and_fetch (&ss, uc); // CHECK: atomicrmw nand
+                                        // CHECK: and
+                                        // CHECK: xor
+  us = __sync_nand_and_fetch (&us, uc); // CHECK: atomicrmw nand
+                                        // CHECK: and
+                                        // CHECK: xor
+  si = __sync_nand_and_fetch (&si, uc); // CHECK: atomicrmw nand
+                                        // CHECK: and
+                                        // CHECK: xor
+  ui = __sync_nand_and_fetch (&ui, uc); // CHECK: atomicrmw nand
+                                        // CHECK: and
+                                        // CHECK: xor
+  sll = __sync_nand_and_fetch (&sll, uc); // CHECK: atomicrmw nand
+                                          // CHECK: and
+                                          // CHECK: xor
+  ull = __sync_nand_and_fetch (&ull, uc); // CHECK: atomicrmw nand
+                                          // CHECK: and
+                                          // CHECK: xor
 
   sc = __sync_and_and_fetch (&sc, uc); // CHECK: atomicrmw and
   uc = __sync_and_and_fetch (&uc, uc); // CHECK: atomicrmw and

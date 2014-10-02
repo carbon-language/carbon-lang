@@ -66,6 +66,11 @@ void test9_3(volatile int* ptr, int val) {
   __sync_fetch_and_add_4(ptr, val);
 }
 
+void test9_4(volatile int* ptr, int val) {
+  // expected-warning@+1 {{the semantics of this intrinsic changed with GCC version 4.4 - the newer semantics are provided here}}
+  __sync_fetch_and_nand(ptr, val);
+}
+
 // rdar://7236819
 void test10(void) __attribute__((noreturn));
 

@@ -6898,6 +6898,11 @@ def warn_duplicate_attribute : Warning<
   "attribute %0 is already applied with different parameters">,
   InGroup<IgnoredAttributes>;
 
+def warn_sync_fetch_and_nand_semantics_change : Warning<
+  "the semantics of this intrinsic changed with GCC "
+  "version 4.4 - the newer semantics are provided here">,
+  InGroup<DiagGroup<"sync-fetch-and-nand-semantics-changed">>;
+
 // Type
 def ext_invalid_sign_spec : Extension<"'%0' cannot be signed or unsigned">;
 def warn_receiver_forward_class : Warning<
