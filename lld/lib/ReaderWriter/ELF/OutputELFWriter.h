@@ -19,6 +19,7 @@
 #include "lld/ReaderWriter/Writer.h"
 
 #include "llvm/ADT/StringSet.h"
+#include "llvm/Support/Path.h"
 
 namespace lld {
 namespace elf {
@@ -193,6 +194,8 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
     if (isNeededTagRequired(sla))
       _soNeeded.insert(sla->loadName());
   }
+  // Never mark the dynamic linker as DT_NEEDED
+  _soNeeded.erase(sys::path::filename(_context.getInterpreter()));
   for (const auto &loadName : _soNeeded) {
     Elf_Dyn dyn;
     dyn.d_tag = DT_NEEDED;
