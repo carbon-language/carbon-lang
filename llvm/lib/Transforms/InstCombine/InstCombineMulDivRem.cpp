@@ -534,7 +534,7 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
 
   // Under unsafe algebra do:
   // X * log2(0.5*Y) = X*log2(Y) - X
-  if (I.hasUnsafeAlgebra()) {
+  if (AllowReassociate) {
     Value *OpX = nullptr;
     Value *OpY = nullptr;
     IntrinsicInst *Log2;
