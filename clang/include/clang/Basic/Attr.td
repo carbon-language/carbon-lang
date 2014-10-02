@@ -354,6 +354,25 @@ def Aligned : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
+def AlignValue : Attr {
+  let Spellings = [
+    // Unfortunately, this is semantically an assertion, not a
+    // directive (something else must ensure the alignment), so
+    // aligned_value is a probably a better name. We might want
+    // to add an aligned_value spelling in the future (and a
+    // corresponding C++ attribute), but this can be done later
+    // once we decide if we also want them to have
+    // slightly-different semantics than Intel's align_value.
+    GNU<"align_value">
+    // Intel's compiler on Windows also supports:
+    // , Declspec<"align_value">
+  ];
+  let Args = [ExprArgument<"Alignment">];
+  let Subjects = SubjectList<[Var, TypedefName], WarnDiag,
+                             "ExpectedVariableOrTypedef">;
+  let Documentation = [AlignValueDocs];
+}
+
 def AlignMac68k : InheritableAttr {
   // This attribute has no spellings as it is only ever created implicitly.
   let Spellings = [];

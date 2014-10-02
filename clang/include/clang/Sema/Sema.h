@@ -7363,6 +7363,11 @@ public:
   void AddAssumeAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E, Expr *OE,
                             unsigned SpellingListIndex);
 
+  /// AddAlignValueAttr - Adds an align_value attribute to a particular
+  /// declaration.
+  void AddAlignValueAttr(SourceRange AttrRange, Decl *D, Expr *E,
+                         unsigned SpellingListIndex);
+
   // OpenMP directives and clauses.
 private:
   void *VarDataSharingAttributesStack;

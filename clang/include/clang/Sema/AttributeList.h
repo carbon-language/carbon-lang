@@ -827,7 +827,7 @@ enum AttributeDeclKind {
   ExpectedVariableFunctionOrLabel,
   ExpectedFieldOrGlobalVar,
   ExpectedStruct,
-  ExpectedVariableFunctionOrTag,
+  ExpectedVariableOrTypedef,
   ExpectedTLSVar,
   ExpectedVariableOrField,
   ExpectedVariableFieldOrTag,

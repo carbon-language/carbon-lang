@@ -1743,6 +1743,25 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
                                                   AI->getArgNo() + 1,
                                                   llvm::Attribute::NonNull));
           }
+
+          const auto *AVAttr = PVD->getAttr<AlignValueAttr>();
+          if (!AVAttr)
+            if (const auto *TOTy = dyn_cast<TypedefType>(OTy))
+              AVAttr = TOTy->getDecl()->getAttr<AlignValueAttr>();
+          if (AVAttr) {         
+            llvm::Value *AlignmentValue =
+              EmitScalarExpr(AVAttr->getAlignment());
+            llvm::ConstantInt *AlignmentCI =
+              cast<llvm::ConstantInt>(AlignmentValue);
+            unsigned Alignment =
+              std::min((unsigned) AlignmentCI->getZExtValue(),
+                       +llvm::Value::MaximumAlignment);
+
+            llvm::AttrBuilder Attrs;
+            Attrs.addAlignmentAttr(Alignment);
+            AI->addAttr(llvm::AttributeSet::get(getLLVMContext(),
+                                                AI->getArgNo() + 1, Attrs));
+          }
         }
 
         if (Arg->getType().isRestrictQualified())

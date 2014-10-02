@@ -1930,8 +1930,12 @@ def err_attribute_bad_neon_vector_size : Error<
   "Neon vector size must be 64 or 128 bits">;
 def err_attribute_unsupported : Error<
   "%0 attribute is not supported for this target">;
+// The err_*_attribute_argument_not_int are seperate because they're used by
+// VerifyIntegerConstantExpression.
 def err_aligned_attribute_argument_not_int : Error<
   "'aligned' attribute requires integer constant">;
+def err_align_value_attribute_argument_not_int : Error<
+  "'align_value' attribute requires integer constant">;
 def err_alignas_attribute_wrong_decl_type : Error<
   "%0 attribute cannot be applied to a %select{function parameter|"
   "variable with 'register' storage class|'catch' variable|bit-field}1">;
@@ -1969,6 +1973,9 @@ def warn_attribute_return_pointers_only : Warning<
   InGroup<IgnoredAttributes>;
 def warn_attribute_return_pointers_refs_only : Warning<
   "%0 attribute only applies to return values that are pointers or references">,
+  InGroup<IgnoredAttributes>;
+def warn_attribute_pointer_or_reference_only : Warning<
+  "%0 attribute only applies to a pointer or reference (%1 is invalid)">,
   InGroup<IgnoredAttributes>;
 def err_attribute_no_member_pointers : Error<
   "%0 attribute cannot be used with pointers to members">;
@@ -2210,7 +2217,7 @@ def warn_attribute_wrong_decl_type : Warning<
   "functions, methods and blocks|functions, methods, and classes|"
   "functions, methods, and parameters|classes|variables|methods|"
   "variables, functions and labels|fields and global variables|structs|"
-  "variables, functions and tag types|thread-local variables|"
+  "variables and typedefs|thread-local variables|"
   "variables and fields|variables, data members and tag types|"
   "types and namespaces|Objective-C interfaces|methods and properties|"
   "struct or union|struct, union or class|types|"

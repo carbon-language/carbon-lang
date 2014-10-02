@@ -1011,6 +1011,26 @@ Clang implements two kinds of checks with this attribute.
   }];
 }
 
+def AlignValueDocs : Documentation {
+  let Category = DocCatType;
+  let Content = [{
+The align_value attribute can be added to the typedef of a pointer type or the
+declaration of a variable of pointer or reference type. It specifies that the
+pointer will point to, or the reference will bind to, only objects with at
+least the provided alignment. This alignment value must be some positive power
+of 2.
+
+   .. code-block:: c
+
+     typedef double * aligned_double_ptr __attribute__((align_value(64)));
+     void foo(double & x  __attribute__((align_value(128)),
+              aligned_double_ptr y) { ... }
+
+If the pointer value does not have the specified alignment at runtime, the
+behavior of the program is undefined.
+  }];
+}
+
 def MSInheritanceDocs : Documentation {
   let Category = DocCatType;
   let Heading = "__single_inhertiance, __multiple_inheritance, __virtual_inheritance";

@@ -2757,6 +2757,58 @@ static void handleAnnotateAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                           Attr.getAttributeSpellingListIndex()));
 }
 
+static void handleAlignValueAttr(Sema &S, Decl *D,
+                                 const AttributeList &Attr) {
+  S.AddAlignValueAttr(Attr.getRange(), D, Attr.getArgAsExpr(0),
+                      Attr.getAttributeSpellingListIndex());
+}
+
+void Sema::AddAlignValueAttr(SourceRange AttrRange, Decl *D, Expr *E,
+                             unsigned SpellingListIndex) {
+  AlignValueAttr TmpAttr(AttrRange, Context, E, SpellingListIndex);
+  SourceLocation AttrLoc = AttrRange.getBegin();
+
+  QualType T;
+  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D))
+    T = TD->getUnderlyingType();
+  else if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
+    T = VD->getType();
+  else
+    llvm_unreachable("Unknown decl type for align_value");
+
+  if (!T->isDependentType() && !T->isAnyPointerType() &&
+      !T->isReferenceType() && !T->isMemberPointerType()) {
+    Diag(AttrLoc, diag::warn_attribute_pointer_or_reference_only)
+      << &TmpAttr /*TmpAttr.getName()*/ << T << D->getSourceRange();
+    return;
+  }
+
+  if (!E->isValueDependent()) {
+    llvm::APSInt Alignment(32);
+    ExprResult ICE
+      = VerifyIntegerConstantExpression(E, &Alignment,
+          diag::err_align_value_attribute_argument_not_int,
+            /*AllowFold*/ false);
+    if (ICE.isInvalid())
+      return;
+
+    if (!Alignment.isPowerOf2()) {
+      Diag(AttrLoc, diag::err_alignment_not_power_of_two)
+        << E->getSourceRange();
+      return;
+    }
+
+    D->addAttr(::new (Context)
+               AlignValueAttr(AttrRange, Context, ICE.get(),
+               SpellingListIndex));
+    return;
+  }
+
+  // Save dependent expressions in the AST to be instantiated.
+  D->addAttr(::new (Context) AlignValueAttr(TmpAttr));
+  return;
+}
+
 static void handleAlignedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 1) {
@@ -4180,6 +4232,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_Aligned:
     handleAlignedAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_AlignValue:
+    handleAlignValueAttr(S, D, Attr);
     break;
   case AttributeList::AT_AlwaysInline:
     handleAlwaysInlineAttr(S, D, Attr);
