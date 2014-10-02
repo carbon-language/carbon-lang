@@ -22,6 +22,7 @@ class SBTypeMemberFunctionsTest(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.type_api(self.exe_name)
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     @dwarf_test
     def test_with_dwarf(self):
