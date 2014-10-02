@@ -56,6 +56,7 @@ namespace PBQP {
     typedef typename CostAllocator::MatrixPtr MatrixPtr;
     typedef typename SolverT::NodeMetadata NodeMetadata;
     typedef typename SolverT::EdgeMetadata EdgeMetadata;
+    typedef typename SolverT::GraphMetadata GraphMetadata;
 
   private:
 
@@ -172,6 +173,7 @@ namespace PBQP {
 
     // ----- MEMBERS -----
 
+    GraphMetadata Metadata;
     CostAllocator CostAlloc;
     SolverT *Solver;
 
@@ -330,6 +332,12 @@ namespace PBQP {
 
     /// \brief Construct an empty PBQP graph.
     Graph() : Solver(nullptr) { }
+
+    /// \brief Get a reference to the graph metadata.
+    GraphMetadata& getMetadata() { return Metadata; }
+
+    /// \brief Get a const-reference to the graph metadata.
+    const GraphMetadata& getMetadata() const { return Metadata; }
 
     /// \brief Lock this graph to the given solver instance in preparation
     /// for running the solver. This method will call solver.handleAddNode for
