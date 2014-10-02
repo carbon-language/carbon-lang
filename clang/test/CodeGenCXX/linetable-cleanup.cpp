@@ -46,14 +46,14 @@ void bar()
 void baz()
 {
   if (!foo())
-    // CHECK: ![[SCOPE1:.*]] = metadata !{{{.*}}, i32 [[@LINE-1]], {{.*}}} ; [ DW_TAG_lexical_block ]
+    // CHECK: ![[SCOPE1:.*]] = metadata !{metadata !"0xb\00[[@LINE-1]]\00{{.*}}", {{.*}} ; [ DW_TAG_lexical_block ]
     // CHECK: {{.*}} = metadata !{i32 [[@LINE+1]], i32 0, metadata ![[SCOPE1]], null}
     return;
 
   if (foo()) {
     // no cleanup
     // CHECK: {{.*}} = metadata !{i32 [[@LINE+2]], i32 0, metadata ![[SCOPE2:.*]], null}
-    // CHECK: ![[SCOPE2]] = metadata !{{{.*}}, i32 [[@LINE-3]], {{.*}}} ; [ DW_TAG_lexical_block ]
+    // CHECK: ![[SCOPE2]] = metadata !{metadata !"0xb\00[[@LINE-3]]\00{{.*}}", {{.*}} ; [ DW_TAG_lexical_block ]
     return;
   }
   // CHECK: ![[RETBAZ]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}

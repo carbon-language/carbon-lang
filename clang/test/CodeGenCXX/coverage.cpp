@@ -3,5 +3,5 @@
 extern "C" void test_name1() {}
 void test_name2() {}
 
-// CHECK: metadata !"test_name1", metadata !"test_name1", metadata !"",{{.*}}DW_TAG_subprogram
-// CHECK: metadata !"test_name2", metadata !"test_name2", metadata !"_Z10test_name2v",{{.*}}DW_TAG_subprogram
+// CHECK: metadata !"0x2e\00test_name1\00test_name1\00\00{{[^,]+}}", {{.*}} DW_TAG_subprogram
+// CHECK: metadata !"0x2e\00test_name2\00test_name2\00_Z10test_name2v\00{{[^,]+}}", {{.*}} DW_TAG_subprogram

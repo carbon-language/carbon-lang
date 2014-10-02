@@ -7,5 +7,5 @@ typedef int MyType;
 
 MyType a;
 
-// CHECK: metadata ![[HEADER:[0-9]+]], null, metadata !"MyType"{{.*}} ; [ DW_TAG_typedef ] [MyType] [line 2, size 0, align 0, offset 0] [from int]
+// CHECK: metadata !{metadata !"0x16\00MyType\002\00{{.*}}", metadata ![[HEADER:[0-9]+]], null{{.*}}} ; [ DW_TAG_typedef ] [MyType] [line 2, size 0, align 0, offset 0] [from int]
 // CHECK: ![[HEADER]] = metadata !{metadata !"b.h",

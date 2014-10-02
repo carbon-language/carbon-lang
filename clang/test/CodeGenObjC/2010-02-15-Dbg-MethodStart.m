@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x objective-c -emit-llvm -g < %s | grep  subprogram | grep "i32 9"
+// RUN: %clang_cc1 -x objective-c -emit-llvm -g < %s | FileCheck "%s"
 // Test to check that subprogram start location.
 
 @interface Foo
@@ -7,6 +7,7 @@
 
 @implementation Foo
 -(int) barMethod {
+// CHECK: [ DW_TAG_subprogram ] [line [[@LINE-1]]]
   int i = 0;
   int j = 1;
   int k = 1;

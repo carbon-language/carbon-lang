@@ -14,6 +14,6 @@
 }
 @end
 
-// CHECK: metadata !{i32 {{.*}}, metadata ![[CTOR:.*]], metadata !"self", null, i32 16777216, metadata !{{.*}}, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [self] [line 0]
-// CHECK: metadata !{i32 {{.*}}, metadata ![[CTOR]], metadata !"_cmd", null, i32 33554432, metadata !{{.*}}, i32 64, i32 0} ; [ DW_TAG_arg_variable ] [_cmd] [line 0]
-// CHECK: metadata !{i32 {{.*}}, metadata ![[CTOR]], metadata !"myarg", metadata !{{.*}}, i32 50331659, metadata !{{.*}}, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [myarg] [line 11]
+// CHECK: metadata !{metadata !"0x101\00self\0016777216\001088", metadata ![[CTOR:.*]], null, metadata !{{.*}}} ; [ DW_TAG_arg_variable ] [self] [line 0]
+// CHECK: metadata !{metadata !"0x101\00_cmd\0033554432\0064", metadata ![[CTOR]], null, metadata !{{.*}}} ; [ DW_TAG_arg_variable ] [_cmd] [line 0]
+// CHECK: metadata !{metadata !"0x101\00myarg\0050331659\000", metadata ![[CTOR]], metadata !{{.*}}, metadata !{{.*}}} ; [ DW_TAG_arg_variable ] [myarg] [line 11]

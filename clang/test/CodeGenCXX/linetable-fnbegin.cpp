@@ -5,7 +5,7 @@
 // CHECK-NOT: define
 // CHECK: ret {{.*}}, !dbg [[DBG:.*]]
 // CHECK: [[HPP:.*]] = metadata !{metadata !"./template.hpp",
-// CHECK: [[SP:.*]] = metadata !{i32 786478, metadata [[HPP]],{{.*}}[ DW_TAG_subprogram ] [line 22] [def] [bar]
+// CHECK: [[SP:.*]] = metadata !{metadata !"0x2e\00{{.*}}", metadata [[HPP]],{{.*}}[ DW_TAG_subprogram ] [line 22] [def] [bar]
 // We shouldn't need a lexical block for this function.
 // CHECK: [[DBG]] = metadata !{i32 23, i32 0, metadata [[SP]], null}
 

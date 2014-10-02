@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -g -emit-llvm %s -o - | grep "metadata ..b., metadata ..b., metadata ...,"
+// RUN: %clang_cc1 -g -emit-llvm %s -o - | FileCheck %s
 // Test to check intentionally empty linkage name for a static variable.
 // Radar 7651244.
 static int foo(int a)
@@ -11,3 +11,4 @@ int main() {
 	int j = foo(1);
 	return 0;
 }
+// CHECK: metadata !"0x34\00b\00b\00\00{{.*}}",

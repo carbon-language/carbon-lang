@@ -42,7 +42,7 @@ struct foo2 foo2;
 
 
 // Radar 7325611
-// CHECK: "barfoo"
+// CHECK: !"0x16\00barfoo\00{{.*}}"
 typedef int barfoo;
 barfoo foo() {
 }
