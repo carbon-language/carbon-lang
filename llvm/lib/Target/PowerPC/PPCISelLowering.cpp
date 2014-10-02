@@ -613,10 +613,10 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM)
     setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Legal);
   }
 
-  setOperationAction(ISD::ATOMIC_LOAD,  MVT::i32, Expand);
-  setOperationAction(ISD::ATOMIC_STORE, MVT::i32, Expand);
-  setOperationAction(ISD::ATOMIC_LOAD,  MVT::i64, Expand);
-  setOperationAction(ISD::ATOMIC_STORE, MVT::i64, Expand);
+  if (!isPPC64) {
+    setOperationAction(ISD::ATOMIC_LOAD,  MVT::i64, Expand);
+    setOperationAction(ISD::ATOMIC_STORE, MVT::i64, Expand);
+  }
 
   setBooleanContents(ZeroOrOneBooleanContent);
   // Altivec instructions set fields to all zeros or all ones.

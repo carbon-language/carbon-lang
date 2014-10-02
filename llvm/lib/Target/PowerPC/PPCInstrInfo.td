@@ -3695,3 +3695,19 @@ defm : TrapExtendedMnemonic<"lgt", 1>;
 defm : TrapExtendedMnemonic<"lnl", 5>;
 defm : TrapExtendedMnemonic<"lng", 6>;
 defm : TrapExtendedMnemonic<"u", 31>;
+
+// Atomic loads
+def : Pat<(atomic_load_8  iaddr:$src), (LBZ  memri:$src)>;
+def : Pat<(atomic_load_16 iaddr:$src), (LHZ  memri:$src)>;
+def : Pat<(atomic_load_32 iaddr:$src), (LWZ  memri:$src)>;
+def : Pat<(atomic_load_8  xaddr:$src), (LBZX memrr:$src)>;
+def : Pat<(atomic_load_16 xaddr:$src), (LHZX memrr:$src)>;
+def : Pat<(atomic_load_32 xaddr:$src), (LWZX memrr:$src)>;
+
+// Atomic stores
+def : Pat<(atomic_store_8  iaddr:$ptr, i32:$val), (STB  gprc:$val, memri:$ptr)>;
+def : Pat<(atomic_store_16 iaddr:$ptr, i32:$val), (STH  gprc:$val, memri:$ptr)>;
+def : Pat<(atomic_store_32 iaddr:$ptr, i32:$val), (STW  gprc:$val, memri:$ptr)>;
+def : Pat<(atomic_store_8  xaddr:$ptr, i32:$val), (STBX gprc:$val, memrr:$ptr)>;
+def : Pat<(atomic_store_16 xaddr:$ptr, i32:$val), (STHX gprc:$val, memrr:$ptr)>;
+def : Pat<(atomic_store_32 xaddr:$ptr, i32:$val), (STWX gprc:$val, memrr:$ptr)>;

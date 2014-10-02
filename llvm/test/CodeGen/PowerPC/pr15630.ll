@@ -13,4 +13,5 @@ entry:
   ret void
 }
 
-; CHECK: stwcx.
+; CHECK: sync
+; CHECK: stb

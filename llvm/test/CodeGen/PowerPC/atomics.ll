@@ -11,18 +11,21 @@
 ; We also vary orderings to check for barriers.
 define i8 @load_i8_unordered(i8* %mem) {
 ; CHECK-LABEL: load_i8_unordered
+; CHECK: lbz
 ; CHECK-NOT: sync
   %val = load atomic i8* %mem unordered, align 1
   ret i8 %val
 }
 define i16 @load_i16_monotonic(i16* %mem) {
 ; CHECK-LABEL: load_i16_monotonic
+; CHECK: lhz
 ; CHECK-NOT: sync
   %val = load atomic i16* %mem monotonic, align 2
   ret i16 %val
 }
 define i32 @load_i32_acquire(i32* %mem) {
 ; CHECK-LABEL: load_i32_acquire
+; CHECK: lwz
   %val = load atomic i32* %mem acquire, align 4
 ; CHECK: sync 1
   ret i32 %val
@@ -30,6 +33,9 @@ define i32 @load_i32_acquire(i32* %mem) {
 define i64 @load_i64_seq_cst(i64* %mem) {
 ; CHECK-LABEL: load_i64_seq_cst
 ; CHECK: sync 0
+; PPC32: __sync_
+; PPC64-NOT: __sync_
+; PPC64: ld
   %val = load atomic i64* %mem seq_cst, align 8
 ; CHECK: sync 1
   ret i64 %val
@@ -39,24 +45,30 @@ define i64 @load_i64_seq_cst(i64* %mem) {
 define void @store_i8_unordered(i8* %mem) {
 ; CHECK-LABEL: store_i8_unordered
 ; CHECK-NOT: sync
+; CHECK: stb
   store atomic i8 42, i8* %mem unordered, align 1
   ret void
 }
 define void @store_i16_monotonic(i16* %mem) {
 ; CHECK-LABEL: store_i16_monotonic
 ; CHECK-NOT: sync
+; CHECK: sth
   store atomic i16 42, i16* %mem monotonic, align 2
   ret void
 }
 define void @store_i32_release(i32* %mem) {
 ; CHECK-LABEL: store_i32_release
 ; CHECK: sync 1
+; CHECK: stw
   store atomic i32 42, i32* %mem release, align 4
   ret void
 }
 define void @store_i64_seq_cst(i64* %mem) {
 ; CHECK-LABEL: store_i64_seq_cst
 ; CHECK: sync 0
+; PPC32: __sync_
+; PPC64-NOT: __sync_
+; PPC64: std
   store atomic i64 42, i64* %mem seq_cst, align 8
   ret void
 }

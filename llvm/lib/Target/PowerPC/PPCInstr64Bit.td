@@ -1135,3 +1135,9 @@ def : Pat<(i64 (unaligned4load xoaddr:$src)),
 def : Pat<(unaligned4store i64:$rS, xoaddr:$dst),
           (STDX $rS, xoaddr:$dst)>;
 
+// 64-bits atomic loads and stores
+def : Pat<(atomic_load_64 ixaddr:$src), (LD  memrix:$src)>;
+def : Pat<(atomic_load_64 xaddr:$src),  (LDX memrr:$src)>;
+
+def : Pat<(atomic_store_64 ixaddr:$ptr, i64:$val), (STD  g8rc:$val, memrix:$ptr)>;
+def : Pat<(atomic_store_64 xaddr:$ptr,  i64:$val), (STDX g8rc:$val, memrr:$ptr)>;
