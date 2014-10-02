@@ -47,8 +47,8 @@ using namespace llvm;
 // Constant Folding internal helper functions
 //===----------------------------------------------------------------------===//
 
-/// FoldBitCast - Constant fold bitcast, symbolically evaluating it with
-/// DataLayout.  This always returns a non-null constant, but it may be a
+/// Constant fold bitcast, symbolically evaluating it with DataLayout.
+/// This always returns a non-null constant, but it may be a
 /// ConstantExpr if unfoldable.
 static Constant *FoldBitCast(Constant *C, Type *DestTy,
                              const DataLayout &TD) {
@@ -222,9 +222,8 @@ static Constant *FoldBitCast(Constant *C, Type *DestTy,
 }
 
 
-/// IsConstantOffsetFromGlobal - If this constant is actually a constant offset
-/// from a global, return the global and the constant.  Because of
-/// constantexprs, this function is recursive.
+/// If this constant is a constant offset from a global, return the global and
+/// the constant. Because of constantexprs, this function is recursive.
 static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
                                        APInt &Offset, const DataLayout &TD) {
   // Trivial case, constant is the global.
@@ -264,10 +263,10 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
   return true;
 }
 
-/// ReadDataFromGlobal - Recursive helper to read bits out of global.  C is the
-/// constant being copied out of. ByteOffset is an offset into C.  CurPtr is the
-/// pointer to copy results into and BytesLeft is the number of bytes left in
-/// the CurPtr buffer.  TD is the target data.
+/// Recursive helper to read bits out of global. C is the constant being copied
+/// out of. ByteOffset is an offset into C. CurPtr is the pointer to copy
+/// results into and BytesLeft is the number of bytes left in
+/// the CurPtr buffer. TD is the target data.
 static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
                                unsigned char *CurPtr, unsigned BytesLeft,
                                const DataLayout &TD) {
@@ -518,9 +517,8 @@ static Constant *ConstantFoldLoadThroughBitcast(ConstantExpr *CE,
   return nullptr;
 }
 
-/// ConstantFoldLoadFromConstPtr - Return the value that a load from C would
-/// produce if it is constant and determinable.  If this is not determinable,
-/// return null.
+/// Return the value that a load from C would produce if it is constant and
+/// determinable. If this is not determinable, return null.
 Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
                                              const DataLayout *TD) {
   // First, try the easy cases:
@@ -610,7 +608,7 @@ static Constant *ConstantFoldLoadInst(const LoadInst *LI, const DataLayout *TD){
   return nullptr;
 }
 
-/// SymbolicallyEvaluateBinop - One of Op0/Op1 is a constant expression.
+/// One of Op0/Op1 is a constant expression.
 /// Attempt to symbolically evaluate the result of a binary operator merging
 /// these together.  If target data info is available, it is provided as DL,
 /// otherwise DL is null.
@@ -667,9 +665,8 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
   return nullptr;
 }
 
-/// CastGEPIndices - If array indices are not pointer-sized integers,
-/// explicitly cast them so that they aren't implicitly casted by the
-/// getelementptr.
+/// If array indices are not pointer-sized integers, explicitly cast them so
+/// that they aren't implicitly casted by the getelementptr.
 static Constant *CastGEPIndices(ArrayRef<Constant *> Ops,
                                 Type *ResultTy, const DataLayout *TD,
                                 const TargetLibraryInfo *TLI) {
@@ -724,8 +721,7 @@ static Constant* StripPtrCastKeepAS(Constant* Ptr) {
   return Ptr;
 }
 
-/// SymbolicallyEvaluateGEP - If we can symbolically evaluate the specified GEP
-/// constant expression, do so.
+/// If we can symbolically evaluate the GEP constant expression, do so.
 static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
                                          Type *ResultTy, const DataLayout *TD,
                                          const TargetLibraryInfo *TLI) {
@@ -887,7 +883,7 @@ static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
 // Constant Folding public APIs
 //===----------------------------------------------------------------------===//
 
-/// ConstantFoldInstruction - Try to constant fold the specified instruction.
+/// Try to constant fold the specified instruction.
 /// If successful, the constant result is returned, if not, null is returned.
 /// Note that this fails if not all of the operands are constant.  Otherwise,
 /// this function can only fail when attempting to fold instructions like loads
@@ -987,7 +983,7 @@ ConstantFoldConstantExpressionImpl(const ConstantExpr *CE, const DataLayout *TD,
   return ConstantFoldInstOperands(CE->getOpcode(), CE->getType(), Ops, TD, TLI);
 }
 
-/// ConstantFoldConstantExpression - Attempt to fold the constant expression
+/// Attempt to fold the constant expression
 /// using the specified DataLayout.  If successful, the constant result is
 /// result is returned, if not, null is returned.
 Constant *llvm::ConstantFoldConstantExpression(const ConstantExpr *CE,
@@ -997,7 +993,7 @@ Constant *llvm::ConstantFoldConstantExpression(const ConstantExpr *CE,
   return ConstantFoldConstantExpressionImpl(CE, TD, TLI, FoldedOps);
 }
 
-/// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
+/// Attempt to constant fold an instruction with the
 /// specified opcode and operands.  If successful, the constant result is
 /// returned, if not, null is returned.  Note that this function can fail when
 /// attempting to fold instructions like loads and stores, which have no
@@ -1102,10 +1098,9 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
   }
 }
 
-/// ConstantFoldCompareInstOperands - Attempt to constant fold a compare
+/// Attempt to constant fold a compare
 /// instruction (icmp/fcmp) with the specified operands.  If it fails, it
 /// returns a constant expression of the specified operands.
-///
 Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
                                                 Constant *Ops0, Constant *Ops1,
                                                 const DataLayout *TD,
@@ -1192,9 +1187,9 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
 }
 
 
-/// ConstantFoldLoadThroughGEPConstantExpr - Given a constant and a
-/// getelementptr constantexpr, return the constant value being addressed by the
-/// constant expression, or null if something is funny and we can't decide.
+/// Given a constant and a getelementptr constantexpr, return the constant value
+/// being addressed by the constant expression, or null if something is funny
+/// and we can't decide.
 Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
                                                        ConstantExpr *CE) {
   if (!CE->getOperand(1)->isNullValue())
@@ -1210,10 +1205,9 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
   return C;
 }
 
-/// ConstantFoldLoadThroughGEPIndices - Given a constant and getelementptr
-/// indices (with an *implied* zero pointer index that is not in the list),
-/// return the constant value being addressed by a virtual load, or null if
-/// something is funny and we can't decide.
+/// Given a constant and getelementptr indices (with an *implied* zero pointer
+/// index that is not in the list), return the constant value being addressed by
+/// a virtual load, or null if something is funny and we can't decide.
 Constant *llvm::ConstantFoldLoadThroughGEPIndices(Constant *C,
                                                   ArrayRef<Constant*> Indices) {
   // Loop over all of the operands, tracking down which value we are
@@ -1231,8 +1225,7 @@ Constant *llvm::ConstantFoldLoadThroughGEPIndices(Constant *C,
 //  Constant Folding for Calls
 //
 
-/// canConstantFoldCallTo - Return true if its even possible to fold a call to
-/// the specified function.
+/// Return true if it's even possible to fold a call to the specified function.
 bool llvm::canConstantFoldCallTo(const Function *F) {
   switch (F->getIntrinsicID()) {
   case Intrinsic::fabs:
@@ -1321,7 +1314,7 @@ static Constant *GetConstantFoldFPValue(double V, Type *Ty) {
 }
 
 namespace {
-/// llvm_fenv_clearexcept - Clear the floating-point exception state.
+/// Clear the floating-point exception state.
 static inline void llvm_fenv_clearexcept() {
 #if defined(HAVE_FENV_H) && HAVE_DECL_FE_ALL_EXCEPT
   feclearexcept(FE_ALL_EXCEPT);
@@ -1329,7 +1322,7 @@ static inline void llvm_fenv_clearexcept() {
   errno = 0;
 }
 
-/// llvm_fenv_testexcept - Test if a floating-point exception was raised.
+/// Test if a floating-point exception was raised.
 static inline bool llvm_fenv_testexcept() {
   int errno_val = errno;
   if (errno_val == ERANGE || errno_val == EDOM)
@@ -1366,14 +1359,13 @@ static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
   return GetConstantFoldFPValue(V, Ty);
 }
 
-/// ConstantFoldConvertToInt - Attempt to an SSE floating point to integer
-/// conversion of a constant floating point. If roundTowardZero is false, the
-/// default IEEE rounding is used (toward nearest, ties to even). This matches
-/// the behavior of the non-truncating SSE instructions in the default rounding
-/// mode. The desired integer type Ty is used to select how many bits are
-/// available for the result. Returns null if the conversion cannot be
-/// performed, otherwise returns the Constant value resulting from the
-/// conversion.
+/// Attempt to fold an SSE floating point to integer conversion of a constant
+/// floating point. If roundTowardZero is false, the default IEEE rounding is
+/// used (toward nearest, ties to even). This matches the behavior of the
+/// non-truncating SSE instructions in the default rounding mode. The desired
+/// integer type Ty is used to select how many bits are available for the
+/// result. Returns null if the conversion cannot be performed, otherwise
+/// returns the Constant value resulting from the conversion.
 static Constant *ConstantFoldConvertToInt(const APFloat &Val,
                                           bool roundTowardZero, Type *Ty) {
   // All of these conversion intrinsics form an integer of at most 64bits.
@@ -1768,7 +1760,7 @@ static Constant *ConstantFoldVectorCall(StringRef Name, unsigned IntrinsicID,
   return ConstantVector::get(Result);
 }
 
-/// ConstantFoldCall - Attempt to constant fold a call to the specified function
+/// Attempt to constant fold a call to the specified function
 /// with the specified arguments, returning null if unsuccessful.
 Constant *
 llvm::ConstantFoldCall(Function *F, ArrayRef<Constant *> Operands,
