@@ -908,7 +908,8 @@ void CodeGenPGO::emitCounterRegionMapping(const Decl *D) {
   llvm::raw_string_ostream OS(CoverageMapping);
   CoverageMappingGen MappingGen(*CGM.getCoverageMapping(),
                                 CGM.getContext().getSourceManager(),
-                                CGM.getLangOpts(), RegionCounterMap.get());
+                                CGM.getLangOpts(), RegionCounterMap.get(),
+                                NumRegionCounters);
   MappingGen.emitCounterMapping(D, OS);
   OS.flush();
 }

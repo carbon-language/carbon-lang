@@ -581,9 +581,11 @@ struct CounterCoverageMappingBuilder
 
   CounterCoverageMappingBuilder(
       CoverageMappingModuleGen &CVM,
-      llvm::DenseMap<const Stmt *, unsigned> &CounterMap, SourceManager &SM,
+      llvm::DenseMap<const Stmt *, unsigned> &CounterMap,
+      unsigned NumRegionCounters, SourceManager &SM,
       const LangOptions &LangOpts)
-      : CoverageMappingBuilder(CVM, SM, LangOpts), CounterMap(CounterMap) {}
+      : CoverageMappingBuilder(CVM, SM, LangOpts), CounterMap(CounterMap),
+        Builder(NumRegionCounters) {}
 
   /// \brief Write the mapping data to the output stream
   void write(llvm::raw_ostream &OS) {
@@ -1211,7 +1213,8 @@ unsigned CoverageMappingModuleGen::getFileID(const FileEntry *File) {
 void CoverageMappingGen::emitCounterMapping(const Decl *D,
                                             llvm::raw_ostream &OS) {
   assert(CounterMap);
-  CounterCoverageMappingBuilder Walker(CVM, *CounterMap, SM, LangOpts);
+  CounterCoverageMappingBuilder Walker(CVM, *CounterMap, NumRegionCounters, SM,
+                                       LangOpts);
   Walker.VisitDecl(D);
   Walker.write(OS);
 }
