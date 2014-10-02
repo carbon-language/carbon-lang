@@ -170,6 +170,15 @@ ASSERT_EQ (true, HasError ());
         }
 
         void
+        CallAfterRunningThreadsStop (lldb::tid_t deferred_tid)
+        {
+            m_coordinator.CallAfterRunningThreadsStop (deferred_tid,
+                                                       GetStopRequestFunction (),
+                                                       GetDeferredStopNotificationFunction (),
+                                                       GetErrorFunction ());
+        }
+
+        void
         NotifyThreadCreate (lldb::tid_t stopped_tid, bool thread_is_stopped)
         {
             m_coordinator.NotifyThreadCreate (stopped_tid, thread_is_stopped, GetErrorFunction ());
@@ -668,6 +677,97 @@ TEST_F (ThreadStateCoordinatorTest, ResumedThreadAlreadyMarkedDoesNotHoldUpPendi
     // After notifying thread b stopped, we now have thread a resumed but thread b stopped.
     // However, since thread a had stopped, we now have had both requirements stopped at some point.
     // For now we'll expect this will fire the pending deferred stop notification.
+    ASSERT_EQ (true, DidFireDeferredNotification ());
+    ASSERT_EQ (TRIGGERING_TID, GetDeferredNotificationTID ());
+}
+
+TEST_F (ThreadStateCoordinatorTest, CallAfterRunningThreadsStopFiresWhenNoRunningThreads)
+{
+    // Let the coordinator know about our thread.
+    SetupKnownStoppedThread (TRIGGERING_TID);
+
+    // Notify we have a trigger that needs to be fired when all running threads have stopped.
+    CallAfterRunningThreadsStop (TRIGGERING_TID);
+
+    // Notification trigger shouldn't go off yet.
+    ASSERT_EQ (false, DidFireDeferredNotification ());
+
+    // Process next event.  This will pick up the call after threads stop event.
+    ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
+
+    // Now the trigger should have fired, since there were no threads that needed to first stop.
+    ASSERT_EQ (true, DidFireDeferredNotification ());
+    ASSERT_EQ (TRIGGERING_TID, GetDeferredNotificationTID ());
+
+    // And no stop requests should have been made.
+    ASSERT_EQ (0, GetRequestedStopCount ());
+}
+
+TEST_F (ThreadStateCoordinatorTest, CallAfterRunningThreadsStopRequestsTwoPendingStops)
+{
+    // Let the coordinator know about our threads.
+    SetupKnownStoppedThread (TRIGGERING_TID);
+    SetupKnownRunningThread (PENDING_STOP_TID);
+    SetupKnownRunningThread (PENDING_STOP_TID_02);
+
+    // Notify we have a trigger that needs to be fired when all running threads have stopped.
+    CallAfterRunningThreadsStop (TRIGGERING_TID);
+
+    // Notification trigger shouldn't go off yet.
+    ASSERT_EQ (false, DidFireDeferredNotification ());
+
+    // Process next event.  This will pick up the call after threads stop event.
+    ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
+
+    // We should have two stop requests for the two threads currently running.
+    ASSERT_EQ (2, GetRequestedStopCount ());
+    ASSERT_EQ (true, DidRequestStopForTid (PENDING_STOP_TID));
+    ASSERT_EQ (true, DidRequestStopForTid (PENDING_STOP_TID_02));
+
+    // But the deferred stop notification should not have fired yet.
+    ASSERT_EQ (false, DidFireDeferredNotification ());
+
+    // Now notify the two threads stopped.
+    NotifyThreadStop (PENDING_STOP_TID);
+    ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
+    ASSERT_EQ (false, DidFireDeferredNotification ());
+
+    NotifyThreadStop (PENDING_STOP_TID_02);
+    ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
+
+    // Now the trigger should have fired, since there were no threads that needed to first stop.
+    ASSERT_EQ (true, DidFireDeferredNotification ());
+    ASSERT_EQ (TRIGGERING_TID, GetDeferredNotificationTID ());
+}
+
+TEST_F (ThreadStateCoordinatorTest, CallAfterRunningThreadsStopRequestsStopTwoOtherThreadsOneRunning)
+{
+    // Let the coordinator know about our threads.  PENDING_STOP_TID_02 will already be stopped.
+    SetupKnownStoppedThread (TRIGGERING_TID);
+    SetupKnownRunningThread (PENDING_STOP_TID);
+    SetupKnownStoppedThread (PENDING_STOP_TID_02);
+
+    // Notify we have a trigger that needs to be fired when all running threads have stopped.
+    CallAfterRunningThreadsStop (TRIGGERING_TID);
+
+    // Notification trigger shouldn't go off yet.
+    ASSERT_EQ (false, DidFireDeferredNotification ());
+
+    // Process next event.  This will pick up the call after threads stop event.
+    ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
+
+    // We should have two stop requests for the two threads currently running.
+    ASSERT_EQ (1, GetRequestedStopCount ());
+    ASSERT_EQ (true, DidRequestStopForTid (PENDING_STOP_TID));
+
+    // But the deferred stop notification should not have fired yet.
+    ASSERT_EQ (false, DidFireDeferredNotification ());
+
+    // Now notify the two threads stopped.
+    NotifyThreadStop (PENDING_STOP_TID);
+    ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
+
+    // Now the trigger should have fired, since there were no threads that needed to first stop.
     ASSERT_EQ (true, DidFireDeferredNotification ());
     ASSERT_EQ (TRIGGERING_TID, GetDeferredNotificationTID ());
 }

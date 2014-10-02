@@ -71,6 +71,16 @@ namespace lldb_private
                               const ThreadIDFunction &call_after_function,
                               const ErrorFunction &error_function);
 
+        // This method is the main purpose of the class: triggering a deferred
+        // action after all non-stopped threads stop.  The triggering_tid is the
+        // thread id passed to the call_after_function.  The error_function will
+        // be fired if the triggering tid is unknown at the time of execution.
+        void
+        CallAfterRunningThreadsStop (lldb::tid_t triggering_tid,
+                                     const ThreadIDFunction &request_thread_stop_function,
+                                     const ThreadIDFunction &call_after_function,
+                                     const ErrorFunction &error_function);
+
         // Notify the thread stopped.  Will trigger error at time of execution if we
         // already think it is stopped.
         void
