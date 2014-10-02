@@ -132,7 +132,14 @@ else()
   elseif("${LLVM_NATIVE_ARCH}" STREQUAL "PowerPC")
     test_target_arch(powerpc64 ${TARGET_64_BIT_CFLAGS})
   elseif("${LLVM_NATIVE_ARCH}" STREQUAL "Mips")
-    test_target_arch(mips "")
+    if("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "mipsel|mips64el")
+      # regex for mipsel, mips64el                                                                                                                                                                                 
+      test_target_arch(mipsel ${TARGET_32_BIT_CFLAGS})
+      test_target_arch(mips64el ${TARGET_64_BIT_CFLAGS})
+    else()
+      test_target_arch(mips ${TARGET_32_BIT_CFLAGS})
+      test_target_arch(mips64 ${TARGET_64_BIT_CFLAGS})
+    endif()
   endif()
   # Build ARM libraries if we are configured to test on ARM
   if("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "arm|aarch64")
@@ -158,7 +165,7 @@ endfunction()
 
 # Arhcitectures supported by compiler-rt libraries.
 filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
-  x86_64 i386 i686 powerpc64 arm aarch64 mips)
+  x86_64 i386 i686 powerpc64 arm aarch64 mips mips64 mipsel mips64el)
 filter_available_targets(ASAN_SUPPORTED_ARCH
   x86_64 i386 i686 powerpc64 arm mips)
 filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64)
@@ -168,7 +175,7 @@ filter_available_targets(LSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(LSAN_COMMON_SUPPORTED_ARCH
   ${SANITIZER_COMMON_SUPPORTED_ARCH})
 filter_available_targets(MSAN_SUPPORTED_ARCH x86_64)
-filter_available_targets(PROFILE_SUPPORTED_ARCH x86_64 i386 i686 arm aarch64)
+filter_available_targets(PROFILE_SUPPORTED_ARCH x86_64 i386 i686 arm mips mips64 mipsel mips64el aarch64)
 filter_available_targets(TSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(UBSAN_SUPPORTED_ARCH x86_64 i386 i686 arm aarch64 mips)
 
