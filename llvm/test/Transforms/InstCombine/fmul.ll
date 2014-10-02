@@ -128,7 +128,7 @@ define float @test11(float %x, float %y) {
 ; With unsafe/fast math, sqrt(X) * sqrt(X) is just X.
 declare double @llvm.sqrt.f64(double)
 
-define double @sqrt_squared1(double %f) #0 {
+define double @sqrt_squared1(double %f) {
   %sqrt = call double @llvm.sqrt.f64(double %f)
   %mul = fmul fast double %sqrt, %sqrt
   ret double %mul
@@ -142,7 +142,7 @@ define double @sqrt_squared1(double %f) #0 {
 ; itself because it was not marked 'fast' originally. 
 ; Thus, we have an overall fast result, but no more indication of
 ; 'fast'ness in the code.
-define double @sqrt_squared2(double %f) #0 {
+define double @sqrt_squared2(double %f) {
   %sqrt = call double @llvm.sqrt.f64(double %f)
   %mul1 = fmul fast double %sqrt, %sqrt
   %mul2 = fmul double %mul1, %sqrt
