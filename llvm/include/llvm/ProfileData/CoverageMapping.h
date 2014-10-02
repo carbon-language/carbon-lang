@@ -103,8 +103,6 @@ struct CounterExpression {
 class CounterExpressionBuilder {
   /// \brief A list of all the counter expressions
   llvm::SmallVector<CounterExpression, 16> Expressions;
-  /// \brief An array of terms used in expression simplification.
-  llvm::SmallVector<int, 16> Terms;
 
   /// \brief Return the counter which corresponds to the given expression.
   ///
@@ -113,18 +111,19 @@ class CounterExpressionBuilder {
   /// expression is added to the builder's collection of expressions.
   Counter get(const CounterExpression &E);
 
-  /// \brief Convert the expression tree represented by a counter
-  /// into a polynomial in the form of K1Counter1 + .. + KNCounterN
-  /// where K1 .. KN are integer constants that are stored in the Terms array.
-  void extractTerms(Counter C, int Sign = 1);
+  /// \brief Gather the terms of the expression tree for processing.
+  ///
+  /// This collects each addition and subtraction referenced by the counter into
+  /// a sequence that can be sorted and combined to build a simplified counter
+  /// expression.
+  void extractTerms(Counter C, int Sign,
+                    SmallVectorImpl<std::pair<unsigned, int>> &Terms);
 
   /// \brief Simplifies the given expression tree
   /// by getting rid of algebraically redundant operations.
   Counter simplify(Counter ExpressionTree);
 
 public:
-  CounterExpressionBuilder(unsigned NumCounterValues);
-
   ArrayRef<CounterExpression> getExpressions() const { return Expressions; }
 
   /// \brief Return a counter that represents the expression
