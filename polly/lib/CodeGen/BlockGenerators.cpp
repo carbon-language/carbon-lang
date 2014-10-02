@@ -222,8 +222,8 @@ Value *BlockGenerator::generateScalarLoad(const LoadInst *Load,
   const Instruction *Inst = dyn_cast<Instruction>(Load);
   Value *NewPointer =
       generateLocationAccessed(Inst, Pointer, BBMap, GlobalMap, LTS);
-  Value *ScalarLoad =
-      Builder.CreateLoad(NewPointer, Load->getName() + "_p_scalar_");
+  Value *ScalarLoad = Builder.CreateAlignedLoad(
+      NewPointer, Load->getAlignment(), Load->getName() + "_p_scalar_");
   return ScalarLoad;
 }
 
@@ -237,7 +237,9 @@ Value *BlockGenerator::generateScalarStore(const StoreInst *Store,
   Value *ValueOperand = getNewValue(Store->getValueOperand(), BBMap, GlobalMap,
                                     LTS, getLoopForInst(Store));
 
-  return Builder.CreateStore(ValueOperand, NewPointer);
+  Value *NewStore = Builder.CreateAlignedStore(ValueOperand, NewPointer,
+                                               Store->getAlignment());
+  return NewStore;
 }
 
 void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,

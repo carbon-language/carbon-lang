@@ -277,6 +277,21 @@ bool JSONImporter::runOnScop(Scop &scop) {
         return false;
       }
 
+      // We keep the old alignment, thus we cannot allow accesses to memory
+      // locations that were not accessed before.
+      isl_set *newAccessSet = isl_map_range(isl_map_copy(newAccessMap));
+      isl_set *currentAccessSet = isl_map_range(isl_map_copy(currentAccessMap));
+      bool isSubset = isl_set_is_subset(newAccessSet, currentAccessSet);
+      isl_set_free(newAccessSet);
+      isl_set_free(currentAccessSet);
+
+      if (!isSubset) {
+        errs() << "JScop file changes the accessed memory\n";
+        isl_map_free(currentAccessMap);
+        isl_map_free(newAccessMap);
+        return false;
+      }
+
       // We need to copy the isl_ids for the parameter dimensions to the new
       // map. Without doing this the current map would have different
       // ids then the new one, even though both are named identically.
