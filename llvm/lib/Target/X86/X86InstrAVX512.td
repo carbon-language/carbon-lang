@@ -298,110 +298,63 @@ def : Pat<(v8f64 immAllZerosV), (AVX512_512_SET0)>;
 //===----------------------------------------------------------------------===//
 // AVX-512 - VECTOR INSERT
 //
-// -- 32x8 form --
-let hasSideEffects = 0, ExeDomain = SSEPackedSingle in {
-def VINSERTF32x4rr : AVX512AIi8<0x18, MRMSrcReg, (outs VR512:$dst),
-          (ins VR512:$src1, VR128X:$src2, i8imm:$src3),
-          "vinsertf32x4\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-          []>, EVEX_4V, EVEX_V512;
-let mayLoad = 1 in
-def VINSERTF32x4rm : AVX512AIi8<0x18, MRMSrcMem, (outs VR512:$dst),
-          (ins VR512:$src1, f128mem:$src2, i8imm:$src3),
-          "vinsertf32x4\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-          []>, EVEX_4V, EVEX_V512, EVEX_CD8<32, CD8VT4>;
+
+multiclass vinsert_for_size<int Opcode,
+                             X86VectorVTInfo From, X86VectorVTInfo To,
+                             X86VectorVTInfo AltFrom, X86VectorVTInfo AltTo,
+                             PatFrag vinsert_insert,
+                             SDNodeXForm INSERT_get_vinsert_imm> {
+  let hasSideEffects = 0, ExeDomain = To.ExeDomain in {
+    def rr : AVX512AIi8<Opcode, MRMSrcReg, (outs VR512:$dst),
+               (ins VR512:$src1, From.RC:$src2, i8imm:$src3),
+               "vinsert" # From.EltTypeName # "x4\t{$src3, $src2, $src1, $dst|"
+                                                   "$dst, $src1, $src2, $src3}",
+               []>, EVEX_4V, EVEX_V512;
+
+    let mayLoad = 1 in
+    def rm : AVX512AIi8<Opcode, MRMSrcMem, (outs VR512:$dst),
+               (ins VR512:$src1, From.MemOp:$src2, i8imm:$src3),
+               "vinsert" # From.EltTypeName # "x4\t{$src3, $src2, $src1, $dst|"
+                                                   "$dst, $src1, $src2, $src3}",
+               []>, EVEX_4V, EVEX_V512, EVEX_CD8<From.EltSize, CD8VT4>;
+  }
+
+  // Codegen pattern, e.g. v4i32 -> v16i32 for vinserti32x4
+  def : Pat<(vinsert_insert:$ins
+               (To.VT VR512:$src1), (From.VT From.RC:$src2), (iPTR imm)),
+            (To.VT (!cast<Instruction>(NAME # From.EltSize # "x4rr")
+                          VR512:$src1, From.RC:$src2,
+                          (INSERT_get_vinsert_imm VR512:$ins)))>;
+
+  // Codegen pattern with the alternative types, e.g. v2i64 -> v8i64 for
+  // vinserti32x4
+  def : Pat<(vinsert_insert:$ins
+               (AltTo.VT VR512:$src1), (AltFrom.VT From.RC:$src2), (iPTR imm)),
+            (AltTo.VT (!cast<Instruction>(NAME # From.EltSize # "x4rr")
+                          VR512:$src1, From.RC:$src2,
+                          (INSERT_get_vinsert_imm VR512:$ins)))>;
 }
 
-// -- 64x4 fp form --
-let hasSideEffects = 0, ExeDomain = SSEPackedDouble in {
-def VINSERTF64x4rr : AVX512AIi8<0x1a, MRMSrcReg, (outs VR512:$dst),
-          (ins VR512:$src1, VR256X:$src2, i8imm:$src3),
-          "vinsertf64x4\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-          []>, EVEX_4V, EVEX_V512, VEX_W;
-let mayLoad = 1 in
-def VINSERTF64x4rm : AVX512AIi8<0x1a, MRMSrcMem, (outs VR512:$dst),
-          (ins VR512:$src1, f256mem:$src2, i8imm:$src3),
-          "vinsertf64x4\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-          []>, EVEX_4V, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT4>;
-}
-// -- 32x4 integer form --
-let hasSideEffects = 0 in {
-def VINSERTI32x4rr : AVX512AIi8<0x38, MRMSrcReg, (outs VR512:$dst),
-          (ins VR512:$src1, VR128X:$src2, i8imm:$src3),
-          "vinserti32x4\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-          []>, EVEX_4V, EVEX_V512;
-let mayLoad = 1 in
-def VINSERTI32x4rm : AVX512AIi8<0x38, MRMSrcMem, (outs VR512:$dst),
-          (ins VR512:$src1, i128mem:$src2, i8imm:$src3),
-          "vinserti32x4\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-          []>, EVEX_4V, EVEX_V512, EVEX_CD8<32, CD8VT4>;
+multiclass vinsert_for_type<ValueType EltVT32, int Opcode32,
+                            ValueType EltVT64, int Opcode64> {
+  defm NAME # "32x4" : vinsert_for_size<Opcode32,
+                                 X86VectorVTInfo< 4, EltVT32, VR128X>,
+                                 X86VectorVTInfo<16, EltVT32, VR512>,
+                                 X86VectorVTInfo< 2, EltVT64, VR128X>,
+                                 X86VectorVTInfo< 8, EltVT64, VR512>,
+                                 vinsert128_insert,
+                                 INSERT_get_vinsert128_imm>;
+  defm NAME # "64x4" : vinsert_for_size<Opcode64,
+                                 X86VectorVTInfo< 4, EltVT64, VR256X>,
+                                 X86VectorVTInfo< 8, EltVT64, VR512>,
+                                 X86VectorVTInfo< 8, EltVT32, VR256>,
+                                 X86VectorVTInfo<16, EltVT32, VR512>,
+                                 vinsert256_insert,
+                                 INSERT_get_vinsert256_imm>, VEX_W;
 }
 
-let hasSideEffects = 0 in {
-// -- 64x4 form --
-def VINSERTI64x4rr : AVX512AIi8<0x3a, MRMSrcReg, (outs VR512:$dst),
-          (ins VR512:$src1, VR256X:$src2, i8imm:$src3),
-          "vinserti64x4\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-          []>, EVEX_4V, EVEX_V512, VEX_W;
-let mayLoad = 1 in
-def VINSERTI64x4rm : AVX512AIi8<0x3a, MRMSrcMem, (outs VR512:$dst),
-          (ins VR512:$src1, i256mem:$src2, i8imm:$src3),
-          "vinserti64x4\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-          []>, EVEX_4V, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT4>;
-}
-
-def : Pat<(vinsert128_insert:$ins (v16f32 VR512:$src1), (v4f32 VR128X:$src2),
-           (iPTR imm)), (VINSERTF32x4rr VR512:$src1, VR128X:$src2,
-                        (INSERT_get_vinsert128_imm VR512:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v8f64  VR512:$src1), (v2f64 VR128X:$src2),
-           (iPTR imm)), (VINSERTF32x4rr VR512:$src1, VR128X:$src2,
-                        (INSERT_get_vinsert128_imm VR512:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v8i64  VR512:$src1), (v2i64 VR128X:$src2),
-           (iPTR imm)), (VINSERTI32x4rr VR512:$src1, VR128X:$src2,
-                        (INSERT_get_vinsert128_imm VR512:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v16i32 VR512:$src1), (v4i32 VR128X:$src2),
-           (iPTR imm)), (VINSERTI32x4rr VR512:$src1, VR128X:$src2,
-                        (INSERT_get_vinsert128_imm VR512:$ins))>;
-
-def : Pat<(vinsert128_insert:$ins (v16f32 VR512:$src1), (loadv4f32 addr:$src2),
-           (iPTR imm)), (VINSERTF32x4rm VR512:$src1, addr:$src2,
-                        (INSERT_get_vinsert128_imm VR512:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v16i32 VR512:$src1),
-                  (bc_v4i32 (loadv2i64 addr:$src2)),
-           (iPTR imm)), (VINSERTI32x4rm VR512:$src1, addr:$src2,
-                        (INSERT_get_vinsert128_imm VR512:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v8f64  VR512:$src1), (loadv2f64 addr:$src2),
-           (iPTR imm)), (VINSERTF32x4rm VR512:$src1, addr:$src2,
-                        (INSERT_get_vinsert128_imm VR512:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v8i64  VR512:$src1), (loadv2i64 addr:$src2),
-           (iPTR imm)), (VINSERTI32x4rm VR512:$src1, addr:$src2,
-                        (INSERT_get_vinsert128_imm VR512:$ins))>;
-
-def : Pat<(vinsert256_insert:$ins (v16f32  VR512:$src1), (v8f32 VR256X:$src2),
-           (iPTR imm)), (VINSERTF64x4rr VR512:$src1, VR256X:$src2,
-                        (INSERT_get_vinsert256_imm VR512:$ins))>;
-def : Pat<(vinsert256_insert:$ins (v8f64  VR512:$src1), (v4f64 VR256X:$src2),
-           (iPTR imm)), (VINSERTF64x4rr VR512:$src1, VR256X:$src2,
-                        (INSERT_get_vinsert256_imm VR512:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v8i64  VR512:$src1), (v4i64 VR256X:$src2),
-           (iPTR imm)), (VINSERTI64x4rr VR512:$src1, VR256X:$src2,
-                        (INSERT_get_vinsert256_imm VR512:$ins))>;
-def : Pat<(vinsert128_insert:$ins (v16i32 VR512:$src1), (v8i32 VR256X:$src2),
-           (iPTR imm)), (VINSERTI64x4rr VR512:$src1, VR256X:$src2,
-                        (INSERT_get_vinsert256_imm VR512:$ins))>;
-
-def : Pat<(vinsert256_insert:$ins (v16f32  VR512:$src1), (loadv8f32 addr:$src2),
-           (iPTR imm)), (VINSERTF64x4rm VR512:$src1, addr:$src2,
-                        (INSERT_get_vinsert256_imm VR512:$ins))>;
-def : Pat<(vinsert256_insert:$ins (v8f64  VR512:$src1), (loadv4f64 addr:$src2),
-           (iPTR imm)), (VINSERTF64x4rm VR512:$src1, addr:$src2,
-                        (INSERT_get_vinsert256_imm VR512:$ins))>;
-def : Pat<(vinsert256_insert:$ins (v8i64  VR512:$src1), (loadv4i64 addr:$src2),
-           (iPTR imm)), (VINSERTI64x4rm VR512:$src1, addr:$src2,
-                        (INSERT_get_vinsert256_imm VR512:$ins))>;
-def : Pat<(vinsert256_insert:$ins (v16i32 VR512:$src1),
-	                (bc_v8i32 (loadv4i64 addr:$src2)),
-           (iPTR imm)), (VINSERTI64x4rm VR512:$src1, addr:$src2,
-                        (INSERT_get_vinsert256_imm VR512:$ins))>;
+defm VINSERTF : vinsert_for_type<f32, 0x18, f64, 0x1a>;
+defm VINSERTI : vinsert_for_type<i32, 0x38, i64, 0x3a>;
 
 // vinsertps - insert f32 to XMM
 def VINSERTPSzrr : AVX512AIi8<0x21, MRMSrcReg, (outs VR128X:$dst),
