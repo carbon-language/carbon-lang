@@ -3,26 +3,42 @@ RUN: llvm-readobj --coff-imports %p/Inputs/imports.exe.coff-x86-64 | FileCheck -
 
 X86:      Import {
 X86-NEXT:   Name: KERNEL32.dll
-X86-NEXT:   ImportLookupTableRVA: 0x204C
+X86-NEXT:   ImportLookupTableRVA: 0x2070
 X86-NEXT:   ImportAddressTableRVA: 0x2000
 X86-NEXT:   Symbol: ExitProcess (337)
 X86-NEXT: }
 X86-NEXT: Import {
 X86-NEXT:   Name: USER32.dll
-X86-NEXT:   ImportLookupTableRVA: 0x2054
+X86-NEXT:   ImportLookupTableRVA: 0x2078
 X86-NEXT:   ImportAddressTableRVA: 0x2008
 X86-NEXT:   Symbol: MessageBoxA (582)
+X86-NEXT: }
+X86-NEXT: Import {
+X86-NEXT:   Name: mydll.dll
+X86-NEXT:   ImportLookupTableRVA: 0x2080
+X86-NEXT:   ImportAddressTableRVA: 0x2010
+X86-NEXT:   Symbol: Func2 (1)
+X86-NEXT:   Symbol:  (3)
+X86-NEXT:   Symbol: Func1 (0)
 X86-NEXT: }
 
 X64:      Import {
 X64-NEXT:   Name: KERNEL32.dll
-X64-NEXT:   ImportLookupTableRVA: 0x2060
+X64-NEXT:   ImportLookupTableRVA: 0x2090
 X64-NEXT:   ImportAddressTableRVA: 0x2000
 X64-NEXT:   Symbol: ExitProcess (343)
 X64-NEXT: }
 X64-NEXT: Import {
 X64-NEXT:   Name: USER32.dll
-X64-NEXT:   ImportLookupTableRVA: 0x2070
+X64-NEXT:   ImportLookupTableRVA: 0x20A0
 X64-NEXT:   ImportAddressTableRVA: 0x2010
 X64-NEXT:   Symbol: MessageBoxA (586)
+X64-NEXT: }
+X64-NEXT: Import {
+X64-NEXT:   Name: mydll.dll
+X64-NEXT:   ImportLookupTableRVA: 0x20B0
+X64-NEXT:   ImportAddressTableRVA: 0x2020
+X64-NEXT:   Symbol: Func2 (1)
+X64-NEXT:   Symbol:  (3)
+X64-NEXT:   Symbol: Func1 (0)
 X64-NEXT: }
