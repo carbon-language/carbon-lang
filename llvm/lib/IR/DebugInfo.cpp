@@ -1456,7 +1456,7 @@ void DIExpression::printInternal(raw_ostream &OS) const {
     case DW_OP_piece: {
       unsigned Offset = getElement(++I);
       unsigned Size = getElement(++I);
-      OS << " offset=" << Offset << ", size= " << Size;
+      OS << " offset=" << Offset << ", size=" << Size;
       break;
     }
     default:
