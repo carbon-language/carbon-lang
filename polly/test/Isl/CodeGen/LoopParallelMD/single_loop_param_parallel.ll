@@ -38,17 +38,17 @@ ret:
 
 ; SEQUENTIAL: @test-one
 ; SEQUENTIAL-NOT: !llvm.mem.parallel_loop_access
-; SEQUENTIAL-NOT: !llvm.loop !0
+; SEQUENTIAL-NOT: !llvm.loop
 ; SEQUENTIAL-SCEV: @test-one
 ; SEQUENTIAL-SCEV-NOT: !llvm.mem.parallel_loop_access
 ; SEQUENTIAL-SCEV-NOT: !llvm.loop
 
 ; PARALLEL: @test-one
-; PARALLEL: store i32 1, i32* %p_scevgep, !llvm.mem.parallel_loop_access !0
-; PARALLEL:  br i1 %polly.loop_cond, label %polly.loop_header, label %polly.loop_exit, !llvm.loop !0
+; PARALLEL: store i32 1, i32* %p_scevgep, {{[ ._!,a-zA-Z0-9]*}}, !llvm.mem.parallel_loop_access ![[LoopID:[0-9]*]]
+; PARALLEL:  br i1 %polly.loop_cond, label %polly.loop_header, label %polly.loop_exit, !llvm.loop ![[LoopID]]
 ; PARALLEL-SCEV: @test-one
-; PARALLEL-SCEV: store i32 1, i32* %scevgep1, !llvm.mem.parallel_loop_access !0
-; PARALLEL-SCEV:  br i1 %polly.loop_cond, label %polly.loop_header, label %polly.loop_exit, !llvm.loop !0
+; PARALLEL-SCEV: store i32 1, i32* %scevgep1, {{[ ._!,a-zA-Z0-9]*}}, !llvm.mem.parallel_loop_access ![[LoopID:[0-9]*]]
+; PARALLEL-SCEV:  br i1 %polly.loop_cond, label %polly.loop_header, label %polly.loop_exit, !llvm.loop ![[LoopID]]
 
 ; This loop has memory dependences that require at least a simple dependence
 ; analysis to detect the parallelism.
@@ -87,16 +87,16 @@ ret:
 
 ; SEQUENTIAL: @test-two
 ; SEQUENTIAL-NOT: !llvm.mem.parallel_loop_access
-; SEQUENTIAL-NOT: !llvm.loop !0
+; SEQUENTIAL-NOT: !llvm.loop
 ; SEQUENTIAL-SCEV: @test-two
 ; SEQUENTIAL-SCEV-NOT: !llvm.mem.parallel_loop_access
 ; SEQUENTIAL-SCEV-NOT: !llvm.loop
 
 ; PARALLEL: @test-two
-; PARALLEL: %val_p_scalar_ = load i32* %p_scevgepload, !llvm.mem.parallel_loop_access !1
-; PARALLEL: store i32 %val_p_scalar_, i32* %p_scevgepstore, !llvm.mem.parallel_loop_access !1
-; PARALLEL: br i1 %polly.loop_cond, label %polly.loop_header, label %polly.loop_exit, !llvm.loop !1
+; PARALLEL: %val_p_scalar_ = load i32* %p_scevgepload, {{[ ._!,a-zA-Z0-9]*}}, !llvm.mem.parallel_loop_access ![[LoopID:[0-9]*]]
+; PARALLEL: store i32 %val_p_scalar_, i32* %p_scevgepstore, {{[ ._!,a-zA-Z0-9]*}}, !llvm.mem.parallel_loop_access ![[LoopID]]
+; PARALLEL: br i1 %polly.loop_cond, label %polly.loop_header, label %polly.loop_exit, !llvm.loop ![[LoopID]]
 ; PARALLEL-SCEV: @test-two
-; PARALLEL-SCEV: %val_p_scalar_ = load i32* %scevgep, !llvm.mem.parallel_loop_access !1
-; PARALLEL-SCEV: store i32 %val_p_scalar_, i32* %scevgep1, !llvm.mem.parallel_loop_access !1
-; PARALLEL-SCEV:  br i1 %polly.loop_cond, label %polly.loop_header, label %polly.loop_exit, !llvm.loop !1
+; PARALLEL-SCEV: %val_p_scalar_ = load i32* %scevgep, {{[ ._!,a-zA-Z0-9]*}}, !llvm.mem.parallel_loop_access ![[LoopID:[0-9]*]]
+; PARALLEL-SCEV: store i32 %val_p_scalar_, i32* %scevgep1, {{[ ._!,a-zA-Z0-9]*}}, !llvm.mem.parallel_loop_access ![[LoopID]]
+; PARALLEL-SCEV:  br i1 %polly.loop_cond, label %polly.loop_header, label %polly.loop_exit, !llvm.loop ![[LoopID]]

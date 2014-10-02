@@ -605,6 +605,10 @@ public:
     assert(!S.getRegion().isTopLevelRegion() &&
            "Top level regions are not supported");
 
+    // Build the alias scopes for annotations first.
+    if (PollyAnnotateAliasScopes)
+      Annotator.buildAliasScopes(S);
+
     BasicBlock *EnteringBB = simplifyRegion(&S, this);
     PollyIRBuilder Builder = createPollyIRBuilder(EnteringBB, Annotator);
 

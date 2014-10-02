@@ -3,16 +3,16 @@
 ; Check that we mark multiple parallel loops correctly including the memory instructions.
 ;
 ; CHECK-DAG:  %polly.loop_cond[[COuter:[0-9]*]] = icmp sle i64 %polly.indvar{{[0-9]*}}, 1022
-; CHECK-DAG:  br i1 %polly.loop_cond[[COuter]], label %polly.loop_header{{[0-9]*}}, label %polly.loop_exit{{[0-9]*}}, !llvm.loop !0
+; CHECK-DAG:  br i1 %polly.loop_cond[[COuter]], label %polly.loop_header{{[0-9]*}}, label %polly.loop_exit{{[0-9]*}}, !llvm.loop ![[IDOuter:[0-9]*]]
 ;
 ; CHECK-DAG:  %polly.loop_cond[[CInner:[0-9]*]] = icmp sle i64 %polly.indvar{{[0-9]*}}, 510
-; CHECK-DAG:  br i1 %polly.loop_cond[[CInner]], label %polly.loop_header{{[0-9]*}}, label %polly.loop_exit{{[0-9]*}}, !llvm.loop !2
+; CHECK-DAG:  br i1 %polly.loop_cond[[CInner]], label %polly.loop_header{{[0-9]*}}, label %polly.loop_exit{{[0-9]*}}, !llvm.loop ![[IDInner:[0-9]*]]
 ;
-; CHECK-DAG: store i32 %p_tmp{{[0-9]*}}, i32* %p_arrayidx{{[0-9]*}}, !llvm.mem.parallel_loop_access !1
+; CHECK-DAG: store i32 %p_tmp{{[0-9]*}}, i32* %p_arrayidx{{[0-9]*}}, {{[ ._!,a-zA-Z0-9]*}}, !llvm.mem.parallel_loop_access !4
 ;
-; CHECK: !0 = metadata !{metadata !0}
-; CHECK: !1 = metadata !{metadata !0, metadata !2}
-; CHECK: !2 = metadata !{metadata !2}
+; CHECK-DAG: ![[IDOuter]] = metadata !{metadata ![[IDOuter]]}
+; CHECK-DAG: ![[IDInner]] = metadata !{metadata ![[IDInner]]}
+; CHECK-DAG: !4 = metadata !{metadata ![[IDOuter]], metadata ![[IDInner]]}
 ;
 ;    void jd(int *A) {
 ;      for (int i = 0; i < 1024; i++)

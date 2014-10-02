@@ -36,6 +36,9 @@ enum CodeGenChoice {
 };
 extern CodeGenChoice PollyCodeGenChoice;
 
+/// @brief Flag to turn on/off annotation of alias scopes.
+extern bool PollyAnnotateAliasScopes;
+
 static inline int getNumberOfIterations(__isl_take isl_set *Domain) {
   int Dim = isl_set_dim(Domain, isl_dim_set);
 
