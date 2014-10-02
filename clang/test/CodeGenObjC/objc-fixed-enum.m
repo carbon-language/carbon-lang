@@ -51,14 +51,14 @@ int main() {
 // CHECK: ![[ENUMERATOR3:[0-9]+]] = {{.*}}; [ DW_TAG_typedef ] [NSInteger] [line 6{{.*}}] [from long int]
 // CHECK: ![[ENUMERATOR2:[0-9]+]] = {{.*}}; [ DW_TAG_enumeration_type ] [line 22{{.*}}] [from NSInteger]
 
-// CHECK: ![[ENUM0]] = metadata !{metadata !"0x100\00e0\00{{[^,]*}}"{{, [^,]+, [^,]+}}, metadata ![[TYPE0:[0-9]+]]} ; [ DW_TAG_auto_variable ]
-// CHECK: ![[TYPE0]] = metadata !{metadata !"0x16\00Enum0\00{{.*}}", {{.*}}, metadata ![[ENUMERATOR0]]} ; [ DW_TAG_typedef ] [Enum0]
+// CHECK: ![[ENUM0]] = metadata !{{{.*}}!"e0", metadata !{{[0-9]+}}, i32 {{[0-9]+}}, metadata ![[TYPE0:[0-9]+]]
+// CHECK: ![[TYPE0]] = metadata !{{{.*}}!"Enum0", {{.*}} metadata ![[ENUMERATOR0]]} ; [ DW_TAG_typedef ] [Enum0]
 
-// CHECK: ![[ENUM1]] = metadata !{metadata !"0x100\00e1\00{{[^,]*}}"{{, [^,]+, [^,]+}}, metadata ![[TYPE1:[0-9]+]]} ; [ DW_TAG_auto_variable ]
-// CHECK: ![[TYPE1]] = metadata !{metadata !"0x16\00Enum1\00{{.*}}", {{.*}}, metadata ![[ENUMERATOR1]]} ; [ DW_TAG_typedef ] [Enum1]
+// CHECK: ![[ENUM1]] = metadata !{{{.*}}!"e1", metadata !{{[0-9]+}}, i32 {{[0-9]+}}, metadata ![[TYPE1:[0-9]+]]
+// CHECK: ![[TYPE1]] = metadata !{{{.*}}!"Enum1", {{.*}} metadata ![[ENUMERATOR1]]} ; [ DW_TAG_typedef ] [Enum1]
 
-// CHECK: ![[ENUM2]] = metadata !{metadata !"0x100\00e2\00{{[^,]*}}"{{, [^,]+, [^,]+}}, metadata ![[TYPE2:[0-9]+]]} ; [ DW_TAG_auto_variable ]
-// CHECK: ![[TYPE2]] = metadata !{metadata !"0x16\00Enum2\00{{.*}}", {{.*}}, metadata ![[ENUMERATOR2]]} ; [ DW_TAG_typedef ] [Enum2]
+// CHECK: ![[ENUM2]] = metadata !{{{.*}}!"e2", metadata !{{[0-9]+}}, i32 {{[0-9]+}}, metadata ![[TYPE2:[0-9]+]]
+// CHECK: ![[TYPE2]] = metadata !{{{.*}}!"Enum2", {{.*}} metadata ![[ENUMERATOR2]]} ; [ DW_TAG_typedef ] [Enum2]
 
-// CHECK: ![[ENUM3]] = metadata !{metadata !"0x100\00e3\00{{[^,]*}}"{{, [^,]+, [^,]+}}, metadata ![[TYPE3:[0-9]+]]} ; [ DW_TAG_auto_variable ]
-// CHECK: ![[TYPE3]] = metadata !{metadata !"0x16\00Enum3\00{{.*}}", {{.*}}, metadata ![[ENUMERATOR3]]} ; [ DW_TAG_typedef ] [Enum3]
+// CHECK: ![[ENUM3]] = metadata !{{{.*}}!"e3", metadata !{{[0-9]+}}, i32 {{[0-9]+}}, metadata ![[TYPE3:[0-9]+]]
+// CHECK: ![[TYPE3]] = metadata !{{{.*}}!"Enum3", {{.*}} metadata ![[ENUMERATOR3]]} ; [ DW_TAG_typedef ] [Enum3]

@@ -31,7 +31,7 @@ private:
 };
 
 
-// CHECK: {{.*}}\00256\00{{.*}} ; [ DW_TAG_subprogram ] [line [[@LINE+1]]] [def] [free]
+// CHECK: i32 256, {{.*}} ; [ DW_TAG_subprogram ] [line [[@LINE+1]]] [def] [free]
 void free() {}
 
 A a;
