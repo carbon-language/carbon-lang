@@ -6,27 +6,27 @@
 # RUN: lld -flavor link /out:%t1.exe /subsystem:console /entry:main /opt:noref \
 # RUN:   -- %t.obj %p/Inputs/vars.lib
 # RUN: llvm-objdump -d %t1.exe | FileCheck -check-prefix=TEXT %s
-# RUN: llvm-readobj -sections %t1.exe | FileCheck -check-prefix=SECTION %s
+# RUN: llvm-readobj -coff-imports %t1.exe | FileCheck -check-prefix=IMPORT %s
 #
 # RUN: lld -flavor link /out:%t2.exe /subsystem:console /entry:main /opt:noref \
 # RUN:   /libpath:%p/Inputs -- %t.obj vars.lib
 # RUN: llvm-objdump -d %t2.exe | FileCheck -check-prefix=TEXT %s
-# RUN: llvm-readobj -sections %t2.exe | FileCheck -check-prefix=SECTION %s
+# RUN: llvm-readobj -coff-imports %t2.exe | FileCheck -check-prefix=IMPORT %s
 #
 # RUN: lld -flavor link /out:%t3.exe /subsystem:console /entry:main /opt:noref \
 # RUN:   /libpath:%p/Inputs /defaultlib:vars.lib -- %t.obj
 # RUN: llvm-objdump -d %t3.exe | FileCheck -check-prefix=TEXT %s
-# RUN: llvm-readobj -sections %t3.exe | FileCheck -check-prefix=SECTION %s
+# RUN: llvm-readobj -coff-imports %t3.exe | FileCheck -check-prefix=IMPORT %s
 #
 # RUN: env LIB=%p/Inputs lld -flavor link /out:%t4.exe /subsystem:console \
 # RUN:   /opt:noref /entry:main -- %t.obj vars.lib
 # RUN: llvm-objdump -d %t4.exe | FileCheck -check-prefix=TEXT %s
-# RUN: llvm-readobj -sections %t4.exe | FileCheck -check-prefix=SECTION %s
+# RUN: llvm-readobj -coff-imports %t4.exe | FileCheck -check-prefix=IMPORT %s
 #
 # RUN: env LINK="/out:%t5.exe /subsystem:console /entry:main /opt:noref \
 # RUN:   -- %t.obj" lld -flavor link %p/Inputs/vars.lib
 # RUN: llvm-objdump -d %t5.exe | FileCheck -check-prefix=TEXT %s
-# RUN: llvm-readobj -sections %t5.exe | FileCheck -check-prefix=SECTION %s
+# RUN: llvm-readobj -coff-imports %t5.exe | FileCheck -check-prefix=IMPORT %s
 
 TEXT: Disassembly of section .text:
 TEXT-NEXT: .text:
@@ -43,4 +43,11 @@ TEXT-NEXT:     popl    %esi
 TEXT-NEXT:     popl    %ebp
 TEXT-NEXT:     ret
 
-SECTION: Name: .idata (2E 69 64 61 74 61 00 00)
+IMPORT:      Import {
+IMPORT-NEXT:   Name: vars.dll
+IMPORT-NEXT:   ImportLookupTableRVA: 0x4000
+IMPORT-NEXT:   ImportAddressTableRVA: 0x2000
+IMPORT-NEXT:   Symbol: _name_with_underscore (0)
+IMPORT-NEXT:   Symbol: fn (1)
+IMPORT-NEXT:   Symbol:  (1)
+IMPORT-NEXT: }
