@@ -37,10 +37,6 @@ protected:
     return std::error_code();
   }
 
-  bool isDynSymEntryRequired(const SharedLibraryAtom *sla) const override {
-    return _writeHelper.isDynSymEntryRequired(sla);
-  }
-
   bool isNeededTagRequired(const SharedLibraryAtom *sla) const override {
     return _writeHelper.isNeededTagRequired(sla);
   }
