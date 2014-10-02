@@ -164,18 +164,18 @@ struct import_directory_table_entry {
 
 template <typename IntTy>
 struct import_lookup_table_entry {
-  IntTy data;
+  IntTy Data;
 
-  bool isOrdinal() const { return data < 0; }
+  bool isOrdinal() const { return Data < 0; }
 
   uint16_t getOrdinal() const {
     assert(isOrdinal() && "ILT entry is not an ordinal!");
-    return data & 0xFFFF;
+    return Data & 0xFFFF;
   }
 
   uint32_t getHintNameRVA() const {
     assert(!isOrdinal() && "ILT entry is not a Hint/Name RVA!");
-    return data & 0xFFFFFFFF;
+    return Data & 0xFFFFFFFF;
   }
 };
 

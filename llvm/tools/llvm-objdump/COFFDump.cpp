@@ -322,7 +322,7 @@ static void printImportTables(const COFFObjectFile *Obj) {
     const import_lookup_table_entry32 *entry;
     if (I->getImportLookupEntry(entry))
       return;
-    for (; entry->data; ++entry) {
+    for (; entry->Data; ++entry) {
       if (entry->isOrdinal()) {
         outs() << format("      % 6d\n", entry->getOrdinal());
         continue;
