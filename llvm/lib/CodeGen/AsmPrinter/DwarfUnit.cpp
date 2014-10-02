@@ -1713,7 +1713,7 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
     // it is not a static member.
     if (!IsStaticMember)
       addConstantValue(*VariableDIE, CI, GTy);
-  } else if (const ConstantExpr *CE = getMergedGlobalExpr(GV->getOperand(11))) {
+  } else if (const ConstantExpr *CE = getMergedGlobalExpr(GV.getConstant())) {
     addToAccelTable = true;
     // GV is a merged global.
     DIELoc *Loc = new (DIEValueAllocator) DIELoc();

@@ -26,5 +26,6 @@ declare void @llvm.dbg.stoppoint(i32, i32, metadata) nounwind readnone
 
 declare void @llvm.dbg.region.end(metadata) nounwind readnone
 
-!0 = metadata !{i32 458798, i32 0, metadata !1, metadata !"main", metadata !"main", metadata !"main", metadata !1, i32 2, null, i1 false, i1 true}
-!1 = metadata !{i32 458769, i32 0, i32 12, metadata !"a.c", metadata !"/home/rich/ellcc/test/source", metadata !"ellcc 0.1.0", i1 true, i1 true, metadata !"", i32 0}
+!0 = metadata !{metadata !"0x2e\00main\00main\00main\002\000\001\000\006\000\000\000", i32 0, metadata !1, null, null, null, null, null} ; [ DW_TAG_subprogram ]
+!1 = metadata !{metadata !"0x11\0012\00ellcc 0.1.0\001\00\000\00\000", metadata !2, null, null, null, null, null} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{metadata !"a.c", metadata !"/home/rich/ellcc/test/source"}

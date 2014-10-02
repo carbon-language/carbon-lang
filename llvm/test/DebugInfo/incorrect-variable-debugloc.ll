@@ -110,7 +110,7 @@ entry:
 
 ; <label>:30                                      ; preds = %24, %5
   store i32 0, i32* %i.i, align 4, !dbg !39, !tbaa !41
-  tail call void @llvm.dbg.value(metadata !{%struct.C* %8}, i64 0, metadata !27, metadata !{i32 786690}), !dbg !46
+  tail call void @llvm.dbg.value(metadata !{%struct.C* %8}, i64 0, metadata !27, metadata !{metadata !"0x102"}), !dbg !46
   call void @_ZN1C5m_fn3Ev(%struct.C* %8), !dbg !47
   unreachable, !dbg !47
 }
@@ -145,7 +145,7 @@ entry:
   %16 = add i64 %15, 0, !dbg !48
   %17 = inttoptr i64 %16 to i64*, !dbg !48
   store i64 -868083113472691727, i64* %17, !dbg !48
-  tail call void @llvm.dbg.value(metadata !{%struct.C* %this}, i64 0, metadata !30, metadata !{i32 786690}), !dbg !48
+  tail call void @llvm.dbg.value(metadata !{%struct.C* %this}, i64 0, metadata !30, metadata !{metadata !"0x102"}), !dbg !48
   %call = call i32 @_ZN1A5m_fn1Ev(%struct.A* %8), !dbg !49
   %i.i = getelementptr inbounds %struct.C* %this, i64 0, i32 1, i32 0, !dbg !50
   %18 = ptrtoint i32* %i.i to i64, !dbg !50
@@ -336,44 +336,44 @@ attributes #3 = { nounwind readnone }
 !llvm.module.flags = !{!36, !37}
 !llvm.ident = !{!38}
 
-!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.5.0 ", i1 true, metadata !"", i32 0, metadata !2, metadata !3, metadata !21, metadata !2, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/<stdin>] [DW_LANG_C_plus_plus]
+!0 = metadata !{metadata !"0x11\004\00clang version 3.5.0 \001\00\000\00\001", metadata !1, metadata !2, metadata !3, metadata !21, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/<stdin>] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"<stdin>", metadata !"/tmp/dbginfo"}
 !2 = metadata !{}
 !3 = metadata !{metadata !4, metadata !14}
-!4 = metadata !{i32 786451, metadata !5, null, metadata !"C", i32 10, i64 64, i64 32, i32 0, i32 0, null, metadata !6, i32 0, null, null, metadata !"_ZTS1C"} ; [ DW_TAG_structure_type ] [C] [line 10, size 64, align 32, offset 0] [def] [from ]
+!4 = metadata !{metadata !"0x13\00C\0010\0064\0032\000\000\000", metadata !5, null, null, metadata !6, null, null, metadata !"_ZTS1C"} ; [ DW_TAG_structure_type ] [C] [line 10, size 64, align 32, offset 0] [def] [from ]
 !5 = metadata !{metadata !"incorrect-variable-debug-loc.cpp", metadata !"/tmp/dbginfo"}
 !6 = metadata !{metadata !7, metadata !9, metadata !10}
-!7 = metadata !{i32 786445, metadata !5, metadata !"_ZTS1C", metadata !"j", i32 12, i64 32, i64 32, i64 0, i32 0, metadata !8} ; [ DW_TAG_member ] [j] [line 12, size 32, align 32, offset 0] [from int]
-!8 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!9 = metadata !{i32 786445, metadata !5, metadata !"_ZTS1C", metadata !"b", i32 13, i64 32, i64 32, i64 32, i32 0, metadata !"_ZTS1B"} ; [ DW_TAG_member ] [b] [line 13, size 32, align 32, offset 32] [from _ZTS1B]
-!10 = metadata !{i32 786478, metadata !5, metadata !"_ZTS1C", metadata !"m_fn3", metadata !"m_fn3", metadata !"_ZN1C5m_fn3Ev", i32 11, metadata !11, i1 false, i1 false, i32 0, i32 0, null, i32 256, i1 true, null, null, i32 0, null, i32 11} ; [ DW_TAG_subprogram ] [line 11] [m_fn3]
-!11 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !12, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = metadata !{metadata !"0xd\00j\0012\0032\0032\000\000", metadata !5, metadata !"_ZTS1C", metadata !8} ; [ DW_TAG_member ] [j] [line 12, size 32, align 32, offset 0] [from int]
+!8 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = metadata !{metadata !"0xd\00b\0013\0032\0032\0032\000", metadata !5, metadata !"_ZTS1C", metadata !"_ZTS1B"} ; [ DW_TAG_member ] [b] [line 13, size 32, align 32, offset 32] [from _ZTS1B]
+!10 = metadata !{metadata !"0x2e\00m_fn3\00m_fn3\00_ZN1C5m_fn3Ev\0011\000\000\000\006\00256\001\0011", metadata !5, metadata !"_ZTS1C", metadata !11, null, null, null, i32 0, null} ; [ DW_TAG_subprogram ] [line 11] [m_fn3]
+!11 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !12, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !12 = metadata !{null, metadata !13}
-!13 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 1088, metadata !"_ZTS1C"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1C]
-!14 = metadata !{i32 786451, metadata !5, null, metadata !"B", i32 5, i64 32, i64 32, i32 0, i32 0, null, metadata !15, i32 0, null, null, metadata !"_ZTS1B"} ; [ DW_TAG_structure_type ] [B] [line 5, size 32, align 32, offset 0] [def] [from ]
+!13 = metadata !{metadata !"0xf\00\000\0064\0064\000\001088", null, null, metadata !"_ZTS1C"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1C]
+!14 = metadata !{metadata !"0x13\00B\005\0032\0032\000\000\000", metadata !5, null, null, metadata !15, null, null, metadata !"_ZTS1B"} ; [ DW_TAG_structure_type ] [B] [line 5, size 32, align 32, offset 0] [def] [from ]
 !15 = metadata !{metadata !16, metadata !17}
-!16 = metadata !{i32 786445, metadata !5, metadata !"_ZTS1B", metadata !"i", i32 7, i64 32, i64 32, i64 0, i32 0, metadata !8} ; [ DW_TAG_member ] [i] [line 7, size 32, align 32, offset 0] [from int]
-!17 = metadata !{i32 786478, metadata !5, metadata !"_ZTS1B", metadata !"m_fn2", metadata !"m_fn2", metadata !"_ZN1B5m_fn2Ev", i32 6, metadata !18, i1 false, i1 false, i32 0, i32 0, null, i32 256, i1 true, null, null, i32 0, null, i32 6} ; [ DW_TAG_subprogram ] [line 6] [m_fn2]
-!18 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !19, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!16 = metadata !{metadata !"0xd\00i\007\0032\0032\000\000", metadata !5, metadata !"_ZTS1B", metadata !8} ; [ DW_TAG_member ] [i] [line 7, size 32, align 32, offset 0] [from int]
+!17 = metadata !{metadata !"0x2e\00m_fn2\00m_fn2\00_ZN1B5m_fn2Ev\006\000\000\000\006\00256\001\006", metadata !5, metadata !"_ZTS1B", metadata !18, null, null, null, i32 0, null} ; [ DW_TAG_subprogram ] [line 6] [m_fn2]
+!18 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !19, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !19 = metadata !{null, metadata !20}
-!20 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 1088, metadata !"_ZTS1B"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1B]
+!20 = metadata !{metadata !"0xf\00\000\0064\0064\000\001088", null, null, metadata !"_ZTS1B"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1B]
 !21 = metadata !{metadata !22, metadata !28, metadata !32}
-!22 = metadata !{i32 786478, metadata !5, metadata !23, metadata !"fn1", metadata !"fn1", metadata !"_Z3fn1v", i32 16, metadata !24, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32 ()* @_Z3fn1v, null, null, metadata !26, i32 16} ; [ DW_TAG_subprogram ] [line 16] [def] [fn1]
-!23 = metadata !{i32 786473, metadata !5}         ; [ DW_TAG_file_type ] [/tmp/dbginfo/incorrect-variable-debug-loc.cpp]
-!24 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !25, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!22 = metadata !{metadata !"0x2e\00fn1\00fn1\00_Z3fn1v\0016\000\001\000\006\00256\001\0016", metadata !5, metadata !23, metadata !24, null, i32 ()* @_Z3fn1v, null, null, metadata !26} ; [ DW_TAG_subprogram ] [line 16] [def] [fn1]
+!23 = metadata !{metadata !"0x29", metadata !5}         ; [ DW_TAG_file_type ] [/tmp/dbginfo/incorrect-variable-debug-loc.cpp]
+!24 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !25, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !25 = metadata !{metadata !8}
 !26 = metadata !{metadata !27}
-!27 = metadata !{i32 786688, metadata !22, metadata !"A", metadata !23, i32 17, metadata !"_ZTS1C", i32 0, i32 0} ; [ DW_TAG_auto_variable ] [A] [line 17]
-!28 = metadata !{i32 786478, metadata !5, metadata !"_ZTS1C", metadata !"m_fn3", metadata !"m_fn3", metadata !"_ZN1C5m_fn3Ev", i32 21, metadata !11, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, void (%struct.C*)* @_ZN1C5m_fn3Ev, null, metadata !10, metadata !29, i32 21} ; [ DW_TAG_subprogram ] [line 21] [def] [m_fn3]
+!27 = metadata !{metadata !"0x100\00A\0017\000", metadata !22, metadata !23, metadata !"_ZTS1C"} ; [ DW_TAG_auto_variable ] [A] [line 17]
+!28 = metadata !{metadata !"0x2e\00m_fn3\00m_fn3\00_ZN1C5m_fn3Ev\0021\000\001\000\006\00256\001\0021", metadata !5, metadata !"_ZTS1C", metadata !11, null, void (%struct.C*)* @_ZN1C5m_fn3Ev, null, metadata !10, metadata !29} ; [ DW_TAG_subprogram ] [line 21] [def] [m_fn3]
 !29 = metadata !{metadata !30}
-!30 = metadata !{i32 786689, metadata !28, metadata !"this", null, i32 16777216, metadata !31, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [this] [line 0]
-!31 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !"_ZTS1C"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS1C]
-!32 = metadata !{i32 786478, metadata !5, metadata !"_ZTS1B", metadata !"m_fn2", metadata !"m_fn2", metadata !"_ZN1B5m_fn2Ev", i32 6, metadata !18, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, null, null, metadata !17, metadata !33, i32 6} ; [ DW_TAG_subprogram ] [line 6] [def] [m_fn2]
+!30 = metadata !{metadata !"0x101\00this\0016777216\001088", metadata !28, null, metadata !31} ; [ DW_TAG_arg_variable ] [this] [line 0]
+!31 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !"_ZTS1C"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS1C]
+!32 = metadata !{metadata !"0x2e\00m_fn2\00m_fn2\00_ZN1B5m_fn2Ev\006\000\001\000\006\00256\001\006", metadata !5, metadata !"_ZTS1B", metadata !18, null, null, null, metadata !17, metadata !33} ; [ DW_TAG_subprogram ] [line 6] [def] [m_fn2]
 !33 = metadata !{metadata !34}
-!34 = metadata !{i32 786689, metadata !32, metadata !"this", null, i32 16777216, metadata !35, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [this] [line 0]
-!35 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !"_ZTS1B"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS1B]
+!34 = metadata !{metadata !"0x101\00this\0016777216\001088", metadata !32, null, metadata !35} ; [ DW_TAG_arg_variable ] [this] [line 0]
+!35 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !"_ZTS1B"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS1B]
 !36 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!37 = metadata !{i32 2, metadata !"Debug Info Version", i32 1}
+!37 = metadata !{i32 2, metadata !"Debug Info Version", i32 2}
 !38 = metadata !{metadata !"clang version 3.5.0 "}
 !39 = metadata !{i32 6, i32 0, metadata !32, metadata !40}
 !40 = metadata !{i32 18, i32 0, metadata !22, null}

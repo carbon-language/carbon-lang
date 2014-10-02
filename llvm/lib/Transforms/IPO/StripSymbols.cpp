@@ -353,11 +353,9 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
       // sure that an assert is hit if the location of the subprogram array
       // changes. This is just to make sure that this is updated if such an
       // event occurs.
-      assert(DIC->getNumOperands() >= 10 &&
-             SPs == DIC->getOperand(9) &&
-             "DICompileUnits is expected to store Subprograms in operand "
-             "9.");
-      DIC->replaceOperandWith(9, MDNode::get(C, LiveSubprograms));
+      assert(DIC->getNumOperands() >= 5 && SPs == DIC->getOperand(4) &&
+             "DICompileUnits is expected to store Subprograms in operand 4.");
+      DIC->replaceOperandWith(4, MDNode::get(C, LiveSubprograms));
       Changed = true;
     }
 
@@ -366,11 +364,10 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
       // make sure that an assert is hit if the location of the subprogram array
       // changes. This is just to make sure that this index is updated if such
       // an event occurs.
-      assert(DIC->getNumOperands() >= 11 &&
-             GVs == DIC->getOperand(10) &&
-             "DICompileUnits is expected to store Global Variables in operand "
-             "10.");
-      DIC->replaceOperandWith(10, MDNode::get(C, LiveGlobalVariables));
+      assert(
+          DIC->getNumOperands() >= 6 && GVs == DIC->getOperand(5) &&
+          "DICompileUnits is expected to store Global Variables in operand 5.");
+      DIC->replaceOperandWith(5, MDNode::get(C, LiveGlobalVariables));
       Changed = true;
     }
 

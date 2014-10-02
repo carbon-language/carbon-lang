@@ -21,16 +21,16 @@ entry:
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!12}
 
-!0 = metadata !{i32 786689, metadata !1, metadata !"x", metadata !2, i32 1, metadata !6} ; [ DW_TAG_arg_variable ]
-!1 = metadata !{i32 786478, metadata !10, metadata !2, metadata !"foo", metadata !"foo", metadata !"foo", i32 1, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 false, i32 (i32, i32, i32, i32)* @foo, null, null, null, i32 1} ; [ DW_TAG_subprogram ]
-!2 = metadata !{i32 786473, metadata !10} ; [ DW_TAG_file_type ]
-!3 = metadata !{i32 786449, metadata !10, i32 12, metadata !"producer", i1 false, metadata !"", i32 0, metadata !11, metadata !11, metadata !9, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
-!4 = metadata !{i32 786453, metadata !10, metadata !2, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = metadata !{metadata !"0x101\00x\001\000", metadata !1, metadata !2, metadata !6} ; [ DW_TAG_arg_variable ]
+!1 = metadata !{metadata !"0x2e\00foo\00foo\00foo\001\000\001\000\006\000\000\001", metadata !10, metadata !2, metadata !4, null, i32 (i32, i32, i32, i32)* @foo, null, null, null} ; [ DW_TAG_subprogram ]
+!2 = metadata !{metadata !"0x29", metadata !10} ; [ DW_TAG_file_type ]
+!3 = metadata !{metadata !"0x11\0012\00producer\000\00\000\00\000", metadata !10, metadata !11, metadata !11, metadata !9, null, null} ; [ DW_TAG_compile_unit ]
+!4 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", metadata !10, metadata !2, null, metadata !5, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !5 = metadata !{metadata !6}
-!6 = metadata !{i32 786468, metadata !10, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!7 = metadata !{i32 786443, metadata !2, metadata !1, i32 1, i32 30, i32 0} ; [ DW_TAG_lexical_block ]
+!6 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", metadata !10, metadata !2} ; [ DW_TAG_base_type ]
+!7 = metadata !{metadata !"0xb\001\0030\000", metadata !2, metadata !1} ; [ DW_TAG_lexical_block ]
 !8 = metadata !{i32 4, i32 3, metadata !7, null}
 !9 = metadata !{metadata !1}
 !10 = metadata !{metadata !"test.c", metadata !"/dir"}
 !11 = metadata !{i32 0}
-!12 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!12 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}

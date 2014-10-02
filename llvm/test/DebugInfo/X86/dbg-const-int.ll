@@ -12,7 +12,7 @@ target triple = "x86_64-apple-macosx10.6.7"
 
 define i32 @foo() nounwind uwtable readnone optsize ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata !8, i64 0, metadata !6, metadata !{i32 786690}), !dbg !9
+  tail call void @llvm.dbg.value(metadata !8, i64 0, metadata !6, metadata !{metadata !"0x102"}), !dbg !9
   ret i32 42, !dbg !10
 }
 
@@ -21,14 +21,14 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!15}
 
-!0 = metadata !{i32 786449, metadata !13, i32 12, metadata !"clang version 3.0 (trunk 132191)", i1 true, metadata !"", i32 0, metadata !14, metadata !14, metadata !11, null,  null, null} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{i32 786478, metadata !13, metadata !2, metadata !"foo", metadata !"foo", metadata !"", i32 1, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 true, i32 ()* @foo, null, null, metadata !12, i32 0} ; [ DW_TAG_subprogram ] [line 1] [def] [scope 0] [foo]
-!2 = metadata !{i32 786473, metadata !13} ; [ DW_TAG_file_type ]
-!3 = metadata !{i32 786453, metadata !13, metadata !2, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = metadata !{metadata !"0x11\0012\00clang version 3.0 (trunk 132191)\001\00\000\00\000", metadata !13, metadata !14, metadata !14, metadata !11, null,  null} ; [ DW_TAG_compile_unit ]
+!1 = metadata !{metadata !"0x2e\00foo\00foo\00\001\000\001\000\006\000\001\000", metadata !13, metadata !2, metadata !3, null, i32 ()* @foo, null, null, metadata !12} ; [ DW_TAG_subprogram ] [line 1] [def] [scope 0] [foo]
+!2 = metadata !{metadata !"0x29", metadata !13} ; [ DW_TAG_file_type ]
+!3 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", metadata !13, metadata !2, null, metadata !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{metadata !5}
-!5 = metadata !{i32 786468, null, metadata !0, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!6 = metadata !{i32 786688, metadata !7, metadata !"i", metadata !2, i32 2, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
-!7 = metadata !{i32 786443, metadata !13, metadata !1, i32 1, i32 11, i32 0} ; [ DW_TAG_lexical_block ]
+!5 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, metadata !0} ; [ DW_TAG_base_type ]
+!6 = metadata !{metadata !"0x100\00i\002\000", metadata !7, metadata !2, metadata !5} ; [ DW_TAG_auto_variable ]
+!7 = metadata !{metadata !"0xb\001\0011\000", metadata !13, metadata !1} ; [ DW_TAG_lexical_block ]
 !8 = metadata !{i32 42}
 !9 = metadata !{i32 2, i32 12, metadata !7, null}
 !10 = metadata !{i32 3, i32 2, metadata !7, null}
@@ -36,4 +36,4 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !12 = metadata !{metadata !6}
 !13 = metadata !{metadata !"a.c", metadata !"/private/tmp"}
 !14 = metadata !{i32 0}
-!15 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!15 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}

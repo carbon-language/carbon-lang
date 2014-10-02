@@ -6,12 +6,12 @@
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!9}
 
-!0 = metadata !{i32 786449, metadata !8, i32 12, metadata !"clang version 3.1 (trunk 143009)", i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !1, metadata !3,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{metadata !"0x11\0012\00clang version 3.1 (trunk 143009)\001\00\000\00\000", metadata !8, metadata !1, metadata !1, metadata !1, metadata !3,  metadata !1} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 720948, i32 0, null, metadata !"yyyy", metadata !"yyyy", metadata !"", metadata !6, i32 1, metadata !7, i32 0, i32 1, i32* @yyyy, null} ; [ DW_TAG_variable ]
-!6 = metadata !{i32 720937, metadata !8} ; [ DW_TAG_file_type ]
-!7 = metadata !{i32 720932, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!5 = metadata !{metadata !"0x34\00yyyy\00yyyy\00\001\000\001", null, metadata !6, metadata !7, i32* @yyyy, null} ; [ DW_TAG_variable ]
+!6 = metadata !{metadata !"0x29", metadata !8} ; [ DW_TAG_file_type ]
+!7 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ]
 !8 = metadata !{metadata !"z.c", metadata !"/home/nicholas"}
 
 ; Verify that "yyyy" ended up in the stringpool.
@@ -40,4 +40,4 @@
 ; DARWIN-NEXT:        .byte   9                       ## DW_AT_location
 ; DARWIN-NEXT:        .byte   3
 ; DARWIN-NEXT:        .quad   _yyyy
-!9 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!9 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}

@@ -16,7 +16,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define signext i16 @subdivp(%struct.node.0.27* nocapture %p, double %dsq, double %tolsq, %struct.hgstruct.2.29* nocapture byval align 8 %hg) nounwind uwtable readonly ssp {
 entry:
-  call void @llvm.dbg.declare(metadata !{%struct.hgstruct.2.29* %hg}, metadata !4, metadata !{i32 786690})
+  call void @llvm.dbg.declare(metadata !{%struct.hgstruct.2.29* %hg}, metadata !4, metadata !{metadata !"0x102"})
   %type = getelementptr inbounds %struct.node.0.27* %p, i64 0, i32 0
   %0 = load i16* %type, align 2
   %cmp = icmp eq i16 %0, 1
@@ -38,15 +38,15 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!12}
 
-!0 = metadata !{i32 786449, metadata !11, i32 12, metadata !"clang version 3.3 (trunk 168918) (llvm/trunk 168920)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !13, metadata !2, null, metadata !""} ; [ DW_TAG_compile_unit ] [MultiSource/Benchmarks/Olden/bh/newbh.c] [DW_LANG_C99]
+!0 = metadata !{metadata !"0x11\0012\00clang version 3.3 (trunk 168918) (llvm/trunk 168920)\001\00\000\00\000", metadata !11, metadata !2, metadata !2, metadata !13, metadata !2, null} ; [ DW_TAG_compile_unit ] [MultiSource/Benchmarks/Olden/bh/newbh.c] [DW_LANG_C99]
 !2 = metadata !{}
-!4 = metadata !{i32 786689, null, metadata !"hg", metadata !5, i32 67109589, metadata !6, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [hg] [line 725]
-!5 = metadata !{i32 786473, metadata !11} ; [ DW_TAG_file_type ]
-!6 = metadata !{i32 786454, metadata !11, null, metadata !"hgstruct", i32 492, i64 0, i64 0, i64 0, i32 0, metadata !7} ; [ DW_TAG_typedef ] [hgstruct] [line 492, size 0, align 0, offset 0] [from ]
-!7 = metadata !{i32 786451, metadata !11, null, metadata !"", i32 487, i64 512, i64 64, i32 0, i32 0, null, null, i32 0, null, i32 0, null} ; [ DW_TAG_structure_type ] [line 487, size 512, align 64, offset 0] [def] [from ]
+!4 = metadata !{metadata !"0x101\00hg\0067109589\000", null, metadata !5, metadata !6} ; [ DW_TAG_arg_variable ] [hg] [line 725]
+!5 = metadata !{metadata !"0x29", metadata !11} ; [ DW_TAG_file_type ]
+!6 = metadata !{metadata !"0x16\00hgstruct\00492\000\000\000\000", metadata !11, null, metadata !7} ; [ DW_TAG_typedef ] [hgstruct] [line 492, size 0, align 0, offset 0] [from ]
+!7 = metadata !{metadata !"0x13\00\00487\00512\0064\000\000\000", metadata !11, null, null, null, null, i32 0, null} ; [ DW_TAG_structure_type ] [line 487, size 512, align 64, offset 0] [def] [from ]
 !11 = metadata !{metadata !"MultiSource/Benchmarks/Olden/bh/newbh.c", metadata !"MultiSource/Benchmarks/Olden/bh"}
-!12 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!12 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
 !13 = metadata !{metadata !14}
-!14 = metadata !{i32 786478, metadata !11, metadata !5, metadata !"subdivp", metadata !"subdivp", null, i32 0, metadata !15, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i16 (%struct.node.0.27*, double, double, %struct.hgstruct.2.29* )* @subdivp, null, null, null, i32 1} ; [ DW_TAG_subprogram ] [def] [subdivp]
-!15 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !16, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!14 = metadata !{metadata !"0x2e\00subdivp\00subdivp\00\000\000\001\000\006\00256\001\001", metadata !11, metadata !5, metadata !15, null, i16 (%struct.node.0.27*, double, double, %struct.hgstruct.2.29* )* @subdivp, null, null, null} ; [ DW_TAG_subprogram ] [def] [subdivp]
+!15 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !16, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !16 = metadata !{null}

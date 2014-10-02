@@ -25,6 +25,8 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ErrorHandling.h"
+#include <iterator>
 
 namespace llvm {
 class BasicBlock;
@@ -54,6 +56,55 @@ class DIObjCProperty;
 
 /// Maps from type identifier to the actual MDNode.
 typedef DenseMap<const MDString *, MDNode *> DITypeIdentifierMap;
+
+class DIHeaderFieldIterator
+    : public std::iterator<std::input_iterator_tag, StringRef, std::ptrdiff_t,
+                           const StringRef *, StringRef> {
+  StringRef Header;
+  StringRef Current;
+
+public:
+  DIHeaderFieldIterator() {}
+  DIHeaderFieldIterator(StringRef Header)
+      : Header(Header), Current(Header.slice(0, Header.find('\0'))) {}
+  StringRef operator*() const { return Current; }
+  const StringRef * operator->() const { return &Current; }
+  DIHeaderFieldIterator &operator++() {
+    increment();
+    return *this;
+  }
+  DIHeaderFieldIterator operator++(int) {
+    DIHeaderFieldIterator X(*this);
+    increment();
+    return X;
+  }
+  bool operator==(const DIHeaderFieldIterator &X) const {
+    return Current.data() == X.Current.data();
+  }
+  bool operator!=(const DIHeaderFieldIterator &X) const {
+    return !(*this == X);
+  }
+
+  StringRef getHeader() const { return Header; }
+  StringRef getCurrent() const { return Current; }
+  StringRef getPrefix() const {
+    if (Current.begin() == Header.begin())
+      return StringRef();
+    return Header.slice(0, Current.begin() - Header.begin() - 1);
+  }
+  StringRef getSuffix() const {
+    if (Current.end() == Header.end())
+      return StringRef();
+    return Header.slice(Current.end() - Header.begin() + 1, StringRef::npos);
+  }
+
+private:
+  void increment() {
+    assert(Current.data() != nullptr && "Cannot increment past the end");
+    StringRef Suffix = getSuffix();
+    Current = Suffix.slice(0, Suffix.find('\0'));
+  }
+};
 
 /// DIDescriptor - A thin wraper around MDNode to access encoded debug info.
 /// This should not be stored in a container, because the underlying MDNode
@@ -126,9 +177,32 @@ public:
   bool operator==(DIDescriptor Other) const { return DbgNode == Other.DbgNode; }
   bool operator!=(DIDescriptor Other) const { return !operator==(Other); }
 
-  uint16_t getTag() const {
-    return getUnsignedField(0) & ~LLVMDebugVersionMask;
+  StringRef getHeader() const {
+    return getStringField(0);
   }
+
+  size_t getNumHeaderFields() const {
+    return std::distance(DIHeaderFieldIterator(getHeader()),
+                         DIHeaderFieldIterator());
+  }
+
+  StringRef getHeaderField(unsigned Index) const {
+    // Since callers expect an empty string for out-of-range accesses, we can't
+    // use std::advance() here.
+    for (DIHeaderFieldIterator I(getHeader()), E; I != E; ++I, --Index)
+      if (!Index)
+        return *I;
+    return StringRef();
+  }
+
+  template <class T> T getHeaderFieldAs(unsigned Index) const {
+    T Int;
+    if (getHeaderField(Index).getAsInteger(0, Int))
+      return 0;
+    return Int;
+  }
+
+  uint16_t getTag() const { return getHeaderFieldAs<uint16_t>(0); }
 
   bool isDerivedType() const;
   bool isCompositeType() const;
@@ -172,8 +246,8 @@ class DISubrange : public DIDescriptor {
 public:
   explicit DISubrange(const MDNode *N = nullptr) : DIDescriptor(N) {}
 
-  int64_t getLo() const { return getInt64Field(1); }
-  int64_t getCount() const { return getInt64Field(2); }
+  int64_t getLo() const { return getHeaderFieldAs<int64_t>(1); }
+  int64_t getCount() const { return getHeaderFieldAs<int64_t>(2); }
   bool Verify() const;
 };
 
@@ -201,8 +275,8 @@ class DIEnumerator : public DIDescriptor {
 public:
   explicit DIEnumerator(const MDNode *N = nullptr) : DIDescriptor(N) {}
 
-  StringRef getName() const { return getStringField(1); }
-  int64_t getEnumValue() const { return getInt64Field(2); }
+  StringRef getName() const { return getHeaderField(1); }
+  int64_t getEnumValue() const { return getHeaderFieldAs<int64_t>(2); }
   bool Verify() const;
 };
 
@@ -318,14 +392,22 @@ public:
   bool Verify() const;
 
   DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(2); }
-  StringRef getName() const { return getStringField(3); }
-  unsigned getLineNumber() const { return getUnsignedField(4); }
-  uint64_t getSizeInBits() const { return getUInt64Field(5); }
-  uint64_t getAlignInBits() const { return getUInt64Field(6); }
+  StringRef getName() const { return getHeaderField(1); }
+  unsigned getLineNumber() const {
+    return getHeaderFieldAs<unsigned>(2);
+  }
+  uint64_t getSizeInBits() const {
+    return getHeaderFieldAs<unsigned>(3);
+  }
+  uint64_t getAlignInBits() const {
+    return getHeaderFieldAs<unsigned>(4);
+  }
   // FIXME: Offset is only used for DW_TAG_member nodes.  Making every type
   // carry this is just plain insane.
-  uint64_t getOffsetInBits() const { return getUInt64Field(7); }
-  unsigned getFlags() const { return getUnsignedField(8); }
+  uint64_t getOffsetInBits() const {
+    return getHeaderFieldAs<unsigned>(5);
+  }
+  unsigned getFlags() const { return getHeaderFieldAs<unsigned>(6); }
   bool isPrivate() const {
     return (getFlags() & FlagAccessibility) == FlagPrivate;
   }
@@ -365,7 +447,7 @@ class DIBasicType : public DIType {
 public:
   explicit DIBasicType(const MDNode *N = nullptr) : DIType(N) {}
 
-  unsigned getEncoding() const { return getUnsignedField(9); }
+  unsigned getEncoding() const { return getHeaderFieldAs<unsigned>(7); }
 
   /// Verify - Verify that a basic type descriptor is well formed.
   bool Verify() const;
@@ -381,7 +463,7 @@ class DIDerivedType : public DIType {
 public:
   explicit DIDerivedType(const MDNode *N = nullptr) : DIType(N) {}
 
-  DITypeRef getTypeDerivedFrom() const { return getFieldAs<DITypeRef>(9); }
+  DITypeRef getTypeDerivedFrom() const { return getFieldAs<DITypeRef>(3); }
 
   /// getObjCProperty - Return property node, if this ivar is
   /// associated with one.
@@ -389,12 +471,12 @@ public:
 
   DITypeRef getClassType() const {
     assert(getTag() == dwarf::DW_TAG_ptr_to_member_type);
-    return getFieldAs<DITypeRef>(10);
+    return getFieldAs<DITypeRef>(4);
   }
 
   Constant *getConstant() const {
     assert((getTag() == dwarf::DW_TAG_member) && isStaticMember());
-    return getConstantField(10);
+    return getConstantField(4);
   }
 
   /// Verify - Verify that a derived type descriptor is well formed.
@@ -417,19 +499,21 @@ public:
 
   DIArray getElements() const {
     assert(!isSubroutineType() && "no elements for DISubroutineType");
-    return getFieldAs<DIArray>(10);
+    return getFieldAs<DIArray>(4);
   }
   template <typename T>
   void setArrays(DITypedArray<T> Elements, DIArray TParams = DIArray()) {
-    assert((!TParams || DbgNode->getNumOperands() == 15) &&
+    assert((!TParams || DbgNode->getNumOperands() == 8) &&
            "If you're setting the template parameters this should include a slot "
            "for that!");
     setArraysHelper(Elements, TParams);
   }
-  unsigned getRunTimeLang() const { return getUnsignedField(11); }
-  DITypeRef getContainingType() const { return getFieldAs<DITypeRef>(12); }
+  unsigned getRunTimeLang() const {
+    return getHeaderFieldAs<unsigned>(7);
+  }
+  DITypeRef getContainingType() const { return getFieldAs<DITypeRef>(5); }
   void setContainingType(DICompositeType ContainingType);
-  DIArray getTemplateParams() const { return getFieldAs<DIArray>(13); }
+  DIArray getTemplateParams() const { return getFieldAs<DIArray>(6); }
   MDString *getIdentifier() const;
 
   /// Verify - Verify that a composite type descriptor is well formed.
@@ -440,7 +524,7 @@ class DISubroutineType : public DICompositeType {
 public:
   explicit DISubroutineType(const MDNode *N = nullptr) : DICompositeType(N) {}
   DITypedArray<DITypeRef> getTypeArray() const {
-    return getFieldAs<DITypedArray<DITypeRef>>(10);
+    return getFieldAs<DITypedArray<DITypeRef>>(4);
   }
 };
 
@@ -463,13 +547,13 @@ public:
   explicit DICompileUnit(const MDNode *N = nullptr) : DIScope(N) {}
 
   dwarf::SourceLanguage getLanguage() const {
-    return static_cast<dwarf::SourceLanguage>(getUnsignedField(2));
+    return static_cast<dwarf::SourceLanguage>(getHeaderFieldAs<unsigned>(1));
   }
-  StringRef getProducer() const { return getStringField(3); }
+  StringRef getProducer() const { return getHeaderField(2); }
 
-  bool isOptimized() const { return getUnsignedField(4) != 0; }
-  StringRef getFlags() const { return getStringField(5); }
-  unsigned getRunTimeVersion() const { return getUnsignedField(6); }
+  bool isOptimized() const { return getHeaderFieldAs<bool>(3) != 0; }
+  StringRef getFlags() const { return getHeaderField(4); }
+  unsigned getRunTimeVersion() const { return getHeaderFieldAs<unsigned>(5); }
 
   DIArray getEnumTypes() const;
   DIArray getRetainedTypes() const;
@@ -477,8 +561,8 @@ public:
   DIArray getGlobalVariables() const;
   DIArray getImportedEntities() const;
 
-  StringRef getSplitDebugFilename() const { return getStringField(12); }
-  unsigned getEmissionKind() const { return getUnsignedField(13); }
+  StringRef getSplitDebugFilename() const { return getHeaderField(6); }
+  unsigned getEmissionKind() const { return getHeaderFieldAs<unsigned>(7); }
 
   /// Verify - Verify that a compile unit is well formed.
   bool Verify() const;
@@ -492,28 +576,50 @@ class DISubprogram : public DIScope {
 public:
   explicit DISubprogram(const MDNode *N = nullptr) : DIScope(N) {}
 
-  DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(2); }
-  StringRef getName() const { return getStringField(3); }
-  StringRef getDisplayName() const { return getStringField(4); }
-  StringRef getLinkageName() const { return getStringField(5); }
-  unsigned getLineNumber() const { return getUnsignedField(6); }
-  DISubroutineType getType() const { return getFieldAs<DISubroutineType>(7); }
+  StringRef getName() const { return getHeaderField(1); }
+  StringRef getDisplayName() const { return getHeaderField(2); }
+  StringRef getLinkageName() const { return getHeaderField(3); }
+  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(4); }
 
   /// isLocalToUnit - Return true if this subprogram is local to the current
   /// compile unit, like 'static' in C.
-  unsigned isLocalToUnit() const { return getUnsignedField(8); }
-  unsigned isDefinition() const { return getUnsignedField(9); }
+  unsigned isLocalToUnit() const { return getHeaderFieldAs<unsigned>(5); }
+  unsigned isDefinition() const { return getHeaderFieldAs<unsigned>(6); }
 
-  unsigned getVirtuality() const { return getUnsignedField(10); }
-  unsigned getVirtualIndex() const { return getUnsignedField(11); }
+  unsigned getVirtuality() const { return getHeaderFieldAs<unsigned>(7); }
+  unsigned getVirtualIndex() const { return getHeaderFieldAs<unsigned>(8); }
 
-  DITypeRef getContainingType() const { return getFieldAs<DITypeRef>(12); }
+  unsigned getFlags() const { return getHeaderFieldAs<unsigned>(9); }
 
-  unsigned getFlags() const { return getUnsignedField(13); }
+  unsigned isOptimized() const { return getHeaderFieldAs<bool>(10); }
 
-  unsigned isArtificial() const {
-    return (getUnsignedField(13) & FlagArtificial) != 0;
+  /// getScopeLineNumber - Get the beginning of the scope of the
+  /// function, not necessarily where the name of the program
+  /// starts.
+  unsigned getScopeLineNumber() const { return getHeaderFieldAs<unsigned>(11); }
+
+  DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(2); }
+  DISubroutineType getType() const { return getFieldAs<DISubroutineType>(3); }
+
+  DITypeRef getContainingType() const { return getFieldAs<DITypeRef>(4); }
+
+  /// Verify - Verify that a subprogram descriptor is well formed.
+  bool Verify() const;
+
+  /// describes - Return true if this subprogram provides debugging
+  /// information for the function F.
+  bool describes(const Function *F);
+
+  Function *getFunction() const { return getFunctionField(5); }
+  void replaceFunction(Function *F) { replaceFunctionField(5, F); }
+  DIArray getTemplateParams() const { return getFieldAs<DIArray>(6); }
+  DISubprogram getFunctionDeclaration() const {
+    return getFieldAs<DISubprogram>(7);
   }
+  MDNode *getVariablesNodes() const;
+  DIArray getVariables() const;
+
+  unsigned isArtificial() const { return (getFlags() & FlagArtificial) != 0; }
   /// isPrivate - Return true if this subprogram has "private"
   /// access specifier.
   bool isPrivate() const {
@@ -530,47 +636,23 @@ public:
     return (getFlags() & FlagAccessibility) == FlagPublic;
   }
   /// isExplicit - Return true if this subprogram is marked as explicit.
-  bool isExplicit() const { return (getUnsignedField(13) & FlagExplicit) != 0; }
+  bool isExplicit() const { return (getFlags() & FlagExplicit) != 0; }
   /// isPrototyped - Return true if this subprogram is prototyped.
-  bool isPrototyped() const {
-    return (getUnsignedField(13) & FlagPrototyped) != 0;
-  }
+  bool isPrototyped() const { return (getFlags() & FlagPrototyped) != 0; }
 
   /// Return true if this subprogram is a C++11 reference-qualified
   /// non-static member function (void foo() &).
   unsigned isLValueReference() const {
-    return (getUnsignedField(13) & FlagLValueReference) != 0;
+    return (getFlags() & FlagLValueReference) != 0;
   }
 
   /// Return true if this subprogram is a C++11
   /// rvalue-reference-qualified non-static member function
   /// (void foo() &&).
   unsigned isRValueReference() const {
-    return (getUnsignedField(13) & FlagRValueReference) != 0;
+    return (getFlags() & FlagRValueReference) != 0;
   }
 
-  unsigned isOptimized() const;
-
-  /// Verify - Verify that a subprogram descriptor is well formed.
-  bool Verify() const;
-
-  /// describes - Return true if this subprogram provides debugging
-  /// information for the function F.
-  bool describes(const Function *F);
-
-  Function *getFunction() const { return getFunctionField(15); }
-  void replaceFunction(Function *F) { replaceFunctionField(15, F); }
-  DIArray getTemplateParams() const { return getFieldAs<DIArray>(16); }
-  DISubprogram getFunctionDeclaration() const {
-    return getFieldAs<DISubprogram>(17);
-  }
-  MDNode *getVariablesNodes() const;
-  DIArray getVariables() const;
-
-  /// getScopeLineNumber - Get the beginning of the scope of the
-  /// function, not necessarily where the name of the program
-  /// starts.
-  unsigned getScopeLineNumber() const { return getUnsignedField(19); }
 };
 
 /// DILexicalBlock - This is a wrapper for a lexical block.
@@ -578,8 +660,12 @@ class DILexicalBlock : public DIScope {
 public:
   explicit DILexicalBlock(const MDNode *N = nullptr) : DIScope(N) {}
   DIScope getContext() const { return getFieldAs<DIScope>(2); }
-  unsigned getLineNumber() const { return getUnsignedField(3); }
-  unsigned getColumnNumber() const { return getUnsignedField(4); }
+  unsigned getLineNumber() const {
+    return getHeaderFieldAs<unsigned>(1);
+  }
+  unsigned getColumnNumber() const {
+    return getHeaderFieldAs<unsigned>(2);
+  }
   bool Verify() const;
 };
 
@@ -596,7 +682,7 @@ public:
   unsigned getLineNumber() const { return getScope().getLineNumber(); }
   unsigned getColumnNumber() const { return getScope().getColumnNumber(); }
   DILexicalBlock getScope() const { return getFieldAs<DILexicalBlock>(2); }
-  unsigned getDiscriminator() const { return getUnsignedField(3); }
+  unsigned getDiscriminator() const { return getHeaderFieldAs<unsigned>(1); }
   bool Verify() const;
 };
 
@@ -607,9 +693,9 @@ class DINameSpace : public DIScope {
 
 public:
   explicit DINameSpace(const MDNode *N = nullptr) : DIScope(N) {}
+  StringRef getName() const { return getHeaderField(1); }
+  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(2); }
   DIScope getContext() const { return getFieldAs<DIScope>(2); }
-  StringRef getName() const { return getStringField(3); }
-  unsigned getLineNumber() const { return getUnsignedField(4); }
   bool Verify() const;
 };
 
@@ -619,15 +705,16 @@ public:
   explicit DITemplateTypeParameter(const MDNode *N = nullptr)
     : DIDescriptor(N) {}
 
+  StringRef getName() const { return getHeaderField(1); }
+  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(2); }
+  unsigned getColumnNumber() const { return getHeaderFieldAs<unsigned>(3); }
+
   DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(1); }
-  StringRef getName() const { return getStringField(2); }
-  DITypeRef getType() const { return getFieldAs<DITypeRef>(3); }
-  StringRef getFilename() const { return getFieldAs<DIFile>(4).getFilename(); }
+  DITypeRef getType() const { return getFieldAs<DITypeRef>(2); }
+  StringRef getFilename() const { return getFieldAs<DIFile>(3).getFilename(); }
   StringRef getDirectory() const {
-    return getFieldAs<DIFile>(4).getDirectory();
+    return getFieldAs<DIFile>(3).getDirectory();
   }
-  unsigned getLineNumber() const { return getUnsignedField(5); }
-  unsigned getColumnNumber() const { return getUnsignedField(6); }
   bool Verify() const;
 };
 
@@ -637,16 +724,17 @@ public:
   explicit DITemplateValueParameter(const MDNode *N = nullptr)
     : DIDescriptor(N) {}
 
+  StringRef getName() const { return getHeaderField(1); }
+  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(2); }
+  unsigned getColumnNumber() const { return getHeaderFieldAs<unsigned>(3); }
+
   DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(1); }
-  StringRef getName() const { return getStringField(2); }
-  DITypeRef getType() const { return getFieldAs<DITypeRef>(3); }
+  DITypeRef getType() const { return getFieldAs<DITypeRef>(2); }
   Value *getValue() const;
-  StringRef getFilename() const { return getFieldAs<DIFile>(5).getFilename(); }
+  StringRef getFilename() const { return getFieldAs<DIFile>(4).getFilename(); }
   StringRef getDirectory() const {
-    return getFieldAs<DIFile>(5).getDirectory();
+    return getFieldAs<DIFile>(4).getDirectory();
   }
-  unsigned getLineNumber() const { return getUnsignedField(6); }
-  unsigned getColumnNumber() const { return getUnsignedField(7); }
   bool Verify() const;
 };
 
@@ -658,24 +746,24 @@ class DIGlobalVariable : public DIDescriptor {
 public:
   explicit DIGlobalVariable(const MDNode *N = nullptr) : DIDescriptor(N) {}
 
-  DIScope getContext() const { return getFieldAs<DIScope>(2); }
-  StringRef getName() const { return getStringField(3); }
-  StringRef getDisplayName() const { return getStringField(4); }
-  StringRef getLinkageName() const { return getStringField(5); }
-  StringRef getFilename() const { return getFieldAs<DIFile>(6).getFilename(); }
+  StringRef getName() const { return getHeaderField(1); }
+  StringRef getDisplayName() const { return getHeaderField(2); }
+  StringRef getLinkageName() const { return getHeaderField(3); }
+  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(4); }
+  unsigned isLocalToUnit() const { return getHeaderFieldAs<bool>(5); }
+  unsigned isDefinition() const { return getHeaderFieldAs<bool>(6); }
+
+  DIScope getContext() const { return getFieldAs<DIScope>(1); }
+  StringRef getFilename() const { return getFieldAs<DIFile>(2).getFilename(); }
   StringRef getDirectory() const {
-    return getFieldAs<DIFile>(6).getDirectory();
+    return getFieldAs<DIFile>(2).getDirectory();
   }
+  DITypeRef getType() const { return getFieldAs<DITypeRef>(3); }
 
-  unsigned getLineNumber() const { return getUnsignedField(7); }
-  DITypeRef getType() const { return getFieldAs<DITypeRef>(8); }
-  unsigned isLocalToUnit() const { return getUnsignedField(9); }
-  unsigned isDefinition() const { return getUnsignedField(10); }
-
-  GlobalVariable *getGlobal() const { return getGlobalVariableField(11); }
-  Constant *getConstant() const { return getConstantField(11); }
+  GlobalVariable *getGlobal() const { return getGlobalVariableField(4); }
+  Constant *getConstant() const { return getConstantField(4); }
   DIDerivedType getStaticDataMemberDeclaration() const {
-    return getFieldAs<DIDerivedType>(12);
+    return getFieldAs<DIDerivedType>(5);
   }
 
   /// Verify - Verify that a global variable descriptor is well formed.
@@ -691,28 +779,29 @@ class DIVariable : public DIDescriptor {
 public:
   explicit DIVariable(const MDNode *N = nullptr) : DIDescriptor(N) {}
 
-  DIScope getContext() const { return getFieldAs<DIScope>(1); }
-  StringRef getName() const { return getStringField(2); }
-  DIFile getFile() const { return getFieldAs<DIFile>(3); }
-  unsigned getLineNumber() const { return (getUnsignedField(4) << 8) >> 8; }
-  unsigned getArgNumber() const {
-    unsigned L = getUnsignedField(4);
-    return L >> 24;
+  StringRef getName() const { return getHeaderField(1); }
+  unsigned getLineNumber() const {
+    // FIXME: Line number and arg number shouldn't be merged together like this.
+    return (getHeaderFieldAs<unsigned>(2) << 8) >> 8;
   }
-  DITypeRef getType() const { return getFieldAs<DITypeRef>(5); }
+  unsigned getArgNumber() const { return getHeaderFieldAs<unsigned>(2) >> 24; }
+
+  DIScope getContext() const { return getFieldAs<DIScope>(1); }
+  DIFile getFile() const { return getFieldAs<DIFile>(2); }
+  DITypeRef getType() const { return getFieldAs<DITypeRef>(3); }
 
   /// isArtificial - Return true if this variable is marked as "artificial".
   bool isArtificial() const {
-    return (getUnsignedField(6) & FlagArtificial) != 0;
+    return (getHeaderFieldAs<unsigned>(3) & FlagArtificial) != 0;
   }
 
   bool isObjectPointer() const {
-    return (getUnsignedField(6) & FlagObjectPointer) != 0;
+    return (getHeaderFieldAs<unsigned>(3) & FlagObjectPointer) != 0;
   }
 
   /// \brief Return true if this variable is represented as a pointer.
   bool isIndirect() const {
-    return (getUnsignedField(6) & FlagIndirectVariable) != 0;
+    return (getHeaderFieldAs<unsigned>(3) & FlagIndirectVariable) != 0;
   }
 
   /// getInlinedAt - If this variable is inlined then return inline location.
@@ -752,7 +841,7 @@ public:
   unsigned getNumElements() const {
     if (!DbgNode)
       return 0;
-    unsigned N = DbgNode->getNumOperands();
+    unsigned N = getNumHeaderFields();
     assert(N > 0 && "missing tag");
     return N - 1;
   }
@@ -812,34 +901,35 @@ class DIObjCProperty : public DIDescriptor {
 public:
   explicit DIObjCProperty(const MDNode *N) : DIDescriptor(N) {}
 
-  StringRef getObjCPropertyName() const { return getStringField(1); }
-  DIFile getFile() const { return getFieldAs<DIFile>(2); }
-  unsigned getLineNumber() const { return getUnsignedField(3); }
+  StringRef getObjCPropertyName() const { return getHeaderField(1); }
+  DIFile getFile() const { return getFieldAs<DIFile>(1); }
+  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(2); }
 
-  StringRef getObjCPropertyGetterName() const { return getStringField(4); }
-  StringRef getObjCPropertySetterName() const { return getStringField(5); }
+  StringRef getObjCPropertyGetterName() const { return getHeaderField(3); }
+  StringRef getObjCPropertySetterName() const { return getHeaderField(4); }
+  unsigned getAttributes() const { return getHeaderFieldAs<unsigned>(5); }
   bool isReadOnlyObjCProperty() const {
-    return (getUnsignedField(6) & dwarf::DW_APPLE_PROPERTY_readonly) != 0;
+    return (getAttributes() & dwarf::DW_APPLE_PROPERTY_readonly) != 0;
   }
   bool isReadWriteObjCProperty() const {
-    return (getUnsignedField(6) & dwarf::DW_APPLE_PROPERTY_readwrite) != 0;
+    return (getAttributes() & dwarf::DW_APPLE_PROPERTY_readwrite) != 0;
   }
   bool isAssignObjCProperty() const {
-    return (getUnsignedField(6) & dwarf::DW_APPLE_PROPERTY_assign) != 0;
+    return (getAttributes() & dwarf::DW_APPLE_PROPERTY_assign) != 0;
   }
   bool isRetainObjCProperty() const {
-    return (getUnsignedField(6) & dwarf::DW_APPLE_PROPERTY_retain) != 0;
+    return (getAttributes() & dwarf::DW_APPLE_PROPERTY_retain) != 0;
   }
   bool isCopyObjCProperty() const {
-    return (getUnsignedField(6) & dwarf::DW_APPLE_PROPERTY_copy) != 0;
+    return (getAttributes() & dwarf::DW_APPLE_PROPERTY_copy) != 0;
   }
   bool isNonAtomicObjCProperty() const {
-    return (getUnsignedField(6) & dwarf::DW_APPLE_PROPERTY_nonatomic) != 0;
+    return (getAttributes() & dwarf::DW_APPLE_PROPERTY_nonatomic) != 0;
   }
 
   /// Objective-C doesn't have an ODR, so there is no benefit in storing
   /// the type as a DITypeRef here.
-  DIType getType() const { return getFieldAs<DIType>(7); }
+  DIType getType() const { return getFieldAs<DIType>(2); }
 
   /// Verify - Verify that a derived type descriptor is well formed.
   bool Verify() const;
@@ -854,8 +944,8 @@ public:
   explicit DIImportedEntity(const MDNode *N) : DIDescriptor(N) {}
   DIScope getContext() const { return getFieldAs<DIScope>(1); }
   DIScopeRef getEntity() const { return getFieldAs<DIScopeRef>(2); }
-  unsigned getLineNumber() const { return getUnsignedField(3); }
-  StringRef getName() const { return getStringField(4); }
+  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(1); }
+  StringRef getName() const { return getHeaderField(2); }
   bool Verify() const;
 };
 

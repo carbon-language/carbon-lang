@@ -17,13 +17,13 @@
 !llvm.module.flags = !{!7, !8}
 !llvm.ident = !{!9}
 
-!0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.5 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !2, metadata !3, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/simple.c] [DW_LANG_C99]
+!0 = metadata !{metadata !"0x11\0012\00clang version 3.5 \000\00\000\00\000", metadata !1, metadata !2, metadata !2, metadata !2, metadata !3, metadata !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/simple.c] [DW_LANG_C99]
 !1 = metadata !{metadata !"simple.c", metadata !"/tmp/dbginfo"}
 !2 = metadata !{}
 !3 = metadata !{metadata !4}
-!4 = metadata !{i32 786484, i32 0, null, metadata !"f", metadata !"f", metadata !"", metadata !5, i32 2, metadata !6, i32 0, i32 1, %struct.foo* @f, null} ; [ DW_TAG_variable ] [f] [line 2] [def]
-!5 = metadata !{i32 786473, metadata !1}          ; [ DW_TAG_file_type ] [/tmp/dbginfo/simple.c]
-!6 = metadata !{i32 786451, metadata !1, null, metadata !"foo", i32 1, i64 0, i64 8, i32 0, i32 0, null, metadata !2, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [foo] [line 1, size 0, align 8, offset 0] [def] [from ]
+!4 = metadata !{metadata !"0x34\00f\00f\00\002\000\001", null, metadata !5, metadata !6, %struct.foo* @f, null} ; [ DW_TAG_variable ] [f] [line 2] [def]
+!5 = metadata !{metadata !"0x29", metadata !1}          ; [ DW_TAG_file_type ] [/tmp/dbginfo/simple.c]
+!6 = metadata !{metadata !"0x13\00foo\001\000\008\000\000\000", metadata !1, null, null, metadata !2, null, null, null} ; [ DW_TAG_structure_type ] [foo] [line 1, size 0, align 8, offset 0] [def] [from ]
 !7 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!8 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!8 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
 !9 = metadata !{metadata !"clang version 3.5 "}
