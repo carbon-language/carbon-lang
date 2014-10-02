@@ -310,6 +310,10 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind15Registers_arm646jumptoEv)
 
 #elif __arm__ && !__APPLE__
 
+#if !defined(__ARM_ARCH_ISA_ARM)
+  .thumb
+#endif
+
 @
 @ void libunwind::Registers_arm::restoreCoreAndJumpTo()
 @
@@ -318,6 +322,13 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind15Registers_arm646jumptoEv)
 @
   .p2align 2
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm20restoreCoreAndJumpToEv)
+#if !defined(__ARM_ARCH_ISA_ARM)
+  ldr r2, [r0, #52]
+  ldr r3, [r0, #60]
+  mov sp, r2
+  mov lr, r3         @ restore pc into lr
+  ldm r0, {r0-r7}
+#else
   @ Use lr as base so that r0 can be restored.
   mov lr, r0
   @ 32bit thumb-2 restrictions for ldm:
@@ -326,11 +337,8 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm20restoreCoreAndJu
   ldm lr, {r0-r12}
   ldr sp, [lr, #52]
   ldr lr, [lr, #60]  @ restore pc into lr
-#if __ARM_ARCH > 4
-  bx lr
-#else
-  mov pc, lr
 #endif
+  JMP(lr)
 
 @
 @ static void libunwind::Registers_arm::restoreVFPWithFLDMD(unw_fpreg_t* values)
@@ -340,8 +348,9 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm20restoreCoreAndJu
 @
   .p2align 2
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm19restoreVFPWithFLDMDEPy)
+#if defined(__ARM_FP)
   @ VFP and iwMMX instructions are only available when compiling with the flags
-  @ that enable them. We don't want to do that in the library (because we don't
+  @ that enable them. We do not want to do that in the library (because we do not
   @ want the compiler to generate instructions that access those) but this is
   @ only accessed if the personality routine needs these registers. Use of
   @ these registers implies they are, actually, available on the target, so
@@ -352,7 +361,8 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm19restoreVFPWithFL
 #else
   vldmia r0, {d0-d15}
 #endif
-  mov pc, lr
+#endif
+  JMP(lr)
 
 @
 @ static void libunwind::Registers_arm::restoreVFPWithFLDMX(unw_fpreg_t* values)
@@ -362,12 +372,14 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm19restoreVFPWithFL
 @
   .p2align 2
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm19restoreVFPWithFLDMXEPy)
+#if defined(__ARM_FP)
 #if __ARM_ARCH < 7
   ldc p11, cr0, [r0], {0x21}  @ fldmiax r0, {d0-d15}
 #else
   vldmia r0, {d0-d15} @ fldmiax is deprecated in ARMv7+ and now behaves like vldmia
 #endif
-  mov pc, lr
+#endif
+  JMP(lr)
 
 @
 @ static void libunwind::Registers_arm::restoreVFPv3(unw_fpreg_t* values)
@@ -377,12 +389,14 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm19restoreVFPWithFL
 @
   .p2align 2
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm12restoreVFPv3EPy)
+#if defined(__ARM_FP)
 #if __ARM_ARCH < 7
   ldcl p11, cr0, [r0], {0x20}  @ vldm r0, {d16-d31}
 #else
   vldmia r0, {d16-d31}
 #endif
-  mov pc, lr
+#endif
+  JMP(lr)
 
 @
 @ static void libunwind::Registers_arm::restoreiWMMX(unw_fpreg_t* values)
@@ -392,6 +406,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm12restoreVFPv3EPy)
 @
   .p2align 2
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm12restoreiWMMXEPy)
+#if (!defined(__ARM_ARCH_6M__) && !defined(__ARM_ARCH_6SM__)) || __ARM_WMMX
   ldcl p1, cr0, [r0], #8  @ wldrd wR0, [r0], #8
   ldcl p1, cr1, [r0], #8  @ wldrd wR1, [r0], #8
   ldcl p1, cr2, [r0], #8  @ wldrd wR2, [r0], #8
@@ -408,7 +423,8 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm12restoreiWMMXEPy)
   ldcl p1, cr13, [r0], #8  @ wldrd wR13, [r0], #8
   ldcl p1, cr14, [r0], #8  @ wldrd wR14, [r0], #8
   ldcl p1, cr15, [r0], #8  @ wldrd wR15, [r0], #8
-  mov pc, lr
+#endif
+  JMP(lr)
 
 @
 @ static void libunwind::Registers_arm::restoreiWMMXControl(unw_uint32_t* values)
@@ -418,10 +434,12 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm12restoreiWMMXEPy)
 @
   .p2align 2
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm19restoreiWMMXControlEPj)
+#if (!defined(__ARM_ARCH_6M__) && !defined(__ARM_ARCH_6SM__)) || __ARM_WMMX
   ldc2 p1, cr8, [r0], #4  @ wldrw wCGR0, [r0], #4
   ldc2 p1, cr9, [r0], #4  @ wldrw wCGR1, [r0], #4
   ldc2 p1, cr10, [r0], #4  @ wldrw wCGR2, [r0], #4
   ldc2 p1, cr11, [r0], #4  @ wldrw wCGR3, [r0], #4
-  mov pc, lr
+#endif
+  JMP(lr)
 
 #endif

@@ -61,4 +61,16 @@
   SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR             \
   SYMBOL_NAME(name):
 
+#if defined(__arm__)
+#if defined(__ARM_ARCH_4T__) || __ARM_ARCH >= 5
+#define ARM_HAS_BX
+#endif
+
+#ifdef ARM_HAS_BX
+#define JMP(r) bx r
+#else
+#define JMP(r) mov pc, r
+#endif
+#endif /* __arm__ */
+
 #endif /* UNWIND_ASSEMBLY_H */
