@@ -10,11 +10,12 @@ struct X {
 
 struct B {
   virtual void f();
-  virtual void g();
+  virtual void g(); // expected-note {{overridden virtual function is here}}
 };
 struct D final : B { // expected-warning {{'final' keyword is a C++11 extension}}
   virtual void f() override; // expected-warning {{'override' keyword is a C++11 extension}}
-  virtual void g() final; // expected-warning {{'final' keyword is a C++11 extension}}
+  virtual void g() final; // expected-warning {{'final' keyword is a C++11 extension}} \
+			  // expected-warning {{'g' overrides a member function but is not marked 'override'}}
 };
 
 void NewBracedInitList() {

@@ -12,7 +12,7 @@ __interface I1 {
   operator int();
   // expected-error@+1 {{nested class I1::(anonymous) is not permitted within an interface type}}
   struct { int a; };
-  void fn2() {
+  void fn2() { // expected-note {{overridden virtual function is here}}
     struct A { }; // should be ignored: not a nested class
   }
 protected: // expected-error {{interface types cannot specify 'protected' access}}
@@ -44,7 +44,7 @@ __interface I3 final {
 __interface I4 : I1, I2 {
   void fn1() const override;
   // expected-error@+1 {{'final' keyword not permitted with interface types}}
-  void fn2() final;
+  void fn2() final; // expected-warning {{'fn2' overrides a member function but is not marked 'override'}}
 };
 
 // expected-error@+1 {{interface type cannot inherit from non-public 'interface I1'}}

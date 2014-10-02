@@ -83,13 +83,13 @@ namespace PR5066 {
 
 namespace FinalOverride {
   struct Base {
-    virtual void *f();
+    virtual void *f(); // expected-note {{overridden virtual function is here}}
     virtual void *g();
     virtual void *h();
     virtual void *i();
   };
   struct Derived : Base {
-    virtual auto f() -> void *final;
+    virtual auto f() -> void *final; // expected-warning {{'f' overrides a member function but is not marked 'override'}}
     virtual auto g() -> void *override;
     virtual auto h() -> void *final override;
     virtual auto i() -> void *override final;

@@ -1897,6 +1897,31 @@ void Sema::CheckOverrideControl(NamedDecl *D) {
       << MD->getDeclName();
 }
 
+void Sema::DiagnoseAbsenseOfOverrideControl(NamedDecl *D) {
+  if (D->isInvalidDecl())
+    return;
+  CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D);
+  if (!MD || MD->isImplicit() || isa<CXXDestructorDecl>(MD))
+    return;
+
+  bool HasOverriddenMethods =
+    MD->begin_overridden_methods() != MD->end_overridden_methods();
+  if (HasOverriddenMethods) {
+    SourceLocation EndLocation =
+      (MD->isPure() || MD->hasAttr<FinalAttr>())
+        ? SourceLocation() : MD->getSourceRange().getEnd();
+    Diag(MD->getLocation(), diag::warn_function_marked_not_override_overriding)
+      << MD->getDeclName()
+      << FixItHint::CreateReplacement(EndLocation, ") override");
+    for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
+         E = MD->end_overridden_methods(); I != E; ++I) {
+      const CXXMethodDecl *OMD = *I;
+      Diag(OMD->getLocation(), diag::note_overridden_virtual_function);
+      break;
+    }
+  }
+}
+
 /// CheckIfOverriddenFunctionIsMarkedFinal - Checks whether a virtual member
 /// function overrides a virtual member function marked 'final', according to
 /// C++11 [class.virtual]p4.
@@ -4680,13 +4705,18 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     }
   }
 
+  bool HasMethodWithOverrideControl = false,
+       HasOverridingMethodWithoutOverrideControl = false;
   if (!Record->isDependentType()) {
     for (auto *M : Record->methods()) {
       // See if a method overloads virtual methods in a base
       // class without overriding any.
       if (!M->isStatic())
         DiagnoseHiddenVirtualMethods(M);
-
+      if (M->hasAttr<OverrideAttr>())
+        HasMethodWithOverrideControl = true;
+      else if (M->begin_overridden_methods() != M->end_overridden_methods())
+        HasOverridingMethodWithoutOverrideControl = true;
       // Check whether the explicitly-defaulted special members are valid.
       if (!M->isInvalidDecl() && M->isExplicitlyDefaulted())
         CheckExplicitlyDefaultedSpecialMember(M);
@@ -4705,6 +4735,14 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     }
   }
 
+  if (HasMethodWithOverrideControl
+      && HasOverridingMethodWithoutOverrideControl) {
+    // At least one method has the 'override' control declared.
+    // Diagnose all other overridden methods which do not have 'override' specified on them.
+    for (auto *M : Record->methods())
+      if (!M->hasAttr<OverrideAttr>())
+        DiagnoseAbsenseOfOverrideControl(M);
+  }
   // C++11 [dcl.constexpr]p8: A constexpr specifier for a non-static member
   // function that is not a constructor declares that member function to be
   // const. [...] The class of which that function is a member shall be
