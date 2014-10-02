@@ -651,6 +651,8 @@ public:
   bool operator==(const ImportDirectoryEntryRef &Other) const;
   void moveNext();
   std::error_code getName(StringRef &Result) const;
+  std::error_code getImportLookupTableRVA(uint32_t &Result) const;
+  std::error_code getImportAddressTableRVA(uint32_t &Result) const;
 
   std::error_code
   getImportTableEntry(const import_directory_table_entry *&Result) const;

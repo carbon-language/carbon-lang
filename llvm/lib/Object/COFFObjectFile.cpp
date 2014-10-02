@@ -491,8 +491,9 @@ std::error_code COFFObjectFile::initImportTablePtr() {
     return object_error::success;
 
   uint32_t ImportTableRva = DataEntry->RelativeVirtualAddress;
+  // -1 because the last entry is the null entry.
   NumberOfImportDirectory = DataEntry->Size /
-      sizeof(import_directory_table_entry);
+      sizeof(import_directory_table_entry) - 1;
 
   // Find the section that contains the RVA. This is needed because the RVA is
   // the import table's memory address which is different from its file offset.
@@ -1029,24 +1030,36 @@ void ImportDirectoryEntryRef::moveNext() {
 
 std::error_code ImportDirectoryEntryRef::getImportTableEntry(
     const import_directory_table_entry *&Result) const {
-  Result = ImportTable;
+  Result = ImportTable + Index;
   return object_error::success;
 }
 
 std::error_code ImportDirectoryEntryRef::getName(StringRef &Result) const {
   uintptr_t IntPtr = 0;
   if (std::error_code EC =
-          OwningObject->getRvaPtr(ImportTable->NameRVA, IntPtr))
+          OwningObject->getRvaPtr(ImportTable[Index].NameRVA, IntPtr))
     return EC;
   Result = StringRef(reinterpret_cast<const char *>(IntPtr));
+  return object_error::success;
+}
+
+std::error_code
+ImportDirectoryEntryRef::getImportLookupTableRVA(uint32_t  &Result) const {
+  Result = ImportTable[Index].ImportLookupTableRVA;
+  return object_error::success;
+}
+
+std::error_code
+ImportDirectoryEntryRef::getImportAddressTableRVA(uint32_t &Result) const {
+  Result = ImportTable[Index].ImportAddressTableRVA;
   return object_error::success;
 }
 
 std::error_code ImportDirectoryEntryRef::getImportLookupEntry(
     const import_lookup_table_entry32 *&Result) const {
   uintptr_t IntPtr = 0;
-  if (std::error_code EC =
-          OwningObject->getRvaPtr(ImportTable->ImportLookupTableRVA, IntPtr))
+  uint32_t RVA = ImportTable[Index].ImportLookupTableRVA;
+  if (std::error_code EC = OwningObject->getRvaPtr(RVA, IntPtr))
     return EC;
   Result = reinterpret_cast<const import_lookup_table_entry32 *>(IntPtr);
   return object_error::success;

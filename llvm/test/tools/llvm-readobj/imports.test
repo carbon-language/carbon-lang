@@ -1,0 +1,24 @@
+RUN: llvm-readobj --coff-imports %p/Inputs/imports.exe.coff-i386 | FileCheck -check-prefix=X86 %s
+RUN: llvm-readobj --coff-imports %p/Inputs/imports.exe.coff-x86-64 | FileCheck -check-prefix=X64  %s
+
+X86:      Import {
+X86-NEXT:   Name: KERNEL32.dll
+X86-NEXT:   ImportLookupTableRVA: 0x204C
+X86-NEXT:   ImportAddressTableRVA: 0x2000
+X86-NEXT: }
+X86-NEXT: Import {
+X86-NEXT:   Name: USER32.dll
+X86-NEXT:   ImportLookupTableRVA: 0x2054
+X86-NEXT:   ImportAddressTableRVA: 0x2008
+X86-NEXT: }
+
+X64:      Import {
+X64-NEXT:   Name: KERNEL32.dll
+X64-NEXT:   ImportLookupTableRVA: 0x2060
+X64-NEXT:   ImportAddressTableRVA: 0x2000
+X64-NEXT: }
+X64-NEXT: Import {
+X64-NEXT:   Name: USER32.dll
+X64-NEXT:   ImportLookupTableRVA: 0x2070
+X64-NEXT:   ImportAddressTableRVA: 0x2010
+X64-NEXT: }

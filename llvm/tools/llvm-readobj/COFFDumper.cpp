@@ -55,6 +55,7 @@ public:
   void printSymbols() override;
   void printDynamicSymbols() override;
   void printUnwindInfo() override;
+  void printCOFFImports() override;
 
 private:
   void printSymbol(const SymbolRef &Sym);
@@ -882,3 +883,17 @@ void COFFDumper::printUnwindInfo() {
   }
 }
 
+void COFFDumper::printCOFFImports() {
+  for (auto I = Obj->import_directory_begin(), E = Obj->import_directory_end();
+       I != E; ++I) {
+    DictScope Import(W, "Import");
+    StringRef Name;
+    if (error(I->getName(Name))) return;
+    W.printString("Name", Name);
+    uint32_t Addr;
+    if (error(I->getImportLookupTableRVA(Addr))) return;
+    W.printHex("ImportLookupTableRVA", Addr);
+    if (error(I->getImportAddressTableRVA(Addr))) return;
+    W.printHex("ImportAddressTableRVA", Addr);
+  }
+}
