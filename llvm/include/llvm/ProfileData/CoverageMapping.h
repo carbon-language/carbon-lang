@@ -16,6 +16,8 @@
 #define LLVM_PROFILEDATA_COVERAGEMAPPING_H_
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
@@ -91,10 +93,6 @@ struct CounterExpression {
 
   CounterExpression(ExprKind Kind, Counter LHS, Counter RHS)
       : Kind(Kind), LHS(LHS), RHS(RHS) {}
-
-  bool operator==(const CounterExpression &Other) const {
-    return Kind == Other.Kind && LHS == Other.LHS && RHS == Other.RHS;
-  }
 };
 
 /// \brief A Counter expression builder is used to construct the
@@ -102,7 +100,9 @@ struct CounterExpression {
 /// and simplifies algebraic expressions.
 class CounterExpressionBuilder {
   /// \brief A list of all the counter expressions
-  llvm::SmallVector<CounterExpression, 16> Expressions;
+  std::vector<CounterExpression> Expressions;
+  /// \brief A lookup table for the index of a given expression.
+  llvm::DenseMap<CounterExpression, unsigned> ExpressionIndices;
 
   /// \brief Return the counter which corresponds to the given expression.
   ///
@@ -370,6 +370,36 @@ public:
 };
 
 } // end namespace coverage
+
+/// \brief Provide DenseMapInfo for CounterExpression
+template<> struct DenseMapInfo<coverage::CounterExpression> {
+  static inline coverage::CounterExpression getEmptyKey() {
+    using namespace coverage;
+    return CounterExpression(CounterExpression::ExprKind::Subtract,
+                             Counter::getCounter(~0U),
+                             Counter::getCounter(~0U));
+  }
+
+  static inline coverage::CounterExpression getTombstoneKey() {
+    using namespace coverage;
+    return CounterExpression(CounterExpression::ExprKind::Add,
+                             Counter::getCounter(~0U),
+                             Counter::getCounter(~0U));
+  }
+
+  static unsigned getHashValue(const coverage::CounterExpression &V) {
+    return static_cast<unsigned>(
+        hash_combine(V.Kind, V.LHS.getKind(), V.LHS.getCounterID(),
+                     V.RHS.getKind(), V.RHS.getCounterID()));
+  }
+
+  static bool isEqual(const coverage::CounterExpression &LHS,
+                      const coverage::CounterExpression &RHS) {
+    return LHS.Kind == RHS.Kind && LHS.LHS == RHS.LHS && LHS.RHS == RHS.RHS;
+  }
+};
+
+
 } // end namespace llvm
 
 #endif // LLVM_PROFILEDATA_COVERAGEMAPPING_H_

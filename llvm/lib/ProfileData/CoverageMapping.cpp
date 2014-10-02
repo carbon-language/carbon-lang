@@ -28,12 +28,13 @@ using namespace coverage;
 #define DEBUG_TYPE "coverage-mapping"
 
 Counter CounterExpressionBuilder::get(const CounterExpression &E) {
-  for (unsigned I = 0, S = Expressions.size(); I < S; ++I) {
-    if (Expressions[I] == E)
-      return Counter::getExpression(I);
-  }
+  auto It = ExpressionIndices.find(E);
+  if (It != ExpressionIndices.end())
+    return Counter::getExpression(It->second);
+  unsigned I = Expressions.size();
   Expressions.push_back(E);
-  return Counter::getExpression(Expressions.size() - 1);
+  ExpressionIndices[E] = I;
+  return Counter::getExpression(I);
 }
 
 void CounterExpressionBuilder::extractTerms(
