@@ -1378,6 +1378,11 @@ let Predicates = [HasAVX] in {
   def : Pat<(v2f64 (X86Unpckl VR128:$src1,
                       (scalar_to_vector (loadf64 addr:$src2)))),
             (VMOVHPDrm VR128:$src1, addr:$src2)>;
+  // Also handle an i64 load because that may get selected as a faster way to
+  // load the data.
+  def : Pat<(v2f64 (X86Unpckl VR128:$src1,
+                      (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src2)))))),
+            (VMOVHPDrm VR128:$src1, addr:$src2)>;
 }
 
 let Predicates = [UseSSE1] in {
@@ -1397,6 +1402,11 @@ let Predicates = [UseSSE2] in {
   // and the fold opportunity reappears.
   def : Pat<(v2f64 (X86Unpckl VR128:$src1,
                       (scalar_to_vector (loadf64 addr:$src2)))),
+            (MOVHPDrm VR128:$src1, addr:$src2)>;
+  // Also handle an i64 load because that may get selected as a faster way to
+  // load the data.
+  def : Pat<(v2f64 (X86Unpckl VR128:$src1,
+                      (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src2)))))),
             (MOVHPDrm VR128:$src1, addr:$src2)>;
 }
 

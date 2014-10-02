@@ -10252,16 +10252,17 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
         return DAG.getVectorShuffle(VT, dl, V1, V2, NewMask);
       }
 
-  // For integer vector shuffles, try to collapse them into a shuffle of fewer
-  // lanes but wider integers. We cap this to not form integers larger than i64
-  // but it might be interesting to form i128 integers to handle flipping the
-  // low and high halves of AVX 256-bit vectors.
+  // Try to collapse shuffles into using a vector type with fewer elements but
+  // wider element types. We cap this to not form integers or floating point
+  // elements wider than 64 bits, but it might be interesting to form i128
+  // integers to handle flipping the low and high halves of AVX 256-bit vectors.
   SmallVector<int, 16> WidenedMask;
-  if (VT.isInteger() && VT.getScalarSizeInBits() < 64 &&
+  if (VT.getScalarSizeInBits() < 64 &&
       canWidenShuffleElements(Mask, WidenedMask)) {
-    MVT NewVT =
-        MVT::getVectorVT(MVT::getIntegerVT(VT.getScalarSizeInBits() * 2),
-                         VT.getVectorNumElements() / 2);
+    MVT NewEltVT = VT.isFloatingPoint()
+                       ? MVT::getFloatingPointVT(VT.getScalarSizeInBits() * 2)
+                       : MVT::getIntegerVT(VT.getScalarSizeInBits() * 2);
+    MVT NewVT = MVT::getVectorVT(NewEltVT, VT.getVectorNumElements() / 2);
     V1 = DAG.getNode(ISD::BITCAST, dl, NewVT, V1);
     V2 = DAG.getNode(ISD::BITCAST, dl, NewVT, V2);
     return DAG.getNode(ISD::BITCAST, dl, VT,

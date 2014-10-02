@@ -148,7 +148,7 @@ define <8 x float> @shuffle_v8f32_70000000(<8 x float> %a, <8 x float> %b) {
 define <8 x float> @shuffle_v8f32_01014545(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: shuffle_v8f32_01014545:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermilps {{.*#+}} ymm0 = ymm0[0,1,0,1,4,5,4,5]
+; ALL-NEXT:    vpermilpd {{.*#+}} ymm0 = ymm0[0,0,2,2]
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 1, i32 0, i32 1, i32 4, i32 5, i32 4, i32 5>
   ret <8 x float> %shuffle
@@ -202,7 +202,7 @@ define <8 x float> @shuffle_v8f32_08080808(<8 x float> %a, <8 x float> %b) {
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vpermilps {{.*#+}} xmm1 = xmm1[0,0,2,0]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm1, %ymm1
-; AVX1-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,1,0,3]
+; AVX1-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0,0]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; AVX1-NEXT:    vblendps {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2],ymm1[3],ymm0[4],ymm1[5],ymm0[6],ymm1[7]
 ; AVX1-NEXT:    retq
@@ -210,7 +210,7 @@ define <8 x float> @shuffle_v8f32_08080808(<8 x float> %a, <8 x float> %b) {
 ; AVX2-LABEL: shuffle_v8f32_08080808:
 ; AVX2:       # BB#0:
 ; AVX2-NEXT:    vbroadcastss %xmm1, %ymm1
-; AVX2-NEXT:    vbroadcastss %xmm0, %ymm0
+; AVX2-NEXT:    vbroadcastsd %xmm0, %ymm0
 ; AVX2-NEXT:    vblendps {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2],ymm1[3],ymm0[4],ymm1[5],ymm0[6],ymm1[7]
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 8, i32 0, i32 8, i32 0, i32 8, i32 0, i32 8>
@@ -651,7 +651,7 @@ define <8 x float> @shuffle_v8f32_c348cda0(<8 x float> %a, <8 x float> %b) {
 ; AVX1-NEXT:    vshufps {{.*#+}} ymm0 = ymm0[0,3],ymm2[0,0],ymm0[4,7],ymm2[4,4]
 ; AVX1-NEXT:    vperm2f128 {{.*#+}} ymm2 = ymm1[2,3,0,1]
 ; AVX1-NEXT:    vpermilps {{.*#+}} ymm1 = ymm1[0,1,2,0,4,5,6,4]
-; AVX1-NEXT:    vblendps {{.*#+}} ymm1 = ymm2[0],ymm1[1,2,3,4,5],ymm2[6],ymm1[7]
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm1 = ymm2[0],ymm1[1,2],ymm2[3]
 ; AVX1-NEXT:    vblendps {{.*#+}} ymm0 = ymm1[0],ymm0[1,2],ymm1[3,4,5,6],ymm0[7]
 ; AVX1-NEXT:    retq
 ;
@@ -671,9 +671,9 @@ define <8 x float> @shuffle_v8f32_f511235a(<8 x float> %a, <8 x float> %b) {
 ; AVX1-LABEL: shuffle_v8f32_f511235a:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vperm2f128 {{.*#+}} ymm2 = ymm0[2,3,0,1]
-; AVX1-NEXT:    vpermilps {{.*#+}} ymm2 = ymm2[u,1,u,u,6,7,u,u]
+; AVX1-NEXT:    vpermilpd {{.*#+}} ymm2 = ymm2[0,0,3,2]
 ; AVX1-NEXT:    vpermilps {{.*#+}} ymm0 = ymm0[0,1,1,1,4,5,5,5]
-; AVX1-NEXT:    vblendps {{.*#+}} ymm0 = ymm0[0],ymm2[1],ymm0[2,3],ymm2[4,5],ymm0[6,7]
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm2[0],ymm0[1],ymm2[2],ymm0[3]
 ; AVX1-NEXT:    vperm2f128 {{.*#+}} ymm1 = ymm1[2,3,0,1]
 ; AVX1-NEXT:    vpermilps {{.*#+}} ymm1 = ymm1[3,1,2,2,7,5,6,6]
 ; AVX1-NEXT:    vblendps {{.*#+}} ymm0 = ymm1[0],ymm0[1,2,3,4,5,6],ymm1[7]
@@ -900,7 +900,7 @@ define <8 x i32> @shuffle_v8i32_08080808(<8 x i32> %a, <8 x i32> %b) {
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vpermilps {{.*#+}} xmm1 = xmm1[0,0,2,0]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm1, %ymm1
-; AVX1-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,1,0,3]
+; AVX1-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0,0]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; AVX1-NEXT:    vblendps {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2],ymm1[3],ymm0[4],ymm1[5],ymm0[6],ymm1[7]
 ; AVX1-NEXT:    retq
@@ -1564,9 +1564,8 @@ define <8 x i32> @shuffle_v8i32_6caa87e5(<8 x i32> %a, <8 x i32> %b) {
 ; AVX1-NEXT:    vperm2f128 {{.*#+}} ymm2 = ymm1[2,3,0,1]
 ; AVX1-NEXT:    vshufps {{.*#+}} ymm1 = ymm2[0,0],ymm1[2,2],ymm2[4,4],ymm1[6,6]
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; AVX1-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[2,1,2,3]
-; AVX1-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,3,2,1]
-; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm2, %ymm0
+; AVX1-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,0]
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; AVX1-NEXT:    vblendps {{.*#+}} ymm0 = ymm0[0],ymm1[1,2,3,4],ymm0[5],ymm1[6],ymm0[7]
 ; AVX1-NEXT:    retq
 ;
