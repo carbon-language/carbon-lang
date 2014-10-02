@@ -7,7 +7,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
   include_directories(MacOSX)
   #include_directories(${CMAKE_CURRENT_BINARY_DIR}/MacOSX)
 
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -Wl,-sectcreate,__TEXT,__info_plist,${CMAKE_CURRENT_SOURCE_DIR}/../resources/lldb-debugserver-Info.plist")
 endif()
 
 add_definitions(
