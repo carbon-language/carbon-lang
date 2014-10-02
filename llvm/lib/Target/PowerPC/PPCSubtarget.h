@@ -103,6 +103,7 @@ protected:
   bool HasPOPCNTD;
   bool HasLDBRX;
   bool IsBookE;
+  bool HasOnlyMSYNC;
   bool IsE500;
   bool IsPPC4xx;
   bool IsPPC6xx;
@@ -219,6 +220,7 @@ public:
   bool hasPOPCNTD() const { return HasPOPCNTD; }
   bool hasLDBRX() const { return HasLDBRX; }
   bool isBookE() const { return IsBookE; }
+  bool hasOnlyMSYNC() const { return HasOnlyMSYNC; }
   bool isPPC4xx() const { return IsPPC4xx; }
   bool isPPC6xx() const { return IsPPC6xx; }
   bool isE500() const { return IsE500; }

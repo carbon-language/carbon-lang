@@ -665,6 +665,8 @@ def In32BitMode  : Predicate<"!PPCSubTarget->isPPC64()">;
 def In64BitMode  : Predicate<"PPCSubTarget->isPPC64()">;
 def IsBookE  : Predicate<"PPCSubTarget->isBookE()">;
 def IsNotBookE  : Predicate<"!PPCSubTarget->isBookE()">;
+def HasOnlyMSYNC : Predicate<"PPCSubTarget->hasOnlyMSYNC()">;
+def HasSYNC   : Predicate<"!PPCSubTarget->hasOnlyMSYNC()">;
 def IsPPC4xx  : Predicate<"PPCSubTarget->isPPC4xx()">;
 def IsPPC6xx  : Predicate<"PPCSubTarget->isPPC6xx()">;
 def IsE500  : Predicate<"PPCSubTarget->isE500()">;
@@ -1695,22 +1697,19 @@ def STMW : DForm_1<47, (outs), (ins gprc:$rS, memri:$dst),
                    "stmw $rS, $dst", IIC_LdStLMW, []>;
 
 def SYNC : XForm_24_sync<31, 598, (outs), (ins i32imm:$L),
-                        "sync $L", IIC_LdStSync, []>, Requires<[IsNotBookE]>;
+                        "sync $L", IIC_LdStSync, []>;
 
 let isCodeGenOnly = 1 in {
   def MSYNC : XForm_24_sync<31, 598, (outs), (ins),
-                           "msync", IIC_LdStSync, []>, Requires<[IsBookE]> {
+                           "msync", IIC_LdStSync, []> {
     let L = 0;
   }
 }
 
-// FIXME: We should use a specific flag to check for the presence of the sync
-// instruction instead of relying on IsBookE.
-// For example, the PPC A2 supports SYNC despite being a BookE processor.
-def : Pat<(int_ppc_sync),   (SYNC 0)>, Requires<[IsNotBookE]>;
-def : Pat<(int_ppc_lwsync), (SYNC 1)>, Requires<[IsNotBookE]>;
-def : Pat<(int_ppc_sync),   (MSYNC)>, Requires<[IsBookE]>;
-def : Pat<(int_ppc_lwsync), (MSYNC)>, Requires<[IsBookE]>;
+def : Pat<(int_ppc_sync),   (SYNC 0)>, Requires<[HasSYNC]>;
+def : Pat<(int_ppc_lwsync), (SYNC 1)>, Requires<[HasSYNC]>;
+def : Pat<(int_ppc_sync),   (MSYNC)>, Requires<[HasOnlyMSYNC]>;
+def : Pat<(int_ppc_lwsync), (MSYNC)>, Requires<[HasOnlyMSYNC]>;
 
 //===----------------------------------------------------------------------===//
 // PPC32 Arithmetic Instructions.
@@ -2550,8 +2549,8 @@ def : Pat<(f64 (extloadf32 xaddr:$src)),
 def : Pat<(f64 (fextend f32:$src)),
           (COPY_TO_REGCLASS $src, F8RC)>;
 
-def : Pat<(atomic_fence (imm), (imm)), (SYNC 0)>, Requires<[IsNotBookE]>;
-def : Pat<(atomic_fence (imm), (imm)), (MSYNC)>, Requires<[IsBookE]>;
+def : Pat<(atomic_fence (imm), (imm)), (SYNC 0)>, Requires<[HasSYNC]>;
+def : Pat<(atomic_fence (imm), (imm)), (MSYNC)>, Requires<[HasOnlyMSYNC]>;
 
 // Additional FNMSUB patterns: -a*c + b == -(a*c - b)
 def : Pat<(fma (fneg f64:$A), f64:$C, f64:$B),
@@ -3249,10 +3248,10 @@ class PPCAsmPseudo<string asm, dag iops>
 
 def : InstAlias<"sc", (SC 0)>;
 
-def : InstAlias<"sync", (SYNC 0)>, Requires<[IsNotBookE]>;
-def : InstAlias<"msync", (SYNC 0)>, Requires<[IsNotBookE]>;
-def : InstAlias<"lwsync", (SYNC 1)>, Requires<[IsNotBookE]>;
-def : InstAlias<"ptesync", (SYNC 2)>, Requires<[IsNotBookE]>;
+def : InstAlias<"sync", (SYNC 0)>, Requires<[HasSYNC]>;
+def : InstAlias<"msync", (SYNC 0)>, Requires<[HasSYNC]>;
+def : InstAlias<"lwsync", (SYNC 1)>, Requires<[HasSYNC]>;
+def : InstAlias<"ptesync", (SYNC 2)>, Requires<[HasSYNC]>;
 
 def : InstAlias<"wait", (WAIT 0)>;
 def : InstAlias<"waitrsv", (WAIT 1)>;
