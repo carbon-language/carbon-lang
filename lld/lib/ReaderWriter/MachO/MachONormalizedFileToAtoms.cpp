@@ -88,8 +88,10 @@ const MachORelocatableSectionToAtomType sectsToAtomType[] = {
 
 
 /// Figures out ContentType of a mach-o section.
-DefinedAtom::ContentType atomTypeFromSection(const Section &section) {
+DefinedAtom::ContentType atomTypeFromSection(const Section &section,
+                                             bool &customSectionName) {
   // First look for match of name and type. Empty names in table are wildcards.
+  customSectionName = false;
   for (const MachORelocatableSectionToAtomType *p = sectsToAtomType ;
                                  p->atomType != DefinedAtom::typeUnknown; ++p) {
     if (p->sectionType != section.type)
@@ -98,6 +100,7 @@ DefinedAtom::ContentType atomTypeFromSection(const Section &section) {
       continue;
     if (!p->sectionName.equals(section.sectionName) && !p->sectionName.empty())
       continue;
+    customSectionName = p->segmentName.empty() && p->sectionName.empty();
     return p->atomType;
   }
   // Look for code denoted by section attributes
@@ -343,6 +346,7 @@ std::error_code processSymboledSection(DefinedAtom::ContentType atomType,
 
 std::error_code processSection(DefinedAtom::ContentType atomType,
                                const Section &section,
+                               bool customSectionName,
                                const NormalizedFile &normalizedFile,
                                MachOFile &file, bool copyRefs) {
   const bool is64 = MachOLinkingContext::is64Bit(normalizedFile.arch);
@@ -432,8 +436,19 @@ std::error_code processSection(DefinedAtom::ContentType atomType,
                                      + " is malformed.  The last atom is "
                                      "not zero terminated.");
       }
-      file.addDefinedAtom(StringRef(), scope, atomType, merge, offset, size,
-                          false, false, copyRefs, &section);
+      if (customSectionName) {
+        // Mach-O needs a segment and section name.  Concatentate those two
+        // with a / separator (e.g. "seg/sect") to fit into the lld model
+        // of just a section name.
+        std::string segSectName = section.segmentName.str()
+                                  + "/" + section.sectionName.str();
+        file.addDefinedAtomInCustomSection(StringRef(), scope, atomType,
+                                           merge, false, false, offset,
+                                           size, segSectName, true, &section);
+      } else {
+        file.addDefinedAtom(StringRef(), scope, atomType, merge, offset, size,
+                            false, false, copyRefs, &section);
+      }
       offset += size;
     }
   }
@@ -599,9 +614,12 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
   for (auto &sect : normalizedFile.sections) {
     if (isDebugInfoSection(sect))
       continue;
-    DefinedAtom::ContentType atomType = atomTypeFromSection(sect);
+    bool customSectionName;
+    DefinedAtom::ContentType atomType = atomTypeFromSection(sect,
+                                                            customSectionName);
     if (std::error_code ec =
-            processSection(atomType, sect, normalizedFile, *file, copyRefs))
+            processSection(atomType, sect, customSectionName, normalizedFile,
+                           *file, copyRefs))
       return ec;
   }
   // Create atoms from undefined symbols.
