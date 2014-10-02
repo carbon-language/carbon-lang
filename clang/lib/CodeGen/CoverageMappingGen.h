@@ -87,20 +87,16 @@ class CoverageMappingGen {
   SourceManager &SM;
   const LangOptions &LangOpts;
   llvm::DenseMap<const Stmt *, unsigned> *CounterMap;
-  unsigned NumRegionCounters;
 
 public:
   CoverageMappingGen(CoverageMappingModuleGen &CVM, SourceManager &SM,
                      const LangOptions &LangOpts)
-      : CVM(CVM), SM(SM), LangOpts(LangOpts), CounterMap(nullptr),
-        NumRegionCounters(0) {}
+      : CVM(CVM), SM(SM), LangOpts(LangOpts), CounterMap(nullptr) {}
 
   CoverageMappingGen(CoverageMappingModuleGen &CVM, SourceManager &SM,
                      const LangOptions &LangOpts,
-                     llvm::DenseMap<const Stmt *, unsigned> *CounterMap,
-                     unsigned NumRegionCounters)
-      : CVM(CVM), SM(SM), LangOpts(LangOpts), CounterMap(CounterMap),
-        NumRegionCounters(NumRegionCounters) {}
+                     llvm::DenseMap<const Stmt *, unsigned> *CounterMap)
+      : CVM(CVM), SM(SM), LangOpts(LangOpts), CounterMap(CounterMap) {}
 
   /// \brief Emit the coverage mapping data which maps the regions of
   /// code to counters that will be used to find the execution
