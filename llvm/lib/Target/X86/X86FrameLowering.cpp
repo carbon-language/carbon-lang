@@ -53,7 +53,8 @@ bool X86FrameLowering::hasFP(const MachineFunction &MF) const {
           MFI->hasVarSizedObjects() ||
           MFI->isFrameAddressTaken() || MFI->hasInlineAsmWithSPAdjust() ||
           MF.getInfo<X86MachineFunctionInfo>()->getForceFramePointer() ||
-          MMI.callsUnwindInit() || MMI.callsEHReturn());
+          MMI.callsUnwindInit() || MMI.callsEHReturn() ||
+          MFI->hasStackMap() || MFI->hasPatchPoint());
 }
 
 static unsigned getSUBriOpcode(unsigned IsLP64, int64_t Imm) {

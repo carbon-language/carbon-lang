@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7 -disable-fp-elim | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7 | FileCheck %s
 
 ; Check that the X86 stackmap shadow optimization is only outputting a 1-byte
 ; nop here. 8-bytes are requested, but 7 are covered by the code for the call to

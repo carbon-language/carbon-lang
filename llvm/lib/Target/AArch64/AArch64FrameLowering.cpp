@@ -92,7 +92,8 @@ bool AArch64FrameLowering::hasFP(const MachineFunction &MF) const {
 #endif
 
   return (MFI->hasCalls() || MFI->hasVarSizedObjects() ||
-          MFI->isFrameAddressTaken());
+          MFI->isFrameAddressTaken() || MFI->hasStackMap() ||
+          MFI->hasPatchPoint());
 }
 
 /// hasReservedCallFrame - Under normal circumstances, when a frame pointer is

@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=x86_64-apple-darwin -mcpu=corei7 -disable-fp-elim                             < %s | FileCheck %s
-; RUN: llc -mtriple=x86_64-apple-darwin -mcpu=corei7 -disable-fp-elim -fast-isel -fast-isel-abort < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-darwin -mcpu=corei7                             < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-darwin -mcpu=corei7 -fast-isel -fast-isel-abort < %s | FileCheck %s
 
 ; Trivial patchpoint codegen
 ;
