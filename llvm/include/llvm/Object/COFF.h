@@ -26,8 +26,10 @@ template <typename T> class ArrayRef;
 namespace object {
 class ImportDirectoryEntryRef;
 class ExportDirectoryEntryRef;
+class ImportedSymbolRef;
 typedef content_iterator<ImportDirectoryEntryRef> import_directory_iterator;
 typedef content_iterator<ExportDirectoryEntryRef> export_directory_iterator;
+typedef content_iterator<ImportedSymbolRef> imported_symbol_iterator;
 
 /// The DOS compatible header at the front of all PE/COFF executables.
 struct dos_header {
@@ -160,10 +162,11 @@ struct import_directory_table_entry {
   support::ulittle32_t ImportAddressTableRVA;
 };
 
-struct import_lookup_table_entry32 {
-  support::ulittle32_t data;
+template <typename IntTy>
+struct import_lookup_table_entry {
+  IntTy data;
 
-  bool isOrdinal() const { return data & 0x80000000; }
+  bool isOrdinal() const { return data < 0; }
 
   uint16_t getOrdinal() const {
     assert(isOrdinal() && "ILT entry is not an ordinal!");
@@ -172,9 +175,14 @@ struct import_lookup_table_entry32 {
 
   uint32_t getHintNameRVA() const {
     assert(!isOrdinal() && "ILT entry is not a Hint/Name RVA!");
-    return data;
+    return data & 0xFFFFFFFF;
   }
 };
+
+typedef import_lookup_table_entry<support::little32_t>
+    import_lookup_table_entry32;
+typedef import_lookup_table_entry<support::little64_t>
+    import_lookup_table_entry64;
 
 struct export_directory_table_entry {
   support::ulittle32_t ExportFlags;
@@ -650,6 +658,10 @@ public:
 
   bool operator==(const ImportDirectoryEntryRef &Other) const;
   void moveNext();
+
+  imported_symbol_iterator imported_symbol_begin() const;
+  imported_symbol_iterator imported_symbol_end() const;
+
   std::error_code getName(StringRef &Result) const;
   std::error_code getImportLookupTableRVA(uint32_t &Result) const;
   std::error_code getImportAddressTableRVA(uint32_t &Result) const;
@@ -685,6 +697,29 @@ public:
 
 private:
   const export_directory_table_entry *ExportTable;
+  uint32_t Index;
+  const COFFObjectFile *OwningObject;
+};
+
+class ImportedSymbolRef {
+public:
+  ImportedSymbolRef() : OwningObject(nullptr) {}
+  ImportedSymbolRef(const import_lookup_table_entry32 *Entry, uint32_t I,
+                    const COFFObjectFile *Owner)
+      : Entry32(Entry), Entry64(nullptr), Index(I), OwningObject(Owner) {}
+  ImportedSymbolRef(const import_lookup_table_entry64 *Entry, uint32_t I,
+                    const COFFObjectFile *Owner)
+      : Entry32(nullptr), Entry64(Entry), Index(I), OwningObject(Owner) {}
+
+  bool operator==(const ImportedSymbolRef &Other) const;
+  void moveNext();
+
+  std::error_code getSymbolName(StringRef &Result) const;
+  std::error_code getOrdinal(uint16_t &Result) const;
+
+private:
+  const import_lookup_table_entry32 *Entry32;
+  const import_lookup_table_entry64 *Entry64;
   uint32_t Index;
   const COFFObjectFile *OwningObject;
 };

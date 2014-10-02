@@ -27,6 +27,7 @@ using namespace object;
 
 using support::ulittle16_t;
 using support::ulittle32_t;
+using support::ulittle64_t;
 using support::little16_t;
 
 // Returns false if size is greater than the buffer size. And sets ec.
@@ -1034,6 +1035,42 @@ std::error_code ImportDirectoryEntryRef::getImportTableEntry(
   return object_error::success;
 }
 
+static imported_symbol_iterator
+makeImportedSymbolIterator(const COFFObjectFile *OwningObject,
+                           uintptr_t Ptr, int Index) {
+  if (OwningObject->getBytesInAddress() == 4) {
+    auto *P = reinterpret_cast<const import_lookup_table_entry32 *>(Ptr);
+    return imported_symbol_iterator(ImportedSymbolRef(P, Index, OwningObject));
+  }
+  auto *P = reinterpret_cast<const import_lookup_table_entry64 *>(Ptr);
+  return imported_symbol_iterator(ImportedSymbolRef(P, Index, OwningObject));
+}
+
+imported_symbol_iterator
+ImportDirectoryEntryRef::imported_symbol_begin() const {
+  uintptr_t IntPtr = 0;
+  OwningObject->getRvaPtr(ImportTable[Index].ImportLookupTableRVA, IntPtr);
+  return makeImportedSymbolIterator(OwningObject, IntPtr, 0);
+}
+
+imported_symbol_iterator
+ImportDirectoryEntryRef::imported_symbol_end() const {
+  uintptr_t IntPtr = 0;
+  OwningObject->getRvaPtr(ImportTable[Index].ImportLookupTableRVA, IntPtr);
+  // Forward the pointer to the last entry which is null.
+  int Index = 0;
+  if (OwningObject->getBytesInAddress() == 4) {
+    auto *Entry = reinterpret_cast<ulittle32_t *>(IntPtr);
+    while (*Entry++)
+      ++Index;
+  } else {
+    auto *Entry = reinterpret_cast<ulittle64_t *>(IntPtr);
+    while (*Entry++)
+      ++Index;
+  }
+  return makeImportedSymbolIterator(OwningObject, IntPtr, Index);
+}
+
 std::error_code ImportDirectoryEntryRef::getName(StringRef &Result) const {
   uintptr_t IntPtr = 0;
   if (std::error_code EC =
@@ -1136,6 +1173,59 @@ ExportDirectoryEntryRef::getSymbolName(StringRef &Result) const {
     return object_error::success;
   }
   Result = "";
+  return object_error::success;
+}
+
+bool ImportedSymbolRef::
+operator==(const ImportedSymbolRef &Other) const {
+  return Entry32 == Other.Entry32 && Entry64 == Other.Entry64
+      && Index == Other.Index;
+}
+
+void ImportedSymbolRef::moveNext() {
+  ++Index;
+}
+
+std::error_code
+ImportedSymbolRef::getSymbolName(StringRef &Result) const {
+  uint32_t RVA;
+  if (Entry32) {
+    // If a symbol is imported only by ordinal, it has no name.
+    if (Entry32[Index].isOrdinal())
+      return object_error::success;
+    RVA = Entry32[Index].getHintNameRVA();
+  } else {
+    if (Entry64[Index].isOrdinal())
+      return object_error::success;
+    RVA = Entry64[Index].getHintNameRVA();
+  }
+  uintptr_t IntPtr = 0;
+  if (std::error_code EC = OwningObject->getRvaPtr(RVA, IntPtr))
+    return EC;
+  // +2 because the first two bytes is hint.
+  Result = StringRef(reinterpret_cast<const char *>(IntPtr + 2));
+  return object_error::success;
+}
+
+std::error_code ImportedSymbolRef::getOrdinal(uint16_t &Result) const {
+  uint32_t RVA;
+  if (Entry32) {
+    if (Entry32[Index].isOrdinal()) {
+      Result = Entry32[Index].getOrdinal();
+      return object_error::success;
+    }
+    RVA = Entry32[Index].getHintNameRVA();
+  } else {
+    if (Entry64[Index].isOrdinal()) {
+      Result = Entry64[Index].getOrdinal();
+      return object_error::success;
+    }
+    RVA = Entry64[Index].getHintNameRVA();
+  }
+  uintptr_t IntPtr = 0;
+  if (std::error_code EC = OwningObject->getRvaPtr(RVA, IntPtr))
+    return EC;
+  Result = *reinterpret_cast<const ulittle16_t *>(IntPtr);
   return object_error::success;
 }
 

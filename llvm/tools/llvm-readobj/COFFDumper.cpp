@@ -895,5 +895,13 @@ void COFFDumper::printCOFFImports() {
     W.printHex("ImportLookupTableRVA", Addr);
     if (error(I->getImportAddressTableRVA(Addr))) return;
     W.printHex("ImportAddressTableRVA", Addr);
+    for (auto J = I->imported_symbol_begin(), F = I->imported_symbol_end();
+         J != F; ++J) {
+      StringRef Sym;
+      if (error(J->getSymbolName(Sym))) return;
+      uint16_t Ordinal;
+      if (error(J->getOrdinal(Ordinal))) return;
+      W.printNumber("Symbol", Sym, Ordinal);
+    }
   }
 }
