@@ -22,8 +22,8 @@ target triple = "x86_64-apple-darwin10.0.0"
 
 define i64 @gcd(i64 %a, i64 %b) nounwind readnone optsize noinline ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i64 %a}, i64 0, metadata !10, metadata !{metadata !"0x102"}), !dbg !18
-  tail call void @llvm.dbg.value(metadata !{i64 %b}, i64 0, metadata !11, metadata !{metadata !"0x102"}), !dbg !19
+  tail call void @llvm.dbg.value(metadata !{i64 %a}, i64 0, metadata !10, metadata !{i32 786690}), !dbg !18
+  tail call void @llvm.dbg.value(metadata !{i64 %b}, i64 0, metadata !11, metadata !{i32 786690}), !dbg !19
   br label %while.body, !dbg !20
 
 while.body:                                       ; preds = %while.body, %entry
@@ -34,14 +34,14 @@ while.body:                                       ; preds = %while.body, %entry
   br i1 %cmp, label %if.then, label %while.body, !dbg !23
 
 if.then:                                          ; preds = %while.body
-  tail call void @llvm.dbg.value(metadata !{i64 %rem}, i64 0, metadata !12, metadata !{metadata !"0x102"}), !dbg !21
+  tail call void @llvm.dbg.value(metadata !{i64 %rem}, i64 0, metadata !12, metadata !{i32 786690}), !dbg !21
   ret i64 %b.addr.0, !dbg !23
 }
 
 define i32 @main() nounwind optsize ssp {
 entry:
   %call = tail call i32 @rand() nounwind optsize, !dbg !24
-  tail call void @llvm.dbg.value(metadata !{i32 %call}, i64 0, metadata !14, metadata !{metadata !"0x102"}), !dbg !24
+  tail call void @llvm.dbg.value(metadata !{i32 %call}, i64 0, metadata !14, metadata !{i32 786690}), !dbg !24
   %cmp = icmp ugt i32 %call, 21, !dbg !25
   br i1 %cmp, label %cond.true, label %cond.end, !dbg !25
 
@@ -51,7 +51,7 @@ cond.true:                                        ; preds = %entry
 
 cond.end:                                         ; preds = %entry, %cond.true
   %cond = phi i32 [ %call1, %cond.true ], [ %call, %entry ], !dbg !25
-  tail call void @llvm.dbg.value(metadata !{i32 %cond}, i64 0, metadata !17, metadata !{metadata !"0x102"}), !dbg !25
+  tail call void @llvm.dbg.value(metadata !{i32 %cond}, i64 0, metadata !17, metadata !{i32 786690}), !dbg !25
   %conv = sext i32 %cond to i64, !dbg !26
   %conv5 = zext i32 %call to i64, !dbg !26
   %call6 = tail call i64 @gcd(i64 %conv, i64 %conv5) optsize, !dbg !26
@@ -78,29 +78,29 @@ declare i32 @puts(i8* nocapture) nounwind
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!33}
 
-!0 = metadata !{metadata !"0x2e\00gcd\00gcd\00\005\000\001\000\006\00256\001\000", metadata !31, metadata !1, metadata !3, null, i64 (i64, i64)* @gcd, null, null, metadata !29} ; [ DW_TAG_subprogram ] [line 5] [def] [scope 0] [gcd]
-!1 = metadata !{metadata !"0x29", metadata !31} ; [ DW_TAG_file_type ]
-!2 = metadata !{metadata !"0x11\0012\00clang version 2.9 (trunk 124117)\001\00\000\00\001", metadata !31, metadata !32, metadata !32, metadata !28, null,  null} ; [ DW_TAG_compile_unit ]
-!3 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", metadata !31, metadata !1, null, metadata !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = metadata !{i32 786478, metadata !31, metadata !1, metadata !"gcd", metadata !"gcd", metadata !"", i32 5, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i64 (i64, i64)* @gcd, null, null, metadata !29, i32 0} ; [ DW_TAG_subprogram ] [line 5] [def] [scope 0] [gcd]
+!1 = metadata !{i32 786473, metadata !31} ; [ DW_TAG_file_type ]
+!2 = metadata !{i32 786449, metadata !31, i32 12, metadata !"clang version 2.9 (trunk 124117)", i1 true, metadata !"", i32 0, metadata !32, metadata !32, metadata !28, null,  null, null, i32 1} ; [ DW_TAG_compile_unit ]
+!3 = metadata !{i32 786453, metadata !31, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{metadata !5}
-!5 = metadata !{metadata !"0x24\00long int\000\0064\0064\000\000\005", null, metadata !2} ; [ DW_TAG_base_type ]
-!6 = metadata !{metadata !"0x2e\00main\00main\00\0025\000\001\000\006\000\001\000", metadata !31, metadata !1, metadata !7, null, i32 ()* @main, null, null, metadata !30} ; [ DW_TAG_subprogram ] [line 25] [def] [scope 0] [main]
-!7 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", metadata !31, metadata !1, null, metadata !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = metadata !{i32 786468, null, metadata !2, metadata !"long int", i32 0, i64 64, i64 64, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!6 = metadata !{i32 786478, metadata !31, metadata !1, metadata !"main", metadata !"main", metadata !"", i32 25, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 true, i32 ()* @main, null, null, metadata !30, i32 0} ; [ DW_TAG_subprogram ] [line 25] [def] [scope 0] [main]
+!7 = metadata !{i32 786453, metadata !31, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
-!9 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, metadata !2} ; [ DW_TAG_base_type ]
-!10 = metadata !{metadata !"0x101\00a\005\000", metadata !0, metadata !1, metadata !5} ; [ DW_TAG_arg_variable ]
-!11 = metadata !{metadata !"0x101\00b\005\000", metadata !0, metadata !1, metadata !5} ; [ DW_TAG_arg_variable ]
-!12 = metadata !{metadata !"0x100\00c\006\000", metadata !13, metadata !1, metadata !5} ; [ DW_TAG_auto_variable ]
-!13 = metadata !{metadata !"0xb\005\0052\000", metadata !31, metadata !0} ; [ DW_TAG_lexical_block ]
-!14 = metadata !{metadata !"0x100\00m\0026\000", metadata !15, metadata !1, metadata !16} ; [ DW_TAG_auto_variable ]
-!15 = metadata !{metadata !"0xb\0025\0012\002", metadata !31, metadata !6} ; [ DW_TAG_lexical_block ]
-!16 = metadata !{metadata !"0x24\00unsigned int\000\0032\0032\000\000\007", null, metadata !2} ; [ DW_TAG_base_type ]
-!17 = metadata !{metadata !"0x100\00z_s\0027\000", metadata !15, metadata !1, metadata !9} ; [ DW_TAG_auto_variable ]
+!9 = metadata !{i32 786468, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!10 = metadata !{i32 786689, metadata !0, metadata !"a", metadata !1, i32 5, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
+!11 = metadata !{i32 786689, metadata !0, metadata !"b", metadata !1, i32 5, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
+!12 = metadata !{i32 786688, metadata !13, metadata !"c", metadata !1, i32 6, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
+!13 = metadata !{i32 786443, metadata !31, metadata !0, i32 5, i32 52, i32 0} ; [ DW_TAG_lexical_block ]
+!14 = metadata !{i32 786688, metadata !15, metadata !"m", metadata !1, i32 26, metadata !16, i32 0, null} ; [ DW_TAG_auto_variable ]
+!15 = metadata !{i32 786443, metadata !31, metadata !6, i32 25, i32 12, i32 2} ; [ DW_TAG_lexical_block ]
+!16 = metadata !{i32 786468, null, metadata !2, metadata !"unsigned int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
+!17 = metadata !{i32 786688, metadata !15, metadata !"z_s", metadata !1, i32 27, metadata !9, i32 0, null} ; [ DW_TAG_auto_variable ]
 !18 = metadata !{i32 5, i32 41, metadata !0, null}
 !19 = metadata !{i32 5, i32 49, metadata !0, null}
 !20 = metadata !{i32 7, i32 5, metadata !13, null}
 !21 = metadata !{i32 8, i32 9, metadata !22, null}
-!22 = metadata !{metadata !"0xb\007\0014\001", metadata !31, metadata !13} ; [ DW_TAG_lexical_block ]
+!22 = metadata !{i32 786443, metadata !31, metadata !13, i32 7, i32 14, i32 1} ; [ DW_TAG_lexical_block ]
 !23 = metadata !{i32 9, i32 9, metadata !22, null}
 !24 = metadata !{i32 26, i32 38, metadata !15, null}
 !25 = metadata !{i32 27, i32 38, metadata !15, null}
@@ -111,4 +111,4 @@ declare i32 @puts(i8* nocapture) nounwind
 !30 = metadata !{metadata !14, metadata !17}
 !31 = metadata !{metadata !"rem_small.c", metadata !"/private/tmp"}
 !32 = metadata !{i32 0}
-!33 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!33 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

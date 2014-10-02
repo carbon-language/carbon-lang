@@ -17,7 +17,7 @@ entry:
 for.body:
   call void @llvm.lifetime.end(i64 -1, i8* %0) nounwind
   call void @llvm.lifetime.start(i64 -1, i8* %x.i) nounwind
-  call void @llvm.dbg.declare(metadata !{i8* %x.i}, metadata !22, metadata !{metadata !"0x102"}) nounwind
+  call void @llvm.dbg.declare(metadata !{i8* %x.i}, metadata !22, metadata !{i32 786690}) nounwind
   br label %for.body
 }
 
@@ -27,9 +27,9 @@ declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!23}
-!0 = metadata !{metadata !"0x11\001\00clang\001\00\000\00\000", metadata !1, metadata !2, metadata !2, null, null, null} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 524305, metadata !1, i32 1, metadata !"clang", i1 true, metadata !"", i32 0, metadata !2, metadata !2, null, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{metadata !"t.c", metadata !""}
-!16 = metadata !{metadata !"0x24\00char\000\008\008\000\000\006", null, null} ; [ DW_TAG_base_type ]
+!16 = metadata !{i32 786468, null, null, metadata !"char", i32 0, i64 8, i64 8, i64 0, i32 0, i32 6}
 !2 = metadata !{i32 0}
-!22 = metadata !{metadata !"0x100\00x\0016\000", null, metadata !2, metadata !16} ; [ DW_TAG_auto_variable ]
-!23 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!22 = metadata !{i32 786688, null, metadata !"x", metadata !2, i32 16, metadata !16, i32 0, i32 0}
+!23 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

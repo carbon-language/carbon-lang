@@ -4,10 +4,10 @@
 
 define i32 @bar(%struct.a* nocapture %b) nounwind ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata !{%struct.a* %b}, i64 0, metadata !6, metadata !{metadata !"0x102"}), !dbg !13
+  tail call void @llvm.dbg.value(metadata !{%struct.a* %b}, i64 0, metadata !6, metadata !{i32 786690}), !dbg !13
   %tmp1 = getelementptr inbounds %struct.a* %b, i64 0, i32 0, !dbg !14
   %tmp2 = load i32* %tmp1, align 4, !dbg !14
-  tail call void @llvm.dbg.value(metadata !{i32 %tmp2}, i64 0, metadata !11, metadata !{metadata !"0x102"}), !dbg !14
+  tail call void @llvm.dbg.value(metadata !{i32 %tmp2}, i64 0, metadata !11, metadata !{i32 786690}), !dbg !14
   %call = tail call i32 (...)* @foo(i32 %tmp2) nounwind , !dbg !18
   %add = add nsw i32 %tmp2, 1, !dbg !19
   ret i32 %add, !dbg !19
@@ -20,19 +20,19 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!24}
 
-!0 = metadata !{metadata !"0x2e\00bar\00bar\00\005\000\001\000\006\00256\001\000", metadata !22, metadata !1, metadata !3, null, i32 (%struct.a*)* @bar, null, null, metadata !21} ; [ DW_TAG_subprogram ] [line 5] [def] [scope 0] [bar]
-!1 = metadata !{metadata !"0x29", metadata !22} ; [ DW_TAG_file_type ]
-!2 = metadata !{metadata !"0x11\0012\00clang version 2.9 (trunk 122997)\001\00\000\00\001", metadata !22, metadata !23, metadata !23, metadata !20, null,  null} ; [ DW_TAG_compile_unit ]
-!3 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", metadata !22, metadata !1, null, metadata !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = metadata !{i32 786478, metadata !22, metadata !1, metadata !"bar", metadata !"bar", metadata !"", i32 5, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32 (%struct.a*)* @bar, null, null, metadata !21, i32 0} ; [ DW_TAG_subprogram ] [line 5] [def] [scope 0] [bar]
+!1 = metadata !{i32 786473, metadata !22} ; [ DW_TAG_file_type ]
+!2 = metadata !{i32 786449, metadata !22, i32 12, metadata !"clang version 2.9 (trunk 122997)", i1 true, metadata !"", i32 0, metadata !23, metadata !23, metadata !20, null,  null, null, i32 1} ; [ DW_TAG_compile_unit ]
+!3 = metadata !{i32 786453, metadata !22, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{metadata !5}
-!5 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, metadata !2} ; [ DW_TAG_base_type ]
-!6 = metadata !{metadata !"0x101\00b\005\000", metadata !0, metadata !1, metadata !7} ; [ DW_TAG_arg_variable ]
-!7 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, metadata !2, metadata !8} ; [ DW_TAG_pointer_type ]
-!8 = metadata !{metadata !"0x13\00a\001\0032\0032\000\000\000", metadata !22, metadata !2, null, metadata !9, null, null, null} ; [ DW_TAG_structure_type ] [a] [line 1, size 32, align 32, offset 0] [def] [from ]
+!5 = metadata !{i32 786468, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!6 = metadata !{i32 786689, metadata !0, metadata !"b", metadata !1, i32 5, metadata !7, i32 0, null} ; [ DW_TAG_arg_variable ]
+!7 = metadata !{i32 786447, null, metadata !2, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !8} ; [ DW_TAG_pointer_type ]
+!8 = metadata !{i32 786451, metadata !22, metadata !2, metadata !"a", i32 1, i64 32, i64 32, i32 0, i32 0, null, metadata !9, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [a] [line 1, size 32, align 32, offset 0] [def] [from ]
 !9 = metadata !{metadata !10}
-!10 = metadata !{metadata !"0xd\00c\002\0032\0032\000\000", metadata !22, metadata !1, metadata !5} ; [ DW_TAG_member ]
-!11 = metadata !{metadata !"0x100\00x\006\000", metadata !12, metadata !1, metadata !5} ; [ DW_TAG_auto_variable ]
-!12 = metadata !{metadata !"0xb\005\0022\000", metadata !22, metadata !0} ; [ DW_TAG_lexical_block ]
+!10 = metadata !{i32 786445, metadata !22, metadata !1, metadata !"c", i32 2, i64 32, i64 32, i64 0, i32 0, metadata !5} ; [ DW_TAG_member ]
+!11 = metadata !{i32 786688, metadata !12, metadata !"x", metadata !1, i32 6, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
+!12 = metadata !{i32 786443, metadata !22, metadata !0, i32 5, i32 22, i32 0} ; [ DW_TAG_lexical_block ]
 !13 = metadata !{i32 5, i32 19, metadata !0, null}
 !14 = metadata !{i32 6, i32 14, metadata !12, null}
 !18 = metadata !{i32 7, i32 2, metadata !12, null}
@@ -62,4 +62,4 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 ;CHECK-NEXT: Ltmp
 ;CHECK-NEXT:	.quad	0
 ;CHECK-NEXT:	.quad	0
-!24 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!24 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

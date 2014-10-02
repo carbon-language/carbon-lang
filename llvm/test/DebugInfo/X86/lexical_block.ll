@@ -25,7 +25,7 @@
 define void @_Z1bv() #0 {
 entry:
   %i = alloca i32, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %i}, metadata !11, metadata !{metadata !"0x102"}), !dbg !14
+  call void @llvm.dbg.declare(metadata !{i32* %i}, metadata !11, metadata !{i32 786690}), !dbg !14
   store i32 3, i32* %i, align 4, !dbg !14
   %0 = load i32* %i, align 4, !dbg !14
   %tobool = icmp ne i32 %0, 0, !dbg !14
@@ -48,20 +48,20 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = metadata !{metadata !"0x11\004\00clang version 3.5.0 \000\00\000\00\001", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/lexical_block.cpp] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.5.0 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/lexical_block.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"lexical_block.cpp", metadata !"/tmp/dbginfo"}
 !2 = metadata !{}
 !3 = metadata !{metadata !4}
-!4 = metadata !{metadata !"0x2e\00b\00b\00_Z1bv\001\000\001\000\006\00256\000\001", metadata !1, metadata !5, metadata !6, null, void ()* @_Z1bv, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 1] [def] [b]
-!5 = metadata !{metadata !"0x29", metadata !1}          ; [ DW_TAG_file_type ] [/tmp/dbginfo/lexical_block.cpp]
-!6 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = metadata !{i32 786478, metadata !1, metadata !5, metadata !"b", metadata !"b", metadata !"_Z1bv", i32 1, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void ()* @_Z1bv, null, null, metadata !2, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [b]
+!5 = metadata !{i32 786473, metadata !1}          ; [ DW_TAG_file_type ] [/tmp/dbginfo/lexical_block.cpp]
+!6 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !7, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !7 = metadata !{null}
 !8 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!9 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!9 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
 !10 = metadata !{metadata !"clang version 3.5.0 "}
-!11 = metadata !{metadata !"0x100\00i\002\000", metadata !12, metadata !5, metadata !13} ; [ DW_TAG_auto_variable ] [i] [line 2]
-!12 = metadata !{metadata !"0xb\002\000\000", metadata !1, metadata !4} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/lexical_block.cpp]
-!13 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!11 = metadata !{i32 786688, metadata !12, metadata !"i", metadata !5, i32 2, metadata !13, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [i] [line 2]
+!12 = metadata !{i32 786443, metadata !1, metadata !4, i32 2, i32 0, i32 0, i32 0} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/lexical_block.cpp]
+!13 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !14 = metadata !{i32 2, i32 0, metadata !12, null}
 !15 = metadata !{i32 3, i32 0, metadata !12, null}
 !16 = metadata !{i32 4, i32 0, metadata !4, null}

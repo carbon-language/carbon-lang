@@ -44,7 +44,7 @@
 define zeroext i1 @_ZN3Foo3batEv(%struct.Foo* %this) #0 align 2 {
 entry:
   %0 = load %struct.Foo** @pfoo, align 8
-  tail call void @llvm.dbg.value(metadata !{%struct.Foo* %0}, i64 0, metadata !62, metadata !{metadata !"0x102"})
+  tail call void @llvm.dbg.value(metadata !{%struct.Foo* %0}, i64 0, metadata !62, metadata !{i32 786690})
   %cmp.i = icmp eq %struct.Foo* %0, %this
   ret i1 %cmp.i
 }
@@ -53,7 +53,7 @@ entry:
 define void @_Z3bazv() #1 {
 entry:
   %0 = load %struct.Wibble** @wibble1, align 8
-  tail call void @llvm.dbg.value(metadata !64, i64 0, metadata !65, metadata !{metadata !"0x102"})
+  tail call void @llvm.dbg.value(metadata !64, i64 0, metadata !65, metadata !{i32 786690})
   %1 = load %struct.Wibble** @wibble2, align 8
   %cmp.i = icmp ugt %struct.Wibble* %1, %0
   br i1 %cmp.i, label %if.then.i, label %_ZN7Flibble3barEP6Wibble.exit
@@ -76,8 +76,8 @@ attributes #1 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 attributes #2 = { nounwind readnone }
 
 
-!17 = metadata !{metadata !"0x10\00\000\000\000\000\000", null, null, null} ; [ DW_TAG_reference_type ] [line 0, size 0, align 0, offset 0] [from Foo]
-!45 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, null} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from Flibble]
-!62 = metadata !{metadata !"0x101\00arg\0033554436\000", null, null, metadata !17} ; [ DW_TAG_arg_variable ] [arg] [line 4]
+!17 = metadata !{i32 786448, null, null, null, i32 0, i64 0, i64 0, i64 0, i32 0, null} ; [ DW_TAG_reference_type ] [line 0, size 0, align 0, offset 0] [from Foo]
+!45 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, null} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from Flibble]
+!62 = metadata !{i32 786689, null, metadata !"arg", null, i32 33554436, metadata !17, i32 0, null} ; [ DW_TAG_arg_variable ] [arg] [line 4]
 !64 = metadata !{%struct.Flibble* undef}
-!65 = metadata !{metadata !"0x101\00this\0016777229\001088", null, null, metadata !45} ; [ DW_TAG_arg_variable ] [this] [line 13]
+!65 = metadata !{i32 786689, null, metadata !"this", null, i32 16777229, metadata !45, i32 1088, null} ; [ DW_TAG_arg_variable ] [this] [line 13]

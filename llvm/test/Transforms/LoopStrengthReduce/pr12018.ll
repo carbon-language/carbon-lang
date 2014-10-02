@@ -35,4 +35,4 @@ declare %struct.nsTArrayHeader* @_ZN8nsTArray4Hdr2Ev()
 
 declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
-!0 = metadata !{metadata !"0x101"}                       ; [ DW_TAG_arg_variable ]
+!0 = metadata !{i32 786689}                       ; [ DW_TAG_arg_variable ]

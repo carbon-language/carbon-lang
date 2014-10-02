@@ -79,8 +79,14 @@ MDNode *DebugLoc::getScopeNode(const LLVMContext &Ctx) const {
 DebugLoc DebugLoc::getFnDebugLoc(const LLVMContext &Ctx) const {
   const MDNode *Scope = getScopeNode(Ctx);
   DISubprogram SP = getDISubprogram(Scope);
-  if (SP.isSubprogram())
-    return DebugLoc::get(SP.getScopeLineNumber(), 0, SP);
+  if (SP.isSubprogram()) {
+    // Check for number of operands since the compatibility is
+    // cheap here.  FIXME: Name the magic constant.
+    if (SP->getNumOperands() > 19)
+      return DebugLoc::get(SP.getScopeLineNumber(), 0, SP);
+    else
+      return DebugLoc::get(SP.getLineNumber(), 0, SP);
+  }
 
   return DebugLoc();
 }

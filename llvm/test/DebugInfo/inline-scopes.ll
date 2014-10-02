@@ -43,7 +43,7 @@ entry:
   %b.i3 = alloca i8, align 1
   %retval.i = alloca i32, align 4
   %b.i = alloca i8, align 1
-  call void @llvm.dbg.declare(metadata !{i8* %b.i}, metadata !16, metadata !{metadata !"0x102"}), !dbg !19
+  call void @llvm.dbg.declare(metadata !{i8* %b.i}, metadata !16, metadata !{i32 786690}), !dbg !19
   %call.i = call zeroext i1 @_Z1fv(), !dbg !19
   %frombool.i = zext i1 %call.i to i8, !dbg !19
   store i8 %frombool.i, i8* %b.i, align 1, !dbg !19
@@ -61,7 +61,7 @@ if.end.i:                                         ; preds = %entry
 
 _Z2f1v.exit:                                      ; preds = %if.then.i, %if.end.i
   %1 = load i32* %retval.i, !dbg !23
-  call void @llvm.dbg.declare(metadata !{i8* %b.i3}, metadata !24, metadata !{metadata !"0x102"}), !dbg !27
+  call void @llvm.dbg.declare(metadata !{i8* %b.i3}, metadata !24, metadata !{i32 786690}), !dbg !27
   %call.i4 = call zeroext i1 @_Z1fv(), !dbg !27
   %frombool.i5 = zext i1 %call.i4 to i8, !dbg !27
   store i8 %frombool.i5, i8* %b.i3, align 1, !dbg !27
@@ -95,33 +95,33 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !llvm.module.flags = !{!13, !14}
 !llvm.ident = !{!15}
 
-!0 = metadata !{metadata !"0x11\004\00clang version 3.5.0 \000\00\000\00\001", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/inline-scopes.cpp] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.5.0 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/inline-scopes.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"inline-scopes.cpp", metadata !"/tmp/dbginfo"}
 !2 = metadata !{}
 !3 = metadata !{metadata !4, metadata !10, metadata !12}
-!4 = metadata !{metadata !"0x2e\00main\00main\00\007\000\001\000\006\00256\000\007", metadata !5, metadata !6, metadata !7, null, i32 ()* @main, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 7] [def] [main]
+!4 = metadata !{i32 786478, metadata !5, metadata !6, metadata !"main", metadata !"main", metadata !"", i32 7, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 ()* @main, null, null, metadata !2, i32 7} ; [ DW_TAG_subprogram ] [line 7] [def] [main]
 !5 = metadata !{metadata !"y.cc", metadata !"/tmp/dbginfo"}
-!6 = metadata !{metadata !"0x29", metadata !5}          ; [ DW_TAG_file_type ] [/tmp/dbginfo/y.cc]
-!7 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!6 = metadata !{i32 786473, metadata !5}          ; [ DW_TAG_file_type ] [/tmp/dbginfo/y.cc]
+!7 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
-!9 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!10 = metadata !{metadata !"0x2e\00f2\00f2\00_Z2f2v\008\000\001\000\006\00256\000\008", metadata !1, metadata !11, metadata !7, null, null, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 8] [def] [f2]
-!11 = metadata !{metadata !"0x29", metadata !1}         ; [ DW_TAG_file_type ] [/tmp/dbginfo/inline-scopes.cpp]
-!12 = metadata !{metadata !"0x2e\00f1\00f1\00_Z2f1v\002\000\001\000\006\00256\000\002", metadata !1, metadata !11, metadata !7, null, null, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 2] [def] [f1]
+!9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!10 = metadata !{i32 786478, metadata !1, metadata !11, metadata !"f2", metadata !"f2", metadata !"_Z2f2v", i32 8, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, null, null, null, metadata !2, i32 8} ; [ DW_TAG_subprogram ] [line 8] [def] [f2]
+!11 = metadata !{i32 786473, metadata !1}         ; [ DW_TAG_file_type ] [/tmp/dbginfo/inline-scopes.cpp]
+!12 = metadata !{i32 786478, metadata !1, metadata !11, metadata !"f1", metadata !"f1", metadata !"_Z2f1v", i32 2, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, null, null, null, metadata !2, i32 2} ; [ DW_TAG_subprogram ] [line 2] [def] [f1]
 !13 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!14 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!14 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
 !15 = metadata !{metadata !"clang version 3.5.0 "}
-!16 = metadata !{metadata !"0x100\00b\003\000", metadata !17, metadata !11, metadata !18} ; [ DW_TAG_auto_variable ] [b] [line 3]
-!17 = metadata !{metadata !"0xb\003\000\001", metadata !1, metadata !12} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/inline-scopes.cpp]
-!18 = metadata !{metadata !"0x24\00bool\000\008\008\000\000\002", null, null} ; [ DW_TAG_base_type ] [bool] [line 0, size 8, align 8, offset 0, enc DW_ATE_boolean]
+!16 = metadata !{i32 786688, metadata !17, metadata !"b", metadata !11, i32 3, metadata !18, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [b] [line 3]
+!17 = metadata !{i32 786443, metadata !1, metadata !12, i32 3, i32 0, i32 1} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/inline-scopes.cpp]
+!18 = metadata !{i32 786468, null, null, metadata !"bool", i32 0, i64 8, i64 8, i64 0, i32 0, i32 2} ; [ DW_TAG_base_type ] [bool] [line 0, size 8, align 8, offset 0, enc DW_ATE_boolean]
 !19 = metadata !{i32 3, i32 0, metadata !17, metadata !20}
-!20 = metadata !{i32 8, i32 0, metadata !4, null}
+!20 = metadata !{i32 8, i32 0, metadata !4, null} ; [ DW_TAG_imported_declaration ]
 !21 = metadata !{i32 4, i32 0, metadata !17, metadata !20}
 !22 = metadata !{i32 5, i32 0, metadata !12, metadata !20}
 !23 = metadata !{i32 6, i32 0, metadata !12, metadata !20}
-!24 = metadata !{metadata !"0x100\00b\002\000", metadata !25, metadata !6, metadata !18} ; [ DW_TAG_auto_variable ] [b] [line 2]
-!25 = metadata !{metadata !"0xb\002\000\000", metadata !5, metadata !26} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/y.cc]
-!26 = metadata !{metadata !"0xb\000", metadata !5, metadata !10} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/y.cc]
+!24 = metadata !{i32 786688, metadata !25, metadata !"b", metadata !6, i32 2, metadata !18, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [b] [line 2]
+!25 = metadata !{i32 786443, metadata !5, metadata !26, i32 2, i32 0, i32 0} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/y.cc]
+!26 = metadata !{i32 786443, metadata !5, metadata !10, i32 0} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/y.cc]
 !27 = metadata !{i32 2, i32 0, metadata !25, metadata !28}
 !28 = metadata !{i32 9, i32 0, metadata !4, null}
 !29 = metadata !{i32 3, i32 0, metadata !25, metadata !28}

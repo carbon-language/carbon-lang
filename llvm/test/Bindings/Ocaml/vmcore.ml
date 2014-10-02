@@ -1358,7 +1358,7 @@ let test_builder () =
 (* End-of-file checks for things like metdata and attributes.
  * CHECK: attributes #0 = {{.*}}uwtable{{.*}}
  * CHECK: !llvm.module.flags = !{!0}
- * CHECK: !0 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+ * CHECK: !0 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
  * CHECK: !1 = metadata !{i32 1, metadata !"metadata test"}
  * CHECK: !2 = metadata !{i32 2, i32 3, metadata !3, metadata !3}
  *)

@@ -31,7 +31,7 @@ lpad:
 }
 
 !llvm.module.flags = !{!1}
-!1 = metadata !{i32 2, metadata !"Debug Info Version", i32 2}
+!1 = metadata !{i32 2, metadata !"Debug Info Version", i32 1}
 !2 = metadata !{}
 !3 = metadata !{i32 1, i32 0, metadata !2, null}
 !4 = metadata !{i32 2, i32 0, metadata !2, null}

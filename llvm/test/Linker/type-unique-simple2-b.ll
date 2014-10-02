@@ -22,7 +22,7 @@ define void @_ZN1A6setFooEv(%class.A* %this) unnamed_addr #0 align 2 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !32, metadata !{metadata !"0x102"}), !dbg !34
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !32, metadata !{i32 786690}), !dbg !34
   %this1 = load %class.A** %this.addr
   ret void, !dbg !35
 }
@@ -35,7 +35,7 @@ define i32 @_ZN1A6getFooEv(%class.A* %this) unnamed_addr #0 align 2 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !36, metadata !{metadata !"0x102"}), !dbg !37
+  call void @llvm.dbg.declare(metadata !{%class.A** %this.addr}, metadata !36, metadata !{i32 786690}), !dbg !37
   %this1 = load %class.A** %this.addr
   ret i32 1, !dbg !38
 }
@@ -47,42 +47,42 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!29, !30}
 !llvm.ident = !{!31}
 
-!0 = metadata !{metadata !"0x11\004\00clang version 3.5 \000\00\000\00\000", metadata !1, metadata !2, metadata !3, metadata !25, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/<unknown>] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.5 ", i1 false, metadata !"", i32 0, metadata !2, metadata !3, metadata !25, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/<unknown>] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"<unknown>", metadata !""}
 !2 = metadata !{}
 !3 = metadata !{metadata !4}
-!4 = metadata !{metadata !"0x2\00A\002\0064\0064\000\000\000", metadata !5, null, null, metadata !6, metadata !"_ZTS1A", null, metadata !"_ZTS1A"} ; [ DW_TAG_class_type ] [A] [line 2, size 64, align 64, offset 0] [def] [from ]
+!4 = metadata !{i32 786434, metadata !5, null, metadata !"A", i32 2, i64 64, i64 64, i32 0, i32 0, null, metadata !6, i32 0, metadata !"_ZTS1A", null, metadata !"_ZTS1A"} ; [ DW_TAG_class_type ] [A] [line 2, size 64, align 64, offset 0] [def] [from ]
 !5 = metadata !{metadata !"./ab.h", metadata !""}
 !6 = metadata !{metadata !7, metadata !14, metadata !19}
-!7 = metadata !{metadata !"0xd\00_vptr$A\000\0064\000\000\0064", metadata !5, metadata !8, metadata !9} ; [ DW_TAG_member ] [_vptr$A] [line 0, size 64, align 0, offset 0] [artificial] [from ]
-!8 = metadata !{metadata !"0x29", metadata !5}          ; [ DW_TAG_file_type ] [/./ab.h]
-!9 = metadata !{metadata !"0xf\00\000\0064\000\000\000", null, null, metadata !10} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 0, offset 0] [from __vtbl_ptr_type]
-!10 = metadata !{metadata !"0xf\00__vtbl_ptr_type\000\0064\000\000\000", null, null, metadata !11} ; [ DW_TAG_pointer_type ] [__vtbl_ptr_type] [line 0, size 64, align 0, offset 0] [from ]
-!11 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !12, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = metadata !{i32 786445, metadata !5, metadata !8, metadata !"_vptr$A", i32 0, i64 64, i64 0, i64 0, i32 64, metadata !9} ; [ DW_TAG_member ] [_vptr$A] [line 0, size 64, align 0, offset 0] [artificial] [from ]
+!8 = metadata !{i32 786473, metadata !5}          ; [ DW_TAG_file_type ] [/./ab.h]
+!9 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 0, i64 0, i32 0, metadata !10} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 0, offset 0] [from __vtbl_ptr_type]
+!10 = metadata !{i32 786447, null, null, metadata !"__vtbl_ptr_type", i32 0, i64 64, i64 0, i64 0, i32 0, metadata !11} ; [ DW_TAG_pointer_type ] [__vtbl_ptr_type] [line 0, size 64, align 0, offset 0] [from ]
+!11 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !12, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !12 = metadata !{metadata !13}
-!13 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!14 = metadata !{metadata !"0x2e\00setFoo\00setFoo\00_ZN1A6setFooEv\004\000\000\001\006\00259\000\004", metadata !5, metadata !"_ZTS1A", metadata !15, metadata !"_ZTS1A", null, null, i32 0, metadata !18} ; [ DW_TAG_subprogram ] [line 4] [setFoo]
-!15 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !16, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!13 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!14 = metadata !{i32 786478, metadata !5, metadata !"_ZTS1A", metadata !"setFoo", metadata !"setFoo", metadata !"_ZN1A6setFooEv", i32 4, metadata !15, i1 false, i1 false, i32 1, i32 0, metadata !"_ZTS1A", i32 259, i1 false, null, null, i32 0, metadata !18, i32 4} ; [ DW_TAG_subprogram ] [line 4] [setFoo]
+!15 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !16, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !16 = metadata !{null, metadata !17}
-!17 = metadata !{metadata !"0xf\00\000\0064\0064\000\001088", null, null, metadata !"_ZTS1A"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1A]
+!17 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 1088, metadata !"_ZTS1A"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1A]
 !18 = metadata !{i32 786468}
-!19 = metadata !{metadata !"0x2e\00getFoo\00getFoo\00_ZN1A6getFooEv\005\000\000\001\006\00259\000\005", metadata !5, metadata !"_ZTS1A", metadata !20, metadata !"_ZTS1A", null, null, i32 0, metadata !24} ; [ DW_TAG_subprogram ] [line 5] [getFoo]
-!20 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !21, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!19 = metadata !{i32 786478, metadata !5, metadata !"_ZTS1A", metadata !"getFoo", metadata !"getFoo", metadata !"_ZN1A6getFooEv", i32 5, metadata !20, i1 false, i1 false, i32 1, i32 1, metadata !"_ZTS1A", i32 259, i1 false, null, null, i32 0, metadata !24, i32 5} ; [ DW_TAG_subprogram ] [line 5] [getFoo]
+!20 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !21, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !21 = metadata !{metadata !22, metadata !17}
-!22 = metadata !{metadata !"0x26\00\000\000\000\000\000", null, null, metadata !23} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from foo_t]
-!23 = metadata !{metadata !"0x16\00foo_t\001\000\000\000\000", metadata !5, null, metadata !13} ; [ DW_TAG_typedef ] [foo_t] [line 1, size 0, align 0, offset 0] [from int]
+!22 = metadata !{i32 786470, null, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, metadata !23} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from foo_t]
+!23 = metadata !{i32 786454, metadata !5, null, metadata !"foo_t", i32 1, i64 0, i64 0, i64 0, i32 0, metadata !13} ; [ DW_TAG_typedef ] [foo_t] [line 1, size 0, align 0, offset 0] [from int]
 !24 = metadata !{i32 786468}
 !25 = metadata !{metadata !26, metadata !28}
-!26 = metadata !{metadata !"0x2e\00setFoo\00setFoo\00_ZN1A6setFooEv\002\000\001\000\006\00259\000\002", metadata !27, metadata !"_ZTS1A", metadata !15, null, void (%class.A*)* @_ZN1A6setFooEv, null, metadata !14, metadata !2} ; [ DW_TAG_subprogram ] [line 2] [def] [setFoo]
+!26 = metadata !{i32 786478, metadata !27, metadata !"_ZTS1A", metadata !"setFoo", metadata !"setFoo", metadata !"_ZN1A6setFooEv", i32 2, metadata !15, i1 false, i1 true, i32 0, i32 0, null, i32 259, i1 false, void (%class.A*)* @_ZN1A6setFooEv, null, metadata !14, metadata !2, i32 2} ; [ DW_TAG_subprogram ] [line 2] [def] [setFoo]
 !27 = metadata !{metadata !"b.cpp", metadata !""}
-!28 = metadata !{metadata !"0x2e\00getFoo\00getFoo\00_ZN1A6getFooEv\004\000\001\000\006\00259\000\004", metadata !27, metadata !"_ZTS1A", metadata !20, null, i32 (%class.A*)* @_ZN1A6getFooEv, null, metadata !19, metadata !2} ; [ DW_TAG_subprogram ] [line 4] [def] [getFoo]
+!28 = metadata !{i32 786478, metadata !27, metadata !"_ZTS1A", metadata !"getFoo", metadata !"getFoo", metadata !"_ZN1A6getFooEv", i32 4, metadata !20, i1 false, i1 true, i32 0, i32 0, null, i32 259, i1 false, i32 (%class.A*)* @_ZN1A6getFooEv, null, metadata !19, metadata !2, i32 4} ; [ DW_TAG_subprogram ] [line 4] [def] [getFoo]
 !29 = metadata !{i32 2, metadata !"Dwarf Version", i32 2}
-!30 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!30 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
 !31 = metadata !{metadata !"clang version 3.5 "}
-!32 = metadata !{metadata !"0x101\00this\0016777216\001088", metadata !26, null, metadata !33} ; [ DW_TAG_arg_variable ] [this] [line 0]
-!33 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !"_ZTS1A"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS1A]
+!32 = metadata !{i32 786689, metadata !26, metadata !"this", null, i32 16777216, metadata !33, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [this] [line 0]
+!33 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !"_ZTS1A"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS1A]
 !34 = metadata !{i32 0, i32 0, metadata !26, null}
 !35 = metadata !{i32 2, i32 0, metadata !26, null}
-!36 = metadata !{metadata !"0x101\00this\0016777216\001088", metadata !28, null, metadata !33} ; [ DW_TAG_arg_variable ] [this] [line 0]
+!36 = metadata !{i32 786689, metadata !28, metadata !"this", null, i32 16777216, metadata !33, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [this] [line 0]
 !37 = metadata !{i32 0, i32 0, metadata !28, null}
 !38 = metadata !{i32 4, i32 0, metadata !28, null}

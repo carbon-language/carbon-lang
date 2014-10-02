@@ -8,4 +8,6 @@ define void @foo(i32 addrspace(1)*) nounwind {
 
 ; Make sure the pointer size is 16
 
-; CHECK: metadata !"0xf\00i32 addrspace(1)*\000\0016\002\000\000"
+; CHECK: metadata !"i32 addrspace(1)*", i32 0, i64 16, i64 2, i64 0, i32 0
+
+

@@ -64,7 +64,7 @@ define i32 @_Z3bari(i32 %b) #0 {
 entry:
   %b.addr = alloca i32, align 4
   store i32 %b, i32* %b.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %b.addr}, metadata !21, metadata !{metadata !"0x102"}), !dbg !22
+  call void @llvm.dbg.declare(metadata !{i32* %b.addr}, metadata !21, metadata !{i32 786690}), !dbg !22
   %0 = load i32* %b.addr, align 4, !dbg !23
   %add = add nsw i32 %0, 4, !dbg !23
   ret i32 %add, !dbg !23
@@ -76,8 +76,8 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 define void @_Z3baz1A(%struct.A* %a) #2 {
 entry:
   %z = alloca i32, align 4
-  call void @llvm.dbg.declare(metadata !{%struct.A* %a}, metadata !24, metadata !{metadata !"0x102"}), !dbg !25
-  call void @llvm.dbg.declare(metadata !{i32* %z}, metadata !26, metadata !{metadata !"0x102"}), !dbg !27
+  call void @llvm.dbg.declare(metadata !{%struct.A* %a}, metadata !24, metadata !{i32 786690}), !dbg !25
+  call void @llvm.dbg.declare(metadata !{i32* %z}, metadata !26, metadata !{i32 786690}), !dbg !27
   store i32 2, i32* %z, align 4, !dbg !27
   %var = getelementptr inbounds %struct.A* %a, i32 0, i32 1, !dbg !28
   %0 = load i32* %var, align 4, !dbg !28
@@ -116,38 +116,38 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !llvm.module.flags = !{!18, !19}
 !llvm.ident = !{!20, !20}
 
-!0 = metadata !{metadata !"0x11\004\00clang version 3.5.0 (210479)\000\00\000\00\001", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/llvm_cmake_gcc/debug-loc-offset1.cc] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.5.0 (210479)", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [/llvm_cmake_gcc/debug-loc-offset1.cc] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"debug-loc-offset1.cc", metadata !"/llvm_cmake_gcc"}
 !2 = metadata !{}
 !3 = metadata !{metadata !4}
-!4 = metadata !{metadata !"0x2e\00bar\00bar\00_Z3bari\001\000\001\000\006\00256\000\001", metadata !1, metadata !5, metadata !6, null, i32 (i32)* @_Z3bari, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 1] [def] [bar]
-!5 = metadata !{metadata !"0x29", metadata !1}          ; [ DW_TAG_file_type ] [/llvm_cmake_gcc/debug-loc-offset1.cc]
-!6 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = metadata !{i32 786478, metadata !1, metadata !5, metadata !"bar", metadata !"bar", metadata !"_Z3bari", i32 1, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @_Z3bari, null, null, metadata !2, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [bar]
+!5 = metadata !{i32 786473, metadata !1}          ; [ DW_TAG_file_type ] [/llvm_cmake_gcc/debug-loc-offset1.cc]
+!6 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !7, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !7 = metadata !{metadata !8, metadata !8}
-!8 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!9 = metadata !{metadata !"0x11\004\00clang version 3.5.0 (210479)\000\00\000\00\001", metadata !10, metadata !2, metadata !11, metadata !13, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/llvm_cmake_gcc/debug-loc-offset2.cc] [DW_LANG_C_plus_plus]
+!8 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = metadata !{i32 786449, metadata !10, i32 4, metadata !"clang version 3.5.0 (210479)", i1 false, metadata !"", i32 0, metadata !2, metadata !11, metadata !13, metadata !2, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [/llvm_cmake_gcc/debug-loc-offset2.cc] [DW_LANG_C_plus_plus]
 !10 = metadata !{metadata !"debug-loc-offset2.cc", metadata !"/llvm_cmake_gcc"}
 !11 = metadata !{metadata !12}
-!12 = metadata !{metadata !"0x13\00A\001\000\000\000\004\000", metadata !10, null, null, null, null, null, metadata !"_ZTS1A"} ; [ DW_TAG_structure_type ] [A] [line 1, size 0, align 0, offset 0] [decl] [from ]
+!12 = metadata !{i32 786451, metadata !10, null, metadata !"A", i32 1, i64 0, i64 0, i32 0, i32 4, null, null, i32 0, null, null, metadata !"_ZTS1A"} ; [ DW_TAG_structure_type ] [A] [line 1, size 0, align 0, offset 0] [decl] [from ]
 !13 = metadata !{metadata !14}
-!14 = metadata !{metadata !"0x2e\00baz\00baz\00_Z3baz1A\006\000\001\000\006\00256\000\006", metadata !10, metadata !15, metadata !16, null, void (%struct.A*)* @_Z3baz1A, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 6] [def] [baz]
-!15 = metadata !{metadata !"0x29", metadata !10}        ; [ DW_TAG_file_type ] [/llvm_cmake_gcc/debug-loc-offset2.cc]
-!16 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !17, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!14 = metadata !{i32 786478, metadata !10, metadata !15, metadata !"baz", metadata !"baz", metadata !"_Z3baz1A", i32 6, metadata !16, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%struct.A*)* @_Z3baz1A, null, null, metadata !2, i32 6} ; [ DW_TAG_subprogram ] [line 6] [def] [baz]
+!15 = metadata !{i32 786473, metadata !10}        ; [ DW_TAG_file_type ] [/llvm_cmake_gcc/debug-loc-offset2.cc]
+!16 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !17, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !17 = metadata !{null, metadata !12}
 !18 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!19 = metadata !{i32 2, metadata !"Debug Info Version", i32 2}
+!19 = metadata !{i32 2, metadata !"Debug Info Version", i32 1}
 !20 = metadata !{metadata !"clang version 3.5.0 (210479)"}
-!21 = metadata !{metadata !"0x101\00b\0016777217\000", metadata !4, metadata !5, metadata !8} ; [ DW_TAG_arg_variable ] [b] [line 1]
+!21 = metadata !{i32 786689, metadata !4, metadata !"b", metadata !5, i32 16777217, metadata !8, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [b] [line 1]
 !22 = metadata !{i32 1, i32 0, metadata !4, null}
 !23 = metadata !{i32 2, i32 0, metadata !4, null}
-!24 = metadata !{metadata !"0x101\00a\0016777222\008192", metadata !14, metadata !15, metadata !"_ZTS1A"} ; [ DW_TAG_arg_variable ] [a] [line 6]
+!24 = metadata !{i32 786689, metadata !14, metadata !"a", metadata !15, i32 16777222, metadata !"_ZTS1A", i32 8192, i32 0} ; [ DW_TAG_arg_variable ] [a] [line 6]
 !25 = metadata !{i32 6, i32 0, metadata !14, null}
-!26 = metadata !{metadata !"0x100\00z\007\000", metadata !14, metadata !15, metadata !8} ; [ DW_TAG_auto_variable ] [z] [line 7]
+!26 = metadata !{i32 786688, metadata !14, metadata !"z", metadata !15, i32 7, metadata !8, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [z] [line 7]
 !27 = metadata !{i32 7, i32 0, metadata !14, null}
-!28 = metadata !{i32 8, i32 0, metadata !29, null}
-!29 = metadata !{metadata !"0xb\008\000\000", metadata !10, metadata !14} ; [ DW_TAG_lexical_block ] [/llvm_cmake_gcc/debug-loc-offset2.cc]
+!28 = metadata !{i32 8, i32 0, metadata !29, null} ; [ DW_TAG_imported_declaration ]
+!29 = metadata !{i32 786443, metadata !10, metadata !14, i32 8, i32 0, i32 0, i32 0} ; [ DW_TAG_lexical_block ] [/llvm_cmake_gcc/debug-loc-offset2.cc]
 !30 = metadata !{i32 9, i32 0, metadata !29, null}
 !31 = metadata !{i32 10, i32 0, metadata !32, null}
-!32 = metadata !{metadata !"0xb\0010\000\000", metadata !10, metadata !14} ; [ DW_TAG_lexical_block ] [/llvm_cmake_gcc/debug-loc-offset2.cc]
+!32 = metadata !{i32 786443, metadata !10, metadata !14, i32 10, i32 0, i32 0, i32 1} ; [ DW_TAG_lexical_block ] [/llvm_cmake_gcc/debug-loc-offset2.cc]
 !33 = metadata !{i32 11, i32 0, metadata !32, null}
 !34 = metadata !{i32 12, i32 0, metadata !14, null}

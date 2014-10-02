@@ -138,10 +138,8 @@ void DIDescriptor::replaceFunctionField(unsigned Elt, Function *F) {
   }
 }
 
-static unsigned DIVariableInlinedAtIndex = 4;
-MDNode *DIVariable::getInlinedAt() const {
-  return getNodeField(DbgNode, DIVariableInlinedAtIndex);
-}
+/// getInlinedAt - If this variable is inlined then return inline location.
+MDNode *DIVariable::getInlinedAt() const { return getNodeField(DbgNode, 7); }
 
 /// Return the size reported by the variable's type.
 unsigned DIVariable::getSizeInBits(const DITypeIdentifierMap &Map) {
@@ -158,9 +156,12 @@ unsigned DIVariable::getSizeInBits(const DITypeIdentifierMap &Map) {
 
 uint64_t DIExpression::getElement(unsigned Idx) const {
   unsigned I = Idx + 1;
-  assert(I < getNumHeaderFields() &&
-         "non-existing complex address element requested");
-  return getHeaderFieldAs<int64_t>(I);
+  if (I < DbgNode->getNumOperands())
+    if (auto *CI = dyn_cast_or_null<ConstantInt>(DbgNode->getOperand(I)))
+      return CI->getZExtValue();
+
+  assert(false && "non-existing complex address element requested");
+  return 0;
 }
 
 bool DIExpression::isVariablePiece() const {
@@ -322,13 +323,13 @@ bool DIDescriptor::isNameSpace() const {
 /// lexical block with an extra file.
 bool DIDescriptor::isLexicalBlockFile() const {
   return DbgNode && getTag() == dwarf::DW_TAG_lexical_block &&
-         DbgNode->getNumOperands() == 3 && getNumHeaderFields() == 2;
+         (DbgNode->getNumOperands() == 4);
 }
 
 /// isLexicalBlock - Return true if the specified tag is DW_TAG_lexical_block.
 bool DIDescriptor::isLexicalBlock() const {
   return DbgNode && getTag() == dwarf::DW_TAG_lexical_block &&
-         DbgNode->getNumOperands() == 3 && getNumHeaderFields() == 4;
+         (DbgNode->getNumOperands() > 3);
 }
 
 /// isSubrange - Return true if the specified tag is DW_TAG_subrange_type.
@@ -412,7 +413,7 @@ bool DICompileUnit::Verify() const {
   if (getFilename().empty())
     return false;
 
-  return DbgNode->getNumOperands() == 7 && getNumHeaderFields() == 8;
+  return DbgNode->getNumOperands() == 14;
 }
 
 /// Verify - Verify that an ObjC property is well formed.
@@ -421,7 +422,7 @@ bool DIObjCProperty::Verify() const {
     return false;
 
   // Don't worry about the rest of the strings for now.
-  return DbgNode->getNumOperands() == 3 && getNumHeaderFields() == 6;
+  return DbgNode->getNumOperands() == 8;
 }
 
 /// Check if a field at position Elt of a MDNode is a MDNode.
@@ -506,23 +507,21 @@ bool DIType::Verify() const {
 
 /// Verify - Verify that a basic type descriptor is well formed.
 bool DIBasicType::Verify() const {
-  return isBasicType() && DbgNode->getNumOperands() == 3 &&
-         getNumHeaderFields() == 8;
+  return isBasicType() && DbgNode->getNumOperands() == 10;
 }
 
 /// Verify - Verify that a derived type descriptor is well formed.
 bool DIDerivedType::Verify() const {
-  // Make sure DerivedFrom @ field 3 is TypeRef.
-  if (!fieldIsTypeRef(DbgNode, 3))
+  // Make sure DerivedFrom @ field 9 is TypeRef.
+  if (!fieldIsTypeRef(DbgNode, 9))
     return false;
   if (getTag() == dwarf::DW_TAG_ptr_to_member_type)
-    // Make sure ClassType @ field 4 is a TypeRef.
-    if (!fieldIsTypeRef(DbgNode, 4))
+    // Make sure ClassType @ field 10 is a TypeRef.
+    if (!fieldIsTypeRef(DbgNode, 10))
       return false;
 
-  return isDerivedType() && DbgNode->getNumOperands() >= 4 &&
-         DbgNode->getNumOperands() <= 8 && getNumHeaderFields() >= 7 &&
-         getNumHeaderFields() <= 8;
+  return isDerivedType() && DbgNode->getNumOperands() >= 10 &&
+         DbgNode->getNumOperands() <= 14;
 }
 
 /// Verify - Verify that a composite type descriptor is well formed.
@@ -530,21 +529,21 @@ bool DICompositeType::Verify() const {
   if (!isCompositeType())
     return false;
 
-  // Make sure DerivedFrom @ field 3 and ContainingType @ field 5 are TypeRef.
-  if (!fieldIsTypeRef(DbgNode, 3))
+  // Make sure DerivedFrom @ field 9 and ContainingType @ field 12 are TypeRef.
+  if (!fieldIsTypeRef(DbgNode, 9))
     return false;
-  if (!fieldIsTypeRef(DbgNode, 5))
+  if (!fieldIsTypeRef(DbgNode, 12))
     return false;
 
-  // Make sure the type identifier at field 7 is MDString, it can be null.
-  if (!fieldIsMDString(DbgNode, 7))
+  // Make sure the type identifier at field 14 is MDString, it can be null.
+  if (!fieldIsMDString(DbgNode, 14))
     return false;
 
   // A subroutine type can't be both & and &&.
   if (isLValueReference() && isRValueReference())
     return false;
 
-  return DbgNode->getNumOperands() == 8 && getNumHeaderFields() == 8;
+  return DbgNode->getNumOperands() == 15;
 }
 
 /// Verify - Verify that a subprogram descriptor is well formed.
@@ -552,20 +551,20 @@ bool DISubprogram::Verify() const {
   if (!isSubprogram())
     return false;
 
-  // Make sure context @ field 2 is a ScopeRef and type @ field 3 is a MDNode.
+  // Make sure context @ field 2 is a ScopeRef and type @ field 7 is a MDNode.
   if (!fieldIsScopeRef(DbgNode, 2))
     return false;
-  if (!fieldIsMDNode(DbgNode, 3))
+  if (!fieldIsMDNode(DbgNode, 7))
     return false;
-  // Containing type @ field 4.
-  if (!fieldIsTypeRef(DbgNode, 4))
+  // Containing type @ field 12.
+  if (!fieldIsTypeRef(DbgNode, 12))
     return false;
 
   // A subprogram can't be both & and &&.
   if (isLValueReference() && isRValueReference())
     return false;
 
-  return DbgNode->getNumOperands() == 9 && getNumHeaderFields() == 12;
+  return DbgNode->getNumOperands() == 20;
 }
 
 /// Verify - Verify that a global variable descriptor is well formed.
@@ -575,17 +574,17 @@ bool DIGlobalVariable::Verify() const {
 
   if (getDisplayName().empty())
     return false;
-  // Make sure context @ field 1 is an MDNode.
-  if (!fieldIsMDNode(DbgNode, 1))
+  // Make sure context @ field 2 is an MDNode.
+  if (!fieldIsMDNode(DbgNode, 2))
     return false;
-  // Make sure that type @ field 3 is a DITypeRef.
-  if (!fieldIsTypeRef(DbgNode, 3))
+  // Make sure that type @ field 8 is a DITypeRef.
+  if (!fieldIsTypeRef(DbgNode, 8))
     return false;
-  // Make sure StaticDataMemberDeclaration @ field 5 is MDNode.
-  if (!fieldIsMDNode(DbgNode, 5))
+  // Make sure StaticDataMemberDeclaration @ field 12 is MDNode.
+  if (!fieldIsMDNode(DbgNode, 12))
     return false;
 
-  return DbgNode->getNumOperands() == 6 && getNumHeaderFields() == 7;
+  return DbgNode->getNumOperands() == 13;
 }
 
 /// Verify - Verify that a variable descriptor is well formed.
@@ -596,21 +595,15 @@ bool DIVariable::Verify() const {
   // Make sure context @ field 1 is an MDNode.
   if (!fieldIsMDNode(DbgNode, 1))
     return false;
-  // Make sure that type @ field 3 is a DITypeRef.
-  if (!fieldIsTypeRef(DbgNode, 3))
-    return false;
-
-  // Check the number of header fields, which is common between complex and
-  // simple variables.
-  if (getNumHeaderFields() != 4)
+  // Make sure that type @ field 5 is a DITypeRef.
+  if (!fieldIsTypeRef(DbgNode, 5))
     return false;
 
   // Variable without an inline location.
-  if (DbgNode->getNumOperands() == 4)
+  if (DbgNode->getNumOperands() == 7)
     return true;
 
-  // Variable with an inline location.
-  return getInlinedAt() != nullptr && DbgNode->getNumOperands() == 5;
+  return DbgNode->getNumOperands() == 8;
 }
 
 /// Verify - Verify that a variable descriptor is well formed.
@@ -619,7 +612,7 @@ bool DIExpression::Verify() const {
   if (!DbgNode)
     return true;
 
-  return isExpression() && DbgNode->getNumOperands() == 1;
+  return isExpression();
 }
 
 /// Verify - Verify that a location descriptor is well formed.
@@ -634,7 +627,7 @@ bool DILocation::Verify() const {
 bool DINameSpace::Verify() const {
   if (!isNameSpace())
     return false;
-  return DbgNode->getNumOperands() == 3 && getNumHeaderFields() == 3;
+  return DbgNode->getNumOperands() == 5;
 }
 
 /// \brief Retrieve the MDNode for the directory/file pair.
@@ -647,53 +640,47 @@ bool DIFile::Verify() const {
 
 /// \brief Verify that the enumerator descriptor is well formed.
 bool DIEnumerator::Verify() const {
-  return isEnumerator() && DbgNode->getNumOperands() == 1 &&
-         getNumHeaderFields() == 3;
+  return isEnumerator() && DbgNode->getNumOperands() == 3;
 }
 
 /// \brief Verify that the subrange descriptor is well formed.
 bool DISubrange::Verify() const {
-  return isSubrange() && DbgNode->getNumOperands() == 1 &&
-         getNumHeaderFields() == 3;
+  return isSubrange() && DbgNode->getNumOperands() == 3;
 }
 
 /// \brief Verify that the lexical block descriptor is well formed.
 bool DILexicalBlock::Verify() const {
-  return isLexicalBlock() && DbgNode->getNumOperands() == 3 &&
-         getNumHeaderFields() == 4;
+  return isLexicalBlock() && DbgNode->getNumOperands() == 6;
 }
 
 /// \brief Verify that the file-scoped lexical block descriptor is well formed.
 bool DILexicalBlockFile::Verify() const {
-  return isLexicalBlockFile() && DbgNode->getNumOperands() == 3 &&
-         getNumHeaderFields() == 2;
+  return isLexicalBlockFile() && DbgNode->getNumOperands() == 4;
 }
 
 /// \brief Verify that the template type parameter descriptor is well formed.
 bool DITemplateTypeParameter::Verify() const {
-  return isTemplateTypeParameter() && DbgNode->getNumOperands() == 4 &&
-         getNumHeaderFields() == 4;
+  return isTemplateTypeParameter() && DbgNode->getNumOperands() == 7;
 }
 
 /// \brief Verify that the template value parameter descriptor is well formed.
 bool DITemplateValueParameter::Verify() const {
-  return isTemplateValueParameter() && DbgNode->getNumOperands() == 5 &&
-         getNumHeaderFields() == 4;
+  return isTemplateValueParameter() && DbgNode->getNumOperands() == 8;
 }
 
 /// \brief Verify that the imported module descriptor is well formed.
 bool DIImportedEntity::Verify() const {
-  return isImportedEntity() && DbgNode->getNumOperands() == 3 &&
-         getNumHeaderFields() == 3;
+  return isImportedEntity() &&
+         (DbgNode->getNumOperands() == 4 || DbgNode->getNumOperands() == 5);
 }
 
 /// getObjCProperty - Return property node, if this ivar is associated with one.
 MDNode *DIDerivedType::getObjCProperty() const {
-  return getNodeField(DbgNode, 4);
+  return getNodeField(DbgNode, 10);
 }
 
 MDString *DICompositeType::getIdentifier() const {
-  return cast_or_null<MDString>(getField(DbgNode, 7));
+  return cast_or_null<MDString>(getField(DbgNode, 14));
 }
 
 #ifndef NDEBUG
@@ -717,13 +704,13 @@ void DICompositeType::setArraysHelper(MDNode *Elements, MDNode *TParams) {
   if (Elements) {
 #ifndef NDEBUG
     // Check that the new list of members contains all the old members as well.
-    if (const MDNode *El = cast_or_null<MDNode>(N->getOperand(4)))
+    if (const MDNode *El = cast_or_null<MDNode>(N->getOperand(10)))
       VerifySubsetOf(El, Elements);
 #endif
-    N->replaceOperandWith(4, Elements);
+    N->replaceOperandWith(10, Elements);
   }
   if (TParams)
-    N->replaceOperandWith(6, TParams);
+    N->replaceOperandWith(13, TParams);
   DbgNode = N;
 }
 
@@ -741,7 +728,7 @@ DIScopeRef DIScope::getRef() const {
 /// \brief Set the containing type.
 void DICompositeType::setContainingType(DICompositeType ContainingType) {
   TrackingVH<MDNode> N(*this);
-  N->replaceOperandWith(5, ContainingType.getRef());
+  N->replaceOperandWith(12, ContainingType.getRef());
   DbgNode = N;
 }
 
@@ -770,16 +757,23 @@ bool DISubprogram::describes(const Function *F) {
   return false;
 }
 
+unsigned DISubprogram::isOptimized() const {
+  assert(DbgNode && "Invalid subprogram descriptor!");
+  if (DbgNode->getNumOperands() == 15)
+    return getUnsignedField(14);
+  return 0;
+}
+
 MDNode *DISubprogram::getVariablesNodes() const {
-  return getNodeField(DbgNode, 8);
+  return getNodeField(DbgNode, 18);
 }
 
 DIArray DISubprogram::getVariables() const {
-  return DIArray(getNodeField(DbgNode, 8));
+  return DIArray(getNodeField(DbgNode, 18));
 }
 
 Value *DITemplateValueParameter::getValue() const {
-  return getField(DbgNode, 3);
+  return getField(DbgNode, 4);
 }
 
 // If the current node has a parent scope then return that,
@@ -832,38 +826,38 @@ StringRef DIScope::getDirectory() const {
 }
 
 DIArray DICompileUnit::getEnumTypes() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 7)
+  if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  return DIArray(getNodeField(DbgNode, 2));
+  return DIArray(getNodeField(DbgNode, 7));
 }
 
 DIArray DICompileUnit::getRetainedTypes() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 7)
+  if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  return DIArray(getNodeField(DbgNode, 3));
+  return DIArray(getNodeField(DbgNode, 8));
 }
 
 DIArray DICompileUnit::getSubprograms() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 7)
+  if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  return DIArray(getNodeField(DbgNode, 4));
+  return DIArray(getNodeField(DbgNode, 9));
 }
 
 DIArray DICompileUnit::getGlobalVariables() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 7)
+  if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  return DIArray(getNodeField(DbgNode, 5));
+  return DIArray(getNodeField(DbgNode, 10));
 }
 
 DIArray DICompileUnit::getImportedEntities() const {
-  if (!DbgNode || DbgNode->getNumOperands() < 7)
+  if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  return DIArray(getNodeField(DbgNode, 6));
+  return DIArray(getNodeField(DbgNode, 11));
 }
 
 /// copyWithNewScope - Return a copy of this location, replacing the
@@ -936,35 +930,21 @@ NamedMDNode *llvm::getOrInsertFnSpecificMDNode(Module &M, DISubprogram Fn) {
 /// @param InlinedScope  Location at current variable is inlined.
 DIVariable llvm::createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
                                        LLVMContext &VMContext) {
-  assert(DIVariable(DV).Verify() && "Expected a DIVariable");
-  if (!InlinedScope)
-    return cleanseInlinedVariable(DV, VMContext);
-
-  // Insert inlined scope.
-  SmallVector<Value *, 8> Elts;
-  for (unsigned I = 0, E = DIVariableInlinedAtIndex; I != E; ++I)
-    Elts.push_back(DV->getOperand(I));
-  Elts.push_back(InlinedScope);
-
-  DIVariable Inlined(MDNode::get(VMContext, Elts));
-  assert(Inlined.Verify() && "Expected to create a DIVariable");
-  return Inlined;
+  SmallVector<Value *, 16> Elts;
+  // Insert inlined scope as 7th element.
+  for (unsigned i = 0, e = DV->getNumOperands(); i != e; ++i)
+    i == 7 ? Elts.push_back(InlinedScope) : Elts.push_back(DV->getOperand(i));
+  return DIVariable(MDNode::get(VMContext, Elts));
 }
 
 /// cleanseInlinedVariable - Remove inlined scope from the variable.
 DIVariable llvm::cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext) {
-  assert(DIVariable(DV).Verify() && "Expected a DIVariable");
-  if (!DIVariable(DV).getInlinedAt())
-    return DIVariable(DV);
-
-  // Remove inlined scope.
-  SmallVector<Value *, 8> Elts;
-  for (unsigned I = 0, E = DIVariableInlinedAtIndex; I != E; ++I)
-    Elts.push_back(DV->getOperand(I));
-
-  DIVariable Cleansed(MDNode::get(VMContext, Elts));
-  assert(Cleansed.Verify() && "Expected to create a DIVariable");
-  return Cleansed;
+  SmallVector<Value *, 16> Elts;
+  // Insert inlined scope as 7th element.
+  for (unsigned i = 0, e = DV->getNumOperands(); i != e; ++i)
+    i == 7 ? Elts.push_back(Constant::getNullValue(Type::getInt32Ty(VMContext)))
+           : Elts.push_back(DV->getOperand(i));
+  return DIVariable(MDNode::get(VMContext, Elts));
 }
 
 /// getDISubprogram - Find subprogram that is enclosing this scope.

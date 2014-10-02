@@ -39,7 +39,7 @@
 define void @_Z4funcv() #0 {
 entry:
   %b = alloca i32, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %b}, metadata !20, metadata !{metadata !"0x102"}), !dbg !22
+  call void @llvm.dbg.declare(metadata !{i32* %b}, metadata !20, metadata !{i32 786690}), !dbg !22
   store i32 0, i32* %b, align 4, !dbg !22
   ret void, !dbg !23
 }
@@ -53,28 +53,28 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!19, !24}
 
-!0 = metadata !{metadata !"0x11\004\00clang version 3.4 \000\00\000\00\000", metadata !1, metadata !2, metadata !11, metadata !12, metadata !17, metadata !11} ; [ DW_TAG_compile_unit ] [/tmp/enum.cpp] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !11, metadata !12, metadata !17, metadata !11, metadata !""} ; [ DW_TAG_compile_unit ] [/tmp/enum.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"enum.cpp", metadata !"/tmp"}
 !2 = metadata !{metadata !3, metadata !8}
-!3 = metadata !{metadata !"0x4\00e1\001\0064\0064\000\000\000", metadata !1, null, null, metadata !4, null, null, null} ; [ DW_TAG_enumeration_type ] [e1] [line 1, size 64, align 64, offset 0] [def] [from ]
+!3 = metadata !{i32 786436, metadata !1, null, metadata !"e1", i32 1, i64 64, i64 64, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_enumeration_type ] [e1] [line 1, size 64, align 64, offset 0] [def] [from ]
 !4 = metadata !{metadata !5, metadata !6, metadata !7}
-!5 = metadata !{metadata !"0x28\00I\000"} ; [ DW_TAG_enumerator ] [I :: 0]
-!6 = metadata !{metadata !"0x28\00J\004294967295"} ; [ DW_TAG_enumerator ] [J :: 4294967295]
-!7 = metadata !{metadata !"0x28\00K\00-1152921504606846976"} ; [ DW_TAG_enumerator ] [K :: 17293822569102704640]
-!8 = metadata !{metadata !"0x4\00e2\002\0032\0032\000\000\000", metadata !1, null, null, metadata !9, null, null, null} ; [ DW_TAG_enumeration_type ] [e2] [line 2, size 32, align 32, offset 0] [def] [from ]
+!5 = metadata !{i32 786472, metadata !"I", i64 0} ; [ DW_TAG_enumerator ] [I :: 0]
+!6 = metadata !{i32 786472, metadata !"J", i64 4294967295} ; [ DW_TAG_enumerator ] [J :: 4294967295]
+!7 = metadata !{i32 786472, metadata !"K", i64 -1152921504606846976} ; [ DW_TAG_enumerator ] [K :: 17293822569102704640]
+!8 = metadata !{i32 786436, metadata !1, null, metadata !"e2", i32 2, i64 32, i64 32, i32 0, i32 0, null, metadata !9, i32 0, null, null, null} ; [ DW_TAG_enumeration_type ] [e2] [line 2, size 32, align 32, offset 0] [def] [from ]
 !9 = metadata !{metadata !10}
-!10 = metadata !{metadata !"0x28\00X\000"} ; [ DW_TAG_enumerator ] [X :: 0]
+!10 = metadata !{i32 786472, metadata !"X", i64 0} ; [ DW_TAG_enumerator ] [X :: 0]
 !11 = metadata !{}
 !12 = metadata !{metadata !13}
-!13 = metadata !{metadata !"0x2e\00func\00func\00_Z4funcv\003\000\001\000\006\00256\000\003", metadata !1, metadata !14, metadata !15, null, void ()* @_Z4funcv, null, null, metadata !11} ; [ DW_TAG_subprogram ] [line 3] [def] [func]
-!14 = metadata !{metadata !"0x29", metadata !1}         ; [ DW_TAG_file_type ] [/tmp/enum.cpp]
-!15 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !16, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!13 = metadata !{i32 786478, metadata !1, metadata !14, metadata !"func", metadata !"func", metadata !"_Z4funcv", i32 3, metadata !15, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void ()* @_Z4funcv, null, null, metadata !11, i32 3} ; [ DW_TAG_subprogram ] [line 3] [def] [func]
+!14 = metadata !{i32 786473, metadata !1}         ; [ DW_TAG_file_type ] [/tmp/enum.cpp]
+!15 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !16, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !16 = metadata !{null}
 !17 = metadata !{metadata !18}
-!18 = metadata !{metadata !"0x34\00a\00a\00\001\000\001", null, metadata !14, metadata !3, i64* @a, null} ; [ DW_TAG_variable ] [a] [line 1] [def]
+!18 = metadata !{i32 786484, i32 0, null, metadata !"a", metadata !"a", metadata !"", metadata !14, i32 1, metadata !3, i32 0, i32 1, i64* @a, null} ; [ DW_TAG_variable ] [a] [line 1] [def]
 !19 = metadata !{i32 2, metadata !"Dwarf Version", i32 3}
-!20 = metadata !{metadata !"0x100\00b\004\000", metadata !13, metadata !14, metadata !21} ; [ DW_TAG_auto_variable ] [b] [line 4]
-!21 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!20 = metadata !{i32 786688, metadata !13, metadata !"b", metadata !14, i32 4, metadata !21, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [b] [line 4]
+!21 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !22 = metadata !{i32 4, i32 0, metadata !13, null}
 !23 = metadata !{i32 5, i32 0, metadata !13, null}
-!24 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!24 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

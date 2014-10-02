@@ -6,7 +6,7 @@
 
 ; CHECK: call void @foo(), !dbg ![[LOC:[0-9]+]], !attach ![[CALL:[0-9]+]]
 ; CHECK: ![[LOC]] = metadata !{i32 104, i32 105, metadata ![[SCOPE:[0-9]+]], metadata ![[SCOPE]]}
-; CHECK: ![[SCOPE]] = metadata !{metadata !"0x11\000\00me\001\00\000\00\000", metadata ![[FILE:[0-9]+]], metadata ![[LIST:[0-9]+]], metadata ![[LIST]], null, null, null}
+; CHECK: ![[SCOPE]] = metadata !{i32 458769, metadata ![[FILE:[0-9]+]], i32 0, metadata !"me", i1 true, metadata !"", i32 0, metadata ![[LIST:[0-9]+]], metadata ![[LIST]], null, null, null, metadata !""}
 ; CHECK: ![[FILE]] = metadata !{metadata !"source.c", metadata !"/dir"}
 ; CHECK: ![[LIST]] = metadata !{i32 0}
 ; CHECK: ![[CALL]] = metadata !{metadata !"the call to foo"}
@@ -31,7 +31,7 @@ declare void @foo()
 !3 = metadata !{metadata !"noise"}
 !4 = metadata !{metadata !"filler"}
 
-!9 = metadata !{metadata !"0x11\000\00me\001\00\000\00\000", metadata !15, metadata !16, metadata !16, null, null, null} ; [ DW_TAG_compile_unit ]
+!9 = metadata !{i32 458769, metadata !15, i32 0, metadata !"me", i1 true, metadata !"", i32 0, metadata !16, metadata !16, null, null, null, metadata !""}
 !10 = metadata !{i32 100, i32 101, metadata !9, metadata !9}
 !11 = metadata !{i32 102, i32 103, metadata !9, metadata !9}
 !12 = metadata !{i32 104, i32 105, metadata !9, metadata !9}
@@ -39,4 +39,4 @@ declare void @foo()
 !14 = metadata !{i32 108, i32 109, metadata !9, metadata !9}
 !15 = metadata !{metadata !"source.c", metadata !"/dir"}
 !16 = metadata !{i32 0}
-!17 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!17 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

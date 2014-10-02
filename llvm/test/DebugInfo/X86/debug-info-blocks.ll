@@ -101,9 +101,9 @@ define internal i8* @"\01-[A init]"(%0* %self, i8* %_cmd) #0 {
   %3 = alloca %struct._objc_super
   %4 = alloca <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, align 8
   store %0* %self, %0** %1, align 8
-  call void @llvm.dbg.declare(metadata !{%0** %1}, metadata !60, metadata !{metadata !"0x102"}), !dbg !62
+  call void @llvm.dbg.declare(metadata !{%0** %1}, metadata !60, metadata !{i32 786690}), !dbg !62
   store i8* %_cmd, i8** %2, align 8
-  call void @llvm.dbg.declare(metadata !{i8** %2}, metadata !63, metadata !{metadata !"0x102"}), !dbg !62
+  call void @llvm.dbg.declare(metadata !{i8** %2}, metadata !63, metadata !{i32 786690}), !dbg !62
   %5 = load %0** %1, !dbg !65
   %6 = bitcast %0* %5 to i8*, !dbg !65
   %7 = getelementptr inbounds %struct._objc_super* %3, i32 0, i32 0, !dbg !65
@@ -150,7 +150,7 @@ declare i8* @objc_msgSendSuper2(%struct._objc_super*, i8*, ...)
 define internal void @run(void ()* %block) #0 {
   %1 = alloca void ()*, align 8
   store void ()* %block, void ()** %1, align 8
-  call void @llvm.dbg.declare(metadata !{void ()** %1}, metadata !72, metadata !{metadata !"0x102"}), !dbg !73
+  call void @llvm.dbg.declare(metadata !{void ()** %1}, metadata !72, metadata !{i32 786690}), !dbg !73
   %2 = load void ()** %1, align 8, !dbg !74
   %3 = bitcast void ()* %2 to %struct.__block_literal_generic*, !dbg !74
   %4 = getelementptr inbounds %struct.__block_literal_generic* %3, i32 0, i32 3, !dbg !74
@@ -167,13 +167,13 @@ define internal void @"__9-[A init]_block_invoke"(i8* %.block_descriptor) #0 {
   %d = alloca %1*, align 8
   store i8* %.block_descriptor, i8** %1, align 8
   %3 = load i8** %1
-  call void @llvm.dbg.value(metadata !{i8* %3}, i64 0, metadata !76, metadata !{metadata !"0x102"}), !dbg !88
-  call void @llvm.dbg.declare(metadata !{i8* %.block_descriptor}, metadata !76, metadata !{metadata !"0x102"}), !dbg !88
+  call void @llvm.dbg.value(metadata !{i8* %3}, i64 0, metadata !76, metadata !{i32 786690}), !dbg !88
+  call void @llvm.dbg.declare(metadata !{i8* %.block_descriptor}, metadata !76, metadata !{i32 786690}), !dbg !88
   %4 = bitcast i8* %.block_descriptor to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !88
   store <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** %2, align 8, !dbg !88
   %5 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 5, !dbg !88
   call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** %2}, metadata !89, metadata !111), !dbg !90
-  call void @llvm.dbg.declare(metadata !{%1** %d}, metadata !91, metadata !{metadata !"0x102"}), !dbg !100
+  call void @llvm.dbg.declare(metadata !{%1** %d}, metadata !91, metadata !{i32 786690}), !dbg !100
   %6 = load %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_", !dbg !100
   %7 = bitcast %struct._class_t* %6 to i8*, !dbg !100
   %8 = load i8** getelementptr inbounds (%struct._message_ref_t* bitcast ({ i8* (i8*, %struct._message_ref_t*, ...)*, i8* }* @"\01l_objc_msgSend_fixup_alloc" to %struct._message_ref_t*), i32 0, i32 0), !dbg !100
@@ -210,9 +210,9 @@ define internal void @__copy_helper_block_(i8*, i8*) {
   %3 = alloca i8*, align 8
   %4 = alloca i8*, align 8
   store i8* %0, i8** %3, align 8
-  call void @llvm.dbg.declare(metadata !{i8** %3}, metadata !102, metadata !{metadata !"0x102"}), !dbg !103
+  call void @llvm.dbg.declare(metadata !{i8** %3}, metadata !102, metadata !{i32 786690}), !dbg !103
   store i8* %1, i8** %4, align 8
-  call void @llvm.dbg.declare(metadata !{i8** %4}, metadata !104, metadata !{metadata !"0x102"}), !dbg !103
+  call void @llvm.dbg.declare(metadata !{i8** %4}, metadata !104, metadata !{i32 786690}), !dbg !103
   %5 = load i8** %4, !dbg !103
   %6 = bitcast i8* %5 to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !103
   %7 = load i8** %3, !dbg !103
@@ -231,7 +231,7 @@ declare void @_Block_object_assign(i8*, i8*, i32)
 define internal void @__destroy_helper_block_(i8*) {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
-  call void @llvm.dbg.declare(metadata !{i8** %2}, metadata !105, metadata !{metadata !"0x102"}), !dbg !106
+  call void @llvm.dbg.declare(metadata !{i8** %2}, metadata !105, metadata !{i32 786690}), !dbg !106
   %3 = load i8** %2, !dbg !106
   %4 = bitcast i8* %3 to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !106
   %5 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 5, !dbg !106
@@ -247,7 +247,7 @@ define i32 @main() #0 {
   %1 = alloca i32, align 4
   %a = alloca %0*, align 8
   store i32 0, i32* %1
-  call void @llvm.dbg.declare(metadata !{%0** %a}, metadata !107, metadata !{metadata !"0x102"}), !dbg !108
+  call void @llvm.dbg.declare(metadata !{%0** %a}, metadata !107, metadata !{i32 786690}), !dbg !108
   %2 = load %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_5", !dbg !108
   %3 = bitcast %struct._class_t* %2 to i8*, !dbg !108
   %4 = load i8** getelementptr inbounds (%struct._message_ref_t* bitcast ({ i8* (i8*, %struct._message_ref_t*, ...)*, i8* }* @"\01l_objc_msgSend_fixup_alloc" to %struct._message_ref_t*), i32 0, i32 0), !dbg !108
@@ -270,115 +270,115 @@ attributes #3 = { nounwind }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!56, !57, !58, !59, !110}
 
-!0 = metadata !{metadata !"0x11\0016\00clang version 3.3 \000\00\002\00\001", metadata !1, metadata !2, metadata !3, metadata !12, metadata !2,  metadata !2} ; [ DW_TAG_compile_unit ] [llvm/tools/clang/test/CodeGenObjC/<unknown>] [DW_LANG_ObjC]
+!0 = metadata !{i32 786449, metadata !1, i32 16, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 2, metadata !2, metadata !3, metadata !12, metadata !2,  metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [llvm/tools/clang/test/CodeGenObjC/<unknown>] [DW_LANG_ObjC]
 !1 = metadata !{metadata !"llvm/tools/clang/test/CodeGenObjC/<unknown>", metadata !"llvm/_build.ninja.Debug"}
 !2 = metadata !{}
 !3 = metadata !{metadata !4}
-!4 = metadata !{metadata !"0x13\00A\0033\0032\0032\000\00512\0016", metadata !5, metadata !6, null, metadata !7, null, null, null} ; [ DW_TAG_structure_type ] [A] [line 33, size 32, align 32, offset 0] [def] [from ]
+!4 = metadata !{i32 786451, metadata !5, metadata !6, metadata !"A", i32 33, i64 32, i64 32, i32 0, i32 512, null, metadata !7, i32 16, null, null, null} ; [ DW_TAG_structure_type ] [A] [line 33, size 32, align 32, offset 0] [def] [from ]
 !5 = metadata !{metadata !"llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m", metadata !"llvm/_build.ninja.Debug"}
-!6 = metadata !{metadata !"0x29", metadata !5}          ; [ DW_TAG_file_type ] [llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m]
+!6 = metadata !{i32 786473, metadata !5}          ; [ DW_TAG_file_type ] [llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m]
 !7 = metadata !{metadata !8, metadata !10}
-!8 = metadata !{metadata !"0x1c\00\000\000\000\000\000", null, metadata !4, metadata !9} ; [ DW_TAG_inheritance ] [line 0, size 0, align 0, offset 0] [from NSObject]
-!9 = metadata !{metadata !"0x13\00NSObject\0021\000\008\000\000\0016", metadata !5, metadata !6, null, metadata !2, null, null, null} ; [ DW_TAG_structure_type ] [NSObject] [line 21, size 0, align 8, offset 0] [def] [from ]
-!10 = metadata !{metadata !"0xd\00ivar\0035\0032\0032\000\000", metadata !5, metadata !6, metadata !11, null} ; [ DW_TAG_member ] [ivar] [line 35, size 32, align 32, offset 0] [from int]
-!11 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!8 = metadata !{i32 786460, null, metadata !4, null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !9} ; [ DW_TAG_inheritance ] [line 0, size 0, align 0, offset 0] [from NSObject]
+!9 = metadata !{i32 786451, metadata !5, metadata !6, metadata !"NSObject", i32 21, i64 0, i64 8, i32 0, i32 0, null, metadata !2, i32 16, null, null, null} ; [ DW_TAG_structure_type ] [NSObject] [line 21, size 0, align 8, offset 0] [def] [from ]
+!10 = metadata !{i32 786445, metadata !5, metadata !6, metadata !"ivar", i32 35, i64 32, i64 32, i64 0, i32 0, metadata !11, null} ; [ DW_TAG_member ] [ivar] [line 35, size 32, align 32, offset 0] [from int]
+!11 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !12 = metadata !{metadata !13, metadata !27, metadata !31, metadata !35, metadata !36, metadata !39}
-!13 = metadata !{metadata !"0x2e\00-[A init]\00-[A init]\00\0046\001\001\000\006\00256\000\0046", metadata !5, metadata !6, metadata !14, null, i8* (%0*, i8*)* @"\01-[A init]", null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 46] [local] [def] [-[A init]]
-!14 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !15, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!13 = metadata !{i32 786478, metadata !5, metadata !6, metadata !"-[A init]", metadata !"-[A init]", metadata !"", i32 46, metadata !14, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, i8* (%0*, i8*)* @"\01-[A init]", null, null, metadata !2, i32 46} ; [ DW_TAG_subprogram ] [line 46] [local] [def] [-[A init]]
+!14 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !15, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !15 = metadata !{metadata !16, metadata !23, metadata !24}
-!16 = metadata !{metadata !"0x16\00id\0046\000\000\000\000", metadata !5, null, metadata !17} ; [ DW_TAG_typedef ] [id] [line 46, size 0, align 0, offset 0] [from ]
-!17 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !18} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from objc_object]
-!18 = metadata !{metadata !"0x13\00objc_object\000\000\000\000\000\000", metadata !1, null, null, metadata !19, null, null, null} ; [ DW_TAG_structure_type ] [objc_object] [line 0, size 0, align 0, offset 0] [def] [from ]
+!16 = metadata !{i32 786454, metadata !5, null, metadata !"id", i32 46, i64 0, i64 0, i64 0, i32 0, metadata !17} ; [ DW_TAG_typedef ] [id] [line 46, size 0, align 0, offset 0] [from ]
+!17 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !18} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from objc_object]
+!18 = metadata !{i32 786451, metadata !1, null, metadata !"objc_object", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !19, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [objc_object] [line 0, size 0, align 0, offset 0] [def] [from ]
 !19 = metadata !{metadata !20}
-!20 = metadata !{metadata !"0xd\00isa\000\0064\000\000\000", metadata !1, metadata !18, metadata !21} ; [ DW_TAG_member ] [isa] [line 0, size 64, align 0, offset 0] [from ]
-!21 = metadata !{metadata !"0xf\00\000\0064\000\000\000", null, null, metadata !22} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 0, offset 0] [from objc_class]
-!22 = metadata !{metadata !"0x13\00objc_class\000\000\000\000\004\000", metadata !1, null, null, null, null, null, null} ; [ DW_TAG_structure_type ] [objc_class] [line 0, size 0, align 0, offset 0] [decl] [from ]
-!23 = metadata !{metadata !"0xf\00\000\0064\0064\000\001088", i32 0, null, metadata !4} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from A]
-!24 = metadata !{metadata !"0x16\00SEL\0046\000\000\000\0064", metadata !5, null, metadata !25} ; [ DW_TAG_typedef ] [SEL] [line 46, size 0, align 0, offset 0] [artificial] [from ]
-!25 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !26} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from objc_selector]
-!26 = metadata !{metadata !"0x13\00objc_selector\000\000\000\000\004\000", metadata !1, null, null, null, null, null, null} ; [ DW_TAG_structure_type ] [objc_selector] [line 0, size 0, align 0, offset 0] [decl] [from ]
-!27 = metadata !{metadata !"0x2e\00__9-[A init]_block_invoke\00__9-[A init]_block_invoke\00\0049\001\001\000\006\00256\000\0049", metadata !5, metadata !6, metadata !28, null, void (i8*)* @"__9-[A init]_block_invoke", null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 49] [local] [def] [__9-[A init]_block_invoke]
-!28 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !29, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!20 = metadata !{i32 786445, metadata !1, metadata !18, metadata !"isa", i32 0, i64 64, i64 0, i64 0, i32 0, metadata !21} ; [ DW_TAG_member ] [isa] [line 0, size 64, align 0, offset 0] [from ]
+!21 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 0, i64 0, i32 0, metadata !22} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 0, offset 0] [from objc_class]
+!22 = metadata !{i32 786451, metadata !1, null, metadata !"objc_class", i32 0, i64 0, i64 0, i32 0, i32 4, null, null, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [objc_class] [line 0, size 0, align 0, offset 0] [decl] [from ]
+!23 = metadata !{i32 786447, i32 0, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 1088, metadata !4} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from A]
+!24 = metadata !{i32 786454, metadata !5, null, metadata !"SEL", i32 46, i64 0, i64 0, i64 0, i32 64, metadata !25} ; [ DW_TAG_typedef ] [SEL] [line 46, size 0, align 0, offset 0] [artificial] [from ]
+!25 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !26} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from objc_selector]
+!26 = metadata !{i32 786451, metadata !1, null, metadata !"objc_selector", i32 0, i64 0, i64 0, i32 0, i32 4, null, null, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [objc_selector] [line 0, size 0, align 0, offset 0] [decl] [from ]
+!27 = metadata !{i32 786478, metadata !5, metadata !6, metadata !"__9-[A init]_block_invoke", metadata !"__9-[A init]_block_invoke", metadata !"", i32 49, metadata !28, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i8*)* @"__9-[A init]_block_invoke", null, null, metadata !2, i32 49} ; [ DW_TAG_subprogram ] [line 49] [local] [def] [__9-[A init]_block_invoke]
+!28 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !29, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !29 = metadata !{null, metadata !30}
-!30 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, null} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from ]
-!31 = metadata !{metadata !"0x2e\00__copy_helper_block_\00__copy_helper_block_\00\0052\001\001\000\006\000\000\0052", metadata !1, metadata !32, metadata !33, null, void (i8*, i8*)* @__copy_helper_block_, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 52] [local] [def] [__copy_helper_block_]
-!32 = metadata !{metadata !"0x29", metadata !1}         ; [ DW_TAG_file_type ] [llvm/tools/clang/test/CodeGenObjC/<unknown>]
-!33 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !34, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!30 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, null} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from ]
+!31 = metadata !{i32 786478, metadata !1, metadata !32, metadata !"__copy_helper_block_", metadata !"__copy_helper_block_", metadata !"", i32 52, metadata !33, i1 true, i1 true, i32 0, i32 0, null, i32 0, i1 false, void (i8*, i8*)* @__copy_helper_block_, null, null, metadata !2, i32 52} ; [ DW_TAG_subprogram ] [line 52] [local] [def] [__copy_helper_block_]
+!32 = metadata !{i32 786473, metadata !1}         ; [ DW_TAG_file_type ] [llvm/tools/clang/test/CodeGenObjC/<unknown>]
+!33 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !34, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !34 = metadata !{null, metadata !30, metadata !30}
-!35 = metadata !{metadata !"0x2e\00__destroy_helper_block_\00__destroy_helper_block_\00\0052\001\001\000\006\000\000\0052", metadata !1, metadata !32, metadata !28, null, void (i8*)* @__destroy_helper_block_, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 52] [local] [def] [__destroy_helper_block_]
-!36 = metadata !{metadata !"0x2e\00main\00main\00\0059\000\001\000\006\000\000\0060", metadata !5, metadata !6, metadata !37, null, i32 ()* @main, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 59] [def] [scope 60] [main]
-!37 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !38, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!35 = metadata !{i32 786478, metadata !1, metadata !32, metadata !"__destroy_helper_block_", metadata !"__destroy_helper_block_", metadata !"", i32 52, metadata !28, i1 true, i1 true, i32 0, i32 0, null, i32 0, i1 false, void (i8*)* @__destroy_helper_block_, null, null, metadata !2, i32 52} ; [ DW_TAG_subprogram ] [line 52] [local] [def] [__destroy_helper_block_]
+!36 = metadata !{i32 786478, metadata !5, metadata !6, metadata !"main", metadata !"main", metadata !"", i32 59, metadata !37, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 ()* @main, null, null, metadata !2, i32 60} ; [ DW_TAG_subprogram ] [line 59] [def] [scope 60] [main]
+!37 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !38, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !38 = metadata !{metadata !11}
-!39 = metadata !{metadata !"0x2e\00run\00run\00\0039\001\001\000\006\00256\000\0040", metadata !5, metadata !6, metadata !40, null, void (void ()*)* @run, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 39] [local] [def] [scope 40] [run]
-!40 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !41, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!39 = metadata !{i32 786478, metadata !5, metadata !6, metadata !"run", metadata !"run", metadata !"", i32 39, metadata !40, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (void ()*)* @run, null, null, metadata !2, i32 40} ; [ DW_TAG_subprogram ] [line 39] [local] [def] [scope 40] [run]
+!40 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !41, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !41 = metadata !{null, metadata !42}
-!42 = metadata !{metadata !"0xf\00\000\0064\000\000\000", null, null, metadata !43} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 0, offset 0] [from __block_literal_generic]
-!43 = metadata !{metadata !"0x13\00__block_literal_generic\0040\00256\000\000\008\000", metadata !5, metadata !6, null, metadata !44, null, null, null} ; [ DW_TAG_structure_type ] [__block_literal_generic] [line 40, size 256, align 0, offset 0] [def] [from ]
+!42 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 0, i64 0, i32 0, metadata !43} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 0, offset 0] [from __block_literal_generic]
+!43 = metadata !{i32 786451, metadata !5, metadata !6, metadata !"__block_literal_generic", i32 40, i64 256, i64 0, i32 0, i32 8, null, metadata !44, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [__block_literal_generic] [line 40, size 256, align 0, offset 0] [def] [from ]
 !44 = metadata !{metadata !45, metadata !46, metadata !47, metadata !48, metadata !49}
-!45 = metadata !{metadata !"0xd\00__isa\000\0064\0064\000\000", metadata !5, metadata !6, metadata !30} ; [ DW_TAG_member ] [__isa] [line 0, size 64, align 64, offset 0] [from ]
-!46 = metadata !{metadata !"0xd\00__flags\000\0032\0032\0064\000", metadata !5, metadata !6, metadata !11} ; [ DW_TAG_member ] [__flags] [line 0, size 32, align 32, offset 64] [from int]
-!47 = metadata !{metadata !"0xd\00__reserved\000\0032\0032\0096\000", metadata !5, metadata !6, metadata !11} ; [ DW_TAG_member ] [__reserved] [line 0, size 32, align 32, offset 96] [from int]
-!48 = metadata !{metadata !"0xd\00__FuncPtr\000\0064\0064\00128\000", metadata !5, metadata !6, metadata !30} ; [ DW_TAG_member ] [__FuncPtr] [line 0, size 64, align 64, offset 128] [from ]
-!49 = metadata !{metadata !"0xd\00__descriptor\0040\0064\0064\00192\000", metadata !5, metadata !6, metadata !50} ; [ DW_TAG_member ] [__descriptor] [line 40, size 64, align 64, offset 192] [from ]
-!50 = metadata !{metadata !"0xf\00\000\0064\000\000\000", null, null, metadata !51} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 0, offset 0] [from __block_descriptor]
-!51 = metadata !{metadata !"0x13\00__block_descriptor\0040\00128\000\000\008\000", metadata !5, metadata !6, null, metadata !52, null, null, null} ; [ DW_TAG_structure_type ] [__block_descriptor] [line 40, size 128, align 0, offset 0] [def] [from ]
+!45 = metadata !{i32 786445, metadata !5, metadata !6, metadata !"__isa", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !30} ; [ DW_TAG_member ] [__isa] [line 0, size 64, align 64, offset 0] [from ]
+!46 = metadata !{i32 786445, metadata !5, metadata !6, metadata !"__flags", i32 0, i64 32, i64 32, i64 64, i32 0, metadata !11} ; [ DW_TAG_member ] [__flags] [line 0, size 32, align 32, offset 64] [from int]
+!47 = metadata !{i32 786445, metadata !5, metadata !6, metadata !"__reserved", i32 0, i64 32, i64 32, i64 96, i32 0, metadata !11} ; [ DW_TAG_member ] [__reserved] [line 0, size 32, align 32, offset 96] [from int]
+!48 = metadata !{i32 786445, metadata !5, metadata !6, metadata !"__FuncPtr", i32 0, i64 64, i64 64, i64 128, i32 0, metadata !30} ; [ DW_TAG_member ] [__FuncPtr] [line 0, size 64, align 64, offset 128] [from ]
+!49 = metadata !{i32 786445, metadata !5, metadata !6, metadata !"__descriptor", i32 40, i64 64, i64 64, i64 192, i32 0, metadata !50} ; [ DW_TAG_member ] [__descriptor] [line 40, size 64, align 64, offset 192] [from ]
+!50 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 0, i64 0, i32 0, metadata !51} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 0, offset 0] [from __block_descriptor]
+!51 = metadata !{i32 786451, metadata !5, metadata !6, metadata !"__block_descriptor", i32 40, i64 128, i64 0, i32 0, i32 8, null, metadata !52, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [__block_descriptor] [line 40, size 128, align 0, offset 0] [def] [from ]
 !52 = metadata !{metadata !53, metadata !55}
-!53 = metadata !{metadata !"0xd\00reserved\000\0064\0064\000\000", metadata !5, metadata !6, metadata !54} ; [ DW_TAG_member ] [reserved] [line 0, size 64, align 64, offset 0] [from long unsigned int]
-!54 = metadata !{metadata !"0x24\00long unsigned int\000\0064\0064\000\000\007", null, null} ; [ DW_TAG_base_type ] [long unsigned int] [line 0, size 64, align 64, offset 0, enc DW_ATE_unsigned]
-!55 = metadata !{metadata !"0xd\00Size\000\0064\0064\0064\000", metadata !5, metadata !6, metadata !54} ; [ DW_TAG_member ] [Size] [line 0, size 64, align 64, offset 64] [from long unsigned int]
+!53 = metadata !{i32 786445, metadata !5, metadata !6, metadata !"reserved", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !54} ; [ DW_TAG_member ] [reserved] [line 0, size 64, align 64, offset 0] [from long unsigned int]
+!54 = metadata !{i32 786468, null, null, metadata !"long unsigned int", i32 0, i64 64, i64 64, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ] [long unsigned int] [line 0, size 64, align 64, offset 0, enc DW_ATE_unsigned]
+!55 = metadata !{i32 786445, metadata !5, metadata !6, metadata !"Size", i32 0, i64 64, i64 64, i64 64, i32 0, metadata !54} ; [ DW_TAG_member ] [Size] [line 0, size 64, align 64, offset 64] [from long unsigned int]
 !56 = metadata !{i32 1, metadata !"Objective-C Version", i32 2}
 !57 = metadata !{i32 1, metadata !"Objective-C Image Info Version", i32 0}
 !58 = metadata !{i32 1, metadata !"Objective-C Image Info Section", metadata !"__DATA, __objc_imageinfo, regular, no_dead_strip"}
 !59 = metadata !{i32 4, metadata !"Objective-C Garbage Collection", i32 0}
-!60 = metadata !{metadata !"0x101\00self\0016777262\001088", metadata !13, metadata !32, metadata !61} ; [ DW_TAG_arg_variable ] [self] [line 46]
-!61 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !4} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from A]
+!60 = metadata !{i32 786689, metadata !13, metadata !"self", metadata !32, i32 16777262, metadata !61, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [self] [line 46]
+!61 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !4} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from A]
 !62 = metadata !{i32 46, i32 0, metadata !13, null}
-!63 = metadata !{metadata !"0x101\00_cmd\0033554478\0064", metadata !13, metadata !32, metadata !64} ; [ DW_TAG_arg_variable ] [_cmd] [line 46]
-!64 = metadata !{metadata !"0x16\00SEL\0046\000\000\000\000", metadata !5, null, metadata !25} ; [ DW_TAG_typedef ] [SEL] [line 46, size 0, align 0, offset 0] [from ]
+!63 = metadata !{i32 786689, metadata !13, metadata !"_cmd", metadata !32, i32 33554478, metadata !64, i32 64, i32 0} ; [ DW_TAG_arg_variable ] [_cmd] [line 46]
+!64 = metadata !{i32 786454, metadata !5, null, metadata !"SEL", i32 46, i64 0, i64 0, i64 0, i32 0, metadata !25} ; [ DW_TAG_typedef ] [SEL] [line 46, size 0, align 0, offset 0] [from ]
 !65 = metadata !{i32 48, i32 0, metadata !66, null}
-!66 = metadata !{metadata !"0xb\0047\000\000", metadata !5, metadata !13} ; [ DW_TAG_lexical_block ] [llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m]
+!66 = metadata !{i32 786443, metadata !5, metadata !13, i32 47, i32 0, i32 0} ; [ DW_TAG_lexical_block ] [llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m]
 !67 = metadata !{}
 !68 = metadata !{i32 49, i32 0, metadata !69, null}
-!69 = metadata !{metadata !"0xb\0048\000\001", metadata !5, metadata !66} ; [ DW_TAG_lexical_block ] [llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m]
+!69 = metadata !{i32 786443, metadata !5, metadata !66, i32 48, i32 0, i32 1} ; [ DW_TAG_lexical_block ] [llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m]
 !70 = metadata !{i32 53, i32 0, metadata !69, null}
 !71 = metadata !{i32 54, i32 0, metadata !66, null}
-!72 = metadata !{metadata !"0x101\00block\0016777255\000", metadata !39, metadata !6, metadata !42} ; [ DW_TAG_arg_variable ] [block] [line 39]
+!72 = metadata !{i32 786689, metadata !39, metadata !"block", metadata !6, i32 16777255, metadata !42, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [block] [line 39]
 !73 = metadata !{i32 39, i32 0, metadata !39, null}
 !74 = metadata !{i32 41, i32 0, metadata !39, null}
 !75 = metadata !{i32 42, i32 0, metadata !39, null}
-!76 = metadata !{metadata !"0x101\00.block_descriptor\0016777265\0064", metadata !27, metadata !6, metadata !77} ; [ DW_TAG_arg_variable ] [.block_descriptor] [line 49]
-!77 = metadata !{metadata !"0xf\00\000\0064\000\000\000", null, null, metadata !78} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 0, offset 0] [from __block_literal_1]
-!78 = metadata !{metadata !"0x13\00__block_literal_1\0049\00320\0064\000\000\000", metadata !5, metadata !6, null, metadata !79, null, null, null} ; [ DW_TAG_structure_type ] [__block_literal_1] [line 49, size 320, align 64, offset 0] [def] [from ]
+!76 = metadata !{i32 786689, metadata !27, metadata !".block_descriptor", metadata !6, i32 16777265, metadata !77, i32 64, i32 0} ; [ DW_TAG_arg_variable ] [.block_descriptor] [line 49]
+!77 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 0, i64 0, i32 0, metadata !78} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 0, offset 0] [from __block_literal_1]
+!78 = metadata !{i32 786451, metadata !5, metadata !6, metadata !"__block_literal_1", i32 49, i64 320, i64 64, i32 0, i32 0, null, metadata !79, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [__block_literal_1] [line 49, size 320, align 64, offset 0] [def] [from ]
 !79 = metadata !{metadata !80, metadata !81, metadata !82, metadata !83, metadata !84, metadata !87}
-!80 = metadata !{metadata !"0xd\00__isa\0049\0064\0064\000\000", metadata !5, metadata !6, metadata !30} ; [ DW_TAG_member ] [__isa] [line 49, size 64, align 64, offset 0] [from ]
-!81 = metadata !{metadata !"0xd\00__flags\0049\0032\0032\0064\000", metadata !5, metadata !6, metadata !11} ; [ DW_TAG_member ] [__flags] [line 49, size 32, align 32, offset 64] [from int]
-!82 = metadata !{metadata !"0xd\00__reserved\0049\0032\0032\0096\000", metadata !5, metadata !6, metadata !11} ; [ DW_TAG_member ] [__reserved] [line 49, size 32, align 32, offset 96] [from int]
-!83 = metadata !{metadata !"0xd\00__FuncPtr\0049\0064\0064\00128\000", metadata !5, metadata !6, metadata !30} ; [ DW_TAG_member ] [__FuncPtr] [line 49, size 64, align 64, offset 128] [from ]
-!84 = metadata !{metadata !"0xd\00__descriptor\0049\0064\0064\00192\000", metadata !5, metadata !6, metadata !85} ; [ DW_TAG_member ] [__descriptor] [line 49, size 64, align 64, offset 192] [from ]
-!85 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !86} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from __block_descriptor_withcopydispose]
-!86 = metadata !{metadata !"0x13\00__block_descriptor_withcopydispose\0049\000\000\000\004\000", metadata !1, null, null, null, null, null, null} ; [ DW_TAG_structure_type ] [__block_descriptor_withcopydispose] [line 49, size 0, align 0, offset 0] [decl] [from ]
-!87 = metadata !{metadata !"0xd\00self\0049\0064\0064\00256\000", metadata !5, metadata !6, metadata !61} ; [ DW_TAG_member ] [self] [line 49, size 64, align 64, offset 256] [from ]
+!80 = metadata !{i32 786445, metadata !5, metadata !6, metadata !"__isa", i32 49, i64 64, i64 64, i64 0, i32 0, metadata !30} ; [ DW_TAG_member ] [__isa] [line 49, size 64, align 64, offset 0] [from ]
+!81 = metadata !{i32 786445, metadata !5, metadata !6, metadata !"__flags", i32 49, i64 32, i64 32, i64 64, i32 0, metadata !11} ; [ DW_TAG_member ] [__flags] [line 49, size 32, align 32, offset 64] [from int]
+!82 = metadata !{i32 786445, metadata !5, metadata !6, metadata !"__reserved", i32 49, i64 32, i64 32, i64 96, i32 0, metadata !11} ; [ DW_TAG_member ] [__reserved] [line 49, size 32, align 32, offset 96] [from int]
+!83 = metadata !{i32 786445, metadata !5, metadata !6, metadata !"__FuncPtr", i32 49, i64 64, i64 64, i64 128, i32 0, metadata !30} ; [ DW_TAG_member ] [__FuncPtr] [line 49, size 64, align 64, offset 128] [from ]
+!84 = metadata !{i32 786445, metadata !5, metadata !6, metadata !"__descriptor", i32 49, i64 64, i64 64, i64 192, i32 0, metadata !85} ; [ DW_TAG_member ] [__descriptor] [line 49, size 64, align 64, offset 192] [from ]
+!85 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !86} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from __block_descriptor_withcopydispose]
+!86 = metadata !{i32 786451, metadata !1, null, metadata !"__block_descriptor_withcopydispose", i32 49, i64 0, i64 0, i32 0, i32 4, null, null, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [__block_descriptor_withcopydispose] [line 49, size 0, align 0, offset 0] [decl] [from ]
+!87 = metadata !{i32 786445, metadata !5, metadata !6, metadata !"self", i32 49, i64 64, i64 64, i64 256, i32 0, metadata !61} ; [ DW_TAG_member ] [self] [line 49, size 64, align 64, offset 256] [from ]
 !88 = metadata !{i32 49, i32 0, metadata !27, null}
-!89 = metadata !{metadata !"0x100\00self\0052\000", metadata !27, metadata !32, metadata !23} ; [ DW_TAG_auto_variable ] [self] [line 52]
+!89 = metadata !{i32 786688, metadata !27, metadata !"self", metadata !32, i32 52, metadata !23, i32 0, i32 0} ;; [ DW_TAG_auto_variable ] [self] [line 52]
 !90 = metadata !{i32 52, i32 0, metadata !27, null}
-!91 = metadata !{metadata !"0x100\00d\0050\000", metadata !92, metadata !6, metadata !93} ; [ DW_TAG_auto_variable ] [d] [line 50]
-!92 = metadata !{metadata !"0xb\0049\000\002", metadata !5, metadata !27} ; [ DW_TAG_lexical_block ] [llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m]
-!93 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, null, metadata !94} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from NSMutableDictionary]
-!94 = metadata !{metadata !"0x13\00NSMutableDictionary\0030\000\008\000\000\0016", metadata !5, metadata !6, null, metadata !95, null, null, null} ; [ DW_TAG_structure_type ] [NSMutableDictionary] [line 30, size 0, align 8, offset 0] [def] [from ]
+!91 = metadata !{i32 786688, metadata !92, metadata !"d", metadata !6, i32 50, metadata !93, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [d] [line 50]
+!92 = metadata !{i32 786443, metadata !5, metadata !27, i32 49, i32 0, i32 2} ; [ DW_TAG_lexical_block ] [llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m]
+!93 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !94} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from NSMutableDictionary]
+!94 = metadata !{i32 786451, metadata !5, metadata !6, metadata !"NSMutableDictionary", i32 30, i64 0, i64 8, i32 0, i32 0, null, metadata !95, i32 16, null, null, null} ; [ DW_TAG_structure_type ] [NSMutableDictionary] [line 30, size 0, align 8, offset 0] [def] [from ]
 !95 = metadata !{metadata !96}
-!96 = metadata !{metadata !"0x1c\00\000\000\000\000\000", null, metadata !94, metadata !97} ; [ DW_TAG_inheritance ] [line 0, size 0, align 0, offset 0] [from NSDictionary]
-!97 = metadata !{metadata !"0x13\00NSDictionary\0026\000\008\000\000\0016", metadata !5, metadata !6, null, metadata !98, null, null, null} ; [ DW_TAG_structure_type ] [NSDictionary] [line 26, size 0, align 8, offset 0] [def] [from ]
+!96 = metadata !{i32 786460, null, metadata !94, null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !97} ; [ DW_TAG_inheritance ] [line 0, size 0, align 0, offset 0] [from NSDictionary]
+!97 = metadata !{i32 786451, metadata !5, metadata !6, metadata !"NSDictionary", i32 26, i64 0, i64 8, i32 0, i32 0, null, metadata !98, i32 16, null, null, null} ; [ DW_TAG_structure_type ] [NSDictionary] [line 26, size 0, align 8, offset 0] [def] [from ]
 !98 = metadata !{metadata !99}
-!99 = metadata !{metadata !"0x1c\00\000\000\000\000\000", null, metadata !97, metadata !9} ; [ DW_TAG_inheritance ] [line 0, size 0, align 0, offset 0] [from NSObject]
+!99 = metadata !{i32 786460, null, metadata !97, null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !9} ; [ DW_TAG_inheritance ] [line 0, size 0, align 0, offset 0] [from NSObject]
 !100 = metadata !{i32 50, i32 0, metadata !92, null}
 !101 = metadata !{i32 51, i32 0, metadata !92, null}
-!102 = metadata !{metadata !"0x101\00\0016777268\001088", metadata !31, metadata !32, metadata !30} ; [ DW_TAG_arg_variable ] [line 52]
+!102 = metadata !{i32 786689, metadata !31, metadata !"", metadata !32, i32 16777268, metadata !30, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [line 52]
 !103 = metadata !{i32 52, i32 0, metadata !31, null}
-!104 = metadata !{metadata !"0x101\00\0033554484\0064", metadata !31, metadata !32, metadata !30} ; [ DW_TAG_arg_variable ] [line 52]
-!105 = metadata !{metadata !"0x101\00\0016777268\001088", metadata !35, metadata !32, metadata !30} ; [ DW_TAG_arg_variable ] [line 52]
+!104 = metadata !{i32 786689, metadata !31, metadata !"", metadata !32, i32 33554484, metadata !30, i32 64, i32 0} ; [ DW_TAG_arg_variable ] [line 52]
+!105 = metadata !{i32 786689, metadata !35, metadata !"", metadata !32, i32 16777268, metadata !30, i32 1088, i32 0} ; [ DW_TAG_arg_variable ] [line 52]
 !106 = metadata !{i32 52, i32 0, metadata !35, null}
-!107 = metadata !{metadata !"0x100\00a\0061\000", metadata !36, metadata !6, metadata !61} ; [ DW_TAG_auto_variable ] [a] [line 61]
+!107 = metadata !{i32 786688, metadata !36, metadata !"a", metadata !6, i32 61, metadata !61, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [a] [line 61]
 !108 = metadata !{i32 61, i32 0, metadata !36, null}
 !109 = metadata !{i32 62, i32 0, metadata !36, null}
-!110 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
-!111 = metadata !{metadata !"0x102\006\0034\0032"} ; [ DW_TAG_expression ] [DW_OP_deref DW_OP_plus 32]
+!110 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!111 = metadata !{i32 786690, i64 6, i64 34, i64 32} ; [DW_OP_deref DW_OP_plus 32]

@@ -31,7 +31,7 @@ template<typename ValueSubClass, typename ItemParentClass>
 
 
 enum LLVMConstants : uint32_t {
-  DEBUG_METADATA_VERSION = 2  // Current debug info version number.
+  DEBUG_METADATA_VERSION = 1  // Current debug info version number.
 };
 
 //===----------------------------------------------------------------------===//
