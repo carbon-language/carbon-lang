@@ -61,27 +61,6 @@ void SpillPlacement::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-namespace {
-static ManagedStatic<BlockFrequency> Threshold;
-}
-
-/// Decision threshold. A node gets the output value 0 if the weighted sum of
-/// its inputs falls in the open interval (-Threshold;Threshold).
-static BlockFrequency getThreshold() { return *Threshold; }
-
-/// \brief Set the threshold for a given entry frequency.
-///
-/// Set the threshold relative to \c Entry.  Since the threshold is used as a
-/// bound on the open interval (-Threshold;Threshold), 1 is the minimum
-/// threshold.
-static void setThreshold(const BlockFrequency &Entry) {
-  // Apparently 2 is a good threshold when Entry==2^14, but we need to scale
-  // it.  Divide by 2^13, rounding as appropriate.
-  uint64_t Freq = Entry.getFrequency();
-  uint64_t Scaled = (Freq >> 13) + bool(Freq & (1 << 12));
-  *Threshold = std::max(UINT64_C(1), Scaled);
-}
-
 /// Node - Each edge bundle corresponds to a Hopfield node.
 ///
 /// The node contains precomputed frequency data that only depends on the CFG,
@@ -127,9 +106,9 @@ struct SpillPlacement::Node {
 
   /// clear - Reset per-query data, but preserve frequencies that only depend on
   // the CFG.
-  void clear() {
+  void clear(const BlockFrequency &Threshold) {
     BiasN = BiasP = Value = 0;
-    SumLinkWeights = getThreshold();
+    SumLinkWeights = Threshold;
     Links.clear();
   }
 
@@ -167,7 +146,7 @@ struct SpillPlacement::Node {
 
   /// update - Recompute Value from Bias and Links. Return true when node
   /// preference changes.
-  bool update(const Node nodes[]) {
+  bool update(const Node nodes[], const BlockFrequency &Threshold) {
     // Compute the weighted sum of inputs.
     BlockFrequency SumN = BiasN;
     BlockFrequency SumP = BiasP;
@@ -187,9 +166,9 @@ struct SpillPlacement::Node {
     //  2. It helps tame rounding errors when the links nominally sum to 0.
     //
     bool Before = preferReg();
-    if (SumN >= SumP + getThreshold())
+    if (SumN >= SumP + Threshold)
       Value = -1;
-    else if (SumP >= SumN + getThreshold())
+    else if (SumP >= SumN + Threshold)
       Value = 1;
     else
       Value = 0;
@@ -228,7 +207,7 @@ void SpillPlacement::activate(unsigned n) {
   if (ActiveNodes->test(n))
     return;
   ActiveNodes->set(n);
-  nodes[n].clear();
+  nodes[n].clear(Threshold);
 
   // Very large bundles usually come from big switches, indirect branches,
   // landing pads, or loops with many 'continue' statements. It is difficult to
@@ -245,6 +224,18 @@ void SpillPlacement::activate(unsigned n) {
   }
 }
 
+/// \brief Set the threshold for a given entry frequency.
+///
+/// Set the threshold relative to \c Entry.  Since the threshold is used as a
+/// bound on the open interval (-Threshold;Threshold), 1 is the minimum
+/// threshold.
+void SpillPlacement::setThreshold(const BlockFrequency &Entry) {
+  // Apparently 2 is a good threshold when Entry==2^14, but we need to scale
+  // it.  Divide by 2^13, rounding as appropriate.
+  uint64_t Freq = Entry.getFrequency();
+  uint64_t Scaled = (Freq >> 13) + bool(Freq & (1 << 12));
+  Threshold = std::max(UINT64_C(1), Scaled);
+}
 
 /// addConstraints - Compute node biases and weights from a set of constraints.
 /// Set a bit in NodeMask for each active node.
@@ -311,7 +302,7 @@ bool SpillPlacement::scanActiveBundles() {
   Linked.clear();
   RecentPositive.clear();
   for (int n = ActiveNodes->find_first(); n>=0; n = ActiveNodes->find_next(n)) {
-    nodes[n].update(nodes);
+    nodes[n].update(nodes, Threshold);
     // A node that must spill, or a node without any links is not going to
     // change its value ever again, so exclude it from iterations.
     if (nodes[n].mustSpill())
@@ -331,7 +322,7 @@ void SpillPlacement::iterate() {
   // First update the recently positive nodes. They have likely received new
   // negative bias that will turn them off.
   while (!RecentPositive.empty())
-    nodes[RecentPositive.pop_back_val()].update(nodes);
+    nodes[RecentPositive.pop_back_val()].update(nodes, Threshold);
 
   if (Linked.empty())
     return;
@@ -350,7 +341,7 @@ void SpillPlacement::iterate() {
            iteration == 0 ? Linked.rbegin() : std::next(Linked.rbegin()),
            E = Linked.rend(); I != E; ++I) {
       unsigned n = *I;
-      if (nodes[n].update(nodes)) {
+      if (nodes[n].update(nodes, Threshold)) {
         Changed = true;
         if (nodes[n].preferReg())
           RecentPositive.push_back(n);
@@ -364,7 +355,7 @@ void SpillPlacement::iterate() {
     for (SmallVectorImpl<unsigned>::const_iterator I =
            std::next(Linked.begin()), E = Linked.end(); I != E; ++I) {
       unsigned n = *I;
-      if (nodes[n].update(nodes)) {
+      if (nodes[n].update(nodes, Threshold)) {
         Changed = true;
         if (nodes[n].preferReg())
           RecentPositive.push_back(n);

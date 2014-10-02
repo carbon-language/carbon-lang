@@ -62,6 +62,10 @@ class SpillPlacement : public MachineFunctionPass {
   // Block frequencies are computed once. Indexed by block number.
   SmallVector<BlockFrequency, 8> BlockFrequencies;
 
+  /// Decision threshold. A node gets the output value 0 if the weighted sum of
+  /// its inputs falls in the open interval (-Threshold;Threshold).
+  BlockFrequency Threshold;
+
 public:
   static char ID; // Pass identification, replacement for typeid.
 
@@ -152,6 +156,7 @@ private:
   void releaseMemory() override;
 
   void activate(unsigned);
+  void setThreshold(const BlockFrequency &Entry);
 };
 
 } // end namespace llvm
