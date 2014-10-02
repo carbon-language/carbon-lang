@@ -3,6 +3,7 @@ set(LLVM_LINK_COMPONENTS support)
 add_clang_library(clangTidyMiscModule
   ArgumentCommentCheck.cpp
   BoolPointerImplicitConversion.cpp
+  BracesAroundStatementsCheck.cpp
   FunctionSize.cpp
   MiscTidyModule.cpp
   RedundantSmartptrGet.cpp
