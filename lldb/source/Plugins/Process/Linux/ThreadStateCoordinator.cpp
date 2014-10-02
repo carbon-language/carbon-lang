@@ -333,18 +333,25 @@ public:
     EventLoopResult
     ProcessEvent(ThreadStateCoordinator &coordinator) override
     {
-        // Tell the thread to resume if we don't already think it is running.
+        // Ensure we know about the thread.
         auto find_it = coordinator.m_tid_stop_map.find (m_tid);
         if (find_it == coordinator.m_tid_stop_map.end ())
         {
-            // Skip the resume call - we think it is already running because we don't know anything about the thread.
-            coordinator.Log ("EventRequestResume::%s skipping resume request because we don't know about tid %" PRIu64 " and we therefore assume it is running.", __FUNCTION__, m_tid);
+            // We don't know about this thread.  This is an error condition.
+            std::ostringstream error_message;
+            error_message << "error: tid " << m_tid << " asked to resume but tid is unknown";
+            m_error_function (error_message.str ());
             return eventLoopResultContinue;
         }
-        else if (!find_it->second)
+        
+        // Tell the thread to resume if we don't already think it is running.
+        const bool is_stopped = find_it->second;
+        if (!is_stopped)
         {
             // Skip the resume call - we have tracked it to be running.
-            coordinator.Log ("EventRequestResume::%s skipping resume request because tid %" PRIu64 " is already running according to our state tracking.", __FUNCTION__, m_tid);
+            std::ostringstream error_message;
+            error_message << "error: tid " << m_tid << " asked to resume but we think it is already running";
+            m_error_function (error_message.str ());
             return eventLoopResultContinue;
         }
 

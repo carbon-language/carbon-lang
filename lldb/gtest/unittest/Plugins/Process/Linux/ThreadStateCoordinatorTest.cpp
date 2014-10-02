@@ -530,6 +530,28 @@ TEST_F (ThreadStateCoordinatorTest, DeferredNotificationRemovedByResetForExec)
     ASSERT_EQ (false, DidFireDeferredNotification ());
 }
 
+TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeSignalsErrorOnUnknownThread)
+{
+    const lldb::tid_t UNKNOWN_TID = 411;
+
+    // Request a resume.
+    lldb::tid_t resumed_tid = 0;
+    int resume_call_count = 0;
+
+    m_coordinator.RequestThreadResume (UNKNOWN_TID,
+                                       [&](lldb::tid_t tid)
+                                       {
+                                           ++resume_call_count;
+                                           resumed_tid = tid;
+                                       },
+                                       GetErrorFunction ());
+    // Shouldn't be called yet.
+    ASSERT_EQ (0, resume_call_count);
+
+    // Process next event.  After that, the resume request call should have fired.
+    ASSERT_PROCESS_NEXT_EVENT_FAILS ();
+    ASSERT_EQ (0, resume_call_count);
+}
 
 TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeCallsCallbackWhenThreadIsStopped)
 {
@@ -556,10 +578,10 @@ TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeCallsCallbackWhenThreadIs
     ASSERT_EQ (NEW_THREAD_TID, resumed_tid);
 }
 
-TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeIgnoresCallbackWhenThreadIsRunning)
+TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeSignalsErrorOnAlreadyRunningThread)
 {
-    // This thread will be assumed running (i.e. unknown, assumed running until marked stopped.)
     const lldb::tid_t TEST_TID = 1234;
+    SetupKnownRunningThread (NEW_THREAD_TID);
 
     // Request a resume.
     lldb::tid_t resumed_tid = 0;
@@ -577,7 +599,7 @@ TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeIgnoresCallbackWhenThread
     ASSERT_EQ (0, resume_call_count);
 
     // Process next event.
-    ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
+    ASSERT_PROCESS_NEXT_EVENT_FAILS ();
 
     // The resume request should not have gone off because we think it is already running.
     ASSERT_EQ (0, resume_call_count);
