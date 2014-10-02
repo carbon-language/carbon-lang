@@ -1460,7 +1460,9 @@ void DIExpression::printInternal(raw_ostream &OS) const {
       break;
     }
     default:
-      break;
+      // Else bail out early. This may be a line table entry.
+      OS << "Unknown]";
+      return;
     }
     OS << "]";
   }
