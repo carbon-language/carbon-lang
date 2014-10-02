@@ -21,6 +21,7 @@ class InlinedBreakpointsTestCase(TestBase):
         self.buildDsym()
         self.inlined_breakpoints()
 
+    @expectedFailureFreeBSD("llvm.org/pr21142")
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test 'b basic_types.cpp:176' does break (where int.cpp includes basic_type.cpp)."""
