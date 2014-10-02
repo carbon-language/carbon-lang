@@ -548,7 +548,7 @@ TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeSignalsErrorOnUnknownThre
     // Shouldn't be called yet.
     ASSERT_EQ (0, resume_call_count);
 
-    // Process next event.  After that, the resume request call should have fired.
+    // Process next event.  This should fail since the coordinator doesn't know about the thread.
     ASSERT_PROCESS_NEXT_EVENT_FAILS ();
     ASSERT_EQ (0, resume_call_count);
 }
@@ -598,7 +598,7 @@ TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeSignalsErrorOnAlreadyRunn
     // Shouldn't be called yet.
     ASSERT_EQ (0, resume_call_count);
 
-    // Process next event.
+    // Process next event.  Should be an error.
     ASSERT_PROCESS_NEXT_EVENT_FAILS ();
 
     // The resume request should not have gone off because we think it is already running.
