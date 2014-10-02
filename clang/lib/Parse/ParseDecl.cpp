@@ -627,6 +627,10 @@ void Parser::ParseOpenCLQualifiers(ParsedAttributes &Attrs) {
                AttributeList::AS_Keyword);
 }
 
+static bool VersionNumberSeparator(const char Separator) {
+  return (Separator == '.' || Separator == '_');
+}
+
 /// \brief Parse a version number.
 ///
 /// version:
@@ -684,7 +688,8 @@ VersionTuple Parser::ParseVersionTuple(SourceRange &Range) {
     return VersionTuple(Major);
   }
 
-  if (ThisTokBegin[AfterMajor] != '.' || (AfterMajor + 1 == ActualLength)) {
+  if (!VersionNumberSeparator(ThisTokBegin[AfterMajor])
+      || (AfterMajor + 1 == ActualLength)) {
     Diag(Tok, diag::err_expected_version);
     SkipUntil(tok::comma, tok::r_paren,
               StopAtSemi | StopBeforeMatch | StopAtCodeCompletion);
@@ -711,8 +716,8 @@ VersionTuple Parser::ParseVersionTuple(SourceRange &Range) {
     return VersionTuple(Major, Minor);
   }
 
-  // If what follows is not a '.', we have a problem.
-  if (ThisTokBegin[AfterMinor] != '.') {
+  // If what follows is not a '.' or '_', we have a problem.
+  if (!VersionNumberSeparator(ThisTokBegin[AfterMinor])) {
     Diag(Tok, diag::err_expected_version);
     SkipUntil(tok::comma, tok::r_paren,
               StopAtSemi | StopBeforeMatch | StopAtCodeCompletion);
