@@ -3,7 +3,7 @@
 // rdar://problem/14386148
 // Test that the foo is aligned at an 8 byte boundary in the DWARF
 // expression (256) that locates it inside of the byref descriptor:
-// CHECK: metadata !"foo", i32 0, i64 {{[0-9]+}}, i64 64, i64 256, i32 0, metadata
+// CHECK: [ DW_TAG_member ] [foo] [line 0, size {{[0-9]+}}, align 64, offset 256] [from Foo]
 
 struct Foo {
   unsigned char *data;

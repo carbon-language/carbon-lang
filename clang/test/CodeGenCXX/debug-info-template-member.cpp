@@ -16,18 +16,18 @@ inline int add3(int x) {
   return MyClass().add<3>(x); // even though add<3> is ODR used, don't emit it since we don't codegen it
 }
 
-// CHECK: [[FOO_MEM:![0-9]*]], i32 0, null, null, metadata !"_ZTS3foo"} ; [ DW_TAG_structure_type ] [foo]
+// CHECK: [[FOO_MEM:![0-9]*]], null, null, metadata !"_ZTS3foo"} ; [ DW_TAG_structure_type ] [foo]
 // CHECK: [[FOO_MEM]] = metadata !{metadata [[FOO_FUNC:![0-9]*]]}
-// CHECK: [[FOO_FUNC]] = {{.*}}, metadata !"_ZN3foo4funcEN5outerIS_E5innerE", i32 {{[0-9]*}}, metadata [[FOO_FUNC_TYPE:![0-9]*]], {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [func]
-// CHECK: [[FOO_FUNC_TYPE]] = {{.*}}, metadata [[FOO_FUNC_PARAMS:![0-9]*]], i32 0, null, null, null} ; [ DW_TAG_subroutine_type ]
+// CHECK: [[FOO_FUNC]] = metadata !{metadata !"0x2e\00func\00func\00_ZN3foo4funcEN5outerIS_E5innerE\00{{.*}}"{{, [^,]+, [^,]+}}, metadata [[FOO_FUNC_TYPE:![0-9]*]], {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [func]
+// CHECK: [[FOO_FUNC_TYPE]] = {{.*}}, metadata [[FOO_FUNC_PARAMS:![0-9]*]], null, null, null} ; [ DW_TAG_subroutine_type ]
 // CHECK: [[FOO_FUNC_PARAMS]] = metadata !{null, metadata !{{[0-9]*}}, metadata !"[[OUTER_FOO_INNER_ID:.*]]"}
 // CHECK: !{{[0-9]*}} = {{.*}}, null, metadata !"[[OUTER_FOO_INNER_ID]]"} ; [ DW_TAG_structure_type ] [inner]
 
-// CHECK: metadata [[VIRT_MEM:![0-9]*]], i32 0, metadata !"_ZTS4virtI4elemE", metadata [[VIRT_TEMP_PARAM:![0-9]*]], metadata !"_ZTS4virtI4elemE"} ; [ DW_TAG_structure_type ] [virt<elem>] {{.*}} [def]
+// CHECK: metadata [[VIRT_MEM:![0-9]*]], metadata !"_ZTS4virtI4elemE", metadata [[VIRT_TEMP_PARAM:![0-9]*]], metadata !"_ZTS4virtI4elemE"} ; [ DW_TAG_structure_type ] [virt<elem>] {{.*}} [def]
 // CHECK: [[VIRT_TEMP_PARAM]] = metadata !{metadata [[VIRT_T:![0-9]*]]}
-// CHECK: [[VIRT_T]] = {{.*}}, metadata !"T", metadata !"_ZTS4elem", {{.*}} ; [ DW_TAG_template_type_parameter ]
+// CHECK: [[VIRT_T]] = metadata !{metadata !"0x2f\00T\000\000"{{, [^,]+}}, metadata !"_ZTS4elem", {{.*}} ; [ DW_TAG_template_type_parameter ]
 
-// CHECK: [[C:![0-9]*]] = {{.*}}, metadata [[C_MEM:![0-9]*]], i32 0, metadata !"_ZTS7MyClass", null, metadata !"_ZTS7MyClass"} ; [ DW_TAG_structure_type ] [MyClass]
+// CHECK: [[C:![0-9]*]] = {{.*}}, metadata [[C_MEM:![0-9]*]], metadata !"_ZTS7MyClass", null, metadata !"_ZTS7MyClass"} ; [ DW_TAG_structure_type ] [MyClass]
 // CHECK: [[C_MEM]] = metadata !{metadata [[C_VPTR:![0-9]*]], metadata [[C_ADD:![0-9]*]], metadata [[C_FUNC:![0-9]*]], metadata [[C_CTOR:![0-9]*]]}
 // CHECK: [[C_VPTR]] = {{.*}} ; [ DW_TAG_member ] [_vptr$MyClass]
 
@@ -35,7 +35,7 @@ inline int add3(int x) {
 // CHECK: [[C_FUNC]] = {{.*}} ; [ DW_TAG_subprogram ] [line 7] [func]
 // CHECK: [[C_CTOR]] = {{.*}} ; [ DW_TAG_subprogram ] [line 0] [MyClass]
 
-// CHECK: [[ELEM:![0-9]*]] = {{.*}}, metadata [[ELEM_MEM:![0-9]*]], i32 0, null, null, metadata !"_ZTS4elem"} ; [ DW_TAG_structure_type ] [elem] {{.*}} [def]
+// CHECK: [[ELEM:![0-9]*]] = {{.*}}, metadata [[ELEM_MEM:![0-9]*]], null, null, metadata !"_ZTS4elem"} ; [ DW_TAG_structure_type ] [elem] {{.*}} [def]
 // CHECK: [[ELEM_MEM]] = metadata !{metadata [[ELEM_X:![0-9]*]]}
 // CHECK: [[ELEM_X]] = {{.*}} ; [ DW_TAG_member ] [x] {{.*}} [static] [from _ZTS4virtI4elemE]
 
@@ -59,7 +59,7 @@ inline void func() {
 
 outer<foo>::inner x;
 
-// CHECK: metadata !"[[OUTER_FOO_INNER_ID]]", i32 {{[0-9]*}}, i32 {{[0-9]*}}, %"struct.outer<foo>::inner"* @x, {{.*}} ; [ DW_TAG_variable ] [x]
+// CHECK: metadata !{metadata !"0x34\00{{.*}}", {{.*}}, metadata !"[[OUTER_FOO_INNER_ID]]", %"struct.outer<foo>::inner"* @x, {{.*}} ; [ DW_TAG_variable ] [x]
 
 template <typename T>
 struct virt {

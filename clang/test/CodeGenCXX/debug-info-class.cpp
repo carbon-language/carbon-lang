@@ -94,20 +94,20 @@ int main(int argc, char **argv) {
 // CHECK: DW_TAG_class_type ] [bar]
 // CHECK: DW_TAG_union_type ] [baz]
 // CHECK: DW_TAG_class_type ] [B] {{.*}} [def]
-// CHECK: metadata !"_vptr$B", {{.*}}, i32 64, metadata !{{.*}}} ; [ DW_TAG_member ]
+// CHECK: metadata !"0xd\00_vptr$B\00{{.*}}\0064", {{.*}} ; [ DW_TAG_member ]
 
-// CHECK: [[C:![0-9]*]] = {{.*}} metadata [[C_MEM:![0-9]*]], i32 0, metadata !"_ZTS1C", null, metadata !"_ZTS1C"} ; [ DW_TAG_structure_type ] [C] {{.*}} [def]
+// CHECK: [[C:![0-9]*]] = {{.*}} metadata [[C_MEM:![0-9]*]], metadata !"_ZTS1C", null, metadata !"_ZTS1C"} ; [ DW_TAG_structure_type ] [C] {{.*}} [def]
 // CHECK: [[C_MEM]] = metadata !{metadata [[C_VPTR:![0-9]*]], metadata [[C_S:![0-9]*]], metadata [[C_DTOR:![0-9]*]]}
 // CHECK: [[C_VPTR]] = {{.*}} ; [ DW_TAG_member ] [_vptr$C] {{.*}} [artificial]
 // CHECK: [[C_S]] = {{.*}} ; [ DW_TAG_member ] [s] {{.*}} [static] [from int]
 // CHECK: [[C_DTOR]] = {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [~C]
 
-// CHECK: null, i32 0, null, null, metadata !"_ZTS1D"} ; [ DW_TAG_structure_type ] [D] {{.*}} [decl]
-// CHECK: null, i32 0, null, null, metadata !"_ZTS1E"} ; [ DW_TAG_structure_type ] [E] {{.*}} [decl]
-// CHECK: [[F:![0-9]*]] = {{.*}} null, i32 0, null, null, metadata !"_ZTS1F"} ; [ DW_TAG_structure_type ] [F] {{.*}} [decl]
+// CHECK: null, null, null, metadata !"_ZTS1D"} ; [ DW_TAG_structure_type ] [D] {{.*}} [decl]
+// CHECK: null, null, null, metadata !"_ZTS1E"} ; [ DW_TAG_structure_type ] [E] {{.*}} [decl]
+// CHECK: [[F:![0-9]*]] = {{.*}} null, null, null, metadata !"_ZTS1F"} ; [ DW_TAG_structure_type ] [F] {{.*}} [decl]
 
-// CHECK: null, i32 0, null, null, metadata !"_ZTS1G"} ; [ DW_TAG_structure_type ] [G] {{.*}} [decl]
-// CHECK: metadata [[G_INNER_MEM:![0-9]*]], i32 0, null, null, metadata !"_ZTSN1G5innerE"} ; [ DW_TAG_structure_type ] [inner] [line 50, {{.*}} [def]
+// CHECK: null, null, null, metadata !"_ZTS1G"} ; [ DW_TAG_structure_type ] [G] {{.*}} [decl]
+// CHECK: metadata [[G_INNER_MEM:![0-9]*]], null, null, metadata !"_ZTSN1G5innerE"} ; [ DW_TAG_structure_type ] [inner] [line 50, {{.*}} [def]
 // CHECK: [[G_INNER_MEM]] = metadata !{metadata [[G_INNER_I:![0-9]*]]}
 // CHECK: [[G_INNER_I]] = {{.*}} ; [ DW_TAG_member ] [j] {{.*}} [from int]
 
@@ -115,8 +115,8 @@ int main(int argc, char **argv) {
 // CHECK: HdrSize
 // CHECK: ; [ DW_TAG_structure_type ] [I] {{.*}} [def]
 //
-// CHECK: metadata !"_ZTS1D", {{.*}}, metadata [[D_FUNC_DECL:![0-9]*]], metadata {{![0-9]*}}, i32 {{[0-9]*}}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]
-// CHECK: [[D_FUNC_DECL]] = {{.*}}, metadata !"_ZTS1D", {{.*}}, i32 0, null, i32 {{[0-9]*}}} ; [ DW_TAG_subprogram ] {{.*}} [func]
+// CHECK: metadata !"_ZTS1D", {{.*}}, metadata [[D_FUNC_DECL:![0-9]*]], metadata {{![0-9]*}}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]
+// CHECK: [[D_FUNC_DECL]] = metadata !{metadata !"0x2e\00func\00{{.*}}\000\00{{[0-9]+}}"{{.*}}, metadata !"_ZTS1D", {{.*}}, null} ; [ DW_TAG_subprogram ] {{.*}} [func]
 
 // CHECK: [[F_I_DEF:![0-9]*]] = {{.*}}, metadata [[F_I:![0-9]*]]} ; [ DW_TAG_variable ] [i]
 

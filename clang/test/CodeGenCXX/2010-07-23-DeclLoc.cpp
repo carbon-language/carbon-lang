@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -emit-llvm -g %s -o - | FileCheck %s
 // Require the template function declaration refer to the correct filename.
 // First, locate the function decl in metadata, and pluck out the file handle:
-// CHECK: metadata [[filehandle:![0-9]+]], {{[^,]*}}, {{.*extract_dwarf_data_from_header.*extract_dwarf_data_from_header.*extract_dwarf_data_from_header.*[^ ]+", }}
+// CHECK: metadata !"0x2e\00extract_dwarf_data_from_header{{[^"]+}}", metadata [[filehandle:![0-9]+]]
 // Second: Require that filehandle refer to the correct filename:
 // CHECK: [[filehandle]] = {{.*}}decl_should_be_here.hpp"
 typedef long unsigned int __darwin_size_t;

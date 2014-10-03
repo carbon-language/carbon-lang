@@ -6,5 +6,5 @@ int main() {
   return 0;
 }
 
-// CHECK: metadata !{i32 {{.*}}, i32 0, metadata !{{.*}}, metadata !"localstatic", metadata !"localstatic", metadata !"", metadata !{{.*}}, i32 5, metadata !{{.*}}, i32 1, i32 1, i32* @main.localstatic, null} ; [ DW_TAG_variable ]
-// CHECK: metadata !{i32 {{.*}}, i32 0, null, metadata !"global", metadata !"global", metadata !"", metadata !{{.*}}, i32 3, metadata !{{.*}}, i32 0, i32 1, i32* @global, null} ; [ DW_TAG_variable ]
+// CHECK: metadata !{metadata !"0x34\00localstatic\00localstatic\00\005\001\001", metadata !{{.*}}, metadata !{{.*}}, metadata !{{.*}}, i32* @main.localstatic, null} ; [ DW_TAG_variable ]
+// CHECK: metadata !{metadata !"0x34\00global\00global\00\003\000\001", null, metadata !{{.*}}, metadata !{{.*}}, i32* @global, null} ; [ DW_TAG_variable ]

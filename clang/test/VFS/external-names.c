@@ -29,7 +29,7 @@
 
 // RUN: %clang_cc1 -I %t -ivfsoverlay %t.external.yaml -triple %itanium_abi_triple -g -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-DEBUG-EXTERNAL %s
 // CHECK-DEBUG-EXTERNAL: ![[Num:[0-9]*]] = metadata !{metadata !"{{.*}}Inputs{{.}}external-names.h
-// CHECK-DEBUG-EXTERNAL: metadata !{i32 {{[0-9]*}}, metadata ![[Num]]{{.*}}DW_TAG_file_type
+// CHECK-DEBUG-EXTERNAL: metadata !{metadata !"0x29", metadata ![[Num]]{{.*}}DW_TAG_file_type
 
 // RUN: %clang_cc1 -I %t -ivfsoverlay %t.yaml -triple %itanium_abi_triple -g -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-DEBUG %s
 // CHECK-DEBUG-NOT: Inputs

@@ -13,15 +13,15 @@ bar
 = foo<T*>;
 }
 
-// CHECK: metadata [[BINT:![0-9]*]], i32 0, i32 1, {{.*}} ; [ DW_TAG_variable ] [bi]
+// CHECK: metadata [[BINT:![0-9]*]], {{[^,]+, [^,]+}}} ; [ DW_TAG_variable ] [bi]
 // CHECK: [[BINT]] = {{.*}} ; [ DW_TAG_typedef ] [bar<int>] [line 42
 x::bar<int> bi;
-// CHECK: metadata [[BFLOAT:![0-9]*]], i32 0, i32 1, {{.*}} ; [ DW_TAG_variable ] [bf]
+// CHECK: metadata [[BFLOAT:![0-9]*]], {{[^,]+, [^,]+}}} ; [ DW_TAG_variable ] [bf]
 // CHECK: [[BFLOAT]] = {{.*}} ; [ DW_TAG_typedef ] [bar<float>] [line 42
 x::bar<float> bf;
 
 using
-// CHECK: metadata [[NARF:![0-9]*]], i32 0, i32 1, {{.*}} ; [ DW_TAG_variable ] [n]
+// CHECK: metadata [[NARF:![0-9]*]], {{[^,]+, [^,]+}}} ; [ DW_TAG_variable ] [n]
 # 142
 narf // CHECK: [[NARF]] = {{.*}} ; [ DW_TAG_typedef ] [narf] [line 142
 = int;
