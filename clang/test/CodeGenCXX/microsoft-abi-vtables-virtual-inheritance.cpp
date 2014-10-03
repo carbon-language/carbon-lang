@@ -777,6 +777,16 @@ struct A {
 A::A() {}
 }
 
+namespace Test14 {
+struct A {
+  virtual void f();
+};
+struct __declspec(dllexport) B : virtual A {
+  virtual void f() = 0;
+  // MANGLING-DAG: @"\01??_7B@Test14@@6B@" = weak_odr dllexport unnamed_addr constant [1 x i8*] [i8* bitcast (void ()* @_purecall to i8*)]
+};
+}
+
 namespace pr21031_1 {
 // This ordering of base specifiers regressed in r202425.
 struct A { virtual void f(void); };
