@@ -1116,17 +1116,6 @@ const SymbolicRegion *MemRegion::getSymbolicBase() const {
   return nullptr;
 }
 
-// FIXME: Merge with the implementation of the same method in Store.cpp
-static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
-  if (const RecordType *RT = Ty->getAs<RecordType>()) {
-    const RecordDecl *D = RT->getDecl();
-    if (!D->getDefinition())
-      return false;
-  }
-
-  return true;
-}
-
 RegionRawOffset ElementRegion::getAsArrayOffset() const {
   CharUnits offset = CharUnits::Zero();
   const ElementRegion *ER = this;
@@ -1148,7 +1137,7 @@ RegionRawOffset ElementRegion::getAsArrayOffset() const {
         QualType elemType = ER->getElementType();
 
         // If we are pointing to an incomplete type, go no further.
-        if (!IsCompleteType(C, elemType)) {
+        if (elemType->isIncompleteType()) {
           superR = ER;
           break;
         }
@@ -1288,7 +1277,7 @@ RegionOffset MemRegion::getAsOffset() const {
       R = ER->getSuperRegion();
 
       QualType EleTy = ER->getValueType();
-      if (!IsCompleteType(getContext(), EleTy)) {
+      if (EleTy->isIncompleteType()) {
         // We cannot compute the offset of the base class.
         SymbolicOffsetBase = R;
         continue;

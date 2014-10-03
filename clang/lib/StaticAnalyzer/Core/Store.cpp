@@ -48,17 +48,6 @@ const MemRegion *StoreManager::MakeElementRegion(const MemRegion *Base,
   return MRMgr.getElementRegion(EleTy, idx, Base, svalBuilder.getContext());
 }
 
-// FIXME: Merge with the implementation of the same method in MemRegion.cpp
-static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
-  if (const RecordType *RT = Ty->getAs<RecordType>()) {
-    const RecordDecl *D = RT->getDecl();
-    if (!D->getDefinition())
-      return false;
-  }
-
-  return true;
-}
-
 StoreRef StoreManager::BindDefault(Store store, const MemRegion *R, SVal V) {
   return StoreRef(store, *this);
 }
@@ -196,7 +185,7 @@ const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy)
       const MemRegion *newSuperR = nullptr;
 
       // We can only compute sizeof(PointeeTy) if it is a complete type.
-      if (IsCompleteType(Ctx, PointeeTy)) {
+      if (!PointeeTy->isIncompleteType()) {
         // Compute the size in **bytes**.
         CharUnits pointeeTySize = Ctx.getTypeSizeInChars(PointeeTy);
         if (!pointeeTySize.isZero()) {
