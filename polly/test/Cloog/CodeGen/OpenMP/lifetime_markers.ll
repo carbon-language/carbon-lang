@@ -13,7 +13,7 @@
 ; CHECK-NEXT:    %[[GEP:[._0-9a-zA-Z]*]] = getelementptr inbounds { i32* }* %polly.par.userContext, i32 0, i32 0
 ; CHECK-NEXT:    store i32* %A, i32** %[[GEP]]
 ; CHECK-NEXT:    %polly.par.userContext{{[0-9]*}} = bitcast { i32* }* %polly.par.userContext to i8*
-; CHECK-NEXT:    call void @GOMP_parallel_loop_runtime_start(void (i8*)* @jd.polly.subfn, i8* %polly.par.userContext{{[0-9]*}}, i64 0, i64 0, i64 1024, i64 1)
+; CHECK-NEXT:    call void @GOMP_parallel_loop_runtime_start(void (i8*)* @jd.polly.subfn, i8* %polly.par.userContext{{[0-9]*}}, i32 0, i64 0, i64 1024, i64 1)
 ; CHECK-NEXT:    call void @jd.polly.subfn(i8* %polly.par.userContext{{[0-9]*}})
 ; CHECK-NEXT:    call void @GOMP_parallel_end()
 ; CHECK-NEXT:    %[[BC2:[._0-9a-zA-Z]*]] = bitcast { i32* }* %polly.par.userContext to i8*

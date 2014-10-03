@@ -2,9 +2,9 @@
 ; RUN: opt %loadPolly -polly-codegen -enable-polly-openmp -polly-num-threads=1 -S < %s | FileCheck %s --check-prefix=ONE
 ; RUN: opt %loadPolly -polly-codegen -enable-polly-openmp -polly-num-threads=4 -S < %s | FileCheck %s --check-prefix=FOUR
 ;
-; AUTO: call void @GOMP_parallel_loop_runtime_start(void (i8*)* @jd.polly.subfn, i8* %polly.par.userContext{{[0-9]*}}, i64 0, i64 0, i64 1024, i64 1)
-; ONE: call void @GOMP_parallel_loop_runtime_start(void (i8*)* @jd.polly.subfn, i8* %polly.par.userContext{{[0-9]*}}, i64 1, i64 0, i64 1024, i64 1)
-; FOUR: call void @GOMP_parallel_loop_runtime_start(void (i8*)* @jd.polly.subfn, i8* %polly.par.userContext{{[0-9]*}}, i64 4, i64 0, i64 1024, i64 1)
+; AUTO: call void @GOMP_parallel_loop_runtime_start(void (i8*)* @jd.polly.subfn, i8* %polly.par.userContext{{[0-9]*}}, i32 0, i64 0, i64 1024, i64 1)
+; ONE: call void @GOMP_parallel_loop_runtime_start(void (i8*)* @jd.polly.subfn, i8* %polly.par.userContext{{[0-9]*}}, i32 1, i64 0, i64 1024, i64 1)
+; FOUR: call void @GOMP_parallel_loop_runtime_start(void (i8*)* @jd.polly.subfn, i8* %polly.par.userContext{{[0-9]*}}, i32 4, i64 0, i64 1024, i64 1)
 ;
 ;    void jd(int *A) {
 ;      for (int i = 0; i < 1024; i++)

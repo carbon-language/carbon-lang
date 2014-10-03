@@ -189,14 +189,14 @@ void ParallelLoopGenerator::createCallSpawnThreads(Value *SubFn,
 
     Type *Params[] = {PointerType::getUnqual(FunctionType::get(
                           Builder.getVoidTy(), Builder.getInt8PtrTy(), false)),
-                      Builder.getInt8PtrTy(), LongType, LongType, LongType,
-                      LongType};
+                      Builder.getInt8PtrTy(), Builder.getInt32Ty(), LongType,
+                      LongType, LongType};
 
     FunctionType *Ty = FunctionType::get(Builder.getVoidTy(), Params, false);
     F = Function::Create(Ty, Linkage, Name, M);
   }
 
-  Value *NumberOfThreads = ConstantInt::get(LongType, PollyNumThreads);
+  Value *NumberOfThreads = Builder.getInt32(PollyNumThreads);
   Value *Args[] = {SubFn, SubFnParam, NumberOfThreads, LB, UB, Stride};
 
   Builder.CreateCall(F, Args);
