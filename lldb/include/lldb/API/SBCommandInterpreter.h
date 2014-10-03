@@ -175,9 +175,9 @@ class SBCommandPluginInterface
 {
 public:
     virtual bool
-    DoExecute (lldb::SBDebugger debugger,
-               char** command,
-               lldb::SBCommandReturnObject &result)
+    DoExecute (lldb::SBDebugger /*debugger*/,
+               char** /*command*/,
+               lldb::SBCommandReturnObject & /*result*/)
     {
         return false;
     }
