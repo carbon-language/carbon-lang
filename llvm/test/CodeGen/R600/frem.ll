@@ -57,7 +57,7 @@ define void @frem_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
 ; FUNC-LABEL: {{^}}unsafe_frem_f64:
 ; SI: V_RCP_F64_e32
 ; SI: V_MUL_F64
-; SI: V_BFE_I32
+; SI: V_BFE_U32
 ; SI: V_FMA_F64
 ; SI: S_ENDPGM
 define void @unsafe_frem_f64(double addrspace(1)* %out, double addrspace(1)* %in1,

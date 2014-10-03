@@ -1714,7 +1714,7 @@ SDValue AMDGPUTargetLowering::LowerFTRUNC(SDValue Op, SelectionDAG &DAG) const {
   const unsigned ExpBits = 11;
 
   // Extract the exponent.
-  SDValue ExpPart = DAG.getNode(AMDGPUISD::BFE_I32, SL, MVT::i32,
+  SDValue ExpPart = DAG.getNode(AMDGPUISD::BFE_U32, SL, MVT::i32,
                                 Hi,
                                 DAG.getConstant(FractBits - 32, MVT::i32),
                                 DAG.getConstant(ExpBits, MVT::i32));

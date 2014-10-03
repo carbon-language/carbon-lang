@@ -11,7 +11,7 @@ declare <16 x double> @llvm.floor.v16f64(<16 x double>) nounwind readnone
 ; FUNC-LABEL: {{^}}ffloor_f64:
 ; CI: V_FLOOR_F64_e32
 
-; SI: S_BFE_I32 [[SEXP:s[0-9]+]], {{s[0-9]+}}, 0xb0014
+; SI: S_BFE_U32 [[SEXP:s[0-9]+]], {{s[0-9]+}}, 0xb0014
 ; SI: S_ADD_I32 s{{[0-9]+}}, [[SEXP]], 0xfffffc01
 ; SI: S_LSHR_B64
 ; SI: S_NOT_B64
