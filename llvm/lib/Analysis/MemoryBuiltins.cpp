@@ -332,7 +332,11 @@ const CallInst *llvm::isFreeCall(const Value *I, const TargetLibraryInfo *TLI) {
       TLIFn == LibFunc::ZdlPv || // operator delete(void*)
       TLIFn == LibFunc::ZdaPv)   // operator delete[](void*)
     ExpectedNumParams = 1;
-  else if (TLIFn == LibFunc::ZdlPvRKSt9nothrow_t || // delete(void*, nothrow)
+  else if (TLIFn == LibFunc::ZdlPvj ||              // delete(void*, uint)
+           TLIFn == LibFunc::ZdlPvm ||              // delete(void*, ulong)
+           TLIFn == LibFunc::ZdlPvRKSt9nothrow_t || // delete(void*, nothrow)
+           TLIFn == LibFunc::ZdaPvj ||              // delete[](void*, uint)
+           TLIFn == LibFunc::ZdaPvm ||              // delete[](void*, ulong)
            TLIFn == LibFunc::ZdaPvRKSt9nothrow_t)   // delete[](void*, nothrow)
     ExpectedNumParams = 2;
   else

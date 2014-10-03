@@ -26,10 +26,18 @@ namespace llvm {
       ZdaPv,
       /// void operator delete[](void*, nothrow);
       ZdaPvRKSt9nothrow_t,
+      /// void operator delete[](void*, unsigned int);
+      ZdaPvj,
+      /// void operator delete[](void*, unsigned long);
+      ZdaPvm,
       /// void operator delete(void*);
       ZdlPv,
       /// void operator delete(void*, nothrow);
       ZdlPvRKSt9nothrow_t,
+      /// void operator delete(void*, unsigned int);
+      ZdlPvj,
+      /// void operator delete(void*, unsigned long);
+      ZdlPvm,
       /// void *new[](unsigned int);
       Znaj,
       /// void *new[](unsigned int, nothrow);
