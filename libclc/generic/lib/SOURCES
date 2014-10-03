@@ -1,3 +1,4 @@
+async/async_work_group_copy.cl
 async/async_work_group_strided_copy.cl
 async/prefetch.cl
 async/wait_group_events.cl
