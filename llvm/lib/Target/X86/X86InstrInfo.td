@@ -693,6 +693,7 @@ def UseSSE3      : Predicate<"Subtarget->hasSSE3() && !Subtarget->hasAVX()">;
 def HasSSSE3     : Predicate<"Subtarget->hasSSSE3()">;
 def UseSSSE3     : Predicate<"Subtarget->hasSSSE3() && !Subtarget->hasAVX()">;
 def HasSSE41     : Predicate<"Subtarget->hasSSE41()">;
+def NoSSE41      : Predicate<"!Subtarget->hasSSE41()">;
 def UseSSE41     : Predicate<"Subtarget->hasSSE41() && !Subtarget->hasAVX()">;
 def HasSSE42     : Predicate<"Subtarget->hasSSE42()">;
 def UseSSE42     : Predicate<"Subtarget->hasSSE42() && !Subtarget->hasAVX()">;

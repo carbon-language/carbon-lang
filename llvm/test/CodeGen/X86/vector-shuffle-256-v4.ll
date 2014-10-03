@@ -678,8 +678,8 @@ define <4 x i64> @insert_reg_and_zero_v4i64(i64 %a) {
 ; AVX1-LABEL: insert_reg_and_zero_v4i64:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vmovq %rdi, %xmm0
-; AVX1-NEXT:    vxorps %xmm1, %xmm1, %xmm1
-; AVX1-NEXT:    vmovsd %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1,2,3]
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: insert_reg_and_zero_v4i64:
@@ -697,8 +697,8 @@ define <4 x i64> @insert_mem_and_zero_v4i64(i64* %ptr) {
 ; AVX1-LABEL: insert_mem_and_zero_v4i64:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vmovq (%rdi), %xmm0
-; AVX1-NEXT:    vxorps %xmm1, %xmm1, %xmm1
-; AVX1-NEXT:    vmovsd %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1,2,3]
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: insert_mem_and_zero_v4i64:

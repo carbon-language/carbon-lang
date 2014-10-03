@@ -228,9 +228,9 @@ define <4 x i32> @test18(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    xorps %xmm2, %xmm2
 ; CHECK-NEXT:    xorps %xmm3, %xmm3
-; CHECK-NEXT:    movss %xmm0, %xmm3
+; CHECK-NEXT:    blendps $1, %xmm0, %xmm3
 ; CHECK-NEXT:    shufps {{.*#+}} xmm3 = xmm3[2,0],xmm2[0,0]
-; CHECK-NEXT:    movss %xmm1, %xmm2
+; CHECK-NEXT:    blendps $1, %xmm1, %xmm2
 ; CHECK-NEXT:    orps %xmm3, %xmm2
 ; CHECK-NEXT:    movaps %xmm2, %xmm0
 ; CHECK-NEXT:    retq

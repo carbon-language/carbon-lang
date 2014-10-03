@@ -39,7 +39,7 @@ entry:
 define <4 x float> @test3(<4 x float> %A) {
 ; CHECK-LABEL: test3:
 ; CHECK:         xorps %[[X1:xmm[0-9]+]], %[[X1]]
-; CHECK-NEXT:    movss %xmm0, %[[X1]]
+; CHECK-NEXT:    blendps $1, %xmm0, %[[X1]]
 ; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = [[X1]][1,0,1,1]
 ; CHECK-NEXT:    retl
 ;

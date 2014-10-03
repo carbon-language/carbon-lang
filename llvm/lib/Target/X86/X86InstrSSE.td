@@ -612,29 +612,6 @@ let canFoldAsLoad = 1, isReMaterializable = 1 in {
 
 // Patterns
 let Predicates = [UseAVX] in {
-  let AddedComplexity = 15 in {
-  // Move scalar to XMM zero-extended, zeroing a VR128 then do a
-  // MOVS{S,D} to the lower bits.
-  def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
-            (VMOVSSrr (v4f32 (V_SET0)), FR32:$src)>;
-  def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
-            (VMOVSSrr (v4f32 (V_SET0)), (COPY_TO_REGCLASS VR128:$src, FR32))>;
-  def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
-            (VMOVSSrr (v4i32 (V_SET0)), (COPY_TO_REGCLASS VR128:$src, FR32))>;
-  def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
-            (VMOVSDrr (v2f64 (V_SET0)), FR64:$src)>;
-
-  // Move low f32 and clear high bits.
-  def : Pat<(v8f32 (X86vzmovl (v8f32 VR256:$src))),
-            (SUBREG_TO_REG (i32 0),
-             (VMOVSSrr (v4f32 (V_SET0)),
-                       (EXTRACT_SUBREG (v8f32 VR256:$src), sub_xmm)), sub_xmm)>;
-  def : Pat<(v8i32 (X86vzmovl (v8i32 VR256:$src))),
-            (SUBREG_TO_REG (i32 0),
-             (VMOVSSrr (v4i32 (V_SET0)),
-                       (EXTRACT_SUBREG (v8i32 VR256:$src), sub_xmm)), sub_xmm)>;
-  }
-
   let AddedComplexity = 20 in {
   // MOVSSrm zeros the high parts of the register; represent this
   // with SUBREG_TO_REG. The AVX versions also write: DST[255:128] <- 0
@@ -670,30 +647,9 @@ let Predicates = [UseAVX] in {
                    (v2f64 (scalar_to_vector (loadf64 addr:$src))), (iPTR 0)))),
             (SUBREG_TO_REG (i32 0), (VMOVSDrm addr:$src), sub_xmm)>;
   }
-  def : Pat<(v8f32 (X86vzmovl (insert_subvector undef,
-                   (v4f32 (scalar_to_vector FR32:$src)), (iPTR 0)))),
-            (SUBREG_TO_REG (i32 0),
-                           (v4f32 (VMOVSSrr (v4f32 (V_SET0)), FR32:$src)),
-                           sub_xmm)>;
-  def : Pat<(v4f64 (X86vzmovl (insert_subvector undef,
-                   (v2f64 (scalar_to_vector FR64:$src)), (iPTR 0)))),
-            (SUBREG_TO_REG (i64 0),
-                           (v2f64 (VMOVSDrr (v2f64 (V_SET0)), FR64:$src)),
-                           sub_xmm)>;
   def : Pat<(v4i64 (X86vzmovl (insert_subvector undef,
                    (v2i64 (scalar_to_vector (loadi64 addr:$src))), (iPTR 0)))),
             (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_xmm)>;
-
-  // Move low f64 and clear high bits.
-  def : Pat<(v4f64 (X86vzmovl (v4f64 VR256:$src))),
-            (SUBREG_TO_REG (i32 0),
-             (VMOVSDrr (v2f64 (V_SET0)),
-                       (EXTRACT_SUBREG (v4f64 VR256:$src), sub_xmm)), sub_xmm)>;
-
-  def : Pat<(v4i64 (X86vzmovl (v4i64 VR256:$src))),
-            (SUBREG_TO_REG (i32 0),
-             (VMOVSDrr (v2i64 (V_SET0)),
-                       (EXTRACT_SUBREG (v4i64 VR256:$src), sub_xmm)), sub_xmm)>;
 
   // Extract and store.
   def : Pat<(store (f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
@@ -745,7 +701,6 @@ let Predicates = [UseAVX] in {
                         (EXTRACT_SUBREG (v4f64 VR256:$src2), sub_xmm)),
               sub_xmm)>;
 
-
   // FIXME: Instead of a X86Movlps there should be a X86Movsd here, the problem
   // is during lowering, where it's not possible to recognize the fold cause
   // it has two uses through a bitcast. One use disappears at isel time and the
@@ -761,7 +716,7 @@ let Predicates = [UseAVX] in {
 }
 
 let Predicates = [UseSSE1] in {
-  let AddedComplexity = 15 in {
+  let Predicates = [NoSSE41], AddedComplexity = 15 in {
   // Move scalar to XMM zero-extended, zeroing a VR128 then do a
   // MOVSS to the lower bits.
   def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
@@ -795,7 +750,7 @@ let Predicates = [UseSSE1] in {
 }
 
 let Predicates = [UseSSE2] in {
-  let AddedComplexity = 15 in {
+  let Predicates = [NoSSE41], AddedComplexity = 15 in {
   // Move scalar to XMM zero-extended, zeroing a VR128 then do a
   // MOVSD to the lower bits.
   def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
@@ -7575,6 +7530,57 @@ let Predicates = [HasAVX2] in {
                                (imm:$mask))),
             (VPBLENDWYrri VR256:$src1, VR256:$src2, imm:$mask)>;
 }
+
+// Patterns
+let Predicates = [UseAVX] in {
+  let AddedComplexity = 15 in {
+  // Move scalar to XMM zero-extended, zeroing a VR128 then do a
+  // MOVS{S,D} to the lower bits.
+  def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
+            (VMOVSSrr (v4f32 (V_SET0)), FR32:$src)>;
+  def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
+            (VBLENDPSrri (v4f32 (V_SET0)), VR128:$src, (i8 1))>;
+  def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
+            (VBLENDPSrri (v4i32 (V_SET0)), VR128:$src, (i8 1))>;
+  def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
+            (VMOVSDrr (v2f64 (V_SET0)), FR64:$src)>;
+
+  // Move low f32 and clear high bits.
+  def : Pat<(v8f32 (X86vzmovl (v8f32 VR256:$src))),
+            (VBLENDPSYrri (v8f32 (AVX_SET0)), VR256:$src, (i8 1))>;
+  def : Pat<(v8i32 (X86vzmovl (v8i32 VR256:$src))),
+            (VBLENDPSYrri (v8i32 (AVX_SET0)), VR256:$src, (i8 1))>;
+  }
+
+  def : Pat<(v8f32 (X86vzmovl (insert_subvector undef,
+                   (v4f32 (scalar_to_vector FR32:$src)), (iPTR 0)))),
+            (SUBREG_TO_REG (i32 0),
+                           (v4f32 (VMOVSSrr (v4f32 (V_SET0)), FR32:$src)),
+                           sub_xmm)>;
+  def : Pat<(v4f64 (X86vzmovl (insert_subvector undef,
+                   (v2f64 (scalar_to_vector FR64:$src)), (iPTR 0)))),
+            (SUBREG_TO_REG (i64 0),
+                           (v2f64 (VMOVSDrr (v2f64 (V_SET0)), FR64:$src)),
+                           sub_xmm)>;
+
+  // Move low f64 and clear high bits.
+  def : Pat<(v4f64 (X86vzmovl (v4f64 VR256:$src))),
+            (VBLENDPDYrri (v4f64 (AVX_SET0)), VR256:$src, (i8 1))>;
+
+  def : Pat<(v4i64 (X86vzmovl (v4i64 VR256:$src))),
+            (VBLENDPDYrri (v4i64 (AVX_SET0)), VR256:$src, (i8 1))>;
+}
+
+let Predicates = [UseSSE41] in {
+  // With SSE41 we can use blends for these patterns.
+  def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
+            (BLENDPSrri (v4f32 (V_SET0)), VR128:$src, (i8 1))>;
+  def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
+            (BLENDPSrri (v4f32 (V_SET0)), VR128:$src, (i8 1))>;
+  def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
+            (BLENDPDrri (v2f64 (V_SET0)), VR128:$src, (i8 1))>;
+}
+
 
 /// SS41I_ternary_int - SSE 4.1 ternary operator
 let Uses = [XMM0], Constraints = "$src1 = $dst" in {

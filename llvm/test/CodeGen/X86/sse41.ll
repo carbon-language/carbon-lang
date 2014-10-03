@@ -522,7 +522,7 @@ define <4 x float> @shuf_X00A(<4 x float> %x, <4 x float> %a) {
 ; X32-LABEL: shuf_X00A:
 ; X32:       ## BB#0:
 ; X32-NEXT:    xorps %xmm2, %xmm2
-; X32-NEXT:    movss %xmm0, %xmm2
+; X32-NEXT:    blendps $1, %xmm0, %xmm2
 ; X32-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1,2],xmm1[0]
 ; X32-NEXT:    movaps %xmm2, %xmm0
 ; X32-NEXT:    retl
@@ -530,7 +530,7 @@ define <4 x float> @shuf_X00A(<4 x float> %x, <4 x float> %a) {
 ; X64-LABEL: shuf_X00A:
 ; X64:       ## BB#0:
 ; X64-NEXT:    xorps %xmm2, %xmm2
-; X64-NEXT:    movss %xmm0, %xmm2
+; X64-NEXT:    blendps $1, %xmm0, %xmm2
 ; X64-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1,2],xmm1[0]
 ; X64-NEXT:    movaps %xmm2, %xmm0
 ; X64-NEXT:    retq
@@ -546,7 +546,7 @@ define <4 x float> @shuf_X00X(<4 x float> %x, <4 x float> %a) {
 ; X32-LABEL: shuf_X00X:
 ; X32:       ## BB#0:
 ; X32-NEXT:    xorps %xmm1, %xmm1
-; X32-NEXT:    movss %xmm0, %xmm1
+; X32-NEXT:    blendps $1, %xmm0, %xmm1
 ; X32-NEXT:    insertps {{.*#+}} xmm1 = xmm1[0,1,2],xmm0[0]
 ; X32-NEXT:    movaps %xmm1, %xmm0
 ; X32-NEXT:    retl
@@ -554,7 +554,7 @@ define <4 x float> @shuf_X00X(<4 x float> %x, <4 x float> %a) {
 ; X64-LABEL: shuf_X00X:
 ; X64:       ## BB#0:
 ; X64-NEXT:    xorps %xmm1, %xmm1
-; X64-NEXT:    movss %xmm0, %xmm1
+; X64-NEXT:    blendps $1, %xmm0, %xmm1
 ; X64-NEXT:    insertps {{.*#+}} xmm1 = xmm1[0,1,2],xmm0[0]
 ; X64-NEXT:    movaps %xmm1, %xmm0
 ; X64-NEXT:    retq
@@ -570,7 +570,7 @@ define <4 x float> @shuf_X0YC(<4 x float> %x, <4 x float> %a) {
 ; X32-LABEL: shuf_X0YC:
 ; X32:       ## BB#0:
 ; X32-NEXT:    xorps %xmm2, %xmm2
-; X32-NEXT:    movss %xmm0, %xmm2
+; X32-NEXT:    blendps $1, %xmm0, %xmm2
 ; X32-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,1],xmm0[1,0]
 ; X32-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1,2],xmm1[2]
 ; X32-NEXT:    movaps %xmm2, %xmm0
@@ -579,7 +579,7 @@ define <4 x float> @shuf_X0YC(<4 x float> %x, <4 x float> %a) {
 ; X64-LABEL: shuf_X0YC:
 ; X64:       ## BB#0:
 ; X64-NEXT:    xorps %xmm2, %xmm2
-; X64-NEXT:    movss %xmm0, %xmm2
+; X64-NEXT:    blendps $1, %xmm0, %xmm2
 ; X64-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,1],xmm0[1,0]
 ; X64-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1,2],xmm1[2]
 ; X64-NEXT:    movaps %xmm2, %xmm0
@@ -692,7 +692,7 @@ define <4 x i32> @i32_shuf_X00A(<4 x i32> %x, <4 x i32> %a) {
 ; X32-LABEL: i32_shuf_X00A:
 ; X32:       ## BB#0:
 ; X32-NEXT:    xorps %xmm2, %xmm2
-; X32-NEXT:    movss %xmm0, %xmm2
+; X32-NEXT:    blendps $1, %xmm0, %xmm2
 ; X32-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1,2],xmm1[0]
 ; X32-NEXT:    movaps %xmm2, %xmm0
 ; X32-NEXT:    retl
@@ -700,7 +700,7 @@ define <4 x i32> @i32_shuf_X00A(<4 x i32> %x, <4 x i32> %a) {
 ; X64-LABEL: i32_shuf_X00A:
 ; X64:       ## BB#0:
 ; X64-NEXT:    xorps %xmm2, %xmm2
-; X64-NEXT:    movss %xmm0, %xmm2
+; X64-NEXT:    blendps $1, %xmm0, %xmm2
 ; X64-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1,2],xmm1[0]
 ; X64-NEXT:    movaps %xmm2, %xmm0
 ; X64-NEXT:    retq
@@ -716,7 +716,7 @@ define <4 x i32> @i32_shuf_X00X(<4 x i32> %x, <4 x i32> %a) {
 ; X32-LABEL: i32_shuf_X00X:
 ; X32:       ## BB#0:
 ; X32-NEXT:    xorps %xmm1, %xmm1
-; X32-NEXT:    movss %xmm0, %xmm1
+; X32-NEXT:    blendps $1, %xmm0, %xmm1
 ; X32-NEXT:    insertps {{.*#+}} xmm1 = xmm1[0,1,2],xmm0[0]
 ; X32-NEXT:    movaps %xmm1, %xmm0
 ; X32-NEXT:    retl
@@ -724,7 +724,7 @@ define <4 x i32> @i32_shuf_X00X(<4 x i32> %x, <4 x i32> %a) {
 ; X64-LABEL: i32_shuf_X00X:
 ; X64:       ## BB#0:
 ; X64-NEXT:    xorps %xmm1, %xmm1
-; X64-NEXT:    movss %xmm0, %xmm1
+; X64-NEXT:    blendps $1, %xmm0, %xmm1
 ; X64-NEXT:    insertps {{.*#+}} xmm1 = xmm1[0,1,2],xmm0[0]
 ; X64-NEXT:    movaps %xmm1, %xmm0
 ; X64-NEXT:    retq
@@ -740,7 +740,7 @@ define <4 x i32> @i32_shuf_X0YC(<4 x i32> %x, <4 x i32> %a) {
 ; X32-LABEL: i32_shuf_X0YC:
 ; X32:       ## BB#0:
 ; X32-NEXT:    xorps %xmm2, %xmm2
-; X32-NEXT:    movss %xmm0, %xmm2
+; X32-NEXT:    blendps $1, %xmm0, %xmm2
 ; X32-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,1],xmm0[1,0]
 ; X32-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1,2],xmm1[2]
 ; X32-NEXT:    movaps %xmm2, %xmm0
@@ -749,7 +749,7 @@ define <4 x i32> @i32_shuf_X0YC(<4 x i32> %x, <4 x i32> %a) {
 ; X64-LABEL: i32_shuf_X0YC:
 ; X64:       ## BB#0:
 ; X64-NEXT:    xorps %xmm2, %xmm2
-; X64-NEXT:    movss %xmm0, %xmm2
+; X64-NEXT:    blendps $1, %xmm0, %xmm2
 ; X64-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,1],xmm0[1,0]
 ; X64-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1,2],xmm1[2]
 ; X64-NEXT:    movaps %xmm2, %xmm0
