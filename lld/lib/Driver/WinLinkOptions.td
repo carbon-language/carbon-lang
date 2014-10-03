@@ -38,6 +38,7 @@ def subsystem : P<"subsystem", "Specify subsystem">;
 def stub    : P<"stub", "Specify DOS stub file">;
 def opt     : P<"opt", "Control optimizations">;
 def implib  : P<"implib", "Import library name">;
+def delayload : P<"delayload", "Delay loaded DLL name">;
 
 def manifest : F<"manifest">;
 def manifest_colon : P<"manifest", "Create manifest file">;
@@ -106,7 +107,6 @@ def no_incremental : F<"incremental:no">;
 def nologo : F<"nologo">;
 
 def delay : QF<"delay">;
-def delayload : QF<"delayload">;
 def errorreport : QF<"errorreport">;
 def idlout : QF<"idlout">;
 def ignore : QF<"ignore">;

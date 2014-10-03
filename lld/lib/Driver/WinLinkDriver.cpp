@@ -1189,6 +1189,11 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       ctx.setOutputImportLibraryPath(inputArg->getValue());
       break;
 
+    case OPT_delayload:
+      ctx.addInitialUndefinedSymbol(
+          ctx.is64Bit() ? "__delayLoadHelper2" : "___delayLoadHelper2@8");
+      break;
+
     case OPT_stub: {
       ArrayRef<uint8_t> contents;
       if (!readFile(ctx, inputArg->getValue(), contents)) {
