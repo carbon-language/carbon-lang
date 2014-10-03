@@ -2,6 +2,8 @@
 ; RUN: llc -march=x86-64 -mcpu=core2 < %s | FileCheck %s --check-prefix=SSE
 ; RUN: llc -march=x86-64 -mcpu=core-avx2 < %s | FileCheck %s --check-prefix=AVX
 
+target triple = "x86_64-unknown-unknown"
+
 define <4 x i32> @test1(<4 x i32> %a) {
 ; SSE41-LABEL: test1:
 ; SSE41:       # BB#0:

@@ -1,5 +1,7 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse4.2 | FileCheck %s
 
+target triple = "x86_64-unknown-unknown"
+
 ; widening shuffle v3float and then a add
 define void @shuf(<3 x float>* %dst.addr, <3 x float> %src1,<3 x float> %src2) nounwind {
 ; CHECK-LABEL: shuf:
