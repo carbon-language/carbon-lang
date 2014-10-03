@@ -289,3 +289,13 @@ struct R : Q {
 
 R r;
 void use(R *obj) { obj->foo(42l); }
+
+struct S {
+  // CHECK-LABEL: VFTable for 'S' (1 entry).
+  // CHECK-NEXT:   0 | void S::f() [deleted]
+  virtual void f() = delete;
+  S();
+  // EMITS-VFTABLE-DAG: @"\01??_7S@@6B@" = linkonce_odr unnamed_addr constant [1 x i8*] [i8* bitcast (void ()* @_purecall to i8*)]
+};
+
+S::S() {}
