@@ -2432,6 +2432,42 @@ struct MatchScope {
   bool HasChainNodesMatched, HasGlueResultNodesMatched;
 };
 
+/// \\brief A DAG update listener to keep the matching state
+/// (i.e. RecordedNodes and MatchScope) uptodate if the target is allowed to
+/// change the DAG while matching.  X86 addressing mode matcher is an example
+/// for this.
+class MatchStateUpdater : public SelectionDAG::DAGUpdateListener
+{
+      SmallVectorImpl<std::pair<SDValue, SDNode*> > &RecordedNodes;
+      SmallVectorImpl<MatchScope> &MatchScopes;
+public:
+  MatchStateUpdater(SelectionDAG &DAG,
+                    SmallVectorImpl<std::pair<SDValue, SDNode*> > &RN,
+                    SmallVectorImpl<MatchScope> &MS) :
+    SelectionDAG::DAGUpdateListener(DAG),
+    RecordedNodes(RN), MatchScopes(MS) { }
+
+  void NodeDeleted(SDNode *N, SDNode *E) {
+    // Some early-returns here to avoid the search if we deleted the node or
+    // if the update comes from MorphNodeTo (MorphNodeTo is the last thing we
+    // do, so it's unnecessary to update matching state at that point).
+    // Neither of these can occur currently because we only install this
+    // update listener during matching a complex patterns.
+    if (!E || E->isMachineOpcode())
+      return;
+    // Performing linear search here does not matter because we almost never
+    // run this code.  You'd have to have a CSE during complex pattern
+    // matching.
+    for (auto &I : RecordedNodes)
+      if (I.first.getNode() == N)
+        I.first.setNode(E);
+
+    for (auto &I : MatchScopes)
+      for (auto &J : I.NodeStack)
+        if (J.getNode() == N)
+          J.setNode(E);
+  }
+};
 }
 
 SDNode *SelectionDAGISel::
@@ -2686,6 +2722,14 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       unsigned CPNum = MatcherTable[MatcherIndex++];
       unsigned RecNo = MatcherTable[MatcherIndex++];
       assert(RecNo < RecordedNodes.size() && "Invalid CheckComplexPat");
+
+      // If target can modify DAG during matching, keep the matching state
+      // consistent.
+      std::unique_ptr<MatchStateUpdater> MSU;
+      if (ComplexPatternFuncMutatesDAG())
+        MSU.reset(new MatchStateUpdater(*CurDAG, RecordedNodes,
+                                        MatchScopes));
+
       if (!CheckComplexPattern(NodeToMatch, RecordedNodes[RecNo].second,
                                RecordedNodes[RecNo].first, CPNum,
                                RecordedNodes))

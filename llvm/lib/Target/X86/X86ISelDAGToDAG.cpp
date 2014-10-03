@@ -299,6 +299,13 @@ namespace {
     const X86InstrInfo *getInstrInfo() const {
       return getTargetMachine().getSubtargetImpl()->getInstrInfo();
     }
+
+    /// \brief Address-mode matching performs shift-of-and to and-of-shift
+    /// reassociation in order to expose more scaled addressing
+    /// opportunities.
+    bool ComplexPatternFuncMutatesDAG() const override {
+      return true;
+    }
   };
 }
 
