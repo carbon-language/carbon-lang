@@ -164,7 +164,7 @@ static TargetLoweringObjectFile *createTLOF(const Triple &TT) {
   return new ARMElfTargetObjectFile();
 }
 
-ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
+ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM)
     : TargetLowering(TM, createTLOF(Triple(TM.getTargetTriple()))) {
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
   RegInfo = TM.getSubtargetImpl()->getRegisterInfo();
