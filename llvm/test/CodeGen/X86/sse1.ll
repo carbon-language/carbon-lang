@@ -2,17 +2,6 @@
 ; RUN: llc < %s -march=x86 -mcpu=pentium3 -O3 | FileCheck %s
 ; RUN: llc < %s -march=x86-64 -mattr=-sse2,+sse -O3 | FileCheck %s
 
-define <8 x i16> @test1(<8 x i32> %a) nounwind {
-; CHECK: test1
-  ret <8 x i16> zeroinitializer
-}
-
-define <8 x i16> @test2(<8 x i32> %a) nounwind {
-; CHECK: test2
-  %c = trunc <8 x i32> %a to <8 x i16>            ; <<8 x i16>> [#uses=1]
-  ret <8 x i16> %c
-}
-
 ; PR7993
 ;define <4 x i32> @test3(<4 x i16> %a) nounwind {
 ;  %c = sext <4 x i16> %a to <4 x i32>             ; <<4 x i32>> [#uses=1]
@@ -23,6 +12,15 @@ define <8 x i16> @test2(<8 x i32> %a) nounwind {
 ; vector that this ends up returning.
 ; rdar://8368414
 define <2 x float> @test4(<2 x float> %A, <2 x float> %B) nounwind {
+; CHECK-LABEL: test4:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    movaps %xmm0, %xmm2
+; CHECK-NEXT:    shufps {{.*#+}} xmm2 = xmm2[1,0,0,0]
+; CHECK-NEXT:    addss %xmm1, %xmm0
+; CHECK-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,0,0,0]
+; CHECK-NEXT:    subss %xmm1, %xmm2
+; CHECK-NEXT:    unpcklps {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
+; CHECK-NEXT:    ret
 entry:
   %tmp7 = extractelement <2 x float> %A, i32 0
   %tmp5 = extractelement <2 x float> %A, i32 1
@@ -33,15 +31,6 @@ entry:
   %tmp11 = insertelement <2 x float> undef, float %add.r, i32 0
   %tmp9 = insertelement <2 x float> %tmp11, float %add.i, i32 1
   ret <2 x float> %tmp9
-; CHECK-LABEL: test4:
-; CHECK-NOT: shufps	$16
-; CHECK: shufps	$1, 
-; CHECK-NOT: shufps	$16
-; CHECK: shufps	$1, 
-; CHECK-NOT: shufps	$16
-; CHECK: unpcklps
-; CHECK-NOT: shufps	$16
-; CHECK: ret
 }
 
 ; We used to get stuck in type legalization for this example when lowering the
@@ -50,8 +39,9 @@ entry:
 ; condition operand and widening the resulting vselect for the v4f32 result.
 ; PR18036
 
-; CHECK-LABEL: vselect
 define <4 x float> @vselect(<4 x float>*%p, <4 x i32> %q) {
+; CHECK-LABEL: vselect:
+; CHECK:         ret
 entry:
   %a1 = icmp eq <4 x i32> %q, zeroinitializer
   %a14 = select <4 x i1> %a1, <4 x float> <float 1.000000e+00, float 2.000000e+00, float 3.000000e+00, float 4.000000e+0> , <4 x float> zeroinitializer
