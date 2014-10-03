@@ -954,11 +954,12 @@ void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
 
   if (OMD->isVariadic())
       Out << ", ...";
+  
+  prettyPrintAttributes(OMD);
 
   if (OMD->getBody() && !Policy.TerseOutput) {
     Out << ' ';
     OMD->getBody()->printPretty(Out, nullptr, Policy);
-    Out << '\n';
   }
   else if (Policy.PolishForDeclaration)
     Out << ';';
@@ -968,6 +969,7 @@ void DeclPrinter::VisitObjCImplementationDecl(ObjCImplementationDecl *OID) {
   std::string I = OID->getNameAsString();
   ObjCInterfaceDecl *SID = OID->getSuperClass();
 
+  bool eolnOut = false;
   if (SID)
     Out << "@implementation " << I << " : " << *SID;
   else
@@ -975,6 +977,7 @@ void DeclPrinter::VisitObjCImplementationDecl(ObjCImplementationDecl *OID) {
   
   if (OID->ivar_size() > 0) {
     Out << "{\n";
+    eolnOut = true;
     Indentation += Policy.Indentation;
     for (const auto *I : OID->ivars()) {
       Indent() << I->getASTContext().getUnqualifiedObjCPointerType(I->getType()).
@@ -983,7 +986,13 @@ void DeclPrinter::VisitObjCImplementationDecl(ObjCImplementationDecl *OID) {
     Indentation -= Policy.Indentation;
     Out << "}\n";
   }
+  else if (SID || (OID->decls_begin() != OID->decls_end())) {
+    Out << "\n";
+    eolnOut = true;
+  }
   VisitDeclContext(OID, false);
+  if (!eolnOut)
+    Out << "\n";
   Out << "@end";
 }
 
@@ -1022,14 +1031,14 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
     Indentation -= Policy.Indentation;
     Out << "}\n";
   }
-  else if (SID) {
+  else if (SID || (OID->decls_begin() != OID->decls_end())) {
     Out << "\n";
     eolnOut = true;
   }
 
   VisitDeclContext(OID, false);
   if (!eolnOut)
-    Out << ' ';
+    Out << "\n";
   Out << "@end";
   // FIXME: implement the rest...
 }
