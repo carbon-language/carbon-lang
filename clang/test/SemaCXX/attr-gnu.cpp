@@ -15,15 +15,14 @@ void g(int a[static [[]] 5]); // expected-error {{static array size is a C99 fea
 namespace {
 class B {
 public:
-  virtual void test() {} // expected-note {{overridden virtual function is here}}
+  virtual void test() {}
   virtual void test2() {}
   virtual void test3() {}
 };
 
 class D : public B {
 public:
-  void test() __attribute__((deprecated)) final {} // expected-warning {{GCC does not allow an attribute in this position on a function declaration}} \
-						   // expected-warning {{'test' overrides a member function but is not marked 'override'}}
+  void test() __attribute__((deprecated)) final {} // expected-warning {{GCC does not allow an attribute in this position on a function declaration}}
   void test2() [[]] override {} // Ok
   void test3() __attribute__((cf_unknown_transfer)) override {} // Ok, not known to GCC.
 };

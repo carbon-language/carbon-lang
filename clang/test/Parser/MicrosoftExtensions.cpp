@@ -208,12 +208,12 @@ extern TypenameWrongPlace<AAAA> PR16925;
 
 __interface MicrosoftInterface;
 __interface MicrosoftInterface {
-   void foo1() = 0; // expected-note {{overridden virtual function is here}}
+   void foo1() = 0;
    virtual void foo2() = 0;
 };
 
 __interface MicrosoftDerivedInterface : public MicrosoftInterface {
-  void foo1(); // expected-warning {{'foo1' overrides a member function but is not marked 'override'}}
+  void foo1();
   void foo2() override;
   void foo3();
 };

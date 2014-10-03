@@ -24,7 +24,7 @@ namespace SemiCommaTypo {
   int o;
 
   struct Base {
-    virtual void f2(), f3(); // expected-note {{overridden virtual function is here}}
+    virtual void f2(), f3();
   };
   struct MemberDeclarator : Base {
     int k : 4,
@@ -33,7 +33,7 @@ namespace SemiCommaTypo {
     char c, // expected-error {{expected ';' at end of declaration}}
     typedef void F(), // expected-error {{expected ';' at end of declaration}}
     F f1,
-      f2 final, // expected-warning {{'f2' overrides a member function but is not marked 'override'}}
+      f2 final,
       f3 override, // expected-error {{expected ';' at end of declaration}}
   };
 }

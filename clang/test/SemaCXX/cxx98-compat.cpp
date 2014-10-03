@@ -120,12 +120,11 @@ struct InClassInit {
 
 struct OverrideControlBase {
   virtual void f();
-  virtual void g(); // expected-note {{overridden virtual function is here}}
+  virtual void g();
 };
 struct OverrideControl final : OverrideControlBase { // expected-warning {{'final' keyword is incompatible with C++98}}
   virtual void f() override; // expected-warning {{'override' keyword is incompatible with C++98}}
-  virtual void g() final; // expected-warning {{'final' keyword is incompatible with C++98}} \
-			  // expected-warning {{'g' overrides a member function but is not marked 'override'}}
+  virtual void g() final; // expected-warning {{'final' keyword is incompatible with C++98}}
 };
 
 using AliasDecl = int; // expected-warning {{alias declarations are incompatible with C++98}}

@@ -61,7 +61,7 @@ struct D : B {
 namespace PR13499 {
   struct X {
     virtual void f();
-    virtual void h(); // expected-note 2 {{overridden virtual function is here}}
+    virtual void h();
   };
   template<typename T> struct A : X {
     void f() override;
@@ -83,7 +83,7 @@ namespace PR13499 {
   template<typename...T> struct E : X {
     void f(T...) override;
     void g(T...) override; // expected-error {{only virtual member functions can be marked 'override'}}
-    void h(T...) final; // expected-warning {{'h' overrides a member function but is not marked 'override'}}
+    void h(T...) final;
     void i(T...) final; // expected-error {{only virtual member functions can be marked 'final'}}
   };
   // FIXME: Diagnose these in the template definition, not in the instantiation.
@@ -91,13 +91,13 @@ namespace PR13499 {
 
   template<typename T> struct Y : T {
     void f() override;
-    void h() final; // expected-warning {{'h' overrides a member function but is not marked 'override'}}
+    void h() final;
   };
   template<typename T> struct Z : T {
     void g() override; // expected-error {{only virtual member functions can be marked 'override'}}
     void i() final; // expected-error {{only virtual member functions can be marked 'final'}}
   };
-  Y<X> y; // expected-note {{in instantiation of}}
+  Y<X> y;
   Z<X> z; // expected-note {{in instantiation of}}
 }
 

@@ -372,14 +372,14 @@ struct SomeBase {
 
   // expected-note@+2 {{overridden virtual function is here}}
   // expected-warning@+1 {{'sealed' keyword is a Microsoft extension}}
-  virtual void SealedFunction() sealed; // expected-note {{overridden virtual function is here}}
+  virtual void SealedFunction() sealed;
 };
 
 // expected-note@+2 {{'SealedType' declared here}}
 // expected-warning@+1 {{'sealed' keyword is a Microsoft extension}}
 struct SealedType sealed : SomeBase {
   // expected-error@+1 {{declaration of 'SealedFunction' overrides a 'sealed' function}}
-  virtual void SealedFunction(); // expected-warning {{'SealedFunction' overrides a member function but is not marked 'override'}}
+  virtual void SealedFunction();
 
   // expected-warning@+1 {{'override' keyword is a C++11 extension}}
   virtual void OverrideMe() override;
