@@ -168,6 +168,11 @@ Value *ParallelLoopGenerator::createParallelLoop(
   Builder.CreateCall(SubFn, SubFnParam);
   createCallJoinThreads();
 
+  // Mark the end of the lifetime for the parameter struct.
+  Type *Ty = Struct->getType();
+  ConstantInt *SizeOf = Builder.getInt64(DL.getTypeAllocSize(Ty));
+  Builder.CreateLifetimeEnd(Struct, SizeOf);
+
   return IV;
 }
 
@@ -273,9 +278,17 @@ ParallelLoopGenerator::storeValuesIntoStruct(SetVector<Value *> &Values) {
   for (Value *V : Values)
     Members.push_back(V->getType());
 
+  // We do not want to allocate the alloca inside any loop, thus we allocate it
+  // in the entry block of the function and use annotations to denote the actual
+  // live span (similar to clang).
+  BasicBlock &EntryBB = Builder.GetInsertBlock()->getParent()->getEntryBlock();
+  Instruction *IP = EntryBB.getFirstInsertionPt();
   StructType *Ty = StructType::get(Builder.getContext(), Members);
-  Value *Struct =
-      new AllocaInst(Ty, 0, "polly.par.userContext", Builder.GetInsertPoint());
+  Value *Struct = new AllocaInst(Ty, 0, "polly.par.userContext", IP);
+
+  // Mark the start of the lifetime for the parameter struct.
+  ConstantInt *SizeOf = Builder.getInt64(DL.getTypeAllocSize(Ty));
+  Builder.CreateLifetimeStart(Struct, SizeOf);
 
   for (unsigned i = 0; i < Values.size(); i++) {
     Value *Address = Builder.CreateStructGEP(Struct, i);
