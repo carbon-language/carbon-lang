@@ -234,7 +234,7 @@ The Directory Structure
           ...
   test/clang-tidy/                  # Integration tests.
       ...
-  unittests/clang-tidy/
+  unittests/clang-tidy/             # Unit tests.
   ├── ClangTidyTest.h
   ├── GoogleModuleTest.cpp
   ├── LLVMModuleTest.cpp
@@ -400,6 +400,44 @@ be set in a ``.clang-tidy`` file in the following way:
     - key: my-check.SomeOption2
       value: 'some other value'
   }
+
+
+Testing Checks
+--------------
+
+:program:`clang-tidy` checks can be tested using either unit tests or
+`lit`_ tests. Unit tests may be more convenient to test complex replacements
+with strict checks. `Lit`_ tests allow using partial text matching and regular
+expressions which makes them more suitable for writing compact tests for
+diagnostic messages.
+
+The ``check_clang_tidy_fix.sh`` script provides an easy way to test both
+diagnostic messages and fix-its. It filters out ``CHECK`` lines from the test
+file, runs :program:`clang-tidy` and verifies messages and fixes with two
+separate `FileCheck`_ invocations. To use the script, put a .cpp file with the
+appropriate ``RUN`` line in the ``test/clang-tidy`` directory.  Use
+``CHECK-MESSAGES:`` and ``CHECK-FIXES:`` lines to write checks against
+diagnostic messages and fixed code.
+
+It's advised to make the checks as specific as possible to avoid checks matching
+to incorrect parts of the input. Use ``[[@LINE+X]]``/``[[@LINE-X]]``
+substitutions and distinct function and variable names in the test code.
+
+Here's an example of a test using the ``check_clang_tidy_fix.sh`` script:
+
+.. code-block:: bash
+
+  // RUN: $(dirname %s)/check_clang_tidy_fix.sh %s google-readability-casting %t
+  // REQUIRES: shell
+
+  void f(int a) {
+    int b = (int)a;
+    // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Redundant cast to the same type. [google-readability-casting]
+    // CHECK-FIXES: int b = a;
+  }
+
+.. _lit: http://llvm.org/docs/CommandGuide/lit.html
+.. _FileCheck: http://llvm.org/docs/CommandGuide/FileCheck.html
 
 
 Running clang-tidy on LLVM
