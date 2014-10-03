@@ -682,7 +682,7 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
       // Create an anonymous atom to hold the data.
       ELFDefinedAtom<ELFT> *anonAtom = nullptr;
       anonFollowedBy = nullptr;
-      if (symbol->getBinding() == llvm::ELF::STB_WEAK && contentSize != 0) {
+      if (symbol->getBinding() == llvm::ELF::STB_WEAK) {
         // Create anonymous new non-weak ELF symbol that holds the symbol
         // data.
         auto sym = new (_readerStorage) Elf_Sym(*symbol);
