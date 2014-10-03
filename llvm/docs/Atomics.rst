@@ -18,8 +18,8 @@ clarified in the IR.
 The atomic instructions are designed specifically to provide readable IR and
 optimized code generation for the following:
 
-* The new C++0x ``<atomic>`` header.  (`C++0x draft available here
-  <http://www.open-std.org/jtc1/sc22/wg21/>`_.) (`C1x draft available here
+* The new C++11 ``<atomic>`` header.  (`C++11 draft available here
+  <http://www.open-std.org/jtc1/sc22/wg21/>`_.) (`C11 draft available here
   <http://www.open-std.org/jtc1/sc22/wg14/>`_.)
 
 * Proper semantics for Java-style memory, for both ``volatile`` and regular
@@ -115,7 +115,10 @@ memory operation can happen on any thread between the load and store.
 A ``fence`` provides Acquire and/or Release ordering which is not part of
 another operation; it is normally used along with Monotonic memory operations.
 A Monotonic load followed by an Acquire fence is roughly equivalent to an
-Acquire load.
+Acquire load, and a Monotonic store following a Release fence is roughly
+equivalent to a Release store. SequentiallyConsistent fences behave as both
+an Acquire and a Release fence, and offer some additional complicated
+guarantees, see the C++11 standard for details.
 
 Frontends generating atomic instructions generally need to be aware of the
 target to some degree; atomic instructions are guaranteed to be lock-free, and
@@ -221,7 +224,7 @@ essentially guarantees that if you take all the operations affecting a specific
 address, a consistent ordering exists.
 
 Relevant standard
-  This corresponds to the C++0x/C1x ``memory_order_relaxed``; see those
+  This corresponds to the C++11/C11 ``memory_order_relaxed``; see those
   standards for the exact definition.
 
 Notes for frontends
@@ -251,8 +254,8 @@ Acquire provides a barrier of the sort necessary to acquire a lock to access
 other memory with normal loads and stores.
 
 Relevant standard
-  This corresponds to the C++0x/C1x ``memory_order_acquire``. It should also be
-  used for C++0x/C1x ``memory_order_consume``.
+  This corresponds to the C++11/C11 ``memory_order_acquire``. It should also be
+  used for C++11/C11 ``memory_order_consume``.
 
 Notes for frontends
   If you are writing a frontend which uses this directly, use with caution.
@@ -281,7 +284,7 @@ Release is similar to Acquire, but with a barrier of the sort necessary to
 release a lock.
 
 Relevant standard
-  This corresponds to the C++0x/C1x ``memory_order_release``.
+  This corresponds to the C++11/C11 ``memory_order_release``.
 
 Notes for frontends
   If you are writing a frontend which uses this directly, use with caution.
@@ -307,7 +310,7 @@ AcquireRelease (``acq_rel`` in IR) provides both an Acquire and a Release
 barrier (for fences and operations which both read and write memory).
 
 Relevant standard
-  This corresponds to the C++0x/C1x ``memory_order_acq_rel``.
+  This corresponds to the C++11/C11 ``memory_order_acq_rel``.
 
 Notes for frontends
   If you are writing a frontend which uses this directly, use with caution.
@@ -330,7 +333,7 @@ and Release semantics for stores. Additionally, it guarantees that a total
 ordering exists between all SequentiallyConsistent operations.
 
 Relevant standard
-  This corresponds to the C++0x/C1x ``memory_order_seq_cst``, Java volatile, and
+  This corresponds to the C++11/C11 ``memory_order_seq_cst``, Java volatile, and
   the gcc-compatible ``__sync_*`` builtins which do not specify otherwise.
 
 Notes for frontends
@@ -368,6 +371,11 @@ Predicates for optimizer writers to query:
   that they return true for any operation which is volatile or at least
   Monotonic.
 
+* ``isAtLeastAcquire()``/``isAtLeastRelease()``: These are predicates on
+  orderings. They can be useful for passes that are aware of atomics, for
+  example to do DSE across a single atomic access, but not across a
+  release-acquire pair (see MemoryDependencyAnalysis for an example of this)
+
 * Alias analysis: Note that AA will return ModRef for anything Acquire or
   Release, and for the address accessed by any Monotonic operation.
 
@@ -389,7 +397,9 @@ operations:
 
 * DSE: Unordered stores can be DSE'ed like normal stores.  Monotonic stores can
   be DSE'ed in some cases, but it's tricky to reason about, and not especially
-  important.
+  important. It is possible in some case for DSE to operate across a stronger
+  atomic operation, but it is fairly tricky. DSE delegates this reasoning to
+  MemoryDependencyAnalysis (which is also used by other passes like GVN).
 
 * Folding a load: Any atomic load from a constant global can be constant-folded,
   because it cannot be observed.  Similar reasoning allows scalarrepl with
@@ -400,7 +410,8 @@ Atomics and Codegen
 
 Atomic operations are represented in the SelectionDAG with ``ATOMIC_*`` opcodes.
 On architectures which use barrier instructions for all atomic ordering (like
-ARM), appropriate fences are split out as the DAG is built.
+ARM), appropriate fences can be emitted by the AtomicExpand Codegen pass if
+``setInsertFencesForAtomic()`` was used.
 
 The MachineMemOperand for all atomic operations is currently marked as volatile;
 this is not correct in the IR sense of volatile, but CodeGen handles anything
@@ -414,11 +425,6 @@ implemented in a lock-free manner.  It is expected that backends will give an
 error when given an operation which cannot be implemented.  (The LLVM code
 generator is not very helpful here at the moment, but hopefully that will
 change.)
-
-The implementation of atomics on LL/SC architectures (like ARM) is currently a
-bit of a mess; there is a lot of copy-pasted code across targets, and the
-representation is relatively unsuited to optimization (it would be nice to be
-able to optimize loops involving cmpxchg etc.).
 
 On x86, all atomic loads generate a ``MOV``. SequentiallyConsistent stores
 generate an ``XCHG``, other stores generate a ``MOV``. SequentiallyConsistent
@@ -435,3 +441,17 @@ operation. Loads and stores generate normal instructions.  ``cmpxchg`` and
 ``atomicrmw`` can be represented using a loop with LL/SC-style instructions
 which take some sort of exclusive lock on a cache line (``LDREX`` and ``STREX``
 on ARM, etc.).
+
+It is often easiest for backends to use AtomicExpandPass to lower some of the
+atomic constructs. Here are some lowerings it can do:
+* cmpxchg -> loop with load-linked/store-conditional
+  by overriding ``hasLoadLinkedStoreConditional()``, ``emitLoadLinked()``,
+  ``emitStoreConditional()``
+* large loads/stores -> ll-sc/cmpxchg
+  by overriding ``shouldExpandAtomicStoreInIR()``/``shouldExpandAtomicLoadInIR()``
+* strong atomic accesses -> monotonic accesses + fences
+  by using ``setInsertFencesForAtomic()`` and overriding ``emitLeadingFence()``
+  and ``emitTrailingFence()``
+* atomic rmw -> loop with cmpxchg or load-linked/store-conditional
+  by overriding ``expandAtomicRMWInIR()``
+For an example of all of these, look at the ARM backend.
