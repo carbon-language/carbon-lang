@@ -78,15 +78,15 @@ entry:
 
 declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 
-; CHECK: %omp.userContext = alloca { i32 }
-; CHECK: getelementptr inbounds { i32 }* %omp.userContext, i32 0, i32 0
-; CHECK: store i32 %polly.indvar, i32* %0
-; CHECK: %omp_data = bitcast { i32 }* %omp.userContext to i8*
-; CHECK: call void @GOMP_parallel_loop_runtime_start(void (i8*)* @loop_openmp.omp_subfn, i8* %omp_data, i32 0, i32 0, i32 10, i32 1)
-; CHECK: call void @loop_openmp.omp_subfn(i8* %omp_data)
+; CHECK: %polly.par.userContext = alloca { i32 }
+; CHECK: %[[NO:[._a-zA-Z0-9]*]] = getelementptr inbounds { i32 }* %polly.par.userContext, i32 0, i32 0
+; CHECK: store i32 %polly.indvar, i32* %[[NO]]
+; CHECK: %[[DATA:[._a-zA-Z0-9]*]] = bitcast { i32 }* %polly.par.userContext to i8*
+; CHECK: call void @GOMP_parallel_loop_runtime_start(void (i8*)* @loop_openmp.polly.subfn, i8* %[[DATA]], i32 0, i32 0, i32 10, i32 1)
+; CHECK: call void @loop_openmp.polly.subfn(i8* %[[DATA]])
 ; CHECK: call void @GOMP_parallel_end()
 
 ; Verify the new subfunction is annotated such that SCoP detection will skip it.
-; CHECK: @loop_openmp.omp_subfn({{.*}}) [[ATTR:#[0-9]+]]
+; CHECK: @loop_openmp.polly.subfn({{.*}}) [[ATTR:#[0-9]+]]
 ; CHECK: attributes [[ATTR]] = {{{[^\}]*}}polly.skip.fn{{[^\}]*}}}
 

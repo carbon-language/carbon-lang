@@ -49,9 +49,8 @@ entry:
   call void @foo()
   ret i32 0
 }
-; CHECK: getelementptr inbounds { [10 x float]* }* %omp.userContext, i32 0, i32 0
-; CHECK: store [10 x float]* %A, [10 x float]** %0
-; CHECK: %omp_data = bitcast { [10 x float]* }* %omp.userContext to i8*
-; CHECK: inbounds { [10 x float]* }* %omp.userContext1, i32 0, i32 0
+; CHECK: %[[V:[._a-zA-Z0-9]+]] = getelementptr inbounds { [10 x float]* }* %polly.par.userContext, i32 0, i32 0
+; CHECK: store [10 x float]* %A, [10 x float]** %[[V]]
+; CHECK: inbounds { [10 x float]* }* %polly.par.userContext{{[0-9]*}}, i32 0, i32 0
 ; CHECK: load [10 x float]**
 

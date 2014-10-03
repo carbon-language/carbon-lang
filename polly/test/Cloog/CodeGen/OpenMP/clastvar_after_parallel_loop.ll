@@ -53,4 +53,4 @@ end:                                         ; preds = %for.end, %entry
 ; CLOOG:   Stmt_for_end(c2);
 ; CLOOG: }
 
-; CHECK: @f.omp_subfn
+; CHECK: @f.polly.subfn

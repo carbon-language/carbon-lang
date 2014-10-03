@@ -31,4 +31,4 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
-; CHECK: %omp.userContext = alloca { float }
+; CHECK: %polly.par.userContext = alloca { float }

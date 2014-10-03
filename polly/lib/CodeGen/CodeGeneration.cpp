@@ -246,6 +246,7 @@ private:
   LoopInfo &LI;
   ScalarEvolution &SE;
   DominatorTree &DT;
+  const DataLayout &DL;
 
   // The Builder specifies the current location to code generate at.
   PollyIRBuilder &Builder;
@@ -316,7 +317,7 @@ private:
   /// @brief Update ClastVars and ValueMap according to a value map.
   ///
   /// @param VMap A map from old to new values.
-  void updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap);
+  void updateWithValueMap(ParallelLoopGenerator::ValueToValueMapTy &VMap);
 
   /// @brief Create an OpenMP parallel for loop.
   ///
@@ -579,8 +580,8 @@ SetVector<Value *> ClastStmtCodeGen::getOMPValues(const clast_stmt *Body) {
   return Values;
 }
 
-void
-ClastStmtCodeGen::updateWithValueMap(OMPGenerator::ValueToValueMapTy &VMap) {
+void ClastStmtCodeGen::updateWithValueMap(
+    ParallelLoopGenerator::ValueToValueMapTy &VMap) {
   std::set<Value *> Inserted;
 
   for (const auto &I : ClastVars) {
@@ -611,8 +612,8 @@ void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
   BasicBlock::iterator LoopBody;
   IntegerType *IntPtrTy = getIntPtrTy();
   SetVector<Value *> Values;
-  OMPGenerator::ValueToValueMapTy VMap;
-  OMPGenerator OMPGen(Builder, P);
+  ParallelLoopGenerator::ValueToValueMapTy VMap;
+  ParallelLoopGenerator OMPGen(Builder, P, LI, DT, DL);
 
   Stride = Builder.getInt(APInt_from_MPZ(For->stride));
   Stride = Builder.CreateSExtOrBitCast(Stride, IntPtrTy);
@@ -1025,7 +1026,8 @@ void ClastStmtCodeGen::codegen(const clast_root *r) {
 ClastStmtCodeGen::ClastStmtCodeGen(Scop *scop, PollyIRBuilder &B, Pass *P)
     : S(scop), P(P), LI(P->getAnalysis<LoopInfo>()),
       SE(P->getAnalysis<ScalarEvolution>()),
-      DT(P->getAnalysis<DominatorTreeWrapperPass>().getDomTree()), Builder(B),
+      DT(P->getAnalysis<DominatorTreeWrapperPass>().getDomTree()),
+      DL(P->getAnalysis<DataLayoutPass>().getDataLayout()), Builder(B),
       ExpGen(Builder, ClastVars) {}
 
 namespace {
@@ -1074,9 +1076,11 @@ public:
     AU.addRequired<ScopDetection>();
     AU.addRequired<ScopInfo>();
     AU.addRequired<DataLayoutPass>();
+    AU.addRequired<DataLayoutPass>();
     AU.addRequired<LoopInfo>();
 
     AU.addPreserved<CloogInfo>();
+    AU.addPreserved<DataLayoutPass>();
     AU.addPreserved<Dependences>();
     AU.addPreserved<LoopInfo>();
     AU.addPreserved<DominatorTreeWrapperPass>();
@@ -1103,6 +1107,7 @@ INITIALIZE_PASS_DEPENDENCY(CloogInfo);
 INITIALIZE_PASS_DEPENDENCY(Dependences);
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
+INITIALIZE_PASS_DEPENDENCY(DataLayoutPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
 INITIALIZE_PASS_DEPENDENCY(ScopDetection);
 INITIALIZE_PASS_DEPENDENCY(DataLayoutPass);
