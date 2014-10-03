@@ -1,6 +1,5 @@
 # RUN: llvm-mc -triple=x86_64-apple-macosx10.9 -relocation-model=pic -filetype=obj -o %T/test_x86-64.o %s
 # RUN: llvm-rtdyld -triple=x86_64-apple-macosx10.9 -verify -check=%s %/T/test_x86-64.o
-# XFAIL: mips
 
         .section	__TEXT,__text,regular,pure_instructions
 	.globl	foo
