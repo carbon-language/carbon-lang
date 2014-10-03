@@ -20,6 +20,7 @@
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_procmaps.h"
 #include "sanitizer_common/sanitizer_stoptheworld.h"
+#include "sanitizer_common/sanitizer_stackdepot.h"
 #include "tsan_platform.h"
 #include "tsan_rtl.h"
 #include "tsan_flags.h"
@@ -99,12 +100,14 @@ void FillProfileCallback(uptr start, uptr rss, bool file,
 void WriteMemoryProfile(char *buf, uptr buf_size, uptr nthread, uptr nlive) {
   uptr mem[MemCount] = {};
   __sanitizer::GetMemoryProfile(FillProfileCallback, mem, 7);
+  StackDepotStats *stacks = StackDepotGetStats();
   internal_snprintf(buf, buf_size,
       "RSS %zd MB: shadow:%zd meta:%zd file:%zd mmap:%zd"
-      " trace:%zd heap:%zd other:%zd nthr=%zd/%zd\n",
+      " trace:%zd heap:%zd other:%zd stacks=%zd[%zd] nthr=%zd/%zd\n",
       mem[MemTotal] >> 20, mem[MemShadow] >> 20, mem[MemMeta] >> 20,
       mem[MemFile] >> 20, mem[MemMmap] >> 20, mem[MemTrace] >> 20,
       mem[MemHeap] >> 20, mem[MemOther] >> 20,
+      stacks->allocated >> 20, stacks->n_uniq_ids,
       nlive, nthread);
 }
 
