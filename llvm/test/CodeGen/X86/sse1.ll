@@ -1,6 +1,6 @@
 ; Tests for SSE1 and below, without SSE2+.
-; RUN: llc < %s -march=x86 -mcpu=pentium3 -O3 | FileCheck %s
-; RUN: llc < %s -march=x86-64 -mattr=-sse2,+sse -O3 | FileCheck %s
+; RUN: llc < %s -mtriple=i386-unknown-unknown -march=x86 -mcpu=pentium3 -O3 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -march=x86-64 -mattr=-sse2,+sse -O3 | FileCheck %s
 
 ; PR7993
 ;define <4 x i32> @test3(<4 x i16> %a) nounwind {

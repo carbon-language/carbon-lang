@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mcpu=nehalem | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -march=x86-64 -mcpu=nehalem | FileCheck %s
 
 define <4 x float> @a(<4 x float>* %y) nounwind {
 ; CHECK-LABEL: a:
