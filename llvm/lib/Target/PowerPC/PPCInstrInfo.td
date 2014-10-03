@@ -2549,7 +2549,14 @@ def : Pat<(f64 (extloadf32 xaddr:$src)),
 def : Pat<(f64 (fextend f32:$src)),
           (COPY_TO_REGCLASS $src, F8RC)>;
 
-def : Pat<(atomic_fence (imm), (imm)), (SYNC 0)>, Requires<[HasSYNC]>;
+// Only seq_cst fences require the heavyweight sync (SYNC 0).
+// All others can use the lightweight sync (SYNC 1).
+// source: http://www.cl.cam.ac.uk/~pes20/cpp/cpp0xmappings.html
+// The rule for seq_cst is duplicated to work with both 64 bits and 32 bits
+// versions of Power.
+def : Pat<(atomic_fence (i64 7), (imm)), (SYNC 0)>, Requires<[HasSYNC]>;
+def : Pat<(atomic_fence (i32 7), (imm)), (SYNC 0)>, Requires<[HasSYNC]>;
+def : Pat<(atomic_fence (imm),   (imm)), (SYNC 1)>, Requires<[HasSYNC]>;
 def : Pat<(atomic_fence (imm), (imm)), (MSYNC)>, Requires<[HasOnlyMSYNC]>;
 
 // Additional FNMSUB patterns: -a*c + b == -(a*c - b)
