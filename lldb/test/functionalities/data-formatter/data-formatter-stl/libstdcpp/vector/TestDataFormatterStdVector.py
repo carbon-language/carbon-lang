@@ -14,14 +14,12 @@ class StdVectorDataFormatterTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
-    @expectedFailureDarwin("llvm.org/pr20264")
     def test_with_dsym_and_run_command(self):
         """Test data formatter commands."""
         self.buildDsym()
         self.data_formatter_commands()
 
     @dwarf_test
-    @expectedFailureClang # llvm.org/pr15301 LLDB prints incorrect sizes of STL containers
     @expectedFailureIcc # llvm.org/pr15301 LLDB prints incorrect sizes of STL containers
     @expectedFailureGcc # llvm.org/pr17499 The data formatter cannot parse STL containers
     def test_with_dwarf_and_run_command(self):

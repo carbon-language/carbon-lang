@@ -15,7 +15,6 @@ class ObjCDataFormatterTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @expectedFailureDarwin("llvm.org/pr20260")
     @dsym_test
     def test_plain_objc_with_dsym_and_run_command(self):
         """Test basic ObjC formatting behavior."""
@@ -23,7 +22,6 @@ class ObjCDataFormatterTestCase(TestBase):
         self.plain_data_formatter_commands()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @expectedFailureDarwin("llvm.org/pr20260")
     @dwarf_test
     def test_plain_objc_with_dwarf_and_run_command(self):
         """Test basic ObjC formatting behavior."""

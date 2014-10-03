@@ -14,14 +14,11 @@ class StdMapDataFormatterTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
-    @expectedFailureDarwin("llvm.org/pr20263")
     def test_with_dsym_and_run_command(self):
         """Test data formatter commands."""
         self.buildDsym()
         self.data_formatter_commands()
 
-    @expectedFailureClang # llvm.org/pr15301: LLDB prints incorrect size of
-                          # libstdc++ containers
     @skipIfGcc # llvm.org/pr15036: When built with GCC, this test causes lldb to crash with
                # assert DeclCXX.h:554 queried property of class with no definition
     @expectedFailureIcc   # llvm.org/pr15301: LLDB prints incorrect size of
