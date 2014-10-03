@@ -16,7 +16,8 @@ BUILT_SOURCES = HexagonGenRegisterInfo.inc \
                 HexagonGenAsmWriter.inc \
                 HexagonGenDAGISel.inc HexagonGenSubtargetInfo.inc \
                 HexagonGenCallingConv.inc \
-                HexagonGenDFAPacketizer.inc
+                HexagonGenDFAPacketizer.inc \
+                HexagonGenMCCodeEmitter.inc
 
 DIRS = InstPrinter TargetInfo MCTargetDesc
 
