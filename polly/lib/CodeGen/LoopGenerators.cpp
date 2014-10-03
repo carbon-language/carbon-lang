@@ -18,9 +18,15 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
 using namespace polly;
+
+static cl::opt<int>
+    PollyNumThreads("polly-num-threads",
+                    cl::desc("Number of threads to use (0 = auto)"), cl::Hidden,
+                    cl::init(0));
 
 // We generate a loop of either of the following structures:
 //
@@ -185,7 +191,7 @@ void ParallelLoopGenerator::createCallSpawnThreads(Value *SubFn,
     F = Function::Create(Ty, Linkage, Name, M);
   }
 
-  Value *NumberOfThreads = ConstantInt::get(LongType, 0);
+  Value *NumberOfThreads = ConstantInt::get(LongType, PollyNumThreads);
   Value *Args[] = {SubFn, SubFnParam, NumberOfThreads, LB, UB, Stride};
 
   Builder.CreateCall(F, Args);
