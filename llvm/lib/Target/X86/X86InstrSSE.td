@@ -1269,6 +1269,9 @@ let Predicates = [HasAVX] in {
             (VMOVLPDrm VR128:$src1, addr:$src2)>;
   def : Pat<(v2i64 (X86Movlpd VR128:$src1, (load addr:$src2))),
             (VMOVLPDrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v2f64 (X86Movsd VR128:$src1,
+                             (v2f64 (scalar_to_vector (loadf64 addr:$src2))))),
+            (VMOVLPDrm VR128:$src1, addr:$src2)>;
 
   // Store patterns
   def : Pat<(store (v4f32 (X86Movlps (load addr:$src1), VR128:$src2)),
@@ -1315,6 +1318,9 @@ let Predicates = [UseSSE2] in {
   def : Pat<(v2f64 (X86Movlpd VR128:$src1, (load addr:$src2))),
             (MOVLPDrm VR128:$src1, addr:$src2)>;
   def : Pat<(v2i64 (X86Movlpd VR128:$src1, (load addr:$src2))),
+            (MOVLPDrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v2f64 (X86Movsd VR128:$src1,
+                             (v2f64 (scalar_to_vector (loadf64 addr:$src2))))),
             (MOVLPDrm VR128:$src1, addr:$src2)>;
 
   // Store patterns

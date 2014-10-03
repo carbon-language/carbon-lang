@@ -7779,16 +7779,18 @@ static SDValue lowerVectorShuffleAsElementInsertion(
     MVT VT, SDLoc DL, SDValue V1, SDValue V2, ArrayRef<int> Mask,
     const X86Subtarget *Subtarget, SelectionDAG &DAG) {
   SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
+  MVT ExtVT = VT;
+  MVT EltVT = VT.getVectorElementType();
 
   int V2Index = std::find_if(Mask.begin(), Mask.end(),
                              [&Mask](int M) { return M >= (int)Mask.size(); }) -
                 Mask.begin();
+  bool IsV1Zeroable = true;
   for (int i = 0, Size = Mask.size(); i < Size; ++i)
-    if (i != V2Index && !Zeroable[i])
-      return SDValue(); // Not inserting into a zero vector.
-
-  MVT ExtVT = VT;
-  MVT EltVT = VT.getVectorElementType();
+    if (i != V2Index && !Zeroable[i]) {
+      IsV1Zeroable = false;
+      break;
+    }
 
   // Check for a single input from a SCALAR_TO_VECTOR node.
   // FIXME: All of this should be canonicalized into INSERT_VECTOR_ELT and
@@ -7800,6 +7802,11 @@ static SDValue lowerVectorShuffleAsElementInsertion(
     // We need to zext the scalar if it is smaller than an i32.
     V2S = DAG.getNode(ISD::BITCAST, DL, EltVT, V2S);
     if (EltVT == MVT::i8 || EltVT == MVT::i16) {
+      // Using zext to expand a narrow element won't work for non-zero
+      // insertions.
+      if (!IsV1Zeroable)
+        return SDValue();
+
       // Zero-extend directly to i32.
       ExtVT = MVT::v4i32;
       V2S = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i32, V2S);
@@ -7810,6 +7817,25 @@ static SDValue lowerVectorShuffleAsElementInsertion(
     // Either not inserting from the low element of the input or the input
     // element size is too small to use VZEXT_MOVL to clear the high bits.
     return SDValue();
+  }
+
+  if (!IsV1Zeroable) {
+    // If V1 can't be treated as a zero vector we have fewer options to lower
+    // this. We can't support integer vectors or non-zero targets cheaply, and
+    // the V1 elements can't be permuted in any way.
+    assert(VT == ExtVT && "Cannot change extended type when non-zeroable!");
+    if (!VT.isFloatingPoint() || V2Index != 0)
+      return SDValue();
+    SmallVector<int, 8> V1Mask(Mask.begin(), Mask.end());
+    V1Mask[V2Index] = -1;
+    if (!isNoopShuffleMask(V1Mask))
+      return SDValue();
+
+    // Otherwise, use MOVSD or MOVSS.
+    assert((EltVT == MVT::f32 || EltVT == MVT::f64) &&
+           "Only two types of floating point element types to handle!");
+    return DAG.getNode(EltVT == MVT::f32 ? X86ISD::MOVSS : X86ISD::MOVSD, DL,
+                       ExtVT, V1, V2);
   }
 
   V2 = DAG.getNode(X86ISD::VZEXT_MOVL, DL, ExtVT, V2);
