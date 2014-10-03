@@ -249,7 +249,7 @@ private:
   bool isCMemFunction(const FunctionDecl *FD,
                       ASTContext &C,
                       AllocationFamily Family,
-                      enum MemoryOperationKind) const;
+                      MemoryOperationKind MemKind) const;
   bool isStandardNewDelete(const FunctionDecl *FD, ASTContext &C) const;
   ///@}
   ProgramStateRef MallocMemReturnsAttr(CheckerContext &C,
@@ -526,7 +526,7 @@ bool MallocChecker::isMemFunction(const FunctionDecl *FD, ASTContext &C) const {
 bool MallocChecker::isCMemFunction(const FunctionDecl *FD,
                                    ASTContext &C,
                                    AllocationFamily Family,
-                                   enum MemoryOperationKind MemKind) const {
+                                   MemoryOperationKind MemKind) const {
   if (!FD)
     return false;
 
