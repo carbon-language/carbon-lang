@@ -17,8 +17,8 @@
 
 // CHECK: Target options:
 // CHECK:     Triple:
-// CHECK:     CPU: 
-// CHECK:     ABI: 
+// CHECK:     CPU:
+// CHECK:     ABI:
 
 // CHECK: Diagnostic options:
 // CHECK:   IgnoreWarnings: Yes
@@ -28,7 +28,7 @@
 // CHECK: Header search options:
 // CHECK:   System root [-isysroot=]: '/'
 // CHECK:   Use builtin include directories [-nobuiltininc]: Yes
-// CHECK:   Use standard system include directories [-nostdinc]: Yes
+// CHECK:   Use standard system include directories [-nostdinc]: No
 // CHECK:   Use standard C++ include directories [-nostdinc++]: Yes
 // CHECK:   Use libc++ (rather than libstdc++) [-stdlib=]:
 
