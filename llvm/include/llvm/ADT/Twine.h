@@ -157,7 +157,7 @@ namespace llvm {
     // don't support specifying the backing type for an enum
     /// LHSKind - The NodeKind of the left hand side, \see getLHSKind().
     unsigned char LHSKind;
-    /// RHSKind - The NodeKind of the left hand side, \see getLHSKind().
+    /// RHSKind - The NodeKind of the right hand side, \see getRHSKind().
     unsigned char RHSKind;
 
   private:
