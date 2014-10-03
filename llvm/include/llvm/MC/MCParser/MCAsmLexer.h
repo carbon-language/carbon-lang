@@ -74,6 +74,7 @@ public:
 
   SMLoc getLoc() const;
   SMLoc getEndLoc() const;
+  SMRange getLocRange() const;
 
   /// getStringContents - Get the contents of a string token (without quotes).
   StringRef getStringContents() const {

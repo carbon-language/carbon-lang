@@ -1,7 +1,11 @@
-# RUN: llvm-mc %s -triple=mips64-unknown-freebsd -show-encoding | FileCheck %s
+# RUN: llvm-mc %s -triple=mips64-unknown-freebsd -show-encoding 2>%t0 \
+# RUN:     | FileCheck %s
+# RUN: FileCheck -check-prefix=WARNING %s < %t0
+#
 # RUN: llvm-mc %s -triple=mips64-unknown-freebsd -show-encoding \
-# RUN:     -mattr=-n64,+n32 | FileCheck %s
-
+# RUN:     -mattr=-n64,+n32 2>%t1 | FileCheck %s
+# RUN: FileCheck -check-prefix=WARNING %s < %t1
+#
 # Check that the register names are mapped to their correct numbers for n32/n64
 # Second byte of addiu with $zero at rt contains the number of the source
 # register.
@@ -23,9 +27,25 @@ daddiu	$t0, $zero, 0 # [*] # CHECK: encoding: [0x64,0x0c,0x00,0x00]
 daddiu	$t1, $zero, 0 # [*] # CHECK: encoding: [0x64,0x0d,0x00,0x00]
 daddiu	$t2, $zero, 0 # [*] # CHECK: encoding: [0x64,0x0e,0x00,0x00]
 daddiu	$t3, $zero, 0 # [*] # CHECK: encoding: [0x64,0x0f,0x00,0x00]
+# WARNING: mips64-register-names-n32-n64.s:[[@LINE+4]]:9: warning: register names $t4-$t7 are only available in O32.
+# WARNING-NEXT: daddiu  $t4, $zero, 0       # {{CHECK}}: encoding: [0x64,0x0c,0x00,0x00]
+# WARNING-NEXT:          ^~
+# WARNING-NEXT:          Did you mean $t0?
 daddiu	$t4, $zero, 0       # CHECK: encoding: [0x64,0x0c,0x00,0x00]
+# WARNING: mips64-register-names-n32-n64.s:[[@LINE+4]]:9: warning: register names $t4-$t7 are only available in O32.
+# WARNING-NEXT: daddiu  $t5, $zero, 0       # {{CHECK}}: encoding: [0x64,0x0d,0x00,0x00]
+# WARNING-NEXT:          ^~
+# WARNING-NEXT:          Did you mean $t1?
 daddiu	$t5, $zero, 0       # CHECK: encoding: [0x64,0x0d,0x00,0x00]
+# WARNING: mips64-register-names-n32-n64.s:[[@LINE+4]]:9: warning: register names $t4-$t7 are only available in O32.
+# WARNING-NEXT: daddiu  $t6, $zero, 0       # {{CHECK}}: encoding: [0x64,0x0e,0x00,0x00]
+# WARNING-NEXT:          ^~
+# WARNING-NEXT:          Did you mean $t2?
 daddiu	$t6, $zero, 0       # CHECK: encoding: [0x64,0x0e,0x00,0x00]
+# WARNING: mips64-register-names-n32-n64.s:[[@LINE+4]]:9: warning: register names $t4-$t7 are only available in O32.
+# WARNING-NEXT: daddiu  $t7, $zero, 0       # {{CHECK}}: encoding: [0x64,0x0f,0x00,0x00]
+# WARNING-NEXT:          ^~
+# WARNING-NEXT:          Did you mean $t3?
 daddiu	$t7, $zero, 0       # CHECK: encoding: [0x64,0x0f,0x00,0x00]
 daddiu	$s0, $zero, 0       # CHECK: encoding: [0x64,0x10,0x00,0x00]
 daddiu	$s1, $zero, 0       # CHECK: encoding: [0x64,0x11,0x00,0x00]

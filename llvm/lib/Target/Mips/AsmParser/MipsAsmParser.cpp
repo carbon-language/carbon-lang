@@ -27,6 +27,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/SourceMgr.h"
 #include <memory>
 
 using namespace llvm;
@@ -100,6 +101,10 @@ class MipsAsmParser : public MCTargetAsmParser {
                        // nullptr, which indicates that no function is currently
                        // selected. This usually happens after an '.end func'
                        // directive.
+
+  // Print a warning along with its fix-it message at the given range.
+  void printWarningWithFixIt(const Twine &Msg, const Twine &FixMsg,
+                             SMRange Range, bool ShowColors = true);
 
 #define GET_ASSEMBLER_HEADER
 #include "MipsGenAsmMatcher.inc"
@@ -1619,6 +1624,14 @@ void MipsAsmParser::warnIfAssemblerTemporary(int RegIndex, SMLoc Loc) {
   }
 }
 
+void
+MipsAsmParser::printWarningWithFixIt(const Twine &Msg, const Twine &FixMsg,
+                                     SMRange Range, bool ShowColors) {
+  getSourceManager().PrintMessage(Range.Start, SourceMgr::DK_Warning, Msg,
+                                  { Range }, { SMFixIt(Range, FixMsg) },
+                                  ShowColors);
+}
+
 int MipsAsmParser::matchCPURegisterName(StringRef Name) {
   int CC;
 
@@ -1660,6 +1673,23 @@ int MipsAsmParser::matchCPURegisterName(StringRef Name) {
 
   if (!(isABI_N32() || isABI_N64()))
     return CC;
+
+  if (12 <= CC && CC <= 15) {
+    // Name is one of t4-t7
+    AsmToken RegTok = getLexer().peekTok();
+    SMRange RegRange = RegTok.getLocRange();
+
+    StringRef FixedName = StringSwitch<StringRef>(Name)
+                              .Case("t4", "t0")
+                              .Case("t5", "t1")
+                              .Case("t6", "t2")
+                              .Case("t7", "t3")
+                              .Default("");
+    assert(FixedName != "" &&  "Register name is not one of t4-t7.");
+
+    printWarningWithFixIt("register names $t4-$t7 are only available in O32.",
+                          "Did you mean $" + FixedName + "?", RegRange);
+  }
 
   // Although SGI documentation just cuts out t0-t3 for n32/n64,
   // GNU pushes the values of t0-t3 to override the o32/o64 values for t4-t7
