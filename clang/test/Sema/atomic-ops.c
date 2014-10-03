@@ -2,10 +2,7 @@
 
 // Basic parsing/Sema tests for __c11_atomic_*
 
-typedef enum memory_order {
-  memory_order_relaxed, memory_order_consume, memory_order_acquire,
-  memory_order_release, memory_order_acq_rel, memory_order_seq_cst
-} memory_order;
+#include <stdatomic.h>
 
 struct S { char c[3]; };
 
@@ -39,6 +36,14 @@ _Static_assert(__atomic_is_lock_free(4, 0), "");
 _Static_assert(__atomic_is_lock_free(8, 0), "");
 _Static_assert(__atomic_is_lock_free(16, 0), ""); // expected-error {{not an integral constant expression}}
 _Static_assert(__atomic_is_lock_free(17, 0), ""); // expected-error {{not an integral constant expression}}
+
+_Static_assert(atomic_is_lock_free((atomic_char*)0), "");
+_Static_assert(atomic_is_lock_free((atomic_short*)0), "");
+_Static_assert(atomic_is_lock_free((atomic_int*)0), "");
+_Static_assert(atomic_is_lock_free((atomic_long*)0), "");
+// expected-error@+1 {{__int128 is not supported on this target}}
+_Static_assert(atomic_is_lock_free((_Atomic(__int128)*)0), ""); // expected-error {{not an integral constant expression}}
+_Static_assert(atomic_is_lock_free(0 + (atomic_char*)0), "");
 
 char i8;
 short i16;
@@ -171,6 +176,62 @@ void f(_Atomic(int) *i, _Atomic(int*) *p, _Atomic(float) *d,
   __c11_atomic_init(&const_atomic, 0); // expected-error {{address argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
   __c11_atomic_store(&const_atomic, 0, memory_order_release); // expected-error {{address argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
   __c11_atomic_load(&const_atomic, memory_order_acquire); // expected-error {{address argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
+
+  // Ensure the <stdatomic.h> macros behave appropriately.
+  atomic_int n = ATOMIC_VAR_INIT(123);
+  atomic_init(&n, 456);
+  atomic_init(&n, (void*)0); // expected-warning {{passing 'void *' to parameter of type 'int'}}
+
+  const atomic_wchar_t cawt;
+  atomic_init(&cawt, L'x'); // expected-error {{non-const}}
+  atomic_wchar_t awt;
+  atomic_init(&awt, L'x');
+
+  int x = kill_dependency(12);
+
+  atomic_thread_fence(); // expected-error {{too few arguments to function call}}
+  atomic_thread_fence(memory_order_seq_cst);
+  atomic_signal_fence(memory_order_seq_cst);
+  void (*pfn)(memory_order) = &atomic_thread_fence;
+  pfn = &atomic_signal_fence;
+
+  int k = atomic_load_explicit(&n, memory_order_relaxed);
+  atomic_store_explicit(&n, k, memory_order_relaxed);
+  atomic_store(&n, atomic_load(&n));
+
+  k = atomic_exchange(&n, 72);
+  k = atomic_exchange_explicit(&n, k, memory_order_release);
+
+  atomic_compare_exchange_strong(&n, k, k); // expected-warning {{take the address with &}}
+  atomic_compare_exchange_weak(&n, &k, k);
+  atomic_compare_exchange_strong_explicit(&n, &k, k, memory_order_seq_cst); // expected-error {{too few arguments}}
+  atomic_compare_exchange_weak_explicit(&n, &k, k, memory_order_seq_cst, memory_order_acquire);
+
+  atomic_fetch_add(&k, n); // expected-error {{must be a pointer to _Atomic}}
+  k = atomic_fetch_add(&n, k);
+  k = atomic_fetch_sub(&n, k);
+  k = atomic_fetch_and(&n, k);
+  k = atomic_fetch_or(&n, k);
+  k = atomic_fetch_xor(&n, k);
+  k = atomic_fetch_add_explicit(&n, k, memory_order_acquire);
+  k = atomic_fetch_sub_explicit(&n, k, memory_order_release);
+  k = atomic_fetch_and_explicit(&n, k, memory_order_acq_rel);
+  k = atomic_fetch_or_explicit(&n, k, memory_order_consume);
+  k = atomic_fetch_xor_explicit(&n, k, memory_order_relaxed);
+
+  // C11 7.17.1/4: atomic_flag is a structure type.
+  struct atomic_flag must_be_struct = ATOMIC_FLAG_INIT;
+  // C11 7.17.8/5 implies that it is also a typedef type.
+  atomic_flag guard = ATOMIC_FLAG_INIT;
+  _Bool old_val = atomic_flag_test_and_set(&guard);
+  if (old_val) atomic_flag_clear(&guard);
+
+  old_val = (atomic_flag_test_and_set)(&guard);
+  if (old_val) (atomic_flag_clear)(&guard);
+
+  const atomic_flag const_guard;
+  atomic_flag_test_and_set(&const_guard); // expected-error {{address argument to atomic operation must be a pointer to non-const _Atomic type ('const atomic_bool *' (aka 'const _Atomic(_Bool) *') invalid)}}
+  atomic_flag_clear(&const_guard); // expected-error {{address argument to atomic operation must be a pointer to non-const _Atomic type ('const atomic_bool *' (aka 'const _Atomic(_Bool) *') invalid)}}
 }
 
 _Atomic(int*) PR12527_a;
@@ -403,3 +464,5 @@ void memory_checks(_Atomic(int) *Ap, int *p, int val) {
   (void)__atomic_compare_exchange_n(p, p, val, 0, memory_order_acq_rel, memory_order_relaxed);
   (void)__atomic_compare_exchange_n(p, p, val, 0, memory_order_seq_cst, memory_order_relaxed);
 }
+
+

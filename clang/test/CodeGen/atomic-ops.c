@@ -7,12 +7,9 @@
 #ifndef ALREADY_INCLUDED
 #define ALREADY_INCLUDED
 
-// Basic IRGen tests for __c11_atomic_* and GNU __atomic_*
+#include <stdatomic.h>
 
-typedef enum memory_order {
-  memory_order_relaxed, memory_order_consume, memory_order_acquire,
-  memory_order_release, memory_order_acq_rel, memory_order_seq_cst
-} memory_order;
+// Basic IRGen tests for __c11_atomic_* and GNU __atomic_*
 
 int fi1(_Atomic(int) *i) {
   // CHECK-LABEL: @fi1
@@ -34,6 +31,12 @@ int fi1b(int *i) {
   return __atomic_load_n(i, memory_order_seq_cst);
 }
 
+int fi1c(atomic_int *i) {
+  // CHECK-LABEL: @fi1c
+  // CHECK: load atomic i32* {{.*}} seq_cst
+  return atomic_load(i);
+}
+
 void fi2(_Atomic(int) *i) {
   // CHECK-LABEL: @fi2
   // CHECK: store atomic i32 {{.*}} seq_cst
@@ -51,6 +54,12 @@ void fi2b(int *i) {
   // CHECK-LABEL: @fi2b
   // CHECK: store atomic i32 {{.*}} seq_cst
   __atomic_store_n(i, 1, memory_order_seq_cst);
+}
+
+void fi2c(atomic_int *i) {
+  // CHECK-LABEL: @fi2c
+  // CHECK: store atomic i32 {{.*}} seq_cst
+  atomic_store(i, 1);
 }
 
 int fi3(_Atomic(int) *i) {
@@ -89,8 +98,15 @@ int fi3d(int *i) {
   return __atomic_nand_fetch(i, 1, memory_order_seq_cst);
 }
 
+int fi3e(atomic_int *i) {
+  // CHECK-LABEL: @fi3e
+  // CHECK: atomicrmw or
+  // CHECK-NOT: {{ or }}
+  return atomic_fetch_or(i, 1);
+}
+
 _Bool fi4(_Atomic(int) *i) {
-  // CHECK-LABEL: @fi4
+  // CHECK-LABEL: @fi4(
   // CHECK: [[PAIR:%[.0-9A-Z_a-z]+]] = cmpxchg i32* [[PTR:%[.0-9A-Z_a-z]+]], i32 [[EXPECTED:%[.0-9A-Z_a-z]+]], i32 [[DESIRED:%[.0-9A-Z_a-z]+]]
   // CHECK: [[OLD:%[.0-9A-Z_a-z]+]] = extractvalue { i32, i1 } [[PAIR]], 0
   // CHECK: [[CMP:%[.0-9A-Z_a-z]+]] = extractvalue { i32, i1 } [[PAIR]], 1
@@ -101,7 +117,7 @@ _Bool fi4(_Atomic(int) *i) {
 }
 
 _Bool fi4a(int *i) {
-  // CHECK-LABEL: @fi4
+  // CHECK-LABEL: @fi4a
   // CHECK: [[PAIR:%[.0-9A-Z_a-z]+]] = cmpxchg i32* [[PTR:%[.0-9A-Z_a-z]+]], i32 [[EXPECTED:%[.0-9A-Z_a-z]+]], i32 [[DESIRED:%[.0-9A-Z_a-z]+]]
   // CHECK: [[OLD:%[.0-9A-Z_a-z]+]] = extractvalue { i32, i1 } [[PAIR]], 0
   // CHECK: [[CMP:%[.0-9A-Z_a-z]+]] = extractvalue { i32, i1 } [[PAIR]], 1
@@ -113,7 +129,7 @@ _Bool fi4a(int *i) {
 }
 
 _Bool fi4b(int *i) {
-  // CHECK-LABEL: @fi4
+  // CHECK-LABEL: @fi4b(
   // CHECK: [[PAIR:%[.0-9A-Z_a-z]+]] = cmpxchg weak i32* [[PTR:%[.0-9A-Z_a-z]+]], i32 [[EXPECTED:%[.0-9A-Z_a-z]+]], i32 [[DESIRED:%[.0-9A-Z_a-z]+]]
   // CHECK: [[OLD:%[.0-9A-Z_a-z]+]] = extractvalue { i32, i1 } [[PAIR]], 0
   // CHECK: [[CMP:%[.0-9A-Z_a-z]+]] = extractvalue { i32, i1 } [[PAIR]], 1
@@ -121,6 +137,13 @@ _Bool fi4b(int *i) {
   // CHECK: store i32 [[OLD]]
   int cmp = 0;
   return __atomic_compare_exchange_n(i, &cmp, 1, 1, memory_order_acquire, memory_order_acquire);
+}
+
+_Bool fi4c(atomic_int *i) {
+  // CHECK-LABEL: @fi4c
+  // CHECK: cmpxchg i32*
+  int cmp = 0;
+  return atomic_compare_exchange_strong(i, &cmp, 1);
 }
 
 float ff1(_Atomic(float) *d) {

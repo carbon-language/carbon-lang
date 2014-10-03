@@ -819,7 +819,16 @@ C11 atomic operations
 Use ``__has_feature(c_atomic)`` or ``__has_extension(c_atomic)`` to determine
 if support for atomic types using ``_Atomic`` is enabled.  Clang also provides
 :ref:`a set of builtins <langext-__c11_atomic>` which can be used to implement
-the ``<stdatomic.h>`` operations on ``_Atomic`` types.
+the ``<stdatomic.h>`` operations on ``_Atomic`` types. Use
+``__has_include(<stdatomic.h>)`` to determine if C11's ``<stdatomic.h>`` header
+is available.
+
+Clang will use the system's ``<stdatomic.h>`` header when one is available, and
+will otherwise use its own. When using its own, implementations of the atomic
+operations are provided as macros. In the cases where C11 also requires a real
+function, this header provides only the declaration of that function (along
+with a shadowing macro implementation), and you must link to a library which
+provides a definition of the function if you use it instead of the macro.
 
 C11 generic selections
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -1597,12 +1606,14 @@ __c11_atomic builtins
 Clang provides a set of builtins which are intended to be used to implement
 C11's ``<stdatomic.h>`` header.  These builtins provide the semantics of the
 ``_explicit`` form of the corresponding C11 operation, and are named with a
-``__c11_`` prefix.  The supported operations are:
+``__c11_`` prefix.  The supported operations, and the differences from
+the corresponding C11 operations, are:
 
 * ``__c11_atomic_init``
 * ``__c11_atomic_thread_fence``
 * ``__c11_atomic_signal_fence``
-* ``__c11_atomic_is_lock_free``
+* ``__c11_atomic_is_lock_free`` (The argument is the size of the
+  ``_Atomic(...)'' object, instead of its address)
 * ``__c11_atomic_store``
 * ``__c11_atomic_load``
 * ``__c11_atomic_exchange``
@@ -1613,6 +1624,11 @@ C11's ``<stdatomic.h>`` header.  These builtins provide the semantics of the
 * ``__c11_atomic_fetch_and``
 * ``__c11_atomic_fetch_or``
 * ``__c11_atomic_fetch_xor``
+
+The macros ``__ATOMIC_RELAXED``, ``__ATOMIC_CONSUME``, ``__ATOMIC_ACQUIRE``,
+``__ATOMIC_RELEASE``, ``__ATOMIC_ACQ_REL``, and ``_ATOMIC_SEQ_CST`` are
+provided, with values corresponding to the enumerators of C11's
+``memory_order`` enumeration.
 
 Low-level ARM exclusive memory builtins
 ---------------------------------------
