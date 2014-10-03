@@ -1028,13 +1028,6 @@ FormatManager::LoadLibStdcppFormatters()
     AddCXXSynthetic(gnu_category_sp, lldb_private::formatters::LibStdcppVectorIteratorSyntheticFrontEndCreator, "std::vector iterator synthetic children", ConstString("^__gnu_cxx::__normal_iterator<.+>$"), stl_synth_flags, true);
     
     AddCXXSynthetic(gnu_category_sp, lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEndCreator, "std::map iterator synthetic children", ConstString("^std::_Rb_tree_iterator<.+>$"), stl_synth_flags, true);
-    
-    gnu_category_sp->GetTypeSummariesContainer()->Add(ConstString("std::vector<std::allocator<bool> >"),
-                                                   TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
-    
-    gnu_category_sp->GetTypeSyntheticsContainer()->Add(ConstString("std::vector<std::allocator<bool> >"),
-                                                     SyntheticChildrenSP(new CXXSyntheticChildren(stl_synth_flags,"libc++ std::vector<bool> synthetic children",lldb_private::formatters::LibstdcppVectorBoolSyntheticFrontEndCreator)));
-
 #endif
 }
 

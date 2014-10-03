@@ -14,6 +14,7 @@ class StdVBoolDataFormatterTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
+    @skipIfDarwin
     def test_with_dsym_and_run_command(self):
         """Test data formatter commands."""
         self.buildDsym()
@@ -21,6 +22,7 @@ class StdVBoolDataFormatterTestCase(TestBase):
 
     @expectedFailureFreeBSD("llvm.org/pr20548") # fails to build on lab.llvm.org buildbot
     @dwarf_test
+    @skipIfDarwin
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         self.buildDwarf()
