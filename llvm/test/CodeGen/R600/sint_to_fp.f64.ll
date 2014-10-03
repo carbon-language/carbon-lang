@@ -1,8 +1,10 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
 
-; SI: {{^}}sint_to_fp64:
+declare i32 @llvm.r600.read.tidig.x() nounwind readnone
+
+; SI-LABEL: {{^}}sint_to_fp_i32_to_f64
 ; SI: V_CVT_F64_I32_e32
-define void @sint_to_fp64(double addrspace(1)* %out, i32 %in) {
+define void @sint_to_fp_i32_to_f64(double addrspace(1)* %out, i32 %in) {
   %result = sitofp i32 %in to double
   store double %result, double addrspace(1)* %out
   ret void
@@ -31,5 +33,28 @@ define void @sint_to_fp_i1_f64(double addrspace(1)* %out, i32 %in) {
 define void @sint_to_fp_i1_f64_load(double addrspace(1)* %out, i1 %in) {
   %fp = sitofp i1 %in to double
   store double %fp, double addrspace(1)* %out, align 8
+  ret void
+}
+
+; SI-LABEL: @s_sint_to_fp_i64_to_f64
+define void @s_sint_to_fp_i64_to_f64(double addrspace(1)* %out, i64 %in) {
+  %result = sitofp i64 %in to double
+  store double %result, double addrspace(1)* %out
+  ret void
+}
+
+; SI-LABEL: @v_sint_to_fp_i64_to_f64
+; SI: BUFFER_LOAD_DWORDX2 v{{\[}}[[LO:[0-9]+]]:[[HI:[0-9]+]]{{\]}}
+; SI-DAG: V_CVT_F64_U32_e32 [[LO_CONV:v\[[0-9]+:[0-9]+\]]], v[[LO]]
+; SI-DAG: V_CVT_F64_I32_e32 [[HI_CONV:v\[[0-9]+:[0-9]+\]]], v[[HI]]
+; SI: V_LDEXP_F64 [[LDEXP:v\[[0-9]+:[0-9]+\]]], [[HI_CONV]], 32
+; SI: V_ADD_F64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[LDEXP]], [[LO_CONV]]
+; SI: BUFFER_STORE_DWORDX2 [[RESULT]]
+define void @v_sint_to_fp_i64_to_f64(double addrspace(1)* %out, i64 addrspace(1)* %in) {
+  %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
+  %gep = getelementptr i64 addrspace(1)* %in, i32 %tid
+  %val = load i64 addrspace(1)* %gep, align 8
+  %result = sitofp i64 %val to double
+  store double %result, double addrspace(1)* %out
   ret void
 }
