@@ -564,8 +564,8 @@ void
 TypeCategoryImpl::Enable (bool value, uint32_t position)
 {
     Mutex::Locker locker(m_mutex);
-    m_enabled = value;
-    m_enabled_position = position;
+    if ( (m_enabled = value) )
+        m_enabled_position = position;
     if (m_change_listener)
         m_change_listener->Changed();
 }

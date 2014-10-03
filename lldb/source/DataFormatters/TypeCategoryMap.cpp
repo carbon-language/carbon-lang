@@ -120,6 +120,31 @@ TypeCategoryMap::Disable (ValueSP category)
 }
 
 void
+TypeCategoryMap::EnableAllCategories ()
+{
+    Mutex::Locker locker(m_map_mutex);
+    std::vector<ValueSP> sorted_categories(m_map.size(), ValueSP());
+    MapType::iterator iter = m_map.begin(), end = m_map.end();
+    for (; iter != end; ++iter)
+        sorted_categories.at(iter->second->GetLastEnabledPosition()) = iter->second;
+    decltype(sorted_categories)::iterator viter = sorted_categories.begin(), vend = sorted_categories.end();
+    for (; viter != vend; viter++)
+        Enable(*viter, Last);
+}
+
+void
+TypeCategoryMap::DisableAllCategories ()
+{
+    Mutex::Locker locker(m_map_mutex);
+    Position p = First;
+    for (; false == m_active_categories.empty(); p++)
+    {
+        m_active_categories.front()->SetEnabledPosition(p);
+        Disable(m_active_categories.front());
+    }
+}
+
+void
 TypeCategoryMap::Clear ()
 {
     Mutex::Locker locker(m_map_mutex);

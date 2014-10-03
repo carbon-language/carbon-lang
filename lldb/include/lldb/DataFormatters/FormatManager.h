@@ -86,6 +86,18 @@ public:
         m_categories_map.Disable(category);
     }
     
+    void
+    EnableAllCategories ()
+    {
+        m_categories_map.EnableAllCategories ();
+    }
+    
+    void
+    DisableAllCategories ()
+    {
+        m_categories_map.DisableAllCategories ();
+    }
+    
     bool
     DeleteCategory (const ConstString& category_name)
     {

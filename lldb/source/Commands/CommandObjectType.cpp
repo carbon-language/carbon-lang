@@ -2465,22 +2465,7 @@ protected:
         
         if (argc == 1 && strcmp(command.GetArgumentAtIndex(0),"*") == 0)
         {
-            // we want to make sure to enable "system" last and "default" first
-            DataVisualization::Categories::Enable(ConstString("default"), TypeCategoryMap::First);
-            uint32_t num_categories = DataVisualization::Categories::GetCount();
-            for (uint32_t i = 0; i < num_categories; i++)
-            {
-                lldb::TypeCategoryImplSP category_sp = DataVisualization::Categories::GetCategoryAtIndex(i);
-                if (category_sp)
-                {
-                    if ( ::strcmp(category_sp->GetName(), "system") == 0 ||
-                         ::strcmp(category_sp->GetName(), "default") == 0 )
-                        continue;
-                    else
-                        DataVisualization::Categories::Enable(category_sp, TypeCategoryMap::Default);
-                }
-            }
-            DataVisualization::Categories::Enable(ConstString("system"), TypeCategoryMap::Last);
+            DataVisualization::Categories::EnableStar();
         }
         else
         {
@@ -2630,14 +2615,7 @@ protected:
         
         if (argc == 1 && strcmp(command.GetArgumentAtIndex(0),"*") == 0)
         {
-            uint32_t num_categories = DataVisualization::Categories::GetCount();
-            for (uint32_t i = 0; i < num_categories; i++)
-            {
-                lldb::TypeCategoryImplSP category_sp = DataVisualization::Categories::GetCategoryAtIndex(i);
-                // no need to check if the category is enabled - disabling a disabled category has no effect
-                if (category_sp)
-                    DataVisualization::Categories::Disable(category_sp);
-            }
+            DataVisualization::Categories::DisableStar();
         }
         else
         {

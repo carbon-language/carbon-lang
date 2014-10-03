@@ -302,6 +302,18 @@ namespace lldb_private {
             Enable(false, UINT32_MAX);
         }
         
+        uint32_t
+        GetLastEnabledPosition ()
+        {
+            return m_enabled_position;
+        }
+        
+        void
+        SetEnabledPosition (uint32_t p)
+        {
+            m_enabled_position = p;
+        }
+        
         friend class TypeCategoryMap;
         
         friend class FormattersContainer<ConstString, TypeFormatImpl>;

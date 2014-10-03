@@ -144,6 +144,12 @@ public:
         Disable (const lldb::TypeCategoryImplSP& category);
         
         static void
+        EnableStar ();
+        
+        static void
+        DisableStar ();
+        
+        static void
         LoopThrough (FormatManager::CategoryCallback callback, void* callback_baton);
         
         static uint32_t

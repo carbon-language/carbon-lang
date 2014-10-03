@@ -63,6 +63,12 @@ namespace lldb_private {
         
         bool
         Disable (ValueSP category);
+
+        void
+        EnableAllCategories ();
+        
+        void
+        DisableAllCategories ();
         
         void
         Clear ();

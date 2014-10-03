@@ -196,6 +196,18 @@ DataVisualization::Categories::Disable (const lldb::TypeCategoryImplSP& category
 }
 
 void
+DataVisualization::Categories::EnableStar ()
+{
+    GetFormatManager().EnableAllCategories ();
+}
+
+void
+DataVisualization::Categories::DisableStar ()
+{
+    GetFormatManager().DisableAllCategories();
+}
+
+void
 DataVisualization::Categories::LoopThrough (FormatManager::CategoryCallback callback, void* callback_baton)
 {
     GetFormatManager().LoopThroughCategories(callback, callback_baton);
