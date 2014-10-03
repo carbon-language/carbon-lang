@@ -7801,28 +7801,32 @@ static SDValue lowerVectorShuffleAsElementInsertion(
         return SDValue(); // Not inserting into a zero vector.
   }
 
+  MVT ExtVT = VT;
+  MVT EltVT = VT.getVectorElementType();
+
   // Check for a single input from a SCALAR_TO_VECTOR node.
   // FIXME: All of this should be canonicalized into INSERT_VECTOR_ELT and
   // all the smarts here sunk into that routine. However, the current
   // lowering of BUILD_VECTOR makes that nearly impossible until the old
   // vector shuffle lowering is dead.
-  SDValue V2S =
-      getScalarValueForVectorElement(V2, Mask[V2Index] - Mask.size(), DAG);
-  if (!V2S)
+  if (SDValue V2S = getScalarValueForVectorElement(
+          V2, Mask[V2Index] - Mask.size(), DAG)) {
+    // We need to zext the scalar if it is smaller than an i32.
+    V2S = DAG.getNode(ISD::BITCAST, DL, EltVT, V2S);
+    if (EltVT == MVT::i8 || EltVT == MVT::i16) {
+      // Zero-extend directly to i32.
+      ExtVT = MVT::v4i32;
+      V2S = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i32, V2S);
+    }
+    V2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, ExtVT, V2S);
+  } else if (Mask[V2Index] != (int)Mask.size() || EltVT == MVT::i8 ||
+             EltVT == MVT::i16) {
+    // Either not inserting from the low element of the input or the input
+    // element size is too small to use VZEXT_MOVL to clear the high bits.
     return SDValue();
-
-  // First, we need to zext the scalar if it is smaller than an i32.
-  MVT ExtVT = VT;
-  MVT EltVT = VT.getVectorElementType();
-  V2S = DAG.getNode(ISD::BITCAST, DL, EltVT, V2S);
-  if (EltVT == MVT::i8 || EltVT == MVT::i16) {
-    // Zero-extend directly to i32.
-    ExtVT = MVT::v4i32;
-    V2S = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i32, V2S);
   }
 
-  V2 = DAG.getNode(X86ISD::VZEXT_MOVL, DL, ExtVT,
-                   DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, ExtVT, V2S));
+  V2 = DAG.getNode(X86ISD::VZEXT_MOVL, DL, ExtVT, V2);
   if (ExtVT != VT)
     V2 = DAG.getNode(ISD::BITCAST, DL, VT, V2);
 
@@ -7998,18 +8002,18 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                     getV4X86ShuffleImm8ForMask(WidenedMask, DAG)));
   }
 
-  // Use dedicated unpack instructions for masks that match their pattern.
-  if (isShuffleEquivalent(Mask, 0, 2))
-    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v2i64, V1, V2);
-  if (isShuffleEquivalent(Mask, 1, 3))
-    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v2i64, V1, V2);
-
   // If we have a single input from V2 insert that into V1 if we can do so
   // cheaply.
   if ((Mask[0] >= 2) + (Mask[1] >= 2) == 1)
     if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
             MVT::v2i64, DL, V1, V2, Mask, Subtarget, DAG))
       return Insertion;
+
+  // Use dedicated unpack instructions for masks that match their pattern.
+  if (isShuffleEquivalent(Mask, 0, 2))
+    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v2i64, V1, V2);
+  if (isShuffleEquivalent(Mask, 1, 3))
+    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v2i64, V1, V2);
 
   if (Subtarget->hasSSE41())
     if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v2i64, V1, V2, Mask,
@@ -8275,17 +8279,17 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                        getV4X86ShuffleImm8ForMask(Mask, DAG));
   }
 
-  // Use dedicated unpack instructions for masks that match their pattern.
-  if (isShuffleEquivalent(Mask, 0, 4, 1, 5))
-    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v4i32, V1, V2);
-  if (isShuffleEquivalent(Mask, 2, 6, 3, 7))
-    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v4i32, V1, V2);
-
   // There are special ways we can lower some single-element blends.
   if (NumV2Elements == 1)
     if (SDValue V = lowerVectorShuffleAsElementInsertion(MVT::v4i32, DL, V1, V2,
                                                          Mask, Subtarget, DAG))
       return V;
+
+  // Use dedicated unpack instructions for masks that match their pattern.
+  if (isShuffleEquivalent(Mask, 0, 4, 1, 5))
+    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v4i32, V1, V2);
+  if (isShuffleEquivalent(Mask, 2, 6, 3, 7))
+    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v4i32, V1, V2);
 
   if (Subtarget->hasSSE41())
     if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v4i32, V1, V2, Mask,

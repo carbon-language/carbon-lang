@@ -95,8 +95,8 @@ define <4 x float> @shuffle_v4f32_4zzz(<4 x float> %a) {
 ; SSE1-LABEL: shuffle_v4f32_4zzz:
 ; SSE1:       # BB#0:
 ; SSE1-NEXT:    xorps %xmm1, %xmm1
-; SSE1-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,0],xmm1[1,0]
-; SSE1-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2],xmm1[2,3]
+; SSE1-NEXT:    movss %xmm0, %xmm1
+; SSE1-NEXT:    movaps %xmm1, %xmm0
 ; SSE1-NEXT:    retq
   %shuffle = shufflevector <4 x float> zeroinitializer, <4 x float> %a, <4 x i32> <i32 4, i32 1, i32 2, i32 3>
   ret <4 x float> %shuffle
