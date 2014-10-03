@@ -343,6 +343,7 @@ Information about LLVM's development process.
    HowToReleaseLLVM
    Packaging
    ReleaseProcess
+   Phabricator
 
 :doc:`DeveloperPolicy`
    The LLVM project's policy towards developers and their contributions.
@@ -368,6 +369,10 @@ Information about LLVM's development process.
 
 :doc:`Packaging`
    Advice on packaging LLVM into a distribution.
+
+:doc:`Phabricator`
+   Describes how to use the Phabricator code review tool hosted on
+   http://reviews.llvm.org/ and its command line interface, Arcanist.
 
 Community
 =========
