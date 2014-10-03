@@ -35,6 +35,7 @@ set(files
   stdarg.h
   stdbool.h
   stddef.h
+  __stddef_max_align_t.h
   stdint.h
   stdnoreturn.h
   tbmintrin.h

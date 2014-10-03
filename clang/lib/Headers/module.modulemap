@@ -170,3 +170,7 @@ module _Builtin_intrinsics [system] {
     }
   }
 }
+
+module _Builtin_stddef_max_align_t [system] [extern_c] {
+  header "__stddef_max_align_t.h"
+}

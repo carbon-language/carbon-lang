@@ -30,11 +30,15 @@
 #if !defined(__need_ptrdiff_t) && !defined(__need_size_t) &&                   \
     !defined(__need_wchar_t) && !defined(__need_NULL) &&                       \
     !defined(__need_wint_t)
+/* Always define miscellaneous pieces when modules are available. */
+#if !__has_feature(modules)
 #define __STDDEF_H
+#endif
 #define __need_ptrdiff_t
 #define __need_size_t
 #define __need_wchar_t
 #define __need_NULL
+#define __need_STDDEF_H_misc
 /* __need_wint_t is intentionally not defined here. */
 #endif
 
@@ -60,7 +64,7 @@ typedef __SIZE_TYPE__ size_t;
 #undef __need_size_t
 #endif /*defined(__need_size_t) */
 
-#if defined(__STDDEF_H)
+#if defined(__need_STDDEF_H_misc)
 /* ISO9899:2011 7.20 (C11 Annex K): Define rsize_t if __STDC_WANT_LIB_EXT1__ is
  * enabled. */
 #if (defined(__STDC_WANT_LIB_EXT1__) && __STDC_WANT_LIB_EXT1__ >= 1 && \
@@ -71,7 +75,7 @@ typedef __SIZE_TYPE__ size_t;
 #endif
 typedef __SIZE_TYPE__ rsize_t;
 #endif
-#endif /* defined(__STDDEF_H) */
+#endif /* defined(__need_STDDEF_H_misc) */
 
 #if defined(__need_wchar_t)
 #ifndef __cplusplus
@@ -109,26 +113,13 @@ using ::std::nullptr_t;
 #undef __need_NULL
 #endif /* defined(__need_NULL) */
 
-#if defined(__STDDEF_H)
-
+#if defined(__need_STDDEF_H_misc)
 #if __STDC_VERSION__ >= 201112L || __cplusplus >= 201103L
-#if !defined(__CLANG_MAX_ALIGN_T_DEFINED) || __has_feature(modules)
-#ifndef _MSC_VER
-typedef struct {
-  long long __clang_max_align_nonce1
-      __attribute__((__aligned__(__alignof__(long long))));
-  long double __clang_max_align_nonce2
-      __attribute__((__aligned__(__alignof__(long double))));
-} max_align_t;
-#else
-typedef double max_align_t;
+#include "__stddef_max_align_t.h"
 #endif
-#define __CLANG_MAX_ALIGN_T_DEFINED
-#endif
-#endif
-
 #define offsetof(t, d) __builtin_offsetof(t, d)
-#endif  /* __STDDEF_H */
+#undef __need_STDDEF_H_misc
+#endif  /* defined(__need_STDDEF_H_misc) */
 
 /* Some C libraries expect to see a wint_t here. Others (notably MinGW) will use
 __WINT_TYPE__ directly; accommodate both by requiring __need_wint_t */
