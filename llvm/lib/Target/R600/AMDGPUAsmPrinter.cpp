@@ -97,6 +97,10 @@ void AMDGPUAsmPrinter::EmitEndOfAsmFile(Module &M) {
 }
 
 bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+
+  // The starting address of all shader programs must be 256 bytes aligned.
+  MF.setAlignment(8);
+
   SetupMachineFunction(MF);
 
   EmitFunctionHeader();

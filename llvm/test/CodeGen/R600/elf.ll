@@ -5,6 +5,8 @@
 ; ELF-CHECK: Name: .AMDGPU.config
 ; ELF-CHECK: Type: SHT_PROGBITS
 
+; CONFIG-CHECK: .align 256
+; CONFIG-CHECK: test:
 ; CONFIG-CHECK: .section .AMDGPU.config
 ; CONFIG-CHECK-NEXT: .long   45096
 ; CONFIG-CHECK-NEXT: .long   0
