@@ -154,10 +154,10 @@ ARMSubtarget &ARMSubtarget::initializeSubtargetDependencies(StringRef CPU,
 
 ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, TargetMachine &TM,
-                           bool IsLittle, const TargetOptions &Options)
+                           bool IsLittle)
     : ARMGenSubtargetInfo(TT, CPU, FS), ARMProcFamily(Others),
       ARMProcClass(None), stackAlignment(4), CPUString(CPU), IsLittle(IsLittle),
-      TargetTriple(TT), Options(Options), TargetABI(ARM_ABI_UNKNOWN),
+      TargetTriple(TT), Options(TM.Options), TargetABI(ARM_ABI_UNKNOWN),
       DL(computeDataLayout(initializeSubtargetDependencies(CPU, FS))),
       TSInfo(DL),
       InstrInfo(isThumb1Only()
