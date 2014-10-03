@@ -683,12 +683,6 @@ public:
   /// (3) Bottom-up allocation is no longer guaranteed to optimally color.
   virtual bool reverseLocalAssignment() const { return false; }
 
-  /// Allow the target to override register assignment heuristics based on the
-  /// live range size. If this returns false, then local live ranges are always
-  /// assigned in order regardless of their size. This is a temporary hook for
-  /// debugging downstream codegen failures exposed by regalloc.
-  virtual bool mayOverrideLocalAssignment() const { return true; }
-
   /// Allow the target to override the cost of using a callee-saved register for
   /// the first time. Default value of 0 means we will use a callee-saved
   /// register if it is available.

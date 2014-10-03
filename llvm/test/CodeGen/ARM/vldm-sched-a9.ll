@@ -6,8 +6,8 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; the changes for PR:18825 prevent that spilling.
 
 ; CHECK: test:
-; CHECK-NOT: vstmia
-; CHECK-NOT: vldmia
+; CHECK: vstmia
+; CHECK: vldmia
 define void @test(i64* %src) #0 {
 entry:
   %arrayidx39 = getelementptr inbounds i64* %src, i32 13
