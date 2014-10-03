@@ -60,23 +60,23 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.5 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/home/grosser/Projects/polly/git/tools/polly/test.c] [DW_LANG_C99]
+!0 = metadata !{metadata !"0x11\0012\00clang version 3.5 \000\00\000\00\000", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/home/grosser/Projects/polly/git/tools/polly/test.c] [DW_LANG_C99]
 !1 = metadata !{metadata !"test.c", metadata !"/home/grosser/Projects/polly/git/tools/polly"}
 !2 = metadata !{i32 0}
 !3 = metadata !{metadata !4, metadata !7}
-!4 = metadata !{i32 786478, metadata !1, metadata !5, metadata !"foo", metadata !"foo", metadata !"", i32 1, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (float*)* @foo, null, null, metadata !2, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [foo]
-!5 = metadata !{i32 786473, metadata !1}          ; [ DW_TAG_file_type ] [/home/grosser/Projects/polly/git/tools/polly/test.c]
-!6 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !2, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!7 = metadata !{i32 786478, metadata !1, metadata !5, metadata !"bar", metadata !"bar", metadata !"", i32 6, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (float*)* @bar, null, null, metadata !2, i32 6} ; [ DW_TAG_subprogram ] [line 6] [def] [bar]
+!4 = metadata !{metadata !"0x2e\00foo\00foo\00\001\000\001\000\006\00256\000\001", metadata !1, metadata !5, metadata !6, null, void (float*)* @foo, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 1] [def] [foo]
+!5 = metadata !{metadata !"0x29", metadata !1}          ; [ DW_TAG_file_type ] [/home/grosser/Projects/polly/git/tools/polly/test.c]
+!6 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !2, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = metadata !{metadata !"0x2e\00bar\00bar\00\006\000\001\000\006\00256\000\006", metadata !1, metadata !5, metadata !6, null, void (float*)* @bar, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 6] [def] [bar]
 !8 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!9 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!9 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
 !10 = metadata !{metadata !"clang version 3.5 "}
 !11 = metadata !{i32 2, i32 0, metadata !12, null}
-!12 = metadata !{i32 786443, metadata !1, metadata !4, i32 2, i32 0, i32 0} ; [ DW_TAG_lexical_block ] [/home/grosser/Projects/polly/git/tools/polly/test.c]
+!12 = metadata !{metadata !"0xb\002\000\000", metadata !1, metadata !4} ; [ DW_TAG_lexical_block ] [/home/grosser/Projects/polly/git/tools/polly/test.c]
 !13 = metadata !{i32 3, i32 0, metadata !12, null}
 !14 = metadata !{i32 4, i32 0, metadata !4, null}
 !15 = metadata !{i32 9, i32 0, metadata !16, null}
-!16 = metadata !{i32 786443, metadata !1, metadata !7, i32 9, i32 0, i32 1} ; [ DW_TAG_lexical_block ] [/home/grosser/Projects/polly/git/tools/polly/test.c]
+!16 = metadata !{metadata !"0xb\009\000\001", metadata !1, metadata !7} ; [ DW_TAG_lexical_block ] [/home/grosser/Projects/polly/git/tools/polly/test.c]
 !17 = metadata !{i32 13, i32 0, metadata !16, null}
 !18 = metadata !{i32 14, i32 0, metadata !7, null}
 
