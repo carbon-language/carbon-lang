@@ -75,6 +75,9 @@ private:
   std::error_code resolveSymbolName(const coff_section *Section,
                                     uint64_t Offset, StringRef &Name);
 
+  void printImportedSymbols(imported_symbol_iterator I,
+                            imported_symbol_iterator E);
+
   typedef DenseMap<const coff_section*, std::vector<RelocationRef> > RelocMapTy;
 
   const llvm::object::COFFObjectFile *Obj;
@@ -883,7 +886,19 @@ void COFFDumper::printUnwindInfo() {
   }
 }
 
+void COFFDumper::printImportedSymbols(imported_symbol_iterator I,
+                                      imported_symbol_iterator E) {
+  for (; I != E; ++I) {
+    StringRef Sym;
+    if (error(I->getSymbolName(Sym))) return;
+    uint16_t Ordinal;
+    if (error(I->getOrdinal(Ordinal))) return;
+    W.printNumber("Symbol", Sym, Ordinal);
+  }
+}
+
 void COFFDumper::printCOFFImports() {
+  // Regular imports
   for (auto I = Obj->import_directory_begin(), E = Obj->import_directory_end();
        I != E; ++I) {
     DictScope Import(W, "Import");
@@ -895,13 +910,17 @@ void COFFDumper::printCOFFImports() {
     W.printHex("ImportLookupTableRVA", Addr);
     if (error(I->getImportAddressTableRVA(Addr))) return;
     W.printHex("ImportAddressTableRVA", Addr);
-    for (auto J = I->imported_symbol_begin(), F = I->imported_symbol_end();
-         J != F; ++J) {
-      StringRef Sym;
-      if (error(J->getSymbolName(Sym))) return;
-      uint16_t Ordinal;
-      if (error(J->getOrdinal(Ordinal))) return;
-      W.printNumber("Symbol", Sym, Ordinal);
-    }
+    printImportedSymbols(I->imported_symbol_begin(), I->imported_symbol_end());
+  }
+
+  // Delay imports
+  for (auto I = Obj->delay_import_directory_begin(),
+            E = Obj->delay_import_directory_end();
+       I != E; ++I) {
+    DictScope Import(W, "DelayImport");
+    StringRef Name;
+    if (error(I->getName(Name))) return;
+    W.printString("Name", Name);
+    printImportedSymbols(I->imported_symbol_begin(), I->imported_symbol_end());
   }
 }

@@ -25,9 +25,12 @@ template <typename T> class ArrayRef;
 
 namespace object {
 class ImportDirectoryEntryRef;
+class DelayImportDirectoryEntryRef;
 class ExportDirectoryEntryRef;
 class ImportedSymbolRef;
 typedef content_iterator<ImportDirectoryEntryRef> import_directory_iterator;
+typedef content_iterator<DelayImportDirectoryEntryRef>
+    delay_import_directory_iterator;
 typedef content_iterator<ExportDirectoryEntryRef> export_directory_iterator;
 typedef content_iterator<ImportedSymbolRef> imported_symbol_iterator;
 
@@ -183,6 +186,18 @@ typedef import_lookup_table_entry<support::little32_t>
     import_lookup_table_entry32;
 typedef import_lookup_table_entry<support::little64_t>
     import_lookup_table_entry64;
+
+struct delay_import_directory_table_entry {
+  // dumpbin reports this field as "Characteristics" instead of "Attributes".
+  support::ulittle32_t Attributes;
+  support::ulittle32_t Name;
+  support::ulittle32_t ModuleHandle;
+  support::ulittle32_t DelayImportAddressTable;
+  support::ulittle32_t DelayImportNameTable;
+  support::ulittle32_t BoundDelayImportTable;
+  support::ulittle32_t UnloadDelayImportTable;
+  support::ulittle32_t TimeStamp;
+};
 
 struct export_directory_table_entry {
   support::ulittle32_t ExportFlags;
@@ -440,6 +455,8 @@ private:
   uint32_t StringTableSize;
   const import_directory_table_entry *ImportDirectory;
   uint32_t NumberOfImportDirectory;
+  const delay_import_directory_table_entry *DelayImportDirectory;
+  uint32_t NumberOfDelayImportDirectory;
   const export_directory_table_entry *ExportDirectory;
 
   std::error_code getString(uint32_t offset, StringRef &Res) const;
@@ -451,6 +468,7 @@ private:
 
   std::error_code initSymbolTablePtr();
   std::error_code initImportTablePtr();
+  std::error_code initDelayImportTablePtr();
   std::error_code initExportTablePtr();
 
 public:
@@ -582,6 +600,8 @@ public:
 
   import_directory_iterator import_directory_begin() const;
   import_directory_iterator import_directory_end() const;
+  delay_import_directory_iterator delay_import_directory_begin() const;
+  delay_import_directory_iterator delay_import_directory_end() const;
   export_directory_iterator export_directory_begin() const;
   export_directory_iterator export_directory_end() const;
 
@@ -674,6 +694,27 @@ public:
 
 private:
   const import_directory_table_entry *ImportTable;
+  uint32_t Index;
+  const COFFObjectFile *OwningObject;
+};
+
+class DelayImportDirectoryEntryRef {
+public:
+  DelayImportDirectoryEntryRef() : OwningObject(nullptr) {}
+  DelayImportDirectoryEntryRef(const delay_import_directory_table_entry *T,
+                               uint32_t I, const COFFObjectFile *Owner)
+      : Table(T), Index(I), OwningObject(Owner) {}
+
+  bool operator==(const DelayImportDirectoryEntryRef &Other) const;
+  void moveNext();
+
+  imported_symbol_iterator imported_symbol_begin() const;
+  imported_symbol_iterator imported_symbol_end() const;
+
+  std::error_code getName(StringRef &Result) const;
+
+private:
+  const delay_import_directory_table_entry *Table;
   uint32_t Index;
   const COFFObjectFile *OwningObject;
 };
