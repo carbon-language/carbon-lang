@@ -1277,42 +1277,44 @@ makeStandaloneRange(CharSourceRange Range, const SourceManager &SM,
   return std::make_pair(Offset, EndOffset);
 }
 
-static void makeStandaloneFixIt(const SourceManager &SM,
-                                const LangOptions &LangOpts,
-                                const FixItHint &InFix,
-                                ASTUnit::StandaloneFixIt &OutFix) {
+static ASTUnit::StandaloneFixIt makeStandaloneFixIt(const SourceManager &SM,
+                                                    const LangOptions &LangOpts,
+                                                    const FixItHint &InFix) {
+  ASTUnit::StandaloneFixIt OutFix;
   OutFix.RemoveRange = makeStandaloneRange(InFix.RemoveRange, SM, LangOpts);
   OutFix.InsertFromRange = makeStandaloneRange(InFix.InsertFromRange, SM,
                                                LangOpts);
   OutFix.CodeToInsert = InFix.CodeToInsert;
   OutFix.BeforePreviousInsertions = InFix.BeforePreviousInsertions;
+  return OutFix;
 }
 
-static void makeStandaloneDiagnostic(const LangOptions &LangOpts,
-                                     const StoredDiagnostic &InDiag,
-                                     ASTUnit::StandaloneDiagnostic &OutDiag) {
+static ASTUnit::StandaloneDiagnostic
+makeStandaloneDiagnostic(const LangOptions &LangOpts,
+                         const StoredDiagnostic &InDiag) {
+  ASTUnit::StandaloneDiagnostic OutDiag;
   OutDiag.ID = InDiag.getID();
   OutDiag.Level = InDiag.getLevel();
   OutDiag.Message = InDiag.getMessage();
   OutDiag.LocOffset = 0;
   if (InDiag.getLocation().isInvalid())
-    return;
+    return OutDiag;
   const SourceManager &SM = InDiag.getLocation().getManager();
   SourceLocation FileLoc = SM.getFileLoc(InDiag.getLocation());
   OutDiag.Filename = SM.getFilename(FileLoc);
   if (OutDiag.Filename.empty())
-    return;
+    return OutDiag;
   OutDiag.LocOffset = SM.getFileOffset(FileLoc);
   for (StoredDiagnostic::range_iterator
          I = InDiag.range_begin(), E = InDiag.range_end(); I != E; ++I) {
     OutDiag.Ranges.push_back(makeStandaloneRange(*I, SM, LangOpts));
   }
-  for (StoredDiagnostic::fixit_iterator
-         I = InDiag.fixit_begin(), E = InDiag.fixit_end(); I != E; ++I) {
-    ASTUnit::StandaloneFixIt Fix;
-    makeStandaloneFixIt(SM, LangOpts, *I, Fix);
-    OutDiag.FixIts.push_back(Fix);
-  }
+  for (StoredDiagnostic::fixit_iterator I = InDiag.fixit_begin(),
+                                        E = InDiag.fixit_end();
+       I != E; ++I)
+    OutDiag.FixIts.push_back(makeStandaloneFixIt(SM, LangOpts, *I));
+
+  return OutDiag;
 }
 
 /// \brief Attempt to build or re-use a precompiled preamble when (re-)parsing
@@ -1574,13 +1576,11 @@ ASTUnit::getMainBufferWithPrecompiledPreamble(
 
   // Transfer any diagnostics generated when parsing the preamble into the set
   // of preamble diagnostics.
-  for (stored_diag_iterator
-         I = stored_diag_afterDriver_begin(),
-         E = stored_diag_end(); I != E; ++I) {
-    StandaloneDiagnostic Diag;
-    makeStandaloneDiagnostic(Clang->getLangOpts(), *I, Diag);
-    PreambleDiagnostics.push_back(Diag);
-  }
+  for (stored_diag_iterator I = stored_diag_afterDriver_begin(),
+                            E = stored_diag_end();
+       I != E; ++I)
+    PreambleDiagnostics.push_back(
+        makeStandaloneDiagnostic(Clang->getLangOpts(), *I));
 
   Act->EndSourceFile();
 
