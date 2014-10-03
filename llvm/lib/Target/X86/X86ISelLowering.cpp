@@ -10263,10 +10263,14 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
                        ? MVT::getFloatingPointVT(VT.getScalarSizeInBits() * 2)
                        : MVT::getIntegerVT(VT.getScalarSizeInBits() * 2);
     MVT NewVT = MVT::getVectorVT(NewEltVT, VT.getVectorNumElements() / 2);
-    V1 = DAG.getNode(ISD::BITCAST, dl, NewVT, V1);
-    V2 = DAG.getNode(ISD::BITCAST, dl, NewVT, V2);
-    return DAG.getNode(ISD::BITCAST, dl, VT,
-                       DAG.getVectorShuffle(NewVT, dl, V1, V2, WidenedMask));
+    // Make sure that the new vector type is legal. For example, v2f64 isn't
+    // legal on SSE1.
+    if (DAG.getTargetLoweringInfo().isTypeLegal(NewVT)) {
+      V1 = DAG.getNode(ISD::BITCAST, dl, NewVT, V1);
+      V2 = DAG.getNode(ISD::BITCAST, dl, NewVT, V2);
+      return DAG.getNode(ISD::BITCAST, dl, VT,
+                         DAG.getVectorShuffle(NewVT, dl, V1, V2, WidenedMask));
+    }
   }
 
   int NumV1Elements = 0, NumUndefElements = 0, NumV2Elements = 0;
