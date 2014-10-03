@@ -13,6 +13,7 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Option/Option.h"
+#include "llvm/ADT/iterator.h"
 #include <memory>
 
 namespace llvm {
@@ -158,8 +159,8 @@ class JobList : public Job {
 public:
   typedef SmallVector<std::unique_ptr<Job>, 4> list_type;
   typedef list_type::size_type size_type;
-  typedef list_type::iterator iterator;
-  typedef list_type::const_iterator const_iterator;
+  typedef llvm::pointee_iterator<list_type::iterator> iterator;
+  typedef llvm::pointee_iterator<list_type::const_iterator> const_iterator;
 
 private:
   list_type Jobs;

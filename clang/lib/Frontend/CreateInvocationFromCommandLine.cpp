@@ -63,7 +63,7 @@ clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
   // We expect to get back exactly one command job, if we didn't something
   // failed.
   const driver::JobList &Jobs = C->getJobs();
-  if (Jobs.size() != 1 || !isa<driver::Command>(**Jobs.begin())) {
+  if (Jobs.size() != 1 || !isa<driver::Command>(*Jobs.begin())) {
     SmallString<256> Msg;
     llvm::raw_svector_ostream OS(Msg);
     Jobs.Print(OS, "; ", true);
@@ -71,7 +71,7 @@ clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
     return nullptr;
   }
 
-  const driver::Command &Cmd = cast<driver::Command>(**Jobs.begin());
+  const driver::Command &Cmd = cast<driver::Command>(*Jobs.begin());
   if (StringRef(Cmd.getCreator().getName()) != "clang") {
     Diags->Report(diag::err_fe_expected_clang_command);
     return nullptr;

@@ -578,8 +578,8 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
 
 void Driver::setUpResponseFiles(Compilation &C, Job &J) {
   if (JobList *Jobs = dyn_cast<JobList>(&J)) {
-    for (JobList::iterator I = Jobs->begin(), E = Jobs->end(); I != E; ++I)
-      setUpResponseFiles(C, **I);
+    for (auto &Job : *Jobs)
+      setUpResponseFiles(C, Job);
     return;
   }
 

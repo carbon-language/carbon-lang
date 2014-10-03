@@ -287,8 +287,8 @@ JobList::JobList() : Job(JobListClass) {}
 
 void JobList::Print(raw_ostream &OS, const char *Terminator, bool Quote,
                     bool CrashReport) const {
-  for (const_iterator it = begin(), ie = end(); it != ie; ++it)
-    (*it)->Print(OS, Terminator, Quote, CrashReport);
+  for (const auto &Job : *this)
+    Job.Print(OS, Terminator, Quote, CrashReport);
 }
 
 void JobList::clear() { Jobs.clear(); }

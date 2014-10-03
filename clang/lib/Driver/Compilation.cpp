@@ -202,9 +202,8 @@ void Compilation::ExecuteJob(const Job &J,
       FailingCommands.push_back(std::make_pair(Res, FailingCommand));
   } else {
     const JobList *Jobs = cast<JobList>(&J);
-    for (JobList::const_iterator it = Jobs->begin(), ie = Jobs->end();
-         it != ie; ++it)
-      ExecuteJob(**it, FailingCommands);
+    for (const auto &Job : *Jobs)
+      ExecuteJob(Job, FailingCommands);
   }
 }
 
