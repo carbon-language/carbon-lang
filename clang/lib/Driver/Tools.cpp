@@ -581,24 +581,14 @@ static void getARMFPUFeatures(const Driver &D, const Arg *A,
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
 
-// Select the float ABI as determined by -msoft-float, -mhard-float,
-// -mfpu=... and -mfloat-abi=...
+// Select the float ABI as determined by -msoft-float, -mhard-float, and
+// -mfloat-abi=.
 StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
-                                     const llvm::Triple &Triple,
-                                     bool *ExplicitNoFloat) {
-
-  // FIXME: -msoft-float and -mhard-float identify the nature of floating point
-  // ops, whereas -mfloat-abi=... identifies the floating point argument passing
-  // convention. But here we are mushing them together into FloatABI = soft/
-  // softfp/hard, which is a bit confusing. For example, this means -msoft-float
-  // and -mfloat-abi=soft are equivalent options to clang. But when we pass
-  // arguments to the backend (AddARMTargetArgs), these two options take their
-  // original interpretations.
+                                     const llvm::Triple &Triple) {
   StringRef FloatABI;
-  const Arg *A = Args.getLastArg(options::OPT_msoft_float,
-                                 options::OPT_mhard_float,
-                                 options::OPT_mfloat_abi_EQ);
-  if (A) {
+  if (Arg *A = Args.getLastArg(options::OPT_msoft_float,
+                               options::OPT_mhard_float,
+                               options::OPT_mfloat_abi_EQ)) {
     if (A->getOption().matches(options::OPT_msoft_float))
       FloatABI = "soft";
     else if (A->getOption().matches(options::OPT_mhard_float))
@@ -612,31 +602,6 @@ StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
       }
     }
   }
-
-  // Some -mfpu=... options are incompatible with some mfloat-abi=... options
-  if (Arg *B = Args.getLastArg(options::OPT_mfpu_EQ)) {
-    StringRef FPU = B->getValue();
-    if (FPU == "none") {
-      // Signal incompatible -mfloat-abi=... options
-      if (FloatABI == "hard")
-        D.Diag(diag::warn_drv_implied_soft_float_conflict)
-          << B->getAsString(Args) << A->getAsString(Args);
-      else if (FloatABI == "softfp")
-        D.Diag(diag::warn_drv_implied_soft_float_assumed)
-          << B->getAsString(Args) << A->getAsString(Args);
-      // Assume soft-float
-      FloatABI = "soft";
-    } else if (FloatABI.empty() || FloatABI == "soft") {
-      // Need -mhard-float for floating point ops
-      FloatABI = "softfp";
-    } 
-  }
-
-  // This allows us to differentiate between a user specified soft-float and
-  // an inferred soft-float. The latter may be overridden under other conditions
-  // but the former has higher priority.
-  if (FloatABI == "soft" && ExplicitNoFloat)
-    *ExplicitNoFloat = true;
 
   // If unspecified, choose the default based on the platform.
   if (FloatABI.empty()) {
@@ -716,8 +681,7 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
                                  const ArgList &Args,
                                  std::vector<const char *> &Features,
                                  bool ForAS) {
-  bool ExplicitNoFloat = false;
-  StringRef FloatABI = tools::arm::getARMFloatABI(D, Args, Triple, &ExplicitNoFloat);
+  StringRef FloatABI = tools::arm::getARMFloatABI(D, Args, Triple);
   if (!ForAS) {
     // FIXME: Note, this is a hack, the LLVM backend doesn't actually use these
     // yet (it uses the -mfloat-abi and -msoft-float options), and it is
@@ -752,14 +716,6 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     Features.push_back("-neon");
     // Also need to explicitly disable features which imply NEON.
     Features.push_back("-crypto");
-    // Disable remaining floating-point features if soft-float is explicitly
-    // requested.
-    if (ExplicitNoFloat) {
-      Features.push_back("-vfp2");
-      Features.push_back("-vfp3");
-      Features.push_back("-vfp4");
-      Features.push_back("-fp-armv8");
-    }
   }
 
   // En/disable crc

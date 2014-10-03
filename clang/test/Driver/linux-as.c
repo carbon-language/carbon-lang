@@ -13,7 +13,7 @@
 // RUN: %clang -target arm-linux -mfpu=neon -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-ARM-MFPU %s
-// CHECK-ARM-MFPU: as{{(.exe)?}}" "-mfloat-abi=softfp" "-mfpu=neon"
+// CHECK-ARM-MFPU: as{{(.exe)?}}" "-mfloat-abi=soft" "-mfpu=neon"
 //
 // RUN: %clang -target arm-linux -march=armv7-a -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
@@ -23,7 +23,7 @@
 // RUN: %clang -target arm-linux -mcpu=cortex-a8 -mfpu=neon -march=armv7-a -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-ARM-ALL %s
-// CHECK-ARM-ALL: as{{(.exe)?}}" "-mfloat-abi=softfp" "-march=armv7-a" "-mcpu=cortex-a8" "-mfpu=neon"
+// CHECK-ARM-ALL: as{{(.exe)?}}" "-mfloat-abi=soft" "-march=armv7-a" "-mcpu=cortex-a8" "-mfpu=neon"
 //
 // RUN: %clang -target armv7-linux -mcpu=cortex-a8 -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
