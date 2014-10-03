@@ -50,7 +50,7 @@ private:
         : Finder(Finder), Owner(Owner) {}
 
     std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &,
-                                                   StringRef) {
+                                                   StringRef) override {
       return Finder.newASTConsumer();
     }
 
