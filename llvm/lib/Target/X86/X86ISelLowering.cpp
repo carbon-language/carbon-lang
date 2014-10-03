@@ -7783,23 +7783,9 @@ static SDValue lowerVectorShuffleAsElementInsertion(
   int V2Index = std::find_if(Mask.begin(), Mask.end(),
                              [&Mask](int M) { return M >= (int)Mask.size(); }) -
                 Mask.begin();
-  if (Mask.size() == 2) {
-    if (!Zeroable[V2Index ^ 1]) {
-      // For 2-wide masks we may be able to just invert the inputs. We use an xor
-      // with 2 to flip from {2,3} to {0,1} and vice versa.
-      int InverseMask[2] = {Mask[0] < 0 ? -1 : (Mask[0] ^ 2),
-                            Mask[1] < 0 ? -1 : (Mask[1] ^ 2)};
-      if (Zeroable[V2Index])
-        return lowerVectorShuffleAsElementInsertion(VT, DL, V2, V1, InverseMask,
-                                                    Subtarget, DAG);
-      else
-        return SDValue();
-    }
-  } else {
-    for (int i = 0, Size = Mask.size(); i < Size; ++i)
-      if (i != V2Index && !Zeroable[i])
-        return SDValue(); // Not inserting into a zero vector.
-  }
+  for (int i = 0, Size = Mask.size(); i < Size; ++i)
+    if (i != V2Index && !Zeroable[i])
+      return SDValue(); // Not inserting into a zero vector.
 
   MVT ExtVT = VT;
   MVT EltVT = VT.getVectorElementType();
@@ -7940,10 +7926,18 @@ static SDValue lowerV2F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v2f64, V1, V2);
 
   // If we have a single input, insert that into V1 if we can do so cheaply.
-  if ((Mask[0] >= 2) + (Mask[1] >= 2) == 1)
+  if ((Mask[0] >= 2) + (Mask[1] >= 2) == 1) {
     if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
             MVT::v2f64, DL, V1, V2, Mask, Subtarget, DAG))
       return Insertion;
+    // Try inverting the insertion since for v2 masks it is easy to do and we
+    // can't reliably sort the mask one way or the other.
+    int InverseMask[2] = {Mask[0] < 0 ? -1 : (Mask[0] ^ 2),
+                          Mask[1] < 0 ? -1 : (Mask[1] ^ 2)};
+    if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
+            MVT::v2f64, DL, V2, V1, InverseMask, Subtarget, DAG))
+      return Insertion;
+  }
 
   // Try to use one of the special instruction patterns to handle two common
   // blend patterns if a zero-blend above didn't work.
@@ -8004,10 +7998,18 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   // If we have a single input from V2 insert that into V1 if we can do so
   // cheaply.
-  if ((Mask[0] >= 2) + (Mask[1] >= 2) == 1)
+  if ((Mask[0] >= 2) + (Mask[1] >= 2) == 1) {
     if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
             MVT::v2i64, DL, V1, V2, Mask, Subtarget, DAG))
       return Insertion;
+    // Try inverting the insertion since for v2 masks it is easy to do and we
+    // can't reliably sort the mask one way or the other.
+    int InverseMask[2] = {Mask[0] < 0 ? -1 : (Mask[0] ^ 2),
+                          Mask[1] < 0 ? -1 : (Mask[1] ^ 2)};
+    if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
+            MVT::v2i64, DL, V2, V1, InverseMask, Subtarget, DAG))
+      return Insertion;
+  }
 
   // Use dedicated unpack instructions for masks that match their pattern.
   if (isShuffleEquivalent(Mask, 0, 2))
