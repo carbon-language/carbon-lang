@@ -138,6 +138,7 @@
 
 /* 6.11.10 Async Copy and Prefetch Functions */
 #include <clc/async/prefetch.h>
+#include <clc/async/wait_group_events.h>
 
 /* 6.11.11 Atomic Functions */
 #include <clc/atomic/atomic_add.h>

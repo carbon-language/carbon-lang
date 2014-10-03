@@ -1,4 +1,5 @@
 async/prefetch.cl
+async/wait_group_events.cl
 atomic/atomic_xchg.cl
 atomic/atomic_impl.ll
 cl_khr_global_int32_base_atomics/atom_add.cl
