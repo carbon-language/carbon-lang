@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 | FileCheck %s
+; RUN: llc < %s -mtriple=i386-unknown-unknown -march=x86 -mattr=+sse2 | FileCheck %s
 
 ; rdar://6504833
 define float @test1(i32 %x) nounwind readnone {
