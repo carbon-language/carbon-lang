@@ -111,7 +111,6 @@ void InstrProfWriter::write(raw_fd_ostream &OS) {
   OnDiskChainedHashTableGenerator<InstrProfRecordTrait> Generator;
 
   // Populate the hash table generator.
-  std::vector<uint64_t> CounterBuffer;
   for (const auto &I : FunctionData)
     Generator.insert(I.getKey(), &I.getValue());
 

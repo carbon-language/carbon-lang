@@ -2262,7 +2262,7 @@ bool TGParser::ParseTopLevelLet(MultiClass *CurMultiClass) {
   // Add this entry to the let stack.
   std::vector<LetRecord> LetInfo = ParseLetList();
   if (LetInfo.empty()) return true;
-  LetStack.push_back(LetInfo);
+  LetStack.push_back(std::move(LetInfo));
 
   if (Lex.getCode() != tgtok::In)
     return TokError("expected 'in' at end of top-level 'let'");

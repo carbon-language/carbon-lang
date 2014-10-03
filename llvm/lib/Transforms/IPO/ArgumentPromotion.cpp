@@ -530,7 +530,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg,
         // of elements of the aggregate.
         return false;
       }
-      ToPromote.insert(Operands);
+      ToPromote.insert(std::move(Operands));
     }
   }
 

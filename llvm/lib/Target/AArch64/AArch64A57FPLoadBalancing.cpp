@@ -352,7 +352,7 @@ bool AArch64A57FPLoadBalancing::runOnBasicBlock(MachineBasicBlock &MBB) {
   for (auto I = EC.begin(), E = EC.end(); I != E; ++I) {
     std::vector<Chain*> Cs(EC.member_begin(I), EC.member_end());
     if (Cs.empty()) continue;
-    V.push_back(Cs);
+    V.push_back(std::move(Cs));
   }
 
   // Now we have a set of sets, order them by start address so
@@ -377,7 +377,7 @@ bool AArch64A57FPLoadBalancing::runOnBasicBlock(MachineBasicBlock &MBB) {
   int Parity = 0;
 
   for (auto &I : V)
-    Changed |= colorChainSet(I, MBB, Parity);
+    Changed |= colorChainSet(std::move(I), MBB, Parity);
 
   return Changed;
 }

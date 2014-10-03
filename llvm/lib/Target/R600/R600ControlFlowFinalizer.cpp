@@ -336,7 +336,7 @@ private:
         getHWInstrDesc(IsTex?CF_TC:CF_VC))
         .addImm(0) // ADDR
         .addImm(AluInstCount - 1); // COUNT
-    return ClauseFile(MIb, ClauseContent);
+    return ClauseFile(MIb, std::move(ClauseContent));
   }
 
   void getLiteral(MachineInstr *MI, std::vector<int64_t> &Lits) const {
@@ -426,7 +426,7 @@ private:
     }
     assert(ClauseContent.size() < 128 && "ALU clause is too big");
     ClauseHead->getOperand(7).setImm(ClauseContent.size() - 1);
-    return ClauseFile(ClauseHead, ClauseContent);
+    return ClauseFile(ClauseHead, std::move(ClauseContent));
   }
 
   void

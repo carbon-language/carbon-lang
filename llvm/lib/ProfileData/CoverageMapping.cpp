@@ -202,7 +202,7 @@ CoverageMapping::load(ObjectFileCoverageMappingReader &CoverageReader,
       continue;
     }
 
-    Coverage->Functions.push_back(Function);
+    Coverage->Functions.push_back(std::move(Function));
   }
 
   return std::move(Coverage);

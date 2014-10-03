@@ -280,9 +280,8 @@ bool R600VectorRegMerger::tryMergeUsingCommonSlot(RegSeqInfo &RSI,
       continue;
     if (PreviousRegSeqByReg[MOp->getReg()].empty())
       continue;
-    std::vector<MachineInstr *> MIs = PreviousRegSeqByReg[MOp->getReg()];
-    for (unsigned i = 0, e = MIs.size(); i < e; i++) {
-      CompatibleRSI = PreviousRegSeq[MIs[i]];
+    for (MachineInstr *MI : PreviousRegSeqByReg[MOp->getReg()]) {
+      CompatibleRSI = PreviousRegSeq[MI];
       if (RSI == CompatibleRSI)
         continue;
       if (tryMergeVector(&CompatibleRSI, &RSI, RemapChan))

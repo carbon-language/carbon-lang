@@ -571,7 +571,7 @@ R600InstrInfo::fitsReadPortLimitations(const std::vector<MachineInstr *> &IG,
   if (!isLastAluTrans)
     return FindSwizzleForVectorSlot(IGSrcs, ValidSwizzle, TransOps, TransBS);
 
-  TransOps = IGSrcs.back();
+  TransOps = std::move(IGSrcs.back());
   IGSrcs.pop_back();
   ValidSwizzle.pop_back();
 

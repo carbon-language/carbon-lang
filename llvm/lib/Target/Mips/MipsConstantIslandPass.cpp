@@ -590,9 +590,7 @@ MipsConstantIslands::doInitialPlacement(std::vector<MachineInstr*> &CPEMIs) {
       if (InsPoint[a] == InsAt)
         InsPoint[a] = CPEMI;
     // Add a new CPEntry, but no corresponding CPUser yet.
-    std::vector<CPEntry> CPEs;
-    CPEs.push_back(CPEntry(CPEMI, i));
-    CPEntries.push_back(CPEs);
+    CPEntries.emplace_back(1, CPEntry(CPEMI, i));
     ++NumCPEs;
     DEBUG(dbgs() << "Moved CPI#" << i << " to end of function, size = "
                  << Size << ", align = " << Align <<'\n');

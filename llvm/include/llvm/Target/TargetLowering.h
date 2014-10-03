@@ -2547,11 +2547,10 @@ public:
     unsigned getMatchedOperand() const;
 
     /// Copy constructor for copying from a ConstraintInfo.
-    AsmOperandInfo(const InlineAsm::ConstraintInfo &info)
-      : InlineAsm::ConstraintInfo(info),
-        ConstraintType(TargetLowering::C_Unknown),
-        CallOperandVal(nullptr), ConstraintVT(MVT::Other) {
-    }
+    AsmOperandInfo(InlineAsm::ConstraintInfo Info)
+        : InlineAsm::ConstraintInfo(std::move(Info)),
+          ConstraintType(TargetLowering::C_Unknown), CallOperandVal(nullptr),
+          ConstraintVT(MVT::Other) {}
   };
 
   typedef std::vector<AsmOperandInfo> AsmOperandInfoVector;

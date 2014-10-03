@@ -143,9 +143,6 @@ namespace {
       RegPressure.clear();
       RegLimit.clear();
       BackTrace.clear();
-      for (DenseMap<unsigned,std::vector<const MachineInstr*> >::iterator
-             CI = CSEMap.begin(), CE = CSEMap.end(); CI != CE; ++CI)
-        CI->second.clear();
       CSEMap.clear();
     }
 
@@ -1300,15 +1297,7 @@ void MachineLICM::InitCSEMap(MachineBasicBlock *BB) {
   for (MachineBasicBlock::iterator I = BB->begin(),E = BB->end(); I != E; ++I) {
     const MachineInstr *MI = &*I;
     unsigned Opcode = MI->getOpcode();
-    DenseMap<unsigned, std::vector<const MachineInstr*> >::iterator
-      CI = CSEMap.find(Opcode);
-    if (CI != CSEMap.end())
-      CI->second.push_back(MI);
-    else {
-      std::vector<const MachineInstr*> CSEMIs;
-      CSEMIs.push_back(MI);
-      CSEMap.insert(std::make_pair(Opcode, CSEMIs));
-    }
+    CSEMap[Opcode].push_back(MI);
   }
 }
 
@@ -1448,11 +1437,8 @@ bool MachineLICM::Hoist(MachineInstr *MI, MachineBasicBlock *Preheader) {
     // Add to the CSE map.
     if (CI != CSEMap.end())
       CI->second.push_back(MI);
-    else {
-      std::vector<const MachineInstr*> CSEMIs;
-      CSEMIs.push_back(MI);
-      CSEMap.insert(std::make_pair(Opcode, CSEMIs));
-    }
+    else
+      CSEMap[Opcode].push_back(MI);
   }
 
   ++NumHoisted;

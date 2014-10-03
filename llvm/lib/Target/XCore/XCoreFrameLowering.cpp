@@ -312,11 +312,10 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   if (emitFrameMoves) {
     // Frame moves for callee saved.
-    auto SpillLabels = XFI->getSpillLabels();
-    for (unsigned I = 0, E = SpillLabels.size(); I != E; ++I) {
-      MachineBasicBlock::iterator Pos = SpillLabels[I].first;
+    for (const auto &SpillLabel : XFI->getSpillLabels()) {
+      MachineBasicBlock::iterator Pos = SpillLabel.first;
       ++Pos;
-      CalleeSavedInfo &CSI = SpillLabels[I].second;
+      const CalleeSavedInfo &CSI = SpillLabel.second;
       int Offset = MFI->getObjectOffset(CSI.getFrameIdx());
       unsigned DRegNum = MRI->getDwarfRegNum(CSI.getReg(), true);
       EmitCfiOffset(MBB, Pos, dl, TII, MMI, DRegNum, Offset);
