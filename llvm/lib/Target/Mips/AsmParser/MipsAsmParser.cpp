@@ -1628,7 +1628,7 @@ void
 MipsAsmParser::printWarningWithFixIt(const Twine &Msg, const Twine &FixMsg,
                                      SMRange Range, bool ShowColors) {
   getSourceManager().PrintMessage(Range.Start, SourceMgr::DK_Warning, Msg,
-                                  { Range }, { SMFixIt(Range, FixMsg) },
+                                  Range, SMFixIt(Range, FixMsg),
                                   ShowColors);
 }
 
