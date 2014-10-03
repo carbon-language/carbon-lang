@@ -444,6 +444,7 @@ on ARM, etc.).
 
 It is often easiest for backends to use AtomicExpandPass to lower some of the
 atomic constructs. Here are some lowerings it can do:
+
 * cmpxchg -> loop with load-linked/store-conditional
   by overriding ``hasLoadLinkedStoreConditional()``, ``emitLoadLinked()``,
   ``emitStoreConditional()``
@@ -454,4 +455,5 @@ atomic constructs. Here are some lowerings it can do:
   and ``emitTrailingFence()``
 * atomic rmw -> loop with cmpxchg or load-linked/store-conditional
   by overriding ``expandAtomicRMWInIR()``
+
 For an example of all of these, look at the ARM backend.
