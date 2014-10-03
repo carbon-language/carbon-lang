@@ -7830,6 +7830,11 @@ static SDValue lowerVectorShuffleAsElementInsertion(
     V1Mask[V2Index] = -1;
     if (!isNoopShuffleMask(V1Mask))
       return SDValue();
+    // This is essentially a special case blend operation, but if we have
+    // general purpose blend operations, they are always faster. Bail and let
+    // the rest of the lowering handle these as blends.
+    if (Subtarget->hasSSE41())
+      return SDValue();
 
     // Otherwise, use MOVSD or MOVSS.
     assert((EltVT == MVT::f32 || EltVT == MVT::f64) &&

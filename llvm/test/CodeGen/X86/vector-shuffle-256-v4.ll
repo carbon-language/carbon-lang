@@ -55,7 +55,7 @@ define <4 x double> @shuffle_v4f64_0300(<4 x double> %a, <4 x double> %b) {
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vperm2f128 {{.*#+}} ymm1 = ymm0[2,3,0,1]
 ; AVX1-NEXT:    vpermilpd {{.*#+}} ymm1 = ymm1[0,1,2,2]
-; AVX1-NEXT:    vmovsd %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1,2,3]
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: shuffle_v4f64_0300:
@@ -382,7 +382,7 @@ define <4 x i64> @shuffle_v4i64_0300(<4 x i64> %a, <4 x i64> %b) {
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vperm2f128 {{.*#+}} ymm1 = ymm0[2,3,0,1]
 ; AVX1-NEXT:    vpermilpd {{.*#+}} ymm1 = ymm1[0,1,2,2]
-; AVX1-NEXT:    vmovsd %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1,2,3]
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: shuffle_v4i64_0300:
@@ -518,7 +518,7 @@ define <4 x i64> @shuffle_v4i64_4012(<4 x i64> %a, <4 x i64> %b) {
 ; AVX1-NEXT:    vshufpd {{.*#+}} xmm2 = xmm0[1],xmm2[0]
 ; AVX1-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0,0]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
-; AVX1-NEXT:    vmovsd %xmm1, %xmm0, %xmm0
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm1[0],ymm0[1,2,3]
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: shuffle_v4i64_4012:
@@ -654,7 +654,7 @@ define <4 x i64> @stress_test1(<4 x i64> %a, <4 x i64> %b) {
 ; AVX1-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm1[1,0]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm1, %ymm1
 ; AVX1-NEXT:    vpermilpd {{.*#+}} ymm0 = ymm0[1,0,2,2]
-; AVX1-NEXT:    vmovsd %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1,2,3]
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: stress_test1:
