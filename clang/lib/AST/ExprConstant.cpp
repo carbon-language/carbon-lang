@@ -6170,7 +6170,6 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     return Success(Operand, E);
   }
 
-  case Builtin::BI__builtin_assume_aligned:
   case Builtin::BI__builtin_expect:
     return Visit(E->getArg(0));
 
