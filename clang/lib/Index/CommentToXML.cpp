@@ -608,10 +608,9 @@ void CommentASTToXMLConverter::formatTextOfDeclaration(
       .getLocWithOffset(0);
   unsigned Length = Declaration.size();
 
-  std::vector<CharSourceRange> Ranges(
-      1, CharSourceRange::getCharRange(Start, Start.getLocWithOffset(Length)));
   tooling::Replacements Replace = reformat(
-      format::getLLVMStyle(), FormatRewriterContext.Sources, ID, Ranges);
+      format::getLLVMStyle(), FormatRewriterContext.Sources, ID,
+      CharSourceRange::getCharRange(Start, Start.getLocWithOffset(Length)));
   applyAllReplacements(Replace, FormatRewriterContext.Rewrite);
   Declaration = FormatRewriterContext.getRewrittenText(ID);
 }

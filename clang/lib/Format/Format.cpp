@@ -1085,7 +1085,7 @@ private:
   /// \p IndentForLevel must contain the indent for the level \c l
   /// at \p IndentForLevel[l], or a value < 0 if the indent for
   /// that level is unknown.
-  unsigned getIndent(const std::vector<int> IndentForLevel, unsigned Level) {
+  unsigned getIndent(ArrayRef<int> IndentForLevel, unsigned Level) {
     if (IndentForLevel[Level] != -1)
       return IndentForLevel[Level];
     if (Level == 0)
@@ -1775,7 +1775,7 @@ static StringRef getLanguageName(FormatStyle::LanguageKind Language) {
 class Formatter : public UnwrappedLineConsumer {
 public:
   Formatter(const FormatStyle &Style, SourceManager &SourceMgr, FileID ID,
-            const std::vector<CharSourceRange> &Ranges)
+            ArrayRef<CharSourceRange> Ranges)
       : Style(Style), ID(ID), SourceMgr(SourceMgr),
         Whitespaces(SourceMgr, Style,
                     inputUsesCRLF(SourceMgr.getBufferData(ID))),
@@ -2059,7 +2059,7 @@ private:
 
 tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
                                SourceManager &SourceMgr,
-                               std::vector<CharSourceRange> Ranges) {
+                               ArrayRef<CharSourceRange> Ranges) {
   if (Style.DisableFormat)
     return tooling::Replacements();
   return reformat(Style, SourceMgr,
@@ -2068,7 +2068,7 @@ tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
 
 tooling::Replacements reformat(const FormatStyle &Style,
                                SourceManager &SourceMgr, FileID ID,
-                               std::vector<CharSourceRange> Ranges) {
+                               ArrayRef<CharSourceRange> Ranges) {
   if (Style.DisableFormat)
     return tooling::Replacements();
   Formatter formatter(Style, SourceMgr, ID, Ranges);
@@ -2076,7 +2076,7 @@ tooling::Replacements reformat(const FormatStyle &Style,
 }
 
 tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
-                               std::vector<tooling::Range> Ranges,
+                               ArrayRef<tooling::Range> Ranges,
                                StringRef FileName) {
   if (Style.DisableFormat)
     return tooling::Replacements();
@@ -2095,9 +2095,9 @@ tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
       SourceMgr.createFileID(Entry, SourceLocation(), clang::SrcMgr::C_User);
   SourceLocation StartOfFile = SourceMgr.getLocForStartOfFile(ID);
   std::vector<CharSourceRange> CharRanges;
-  for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
-    SourceLocation Start = StartOfFile.getLocWithOffset(Ranges[i].getOffset());
-    SourceLocation End = Start.getLocWithOffset(Ranges[i].getLength());
+  for (const tooling::Range &Range : Ranges) {
+    SourceLocation Start = StartOfFile.getLocWithOffset(Range.getOffset());
+    SourceLocation End = Start.getLocWithOffset(Range.getLength());
     CharRanges.push_back(CharSourceRange::getCharRange(Start, End));
   }
   return reformat(Style, SourceMgr, ID, CharRanges);
