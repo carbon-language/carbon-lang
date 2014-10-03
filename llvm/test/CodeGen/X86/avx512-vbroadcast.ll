@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl --show-mc-encoding| FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
 
 ;CHECK-LABEL: _inreg16xi32:
 ;CHECK: vpbroadcastd {{.*}}, %zmm
@@ -45,7 +45,7 @@ define   <16 x i32> @_xmm16xi32(<16 x i32> %a) {
 }
 
 ;CHECK-LABEL: _xmm16xfloat
-;CHECK: vbroadcastss {{.*}}## encoding: [0x62
+;CHECK: vbroadcastss {{.*}}
 ;CHECK: ret
 define   <16 x float> @_xmm16xfloat(<16 x float> %a) {
   %b = shufflevector <16 x float> %a, <16 x float> undef, <16 x i32> zeroinitializer

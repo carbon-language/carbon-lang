@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl --show-mc-encoding| FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
 ; CHECK: LCP
 ; CHECK: .long 2
 ; CHECK: .long 5
@@ -169,7 +169,7 @@ define <16 x i32> @test11(<16 x i32> %a, <16 x i32>* %b) nounwind {
 }
 
 ; CHECK-LABEL: test12
-; CHECK: vmovlhps {{.*}}## encoding: [0x62
+; CHECK: vmovlhps {{.*}}
 ; CHECK: ret
 define <4 x i32> @test12(<4 x i32> %a, <4 x i32> %b) nounwind {
   %c = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
@@ -226,7 +226,7 @@ define <8 x double> @test16(<8 x double> %a, <8 x double> %b) nounwind {
 }
 
 ; CHECK-LABEL: test16k
-; CHECK: valignq $2, %zmm0, %zmm1, %zmm2 {%k1} #
+; CHECK: valignq $2, %zmm0, %zmm1, %zmm2 {%k1}
 define <8 x i64> @test16k(<8 x i64> %a, <8 x i64> %b, <8 x i64> %src, i8 %mask) nounwind {
   %c = shufflevector <8 x i64> %a, <8 x i64> %b, <8 x i32> <i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9>
   %m = bitcast i8 %mask to <8 x i1>
@@ -235,7 +235,7 @@ define <8 x i64> @test16k(<8 x i64> %a, <8 x i64> %b, <8 x i64> %src, i8 %mask) 
 }
 
 ; CHECK-LABEL: test16kz
-; CHECK: valignq $2, %zmm0, %zmm1, %zmm0 {%k1} {z} ## encoding: [0x62,0xf3,0xf5,0xc9,0x03,0xc0,0x02]
+; CHECK: valignq $2, %zmm0, %zmm1, %zmm0 {%k1} {z}
 define <8 x i64> @test16kz(<8 x i64> %a, <8 x i64> %b, i8 %mask) nounwind {
   %c = shufflevector <8 x i64> %a, <8 x i64> %b, <8 x i32> <i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9>
   %m = bitcast i8 %mask to <8 x i1>
@@ -296,7 +296,7 @@ define <16 x float> @test21(<16 x float> %a, <16 x float> %c) {
 }
 
 ; CHECK-LABEL: test22
-; CHECK: vmovhlps {{.*}}## encoding: [0x62
+; CHECK: vmovhlps {{.*}}
 ; CHECK: ret
 define <4 x i32> @test22(<4 x i32> %a, <4 x i32> %b) nounwind {
   %c = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 2, i32 3, i32 6, i32 7>

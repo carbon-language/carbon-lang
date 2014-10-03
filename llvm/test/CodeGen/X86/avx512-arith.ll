@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl --show-mc-encoding| FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
 
 ; CHECK-LABEL: addpd512
 ; CHECK: vaddpd
@@ -223,7 +223,7 @@ define <16 x i32> @vpaddd_broadcast_test(<16 x i32> %i) nounwind {
 }
 
 ; CHECK-LABEL: vpaddd_mask_test
-; CHECK: vpaddd {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]} }}
+; CHECK: vpaddd {{%zmm[0-9], %zmm[0-9], %zmm[0-9] {%k[1-7]}}}
 ; CHECK: ret
 define <16 x i32> @vpaddd_mask_test(<16 x i32> %i, <16 x i32> %j, <16 x i32> %mask1) nounwind readnone {
   %mask = icmp ne <16 x i32> %mask1, zeroinitializer
@@ -233,7 +233,7 @@ define <16 x i32> @vpaddd_mask_test(<16 x i32> %i, <16 x i32> %j, <16 x i32> %ma
 }
 
 ; CHECK-LABEL: vpaddd_maskz_test
-; CHECK: vpaddd {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]} {z} }}
+; CHECK: vpaddd {{%zmm[0-9], %zmm[0-9], %zmm[0-9] {%k[1-7]} {z}}}
 ; CHECK: ret
 define <16 x i32> @vpaddd_maskz_test(<16 x i32> %i, <16 x i32> %j, <16 x i32> %mask1) nounwind readnone {
   %mask = icmp ne <16 x i32> %mask1, zeroinitializer
@@ -243,7 +243,7 @@ define <16 x i32> @vpaddd_maskz_test(<16 x i32> %i, <16 x i32> %j, <16 x i32> %m
 }
 
 ; CHECK-LABEL: vpaddd_mask_fold_test
-; CHECK: vpaddd (%rdi), {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]} }}
+; CHECK: vpaddd (%rdi), {{%zmm[0-9], %zmm[0-9] {%k[1-7]}}}
 ; CHECK: ret
 define <16 x i32> @vpaddd_mask_fold_test(<16 x i32> %i, <16 x i32>* %j.ptr, <16 x i32> %mask1) nounwind readnone {
   %mask = icmp ne <16 x i32> %mask1, zeroinitializer
@@ -254,7 +254,7 @@ define <16 x i32> @vpaddd_mask_fold_test(<16 x i32> %i, <16 x i32>* %j.ptr, <16 
 }
 
 ; CHECK-LABEL: vpaddd_mask_broadcast_test
-; CHECK: vpaddd LCP{{.*}}(%rip){1to16}, {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]} }}
+; CHECK: vpaddd LCP{{.*}}(%rip){1to16}, {{%zmm[0-9], %zmm[0-9] {%k[1-7]}}}
 ; CHECK: ret
 define <16 x i32> @vpaddd_mask_broadcast_test(<16 x i32> %i, <16 x i32> %mask1) nounwind readnone {
   %mask = icmp ne <16 x i32> %mask1, zeroinitializer
@@ -264,7 +264,7 @@ define <16 x i32> @vpaddd_mask_broadcast_test(<16 x i32> %i, <16 x i32> %mask1) 
 }
 
 ; CHECK-LABEL: vpaddd_maskz_fold_test
-; CHECK: vpaddd (%rdi), {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]}}} {z}
+; CHECK: vpaddd (%rdi), {{%zmm[0-9], %zmm[0-9] {%k[1-7]}}} {z}
 ; CHECK: ret
 define <16 x i32> @vpaddd_maskz_fold_test(<16 x i32> %i, <16 x i32>* %j.ptr, <16 x i32> %mask1) nounwind readnone {
   %mask = icmp ne <16 x i32> %mask1, zeroinitializer
@@ -275,7 +275,7 @@ define <16 x i32> @vpaddd_maskz_fold_test(<16 x i32> %i, <16 x i32>* %j.ptr, <16
 }
 
 ; CHECK-LABEL: vpaddd_maskz_broadcast_test
-; CHECK: vpaddd LCP{{.*}}(%rip){1to16}, {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]}}} {z}
+; CHECK: vpaddd LCP{{.*}}(%rip){1to16}, {{%zmm[0-9], %zmm[0-9] {%k[1-7]}}} {z}
 ; CHECK: ret
 define <16 x i32> @vpaddd_maskz_broadcast_test(<16 x i32> %i, <16 x i32> %mask1) nounwind readnone {
   %mask = icmp ne <16 x i32> %mask1, zeroinitializer
@@ -309,7 +309,7 @@ define <16 x i32> @vpmulld_test(<16 x i32> %i, <16 x i32> %j) {
 }
 
 ; CHECK-LABEL: sqrtA
-; CHECK: vsqrtss {{.*}} encoding: [0x62
+; CHECK: vsqrtss {{.*}}
 ; CHECK: ret
 declare float @sqrtf(float) readnone
 define float @sqrtA(float %a) nounwind uwtable readnone ssp {
@@ -319,7 +319,7 @@ entry:
 }
 
 ; CHECK-LABEL: sqrtB
-; CHECK: vsqrtsd {{.*}}## encoding: [0x62
+; CHECK: vsqrtsd {{.*}}
 ; CHECK: ret
 declare double @sqrt(double) readnone
 define double @sqrtB(double %a) nounwind uwtable readnone ssp {
@@ -329,7 +329,7 @@ entry:
 }
 
 ; CHECK-LABEL: sqrtC
-; CHECK: vsqrtss {{.*}}## encoding: [0x62
+; CHECK: vsqrtss {{.*}}
 ; CHECK: ret
 declare float @llvm.sqrt.f32(float)
 define float @sqrtC(float %a) nounwind {
