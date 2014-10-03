@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 #===- lib/asan/scripts/asan_device_setup -----------------------------------===#
 #
 #                     The LLVM Compiler Infrastructure
@@ -10,6 +10,7 @@
 #
 #===------------------------------------------------------------------------===#
 
+set -e
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 
@@ -27,6 +28,21 @@ function usage {
     echo "            device-id."
     echo
     exit 1
+}
+
+function get_device_arch { # OUTVAR
+    local _outvar=$1
+    local _ABI=$($ADB shell getprop ro.product.cpu.abi)
+    local _ARCH=
+    if [[ $_ABI == x86* ]]; then
+        _ARCH=i686
+    elif [[ $_ABI == armeabi* ]]; then
+        _ARCH=arm
+    else
+        echo "Unrecognized device ABI: $_ABI"
+        exit 1
+    fi
+    eval $_outvar=\$_ARCH
 }
 
 while [[ $# > 0 ]]; do
@@ -70,13 +86,17 @@ if [[ x$device != x ]]; then
     ADB="$ADB -s $device"
 fi
 
-ASAN_RT="libclang_rt.asan-arm-android.so"
+echo '>> Remounting /system rw'
+$ADB root
+$ADB wait-for-device
+$ADB remount
+
+get_device_arch ARCH
+echo 'Target architecture: $ARCH'
+ASAN_RT="libclang_rt.asan-$ARCH-android.so"
 
 if [[ x$revert == xyes ]]; then
     echo '>> Uninstalling ASan'
-    $ADB root
-    $ADB wait-for-device
-    $ADB remount
 
     if ! $ADB shell readlink /system/bin/app_process | grep 'app_process' >&/dev/null; then
         echo '>> Pre-L device detected.'
@@ -124,11 +144,6 @@ TMPDIROLD="$TMPDIRBASE/old"
 TMPDIR="$TMPDIRBASE/new"
 mkdir "$TMPDIROLD"
 
-echo '>> Remounting /system rw'
-$ADB root
-$ADB wait-for-device
-$ADB remount
-
 RELEASE=$($ADB shell getprop ro.build.version.release)
 PRE_L=0
 if echo "$RELEASE" | grep '^4\.' >&/dev/null; then
@@ -150,7 +165,7 @@ fi
 echo '>> Copying files from the device'
 $ADB pull /system/bin/app_process.wrap "$TMPDIROLD" || true
 $ADB pull /system/bin/asanwrapper "$TMPDIROLD" || true
-$ADB pull /system/lib/libclang_rt.asan-arm-android.so "$TMPDIROLD" || true
+$ADB pull /system/lib/"$ASAN_RT" "$TMPDIROLD" || true
 cp -r "$TMPDIROLD" "$TMPDIR"
 
 if [[ -f "$TMPDIR/app_process.wrap" ]]; then
@@ -180,7 +195,7 @@ fi
 cat <<EOF >"$TMPDIR/app_process.wrap"
 #!/system/bin/sh-from-zygote
 ASAN_OPTIONS=$ASAN_OPTIONS \\
-LD_PRELOAD=\$LD_PRELOAD:libclang_rt.asan-arm-android.so \\
+LD_PRELOAD=\$LD_PRELOAD:$ASAN_RT \\
 exec /system/bin/app_process32 \$@
 
 EOF
@@ -189,7 +204,7 @@ EOF
 # zygote).
 cat <<EOF >"$TMPDIR/asanwrapper"
 #!/system/bin/sh
-LD_PRELOAD=libclang_rt.asan-arm-android.so \\
+LD_PRELOAD=$ASAN_RT \\
 exec \$@
 
 EOF
