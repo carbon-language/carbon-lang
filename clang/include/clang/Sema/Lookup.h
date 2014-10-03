@@ -436,6 +436,7 @@ public:
       // If we didn't make the lookup unambiguous, restore the old
       // ambiguity kind.
       if (ResultKind == Ambiguous) {
+        (void)WasAmbiguous;
         assert(WasAmbiguous);
         Ambiguity = SavedAK;
       } else if (Paths) {
