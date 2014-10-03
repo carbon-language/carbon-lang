@@ -134,6 +134,9 @@ public:
   /// The name of the relocation model to use.
   std::string RelocationModel;
 
+  /// The thread model to use
+  std::string ThreadModel;
+
   /// Path to blacklist file for sanitizers.
   std::string SanitizerBlacklistFile;
 

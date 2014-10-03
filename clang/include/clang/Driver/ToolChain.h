@@ -251,6 +251,12 @@ public:
   /// UseSEHExceptions - Does this tool chain use SEH exceptions.
   virtual bool UseSEHExceptions() const { return false; }
 
+  /// getThreadModel() - Which thread model does this target use?
+  virtual std::string getThreadModel() const { return "posix"; }
+
+  /// supportsThreadModel() - Does this target support a thread model?
+  virtual bool isThreadModelSupported(const StringRef Model) const;
+
   /// ComputeLLVMTriple - Return the LLVM target triple to use, after taking
   /// command line arguments into account.
   virtual std::string

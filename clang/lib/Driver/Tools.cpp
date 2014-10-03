@@ -2753,6 +2753,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
+  CmdArgs.push_back("-mthread-model");
+  if (Arg *A = Args.getLastArg(options::OPT_mthread_model))
+    CmdArgs.push_back(A->getValue());
+  else
+    CmdArgs.push_back(Args.MakeArgString(getToolChain().getThreadModel()));
+
   if (!Args.hasFlag(options::OPT_fmerge_all_constants,
                     options::OPT_fno_merge_all_constants))
     CmdArgs.push_back("-fno-merge-all-constants");

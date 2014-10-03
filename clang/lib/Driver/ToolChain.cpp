@@ -27,8 +27,13 @@ using namespace clang;
 using namespace llvm::opt;
 
 ToolChain::ToolChain(const Driver &D, const llvm::Triple &T,
-                     const ArgList &A)
-  : D(D), Triple(T), Args(A) {
+                     const ArgList &Args)
+  : D(D), Triple(T), Args(Args) {
+  if (Arg *A = Args.getLastArg(options::OPT_mthread_model))
+    if (!isThreadModelSupported(A->getValue()))
+      D.Diag(diag::err_drv_invalid_thread_model_for_target)
+          << A->getValue()
+          << A->getAsString(Args);
 }
 
 ToolChain::~ToolChain() {
@@ -199,6 +204,19 @@ bool ToolChain::isCrossCompiling() const {
 ObjCRuntime ToolChain::getDefaultObjCRuntime(bool isNonFragile) const {
   return ObjCRuntime(isNonFragile ? ObjCRuntime::GNUstep : ObjCRuntime::GCC,
                      VersionTuple());
+}
+
+bool ToolChain::isThreadModelSupported(const StringRef Model) const {
+  if (Model == "single") {
+    // FIXME: 'single' is only supported on ARM so far.
+    return Triple.getArch() == llvm::Triple::arm ||
+           Triple.getArch() == llvm::Triple::armeb ||
+           Triple.getArch() == llvm::Triple::thumb ||
+           Triple.getArch() == llvm::Triple::thumbeb;
+  } else if (Model == "posix")
+    return true;
+
+  return false;
 }
 
 std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,

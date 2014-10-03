@@ -684,9 +684,13 @@ void Driver::PrintVersion(const Compilation &C, raw_ostream &OS) const {
   OS << "Target: " << TC.getTripleString() << '\n';
 
   // Print the threading model.
-  //
-  // FIXME: Implement correctly.
-  OS << "Thread model: " << "posix" << '\n';
+  if (Arg *A = C.getArgs().getLastArg(options::OPT_mthread_model)) {
+    // Don't print if the ToolChain would have barfed on it already
+    if (TC.isThreadModelSupported(A->getValue()))
+      OS << "Thread model: " << A->getValue();
+  } else
+    OS << "Thread model: " << TC.getThreadModel();
+  OS << '\n';
 }
 
 /// PrintDiagnosticCategories - Implement the --print-diagnostic-categories
