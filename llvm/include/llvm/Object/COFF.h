@@ -712,6 +712,8 @@ public:
   imported_symbol_iterator imported_symbol_end() const;
 
   std::error_code getName(StringRef &Result) const;
+  std::error_code getDelayImportTable(
+      const delay_import_directory_table_entry *&Result) const;
 
 private:
   const delay_import_directory_table_entry *Table;

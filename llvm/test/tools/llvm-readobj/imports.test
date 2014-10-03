@@ -28,6 +28,12 @@ X86-NEXT:   Symbol:  (3)
 X86-NEXT: }
 X86-NEXT: DelayImport {
 X86-NEXT:   Name: lazyload.dll
+X86-NEXT:   Attributes: 0x1
+X86-NEXT:   ModuleHandle: 0x301C
+X86-NEXT:   ImportAddressTable: 0x3010
+X86-NEXT:   ImportNameTable: 0x2090
+X86-NEXT:   BoundDelayImportTable: 0x20AC
+X86-NEXT:   UnloadDelayImportTable: 0x0
 X86-NEXT:   Symbol: Func5 (0)
 X86-NEXT:   Symbol: Func4 (0)
 X86-NEXT: }
@@ -59,6 +65,12 @@ X64-NEXT:   Symbol:  (3)
 X64-NEXT: }
 X64-NEXT: DelayImport {
 X64-NEXT:   Name: lazyload.dll
+X64-NEXT:   Attributes: 0x1
+X64-NEXT:   ModuleHandle: 0x3028
+X64-NEXT:   ImportAddressTable: 0x3010
+X64-NEXT:   ImportNameTable: 0x20E0
+X64-NEXT:   BoundDelayImportTable: 0x2108
+X64-NEXT:   UnloadDelayImportTable: 0x0
 X64-NEXT:   Symbol: Func5 (0)
 X64-NEXT:   Symbol: Func4 (0)
 X64-NEXT: }

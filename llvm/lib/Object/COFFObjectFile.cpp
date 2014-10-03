@@ -1179,6 +1179,12 @@ std::error_code DelayImportDirectoryEntryRef::getName(StringRef &Result) const {
   return object_error::success;
 }
 
+std::error_code DelayImportDirectoryEntryRef::
+getDelayImportTable(const delay_import_directory_table_entry *&Result) const {
+  Result = Table;
+  return object_error::success;
+}
+
 bool ExportDirectoryEntryRef::
 operator==(const ExportDirectoryEntryRef &Other) const {
   return ExportTable == Other.ExportTable && Index == Other.Index;

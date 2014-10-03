@@ -921,6 +921,14 @@ void COFFDumper::printCOFFImports() {
     StringRef Name;
     if (error(I->getName(Name))) return;
     W.printString("Name", Name);
+    const delay_import_directory_table_entry *Table;
+    if (error(I->getDelayImportTable(Table))) return;
+    W.printHex("Attributes", Table->Attributes);
+    W.printHex("ModuleHandle", Table->ModuleHandle);
+    W.printHex("ImportAddressTable", Table->DelayImportAddressTable);
+    W.printHex("ImportNameTable", Table->DelayImportNameTable);
+    W.printHex("BoundDelayImportTable", Table->BoundDelayImportTable);
+    W.printHex("UnloadDelayImportTable", Table->UnloadDelayImportTable);
     printImportedSymbols(I->imported_symbol_begin(), I->imported_symbol_end());
   }
 }
