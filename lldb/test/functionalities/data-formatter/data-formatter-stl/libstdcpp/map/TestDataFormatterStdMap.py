@@ -23,6 +23,7 @@ class StdMapDataFormatterTestCase(TestBase):
                # assert DeclCXX.h:554 queried property of class with no definition
     @expectedFailureIcc   # llvm.org/pr15301: LLDB prints incorrect size of
                           # libstdc++ containers
+    @skipIfFreeBSD                      
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""

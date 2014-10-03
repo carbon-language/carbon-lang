@@ -20,6 +20,7 @@ class StdVectorDataFormatterTestCase(TestBase):
         self.data_formatter_commands()
 
     @dwarf_test
+    @skipIfFreeBSD
     @expectedFailureIcc # llvm.org/pr15301 LLDB prints incorrect sizes of STL containers
     @expectedFailureGcc # llvm.org/pr17499 The data formatter cannot parse STL containers
     def test_with_dwarf_and_run_command(self):
