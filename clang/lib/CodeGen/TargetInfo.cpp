@@ -2974,6 +2974,10 @@ public:
 
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
                                llvm::Value *Address) const override;
+
+  unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
+    return 16; // Natural alignment for Altivec vectors.
+  }
 };
 
 }
@@ -3090,6 +3094,10 @@ public:
 
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
                                llvm::Value *Address) const override;
+
+  unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
+    return 16; // Natural alignment for Altivec and VSX vectors.
+  }
 };
 
 class PPC64TargetCodeGenInfo : public DefaultTargetCodeGenInfo {
@@ -3103,6 +3111,10 @@ public:
 
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
                                llvm::Value *Address) const override;
+
+  unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
+    return 16; // Natural alignment for Altivec vectors.
+  }
 };
 
 }
