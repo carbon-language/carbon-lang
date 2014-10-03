@@ -286,6 +286,8 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::UREM, MVT::i32, Expand);
   setOperationAction(ISD::UINT_TO_FP, MVT::i64, Custom);
   setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
+  setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
+  setOperationAction(ISD::FP_TO_UINT, MVT::i64, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
 
   if (!Subtarget->hasFFBH())
@@ -558,6 +560,8 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op,
   case ISD::FFLOOR: return LowerFFLOOR(Op, DAG);
   case ISD::SINT_TO_FP: return LowerSINT_TO_FP(Op, DAG);
   case ISD::UINT_TO_FP: return LowerUINT_TO_FP(Op, DAG);
+  case ISD::FP_TO_SINT: return LowerFP_TO_SINT(Op, DAG);
+  case ISD::FP_TO_UINT: return LowerFP_TO_UINT(Op, DAG);
   }
   return Op;
 }
@@ -1861,6 +1865,55 @@ SDValue AMDGPUTargetLowering::LowerSINT_TO_FP(SDValue Op,
   SDValue Src = Op.getOperand(0);
   if (Src.getValueType() == MVT::i64 && Op.getValueType() == MVT::f64)
     return LowerINT_TO_FP64(Op, DAG, true);
+
+  return SDValue();
+}
+
+SDValue AMDGPUTargetLowering::LowerFP64_TO_INT(SDValue Op, SelectionDAG &DAG,
+                                               bool Signed) const {
+  SDLoc SL(Op);
+
+  SDValue Src = Op.getOperand(0);
+
+  SDValue Trunc = DAG.getNode(ISD::FTRUNC, SL, MVT::f64, Src);
+
+  SDValue K0
+    = DAG.getConstantFP(BitsToDouble(UINT64_C(0x3df0000000000000)), MVT::f64);
+  SDValue K1
+    = DAG.getConstantFP(BitsToDouble(UINT64_C(0xc1f0000000000000)), MVT::f64);
+
+  SDValue Mul = DAG.getNode(ISD::FMUL, SL, MVT::f64, Trunc, K0);
+
+  SDValue FloorMul = DAG.getNode(ISD::FFLOOR, SL, MVT::f64, Mul);
+
+
+  SDValue Fma = DAG.getNode(ISD::FMA, SL, MVT::f64, FloorMul, K1, Trunc);
+
+  SDValue Hi = DAG.getNode(Signed ? ISD::FP_TO_SINT : ISD::FP_TO_UINT, SL,
+                           MVT::i32, FloorMul);
+  SDValue Lo = DAG.getNode(ISD::FP_TO_UINT, SL, MVT::i32, Fma);
+
+  SDValue Result = DAG.getNode(ISD::BUILD_VECTOR, SL, MVT::v2i32, Lo, Hi);
+
+  return DAG.getNode(ISD::BITCAST, SL, MVT::i64, Result);
+}
+
+SDValue AMDGPUTargetLowering::LowerFP_TO_SINT(SDValue Op,
+                                              SelectionDAG &DAG) const {
+  SDValue Src = Op.getOperand(0);
+
+  if (Op.getValueType() == MVT::i64 && Src.getValueType() == MVT::f64)
+    return LowerFP64_TO_INT(Op, DAG, true);
+
+  return SDValue();
+}
+
+SDValue AMDGPUTargetLowering::LowerFP_TO_UINT(SDValue Op,
+                                              SelectionDAG &DAG) const {
+  SDValue Src = Op.getOperand(0);
+
+  if (Op.getValueType() == MVT::i64 && Src.getValueType() == MVT::f64)
+    return LowerFP64_TO_INT(Op, DAG, false);
 
   return SDValue();
 }

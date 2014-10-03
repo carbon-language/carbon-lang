@@ -168,9 +168,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::LOAD, MVT::i1, Custom);
 
-  setOperationAction(ISD::FP_TO_SINT, MVT::i64, Expand);
-  setOperationAction(ISD::FP_TO_UINT, MVT::i64, Expand);
-
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
   setOperationAction(ISD::FrameIndex, MVT::i32, Custom);
