@@ -4885,6 +4885,38 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
   return ExprEvaluatorBaseTy::VisitCastExpr(E);
 }
 
+static CharUnits GetAlignOfType(EvalInfo &Info, QualType T) {
+  // C++ [expr.alignof]p3:
+  //     When alignof is applied to a reference type, the result is the
+  //     alignment of the referenced type.
+  if (const ReferenceType *Ref = T->getAs<ReferenceType>())
+    T = Ref->getPointeeType();
+
+  // __alignof is defined to return the preferred alignment.
+  return Info.Ctx.toCharUnitsFromBits(
+    Info.Ctx.getPreferredTypeAlign(T.getTypePtr()));
+}
+
+static CharUnits GetAlignOfExpr(EvalInfo &Info, const Expr *E) {
+  E = E->IgnoreParens();
+
+  // The kinds of expressions that we have special-case logic here for
+  // should be kept up to date with the special checks for those
+  // expressions in Sema.
+
+  // alignof decl is always accepted, even if it doesn't make sense: we default
+  // to 1 in those cases.
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
+    return Info.Ctx.getDeclAlign(DRE->getDecl(),
+                                 /*RefAsPointee*/true);
+
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(E))
+    return Info.Ctx.getDeclAlign(ME->getMemberDecl(),
+                                 /*RefAsPointee*/true);
+
+  return GetAlignOfType(Info, E->getType());
+}
+
 bool PointerExprEvaluator::VisitCallExpr(const CallExpr *E) {
   if (IsStringLiteralCall(E))
     return Success(E);
@@ -4892,7 +4924,71 @@ bool PointerExprEvaluator::VisitCallExpr(const CallExpr *E) {
   switch (E->getBuiltinCallee()) {
   case Builtin::BI__builtin_addressof:
     return EvaluateLValue(E->getArg(0), Result, Info);
+  case Builtin::BI__builtin_assume_aligned: {
+    // We need to be very careful here because: if the pointer does not have the
+    // asserted alignment, then the behavior is undefined, and undefined
+    // behavior is non-constant.
+    if (!EvaluatePointer(E->getArg(0), Result, Info))
+      return false;
 
+    LValue OffsetResult(Result);
+    APSInt Alignment;
+    if (!EvaluateInteger(E->getArg(1), Alignment, Info))
+      return false;
+    CharUnits Align = CharUnits::fromQuantity(getExtValue(Alignment));
+
+    if (E->getNumArgs() > 2) {
+      APSInt Offset;
+      if (!EvaluateInteger(E->getArg(2), Offset, Info))
+        return false;
+
+      int64_t AdditionalOffset = -getExtValue(Offset);
+      OffsetResult.Offset += CharUnits::fromQuantity(AdditionalOffset);
+    }
+
+    // If there is a base object, then it must have the correct alignment.
+    if (OffsetResult.Base) {
+      CharUnits BaseAlignment;
+      if (const ValueDecl *VD =
+          OffsetResult.Base.dyn_cast<const ValueDecl*>()) {
+        BaseAlignment = Info.Ctx.getDeclAlign(VD);
+      } else {
+        BaseAlignment =
+          GetAlignOfExpr(Info, OffsetResult.Base.get<const Expr*>());
+      }
+
+      if (BaseAlignment < Align) {
+        Result.Designator.setInvalid();
+	// FIXME: Quantities here cast to integers because the plural modifier
+	// does not work on APSInts yet.
+        CCEDiag(E->getArg(0),
+                diag::note_constexpr_baa_insufficient_alignment) << 0
+          << (int) BaseAlignment.getQuantity()
+          << (unsigned) getExtValue(Alignment);
+        return false;
+      }
+    }
+
+    // The offset must also have the correct alignment.
+    if (OffsetResult.Offset.RoundUpToAlignment(Align) != OffsetResult.Offset) {
+      Result.Designator.setInvalid();
+      APSInt Offset(64, false);
+      Offset = OffsetResult.Offset.getQuantity();
+
+      if (OffsetResult.Base)
+        CCEDiag(E->getArg(0),
+                diag::note_constexpr_baa_insufficient_alignment) << 1
+          << (int) getExtValue(Offset) << (unsigned) getExtValue(Alignment);
+      else
+        CCEDiag(E->getArg(0),
+                diag::note_constexpr_baa_value_insufficient_alignment)
+          << Offset << (unsigned) getExtValue(Alignment);
+
+      return false;
+    }
+
+    return true;
+  }
   default:
     return ExprEvaluatorBaseTy::VisitCallExpr(E);
   }
@@ -5853,8 +5949,6 @@ public:
   bool VisitSizeOfPackExpr(const SizeOfPackExpr *E);
 
 private:
-  CharUnits GetAlignOfExpr(const Expr *E);
-  CharUnits GetAlignOfType(QualType T);
   static QualType GetObjectType(APValue::LValueBase B);
   bool TryEvaluateBuiltinObjectSize(const CallExpr *E);
   // FIXME: Missing: array subscript of vector, member of vector
@@ -7019,39 +7113,6 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   return ExprEvaluatorBaseTy::VisitBinaryOperator(E);
 }
 
-CharUnits IntExprEvaluator::GetAlignOfType(QualType T) {
-  // C++ [expr.alignof]p3:
-  //     When alignof is applied to a reference type, the result is the
-  //     alignment of the referenced type.
-  if (const ReferenceType *Ref = T->getAs<ReferenceType>())
-    T = Ref->getPointeeType();
-
-  // __alignof is defined to return the preferred alignment.
-  return Info.Ctx.toCharUnitsFromBits(
-    Info.Ctx.getPreferredTypeAlign(T.getTypePtr()));
-}
-
-CharUnits IntExprEvaluator::GetAlignOfExpr(const Expr *E) {
-  E = E->IgnoreParens();
-
-  // The kinds of expressions that we have special-case logic here for
-  // should be kept up to date with the special checks for those
-  // expressions in Sema.
-
-  // alignof decl is always accepted, even if it doesn't make sense: we default
-  // to 1 in those cases.
-  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
-    return Info.Ctx.getDeclAlign(DRE->getDecl(),
-                                 /*RefAsPointee*/true);
-
-  if (const MemberExpr *ME = dyn_cast<MemberExpr>(E))
-    return Info.Ctx.getDeclAlign(ME->getMemberDecl(),
-                                 /*RefAsPointee*/true);
-
-  return GetAlignOfType(E->getType());
-}
-
-
 /// VisitUnaryExprOrTypeTraitExpr - Evaluate a sizeof, alignof or vec_step with
 /// a result as the expression's type.
 bool IntExprEvaluator::VisitUnaryExprOrTypeTraitExpr(
@@ -7059,9 +7120,9 @@ bool IntExprEvaluator::VisitUnaryExprOrTypeTraitExpr(
   switch(E->getKind()) {
   case UETT_AlignOf: {
     if (E->isArgumentType())
-      return Success(GetAlignOfType(E->getArgumentType()), E);
+      return Success(GetAlignOfType(Info, E->getArgumentType()), E);
     else
-      return Success(GetAlignOfExpr(E->getArgumentExpr()), E);
+      return Success(GetAlignOfExpr(Info, E->getArgumentExpr()), E);
   }
 
   case UETT_VecStep: {

@@ -141,6 +141,13 @@ def note_constexpr_calls_suppressed : Note<
   "(skipping %0 call%s0 in backtrace; use -fconstexpr-backtrace-limit=0 to "
   "see all)">;
 def note_constexpr_call_here : Note<"in call to '%0'">;
+def note_constexpr_baa_insufficient_alignment : Note<
+  "%select{alignment of|offset of the aligned pointer from}0 the base pointee "
+  "object (%1 %plural{1:byte|:bytes}1) is %select{less than|not a multiple of}0 the "
+  "asserted %2 %plural{1:byte|:bytes}2">;
+def note_constexpr_baa_value_insufficient_alignment : Note<
+  "value of the aligned pointer (%0) is not a multiple of the asserted %1 "
+  "%plural{1:byte|:bytes}1">;
 
 def warn_integer_constant_overflow : Warning<
   "overflow in expression; result is %0 with type %1">,
