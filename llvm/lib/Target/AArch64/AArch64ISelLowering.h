@@ -204,7 +204,7 @@ class AArch64TargetLowering : public TargetLowering {
   bool RequireStrictAlign;
 
 public:
-  explicit AArch64TargetLowering(TargetMachine &TM);
+  explicit AArch64TargetLowering(const TargetMachine &TM);
 
   /// Selects the correct CCAssignFn for a given CallingConvention value.
   CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool IsVarArg) const;

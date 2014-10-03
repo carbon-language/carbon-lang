@@ -43,8 +43,8 @@ AArch64Subtarget::initializeSubtargetDependencies(StringRef FS) {
 
 AArch64Subtarget::AArch64Subtarget(const std::string &TT,
                                    const std::string &CPU,
-                                   const std::string &FS, TargetMachine &TM,
-                                   bool LittleEndian)
+                                   const std::string &FS,
+                                   const TargetMachine &TM, bool LittleEndian)
     : AArch64GenSubtargetInfo(TT, CPU, FS), ARMProcFamily(Others),
       HasFPARMv8(false), HasNEON(false), HasCrypto(false), HasCRC(false),
       HasZeroCycleRegMove(false), HasZeroCycleZeroing(false), CPUString(CPU),
