@@ -969,8 +969,13 @@ void CStringChecker::evalCopyCommon(CheckerContext &C,
       // Get the length to copy.
       if (Optional<NonLoc> lenValNonLoc = sizeVal.getAs<NonLoc>()) {
         // Get the byte after the last byte copied.
+        SValBuilder &SvalBuilder = C.getSValBuilder();
+        ASTContext &Ctx = SvalBuilder.getContext();
+        QualType CharPtrTy = Ctx.getPointerType(Ctx.CharTy);
+        loc::MemRegionVal DestRegCharVal = SvalBuilder.evalCast(destRegVal,
+          CharPtrTy, Dest->getType()).castAs<loc::MemRegionVal>();
         SVal lastElement = C.getSValBuilder().evalBinOpLN(state, BO_Add, 
-                                                          destRegVal,
+                                                          DestRegCharVal,
                                                           *lenValNonLoc, 
                                                           Dest->getType());
       
