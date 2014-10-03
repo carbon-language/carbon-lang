@@ -1870,10 +1870,6 @@ if test "$BINDINGS_TO_BUILD" = auto ; then
 fi
 AC_SUBST(BINDINGS_TO_BUILD,$BINDINGS_TO_BUILD)
 
-dnl This isn't really configurey, but it avoids having to repeat the list in
-dnl other files.
-AC_SUBST(ALL_BINDINGS,ocaml)
-
 dnl Do any work necessary to ensure that bindings have what they need.
 binding_prereqs_failed=0
 for a_binding in $BINDINGS_TO_BUILD ; do

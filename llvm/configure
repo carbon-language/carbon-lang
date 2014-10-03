@@ -788,7 +788,6 @@ LLVM_INFODIR
 LLVM_MANDIR
 LLVM_CONFIGTIME
 BINDINGS_TO_BUILD
-ALL_BINDINGS
 OCAML_LIBDIR
 ENABLE_VISIBILITY_INLINES_HIDDEN
 RPATH
@@ -18618,9 +18617,6 @@ fi
 BINDINGS_TO_BUILD=$BINDINGS_TO_BUILD
 
 
-ALL_BINDINGS=ocaml
-
-
 binding_prereqs_failed=0
 for a_binding in $BINDINGS_TO_BUILD ; do
   case "$a_binding" in
@@ -19719,7 +19715,6 @@ LLVM_INFODIR!$LLVM_INFODIR$ac_delim
 LLVM_MANDIR!$LLVM_MANDIR$ac_delim
 LLVM_CONFIGTIME!$LLVM_CONFIGTIME$ac_delim
 BINDINGS_TO_BUILD!$BINDINGS_TO_BUILD$ac_delim
-ALL_BINDINGS!$ALL_BINDINGS$ac_delim
 OCAML_LIBDIR!$OCAML_LIBDIR$ac_delim
 ENABLE_VISIBILITY_INLINES_HIDDEN!$ENABLE_VISIBILITY_INLINES_HIDDEN$ac_delim
 RPATH!$RPATH$ac_delim
@@ -19729,7 +19724,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 96; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

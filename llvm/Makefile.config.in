@@ -370,7 +370,6 @@ HUGE_VAL_SANITY = @HUGE_VAL_SANITY@
 
 # Bindings that we should build
 BINDINGS_TO_BUILD := @BINDINGS_TO_BUILD@
-ALL_BINDINGS      := @ALL_BINDINGS@
 OCAML_LIBDIR      := @OCAML_LIBDIR@
 
 # When compiling under Mingw/Cygwin, executables such as tblgen
