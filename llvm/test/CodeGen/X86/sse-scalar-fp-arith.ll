@@ -1,6 +1,8 @@
-; RUN: llc -mtriple=x86_64-pc-linux -mcpu=corei7 < %s | FileCheck --check-prefix=SSE --check-prefix=SSE2 %s
-; RUN: llc -mtriple=x86_64-pc-linux -mattr=-sse4.1 -mcpu=corei7 < %s | FileCheck --check-prefix=SSE --check-prefix=SSE41 %s
-; RUN: llc -mtriple=x86_64-pc-linux -mcpu=corei7-avx < %s | FileCheck --check-prefix=AVX %s
+; RUN: llc -mcpu=x86-64 -mattr=+sse2 < %s | FileCheck --check-prefix=SSE --check-prefix=SSE2 %s
+; RUN: llc -mcpu=x86-64 -mattr=+sse4.1 < %s | FileCheck --check-prefix=SSE --check-prefix=SSE41 %s
+; RUN: llc -mcpu=x86-64 -mattr=+avx < %s | FileCheck --check-prefix=AVX %s
+
+target triple = "x86_64-unknown-unknown"
 
 ; Ensure that the backend no longer emits unnecessary vector insert
 ; instructions immediately after SSE scalar fp instructions
