@@ -152,7 +152,7 @@ define void @_ZN1A1B2f1Ei(i32) #0 {
 entry:
   %.addr = alloca i32, align 4
   store i32 %0, i32* %.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %.addr}, metadata !42, metadata !{i32 786690}), !dbg !43
+  call void @llvm.dbg.declare(metadata !{i32* %.addr}, metadata !42, metadata !{metadata !"0x102"}), !dbg !43
   ret void, !dbg !43
 }
 
@@ -167,7 +167,7 @@ entry:
   %x = alloca %"struct.A::B::bar", align 1
   %frombool = zext i1 %b to i8
   store i8 %frombool, i8* %b.addr, align 1
-  call void @llvm.dbg.declare(metadata !{i8* %b.addr}, metadata !44, metadata !{i32 786690}), !dbg !45
+  call void @llvm.dbg.declare(metadata !{i8* %b.addr}, metadata !44, metadata !{metadata !"0x102"}), !dbg !45
   %0 = load i8* %b.addr, align 1, !dbg !46
   %tobool = trunc i8 %0 to i1, !dbg !46
   br i1 %tobool, label %if.then, label %if.end, !dbg !46
@@ -178,7 +178,7 @@ if.then:                                          ; preds = %entry
   br label %return, !dbg !47
 
 if.end:                                           ; preds = %entry
-  call void @llvm.dbg.declare(metadata !{%"struct.A::B::bar"* %x}, metadata !48, metadata !{i32 786690}), !dbg !49
+  call void @llvm.dbg.declare(metadata !{%"struct.A::B::bar"* %x}, metadata !48, metadata !{metadata !"0x102"}), !dbg !49
   %2 = load i32* @_ZN1A1B1iE, align 4, !dbg !50
   %3 = load i32* @_ZN1A1B1iE, align 4, !dbg !50
   %add = add nsw i32 %2, %3, !dbg !50
@@ -198,56 +198,56 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!52}
 
-!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !19, metadata !21, metadata !""} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/blaikie/dev/llvm/build/clang/debug//usr/local/google/home/blaikie/dev/llvm/src/tools/clang/test/CodeGenCXX/debug-info-namespace.cpp] [DW_LANG_C_plus_plus]
+!0 = metadata !{metadata !"0x11\004\00clang version 3.4 \000\00\000\00\000", metadata !1, metadata !2, metadata !2, metadata !3, metadata !19, metadata !21} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/blaikie/dev/llvm/build/clang/debug//usr/local/google/home/blaikie/dev/llvm/src/tools/clang/test/CodeGenCXX/debug-info-namespace.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"/usr/local/google/home/blaikie/dev/llvm/src/tools/clang/test/CodeGenCXX/debug-info-namespace.cpp", metadata !"/usr/local/google/home/blaikie/dev/llvm/build/clang/debug"}
 !2 = metadata !{}
 !3 = metadata !{metadata !4, metadata !10, metadata !14}
-!4 = metadata !{i32 786478, metadata !5, metadata !6, metadata !"f1", metadata !"f1", metadata !"_ZN1A1B2f1Ev", i32 3, metadata !8, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void ()* @_ZN1A1B2f1Ev, null, null, metadata !2, i32 3} ; [ DW_TAG_subprogram ] [line 3] [def] [f1]
+!4 = metadata !{metadata !"0x2e\00f1\00f1\00_ZN1A1B2f1Ev\003\000\001\000\006\00256\000\003", metadata !5, metadata !6, metadata !8, null, void ()* @_ZN1A1B2f1Ev, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 3] [def] [f1]
 !5 = metadata !{metadata !"foo.cpp", metadata !"/usr/local/google/home/blaikie/dev/llvm/build/clang/debug"}
-!6 = metadata !{i32 786489, metadata !5, metadata !7, metadata !"B", i32 1} ; [ DW_TAG_namespace ] [B] [line 1]
-!7 = metadata !{i32 786489, metadata !1, null, metadata !"A", i32 3} ; [ DW_TAG_namespace ] [A] [line 3]
-!8 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !9, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!6 = metadata !{metadata !"0x39\00B\001", metadata !5, metadata !7} ; [ DW_TAG_namespace ] [B] [line 1]
+!7 = metadata !{metadata !"0x39\00A\003", metadata !1, null} ; [ DW_TAG_namespace ] [A] [line 3]
+!8 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !9, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !9 = metadata !{null}
-!10 = metadata !{i32 786478, metadata !5, metadata !6, metadata !"f1", metadata !"f1", metadata !"_ZN1A1B2f1Ei", i32 4, metadata !11, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i32)* @_ZN1A1B2f1Ei, null, null, metadata !2, i32 4} ; [ DW_TAG_subprogram ] [line 4] [def] [f1]
-!11 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !12, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!10 = metadata !{metadata !"0x2e\00f1\00f1\00_ZN1A1B2f1Ei\004\000\001\000\006\00256\000\004", metadata !5, metadata !6, metadata !11, null, void (i32)* @_ZN1A1B2f1Ei, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 4] [def] [f1]
+!11 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !12, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !12 = metadata !{null, metadata !13}
-!13 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!14 = metadata !{i32 786478, metadata !5, metadata !15, metadata !"func", metadata !"func", metadata !"_Z4funcb", i32 13, metadata !16, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i1)* @_Z4funcb, null, null, metadata !2, i32 13} ; [ DW_TAG_subprogram ] [line 13] [def] [func]
-!15 = metadata !{i32 786473, metadata !5}         ; [ DW_TAG_file_type ] [/usr/local/google/home/blaikie/dev/llvm/build/clang/debug/foo.cpp]
-!16 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !17, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!13 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!14 = metadata !{metadata !"0x2e\00func\00func\00_Z4funcb\0013\000\001\000\006\00256\000\0013", metadata !5, metadata !15, metadata !16, null, i32 (i1)* @_Z4funcb, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 13] [def] [func]
+!15 = metadata !{metadata !"0x29", metadata !5}         ; [ DW_TAG_file_type ] [/usr/local/google/home/blaikie/dev/llvm/build/clang/debug/foo.cpp]
+!16 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !17, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !17 = metadata !{metadata !13, metadata !18}
-!18 = metadata !{i32 786468, null, null, metadata !"bool", i32 0, i64 8, i64 8, i64 0, i32 0, i32 2} ; [ DW_TAG_base_type ] [bool] [line 0, size 8, align 8, offset 0, enc DW_ATE_boolean]
+!18 = metadata !{metadata !"0x24\00bool\000\008\008\000\000\002", null, null} ; [ DW_TAG_base_type ] [bool] [line 0, size 8, align 8, offset 0, enc DW_ATE_boolean]
 !19 = metadata !{metadata !20}
-!20 = metadata !{i32 786484, i32 0, metadata !6, metadata !"i", metadata !"i", metadata !"_ZN1A1B1iE", metadata !15, i32 2, metadata !13, i32 0, i32 1, i32* @_ZN1A1B1iE, null} ; [ DW_TAG_variable ] [i] [line 2] [def]
+!20 = metadata !{metadata !"0x34\00i\00i\00_ZN1A1B1iE\002\000\001", metadata !6, metadata !15, metadata !13, i32* @_ZN1A1B1iE, null} ; [ DW_TAG_variable ] [i] [line 2] [def]
 !21 = metadata !{metadata !22, metadata !23, metadata !24, metadata !26, metadata !27, metadata !29, metadata !37, metadata !38, metadata !39, metadata !40}
-!22 = metadata !{i32 786490, metadata !7, metadata !6, i32 8} ; [ DW_TAG_imported_module ]
-!23 = metadata !{i32 786490, metadata !0, metadata !7, i32 11} ; [ DW_TAG_imported_module ]
-!24 = metadata !{i32 786490, metadata !25, metadata !6, i32 15} ; [ DW_TAG_imported_module ]
-!25 = metadata !{i32 786443, metadata !5, metadata !14, i32 14, i32 0, i32 0} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/blaikie/dev/llvm/build/clang/debug/foo.cpp]
-!26 = metadata !{i32 786490, metadata !14, metadata !7, i32 18} ; [ DW_TAG_imported_module ]
-!27 = metadata !{i32 786440, metadata !14, metadata !28, i32 19} ; [ DW_TAG_imported_declaration ]
-!28 = metadata !{i32 786451, metadata !5, metadata !6, metadata !"foo", i32 5, i64 0, i64 0, i32 0, i32 4, null, null, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [foo] [line 5, size 0, align 0, offset 0] [decl] [from ]
-!29 = metadata !{i32 786440, metadata !14, metadata !30, i32 20} ; [ DW_TAG_imported_declaration ]
-!30 = metadata !{i32 786451, metadata !5, metadata !6, metadata !"bar", i32 6, i64 8, i64 8, i32 0, i32 0, null, metadata !31, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [bar] [line 6, size 8, align 8, offset 0] [def] [from ]
+!22 = metadata !{metadata !"0x3a\008\00", metadata !7, metadata !6} ; [ DW_TAG_imported_module ]
+!23 = metadata !{metadata !"0x3a\0011\00", metadata !0, metadata !7} ; [ DW_TAG_imported_module ]
+!24 = metadata !{metadata !"0x3a\0015\00", metadata !25, metadata !6} ; [ DW_TAG_imported_module ]
+!25 = metadata !{metadata !"0xb\0014\000\000", metadata !5, metadata !14} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/blaikie/dev/llvm/build/clang/debug/foo.cpp]
+!26 = metadata !{metadata !"0x3a\0018\00", metadata !14, metadata !7} ; [ DW_TAG_imported_module ]
+!27 = metadata !{metadata !"0x8\0019\00", metadata !14, metadata !28} ; [ DW_TAG_imported_declaration ]
+!28 = metadata !{metadata !"0x13\00foo\005\000\000\000\004\000", metadata !5, metadata !6, null, null, null, null, null} ; [ DW_TAG_structure_type ] [foo] [line 5, size 0, align 0, offset 0] [decl] [from ]
+!29 = metadata !{metadata !"0x8\0020\00", metadata !14, metadata !30} ; [ DW_TAG_imported_declaration ]
+!30 = metadata !{metadata !"0x13\00bar\006\008\008\000\000\000", metadata !5, metadata !6, null, metadata !31, null, null, null} ; [ DW_TAG_structure_type ] [bar] [line 6, size 8, align 8, offset 0] [def] [from ]
 !31 = metadata !{metadata !32}
-!32 = metadata !{i32 786478, metadata !5, metadata !30, metadata !"bar", metadata !"bar", metadata !"", i32 6, metadata !33, i1 false, i1 false, i32 0, i32 0, null, i32 320, i1 false, null, null, i32 0, metadata !36, i32 6} ; [ DW_TAG_subprogram ] [line 6] [bar]
-!33 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !34, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!32 = metadata !{metadata !"0x2e\00bar\00bar\00\006\000\000\000\006\00320\000\006", metadata !5, metadata !30, metadata !33, null, null, null, i32 0, metadata !36} ; [ DW_TAG_subprogram ] [line 6] [bar]
+!33 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !34, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !34 = metadata !{null, metadata !35}
-!35 = metadata !{i32 786447, i32 0, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 1088, metadata !30} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from bar]
+!35 = metadata !{metadata !"0xf\00\000\0064\0064\000\001088", i32 0, null, metadata !30} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from bar]
 !36 = metadata !{i32 786468}
-!37 = metadata !{i32 786440, metadata !14, metadata !10, i32 21} ; [ DW_TAG_imported_declaration ]
-!38 = metadata !{i32 786440, metadata !14, metadata !20, i32 22} ; [ DW_TAG_imported_declaration ]
-!39 = metadata !{i32 786440, metadata !14, metadata !7, i32 24, metadata !"X"} ; [ DW_TAG_imported_declaration ]
-!40 = metadata !{i32 786440, metadata !14, metadata !39, i32 25, metadata !"Y"} ; [ DW_TAG_imported_declaration ]
+!37 = metadata !{metadata !"0x8\0021\00", metadata !14, metadata !10} ; [ DW_TAG_imported_declaration ]
+!38 = metadata !{metadata !"0x8\0022\00", metadata !14, metadata !20} ; [ DW_TAG_imported_declaration ]
+!39 = metadata !{metadata !"0x8\0024\00X", metadata !14, metadata !7} ; [ DW_TAG_imported_declaration ]
+!40 = metadata !{metadata !"0x8\0025\00Y", metadata !14, metadata !39} ; [ DW_TAG_imported_declaration ]
 !41 = metadata !{i32 3, i32 0, metadata !4, null}
-!42 = metadata !{i32 786689, metadata !10, metadata !"", metadata !15, i32 16777220, metadata !13, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [line 4]
+!42 = metadata !{metadata !"0x101\00\0016777220\000", metadata !10, metadata !15, metadata !13} ; [ DW_TAG_arg_variable ] [line 4]
 !43 = metadata !{i32 4, i32 0, metadata !10, null}
-!44 = metadata !{i32 786689, metadata !14, metadata !"b", metadata !15, i32 16777229, metadata !18, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [b] [line 13]
+!44 = metadata !{metadata !"0x101\00b\0016777229\000", metadata !14, metadata !15, metadata !18} ; [ DW_TAG_arg_variable ] [b] [line 13]
 !45 = metadata !{i32 13, i32 0, metadata !14, null}
 !46 = metadata !{i32 14, i32 0, metadata !14, null}
 !47 = metadata !{i32 16, i32 0, metadata !25, null}
-!48 = metadata !{i32 786688, metadata !14, metadata !"x", metadata !15, i32 23, metadata !30, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [x] [line 23]
+!48 = metadata !{metadata !"0x100\00x\0023\000", metadata !14, metadata !15, metadata !30} ; [ DW_TAG_auto_variable ] [x] [line 23]
 !49 = metadata !{i32 23, i32 0, metadata !14, null}
 !50 = metadata !{i32 26, i32 0, metadata !14, null}
 !51 = metadata !{i32 27, i32 0, metadata !14, null}
-!52 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!52 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}

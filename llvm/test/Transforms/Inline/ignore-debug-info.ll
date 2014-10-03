@@ -47,9 +47,9 @@ attributes #0 = { nounwind readnone }
 !llvm.module.flags = !{!3, !4}
 !llvm.ident = !{!5}
 
-!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !{}, metadata !2, metadata !2, metadata !""}
+!0 = metadata !{metadata !"0x11\004\00\000\00\000\00\000", metadata !1, metadata !2, metadata !2, metadata !{}, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{metadata !"", metadata !""}
 !2 = metadata !{i32 0}
 !3 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!4 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!4 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
 !5 = metadata !{metadata !""}

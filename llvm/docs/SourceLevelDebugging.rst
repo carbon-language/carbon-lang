@@ -186,11 +186,15 @@ the simple data types ``i32``, ``i1``, ``float``, ``double``, ``mdstring`` and
     ...
   }
 
-<a name="LLVMDebugVersion">The first field of a descriptor is always an
-``i32`` containing a tag value identifying the content of the descriptor.
-The remaining fields are specific to the descriptor.  The values of tags are
-loosely bound to the tag values of DWARF information entries.  However, that
-does not restrict the use of the information supplied to DWARF targets.
+Most of the string and integer fields in descriptors are packed into a single,
+null-separated ``mdstring``.  The first field of the header is always an
+``i32`` containing the DWARF tag value identifying the content of the
+descriptor.
+
+For clarity of definition in this document, these header fields are described
+below split inside an imaginary ``DIHeader`` construct.  This is invalid
+assembly syntax.  In valid IR, these fields are stringified and concatenated,
+separated by ``\00``.
 
 The details of the various descriptors follow.
 
@@ -200,20 +204,22 @@ Compile unit descriptors
 .. code-block:: llvm
 
   !0 = metadata !{
-    i32,       ;; Tag = 17 (DW_TAG_compile_unit)
+    DIHeader(
+      i32,       ;; Tag = 17 (DW_TAG_compile_unit)
+      i32,       ;; DWARF language identifier (ex. DW_LANG_C89)
+      mdstring,  ;; Producer (ex. "4.0.1 LLVM (LLVM research group)")
+      i1,        ;; True if this is optimized.
+      mdstring,  ;; Flags
+      i32,       ;; Runtime version
+      mdstring,  ;; Split debug filename
+      i32        ;; Debug info emission kind (1 = Full Debug Info, 2 = Line Tables Only)
+    ),
     metadata,  ;; Source directory (including trailing slash) & file pair
-    i32,       ;; DWARF language identifier (ex. DW_LANG_C89)
-    metadata   ;; Producer (ex. "4.0.1 LLVM (LLVM research group)")
-    i1,        ;; True if this is optimized.
-    metadata,  ;; Flags
-    i32        ;; Runtime version
-    metadata   ;; List of enums types
-    metadata   ;; List of retained types
-    metadata   ;; List of subprograms
-    metadata   ;; List of global variables
+    metadata,  ;; List of enums types
+    metadata,  ;; List of retained types
+    metadata,  ;; List of subprograms
+    metadata,  ;; List of global variables
     metadata   ;; List of imported entities
-    metadata   ;; Split debug filename
-    i32        ;; Debug info emission kind (1 = Full Debug Info, 2 = Line Tables Only)
   }
 
 These descriptors contain a source language ID for the file (we use the DWARF
@@ -236,8 +242,10 @@ File descriptors
 .. code-block:: llvm
 
   !0 = metadata !{
-    i32,      ;; Tag = 41 (DW_TAG_file_type)
-    metadata, ;; Source directory (including trailing slash) & file pair
+    DIHeader(
+      i32       ;; Tag = 41 (DW_TAG_file_type)
+    ),
+    metadata  ;; Source directory (including trailing slash) & file pair
   }
 
 These descriptors contain information for a file.  Global variables and top
@@ -255,17 +263,18 @@ Global variable descriptors
 .. code-block:: llvm
 
   !1 = metadata !{
-    i32,      ;; Tag = 52 (DW_TAG_variable)
-    i32,      ;; Unused field.
+    DIHeader(
+      i32,      ;; Tag = 52 (DW_TAG_variable)
+      mdstring, ;; Name
+      mdstring, ;; Display name (fully qualified C++ name)
+      mdstring, ;; MIPS linkage name (for C++)
+      i32,      ;; Line number where defined
+      i1,       ;; True if the global is local to compile unit (static)
+      i1        ;; True if the global is defined in the compile unit (not extern)
+    ),
     metadata, ;; Reference to context descriptor
-    metadata, ;; Name
-    metadata, ;; Display name (fully qualified C++ name)
-    metadata, ;; MIPS linkage name (for C++)
     metadata, ;; Reference to file where defined
-    i32,      ;; Line number where defined
     metadata, ;; Reference to type descriptor
-    i1,       ;; True if the global is local to compile unit (static)
-    i1,       ;; True if the global is defined in the compile unit (not extern)
     {}*,      ;; Reference to the global variable
     metadata, ;; The static member declaration, if any
   }
@@ -282,27 +291,29 @@ Subprogram descriptors
 .. code-block:: llvm
 
   !2 = metadata !{
-    i32,      ;; Tag = 46 (DW_TAG_subprogram)
+    DIHeader(
+      i32,      ;; Tag = 46 (DW_TAG_subprogram)
+      mdstring, ;; Name
+      mdstring, ;; Display name (fully qualified C++ name)
+      mdstring, ;; MIPS linkage name (for C++)
+      i32,      ;; Line number where defined
+      i1,       ;; True if the global is local to compile unit (static)
+      i1,       ;; True if the global is defined in the compile unit (not extern)
+      i32,      ;; Virtuality, e.g. dwarf::DW_VIRTUALITY__virtual
+      i32,      ;; Index into a virtual function
+      i32,      ;; Flags - Artificial, Private, Protected, Explicit, Prototyped.
+      i1,       ;; isOptimized
+      i32       ;; Line number where the scope of the subprogram begins
+    ),
     metadata, ;; Source directory (including trailing slash) & file pair
     metadata, ;; Reference to context descriptor
-    metadata, ;; Name
-    metadata, ;; Display name (fully qualified C++ name)
-    metadata, ;; MIPS linkage name (for C++)
-    i32,      ;; Line number where defined
     metadata, ;; Reference to type descriptor
-    i1,       ;; True if the global is local to compile unit (static)
-    i1,       ;; True if the global is defined in the compile unit (not extern)
-    i32,      ;; Virtuality, e.g. dwarf::DW_VIRTUALITY__virtual
-    i32,      ;; Index into a virtual function
     metadata, ;; indicates which base type contains the vtable pointer for the
               ;; derived class
-    i32,      ;; Flags - Artificial, Private, Protected, Explicit, Prototyped.
-    i1,       ;; isOptimized
     {}*,      ;; Reference to the LLVM function
     metadata, ;; Lists function template parameters
     metadata, ;; Function declaration descriptor
-    metadata, ;; List of function variables
-    i32       ;; Line number where the scope of the subprogram begins
+    metadata  ;; List of function variables
   }
 
 These descriptors provide debug information about functions, methods and
@@ -315,12 +326,14 @@ Block descriptors
 .. code-block:: llvm
 
   !3 = metadata !{
-    i32,      ;; Tag = 11 (DW_TAG_lexical_block)
+    DIHeader(
+      i32,      ;; Tag = 11 (DW_TAG_lexical_block)
+      i32,      ;; Line number
+      i32,      ;; Column number
+      i32       ;; Unique ID to identify blocks from a template function
+    ),
     metadata, ;; Source directory (including trailing slash) & file pair
-    metadata, ;; Reference to context descriptor
-    i32,      ;; Line number
-    i32,      ;; Column number
-    i32       ;; Unique ID to identify blocks from a template function
+    metadata  ;; Reference to context descriptor
   }
 
 This descriptor provides debug information about nested blocks within a
@@ -330,10 +343,12 @@ lexical blocks at same depth.
 .. code-block:: llvm
 
   !3 = metadata !{
-    i32,      ;; Tag = 11 (DW_TAG_lexical_block)
+    DIHeader(
+      i32,      ;; Tag = 11 (DW_TAG_lexical_block)
+      i32       ;; DWARF path discriminator value
+    ),
     metadata, ;; Source directory (including trailing slash) & file pair
     metadata  ;; Reference to the scope we're annotating with a file change
-    i32,      ;; DWARF path discriminator value
   }
 
 This descriptor provides a wrapper around a lexical scope to handle file
@@ -347,16 +362,18 @@ Basic type descriptors
 .. code-block:: llvm
 
   !4 = metadata !{
-    i32,      ;; Tag = 36 (DW_TAG_base_type)
+    DIHeader(
+      i32,      ;; Tag = 36 (DW_TAG_base_type)
+      mdstring, ;; Name (may be "" for anonymous types)
+      i32,      ;; Line number where defined (may be 0)
+      i64,      ;; Size in bits
+      i64,      ;; Alignment in bits
+      i64,      ;; Offset in bits
+      i32,      ;; Flags
+      i32       ;; DWARF type encoding
+    ),
     metadata, ;; Source directory (including trailing slash) & file pair (may be null)
-    metadata, ;; Reference to context
-    metadata, ;; Name (may be "" for anonymous types)
-    i32,      ;; Line number where defined (may be 0)
-    i64,      ;; Size in bits
-    i64,      ;; Alignment in bits
-    i64,      ;; Offset in bits
-    i32,      ;; Flags
-    i32       ;; DWARF type encoding
+    metadata  ;; Reference to context
   }
 
 These descriptors define primitive types used in the code.  Example ``int``,
@@ -390,22 +407,19 @@ Derived type descriptors
 .. code-block:: llvm
 
   !5 = metadata !{
-    i32,      ;; Tag (see below)
+    DIHeader(
+      i32,      ;; Tag (see below)
+      mdstring, ;; Name (may be "" for anonymous types)
+      i32,      ;; Line number where defined (may be 0)
+      i64,      ;; Size in bits
+      i64,      ;; Alignment in bits
+      i64,      ;; Offset in bits
+      i32       ;; Flags to encode attributes, e.g. private
+    ),
     metadata, ;; Source directory (including trailing slash) & file pair (may be null)
     metadata, ;; Reference to context
-    metadata, ;; Name (may be "" for anonymous types)
-    i32,      ;; Line number where defined (may be 0)
-    i64,      ;; Size in bits
-    i64,      ;; Alignment in bits
-    i64,      ;; Offset in bits
-    i32,      ;; Flags to encode attributes, e.g. private
     metadata, ;; Reference to type derived from
-    metadata, ;; (optional) Name of the Objective C property associated with
-              ;; Objective-C an ivar, or the type of which this
-              ;; pointer-to-member is pointing to members of.
-    metadata, ;; (optional) Name of the Objective C property getter selector.
-    metadata, ;; (optional) Name of the Objective C property setter selector.
-    i32       ;; (optional) Objective C property attributes.
+    metadata  ;; (optional) Objective C property node
   }
 
 These descriptors are used to define types derived from other types.  The value
@@ -453,21 +467,23 @@ Composite type descriptors
 .. code-block:: llvm
 
   !6 = metadata !{
-    i32,      ;; Tag (see below)
+    DIHeader(
+      i32,      ;; Tag (see below)
+      mdstring, ;; Name (may be "" for anonymous types)
+      i32,      ;; Line number where defined (may be 0)
+      i64,      ;; Size in bits
+      i64,      ;; Alignment in bits
+      i64,      ;; Offset in bits
+      i32,      ;; Flags
+      i32       ;; Runtime languages
+    ),
     metadata, ;; Source directory (including trailing slash) & file pair (may be null)
     metadata, ;; Reference to context
-    metadata, ;; Name (may be "" for anonymous types)
-    i32,      ;; Line number where defined (may be 0)
-    i64,      ;; Size in bits
-    i64,      ;; Alignment in bits
-    i64,      ;; Offset in bits
-    i32,      ;; Flags
     metadata, ;; Reference to type derived from
     metadata, ;; Reference to array of member descriptors
-    i32,      ;; Runtime languages
     metadata, ;; Base type containing the vtable pointer for this type
     metadata, ;; Template parameters
-    metadata  ;; A unique identifier for type uniquing purpose (may be null)
+    mdstring  ;; A unique identifier for type uniquing purpose (may be null)
   }
 
 These descriptors are used to define types that are composed of 0 or more
@@ -529,9 +545,11 @@ Subrange descriptors
 .. code-block:: llvm
 
   !42 = metadata !{
-    i32,      ;; Tag = 33 (DW_TAG_subrange_type)
-    i64,      ;; Low value
-    i64       ;; High value
+    DIHeader(
+      i32,      ;; Tag = 33 (DW_TAG_subrange_type)
+      i64,      ;; Low value
+      i64       ;; High value
+    )
   }
 
 These descriptors are used to define ranges of array subscripts for an array
@@ -548,9 +566,11 @@ Enumerator descriptors
 .. code-block:: llvm
 
   !6 = metadata !{
-    i32,      ;; Tag = 40 (DW_TAG_enumerator)
-    metadata, ;; Name
-    i64       ;; Value
+    DIHeader(
+      i32,      ;; Tag = 40 (DW_TAG_enumerator)
+      mdstring, ;; Name
+      i64       ;; Value
+    )
   }
 
 These descriptors are used to define members of an enumeration :ref:`composite
@@ -562,16 +582,17 @@ Local variables
 .. code-block:: llvm
 
   !7 = metadata !{
-    i32,      ;; Tag (see below)
+    DIHeader(
+      i32,      ;; Tag (see below)
+      mdstring, ;; Name
+      i32,      ;; 24 bit - Line number where defined
+                ;; 8 bit - Argument number. 1 indicates 1st argument.
+      i32       ;; flags
+    ),
     metadata, ;; Context
-    metadata, ;; Name
     metadata, ;; Reference to file where defined
-    i32,      ;; 24 bit - Line number where defined
-              ;; 8 bit - Argument number. 1 indicates 1st argument.
     metadata, ;; Reference to the type descriptor
-    i32,      ;; flags
     metadata  ;; (optional) Reference to inline location
-    metadata  ;; (optional) Reference to a complex expression.
   }
 
 These descriptors are used to define variables local to a sub program.  The

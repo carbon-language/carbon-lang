@@ -2340,7 +2340,7 @@ static void WriteMDNodeComment(const MDNode *Node,
     return;
 
   Value *Op = Node->getOperand(0);
-  if (!Op || !isa<ConstantInt>(Op) || cast<ConstantInt>(Op)->getBitWidth() < 32)
+  if (!Op || !isa<MDString>(Op))
     return;
 
   DIDescriptor Desc(Node);

@@ -10,7 +10,7 @@
 !llvm.module.flags = !{ !0 }
 !llvm.dbg.cu = !{!1}
 
-!0 = metadata !{i32 2, metadata !"Debug Info Version", i32 1}
-!1 = metadata !{i32 589841, metadata !2, i32 12, metadata !"clang", i1 true, metadata !"", i32 0, metadata !3, metadata !3, metadata !3, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 2, metadata !"Debug Info Version", i32 2}
+!1 = metadata !{metadata !"0x11\0012\00clang\001\00\000\00\000", metadata !2, metadata !3, metadata !3, metadata !3, null, null} ; [ DW_TAG_compile_unit ]
 !2 = metadata !{metadata !"a.c", metadata !""}
 !3 = metadata !{}

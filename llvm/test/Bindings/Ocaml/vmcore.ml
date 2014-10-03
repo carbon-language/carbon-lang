@@ -1070,7 +1070,8 @@ let test_builder () =
     (* !llvm.module.flags is emitted at EOF. *)
     let n1 = const_int i32_type 1 in
     let n2 = mdstring context "Debug Info Version" in
-    let md = mdnode context [| n1; n2; n1 |] in
+    let n3 = const_int i32_type 2 in
+    let md = mdnode context [| n1; n2; n3 |] in
     add_named_metadata_operand m "llvm.module.flags" md;
 
     insist ((get_named_metadata m "llvm.module.flags") = [| md |])
@@ -1358,7 +1359,7 @@ let test_builder () =
 (* End-of-file checks for things like metdata and attributes.
  * CHECK: attributes #0 = {{.*}}uwtable{{.*}}
  * CHECK: !llvm.module.flags = !{!0}
- * CHECK: !0 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+ * CHECK: !0 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
  * CHECK: !1 = metadata !{i32 1, metadata !"metadata test"}
  * CHECK: !2 = metadata !{i32 2, i32 3, metadata !3, metadata !3}
  *)

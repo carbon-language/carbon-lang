@@ -30,9 +30,9 @@ target triple = "thumbv7-apple-darwin10"
 
 define zeroext i8 @get1(i8 zeroext %a) nounwind optsize {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i8 %a}, i64 0, metadata !10, metadata !{i32 786690}), !dbg !30
+  tail call void @llvm.dbg.value(metadata !{i8 %a}, i64 0, metadata !10, metadata !{metadata !"0x102"}), !dbg !30
   %0 = load i8* @x1, align 4, !dbg !30
-  tail call void @llvm.dbg.value(metadata !{i8 %0}, i64 0, metadata !11, metadata !{i32 786690}), !dbg !30
+  tail call void @llvm.dbg.value(metadata !{i8 %0}, i64 0, metadata !11, metadata !{metadata !"0x102"}), !dbg !30
   store i8 %a, i8* @x1, align 4, !dbg !30
   ret i8 %0, !dbg !31
 }
@@ -41,36 +41,36 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 
 define zeroext i8 @get2(i8 zeroext %a) nounwind optsize {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i8 %a}, i64 0, metadata !18, metadata !{i32 786690}), !dbg !32
+  tail call void @llvm.dbg.value(metadata !{i8 %a}, i64 0, metadata !18, metadata !{metadata !"0x102"}), !dbg !32
   %0 = load i8* @x2, align 4, !dbg !32
-  tail call void @llvm.dbg.value(metadata !{i8 %0}, i64 0, metadata !19, metadata !{i32 786690}), !dbg !32
+  tail call void @llvm.dbg.value(metadata !{i8 %0}, i64 0, metadata !19, metadata !{metadata !"0x102"}), !dbg !32
   store i8 %a, i8* @x2, align 4, !dbg !32
   ret i8 %0, !dbg !33
 }
 
 define zeroext i8 @get3(i8 zeroext %a) nounwind optsize {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i8 %a}, i64 0, metadata !21, metadata !{i32 786690}), !dbg !34
+  tail call void @llvm.dbg.value(metadata !{i8 %a}, i64 0, metadata !21, metadata !{metadata !"0x102"}), !dbg !34
   %0 = load i8* @x3, align 4, !dbg !34
-  tail call void @llvm.dbg.value(metadata !{i8 %0}, i64 0, metadata !22, metadata !{i32 786690}), !dbg !34
+  tail call void @llvm.dbg.value(metadata !{i8 %0}, i64 0, metadata !22, metadata !{metadata !"0x102"}), !dbg !34
   store i8 %a, i8* @x3, align 4, !dbg !34
   ret i8 %0, !dbg !35
 }
 
 define zeroext i8 @get4(i8 zeroext %a) nounwind optsize {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i8 %a}, i64 0, metadata !24, metadata !{i32 786690}), !dbg !36
+  tail call void @llvm.dbg.value(metadata !{i8 %a}, i64 0, metadata !24, metadata !{metadata !"0x102"}), !dbg !36
   %0 = load i8* @x4, align 4, !dbg !36
-  tail call void @llvm.dbg.value(metadata !{i8 %0}, i64 0, metadata !25, metadata !{i32 786690}), !dbg !36
+  tail call void @llvm.dbg.value(metadata !{i8 %0}, i64 0, metadata !25, metadata !{metadata !"0x102"}), !dbg !36
   store i8 %a, i8* @x4, align 4, !dbg !36
   ret i8 %0, !dbg !37
 }
 
 define zeroext i8 @get5(i8 zeroext %a) nounwind optsize {
 entry:
-  tail call void @llvm.dbg.value(metadata !{i8 %a}, i64 0, metadata !27, metadata !{i32 786690}), !dbg !38
+  tail call void @llvm.dbg.value(metadata !{i8 %a}, i64 0, metadata !27, metadata !{metadata !"0x102"}), !dbg !38
   %0 = load i8* @x5, align 4, !dbg !38
-  tail call void @llvm.dbg.value(metadata !{i8 %0}, i64 0, metadata !28, metadata !{i32 786690}), !dbg !38
+  tail call void @llvm.dbg.value(metadata !{i8 %0}, i64 0, metadata !28, metadata !{metadata !"0x102"}), !dbg !38
   store i8 %a, i8* @x5, align 4, !dbg !38
   ret i8 %0, !dbg !39
 }
@@ -78,36 +78,36 @@ entry:
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!49}
 
-!0 = metadata !{i32 786478, metadata !47, metadata !1, metadata !"get1", metadata !"get1", metadata !"get1", i32 4, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i8 (i8)* @get1, null, null, metadata !42, i32 4} ; [ DW_TAG_subprogram ]
-!1 = metadata !{i32 786473, metadata !47} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 786449, metadata !47, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build 2369.8)", i1 true, metadata !"", i32 0, metadata !48, metadata !48, metadata !40, metadata !41,  metadata !48, metadata !""} ; [ DW_TAG_compile_unit ]
-!3 = metadata !{i32 786453, metadata !47, metadata !1, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = metadata !{metadata !"0x2e\00get1\00get1\00get1\004\000\001\000\006\00256\001\004", metadata !47, metadata !1, metadata !3, null, i8 (i8)* @get1, null, null, metadata !42} ; [ DW_TAG_subprogram ]
+!1 = metadata !{metadata !"0x29", metadata !47} ; [ DW_TAG_file_type ]
+!2 = metadata !{metadata !"0x11\001\004.2.1 (Based on Apple Inc. build 5658) (LLVM build 2369.8)\001\00\000\00\000", metadata !47, metadata !48, metadata !48, metadata !40, metadata !41,  metadata !48} ; [ DW_TAG_compile_unit ]
+!3 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", metadata !47, metadata !1, null, metadata !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{metadata !5, metadata !5}
-!5 = metadata !{i32 786468, metadata !47, metadata !1, metadata !"_Bool", i32 0, i64 8, i64 8, i64 0, i32 0, i32 2} ; [ DW_TAG_base_type ]
-!6 = metadata !{i32 786478, metadata !47, metadata !1, metadata !"get2", metadata !"get2", metadata !"get2", i32 7, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i8 (i8)* @get2, null, null, metadata !43, i32 7} ; [ DW_TAG_subprogram ]
-!7 = metadata !{i32 786478, metadata !47, metadata !1, metadata !"get3", metadata !"get3", metadata !"get3", i32 10, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i8 (i8)* @get3, null, null, metadata !44, i32 10} ; [ DW_TAG_subprogram ]
-!8 = metadata !{i32 786478, metadata !47, metadata !1, metadata !"get4", metadata !"get4", metadata !"get4", i32 13, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i8 (i8)* @get4, null, null, metadata !45, i32 13} ; [ DW_TAG_subprogram ]
-!9 = metadata !{i32 786478, metadata !47, metadata !1, metadata !"get5", metadata !"get5", metadata !"get5", i32 16, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i8 (i8)* @get5, null, null, metadata !46, i32 16} ; [ DW_TAG_subprogram ]
-!10 = metadata !{i32 786689, metadata !0, metadata !"a", metadata !1, i32 4, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
-!11 = metadata !{i32 786688, metadata !12, metadata !"b", metadata !1, i32 4, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
-!12 = metadata !{i32 786443, metadata !47, metadata !0, i32 4, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
-!13 = metadata !{i32 786484, i32 0, metadata !1, metadata !"x1", metadata !"x1", metadata !"", metadata !1, i32 3, metadata !5, i1 true, i1 true, i8* @x1, null} ; [ DW_TAG_variable ]
-!14 = metadata !{i32 786484, i32 0, metadata !1, metadata !"x2", metadata !"x2", metadata !"", metadata !1, i32 6, metadata !5, i1 true, i1 true, i8* @x2, null} ; [ DW_TAG_variable ]
-!15 = metadata !{i32 786484, i32 0, metadata !1, metadata !"x3", metadata !"x3", metadata !"", metadata !1, i32 9, metadata !5, i1 true, i1 true, i8* @x3, null} ; [ DW_TAG_variable ]
-!16 = metadata !{i32 786484, i32 0, metadata !1, metadata !"x4", metadata !"x4", metadata !"", metadata !1, i32 12, metadata !5, i1 true, i1 true, i8* @x4, null} ; [ DW_TAG_variable ]
-!17 = metadata !{i32 786484, i32 0, metadata !1, metadata !"x5", metadata !"x5", metadata !"", metadata !1, i32 15, metadata !5, i1 false, i1 true, i8* @x5, null} ; [ DW_TAG_variable ]
-!18 = metadata !{i32 786689, metadata !6, metadata !"a", metadata !1, i32 7, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
-!19 = metadata !{i32 786688, metadata !20, metadata !"b", metadata !1, i32 7, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
-!20 = metadata !{i32 786443, metadata !47, metadata !6, i32 7, i32 0, i32 1} ; [ DW_TAG_lexical_block ]
-!21 = metadata !{i32 786689, metadata !7, metadata !"a", metadata !1, i32 10, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
-!22 = metadata !{i32 786688, metadata !23, metadata !"b", metadata !1, i32 10, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
-!23 = metadata !{i32 786443, metadata !47, metadata !7, i32 10, i32 0, i32 2} ; [ DW_TAG_lexical_block ]
-!24 = metadata !{i32 786689, metadata !8, metadata !"a", metadata !1, i32 13, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
-!25 = metadata !{i32 786688, metadata !26, metadata !"b", metadata !1, i32 13, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
-!26 = metadata !{i32 786443, metadata !47, metadata !8, i32 13, i32 0, i32 3} ; [ DW_TAG_lexical_block ]
-!27 = metadata !{i32 786689, metadata !9, metadata !"a", metadata !1, i32 16, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
-!28 = metadata !{i32 786688, metadata !29, metadata !"b", metadata !1, i32 16, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
-!29 = metadata !{i32 786443, metadata !47, metadata !9, i32 16, i32 0, i32 4} ; [ DW_TAG_lexical_block ]
+!5 = metadata !{metadata !"0x24\00_Bool\000\008\008\000\000\002", metadata !47, metadata !1} ; [ DW_TAG_base_type ]
+!6 = metadata !{metadata !"0x2e\00get2\00get2\00get2\007\000\001\000\006\00256\001\007", metadata !47, metadata !1, metadata !3, null, i8 (i8)* @get2, null, null, metadata !43} ; [ DW_TAG_subprogram ]
+!7 = metadata !{metadata !"0x2e\00get3\00get3\00get3\0010\000\001\000\006\00256\001\0010", metadata !47, metadata !1, metadata !3, null, i8 (i8)* @get3, null, null, metadata !44} ; [ DW_TAG_subprogram ]
+!8 = metadata !{metadata !"0x2e\00get4\00get4\00get4\0013\000\001\000\006\00256\001\0013", metadata !47, metadata !1, metadata !3, null, i8 (i8)* @get4, null, null, metadata !45} ; [ DW_TAG_subprogram ]
+!9 = metadata !{metadata !"0x2e\00get5\00get5\00get5\0016\000\001\000\006\00256\001\0016", metadata !47, metadata !1, metadata !3, null, i8 (i8)* @get5, null, null, metadata !46} ; [ DW_TAG_subprogram ]
+!10 = metadata !{metadata !"0x101\00a\004\000", metadata !0, metadata !1, metadata !5} ; [ DW_TAG_arg_variable ]
+!11 = metadata !{metadata !"0x100\00b\004\000", metadata !12, metadata !1, metadata !5} ; [ DW_TAG_auto_variable ]
+!12 = metadata !{metadata !"0xb\004\000\000", metadata !47, metadata !0} ; [ DW_TAG_lexical_block ]
+!13 = metadata !{metadata !"0x34\00x1\00x1\00\003\001\001", metadata !1, metadata !1, metadata !5, i8* @x1, null} ; [ DW_TAG_variable ]
+!14 = metadata !{metadata !"0x34\00x2\00x2\00\006\001\001", metadata !1, metadata !1, metadata !5, i8* @x2, null} ; [ DW_TAG_variable ]
+!15 = metadata !{metadata !"0x34\00x3\00x3\00\009\001\001", metadata !1, metadata !1, metadata !5, i8* @x3, null} ; [ DW_TAG_variable ]
+!16 = metadata !{metadata !"0x34\00x4\00x4\00\0012\001\001", metadata !1, metadata !1, metadata !5, i8* @x4, null} ; [ DW_TAG_variable ]
+!17 = metadata !{metadata !"0x34\00x5\00x5\00\0015\000\001", metadata !1, metadata !1, metadata !5, i8* @x5, null} ; [ DW_TAG_variable ]
+!18 = metadata !{metadata !"0x101\00a\007\000", metadata !6, metadata !1, metadata !5} ; [ DW_TAG_arg_variable ]
+!19 = metadata !{metadata !"0x100\00b\007\000", metadata !20, metadata !1, metadata !5} ; [ DW_TAG_auto_variable ]
+!20 = metadata !{metadata !"0xb\007\000\001", metadata !47, metadata !6} ; [ DW_TAG_lexical_block ]
+!21 = metadata !{metadata !"0x101\00a\0010\000", metadata !7, metadata !1, metadata !5} ; [ DW_TAG_arg_variable ]
+!22 = metadata !{metadata !"0x100\00b\0010\000", metadata !23, metadata !1, metadata !5} ; [ DW_TAG_auto_variable ]
+!23 = metadata !{metadata !"0xb\0010\000\002", metadata !47, metadata !7} ; [ DW_TAG_lexical_block ]
+!24 = metadata !{metadata !"0x101\00a\0013\000", metadata !8, metadata !1, metadata !5} ; [ DW_TAG_arg_variable ]
+!25 = metadata !{metadata !"0x100\00b\0013\000", metadata !26, metadata !1, metadata !5} ; [ DW_TAG_auto_variable ]
+!26 = metadata !{metadata !"0xb\0013\000\003", metadata !47, metadata !8} ; [ DW_TAG_lexical_block ]
+!27 = metadata !{metadata !"0x101\00a\0016\000", metadata !9, metadata !1, metadata !5} ; [ DW_TAG_arg_variable ]
+!28 = metadata !{metadata !"0x100\00b\0016\000", metadata !29, metadata !1, metadata !5} ; [ DW_TAG_auto_variable ]
+!29 = metadata !{metadata !"0xb\0016\000\004", metadata !47, metadata !9} ; [ DW_TAG_lexical_block ]
 !30 = metadata !{i32 4, i32 0, metadata !0, null}
 !31 = metadata !{i32 4, i32 0, metadata !12, null}
 !32 = metadata !{i32 7, i32 0, metadata !6, null}
@@ -127,4 +127,4 @@ entry:
 !46 = metadata !{metadata !27, metadata !28}
 !47 = metadata !{metadata !"foo.c", metadata !"/tmp/"}
 !48 = metadata !{}
-!49 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!49 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}

@@ -14,9 +14,9 @@ entry:
   %2 = alloca i64                                 ; <i64*> [#uses=1]
   %3 = alloca i64                                 ; <i64*> [#uses=6]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata !{i8** %s1_addr}, metadata !0, metadata !{i32 786690}), !dbg !7
+  call void @llvm.dbg.declare(metadata !{i8** %s1_addr}, metadata !0, metadata !{metadata !"0x102"}), !dbg !7
   store i8* %s1, i8** %s1_addr
-  call void @llvm.dbg.declare(metadata !{[0 x i8]** %str.0}, metadata !8, metadata !{i32 786690}), !dbg !7
+  call void @llvm.dbg.declare(metadata !{[0 x i8]** %str.0}, metadata !8, metadata !{metadata !"0x102"}), !dbg !7
   %4 = call i8* @llvm.stacksave(), !dbg !7        ; <i8*> [#uses=1]
   store i8* %4, i8** %saved_stack.1, align 8, !dbg !7
   %5 = load i8** %s1_addr, align 8, !dbg !13      ; <i8*> [#uses=1]
@@ -66,21 +66,21 @@ declare i64 @strlen(i8*) nounwind readonly
 
 declare void @llvm.stackrestore(i8*) nounwind
 
-!0 = metadata !{i32 459009, metadata !1, metadata !"s1", metadata !2, i32 2, metadata !6} ; [ DW_TAG_arg_variable ]
-!1 = metadata !{i32 458798, i32 0, metadata !2, metadata !"foo", metadata !"foo", metadata !"foo", i32 2, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 0, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
-!2 = metadata !{i32 458769, metadata !17, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, metadata !18, metadata !18, null, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
-!3 = metadata !{i32 458773, null, metadata !2, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = metadata !{metadata !"0x101\00s1\002\000", metadata !1, metadata !2, metadata !6} ; [ DW_TAG_arg_variable ]
+!1 = metadata !{metadata !"0x2e\00foo\00foo\00foo\002\000\001\000\006\000\000\000", i32 0, metadata !2, metadata !3, null, null, null, null, null} ; [ DW_TAG_subprogram ]
+!2 = metadata !{metadata !"0x11\001\004.2.1 (Based on Apple Inc. build 5658) (LLVM build)\001\00\000\00\000", metadata !17, metadata !18, metadata !18, null, null, null} ; [ DW_TAG_compile_unit ]
+!3 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", null, metadata !2, null, metadata !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{metadata !5, metadata !6}
-!5 = metadata !{i32 458788, null, metadata !2, metadata !"char", i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]
-!6 = metadata !{i32 458767, null, metadata !2, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !5} ; [ DW_TAG_pointer_type ]
+!5 = metadata !{metadata !"0x24\00char\000\008\008\000\000\006", null, metadata !2} ; [ DW_TAG_base_type ]
+!6 = metadata !{metadata !"0xf\00\000\0064\0064\000\000", null, metadata !2, metadata !5} ; [ DW_TAG_pointer_type ]
 !7 = metadata !{i32 2, i32 0, metadata !1, null}
-!8 = metadata !{i32 459008, metadata !1, metadata !"str.0", metadata !2, i32 3, metadata !9} ; [ DW_TAG_auto_variable ]
-!9 = metadata !{i32 458767, null, metadata !2, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 64, metadata !10} ; [ DW_TAG_pointer_type ]
-!10 = metadata !{i32 458753, null, metadata !2, metadata !"", i32 0, i64 8, i64 8, i64 0, i32 0, metadata !5, metadata !11, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 8, align 8, offset 0] [from char]
+!8 = metadata !{metadata !"0x100\00str.0\003\000", metadata !1, metadata !2, metadata !9} ; [ DW_TAG_auto_variable ]
+!9 = metadata !{metadata !"0xf\00\000\0064\0064\000\0064", null, metadata !2, metadata !10} ; [ DW_TAG_pointer_type ]
+!10 = metadata !{metadata !"0x1\00\000\008\008\000\000", null, metadata !2, metadata !5, metadata !11, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 8, align 8, offset 0] [from char]
 !11 = metadata !{metadata !12}
-!12 = metadata !{i32 458785, i64 0, i64 1}        ; [ DW_TAG_subrange_type ]
+!12 = metadata !{metadata !"0x21\000\001"}        ; [ DW_TAG_subrange_type ]
 !13 = metadata !{i32 3, i32 0, metadata !14, null}
-!14 = metadata !{i32 458763, metadata !17, metadata !1, i32 0, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
+!14 = metadata !{metadata !"0xb\000\000\000", metadata !17, metadata !1} ; [ DW_TAG_lexical_block ]
 !15 = metadata !{i32 4, i32 0, metadata !14, null}
 !16 = metadata !{i32 5, i32 0, metadata !14, null}
 !17 = metadata !{metadata !"vla.c", metadata !"/tmp/"}

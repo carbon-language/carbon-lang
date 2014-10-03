@@ -47,8 +47,8 @@ entry:
   %k.addr = alloca i32, align 4
   %k2 = alloca i32, align 4
   store i32 %k, i32* %k.addr, align 4
-  call void @llvm.dbg.declare(metadata !{i32* %k.addr}, metadata !13, metadata !{i32 786690}), !dbg !14
-  call void @llvm.dbg.declare(metadata !{i32* %k2}, metadata !15, metadata !{i32 786690}), !dbg !16
+  call void @llvm.dbg.declare(metadata !{i32* %k.addr}, metadata !13, metadata !{metadata !"0x102"}), !dbg !14
+  call void @llvm.dbg.declare(metadata !{i32* %k2}, metadata !15, metadata !{metadata !"0x102"}), !dbg !16
   %0 = load i32* %k.addr, align 4, !dbg !16
   %call = call i32 @_Z8test_exti(i32 %0), !dbg !16
   store i32 %call, i32* %k2, align 4, !dbg !16
@@ -103,7 +103,7 @@ catch.dispatch:                                   ; preds = %lpad
   br i1 %matches, label %catch, label %eh.resume, !dbg !23
 
 catch:                                            ; preds = %catch.dispatch
-  call void @llvm.dbg.declare(metadata !{i32* %e}, metadata !24, metadata !{i32 786690}), !dbg !25
+  call void @llvm.dbg.declare(metadata !{i32* %e}, metadata !24, metadata !{metadata !"0x102"}), !dbg !25
   %exn = load i8** %exn.slot, !dbg !23
   %5 = call i8* @__cxa_begin_catch(i8* %exn) #2, !dbg !23
   %6 = bitcast i8* %5 to i32*, !dbg !23
@@ -140,35 +140,35 @@ attributes #2 = { nounwind }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!31}
 
-!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [<unknown>] [DW_LANG_C_plus_plus]
+!0 = metadata !{metadata !"0x11\004\00clang version 3.3 \000\00\000\00\000", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [<unknown>] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"<unknown>", metadata !""}
 !2 = metadata !{i32 0}
 !3 = metadata !{metadata !4, metadata !10}
-!4 = metadata !{i32 786478, metadata !5, metadata !6, metadata !"test", metadata !"test", metadata !"_Z4testi", i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @_Z4testi, null, null, metadata !2, i32 4} ; [ DW_TAG_subprogram ] [line 4] [def] [test]
+!4 = metadata !{metadata !"0x2e\00test\00test\00_Z4testi\004\000\001\000\006\00256\000\004", metadata !5, metadata !6, metadata !7, null, i32 (i32)* @_Z4testi, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 4] [def] [test]
 !5 = metadata !{metadata !"test.cpp", metadata !""}
-!6 = metadata !{i32 786473, metadata !5}          ; [ DW_TAG_file_type ] [test.cpp]
-!7 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!6 = metadata !{metadata !"0x29", metadata !5}          ; [ DW_TAG_file_type ] [test.cpp]
+!7 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9, metadata !9}
-!9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!10 = metadata !{i32 786478, metadata !5, metadata !6, metadata !"test2", metadata !"test2", metadata !"_Z5test2v", i32 11, metadata !11, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 ()* @_Z5test2v, null, null, metadata !2, i32 11} ; [ DW_TAG_subprogram ] [line 11] [def] [test2]
-!11 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !12, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!9 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!10 = metadata !{metadata !"0x2e\00test2\00test2\00_Z5test2v\0011\000\001\000\006\00256\000\0011", metadata !5, metadata !6, metadata !11, null, i32 ()* @_Z5test2v, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 11] [def] [test2]
+!11 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !12, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !12 = metadata !{metadata !9}
-!13 = metadata !{i32 786689, metadata !4, metadata !"k", metadata !6, i32 16777220, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [k] [line 4]
+!13 = metadata !{metadata !"0x101\00k\0016777220\000", metadata !4, metadata !6, metadata !9} ; [ DW_TAG_arg_variable ] [k] [line 4]
 !14 = metadata !{i32 4, i32 0, metadata !4, null}
-!15 = metadata !{i32 786688, metadata !4, metadata !"k2", metadata !6, i32 5, metadata !9, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [k2] [line 5]
+!15 = metadata !{metadata !"0x100\00k2\005\000", metadata !4, metadata !6, metadata !9} ; [ DW_TAG_auto_variable ] [k2] [line 5]
 !16 = metadata !{i32 5, i32 0, metadata !4, null}
 !17 = metadata !{i32 6, i32 0, metadata !4, null}
 !18 = metadata !{i32 7, i32 0, metadata !4, null}
 !19 = metadata !{i32 8, i32 0, metadata !4, null}
 !20 = metadata !{i32 9, i32 0, metadata !4, null}
 !21 = metadata !{i32 14, i32 0, metadata !22, null}
-!22 = metadata !{i32 786443, metadata !5, metadata !10, i32 13, i32 0, i32 0} ; [ DW_TAG_lexical_block ] [test.cpp]
+!22 = metadata !{metadata !"0xb\0013\000\000", metadata !5, metadata !10} ; [ DW_TAG_lexical_block ] [test.cpp]
 !23 = metadata !{i32 15, i32 0, metadata !22, null}
-!24 = metadata !{i32 786688, metadata !10, metadata !"e", metadata !6, i32 16, metadata !9, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [e] [line 16]
+!24 = metadata !{metadata !"0x100\00e\0016\000", metadata !10, metadata !6, metadata !9} ; [ DW_TAG_auto_variable ] [e] [line 16]
 !25 = metadata !{i32 16, i32 0, metadata !10, null}
 !26 = metadata !{i32 17, i32 0, metadata !27, null}
-!27 = metadata !{i32 786443, metadata !5, metadata !10, i32 16, i32 0, i32 1} ; [ DW_TAG_lexical_block ] [test.cpp]
+!27 = metadata !{metadata !"0xb\0016\000\001", metadata !5, metadata !10} ; [ DW_TAG_lexical_block ] [test.cpp]
 !28 = metadata !{i32 18, i32 0, metadata !27, null}
 !29 = metadata !{i32 19, i32 0, metadata !10, null}
 !30 = metadata !{i32 20, i32 0, metadata !10, null}
-!31 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!31 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
