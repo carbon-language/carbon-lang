@@ -1613,7 +1613,7 @@ the corresponding C11 operations, are:
 * ``__c11_atomic_thread_fence``
 * ``__c11_atomic_signal_fence``
 * ``__c11_atomic_is_lock_free`` (The argument is the size of the
-  ``_Atomic(...)'' object, instead of its address)
+  ``_Atomic(...)`` object, instead of its address)
 * ``__c11_atomic_store``
 * ``__c11_atomic_load``
 * ``__c11_atomic_exchange``
