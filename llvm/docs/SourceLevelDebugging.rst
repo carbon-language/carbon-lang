@@ -955,9 +955,10 @@ a C/C++ front-end would generate the following descriptors:
   ;; Define the file
   ;;
   !5 = metadata !{
-    Header(
-      i32 41               ;; Tag
-    ), ;; metadata !"0x29"
+    ; Header(
+    ;   i32 41             ;; Tag
+    ; )
+    metadata !"0x29",
     metadata !1            ;; File/directory pair
   } ; [ DW_TAG_file_type ]
 
