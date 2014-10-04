@@ -28,6 +28,8 @@ def macosx_version_min : Separate<["-"], "macosx_version_min">,
 def ios_version_min : Separate<["-"], "ios_version_min">,
      MetaVarName<"<version>">,
      HelpText<"Minimum iOS version">, Group<grp_opts>;
+def iphoneos_version_min : Separate<["-"], "iphoneos_version_min">,
+     Alias<ios_version_min>;
 def ios_simulator_version_min : Separate<["-"], "ios_simulator_version_min">,
      MetaVarName<"<version>">,
      HelpText<"Minimum iOS simulator version">, Group<grp_opts>;
