@@ -86,6 +86,9 @@ namespace ns { __declspec(dllimport) int ExternalGlobal; }
 __declspec(dllimport) auto InternalAutoTypeGlobal = Internal(); // expected-error{{'InternalAutoTypeGlobal' must have external linkage when declared 'dllimport'}}
                                                                 // expected-error@-1{{definition of dllimport data}}
 
+// Thread local variables are invalid.
+__declspec(dllimport) __thread int ThreadLocalGlobal; // expected-error{{'ThreadLocalGlobal' cannot be thread local when declared 'dllimport'}}
+
 // Import in local scope.
 __declspec(dllimport) float LocalRedecl1; // expected-note{{previous definition is here}}
 __declspec(dllimport) float LocalRedecl2; // expected-note{{previous definition is here}}

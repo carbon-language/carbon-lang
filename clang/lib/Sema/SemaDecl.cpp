@@ -9534,8 +9534,11 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
     }
   }
 
+  // Grab the dllimport or dllexport attribute off of the VarDecl.
+  const InheritableAttr *DLLAttr = getDLLAttr(VD);
+
   // Imported static data members cannot be defined out-of-line.
-  if (const DLLImportAttr *IA = VD->getAttr<DLLImportAttr>()) {
+  if (const auto *IA = dyn_cast_or_null<DLLImportAttr>(DLLAttr)) {
     if (VD->isStaticDataMember() && VD->isOutOfLine() &&
         VD->isThisDeclarationADefinition()) {
       // We allow definitions of dllimport class template static data members
@@ -9554,6 +9557,14 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
       if (!IsClassTemplateMember)
         VD->setInvalidDecl();
     }
+  }
+
+  // dllimport/dllexport variables cannot be thread local, their TLS index
+  // isn't exported with the variable.
+  if (DLLAttr && VD->getTLSKind()) {
+    Diag(VD->getLocation(), diag::err_attribute_dll_thread_local) << VD
+                                                                  << DLLAttr;
+    VD->setInvalidDecl();
   }
 
   if (UsedAttr *Attr = VD->getAttr<UsedAttr>()) {

@@ -77,6 +77,9 @@ __declspec(dllimport) extern int GlobalRedecl5; // expected-warning{{redeclarati
 // External linkage is required.
 __declspec(dllimport) static int StaticGlobal; // expected-error{{'StaticGlobal' must have external linkage when declared 'dllimport'}}
 
+// Thread local variables are invalid.
+__declspec(dllimport) __thread int ThreadLocalGlobal; // expected-error{{'ThreadLocalGlobal' cannot be thread local when declared 'dllimport'}}
+
 // Import in local scope.
 __declspec(dllimport) float LocalRedecl1; // expected-note{{previous definition is here}}
 __declspec(dllimport) float LocalRedecl2; // expected-note{{previous definition is here}}

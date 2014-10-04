@@ -49,6 +49,9 @@ __declspec(dllexport) extern int GlobalRedecl4; // expected-warning{{redeclarati
 // External linkage is required.
 __declspec(dllexport) static int StaticGlobal; // expected-error{{'StaticGlobal' must have external linkage when declared 'dllexport'}}
 
+// Thread local variables are invalid.
+__declspec(dllexport) __thread int ThreadLocalGlobal; // expected-error{{'ThreadLocalGlobal' cannot be thread local when declared 'dllexport'}}
+
 // Export in local scope.
 void functionScope() {
   __declspec(dllexport)        int LocalVarDecl; // expected-error{{'LocalVarDecl' must have external linkage when declared 'dllexport'}}
