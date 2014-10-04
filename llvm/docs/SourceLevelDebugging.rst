@@ -935,13 +935,13 @@ a C/C++ front-end would generate the following descriptors:
   ;;
   !4 = metadata !{
     ; Header(
-    ;   i32 52,                          ;; Tag
-    ;   metadata !"MyGlobal",            ;; Name
-    ;   metadata !"MyGlobal",            ;; Display Name
-    ;   metadata !"",                    ;; Linkage Name
-    ;   i32 1,                           ;; Line
-    ;   i32 0,                           ;; IsLocalToUnit
-    ;   i32 1                            ;; IsDefinition
+    ;   i32 52,                        ;; Tag
+    ;   metadata !"MyGlobal",          ;; Name
+    ;   metadata !"MyGlobal",          ;; Display Name
+    ;   metadata !"",                  ;; Linkage Name
+    ;   i32 1,                         ;; Line
+    ;   i32 0,                         ;; IsLocalToUnit
+    ;   i32 1                          ;; IsDefinition
     ; )
     metadata !"0x34\00MyGlobal\00MyGlobal\00\001\000\001",
     null,                              ;; Unused
@@ -967,14 +967,14 @@ a C/C++ front-end would generate the following descriptors:
   ;;
   !6 = metadata !{
     ; Header(
-    ;   i32 36,                         ;; Tag
-    ;   metadata !"int",                ;; Name
-    ;   i32 0,                          ;; Line
-    ;   i64 32,                         ;; Size in Bits
-    ;   i64 32,                         ;; Align in Bits
-    ;   i64 0,                          ;; Offset
-    ;   i32 0,                          ;; Flags
-    ;   i32 5                           ;; Encoding
+    ;   i32 36,                       ;; Tag
+    ;   metadata !"int",              ;; Name
+    ;   i32 0,                        ;; Line
+    ;   i64 32,                       ;; Size in Bits
+    ;   i64 32,                       ;; Align in Bits
+    ;   i64 0,                        ;; Offset
+    ;   i32 0,                        ;; Flags
+    ;   i32 5                         ;; Encoding
     ; )
     metadata !"0x24\00int\000\0032\0032\000\000\005",
     null,                             ;; Unused
@@ -1001,18 +1001,18 @@ a C/C++ front-end would generate the following descriptors:
   ;;
   !6 = metadata !{
     ; Header(
-    ;   i32 46,            ;; Tag
-    ;   metadata !"main",  ;; Name
-    ;   metadata !"main",  ;; Display name
-    ;   metadata !"",      ;; Linkage name
-    ;   i32 1,             ;; Line number
-    ;   i1 false,          ;; Is local
-    ;   i1 true,           ;; Is definition
-    ;   i32 0,             ;; Virtuality attribute, e.g. pure virtual function
-    ;   i32 0,             ;; Index into virtual table for C++ methods
-    ;   i32 256,           ;; Flags
-    ;   i1 0,              ;; True if this function is optimized
-    ;   1                  ;; Line number of the opening '{' of the function
+    ;   i32 46,             ;; Tag
+    ;   metadata !"main",   ;; Name
+    ;   metadata !"main",   ;; Display name
+    ;   metadata !"",       ;; Linkage name
+    ;   i32 1,              ;; Line number
+    ;   i1 false,           ;; Is local
+    ;   i1 true,            ;; Is definition
+    ;   i32 0,              ;; Virtuality attribute, e.g. pure virtual function
+    ;   i32 0,              ;; Index into virtual table for C++ methods
+    ;   i32 256,            ;; Flags
+    ;   i1 0,               ;; True if this function is optimized
+    ;   1                   ;; Line number of the opening '{' of the function
     ; )
     metadata !"0x2e\00main\00main\00\001\000\001\000\000\00256\000\001",
     metadata !1,            ;; File
