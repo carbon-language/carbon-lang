@@ -235,7 +235,8 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
     MCSymbolRefExpr::Create(AP.CurrentFnSym, OutContext),
     OutContext);
 
-  CSInfos.push_back(CallsiteInfo(CSOffsetExpr, ID, Locations, LiveOuts));
+  CSInfos.emplace_back(CSOffsetExpr, ID, std::move(Locations),
+                       std::move(LiveOuts));
 
   // Record the stack size of the current function.
   const MachineFrameInfo *MFI = AP.MF->getFrameInfo();

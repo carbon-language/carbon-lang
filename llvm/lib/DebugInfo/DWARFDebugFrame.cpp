@@ -202,7 +202,8 @@ public:
       SmallString<8> Augmentation, uint64_t CodeAlignmentFactor,
       int64_t DataAlignmentFactor, uint64_t ReturnAddressRegister)
       : FrameEntry(FK_CIE, Offset, Length), Version(Version),
-        Augmentation(Augmentation), CodeAlignmentFactor(CodeAlignmentFactor),
+        Augmentation(std::move(Augmentation)),
+        CodeAlignmentFactor(CodeAlignmentFactor),
         DataAlignmentFactor(DataAlignmentFactor),
         ReturnAddressRegister(ReturnAddressRegister) {}
 

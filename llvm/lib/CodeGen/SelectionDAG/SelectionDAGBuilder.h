@@ -276,9 +276,9 @@ private:
     BitTestBlock(APInt F, APInt R, const Value* SV,
                  unsigned Rg, MVT RgVT, bool E,
                  MachineBasicBlock* P, MachineBasicBlock* D,
-                 const BitTestInfo& C):
+                 BitTestInfo C):
       First(F), Range(R), SValue(SV), Reg(Rg), RegVT(RgVT), Emitted(E),
-      Parent(P), Default(D), Cases(C) { }
+      Parent(P), Default(D), Cases(std::move(C)) { }
     APInt First;
     APInt Range;
     const Value *SValue;

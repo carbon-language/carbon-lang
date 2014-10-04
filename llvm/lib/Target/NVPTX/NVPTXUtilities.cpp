@@ -90,11 +90,11 @@ static void cacheAnnotationFromMD(const Module *m, const GlobalValue *gv) {
     return;
 
   if ((*annotationCache).find(m) != (*annotationCache).end())
-    (*annotationCache)[m][gv] = tmp;
+    (*annotationCache)[m][gv] = std::move(tmp);
   else {
     global_val_annot_t tmp1;
-    tmp1[gv] = tmp;
-    (*annotationCache)[m] = tmp1;
+    tmp1[gv] = std::move(tmp);
+    (*annotationCache)[m] = std::move(tmp1);
   }
 }
 

@@ -782,7 +782,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
   return Chain;
 }
 
-static bool canUseSiblingCall(CCState ArgCCInfo,
+static bool canUseSiblingCall(const CCState &ArgCCInfo,
                               SmallVectorImpl<CCValAssign> &ArgLocs) {
   // Punt if there are any indirect or stack arguments, or if the call
   // needs the call-saved argument register R6.

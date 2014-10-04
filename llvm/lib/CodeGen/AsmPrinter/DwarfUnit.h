@@ -221,7 +221,9 @@ public:
   SmallVectorImpl<RangeSpan> &getRanges() { return CURanges; }
 
   /// addRangeList - Add an address range list to the list of range lists.
-  void addRangeList(RangeSpanList Ranges) { CURangeLists.push_back(Ranges); }
+  void addRangeList(RangeSpanList Ranges) {
+    CURangeLists.push_back(std::move(Ranges));
+  }
 
   /// getRangeLists - Get the vector of range lists.
   const SmallVectorImpl<RangeSpanList> &getRangeLists() const {

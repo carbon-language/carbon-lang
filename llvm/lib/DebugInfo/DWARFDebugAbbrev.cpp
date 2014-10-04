@@ -30,7 +30,6 @@ bool DWARFAbbreviationDeclarationSet::extract(DataExtractor Data,
   DWARFAbbreviationDeclaration AbbrDecl;
   uint32_t PrevAbbrCode = 0;
   while (AbbrDecl.extract(Data, OffsetPtr)) {
-    Decls.push_back(AbbrDecl);
     if (FirstAbbrCode == 0) {
       FirstAbbrCode = AbbrDecl.getCode();
     } else {
@@ -40,6 +39,7 @@ bool DWARFAbbreviationDeclarationSet::extract(DataExtractor Data,
       }
     }
     PrevAbbrCode = AbbrDecl.getCode();
+    Decls.push_back(std::move(AbbrDecl));
   }
   return BeginOffset != *OffsetPtr;
 }
@@ -82,7 +82,7 @@ void DWARFDebugAbbrev::extract(DataExtractor Data) {
     uint32_t CUAbbrOffset = Offset;
     if (!AbbrDecls.extract(Data, &Offset))
       break;
-    AbbrDeclSets[CUAbbrOffset] = AbbrDecls;
+    AbbrDeclSets[CUAbbrOffset] = std::move(AbbrDecls);
   }
 }
 

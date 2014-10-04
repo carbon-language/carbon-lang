@@ -459,11 +459,9 @@ private:
   void CounterPropagateAddr(MachineInstr *MI, unsigned Addr) const {
     MI->getOperand(0).setImm(Addr + MI->getOperand(0).getImm());
   }
-  void CounterPropagateAddr(std::set<MachineInstr *> MIs, unsigned Addr)
-      const {
-    for (std::set<MachineInstr *>::iterator It = MIs.begin(), E = MIs.end();
-        It != E; ++It) {
-      MachineInstr *MI = *It;
+  void CounterPropagateAddr(const std::set<MachineInstr *> &MIs,
+                            unsigned Addr) const {
+    for (MachineInstr *MI : MIs) {
       CounterPropagateAddr(MI, Addr);
     }
   }
@@ -543,7 +541,7 @@ public:
           std::pair<unsigned, std::set<MachineInstr *> > Pair(CfCount,
               std::set<MachineInstr *>());
           Pair.second.insert(MIb);
-          LoopStack.push_back(Pair);
+          LoopStack.push_back(std::move(Pair));
           MI->eraseFromParent();
           CfCount++;
           break;
@@ -551,7 +549,7 @@ public:
         case AMDGPU::ENDLOOP: {
           CFStack.popLoop();
           std::pair<unsigned, std::set<MachineInstr *> > Pair =
-              LoopStack.back();
+              std::move(LoopStack.back());
           LoopStack.pop_back();
           CounterPropagateAddr(Pair.second, CfCount);
           BuildMI(MBB, MI, MBB.findDebugLoc(MI), getHWInstrDesc(CF_END_LOOP))

@@ -91,7 +91,7 @@ struct RebasedConstantInfo {
   Constant *Offset;
 
   RebasedConstantInfo(ConstantUseListType &&Uses, Constant *Offset)
-    : Uses(Uses), Offset(Offset) { }
+    : Uses(std::move(Uses)), Offset(Offset) { }
 };
 
 /// \brief A base constant and all its rebased constants.
@@ -395,7 +395,7 @@ void ConstantHoisting::findAndMakeBaseConstant(ConstCandVecType::iterator S,
     ConstInfo.RebasedConstants.push_back(
       RebasedConstantInfo(std::move(ConstCand->Uses), Offset));
   }
-  ConstantVec.push_back(ConstInfo);
+  ConstantVec.push_back(std::move(ConstInfo));
 }
 
 /// \brief Finds and combines constant candidates that can be easily

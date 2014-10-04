@@ -1881,7 +1881,8 @@ ExpandBVWithShuffles(SDNode *Node, SelectionDAG &DAG,
                                          ShuffleVec.data());
         else if (!TLI.isShuffleMaskLegal(ShuffleVec, VT))
           return false;
-        NewIntermedVals.push_back(std::make_pair(Shuffle, FinalIndices));
+        NewIntermedVals.push_back(
+            std::make_pair(Shuffle, std::move(FinalIndices)));
       }
 
       // If we had an odd number of defined values, then append the last

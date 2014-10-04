@@ -2617,12 +2617,12 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
 
   BitTestBlock BTB(lowBound, cmpRange, SV,
                    -1U, MVT::Other, (CR.CaseBB == SwitchBB),
-                   CR.CaseBB, Default, BTC);
+                   CR.CaseBB, Default, std::move(BTC));
 
   if (CR.CaseBB == SwitchBB)
     visitBitTestHeader(BTB, SwitchBB);
 
-  BitTestCases.push_back(BTB);
+  BitTestCases.push_back(std::move(BTB));
 
   return true;
 }
