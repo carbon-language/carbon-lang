@@ -91,12 +91,47 @@ public:
     return CGF.EmitLoadOfLValue(LV, Loc).getScalarVal();
   }
 
+  void EmitLValueAlignmentAssumption(const Expr *E, Value *V) {
+    const AlignValueAttr *AVAttr = nullptr;
+    if (const auto *DRE = dyn_cast<DeclRefExpr>(E)) {
+      const ValueDecl *VD = DRE->getDecl();
+
+      if (VD->getType()->isReferenceType()) {
+        if (const auto *TTy =
+            dyn_cast<TypedefType>(VD->getType().getNonReferenceType()))
+          AVAttr = TTy->getDecl()->getAttr<AlignValueAttr>();
+      } else {
+        // Assumptions for function parameters are emitted at the start of the
+        // function, so there is no need to repeat that here.
+        if (isa<ParmVarDecl>(VD))
+          return;
+
+        AVAttr = VD->getAttr<AlignValueAttr>();
+      }
+    }
+
+    if (!AVAttr)
+      if (const auto *TTy =
+          dyn_cast<TypedefType>(E->getType()))
+        AVAttr = TTy->getDecl()->getAttr<AlignValueAttr>();
+
+    if (!AVAttr)
+      return;
+
+    Value *AlignmentValue = CGF.EmitScalarExpr(AVAttr->getAlignment());
+    llvm::ConstantInt *AlignmentCI = cast<llvm::ConstantInt>(AlignmentValue);
+    CGF.EmitAlignmentAssumption(V, AlignmentCI->getZExtValue());
+  }
+
   /// EmitLoadOfLValue - Given an expression with complex type that represents a
   /// value l-value, this method emits the address of the l-value, then loads
   /// and returns the result.
   Value *EmitLoadOfLValue(const Expr *E) {
-    return EmitLoadOfLValue(EmitCheckedLValue(E, CodeGenFunction::TCK_Load),
-                            E->getExprLoc());
+    Value *V = EmitLoadOfLValue(EmitCheckedLValue(E, CodeGenFunction::TCK_Load),
+                                E->getExprLoc());
+
+    EmitLValueAlignmentAssumption(E, V);
+    return V;
   }
 
   /// EmitConversionToBool - Convert the specified expression value to a
@@ -286,7 +321,10 @@ public:
     if (E->getCallReturnType()->isReferenceType())
       return EmitLoadOfLValue(E);
 
-    return CGF.EmitCallExpr(E).getScalarVal();
+    Value *V = CGF.EmitCallExpr(E).getScalarVal();
+
+    EmitLValueAlignmentAssumption(E, V);
+    return V;
   }
 
   Value *VisitStmtExpr(const StmtExpr *E);
