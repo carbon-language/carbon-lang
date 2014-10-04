@@ -27,7 +27,7 @@
 @   value is the quotient, the remainder is placed in the variable.
 
 	.p2align 2
-DEFINE_COMPILERRT_FUNCTION(__udivmodsi4)
+DEFINE_COMPILERRT_THUMB_FUNCTION(__udivmodsi4)
 #if __ARM_ARCH_EXT_IDIV__
 	tst     r1, r1
 	beq     LOCAL_LABEL(divby0)

@@ -30,7 +30,7 @@
 @   Calculate and return the remainder of the (signed) division.
 
 	.p2align 3
-DEFINE_COMPILERRT_FUNCTION(__modsi3)
+DEFINE_COMPILERRT_THUMB_FUNCTION(__modsi3)
 #if __ARM_ARCH_EXT_IDIV__
 	tst     r1, r1
 	beq     LOCAL_LABEL(divzero)

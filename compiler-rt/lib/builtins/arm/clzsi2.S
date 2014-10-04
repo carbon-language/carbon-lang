@@ -20,7 +20,7 @@
 #endif
 
 	.p2align	2
-DEFINE_COMPILERRT_FUNCTION(__clzsi2)
+DEFINE_COMPILERRT_THUMB_FUNCTION(__clzsi2)
 #ifdef __ARM_FEATURE_CLZ
 	clz	r0, r0
 	JMP(lr)
