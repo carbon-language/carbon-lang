@@ -383,27 +383,27 @@ private:
     assert(MacroLoc.isFileID());
 
     do {
-      ASTContext::ParentVector Parents = Context.getParents(Start);
+      const auto &Parents = Context.getParents(Start);
       if (Parents.empty())
         return false;
       assert(Parents.size() == 1 &&
              "Found an ancestor with more than one parent!");
 
-      ASTContext::ParentVector::const_iterator I = Parents.begin();
+      const ast_type_traits::DynTypedNode &Parent = Parents[0];
 
       SourceLocation Loc;
-      if (const Decl *D = I->get<Decl>())
+      if (const Decl *D = Parent.get<Decl>())
         Loc = D->getLocStart();
-      else if (const Stmt *S = I->get<Stmt>())
+      else if (const Stmt *S = Parent.get<Stmt>())
         Loc = S->getLocStart();
       else
         llvm_unreachable("Expected to find Decl or Stmt containing ancestor");
 
       if (!expandsFrom(Loc, MacroLoc)) {
-        Result = *I;
+        Result = Parent;
         return true;
       }
-      Start = *I;
+      Start = Parent;
     } while (1);
 
     llvm_unreachable("findContainingAncestor");
