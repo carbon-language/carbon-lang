@@ -50,7 +50,8 @@ void DwarfCompileUnit::addLocalLabelAddress(DIE &Die,
                      : new (DIEValueAllocator) DIEInteger(0));
 }
 
-unsigned DwarfCompileUnit::getOrCreateSourceID(StringRef FileName, StringRef DirName) {
+unsigned DwarfCompileUnit::getOrCreateSourceID(StringRef FileName,
+                                               StringRef DirName) {
   // If we print assembly, we can't separate .file entries according to
   // compile units. Thus all files will belong to the default compile unit.
 
