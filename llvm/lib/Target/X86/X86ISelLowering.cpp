@@ -11532,37 +11532,6 @@ static SDValue LowerVectorIntExtend(SDValue Op, const X86Subtarget *Subtarget,
   if (!DAG.getTargetLoweringInfo().isTypeLegal(NVT))
     return SDValue();
 
-  // Simplify the operand as it's prepared to be fed into shuffle.
-  unsigned SignificantBits = NVT.getSizeInBits() >> Shift;
-  if (V1.getOpcode() == ISD::BITCAST &&
-      V1.getOperand(0).getOpcode() == ISD::SCALAR_TO_VECTOR &&
-      V1.getOperand(0).getOperand(0).getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
-      V1.getOperand(0).getOperand(0)
-        .getSimpleValueType().getSizeInBits() == SignificantBits) {
-    // (bitcast (sclr2vec (ext_vec_elt x))) -> (bitcast x)
-    SDValue V = V1.getOperand(0).getOperand(0).getOperand(0);
-    ConstantSDNode *CIdx =
-      dyn_cast<ConstantSDNode>(V1.getOperand(0).getOperand(0).getOperand(1));
-    // If it's foldable, i.e. normal load with single use, we will let code
-    // selection to fold it. Otherwise, we will short the conversion sequence.
-    if (CIdx && CIdx->getZExtValue() == 0 &&
-        (!ISD::isNormalLoad(V.getNode()) || !V.hasOneUse())) {
-      MVT FullVT = V.getSimpleValueType();
-      MVT V1VT = V1.getSimpleValueType();
-      if (FullVT.getSizeInBits() > V1VT.getSizeInBits()) {
-        // The "ext_vec_elt" node is wider than the result node.
-        // In this case we should extract subvector from V.
-        // (bitcast (sclr2vec (ext_vec_elt x))) -> (bitcast (extract_subvector x)).
-        unsigned Ratio = FullVT.getSizeInBits() / V1VT.getSizeInBits();
-        MVT SubVecVT = MVT::getVectorVT(FullVT.getVectorElementType(),
-                                        FullVT.getVectorNumElements()/Ratio);
-        V = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVecVT, V,
-                        DAG.getIntPtrConstant(0));
-      }
-      V1 = DAG.getNode(ISD::BITCAST, DL, V1VT, V);
-    }
-  }
-
   return DAG.getNode(ISD::BITCAST, DL, VT,
                      DAG.getNode(X86ISD::VZEXT, DL, NVT, V1));
 }
@@ -24620,18 +24589,48 @@ static SDValue PerformSubCombine(SDNode *N, SelectionDAG &DAG,
 
 /// performVZEXTCombine - Performs build vector combines
 static SDValue performVZEXTCombine(SDNode *N, SelectionDAG &DAG,
-                                        TargetLowering::DAGCombinerInfo &DCI,
-                                        const X86Subtarget *Subtarget) {
+                                   TargetLowering::DAGCombinerInfo &DCI,
+                                   const X86Subtarget *Subtarget) {
+  SDLoc DL(N);
+  MVT VT = N->getSimpleValueType(0);
+  SDValue Op = N->getOperand(0);
+  MVT OpVT = Op.getSimpleValueType();
+  MVT OpEltVT = OpVT.getVectorElementType();
+
   // (vzext (bitcast (vzext (x)) -> (vzext x)
-  SDValue In = N->getOperand(0);
-  while (In.getOpcode() == ISD::BITCAST)
-    In = In.getOperand(0);
+  SDValue V = Op;
+  while (V.getOpcode() == ISD::BITCAST)
+    V = V.getOperand(0);
 
-  if (In.getOpcode() != X86ISD::VZEXT)
-    return SDValue();
+  if (V != Op && V.getOpcode() == X86ISD::VZEXT)
+    return DAG.getNode(X86ISD::VZEXT, DL, VT, V.getOperand(0));
 
-  return DAG.getNode(X86ISD::VZEXT, SDLoc(N), N->getValueType(0),
-                     In.getOperand(0));
+  // Check if we can bypass extracting and re-inserting an element of an input
+  // vector. Essentialy:
+  // (bitcast (sclr2vec (ext_vec_elt x))) -> (bitcast x)
+  unsigned InputBits = OpEltVT.getSizeInBits() * VT.getVectorNumElements();
+  if (V.getOpcode() == ISD::SCALAR_TO_VECTOR &&
+      V.getOperand(0).getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
+      V.getOperand(0).getSimpleValueType().getSizeInBits() == InputBits) {
+    SDValue ExtractedV = V.getOperand(0);
+    SDValue OrigV = ExtractedV.getOperand(0);
+    if (auto *ExtractIdx = dyn_cast<ConstantSDNode>(ExtractedV.getOperand(1)))
+      if (ExtractIdx->getZExtValue() == 0) {
+        MVT OrigVT = OrigV.getSimpleValueType();
+        // Extract a subvector if necessary...
+        if (OrigVT.getSizeInBits() > OpVT.getSizeInBits()) {
+          int Ratio = OrigVT.getSizeInBits() / OpVT.getSizeInBits();
+          OrigVT = MVT::getVectorVT(OrigVT.getVectorElementType(),
+                                    OrigVT.getVectorNumElements() / Ratio);
+          OrigV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, OrigVT, OrigV,
+                              DAG.getIntPtrConstant(0));
+        }
+        Op = DAG.getNode(ISD::BITCAST, DL, OpVT, OrigV);
+        return DAG.getNode(X86ISD::VZEXT, DL, VT, Op);
+      }
+  }
+
+  return SDValue();
 }
 
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
