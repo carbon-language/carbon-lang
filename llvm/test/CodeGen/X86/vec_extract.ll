@@ -1,5 +1,7 @@
 ; RUN: llc < %s -mcpu=corei7 -march=x86 -mattr=+sse2,-sse4.1 | FileCheck %s
 
+target triple = "x86_64-unknown-linux-gnu"
+
 define void @test1(<4 x float>* %F, float* %f) nounwind {
 ; CHECK-LABEL: test1:
 ; CHECK:       # BB#0: # %entry
