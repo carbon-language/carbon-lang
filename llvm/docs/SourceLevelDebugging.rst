@@ -887,7 +887,7 @@ a C/C++ front-end would generate the following descriptors:
   ;;
   ;; Define the global itself.
   ;;
-  %MyGlobal = global int 100
+  @MyGlobal = global i32 100, align 4
   ...
   ;;
   ;; List of debug info of globals
