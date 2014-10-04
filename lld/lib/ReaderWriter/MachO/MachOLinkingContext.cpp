@@ -357,6 +357,19 @@ bool MachOLinkingContext::pathExists(StringRef path) const {
   return _existingPaths.find(key) != _existingPaths.end();
 }
 
+bool MachOLinkingContext::fileExists(StringRef path) const {
+  bool found = pathExists(path);
+  // Log search misses.
+  if (!found)
+    addInputFileNotFound(path);
+
+  // When testing, file is never opened, so logging is done here.
+  if (_testingFileUsage && found)
+    addInputFileDependency(path);
+
+  return found;
+}
+
 void MachOLinkingContext::setSysLibRoots(const StringRefVector &paths) {
   _syslibRoots = paths;
 }
@@ -426,7 +439,7 @@ MachOLinkingContext::searchDirForLibrary(StringRef path,
     // A request ending in .o is special: just search for the file directly.
     fullPath.assign(path);
     llvm::sys::path::append(fullPath, libName);
-    if (pathExists(fullPath))
+    if (fileExists(fullPath))
       return fullPath.str().copy(_allocator);
     return make_error_code(llvm::errc::no_such_file_or_directory);
   }
@@ -434,13 +447,13 @@ MachOLinkingContext::searchDirForLibrary(StringRef path,
   // Search for dynamic library
   fullPath.assign(path);
   llvm::sys::path::append(fullPath, Twine("lib") + libName + ".dylib");
-  if (pathExists(fullPath))
+  if (fileExists(fullPath))
     return fullPath.str().copy(_allocator);
 
   // If not, try for a static library
   fullPath.assign(path);
   llvm::sys::path::append(fullPath, Twine("lib") + libName + ".a");
-  if (pathExists(fullPath))
+  if (fileExists(fullPath))
     return fullPath.str().copy(_allocator);
 
   return make_error_code(llvm::errc::no_such_file_or_directory);
@@ -465,7 +478,7 @@ ErrorOr<StringRef> MachOLinkingContext::findPathForFramework(StringRef fwName) c
   for (StringRef dir : frameworkDirs()) {
     fullPath.assign(dir);
     llvm::sys::path::append(fullPath, Twine(fwName) + ".framework", fwName);
-    if (pathExists(fullPath))
+    if (fileExists(fullPath))
       return fullPath.str().copy(_allocator);
   }
 
@@ -519,6 +532,8 @@ bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
         addDeadStripRoot(symbol.getKey());
     }
   }
+
+  addOutputFileDependency(outputPath());
 
   return true;
 }
@@ -690,6 +705,53 @@ std::string MachOLinkingContext::demangle(StringRef symbolName) const {
 #endif
 
   return symbolName;
+}
+
+std::error_code MachOLinkingContext::createDependencyFile(StringRef path) {
+  std::error_code ec;
+  _dependencyInfo = std::unique_ptr<llvm::raw_fd_ostream>(new
+                         llvm::raw_fd_ostream(path, ec, llvm::sys::fs::F_None));
+  if (ec) {
+    _dependencyInfo.reset();
+    return ec;
+  }
+
+  char linkerVersionOpcode = 0x00;
+  *_dependencyInfo << linkerVersionOpcode;
+  *_dependencyInfo << "lld";     // FIXME
+  *_dependencyInfo << '\0';
+
+  return std::error_code();
+}
+
+void MachOLinkingContext::addInputFileDependency(StringRef path) const {
+  if (!_dependencyInfo)
+    return;
+
+  char inputFileOpcode = 0x10;
+  *_dependencyInfo << inputFileOpcode;
+  *_dependencyInfo << path;
+  *_dependencyInfo << '\0';
+}
+
+void MachOLinkingContext::addInputFileNotFound(StringRef path) const {
+  if (!_dependencyInfo)
+    return;
+
+  char inputFileOpcode = 0x11;
+  *_dependencyInfo << inputFileOpcode;
+  *_dependencyInfo << path;
+  *_dependencyInfo << '\0';
+}
+
+void MachOLinkingContext::addOutputFileDependency(StringRef path) const {
+  if (!_dependencyInfo)
+    return;
+
+  char outputFileOpcode = 0x40;
+  *_dependencyInfo << outputFileOpcode;
+  *_dependencyInfo << path;
+  *_dependencyInfo << '\0';
 }
 
 

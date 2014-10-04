@@ -146,6 +146,9 @@ def image_base : Separate<["-"], "image_base">;
 def seg1addr : Separate<["-"], "seg1addr">, Alias<image_base>;
 def demangle : Flag<["-"], "demangle">,
      HelpText<"Demangles symbol names in errors and warnings">;
+def dependency_info : Separate<["-"], "dependency_info">,
+     MetaVarName<"<file>">,
+     HelpText<"Write binary list of files used during link">;
 
 def t : Flag<["-"], "t">,
      HelpText<"Print the names of the input files as ld processes them">;

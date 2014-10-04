@@ -30,6 +30,7 @@ std::error_code MachOFileNode::parse(const LinkingContext &ctx,
   if (std::error_code ec = getBuffer(*filePath))
     return ec;
 
+  _context.addInputFileDependency(*filePath);
   if (ctx.logInputFiles())
     diagnostics << *filePath << "\n";
 

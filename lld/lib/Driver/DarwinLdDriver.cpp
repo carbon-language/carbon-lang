@@ -100,6 +100,7 @@ static std::error_code parseExportsList(StringRef exportFilePath,
                                    MemoryBuffer::getFileOrSTDIN(exportFilePath);
   if (std::error_code ec = mb.getError())
     return ec;
+  ctx.addInputFileDependency(exportFilePath);
   StringRef buffer = mb->get()->getBuffer();
   while (!buffer.empty()) {
     // Split off each line in the file.
@@ -134,6 +135,7 @@ static std::error_code parseFileList(StringRef fileListPath,
   std::pair<StringRef, StringRef> opt = fileListPath.split(',');
   StringRef filePath = opt.first;
   StringRef dirName = opt.second;
+  ctx.addInputFileDependency(filePath);
   // Map in file list file.
   ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
                                         MemoryBuffer::getFileOrSTDIN(filePath);
@@ -434,6 +436,16 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     ctx.setKeepPrivateExterns(true);
     if (ctx.outputMachOType() != llvm::MachO::MH_OBJECT)
       diagnostics << "warning: -keep_private_externs only used in -r mode\n";
+  }
+
+  // Handle -dependency_info <path> used by Xcode.
+  if (llvm::opt::Arg *depInfo = parsedArgs->getLastArg(OPT_dependency_info)) {
+    if (std::error_code ec = ctx.createDependencyFile(depInfo->getValue())) {
+      diagnostics << "warning: " << ec.message()
+                  << ", processing '-dependency_info "
+                  << depInfo->getValue()
+                  << "'\n";
+    }
   }
 
   // In -test_file_usage mode, we'll be given an explicit list of paths that

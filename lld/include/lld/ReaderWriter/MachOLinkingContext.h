@@ -99,7 +99,12 @@ public:
   void setKeepPrivateExterns(bool v) { _keepPrivateExterns = v; }
   bool demangleSymbols() const { return _demangle; }
   void setDemangleSymbols(bool d) { _demangle = d; }
-
+  /// Create file at specified path which will contain a binary encoding
+  /// of all input and output file paths.
+  std::error_code createDependencyFile(StringRef path);
+  void addInputFileDependency(StringRef path) const;
+  void addInputFileNotFound(StringRef path) const;
+  void addOutputFileDependency(StringRef path) const;
 
   bool minOS(StringRef mac, StringRef iOS) const;
   void setDoNothing(bool value) { _doNothing = value; }
@@ -122,6 +127,9 @@ public:
   /// internally maintained list of files that exist (provided by -path_exists)
   /// instead of the actual filesystem.
   bool pathExists(StringRef path) const;
+
+  /// Like pathExists() but only used on files - not directories.
+  bool fileExists(StringRef path) const;
 
   /// \brief Adds any library search paths derived from the given base, possibly
   /// modified by -syslibroots.
@@ -304,6 +312,7 @@ private:
   mutable std::vector<std::unique_ptr<class MachOFileNode>> _indirectDylibs;
   ExportMode _exportMode;
   llvm::StringSet<> _exportedSymbols;
+  std::unique_ptr<llvm::raw_fd_ostream> _dependencyInfo;
 };
 
 } // end namespace lld
