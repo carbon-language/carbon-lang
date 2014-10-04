@@ -3304,6 +3304,7 @@ bool AArch64FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
     ResultReg2 = fastEmitInst_rri(AArch64::CSINCWr, &AArch64::GPR32RegClass,
                                   AArch64::WZR, /*IsKill=*/true, AArch64::WZR,
                                   /*IsKill=*/true, getInvertedCondCode(CC));
+    (void)ResultReg2;
     assert((ResultReg1 + 1) == ResultReg2 &&
            "Nonconsecutive result registers.");
     updateValueMap(II, ResultReg1, 2);
