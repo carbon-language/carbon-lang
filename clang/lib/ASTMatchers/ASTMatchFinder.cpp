@@ -380,9 +380,12 @@ public:
     Result.Nodes = *Builder;
     Result.ResultOfMatch = matchesRecursively(Node, Matcher, &Result.Nodes,
                                               MaxDepth, Traversal, Bind);
-    ResultCache[Key] = Result;
-    *Builder = Result.Nodes;
-    return Result.ResultOfMatch;
+
+    MemoizedMatchResult &CachedResult = ResultCache[Key];
+    CachedResult = std::move(Result);
+
+    *Builder = CachedResult.Nodes;
+    return CachedResult.ResultOfMatch;
   }
 
   // Matches children or descendants of 'Node' with 'BaseMatcher'.
@@ -524,11 +527,7 @@ private:
     assert(Node.getMemoizationData() &&
            "Invariant broken: only nodes that support memoization may be "
            "used in the parent map.");
-    ASTContext::ParentVector Parents = ActiveASTContext->getParents(Node);
-    if (Parents.empty()) {
-      assert(false && "Found node that is not in the parent map.");
-      return false;
-    }
+
     MatchKey Key;
     Key.MatcherID = Matcher.getID();
     Key.Node = Node;
@@ -541,9 +540,13 @@ private:
       *Builder = I->second.Nodes;
       return I->second.ResultOfMatch;
     }
+
     MemoizedMatchResult Result;
     Result.ResultOfMatch = false;
     Result.Nodes = *Builder;
+
+    const auto &Parents = ActiveASTContext->getParents(Node);
+    assert(!Parents.empty() && "Found node that is not in the parent map.");
     if (Parents.size() == 1) {
       // Only one parent - do recursive memoization.
       const ast_type_traits::DynTypedNode Parent = Parents[0];
@@ -570,25 +573,24 @@ private:
           break;
         }
         if (MatchMode != ASTMatchFinder::AMM_ParentOnly) {
-          ASTContext::ParentVector Ancestors =
-              ActiveASTContext->getParents(Queue.front());
-          for (ASTContext::ParentVector::const_iterator I = Ancestors.begin(),
-                                                        E = Ancestors.end();
-               I != E; ++I) {
+          for (const auto &Parent :
+               ActiveASTContext->getParents(Queue.front())) {
             // Make sure we do not visit the same node twice.
             // Otherwise, we'll visit the common ancestors as often as there
             // are splits on the way down.
-            if (Visited.insert(I->getMemoizationData()).second)
-              Queue.push_back(*I);
+            if (Visited.insert(Parent.getMemoizationData()).second)
+              Queue.push_back(Parent);
           }
         }
         Queue.pop_front();
       }
     }
-    ResultCache[Key] = Result;
 
-    *Builder = Result.Nodes;
-    return Result.ResultOfMatch;
+    MemoizedMatchResult &CachedResult = ResultCache[Key];
+    CachedResult = std::move(Result);
+
+    *Builder = CachedResult.Nodes;
+    return CachedResult.ResultOfMatch;
   }
 
   // Implements a BoundNodesTree::Visitor that calls a MatchCallback with
@@ -615,14 +617,10 @@ private:
                             BoundNodesTreeBuilder *Builder) {
     const Type *const CanonicalType =
       ActiveASTContext->getCanonicalType(TypeNode);
-    const std::set<const TypedefNameDecl *> &Aliases =
-        TypeAliases[CanonicalType];
-    for (std::set<const TypedefNameDecl*>::const_iterator
-           It = Aliases.begin(), End = Aliases.end();
-         It != End; ++It) {
+    for (const TypedefNameDecl *Alias : TypeAliases.lookup(CanonicalType)) {
       BoundNodesTreeBuilder Result(*Builder);
-      if (Matcher.matches(**It, this, &Result)) {
-        *Builder = Result;
+      if (Matcher.matches(*Alias, this, &Result)) {
+        *Builder = std::move(Result);
         return true;
       }
     }
@@ -706,7 +704,7 @@ bool MatchASTVisitor::classIsDerivedFrom(const CXXRecordDecl *Declaration,
     }
     BoundNodesTreeBuilder Result(*Builder);
     if (Base.matches(*ClassDecl, this, &Result)) {
-      *Builder = Result;
+      *Builder = std::move(Result);
       return true;
     }
     if (classIsDerivedFrom(ClassDecl, Base, Builder))

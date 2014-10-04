@@ -461,11 +461,12 @@ public:
   /// 'NodeT' can be one of Decl, Stmt, Type, TypeLoc,
   /// NestedNameSpecifier or NestedNameSpecifierLoc.
   template <typename NodeT>
-  ParentVector getParents(const NodeT &Node) {
+  ArrayRef<ast_type_traits::DynTypedNode> getParents(const NodeT &Node) {
     return getParents(ast_type_traits::DynTypedNode::create(Node));
   }
 
-  ParentVector getParents(const ast_type_traits::DynTypedNode &Node);
+  ArrayRef<ast_type_traits::DynTypedNode>
+  getParents(const ast_type_traits::DynTypedNode &Node);
 
   const clang::PrintingPolicy &getPrintingPolicy() const {
     return PrintingPolicy;
