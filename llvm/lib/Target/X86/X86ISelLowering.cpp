@@ -24596,19 +24596,39 @@ static SDValue performVZEXTCombine(SDNode *N, SelectionDAG &DAG,
   SDValue Op = N->getOperand(0);
   MVT OpVT = Op.getSimpleValueType();
   MVT OpEltVT = OpVT.getVectorElementType();
+  unsigned InputBits = OpEltVT.getSizeInBits() * VT.getVectorNumElements();
 
   // (vzext (bitcast (vzext (x)) -> (vzext x)
   SDValue V = Op;
   while (V.getOpcode() == ISD::BITCAST)
     V = V.getOperand(0);
 
-  if (V != Op && V.getOpcode() == X86ISD::VZEXT)
-    return DAG.getNode(X86ISD::VZEXT, DL, VT, V.getOperand(0));
+  if (V != Op && V.getOpcode() == X86ISD::VZEXT) {
+    MVT InnerVT = V.getSimpleValueType();
+    MVT InnerEltVT = InnerVT.getVectorElementType();
+
+    // If the element sizes match exactly, we can just do one larger vzext. This
+    // is always an exact type match as vzext operates on integer types.
+    if (OpEltVT == InnerEltVT) {
+      assert(OpVT == InnerVT && "Types must match for vzext!");
+      return DAG.getNode(X86ISD::VZEXT, DL, VT, V.getOperand(0));
+    }
+
+    // The only other way we can combine them is if only a single element of the
+    // inner vzext is used in the input to the outer vzext.
+    if (InnerEltVT.getSizeInBits() < InputBits)
+      return SDValue();
+
+    // In this case, the inner vzext is completely dead because we're going to
+    // only look at bits inside of the low element. Just do the outer vzext on
+    // a bitcast of the input to the inner.
+    return DAG.getNode(X86ISD::VZEXT, DL, VT,
+                       DAG.getNode(ISD::BITCAST, DL, OpVT, V));
+  }
 
   // Check if we can bypass extracting and re-inserting an element of an input
   // vector. Essentialy:
   // (bitcast (sclr2vec (ext_vec_elt x))) -> (bitcast x)
-  unsigned InputBits = OpEltVT.getSizeInBits() * VT.getVectorNumElements();
   if (V.getOpcode() == ISD::SCALAR_TO_VECTOR &&
       V.getOperand(0).getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
       V.getOperand(0).getSimpleValueType().getSizeInBits() == InputBits) {
