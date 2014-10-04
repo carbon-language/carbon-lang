@@ -16,6 +16,7 @@
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -1016,6 +1017,22 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
                           II->getName());
       return EraseInstFromFunction(*II);
     }
+
+    // If there is a dominating assume with the same condition as this one,
+    // then this one is redundant, and should be removed.
+    if (DT) {
+      for (User *U : IIOperand->users()) {
+        Instruction *User = dyn_cast<Instruction>(U);
+        if (!User || User == II)
+          continue;
+
+        if (match(User,
+                  m_Intrinsic<Intrinsic::assume>(m_Specific(IIOperand))) &&
+            DT->dominates(User, II))
+          return EraseInstFromFunction(*II);
+      }
+    }
+
     break;
   }
   }
