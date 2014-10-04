@@ -316,7 +316,7 @@ AliasAnalysis::getLocationForDest(const MemIntrinsic *MTI) {
   // memcpy/memmove can have AA tags. For memcpy, they apply
   // to both the source and the destination.
   AAMDNodes AATags;
-  MTI->getMetadata(AATags);
+  MTI->getAAMetadata(AATags);
  
   return Location(MTI->getRawDest(), Size, AATags);
 }

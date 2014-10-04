@@ -171,7 +171,7 @@ namespace {
       llvm::RGPassManager RGM;
       ((llvm::RegionPass*)nullptr)->runOnRegion((llvm::Region*)nullptr, RGM);
       llvm::AliasSetTracker X(*(llvm::AliasAnalysis*)nullptr);
-      X.add((llvm::Value*)nullptr, 0, nullptr);  // for -print-alias-sets
+      X.add(nullptr, 0, llvm::AAMDNodes()); // for -print-alias-sets
     }
   } ForcePassLinking; // Force link by creating a global definition.
 }

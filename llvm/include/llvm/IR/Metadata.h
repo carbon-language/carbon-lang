@@ -70,20 +70,17 @@ public:
 /// AAMDNodes - A collection of metadata nodes that might be associated with a
 /// memory access used by the alias-analysis infrastructure.
 struct AAMDNodes {
-  AAMDNodes(MDNode *T = nullptr, MDNode *S = nullptr, MDNode *N = nullptr)
-    : TBAA(T), Scope(S), NoAlias(N) {}
+  explicit AAMDNodes(MDNode *T = nullptr, MDNode *S = nullptr,
+                     MDNode *N = nullptr)
+      : TBAA(T), Scope(S), NoAlias(N) {}
 
-  bool operator == (const AAMDNodes &A) const {
-    return equals(A);
+  bool operator==(const AAMDNodes &A) const {
+    return TBAA == A.TBAA && Scope == A.Scope && NoAlias == A.NoAlias;
   }
 
-  bool operator != (const AAMDNodes &A) const {
-    return !equals(A);
-  }
+  bool operator!=(const AAMDNodes &A) const { return !(*this == A); }
 
-  operator bool() const {
-    return TBAA || Scope || NoAlias;
-  }
+  LLVM_EXPLICIT operator bool() const { return TBAA || Scope || NoAlias; }
 
   /// TBAA - The tag for type-based alias analysis.
   MDNode *TBAA;
@@ -93,11 +90,6 @@ struct AAMDNodes {
 
   /// NoAlias - The tag specifying the noalias scope.
   MDNode *NoAlias;
-
-protected:
-  bool equals(const AAMDNodes &A) const {
-    return TBAA == A.TBAA && Scope == A.Scope && NoAlias == A.NoAlias;
-  }
 };
 
 // Specialize DenseMapInfo for AAMDNodes.

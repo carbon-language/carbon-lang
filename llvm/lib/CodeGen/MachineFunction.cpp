@@ -247,12 +247,12 @@ MachineFunction::getMachineMemOperand(const MachineMemOperand *MMO,
                MachineMemOperand(MachinePointerInfo(MMO->getValue(),
                                                     MMO->getOffset()+Offset),
                                  MMO->getFlags(), Size,
-                                 MMO->getBaseAlignment(), nullptr);
+                                 MMO->getBaseAlignment());
   return new (Allocator)
              MachineMemOperand(MachinePointerInfo(MMO->getPseudoValue(),
                                                   MMO->getOffset()+Offset),
                                MMO->getFlags(), Size,
-                               MMO->getBaseAlignment(), nullptr);
+                               MMO->getBaseAlignment());
 }
 
 MachineInstr::mmo_iterator
