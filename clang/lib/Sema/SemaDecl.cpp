@@ -5103,14 +5103,7 @@ static void checkAttributesAfterMerging(Sema &S, NamedDecl &ND) {
   }
 
   // dll attributes require external linkage.
-  if (const DLLImportAttr *Attr = ND.getAttr<DLLImportAttr>()) {
-    if (!ND.isExternallyVisible()) {
-      S.Diag(ND.getLocation(), diag::err_attribute_dll_not_extern)
-        << &ND << Attr;
-      ND.setInvalidDecl();
-    }
-  }
-  if (const DLLExportAttr *Attr = ND.getAttr<DLLExportAttr>()) {
+  if (const InheritableAttr *Attr = getDLLAttr(&ND)) {
     if (!ND.isExternallyVisible()) {
       S.Diag(ND.getLocation(), diag::err_attribute_dll_not_extern)
         << &ND << Attr;
