@@ -633,7 +633,7 @@ struct LogicOp {
   LogicOp(unsigned regSize, unsigned immLSB, unsigned immSize)
     : RegSize(regSize), ImmLSB(immLSB), ImmSize(immSize) {}
 
-  operator bool() const { return RegSize; }
+  LLVM_EXPLICIT operator bool() const { return RegSize; }
 
   unsigned RegSize, ImmLSB, ImmSize;
 };
