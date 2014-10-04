@@ -28,7 +28,6 @@
 // tell linker it can break up file at label boundaries
 #define FILE_LEVEL_DIRECTIVE .subsections_via_symbols
 #define SYMBOL_IS_FUNC(name)
-// rdar://problem/18523605
 #if __ARM_ARCH_ISA_THUMB == 2
 #define THUMB_FUNC .thumb_func
 #endif
@@ -49,6 +48,7 @@
     .scl 2 SEPARATOR                                                           \
     .type 32 SEPARATOR                                                         \
   .endef
+#define THUMB_FUNC
 #define FILE_LEVEL_DIRECTIVE
 #endif
 
