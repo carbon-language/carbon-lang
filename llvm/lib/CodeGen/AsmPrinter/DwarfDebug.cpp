@@ -11,8 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ByteStreamer.h"
 #include "DwarfDebug.h"
+
+#include "ByteStreamer.h"
+#include "DwarfCompileUnit.h"
 #include "DIE.h"
 #include "DIEHash.h"
 #include "DwarfUnit.h"

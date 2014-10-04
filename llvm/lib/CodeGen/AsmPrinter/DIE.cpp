@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "DIE.h"
+
+#include "DwarfCompileUnit.h"
 #include "DwarfDebug.h"
 #include "DwarfUnit.h"
 #include "llvm/ADT/Twine.h"
