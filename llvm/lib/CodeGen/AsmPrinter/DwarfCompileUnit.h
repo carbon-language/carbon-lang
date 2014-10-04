@@ -62,6 +62,12 @@ public:
   void addRange(RangeSpan Range);
 
   void attachLowHighPC(DIE &D, const MCSymbol *Begin, const MCSymbol *End);
+
+  /// \brief Find DIE for the given subprogram and attach appropriate
+  /// DW_AT_low_pc and DW_AT_high_pc attributes. If there are global
+  /// variables in this scope then create and insert DIEs for these
+  /// variables.
+  DIE &updateSubprogramScopeDIE(DISubprogram SP);
 };
 
 } // end llvm namespace

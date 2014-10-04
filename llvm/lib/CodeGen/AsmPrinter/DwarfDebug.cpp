@@ -311,32 +311,6 @@ bool DwarfDebug::isSubprogramContext(const MDNode *Context) {
   return false;
 }
 
-// Find DIE for the given subprogram and attach appropriate DW_AT_low_pc
-// and DW_AT_high_pc attributes. If there are global variables in this
-// scope then create and insert DIEs for these variables.
-DIE &DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
-                                          DISubprogram SP) {
-  DIE *SPDie = SPCU.getOrCreateSubprogramDIE(SP);
-
-  SPCU.attachLowHighPC(*SPDie, FunctionBeginSym, FunctionEndSym);
-  if (!CurFn->getTarget().Options.DisableFramePointerElim(*CurFn))
-    SPCU.addFlag(*SPDie, dwarf::DW_AT_APPLE_omit_frame_ptr);
-
-  // Only include DW_AT_frame_base in full debug info
-  if (SPCU.getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly) {
-    const TargetRegisterInfo *RI =
-        Asm->TM.getSubtargetImpl()->getRegisterInfo();
-    MachineLocation Location(RI->getFrameRegister(*Asm->MF));
-    SPCU.addAddress(*SPDie, dwarf::DW_AT_frame_base, Location);
-  }
-
-  // Add name to the name table, we do this here because we're guaranteed
-  // to have concrete versions of our DW_TAG_subprogram nodes.
-  addSubprogramNames(SP, *SPDie);
-
-  return *SPDie;
-}
-
 /// Check whether we should create a DIE for the given Scope, return true
 /// if we don't create a DIE (the corresponding DIE is null).
 bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
@@ -545,7 +519,7 @@ void DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
 
   ProcessedSPNodes.insert(Sub);
 
-  DIE &ScopeDIE = updateSubprogramScopeDIE(TheCU, Sub);
+  DIE &ScopeDIE = TheCU.updateSubprogramScopeDIE(Sub);
 
   // Collect arguments for current function.
   assert(LScopes.isCurrentFunctionScope(Scope));

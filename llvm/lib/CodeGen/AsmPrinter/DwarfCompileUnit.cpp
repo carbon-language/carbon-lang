@@ -1,5 +1,6 @@
 #include "DwarfCompileUnit.h"
 
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -7,6 +8,9 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
 
@@ -287,6 +291,32 @@ void DwarfCompileUnit::attachLowHighPC(DIE &D, const MCSymbol *Begin,
     addLabelAddress(D, dwarf::DW_AT_high_pc, End);
   else
     addLabelDelta(D, dwarf::DW_AT_high_pc, End, Begin);
+}
+
+// Find DIE for the given subprogram and attach appropriate DW_AT_low_pc
+// and DW_AT_high_pc attributes. If there are global variables in this
+// scope then create and insert DIEs for these variables.
+DIE &DwarfCompileUnit::updateSubprogramScopeDIE(DISubprogram SP) {
+  DIE *SPDie = getOrCreateSubprogramDIE(SP);
+
+  attachLowHighPC(*SPDie, DD->getFunctionBeginSym(), DD->getFunctionEndSym());
+  if (!DD->getCurrentFunction()->getTarget().Options.DisableFramePointerElim(
+          *DD->getCurrentFunction()))
+    addFlag(*SPDie, dwarf::DW_AT_APPLE_omit_frame_ptr);
+
+  // Only include DW_AT_frame_base in full debug info
+  if (getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly) {
+    const TargetRegisterInfo *RI =
+        Asm->TM.getSubtargetImpl()->getRegisterInfo();
+    MachineLocation Location(RI->getFrameRegister(*Asm->MF));
+    addAddress(*SPDie, dwarf::DW_AT_frame_base, Location);
+  }
+
+  // Add name to the name table, we do this here because we're guaranteed
+  // to have concrete versions of our DW_TAG_subprogram nodes.
+  DD->addSubprogramNames(SP, *SPDie);
+
+  return *SPDie;
 }
 
 } // end llvm namespace

@@ -353,12 +353,6 @@ class DwarfDebug : public AsmPrinterHandler {
   void ensureAbstractVariableIsCreatedIfScoped(const DIVariable &Var,
                                                const MDNode *Scope);
 
-  /// \brief Find DIE for the given subprogram and attach appropriate
-  /// DW_AT_low_pc and DW_AT_high_pc attributes. If there are global
-  /// variables in this scope then create and insert DIEs for these
-  /// variables.
-  DIE &updateSubprogramScopeDIE(DwarfCompileUnit &SPCU, DISubprogram SP);
-
   /// \brief A helper function to check whether the DIE for a given Scope is
   /// going to be null.
   bool isLexicalScopeDIENull(LexicalScope *Scope);
@@ -691,6 +685,10 @@ public:
   void addAccelNamespace(StringRef Name, const DIE &Die);
 
   void addAccelType(StringRef Name, const DIE &Die, char Flags);
+
+  const MachineFunction *getCurrentFunction() const { return CurFn; }
+  const MCSymbol *getFunctionBeginSym() const { return FunctionBeginSym; }
+  const MCSymbol *getFunctionEndSym() const { return FunctionEndSym; }
 };
 } // End of namespace llvm
 
