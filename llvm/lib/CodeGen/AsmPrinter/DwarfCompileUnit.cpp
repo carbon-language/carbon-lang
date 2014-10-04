@@ -274,4 +274,18 @@ void DwarfCompileUnit::applyStmtList(DIE &D) {
              UnitDie.getValues()[stmtListIndex]);
 }
 
+void DwarfCompileUnit::attachLowHighPC(DIE &D, const MCSymbol *Begin,
+                                       const MCSymbol *End) {
+  assert(Begin && "Begin label should not be null!");
+  assert(End && "End label should not be null!");
+  assert(Begin->isDefined() && "Invalid starting label");
+  assert(End->isDefined() && "Invalid end label");
+
+  addLabelAddress(D, dwarf::DW_AT_low_pc, Begin);
+  if (DD->getDwarfVersion() < 4)
+    addLabelAddress(D, dwarf::DW_AT_high_pc, End);
+  else
+    addLabelDelta(D, dwarf::DW_AT_high_pc, End, Begin);
+}
+
 } // end llvm namespace

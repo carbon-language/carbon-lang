@@ -567,8 +567,6 @@ class DwarfDebug : public AsmPrinterHandler {
 
   void attachRangesOrLowHighPC(DwarfCompileUnit &Unit, DIE &D,
                                const SmallVectorImpl<InsnRange> &Ranges);
-  void attachLowHighPC(DwarfCompileUnit &Unit, DIE &D, const MCSymbol *Begin,
-                       const MCSymbol *End);
 
 public:
   //===--------------------------------------------------------------------===//

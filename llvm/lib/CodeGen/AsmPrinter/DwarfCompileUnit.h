@@ -60,6 +60,8 @@ public:
 
   /// addRange - Add an address range to the list of ranges for this unit.
   void addRange(RangeSpan Range);
+
+  void attachLowHighPC(DIE &D, const MCSymbol *Begin, const MCSymbol *End);
 };
 
 } // end llvm namespace

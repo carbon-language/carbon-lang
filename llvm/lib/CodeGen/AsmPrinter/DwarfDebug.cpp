@@ -318,7 +318,7 @@ DIE &DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
                                           DISubprogram SP) {
   DIE *SPDie = SPCU.getOrCreateSubprogramDIE(SP);
 
-  attachLowHighPC(SPCU, *SPDie, FunctionBeginSym, FunctionEndSym);
+  SPCU.attachLowHighPC(*SPDie, FunctionBeginSym, FunctionEndSym);
   if (!CurFn->getTarget().Options.DisableFramePointerElim(*CurFn))
     SPCU.addFlag(*SPDie, dwarf::DW_AT_APPLE_omit_frame_ptr);
 
@@ -394,8 +394,8 @@ void DwarfDebug::attachRangesOrLowHighPC(DwarfCompileUnit &TheCU, DIE &Die,
                                     const SmallVectorImpl<InsnRange> &Ranges) {
   assert(!Ranges.empty());
   if (Ranges.size() == 1)
-    attachLowHighPC(TheCU, Die, getLabelBeforeInsn(Ranges.front().first),
-                    getLabelAfterInsn(Ranges.front().second));
+    TheCU.attachLowHighPC(Die, getLabelBeforeInsn(Ranges.front().first),
+                          getLabelAfterInsn(Ranges.front().second));
   else
     addScopeRangeList(TheCU, Die, Ranges);
 }
@@ -977,7 +977,7 @@ void DwarfDebug::finalizeModuleInfo() {
                     0);
         } else {
           RangeSpan &Range = TheU->getRanges().back();
-          attachLowHighPC(U, U.getUnitDie(), Range.getStart(), Range.getEnd());
+          U.attachLowHighPC(U.getUnitDie(), Range.getStart(), Range.getEnd());
         }
       }
     }
@@ -2634,20 +2634,6 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
       InfoHolder.addUnit(std::move(TU.first));
   }
   CU.addDIETypeSignature(RefDie, NewTU);
-}
-
-void DwarfDebug::attachLowHighPC(DwarfCompileUnit &Unit, DIE &D,
-                                 const MCSymbol *Begin, const MCSymbol *End) {
-  assert(Begin && "Begin label should not be null!");
-  assert(End && "End label should not be null!");
-  assert(Begin->isDefined() && "Invalid starting label");
-  assert(End->isDefined() && "Invalid end label");
-
-  Unit.addLabelAddress(D, dwarf::DW_AT_low_pc, Begin);
-  if (DwarfVersion < 4)
-    Unit.addLabelAddress(D, dwarf::DW_AT_high_pc, End);
-  else
-    Unit.addLabelDelta(D, dwarf::DW_AT_high_pc, End, Begin);
 }
 
 // Accelerator table mutators - add each name along with its companion
