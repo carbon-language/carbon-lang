@@ -29,12 +29,14 @@ struct Derived : Base1 {
     X = sizeof(__super::XXX)
   };
 
-  void foo(int i) {
-    __super::foo(i);
+  void foo() {
+    __super::foo(1);
 
-    if (i == 0) {
-      __super::foo(i);
+    if (true) {
+      __super::foo(1);
     }
+
+    return __super::foo(1);
   }
 
   static void bar() {

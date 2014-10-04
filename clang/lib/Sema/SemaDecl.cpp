@@ -702,11 +702,7 @@ Sema::NameClassification Sema::ClassifyName(Scope *S,
   }
 
   LookupResult Result(*this, Name, NameLoc, LookupOrdinaryName);
-  NestedNameSpecifier *NNS = SS.getScopeRep();
-  if (NNS && NNS->getKind() == NestedNameSpecifier::Super)
-    LookupInSuper(Result, NNS->getAsRecordDecl());
-  else
-    LookupParsedName(Result, S, &SS, !CurMethod);
+  LookupParsedName(Result, S, &SS, !CurMethod);
 
   // For unqualified lookup in a class template in MSVC mode, look into
   // dependent base classes where the primary class template is known.
