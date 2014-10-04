@@ -15,7 +15,7 @@ define <3 x double> @v3f2d_ext_vec(<3 x float> %v1) nounwind {
 entry:
 ; CHECK: v3f2d_ext_vec
 ; CHECK: cvtps2pd
-; CHECK: movhlps
+; CHECK: shufpd
 ; CHECK: cvtps2pd
 ; AVX:   v3f2d_ext_vec
 ; AVX:   vcvtps2pd
@@ -28,7 +28,7 @@ define <4 x double> @v4f2d_ext_vec(<4 x float> %v1) nounwind {
 entry:
 ; CHECK: v4f2d_ext_vec
 ; CHECK: cvtps2pd
-; CHECK: movhlps
+; CHECK: shufpd
 ; CHECK: cvtps2pd
 ; AVX:   v4f2d_ext_vec
 ; AVX:   vcvtps2pd
@@ -42,9 +42,9 @@ entry:
 ; CHECK: v8f2d_ext_vec
 ; CHECK: cvtps2pd
 ; CHECK: cvtps2pd
-; CHECK: movhlps
+; CHECK: shufpd
 ; CHECK: cvtps2pd
-; CHECK: movhlps
+; CHECK: shufpd
 ; CHECK: cvtps2pd
 ; AVX:   v8f2d_ext_vec
 ; AVX:   vcvtps2pd

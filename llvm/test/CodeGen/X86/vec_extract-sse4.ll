@@ -1,11 +1,12 @@
 ; RUN: llc < %s -mcpu=corei7 -march=x86 -mattr=+sse4.1 | FileCheck %s
 
 define void @t1(float* %R, <4 x float>* %P1) nounwind {
-; CHECK-LABEL: @t1
-; CHECK:         movl 4(%esp), %[[R0:e[abcd]x]]
-; CHECK-NEXT:    movl 8(%esp), %[[R1:e[abcd]x]]
-; CHECK-NEXT:    movss 12(%[[R1]]), %[[R2:xmm.*]]
-; CHECK-NEXT:    movss %[[R2]], (%[[R0]])
+; CHECK-LABEL: t1:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; CHECK-NEXT:    movss 12(%ecx), %xmm0
+; CHECK-NEXT:    movss %xmm0, (%eax)
 ; CHECK-NEXT:    retl
 
 	%X = load <4 x float>* %P1
@@ -15,9 +16,15 @@ define void @t1(float* %R, <4 x float>* %P1) nounwind {
 }
 
 define float @t2(<4 x float>* %P1) nounwind {
-; CHECK-LABEL: @t2
-; CHECK:         movl 4(%esp), %[[R0:e[abcd]x]]
-; CHECK-NEXT:    flds 8(%[[R0]])
+; CHECK-LABEL: t2:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    pushl %eax
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movapd (%eax), %xmm0
+; CHECK-NEXT:    shufpd {{.*#+}} xmm0 = xmm0[1,0]
+; CHECK-NEXT:    movss %xmm0, (%esp)
+; CHECK-NEXT:    flds (%esp)
+; CHECK-NEXT:    popl %eax
 ; CHECK-NEXT:    retl
 
 	%X = load <4 x float>* %P1
@@ -26,11 +33,12 @@ define float @t2(<4 x float>* %P1) nounwind {
 }
 
 define void @t3(i32* %R, <4 x i32>* %P1) nounwind {
-; CHECK-LABEL: @t3
-; CHECK:         movl 4(%esp), %[[R0:e[abcd]x]]
-; CHECK-NEXT:    movl 8(%esp), %[[R1:e[abcd]x]]
-; CHECK-NEXT:    movl 12(%[[R1]]), %[[R2:e[abcd]x]]
-; CHECK-NEXT:    movl %[[R2]], (%[[R0]])
+; CHECK-LABEL: t3:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; CHECK-NEXT:    movl 12(%ecx), %ecx
+; CHECK-NEXT:    movl %ecx, (%eax)
 ; CHECK-NEXT:    retl
 
 	%X = load <4 x i32>* %P1
@@ -40,9 +48,10 @@ define void @t3(i32* %R, <4 x i32>* %P1) nounwind {
 }
 
 define i32 @t4(<4 x i32>* %P1) nounwind {
-; CHECK-LABEL: @t4
-; CHECK:         movl 4(%esp), %[[R0:e[abcd]x]]
-; CHECK-NEXT:    movl 12(%[[R0]]), %eax
+; CHECK-LABEL: t4:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movl 12(%eax), %eax
 ; CHECK-NEXT:    retl
 
 	%X = load <4 x i32>* %P1

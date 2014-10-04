@@ -8,7 +8,7 @@
 ;CHECK: vpxor
 ;CHECK: vinserti128
 ;CHECK: vpshufd
-;CHECK: vpshufd
+;CHECK: vpbroadcastd
 ;CHECK: vmulps
 ;CHECK: vmulps
 ;CHECK: ret

@@ -51,7 +51,7 @@ define <4 x float> @test3(<4 x double>* %p) nounwind {
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; CHECK-NEXT:    cvtpd2ps 16(%eax), %xmm1
 ; CHECK-NEXT:    cvtpd2ps (%eax), %xmm0
-; CHECK-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; CHECK-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; CHECK-NEXT:    retl
 ;
 ; AVX-LABEL: test3:
@@ -70,10 +70,10 @@ define <8 x float> @test4(<8 x double>* %p) nounwind {
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; CHECK-NEXT:    cvtpd2ps 16(%eax), %xmm1
 ; CHECK-NEXT:    cvtpd2ps (%eax), %xmm0
-; CHECK-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; CHECK-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; CHECK-NEXT:    cvtpd2ps 48(%eax), %xmm2
 ; CHECK-NEXT:    cvtpd2ps 32(%eax), %xmm1
-; CHECK-NEXT:    movlhps {{.*#+}} xmm1 = xmm1[0],xmm2[0]
+; CHECK-NEXT:    unpcklpd {{.*#+}} xmm1 = xmm1[0],xmm2[0]
 ; CHECK-NEXT:    retl
 ;
 ; AVX-LABEL: test4:

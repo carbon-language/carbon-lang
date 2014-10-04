@@ -15,9 +15,9 @@ define <2 x float> @test4(<2 x float> %A, <2 x float> %B) nounwind {
 ; CHECK-LABEL: test4:
 ; CHECK:       # BB#0: # %entry
 ; CHECK-NEXT:    movaps %xmm0, %xmm2
-; CHECK-NEXT:    shufps {{.*#+}} xmm2 = xmm2[1,0,0,0]
+; CHECK-NEXT:    shufps {{.*#+}} xmm2 = xmm2[1,1,2,3]
 ; CHECK-NEXT:    addss %xmm1, %xmm0
-; CHECK-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,0,0,0]
+; CHECK-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,1,2,3]
 ; CHECK-NEXT:    subss %xmm1, %xmm2
 ; CHECK-NEXT:    unpcklps {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
 ; CHECK-NEXT:    ret

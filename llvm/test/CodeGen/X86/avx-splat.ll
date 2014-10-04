@@ -9,8 +9,7 @@ entry:
   ret <32 x i8> %shuffle
 }
 
-; CHECK: vpunpckhwd %xmm
-; CHECK-NEXT: vpshufd $85
+; CHECK: vpshufb {{.*}} ## xmm0 = xmm0[10,11,10,11,10,11,10,11,10,11,10,11,10,11,10,11]
 ; CHECK-NEXT: vinsertf128 $1
 define <16 x i16> @funcB(<16 x i16> %a) nounwind uwtable readnone ssp {
 entry:
@@ -19,7 +18,7 @@ entry:
 }
 
 ; CHECK: vmovq
-; CHECK-NEXT: vmovlhps %xmm
+; CHECK-NEXT: vunpcklpd %xmm
 ; CHECK-NEXT: vinsertf128 $1
 define <4 x i64> @funcC(i64 %q) nounwind uwtable readnone ssp {
 entry:
@@ -70,7 +69,7 @@ __load_and_broadcast_32.exit1249:                 ; preds = %load.i1247, %for_ex
   ret <8 x float> %load_broadcast12281250
 }
 
-; CHECK: vpshufd $0
+; CHECK: vpermilps $4
 ; CHECK-NEXT: vinsertf128 $1
 define <8 x float> @funcF(i32 %val) nounwind {
   %ret6 = insertelement <8 x i32> undef, i32 %val, i32 6
@@ -79,7 +78,7 @@ define <8 x float> @funcF(i32 %val) nounwind {
   ret <8 x float> %tmp
 }
 
-; CHECK: vpshufd  $0
+; CHECK: vpermilps $0
 ; CHECK-NEXT: vinsertf128  $1
 define <8 x float> @funcG(<8 x float> %a) nounwind uwtable readnone ssp {
 entry:
@@ -88,7 +87,7 @@ entry:
 }
 
 ; CHECK: vextractf128  $1
-; CHECK-NEXT: vpshufd
+; CHECK-NEXT: vpermilps $85
 ; CHECK-NEXT: vinsertf128  $1
 define <8 x float> @funcH(<8 x float> %a) nounwind uwtable readnone ssp {
 entry:

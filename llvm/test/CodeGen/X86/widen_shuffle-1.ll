@@ -45,8 +45,8 @@ define void @shuf3(<4 x float> %tmp10, <4 x float> %vecinit15, <4 x float>* %dst
 ; CHECK-LABEL: shuf3:
 ; CHECK:       # BB#0: # %entry
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[0,0,0,0]
-; CHECK-NEXT:    movdqa %xmm0, (%eax)
+; CHECK-NEXT:    shufps {{.*#+}} xmm1 = xmm1[0,0,0,0]
+; CHECK-NEXT:    movaps %xmm1, (%eax)
 ; CHECK-NEXT:    retl
 entry:
   %shuffle.i.i.i12 = shufflevector <4 x float> %tmp10, <4 x float> %vecinit15, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
@@ -68,9 +68,10 @@ entry:
 define <8 x i8> @shuf4(<4 x i8> %a, <4 x i8> %b) nounwind readnone {
 ; CHECK-LABEL: shuf4:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufb {{.*#+}} xmm1 = zero,zero,zero,zero,zero,zero,zero,zero,xmm1[0],zero,xmm1[4],zero,xmm1[8],zero,xmm1[12],zero
-; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0],zero,xmm0[4],zero,xmm0[8],zero,xmm0[12],zero,zero,zero,zero,zero,zero,zero,zero,zero
-; CHECK-NEXT:    por %xmm1, %xmm0
+; CHECK-NEXT:    movdqa {{.*#+}} xmm2 = [0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
+; CHECK-NEXT:    pshufb %xmm2, %xmm1
+; CHECK-NEXT:    pshufb %xmm2, %xmm0
+; CHECK-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; CHECK-NEXT:    retl
   %vshuf = shufflevector <4 x i8> %a, <4 x i8> %b, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
   ret <8 x i8> %vshuf
@@ -82,7 +83,7 @@ define void @shuf5(<8 x i8>* %p) nounwind {
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; CHECK-NEXT:    movdqa {{.*#+}} xmm0 = <4,33,u,u,u,u,u,u>
-; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[2,2,0,0,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
+; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[2,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u]
 ; CHECK-NEXT:    movlpd %xmm0, (%eax)
 ; CHECK-NEXT:    retl
   %v = shufflevector <2 x i8> <i8 4, i8 33>, <2 x i8> undef, <8 x i32> <i32 1, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>

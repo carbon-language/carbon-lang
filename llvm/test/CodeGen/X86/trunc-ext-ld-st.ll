@@ -20,7 +20,7 @@ define void @load_2_i8(<2 x i8>* %A)  {
 ; Read 32-bits
 ;CHECK: pmovzxwq
 ;CHECK: paddq
-;CHECK: pshufb
+;CHECK: pshufd
 ;CHECK: movd
 ;CHECK: ret
 define void @load_2_i16(<2 x i16>* %A)  {

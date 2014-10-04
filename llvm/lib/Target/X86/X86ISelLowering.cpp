@@ -67,7 +67,7 @@ static cl::opt<bool> ExperimentalVectorWideningLegalization(
     cl::Hidden);
 
 static cl::opt<bool> ExperimentalVectorShuffleLowering(
-    "x86-experimental-vector-shuffle-lowering", cl::init(false),
+    "x86-experimental-vector-shuffle-lowering", cl::init(true),
     cl::desc("Enable an experimental vector shuffle lowering code path."),
     cl::Hidden);
 

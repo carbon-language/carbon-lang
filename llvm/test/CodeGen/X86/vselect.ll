@@ -247,8 +247,8 @@ define <2 x i64> @test25(<2 x i64> %a, <2 x i64> %b) {
 define <4 x float> @select_of_shuffles_0(<2 x float> %a0, <2 x float> %b0, <2 x float> %a1, <2 x float> %b1) {
 ; CHECK-LABEL: select_of_shuffles_0:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0],xmm2[0]
-; CHECK-NEXT:    movlhps {{.*#+}} xmm1 = xmm1[0],xmm3[0]
+; CHECK-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm2[0]
+; CHECK-NEXT:    unpcklpd {{.*#+}} xmm1 = xmm1[0],xmm3[0]
 ; CHECK-NEXT:    subps %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %1 = shufflevector <2 x float> %a0, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>

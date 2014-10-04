@@ -3,8 +3,8 @@
 define <4 x float> @a(<4 x float>* %y) nounwind {
 ; CHECK-LABEL: a:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    movdqu (%rdi), %xmm0
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[3,2,1,0]
+; CHECK-NEXT:    movups (%rdi), %xmm0
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[3,2,1,0]
 ; CHECK-NEXT:    retq
   %x = load <4 x float>* %y, align 4
   %a = extractelement <4 x float> %x, i32 0

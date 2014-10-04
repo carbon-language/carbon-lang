@@ -151,7 +151,7 @@ define <4 x i32> @swizzle_14(<4 x i32> %v) {
 define <4 x float> @swizzle_15(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_15:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,0,3,2]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[1,0,3,2]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 3, i32 2, i32 0, i32 1>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 3, i32 2, i32 0, i32 1>
@@ -161,7 +161,7 @@ define <4 x float> @swizzle_15(<4 x float> %v) {
 define <4 x float> @swizzle_16(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_16:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[2,1,3,0]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[2,1,3,0]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 3, i32 1, i32 0, i32 2>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 3, i32 1, i32 0, i32 2>
@@ -171,7 +171,7 @@ define <4 x float> @swizzle_16(<4 x float> %v) {
 define <4 x float> @swizzle_17(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_17:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,0,3,2]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[1,0,3,2]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 2, i32 3, i32 1, i32 0>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 2, i32 3, i32 1, i32 0>
@@ -181,7 +181,7 @@ define <4 x float> @swizzle_17(<4 x float> %v) {
 define <4 x float> @swizzle_18(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_18:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[3,1,0,2]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[3,1,0,2]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 2, i32 1, i32 3, i32 0>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 2, i32 1, i32 3, i32 0>
@@ -191,7 +191,7 @@ define <4 x float> @swizzle_18(<4 x float> %v) {
 define <4 x float> @swizzle_19(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_19:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
+; CHECK-NEXT:    shufpd {{.*#+}} xmm0 = xmm0[1,0]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 1, i32 2, i32 3, i32 0>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 1, i32 2, i32 3, i32 0>
@@ -201,7 +201,7 @@ define <4 x float> @swizzle_19(<4 x float> %v) {
 define <4 x float> @swizzle_20(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_20:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[2,0,1,3]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[2,0,1,3]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 1, i32 2, i32 0, i32 3>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 1, i32 2, i32 0, i32 3>
@@ -211,7 +211,7 @@ define <4 x float> @swizzle_20(<4 x float> %v) {
 define <4 x float> @swizzle_21(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_21:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,2,3,1]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2,3,1]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 0, i32 3, i32 1, i32 2>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 0, i32 3, i32 1, i32 2>
@@ -221,7 +221,7 @@ define <4 x float> @swizzle_21(<4 x float> %v) {
 define <4 x float> @swizzle_22(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_22:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,3,2,0]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[1,3,2,0]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 3, i32 0, i32 2, i32 1>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 3, i32 0, i32 2, i32 1>
@@ -231,7 +231,7 @@ define <4 x float> @swizzle_22(<4 x float> %v) {
 define <4 x float> @swizzle_23(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_23:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
+; CHECK-NEXT:    shufpd {{.*#+}} xmm0 = xmm0[1,0]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 3, i32 0, i32 1, i32 2>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 3, i32 0, i32 1, i32 2>
@@ -241,7 +241,7 @@ define <4 x float> @swizzle_23(<4 x float> %v) {
 define <4 x float> @swizzle_24(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_24:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,2,0,3]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[1,2,0,3]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 2, i32 0, i32 1, i32 3>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 2, i32 0, i32 1, i32 3>
@@ -251,7 +251,7 @@ define <4 x float> @swizzle_24(<4 x float> %v) {
 define <4 x float> @swizzle_25(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_25:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[3,2,1,0]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[3,2,1,0]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 2, i32 0, i32 3, i32 1>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 2, i32 0, i32 3, i32 1>
@@ -261,7 +261,7 @@ define <4 x float> @swizzle_25(<4 x float> %v) {
 define <4 x float> @swizzle_26(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_26:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,3,1,2]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,3,1,2]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 0, i32 2, i32 3, i32 1>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 0, i32 2, i32 3, i32 1>
@@ -271,7 +271,7 @@ define <4 x float> @swizzle_26(<4 x float> %v) {
 define <4 x float> @swizzle_27(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_27:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[3,2,1,0]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[3,2,1,0]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 1, i32 3, i32 0, i32 2>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 1, i32 3, i32 0, i32 2>
@@ -281,7 +281,7 @@ define <4 x float> @swizzle_27(<4 x float> %v) {
 define <4 x float> @swizzle_28(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_28:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[3,0,2,1]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[3,0,2,1]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 1, i32 3, i32 2, i32 0>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 1, i32 3, i32 2, i32 0>
@@ -291,7 +291,7 @@ define <4 x float> @swizzle_28(<4 x float> %v) {
 define <4 x float> @swizzle_29(<4 x float> %v) {
 ; CHECK-LABEL: swizzle_29:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,3,2,0]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[1,3,2,0]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> <i32 3, i32 1, i32 2, i32 0>
   %2 = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> <i32 1, i32 0, i32 2, i32 3>
@@ -334,7 +334,8 @@ define <8 x i16> @swizzle_32(<8 x i16> %v) {
 define <8 x i16> @swizzle_33(<8 x i16> %v) {
 ; CHECK-LABEL: swizzle_33:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[4,5,2,3,6,7,0,1,10,11,14,15,12,13,8,9]
+; CHECK-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[2,1,3,0,4,5,6,7]
+; CHECK-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,5,7,6,4]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <8 x i16> %v, <8 x i16> undef, <8 x i32> <i32 4, i32 6, i32 5, i32 7, i32 2, i32 3, i32 1, i32 0>
   %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> <i32 4, i32 6, i32 5, i32 7, i32 2, i32 3, i32 1, i32 0>
@@ -344,7 +345,8 @@ define <8 x i16> @swizzle_33(<8 x i16> %v) {
 define <8 x i16> @swizzle_34(<8 x i16> %v) {
 ; CHECK-LABEL: swizzle_34:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[2,3,6,7,0,1,4,5,14,15,12,13,8,9,10,11]
+; CHECK-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[1,3,0,2,4,5,6,7]
+; CHECK-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,7,6,4,5]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <8 x i16> %v, <8 x i16> undef, <8 x i32> <i32 4, i32 7, i32 6, i32 5, i32 1, i32 2, i32 0, i32 3>
   %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> <i32 4, i32 7, i32 6, i32 5, i32 1, i32 2, i32 0, i32 3>
@@ -354,7 +356,8 @@ define <8 x i16> @swizzle_34(<8 x i16> %v) {
 define <8 x i16> @swizzle_35(<8 x i16> %v) {
 ; CHECK-LABEL: swizzle_35:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[4,5,2,3,0,1,6,7,8,9,10,11,14,15,12,13]
+; CHECK-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[2,1,0,3,4,5,6,7]
+; CHECK-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5,7,6]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <8 x i16> %v, <8 x i16> undef, <8 x i32> <i32 7, i32 4, i32 6, i32 5, i32 1, i32 3, i32 0, i32 2>
   %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> <i32 7, i32 4, i32 6, i32 5, i32 1, i32 3, i32 0, i32 2>
@@ -364,7 +367,8 @@ define <8 x i16> @swizzle_35(<8 x i16> %v) {
 define <8 x i16> @swizzle_36(<8 x i16> %v) {
 ; CHECK-LABEL: swizzle_36:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,1,6,7,4,5,2,3,8,9,12,13,10,11,14,15]
+; CHECK-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[0,3,2,1,4,5,6,7]
+; CHECK-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,6,5,7]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <8 x i16> %v, <8 x i16> undef, <8 x i32> <i32 4, i32 6, i32 7, i32 5, i32 0, i32 1, i32 3, i32 2>
   %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> <i32 4, i32 6, i32 7, i32 5, i32 0, i32 1, i32 3, i32 2>
@@ -384,7 +388,8 @@ define <8 x i16> @swizzle_37(<8 x i16> %v) {
 define <8 x i16> @swizzle_38(<8 x i16> %v) {
 ; CHECK-LABEL: swizzle_38:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[4,5,2,3,0,1,6,7,10,11,8,9,12,13,14,15]
+; CHECK-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[2,1,0,3,4,5,6,7]
+; CHECK-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,5,4,6,7]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <8 x i16> %v, <8 x i16> undef, <8 x i32> <i32 5, i32 6, i32 4, i32 7, i32 0, i32 2, i32 1, i32 3>
   %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> <i32 5, i32 6, i32 4, i32 7, i32 0, i32 2, i32 1, i32 3>
@@ -394,7 +399,8 @@ define <8 x i16> @swizzle_38(<8 x i16> %v) {
 define <8 x i16> @swizzle_39(<8 x i16> %v) {
 ; CHECK-LABEL: swizzle_39:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[4,5,6,7,2,3,0,1,14,15,12,13,8,9,10,11]
+; CHECK-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[2,3,1,0,4,5,6,7]
+; CHECK-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,7,6,4,5]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <8 x i16> %v, <8 x i16> undef, <8 x i32> <i32 5, i32 4, i32 6, i32 7, i32 3, i32 2, i32 1, i32 0>
   %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> <i32 5, i32 4, i32 6, i32 7, i32 3, i32 2, i32 1, i32 0>
@@ -404,7 +410,8 @@ define <8 x i16> @swizzle_39(<8 x i16> %v) {
 define <8 x i16> @swizzle_40(<8 x i16> %v) {
 ; CHECK-LABEL: swizzle_40:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[6,7,2,3,4,5,0,1,8,9,12,13,10,11,14,15]
+; CHECK-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[3,1,2,0,4,5,6,7]
+; CHECK-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,6,5,7]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <8 x i16> %v, <8 x i16> undef, <8 x i32> <i32 6, i32 4, i32 7, i32 5, i32 1, i32 0, i32 3, i32 2>
   %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> <i32 6, i32 4, i32 7, i32 5, i32 1, i32 0, i32 3, i32 2>
@@ -414,7 +421,8 @@ define <8 x i16> @swizzle_40(<8 x i16> %v) {
 define <8 x i16> @swizzle_41(<8 x i16> %v) {
 ; CHECK-LABEL: swizzle_41:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[6,7,4,5,2,3,0,1,12,13,14,15,8,9,10,11]
+; CHECK-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[3,2,1,0,4,5,6,7]
+; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,1,3,2]
 ; CHECK-NEXT:    retq
   %1 = shufflevector <8 x i16> %v, <8 x i16> undef, <8 x i32> <i32 6, i32 7, i32 5, i32 4, i32 0, i32 1, i32 3, i32 2>
   %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> <i32 6, i32 7, i32 5, i32 4, i32 0, i32 1, i32 3, i32 2>

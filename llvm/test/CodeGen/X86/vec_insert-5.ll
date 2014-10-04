@@ -8,7 +8,7 @@ define void  @t1(i32 %a, x86_mmx* %P) nounwind {
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; CHECK-NEXT:    shll $12, %ecx
 ; CHECK-NEXT:    movd %ecx, %xmm0
-; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,0,1,1]
+; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,0,0,1]
 ; CHECK-NEXT:    movlpd %xmm0, (%eax)
 ; CHECK-NEXT:    retl
  %tmp12 = shl i32 %a, 12
@@ -23,8 +23,10 @@ define <4 x float> @t2(<4 x float>* %P) nounwind {
 ; CHECK-LABEL: t2:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-NEXT:    movdqa (%eax), %xmm0
-; CHECK-NEXT:    pslldq $12, %xmm0
+; CHECK-NEXT:    movaps (%eax), %xmm1
+; CHECK-NEXT:    xorps %xmm0, %xmm0
+; CHECK-NEXT:    shufps {{.*#+}} xmm1 = xmm1[0,0],xmm0[0,0]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,0],xmm1[2,0]
 ; CHECK-NEXT:    retl
   %tmp1 = load <4 x float>* %P
   %tmp2 = shufflevector <4 x float> %tmp1, <4 x float> zeroinitializer, <4 x i32> < i32 4, i32 4, i32 4, i32 0 >
@@ -35,8 +37,9 @@ define <4 x float> @t3(<4 x float>* %P) nounwind {
 ; CHECK-LABEL: t3:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-NEXT:    movdqa (%eax), %xmm0
-; CHECK-NEXT:    psrldq $8, %xmm0
+; CHECK-NEXT:    movaps (%eax), %xmm0
+; CHECK-NEXT:    xorps %xmm1, %xmm1
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[2,3],xmm1[0,0]
 ; CHECK-NEXT:    retl
   %tmp1 = load <4 x float>* %P
   %tmp2 = shufflevector <4 x float> %tmp1, <4 x float> zeroinitializer, <4 x i32> < i32 2, i32 3, i32 4, i32 4 >
@@ -47,8 +50,10 @@ define <4 x float> @t4(<4 x float>* %P) nounwind {
 ; CHECK-LABEL: t4:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-NEXT:    movdqa (%eax), %xmm0
-; CHECK-NEXT:    psrldq $12, %xmm0
+; CHECK-NEXT:    movaps (%eax), %xmm0
+; CHECK-NEXT:    xorps %xmm1, %xmm1
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[3,0],xmm1[0,0]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2],xmm1[0,0]
 ; CHECK-NEXT:    retl
   %tmp1 = load <4 x float>* %P
   %tmp2 = shufflevector <4 x float> zeroinitializer, <4 x float> %tmp1, <4 x i32> < i32 7, i32 0, i32 0, i32 0 >
@@ -58,7 +63,10 @@ define <4 x float> @t4(<4 x float>* %P) nounwind {
 define <16 x i8> @t5(<16 x i8> %x) nounwind {
 ; CHECK-LABEL: t5:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    psrldq $1, %xmm0
+; CHECK-NEXT:    pxor %xmm1, %xmm1
+; CHECK-NEXT:    pshufb {{.*#+}} xmm1 = zero,xmm1[u,u,u,u,u,u,u,u,u,u,u,u,u,u,1]
+; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[1,u,u,u,u,u,u,u,u,u,u,u,u,u,u],zero
+; CHECK-NEXT:    por %xmm1, %xmm0
 ; CHECK-NEXT:    retl
   %s = shufflevector <16 x i8> %x, <16 x i8> zeroinitializer, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 17>
   ret <16 x i8> %s
@@ -76,7 +84,7 @@ define <16 x i8> @t6(<16 x i8> %x) nounwind {
 define <16 x i8> @t7(<16 x i8> %x) nounwind {
 ; CHECK-LABEL: t7:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    pslldq $13, %xmm0
+; CHECK-NEXT:    palignr {{.*#+}} xmm0 = xmm0[3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2]
 ; CHECK-NEXT:    retl
   %s = shufflevector <16 x i8> %x, <16 x i8> undef, <16 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 1, i32 2>
   ret <16 x i8> %s

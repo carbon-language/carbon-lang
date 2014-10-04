@@ -9,15 +9,15 @@
 define <4 x float> @vsel_float(<4 x float> %v1, <4 x float> %v2) {
 ; SSE2-LABEL: vsel_float:
 ; SSE2:       # BB#0: # %entry
-; SSE2-NEXT:    andps {{.*}}, %xmm1
-; SSE2-NEXT:    andps {{.*}}, %xmm0
+; SSE2-NEXT:    andps {{.*}}(%rip), %xmm1
+; SSE2-NEXT:    andps {{.*}}(%rip), %xmm0
 ; SSE2-NEXT:    orps %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: vsel_float:
 ; SSSE3:       # BB#0: # %entry
-; SSSE3-NEXT:    andps {{.*}}, %xmm1
-; SSSE3-NEXT:    andps {{.*}}, %xmm0
+; SSSE3-NEXT:    andps {{.*}}(%rip), %xmm1
+; SSSE3-NEXT:    andps {{.*}}(%rip), %xmm0
 ; SSSE3-NEXT:    orps %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
@@ -54,26 +54,26 @@ entry:
 define <4 x i8> @vsel_4xi8(<4 x i8> %v1, <4 x i8> %v2) {
 ; SSE2-LABEL: vsel_4xi8:
 ; SSE2:       # BB#0: # %entry
-; SSE2-NEXT:    andps {{.*}}, %xmm1
-; SSE2-NEXT:    andps {{.*}}, %xmm0
+; SSE2-NEXT:    andps {{.*}}(%rip), %xmm1
+; SSE2-NEXT:    andps {{.*}}(%rip), %xmm0
 ; SSE2-NEXT:    orps %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: vsel_4xi8:
 ; SSSE3:       # BB#0: # %entry
-; SSSE3-NEXT:    andps {{.*}}, %xmm1
-; SSSE3-NEXT:    andps {{.*}}, %xmm0
+; SSSE3-NEXT:    andps {{.*}}(%rip), %xmm1
+; SSSE3-NEXT:    andps {{.*}}(%rip), %xmm0
 ; SSSE3-NEXT:    orps %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: vsel_4xi8:
 ; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0,1],xmm1[2],xmm0[3]
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5],xmm0[6,7]
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: vsel_4xi8:
 ; AVX1:       # BB#0: # %entry
-; AVX1-NEXT:    vblendps {{.*#+}} xmm0 = xmm0[0,1],xmm1[2],xmm0[3]
+; AVX1-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5],xmm0[6,7]
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: vsel_4xi8:
@@ -88,26 +88,26 @@ entry:
 define <4 x i16> @vsel_4xi16(<4 x i16> %v1, <4 x i16> %v2) {
 ; SSE2-LABEL: vsel_4xi16:
 ; SSE2:       # BB#0: # %entry
-; SSE2-NEXT:    andps {{.*}}, %xmm1
-; SSE2-NEXT:    andps {{.*}}, %xmm0
+; SSE2-NEXT:    andps {{.*}}(%rip), %xmm1
+; SSE2-NEXT:    andps {{.*}}(%rip), %xmm0
 ; SSE2-NEXT:    orps %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: vsel_4xi16:
 ; SSSE3:       # BB#0: # %entry
-; SSSE3-NEXT:    andps {{.*}}, %xmm1
-; SSSE3-NEXT:    andps {{.*}}, %xmm0
+; SSSE3-NEXT:    andps {{.*}}(%rip), %xmm1
+; SSSE3-NEXT:    andps {{.*}}(%rip), %xmm0
 ; SSSE3-NEXT:    orps %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: vsel_4xi16:
 ; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm1[1],xmm0[2,3]
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3],xmm0[4,5,6,7]
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: vsel_4xi16:
 ; AVX1:       # BB#0: # %entry
-; AVX1-NEXT:    vblendps {{.*#+}} xmm0 = xmm0[0],xmm1[1],xmm0[2,3]
+; AVX1-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3],xmm0[4,5,6,7]
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: vsel_4xi16:
@@ -122,26 +122,26 @@ entry:
 define <4 x i32> @vsel_i32(<4 x i32> %v1, <4 x i32> %v2) {
 ; SSE2-LABEL: vsel_i32:
 ; SSE2:       # BB#0: # %entry
-; SSE2-NEXT:    andps {{.*}}, %xmm1
-; SSE2-NEXT:    andps {{.*}}, %xmm0
+; SSE2-NEXT:    andps {{.*}}(%rip), %xmm1
+; SSE2-NEXT:    andps {{.*}}(%rip), %xmm0
 ; SSE2-NEXT:    orps %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: vsel_i32:
 ; SSSE3:       # BB#0: # %entry
-; SSSE3-NEXT:    andps {{.*}}, %xmm1
-; SSSE3-NEXT:    andps {{.*}}, %xmm0
+; SSSE3-NEXT:    andps {{.*}}(%rip), %xmm1
+; SSSE3-NEXT:    andps {{.*}}(%rip), %xmm0
 ; SSSE3-NEXT:    orps %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: vsel_i32:
 ; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm0[0],xmm1[1],xmm0[2],xmm1[3]
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3],xmm0[4,5],xmm1[6,7]
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: vsel_i32:
 ; AVX1:       # BB#0: # %entry
-; AVX1-NEXT:    vblendps {{.*#+}} xmm0 = xmm0[0],xmm1[1],xmm0[2],xmm1[3]
+; AVX1-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3],xmm0[4,5],xmm1[6,7]
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: vsel_i32:
@@ -188,21 +188,22 @@ entry:
 define <8 x i16> @vsel_8xi16(<8 x i16> %v1, <8 x i16> %v2) {
 ; SSE2-LABEL: vsel_8xi16:
 ; SSE2:       # BB#0: # %entry
-; SSE2-NEXT:    andps {{.*}}, %xmm1
-; SSE2-NEXT:    andps {{.*}}, %xmm0
+; SSE2-NEXT:    andps {{.*}}(%rip), %xmm1
+; SSE2-NEXT:    andps {{.*}}(%rip), %xmm0
 ; SSE2-NEXT:    orps %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: vsel_8xi16:
 ; SSSE3:       # BB#0: # %entry
-; SSSE3-NEXT:    andps {{.*}}, %xmm1
-; SSSE3-NEXT:    andps {{.*}}, %xmm0
+; SSSE3-NEXT:    andps {{.*}}(%rip), %xmm1
+; SSSE3-NEXT:    andps {{.*}}(%rip), %xmm0
 ; SSSE3-NEXT:    orps %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: vsel_8xi16:
 ; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3],xmm0[4],xmm1[5,6,7]
+; SSE41-NEXT:    pblendw {{.*#+}} xmm1 = xmm0[0],xmm1[1,2,3],xmm0[4],xmm1[5,6,7]
+; SSE41-NEXT:    movdqa %xmm1, %xmm0
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: vsel_8xi16:
@@ -217,15 +218,15 @@ entry:
 define <16 x i8> @vsel_i8(<16 x i8> %v1, <16 x i8> %v2) {
 ; SSE2-LABEL: vsel_i8:
 ; SSE2:       # BB#0: # %entry
-; SSE2-NEXT:    andps {{.*}}, %xmm1
-; SSE2-NEXT:    andps {{.*}}, %xmm0
+; SSE2-NEXT:    andps {{.*}}(%rip), %xmm1
+; SSE2-NEXT:    andps {{.*}}(%rip), %xmm0
 ; SSE2-NEXT:    orps %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: vsel_i8:
 ; SSSE3:       # BB#0: # %entry
-; SSSE3-NEXT:    andps {{.*}}, %xmm1
-; SSSE3-NEXT:    andps {{.*}}, %xmm0
+; SSSE3-NEXT:    andps {{.*}}(%rip), %xmm1
+; SSSE3-NEXT:    andps {{.*}}(%rip), %xmm0
 ; SSSE3-NEXT:    orps %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
@@ -359,11 +360,17 @@ define <8 x i64> @vsel_i648(<8 x i64> %v1, <8 x i64> %v2) {
 ; SSE41-NEXT:    blendpd {{.*#+}} xmm3 = xmm7[0,1]
 ; SSE41-NEXT:    retq
 ;
-; AVX-LABEL: vsel_i648:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm2[1,2,3]
-; AVX-NEXT:    vblendpd {{.*#+}} ymm1 = ymm1[0],ymm3[1,2,3]
-; AVX-NEXT:    retq
+; AVX1-LABEL: vsel_i648:
+; AVX1:       # BB#0: # %entry
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm2[1,2,3]
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm1 = ymm1[0],ymm3[1,2,3]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: vsel_i648:
+; AVX2:       # BB#0: # %entry
+; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1],ymm2[2,3,4,5,6,7]
+; AVX2-NEXT:    vpblendd {{.*#+}} ymm1 = ymm1[0,1],ymm3[2,3,4,5,6,7]
+; AVX2-NEXT:    retq
 entry:
   %vsel = select <8 x i1> <i1 true, i1 false, i1 false, i1 false, i1 true, i1 false, i1 false, i1 false>, <8 x i64> %v1, <8 x i64> %v2
   ret <8 x i64> %vsel
@@ -511,8 +518,10 @@ define <8 x float> @constant_blendvps_avx(<8 x float> %xyzw, <8 x float> %abcd) 
 ;
 ; SSE41-LABEL: constant_blendvps_avx:
 ; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    blendps {{.*#+}} xmm0 = xmm2[0,1,2],xmm0[3]
-; SSE41-NEXT:    blendps {{.*#+}} xmm1 = xmm3[0,1,2],xmm1[3]
+; SSE41-NEXT:    blendps {{.*#+}} xmm2 = xmm2[0,1,2],xmm0[3]
+; SSE41-NEXT:    blendps {{.*#+}} xmm3 = xmm3[0,1,2],xmm1[3]
+; SSE41-NEXT:    movaps %xmm2, %xmm0
+; SSE41-NEXT:    movaps %xmm3, %xmm1
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: constant_blendvps_avx:
@@ -561,8 +570,8 @@ define <32 x i8> @constant_pblendvb_avx2(<32 x i8> %xyzw, <32 x i8> %abcd) {
 ;
 ; AVX1-LABEL: constant_pblendvb_avx2:
 ; AVX1:       # BB#0: # %entry
-; AVX1-NEXT:    vandps {{.*}}, %ymm1, %ymm1
-; AVX1-NEXT:    vandps {{.*}}, %ymm0, %ymm0
+; AVX1-NEXT:    vandps {{.*}}(%rip), %ymm1, %ymm1
+; AVX1-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
 ; AVX1-NEXT:    vorps %ymm1, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
@@ -584,13 +593,13 @@ define <4 x float> @blend_shufflevector_4xfloat(<4 x float> %a, <4 x float> %b) 
 ; SSE2-LABEL: blend_shufflevector_4xfloat:
 ; SSE2:       # BB#0: # %entry
 ; SSE2-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2],xmm1[1,3]
-; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,2,1,3]
+; SSE2-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2,1,3]
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: blend_shufflevector_4xfloat:
 ; SSSE3:       # BB#0: # %entry
 ; SSSE3-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2],xmm1[1,3]
-; SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,2,1,3]
+; SSSE3-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2,1,3]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: blend_shufflevector_4xfloat:
@@ -628,8 +637,8 @@ define <8 x float> @blend_shufflevector_8xfloat(<8 x float> %a, <8 x float> %b) 
 ;
 ; SSE41-LABEL: blend_shufflevector_8xfloat:
 ; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    blendps {{.*#+}} xmm2 = xmm0[0],xmm2[1,2,3]
 ; SSE41-NEXT:    blendps {{.*#+}} xmm3 = xmm3[0,1],xmm1[2],xmm3[3]
-; SSE41-NEXT:    movss %xmm0, %xmm2
 ; SSE41-NEXT:    movaps %xmm2, %xmm0
 ; SSE41-NEXT:    movaps %xmm3, %xmm1
 ; SSE41-NEXT:    retq
@@ -644,11 +653,22 @@ entry:
 }
 
 define <4 x double> @blend_shufflevector_4xdouble(<4 x double> %a, <4 x double> %b) {
-; SSE-LABEL: blend_shufflevector_4xdouble:
-; SSE:       # BB#0: # %entry
-; SSE-NEXT:    movsd %xmm0, %xmm2
-; SSE-NEXT:    movaps %xmm2, %xmm0
-; SSE-NEXT:    retq
+; SSE2-LABEL: blend_shufflevector_4xdouble:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movsd %xmm0, %xmm2
+; SSE2-NEXT:    movaps %xmm2, %xmm0
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: blend_shufflevector_4xdouble:
+; SSSE3:       # BB#0: # %entry
+; SSSE3-NEXT:    movsd %xmm0, %xmm2
+; SSSE3-NEXT:    movaps %xmm2, %xmm0
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: blend_shufflevector_4xdouble:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    blendpd {{.*#+}} xmm0 = xmm0[0],xmm2[1]
+; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: blend_shufflevector_4xdouble:
 ; AVX:       # BB#0: # %entry
@@ -660,16 +680,34 @@ entry:
 }
 
 define <4 x i64> @blend_shufflevector_4xi64(<4 x i64> %a, <4 x i64> %b) {
-; SSE-LABEL: blend_shufflevector_4xi64:
-; SSE:       # BB#0: # %entry
-; SSE-NEXT:    movsd %xmm2, %xmm0
-; SSE-NEXT:    movaps %xmm3, %xmm1
-; SSE-NEXT:    retq
+; SSE2-LABEL: blend_shufflevector_4xi64:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    movsd %xmm2, %xmm0
+; SSE2-NEXT:    movaps %xmm3, %xmm1
+; SSE2-NEXT:    retq
 ;
-; AVX-LABEL: blend_shufflevector_4xi64:
-; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vblendpd {{.*#+}} ymm0 = ymm1[0],ymm0[1],ymm1[2,3]
-; AVX-NEXT:    retq
+; SSSE3-LABEL: blend_shufflevector_4xi64:
+; SSSE3:       # BB#0: # %entry
+; SSSE3-NEXT:    movsd %xmm2, %xmm0
+; SSSE3-NEXT:    movaps %xmm3, %xmm1
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: blend_shufflevector_4xi64:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    pblendw {{.*#+}} xmm2 = xmm2[0,1,2,3],xmm0[4,5,6,7]
+; SSE41-NEXT:    movdqa %xmm2, %xmm0
+; SSE41-NEXT:    movaps %xmm3, %xmm1
+; SSE41-NEXT:    retq
+;
+; AVX1-LABEL: blend_shufflevector_4xi64:
+; AVX1:       # BB#0: # %entry
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm1[0],ymm0[1],ymm1[2,3]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: blend_shufflevector_4xi64:
+; AVX2:       # BB#0: # %entry
+; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm1[0,1],ymm0[2,3],ymm1[4,5,6,7]
+; AVX2-NEXT:    retq
 entry:
   %select = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 4, i32 1, i32 6, i32 7>
   ret <4 x i64> %select

@@ -317,7 +317,7 @@ define   <4 x double> @_inreg4xdouble(<4 x double> %a) {
 }
 
 ;CHECK-LABEL: _inreg2xdouble:
-;CHECK: vpbroadcastq
+;CHECK: vunpcklpd
 ;CHECK: ret
 define   <2 x double> @_inreg2xdouble(<2 x double> %a) {
   %b = shufflevector <2 x double> %a, <2 x double> undef, <2 x i32> zeroinitializer

@@ -5,7 +5,7 @@ define float @test1(i32 %x) nounwind readnone {
 ; CHECK-LABEL: test1:
 ; CHECK:       # BB#0: # %entry
 ; CHECK-NEXT:    pushl %eax
-; CHECK-NEXT:    movsd {{.*}}, %xmm0
+; CHECK-NEXT:    movsd .LCPI0_0, %xmm0
 ; CHECK-NEXT:    movd {{[0-9]+}}(%esp), %xmm1
 ; CHECK-NEXT:    orps %xmm0, %xmm1
 ; CHECK-NEXT:    subsd %xmm0, %xmm1
@@ -27,7 +27,7 @@ define float @test2(<4 x i32> %x) nounwind readnone ssp {
 ; CHECK-NEXT:    pushl %eax
 ; CHECK-NEXT:    xorps %xmm1, %xmm1
 ; CHECK-NEXT:    movss %xmm0, %xmm1
-; CHECK-NEXT:    movsd {{.*}}, %xmm0
+; CHECK-NEXT:    movsd .LCPI1_0, %xmm0
 ; CHECK-NEXT:    orps %xmm0, %xmm1
 ; CHECK-NEXT:    subsd %xmm0, %xmm1
 ; CHECK-NEXT:    xorps %xmm0, %xmm0
