@@ -116,6 +116,11 @@ namespace DuplicateSpecifier {
   };
 }
 
+namespace ColonColonDecltype {
+  struct S { struct T {}; };
+  ::decltype(S())::T invalid; // expected-error {{expected unqualified-id}}
+}
+
 struct Base { virtual void f() = 0; virtual void g() = 0; virtual void h() = 0; };
 struct MemberComponentOrder : Base {
   void f() override __asm__("foobar") __attribute__(( )) {}
