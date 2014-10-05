@@ -2146,7 +2146,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     unsigned B = MI->getOperand(1).getReg();
     unsigned C = MI->getOperand(2).getReg();
     if (B != C) return nullptr;
-    unsigned M = MI->getOperand(3).getImm();
+    int64_t M = MI->getOperand(3).getImm();
     NewMI = BuildMI(MF, MI->getDebugLoc(), get(X86::PSHUFDri))
       .addOperand(Dest).addOperand(Src).addImm(M);
     break;
