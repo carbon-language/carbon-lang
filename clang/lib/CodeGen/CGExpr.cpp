@@ -1822,7 +1822,8 @@ static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
   QualType T = E->getType();
 
   // If it's thread_local, emit a call to its wrapper function instead.
-  if (VD->getTLSKind() == VarDecl::TLS_Dynamic)
+  if (VD->getTLSKind() == VarDecl::TLS_Dynamic &&
+      CGF.CGM.getCXXABI().usesThreadWrapperFunction())
     return CGF.CGM.getCXXABI().EmitThreadLocalVarDeclLValue(CGF, VD, T);
 
   llvm::Value *V = CGF.CGM.GetAddrOfGlobalVar(VD);

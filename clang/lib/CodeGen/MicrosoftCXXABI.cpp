@@ -255,9 +255,22 @@ public:
   llvm::Value *performReturnAdjustment(CodeGenFunction &CGF, llvm::Value *Ret,
                                        const ReturnAdjustment &RA) override;
 
+  void EmitThreadLocalInitFuncs(
+      CodeGenModule &CGM,
+      ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *>>
+          CXXThreadLocals,
+      ArrayRef<llvm::Function *> CXXThreadLocalInits,
+      ArrayRef<llvm::GlobalVariable *> CXXThreadLocalInitVars) override;
+
+  bool usesThreadWrapperFunction() const override { return false; }
+  LValue EmitThreadLocalVarDeclLValue(CodeGenFunction &CGF, const VarDecl *VD,
+                                      QualType LValType) override;
+
   void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
                        llvm::GlobalVariable *DeclPtr,
                        bool PerformInit) override;
+  void registerGlobalDtor(CodeGenFunction &CGF, const VarDecl &D,
+                          llvm::Constant *Dtor, llvm::Constant *Addr) override;
 
   // ==== Notes on array cookies =========
   //
@@ -1709,6 +1722,94 @@ llvm::Value* MicrosoftCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
   // over the cookie completely.
   return CGF.Builder.CreateConstInBoundsGEP1_64(newPtr,
                                                 cookieSize.getQuantity());
+}
+
+static void emitGlobalDtorWithTLRegDtor(CodeGenFunction &CGF, const VarDecl &VD,
+                                        llvm::Constant *Dtor,
+                                        llvm::Constant *Addr) {
+  // Create a function which calls the destructor.
+  llvm::Constant *DtorStub = CGF.createAtExitStub(VD, Dtor, Addr);
+
+  // extern "C" int __tlregdtor(void (*f)(void));
+  llvm::FunctionType *TLRegDtorTy = llvm::FunctionType::get(
+      CGF.IntTy, DtorStub->getType(), /*IsVarArg=*/false);
+
+  llvm::Constant *TLRegDtor =
+      CGF.CGM.CreateRuntimeFunction(TLRegDtorTy, "__tlregdtor");
+  if (llvm::Function *TLRegDtorFn = dyn_cast<llvm::Function>(TLRegDtor))
+    TLRegDtorFn->setDoesNotThrow();
+
+  CGF.EmitNounwindRuntimeCall(TLRegDtor, DtorStub);
+}
+
+void MicrosoftCXXABI::registerGlobalDtor(CodeGenFunction &CGF, const VarDecl &D,
+                                         llvm::Constant *Dtor,
+                                         llvm::Constant *Addr) {
+  if (D.getTLSKind())
+    return emitGlobalDtorWithTLRegDtor(CGF, D, Dtor, Addr);
+
+  // The default behavior is to use atexit.
+  CGF.registerGlobalDtorWithAtExit(D, Dtor, Addr);
+}
+
+void MicrosoftCXXABI::EmitThreadLocalInitFuncs(
+    CodeGenModule &CGM,
+    ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *>>
+        CXXThreadLocals,
+    ArrayRef<llvm::Function *> CXXThreadLocalInits,
+    ArrayRef<llvm::GlobalVariable *> CXXThreadLocalInitVars) {
+  // This will create a GV in the .CRT$XDU section.  It will point to our
+  // initialization function.  The CRT will call all of these function
+  // pointers at start-up time and, eventually, at thread-creation time.
+  auto AddToXDU = [&CGM](llvm::Function *InitFunc) {
+    llvm::GlobalVariable *InitFuncPtr = new llvm::GlobalVariable(
+        CGM.getModule(), InitFunc->getType(), /*IsConstant=*/true,
+        llvm::GlobalVariable::InternalLinkage, InitFunc,
+        Twine(InitFunc->getName(), "$initializer$"));
+    InitFuncPtr->setSection(".CRT$XDU");
+    // This variable has discardable linkage, we have to add it to @llvm.used to
+    // ensure it won't get discarded.
+    CGM.addUsedGlobal(InitFuncPtr);
+    return InitFuncPtr;
+  };
+
+  std::vector<llvm::Function *> NonComdatInits;
+  for (size_t I = 0, E = CXXThreadLocalInitVars.size(); I != E; ++I) {
+    llvm::GlobalVariable *GV = CXXThreadLocalInitVars[I];
+    llvm::Function *F = CXXThreadLocalInits[I];
+
+    // If the GV is already in a comdat group, then we have to join it.
+    llvm::Comdat *C = GV->getComdat();
+
+    // LinkOnce and Weak linkage are lowered down to a single-member comdat
+    // group.
+    // Make an explicit group so we can join it.
+    if (!C && (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage())) {
+      C = CGM.getModule().getOrInsertComdat(GV->getName());
+      GV->setComdat(C);
+      AddToXDU(F)->setComdat(C);
+    } else {
+      NonComdatInits.push_back(F);
+    }
+  }
+
+  if (!NonComdatInits.empty()) {
+    llvm::FunctionType *FTy =
+        llvm::FunctionType::get(CGM.VoidTy, /*isVarArg=*/false);
+    llvm::Function *InitFunc =
+        CGM.CreateGlobalInitOrDestructFunction(FTy, "__tls_init",
+                                               /*TLS=*/true);
+    CodeGenFunction(CGM).GenerateCXXGlobalInitFunc(InitFunc, NonComdatInits);
+
+    AddToXDU(InitFunc);
+  }
+}
+
+LValue MicrosoftCXXABI::EmitThreadLocalVarDeclLValue(CodeGenFunction &CGF,
+                                                     const VarDecl *VD,
+                                                     QualType LValType) {
+  CGF.CGM.ErrorUnsupported(VD, "thread wrappers");
+  return LValue();
 }
 
 void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,

@@ -246,17 +246,6 @@ llvm::Value *CGCXXABI::readArrayCookieImpl(CodeGenFunction &CGF,
   return llvm::ConstantInt::get(CGF.SizeTy, 0);
 }
 
-void CGCXXABI::registerGlobalDtor(CodeGenFunction &CGF,
-                                  const VarDecl &D,
-                                  llvm::Constant *dtor,
-                                  llvm::Constant *addr) {
-  if (D.getTLSKind())
-    CGM.ErrorUnsupported(&D, "non-trivial TLS destruction");
-
-  // The default behavior is to use atexit.
-  CGF.registerGlobalDtorWithAtExit(D, dtor, addr);
-}
-
 /// Returns the adjustment, in bytes, required for the given
 /// member-pointer operation.  Returns null if no adjustment is
 /// required.
@@ -308,18 +297,6 @@ CGCXXABI::EmitCtorCompleteObjectHandler(CodeGenFunction &CGF,
 
   ErrorUnsupportedABI(CGF, "complete object detection in ctor");
   return nullptr;
-}
-
-void CGCXXABI::EmitThreadLocalInitFuncs(
-    ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *> > Decls,
-    llvm::Function *InitFunc) {
-}
-
-LValue CGCXXABI::EmitThreadLocalVarDeclLValue(CodeGenFunction &CGF,
-                                              const VarDecl *VD,
-                                              QualType LValType) {
-  ErrorUnsupportedABI(CGF, "odr-use of thread_local global");
-  return LValue();
 }
 
 bool CGCXXABI::NeedsVTTParameter(GlobalDecl GD) {

@@ -2512,6 +2512,9 @@ public:
   void EmitCXXGlobalVarDeclInit(const VarDecl &D, llvm::Constant *DeclPtr,
                                 bool PerformInit);
 
+  llvm::Constant *createAtExitStub(const VarDecl &VD, llvm::Constant *Dtor,
+                                   llvm::Constant *Addr);
+
   /// Call atexit() with a function that passes the given argument to
   /// the given function.
   void registerGlobalDtorWithAtExit(const VarDecl &D, llvm::Constant *fn,
@@ -2528,7 +2531,7 @@ public:
   /// GenerateCXXGlobalInitFunc - Generates code for initializing global
   /// variables.
   void GenerateCXXGlobalInitFunc(llvm::Function *Fn,
-                                 ArrayRef<llvm::Constant *> Decls,
+                                 ArrayRef<llvm::Function *> CXXThreadLocals,
                                  llvm::GlobalVariable *Guard = nullptr);
 
   /// GenerateCXXGlobalDtorsFunc - Generates code for destroying global

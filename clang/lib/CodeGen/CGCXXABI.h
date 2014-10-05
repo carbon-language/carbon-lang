@@ -484,30 +484,40 @@ public:
   /// Emit code to force the execution of a destructor during global
   /// teardown.  The default implementation of this uses atexit.
   ///
-  /// \param dtor - a function taking a single pointer argument
-  /// \param addr - a pointer to pass to the destructor function.
+  /// \param Dtor - a function taking a single pointer argument
+  /// \param Addr - a pointer to pass to the destructor function.
   virtual void registerGlobalDtor(CodeGenFunction &CGF, const VarDecl &D,
-                                  llvm::Constant *dtor, llvm::Constant *addr);
+                                  llvm::Constant *Dtor,
+                                  llvm::Constant *Addr) = 0;
 
   /*************************** thread_local initialization ********************/
 
   /// Emits ABI-required functions necessary to initialize thread_local
   /// variables in this translation unit.
   ///
-  /// \param Decls The thread_local declarations in this translation unit.
-  /// \param InitFunc If this translation unit contains any non-constant
-  ///        initialization or non-trivial destruction for thread_local
-  ///        variables, a function to perform the initialization. Otherwise, 0.
+  /// \param CXXThreadLocals - The thread_local declarations in this translation
+  ///        unit.
+  /// \param CXXThreadLocalInits - If this translation unit contains any
+  ///        non-constant initialization or non-trivial destruction for
+  ///        thread_local variables, a list of functions to perform the
+  ///        initialization.
   virtual void EmitThreadLocalInitFuncs(
-      ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *> > Decls,
-      llvm::Function *InitFunc);
+      CodeGenModule &CGM,
+      ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *>>
+          CXXThreadLocals,
+      ArrayRef<llvm::Function *> CXXThreadLocalInits,
+      ArrayRef<llvm::GlobalVariable *> CXXThreadLocalInitVars) = 0;
+
+  // Determine if references to thread_local global variables can be made
+  // directly or require access through a thread wrapper function.
+  virtual bool usesThreadWrapperFunction() const = 0;
 
   /// Emit a reference to a non-local thread_local variable (including
   /// triggering the initialization of all thread_local variables in its
   /// translation unit).
   virtual LValue EmitThreadLocalVarDeclLValue(CodeGenFunction &CGF,
                                               const VarDecl *VD,
-                                              QualType LValType);
+                                              QualType LValType) = 0;
 
   /// Emit a single constructor/destructor with the given type from a C++
   /// constructor Decl.
