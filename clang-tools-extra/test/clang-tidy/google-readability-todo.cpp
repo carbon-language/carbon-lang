@@ -23,3 +23,5 @@
 // TODO(bar):
 // TODO(foo): paint bikeshed
 // TODO(b/12345): find the holy grail
+// TODO (b/12345): allow spaces before parentheses
+// TODO(asdf) allow missing semicolon

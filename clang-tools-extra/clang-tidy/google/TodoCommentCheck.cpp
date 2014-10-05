@@ -19,7 +19,7 @@ class TodoCommentCheck::TodoCommentHandler : public CommentHandler {
 public:
   TodoCommentHandler(TodoCommentCheck &Check, llvm::Optional<std::string> User)
       : Check(Check), User(User ? *User : "unknown"),
-        TodoMatch("^// *TODO(\\(.*\\))?:?( )?(.*)$") {}
+        TodoMatch("^// *TODO *(\\(.*\\))?:?( )?(.*)$") {}
 
   bool HandleComment(Preprocessor &PP, SourceRange Range) override {
     StringRef Text =
