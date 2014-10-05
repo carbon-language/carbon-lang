@@ -1,5 +1,9 @@
 set(LLVM_LINK_COMPONENTS
   HexagonCodeGen
+  HexagonDesc
+  HexagonInfo
+  MC
+  Support
   )
 
 include_directories (${LLVM_MAIN_SRC_DIR}/lib/Target/Hexagon)
