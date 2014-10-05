@@ -59,7 +59,70 @@ class TempScop;
 class SCEVAffFunc;
 class Comparison;
 
-//===----------------------------------------------------------------------===//
+/// @brief A class to store information about arrays in the SCoP.
+///
+/// Objects are accessible via the ScoP, MemoryAccess or the id associated with
+/// the MemoryAccess access function.
+///
+class ScopArrayInfo {
+public:
+  /// @brief Construct a ScopArrayInfo object.
+  ///
+  /// @param BasePtr        The array base pointer.
+  /// @param AccessType     The type used to access this array.
+  /// @param IslCtx         The isl context used to create the base pointer id.
+  /// @param DimensionSizes A vector containing the size of each dimension.
+  ScopArrayInfo(Value *BasePtr, Type *AccessType, isl_ctx *IslCtx,
+                const SmallVector<const SCEV *, 4> &DimensionSizes);
+
+  /// @brief Destructor to free the isl id of the base pointer.
+  ~ScopArrayInfo();
+
+  /// @brief Return the base pointer.
+  Value *getBasePtr() const { return BasePtr; }
+
+  /// @brief Return the number of dimensions.
+  unsigned getNumberOfDimensions() const { return DimensionSizes.size(); }
+
+  /// @brief Return the size of dimension @p dim.
+  const SCEV *getDimensionSize(unsigned dim) const {
+    assert(dim < getNumberOfDimensions() && "Invalid dimension");
+    return DimensionSizes[dim];
+  }
+
+  /// @brief Return the type used to access this array in the SCoP.
+  Type *getType() const { return AccessType; }
+
+  /// @brief Return the isl id for the base pointer.
+  __isl_give isl_id *getBasePtrId() const;
+
+  /// @brief Dump a readable representation to stderr.
+  void dump() const;
+
+  /// @brief Print a readable representation to @p OS.
+  void print(raw_ostream &OS) const;
+
+  /// @brief Access the ScopArrayInfo associated with an access function.
+  static const ScopArrayInfo *
+  getFromAccessFunction(__isl_keep isl_pw_multi_aff *PMA);
+
+  /// @brief Access the ScopArrayInfo associated with an isl Id.
+  static const ScopArrayInfo *getFromId(__isl_take isl_id *Id);
+
+private:
+  /// @brief The base pointer.
+  Value *BasePtr;
+
+  /// @brief The type used to access this array.
+  Type *AccessType;
+
+  /// @brief The isl id for the base pointer.
+  isl_id *Id;
+
+  /// @brief The sizes of each dimension.
+  SmallVector<const SCEV *, 4> DimensionSizes;
+};
+
 /// @brief Represent memory accesses in statements.
 class MemoryAccess {
 public:
@@ -148,11 +211,12 @@ private:
 public:
   /// @brief Create a memory access from an access in LLVM-IR.
   ///
-  /// @param Access     The memory access.
-  /// @param Statement  The statement that contains the access.
-  /// @param SE         The ScalarEvolution analysis.
+  /// @param Access    The memory access.
+  /// @param AccInst   The access instruction.
+  /// @param Statement The statement that contains the access.
+  /// @param SAI       The ScopArrayInfo object for this base pointer.
   MemoryAccess(const IRAccess &Access, Instruction *AccInst,
-               ScopStmt *Statement);
+               ScopStmt *Statement, const ScopArrayInfo *SAI);
 
   ~MemoryAccess();
 
@@ -187,6 +251,9 @@ public:
 
   /// @brief Get the base array isl_id for this access.
   __isl_give isl_id *getArrayId() const;
+
+  /// @brief Get the ScopArrayInfo object for the base address.
+  const ScopArrayInfo *getScopArrayInfo() const;
 
   /// @brief Return a string representation of the accesse's reduction type.
   const std::string getReductionOperatorStr() const;
@@ -534,6 +601,9 @@ private:
   /// Constraints on parameters.
   isl_set *Context;
 
+  /// @brief A map to remember ScopArrayInfo objects for all base pointers.
+  DenseMap<const Value *, const ScopArrayInfo *> ScopArrayInfoMap;
+
   /// @brief The assumptions under which this scop was built.
   ///
   /// When constructing a scop sometimes the exact representation of a statement
@@ -727,6 +797,13 @@ public:
   const_reverse_iterator rbegin() const { return Stmts.rbegin(); }
   const_reverse_iterator rend() const { return Stmts.rend(); }
   //@}
+
+  /// @brief Return the (possibly new) ScopArrayInfo object for @p Access.
+  const ScopArrayInfo *getOrCreateScopArrayInfo(const IRAccess &Access,
+                                                Instruction *AccessInst);
+
+  /// @brief Return the cached ScopArrayInfo object for @p BasePtr.
+  const ScopArrayInfo *getScopArrayInfo(Value *BasePtr);
 
   void setContext(isl_set *NewContext);
 

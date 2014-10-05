@@ -278,6 +278,43 @@ int SCEVAffinator::getLoopDepth(const Loop *L) {
   return L->getLoopDepth() - outerLoop->getLoopDepth();
 }
 
+ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *AccessType, isl_ctx *Ctx,
+                             const SmallVector<const SCEV *, 4> &DimensionSizes)
+    : BasePtr(BasePtr), AccessType(AccessType), DimensionSizes(DimensionSizes) {
+  const std::string BasePtrName = getIslCompatibleName("MemRef_", BasePtr, "");
+  Id = isl_id_alloc(Ctx, BasePtrName.c_str(), this);
+}
+
+ScopArrayInfo::~ScopArrayInfo() { isl_id_free(Id); }
+
+isl_id *ScopArrayInfo::getBasePtrId() const { return isl_id_copy(Id); }
+
+void ScopArrayInfo::dump() const { print(errs()); }
+
+void ScopArrayInfo::print(raw_ostream &OS) const {
+  OS << "ScopArrayInfo:\n";
+  OS << "  Base: " << *getBasePtr() << "\n";
+  OS << "  Type: " << *getType() << "\n";
+  OS << "  Dimension Sizes:\n";
+  for (unsigned u = 0; u < getNumberOfDimensions(); u++)
+    OS << "    " << u << ") " << *DimensionSizes[u] << "\n";
+  OS << "\n";
+}
+
+const ScopArrayInfo *
+ScopArrayInfo::getFromAccessFunction(__isl_keep isl_pw_multi_aff *PMA) {
+  isl_id *Id = isl_pw_multi_aff_get_tuple_id(PMA, isl_dim_out);
+  assert(Id && "Output dimension didn't have an ID");
+  return getFromId(Id);
+}
+
+const ScopArrayInfo *ScopArrayInfo::getFromId(isl_id *Id) {
+  void *User = isl_id_get_user(Id);
+  const ScopArrayInfo *SAI = static_cast<ScopArrayInfo *>(User);
+  isl_id_free(Id);
+  return SAI;
+}
+
 const std::string
 MemoryAccess::getReductionOperatorStr(MemoryAccess::ReductionType RT) {
   switch (RT) {
@@ -346,6 +383,14 @@ static MemoryAccess::AccessType getMemoryAccessType(const IRAccess &Access) {
     return MemoryAccess::MAY_WRITE;
   }
   llvm_unreachable("Unknown IRAccess type!");
+}
+
+const ScopArrayInfo *MemoryAccess::getScopArrayInfo() const {
+  isl_id *ArrayId = getArrayId();
+  void *User = isl_id_get_user(ArrayId);
+  const ScopArrayInfo *SAI = static_cast<ScopArrayInfo *>(User);
+  isl_id_free(ArrayId);
+  return SAI;
 }
 
 isl_id *MemoryAccess::getArrayId() const {
@@ -433,14 +478,15 @@ void MemoryAccess::assumeNoOutOfBound(const IRAccess &Access) {
 }
 
 MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
-                           ScopStmt *Statement)
+                           ScopStmt *Statement, const ScopArrayInfo *SAI)
     : Type(getMemoryAccessType(Access)), Statement(Statement), Inst(AccInst),
       newAccessRelation(nullptr) {
 
   isl_ctx *Ctx = Statement->getIslCtx();
   BaseAddr = Access.getBase();
   BaseName = getIslCompatibleName("MemRef_", getBaseAddr(), "");
-  isl_id *BaseAddrId = isl_id_alloc(Ctx, getBaseName().c_str(), nullptr);
+
+  isl_id *BaseAddrId = SAI->getBasePtrId();
 
   if (!Access.isAffine()) {
     // We overapproximate non-affine accesses with a possible access to the
@@ -666,18 +712,23 @@ void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
 }
 
 void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
-  for (auto &&Access : *tempScop.getAccessFunctions(BB)) {
-    MemAccs.push_back(new MemoryAccess(Access.first, Access.second, this));
+  for (const auto &AccessPair : *tempScop.getAccessFunctions(BB)) {
+    const IRAccess &Access = AccessPair.first;
+    Instruction *AccessInst = AccessPair.second;
+
+    const ScopArrayInfo *SAI =
+        getParent()->getOrCreateScopArrayInfo(Access, AccessInst);
+    MemAccs.push_back(new MemoryAccess(Access, AccessInst, this, SAI));
 
     // We do not track locations for scalar memory accesses at the moment.
     //
     // We do not have a use for this information at the moment. If we need this
     // at some point, the "instruction -> access" mapping needs to be enhanced
     // as a single instruction could then possibly perform multiple accesses.
-    if (!Access.first.isScalar()) {
-      assert(!InstructionToAccess.count(Access.second) &&
+    if (!Access.isScalar()) {
+      assert(!InstructionToAccess.count(AccessInst) &&
              "Unexpected 1-to-N mapping on instruction to access map!");
-      InstructionToAccess[Access.second] = MemAccs.back();
+      InstructionToAccess[AccessInst] = MemAccs.back();
     }
   }
 }
@@ -1373,6 +1424,10 @@ Scop::~Scop() {
   for (ScopStmt *Stmt : *this)
     delete Stmt;
 
+  // Free the ScopArrayInfo objects.
+  for (auto &ScopArrayInfoPair : ScopArrayInfoMap)
+    delete ScopArrayInfoPair.second;
+
   // Free the alias groups
   for (MinMaxVectorTy *MinMaxAccesses : MinMaxAliasGroups) {
     for (MinMaxAccessTy &MMA : *MinMaxAccesses) {
@@ -1381,6 +1436,26 @@ Scop::~Scop() {
     }
     delete MinMaxAccesses;
   }
+}
+
+const ScopArrayInfo *Scop::getOrCreateScopArrayInfo(const IRAccess &Access,
+                                                    Instruction *AccessInst) {
+  Value *BasePtr = Access.getBase();
+  const ScopArrayInfo *&SAI = ScopArrayInfoMap[BasePtr];
+  if (!SAI) {
+    Type *AccessType = getPointerOperand(*AccessInst)->getType();
+    SAI = new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Access.Sizes);
+  }
+  return SAI;
+}
+
+const ScopArrayInfo *Scop::getScopArrayInfo(Value *BasePtr) {
+  const SCEV *PtrSCEV = SE->getSCEV(BasePtr);
+  const SCEVUnknown *PtrBaseSCEV =
+      cast<SCEVUnknown>(SE->getPointerBase(PtrSCEV));
+  const ScopArrayInfo *SAI = ScopArrayInfoMap[PtrBaseSCEV->getValue()];
+  assert(SAI && "No ScopArrayInfo available for this base pointer");
+  return SAI;
 }
 
 std::string Scop::getContextStr() const { return stringFromIslObj(Context); }

@@ -59,7 +59,7 @@ for.end6:                                         ; preds = %for.cond
 ; WITHCONST:  %[[MUL2:[._a-zA-Z0-9]+]] = mul nsw i64 2, %[[IVIn]]
 ; WITHCONST:  %[[SUM1:[._a-zA-Z0-9]+]] = add nsw i64 %[[MUL1]], %[[MUL2]]
 ; WITHCONST:  %[[SUM2:[._a-zA-Z0-9]+]] = add nsw i64 %[[SUM1]], 5
-; WITHCONST:  %[[ACC:[._a-zA-Z0-9]*]] = getelementptr [1040 x float]* @A, i64 0, i64 %[[SUM2]]
+; WITHCONST:  %[[ACC:[._a-zA-Z0-9]*]] = getelementptr float* getelementptr inbounds ([1040 x float]* @A, i{{(32|64)}} 0, i{{(32|64)}} 0), i64 %[[SUM2]]
 ; WITHCONST:  store float 1.000000e+02, float* %[[ACC]]
 
 ; WITHOUTCONST:  %[[IVOut:polly.indvar[0-9]*]] = phi i64 [ 0, %polly.loop_preheader{{[0-9]*}} ], [ %polly.indvar_next{{[0-9]*}}, %polly.{{[._a-zA-Z0-9]*}} ]
@@ -67,5 +67,5 @@ for.end6:                                         ; preds = %for.cond
 ; WITHOUTCONST:  %[[MUL1:[._a-zA-Z0-9]+]] = mul nsw i64 16, %[[IVOut]]
 ; WITHOUTCONST:  %[[MUL2:[._a-zA-Z0-9]+]] = mul nsw i64 2, %[[IVIn]]
 ; WITHOUTCONST:  %[[SUM1:[._a-zA-Z0-9]+]] = add nsw i64 %[[MUL1]], %[[MUL2]]
-; WITHOUTCONST:  %[[ACC:[._a-zA-Z0-9]*]] = getelementptr [1040 x float]* @A, i64 0, i64 %[[SUM1]]
+; WITHOUTCONST:  %[[ACC:[._a-zA-Z0-9]*]] = getelementptr float* getelementptr inbounds ([1040 x float]* @A, i{{(32|64)}} 0, i{{(32|64)}} 0), i64 %[[SUM1]]
 ; WITHOUTCONST:  store float 1.000000e+02, float* %[[ACC]]

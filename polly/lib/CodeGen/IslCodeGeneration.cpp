@@ -23,7 +23,6 @@
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/CodeGeneration.h"
 #include "polly/CodeGen/IslAst.h"
-#include "polly/CodeGen/IslExprBuilder.h"
 #include "polly/CodeGen/LoopGenerators.h"
 #include "polly/CodeGen/Utils.h"
 #include "polly/Dependences.h"

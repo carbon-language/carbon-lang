@@ -277,6 +277,9 @@ bool JSONImporter::runOnScop(Scop &scop) {
         return false;
       }
 
+      isl_id *OutId = isl_map_get_tuple_id(currentAccessMap, isl_dim_out);
+      newAccessMap = isl_map_set_tuple_id(newAccessMap, isl_dim_out, OutId);
+
       // We keep the old alignment, thus we cannot allow accesses to memory
       // locations that were not accessed before.
       isl_set *newAccessSet = isl_map_range(isl_map_copy(newAccessMap));

@@ -11,6 +11,7 @@
 
 #include "polly/CodeGen/IslExprBuilder.h"
 
+#include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
 
 #include "llvm/Support/Debug.h"
@@ -103,39 +104,28 @@ Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
   assert(isl_ast_expr_get_op_n_arg(Expr) == 2 &&
          "Multidimensional access functions are not supported yet");
 
-  Value *Base, *IndexOp, *Zero, *Access;
-  SmallVector<Value *, 4> Indices;
-  Type *PtrElTy;
+  Value *Base, *IndexOp, *Access;
+  isl_ast_expr *BaseExpr;
+  isl_id *BaseId;
 
-  Base = create(isl_ast_expr_get_op_arg(Expr, 0));
+  BaseExpr = isl_ast_expr_get_op_arg(Expr, 0);
+  BaseId = isl_ast_expr_get_id(BaseExpr);
+  isl_ast_expr_free(BaseExpr);
+
+  const ScopArrayInfo *SAI = ScopArrayInfo::getFromId(BaseId);
+  Base = SAI->getBasePtr();
   assert(Base->getType()->isPointerTy() && "Access base should be a pointer");
+  const Twine &BaseName = Base->getName();
+
+  if (Base->getType() != SAI->getType())
+    Base = Builder.CreateBitCast(Base, SAI->getType(),
+                                 "polly.access.cast." + BaseName);
 
   IndexOp = create(isl_ast_expr_get_op_arg(Expr, 1));
   assert(IndexOp->getType()->isIntegerTy() &&
          "Access index should be an integer");
-  Zero = ConstantInt::getNullValue(IndexOp->getType());
 
-  // If base is a array type like,
-  //   int A[N][M][K];
-  // we have to adjust the GEP. The easiest way is to transform accesses like,
-  //   A[i][j][k]
-  // into equivalent ones like,
-  //   A[0][0][ i*N*M + j*M + k]
-  // because SCEV already folded the "peudo dimensions" into one. Thus our index
-  // operand will be 'i*N*M + j*M + k' anyway.
-  PtrElTy = Base->getType()->getPointerElementType();
-  while (PtrElTy->isArrayTy()) {
-    Indices.push_back(Zero);
-    PtrElTy = PtrElTy->getArrayElementType();
-  }
-
-  Indices.push_back(IndexOp);
-  assert((PtrElTy->isIntOrIntVectorTy() || PtrElTy->isFPOrFPVectorTy() ||
-          PtrElTy->isPtrOrPtrVectorTy()) &&
-         "We do not yet change the type of the access base during code "
-         "generation.");
-
-  Access = Builder.CreateGEP(Base, Indices, "polly.access." + Base->getName());
+  Access = Builder.CreateGEP(Base, IndexOp, "polly.access." + BaseName);
 
   isl_ast_expr_free(Expr);
   return Access;

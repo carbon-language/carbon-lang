@@ -38,4 +38,4 @@ for.inc:                                          ; preds = %for.body
 for.end:                                          ; preds = %for.cond
   ret i32 0
 }
-; CHECK: load float* getelementptr inbounds ([100 x float]* @A, i64 0, i64 0)
+; CHECK: load float* getelementptr inbounds ([100 x float]* @A, i{{(32|64)}} 0, i{{(32|64)}} 0)
