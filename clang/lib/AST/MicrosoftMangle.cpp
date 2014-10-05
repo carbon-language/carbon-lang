@@ -2348,7 +2348,7 @@ void MicrosoftMangleContextImpl::mangleReferenceTemporary(const VarDecl *VD,
 
 void MicrosoftMangleContextImpl::mangleStaticGuardVariable(const VarDecl *VD,
                                                            raw_ostream &Out) {
-  // TODO: This is not correct, especially with respect to MSVC2013.  MSVC2013
+  // TODO: This is not correct, especially with respect to VS "14".  VS "14"
   // utilizes thread local variables to implement thread safe, re-entrant
   // initialization for statics.  They no longer differentiate between an
   // externally visible and non-externally visible static with respect to
