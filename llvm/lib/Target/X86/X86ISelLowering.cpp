@@ -9278,21 +9278,29 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   //
   // FIXME: We need to handle other interleaving widths (i16, i32, ...).
   if (shouldLowerAsInterleaving(Mask)) {
-    // FIXME: Figure out whether we should pack these into the low or high
-    // halves.
-
-    int EMask[16], OMask[16];
+    int NumLoHalf = std::count_if(Mask.begin(), Mask.end(), [](int M) {
+      return (M >= 0 && M < 8) || (M >= 16 && M < 24);
+    });
+    int NumHiHalf = std::count_if(Mask.begin(), Mask.end(), [](int M) {
+      return (M >= 8 && M < 16) || M >= 24;
+    });
+    int EMask[16] = {-1, -1, -1, -1, -1, -1, -1, -1,
+                     -1, -1, -1, -1, -1, -1, -1, -1};
+    int OMask[16] = {-1, -1, -1, -1, -1, -1, -1, -1,
+                     -1, -1, -1, -1, -1, -1, -1, -1};
+    bool UnpackLo = NumLoHalf >= NumHiHalf;
+    MutableArrayRef<int> TargetEMask(UnpackLo ? EMask : EMask + 8, 8);
+    MutableArrayRef<int> TargetOMask(UnpackLo ? OMask : OMask + 8, 8);
     for (int i = 0; i < 8; ++i) {
-      EMask[i] = Mask[2*i];
-      OMask[i] = Mask[2*i + 1];
-      EMask[i + 8] = -1;
-      OMask[i + 8] = -1;
+      TargetEMask[i] = Mask[2 * i];
+      TargetOMask[i] = Mask[2 * i + 1];
     }
 
     SDValue Evens = DAG.getVectorShuffle(MVT::v16i8, DL, V1, V2, EMask);
     SDValue Odds = DAG.getVectorShuffle(MVT::v16i8, DL, V1, V2, OMask);
 
-    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, Evens, Odds);
+    return DAG.getNode(UnpackLo ? X86ISD::UNPCKL : X86ISD::UNPCKH, DL,
+                       MVT::v16i8, Evens, Odds);
   }
 
   // Check for SSSE3 which lets us lower all v16i8 shuffles much more directly
