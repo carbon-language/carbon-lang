@@ -95,7 +95,7 @@ inline int __declspec(dllimport) inlineStaticLocalsFunc() {
 USE(inlineStaticLocalsFunc);
 
 // The address of a dllimport global cannot be used in constant initialization.
-// M32-DAG: @"\01?arr@?0??initializationFunc@@YAPAHXZ@4QBQAHB" = internal global [1 x i32*] zeroinitializer
+// M32-DAG: @"\01?arr@?1??initializationFunc@@YAPAHXZ@4QBQAHB" = internal global [1 x i32*] zeroinitializer
 // GNU-DAG: @_ZZ18initializationFuncvE3arr = internal global [1 x i32*] zeroinitializer
 int *initializationFunc() {
   static int *const arr[] = {&ExternGlobalDecl};

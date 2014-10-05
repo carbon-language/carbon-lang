@@ -77,8 +77,8 @@ namespace ns { __declspec(dllexport) int ExternalGlobal; }
 __declspec(dllexport) auto ExternalAutoTypeGlobal = External();
 
 int f();
-// MSC-DAG: @"\01?x@?0??nonInlineStaticLocalsFunc@@YAHXZ@4HA" = internal {{(unnamed_addr )*}}global i32 0
-// MSC-DAG: @"\01?$S1@?0??nonInlineStaticLocalsFunc@@YAHXZ@4IA" = internal {{(unnamed_addr )*}}global i32 0
+// MSC-DAG: @"\01?x@?1??nonInlineStaticLocalsFunc@@YAHXZ@4HA" = internal {{(unnamed_addr )*}}global i32 0
+// MSC-DAG: @"\01?$S1@?1??nonInlineStaticLocalsFunc@@YAHXZ@4IA" = internal {{(unnamed_addr )*}}global i32 0
 int __declspec(dllexport) nonInlineStaticLocalsFunc() {
   static int x = f();
   return x++;

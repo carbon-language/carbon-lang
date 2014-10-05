@@ -13,7 +13,7 @@ auto FunctionWithLocalType() {
   return LocalType{};
 }
 
-// CHECK: "\01?ValueFromFunctionWithLocalType@@3ULocalType@?0??FunctionWithLocalType@@YA?A?<auto>@@XZ@A"
+// CHECK: "\01?ValueFromFunctionWithLocalType@@3ULocalType@?1??FunctionWithLocalType@@YA?A?<auto>@@XZ@A"
 auto ValueFromFunctionWithLocalType = FunctionWithLocalType();
 
 // CHECK: "\01??R<lambda_0>@@QBE?A?<auto>@@XZ"
@@ -22,7 +22,7 @@ auto LambdaWithLocalType = [] {
   return LocalType{};
 };
 
-// CHECK: "\01?ValueFromLambdaWithLocalType@@3ULocalType@?0???R<lambda_0>@@QBE?A?<auto>@@XZ@A"
+// CHECK: "\01?ValueFromLambdaWithLocalType@@3ULocalType@?1???R<lambda_0>@@QBE?A?<auto>@@XZ@A"
 auto ValueFromLambdaWithLocalType = LambdaWithLocalType();
 
 template <typename T>

@@ -160,7 +160,7 @@ public:
     unsigned &discriminator = Uniquifier[ND];
     if (!discriminator)
       discriminator = ++Discriminator[std::make_pair(DC, ND->getIdentifier())];
-    disc = discriminator;
+    disc = discriminator + 1;
     return true;
   }
 
