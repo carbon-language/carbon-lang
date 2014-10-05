@@ -1,7 +1,7 @@
 # Verify that lld can handle .lib files. "main.obj" refers "var" and
 # "fn" defined in "vars.lib".
 #
-# RUN: yaml2obj %p/Inputs/vars-main.obj.yaml > %t.obj
+# RUN: yaml2obj %p/Inputs/vars-main-x86.obj.yaml > %t.obj
 #
 # RUN: lld -flavor link /out:%t1.exe /subsystem:console /entry:main /opt:noref \
 # RUN:   -- %t.obj %p/Inputs/vars.lib

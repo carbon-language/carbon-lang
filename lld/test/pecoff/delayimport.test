@@ -1,12 +1,13 @@
-# RUN: yaml2obj %p/Inputs/vars-main.obj.yaml > %t.obj
+# RUN: yaml2obj %p/Inputs/vars-main-x86.obj.yaml > %t-x86.obj
+# RUN: yaml2obj %p/Inputs/vars-main-x64.obj.yaml > %t-x64.obj
 #
-# RUN: not lld -flavor link /out:%t1.exe /subsystem:console /entry:main \
-# RUN:   /delayload:vars.dll -- %t.obj %p/Inputs/vars.lib >& %t.log
-# RUN: FileCheck -check-prefix=X86 %s < %t.log
+# RUN: not lld -flavor link /out:%t.exe /subsystem:console /entry:main \
+# RUN:   /delayload:vars.dll -- %t-x86.obj %p/Inputs/vars.lib 2>&1 \
+# RUN:   | FileCheck -check-prefix=X86 %s
 #
-# RUN: not lld -flavor link /out:%t1.exe /subsystem:console /entry:main \
-# RUN:   /machine:x64 /delayload:vars.dll -- %t.obj %p/Inputs/vars.lib >& %t.log
-# RUN: FileCheck -check-prefix=X64 %s < %t.log
+# RUN: not lld -flavor link /out:%t.exe /subsystem:console /entry:main \
+# RUN:   /machine:x64 /delayload:vars.dll -- %t-x64.obj %p/Inputs/vars.lib 2>&1 \
+# RUN:   | FileCheck -check-prefix=X64 %s
 
 X86: Undefined symbol: {{.*}} ___delayLoadHelper2@8
 X64: Undefined symbol: {{.*}} __delayLoadHelper2

@@ -28,6 +28,7 @@ enum class NativeReaderError {
   file_malformed,
   unknown_chunk_type,
   memory_error,
+  conflicting_target_machine,
 };
 
 inline std::error_code make_error_code(NativeReaderError e) {

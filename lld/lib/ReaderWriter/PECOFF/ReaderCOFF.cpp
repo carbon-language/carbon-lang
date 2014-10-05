@@ -71,6 +71,7 @@ public:
   std::error_code parse();
   StringRef getLinkerDirectives() const { return _directives; }
   bool isCompatibleWithSEH() const { return _compatibleWithSEH; }
+  llvm::COFF::MachineTypes getMachineType() { return _machineType; }
 
   const atom_collection<DefinedAtom> &defined() const override {
     return _definedAtoms;
@@ -190,6 +191,7 @@ private:
   _definedAtomLocations;
 
   uint64_t _ordinal;
+  llvm::COFF::MachineTypes _machineType;
 };
 
 class BumpPtrStringSaver : public llvm::cl::StringSaver {
@@ -290,7 +292,8 @@ DefinedAtom::Merge getMerge(const coff_aux_section_definition *auxsym) {
 
 FileCOFF::FileCOFF(std::unique_ptr<MemoryBuffer> mb, std::error_code &ec)
     : File(mb->getBufferIdentifier(), kindObject), _mb(std::move(mb)),
-      _compatibleWithSEH(false), _ordinal(0) {
+      _compatibleWithSEH(false), _ordinal(0),
+      _machineType(llvm::COFF::MT_Invalid) {
   auto binaryOrErr = llvm::object::createBinary(_mb->getMemBufferRef());
   if ((ec = binaryOrErr.getError()))
     return;
@@ -302,6 +305,8 @@ FileCOFF::FileCOFF(std::unique_ptr<MemoryBuffer> mb, std::error_code &ec)
     return;
   }
   bin.release();
+
+  _machineType = static_cast<llvm::COFF::MachineTypes>(_obj->getMachine());
 
   // Read .drectve section if exists.
   ArrayRef<uint8_t> directives;
@@ -951,6 +956,18 @@ StringRef FileCOFF::ArrayRefToString(ArrayRef<uint8_t> array) {
   return StringRef(*contents).trim();
 }
 
+StringRef getMachineName(llvm::COFF::MachineTypes Type) {
+  switch (Type) {
+  default: llvm_unreachable("unsupported machine type");
+  case llvm::COFF::IMAGE_FILE_MACHINE_ARMNT:
+    return "ARM";
+  case llvm::COFF::IMAGE_FILE_MACHINE_I386:
+    return "X86";
+  case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
+    return "X64";
+  }
+}
+
 class COFFObjectReader : public Reader {
 public:
   COFFObjectReader(PECOFFLinkingContext &ctx) : _ctx(ctx) {}
@@ -969,6 +986,15 @@ public:
     std::unique_ptr<FileCOFF> file(new FileCOFF(std::move(mb), ec));
     if (ec)
       return ec;
+
+    if (file->getMachineType() != llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN &&
+        file->getMachineType() != _ctx.getMachineType()) {
+      llvm::errs() << "module machine type '"
+                   << getMachineName(file->getMachineType())
+                   << "' conflicts with target machine type '"
+                   << getMachineName(_ctx.getMachineType()) << "'\n";
+      return NativeReaderError::conflicting_target_machine;
+    }
 
     // The set to contain the symbols specified as arguments of
     // /INCLUDE option.

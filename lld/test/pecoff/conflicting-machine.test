@@ -1,0 +1,6 @@
+# RUN: yaml2obj %p/Inputs/vars-main-x64.obj.yaml > %t-x64.obj
+
+# RUN: not lld -flavor link /machine:x86 /out:%t.exe /entry:main %t-x64.obj 2>&1 \
+# RUN:    | FileCheck %s
+
+CHECK: module machine type 'X64' conflicts with target machine type 'X86'

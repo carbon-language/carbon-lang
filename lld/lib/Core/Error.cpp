@@ -38,6 +38,8 @@ public:
       return "out of memory";
     case NativeReaderError::unknown_chunk_type:
       return "unknown chunk type";
+    case NativeReaderError::conflicting_target_machine:
+      return "conflicting target machine";
     }
     llvm_unreachable("An enumerator of NativeReaderError does not have a "
                      "message defined.");
