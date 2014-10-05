@@ -61,6 +61,7 @@ math/exp.cl
 math/exp10.cl
 math/fmax.cl
 math/fmin.cl
+math/fmod.cl
 math/hypot.cl
 math/mad.cl
 math/mix.cl
