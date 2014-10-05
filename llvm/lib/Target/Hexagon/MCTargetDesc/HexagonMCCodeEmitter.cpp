@@ -32,7 +32,7 @@ STATISTIC(MCNumEmitted, "Number of MC instructions emitted");
 
 namespace {
 /// \brief 10.6 Instruction Packets
-/// \brief Possible values for instruction packet parse field.
+/// Possible values for instruction packet parse field.
 enum class ParseField { duplex = 0x0, last0 = 0x1, last1 = 0x2, end = 0x3 };
 /// \brief Returns the packet bits based on instruction position.
 uint32_t getPacketBits(HexagonMCInst const &HMI) {
