@@ -4,7 +4,7 @@ define <16 x i32> @test1(i32* %x) {
 ; CHECK-LABEL: test1:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vmovd (%rdi), %xmm0
-; CHECK-NEXT:    vpbroadcastq %xmm0, %ymm0
+; CHECK-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm0
 ; CHECK-NEXT:    vpxor %ymm1, %ymm1, %ymm1
 ; CHECK-NEXT:    vpblendd {{.*#+}} ymm0 = ymm1[0,1,2,3],ymm0[4],ymm1[5,6,7]
 ; CHECK-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
