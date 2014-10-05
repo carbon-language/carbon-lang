@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -10708,6 +10709,92 @@ SDValue DAGCombiner::visitEXTRACT_SUBVECTOR(SDNode* N) {
   return SDValue();
 }
 
+static SDValue simplifyShuffleOperandRecursively(SmallBitVector &UsedElements,
+                                                 SDValue V, SelectionDAG &DAG) {
+  SDLoc DL(V);
+  EVT VT = V.getValueType();
+
+  switch (V.getOpcode()) {
+  default:
+    return V;
+
+  case ISD::CONCAT_VECTORS: {
+    EVT OpVT = V->getOperand(0).getValueType();
+    int OpSize = OpVT.getVectorNumElements();
+    SmallBitVector OpUsedElements(OpSize, false);
+    bool FoundSimplification = false;
+    SmallVector<SDValue, 4> NewOps;
+    NewOps.reserve(V->getNumOperands());
+    for (int i = 0, NumOps = V->getNumOperands(); i < NumOps; ++i) {
+      SDValue Op = V->getOperand(i);
+      bool OpUsed = false;
+      for (int j = 0; j < OpSize; ++j)
+        if (UsedElements[i * OpSize + j]) {
+          OpUsedElements[j] = true;
+          OpUsed = true;
+        }
+      NewOps.push_back(
+          OpUsed ? simplifyShuffleOperandRecursively(OpUsedElements, Op, DAG)
+                 : DAG.getUNDEF(OpVT));
+      FoundSimplification |= Op == NewOps.back();
+      OpUsedElements.reset();
+    }
+    if (FoundSimplification)
+      V = DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, NewOps);
+    return V;
+  }
+
+  case ISD::INSERT_SUBVECTOR: {
+    SDValue BaseV = V->getOperand(0);
+    SDValue SubV = V->getOperand(1);
+    auto *IdxN = dyn_cast<ConstantSDNode>(V->getOperand(2));
+    if (!IdxN)
+      return V;
+
+    int SubSize = SubV.getValueType().getVectorNumElements();
+    int Idx = IdxN->getZExtValue();
+    bool SubVectorUsed = false;
+    SmallBitVector SubUsedElements(SubSize, false);
+    for (int i = 0; i < SubSize; ++i)
+      if (UsedElements[i + Idx]) {
+        SubVectorUsed = true;
+        SubUsedElements[i] = true;
+        UsedElements[i + Idx] = false;
+      }
+
+    // Now recurse on both the base and sub vectors.
+    SDValue SimplifiedSubV =
+        SubVectorUsed
+            ? simplifyShuffleOperandRecursively(SubUsedElements, SubV, DAG)
+            : DAG.getUNDEF(SubV.getValueType());
+    SDValue SimplifiedBaseV = simplifyShuffleOperandRecursively(UsedElements, BaseV, DAG);
+    if (SimplifiedSubV != SubV || SimplifiedBaseV != BaseV)
+      V = DAG.getNode(ISD::INSERT_SUBVECTOR, DL, VT,
+                      SimplifiedBaseV, SimplifiedSubV, V->getOperand(2));
+    return V;
+  }
+  }
+}
+
+static SDValue simplifyShuffleOperands(ShuffleVectorSDNode *SVN, SDValue N0,
+                                       SDValue N1, SelectionDAG &DAG) {
+  EVT VT = SVN->getValueType(0);
+  int NumElts = VT.getVectorNumElements();
+  SmallBitVector N0UsedElements(NumElts, false), N1UsedElements(NumElts, false);
+  for (int M : SVN->getMask())
+    if (M >= 0 && M < NumElts)
+      N0UsedElements[M] = true;
+    else if (M >= NumElts)
+      N1UsedElements[M - NumElts] = true;
+
+  SDValue S0 = simplifyShuffleOperandRecursively(N0UsedElements, N0, DAG);
+  SDValue S1 = simplifyShuffleOperandRecursively(N1UsedElements, N1, DAG);
+  if (S0 == N0 && S1 == N1)
+    return SDValue();
+
+  return DAG.getVectorShuffle(VT, SDLoc(SVN), S0, S1, SVN->getMask());
+}
+
 // Tries to turn a shuffle of two CONCAT_VECTORS into a single concat.
 static SDValue partitionShuffleOfConcats(SDNode *N, SelectionDAG &DAG) {
   EVT VT = N->getValueType(0);
@@ -10859,6 +10946,12 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
         return N0;
     }
   }
+
+  // There are various patterns used to build up a vector from smaller vectors,
+  // subvectors, or elements. Scan chains of these and replace unused insertions
+  // or components with undef.
+  if (SDValue S = simplifyShuffleOperands(SVN, N0, N1, DAG))
+    return S;
 
   if (N0.getOpcode() == ISD::CONCAT_VECTORS &&
       Level < AfterLegalizeVectorOps &&

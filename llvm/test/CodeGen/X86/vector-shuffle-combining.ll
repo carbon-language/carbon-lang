@@ -2512,3 +2512,67 @@ define <4 x float> @combine_undef_input_test20(<4 x float> %a) {
   %2 = shufflevector <4 x float> %a, <4 x float> %1, <4 x i32> <i32 4, i32 6, i32 2, i32 3>
   ret <4 x float> %2
 }
+
+; These tests are designed to test the ability to combine away unnecessary
+; operations feeding into a shuffle. The AVX cases are the important ones as
+; they leverage operations which cannot be done naturally on the entire vector
+; and thus are decomposed into multiple smaller operations.
+
+define <8 x i32> @combine_unneeded_subvector1(<8 x i32> %a) {
+; SSE-LABEL: combine_unneeded_subvector1:
+; SSE:       # BB#0:
+; SSE-NEXT:    paddd {{.*}}(%rip), %xmm1
+; SSE-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[3,2,1,0]
+; SSE-NEXT:    movdqa %xmm0, %xmm1
+; SSE-NEXT:    retq
+;
+; AVX1-LABEL: combine_unneeded_subvector1:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX1-NEXT:    vpaddd {{.*}}(%rip), %xmm0, %xmm0
+; AVX1-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,2,1,0]
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: combine_unneeded_subvector1:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpaddd {{.*}}(%rip), %ymm0, %ymm0
+; AVX2-NEXT:    vmovdqa {{.*#+}} ymm1 = [7,6,5,4,7,6,5,4]
+; AVX2-NEXT:    vpermd %ymm0, %ymm1, %ymm0
+; AVX2-NEXT:    retq
+  %b = add <8 x i32> %a, <i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8>
+  %c = shufflevector <8 x i32> %b, <8 x i32> undef, <8 x i32> <i32 7, i32 6, i32 5, i32 4, i32 7, i32 6, i32 5, i32 4>
+  ret <8 x i32> %c
+}
+
+define <8 x i32> @combine_unneeded_subvector2(<8 x i32> %a, <8 x i32> %b) {
+; SSE-LABEL: combine_unneeded_subvector2:
+; SSE:       # BB#0:
+; SSE-NEXT:    paddd {{.*}}(%rip), %xmm1
+; SSE-NEXT:    pshufd {{.*#+}} xmm0 = xmm3[3,2,1,0]
+; SSE-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[3,2,1,0]
+; SSE-NEXT:    retq
+;
+; AVX1-LABEL: combine_unneeded_subvector2:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX1-NEXT:    vpaddd {{.*}}(%rip), %xmm0, %xmm0
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm1
+; AVX1-NEXT:    vpermilps {{.*#+}} xmm1 = xmm1[3,2,1,0]
+; AVX1-NEXT:    vpermilps {{.*#+}} ymm0 = ymm0[3,2,1,0,7,6,5,4]
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm1[0,1],ymm0[2,3]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: combine_unneeded_subvector2:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpaddd {{.*}}(%rip), %ymm0, %ymm0
+; AVX2-NEXT:    vmovdqa {{.*#+}} ymm2 = <7,6,5,4,u,u,u,u>
+; AVX2-NEXT:    vpermd %ymm1, %ymm2, %ymm1
+; AVX2-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[3,2,1,0,7,6,5,4]
+; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm1[0,1,2,3],ymm0[4,5,6,7]
+; AVX2-NEXT:    retq
+  %c = add <8 x i32> %a, <i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8>
+  %d = shufflevector <8 x i32> %b, <8 x i32> %c, <8 x i32> <i32 7, i32 6, i32 5, i32 4, i32 15, i32 14, i32 13, i32 12>
+  ret <8 x i32> %d
+}
