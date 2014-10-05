@@ -15119,13 +15119,32 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(X86ISD::CMOV, DL, VTs, Ops);
 }
 
-static SDValue LowerSIGN_EXTEND_AVX512(SDValue Op, SelectionDAG &DAG) {
+static SDValue LowerSIGN_EXTEND_AVX512(SDValue Op, const X86Subtarget *Subtarget,
+                                       SelectionDAG &DAG) {
   MVT VT = Op->getSimpleValueType(0);
   SDValue In = Op->getOperand(0);
   MVT InVT = In.getSimpleValueType();
+  MVT VTElt = VT.getVectorElementType();
+  MVT InVTElt = InVT.getVectorElementType();
   SDLoc dl(Op);
 
+  // SKX processor
+  if ((InVTElt == MVT::i1) &&
+      (((Subtarget->hasBWI() && Subtarget->hasVLX() &&
+        VT.getSizeInBits() <= 256 && VTElt.getSizeInBits() <= 16)) ||
+
+       ((Subtarget->hasBWI() && VT.is512BitVector() &&
+        VTElt.getSizeInBits() <= 16)) ||
+
+       ((Subtarget->hasDQI() && Subtarget->hasVLX() &&
+        VT.getSizeInBits() <= 256 && VTElt.getSizeInBits() >= 32)) ||
+    
+       ((Subtarget->hasDQI() && VT.is512BitVector() &&
+        VTElt.getSizeInBits() >= 32))))
+    return DAG.getNode(X86ISD::VSEXT, dl, VT, In);
+    
   unsigned int NumElts = VT.getVectorNumElements();
+
   if (NumElts != 8 && NumElts != 16)
     return SDValue();
 
@@ -15158,7 +15177,7 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, const X86Subtarget *Subtarget,
   SDLoc dl(Op);
 
   if (VT.is512BitVector() || InVT.getVectorElementType() == MVT::i1)
-    return LowerSIGN_EXTEND_AVX512(Op, DAG);
+    return LowerSIGN_EXTEND_AVX512(Op, Subtarget, DAG);
 
   if ((VT != MVT::v4i64 || InVT != MVT::v4i32) &&
       (VT != MVT::v8i32 || InVT != MVT::v8i16) &&

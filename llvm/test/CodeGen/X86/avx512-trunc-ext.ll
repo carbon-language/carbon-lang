@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=skx | FileCheck --check-prefix=SKX %s
 
 ; CHECK-LABEL: trunc_16x32_to_16x8
 ; CHECK: vpmovdb
@@ -118,6 +119,7 @@ define i8 @trunc_8i16_to_8i1(<8 x i16> %a) {
 
 ; CHECK-LABEL: sext_8i1_8i32
 ; CHECK: vpbroadcastq  LCP{{.*}}(%rip), %zmm0 {%k1} {z}
+; SKX: vpmovm2d
 ; CHECK: ret
 define <8 x i32> @sext_8i1_8i32(<8 x i32> %a1, <8 x i32> %a2) nounwind {
   %x = icmp slt <8 x i32> %a1, %a2
@@ -144,4 +146,31 @@ define i16 @trunc_i32_to_i1(i32 %a) {
   %maskv = insertelement <16 x i1> <i1 true, i1 false, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true>, i1 %a_i, i32 0
   %res = bitcast <16 x i1> %maskv to i16
   ret i16 %res
+}
+
+; CHECK-LABEL: sext_8i1_8i16
+; SKX: vpmovm2w
+; CHECK: ret
+define <8 x i16> @sext_8i1_8i16(<8 x i32> %a1, <8 x i32> %a2) nounwind {
+  %x = icmp slt <8 x i32> %a1, %a2
+  %y = sext <8 x i1> %x to <8 x i16>
+  ret <8 x i16> %y
+}
+
+; CHECK-LABEL: sext_16i1_16i32
+; SKX: vpmovm2d
+; CHECK: ret
+define <16 x i32> @sext_16i1_16i32(<16 x i32> %a1, <16 x i32> %a2) nounwind {
+  %x = icmp slt <16 x i32> %a1, %a2
+  %y = sext <16 x i1> %x to <16 x i32>
+  ret <16 x i32> %y
+}
+
+; CHECK-LABEL: sext_8i1_8i64
+; SKX: vpmovm2q
+; CHECK: ret
+define <8 x i64> @sext_8i1_8i64(<8 x i32> %a1, <8 x i32> %a2) nounwind {
+  %x = icmp slt <8 x i32> %a1, %a2
+  %y = sext <8 x i1> %x to <8 x i64>
+  ret <8 x i64> %y
 }
