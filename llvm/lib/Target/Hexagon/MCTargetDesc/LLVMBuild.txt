@@ -19,5 +19,5 @@
 type = Library
 name = HexagonDesc
 parent = Hexagon
-required_libraries = HexagonInfo MC
+required_libraries = HexagonInfo MC Support
 add_to_library_groups = Hexagon
