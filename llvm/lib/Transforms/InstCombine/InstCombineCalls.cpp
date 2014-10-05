@@ -1020,18 +1020,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
     // If there is a dominating assume with the same condition as this one,
     // then this one is redundant, and should be removed.
-    if (DT) {
-      for (User *U : IIOperand->users()) {
-        Instruction *User = dyn_cast<Instruction>(U);
-        if (!User || User == II)
-          continue;
-
-        if (match(User,
-                  m_Intrinsic<Intrinsic::assume>(m_Specific(IIOperand))) &&
-            DT->dominates(User, II))
-          return EraseInstFromFunction(*II);
-      }
-    }
+    APInt KnownZero(1, 0), KnownOne(1, 0);
+    computeKnownBits(IIOperand, KnownZero, KnownOne, 0, II);
+    if (KnownOne.isAllOnesValue())
+      return EraseInstFromFunction(*II);
 
     break;
   }
