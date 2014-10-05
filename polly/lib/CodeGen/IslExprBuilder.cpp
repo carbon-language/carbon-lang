@@ -14,6 +14,7 @@
 #include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
 
+#include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
@@ -100,10 +101,6 @@ Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
   assert(isl_ast_expr_get_op_n_arg(Expr) >= 2 &&
          "We need at least two operands to create a member access.");
 
-  // TODO: Support for multi-dimensional array.
-  assert(isl_ast_expr_get_op_n_arg(Expr) == 2 &&
-         "Multidimensional access functions are not supported yet");
-
   Value *Base, *IndexOp, *Access;
   isl_ast_expr *BaseExpr;
   isl_id *BaseId;
@@ -121,9 +118,27 @@ Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
     Base = Builder.CreateBitCast(Base, SAI->getType(),
                                  "polly.access.cast." + BaseName);
 
-  IndexOp = create(isl_ast_expr_get_op_arg(Expr, 1));
-  assert(IndexOp->getType()->isIntegerTy() &&
-         "Access index should be an integer");
+  IndexOp = nullptr;
+  for (unsigned u = 1, e = isl_ast_expr_get_op_n_arg(Expr); u < e; u++) {
+    Value *NextIndex = create(isl_ast_expr_get_op_arg(Expr, u));
+    assert(NextIndex->getType()->isIntegerTy() &&
+           "Access index should be an integer");
+
+    if (!IndexOp)
+      IndexOp = NextIndex;
+    else
+      IndexOp = Builder.CreateAdd(IndexOp, NextIndex);
+
+    // For every but the last dimension multiply the size, for the last
+    // dimension we can exit the loop.
+    if (u + 1 >= e)
+      break;
+
+    const SCEV *DimSCEV = SAI->getDimensionSize(u - 1);
+    Value *DimSize = Expander.expandCodeFor(DimSCEV, IndexOp->getType(),
+                                            Builder.GetInsertPoint());
+    IndexOp = Builder.CreateMul(IndexOp, DimSize);
+  }
 
   Access = Builder.CreateGEP(Base, IndexOp, "polly.access." + BaseName);
 

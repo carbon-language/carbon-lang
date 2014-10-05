@@ -57,8 +57,12 @@ class IslNodeBuilder {
 public:
   IslNodeBuilder(PollyIRBuilder &Builder, ScopAnnotator &Annotator, Pass *P,
                  LoopInfo &LI, ScalarEvolution &SE, DominatorTree &DT)
-      : Builder(Builder), Annotator(Annotator), ExprBuilder(Builder, IDToValue),
-        P(P), LI(LI), SE(SE), DT(DT) {}
+      : Builder(Builder), Annotator(Annotator),
+        Rewriter(new SCEVExpander(SE, "polly")),
+        ExprBuilder(Builder, IDToValue, *Rewriter), P(P), LI(LI), SE(SE),
+        DT(DT) {}
+
+  ~IslNodeBuilder() { delete Rewriter; }
 
   /// @brief Add the mappings from array id's to array llvm::Value's.
   void addMemoryAccesses(Scop &S);
@@ -69,6 +73,10 @@ public:
 private:
   PollyIRBuilder &Builder;
   ScopAnnotator &Annotator;
+
+  /// @brief A SCEVExpander to create llvm values from SCEVs.
+  SCEVExpander *Rewriter;
+
   IslExprBuilder ExprBuilder;
   Pass *P;
   LoopInfo &LI;
@@ -532,7 +540,6 @@ void IslNodeBuilder::create(__isl_take isl_ast_node *Node) {
 }
 
 void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {
-  SCEVExpander Rewriter(SE, "polly");
 
   for (unsigned i = 0; i < isl_set_dim(Context, isl_dim_param); ++i) {
     isl_id *Id;
@@ -544,7 +551,7 @@ void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {
     Scev = (const SCEV *)isl_id_get_user(Id);
     T = dyn_cast<IntegerType>(Scev->getType());
     InsertLocation = --(Builder.GetInsertBlock()->end());
-    Value *V = Rewriter.expandCodeFor(Scev, T, InsertLocation);
+    Value *V = Rewriter->expandCodeFor(Scev, T, InsertLocation);
     IDToValue[Id] = V;
 
     isl_id_free(Id);

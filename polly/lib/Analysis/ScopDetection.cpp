@@ -202,12 +202,6 @@ ScopDetection::ScopDetection() : FunctionPass(ID) {
     return;
   }
 
-  if (PollyDelinearize) {
-    DEBUG(errs() << "WARNING: We disable runtime alias checks as "
-                    "delinearization is enabled.\n");
-    PollyUseRuntimeAliasChecks = false;
-  }
-
   if (AllowNonAffine) {
     DEBUG(errs() << "WARNING: We disable runtime alias checks as non affine "
                     "accesses are enabled.\n");
