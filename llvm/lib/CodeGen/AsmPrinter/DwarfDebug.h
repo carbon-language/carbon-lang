@@ -215,10 +215,6 @@ class DwarfDebug : public AsmPrinterHandler {
   // can refer to them in spite of insertions into this list.
   SmallVector<DebugLocList, 4> DotDebugLocEntries;
 
-  // Collection of subprogram DIEs that are marked (at the end of the module)
-  // as DW_AT_inline.
-  SmallPtrSet<DIE *, 4> InlinedSubprogramDIEs;
-
   // This is a collection of subprogram MDNodes that are processed to
   // create DIEs.
   SmallPtrSet<const MDNode *, 16> ProcessedSPNodes;
