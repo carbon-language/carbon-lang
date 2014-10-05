@@ -57,10 +57,8 @@ namespace {
     Location getArgLocation(ImmutableCallSite CS, unsigned ArgIdx,
                             ModRefResult &Mask) override {
       Mask = ModRef;
-      AAMDNodes AATags(
-          CS.getInstruction()->getMetadata(LLVMContext::MD_tbaa),
-          CS.getInstruction()->getMetadata(LLVMContext::MD_alias_scope),
-          CS.getInstruction()->getMetadata(LLVMContext::MD_noalias));
+      AAMDNodes AATags;
+      CS->getAAMetadata(AATags);
       return Location(CS.getArgument(ArgIdx), UnknownSize, AATags);
     }
 
