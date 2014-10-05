@@ -25,18 +25,20 @@ public:
   }
 
   std::string message(int ev) const override {
-    if (NativeReaderError(ev) == NativeReaderError::success)
+    switch (static_cast<NativeReaderError>(ev)) {
+    case NativeReaderError::success:
       return "Success";
-    if (NativeReaderError(ev) == NativeReaderError::unknown_file_format)
+    case NativeReaderError::unknown_file_format:
       return "Unknown file format";
-    if (NativeReaderError(ev) == NativeReaderError::file_too_short)
+    case NativeReaderError::file_too_short:
       return "file truncated";
-    if (NativeReaderError(ev) == NativeReaderError::file_malformed)
+    case NativeReaderError::file_malformed:
       return "file malformed";
-    if (NativeReaderError(ev) == NativeReaderError::memory_error)
+    case NativeReaderError::memory_error:
       return "out of memory";
-    if (NativeReaderError(ev) == NativeReaderError::unknown_chunk_type)
+    case NativeReaderError::unknown_chunk_type:
       return "unknown chunk type";
+    }
     llvm_unreachable("An enumerator of NativeReaderError does not have a "
                      "message defined.");
   }
@@ -54,12 +56,14 @@ public:
   }
 
   std::string message(int ev) const override {
-    if (YamlReaderError(ev) == YamlReaderError::success)
+    switch (static_cast<YamlReaderError>(ev)) {
+    case YamlReaderError::success:
       return "Success";
-    if (YamlReaderError(ev) == YamlReaderError::unknown_keyword)
+    case YamlReaderError::unknown_keyword:
       return "Unknown keyword found in yaml file";
-    if (YamlReaderError(ev) == YamlReaderError::illegal_value)
+    case YamlReaderError::illegal_value:
       return "Bad value found in yaml file";
+    }
     llvm_unreachable("An enumerator of YamlReaderError does not have a "
                      "message defined.");
   }
@@ -77,14 +81,14 @@ public:
   }
 
   std::string message(int ev) const override {
-    LinkerScriptReaderError e = LinkerScriptReaderError(ev);
-    if (e == LinkerScriptReaderError::success)
+    switch (static_cast<LinkerScriptReaderError>(ev)) {
+    case LinkerScriptReaderError::success:
       return "Success";
-    if (e == LinkerScriptReaderError::parse_error)
+    case LinkerScriptReaderError::parse_error:
       return "Error parsing linker script";
-    llvm_unreachable(
-        "An enumerator of LinkerScriptReaderError does not have a "
-        "message defined.");
+    }
+    llvm_unreachable("An enumerator of LinkerScriptReaderError does not have a "
+                     "message defined.");
   }
 };
 
@@ -100,8 +104,16 @@ public:
   }
 
   std::string message(int ev) const override {
-    if (InputGraphError(ev) == InputGraphError::success)
+    switch (static_cast<InputGraphError>(ev)) {
+    case InputGraphError::success:
       return "Success";
+    case InputGraphError::failure:
+      return "failure";
+    case InputGraphError::no_more_elements:
+      return "no more elements";
+    case InputGraphError::no_more_files:
+      return "no more files";
+    }
     llvm_unreachable("An enumerator of InputGraphError does not have a "
                      "message defined.");
   }
@@ -119,11 +131,12 @@ public:
   }
 
   std::string message(int ev) const override {
-    if (ReaderError(ev) == ReaderError::success)
+    switch (static_cast<ReaderError>(ev)) {
+    case ReaderError::success:
       return "Success";
-    else if (ReaderError(ev) == ReaderError::unknown_file_format)
+    case ReaderError::unknown_file_format:
       return "File format for the input file is not recognized by this flavor";
-
+    }
     llvm_unreachable("An enumerator of ReaderError does not have a "
                      "message defined.");
   }
