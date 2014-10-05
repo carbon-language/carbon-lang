@@ -186,7 +186,8 @@ define <2 x double> @shuffle_v2f64_22(<2 x double> %a, <2 x double> %b) {
 define <2 x double> @shuffle_v2f64_32(<2 x double> %a, <2 x double> %b) {
 ; SSE-LABEL: shuffle_v2f64_32:
 ; SSE:       # BB#0:
-; SSE-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[2,3,0,1]
+; SSE-NEXT:    shufpd {{.*#+}} xmm1 = xmm1[1,0]
+; SSE-NEXT:    movapd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_v2f64_32:

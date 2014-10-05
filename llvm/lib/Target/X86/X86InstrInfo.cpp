@@ -2139,34 +2139,6 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
 
   unsigned MIOpc = MI->getOpcode();
   switch (MIOpc) {
-  case X86::SHUFPSrri: {
-    assert(MI->getNumOperands() == 4 && "Unknown shufps instruction!");
-    if (!Subtarget.hasSSE2()) return nullptr;
-
-    unsigned B = MI->getOperand(1).getReg();
-    unsigned C = MI->getOperand(2).getReg();
-    if (B != C) return nullptr;
-    int64_t M = MI->getOperand(3).getImm();
-    NewMI = BuildMI(MF, MI->getDebugLoc(), get(X86::PSHUFDri))
-      .addOperand(Dest).addOperand(Src).addImm(M);
-    break;
-  }
-  case X86::SHUFPDrri: {
-    assert(MI->getNumOperands() == 4 && "Unknown shufpd instruction!");
-    if (!Subtarget.hasSSE2()) return nullptr;
-
-    unsigned B = MI->getOperand(1).getReg();
-    unsigned C = MI->getOperand(2).getReg();
-    if (B != C) return nullptr;
-    unsigned M = MI->getOperand(3).getImm();
-
-    // Convert to PSHUFD mask.
-    M = ((M & 1) << 1) | ((M & 1) << 3) | ((M & 2) << 4) | ((M & 2) << 6)| 0x44;
-
-    NewMI = BuildMI(MF, MI->getDebugLoc(), get(X86::PSHUFDri))
-      .addOperand(Dest).addOperand(Src).addImm(M);
-    break;
-  }
   case X86::SHL64ri: {
     assert(MI->getNumOperands() >= 3 && "Unknown shift instruction!");
     unsigned ShAmt = getTruncatedShiftCount(MI, 2);

@@ -5,7 +5,8 @@
 define void @test1(<2 x float> %Q, float *%P2) nounwind {
 ; X64-LABEL: test1:
 ; X64:       # BB#0:
-; X64-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; X64-NEXT:    movaps %xmm0, %xmm1
+; X64-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,1,2,3]
 ; X64-NEXT:    addss %xmm0, %xmm1
 ; X64-NEXT:    movss %xmm1, (%rdi)
 ; X64-NEXT:    retq
@@ -13,7 +14,8 @@ define void @test1(<2 x float> %Q, float *%P2) nounwind {
 ; X32-LABEL: test1:
 ; X32:       # BB#0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; X32-NEXT:    movaps %xmm0, %xmm1
+; X32-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,1,2,3]
 ; X32-NEXT:    addss %xmm0, %xmm1
 ; X32-NEXT:    movss %xmm1, (%eax)
 ; X32-NEXT:    retl

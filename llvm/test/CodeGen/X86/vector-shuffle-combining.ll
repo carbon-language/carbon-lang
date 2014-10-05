@@ -396,14 +396,16 @@ define <4 x i32> @combine_bitwise_ops_test4b(<4 x i32> %a, <4 x i32> %b, <4 x i3
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    andps %xmm1, %xmm0
 ; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2],xmm0[1,3]
-; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm2[0,2,1,3]
+; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
+; SSE2-NEXT:    movaps %xmm2, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: combine_bitwise_ops_test4b:
 ; SSSE3:       # BB#0:
 ; SSSE3-NEXT:    andps %xmm1, %xmm0
 ; SSSE3-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2],xmm0[1,3]
-; SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm2[0,2,1,3]
+; SSSE3-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
+; SSSE3-NEXT:    movaps %xmm2, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: combine_bitwise_ops_test4b:
@@ -435,14 +437,16 @@ define <4 x i32> @combine_bitwise_ops_test5b(<4 x i32> %a, <4 x i32> %b, <4 x i3
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    orps %xmm1, %xmm0
 ; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2],xmm0[1,3]
-; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm2[0,2,1,3]
+; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
+; SSE2-NEXT:    movaps %xmm2, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: combine_bitwise_ops_test5b:
 ; SSSE3:       # BB#0:
 ; SSSE3-NEXT:    orps %xmm1, %xmm0
 ; SSSE3-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2],xmm0[1,3]
-; SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm2[0,2,1,3]
+; SSSE3-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
+; SSSE3-NEXT:    movaps %xmm2, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: combine_bitwise_ops_test5b:
@@ -1124,7 +1128,8 @@ define <4 x float> @combine_test1(<4 x float> %a, <4 x float> %b) {
 ; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2],xmm0[1,3]
 ; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
 ; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2],xmm1[1,3]
-; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm2[0,2,1,3]
+; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
+; SSE2-NEXT:    movaps %xmm2, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: combine_test1:
@@ -1252,7 +1257,8 @@ define <4 x i32> @combine_test6(<4 x i32> %a, <4 x i32> %b) {
 ; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2],xmm0[1,3]
 ; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
 ; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2],xmm1[1,3]
-; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm2[0,2,1,3]
+; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
+; SSE2-NEXT:    movaps %xmm2, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: combine_test6:
@@ -1651,7 +1657,8 @@ define <4 x float> @combine_test2b(<4 x float> %a, <4 x float> %b) {
 ; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2],xmm0[1,3]
 ; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
 ; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,0],xmm1[1,1]
-; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm2[0,2,1,3]
+; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
+; SSE2-NEXT:    movaps %xmm2, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: combine_test2b:
@@ -1660,7 +1667,8 @@ define <4 x float> @combine_test2b(<4 x float> %a, <4 x float> %b) {
 ; SSSE3-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2],xmm0[1,3]
 ; SSSE3-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
 ; SSSE3-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,0],xmm1[1,1]
-; SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm2[0,2,1,3]
+; SSSE3-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
+; SSSE3-NEXT:    movaps %xmm2, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: combine_test2b:
@@ -1668,7 +1676,8 @@ define <4 x float> @combine_test2b(<4 x float> %a, <4 x float> %b) {
 ; SSE41-NEXT:    movaps %xmm1, %xmm2
 ; SSE41-NEXT:    blendps {{.*#+}} xmm2 = xmm2[0],xmm0[1],xmm2[2],xmm0[3]
 ; SSE41-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,0],xmm1[1,1]
-; SSE41-NEXT:    pshufd {{.*#+}} xmm0 = xmm2[0,2,1,3]
+; SSE41-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
+; SSE41-NEXT:    movaps %xmm2, %xmm0
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test2b:

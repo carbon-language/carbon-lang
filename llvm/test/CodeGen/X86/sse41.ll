@@ -291,7 +291,8 @@ declare i32 @llvm.x86.sse41.ptestnzc(<2 x i64>, <2 x i64>) nounwind readnone
 define <2 x float> @buildvector(<2 x float> %A, <2 x float> %B) nounwind  {
 ; X32-LABEL: buildvector:
 ; X32:       ## BB#0: ## %entry
-; X32-NEXT:    pshufd {{.*#+}} xmm2 = xmm0[1,1,2,3]
+; X32-NEXT:    movaps %xmm0, %xmm2
+; X32-NEXT:    shufps {{.*#+}} xmm2 = xmm2[1,1,2,3]
 ; X32-NEXT:    addss %xmm1, %xmm0
 ; X32-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,1,2,3]
 ; X32-NEXT:    addss %xmm2, %xmm1
@@ -300,7 +301,8 @@ define <2 x float> @buildvector(<2 x float> %A, <2 x float> %B) nounwind  {
 ;
 ; X64-LABEL: buildvector:
 ; X64:       ## BB#0: ## %entry
-; X64-NEXT:    pshufd {{.*#+}} xmm2 = xmm0[1,1,2,3]
+; X64-NEXT:    movaps %xmm0, %xmm2
+; X64-NEXT:    shufps {{.*#+}} xmm2 = xmm2[1,1,2,3]
 ; X64-NEXT:    addss %xmm1, %xmm0
 ; X64-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,1,2,3]
 ; X64-NEXT:    addss %xmm2, %xmm1

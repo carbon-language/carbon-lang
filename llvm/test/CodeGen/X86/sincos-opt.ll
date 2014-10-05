@@ -15,7 +15,8 @@ entry:
 
 ; OSX_SINCOS-LABEL: test1:
 ; OSX_SINCOS: callq ___sincosf_stret
-; OSX_SINCOS: pshufd {{.*}} ## xmm1 = xmm0[1,1,2,3]
+; OSX_SINCOS: movaps %xmm0, %xmm1
+; OSX_SINCOS: shufps {{.*}} ## xmm1 = xmm1[1,1,2,3]
 ; OSX_SINCOS: addss %xmm0, %xmm1
 
 ; OSX_NOOPT: test1
