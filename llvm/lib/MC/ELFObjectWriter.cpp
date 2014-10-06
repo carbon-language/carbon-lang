@@ -770,8 +770,9 @@ bool ELFObjectWriter::shouldRelocateWithSymbol(const MCAssembler &Asm,
   }
 
   // Most TLS relocations use a got, so they need the symbol. Even those that
-  // are just an offset (@tpoff), require a symbol in some linkers (gold,
-  // but not bfd ld).
+  // are just an offset (@tpoff), require a symbol in gold versions before
+  // 5efeedf61e4fe720fd3e9a08e6c91c10abb66d42 (2014-09-26) which fixed
+  // http://sourceware.org/PR16773.
   if (Flags & ELF::SHF_TLS)
     return true;
 
