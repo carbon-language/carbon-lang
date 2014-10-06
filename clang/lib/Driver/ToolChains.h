@@ -588,7 +588,6 @@ public:
   bool IsIntegratedAssemblerDefault() const override {
     switch (getTriple().getArch()) {
     case llvm::Triple::ppc:
-    case llvm::Triple::ppc64:
       return true;
     default:
       return Generic_ELF::IsIntegratedAssemblerDefault();
@@ -621,8 +620,6 @@ public:
   bool IsIntegratedAssemblerDefault() const override {
     switch (getTriple().getArch()) {
     case llvm::Triple::ppc:
-    case llvm::Triple::ppc64:
-    case llvm::Triple::ppc64le:
       return true;
     default:
       return Generic_ELF::IsIntegratedAssemblerDefault();
