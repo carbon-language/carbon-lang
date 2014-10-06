@@ -1,8 +1,8 @@
-; RUN: llc -O0 -filetype=obj -mtriple=aarch64_be-none-linux < %s | llvm-dwarfdump - | FileCheck %s
+; RUN: llc -O0 -filetype=obj -mtriple=aarch64-none-linux < %s | llvm-dwarfdump - | FileCheck %s
 
-; CHECK: file format ELF64-aarch64-big
+; CHECK: file format ELF64-aarch64-little
 
-target datalayout = "E-m:e-i64:64-i128:128-n32:64-S128"
+target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128"
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!3, !4}
