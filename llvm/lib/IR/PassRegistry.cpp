@@ -70,16 +70,6 @@ void PassRegistry::registerPass(const PassInfo &PI, bool ShouldFree) {
     ToFree.push_back(std::unique_ptr<const PassInfo>(&PI));
 }
 
-void PassRegistry::unregisterPass(const PassInfo &PI) {
-  sys::SmartScopedWriter<true> Guard(Lock);
-  MapType::iterator I = PassInfoMap.find(PI.getTypeInfo());
-  assert(I != PassInfoMap.end() && "Pass registered but not in map!");
-
-  // Remove pass from the map.
-  PassInfoMap.erase(I);
-  PassInfoStringMap.erase(PI.getPassArgument());
-}
-
 void PassRegistry::enumerateWith(PassRegistrationListener *L) {
   sys::SmartScopedReader<true> Guard(Lock);
   for (auto PassInfoPair : PassInfoMap)
