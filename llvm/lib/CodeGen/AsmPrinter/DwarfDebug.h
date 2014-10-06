@@ -508,11 +508,6 @@ class DwarfDebug : public AsmPrinterHandler {
   void constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
                                         const MDNode *N);
 
-  /// \brief Construct import_module DIE.
-  std::unique_ptr<DIE>
-  constructImportedEntityDIE(DwarfCompileUnit &TheCU,
-                             const DIImportedEntity &Module);
-
   /// \brief Register a source line with debug info. Returns the unique
   /// label that was emitted and which provides correspondence to the
   /// source line list.

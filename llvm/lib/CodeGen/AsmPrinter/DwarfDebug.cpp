@@ -595,7 +595,7 @@ void DwarfDebug::constructScopeDIE(
     for (ImportedEntityMap::const_iterator i = Range.first; i != Range.second;
          ++i)
       Children.push_back(
-          constructImportedEntityDIE(TheCU, DIImportedEntity(i->second)));
+          TheCU.constructImportedEntityDIE(DIImportedEntity(i->second)));
     // If there are only other scopes as children, put them directly in the
     // parent instead, as this scope would serve no purpose.
     if (Children.size() == ChildScopeCount) {
@@ -690,36 +690,7 @@ void DwarfDebug::constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
   DIImportedEntity Module(N);
   assert(Module.Verify());
   if (DIE *D = TheCU.getOrCreateContextDIE(Module.getContext()))
-    D->addChild(constructImportedEntityDIE(TheCU, Module));
-}
-
-std::unique_ptr<DIE>
-DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
-                                       const DIImportedEntity &Module) {
-  assert(Module.Verify() &&
-         "Use one of the MDNode * overloads to handle invalid metadata");
-  std::unique_ptr<DIE> IMDie = make_unique<DIE>((dwarf::Tag)Module.getTag());
-  TheCU.insertDIE(Module, IMDie.get());
-  DIE *EntityDie;
-  DIDescriptor Entity = resolve(Module.getEntity());
-  if (Entity.isNameSpace())
-    EntityDie = TheCU.getOrCreateNameSpace(DINameSpace(Entity));
-  else if (Entity.isSubprogram())
-    EntityDie = TheCU.getOrCreateSubprogramDIE(DISubprogram(Entity));
-  else if (Entity.isType())
-    EntityDie = TheCU.getOrCreateTypeDIE(DIType(Entity));
-  else
-    EntityDie = TheCU.getDIE(Entity);
-  assert(EntityDie);
-  TheCU.addSourceLine(*IMDie, Module.getLineNumber(),
-                      Module.getContext().getFilename(),
-                      Module.getContext().getDirectory());
-  TheCU.addDIEEntry(*IMDie, dwarf::DW_AT_import, *EntityDie);
-  StringRef Name = Module.getName();
-  if (!Name.empty())
-    TheCU.addString(*IMDie, dwarf::DW_AT_name, Name);
-
-  return IMDie;
+    D->addChild(TheCU.constructImportedEntityDIE(Module));
 }
 
 // Emit all Dwarf sections that should come prior to the content. Create

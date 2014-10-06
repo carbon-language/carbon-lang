@@ -424,6 +424,10 @@ public:
   /// constructSubprogramArguments - Construct function argument DIEs.
   void constructSubprogramArguments(DIE &Buffer, DITypeArray Args);
 
+  /// \brief Construct import_module DIE.
+  std::unique_ptr<DIE>
+  constructImportedEntityDIE(const DIImportedEntity &Module);
+
   /// Create a DIE with the given Tag, add the DIE to its parent, and
   /// call insertDIE if MD is not null.
   DIE &createAndAddDIE(unsigned Tag, DIE &Parent,
