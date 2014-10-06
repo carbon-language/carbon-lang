@@ -378,6 +378,9 @@ int main(int argc_, const char **argv_) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc_, argv_);
 
+  if (llvm::sys::Process::FixupStandardFileDescriptors())
+    return 1;
+
   SmallVector<const char *, 256> argv;
   llvm::SpecificBumpPtrAllocator<char> ArgAllocator;
   std::error_code EC = llvm::sys::Process::GetArgumentVector(
