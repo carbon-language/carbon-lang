@@ -51,6 +51,9 @@ namespace lldb
     typedef void*               rwlock_t;
     typedef void*               process_t;                  // Process type is HANDLE
     typedef void*               thread_t;                   // Host thread type
+    typedef void*               file_t;                     // Host file type
+    typedef void*               pipe_t;                     // Host pipe type
+    typedef unsigned int __w64  socket_t;                   // Host socket type
     typedef uint32_t            thread_key_t;
     typedef void*               thread_arg_t;               // Host thread argument type
     typedef unsigned            thread_result_t;            // Host thread result type
@@ -71,6 +74,9 @@ namespace lldb
     typedef pthread_rwlock_t    rwlock_t;
     typedef uint64_t            process_t;                  // Process type is just a pid.
     typedef pthread_t           thread_t;                   // Host thread type
+    typedef int                 file_t;                     // Host file type
+    typedef int                 pipe_t;                     // Host pipe type
+    typedef int                 socket_t;                   // Host socket type
     typedef pthread_key_t       thread_key_t;
     typedef void *              thread_arg_t;               // Host thread argument type
     typedef void *              thread_result_t;            // Host thread result type

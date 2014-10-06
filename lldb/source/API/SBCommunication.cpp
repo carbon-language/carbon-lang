@@ -71,7 +71,7 @@ SBCommunication::Connect (const char *url)
     if (m_opaque)
     {
         if (!m_opaque->HasConnection ())
-            m_opaque->SetConnection (new ConnectionFileDescriptor());
+            m_opaque->SetConnection(Connection::CreateDefaultConnection(url));
         return m_opaque->Connect (url, NULL);
     }
     return eConnectionStatusNoConnection;

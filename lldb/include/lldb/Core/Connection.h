@@ -46,6 +46,8 @@ public:
     virtual
     ~Connection ();
 
+    static Connection *CreateDefaultConnection(const char *url);
+
     //------------------------------------------------------------------
     /// Connect using the connect string \a url.
     ///
