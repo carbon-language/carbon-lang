@@ -55,11 +55,11 @@ public:
   void update(StringRef Str);
 
   /// \brief Finishes off the hash and puts the result in result.
-  void final(MD5Result &result);
+  void final(MD5Result &Result);
 
   /// \brief Translates the bytes in \p Res to a hex string that is
   /// deposited into \p Str. The result will be of length 32.
-  static void stringifyResult(MD5Result &Res, SmallString<32> &Str);
+  static void stringifyResult(MD5Result &Result, SmallString<32> &Str);
 
 private:
   const uint8_t *body(ArrayRef<uint8_t> Data);
