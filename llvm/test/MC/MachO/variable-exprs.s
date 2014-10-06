@@ -134,10 +134,10 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-I386:   ('nsyms', 10)
 // CHECK-I386:   ('stroff', 576)
 // CHECK-I386:   ('strsize', 24)
-// CHECK-I386:   ('_string_data', '\x00d2\x00d\x00d3\x00a\x00b\x00c\x00e\x00g\x00f\x00t0\x00')
+// CHECK-I386:   ('_string_data', '\x00g\x00f\x00e\x00d\x00c\x00b\x00a\x00d3\x00d2\x00t0\x00')
 // CHECK-I386:   ('_symbols', [
 // CHECK-I386:     # Symbol 0
-// CHECK-I386:    (('n_strx', 9)
+// CHECK-I386:    (('n_strx', 13)
 // CHECK-I386:     ('n_type', 0xe)
 // CHECK-I386:     ('n_sect', 2)
 // CHECK-I386:     ('n_desc', 0)
@@ -153,7 +153,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-I386:     ('_string', 'b')
 // CHECK-I386:    ),
 // CHECK-I386:     # Symbol 2
-// CHECK-I386:    (('n_strx', 13)
+// CHECK-I386:    (('n_strx', 9)
 // CHECK-I386:     ('n_type', 0xe)
 // CHECK-I386:     ('n_sect', 2)
 // CHECK-I386:     ('n_desc', 0)
@@ -161,7 +161,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-I386:     ('_string', 'c')
 // CHECK-I386:    ),
 // CHECK-I386:     # Symbol 3
-// CHECK-I386:    (('n_strx', 15)
+// CHECK-I386:    (('n_strx', 5)
 // CHECK-I386:     ('n_type', 0xe)
 // CHECK-I386:     ('n_sect', 2)
 // CHECK-I386:     ('n_desc', 0)
@@ -169,7 +169,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-I386:     ('_string', 'e')
 // CHECK-I386:    ),
 // CHECK-I386:     # Symbol 4
-// CHECK-I386:    (('n_strx', 17)
+// CHECK-I386:    (('n_strx', 1)
 // CHECK-I386:     ('n_type', 0xe)
 // CHECK-I386:     ('n_sect', 2)
 // CHECK-I386:     ('n_desc', 0)
@@ -177,7 +177,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-I386:     ('_string', 'g')
 // CHECK-I386:    ),
 // CHECK-I386:     # Symbol 5
-// CHECK-I386:    (('n_strx', 19)
+// CHECK-I386:    (('n_strx', 3)
 // CHECK-I386:     ('n_type', 0xe)
 // CHECK-I386:     ('n_sect', 2)
 // CHECK-I386:     ('n_desc', 0)
@@ -193,7 +193,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-I386:     ('_string', 't0')
 // CHECK-I386:    ),
 // CHECK-I386:     # Symbol 7
-// CHECK-I386:    (('n_strx', 4)
+// CHECK-I386:    (('n_strx', 7)
 // CHECK-I386:     ('n_type', 0x1)
 // CHECK-I386:     ('n_sect', 0)
 // CHECK-I386:     ('n_desc', 0)
@@ -201,15 +201,15 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-I386:     ('_string', 'd')
 // CHECK-I386:    ),
 // CHECK-I386:     # Symbol 8
-// CHECK-I386:    (('n_strx', 1)
+// CHECK-I386:    (('n_strx', 18)
 // CHECK-I386:     ('n_type', 0xb)
 // CHECK-I386:     ('n_sect', 0)
 // CHECK-I386:     ('n_desc', 0)
-// CHECK-I386:     ('n_value', 4)
+// CHECK-I386:     ('n_value', 7)
 // CHECK-I386:     ('_string', 'd2')
 // CHECK-I386:    ),
 // CHECK-I386:     # Symbol 9
-// CHECK-I386:    (('n_strx', 6)
+// CHECK-I386:    (('n_strx', 15)
 // CHECK-I386:     ('n_type', 0x1)
 // CHECK-I386:     ('n_sect', 0)
 // CHECK-I386:     ('n_desc', 0)
@@ -335,10 +335,10 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-X86_64:   ('nsyms', 10)
 // CHECK-X86_64:   ('stroff', 660)
 // CHECK-X86_64:   ('strsize', 24)
-// CHECK-X86_64:   ('_string_data', '\x00d2\x00d\x00d3\x00a\x00b\x00c\x00e\x00g\x00f\x00t0\x00')
+// CHECK-X86_64:   ('_string_data', '\x00g\x00f\x00e\x00d\x00c\x00b\x00a\x00d3\x00d2\x00t0\x00')
 // CHECK-X86_64:   ('_symbols', [
 // CHECK-X86_64:     # Symbol 0
-// CHECK-X86_64:    (('n_strx', 9)
+// CHECK-X86_64:    (('n_strx', 13)
 // CHECK-X86_64:     ('n_type', 0xe)
 // CHECK-X86_64:     ('n_sect', 2)
 // CHECK-X86_64:     ('n_desc', 0)
@@ -354,7 +354,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-X86_64:     ('_string', 'b')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 2
-// CHECK-X86_64:    (('n_strx', 13)
+// CHECK-X86_64:    (('n_strx', 9)
 // CHECK-X86_64:     ('n_type', 0xe)
 // CHECK-X86_64:     ('n_sect', 2)
 // CHECK-X86_64:     ('n_desc', 0)
@@ -362,7 +362,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-X86_64:     ('_string', 'c')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 3
-// CHECK-X86_64:    (('n_strx', 15)
+// CHECK-X86_64:    (('n_strx', 5)
 // CHECK-X86_64:     ('n_type', 0xe)
 // CHECK-X86_64:     ('n_sect', 2)
 // CHECK-X86_64:     ('n_desc', 0)
@@ -370,7 +370,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-X86_64:     ('_string', 'e')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 4
-// CHECK-X86_64:    (('n_strx', 17)
+// CHECK-X86_64:    (('n_strx', 1)
 // CHECK-X86_64:     ('n_type', 0xe)
 // CHECK-X86_64:     ('n_sect', 2)
 // CHECK-X86_64:     ('n_desc', 0)
@@ -378,7 +378,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-X86_64:     ('_string', 'g')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 5
-// CHECK-X86_64:    (('n_strx', 19)
+// CHECK-X86_64:    (('n_strx', 3)
 // CHECK-X86_64:     ('n_type', 0xe)
 // CHECK-X86_64:     ('n_sect', 2)
 // CHECK-X86_64:     ('n_desc', 0)
@@ -394,7 +394,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-X86_64:     ('_string', 't0')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 7
-// CHECK-X86_64:    (('n_strx', 4)
+// CHECK-X86_64:    (('n_strx', 7)
 // CHECK-X86_64:     ('n_type', 0x1)
 // CHECK-X86_64:     ('n_sect', 0)
 // CHECK-X86_64:     ('n_desc', 0)
@@ -402,15 +402,15 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-X86_64:     ('_string', 'd')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 8
-// CHECK-X86_64:    (('n_strx', 1)
+// CHECK-X86_64:    (('n_strx', 18)
 // CHECK-X86_64:     ('n_type', 0xb)
 // CHECK-X86_64:     ('n_sect', 0)
 // CHECK-X86_64:     ('n_desc', 0)
-// CHECK-X86_64:     ('n_value', 4)
+// CHECK-X86_64:     ('n_value', 7)
 // CHECK-X86_64:     ('_string', 'd2')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 9
-// CHECK-X86_64:    (('n_strx', 6)
+// CHECK-X86_64:    (('n_strx', 15)
 // CHECK-X86_64:     ('n_type', 0x1)
 // CHECK-X86_64:     ('n_sect', 0)
 // CHECK-X86_64:     ('n_desc', 0)

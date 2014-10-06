@@ -82,10 +82,10 @@ baz:
 // CHECK:   ('nsyms', 3)
 // CHECK:   ('stroff', 444)
 // CHECK:   ('strsize', 16)
-// CHECK:   ('_string_data', '\x00foo\x00bar\x00baz\x00\x00\x00\x00')
+// CHECK:   ('_string_data', '\x00baz\x00bar\x00foo\x00\x00\x00\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 1)
+// CHECK:    (('n_strx', 9)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -101,7 +101,7 @@ baz:
 // CHECK:     ('_string', 'bar')
 // CHECK:    ),
 // CHECK:     # Symbol 2
-// CHECK:    (('n_strx', 9)
+// CHECK:    (('n_strx', 1)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 3)
 // CHECK:     ('n_desc', 0)

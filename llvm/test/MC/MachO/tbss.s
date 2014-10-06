@@ -67,10 +67,10 @@
 // CHECK:   ('nsyms', 2)
 // CHECK:   ('stroff', 400)
 // CHECK:   ('strsize', 28)
-// CHECK:   ('_string_data', '\x00_a$tlv$init\x00_b$tlv$init\x00\x00\x00\x00')
+// CHECK:   ('_string_data', '\x00_b$tlv$init\x00_a$tlv$init\x00\x00\x00\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 1)
+// CHECK:    (('n_strx', 13)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -78,7 +78,7 @@
 // CHECK:     ('_string', '_a$tlv$init')
 // CHECK:    ),
 // CHECK:     # Symbol 1
-// CHECK:    (('n_strx', 13)
+// CHECK:    (('n_strx', 1)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)

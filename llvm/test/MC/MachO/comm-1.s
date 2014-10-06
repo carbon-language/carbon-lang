@@ -51,10 +51,10 @@
 // CHECK:   ('nsyms', 4)
 // CHECK:   ('stroff', 304)
 // CHECK:   ('strsize', 48)
-// CHECK:   ('_string_data', '\x00sym_comm_B\x00sym_comm_A\x00sym_comm_C\x00sym_comm_D\x00\x00\x00\x00')
+// CHECK:   ('_string_data', '\x00sym_comm_D\x00sym_comm_C\x00sym_comm_B\x00sym_comm_A\x00\x00\x00\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 12)
+// CHECK:    (('n_strx', 34)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)
@@ -62,7 +62,7 @@
 // CHECK:     ('_string', 'sym_comm_A')
 // CHECK:    ),
 // CHECK:     # Symbol 1
-// CHECK:    (('n_strx', 1)
+// CHECK:    (('n_strx', 23)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)
@@ -70,7 +70,7 @@
 // CHECK:     ('_string', 'sym_comm_B')
 // CHECK:    ),
 // CHECK:     # Symbol 2
-// CHECK:    (('n_strx', 23)
+// CHECK:    (('n_strx', 12)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 544)
@@ -78,7 +78,7 @@
 // CHECK:     ('_string', 'sym_comm_C')
 // CHECK:    ),
 // CHECK:     # Symbol 3
-// CHECK:    (('n_strx', 34)
+// CHECK:    (('n_strx', 1)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 768)

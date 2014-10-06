@@ -75,10 +75,10 @@ _g.eh:
 // CHECK-NEXT:  ('nsyms', 2)
 // CHECK-NEXT:  ('stroff', 424)
 // CHECK-NEXT:  ('strsize', 12)
-// CHECK-NEXT:  ('_string_data', '\x00_g\x00_g.eh\x00\x00\x00')
+// CHECK-NEXT:  ('_string_data', '\x00_g.eh\x00_g\x00\x00\x00')
 // CHECK-NEXT:  ('_symbols', [
 // CHECK-NEXT:    # Symbol 0
-// CHECK-NEXT:   (('n_strx', 1)
+// CHECK-NEXT:   (('n_strx', 7)
 // CHECK-NEXT:    ('n_type', 0xe)
 // CHECK-NEXT:    ('n_sect', 1)
 // CHECK-NEXT:    ('n_desc', 0)
@@ -86,7 +86,7 @@ _g.eh:
 // CHECK-NEXT:    ('_string', '_g')
 // CHECK-NEXT:   ),
 // CHECK-NEXT:    # Symbol 1
-// CHECK-NEXT:   (('n_strx', 4)
+// CHECK-NEXT:   (('n_strx', 1)
 // CHECK-NEXT:    ('n_type', 0xe)
 // CHECK-NEXT:    ('n_sect', 2)
 // CHECK-NEXT:    ('n_desc', 0)

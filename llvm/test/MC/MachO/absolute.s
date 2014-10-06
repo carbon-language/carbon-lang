@@ -63,10 +63,10 @@ foo_equals2 = (_foo - _bar + 0xffff0000)
 // CHECK:   ('nsyms', 8)
 // CHECK:   ('stroff', 420)
 // CHECK:   ('strsize', 84)
-// CHECK:   ('_string_data', '\x00foo_set1_global\x00foo_set2_global\x00_bar\x00_foo\x00foo_set1\x00foo_set2\x00foo_equals\x00foo_equals2\x00')
+// CHECK:   ('_string_data', '\x00foo_equals\x00_bar\x00_foo\x00foo_set2_global\x00foo_set1_global\x00foo_set2\x00foo_equals2\x00foo_set1\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 33)
+// CHECK:    (('n_strx', 12)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 0)
@@ -74,7 +74,7 @@ foo_equals2 = (_foo - _bar + 0xffff0000)
 // CHECK:     ('_string', '_bar')
 // CHECK:    ),
 // CHECK:     # Symbol 1
-// CHECK:    (('n_strx', 38)
+// CHECK:    (('n_strx', 17)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 0)
@@ -82,7 +82,7 @@ foo_equals2 = (_foo - _bar + 0xffff0000)
 // CHECK:     ('_string', '_foo')
 // CHECK:    ),
 // CHECK:     # Symbol 2
-// CHECK:    (('n_strx', 43)
+// CHECK:    (('n_strx', 75)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 32)
@@ -90,7 +90,7 @@ foo_equals2 = (_foo - _bar + 0xffff0000)
 // CHECK:     ('_string', 'foo_set1')
 // CHECK:    ),
 // CHECK:     # Symbol 3
-// CHECK:    (('n_strx', 52)
+// CHECK:    (('n_strx', 54)
 // CHECK:     ('n_type', 0x2)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 32)
@@ -98,7 +98,7 @@ foo_equals2 = (_foo - _bar + 0xffff0000)
 // CHECK:     ('_string', 'foo_set2')
 // CHECK:    ),
 // CHECK:     # Symbol 4
-// CHECK:    (('n_strx', 61)
+// CHECK:    (('n_strx', 1)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 0)
@@ -106,7 +106,7 @@ foo_equals2 = (_foo - _bar + 0xffff0000)
 // CHECK:     ('_string', 'foo_equals')
 // CHECK:    ),
 // CHECK:     # Symbol 5
-// CHECK:    (('n_strx', 72)
+// CHECK:    (('n_strx', 63)
 // CHECK:     ('n_type', 0x2)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)
@@ -114,7 +114,7 @@ foo_equals2 = (_foo - _bar + 0xffff0000)
 // CHECK:     ('_string', 'foo_equals2')
 // CHECK:    ),
 // CHECK:     # Symbol 6
-// CHECK:    (('n_strx', 1)
+// CHECK:    (('n_strx', 38)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 32)
@@ -122,7 +122,7 @@ foo_equals2 = (_foo - _bar + 0xffff0000)
 // CHECK:     ('_string', 'foo_set1_global')
 // CHECK:    ),
 // CHECK:     # Symbol 7
-// CHECK:    (('n_strx', 17)
+// CHECK:    (('n_strx', 22)
 // CHECK:     ('n_type', 0x3)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 32)

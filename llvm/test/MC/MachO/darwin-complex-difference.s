@@ -74,10 +74,10 @@ _d:
 // CHECK:   ('nsyms', 3)
 // CHECK:   ('stroff', 392)
 // CHECK:   ('strsize', 12)
-// CHECK:   ('_string_data', '\x00_a\x00_c\x00_d\x00\x00\x00')
+// CHECK:   ('_string_data', '\x00_d\x00_c\x00_a\x00\x00\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 1)
+// CHECK:    (('n_strx', 7)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 0)
@@ -93,7 +93,7 @@ _d:
 // CHECK:     ('_string', '_c')
 // CHECK:    ),
 // CHECK:     # Symbol 2
-// CHECK:    (('n_strx', 7)
+// CHECK:    (('n_strx', 1)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 0)

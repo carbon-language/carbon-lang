@@ -647,10 +647,10 @@ D38:
 // CHECK:   ('nsyms', 40)
 // CHECK:   ('stroff', 3328)
 // CHECK:   ('strsize', 152)
-// CHECK:   ('_string_data', '\x00D0\x00D1\x00D2\x00D3\x00L4\x00D4\x00D5\x00D6\x00D7\x00D8\x00D9\x00D12\x00D13\x00D16\x00D17\x00D18\x00D19\x00D20\x00D21\x00D22\x00D23\x00D24\x00D25\x00D26\x00D27\x00D28\x00D29\x00D30\x00D31\x00D32\x00D33\x00D34\x00L35\x00D35\x00L36\x00D36\x00L37\x00D37\x00L38\x00D38\x00\x00\x00')
+// CHECK:   ('_string_data', '\x00D9\x00D29\x00D19\x00D8\x00L38\x00D38\x00D28\x00D18\x00D7\x00L37\x00D37\x00D27\x00D17\x00D6\x00L36\x00D36\x00D26\x00D16\x00D5\x00L35\x00D35\x00D25\x00L4\x00D4\x00D34\x00D24\x00D3\x00D33\x00D23\x00D13\x00D2\x00D32\x00D22\x00D12\x00D1\x00D31\x00D21\x00D0\x00D30\x00D20\x00\x00\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 1)
+// CHECK:    (('n_strx', 139)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 0)
@@ -658,7 +658,7 @@ D38:
 // CHECK:     ('_string', 'D0')
 // CHECK:    ),
 // CHECK:     # Symbol 1
-// CHECK:    (('n_strx', 4)
+// CHECK:    (('n_strx', 128)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 0)
@@ -666,7 +666,7 @@ D38:
 // CHECK:     ('_string', 'D1')
 // CHECK:    ),
 // CHECK:     # Symbol 2
-// CHECK:    (('n_strx', 7)
+// CHECK:    (('n_strx', 113)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -674,7 +674,7 @@ D38:
 // CHECK:     ('_string', 'D2')
 // CHECK:    ),
 // CHECK:     # Symbol 3
-// CHECK:    (('n_strx', 10)
+// CHECK:    (('n_strx', 98)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 3)
 // CHECK:     ('n_desc', 0)
@@ -682,7 +682,7 @@ D38:
 // CHECK:     ('_string', 'D3')
 // CHECK:    ),
 // CHECK:     # Symbol 4
-// CHECK:    (('n_strx', 13)
+// CHECK:    (('n_strx', 84)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 4)
 // CHECK:     ('n_desc', 0)
@@ -690,7 +690,7 @@ D38:
 // CHECK:     ('_string', 'L4')
 // CHECK:    ),
 // CHECK:     # Symbol 5
-// CHECK:    (('n_strx', 16)
+// CHECK:    (('n_strx', 87)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 4)
 // CHECK:     ('n_desc', 0)
@@ -698,7 +698,7 @@ D38:
 // CHECK:     ('_string', 'D4')
 // CHECK:    ),
 // CHECK:     # Symbol 6
-// CHECK:    (('n_strx', 19)
+// CHECK:    (('n_strx', 69)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 5)
 // CHECK:     ('n_desc', 0)
@@ -706,7 +706,7 @@ D38:
 // CHECK:     ('_string', 'D5')
 // CHECK:    ),
 // CHECK:     # Symbol 7
-// CHECK:    (('n_strx', 22)
+// CHECK:    (('n_strx', 50)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 6)
 // CHECK:     ('n_desc', 0)
@@ -714,7 +714,7 @@ D38:
 // CHECK:     ('_string', 'D6')
 // CHECK:    ),
 // CHECK:     # Symbol 8
-// CHECK:    (('n_strx', 25)
+// CHECK:    (('n_strx', 31)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 7)
 // CHECK:     ('n_desc', 0)
@@ -722,7 +722,7 @@ D38:
 // CHECK:     ('_string', 'D7')
 // CHECK:    ),
 // CHECK:     # Symbol 9
-// CHECK:    (('n_strx', 28)
+// CHECK:    (('n_strx', 12)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 8)
 // CHECK:     ('n_desc', 0)
@@ -730,7 +730,7 @@ D38:
 // CHECK:     ('_string', 'D8')
 // CHECK:    ),
 // CHECK:     # Symbol 10
-// CHECK:    (('n_strx', 31)
+// CHECK:    (('n_strx', 1)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 9)
 // CHECK:     ('n_desc', 0)
@@ -738,7 +738,7 @@ D38:
 // CHECK:     ('_string', 'D9')
 // CHECK:    ),
 // CHECK:     # Symbol 11
-// CHECK:    (('n_strx', 34)
+// CHECK:    (('n_strx', 124)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 10)
 // CHECK:     ('n_desc', 0)
@@ -746,7 +746,7 @@ D38:
 // CHECK:     ('_string', 'D12')
 // CHECK:    ),
 // CHECK:     # Symbol 12
-// CHECK:    (('n_strx', 38)
+// CHECK:    (('n_strx', 109)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 11)
 // CHECK:     ('n_desc', 0)
@@ -754,7 +754,7 @@ D38:
 // CHECK:     ('_string', 'D13')
 // CHECK:    ),
 // CHECK:     # Symbol 13
-// CHECK:    (('n_strx', 42)
+// CHECK:    (('n_strx', 65)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 12)
 // CHECK:     ('n_desc', 0)
@@ -770,7 +770,7 @@ D38:
 // CHECK:     ('_string', 'D17')
 // CHECK:    ),
 // CHECK:     # Symbol 15
-// CHECK:    (('n_strx', 50)
+// CHECK:    (('n_strx', 27)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 14)
 // CHECK:     ('n_desc', 0)
@@ -778,7 +778,7 @@ D38:
 // CHECK:     ('_string', 'D18')
 // CHECK:    ),
 // CHECK:     # Symbol 16
-// CHECK:    (('n_strx', 54)
+// CHECK:    (('n_strx', 8)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 15)
 // CHECK:     ('n_desc', 0)
@@ -786,7 +786,7 @@ D38:
 // CHECK:     ('_string', 'D19')
 // CHECK:    ),
 // CHECK:     # Symbol 17
-// CHECK:    (('n_strx', 58)
+// CHECK:    (('n_strx', 146)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 16)
 // CHECK:     ('n_desc', 0)
@@ -794,7 +794,7 @@ D38:
 // CHECK:     ('_string', 'D20')
 // CHECK:    ),
 // CHECK:     # Symbol 18
-// CHECK:    (('n_strx', 62)
+// CHECK:    (('n_strx', 135)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 17)
 // CHECK:     ('n_desc', 0)
@@ -802,7 +802,7 @@ D38:
 // CHECK:     ('_string', 'D21')
 // CHECK:    ),
 // CHECK:     # Symbol 19
-// CHECK:    (('n_strx', 66)
+// CHECK:    (('n_strx', 120)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 18)
 // CHECK:     ('n_desc', 0)
@@ -810,7 +810,7 @@ D38:
 // CHECK:     ('_string', 'D22')
 // CHECK:    ),
 // CHECK:     # Symbol 20
-// CHECK:    (('n_strx', 70)
+// CHECK:    (('n_strx', 105)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 19)
 // CHECK:     ('n_desc', 0)
@@ -818,7 +818,7 @@ D38:
 // CHECK:     ('_string', 'D23')
 // CHECK:    ),
 // CHECK:     # Symbol 21
-// CHECK:    (('n_strx', 74)
+// CHECK:    (('n_strx', 94)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 20)
 // CHECK:     ('n_desc', 0)
@@ -826,7 +826,7 @@ D38:
 // CHECK:     ('_string', 'D24')
 // CHECK:    ),
 // CHECK:     # Symbol 22
-// CHECK:    (('n_strx', 78)
+// CHECK:    (('n_strx', 80)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 21)
 // CHECK:     ('n_desc', 0)
@@ -834,7 +834,7 @@ D38:
 // CHECK:     ('_string', 'D25')
 // CHECK:    ),
 // CHECK:     # Symbol 23
-// CHECK:    (('n_strx', 82)
+// CHECK:    (('n_strx', 61)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 22)
 // CHECK:     ('n_desc', 0)
@@ -842,7 +842,7 @@ D38:
 // CHECK:     ('_string', 'D26')
 // CHECK:    ),
 // CHECK:     # Symbol 24
-// CHECK:    (('n_strx', 86)
+// CHECK:    (('n_strx', 42)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 23)
 // CHECK:     ('n_desc', 0)
@@ -850,7 +850,7 @@ D38:
 // CHECK:     ('_string', 'D27')
 // CHECK:    ),
 // CHECK:     # Symbol 25
-// CHECK:    (('n_strx', 90)
+// CHECK:    (('n_strx', 23)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 24)
 // CHECK:     ('n_desc', 0)
@@ -858,7 +858,7 @@ D38:
 // CHECK:     ('_string', 'D28')
 // CHECK:    ),
 // CHECK:     # Symbol 26
-// CHECK:    (('n_strx', 94)
+// CHECK:    (('n_strx', 4)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 25)
 // CHECK:     ('n_desc', 0)
@@ -866,7 +866,7 @@ D38:
 // CHECK:     ('_string', 'D29')
 // CHECK:    ),
 // CHECK:     # Symbol 27
-// CHECK:    (('n_strx', 98)
+// CHECK:    (('n_strx', 142)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 26)
 // CHECK:     ('n_desc', 0)
@@ -874,7 +874,7 @@ D38:
 // CHECK:     ('_string', 'D30')
 // CHECK:    ),
 // CHECK:     # Symbol 28
-// CHECK:    (('n_strx', 102)
+// CHECK:    (('n_strx', 131)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 27)
 // CHECK:     ('n_desc', 0)
@@ -882,7 +882,7 @@ D38:
 // CHECK:     ('_string', 'D31')
 // CHECK:    ),
 // CHECK:     # Symbol 29
-// CHECK:    (('n_strx', 106)
+// CHECK:    (('n_strx', 116)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 28)
 // CHECK:     ('n_desc', 0)
@@ -890,7 +890,7 @@ D38:
 // CHECK:     ('_string', 'D32')
 // CHECK:    ),
 // CHECK:     # Symbol 30
-// CHECK:    (('n_strx', 110)
+// CHECK:    (('n_strx', 101)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 29)
 // CHECK:     ('n_desc', 0)
@@ -898,7 +898,7 @@ D38:
 // CHECK:     ('_string', 'D33')
 // CHECK:    ),
 // CHECK:     # Symbol 31
-// CHECK:    (('n_strx', 114)
+// CHECK:    (('n_strx', 90)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 30)
 // CHECK:     ('n_desc', 0)
@@ -906,7 +906,7 @@ D38:
 // CHECK:     ('_string', 'D34')
 // CHECK:    ),
 // CHECK:     # Symbol 32
-// CHECK:    (('n_strx', 118)
+// CHECK:    (('n_strx', 72)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 4)
 // CHECK:     ('n_desc', 0)
@@ -914,7 +914,7 @@ D38:
 // CHECK:     ('_string', 'L35')
 // CHECK:    ),
 // CHECK:     # Symbol 33
-// CHECK:    (('n_strx', 122)
+// CHECK:    (('n_strx', 76)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 4)
 // CHECK:     ('n_desc', 0)
@@ -922,7 +922,7 @@ D38:
 // CHECK:     ('_string', 'D35')
 // CHECK:    ),
 // CHECK:     # Symbol 34
-// CHECK:    (('n_strx', 126)
+// CHECK:    (('n_strx', 53)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 4)
 // CHECK:     ('n_desc', 0)
@@ -930,7 +930,7 @@ D38:
 // CHECK:     ('_string', 'L36')
 // CHECK:    ),
 // CHECK:     # Symbol 35
-// CHECK:    (('n_strx', 130)
+// CHECK:    (('n_strx', 57)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 4)
 // CHECK:     ('n_desc', 0)
@@ -938,7 +938,7 @@ D38:
 // CHECK:     ('_string', 'D36')
 // CHECK:    ),
 // CHECK:     # Symbol 36
-// CHECK:    (('n_strx', 134)
+// CHECK:    (('n_strx', 34)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 4)
 // CHECK:     ('n_desc', 0)
@@ -946,7 +946,7 @@ D38:
 // CHECK:     ('_string', 'L37')
 // CHECK:    ),
 // CHECK:     # Symbol 37
-// CHECK:    (('n_strx', 138)
+// CHECK:    (('n_strx', 38)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 4)
 // CHECK:     ('n_desc', 0)
@@ -954,7 +954,7 @@ D38:
 // CHECK:     ('_string', 'D37')
 // CHECK:    ),
 // CHECK:     # Symbol 38
-// CHECK:    (('n_strx', 142)
+// CHECK:    (('n_strx', 15)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 31)
 // CHECK:     ('n_desc', 0)
@@ -962,7 +962,7 @@ D38:
 // CHECK:     ('_string', 'L38')
 // CHECK:    ),
 // CHECK:     # Symbol 39
-// CHECK:    (('n_strx', 146)
+// CHECK:    (('n_strx', 19)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 31)
 // CHECK:     ('n_desc', 0)

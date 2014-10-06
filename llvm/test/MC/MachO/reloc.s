@@ -181,10 +181,10 @@ _f1:
 // CHECK:   ('nsyms', 10)
 // CHECK:   ('stroff', 724)
 // CHECK:   ('strsize', 88)
-// CHECK:   ('_string_data', '\x00undef\x00local_a_ext\x00.objc_class_name_A\x00_f1\x00local_a\x00local_a_elt\x00local_b\x00local_c\x00bar\x00_f0\x00\x00\x00')
+// CHECK:   ('_string_data', '\x00local_a_ext\x00local_a_elt\x00bar\x00undef\x00local_c\x00local_b\x00local_a\x00.objc_class_name_A\x00_f1\x00_f0\x00\x00\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 42)
+// CHECK:    (('n_strx', 51)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -192,7 +192,7 @@ _f1:
 // CHECK:     ('_string', 'local_a')
 // CHECK:    ),
 // CHECK:     # Symbol 1
-// CHECK:    (('n_strx', 50)
+// CHECK:    (('n_strx', 13)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -200,7 +200,7 @@ _f1:
 // CHECK:     ('_string', 'local_a_elt')
 // CHECK:    ),
 // CHECK:     # Symbol 2
-// CHECK:    (('n_strx', 62)
+// CHECK:    (('n_strx', 43)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -208,7 +208,7 @@ _f1:
 // CHECK:     ('_string', 'local_b')
 // CHECK:    ),
 // CHECK:     # Symbol 3
-// CHECK:    (('n_strx', 70)
+// CHECK:    (('n_strx', 35)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -216,7 +216,7 @@ _f1:
 // CHECK:     ('_string', 'local_c')
 // CHECK:    ),
 // CHECK:     # Symbol 4
-// CHECK:    (('n_strx', 78)
+// CHECK:    (('n_strx', 25)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 3)
 // CHECK:     ('n_desc', 0)
@@ -232,7 +232,7 @@ _f1:
 // CHECK:     ('_string', '_f0')
 // CHECK:    ),
 // CHECK:     # Symbol 6
-// CHECK:    (('n_strx', 19)
+// CHECK:    (('n_strx', 59)
 // CHECK:     ('n_type', 0x3)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)
@@ -240,7 +240,7 @@ _f1:
 // CHECK:     ('_string', '.objc_class_name_A')
 // CHECK:    ),
 // CHECK:     # Symbol 7
-// CHECK:    (('n_strx', 38)
+// CHECK:    (('n_strx', 78)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 128)
@@ -248,7 +248,7 @@ _f1:
 // CHECK:     ('_string', '_f1')
 // CHECK:    ),
 // CHECK:     # Symbol 8
-// CHECK:    (('n_strx', 7)
+// CHECK:    (('n_strx', 1)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -256,7 +256,7 @@ _f1:
 // CHECK:     ('_string', 'local_a_ext')
 // CHECK:    ),
 // CHECK:     # Symbol 9
-// CHECK:    (('n_strx', 1)
+// CHECK:    (('n_strx', 29)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)

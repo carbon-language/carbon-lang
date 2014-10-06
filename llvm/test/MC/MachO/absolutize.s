@@ -150,10 +150,10 @@ Ldata_expr_2 = Ldata_d - Ldata_c
 // CHECK:   ('nsyms', 4)
 // CHECK:   ('stroff', 572)
 // CHECK:   ('strsize', 36)
-// CHECK:   ('_string_data', '\x00_text_a\x00_text_b\x00_data_a\x00_data_b\x00\x00\x00\x00')
+// CHECK:   ('_string_data', '\x00_text_b\x00_data_b\x00_text_a\x00_data_a\x00\x00\x00\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 1)
+// CHECK:    (('n_strx', 17)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 0)
@@ -161,7 +161,7 @@ Ldata_expr_2 = Ldata_d - Ldata_c
 // CHECK:     ('_string', '_text_a')
 // CHECK:    ),
 // CHECK:     # Symbol 1
-// CHECK:    (('n_strx', 9)
+// CHECK:    (('n_strx', 1)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 0)
@@ -169,7 +169,7 @@ Ldata_expr_2 = Ldata_d - Ldata_c
 // CHECK:     ('_string', '_text_b')
 // CHECK:    ),
 // CHECK:     # Symbol 2
-// CHECK:    (('n_strx', 17)
+// CHECK:    (('n_strx', 25)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -177,7 +177,7 @@ Ldata_expr_2 = Ldata_d - Ldata_c
 // CHECK:     ('_string', '_data_a')
 // CHECK:    ),
 // CHECK:     # Symbol 3
-// CHECK:    (('n_strx', 25)
+// CHECK:    (('n_strx', 9)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)

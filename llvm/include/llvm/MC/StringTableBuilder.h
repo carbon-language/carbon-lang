@@ -31,7 +31,8 @@ public:
 
   enum Kind {
     ELF,
-    WinCOFF
+    WinCOFF,
+    MachO
   };
 
   /// \brief Analyze the strings and build the final table. No more strings can

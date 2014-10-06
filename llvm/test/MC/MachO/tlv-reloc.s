@@ -111,10 +111,10 @@ _foo:
 // CHECK:   ('nsyms', 4)
 // CHECK:   ('stroff', 576)
 // CHECK:   ('strsize', 40)
-// CHECK:   ('_string_data', '\x00_a\x00__tlv_bootstrap\x00_foo\x00_a$tlv$init\x00\x00\x00\x00')
+// CHECK:   ('_string_data', '\x00_a$tlv$init\x00__tlv_bootstrap\x00_foo\x00_a\x00\x00\x00\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 25)
+// CHECK:    (('n_strx', 1)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -122,7 +122,7 @@ _foo:
 // CHECK:     ('_string', '_a$tlv$init')
 // CHECK:    ),
 // CHECK:     # Symbol 1
-// CHECK:    (('n_strx', 1)
+// CHECK:    (('n_strx', 34)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 3)
 // CHECK:     ('n_desc', 0)
@@ -130,7 +130,7 @@ _foo:
 // CHECK:     ('_string', '_a')
 // CHECK:    ),
 // CHECK:     # Symbol 2
-// CHECK:    (('n_strx', 20)
+// CHECK:    (('n_strx', 29)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 1)
 // CHECK:     ('n_desc', 0)
@@ -138,7 +138,7 @@ _foo:
 // CHECK:     ('_string', '_foo')
 // CHECK:    ),
 // CHECK:     # Symbol 3
-// CHECK:    (('n_strx', 4)
+// CHECK:    (('n_strx', 13)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)

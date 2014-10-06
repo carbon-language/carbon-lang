@@ -53,10 +53,10 @@
 // CHECK:   ('nsyms', 2)
 // CHECK:   ('stroff', 308)
 // CHECK:   ('strsize', 8)
-// CHECK:   ('_string_data', '\x00a\x00b\x00\x00\x00\x00')
+// CHECK:   ('_string_data', '\x00b\x00a\x00\x00\x00\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 1)
+// CHECK:    (('n_strx', 3)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)
@@ -64,7 +64,7 @@
 // CHECK:     ('_string', 'a')
 // CHECK:    ),
 // CHECK:     # Symbol 1
-// CHECK:    (('n_strx', 3)
+// CHECK:    (('n_strx', 1)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)

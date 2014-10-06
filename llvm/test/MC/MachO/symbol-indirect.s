@@ -137,10 +137,10 @@ sym_nlp_G:
 // CHECK:   ('nsyms', 10)
 // CHECK:   ('stroff', 592)
 // CHECK:   ('strsize', 104)
-// CHECK:   ('_string_data', '\x00sym_lsp_A\x00sym_lsp_G\x00sym_nlp_A\x00sym_nlp_G\x00sym_nlp_B\x00sym_nlp_E\x00sym_lsp_B\x00sym_lsp_E\x00sym_lsp_C\x00sym_nlp_C\x00\x00\x00\x00')
+// CHECK:   ('_string_data', '\x00sym_lsp_G\x00sym_nlp_G\x00sym_lsp_E\x00sym_nlp_E\x00sym_lsp_C\x00sym_nlp_C\x00sym_lsp_B\x00sym_nlp_B\x00sym_lsp_A\x00sym_nlp_A\x00\x00\x00\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 81)
+// CHECK:    (('n_strx', 41)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -148,7 +148,7 @@ sym_nlp_G:
 // CHECK:     ('_string', 'sym_lsp_C')
 // CHECK:    ),
 // CHECK:     # Symbol 1
-// CHECK:    (('n_strx', 91)
+// CHECK:    (('n_strx', 51)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 3)
 // CHECK:     ('n_desc', 0)
@@ -156,7 +156,7 @@ sym_nlp_G:
 // CHECK:     ('_string', 'sym_nlp_C')
 // CHECK:    ),
 // CHECK:     # Symbol 2
-// CHECK:    (('n_strx', 11)
+// CHECK:    (('n_strx', 1)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -164,7 +164,7 @@ sym_nlp_G:
 // CHECK:     ('_string', 'sym_lsp_G')
 // CHECK:    ),
 // CHECK:     # Symbol 3
-// CHECK:    (('n_strx', 31)
+// CHECK:    (('n_strx', 11)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 3)
 // CHECK:     ('n_desc', 0)
@@ -172,7 +172,7 @@ sym_nlp_G:
 // CHECK:     ('_string', 'sym_nlp_G')
 // CHECK:    ),
 // CHECK:     # Symbol 4
-// CHECK:    (('n_strx', 1)
+// CHECK:    (('n_strx', 81)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)
@@ -188,7 +188,7 @@ sym_nlp_G:
 // CHECK:     ('_string', 'sym_lsp_B')
 // CHECK:    ),
 // CHECK:     # Symbol 6
-// CHECK:    (('n_strx', 71)
+// CHECK:    (('n_strx', 21)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 1)
@@ -196,7 +196,7 @@ sym_nlp_G:
 // CHECK:     ('_string', 'sym_lsp_E')
 // CHECK:    ),
 // CHECK:     # Symbol 7
-// CHECK:    (('n_strx', 21)
+// CHECK:    (('n_strx', 91)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)
@@ -204,7 +204,7 @@ sym_nlp_G:
 // CHECK:     ('_string', 'sym_nlp_A')
 // CHECK:    ),
 // CHECK:     # Symbol 8
-// CHECK:    (('n_strx', 41)
+// CHECK:    (('n_strx', 71)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)
@@ -212,7 +212,7 @@ sym_nlp_G:
 // CHECK:     ('_string', 'sym_nlp_B')
 // CHECK:    ),
 // CHECK:     # Symbol 9
-// CHECK:    (('n_strx', 51)
+// CHECK:    (('n_strx', 31)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)

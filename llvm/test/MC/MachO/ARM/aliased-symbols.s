@@ -70,7 +70,7 @@ Ltmp0:
         // alias_to_local is an alias, but what it points to has no
         // MachO representation. We must resolve it.
 // CHECK: Symbol {
-// CHECK-NEXT:   Name: alias_to_local (37)
+// CHECK-NEXT:   Name: alias_to_local (42)
 // CHECK-NEXT:   Type: Section (0xE)
 // CHECK-NEXT:   Section:  (0x0)
 // CHECK-NEXT:   RefType: UndefinedNonLazy (0x0)
@@ -93,7 +93,7 @@ Ltmp0:
 
         // var1 was another alias to an unknown variable. Not extern this time.
 // CHECK: Symbol {
-// CHECK-NEXT:   Name: var1 (1)
+// CHECK-NEXT:   Name: var1 (89)
 // CHECK-NEXT:   Type: Indirect (0xA)
 // CHECK-NEXT:   Section:  (0x0)
 // CHECK-NEXT:   RefType: UndefinedNonLazy (0x0)

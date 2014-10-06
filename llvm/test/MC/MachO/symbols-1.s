@@ -59,10 +59,10 @@ Lsym_asm_temp:
 // CHECK-X86_32:   ('nsyms', 9)
 // CHECK-X86_32:   ('stroff', 368)
 // CHECK-X86_32:   ('strsize', 140)
-// CHECK-X86_32:   ('_string_data', '\x00sym_globl_def_B\x00sym_globl_undef_B\x00sym_globl_def_A\x00sym_globl_undef_A\x00sym_globl_def_C\x00sym_globl_undef_C\x00sym_local_B\x00sym_local_A\x00sym_local_C\x00\x00')
+// CHECK-X86_32:   ('_string_data', '\x00sym_local_C\x00sym_globl_undef_C\x00sym_globl_def_C\x00sym_local_B\x00sym_globl_undef_B\x00sym_globl_def_B\x00sym_local_A\x00sym_globl_undef_A\x00sym_globl_def_A\x00\x00')
 // CHECK-X86_32:   ('_symbols', [
 // CHECK-X86_32:     # Symbol 0
-// CHECK-X86_32:    (('n_strx', 103)
+// CHECK-X86_32:    (('n_strx', 47)
 // CHECK-X86_32:     ('n_type', 0xe)
 // CHECK-X86_32:     ('n_sect', 1)
 // CHECK-X86_32:     ('n_desc', 0)
@@ -70,7 +70,7 @@ Lsym_asm_temp:
 // CHECK-X86_32:     ('_string', 'sym_local_B')
 // CHECK-X86_32:    ),
 // CHECK-X86_32:     # Symbol 1
-// CHECK-X86_32:    (('n_strx', 115)
+// CHECK-X86_32:    (('n_strx', 93)
 // CHECK-X86_32:     ('n_type', 0xe)
 // CHECK-X86_32:     ('n_sect', 1)
 // CHECK-X86_32:     ('n_desc', 0)
@@ -78,7 +78,7 @@ Lsym_asm_temp:
 // CHECK-X86_32:     ('_string', 'sym_local_A')
 // CHECK-X86_32:    ),
 // CHECK-X86_32:     # Symbol 2
-// CHECK-X86_32:    (('n_strx', 127)
+// CHECK-X86_32:    (('n_strx', 1)
 // CHECK-X86_32:     ('n_type', 0xe)
 // CHECK-X86_32:     ('n_sect', 1)
 // CHECK-X86_32:     ('n_desc', 0)
@@ -86,7 +86,7 @@ Lsym_asm_temp:
 // CHECK-X86_32:     ('_string', 'sym_local_C')
 // CHECK-X86_32:    ),
 // CHECK-X86_32:     # Symbol 3
-// CHECK-X86_32:    (('n_strx', 35)
+// CHECK-X86_32:    (('n_strx', 123)
 // CHECK-X86_32:     ('n_type', 0xf)
 // CHECK-X86_32:     ('n_sect', 1)
 // CHECK-X86_32:     ('n_desc', 0)
@@ -94,7 +94,7 @@ Lsym_asm_temp:
 // CHECK-X86_32:     ('_string', 'sym_globl_def_A')
 // CHECK-X86_32:    ),
 // CHECK-X86_32:     # Symbol 4
-// CHECK-X86_32:    (('n_strx', 1)
+// CHECK-X86_32:    (('n_strx', 77)
 // CHECK-X86_32:     ('n_type', 0xf)
 // CHECK-X86_32:     ('n_sect', 1)
 // CHECK-X86_32:     ('n_desc', 0)
@@ -102,7 +102,7 @@ Lsym_asm_temp:
 // CHECK-X86_32:     ('_string', 'sym_globl_def_B')
 // CHECK-X86_32:    ),
 // CHECK-X86_32:     # Symbol 5
-// CHECK-X86_32:    (('n_strx', 69)
+// CHECK-X86_32:    (('n_strx', 31)
 // CHECK-X86_32:     ('n_type', 0xf)
 // CHECK-X86_32:     ('n_sect', 1)
 // CHECK-X86_32:     ('n_desc', 0)
@@ -110,7 +110,7 @@ Lsym_asm_temp:
 // CHECK-X86_32:     ('_string', 'sym_globl_def_C')
 // CHECK-X86_32:    ),
 // CHECK-X86_32:     # Symbol 6
-// CHECK-X86_32:    (('n_strx', 51)
+// CHECK-X86_32:    (('n_strx', 105)
 // CHECK-X86_32:     ('n_type', 0x1)
 // CHECK-X86_32:     ('n_sect', 0)
 // CHECK-X86_32:     ('n_desc', 0)
@@ -118,7 +118,7 @@ Lsym_asm_temp:
 // CHECK-X86_32:     ('_string', 'sym_globl_undef_A')
 // CHECK-X86_32:    ),
 // CHECK-X86_32:     # Symbol 7
-// CHECK-X86_32:    (('n_strx', 17)
+// CHECK-X86_32:    (('n_strx', 59)
 // CHECK-X86_32:     ('n_type', 0x1)
 // CHECK-X86_32:     ('n_sect', 0)
 // CHECK-X86_32:     ('n_desc', 0)
@@ -126,7 +126,7 @@ Lsym_asm_temp:
 // CHECK-X86_32:     ('_string', 'sym_globl_undef_B')
 // CHECK-X86_32:    ),
 // CHECK-X86_32:     # Symbol 8
-// CHECK-X86_32:    (('n_strx', 85)
+// CHECK-X86_32:    (('n_strx', 13)
 // CHECK-X86_32:     ('n_type', 0x1)
 // CHECK-X86_32:     ('n_sect', 0)
 // CHECK-X86_32:     ('n_desc', 0)
@@ -207,10 +207,10 @@ Lsym_asm_temp:
 // CHECK-X86_64:   ('nsyms', 9)
 // CHECK-X86_64:   ('stroff', 436)
 // CHECK-X86_64:   ('strsize', 140)
-// CHECK-X86_64:   ('_string_data', '\x00sym_globl_def_B\x00sym_globl_undef_B\x00sym_globl_def_A\x00sym_globl_undef_A\x00sym_globl_def_C\x00sym_globl_undef_C\x00sym_local_B\x00sym_local_A\x00sym_local_C\x00\x00')
+// CHECK-X86_64:   ('_string_data', '\x00sym_local_C\x00sym_globl_undef_C\x00sym_globl_def_C\x00sym_local_B\x00sym_globl_undef_B\x00sym_globl_def_B\x00sym_local_A\x00sym_globl_undef_A\x00sym_globl_def_A\x00\x00')
 // CHECK-X86_64:   ('_symbols', [
 // CHECK-X86_64:     # Symbol 0
-// CHECK-X86_64:    (('n_strx', 103)
+// CHECK-X86_64:    (('n_strx', 47)
 // CHECK-X86_64:     ('n_type', 0xe)
 // CHECK-X86_64:     ('n_sect', 1)
 // CHECK-X86_64:     ('n_desc', 0)
@@ -218,7 +218,7 @@ Lsym_asm_temp:
 // CHECK-X86_64:     ('_string', 'sym_local_B')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 1
-// CHECK-X86_64:    (('n_strx', 115)
+// CHECK-X86_64:    (('n_strx', 93)
 // CHECK-X86_64:     ('n_type', 0xe)
 // CHECK-X86_64:     ('n_sect', 1)
 // CHECK-X86_64:     ('n_desc', 0)
@@ -226,7 +226,7 @@ Lsym_asm_temp:
 // CHECK-X86_64:     ('_string', 'sym_local_A')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 2
-// CHECK-X86_64:    (('n_strx', 127)
+// CHECK-X86_64:    (('n_strx', 1)
 // CHECK-X86_64:     ('n_type', 0xe)
 // CHECK-X86_64:     ('n_sect', 1)
 // CHECK-X86_64:     ('n_desc', 0)
@@ -234,7 +234,7 @@ Lsym_asm_temp:
 // CHECK-X86_64:     ('_string', 'sym_local_C')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 3
-// CHECK-X86_64:    (('n_strx', 35)
+// CHECK-X86_64:    (('n_strx', 123)
 // CHECK-X86_64:     ('n_type', 0xf)
 // CHECK-X86_64:     ('n_sect', 1)
 // CHECK-X86_64:     ('n_desc', 0)
@@ -242,7 +242,7 @@ Lsym_asm_temp:
 // CHECK-X86_64:     ('_string', 'sym_globl_def_A')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 4
-// CHECK-X86_64:    (('n_strx', 1)
+// CHECK-X86_64:    (('n_strx', 77)
 // CHECK-X86_64:     ('n_type', 0xf)
 // CHECK-X86_64:     ('n_sect', 1)
 // CHECK-X86_64:     ('n_desc', 0)
@@ -250,7 +250,7 @@ Lsym_asm_temp:
 // CHECK-X86_64:     ('_string', 'sym_globl_def_B')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 5
-// CHECK-X86_64:    (('n_strx', 69)
+// CHECK-X86_64:    (('n_strx', 31)
 // CHECK-X86_64:     ('n_type', 0xf)
 // CHECK-X86_64:     ('n_sect', 1)
 // CHECK-X86_64:     ('n_desc', 0)
@@ -258,7 +258,7 @@ Lsym_asm_temp:
 // CHECK-X86_64:     ('_string', 'sym_globl_def_C')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 6
-// CHECK-X86_64:    (('n_strx', 51)
+// CHECK-X86_64:    (('n_strx', 105)
 // CHECK-X86_64:     ('n_type', 0x1)
 // CHECK-X86_64:     ('n_sect', 0)
 // CHECK-X86_64:     ('n_desc', 0)
@@ -266,7 +266,7 @@ Lsym_asm_temp:
 // CHECK-X86_64:     ('_string', 'sym_globl_undef_A')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 7
-// CHECK-X86_64:    (('n_strx', 17)
+// CHECK-X86_64:    (('n_strx', 59)
 // CHECK-X86_64:     ('n_type', 0x1)
 // CHECK-X86_64:     ('n_sect', 0)
 // CHECK-X86_64:     ('n_desc', 0)
@@ -274,7 +274,7 @@ Lsym_asm_temp:
 // CHECK-X86_64:     ('_string', 'sym_globl_undef_B')
 // CHECK-X86_64:    ),
 // CHECK-X86_64:     # Symbol 8
-// CHECK-X86_64:    (('n_strx', 85)
+// CHECK-X86_64:    (('n_strx', 13)
 // CHECK-X86_64:     ('n_type', 0x1)
 // CHECK-X86_64:     ('n_sect', 0)
 // CHECK-X86_64:     ('n_desc', 0)

@@ -167,10 +167,10 @@ _b:
 // CHECK:   ('nsyms', 9)
 // CHECK:   ('stroff', 840)
 // CHECK:   ('strsize', 80)
-// CHECK:   ('_string_data', '\x00_c$tlv$init\x00_c\x00___tlv_bootstrap\x00_d$tlv$init\x00_d\x00_a\x00_b\x00_a$tlv$init\x00_b$tlv$init\x00\x00\x00')
+// CHECK:   ('_string_data', '\x00_d$tlv$init\x00_c$tlv$init\x00_b$tlv$init\x00_a$tlv$init\x00___tlv_bootstrap\x00_d\x00_c\x00_b\x00_a\x00\x00\x00')
 // CHECK:   ('_symbols', [
 // CHECK:     # Symbol 0
-// CHECK:    (('n_strx', 54)
+// CHECK:    (('n_strx', 37)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 4)
 // CHECK:     ('n_desc', 0)
@@ -178,7 +178,7 @@ _b:
 // CHECK:     ('_string', '_a$tlv$init')
 // CHECK:    ),
 // CHECK:     # Symbol 1
-// CHECK:    (('n_strx', 66)
+// CHECK:    (('n_strx', 25)
 // CHECK:     ('n_type', 0xe)
 // CHECK:     ('n_sect', 4)
 // CHECK:     ('n_desc', 0)
@@ -186,7 +186,7 @@ _b:
 // CHECK:     ('_string', '_b$tlv$init')
 // CHECK:    ),
 // CHECK:     # Symbol 2
-// CHECK:    (('n_strx', 48)
+// CHECK:    (('n_strx', 75)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 3)
 // CHECK:     ('n_desc', 0)
@@ -194,7 +194,7 @@ _b:
 // CHECK:     ('_string', '_a')
 // CHECK:    ),
 // CHECK:     # Symbol 3
-// CHECK:    (('n_strx', 51)
+// CHECK:    (('n_strx', 72)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 3)
 // CHECK:     ('n_desc', 0)
@@ -202,7 +202,7 @@ _b:
 // CHECK:     ('_string', '_b')
 // CHECK:    ),
 // CHECK:     # Symbol 4
-// CHECK:    (('n_strx', 13)
+// CHECK:    (('n_strx', 69)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 3)
 // CHECK:     ('n_desc', 0)
@@ -210,7 +210,7 @@ _b:
 // CHECK:     ('_string', '_c')
 // CHECK:    ),
 // CHECK:     # Symbol 5
-// CHECK:    (('n_strx', 1)
+// CHECK:    (('n_strx', 13)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -218,7 +218,7 @@ _b:
 // CHECK:     ('_string', '_c$tlv$init')
 // CHECK:    ),
 // CHECK:     # Symbol 6
-// CHECK:    (('n_strx', 45)
+// CHECK:    (('n_strx', 66)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 3)
 // CHECK:     ('n_desc', 0)
@@ -226,7 +226,7 @@ _b:
 // CHECK:     ('_string', '_d')
 // CHECK:    ),
 // CHECK:     # Symbol 7
-// CHECK:    (('n_strx', 33)
+// CHECK:    (('n_strx', 1)
 // CHECK:     ('n_type', 0xf)
 // CHECK:     ('n_sect', 2)
 // CHECK:     ('n_desc', 0)
@@ -234,7 +234,7 @@ _b:
 // CHECK:     ('_string', '_d$tlv$init')
 // CHECK:    ),
 // CHECK:     # Symbol 8
-// CHECK:    (('n_strx', 16)
+// CHECK:    (('n_strx', 49)
 // CHECK:     ('n_type', 0x1)
 // CHECK:     ('n_sect', 0)
 // CHECK:     ('n_desc', 0)

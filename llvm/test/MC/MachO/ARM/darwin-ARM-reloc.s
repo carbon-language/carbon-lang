@@ -110,10 +110,10 @@ Lsc0_0:
 @ CHECK:   ('nsyms', 4)
 @ CHECK:   ('stroff', 488)
 @ CHECK:   ('strsize', 24)
-@ CHECK:   ('_string_data', '\x00_printf\x00_f0\x00_f1\x00_d0\x00\x00\x00\x00')
+@ CHECK:   ('_string_data', '\x00_printf\x00_f1\x00_f0\x00_d0\x00\x00\x00\x00')
 @ CHECK:   ('_symbols', [
 @ CHECK:     # Symbol 0
-@ CHECK:    (('n_strx', 9)
+@ CHECK:    (('n_strx', 13)
 @ CHECK:     ('n_type', 0xe)
 @ CHECK:     ('n_sect', 1)
 @ CHECK:     ('n_desc', 0)
@@ -121,7 +121,7 @@ Lsc0_0:
 @ CHECK:     ('_string', '_f0')
 @ CHECK:    ),
 @ CHECK:     # Symbol 1
-@ CHECK:    (('n_strx', 13)
+@ CHECK:    (('n_strx', 9)
 @ CHECK:     ('n_type', 0xe)
 @ CHECK:     ('n_sect', 1)
 @ CHECK:     ('n_desc', 0)
