@@ -986,9 +986,17 @@ CFLAliasAnalysis::query(const AliasAnalysis::Location &LocA,
 
   auto AttrsA = Sets.getLink(SetA.Index).Attrs;
   auto AttrsB = Sets.getLink(SetB.Index).Attrs;
-  auto CombinedAttrs = AttrsA | AttrsB;
-  if (CombinedAttrs.any())
-    return AliasAnalysis::PartialAlias;
+  // Stratified set attributes are used as markets to signify whether a member
+  // of a StratifiedSet (or a member of a set above the current set) has 
+  // interacted with either arguments or globals. "Interacted with" meaning
+  // its value may be different depending on the value of an argument or 
+  // global. The thought behind this is that, because arguments and globals
+  // may alias each other, if AttrsA and AttrsB have touched args/globals,
+  // we must conservatively say that they alias. However, if at least one of 
+  // the sets has no values that could legally be altered by changing the value 
+  // of an argument or global, then we don't have to be as conservative.
+  if (AttrsA.any() && AttrsB.any())
+    return AliasAnalysis::MayAlias;
 
   return AliasAnalysis::NoAlias;
 }
