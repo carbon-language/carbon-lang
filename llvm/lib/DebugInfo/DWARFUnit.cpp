@@ -17,6 +17,21 @@
 using namespace llvm;
 using namespace dwarf;
 
+
+void DWARFUnitSectionBase::parse(DWARFContext &C, StringRef SectionData,
+                                 const RelocAddrMap &Map) {
+  parseImpl(C, C.getDebugAbbrev(), SectionData, C.getRangeSection(),
+            C.getStringSection(), StringRef(), C.getAddrSection(), Map,
+            C.isLittleEndian());
+}
+
+void DWARFUnitSectionBase::parseDWO(DWARFContext &C, StringRef SectionData,
+                                    const RelocAddrMap &Map) {
+  parseImpl(C, C.getDebugAbbrevDWO(), SectionData, C.getRangeDWOSection(),
+            C.getStringDWOSection(), C.getStringOffsetDWOSection(),
+            C.getAddrSection(), Map, C.isLittleEndian());
+}
+
 DWARFUnit::DWARFUnit(DWARFContext &DC, const DWARFDebugAbbrev *DA,
                      StringRef IS, StringRef RS, StringRef SS, StringRef SOS,
                      StringRef AOS, const RelocAddrMap *M, bool LE,
