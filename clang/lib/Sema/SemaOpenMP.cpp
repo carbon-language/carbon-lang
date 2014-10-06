@@ -1851,7 +1851,7 @@ public:
   /// \brief True if the step should be subtracted.
   bool ShouldSubtractStep() const { return SubtractStep; }
   /// \brief Build the expression to calculate the number of iterations.
-  Expr *BuildNumIterations(Scope *S) const;
+  Expr *BuildNumIterations(Scope *S, const bool LimitedType) const;
   /// \brief Build reference expression to the counter be used for codegen.
   Expr *BuildCounterVar() const;
   /// \brief Build initization of the counter be used for codegen.
@@ -2183,7 +2183,9 @@ bool OpenMPIterationSpaceChecker::CheckInc(Expr *S) {
 }
 
 /// \brief Build the expression to calculate the number of iterations.
-Expr *OpenMPIterationSpaceChecker::BuildNumIterations(Scope *S) const {
+Expr *
+OpenMPIterationSpaceChecker::BuildNumIterations(Scope *S,
+                                                const bool LimitedType) const {
   ExprResult Diff;
   if (Var->getType()->isIntegerType() || Var->getType()->isPointerType() ||
       SemaRef.getLangOpts().CPlusPlus) {
@@ -2229,6 +2231,26 @@ Expr *OpenMPIterationSpaceChecker::BuildNumIterations(Scope *S) const {
                             Step->IgnoreImplicit());
   if (!Diff.isUsable())
     return nullptr;
+
+  // OpenMP runtime requires 32-bit or 64-bit loop variables.
+  if (LimitedType) {
+    auto &C = SemaRef.Context;
+    QualType Type = Diff.get()->getType();
+    unsigned NewSize = (C.getTypeSize(Type) > 32) ? 64 : 32;
+    if (NewSize != C.getTypeSize(Type)) {
+      if (NewSize < C.getTypeSize(Type)) {
+        assert(NewSize == 64 && "incorrect loop var size");
+        SemaRef.Diag(DefaultLoc, diag::warn_omp_loop_64_bit_var)
+            << InitSrcRange << ConditionSrcRange;
+      }
+      QualType NewType = C.getIntTypeForBitwidth(
+          NewSize, Type->hasSignedIntegerRepresentation());
+      Diff = SemaRef.PerformImplicitConversion(Diff.get(), NewType,
+                                               Sema::AA_Converting, true);
+      if (!Diff.isUsable())
+        return nullptr;
+    }
+  }
 
   return Diff.get();
 }
@@ -2418,7 +2440,8 @@ static bool CheckOpenMPIterationSpace(
     return HasErrors;
 
   // Build the loop's iteration space representation.
-  ResultIterSpace.NumIterations = ISC.BuildNumIterations(DSA.getCurScope());
+  ResultIterSpace.NumIterations = ISC.BuildNumIterations(
+      DSA.getCurScope(), /* LimitedType */ isOpenMPWorksharingDirective(DKind));
   ResultIterSpace.CounterVar = ISC.BuildCounterVar();
   ResultIterSpace.CounterInit = ISC.BuildCounterInit();
   ResultIterSpace.CounterStep = ISC.BuildCounterStep();

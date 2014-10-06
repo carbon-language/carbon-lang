@@ -7238,6 +7238,9 @@ def err_omp_loop_cannot_use_stmt : Error<
   "'%0' statement cannot be used in OpenMP for loop">;
 def err_omp_simd_region_cannot_use_stmt : Error<
   "'%0' statement cannot be used in OpenMP simd region">;
+def warn_omp_loop_64_bit_var : Warning<
+  "OpenMP loop iteration variable cannot have more than 64 bits size and will be narrowed">,
+  InGroup<OpenMPLoopForm>;
 def err_omp_unknown_reduction_identifier : Error<
   "incorrect reduction identifier, expected one of '+', '-', '*', '&', '|', '^', '&&', '||', 'min' or 'max'">;
 def err_omp_reduction_type_array : Error<
