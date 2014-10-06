@@ -3,8 +3,17 @@
 // RUN: c-arcmt-test -mt-migrate-directory %t | arcmt-test -verify-transformed-files %s.result
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only -x objective-c -fobjc-runtime-has-weak -fobjc-arc %s.result
 
+typedef signed char int8_t;
+typedef short int16_t;
+typedef int int32_t;
 typedef long NSInteger;
+typedef long long int64_t;
+
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
 typedef unsigned long NSUInteger;
+typedef unsigned long long uint64_t;
 
 #define NS_ENUM(_type, _name) enum _name : _type _name; enum _name : _type
 #define NS_OPTIONS(_type, _name) enum _name : _type _name; enum _name : _type
@@ -322,3 +331,35 @@ typedef enum {
 
   NumericEnum4;
 
+// rdar://18532199
+enum
+{
+  UI8one = 1
+};
+typedef int8_t MyEnumeratedType;
+
+
+enum {
+  UI16One = 0,
+  UI16Two = 0x1,
+  UI16three = 0x8,
+  UI16Four = 0x100
+};
+typedef int16_t UI16;
+
+enum {
+    UI32ViewAutoresizingNone                 = 0,
+    UI32ViewAutoresizingFlexibleLeftMargin,
+    UI32ViewAutoresizingFlexibleWidth,
+    UI32ViewAutoresizingFlexibleRightMargin,
+    UI32ViewAutoresizingFlexibleTopMargin,
+    UI32ViewAutoresizingFlexibleHeight,
+    UI32ViewAutoresizingFlexibleBottomMargin
+};
+typedef uint32_t UI32TableViewCellStyle;
+
+enum
+{
+        UIU8one = 1
+};
+typedef uint8_t UI8Type;

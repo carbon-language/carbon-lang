@@ -10,6 +10,7 @@
 #include "clang/AST/NSAPI.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
+#include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;
 
@@ -398,6 +399,32 @@ bool NSAPI::isObjCNSIntegerType(QualType T) const {
 /// \brief Returns true if \param T is a typedef of "NSUInteger" in objective-c.
 bool NSAPI::isObjCNSUIntegerType(QualType T) const {
   return isObjCTypedef(T, "NSUInteger", NSUIntegerId);
+}
+
+StringRef NSAPI::GetNSIntegralKind(QualType T) const {
+  if (!Ctx.getLangOpts().ObjC1 || T.isNull())
+    return StringRef();
+  
+  while (const TypedefType *TDT = T->getAs<TypedefType>()) {
+    StringRef NSIntegralResust =
+      llvm::StringSwitch<StringRef>(
+        TDT->getDecl()->getDeclName().getAsIdentifierInfo()->getName())
+    .Case("int8_t", "int8_t")
+    .Case("int16_t", "int16_t")
+    .Case("int32_t", "int32_t")
+    .Case("NSInteger", "NSInteger")
+    .Case("int64_t", "int64_t")
+    .Case("uint8_t", "uint8_t")
+    .Case("uint16_t", "uint16_t")
+    .Case("uint32_t", "uint32_t")
+    .Case("NSUInteger", "NSUInteger")
+    .Case("uint64_t", "uint64_t")
+    .Default(StringRef());
+    if (!NSIntegralResust.empty())
+      return NSIntegralResust;
+    T = TDT->desugar();
+  }
+  return StringRef();
 }
 
 bool NSAPI::isObjCTypedef(QualType T,
