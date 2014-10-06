@@ -324,7 +324,7 @@ uint32_t
 SBType::GetNumberOfFields ()
 {
     if (IsValid())
-        return m_opaque_sp->GetClangASTType(false).GetNumFields();
+        return m_opaque_sp->GetClangASTType(true).GetNumFields();
     return 0;
 }
 

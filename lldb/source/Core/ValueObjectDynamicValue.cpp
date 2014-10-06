@@ -249,7 +249,7 @@ ValueObjectDynamicValue::UpdateValue ()
             }
             else
             {
-                m_type_impl = TypeImpl(FixupTypeAndOrName(class_type_or_name, *m_parent).GetClangASTType());
+                m_type_impl = TypeImpl(m_parent->GetClangType(),FixupTypeAndOrName(class_type_or_name, *m_parent).GetClangASTType());
             }
         }
         else
