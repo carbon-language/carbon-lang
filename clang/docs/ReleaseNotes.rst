@@ -1,5 +1,5 @@
 =====================================
-Clang 3.5 (In-Progress) Release Notes
+Clang 3.6 (In-Progress) Release Notes
 =====================================
 
 .. contents::
