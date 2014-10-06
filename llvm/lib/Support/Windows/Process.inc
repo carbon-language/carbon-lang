@@ -273,6 +273,10 @@ Process::GetArgumentVector(SmallVectorImpl<const char *> &Args,
   return ec;
 }
 
+std::error_code Process::FixupStandardFileDescriptors() {
+  return std::error_code();
+}
+
 bool Process::StandardInIsUserInput() {
   return FileDescriptorIsDisplayed(0);
 }

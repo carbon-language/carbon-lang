@@ -186,6 +186,12 @@ public:
                     ArrayRef<const char *> ArgsFromMain,
                     SpecificBumpPtrAllocator<char> &ArgAllocator);
 
+  // This functions ensures that the standard file descriptors (input, output,
+  // and error) are properly mapped to a file descriptor before we use any of
+  // them.  This should only be called by standalone programs, library
+  // components should not call this.
+  static std::error_code FixupStandardFileDescriptors();
+
   /// This function determines if the standard input is connected directly
   /// to a user's input (keyboard probably), rather than coming from a file
   /// or pipe.

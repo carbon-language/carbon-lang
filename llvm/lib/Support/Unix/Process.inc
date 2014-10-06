@@ -18,6 +18,9 @@
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/Support/TimeValue.h"
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -196,6 +199,62 @@ Process::GetArgumentVector(SmallVectorImpl<const char *> &ArgsOut,
                            SpecificBumpPtrAllocator<char> &) {
   ArgsOut.append(ArgsIn.begin(), ArgsIn.end());
 
+  return std::error_code();
+}
+
+namespace {
+class FDCloser {
+public:
+  FDCloser(int &FD) : FD(FD), KeepOpen(false) {}
+  void keepOpen() { KeepOpen = true; }
+  ~FDCloser() {
+    if (!KeepOpen && FD >= 0)
+      ::close(FD);
+  }
+
+private:
+  FDCloser(const FDCloser &) LLVM_DELETED_FUNCTION;
+  void operator=(const FDCloser &) LLVM_DELETED_FUNCTION;
+
+  int &FD;
+  bool KeepOpen;
+};
+}
+
+std::error_code Process::FixupStandardFileDescriptors() {
+  int NullFD = -1;
+  FDCloser FDC(NullFD);
+  const int StandardFDs[] = {STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO};
+  for (int StandardFD : StandardFDs) {
+    struct stat st;
+    errno = 0;
+    while (fstat(StandardFD, &st) < 0) {
+      assert(errno && "expected errno to be set if fstat failed!");
+      // fstat should return EBADF if the file descriptor is closed.
+      if (errno == EBADF)
+        break;
+      // retry fstat if we got EINTR, otherwise bubble up the failure.
+      if (errno != EINTR)
+        return std::error_code(errno, std::generic_category());
+    }
+    // if fstat succeeds, move on to the next FD.
+    if (!errno)
+      continue;
+    assert(errno == EBADF && "expected errno to have EBADF at this point!");
+
+    if (NullFD < 0) {
+      while ((NullFD = open("/dev/null", O_RDWR)) < 0) {
+        if (errno == EINTR)
+          continue;
+        return std::error_code(errno, std::generic_category());
+      }
+    }
+
+    if (NullFD == StandardFD)
+      FDC.keepOpen();
+    else if (dup2(NullFD, StandardFD) < 0)
+      return std::error_code(errno, std::generic_category());
+  }
   return std::error_code();
 }
 
