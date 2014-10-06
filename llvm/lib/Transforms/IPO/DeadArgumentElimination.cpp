@@ -1093,8 +1093,8 @@ bool DAE::runOnModule(Module &M) {
   // determine that dead arguments passed into recursive functions are dead).
   //
   DEBUG(dbgs() << "DAE - Determining liveness\n");
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    SurveyFunction(*I);
+  for (auto &F : M)
+    SurveyFunction(F);
 
   // Now, remove all dead arguments and return values from each function in
   // turn.
@@ -1107,11 +1107,8 @@ bool DAE::runOnModule(Module &M) {
 
   // Finally, look for any unused parameters in functions with non-local
   // linkage and replace the passed in parameters with undef.
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    Function& F = *I;
-
+  for (auto &F : M)
     Changed |= RemoveDeadArgumentsFromCallers(F);
-  }
 
   return Changed;
 }
