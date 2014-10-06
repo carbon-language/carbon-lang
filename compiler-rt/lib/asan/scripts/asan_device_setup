@@ -90,9 +90,10 @@ echo '>> Remounting /system rw'
 $ADB root
 $ADB wait-for-device
 $ADB remount
+$ADB wait-for-device
 
 get_device_arch ARCH
-echo 'Target architecture: $ARCH'
+echo "Target architecture: $ARCH"
 ASAN_RT="libclang_rt.asan-$ARCH-android.so"
 
 if [[ x$revert == xyes ]]; then
