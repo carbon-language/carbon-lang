@@ -29,9 +29,9 @@ raw_ostream& clang::operator<<(raw_ostream &Out,
                                      const VersionTuple &V) {
   Out << V.getMajor();
   if (Optional<unsigned> Minor = V.getMinor())
-    Out << '.' << *Minor;
+    Out << (V.usesUnderscores() ? '_' : '.') << *Minor;
   if (Optional<unsigned> Subminor = V.getSubminor())
-    Out << '.' << *Subminor;
+    Out << (V.usesUnderscores() ? '_' : '.') << *Subminor;
   return Out;
 }
 

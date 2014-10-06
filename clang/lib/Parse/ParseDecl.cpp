@@ -714,7 +714,7 @@ VersionTuple Parser::ParseVersionTuple(SourceRange &Range) {
       return VersionTuple();
     }
 
-    return VersionTuple(Major, Minor);
+    return VersionTuple(Major, Minor, (AfterMajorSeparator == '_'));
   }
 
   const char AfterMinorSeparator = ThisTokBegin[AfterMinor];
@@ -745,7 +745,7 @@ VersionTuple Parser::ParseVersionTuple(SourceRange &Range) {
     return VersionTuple();
   }
   ConsumeToken();
-  return VersionTuple(Major, Minor, Subminor);
+  return VersionTuple(Major, Minor, Subminor, (AfterMajorSeparator == '_'));
 }
 
 /// \brief Parse the contents of the "availability" attribute.
