@@ -96,6 +96,34 @@ define float @goo(float %a, float %b) nounwind {
 ; CHECK-SAFE: blr
 }
 
+; Recognize that this is rsqrt(a) * rcp(b) * c, 
+; not 1 / ( 1 / sqrt(a)) * rcp(b) * c.
+define float @rsqrt_fmul(float %a, float %b, float %c) {
+  %x = call float @llvm.sqrt.f32(float %a)
+  %y = fmul float %x, %b 
+  %z = fdiv float %c, %y
+  ret float %z
+
+; CHECK: @rsqrt_fmul
+; CHECK-DAG: frsqrtes
+; CHECK-DAG: fres
+; CHECK-DAG: fnmsubs
+; CHECK-DAG: fmuls
+; CHECK-DAG: fnmsubs
+; CHECK-DAG: fmadds
+; CHECK-DAG: fmadds
+; CHECK: fmuls
+; CHECK-NEXT: fmuls
+; CHECK-NEXT: fmuls
+; CHECK-NEXT: blr
+
+; CHECK-SAFE: @rsqrt_fmul
+; CHECK-SAFE: fsqrts
+; CHECK-SAFE: fmuls
+; CHECK-SAFE: fdivs
+; CHECK-SAFE: blr
+}
+
 define <4 x float> @hoo(<4 x float> %a, <4 x float> %b) nounwind {
   %x = call <4 x float> @llvm.sqrt.v4f32(<4 x float> %b)
   %r = fdiv <4 x float> %a, %x
