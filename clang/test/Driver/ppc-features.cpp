@@ -102,11 +102,11 @@
 // CHECK-CRBITS: "-target-feature" "+crbits"
 
 // Assembler features
-// RUN: %clang -target powerpc64-unknown-linux-gnu %s -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK_BE_AS_ARGS %s
+// RUN: %clang -target powerpc64-unknown-linux-gnu %s -### -o %t.o -no-integrated-as 2>&1 | FileCheck -check-prefix=CHECK_BE_AS_ARGS %s
 // CHECK_BE_AS_ARGS: "-mppc64"
 // CHECK_BE_AS_ARGS: "-many"
 
-// RUN: %clang -target powerpc64le-unknown-linux-gnu %s -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK_LE_AS_ARGS %s
+// RUN: %clang -target powerpc64le-unknown-linux-gnu %s -### -o %t.o -no-integrated-as 2>&1 | FileCheck -check-prefix=CHECK_LE_AS_ARGS %s
 // CHECK_LE_AS_ARGS: "-mppc64"
 // CHECK_LE_AS_ARGS: "-many"
 // CHECK_LE_AS_ARGS: "-mlittle-endian"
