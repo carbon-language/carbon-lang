@@ -55,11 +55,11 @@
 ; CHECK: [[STATIC_MEM_DECL:0x[0-9a-f]+]]: DW_TAG_member
 ; CHECK-NEXT: DW_AT_name {{.*}} "static_member_variable"
 
-; CHECK: [[MEM_FUNC_DECL:0x[0-9a-f]+]]: DW_TAG_subprogram
+; CHECK: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_MIPS_linkage_name
 ; CHECK-NEXT: DW_AT_name {{.*}} "member_function"
 
-; CHECK: [[STATIC_MEM_FUNC_DECL:0x[0-9a-f]+]]: DW_TAG_subprogram
+; CHECK: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_MIPS_linkage_name
 ; CHECK-NEXT: DW_AT_name {{.*}} "static_member_function"
 
@@ -160,11 +160,11 @@
 
 ; CHECK: [[MEM_FUNC:0x[0-9a-f]+]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_specification {{.*}} {[[MEM_FUNC_DECL]]}
+; CHECK: DW_AT_specification {{.*}} "_ZN1C15member_functionEv"
 
 ; CHECK: [[STATIC_MEM_FUNC:0x[0-9a-f]+]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_specification {{.*}} {[[STATIC_MEM_FUNC_DECL]]}
+; CHECK: DW_AT_specification {{.*}} "_ZN1C22static_member_functionEv"
 
 ; CHECK: [[GLOBAL_FUNC:0x[0-9a-f]+]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG

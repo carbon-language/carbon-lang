@@ -3,11 +3,11 @@
 
 ; test that the DW_AT_specification is a back edge in the file.
 
-; CHECK: [[BAR_DECL:0x[0-9a-f]*]]: DW_TAG_subprogram
+; CHECK: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN3foo3barEv"
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_specification {{.*}} {[[BAR_DECL]]}
+; CHECK: DW_AT_specification {{.*}} "_ZN3foo3barEv"
 
 
 @_ZZN3foo3barEvE1x = constant i32 0, align 4

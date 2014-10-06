@@ -8,51 +8,54 @@
 
 ; CHECK: DW_TAG_class_type
 ; CHECK:   DW_TAG_subprogram
-; CHECK: [[ASSIGN_DECL:0x........]]:  DW_TAG_subprogram
+; CHECK:   DW_TAG_subprogram
+; CHECK:     DW_AT_MIPS_linkage_name {{.*}} "_ZN12nsAutoRefCntaSEi"
 
 ; CHECK: DW_TAG_class_type
-; CHECK: [[RELEASE_DECL:0x........]]:  DW_TAG_subprogram
-; CHECK: [[DTOR_DECL:0x........]]:  DW_TAG_subprogram
+; CHECK:   DW_TAG_subprogram
+; CHECK:     DW_AT_MIPS_linkage_name {{.*}} "_ZN17nsAutoRefCnt7ReleaseEv"
+; CHECK:   DW_TAG_subprogram
+; CHECK:     DW_AT_name {{.*}} "~nsAutoRefCnt"
 
-; CHECK: [[D2_ABS:.*]]: DW_TAG_subprogram
+; CHECK: DW_TAG_subprogram
 ; CHECK-NEXT:     DW_AT_{{.*}}linkage_name {{.*}}D2
-; CHECK-NEXT:     DW_AT_specification {{.*}} {[[DTOR_DECL]]}
+; CHECK-NEXT:     DW_AT_specification {{.*}} "~nsAutoRefCnt"
 ; CHECK-NEXT:     DW_AT_inline
 ; CHECK-NOT:      DW_AT
 ; CHECK: DW_TAG
-; CHECK: [[D1_ABS:.*]]: DW_TAG_subprogram
+; CHECK: DW_TAG_subprogram
 ; CHECK-NEXT:     DW_AT_{{.*}}linkage_name {{.*}}D1
-; CHECK-NEXT:     DW_AT_specification {{.*}} {[[DTOR_DECL]]}
+; CHECK-NEXT:     DW_AT_specification {{.*}} "~nsAutoRefCnt"
 ; CHECK-NEXT:     DW_AT_inline
 ; CHECK-NOT:     DW_AT
 ; CHECK: [[D1_THIS_ABS:.*]]: DW_TAG_formal_parameter
 
-; CHECK: [[RELEASE:0x........]]: DW_TAG_subprogram
-; CHECK:     DW_AT_specification {{.*}} {[[RELEASE_DECL]]}
+; CHECK: DW_TAG_subprogram
+; CHECK:     DW_AT_specification {{.*}} "_ZN17nsAutoRefCnt7ReleaseEv"
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK-NOT: NULL
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_TAG_inlined_subroutine
-; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[ASSIGN:0x........]]}
+; CHECK-NEXT: DW_AT_abstract_origin {{.*}} "_ZN12nsAutoRefCntaSEi"
 ; CHECK-NOT: NULL
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_TAG_inlined_subroutine
-; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D1_ABS]]}
+; CHECK-NEXT: DW_AT_abstract_origin {{.*}} "_ZN17nsAutoRefCntD1Ev"
 ; CHECK-NOT: NULL
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_TAG_inlined_subroutine
-; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D2_ABS]]}
+; CHECK-NEXT: DW_AT_abstract_origin {{.*}} "_ZN17nsAutoRefCntD2Ev"
 
 ; and then that a TAG_subprogram refers to it with AT_abstract_origin.
 
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_abstract_origin {{.*}} {[[D1_ABS]]}
+; CHECK: DW_AT_abstract_origin {{.*}} "_ZN17nsAutoRefCntD1Ev"
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_abstract_origin {{.*}} {[[D1_THIS_ABS]]}
 ; CHECK: DW_TAG_inlined_subroutine
-; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[D2_ABS]]}
+; CHECK-NEXT: DW_AT_abstract_origin {{.*}} "_ZN17nsAutoRefCntD2Ev"
 
 
 define i32 @_ZN17nsAutoRefCnt7ReleaseEv() {

@@ -41,7 +41,7 @@
 ; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_ZL3barv"
 
 ; getFoo and A may only appear once.
-; CHECK-NOT:  {{(getFoo)|("A")}}
+; CHECK-NOT:  AT_name{{.*(getFoo)|("A")}}
 
 
 ; ModuleID = 'type-unique-odr-a.cpp'

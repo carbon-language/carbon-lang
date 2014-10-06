@@ -25,7 +25,7 @@
 ; CHECK:   DW_TAG_subprogram
 ; CHECK:     DW_AT_type [DW_FORM_ref_addr] (0x00000000[[INT:.*]])
 ; CHECK:     DW_TAG_inlined_subroutine
-; CHECK:       DW_AT_abstract_origin {{.*}}[[ABS_FUNC:........]])
+; CHECK:       DW_AT_abstract_origin {{.*}}[[ABS_FUNC:........]] "_Z4funci"
 ; CHECK:       DW_TAG_formal_parameter
 ; CHECK:         DW_AT_abstract_origin {{.*}}[[ABS_VAR:........]])
 
@@ -47,7 +47,7 @@
 ; provides the address range and variable location
 ; CHECK: DW_TAG_subprogram
 ; CHECK:   DW_AT_low_pc
-; CHECK:   DW_AT_abstract_origin {{.*}} {0x[[ABS_FUNC]]}
+; CHECK:   DW_AT_abstract_origin {{.*}} {0x[[ABS_FUNC]]} "_Z4funci"
 ; CHECK:   DW_TAG_formal_parameter
 ; CHECK:     DW_AT_location
 ; CHECK:     DW_AT_abstract_origin {{.*}} {0x[[ABS_VAR]]}

@@ -120,6 +120,20 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
     formValue.dump(OS, u);
   }
 
+  // We have dumped the attribute raw value. For some attributes
+  // having both the raw value and the pretty-printed value is
+  // interesting. These attributes are handled below.
+  if ((attr == DW_AT_specification || attr == DW_AT_abstract_origin) &&
+      // The signature references aren't handled.
+      formValue.getForm() != DW_FORM_ref_sig8) {
+    uint32_t Ref = formValue.getAsReference(u).getValue();
+    DWARFDebugInfoEntryMinimal DIE;
+    if (const DWARFUnit *RefU = findUnitAndExtractFast(DIE, u, &Ref))
+      if (const char *Ref = DIE.getSubroutineName(RefU,
+                                                  FunctionNameKind::LinkageName))
+        OS << " \"" << Ref << '\"';
+  }
+
   OS << ")\n";
 }
 

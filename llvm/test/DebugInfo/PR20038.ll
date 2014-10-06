@@ -18,7 +18,7 @@
 ; CHECK-NOT: DW_TAG
 ; CHECK:     DW_AT_name {{.*}} "~C"
 
-; CHECK: [[D1_ABS:.*]]: DW_TAG_subprogram
+; CHECK:  DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_ZN1CD1Ev"
 ; CHECK-NOT: {{DW_TAG|NULL}}
@@ -32,7 +32,7 @@
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:   DW_TAG_inlined_subroutine
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_abstract_origin {{.*}} {[[D1_ABS]]}
+; CHECK:     DW_AT_abstract_origin {{.*}} "_ZN1CD1Ev"
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:     DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG

@@ -37,7 +37,7 @@
 ;   x(u);
 ; }
 
-; CHECK: [[ABS_X:.*]]: DW_TAG_subprogram
+; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_name {{.*}} "x"
 ; CHECK-NOT: {{DW_TAG|NULL}}
@@ -57,7 +57,7 @@
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:   DW_TAG_inlined_subroutine
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_abstract_origin {{.*}} {[[ABS_X]]}
+; CHECK:     DW_AT_abstract_origin {{.*}} "_Z1xb"
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:     DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
@@ -78,7 +78,7 @@
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:   DW_TAG_inlined_subroutine
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_abstract_origin {{.*}} {[[ABS_X]]}
+; CHECK:     DW_AT_abstract_origin {{.*}} "_Z1xb"
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; FIXME: This formal parameter goes missing at least at -O2 (& on
 ; mips/powerpc), maybe before that. Perhaps SelectionDAG is to blame (and

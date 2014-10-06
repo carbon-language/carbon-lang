@@ -18,13 +18,14 @@
 
 ; But make sure we emit DW_AT_object_pointer on the abstract definition.
 ; CHECK: [[ABSTRACT_ORIGIN:.*]]: DW_TAG_subprogram
-; CHECK-NOT: NULL
-; CHECK-NOT: TAG
+; CHECK-NOT: {{NULL|TAG}}
+; CHECK: DW_AT_specification {{.*}} "_ZN3foo4funcEi"
+; CHECK-NOT: {{NULL|TAG}}
 ; CHECK: DW_AT_object_pointer
 
 ; Ensure we omit DW_AT_object_pointer on inlined subroutines.
 ; CHECK: DW_TAG_inlined_subroutine
-; CHECK-NEXT: DW_AT_abstract_origin {{.*}}{[[ABSTRACT_ORIGIN]]}
+; CHECK-NEXT: DW_AT_abstract_origin {{.*}} {[[ABSTRACT_ORIGIN]]} "_ZN3foo4funcEi"
 ; CHECK-NOT: NULL
 ; CHECK-NOT: DW_AT_object_pointer
 ; CHECK: DW_TAG_formal_parameter
