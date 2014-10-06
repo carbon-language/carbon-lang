@@ -602,7 +602,8 @@ static void findIrreducibleHeaders(
       break;
     }
   }
-  assert(Headers.size() >= 2 && "Should be irreducible");
+  assert(Headers.size() >= 2 &&
+         "Expected irreducible CFG; -loop-info is likely invalid");
   if (Headers.size() == InSCC.size()) {
     // Every block is a header.
     std::sort(Headers.begin(), Headers.end());
