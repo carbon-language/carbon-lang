@@ -256,21 +256,24 @@ DynamicLoaderDarwinKernel::SearchForKernelWithDebugHints (Process *process)
     if (process->GetTarget().GetArchitecture().GetAddressByteSize() == 8)
     {
         addr = process->ReadUnsignedIntegerFromMemory (0xffffff8000002010ULL, 8, LLDB_INVALID_ADDRESS, read_err);
+        if (CheckForKernelImageAtAddress (addr, process).IsValid())
+        {
+            return addr;
+        }
+        addr = process->ReadUnsignedIntegerFromMemory (0xffffff8000004010ULL, 8, LLDB_INVALID_ADDRESS, read_err);
+        if (CheckForKernelImageAtAddress (addr, process).IsValid())
+        {
+            return addr;
+        }
     }
     else
     {
         addr = process->ReadUnsignedIntegerFromMemory (0xffff0110, 4, LLDB_INVALID_ADDRESS, read_err);
-    }
-
-    if (addr == 0)
-        addr = LLDB_INVALID_ADDRESS;
-
-    if (addr != LLDB_INVALID_ADDRESS)
-    {
         if (CheckForKernelImageAtAddress (addr, process).IsValid())
+        {
             return addr;
+        }
     }
-
     return LLDB_INVALID_ADDRESS;
 }
 
