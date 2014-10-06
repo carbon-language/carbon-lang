@@ -88,8 +88,9 @@ public:
     DataExtractor Data(Section, LE, 0);
     uint32_t Offset = 0;
     while (Data.isValidOffset(Offset)) {
-      auto U = make_unique<UnitType>(Context, DA, Section, RS, SS, SOS, AOS, &M,
-                                     Data.isLittleEndian(), *this);
+      auto U =
+          llvm::make_unique<UnitType>(Context, DA, Section, RS, SS, SOS, AOS,
+                                      &M, Data.isLittleEndian(), *this);
       if (!U->extract(Data, &Offset))
         break;
       this->push_back(std::move(U));
