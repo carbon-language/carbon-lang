@@ -159,6 +159,8 @@ SBDebugger::Create(bool source_init_files, lldb::LogOutputCallback callback, voi
 {
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
+    Initialize();
+
     SBDebugger debugger;
     
     // Currently we have issues if this function is called simultaneously on two different
@@ -209,6 +211,8 @@ SBDebugger::Destroy (SBDebugger &debugger)
                      static_cast<void*>(debugger.m_opaque_sp.get()),
                      sstr.GetData());
     }
+
+    Terminate();
 
     Debugger::Destroy (debugger.m_opaque_sp);
 
