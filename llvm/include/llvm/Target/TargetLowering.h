@@ -275,10 +275,7 @@ public:
     return false;
   }
 
-  /// Return the ValueType of the result of SETCC operations.  Also used to
-  /// obtain the target's preferred type for the condition operand of SELECT and
-  /// BRCOND nodes.  In the case of BRCOND the argument passed is MVT::Other
-  /// since there are no other operands to get a type hint from.
+  /// Return the ValueType of the result of SETCC operations.
   virtual EVT getSetCCResultType(LLVMContext &Context, EVT VT) const;
 
   /// Return the ValueType for comparison libcalls. Comparions libcalls include

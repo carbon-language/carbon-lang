@@ -61,3 +61,36 @@ if.end:                                           ; preds = %if.then, %entry
   %xor27 = xor i32 undef, %cond                   ; <i32> [#uses=0]
   ret i32 0
 }
+
+define i32 @t4(i64 %x) nounwind readnone ssp {
+entry:
+; 32-LABEL: t4:
+; 32: movl
+; 32: orl
+; 32: movl
+; 32: je
+; 32: xorl
+
+; 64-LABEL: t4:
+; 64: cmpq $1
+; 64: sbbl
+  %0 = icmp eq i64 %x, 0
+  %1 = sext i1 %0 to i32
+  ret i32 %1
+}
+
+define i64 @t5(i32 %x) nounwind readnone ssp {
+entry:
+; 32-LABEL: t5:
+; 32: cmpl $1
+; 32: sbbl
+; 32: movl
+
+; 64-LABEL: t5:
+; 64: cmpl $1
+; 64: sbbq
+  %0 = icmp eq i32 %x, 0
+  %1 = sext i1 %0 to i64
+  ret i64 %1
+}
+
