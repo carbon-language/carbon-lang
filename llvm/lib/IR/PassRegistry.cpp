@@ -101,10 +101,6 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
     // the interface.
     ImplementationInfo->addInterfaceImplemented(InterfaceInfo);
 
-    AnalysisGroupInfo &AGI = AnalysisGroupInfoMap[InterfaceInfo];
-    assert(AGI.Implementations.count(ImplementationInfo) == 0 &&
-           "Cannot add a pass to the same analysis group more than once!");
-    AGI.Implementations.insert(ImplementationInfo);
     if (isDefault) {
       assert(InterfaceInfo->getNormalCtor() == nullptr &&
              "Default implementation for analysis group already specified!");

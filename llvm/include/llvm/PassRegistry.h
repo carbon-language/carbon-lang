@@ -48,12 +48,6 @@ class PassRegistry {
   typedef StringMap<const PassInfo *> StringMapType;
   StringMapType PassInfoStringMap;
 
-  /// AnalysisGroupInfo - Keep track of information for each analysis group.
-  struct AnalysisGroupInfo {
-    SmallPtrSet<const PassInfo *, 8> Implementations;
-  };
-  DenseMap<const PassInfo *, AnalysisGroupInfo> AnalysisGroupInfoMap;
-
   std::vector<std::unique_ptr<const PassInfo>> ToFree;
   std::vector<PassRegistrationListener *> Listeners;
 
