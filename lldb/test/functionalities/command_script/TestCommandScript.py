@@ -86,8 +86,8 @@ class CmdPythonTestCase(TestBase):
                        'For more information run'])
 
         self.expect("help targetname",
-                    substrs = ['This command takes','\'raw\' input',
-                               'quote stuff'])
+                    substrs = ['This', 'command', 'takes', '\'raw\'', 'input',
+                               'quote', 'stuff'])
 
         self.expect("longwait",
                     substrs = ['Done; if you saw the delays I am doing OK'])
