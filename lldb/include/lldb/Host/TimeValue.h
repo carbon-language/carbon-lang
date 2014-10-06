@@ -31,6 +31,7 @@ public:
     static const uint64_t MicroSecPerSec = 1000000UL;
     static const uint64_t NanoSecPerSec = 1000000000UL;
     static const uint64_t NanoSecPerMicroSec = 1000U;
+    static const uint64_t NanoSecPerMilliSec = 1000000UL;
 
     //------------------------------------------------------------------
     // Constructors and Destructors
@@ -95,6 +96,15 @@ public:
     /// @brief Retrieve the fractional part as microseconds;
     uint32_t microseconds() const {
         return (m_nano_seconds % NanoSecPerSec) / NanoSecPerMicroSec;
+    }
+
+    /// Returns only the fractional portion of the TimeValue rounded down to the
+    /// nearest millisecond (divide by one million).
+    /// @brief Retrieve the fractional part as milliseconds;
+    uint32_t
+    milliseconds() const
+    {
+        return nanoseconds() / NanoSecPerMilliSec;
     }
 
 protected:
