@@ -308,9 +308,9 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
       BasicBlock *New = CloneBasicBlock(*BB, VMap, "." + Twine(It));
       Header->getParent()->getBasicBlockList().push_back(New);
 
-      // Loop over all of the PHI nodes in the block, changing them to use the
-      // incoming values from the previous block.
       if (*BB == Header)
+        // Loop over all of the PHI nodes in the block, changing them to use
+        // the incoming values from the previous block.
         for (unsigned i = 0, e = OrigPHINode.size(); i != e; ++i) {
           PHINode *NewPHI = cast<PHINode>(VMap[OrigPHINode[i]]);
           Value *InVal = NewPHI->getIncomingValueForBlock(LatchBlock);
