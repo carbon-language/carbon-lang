@@ -64,28 +64,6 @@ class IdDynMatcher : public DynMatcherInterface {
   const IntrusiveRefCntPtr<DynMatcherInterface> InnerMatcher;
 };
 
-/// \brief Return the most derived type between \p Kind1 and \p Kind2.
-///
-/// Return the null type if they are not related.
-ast_type_traits::ASTNodeKind getMostDerivedType(
-    const ast_type_traits::ASTNodeKind Kind1,
-    const ast_type_traits::ASTNodeKind Kind2) {
-  if (Kind1.isBaseOf(Kind2)) return Kind2;
-  if (Kind2.isBaseOf(Kind1)) return Kind1;
-  return ast_type_traits::ASTNodeKind();
-}
-
-/// \brief Return the least derived type between \p Kind1 and \p Kind2.
-///
-/// Return the null type if they are not related.
-static ast_type_traits::ASTNodeKind getLeastDerivedType(
-    const ast_type_traits::ASTNodeKind Kind1,
-    const ast_type_traits::ASTNodeKind Kind2) {
-  if (Kind1.isBaseOf(Kind2)) return Kind1;
-  if (Kind2.isBaseOf(Kind1)) return Kind2;
-  return ast_type_traits::ASTNodeKind();
-}
-
 }  // namespace
 
 DynTypedMatcher DynTypedMatcher::constructVariadic(
@@ -98,7 +76,8 @@ DynTypedMatcher DynTypedMatcher::constructVariadic(
     assert(Result.SupportedKind.isSame(M.SupportedKind) &&
            "SupportedKind must match!");
     Result.RestrictKind =
-        getLeastDerivedType(Result.RestrictKind, M.RestrictKind);
+        ast_type_traits::ASTNodeKind::getMostDerivedCommonAncestor(
+            Result.RestrictKind, M.RestrictKind);
   }
   Result.Implementation = new VariadicMatcher(Func, std::move(InnerMatchers));
   return Result;
@@ -108,7 +87,8 @@ DynTypedMatcher DynTypedMatcher::dynCastTo(
     const ast_type_traits::ASTNodeKind Kind) const {
   auto Copy = *this;
   Copy.SupportedKind = Kind;
-  Copy.RestrictKind = getMostDerivedType(Kind, RestrictKind);
+  Copy.RestrictKind =
+      ast_type_traits::ASTNodeKind::getMostDerivedType(Kind, RestrictKind);
   return Copy;
 }
 

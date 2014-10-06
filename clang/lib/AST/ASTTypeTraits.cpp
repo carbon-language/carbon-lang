@@ -62,6 +62,22 @@ bool ASTNodeKind::isBaseOf(NodeKindId Base, NodeKindId Derived,
 
 StringRef ASTNodeKind::asStringRef() const { return AllKindInfo[KindId].Name; }
 
+ASTNodeKind ASTNodeKind::getMostDerivedType(ASTNodeKind Kind1,
+                                            ASTNodeKind Kind2) {
+  if (Kind1.isBaseOf(Kind2)) return Kind2;
+  if (Kind2.isBaseOf(Kind1)) return Kind1;
+  return ASTNodeKind();
+}
+
+ASTNodeKind ASTNodeKind::getMostDerivedCommonAncestor(ASTNodeKind Kind1,
+                                                      ASTNodeKind Kind2) {
+  NodeKindId Parent = Kind1.KindId;
+  while (!isBaseOf(Parent, Kind2.KindId, nullptr) && Parent != NKI_None) {
+    Parent = AllKindInfo[Parent].ParentId;
+  }
+  return ASTNodeKind(Parent);
+}
+
 ASTNodeKind ASTNodeKind::getFromNode(const Decl &D) {
   switch (D.getKind()) {
 #define DECL(DERIVED, BASE)                                                    \

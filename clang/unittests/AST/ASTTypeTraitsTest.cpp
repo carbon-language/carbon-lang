@@ -26,6 +26,12 @@ template <typename T> static ASTNodeKind DNT() {
   return ASTNodeKind::getFromNodeKind<T>();
 }
 
+TEST(ASTNodeKind, IsNone) {
+  EXPECT_TRUE(ASTNodeKind().isNone());
+  EXPECT_FALSE(DNT<Decl>().isNone());
+  EXPECT_FALSE(DNT<VarDecl>().isNone());
+}
+
 TEST(ASTNodeKind, Bases) {
   EXPECT_TRUE(DNT<Decl>().isBaseOf(DNT<VarDecl>()));
   EXPECT_FALSE(DNT<Decl>().isSame(DNT<VarDecl>()));
@@ -58,6 +64,39 @@ TEST(ASTNodeKind, DiffBase) {
   EXPECT_FALSE(DNT<Expr>().isBaseOf(DNT<ArrayType>()));
   EXPECT_FALSE(DNT<QualType>().isBaseOf(DNT<FunctionDecl>()));
   EXPECT_FALSE(DNT<Type>().isSame(DNT<QualType>()));
+}
+
+TEST(ASTNodeKind, MostDerivedType) {
+  EXPECT_TRUE(DNT<BinaryOperator>().isSame(
+      ASTNodeKind::getMostDerivedType(DNT<Expr>(), DNT<BinaryOperator>())));
+  EXPECT_TRUE(DNT<BinaryOperator>().isSame(
+      ASTNodeKind::getMostDerivedType(DNT<BinaryOperator>(), DNT<Expr>())));
+  EXPECT_TRUE(DNT<VarDecl>().isSame(
+      ASTNodeKind::getMostDerivedType(DNT<VarDecl>(), DNT<VarDecl>())));
+
+  // Not related. Returns nothing.
+  EXPECT_TRUE(
+      ASTNodeKind::getMostDerivedType(DNT<IfStmt>(), DNT<VarDecl>()).isNone());
+  EXPECT_TRUE(ASTNodeKind::getMostDerivedType(DNT<IfStmt>(),
+                                              DNT<BinaryOperator>()).isNone());
+}
+
+TEST(ASTNodeKind, MostDerivedCommonAncestor) {
+  EXPECT_TRUE(DNT<Expr>().isSame(ASTNodeKind::getMostDerivedCommonAncestor(
+      DNT<Expr>(), DNT<BinaryOperator>())));
+  EXPECT_TRUE(DNT<Expr>().isSame(ASTNodeKind::getMostDerivedCommonAncestor(
+      DNT<BinaryOperator>(), DNT<Expr>())));
+  EXPECT_TRUE(DNT<VarDecl>().isSame(ASTNodeKind::getMostDerivedCommonAncestor(
+      DNT<VarDecl>(), DNT<VarDecl>())));
+
+  // A little related. Returns the ancestor.
+  EXPECT_TRUE(
+      DNT<NamedDecl>().isSame(ASTNodeKind::getMostDerivedCommonAncestor(
+          DNT<CXXMethodDecl>(), DNT<RecordDecl>())));
+
+  // Not related. Returns nothing.
+  EXPECT_TRUE(ASTNodeKind::getMostDerivedCommonAncestor(
+                  DNT<IfStmt>(), DNT<VarDecl>()).isNone());
 }
 
 struct Foo {};

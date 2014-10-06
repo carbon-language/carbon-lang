@@ -460,6 +460,11 @@ TEST(DeclarationMatcher, MatchAnyOf) {
   EXPECT_TRUE(matches("class U {};", XOrYOrZOrUOrV));
   EXPECT_TRUE(matches("class V {};", XOrYOrZOrUOrV));
   EXPECT_TRUE(notMatches("class A {};", XOrYOrZOrUOrV));
+
+  StatementMatcher MixedTypes = stmt(anyOf(ifStmt(), binaryOperator()));
+  EXPECT_TRUE(matches("int F() { return 1 + 2; }", MixedTypes));
+  EXPECT_TRUE(matches("int F() { if (true) return 1; }", MixedTypes));
+  EXPECT_TRUE(notMatches("int F() { return 1; }", MixedTypes));
 }
 
 TEST(DeclarationMatcher, MatchHas) {

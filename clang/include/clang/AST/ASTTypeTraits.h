@@ -63,6 +63,9 @@ public:
   /// \brief Returns \c true if \c this and \c Other represent the same kind.
   bool isSame(ASTNodeKind Other) const;
 
+  /// \brief Returns \c true only for the default \c ASTNodeKind()
+  bool isNone() const { return KindId == NKI_None; }
+
   /// \brief Returns \c true if \c this is a base kind of (or same as) \c Other.
   /// \param Distance If non-null, used to return the distance between \c this
   /// and \c Other in the class hierarchy.
@@ -75,6 +78,17 @@ public:
   bool operator<(const ASTNodeKind &Other) const {
     return KindId < Other.KindId;
   }
+
+  /// \brief Return the most derived type between \p Kind1 and \p Kind2.
+  ///
+  /// Return ASTNodeKind() if they are not related.
+  static ASTNodeKind getMostDerivedType(ASTNodeKind Kind1, ASTNodeKind Kind2);
+
+  /// \brief Return the most derived common ancestor between Kind1 and Kind2.
+  ///
+  /// Return ASTNodeKind() if they are not related.
+  static ASTNodeKind getMostDerivedCommonAncestor(ASTNodeKind Kind1,
+                                                  ASTNodeKind Kind2);
 
 private:
   /// \brief Kind ids.

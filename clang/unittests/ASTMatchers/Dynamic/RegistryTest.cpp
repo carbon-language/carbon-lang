@@ -347,7 +347,7 @@ TEST_F(RegistryTest, VariadicOp) {
       "anyOf",
       constructMatcher("recordDecl",
                        constructMatcher("hasName", std::string("Foo"))),
-      constructMatcher("namedDecl",
+      constructMatcher("functionDecl",
                        constructMatcher("hasName", std::string("foo"))))
       .getTypedMatcher<Decl>();
 
