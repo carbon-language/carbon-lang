@@ -24,7 +24,9 @@ namespace llvm {
 /// PPCTargetMachine - Common code between 32-bit and 64-bit PowerPC targets.
 ///
 class PPCTargetMachine : public LLVMTargetMachine {
-  PPCSubtarget        Subtarget;
+  PPCSubtarget Subtarget;
+
+  mutable StringMap<std::unique_ptr<PPCSubtarget>> SubtargetMap;
 
 public:
   PPCTargetMachine(const Target &T, StringRef TT,
@@ -33,6 +35,7 @@ public:
                    CodeGenOpt::Level OL);
 
   const PPCSubtarget *getSubtargetImpl() const override { return &Subtarget; }
+  const PPCSubtarget *getSubtargetImpl(const Function &F) const override;
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;

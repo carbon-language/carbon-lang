@@ -24,6 +24,7 @@ namespace llvm {
 class AArch64TargetMachine : public LLVMTargetMachine {
 protected:
   AArch64Subtarget Subtarget;
+  mutable StringMap<std::unique_ptr<AArch64Subtarget>> SubtargetMap;
 
 public:
   AArch64TargetMachine(const Target &T, StringRef TT, StringRef CPU,
@@ -34,6 +35,7 @@ public:
   const AArch64Subtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }
+  const AArch64Subtarget *getSubtargetImpl(const Function &F) const override;
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
@@ -45,6 +47,7 @@ public:
   bool isPBQPUsed() const { return usingPBQP; }
 
 private:
+  bool isLittle;
   bool usingPBQP;
 };
 

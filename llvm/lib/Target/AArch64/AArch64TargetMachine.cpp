@@ -14,6 +14,7 @@
 #include "AArch64TargetMachine.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
+#include "llvm/IR/Function.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -95,7 +96,7 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
                                            CodeGenOpt::Level OL,
                                            bool LittleEndian)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-      Subtarget(TT, CPU, FS, *this, LittleEndian),
+      Subtarget(TT, CPU, FS, *this, LittleEndian), isLittle(LittleEndian),
       usingPBQP(false) {
   initAsmInfo();
 
@@ -103,6 +104,32 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
     usingPBQP = true;
     RegisterRegAlloc::setDefault(createAArch64A57PBQPRegAlloc);
   }
+}
+
+const AArch64Subtarget *
+AArch64TargetMachine::getSubtargetImpl(const Function &F) const {
+  AttributeSet FnAttrs = F.getAttributes();
+  Attribute CPUAttr =
+      FnAttrs.getAttribute(AttributeSet::FunctionIndex, "target-cpu");
+  Attribute FSAttr =
+      FnAttrs.getAttribute(AttributeSet::FunctionIndex, "target-features");
+
+  std::string CPU = !CPUAttr.hasAttribute(Attribute::None)
+                        ? CPUAttr.getValueAsString().str()
+                        : TargetCPU;
+  std::string FS = !FSAttr.hasAttribute(Attribute::None)
+                       ? FSAttr.getValueAsString().str()
+                       : TargetFS;
+
+  auto &I = SubtargetMap[CPU + FS];
+  if (!I) {
+    // This needs to be done before we create a new subtarget since any
+    // creation will depend on the TM and the code generation flags on the
+    // function that reside in TargetOptions.
+    resetTargetOptions(F);
+    I = llvm::make_unique<AArch64Subtarget>(TargetTriple, CPU, FS, *this, isLittle);
+  }
+  return I.get();
 }
 
 void AArch64leTargetMachine::anchor() { }

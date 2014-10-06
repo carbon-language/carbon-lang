@@ -24,6 +24,9 @@ namespace llvm {
 class ARMBaseTargetMachine : public LLVMTargetMachine {
 protected:
   ARMSubtarget        Subtarget;
+  bool isLittle;
+  mutable StringMap<std::unique_ptr<ARMSubtarget>> SubtargetMap;
+
 public:
   ARMBaseTargetMachine(const Target &T, StringRef TT,
                        StringRef CPU, StringRef FS,
@@ -33,6 +36,7 @@ public:
                        bool isLittle);
 
   const ARMSubtarget *getSubtargetImpl() const override { return &Subtarget; }
+  const ARMSubtarget *getSubtargetImpl(const Function &F) const override;
 
   /// \brief Register ARM analysis passes with a pass manager.
   void addAnalysisPasses(PassManagerBase &PM) override;
