@@ -1,3 +1,4 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; The following two object files were generated using the following command:
 ;   D:\> cl /Z7 /c source.c
 ; with the following contents of D:\source.c:
@@ -21,25 +22,6 @@ RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifunction-linetables.obj
 RUN:   | FileCheck %s -check-prefix MFUN32
 RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifunction-linetables.obj.coff-2013-x86_64 \
 RUN:   | FileCheck %s -check-prefix MFUN64
-
-; The following two object files were generated using the following command:
-;   D:\> cl /Z7 /c input.c
-; with the following contents of D:\input.c:
-;   void g(void);
-;
-;   void f(void) {
-;   #line 1 "one.c"
-;     g();
-;   #line 2 "two.c"
-;     g();
-;   #line 7 "one.c"
-;     g();
-;   }
-; using CL v18.00.21005.1 32-/64-bit versions respectively.
-RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifile-linetables.obj.coff-2013-i368 \
-RUN:   | FileCheck %s -check-prefix MFILE32
-RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifile-linetables.obj.coff-2013-x86_64 \
-RUN:   | FileCheck %s -check-prefix MFILE64
 
 MFUN32:      CodeViewLineTables [
 MFUN32-NEXT:   Magic: 0x4
@@ -211,6 +193,26 @@ MFUN64-NEXT:     ]
 MFUN64-NEXT:   ]
 MFUN64-NEXT: ]
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; The following two object files were generated using the following command:
+;   D:\> cl /Z7 /c input.c
+; with the following contents of D:\input.c:
+;   void g(void);
+;
+;   void f(void) {
+;   #line 1 "one.c"
+;     g();
+;   #line 2 "two.c"
+;     g();
+;   #line 7 "one.c"
+;     g();
+;   }
+; using CL v18.00.21005.1 32-/64-bit versions respectively.
+RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifile-linetables.obj.coff-2013-i368 \
+RUN:   | FileCheck %s -check-prefix MFILE32
+RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifile-linetables.obj.coff-2013-x86_64 \
+RUN:   | FileCheck %s -check-prefix MFILE64
+
 MFILE32:      CodeViewLineTables [
 MFILE32-NEXT:   Magic: 0x4
 MFILE32-NEXT:   Subsection [
@@ -314,3 +316,41 @@ MFILE64-NEXT:       +0x13: 8
 MFILE64-NEXT:     ]
 MFILE64-NEXT:   ]
 MFILE64-NEXT: ]
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; The following object file was generated using the following command:
+;   C:\src> cl /Z7 /Gy /c test.cc
+; with the following contents of C:\src\test.cc:
+;   int f()
+;   {
+;     return 0;
+;   }
+;
+;   int g()
+;   {
+;     return 0;
+;   }
+; using 32-version of CL v18.00.21005.1.
+RUN: llvm-readobj -s -codeview-linetables %p/Inputs/comdat-function-linetables.obj.coff-2013-i386 \
+RUN:   | FileCheck %s -check-prefix MCOMDAT
+
+MCOMDAT:      FunctionLineTable [
+MCOMDAT-NEXT:        FunctionName: ?f@@YAHXZ
+MCOMDAT-NEXT:        CodeSize: 0x7
+MCOMDAT-NEXT:        FilenameSegment [
+MCOMDAT-NEXT:          Filename: c:\src\test.cc
+MCOMDAT-NEXT:          +0x0: 2
+MCOMDAT-NEXT:          +0x3: 3
+MCOMDAT-NEXT:          +0x5: 4
+MCOMDAT-NEXT:        ]
+MCOMDAT-NEXT:      ]
+MCOMDAT:      FunctionLineTable [
+MCOMDAT-NEXT:        FunctionName: ?g@@YAHXZ
+MCOMDAT-NEXT:        CodeSize: 0x7
+MCOMDAT-NEXT:        FilenameSegment [
+MCOMDAT-NEXT:          Filename: c:\src\test.cc
+MCOMDAT-NEXT:          +0x0: 7
+MCOMDAT-NEXT:          +0x3: 8
+MCOMDAT-NEXT:          +0x5: 9
+MCOMDAT-NEXT:        ]
+MCOMDAT-NEXT:      ]
