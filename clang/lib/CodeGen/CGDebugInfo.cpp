@@ -1162,6 +1162,11 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
     // the member being added to type units by LLVM, while still allowing it
     // to be emitted into the type declaration/reference inside the compile
     // unit.
+    // FIXME: Handle Using(Shadow?)Decls here to create
+    // DW_TAG_imported_declarations inside the class for base decls brought into
+    // derived classes. GDB doesn't seem to notice/leverage these when I tried
+    // it, so I'm not rushing to fix this. (GCC seems to produce them, if
+    // referenced)
     if (!Method || Method->isImplicit())
       continue;
     // Reuse the existing member function declaration if it exists.
