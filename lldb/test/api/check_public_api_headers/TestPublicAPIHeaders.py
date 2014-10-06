@@ -19,6 +19,7 @@ class SBDirCheckerCase(TestBase):
         self.source = 'main.cpp'
         self.exe_name = 'a.out'
 
+    @skipIfNoSBHeaders
     def test_sb_api_directory(self):
         """Test the SB API directory and make sure there's no unwanted stuff."""
 
