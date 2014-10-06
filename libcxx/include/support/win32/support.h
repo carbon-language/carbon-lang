@@ -31,6 +31,8 @@
 #define NOMINMAX
 #endif
 
+// The mingw headers already define these as static.
+#ifndef __MINGW32__
 extern "C" {
 
 int vasprintf(char **sptr, const char *__restrict fmt, va_list ap);
@@ -40,6 +42,7 @@ size_t mbsnrtowcs(wchar_t *__restrict dst, const char **__restrict src,
 size_t wcsnrtombs(char *__restrict dst, const wchar_t **__restrict src,
                   size_t nwc, size_t len, mbstate_t *__restrict ps);
 }
+#endif // __MINGW32__
 
 #if defined(_LIBCPP_MSVCRT)
 #define snprintf _snprintf
