@@ -25,11 +25,11 @@
 // Other libraries and framework includes
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/Error.h"
-#include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Core/ConnectionMachPort.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/HostThread.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Host/Socket.h"

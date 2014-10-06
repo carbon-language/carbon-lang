@@ -23,8 +23,8 @@
 #include <string>
 #include <vector>
 
-#include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Host/Condition.h"
+#include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/Predicate.h"

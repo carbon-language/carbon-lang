@@ -31,7 +31,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Debugger.h"
-#include "lldb/Core/ConnectionFileDescriptor.h"
+#include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"

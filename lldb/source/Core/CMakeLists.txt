@@ -11,7 +11,6 @@ add_lldb_library(lldbCore
   Broadcaster.cpp
   Communication.cpp
   Connection.cpp
-  ConnectionFileDescriptor.cpp
   ConnectionMachPort.cpp
   ConnectionSharedMemory.cpp
   ConstString.cpp
