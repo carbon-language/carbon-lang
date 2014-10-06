@@ -63,10 +63,8 @@ void PassRegistry::registerPass(const PassInfo &PI, bool ShouldFree) {
   PassInfoStringMap[PI.getPassArgument()] = &PI;
 
   // Notify any listeners.
-  for (std::vector<PassRegistrationListener *>::iterator I = Listeners.begin(),
-                                                         E = Listeners.end();
-       I != E; ++I)
-    (*I)->passRegistered(&PI);
+  for (auto *Listener : Listeners)
+    Listener->passRegistered(&PI);
 
   if (ShouldFree)
     ToFree.push_back(std::unique_ptr<const PassInfo>(&PI));
@@ -84,8 +82,8 @@ void PassRegistry::unregisterPass(const PassInfo &PI) {
 
 void PassRegistry::enumerateWith(PassRegistrationListener *L) {
   sys::SmartScopedReader<true> Guard(Lock);
-  for (auto I = PassInfoMap.begin(), E = PassInfoMap.end(); I != E; ++I)
-    L->passEnumerate(I->second);
+  for (auto PassInfoPair : PassInfoMap)
+    L->passEnumerate(PassInfoPair.second);
 }
 
 /// Analysis Group Mechanisms.
