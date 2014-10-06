@@ -626,7 +626,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile &Obj)
           Sym->getAddress(SymAddr);
         }
 
-        object::RelocVisitor V(Obj.getFileFormatName());
+        object::RelocVisitor V(Obj);
         // The section address is always 0 for debug sections.
         object::RelocToApply R(V.visit(Type, Reloc, 0, SymAddr));
         if (V.error()) {
