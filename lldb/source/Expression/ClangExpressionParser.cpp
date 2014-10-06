@@ -98,6 +98,7 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
 
 ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
                                               ClangExpression &expr,
+                                              Args &expr_parser_compiler_args,
                                               bool generate_debug_info) :
     m_expr (expr),
     m_compiler (),
@@ -151,6 +152,11 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     assert (m_compiler->hasTarget());
 
     // 3. Set options.
+
+    clang::CompilerInvocation::CreateFromArgs(m_compiler->getInvocation(),
+        expr_parser_compiler_args.GetConstArgumentVector(),
+        expr_parser_compiler_args.GetConstArgumentVector() + expr_parser_compiler_args.GetArgumentCount(),
+        m_compiler->getDiagnostics());
 
     lldb::LanguageType language = expr.Language();
 

@@ -2653,6 +2653,7 @@ g_properties[] =
     { "breakpoints-use-platform-avoid-list", OptionValue::eTypeBoolean   , false, true                      , NULL, NULL, "Consult the platform module avoid list when setting non-module specific breakpoints." },
     { "arg0"                               , OptionValue::eTypeString    , false, 0                         , NULL, NULL, "The first argument passed to the program in the argument array which can be different from the executable itself." },
     { "run-args"                           , OptionValue::eTypeArgs      , false, 0                         , NULL, NULL, "A list containing all the arguments to be passed to the executable when it is run. Note that this does NOT include the argv[0] which is in target.arg0." },
+    { "expr-parser-compiler-args"          , OptionValue::eTypeArgs      , false, 0                         , NULL, NULL, "A list containing all the arguments to be passed to the expression parser compiler." },
     { "env-vars"                           , OptionValue::eTypeDictionary, false, OptionValue::eTypeString  , NULL, NULL, "A list of all the environment variables to be passed to the executable's environment, and their values." },
     { "inherit-env"                        , OptionValue::eTypeBoolean   , false, true                      , NULL, NULL, "Inherit the environment from the process that is running LLDB." },
     { "input-path"                         , OptionValue::eTypeFileSpec  , false, 0                         , NULL, NULL, "The file/path to be used by the executable program for reading its standard input." },
@@ -2701,6 +2702,7 @@ enum
     ePropertyBreakpointUseAvoidList,
     ePropertyArg0,
     ePropertyRunArgs,
+    ePropertyExprParserCompilerArgs,
     ePropertyEnvVars,
     ePropertyInheritEnv,
     ePropertyInputPath,
@@ -2953,6 +2955,20 @@ bool
 TargetProperties::GetRunArguments (Args &args) const
 {
     const uint32_t idx = ePropertyRunArgs;
+    return m_collection_sp->GetPropertyAtIndexAsArgs (NULL, idx, args);
+}
+
+void
+TargetProperties::SetExprParserCompilerArguments (const Args &args)
+{
+    const uint32_t idx = ePropertyExprParserCompilerArgs;
+    m_collection_sp->SetPropertyAtIndexFromArgs (NULL, idx, args);
+}
+
+bool
+TargetProperties::GetExprParserCompilerArguments (Args &args) const
+{
+    const uint32_t idx = ePropertyExprParserCompilerArgs;
     return m_collection_sp->GetPropertyAtIndexAsArgs (NULL, idx, args);
 }
 

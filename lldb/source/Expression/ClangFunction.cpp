@@ -238,7 +238,9 @@ ClangFunction::CompileFunction (Stream &errors)
     if (jit_process_sp)
     {
         const bool generate_debug_info = true;
-        m_parser.reset(new ClangExpressionParser(jit_process_sp.get(), *this, generate_debug_info));
+        Args expr_parser_compiler_args;
+        jit_process_sp->GetTarget().GetExprParserCompilerArguments (expr_parser_compiler_args);
+        m_parser.reset(new ClangExpressionParser(jit_process_sp.get(), *this, expr_parser_compiler_args, generate_debug_info));
         
         num_errors = m_parser->Parse (errors);
     }

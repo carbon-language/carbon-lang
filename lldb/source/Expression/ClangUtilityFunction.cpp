@@ -122,7 +122,9 @@ ClangUtilityFunction::Install (Stream &error_stream,
     }
     
     const bool generate_debug_info = true;
-    ClangExpressionParser parser(exe_ctx.GetBestExecutionContextScope(), *this, generate_debug_info);
+    Args expr_parser_compiler_args;
+    target->GetExprParserCompilerArguments (expr_parser_compiler_args);
+    ClangExpressionParser parser(exe_ctx.GetBestExecutionContextScope(), *this, expr_parser_compiler_args, generate_debug_info);
     
     unsigned num_errors = parser.Parse (error_stream);
     

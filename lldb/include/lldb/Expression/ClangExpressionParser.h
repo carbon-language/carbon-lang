@@ -52,6 +52,7 @@ public:
     //------------------------------------------------------------------
     ClangExpressionParser (ExecutionContextScope *exe_scope,
                            ClangExpression &expr,
+                           Args &expr_parser_compiler_args,
                            bool generate_debug_info);
     
     //------------------------------------------------------------------
