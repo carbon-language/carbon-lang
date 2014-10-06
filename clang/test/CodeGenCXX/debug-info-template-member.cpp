@@ -28,21 +28,22 @@ inline int add3(int x) {
 // CHECK: [[VIRT_T]] = metadata !{metadata !"0x2f\00T\000\000"{{, [^,]+}}, metadata !"_ZTS4elem", {{.*}} ; [ DW_TAG_template_type_parameter ]
 
 // CHECK: [[C:![0-9]*]] = {{.*}}, metadata [[C_MEM:![0-9]*]], metadata !"_ZTS7MyClass", null, metadata !"_ZTS7MyClass"} ; [ DW_TAG_structure_type ] [MyClass]
-// CHECK: [[C_MEM]] = metadata !{metadata [[C_VPTR:![0-9]*]], metadata [[C_FUNC:![0-9]*]], metadata [[C_CTOR:![0-9]*]]}
+// CHECK: [[C_MEM]] = metadata !{metadata [[C_VPTR:![0-9]*]], metadata [[C_FUNC:![0-9]*]]}
 // CHECK: [[C_VPTR]] = {{.*}} ; [ DW_TAG_member ] [_vptr$MyClass]
 
 // CHECK: [[C_FUNC]] = {{.*}} ; [ DW_TAG_subprogram ] [line 7] [func]
-// CHECK: [[C_CTOR]] = {{.*}} ; [ DW_TAG_subprogram ] [line 0] [MyClass]
 
 // CHECK: [[ELEM:![0-9]*]] = {{.*}}, metadata [[ELEM_MEM:![0-9]*]], null, null, metadata !"_ZTS4elem"} ; [ DW_TAG_structure_type ] [elem] {{.*}} [def]
 // CHECK: [[ELEM_MEM]] = metadata !{metadata [[ELEM_X:![0-9]*]]}
 // CHECK: [[ELEM_X]] = {{.*}} ; [ DW_TAG_member ] [x] {{.*}} [static] [from _ZTS4virtI4elemE]
 
-// Check that the member function template specialization refers to its class by
-// scope, even though it didn't appear in the class's member list (C_MEM). This
-// prevents the function from being added to type units, while still appearing
-// in the type declaration/reference in the compile unit.
+// Check that the member function template specialization and implicit special
+// members (the default ctor) refer to their class by scope, even though they
+// didn't appear in the class's member list (C_MEM). This prevents the functions
+// from being added to type units, while still appearing in the type
+// declaration/reference in the compile unit.
 // CHECK: metadata !"_ZTS7MyClass", {{.*}} ; [ DW_TAG_subprogram ] [line 4] [add<2>]
+// CHECK: metadata !"_ZTS7MyClass", {{.*}} ; [ DW_TAG_subprogram ] [line 0] [MyClass]
 
 template<typename T>
 struct outer {

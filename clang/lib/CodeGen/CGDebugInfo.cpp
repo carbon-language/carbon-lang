@@ -1157,24 +1157,23 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
   // have templated functions iterate over every declaration to gather
   // the functions.
   for(const auto *I : RD->decls()) {
-    if (const auto *Method = dyn_cast<CXXMethodDecl>(I)) {
-      // Reuse the existing member function declaration if it exists.
-      // It may be associated with the declaration of the type & should be
-      // reused as we're building the definition.
-      //
-      // This situation can arise in the vtable-based debug info reduction where
-      // implicit members are emitted in a non-vtable TU.
-      llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator MI =
-          SPCache.find(Method->getCanonicalDecl());
-      if (MI == SPCache.end()) {
-        // If the member is implicit, lazily create it when we see the
-        // definition, not before. (an ODR-used implicit default ctor that's
-        // never actually code generated should not produce debug info)
-        if (!Method->isImplicit())
-          EltTys.push_back(CreateCXXMemberFunction(Method, Unit, RecordTy));
-      } else
-        EltTys.push_back(MI->second);
-    }
+    const auto *Method = dyn_cast<CXXMethodDecl>(I);
+    // If the member is implicit, don't add it to the member list. This avoids
+    // the member being added to type units by LLVM, while still allowing it
+    // to be emitted into the type declaration/reference inside the compile
+    // unit.
+    if (!Method || Method->isImplicit())
+      continue;
+    // Reuse the existing member function declaration if it exists.
+    // It may be associated with the declaration of the type & should be
+    // reused as we're building the definition.
+    //
+    // This situation can arise in the vtable-based debug info reduction where
+    // implicit members are emitted in a non-vtable TU.
+    auto MI = SPCache.find(Method->getCanonicalDecl());
+    EltTys.push_back(MI == SPCache.end()
+                         ? CreateCXXMemberFunction(Method, Unit, RecordTy)
+                         : MI->second);
   }
 }
 
