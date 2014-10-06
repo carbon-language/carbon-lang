@@ -544,9 +544,8 @@ void ARMInstPrinter::printAddrMode3Operand(const MCInst *MI, unsigned Op,
     return;
   }
 
-  const MCOperand &MO3 = MI->getOperand(Op+2);
-
-  assert(ARM_AM::getAM3IdxMode(MO3.getImm()) != ARMII::IndexModePost &&
+  assert(ARM_AM::getAM3IdxMode(MI->getOperand(Op + 2).getImm()) !=
+             ARMII::IndexModePost &&
          "unexpected idxmode");
   printAM3PreOrOffsetIndexOp(MI, Op, O, AlwaysPrintImm0);
 }
