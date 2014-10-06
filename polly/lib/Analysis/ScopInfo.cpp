@@ -1270,6 +1270,14 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   DenseMap<Value *, MemoryAccess *> PtrToAcc;
   DenseSet<Value *> HasWriteAccess;
   for (ScopStmt *Stmt : *this) {
+
+    // Skip statements with an empty domain as they will never be executed.
+    isl_set *StmtDomain = Stmt->getDomain();
+    bool StmtDomainEmpty = isl_set_is_empty(StmtDomain);
+    isl_set_free(StmtDomain);
+    if (StmtDomainEmpty)
+      continue;
+
     for (MemoryAccess *MA : *Stmt) {
       if (MA->isScalar())
         continue;
