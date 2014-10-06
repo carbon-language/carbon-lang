@@ -1178,7 +1178,7 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
     auto MI = SPCache.find(Method->getCanonicalDecl());
     EltTys.push_back(MI == SPCache.end()
                          ? CreateCXXMemberFunction(Method, Unit, RecordTy)
-                         : MI->second);
+                         : static_cast<llvm::Value *>(MI->second));
   }
 }
 
