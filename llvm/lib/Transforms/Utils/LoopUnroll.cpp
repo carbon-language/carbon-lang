@@ -308,6 +308,8 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
       BasicBlock *New = CloneBasicBlock(*BB, VMap, "." + Twine(It));
       Header->getParent()->getBasicBlockList().push_back(New);
 
+      L->addBasicBlockToLoop(New, LI->getBase());
+
       if (*BB == Header)
         // Loop over all of the PHI nodes in the block, changing them to use
         // the incoming values from the previous block.
@@ -326,8 +328,6 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
       for (ValueToValueMapTy::iterator VI = VMap.begin(), VE = VMap.end();
            VI != VE; ++VI)
         LastValueMap[VI->first] = VI->second;
-
-      L->addBasicBlockToLoop(New, LI->getBase());
 
       // Add phi entries for newly created values to all exit blocks.
       for (succ_iterator SI = succ_begin(*BB), SE = succ_end(*BB);
