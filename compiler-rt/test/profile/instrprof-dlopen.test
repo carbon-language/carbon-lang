@@ -1,8 +1,8 @@
 RUN: mkdir -p %t.d
 RUN: %clang_profgen -o %t.d/func.shared -fPIC -shared %S/Inputs/instrprof-dlopen-func.c
 RUN: %clang_profgen -o %t.d/func2.shared -fPIC -shared %S/Inputs/instrprof-dlopen-func2.c
-RUN: %clang -o %t-local -fPIC -DDLOPEN_FUNC_DIR=\"%t.d\" -DDLOPEN_FLAGS="RTLD_LAZY | RTLD_LOCAL" %S/Inputs/instrprof-dlopen-main.c -ldl
-RUN: %clang -o %t-global -fPIC -DDLOPEN_FUNC_DIR=\"%t.d\" -DDLOPEN_FLAGS="RTLD_LAZY | RTLD_GLOBAL" %S/Inputs/instrprof-dlopen-main.c -ldl
+RUN: %clang -o %t-local -fPIC -DDLOPEN_FUNC_DIR=\"%t.d\" -DDLOPEN_FLAGS="RTLD_LAZY | RTLD_LOCAL" %S/Inputs/instrprof-dlopen-main.c
+RUN: %clang -o %t-global -fPIC -DDLOPEN_FUNC_DIR=\"%t.d\" -DDLOPEN_FLAGS="RTLD_LAZY | RTLD_GLOBAL" %S/Inputs/instrprof-dlopen-main.c
 
 RUN: %clang -c -o %t.d/main.o %S/Inputs/instrprof-dlopen-main.c
 RUN: %clang_profgen -o %t-static %S/Inputs/instrprof-dlopen-func.c %S/Inputs/instrprof-dlopen-func2.c %t.d/main.o
