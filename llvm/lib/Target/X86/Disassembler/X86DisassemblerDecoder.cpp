@@ -852,6 +852,22 @@ static bool is16BitEquivalent(const char* orig, const char* equiv) {
 }
 
 /*
+ * is64Bit - Determines whether this instruction is a 64-bit instruction.
+ *
+ * @param name - The instruction that is not 16-bit
+ */
+static bool is64Bit(const char* name) {
+  off_t i;
+
+  for (i = 0;; ++i) {
+    if (name[i] == '\0')
+      return false;
+    if (name[i] == '6' && name[i+1] == '4')
+      return true;
+  }
+}
+
+/*
  * getID - Determines the ID of an instruction, consuming the ModR/M byte as
  *   appropriate for extended and escape opcodes.  Determines the attributes and
  *   context for the instruction before doing so.
@@ -982,6 +998,37 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
   }
 
   /* The following clauses compensate for limitations of the tables. */
+
+  if (insn->mode != MODE_64BIT &&
+      insn->vectorExtensionType != TYPE_NO_VEX_XOP) {
+    /*
+     * The tables can't distinquish between cases where the W-bit is used to
+     * select register size and cases where its a required part of the opcode.
+     */
+    if ((insn->vectorExtensionType == TYPE_EVEX &&
+         wFromEVEX3of4(insn->vectorExtensionPrefix[2])) ||
+        (insn->vectorExtensionType == TYPE_VEX_3B &&
+         wFromVEX3of3(insn->vectorExtensionPrefix[2])) ||
+        (insn->vectorExtensionType == TYPE_XOP &&
+         wFromXOP3of3(insn->vectorExtensionPrefix[2]))) {
+
+      uint16_t instructionIDWithREXW;
+      if (getIDWithAttrMask(&instructionIDWithREXW,
+                            insn, attrMask | ATTR_REXW)) {
+        insn->instructionID = instructionID;
+        insn->spec = specifierForUID(instructionID);
+        return 0;
+      }
+
+      const char *SpecName = GetInstrName(instructionIDWithREXW, miiArg);
+      // If not a 64-bit instruction. Switch the opcode.
+      if (!is64Bit(SpecName)) {
+        insn->instructionID = instructionIDWithREXW;
+        insn->spec = specifierForUID(instructionIDWithREXW);
+        return 0;
+      }
+    }
+  }
 
   if ((insn->mode == MODE_16BIT || insn->prefixPresent[0x66]) &&
       !(attrMask & ATTR_OPSIZE)) {
