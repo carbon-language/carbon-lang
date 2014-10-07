@@ -56,6 +56,7 @@ public:
   void printDynamicSymbols() override;
   void printUnwindInfo() override;
   void printCOFFImports() override;
+  void printCOFFDirectives() override;
 
 private:
   void printSymbol(const SymbolRef &Sym);
@@ -932,3 +933,21 @@ void COFFDumper::printCOFFImports() {
     printImportedSymbols(I->imported_symbol_begin(), I->imported_symbol_end());
   }
 }
+
+void COFFDumper::printCOFFDirectives() {
+  for (const SectionRef &Section : Obj->sections()) {
+    StringRef Contents;
+    StringRef Name;
+
+    if (error(Section.getName(Name)))
+      continue;
+    if (Name != ".drectve")
+      continue;
+
+    if (error(Section.getContents(Contents)))
+      return;
+
+    W.printString("Directive(s)", Contents);
+  }
+}
+

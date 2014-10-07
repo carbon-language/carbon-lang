@@ -145,6 +145,11 @@ namespace opts {
   // -coff-imports
   cl::opt<bool>
   COFFImports("coff-imports", cl::desc("Display the PE/COFF import table"));
+
+  // -coff-directives
+  cl::opt<bool>
+  COFFDirectives("coff-directives",
+                 cl::desc("Display the contents PE/COFF .drectve section"));
 } // namespace opts
 
 static int ReturnValue = EXIT_SUCCESS;
@@ -272,6 +277,8 @@ static void dumpObject(const ObjectFile *Obj) {
       Dumper->printMipsPLTGOT();
   if (opts::COFFImports)
     Dumper->printCOFFImports();
+  if (opts::COFFDirectives)
+    Dumper->printCOFFDirectives();
 }
 
 
