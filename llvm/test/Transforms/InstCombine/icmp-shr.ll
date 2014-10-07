@@ -418,8 +418,6 @@ define i1 @nonexact_lshr_ne_shift_gt(i8 %a) {
  ret i1 %cmp
 }
 
-
-
 ; CHECK-LABEL: @exact_ashr_eq
 ; CHECK-NEXT: icmp eq i8 %a, 7
 define i1 @exact_ashr_eq(i8 %a) {
