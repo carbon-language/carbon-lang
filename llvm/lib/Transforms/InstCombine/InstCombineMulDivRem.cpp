@@ -985,9 +985,9 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   // (zext A) udiv (zext B) --> zext (A udiv B)
   if (ZExtInst *ZOp0 = dyn_cast<ZExtInst>(Op0))
     if (Value *ZOp1 = dyn_castZExtVal(Op1, ZOp0->getSrcTy()))
-      return new ZExtInst(Builder->CreateUDiv(ZOp0->getOperand(0), ZOp1, "div",
-                                              I.isExact()),
-                          I.getType());
+      return new ZExtInst(
+          Builder->CreateUDiv(ZOp0->getOperand(0), ZOp1, "div", I.isExact()),
+          I.getType());
 
   // (LHS udiv (select (select (...)))) -> (LHS >> (select (select (...))))
   SmallVector<UDivFoldAction, 6> UDivActions;
@@ -1092,8 +1092,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
 /// If the conversion was successful, the simplified expression "X * 1/C" is
 /// returned; otherwise, NULL is returned.
 ///
-static Instruction *CvtFDivConstToReciprocal(Value *Dividend,
-                                             Constant *Divisor,
+static Instruction *CvtFDivConstToReciprocal(Value *Dividend, Constant *Divisor,
                                              bool AllowReciprocal) {
   if (!isa<ConstantFP>(Divisor)) // TODO: handle vectors.
     return nullptr;
