@@ -72,7 +72,7 @@ public:
   /// changing, e.g. when libclang tries to parse while the user is
   /// editing/updating the file.
   static ErrorOr<std::unique_ptr<MemoryBuffer>>
-  getFile(Twine Filename, int64_t FileSize = -1,
+  getFile(const Twine &Filename, int64_t FileSize = -1,
           bool RequiresNullTerminator = true, bool IsVolatileSize = false);
 
   /// Given an already-open file descriptor, map some slice of it into a
@@ -83,7 +83,7 @@ public:
   /// changing, e.g. when libclang tries to parse while the user is
   /// editing/updating the file.
   static ErrorOr<std::unique_ptr<MemoryBuffer>>
-  getOpenFileSlice(int FD, const char *Filename, uint64_t MapSize,
+  getOpenFileSlice(int FD, const Twine &Filename, uint64_t MapSize,
                    int64_t Offset, bool IsVolatileSize = false);
 
   /// Given an already-open file descriptor, read the file and return a
@@ -93,7 +93,7 @@ public:
   /// changing, e.g. when libclang tries to parse while the user is
   /// editing/updating the file.
   static ErrorOr<std::unique_ptr<MemoryBuffer>>
-  getOpenFile(int FD, const char *Filename, uint64_t FileSize,
+  getOpenFile(int FD, const Twine &Filename, uint64_t FileSize,
               bool RequiresNullTerminator = true, bool IsVolatileSize = false);
 
   /// Open the specified memory range as a MemoryBuffer. Note that InputData
@@ -108,7 +108,7 @@ public:
   /// Open the specified memory range as a MemoryBuffer, copying the contents
   /// and taking ownership of it. InputData does not have to be null terminated.
   static std::unique_ptr<MemoryBuffer>
-  getMemBufferCopy(StringRef InputData, StringRef BufferName = "");
+  getMemBufferCopy(StringRef InputData, const Twine &BufferName = "");
 
   /// Allocate a new zero-initialized MemoryBuffer of the specified size. Note
   /// that the caller need not initialize the memory allocated by this method.
@@ -120,7 +120,7 @@ public:
   /// Note that the caller should initialize the memory allocated by this
   /// method. The memory is owned by the MemoryBuffer object.
   static std::unique_ptr<MemoryBuffer>
-  getNewUninitMemBuffer(size_t Size, StringRef BufferName = "");
+  getNewUninitMemBuffer(size_t Size, const Twine &BufferName = "");
 
   /// Read all of stdin into a file buffer, and return it.
   static ErrorOr<std::unique_ptr<MemoryBuffer>> getSTDIN();
@@ -128,7 +128,7 @@ public:
   /// Open the specified file as a MemoryBuffer, or open stdin if the Filename
   /// is "-".
   static ErrorOr<std::unique_ptr<MemoryBuffer>>
-  getFileOrSTDIN(StringRef Filename, int64_t FileSize = -1);
+  getFileOrSTDIN(const Twine &Filename, int64_t FileSize = -1);
 
   //===--------------------------------------------------------------------===//
   // Provided for performance analysis.
