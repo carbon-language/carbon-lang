@@ -34,8 +34,9 @@ class X86AsmInstrumentation {
 public:
   virtual ~X86AsmInstrumentation();
 
-  void SetFrameRegister(unsigned RegNo) {
-    FrameReg = RegNo;
+  // Sets frame register corresponding to a current frame.
+  void SetInitialFrameRegister(unsigned RegNo) {
+    InitialFrameReg = RegNo;
   }
 
   // Tries to instrument and emit instruction.
@@ -51,11 +52,13 @@ protected:
 
   X86AsmInstrumentation(const MCSubtargetInfo &STI);
 
+  unsigned GetFrameRegGeneric(const MCContext &Ctx, MCStreamer &Out);
+
   void EmitInstruction(MCStreamer &Out, const MCInst &Inst);
 
   const MCSubtargetInfo &STI;
 
-  unsigned FrameReg;
+  unsigned InitialFrameReg;
 };
 
 } // End llvm namespace

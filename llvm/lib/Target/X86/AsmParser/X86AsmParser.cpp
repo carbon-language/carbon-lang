@@ -973,7 +973,7 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
 }
 
 void X86AsmParser::SetFrameRegister(unsigned RegNo) {
-  Instrumentation->SetFrameRegister(RegNo);
+  Instrumentation->SetInitialFrameRegister(RegNo);
 }
 
 std::unique_ptr<X86Operand> X86AsmParser::DefaultMemSIOperand(SMLoc Loc) {

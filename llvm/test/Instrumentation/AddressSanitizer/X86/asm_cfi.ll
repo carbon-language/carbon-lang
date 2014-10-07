@@ -41,5 +41,14 @@ entry:
   ret void
 }
 
+; CHECK-LABEL: mov8b_rsp_no_cfi
+; CHECK-NOT: .cfi{{[a-z_]+}}
+define void @mov8b_rsp_no_cfi(i64* %dst, i64* %src) #2 {
+entry:
+  tail call void asm sideeffect "movq ($0), %rax \0A\09movq %rax, ($1) \0A\09", "r,r,~{rax},~{memory},~{dirflag},~{fpsr},~{flags}"(i64* %src, i64* %dst)
+  ret void
+}
+
 attributes #0 = { nounwind sanitize_address uwtable "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" }
 attributes #1 = { nounwind sanitize_address uwtable "no-frame-pointer-elim"="false" }
+attributes #2 = { nounwind sanitize_address "no-frame-pointer-elim"="false" }

@@ -15,6 +15,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/IR/Function.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstBuilder.h"
@@ -297,6 +298,13 @@ public:
 
   virtual ~X86AddressSanitizer32() {}
 
+  unsigned GetFrameReg(const MCContext &Ctx, MCStreamer &Out) {
+    unsigned FrameReg = GetFrameRegGeneric(Ctx, Out);
+    if (FrameReg == X86::NoRegister)
+      return FrameReg;
+    return getX86SubSuperRegister(FrameReg, MVT::i32);
+  }
+
   virtual void StoreFlags(MCStreamer &Out) override {
     EmitInstruction(Out, MCInstBuilder(X86::PUSHF32));
   }
@@ -308,7 +316,8 @@ public:
   virtual void InstrumentMemOperandPrologue(const RegisterContext &RegCtx,
                                             MCContext &Ctx,
                                             MCStreamer &Out) override {
-    const MCRegisterInfo* MRI = Ctx.getRegisterInfo();
+    const MCRegisterInfo *MRI = Ctx.getRegisterInfo();
+    unsigned FrameReg = GetFrameReg(Ctx, Out);
     if (MRI && FrameReg != X86::NoRegister) {
       EmitInstruction(
           Out, MCInstBuilder(X86::PUSH32r).addReg(X86::EBP));
@@ -348,6 +357,7 @@ public:
     EmitInstruction(
         Out, MCInstBuilder(X86::POP32r).addReg(RegCtx.addressReg(MVT::i32)));
 
+    unsigned FrameReg = GetFrameReg(Ctx, Out);
     if (Ctx.getRegisterInfo() && FrameReg != X86::NoRegister) {
       EmitInstruction(
           Out, MCInstBuilder(X86::POP32r).addReg(X86::EBP));
@@ -554,6 +564,13 @@ public:
 
   virtual ~X86AddressSanitizer64() {}
 
+  unsigned GetFrameReg(const MCContext &Ctx, MCStreamer &Out) {
+    unsigned FrameReg = GetFrameRegGeneric(Ctx, Out);
+    if (FrameReg == X86::NoRegister)
+      return FrameReg;
+    return getX86SubSuperRegister(FrameReg, MVT::i64);
+  }
+
   virtual void StoreFlags(MCStreamer &Out) override {
     EmitInstruction(Out, MCInstBuilder(X86::PUSHF64));
   }
@@ -565,19 +582,20 @@ public:
   virtual void InstrumentMemOperandPrologue(const RegisterContext &RegCtx,
                                             MCContext &Ctx,
                                             MCStreamer &Out) override {
-    const MCRegisterInfo *RegisterInfo = Ctx.getRegisterInfo();
-    if (RegisterInfo && FrameReg != X86::NoRegister) {
+    const MCRegisterInfo *MRI = Ctx.getRegisterInfo();
+    unsigned FrameReg = GetFrameReg(Ctx, Out);
+    if (MRI && FrameReg != X86::NoRegister) {
       EmitInstruction(Out, MCInstBuilder(X86::PUSH64r).addReg(X86::RBP));
       if (FrameReg == X86::RSP) {
         Out.EmitCFIAdjustCfaOffset(8 /* byte size of the FrameReg */);
         Out.EmitCFIRelOffset(
-            RegisterInfo->getDwarfRegNum(X86::RBP, true /* IsEH */), 0);
+            MRI->getDwarfRegNum(X86::RBP, true /* IsEH */), 0);
       }
       EmitInstruction(
           Out, MCInstBuilder(X86::MOV64rr).addReg(X86::RBP).addReg(FrameReg));
       Out.EmitCFIRememberState();
       Out.EmitCFIDefCfaRegister(
-          RegisterInfo->getDwarfRegNum(X86::RBP, true /* IsEH */));
+          MRI->getDwarfRegNum(X86::RBP, true /* IsEH */));
     }
 
     EmitAdjustRSP(Ctx, Out, -128);
@@ -606,6 +624,7 @@ public:
         Out, MCInstBuilder(X86::POP64r).addReg(RegCtx.shadowReg(MVT::i64)));
     EmitAdjustRSP(Ctx, Out, 128);
 
+    unsigned FrameReg = GetFrameReg(Ctx, Out);
     if (Ctx.getRegisterInfo() && FrameReg != X86::NoRegister) {
       EmitInstruction(
           Out, MCInstBuilder(X86::POP64r).addReg(X86::RBP));
@@ -820,7 +839,7 @@ void X86AddressSanitizer64::InstrumentMOVSImpl(unsigned AccessSize,
 } // End anonymous namespace
 
 X86AsmInstrumentation::X86AsmInstrumentation(const MCSubtargetInfo &STI)
-    : STI(STI), FrameReg(X86::NoRegister) {}
+    : STI(STI), InitialFrameReg(0) {}
 
 X86AsmInstrumentation::~X86AsmInstrumentation() {}
 
@@ -833,6 +852,25 @@ void X86AsmInstrumentation::InstrumentAndEmitInstruction(
 void X86AsmInstrumentation::EmitInstruction(MCStreamer &Out,
                                             const MCInst &Inst) {
   Out.EmitInstruction(Inst, STI);
+}
+
+unsigned X86AsmInstrumentation::GetFrameRegGeneric(const MCContext &Ctx,
+                                                   MCStreamer &Out) {
+  if (!Out.getNumFrameInfos()) // No active dwarf frame
+    return X86::NoRegister;
+  const MCDwarfFrameInfo &Frame = Out.getDwarfFrameInfos().back();
+  if (Frame.End) // Active dwarf frame is closed
+    return X86::NoRegister;
+  const MCRegisterInfo *MRI = Ctx.getRegisterInfo();
+  if (!MRI) // No register info
+    return X86::NoRegister;
+
+  if (InitialFrameReg) {
+    // FrameReg is set explicitly, we're instrumenting a MachineFunction.
+    return InitialFrameReg;
+  }
+
+  return MRI->getLLVMRegNum(Frame.CurrentCfaRegister, true /* IsEH */);
 }
 
 X86AsmInstrumentation *
