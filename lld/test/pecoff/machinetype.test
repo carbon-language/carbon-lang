@@ -1,3 +1,13 @@
-# RUN: yaml2obj %p/Inputs/hello.obj.yaml > %t1.obj
-# RUN: yaml2obj %p/Inputs/machine-type-unknown.obj.yaml > %t2.obj
+# RUN: yaml2obj %p/Inputs/machine-type-unknown.obj.yaml > %t1.obj
+# RUN: yaml2obj %p/Inputs/hello.obj.yaml > %t2.obj
+# RUN: yaml2obj %p/Inputs/hello64.obj.yaml > %t3.obj
+
 # RUN: lld -flavor link /out:%t.exe /subsystem:console /force -- %t1.obj %t2.obj
+# RUN: llvm-readobj %t.exe | FileCheck -check-prefix=X86 %s
+
+X86: Arch: i386
+
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /force -- %t1.obj %t3.obj
+# RUN: llvm-readobj %t.exe | FileCheck -check-prefix=X64 %s
+
+X64: Arch: x86_64

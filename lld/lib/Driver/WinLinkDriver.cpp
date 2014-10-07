@@ -23,6 +23,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Object/COFF.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/CommandLine.h"
@@ -359,6 +360,25 @@ static bool parseManifestUAC(StringRef option,
     }
     return false;
   }
+}
+
+// Returns the machine type (e.g. x86) of the given input file.
+// If the file is not COFF, returns false.
+static bool getMachineType(StringRef path, llvm::COFF::MachineTypes &result) {
+  llvm::sys::fs::file_magic fileType;
+  if (llvm::sys::fs::identify_magic(path, fileType))
+    return false;
+  if (fileType != llvm::sys::fs::file_magic::coff_object)
+    return false;
+  ErrorOr<std::unique_ptr<MemoryBuffer>> buf = MemoryBuffer::getFile(path);
+  if (!buf)
+    return false;
+  std::error_code ec;
+  llvm::object::COFFObjectFile obj(buf.get()->getMemBufferRef(), ec);
+  if (ec)
+    return false;
+  result = static_cast<llvm::COFF::MachineTypes>(obj.getMachine());
+  return true;
 }
 
 // Parse /export:entryname[=internalname][,@ordinal[,NONAME]][,DATA][,PRIVATE].
@@ -854,9 +874,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // Handle /machine before parsing all the other options, as the target machine
   // type affects how to handle other options. For example, x86 needs the
   // leading underscore to mangle symbols, while x64 doesn't need it.
-  //
-  // TODO: If /machine option is missing, we probably should take a look at
-  // the magic byte of the first object file to set machine type.
   if (llvm::opt::Arg *inputArg = parsedArgs->getLastArg(OPT_machine)) {
     StringRef arg = inputArg->getValue();
     llvm::COFF::MachineTypes type = stringToMachineType(arg);
@@ -865,6 +882,25 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       return false;
     }
     ctx.setMachineType(type);
+  } else {
+    // If /machine option is missing, we need to take a look at
+    // the magic byte of the first object file to infer machine type.
+    std::vector<StringRef> files;
+    for (auto arg : *parsedArgs)
+      if (arg->getOption().getID() == OPT_INPUT)
+        files.push_back(arg->getValue());
+    if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_DASH_DASH))
+      files.insert(files.end(), arg->getValues().begin(),
+                   arg->getValues().end());
+    for (StringRef path : files) {
+      llvm::COFF::MachineTypes type;
+      if (!getMachineType(path, type))
+        continue;
+      if (type == llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN)
+        continue;
+      ctx.setMachineType(type);
+      break;
+    }
   }
 
   // Handle /nodefaultlib:<lib>. The same option without argument is handled in
