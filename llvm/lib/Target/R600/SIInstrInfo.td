@@ -11,6 +11,12 @@ class vop {
   field bits<9> SI3;
 }
 
+class vopc <bits<8> si> : vop {
+  field bits<8> SI = si;
+
+  field bits<9> SI3 = {0, si{7-0}};
+}
+
 class vop1 <bits<8> si> : vop {
   field bits<8> SI  = si;
 
@@ -688,17 +694,15 @@ multiclass VOP3b_2_m <bits<9> op, dag outs, dag ins, string asm,
   } // End sdst = SIOperand.VCC, Defs = [VCC]
 }
 
-multiclass VOP3_C_m <bits<8> op, dag outs, dag ins, string asm,
+multiclass VOP3_C_m <vop op, dag outs, dag ins, string asm,
                      list<dag> pattern, string opName,
                      bit HasMods, bit defExec> {
 
   def "" : VOP3_Pseudo <outs, ins, pattern, opName>;
 
-    def _si : VOP3_Real_si <
-                {0, op{7}, op{6}, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
-                outs, ins, asm, opName>,
+  def _si : VOP3_Real_si <op.SI3, outs, ins, asm, opName>,
               VOP3DisableFields<1, 0, HasMods> {
-  let Defs = !if(defExec, [EXEC], []);
+    let Defs = !if(defExec, [EXEC], []);
   }
 }
 
@@ -784,11 +788,11 @@ multiclass VOP2bInst <bits<6> op, string opName, VOPProfile P,
   revOp, P.HasModifiers
 >;
 
-multiclass VOPC_Helper <bits<8> op, string opName,
+multiclass VOPC_Helper <vopc op, string opName,
                         dag ins32, string asm32, list<dag> pat32,
                         dag out64, dag ins64, string asm64, list<dag> pat64,
                         bit HasMods, bit DefExec> {
-  def _e32 : VOPC <op, ins32, opName#asm32, pat32>, VOP <opName> {
+  def _e32 : VOPC <op.SI, ins32, opName#asm32, pat32>, VOP <opName> {
     let Defs = !if(DefExec, [EXEC], []);
   }
 
@@ -796,7 +800,7 @@ multiclass VOPC_Helper <bits<8> op, string opName,
                         HasMods, DefExec>;
 }
 
-multiclass VOPCInst <bits<8> op, string opName,
+multiclass VOPCInst <vopc op, string opName,
                      VOPProfile P, PatLeaf cond = COND_NULL,
                      bit DefExec = 0> : VOPC_Helper <
   op, opName,
@@ -812,33 +816,33 @@ multiclass VOPCInst <bits<8> op, string opName,
   P.HasModifiers, DefExec
 >;
 
-multiclass VOPC_F32 <bits<8> op, string opName, PatLeaf cond = COND_NULL> :
+multiclass VOPC_F32 <vopc op, string opName, PatLeaf cond = COND_NULL> :
   VOPCInst <op, opName, VOP_F32_F32_F32, cond>;
 
-multiclass VOPC_F64 <bits<8> op, string opName, PatLeaf cond = COND_NULL> :
+multiclass VOPC_F64 <vopc op, string opName, PatLeaf cond = COND_NULL> :
   VOPCInst <op, opName, VOP_F64_F64_F64, cond>;
 
-multiclass VOPC_I32 <bits<8> op, string opName, PatLeaf cond = COND_NULL> :
+multiclass VOPC_I32 <vopc op, string opName, PatLeaf cond = COND_NULL> :
   VOPCInst <op, opName, VOP_I32_I32_I32, cond>;
 
-multiclass VOPC_I64 <bits<8> op, string opName, PatLeaf cond = COND_NULL> :
+multiclass VOPC_I64 <vopc op, string opName, PatLeaf cond = COND_NULL> :
   VOPCInst <op, opName, VOP_I64_I64_I64, cond>;
 
 
-multiclass VOPCX <bits<8> op, string opName, VOPProfile P,
+multiclass VOPCX <vopc op, string opName, VOPProfile P,
                   PatLeaf cond = COND_NULL>
   : VOPCInst <op, opName, P, cond, 1>;
 
-multiclass VOPCX_F32 <bits<8> op, string opName, PatLeaf cond = COND_NULL> :
+multiclass VOPCX_F32 <vopc op, string opName, PatLeaf cond = COND_NULL> :
   VOPCX <op, opName, VOP_F32_F32_F32, cond>;
 
-multiclass VOPCX_F64 <bits<8> op, string opName, PatLeaf cond = COND_NULL> :
+multiclass VOPCX_F64 <vopc op, string opName, PatLeaf cond = COND_NULL> :
   VOPCX <op, opName, VOP_F64_F64_F64, cond>;
 
-multiclass VOPCX_I32 <bits<8> op, string opName, PatLeaf cond = COND_NULL> :
+multiclass VOPCX_I32 <vopc op, string opName, PatLeaf cond = COND_NULL> :
   VOPCX <op, opName, VOP_I32_I32_I32, cond>;
 
-multiclass VOPCX_I64 <bits<8> op, string opName, PatLeaf cond = COND_NULL> :
+multiclass VOPCX_I64 <vopc op, string opName, PatLeaf cond = COND_NULL> :
   VOPCX <op, opName, VOP_I64_I64_I64, cond>;
 
 multiclass VOP3_Helper <bits<9> op, string opName, dag outs, dag ins, string asm,
