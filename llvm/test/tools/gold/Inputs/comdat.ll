@@ -1,7 +1,7 @@
 $c2 = comdat any
 
 @v1 = weak_odr global i32 41, comdat $c2
-define weak_odr i32 @f1(i8* %this) comdat $c2 {
+define weak_odr protected i32 @f1(i8* %this) comdat $c2 {
 bb20:
   store i8* %this, i8** null
   br label %bb21

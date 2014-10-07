@@ -491,8 +491,8 @@ static GlobalObject *makeInternalReplacement(GlobalObject *GO) {
   Module *M = GO->getParent();
   GlobalObject *Ret;
   if (auto *F = dyn_cast<Function>(GO)) {
-    auto *NewF = Function::Create(
-        F->getFunctionType(), GlobalValue::InternalLinkage, F->getName(), M);
+    auto *NewF = Function::Create(F->getFunctionType(), F->getLinkage(),
+                                  F->getName(), M);
 
     ValueToValueMapTy VM;
     Function::arg_iterator NewI = NewF->arg_begin();
@@ -514,12 +514,13 @@ static GlobalObject *makeInternalReplacement(GlobalObject *GO) {
     auto *Var = cast<GlobalVariable>(GO);
     Ret = new GlobalVariable(
         *M, Var->getType()->getElementType(), Var->isConstant(),
-        GlobalValue::InternalLinkage, Var->getInitializer(), Var->getName(),
+        Var->getLinkage(), Var->getInitializer(), Var->getName(),
         nullptr, Var->getThreadLocalMode(), Var->getType()->getAddressSpace(),
         Var->isExternallyInitialized());
     Var->setInitializer(nullptr);
   }
   Ret->copyAttributesFrom(GO);
+  Ret->setLinkage(GlobalValue::InternalLinkage);
   Ret->setComdat(GO->getComdat());
 
   return Ret;

@@ -49,7 +49,7 @@ bb11:
 ; CHECK: @a23 = alias i32 (i8*)* @f12{{$}}
 ; CHECK: @a24 = alias bitcast (i32 (i8*)* @f12 to i16*)
 
-; CHECK:      define weak_odr i32 @f1(i8*) comdat $c1 {
+; CHECK:      define weak_odr protected i32 @f1(i8*) comdat $c1 {
 ; CHECK-NEXT: bb10:
 ; CHECK-NEXT:   br label %bb11{{$}}
 ; CHECK:      bb11:
