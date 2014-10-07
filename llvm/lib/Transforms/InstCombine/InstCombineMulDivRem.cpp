@@ -886,7 +886,8 @@ static Instruction *foldUDivPow2Cst(Value *Op0, Value *Op1,
   const APInt &C = cast<Constant>(Op1)->getUniqueInteger();
   BinaryOperator *LShr = BinaryOperator::CreateLShr(
       Op0, ConstantInt::get(Op0->getType(), C.logBase2()));
-  if (I.isExact()) LShr->setIsExact();
+  if (I.isExact())
+    LShr->setIsExact();
   return LShr;
 }
 
@@ -914,7 +915,8 @@ static Instruction *foldUDivShl(Value *Op0, Value *Op1, const BinaryOperator &I,
   if (ZExtInst *Z = dyn_cast<ZExtInst>(Op1))
     N = IC.Builder->CreateZExt(N, Z->getDestTy());
   BinaryOperator *LShr = BinaryOperator::CreateLShr(Op0, N);
-  if (I.isExact()) LShr->setIsExact();
+  if (I.isExact())
+    LShr->setIsExact();
   return LShr;
 }
 
