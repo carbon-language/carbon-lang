@@ -1,4 +1,4 @@
-//===-- X86DisassemblerDecoder.c - Disassembler decoder -------------------===//
+//===-- X86DisassemblerDecoder.cpp - Disassembler decoder -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,10 +13,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <stdarg.h>   /* for va_*()       */
-#include <stdio.h>    /* for vsnprintf()  */
-#include <stdlib.h>   /* for exit()       */
-#include <string.h>   /* for memset()     */
+#include <cstdarg>   /* for va_*()       */
+#include <cstdio>    /* for vsnprintf()  */
+#include <cstdlib>   /* for exit()       */
+#include <cstring>   /* for memset()     */
 
 #include "X86DisassemblerDecoder.h"
 
