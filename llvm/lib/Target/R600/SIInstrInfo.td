@@ -7,6 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+class vop {
+  field bits<9> SI3;
+}
+
+class vop1 <bits<8> si> : vop {
+  field bits<8> SI  = si;
+
+  field bits<9> SI3 = {1, 1, si{6-0}};
+}
+
 // Execpt for the NONE field, this must be kept in sync with the SISubtarget enum
 // in AMDGPUMCInstLower.h
 def SISubtarget {
@@ -585,6 +595,20 @@ class AtomicNoRet <string noRetOp, bit isRet> {
   bit IsRet = isRet;
 }
 
+class VOP1_Pseudo <dag outs, dag ins, list<dag> pattern, string opName> :
+  VOP1Common <outs, ins, "", pattern>,
+  SIMCInstr<opName, SISubtarget.NONE> {
+  let isPseudo = 1;
+}
+
+multiclass VOP1_m <vop1 op, dag outs, dag ins, string asm, list<dag> pattern,
+                   string opName> {
+  def "" : VOP1_Pseudo <outs, ins, pattern, opName>;
+
+  def _si : VOP1<op.SI, outs, ins, asm, []>,
+            SIMCInstr <opName, SISubtarget.SI>;
+}
+
 class VOP3DisableFields <bit HasSrc1, bit HasSrc2, bit HasModifiers> {
 
   bits<2> src0_modifiers = !if(HasModifiers, ?, 0);
@@ -619,14 +643,12 @@ multiclass VOP3_m <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern,
 
 }
 
-multiclass VOP3_1_m <bits<8> op, dag outs, dag ins, string asm,
+multiclass VOP3_1_m <vop op, dag outs, dag ins, string asm,
                      list<dag> pattern, string opName, bit HasMods = 1> {
 
   def "" : VOP3_Pseudo <outs, ins, pattern, opName>;
 
-  def _si : VOP3_Real_si <
-              {1, 1, op{6}, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
-              outs, ins, asm, opName>,
+  def _si : VOP3_Real_si <op.SI3, outs, ins, asm, opName>,
             VOP3DisableFields<0, 0, HasMods>;
 }
 
@@ -674,17 +696,17 @@ multiclass VOP3_C_m <bits<8> op, dag outs, dag ins, string asm,
   }
 }
 
-multiclass VOP1_Helper <bits<8> op, string opName, dag outs,
+multiclass VOP1_Helper <vop1 op, string opName, dag outs,
                         dag ins32, string asm32, list<dag> pat32,
                         dag ins64, string asm64, list<dag> pat64,
                         bit HasMods> {
 
-  def _e32 : VOP1 <op, outs, ins32, opName#asm32, pat32>, VOP<opName>;
+  def _e32 : VOP1 <op.SI, outs, ins32, opName#asm32, pat32>, VOP<opName>;
 
   defm _e64 : VOP3_1_m <op, outs, ins64, opName#"_e64"#asm64, pat64, opName, HasMods>;
 }
 
-multiclass VOP1Inst <bits<8> op, string opName, VOPProfile P,
+multiclass VOP1Inst <vop1 op, string opName, VOPProfile P,
                      SDPatternOperator node = null_frag> : VOP1_Helper <
   op, opName, P.Outs,
   P.Ins32, P.Asm32, [],

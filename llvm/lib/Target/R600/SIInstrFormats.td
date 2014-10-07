@@ -60,6 +60,15 @@ class Enc64 {
   int Size = 8;
 }
 
+class VOP1Common <dag outs, dag ins, string asm, list<dag> pattern> :
+    InstSI <outs, ins, asm, pattern> {
+  let mayLoad = 0;
+  let mayStore = 0;
+  let hasSideEffects = 0;
+  let UseNamedOperandTable = 1;
+  let VOP1 = 1;
+}
+
 class VOP3Common <dag outs, dag ins, string asm, list<dag> pattern> :
     InstSI <outs, ins, asm, pattern> {
 
@@ -485,14 +494,8 @@ class EXPe : Enc64 {
 let Uses = [EXEC] in {
 
 class VOP1 <bits<8> op, dag outs, dag ins, string asm, list<dag> pattern> :
-    InstSI <outs, ins, asm, pattern>, VOP1e<op> {
-
-  let mayLoad = 0;
-  let mayStore = 0;
-  let hasSideEffects = 0;
-  let UseNamedOperandTable = 1;
-  let VOP1 = 1;
-}
+    VOP1Common <outs, ins, asm, pattern>,
+    VOP1e<op>;
 
 class VOP2 <bits<6> op, dag outs, dag ins, string asm, list<dag> pattern> :
     InstSI <outs, ins, asm, pattern>, VOP2e<op> {
