@@ -34,6 +34,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include <stdint.h>
 using namespace llvm;
 
 #define DEBUG_TYPE "x86-isel"
@@ -1712,6 +1713,12 @@ static SDValue getAtomicLoadArithTargetConstant(SelectionDAG *CurDAG,
     // Quit if not 32-bit imm.
     if ((int32_t)CNVal != CNVal)
       return Val;
+    // Quit if INT32_MIN: it would be negated as it is negative and overflow,
+    // producing an immediate that does not fit in the 32 bits available for
+    // an immediate operand to sub. However, it still fits in 32 bits for the
+    // add (since it is not negated) so we can return target-constant.
+    if (CNVal == INT32_MIN)
+      return CurDAG->getTargetConstant(CNVal, NVT);
     // For atomic-load-add, we could do some optimizations.
     if (Op == ADD) {
       // Translate to INC/DEC if ADD by 1 or -1.
@@ -1824,6 +1831,8 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadArith(SDNode *Node, MVT NVT) {
           Opc = AtomicOpcTbl[Op][SextConstantI64];
         else if (i64immSExt32(Val.getNode()))
           Opc = AtomicOpcTbl[Op][ConstantI64];
+        else
+          llvm_unreachable("True 64 bits constant in SelectAtomicLoadArith");
       } else
         Opc = AtomicOpcTbl[Op][I64];
       break;
