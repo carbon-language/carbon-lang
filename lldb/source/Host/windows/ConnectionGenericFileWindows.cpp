@@ -155,7 +155,7 @@ ConnectionGenericFile::Disconnect(Error *error_ptr)
 {
     Log *log(lldb_private::GetLogIfAnyCategoriesSet(LIBLLDB_LOG_CONNECTION));
     if (log)
-        log->Printf("%p ConnectionGenericFile::Disconnect (url = '%s')", static_cast<void *>(this), s);
+        log->Printf("%p ConnectionGenericFile::Disconnect ()", static_cast<void *>(this));
 
     if (!IsConnected())
         return eConnectionStatusSuccess;
