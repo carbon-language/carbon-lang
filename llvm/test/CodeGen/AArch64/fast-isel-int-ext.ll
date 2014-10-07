@@ -371,8 +371,7 @@ define i64 @load_register_sext_i32_to_i64(i64 %a, i64 %b) {
 ; Extend
 define i32 @load_extend_zext_i8_to_i32(i64 %a, i32 %b) {
 ; CHECK-LABEL: load_extend_zext_i8_to_i32
-; CHECK:       sxtw [[REG:x[0-9]+]], w1
-; CHECK-NEXT:  ldrb w0, [x0, [[REG]]]
+; CHECK:       ldrb w0, [x0, w1, sxtw]
 ; CHECK-NOT:   uxtb
   %1 = sext i32 %b to i64
   %2 = add i64 %a, %1
@@ -384,8 +383,7 @@ define i32 @load_extend_zext_i8_to_i32(i64 %a, i32 %b) {
 
 define i32 @load_extend_zext_i16_to_i32(i64 %a, i32 %b) {
 ; CHECK-LABEL: load_extend_zext_i16_to_i32
-; CHECK:       sxtw [[REG:x[0-9]+]], w1
-; CHECK-NEXT:  ldrh w0, [x0, [[REG]]]
+; CHECK:       ldrh w0, [x0, w1, sxtw]
 ; CHECK-NOT:   uxth
   %1 = sext i32 %b to i64
   %2 = add i64 %a, %1
@@ -397,8 +395,7 @@ define i32 @load_extend_zext_i16_to_i32(i64 %a, i32 %b) {
 
 define i64 @load_extend_zext_i8_to_i64(i64 %a, i32 %b) {
 ; CHECK-LABEL: load_extend_zext_i8_to_i64
-; CHECK:       sxtw [[REG:x[0-9]+]], w1
-; CHECK-NEXT:  ldrb w0, [x0, [[REG]]]
+; CHECK:       ldrb w0, [x0, w1, sxtw]
 ; CHECK-NOT:   uxtb
   %1 = sext i32 %b to i64
   %2 = add i64 %a, %1
@@ -410,8 +407,7 @@ define i64 @load_extend_zext_i8_to_i64(i64 %a, i32 %b) {
 
 define i64 @load_extend_zext_i16_to_i64(i64 %a, i32 %b) {
 ; CHECK-LABEL: load_extend_zext_i16_to_i64
-; CHECK:       sxtw [[REG:x[0-9]+]], w1
-; CHECK-NEXT:  ldrh w0, [x0, [[REG]]]
+; CHECK:       ldrh w0, [x0, w1, sxtw]
 ; CHECK-NOT:   uxth
   %1 = sext i32 %b to i64
   %2 = add i64 %a, %1
@@ -423,8 +419,7 @@ define i64 @load_extend_zext_i16_to_i64(i64 %a, i32 %b) {
 
 define i64 @load_extend_zext_i32_to_i64(i64 %a, i32 %b) {
 ; CHECK-LABEL: load_extend_zext_i32_to_i64
-; CHECK:       sxtw [[REG:x[0-9]+]], w1
-; CHECK-NEXT:  ldr w0, [x0, [[REG]]]
+; CHECK:       ldr w0, [x0, w1, sxtw]
 ; CHECK-NOT:   uxtw
   %1 = sext i32 %b to i64
   %2 = add i64 %a, %1
@@ -436,8 +431,7 @@ define i64 @load_extend_zext_i32_to_i64(i64 %a, i32 %b) {
 
 define i32 @load_extend_sext_i8_to_i32(i64 %a, i32 %b) {
 ; CHECK-LABEL: load_extend_sext_i8_to_i32
-; CHECK:       sxtw [[REG:x[0-9]+]], w1
-; CHECK-NEXT:  ldrsb w0, [x0, [[REG]]]
+; CHECK:       ldrsb w0, [x0, w1, sxtw]
 ; CHECK-NOT:   sxtb
   %1 = sext i32 %b to i64
   %2 = add i64 %a, %1
@@ -449,8 +443,7 @@ define i32 @load_extend_sext_i8_to_i32(i64 %a, i32 %b) {
 
 define i32 @load_extend_sext_i16_to_i32(i64 %a, i32 %b) {
 ; CHECK-LABEL: load_extend_sext_i16_to_i32
-; CHECK:       sxtw [[REG:x[0-9]+]], w1
-; CHECK-NEXT:  ldrsh w0, [x0, [[REG]]]
+; CHECK:       ldrsh w0, [x0, w1, sxtw]
 ; CHECK-NOT:   sxth
   %1 = sext i32 %b to i64
   %2 = add i64 %a, %1
@@ -462,8 +455,7 @@ define i32 @load_extend_sext_i16_to_i32(i64 %a, i32 %b) {
 
 define i64 @load_extend_sext_i8_to_i64(i64 %a, i32 %b) {
 ; CHECK-LABEL: load_extend_sext_i8_to_i64
-; CHECK:       sxtw [[REG:x[0-9]+]], w1
-; CHECK-NEXT:  ldrsb x0, [x0, [[REG]]]
+; CHECK:       ldrsb x0, [x0, w1, sxtw]
 ; CHECK-NOT:   sxtb
   %1 = sext i32 %b to i64
   %2 = add i64 %a, %1
@@ -475,8 +467,7 @@ define i64 @load_extend_sext_i8_to_i64(i64 %a, i32 %b) {
 
 define i64 @load_extend_sext_i16_to_i64(i64 %a, i32 %b) {
 ; CHECK-LABEL: load_extend_sext_i16_to_i64
-; CHECK:       sxtw [[REG:x[0-9]+]], w1
-; CHECK-NEXT:  ldrsh x0, [x0, [[REG]]]
+; CHECK:       ldrsh x0, [x0, w1, sxtw]
 ; CHECK-NOT:   sxth
   %1 = sext i32 %b to i64
   %2 = add i64 %a, %1
@@ -488,8 +479,7 @@ define i64 @load_extend_sext_i16_to_i64(i64 %a, i32 %b) {
 
 define i64 @load_extend_sext_i32_to_i64(i64 %a, i32 %b) {
 ; CHECK-LABEL: load_extend_sext_i32_to_i64
-; CHECK:       sxtw [[REG:x[0-9]+]], w1
-; CHECK-NEXT:  ldrsw x0, [x0, [[REG]]]
+; CHECK:       ldrsw x0, [x0, w1, sxtw]
 ; CHECK-NOT:   sxtw
   %1 = sext i32 %b to i64
   %2 = add i64 %a, %1

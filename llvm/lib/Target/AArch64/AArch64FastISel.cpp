@@ -776,6 +776,35 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
       }
     break;
   }
+  case Instruction::SExt:
+  case Instruction::ZExt: {
+    if (!Addr.getReg() || Addr.getOffsetReg())
+      break;
+
+    const Value *Src = nullptr;
+    // Fold the zext or sext when it won't become a noop.
+    if (const auto *ZE = dyn_cast<ZExtInst>(U)) {
+      if (!isIntExtFree(ZE) && ZE->getOperand(0)->getType()->isIntegerTy(32)) {
+        Addr.setExtendType(AArch64_AM::UXTW);
+        Src = ZE->getOperand(0);
+      }
+    } else if (const auto *SE = dyn_cast<SExtInst>(U)) {
+      if (!isIntExtFree(SE) && SE->getOperand(0)->getType()->isIntegerTy(32)) {
+        Addr.setExtendType(AArch64_AM::SXTW);
+        Src = SE->getOperand(0);
+      }
+    }
+
+    if (!Src)
+      break;
+
+    Addr.setShift(0);
+    unsigned Reg = getRegForValue(Src);
+    if (!Reg)
+      return false;
+    Addr.setOffsetReg(Reg);
+    return true;
+  }
   } // end switch
 
   if (Addr.getReg()) {
