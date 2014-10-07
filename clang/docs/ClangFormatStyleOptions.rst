@@ -85,6 +85,24 @@ is applied for all input files. The format of the configuration is:
   -style='{key1: value1, key2: value2, ...}'
 
 
+Disabling Formatting on a Piece of Code
+=======================================
+
+Clang-format understands also special comments that switch formatting in a
+delimited range. The code between a comment ``// clang-format off`` or
+``/* clang-format off */`` up to a comment ``// clang-format on`` or
+``/* clang-format on */`` will not be formatted. The comments themselves
+will be formatted (aligned) normally.
+
+.. code-block:: c++
+
+  int formatted_code;
+  // clang-format off
+      void    unformatted_code  ;
+  // clang-format on
+  void formatted_code_again;
+
+
 Configuring Style in Code
 =========================
 
