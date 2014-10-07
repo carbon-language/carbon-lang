@@ -9,12 +9,16 @@ int
 wait_a_while (int microseconds)
 {
     int num_times = 0;
+    auto end_time = std::chrono::system_clock::now() + std::chrono::microseconds(microseconds);
 
     while (1)
     {
         num_times++;
-        std::this_thread::sleep_for(std::chrono::microseconds(microseconds));
-        break;
+        auto wait_time = end_time - std::chrono::system_clock::now();
+
+        std::this_thread::sleep_for(wait_time);
+        if (std::chrono::system_clock::now() > end_time)
+            break;
     }
     return num_times;
 }
