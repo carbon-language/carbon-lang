@@ -123,8 +123,8 @@ BasicBlock *polly::simplifyRegion(Scop *S, Pass *P) {
     // inserted __after__ EntryBB causing the following situation:
     //
     // EnteringBB
-    //     |
-    //    / \
+    //    _|_
+    //    | |
     //    |  \-> some_other_BB_not_in_R
     //    V
     // EntryBB
