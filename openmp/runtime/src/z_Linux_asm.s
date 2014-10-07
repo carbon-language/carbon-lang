@@ -1,7 +1,7 @@
 //  z_Linux_asm.s:  - microtasking routines specifically
 //                    written for Intel platforms running Linux* OS
-// $Revision: 42810 $
-// $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
+// $Revision: 43473 $
+// $Date: 2014-09-26 15:02:57 -0500 (Fri, 26 Sep 2014) $
 
 //
 ////===----------------------------------------------------------------------===//
@@ -489,118 +489,6 @@ __kmp_unnamed_critical_addr:
 
 //------------------------------------------------------------------------
 //
-// FUNCTION __kmp_test_then_add_real32
-//
-// kmp_real32
-// __kmp_test_then_add_real32( volatile kmp_real32 *addr, kmp_real32 data );
-//
-
-        PROC  __kmp_test_then_add_real32
-
-_addr = 8
-_data = 12
-_old_value = -4
-_new_value = -8
-
-        pushl   %ebp
-        movl    %esp, %ebp
-        subl    $8, %esp
-        pushl   %esi
-        pushl   %ebx
-        movl    _addr(%ebp), %esi
-L22:
-        flds    (%esi)
-                        // load <addr>
-        fsts    _old_value(%ebp)
-                        // store into old_value
-        fadds   _data(%ebp)
-        fstps   _new_value(%ebp)
-                        // new_value = old_value + data
-
-        movl    _old_value(%ebp), %eax
-                        // load old_value
-        movl    _new_value(%ebp), %ebx
-                        // load new_value
-
-	lock
-	cmpxchgl %ebx,(%esi)
-                        // Compare %EAX with <addr>.  If equal set
-                        // ZF and load %EBX into <addr>.  Else, clear
-                        // ZF and load <addr> into %EAX.
-        jnz     L22
-
-
-        flds    _old_value(%ebp)
-                        // return old_value
-        popl    %ebx
-        popl    %esi
-        movl    %ebp, %esp
-        popl    %ebp
-        ret
-
-        DEBUG_INFO __kmp_test_then_add_real32
-
-//------------------------------------------------------------------------
-//
-// FUNCTION __kmp_test_then_add_real64
-//
-// kmp_real64
-// __kmp_test_then_add_real64( volatile kmp_real64 *addr, kmp_real64 data );
-//
-        PROC  __kmp_test_then_add_real64
-
-_addr = 8
-_data = 12
-_old_value = -8
-_new_value = -16
-
-        pushl   %ebp
-        movl    %esp, %ebp
-        subl    $16, %esp
-        pushl   %esi
-        pushl   %ebx
-        pushl   %ecx
-        pushl   %edx
-        movl    _addr(%ebp), %esi
-L44:
-        fldl    (%esi)
-                        // load <addr>
-        fstl    _old_value(%ebp)
-                        // store into old_value
-        faddl   _data(%ebp)
-        fstpl   _new_value(%ebp)
-                        // new_value = old_value + data
-
-        movl    _old_value+4(%ebp), %edx
-        movl    _old_value(%ebp), %eax
-                        // load old_value
-        movl    _new_value+4(%ebp), %ecx
-        movl    _new_value(%ebp), %ebx
-                        // load new_value
-
-	lock
-	cmpxchg8b (%esi)
-                        // Compare %EDX:%EAX with <addr>.  If equal set
-                        // ZF and load %ECX:%EBX into <addr>.  Else, clear
-                        // ZF and load <addr> into %EDX:%EAX.
-        jnz     L44
-
-
-        fldl    _old_value(%ebp)
-                        // return old_value
-        popl    %edx
-        popl    %ecx
-        popl    %ebx
-        popl    %esi
-        movl    %ebp, %esp
-        popl    %ebp
-        ret
-
-        DEBUG_INFO __kmp_test_then_add_real64
-
-
-//------------------------------------------------------------------------
-//
 // FUNCTION __kmp_load_x87_fpu_control_word
 //
 // void
@@ -758,30 +646,7 @@ L44:
 	.data
 	ALIGN 4
 
-// AC: The following #if hiden the .text thus moving the rest of code into .data section on MIC.
-// To prevent this in future .text added to every routine definition for x86_64.
-# if __MIC__ || __MIC2__
-
-# else
-
-//------------------------------------------------------------------------
-//
-// FUNCTION __kmp_x86_pause
-//
-// void
-// __kmp_x86_pause( void );
-//
-
-        .text
-        PROC  __kmp_x86_pause
-
-        pause_op
-        ret
-
-        DEBUG_INFO __kmp_x86_pause
-
-# endif // __MIC__ || __MIC2__
-
+// To prevent getting our code into .data section .text added to every routine definition for x86_64.
 //------------------------------------------------------------------------
 //
 // FUNCTION __kmp_x86_cpuid
@@ -1176,79 +1041,6 @@ L44:
 
 # if ! (__MIC__ || __MIC2__)
 
-//------------------------------------------------------------------------
-//
-// FUNCTION __kmp_test_then_add_real32
-//
-// kmp_real32
-// __kmp_test_then_add_real32( volatile kmp_real32 *addr, kmp_real32 data );
-//
-// parameters:
-// 	addr:	%rdi
-// 	data:	%xmm0 (lower 4 bytes)
-//
-// return:	%xmm0 (lower 4 bytes)
-
-        .text
-        PROC  __kmp_test_then_add_real32
-1:
-	movss   (%rdi), %xmm1	// load value of <addr>
-	movd	%xmm1, %eax	// save old value of <addr>
-
-	addss	%xmm0, %xmm1	// new value = old value + <data>
-	movd	%xmm1, %ecx	// move new value to GP reg.
-
-	lock
-	cmpxchgl %ecx, (%rdi)	// Compare %EAX with <addr>.  If equal set
-                             	// ZF and exchange %ECX with <addr>.  Else,
-                                // clear ZF and load <addr> into %EAX.
-        jz      2f
-	pause_op
-	jmp	1b
-2:
-	movd	%eax, %xmm0	// load old value into return register
-        ret
-
-        DEBUG_INFO __kmp_test_then_add_real32
-
-
-//------------------------------------------------------------------------
-//
-// FUNCTION __kmp_test_then_add_real64
-//
-// kmp_real64
-// __kmp_test_then_add_real64( volatile kmp_real64 *addr, kmp_real64 data );
-//
-// parameters:
-//      addr:   %rdi
-//      data:   %xmm0 (lower 8 bytes)
-//      return: %xmm0 (lower 8 bytes)
-//
-
-        .text
-        PROC  __kmp_test_then_add_real64
-1:
-        movlpd	(%rdi), %xmm1	// load value of <addr>
-	movd	%xmm1, %rax	// save old value of <addr>
-
-	addsd	%xmm0, %xmm1	// new value = old value + <data>
-	movd	%xmm1, %rcx	// move new value to GP reg.
-
-	lock
-	cmpxchgq  %rcx, (%rdi) 	// Compare %RAX with <addr>.  If equal set
-				// ZF and exchange %RCX with <addr>.  Else,
-				// clear ZF and load <addr> into %RAX.
-        jz      2f
-	pause_op
-	jmp     1b
-
-2:
-	movd	%rax, %xmm0	// load old value into return register
-        ret
-
-        DEBUG_INFO __kmp_test_then_add_real64
-
-
 # if !KMP_ASM_INTRINS
 
 //------------------------------------------------------------------------
@@ -1382,7 +1174,7 @@ L44:
 // typedef void	(*microtask_t)( int *gtid, int *tid, ... );
 //
 // int
-// __kmp_invoke_microtask( void (*pkfn) (int *gtid, int *tid, ...),
+// __kmp_invoke_microtask( void (*pkfn) (int gtid, int tid, ...),
 //		           int gtid, int tid,
 //                         int argc, void *p_argv[] ) {
 //    (*pkfn)( & gtid, & tid, argv[0], ... );
@@ -1597,5 +1389,9 @@ __kmp_unnamed_critical_addr:
 #endif /* KMP_ARCH_PPC64 */
 
 #if defined(__linux__)
+# if KMP_ARCH_ARM
+.section .note.GNU-stack,"",%progbits
+# else
 .section .note.GNU-stack,"",@progbits
+# endif
 #endif

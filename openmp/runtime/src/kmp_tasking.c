@@ -1,7 +1,7 @@
 /*
  * kmp_tasking.c -- OpenMP 3.0 tasking support.
- * $Revision: 42852 $
- * $Date: 2013-12-04 10:50:49 -0600 (Wed, 04 Dec 2013) $
+ * $Revision: 43389 $
+ * $Date: 2014-08-11 10:54:01 -0500 (Mon, 11 Aug 2014) $
  */
 
 
@@ -18,9 +18,9 @@
 #include "kmp.h"
 #include "kmp_i18n.h"
 #include "kmp_itt.h"
+#include "kmp_wait_release.h"
 
 
-#if OMP_30_ENABLED
 
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
@@ -31,26 +31,12 @@ static void __kmp_enable_tasking( kmp_task_team_t *task_team, kmp_info_t *this_t
 static void __kmp_alloc_task_deque( kmp_info_t *thread, kmp_thread_data_t *thread_data );
 static int  __kmp_realloc_task_threads_data( kmp_info_t *thread, kmp_task_team_t *task_team );
 
-#ifndef KMP_DEBUG
-# define __kmp_static_delay( arg )     /* nothing to do */
-#else
-
-static void
-__kmp_static_delay( int arg )
-{
-/* Work around weird code-gen bug that causes assert to trip */
-# if KMP_ARCH_X86_64 && KMP_OS_LINUX
-    KMP_ASSERT( arg != 0 );
-# else
-    KMP_ASSERT( arg >= 0 );
-# endif
-}
-#endif /* KMP_DEBUG */
-
-static void
-__kmp_static_yield( int arg )
-{
-    __kmp_yield( arg );
+static inline void __kmp_null_resume_wrapper(int gtid, volatile void *flag) {
+    switch (((kmp_flag_64 *)flag)->get_type()) {
+    case flag32: __kmp_resume_32(gtid, NULL); break;
+    case flag64: __kmp_resume_64(gtid, NULL); break;
+    case flag_oncore: __kmp_resume_oncore(gtid, NULL); break;
+    }
 }
 
 #ifdef BUILD_TIED_TASK_STACK
@@ -605,9 +591,7 @@ __kmp_task_finish( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t *resumed_tas
     }
 #endif /* BUILD_TIED_TASK_STACK */
 
-    KMP_DEBUG_ASSERT( taskdata -> td_flags.executing == 1 );
     KMP_DEBUG_ASSERT( taskdata -> td_flags.complete == 0 );
-    taskdata -> td_flags.executing = 0;  // suspend the finishing task
     taskdata -> td_flags.complete = 1;   // mark the task as completed
     KMP_DEBUG_ASSERT( taskdata -> td_flags.started == 1 );
     KMP_DEBUG_ASSERT( taskdata -> td_flags.freed == 0 );
@@ -623,6 +607,12 @@ __kmp_task_finish( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t *resumed_tas
         __kmp_release_deps(gtid,taskdata);
 #endif
     }
+
+    // td_flags.executing  must be marked as 0 after __kmp_release_deps has been called
+    // Othertwise, if a task is executed immediately from the release_deps code
+    // the flag will be reset to 1 again by this same function
+    KMP_DEBUG_ASSERT( taskdata -> td_flags.executing == 1 );
+    taskdata -> td_flags.executing = 0;  // suspend the finishing task
 
     KA_TRACE(20, ("__kmp_task_finish: T#%d finished task %p, %d incomplete children\n",
                   gtid, taskdata, children) );
@@ -908,7 +898,7 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_tasking_flags_t *flags,
     taskdata->td_taskgroup = parent_task->td_taskgroup; // task inherits the taskgroup from the parent task
     taskdata->td_dephash = NULL;
     taskdata->td_depnode = NULL;
-#endif 
+#endif
     // Only need to keep track of child task counts if team parallel and tasking not serialized
     if ( !( taskdata -> td_flags.team_serial || taskdata -> td_flags.tasking_ser ) ) {
         KMP_TEST_THEN_INC32( (kmp_int32 *)(& parent_task->td_incomplete_child_tasks) );
@@ -1047,9 +1037,38 @@ __kmpc_omp_task_parts( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t * new_task)
     return TASK_CURRENT_NOT_QUEUED;
 }
 
+//---------------------------------------------------------------------
+// __kmp_omp_task: Schedule a non-thread-switchable task for execution
+// gtid: Global Thread ID of encountering thread
+// new_task: non-thread-switchable task thunk allocated by __kmp_omp_task_alloc()
+// serialize_immediate: if TRUE then if the task is executed immediately its execution will be serialized
+// returns:
+//
+//    TASK_CURRENT_NOT_QUEUED (0) if did not suspend and queue current task to be resumed later.
+//    TASK_CURRENT_QUEUED (1) if suspended and queued the current task to be resumed later.
+kmp_int32
+__kmp_omp_task( kmp_int32 gtid, kmp_task_t * new_task, bool serialize_immediate )
+{
+    kmp_taskdata_t * new_taskdata = KMP_TASK_TO_TASKDATA(new_task);
+
+    /* Should we execute the new task or queue it?   For now, let's just always try to
+       queue it.  If the queue fills up, then we'll execute it.  */
+
+    if ( __kmp_push_task( gtid, new_task ) == TASK_NOT_PUSHED ) // if cannot defer
+    {                                                           // Execute this task immediately
+        kmp_taskdata_t * current_task = __kmp_threads[ gtid ] -> th.th_current_task;
+        if ( serialize_immediate )
+          new_taskdata -> td_flags.task_serial = 1;
+        __kmp_invoke_task( gtid, new_task, current_task );
+    }
+
+
+    return TASK_CURRENT_NOT_QUEUED;
+}
 
 //---------------------------------------------------------------------
-// __kmpc_omp_task: Schedule a non-thread-switchable task for execution
+// __kmpc_omp_task: Wrapper around __kmp_omp_task to schedule a non-thread-switchable task from
+// the parent thread only!
 // loc_ref: location of original task pragma (ignored)
 // gtid: Global Thread ID of encountering thread
 // new_task: non-thread-switchable task thunk allocated by __kmp_omp_task_alloc()
@@ -1062,27 +1081,17 @@ kmp_int32
 __kmpc_omp_task( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t * new_task)
 {
     kmp_taskdata_t * new_taskdata = KMP_TASK_TO_TASKDATA(new_task);
-    kmp_int32 rc;
+    kmp_int32 res;
 
     KA_TRACE(10, ("__kmpc_omp_task(enter): T#%d loc=%p task=%p\n",
                   gtid, loc_ref, new_taskdata ) );
 
-    /* Should we execute the new task or queue it?   For now, let's just always try to
-       queue it.  If the queue fills up, then we'll execute it.  */
-
-    if ( __kmp_push_task( gtid, new_task ) == TASK_NOT_PUSHED ) // if cannot defer
-    {                                                           // Execute this task immediately
-        kmp_taskdata_t * current_task = __kmp_threads[ gtid ] -> th.th_current_task;
-        new_taskdata -> td_flags.task_serial = 1;
-        __kmp_invoke_task( gtid, new_task, current_task );
-    }
+    res =  __kmp_omp_task(gtid,new_task,true);
 
     KA_TRACE(10, ("__kmpc_omp_task(exit): T#%d returning TASK_CURRENT_NOT_QUEUED: loc=%p task=%p\n",
                   gtid, loc_ref, new_taskdata ) );
-
-    return TASK_CURRENT_NOT_QUEUED;
+    return res;
 }
-
 
 //-------------------------------------------------------------------------------------
 // __kmpc_omp_taskwait: Wait until all tasks generated by the current task are complete
@@ -1117,11 +1126,10 @@ __kmpc_omp_taskwait( ident_t *loc_ref, kmp_int32 gtid )
 
         if ( ! taskdata->td_flags.team_serial ) {
             // GEH: if team serialized, avoid reading the volatile variable below.
+            kmp_flag_32 flag(&(taskdata->td_incomplete_child_tasks), 0U);
             while ( TCR_4(taskdata -> td_incomplete_child_tasks) != 0 ) {
-                __kmp_execute_tasks( thread, gtid, &(taskdata->td_incomplete_child_tasks),
-                                     0, FALSE, &thread_finished
-                                     USE_ITT_BUILD_ARG(itt_sync_obj),
-                                     __kmp_task_stealing_constraint );
+                flag.execute_tasks(thread, gtid, FALSE, &thread_finished
+                                   USE_ITT_BUILD_ARG(itt_sync_obj), __kmp_task_stealing_constraint );
             }
         }
 #if USE_ITT_BUILD
@@ -1153,7 +1161,7 @@ __kmpc_omp_taskyield( ident_t *loc_ref, kmp_int32 gtid, int end_part )
     KA_TRACE(10, ("__kmpc_omp_taskyield(enter): T#%d loc=%p end_part = %d\n",
                   gtid, loc_ref, end_part) );
 
-    if ( __kmp_tasking_mode != tskm_immediate_exec ) {
+    if ( __kmp_tasking_mode != tskm_immediate_exec && __kmp_init_parallel ) {
         // GEH TODO: shouldn't we have some sort of OMPRAP API calls here to mark begin wait?
 
         thread = __kmp_threads[ gtid ];
@@ -1172,11 +1180,14 @@ __kmpc_omp_taskyield( ident_t *loc_ref, kmp_int32 gtid, int end_part )
             __kmp_itt_taskwait_starting( gtid, itt_sync_obj );
 #endif /* USE_ITT_BUILD */
         if ( ! taskdata->td_flags.team_serial ) {
-            __kmp_execute_tasks( thread, gtid, NULL, 0, FALSE, &thread_finished
-                                 USE_ITT_BUILD_ARG(itt_sync_obj),
-                                 __kmp_task_stealing_constraint );
+            kmp_task_team_t * task_team = thread->th.th_task_team;
+            if (task_team != NULL) {
+                if (KMP_TASKING_ENABLED(task_team, thread->th.th_task_state)) {
+                    __kmp_execute_tasks_32( thread, gtid, NULL, FALSE, &thread_finished
+                                            USE_ITT_BUILD_ARG(itt_sync_obj), __kmp_task_stealing_constraint );
+                }
+            }
         }
-
 #if USE_ITT_BUILD
         if ( itt_sync_obj != NULL )
             __kmp_itt_taskwait_finished( gtid, itt_sync_obj );
@@ -1236,11 +1247,10 @@ __kmpc_end_taskgroup( ident_t* loc, int gtid )
 #endif /* USE_ITT_BUILD */
 
         if ( ! taskdata->td_flags.team_serial ) {
+            kmp_flag_32 flag(&(taskgroup->count), 0U);
             while ( TCR_4(taskgroup->count) != 0 ) {
-                __kmp_execute_tasks( thread, gtid, &(taskgroup->count),
-                                     0, FALSE, &thread_finished
-                                     USE_ITT_BUILD_ARG(itt_sync_obj),
-                                     __kmp_task_stealing_constraint );
+                flag.execute_tasks(thread, gtid, FALSE, &thread_finished
+                                   USE_ITT_BUILD_ARG(itt_sync_obj), __kmp_task_stealing_constraint );
             }
         }
 
@@ -1433,7 +1443,7 @@ __kmp_steal_task( kmp_info_t *victim, kmp_int32 gtid, kmp_task_team_t *task_team
 
     __kmp_release_bootstrap_lock( & victim_td -> td.td_deque_lock );
 
-    KA_TRACE(10, ("__kmp_steal_task(exit #3): T#%d stole task %p from T#d: task_team=%p "
+    KA_TRACE(10, ("__kmp_steal_task(exit #3): T#%d stole task %p from T#%d: task_team=%p "
                   "ntasks=%d head=%u tail=%u\n",
                   gtid, taskdata, __kmp_gtid_from_thread( victim ), task_team,
                   victim_td->td.td_deque_ntasks, victim_td->td.td_deque_head,
@@ -1445,7 +1455,7 @@ __kmp_steal_task( kmp_info_t *victim, kmp_int32 gtid, kmp_task_team_t *task_team
 
 
 //-----------------------------------------------------------------------------
-// __kmp_execute_tasks: Choose and execute tasks until either the condition
+// __kmp_execute_tasks_template: Choose and execute tasks until either the condition
 // is statisfied (return true) or there are none left (return false).
 // final_spin is TRUE if this is the spin at the release barrier.
 // thread_finished indicates whether the thread is finished executing all
@@ -1453,16 +1463,10 @@ __kmp_steal_task( kmp_info_t *victim, kmp_int32 gtid, kmp_task_team_t *task_team
 // spinner is the location on which to spin.
 // spinner == NULL means only execute a single task and return.
 // checker is the value to check to terminate the spin.
-
-int
-__kmp_execute_tasks( kmp_info_t *thread,
-                     kmp_int32 gtid,
-                     volatile kmp_uint *spinner,
-                     kmp_uint checker,
-                     int final_spin,
-                     int *thread_finished
-                     USE_ITT_BUILD_ARG(void * itt_sync_obj),
-                     kmp_int32 is_constrained )
+template <class C>
+static inline int __kmp_execute_tasks_template(kmp_info_t *thread, kmp_int32 gtid, C *flag, int final_spin, 
+                                               int *thread_finished
+                                               USE_ITT_BUILD_ARG(void * itt_sync_obj), kmp_int32 is_constrained)
 {
     kmp_task_team_t *     task_team;
     kmp_team_t *          team;
@@ -1478,7 +1482,7 @@ __kmp_execute_tasks( kmp_info_t *thread,
     task_team = thread -> th.th_task_team;
     KMP_DEBUG_ASSERT( task_team != NULL );
 
-    KA_TRACE(15, ("__kmp_execute_tasks(enter): T#%d final_spin=%d *thread_finished=%d\n",
+    KA_TRACE(15, ("__kmp_execute_tasks_template(enter): T#%d final_spin=%d *thread_finished=%d\n",
                   gtid, final_spin, *thread_finished) );
 
     threads_data = (kmp_thread_data_t *)TCR_PTR(task_team -> tt.tt_threads_data);
@@ -1512,8 +1516,8 @@ __kmp_execute_tasks( kmp_info_t *thread,
         // If this thread is in the last spin loop in the barrier, waiting to be
         // released, we know that the termination condition will not be satisified,
         // so don't waste any cycles checking it.
-        if ((spinner == NULL) || ((!final_spin) && (TCR_4(*spinner) == checker))) {
-            KA_TRACE(15, ("__kmp_execute_tasks(exit #1): T#%d spin condition satisfied\n", gtid) );
+        if (flag == NULL || (!final_spin && flag->done_check())) {
+            KA_TRACE(15, ("__kmp_execute_tasks_template(exit #1): T#%d spin condition satisfied\n", gtid) );
             return TRUE;
         }
         KMP_YIELD( __kmp_library == library_throughput );   // Yield before executing next task
@@ -1527,7 +1531,7 @@ __kmp_execute_tasks( kmp_info_t *thread,
         // result in the termination condition being satisfied.
         if (! *thread_finished) {
             kmp_uint32 count = KMP_TEST_THEN_DEC32( (kmp_int32 *)unfinished_threads ) - 1;
-            KA_TRACE(20, ("__kmp_execute_tasks(dec #1): T#%d dec unfinished_threads to %d task_team=%p\n",
+            KA_TRACE(20, ("__kmp_execute_tasks_template(dec #1): T#%d dec unfinished_threads to %d task_team=%p\n",
                           gtid, count, task_team) );
             *thread_finished = TRUE;
         }
@@ -1537,8 +1541,8 @@ __kmp_execute_tasks( kmp_info_t *thread,
         // thread to pass through the barrier, where it might reset each thread's
         // th.th_team field for the next parallel region.
         // If we can steal more work, we know that this has not happened yet.
-        if ((spinner != NULL) && (TCR_4(*spinner) == checker)) {
-            KA_TRACE(15, ("__kmp_execute_tasks(exit #2): T#%d spin condition satisfied\n", gtid) );
+        if (flag != NULL && flag->done_check()) {
+            KA_TRACE(15, ("__kmp_execute_tasks_template(exit #2): T#%d spin condition satisfied\n", gtid) );
             return TRUE;
         }
     }
@@ -1569,8 +1573,8 @@ __kmp_execute_tasks( kmp_info_t *thread,
 #endif /* USE_ITT_BUILD */
 
             // Check to see if this thread can proceed.
-            if ((spinner == NULL) || ((!final_spin) && (TCR_4(*spinner) == checker))) {
-                KA_TRACE(15, ("__kmp_execute_tasks(exit #3): T#%d spin condition satisfied\n",
+            if (flag == NULL || (!final_spin && flag->done_check())) {
+                KA_TRACE(15, ("__kmp_execute_tasks_template(exit #3): T#%d spin condition satisfied\n",
                               gtid) );
                 return TRUE;
             }
@@ -1579,7 +1583,7 @@ __kmp_execute_tasks( kmp_info_t *thread,
             // If the execution of the stolen task resulted in more tasks being
             // placed on our run queue, then restart the whole process.
             if (TCR_4(threads_data[ tid ].td.td_deque_ntasks) != 0) {
-                KA_TRACE(20, ("__kmp_execute_tasks: T#%d stolen task spawned other tasks, restart\n",
+                KA_TRACE(20, ("__kmp_execute_tasks_template: T#%d stolen task spawned other tasks, restart\n",
                               gtid) );
                 goto start;
             }
@@ -1596,7 +1600,7 @@ __kmp_execute_tasks( kmp_info_t *thread,
             // result in the termination condition being satisfied.
             if (! *thread_finished) {
                 kmp_uint32 count = KMP_TEST_THEN_DEC32( (kmp_int32 *)unfinished_threads ) - 1;
-                KA_TRACE(20, ("__kmp_execute_tasks(dec #2): T#%d dec unfinished_threads to %d "
+                KA_TRACE(20, ("__kmp_execute_tasks_template(dec #2): T#%d dec unfinished_threads to %d "
                               "task_team=%p\n", gtid, count, task_team) );
                 *thread_finished = TRUE;
             }
@@ -1607,8 +1611,8 @@ __kmp_execute_tasks( kmp_info_t *thread,
             // thread to pass through the barrier, where it might reset each thread's
             // th.th_team field for the next parallel region.
             // If we can steal more work, we know that this has not happened yet.
-            if ((spinner != NULL) && (TCR_4(*spinner) == checker)) {
-                KA_TRACE(15, ("__kmp_execute_tasks(exit #4): T#%d spin condition satisfied\n",
+            if (flag != NULL && flag->done_check()) {
+                KA_TRACE(15, ("__kmp_execute_tasks_template(exit #4): T#%d spin condition satisfied\n",
                               gtid) );
                 return TRUE;
             }
@@ -1640,8 +1644,7 @@ __kmp_execute_tasks( kmp_info_t *thread,
              (__kmp_dflt_blocktime != KMP_MAX_BLOCKTIME) &&
              (TCR_PTR(other_thread->th.th_sleep_loc) != NULL))
         {
-            __kmp_resume( __kmp_gtid_from_thread( other_thread ), NULL );
-
+            __kmp_null_resume_wrapper(__kmp_gtid_from_thread(other_thread), other_thread->th.th_sleep_loc);
             // A sleeping thread should not have any tasks on it's queue.
             // There is a slight possibility that it resumes, steals a task from
             // another thread, which spawns more tasks, all in the that it takes
@@ -1677,8 +1680,8 @@ __kmp_execute_tasks( kmp_info_t *thread,
             }
 
             // Check to see if this thread can proceed.
-            if ((spinner == NULL) || ((!final_spin) && (TCR_4(*spinner) == checker))) {
-                KA_TRACE(15, ("__kmp_execute_tasks(exit #5): T#%d spin condition satisfied\n",
+            if (flag == NULL || (!final_spin && flag->done_check())) {
+                KA_TRACE(15, ("__kmp_execute_tasks_template(exit #5): T#%d spin condition satisfied\n",
                               gtid) );
                 return TRUE;
             }
@@ -1687,7 +1690,7 @@ __kmp_execute_tasks( kmp_info_t *thread,
             // If the execution of the stolen task resulted in more tasks being
             // placed on our run queue, then restart the whole process.
             if (TCR_4(threads_data[ tid ].td.td_deque_ntasks) != 0) {
-                KA_TRACE(20, ("__kmp_execute_tasks: T#%d stolen task spawned other tasks, restart\n",
+                KA_TRACE(20, ("__kmp_execute_tasks_template: T#%d stolen task spawned other tasks, restart\n",
                               gtid) );
                 goto start;
             }
@@ -1704,7 +1707,7 @@ __kmp_execute_tasks( kmp_info_t *thread,
             // result in the termination condition being satisfied.
             if (! *thread_finished) {
                 kmp_uint32 count = KMP_TEST_THEN_DEC32( (kmp_int32 *)unfinished_threads ) - 1;
-                KA_TRACE(20, ("__kmp_execute_tasks(dec #3): T#%d dec unfinished_threads to %d; "
+                KA_TRACE(20, ("__kmp_execute_tasks_template(dec #3): T#%d dec unfinished_threads to %d; "
                               "task_team=%p\n",
                               gtid, count, task_team) );
                 *thread_finished = TRUE;
@@ -1716,17 +1719,41 @@ __kmp_execute_tasks( kmp_info_t *thread,
             // thread to pass through the barrier, where it might reset each thread's
             // th.th_team field for the next parallel region.
             // If we can steal more work, we know that this has not happened yet.
-            if ((spinner != NULL) && (TCR_4(*spinner) == checker)) {
-                KA_TRACE(15, ("__kmp_execute_tasks(exit #6): T#%d spin condition satisfied\n",
-                              gtid) );
+            if (flag != NULL && flag->done_check()) {
+                KA_TRACE(15, ("__kmp_execute_tasks_template(exit #6): T#%d spin condition satisfied\n", gtid) );
                 return TRUE;
             }
         }
     }
 
-    KA_TRACE(15, ("__kmp_execute_tasks(exit #7): T#%d can't find work\n", gtid) );
+    KA_TRACE(15, ("__kmp_execute_tasks_template(exit #7): T#%d can't find work\n", gtid) );
     return FALSE;
 }
+
+int __kmp_execute_tasks_32(kmp_info_t *thread, kmp_int32 gtid, kmp_flag_32 *flag, int final_spin,
+                           int *thread_finished
+                           USE_ITT_BUILD_ARG(void * itt_sync_obj), kmp_int32 is_constrained)
+{
+    return __kmp_execute_tasks_template(thread, gtid, flag, final_spin, thread_finished
+                                        USE_ITT_BUILD_ARG(itt_sync_obj), is_constrained);
+}
+
+int __kmp_execute_tasks_64(kmp_info_t *thread, kmp_int32 gtid, kmp_flag_64 *flag, int final_spin,
+                           int *thread_finished
+                           USE_ITT_BUILD_ARG(void * itt_sync_obj), kmp_int32 is_constrained)
+{
+    return __kmp_execute_tasks_template(thread, gtid, flag, final_spin, thread_finished
+                                        USE_ITT_BUILD_ARG(itt_sync_obj), is_constrained);
+}
+
+int __kmp_execute_tasks_oncore(kmp_info_t *thread, kmp_int32 gtid, kmp_flag_oncore *flag, int final_spin,
+                               int *thread_finished
+                               USE_ITT_BUILD_ARG(void * itt_sync_obj), kmp_int32 is_constrained)
+{
+    return __kmp_execute_tasks_template(thread, gtid, flag, final_spin, thread_finished
+                                        USE_ITT_BUILD_ARG(itt_sync_obj), is_constrained);
+}
+
 
 
 //-----------------------------------------------------------------------------
@@ -1770,7 +1797,7 @@ __kmp_enable_tasking( kmp_task_team_t *task_team, kmp_info_t *this_thr )
         // tasks and execute them.  In extra barrier mode, tasks do not sleep
         // at the separate tasking barrier, so this isn't a problem.
         for (i = 0; i < nthreads; i++) {
-            volatile kmp_uint *sleep_loc;
+            volatile void *sleep_loc;
             kmp_info_t *thread = threads_data[i].td.td_thr;
 
             if (i == this_thr->th.th_info.ds.ds_tid) {
@@ -1779,17 +1806,16 @@ __kmp_enable_tasking( kmp_task_team_t *task_team, kmp_info_t *this_thr )
             // Since we haven't locked the thread's suspend mutex lock at this
             // point, there is a small window where a thread might be putting
             // itself to sleep, but hasn't set the th_sleep_loc field yet.
-            // To work around this, __kmp_execute_tasks() periodically checks
+            // To work around this, __kmp_execute_tasks_template() periodically checks
             // see if other threads are sleeping (using the same random
             // mechanism that is used for task stealing) and awakens them if
             // they are.
-            if ( ( sleep_loc =  (volatile kmp_uint *)
-                                TCR_PTR( thread -> th.th_sleep_loc) ) != NULL )
+            if ( ( sleep_loc = TCR_PTR( thread -> th.th_sleep_loc) ) != NULL )
             {
                 KF_TRACE( 50, ( "__kmp_enable_tasking: T#%d waking up thread T#%d\n",
                                  __kmp_gtid_from_thread( this_thr ),
                                  __kmp_gtid_from_thread( thread ) ) );
-                __kmp_resume( __kmp_gtid_from_thread( thread ), sleep_loc );
+                __kmp_null_resume_wrapper(__kmp_gtid_from_thread(thread), sleep_loc);
             }
             else {
                 KF_TRACE( 50, ( "__kmp_enable_tasking: T#%d don't wake up thread T#%d\n",
@@ -1805,7 +1831,7 @@ __kmp_enable_tasking( kmp_task_team_t *task_team, kmp_info_t *this_thr )
 
 
 /* ------------------------------------------------------------------------ */
-/*
+/* // TODO: Check the comment consistency
  * Utility routines for "task teams".  A task team (kmp_task_t) is kind of
  * like a shadow of the kmp_team_t data struct, with a different lifetime.
  * After a child * thread checks into a barrier and calls __kmp_release() from
@@ -1838,6 +1864,7 @@ __kmp_enable_tasking( kmp_task_team_t *task_team, kmp_info_t *this_thr )
  * not settting the field minimizes the performance impact of tasking on
  * barriers, when no explicit tasks were spawned (pushed, actually).
  */
+
 
 static kmp_task_team_t *__kmp_free_task_teams = NULL;           // Free list for task_team data structures
 // Lock for task team data structures
@@ -2193,7 +2220,6 @@ __kmp_wait_to_unref_task_teams(void)
              thread != NULL;
              thread = thread->th.th_next_pool)
         {
-            volatile kmp_uint *sleep_loc;
 #if KMP_OS_WINDOWS
             DWORD exit_val;
 #endif
@@ -2218,11 +2244,12 @@ __kmp_wait_to_unref_task_teams(void)
                            __kmp_gtid_from_thread( thread ) ) );
 
             if ( __kmp_dflt_blocktime != KMP_MAX_BLOCKTIME ) {
+                volatile void *sleep_loc;
                 // If the thread is sleeping, awaken it.
-                if ( ( sleep_loc = (volatile kmp_uint *) TCR_PTR( thread->th.th_sleep_loc) ) != NULL ) {
+                if ( ( sleep_loc = TCR_PTR( thread->th.th_sleep_loc) ) != NULL ) {
                     KA_TRACE( 10, ( "__kmp_wait_to_unref_task_team: T#%d waking up thread T#%d\n",
                                     __kmp_gtid_from_thread( thread ), __kmp_gtid_from_thread( thread ) ) );
-                    __kmp_resume( __kmp_gtid_from_thread( thread ), sleep_loc );
+                    __kmp_null_resume_wrapper(__kmp_gtid_from_thread(thread), sleep_loc);
                 }
             }
         }
@@ -2350,9 +2377,9 @@ __kmp_task_team_wait( kmp_info_t *this_thr,
         // contention, only the master thread checks for the
         // termination condition.
         //
-        __kmp_wait_sleep( this_thr, &task_team->tt.tt_unfinished_threads, 0, TRUE
-                          USE_ITT_BUILD_ARG(itt_sync_obj)
-                          );
+        kmp_flag_32 flag(&task_team->tt.tt_unfinished_threads, 0U);
+        flag.wait(this_thr, TRUE
+                  USE_ITT_BUILD_ARG(itt_sync_obj));
 
         //
         // Kill the old task team, so that the worker threads will
@@ -2390,8 +2417,9 @@ __kmp_tasking_barrier( kmp_team_t *team, kmp_info_t *thread, int gtid )
 #if USE_ITT_BUILD
     KMP_FSYNC_SPIN_INIT( spin, (kmp_uint32*) NULL );
 #endif /* USE_ITT_BUILD */
-    while (! __kmp_execute_tasks( thread, gtid, spin, 0, TRUE, &flag 
-                                  USE_ITT_BUILD_ARG(NULL), 0 ) ) {
+    kmp_flag_32 spin_flag(spin, 0U);
+    while (! spin_flag.execute_tasks(thread, gtid, TRUE, &flag
+                                     USE_ITT_BUILD_ARG(NULL), 0 ) ) {
 #if USE_ITT_BUILD
         // TODO: What about itt_sync_obj??
         KMP_FSYNC_SPIN_PREPARE( spin );
@@ -2408,6 +2436,4 @@ __kmp_tasking_barrier( kmp_team_t *team, kmp_info_t *thread, int gtid )
     KMP_FSYNC_SPIN_ACQUIRED( (void*) spin );
 #endif /* USE_ITT_BUILD */
 }
-
-#endif // OMP_30_ENABLED
 

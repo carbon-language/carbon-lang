@@ -1,7 +1,7 @@
 /*
  * kmp_version.c
- * $Revision: 42806 $
- * $Date: 2013-11-05 16:16:45 -0600 (Tue, 05 Nov 2013) $
+ * $Revision: 43435 $
+ * $Date: 2014-09-04 15:16:08 -0500 (Thu, 04 Sep 2014) $
  */
 
 
@@ -20,7 +20,7 @@
 #include "kmp_version.h"
 
 // Replace with snapshot date YYYYMMDD for promotion build.
-#define KMP_VERSION_BUILD    00000000
+#define KMP_VERSION_BUILD    20140926
 
 // Helper macros to convert value of macro to string literal.
 #define _stringer( x ) #x
@@ -46,6 +46,8 @@
         #define KMP_COMPILER "Intel C++ Compiler 14.0"
     #elif __INTEL_COMPILER == 1410
         #define KMP_COMPILER "Intel C++ Compiler 14.1"
+    #elif __INTEL_COMPILER == 1500
+        #define KMP_COMPILER "Intel C++ Compiler 15.0"
     #elif __INTEL_COMPILER == 9999
         #define KMP_COMPILER "Intel C++ Compiler mainline"
     #endif
@@ -54,7 +56,7 @@
 #elif KMP_COMPILER_GCC
     #define KMP_COMPILER "GCC " stringer( __GNUC__ ) "." stringer( __GNUC_MINOR__ )
 #elif KMP_COMPILER_MSVC
-    #define KMP_COMPILER "MSVC " stringer( __MSC_FULL_VER )
+    #define KMP_COMPILER "MSVC " stringer( _MSC_FULL_VER )
 #endif
 #ifndef KMP_COMPILER
     #warning "Unknown compiler"
@@ -77,7 +79,7 @@
 
 // Finally, define strings.
 #define KMP_LIBRARY   KMP_LIB_TYPE " library (" KMP_LINK_TYPE ")"
-#define KMP_COPYRIGHT "Copyright (C) 1997-2013, Intel Corporation. All Rights Reserved."
+#define KMP_COPYRIGHT ""
 
 int const __kmp_version_major = KMP_VERSION_MAJOR;
 int const __kmp_version_minor = KMP_VERSION_MINOR;
@@ -85,10 +87,8 @@ int const __kmp_version_build = KMP_VERSION_BUILD;
 int const __kmp_openmp_version =
     #if OMP_40_ENABLED
         201307;
-    #elif OMP_30_ENABLED
-        201107;
     #else
-        200505;
+        201107;
     #endif
 
 /* Do NOT change the format of this string!  Intel(R) Thread Profiler checks for a
@@ -128,7 +128,6 @@ __kmp_print_version_1( void )
         kmp_str_buf_t buffer;
         __kmp_str_buf_init( & buffer );
         // Print version strings skipping initial magic.
-        __kmp_str_buf_print( & buffer, "%s\n", & __kmp_version_copyright[ KMP_VERSION_MAGIC_LEN ] );
         __kmp_str_buf_print( & buffer, "%s\n", & __kmp_version_lib_ver[ KMP_VERSION_MAGIC_LEN ] );
         __kmp_str_buf_print( & buffer, "%s\n", & __kmp_version_lib_type[ KMP_VERSION_MAGIC_LEN ] );
         __kmp_str_buf_print( & buffer, "%s\n", & __kmp_version_link_type[ KMP_VERSION_MAGIC_LEN ] );
@@ -164,8 +163,6 @@ __kmp_print_version_1( void )
                 ); // __kmp_str_buf_print
             }; // for i
             __kmp_str_buf_print( & buffer, "%s\n", & __kmp_version_lock[ KMP_VERSION_MAGIC_LEN ] );
-            __kmp_str_buf_print( & buffer, "%s\n", & __kmp_version_perf_v19[ KMP_VERSION_MAGIC_LEN ] );
-            __kmp_str_buf_print( & buffer, "%s\n", & __kmp_version_perf_v106[ KMP_VERSION_MAGIC_LEN ] );
         #endif
         __kmp_str_buf_print(
             & buffer,

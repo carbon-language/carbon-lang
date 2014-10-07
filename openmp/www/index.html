@@ -32,7 +32,7 @@
 
 <div id="content">
   <!--*********************************************************************-->
-  <h1>"OpenMP&reg;" Support for the OpenMP language</h1>
+  <h1>OpenMP&reg;: Support for the OpenMP language</h1>
   <!--*********************************************************************-->
 
   <p>The OpenMP subproject of LLVM is intended to contain all of the
@@ -42,11 +42,23 @@
      found at <a href="http://clang-omp.github.io/">OpenMP/Clang</a>. 
   </p>
 
-  <p>Here you can find the code for the runtime library against which
-    code compiled by the OpenMP/Clang compiler must be linked before it
-    can run. This code is also available
-    at <a href="http://openmprtl.org/">openmprtl.org</a>; we intend to
-    keep the different sites in sync.
+  <p>Here you can find :-
+    <ul>
+      <li>
+        the code for the runtime library against which
+        code compiled by the OpenMP/Clang compiler must be linked before it
+        can run. This code is also available
+        at <a href="http://openmprtl.org/">openmprtl.org</a>; we intend to
+        keep the different sites in sync.
+      </li>
+      <li>
+        the library that supports offload to target devices (in
+        "offload")
+      </li>
+      <li>
+        the OpenUH test-suite which is being integrated.
+      </li>
+    </ul>
   </p>
 
   <p>Support for the parts of the OpenMP 4.0 language that are not
@@ -81,9 +93,10 @@
         <li>ABI compatibility with <a href="http://gcc.gnu.org">Gcc</a> and
         <a href="http://software.intel.com/en-us/intel-compilers">Intel's
         existing OpenMP compilers.</a> 
-        However, we are not currently (May 2014) compatible with gcc 4.9, since
-        it has introduced new entrypoints with which we have not yet
-        caught up... 
+        With this release we have restored compatibility with OpenMP
+        3.1 code compiled by gcc 4.9, however we do not have support
+        for OpenMP 4.0 code that uses task cancellation when compiled
+        by gcc 4.9. How we will support such code remains a research issue.
         </li>
     </ul>
 
@@ -99,12 +112,20 @@
   <h2 id="requirements">Platform Support</h2>
   <!--=====================================================================-->
 
-  <p>The OpenMP runtime is known to work on 32 and 64 bit X86
-    processors when compiled with either the Intel compiler or gcc, and also the Intel&reg;&nbsp;Xeon Phi&trade; product family, when compiled with
-    the Intel compiler.
+  <p>The OpenMP runtime is known to work on 
+    <ul>
+      <li>ARM&reg;&nbsp; architecture processors</li>
+      <li>PowerPC&trade;&nbsp; processors</li>
+      <li>32 and 64 bit X86
+        processors when compiled with clang, with the Intel compiler
+        or with gcc, and also the Intel&reg;&nbsp;Xeon Phi&trade; product family, when compiled with
+        the Intel compiler.
+      </li>
+    </ul>
+    Ports to other architectures and operating systems are welcome.
   </p>
   
-  <p>A full OS compatibility matrix is in 
+  <p>A full OS and archiecture compatibility matrix is in 
     <a href="README.txt">README.txt</a>
   </p>
 
@@ -123,8 +144,7 @@
  
    <p>The University of Houston has kindly contributed their test
    suite (in the "testsuite" directory). Integration and use of this
-   for automatic testing remain to be done, but now the code is here
-   work can begin.
+   for automatic testing is in progress.
    </p>
 
   <!--=====================================================================-->
@@ -151,6 +171,9 @@
   
   <p>Full details of how to build are in the
     <a href="README.txt">README.txt</a>
+    which also describes a CMake based build system which may be more
+    convenient on some platforms and for porting to new platforms than
+    the make and Perl based system.
   </p>
 
   <!--=====================================================================-->
@@ -184,6 +207,14 @@
 <li>
   Intel is a trademark of Intel Corporation in the U.S. and/or other
   countries.
+</li>
+<li>
+  PowerPC is a trademark of IBM Corporation in the U.S. and/or other
+  countries.
+</li>
+<li>
+  ARM is a trademark of ARM Corporation in the U.S. and/or
+  other countries.
 </li>
 </ul>
 </div>

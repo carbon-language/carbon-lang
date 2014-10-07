@@ -1,7 +1,7 @@
 /*
  * kmp_utility.c -- Utility routines for the OpenMP support library.
- * $Revision: 42588 $
- * $Date: 2013-08-13 01:26:00 -0500 (Tue, 13 Aug 2013) $
+ * $Revision: 42951 $
+ * $Date: 2014-01-21 14:41:41 -0600 (Tue, 21 Jan 2014) $
  */
 
 

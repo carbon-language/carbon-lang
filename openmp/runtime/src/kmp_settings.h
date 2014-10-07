@@ -1,7 +1,7 @@
 /*
  * kmp_settings.h -- Initialize environment variables
- * $Revision: 42598 $
- * $Date: 2013-08-19 15:40:56 -0500 (Mon, 19 Aug 2013) $
+ * $Revision: 42951 $
+ * $Date: 2014-01-21 14:41:41 -0600 (Tue, 21 Jan 2014) $
  */
 
 

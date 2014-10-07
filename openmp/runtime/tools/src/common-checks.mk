@@ -32,7 +32,7 @@ ifeq "$(clean)" ""    # Do not check tools if clean goal specified.
         endif
     endif
     ifneq "$(filter gcc clang,$(c))" "" # if build compiler is gcc or clang
-        check_tools_flags += --no-intel
+        check_tools_flags += --nointel
     endif
     ifeq "$(c)" "clang"
         check_tools_flags += --clang

@@ -10,4 +10,3 @@
 #
 
 include tools/linux.inc
-

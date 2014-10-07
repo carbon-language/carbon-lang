@@ -137,8 +137,7 @@ libiomp5 version can be 5 or 4.
 OpenMP version can be either 40 or 30.
 
 -Dmic_arch=knc|knf
-Intel(R) MIC Architecture.  Can be 
-knf (Knights Ferry) or knc (Knights Corner).
+Intel(R) MIC Architecture, can be knf or knc.
 This value is ignored if os != mic
   
 -Dmic_os=lin|bsd

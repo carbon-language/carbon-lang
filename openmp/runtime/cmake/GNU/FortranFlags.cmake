@@ -1,3 +1,14 @@
+#
+#//===----------------------------------------------------------------------===//
+#//
+#//                     The LLVM Compiler Infrastructure
+#//
+#// This file is dual licensed under the MIT and the University of Illinois Open
+#// Source Licenses. See LICENSE.txt for details.
+#//
+#//===----------------------------------------------------------------------===//
+#
+
 # This file holds GNU (gcc/g++) specific compiler dependent flags
 # The flag types are:
 #   1) Fortran Compiler flags

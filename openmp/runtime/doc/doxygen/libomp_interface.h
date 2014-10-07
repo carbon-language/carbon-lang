@@ -208,6 +208,7 @@ are documented in different modules.
  - @ref THREADPRIVATE functions to support thread private data, copyin etc
  - @ref SYNCHRONIZATION functions to support `omp critical`, `omp barrier`, `omp master`, reductions etc
  - @ref ATOMIC_OPS functions to support atomic operations
+ - @ref STATS_GATHERING macros to support developer profiling of libiomp5
  - Documentation on tasking has still to be written...
 
 @section SEC_EXAMPLES Examples
@@ -319,8 +320,29 @@ These functions are used for implementing barriers.
 @defgroup THREADPRIVATE Thread private data support
 These functions support copyin/out and thread private data.
 
+@defgroup STATS_GATHERING Statistics Gathering from OMPTB
+These macros support profiling the libiomp5 library.  Use --stats=on when building with build.pl to enable
+and then use the KMP_* macros to profile (through counts or clock ticks) libiomp5 during execution of an OpenMP program.
+
+@section sec_stats_env_vars Environment Variables
+
+This section describes the environment variables relevent to stats-gathering in libiomp5
+
+@code
+KMP_STATS_FILE
+@endcode
+This environment variable is set to an output filename that will be appended *NOT OVERWRITTEN* if it exists.  If this environment variable is undefined, the statistics will be output to stderr
+
+@code
+KMP_STATS_THREADS
+@endcode
+This environment variable indicates to print thread-specific statistics as well as aggregate statistics.  Each thread's statistics will be shown as well as the collective sum of all threads.  The values "true", "on", "1", "yes" will all indicate to print per thread statistics.
+
 @defgroup TASKING Tasking support
-These functions support are used to implement tasking constructs.
+These functions support tasking constructs.
+
+@defgroup USER User visible functions
+These functions can be called directly by the user, but are runtime library specific, rather than being OpenMP interfaces.
 
 */
 

@@ -296,9 +296,14 @@ sub get_clang_compiler_version($) {
     $rc = run( [ $tool, "--version" ], $stdout, $stderr );
     if ( $rc >= 0 ) {
         my ( $ver, $bld );
-        if ( $target_os eq "mac" and $stdout =~ m{^.*? (\d+\.\d+) \(.*-(\d+\.\d+\.\d+)\)}m ) {
+        if ( $target_os eq "mac" ) {
             # Apple LLVM version 4.2 (clang-425.0.28) (based on LLVM 3.2svn)
+            $stdout =~ m{^.*? (\d+\.\d+) \(.*-(\d+\.\d+\.\d+)\)}m;
             ( $ver, $bld ) = ( $1, $2 );
+            # For custom clang versions.
+            if ( not defined($ver) and $stdout =~ m{^.*? (\d+\.\d+)( \((.*)\))?}m ) {
+                ( $ver, $bld ) = ( $1, $3 );
+            }
         } else {
             if ( 0 ) {
             } elsif ( $stdout =~ m{^.*? (\d+\.\d+)( \((.*)\))?}m ) {
@@ -322,7 +327,7 @@ sub get_ms_compiler_version() {
     my $tool = "cl";
     my ( @ret ) = ( $tool );
     my $mc_archs = {
-        qr{80x86}         => "IA-32 architecture",
+        qr{80x86|x86}     => "IA-32 architecture",
         qr{AMD64|x64}     => "Intel(R) 64",
     };
     $rc = run( [ $tool ], $stdout, $stderr );
@@ -426,13 +431,14 @@ if ( $intel ) {
     };
 }; # if
 if ( $target_os eq "lin" or $target_os eq "mac" ) {
-    if ( $clang ) {
+    # check for clang/gnu tools because touch-test.c is compiled with them.
+    if ( $clang or $target_os eq "mac" ) { # OS X* >= 10.9 discarded GNU compilers.
         push( @versions, [ "Clang C Compiler",     get_clang_compiler_version( $clang_compilers->{ $target_os }->{ c   } ) ] );
         push( @versions, [ "Clang C++ Compiler",   get_clang_compiler_version( $clang_compilers->{ $target_os }->{ cpp } ) ] );
     } else {
         push( @versions, [ "GNU C Compiler",     get_gnu_compiler_version( $gnu_compilers->{ $target_os }->{ c   } ) ] );
         push( @versions, [ "GNU C++ Compiler",   get_gnu_compiler_version( $gnu_compilers->{ $target_os }->{ cpp } ) ] );
-    }; # if
+    };
     # if intel fortran has been checked then gnu fortran is unnecessary
     # also, if user specifies clang as build compiler, then gfortran is assumed fortran compiler
     if ( $fortran and not $intel ) {

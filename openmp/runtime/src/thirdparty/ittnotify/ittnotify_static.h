@@ -105,14 +105,14 @@ ITT_STUBV(ITTAPI, void, model_clear_uses,          (void* addr),              (I
 
 #ifndef __ITT_INTERNAL_BODY
 #if ITT_PLATFORM==ITT_PLATFORM_WIN
-ITT_STUBV(ITTAPI, void, model_site_beginW,         (const wchar_t *name), (ITT_FORMAT name), model_site_beginW, __itt_group_model, "\"%s\"")
-ITT_STUBV(ITTAPI, void, model_task_beginW,         (const wchar_t *name), (ITT_FORMAT name), model_task_beginW, __itt_group_model, "\"%s\"")
+ITT_STUBV(ITTAPI, void, model_site_beginW,         (const wchar_t *name),     (ITT_FORMAT name),       model_site_beginW,         __itt_group_model, "\"%s\"")
+ITT_STUBV(ITTAPI, void, model_task_beginW,         (const wchar_t *name),     (ITT_FORMAT name),       model_task_beginW,         __itt_group_model, "\"%s\"")
 ITT_STUBV(ITTAPI, void, model_iteration_taskW,     (const wchar_t *name),     (ITT_FORMAT name),       model_iteration_taskW,     __itt_group_model, "\"%s\"")
 #endif /* ITT_PLATFORM==ITT_PLATFORM_WIN */
 ITT_STUBV(ITTAPI, void, model_site_beginA,         (const char *name),        (ITT_FORMAT name),       model_site_beginA,         __itt_group_model, "\"%s\"")
-ITT_STUBV(ITTAPI, void, model_site_beginAL,        (const char *name, size_t len), (ITT_FORMAT name, len), model_site_beginAL, __itt_group_model, "\"%s\", %d")
+ITT_STUBV(ITTAPI, void, model_site_beginAL,        (const char *name, size_t len), (ITT_FORMAT name, len), model_site_beginAL,    __itt_group_model, "\"%s\", %d")
 ITT_STUBV(ITTAPI, void, model_task_beginA,         (const char *name),        (ITT_FORMAT name),       model_task_beginA,         __itt_group_model, "\"%s\"")
-ITT_STUBV(ITTAPI, void, model_task_beginAL,        (const char *name, size_t len), (ITT_FORMAT name, len), model_task_beginAL, __itt_group_model, "\"%s\", %d")
+ITT_STUBV(ITTAPI, void, model_task_beginAL,        (const char *name, size_t len), (ITT_FORMAT name, len), model_task_beginAL,    __itt_group_model, "\"%s\", %d")
 ITT_STUBV(ITTAPI, void, model_iteration_taskA,     (const char *name),        (ITT_FORMAT name),       model_iteration_taskA,     __itt_group_model, "\"%s\"")
 ITT_STUBV(ITTAPI, void, model_iteration_taskAL,    (const char *name, size_t len), (ITT_FORMAT name, len), model_iteration_taskAL, __itt_group_model, "\"%s\", %d")
 ITT_STUBV(ITTAPI, void, model_site_end_2,          (void),                    (ITT_NO_PARAMS),         model_site_end_2,          __itt_group_model, "no args")
@@ -154,8 +154,8 @@ ITT_STUBV(ITTAPI, void, region_begin, (const __itt_domain *domain, __itt_id id, 
 ITT_STUBV(ITTAPI, void, region_end,   (const __itt_domain *domain, __itt_id id),                                             (ITT_FORMAT domain, id),               region_end,   __itt_group_structure, "%p, %lu")
 
 #ifndef __ITT_INTERNAL_BODY
-ITT_STUBV(ITTAPI, void, frame_begin_v3, (const __itt_domain *domain, __itt_id *id), (ITT_FORMAT domain, id), frame_begin_v3, __itt_group_structure, "%p, %p")
-ITT_STUBV(ITTAPI, void, frame_end_v3,   (const __itt_domain *domain, __itt_id *id), (ITT_FORMAT domain, id), frame_end_v3,   __itt_group_structure, "%p, %p")
+ITT_STUBV(ITTAPI, void, frame_begin_v3,  (const __itt_domain *domain, __itt_id *id),                                             (ITT_FORMAT domain, id),             frame_begin_v3,  __itt_group_structure, "%p, %p")
+ITT_STUBV(ITTAPI, void, frame_end_v3,    (const __itt_domain *domain, __itt_id *id),                                             (ITT_FORMAT domain, id),             frame_end_v3,    __itt_group_structure, "%p, %p")
 ITT_STUBV(ITTAPI, void, frame_submit_v3, (const __itt_domain *domain, __itt_id *id, __itt_timestamp begin, __itt_timestamp end), (ITT_FORMAT domain, id, begin, end), frame_submit_v3, __itt_group_structure, "%p, %p, %lu, %lu")
 #endif /* __ITT_INTERNAL_BODY */
 

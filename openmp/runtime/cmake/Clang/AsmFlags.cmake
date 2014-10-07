@@ -1,3 +1,14 @@
+#
+#//===----------------------------------------------------------------------===//
+#//
+#//                     The LLVM Compiler Infrastructure
+#//
+#// This file is dual licensed under the MIT and the University of Illinois Open
+#// Source Licenses. See LICENSE.txt for details.
+#//
+#//===----------------------------------------------------------------------===//
+#
+
 # This file holds Clang (clang/clang++) specific compiler dependent flags
 # The flag types are:
 #   1) Assembly flags

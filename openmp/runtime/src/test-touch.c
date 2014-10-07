@@ -11,9 +11,15 @@
 //===----------------------------------------------------------------------===//
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern double omp_get_wtime();
 extern int    omp_get_num_threads();
 extern int    omp_get_max_threads();
+#ifdef __cplusplus
+}
+#endif
 
 int main() {
     omp_get_wtime();

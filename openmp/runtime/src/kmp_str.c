@@ -1,7 +1,7 @@
 /*
  * kmp_str.c -- String manipulation routines.
- * $Revision: 42810 $
- * $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
+ * $Revision: 43084 $
+ * $Date: 2014-04-15 09:15:14 -0500 (Tue, 15 Apr 2014) $
  */
 
 

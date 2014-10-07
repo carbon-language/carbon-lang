@@ -1,7 +1,7 @@
 /*
  * kmp_ftn_os.h -- KPTS Fortran defines header file.
- * $Revision: 42745 $
- * $Date: 2013-10-14 17:02:04 -0500 (Mon, 14 Oct 2013) $
+ * $Revision: 43354 $
+ * $Date: 2014-07-22 17:15:02 -0500 (Tue, 22 Jul 2014) $
  */
 
 
@@ -472,14 +472,14 @@
 #define KMP_API_NAME_GOMP_TASKGROUP_START                GOMP_taskgroup_start
 #define KMP_API_NAME_GOMP_TASKGROUP_END                  GOMP_taskgroup_end
 /* Target functions should be taken care of by liboffload */
-//#define KMP_API_NAME_GOMP_TARGET                       GOMP_target
-//#define KMP_API_NAME_GOMP_TARGET_DATA                  GOMP_target_data
-//#define KMP_API_NAME_GOMP_TARGET_END_DATA              GOMP_target_end_data
-//#define KMP_API_NAME_GOMP_TARGET_UPDATE                GOMP_target_update
+#define KMP_API_NAME_GOMP_TARGET                         GOMP_target
+#define KMP_API_NAME_GOMP_TARGET_DATA                    GOMP_target_data
+#define KMP_API_NAME_GOMP_TARGET_END_DATA                GOMP_target_end_data
+#define KMP_API_NAME_GOMP_TARGET_UPDATE                  GOMP_target_update
 #define KMP_API_NAME_GOMP_TEAMS                          GOMP_teams
 
-#if KMP_OS_LINUX && !KMP_OS_CNK && !KMP_ARCH_PPC64
-    #define xstr(x) str(x) 
+#ifdef KMP_USE_VERSION_SYMBOLS
+    #define xstr(x) str(x)
     #define str(x) #x
 
     // If Linux, xexpand prepends __kmp_api_ to the real API name
@@ -494,7 +494,7 @@
     __asm__(".symver " xstr(__kmp_api_##api_name##_##version_num##_alias) "," xstr(api_name) "@" version_str "\n\t"); \
     __asm__(".symver " xstr(__kmp_api_##api_name) "," xstr(api_name) "@@" default_ver "\n\t")
 
-#else /* KMP_OS_LINUX */
+#else // KMP_USE_VERSION_SYMBOLS
     #define xstr(x) /* Nothing */
     #define str(x)  /* Nothing */
 
@@ -508,7 +508,7 @@
     #define xversionify(api_name, version_num, version_str) /* Nothing */
     #define versionify(api_name, version_num, version_str, default_ver) /* Nothing */
 
-#endif /* KMP_OS_LINUX */
+#endif // KMP_USE_VERSION_SYMBOLS
 
 #endif /* KMP_FTN_OS_H */
 

@@ -1,7 +1,7 @@
 /*
  * kmp_lock.cpp -- lock-related functions
- * $Revision: 42810 $
- * $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
+ * $Revision: 43389 $
+ * $Date: 2014-08-11 10:54:01 -0500 (Mon, 11 Aug 2014) $
  */
 
 
@@ -38,29 +38,6 @@
 #  define FUTEX_WAKE    1
 # endif
 #endif
-
-
-#ifndef KMP_DEBUG
-# define __kmp_static_delay( arg )     /* nothing to do */
-#else
-
-static void
-__kmp_static_delay( int arg )
-{
-/* Work around weird code-gen bug that causes assert to trip */
-# if KMP_ARCH_X86_64 && KMP_OS_LINUX
-    KMP_ASSERT( arg != 0 );
-# else
-    KMP_ASSERT( arg >= 0 );
-# endif
-}
-#endif /* KMP_DEBUG */
-
-static void
-__kmp_static_yield( int arg )
-{
-    __kmp_yield( arg );
-}
 
 /* Implement spin locks for internal library use.             */
 /* The algorithm implemented is Lamport's bakery lock [1974]. */
@@ -163,15 +140,13 @@ __kmp_acquire_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_acquire_tas_lock_with_checks( kmp_tas_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_set_lock";
-        if ( ( sizeof ( kmp_tas_lock_t ) <= OMP_LOCK_T_SIZE )
-          && __kmp_is_tas_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( ( gtid >= 0 ) && ( __kmp_get_tas_lock_owner( lck ) == gtid ) ) {
-            KMP_FATAL( LockIsAlreadyOwned, func );
-        }
+    char const * const func = "omp_set_lock";
+    if ( ( sizeof ( kmp_tas_lock_t ) <= OMP_LOCK_T_SIZE )
+      && __kmp_is_tas_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( ( gtid >= 0 ) && ( __kmp_get_tas_lock_owner( lck ) == gtid ) ) {
+        KMP_FATAL( LockIsAlreadyOwned, func );
     }
     __kmp_acquire_tas_lock( lck, gtid );
 }
@@ -190,12 +165,10 @@ __kmp_test_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
 static int
 __kmp_test_tas_lock_with_checks( kmp_tas_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_test_lock";
-        if ( ( sizeof ( kmp_tas_lock_t ) <= OMP_LOCK_T_SIZE )
-          && __kmp_is_tas_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
+    char const * const func = "omp_test_lock";
+    if ( ( sizeof ( kmp_tas_lock_t ) <= OMP_LOCK_T_SIZE )
+      && __kmp_is_tas_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
     }
     return __kmp_test_tas_lock( lck, gtid );
 }
@@ -217,20 +190,18 @@ __kmp_release_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_release_tas_lock_with_checks( kmp_tas_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_unset_lock";
-        KMP_MB();  /* in case another processor initialized lock */
-        if ( ( sizeof ( kmp_tas_lock_t ) <= OMP_LOCK_T_SIZE )
-          && __kmp_is_tas_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( __kmp_get_tas_lock_owner( lck ) == -1 ) {
-            KMP_FATAL( LockUnsettingFree, func );
-        }
-        if ( ( gtid >= 0 ) && ( __kmp_get_tas_lock_owner( lck ) >= 0 )
-          && ( __kmp_get_tas_lock_owner( lck ) != gtid ) ) {
-            KMP_FATAL( LockUnsettingSetByAnother, func );
-        }
+    char const * const func = "omp_unset_lock";
+    KMP_MB();  /* in case another processor initialized lock */
+    if ( ( sizeof ( kmp_tas_lock_t ) <= OMP_LOCK_T_SIZE )
+      && __kmp_is_tas_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( __kmp_get_tas_lock_owner( lck ) == -1 ) {
+        KMP_FATAL( LockUnsettingFree, func );
+    }
+    if ( ( gtid >= 0 ) && ( __kmp_get_tas_lock_owner( lck ) >= 0 )
+      && ( __kmp_get_tas_lock_owner( lck ) != gtid ) ) {
+        KMP_FATAL( LockUnsettingSetByAnother, func );
     }
     __kmp_release_tas_lock( lck, gtid );
 }
@@ -256,15 +227,13 @@ __kmp_destroy_tas_lock( kmp_tas_lock_t *lck )
 static void
 __kmp_destroy_tas_lock_with_checks( kmp_tas_lock_t *lck )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_destroy_lock";
-        if ( ( sizeof ( kmp_tas_lock_t ) <= OMP_LOCK_T_SIZE )
-          && __kmp_is_tas_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( __kmp_get_tas_lock_owner( lck ) != -1 ) {
-            KMP_FATAL( LockStillOwned, func );
-        }
+    char const * const func = "omp_destroy_lock";
+    if ( ( sizeof ( kmp_tas_lock_t ) <= OMP_LOCK_T_SIZE )
+      && __kmp_is_tas_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( __kmp_get_tas_lock_owner( lck ) != -1 ) {
+        KMP_FATAL( LockStillOwned, func );
     }
     __kmp_destroy_tas_lock( lck );
 }
@@ -291,11 +260,9 @@ __kmp_acquire_nested_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_acquire_nested_tas_lock_with_checks( kmp_tas_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_set_nest_lock";
-        if ( ! __kmp_is_tas_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
+    char const * const func = "omp_set_nest_lock";
+    if ( ! __kmp_is_tas_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
     }
     __kmp_acquire_nested_tas_lock( lck, gtid );
 }
@@ -323,11 +290,9 @@ __kmp_test_nested_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
 static int
 __kmp_test_nested_tas_lock_with_checks( kmp_tas_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_test_nest_lock";
-        if ( ! __kmp_is_tas_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
+    char const * const func = "omp_test_nest_lock";
+    if ( ! __kmp_is_tas_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
     }
     return __kmp_test_nested_tas_lock( lck, gtid );
 }
@@ -346,18 +311,16 @@ __kmp_release_nested_tas_lock( kmp_tas_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_release_nested_tas_lock_with_checks( kmp_tas_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_unset_nest_lock";
-        KMP_MB();  /* in case another processor initialized lock */
-        if ( ! __kmp_is_tas_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
-        if ( __kmp_get_tas_lock_owner( lck ) == -1 ) {
-            KMP_FATAL( LockUnsettingFree, func );
-        }
-        if ( __kmp_get_tas_lock_owner( lck ) != gtid ) {
-            KMP_FATAL( LockUnsettingSetByAnother, func );
-        }
+    char const * const func = "omp_unset_nest_lock";
+    KMP_MB();  /* in case another processor initialized lock */
+    if ( ! __kmp_is_tas_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
+    }
+    if ( __kmp_get_tas_lock_owner( lck ) == -1 ) {
+        KMP_FATAL( LockUnsettingFree, func );
+    }
+    if ( __kmp_get_tas_lock_owner( lck ) != gtid ) {
+        KMP_FATAL( LockUnsettingSetByAnother, func );
     }
     __kmp_release_nested_tas_lock( lck, gtid );
 }
@@ -385,14 +348,12 @@ __kmp_destroy_nested_tas_lock( kmp_tas_lock_t *lck )
 static void
 __kmp_destroy_nested_tas_lock_with_checks( kmp_tas_lock_t *lck )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_destroy_nest_lock";
-        if ( ! __kmp_is_tas_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
-        if ( __kmp_get_tas_lock_owner( lck ) != -1 ) {
-            KMP_FATAL( LockStillOwned, func );
-        }
+    char const * const func = "omp_destroy_nest_lock";
+    if ( ! __kmp_is_tas_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
+    }
+    if ( __kmp_get_tas_lock_owner( lck ) != -1 ) {
+        KMP_FATAL( LockStillOwned, func );
     }
     __kmp_destroy_nested_tas_lock( lck );
 }
@@ -506,15 +467,13 @@ __kmp_acquire_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_acquire_futex_lock_with_checks( kmp_futex_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_set_lock";
-        if ( ( sizeof ( kmp_futex_lock_t ) <= OMP_LOCK_T_SIZE )
-          && __kmp_is_futex_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( ( gtid >= 0 ) && ( __kmp_get_futex_lock_owner( lck ) == gtid ) ) {
-            KMP_FATAL( LockIsAlreadyOwned, func );
-        }
+    char const * const func = "omp_set_lock";
+    if ( ( sizeof ( kmp_futex_lock_t ) <= OMP_LOCK_T_SIZE )
+      && __kmp_is_futex_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( ( gtid >= 0 ) && ( __kmp_get_futex_lock_owner( lck ) == gtid ) ) {
+        KMP_FATAL( LockIsAlreadyOwned, func );
     }
     __kmp_acquire_futex_lock( lck, gtid );
 }
@@ -532,12 +491,10 @@ __kmp_test_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
 static int
 __kmp_test_futex_lock_with_checks( kmp_futex_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_test_lock";
-        if ( ( sizeof ( kmp_futex_lock_t ) <= OMP_LOCK_T_SIZE )
-          && __kmp_is_futex_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
+    char const * const func = "omp_test_lock";
+    if ( ( sizeof ( kmp_futex_lock_t ) <= OMP_LOCK_T_SIZE )
+      && __kmp_is_futex_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
     }
     return __kmp_test_futex_lock( lck, gtid );
 }
@@ -575,20 +532,18 @@ __kmp_release_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_release_futex_lock_with_checks( kmp_futex_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_unset_lock";
-        KMP_MB();  /* in case another processor initialized lock */
-        if ( ( sizeof ( kmp_futex_lock_t ) <= OMP_LOCK_T_SIZE )
-          && __kmp_is_futex_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( __kmp_get_futex_lock_owner( lck ) == -1 ) {
-            KMP_FATAL( LockUnsettingFree, func );
-        }
-        if ( ( gtid >= 0 ) && ( __kmp_get_futex_lock_owner( lck ) >= 0 )
-          && ( __kmp_get_futex_lock_owner( lck ) != gtid ) ) {
-            KMP_FATAL( LockUnsettingSetByAnother, func );
-        }
+    char const * const func = "omp_unset_lock";
+    KMP_MB();  /* in case another processor initialized lock */
+    if ( ( sizeof ( kmp_futex_lock_t ) <= OMP_LOCK_T_SIZE )
+      && __kmp_is_futex_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( __kmp_get_futex_lock_owner( lck ) == -1 ) {
+        KMP_FATAL( LockUnsettingFree, func );
+    }
+    if ( ( gtid >= 0 ) && ( __kmp_get_futex_lock_owner( lck ) >= 0 )
+      && ( __kmp_get_futex_lock_owner( lck ) != gtid ) ) {
+        KMP_FATAL( LockUnsettingSetByAnother, func );
     }
     __kmp_release_futex_lock( lck, gtid );
 }
@@ -614,15 +569,13 @@ __kmp_destroy_futex_lock( kmp_futex_lock_t *lck )
 static void
 __kmp_destroy_futex_lock_with_checks( kmp_futex_lock_t *lck )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_destroy_lock";
-        if ( ( sizeof ( kmp_futex_lock_t ) <= OMP_LOCK_T_SIZE )
-          && __kmp_is_futex_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( __kmp_get_futex_lock_owner( lck ) != -1 ) {
-            KMP_FATAL( LockStillOwned, func );
-        }
+    char const * const func = "omp_destroy_lock";
+    if ( ( sizeof ( kmp_futex_lock_t ) <= OMP_LOCK_T_SIZE )
+      && __kmp_is_futex_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( __kmp_get_futex_lock_owner( lck ) != -1 ) {
+        KMP_FATAL( LockStillOwned, func );
     }
     __kmp_destroy_futex_lock( lck );
 }
@@ -649,11 +602,9 @@ __kmp_acquire_nested_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_acquire_nested_futex_lock_with_checks( kmp_futex_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_set_nest_lock";
-        if ( ! __kmp_is_futex_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
+    char const * const func = "omp_set_nest_lock";
+    if ( ! __kmp_is_futex_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
     }
     __kmp_acquire_nested_futex_lock( lck, gtid );
 }
@@ -681,11 +632,9 @@ __kmp_test_nested_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
 static int
 __kmp_test_nested_futex_lock_with_checks( kmp_futex_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_test_nest_lock";
-        if ( ! __kmp_is_futex_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
+    char const * const func = "omp_test_nest_lock";
+    if ( ! __kmp_is_futex_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
     }
     return __kmp_test_nested_futex_lock( lck, gtid );
 }
@@ -704,18 +653,16 @@ __kmp_release_nested_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_release_nested_futex_lock_with_checks( kmp_futex_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_unset_nest_lock";
-        KMP_MB();  /* in case another processor initialized lock */
-        if ( ! __kmp_is_futex_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
-        if ( __kmp_get_futex_lock_owner( lck ) == -1 ) {
-            KMP_FATAL( LockUnsettingFree, func );
-        }
-        if ( __kmp_get_futex_lock_owner( lck ) != gtid ) {
-            KMP_FATAL( LockUnsettingSetByAnother, func );
-        }
+    char const * const func = "omp_unset_nest_lock";
+    KMP_MB();  /* in case another processor initialized lock */
+    if ( ! __kmp_is_futex_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
+    }
+    if ( __kmp_get_futex_lock_owner( lck ) == -1 ) {
+        KMP_FATAL( LockUnsettingFree, func );
+    }
+    if ( __kmp_get_futex_lock_owner( lck ) != gtid ) {
+        KMP_FATAL( LockUnsettingSetByAnother, func );
     }
     __kmp_release_nested_futex_lock( lck, gtid );
 }
@@ -743,14 +690,12 @@ __kmp_destroy_nested_futex_lock( kmp_futex_lock_t *lck )
 static void
 __kmp_destroy_nested_futex_lock_with_checks( kmp_futex_lock_t *lck )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_destroy_nest_lock";
-        if ( ! __kmp_is_futex_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
-        if ( __kmp_get_futex_lock_owner( lck ) != -1 ) {
-            KMP_FATAL( LockStillOwned, func );
-        }
+    char const * const func = "omp_destroy_nest_lock";
+    if ( ! __kmp_is_futex_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
+    }
+    if ( __kmp_get_futex_lock_owner( lck ) != -1 ) {
+        KMP_FATAL( LockStillOwned, func );
     }
     __kmp_destroy_nested_futex_lock( lck );
 }
@@ -781,9 +726,7 @@ __kmp_bakery_check(kmp_uint value, kmp_uint checker)
     if (value == checker) {
         return TRUE;
     }
-    for (pause = checker - value; pause != 0; --pause) {
-        __kmp_static_delay(TRUE);
-    }
+    for (pause = checker - value; pause != 0; --pause);
     return FALSE;
 }
 
@@ -818,24 +761,20 @@ __kmp_acquire_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_acquire_ticket_lock_with_checks( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_set_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_is_ticket_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( ( gtid >= 0 ) && ( __kmp_get_ticket_lock_owner( lck ) == gtid ) ) {
-            KMP_FATAL( LockIsAlreadyOwned, func );
-        }
+    char const * const func = "omp_set_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( __kmp_is_ticket_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( ( gtid >= 0 ) && ( __kmp_get_ticket_lock_owner( lck ) == gtid ) ) {
+        KMP_FATAL( LockIsAlreadyOwned, func );
     }
 
     __kmp_acquire_ticket_lock( lck, gtid );
 
-    if ( __kmp_env_consistency_check ) {
-        lck->lk.owner_id = gtid + 1;
-    }
+    lck->lk.owner_id = gtid + 1;
 }
 
 int
@@ -856,19 +795,17 @@ __kmp_test_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 static int
 __kmp_test_ticket_lock_with_checks( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_test_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_is_ticket_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
+    char const * const func = "omp_test_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( __kmp_is_ticket_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
     }
 
     int retval = __kmp_test_ticket_lock( lck, gtid );
 
-    if ( __kmp_env_consistency_check && retval ) {
+    if ( retval ) {
         lck->lk.owner_id = gtid + 1;
     }
     return retval;
@@ -895,24 +832,22 @@ __kmp_release_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_release_ticket_lock_with_checks( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_unset_lock";
-        KMP_MB();  /* in case another processor initialized lock */
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_is_ticket_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( __kmp_get_ticket_lock_owner( lck ) == -1 ) {
-            KMP_FATAL( LockUnsettingFree, func );
-        }
-        if ( ( gtid >= 0 ) && ( __kmp_get_ticket_lock_owner( lck ) >= 0 )
-          && ( __kmp_get_ticket_lock_owner( lck ) != gtid ) ) {
-            KMP_FATAL( LockUnsettingSetByAnother, func );
-        }
-        lck->lk.owner_id = 0;
+    char const * const func = "omp_unset_lock";
+    KMP_MB();  /* in case another processor initialized lock */
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
     }
+    if ( __kmp_is_ticket_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( __kmp_get_ticket_lock_owner( lck ) == -1 ) {
+        KMP_FATAL( LockUnsettingFree, func );
+    }
+    if ( ( gtid >= 0 ) && ( __kmp_get_ticket_lock_owner( lck ) >= 0 )
+      && ( __kmp_get_ticket_lock_owner( lck ) != gtid ) ) {
+        KMP_FATAL( LockUnsettingSetByAnother, func );
+    }
+    lck->lk.owner_id = 0;
     __kmp_release_ticket_lock( lck, gtid );
 }
 
@@ -947,17 +882,15 @@ __kmp_destroy_ticket_lock( kmp_ticket_lock_t *lck )
 static void
 __kmp_destroy_ticket_lock_with_checks( kmp_ticket_lock_t *lck )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_destroy_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_is_ticket_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( __kmp_get_ticket_lock_owner( lck ) != -1 ) {
-            KMP_FATAL( LockStillOwned, func );
-        }
+    char const * const func = "omp_destroy_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( __kmp_is_ticket_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( __kmp_get_ticket_lock_owner( lck ) != -1 ) {
+        KMP_FATAL( LockStillOwned, func );
     }
     __kmp_destroy_ticket_lock( lck );
 }
@@ -987,14 +920,12 @@ __kmp_acquire_nested_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_acquire_nested_ticket_lock_with_checks( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_set_nest_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( ! __kmp_is_ticket_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
+    char const * const func = "omp_set_nest_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( ! __kmp_is_ticket_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
     }
     __kmp_acquire_nested_ticket_lock( lck, gtid );
 }
@@ -1025,14 +956,12 @@ static int
 __kmp_test_nested_ticket_lock_with_checks( kmp_ticket_lock_t *lck,
   kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_test_nest_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( ! __kmp_is_ticket_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
+    char const * const func = "omp_test_nest_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( ! __kmp_is_ticket_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
     }
     return __kmp_test_nested_ticket_lock( lck, gtid );
 }
@@ -1053,21 +982,19 @@ __kmp_release_nested_ticket_lock( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_release_nested_ticket_lock_with_checks( kmp_ticket_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_unset_nest_lock";
-        KMP_MB();  /* in case another processor initialized lock */
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( ! __kmp_is_ticket_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
-        if ( __kmp_get_ticket_lock_owner( lck ) == -1 ) {
-            KMP_FATAL( LockUnsettingFree, func );
-        }
-        if ( __kmp_get_ticket_lock_owner( lck ) != gtid ) {
-            KMP_FATAL( LockUnsettingSetByAnother, func );
-        }
+    char const * const func = "omp_unset_nest_lock";
+    KMP_MB();  /* in case another processor initialized lock */
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( ! __kmp_is_ticket_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
+    }
+    if ( __kmp_get_ticket_lock_owner( lck ) == -1 ) {
+        KMP_FATAL( LockUnsettingFree, func );
+    }
+    if ( __kmp_get_ticket_lock_owner( lck ) != gtid ) {
+        KMP_FATAL( LockUnsettingSetByAnother, func );
     }
     __kmp_release_nested_ticket_lock( lck, gtid );
 }
@@ -1095,17 +1022,15 @@ __kmp_destroy_nested_ticket_lock( kmp_ticket_lock_t *lck )
 static void
 __kmp_destroy_nested_ticket_lock_with_checks( kmp_ticket_lock_t *lck )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_destroy_nest_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( ! __kmp_is_ticket_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
-        if ( __kmp_get_ticket_lock_owner( lck ) != -1 ) {
-            KMP_FATAL( LockStillOwned, func );
-        }
+    char const * const func = "omp_destroy_nest_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( ! __kmp_is_ticket_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
+    }
+    if ( __kmp_get_ticket_lock_owner( lck ) != -1 ) {
+        KMP_FATAL( LockStillOwned, func );
     }
     __kmp_destroy_nested_ticket_lock( lck );
 }
@@ -1443,24 +1368,20 @@ static void
 __kmp_acquire_queuing_lock_with_checks( kmp_queuing_lock_t *lck,
   kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_set_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_is_queuing_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( __kmp_get_queuing_lock_owner( lck ) == gtid ) {
-            KMP_FATAL( LockIsAlreadyOwned, func );
-        }
+    char const * const func = "omp_set_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( __kmp_is_queuing_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( __kmp_get_queuing_lock_owner( lck ) == gtid ) {
+        KMP_FATAL( LockIsAlreadyOwned, func );
     }
 
     __kmp_acquire_queuing_lock( lck, gtid );
 
-    if ( __kmp_env_consistency_check ) {
-        lck->lk.owner_id = gtid + 1;
-    }
+    lck->lk.owner_id = gtid + 1;
 }
 
 int
@@ -1500,19 +1421,17 @@ __kmp_test_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
 static int
 __kmp_test_queuing_lock_with_checks( kmp_queuing_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_test_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_is_queuing_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
+    char const * const func = "omp_test_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( __kmp_is_queuing_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
     }
 
     int retval = __kmp_test_queuing_lock( lck, gtid );
 
-    if ( __kmp_env_consistency_check && retval ) {
+    if ( retval ) {
         lck->lk.owner_id = gtid + 1;
     }
     return retval;
@@ -1655,23 +1574,21 @@ static void
 __kmp_release_queuing_lock_with_checks( kmp_queuing_lock_t *lck,
   kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_unset_lock";
-        KMP_MB();  /* in case another processor initialized lock */
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_is_queuing_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( __kmp_get_queuing_lock_owner( lck ) == -1 ) {
-            KMP_FATAL( LockUnsettingFree, func );
-        }
-        if ( __kmp_get_queuing_lock_owner( lck ) != gtid ) {
-            KMP_FATAL( LockUnsettingSetByAnother, func );
-        }
-        lck->lk.owner_id = 0;
+    char const * const func = "omp_unset_lock";
+    KMP_MB();  /* in case another processor initialized lock */
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
     }
+    if ( __kmp_is_queuing_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( __kmp_get_queuing_lock_owner( lck ) == -1 ) {
+        KMP_FATAL( LockUnsettingFree, func );
+    }
+    if ( __kmp_get_queuing_lock_owner( lck ) != gtid ) {
+        KMP_FATAL( LockUnsettingSetByAnother, func );
+    }
+    lck->lk.owner_id = 0;
     __kmp_release_queuing_lock( lck, gtid );
 }
 
@@ -1712,17 +1629,15 @@ __kmp_destroy_queuing_lock( kmp_queuing_lock_t *lck )
 static void
 __kmp_destroy_queuing_lock_with_checks( kmp_queuing_lock_t *lck )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_destroy_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_is_queuing_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( __kmp_get_queuing_lock_owner( lck ) != -1 ) {
-            KMP_FATAL( LockStillOwned, func );
-        }
+    char const * const func = "omp_destroy_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( __kmp_is_queuing_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( __kmp_get_queuing_lock_owner( lck ) != -1 ) {
+        KMP_FATAL( LockStillOwned, func );
     }
     __kmp_destroy_queuing_lock( lck );
 }
@@ -1752,14 +1667,12 @@ __kmp_acquire_nested_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_acquire_nested_queuing_lock_with_checks( kmp_queuing_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_set_nest_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( ! __kmp_is_queuing_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
+    char const * const func = "omp_set_nest_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( ! __kmp_is_queuing_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
     }
     __kmp_acquire_nested_queuing_lock( lck, gtid );
 }
@@ -1790,14 +1703,12 @@ static int
 __kmp_test_nested_queuing_lock_with_checks( kmp_queuing_lock_t *lck,
   kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_test_nest_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( ! __kmp_is_queuing_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
+    char const * const func = "omp_test_nest_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( ! __kmp_is_queuing_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
     }
     return __kmp_test_nested_queuing_lock( lck, gtid );
 }
@@ -1818,21 +1729,19 @@ __kmp_release_nested_queuing_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_release_nested_queuing_lock_with_checks( kmp_queuing_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_unset_nest_lock";
-        KMP_MB();  /* in case another processor initialized lock */
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( ! __kmp_is_queuing_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
-        if ( __kmp_get_queuing_lock_owner( lck ) == -1 ) {
-            KMP_FATAL( LockUnsettingFree, func );
-        }
-        if ( __kmp_get_queuing_lock_owner( lck ) != gtid ) {
-            KMP_FATAL( LockUnsettingSetByAnother, func );
-        }
+    char const * const func = "omp_unset_nest_lock";
+    KMP_MB();  /* in case another processor initialized lock */
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( ! __kmp_is_queuing_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
+    }
+    if ( __kmp_get_queuing_lock_owner( lck ) == -1 ) {
+        KMP_FATAL( LockUnsettingFree, func );
+    }
+    if ( __kmp_get_queuing_lock_owner( lck ) != gtid ) {
+        KMP_FATAL( LockUnsettingSetByAnother, func );
     }
     __kmp_release_nested_queuing_lock( lck, gtid );
 }
@@ -1860,17 +1769,15 @@ __kmp_destroy_nested_queuing_lock( kmp_queuing_lock_t *lck )
 static void
 __kmp_destroy_nested_queuing_lock_with_checks( kmp_queuing_lock_t *lck )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_destroy_nest_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( ! __kmp_is_queuing_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
-        if ( __kmp_get_queuing_lock_owner( lck ) != -1 ) {
-            KMP_FATAL( LockStillOwned, func );
-        }
+    char const * const func = "omp_destroy_nest_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( ! __kmp_is_queuing_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
+    }
+    if ( __kmp_get_queuing_lock_owner( lck ) != -1 ) {
+        KMP_FATAL( LockStillOwned, func );
     }
     __kmp_destroy_nested_queuing_lock( lck );
 }
@@ -2032,7 +1939,7 @@ static __inline void _xend()
 static kmp_adaptive_lock_statistics_t destroyedStats;
 
 // To hold the list of live locks.
-static kmp_adaptive_lock_t liveLocks;
+static kmp_adaptive_lock_info_t liveLocks;
 
 // A lock so we can safely update the list of locks.
 static kmp_bootstrap_lock_t chain_lock;
@@ -2041,7 +1948,7 @@ static kmp_bootstrap_lock_t chain_lock;
 void
 __kmp_init_speculative_stats()
 {
-    kmp_adaptive_lock *lck = &liveLocks;
+    kmp_adaptive_lock_info_t *lck = &liveLocks;
 
     memset( ( void * ) & ( lck->stats ), 0, sizeof( lck->stats ) );
     lck->stats.next = lck;
@@ -2056,7 +1963,7 @@ __kmp_init_speculative_stats()
 
 // Insert the lock into the circular list
 static void
-__kmp_remember_lock( kmp_adaptive_lock * lck )
+__kmp_remember_lock( kmp_adaptive_lock_info_t * lck )
 {
     __kmp_acquire_bootstrap_lock( &chain_lock );
 
@@ -2073,27 +1980,27 @@ __kmp_remember_lock( kmp_adaptive_lock * lck )
 }
 
 static void
-__kmp_forget_lock( kmp_adaptive_lock * lck )
+__kmp_forget_lock( kmp_adaptive_lock_info_t * lck )
 {
     KMP_ASSERT( lck->stats.next->stats.prev == lck );
     KMP_ASSERT( lck->stats.prev->stats.next == lck );
 
-    kmp_adaptive_lock * n = lck->stats.next;
-    kmp_adaptive_lock * p = lck->stats.prev;
+    kmp_adaptive_lock_info_t * n = lck->stats.next;
+    kmp_adaptive_lock_info_t * p = lck->stats.prev;
 
     n->stats.prev = p;
     p->stats.next = n;
 }
 
 static void
-__kmp_zero_speculative_stats( kmp_adaptive_lock * lck )
+__kmp_zero_speculative_stats( kmp_adaptive_lock_info_t * lck )
 {
     memset( ( void * )&lck->stats, 0, sizeof( lck->stats ) );
     __kmp_remember_lock( lck );
 }
 
 static void
-__kmp_add_stats( kmp_adaptive_lock_statistics_t * t, kmp_adaptive_lock_t * lck )
+__kmp_add_stats( kmp_adaptive_lock_statistics_t * t, kmp_adaptive_lock_info_t * lck )
 {
     kmp_adaptive_lock_statistics_t volatile *s = &lck->stats;
 
@@ -2106,7 +2013,7 @@ __kmp_add_stats( kmp_adaptive_lock_statistics_t * t, kmp_adaptive_lock_t * lck )
 }
 
 static void
-__kmp_accumulate_speculative_stats( kmp_adaptive_lock * lck)
+__kmp_accumulate_speculative_stats( kmp_adaptive_lock_info_t * lck)
 {
     kmp_adaptive_lock_statistics_t *t = &destroyedStats;
 
@@ -2132,7 +2039,8 @@ FILE * __kmp_open_stats_file()
 
     size_t buffLen = strlen( __kmp_speculative_statsfile ) + 20;
     char buffer[buffLen];
-    snprintf (&buffer[0], buffLen, __kmp_speculative_statsfile, getpid());
+    snprintf (&buffer[0], buffLen, __kmp_speculative_statsfile,
+      (kmp_int32)getpid());
     FILE * result = fopen(&buffer[0], "w");
 
     // Maybe we should issue a warning here...
@@ -2148,7 +2056,7 @@ __kmp_print_speculative_stats()
     FILE * statsFile = __kmp_open_stats_file();
 
     kmp_adaptive_lock_statistics_t total = destroyedStats;
-    kmp_adaptive_lock *lck;
+    kmp_adaptive_lock_info_t *lck;
 
     for (lck = liveLocks.stats.next; lck != &liveLocks; lck = lck->stats.next) {
         __kmp_add_stats( &total, lck );
@@ -2210,7 +2118,7 @@ __kmp_is_unlocked_queuing_lock( kmp_queuing_lock_t *lck )
 
 // Functions for manipulating the badness
 static __inline void
-__kmp_update_badness_after_success( kmp_queuing_lock_t *lck )
+__kmp_update_badness_after_success( kmp_adaptive_lock_t *lck )
 {
     // Reset the badness to zero so we eagerly try to speculate again
     lck->lk.adaptive.badness = 0;
@@ -2219,7 +2127,7 @@ __kmp_update_badness_after_success( kmp_queuing_lock_t *lck )
 
 // Create a bit mask with one more set bit.
 static __inline void
-__kmp_step_badness( kmp_queuing_lock_t *lck )
+__kmp_step_badness( kmp_adaptive_lock_t *lck )
 {
     kmp_uint32 newBadness = ( lck->lk.adaptive.badness << 1 ) | 1;
     if ( newBadness > lck->lk.adaptive.max_badness) {
@@ -2231,7 +2139,7 @@ __kmp_step_badness( kmp_queuing_lock_t *lck )
 
 // Check whether speculation should be attempted.
 static __inline int
-__kmp_should_speculate( kmp_queuing_lock_t *lck, kmp_int32 gtid )
+__kmp_should_speculate( kmp_adaptive_lock_t *lck, kmp_int32 gtid )
 {
     kmp_uint32 badness = lck->lk.adaptive.badness;
     kmp_uint32 attempts= lck->lk.adaptive.acquire_attempts;
@@ -2243,7 +2151,7 @@ __kmp_should_speculate( kmp_queuing_lock_t *lck, kmp_int32 gtid )
 // Does not back off to the non-speculative lock.
 //
 static int
-__kmp_test_adaptive_lock_only( kmp_queuing_lock_t * lck, kmp_int32 gtid )
+__kmp_test_adaptive_lock_only( kmp_adaptive_lock_t * lck, kmp_int32 gtid )
 {
     int retries = lck->lk.adaptive.max_soft_retries;
 
@@ -2264,7 +2172,7 @@ __kmp_test_adaptive_lock_only( kmp_queuing_lock_t * lck, kmp_int32 gtid )
            * and now. This also gets the lock cache line into our read-set,
            * which we need so that we'll abort if anyone later claims it for real.
            */
-            if (! __kmp_is_unlocked_queuing_lock( lck ) )
+            if (! __kmp_is_unlocked_queuing_lock( GET_QLK_PTR(lck) ) )
             {
                 // Lock is now visibly acquired, so someone beat us to it.
                 // Abort the transaction so we'll restart from _xbegin with the
@@ -2299,7 +2207,7 @@ __kmp_test_adaptive_lock_only( kmp_queuing_lock_t * lck, kmp_int32 gtid )
 // if the speculative lock cannot be acquired.
 // We can succeed speculatively, non-speculatively, or fail.
 static int
-__kmp_test_adaptive_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
+__kmp_test_adaptive_lock( kmp_adaptive_lock_t *lck, kmp_int32 gtid )
 {
     // First try to acquire the lock speculatively
     if ( __kmp_should_speculate( lck, gtid ) && __kmp_test_adaptive_lock_only( lck, gtid ) )
@@ -2310,7 +2218,7 @@ __kmp_test_adaptive_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
     lck->lk.adaptive.acquire_attempts++;
 
     // Use base, non-speculative lock.
-    if ( __kmp_test_queuing_lock( lck, gtid ) )
+    if ( __kmp_test_queuing_lock( GET_QLK_PTR(lck), gtid ) )
     {
         KMP_INC_STAT(lck,nonSpeculativeAcquires);
         return 1;       // Lock is acquired (non-speculatively)
@@ -2322,19 +2230,17 @@ __kmp_test_adaptive_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
 }
 
 static int
-__kmp_test_adaptive_lock_with_checks( kmp_queuing_lock_t *lck, kmp_int32 gtid )
+__kmp_test_adaptive_lock_with_checks( kmp_adaptive_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_test_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
+    char const * const func = "omp_test_lock";
+    if ( lck->lk.qlk.initialized != GET_QLK_PTR(lck) ) {
+        KMP_FATAL( LockIsUninitialized, func );
     }
 
     int retval = __kmp_test_adaptive_lock( lck, gtid );
 
-    if ( __kmp_env_consistency_check && retval ) {
-        lck->lk.owner_id = gtid + 1;
+    if ( retval ) {
+        lck->lk.qlk.owner_id = gtid + 1;
     }
     return retval;
 }
@@ -2354,11 +2260,11 @@ __kmp_test_adaptive_lock_with_checks( kmp_queuing_lock_t *lck, kmp_int32 gtid )
 // is no longer fair. However OpenMP makes no guarantee that its
 // locks are fair, so this isn't a real problem.
 static void
-__kmp_acquire_adaptive_lock( kmp_queuing_lock_t * lck, kmp_int32 gtid )
+__kmp_acquire_adaptive_lock( kmp_adaptive_lock_t * lck, kmp_int32 gtid )
 {
     if ( __kmp_should_speculate( lck, gtid ) )
     {
-        if ( __kmp_is_unlocked_queuing_lock( lck ) )
+        if ( __kmp_is_unlocked_queuing_lock( GET_QLK_PTR(lck) ) )
         {
             if ( __kmp_test_adaptive_lock_only( lck , gtid ) )
                 return;
@@ -2372,7 +2278,7 @@ __kmp_acquire_adaptive_lock( kmp_queuing_lock_t * lck, kmp_int32 gtid )
             // All other threads will also see the same result for
             // shouldSpeculate, so will be doing the same if they
             // try to claim the lock from now on.
-            while ( ! __kmp_is_unlocked_queuing_lock( lck ) )
+            while ( ! __kmp_is_unlocked_queuing_lock( GET_QLK_PTR(lck) ) )
             {
                 KMP_INC_STAT(lck,lemmingYields);
                 __kmp_yield (TRUE);
@@ -2387,35 +2293,31 @@ __kmp_acquire_adaptive_lock( kmp_queuing_lock_t * lck, kmp_int32 gtid )
     // Count the non-speculative acquire attempt
     lck->lk.adaptive.acquire_attempts++;
 
-    __kmp_acquire_queuing_lock_timed_template<FALSE>( lck, gtid );
+    __kmp_acquire_queuing_lock_timed_template<FALSE>( GET_QLK_PTR(lck), gtid );
     // We have acquired the base lock, so count that.
     KMP_INC_STAT(lck,nonSpeculativeAcquires );
 }
 
 static void
-__kmp_acquire_adaptive_lock_with_checks( kmp_queuing_lock_t *lck, kmp_int32 gtid )
+__kmp_acquire_adaptive_lock_with_checks( kmp_adaptive_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_set_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_get_queuing_lock_owner( lck ) == gtid ) {
-            KMP_FATAL( LockIsAlreadyOwned, func );
-        }
+    char const * const func = "omp_set_lock";
+    if ( lck->lk.qlk.initialized != GET_QLK_PTR(lck) ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( __kmp_get_queuing_lock_owner( GET_QLK_PTR(lck) ) == gtid ) {
+        KMP_FATAL( LockIsAlreadyOwned, func );
     }
 
     __kmp_acquire_adaptive_lock( lck, gtid );
 
-    if ( __kmp_env_consistency_check ) {
-        lck->lk.owner_id = gtid + 1;
-    }
+    lck->lk.qlk.owner_id = gtid + 1;
 }
 
 static void
-__kmp_release_adaptive_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
+__kmp_release_adaptive_lock( kmp_adaptive_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_is_unlocked_queuing_lock( lck ) )
+    if ( __kmp_is_unlocked_queuing_lock( GET_QLK_PTR(lck) ) )
     {   // If the lock doesn't look claimed we must be speculating.
         // (Or the user's code is buggy and they're releasing without locking;
         // if we had XTEST we'd be able to check that case...)
@@ -2425,34 +2327,32 @@ __kmp_release_adaptive_lock( kmp_queuing_lock_t *lck, kmp_int32 gtid )
     else
     {   // Since the lock *is* visibly locked we're not speculating,
         // so should use the underlying lock's release scheme.
-        __kmp_release_queuing_lock( lck, gtid );
+        __kmp_release_queuing_lock( GET_QLK_PTR(lck), gtid );
     }
 }
 
 static void
-__kmp_release_adaptive_lock_with_checks( kmp_queuing_lock_t *lck, kmp_int32 gtid )
+__kmp_release_adaptive_lock_with_checks( kmp_adaptive_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_unset_lock";
-        KMP_MB();  /* in case another processor initialized lock */
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_get_queuing_lock_owner( lck ) == -1 ) {
-            KMP_FATAL( LockUnsettingFree, func );
-        }
-        if ( __kmp_get_queuing_lock_owner( lck ) != gtid ) {
-            KMP_FATAL( LockUnsettingSetByAnother, func );
-        }
-        lck->lk.owner_id = 0;
+    char const * const func = "omp_unset_lock";
+    KMP_MB();  /* in case another processor initialized lock */
+    if ( lck->lk.qlk.initialized != GET_QLK_PTR(lck) ) {
+        KMP_FATAL( LockIsUninitialized, func );
     }
+    if ( __kmp_get_queuing_lock_owner( GET_QLK_PTR(lck) ) == -1 ) {
+        KMP_FATAL( LockUnsettingFree, func );
+    }
+    if ( __kmp_get_queuing_lock_owner( GET_QLK_PTR(lck) ) != gtid ) {
+        KMP_FATAL( LockUnsettingSetByAnother, func );
+    }
+    lck->lk.qlk.owner_id = 0;
     __kmp_release_adaptive_lock( lck, gtid );
 }
 
 static void
-__kmp_init_adaptive_lock( kmp_queuing_lock_t *lck )
+__kmp_init_adaptive_lock( kmp_adaptive_lock_t *lck )
 {
-    __kmp_init_queuing_lock( lck );
+    __kmp_init_queuing_lock( GET_QLK_PTR(lck) );
     lck->lk.adaptive.badness = 0;
     lck->lk.adaptive.acquire_attempts = 0; //nonSpeculativeAcquireAttempts = 0;
     lck->lk.adaptive.max_soft_retries = __kmp_adaptive_backoff_params.max_soft_retries;
@@ -2464,32 +2364,30 @@ __kmp_init_adaptive_lock( kmp_queuing_lock_t *lck )
 }
 
 static void
-__kmp_init_adaptive_lock_with_checks( kmp_queuing_lock_t * lck )
+__kmp_init_adaptive_lock_with_checks( kmp_adaptive_lock_t * lck )
 {
     __kmp_init_adaptive_lock( lck );
 }
 
 static void
-__kmp_destroy_adaptive_lock( kmp_queuing_lock_t *lck )
+__kmp_destroy_adaptive_lock( kmp_adaptive_lock_t *lck )
 {
 #if KMP_DEBUG_ADAPTIVE_LOCKS
     __kmp_accumulate_speculative_stats( &lck->lk.adaptive );
 #endif
-    __kmp_destroy_queuing_lock (lck);
+    __kmp_destroy_queuing_lock (GET_QLK_PTR(lck));
     // Nothing needed for the speculative part.
 }
 
 static void
-__kmp_destroy_adaptive_lock_with_checks( kmp_queuing_lock_t *lck )
+__kmp_destroy_adaptive_lock_with_checks( kmp_adaptive_lock_t *lck )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_destroy_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_get_queuing_lock_owner( lck ) != -1 ) {
-            KMP_FATAL( LockStillOwned, func );
-        }
+    char const * const func = "omp_destroy_lock";
+    if ( lck->lk.qlk.initialized != GET_QLK_PTR(lck) ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( __kmp_get_queuing_lock_owner( GET_QLK_PTR(lck) ) != -1 ) {
+        KMP_FATAL( LockStillOwned, func );
     }
     __kmp_destroy_adaptive_lock( lck );
 }
@@ -2544,9 +2442,6 @@ __kmp_acquire_drdpa_lock_timed_template( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
     KMP_FSYNC_PREPARE(lck);
     KMP_INIT_YIELD(spins);
     while (TCR_8(polls[ticket & mask]).poll < ticket) { // volatile load
-        __kmp_static_delay(TRUE);
-
-        //
         // If we are oversubscribed,
         // or have waited a bit (and KMP_LIBRARY=turnaround), then yield.
         // CPU Pause is in the macros for yield.
@@ -2691,24 +2586,20 @@ __kmp_acquire_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_acquire_drdpa_lock_with_checks( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_set_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_is_drdpa_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( ( gtid >= 0 ) && ( __kmp_get_drdpa_lock_owner( lck ) == gtid ) ) {
-            KMP_FATAL( LockIsAlreadyOwned, func );
-        }
+    char const * const func = "omp_set_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( __kmp_is_drdpa_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( ( gtid >= 0 ) && ( __kmp_get_drdpa_lock_owner( lck ) == gtid ) ) {
+        KMP_FATAL( LockIsAlreadyOwned, func );
     }
 
     __kmp_acquire_drdpa_lock( lck, gtid );
 
-    if ( __kmp_env_consistency_check ) {
-        lck->lk.owner_id = gtid + 1;
-    }
+    lck->lk.owner_id = gtid + 1;
 }
 
 int
@@ -2750,19 +2641,17 @@ __kmp_test_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 static int
 __kmp_test_drdpa_lock_with_checks( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_test_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_is_drdpa_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
+    char const * const func = "omp_test_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( __kmp_is_drdpa_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
     }
 
     int retval = __kmp_test_drdpa_lock( lck, gtid );
 
-    if ( __kmp_env_consistency_check && retval ) {
+    if ( retval ) {
         lck->lk.owner_id = gtid + 1;
     }
     return retval;
@@ -2790,24 +2679,22 @@ __kmp_release_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_release_drdpa_lock_with_checks( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_unset_lock";
-        KMP_MB();  /* in case another processor initialized lock */
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_is_drdpa_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( __kmp_get_drdpa_lock_owner( lck ) == -1 ) {
-            KMP_FATAL( LockUnsettingFree, func );
-        }
-        if ( ( gtid >= 0 ) && ( __kmp_get_drdpa_lock_owner( lck ) >= 0 )
-          && ( __kmp_get_drdpa_lock_owner( lck ) != gtid ) ) {
-            KMP_FATAL( LockUnsettingSetByAnother, func );
-        }
-        lck->lk.owner_id = 0;
+    char const * const func = "omp_unset_lock";
+    KMP_MB();  /* in case another processor initialized lock */
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
     }
+    if ( __kmp_is_drdpa_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( __kmp_get_drdpa_lock_owner( lck ) == -1 ) {
+        KMP_FATAL( LockUnsettingFree, func );
+    }
+    if ( ( gtid >= 0 ) && ( __kmp_get_drdpa_lock_owner( lck ) >= 0 )
+      && ( __kmp_get_drdpa_lock_owner( lck ) != gtid ) ) {
+        KMP_FATAL( LockUnsettingSetByAnother, func );
+    }
+    lck->lk.owner_id = 0;
     __kmp_release_drdpa_lock( lck, gtid );
 }
 
@@ -2861,17 +2748,15 @@ __kmp_destroy_drdpa_lock( kmp_drdpa_lock_t *lck )
 static void
 __kmp_destroy_drdpa_lock_with_checks( kmp_drdpa_lock_t *lck )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_destroy_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( __kmp_is_drdpa_lock_nestable( lck ) ) {
-            KMP_FATAL( LockNestableUsedAsSimple, func );
-        }
-        if ( __kmp_get_drdpa_lock_owner( lck ) != -1 ) {
-            KMP_FATAL( LockStillOwned, func );
-        }
+    char const * const func = "omp_destroy_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( __kmp_is_drdpa_lock_nestable( lck ) ) {
+        KMP_FATAL( LockNestableUsedAsSimple, func );
+    }
+    if ( __kmp_get_drdpa_lock_owner( lck ) != -1 ) {
+        KMP_FATAL( LockStillOwned, func );
     }
     __kmp_destroy_drdpa_lock( lck );
 }
@@ -2901,14 +2786,12 @@ __kmp_acquire_nested_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_acquire_nested_drdpa_lock_with_checks( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_set_nest_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( ! __kmp_is_drdpa_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
+    char const * const func = "omp_set_nest_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( ! __kmp_is_drdpa_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
     }
     __kmp_acquire_nested_drdpa_lock( lck, gtid );
 }
@@ -2938,14 +2821,12 @@ __kmp_test_nested_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 static int
 __kmp_test_nested_drdpa_lock_with_checks( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_test_nest_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( ! __kmp_is_drdpa_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
+    char const * const func = "omp_test_nest_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( ! __kmp_is_drdpa_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
     }
     return __kmp_test_nested_drdpa_lock( lck, gtid );
 }
@@ -2966,21 +2847,19 @@ __kmp_release_nested_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 static void
 __kmp_release_nested_drdpa_lock_with_checks( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_unset_nest_lock";
-        KMP_MB();  /* in case another processor initialized lock */
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( ! __kmp_is_drdpa_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
-        if ( __kmp_get_drdpa_lock_owner( lck ) == -1 ) {
-            KMP_FATAL( LockUnsettingFree, func );
-        }
-        if ( __kmp_get_drdpa_lock_owner( lck ) != gtid ) {
-            KMP_FATAL( LockUnsettingSetByAnother, func );
-        }
+    char const * const func = "omp_unset_nest_lock";
+    KMP_MB();  /* in case another processor initialized lock */
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( ! __kmp_is_drdpa_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
+    }
+    if ( __kmp_get_drdpa_lock_owner( lck ) == -1 ) {
+        KMP_FATAL( LockUnsettingFree, func );
+    }
+    if ( __kmp_get_drdpa_lock_owner( lck ) != gtid ) {
+        KMP_FATAL( LockUnsettingSetByAnother, func );
     }
     __kmp_release_nested_drdpa_lock( lck, gtid );
 }
@@ -3008,17 +2887,15 @@ __kmp_destroy_nested_drdpa_lock( kmp_drdpa_lock_t *lck )
 static void
 __kmp_destroy_nested_drdpa_lock_with_checks( kmp_drdpa_lock_t *lck )
 {
-    if ( __kmp_env_consistency_check ) {
-        char const * const func = "omp_destroy_nest_lock";
-        if ( lck->lk.initialized != lck ) {
-            KMP_FATAL( LockIsUninitialized, func );
-        }
-        if ( ! __kmp_is_drdpa_lock_nestable( lck ) ) {
-            KMP_FATAL( LockSimpleUsedAsNestable, func );
-        }
-        if ( __kmp_get_drdpa_lock_owner( lck ) != -1 ) {
-            KMP_FATAL( LockStillOwned, func );
-        }
+    char const * const func = "omp_destroy_nest_lock";
+    if ( lck->lk.initialized != lck ) {
+        KMP_FATAL( LockIsUninitialized, func );
+    }
+    if ( ! __kmp_is_drdpa_lock_nestable( lck ) ) {
+        KMP_FATAL( LockSimpleUsedAsNestable, func );
+    }
+    if ( __kmp_get_drdpa_lock_owner( lck ) != -1 ) {
+        KMP_FATAL( LockStillOwned, func );
     }
     __kmp_destroy_nested_drdpa_lock( lck );
 }
@@ -3106,49 +2983,18 @@ void __kmp_set_user_lock_vptrs( kmp_lock_kind_t user_lock_kind )
               ( kmp_int32 ( * )( kmp_user_lock_p ) )
               ( &__kmp_get_tas_lock_owner );
 
-            __kmp_acquire_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_acquire_tas_lock_with_checks );
-
-            __kmp_test_user_lock_with_checks_ =
-              ( int  ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_test_tas_lock_with_checks );
-
-            __kmp_release_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_release_tas_lock_with_checks );
-
-            __kmp_init_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_init_tas_lock_with_checks );
+            if ( __kmp_env_consistency_check ) {
+                KMP_BIND_USER_LOCK_WITH_CHECKS(tas);
+                KMP_BIND_NESTED_USER_LOCK_WITH_CHECKS(tas);
+            }
+            else {
+                KMP_BIND_USER_LOCK(tas);
+                KMP_BIND_NESTED_USER_LOCK(tas);
+            }
 
             __kmp_destroy_user_lock_ =
               ( void ( * )( kmp_user_lock_p ) )
               ( &__kmp_destroy_tas_lock );
-
-            __kmp_destroy_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_destroy_tas_lock_with_checks );
-
-            __kmp_acquire_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_acquire_nested_tas_lock_with_checks );
-
-            __kmp_test_nested_user_lock_with_checks_ =
-              ( int  ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_test_nested_tas_lock_with_checks );
-
-            __kmp_release_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_release_nested_tas_lock_with_checks );
-
-            __kmp_init_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_init_nested_tas_lock_with_checks );
-
-            __kmp_destroy_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_destroy_nested_tas_lock_with_checks );
 
              __kmp_is_user_lock_initialized_ =
                ( int ( * )( kmp_user_lock_p ) ) NULL;
@@ -3177,49 +3023,18 @@ void __kmp_set_user_lock_vptrs( kmp_lock_kind_t user_lock_kind )
               ( kmp_int32 ( * )( kmp_user_lock_p ) )
               ( &__kmp_get_futex_lock_owner );
 
-            __kmp_acquire_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_acquire_futex_lock_with_checks );
-
-            __kmp_test_user_lock_with_checks_ =
-              ( int  ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_test_futex_lock_with_checks );
-
-            __kmp_release_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_release_futex_lock_with_checks );
-
-            __kmp_init_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_init_futex_lock_with_checks );
+            if ( __kmp_env_consistency_check ) {
+                KMP_BIND_USER_LOCK_WITH_CHECKS(futex);
+                KMP_BIND_NESTED_USER_LOCK_WITH_CHECKS(futex);
+            }
+            else {
+                KMP_BIND_USER_LOCK(futex);
+                KMP_BIND_NESTED_USER_LOCK(futex);
+            }
 
             __kmp_destroy_user_lock_ =
               ( void ( * )( kmp_user_lock_p ) )
               ( &__kmp_destroy_futex_lock );
-
-            __kmp_destroy_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_destroy_futex_lock_with_checks );
-
-            __kmp_acquire_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_acquire_nested_futex_lock_with_checks );
-
-            __kmp_test_nested_user_lock_with_checks_ =
-              ( int  ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_test_nested_futex_lock_with_checks );
-
-            __kmp_release_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_release_nested_futex_lock_with_checks );
-
-            __kmp_init_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_init_nested_futex_lock_with_checks );
-
-            __kmp_destroy_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_destroy_nested_futex_lock_with_checks );
 
              __kmp_is_user_lock_initialized_ =
                ( int ( * )( kmp_user_lock_p ) ) NULL;
@@ -3248,49 +3063,18 @@ void __kmp_set_user_lock_vptrs( kmp_lock_kind_t user_lock_kind )
               ( kmp_int32 ( * )( kmp_user_lock_p ) )
               ( &__kmp_get_ticket_lock_owner );
 
-            __kmp_acquire_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_acquire_ticket_lock_with_checks );
-
-            __kmp_test_user_lock_with_checks_ =
-              ( int  ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_test_ticket_lock_with_checks );
-
-            __kmp_release_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_release_ticket_lock_with_checks );
-
-            __kmp_init_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_init_ticket_lock_with_checks );
+            if ( __kmp_env_consistency_check ) {
+                KMP_BIND_USER_LOCK_WITH_CHECKS(ticket);
+                KMP_BIND_NESTED_USER_LOCK_WITH_CHECKS(ticket);
+            }
+            else {
+                KMP_BIND_USER_LOCK(ticket);
+                KMP_BIND_NESTED_USER_LOCK(ticket);
+            }
 
             __kmp_destroy_user_lock_ =
               ( void ( * )( kmp_user_lock_p ) )
               ( &__kmp_destroy_ticket_lock );
-
-            __kmp_destroy_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_destroy_ticket_lock_with_checks );
-
-            __kmp_acquire_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_acquire_nested_ticket_lock_with_checks );
-
-            __kmp_test_nested_user_lock_with_checks_ =
-              ( int  ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_test_nested_ticket_lock_with_checks );
-
-            __kmp_release_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_release_nested_ticket_lock_with_checks );
-
-            __kmp_init_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_init_nested_ticket_lock_with_checks );
-
-            __kmp_destroy_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_destroy_nested_ticket_lock_with_checks );
 
              __kmp_is_user_lock_initialized_ =
                ( int ( * )( kmp_user_lock_p ) )
@@ -3322,49 +3106,18 @@ void __kmp_set_user_lock_vptrs( kmp_lock_kind_t user_lock_kind )
               ( kmp_int32 ( * )( kmp_user_lock_p ) )
               ( &__kmp_get_queuing_lock_owner );
 
-            __kmp_acquire_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_acquire_queuing_lock_with_checks );
-
-            __kmp_test_user_lock_with_checks_ =
-              ( int  ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_test_queuing_lock_with_checks );
-
-            __kmp_release_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_release_queuing_lock_with_checks );
-
-            __kmp_init_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_init_queuing_lock_with_checks );
+            if ( __kmp_env_consistency_check ) {
+                KMP_BIND_USER_LOCK_WITH_CHECKS(queuing);
+                KMP_BIND_NESTED_USER_LOCK_WITH_CHECKS(queuing);
+            }
+            else {
+                KMP_BIND_USER_LOCK(queuing);
+                KMP_BIND_NESTED_USER_LOCK(queuing);
+            }
 
             __kmp_destroy_user_lock_ =
               ( void ( * )( kmp_user_lock_p ) )
               ( &__kmp_destroy_queuing_lock );
-
-            __kmp_destroy_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_destroy_queuing_lock_with_checks );
-
-            __kmp_acquire_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_acquire_nested_queuing_lock_with_checks );
-
-            __kmp_test_nested_user_lock_with_checks_ =
-              ( int  ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_test_nested_queuing_lock_with_checks );
-
-            __kmp_release_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_release_nested_queuing_lock_with_checks );
-
-            __kmp_init_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_init_nested_queuing_lock_with_checks );
-
-            __kmp_destroy_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_destroy_nested_queuing_lock_with_checks );
 
              __kmp_is_user_lock_initialized_ =
                ( int ( * )( kmp_user_lock_p ) )
@@ -3390,32 +3143,19 @@ void __kmp_set_user_lock_vptrs( kmp_lock_kind_t user_lock_kind )
 
 #if KMP_USE_ADAPTIVE_LOCKS
         case lk_adaptive: {
-            __kmp_base_user_lock_size = sizeof( kmp_base_queuing_lock_t );
-            __kmp_user_lock_size = sizeof( kmp_queuing_lock_t );
+            __kmp_base_user_lock_size = sizeof( kmp_base_adaptive_lock_t );
+            __kmp_user_lock_size = sizeof( kmp_adaptive_lock_t );
 
             __kmp_get_user_lock_owner_ =
               ( kmp_int32 ( * )( kmp_user_lock_p ) )
               ( &__kmp_get_queuing_lock_owner );
 
-            __kmp_acquire_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_acquire_adaptive_lock_with_checks );
-
-            __kmp_test_user_lock_with_checks_ =
-              ( int  ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_test_adaptive_lock_with_checks );
-
-            __kmp_release_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_release_adaptive_lock_with_checks );
-
-            __kmp_init_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_init_adaptive_lock_with_checks );
-
-            __kmp_destroy_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_destroy_adaptive_lock_with_checks );
+            if ( __kmp_env_consistency_check ) {
+                KMP_BIND_USER_LOCK_WITH_CHECKS(adaptive);
+            }
+            else {
+                KMP_BIND_USER_LOCK(adaptive);
+            }
 
             __kmp_destroy_user_lock_ =
               ( void ( * )( kmp_user_lock_p ) )
@@ -3453,49 +3193,18 @@ void __kmp_set_user_lock_vptrs( kmp_lock_kind_t user_lock_kind )
               ( kmp_int32 ( * )( kmp_user_lock_p ) )
               ( &__kmp_get_drdpa_lock_owner );
 
-            __kmp_acquire_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_acquire_drdpa_lock_with_checks );
-
-            __kmp_test_user_lock_with_checks_ =
-              ( int  ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_test_drdpa_lock_with_checks );
-
-            __kmp_release_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_release_drdpa_lock_with_checks );
-
-            __kmp_init_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_init_drdpa_lock_with_checks );
+            if ( __kmp_env_consistency_check ) {
+                KMP_BIND_USER_LOCK_WITH_CHECKS(drdpa);
+                KMP_BIND_NESTED_USER_LOCK_WITH_CHECKS(drdpa);
+            }
+            else {
+                KMP_BIND_USER_LOCK(drdpa);
+                KMP_BIND_NESTED_USER_LOCK(drdpa);
+            }
 
             __kmp_destroy_user_lock_ =
               ( void ( * )( kmp_user_lock_p ) )
               ( &__kmp_destroy_drdpa_lock );
-
-            __kmp_destroy_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_destroy_drdpa_lock_with_checks );
-
-            __kmp_acquire_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_acquire_nested_drdpa_lock_with_checks );
-
-            __kmp_test_nested_user_lock_with_checks_ =
-              ( int  ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_test_nested_drdpa_lock_with_checks );
-
-            __kmp_release_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p, kmp_int32 ) )
-              ( &__kmp_release_nested_drdpa_lock_with_checks );
-
-            __kmp_init_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_init_nested_drdpa_lock_with_checks );
-
-            __kmp_destroy_nested_user_lock_with_checks_ =
-              ( void ( * )( kmp_user_lock_p ) )
-              ( &__kmp_destroy_nested_drdpa_lock_with_checks );
 
              __kmp_is_user_lock_initialized_ =
                ( int ( * )( kmp_user_lock_p ) )

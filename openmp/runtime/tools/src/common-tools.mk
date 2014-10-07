@@ -48,6 +48,11 @@ ifeq "$(OPTIMIZATION)" "on"
     cpp-flags += -D NDEBUG
 else
     cpp-flags += -D _DEBUG -D BUILD_DEBUG
+    ifeq "$(os)" "win"
+        # This is forced since VS2010 tool produces inconsistent directives
+        # between objects, resulting in a link failure.
+        cpp-flags += -D _ITERATOR_DEBUG_LEVEL=0
+    endif
 endif
 
 # --- Linux* OS, Intel(R) Many Integrated Core Architecture and OS X* definitions ---
@@ -372,6 +377,11 @@ ifeq "$(os)" "win"
         c-flags   += -RTC1
         cxx-flags += -RTC1
     endif
+    # SDL (Security Development Lifecycle) flags:
+    #   GS - Stack-based Buffer Overrun Detection
+    #   DynamicBase - Image Randomization
+    c-flags   += -GS -DynamicBase  
+    cxx-flags += -GS -DynamicBase  
     # --- Assembler ---
     ifeq "$(arch)" "32"
         as   = ml
@@ -385,12 +395,19 @@ ifeq "$(os)" "win"
     ifneq "$(filter ml ml64,$(as))" ""
         as-out   = -Fo
         as-flags += -nologo -c
+        # SDL (Security Development Lifecycle) flags:
+        #   DynamicBase - Image Randomization
+	as-flags += -DynamicBase 
     endif
     # --- Fortran ---
     fort        = ifort
     fort-out    = -o$(space)
     fort-flags += -nologo
     fort-flags += -c
+    # SDL (Security Development Lifecycle) flags:
+    #   GS - Stack-based Buffer Overrun Detection
+    #   DynamicBase - Image Randomization
+    fort-flags += -GS -DynamicBase 
     # --- Librarian ---
     ar     = link.exe
     ar-out = -out:
@@ -433,6 +450,9 @@ ifeq "$(os)" "win"
         as-flags += -safeseh
         ld-flags += -safeseh
     endif
+    # SDL (Security Development Lifecycle) flags:
+    #   NXCompat - Data Execution Prevention
+    ld-flags += -NXCompat -DynamicBase
 endif
 
 # end of file #

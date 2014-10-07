@@ -272,6 +272,8 @@ sub get_deps_link($) {
             } elsif ( $line =~ m{^\s*-+\s*$} ) {
             } elsif ( $line =~ m{^\s*/alternatename\:.*$} ) {
             } elsif ( $line =~ m{^\s*$} ) {
+            } elsif ( $line =~ m{^\s*/FAILIFMISMATCH\:.*$} ) {
+                # This directive is produced only by _MSC_VER=1600
             } elsif ( $line =~ m{^\s*Summary\s*$} ) {
                 last;
             } else {

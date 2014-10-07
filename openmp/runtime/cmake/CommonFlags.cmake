@@ -1,3 +1,14 @@
+#
+#//===----------------------------------------------------------------------===//
+#//
+#//                     The LLVM Compiler Infrastructure
+#//
+#// This file is dual licensed under the MIT and the University of Illinois Open
+#// Source Licenses. See LICENSE.txt for details.
+#//
+#//===----------------------------------------------------------------------===//
+#
+
 # This file holds the common flags independent of compiler
 # The flag types are: 
 #   1) Assembly flags          (append_asm_flags_common)
@@ -71,22 +82,21 @@ function(append_linker_flags_common input_ld_flags input_ld_flags_libs)
     set(local_ld_flags)
     set(local_ld_flags_libs)
 
-    #################################
-    # Windows linker flags
-    if(${WINDOWS}) 
+    if(${USE_PREDEFINED_LINKER_FLAGS})
 
-    ##################
-    # MAC linker flags
-    elseif(${MAC})
-        if(${USE_PREDEFINED_LINKER_FLAGS})
+        #################################
+        # Windows linker flags
+        if(${WINDOWS}) 
+
+        ##################
+        # MAC linker flags
+        elseif(${MAC})
             append_linker_flags("-single_module")
             append_linker_flags("-current_version ${version}.0")
             append_linker_flags("-compatibility_version ${version}.0")
-        endif()
-    #####################################################################################
-    # Intel(R) Many Integrated Core Architecture (Intel(R) MIC Architecture) linker flags
-    elseif(${MIC})
-        if(${USE_PREDEFINED_LINKER_FLAGS})
+        #####################################################################################
+        # Intel(R) Many Integrated Core Architecture (Intel(R) MIC Architecture) linker flags
+        elseif(${MIC})
             append_linker_flags("-Wl,-x")
             append_linker_flags("-Wl,--warn-shared-textrel") #  Warn if the linker adds a DT_TEXTREL to a shared object.
             append_linker_flags("-Wl,--as-needed")
@@ -98,13 +108,11 @@ function(append_linker_flags_common input_ld_flags input_ld_flags_libs)
             if(${STATS_GATHERING})
                 append_linker_flags_library("-Wl,-lstdc++") # link in standard c++ library (stats-gathering needs it)
             endif()
-        endif()
-    #########################
-    # Unix based linker flags
-    else()
-        # For now, always include --version-script flag on Unix systems.
-        append_linker_flags("-Wl,--version-script=${src_dir}/exports_so.txt") # Use exports_so.txt as version script to create versioned symbols for ELF libraries
-        if(${USE_PREDEFINED_LINKER_FLAGS})
+        #########################
+        # Unix based linker flags
+        else()
+            # For now, always include --version-script flag on Unix systems.
+            append_linker_flags("-Wl,--version-script=${src_dir}/exports_so.txt") # Use exports_so.txt as version script to create versioned symbols for ELF libraries
             append_linker_flags("-Wl,-z,noexecstack") #  Marks the object as not requiring executable stack.
             append_linker_flags("-Wl,--as-needed")    #  Only adds library dependencies as they are needed. (if libiomp5 actually uses a function from the library, then add it)
             if(NOT ${STUBS_LIBRARY})
@@ -117,8 +125,9 @@ function(append_linker_flags_common input_ld_flags input_ld_flags_libs)
                     append_linker_flags_library("-Wl,-ldl") # link in libdl (dynamic loader library)
                 endif()
             endif()
-        endif() # if(${USE_PREDEFINED_LINKER_FLAGS})
-    endif() # if(${OPERATING_SYSTEM}) ...
+        endif() # if(${OPERATING_SYSTEM}) ...
+
+    endif() # USE_PREDEFINED_LINKER_FLAGS
 
     set(${input_ld_flags}      "${${input_ld_flags}}"      "${local_ld_flags}"      "${USER_LD_FLAGS}"     PARENT_SCOPE)
     set(${input_ld_flags_libs} "${${input_ld_flags_libs}}" "${local_ld_flags_libs}" "${USER_LD_LIB_FLAGS}" PARENT_SCOPE)

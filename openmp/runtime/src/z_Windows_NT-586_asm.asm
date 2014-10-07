@@ -1,7 +1,7 @@
 ;  z_Windows_NT-586_asm.asm:  - microtasking routines specifically
 ;    written for IA-32 architecture and Intel(R) 64 running Windows* OS
-;  $Revision: 42487 $
-;  $Date: 2013-07-08 08:11:23 -0500 (Mon, 08 Jul 2013) $
+;  $Revision: 43373 $
+;  $Date: 2014-08-07 09:17:32 -0500 (Thu, 07 Aug 2014) $
 
 ;
 ;//===----------------------------------------------------------------------===//
@@ -495,121 +495,6 @@ lock    cmpxchg8b QWORD PTR [edi]
 ___kmp_compare_and_store_ret64 ENDP
 _TEXT     ENDS
 
-
-;------------------------------------------------------------------------
-;
-; FUNCTION ___kmp_test_then_add_real32
-;
-; kmp_real32
-; __kmp_test_then_add_real32( volatile kmp_real32 *addr, kmp_real32 data );
-;
-
-PUBLIC  ___kmp_test_then_add_real32
-_TEXT   SEGMENT
-        ALIGN 16
-_addr$ = 8
-_data$ = 12
-_old_value$ = -4
-_new_value$ = -8
-
-___kmp_test_then_add_real32 PROC NEAR
-        push    ebp
-        mov     ebp, esp
-        sub     esp, 8
-        push    esi
-        push    ebx
-        mov     esi, DWORD PTR _addr$[ebp]
-$L22:
-        fld     DWORD PTR [esi]
-                        ;; load <addr>
-        fst     DWORD PTR _old_value$[ebp]
-                        ;; store into old_value
-        fadd    DWORD PTR _data$[ebp]
-        fstp    DWORD PTR _new_value$[ebp]
-                        ;; new_value = old_value + data
-
-        mov     eax, DWORD PTR _old_value$[ebp]
-                        ;; load old_value
-        mov     ebx, DWORD PTR _new_value$[ebp]
-                        ;; load new_value
-
-lock    cmpxchg DWORD PTR [esi], ebx
-                        ;; Compare EAX with <addr>.  If equal set
-                        ;; ZF and load EBX into <addr>.  Else, clear
-                        ;; ZF and load <addr> into EAX.
-        jnz     SHORT $L22
-
-
-        fld     DWORD PTR _old_value$[ebp]
-                        ;; return old_value
-        pop     ebx
-        pop     esi
-        mov     esp, ebp
-        pop     ebp
-        ret     0
-___kmp_test_then_add_real32 ENDP
-_TEXT     ENDS
-
-;------------------------------------------------------------------------
-;
-; FUNCTION ___kmp_test_then_add_real64
-;
-; kmp_real64
-; __kmp_test_then_add_real64( volatile kmp_real64 *addr, kmp_real64 data );
-;
-
-PUBLIC  ___kmp_test_then_add_real64
-_TEXT   SEGMENT
-        ALIGN 16
-_addr$ = 8
-_data$ = 12
-_old_value$ = -8
-_new_value$ = -16
-
-___kmp_test_then_add_real64 PROC NEAR
-        push    ebp
-        mov     ebp, esp
-        sub     esp, 16
-        push    esi
-        push    ebx
-        push    ecx
-        push    edx
-        mov     esi, DWORD PTR _addr$[ebp]
-$L44:
-        fld     QWORD PTR [esi]
-                        ;; load <addr>
-        fst     QWORD PTR _old_value$[ebp]
-                        ;; store into old_value
-        fadd    QWORD PTR _data$[ebp]
-        fstp    QWORD PTR _new_value$[ebp]
-                        ;; new_value = old_value + data
-
-        mov     edx, DWORD PTR _old_value$[ebp+4]
-        mov     eax, DWORD PTR _old_value$[ebp]
-                        ;; load old_value
-        mov     ecx, DWORD PTR _new_value$[ebp+4]
-        mov     ebx, DWORD PTR _new_value$[ebp]
-                        ;; load new_value
-
-lock    cmpxchg8b QWORD PTR [esi]
-                        ;; Compare EDX:EAX with <addr>.  If equal set
-                        ;; ZF and load ECX:EBX into <addr>.  Else, clear
-                        ;; ZF and load <addr> into EDX:EAX.
-        jnz     SHORT $L44
-
-
-        fld     QWORD PTR _old_value$[ebp]
-                        ;; return old_value
-        pop     edx
-        pop     ecx
-        pop     ebx
-        pop     esi
-        mov     esp, ebp
-        pop     ebp
-        ret     0
-___kmp_test_then_add_real64 ENDP
-_TEXT   ENDS
-
 ;------------------------------------------------------------------------
 ;
 ; FUNCTION ___kmp_load_x87_fpu_control_word
@@ -785,27 +670,6 @@ endif
 ; ==================================== Intel(R) 64 ===================================
 
 ifdef _M_AMD64
-
-;------------------------------------------------------------------------
-;
-; FUNCTION __kmp_x86_pause
-;
-; void
-; __kmp_x86_pause( void )
-;
-
-PUBLIC  __kmp_x86_pause
-_TEXT   SEGMENT
-        ALIGN 16
-__kmp_x86_pause PROC ;NEAR
-
-        db      0f3H
-        db      090H    ; pause
-        ret
-
-__kmp_x86_pause ENDP
-_TEXT   ENDS
-
 
 ;------------------------------------------------------------------------
 ;
@@ -1339,93 +1203,6 @@ lock    xchg    QWORD PTR [rcx], rax
 
 __kmp_xchg_real64 ENDP
 _TEXT   ENDS
-
-
-;------------------------------------------------------------------------
-;
-; FUNCTION __kmp_test_then_add_real32
-;
-; kmp_real32
-; __kmp_test_then_add_real32( volatile kmp_real32 *addr, kmp_real32 data );
-;
-; parameters:
-;	addr:	rcx
-;	data:	xmm1 (lower 4 bytes)
-;
-; return:	xmm0 (lower 4 bytes)
-
-PUBLIC  __kmp_test_then_add_real32
-_TEXT   SEGMENT
-        ALIGN 16
-
-__kmp_test_then_add_real32 PROC ;NEAR
-$__kmp_real32_loop:
-        movss   xmm0, DWORD PTR [rcx]	; load value at <addr>
-	movd	eax, xmm0		; save old value at <addr>
-
-	addss	xmm0, xmm1		; new value = old value + <data>
-	movd	edx, xmm0		; move new value to GP reg.
-
-lock    cmpxchg DWORD PTR [rcx], edx
-                        ; Compare EAX with <addr>.  If equal set
-                        ; ZF and exchange EDX with <addr>.  Else, clear
-                        ; ZF and load <addr> into EAX.
-        jz     	SHORT $__kmp_real32_success
-
-        db      0f3H
-        db      090H    		; pause
-
-	jmp	SHORT $__kmp_real32_loop
-
-$__kmp_real32_success:
-	movd	xmm0, eax		; load old value into return register
-        ret
-__kmp_test_then_add_real32 ENDP
-_TEXT     ENDS
-
-
-;------------------------------------------------------------------------
-;
-; FUNCTION __kmp_test_then_add_real64
-;
-; kmp_real64
-; __kmp_test_then_add_real64( volatile kmp_real64 *addr, kmp_real64 data );
-;
-; parameters:
-;	addr:	rcx
-;	data:	xmm1 (lower 8 bytes)
-;
-; return:	xmm0 (lower 8 bytes)
-
-PUBLIC  __kmp_test_then_add_real64
-_TEXT   SEGMENT
-        ALIGN 16
-
-__kmp_test_then_add_real64 PROC ;NEAR
-$__kmp_real64_loop:
-        movlpd  xmm0, QWORD PTR [rcx]	; load value at <addr>
-	movd	rax, xmm0		; save old value at <addr>
-
-	addsd	xmm0, xmm1		; new value = old value + <data>
-	movd	rdx, xmm0		; move new value to GP reg.
-
-lock    cmpxchg QWORD PTR [rcx], rdx
-                        ; Compare RAX with <addr>.  If equal set
-                        ; ZF and exchange RDX with <addr>.  Else, clear
-                        ; ZF and load <addr> into RAX.
-        jz     	SHORT $__kmp_real64_success
-
-        db      0f3H
-        db      090H    		; pause
-
-	jmp	SHORT $__kmp_real64_loop
-
-$__kmp_real64_success:
-	movd	xmm0, rax		; load old value into return register
-        ret
-__kmp_test_then_add_real64 ENDP
-_TEXT   ENDS
-
 
 ;------------------------------------------------------------------------
 ;

@@ -1,3 +1,14 @@
+#
+#//===----------------------------------------------------------------------===//
+#//
+#//                     The LLVM Compiler Infrastructure
+#//
+#// This file is dual licensed under the MIT and the University of Illinois Open
+#// Source Licenses. See LICENSE.txt for details.
+#//
+#//===----------------------------------------------------------------------===//
+#
+
 # This file holds Clang (clang/clang++) specific compiler dependent flags
 # The flag types are:
 #   1) C/C++ Compiler flags
@@ -19,6 +30,7 @@ function(append_compiler_specific_c_and_cxx_flags input_c_flags input_cxx_flags)
     endif()
     append_c_and_cxx_flags("-Wno-unused-value") # Don't warn about unused values
     append_c_and_cxx_flags("-Wno-switch") # Don't warn about switch statements that don't cover entire range of values
+    append_c_and_cxx_flags("-Wno-deprecated-register") # Don't warn about using register keyword
     set(${input_c_flags}   ${${input_c_flags}}   "${local_c_flags}" PARENT_SCOPE)
     set(${input_cxx_flags} ${${input_cxx_flags}} "${local_cxx_flags}" PARENT_SCOPE)
 endfunction()

@@ -9,6 +9,7 @@ beautification by scripts.  The fields are: name (N), email (E), web-address
 (S).
 
 N: Carlo Bertolli
+W: http://ibm.com
 D: IBM contributor to PowerPC support in CMake files and elsewhere.
 
 N: Sunita Chandrasekaran
@@ -27,6 +28,11 @@ D: Created the runtime.
 
 N: Matthias Muller
 D: Contributor to testsuite from OpenUH
+
+N: Tal Nevo
+E: tal@scalemp.com
+D: ScaleMP contributor to improve runtime performance there.
+W: http://scalemp.com
 
 N: Pavel Neytchev
 D: Contributor to testsuite from OpenUH

@@ -1,7 +1,7 @@
 /*
  * kmp_alloc.c -- private/shared dyanmic memory allocation and management
- * $Revision: 42810 $
- * $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
+ * $Revision: 43450 $
+ * $Date: 2014-09-09 10:07:22 -0500 (Tue, 09 Sep 2014) $
  */
 
 
@@ -1228,7 +1228,7 @@ bpoold(  kmp_info_t *th, void *buf, int dumpalloc, int dumpfree)
                 bufdump( th, (void *) (((char *) b) + sizeof(bhead_t)));
             }
         } else {
-            char *lerr = "";
+            const char *lerr = "";
 
             KMP_DEBUG_ASSERT(bs > 0);
             if ((b->ql.blink->ql.flink != b) || (b->ql.flink->ql.blink != b)) {
@@ -1772,7 +1772,11 @@ ___kmp_free( void * ptr KMP_SRC_LOC_DECL )
 
         #ifndef LEAK_MEMORY
             KE_TRACE( 10, ( "   free( %p )\n", descr.ptr_allocated ) );
+        # ifdef KMP_DEBUG
+            _free_src_loc( descr.ptr_allocated, _file_, _line_ );
+        # else
             free_src_loc( descr.ptr_allocated KMP_SRC_LOC_PARM );
+        # endif
         #endif
 
     KMP_MB();
@@ -1790,7 +1794,7 @@ ___kmp_free( void * ptr KMP_SRC_LOC_DECL )
 // Otherwise allocate normally using kmp_thread_malloc.
 
 // AC: How to choose the limit? Just get 16 for now...
-static int const __kmp_free_list_limit = 16;
+#define KMP_FREE_LIST_LIMIT 16
 
 // Always use 128 bytes for determining buckets for caching memory blocks
 #define DCACHE_LINE  128
@@ -1932,7 +1936,7 @@ ___kmp_fast_free( kmp_info_t *this_thr, void * ptr KMP_SRC_LOC_DECL )
             kmp_mem_descr_t * dsc  = (kmp_mem_descr_t *)( (char*)head - sizeof(kmp_mem_descr_t) );
             kmp_info_t      * q_th = (kmp_info_t *)(dsc->ptr_aligned); // allocating thread, same for all queue nodes
             size_t            q_sz = dsc->size_allocated + 1;          // new size in case we add current task
-            if ( q_th == alloc_thr && q_sz <= __kmp_free_list_limit ) {
+            if ( q_th == alloc_thr && q_sz <= KMP_FREE_LIST_LIMIT ) {
                 // we can add current task to "other" list, no sync needed
                 *((void **)ptr) = head;
                 descr->size_allocated = q_sz;

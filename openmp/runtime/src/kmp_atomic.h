@@ -1,7 +1,7 @@
 /*
  * kmp_atomic.h - ATOMIC header file
- * $Revision: 42810 $
- * $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
+ * $Revision: 43191 $
+ * $Date: 2014-05-27 07:44:11 -0500 (Tue, 27 May 2014) $
  */
 
 
@@ -33,7 +33,7 @@
 #if defined( __cplusplus ) && ( KMP_OS_WINDOWS )
     // create shortcuts for c99 complex types
 
-    #ifdef _DEBUG
+    #if (_MSC_VER < 1600) && defined(_DEBUG)
         // Workaround for the problem of _DebugHeapTag unresolved external.
         // This problem prevented to use our static debug library for C tests
         // compiled with /MDd option (the library itself built with /MTd),

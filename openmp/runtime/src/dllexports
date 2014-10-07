@@ -161,10 +161,8 @@
     # Regular entry points
         __kmp_wait_yield_4
         __kmp_wait_yield_8
-        __kmp_wait_sleep
         __kmp_fork_call
         __kmp_invoke_microtask
-        __kmp_release
         __kmp_launch_monitor
         __kmp_launch_worker
         __kmp_reap_monitor
@@ -191,6 +189,14 @@
         %ifdef msvc_compat
             _You_must_link_with_Microsoft_OpenMP_library  DATA
         %endif
+
+        __kmp_wait_32
+        __kmp_wait_64
+        __kmp_wait_oncore
+        __kmp_release_32
+        __kmp_release_64
+        __kmp_release_oncore
+
 
 #    VT_getthid                              1
 #    vtgthid                                 2
@@ -360,6 +366,18 @@ kmpc_set_defaults                           224
         __kmpc_cancel                       244
         __kmpc_cancellationpoint            245
         __kmpc_cancel_barrier               246
+        __kmpc_dist_for_static_init_4       247
+        __kmpc_dist_for_static_init_4u      248
+        __kmpc_dist_for_static_init_8       249
+        __kmpc_dist_for_static_init_8u      250
+        __kmpc_dist_dispatch_init_4         251
+        __kmpc_dist_dispatch_init_4u        252
+        __kmpc_dist_dispatch_init_8         253
+        __kmpc_dist_dispatch_init_8u        254
+        __kmpc_team_static_init_4           255
+        __kmpc_team_static_init_4u          256
+        __kmpc_team_static_init_8           257
+        __kmpc_team_static_init_8u          258
     %endif # OMP_40
 %endif
 

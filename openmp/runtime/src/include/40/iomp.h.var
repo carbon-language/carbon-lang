@@ -91,7 +91,7 @@
     } kmp_cancel_kind_t;
 
     extern int    __KAI_KMPC_CONVENTION  kmp_get_cancellation_status(kmp_cancel_kind_t);
-    
+
 #   undef __KAI_KMPC_CONVENTION
 
     /* Warning:

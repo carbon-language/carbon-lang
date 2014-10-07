@@ -1,3 +1,14 @@
+#
+#//===----------------------------------------------------------------------===//
+#//
+#//                     The LLVM Compiler Infrastructure
+#//
+#// This file is dual licensed under the MIT and the University of Illinois Open
+#// Source Licenses. See LICENSE.txt for details.
+#//
+#//===----------------------------------------------------------------------===//
+#
+
 # This file holds Intel(R) C Compiler / Intel(R) C++ Compiler / Intel(R) Fortran Compiler (icc/icpc/icl.exe/ifort) dependent flags
 # The flag types are:
 #   2) C/C++ Compiler flags
@@ -41,7 +52,6 @@ function(append_compiler_specific_c_and_cxx_flags input_c_flags input_cxx_flags)
         endif()
     else()
         append_c_and_cxx_flags("-Wsign-compare") # warn on sign comparisons
-        append_c_and_cxx_flags("-Werror") # Changes all warnings to errors.
         append_c_and_cxx_flags("-Qoption,cpp,--extended_float_types") # Enabled _Quad type.
         append_c_and_cxx_flags("-fno-exceptions") # Exception handling table generation is disabled.
         append_c_and_cxx_flags("-x c++") # Compile C files as C++ files

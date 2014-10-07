@@ -1,7 +1,7 @@
 /*
  * kmp_atomic.c -- ATOMIC implementation routines
- * $Revision: 42810 $
- * $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
+ * $Revision: 43421 $
+ * $Date: 2014-08-28 08:56:10 -0500 (Thu, 28 Aug 2014) $
  */
 
 
@@ -690,7 +690,7 @@ RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID( ident_t *id_ref, int gtid, TYPE * lh
 #endif /* KMP_GOMP_COMPAT */
 
 #if KMP_MIC
-# define KMP_DO_PAUSE _mm_delay_32( 30 )
+# define KMP_DO_PAUSE _mm_delay_32( 1 )
 #else
 # define KMP_DO_PAUSE KMP_CPU_PAUSE()
 #endif /* KMP_MIC */
@@ -700,14 +700,10 @@ RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID( ident_t *id_ref, int gtid, TYPE * lh
 //     TYPE    - operands' type
 //     BITS    - size in bits, used to distinguish low level calls
 //     OP      - operator
-// Note: temp_val introduced in order to force the compiler to read
-//       *lhs only once (w/o it the compiler reads *lhs twice)
 #define OP_CMPXCHG(TYPE,BITS,OP)                                          \
     {                                                                     \
-        TYPE KMP_ATOMIC_VOLATILE temp_val;                                \
         TYPE old_value, new_value;                                        \
-        temp_val = *lhs;                                                  \
-        old_value = temp_val;                                             \
+        old_value = *(TYPE volatile *)lhs;                                \
         new_value = old_value OP rhs;                                     \
         while ( ! KMP_COMPARE_AND_STORE_ACQ##BITS( (kmp_int##BITS *) lhs, \
                       *VOLATILE_CAST(kmp_int##BITS *) &old_value,         \
@@ -715,8 +711,7 @@ RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID( ident_t *id_ref, int gtid, TYPE * lh
         {                                                                 \
                 KMP_DO_PAUSE;                                             \
                                                                           \
-            temp_val = *lhs;                                              \
-            old_value = temp_val;                                         \
+            old_value = *(TYPE volatile *)lhs;                            \
             new_value = old_value OP rhs;                                 \
         }                                                                 \
     }
@@ -765,13 +760,6 @@ ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                      \
     KMP_TEST_THEN_ADD##BITS( lhs, OP rhs );                                \
 }
 // -------------------------------------------------------------------------
-#define ATOMIC_FLOAT_ADD(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,MASK,GOMP_FLAG) \
-ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                      \
-    OP_GOMP_CRITICAL(OP##=,GOMP_FLAG)                                      \
-    /* OP used as a sign for subtraction: (lhs-rhs) --> (lhs+-rhs) */      \
-    KMP_TEST_THEN_ADD_REAL##BITS( lhs, OP rhs );                           \
-}
-// -------------------------------------------------------------------------
 #define ATOMIC_CMPXCHG(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,MASK,GOMP_FLAG)   \
 ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                      \
     OP_GOMP_CRITICAL(OP##=,GOMP_FLAG)                                      \
@@ -797,17 +785,6 @@ ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                      \
     if ( ! ( (kmp_uintptr_t) lhs & 0x##MASK) ) {                           \
         /* OP used as a sign for subtraction: (lhs-rhs) --> (lhs+-rhs) */  \
         KMP_TEST_THEN_ADD##BITS( lhs, OP rhs );                            \
-    } else {                                                               \
-        KMP_CHECK_GTID;                                                    \
-        OP_CRITICAL(OP##=,LCK_ID)  /* unaligned address - use critical */  \
-    }                                                                      \
-}
-// -------------------------------------------------------------------------
-#define ATOMIC_FLOAT_ADD(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,MASK,GOMP_FLAG) \
-ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                      \
-    OP_GOMP_CRITICAL(OP##=,GOMP_FLAG)                                      \
-    if ( ! ( (kmp_uintptr_t) lhs & 0x##MASK) ) {                           \
-        OP_CMPXCHG(TYPE,BITS,OP)     /* aligned address */                 \
     } else {                                                               \
         KMP_CHECK_GTID;                                                    \
         OP_CRITICAL(OP##=,LCK_ID)  /* unaligned address - use critical */  \
@@ -845,25 +822,15 @@ ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                           
 ATOMIC_FIXED_ADD( fixed4, add, kmp_int32,  32, +, 4i, 3, 0            )  // __kmpc_atomic_fixed4_add
 ATOMIC_FIXED_ADD( fixed4, sub, kmp_int32,  32, -, 4i, 3, 0            )  // __kmpc_atomic_fixed4_sub
 
-#if KMP_MIC
 ATOMIC_CMPXCHG( float4,  add, kmp_real32, 32, +,  4r, 3, KMP_ARCH_X86 )  // __kmpc_atomic_float4_add
 ATOMIC_CMPXCHG( float4,  sub, kmp_real32, 32, -,  4r, 3, KMP_ARCH_X86 )  // __kmpc_atomic_float4_sub
-#else
-ATOMIC_FLOAT_ADD( float4, add, kmp_real32, 32, +, 4r, 3, KMP_ARCH_X86 )  // __kmpc_atomic_float4_add
-ATOMIC_FLOAT_ADD( float4, sub, kmp_real32, 32, -, 4r, 3, KMP_ARCH_X86 )  // __kmpc_atomic_float4_sub
-#endif // KMP_MIC
 
 // Routines for ATOMIC 8-byte operands addition and subtraction
 ATOMIC_FIXED_ADD( fixed8, add, kmp_int64,  64, +, 8i, 7, KMP_ARCH_X86 )  // __kmpc_atomic_fixed8_add
 ATOMIC_FIXED_ADD( fixed8, sub, kmp_int64,  64, -, 8i, 7, KMP_ARCH_X86 )  // __kmpc_atomic_fixed8_sub
 
-#if KMP_MIC
 ATOMIC_CMPXCHG( float8,  add, kmp_real64, 64, +,  8r, 7, KMP_ARCH_X86 )  // __kmpc_atomic_float8_add
 ATOMIC_CMPXCHG( float8,  sub, kmp_real64, 64, -,  8r, 7, KMP_ARCH_X86 )  // __kmpc_atomic_float8_sub
-#else
-ATOMIC_FLOAT_ADD( float8, add, kmp_real64, 64, +, 8r, 7, KMP_ARCH_X86 )  // __kmpc_atomic_float8_add
-ATOMIC_FLOAT_ADD( float8, sub, kmp_real64, 64, -, 8r, 7, KMP_ARCH_X86 )  // __kmpc_atomic_float8_sub
-#endif // KMP_MIC
 
 // ------------------------------------------------------------------------
 // Entries definition for integer operands
@@ -1867,35 +1834,16 @@ ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                  \
         return old_value;                                                  \
 }
 // -------------------------------------------------------------------------
-#define ATOMIC_FLOAT_ADD_CPT(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)         \
-ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                  \
-    TYPE old_value, new_value;                                             \
-    OP_GOMP_CRITICAL_CPT(OP,GOMP_FLAG)                                     \
-    /* OP used as a sign for subtraction: (lhs-rhs) --> (lhs+-rhs) */      \
-    old_value = KMP_TEST_THEN_ADD_REAL##BITS( lhs, OP rhs );               \
-    if( flag ) {                                                           \
-        return old_value OP rhs;                                           \
-    } else                                                                 \
-        return old_value;                                                  \
-}
-// -------------------------------------------------------------------------
 
 ATOMIC_FIXED_ADD_CPT( fixed4, add_cpt, kmp_int32,  32, +, 0            )  // __kmpc_atomic_fixed4_add_cpt
 ATOMIC_FIXED_ADD_CPT( fixed4, sub_cpt, kmp_int32,  32, -, 0            )  // __kmpc_atomic_fixed4_sub_cpt
 ATOMIC_FIXED_ADD_CPT( fixed8, add_cpt, kmp_int64,  64, +, KMP_ARCH_X86 )  // __kmpc_atomic_fixed8_add_cpt
 ATOMIC_FIXED_ADD_CPT( fixed8, sub_cpt, kmp_int64,  64, -, KMP_ARCH_X86 )  // __kmpc_atomic_fixed8_sub_cpt
 
-#if KMP_MIC
 ATOMIC_CMPXCHG_CPT( float4, add_cpt, kmp_real32, 32, +, KMP_ARCH_X86 )  // __kmpc_atomic_float4_add_cpt
 ATOMIC_CMPXCHG_CPT( float4, sub_cpt, kmp_real32, 32, -, KMP_ARCH_X86 )  // __kmpc_atomic_float4_sub_cpt
 ATOMIC_CMPXCHG_CPT( float8, add_cpt, kmp_real64, 64, +, KMP_ARCH_X86 )  // __kmpc_atomic_float8_add_cpt
 ATOMIC_CMPXCHG_CPT( float8, sub_cpt, kmp_real64, 64, -, KMP_ARCH_X86 )  // __kmpc_atomic_float8_sub_cpt
-#else
-ATOMIC_FLOAT_ADD_CPT( float4, add_cpt, kmp_real32, 32, +, KMP_ARCH_X86 )  // __kmpc_atomic_float4_add_cpt
-ATOMIC_FLOAT_ADD_CPT( float4, sub_cpt, kmp_real32, 32, -, KMP_ARCH_X86 )  // __kmpc_atomic_float4_sub_cpt
-ATOMIC_FLOAT_ADD_CPT( float8, add_cpt, kmp_real64, 64, +, KMP_ARCH_X86 )  // __kmpc_atomic_float8_add_cpt
-ATOMIC_FLOAT_ADD_CPT( float8, sub_cpt, kmp_real64, 64, -, KMP_ARCH_X86 )  // __kmpc_atomic_float8_sub_cpt
-#endif // KMP_MIC
 
 // ------------------------------------------------------------------------
 // Entries definition for integer operands

@@ -1,8 +1,8 @@
 #if USE_ITT_BUILD
 /*
  * kmp_itt.c -- ITT Notify interface.
- * $Revision: 42489 $
- * $Date: 2013-07-08 11:00:09 -0500 (Mon, 08 Jul 2013) $
+ * $Revision: 43457 $
+ * $Date: 2014-09-17 03:57:22 -0500 (Wed, 17 Sep 2014) $
  */
 
 
@@ -25,8 +25,13 @@
 
 #if USE_ITT_NOTIFY
 
-    kmp_int32 __kmp_frame_domain_count = 0;
-    __itt_domain* __kmp_itt_domains[KMP_MAX_FRAME_DOMAINS];
+    kmp_int32 __kmp_barrier_domain_count;
+    kmp_int32 __kmp_region_domain_count;
+    __itt_domain* __kmp_itt_barrier_domains[KMP_MAX_FRAME_DOMAINS];
+    __itt_domain* __kmp_itt_region_domains[KMP_MAX_FRAME_DOMAINS];
+    __itt_domain* __kmp_itt_imbalance_domains[KMP_MAX_FRAME_DOMAINS];
+    kmp_int32 __kmp_itt_region_team_size[KMP_MAX_FRAME_DOMAINS];
+    __itt_domain * metadata_domain = NULL;
 
     #include "kmp_version.h"
     #include "kmp_i18n.h"

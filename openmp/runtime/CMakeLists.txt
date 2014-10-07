@@ -238,8 +238,18 @@ set(USE_BUILDPL_RULES false CACHE BOOL "Should the build follow build.pl rules/r
 # - these predefined linker flags should work for Windows, Mac, and True Linux for the most popular compilers/linkers
 set(USE_PREDEFINED_LINKER_FLAGS true CACHE BOOL "Should the build use the predefined linker flags in CommonFlags.cmake?")
 
+# - On multinode systems, larger alignment is desired to avoid false sharing
+set(USE_INTERNODE_ALIGNMENT false CACHE BOOL "Should larger alignment (4096 bytes) be used for some locks and data structures?")
+
+# - libgomp drop-in compatibility
+if(${LINUX} AND NOT ${PPC64})
+    set(USE_VERSION_SYMBOLS true CACHE BOOL "Should version symbols be used? These provide binary compatibility with libgomp.")
+else()
+    set(USE_VERSION_SYMBOLS false CACHE BOOL "Should version symbols be used? These provide binary compatibility with libgomp.")
+endif()
+
 # - TSX based locks have __asm code which can be troublesome for some compilers.  This feature is also x86 specific.
-if({${IA32} OR ${INTEL64})
+if(${IA32} OR ${INTEL64})
     set(USE_ADAPTIVE_LOCKS true CACHE BOOL "Should TSX-based lock be compiled (adaptive lock in kmp_lock.cpp).  These are x86 specific.")
 else()
     set(USE_ADAPTIVE_LOCKS false CACHE BOOL "Should TSX-based lock be compiled (adaptive lock in kmp_lock.cpp).  These are x86 specific.")

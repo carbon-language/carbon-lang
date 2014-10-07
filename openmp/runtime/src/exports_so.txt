@@ -40,6 +40,8 @@ VERSION {
         __kmp_thread_pool;
         __kmp_thread_pool_nth;
 
+	__kmp_reset_stats;
+
 #if USE_ITT_BUILD
         #
         # ITT support.
@@ -64,8 +66,12 @@ VERSION {
         __kmp_launch_worker;
         __kmp_reap_monitor;
         __kmp_reap_worker;
-        __kmp_release;
-        __kmp_wait_sleep;
+        __kmp_release_32;
+        __kmp_release_64;
+        __kmp_release_oncore;
+        __kmp_wait_32;
+        __kmp_wait_64;
+        __kmp_wait_oncore;
         __kmp_wait_yield_4;
         __kmp_wait_yield_8;
 

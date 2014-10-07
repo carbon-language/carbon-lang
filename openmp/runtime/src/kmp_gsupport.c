@@ -1,7 +1,7 @@
 /*
  * kmp_gsupport.c
- * $Revision: 42810 $
- * $Date: 2013-11-07 12:06:33 -0600 (Thu, 07 Nov 2013) $
+ * $Revision: 43473 $
+ * $Date: 2014-09-26 15:02:57 -0500 (Fri, 26 Sep 2014) $
  */
 
 
@@ -244,7 +244,7 @@ xexpand(KMP_API_NAME_GOMP_ORDERED_END)(void)
 // The parallel contruct
 //
 
-#ifdef KMP_DEBUG
+#ifndef KMP_DEBUG
 static
 #endif /* KMP_DEBUG */
 void
@@ -255,7 +255,7 @@ __kmp_GOMP_microtask_wrapper(int *gtid, int *npr, void (*task)(void *),
 }
 
 
-#ifdef KMP_DEBUG
+#ifndef KMP_DEBUG
 static
 #endif /* KMP_DEBUG */
 void
@@ -276,7 +276,7 @@ __kmp_GOMP_parallel_microtask_wrapper(int *gtid, int *npr,
 }
 
 
-#ifdef KMP_DEBUG
+#ifndef KMP_DEBUG
 static
 #endif /* KMP_DEBUG */
 void
@@ -287,7 +287,7 @@ __kmp_GOMP_fork_call(ident_t *loc, int gtid, microtask_t wrapper, int argc,...)
     va_list ap;
     va_start(ap, argc);
 
-    rc = __kmp_fork_call(loc, gtid, FALSE, argc, wrapper, __kmp_invoke_task_func,
+    rc = __kmp_fork_call(loc, gtid, fork_context_gnu, argc, wrapper, __kmp_invoke_task_func,
 #if (KMP_ARCH_X86_64 || KMP_ARCH_ARM) && KMP_OS_LINUX
       &ap
 #else
@@ -563,7 +563,7 @@ xexpand(KMP_API_NAME_GOMP_LOOP_END_NOWAIT)(void)
             status = KMP_DISPATCH_NEXT_ULL(&loc, gtid, NULL,                 \
               (kmp_uint64 *)p_lb, (kmp_uint64 *)p_ub, (kmp_int64 *)&stride); \
             if (status) {                                                    \
-                KMP_DEBUG_ASSERT(stride == str2);                            \
+                KMP_DEBUG_ASSERT((long long)stride == str2);                 \
                 *p_ub += (str > 0) ? 1 : -1;                                 \
             }                                                                \
         }                                                                    \
@@ -666,9 +666,6 @@ PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_GUIDED_START), kmp_s
 PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_RUNTIME_START), kmp_sch_runtime)
 
 
-#if OMP_30_ENABLED
-
-
 /**/
 //
 // Tasking constructs
@@ -740,9 +737,6 @@ xexpand(KMP_API_NAME_GOMP_TASKWAIT)(void)
 
     KA_TRACE(20, ("GOMP_taskwait exit: T#%d\n", gtid));
 }
-
-
-#endif /* OMP_30_ENABLED */
 
 
 /**/
@@ -861,8 +855,267 @@ xexpand(KMP_API_NAME_GOMP_SECTIONS_END_NOWAIT)(void)
 void
 xexpand(KMP_API_NAME_GOMP_TASKYIELD)(void)
 {
-
+    KA_TRACE(20, ("GOMP_taskyield: T#%d\n", __kmp_get_gtid()))
+    return;
 }
+
+#if OMP_40_ENABLED // these are new GOMP_4.0 entry points
+
+void
+xexpand(KMP_API_NAME_GOMP_PARALLEL)(void (*task)(void *), void *data, unsigned num_threads, unsigned int flags)
+{
+    int gtid = __kmp_entry_gtid();
+    MKLOC(loc, "GOMP_parallel");
+    KA_TRACE(20, ("GOMP_parallel: T#%d\n", gtid));
+
+    if (__kmpc_ok_to_fork(&loc) && (num_threads != 1)) {
+        if (num_threads != 0) {
+            __kmp_push_num_threads(&loc, gtid, num_threads);
+        }
+        if(flags != 0) {
+            __kmp_push_proc_bind(&loc, gtid, (kmp_proc_bind_t)flags);
+        }
+        __kmp_GOMP_fork_call(&loc, gtid,
+          (microtask_t)__kmp_GOMP_microtask_wrapper, 2, task, data);
+    }
+    else {
+        __kmpc_serialized_parallel(&loc, gtid);
+    }
+    task(data);
+    xexpand(KMP_API_NAME_GOMP_PARALLEL_END)();
+}
+
+void
+xexpand(KMP_API_NAME_GOMP_PARALLEL_SECTIONS)(void (*task) (void *), void *data,
+  unsigned num_threads, unsigned count, unsigned flags)
+{
+    int gtid = __kmp_entry_gtid();
+    int last = FALSE;
+    MKLOC(loc, "GOMP_parallel_sections");
+    KA_TRACE(20, ("GOMP_parallel_sections: T#%d\n", gtid));
+
+    if (__kmpc_ok_to_fork(&loc) && (num_threads != 1)) {
+        if (num_threads != 0) {
+            __kmp_push_num_threads(&loc, gtid, num_threads);
+        }
+        if(flags != 0) {
+            __kmp_push_proc_bind(&loc, gtid, (kmp_proc_bind_t)flags);
+        }
+        __kmp_GOMP_fork_call(&loc, gtid,
+          (microtask_t)__kmp_GOMP_parallel_microtask_wrapper, 9, task, data,
+          num_threads, &loc, kmp_nm_dynamic_chunked, (kmp_int)1,
+          (kmp_int)count, (kmp_int)1, (kmp_int)1);
+    }
+    else {
+        __kmpc_serialized_parallel(&loc, gtid);
+    }
+
+    KMP_DISPATCH_INIT(&loc, gtid, kmp_nm_dynamic_chunked, 1, count, 1, 1, TRUE);
+
+    task(data);
+    xexpand(KMP_API_NAME_GOMP_PARALLEL_END)();
+    KA_TRACE(20, ("GOMP_parallel_sections exit: T#%d\n", gtid));
+}
+
+#define PARALLEL_LOOP(func, schedule) \
+    void func (void (*task) (void *), void *data, unsigned num_threads,      \
+      long lb, long ub, long str, long chunk_sz, unsigned flags)             \
+    {                                                                        \
+        int gtid = __kmp_entry_gtid();                                       \
+        int last = FALSE;                                                    \
+        MKLOC(loc, #func);                                                   \
+        KA_TRACE(20, ( #func ": T#%d, lb 0x%lx, ub 0x%lx, str 0x%lx, chunk_sz 0x%lx\n",        \
+          gtid, lb, ub, str, chunk_sz ));                                    \
+                                                                             \
+        if (__kmpc_ok_to_fork(&loc) && (num_threads != 1)) {                 \
+            if (num_threads != 0) {                                          \
+                __kmp_push_num_threads(&loc, gtid, num_threads);             \
+            }                                                                \
+            if (flags != 0) {                                                \
+                __kmp_push_proc_bind(&loc, gtid, (kmp_proc_bind_t)flags);    \
+            }                                                                \
+            __kmp_GOMP_fork_call(&loc, gtid,                                 \
+              (microtask_t)__kmp_GOMP_parallel_microtask_wrapper, 9,         \
+              task, data, num_threads, &loc, (schedule), lb,                 \
+              (str > 0) ? (ub - 1) : (ub + 1), str, chunk_sz);               \
+        }                                                                    \
+        else {                                                               \
+            __kmpc_serialized_parallel(&loc, gtid);                          \
+        }                                                                    \
+                                                                             \
+        KMP_DISPATCH_INIT(&loc, gtid, (schedule), lb,                        \
+          (str > 0) ? (ub - 1) : (ub + 1), str, chunk_sz,                    \
+          (schedule) != kmp_sch_static);                                     \
+        task(data);                                                          \
+        xexpand(KMP_API_NAME_GOMP_PARALLEL_END)();                           \
+                                                                             \
+        KA_TRACE(20, ( #func " exit: T#%d\n", gtid));                        \
+    }
+
+PARALLEL_LOOP(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_STATIC), kmp_sch_static)
+PARALLEL_LOOP(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_DYNAMIC), kmp_sch_dynamic_chunked)
+PARALLEL_LOOP(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_GUIDED), kmp_sch_guided_chunked)
+PARALLEL_LOOP(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_RUNTIME), kmp_sch_runtime)
+
+
+void
+xexpand(KMP_API_NAME_GOMP_TASKGROUP_START)(void)
+{
+    int gtid = __kmp_get_gtid();
+    MKLOC(loc, "GOMP_taskgroup_start");
+    KA_TRACE(20, ("GOMP_taskgroup_start: T#%d\n", gtid));
+
+    __kmpc_taskgroup(&loc, gtid);
+
+    return;
+}
+
+void
+xexpand(KMP_API_NAME_GOMP_TASKGROUP_END)(void)
+{
+    int gtid = __kmp_get_gtid();
+    MKLOC(loc, "GOMP_taskgroup_end");
+    KA_TRACE(20, ("GOMP_taskgroup_end: T#%d\n", gtid));
+
+    __kmpc_end_taskgroup(&loc, gtid);
+
+    return;
+}
+
+#ifndef KMP_DEBUG
+static
+#endif /* KMP_DEBUG */
+kmp_int32 __kmp_gomp_to_iomp_cancellation_kind(int gomp_kind) {
+    kmp_int32 cncl_kind = 0;
+    switch(gomp_kind) {
+      case 1:
+        cncl_kind = cancel_parallel;
+        break;
+      case 2:
+        cncl_kind = cancel_loop;
+        break;
+      case 4:
+        cncl_kind = cancel_sections;
+        break;
+      case 8:
+        cncl_kind = cancel_taskgroup;
+        break;
+    }
+    return cncl_kind;
+}
+
+bool
+xexpand(KMP_API_NAME_GOMP_CANCELLATION_POINT)(int which)
+{
+    if(__kmp_omp_cancellation) {
+        KMP_FATAL(NoGompCancellation);
+    }
+    int gtid = __kmp_get_gtid();
+    MKLOC(loc, "GOMP_cancellation_point");
+    KA_TRACE(20, ("GOMP_cancellation_point: T#%d\n", gtid));
+
+    kmp_int32 cncl_kind = __kmp_gomp_to_iomp_cancellation_kind(which);
+
+    return __kmpc_cancellationpoint(&loc, gtid, cncl_kind);
+}
+
+bool
+xexpand(KMP_API_NAME_GOMP_BARRIER_CANCEL)(void)
+{
+    if(__kmp_omp_cancellation) {
+        KMP_FATAL(NoGompCancellation);
+    }
+    KMP_FATAL(NoGompCancellation);
+    int gtid = __kmp_get_gtid();
+    MKLOC(loc, "GOMP_barrier_cancel");
+    KA_TRACE(20, ("GOMP_barrier_cancel: T#%d\n", gtid));
+
+    return __kmpc_cancel_barrier(&loc, gtid);
+}
+
+bool
+xexpand(KMP_API_NAME_GOMP_CANCEL)(int which, bool do_cancel)
+{
+    if(__kmp_omp_cancellation) {
+        KMP_FATAL(NoGompCancellation);
+    } else {
+        return FALSE;
+    }
+
+    int gtid = __kmp_get_gtid();
+    MKLOC(loc, "GOMP_cancel");
+    KA_TRACE(20, ("GOMP_cancel: T#%d\n", gtid));
+
+    kmp_int32 cncl_kind = __kmp_gomp_to_iomp_cancellation_kind(which);
+
+    if(do_cancel == FALSE) {
+        return xexpand(KMP_API_NAME_GOMP_CANCELLATION_POINT)(which);
+    } else {
+        return __kmpc_cancel(&loc, gtid, cncl_kind);
+    }
+}
+
+bool
+xexpand(KMP_API_NAME_GOMP_SECTIONS_END_CANCEL)(void)
+{
+    if(__kmp_omp_cancellation) {
+        KMP_FATAL(NoGompCancellation);
+    }
+    int gtid = __kmp_get_gtid();
+    MKLOC(loc, "GOMP_sections_end_cancel");
+    KA_TRACE(20, ("GOMP_sections_end_cancel: T#%d\n", gtid));
+
+    return __kmpc_cancel_barrier(&loc, gtid);
+}
+
+bool
+xexpand(KMP_API_NAME_GOMP_LOOP_END_CANCEL)(void)
+{
+    if(__kmp_omp_cancellation) {
+        KMP_FATAL(NoGompCancellation);
+    }
+    int gtid = __kmp_get_gtid();
+    MKLOC(loc, "GOMP_loop_end_cancel");
+    KA_TRACE(20, ("GOMP_loop_end_cancel: T#%d\n", gtid));
+
+    return __kmpc_cancel_barrier(&loc, gtid);
+}
+
+// All target functions are empty as of 2014-05-29
+void
+xexpand(KMP_API_NAME_GOMP_TARGET)(int device, void (*fn) (void *), const void *openmp_target,
+             size_t mapnum, void **hostaddrs, size_t *sizes, unsigned char *kinds)
+{
+    return;
+}
+
+void
+xexpand(KMP_API_NAME_GOMP_TARGET_DATA)(int device, const void *openmp_target, size_t mapnum,
+                  void **hostaddrs, size_t *sizes, unsigned char *kinds)
+{
+    return;
+}
+
+void
+xexpand(KMP_API_NAME_GOMP_TARGET_END_DATA)(void)
+{
+    return;
+}
+
+void
+xexpand(KMP_API_NAME_GOMP_TARGET_UPDATE)(int device, const void *openmp_target, size_t mapnum,
+                    void **hostaddrs, size_t *sizes, unsigned char *kinds)
+{
+    return;
+}
+
+void
+xexpand(KMP_API_NAME_GOMP_TEAMS)(unsigned int num_teams, unsigned int thread_limit)
+{
+    return;
+}
+#endif // OMP_40_ENABLED
+
 
 /*
     The following sections of code create aliases for the GOMP_* functions,
@@ -871,7 +1124,7 @@ xexpand(KMP_API_NAME_GOMP_TASKYIELD)(void)
     xaliasify and xversionify are defined in kmp_ftn_os.h
 */
 
-#if KMP_OS_LINUX
+#ifdef KMP_USE_VERSION_SYMBOLS
 
 // GOMP_1.0 aliases
 xaliasify(KMP_API_NAME_GOMP_ATOMIC_END, 10);
@@ -917,10 +1170,8 @@ xaliasify(KMP_API_NAME_GOMP_SINGLE_COPY_START, 10);
 xaliasify(KMP_API_NAME_GOMP_SINGLE_START, 10);
 
 // GOMP_2.0 aliases
-#if OMP_30_ENABLED
 xaliasify(KMP_API_NAME_GOMP_TASK, 20);
 xaliasify(KMP_API_NAME_GOMP_TASKWAIT, 20);
-#endif
 xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_DYNAMIC_NEXT, 20);
 xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_DYNAMIC_START, 20);
 xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_GUIDED_NEXT, 20);
@@ -942,9 +1193,27 @@ xaliasify(KMP_API_NAME_GOMP_LOOP_ULL_STATIC_START, 20);
 xaliasify(KMP_API_NAME_GOMP_TASKYIELD, 30);
 
 // GOMP_4.0 aliases
-/* TODO: add GOMP_4.0 aliases when corresponding
-         GOMP_* functions are implemented
-*/
+// The GOMP_parallel* entry points below aren't OpenMP 4.0 related.
+#if OMP_40_ENABLED
+xaliasify(KMP_API_NAME_GOMP_PARALLEL, 40);
+xaliasify(KMP_API_NAME_GOMP_PARALLEL_SECTIONS, 40);
+xaliasify(KMP_API_NAME_GOMP_PARALLEL_LOOP_DYNAMIC, 40);
+xaliasify(KMP_API_NAME_GOMP_PARALLEL_LOOP_GUIDED, 40);
+xaliasify(KMP_API_NAME_GOMP_PARALLEL_LOOP_RUNTIME, 40);
+xaliasify(KMP_API_NAME_GOMP_PARALLEL_LOOP_STATIC, 40);
+xaliasify(KMP_API_NAME_GOMP_TASKGROUP_START, 40);
+xaliasify(KMP_API_NAME_GOMP_TASKGROUP_END, 40);
+xaliasify(KMP_API_NAME_GOMP_BARRIER_CANCEL, 40);
+xaliasify(KMP_API_NAME_GOMP_CANCEL, 40);
+xaliasify(KMP_API_NAME_GOMP_CANCELLATION_POINT, 40);
+xaliasify(KMP_API_NAME_GOMP_LOOP_END_CANCEL, 40);
+xaliasify(KMP_API_NAME_GOMP_SECTIONS_END_CANCEL, 40);
+xaliasify(KMP_API_NAME_GOMP_TARGET, 40);
+xaliasify(KMP_API_NAME_GOMP_TARGET_DATA, 40);
+xaliasify(KMP_API_NAME_GOMP_TARGET_END_DATA, 40);
+xaliasify(KMP_API_NAME_GOMP_TARGET_UPDATE, 40);
+xaliasify(KMP_API_NAME_GOMP_TEAMS, 40);
+#endif
 
 // GOMP_1.0 versioned symbols
 xversionify(KMP_API_NAME_GOMP_ATOMIC_END, 10, "GOMP_1.0");
@@ -990,10 +1259,8 @@ xversionify(KMP_API_NAME_GOMP_SINGLE_COPY_START, 10, "GOMP_1.0");
 xversionify(KMP_API_NAME_GOMP_SINGLE_START, 10, "GOMP_1.0");
 
 // GOMP_2.0 versioned symbols
-#if OMP_30_ENABLED
 xversionify(KMP_API_NAME_GOMP_TASK, 20, "GOMP_2.0");
 xversionify(KMP_API_NAME_GOMP_TASKWAIT, 20, "GOMP_2.0");
-#endif
 xversionify(KMP_API_NAME_GOMP_LOOP_ULL_DYNAMIC_NEXT, 20, "GOMP_2.0");
 xversionify(KMP_API_NAME_GOMP_LOOP_ULL_DYNAMIC_START, 20, "GOMP_2.0");
 xversionify(KMP_API_NAME_GOMP_LOOP_ULL_GUIDED_NEXT, 20, "GOMP_2.0");
@@ -1015,11 +1282,28 @@ xversionify(KMP_API_NAME_GOMP_LOOP_ULL_STATIC_START, 20, "GOMP_2.0");
 xversionify(KMP_API_NAME_GOMP_TASKYIELD, 30, "GOMP_3.0");
 
 // GOMP_4.0 versioned symbols
-/* TODO: add GOMP_4.0 versioned symbols when corresponding
-         GOMP_* functions are implemented
-*/
+#if OMP_40_ENABLED
+xversionify(KMP_API_NAME_GOMP_PARALLEL, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_PARALLEL_SECTIONS, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_PARALLEL_LOOP_DYNAMIC, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_PARALLEL_LOOP_GUIDED, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_PARALLEL_LOOP_RUNTIME, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_PARALLEL_LOOP_STATIC, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_TASKGROUP_START, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_TASKGROUP_END, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_BARRIER_CANCEL, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_CANCEL, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_CANCELLATION_POINT, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_LOOP_END_CANCEL, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_SECTIONS_END_CANCEL, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_TARGET, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_TARGET_DATA, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_TARGET_END_DATA, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_TARGET_UPDATE, 40, "GOMP_4.0");
+xversionify(KMP_API_NAME_GOMP_TEAMS, 40, "GOMP_4.0");
+#endif
 
-#endif /* KMP_OS_LINUX */
+#endif // KMP_USE_VERSION_SYMBOLS
 
 #ifdef __cplusplus
     } //extern "C"

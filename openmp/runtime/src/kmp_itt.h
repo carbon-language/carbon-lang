@@ -1,8 +1,8 @@
 #if USE_ITT_BUILD
 /*
  * kmp_itt.h -- ITT Notify interface.
- * $Revision: 42829 $
- * $Date: 2013-11-21 05:44:01 -0600 (Thu, 21 Nov 2013) $
+ * $Revision: 43457 $
+ * $Date: 2014-09-17 03:57:22 -0500 (Wed, 17 Sep 2014) $
  */
 
 
@@ -55,12 +55,20 @@ void __kmp_itt_destroy();
 //     __kmp_itt_xxxed()  function should be called after action.
 
 // --- Parallel region reporting ---
-__kmp_inline void __kmp_itt_region_forking(  int gtid, int serialized = 0 ); // Master only, before forking threads.
+__kmp_inline void __kmp_itt_region_forking(  int gtid, int team_size, int barriers, int serialized = 0 ); // Master only, before forking threads.
 __kmp_inline void __kmp_itt_region_joined(   int gtid, int serialized = 0 ); // Master only, after joining threads.
     // (*) Note: A thread may execute tasks after this point, though.
 
 // --- Frame reporting ---
-__kmp_inline void __kmp_itt_frame_submit( int gtid, __itt_timestamp begin, __itt_timestamp end, int imbalance, ident_t *loc );
+// region = 0 - no regions, region = 1 - parallel, region = 2 - serialized parallel
+__kmp_inline void __kmp_itt_frame_submit( int gtid, __itt_timestamp begin, __itt_timestamp end, int imbalance, ident_t *loc, int team_size, int region = 0 );
+
+// --- Metadata reporting ---
+// begin/end - begin/end timestamps of a barrier frame, imbalance - aggregated wait time value, reduction -if this is a reduction barrier
+__kmp_inline void __kmp_itt_metadata_imbalance( int gtid, kmp_uint64 begin, kmp_uint64 end, kmp_uint64 imbalance, kmp_uint64 reduction );
+// sched_type: 0 - static, 1 - dynamic, 2 - guided, 3 - custom (all others); iterations - loop trip count, chunk - chunk size
+__kmp_inline void __kmp_itt_metadata_loop( ident_t * loc, kmp_uint64 sched_type, kmp_uint64 iterations, kmp_uint64 chunk );
+__kmp_inline void __kmp_itt_metadata_single();
 
 // --- Barrier reporting ---
 __kmp_inline void * __kmp_itt_barrier_object( int gtid, int bt, int set_name = 0, int delta = 0 );
@@ -135,8 +143,12 @@ __kmp_inline void __kmp_itt_stack_callee_leave(__itt_caller);
     #if (INCLUDE_SSC_MARKS && KMP_OS_LINUX && KMP_ARCH_X86_64)
     // Portable (at least for gcc and icc) code to insert the necessary instructions
     // to set %ebx and execute the unlikely no-op.
-    # define INSERT_SSC_MARK(tag)                                           \
-        __asm__ __volatile__ ("movl %0, %%ebx; .byte 0x64, 0x67, 0x90 " ::"i"(tag):"%ebx")
+      #if defined( __INTEL_COMPILER )
+      # define INSERT_SSC_MARK(tag) __SSC_MARK(tag)
+      #else
+      # define INSERT_SSC_MARK(tag)                                          \
+      __asm__ __volatile__ ("movl %0, %%ebx; .byte 0x64, 0x67, 0x90 " ::"i"(tag):"%ebx")
+      #endif
     #else
     # define INSERT_SSC_MARK(tag) ((void)0)
     #endif
@@ -149,6 +161,18 @@ __kmp_inline void __kmp_itt_stack_callee_leave(__itt_caller);
      */
     #define SSC_MARK_SPIN_START() INSERT_SSC_MARK(0x4376)
     #define SSC_MARK_SPIN_END()   INSERT_SSC_MARK(0x4377)
+
+    // Markers for architecture simulation.
+    // FORKING      : Before the master thread forks.
+    // JOINING      : At the start of the join.
+    // INVOKING     : Before the threads invoke microtasks.
+    // DISPATCH_INIT: At the start of dynamically scheduled loop.
+    // DISPATCH_NEXT: After claming next iteration of dynamically scheduled loop.
+    #define SSC_MARK_FORKING()          INSERT_SSC_MARK(0xd693)
+    #define SSC_MARK_JOINING()          INSERT_SSC_MARK(0xd694)
+    #define SSC_MARK_INVOKING()         INSERT_SSC_MARK(0xd695)
+    #define SSC_MARK_DISPATCH_INIT()    INSERT_SSC_MARK(0xd696)
+    #define SSC_MARK_DISPATCH_NEXT()    INSERT_SSC_MARK(0xd697)
 
     // The object is an address that associates a specific set of the prepare, acquire, release,
     // and cancel operations.
@@ -227,8 +251,14 @@ __kmp_inline void __kmp_itt_stack_callee_leave(__itt_caller);
 
     const int KMP_MAX_FRAME_DOMAINS = 512; // Maximum number of frame domains to use (maps to
                                            // different OpenMP regions in the user source code).
-    extern kmp_int32 __kmp_frame_domain_count;
-    extern __itt_domain* __kmp_itt_domains[KMP_MAX_FRAME_DOMAINS];
+    extern kmp_int32 __kmp_barrier_domain_count;
+    extern kmp_int32 __kmp_region_domain_count;
+    extern __itt_domain* __kmp_itt_barrier_domains[KMP_MAX_FRAME_DOMAINS];
+    extern __itt_domain* __kmp_itt_region_domains[KMP_MAX_FRAME_DOMAINS];
+    extern __itt_domain* __kmp_itt_imbalance_domains[KMP_MAX_FRAME_DOMAINS];
+    extern kmp_int32 __kmp_itt_region_team_size[KMP_MAX_FRAME_DOMAINS];
+    extern __itt_domain * metadata_domain;
+
 #else
 
 // Null definitions of the synchronization tracing functions.

@@ -42,6 +42,10 @@ function(append_cpp_flags input_cpp_flags)
     endif()
     append_definitions("-D INTEL_ITTNOTIFY_PREFIX=__kmp_itt_")
 
+    if(${USE_VERSION_SYMBOLS})
+        append_definitions("-D KMP_USE_VERSION_SYMBOLS")
+    endif()
+
     #####################
     # Windows definitions
     if(${WINDOWS})
@@ -132,6 +136,11 @@ function(append_cpp_flags input_cpp_flags)
     else()
         append_definitions("-D KMP_USE_ADAPTIVE_LOCKS=0")
         append_definitions("-D KMP_DEBUG_ADAPTIVE_LOCKS=0")
+    endif()
+    if(${USE_INTERNODE_ALIGNMENT})
+        append_definitions("-D KMP_USE_INTERNODE_ALIGNMENT=1")
+    else()
+        append_definitions("-D KMP_USE_INTERNODE_ALIGNMENT=0")
     endif()
     set(${input_cpp_flags} "${${input_cpp_flags}}" "${local_cpp_flags}" "${USER_CPP_FLAGS}" "$ENV{CPPFLAGS}" PARENT_SCOPE)
 endfunction()

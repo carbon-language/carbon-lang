@@ -1,3 +1,14 @@
+#
+#//===----------------------------------------------------------------------===//
+#//
+#//                     The LLVM Compiler Infrastructure
+#//
+#// This file is dual licensed under the MIT and the University of Illinois Open
+#// Source Licenses. See LICENSE.txt for details.
+#//
+#//===----------------------------------------------------------------------===//
+#
+
 ######################################################
 # MICRO TESTS
 # The following micro-tests are small tests to perform on 
@@ -219,15 +230,14 @@ if(${test_deps} AND ${tests})
         set(td_exp libc.so.7 libthr.so.3 libunwind.so.5)
     elseif(${LINUX})
         set(td_exp libdl.so.2,libgcc_s.so.1)
-        if(NOT ${IA32} AND NOT ${INTEL64})
-            set(td_exp ${td_exp},libffi.so.6,libffi.so.5)
-        endif()
         if(${IA32})
             set(td_exp ${td_exp},libc.so.6,ld-linux.so.2)  
         elseif(${INTEL64})
             set(td_exp ${td_exp},libc.so.6,ld-linux-x86-64.so.2)  
         elseif(${ARM})
-            set(td_exp ${td_exp},libc.so.6,ld-linux-armhf.so.3)  
+            set(td_exp ${td_exp},libffi.so.6,libffi.so.5,libc.so.6,ld-linux-armhf.so.3)  
+        elseif(${PPC64})
+            set(td_exp ${td_exp},libc.so.6,ld64.so.1)  
         endif()
         if(${STD_CPP_LIB})
             set(td_exp ${td_exp},libstdc++.so.6)

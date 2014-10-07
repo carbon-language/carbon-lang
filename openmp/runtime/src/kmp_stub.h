@@ -1,7 +1,7 @@
 /*
  * kmp_stub.h
- * $Revision: 42061 $
- * $Date: 2013-02-28 16:36:24 -0600 (Thu, 28 Feb 2013) $
+ * $Revision: 42951 $
+ * $Date: 2014-01-21 14:41:41 -0600 (Tue, 21 Jan 2014) $
  */
 
 
@@ -33,7 +33,6 @@ int  __kmps_get_nested( void );
 void __kmps_set_stacksize( int arg );
 int  __kmps_get_stacksize();
 
-#if OMP_30_ENABLED
 #ifndef KMP_SCHED_TYPE_DEFINED
 #define KMP_SCHED_TYPE_DEFINED
 typedef enum kmp_sched {
@@ -46,11 +45,10 @@ typedef enum kmp_sched {
 #endif
 void __kmps_set_schedule( kmp_sched_t kind, int modifier );
 void __kmps_get_schedule( kmp_sched_t *kind, int *modifier );
-#endif // OMP_30_ENABLED
 
 #if OMP_40_ENABLED
-void __kmps_set_proc_bind( enum kmp_proc_bind_t arg );
-enum kmp_proc_bind_t __kmps_get_proc_bind( void );
+void __kmps_set_proc_bind( kmp_proc_bind_t arg );
+kmp_proc_bind_t __kmps_get_proc_bind( void );
 #endif /* OMP_40_ENABLED */
 
 double __kmps_get_wtime();

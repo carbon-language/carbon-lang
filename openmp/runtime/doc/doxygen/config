@@ -1539,7 +1539,7 @@ INCLUDE_FILE_PATTERNS  =
 # undefined via #undef or recursively expanded use the := operator
 # instead of the = operator.
 
-PREDEFINED             = OMP_30_ENABLED=1, OMP_40_ENABLED=1
+PREDEFINED             = OMP_30_ENABLED=1, OMP_40_ENABLED=1, KMP_STATS_ENABLED=1
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
 # this tag can be used to specify a list of macro names that should be expanded.

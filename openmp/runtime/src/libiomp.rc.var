@@ -1,6 +1,6 @@
 // libiomp.rc.var
-// $Revision: 42219 $
-// $Date: 2013-03-29 13:36:05 -0500 (Fri, 29 Mar 2013) $
+// $Revision: 42994 $
+// $Date: 2014-03-04 02:22:15 -0600 (Tue, 04 Mar 2014) $
 
 //
 ////===----------------------------------------------------------------------===//
@@ -41,8 +41,6 @@ VS_VERSION_INFO VERSIONINFO
 
                 // FileDescription and LegalCopyright should be short.
                 VALUE "FileDescription",  "Intel(R) OpenMP* Runtime Library${{ our $MESSAGE_CATALOG; $MESSAGE_CATALOG ? " Message Catalog" : "" }}\0"
-                VALUE "LegalCopyright",   "Copyright (C) 1997-2013, Intel Corporation. All rights reserved.\0"
-
                 // Following values may be relatively long.
                 VALUE "CompanyName",      "Intel Corporation\0"
                 // VALUE "LegalTrademarks",  "\0"  // Not used for now.

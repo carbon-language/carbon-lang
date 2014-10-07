@@ -1,6 +1,6 @@
 # en_US.txt #
-# $Revision: 42659 $
-# $Date: 2013-09-12 09:22:48 -0500 (Thu, 12 Sep 2013) $
+# $Revision: 43419 $
+# $Date: 2014-08-27 14:59:52 -0500 (Wed, 27 Aug 2014) $
 
 #
 #//===----------------------------------------------------------------------===//
@@ -40,7 +40,7 @@ Language "English"
 Country  "USA"
 LangId   "1033"
 Version  "2"
-Revision "20130911"
+Revision "20140827"
 
 
 
@@ -290,7 +290,7 @@ ChangeThreadAffMaskError     "Cannot change thread affinity mask."
 ThreadsMigrate               "%1$s: Threads may migrate across %2$d innermost levels of machine"
 DecreaseToThreads            "%1$s: decrease to %2$d threads"
 IncreaseToThreads            "%1$s: increase to %2$d threads"
-BoundToOSProcSet             "%1$s: Internal thread %2$d bound to OS proc set %3$s"
+OBSOLETE                     "%1$s: Internal thread %2$d bound to OS proc set %3$s"
 AffCapableUseCpuinfo         "%1$s: Affinity capable, using cpuinfo file"
 AffUseGlobCpuid              "%1$s: Affinity capable, using global cpuid info"
 AffCapableUseFlat            "%1$s: Affinity capable, using default \"flat\" topology"
@@ -395,9 +395,17 @@ AffThrPlaceInvalid           "%1$s: invalid value \"%2$s\", valid format is \"nC
 AffThrPlaceUnsupported       "KMP_PLACE_THREADS ignored: unsupported architecture."
 AffThrPlaceManyCores         "KMP_PLACE_THREADS ignored: too many cores requested."
 SyntaxErrorUsing             "%1$s: syntax error, using %2$s."
-AdaptiveNotSupported         "%1$s: Adaptive locks are not supported; using queuing." 
-EnvSyntaxError               "%1$s: Invalid symbols found. Check the value \"%2$s\"." 
-EnvSpacesNotAllowed          "%1$s: Spaces between digits are not allowed \"%2$s\"." 
+AdaptiveNotSupported         "%1$s: Adaptive locks are not supported; using queuing."
+EnvSyntaxError               "%1$s: Invalid symbols found. Check the value \"%2$s\"."
+EnvSpacesNotAllowed          "%1$s: Spaces between digits are not allowed \"%2$s\"."
+BoundToOSProcSet             "%1$s: pid %2$d thread %3$d bound to OS proc set %4$s"
+CnsLoopIncrIllegal           "%1$s error: parallel loop increment and condition are inconsistent."
+NoGompCancellation           "libgomp cancellation is not currently supported."
+AffThrPlaceNonUniform        "KMP_PLACE_THREADS ignored: non-uniform topology."
+AffThrPlaceNonThreeLevel     "KMP_PLACE_THREADS ignored: only three-level topology is supported."
+AffGranTopGroup              "%1$s: granularity=%2$s is not supported with KMP_TOPOLOGY_METHOD=group. Using \"granularity=fine\"."
+AffGranGroupType             "%1$s: granularity=group is not supported with KMP_AFFINITY=%2$s. Using \"granularity=core\"."
+
 
 # --------------------------------------------------------------------------------------------------
 -*- HINTS -*-

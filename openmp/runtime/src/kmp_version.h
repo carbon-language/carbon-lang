@@ -1,7 +1,7 @@
 /*
  * kmp_version.h -- version number for this release
- * $Revision: 42181 $
- * $Date: 2013-03-26 15:04:45 -0500 (Tue, 26 Mar 2013) $
+ * $Revision: 42982 $
+ * $Date: 2014-02-12 10:11:02 -0600 (Wed, 12 Feb 2014) $
  */
 
 
@@ -55,8 +55,6 @@ extern char const __kmp_version_alt_comp[];
 extern char const __kmp_version_omp_api[];
 // ??? extern char const __kmp_version_debug[];
 extern char const __kmp_version_lock[];
-extern char const __kmp_version_perf_v19[];
-extern char const __kmp_version_perf_v106[];
 extern char const __kmp_version_nested_stats_reporting[];
 extern char const __kmp_version_ftnstdcall[];
 extern char const __kmp_version_ftncdecl[];

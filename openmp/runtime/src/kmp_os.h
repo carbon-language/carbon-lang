@@ -1,7 +1,7 @@
 /*
  * kmp_os.h -- KPTS runtime header file.
- * $Revision: 42820 $
- * $Date: 2013-11-13 16:53:44 -0600 (Wed, 13 Nov 2013) $
+ * $Revision: 43473 $
+ * $Date: 2014-09-26 15:02:57 -0500 (Fri, 26 Sep 2014) $
  */
 
 
@@ -69,7 +69,7 @@
 #define KMP_OS_LINUX    0
 #define KMP_OS_FREEBSD  0
 #define KMP_OS_DARWIN   0
-#define KMP_OS_WINDOWS    0
+#define KMP_OS_WINDOWS  0
 #define KMP_OS_CNK      0
 #define KMP_OS_UNIX     0  /* disjunction of KMP_OS_LINUX, KMP_OS_DARWIN etc. */
 
@@ -114,6 +114,12 @@
 #if KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_DARWIN
 # undef KMP_OS_UNIX
 # define KMP_OS_UNIX 1
+#endif
+
+#if (KMP_OS_LINUX || KMP_OS_WINDOWS) && !KMP_OS_CNK && !KMP_ARCH_PPC64
+# define KMP_AFFINITY_SUPPORTED 1
+#else
+# define KMP_AFFINITY_SUPPORTED 0
 #endif
 
 #if KMP_OS_WINDOWS
@@ -356,6 +362,8 @@ typedef double  kmp_real64;
 extern "C" {
 #endif // __cplusplus
 
+#define INTERNODE_CACHE_LINE 4096 /* for multi-node systems */
+
 /* Define the default size of the cache line */
 #ifndef CACHE_LINE
     #define CACHE_LINE                  128         /* cache line size in bytes */
@@ -366,16 +374,6 @@ extern "C" {
     #endif
 #endif /* CACHE_LINE */
 
-/* SGI's cache padding improvements using align decl specs (Ver 19) */
-#if !defined KMP_PERF_V19
-# define KMP_PERF_V19			KMP_ON
-#endif
-
-/* SGI's improvements for inline argv (Ver 106) */
-#if !defined KMP_PERF_V106
-# define KMP_PERF_V106			KMP_ON
-#endif
-
 #define KMP_CACHE_PREFETCH(ADDR) 	/* nothing */
 
 /* Temporary note: if performance testing of this passes, we can remove
@@ -383,10 +381,12 @@ extern "C" {
 #if KMP_OS_UNIX && defined(__GNUC__)
 # define KMP_DO_ALIGN(bytes)  __attribute__((aligned(bytes)))
 # define KMP_ALIGN_CACHE      __attribute__((aligned(CACHE_LINE)))
+# define KMP_ALIGN_CACHE_INTERNODE __attribute__((aligned(INTERNODE_CACHE_LINE)))
 # define KMP_ALIGN(bytes)     __attribute__((aligned(bytes)))
 #else
 # define KMP_DO_ALIGN(bytes)  __declspec( align(bytes) )
 # define KMP_ALIGN_CACHE      __declspec( align(CACHE_LINE) )
+# define KMP_ALIGN_CACHE_INTERNODE      __declspec( align(INTERNODE_CACHE_LINE) )
 # define KMP_ALIGN(bytes)     __declspec( align(bytes) )
 #endif
 
@@ -525,7 +525,7 @@ extern kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v );
 # define KMP_XCHG_REAL64(p, v)                  __kmp_xchg_real64( (p), (v) );
 
 
-#elif (KMP_ASM_INTRINS && (KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_DARWIN)) || !(KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#elif (KMP_ASM_INTRINS && KMP_OS_UNIX) || !(KMP_ARCH_X86 || KMP_ARCH_X86_64)
 
 /* cast p to correct type so that proper intrinsic will be used */
 # define KMP_TEST_THEN_INC32(p)                 __sync_fetch_and_add( (kmp_int32 *)(p), 1 )
@@ -653,17 +653,6 @@ extern kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v );
 # define KMP_XCHG_REAL64(p, v)                  __kmp_xchg_real64( (p), (v) );
 
 #endif /* KMP_ASM_INTRINS */
-
-# if !KMP_MIC
-//
-// no routines for floating addition on MIC
-// no intrinsic support for floating addition on UNIX
-//
-extern kmp_real32 __kmp_test_then_add_real32 ( volatile kmp_real32 *p, kmp_real32 v );
-extern kmp_real64 __kmp_test_then_add_real64 ( volatile kmp_real64 *p, kmp_real64 v );
-#  define KMP_TEST_THEN_ADD_REAL32(p, v)        __kmp_test_then_add_real32( (p), (v) )
-#  define KMP_TEST_THEN_ADD_REAL64(p, v)        __kmp_test_then_add_real64( (p), (v) )
-# endif
 
 
 /* ------------- relaxed consistency memory model stuff ------------------ */

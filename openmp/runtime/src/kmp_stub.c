@@ -1,7 +1,7 @@
 /*
  * kmp_stub.c -- stub versions of user-callable OpenMP RT functions.
- * $Revision: 42826 $
- * $Date: 2013-11-20 03:39:45 -0600 (Wed, 20 Nov 2013) $
+ * $Revision: 42951 $
+ * $Date: 2014-01-21 14:41:41 -0600 (Tue, 21 Jan 2014) $
  */
 
 
@@ -15,13 +15,13 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "kmp_stub.h"
-
 #include <stdlib.h>
 #include <limits.h>
 #include <errno.h>
 
-#include "kmp_os.h"             // KMP_OS_*
+#include "omp.h"                // Function renamings.
+#include "kmp.h"                // KMP_DEFAULT_STKSIZE
+#include "kmp_stub.h"
 
 #if KMP_OS_WINDOWS
     #include <windows.h>
@@ -29,19 +29,11 @@
     #include <sys/time.h>
 #endif
 
-#include "omp.h"                // Function renamings.
-#include "kmp.h"                // KMP_DEFAULT_STKSIZE
-#include "kmp_version.h"
-
 // Moved from omp.h
-#if OMP_30_ENABLED
-
 #define omp_set_max_active_levels    ompc_set_max_active_levels
 #define omp_set_schedule             ompc_set_schedule
 #define omp_get_ancestor_thread_num  ompc_get_ancestor_thread_num
 #define omp_get_team_size            ompc_get_team_size
-
-#endif // OMP_30_ENABLED
 
 #define omp_set_num_threads          ompc_set_num_threads
 #define omp_set_dynamic              ompc_set_dynamic
@@ -95,15 +87,13 @@ static size_t __kmps_init() {
 void omp_set_num_threads( omp_int_t num_threads ) { i; }
 void omp_set_dynamic( omp_int_t dynamic )         { i; __kmps_set_dynamic( dynamic ); }
 void omp_set_nested( omp_int_t nested )           { i; __kmps_set_nested( nested );   }
-#if OMP_30_ENABLED
-    void omp_set_max_active_levels( omp_int_t max_active_levels ) { i; }
-    void omp_set_schedule( omp_sched_t kind, omp_int_t modifier ) { i; __kmps_set_schedule( (kmp_sched_t)kind, modifier ); }
-    int omp_get_ancestor_thread_num( omp_int_t level ) { i; return ( level ) ? ( -1 ) : ( 0 ); }
-    int omp_get_team_size( omp_int_t level ) { i; return ( level ) ? ( -1 ) : ( 1 ); }
-    int kmpc_set_affinity_mask_proc( int proc, void **mask ) { i; return -1; }
-    int kmpc_unset_affinity_mask_proc( int proc, void **mask ) { i; return -1; }
-    int kmpc_get_affinity_mask_proc( int proc, void **mask ) { i; return -1; }
-#endif // OMP_30_ENABLED
+void omp_set_max_active_levels( omp_int_t max_active_levels ) { i; }
+void omp_set_schedule( omp_sched_t kind, omp_int_t modifier ) { i; __kmps_set_schedule( (kmp_sched_t)kind, modifier ); }
+int omp_get_ancestor_thread_num( omp_int_t level ) { i; return ( level ) ? ( -1 ) : ( 0 ); }
+int omp_get_team_size( omp_int_t level ) { i; return ( level ) ? ( -1 ) : ( 1 ); }
+int kmpc_set_affinity_mask_proc( int proc, void **mask ) { i; return -1; }
+int kmpc_unset_affinity_mask_proc( int proc, void **mask ) { i; return -1; }
+int kmpc_get_affinity_mask_proc( int proc, void **mask ) { i; return -1; }
 
 /* kmp API functions */
 void kmp_set_stacksize( omp_int_t arg )   { i; __kmps_set_stacksize( arg ); }
@@ -178,8 +168,6 @@ int __kmps_get_stacksize( void ) {
     return __kmps_stacksize;
 } // __kmps_get_stacksize
 
-#if OMP_30_ENABLED
-
 static kmp_sched_t __kmps_sched_kind     = kmp_sched_default;
 static int         __kmps_sched_modifier = 0;
 
@@ -194,8 +182,6 @@ static int         __kmps_sched_modifier = 0;
         *kind     = __kmps_sched_kind;
         *modifier = __kmps_sched_modifier;
     } // __kmps_get_schedule
-
-#endif // OMP_30_ENABLED
 
 #if OMP_40_ENABLED
 

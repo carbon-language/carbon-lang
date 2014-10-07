@@ -1,7 +1,7 @@
 /*
  * kmp_debug.c -- debug utilities for the Guide library
- * $Revision: 42150 $
- * $Date: 2013-03-15 15:40:38 -0500 (Fri, 15 Mar 2013) $
+ * $Revision: 42951 $
+ * $Date: 2014-01-21 14:41:41 -0600 (Tue, 21 Jan 2014) $
  */
 
 
