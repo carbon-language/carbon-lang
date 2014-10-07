@@ -40,8 +40,6 @@ class MachineInstrBuilder;
 class AMDGPUInstrInfo : public AMDGPUGenInstrInfo {
 private:
   const AMDGPURegisterInfo RI;
-  bool getNextBranchInstr(MachineBasicBlock::iterator &iter,
-                          MachineBasicBlock &MBB) const;
   virtual void anchor();
 protected:
   const AMDGPUSubtarget &ST;
