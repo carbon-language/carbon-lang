@@ -6,149 +6,404 @@ import sys
 from Tkinter import *
 import ttk
 
-def get_item_dictionary_for_sbvalue(v, include_typename):
-    '''Given an lldb.SBValue, create an item dictionary for that value and return it
-    
-    The dictionary must have the following key/value pairs:
-        'values'   - must be a list of string values for each column defined in self.get_column_definitions()
-        'children' - a boolean value that indicates if an item has children or not
-    '''
-    name = v.name
-    if name is None:
-        name = ''
-    if include_typename:
-        typename = v.type
+class ValueTreeItemDelegate(object):
+    def __init__(self, value):
+        self.value = value
+
+    def get_item_dictionary(self):
+        name = self.value.name
+        if name is None:
+            name = ''
+        typename = self.value.type
         if typename is None:
             typename = ''
-    value = v.value
-    if value is None:
-        value = ''
-    summary = v.summary
-    if summary is None:
-        summary = ''
-    if include_typename:
-        return {   'values' : [name, typename, value, summary], 
-                 'children' : v.MightHaveChildren(),
-                     'type' : 'SBValue',
-                   'object' : v }
-    else:
-        return {   'values' : [name, value, summary], 
-                 'children' : v.MightHaveChildren(),
-                     'type' : 'SBValue',
-                   'object' : v }
+        value = self.value.value
+        if value is None:
+            value = ''
+        summary = self.value.summary
+        if summary is None:
+            summary = ''
+        has_children = self.value.MightHaveChildren()
+        return { '#0' : name,
+                 'typename' : typename,
+                 'value' : value,
+                 'summary' : summary,
+                 'children' : has_children,
+                 'tree-item-delegate' : self }
         
+    def get_child_item_dictionaries(self):
+        item_dicts = list()
+        for i in range(self.value.num_children):
+            item_delegate = ValueTreeItemDelegate(self.value.GetChildAtIndex(i))
+            item_dicts.append(item_delegate.get_item_dictionary())
+        return item_dicts
 
-def get_item_dictionary_for_process(process):
-    id = process.GetProcessID()
-    num_threads = process.GetNumThreads()
-    value = str(process.GetProcessID())
-    summary = process.target.executable.fullpath
-    return {   'values' : ['process', value, summary], 
-             'children' : num_threads > 0,
-                 'type' : 'SBProcess',
-               'object' : process }
+class FrameTreeItemDelegate(object):
+    def __init__(self, frame):
+        self.frame = frame
 
-def get_item_dictionary_for_thread(thread):
-    num_frames = thread.GetNumFrames()
-    value = '0x%x' % (thread.GetThreadID())
-    summary = '%u frames' % (num_frames)
-    return {   'values' : ['thread #%u' % (thread.GetIndexID()), value, summary], 
-             'children' : num_frames > 0,
-                 'type' : 'SBThread',
-               'object' : thread }
+    def get_item_dictionary(self):
+        id = self.frame.GetFrameID()
+        name = 'frame #%u' % (id);
+        value = '0x%16.16x' % (self.frame.GetPC())
+        stream = lldb.SBStream()
+        self.frame.GetDescription(stream)
+        summary = stream.GetData().split("`")[1]
+        return { '#0' : name,
+                 'value': value, 
+                 'summary': summary, 
+                 'children' : self.frame.GetVariables(True, True, True, True).GetSize() > 0,
+                 'tree-item-delegate' : self }
 
-def get_item_dictionary_for_frame(frame):
-    id = frame.GetFrameID()
-    value = '0x%16.16x' % (frame.GetPC())
-    stream = lldb.SBStream()
-    frame.GetDescription(stream)
-    summary = stream.GetData().split("`")[1]
-    return {   'values' : ['frame #%u' % (id), value, summary], 
-             'children' : frame.GetVariables(True, True, True, True).GetSize() > 0,
-                 'type' : 'SBFrame',
-               'object' : frame }
+    def get_child_item_dictionaries(self):
+        item_dicts = list()
+        variables = self.frame.GetVariables(True, True, True, True)
+        n = variables.GetSize()
+        for i in range(n):
+            item_delegate = ValueTreeItemDelegate(variables[i])
+            item_dicts.append(item_delegate.get_item_dictionary())
+        return item_dicts
 
-class ProcessTreeDelegate(object):
+class ThreadTreeItemDelegate(object):
+   def __init__(self, thread):
+       self.thread = thread
+
+   def get_item_dictionary(self):
+       num_frames = self.thread.GetNumFrames()
+       name = 'thread #%u' % (self.thread.GetIndexID())
+       value = '0x%x' % (self.thread.GetThreadID())
+       summary = '%u frames' % (num_frames)
+       return { '#0' : name,
+                'value': value, 
+                'summary': summary,
+                'children' : num_frames > 0,
+                'tree-item-delegate' : self }
+
+   def get_child_item_dictionaries(self):
+       item_dicts = list()
+       for frame in self.thread:
+           item_delegate = FrameTreeItemDelegate(frame)
+           item_dicts.append(item_delegate.get_item_dictionary())
+       return item_dicts
+        
+class ProcessTreeItemDelegate(object):
     def __init__(self, process):
         self.process = process
 
-    def get_column_definitions(self):
-        '''Return an array of column definition dictionaries'''
-        return [{ 'id' : '#0'     , 'text' : 'Name'   , 'anchor' : W , 'stretch' : 0 },
-                { 'id' : 'value'  , 'text' : 'Value'  , 'anchor' : W , 'stretch' : 0 },
-                { 'id' : 'summary', 'text' : 'Summary', 'anchor' : W , 'stretch' : 1 }]
+    def get_item_dictionary(self):
+        id = self.process.GetProcessID()
+        num_threads = self.process.GetNumThreads()
+        value = str(self.process.GetProcessID())
+        summary = self.process.target.executable.fullpath
+        return { '#0' : 'process',
+                 'value': value, 
+                 'summary': summary,
+                 'children' : num_threads > 0,
+                 'tree-item-delegate' : self }
 
-    def get_item_dictionary(self, sbvalue):
-        '''Given an lldb.SBValue, create an item dictionary for that value and return it
-
-           The dictionary must have the following key/value pairs:
-           'values'   - must be a list of string values for each column defined in self.get_column_definitions()
-           'children' - a boolean value that indicates if an item has children or not
-        '''
-
-    def get_child_item_dictionaries(self, parent_item_dict):
-        '''Given an lldb.SBValue, create an item dictionary for that value and return it'''
+    def get_child_item_dictionaries(self):
         item_dicts = list()
-        if parent_item_dict is None:
-            # Create root items if parent_item_dict is None
-            item_dicts.append(get_item_dictionary_for_process(self.process))
-        else:
-            # Get children for a specified item given its item dictionary
-            item_type = parent_item_dict['type']
-            if item_type == 'SBProcess':
-                for thread in parent_item_dict['object']:
-                    item_dicts.append(get_item_dictionary_for_thread(thread))
-            elif item_type == 'SBThread':
-                for frame in parent_item_dict['object']:
-                    item_dicts.append(get_item_dictionary_for_frame(frame))
-            elif item_type == 'SBFrame':
-                frame = parent_item_dict['object']
-                variables = frame.GetVariables(True, True, True, True)
-                n = variables.GetSize()
-                for i in range(n):
-                    item_dicts.append(get_item_dictionary_for_sbvalue(variables[i], False))
-            elif item_type == 'SBValue':
-                sbvalue = parent_item_dict['object']
-                if sbvalue.IsValid():
-                    for i in range(sbvalue.num_children):
-                        item_dicts.append(get_item_dictionary_for_sbvalue(sbvalue.GetChildAtIndex(i), False))
-        return item_dicts            
+        for thread in self.process:
+            item_delegate = ThreadTreeItemDelegate(thread)
+            item_dicts.append(item_delegate.get_item_dictionary())
+        return item_dicts
 
-class VariableTreeDelegate(object):
-    def __init__(self, frame):
-        self.frame = frame
-    
-    def get_column_definitions(self):
-        '''Return an array of column definition dictionaries'''
-        return [{ 'id' : '#0'     , 'text' : 'Name'   , 'anchor' : W , 'stretch' : 0 },
-                { 'id' : 'type'   , 'text' : 'Type'   , 'anchor' : W , 'stretch' : 0 },
-                { 'id' : 'value'  , 'text' : 'Value'  , 'anchor' : W , 'stretch' : 0 },
-                { 'id' : 'summary', 'text' : 'Summary', 'anchor' : W , 'stretch' : 1 }]
-            
-    def get_child_item_dictionaries(self, parent_item_dict):
-        '''Given an lldb.SBValue, create an item dictionary for that value and return it'''
+class TargetTreeItemDelegate(object):
+    def __init__(self, target):
+        self.target = target
+
+    def get_item_dictionary(self):
+        value = str(self.target.triple)
+        summary = self.target.executable.fullpath
+        return { '#0' : 'target',
+                 'value': value, 
+                 'summary': summary,
+                 'children' : True,
+                 'tree-item-delegate' : self }
+
+    def get_child_item_dictionaries(self):
         item_dicts = list()
-        if parent_item_dict is None:
-            # Create root items if parent_item_dict is None
-            variables = self.frame.GetVariables(True, True, True, True)
-            n = variables.GetSize()
-            for i in range(n):
-                item_dicts.append(get_item_dictionary_for_sbvalue(variables[i], True))
+        image_item_delegate = TargetImagesTreeItemDelegate(self.target)
+        item_dicts.append(image_item_delegate.get_item_dictionary())
+        return item_dicts
+
+class TargetImagesTreeItemDelegate(object):
+    def __init__(self, target):
+        self.target = target
+
+    def get_item_dictionary(self):
+        value = str(self.target.triple)
+        summary = self.target.executable.fullpath
+        num_modules = self.target.GetNumModules()
+        return { '#0' : 'images',
+                 'value': '', 
+                 'summary': '%u images' % num_modules,
+                 'children' : num_modules > 0,
+                 'tree-item-delegate' : self }
+
+    def get_child_item_dictionaries(self):
+        item_dicts = list()
+        for i in range(self.target.GetNumModules()):
+            module = self.target.GetModuleAtIndex(i)
+            image_item_delegate = ModuleTreeItemDelegate(self.target, module, i)
+            item_dicts.append(image_item_delegate.get_item_dictionary())
+        return item_dicts
+
+class ModuleTreeItemDelegate(object):
+    def __init__(self, target, module, index):
+        self.target = target
+        self.module = module
+        self.index = index
+
+    def get_item_dictionary(self):
+        name = 'module %u' % (self.index)
+        value = self.module.file.basename
+        summary = self.module.file.dirname
+        return { '#0' : name,
+                 'value': value, 
+                 'summary': summary,
+                 'children' : True,
+                 'tree-item-delegate' : self }
+
+    def get_child_item_dictionaries(self):
+        item_dicts = list()
+        sections_item_delegate = ModuleSectionsTreeItemDelegate(self.target, self.module)
+        item_dicts.append(sections_item_delegate.get_item_dictionary())
+
+        symbols_item_delegate = ModuleSymbolsTreeItemDelegate(self.target, self.module)
+        item_dicts.append(symbols_item_delegate.get_item_dictionary())
+
+        comp_units_item_delegate = ModuleCompileUnitsTreeItemDelegate(self.target, self.module)
+        item_dicts.append(comp_units_item_delegate.get_item_dictionary())
+        return item_dicts
+
+class ModuleSectionsTreeItemDelegate(object):
+    def __init__(self, target, module):
+        self.target = target
+        self.module = module
+
+    def get_item_dictionary(self):
+        name = 'sections'
+        value = ''
+        summary = '%u sections' % (self.module.GetNumSections())
+        return { '#0' : name,
+                 'value': value, 
+                 'summary': summary,
+                 'children' : True,
+                 'tree-item-delegate' : self }
+
+    def get_child_item_dictionaries(self):
+        item_dicts = list()
+        num_sections = self.module.GetNumSections()
+        for i in range(num_sections):
+            section = self.module.GetSectionAtIndex(i)
+            image_item_delegate = SectionTreeItemDelegate(self.target, section)
+            item_dicts.append(image_item_delegate.get_item_dictionary())
+        return item_dicts
+
+class SectionTreeItemDelegate(object):
+    def __init__(self, target, section):
+        self.target = target
+        self.section = section
+
+    def get_item_dictionary(self):
+        name = self.section.name
+        section_load_addr = self.section.GetLoadAddress(self.target)
+        if section_load_addr != lldb.LLDB_INVALID_ADDRESS:
+            value = '0x%16.16x' % (section_load_addr)
         else:
-            # Get children for a specified item given its item dictionary
-            sbvalue = parent_item_dict['object']
-            if sbvalue.IsValid():
-                for i in range(sbvalue.num_children):
-                    item_dicts.append(get_item_dictionary_for_sbvalue(sbvalue.GetChildAtIndex(i), True))
-        return item_dicts            
-            
+            value = '0x%16.16x *' % (self.section.file_addr)
+        summary = ''
+        return { '#0' : name,
+                 'value': value, 
+                 'summary': summary,
+                 'children' : self.section.GetNumSubSections() > 0,
+                 'tree-item-delegate' : self }
+
+    def get_child_item_dictionaries(self):
+        item_dicts = list()
+        num_sections = self.section.GetNumSubSections()
+        for i in range(num_sections):
+            section = self.section.GetSubSectionAtIndex(i)
+            image_item_delegate = SectionTreeItemDelegate(self.target, section)
+            item_dicts.append(image_item_delegate.get_item_dictionary())            
+        return item_dicts
+
+class ModuleCompileUnitsTreeItemDelegate(object):
+    def __init__(self, target, module):
+        self.target = target
+        self.module = module
+
+    def get_item_dictionary(self):
+        name = 'compile units'
+        value = ''
+        summary = '%u compile units' % (self.module.GetNumSections())
+        return { '#0' : name,
+                 'value': value, 
+                 'summary': summary,
+                 'children' : self.module.GetNumCompileUnits() > 0,
+                 'tree-item-delegate' : self }
+
+    def get_child_item_dictionaries(self):
+        item_dicts = list()
+        num_cus = self.module.GetNumCompileUnits()
+        for i in range(num_cus):
+            cu = self.module.GetCompileUnitAtIndex(i)
+            image_item_delegate = CompileUnitTreeItemDelegate(self.target, cu)
+            item_dicts.append(image_item_delegate.get_item_dictionary())
+        return item_dicts
+
+class CompileUnitTreeItemDelegate(object):
+    def __init__(self, target, cu):
+        self.target = target
+        self.cu = cu
+
+    def get_item_dictionary(self):
+        name = self.cu.GetFileSpec().basename
+        value = ''
+        num_lines = self.cu.GetNumLineEntries()
+        summary = ''
+        return { '#0' : name,
+                 'value': value, 
+                 'summary': summary,
+                 'children' : num_lines > 0,
+                 'tree-item-delegate' : self }
+
+    def get_child_item_dictionaries(self):
+        item_dicts = list()
+        item_delegate = LineTableTreeItemDelegate(self.target, self.cu)
+        item_dicts.append(item_delegate.get_item_dictionary())
+        return item_dicts
+
+class LineTableTreeItemDelegate(object):
+    def __init__(self, target, cu):
+        self.target = target
+        self.cu = cu
+
+    def get_item_dictionary(self):
+        name = 'line table'
+        value = ''
+        num_lines = self.cu.GetNumLineEntries()
+        summary = '%u line entries' % (num_lines)
+        return { '#0' : name,
+                 'value': value, 
+                 'summary': summary,
+                 'children' : num_lines > 0,
+                 'tree-item-delegate' : self }
+
+    def get_child_item_dictionaries(self):
+        item_dicts = list()
+        num_lines = self.cu.GetNumLineEntries()
+        for i in range(num_lines):
+            line_entry = self.cu.GetLineEntryAtIndex(i)
+            item_delegate = LineEntryTreeItemDelegate(self.target, line_entry, i)
+            item_dicts.append(item_delegate.get_item_dictionary())
+        return item_dicts
+
+class LineEntryTreeItemDelegate(object):
+    def __init__(self, target, line_entry, index):
+        self.target = target
+        self.line_entry = line_entry
+        self.index = index
+
+    def get_item_dictionary(self):
+        name = str(self.index)
+        address = self.line_entry.GetStartAddress()
+        load_addr = address.GetLoadAddress(self.target)
+        if load_addr != lldb.LLDB_INVALID_ADDRESS:
+            value = '0x%16.16x' % (load_addr)
+        else:
+            value = '0x%16.16x *' % (address.file_addr)
+        summary = self.line_entry.GetFileSpec().fullpath + ':' + str(self.line_entry.line)
+        return { '#0' : name,
+                 'value': value, 
+                 'summary': summary,
+                 'children' : False,
+                 'tree-item-delegate' : self }
+
+    def get_child_item_dictionaries(self):
+        item_dicts = list()
+        return item_dicts
+
+class InstructionTreeItemDelegate(object):
+    def __init__(self, target, instr):
+        self.target = target
+        self.instr = instr
+
+    def get_item_dictionary(self):
+        address = self.instr.GetAddress()
+        load_addr = address.GetLoadAddress(self.target)
+        if load_addr != lldb.LLDB_INVALID_ADDRESS:
+            name = '0x%16.16x' % (load_addr)
+        else:
+            name = '0x%16.16x *' % (address.file_addr)
+        value = self.instr.GetMnemonic(self.target) + ' ' + self.instr.GetOperands(self.target)
+        summary = self.instr.GetComment(self.target)
+        return { '#0' : name,
+                 'value': value, 
+                 'summary': summary,
+                 'children' : False,
+                 'tree-item-delegate' : self }
+
+class ModuleSymbolsTreeItemDelegate(object):
+    def __init__(self, target, module):
+        self.target = target
+        self.module = module
+
+    def get_item_dictionary(self):
+        name = 'symbols'
+        value = ''
+        summary = '%u symbols' % (self.module.GetNumSymbols())
+        return { '#0' : name,
+                 'value': value, 
+                 'summary': summary,
+                 'children' : True,
+                 'tree-item-delegate' : self }
+
+    def get_child_item_dictionaries(self):
+        item_dicts = list()
+        num_symbols = self.module.GetNumSymbols()
+        for i in range(num_symbols):
+            symbol = self.module.GetSymbolAtIndex(i)
+            image_item_delegate = SymbolTreeItemDelegate(self.target, symbol, i)
+            item_dicts.append(image_item_delegate.get_item_dictionary())
+        return item_dicts
+
+class SymbolTreeItemDelegate(object):
+    def __init__(self, target, symbol, index):
+        self.target = target
+        self.symbol = symbol
+        self.index = index
+
+    def get_item_dictionary(self):
+        address = self.symbol.GetStartAddress()
+        name = '[%u]' % self.index
+        symbol_load_addr = address.GetLoadAddress(self.target)
+        if symbol_load_addr != lldb.LLDB_INVALID_ADDRESS:
+            value = '0x%16.16x' % (symbol_load_addr)
+        else:
+            value = '0x%16.16x *' % (address.file_addr)
+        summary = self.symbol.name
+        return { '#0' : name,
+                 'value': value, 
+                 'summary': summary,
+                 'children' : False,
+                 'tree-item-delegate' : self }
+
+    def get_child_item_dictionaries(self):
+        item_dicts = list()
+        return item_dicts
+
+
+         
 class DelegateTree(ttk.Frame):
      
-    def __init__(self, delegate, title, name):
+    def __init__(self, column_dicts, delegate, title, name):
         ttk.Frame.__init__(self, name=name)
         self.pack(expand=Y, fill=BOTH)
         self.master.title(title)
         self.delegate = delegate
+        self.columns_dicts = column_dicts
         self.item_id_to_item_dict = dict()
         frame = Frame(self)
         frame.pack(side=TOP, fill=BOTH, expand=Y)
@@ -159,10 +414,9 @@ class DelegateTree(ttk.Frame):
         frame = ttk.Frame(parent)
         frame.pack(side=TOP, fill=BOTH, expand=Y)
          
-        columns_dicts = self.delegate.get_column_definitions()
         column_ids = list()
-        for i in range(1,len(columns_dicts)):
-            column_ids.append(columns_dicts[i]['id'])
+        for i in range(1,len(self.columns_dicts)):
+            column_ids.append(self.columns_dicts[i]['id'])
         # create the tree and scrollbars
         self.tree = ttk.Treeview(columns=column_ids)
          
@@ -172,7 +426,7 @@ class DelegateTree(ttk.Frame):
         self.tree['xscroll'] = scroll_bar_h.set
          
         # setup column headings and columns properties
-        for columns_dict in columns_dicts:
+        for columns_dict in self.columns_dicts:
             self.tree.heading(columns_dict['id'], text=columns_dict['text'], anchor=columns_dict['anchor'])
             self.tree.column(columns_dict['id'], stretch=columns_dict['stretch'])
          
@@ -190,18 +444,26 @@ class DelegateTree(ttk.Frame):
 
     def insert_items(self, parent_id, item_dicts):
         for item_dict in item_dicts:
-            values =  item_dict['values']
+            name = None
+            values = list()
+            first = True
+            for columns_dict in self.columns_dicts:
+                if first:
+                    name = item_dict[columns_dict['id']]
+                    first = False
+                else:
+                    values.append(item_dict[columns_dict['id']])
             item_id = self.tree.insert (parent_id, # root item has an empty name
                                         END, 
-                                        text=values[0], 
-                                        values=values[1:])
+                                        text=name, 
+                                        values=values)
             self.item_id_to_item_dict[item_id] = item_dict
             if item_dict['children']:
                 self.tree.insert(item_id, END, text='dummy')
         
     def _populate_root(self):
         # use current directory as root node
-        self.insert_items('', self.delegate.get_child_item_dictionaries(None))
+        self.insert_items('', self.delegate.get_child_item_dictionaries())
     
     def _update_tree(self, event):
         # user expanded a node - build the related directory
@@ -214,7 +476,8 @@ class DelegateTree(ttk.Frame):
             # populated
             if self.tree.item(first_child, option='text') == 'dummy':
                 self.tree.delete(first_child)
-                item_dicts = self.delegate.get_child_item_dictionaries(self.item_id_to_item_dict[item_id])
+                item_dict = self.item_id_to_item_dict[item_id]
+                item_dicts = item_dict['tree-item-delegate'].get_child_item_dictionaries()
                 self.insert_items(item_id, item_dicts)
 
 @lldb.command("tk-variables")
@@ -238,8 +501,11 @@ def tk_variable_display(debugger, command, result, dict):
         return
     # Parse command line args
     command_args = shlex.split(command)
-    
-    tree = DelegateTree(VariableTreeDelegate(frame), 'Variables', 'lldb-tk-variables')
+    column_dicts = [{ 'id' : '#0'      , 'text' : 'Name'   , 'anchor' : W , 'stretch' : 0 },
+                    { 'id' : 'typename', 'text' : 'Type'   , 'anchor' : W , 'stretch' : 0 },
+                    { 'id' : 'value'   , 'text' : 'Value'  , 'anchor' : W , 'stretch' : 0 },
+                    { 'id' : 'summary' , 'text' : 'Summary', 'anchor' : W , 'stretch' : 1 }]
+    tree = DelegateTree(column_dicts, FrameTreeItemDelegate(frame), 'Variables', 'lldb-tk-variables')
     tree.mainloop()
 
 @lldb.command("tk-process")
@@ -254,7 +520,25 @@ def tk_process_display(debugger, command, result, dict):
         print >>result, "invalid process"
         return
     # Parse command line args
+    columnd_dicts = [{ 'id' : '#0'     , 'text' : 'Name'   , 'anchor' : W , 'stretch' : 0 },
+                     { 'id' : 'value'  , 'text' : 'Value'  , 'anchor' : W , 'stretch' : 0 },
+                     { 'id' : 'summary', 'text' : 'Summary', 'anchor' : W , 'stretch' : 1 }];
     command_args = shlex.split(command)
-    tree = DelegateTree(ProcessTreeDelegate(process), 'Process', 'lldb-tk-process')
+    tree = DelegateTree(columnd_dicts, ProcessTreeItemDelegate(process), 'Process', 'lldb-tk-process')
+    tree.mainloop()
+
+@lldb.command("tk-target")
+def tk_target_display(debugger, command, result, dict):
+    sys.argv = ['tk-target'] # needed for tree creation in TK library as it uses sys.argv...
+    target = debugger.GetSelectedTarget()
+    if not target:
+        print >>result, "invalid target"
+        return
+    # Parse command line args
+    columnd_dicts = [{ 'id' : '#0'     , 'text' : 'Name'   , 'anchor' : W , 'stretch' : 0 },
+                     { 'id' : 'value'  , 'text' : 'Value'  , 'anchor' : W , 'stretch' : 0 },
+                     { 'id' : 'summary', 'text' : 'Summary', 'anchor' : W , 'stretch' : 1 }];
+    command_args = shlex.split(command)
+    tree = DelegateTree(columnd_dicts, TargetTreeItemDelegate(target), 'Target', 'lldb-tk-target')
     tree.mainloop()
 
