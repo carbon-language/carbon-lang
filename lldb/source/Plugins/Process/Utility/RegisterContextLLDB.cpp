@@ -408,9 +408,13 @@ RegisterContextLLDB::InitializeNonZerothFrame()
 
             if (CheckIfLoopingStack ())
             {
-                UnwindLogMsg ("same CFA address as next frame, assuming the unwind is looping - stopping");
-                m_frame_type = eNotAValidFrame;
-                return;
+                TryFallbackUnwindPlan();
+                if (CheckIfLoopingStack ())
+                {
+                    UnwindLogMsg ("same CFA address as next frame, assuming the unwind is looping - stopping");
+                    m_frame_type = eNotAValidFrame;
+                    return;
+                }
             }
 
             UnwindLogMsg ("initialized frame cfa is 0x%" PRIx64, (uint64_t) m_cfa);
@@ -583,9 +587,13 @@ RegisterContextLLDB::InitializeNonZerothFrame()
 
     if (CheckIfLoopingStack ())
     {
-        UnwindLogMsg ("same CFA address as next frame, assuming the unwind is looping - stopping");
-        m_frame_type = eNotAValidFrame;
-        return;
+        TryFallbackUnwindPlan();
+        if (CheckIfLoopingStack ())
+        {
+            UnwindLogMsg ("same CFA address as next frame, assuming the unwind is looping - stopping");
+            m_frame_type = eNotAValidFrame;
+            return;
+        }
     }
 
     UnwindLogMsg ("initialized frame current pc is 0x%" PRIx64 " cfa is 0x%" PRIx64,
