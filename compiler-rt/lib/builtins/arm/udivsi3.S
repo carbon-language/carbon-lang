@@ -27,7 +27,11 @@ DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_uidiv, __udivsi3)
 @ unsigned int __udivsi3(unsigned int divident, unsigned int divisor)
 @   Calculate and return the quotient of the (unsigned) division.
 
+#if __ARM_ARCH_ISA_THUMB == 2
 DEFINE_COMPILERRT_THUMB_FUNCTION(__udivsi3)
+#else
+DEFINE_COMPILERRT_FUNCTION(__udivsi3)
+#endif
 #if __ARM_ARCH_EXT_IDIV__
 	tst     r1, r1
 	beq     LOCAL_LABEL(divby0)

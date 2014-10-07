@@ -21,7 +21,11 @@
 // Reverse all the bytes in a 64-bit integer.
 //
 	.p2align 2
+#if __ARM_ARCH_ISA_THUMB == 2
 DEFINE_COMPILERRT_THUMB_FUNCTION(__bswapdi2)
+#else
+DEFINE_COMPILERRT_FUNCTION(__bswapdi2)
+#endif
 #if __ARM_ARCH < 6
     // before armv6 does not have "rev" instruction
     // r2 = rev(r0)
