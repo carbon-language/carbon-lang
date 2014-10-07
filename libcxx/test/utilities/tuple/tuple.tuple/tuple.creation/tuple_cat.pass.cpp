@@ -213,4 +213,18 @@ int main()
         assert(std::get<3>(t3) == 4);
         assert(std::get<4>(t3) == 5);
     }
+    {
+        // See bug #19616.
+        auto t1 = std::tuple_cat(
+            std::make_tuple(std::make_tuple(1)),
+            std::make_tuple()
+        );
+        assert(t1 == std::make_tuple(std::make_tuple(1)));
+
+        auto t2 = std::tuple_cat(
+            std::make_tuple(std::make_tuple(1)),
+            std::make_tuple(std::make_tuple(2))
+        );
+        assert(t2 == std::make_tuple(std::make_tuple(1), std::make_tuple(2)));
+    }
 }
