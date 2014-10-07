@@ -1222,6 +1222,9 @@ static int buildMinMaxAccess(__isl_take isl_set *Set, void *User) {
   MinPMA = isl_set_lexmin_pw_multi_aff(isl_set_copy(Set));
   MaxPMA = isl_set_lexmax_pw_multi_aff(isl_set_copy(Set));
 
+  MinPMA = isl_pw_multi_aff_coalesce(MinPMA);
+  MaxPMA = isl_pw_multi_aff_coalesce(MaxPMA);
+
   // Adjust the last dimension of the maximal access by one as we want to
   // enclose the accessed memory region by MinPMA and MaxPMA. The pointer
   // we test during code generation might now point after the end of the

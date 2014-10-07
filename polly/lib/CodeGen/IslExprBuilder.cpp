@@ -249,6 +249,8 @@ Value *IslExprBuilder::createOpSelect(__isl_take isl_ast_expr *Expr) {
   Type *MaxType = getType(Expr);
 
   Cond = create(isl_ast_expr_get_op_arg(Expr, 0));
+  if (!Cond->getType()->isIntegerTy(1))
+    Cond = Builder.CreateIsNotNull(Cond);
 
   LHS = create(isl_ast_expr_get_op_arg(Expr, 1));
   RHS = create(isl_ast_expr_get_op_arg(Expr, 2));
