@@ -126,10 +126,25 @@ TypeCategoryMap::EnableAllCategories ()
     std::vector<ValueSP> sorted_categories(m_map.size(), ValueSP());
     MapType::iterator iter = m_map.begin(), end = m_map.end();
     for (; iter != end; ++iter)
-        sorted_categories.at(iter->second->GetLastEnabledPosition()) = iter->second;
+    {
+        if (iter->second->IsEnabled())
+            continue;
+        auto pos = iter->second->GetLastEnabledPosition();
+        if (pos >= sorted_categories.size())
+        {
+            auto iter = std::find_if(sorted_categories.begin(),
+                                     sorted_categories.end(),
+                                     [] (const ValueSP& sp) -> bool {
+                                         return sp.get() == nullptr;
+                                     });
+            pos = std::distance(sorted_categories.begin(), iter);
+        }
+        sorted_categories.at(pos) = iter->second;
+    }
     decltype(sorted_categories)::iterator viter = sorted_categories.begin(), vend = sorted_categories.end();
     for (; viter != vend; viter++)
-        Enable(*viter, Last);
+        if (viter->get())
+            Enable(*viter, Last);
 }
 
 void
