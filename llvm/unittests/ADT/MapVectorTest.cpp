@@ -67,6 +67,11 @@ TEST(MapVectorTest, erase) {
   ASSERT_EQ(MV.find(1), MV.end());
   ASSERT_EQ(MV[3], 4);
   ASSERT_EQ(MV[5], 6);
+
+  MV.erase(3);
+  ASSERT_EQ(MV.size(), 1u);
+  ASSERT_EQ(MV.find(3), MV.end());
+  ASSERT_EQ(MV[5], 6);
 }
 
 TEST(MapVectorTest, remove_if) {

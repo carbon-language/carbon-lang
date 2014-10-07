@@ -147,6 +147,17 @@ public:
     return Next;
   }
 
+  /// \brief Remove all elements with the key value Key.
+  ///
+  /// Returns the number of elements removed.
+  size_type erase(const KeyT &Key) {
+    auto Iterator = find(Key);
+    if (Iterator == end())
+      return 0;
+    erase(Iterator);
+    return 1;
+  }
+
   /// \brief Remove the elements that match the predicate.
   ///
   /// Erase all elements that match \c Pred in a single pass.  Takes linear
