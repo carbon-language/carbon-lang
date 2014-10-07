@@ -21,6 +21,7 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Target/TargetLibraryInfo.h"
+
 using namespace llvm;
 using namespace PatternMatch;
 
@@ -2429,6 +2430,128 @@ static bool swapMayExposeCSEOpportunities(const Value * Op0,
   return GlobalSwapBenefits > 0;
 }
 
+/// \brief Check that one use is in the same block as the definition and all
+/// other uses are in blocks dominated by a given block
+///
+/// \param DI Definition
+/// \param UI Use
+/// \param DB Block that must dominate all uses of \p DI outside
+///           the parent block
+/// \return true when \p UI is the only use of \p DI in the parent block
+/// and all other uses of \p DI are in blocks dominated by \p DB.
+///
+bool InstCombiner::dominatesAllUses(const Instruction *DI,
+                                    const Instruction *UI,
+                                    const BasicBlock *DB) const {
+  assert(DI && UI && "Instruction not defined\n");
+  if (DI->getParent() != UI->getParent())
+    return false;
+  // DominatorTree available?
+  if (!DT)
+    return false;
+  for (const User *U : DI->users()) {
+    auto *Usr = cast<Instruction>(U);
+    if (Usr != UI && !DT->dominates(DB, Usr->getParent()))
+      return false;
+  }
+  return true;
+}
+
+///
+/// true when the instruction sequence within a block is select-cmp-br.
+///
+static bool isChainSelectCmpBranch(const SelectInst *SI) {
+  const BasicBlock *BB = SI->getParent();
+  if (!BB)
+    return false;
+  auto *BI = dyn_cast_or_null<BranchInst>(BB->getTerminator());
+  if (!BI || BI->getNumSuccessors() != 2)
+    return false;
+  auto *IC = dyn_cast<ICmpInst>(BI->getCondition());
+  if (!IC || (IC->getOperand(0) != SI && IC->getOperand(1) != SI))
+    return false;
+  return true;
+}
+
+///
+/// \brief True when a select result is replaced by one of its operands
+/// in select-icmp sequence. This will eventually result in the elimination
+/// of the select.
+///
+/// \param SI   Select instruction
+/// \param Icmp Compare instruction
+/// \param CI1  'true' when first select operand is equal to RHSC of Icmp
+/// \param CI2  'true' when second select operand is equal to RHSC of Icmp
+///
+/// Notes:
+/// - The replacement is global and requires dominator information
+/// - The caller is responsible for the actual replacement
+///
+/// Example:
+///
+/// entry:
+///  %4 = select i1 %3, %C* %0, %C* null
+///  %5 = icmp eq %C* %4, null
+///  br i1 %5, label %9, label %7
+///  ...
+///  ; <label>:7                                       ; preds = %entry
+///  %8 = getelementptr inbounds %C* %4, i64 0, i32 0
+///  ...
+///
+/// can be transformed to
+///
+///  %5 = icmp eq %C* %0, null
+///  %6 = select i1 %3, i1 %5, i1 true
+///  br i1 %6, label %9, label %7
+///  ...
+///  ; <label>:7                                       ; preds = %entry
+///  %8 = getelementptr inbounds %C* %0, i64 0, i32 0  // replace by %0!
+///
+/// Similar when the first operand of the select is a constant or/and
+/// the compare is for not equal rather than equal.
+///
+/// FIXME: Currently the function considers equal compares only. It should be
+/// possbile to extend it to not equal compares also.
+///
+bool InstCombiner::replacedSelectWithOperand(SelectInst *SI,
+                                             const ICmpInst *Icmp,
+                                             const ConstantInt *CI1,
+                                             const ConstantInt *CI2) {
+  if (isChainSelectCmpBranch(SI) && Icmp->isEquality()) {
+    // Code sequence is select - icmp.[eq|ne] - br
+    unsigned ReplaceWithOpd = 0;
+    if (CI1 && !CI1->isZero())
+      // The first constant operand of the select and the RHS of
+      // the compare match, so try to substitute
+      // the select results with its second operand
+      // Example:
+      // %4 = select i1 %3, %C* null, %C* %0
+      // %5 = icmp eq %C* %4, null
+      // ==> could replace select with second operand
+      ReplaceWithOpd = 2;
+    else if (CI2 && !CI2->isZero())
+      // Similar when the second operand of the select is a constant
+      // Example:
+      // %4 = select i1 %3, %C* %0, %C* null
+      // %5 = icmp eq %C* %4, null
+      // ==> could replace select with first operand
+      ReplaceWithOpd = 1;
+    if (ReplaceWithOpd) {
+      // Replace select with operand on else path for EQ compares.
+      // Replace select with operand on then path for NE compares.
+      BasicBlock *Succ =
+          Icmp->getPredicate() == ICmpInst::ICMP_EQ
+              ? SI->getParent()->getTerminator()->getSuccessor(1)
+              : SI->getParent()->getTerminator()->getSuccessor(0);
+      if (InstCombiner::dominatesAllUses(SI, Icmp, Succ)) {
+        SI->replaceAllUsesWith(SI->getOperand(ReplaceWithOpd));
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   bool Changed = false;
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -2885,8 +3008,21 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         // fold to a constant (in which case the icmp is replaced with a select
         // which will usually simplify) or this is the only user of the
         // select (in which case we are trading a select+icmp for a simpler
-        // select+icmp).
-        if ((Op1 && Op2) || (LHSI->hasOneUse() && (Op1 || Op2))) {
+        // select+icmp) or all uses of the select can be replaced based on
+        // dominance information ("Global cases").
+        bool Transform = false;
+        if (Op1 && Op2)
+          Transform = true;
+        else if (Op1 || Op2) {
+          if (LHSI->hasOneUse())
+            Transform = true;
+          else
+            // Global cases
+            Transform = replacedSelectWithOperand(
+                cast<SelectInst>(LHSI), &I, dyn_cast_or_null<ConstantInt>(Op1),
+                dyn_cast_or_null<ConstantInt>(Op2));
+        }
+        if (Transform) {
           if (!Op1)
             Op1 = Builder->CreateICmp(I.getPredicate(), LHSI->getOperand(1),
                                       RHSC, I.getName());
