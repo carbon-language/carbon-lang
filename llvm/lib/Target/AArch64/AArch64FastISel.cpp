@@ -590,7 +590,7 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
       std::swap(LHS, RHS);
 
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(RHS)) {
-      Addr.setOffset(Addr.getOffset() + (uint64_t)CI->getSExtValue());
+      Addr.setOffset(Addr.getOffset() + CI->getSExtValue());
       return computeAddress(LHS, Addr, Ty);
     }
 
@@ -599,6 +599,17 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
       return true;
     Addr = Backup;
 
+    break;
+  }
+  case Instruction::Sub: {
+    // Subs of constants are common and easy enough.
+    const Value *LHS = U->getOperand(0);
+    const Value *RHS = U->getOperand(1);
+
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(RHS)) {
+      Addr.setOffset(Addr.getOffset() - CI->getSExtValue());
+      return computeAddress(LHS, Addr, Ty);
+    }
     break;
   }
   case Instruction::Shl: {
