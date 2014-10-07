@@ -1444,24 +1444,24 @@ defm V_MBCNT_HI_U32_B32 : VOP2Inst <vop2<0x24>, "V_MBCNT_HI_U32_B32",
 let isCommutable = 1, Defs = [VCC] in { // Carry-out goes to VCC
 // No patterns so that the scalar instructions are always selected.
 // The scalar versions will be replaced with vector when needed later.
-defm V_ADD_I32 : VOP2bInst <0x00000025, "V_ADD_I32",
+defm V_ADD_I32 : VOP2bInst <vop2<0x25>, "V_ADD_I32",
   VOP_I32_I32_I32, add
 >;
-defm V_SUB_I32 : VOP2bInst <0x00000026, "V_SUB_I32",
+defm V_SUB_I32 : VOP2bInst <vop2<0x26>, "V_SUB_I32",
   VOP_I32_I32_I32, sub
 >;
-defm V_SUBREV_I32 : VOP2bInst <0x00000027, "V_SUBREV_I32",
+defm V_SUBREV_I32 : VOP2bInst <vop2<0x27>, "V_SUBREV_I32",
   VOP_I32_I32_I32, null_frag, "V_SUB_I32"
 >;
 
 let Uses = [VCC] in { // Carry-in comes from VCC
-defm V_ADDC_U32 : VOP2bInst <0x00000028, "V_ADDC_U32",
+defm V_ADDC_U32 : VOP2bInst <vop2<0x28>, "V_ADDC_U32",
   VOP_I32_I32_I32_VCC, adde
 >;
-defm V_SUBB_U32 : VOP2bInst <0x00000029, "V_SUBB_U32",
+defm V_SUBB_U32 : VOP2bInst <vop2<0x29>, "V_SUBB_U32",
   VOP_I32_I32_I32_VCC, sube
 >;
-defm V_SUBBREV_U32 : VOP2bInst <0x0000002a, "V_SUBBREV_U32",
+defm V_SUBBREV_U32 : VOP2bInst <vop2<0x2a>, "V_SUBBREV_U32",
   VOP_I32_I32_I32_VCC, null_frag, "V_SUBB_U32"
 >;
 
@@ -1484,58 +1484,58 @@ defm V_CVT_PKRTZ_F16_F32 : VOP2Inst <vop2<0x2f>, "V_CVT_PKRTZ_F16_F32",
 // VOP3 Instructions
 //===----------------------------------------------------------------------===//
 
-defm V_MAD_LEGACY_F32 : VOP3Inst <0x00000140, "V_MAD_LEGACY_F32",
+defm V_MAD_LEGACY_F32 : VOP3Inst <vop3<0x140>, "V_MAD_LEGACY_F32",
   VOP_F32_F32_F32_F32
 >;
-defm V_MAD_F32 : VOP3Inst <0x00000141, "V_MAD_F32",
+defm V_MAD_F32 : VOP3Inst <vop3<0x141>, "V_MAD_F32",
   VOP_F32_F32_F32_F32, fmad
 >;
-defm V_MAD_I32_I24 : VOP3Inst <0x00000142, "V_MAD_I32_I24",
+defm V_MAD_I32_I24 : VOP3Inst <vop3<0x142>, "V_MAD_I32_I24",
   VOP_I32_I32_I32_I32, AMDGPUmad_i24
 >;
-defm V_MAD_U32_U24 : VOP3Inst <0x00000143, "V_MAD_U32_U24",
+defm V_MAD_U32_U24 : VOP3Inst <vop3<0x143>, "V_MAD_U32_U24",
   VOP_I32_I32_I32_I32, AMDGPUmad_u24
 >;
 
-defm V_CUBEID_F32 : VOP3Inst <0x00000144, "V_CUBEID_F32",
+defm V_CUBEID_F32 : VOP3Inst <vop3<0x144>, "V_CUBEID_F32",
   VOP_F32_F32_F32_F32
 >;
-defm V_CUBESC_F32 : VOP3Inst <0x00000145, "V_CUBESC_F32",
+defm V_CUBESC_F32 : VOP3Inst <vop3<0x145>, "V_CUBESC_F32",
   VOP_F32_F32_F32_F32
 >;
-defm V_CUBETC_F32 : VOP3Inst <0x00000146, "V_CUBETC_F32",
+defm V_CUBETC_F32 : VOP3Inst <vop3<0x146>, "V_CUBETC_F32",
   VOP_F32_F32_F32_F32
 >;
-defm V_CUBEMA_F32 : VOP3Inst <0x00000147, "V_CUBEMA_F32",
+defm V_CUBEMA_F32 : VOP3Inst <vop3<0x147>, "V_CUBEMA_F32",
   VOP_F32_F32_F32_F32
 >;
 
 let neverHasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
-defm V_BFE_U32 : VOP3Inst <0x00000148, "V_BFE_U32",
+defm V_BFE_U32 : VOP3Inst <vop3<0x148>, "V_BFE_U32",
   VOP_I32_I32_I32_I32, AMDGPUbfe_u32
 >;
-defm V_BFE_I32 : VOP3Inst <0x00000149, "V_BFE_I32",
+defm V_BFE_I32 : VOP3Inst <vop3<0x149>, "V_BFE_I32",
   VOP_I32_I32_I32_I32, AMDGPUbfe_i32
 >;
 }
 
-defm V_BFI_B32 : VOP3Inst <0x0000014a, "V_BFI_B32",
+defm V_BFI_B32 : VOP3Inst <vop3<0x14a>, "V_BFI_B32",
   VOP_I32_I32_I32_I32, AMDGPUbfi
 >;
-defm V_FMA_F32 : VOP3Inst <0x0000014b, "V_FMA_F32",
+defm V_FMA_F32 : VOP3Inst <vop3<0x14b>, "V_FMA_F32",
   VOP_F32_F32_F32_F32, fma
 >;
-defm V_FMA_F64 : VOP3Inst <0x0000014c, "V_FMA_F64",
+defm V_FMA_F64 : VOP3Inst <vop3<0x14c>, "V_FMA_F64",
   VOP_F64_F64_F64_F64, fma
 >;
 //def V_LERP_U8 : VOP3_U8 <0x0000014d, "V_LERP_U8", []>;
-defm V_ALIGNBIT_B32 : VOP3Inst <0x0000014e, "V_ALIGNBIT_B32",
+defm V_ALIGNBIT_B32 : VOP3Inst <vop3<0x14e>, "V_ALIGNBIT_B32",
   VOP_I32_I32_I32_I32
 >;
-defm V_ALIGNBYTE_B32 : VOP3Inst <0x0000014f, "V_ALIGNBYTE_B32",
+defm V_ALIGNBYTE_B32 : VOP3Inst <vop3<0x14f>, "V_ALIGNBYTE_B32",
   VOP_I32_I32_I32_I32
 >;
-defm V_MULLIT_F32 : VOP3Inst <0x00000150, "V_MULLIT_F32",
+defm V_MULLIT_F32 : VOP3Inst <vop3<0x150>, "V_MULLIT_F32",
   VOP_F32_F32_F32_F32>;
 ////def V_MIN3_F32 : VOP3_MIN3 <0x00000151, "V_MIN3_F32", []>;
 ////def V_MIN3_I32 : VOP3_MIN3 <0x00000152, "V_MIN3_I32", []>;
@@ -1549,81 +1549,81 @@ defm V_MULLIT_F32 : VOP3Inst <0x00000150, "V_MULLIT_F32",
 //def V_SAD_U8 : VOP3_U8 <0x0000015a, "V_SAD_U8", []>;
 //def V_SAD_HI_U8 : VOP3_U8 <0x0000015b, "V_SAD_HI_U8", []>;
 //def V_SAD_U16 : VOP3_U16 <0x0000015c, "V_SAD_U16", []>;
-defm V_SAD_U32 : VOP3Inst <0x0000015d, "V_SAD_U32",
+defm V_SAD_U32 : VOP3Inst <vop3<0x15d>, "V_SAD_U32",
   VOP_I32_I32_I32_I32
 >;
 ////def V_CVT_PK_U8_F32 : VOP3_U8 <0x0000015e, "V_CVT_PK_U8_F32", []>;
 defm V_DIV_FIXUP_F32 : VOP3Inst <
-  0x0000015f, "V_DIV_FIXUP_F32", VOP_F32_F32_F32_F32, AMDGPUdiv_fixup
+  vop3<0x15f>, "V_DIV_FIXUP_F32", VOP_F32_F32_F32_F32, AMDGPUdiv_fixup
 >;
 defm V_DIV_FIXUP_F64 : VOP3Inst <
-  0x00000160, "V_DIV_FIXUP_F64", VOP_F64_F64_F64_F64, AMDGPUdiv_fixup
+  vop3<0x160>, "V_DIV_FIXUP_F64", VOP_F64_F64_F64_F64, AMDGPUdiv_fixup
 >;
 
-defm V_LSHL_B64 : VOP3Inst <0x00000161, "V_LSHL_B64",
+defm V_LSHL_B64 : VOP3Inst <vop3<0x161>, "V_LSHL_B64",
   VOP_I64_I64_I32, shl
 >;
-defm V_LSHR_B64 : VOP3Inst <0x00000162, "V_LSHR_B64",
+defm V_LSHR_B64 : VOP3Inst <vop3<0x162>, "V_LSHR_B64",
   VOP_I64_I64_I32, srl
 >;
-defm V_ASHR_I64 : VOP3Inst <0x00000163, "V_ASHR_I64",
+defm V_ASHR_I64 : VOP3Inst <vop3<0x163>, "V_ASHR_I64",
   VOP_I64_I64_I32, sra
 >;
 
 let isCommutable = 1 in {
 
-defm V_ADD_F64 : VOP3Inst <0x00000164, "V_ADD_F64",
+defm V_ADD_F64 : VOP3Inst <vop3<0x164>, "V_ADD_F64",
   VOP_F64_F64_F64, fadd
 >;
-defm V_MUL_F64 : VOP3Inst <0x00000165, "V_MUL_F64",
+defm V_MUL_F64 : VOP3Inst <vop3<0x165>, "V_MUL_F64",
   VOP_F64_F64_F64, fmul
 >;
-defm V_MIN_F64 : VOP3Inst <0x00000166, "V_MIN_F64",
+defm V_MIN_F64 : VOP3Inst <vop3<0x166>, "V_MIN_F64",
   VOP_F64_F64_F64
 >;
-defm V_MAX_F64 : VOP3Inst <0x00000167, "V_MAX_F64",
+defm V_MAX_F64 : VOP3Inst <vop3<0x167>, "V_MAX_F64",
   VOP_F64_F64_F64
 >;
 
 } // isCommutable = 1
 
-defm V_LDEXP_F64 : VOP3Inst <0x00000168, "V_LDEXP_F64",
+defm V_LDEXP_F64 : VOP3Inst <vop3<0x168>, "V_LDEXP_F64",
   VOP_F64_F64_I32, AMDGPUldexp
 >;
 
 let isCommutable = 1 in {
 
-defm V_MUL_LO_U32 : VOP3Inst <0x00000169, "V_MUL_LO_U32",
+defm V_MUL_LO_U32 : VOP3Inst <vop3<0x169>, "V_MUL_LO_U32",
   VOP_I32_I32_I32
 >;
-defm V_MUL_HI_U32 : VOP3Inst <0x0000016a, "V_MUL_HI_U32",
+defm V_MUL_HI_U32 : VOP3Inst <vop3<0x16a>, "V_MUL_HI_U32",
   VOP_I32_I32_I32
 >;
-defm V_MUL_LO_I32 : VOP3Inst <0x0000016b, "V_MUL_LO_I32",
+defm V_MUL_LO_I32 : VOP3Inst <vop3<0x16b>, "V_MUL_LO_I32",
   VOP_I32_I32_I32
 >;
-defm V_MUL_HI_I32 : VOP3Inst <0x0000016c, "V_MUL_HI_I32",
+defm V_MUL_HI_I32 : VOP3Inst <vop3<0x16c>, "V_MUL_HI_I32",
   VOP_I32_I32_I32
 >;
 
 } // isCommutable = 1
 
-defm V_DIV_SCALE_F32 : VOP3b_32 <0x0000016d, "V_DIV_SCALE_F32", []>;
+defm V_DIV_SCALE_F32 : VOP3b_32 <vop3<0x16d>, "V_DIV_SCALE_F32", []>;
 
 // Double precision division pre-scale.
-defm V_DIV_SCALE_F64 : VOP3b_64 <0x0000016e, "V_DIV_SCALE_F64", []>;
+defm V_DIV_SCALE_F64 : VOP3b_64 <vop3<0x16e>, "V_DIV_SCALE_F64", []>;
 
-defm V_DIV_FMAS_F32 : VOP3Inst <0x0000016f, "V_DIV_FMAS_F32",
+defm V_DIV_FMAS_F32 : VOP3Inst <vop3<0x16f>, "V_DIV_FMAS_F32",
   VOP_F32_F32_F32_F32, AMDGPUdiv_fmas
 >;
-defm V_DIV_FMAS_F64 : VOP3Inst <0x00000170, "V_DIV_FMAS_F64",
+defm V_DIV_FMAS_F64 : VOP3Inst <vop3<0x170>, "V_DIV_FMAS_F64",
   VOP_F64_F64_F64_F64, AMDGPUdiv_fmas
 >;
 //def V_MSAD_U8 : VOP3_U8 <0x00000171, "V_MSAD_U8", []>;
 //def V_QSAD_U8 : VOP3_U8 <0x00000172, "V_QSAD_U8", []>;
 //def V_MQSAD_U8 : VOP3_U8 <0x00000173, "V_MQSAD_U8", []>;
 defm V_TRIG_PREOP_F64 : VOP3Inst <
-  0x00000174, "V_TRIG_PREOP_F64", VOP_F64_F64_I32, AMDGPUtrig_preop
+  vop3<0x174>, "V_TRIG_PREOP_F64", VOP_F64_F64_I32, AMDGPUtrig_preop
 >;
 
 //===----------------------------------------------------------------------===//
@@ -2877,21 +2877,21 @@ defm V_RNDNE_F64 : VOP1Inst <vop1<0x19>, "V_RNDNE_F64",
   VOP_F64_F64, frint
 >;
 
-defm V_QSAD_PK_U16_U8 : VOP3Inst <0x00000173, "V_QSAD_PK_U16_U8",
+defm V_QSAD_PK_U16_U8 : VOP3Inst <vop3<0x173>, "V_QSAD_PK_U16_U8",
   VOP_I32_I32_I32
 >;
-defm V_MQSAD_U16_U8 : VOP3Inst <0x000000172, "V_MQSAD_U16_U8",
+defm V_MQSAD_U16_U8 : VOP3Inst <vop3<0x172>, "V_MQSAD_U16_U8",
   VOP_I32_I32_I32
 >;
-defm V_MQSAD_U32_U8 : VOP3Inst <0x00000175, "V_MQSAD_U32_U8",
+defm V_MQSAD_U32_U8 : VOP3Inst <vop3<0x175>, "V_MQSAD_U32_U8",
   VOP_I32_I32_I32
 >;
-defm V_MAD_U64_U32 : VOP3Inst <0x00000176, "V_MAD_U64_U32",
+defm V_MAD_U64_U32 : VOP3Inst <vop3<0x176>, "V_MAD_U64_U32",
   VOP_I64_I32_I32_I64
 >;
 
 // XXX - Does this set VCC?
-defm V_MAD_I64_I32 : VOP3Inst <0x00000177, "V_MAD_I64_I32",
+defm V_MAD_I64_I32 : VOP3Inst <vop3<0x177>, "V_MAD_I64_I32",
   VOP_I64_I32_I32_I64
 >;
 
