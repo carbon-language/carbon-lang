@@ -347,13 +347,8 @@ std::error_code COFFObjectFile::sectionContainsSymbol(DataRefImpl SecRef,
                                                       bool &Result) const {
   const coff_section *Sec = toSec(SecRef);
   COFFSymbolRef Symb = getCOFFSymbol(SymbRef);
-  const coff_section *SymbSec = nullptr;
-  if (std::error_code EC = getSection(Symb.getSectionNumber(), SymbSec))
-    return EC;
-  if (SymbSec == Sec)
-    Result = true;
-  else
-    Result = false;
+  int32_t SecNumber = (Sec - SectionTable) + 1;
+  Result = SecNumber == Symb.getSectionNumber();
   return object_error::success;
 }
 
