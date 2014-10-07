@@ -224,11 +224,10 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
 
   // Notify ScalarEvolution that the loop will be substantially changed,
   // if not outright eliminated.
-  if (PP) {
-    ScalarEvolution *SE = PP->getAnalysisIfAvailable<ScalarEvolution>();
-    if (SE)
-      SE->forgetLoop(L);
-  }
+  ScalarEvolution *SE =
+      PP ? PP->getAnalysisIfAvailable<ScalarEvolution>() : nullptr;
+  if (SE)
+    SE->forgetLoop(L);
 
   // If we know the trip count, we know the multiple...
   unsigned BreakoutTrip = 0;
@@ -459,7 +458,6 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
     }
 
     // Simplify any new induction variables in the partially unrolled loop.
-    ScalarEvolution *SE = PP->getAnalysisIfAvailable<ScalarEvolution>();
     if (SE && !CompletelyUnroll) {
       SmallVector<WeakVH, 16> DeadInsts;
       simplifyLoopIVs(L, SE, LPM, DeadInsts);
@@ -508,7 +506,6 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
     if (OuterL) {
       DataLayoutPass *DLP = PP->getAnalysisIfAvailable<DataLayoutPass>();
       const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
-      ScalarEvolution *SE = PP->getAnalysisIfAvailable<ScalarEvolution>();
       simplifyLoop(OuterL, DT, LI, PP, /*AliasAnalysis*/ nullptr, SE, DL, AT);
 
       // LCSSA must be performed on the outermost affected loop. The unrolled
