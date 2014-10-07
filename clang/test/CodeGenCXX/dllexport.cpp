@@ -1,9 +1,9 @@
-// RUN: %clang_cc1 -triple i686-windows-msvc   -emit-llvm -std=c++1y -O0 -o - %s | FileCheck --check-prefix=MSC --check-prefix=M32 %s
+// RUN: %clang_cc1 -triple i686-windows-msvc   -emit-llvm -std=c++1y -O1 -mconstructor-aliases -disable-llvm-optzns -o - %s | FileCheck --check-prefix=MSC --check-prefix=M32 %s
 // RUN: %clang_cc1 -triple x86_64-windows-msvc -emit-llvm -std=c++1y -O0 -o - %s | FileCheck --check-prefix=MSC --check-prefix=M64 %s
 // RUN: %clang_cc1 -triple i686-windows-gnu    -emit-llvm -std=c++1y -O0 -o - %s | FileCheck --check-prefix=GNU --check-prefix=G32 %s
 // RUN: %clang_cc1 -triple x86_64-windows-gnu  -emit-llvm -std=c++1y -O0 -o - %s | FileCheck --check-prefix=GNU --check-prefix=G64 %s
 
-// RUN: %clang_cc1 -triple i686-pc-win32 -O1 -mconstructor-aliases -std=c++1y -emit-llvm -o - %s | FileCheck %s --check-prefix=MSC --check-prefix=M32
+// RUN: %clang_cc1 -triple i686-pc-win32 -O1 -mconstructor-aliases -disable-llvm-optzns -std=c++1y -emit-llvm -o - %s | FileCheck %s --check-prefix=MSC --check-prefix=M32
 
 // Helper structs to make templates more expressive.
 struct ImplicitInst_Exported {};
@@ -542,13 +542,14 @@ struct __declspec(dllexport) Z { virtual ~Z() {} };
 // The user-defined dtor does get exported:
 // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01??1Z@@UAE@XZ"
 
-namespace DontUseDtorAlias {
+namespace UseDtorAlias {
   struct __declspec(dllexport) A { ~A(); };
   struct __declspec(dllexport) B : A { ~B(); };
   A::~A() { }
   B::~B() { }
-  // Emit a real definition of B's constructor; don't alias it to A's.
-  // M32-DAG: define dllexport x86_thiscallcc void @"\01??1B@DontUseDtorAlias@@QAE@XZ"
+  // Emit a alias definition of B's constructor.
+  // M32-DAG: @"\01??1B@UseDtorAlias@@QAE@XZ" = dllexport alias {{.*}} @"\01??1A@UseDtorAlias@@QAE@XZ"
+
 }
 
 struct __declspec(dllexport) DefaultedCtorsDtors {

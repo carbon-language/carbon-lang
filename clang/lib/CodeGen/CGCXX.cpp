@@ -44,10 +44,6 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
   if (!D->hasTrivialBody())
     return true;
 
-  // For exported destructors, we need a full definition.
-  if (D->hasAttr<DLLExportAttr>())
-    return true;
-
   const CXXRecordDecl *Class = D->getParent();
 
   // If we need to manipulate a VTT parameter, give up.
@@ -191,7 +187,7 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   }
 
   // Finally, set up the alias with its proper name and attributes.
-  SetCommonAttributes(cast<NamedDecl>(AliasDecl.getDecl()), Alias);
+  setAliasAttributes(cast<NamedDecl>(AliasDecl.getDecl()), Alias);
 
   return false;
 }
