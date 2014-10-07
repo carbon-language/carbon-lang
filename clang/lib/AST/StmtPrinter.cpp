@@ -928,6 +928,11 @@ void StmtPrinter::VisitOMPTargetDirective(OMPTargetDirective *Node) {
   PrintOMPExecutableDirective(Node);
 }
 
+void StmtPrinter::VisitOMPTeamsDirective(OMPTeamsDirective *Node) {
+  Indent() << "#pragma omp teams ";
+  PrintOMPExecutableDirective(Node);
+}
+
 //===----------------------------------------------------------------------===//
 //  Expr printing methods.
 //===----------------------------------------------------------------------===//

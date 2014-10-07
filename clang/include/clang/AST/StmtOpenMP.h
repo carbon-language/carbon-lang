@@ -1527,6 +1527,64 @@ public:
   }
 };
 
+/// \brief This represents '#pragma omp teams' directive.
+///
+/// \code
+/// #pragma omp teams if(a)
+/// \endcode
+/// In this example directive '#pragma omp teams' has clause 'if' with
+/// condition 'a'.
+///
+class OMPTeamsDirective : public OMPExecutableDirective {
+  friend class ASTStmtReader;
+  /// \brief Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  /// \param NumClauses Number of clauses.
+  ///
+  OMPTeamsDirective(SourceLocation StartLoc, SourceLocation EndLoc,
+                    unsigned NumClauses)
+      : OMPExecutableDirective(this, OMPTeamsDirectiveClass, OMPD_teams,
+                               StartLoc, EndLoc, NumClauses, 1) {}
+
+  /// \brief Build an empty directive.
+  ///
+  /// \param NumClauses Number of clauses.
+  ///
+  explicit OMPTeamsDirective(unsigned NumClauses)
+      : OMPExecutableDirective(this, OMPTeamsDirectiveClass, OMPD_teams,
+                               SourceLocation(), SourceLocation(), NumClauses,
+                               1) {}
+
+public:
+  /// \brief Creates directive with a list of \a Clauses.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  /// \param Clauses List of clauses.
+  /// \param AssociatedStmt Statement, associated with the directive.
+  ///
+  static OMPTeamsDirective *Create(const ASTContext &C, SourceLocation StartLoc,
+                                   SourceLocation EndLoc,
+                                   ArrayRef<OMPClause *> Clauses,
+                                   Stmt *AssociatedStmt);
+
+  /// \brief Creates an empty directive with the place for \a NumClauses
+  /// clauses.
+  ///
+  /// \param C AST context.
+  /// \param NumClauses Number of clauses.
+  ///
+  static OMPTeamsDirective *CreateEmpty(const ASTContext &C,
+                                        unsigned NumClauses, EmptyShell);
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPTeamsDirectiveClass;
+  }
+};
+
 } // end namespace clang
 
 #endif

@@ -108,6 +108,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
   case OMPD_parallel_sections:
   case OMPD_atomic:
   case OMPD_target:
+  case OMPD_teams:
     Diag(Tok, diag::err_omp_unexpected_directive)
         << getOpenMPDirectiveName(DKind);
     break;
@@ -127,7 +128,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
 ///         'section' | 'single' | 'master' | 'critical' [ '(' <name> ')' ] |
 ///         'parallel for' | 'parallel sections' | 'task' | 'taskyield' |
 ///         'barrier' | 'taskwait' | 'flush' | 'ordered' | 'atomic' |
-///         'for simd' | 'parallel for simd' | 'target' {clause}
+///         'for simd' | 'parallel for simd' | 'target' | 'teams' {clause}
 ///         annot_pragma_openmp_end
 ///
 StmtResult
@@ -196,7 +197,8 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
   case OMPD_task:
   case OMPD_ordered:
   case OMPD_atomic:
-  case OMPD_target: {
+  case OMPD_target:
+  case OMPD_teams: {
     ConsumeToken();
     // Parse directive name of the 'critical' directive if any.
     if (DKind == OMPD_critical) {

@@ -466,6 +466,10 @@ void StmtProfiler::VisitOMPTargetDirective(const OMPTargetDirective *S) {
   VisitOMPExecutableDirective(S);
 }
 
+void StmtProfiler::VisitOMPTeamsDirective(const OMPTeamsDirective *S) {
+  VisitOMPExecutableDirective(S);
+}
+
 void StmtProfiler::VisitExpr(const Expr *S) {
   VisitStmt(S);
 }
