@@ -1345,100 +1345,99 @@ def V_WRITELANE_B32 : VOP2 <
 >;
 
 let isCommutable = 1 in {
-defm V_ADD_F32 : VOP2Inst <0x00000003, "V_ADD_F32",
+defm V_ADD_F32 : VOP2Inst <vop2<0x3>, "V_ADD_F32",
   VOP_F32_F32_F32, fadd
 >;
 
-defm V_SUB_F32 : VOP2Inst <0x00000004, "V_SUB_F32", VOP_F32_F32_F32, fsub>;
-defm V_SUBREV_F32 : VOP2Inst <0x00000005, "V_SUBREV_F32",
+defm V_SUB_F32 : VOP2Inst <vop2<0x4>, "V_SUB_F32", VOP_F32_F32_F32, fsub>;
+defm V_SUBREV_F32 : VOP2Inst <vop2<0x5>, "V_SUBREV_F32",
   VOP_F32_F32_F32, null_frag, "V_SUB_F32"
 >;
 } // End isCommutable = 1
 
-defm V_MAC_LEGACY_F32 : VOP2Inst <0x00000006, "V_MAC_LEGACY_F32",
+defm V_MAC_LEGACY_F32 : VOP2Inst <vop2<0x6>, "V_MAC_LEGACY_F32",
   VOP_F32_F32_F32
 >;
 
 let isCommutable = 1 in {
 
-defm V_MUL_LEGACY_F32 : VOP2Inst <
-  0x00000007, "V_MUL_LEGACY_F32",
+defm V_MUL_LEGACY_F32 : VOP2Inst <vop2<0x7>, "V_MUL_LEGACY_F32",
   VOP_F32_F32_F32, int_AMDGPU_mul
 >;
 
-defm V_MUL_F32 : VOP2Inst <0x00000008, "V_MUL_F32",
+defm V_MUL_F32 : VOP2Inst <vop2<0x8>, "V_MUL_F32",
   VOP_F32_F32_F32, fmul
 >;
 
 
-defm V_MUL_I32_I24 : VOP2Inst <0x00000009, "V_MUL_I32_I24",
+defm V_MUL_I32_I24 : VOP2Inst <vop2<0x9>, "V_MUL_I32_I24",
   VOP_I32_I32_I32, AMDGPUmul_i24
 >;
 //defm V_MUL_HI_I32_I24 : VOP2_32 <0x0000000a, "V_MUL_HI_I32_I24", []>;
-defm V_MUL_U32_U24 : VOP2Inst <0x0000000b, "V_MUL_U32_U24",
+defm V_MUL_U32_U24 : VOP2Inst <vop2<0xb>, "V_MUL_U32_U24",
   VOP_I32_I32_I32, AMDGPUmul_u24
 >;
 //defm V_MUL_HI_U32_U24 : VOP2_32 <0x0000000c, "V_MUL_HI_U32_U24", []>;
 
 
-defm V_MIN_LEGACY_F32 : VOP2Inst <0x0000000d, "V_MIN_LEGACY_F32",
+defm V_MIN_LEGACY_F32 : VOP2Inst <vop2<0xd>, "V_MIN_LEGACY_F32",
   VOP_F32_F32_F32, AMDGPUfmin
 >;
 
-defm V_MAX_LEGACY_F32 : VOP2Inst <0x0000000e, "V_MAX_LEGACY_F32",
+defm V_MAX_LEGACY_F32 : VOP2Inst <vop2<0xe>, "V_MAX_LEGACY_F32",
   VOP_F32_F32_F32, AMDGPUfmax
 >;
 
-defm V_MIN_F32 : VOP2Inst <0x0000000f, "V_MIN_F32", VOP_F32_F32_F32>;
-defm V_MAX_F32 : VOP2Inst <0x00000010, "V_MAX_F32", VOP_F32_F32_F32>;
-defm V_MIN_I32 : VOP2Inst <0x00000011, "V_MIN_I32", VOP_I32_I32_I32, AMDGPUsmin>;
-defm V_MAX_I32 : VOP2Inst <0x00000012, "V_MAX_I32", VOP_I32_I32_I32, AMDGPUsmax>;
-defm V_MIN_U32 : VOP2Inst <0x00000013, "V_MIN_U32", VOP_I32_I32_I32, AMDGPUumin>;
-defm V_MAX_U32 : VOP2Inst <0x00000014, "V_MAX_U32", VOP_I32_I32_I32, AMDGPUumax>;
+defm V_MIN_F32 : VOP2Inst <vop2<0xf>, "V_MIN_F32", VOP_F32_F32_F32>;
+defm V_MAX_F32 : VOP2Inst <vop2<0x10>, "V_MAX_F32", VOP_F32_F32_F32>;
+defm V_MIN_I32 : VOP2Inst <vop2<0x11>, "V_MIN_I32", VOP_I32_I32_I32, AMDGPUsmin>;
+defm V_MAX_I32 : VOP2Inst <vop2<0x12>, "V_MAX_I32", VOP_I32_I32_I32, AMDGPUsmax>;
+defm V_MIN_U32 : VOP2Inst <vop2<0x13>, "V_MIN_U32", VOP_I32_I32_I32, AMDGPUumin>;
+defm V_MAX_U32 : VOP2Inst <vop2<0x14>, "V_MAX_U32", VOP_I32_I32_I32, AMDGPUumax>;
 
-defm V_LSHR_B32 : VOP2Inst <0x00000015, "V_LSHR_B32", VOP_I32_I32_I32, srl>;
+defm V_LSHR_B32 : VOP2Inst <vop2<0x15>, "V_LSHR_B32", VOP_I32_I32_I32, srl>;
 
 defm V_LSHRREV_B32 : VOP2Inst <
-  0x00000016, "V_LSHRREV_B32", VOP_I32_I32_I32, null_frag, "V_LSHR_B32"
+  vop2<0x16>, "V_LSHRREV_B32", VOP_I32_I32_I32, null_frag, "V_LSHR_B32"
 >;
 
-defm V_ASHR_I32 : VOP2Inst <0x00000017, "V_ASHR_I32",
+defm V_ASHR_I32 : VOP2Inst <vop2<0x17>, "V_ASHR_I32",
   VOP_I32_I32_I32, sra
 >;
 defm V_ASHRREV_I32 : VOP2Inst <
-  0x00000018, "V_ASHRREV_I32", VOP_I32_I32_I32, null_frag, "V_ASHR_I32"
+  vop2<0x18>, "V_ASHRREV_I32", VOP_I32_I32_I32, null_frag, "V_ASHR_I32"
 >;
 
 let hasPostISelHook = 1 in {
 
-defm V_LSHL_B32 : VOP2Inst <0x00000019, "V_LSHL_B32", VOP_I32_I32_I32, shl>;
+defm V_LSHL_B32 : VOP2Inst <vop2<0x19>, "V_LSHL_B32", VOP_I32_I32_I32, shl>;
 
 }
 defm V_LSHLREV_B32 : VOP2Inst <
-  0x0000001a, "V_LSHLREV_B32", VOP_I32_I32_I32, null_frag, "V_LSHL_B32"
+  vop2<0x1a>, "V_LSHLREV_B32", VOP_I32_I32_I32, null_frag, "V_LSHL_B32"
 >;
 
-defm V_AND_B32 : VOP2Inst <0x0000001b, "V_AND_B32",
+defm V_AND_B32 : VOP2Inst <vop2<0x1b>, "V_AND_B32",
   VOP_I32_I32_I32, and>;
-defm V_OR_B32 : VOP2Inst <0x0000001c, "V_OR_B32",
+defm V_OR_B32 : VOP2Inst <vop2<0x1c>, "V_OR_B32",
   VOP_I32_I32_I32, or
 >;
-defm V_XOR_B32 : VOP2Inst <0x0000001d, "V_XOR_B32",
+defm V_XOR_B32 : VOP2Inst <vop2<0x1d>, "V_XOR_B32",
   VOP_I32_I32_I32, xor
 >;
 
 } // End isCommutable = 1
 
-defm V_BFM_B32 : VOP2Inst <0x0000001e, "V_BFM_B32",
+defm V_BFM_B32 : VOP2Inst <vop2<0x1e>, "V_BFM_B32",
   VOP_I32_I32_I32, AMDGPUbfm>;
-defm V_MAC_F32 : VOP2Inst <0x0000001f, "V_MAC_F32", VOP_F32_F32_F32>;
-defm V_MADMK_F32 : VOP2Inst <0x00000020, "V_MADMK_F32", VOP_F32_F32_F32>;
-defm V_MADAK_F32 : VOP2Inst <0x00000021, "V_MADAK_F32", VOP_F32_F32_F32>;
-defm V_BCNT_U32_B32 : VOP2Inst <0x00000022, "V_BCNT_U32_B32", VOP_I32_I32_I32>;
-defm V_MBCNT_LO_U32_B32 : VOP2Inst <0x00000023, "V_MBCNT_LO_U32_B32",
+defm V_MAC_F32 : VOP2Inst <vop2<0x1f>, "V_MAC_F32", VOP_F32_F32_F32>;
+defm V_MADMK_F32 : VOP2Inst <vop2<0x20>, "V_MADMK_F32", VOP_F32_F32_F32>;
+defm V_MADAK_F32 : VOP2Inst <vop2<0x21>, "V_MADAK_F32", VOP_F32_F32_F32>;
+defm V_BCNT_U32_B32 : VOP2Inst <vop2<0x22>, "V_BCNT_U32_B32", VOP_I32_I32_I32>;
+defm V_MBCNT_LO_U32_B32 : VOP2Inst <vop2<0x23>, "V_MBCNT_LO_U32_B32",
   VOP_I32_I32_I32
 >;
-defm V_MBCNT_HI_U32_B32 : VOP2Inst <0x00000024, "V_MBCNT_HI_U32_B32",
+defm V_MBCNT_HI_U32_B32 : VOP2Inst <vop2<0x24>, "V_MBCNT_HI_U32_B32",
   VOP_I32_I32_I32
 >;
 
@@ -1469,13 +1468,13 @@ defm V_SUBBREV_U32 : VOP2bInst <0x0000002a, "V_SUBBREV_U32",
 } // End Uses = [VCC]
 } // End isCommutable = 1, Defs = [VCC]
 
-defm V_LDEXP_F32 : VOP2Inst <0x0000002b, "V_LDEXP_F32",
+defm V_LDEXP_F32 : VOP2Inst <vop2<0x2b>, "V_LDEXP_F32",
   VOP_F32_F32_I32, AMDGPUldexp
 >;
 ////def V_CVT_PKACCUM_U8_F32 : VOP2_U8 <0x0000002c, "V_CVT_PKACCUM_U8_F32", []>;
 ////def V_CVT_PKNORM_I16_F32 : VOP2_I16 <0x0000002d, "V_CVT_PKNORM_I16_F32", []>;
 ////def V_CVT_PKNORM_U16_F32 : VOP2_U16 <0x0000002e, "V_CVT_PKNORM_U16_F32", []>;
-defm V_CVT_PKRTZ_F16_F32 : VOP2Inst <0x0000002f, "V_CVT_PKRTZ_F16_F32",
+defm V_CVT_PKRTZ_F16_F32 : VOP2Inst <vop2<0x2f>, "V_CVT_PKRTZ_F16_F32",
  VOP_I32_F32_F32, int_SI_packf16
 >;
 ////def V_CVT_PK_U16_U32 : VOP2_U16 <0x00000030, "V_CVT_PK_U16_U32", []>;

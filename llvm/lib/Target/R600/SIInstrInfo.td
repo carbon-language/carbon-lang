@@ -17,6 +17,12 @@ class vop1 <bits<8> si> : vop {
   field bits<9> SI3 = {1, 1, si{6-0}};
 }
 
+class vop2 <bits<6> si> : vop {
+  field bits<6> SI = si;
+
+  field bits<9> SI3 = {1, 0, 0, si{5-0}};
+}
+
 // Execpt for the NONE field, this must be kept in sync with the SISubtarget enum
 // in AMDGPUMCInstLower.h
 def SISubtarget {
@@ -652,14 +658,14 @@ multiclass VOP3_1_m <vop op, dag outs, dag ins, string asm,
             VOP3DisableFields<0, 0, HasMods>;
 }
 
-multiclass VOP3_2_m <bits<9> op, dag outs, dag ins, string asm,
+multiclass VOP3_2_m <vop op, dag outs, dag ins, string asm,
                      list<dag> pattern, string opName, string revOp,
                      bit HasMods = 1, bit UseFullOp = 0> {
 
   def "" : VOP3_Pseudo <outs, ins, pattern, opName>,
            VOP2_REV<revOp#"_e64", !eq(revOp, opName)>;
 
-  def _si : VOP3_Real_si <op,
+  def _si : VOP3_Real_si <op.SI3,
               outs, ins, asm, opName>,
             VOP2_REV<revOp#"_e64_si", !eq(revOp, opName)>,
             VOP3DisableFields<1, 0, HasMods>;
@@ -724,19 +730,18 @@ class VOP2_e32 <bits<6> op, string opName, dag outs, dag ins, string asm,
   VOP <opName>,
   VOP2_REV<revOp#"_e32", !eq(revOp, opName)>;
 
-multiclass VOP2_Helper <bits<6> op, string opName, dag outs,
+multiclass VOP2_Helper <vop2 op, string opName, dag outs,
                         dag ins32, string asm32, list<dag> pat32,
                         dag ins64, string asm64, list<dag> pat64,
                         string revOp, bit HasMods> {
-  def _e32 : VOP2_e32 <op, opName, outs, ins32, asm32, pat32, revOp>;
+  def _e32 : VOP2_e32 <op.SI, opName, outs, ins32, asm32, pat32, revOp>;
 
-  defm _e64 : VOP3_2_m <
-    {1, 0, 0, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
+  defm _e64 : VOP3_2_m <op,
     outs, ins64, opName#"_e64"#asm64, pat64, opName, revOp, HasMods
   >;
 }
 
-multiclass VOP2Inst <bits<6> op, string opName, VOPProfile P,
+multiclass VOP2Inst <vop2 op, string opName, VOPProfile P,
                      SDPatternOperator node = null_frag,
                      string revOp = opName> : VOP2_Helper <
   op, opName, P.Outs,
