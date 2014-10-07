@@ -487,7 +487,7 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
   if (!State.NextToken || !State.NextToken->Previous)
     return 0;
   FormatToken &Current = *State.NextToken;
-  const FormatToken &Previous = *State.NextToken->Previous;
+  const FormatToken &Previous = *Current.Previous;
   // If we are continuing an expression, we want to use the continuation indent.
   unsigned ContinuationIndent =
       std::max(State.Stack.back().LastSpace, State.Stack.back().Indent) +
@@ -717,7 +717,8 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
     // Indent from 'LastSpace' unless this the fake parentheses encapsulating a
     // builder type call after 'return'. If such a call is line-wrapped, we
     // commonly just want to indent from the start of the line.
-    if (!Previous || Previous->isNot(tok::kw_return) || *I > 0)
+    if (!Current.isTrailingComment() &&
+        (!Previous || Previous->isNot(tok::kw_return) || *I > 0))
       NewParenState.Indent =
           std::max(std::max(State.Column, NewParenState.Indent),
                    State.Stack.back().LastSpace);
@@ -756,7 +757,7 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
     // other expression, unless the indentation needs to be skipped.
     if (*I == prec::Conditional ||
         (!SkipFirstExtraIndent && *I > prec::Assignment &&
-         !Style.BreakBeforeBinaryOperators))
+         !Current.isTrailingComment() && !Style.BreakBeforeBinaryOperators))
       NewParenState.Indent += Style.ContinuationIndentWidth;
     if ((Previous && !Previous->opensScope()) || *I > prec::Comma)
       NewParenState.BreakBeforeParameter = false;

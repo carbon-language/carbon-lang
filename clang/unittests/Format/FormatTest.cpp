@@ -832,6 +832,12 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
                "    // Comment inside a statement.\n"
                "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;");
+  verifyFormat("SomeFunction(a,\n"
+               "             // comment\n"
+               "             b + x);");
+  verifyFormat("SomeFunction(a, a,\n"
+               "             // comment\n"
+               "             b + x);");
   verifyFormat(
       "bool aaaaaaaaaaaaa = // comment\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa || aaaaaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
