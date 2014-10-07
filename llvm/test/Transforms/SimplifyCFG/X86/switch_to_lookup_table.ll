@@ -915,8 +915,12 @@ return:
   %x = phi i32 [ 3, %sw.default ], [ 7, %sw.bb1 ], [ 9, %entry ]
   ret i32 %x
 ; CHECK-LABEL: @twocases(
-; CHECK: switch i32
+; CHECK-NOT: switch i32
 ; CHECK-NOT: @switch.table
+; CHECK: %switch.selectcmp
+; CHECK-NEXT: %switch.select
+; CHECK-NEXT: %switch.selectcmp1
+; CHECK-NEXT: %switch.select2
 }
 
 ; Don't build tables for switches with TLS variables.
