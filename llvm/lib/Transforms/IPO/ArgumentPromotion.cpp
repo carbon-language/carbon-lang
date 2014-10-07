@@ -703,6 +703,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   if (DI != FunctionDIs.end()) {
     DISubprogram SP = DI->second;
     SP.replaceFunction(NF);
+    // Ensure the map is updated so it can be reused on subsequent argument
+    // promotions of the same function.
     FunctionDIs.erase(DI);
     FunctionDIs[NF] = SP;
   }

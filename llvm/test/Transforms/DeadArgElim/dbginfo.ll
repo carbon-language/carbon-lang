@@ -1,65 +1,70 @@
 ; RUN: opt -deadargelim -S < %s | FileCheck %s
 ; PR14016
 
+; Built with clang (then manually running -mem2reg with opt) from the following source:
+; static void f1(int, ...) {
+; }
+;
+; void f2() {
+;   f1(1);
+; }
+
+; Test both varargs removal and removal of a traditional dead arg together, to
+; test both the basic functionality, and a particular wrinkle involving updating
+; the function->debug info mapping on update to ensure it's accurate when used
+; again for the next removal.
+
+; CHECK: void ()* @_ZL2f1iz, {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [f1]
+
 ; Check that debug info metadata for subprograms stores pointers to
 ; updated LLVM functions.
 
-target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
-target triple = "x86_64-unknown-linux-gnu"
-
-@x = global i32 0, align 4
-
-define void @_Z3runv() uwtable {
+; Function Attrs: uwtable
+define void @_Z2f2v() #0 {
 entry:
-  call void @_ZN12_GLOBAL__N_18dead_argEPv(i8* null), !dbg !10
-  call void (...)* @_ZN12_GLOBAL__N_111dead_varargEz(), !dbg !12
-  ret void, !dbg !13
-}
-
-; Argument will be deleted
-define internal void @_ZN12_GLOBAL__N_18dead_argEPv(i8* %foo) nounwind uwtable {
-entry:
-  %0 = load i32* @x, align 4, !dbg !14
-  %inc = add nsw i32 %0, 1, !dbg !14
-  store i32 %inc, i32* @x, align 4, !dbg !14
+  call void (i32, ...)* @_ZL2f1iz(i32 1), !dbg !15
   ret void, !dbg !16
 }
 
-; Vararg will be deleted
-define internal void @_ZN12_GLOBAL__N_111dead_varargEz(...) nounwind uwtable {
+; Function Attrs: nounwind uwtable
+define internal void @_ZL2f1iz(i32, ...) #1 {
 entry:
-  %0 = load i32* @x, align 4, !dbg !17
-  %inc = add nsw i32 %0, 1, !dbg !17
-  store i32 %inc, i32* @x, align 4, !dbg !17
-  ret void, !dbg !19
+  call void @llvm.dbg.value(metadata !{i32 %0}, i64 0, metadata !17, metadata !18), !dbg !19
+  ret void, !dbg !20
 }
 
+; Function Attrs: nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata, metadata) #2
+
+; Function Attrs: nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #2
+
+attributes #0 = { uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #1 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #2 = { nounwind readnone }
+
 !llvm.dbg.cu = !{!0}
-!llvm.module.flags = !{!21}
+!llvm.module.flags = !{!12, !13}
+!llvm.ident = !{!14}
 
-!0 = metadata !{metadata !"0x11\004\00clang version 3.2 (trunk 165305)\000\00\000\00\000", metadata !20, metadata !1, metadata !1, metadata !3, metadata !1,  metadata !1} ; [ DW_TAG_compile_unit ] [/home/samsonov/tmp/clang-di/test.cc] [DW_LANG_C_plus_plus]
-!1 = metadata !{i32 0}
-!3 = metadata !{metadata !5, metadata !8, metadata !9}
-!5 = metadata !{metadata !"0x2e\00run\00run\00\008\000\001\000\006\00256\000\008", metadata !20, metadata !6, metadata !7, null, void ()* @_Z3runv, null, null, metadata !1} ; [ DW_TAG_subprogram ] [line 8] [def] [run]
-!6 = metadata !{metadata !"0x29", metadata !20} ; [ DW_TAG_file_type ]
-!7 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", i32 0, null, null, metadata !1, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!8 = metadata !{metadata !"0x2e\00dead_vararg\00dead_vararg\00\005\001\001\000\006\00256\000\005", metadata !20, metadata !6, metadata !7, null, void (...)* @_ZN12_GLOBAL__N_111dead_varargEz, null, null, metadata !1} ; [ DW_TAG_subprogram ] [line 5] [local] [def] [dead_vararg]
-
-; CHECK: metadata !"0x2e\00dead_vararg\00{{[^"]+}}"{{.*}}void ()* @_ZN12_GLOBAL__N_111dead_varargEz
-
-!9 = metadata !{metadata !"0x2e\00dead_arg\00dead_arg\00\004\001\001\000\006\00256\000\004", metadata !20, metadata !6, metadata !7, null, void (i8*)* @_ZN12_GLOBAL__N_18dead_argEPv, null, null, metadata !1} ; [ DW_TAG_subprogram ] [line 4] [local] [def] [dead_arg]
-
-; CHECK: metadata !"0x2e\00dead_arg\00{{[^"]+}}"{{.*}}void ()* @_ZN12_GLOBAL__N_18dead_argEPv
-
-!10 = metadata !{i32 8, i32 14, metadata !11, null}
-!11 = metadata !{metadata !"0xb\008\0012\000", metadata !20, metadata !5} ; [ DW_TAG_lexical_block ] [/home/samsonov/tmp/clang-di/test.cc]
-!12 = metadata !{i32 8, i32 27, metadata !11, null}
-!13 = metadata !{i32 8, i32 42, metadata !11, null}
-!14 = metadata !{i32 4, i32 28, metadata !15, null}
-!15 = metadata !{metadata !"0xb\004\0026\002", metadata !20, metadata !9} ; [ DW_TAG_lexical_block ] [/home/samsonov/tmp/clang-di/test.cc]
-!16 = metadata !{i32 4, i32 33, metadata !15, null}
-!17 = metadata !{i32 5, i32 25, metadata !18, null}
-!18 = metadata !{metadata !"0xb\005\0023\001", metadata !20, metadata !8} ; [ DW_TAG_lexical_block ] [/home/samsonov/tmp/clang-di/test.cc]
-!19 = metadata !{i32 5, i32 30, metadata !18, null}
-!20 = metadata !{metadata !"test.cc", metadata !"/home/samsonov/tmp/clang-di"}
-!21 = metadata !{i32 1, metadata !"Debug Info Version", i32 2}
+!0 = metadata !{metadata !"0x11\004\00clang version 3.6.0 \000\00\000\00\001", metadata !1, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/dbg.cpp] [DW_LANG_C_plus_plus]
+!1 = metadata !{metadata !"dbg.cpp", metadata !"/tmp/dbginfo"}
+!2 = metadata !{}
+!3 = metadata !{metadata !4, metadata !8}
+!4 = metadata !{metadata !"0x2e\00f2\00f2\00_Z2f2v\004\000\001\000\000\00256\000\004", metadata !1, metadata !5, metadata !6, null, void ()* @_Z2f2v, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 4] [def] [f2]
+!5 = metadata !{metadata !"0x29", metadata !1}    ; [ DW_TAG_file_type ] [/tmp/dbginfo/dbg.cpp]
+!6 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", null, null, null, metadata !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = metadata !{null}
+!8 = metadata !{metadata !"0x2e\00f1\00f1\00_ZL2f1iz\001\001\001\000\000\00256\000\001", metadata !1, metadata !5, metadata !9, null, void (i32, ...)* @_ZL2f1iz, null, null, metadata !2} ; [ DW_TAG_subprogram ] [line 1] [local] [def] [f1]
+!9 = metadata !{metadata !"0x15\00\000\000\000\000\000\000", null, null, null, metadata !10, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!10 = metadata !{null, metadata !11, null}
+!11 = metadata !{metadata !"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!12 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
+!13 = metadata !{i32 2, metadata !"Debug Info Version", i32 2}
+!14 = metadata !{metadata !"clang version 3.6.0 "}
+!15 = metadata !{i32 5, i32 3, metadata !4, null}
+!16 = metadata !{i32 6, i32 1, metadata !4, null}
+!17 = metadata !{metadata !"0x101\00\0016777217\000", metadata !8, metadata !5, metadata !11} ; [ DW_TAG_arg_variable ] [line 1]
+!18 = metadata !{metadata !"0x102"}               ; [ DW_TAG_expression ]
+!19 = metadata !{i32 1, i32 19, metadata !8, null}
+!20 = metadata !{i32 2, i32 1, metadata !8, null}
