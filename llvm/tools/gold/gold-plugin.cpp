@@ -637,8 +637,14 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
       keepGlobalValue(*GV, KeptAliases);
       break;
 
-    case LDPR_PREEMPTED_REG:
     case LDPR_PREEMPTED_IR:
+      // Gold might have selected a linkonce_odr and preempted a weak_odr.
+      // In that case we have to make sure we don't end up internalizing it.
+      if (!GV->isDiscardableIfUnused())
+        Maybe.erase(Sym.name);
+
+      // fall-through
+    case LDPR_PREEMPTED_REG:
       Drop.insert(GV);
       break;
 
