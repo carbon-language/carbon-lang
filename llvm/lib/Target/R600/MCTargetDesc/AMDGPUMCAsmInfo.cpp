@@ -15,17 +15,12 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfoELF() {
   HasSingleParameterDotFile = false;
   //===------------------------------------------------------------------===//
   HasSubsectionsViaSymbols = true;
-  HasMachoZeroFillDirective = false;
-  HasMachoTBSSDirective = false;
-  HasStaticCtorDtorReferenceInStaticMode = false;
   LinkerRequiresNonEmptyDwarfLines = true;
   MaxInstLength = 16;
   SeparatorString = "\n";
   CommentString = ";";
-  LabelSuffix = ":";
   InlineAsmStart = ";#ASMSTART";
   InlineAsmEnd = ";#ASMEND";
-  AssemblerDialect = 0;
 
   //===--- Data Emission Directives -------------------------------------===//
   ZeroDirective = ".zero";
@@ -35,13 +30,8 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfoELF() {
   Data16bitsDirective = ".short\t";
   Data32bitsDirective = ".long\t";
   Data64bitsDirective = ".quad\t";
-  GPRel32Directive = nullptr;
   SunStyleELFSectionSwitchSyntax = true;
   UsesELFSectionDirectiveForBSS = true;
-
-  //===--- Alignment Information ----------------------------------------===//
-  AlignmentIsInBytes = true;
-  TextAlignFillValue = 0;
 
   //===--- Global Variable Emission Directives --------------------------===//
   GlobalDirective = ".global";
