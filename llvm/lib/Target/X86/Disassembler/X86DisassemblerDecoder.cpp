@@ -472,8 +472,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
     if ((insn->mode == MODE_64BIT || (byte1 & 0xc0) == 0xc0) &&
        ((~byte1 & 0xc) == 0xc) && ((byte2 & 0x4) == 0x4)) {
       insn->vectorExtensionType = TYPE_EVEX;
-    }
-    else {
+    } else {
       unconsumeByte(insn); /* unconsume byte1 */
       unconsumeByte(insn); /* unconsume byte  */
       insn->necessaryPrefixLocation = insn->readerCursor - 2;
@@ -504,8 +503,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
               insn->vectorExtensionPrefix[0], insn->vectorExtensionPrefix[1],
               insn->vectorExtensionPrefix[2], insn->vectorExtensionPrefix[3]);
     }
-  }
-  else if (byte == 0xc4) {
+  } else if (byte == 0xc4) {
     uint8_t byte1;
 
     if (lookAtByte(insn, &byte1)) {
@@ -516,8 +514,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
     if (insn->mode == MODE_64BIT || (byte1 & 0xc0) == 0xc0) {
       insn->vectorExtensionType = TYPE_VEX_3B;
       insn->necessaryPrefixLocation = insn->readerCursor - 1;
-    }
-    else {
+    } else {
       unconsumeByte(insn);
       insn->necessaryPrefixLocation = insn->readerCursor - 1;
     }
@@ -541,8 +538,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
                 insn->vectorExtensionPrefix[0], insn->vectorExtensionPrefix[1],
                 insn->vectorExtensionPrefix[2]);
     }
-  }
-  else if (byte == 0xc5) {
+  } else if (byte == 0xc5) {
     uint8_t byte1;
 
     if (lookAtByte(insn, &byte1)) {
@@ -552,8 +548,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
 
     if (insn->mode == MODE_64BIT || (byte1 & 0xc0) == 0xc0) {
       insn->vectorExtensionType = TYPE_VEX_2B;
-    }
-    else {
+    } else {
       unconsumeByte(insn);
     }
 
@@ -566,8 +561,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
                         | (rFromVEX2of2(insn->vectorExtensionPrefix[1]) << 2);
       }
 
-      switch (ppFromVEX2of2(insn->vectorExtensionPrefix[1]))
-      {
+      switch (ppFromVEX2of2(insn->vectorExtensionPrefix[1])) {
       default:
         break;
       case VEX_PREFIX_66:
@@ -579,8 +573,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
                 insn->vectorExtensionPrefix[0],
                 insn->vectorExtensionPrefix[1]);
     }
-  }
-  else if (byte == 0x8f) {
+  } else if (byte == 0x8f) {
     uint8_t byte1;
 
     if (lookAtByte(insn, &byte1)) {
@@ -591,8 +584,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
     if ((byte1 & 0x38) != 0x0) { /* 0 in these 3 bits is a POP instruction. */
       insn->vectorExtensionType = TYPE_XOP;
       insn->necessaryPrefixLocation = insn->readerCursor - 1;
-    }
-    else {
+    } else {
       unconsumeByte(insn);
       insn->necessaryPrefixLocation = insn->readerCursor - 1;
     }
@@ -612,8 +604,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
                         | (bFromXOP2of3(insn->vectorExtensionPrefix[1]) << 0);
       }
 
-      switch (ppFromXOP3of3(insn->vectorExtensionPrefix[2]))
-      {
+      switch (ppFromXOP3of3(insn->vectorExtensionPrefix[2])) {
       default:
         break;
       case VEX_PREFIX_66:
@@ -625,8 +616,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
                 insn->vectorExtensionPrefix[0], insn->vectorExtensionPrefix[1],
                 insn->vectorExtensionPrefix[2]);
     }
-  }
-  else {
+  } else {
     if (insn->mode == MODE_64BIT) {
       if ((byte & 0xf0) == 0x40) {
         uint8_t opcodeByte;
@@ -698,8 +688,7 @@ static int readOpcode(struct InternalInstruction* insn) {
 
   insn->opcodeType = ONEBYTE;
 
-  if (insn->vectorExtensionType == TYPE_EVEX)
-  {
+  if (insn->vectorExtensionType == TYPE_EVEX) {
     switch (mmFromEVEX2of4(insn->vectorExtensionPrefix[1])) {
     default:
       dbgprintf(insn, "Unhandled mm field for instruction (0x%hhx)",
@@ -715,8 +704,7 @@ static int readOpcode(struct InternalInstruction* insn) {
       insn->opcodeType = THREEBYTE_3A;
       return consumeByte(insn, &insn->opcode);
     }
-  }
-  else if (insn->vectorExtensionType == TYPE_VEX_3B) {
+  } else if (insn->vectorExtensionType == TYPE_VEX_3B) {
     switch (mmmmmFromVEX2of3(insn->vectorExtensionPrefix[1])) {
     default:
       dbgprintf(insn, "Unhandled m-mmmm field for instruction (0x%hhx)",
@@ -732,12 +720,10 @@ static int readOpcode(struct InternalInstruction* insn) {
       insn->opcodeType = THREEBYTE_3A;
       return consumeByte(insn, &insn->opcode);
     }
-  }
-  else if (insn->vectorExtensionType == TYPE_VEX_2B) {
+  } else if (insn->vectorExtensionType == TYPE_VEX_2B) {
     insn->opcodeType = TWOBYTE;
     return consumeByte(insn, &insn->opcode);
-  }
-  else if (insn->vectorExtensionType == TYPE_XOP) {
+  } else if (insn->vectorExtensionType == TYPE_XOP) {
     switch (mmmmmFromXOP2of3(insn->vectorExtensionPrefix[1])) {
     default:
       dbgprintf(insn, "Unhandled m-mmmm field for instruction (0x%hhx)",
@@ -911,8 +897,7 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
         attrMask |= ATTR_EVEXL;
       if (l2FromEVEX4of4(insn->vectorExtensionPrefix[3]))
         attrMask |= ATTR_EVEXL2;
-    }
-    else if (insn->vectorExtensionType == TYPE_VEX_3B) {
+    } else if (insn->vectorExtensionType == TYPE_VEX_3B) {
       switch (ppFromVEX3of3(insn->vectorExtensionPrefix[2])) {
       case VEX_PREFIX_66:
         attrMask |= ATTR_OPSIZE;
@@ -927,8 +912,7 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
 
       if (lFromVEX3of3(insn->vectorExtensionPrefix[2]))
         attrMask |= ATTR_VEXL;
-    }
-    else if (insn->vectorExtensionType == TYPE_VEX_2B) {
+    } else if (insn->vectorExtensionType == TYPE_VEX_2B) {
       switch (ppFromVEX2of2(insn->vectorExtensionPrefix[1])) {
       case VEX_PREFIX_66:
         attrMask |= ATTR_OPSIZE;
@@ -943,8 +927,7 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
 
       if (lFromVEX2of2(insn->vectorExtensionPrefix[1]))
         attrMask |= ATTR_VEXL;
-    }
-    else if (insn->vectorExtensionType == TYPE_XOP) {
+    } else if (insn->vectorExtensionType == TYPE_XOP) {
       switch (ppFromXOP3of3(insn->vectorExtensionPrefix[2])) {
       case VEX_PREFIX_66:
         attrMask |= ATTR_OPSIZE;
@@ -959,12 +942,10 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
 
       if (lFromXOP3of3(insn->vectorExtensionPrefix[2]))
         attrMask |= ATTR_VEXL;
-    }
-    else {
+    } else {
       return -1;
     }
-  }
-  else {
+  } else {
     if (insn->mode != MODE_16BIT && isPrefixAtLocation(insn, 0x66, insn->necessaryPrefixLocation))
       attrMask |= ATTR_OPSIZE;
     else if (isPrefixAtLocation(insn, 0x67, insn->necessaryPrefixLocation))
