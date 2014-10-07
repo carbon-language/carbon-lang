@@ -823,8 +823,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
       if (A->getOption().matches(options::OPT_mno_unaligned_access))
         CmdArgs.push_back("-arm-strict-align");
       else {
-        if (getToolChain().getTriple().getSubArch() ==
-            llvm::Triple::SubArchType::ARMSubArch_v6m)
+        if (Triple.getSubArch() == llvm::Triple::SubArchType::ARMSubArch_v6m)
           D.Diag(diag::err_target_unsupported_unaligned) << "v6m";
         CmdArgs.push_back("-arm-no-strict-align");
       }
