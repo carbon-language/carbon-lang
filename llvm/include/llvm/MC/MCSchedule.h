@@ -224,7 +224,7 @@ struct MCSchedModel {
     return &SchedClassTable[SchedClassIdx];
   }
 
-  // /\brief Returns a default initialiszed mdoel.  Used for unknown processors.
+  // /\brief Returns a default initialized model. Used for unknown processors.
   static MCSchedModel GetDefaultSchedModel() {
     MCSchedModel Ret = { DefaultIssueWidth,
                          DefaultMicroOpBufferSize,
