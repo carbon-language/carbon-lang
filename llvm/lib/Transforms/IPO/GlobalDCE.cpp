@@ -78,9 +78,6 @@ bool GlobalDCE::runOnModule(Module &M) {
   // Remove empty functions from the global ctors list.
   Changed |= optimizeGlobalCtorsList(M, isEmptyFunction);
 
-  typedef std::multimap<const Comdat *, GlobalValue *> ComdatGVPairsTy;
-  ComdatGVPairsTy ComdatGVPairs;
-
   // Loop over the module, adding globals which are obviously necessary.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     Changed |= RemoveUnusedGlobalValue(*I);
@@ -88,8 +85,6 @@ bool GlobalDCE::runOnModule(Module &M) {
     if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage()) {
       if (!I->isDiscardableIfUnused())
         GlobalIsNeeded(I);
-      else if (const Comdat *C = I->getComdat())
-        ComdatGVPairs.insert(std::make_pair(C, I));
     }
   }
 
@@ -101,8 +96,6 @@ bool GlobalDCE::runOnModule(Module &M) {
     if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage()) {
       if (!I->isDiscardableIfUnused())
         GlobalIsNeeded(I);
-      else if (const Comdat *C = I->getComdat())
-        ComdatGVPairs.insert(std::make_pair(C, I));
     }
   }
 
@@ -112,24 +105,7 @@ bool GlobalDCE::runOnModule(Module &M) {
     // Externally visible aliases are needed.
     if (!I->isDiscardableIfUnused()) {
       GlobalIsNeeded(I);
-    } else if (const Comdat *C = I->getComdat()) {
-      ComdatGVPairs.insert(std::make_pair(C, I));
     }
-  }
-
-  for (ComdatGVPairsTy::iterator I = ComdatGVPairs.begin(),
-                                 E = ComdatGVPairs.end();
-       I != E;) {
-    ComdatGVPairsTy::iterator UB = ComdatGVPairs.upper_bound(I->first);
-    bool CanDiscard = std::all_of(I, UB, [](ComdatGVPairsTy::value_type Pair) {
-      return Pair.second->isDiscardableIfUnused();
-    });
-    if (!CanDiscard) {
-      std::for_each(I, UB, [this](ComdatGVPairsTy::value_type Pair) {
-        GlobalIsNeeded(Pair.second);
-      });
-    }
-    I = UB;
   }
 
   // Now that all globals which are needed are in the AliveGlobals set, we loop
@@ -211,7 +187,20 @@ void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
   // If the global is already in the set, no need to reprocess it.
   if (!AliveGlobals.insert(G))
     return;
-  
+
+  Module *M = G->getParent();
+  if (Comdat *C = G->getComdat()) {
+    for (Function &F : *M)
+      if (F.getComdat() == C)
+        GlobalIsNeeded(&F);
+    for (GlobalVariable &GV : M->globals())
+      if (GV.getComdat() == C)
+        GlobalIsNeeded(&GV);
+    for (GlobalAlias &GA : M->aliases())
+      if (GA.getComdat() == C)
+        GlobalIsNeeded(&GA);
+  }
+
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(G)) {
     // If this is a global variable, we must make sure to add any global values
     // referenced by the initializer to the alive set.
