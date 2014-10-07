@@ -2838,9 +2838,12 @@ Process::Launch (ProcessLaunchInfo &launch_info)
                             system_runtime->DidLaunch();
 
                         m_os_ap.reset (OperatingSystem::FindPlugin (this, NULL));
-                        // This delays passing the stopped event to listeners till DidLaunch gets
-                        // a chance to complete...
-                        HandlePrivateEvent (event_sp);
+
+                        // Note, the stop event was consumed above, but not handled. This was done
+                        // to give DidLaunch a chance to run. The target is either stopped or crashed.
+                        // Directly set the state.  This is done to prevent a stop message with a bunch
+                        // of spurious output on thread status, as well as not pop a ProcessIOHandler.
+                        SetPublicState(state, false);
 
                         if (PrivateStateThreadIsValid ())
                             ResumePrivateStateThread ();
@@ -4029,7 +4032,8 @@ Process::HandlePrivateEvent (EventSP &event_sp)
         {
             // Only push the input handler if we aren't fowarding events,
             // as this means the curses GUI is in use...
-            if (!GetTarget().GetDebugger().IsForwardingEvents())
+            // Or don't push it if we are launching since it will come up stopped.
+            if (!GetTarget().GetDebugger().IsForwardingEvents() && new_state != eStateLaunching)
                 PushProcessIOHandler ();
             m_iohandler_sync.SetValue(true, eBroadcastAlways);
         }
