@@ -38,9 +38,9 @@ using namespace llvm;
 
 STATISTIC(LoadsClustered, "Number of loads clustered together");
 
-// This allows latency based scheduler to notice high latency instructions
+// This allows the latency-based scheduler to notice high latency instructions
 // without a target itinerary. The choice of number here has more to do with
-// balancing scheduler heursitics than with the actual machine latency.
+// balancing scheduler heuristics than with the actual machine latency.
 static cl::opt<int> HighLatencyCycles(
   "sched-high-latency-cycles", cl::Hidden, cl::init(10),
   cl::desc("Roughly estimate the number of cycles that 'long latency'"
