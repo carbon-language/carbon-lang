@@ -39,7 +39,7 @@ using namespace llvm;
 STATISTIC(LoadsClustered, "Number of loads clustered together");
 
 // This allows latency based scheduler to notice high latency instructions
-// without a target itinerary. The choise if number here has more to do with
+// without a target itinerary. The choice of number here has more to do with
 // balancing scheduler heursitics than with the actual machine latency.
 static cl::opt<int> HighLatencyCycles(
   "sched-high-latency-cycles", cl::Hidden, cl::init(10),
