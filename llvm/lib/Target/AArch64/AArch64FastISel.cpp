@@ -178,8 +178,8 @@ private:
   bool emitICmp(MVT RetVT, const Value *LHS, const Value *RHS, bool IsZExt);
   bool emitICmp_ri(MVT RetVT, unsigned LHSReg, bool LHSIsKill, uint64_t Imm);
   bool emitFCmp(MVT RetVT, const Value *LHS, const Value *RHS);
-  bool emitLoad(MVT VT, unsigned &ResultReg, Address Addr, bool WantZExt = true,
-                MachineMemOperand *MMO = nullptr);
+  bool emitLoad(MVT VT, MVT ResultVT, unsigned &ResultReg, Address Addr,
+                bool WantZExt = true, MachineMemOperand *MMO = nullptr);
   bool emitStore(MVT VT, unsigned SrcReg, Address Addr,
                  MachineMemOperand *MMO = nullptr);
   unsigned emitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT, bool isZExt);
@@ -260,6 +260,8 @@ public:
 static bool isIntExtFree(const Instruction *I) {
   assert((isa<ZExtInst>(I) || isa<SExtInst>(I)) &&
          "Unexpected integer extend instruction.");
+  assert(!I->getType()->isVectorTy() && I->getType()->isIntegerTy() &&
+         "Unexpected value type.");
   bool IsZExt = isa<ZExtInst>(I);
 
   if (const auto *LI = dyn_cast<LoadInst>(I->getOperand(0)))
@@ -1589,8 +1591,9 @@ unsigned AArch64FastISel::emitAnd_ri(MVT RetVT, unsigned LHSReg, bool LHSIsKill,
   return emitLogicalOp_ri(ISD::AND, RetVT, LHSReg, LHSIsKill, Imm);
 }
 
-bool AArch64FastISel::emitLoad(MVT VT, unsigned &ResultReg, Address Addr,
-                               bool WantZExt, MachineMemOperand *MMO) {
+bool AArch64FastISel::emitLoad(MVT VT, MVT RetVT, unsigned &ResultReg,
+                               Address Addr, bool WantZExt,
+                               MachineMemOperand *MMO) {
   // Simplify this down to something we can handle.
   if (!simplifyAddress(Addr, VT))
     return false;
@@ -1607,24 +1610,40 @@ bool AArch64FastISel::emitLoad(MVT VT, unsigned &ResultReg, Address Addr,
     ScaleFactor = 1;
   }
 
-  static const unsigned GPOpcTable[2][4][4] = {
+  static const unsigned GPOpcTable[2][8][4] = {
     // Sign-extend.
-    { { AArch64::LDURSBWi,  AArch64::LDURSHWi,  AArch64::LDURSWi,
+    { { AArch64::LDURSBWi,  AArch64::LDURSHWi,  AArch64::LDURWi,
         AArch64::LDURXi  },
-      { AArch64::LDRSBWui,  AArch64::LDRSHWui,  AArch64::LDRSWui,
+      { AArch64::LDURSBXi,  AArch64::LDURSHXi,  AArch64::LDURSWi,
+        AArch64::LDURXi  },
+      { AArch64::LDRSBWui,  AArch64::LDRSHWui,  AArch64::LDRWui,
         AArch64::LDRXui  },
-      { AArch64::LDRSBWroX, AArch64::LDRSHWroX, AArch64::LDRSWroX,
+      { AArch64::LDRSBXui,  AArch64::LDRSHXui,  AArch64::LDRSWui,
+        AArch64::LDRXui  },
+      { AArch64::LDRSBWroX, AArch64::LDRSHWroX, AArch64::LDRWroX,
         AArch64::LDRXroX },
-      { AArch64::LDRSBWroW, AArch64::LDRSHWroW, AArch64::LDRSWroW,
+      { AArch64::LDRSBXroX, AArch64::LDRSHXroX, AArch64::LDRSWroX,
+        AArch64::LDRXroX },
+      { AArch64::LDRSBWroW, AArch64::LDRSHWroW, AArch64::LDRWroW,
         AArch64::LDRXroW },
+      { AArch64::LDRSBXroW, AArch64::LDRSHXroW, AArch64::LDRSWroW,
+        AArch64::LDRXroW }
     },
     // Zero-extend.
     { { AArch64::LDURBBi,   AArch64::LDURHHi,   AArch64::LDURWi,
         AArch64::LDURXi  },
+      { AArch64::LDURBBi,   AArch64::LDURHHi,   AArch64::LDURWi,
+        AArch64::LDURXi  },
+      { AArch64::LDRBBui,   AArch64::LDRHHui,   AArch64::LDRWui,
+        AArch64::LDRXui  },
       { AArch64::LDRBBui,   AArch64::LDRHHui,   AArch64::LDRWui,
         AArch64::LDRXui  },
       { AArch64::LDRBBroX,  AArch64::LDRHHroX,  AArch64::LDRWroX,
         AArch64::LDRXroX },
+      { AArch64::LDRBBroX,  AArch64::LDRHHroX,  AArch64::LDRWroX,
+        AArch64::LDRXroX },
+      { AArch64::LDRBBroW,  AArch64::LDRHHroW,  AArch64::LDRWroW,
+        AArch64::LDRXroW },
       { AArch64::LDRBBroW,  AArch64::LDRHHroW,  AArch64::LDRWroW,
         AArch64::LDRXroW }
     }
@@ -1646,24 +1665,28 @@ bool AArch64FastISel::emitLoad(MVT VT, unsigned &ResultReg, Address Addr,
       Addr.getExtendType() == AArch64_AM::SXTW)
     Idx++;
 
+  bool IsRet64Bit = RetVT == MVT::i64;
   switch (VT.SimpleTy) {
   default:
     llvm_unreachable("Unexpected value type.");
   case MVT::i1: // Intentional fall-through.
   case MVT::i8:
-    Opc = GPOpcTable[WantZExt][Idx][0];
-    RC = &AArch64::GPR32RegClass;
+    Opc = GPOpcTable[WantZExt][2 * Idx + IsRet64Bit][0];
+    RC = (IsRet64Bit && !WantZExt) ?
+             &AArch64::GPR64RegClass: &AArch64::GPR32RegClass;
     break;
   case MVT::i16:
-    Opc = GPOpcTable[WantZExt][Idx][1];
-    RC = &AArch64::GPR32RegClass;
+    Opc = GPOpcTable[WantZExt][2 * Idx + IsRet64Bit][1];
+    RC = (IsRet64Bit && !WantZExt) ?
+             &AArch64::GPR64RegClass: &AArch64::GPR32RegClass;
     break;
   case MVT::i32:
-    Opc = GPOpcTable[WantZExt][Idx][2];
-    RC = WantZExt ? &AArch64::GPR32RegClass : &AArch64::GPR64RegClass;
+    Opc = GPOpcTable[WantZExt][2 * Idx + IsRet64Bit][2];
+    RC = (IsRet64Bit && !WantZExt) ?
+             &AArch64::GPR64RegClass: &AArch64::GPR32RegClass;
     break;
   case MVT::i64:
-    Opc = GPOpcTable[WantZExt][Idx][3];
+    Opc = GPOpcTable[WantZExt][2 * Idx + IsRet64Bit][3];
     RC = &AArch64::GPR64RegClass;
     break;
   case MVT::f32:
@@ -1682,15 +1705,22 @@ bool AArch64FastISel::emitLoad(MVT VT, unsigned &ResultReg, Address Addr,
                                     TII.get(Opc), ResultReg);
   addLoadStoreOperands(Addr, MIB, MachineMemOperand::MOLoad, ScaleFactor, MMO);
 
-  // For 32bit loads we do sign-extending loads to 64bit and then extract the
-  // subreg. In the end this is just a NOOP.
-  if (VT == MVT::i32 && !WantZExt)
-    ResultReg = fastEmitInst_extractsubreg(MVT::i32, ResultReg, /*IsKill=*/true,
-                                           AArch64::sub_32);
+  // For zero-extending loads to 64bit we emit a 32bit load and then convert
+  // the w-reg to an x-reg. In the end this is just an noop and will be removed.
+  if (WantZExt && RetVT == MVT::i64 && VT <= MVT::i32) {
+    unsigned Reg64 = createResultReg(&AArch64::GPR64RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(AArch64::SUBREG_TO_REG), Reg64)
+        .addImm(0)
+        .addReg(ResultReg, getKillRegState(true))
+        .addImm(AArch64::sub_32);
+    ResultReg = Reg64;
+  }
 
   // Loading an i1 requires special handling.
   if (VT == MVT::i1) {
-    unsigned ANDReg = emitAnd_ri(MVT::i32, ResultReg, /*IsKill=*/true, 1);
+    unsigned ANDReg = emitAnd_ri(IsRet64Bit ? MVT::i64 : MVT::i32, ResultReg,
+                                 /*IsKill=*/true, 1);
     assert(ANDReg && "Unexpected AND instruction emission failure.");
     ResultReg = ANDReg;
   }
@@ -1767,11 +1797,21 @@ bool AArch64FastISel::selectLoad(const Instruction *I) {
     return false;
 
   bool WantZExt = true;
-  if (I->hasOneUse() && isa<SExtInst>(I->use_begin()->getUser()))
-    WantZExt = false;
+  MVT RetVT = VT;
+  if (I->hasOneUse()) {
+    if (const auto *ZE = dyn_cast<ZExtInst>(I->use_begin()->getUser())) {
+      if (!isTypeSupported(ZE->getType(), RetVT, /*IsVectorAllowed=*/false))
+        RetVT = VT;
+    } else if (const auto *SE = dyn_cast<SExtInst>(I->use_begin()->getUser())) {
+      if (!isTypeSupported(SE->getType(), RetVT, /*IsVectorAllowed=*/false))
+        RetVT = VT;
+      WantZExt = false;
+    }
+  }
 
   unsigned ResultReg;
-  if (!emitLoad(VT, ResultReg, Addr, WantZExt, createMachineMemOperandFor(I)))
+  if (!emitLoad(VT, RetVT, ResultReg, Addr, WantZExt,
+                createMachineMemOperandFor(I)))
     return false;
 
   updateValueMap(I, ResultReg);
@@ -2897,7 +2937,7 @@ bool AArch64FastISel::tryEmitSmallMemCpy(Address Dest, Address Src,
 
     bool RV;
     unsigned ResultReg;
-    RV = emitLoad(VT, ResultReg, Src);
+    RV = emitLoad(VT, VT, ResultReg, Src);
     if (!RV)
       return false;
 
@@ -3917,51 +3957,37 @@ bool AArch64FastISel::selectIntExt(const Instruction *I) {
   if (!isTypeSupported(I->getOperand(0)->getType(), SrcVT))
     return false;
 
-  if (isIntExtFree(I)) {
-    unsigned SrcReg = getRegForValue(I->getOperand(0));
-    if (!SrcReg)
-      return false;
-    bool SrcIsKill = hasTrivialKill(I->getOperand(0));
-
-    const TargetRegisterClass *RC = (RetVT == MVT::i64) ?
-        &AArch64::GPR64RegClass : &AArch64::GPR32RegClass;
-    unsigned ResultReg = createResultReg(RC);
-    if (RetVT == MVT::i64 && SrcVT != MVT::i64) {
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-              TII.get(AArch64::SUBREG_TO_REG), ResultReg)
-          .addImm(0)
-          .addReg(SrcReg, getKillRegState(SrcIsKill))
-          .addImm(AArch64::sub_32);
-    } else {
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-              TII.get(TargetOpcode::COPY), ResultReg)
-          .addReg(SrcReg, getKillRegState(SrcIsKill));
-    }
-    updateValueMap(I, ResultReg);
-    return true;
-  }
-
   unsigned SrcReg = getRegForValue(I->getOperand(0));
   if (!SrcReg)
     return false;
-  bool SrcRegIsKill = hasTrivialKill(I->getOperand(0));
+  bool SrcIsKill = hasTrivialKill(I->getOperand(0));
 
-  unsigned ResultReg = 0;
-  if (isIntExtFree(I)) {
-    if (RetVT == MVT::i64) {
-      ResultReg = createResultReg(&AArch64::GPR64RegClass);
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-              TII.get(AArch64::SUBREG_TO_REG), ResultReg)
-          .addImm(0)
-          .addReg(SrcReg, getKillRegState(SrcRegIsKill))
-          .addImm(AArch64::sub_32);
-    } else
-      ResultReg = SrcReg;
+  // The load instruction selection code handles the sign-/zero-extension.
+  if (const auto *LI = dyn_cast<LoadInst>(I->getOperand(0))) {
+    if (LI->hasOneUse()) {
+      updateValueMap(I, SrcReg);
+      return true;
+    }
   }
 
-  if (!ResultReg)
-    ResultReg = emitIntExt(SrcVT, SrcReg, RetVT, isa<ZExtInst>(I));
+  bool IsZExt = isa<ZExtInst>(I);
+  if (const auto *Arg = dyn_cast<Argument>(I->getOperand(0))) {
+    if ((IsZExt && Arg->hasZExtAttr()) || (!IsZExt && Arg->hasSExtAttr())) {
+      if (RetVT == MVT::i64 && SrcVT != MVT::i64) {
+        unsigned ResultReg = createResultReg(&AArch64::GPR64RegClass);
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                TII.get(AArch64::SUBREG_TO_REG), ResultReg)
+            .addImm(0)
+            .addReg(SrcReg, getKillRegState(SrcIsKill))
+            .addImm(AArch64::sub_32);
+        SrcReg = ResultReg;
+      }
+      updateValueMap(I, SrcReg);
+      return true;
+    }
+  }
 
+  unsigned ResultReg = emitIntExt(SrcVT, SrcReg, RetVT, IsZExt);
   if (!ResultReg)
     return false;
 
