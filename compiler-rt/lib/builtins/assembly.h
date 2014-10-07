@@ -108,7 +108,7 @@
   .globl SYMBOL_NAME(name) SEPARATOR                                           \
   SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR                                  \
   DECLARE_SYMBOL_VISIBILITY(name) SEPARATOR                                    \
-  .thumb_func                                                                  \
+  .thumb_func SEPARATOR                                                        \
   SYMBOL_NAME(name):
 
 #define DEFINE_COMPILERRT_PRIVATE_FUNCTION(name)                               \
