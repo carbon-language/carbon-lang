@@ -22,21 +22,23 @@ namespace clang {
 namespace tidy {
 namespace test {
 
-class TestPPAction : public PreprocessOnlyAction {
+class TestClangTidyAction : public ASTFrontendAction {
 public:
-  TestPPAction(ClangTidyCheck &Check, ClangTidyContext *Context)
-      : Check(Check), Context(Context) {}
+  TestClangTidyAction(ClangTidyCheck &Check, ast_matchers::MatchFinder &Finder,
+                      ClangTidyContext &Context)
+      : Check(Check), Finder(Finder), Context(Context) {}
 
 private:
-  bool BeginSourceFileAction(CompilerInstance &Compiler,
-                             llvm::StringRef file_name) override {
-    Context->setSourceManager(&Compiler.getSourceManager());
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &Compiler,
+                                                 StringRef File) override {
+    Context.setSourceManager(&Compiler.getSourceManager());
     Check.registerPPCallbacks(Compiler);
-    return true;
+    return Finder.newASTConsumer();
   }
 
   ClangTidyCheck &Check;
-  ClangTidyContext *Context;
+  ast_matchers::MatchFinder &Finder;
+  ClangTidyContext &Context;
 };
 
 template <typename T>
@@ -50,19 +52,25 @@ std::string runCheckOnCode(StringRef Code,
       ClangTidyGlobalOptions(), Options));
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
   T Check("test-check", &Context);
-  std::vector<std::string> ArgCXX11(1, "-std=c++11");
-  ArgCXX11.insert(ArgCXX11.end(), ExtraArgs.begin(), ExtraArgs.end());
-
-  if (!tooling::runToolOnCodeWithArgs(new TestPPAction(Check, &Context), Code,
-                                      ArgCXX11, Filename))
-    return "";
   ast_matchers::MatchFinder Finder;
   Check.registerMatchers(&Finder);
-  std::unique_ptr<tooling::FrontendActionFactory> Factory(
-      tooling::newFrontendActionFactory(&Finder));
-  if (!tooling::runToolOnCodeWithArgs(Factory->create(), Code, ArgCXX11,
-                                      Filename))
+
+  std::vector<std::string> ArgCXX11(1, "clang-tidy");
+  ArgCXX11.push_back("-fsyntax-only");
+  ArgCXX11.push_back("-std=c++11");
+  ArgCXX11.insert(ArgCXX11.end(), ExtraArgs.begin(), ExtraArgs.end());
+  ArgCXX11.push_back(Filename.str());
+  llvm::IntrusiveRefCntPtr<FileManager> files(
+      new FileManager(FileSystemOptions()));
+  tooling::ToolInvocation Invocation(
+      ArgCXX11, new TestClangTidyAction(Check, Finder, Context), files.get());
+  SmallString<16> FileNameStorage;
+  StringRef FileNameRef = Filename.toNullTerminatedStringRef(FileNameStorage);
+  Invocation.mapVirtualFile(FileNameRef, Code);
+  Invocation.setDiagnosticConsumer(&DiagConsumer);
+  if (!Invocation.run())
     return "";
+
   DiagConsumer.finish();
   tooling::Replacements Fixes;
   for (const ClangTidyError &Error : Context.getErrors())
