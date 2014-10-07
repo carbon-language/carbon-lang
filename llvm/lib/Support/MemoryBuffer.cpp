@@ -406,9 +406,10 @@ MemoryBuffer::getOpenFile(int FD, const Twine &Filename, uint64_t FileSize,
 
 ErrorOr<std::unique_ptr<MemoryBuffer>>
 MemoryBuffer::getOpenFileSlice(int FD, const Twine &Filename, uint64_t MapSize,
-                               int64_t Offset, bool IsVolatileSize) {
+                               int64_t Offset) {
+  assert(MapSize != uint64_t(-1));
   return getOpenFileImpl(FD, Filename, -1, MapSize, Offset, false,
-                         IsVolatileSize);
+                         /*IsVolatileSize*/ false);
 }
 
 ErrorOr<std::unique_ptr<MemoryBuffer>> MemoryBuffer::getSTDIN() {

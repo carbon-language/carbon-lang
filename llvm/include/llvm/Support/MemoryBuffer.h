@@ -78,13 +78,9 @@ public:
   /// Given an already-open file descriptor, map some slice of it into a
   /// MemoryBuffer. The slice is specified by an \p Offset and \p MapSize.
   /// Since this is in the middle of a file, the buffer is not null terminated.
-  ///
-  /// \param IsVolatileSize Set to true to indicate that the file size may be
-  /// changing, e.g. when libclang tries to parse while the user is
-  /// editing/updating the file.
   static ErrorOr<std::unique_ptr<MemoryBuffer>>
   getOpenFileSlice(int FD, const Twine &Filename, uint64_t MapSize,
-                   int64_t Offset, bool IsVolatileSize = false);
+                   int64_t Offset);
 
   /// Given an already-open file descriptor, read the file and return a
   /// MemoryBuffer.
