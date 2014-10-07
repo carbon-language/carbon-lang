@@ -50,6 +50,7 @@
 #include <clc/math/fmod.h>
 #include <clc/math/hypot.h>
 #include <clc/math/log.h>
+#include <clc/math/log1p.h>
 #include <clc/math/log2.h>
 #include <clc/math/mad.h>
 #include <clc/math/mix.h>

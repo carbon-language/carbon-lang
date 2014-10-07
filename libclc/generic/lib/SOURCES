@@ -63,8 +63,10 @@ math/fmax.cl
 math/fmin.cl
 math/fmod.cl
 math/hypot.cl
+math/log1p.cl
 math/mad.cl
 math/mix.cl
+math/tables.cl
 math/clc_nextafter.cl
 math/nextafter.cl
 math/pown.cl
