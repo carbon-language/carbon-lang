@@ -16,6 +16,7 @@
 #include "DWARFDebugLine.h"
 #include "DWARFDebugLoc.h"
 #include "DWARFDebugRangeList.h"
+#include "DWARFSection.h"
 #include "DWARFTypeUnit.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"
@@ -63,11 +64,6 @@ class DWARFContext : public DIContext {
   void parseDWOTypeUnits();
 
 public:
-  struct Section {
-    StringRef Data;
-    RelocAddrMap Relocs;
-  };
-
   DWARFContext() : DIContext(CK_DWARF) {}
 
   static bool classof(const DIContext *DICtx) {
@@ -170,17 +166,15 @@ public:
 
   virtual bool isLittleEndian() const = 0;
   virtual uint8_t getAddressSize() const = 0;
-  virtual const Section &getInfoSection() = 0;
-  typedef MapVector<object::SectionRef, Section,
-                    std::map<object::SectionRef, unsigned> > TypeSectionMap;
+  virtual const DWARFSection &getInfoSection() = 0;
+  typedef MapVector<object::SectionRef, DWARFSection,
+                    std::map<object::SectionRef, unsigned>> TypeSectionMap;
   virtual const TypeSectionMap &getTypesSections() = 0;
   virtual StringRef getAbbrevSection() = 0;
-  virtual const Section &getLocSection() = 0;
-  virtual const Section &getLocDWOSection() = 0;
+  virtual const DWARFSection &getLocSection() = 0;
   virtual StringRef getARangeSection() = 0;
   virtual StringRef getDebugFrameSection() = 0;
-  virtual const Section &getLineSection() = 0;
-  virtual const Section &getLineDWOSection() = 0;
+  virtual const DWARFSection &getLineSection() = 0;
   virtual StringRef getStringSection() = 0;
   virtual StringRef getRangeSection() = 0;
   virtual StringRef getPubNamesSection() = 0;
@@ -189,9 +183,11 @@ public:
   virtual StringRef getGnuPubTypesSection() = 0;
 
   // Sections for DWARF5 split dwarf proposal.
-  virtual const Section &getInfoDWOSection() = 0;
+  virtual const DWARFSection &getInfoDWOSection() = 0;
   virtual const TypeSectionMap &getTypesDWOSections() = 0;
   virtual StringRef getAbbrevDWOSection() = 0;
+  virtual const DWARFSection &getLineDWOSection() = 0;
+  virtual const DWARFSection &getLocDWOSection() = 0;
   virtual StringRef getStringDWOSection() = 0;
   virtual StringRef getStringOffsetDWOSection() = 0;
   virtual StringRef getRangeDWOSection() = 0;
@@ -216,15 +212,13 @@ class DWARFContextInMemory : public DWARFContext {
   virtual void anchor();
   bool IsLittleEndian;
   uint8_t AddressSize;
-  Section InfoSection;
+  DWARFSection InfoSection;
   TypeSectionMap TypesSections;
   StringRef AbbrevSection;
-  Section LocSection;
-  Section LocDWOSection;
+  DWARFSection LocSection;
   StringRef ARangeSection;
   StringRef DebugFrameSection;
-  Section LineSection;
-  Section LineDWOSection;
+  DWARFSection LineSection;
   StringRef StringSection;
   StringRef RangeSection;
   StringRef PubNamesSection;
@@ -233,9 +227,11 @@ class DWARFContextInMemory : public DWARFContext {
   StringRef GnuPubTypesSection;
 
   // Sections for DWARF5 split dwarf proposal.
-  Section InfoDWOSection;
+  DWARFSection InfoDWOSection;
   TypeSectionMap TypesDWOSections;
   StringRef AbbrevDWOSection;
+  DWARFSection LineDWOSection;
+  DWARFSection LocDWOSection;
   StringRef StringDWOSection;
   StringRef StringOffsetDWOSection;
   StringRef RangeDWOSection;
@@ -247,15 +243,13 @@ public:
   DWARFContextInMemory(object::ObjectFile &);
   bool isLittleEndian() const override { return IsLittleEndian; }
   uint8_t getAddressSize() const override { return AddressSize; }
-  const Section &getInfoSection() override { return InfoSection; }
+  const DWARFSection &getInfoSection() override { return InfoSection; }
   const TypeSectionMap &getTypesSections() override { return TypesSections; }
   StringRef getAbbrevSection() override { return AbbrevSection; }
-  const Section &getLocSection() override { return LocSection; }
-  const Section &getLocDWOSection() override { return LocDWOSection; }
+  const DWARFSection &getLocSection() override { return LocSection; }
   StringRef getARangeSection() override { return ARangeSection; }
   StringRef getDebugFrameSection() override { return DebugFrameSection; }
-  const Section &getLineSection() override { return LineSection; }
-  const Section &getLineDWOSection() override { return LineDWOSection; }
+  const DWARFSection &getLineSection() override { return LineSection; }
   StringRef getStringSection() override { return StringSection; }
   StringRef getRangeSection() override { return RangeSection; }
   StringRef getPubNamesSection() override { return PubNamesSection; }
@@ -264,11 +258,13 @@ public:
   StringRef getGnuPubTypesSection() override { return GnuPubTypesSection; }
 
   // Sections for DWARF5 split dwarf proposal.
-  const Section &getInfoDWOSection() override { return InfoDWOSection; }
+  const DWARFSection &getInfoDWOSection() override { return InfoDWOSection; }
   const TypeSectionMap &getTypesDWOSections() override {
     return TypesDWOSections;
   }
   StringRef getAbbrevDWOSection() override { return AbbrevDWOSection; }
+  const DWARFSection &getLineDWOSection() override { return LineDWOSection; }
+  const DWARFSection &getLocDWOSection() override { return LocDWOSection; }
   StringRef getStringDWOSection() override { return StringDWOSection; }
   StringRef getStringOffsetDWOSection() override {
     return StringOffsetDWOSection;
