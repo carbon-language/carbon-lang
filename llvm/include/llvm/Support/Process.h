@@ -192,6 +192,15 @@ public:
   // components should not call this.
   static std::error_code FixupStandardFileDescriptors();
 
+  // This function safely closes a file descriptor.  It is not safe to retry
+  // close(2) when it returns with errno equivalent to EINTR; this is because
+  // *nixen cannot agree if the file descriptor is, in fact, closed when this
+  // occurs.
+  //
+  // N.B. Some operating systems, due to thread cancellation, cannot properly
+  // guarantee that it will or will not be closed one way or the other!
+  static std::error_code SafelyCloseFileDescriptor(int FD);
+
   /// This function determines if the standard input is connected directly
   /// to a user's input (keyboard probably), rather than coming from a file
   /// or pipe.

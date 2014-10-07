@@ -258,6 +258,30 @@ std::error_code Process::FixupStandardFileDescriptors() {
   return std::error_code();
 }
 
+std::error_code Process::SafelyCloseFileDescriptor(int FD) {
+  // Create a signal set filled with *all* signals.
+  sigset_t FullSet;
+  if (sigfillset(&FullSet) < 0)
+    return std::error_code(errno, std::generic_category());
+  // Atomically swap our current signal mask with a full mask.
+  sigset_t SavedSet;
+  if (int EC = pthread_sigmask(SIG_SETMASK, &FullSet, &SavedSet))
+    return std::error_code(EC, std::generic_category());
+  // Attempt to close the file descriptor.
+  // We need to save the error, if one occurs, because our subsequent call to
+  // pthread_sigmask might tamper with errno.
+  int ErrnoFromClose = 0;
+  if (::close(FD) < 0)
+    ErrnoFromClose = errno;
+  // Restore the signal mask back to what we saved earlier.
+  int EC = pthread_sigmask(SIG_SETMASK, &SavedSet, nullptr);
+  // The error code from close takes precedence over the one from
+  // pthread_sigmask.
+  if (ErrnoFromClose)
+    return std::error_code(ErrnoFromClose, std::generic_category());
+  return std::error_code(EC, std::generic_category());
+}
+
 bool Process::StandardInIsUserInput() {
   return FileDescriptorIsDisplayed(STDIN_FILENO);
 }
