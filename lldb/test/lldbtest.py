@@ -557,7 +557,7 @@ def skipIfLinux(func):
 def skipIfNoSBHeaders(func):
     """Decorate the item to mark tests that should be skipped when LLDB is built with no SB API headers."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@skipIfLinux can only be used to decorate a test method")
+        raise Exception("@skipIfNoSBHeaders can only be used to decorate a test method")
     @wraps(func)
     def wrapper(*args, **kwargs):
         from unittest2 import case
