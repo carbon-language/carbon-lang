@@ -493,7 +493,21 @@ static GlobalObject *makeInternalReplacement(GlobalObject *GO) {
   if (auto *F = dyn_cast<Function>(GO)) {
     auto *NewF = Function::Create(
         F->getFunctionType(), GlobalValue::InternalLinkage, F->getName(), M);
+
+    ValueToValueMapTy VM;
+    Function::arg_iterator NewI = NewF->arg_begin();
+    for (auto &Arg : F->args()) {
+      NewI->setName(Arg.getName());
+      VM[&Arg] = NewI;
+      ++NewI;
+    }
+
     NewF->getBasicBlockList().splice(NewF->end(), F->getBasicBlockList());
+    for (auto &BB : *NewF) {
+      for (auto &Inst : BB)
+        RemapInstruction(&Inst, VM, RF_IgnoreMissingEntries);
+    }
+
     Ret = NewF;
     F->deleteBody();
   } else {
