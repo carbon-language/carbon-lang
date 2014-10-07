@@ -11,7 +11,7 @@
 #include "AMDGPUMCAsmInfo.h"
 
 using namespace llvm;
-AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
+AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfoELF() {
   HasSingleParameterDotFile = false;
   //===------------------------------------------------------------------===//
   HasSubsectionsViaSymbols = true;
