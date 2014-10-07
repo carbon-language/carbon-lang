@@ -11,15 +11,16 @@
 #define LLD_READER_WRITER_PE_COFF_PASS_H
 
 #include "Atoms.h"
+#include "llvm/Support/COFF.h"
 
 namespace lld {
 namespace pecoff {
 
-void addDir32Reloc(COFFBaseDefinedAtom *atom, const Atom *target, bool is64,
-                   size_t offsetInAtom);
+void addDir32Reloc(COFFBaseDefinedAtom *atom, const Atom *target,
+                   llvm::COFF::MachineTypes machine, size_t offsetInAtom);
 
-void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target, bool is64,
-                     size_t offsetInAtom);
+void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target,
+                     llvm::COFF::MachineTypes machine, size_t offsetInAtom);
 
 } // namespace pecoff
 } // namespace lld

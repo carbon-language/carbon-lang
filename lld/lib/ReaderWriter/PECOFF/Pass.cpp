@@ -23,25 +23,35 @@ static void addReloc(COFFBaseDefinedAtom *atom, const Atom *target,
   atom->addReference(std::unique_ptr<COFFReference>(ref));
 }
 
-void addDir32Reloc(COFFBaseDefinedAtom *atom, const Atom *target, bool is64,
-                   size_t offsetInAtom) {
-  if (is64) {
-    addReloc(atom, target, offsetInAtom, Reference::KindArch::x86_64,
-             llvm::COFF::IMAGE_REL_AMD64_ADDR32);
-  } else {
+void addDir32Reloc(COFFBaseDefinedAtom *atom, const Atom *target,
+                   llvm::COFF::MachineTypes machine, size_t offsetInAtom) {
+  switch (machine) {
+  case llvm::COFF::IMAGE_FILE_MACHINE_I386:
     addReloc(atom, target, offsetInAtom, Reference::KindArch::x86,
              llvm::COFF::IMAGE_REL_I386_DIR32);
+    return;
+  case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
+    addReloc(atom, target, offsetInAtom, Reference::KindArch::x86_64,
+             llvm::COFF::IMAGE_REL_AMD64_ADDR32);
+    return;
+  default:
+    llvm_unreachable("unsupported machine type");
   }
 }
 
-void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target, bool is64,
-                     size_t offsetInAtom) {
-  if (is64) {
-    addReloc(atom, target, offsetInAtom, Reference::KindArch::x86_64,
-             llvm::COFF::IMAGE_REL_AMD64_ADDR32NB);
-  } else {
+void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target,
+                     llvm::COFF::MachineTypes machine, size_t offsetInAtom) {
+  switch (machine) {
+  case llvm::COFF::IMAGE_FILE_MACHINE_I386:
     addReloc(atom, target, offsetInAtom, Reference::KindArch::x86,
              llvm::COFF::IMAGE_REL_I386_DIR32NB);
+    return;
+  case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
+    addReloc(atom, target, offsetInAtom, Reference::KindArch::x86_64,
+             llvm::COFF::IMAGE_REL_AMD64_ADDR32NB);
+    return;
+  default:
+    llvm_unreachable("unsupported machine type");
   }
 }
 

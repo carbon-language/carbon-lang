@@ -26,14 +26,13 @@ namespace lld {
 namespace pecoff {
 namespace idata {
 
-IdataAtom::IdataAtom(Context &context, std::vector<uint8_t> data)
+IdataAtom::IdataAtom(IdataContext &context, std::vector<uint8_t> data)
     : COFFLinkerInternalAtom(context.dummyFile,
-                             context.dummyFile.getNextOrdinal(), data),
-      _is64(context.is64) {
+                             context.dummyFile.getNextOrdinal(), data) {
   context.file.addAtom(*this);
 }
 
-HintNameAtom::HintNameAtom(Context &context, uint16_t hint,
+HintNameAtom::HintNameAtom(IdataContext &context, uint16_t hint,
                            StringRef importName)
     : IdataAtom(context, assembleRawContent(hint, importName)),
       _importName(importName) {}
@@ -68,7 +67,7 @@ ImportTableEntryAtom::assembleRawContent(uint64_t rva, bool is64) {
 // array of pointers to hint/name atoms. The array needs to be terminated with
 // the NULL entry.
 void ImportDirectoryAtom::addRelocations(
-    Context &context, StringRef loadName,
+    IdataContext &context, StringRef loadName,
     const std::vector<COFFSharedLibraryAtom *> &sharedAtoms) {
   // Create parallel arrays. The contents of the two are initially the
   // same. The PE/COFF loader overwrites the import address tables with the
@@ -79,20 +78,21 @@ void ImportDirectoryAtom::addRelocations(
   std::vector<ImportTableEntryAtom *> importAddressTables =
       createImportTableAtoms(context, sharedAtoms, true, ".idata.a");
 
-  addDir32NBReloc(this, importLookupTables[0], _is64,
+  addDir32NBReloc(this, importLookupTables[0], context.ctx.getMachineType(),
                   offsetof(ImportDirectoryTableEntry, ImportLookupTableRVA));
-  addDir32NBReloc(this, importAddressTables[0], _is64,
+  addDir32NBReloc(this, importAddressTables[0], context.ctx.getMachineType(),
                   offsetof(ImportDirectoryTableEntry, ImportAddressTableRVA));
   auto *atom = new (_alloc)
       COFFStringAtom(context.dummyFile, context.dummyFile.getNextOrdinal(),
                      ".idata", loadName);
   context.file.addAtom(*atom);
-  addDir32NBReloc(this, atom, _is64,
+  addDir32NBReloc(this, atom, context.ctx.getMachineType(),
                   offsetof(ImportDirectoryTableEntry, NameRVA));
 }
 
 std::vector<ImportTableEntryAtom *> ImportDirectoryAtom::createImportTableAtoms(
-    Context &context, const std::vector<COFFSharedLibraryAtom *> &sharedAtoms,
+    IdataContext &context,
+    const std::vector<COFFSharedLibraryAtom *> &sharedAtoms,
     bool shouldAddReference, StringRef sectionName) const {
   std::vector<ImportTableEntryAtom *> ret;
   for (COFFSharedLibraryAtom *atom : sharedAtoms) {
@@ -100,14 +100,14 @@ std::vector<ImportTableEntryAtom *> ImportDirectoryAtom::createImportTableAtoms(
     if (atom->importName().empty()) {
       // Import by ordinal
       uint64_t hint = atom->hint();
-      hint |= _is64 ? (uint64_t(1) << 63) : (uint64_t(1) << 31);
+      hint |= context.ctx.is64Bit() ? (uint64_t(1) << 63) : (uint64_t(1) << 31);
       entry = new (_alloc) ImportTableEntryAtom(context, hint, sectionName);
     } else {
       // Import by name
       entry = new (_alloc) ImportTableEntryAtom(context, 0, sectionName);
       HintNameAtom *hintName =
           new (_alloc) HintNameAtom(context, atom->hint(), atom->importName());
-      addDir32NBReloc(entry, hintName, _is64, 0);
+      addDir32NBReloc(entry, hintName, context.ctx.getMachineType(), 0);
     }
     ret.push_back(entry);
     if (shouldAddReference)
@@ -124,8 +124,8 @@ void IdataPass::perform(std::unique_ptr<MutableFile> &file) {
   if (file->sharedLibrary().empty())
     return;
 
-  idata::Context context(*file, _dummyFile, _is64);
-  std::map<StringRef, std::vector<COFFSharedLibraryAtom *> > sharedAtoms =
+  idata::IdataContext context(*file, _dummyFile, _ctx);
+  std::map<StringRef, std::vector<COFFSharedLibraryAtom *>> sharedAtoms =
       groupByLoadName(*file);
   for (auto i : sharedAtoms) {
     StringRef loadName = i.first;
@@ -155,7 +155,7 @@ IdataPass::groupByLoadName(MutableFile &file) {
 }
 
 /// Transforms a reference to a COFFSharedLibraryAtom to a real reference.
-void IdataPass::replaceSharedLibraryAtoms(idata::Context &context) {
+void IdataPass::replaceSharedLibraryAtoms(idata::IdataContext &context) {
   for (const DefinedAtom *atom : context.file.defined()) {
     for (const Reference *ref : *atom) {
       const Atom *target = ref->target();

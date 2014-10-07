@@ -41,12 +41,12 @@ class HintNameAtom;
 class ImportTableEntryAtom;
 
 // A state object of this pass.
-struct Context {
-  Context(MutableFile &f, VirtualFile &g, bool peplus)
-      : file(f), dummyFile(g), is64(peplus) {}
+struct IdataContext {
+  IdataContext(MutableFile &f, VirtualFile &g, const PECOFFLinkingContext &c)
+      : file(f), dummyFile(g), ctx(c) {}
   MutableFile &file;
   VirtualFile &dummyFile;
-  bool is64;
+  const PECOFFLinkingContext &ctx;
 };
 
 /// The root class of all idata atoms.
@@ -58,8 +58,7 @@ public:
   ContentPermissions permissions() const override { return permR__; }
 
 protected:
-  IdataAtom(Context &context, std::vector<uint8_t> data);
-  bool _is64;
+  IdataAtom(IdataContext &context, std::vector<uint8_t> data);
 };
 
 /// A HintNameAtom represents a symbol that will be imported from a DLL at
@@ -72,7 +71,7 @@ protected:
 /// loader can find the symbol quickly.
 class HintNameAtom : public IdataAtom {
 public:
-  HintNameAtom(Context &context, uint16_t hint, StringRef importName);
+  HintNameAtom(IdataContext &context, uint16_t hint, StringRef importName);
 
   StringRef getContentString() { return _importName; }
 
@@ -83,8 +82,9 @@ private:
 
 class ImportTableEntryAtom : public IdataAtom {
 public:
-  ImportTableEntryAtom(Context &ctx, uint64_t contents, StringRef sectionName)
-      : IdataAtom(ctx, assembleRawContent(contents, ctx.is64)),
+  ImportTableEntryAtom(IdataContext &ctx, uint64_t contents,
+                       StringRef sectionName)
+      : IdataAtom(ctx, assembleRawContent(contents, ctx.ctx.is64Bit())),
         _sectionName(sectionName) {}
 
   StringRef customSectionName() const override {
@@ -102,7 +102,7 @@ private:
 /// items. The executable has one ImportDirectoryAtom per one imported DLL.
 class ImportDirectoryAtom : public IdataAtom {
 public:
-  ImportDirectoryAtom(Context &context, StringRef loadName,
+  ImportDirectoryAtom(IdataContext &context, StringRef loadName,
                       const std::vector<COFFSharedLibraryAtom *> &sharedAtoms)
       : IdataAtom(context, std::vector<uint8_t>(20, 0)) {
     addRelocations(context, loadName, sharedAtoms);
@@ -111,11 +111,12 @@ public:
   StringRef customSectionName() const override { return ".idata.d"; }
 
 private:
-  void addRelocations(Context &context, StringRef loadName,
+  void addRelocations(IdataContext &context, StringRef loadName,
                       const std::vector<COFFSharedLibraryAtom *> &sharedAtoms);
 
   std::vector<ImportTableEntryAtom *> createImportTableAtoms(
-      Context &context, const std::vector<COFFSharedLibraryAtom *> &sharedAtoms,
+      IdataContext &context,
+      const std::vector<COFFSharedLibraryAtom *> &sharedAtoms,
       bool shouldAddReference, StringRef sectionName) const;
 
   mutable llvm::BumpPtrAllocator _alloc;
@@ -124,7 +125,7 @@ private:
 /// The last NULL entry in the import directory.
 class NullImportDirectoryAtom : public IdataAtom {
 public:
-  explicit NullImportDirectoryAtom(Context &context)
+  explicit NullImportDirectoryAtom(IdataContext &context)
       : IdataAtom(context, std::vector<uint8_t>(20, 0)) {}
 
   StringRef customSectionName() const override { return ".idata.d"; }
@@ -134,8 +135,7 @@ public:
 
 class IdataPass : public lld::Pass {
 public:
-  IdataPass(const PECOFFLinkingContext &ctx)
-      : _dummyFile(ctx), _is64(ctx.is64Bit()) {}
+  IdataPass(const PECOFFLinkingContext &ctx) : _dummyFile(ctx), _ctx(ctx) {}
 
   void perform(std::unique_ptr<MutableFile> &file) override;
 
@@ -143,14 +143,14 @@ private:
   std::map<StringRef, std::vector<COFFSharedLibraryAtom *> >
   groupByLoadName(MutableFile &file);
 
-  void replaceSharedLibraryAtoms(idata::Context &context);
+  void replaceSharedLibraryAtoms(idata::IdataContext &context);
 
   // A dummy file with which all the atoms created in the pass will be
   // associated. Atoms need to be associated to an input file even if it's not
   // read from a file, so we use this object.
   VirtualFile _dummyFile;
 
-  bool _is64;
+  const PECOFFLinkingContext &_ctx;
   llvm::BumpPtrAllocator _alloc;
 };
 

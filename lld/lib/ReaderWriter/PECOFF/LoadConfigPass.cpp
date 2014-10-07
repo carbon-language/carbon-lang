@@ -43,7 +43,7 @@ LoadConfigAtom::LoadConfigAtom(VirtualFile &file, const DefinedAtom *sxdata,
           file, file.getNextOrdinal(),
           std::vector<uint8_t>(sizeof(coff_load_configuration32))) {
   addDir32Reloc(
-      this, sxdata, false,
+      this, sxdata, llvm::COFF::IMAGE_FILE_MACHINE_I386,
       offsetof(llvm::object::coff_load_configuration32, SEHandlerTable));
   auto *data = getContents<llvm::object::coff_load_configuration32>();
   data->SEHandlerCount = count;
