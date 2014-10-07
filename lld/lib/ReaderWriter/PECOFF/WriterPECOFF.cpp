@@ -558,7 +558,7 @@ void AtomChunk::applyRelocationsX86_32(uint8_t *buffer,
             targetAddr - getSectionStartAddr(targetAddr, sectionRva);
         break;
       default:
-        llvm_unreachable("Unsupported relocation kind");
+        llvm::report_fatal_error("Unsupported relocation kind");
       }
     }
   }
@@ -618,7 +618,7 @@ void AtomChunk::applyRelocationsX86_64(uint8_t *buffer,
         break;
       default:
         llvm::errs() << "Kind: " << (int)ref->kindValue() << "\n";
-        llvm_unreachable("Unsupported relocation kind");
+        llvm::report_fatal_error("Unsupported relocation kind");
       }
     }
   }
@@ -934,7 +934,7 @@ StringRef chooseSectionByContent(const DefinedAtom *atom) {
   }
   llvm::errs() << "Atom: contentType=" << atom->contentType()
                << " permission=" << atom->permissions() << "\n";
-  llvm_unreachable("Failed to choose section based on content");
+  llvm::report_fatal_error("Failed to choose section based on content");
 }
 
 typedef std::map<StringRef, std::vector<const DefinedAtom *> > AtomVectorMap;
