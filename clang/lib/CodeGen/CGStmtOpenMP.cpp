@@ -49,7 +49,7 @@ void CodeGenFunction::EmitOMPParallelDirective(const OMPParallelDirective &S) {
   EmitRuntimeCall(RTLFn, Args);
 }
 
-void CodeGenFunction::EmitOMPSimdBody(const OMPLoopDirective &S,
+void CodeGenFunction::EmitOMPLoopBody(const OMPLoopDirective &S,
                                       bool SeparateIter) {
   RunCleanupsScope BodyScope(*this);
   // Update counters values on current iteration.
@@ -57,7 +57,7 @@ void CodeGenFunction::EmitOMPSimdBody(const OMPLoopDirective &S,
     EmitIgnoredExpr(I);
   }
   // On a continue in the body, jump to the end.
-  auto Continue = getJumpDestInCurrentScope("simd.continue");
+  auto Continue = getJumpDestInCurrentScope("omp.body.continue");
   BreakContinueStack.push_back(BreakContinue(JumpDest(), Continue));
   // Emit loop body.
   EmitStmt(S.getBody());
@@ -72,14 +72,14 @@ void CodeGenFunction::EmitOMPSimdBody(const OMPLoopDirective &S,
   }
 }
 
-void CodeGenFunction::EmitOMPSimdLoop(const OMPLoopDirective &S,
-                                      OMPPrivateScope &LoopScope,
-                                      bool SeparateIter) {
-  auto LoopExit = getJumpDestInCurrentScope("simd.for.end");
+void CodeGenFunction::EmitOMPInnerLoop(const OMPLoopDirective &S,
+                                       OMPPrivateScope &LoopScope,
+                                       bool SeparateIter) {
+  auto LoopExit = getJumpDestInCurrentScope("omp.inner.for.end");
   auto Cnt = getPGORegionCounter(&S);
 
   // Start the loop with a block that tests the condition.
-  auto CondBlock = createBasicBlock("simd.for.cond");
+  auto CondBlock = createBasicBlock("omp.inner.for.cond");
   EmitBlock(CondBlock);
   LoopStack.push(CondBlock);
 
@@ -87,9 +87,9 @@ void CodeGenFunction::EmitOMPSimdLoop(const OMPLoopDirective &S,
   // create a block to stage a loop exit along.
   auto ExitBlock = LoopExit.getBlock();
   if (LoopScope.requiresCleanups())
-    ExitBlock = createBasicBlock("simd.for.cond.cleanup");
+    ExitBlock = createBasicBlock("omp.inner.for.cond.cleanup");
 
-  auto LoopBody = createBasicBlock("simd.for.body");
+  auto LoopBody = createBasicBlock("omp.inner.for.body");
 
   // Emit condition: "IV < LastIteration + 1 [ - 1]"
   // ("- 1" when lastprivate clause is present - separate one iteration).
@@ -106,10 +106,10 @@ void CodeGenFunction::EmitOMPSimdLoop(const OMPLoopDirective &S,
   Cnt.beginRegion(Builder);
 
   // Create a block for the increment.
-  auto Continue = getJumpDestInCurrentScope("simd.for.inc");
+  auto Continue = getJumpDestInCurrentScope("omp.inner.for.inc");
   BreakContinueStack.push_back(BreakContinue(LoopExit, Continue));
 
-  EmitOMPSimdBody(S, /* SeparateIter */ false);
+  EmitOMPLoopBody(S);
   EmitStopPoint(&S);
 
   // Emit "IV = IV + 1" and a back-edge to the condition block.
@@ -236,8 +236,8 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     {
       OMPPrivateScope LoopScope(*this);
       LoopScope.addPrivates(S.counters());
-      EmitOMPSimdLoop(S, LoopScope, /* SeparateIter */ true);
-      EmitOMPSimdBody(S, /* SeparateIter */ true);
+      EmitOMPInnerLoop(S, LoopScope, /* SeparateIter */ true);
+      EmitOMPLoopBody(S, /* SeparateIter */ true);
     }
     EmitOMPSimdFinal(S);
     // Emit: if (LastIteration != 0) - end.
@@ -247,7 +247,7 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     {
       OMPPrivateScope LoopScope(*this);
       LoopScope.addPrivates(S.counters());
-      EmitOMPSimdLoop(S, LoopScope, /* SeparateIter */ false);
+      EmitOMPInnerLoop(S, LoopScope);
     }
     EmitOMPSimdFinal(S);
   }
