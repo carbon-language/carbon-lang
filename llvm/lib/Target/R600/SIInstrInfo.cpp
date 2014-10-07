@@ -88,7 +88,10 @@ bool SIInstrInfo::areLoadsFromSameBasePtr(SDNode *Load0, SDNode *Load1,
     return false;
 
   if (isDS(Opc0) && isDS(Opc1)) {
-    assert(getNumOperandsNoGlue(Load0) == getNumOperandsNoGlue(Load1));
+
+    // FIXME: Handle this case:
+    if (getNumOperandsNoGlue(Load0) != getNumOperandsNoGlue(Load1))
+      return false;
 
     // Check base reg.
     if (Load0->getOperand(1) != Load1->getOperand(1))

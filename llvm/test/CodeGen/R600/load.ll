@@ -701,3 +701,21 @@ entry:
   store <2 x float> %0, <2 x float> addrspace(1)* %out
   ret void
 }
+
+; Test loading a i32 and v2i32 value from the same base pointer.
+; FUNC-LABEL: {{^}}load_i32_v2i32_local:
+; R600-CHECK: LDS_READ_RET
+; R600-CHECK: LDS_READ_RET
+; R600-CHECK: LDS_READ_RET
+; SI-CHECK-DAG: DS_READ_B32
+; SI-CHECK-DAG: DS_READ2_B32
+define void @load_i32_v2i32_local(<2 x i32> addrspace(1)* %out, i32 addrspace(3)* %in) {
+  %scalar = load i32 addrspace(3)* %in
+  %tmp0 = bitcast i32 addrspace(3)* %in to <2 x i32> addrspace(3)*
+  %vec_ptr = getelementptr <2 x i32> addrspace(3)* %tmp0, i32 2
+  %vec0 = load <2 x i32> addrspace(3)* %vec_ptr, align 4
+  %vec1 = insertelement <2 x i32> <i32 0, i32 0>, i32 %scalar, i32 0
+  %vec = add <2 x i32> %vec0, %vec1
+  store <2 x i32> %vec, <2 x i32> addrspace(1)* %out
+  ret void
+}
