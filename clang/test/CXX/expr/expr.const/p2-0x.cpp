@@ -277,7 +277,7 @@ namespace UndefinedBehavior {
 
 // - a lambda-expression (5.1.2);
 struct Lambda {
-  int n : []{ return 1; }(); // expected-error {{constant expression}} expected-error {{integral constant expression}}
+  int n : []{ return 1; }(); // expected-error {{constant expression}} expected-error {{integral constant expression}} expected-note {{non-literal type}}
 };
 
 // - an lvalue-to-rvalue conversion (4.1) unless it is applied to

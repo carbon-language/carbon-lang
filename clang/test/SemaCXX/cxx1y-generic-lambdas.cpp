@@ -859,11 +859,13 @@ namespace ns1 {
 struct X1 {  
   struct X2 {
     enum { E = [](auto i) { return i; }(3) }; //expected-error{{inside of a constant expression}}\
-                                          //expected-error{{not an integral constant}}
+                                          //expected-error{{not an integral constant}}\
+                                          //expected-note{{non-literal type}}
     int L = ([] (int i) { return i; })(2);
     void foo(int i = ([] (int i) { return i; })(2)) { }
     int B : ([](int i) { return i; })(3); //expected-error{{inside of a constant expression}}\
-                                          //expected-error{{not an integral constant}}
+                                          //expected-error{{not an integral constant}}\
+                                          //expected-note{{non-literal type}}
     int arr[([](int i) { return i; })(3)]; //expected-error{{inside of a constant expression}}\
                                            //expected-error{{must have a constant size}}
     int (*fp)(int) = [](int i) { return i; };
@@ -871,9 +873,10 @@ struct X1 {
     int L2 = ([](auto i) { return i; })(2);
     void fooG(int i = ([] (auto i) { return i; })(2)) { }
     int BG : ([](auto i) { return i; })(3); //expected-error{{inside of a constant expression}}  \
-                                             //expected-error{{not an integral constant}}
+                                            //expected-error{{not an integral constant}}\
+                                            //expected-note{{non-literal type}}
     int arrG[([](auto i) { return i; })(3)]; //expected-error{{inside of a constant expression}}\
-                                           //expected-error{{must have a constant size}}
+                                             //expected-error{{must have a constant size}}
     int (*fpG)(int) = [](auto i) { return i; };
     void fooptrG(int (*fp)(char) = [](auto c) { return 0; }) { }
   };
@@ -887,14 +890,16 @@ struct X1 {
     int L = ([] (T i) { return i; })(2);
     void foo(int i = ([] (int i) { return i; })(2)) { }
     int B : ([](T i) { return i; })(3); //expected-error{{inside of a constant expression}}\
-                                          //expected-error{{not an integral constant}}
+                                        //expected-error{{not an integral constant}}\
+                                        //expected-note{{non-literal type}}
     int arr[([](T i) { return i; })(3)]; //expected-error{{inside of a constant expression}}\
-                                           //expected-error{{must have a constant size}}
+                                         //expected-error{{must have a constant size}}
     int (*fp)(T) = [](T i) { return i; };
     void fooptr(T (*fp)(char) = [](char c) { return 0; }) { }
     int L2 = ([](auto i) { return i; })(2);
     void fooG(T i = ([] (auto i) { return i; })(2)) { }
-    int BG : ([](auto i) { return i; })(3); //expected-error{{not an integral constant}}
+    int BG : ([](auto i) { return i; })(3); //expected-error{{not an integral constant}}\
+                                            //expected-note{{non-literal type}}
     int arrG[([](auto i) { return i; })(3)]; //expected-error{{must have a constant size}}
     int (*fpG)(T) = [](auto i) { return i; };
     void fooptrG(T (*fp)(char) = [](auto c) { return 0; }) { }

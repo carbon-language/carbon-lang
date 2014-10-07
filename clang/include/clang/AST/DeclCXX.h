@@ -538,6 +538,12 @@ class CXXRecordDecl : public RecordDecl {
         ManglingNumber(0), ContextDecl(nullptr), Captures(nullptr),
         MethodTyInfo(Info) {
       IsLambda = true;
+
+      // C++11 [expr.prim.lambda]p3:
+      //   This class type is neither an aggregate nor a literal type.
+      Aggregate = false;
+      PlainOldData = false;
+      HasNonLiteralTypeFieldsOrBases = true;
     }
 
     /// \brief Whether this lambda is known to be dependent, even if its
