@@ -4335,3 +4335,11 @@ valignq  $2, 0x100(%rsp), %zmm0, %zmm1
 // CHECK: valignq $3
 // CHECK: encoding: [0x62,0xf3,0xfd,0x49,0x03,0xcb,0x03]
 valignq  $3, %zmm3, %zmm0, %zmm1 {%k1}
+
+// CHECK: vextractf32x4 $3
+// CHECK: encoding: [0x62,0xf3,0x7d,0x49,0x19,0xd9,0x03]
+vextractf32x4  $3, %zmm3, %xmm1 {%k1}
+
+// CHECK: vextracti64x4 $1
+// CHECK: encoding: [0x62,0x53,0xfd,0xcb,0x3b,0xf4,0x01]
+vextracti64x4  $1, %zmm14, %ymm12 {%k3} {z}

@@ -209,6 +209,18 @@ multiclass AVX512_masking_3src<bits<8> O, Format F, X86VectorVTInfo _,
                          OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
                          (vselect _.KRCWM:$mask, RHS, _.RC:$src1)>;
 
+
+multiclass AVX512_masking_in_asm<bits<8> O, Format F, X86VectorVTInfo _,
+                                 dag Outs, dag Ins,
+                                 string OpcodeStr,
+                                 string AttSrcAsm, string IntelSrcAsm,
+                                 list<dag> Pattern> :
+   AVX512_masking_custom<O, F, Outs, Ins,
+                         !con((ins _.RC:$src0, _.KRCWM:$mask), Ins),
+                         !con((ins _.KRCWM:$mask), Ins),
+                         OpcodeStr, AttSrcAsm, IntelSrcAsm, Pattern, [], [],
+                         "$src0 = $dst">;
+
 // Bitcasts between 512-bit vector types. Return the original type since
 // no instruction is needed for the conversion
 let Predicates = [HasAVX512] in {
@@ -405,13 +417,13 @@ multiclass vextract_for_size<int Opcode,
                              PatFrag vextract_extract,
                              SDNodeXForm EXTRACT_get_vextract_imm> {
   let hasSideEffects = 0, ExeDomain = To.ExeDomain in {
-    def rr : AVX512AIi8<Opcode, MRMDestReg, (outs To.RC:$dst),
-            (ins VR512:$src1, i8imm:$idx),
-            "vextract" # To.EltTypeName # "x4\t{$idx, $src1, $dst|"
-                                               "$dst, $src1, $idx}",
-            [(set To.RC:$dst, (vextract_extract:$idx (From.VT VR512:$src1),
-                                                     (iPTR imm)))]>,
-            EVEX, EVEX_V512;
+    defm rr : AVX512_masking_in_asm<Opcode, MRMDestReg, To, (outs To.RC:$dst),
+                (ins VR512:$src1, i8imm:$idx),
+                "vextract" # To.EltTypeName # "x4",
+                "$idx, $src1", "$src1, $idx",
+                [(set To.RC:$dst, (vextract_extract:$idx (From.VT VR512:$src1),
+                                                         (iPTR imm)))]>,
+              AVX512AIi8Base, EVEX, EVEX_V512;
     let mayStore = 1 in
     def rm : AVX512AIi8<Opcode, MRMDestMem, (outs),
             (ins To.MemOp:$dst, VR512:$src1, i8imm:$src2),
