@@ -13,7 +13,7 @@
 #if defined(_WIN32)
 #include "lldb/Host/windows/PipeWindows.h"
 #else
-#include "lldb/Host/windows/PipePosix.h"
+#include "lldb/Host/posix/PipePosix.h"
 #endif
 
 #endif // liblldb_Host_Pipe_h_
