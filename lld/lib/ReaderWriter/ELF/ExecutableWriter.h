@@ -59,6 +59,15 @@ void ExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
                                              atom->_virtualAddr, atom);
       }
 
+  // Put weak symbols in the dynamic symbol table.
+  if (this->_context.isDynamic()) {
+    for (const UndefinedAtom *a : file.undefined()) {
+      if (this->_layout.isReferencedByDefinedAtom(a) &&
+          a->canBeNull() != UndefinedAtom::canBeNullNever)
+        this->_dynamicSymbolTable->addSymbol(a, ELF::SHN_UNDEF);
+    }
+  }
+
   OutputELFWriter<ELFT>::buildDynamicSymbolTable(file);
 }
 

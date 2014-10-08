@@ -471,16 +471,16 @@ public:
     return std::error_code();
   }
 
-  const GOTAtom *getSharedGOT(const SharedLibraryAtom *sla) {
-    auto got = _gotMap.find(sla);
+  const GOTAtom *getSharedGOT(const Atom *a) {
+    auto got = _gotMap.find(a);
     if (got == _gotMap.end()) {
       auto g = new (_file._alloc) X86_64GOTAtom(_file, ".got.dyn");
-      g->addReferenceELF_x86_64(R_X86_64_GLOB_DAT, 0, sla, 0);
+      g->addReferenceELF_x86_64(R_X86_64_GLOB_DAT, 0, a, 0);
 #ifndef NDEBUG
       g->_name = "__got_";
-      g->_name += sla->name();
+      g->_name += a->name();
 #endif
-      _gotMap[sla] = g;
+      _gotMap[a] = g;
       _gotVector.push_back(g);
       return g;
     }
@@ -488,12 +488,13 @@ public:
   }
 
   std::error_code handleGOT(const Reference &ref) {
-    if (isa<UndefinedAtom>(ref.target()))
-      const_cast<Reference &>(ref).setTarget(getNullGOT());
-    else if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(ref.target()))
+    if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(ref.target()))
       const_cast<Reference &>(ref).setTarget(getGOT(da));
-    else if (const auto sla = dyn_cast<const SharedLibraryAtom>(ref.target()))
-      const_cast<Reference &>(ref).setTarget(getSharedGOT(sla));
+    // Handle undefined atoms in the same way as shared lib atoms: to be
+    // resolved at run time.
+    else if (isa<SharedLibraryAtom>(ref.target()) ||
+             isa<UndefinedAtom>(ref.target()))
+      const_cast<Reference &>(ref).setTarget(getSharedGOT(ref.target()));
     return std::error_code();
   }
 };
