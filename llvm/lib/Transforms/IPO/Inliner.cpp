@@ -669,6 +669,13 @@ bool Inliner::removeDeadFunctions(CallGraph &CG, bool AlwaysInlineOnly) {
 
     if (!F->isDefTriviallyDead())
       continue;
+
+    // It is unsafe to drop a function with discardable linkage from a COMDAT
+    // without also dropping the other members of the COMDAT.
+    // The inliner doesn't visit non-function entities which are in COMDAT
+    // groups so it is unsafe to do so *unless* the linkage is local.
+    if (!F->hasLocalLinkage() && F->hasComdat())
+      continue;
     
     // Remove any call graph edges from the function to its callees.
     CGN->removeAllCalledFunctions();
