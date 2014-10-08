@@ -103,7 +103,7 @@ extern "C" int call_deduced_return_operator() {
 }
 
 // CHECK-LABEL: define i32 @call_deduced_return_operator()
-// CHECK: call i32* @_ZZL14deduced_returnvEN1SclEv(%struct.S* %tmp)
+// CHECK: call i32* @_ZZL14deduced_returnvEN1SclEv(
 // CHECK: load i32* %
 // CHECK: ret i32 %
 
@@ -123,7 +123,7 @@ extern "C" int call_block_deduced_return() {
 }
 
 // CHECK-LABEL: define i32 @call_block_deduced_return()
-// CHECK: call i32* @_ZZZL20block_deduced_returnvEUb_EN1SclEv(%struct.S.6* %tmp)
+// CHECK: call i32* @_ZZZL20block_deduced_returnvEUb_EN1SclEv(
 // CHECK: load i32* %
 // CHECK: ret i32 %
 
