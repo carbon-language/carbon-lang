@@ -222,12 +222,17 @@ std::error_code COFFObjectFile::getSymbolSize(DataRefImpl Ref,
   if (std::error_code EC = getSection(Symb.getSectionNumber(), Section))
     return EC;
 
-  if (Symb.getSectionNumber() == COFF::IMAGE_SYM_UNDEFINED)
-    Result = UnknownAddressOrSize;
-  else if (Section)
+  if (Symb.getSectionNumber() == COFF::IMAGE_SYM_UNDEFINED) {
+    if (Symb.getValue() == 0)
+      Result = UnknownAddressOrSize;
+    else
+      Result = Symb.getValue();
+  } else if (Section) {
     Result = Section->SizeOfRawData - Symb.getValue();
-  else
+  } else {
     Result = 0;
+  }
+
   return object_error::success;
 }
 
