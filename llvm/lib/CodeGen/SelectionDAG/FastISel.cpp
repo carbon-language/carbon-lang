@@ -2000,9 +2000,7 @@ bool FastISel::handlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
       EVT VT = TLI.getValueType(PN->getType(), /*AllowUnknown=*/true);
       if (VT == MVT::Other || !TLI.isTypeLegal(VT)) {
         // Handle integer promotions, though, because they're common and easy.
-        if (VT == MVT::i1 || VT == MVT::i8 || VT == MVT::i16)
-          VT = TLI.getTypeToTransformTo(LLVMBB->getContext(), VT);
-        else {
+        if (!(VT == MVT::i1 || VT == MVT::i8 || VT == MVT::i16)) {
           FuncInfo.PHINodesToUpdate.resize(FuncInfo.OrigNumPHINodesToUpdate);
           return false;
         }
