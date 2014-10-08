@@ -51,6 +51,8 @@ public:
   AliasAnalysis *AA;
   GCFunctionInfo *GFI;
   CodeGenOpt::Level OptLevel;
+  const TargetInstrInfo *TII;
+
   static char ID;
 
   explicit SelectionDAGISel(TargetMachine &tm,
