@@ -592,6 +592,8 @@ void RecognizableInstr::emitInstructionSpecifier() {
            "Unexpected number of operands for MRMDestRegFrm");
 
     HANDLE_OPERAND(rmRegister)
+    if (HasEVEX_K)
+      HANDLE_OPERAND(writemaskRegister)
 
     if (HasVEX_4V)
       // FIXME: In AVX, the register below becomes the one encoded
