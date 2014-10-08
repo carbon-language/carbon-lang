@@ -129,10 +129,10 @@ static std::error_code getOffset(const SymbolRef &Sym, uint64_t &Result) {
   if (std::error_code EC = Sym.getSection(SecI))
     return EC;
 
- if (SecI == Obj->section_end()) {
-   Result = UnknownAddressOrSize;
-   return object_error::success;
- }
+  if (SecI == Obj->section_end()) {
+    Result = UnknownAddressOrSize;
+    return object_error::success;
+  }
 
   uint64_t SectionAddress;
   if (std::error_code EC = SecI->getAddress(SectionAddress))
