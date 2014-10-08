@@ -345,7 +345,3 @@ void CodeGenFunction::EmitOMPTargetDirective(const OMPTargetDirective &) {
   llvm_unreachable("CodeGen for 'omp target' is not supported yet.");
 }
 
-void CodeGenFunction::EmitOMPTeamsDirective(const OMPTeamsDirective &) {
-  llvm_unreachable("CodeGen for 'omp teams' is not supported yet.");
-}
-

@@ -236,9 +236,6 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::OMPTargetDirectiveClass:
     EmitOMPTargetDirective(cast<OMPTargetDirective>(*S));
     break;
-  case Stmt::OMPTeamsDirectiveClass:
-    EmitOMPTeamsDirective(cast<OMPTeamsDirective>(*S));
-    break;
   }
 }
 

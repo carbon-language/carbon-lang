@@ -2014,7 +2014,6 @@ public:
   void EmitOMPOrderedDirective(const OMPOrderedDirective &S);
   void EmitOMPAtomicDirective(const OMPAtomicDirective &S);
   void EmitOMPTargetDirective(const OMPTargetDirective &S);
-  void EmitOMPTeamsDirective(const OMPTeamsDirective &S);
 
   /// Helpers for 'omp simd' directive.
   void EmitOMPLoopBody(const OMPLoopDirective &Directive,

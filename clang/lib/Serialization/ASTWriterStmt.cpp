@@ -1992,13 +1992,6 @@ void ASTStmtWriter::VisitOMPOrderedDirective(OMPOrderedDirective *D) {
   Code = serialization::STMT_OMP_ORDERED_DIRECTIVE;
 }
 
-void ASTStmtWriter::VisitOMPTeamsDirective(OMPTeamsDirective *D) {
-  VisitStmt(D);
-  Record.push_back(D->getNumClauses());
-  VisitOMPExecutableDirective(D);
-  Code = serialization::STMT_OMP_TEAMS_DIRECTIVE;
-}
-
 //===----------------------------------------------------------------------===//
 // ASTWriter Implementation
 //===----------------------------------------------------------------------===//
