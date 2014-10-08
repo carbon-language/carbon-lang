@@ -9,7 +9,7 @@
 
 LLD_LEVEL = ../..
 TESTNAME = DriverTests
-USEDLIBS = lldDriver.a \
+USEDLIBS = lldDriver.a lldConfig.a \
            lldELF.a lldMachO.a lldPasses.a lldPECOFF.a \
            lldCore.a lldNative.a lldReaderWriter.a \
            lldHexagonELFTarget.a lldPPCELFTarget.a lldMipsELFTarget.a \

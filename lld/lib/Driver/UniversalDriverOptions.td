@@ -11,6 +11,9 @@ def core : Flag<["-"], "core">,
 def target: Separate<["-"], "target">,
      HelpText<"Select the target">;
 
+def version: Flag<["-"], "version">,
+     HelpText<"Display the version">;
+
 // Help message
 def help : Flag<["-"], "help">,
      HelpText<"Display this help message">;

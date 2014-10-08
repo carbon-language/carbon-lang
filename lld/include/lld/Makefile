@@ -1,5 +1,5 @@
 LLD_LEVEL := ../..
-DIRS :=
+DIRS := Config
 
 include $(LLD_LEVEL)/Makefile
 

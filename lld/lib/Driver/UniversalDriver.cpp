@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
+#include "lld/Config/Version.h"
 
 #include "lld/Core/LLVM.h"
 
@@ -185,6 +186,13 @@ bool UniversalDriver::link(int argc, const char *argv[],
   // Handle --help
   if (parsedArgs->getLastArg(OPT_help)) {
     table.PrintHelp(llvm::outs(), programName.data(), "LLVM Linker", false);
+    return true;
+  }
+
+  // Handle -version
+  if (parsedArgs->getLastArg(OPT_version)) {
+    diagnostics << "LLVM Linker Version: " << getLLDVersion()
+                << getLLDRepositoryVersion() << "\n";
     return true;
   }
 

@@ -19,7 +19,7 @@ LEVEL := $(LLD_LEVEL)/../..
 include $(LEVEL)/Makefile.config
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD)
-USEDLIBS = lldDriver.a \
+USEDLIBS = lldDriver.a lldConfig.a \
            lldELF.a lldMachO.a lldPasses.a lldPECOFF.a lldYAML.a \
            lldReaderWriter.a lldCore.a lldNative.a \
            lldHexagonELFTarget.a lldPPCELFTarget.a lldMipsELFTarget.a \

@@ -26,6 +26,7 @@ add_lld_library(lldDriver
 add_dependencies(lldDriver DriverOptionsTableGen)
 
 target_link_libraries(lldDriver
+  lldConfig
   lldPasses
   lldMachO
   lldPECOFF

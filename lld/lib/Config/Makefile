@@ -1,4 +1,4 @@
-##===- lib/Makefile ----------------------------------------*- Makefile -*-===##
+##===- lib/Config/Makefile ---------------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,11 +6,8 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LLD_LEVEL := ..
 
-# ARCMigrate and Rewrite are always needed because of libclang.
-PARALLEL_DIRS = Config Core Driver Passes ReaderWriter
-
-include $(LLD_LEVEL)/../../Makefile.config
+LLD_LEVEL := ../..
+LIBRARYNAME := lldConfig
 
 include $(LLD_LEVEL)/Makefile
