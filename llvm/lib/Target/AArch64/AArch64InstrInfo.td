@@ -239,6 +239,11 @@ def AArch64WrapperLarge : SDNode<"AArch64ISD::WrapperLarge",
 
 def AArch64NvCast : SDNode<"AArch64ISD::NVCAST", SDTUnaryOp>;
 
+def SDT_AArch64mull : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisInt<1>,
+                                    SDTCisSameAs<1, 2>]>;
+def AArch64smull    : SDNode<"AArch64ISD::SMULL", SDT_AArch64mull>;
+def AArch64umull    : SDNode<"AArch64ISD::UMULL", SDT_AArch64mull>;
+
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
@@ -3147,6 +3152,46 @@ defm USUBL   : SIMDLongThreeVectorBHS<1, 0b0010, "usubl",
                  BinOpFrag<(sub (zext node:$LHS), (zext node:$RHS))>>;
 defm USUBW   : SIMDWideThreeVectorBHS<   1, 0b0011, "usubw",
                  BinOpFrag<(sub node:$LHS, (zext node:$RHS))>>;
+
+// Additional patterns for SMULL and UMULL
+multiclass Neon_mul_widen_patterns<SDPatternOperator opnode,
+  Instruction INST8B, Instruction INST4H, Instruction INST2S> {
+  def : Pat<(v8i16 (opnode (v8i8 V64:$Rn), (v8i8 V64:$Rm))),
+            (INST8B V64:$Rn, V64:$Rm)>;
+  def : Pat<(v4i32 (opnode (v4i16 V64:$Rn), (v4i16 V64:$Rm))),
+            (INST4H V64:$Rn, V64:$Rm)>;
+  def : Pat<(v2i64 (opnode (v2i32 V64:$Rn), (v2i32 V64:$Rm))),
+            (INST2S V64:$Rn, V64:$Rm)>;
+}
+
+defm : Neon_mul_widen_patterns<AArch64smull, SMULLv8i8_v8i16,
+  SMULLv4i16_v4i32, SMULLv2i32_v2i64>;
+defm : Neon_mul_widen_patterns<AArch64umull, UMULLv8i8_v8i16,
+  UMULLv4i16_v4i32, UMULLv2i32_v2i64>;
+
+// Additional patterns for SMLAL/SMLSL and UMLAL/UMLSL
+multiclass Neon_mulacc_widen_patterns<SDPatternOperator opnode,
+  Instruction INST8B, Instruction INST4H, Instruction INST2S> {
+  def : Pat<(v8i16 (opnode (v8i16 V128:$Rd), (v8i8 V64:$Rn), (v8i8 V64:$Rm))),
+            (INST8B V128:$Rd, V64:$Rn, V64:$Rm)>;
+  def : Pat<(v4i32 (opnode (v4i32 V128:$Rd), (v4i16 V64:$Rn), (v4i16 V64:$Rm))),
+            (INST4H V128:$Rd, V64:$Rn, V64:$Rm)>;
+  def : Pat<(v2i64 (opnode (v2i64 V128:$Rd), (v2i32 V64:$Rn), (v2i32 V64:$Rm))),
+            (INST2S  V128:$Rd, V64:$Rn, V64:$Rm)>;
+}
+
+defm : Neon_mulacc_widen_patterns<
+  TriOpFrag<(add node:$LHS, (AArch64smull node:$MHS, node:$RHS))>,
+  SMLALv8i8_v8i16, SMLALv4i16_v4i32, SMLALv2i32_v2i64>;
+defm : Neon_mulacc_widen_patterns<
+  TriOpFrag<(add node:$LHS, (AArch64umull node:$MHS, node:$RHS))>,
+  UMLALv8i8_v8i16, UMLALv4i16_v4i32, UMLALv2i32_v2i64>;
+defm : Neon_mulacc_widen_patterns<
+  TriOpFrag<(sub node:$LHS, (AArch64smull node:$MHS, node:$RHS))>,
+  SMLSLv8i8_v8i16, SMLSLv4i16_v4i32, SMLSLv2i32_v2i64>;
+defm : Neon_mulacc_widen_patterns<
+  TriOpFrag<(sub node:$LHS, (AArch64umull node:$MHS, node:$RHS))>,
+  UMLSLv8i8_v8i16, UMLSLv4i16_v4i32, UMLSLv2i32_v2i64>;
 
 // Patterns for 64-bit pmull
 def : Pat<(int_aarch64_neon_pmull64 V64:$Rn, V64:$Rm),
