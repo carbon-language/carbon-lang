@@ -119,6 +119,16 @@ SoftwareBreakpoint::EnableSoftwareBreakpoint (NativeProcessProtocol &process, ll
         return Error ("SoftwareBreakpoint::%s failed to read memory while attempting to set breakpoint: attempted to read %lu bytes but only read %" PRIu64, __FUNCTION__, bp_opcode_size, bytes_read);
     }
 
+    // Log what we read.
+    if (log)
+    {
+        int i = 0;
+        for (const uint8_t *read_byte = saved_opcode_bytes; read_byte < saved_opcode_bytes + bp_opcode_size; ++read_byte)
+        {
+            log->Printf ("SoftwareBreakpoint::%s addr = 0x%" PRIx64 " ovewriting byte index %d (was 0x%x)", __FUNCTION__, addr, i++, static_cast<int> (*read_byte));
+        }
+    }
+
     // Write a software breakpoint in place of the original opcode.
     lldb::addr_t bytes_written = 0;
     error = process.WriteMemory (addr, bp_opcode_bytes, static_cast<lldb::addr_t> (bp_opcode_size), bytes_written);
@@ -207,7 +217,7 @@ SoftwareBreakpoint::DoDisable ()
 
     if (m_opcode_size > 0)
     {
-        // Clear a software breakoint instruction
+        // Clear a software breakpoint instruction
         uint8_t curr_break_op [MAX_TRAP_OPCODE_SIZE];
         bool break_op_found = false;
         assert (m_opcode_size <= sizeof (curr_break_op));
@@ -265,7 +275,14 @@ SoftwareBreakpoint::DoDisable ()
                     {
                         // SUCCESS
                         if (log)
+                        {
+                            int i = 0;
+                            for (const uint8_t *verify_byte = verify_opcode; verify_byte < verify_opcode + m_opcode_size; ++verify_byte)
+                            {
+                                log->Printf ("SoftwareBreakpoint::%s addr = 0x%" PRIx64 " replaced byte index %d with 0x%x", __FUNCTION__, m_addr, i++, static_cast<int> (*verify_byte));
+                            }
                             log->Printf ("SoftwareBreakpoint::%s addr = 0x%" PRIx64 " -- SUCCESS", __FUNCTION__, m_addr);
+                        }
                         return error;
                     }
                     else
