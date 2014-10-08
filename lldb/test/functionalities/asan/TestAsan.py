@@ -24,7 +24,7 @@ class AsanTestCase(TestBase):
         self.buildDsym (None, compiler)
         self.asan_tests ()
 
-    @expectedFailureFreeBSD("llvm.org/pr21136") # runtimes not yet available by default
+    @skipIfFreeBSD # llvm.org/pr21136 runtimes not yet available by default
     @skipIfRemote
     @dwarf_test
     def test_with_dwarf (self):
