@@ -3902,36 +3902,11 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
   return OMPPrivateClause::Create(Context, StartLoc, LParenLoc, EndLoc, Vars);
 }
 
-namespace {
-class DiagsUninitializedSeveretyRAII {
-private:
-  DiagnosticsEngine &Diags;
-  SourceLocation SavedLoc;
-  bool IsIgnored;
-
-public:
-  DiagsUninitializedSeveretyRAII(DiagnosticsEngine &Diags, SourceLocation Loc,
-                                 bool IsIgnored)
-      : Diags(Diags), SavedLoc(Loc), IsIgnored(IsIgnored) {
-    if (!IsIgnored) {
-      Diags.setSeverity(/*Diag*/ diag::warn_uninit_self_reference_in_init,
-                        /*Map*/ diag::Severity::Ignored, Loc);
-    }
-  }
-  ~DiagsUninitializedSeveretyRAII() {
-    if (!IsIgnored)
-      Diags.popMappings(SavedLoc);
-  }
-};
-}
-
 OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
                                                SourceLocation StartLoc,
                                                SourceLocation LParenLoc,
                                                SourceLocation EndLoc) {
   SmallVector<Expr *, 8> Vars;
-  SmallVector<Expr *, 8> PrivateCopies;
-  SmallVector<Expr *, 8> Inits;
   bool IsImplicitClause =
       StartLoc.isInvalid() && LParenLoc.isInvalid() && EndLoc.isInvalid();
   auto ImplicitClauseLoc = DSAStack->getConstructLoc();
@@ -3941,13 +3916,11 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
     if (isa<DependentScopeDeclRefExpr>(RefExpr)) {
       // It will be analyzed later.
       Vars.push_back(RefExpr);
-      PrivateCopies.push_back(nullptr);
-      Inits.push_back(nullptr);
       continue;
     }
 
-    SourceLocation ELoc =
-        IsImplicitClause ? ImplicitClauseLoc : RefExpr->getExprLoc();
+    SourceLocation ELoc = IsImplicitClause ? ImplicitClauseLoc
+                                           : RefExpr->getExprLoc();
     // OpenMP [2.1, C/C++]
     //  A list item is a variable name.
     // OpenMP  [2.9.3.3, Restrictions, p.1]
@@ -3965,8 +3938,6 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
     if (Type->isDependentType() || Type->isInstantiationDependentType()) {
       // It will be analyzed later.
       Vars.push_back(DE);
-      PrivateCopies.push_back(nullptr);
-      Inits.push_back(nullptr);
       continue;
     }
 
@@ -4000,6 +3971,65 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
     //  clause requires an accessible, unambiguous copy constructor for the
     //  class type.
     Type = Context.getBaseElementType(Type);
+    CXXRecordDecl *RD = getLangOpts().CPlusPlus
+                            ? Type.getNonReferenceType()->getAsCXXRecordDecl()
+                            : nullptr;
+    // FIXME This code must be replaced by actual constructing/destructing of
+    // the firstprivate variable.
+    if (RD) {
+      CXXConstructorDecl *CD = LookupCopyingConstructor(RD, 0);
+      PartialDiagnostic PD =
+          PartialDiagnostic(PartialDiagnostic::NullDiagnostic());
+      if (!CD ||
+          CheckConstructorAccess(ELoc, CD,
+                                 InitializedEntity::InitializeTemporary(Type),
+                                 CD->getAccess(), PD) == AR_inaccessible ||
+          CD->isDeleted()) {
+        if (IsImplicitClause) {
+          Diag(ImplicitClauseLoc,
+               diag::err_omp_task_predetermined_firstprivate_required_method)
+              << 0;
+          Diag(RefExpr->getExprLoc(), diag::note_used_here);
+        } else {
+          Diag(ELoc, diag::err_omp_required_method)
+              << getOpenMPClauseName(OMPC_firstprivate) << 1;
+        }
+        bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                      VarDecl::DeclarationOnly;
+        Diag(VD->getLocation(),
+             IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+            << VD;
+        Diag(RD->getLocation(), diag::note_previous_decl) << RD;
+        continue;
+      }
+      MarkFunctionReferenced(ELoc, CD);
+      DiagnoseUseOfDecl(CD, ELoc);
+
+      CXXDestructorDecl *DD = RD->getDestructor();
+      if (DD) {
+        if (CheckDestructorAccess(ELoc, DD, PD) == AR_inaccessible ||
+            DD->isDeleted()) {
+          if (IsImplicitClause) {
+            Diag(ImplicitClauseLoc,
+                 diag::err_omp_task_predetermined_firstprivate_required_method)
+                << 1;
+            Diag(RefExpr->getExprLoc(), diag::note_used_here);
+          } else {
+            Diag(ELoc, diag::err_omp_required_method)
+                << getOpenMPClauseName(OMPC_firstprivate) << 4;
+          }
+          bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                        VarDecl::DeclarationOnly;
+          Diag(VD->getLocation(),
+               IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+              << VD;
+          Diag(RD->getLocation(), diag::note_previous_decl) << RD;
+          continue;
+        }
+        MarkFunctionReferenced(ELoc, DD);
+        DiagnoseUseOfDecl(DD, ELoc);
+      }
+    }
 
     // If an implicit firstprivate variable found it was checked already.
     if (!IsImplicitClause) {
@@ -4089,67 +4119,15 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
       }
     }
 
-    Type = Type.getUnqualifiedType();
-    auto VDPrivate = VarDecl::Create(Context, CurContext, DE->getLocStart(),
-                                     ELoc, VD->getIdentifier(), VD->getType(),
-                                     VD->getTypeSourceInfo(), /*S*/ SC_Auto);
-    // Generate helper private variable and initialize it with the value of the
-    // original variable. The address of the original variable is replaced by
-    // the address of the new private variable in the CodeGen. This new variable
-    // is not added to IdResolver, so the code in the OpenMP region uses
-    // original variable for proper diagnostics and variable capturing.
-    Expr *VDInitRefExpr = nullptr;
-    // For arrays generate initializer for single element and replace it by the
-    // original array element in CodeGen.
-    if (DE->getType()->isArrayType()) {
-      auto VDInit = VarDecl::Create(Context, CurContext, DE->getLocStart(),
-                                    ELoc, VD->getIdentifier(), Type,
-                                    VD->getTypeSourceInfo(), /*S*/ SC_Auto);
-      CurContext->addHiddenDecl(VDInit);
-      VDInitRefExpr = DeclRefExpr::Create(
-          Context, /*QualifierLoc*/ NestedNameSpecifierLoc(),
-          /*TemplateKWLoc*/ SourceLocation(), VDInit,
-          /*isEnclosingLocal*/ false, ELoc, Type,
-          /*VK*/ VK_LValue);
-      VDInit->setIsUsed();
-      auto Init = DefaultLvalueConversion(VDInitRefExpr).get();
-      InitializedEntity Entity = InitializedEntity::InitializeVariable(VDInit);
-      InitializationKind Kind = InitializationKind::CreateCopy(ELoc, ELoc);
-
-      InitializationSequence InitSeq(*this, Entity, Kind, Init);
-      ExprResult Result = InitSeq.Perform(*this, Entity, Kind, Init);
-      if (Result.isInvalid())
-        VDPrivate->setInvalidDecl();
-      else
-        VDPrivate->setInit(Result.getAs<Expr>());
-    } else {
-      AddInitializerToDecl(VDPrivate, DefaultLvalueConversion(DE).get(),
-                           /*DirectInit*/ false, /*TypeMayContainAuto*/ false);
-    }
-    if (VDPrivate->isInvalidDecl()) {
-      if (IsImplicitClause) {
-        Diag(DE->getExprLoc(),
-             diag::note_omp_task_predetermined_firstprivate_here);
-      }
-      continue;
-    }
-    CurContext->addDecl(VDPrivate);
-    auto VDPrivateRefExpr = DeclRefExpr::Create(
-        Context, /*QualifierLoc*/ NestedNameSpecifierLoc(),
-        /*TemplateKWLoc*/ SourceLocation(), VDPrivate,
-        /*isEnclosingLocal*/ false, DE->getLocStart(), DE->getType(),
-        /*VK*/ VK_LValue);
     DSAStack->addDSA(VD, DE, OMPC_firstprivate);
     Vars.push_back(DE);
-    PrivateCopies.push_back(VDPrivateRefExpr);
-    Inits.push_back(VDInitRefExpr);
   }
 
   if (Vars.empty())
     return nullptr;
 
   return OMPFirstprivateClause::Create(Context, StartLoc, LParenLoc, EndLoc,
-                                       Vars, PrivateCopies, Inits);
+                                       Vars);
 }
 
 OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
