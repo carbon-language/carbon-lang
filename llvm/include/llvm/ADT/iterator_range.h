@@ -49,7 +49,7 @@ template <class T> iterator_range<T> make_range(T x, T y) {
   return iterator_range<T>(std::move(x), std::move(y));
 }
 
-template<typename T> iterator_range<T> make_range(std::pair<T, T> p) {
+template <typename T> iterator_range<T> make_range(std::pair<T, T> p) {
   return iterator_range<T>(std::move(p.first), std::move(p.second));
 }
 }

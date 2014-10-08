@@ -660,10 +660,12 @@ public:
   const MCSymbol *getFunctionBeginSym() const { return FunctionBeginSym; }
   const MCSymbol *getFunctionEndSym() const { return FunctionEndSym; }
 
-  iterator_range<ImportedEntityMap::const_iterator> findImportedEntitiesForScope(const MDNode *Scope) const {
+  iterator_range<ImportedEntityMap::const_iterator>
+  findImportedEntitiesForScope(const MDNode *Scope) const {
     return make_range(std::equal_range(
         ScopesWithImportedEntities.begin(), ScopesWithImportedEntities.end(),
-        std::pair<const MDNode *, const MDNode *>(Scope, nullptr), less_first()));
+        std::pair<const MDNode *, const MDNode *>(Scope, nullptr),
+        less_first()));
   }
 
   /// \brief A helper function to check whether the DIE for a given Scope is
