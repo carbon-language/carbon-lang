@@ -310,14 +310,13 @@ void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
       (hasV7Ops() && (isTargetLinux() || isTargetNaCl() ||
                       isTargetNetBSD())) ||
       (hasV6Ops() && (isTargetMachO() || isTargetNetBSD()));
-    // The one exception is cortex-m0, which despite being v6, does not
-    // support unaligned accesses. Rather than make the above boolean
-    // expression even more obtuse, just override the value here.
-    if (isThumb1Only() && isMClass())
-      AllowsUnalignedMem = false;
   } else {
     AllowsUnalignedMem = !(Align == StrictAlign);
   }
+
+  // No v6M core supports unaligned memory access (v6M ARM ARM A3.2)
+  if (isV6M())
+    AllowsUnalignedMem = false;
 
   switch (IT) {
   case DefaultIT:

@@ -405,6 +405,10 @@ public:
   bool isRClass() const { return ARMProcClass == RClass; }
   bool isAClass() const { return ARMProcClass == AClass; }
 
+  bool isV6M() const {
+    return isThumb1Only() && isMClass();
+  }
+
   bool isR9Reserved() const { return IsR9Reserved; }
 
   bool useMovt(const MachineFunction &MF) const;
