@@ -2097,7 +2097,7 @@ static bool isMsLayout(const RecordDecl* D) {
 // * There is a distinction between alignment and required alignment.
 //   __declspec(align) changes the required alignment of a struct.  This
 //   alignment is _always_ obeyed, even in the presence of #pragma pack. A
-//   record inherites required alignment from all of its fields and bases.
+//   record inherits required alignment from all of its fields and bases.
 // * __declspec(align) on bitfields has the effect of changing the bitfield's
 //   alignment instead of its required alignment.  This is the only known way
 //   to make the alignment of a struct bigger than 8.  Interestingly enough
