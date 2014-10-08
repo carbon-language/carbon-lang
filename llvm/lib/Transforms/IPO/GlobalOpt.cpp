@@ -88,6 +88,7 @@ namespace {
 
     const DataLayout *DL;
     TargetLibraryInfo *TLI;
+    SmallSet<const Comdat *, 8> NotDiscardableComdats;
   };
 }
 
@@ -1908,8 +1909,11 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
     // Functions without names cannot be referenced outside this module.
     if (!F->hasName() && !F->isDeclaration() && !F->hasLocalLinkage())
       F->setLinkage(GlobalValue::InternalLinkage);
+
+    const Comdat *C = F->getComdat();
+    bool inComdat = C && NotDiscardableComdats.count(C);
     F->removeDeadConstantUsers();
-    if (F->isDefTriviallyDead()) {
+    if ((!inComdat || F->hasLocalLinkage()) && F->isDefTriviallyDead()) {
       F->eraseFromParent();
       Changed = true;
       ++NumFnDeleted;
@@ -1941,12 +1945,6 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
 bool GlobalOpt::OptimizeGlobalVars(Module &M) {
   bool Changed = false;
 
-  SmallSet<const Comdat *, 8> NotDiscardableComdats;
-  for (const GlobalVariable &GV : M.globals())
-    if (const Comdat *C = GV.getComdat())
-      if (!GV.isDiscardableIfUnused())
-        NotDiscardableComdats.insert(C);
-
   for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
        GVI != E; ) {
     GlobalVariable *GV = GVI++;
@@ -1963,7 +1961,7 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
 
     if (GV->isDiscardableIfUnused()) {
       if (const Comdat *C = GV->getComdat())
-        if (NotDiscardableComdats.count(C))
+        if (NotDiscardableComdats.count(C) && !GV->hasLocalLinkage())
           continue;
       Changed |= ProcessGlobal(GV, GVI);
     }
@@ -3046,6 +3044,20 @@ bool GlobalOpt::runOnModule(Module &M) {
   bool LocalChange = true;
   while (LocalChange) {
     LocalChange = false;
+
+    NotDiscardableComdats.clear();
+    for (const GlobalVariable &GV : M.globals())
+      if (const Comdat *C = GV.getComdat())
+        if (!GV.isDiscardableIfUnused() || !GV.use_empty())
+          NotDiscardableComdats.insert(C);
+    for (Function &F : M)
+      if (const Comdat *C = F.getComdat())
+        if (!F.isDefTriviallyDead())
+          NotDiscardableComdats.insert(C);
+    for (GlobalAlias &GA : M.aliases())
+      if (const Comdat *C = GA.getComdat())
+        if (!GA.isDiscardableIfUnused() || !GA.use_empty())
+          NotDiscardableComdats.insert(C);
 
     // Delete functions that are trivially dead, ccc -> fastcc
     LocalChange |= OptimizeFunctions(M);
