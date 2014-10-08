@@ -79,6 +79,11 @@ class X86VectorVTInfo<int NumElts, ValueType EltVT, RegisterClass rc,
   Domain ExeDomain = !if (!eq (EltTypeName, "f32"), SSEPackedSingle,
                      !if (!eq (EltTypeName, "f64"), SSEPackedDouble,
                      SSEPackedInt));
+
+  // A vector type of the same width with element type i32.  This is used to
+  // create the canonical constant zero node ImmAllZerosV.
+  ValueType i32VT = !cast<ValueType>("v" # !srl(Size, 5) # "i32");
+  dag ImmAllZerosV = (VT (bitconvert (i32VT immAllZerosV)));
 }
 
 def v64i8_info  : X86VectorVTInfo<64,  i8, VR512, "b">;
@@ -171,9 +176,7 @@ multiclass AVX512_masking_common<bits<8> O, Format F, X86VectorVTInfo _,
                         [(set _.RC:$dst, RHS)],
                         [(set _.RC:$dst, MaskingRHS)],
                         [(set _.RC:$dst,
-                              (vselect _.KRCWM:$mask, RHS,
-                                       (_.VT (bitconvert
-                                               (v16i32 immAllZerosV)))))],
+                              (vselect _.KRCWM:$mask, RHS, _.ImmAllZerosV))],
                         MaskingConstraint, NoItinerary, IsCommutable>;
 
 // This multiclass generates the unconditional/non-masking, the masking and
