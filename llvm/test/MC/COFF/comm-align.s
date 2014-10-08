@@ -24,6 +24,8 @@ _a:
 	.comm _s_4,4,2                  # @s_3
 	.comm _s_8,4,3                  # @s_4
 
+	.comm _small_but_overaligned,1,3                  # @s_4
+
 	.text
 
 	.def _b
@@ -41,10 +43,15 @@ _b:
 # CHECK:     Section: .text (1)
 # CHECK:   }
 # CHECK:   Symbol {
+# CHECK:     Name: _small_but_overaligned
+# CHECK-NEXT:Value: 1
+# CHECK-NEXT:Section: IMAGE_SYM_UNDEFINED (0)
+# CHECK:   }
+# CHECK:   Symbol {
 # CHECK:     Name: _b
 # CHECK:     Section: .text (1)
 # CHECK:   }
 # CHECK: ]
 
-# CHECK: Directive(s): -aligncomm:"_s_2",1 -aligncomm:"_s_4",2 -aligncomm:"_s_8",3
+# CHECK: Directive(s): -aligncomm:"_s_2",1 -aligncomm:"_s_4",2 -aligncomm:"_s_8",3 -aligncomm:"_small_but_overaligned",3
 

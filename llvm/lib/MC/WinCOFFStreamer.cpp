@@ -185,14 +185,13 @@ void MCWinCOFFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
          "Got non-COFF section in the COFF backend!");
 
   const Triple &T = getContext().getObjectFileInfo()->getTargetTriple();
-  if (T.isKnownWindowsMSVCEnvironment())
+  if (T.isKnownWindowsMSVCEnvironment()) {
     if (ByteAlignment > 32)
       report_fatal_error("alignment is limited to 32-bytes");
 
-  // Round size up to alignment so that we will honor the alignment request.
-  // TODO: We don't need to do this if we are targeting the bfd linker once we
-  // add support for adding -aligncomm into the .drectve section.
-  Size = std::max(Size, static_cast<uint64_t>(ByteAlignment));
+    // Round size up to alignment so that we will honor the alignment request.
+    Size = std::max(Size, static_cast<uint64_t>(ByteAlignment));
+  }
 
   AssignSection(Symbol, nullptr);
 
