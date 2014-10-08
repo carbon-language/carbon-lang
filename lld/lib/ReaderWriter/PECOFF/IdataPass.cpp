@@ -63,6 +63,35 @@ ImportTableEntryAtom::assembleRawContent(uint64_t rva, bool is64) {
   return ret;
 }
 
+static std::vector<ImportTableEntryAtom *>
+createImportTableAtoms(IdataContext &context,
+                       const std::vector<COFFSharedLibraryAtom *> &sharedAtoms,
+                       bool shouldAddReference, StringRef sectionName,
+                       llvm::BumpPtrAllocator &alloc) {
+  std::vector<ImportTableEntryAtom *> ret;
+  for (COFFSharedLibraryAtom *atom : sharedAtoms) {
+    ImportTableEntryAtom *entry = nullptr;
+    if (atom->importName().empty()) {
+      // Import by ordinal
+      uint64_t hint = atom->hint();
+      hint |= context.ctx.is64Bit() ? (uint64_t(1) << 63) : (uint64_t(1) << 31);
+      entry = new (alloc) ImportTableEntryAtom(context, hint, sectionName);
+    } else {
+      // Import by name
+      entry = new (alloc) ImportTableEntryAtom(context, 0, sectionName);
+      HintNameAtom *hintName =
+          new (alloc) HintNameAtom(context, atom->hint(), atom->importName());
+      addDir32NBReloc(entry, hintName, context.ctx.getMachineType(), 0);
+    }
+    ret.push_back(entry);
+    if (shouldAddReference)
+      atom->setImportTableEntry(entry);
+  }
+  // Add the NULL entry.
+  ret.push_back(new (alloc) ImportTableEntryAtom(context, 0, sectionName));
+  return ret;
+}
+
 // Creates atoms for an import lookup table. The import lookup table is an
 // array of pointers to hint/name atoms. The array needs to be terminated with
 // the NULL entry.
@@ -74,9 +103,9 @@ void ImportDirectoryAtom::addRelocations(
   // pointers to the referenced items after loading the executable into
   // memory.
   std::vector<ImportTableEntryAtom *> importLookupTables =
-      createImportTableAtoms(context, sharedAtoms, false, ".idata.t");
+      createImportTableAtoms(context, sharedAtoms, false, ".idata.t", _alloc);
   std::vector<ImportTableEntryAtom *> importAddressTables =
-      createImportTableAtoms(context, sharedAtoms, true, ".idata.a");
+      createImportTableAtoms(context, sharedAtoms, true, ".idata.a", _alloc);
 
   addDir32NBReloc(this, importLookupTables[0], context.ctx.getMachineType(),
                   offsetof(ImportDirectoryTableEntry, ImportLookupTableRVA));
@@ -88,34 +117,6 @@ void ImportDirectoryAtom::addRelocations(
   context.file.addAtom(*atom);
   addDir32NBReloc(this, atom, context.ctx.getMachineType(),
                   offsetof(ImportDirectoryTableEntry, NameRVA));
-}
-
-std::vector<ImportTableEntryAtom *> ImportDirectoryAtom::createImportTableAtoms(
-    IdataContext &context,
-    const std::vector<COFFSharedLibraryAtom *> &sharedAtoms,
-    bool shouldAddReference, StringRef sectionName) const {
-  std::vector<ImportTableEntryAtom *> ret;
-  for (COFFSharedLibraryAtom *atom : sharedAtoms) {
-    ImportTableEntryAtom *entry = nullptr;
-    if (atom->importName().empty()) {
-      // Import by ordinal
-      uint64_t hint = atom->hint();
-      hint |= context.ctx.is64Bit() ? (uint64_t(1) << 63) : (uint64_t(1) << 31);
-      entry = new (_alloc) ImportTableEntryAtom(context, hint, sectionName);
-    } else {
-      // Import by name
-      entry = new (_alloc) ImportTableEntryAtom(context, 0, sectionName);
-      HintNameAtom *hintName =
-          new (_alloc) HintNameAtom(context, atom->hint(), atom->importName());
-      addDir32NBReloc(entry, hintName, context.ctx.getMachineType(), 0);
-    }
-    ret.push_back(entry);
-    if (shouldAddReference)
-      atom->setImportTableEntry(entry);
-  }
-  // Add the NULL entry.
-  ret.push_back(new (_alloc) ImportTableEntryAtom(context, 0, sectionName));
-  return ret;
 }
 
 } // namespace idata

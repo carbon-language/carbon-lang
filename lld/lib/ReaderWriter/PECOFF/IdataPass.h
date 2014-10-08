@@ -114,11 +114,6 @@ private:
   void addRelocations(IdataContext &context, StringRef loadName,
                       const std::vector<COFFSharedLibraryAtom *> &sharedAtoms);
 
-  std::vector<ImportTableEntryAtom *> createImportTableAtoms(
-      IdataContext &context,
-      const std::vector<COFFSharedLibraryAtom *> &sharedAtoms,
-      bool shouldAddReference, StringRef sectionName) const;
-
   mutable llvm::BumpPtrAllocator _alloc;
 };
 
