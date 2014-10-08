@@ -209,13 +209,17 @@ public:
   ///                   The pass is needed to update other analysis.
   /// @param LI        The loop info for the current function
   /// @param SE        The scalar evolution info for the current function
+  /// @param Build       The AST build with the new schedule.
+  /// @param ExprBuilder An expression builder to generate new access functions.
   static void generate(PollyIRBuilder &B, ScopStmt &Stmt,
                        VectorValueMapT &GlobalMaps,
                        std::vector<LoopToScevMapT> &VLTS,
                        __isl_keep isl_map *Schedule, Pass *P, LoopInfo &LI,
-                       ScalarEvolution &SE) {
+                       ScalarEvolution &SE,
+                       __isl_keep isl_ast_build *Build = nullptr,
+                       IslExprBuilder *ExprBuilder = nullptr) {
     VectorBlockGenerator Generator(B, GlobalMaps, VLTS, Stmt, Schedule, P, LI,
-                                   SE);
+                                   SE, Build, ExprBuilder);
     Generator.copyBB();
   }
 
@@ -252,7 +256,9 @@ private:
   VectorBlockGenerator(PollyIRBuilder &B, VectorValueMapT &GlobalMaps,
                        std::vector<LoopToScevMapT> &VLTS, ScopStmt &Stmt,
                        __isl_keep isl_map *Schedule, Pass *P, LoopInfo &LI,
-                       ScalarEvolution &SE);
+                       ScalarEvolution &SE,
+                       __isl_keep isl_ast_build *Build = nullptr,
+                       IslExprBuilder *ExprBuilder = nullptr);
 
   int getVectorWidth();
 

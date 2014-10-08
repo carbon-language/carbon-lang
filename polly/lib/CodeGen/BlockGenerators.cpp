@@ -289,8 +289,9 @@ void BlockGenerator::copyBB(ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
 VectorBlockGenerator::VectorBlockGenerator(
     PollyIRBuilder &B, VectorValueMapT &GlobalMaps,
     std::vector<LoopToScevMapT> &VLTS, ScopStmt &Stmt,
-    __isl_keep isl_map *Schedule, Pass *P, LoopInfo &LI, ScalarEvolution &SE)
-    : BlockGenerator(B, Stmt, P, LI, SE, nullptr, nullptr),
+    __isl_keep isl_map *Schedule, Pass *P, LoopInfo &LI, ScalarEvolution &SE,
+    __isl_keep isl_ast_build *Build, IslExprBuilder *ExprBuilder)
+    : BlockGenerator(B, Stmt, P, LI, SE, Build, ExprBuilder),
       GlobalMaps(GlobalMaps), VLTS(VLTS), Schedule(Schedule) {
   assert(GlobalMaps.size() > 1 && "Only one vector lane found");
   assert(Schedule && "No statement domain provided");
@@ -338,8 +339,8 @@ VectorBlockGenerator::generateStrideOneLoad(const LoadInst *Load,
   unsigned Offset = NegativeStride ? VectorWidth - 1 : 0;
 
   Value *NewPointer = nullptr;
-  NewPointer = getNewValue(Pointer, ScalarMaps[Offset], GlobalMaps[Offset],
-                           VLTS[Offset], getLoopForInst(Load));
+  NewPointer = generateLocationAccessed(Load, Pointer, ScalarMaps[Offset],
+                                        GlobalMaps[Offset], VLTS[Offset]);
   Value *VectorPtr =
       Builder.CreateBitCast(NewPointer, VectorPtrType, "vector_ptr");
   LoadInst *VecLoad =
@@ -365,7 +366,7 @@ Value *VectorBlockGenerator::generateStrideZeroLoad(const LoadInst *Load,
   const Value *Pointer = Load->getPointerOperand();
   Type *VectorPtrType = getVectorPtrTy(Pointer, 1);
   Value *NewPointer =
-      getNewValue(Pointer, BBMap, GlobalMaps[0], VLTS[0], getLoopForInst(Load));
+      generateLocationAccessed(Load, Pointer, BBMap, GlobalMaps[0], VLTS[0]);
   Value *VectorPtr = Builder.CreateBitCast(NewPointer, VectorPtrType,
                                            Load->getName() + "_p_vec_p");
   LoadInst *ScalarLoad =
@@ -393,8 +394,8 @@ VectorBlockGenerator::generateUnknownStrideLoad(const LoadInst *Load,
   Value *Vector = UndefValue::get(VectorType);
 
   for (int i = 0; i < VectorWidth; i++) {
-    Value *NewPointer = getNewValue(Pointer, ScalarMaps[i], GlobalMaps[i],
-                                    VLTS[i], getLoopForInst(Load));
+    Value *NewPointer = generateLocationAccessed(Load, Pointer, ScalarMaps[i],
+                                                 GlobalMaps[i], VLTS[i]);
     Value *ScalarLoad =
         Builder.CreateLoad(NewPointer, Load->getName() + "_p_scalar_");
     Vector = Builder.CreateInsertElement(
@@ -481,8 +482,8 @@ void VectorBlockGenerator::copyStore(const StoreInst *Store,
 
   if (Access.isStrideOne(isl_map_copy(Schedule))) {
     Type *VectorPtrType = getVectorPtrTy(Pointer, VectorWidth);
-    Value *NewPointer = getNewValue(Pointer, ScalarMaps[0], GlobalMaps[0],
-                                    VLTS[0], getLoopForInst(Store));
+    Value *NewPointer = generateLocationAccessed(Store, Pointer, ScalarMaps[0],
+                                                 GlobalMaps[0], VLTS[0]);
 
     Value *VectorPtr =
         Builder.CreateBitCast(NewPointer, VectorPtrType, "vector_ptr");
@@ -493,8 +494,8 @@ void VectorBlockGenerator::copyStore(const StoreInst *Store,
   } else {
     for (unsigned i = 0; i < ScalarMaps.size(); i++) {
       Value *Scalar = Builder.CreateExtractElement(Vector, Builder.getInt32(i));
-      Value *NewPointer = getNewValue(Pointer, ScalarMaps[i], GlobalMaps[i],
-                                      VLTS[i], getLoopForInst(Store));
+      Value *NewPointer = generateLocationAccessed(
+          Store, Pointer, ScalarMaps[i], GlobalMaps[i], VLTS[i]);
       Builder.CreateStore(Scalar, NewPointer);
     }
   }
@@ -549,8 +550,8 @@ void VectorBlockGenerator::copyInstScalarized(const Instruction *Inst,
   HasVectorOperand = extractScalarValues(Inst, VectorMap, ScalarMaps);
 
   for (int VectorLane = 0; VectorLane < getVectorWidth(); VectorLane++)
-    copyInstScalar(Inst, ScalarMaps[VectorLane], GlobalMaps[VectorLane],
-                   VLTS[VectorLane]);
+    BlockGenerator::copyInstruction(Inst, ScalarMaps[VectorLane],
+                                    GlobalMaps[VectorLane], VLTS[VectorLane]);
 
   if (!VectorType::isValidElementType(Inst->getType()) || !HasVectorOperand)
     return;
