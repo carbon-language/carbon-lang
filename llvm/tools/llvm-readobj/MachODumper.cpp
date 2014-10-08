@@ -257,8 +257,7 @@ void MachODumper::printSections(const MachOObjectFile *Obj) {
     if (opts::SectionSymbols) {
       ListScope D(W, "Symbols");
       for (const SymbolRef &Symbol : Obj->symbols()) {
-        bool Contained = false;
-        if (Section.containsSymbol(Symbol, Contained) || !Contained)
+        if (!Section.containsSymbol(Symbol))
           continue;
 
         printSymbol(Symbol);
@@ -266,9 +265,7 @@ void MachODumper::printSections(const MachOObjectFile *Obj) {
     }
 
     if (opts::SectionData) {
-      bool IsBSS;
-      if (error(Section.isBSS(IsBSS)))
-        break;
+      bool IsBSS = Section.isBSS();
       if (!IsBSS) {
         StringRef Data;
         if (error(Section.getContents(Data)))

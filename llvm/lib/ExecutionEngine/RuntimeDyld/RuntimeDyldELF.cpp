@@ -702,8 +702,7 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
 
       section_iterator tsi(Obj.end_sections());
       check(TargetSymbol->getSection(tsi));
-      bool IsCode = false;
-      tsi->isText(IsCode);
+      bool IsCode = tsi->isText();
       Rel.SectionID = findOrEmitSection(Obj, (*tsi), IsCode, LocalSections);
       Rel.Addend = (intptr_t)Addend;
       return;
@@ -983,9 +982,7 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
         if (si == Obj.end_sections())
           llvm_unreachable("Symbol section not found, bad object file format!");
         DEBUG(dbgs() << "\t\tThis is section symbol\n");
-        // Default to 'true' in case isText fails (though it never does).
-        bool isCode = true;
-        si->isText(isCode);
+        bool isCode = si->isText();
         Value.SectionID = findOrEmitSection(Obj, (*si), isCode, ObjSectionToID);
         Value.Addend = Addend;
         break;

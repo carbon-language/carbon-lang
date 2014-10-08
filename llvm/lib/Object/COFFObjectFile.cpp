@@ -260,18 +260,14 @@ std::error_code COFFObjectFile::getSectionName(DataRefImpl Ref,
   return getSectionName(Sec, Result);
 }
 
-std::error_code COFFObjectFile::getSectionAddress(DataRefImpl Ref,
-                                                  uint64_t &Result) const {
+uint64_t COFFObjectFile::getSectionAddress(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
-  Result = Sec->VirtualAddress;
-  return object_error::success;
+  return Sec->VirtualAddress;
 }
 
-std::error_code COFFObjectFile::getSectionSize(DataRefImpl Ref,
-                                               uint64_t &Result) const {
+uint64_t COFFObjectFile::getSectionSize(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
-  Result = Sec->SizeOfRawData;
-  return object_error::success;
+  return Sec->SizeOfRawData;
 }
 
 std::error_code COFFObjectFile::getSectionContents(DataRefImpl Ref,
@@ -283,71 +279,52 @@ std::error_code COFFObjectFile::getSectionContents(DataRefImpl Ref,
   return EC;
 }
 
-std::error_code COFFObjectFile::getSectionAlignment(DataRefImpl Ref,
-                                                    uint64_t &Res) const {
+uint64_t COFFObjectFile::getSectionAlignment(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
-  Res = uint64_t(1) << (((Sec->Characteristics & 0x00F00000) >> 20) - 1);
-  return object_error::success;
+  return uint64_t(1) << (((Sec->Characteristics & 0x00F00000) >> 20) - 1);
 }
 
-std::error_code COFFObjectFile::isSectionText(DataRefImpl Ref,
-                                              bool &Result) const {
+bool COFFObjectFile::isSectionText(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
-  Result = Sec->Characteristics & COFF::IMAGE_SCN_CNT_CODE;
-  return object_error::success;
+  return Sec->Characteristics & COFF::IMAGE_SCN_CNT_CODE;
 }
 
-std::error_code COFFObjectFile::isSectionData(DataRefImpl Ref,
-                                              bool &Result) const {
+bool COFFObjectFile::isSectionData(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
-  Result = Sec->Characteristics & COFF::IMAGE_SCN_CNT_INITIALIZED_DATA;
-  return object_error::success;
+  return Sec->Characteristics & COFF::IMAGE_SCN_CNT_INITIALIZED_DATA;
 }
 
-std::error_code COFFObjectFile::isSectionBSS(DataRefImpl Ref,
-                                             bool &Result) const {
+bool COFFObjectFile::isSectionBSS(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
-  Result = Sec->Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
-  return object_error::success;
+  return Sec->Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
 }
 
-std::error_code
-COFFObjectFile::isSectionRequiredForExecution(DataRefImpl Ref,
-                                              bool &Result) const {
+bool COFFObjectFile::isSectionRequiredForExecution(DataRefImpl Ref) const {
   // FIXME: Unimplemented
-  Result = true;
-  return object_error::success;
+  return true;
 }
 
-std::error_code COFFObjectFile::isSectionVirtual(DataRefImpl Ref,
-                                                 bool &Result) const {
+bool COFFObjectFile::isSectionVirtual(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
-  Result = Sec->Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
-  return object_error::success;
+  return Sec->Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA;
 }
 
-std::error_code COFFObjectFile::isSectionZeroInit(DataRefImpl Ref,
-                                                  bool &Result) const {
+bool COFFObjectFile::isSectionZeroInit(DataRefImpl Ref) const {
   // FIXME: Unimplemented.
-  Result = false;
-  return object_error::success;
+  return false;
 }
 
-std::error_code COFFObjectFile::isSectionReadOnlyData(DataRefImpl Ref,
-                                                      bool &Result) const {
+bool COFFObjectFile::isSectionReadOnlyData(DataRefImpl Ref) const {
   // FIXME: Unimplemented.
-  Result = false;
-  return object_error::success;
+  return false;
 }
 
-std::error_code COFFObjectFile::sectionContainsSymbol(DataRefImpl SecRef,
-                                                      DataRefImpl SymbRef,
-                                                      bool &Result) const {
+bool COFFObjectFile::sectionContainsSymbol(DataRefImpl SecRef,
+                                           DataRefImpl SymbRef) const {
   const coff_section *Sec = toSec(SecRef);
   COFFSymbolRef Symb = getCOFFSymbol(SymbRef);
   int32_t SecNumber = (Sec - SectionTable) + 1;
-  Result = SecNumber == Symb.getSectionNumber();
-  return object_error::success;
+  return SecNumber == Symb.getSectionNumber();
 }
 
 relocation_iterator COFFObjectFile::section_rel_begin(DataRefImpl Ref) const {

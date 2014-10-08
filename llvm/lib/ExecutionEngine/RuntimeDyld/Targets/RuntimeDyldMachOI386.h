@@ -152,20 +152,17 @@ private:
     uint32_t AddrA = MachO->getScatteredRelocationValue(RE);
     section_iterator SAI = getSectionByAddress(*MachO, AddrA);
     assert(SAI != MachO->section_end() && "Can't find section for address A");
-    uint64_t SectionABase;
-    SAI->getAddress(SectionABase);
+    uint64_t SectionABase = SAI->getAddress();
     uint64_t SectionAOffset = AddrA - SectionABase;
     SectionRef SectionA = *SAI;
-    bool IsCode;
-    SectionA.isText(IsCode);
+    bool IsCode = SectionA.isText();
     uint32_t SectionAID =
         findOrEmitSection(Obj, SectionA, IsCode, ObjSectionToID);
 
     uint32_t AddrB = MachO->getScatteredRelocationValue(RE2);
     section_iterator SBI = getSectionByAddress(*MachO, AddrB);
     assert(SBI != MachO->section_end() && "Can't find section for address B");
-    uint64_t SectionBBase;
-    SBI->getAddress(SectionBBase);
+    uint64_t SectionBBase = SBI->getAddress();
     uint64_t SectionBOffset = AddrB - SectionBBase;
     SectionRef SectionB = *SBI;
     uint32_t SectionBID =
@@ -211,11 +208,9 @@ private:
     unsigned SymbolBaseAddr = MachO->getScatteredRelocationValue(RE);
     section_iterator TargetSI = getSectionByAddress(*MachO, SymbolBaseAddr);
     assert(TargetSI != MachO->section_end() && "Can't find section for symbol");
-    uint64_t SectionBaseAddr;
-    TargetSI->getAddress(SectionBaseAddr);
+    uint64_t SectionBaseAddr = TargetSI->getAddress();
     SectionRef TargetSection = *TargetSI;
-    bool IsCode;
-    TargetSection.isText(IsCode);
+    bool IsCode = TargetSection.isText();
     uint32_t TargetSectionID =
         findOrEmitSection(Obj, TargetSection, IsCode, ObjSectionToID);
 

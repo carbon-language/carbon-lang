@@ -139,9 +139,8 @@ static void dumpVTables(const ObjectFile *Obj) {
     // Skip external symbols.
     if (SecI == Obj->section_end())
       continue;
-    bool IsBSS, IsVirtual;
-    if (error(SecI->isBSS(IsBSS)) || error(SecI->isVirtual(IsVirtual)))
-      break;
+    bool IsBSS = SecI->isBSS();
+    bool IsVirtual = SecI->isVirtual();
     // Skip virtual or BSS sections.
     if (IsBSS || IsVirtual)
       continue;

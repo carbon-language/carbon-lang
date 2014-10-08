@@ -283,8 +283,7 @@ int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
       return 0;
     // First search the section's relocation entries (if any) for an entry
     // for this section offset.
-    uint64_t sect_addr;
-    info->S.getAddress(sect_addr);
+    uint64_t sect_addr = info->S.getAddress();
     uint64_t sect_offset = (Pc + Offset) - sect_addr;
     bool reloc_found = false;
     DataRefImpl Rel;
@@ -522,8 +521,7 @@ const char *GuessLiteralPointer(uint64_t ReferenceValue, uint64_t ReferencePC,
     return nullptr;
 
   // First see if there is an external relocation entry at the ReferencePC.
-  uint64_t sect_addr;
-  info->S.getAddress(sect_addr);
+  uint64_t sect_addr = info->S.getAddress();
   uint64_t sect_offset = ReferencePC - sect_addr;
   bool reloc_found = false;
   DataRefImpl Rel;
@@ -820,7 +818,7 @@ static void DisassembleInputMachO2(StringRef Filename,
   // Build a data in code table that is sorted on by the address of each entry.
   uint64_t BaseAddress = 0;
   if (Header.filetype == MachO::MH_OBJECT)
-    Sections[0].getAddress(BaseAddress);
+    BaseAddress = Sections[0].getAddress();
   else
     BaseAddress = BaseSegmentAddress;
   DiceTable Dices;
@@ -863,8 +861,7 @@ static void DisassembleInputMachO2(StringRef Filename,
 
   for (unsigned SectIdx = 0; SectIdx != Sections.size(); SectIdx++) {
 
-    bool SectIsText = false;
-    Sections[SectIdx].isText(SectIsText);
+    bool SectIsText = Sections[SectIdx].isText();
     if (SectIsText == false)
       continue;
 
@@ -881,8 +878,7 @@ static void DisassembleInputMachO2(StringRef Filename,
 
     StringRef Bytes;
     Sections[SectIdx].getContents(Bytes);
-    uint64_t SectAddress = 0;
-    Sections[SectIdx].getAddress(SectAddress);
+    uint64_t SectAddress = Sections[SectIdx].getAddress();
     DisasmMemoryObject MemoryObject((const uint8_t *)Bytes.data(), Bytes.size(),
                                     SectAddress);
     bool symbolTableWorked = false;
@@ -890,9 +886,9 @@ static void DisassembleInputMachO2(StringRef Filename,
     // Parse relocations.
     std::vector<std::pair<uint64_t, SymbolRef>> Relocs;
     for (const RelocationRef &Reloc : Sections[SectIdx].relocations()) {
-      uint64_t RelocOffset, SectionAddress;
+      uint64_t RelocOffset;
       Reloc.getOffset(RelocOffset);
-      Sections[SectIdx].getAddress(SectionAddress);
+      uint64_t SectionAddress = Sections[SectIdx].getAddress();
       RelocOffset -= SectionAddress;
 
       symbol_iterator RelocSym = Reloc.getSymbol();
@@ -933,15 +929,13 @@ static void DisassembleInputMachO2(StringRef Filename,
         continue;
 
       // Make sure the symbol is defined in this section.
-      bool containsSym = false;
-      Sections[SectIdx].containsSymbol(Symbols[SymIdx], containsSym);
+      bool containsSym = Sections[SectIdx].containsSymbol(Symbols[SymIdx]);
       if (!containsSym)
         continue;
 
       // Start at the address of the symbol relative to the section's address.
-      uint64_t SectionAddress = 0;
       uint64_t Start = 0;
-      Sections[SectIdx].getAddress(SectionAddress);
+      uint64_t SectionAddress = Sections[SectIdx].getAddress();
       Symbols[SymIdx].getAddress(Start);
       Start -= SectionAddress;
 
@@ -954,8 +948,8 @@ static void DisassembleInputMachO2(StringRef Filename,
         SymbolRef::Type NextSymType;
         Symbols[NextSymIdx].getType(NextSymType);
         if (NextSymType == SymbolRef::ST_Function) {
-          Sections[SectIdx].containsSymbol(Symbols[NextSymIdx],
-                                           containsNextSym);
+          containsNextSym =
+              Sections[SectIdx].containsSymbol(Symbols[NextSymIdx]);
           Symbols[NextSymIdx].getAddress(NextSym);
           NextSym -= SectionAddress;
           break;
@@ -963,8 +957,7 @@ static void DisassembleInputMachO2(StringRef Filename,
         ++NextSymIdx;
       }
 
-      uint64_t SectSize;
-      Sections[SectIdx].getSize(SectSize);
+      uint64_t SectSize = Sections[SectIdx].getSize();
       uint64_t End = containsNextSym ?  NextSym : SectSize;
       uint64_t Size;
 
@@ -1050,11 +1043,9 @@ static void DisassembleInputMachO2(StringRef Filename,
       }
     }
     if (!symbolTableWorked) {
-      // Reading the symbol table didn't work, disassemble the whole section. 
-      uint64_t SectAddress;
-      Sections[SectIdx].getAddress(SectAddress);
-      uint64_t SectSize;
-      Sections[SectIdx].getSize(SectSize);
+      // Reading the symbol table didn't work, disassemble the whole section.
+      uint64_t SectAddress = Sections[SectIdx].getAddress();
+      uint64_t SectSize = Sections[SectIdx].getSize();
       uint64_t InstSize;
       for (uint64_t Index = 0; Index < SectSize; Index += InstSize) {
         MCInst Inst;
@@ -1159,8 +1150,7 @@ static void findUnwindRelocNameAddend(const MachOObjectFile *Obj,
   auto RE = Obj->getRelocation(Reloc.getRawDataRefImpl());
   SectionRef RelocSection = Obj->getRelocationSection(RE);
 
-  uint64_t SectionAddr;
-  RelocSection.getAddress(SectionAddr);
+  uint64_t SectionAddr = RelocSection.getAddress();
 
   auto Sym = Symbols.upper_bound(Addr);
   if (Sym == Symbols.begin()) {
@@ -2731,10 +2721,8 @@ SegInfo::SegInfo(const object::MachOObjectFile *Obj) {
     SectionInfo Info;
     if (error(Section.getName(Info.SectionName)))
       return;
-    if (error(Section.getAddress(Info.Address)))
-      return;
-    if (error(Section.getSize(Info.Size)))
-      return;
+    Info.Address = Section.getAddress();
+    Info.Size = Section.getSize();
     Info.SegmentName =
         Obj->getSectionFinalSegmentName(Section.getRawDataRefImpl());
     if (!Info.SegmentName.equals(CurSegName)) {

@@ -95,22 +95,22 @@ public:
   void moveNext();
 
   std::error_code getName(StringRef &Result) const;
-  std::error_code getAddress(uint64_t &Result) const;
-  std::error_code getSize(uint64_t &Result) const;
+  uint64_t getAddress() const;
+  uint64_t getSize() const;
   std::error_code getContents(StringRef &Result) const;
 
   /// @brief Get the alignment of this section as the actual value (not log 2).
-  std::error_code getAlignment(uint64_t &Result) const;
+  uint64_t getAlignment() const;
 
-  std::error_code isText(bool &Result) const;
-  std::error_code isData(bool &Result) const;
-  std::error_code isBSS(bool &Result) const;
-  std::error_code isRequiredForExecution(bool &Result) const;
-  std::error_code isVirtual(bool &Result) const;
-  std::error_code isZeroInit(bool &Result) const;
-  std::error_code isReadOnlyData(bool &Result) const;
+  bool isText() const;
+  bool isData() const;
+  bool isBSS() const;
+  bool isRequiredForExecution() const;
+  bool isVirtual() const;
+  bool isZeroInit() const;
+  bool isReadOnlyData() const;
 
-  std::error_code containsSymbol(SymbolRef S, bool &Result) const;
+  bool containsSymbol(SymbolRef S) const;
 
   relocation_iterator relocation_begin() const;
   relocation_iterator relocation_end() const;
@@ -225,29 +225,21 @@ protected:
   virtual void moveSectionNext(DataRefImpl &Sec) const = 0;
   virtual std::error_code getSectionName(DataRefImpl Sec,
                                          StringRef &Res) const = 0;
-  virtual std::error_code getSectionAddress(DataRefImpl Sec,
-                                            uint64_t &Res) const = 0;
-  virtual std::error_code getSectionSize(DataRefImpl Sec,
-                                         uint64_t &Res) const = 0;
+  virtual uint64_t getSectionAddress(DataRefImpl Sec) const = 0;
+  virtual uint64_t getSectionSize(DataRefImpl Sec) const = 0;
   virtual std::error_code getSectionContents(DataRefImpl Sec,
                                              StringRef &Res) const = 0;
-  virtual std::error_code getSectionAlignment(DataRefImpl Sec,
-                                              uint64_t &Res) const = 0;
-  virtual std::error_code isSectionText(DataRefImpl Sec, bool &Res) const = 0;
-  virtual std::error_code isSectionData(DataRefImpl Sec, bool &Res) const = 0;
-  virtual std::error_code isSectionBSS(DataRefImpl Sec, bool &Res) const = 0;
-  virtual std::error_code isSectionRequiredForExecution(DataRefImpl Sec,
-                                                        bool &Res) const = 0;
+  virtual uint64_t getSectionAlignment(DataRefImpl Sec) const = 0;
+  virtual bool isSectionText(DataRefImpl Sec) const = 0;
+  virtual bool isSectionData(DataRefImpl Sec) const = 0;
+  virtual bool isSectionBSS(DataRefImpl Sec) const = 0;
+  virtual bool isSectionRequiredForExecution(DataRefImpl Sec) const = 0;
   // A section is 'virtual' if its contents aren't present in the object image.
-  virtual std::error_code isSectionVirtual(DataRefImpl Sec,
-                                           bool &Res) const = 0;
-  virtual std::error_code isSectionZeroInit(DataRefImpl Sec,
-                                            bool &Res) const = 0;
-  virtual std::error_code isSectionReadOnlyData(DataRefImpl Sec,
-                                                bool &Res) const = 0;
-  virtual std::error_code sectionContainsSymbol(DataRefImpl Sec,
-                                                DataRefImpl Symb,
-                                                bool &Result) const = 0;
+  virtual bool isSectionVirtual(DataRefImpl Sec) const = 0;
+  virtual bool isSectionZeroInit(DataRefImpl Sec) const = 0;
+  virtual bool isSectionReadOnlyData(DataRefImpl Sec) const = 0;
+  virtual bool sectionContainsSymbol(DataRefImpl Sec,
+                                     DataRefImpl Symb) const = 0;
   virtual relocation_iterator section_rel_begin(DataRefImpl Sec) const = 0;
   virtual relocation_iterator section_rel_end(DataRefImpl Sec) const = 0;
   virtual section_iterator getRelocatedSection(DataRefImpl Sec) const;
@@ -397,54 +389,53 @@ inline std::error_code SectionRef::getName(StringRef &Result) const {
   return OwningObject->getSectionName(SectionPimpl, Result);
 }
 
-inline std::error_code SectionRef::getAddress(uint64_t &Result) const {
-  return OwningObject->getSectionAddress(SectionPimpl, Result);
+inline uint64_t SectionRef::getAddress() const {
+  return OwningObject->getSectionAddress(SectionPimpl);
 }
 
-inline std::error_code SectionRef::getSize(uint64_t &Result) const {
-  return OwningObject->getSectionSize(SectionPimpl, Result);
+inline uint64_t SectionRef::getSize() const {
+  return OwningObject->getSectionSize(SectionPimpl);
 }
 
 inline std::error_code SectionRef::getContents(StringRef &Result) const {
   return OwningObject->getSectionContents(SectionPimpl, Result);
 }
 
-inline std::error_code SectionRef::getAlignment(uint64_t &Result) const {
-  return OwningObject->getSectionAlignment(SectionPimpl, Result);
+inline uint64_t SectionRef::getAlignment() const {
+  return OwningObject->getSectionAlignment(SectionPimpl);
 }
 
-inline std::error_code SectionRef::isText(bool &Result) const {
-  return OwningObject->isSectionText(SectionPimpl, Result);
+inline bool SectionRef::isText() const {
+  return OwningObject->isSectionText(SectionPimpl);
 }
 
-inline std::error_code SectionRef::isData(bool &Result) const {
-  return OwningObject->isSectionData(SectionPimpl, Result);
+inline bool SectionRef::isData() const {
+  return OwningObject->isSectionData(SectionPimpl);
 }
 
-inline std::error_code SectionRef::isBSS(bool &Result) const {
-  return OwningObject->isSectionBSS(SectionPimpl, Result);
+inline bool SectionRef::isBSS() const {
+  return OwningObject->isSectionBSS(SectionPimpl);
 }
 
-inline std::error_code SectionRef::isRequiredForExecution(bool &Result) const {
-  return OwningObject->isSectionRequiredForExecution(SectionPimpl, Result);
+inline bool SectionRef::isRequiredForExecution() const {
+  return OwningObject->isSectionRequiredForExecution(SectionPimpl);
 }
 
-inline std::error_code SectionRef::isVirtual(bool &Result) const {
-  return OwningObject->isSectionVirtual(SectionPimpl, Result);
+inline bool SectionRef::isVirtual() const {
+  return OwningObject->isSectionVirtual(SectionPimpl);
 }
 
-inline std::error_code SectionRef::isZeroInit(bool &Result) const {
-  return OwningObject->isSectionZeroInit(SectionPimpl, Result);
+inline bool SectionRef::isZeroInit() const {
+  return OwningObject->isSectionZeroInit(SectionPimpl);
 }
 
-inline std::error_code SectionRef::isReadOnlyData(bool &Result) const {
-  return OwningObject->isSectionReadOnlyData(SectionPimpl, Result);
+inline bool SectionRef::isReadOnlyData() const {
+  return OwningObject->isSectionReadOnlyData(SectionPimpl);
 }
 
-inline std::error_code SectionRef::containsSymbol(SymbolRef S,
-                                                  bool &Result) const {
+inline bool SectionRef::containsSymbol(SymbolRef S) const {
   return OwningObject->sectionContainsSymbol(SectionPimpl,
-                                             S.getRawDataRefImpl(), Result);
+                                             S.getRawDataRefImpl());
 }
 
 inline relocation_iterator SectionRef::relocation_begin() const {

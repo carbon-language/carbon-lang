@@ -67,11 +67,10 @@ int convert_for_testing_main(int argc, const char **argv) {
     return 1;
 
   // Get the contents of the given sections.
+  uint64_t ProfileNamesAddress = ProfileNames.getAddress();
   StringRef CoverageMappingData;
-  uint64_t ProfileNamesAddress;
   StringRef ProfileNamesData;
   if (CoverageMapping.getContents(CoverageMappingData) ||
-      ProfileNames.getAddress(ProfileNamesAddress) ||
       ProfileNames.getContents(ProfileNamesData))
     return 1;
 

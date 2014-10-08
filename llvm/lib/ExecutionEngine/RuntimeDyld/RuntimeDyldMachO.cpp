@@ -66,11 +66,9 @@ RelocationValueRef RuntimeDyldMachO::getRelocationValueRef(
     }
   } else {
     SectionRef Sec = Obj.getRelocationSection(RelInfo);
-    bool IsCode = false;
-    Sec.isText(IsCode);
+    bool IsCode = Sec.isText();
     Value.SectionID = findOrEmitSection(ObjImg, Sec, IsCode, ObjSectionToID);
-    uint64_t Addr;
-    Sec.getAddress(Addr);
+    uint64_t Addr = Sec.getAddress();
     Value.Offset = RE.Addend - Addr;
   }
 
@@ -115,9 +113,8 @@ RuntimeDyldMachO::getSectionByAddress(const MachOObjectFile &Obj,
   section_iterator SE = Obj.section_end();
 
   for (; SI != SE; ++SI) {
-    uint64_t SAddr, SSize;
-    SI->getAddress(SAddr);
-    SI->getSize(SSize);
+    uint64_t SAddr = SI->getAddress();
+    uint64_t SSize = SI->getSize();
     if ((Addr >= SAddr) && (Addr < SAddr + SSize))
       return SI;
   }

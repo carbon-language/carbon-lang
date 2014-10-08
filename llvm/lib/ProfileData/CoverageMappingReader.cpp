@@ -333,7 +333,8 @@ struct SectionData {
   std::error_code load(SectionRef &Section) {
     if (auto Err = Section.getContents(Data))
       return Err;
-    return Section.getAddress(Address);
+    Address = Section.getAddress();
+    return instrprof_error::success;
   }
 
   std::error_code get(uint64_t Pointer, size_t Size, StringRef &Result) {

@@ -297,17 +297,13 @@ static void PrintObjectSectionSizes(ObjectFile *Obj) {
     std::size_t max_size_len = strlen("size");
     std::size_t max_addr_len = strlen("addr");
     for (const SectionRef &Section : Obj->sections()) {
-      uint64_t size = 0;
-      if (error(Section.getSize(size)))
-        return;
+      uint64_t size = Section.getSize();
       total += size;
 
       StringRef name;
-      uint64_t addr = 0;
       if (error(Section.getName(name)))
         return;
-      if (error(Section.getAddress(addr)))
-        return;
+      uint64_t addr = Section.getAddress();
       max_name_len = std::max(max_name_len, name.size());
       max_size_len = std::max(max_size_len, getNumLengthAsString(size));
       max_addr_len = std::max(max_addr_len, getNumLengthAsString(addr));
@@ -337,14 +333,10 @@ static void PrintObjectSectionSizes(ObjectFile *Obj) {
     // Print each section.
     for (const SectionRef &Section : Obj->sections()) {
       StringRef name;
-      uint64_t size = 0;
-      uint64_t addr = 0;
       if (error(Section.getName(name)))
         return;
-      if (error(Section.getSize(size)))
-        return;
-      if (error(Section.getAddress(addr)))
-        return;
+      uint64_t size = Section.getSize();
+      uint64_t addr = Section.getAddress();
       std::string namestr = name;
 
       outs() << format(fmt.str().c_str(), namestr.c_str(), size, addr);
@@ -365,18 +357,10 @@ static void PrintObjectSectionSizes(ObjectFile *Obj) {
 
     // Make one pass over the section table to calculate sizes.
     for (const SectionRef &Section : Obj->sections()) {
-      uint64_t size = 0;
-      bool isText = false;
-      bool isData = false;
-      bool isBSS = false;
-      if (error(Section.getSize(size)))
-        return;
-      if (error(Section.isText(isText)))
-        return;
-      if (error(Section.isData(isData)))
-        return;
-      if (error(Section.isBSS(isBSS)))
-        return;
+      uint64_t size = Section.getSize();
+      bool isText = Section.isText();
+      bool isData = Section.isData();
+      bool isBSS = Section.isBSS();
       if (isText)
         total_text += size;
       else if (isData)

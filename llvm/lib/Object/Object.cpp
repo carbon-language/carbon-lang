@@ -132,10 +132,7 @@ const char *LLVMGetSectionName(LLVMSectionIteratorRef SI) {
 }
 
 uint64_t LLVMGetSectionSize(LLVMSectionIteratorRef SI) {
-  uint64_t ret;
-  if (std::error_code ec = (*unwrap(SI))->getSize(ret))
-    report_fatal_error(ec.message());
-  return ret;
+  return (*unwrap(SI))->getSize();
 }
 
 const char *LLVMGetSectionContents(LLVMSectionIteratorRef SI) {
@@ -146,18 +143,12 @@ const char *LLVMGetSectionContents(LLVMSectionIteratorRef SI) {
 }
 
 uint64_t LLVMGetSectionAddress(LLVMSectionIteratorRef SI) {
-  uint64_t ret;
-  if (std::error_code ec = (*unwrap(SI))->getAddress(ret))
-    report_fatal_error(ec.message());
-  return ret;
+  return (*unwrap(SI))->getAddress();
 }
 
 LLVMBool LLVMGetSectionContainsSymbol(LLVMSectionIteratorRef SI,
                                  LLVMSymbolIteratorRef Sym) {
-  bool ret;
-  if (std::error_code ec = (*unwrap(SI))->containsSymbol(**unwrap(Sym), ret))
-    report_fatal_error(ec.message());
-  return ret;
+  return (*unwrap(SI))->containsSymbol(**unwrap(Sym));
 }
 
 // Section Relocation iterators

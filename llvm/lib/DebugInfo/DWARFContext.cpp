@@ -516,12 +516,10 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile &Obj)
     StringRef name;
     Section.getName(name);
     // Skip BSS and Virtual sections, they aren't interesting.
-    bool IsBSS;
-    Section.isBSS(IsBSS);
+    bool IsBSS = Section.isBSS();
     if (IsBSS)
       continue;
-    bool IsVirtual;
-    Section.isVirtual(IsVirtual);
+    bool IsVirtual = Section.isVirtual();
     if (IsVirtual)
       continue;
     StringRef data;
@@ -612,8 +610,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile &Obj)
     }
 
     if (Section.relocation_begin() != Section.relocation_end()) {
-      uint64_t SectionSize;
-      RelocatedSection->getSize(SectionSize);
+      uint64_t SectionSize = RelocatedSection->getSize();
       for (const RelocationRef &Reloc : Section.relocations()) {
         uint64_t Address;
         Reloc.getOffset(Address);
