@@ -452,6 +452,18 @@ TEST_F(WinLinkParserTest, NoEntryError) {
 }
 
 //
+// Tests for DELAYLOAD.
+//
+
+TEST_F(WinLinkParserTest, DelayLoad) {
+  EXPECT_TRUE(parse("link.exe", "/delayload:abc.dll", "/delayload:def.dll",
+                    "a.obj", nullptr));
+  EXPECT_TRUE(_context.isDelayLoadDLL("abc.dll"));
+  EXPECT_TRUE(_context.isDelayLoadDLL("DEF.DLL"));
+  EXPECT_FALSE(_context.isDelayLoadDLL("xyz.dll"));
+}
+
+//
 // Tests for SEH.
 //
 
@@ -671,7 +683,7 @@ TEST_F(WinLinkParserTest, Ignore) {
   // compatibility with link.exe.
   EXPECT_TRUE(parse("link.exe", "/nologo", "/errorreport:prompt",
                     "/incremental", "/incremental:no", "/delay:unload",
-                    "/disallowlib:foo", "/delayload:user32", "/pdb:foo",
+                    "/disallowlib:foo", "/pdb:foo",
                     "/pdbaltpath:bar", "/verbose", "/verbose:icf", "/wx",
                     "/wx:no", "/tlbid:1", "/tlbout:foo", "/idlout:foo",
                     "/ignore:4000", "/ignoreidl", "/implib:foo", "/safeseh",

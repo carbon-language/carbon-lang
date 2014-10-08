@@ -226,6 +226,13 @@ public:
   void setOutputImportLibraryPath(const std::string &val) { _implib = val; }
   std::string getOutputImportLibraryPath() const;
 
+  void addDelayLoadDLL(StringRef dll) {
+    _delayLoadDLLs.insert(dll.lower());
+  }
+  bool isDelayLoadDLL(StringRef dll) const {
+    return _delayLoadDLLs.count(dll.lower()) == 1;
+  }
+
   StringRef getOutputSectionName(StringRef sectionName) const;
   bool addSectionRenaming(raw_ostream &diagnostics,
                           StringRef from, StringRef to);
@@ -365,6 +372,9 @@ private:
 
   // /IMPLIB command line option.
   std::string _implib;
+
+  // /DELAYLOAD option.
+  std::set<std::string> _delayLoadDLLs;
 
   // The set to store /nodefaultlib arguments.
   std::set<std::string> _noDefaultLibs;
