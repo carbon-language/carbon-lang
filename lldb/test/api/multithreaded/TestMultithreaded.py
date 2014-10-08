@@ -28,6 +28,7 @@ class SBBreakpointCallbackCase(TestBase):
         self.build_and_test('driver.cpp test_breakpoint_callback.cpp',
                             'test_breakpoint_callback')
 
+    @expectedFailureFreeBSD("llvm.org/21211")
     @skipIfi386
     @skipIfRemote
     @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
