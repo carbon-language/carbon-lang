@@ -64,11 +64,33 @@ ThreadPlanStepOverBreakpoint::DoPlanExplainsStop (Event *event_ptr)
     StopInfoSP stop_info_sp = GetPrivateStopInfo ();
     if (stop_info_sp)
     {
+        // It's a little surprising that we stop here for a breakpoint hit.  However, when you single step ONTO a breakpoint
+        // we still want to call that a breakpoint hit, and trigger the actions, etc.  Otherwise you would see the
+        // PC at the breakpoint without having triggered the actions, then you'd continue, the PC wouldn't change,
+        // and you'd see the breakpoint hit, which would be odd.
+        // So the lower levels fake "step onto breakpoint address" and return that as a breakpoint.  So our trace
+        // step COULD appear as a breakpoint hit if the next instruction also contained a breakpoint.
         StopReason reason = stop_info_sp->GetStopReason();
-        if (reason == eStopReasonTrace || reason == eStopReasonNone)
+
+        switch (reason)
+        {
+        case eStopReasonTrace:
+        case eStopReasonNone:
             return true;
-        else
+        case eStopReasonBreakpoint:
+            // It's a little surprising that we stop here for a breakpoint hit.  However, when you single step ONTO a
+            // breakpoint we still want to call that a breakpoint hit, and trigger the actions, etc.  Otherwise you
+            // would see the PC at the breakpoint without having triggered the actions, then you'd continue, the PC
+            // wouldn't change, and you'd see the breakpoint hit, which would be odd.
+            // So the lower levels fake "step onto breakpoint address" and return that as a breakpoint hit.  So our trace
+            // step COULD appear as a breakpoint hit if the next instruction also contained a breakpoint.  We don't want
+            // to handle that, since we really don't know what to do with breakpoint hits.  But make sure we don't set
+            // ourselves to auto-continue or we'll wrench control away from the plans that can deal with this.
+            SetAutoContinue(false);
             return false;
+        default:
+            return false;
+        }
     }
     return false;
 }
@@ -76,7 +98,7 @@ ThreadPlanStepOverBreakpoint::DoPlanExplainsStop (Event *event_ptr)
 bool
 ThreadPlanStepOverBreakpoint::ShouldStop (Event *event_ptr)
 {
-    return false;
+    return !ShouldAutoContinue(event_ptr);
 }
 
 bool
@@ -163,3 +185,10 @@ ThreadPlanStepOverBreakpoint::ShouldAutoContinue (Event *event_ptr)
 {
     return m_auto_continue;
 }
+
+bool
+ThreadPlanStepOverBreakpoint::IsPlanStale()
+{
+    return m_thread.GetRegisterContext()->GetPC() != m_breakpoint_addr;
+}
+

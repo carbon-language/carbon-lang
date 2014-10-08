@@ -35,6 +35,7 @@ public:
     virtual void ThreadDestroyed ();
     void SetAutoContinue (bool do_it);
     virtual bool ShouldAutoContinue(Event *event_ptr);
+    virtual bool IsPlanStale();
 
 protected:
     virtual bool DoPlanExplainsStop (Event *event_ptr);

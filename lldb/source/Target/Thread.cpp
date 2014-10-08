@@ -943,30 +943,30 @@ Thread::ShouldStop (Event* event_ptr)
         if (over_ride_stop)
             should_stop = false;
 
-        // One other potential problem is that we set up a master plan, then stop in before it is complete - for instance
-        // by hitting a breakpoint during a step-over - then do some step/finish/etc operations that wind up
-        // past the end point condition of the initial plan.  We don't want to strand the original plan on the stack,
-        // This code clears stale plans off the stack.
+    }
 
-        if (should_stop)
+    // One other potential problem is that we set up a master plan, then stop in before it is complete - for instance
+    // by hitting a breakpoint during a step-over - then do some step/finish/etc operations that wind up
+    // past the end point condition of the initial plan.  We don't want to strand the original plan on the stack,
+    // This code clears stale plans off the stack.
+
+    if (should_stop)
+    {
+        ThreadPlan *plan_ptr = GetCurrentPlan();
+        while (!PlanIsBasePlan(plan_ptr))
         {
-            ThreadPlan *plan_ptr = GetCurrentPlan();
-            while (!PlanIsBasePlan(plan_ptr))
-            {
-                bool stale = plan_ptr->IsPlanStale ();
-                ThreadPlan *examined_plan = plan_ptr;
-                plan_ptr = GetPreviousPlan (examined_plan);
+            bool stale = plan_ptr->IsPlanStale ();
+            ThreadPlan *examined_plan = plan_ptr;
+            plan_ptr = GetPreviousPlan (examined_plan);
 
-                if (stale)
-                {
-                    if (log)
-                        log->Printf("Plan %s being discarded in cleanup, it says it is already done.",
-                                    examined_plan->GetName());
-                    DiscardThreadPlansUpToPlan(examined_plan);
-                }
+            if (stale)
+            {
+                if (log)
+                    log->Printf("Plan %s being discarded in cleanup, it says it is already done.",
+                                examined_plan->GetName());
+                DiscardThreadPlansUpToPlan(examined_plan);
             }
         }
-
     }
 
     if (log)
