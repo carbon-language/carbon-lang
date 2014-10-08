@@ -14,9 +14,14 @@
 
 #include "Unix.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/Mutex.h"
-#include "llvm/Support/UniqueLock.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Mutex.h"
+#include "llvm/Support/Program.h"
+#include "llvm/Support/UniqueLock.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -37,6 +42,9 @@
 #endif
 #if HAVE_MACH_MACH_H
 #include <mach/mach.h>
+#endif
+#if HAVE_LINK_H
+#include <link.h>
 #endif
 
 using namespace llvm;
@@ -264,6 +272,134 @@ void llvm::sys::AddSignalHandler(void (*FnPtr)(void *), void *Cookie) {
   RegisterHandlers();
 }
 
+#if HAVE_LINK_H
+struct DlIteratePhdrData {
+  void **StackTrace;
+  int depth;
+  bool first;
+  const char **modules;
+  intptr_t *offsets;
+  const char *main_exec_name;
+};
+
+static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
+  DlIteratePhdrData *data = (DlIteratePhdrData*)arg;
+  const char *name = data->first ? data->main_exec_name : info->dlpi_name;
+  data->first = false;
+  for (int i = 0; i < info->dlpi_phnum; i++) {
+    const ElfW(Phdr) *phdr = &info->dlpi_phdr[i];
+    if (phdr->p_type != PT_LOAD)
+      continue;
+    intptr_t beg = info->dlpi_addr + phdr->p_vaddr;
+    intptr_t end = beg + phdr->p_memsz;
+    for (int j = 0; j < data->depth; j++) {
+      if (data->modules[j])
+        continue;
+      intptr_t addr = (intptr_t)data->StackTrace[j];
+      if (beg <= addr && addr < end) {
+        data->modules[j] = name;
+        data->offsets[j] = addr - info->dlpi_addr;
+      }
+    }
+  }
+  return 0;
+}
+
+static bool findModulesAndOffsets(void **StackTrace, int Depth,
+                                  const char **Modules, intptr_t *Offsets,
+                                  const char *MainExecutableName) {
+  DlIteratePhdrData data = {StackTrace, Depth,   true,
+                            Modules,    Offsets, MainExecutableName};
+  dl_iterate_phdr(dl_iterate_phdr_cb, &data);
+  return true;
+}
+#else
+static bool findModulesAndOffsets(void **StackTrace, int Depth,
+                                  const char **Modules, intptr_t *Offsets,
+                                  const char *MainExecutableName) {
+  return false;
+}
+#endif
+
+static bool printSymbolizedStackTrace(void **StackTrace, int Depth, FILE *FD) {
+  // FIXME: Subtract necessary number from StackTrace entries to turn return addresses
+  // into actual instruction addresses.
+  // Use llvm-symbolizer tool to symbolize the stack traces.
+  std::string LLVMSymbolizerPath = sys::FindProgramByName("llvm-symbolizer");
+  if (LLVMSymbolizerPath.empty())
+    return false;
+  // We don't know argv0 or the address of main() at this point, but try
+  // to guess it anyway (it's possible on some platforms).
+  std::string MainExecutableName = sys::fs::getMainExecutable(nullptr, nullptr);
+  if (MainExecutableName.empty() ||
+      MainExecutableName.find("llvm-symbolizer") != std::string::npos)
+    return false;
+
+  std::vector<const char *> Modules(Depth, nullptr);
+  std::vector<intptr_t> Offsets(Depth, 0);
+  if (!findModulesAndOffsets(StackTrace, Depth, Modules.data(), Offsets.data(),
+                             MainExecutableName.c_str()))
+    return false;
+  int InputFD;
+  SmallString<32> InputFile, OutputFile;
+  sys::fs::createTemporaryFile("symbolizer-input", "", InputFD, InputFile);
+  sys::fs::createTemporaryFile("symbolizer-output", "", OutputFile);
+  FileRemover InputRemover(InputFile.c_str());
+  FileRemover OutputRemover(OutputFile.c_str());
+  std::vector<const StringRef *> Redirects(3, nullptr);
+  StringRef InputFileStr(InputFile);
+  StringRef OutputFileStr(OutputFile);
+  StringRef StderrFileStr;
+  Redirects[0] = &InputFileStr;
+  Redirects[1] = &OutputFileStr;
+  Redirects[2] = &StderrFileStr;
+
+  {
+    raw_fd_ostream Input(InputFD, true);
+    for (int i = 0; i < Depth; i++) {
+      if (Modules[i])
+        Input << Modules[i] << " " << (void*)Offsets[i] << "\n";
+    }
+  }
+
+  const char *args[] = {"llvm-symbolizer", nullptr};
+  int RunResult =
+      sys::ExecuteAndWait(LLVMSymbolizerPath, args, nullptr, Redirects.data());
+  if (RunResult != 0)
+    return false;
+
+  auto OutputBuf = MemoryBuffer::getFile(OutputFile.c_str());
+  if (std::error_code Err = OutputBuf.getError())
+    return false;
+  StringRef Output = OutputBuf.get()->getBuffer();
+  SmallVector<StringRef, 32> Lines;
+  Output.split(Lines, "\n");
+  auto CurLine = Lines.begin();
+  int frame_no = 0;
+  for (int i = 0; i < Depth; i++) {
+    if (!Modules[i]) {
+      fprintf(FD, "#%d %p\n", frame_no++, StackTrace[i]);
+      continue;
+    }
+    // Read pairs of lines (function name and file/line info) until we
+    // encounter empty line.
+    for (;;) {
+      StringRef FunctionName = *CurLine++;
+      if (FunctionName.empty())
+        break;
+      fprintf(FD, "#%d %p ", frame_no++, StackTrace[i]);
+      if (!FunctionName.startswith("??"))
+        fprintf(FD, "%s ", FunctionName.str().c_str());
+      StringRef FileLineInfo = *CurLine++;
+      if (!FileLineInfo.startswith("??"))
+        fprintf(FD, "%s", FileLineInfo.str().c_str());
+      else
+        fprintf(FD, "(%s+%p)", Modules[i], (void *)Offsets[i]);
+      fprintf(FD, "\n");
+    }
+  }
+  return true;
+}
 
 // PrintStackTrace - In the case of a program crash or fault, print out a stack
 // trace so that the user has an indication of why and where we died.
@@ -276,6 +412,8 @@ void llvm::sys::PrintStackTrace(FILE *FD) {
   // Use backtrace() to output a backtrace on Linux systems with glibc.
   int depth = backtrace(StackTrace,
                         static_cast<int>(array_lengthof(StackTrace)));
+  if (printSymbolizedStackTrace(StackTrace, depth, FD))
+    return;
 #if HAVE_DLFCN_H && __GNUG__
   int width = 0;
   for (int i = 0; i < depth; ++i) {
