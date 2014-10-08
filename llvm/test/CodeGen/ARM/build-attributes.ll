@@ -44,6 +44,30 @@
 ; RUN: llc < %s -mtriple=arm-none-linux-gnueabi | FileCheck %s --check-prefix=PCS-R9-USE
 ; RUN: llc < %s -mtriple=arm-none-linux-gnueabi -arm-reserve-r9 | FileCheck %s --check-prefix=PCS-R9-RESERVE
 
+; ARMv8a (AArch32)
+; RUN: llc < %s -mtriple=armv8-none-linux-gnueabi -mcpu=cortex-a57 -arm-no-strict-align | FileCheck %s --check-prefix=NO-STRICT-ALIGN
+; RUN: llc < %s -mtriple=armv8-none-linux-gnueabi -mcpu=cortex-a57 -arm-strict-align | FileCheck %s --check-prefix=STRICT-ALIGN
+; ARMv7a
+; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -arm-no-strict-align | FileCheck %s --check-prefix=NO-STRICT-ALIGN
+; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a7 -arm-strict-align | FileCheck %s --check-prefix=STRICT-ALIGN
+; ARMv7r
+; RUN: llc < %s -mtriple=armv7r-none-linux-gnueabi -mcpu=cortex-r5 -arm-no-strict-align | FileCheck %s --check-prefix=NO-STRICT-ALIGN
+; RUN: llc < %s -mtriple=armv7r-none-linux-gnueabi -mcpu=cortex-r5 -arm-strict-align | FileCheck %s --check-prefix=STRICT-ALIGN
+; ARMv7m
+; RUN: llc < %s -mtriple=thumbv7m-none-linux-gnueabi -mcpu=cortex-m3 -arm-no-strict-align | FileCheck %s --check-prefix=NO-STRICT-ALIGN
+; RUN: llc < %s -mtriple=thumbv7m-none-linux-gnueabi -mcpu=cortex-m3 -arm-strict-align | FileCheck %s --check-prefix=STRICT-ALIGN
+; ARMv6
+; RUN: llc < %s -mtriple=armv6-none-netbsd-gnueabi -mcpu=arm1136j-s | FileCheck %s --check-prefix=NO-STRICT-ALIGN
+; RUN: llc < %s -mtriple=armv6-none-linux-gnueabi -mcpu=arm1136j-s | FileCheck %s --check-prefix=STRICT-ALIGN
+; ARMv6m
+; RUN: llc < %s -mtriple=thumb-none-linux-gnueabi -arm-no-strict-align -mcpu=cortex-m0 | FileCheck %s --check-prefix=STRICT-ALIGN
+; RUN: llc < %s -mtriple=thumb-none-linux-gnueabi -arm-strict-align -mcpu=cortex-m0 | FileCheck %s --check-prefix=STRICT-ALIGN
+; RUN: llc < %s -mtriple=thumbv6m-none-linux-gnueabi -arm-no-strict-align | FileCheck %s --check-prefix=STRICT-ALIGN
+; RUN: llc < %s -mtriple=thumbv6m-none-linux-gnueabi -arm-strict-align | FileCheck %s --check-prefix=STRICT-ALIGN
+; ARMv5
+; RUN: llc < %s -mtriple=armv5-none-linux-gnueabi -mcpu=arm1022e -arm-no-strict-align | FileCheck %s --check-prefix=NO-STRICT-ALIGN
+; RUN: llc < %s -mtriple=armv5-none-linux-gnueabi -mcpu=arm1022e -arm-strict-align | FileCheck %s --check-prefix=STRICT-ALIGN
+
 ; XSCALE:      .eabi_attribute 6, 5
 ; XSCALE:      .eabi_attribute 8, 1
 ; XSCALE:      .eabi_attribute 9, 1
@@ -136,6 +160,10 @@
 ; V8-FPARMv8-NEON-CRYPTO: .eabi_attribute 6, 14
 ; V8-FPARMv8-NEON-CRYPTO: .fpu crypto-neon-fp-armv8
 ; V8-FPARMv8-NEON-CRYPTO: .eabi_attribute 12, 3
+
+; Tag_CPU_unaligned_access
+; NO-STRICT-ALIGN: .eabi_attribute 34, 1
+; STRICT-ALIGN: .eabi_attribute 34, 0
 
 ; Tag_CPU_arch	'ARMv7'
 ; CORTEX-A7-CHECK: .eabi_attribute	6, 10

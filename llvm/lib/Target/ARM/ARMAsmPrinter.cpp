@@ -706,6 +706,13 @@ void ARMAsmPrinter::emitAttributes() {
     ATS.emitAttribute(ARMBuildAttrs::ABI_FP_number_model,
                       ARMBuildAttrs::AllowIEE754);
 
+  if (Subtarget->allowsUnalignedMem())
+    ATS.emitAttribute(ARMBuildAttrs::CPU_unaligned_access,
+                      ARMBuildAttrs::Allowed);
+  else
+    ATS.emitAttribute(ARMBuildAttrs::CPU_unaligned_access,
+                      ARMBuildAttrs::Not_Allowed);
+
   // FIXME: add more flags to ARMBuildAttributes.h
   // 8-bytes alignment stuff.
   ATS.emitAttribute(ARMBuildAttrs::ABI_align_needed, 1);
