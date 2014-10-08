@@ -115,6 +115,46 @@ def avx512vl_i32_info : AVX512VLVectorVTInfo<v16i32_info, v8i32x_info,
 def avx512vl_i64_info : AVX512VLVectorVTInfo<v8i64_info, v4i64x_info,
                                              v2i64x_info>;
 
+// This multiclass generates the masking variants from the non-masking
+// variant.  It only provides the assembly pieces for the masking variants.
+// It assumes custom ISel patterns for masking which can be provided as
+// template arguments.
+multiclass AVX512_masking_custom<bits<8> O, Format F,
+                                 dag Outs,
+                                 dag Ins, dag MaskingIns, dag ZeroMaskingIns,
+                                 string OpcodeStr,
+                                 string AttSrcAsm, string IntelSrcAsm,
+                                 list<dag> Pattern,
+                                 list<dag> MaskingPattern,
+                                 list<dag> ZeroMaskingPattern,
+                                 string MaskingConstraint = "",
+                                 InstrItinClass itin = NoItinerary,
+                                 bit IsCommutable = 0> {
+  let isCommutable = IsCommutable in
+    def NAME: AVX512<O, F, Outs, Ins,
+                       OpcodeStr#"\t{"#AttSrcAsm#", $dst|"#
+                                     "$dst, "#IntelSrcAsm#"}",
+                       Pattern, itin>;
+
+  // Prefer over VMOV*rrk Pat<>
+  let AddedComplexity = 20 in
+    def NAME#k: AVX512<O, F, Outs, MaskingIns,
+                       OpcodeStr#"\t{"#AttSrcAsm#", $dst {${mask}}|"#
+                                     "$dst {${mask}}, "#IntelSrcAsm#"}",
+                       MaskingPattern, itin>,
+              EVEX_K {
+      // In case of the 3src subclass this is overridden with a let.
+      string Constraints = MaskingConstraint;
+  }
+  let AddedComplexity = 30 in // Prefer over VMOV*rrkz Pat<>
+    def NAME#kz: AVX512<O, F, Outs, ZeroMaskingIns,
+                       OpcodeStr#"\t{"#AttSrcAsm#", $dst {${mask}} {z}|"#
+                                     "$dst {${mask}} {z}, "#IntelSrcAsm#"}",
+                       ZeroMaskingPattern,
+                       itin>,
+              EVEX_KZ;
+}
+
 
 // Common base class of AVX512_masking and AVX512_masking_3src.
 multiclass AVX512_masking_common<bits<8> O, Format F, X86VectorVTInfo _,
@@ -125,34 +165,16 @@ multiclass AVX512_masking_common<bits<8> O, Format F, X86VectorVTInfo _,
                                  dag RHS, dag MaskingRHS,
                                  string MaskingConstraint = "",
                                  InstrItinClass itin = NoItinerary,
-                                 bit IsCommutable = 0> {
-  let isCommutable = IsCommutable in
-    def NAME: AVX512<O, F, Outs, Ins,
-                       OpcodeStr#"\t{"#AttSrcAsm#", $dst|"#
-                                     "$dst, "#IntelSrcAsm#"}",
-                       [(set _.RC:$dst, RHS)], itin>;
-
-  // Prefer over VMOV*rrk Pat<>
-  let AddedComplexity = 20 in
-    def NAME#k: AVX512<O, F, Outs, MaskingIns,
-                       OpcodeStr#"\t{"#AttSrcAsm#", $dst {${mask}}|"#
-                                     "$dst {${mask}}, "#IntelSrcAsm#"}",
-                       [(set _.RC:$dst, MaskingRHS)], itin>,
-              EVEX_K {
-      // In case of the 3src subclass this is overridden with a let.
-      string Constraints = MaskingConstraint;
-  }
-  let AddedComplexity = 30 in // Prefer over VMOV*rrkz Pat<>
-    def NAME#kz: AVX512<O, F, Outs, ZeroMaskingIns,
-                       OpcodeStr#"\t{"#AttSrcAsm#", $dst {${mask}} {z}|"#
-                                     "$dst {${mask}} {z}, "#IntelSrcAsm#"}",
-                       [(set _.RC:$dst,
-                             (vselect _.KRCWM:$mask, RHS,
-                                      (_.VT (bitconvert
-                                              (v16i32 immAllZerosV)))))],
-                       itin>,
-              EVEX_KZ;
-}
+                                 bit IsCommutable = 0> :
+  AVX512_masking_custom<O, F, Outs, Ins, MaskingIns, ZeroMaskingIns, OpcodeStr,
+                        AttSrcAsm, IntelSrcAsm,
+                        [(set _.RC:$dst, RHS)],
+                        [(set _.RC:$dst, MaskingRHS)],
+                        [(set _.RC:$dst,
+                              (vselect _.KRCWM:$mask, RHS,
+                                       (_.VT (bitconvert
+                                               (v16i32 immAllZerosV)))))],
+                        MaskingConstraint, NoItinerary, IsCommutable>;
 
 // This multiclass generates the unconditional/non-masking, the masking and
 // the zero-masking variant of the instruction.  In the masking case, the
