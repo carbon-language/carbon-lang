@@ -219,9 +219,8 @@ Value *BlockGenerator::generateScalarLoad(const LoadInst *Load,
                                           ValueMapT &GlobalMap,
                                           LoopToScevMapT &LTS) {
   const Value *Pointer = Load->getPointerOperand();
-  const Instruction *Inst = dyn_cast<Instruction>(Load);
   Value *NewPointer =
-      generateLocationAccessed(Inst, Pointer, BBMap, GlobalMap, LTS);
+      generateLocationAccessed(Load, Pointer, BBMap, GlobalMap, LTS);
   Value *ScalarLoad = Builder.CreateAlignedLoad(
       NewPointer, Load->getAlignment(), Load->getName() + "_p_scalar_");
   return ScalarLoad;
@@ -468,8 +467,6 @@ void VectorBlockGenerator::copyBinaryInst(const BinaryOperator *Inst,
 void VectorBlockGenerator::copyStore(const StoreInst *Store,
                                      ValueMapT &VectorMap,
                                      VectorValueMapT &ScalarMaps) {
-  int VectorWidth = getVectorWidth();
-
   const MemoryAccess &Access = Statement.getAccessFor(Store);
 
   const Value *Pointer = Store->getPointerOperand();
@@ -481,7 +478,7 @@ void VectorBlockGenerator::copyStore(const StoreInst *Store,
   extractScalarValues(Store, VectorMap, ScalarMaps);
 
   if (Access.isStrideOne(isl_map_copy(Schedule))) {
-    Type *VectorPtrType = getVectorPtrTy(Pointer, VectorWidth);
+    Type *VectorPtrType = getVectorPtrTy(Pointer, getVectorWidth());
     Value *NewPointer = generateLocationAccessed(Store, Pointer, ScalarMaps[0],
                                                  GlobalMaps[0], VLTS[0]);
 
