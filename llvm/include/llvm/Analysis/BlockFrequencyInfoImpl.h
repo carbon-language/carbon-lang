@@ -260,7 +260,7 @@ public:
     /// loop.
     ///
     /// This function should only be called when distributing mass.  As long as
-    /// there are no irreducilbe edges to Node, then it will have complexity
+    /// there are no irreducible edges to Node, then it will have complexity
     /// O(1) in this context.
     ///
     /// In general, the complexity is O(L), where L is the number of loop
