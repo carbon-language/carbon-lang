@@ -6,8 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_ELF_WRITERS_H
-#define LLD_READER_WRITER_ELF_MIPS_MIPS_ELF_WRITERS_H
+#ifndef LLD_READER_WRITER_ELF_MIPS_ELF_WRITERS_H
+#define LLD_READER_WRITER_ELF_MIPS_ELF_WRITERS_H
 
 #include "MipsLinkingContext.h"
 #include "OutputELFWriter.h"

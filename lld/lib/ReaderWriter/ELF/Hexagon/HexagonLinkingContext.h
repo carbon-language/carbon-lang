@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_LINKING_CONTEXT_H
-#define LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_LINKING_CONTEXT_H
+#ifndef LLD_READER_WRITER_ELF_HEXAGON_LINKING_CONTEXT_H
+#define LLD_READER_WRITER_ELF_HEXAGON_LINKING_CONTEXT_H
 
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 
@@ -71,4 +71,4 @@ public:
 } // elf
 } // lld
 
-#endif // LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_LINKING_CONTEXT_H
+#endif // LLD_READER_WRITER_ELF_HEXAGON_LINKING_CONTEXT_H

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_AARCH64_AARCH64_LINKING_CONTEXT_H
-#define LLD_READER_WRITER_ELF_AARCH64_AARCH64_LINKING_CONTEXT_H
+#ifndef LLD_READER_WRITER_ELF_AARCH64_LINKING_CONTEXT_H
+#define LLD_READER_WRITER_ELF_AARCH64_LINKING_CONTEXT_H
 
 #include "AArch64TargetHandler.h"
 

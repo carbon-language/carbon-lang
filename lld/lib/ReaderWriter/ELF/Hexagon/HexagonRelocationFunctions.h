@@ -6,8 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_RELOCATION_FUNCTIONS_H
-#define LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_RELOCATION_FUNCTIONS_H
+#ifndef LLD_READER_WRITER_ELF_HEXAGON_RELOCATION_FUNCTIONS_H
+#define LLD_READER_WRITER_ELF_HEXAGON_RELOCATION_FUNCTIONS_H
 
 namespace lld {
 namespace elf {
@@ -46,4 +46,4 @@ findBitMask(uint32_t insn, Instruction *encodings, int32_t numInsns) {
 } // elf
 } // lld
 
-#endif // LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_RELOCATION_FUNCTIONS_H
+#endif // LLD_READER_WRITER_ELF_HEXAGON_RELOCATION_FUNCTIONS_H

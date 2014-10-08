@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_X86_64_X86_64_RELOCATION_PASS_H
-#define LLD_READER_WRITER_ELF_X86_64_X86_64_RELOCATION_PASS_H
+#ifndef LLD_READER_WRITER_ELF_X86_64_RELOCATION_PASS_H
+#define LLD_READER_WRITER_ELF_X86_64_RELOCATION_PASS_H
 
 #include <memory>
 
