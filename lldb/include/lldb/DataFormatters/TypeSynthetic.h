@@ -94,6 +94,40 @@ namespace lldb_private {
         DISALLOW_COPY_AND_ASSIGN(SyntheticChildrenFrontEnd);
     };
     
+    class SyntheticValueProviderFrontEnd : public SyntheticChildrenFrontEnd
+    {
+    public:
+        SyntheticValueProviderFrontEnd (ValueObject &backend) :
+        SyntheticChildrenFrontEnd(backend)
+        {}
+        
+        virtual
+        ~SyntheticValueProviderFrontEnd ()
+        {
+        }
+        
+        virtual size_t
+        CalculateNumChildren () { return 0; }
+        
+        virtual lldb::ValueObjectSP
+        GetChildAtIndex (size_t idx) { return nullptr; }
+        
+        virtual size_t
+        GetIndexOfChildWithName (const ConstString &name) { return UINT32_MAX; }
+        
+        virtual bool
+        Update () { return false; }
+        
+        virtual bool
+        MightHaveChildren () { return false; }
+        
+        virtual lldb::ValueObjectSP
+        GetSyntheticValue () = 0;
+        
+    private:
+        DISALLOW_COPY_AND_ASSIGN(SyntheticValueProviderFrontEnd);
+    };
+    
     class SyntheticChildren
     {
     public:
