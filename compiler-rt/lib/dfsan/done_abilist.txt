@@ -208,9 +208,11 @@ fun:sigemptyset=custom
 fun:sigaction=custom
 fun:gettimeofday=custom
 
+# sprintf-like
+fun:sprintf=custom
+fun:snprintf=custom
+
 # TODO: custom
-fun:snprintf=discard
-fun:vsnprintf=discard
 fun:asprintf=discard
 fun:qsort=discard
 

@@ -5,7 +5,6 @@
 
 // Tests custom implementations of various glibc functions.
 
-#define _GNU_SOURCE
 #include <sanitizer/dfsan_interface.h>
 
 #include <arpa/inet.h>
@@ -18,6 +17,7 @@
 #include <sched.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/select.h>
@@ -256,12 +256,12 @@ void test_calloc() {
   // With any luck this sequence of calls will cause calloc to return the same
   // pointer both times.  This is probably the best we can do to test this
   // function.
-  char *crv = calloc(4096, 1);
+  char *crv = (char *) calloc(4096, 1);
   ASSERT_ZERO_LABEL(crv[0]);
   dfsan_set_label(i_label, crv, 100);
   free(crv);
 
-  crv = calloc(4096, 1);
+  crv = (char *) calloc(4096, 1);
   ASSERT_ZERO_LABEL(crv[0]);
   free(crv);
 }
@@ -342,14 +342,14 @@ void test_ctime_r() {
 
 static int write_callback_count = 0;
 static int last_fd;
-static const void *last_buf;
+static const unsigned char *last_buf;
 static size_t last_count;
 
 void write_callback(int fd, const void *buf, size_t count) {
   write_callback_count++;
 
   last_fd = fd;
-  last_buf = buf;
+  last_buf = (const unsigned char*) buf;
   last_count = count;
 }
 
@@ -376,7 +376,7 @@ void test_dfsan_set_write_callback() {
   dfsan_set_label(i_label, &fd, sizeof(fd));
   dfsan_set_label(j_label, &(buf[3]), 1);
   dfsan_set_label(k_label, &buf_len, sizeof(buf_len));
-  
+
   res = write(fd, buf, buf_len);
   assert(write_callback_count == 2);
   ASSERT_READ_ZERO_LABEL(&res, sizeof(res));
@@ -694,11 +694,11 @@ void test_memchr() {
   dfsan_set_label(i_label, &str1[3], 1);
   dfsan_set_label(j_label, &str1[4], 1);
 
-  char *crv = memchr(str1, 'r', sizeof(str1));
+  char *crv = (char *) memchr(str1, 'r', sizeof(str1));
   assert(crv == &str1[2]);
   ASSERT_ZERO_LABEL(crv);
 
-  crv = memchr(str1, '1', sizeof(str1));
+  crv = (char *) memchr(str1, '1', sizeof(str1));
   assert(crv == &str1[3]);
 #ifdef STRICT_DATA_DEPENDENCIES
   ASSERT_ZERO_LABEL(crv);
@@ -706,7 +706,7 @@ void test_memchr() {
   ASSERT_LABEL(crv, i_label);
 #endif
 
-  crv = memchr(str1, 'x', sizeof(str1));
+  crv = (char *) memchr(str1, 'x', sizeof(str1));
   assert(!crv);
 #ifdef STRICT_DATA_DEPENDENCIES
   ASSERT_ZERO_LABEL(crv);
@@ -774,6 +774,124 @@ void test_write() {
   close(fd);
 }
 
+template <class T>
+void test_sprintf_chunk(const char* expected, const char* format, T arg) {
+  char buf[512];
+  memset(buf, 'a', sizeof(buf));
+
+  char padded_expected[512];
+  strcpy(padded_expected, "foo ");
+  strcat(padded_expected, expected);
+  strcat(padded_expected, " bar");
+
+  char padded_format[512];
+  strcpy(padded_format, "foo ");
+  strcat(padded_format, format);
+  strcat(padded_format, " bar");
+
+  // Non labelled arg.
+  assert(sprintf(buf, padded_format,  arg) == strlen(padded_expected));
+  assert(strcmp(buf, padded_expected) == 0);
+  ASSERT_READ_LABEL(buf, strlen(padded_expected), 0);
+  memset(buf, 'a', sizeof(buf));
+
+  // Labelled arg.
+  dfsan_set_label(i_label, &arg, sizeof(arg));
+  assert(sprintf(buf, padded_format,  arg) == strlen(padded_expected));
+  assert(strcmp(buf, padded_expected) == 0);
+  ASSERT_READ_LABEL(buf, 4, 0);
+  ASSERT_READ_LABEL(buf + 4, strlen(padded_expected) - 8, i_label);
+  ASSERT_READ_LABEL(buf + (strlen(padded_expected) - 4), 4, 0);
+}
+
+void test_sprintf() {
+  char buf[2048];
+  memset(buf, 'a', sizeof(buf));
+
+  // Test formatting (no conversion specifier).
+  assert(sprintf(buf, "Hello world!") == 12);
+  assert(strcmp(buf, "Hello world!") == 0);
+  ASSERT_READ_LABEL(buf, sizeof(buf), 0);
+
+  // Test formatting & label propagation (multiple conversion specifiers): %s,
+  // %d, %n, %f, and %%.
+  const char* s = "world";
+  int m = 8;
+  int d = 27;
+  dfsan_set_label(k_label, (void *) (s + 1), 2);
+  dfsan_set_label(i_label, &m, sizeof(m));
+  dfsan_set_label(j_label, &d, sizeof(d));
+  int n;
+  int r = sprintf(buf, "hello %s, %-d/%d/%d %f %% %n%d", s, 2014, m, d,
+                  12345.6781234, &n, 1000);
+  assert(r == 42);
+  assert(strcmp(buf, "hello world, 2014/8/27 12345.678123 % 1000") == 0);
+  ASSERT_READ_LABEL(buf, 7, 0);
+  ASSERT_READ_LABEL(buf + 7, 2, k_label);
+  ASSERT_READ_LABEL(buf + 9, 9, 0);
+  ASSERT_READ_LABEL(buf + 18, 1, i_label);
+  ASSERT_READ_LABEL(buf + 19, 1, 0);
+  ASSERT_READ_LABEL(buf + 20, 2, j_label);
+  ASSERT_READ_LABEL(buf + 22, 15, 0);
+  ASSERT_LABEL(r, 0);
+  assert(n == 38);
+
+  // Test formatting & label propagation (single conversion specifier, with
+  // additional length and precision modifiers).
+  test_sprintf_chunk("-559038737", "%d", 0xdeadbeef);
+  test_sprintf_chunk("3735928559", "%u", 0xdeadbeef);
+  test_sprintf_chunk("12345", "%i", 12345);
+  test_sprintf_chunk("751", "%o", 0751);
+  test_sprintf_chunk("babe", "%x", 0xbabe);
+  test_sprintf_chunk("0000BABE", "%.8X", 0xbabe);
+  test_sprintf_chunk("-17", "%hhd", 0xdeadbeef);
+  test_sprintf_chunk("-16657", "%hd", 0xdeadbeef);
+  test_sprintf_chunk("deadbeefdeadbeef", "%lx", 0xdeadbeefdeadbeef);
+  test_sprintf_chunk("0xdeadbeefdeadbeef", "%p",
+                 (void *)  0xdeadbeefdeadbeef);
+  test_sprintf_chunk("18446744073709551615", "%ju", (intmax_t) -1);
+  test_sprintf_chunk("18446744073709551615", "%zu", (size_t) -1);
+  test_sprintf_chunk("18446744073709551615", "%tu", (size_t) -1);
+
+  test_sprintf_chunk("0x1.f9acffa7eb6bfp-4", "%a", 0.123456);
+  test_sprintf_chunk("0X1.F9ACFFA7EB6BFP-4", "%A", 0.123456);
+  test_sprintf_chunk("0.12346", "%.5f", 0.123456);
+  test_sprintf_chunk("0.123456", "%g", 0.123456);
+  test_sprintf_chunk("1.234560e-01", "%e", 0.123456);
+  test_sprintf_chunk("1.234560E-01", "%E", 0.123456);
+  test_sprintf_chunk("0.1234567891234560", "%.16Lf",
+                     (long double) 0.123456789123456);
+
+  test_sprintf_chunk("z", "%c", 'z');
+
+  // %n, %s, %d, %f, and %% already tested
+}
+
+void test_snprintf() {
+  char buf[2048];
+  memset(buf, 'a', sizeof(buf));
+  dfsan_set_label(0, buf, sizeof(buf));
+  const char* s = "world";
+  int y = 2014;
+  int m = 8;
+  int d = 27;
+  dfsan_set_label(k_label, (void *) (s + 1), 2);
+  dfsan_set_label(i_label, &y, sizeof(y));
+  dfsan_set_label(j_label, &m, sizeof(m));
+  int r = snprintf(buf, 19, "hello %s, %-d/%d/%d %f", s, y, m, d,
+                   12345.6781234);
+  // The return value is the number of bytes that would have been written to
+  // the final string if enough space had been available.
+  assert(r == 35);
+  assert(memcmp(buf, "hello world, 2014/", 19) == 0);
+  ASSERT_READ_LABEL(buf, 7, 0);
+  ASSERT_READ_LABEL(buf + 7, 2, k_label);
+  ASSERT_READ_LABEL(buf + 9, 4, 0);
+  ASSERT_READ_LABEL(buf + 13, 4, i_label);
+  ASSERT_READ_LABEL(buf + 17, 2, 0);
+  ASSERT_LABEL(r, 0);
+}
+
 int main(void) {
   i_label = dfsan_create_label("i", 0);
   j_label = dfsan_create_label("j", 0);
@@ -810,7 +928,9 @@ int main(void) {
   test_select();
   test_sigaction();
   test_sigemptyset();
+  test_snprintf();
   test_socketpair();
+  test_sprintf();
   test_stat();
   test_strcasecmp();
   test_strchr();

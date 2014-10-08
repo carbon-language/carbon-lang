@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 DFSAN_DIR=$(dirname "$0")/../
-DFSAN_CUSTOM_TESTS=${DFSAN_DIR}/../../test/dfsan/custom.c
+DFSAN_CUSTOM_TESTS=${DFSAN_DIR}/../../test/dfsan/custom.cc
 DFSAN_CUSTOM_WRAPPERS=${DFSAN_DIR}/dfsan_custom.cc
 DFSAN_ABI_LIST=${DFSAN_DIR}/done_abilist.txt
 
