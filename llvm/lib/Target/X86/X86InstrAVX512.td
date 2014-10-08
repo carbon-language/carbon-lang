@@ -124,17 +124,17 @@ def avx512vl_i64_info : AVX512VLVectorVTInfo<v8i64_info, v4i64x_info,
 // variant.  It only provides the assembly pieces for the masking variants.
 // It assumes custom ISel patterns for masking which can be provided as
 // template arguments.
-multiclass AVX512_masking_custom<bits<8> O, Format F,
-                                 dag Outs,
-                                 dag Ins, dag MaskingIns, dag ZeroMaskingIns,
-                                 string OpcodeStr,
-                                 string AttSrcAsm, string IntelSrcAsm,
-                                 list<dag> Pattern,
-                                 list<dag> MaskingPattern,
-                                 list<dag> ZeroMaskingPattern,
-                                 string MaskingConstraint = "",
-                                 InstrItinClass itin = NoItinerary,
-                                 bit IsCommutable = 0> {
+multiclass AVX512_maskable_custom<bits<8> O, Format F,
+                                  dag Outs,
+                                  dag Ins, dag MaskingIns, dag ZeroMaskingIns,
+                                  string OpcodeStr,
+                                  string AttSrcAsm, string IntelSrcAsm,
+                                  list<dag> Pattern,
+                                  list<dag> MaskingPattern,
+                                  list<dag> ZeroMaskingPattern,
+                                  string MaskingConstraint = "",
+                                  InstrItinClass itin = NoItinerary,
+                                  bit IsCommutable = 0> {
   let isCommutable = IsCommutable in
     def NAME: AVX512<O, F, Outs, Ins,
                        OpcodeStr#"\t{"#AttSrcAsm#", $dst|"#
@@ -161,65 +161,65 @@ multiclass AVX512_masking_custom<bits<8> O, Format F,
 }
 
 
-// Common base class of AVX512_masking and AVX512_masking_3src.
-multiclass AVX512_masking_common<bits<8> O, Format F, X86VectorVTInfo _,
-                                 dag Outs,
-                                 dag Ins, dag MaskingIns, dag ZeroMaskingIns,
-                                 string OpcodeStr,
-                                 string AttSrcAsm, string IntelSrcAsm,
-                                 dag RHS, dag MaskingRHS,
-                                 string MaskingConstraint = "",
-                                 InstrItinClass itin = NoItinerary,
-                                 bit IsCommutable = 0> :
-  AVX512_masking_custom<O, F, Outs, Ins, MaskingIns, ZeroMaskingIns, OpcodeStr,
-                        AttSrcAsm, IntelSrcAsm,
-                        [(set _.RC:$dst, RHS)],
-                        [(set _.RC:$dst, MaskingRHS)],
-                        [(set _.RC:$dst,
-                              (vselect _.KRCWM:$mask, RHS, _.ImmAllZerosV))],
-                        MaskingConstraint, NoItinerary, IsCommutable>;
+// Common base class of AVX512_maskable and AVX512_maskable_3src.
+multiclass AVX512_maskable_common<bits<8> O, Format F, X86VectorVTInfo _,
+                                  dag Outs,
+                                  dag Ins, dag MaskingIns, dag ZeroMaskingIns,
+                                  string OpcodeStr,
+                                  string AttSrcAsm, string IntelSrcAsm,
+                                  dag RHS, dag MaskingRHS,
+                                  string MaskingConstraint = "",
+                                  InstrItinClass itin = NoItinerary,
+                                  bit IsCommutable = 0> :
+  AVX512_maskable_custom<O, F, Outs, Ins, MaskingIns, ZeroMaskingIns, OpcodeStr,
+                         AttSrcAsm, IntelSrcAsm,
+                         [(set _.RC:$dst, RHS)],
+                         [(set _.RC:$dst, MaskingRHS)],
+                         [(set _.RC:$dst,
+                               (vselect _.KRCWM:$mask, RHS, _.ImmAllZerosV))],
+                         MaskingConstraint, NoItinerary, IsCommutable>;
 
 // This multiclass generates the unconditional/non-masking, the masking and
 // the zero-masking variant of the instruction.  In the masking case, the
 // perserved vector elements come from a new dummy input operand tied to $dst.
-multiclass AVX512_masking<bits<8> O, Format F, X86VectorVTInfo _,
-                          dag Outs, dag Ins, string OpcodeStr,
-                          string AttSrcAsm, string IntelSrcAsm,
-                          dag RHS, InstrItinClass itin = NoItinerary,
-                          bit IsCommutable = 0> :
-   AVX512_masking_common<O, F, _, Outs, Ins,
-                         !con((ins _.RC:$src0, _.KRCWM:$mask), Ins),
-                         !con((ins _.KRCWM:$mask), Ins),
-                         OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
-                         (vselect _.KRCWM:$mask, RHS, _.RC:$src0),
-                         "$src0 = $dst", itin, IsCommutable>;
+multiclass AVX512_maskable<bits<8> O, Format F, X86VectorVTInfo _,
+                           dag Outs, dag Ins, string OpcodeStr,
+                           string AttSrcAsm, string IntelSrcAsm,
+                           dag RHS, InstrItinClass itin = NoItinerary,
+                           bit IsCommutable = 0> :
+   AVX512_maskable_common<O, F, _, Outs, Ins,
+                          !con((ins _.RC:$src0, _.KRCWM:$mask), Ins),
+                          !con((ins _.KRCWM:$mask), Ins),
+                          OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
+                          (vselect _.KRCWM:$mask, RHS, _.RC:$src0),
+                          "$src0 = $dst", itin, IsCommutable>;
 
-// Similar to AVX512_masking but in this case one of the source operands
+// Similar to AVX512_maskable but in this case one of the source operands
 // ($src1) is already tied to $dst so we just use that for the preserved
 // vector elements.  NOTE that the NonTiedIns (the ins dag) should exclude
 // $src1.
-multiclass AVX512_masking_3src<bits<8> O, Format F, X86VectorVTInfo _,
-                               dag Outs, dag NonTiedIns, string OpcodeStr,
-                               string AttSrcAsm, string IntelSrcAsm,
-                               dag RHS> :
-   AVX512_masking_common<O, F, _, Outs,
-                         !con((ins _.RC:$src1), NonTiedIns),
-                         !con((ins _.RC:$src1, _.KRCWM:$mask), NonTiedIns),
-                         !con((ins _.RC:$src1, _.KRCWM:$mask), NonTiedIns),
-                         OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
-                         (vselect _.KRCWM:$mask, RHS, _.RC:$src1)>;
+multiclass AVX512_maskable_3src<bits<8> O, Format F, X86VectorVTInfo _,
+                                dag Outs, dag NonTiedIns, string OpcodeStr,
+                                string AttSrcAsm, string IntelSrcAsm,
+                                dag RHS> :
+   AVX512_maskable_common<O, F, _, Outs,
+                          !con((ins _.RC:$src1), NonTiedIns),
+                          !con((ins _.RC:$src1, _.KRCWM:$mask), NonTiedIns),
+                          !con((ins _.RC:$src1, _.KRCWM:$mask), NonTiedIns),
+                          OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
+                          (vselect _.KRCWM:$mask, RHS, _.RC:$src1)>;
 
 
-multiclass AVX512_masking_in_asm<bits<8> O, Format F, X86VectorVTInfo _,
-                                 dag Outs, dag Ins,
-                                 string OpcodeStr,
-                                 string AttSrcAsm, string IntelSrcAsm,
-                                 list<dag> Pattern> :
-   AVX512_masking_custom<O, F, Outs, Ins,
-                         !con((ins _.RC:$src0, _.KRCWM:$mask), Ins),
-                         !con((ins _.KRCWM:$mask), Ins),
-                         OpcodeStr, AttSrcAsm, IntelSrcAsm, Pattern, [], [],
-                         "$src0 = $dst">;
+multiclass AVX512_maskable_in_asm<bits<8> O, Format F, X86VectorVTInfo _,
+                                  dag Outs, dag Ins,
+                                  string OpcodeStr,
+                                  string AttSrcAsm, string IntelSrcAsm,
+                                  list<dag> Pattern> :
+   AVX512_maskable_custom<O, F, Outs, Ins,
+                          !con((ins _.RC:$src0, _.KRCWM:$mask), Ins),
+                          !con((ins _.KRCWM:$mask), Ins),
+                          OpcodeStr, AttSrcAsm, IntelSrcAsm, Pattern, [], [],
+                          "$src0 = $dst">;
 
 // Bitcasts between 512-bit vector types. Return the original type since
 // no instruction is needed for the conversion
@@ -417,7 +417,7 @@ multiclass vextract_for_size<int Opcode,
                              PatFrag vextract_extract,
                              SDNodeXForm EXTRACT_get_vextract_imm> {
   let hasSideEffects = 0, ExeDomain = To.ExeDomain in {
-    defm rr : AVX512_masking_in_asm<Opcode, MRMDestReg, To, (outs To.RC:$dst),
+    defm rr : AVX512_maskable_in_asm<Opcode, MRMDestReg, To, (outs To.RC:$dst),
                 (ins VR512:$src1, i8imm:$idx),
                 "vextract" # To.EltTypeName # "x4",
                 "$idx, $src1", "$src1, $idx",
@@ -2510,7 +2510,7 @@ defm VMOVNTPS : avx512_movnt_vl<0x2B, "vmovntps", alignednontemporalstore,
 multiclass avx512_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
                            X86VectorVTInfo _, OpndItins itins,
                            bit IsCommutable = 0> {
-  defm rr : AVX512_masking<opc, MRMSrcReg, _, (outs _.RC:$dst),
+  defm rr : AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
                     (ins _.RC:$src1, _.RC:$src2), OpcodeStr##_.Suffix,
                     "$src2, $src1", "$src1, $src2",
                     (_.VT (OpNode _.RC:$src1, _.RC:$src2)),
@@ -2518,14 +2518,14 @@ multiclass avx512_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
             AVX512BIBase, EVEX_4V;
 
   let mayLoad = 1 in {
-    defm rm : AVX512_masking<opc, MRMSrcMem, _, (outs _.RC:$dst),
+    defm rm : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                     (ins _.RC:$src1, _.MemOp:$src2), OpcodeStr##_.Suffix,
                     "$src2, $src1", "$src1, $src2",
                     (_.VT (OpNode _.RC:$src1,
                                   (bitconvert (_.LdFrag addr:$src2)))),
                     itins.rm>,
               AVX512BIBase, EVEX_4V;
-    defm rmb : AVX512_masking<opc, MRMSrcMem, _, (outs _.RC:$dst),
+    defm rmb : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                     (ins _.RC:$src1, _.ScalarMemOp:$src2), OpcodeStr##_.Suffix,
                     "${src2}"##_.BroadcastStr##", $src1",
                     "$src1, ${src2}"##_.BroadcastStr,
@@ -3220,7 +3220,7 @@ let Predicates = [HasAVX512] in {
 let Constraints = "$src1 = $dst" in {
 multiclass avx512_fma3p_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
                            X86VectorVTInfo _> {
-  defm r: AVX512_masking_3src<opc, MRMSrcReg, _, (outs _.RC:$dst),
+  defm r: AVX512_maskable_3src<opc, MRMSrcReg, _, (outs _.RC:$dst),
           (ins _.RC:$src2, _.RC:$src3),
           OpcodeStr, "$src3, $src2", "$src2, $src3",
           (_.VT (OpNode _.RC:$src1, _.RC:$src2, _.RC:$src3))>,
@@ -4766,7 +4766,7 @@ def : Pat<(v8i64 (X86Shufp VR512:$src1,
           (VSHUFPDZrmi VR512:$src1, addr:$src2, imm:$imm)>;
 
 multiclass avx512_valign<X86VectorVTInfo _> {
-  defm rri : AVX512_masking<0x03, MRMSrcReg, _, (outs _.RC:$dst),
+  defm rri : AVX512_maskable<0x03, MRMSrcReg, _, (outs _.RC:$dst),
                      (ins _.RC:$src1, _.RC:$src2, i8imm:$src3),
                      "valign"##_.Suffix,
                      "$src3, $src2, $src1", "$src1, $src2, $src3",
