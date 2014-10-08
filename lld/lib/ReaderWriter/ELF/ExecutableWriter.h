@@ -30,6 +30,7 @@ public:
         _runtimeFile(new CRuntimeFile<ELFT>(context)) {}
 
 protected:
+  virtual void buildDynamicSymbolTable(const File &file);
   virtual void addDefaultAtoms();
   virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &);
   virtual void finalizeDefaultAtomValues();
@@ -41,6 +42,25 @@ protected:
 //===----------------------------------------------------------------------===//
 //  ExecutableWriter
 //===----------------------------------------------------------------------===//
+template<class ELFT>
+void ExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
+  for (auto sec : this->_layout.sections())
+    if (auto section = dyn_cast<AtomSection<ELFT>>(sec))
+      for (const auto &atom : section->atoms()) {
+        const DefinedAtom *da = dyn_cast<const DefinedAtom>(atom->_atom);
+        if (!da)
+          continue;
+        if (da->dynamicExport() != DefinedAtom::dynamicExportAlways &&
+            !this->_context.isDynamicallyExportedSymbol(da->name()) &&
+            !(this->_context.shouldExportDynamic() &&
+              da->scope() == Atom::Scope::scopeGlobal))
+          continue;
+        this->_dynamicSymbolTable->addSymbol(atom->_atom, section->ordinal(),
+                                             atom->_virtualAddr, atom);
+      }
+
+  OutputELFWriter<ELFT>::buildDynamicSymbolTable(file);
+}
 
 /// \brief Add absolute symbols by default. These are linker added
 /// absolute symbols

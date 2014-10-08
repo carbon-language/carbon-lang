@@ -179,15 +179,6 @@ void OutputELFWriter<ELFT>::buildStaticSymbolTable(const File &file) {
 template <class ELFT>
 void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   ScopedTask task(getDefaultDomain(), "buildDynamicSymbolTable");
-  for (auto sec : this->_layout.sections())
-    if (auto section = dyn_cast<AtomSection<ELFT>>(sec))
-      for (const auto &atom : section->atoms()) {
-        const DefinedAtom *da = dyn_cast<const DefinedAtom>(atom->_atom);
-        if (da && (da->dynamicExport() == DefinedAtom::dynamicExportAlways ||
-                   _context.isDynamicallyExportedSymbol(da->name())))
-          _dynamicSymbolTable->addSymbol(atom->_atom, section->ordinal(),
-                                         atom->_virtualAddr, atom);
-      }
   for (const auto &sla : file.sharedLibrary()) {
     if (isDynSymEntryRequired(sla))
       _dynamicSymbolTable->addSymbol(sla, ELF::SHN_UNDEF);

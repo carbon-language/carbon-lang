@@ -152,10 +152,13 @@ public:
 
   void setTriple(llvm::Triple trip) { _triple = trip; }
   void setNoInhibitExec(bool v) { _noInhibitExec = v; }
+  void setExportDynamic(bool v) { _exportDynamic = v; }
   void setIsStaticExecutable(bool v) { _isStaticExecutable = v; }
   void setMergeCommonStrings(bool v) { _mergeCommonStrings = v; }
   void setUseShlibUndefines(bool use) { _useShlibUndefines = use; }
   void setOutputELFType(uint32_t type) { _outputELFType = type; }
+
+  bool shouldExportDynamic() const { return _exportDynamic; }
 
   void createInternalFiles(std::vector<std::unique_ptr<File>> &) const override;
 
@@ -283,6 +286,7 @@ protected:
   uint64_t _baseAddress;
   bool _isStaticExecutable;
   bool _noInhibitExec;
+  bool _exportDynamic;
   bool _mergeCommonStrings;
   bool _runLayoutPass;
   bool _useShlibUndefines;

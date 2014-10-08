@@ -139,6 +139,12 @@ defm rpath : dashEq<"rpath", "rpath",
 def rpath_link : Separate<["-"], "rpath-link">,
      HelpText<"Specifies the first set of directories to search">,
      Group<grp_dynlibexec>;
+def export_dynamic : Flag<["--"], "export-dynamic">,
+     HelpText<"Add all symbols to the dynamic symbol table"
+              " when creating executables">,
+     Group<grp_main>;
+def alias_export_dynamic: Flag<["-"], "E">,
+      Alias<export_dynamic>;
 
 //===----------------------------------------------------------------------===//
 /// Dynamic Library Options

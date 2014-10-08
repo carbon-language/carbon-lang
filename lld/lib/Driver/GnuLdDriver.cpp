@@ -372,6 +372,10 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->setAllowRemainingUndefines(true);
       break;
 
+    case OPT_export_dynamic:
+      ctx->setExportDynamic(true);
+      break;
+
     case OPT_merge_strings:
       ctx->setMergeCommonStrings(true);
       break;
