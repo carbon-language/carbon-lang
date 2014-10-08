@@ -14,33 +14,49 @@
 #ifndef LLVM_CLANG_LIB_CODEGEN_CGOPENMPRUNTIME_H
 #define LLVM_CLANG_LIB_CODEGEN_CGOPENMPRUNTIME_H
 
+#include "CodeGenFunction.h"
+#include "clang/AST/StmtOpenMP.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 
-namespace llvm {
-class AllocaInst;
-class CallInst;
-class GlobalVariable;
-class Constant;
-class Function;
-class Module;
-class StructLayout;
-class ArrayType;
-class FunctionType;
-class StructType;
-class Type;
-class Value;
-} // namespace llvm
-
 namespace clang {
 
 namespace CodeGen {
 
-class CodeGenFunction;
-class CodeGenModule;
+/// \brief API for captured statement code generation in OpenMP constructs.
+class CGOpenMPRegionInfo : public CodeGenFunction::CGCapturedStmtInfo {
+public:
+  CGOpenMPRegionInfo(const OMPExecutableDirective &D, const CapturedStmt &S,
+                     const VarDecl *ThreadIDVar)
+      : CGCapturedStmtInfo(S, CR_OpenMP), ThreadIDVar(ThreadIDVar),
+        Directive(D) {}
+
+  virtual ~CGOpenMPRegionInfo() override{};
+
+  /// \brief Gets a variable or parameter for storing global thread id
+  /// inside OpenMP construct.
+  const VarDecl *getThreadIDVariable() const { return ThreadIDVar; }
+
+  static bool classof(const CGCapturedStmtInfo *Info) {
+    return Info->getKind() == CR_OpenMP;
+  }
+
+  /// \brief Emit the captured statement body.
+  virtual void EmitBody(CodeGenFunction &CGF, Stmt *S) override;
+
+  /// \brief Get the name of the capture helper.
+  virtual StringRef getHelperName() const override { return ".omp_outlined."; }
+
+private:
+  /// \brief A variable or parameter storing global thread id for OpenMP
+  /// constructs.
+  const VarDecl *ThreadIDVar;
+  /// \brief OpenMP executable directive associated with the region.
+  const OMPExecutableDirective &Directive;
+};
 
 class CGOpenMPRuntime {
 public:
@@ -76,7 +92,9 @@ public:
     OMPRTL__kmpc_critical,
     // Call to void __kmpc_end_critical(ident_t *loc, kmp_int32 global_tid,
     // kmp_critical_name *crit);
-    OMPRTL__kmpc_end_critical
+    OMPRTL__kmpc_end_critical,
+    // Call to void __kmpc_barrier(ident_t *loc, kmp_int32 global_tid);
+    OMPRTL__kmpc_barrier
   };
 
 private:
@@ -139,23 +157,14 @@ private:
   /// \brief Map of local debug location and functions.
   typedef llvm::DenseMap<llvm::Function *, llvm::Value *> OpenMPLocMapTy;
   OpenMPLocMapTy OpenMPLocMap;
-  /// \brief Map of local gtid and functions.
-  typedef llvm::DenseMap<llvm::Function *, llvm::Value *> OpenMPGtidMapTy;
-  OpenMPGtidMapTy OpenMPGtidMap;
+  /// \brief Map of local ThreadID and functions.
+  typedef llvm::DenseMap<llvm::Function *, llvm::Value *> OpenMPThreadIDMapTy;
+  OpenMPThreadIDMapTy OpenMPThreadIDMap;
   /// \brief Type kmp_critical_name, originally defined as typedef kmp_int32
   /// kmp_critical_name[8];
   llvm::ArrayType *KmpCriticalNameTy;
   /// \brief Map of critical regions names and the corresponding lock objects.
   llvm::StringMap<llvm::Value *, llvm::BumpPtrAllocator> CriticalRegionVarNames;
-
-public:
-  explicit CGOpenMPRuntime(CodeGenModule &CGM);
-  virtual ~CGOpenMPRuntime() {}
-
-  /// \brief Cleans up references to the objects in finished function.
-  /// \param CGF Reference to finished CodeGenFunction.
-  ///
-  void FunctionFinished(CodeGenFunction &CGF);
 
   /// \brief Emits object of ident_t type with info for source location.
   /// \param CGF Reference to current CodeGenFunction.
@@ -165,13 +174,6 @@ public:
   llvm::Value *
   EmitOpenMPUpdateLocation(CodeGenFunction &CGF, SourceLocation Loc,
                            OpenMPLocationFlags Flags = OMP_IDENT_KMPC);
-
-  /// \brief Generates global thread number value.
-  /// \param CGF Reference to current CodeGenFunction.
-  /// \param Loc Clang source location.
-  ///
-  llvm::Value *GetOpenMPGlobalThreadNum(CodeGenFunction &CGF,
-                                        SourceLocation Loc);
 
   /// \brief Returns pointer to ident_t type;
   llvm::Type *getIdentTyPointerTy();
@@ -183,6 +185,33 @@ public:
   /// \param Function OpenMP runtime function.
   /// \return Specified function.
   llvm::Constant *CreateRuntimeFunction(OpenMPRTLFunction Function);
+
+  /// \brief Gets thread id value for the current thread.
+  /// \param CGF Reference to current CodeGenFunction.
+  /// \param Loc Clang source location.
+  ///
+  llvm::Value *GetOpenMPThreadID(CodeGenFunction &CGF, SourceLocation Loc);
+
+public:
+  explicit CGOpenMPRuntime(CodeGenModule &CGM);
+  virtual ~CGOpenMPRuntime() {}
+
+  /// \brief Cleans up references to the objects in finished function.
+  /// \param CGF Reference to finished CodeGenFunction.
+  ///
+  void FunctionFinished(CodeGenFunction &CGF);
+
+  /// \brief Emits code for parallel call of the \a OutlinedFn with variables
+  /// captured in a record which address is stored in \a CapturedStruct.
+  /// \param CGF Reference to current CodeGenFunction.
+  /// \param Loc Clang source location.
+  /// \param OutlinedFn Outlined function to be run in parallel threads.
+  /// \param CapturedStruct A pointer to the record with the references to
+  /// variables used in \a OutlinedFn function.
+  ///
+  virtual void EmitOMPParallelCall(CodeGenFunction &CGF, SourceLocation Loc,
+                                   llvm::Value *OutlinedFn,
+                                   llvm::Value *CapturedStruct);
 
   /// \brief Returns corresponding lock object for the specified critical region
   /// name. If the lock object does not exist it is created, otherwise the
@@ -208,6 +237,14 @@ public:
   virtual void EmitOMPCriticalRegionEnd(CodeGenFunction &CGF,
                                         llvm::Value *RegionLock,
                                         SourceLocation Loc);
+
+  /// \brief Emits a barrier for OpenMP threads.
+  /// \param CGF Reference to current CodeGenFunction.
+  /// \param Loc Clang source location.
+  /// \param Flags Flags for the barrier.
+  ///
+  virtual void EmitOMPBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,
+                                  OpenMPLocationFlags Flags);
 };
 } // namespace CodeGen
 } // namespace clang

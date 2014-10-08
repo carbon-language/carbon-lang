@@ -14,7 +14,7 @@ class S2 {
 
 public:
   S2() : a(0) {}
-  S2(S2 &s2) : a(s2.a) {}
+  S2(const S2 &s2) : a(s2.a) {}
   static float S2s;
   static const float S2sc;
 };
@@ -26,23 +26,23 @@ class S3 {
   S3 &operator=(const S3 &s3);
 
 public:
-  S3() : a(0) {}
-  S3(S3 &s3) : a(s3.a) {}
+  S3() : a(0) {} // expected-note {{candidate constructor not viable: requires 0 arguments, but 1 was provided}}
+  S3(S3 &s3) : a(s3.a) {} // expected-note {{candidate constructor not viable: 1st argument ('const S3') would lose const qualifier}}
 };
 const S3 c;
 const S3 ca[5];
 extern const int f;
-class S4 { // expected-note 2 {{'S4' declared here}}
+class S4 {
   int a;
   S4();
-  S4(const S4 &s4);
+  S4(const S4 &s4); // expected-note 2 {{implicitly declared private here}}
 
 public:
   S4(int v) : a(v) {}
 };
-class S5 { // expected-note 4 {{'S5' declared here}}
+class S5 {
   int a;
-  S5(const S5 &s5) : a(s5.a) {}
+  S5(const S5 &s5) : a(s5.a) {} // expected-note 4 {{implicitly declared private here}}
 
 public:
   S5() : a(0) {}
@@ -62,8 +62,8 @@ S3 h;
 
 template <class I, class C>
 int foomain(int argc, char **argv) {
-  I e(4); // expected-note {{'e' defined here}}
-  C g(5); // expected-note 2 {{'g' defined here}}
+  I e(4);
+  C g(5);
   int i;
   int &j = i; // expected-note {{'j' defined here}}
 #pragma omp parallel
@@ -107,7 +107,7 @@ int foomain(int argc, char **argv) {
   for (int k = 0; k < argc; ++k)
     ++k;
 #pragma omp parallel
-#pragma omp for firstprivate(e, g) // expected-error 2 {{firstprivate variable must have an accessible, unambiguous copy constructor}}
+#pragma omp for firstprivate(e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{calling a private constructor of class 'S5'}}
   for (int k = 0; k < argc; ++k)
     ++k;
 #pragma omp parallel
@@ -138,7 +138,7 @@ int foomain(int argc, char **argv) {
   for (int k = 0; k < argc; ++k)
     ++k;
 #pragma omp parallel
-#pragma omp for lastprivate(g) firstprivate(g) // expected-error {{firstprivate variable must have an accessible, unambiguous copy constructor}}
+#pragma omp for lastprivate(g) firstprivate(g) // expected-error {{calling a private constructor of class 'S5'}}
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel private(i) // expected-note {{defined as private}}
@@ -155,8 +155,8 @@ int foomain(int argc, char **argv) {
 int main(int argc, char **argv) {
   const int d = 5;
   const int da[5] = {0};
-  S4 e(4); // expected-note {{'e' defined here}}
-  S5 g(5); // expected-note 2 {{'g' defined here}}
+  S4 e(4);
+  S5 g(5);
   S3 m;
   S6 n(2);
   int i;
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
-#pragma omp for firstprivate(a, b, c, d, f) // expected-error {{firstprivate variable with incomplete type 'S1'}}
+#pragma omp for firstprivate(a, b, c, d, f) // expected-error {{firstprivate variable with incomplete type 'S1'}} expected-error {{no matching constructor for initialization of 'const S3'}}
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
@@ -235,7 +235,7 @@ int main(int argc, char **argv) {
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
-#pragma omp for firstprivate(e, g) // expected-error 2 {{firstprivate variable must have an accessible, unambiguous copy constructor}}
+#pragma omp for firstprivate(e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{calling a private constructor of class 'S5'}}
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
-#pragma omp for lastprivate(g) firstprivate(g) // expected-error {{firstprivate variable must have an accessible, unambiguous copy constructor}}
+#pragma omp for lastprivate(g) firstprivate(g) // expected-error {{calling a private constructor of class 'S5'}}
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
@@ -291,3 +291,4 @@ int main(int argc, char **argv) {
 
   return foomain<S4, S5>(argc, argv); // expected-note {{in instantiation of function template specialization 'foomain<S4, S5>' requested here}}
 }
+

@@ -1064,7 +1064,7 @@ static bool isCapturedBy(const VarDecl &var, const Expr *e) {
 
 /// \brief Determine whether the given initializer is trivial in the sense
 /// that it requires no code to be generated.
-static bool isTrivialInitializer(const Expr *Init) {
+bool CodeGenFunction::isTrivialInitializer(const Expr *Init) {
   if (!Init)
     return true;
 
