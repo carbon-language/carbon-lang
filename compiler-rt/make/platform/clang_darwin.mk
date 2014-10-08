@@ -157,7 +157,7 @@ CFLAGS.eprintf		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.10.4		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 # FIXME: We can't build ASAN with our stub SDK yet.
 CFLAGS.asan_osx_dynamic := \
-	$(CFLAGS) -mmacosx-version-min=10.6 -fno-builtin \
+	$(CFLAGS) -mmacosx-version-min=10.7 -fno-builtin \
 	-gline-tables-only \
 	-DMAC_INTERPOSE_FUNCTIONS=1
 

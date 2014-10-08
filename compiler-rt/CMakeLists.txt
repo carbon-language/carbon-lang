@@ -299,7 +299,7 @@ if(APPLE)
   if(COMPILER_RT_USES_LIBCXX)
     set(SANITIZER_MIN_OSX_VERSION 10.7)
   else()
-    set(SANITIZER_MIN_OSX_VERSION 10.6)
+    set(SANITIZER_MIN_OSX_VERSION 10.7)
   endif()
   set(CMAKE_OSX_DEPLOYMENT_TARGET "") # We're setting the flag manually below.
   set(DARWIN_osx_CFLAGS -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION})
