@@ -449,6 +449,29 @@ multiclass vextract_for_size<int Opcode,
   def : Pat<(AltTo.VT (extract_subvector (AltFrom.VT VR512:$src), (iPTR 0))),
             (AltTo.VT
                (EXTRACT_SUBREG (AltFrom.VT VR512:$src), AltTo.SubRegIdx))>;
+
+  // Intrinsic call with masking.
+  def : Pat<(!cast<Intrinsic>("int_x86_avx512_mask_vextract" # To.EltTypeName #
+                              "x4_512")
+                VR512:$src1, (iPTR imm:$idx), To.RC:$src0, GR8:$mask),
+            (!cast<Instruction>(NAME # To.EltSize # "x4rrk") To.RC:$src0,
+                (v4i1 (COPY_TO_REGCLASS GR8:$mask, VK4WM)),
+                VR512:$src1, imm:$idx)>;
+
+  // Intrinsic call with zero-masking.
+  def : Pat<(!cast<Intrinsic>("int_x86_avx512_mask_vextract" # To.EltTypeName #
+                              "x4_512")
+                VR512:$src1, (iPTR imm:$idx), To.ImmAllZerosV, GR8:$mask),
+            (!cast<Instruction>(NAME # To.EltSize # "x4rrkz")
+                (v4i1 (COPY_TO_REGCLASS GR8:$mask, VK4WM)),
+                VR512:$src1, imm:$idx)>;
+
+  // Intrinsic call without masking.
+  def : Pat<(!cast<Intrinsic>("int_x86_avx512_mask_vextract" # To.EltTypeName #
+                              "x4_512")
+                VR512:$src1, (iPTR imm:$idx), To.ImmAllZerosV, (i8 -1)),
+            (!cast<Instruction>(NAME # To.EltSize # "x4rr")
+                VR512:$src1, imm:$idx)>;
 }
 
 multiclass vextract_for_type<ValueType EltVT32, int Opcode32,

@@ -1791,6 +1791,23 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx2_vinserti128 : GCCBuiltin<"__builtin_ia32_insert128i256">,
               Intrinsic<[llvm_v4i64_ty], [llvm_v4i64_ty,
                          llvm_v2i64_ty, llvm_i8_ty], [IntrNoMem]>;
+
+  def int_x86_avx512_mask_vextractf32x4_512 :
+      GCCBuiltin<"__builtin_ia32_extractf32x4_mask">,
+                 Intrinsic<[llvm_v4f32_ty], [llvm_v16f32_ty, llvm_i8_ty,
+                           llvm_v4f32_ty, llvm_i8_ty], [IntrNoMem]>;
+  def int_x86_avx512_mask_vextracti32x4_512 :
+      GCCBuiltin<"__builtin_ia32_extracti32x4_mask">,
+                 Intrinsic<[llvm_v4i32_ty], [llvm_v16i32_ty, llvm_i8_ty,
+                           llvm_v4i32_ty, llvm_i8_ty], [IntrNoMem]>;
+  def int_x86_avx512_mask_vextractf64x4_512 :
+      GCCBuiltin<"__builtin_ia32_extractf64x4_mask">,
+                 Intrinsic<[llvm_v4f64_ty], [llvm_v8f64_ty, llvm_i8_ty,
+                           llvm_v4f64_ty, llvm_i8_ty], [IntrNoMem]>;
+  def int_x86_avx512_mask_vextracti64x4_512 :
+      GCCBuiltin<"__builtin_ia32_extracti64x4_mask">,
+                 Intrinsic<[llvm_v4i64_ty], [llvm_v8i64_ty, llvm_i8_ty,
+                           llvm_v4i64_ty, llvm_i8_ty], [IntrNoMem]>;
 }
 
 // Conditional load ops
