@@ -479,7 +479,7 @@ void MemoryAccess::assumeNoOutOfBound(const IRAccess &Access) {
 
 MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
                            ScopStmt *Statement, const ScopArrayInfo *SAI)
-    : Type(getMemoryAccessType(Access)), Statement(Statement), Inst(AccInst),
+    : AccType(getMemoryAccessType(Access)), Statement(Statement), Inst(AccInst),
       newAccessRelation(nullptr) {
 
   isl_ctx *Ctx = Statement->getIslCtx();
@@ -553,7 +553,7 @@ raw_ostream &polly::operator<<(raw_ostream &OS,
 }
 
 void MemoryAccess::print(raw_ostream &OS) const {
-  switch (Type) {
+  switch (AccType) {
   case READ:
     OS.indent(12) << "ReadAccess :=\t";
     break;

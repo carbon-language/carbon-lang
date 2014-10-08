@@ -165,7 +165,7 @@ private:
   const MemoryAccess &operator=(const MemoryAccess &) LLVM_DELETED_FUNCTION;
 
   isl_map *AccessRelation;
-  enum AccessType Type;
+  enum AccessType AccType;
 
   /// @brief The base address (e.g., A for A[i+j]).
   Value *BaseAddr;
@@ -221,19 +221,19 @@ public:
   ~MemoryAccess();
 
   /// @brief Get the type of a memory access.
-  enum AccessType getType() { return Type; }
+  enum AccessType getType() { return AccType; }
 
   /// @brief Is this a reduction like access?
   bool isReductionLike() const { return RedType != RT_NONE; }
 
   /// @brief Is this a read memory access?
-  bool isRead() const { return Type == MemoryAccess::READ; }
+  bool isRead() const { return AccType == MemoryAccess::READ; }
 
   /// @brief Is this a must-write memory access?
-  bool isMustWrite() const { return Type == MemoryAccess::MUST_WRITE; }
+  bool isMustWrite() const { return AccType == MemoryAccess::MUST_WRITE; }
 
   /// @brief Is this a may-write memory access?
-  bool isMayWrite() const { return Type == MemoryAccess::MAY_WRITE; }
+  bool isMayWrite() const { return AccType == MemoryAccess::MAY_WRITE; }
 
   /// @brief Is this a write memory access?
   bool isWrite() const { return isMustWrite() || isMayWrite(); }
