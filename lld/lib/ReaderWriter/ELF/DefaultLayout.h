@@ -10,6 +10,7 @@
 #ifndef LLD_READER_WRITER_ELF_DEFAULT_LAYOUT_H
 #define LLD_READER_WRITER_ELF_DEFAULT_LAYOUT_H
 
+#include "Atoms.h"
 #include "Chunk.h"
 #include "HeaderChunks.h"
 #include "Layout.h"
@@ -171,6 +172,7 @@ public:
   typedef typename std::vector<lld::AtomLayout *>::iterator AbsoluteAtomIterT;
 
   typedef llvm::DenseSet<const Atom *> AtomSetT;
+  typedef llvm::DenseSet<const SharedLibraryAtom *> SharedLibraryAtomSetT;
 
   DefaultLayout(const ELFLinkingContext &context) : _context(context) {}
 
@@ -303,6 +305,10 @@ public:
     return _referencedDynAtoms.count(a);
   }
 
+  const SharedLibraryAtomSetT &getCopiedDynAtoms() const {
+    return _copiedDynAtoms;
+  }
+
 protected:
   /// \brief Allocate a new section.
   virtual AtomSection<ELFT> *createSection(
@@ -325,6 +331,7 @@ protected:
   LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _pltRelocationTable;
   std::vector<lld::AtomLayout *> _absoluteAtoms;
   AtomSetT _referencedDynAtoms;
+  SharedLibraryAtomSetT _copiedDynAtoms;
   const ELFLinkingContext &_context;
 };
 
@@ -582,7 +589,14 @@ ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) 
       if (isa<UndefinedAtom>(reloc->target()) && isLocalReloc)
         continue;
 
-      _referencedDynAtoms.insert(reloc->target());
+      if (!_context.isCopyRelocation(*reloc)) {
+        _referencedDynAtoms.insert(reloc->target());
+        continue;
+      }
+
+      const ObjectAtom *oa = dyn_cast<ObjectAtom>(reloc->target());
+      assert (oa != nullptr && "Targets of copy relocs must be ObjectAtoms");
+      _copiedDynAtoms.insert(oa->getOriginalOwner());
     }
 
     return section->appendAtom(atom);

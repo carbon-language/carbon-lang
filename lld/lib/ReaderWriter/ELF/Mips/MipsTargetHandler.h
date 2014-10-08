@@ -62,26 +62,6 @@ public:
     }
   }
 
-  ErrorOr<const lld::AtomLayout &> addAtom(const Atom *atom) override {
-    // Maintain:
-    // 1. Set of shared library atoms referenced by regular defined atoms.
-    // 2. Set of shared library atoms have corresponding R_MIPS_COPY copies.
-    if (const auto *da = dyn_cast<DefinedAtom>(atom))
-      for (const Reference *ref : *da) {
-        if (ref->kindNamespace() == lld::Reference::KindNamespace::ELF) {
-          assert(ref->kindArch() == Reference::KindArch::Mips);
-          if (ref->kindValue() == llvm::ELF::R_MIPS_COPY)
-            _copiedDynSymNames.insert(atom->name());
-        }
-      }
-
-    return TargetLayout<ELFType>::addAtom(atom);
-  }
-
-  bool isCopied(const SharedLibraryAtom *sla) const {
-    return _copiedDynSymNames.count(sla->name());
-  }
-
   /// \brief GP offset relative to .got section.
   uint64_t getGPOffset() const { return 0x7FF0; }
 
@@ -109,7 +89,6 @@ private:
   MipsPLTSection<ELFType> *_pltSection;
   llvm::Optional<AtomLayout *> _gpAtom;
   llvm::Optional<AtomLayout *> _gpDispAtom;
-  llvm::StringSet<> _copiedDynSymNames;
 };
 
 /// \brief Mips Runtime file.

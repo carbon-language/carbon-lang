@@ -689,8 +689,11 @@ public:
 /// \brief Atom which represents an object for which a COPY relocation will be
 ///   generated.
 class ObjectAtom : public SimpleELFDefinedAtom {
+  const SharedLibraryAtom *_sla;
+
 public:
-  ObjectAtom(const File &f) : SimpleELFDefinedAtom(f) {}
+  ObjectAtom(const File &f, const SharedLibraryAtom *sla)
+      : SimpleELFDefinedAtom(f), _sla(sla) {}
 
   Scope scope() const override { return scopeGlobal; }
 
@@ -712,6 +715,8 @@ public:
   }
 
   StringRef name() const override { return _name; }
+
+  const SharedLibraryAtom *getOriginalOwner() const { return _sla; }
 
   std::string _name;
   uint64_t _size;
