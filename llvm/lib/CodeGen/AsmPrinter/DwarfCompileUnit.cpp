@@ -387,4 +387,12 @@ void DwarfCompileUnit::constructScopeDIE(
   FinalChildren.push_back(std::move(ScopeDIE));
 }
 
+void DwarfCompileUnit::addSectionDelta(DIE &Die, dwarf::Attribute Attribute,
+                                       const MCSymbol *Hi, const MCSymbol *Lo) {
+  DIEValue *Value = new (DIEValueAllocator) DIEDelta(Hi, Lo);
+  Die.addValue(Attribute, DD->getDwarfVersion() >= 4 ? dwarf::DW_FORM_sec_offset
+                                                     : dwarf::DW_FORM_data4,
+               Value);
+}
+
 } // end llvm namespace

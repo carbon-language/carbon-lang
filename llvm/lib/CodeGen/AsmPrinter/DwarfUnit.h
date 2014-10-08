@@ -300,10 +300,6 @@ public:
   /// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
   void addOpAddress(DIELoc &Die, const MCSymbol *Label);
 
-  /// addSectionDelta - Add a label delta attribute data and value.
-  void addSectionDelta(DIE &Die, dwarf::Attribute Attribute, const MCSymbol *Hi,
-                       const MCSymbol *Lo);
-
   /// addLabelDelta - Add a label delta attribute data and value.
   void addLabelDelta(DIE &Die, dwarf::Attribute Attribute, const MCSymbol *Hi,
                      const MCSymbol *Lo);
