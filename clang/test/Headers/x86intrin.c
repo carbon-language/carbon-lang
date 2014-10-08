@@ -87,6 +87,12 @@
 #ifndef __AVX512F__
 #define __AVX512F__
 #endif
+#ifndef __AVX512VL__
+#define __AVX512VL__
+#endif
+#ifndef __AVX512BW__
+#define __AVX512BW__
+#endif
 #ifndef __AVX512ER__
 #define __AVX512ER__
 #endif

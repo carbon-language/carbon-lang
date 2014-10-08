@@ -974,4 +974,30 @@ _mm512_knot(__mmask16 __M)
   return __builtin_ia32_knothi(__M);
 }
 
+/* Integer compare */
+
+static __inline__ __mmask16 __attribute__((__always_inline__, __nodebug__))
+_mm512_cmpeq_epi32_mask(__m512i __a, __m512i __b) {
+  return (__mmask16)__builtin_ia32_pcmpeqd512_mask((__v16si)__a, (__v16si)__b,
+                                                   (__mmask16)-1);
+}
+
+static __inline__ __mmask16 __attribute__((__always_inline__, __nodebug__))
+_mm512_mask_cmpeq_epi32_mask(__mmask16 __u, __m512i __a, __m512i __b) {
+  return (__mmask16)__builtin_ia32_pcmpeqd512_mask((__v16si)__a, (__v16si)__b,
+                                                   __u);
+}
+
+static __inline__ __mmask8 __attribute__((__always_inline__, __nodebug__))
+_mm512_mask_cmpeq_epi64_mask(__mmask8 __u, __m512i __a, __m512i __b) {
+  return (__mmask8)__builtin_ia32_pcmpeqq512_mask((__v8di)__a, (__v8di)__b,
+                                                  __u);
+}
+
+static __inline__ __mmask8 __attribute__((__always_inline__, __nodebug__))
+_mm512_cmpeq_epi64_mask(__m512i __a, __m512i __b) {
+  return (__mmask8)__builtin_ia32_pcmpeqq512_mask((__v8di)__a, (__v8di)__b,
+                                                  (__mmask8)-1);
+}
+
 #endif // __AVX512FINTRIN_H
