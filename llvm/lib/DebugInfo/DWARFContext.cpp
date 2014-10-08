@@ -620,15 +620,12 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile &Obj)
         uint64_t Type;
         Reloc.getType(Type);
         uint64_t SymAddr = 0;
-        // ELF relocations may need the symbol address
-        if (Obj.isELF()) {
-          object::symbol_iterator Sym = Reloc.getSymbol();
+        object::symbol_iterator Sym = Reloc.getSymbol();
+        if (Sym != Obj.symbol_end())
           Sym->getAddress(SymAddr);
-        }
 
         object::RelocVisitor V(Obj);
-        // The section address is always 0 for debug sections.
-        object::RelocToApply R(V.visit(Type, Reloc, 0, SymAddr));
+        object::RelocToApply R(V.visit(Type, Reloc, SymAddr));
         if (V.error()) {
           SmallString<32> Name;
           std::error_code ec(Reloc.getTypeName(Name));

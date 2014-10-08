@@ -2,6 +2,10 @@
 ; RUN:     llvm-dwarfdump - 2>&1 | FileCheck %s
 ; RUN: llc -filetype=obj -O0 < %s -mtriple i386-none-linux | \
 ; RUN:     llvm-dwarfdump - 2>&1 | FileCheck %s
+; RUN: llc -filetype=obj -O0 < %s -mtriple x86_64-none-mingw32 | \
+; RUN:     llvm-dwarfdump - 2>&1 | FileCheck %s
+; RUN: llc -filetype=obj -O0 < %s -mtriple i386-none-mingw32 | \
+; RUN:     llvm-dwarfdump - 2>&1 | FileCheck %s
 
 ; CHECK-NOT: failed to compute relocation
 
@@ -13,5 +17,5 @@
 !1 = metadata !{metadata !"empty.c", metadata !"/a"}
 !2 = metadata !{}
 !3 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
-!4 = metadata !{i32 2, metadata !"Debug Info Version", i32 1}
+!4 = metadata !{i32 2, metadata !"Debug Info Version", i32 2}
 !5 = metadata !{metadata !"clang version 3.6.0 "}

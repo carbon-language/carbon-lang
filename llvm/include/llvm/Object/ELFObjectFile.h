@@ -47,6 +47,8 @@ public:
 
   virtual std::error_code getSymbolVersion(SymbolRef Symb, StringRef &Version,
                                            bool &IsDefault) const = 0;
+
+  static inline bool classof(const Binary *v) { return v->isELF(); }
 };
 
 template <class ELFT> class ELFObjectFile : public ELFObjectFileBase {
