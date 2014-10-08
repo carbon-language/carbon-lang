@@ -71,7 +71,7 @@ UniversalArchs.10.4 := $(call CheckArches,i386 x86_64,10.4)
 # Configuration for targeting iOS for a couple of functions that didn't
 # make it into libSystem.
 Configs += ios
-UniversalArchs.ios := $(call CheckArches,i386 x86_64 x86_64h armv7,ios)
+UniversalArchs.ios := $(call CheckArches,i386 x86_64 x86_64h armv7 arm64,ios)
 
 # Configuration for targeting OSX. These functions may not be in libSystem
 # so we should provide our own.
@@ -80,7 +80,7 @@ UniversalArchs.osx := $(call CheckArches,i386 x86_64 x86_64h,osx)
 
 # Configuration for use with kernel/kexts.
 Configs += cc_kext
-UniversalArchs.cc_kext := $(call CheckArches,armv7 i386 x86_64 x86_64h,cc_kext)
+UniversalArchs.cc_kext := $(call CheckArches,armv7 arm64 i386 x86_64 x86_64h,cc_kext)
 
 # Configuration for use with kernel/kexts for iOS 5.0 and earlier (which used 
 # a different code generation strategy).
@@ -91,7 +91,7 @@ UniversalArchs.cc_kext_ios5 := $(call CheckArches,x86_64 x86_64h armv7,cc_kext_i
 Configs += profile_osx
 UniversalArchs.profile_osx := $(call CheckArches,i386 x86_64 x86_64h,profile_osx)
 Configs += profile_ios
-UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 x86_64h armv7,profile_ios)
+UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 x86_64h armv7 arm64,profile_ios)
 
 # Configurations which define the ASAN support functions.
 Configs += asan_osx_dynamic
@@ -116,13 +116,6 @@ UniversalArchs.cc_kext := $(filter-out armv7, $(UniversalArchs.cc_kext))
 UniversalArchs.cc_kext_ios5 := $(filter-out armv7, $(UniversalArchs.cc_kext_ios5))
 UniversalArchs.profile_ios := $(filter-out armv7, $(UniversalArchs.profile_ios))
 endif
-
-### ARM64 Support ###
-# Explicitly add these, to workaround CheckArches function not including the
-# CFLAGS, and not wanting to require an ARM64 assembler be installed.
-UniversalArchs.ios += arm64
-UniversalArchs.cc_kext += arm64
-UniversalArchs.profile_ios += arm64
 
 # If RC_SUPPORTED_ARCHS is defined, treat it as a list of the architectures we
 # are intended to support and limit what we try to build to that.
