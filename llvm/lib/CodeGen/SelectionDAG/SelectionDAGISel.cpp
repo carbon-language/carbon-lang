@@ -454,7 +454,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   // copied into vregs, emit the copies into the top of the block before
   // emitting the code for the block.
   MachineBasicBlock *EntryMBB = MF->begin();
-  const TargetRegisterInfo &TRI = *TM.getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo &TRI = *MF->getSubtarget().getRegisterInfo();
   RegInfo->EmitLiveInCopies(EntryMBB, TRI, *TII);
 
   DenseMap<unsigned, unsigned> LiveInMap;
