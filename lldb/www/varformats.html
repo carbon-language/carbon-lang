@@ -1027,10 +1027,15 @@ def function (valobj,internal_dict):<br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should be used to update the internal state of this Python object whenever the state of the variables in LLDB changes.</i><sup>[1]</sup><br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> has_children(self): <br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should return True if this object might have children, and False if this object can be guaranteed not to have children.</i><sup>[2]</sup><br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> get_value(self): <br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call can return an SBValue to be presented as the value of the synthetic value under consideration.</i><sup>[3]</sup><br/>
+			
 		</code>
 <sup>[1]</sup> This method is optional. Also, it may optionally choose to return a value (starting with SVN rev153061/LLDB-134). If it returns a value, and that value is <font color=blue><code>True</code></font>, LLDB will be allowed to cache the children and the children count it previously obtained, and will not return to the provider class to ask. If nothing, <font color=blue><code>None</code></font>, or anything other than <font color=blue><code>True</code></font> is returned, LLDB will discard the cached information and ask. Regardless, whenever necessary LLDB will call <code>update</code>.
 <br/>
 <sup>[2]</sup> This method is optional (starting with SVN rev166495/LLDB-175). While implementing it in terms of <code>num_children</code> is acceptable, implementors are encouraged to look for optimized coding alternatives whenever reasonable.
+<br/>
+<sup>[3]</sup> This method is optional (starting with SVN revision 219330). The SBValue you return here will most likely be a numeric type (int, float, ...) as its value bytes will be used as-if they were the value of the root SBValue proper. As a shortcut for this, you can inherit from lldb.SBSyntheticValueProvider, and just define get_value as other methods are defaulted in the superclass as returning default no-children responses.
 		<p>For examples of how synthetic children are created, you are encouraged to look at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/">examples/synthetic</a> in the LLDB trunk. Please, be aware that the code in those files (except bitfield/)
 			is legacy code and is not maintained.
 			You may especially want to begin looking at <a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/synthetic/bitfield">this example</a> to get

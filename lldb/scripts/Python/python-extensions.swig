@@ -1047,3 +1047,27 @@ class value(object):
     def __neq__(self, other):
         return not self.__eq__(other)
 %}
+
+%pythoncode %{
+
+class SBSyntheticValueProvider(object):
+    def __init__(self,valobj):
+        pass
+
+    def num_children(self):
+        return 0
+
+    def get_child_index(self,name):
+        return None
+
+    def get_child_at_index(self,idx):
+        return None
+
+    def update(self):
+        pass
+
+    def has_children(self):
+        return False
+
+
+%}
