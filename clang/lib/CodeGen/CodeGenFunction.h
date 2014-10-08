@@ -113,7 +113,6 @@ class CodeGenFunction : public CodeGenTypeCache {
   void operator=(const CodeGenFunction &) LLVM_DELETED_FUNCTION;
 
   friend class CGCXXABI;
-  friend class CGOpenMPRegionInfo;
 public:
   /// A jump destination is an abstract label, branching to which may
   /// require a jump out through normal cleanups.
@@ -1827,10 +1826,6 @@ public:
   typedef void SpecialInitFn(CodeGenFunction &Init, const VarDecl &D,
                              llvm::Value *Address);
 
-  /// \brief Determine whether the given initializer is trivial in the sense
-  /// that it requires no code to be generated.
-  bool isTrivialInitializer(const Expr *Init);
-
   /// EmitAutoVarDecl - Emit an auto variable declaration.
   ///
   /// This function can be called with a null (unreachable) insert point.
@@ -1996,16 +1991,8 @@ public:
                            ArrayRef<const Attr *> Attrs = None);
 
   llvm::Function *EmitCapturedStmt(const CapturedStmt &S, CapturedRegionKind K);
-  void GenerateCapturedStmtFunctionProlog(const CapturedStmt &S);
-  llvm::Function *GenerateCapturedStmtFunctionEpilog(const CapturedStmt &S);
   llvm::Function *GenerateCapturedStmtFunction(const CapturedStmt &S);
   llvm::Value *GenerateCapturedStmtArgument(const CapturedStmt &S);
-  typedef llvm::DenseMap<const Decl *, llvm::Value *> OuterDeclMapTy;
-  void EmitOMPAggregateAssign(LValue OriginalAddr, llvm::Value *PrivateAddr,
-                              const Expr *AssignExpr, QualType Type,
-                              const VarDecl *VDInit);
-  void EmitOMPFirstprivateClause(const OMPExecutableDirective &D,
-                                 OuterDeclMapTy &OuterDeclMap);
 
   void EmitOMPParallelDirective(const OMPParallelDirective &S);
   void EmitOMPSimdDirective(const OMPSimdDirective &S);

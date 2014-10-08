@@ -986,8 +986,6 @@ public:
 /// with the variables 'a' and 'b'.
 ///
 class OMPFirstprivateClause : public OMPVarListClause<OMPFirstprivateClause> {
-  friend class OMPClauseReader;
-
   /// \brief Build clause with number of variables \a N.
   ///
   /// \param StartLoc Starting location of the clause.
@@ -1008,33 +1006,6 @@ class OMPFirstprivateClause : public OMPVarListClause<OMPFirstprivateClause> {
       : OMPVarListClause<OMPFirstprivateClause>(
             OMPC_firstprivate, SourceLocation(), SourceLocation(),
             SourceLocation(), N) {}
-  /// \brief Sets the list of references to private copies with initializers for
-  /// new private variables.
-  /// \param VL List of references.
-  void setPrivateCopies(ArrayRef<Expr *> VL);
-
-  /// \brief Gets the list of references to private copies with initializers for
-  /// new private variables.
-  MutableArrayRef<Expr *> getPrivateCopies() {
-    return MutableArrayRef<Expr *>(varlist_end(), varlist_size());
-  }
-  ArrayRef<const Expr *> getPrivateCopies() const {
-    return llvm::makeArrayRef(varlist_end(), varlist_size());
-  }
-
-  /// \brief Sets the list of references to initializer variables for new
-  /// private variables.
-  /// \param VL List of references.
-  void setInits(ArrayRef<Expr *> VL);
-
-  /// \brief Gets the list of references to initializer variables for new
-  /// private variables.
-  MutableArrayRef<Expr *> getInits() {
-    return MutableArrayRef<Expr *>(getPrivateCopies().end(), varlist_size());
-  }
-  ArrayRef<const Expr *> getInits() const {
-    return llvm::makeArrayRef(getPrivateCopies().end(), varlist_size());
-  }
 
 public:
   /// \brief Creates clause with a list of variables \a VL.
@@ -1043,49 +1014,17 @@ public:
   /// \param StartLoc Starting location of the clause.
   /// \param LParenLoc Location of '('.
   /// \param EndLoc Ending location of the clause.
-  /// \param VL List of references to the original variables.
-  /// \param PrivateVL List of references to private copies with initializers.
-  /// \param InitVL List of references to auto generated variables used for
-  /// initialization of a single array element. Used if firstprivate variable is
-  /// of array type.
+  /// \param VL List of references to the variables.
   ///
   static OMPFirstprivateClause *
   Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation LParenLoc,
-         SourceLocation EndLoc, ArrayRef<Expr *> VL, ArrayRef<Expr *> PrivateVL,
-         ArrayRef<Expr *> InitVL);
+         SourceLocation EndLoc, ArrayRef<Expr *> VL);
   /// \brief Creates an empty clause with the place for \a N variables.
   ///
   /// \param C AST context.
   /// \param N The number of variables.
   ///
   static OMPFirstprivateClause *CreateEmpty(const ASTContext &C, unsigned N);
-
-  typedef MutableArrayRef<Expr *>::iterator private_copies_iterator;
-  typedef ArrayRef<const Expr *>::iterator private_copies_const_iterator;
-  typedef llvm::iterator_range<private_copies_iterator> private_copies_range;
-  typedef llvm::iterator_range<private_copies_const_iterator>
-      private_copies_const_range;
-
-  private_copies_range private_copies() {
-    return private_copies_range(getPrivateCopies().begin(),
-                                getPrivateCopies().end());
-  }
-  private_copies_const_range private_copies() const {
-    return private_copies_const_range(getPrivateCopies().begin(),
-                                      getPrivateCopies().end());
-  }
-
-  typedef MutableArrayRef<Expr *>::iterator inits_iterator;
-  typedef ArrayRef<const Expr *>::iterator inits_const_iterator;
-  typedef llvm::iterator_range<inits_iterator> inits_range;
-  typedef llvm::iterator_range<inits_const_iterator> inits_const_range;
-
-  inits_range inits() {
-    return inits_range(getInits().begin(), getInits().end());
-  }
-  inits_const_range inits() const {
-    return inits_const_range(getInits().begin(), getInits().end());
-  }
 
   StmtRange children() {
     return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),

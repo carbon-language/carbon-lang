@@ -14,7 +14,7 @@ class S2 {
 
 public:
   S2() : a(0) {}
-  S2(const S2 &s2) : a(s2.a) {}
+  S2(S2 &s2) : a(s2.a) {}
   static float S2s;
   static const float S2sc;
 };
@@ -26,23 +26,23 @@ class S3 {
 
 public:
   S3() : a(0) {}
-  S3(const S3 &s3) : a(s3.a) {}
+  S3(S3 &s3) : a(s3.a) {}
 };
 const S3 c;
 const S3 ca[5];
 extern const int f;
-class S4 {
+class S4 { // expected-note {{'S4' declared here}}
   int a;
   S4();
-  S4(const S4 &s4); // expected-note 2 {{implicitly declared private here}}
+  S4(const S4 &s4);
 
 public:
   S4(int v) : a(v) {}
 };
-class S5 {
+class S5 { // expected-note {{'S5' declared here}}
   int a;
   S5() : a(0) {}
-  S5(const S5 &s5) : a(s5.a) {} // expected-note 2 {{implicitly declared private here}}
+  S5(const S5 &s5) : a(s5.a) {}
 
 public:
   S5(int v) : a(v) {}
@@ -54,8 +54,8 @@ S3 h;
 int main(int argc, char **argv) {
   const int d = 5;
   const int da[5] = {0};
-  S4 e(4);
-  S5 g(5);
+  S4 e(4); // expected-note {{'e' defined here}}
+  S5 g(5); // expected-note {{'g' defined here}}
   int i;
   int &j = i;                                               // expected-note {{'j' defined here}}
 #pragma omp task firstprivate                               // expected-error {{expected '(' after 'firstprivate'}}
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
 #pragma omp task firstprivate(da)
 #pragma omp task firstprivate(S2::S2s)
 #pragma omp task firstprivate(S2::S2sc)
-#pragma omp task firstprivate(e, g)          // expected-error 2 {{calling a private constructor of class 'S4'}} expected-error 2 {{calling a private constructor of class 'S5'}}
+#pragma omp task firstprivate(e, g)          // expected-error 2 {{firstprivate variable must have an accessible, unambiguous copy constructor}}
 #pragma omp task firstprivate(h)             // expected-error {{threadprivate or thread local variable cannot be firstprivate}}
 #pragma omp task private(i), firstprivate(i) // expected-error {{private variable cannot be firstprivate}} expected-note{{defined as private}}
   foo();
