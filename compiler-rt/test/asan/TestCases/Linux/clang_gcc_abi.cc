@@ -4,6 +4,7 @@
 // RUN: %clangxx_asan -O3 -x c %s -o %t && not %run %t 2>&1 | FileCheck %s
 
 // REQUIRES: arm-supported-target
+// XFAIL: armv7l-unknown-linux-gnueabihf
 
 #include <stdlib.h>
 

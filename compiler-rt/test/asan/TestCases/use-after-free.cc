@@ -3,6 +3,7 @@
 // RUN: %clangxx_asan -O2 %s -o %t && not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os --check-prefix=CHECK
 // RUN: %clangxx_asan -O3 %s -o %t && not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os --check-prefix=CHECK
 // XFAIL: arm-linux-gnueabi
+// XFAIL: armv7l-unknown-linux-gnueabihf
 
 #include <stdlib.h>
 int main() {

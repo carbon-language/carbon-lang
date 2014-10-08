@@ -4,6 +4,7 @@
 // RUN: %clangxx_asan -O0 %s -o %t && %run %t
 // RUN: %clangxx_asan -DPOSITIVE -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
 // XFAIL: arm-linux-gnueabi
+// XFAIL: armv7l-unknown-linux-gnueabihf
 
 #include <assert.h>
 #include <stdio.h>

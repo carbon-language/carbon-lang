@@ -7,6 +7,7 @@
 // RUN: %clangxx_asan -O0 %t.o -o %t
 // RUN: ASAN_OPTIONS=start_deactivated=1 not %run %t 2>&1 | FileCheck %s
 // XFAIL: arm-linux-gnueabi
+// XFAIL: armv7l-unknown-linux-gnueabihf
 
 #if !defined(SHARED_LIB)
 #include <dlfcn.h>

@@ -5,6 +5,7 @@
 // RUN: %clangxx_asan -DSO_DIR=\"%T\" %s -o %t
 // RUN: ASAN_OPTIONS=exitcode=0 %run %t 2>&1 | FileCheck %s
 // XFAIL: arm-linux-gnueabi
+// XFAIL: armv7l-unknown-linux-gnueabihf
 
 #include <assert.h>
 #include <dlfcn.h>

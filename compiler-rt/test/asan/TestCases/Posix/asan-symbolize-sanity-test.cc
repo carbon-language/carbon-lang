@@ -8,6 +8,7 @@
 // RUN: %clangxx_asan -O0 %s -o %t
 // RUN: env ASAN_OPTIONS=symbolize=0 not %run %t 2>&1 | %asan_symbolize | FileCheck %s
 // XFAIL: arm-linux-gnueabi
+// XFAIL: armv7l-unknown-linux-gnueabihf
 
 #if !defined(SHARED_LIB)
 #include <dlfcn.h>

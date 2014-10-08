@@ -2,6 +2,7 @@
 // RUN: env ASAN_OPTIONS=detect_stack_use_after_return=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK1
 // RUN: env ASAN_OPTIONS=detect_stack_use_after_return=0 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK0
 // REQUIRES: stable-runtime
+// XFAIL: armv7l-unknown-linux-gnueabihf
 
 #include <assert.h>
 #include <stdio.h>

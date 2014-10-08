@@ -13,6 +13,7 @@
 // RUN: not %run %t 9 2>&1 | FileCheck %s --check-prefix=CHECK-9
 
 // This test assumes float and double are IEEE-754 single- and double-precision.
+// XFAIL: armv7l-unknown-linux-gnueabihf
 
 #if defined(__APPLE__)
 # include <machine/endian.h>

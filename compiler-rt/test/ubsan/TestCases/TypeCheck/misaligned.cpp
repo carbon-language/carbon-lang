@@ -10,6 +10,7 @@
 
 // RUN: %clangxx -fsanitize=alignment -fno-sanitize-recover %s -O3 -o %t
 // RUN: not %run %t w1 2>&1 | FileCheck %s --check-prefix=CHECK-WILD
+// XFAIL: armv7l-unknown-linux-gnueabihf
 
 #include <new>
 

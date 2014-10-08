@@ -3,6 +3,7 @@
 // RUN: %clangxx_asan  %s -o %t && %run %t
 //
 // XFAIL: android
+// XFAIL: armv7l-unknown-linux-gnueabihf
 #include <new>
 #include <stdlib.h>
 #include <stdint.h>
