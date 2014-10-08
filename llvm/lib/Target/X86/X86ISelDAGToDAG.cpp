@@ -1706,7 +1706,8 @@ static const uint16_t AtomicOpcTbl[AtomicOpcEnd][AtomicSzEnd] = {
 static SDValue getAtomicLoadArithTargetConstant(SelectionDAG *CurDAG,
                                                 SDLoc dl,
                                                 enum AtomicOpc &Op, MVT NVT,
-                                                SDValue Val) {
+                                                SDValue Val,
+                                                const X86Subtarget *Subtarget) {
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Val)) {
     int64_t CNVal = CN->getSExtValue();
     // Quit if not 32-bit imm.
@@ -1721,7 +1722,7 @@ static SDValue getAtomicLoadArithTargetConstant(SelectionDAG *CurDAG,
     // For atomic-load-add, we could do some optimizations.
     if (Op == ADD) {
       // Translate to INC/DEC if ADD by 1 or -1.
-      if ((CNVal == 1) || (CNVal == -1)) {
+      if (((CNVal == 1) || (CNVal == -1)) && !Subtarget->slowIncDec()) {
         Op = (CNVal == 1) ? INC : DEC;
         // No more constant operand after being translated into INC/DEC.
         return SDValue();
@@ -1793,7 +1794,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadArith(SDNode *Node, MVT NVT) {
       break;
   }
 
-  Val = getAtomicLoadArithTargetConstant(CurDAG, dl, Op, NVT, Val);
+  Val = getAtomicLoadArithTargetConstant(CurDAG, dl, Op, NVT, Val, Subtarget);
   bool isUnOp = !Val.getNode();
   bool isCN = Val.getNode() && (Val.getOpcode() == ISD::TargetConstant);
 
