@@ -102,7 +102,6 @@ public:
   /// @brief Get the alignment of this section as the actual value (not log 2).
   std::error_code getAlignment(uint64_t &Result) const;
 
-  // FIXME: Move to the normalization layer when it's created.
   std::error_code isText(bool &Result) const;
   std::error_code isData(bool &Result) const;
   std::error_code isBSS(bool &Result) const;
