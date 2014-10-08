@@ -292,11 +292,6 @@ public:
   /// addLocationList - Add a Dwarf loclistptr attribute data and value.
   void addLocationList(DIE &Die, dwarf::Attribute Attribute, unsigned Index);
 
-  /// addSectionLabel - Add a Dwarf section label attribute data and value.
-  ///
-  void addSectionLabel(DIE &Die, dwarf::Attribute Attribute,
-                       const MCSymbol *Label);
-
   /// addSectionOffset - Add an offset into a section attribute data and value.
   ///
   void addSectionOffset(DIE &Die, dwarf::Attribute Attribute, uint64_t Integer);

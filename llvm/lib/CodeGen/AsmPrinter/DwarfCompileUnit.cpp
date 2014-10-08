@@ -254,6 +254,18 @@ void DwarfCompileUnit::addRange(RangeSpan Range) {
   CURanges.back().setEnd(Range.getEnd());
 }
 
+void DwarfCompileUnit::addSectionLabel(DIE &Die, dwarf::Attribute Attribute,
+                                       const MCSymbol *Label,
+                                       const MCSymbol *Sec) {
+  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+    addLabel(Die, Attribute,
+             DD->getDwarfVersion() >= 4 ? dwarf::DW_FORM_sec_offset
+                                        : dwarf::DW_FORM_data4,
+             Label);
+  else
+    addSectionDelta(Die, Attribute, Label, Sec);
+}
+
 void DwarfCompileUnit::initStmtList(MCSymbol *DwarfLineSectionSym) {
   // Define start line table label for each Compile Unit.
   MCSymbol *LineTableStartSym =
@@ -266,11 +278,8 @@ void DwarfCompileUnit::initStmtList(MCSymbol *DwarfLineSectionSym) {
   // left in the skeleton CU and so not included.
   // The line table entries are not always emitted in assembly, so it
   // is not okay to use line_table_start here.
-  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    addSectionLabel(UnitDie, dwarf::DW_AT_stmt_list, LineTableStartSym);
-  else
-    addSectionDelta(UnitDie, dwarf::DW_AT_stmt_list, LineTableStartSym,
-                    DwarfLineSectionSym);
+  addSectionLabel(UnitDie, dwarf::DW_AT_stmt_list, LineTableStartSym,
+                  DwarfLineSectionSym);
 }
 
 void DwarfCompileUnit::applyStmtList(DIE &D) {

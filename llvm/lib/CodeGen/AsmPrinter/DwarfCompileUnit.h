@@ -64,6 +64,11 @@ public:
 
   void attachLowHighPC(DIE &D, const MCSymbol *Begin, const MCSymbol *End);
 
+  /// addSectionLabel - Add a Dwarf section label attribute data and value.
+  ///
+  void addSectionLabel(DIE &Die, dwarf::Attribute Attribute,
+                       const MCSymbol *Label, const MCSymbol *Sec);
+
   /// \brief Find DIE for the given subprogram and attach appropriate
   /// DW_AT_low_pc and DW_AT_high_pc attributes. If there are global
   /// variables in this scope then create and insert DIEs for these

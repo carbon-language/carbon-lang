@@ -330,15 +330,6 @@ bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
   return !getLabelAfterInsn(Ranges.front().second);
 }
 
-static void addSectionLabel(AsmPrinter &Asm, DwarfUnit &U, DIE &D,
-                            dwarf::Attribute A, const MCSymbol *L,
-                            const MCSymbol *Sec) {
-  if (Asm.MAI->doesDwarfUseRelocationsAcrossSections())
-    U.addSectionLabel(D, A, L);
-  else
-    U.addSectionDelta(D, A, L, Sec);
-}
-
 void DwarfDebug::addScopeRangeList(DwarfCompileUnit &TheCU, DIE &ScopeDIE,
                                    const SmallVectorImpl<InsnRange> &Range) {
   // Emit offset in .debug_range as a relocatable label. emitDIE will handle
@@ -351,8 +342,8 @@ void DwarfDebug::addScopeRangeList(DwarfCompileUnit &TheCU, DIE &ScopeDIE,
     TheCU.addSectionDelta(ScopeDIE, dwarf::DW_AT_ranges, RangeSym,
                           DwarfDebugRangeSectionSym);
   else
-    addSectionLabel(*Asm, TheCU, ScopeDIE, dwarf::DW_AT_ranges, RangeSym,
-                    DwarfDebugRangeSectionSym);
+    TheCU.addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges, RangeSym,
+                          DwarfDebugRangeSectionSym);
 
   RangeSpanList List(RangeSym);
   for (const InsnRange &R : Range) {
@@ -821,13 +812,12 @@ void DwarfDebug::finalizeModuleInfo() {
         // We don't keep track of which addresses are used in which CU so this
         // is a bit pessimistic under LTO.
         if (!AddrPool.isEmpty())
-          addSectionLabel(*Asm, *SkCU, SkCU->getUnitDie(),
-                          dwarf::DW_AT_GNU_addr_base, DwarfAddrSectionSym,
-                          DwarfAddrSectionSym);
+          SkCU->addSectionLabel(SkCU->getUnitDie(), dwarf::DW_AT_GNU_addr_base,
+                                DwarfAddrSectionSym, DwarfAddrSectionSym);
         if (!TheU->getRangeLists().empty())
-          addSectionLabel(*Asm, *SkCU, SkCU->getUnitDie(),
-                          dwarf::DW_AT_GNU_ranges_base,
-                          DwarfDebugRangeSectionSym, DwarfDebugRangeSectionSym);
+          SkCU->addSectionLabel(
+              SkCU->getUnitDie(), dwarf::DW_AT_GNU_ranges_base,
+              DwarfDebugRangeSectionSym, DwarfDebugRangeSectionSym);
       }
 
       // If we have code split among multiple sections or non-contiguous
@@ -841,9 +831,9 @@ void DwarfDebug::finalizeModuleInfo() {
       unsigned NumRanges = TheU->getRanges().size();
       if (NumRanges) {
         if (NumRanges > 1) {
-          addSectionLabel(*Asm, U, U.getUnitDie(), dwarf::DW_AT_ranges,
-                          Asm->GetTempSymbol("cu_ranges", U.getUniqueID()),
-                          DwarfDebugRangeSectionSym);
+          U.addSectionLabel(U.getUnitDie(), dwarf::DW_AT_ranges,
+                            Asm->GetTempSymbol("cu_ranges", U.getUniqueID()),
+                            DwarfDebugRangeSectionSym);
 
           // A DW_AT_low_pc attribute may also be specified in combination with
           // DW_AT_ranges to specify the default base address for use in
