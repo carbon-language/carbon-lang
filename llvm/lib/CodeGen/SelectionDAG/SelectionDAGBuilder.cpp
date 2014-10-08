@@ -7478,15 +7478,13 @@ static bool isOnlyUsedInEntryBlock(const Argument *A, bool FastISel) {
 void SelectionDAGISel::LowerArguments(const Function &F) {
   SelectionDAG &DAG = SDB->DAG;
   SDLoc dl = SDB->getCurSDLoc();
-  const TargetLowering *TLI = getTargetLowering();
   const DataLayout *DL = TLI->getDataLayout();
   SmallVector<ISD::InputArg, 16> Ins;
 
   if (!FuncInfo->CanLowerReturn) {
     // Put in an sret pointer parameter before all the other parameters.
     SmallVector<EVT, 1> ValueVTs;
-    ComputeValueVTs(*getTargetLowering(),
-                    PointerType::getUnqual(F.getReturnType()), ValueVTs);
+    ComputeValueVTs(*TLI, PointerType::getUnqual(F.getReturnType()), ValueVTs);
 
     // NOTE: Assuming that a pointer will never break down to more than one VT
     // or one register.
@@ -7576,9 +7574,8 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
 
   // Call the target to set up the argument values.
   SmallVector<SDValue, 8> InVals;
-  SDValue NewRoot = TLI->LowerFormalArguments(DAG.getRoot(), F.getCallingConv(),
-                                              F.isVarArg(), Ins,
-                                              dl, DAG, InVals);
+  SDValue NewRoot = TLI->LowerFormalArguments(
+      DAG.getRoot(), F.getCallingConv(), F.isVarArg(), Ins, dl, DAG, InVals);
 
   // Verify that the target's LowerFormalArguments behaved as expected.
   assert(NewRoot.getNode() && NewRoot.getValueType() == MVT::Other &&

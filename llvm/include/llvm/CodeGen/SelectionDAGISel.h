@@ -52,6 +52,7 @@ public:
   GCFunctionInfo *GFI;
   CodeGenOpt::Level OptLevel;
   const TargetInstrInfo *TII;
+  const TargetLowering *TLI;
 
   static char ID;
 
@@ -59,9 +60,7 @@ public:
                             CodeGenOpt::Level OL = CodeGenOpt::Default);
   virtual ~SelectionDAGISel();
 
-  const TargetLowering *getTargetLowering() const {
-    return TM.getSubtargetImpl()->getTargetLowering();
-  }
+  const TargetLowering *getTargetLowering() const { return TLI; }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 

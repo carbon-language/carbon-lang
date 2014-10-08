@@ -3010,7 +3010,7 @@ llvm::createHybridListDAGScheduler(SelectionDAGISel *IS,
   const TargetMachine &TM = IS->TM;
   const TargetInstrInfo *TII = TM.getSubtargetImpl()->getInstrInfo();
   const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
-  const TargetLowering *TLI = IS->getTargetLowering();
+  const TargetLowering *TLI = IS->TLI;
 
   HybridBURRPriorityQueue *PQ =
     new HybridBURRPriorityQueue(*IS->MF, true, false, TII, TRI, TLI);
@@ -3026,7 +3026,7 @@ llvm::createILPListDAGScheduler(SelectionDAGISel *IS,
   const TargetMachine &TM = IS->TM;
   const TargetInstrInfo *TII = TM.getSubtargetImpl()->getInstrInfo();
   const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
-  const TargetLowering *TLI = IS->getTargetLowering();
+  const TargetLowering *TLI = IS->TLI;
 
   ILPBURRPriorityQueue *PQ =
     new ILPBURRPriorityQueue(*IS->MF, true, false, TII, TRI, TLI);

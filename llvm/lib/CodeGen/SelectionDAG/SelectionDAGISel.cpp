@@ -284,7 +284,7 @@ namespace llvm {
   /// for the target.
   ScheduleDAGSDNodes* createDefaultScheduler(SelectionDAGISel *IS,
                                              CodeGenOpt::Level OptLevel) {
-    const TargetLowering *TLI = IS->getTargetLowering();
+    const TargetLowering *TLI = IS->TLI;
     const TargetSubtargetInfo &ST = IS->MF->getSubtarget();
 
     if (OptLevel == CodeGenOpt::None || ST.useMachineScheduler() ||
@@ -425,7 +425,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
     NewOptLevel = CodeGenOpt::None;
   OptLevelChanger OLC(*this, NewOptLevel);
 
-  TII = TM.getSubtargetImpl()->getInstrInfo();
+  TII = MF->getSubtarget().getInstrInfo();
+  TLI = MF->getSubtarget().getTargetLowering();
   RegInfo = &MF->getRegInfo();
   AA = &getAnalysis<AliasAnalysis>();
   LibInfo = &getAnalysis<TargetLibraryInfo>();
@@ -903,7 +904,6 @@ void SelectionDAGISel::PrepareEHLandingPad() {
     .addSym(Label);
 
   // Mark exception register as live in.
-  const TargetLowering *TLI = getTargetLowering();
   const TargetRegisterClass *PtrRC = TLI->getRegClassFor(TLI->getPointerTy());
   if (unsigned Reg = TLI->getExceptionPointerRegister())
     FuncInfo->ExceptionPointerVirtReg = MBB->addLiveIn(Reg, PtrRC);
@@ -1039,7 +1039,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
   // Initialize the Fast-ISel state, if needed.
   FastISel *FastIS = nullptr;
   if (TM.Options.EnableFastISel)
-    FastIS = getTargetLowering()->createFastISel(*FuncInfo, LibInfo);
+    FastIS = TLI->createFastISel(*FuncInfo, LibInfo);
 
   // Iterate over all basic blocks in the function.
   ReversePostOrderTraversal<const Function*> RPOT(&Fn);
@@ -1858,8 +1858,8 @@ SDNode
   SDLoc dl(Op);
   MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(Op->getOperand(0));
   const MDString *RegStr = dyn_cast<MDString>(MD->getMD()->getOperand(0));
-  unsigned Reg = getTargetLowering()->getRegisterByName(
-                 RegStr->getString().data(), Op->getValueType(0));
+  unsigned Reg =
+      TLI->getRegisterByName(RegStr->getString().data(), Op->getValueType(0));
   SDValue New = CurDAG->getCopyFromReg(
                         CurDAG->getEntryNode(), dl, Reg, Op->getValueType(0));
   New->setNodeId(-1);
@@ -1871,8 +1871,8 @@ SDNode
   SDLoc dl(Op);
   MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(Op->getOperand(1));
   const MDString *RegStr = dyn_cast<MDString>(MD->getMD()->getOperand(0));
-  unsigned Reg = getTargetLowering()->getRegisterByName(
-                 RegStr->getString().data(), Op->getOperand(2).getValueType());
+  unsigned Reg = TLI->getRegisterByName(RegStr->getString().data(),
+                                        Op->getOperand(2).getValueType());
   SDValue New = CurDAG->getCopyToReg(
                         CurDAG->getEntryNode(), dl, Reg, Op->getOperand(2));
   New->setNodeId(-1);
@@ -2372,7 +2372,7 @@ static unsigned IsPredicateKnownToFail(const unsigned char *Table,
     Result = !::CheckOpcode(Table, Index, N.getNode());
     return Index;
   case SelectionDAGISel::OPC_CheckType:
-    Result = !::CheckType(Table, Index, N, SDISel.getTargetLowering());
+    Result = !::CheckType(Table, Index, N, SDISel.TLI);
     return Index;
   case SelectionDAGISel::OPC_CheckChild0Type:
   case SelectionDAGISel::OPC_CheckChild1Type:
@@ -2382,14 +2382,15 @@ static unsigned IsPredicateKnownToFail(const unsigned char *Table,
   case SelectionDAGISel::OPC_CheckChild5Type:
   case SelectionDAGISel::OPC_CheckChild6Type:
   case SelectionDAGISel::OPC_CheckChild7Type:
-    Result = !::CheckChildType(Table, Index, N, SDISel.getTargetLowering(),
-                        Table[Index-1] - SelectionDAGISel::OPC_CheckChild0Type);
+    Result = !::CheckChildType(Table, Index, N, SDISel.TLI,
+                               Table[Index - 1] -
+                                   SelectionDAGISel::OPC_CheckChild0Type);
     return Index;
   case SelectionDAGISel::OPC_CheckCondCode:
     Result = !::CheckCondCode(Table, Index, N);
     return Index;
   case SelectionDAGISel::OPC_CheckValueType:
-    Result = !::CheckValueType(Table, Index, N, SDISel.getTargetLowering());
+    Result = !::CheckValueType(Table, Index, N, SDISel.TLI);
     return Index;
   case SelectionDAGISel::OPC_CheckInteger:
     Result = !::CheckInteger(Table, Index, N);
@@ -2742,7 +2743,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       continue;
 
     case OPC_CheckType:
-      if (!::CheckType(MatcherTable, MatcherIndex, N, getTargetLowering()))
+      if (!::CheckType(MatcherTable, MatcherIndex, N, TLI))
         break;
       continue;
 
@@ -2790,7 +2791,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
 
         MVT CaseVT = (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
         if (CaseVT == MVT::iPTR)
-          CaseVT = getTargetLowering()->getPointerTy();
+          CaseVT = TLI->getPointerTy();
 
         // If the VT matches, then we will execute this case.
         if (CurNodeVT == CaseVT)
@@ -2812,7 +2813,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     case OPC_CheckChild2Type: case OPC_CheckChild3Type:
     case OPC_CheckChild4Type: case OPC_CheckChild5Type:
     case OPC_CheckChild6Type: case OPC_CheckChild7Type:
-      if (!::CheckChildType(MatcherTable, MatcherIndex, N, getTargetLowering(),
+      if (!::CheckChildType(MatcherTable, MatcherIndex, N, TLI,
                             Opcode-OPC_CheckChild0Type))
         break;
       continue;
@@ -2820,7 +2821,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (!::CheckCondCode(MatcherTable, MatcherIndex, N)) break;
       continue;
     case OPC_CheckValueType:
-      if (!::CheckValueType(MatcherTable, MatcherIndex, N, getTargetLowering()))
+      if (!::CheckValueType(MatcherTable, MatcherIndex, N, TLI))
         break;
       continue;
     case OPC_CheckInteger:
@@ -3019,7 +3020,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       for (unsigned i = 0; i != NumVTs; ++i) {
         MVT::SimpleValueType VT =
           (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
-        if (VT == MVT::iPTR) VT = getTargetLowering()->getPointerTy().SimpleTy;
+        if (VT == MVT::iPTR)
+          VT = TLI->getPointerTy().SimpleTy;
         VTs.push_back(VT);
       }
 
