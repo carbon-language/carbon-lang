@@ -234,7 +234,7 @@ public:
   StringRef binderSymbolName() const;
 
   /// Used to keep track of direct and indirect dylibs.
-  void registerDylib(mach_o::MachODylibFile *dylib);
+  void registerDylib(mach_o::MachODylibFile *dylib) const;
 
   /// Used to find indirect dylibs. Instantiates a MachODylibFile if one
   /// has not already been made for the requested dylib.  Uses -L and -F
@@ -243,6 +243,11 @@ public:
 
   /// Creates a copy (owned by this MachOLinkingContext) of a string.
   StringRef copy(StringRef str) { return str.copy(_allocator); }
+
+  /// If the memoryBuffer is a fat file with a slice for the current arch,
+  /// this method will return the offset and size of that slice.
+  bool sliceFromFatFile(const MemoryBuffer &mb, uint32_t &offset,
+                        uint32_t &size);
 
   static bool isThinObjectFile(StringRef path, Arch &arch);
   static Arch archFromCpuType(uint32_t cputype, uint32_t cpusubtype);
@@ -307,8 +312,8 @@ private:
   mutable std::unique_ptr<mach_o::ArchHandler> _archHandler;
   mutable std::unique_ptr<Writer> _writer;
   std::vector<SectionAlign> _sectAligns;
-  llvm::StringMap<mach_o::MachODylibFile*> _pathToDylibMap;
-  std::set<mach_o::MachODylibFile*> _allDylibs;
+  mutable llvm::StringMap<mach_o::MachODylibFile*> _pathToDylibMap;
+  mutable std::set<mach_o::MachODylibFile*> _allDylibs;
   mutable std::vector<std::unique_ptr<class MachOFileNode>> _indirectDylibs;
   ExportMode _exportMode;
   llvm::StringSet<> _exportedSymbols;

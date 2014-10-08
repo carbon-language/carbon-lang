@@ -170,6 +170,35 @@ bool isThinObjectFile(StringRef path, MachOLinkingContext::Arch &arch) {
   return true;
 }
 
+
+bool sliceFromFatFile(const MemoryBuffer &mb, MachOLinkingContext::Arch arch,
+                                             uint32_t &offset, uint32_t &size) {
+  const char *start = mb.getBufferStart();
+  const llvm::MachO::fat_header *fh =
+      reinterpret_cast<const llvm::MachO::fat_header *>(start);
+  if (readBigEndian(fh->magic) != llvm::MachO::FAT_MAGIC)
+    return false;
+  uint32_t nfat_arch = readBigEndian(fh->nfat_arch);
+  const fat_arch *fstart =
+      reinterpret_cast<const fat_arch *>(start + sizeof(fat_header));
+  const fat_arch *fend =
+      reinterpret_cast<const fat_arch *>(start + sizeof(fat_header) +
+                                         sizeof(fat_arch) * nfat_arch);
+  const uint32_t reqCpuType = MachOLinkingContext::cpuTypeFromArch(arch);
+  const uint32_t reqCpuSubtype = MachOLinkingContext::cpuSubtypeFromArch(arch);
+  for (const fat_arch *fa = fstart; fa < fend; ++fa) {
+    if ((readBigEndian(fa->cputype) == reqCpuType) &&
+        (readBigEndian(fa->cpusubtype) == reqCpuSubtype)) {
+      offset = readBigEndian(fa->offset);
+      size = readBigEndian(fa->size);
+      if ((offset + size) > mb.getBufferSize())
+        return false;
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Reads a mach-o file and produces an in-memory normalized view.
 ErrorOr<std::unique_ptr<NormalizedFile>>
 readBinary(std::unique_ptr<MemoryBuffer> &mb,
@@ -179,41 +208,17 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
 
   const char *start = mb->getBufferStart();
   size_t objSize = mb->getBufferSize();
-
-  // Determine endianness and pointer size for mach-o file.
   const mach_header *mh = reinterpret_cast<const mach_header *>(start);
-  bool isFat = mh->magic == llvm::MachO::FAT_CIGAM ||
-               mh->magic == llvm::MachO::FAT_MAGIC;
-  if (isFat) {
-    uint32_t cputype = MachOLinkingContext::cpuTypeFromArch(arch);
-    uint32_t cpusubtype = MachOLinkingContext::cpuSubtypeFromArch(arch);
-    const fat_header *fh = reinterpret_cast<const fat_header *>(start);
-    uint32_t nfat_arch = readBigEndian(fh->nfat_arch);
-    const fat_arch *fa =
-        reinterpret_cast<const fat_arch *>(start + sizeof(fat_header));
-    bool foundArch = false;
-    while (nfat_arch-- > 0) {
-      if (readBigEndian(fa->cputype) == cputype &&
-          readBigEndian(fa->cpusubtype) == cpusubtype) {
-        foundArch = true;
-        break;
-      }
-      fa++;
-    }
-    if (!foundArch) {
-      return make_dynamic_error_code(Twine("file does not contain required"
-                                    " architecture ("
-                                    + MachOLinkingContext::nameFromArch(arch)
-                                    + ")" ));
-    }
-    objSize = readBigEndian(fa->size);
-    uint32_t offset = readBigEndian(fa->offset);
-    if ((offset + objSize) > mb->getBufferSize())
-      return make_error_code(llvm::errc::executable_format_error);
-    start += offset;
+
+  uint32_t sliceOffset;
+  uint32_t sliceSize;
+  if (sliceFromFatFile(*mb, arch, sliceOffset, sliceSize)) {
+    start = &start[sliceOffset];
+    objSize = sliceSize;
     mh = reinterpret_cast<const mach_header *>(start);
   }
 
+  // Determine endianness and pointer size for mach-o file.
   bool is64, swap;
   if (!isMachOHeader(mh, is64, swap))
     return make_error_code(llvm::errc::executable_format_error);
@@ -501,18 +506,20 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
   return std::move(f);
 }
 
-
 class MachOReader : public Reader {
 public:
   MachOReader(MachOLinkingContext &ctx) : _ctx(ctx) {}
 
   bool canParse(file_magic magic, StringRef ext,
                 const MemoryBuffer &mb) const override {
-    if (magic != llvm::sys::fs::file_magic::macho_object &&
-        magic != llvm::sys::fs::file_magic::macho_universal_binary &&
-        magic != llvm::sys::fs::file_magic::macho_dynamically_linked_shared_lib)
+    switch (magic) {
+    case llvm::sys::fs::file_magic::macho_object:
+    case llvm::sys::fs::file_magic::macho_dynamically_linked_shared_lib:
+    case llvm::sys::fs::file_magic::macho_dynamically_linked_shared_lib_stub:
+      return (mb.getBufferSize() > 32);
+    default:
       return false;
-    return (mb.getBufferSize() > 32);
+    }
   }
 
   std::error_code
@@ -547,6 +554,7 @@ void Registry::addSupportMachOObjects(MachOLinkingContext &ctx) {
   add(std::unique_ptr<YamlIOTaggedDocumentHandler>(
                            new mach_o::MachOYamlIOTaggedDocumentHandler(arch)));
 }
+
 
 } // namespace lld
 

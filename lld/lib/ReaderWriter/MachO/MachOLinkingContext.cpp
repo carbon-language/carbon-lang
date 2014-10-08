@@ -136,6 +136,12 @@ bool MachOLinkingContext::isThinObjectFile(StringRef path, Arch &arch) {
   return mach_o::normalized::isThinObjectFile(path, arch);
 }
 
+bool MachOLinkingContext::sliceFromFatFile(const MemoryBuffer &mb,
+                                           uint32_t &offset,
+                                           uint32_t &size) {
+  return mach_o::normalized::sliceFromFatFile(mb, _arch, offset, size);
+}
+
 MachOLinkingContext::MachOLinkingContext()
     : _outputMachOType(MH_EXECUTE), _outputMachOTypeStatic(false),
       _doNothing(false), _pie(false), _arch(arch_unknown), _os(OS::macOSX),
@@ -625,7 +631,7 @@ bool MachOLinkingContext::createImplicitFiles(
 }
 
 
-void MachOLinkingContext::registerDylib(MachODylibFile *dylib) {
+void MachOLinkingContext::registerDylib(MachODylibFile *dylib) const {
   _allDylibs.insert(dylib);
   _pathToDylibMap[dylib->installName()] = dylib;
   // If path is different than install name, register path too.

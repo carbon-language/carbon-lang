@@ -43,6 +43,8 @@ public:
   }
 
 private:
+ void narrowFatBuffer(StringRef filePath);
+
   MachOLinkingContext &_context;
   bool _isWholeArchive;
 };

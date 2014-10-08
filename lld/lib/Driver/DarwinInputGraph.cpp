@@ -16,8 +16,6 @@
 #include "lld/Core/Reference.h"
 #include "lld/Core/SharedLibraryFile.h"
 
-#include "lld/ReaderWriter/MachOLinkingContext.h"
-
 namespace lld {
 
 /// \brief Parse the input file to lld::File.
@@ -33,6 +31,8 @@ std::error_code MachOFileNode::parse(const LinkingContext &ctx,
   _context.addInputFileDependency(*filePath);
   if (ctx.logInputFiles())
     diagnostics << *filePath << "\n";
+
+  narrowFatBuffer(*filePath);
 
   std::vector<std::unique_ptr<File>> parsedFiles;
   if (_isWholeArchive) {
@@ -64,6 +64,23 @@ std::error_code MachOFileNode::parse(const LinkingContext &ctx,
   return std::error_code();
 }
 
+
+/// If buffer contains a fat file, find required arch in fat buffer and
+/// switch buffer to point to just that required slice.
+void MachOFileNode::narrowFatBuffer(StringRef filePath) {
+  // Check if buffer is a "fat" file that contains needed arch.
+  uint32_t offset;
+  uint32_t size;
+  if (!_context.sliceFromFatFile(*_buffer, offset, size)) {
+    return;
+  }
+  // Create new buffer containing just the needed slice.
+  auto subuf = MemoryBuffer::getFileSlice(filePath, size, offset);
+  if (subuf.getError())
+    return;
+  // The assignment to _buffer will release previous buffer.
+  _buffer = std::move(subuf.get());
+}
 
 
 } // end namesapce lld
