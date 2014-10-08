@@ -241,9 +241,16 @@ ConnectionGenericFile::Read(void *dst, size_t dst_len, uint32_t timeout_usec, ll
 
         goto finish;
     }
-
-    // An unknown error occured.  Fail out.
-    return_info.Set(0, eConnectionStatusError, ::GetLastError());
+    else if (::GetLastError() == ERROR_BROKEN_PIPE)
+    {
+        // The write end of a pipe was closed.  This is equivalent to EOF.
+        return_info.Set(0, eConnectionStatusEndOfFile, 0);
+    }
+    else
+    {
+        // An unknown error occured.  Fail out.
+        return_info.Set(0, eConnectionStatusError, ::GetLastError());
+    }
     goto finish;
 
 finish:

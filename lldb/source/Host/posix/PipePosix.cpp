@@ -1,4 +1,4 @@
-//===-- Pipe.cpp ------------------------------------------------*- C++ -*-===//
+//===-- PipePosix.cpp -------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Host/Pipe.h"
+#include "lldb/Host/posix/PipePosix.h"
 
-#if defined(_WIN32)
-#include <io.h>
-#include <fcntl.h>
-#else
 #include <unistd.h>
-#endif
 
 using namespace lldb_private;
 
@@ -39,13 +34,9 @@ Pipe::Open()
     if (IsValid())
         return true;
 
-#ifdef _WIN32
-    if (::_pipe(m_fds, 256, O_BINARY) == 0)
-        return true;
-#else
     if (::pipe(m_fds) == 0)
         return true;
-#endif
+
     m_fds[READ] = Pipe::kInvalidDescriptor;
     m_fds[WRITE] = Pipe::kInvalidDescriptor;
     return false;
@@ -110,11 +101,7 @@ Pipe::CloseReadFileDescriptor()
     if (ReadDescriptorIsValid())
     {
         int err;
-#ifdef _WIN32
-        err = _close(m_fds[READ]);
-#else
         err = close(m_fds[READ]);
-#endif
         m_fds[READ] = Pipe::kInvalidDescriptor;
         return err == 0;
     }
@@ -127,11 +114,7 @@ Pipe::CloseWriteFileDescriptor()
     if (WriteDescriptorIsValid())
     {
         int err;
-#ifdef _WIN32
-        err = _close(m_fds[WRITE]);
-#else
         err = close(m_fds[WRITE]);
-#endif
         m_fds[WRITE] = Pipe::kInvalidDescriptor;
         return err == 0;
     }
@@ -145,11 +128,7 @@ Pipe::Read (void *buf, size_t num_bytes)
     if (ReadDescriptorIsValid())
     {
         const int fd = GetReadFileDescriptor();
-#ifdef _WIN32
-        return _read (fd, (char *)buf, num_bytes);
-#else
         return read (fd, buf, num_bytes);
-#endif
     }
     return 0; // Return 0 since errno won't be set if we didn't call read
 }
@@ -160,12 +139,7 @@ Pipe::Write (const void *buf, size_t num_bytes)
     if (WriteDescriptorIsValid())
     {
         const int fd = GetWriteFileDescriptor();
-#ifdef _WIN32
-        return _write (fd, (char *)buf, num_bytes);
-#else
         return write (fd, buf, num_bytes);
-#endif
     }
     return 0; // Return 0 since errno won't be set if we didn't call write
 }
-

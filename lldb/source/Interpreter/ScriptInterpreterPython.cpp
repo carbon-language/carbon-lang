@@ -39,6 +39,10 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
 
+#if defined(_WIN32)
+#include "lldb/Host/windows/ConnectionGenericFileWindows.h"
+#endif
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -598,9 +602,20 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
                 // Set output to a temporary file so we can forward the results on to the result object
                 
                 Pipe pipe;
+#if defined(_WIN32)
+                // By default Windows does not create a pipe object that can be used for a non-blocking read.
+                // We must explicitly request it.  Furthermore, we can't use an fd for non-blocking read
+                // operations, and must use the native os HANDLE.
+                if (pipe.Open(true, false))
+                {
+                    lldb::file_t read_file = pipe.GetReadNativeHandle();
+                    pipe.ReleaseReadFileDescriptor();
+                    std::unique_ptr<ConnectionGenericFile> conn_ap(new ConnectionGenericFile(read_file, true));
+#else
                 if (pipe.Open())
                 {
                     std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor(pipe.ReleaseReadFileDescriptor(), true));
+#endif
                     if (conn_ap->IsConnected())
                     {
                         output_comm.SetConnection(conn_ap.release());
