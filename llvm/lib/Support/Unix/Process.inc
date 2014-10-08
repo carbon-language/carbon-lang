@@ -268,8 +268,13 @@ std::error_code Process::SafelyCloseFileDescriptor(int FD) {
     return std::error_code(errno, std::generic_category());
   // Atomically swap our current signal mask with a full mask.
   sigset_t SavedSet;
+#if LLVM_ENABLE_THREADS
   if (int EC = pthread_sigmask(SIG_SETMASK, &FullSet, &SavedSet))
     return std::error_code(EC, std::generic_category());
+#else
+  if (sigprocmask(SIG_SETMASK, &FullSet, &SavedSet) < 0)
+    return std::error_code(errno, std::generic_category());
+#endif
   // Attempt to close the file descriptor.
   // We need to save the error, if one occurs, because our subsequent call to
   // pthread_sigmask might tamper with errno.
@@ -277,7 +282,13 @@ std::error_code Process::SafelyCloseFileDescriptor(int FD) {
   if (::close(FD) < 0)
     ErrnoFromClose = errno;
   // Restore the signal mask back to what we saved earlier.
-  int EC = pthread_sigmask(SIG_SETMASK, &SavedSet, nullptr);
+  int EC = 0;
+#if LLVM_ENABLE_THREADS
+  EC = pthread_sigmask(SIG_SETMASK, &SavedSet, nullptr);
+#else
+  if (sigprocmask(SIG_SETMASK, &SavedSet, nullptr) < 0)
+    EC = errno;
+#endif
   // The error code from close takes precedence over the one from
   // pthread_sigmask.
   if (ErrnoFromClose)
