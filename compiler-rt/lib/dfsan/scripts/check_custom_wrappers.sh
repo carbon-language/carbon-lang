@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 DFSAN_DIR=$(dirname "$0")/../
 DFSAN_CUSTOM_TESTS=${DFSAN_DIR}/../../test/dfsan/custom.cc
@@ -7,20 +7,22 @@ DFSAN_ABI_LIST=${DFSAN_DIR}/done_abilist.txt
 
 DIFFOUT=$(mktemp -q /tmp/tmp.XXXXXXXXXX)
 ERRORLOG=$(mktemp -q /tmp/tmp.XXXXXXXXXX)
+DIFF_A=$(mktemp -q /tmp/tmp.XXXXXXXXXX)
+DIFF_B=$(mktemp -q /tmp/tmp.XXXXXXXXXX)
 
 on_exit() {
   rm -f ${DIFFOUT} 2> /dev/null
   rm -f ${ERRORLOG} 2> /dev/null
+  rm -f ${DIFF_A} 2> /dev/null
+  rm -f ${DIFF_B} 2> /dev/null
 }
 
 trap on_exit EXIT
-
-diff -u \
-  <(grep -E "^fun:.*=custom" ${DFSAN_ABI_LIST} | grep -v "dfsan_get_label" \
-    | sed "s/^fun:\(.*\)=custom.*/\1/" | sort ) \
-  <(grep -E "__dfsw.*\(" ${DFSAN_CUSTOM_WRAPPERS} \
-    | sed "s/.*__dfsw_\(.*\)(.*/\1/" \
-    | sort) > ${DIFFOUT}
+grep -E "^fun:.*=custom" ${DFSAN_ABI_LIST} | grep -v "dfsan_get_label" \
+  | sed "s/^fun:\(.*\)=custom.*/\1/" | sort > $DIFF_A
+grep -E "__dfsw.*\(" ${DFSAN_CUSTOM_WRAPPERS} \
+  | sed "s/.*__dfsw_\(.*\)(.*/\1/" | sort > $DIFF_B
+diff -u $DIFF_A $DIFF_B > ${DIFFOUT}
 if [ $? -ne 0 ]
 then
   echo -n "The following differences between the ABI list and ">> ${ERRORLOG}
@@ -28,13 +30,11 @@ then
   cat ${DIFFOUT} >> ${ERRORLOG}
 fi
 
-diff -u \
-  <(grep -E __dfsw_ ${DFSAN_CUSTOM_WRAPPERS} \
-    | sed "s/.*__dfsw_\([^(]*\).*/\1/" \
-    | sort) \
-  <(grep -E "^\\s*test_.*\(\);" ${DFSAN_CUSTOM_TESTS} \
-    | sed "s/.*test_\(.*\)();/\1/" \
-    | sort) > ${DIFFOUT}
+grep -E __dfsw_ ${DFSAN_CUSTOM_WRAPPERS} \
+  | sed "s/.*__dfsw_\([^(]*\).*/\1/" | sort > $DIFF_A
+grep -E "^\\s*test_.*\(\);" ${DFSAN_CUSTOM_TESTS} \
+  | sed "s/.*test_\(.*\)();/\1/" | sort > $DIFF_B
+diff -u $DIFF_A $DIFF_B > ${DIFFOUT}
 if [ $? -ne 0 ]
 then
   echo -n "The following differences between the implemented " >> ${ERRORLOG}
@@ -42,7 +42,7 @@ then
   cat ${DIFFOUT} >> ${ERRORLOG}
 fi
 
-if [[ -s ${ERRORLOG} ]]
+if [ -s ${ERRORLOG} ]
 then
   cat ${ERRORLOG}
   exit 1
