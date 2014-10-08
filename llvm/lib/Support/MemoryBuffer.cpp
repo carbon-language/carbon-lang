@@ -97,6 +97,10 @@ public:
 };
 }
 
+static ErrorOr<std::unique_ptr<MemoryBuffer>>
+getFileAux(const Twine &Filename, int64_t FileSize, uint64_t MapSize, 
+           uint64_t Offset, bool RequiresNullTerminator, bool IsVolatileSize);
+
 std::unique_ptr<MemoryBuffer>
 MemoryBuffer::getMemBuffer(StringRef InputData, StringRef BufferName,
                            bool RequiresNullTerminator) {
@@ -167,6 +171,12 @@ MemoryBuffer::getFileOrSTDIN(const Twine &Filename, int64_t FileSize) {
   return getFile(Filename, FileSize);
 }
 
+ErrorOr<std::unique_ptr<MemoryBuffer>>
+MemoryBuffer::getFileSlice(const Twine &FilePath, uint64_t MapSize, 
+                           uint64_t Offset) {
+  return getFileAux(FilePath, -1, MapSize, Offset, false, false);
+}
+
 
 //===----------------------------------------------------------------------===//
 // MemoryBuffer::getFile implementation.
@@ -232,15 +242,12 @@ getMemoryBufferForStream(int FD, const Twine &BufferName) {
   return MemoryBuffer::getMemBufferCopy(Buffer, BufferName);
 }
 
-static ErrorOr<std::unique_ptr<MemoryBuffer>>
-getFileAux(const Twine &Filename, int64_t FileSize, bool RequiresNullTerminator,
-           bool IsVolatileSize);
 
 ErrorOr<std::unique_ptr<MemoryBuffer>>
 MemoryBuffer::getFile(const Twine &Filename, int64_t FileSize,
                       bool RequiresNullTerminator, bool IsVolatileSize) {
-  return getFileAux(Filename, FileSize, RequiresNullTerminator,
-                    IsVolatileSize);
+  return getFileAux(Filename, FileSize, FileSize, 0,
+                    RequiresNullTerminator, IsVolatileSize);
 }
 
 static ErrorOr<std::unique_ptr<MemoryBuffer>>
@@ -249,15 +256,15 @@ getOpenFileImpl(int FD, const Twine &Filename, uint64_t FileSize,
                 bool IsVolatileSize);
 
 static ErrorOr<std::unique_ptr<MemoryBuffer>>
-getFileAux(const Twine &Filename, int64_t FileSize, bool RequiresNullTerminator,
-           bool IsVolatileSize) {
+getFileAux(const Twine &Filename, int64_t FileSize, uint64_t MapSize,
+           uint64_t Offset, bool RequiresNullTerminator, bool IsVolatileSize) {
   int FD;
   std::error_code EC = sys::fs::openFileForRead(Filename, FD);
   if (EC)
     return EC;
 
   ErrorOr<std::unique_ptr<MemoryBuffer>> Ret =
-      getOpenFileImpl(FD, Filename, FileSize, FileSize, 0,
+      getOpenFileImpl(FD, Filename, FileSize, MapSize, Offset,
                       RequiresNullTerminator, IsVolatileSize);
   close(FD);
   return Ret;
