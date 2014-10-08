@@ -16194,7 +16194,8 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     case INTR_TYPE_3OP:
       return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(), Op.getOperand(1),
         Op.getOperand(2), Op.getOperand(3));
-    case CMP_MASK: {
+    case CMP_MASK:
+    case CMP_MASK_CC: {
       // Comparison intrinsics with masks.
       // Example of transformation:
       // (i8 (int_x86_avx512_mask_pcmpeq_q_128
@@ -16207,12 +16208,19 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
       EVT VT = Op.getOperand(1).getValueType();
       EVT MaskVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
                                     VT.getVectorNumElements());
-      SDValue Mask = Op.getOperand(3);
+      SDValue Mask = Op.getOperand((IntrData->Type == CMP_MASK_CC) ? 4 : 3);
       EVT BitcastVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
                                        Mask.getValueType().getSizeInBits());
-      SDValue Cmp = DAG.getNode(IntrData->Opc0, dl, MaskVT,
-                                Op.getOperand(1), Op.getOperand(2));
-      SDValue CmpMask = getVectorMaskingNode(Cmp, Op.getOperand(3),
+      SDValue Cmp;
+      if (IntrData->Type == CMP_MASK_CC) {
+        Cmp = DAG.getNode(IntrData->Opc0, dl, MaskVT, Op.getOperand(1),
+                    Op.getOperand(2), Op.getOperand(3));
+      } else {
+        assert(IntrData->Type == CMP_MASK && "Unexpected intrinsic type!");
+        Cmp = DAG.getNode(IntrData->Opc0, dl, MaskVT, Op.getOperand(1),
+                    Op.getOperand(2));
+      }
+      SDValue CmpMask = getVectorMaskingNode(Cmp, Mask,
                                         DAG.getTargetConstant(0, MaskVT), DAG);
       SDValue Res = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, BitcastVT,
                                 DAG.getUNDEF(BitcastVT), CmpMask,
