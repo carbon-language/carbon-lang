@@ -166,6 +166,8 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   // Identify the function this subsection is for.
   Asm->OutStreamer.EmitCOFFSecRel32(Fn);
   Asm->OutStreamer.EmitCOFFSectionIndex(Fn);
+  // Insert padding after a 16-bit section index.
+  Asm->EmitInt16(0);
 
   // Length of the function's code, in bytes.
   EmitLabelDiff(Asm->OutStreamer, Fn, FI.End);

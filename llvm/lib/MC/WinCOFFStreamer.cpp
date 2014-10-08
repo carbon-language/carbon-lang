@@ -163,7 +163,7 @@ void MCWinCOFFStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {
   const MCSymbolRefExpr *SRE = MCSymbolRefExpr::Create(Symbol, getContext());
   MCFixup Fixup = MCFixup::Create(DF->getContents().size(), SRE, FK_SecRel_2);
   DF->getFixups().push_back(Fixup);
-  DF->getContents().resize(DF->getContents().size() + 4, 0);
+  DF->getContents().resize(DF->getContents().size() + 2, 0);
 }
 
 void MCWinCOFFStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol) {

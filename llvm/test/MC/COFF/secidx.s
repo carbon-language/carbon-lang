@@ -4,7 +4,9 @@
 
 Lfoo:
 	.secidx	Lfoo
+	.short  0
 	.secidx	Lbar
+	.short  0
 
 .section spam
 Lbar:

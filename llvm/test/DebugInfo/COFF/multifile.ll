@@ -35,6 +35,7 @@
 ; X86-NEXT: [[F2_START]]:
 ; X86-NEXT: .secrel32 _f
 ; X86-NEXT: .secidx _f
+; X86-NEXT: .short 0
 ; X86-NEXT: .long [[END_OF_F]]-_f
 ; Segment for file 'D:\\one.c' begins
 ; X86-NEXT: [[FILE_SEGMENT_START:[^:]*]]:
@@ -129,6 +130,7 @@
 ; X64-NEXT: [[F2_START]]:
 ; X64-NEXT: .secrel32 f
 ; X64-NEXT: .secidx f
+; X64-NEXT: .short 0
 ; X64-NEXT: .long [[END_OF_F]]-f
 ; Segment for file 'D:\\input.c' begins
 ; X64-NEXT: [[FILE_SEGMENT_START:[^:]*]]:
