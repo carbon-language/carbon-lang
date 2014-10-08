@@ -280,9 +280,11 @@ public:
     assert(CleanupBits.CleanupSize == cleanupSize && "cleanup size overflow");
   }
 
-  ~EHCleanupScope() {
+  void Destroy() {
     delete ExtInfo;
   }
+  // Objects of EHCleanupScope are not destructed. Use Destroy().
+  ~EHCleanupScope() LLVM_DELETED_FUNCTION;
 
   bool isNormalCleanup() const { return CleanupBits.IsNormalCleanup; }
   llvm::BasicBlock *getNormalBlock() const { return NormalBlock; }

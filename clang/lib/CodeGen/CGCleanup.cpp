@@ -184,7 +184,7 @@ void EHScopeStack::popCleanup() {
   StartOfData += Cleanup.getAllocatedSize();
 
   // Destroy the cleanup.
-  Cleanup.~EHCleanupScope();
+  Cleanup.Destroy();
 
   // Check whether we can shrink the branch-fixups stack.
   if (!BranchFixups.empty()) {
