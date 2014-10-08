@@ -941,7 +941,7 @@ Process::SyncIOHandler (uint64_t timeout_msec)
                 log->Printf ("Process::%s pid %" PRIu64 ": SUCCESS", __FUNCTION__, GetID ());
         }
 
-        // reset sync one-shot so it will be ready for next time
+        // reset sync one-shot so it will be ready for next launch
         m_iohandler_sync.SetValue(false, eBroadcastNever);
     }
 
