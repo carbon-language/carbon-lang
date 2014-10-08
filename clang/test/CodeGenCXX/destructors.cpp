@@ -280,8 +280,6 @@ namespace test5 {
   // CHECK5:      [[ELEMS:%.*]] = alloca [5 x [[A:%.*]]], align
   // CHECK5-NEXT: [[EXN:%.*]] = alloca i8*
   // CHECK5-NEXT: [[SEL:%.*]] = alloca i32
-  // CHECK5-NEXT: [[PELEMS:%.*]] = bitcast [5 x [[A]]]* [[ELEMS]] to i8*
-  // CHECK5-NEXT: call void @llvm.lifetime.start(i64 5, i8* [[PELEMS]])
   // CHECK5-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [5 x [[A]]]* [[ELEMS]], i32 0, i32 0
   // CHECK5-NEXT: [[END:%.*]] = getelementptr inbounds [[A]]* [[BEGIN]], i64 5
   // CHECK5-NEXT: br label
@@ -290,8 +288,7 @@ namespace test5 {
   // CHECK5-NEXT: invoke void @_ZN5test51AD1Ev([[A]]* [[ELT]])
   // CHECK5:      [[T0:%.*]] = icmp eq [[A]]* [[ELT]], [[BEGIN]]
   // CHECK5-NEXT: br i1 [[T0]],
-  // CHECK5:      call void @llvm.lifetime.end
-  // CHECK5-NEXT: ret void
+  // CHECK5:      ret void
   // lpad
   // CHECK5:      [[EMPTY:%.*]] = icmp eq [[A]]* [[BEGIN]], [[ELT]]
   // CHECK5-NEXT: br i1 [[EMPTY]]
@@ -408,9 +405,7 @@ namespace test9 {
     f1<int>();
     f2();
   }
-
-  // CHECK5-LABEL: define void @_ZN5test93barEv(
-  // CHECK5: invoke void @_ZN5test97ArgTypeD1Ev(%"struct.test9::ArgType"* %
+  // CHECK5: call void @_ZN5test97ArgTypeD1Ev(%"struct.test9::ArgType"* %
   // CHECK5: call void @_ZN5test92f2Ev()
 }
 

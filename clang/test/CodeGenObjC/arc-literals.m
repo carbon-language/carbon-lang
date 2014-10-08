@@ -27,13 +27,9 @@ void test_numeric() {
   // CHECK: call i8* @objc_retainAutoreleasedReturnValue
   id charlit = @'a';
   // CHECK: call void @objc_release
-  // CHECK: call void @llvm.lifetime.end
   // CHECK: call void @objc_release
-  // CHECK: call void @llvm.lifetime.end
   // CHECK: call void @objc_release
-  // CHECK: call void @llvm.lifetime.end
   // CHECK: call void @objc_release
-  // CHECK: call void @llvm.lifetime.end
   // CHECK-NEXT: ret void
 }
 

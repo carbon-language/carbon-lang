@@ -16,13 +16,10 @@ struct Y {
 
 // CHECK-LABEL: define void @_Z10test_arrayv
 void test_array() {
-  // CHECK: [[ARR:%[a-zA-Z0-9.]+]] = alloca i8*
   // CHECK: [[OBJECTS:%[a-zA-Z0-9.]+]] = alloca [2 x i8*]
 
   // Initializing first element
-  // CHECK: [[PTR1:%.*]] = bitcast i8** [[ARR]] to i8*
-  // CHECK-NEXT: call void @llvm.lifetime.start(i64 8, i8* [[PTR1]])
-  // CHECK-NEXT: [[ELEMENT0:%[a-zA-Z0-9.]+]] = getelementptr inbounds [2 x i8*]* [[OBJECTS]], i32 0, i32 0
+  // CHECK: [[ELEMENT0:%[a-zA-Z0-9.]+]] = getelementptr inbounds [2 x i8*]* [[OBJECTS]], i32 0, i32 0
   // CHECK-NEXT: call void @_ZN1XC1Ev
   // CHECK-NEXT: [[OBJECT0:%[a-zA-Z0-9.]+]] = invoke i8* @_ZNK1XcvP11objc_objectEv
   // CHECK: [[RET0:%[a-zA-Z0-9.]+]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[OBJECT0]])
@@ -57,8 +54,6 @@ void test_array() {
   // CHECK-NEXT: call void @_ZN1XD1Ev
   // CHECK-NOT: ret void
   // CHECK: call void @objc_release
-  // CHECK-NEXT: [[PTR2:%.*]] = bitcast i8** [[ARR]] to i8*
-  // CHECK-NEXT: call void @llvm.lifetime.end(i64 8, i8* [[PTR2]])
   // CHECK-NEXT: ret void
 
   // Check cleanups
@@ -75,13 +70,10 @@ void test_array() {
 // CHECK-LABEL: define weak_odr void @_Z24test_array_instantiationIiEvv
 template<typename T>
 void test_array_instantiation() {
-  // CHECK: [[ARR:%[a-zA-Z0-9.]+]] = alloca i8*
   // CHECK: [[OBJECTS:%[a-zA-Z0-9.]+]] = alloca [2 x i8*]
 
   // Initializing first element
-  // CHECK:      [[PTR1:%.*]] = bitcast i8** [[ARR]] to i8*
-  // CHECK-NEXT: call void @llvm.lifetime.start(i64 8, i8* [[PTR1]])
-  // CHECK-NEXT: [[ELEMENT0:%[a-zA-Z0-9.]+]] = getelementptr inbounds [2 x i8*]* [[OBJECTS]], i32 0, i32 0
+  // CHECK: [[ELEMENT0:%[a-zA-Z0-9.]+]] = getelementptr inbounds [2 x i8*]* [[OBJECTS]], i32 0, i32 0
   // CHECK-NEXT: call void @_ZN1XC1Ev
   // CHECK-NEXT: [[OBJECT0:%[a-zA-Z0-9.]+]] = invoke i8* @_ZNK1XcvP11objc_objectEv
   // CHECK: [[RET0:%[a-zA-Z0-9.]+]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[OBJECT0]])
@@ -109,8 +101,6 @@ void test_array_instantiation() {
   // CHECK-NEXT: call void @_ZN1XD1Ev
   // CHECK-NOT: ret void
   // CHECK: call void @objc_release
-  // CHECK-NEXT: [[PTR2]] = bitcast i8** [[ARR]] to i8*
-  // CHECK-NEXT: call void @llvm.lifetime.end(i64 8, i8* [[PTR2]])
   // CHECK-NEXT: ret void
 
   // Check cleanups

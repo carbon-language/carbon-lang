@@ -6,7 +6,7 @@
 struct X {
   X();
   ~X();
-  char t[33];
+  char t[33]; // make the class big enough so that lifetime markers get inserted
 };
 
 extern void useX(const X &);
@@ -118,18 +118,18 @@ struct Z {
 
 extern void useZ(const Z &);
 
-// Check lifetime markers are inserted even if the unnamed object is small
-// CHECK-LABEL: define void @_Z11notTooSmallv
-// CHECK-EH-LABEL: define void @_Z11notTooSmallv
-void notTooSmall() {
-  // CHECK: call void @llvm.lifetime.start
+// Check lifetime markers are not inserted if the unnamed object is too small
+// CHECK-LABEL: define void @_Z8tooSmallv
+// CHECK-EH-LABEL: define void @_Z8tooSmallv
+void tooSmall() {
+  // CHECK-NOT: call void @llvm.lifetime.start
   // CHECK: call void @_Z4useZRK1Z
-  // CHECK: call void @llvm.lifetime.end
+  // CHECK-NOT: call void @llvm.lifetime.end
   // CHECK: ret
   //
-  // CHECK-EH: call void @llvm.lifetime.start
+  // CHECK-EH-NOT: call void @llvm.lifetime.start
   // CHECK-EH: invoke void @_Z4useZRK1Z
-  // CHECK-EH: call void @llvm.lifetime.end
+  // CHECK-EH-NOT: call void @llvm.lifetime.end
   // CHECK-EH: ret
   useZ(Z());
 }
