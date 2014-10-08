@@ -314,7 +314,7 @@ DWARFContext::getLineTableForUnit(DWARFUnit *cu) {
 }
 
 void DWARFContext::parseCompileUnits() {
-  CUs.parse(*this, getInfoSection().Data, getInfoSection().Relocs);
+  CUs.parse(*this, getInfoSection());
 }
 
 void DWARFContext::parseTypeUnits() {
@@ -322,12 +322,12 @@ void DWARFContext::parseTypeUnits() {
     return;
   for (const auto &I : getTypesSections()) {
     TUs.push_back(DWARFUnitSection<DWARFTypeUnit>());
-    TUs.back().parse(*this, I.second.Data, I.second.Relocs);
+    TUs.back().parse(*this, I.second);
   }
 }
 
 void DWARFContext::parseDWOCompileUnits() {
-  DWOCUs.parseDWO(*this, getInfoDWOSection().Data, getInfoDWOSection().Relocs);
+  DWOCUs.parseDWO(*this, getInfoDWOSection());
 }
 
 void DWARFContext::parseDWOTypeUnits() {
@@ -335,7 +335,7 @@ void DWARFContext::parseDWOTypeUnits() {
     return;
   for (const auto &I : getTypesDWOSections()) {
     DWOTUs.push_back(DWARFUnitSection<DWARFTypeUnit>());
-    DWOTUs.back().parseDWO(*this, I.second.Data, I.second.Relocs);
+    DWOTUs.back().parseDWO(*this, I.second);
   }
 }
 
