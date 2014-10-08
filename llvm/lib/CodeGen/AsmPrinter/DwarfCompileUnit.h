@@ -26,6 +26,7 @@ class DIE;
 class DwarfDebug;
 class DwarfFile;
 class MCSymbol;
+class LexicalScope;
 
 class DwarfCompileUnit : public DwarfUnit {
   /// The attribute index of DW_AT_stmt_list in the compile unit DIE, avoiding
@@ -68,6 +69,9 @@ public:
   /// variables in this scope then create and insert DIEs for these
   /// variables.
   DIE &updateSubprogramScopeDIE(DISubprogram SP);
+
+  void constructScopeDIE(LexicalScope *Scope,
+                         SmallVectorImpl<std::unique_ptr<DIE>> &FinalChildren);
 };
 
 } // end llvm namespace

@@ -319,4 +319,63 @@ DIE &DwarfCompileUnit::updateSubprogramScopeDIE(DISubprogram SP) {
   return *SPDie;
 }
 
+// Construct a DIE for this scope.
+void DwarfCompileUnit::constructScopeDIE(
+    LexicalScope *Scope, SmallVectorImpl<std::unique_ptr<DIE>> &FinalChildren) {
+  if (!Scope || !Scope->getScopeNode())
+    return;
+
+  DIScope DS(Scope->getScopeNode());
+
+  assert((Scope->getInlinedAt() || !DS.isSubprogram()) &&
+         "Only handle inlined subprograms here, use "
+         "constructSubprogramScopeDIE for non-inlined "
+         "subprograms");
+
+  SmallVector<std::unique_ptr<DIE>, 8> Children;
+
+  // We try to create the scope DIE first, then the children DIEs. This will
+  // avoid creating un-used children then removing them later when we find out
+  // the scope DIE is null.
+  std::unique_ptr<DIE> ScopeDIE;
+  if (Scope->getParent() && DS.isSubprogram()) {
+    ScopeDIE = DD->constructInlinedScopeDIE(*this, Scope);
+    if (!ScopeDIE)
+      return;
+    // We create children when the scope DIE is not null.
+    DD->createScopeChildrenDIE(*this, Scope, Children);
+  } else {
+    // Early exit when we know the scope DIE is going to be null.
+    if (DD->isLexicalScopeDIENull(Scope))
+      return;
+
+    unsigned ChildScopeCount;
+
+    // We create children here when we know the scope DIE is not going to be
+    // null and the children will be added to the scope DIE.
+    DD->createScopeChildrenDIE(*this, Scope, Children, &ChildScopeCount);
+
+    // There is no need to emit empty lexical block DIE.
+    for (const auto &E : DD->findImportedEntitiesForScope(DS))
+      Children.push_back(
+          constructImportedEntityDIE(DIImportedEntity(E.second)));
+    // If there are only other scopes as children, put them directly in the
+    // parent instead, as this scope would serve no purpose.
+    if (Children.size() == ChildScopeCount) {
+      FinalChildren.insert(FinalChildren.end(),
+                           std::make_move_iterator(Children.begin()),
+                           std::make_move_iterator(Children.end()));
+      return;
+    }
+    ScopeDIE = DD->constructLexicalScopeDIE(*this, Scope);
+    assert(ScopeDIE && "Scope DIE should not be null.");
+  }
+
+  // Add children
+  for (auto &I : Children)
+    ScopeDIE->addChild(std::move(I));
+
+  FinalChildren.push_back(std::move(ScopeDIE));
+}
+
 } // end llvm namespace
