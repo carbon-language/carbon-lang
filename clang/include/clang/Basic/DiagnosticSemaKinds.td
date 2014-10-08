@@ -7141,8 +7141,8 @@ def err_omp_expected_var_name : Error<
   "expected variable name">;
 def err_omp_required_method : Error<
   "%0 variable must have an accessible, unambiguous %select{default constructor|copy constructor|copy assignment operator|'%2'|destructor}1">;
-def err_omp_task_predetermined_firstprivate_required_method : Error<
-  "predetermined as a firstprivate in a task construct variable must have an accessible, unambiguous %select{copy constructor|destructor}0">;
+def note_omp_task_predetermined_firstprivate_here : Note<
+  "predetermined as a firstprivate in a task construct here">;
 def err_omp_clause_ref_type_arg : Error<
   "arguments of OpenMP clause '%0' cannot be of reference type %1">;
 def err_omp_task_predetermined_firstprivate_ref_type_arg : Error<

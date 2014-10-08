@@ -2482,6 +2482,12 @@ template <typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPFirstprivateClause(
     OMPFirstprivateClause *C) {
   TRY_TO(VisitOMPClauseList(C));
+  for (auto *E : C->private_copies()) {
+    TRY_TO(TraverseStmt(E));
+  }
+  for (auto *E : C->inits()) {
+    TRY_TO(TraverseStmt(E));
+  }
   return true;
 }
 
