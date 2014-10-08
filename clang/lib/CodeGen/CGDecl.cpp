@@ -825,19 +825,6 @@ static bool shouldUseMemSetPlusStoresToInitialize(llvm::Constant *Init,
          canEmitInitWithFewStoresAfterMemset(Init, StoreBudget);
 }
 
-/// Should we use the LLVM lifetime intrinsics for the given local variable?
-static bool shouldUseLifetimeMarkers(CodeGenFunction &CGF, uint64_t Size) {
-  // For now, only in optimized builds.
-  if (CGF.CGM.getCodeGenOpts().OptimizationLevel == 0)
-    return false;
-
-  // Limit the size of marked objects to 32 bytes. We don't want to increase
-  // compile time by marking tiny objects.
-  unsigned SizeThreshold = 32;
-
-  return Size > SizeThreshold;
-}
-
 /// EmitAutoVarDecl - Emit code and set up an entry in LocalDeclMap for a
 /// variable declaration with auto, register, or no storage class specifier.
 /// These turn into simple stack objects, or GlobalValues depending on target.
@@ -852,7 +839,12 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D) {
 /// otherwise
 llvm::Value *CodeGenFunction::EmitLifetimeStart(uint64_t Size,
                                                 llvm::Value *Addr) {
-  if (!shouldUseLifetimeMarkers(*this, Size))
+  // For now, only use the markers in optimized builds
+  if (CGM.getCodeGenOpts().OptimizationLevel == 0)
+    return nullptr;
+
+  // Zero-sized objects do not need lifetime markers
+  if (Size == 0)
     return nullptr;
 
   llvm::Value *SizeV = llvm::ConstantInt::get(Int64Ty, Size);
@@ -963,11 +955,10 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
       // Emit a lifetime intrinsic if meaningful.  There's no point
       // in doing this if we don't have a valid insertion point (?).
       uint64_t size = CGM.getDataLayout().getTypeAllocSize(LTy);
-      if (HaveInsertPoint() && EmitLifetimeStart(size, Alloc)) {
-        emission.SizeForLifetimeMarkers = llvm::ConstantInt::get(Int64Ty, size);
-      } else {
+      if (HaveInsertPoint())
+        emission.SizeForLifetimeMarkers = EmitLifetimeStart(size, Alloc);
+      else
         assert(!emission.useLifetimeMarkers());
-      }
     }
   } else {
     EnsureInsertPoint();
