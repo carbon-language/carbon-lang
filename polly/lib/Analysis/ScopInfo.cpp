@@ -1294,7 +1294,7 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
 
   SmallVector<AliasGroupTy, 4> AliasGroups;
   for (AliasSet &AS : AST) {
-    if (AS.isMustAlias())
+    if (AS.isMustAlias() || AS.isForwardingAliasSet())
       continue;
     AliasGroupTy AG;
     for (auto PR : AS)
