@@ -5,8 +5,8 @@ void foo() {
 
 #pragma omp task // expected-error {{unexpected OpenMP directive '#pragma omp task'}}
 
-class S { // expected-note 6 {{'S' declared here}}
-  S(const S &s) { a = s.a + 12; }
+class S {
+  S(const S &s) { a = s.a + 12; } // expected-note 6 {{implicitly declared private here}}
   int a;
 
 public:
@@ -17,23 +17,35 @@ public:
   S operator+(const S &) { return *this; }
 };
 
+class S1 {
+  int a;
+
+public:
+  S1() : a(0) {}
+  S1 &operator++() { return *this; }
+  S1(const S1 &) = delete; // expected-note 2 {{'S1' has been explicitly marked deleted here}}
+};
+
 template <class T>
 int foo() {
-  T a; // expected-note 3 {{'a' defined here}}
+  T a;
   T &b = a; // expected-note 4 {{'b' defined here}}
   int r;
+  S1 s1;
+// expected-error@+1 2 {{call to deleted constructor of 'S1'}}
+#pragma omp task
+// expected-note@+1 2 {{predetermined as a firstprivate in a task construct here}}
+  ++s1;
 #pragma omp task default(none)
 #pragma omp task default(shared)
   ++a;
-// expected-error@+2 {{predetermined as a firstprivate in a task construct variable must have an accessible, unambiguous copy constructor}}
 #pragma omp task default(none)
 #pragma omp task
-// expected-note@+1 {{used here}}
+  // expected-error@+1 {{calling a private constructor of class 'S'}}
   ++a;
 #pragma omp task
-// expected-error@+1 {{predetermined as a firstprivate in a task construct variable must have an accessible, unambiguous copy constructor}}
 #pragma omp task
-  // expected-note@+1 {{used here}}
+  // expected-error@+1 {{calling a private constructor of class 'S'}}
   ++a;
 #pragma omp task default(shared)
 #pragma omp task
@@ -46,11 +58,11 @@ int foo() {
 #pragma omp task
   // expected-note@+1 2 {{used here}}
   ++b;
-// expected-error@+3 {{predetermined as a firstprivate in a task construct variable cannot be of reference type 'int &'}}
-// expected-error@+2 {{predetermined as a firstprivate in a task construct variable cannot be of reference type 'S &'}}
-// expected-error@+1 {{predetermined as a firstprivate in a task construct variable must have an accessible, unambiguous copy constructor}}
+// expected-error@+2 {{predetermined as a firstprivate in a task construct variable cannot be of reference type 'int &'}}
+// expected-error@+1 {{predetermined as a firstprivate in a task construct variable cannot be of reference type 'S &'}}
 #pragma omp task
-// expected-note@+1 3 {{used here}}
+// expected-error@+2 {{calling a private constructor of class 'S'}}
+// expected-note@+1 2 {{used here}}
 #pragma omp parallel shared(a, b)
   ++a, ++b;
 // expected-note@+1 3 {{defined as reduction}}
@@ -109,7 +121,7 @@ int foo() {
 int main(int argc, char **argv) {
   int a;
   int &b = a; // expected-note 2 {{'b' defined here}}
-  S sa;       // expected-note 3 {{'sa' defined here}}
+  S sa;
   S &sb = sa; // expected-note 2 {{'sb' defined here}}
   int r;
 #pragma omp task { // expected-warning {{extra tokens at the end of '#pragma omp task' are ignored}}
@@ -193,14 +205,12 @@ L2:
 #pragma omp task default(shared)
   ++sa;
 #pragma omp task default(none)
-// expected-error@+1 {{predetermined as a firstprivate in a task construct variable must have an accessible, unambiguous copy constructor}}
 #pragma omp task
-// expected-note@+1 {{used here}}
+  // expected-error@+1 {{calling a private constructor of class 'S'}}
   ++sa;
 #pragma omp task
-// expected-error@+1 {{predetermined as a firstprivate in a task construct variable must have an accessible, unambiguous copy constructor}}
 #pragma omp task
-// expected-note@+1 {{used here}}
+  // expected-error@+1 {{calling a private constructor of class 'S'}}
   ++sa;
 #pragma omp task default(shared)
 #pragma omp task
@@ -212,10 +222,10 @@ L2:
 #pragma omp task
   // expected-note@+1 {{used here}}
   ++sb;
-// expected-error@+2 {{predetermined as a firstprivate in a task construct variable cannot be of reference type 'S &'}}
-// expected-error@+1 {{predetermined as a firstprivate in a task construct variable must have an accessible, unambiguous copy constructor}}
+// expected-error@+1 {{predetermined as a firstprivate in a task construct variable cannot be of reference type 'S &'}}
 #pragma omp task
-// expected-note@+1 2 {{used here}}
+// expected-error@+2 {{calling a private constructor of class 'S'}}
+// expected-note@+1 {{used here}}
 #pragma omp parallel shared(sa, sb)
   ++sa, ++sb;
 // expected-note@+1 2 {{defined as reduction}}

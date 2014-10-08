@@ -14,7 +14,7 @@ class S2 {
 
 public:
   S2() : a(0) {}
-  S2(S2 &s2) : a(s2.a) {}
+  S2(const S2 &s2) : a(s2.a) {}
   static float S2s;
   static const float S2sc;
 };
@@ -27,22 +27,22 @@ class S3 {
 
 public:
   S3() : a(0) {}
-  S3(S3 &s3) : a(s3.a) {}
+  S3(const S3 &s3) : a(s3.a) {}
 };
 const S3 c;
 const S3 ca[5];
 extern const int f;
-class S4 { // expected-note 2 {{'S4' declared here}}
+class S4 {
   int a;
   S4();
-  S4(const S4 &s4);
+  S4(const S4 &s4); // expected-note 2 {{implicitly declared private here}}
 
 public:
   S4(int v) : a(v) {}
 };
-class S5 { // expected-note 4 {{'S5' declared here}}
+class S5 {
   int a;
-  S5(const S5 &s5) : a(s5.a) {}
+  S5(const S5 &s5) : a(s5.a) {} // expected-note 4 {{implicitly declared private here}}
 
 public:
   S5() : a(0) {}
@@ -62,8 +62,8 @@ S3 h;
 
 template <class I, class C>
 int foomain(int argc, char **argv) {
-  I e(4); // expected-note {{'e' defined here}}
-  C g(5); // expected-note 2 {{'g' defined here}}
+  I e(4);
+  C g(5);
   int i;
   int &j = i; // expected-note {{'j' defined here}}
 #pragma omp parallel
@@ -117,7 +117,7 @@ int foomain(int argc, char **argv) {
     foo();
   }
 #pragma omp parallel
-#pragma omp sections firstprivate(e, g) // expected-error 2 {{firstprivate variable must have an accessible, unambiguous copy constructor}}
+#pragma omp sections firstprivate(e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{calling a private constructor of class 'S5'}}
   {
     foo();
   }
@@ -153,7 +153,7 @@ int foomain(int argc, char **argv) {
     foo();
   }
 #pragma omp parallel
-#pragma omp sections lastprivate(g) firstprivate(g) // expected-error {{firstprivate variable must have an accessible, unambiguous copy constructor}}
+#pragma omp sections lastprivate(g) firstprivate(g) // expected-error {{calling a private constructor of class 'S5'}}
   {
     foo();
   }
@@ -173,8 +173,8 @@ int foomain(int argc, char **argv) {
 int main(int argc, char **argv) {
   const int d = 5;
   const int da[5] = {0};
-  S4 e(4); // expected-note {{'e' defined here}}
-  S5 g(5); // expected-note 2 {{'g' defined here}}
+  S4 e(4);
+  S5 g(5);
   S3 m;
   S6 n(2);
   int i;
@@ -271,7 +271,7 @@ int main(int argc, char **argv) {
     foo();
   }
 #pragma omp parallel
-#pragma omp sections firstprivate(e, g) // expected-error 2 {{firstprivate variable must have an accessible, unambiguous copy constructor}}
+#pragma omp sections firstprivate(e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{calling a private constructor of class 'S5'}}
   {
     foo();
   }
@@ -301,7 +301,7 @@ int main(int argc, char **argv) {
     foo();
   }
 #pragma omp parallel
-#pragma omp sections lastprivate(g) firstprivate(g) // expected-error {{firstprivate variable must have an accessible, unambiguous copy constructor}}
+#pragma omp sections lastprivate(g) firstprivate(g) // expected-error {{calling a private constructor of class 'S5'}}
   {
     foo();
   }
