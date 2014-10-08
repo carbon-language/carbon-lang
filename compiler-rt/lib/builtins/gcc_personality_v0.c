@@ -180,7 +180,7 @@ static uintptr_t readEncodedPointer(const uint8_t** data, uint8_t encoding)
  * on each frame as the stack is unwound during a C++ exception
  * throw through a C function compiled with -fexceptions.
  */
-#if __arm__
+#if __USING_SJLJ_EXCEPTIONS__
 // the setjump-longjump based exceptions personality routine has a different name
 COMPILER_RT_ABI _Unwind_Reason_Code
 __gcc_personality_sj0(int version, _Unwind_Action actions,

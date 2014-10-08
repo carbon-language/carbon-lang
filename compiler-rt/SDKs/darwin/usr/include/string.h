@@ -32,13 +32,13 @@ char *strncpy(char *, const char *, size_t);
 #if defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__)
 #  if defined(__i386)
 #    define __STRERROR_NAME  "_strerror$UNIX2003"
-#  elif defined(__x86_64__) || defined(__arm)
+#  elif defined(__x86_64__) || defined(__arm) || defined(__arm64)
 #    define __STRERROR_NAME  "_strerror"
 #  else
 #    error "unrecognized architecture for targeting OS X"
 #  endif
 #elif defined(__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__)
-#  if defined(__i386) || defined (__x86_64) || defined(__arm)
+#  if defined(__i386) || defined (__x86_64) || defined(__arm) || defined(__arm64)
 #    define __STRERROR_NAME  "_strerror"
 #  else
 #    error "unrecognized architecture for targeting iOS"

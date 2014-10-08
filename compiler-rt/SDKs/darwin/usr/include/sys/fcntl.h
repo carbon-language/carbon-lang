@@ -23,7 +23,7 @@
 #    define __OPEN_NAME  "_open$UNIX2003"
 #  elif defined(__x86_64__)
 #    define __OPEN_NAME  "_open"
-#  elif defined(__arm)
+#  elif defined(__arm) || defined(__arm64)
 #    define __OPEN_NAME  "_open"
 #  else
 #    error "unrecognized architecture for targeting OS X"
@@ -31,7 +31,7 @@
 #elif defined(__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__)
 #  if defined(__i386) || defined (__x86_64)
 #    define __OPEN_NAME  "_open"
-#  elif defined(__arm)
+#  elif defined(__arm) || defined(__arm64)
 #    define __OPEN_NAME  "_open"
 #  else
 #    error "unrecognized architecture for targeting iOS"

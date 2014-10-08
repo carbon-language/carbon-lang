@@ -34,7 +34,7 @@ typedef __SIZE_TYPE__ size_t;
 #    define __FDOPEN_NAME  "_fdopen"
 #    define __FOPEN_NAME "_fopen"
 #    define __FWRITE_NAME "_fwrite"
-#  elif defined(__arm)
+#  elif defined(__arm) || defined(__arm64)
 #    define __FDOPEN_NAME  "_fdopen"
 #    define __FOPEN_NAME "_fopen"
 #    define __FWRITE_NAME "_fwrite"
@@ -46,7 +46,7 @@ typedef __SIZE_TYPE__ size_t;
 #    define __FDOPEN_NAME  "_fdopen"
 #    define __FOPEN_NAME "_fopen"
 #    define __FWRITE_NAME "_fwrite"
-#  elif defined(__arm)
+#  elif defined(__arm) || defined(__arm64)
 #    define __FDOPEN_NAME  "_fdopen"
 #    define __FOPEN_NAME "_fopen"
 #    define __FWRITE_NAME "_fwrite"

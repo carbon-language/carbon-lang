@@ -115,3 +115,13 @@ FUNCTIONS.armv7 := $(FUNCTIONS) \
 
 FUNCTIONS.armv7s := $(FUNCTIONS.armv7)
 
+FUNCTIONS.arm64 :=  divti3 modti3 \
+					udivmodti4 \
+					udivti3 umodti3 \
+					powisf2 powidf2 \
+					clzti2 \
+					fixdfti fixsfti \
+					fixunsdfti fixunssfti fixunssfti \
+					floattidf floattisf floatuntidf floatuntisf \
+					gcc_personality_v0 atomic
+
