@@ -354,9 +354,6 @@ class DwarfDebug : public AsmPrinterHandler {
   void addScopeRangeList(DwarfCompileUnit &TheCU, DIE &ScopeDIE,
                          const SmallVectorImpl<InsnRange> &Range);
 
-  /// \brief Construct a DIE for this scope.
-  void constructScopeDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope,
-                         SmallVectorImpl<std::unique_ptr<DIE>> &FinalChildren);
   DIE *createAndAddScopeChildren(DwarfCompileUnit &TheCU, LexicalScope *Scope,
                                  DIE &ScopeDIE);
   /// \brief Construct a DIE for this abstract scope.
