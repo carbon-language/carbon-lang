@@ -1,5 +1,5 @@
 // REQUIRES: x86-registered-target
-// RUN: %clang_cc1 %s -triple x86_64-apple-darwin10 -fasm-blocks -Wno-microsoft -verify -fsyntax-only
+// RUN: %clang_cc1 %s -triple x86_64-apple-darwin10 -fasm-blocks -Wno-microsoft -Wunused-label -verify -fsyntax-only
 
 void t1(void) { 
  __asm __asm // expected-error {{__asm used with no assembly instructions}}
@@ -146,5 +146,11 @@ void t10() {
 
 void t11() {
 foo:
-  __asm mov eax, foo // expected-error {{use of undeclared label 'foo'}}
+  __asm mov eax, foo // expected-error {{use of undeclared label 'foo'}} expected-warning {{unused label 'foo'}}
+}
+
+void t12() {
+  __asm foo:
+  __asm bar: // expected-warning {{unused label 'bar'}}
+  __asm jmp foo
 }

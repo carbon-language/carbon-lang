@@ -561,7 +561,10 @@ LabelDecl *Sema::GetOrCreateMSAsmLabel(StringRef ExternalLabelName,
   LabelDecl* Label = LookupOrCreateLabel(PP.getIdentifierInfo(ExternalLabelName),
                                          Location);
 
-  if (!Label->isMSAsmLabel()) {
+  if (Label->isMSAsmLabel()) {
+    // If we have previously created this label implicitly, mark it as used.
+    Label->markUsed(Context);
+  } else {
     // Otherwise, insert it, but only resolve it if we have seen the label itself.
     std::string InternalName;
     llvm::raw_string_ostream OS(InternalName);
