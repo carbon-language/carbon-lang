@@ -14,7 +14,6 @@
 #include "llvm/Analysis/AssumptionTracker.h"
 #include "llvm/Analysis/TargetFolder.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/IR/Dominators.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/IntrinsicInst.h"
@@ -98,8 +97,8 @@ class LLVM_LIBRARY_VISIBILITY InstCombiner
       public InstVisitor<InstCombiner, Instruction *> {
   AssumptionTracker *AT;
   const DataLayout *DL;
-  DominatorTree *DT; // not required
   TargetLibraryInfo *TLI;
+  DominatorTree *DT; // not required
   bool MadeIRChange;
   LibCallSimplifier *Simplifier;
   bool MinimizeSize;
@@ -114,8 +113,7 @@ public:
   BuilderTy *Builder;
 
   static char ID; // Pass identification, replacement for typeid
-  InstCombiner()
-      : FunctionPass(ID), DL(nullptr), DT(nullptr), Builder(nullptr) {
+  InstCombiner() : FunctionPass(ID), DL(nullptr), Builder(nullptr) {
     MinimizeSize = false;
     initializeInstCombinerPass(*PassRegistry::getPassRegistry());
   }
@@ -244,11 +242,6 @@ public:
 
   // visitInstruction - Specify what to return for unhandled instructions...
   Instruction *visitInstruction(Instruction &I) { return nullptr; }
-  bool dominatesAllUses(const Instruction *DI, const Instruction *UI,
-                        const BasicBlock *DB) const;
-  bool replacedSelectWithOperand(SelectInst *SI, const ICmpInst *Icmp,
-                                 const ConstantInt *CI1,
-                                 const ConstantInt *CI2);
 
 private:
   bool ShouldChangeType(Type *From, Type *To) const;

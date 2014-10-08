@@ -90,7 +90,6 @@ INITIALIZE_PASS_BEGIN(InstCombiner, "instcombine",
                 "Combine redundant instructions", false, false)
 INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_END(InstCombiner, "instcombine",
                 "Combine redundant instructions", false, false)
 
@@ -98,8 +97,6 @@ void InstCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
   AU.addRequired<AssumptionTracker>();
   AU.addRequired<TargetLibraryInfo>();
-  AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addPreserved<DominatorTreeWrapperPass>();
 }
 
 
@@ -2936,8 +2933,11 @@ bool InstCombiner::runOnFunction(Function &F) {
   AT = &getAnalysis<AssumptionTracker>();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   DL = DLP ? &DLP->getDataLayout() : nullptr;
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   TLI = &getAnalysis<TargetLibraryInfo>();
+
+  DominatorTreeWrapperPass *DTWP =
+      getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  DT = DTWP ? &DTWP->getDomTree() : nullptr;
 
   // Minimizing size?
   MinimizeSize = F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
