@@ -57,7 +57,7 @@ MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
                                  GCModuleInfo *gmi)
     : Fn(F), Target(TM), STI(TM.getSubtargetImpl()), Ctx(mmi.getContext()),
       MMI(mmi), GMI(gmi) {
-  if (TM.getSubtargetImpl()->getRegisterInfo())
+  if (STI->getRegisterInfo())
     RegInfo = new (Allocator) MachineRegisterInfo(this);
   else
     RegInfo = nullptr;
@@ -72,15 +72,13 @@ MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
                                 getStackAlignment(AttributeSet::FunctionIndex));
 
   ConstantPool = new (Allocator) MachineConstantPool(TM);
-  Alignment =
-      TM.getSubtargetImpl()->getTargetLowering()->getMinFunctionAlignment();
+  Alignment = STI->getTargetLowering()->getMinFunctionAlignment();
 
   // FIXME: Shouldn't use pref alignment if explicit alignment is set on Fn.
   if (!Fn->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
                                         Attribute::OptimizeForSize))
-    Alignment = std::max(
-        Alignment,
-        TM.getSubtargetImpl()->getTargetLowering()->getPrefFunctionAlignment());
+    Alignment = std::max(Alignment,
+                         STI->getTargetLowering()->getPrefFunctionAlignment());
 
   FunctionNumber = FunctionNum;
   JumpTableInfo = nullptr;
