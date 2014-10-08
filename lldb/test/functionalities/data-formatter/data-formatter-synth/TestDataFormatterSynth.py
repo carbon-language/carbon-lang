@@ -14,12 +14,14 @@ class SynthDataFormatterTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
+    @unittest2.expectedFailure("rdar://15630776 - Summary cannot reference non-synthetic children if synthetic children exist")
     def test_with_dsym_and_run_command(self):
         """Test data formatter commands."""
         self.buildDsym()
         self.data_formatter_commands()
 
     @dwarf_test
+    @unittest2.expectedFailure("rdar://15630776 - Summary cannot reference non-synthetic children if synthetic children exist")
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         self.buildDwarf()

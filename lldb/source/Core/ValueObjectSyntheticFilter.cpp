@@ -66,16 +66,17 @@ ValueObjectSynthetic::ValueObjectSynthetic (ValueObject &parent, lldb::Synthetic
     m_name_toindex(),
     m_synthetic_children_count(UINT32_MAX),
     m_parent_type_name(parent.GetTypeName()),
-    m_might_have_children(eLazyBoolCalculate)
+    m_might_have_children(eLazyBoolCalculate),
+    m_provides_value(eLazyBoolCalculate)
 {
-#ifdef LLDB_CONFIGURATION_DEBUG
+#ifdef FOOBAR
     std::string new_name(parent.GetName().AsCString());
     new_name += "$$__synth__";
     SetName (ConstString(new_name.c_str()));
 #else
     SetName(parent.GetName());
 #endif
-    CopyParentData();
+    CopyValueData(m_parent);
     CreateSynthFilter();
 }
 
@@ -191,7 +192,20 @@ ValueObjectSynthetic::UpdateValue ()
         m_might_have_children = eLazyBoolCalculate;
     }
     
-    CopyParentData();
+    m_provides_value = eLazyBoolCalculate;
+    
+    lldb::ValueObjectSP synth_val(m_synth_filter_ap->GetSyntheticValue());
+    
+    if (synth_val && synth_val->CanProvideValue())
+    {
+        m_provides_value = eLazyBoolYes;
+        CopyValueData(synth_val.get());
+    }
+    else
+    {
+        m_provides_value = eLazyBoolNo;
+        CopyValueData(m_parent);
+    }
     
     SetValueIsValid(true);
     return true;
@@ -268,9 +282,19 @@ ValueObjectSynthetic::GetNonSyntheticValue ()
 }
 
 void
-ValueObjectSynthetic::CopyParentData ()
+ValueObjectSynthetic::CopyValueData (ValueObject *source)
 {
-    m_value = m_parent->GetValue();
+    m_value = (source->UpdateValueIfNeeded(), source->GetValue());
     ExecutionContext exe_ctx (GetExecutionContextRef());
     m_error = m_value.GetValueAsData (&exe_ctx, m_data, 0, GetModule().get());
+}
+
+bool
+ValueObjectSynthetic::CanProvideValue ()
+{
+    if (!UpdateValueIfNeeded())
+        return false;
+    if (m_provides_value == eLazyBoolYes)
+        return true;
+    return m_parent->CanProvideValue();
 }

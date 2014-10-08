@@ -59,9 +59,9 @@ TypeFormatImpl_Format::FormatObject (ValueObject *valobj,
 {
     if (!valobj)
         return false;
-    if (valobj->GetClangType().IsAggregateType () == false)
+    if (valobj->CanProvideValue())
     {
-        const Value& value(valobj->GetValue());
+        Value& value(valobj->GetValue());
         const Value::ContextType context_type = value.GetContextType();
         ExecutionContext exe_ctx (valobj->GetExecutionContextRef());
         DataExtractor data;
@@ -92,7 +92,7 @@ TypeFormatImpl_Format::FormatObject (ValueObject *valobj,
         }
         else
         {
-            ClangASTType clang_type = valobj->GetClangType ();
+            ClangASTType clang_type = value.GetClangType ();
             if (clang_type)
             {
                 // put custom bytes to display in the DataExtractor to override the default value logic
@@ -180,7 +180,7 @@ TypeFormatImpl_EnumType::FormatObject (ValueObject *valobj,
     dest.clear();
     if (!valobj)
         return false;
-    if (valobj->GetClangType().IsAggregateType ())
+    if (!valobj->CanProvideValue())
         return false;
     ProcessSP process_sp;
     TargetSP target_sp;

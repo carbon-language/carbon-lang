@@ -132,11 +132,12 @@ public:
     GetNonSyntheticValue ();
     
     virtual bool
-    ResolveValue (Scalar &scalar)
+    CanProvideValue ();
+    
+    virtual bool
+    DoesProvideSyntheticValue ()
     {
-        if (m_parent)
-            return m_parent->ResolveValue(scalar);
-        return false;
+        return (UpdateValueIfNeeded(), m_provides_value == eLazyBoolYes);
     }
     
 protected:
@@ -167,12 +168,14 @@ protected:
 
     LazyBool        m_might_have_children;
     
+    LazyBool        m_provides_value;
+    
 private:
     friend class ValueObject;
     ValueObjectSynthetic (ValueObject &parent, lldb::SyntheticChildrenSP filter);
     
     void
-    CopyParentData ();
+    CopyValueData (ValueObject *source);
     
     //------------------------------------------------------------------
     // For ValueObject only

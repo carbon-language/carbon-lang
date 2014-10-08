@@ -88,6 +88,7 @@ public:
     {
         eExpressionPathScanEndReasonEndOfString = 1,           // out of data to parse
         eExpressionPathScanEndReasonNoSuchChild,               // child element not found
+        eExpressionPathScanEndReasonNoSuchSyntheticChild,      // (synthetic) child element not found
         eExpressionPathScanEndReasonEmptyRangeNotAllowed,      // [] only allowed for arrays
         eExpressionPathScanEndReasonDotInsteadOfArrow,         // . used when -> should be used
         eExpressionPathScanEndReasonArrowInsteadOfDot,         // -> used when . should be used
@@ -379,6 +380,9 @@ public:
     // this vends a TypeImpl that is useful at the SB API layer
     virtual TypeImpl
     GetTypeImpl ();
+    
+    virtual bool
+    CanProvideValue ();
 
     //------------------------------------------------------------------
     // Subclasses must implement the functions below.
@@ -752,6 +756,12 @@ public:
 
     virtual bool
     IsDynamic ()
+    {
+        return false;
+    }
+    
+    virtual bool
+    DoesProvideSyntheticValue ()
     {
         return false;
     }

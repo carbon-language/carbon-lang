@@ -234,7 +234,7 @@ ValueObjectVariable::UpdateValue ()
                     }
                 }
 
-                if (GetClangType().IsAggregateType())
+                if (!CanProvideValue())
                 {
                     // this value object represents an aggregate type whose
                     // children have values, but this object does not. So we

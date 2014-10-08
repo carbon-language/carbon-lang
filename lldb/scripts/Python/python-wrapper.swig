@@ -723,6 +723,34 @@ LLDBSwigPython_MightHaveChildrenSynthProviderInstance
     return ret_val;
 }
 
+SWIGEXPORT PyObject*
+LLDBSwigPython_GetValueSynthProviderInstance
+(
+    PyObject *implementor
+)
+{
+    PyObject* ret_val = nullptr;
+
+    static char callee_name[] = "get_value";
+
+    PyObject* py_return = LLDBSwigPython_CallOptionalMember(implementor,callee_name, Py_None);
+
+    if (py_return == Py_None || py_return == nullptr)
+        ret_val = nullptr;
+
+    lldb::SBValue* sbvalue_ptr = NULL;
+    
+    if (SWIG_ConvertPtr(py_return, (void**)&sbvalue_ptr, SWIGTYPE_p_lldb__SBValue, 0) == -1)
+        ret_val = nullptr;
+    else if (sbvalue_ptr == NULL)
+        ret_val = nullptr;
+    else
+        ret_val = py_return;
+
+    Py_XDECREF(py_return);
+    return ret_val;
+}
+
 SWIGEXPORT void*
 LLDBSWIGPython_CastPyObjectToSBValue
 (

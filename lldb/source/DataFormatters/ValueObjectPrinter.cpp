@@ -66,7 +66,7 @@ ValueObjectPrinter::Init (ValueObject* valobj,
 bool
 ValueObjectPrinter::PrintValueObject ()
 {
-    if (!GetDynamicValueIfNeeded () || m_valobj == nullptr)
+    if (!GetMostSpecializedValue () || m_valobj == nullptr)
         return false;
     
     if (ShouldPrintValueObject())
@@ -97,7 +97,7 @@ ValueObjectPrinter::PrintValueObject ()
 }
 
 bool
-ValueObjectPrinter::GetDynamicValueIfNeeded ()
+ValueObjectPrinter::GetMostSpecializedValue ()
 {
     if (m_valobj)
         return true;
@@ -133,6 +133,25 @@ ValueObjectPrinter::GetDynamicValueIfNeeded ()
             }
             else
                 m_valobj = m_orig_valobj;
+        }
+        
+        if (m_valobj->IsSynthetic())
+        {
+            if (options.m_use_synthetic == false)
+            {
+                ValueObject *non_synthetic = m_valobj->GetNonSyntheticValue().get();
+                if (non_synthetic)
+                    m_valobj = non_synthetic;
+            }
+        }
+        else
+        {
+            if (options.m_use_synthetic == true)
+            {
+                ValueObject *synthetic = m_valobj->GetSyntheticValue().get();
+                if (synthetic)
+                    m_valobj = synthetic;
+            }
         }
     }
     m_clang_type = m_valobj->GetClangType();
@@ -442,8 +461,7 @@ ValueObjectPrinter::ShouldPrintChildren (bool is_failed_description,
 ValueObject*
 ValueObjectPrinter::GetValueObjectForChildrenGeneration ()
 {
-    ValueObjectSP synth_valobj_sp = m_valobj->GetSyntheticValue (options.m_use_synthetic);
-    return (synth_valobj_sp ? synth_valobj_sp.get() : m_valobj);
+    return m_valobj;
 }
 
 void
@@ -540,7 +558,13 @@ ValueObjectPrinter::PrintChildren (uint32_t curr_ptr_depth)
     {
         // Aggregate, no children...
         if (ShouldPrintValueObject())
-            m_stream->PutCString(" {}\n");
+        {
+            // if it has a synthetic value, then don't print {}, the synthetic children are probably only being used to vend a value
+            if (m_valobj->DoesProvideSyntheticValue())
+                m_stream->PutCString( "\n");
+            else
+                m_stream->PutCString(" {}\n");
+        }
     }
     else
     {
@@ -552,7 +576,7 @@ ValueObjectPrinter::PrintChildren (uint32_t curr_ptr_depth)
 bool
 ValueObjectPrinter::PrintChildrenOneLiner (bool hide_names)
 {
-    if (!GetDynamicValueIfNeeded () || m_valobj == nullptr)
+    if (!GetMostSpecializedValue () || m_valobj == nullptr)
         return false;
     
     ValueObject* synth_m_valobj = GetValueObjectForChildrenGeneration();

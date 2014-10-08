@@ -329,7 +329,7 @@ ValueObjectDynamicValue::UpdateValue ()
         m_error = m_value.GetValueAsData (&exe_ctx, m_data, 0, GetModule().get());
         if (m_error.Success())
         {
-            if (GetClangType().IsAggregateType ())
+            if (!CanProvideValue())
             {
                 // this value object represents an aggregate type whose
                 // children have values, but this object does not. So we

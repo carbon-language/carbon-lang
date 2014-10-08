@@ -102,7 +102,7 @@ ValueObjectCast::UpdateValue ()
         //m_value.SetContext (Value::eContextTypeClangType, clang_type);
         m_value.SetClangType (clang_type);
         SetAddressTypeOfChildren(m_parent->GetAddressTypeOfChildren());
-        if (clang_type.IsAggregateType ())
+        if (!CanProvideValue())
         {
             // this value object represents an aggregate type whose
             // children have values, but this object does not. So we

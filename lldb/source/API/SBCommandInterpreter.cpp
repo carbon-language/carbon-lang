@@ -474,6 +474,9 @@ LLDBSwigPython_UpdateSynthProviderInstance (void* implementor);
 extern "C" bool
 LLDBSwigPython_MightHaveChildrenSynthProviderInstance (void* implementor);
 
+extern "C" void *
+LLDBSwigPython_GetValueSynthProviderInstance (void* implementor);
+
 extern "C" bool
 LLDBSwigPythonCallCommand (const char *python_function_name,
                            const char *session_dictionary_name,
@@ -544,6 +547,7 @@ SBCommandInterpreter::InitializeSWIG ()
                                                   LLDBSWIGPython_GetValueObjectSPFromSBValue,
                                                   LLDBSwigPython_UpdateSynthProviderInstance,
                                                   LLDBSwigPython_MightHaveChildrenSynthProviderInstance,
+                                                  LLDBSwigPython_GetValueSynthProviderInstance,
                                                   LLDBSwigPythonCallCommand,
                                                   LLDBSwigPythonCallModuleInit,
                                                   LLDBSWIGPythonCreateOSPlugin,

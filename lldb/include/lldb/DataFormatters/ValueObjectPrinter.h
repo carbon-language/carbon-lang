@@ -295,7 +295,7 @@ protected:
           uint32_t curr_depth);
     
     bool
-    GetDynamicValueIfNeeded ();
+    GetMostSpecializedValue ();
     
     const char*
     GetDescriptionForDisplay ();

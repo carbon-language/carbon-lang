@@ -121,7 +121,7 @@ public:
     typedef lldb::ValueObjectSP  (*SWIGPythonGetValueObjectSPFromSBValue)       (void* data);
     typedef bool            (*SWIGPythonUpdateSynthProviderInstance)            (void* data);
     typedef bool            (*SWIGPythonMightHaveChildrenSynthProviderInstance) (void* data);
-
+    typedef void*           (*SWIGPythonGetValueSynthProviderInstance)          (void *implementor);
     
     typedef bool            (*SWIGPythonCallCommand)            (const char *python_function_name,
                                                                  const char *session_dictionary_name,
@@ -498,6 +498,12 @@ public:
         return true;
     }
     
+    virtual lldb::ValueObjectSP
+    GetSyntheticValue (const lldb::ScriptInterpreterObjectSP& implementor)
+    {
+        return nullptr;
+    }
+    
     virtual bool
     RunScriptBasedCommand (const char* impl_function,
                            const char* args,
@@ -607,6 +613,7 @@ public:
                            SWIGPythonGetValueObjectSPFromSBValue swig_get_valobj_sp_from_sbvalue,
                            SWIGPythonUpdateSynthProviderInstance swig_update_provider,
                            SWIGPythonMightHaveChildrenSynthProviderInstance swig_mighthavechildren_provider,
+                           SWIGPythonGetValueSynthProviderInstance swig_getvalue_provider,
                            SWIGPythonCallCommand swig_call_command,
                            SWIGPythonCallModuleInit swig_call_module_init,
                            SWIGPythonCreateOSPlugin swig_create_os_plugin,

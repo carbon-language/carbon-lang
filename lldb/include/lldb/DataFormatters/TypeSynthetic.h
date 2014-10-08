@@ -81,6 +81,11 @@ namespace lldb_private {
         virtual bool
         MightHaveChildren () = 0;
         
+        // if this function returns a non-null ValueObject, then the returned ValueObject will stand
+        // for this ValueObject whenever a "value" request is made to this ValueObject
+        virtual lldb::ValueObjectSP
+        GetSyntheticValue () { return nullptr; }
+        
         typedef std::shared_ptr<SyntheticChildrenFrontEnd> SharedPointer;
         typedef std::unique_ptr<SyntheticChildrenFrontEnd> AutoPointer;
         
@@ -591,6 +596,15 @@ namespace lldb_private {
                 if (!m_wrapper_sp || m_interpreter == NULL)
                     return UINT32_MAX;
                 return m_interpreter->GetIndexOfChildWithName(m_wrapper_sp, name.GetCString());
+            }
+            
+            virtual lldb::ValueObjectSP
+            GetSyntheticValue ()
+            {
+                if (!m_wrapper_sp || m_interpreter == NULL)
+                    return nullptr;
+                
+                return m_interpreter->GetSyntheticValue(m_wrapper_sp);
             }
             
             typedef std::shared_ptr<SyntheticChildrenFrontEnd> SharedPointer;

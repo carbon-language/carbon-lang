@@ -55,6 +55,7 @@ static ScriptInterpreter::SWIGPythonCastPyObjectToSBValue g_swig_cast_to_sbvalue
 static ScriptInterpreter::SWIGPythonGetValueObjectSPFromSBValue g_swig_get_valobj_sp_from_sbvalue = nullptr;
 static ScriptInterpreter::SWIGPythonUpdateSynthProviderInstance g_swig_update_provider = nullptr;
 static ScriptInterpreter::SWIGPythonMightHaveChildrenSynthProviderInstance g_swig_mighthavechildren_provider = nullptr;
+static ScriptInterpreter::SWIGPythonGetValueSynthProviderInstance g_swig_getvalue_provider = nullptr;
 static ScriptInterpreter::SWIGPythonCallCommand g_swig_call_command = nullptr;
 static ScriptInterpreter::SWIGPythonCallModuleInit g_swig_call_module_init = nullptr;
 static ScriptInterpreter::SWIGPythonCreateOSPlugin g_swig_create_os_plugin = nullptr;
@@ -2140,6 +2141,42 @@ ScriptInterpreterPython::MightHaveChildrenSynthProviderInstance (const lldb::Scr
     return ret_val;
 }
 
+lldb::ValueObjectSP
+ScriptInterpreterPython::GetSyntheticValue (const lldb::ScriptInterpreterObjectSP& implementor_sp)
+{
+    lldb::ValueObjectSP ret_val(nullptr);
+    
+    if (!implementor_sp)
+        return ret_val;
+    
+    void* implementor = implementor_sp->GetObject();
+    
+    if (!implementor)
+        return ret_val;
+    
+    if (!g_swig_getvalue_provider || !g_swig_cast_to_sbvalue || !g_swig_get_valobj_sp_from_sbvalue)
+        return ret_val;
+    
+    {
+        Locker py_lock(this, Locker::AcquireLock | Locker::InitSession | Locker::NoSTDIN);
+        void* child_ptr = g_swig_getvalue_provider (implementor);
+        if (child_ptr != nullptr && child_ptr != Py_None)
+        {
+            lldb::SBValue* sb_value_ptr = (lldb::SBValue*)g_swig_cast_to_sbvalue(child_ptr);
+            if (sb_value_ptr == nullptr)
+                Py_XDECREF(child_ptr);
+            else
+                ret_val = g_swig_get_valobj_sp_from_sbvalue (sb_value_ptr);
+        }
+        else
+        {
+            Py_XDECREF(child_ptr);
+        }
+    }
+    
+    return ret_val;
+}
+
 static std::string
 ReadPythonBacktrace (PyObject* py_backtrace)
 {
@@ -2616,6 +2653,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback swig_init_callb
                                                 SWIGPythonGetValueObjectSPFromSBValue swig_get_valobj_sp_from_sbvalue,
                                                 SWIGPythonUpdateSynthProviderInstance swig_update_provider,
                                                 SWIGPythonMightHaveChildrenSynthProviderInstance swig_mighthavechildren_provider,
+                                                SWIGPythonGetValueSynthProviderInstance swig_getvalue_provider,
                                                 SWIGPythonCallCommand swig_call_command,
                                                 SWIGPythonCallModuleInit swig_call_module_init,
                                                 SWIGPythonCreateOSPlugin swig_create_os_plugin,
@@ -2639,6 +2677,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback swig_init_callb
     g_swig_get_valobj_sp_from_sbvalue = swig_get_valobj_sp_from_sbvalue;
     g_swig_update_provider = swig_update_provider;
     g_swig_mighthavechildren_provider = swig_mighthavechildren_provider;
+    g_swig_getvalue_provider = swig_getvalue_provider;
     g_swig_call_command = swig_call_command;
     g_swig_call_module_init = swig_call_module_init;
     g_swig_create_os_plugin = swig_create_os_plugin;
