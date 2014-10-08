@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_AARCH64_RELOCATION_PASS_H
-#define LLD_READER_WRITER_ELF_AARCH64_RELOCATION_PASS_H
+#ifndef LLD_READER_WRITER_ELF_AARCH64_AARCH64_RELOCATION_PASS_H
+#define LLD_READER_WRITER_ELF_AARCH64_AARCH64_RELOCATION_PASS_H
 
 #include <memory>
 

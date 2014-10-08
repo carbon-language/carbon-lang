@@ -6,8 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLD_READER_WRITER_ELF_MIPS_RELOCATION_HANDLER_H
-#define LLD_READER_WRITER_ELF_MIPS_RELOCATION_HANDLER_H
+#ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_RELOCATION_HANDLER_H
+#define LLD_READER_WRITER_ELF_MIPS_MIPS_RELOCATION_HANDLER_H
 
 #include "MipsLinkingContext.h"
 

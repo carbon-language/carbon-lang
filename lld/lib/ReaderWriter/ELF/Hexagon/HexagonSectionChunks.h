@@ -83,4 +83,4 @@ void SDataSection<HexagonELFType>::doPreFlight() {
 } // elf
 } // lld
 
-#endif // LLD_READER_WRITER_ELF_HEXAGON_SECTION_CHUNKS_H
+#endif // LLD_READER_WRITER_ELF_HEXAGON_HEXAGON_SECTION_CHUNKS_H
