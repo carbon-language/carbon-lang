@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=x86-64 -verify-machineinstrs | FileCheck %s --check-prefix X64
 ; RUN: llc < %s -march=x86 -verify-machineinstrs | FileCheck %s --check-prefix X32
+; RUN: llc < %s -march=x86-64 -mattr=slow-incdec -verify-machineinstrs | FileCheck %s --check-prefix SLOW_INC
 
 ; This file checks that atomic (non-seq_cst) stores of immediate values are
 ; done in one mov instruction and not 2. More precisely, it makes sure that the
@@ -374,6 +375,9 @@ define void @inc_8(i8* %p) {
 ; X32-NOT: lock
 ; X32: incb
 ; X32-NOT: movb
+; SLOW_INC-LABEL: inc_8
+; SLOW_INC-NOT: incb
+; SLOW_INC-NOT: movb
   %1 = load atomic i8* %p seq_cst, align 1
   %2 = add i8 %1, 1
   store atomic i8 %2, i8* %p release, align 1
@@ -387,6 +391,8 @@ define void @inc_16(i16* %p) {
 ; X64-NOT: incw
 ; X32-LABEL: inc_16
 ; X32-NOT: incw
+; SLOW_INC-LABEL: inc_16
+; SLOW_INC-NOT: incw
   %1 = load atomic i16* %p acquire, align 2
   %2 = add i16 %1, 1
   store atomic i16 %2, i16* %p release, align 2
@@ -402,6 +408,9 @@ define void @inc_32(i32* %p) {
 ; X32-NOT: lock
 ; X32: incl
 ; X32-NOT: movl
+; SLOW_INC-LABEL: inc_32
+; SLOW_INC-NOT: incl
+; SLOW_INC-NOT: movl
   %1 = load atomic i32* %p acquire, align 4
   %2 = add i32 %1, 1
   store atomic i32 %2, i32* %p monotonic, align 4
@@ -415,6 +424,9 @@ define void @inc_64(i64* %p) {
 ; X64-NOT: movq
 ;   We do not check X86-32 as it cannot do 'incq'.
 ; X32-LABEL: inc_64
+; SLOW_INC-LABEL: inc_64
+; SLOW_INC-NOT: incq
+; SLOW_INC-NOT: movq
   %1 = load atomic i64* %p acquire, align 8
   %2 = add i64 %1, 1
   store atomic i64 %2, i64* %p release, align 8
@@ -443,6 +455,9 @@ define void @dec_8(i8* %p) {
 ; X32-NOT: lock
 ; X32: decb
 ; X32-NOT: movb
+; SLOW_INC-LABEL: dec_8
+; SLOW_INC-NOT: decb
+; SLOW_INC-NOT: movb
   %1 = load atomic i8* %p seq_cst, align 1
   %2 = sub i8 %1, 1
   store atomic i8 %2, i8* %p release, align 1
@@ -456,6 +471,8 @@ define void @dec_16(i16* %p) {
 ; X64-NOT: decw
 ; X32-LABEL: dec_16
 ; X32-NOT: decw
+; SLOW_INC-LABEL: dec_16
+; SLOW_INC-NOT: decw
   %1 = load atomic i16* %p acquire, align 2
   %2 = sub i16 %1, 1
   store atomic i16 %2, i16* %p release, align 2
@@ -471,6 +488,9 @@ define void @dec_32(i32* %p) {
 ; X32-NOT: lock
 ; X32: decl
 ; X32-NOT: movl
+; SLOW_INC-LABEL: dec_32
+; SLOW_INC-NOT: decl
+; SLOW_INC-NOT: movl
   %1 = load atomic i32* %p acquire, align 4
   %2 = sub i32 %1, 1
   store atomic i32 %2, i32* %p monotonic, align 4
@@ -484,6 +504,9 @@ define void @dec_64(i64* %p) {
 ; X64-NOT: movq
 ;   We do not check X86-32 as it cannot do 'decq'.
 ; X32-LABEL: dec_64
+; SLOW_INC-LABEL: dec_64
+; SLOW_INC-NOT: decq
+; SLOW_INC-NOT: movq
   %1 = load atomic i64* %p acquire, align 8
   %2 = sub i64 %1, 1
   store atomic i64 %2, i64* %p release, align 8
