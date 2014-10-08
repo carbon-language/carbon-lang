@@ -1030,26 +1030,23 @@ void PECOFFWriter::build(const File &linkedFile) {
         peHeader->setAddressOfEntryPoint(0);
       }
     }
-    if (section->getSectionName() == ".data")
+    StringRef name = section->getSectionName();
+    if (name == ".data") {
       peHeader->setBaseOfData(section->getVirtualAddress());
-    if (section->getSectionName() == ".pdata")
-      dataDirectory->setField(DataDirectoryIndex::EXCEPTION_TABLE,
-                              section->getVirtualAddress(), section->size());
-    if (section->getSectionName() == ".rsrc")
-      dataDirectory->setField(DataDirectoryIndex::RESOURCE_TABLE,
-                              section->getVirtualAddress(), section->size());
-    if (section->getSectionName() == ".idata.a")
-      dataDirectory->setField(DataDirectoryIndex::IAT,
-                              section->getVirtualAddress(), section->size());
-    if (section->getSectionName() == ".idata.d")
-      dataDirectory->setField(DataDirectoryIndex::IMPORT_TABLE,
-                              section->getVirtualAddress(), section->size());
-    if (section->getSectionName() == ".edata")
-      dataDirectory->setField(DataDirectoryIndex::EXPORT_TABLE,
-                              section->getVirtualAddress(), section->size());
-    if (section->getSectionName() == ".loadcfg")
-      dataDirectory->setField(DataDirectoryIndex::LOAD_CONFIG_TABLE,
-                              section->getVirtualAddress(), section->size());
+      continue;
+    }
+    DataDirectoryIndex ignore = DataDirectoryIndex(-1);
+    DataDirectoryIndex idx = llvm::StringSwitch<DataDirectoryIndex>(name)
+        .Case(".pdata", DataDirectoryIndex::EXCEPTION_TABLE)
+        .Case(".rsrc", DataDirectoryIndex::RESOURCE_TABLE)
+        .Case(".idata.a", DataDirectoryIndex::IAT)
+        .Case(".idata.d", DataDirectoryIndex::IMPORT_TABLE)
+        .Case(".edata", DataDirectoryIndex::EXPORT_TABLE)
+        .Case(".loadcfg", DataDirectoryIndex::LOAD_CONFIG_TABLE)
+        .Default(ignore);
+    if (idx == ignore)
+      continue;
+    dataDirectory->setField(idx, section->getVirtualAddress(), section->size());
   }
 
   if (const DefinedAtom *atom = findTLSUsedSymbol(_ctx, linkedFile)) {
