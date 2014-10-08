@@ -413,7 +413,6 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   const Function &Fn = *mf.getFunction();
   const TargetInstrInfo &TII = *TM.getSubtargetImpl()->getInstrInfo();
   const TargetRegisterInfo &TRI = *TM.getSubtargetImpl()->getRegisterInfo();
-  const TargetLowering *TLI = TM.getSubtargetImpl()->getTargetLowering();
 
   MF = &mf;
   RegInfo = &MF->getRegInfo();
@@ -433,7 +432,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
   SplitCriticalSideEffectEdges(const_cast<Function&>(Fn), this);
 
-  CurDAG->init(*MF, TLI);
+  CurDAG->init(*MF);
   FuncInfo->set(Fn, *MF, CurDAG);
 
   if (UseMBPI && OptLevel != CodeGenOpt::None)

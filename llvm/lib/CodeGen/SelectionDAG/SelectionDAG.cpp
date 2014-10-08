@@ -915,9 +915,9 @@ SelectionDAG::SelectionDAG(const TargetMachine &tm, CodeGenOpt::Level OL)
   DbgInfo = new SDDbgInfo();
 }
 
-void SelectionDAG::init(MachineFunction &mf, const TargetLowering *tli) {
+void SelectionDAG::init(MachineFunction &mf) {
   MF = &mf;
-  TLI = tli;
+  TLI = getSubtarget().getTargetLowering();
   TSI = getSubtarget().getSelectionDAGInfo();
   Context = &mf.getFunction()->getContext();
 }
