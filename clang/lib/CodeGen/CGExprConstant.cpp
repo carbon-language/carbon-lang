@@ -869,7 +869,8 @@ public:
           if (VD->isFileVarDecl() || VD->hasExternalStorage())
             return CGM.GetAddrOfGlobalVar(VD);
           else if (VD->isLocalVarDecl())
-            return CGM.getStaticLocalDeclAddress(VD);
+            return CGM.getOrCreateStaticVarDecl(
+                *VD, CGM.getLLVMLinkageVarDefinition(VD, /*isConstant=*/false));
         }
       }
       return nullptr;

@@ -146,58 +146,60 @@ void CodeGenFunction::EmitVarDecl(const VarDecl &D) {
   return EmitAutoVarDecl(D);
 }
 
-static std::string GetStaticDeclName(CodeGenFunction &CGF, const VarDecl &D) {
-  CodeGenModule &CGM = CGF.CGM;
-
-  if (CGF.getLangOpts().CPlusPlus)
+static std::string getStaticDeclName(CodeGenModule &CGM, const VarDecl &D) {
+  if (CGM.getLangOpts().CPlusPlus)
     return CGM.getMangledName(&D).str();
 
-  StringRef ContextName;
-  if (!CGF.CurFuncDecl) {
-    // Better be in a block declared in global scope.
-    const NamedDecl *ND = cast<NamedDecl>(&D);
-    const DeclContext *DC = ND->getDeclContext();
-    if (const BlockDecl *BD = dyn_cast<BlockDecl>(DC))
-      ContextName = CGM.getBlockMangledName(GlobalDecl(), BD);
-    else
-      llvm_unreachable("Unknown context for block static var decl");
-  } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CGF.CurFuncDecl))
+  // If this isn't C++, we don't need a mangled name, just a pretty one.
+  assert(!D.isExternallyVisible() && "name shouldn't matter");
+  std::string ContextName;
+  const DeclContext *DC = D.getDeclContext();
+  if (const auto *FD = dyn_cast<FunctionDecl>(DC))
     ContextName = CGM.getMangledName(FD);
-  else if (isa<ObjCMethodDecl>(CGF.CurFuncDecl))
-    ContextName = CGF.CurFn->getName();
+  else if (const auto *BD = dyn_cast<BlockDecl>(DC))
+    ContextName = CGM.getBlockMangledName(GlobalDecl(), BD);
+  else if (const auto *OMD = dyn_cast<ObjCMethodDecl>(DC))
+    ContextName = OMD->getSelector().getAsString();
   else
     llvm_unreachable("Unknown context for static var decl");
 
-  return ContextName.str() + "." + D.getNameAsString();
+  ContextName += "." + D.getNameAsString();
+  return ContextName;
 }
 
-llvm::Constant *
-CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
-                                     llvm::GlobalValue::LinkageTypes Linkage) {
+llvm::Constant *CodeGenModule::getOrCreateStaticVarDecl(
+    const VarDecl &D, llvm::GlobalValue::LinkageTypes Linkage) {
+  // In general, we don't always emit static var decls once before we reference
+  // them. It is possible to reference them before emitting the function that
+  // contains them, and it is possible to emit the containing function multiple
+  // times.
+  if (llvm::Constant *ExistingGV = StaticLocalDeclMap[&D])
+    return ExistingGV;
+
   QualType Ty = D.getType();
   assert(Ty->isConstantSizeType() && "VLAs can't be static");
 
   // Use the label if the variable is renamed with the asm-label extension.
   std::string Name;
   if (D.hasAttr<AsmLabelAttr>())
-    Name = CGM.getMangledName(&D);
+    Name = getMangledName(&D);
   else
-    Name = GetStaticDeclName(*this, D);
+    Name = getStaticDeclName(*this, D);
 
-  llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
+  llvm::Type *LTy = getTypes().ConvertTypeForMem(Ty);
   unsigned AddrSpace =
-   CGM.GetGlobalVarAddressSpace(&D, CGM.getContext().getTargetAddressSpace(Ty));
+      GetGlobalVarAddressSpace(&D, getContext().getTargetAddressSpace(Ty));
   llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(CGM.getModule(), LTy,
+    new llvm::GlobalVariable(getModule(), LTy,
                              Ty.isConstant(getContext()), Linkage,
-                             CGM.EmitNullConstant(D.getType()), Name, nullptr,
+                             EmitNullConstant(D.getType()), Name, nullptr,
                              llvm::GlobalVariable::NotThreadLocal,
                              AddrSpace);
   GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
-  CGM.setGlobalVisibility(GV, &D);
+  setGlobalVisibility(GV, &D);
 
   if (D.getTLSKind())
-    CGM.setTLSMode(GV, D);
+    setTLSMode(GV, D);
 
   if (D.isExternallyVisible()) {
     if (D.hasAttr<DLLImportAttr>())
@@ -207,13 +209,44 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
   }
 
   // Make sure the result is of the correct type.
-  unsigned ExpectedAddrSpace = CGM.getContext().getTargetAddressSpace(Ty);
+  unsigned ExpectedAddrSpace = getContext().getTargetAddressSpace(Ty);
+  llvm::Constant *Addr = GV;
   if (AddrSpace != ExpectedAddrSpace) {
     llvm::PointerType *PTy = llvm::PointerType::get(LTy, ExpectedAddrSpace);
-    return llvm::ConstantExpr::getAddrSpaceCast(GV, PTy);
+    Addr = llvm::ConstantExpr::getAddrSpaceCast(GV, PTy);
   }
 
-  return GV;
+  setStaticLocalDeclAddress(&D, Addr);
+
+  // Ensure that the static local gets initialized by making sure the parent
+  // function gets emitted eventually.
+  const Decl *DC = cast<Decl>(D.getDeclContext());
+
+  // We can't name blocks or captured statements directly, so try to emit their
+  // parents.
+  if (isa<BlockDecl>(DC) || isa<CapturedDecl>(DC)) {
+    DC = DC->getNonClosureContext();
+    // FIXME: Ensure that global blocks get emitted.
+    if (!DC)
+      return Addr;
+  }
+
+  GlobalDecl GD;
+  if (const auto *CD = dyn_cast<CXXConstructorDecl>(DC))
+    GD = GlobalDecl(CD, Ctor_Base);
+  else if (const auto *DD = dyn_cast<CXXDestructorDecl>(DC))
+    GD = GlobalDecl(DD, Dtor_Base);
+  else if (const auto *FD = dyn_cast<FunctionDecl>(DC))
+    GD = GlobalDecl(FD);
+  else {
+    // Don't do anything for Obj-C method decls or global closures. We should
+    // never defer them.
+    assert(isa<ObjCMethodDecl>(DC) && "unexpected parent code decl");
+  }
+  if (GD.getDecl())
+    (void)GetAddrOfGlobal(GD);
+
+  return Addr;
 }
 
 /// hasNontrivialDestruction - Determine whether a type's destruction is
@@ -296,16 +329,11 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   // Check to see if we already have a global variable for this
   // declaration.  This can happen when double-emitting function
   // bodies, e.g. with complete and base constructors.
-  llvm::Constant *addr =
-    CGM.getStaticLocalDeclAddress(&D);
-
-  if (!addr)
-    addr = CreateStaticVarDecl(D, Linkage);
+  llvm::Constant *addr = CGM.getOrCreateStaticVarDecl(D, Linkage);
 
   // Store into LocalDeclMap before generating initializer to handle
   // circular references.
   DMEntry = addr;
-  CGM.setStaticLocalDeclAddress(&D, addr);
 
   // We can't have a VLA here, but we can have a pointer to a VLA,
   // even though that doesn't really make any sense.
@@ -1139,7 +1167,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
   } else {
     // Otherwise, create a temporary global with the initializer then
     // memcpy from the global to the alloca.
-    std::string Name = GetStaticDeclName(*this, D);
+    std::string Name = getStaticDeclName(CGM, D);
     llvm::GlobalVariable *GV =
       new llvm::GlobalVariable(CGM.getModule(), constant->getType(), true,
                                llvm::GlobalValue::PrivateLinkage,

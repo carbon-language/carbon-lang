@@ -1941,7 +1941,8 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
 
     llvm::Value *V = LocalDeclMap.lookup(VD);
     if (!V && VD->isStaticLocal())
-      V = CGM.getStaticLocalDeclAddress(VD);
+      V = CGM.getOrCreateStaticVarDecl(
+          *VD, CGM.getLLVMLinkageVarDefinition(VD, /*isConstant=*/false));
 
     // Use special handling for lambdas.
     if (!V) {

@@ -549,6 +549,10 @@ public:
     StaticLocalDeclMap[D] = C;
   }
 
+  llvm::Constant *
+  getOrCreateStaticVarDecl(const VarDecl &D,
+                           llvm::GlobalValue::LinkageTypes Linkage);
+
   llvm::GlobalVariable *getStaticLocalDeclGuardAddress(const VarDecl *D) {
     return StaticLocalDeclGuardMap[D];
   }
