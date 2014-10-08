@@ -135,10 +135,10 @@ public:
   void perform(std::unique_ptr<MutableFile> &file) override;
 
 private:
-  std::map<StringRef, std::vector<COFFSharedLibraryAtom *> >
+  std::map<StringRef, std::vector<COFFSharedLibraryAtom *>>
   groupByLoadName(MutableFile &file);
 
-  void replaceSharedLibraryAtoms(idata::IdataContext &context);
+  void replaceSharedLibraryAtoms(MutableFile &file);
 
   // A dummy file with which all the atoms created in the pass will be
   // associated. Atoms need to be associated to an input file even if it's not

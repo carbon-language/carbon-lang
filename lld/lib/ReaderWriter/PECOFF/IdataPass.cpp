@@ -138,7 +138,7 @@ void IdataPass::perform(std::unique_ptr<MutableFile> &file) {
   // context.file in the IdataAtom's constructor.
   new (_alloc) idata::NullImportDirectoryAtom(context);
 
-  replaceSharedLibraryAtoms(context);
+  replaceSharedLibraryAtoms(*file);
 }
 
 std::map<StringRef, std::vector<COFFSharedLibraryAtom *> >
@@ -156,8 +156,8 @@ IdataPass::groupByLoadName(MutableFile &file) {
 }
 
 /// Transforms a reference to a COFFSharedLibraryAtom to a real reference.
-void IdataPass::replaceSharedLibraryAtoms(idata::IdataContext &context) {
-  for (const DefinedAtom *atom : context.file.defined()) {
+void IdataPass::replaceSharedLibraryAtoms(MutableFile &file) {
+  for (const DefinedAtom *atom : file.defined()) {
     for (const Reference *ref : *atom) {
       const Atom *target = ref->target();
       auto *sharedAtom = dyn_cast<SharedLibraryAtom>(target);
