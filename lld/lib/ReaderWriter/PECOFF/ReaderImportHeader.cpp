@@ -149,17 +149,38 @@ namespace lld {
 namespace {
 
 // This code is valid both in x86 and x64.
-uint8_t FuncAtomContentX86[] = {
+const uint8_t FuncAtomContentX86[] = {
     0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // JMP *0x0
     0xcc, 0xcc                          // INT 3; INT 3
 };
 
+static void setJumpInstTarget(COFFLinkerInternalAtom *src, const Atom *dst,
+                              int off, MachineTypes machine) {
+  COFFReference *ref;
+  switch (machine) {
+  case llvm::COFF::IMAGE_FILE_MACHINE_I386:
+    ref = new COFFReference(dst, off, llvm::COFF::IMAGE_REL_I386_DIR32,
+                            Reference::KindArch::x86);
+    break;
+  case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
+    ref = new COFFReference(dst, off, llvm::COFF::IMAGE_REL_AMD64_REL32,
+                            Reference::KindArch::x86_64);
+    break;
+  default:
+    llvm::report_fatal_error("unsupported machine type");
+  }
+  src->addReference(std::unique_ptr<COFFReference>(ref));
+}
+
 /// The defined atom for jump table.
 class FuncAtom : public COFFLinkerInternalAtom {
 public:
-  FuncAtom(const File &file, StringRef symbolName)
+  FuncAtom(const File &file, StringRef symbolName,
+           const COFFSharedLibraryAtom *impAtom, MachineTypes machine)
       : COFFLinkerInternalAtom(file, /*oridnal*/ 0, createContent(),
-                               symbolName) {}
+                               symbolName) {
+    setJumpInstTarget(this, impAtom, 2, machine);
+  }
 
   uint64_t ordinal() const override { return 0; }
   Scope scope() const override { return scopeGlobal; }
@@ -212,7 +233,7 @@ public:
     const COFFSharedLibraryAtom *dataAtom =
         addSharedLibraryAtom(hint, symbolName, importName, dllName);
     if (type == llvm::COFF::IMPORT_CODE)
-      addDefinedAtom(symbolName, dllName, dataAtom);
+      addFuncAtom(symbolName, dllName, dataAtom);
 
     ec = std::error_code();
   }
@@ -244,23 +265,9 @@ private:
     return atom;
   }
 
-  void addDefinedAtom(StringRef symbolName, StringRef dllName,
-                      const COFFSharedLibraryAtom *dataAtom) {
-    auto *atom = new (_alloc) FuncAtom(*this, symbolName);
-    COFFReference *ref;
-    switch (_machine) {
-    case llvm::COFF::IMAGE_FILE_MACHINE_I386:
-      ref = new COFFReference(dataAtom, 2, llvm::COFF::IMAGE_REL_I386_DIR32,
-                              Reference::KindArch::x86);
-      break;
-    case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
-      ref = new COFFReference(dataAtom, 2, llvm::COFF::IMAGE_REL_AMD64_REL32,
-                              Reference::KindArch::x86_64);
-      break;
-    default:
-      llvm::report_fatal_error("unsupported machine type");
-    }
-    atom->addReference(std::unique_ptr<COFFReference>(ref));
+  void addFuncAtom(StringRef symbolName, StringRef dllName,
+                   const COFFSharedLibraryAtom *impAtom) {
+    auto *atom = new (_alloc) FuncAtom(*this, symbolName, impAtom, _machine);
     _definedAtoms._atoms.push_back(atom);
   }
 
