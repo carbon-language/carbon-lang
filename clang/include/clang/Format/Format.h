@@ -152,9 +152,13 @@ struct FormatStyle {
   /// commonly have different usage patterns and a number of special cases.
   unsigned SpacesBeforeTrailingComments;
 
-  /// \brief If \c false, a function call's or function definition's parameters
-  /// will either all be on the same line or will have one line each.
+  /// \brief If \c false, a function declaration's or function definition's
+  /// parameters will either all be on the same line or will have one line each.
   bool BinPackParameters;
+
+  /// \brief If \c false, a function call's arguments will either be all on the
+  /// same line or will have one line each.
+  bool BinPackArguments;
 
   /// \brief If \c true, clang-format detects whether function calls and
   /// definitions are formatted with one parameter per line.
@@ -405,6 +409,7 @@ struct FormatStyle {
            AlwaysBreakBeforeMultilineStrings ==
                R.AlwaysBreakBeforeMultilineStrings &&
            BinPackParameters == R.BinPackParameters &&
+           BinPackArguments == R.BinPackArguments &&
            BreakBeforeBinaryOperators == R.BreakBeforeBinaryOperators &&
            BreakBeforeTernaryOperators == R.BreakBeforeTernaryOperators &&
            BreakBeforeBraces == R.BreakBeforeBraces &&

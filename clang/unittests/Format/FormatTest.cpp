@@ -3685,9 +3685,25 @@ TEST_F(FormatTest, BreaksDesireably) {
       "                             NSTrackingActiveAlways;");
 }
 
+TEST_F(FormatTest, FormatsDeclarationsOnePerLine) {
+  FormatStyle NoBinPacking = getGoogleStyle();
+  NoBinPacking.BinPackParameters = false;
+  NoBinPacking.BinPackArguments = true;
+  verifyFormat("void f() {\n"
+               "  f(aaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaa,\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);\n"
+               "}",
+               NoBinPacking);
+  verifyFormat("void f(int aaaaaaaaaaaaaaaaaaaa,\n"
+               "       int aaaaaaaaaaaaaaaaaaaa,\n"
+               "       int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {}",
+               NoBinPacking);
+}
+
 TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
   FormatStyle NoBinPacking = getGoogleStyle();
   NoBinPacking.BinPackParameters = false;
+  NoBinPacking.BinPackArguments = false;
   verifyFormat("f(aaaaaaaaaaaaaaaaaaaa,\n"
                "  aaaaaaaaaaaaaaaaaaaa,\n"
                "  aaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaa);",
@@ -4026,7 +4042,7 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
       "             : aaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
 
   FormatStyle NoBinPacking = getLLVMStyle();
-  NoBinPacking.BinPackParameters = false;
+  NoBinPacking.BinPackArguments = false;
   verifyFormat(
       "void f() {\n"
       "  g(aaa,\n"
@@ -6553,17 +6569,16 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
       "                    der:NO]);\n"
       "}",
       getLLVMStyleWithColumns(70));
-  verifyFormat("{\n"
-               "  popup_window_.reset([[RenderWidgetPopupWindow alloc]\n"
-               "      initWithContentRect:NSMakeRect(origin_global.x,\n"
-               "                                     origin_global.y,\n"
-               "                                     pos.width(),\n"
-               "                                     pos.height())\n"
-               "                styleMask:NSBorderlessWindowMask\n"
-               "                  backing:NSBackingStoreBuffered\n"
-               "                    defer:NO]);\n"
-               "}",
-               getChromiumStyle(FormatStyle::LK_Cpp));
+  verifyFormat(
+      "void f() {\n"
+      "  popup_window_.reset([[RenderWidgetPopupWindow alloc]\n"
+      "      initWithContentRect:NSMakeRect(origin_global.x, origin_global.y,\n"
+      "                                     pos.width(), pos.height())\n"
+      "                styleMask:NSBorderlessWindowMask\n"
+      "                  backing:NSBackingStoreBuffered\n"
+      "                    defer:NO]);\n"
+      "}",
+      getChromiumStyle(FormatStyle::LK_Cpp));
   verifyFormat("[contentsContainer replaceSubview:[subviews objectAtIndex:0]\n"
                "                             with:contentsNativeView];");
 
@@ -8387,6 +8402,7 @@ TEST_F(FormatTest, ParsesConfigurationBools) {
   CHECK_PARSE_BOOL(AlwaysBreakAfterDefinitionReturnType);
   CHECK_PARSE_BOOL(AlwaysBreakTemplateDeclarations);
   CHECK_PARSE_BOOL(BinPackParameters);
+  CHECK_PARSE_BOOL(BinPackArguments);
   CHECK_PARSE_BOOL(BreakBeforeTernaryOperators);
   CHECK_PARSE_BOOL(BreakConstructorInitializersBeforeComma);
   CHECK_PARSE_BOOL(ConstructorInitializerAllOnOneLineOrOnePerLine);

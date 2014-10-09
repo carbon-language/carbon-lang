@@ -205,9 +205,13 @@ the configuration (without a prefix: ``Auto``).
   If ``true``, always break after the ``template<...>`` of a
   template declaration.
 
+**BinPackArguments** (``bool``)
+  If ``false``, a function call's arguments will either be all on the
+  same line or will have one line each.
+
 **BinPackParameters** (``bool``)
-  If ``false``, a function call's or function definition's parameters
-  will either all be on the same line or will have one line each.
+  If ``false``, a function declaration's or function definition's
+  parameters will either all be on the same line or will have one line each.
 
 **BreakBeforeBinaryOperators** (``BinaryOperatorStyle``)
   The way to wrap binary operators.
@@ -288,7 +292,7 @@ the configuration (without a prefix: ``Auto``).
 
 **DerivePointerAlignment** (``bool``)
   If ``true``, analyze the formatted file for the most common
-  alignment of & and ``*``. ``PointerAlignment`` is then used only as fallback.
+  alignment of & and *. ``PointerAlignment`` is then used only as fallback.
 
 **DisableFormat** (``bool``)
   Disables formatting at all.
@@ -342,6 +346,8 @@ the configuration (without a prefix: ``Auto``).
     Do not use.
   * ``LK_Cpp`` (in configuration: ``Cpp``)
     Should be used for C, C++, ObjectiveC, ObjectiveC++.
+  * ``LK_Java`` (in configuration: ``Java``)
+    Should be used for Java.
   * ``LK_JavaScript`` (in configuration: ``JavaScript``)
     Should be used for JavaScript.
   * ``LK_Proto`` (in configuration: ``Proto``)

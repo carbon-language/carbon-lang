@@ -859,11 +859,13 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
     NewIndent = Style.ContinuationIndentWidth +
                 std::max(State.Stack.back().LastSpace,
                          State.Stack.back().StartOfFunctionCall);
-    AvoidBinPacking = !Style.BinPackParameters ||
-                      (Style.ExperimentalAutoDetectBinPacking &&
-                       (Current.PackingKind == PPK_OnePerLine ||
-                        (!BinPackInconclusiveFunctions &&
-                         Current.PackingKind == PPK_Inconclusive)));
+    AvoidBinPacking =
+        (State.Line->MustBeDeclaration && !Style.BinPackParameters) ||
+        (!State.Line->MustBeDeclaration && !Style.BinPackArguments) ||
+        (Style.ExperimentalAutoDetectBinPacking &&
+         (Current.PackingKind == PPK_OnePerLine ||
+          (!BinPackInconclusiveFunctions &&
+           Current.PackingKind == PPK_Inconclusive)));
     // If this '[' opens an ObjC call, determine whether all parameters fit
     // into one line and put one per line if they don't.
     if (Current.Type == TT_ObjCMethodExpr && Style.ColumnLimit != 0 &&
