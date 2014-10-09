@@ -57,10 +57,11 @@ ELFLinkingContext::ELFLinkingContext(
     : _outputELFType(elf::ET_EXEC), _triple(triple),
       _targetHandler(std::move(targetHandler)), _baseAddress(0),
       _isStaticExecutable(false), _noInhibitExec(false),
-      _mergeCommonStrings(false), _runLayoutPass(true),
-      _useShlibUndefines(true), _dynamicLinkerArg(false),
-      _noAllowDynamicLibraries(false), _mergeRODataToTextSegment(true),
-      _outputMagic(OutputMagic::DEFAULT), _sysrootPath("") {}
+      _exportDynamic(false), _mergeCommonStrings(false),
+      _runLayoutPass(true), _useShlibUndefines(true),
+      _dynamicLinkerArg(false), _noAllowDynamicLibraries(false),
+      _mergeRODataToTextSegment(true), _outputMagic(OutputMagic::DEFAULT),
+      _sysrootPath("") {}
 
 bool ELFLinkingContext::is64Bits() const { return getTriple().isArch64Bit(); }
 

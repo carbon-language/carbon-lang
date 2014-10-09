@@ -390,6 +390,7 @@ public:
     symbol->st_name = 0;
     symbol->st_value = 0;
     symbol->st_shndx = llvm::ELF::SHN_UNDEF;
+    symbol->setBindingAndType(llvm::ELF::STB_GLOBAL, llvm::ELF::STT_NOTYPE);
     symbol->st_other = llvm::ELF::STV_DEFAULT;
     symbol->st_size = 0;
     auto newAtom = this->handleUndefinedSymbol(symbolName, symbol);
