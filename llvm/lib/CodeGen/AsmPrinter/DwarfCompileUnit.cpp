@@ -376,7 +376,7 @@ void DwarfCompileUnit::constructScopeDIE(
                            std::make_move_iterator(Children.end()));
       return;
     }
-    ScopeDIE = DD->constructLexicalScopeDIE(*this, Scope);
+    ScopeDIE = constructLexicalScopeDIE(Scope);
     assert(ScopeDIE && "Scope DIE should not be null.");
   }
 
@@ -457,6 +457,22 @@ DwarfCompileUnit::constructInlinedScopeDIE(LexicalScope *Scope) {
   // Add name to the name table, we do this here because we're guaranteed
   // to have concrete versions of our DW_TAG_inlined_subprogram nodes.
   DD->addSubprogramNames(InlinedSP, *ScopeDIE);
+
+  return ScopeDIE;
+}
+
+// Construct new DW_TAG_lexical_block for this scope and attach
+// DW_AT_low_pc/DW_AT_high_pc labels.
+std::unique_ptr<DIE>
+DwarfCompileUnit::constructLexicalScopeDIE(LexicalScope *Scope) {
+  if (DD->isLexicalScopeDIENull(Scope))
+    return nullptr;
+
+  auto ScopeDIE = make_unique<DIE>(dwarf::DW_TAG_lexical_block);
+  if (Scope->isAbstractScope())
+    return ScopeDIE;
+
+  attachRangesOrLowHighPC(*ScopeDIE, Scope->getRanges());
 
   return ScopeDIE;
 }

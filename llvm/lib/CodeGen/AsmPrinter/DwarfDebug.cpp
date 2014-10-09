@@ -330,23 +330,6 @@ bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
   return !getLabelAfterInsn(Ranges.front().second);
 }
 
-// Construct new DW_TAG_lexical_block for this scope and attach
-// DW_AT_low_pc/DW_AT_high_pc labels.
-std::unique_ptr<DIE>
-DwarfDebug::constructLexicalScopeDIE(DwarfCompileUnit &TheCU,
-                                     LexicalScope *Scope) {
-  if (isLexicalScopeDIENull(Scope))
-    return nullptr;
-
-  auto ScopeDIE = make_unique<DIE>(dwarf::DW_TAG_lexical_block);
-  if (Scope->isAbstractScope())
-    return ScopeDIE;
-
-  TheCU.attachRangesOrLowHighPC(*ScopeDIE, Scope->getRanges());
-
-  return ScopeDIE;
-}
-
 static std::unique_ptr<DIE> constructVariableDIE(DwarfCompileUnit &TheCU,
                                                  DbgVariable &DV,
                                                  const LexicalScope &Scope,

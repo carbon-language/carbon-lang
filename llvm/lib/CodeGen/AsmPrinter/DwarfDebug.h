@@ -675,11 +675,6 @@ public:
 
   // FIXME: Sink these functions down into DwarfFile/Dwarf*Unit.
 
-  /// \brief Construct new DW_TAG_lexical_block for this scope and
-  /// attach DW_AT_low_pc/DW_AT_high_pc labels.
-  std::unique_ptr<DIE> constructLexicalScopeDIE(DwarfCompileUnit &TheCU,
-                                                LexicalScope *Scope);
-
   /// A helper function to create children of a Scope DIE.
   DIE *createScopeChildrenDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope,
                               SmallVectorImpl<std::unique_ptr<DIE>> &Children,

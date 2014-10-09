@@ -93,6 +93,10 @@ public:
   /// \brief This scope represents inlined body of a function. Construct
   /// DIE to represent this concrete inlined copy of the function.
   std::unique_ptr<DIE> constructInlinedScopeDIE(LexicalScope *Scope);
+
+  /// \brief Construct new DW_TAG_lexical_block for this scope and
+  /// attach DW_AT_low_pc/DW_AT_high_pc labels.
+  std::unique_ptr<DIE> constructLexicalScopeDIE(LexicalScope *Scope);
 };
 
 } // end llvm namespace
