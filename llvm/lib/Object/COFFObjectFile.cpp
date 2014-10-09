@@ -869,19 +869,33 @@ std::error_code COFFObjectFile::getSectionName(const coff_section *Sec,
 std::error_code
 COFFObjectFile::getSectionContents(const coff_section *Sec,
                                    ArrayRef<uint8_t> &Res) const {
-  // PointerToRawData and SizeOfRawData won't make sense for BSS sections, don't
-  // do anything interesting for them.
+  // PointerToRawData and SizeOfRawData won't make sense for BSS sections,
+  // don't do anything interesting for them.
   assert((Sec->Characteristics & COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA) == 0 &&
          "BSS sections don't have contents!");
   // The only thing that we need to verify is that the contents is contained
   // within the file bounds. We don't need to make sure it doesn't cover other
   // data, as there's nothing that says that is not allowed.
   uintptr_t ConStart = uintptr_t(base()) + Sec->PointerToRawData;
-  uintptr_t ConEnd = ConStart + Sec->SizeOfRawData;
+  // SizeOfRawData and VirtualSize change what they represent depending on
+  // whether or not we have an executable image.
+  //
+  // For object files, SizeOfRawData contains the size of section's data;
+  // VirtualSize is always zero.
+  //
+  // For executables, SizeOfRawData *must* be a multiple of FileAlignment; the
+  // actual section size is in VirtualSize.  It is possible for VirtualSize to
+  // be greater than SizeOfRawData; the contents past that point should be
+  // considered to be zero.
+  uint32_t DataSize;
+  if (Sec->VirtualSize)
+    DataSize = std::min(Sec->VirtualSize, Sec->SizeOfRawData);
+  else
+    DataSize = Sec->SizeOfRawData;
+  uintptr_t ConEnd = ConStart + DataSize;
   if (ConEnd > uintptr_t(Data.getBufferEnd()))
     return object_error::parse_failed;
-  Res = makeArrayRef(reinterpret_cast<const uint8_t*>(ConStart),
-                     Sec->SizeOfRawData);
+  Res = makeArrayRef(reinterpret_cast<const uint8_t *>(ConStart), DataSize);
   return object_error::success;
 }
 
