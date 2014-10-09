@@ -918,8 +918,7 @@ bool ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
     if (const EnumType *EnumTy = qt->getAs<EnumType>()) {
       if (EnumTy->getDecl() == EnumDcl) {
         bool NSOptions = UseNSOptionsMacro(PP, Ctx, EnumDcl);
-        if (!Ctx.Idents.get("NS_ENUM").hasMacroDefinition() &&
-            !InsertFoundation(Ctx, TypedefDcl->getLocStart()))
+        if (!InsertFoundation(Ctx, TypedefDcl->getLocStart()))
           return false;
         edit::Commit commit(*Editor);
         rewriteToNSMacroDecl(EnumDcl, TypedefDcl, *NSAPIObj, commit, !NSOptions);
@@ -932,9 +931,7 @@ bool ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
   
   // We may still use NS_OPTIONS based on what we find in the enumertor list.
   bool NSOptions = UseNSOptionsMacro(PP, Ctx, EnumDcl);
-  // For sanity check, see if macro NS_ENUM can be seen.
-  if (!Ctx.Idents.get("NS_ENUM").hasMacroDefinition()
-        && !InsertFoundation(Ctx, TypedefDcl->getLocStart()))
+  if (!InsertFoundation(Ctx, TypedefDcl->getLocStart()))
     return false;
   edit::Commit commit(*Editor);
   bool Res = rewriteToNSEnumDecl(EnumDcl, TypedefDcl, *NSAPIObj,
@@ -1727,9 +1724,9 @@ bool ObjCMigrateASTConsumer::InsertFoundation(ASTContext &Ctx,
     return false;
   edit::Commit commit(*Editor);
   if (Ctx.getLangOpts().Modules)
-    commit.insert(Loc, "@import Foundation;\n");
+    commit.insert(Loc, "#ifndef NS_ENUM\n@import Foundation;\n#endif\n");
   else
-    commit.insert(Loc, "#import <Foundation/Foundation.h>\n");
+    commit.insert(Loc, "#ifndef NS_ENUM\n#import <Foundation/Foundation.h>\n#endif\n");
   Editor->commit(commit);
   FoundationIncluded = true;
   return true;

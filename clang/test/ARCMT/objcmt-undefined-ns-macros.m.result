@@ -5,7 +5,9 @@
 // rdar://18498550
 
 typedef long NSInteger;
+#ifndef NS_ENUM
 @import Foundation;
+#endif
 typedef NS_OPTIONS(NSUInteger, UITableStyle) {
     UIViewNone         = 0x0,
     UIViewMargin       = 0x1,
