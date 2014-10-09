@@ -154,8 +154,8 @@ namespace llvm {
 
   bool isMov(unsigned Opcode) const override;
 
-  DFAPacketizer *CreateTargetScheduleState(const TargetMachine *TM,
-                                           const ScheduleDAG *DAG) const override;
+  DFAPacketizer *
+  CreateTargetScheduleState(const TargetSubtargetInfo &) const override;
 
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
 

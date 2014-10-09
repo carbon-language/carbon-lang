@@ -47,7 +47,7 @@ ResourcePriorityQueue::ResourcePriorityQueue(SelectionDAGISel *IS)
   TRI = STI.getRegisterInfo();
   TLI = IS->TLI;
   TII = STI.getInstrInfo();
-  ResourcesModel = TII->CreateTargetScheduleState(&IS->MF->getTarget(), nullptr);
+  ResourcesModel = TII->CreateTargetScheduleState(STI);
   // This hard requirement could be relaxed, but for now
   // do not let it procede.
   assert(ResourcesModel && "Unimplemented CreateTargetScheduleState.");

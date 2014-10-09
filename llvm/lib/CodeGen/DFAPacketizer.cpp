@@ -128,7 +128,7 @@ VLIWPacketizerList::VLIWPacketizerList(MachineFunction &MF,
                                        MachineLoopInfo &MLI, bool IsPostRA)
     : TM(MF.getTarget()), MF(MF) {
   TII = TM.getSubtargetImpl()->getInstrInfo();
-  ResourceTracker = TII->CreateTargetScheduleState(&TM, nullptr);
+  ResourceTracker = TII->CreateTargetScheduleState(MF.getSubtarget());
   VLIWScheduler = new DefaultVLIWScheduler(MF, MLI, IsPostRA);
 }
 

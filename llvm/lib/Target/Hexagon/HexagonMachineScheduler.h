@@ -57,8 +57,8 @@ public:
 VLIWResourceModel(const TargetMachine &TM, const TargetSchedModel *SM) :
     SchedModel(SM), TotalPackets(0) {
   ResourcesModel =
-      TM.getSubtargetImpl()->getInstrInfo()->CreateTargetScheduleState(&TM,
-                                                                       nullptr);
+      TM.getSubtargetImpl()->getInstrInfo()->CreateTargetScheduleState(
+          *TM.getSubtargetImpl());
 
     // This hard requirement could be relaxed,
     // but for now do not let it proceed.

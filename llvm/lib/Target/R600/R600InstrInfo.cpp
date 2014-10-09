@@ -654,11 +654,10 @@ R600InstrInfo::fitsConstReadLimitations(const std::vector<MachineInstr *> &MIs)
   return fitsConstReadLimitations(Consts);
 }
 
-DFAPacketizer *R600InstrInfo::CreateTargetScheduleState(const TargetMachine *TM,
-    const ScheduleDAG *DAG) const {
-  const InstrItineraryData *II =
-      TM->getSubtargetImpl()->getInstrItineraryData();
-  return TM->getSubtarget<AMDGPUSubtarget>().createDFAPacketizer(II);
+DFAPacketizer *
+R600InstrInfo::CreateTargetScheduleState(const TargetSubtargetInfo &STI) const {
+  const InstrItineraryData *II = STI.getInstrItineraryData();
+  return static_cast<const AMDGPUSubtarget &>(STI).createDFAPacketizer(II);
 }
 
 static bool
