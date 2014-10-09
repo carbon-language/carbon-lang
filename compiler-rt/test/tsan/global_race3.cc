@@ -18,7 +18,9 @@ void *Thread(void *a) {
 }
 
 int main() {
-  fprintf(stderr, "addr3=%p\n", XXX::YYY::ZZZ);
+  // On FreeBSD, the %p conversion specifier works as 0x%x and thus does not
+  // match to the format used in the diagnotic message.
+  fprintf(stderr, "addr3=0x%012lx\n", (unsigned long) XXX::YYY::ZZZ);
   pthread_t t;
   pthread_create(&t, 0, Thread, 0);
   XXX::YYY::ZZZ[0] = 0;
