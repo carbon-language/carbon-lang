@@ -591,9 +591,8 @@ ValueObjectPrinter::PrintChildrenOneLiner (bool hide_names)
         for (uint32_t idx=0; idx<num_children; ++idx)
         {
             lldb::ValueObjectSP child_sp(synth_m_valobj->GetChildAtIndex(idx, true));
-            lldb::ValueObjectSP child_dyn_sp = child_sp.get() ? child_sp->GetDynamicValue(options.m_use_dynamic) : child_sp;
-            if (child_dyn_sp)
-                child_sp = child_dyn_sp;
+            if (child_sp)
+                child_sp = child_sp->GetQualifiedRepresentationIfAvailable(options.m_use_dynamic, options.m_use_synthetic);
             if (child_sp)
             {
                 if (idx)

@@ -87,6 +87,9 @@ class DataFormatterSynthValueTestCase(TestBase):
         
         self.expect("frame variable x", substrs=['3'])
         self.expect("frame variable x", substrs=['theValue = 3'], matching=False)
+        
+        # check that an aptly defined synthetic provider does not affect one-lining
+        self.expect("expression struct S { myInt theInt{12}; }; S()", substrs = ['(theInt = 12)'])
 
 if __name__ == '__main__':
     import atexit

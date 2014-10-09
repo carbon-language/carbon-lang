@@ -10,7 +10,7 @@ class myIntSynthProvider(object):
 	    return None
 	def update(self):
 		return False
-	def might_have_children(self):
+	def has_children(self):
 	    return False
 	def get_value(self):
 	    return self.val
