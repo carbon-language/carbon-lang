@@ -59,6 +59,15 @@ public:
     }
   }
 
+  bool isCopyRelocation(const Reference &r) const override {
+    if (r.kindNamespace() != Reference::KindNamespace::ELF)
+      return false;
+    assert(r.kindArch() == Reference::KindArch::AArch64);
+    if (r.kindValue() == llvm::ELF::R_AARCH64_COPY)
+      return true;
+    return false;
+  }
+
   bool isPLTRelocation(const DefinedAtom &,
                                const Reference &r) const override {
     if (r.kindNamespace() != Reference::KindNamespace::ELF)

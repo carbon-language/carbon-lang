@@ -90,6 +90,15 @@ public:
                                    const Reference &) const {
     return false;
   }
+
+  /// \brief Is this a copy relocation?
+  ///
+  /// If this is a copy relocation, its target must be an ObjectAtom. We must
+  /// include in DT_NEEDED the name of the library where this object came from.
+  virtual bool isCopyRelocation(const Reference &) const {
+    return false;
+  }
+
   bool validateImpl(raw_ostream &diagnostics) override;
 
   /// \brief Does the linker allow dynamic libraries to be linked with?

@@ -35,6 +35,11 @@ protected:
   virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &);
   virtual void finalizeDefaultAtomValues();
   virtual void createDefaultSections();
+
+  virtual bool isNeededTagRequired(const SharedLibraryAtom *sla) const {
+    return this->_layout.isCopied(sla);
+  }
+
   LLD_UNIQUE_BUMP_PTR(InterpSection<ELFT>) _interpSection;
   std::unique_ptr<CRuntimeFile<ELFT> > _runtimeFile;
 };

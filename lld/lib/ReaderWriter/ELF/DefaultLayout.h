@@ -10,6 +10,7 @@
 #ifndef LLD_READER_WRITER_ELF_DEFAULT_LAYOUT_H
 #define LLD_READER_WRITER_ELF_DEFAULT_LAYOUT_H
 
+#include "Atoms.h"
 #include "Chunk.h"
 #include "HeaderChunks.h"
 #include "Layout.h"
@@ -303,6 +304,10 @@ public:
     return _referencedDynAtoms.count(a);
   }
 
+  bool isCopied(const SharedLibraryAtom *sla) const {
+    return _copiedDynSymNames.count(sla->name());
+  }
+
 protected:
   /// \brief Allocate a new section.
   virtual AtomSection<ELFT> *createSection(
@@ -325,6 +330,7 @@ protected:
   LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _pltRelocationTable;
   std::vector<lld::AtomLayout *> _absoluteAtoms;
   AtomSetT _referencedDynAtoms;
+  llvm::StringSet<> _copiedDynSymNames;
   const ELFLinkingContext &_context;
 };
 
@@ -581,6 +587,11 @@ ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) 
       //Ignore undefined atoms that are not target of dynamic relocations
       if (isa<UndefinedAtom>(reloc->target()) && isLocalReloc)
         continue;
+
+      if (_context.isCopyRelocation(*reloc)) {
+        _copiedDynSymNames.insert(definedAtom->name());
+        continue;
+      }
 
       _referencedDynAtoms.insert(reloc->target());
     }

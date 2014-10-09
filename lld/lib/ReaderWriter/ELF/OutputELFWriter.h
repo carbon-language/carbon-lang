@@ -116,7 +116,7 @@ protected:
 
   /// \brief Create DT_NEEDED dynamic tage for the shared library.
   virtual bool isNeededTagRequired(const SharedLibraryAtom *sla) const {
-    return true;
+    return false;
   }
 
   llvm::BumpPtrAllocator _alloc;
@@ -180,8 +180,11 @@ template <class ELFT>
 void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   ScopedTask task(getDefaultDomain(), "buildDynamicSymbolTable");
   for (const auto &sla : file.sharedLibrary()) {
-    if (isDynSymEntryRequired(sla))
+    if (isDynSymEntryRequired(sla)) {
       _dynamicSymbolTable->addSymbol(sla, ELF::SHN_UNDEF);
+      _soNeeded.insert(sla->loadName());
+      continue;
+    }
     if (isNeededTagRequired(sla))
       _soNeeded.insert(sla->loadName());
   }
