@@ -967,6 +967,10 @@ static bool ShouldBreakUpSubtract(Instruction *Sub) {
   if (BinaryOperator::isNeg(Sub) || BinaryOperator::isFNeg(Sub))
     return false;
 
+  // Don't breakup X - undef.
+  if (isa<UndefValue>(Sub->getOperand(1)))
+    return false;
+
   // Don't bother to break this up unless either the LHS is an associable add or
   // subtract or if this is only used by one.
   Value *V0 = Sub->getOperand(0);
