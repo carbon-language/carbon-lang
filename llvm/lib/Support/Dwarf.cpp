@@ -750,6 +750,39 @@ const char *llvm::dwarf::CallFrameString(unsigned Encoding) {
   return nullptr;
 }
 
+/// ApplePropertyString - Return the string for the specified Apple
+/// property bit. This function is meant to return the symbolic name
+/// for 1 bit of the DW_AT_APPLE_property attribute, not for the whole attribute.
+const char *llvm::dwarf::ApplePropertyString(unsigned Prop) {
+  switch (Prop) {
+  case DW_APPLE_PROPERTY_readonly:
+    return "DW_APPLE_PROPERTY_readonly";
+  case DW_APPLE_PROPERTY_getter:
+    return "DW_APPLE_PROPERTY_getter";
+  case DW_APPLE_PROPERTY_assign:
+    return "DW_APPLE_PROPERTY_assign";
+  case DW_APPLE_PROPERTY_readwrite:
+    return "DW_APPLE_PROPERTY_readwrite";
+  case DW_APPLE_PROPERTY_retain:
+    return "DW_APPLE_PROPERTY_retain";
+  case DW_APPLE_PROPERTY_copy:
+    return "DW_APPLE_PROPERTY_copy";
+  case DW_APPLE_PROPERTY_nonatomic:
+    return "DW_APPLE_PROPERTY_nonatomic";
+  case DW_APPLE_PROPERTY_setter:
+    return "DW_APPLE_PROPERTY_setter";
+  case DW_APPLE_PROPERTY_atomic:
+    return "DW_APPLE_PROPERTY_atomic";
+  case DW_APPLE_PROPERTY_weak:
+    return "DW_APPLE_PROPERTY_weak";
+  case DW_APPLE_PROPERTY_strong:
+    return "DW_APPLE_PROPERTY_strong";
+  case DW_APPLE_PROPERTY_unsafe_unretained:
+    return "DW_APPLE_PROPERTY_unsafe_unretained";
+  }
+  return nullptr;
+}
+
 const char *llvm::dwarf::AtomTypeString(unsigned AT) {
   switch (AT) {
   case dwarf::DW_ATOM_null:

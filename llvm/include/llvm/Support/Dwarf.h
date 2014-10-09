@@ -882,6 +882,11 @@ const char *MacinfoString(unsigned Encoding);
 /// encodings.
 const char *CallFrameString(unsigned Encoding);
 
+/// ApplePropertyString - Return the string for the specified Apple
+/// property bit. This function is meant to return the symbolic name
+/// for 1 bit of the DW_AT_APPLE_property attribute, not for the whole attribute.
+const char *ApplePropertyString(unsigned);
+
 // Constants for the DWARF5 Accelerator Table Proposal
 enum AcceleratorTable {
   // Data layout descriptors.
