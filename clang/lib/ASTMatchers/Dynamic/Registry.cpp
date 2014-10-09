@@ -443,17 +443,22 @@ Registry::getMatcherCompletions(ArrayRef<ArgKind> AcceptedTypes) {
         for (const std::vector<ArgKind> &Arg : ArgsKinds) {
           if (&Arg != &ArgsKinds[0])
             OS << ", ";
-          // This currently assumes that a matcher may not overload a
-          // non-matcher, and all non-matcher overloads have identical
-          // arguments.
-          if (Arg[0].getArgKind() == ArgKind::AK_Matcher) {
-            std::set<ASTNodeKind> MatcherKinds;
-            std::transform(Arg.begin(), Arg.end(),
-                           std::inserter(MatcherKinds, MatcherKinds.end()),
-                           std::mem_fun_ref(&ArgKind::getMatcherKind));
+
+          bool FirstArgKind = true;
+          std::set<ASTNodeKind> MatcherKinds;
+          // Two steps. First all non-matchers, then matchers only.
+          for (const ArgKind &AK : Arg) {
+            if (AK.getArgKind() == ArgKind::AK_Matcher) {
+              MatcherKinds.insert(AK.getMatcherKind());
+            } else {
+              if (!FirstArgKind) OS << "|";
+              FirstArgKind = false;
+              OS << AK.asString();
+            }
+          }
+          if (!MatcherKinds.empty()) {
+            if (!FirstArgKind) OS << "|";
             OS << "Matcher<" << MatcherKinds << ">";
-          } else {
-            OS << Arg[0].asString();
           }
         }
       }
