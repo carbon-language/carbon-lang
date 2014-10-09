@@ -730,6 +730,22 @@ unsigned COFFObjectFile::getArch() const {
   }
 }
 
+iterator_range<import_directory_iterator>
+COFFObjectFile::import_directories() const {
+  return make_range(import_directory_begin(), import_directory_end());
+}
+
+iterator_range<delay_import_directory_iterator>
+COFFObjectFile::delay_import_directories() const {
+  return make_range(delay_import_directory_begin(),
+                    delay_import_directory_end());
+}
+
+iterator_range<export_directory_iterator>
+COFFObjectFile::export_directories() const {
+  return make_range(export_directory_begin(), export_directory_end());
+}
+
 std::error_code COFFObjectFile::getPE32Header(const pe32_header *&Res) const {
   Res = PE32Header;
   return object_error::success;
@@ -1094,6 +1110,11 @@ ImportDirectoryEntryRef::imported_symbol_end() const {
                            OwningObject);
 }
 
+iterator_range<imported_symbol_iterator>
+ImportDirectoryEntryRef::imported_symbols() const {
+  return make_range(imported_symbol_begin(), imported_symbol_end());
+}
+
 std::error_code ImportDirectoryEntryRef::getName(StringRef &Result) const {
   uintptr_t IntPtr = 0;
   if (std::error_code EC =
@@ -1144,6 +1165,11 @@ imported_symbol_iterator
 DelayImportDirectoryEntryRef::imported_symbol_end() const {
   return importedSymbolEnd(Table[Index].DelayImportNameTable,
                            OwningObject);
+}
+
+iterator_range<imported_symbol_iterator>
+DelayImportDirectoryEntryRef::imported_symbols() const {
+  return make_range(imported_symbol_begin(), imported_symbol_end());
 }
 
 std::error_code DelayImportDirectoryEntryRef::getName(StringRef &Result) const {
