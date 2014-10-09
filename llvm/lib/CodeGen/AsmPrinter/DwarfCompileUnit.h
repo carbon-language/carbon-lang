@@ -106,6 +106,10 @@ public:
   /// constructVariableDIE - Construct a DIE for the given DbgVariable.
   std::unique_ptr<DIE> constructVariableDIE(DbgVariable &DV,
                                             bool Abstract = false);
+
+  std::unique_ptr<DIE> constructVariableDIE(DbgVariable &DV,
+                                            const LexicalScope &Scope,
+                                            DIE *&ObjectPointer);
 };
 
 } // end llvm namespace

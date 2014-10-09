@@ -542,4 +542,12 @@ DwarfCompileUnit::constructVariableDIEImpl(const DbgVariable &DV,
   return VariableDie;
 }
 
+std::unique_ptr<DIE> DwarfCompileUnit::constructVariableDIE(
+    DbgVariable &DV, const LexicalScope &Scope, DIE *&ObjectPointer) {
+  auto Var = constructVariableDIE(DV, Scope.isAbstractScope());
+  if (DV.isObjectPointer())
+    ObjectPointer = Var.get();
+  return Var;
+}
+
 } // end llvm namespace

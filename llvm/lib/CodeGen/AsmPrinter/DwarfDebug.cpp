@@ -330,16 +330,6 @@ bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
   return !getLabelAfterInsn(Ranges.front().second);
 }
 
-static std::unique_ptr<DIE> constructVariableDIE(DwarfCompileUnit &TheCU,
-                                                 DbgVariable &DV,
-                                                 const LexicalScope &Scope,
-                                                 DIE *&ObjectPointer) {
-  auto Var = TheCU.constructVariableDIE(DV, Scope.isAbstractScope());
-  if (DV.isObjectPointer())
-    ObjectPointer = Var.get();
-  return Var;
-}
-
 DIE *DwarfDebug::createScopeChildrenDIE(
     DwarfCompileUnit &TheCU, LexicalScope *Scope,
     SmallVectorImpl<std::unique_ptr<DIE>> &Children,
@@ -347,7 +337,7 @@ DIE *DwarfDebug::createScopeChildrenDIE(
   DIE *ObjectPointer = nullptr;
 
   for (DbgVariable *DV : ScopeVariables.lookup(Scope))
-    Children.push_back(constructVariableDIE(TheCU, *DV, *Scope, ObjectPointer));
+    Children.push_back(TheCU.constructVariableDIE(*DV, *Scope, ObjectPointer));
 
   unsigned ChildCountWithoutScopes = Children.size();
 
@@ -433,7 +423,7 @@ void DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
   for (DbgVariable *ArgDV : CurrentFnArguments)
     if (ArgDV)
       ScopeDIE.addChild(
-          constructVariableDIE(TheCU, *ArgDV, *Scope, ObjectPointer));
+          TheCU.constructVariableDIE(*ArgDV, *Scope, ObjectPointer));
 
   // If this is a variadic function, add an unspecified parameter.
   DITypeArray FnArgs = Sub.getType().getTypeArray();
