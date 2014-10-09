@@ -29,7 +29,6 @@ class SDDbgValue;
 class InstrEmitter {
   MachineFunction *MF;
   MachineRegisterInfo *MRI;
-  const TargetMachine *TM;
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
   const TargetLowering *TLI;

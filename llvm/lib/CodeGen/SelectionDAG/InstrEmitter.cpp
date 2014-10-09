@@ -27,7 +27,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
@@ -407,11 +406,10 @@ void InstrEmitter::AddOperand(MachineInstrBuilder &MIB,
     Type *Type = CP->getType();
     // MachineConstantPool wants an explicit alignment.
     if (Align == 0) {
-      Align =
-          TM->getSubtargetImpl()->getDataLayout()->getPrefTypeAlignment(Type);
+      Align = MF->getSubtarget().getDataLayout()->getPrefTypeAlignment(Type);
       if (Align == 0) {
         // Alignment of vector types.  FIXME!
-        Align = TM->getSubtargetImpl()->getDataLayout()->getTypeAllocSize(Type);
+        Align = MF->getSubtarget().getDataLayout()->getTypeAllocSize(Type);
       }
     }
 
@@ -1022,8 +1020,8 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
 /// at the given position in the given block.
 InstrEmitter::InstrEmitter(MachineBasicBlock *mbb,
                            MachineBasicBlock::iterator insertpos)
-    : MF(mbb->getParent()), MRI(&MF->getRegInfo()), TM(&MF->getTarget()),
-      TII(TM->getSubtargetImpl()->getInstrInfo()),
-      TRI(TM->getSubtargetImpl()->getRegisterInfo()),
-      TLI(TM->getSubtargetImpl()->getTargetLowering()), MBB(mbb),
+    : MF(mbb->getParent()), MRI(&MF->getRegInfo()),
+      TII(MF->getSubtarget().getInstrInfo()),
+      TRI(MF->getSubtarget().getRegisterInfo()),
+      TLI(MF->getSubtarget().getTargetLowering()), MBB(mbb),
       InsertPos(insertpos) {}
