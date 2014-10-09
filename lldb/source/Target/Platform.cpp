@@ -1045,7 +1045,11 @@ Error
 Platform::LaunchProcess (ProcessLaunchInfo &launch_info)
 {
     Error error;
-    // Take care of the host case so that each subclass can just 
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
+    if (log)
+        log->Printf ("Platform::%s()", __FUNCTION__);
+
+    // Take care of the host case so that each subclass can just
     // call this function to get the host functionality.
     if (IsHost())
     {
@@ -1058,6 +1062,12 @@ Platform::LaunchProcess (ProcessLaunchInfo &launch_info)
             const bool will_debug = launch_info.GetFlags().Test(eLaunchFlagDebug);
             const bool first_arg_is_full_shell_command = false;
             uint32_t num_resumes = GetResumeCountForLaunchInfo (launch_info);
+            if (log)
+                log->Printf ("Platform::%s GetResumeCountForLaunchInfo() returned %" PRIu32 ", shell is '%s'",
+                             __FUNCTION__,
+                             num_resumes,
+                             launch_info.GetShell () ? launch_info.GetShell () : "<null>");
+
             if (!launch_info.ConvertArgumentsForLaunchingInShell (error,
                                                                   is_localhost,
                                                                   will_debug,
@@ -1065,6 +1075,9 @@ Platform::LaunchProcess (ProcessLaunchInfo &launch_info)
                                                                   num_resumes))
                 return error;
         }
+
+        if (log)
+            log->Printf ("Platform::%s final launch_info resume count: %" PRIu32, __FUNCTION__, launch_info.GetResumeCount ());
 
         error = Host::LaunchProcess (launch_info);
     }
@@ -1080,6 +1093,10 @@ Platform::DebugProcess (ProcessLaunchInfo &launch_info,
                         Listener &listener,
                         Error &error)
 {
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
+    if (log)
+        log->Printf ("Platform::%s entered (target %p)", __FUNCTION__, static_cast<void*>(target));
+
     ProcessSP process_sp;
     // Make sure we stop at the entry point
     launch_info.GetFlags ().Set (eLaunchFlagDebug);
@@ -1091,12 +1108,16 @@ Platform::DebugProcess (ProcessLaunchInfo &launch_info,
     error = LaunchProcess (launch_info);
     if (error.Success())
     {
+        if (log)
+            log->Printf ("Platform::%s LaunchProcess() call succeeded (pid=%" PRIu64 ")", __FUNCTION__, launch_info.GetProcessID ());
         if (launch_info.GetProcessID() != LLDB_INVALID_PROCESS_ID)
         {
             ProcessAttachInfo attach_info (launch_info);
             process_sp = Attach (attach_info, debugger, target, listener, error);
             if (process_sp)
             {
+                if (log)
+                    log->Printf ("Platform::%s Attach() succeeded, Process plugin: %s", __FUNCTION__, process_sp->GetPluginName ().AsCString ());
                 launch_info.SetHijackListener(attach_info.GetHijackListener());
                 
                 // Since we attached to the process, it will think it needs to detach
@@ -1115,8 +1136,24 @@ Platform::DebugProcess (ProcessLaunchInfo &launch_info,
                     process_sp->SetSTDIOFileDescriptor(pty_fd);
                 }
             }
+            else
+            {
+                if (log)
+                    log->Printf ("Platform::%s Attach() failed: %s", __FUNCTION__, error.AsCString ());
+            }
+        }
+        else
+        {
+            if (log)
+                log->Printf ("Platform::%s LaunchProcess() returned launch_info with invalid process id", __FUNCTION__);
         }
     }
+    else
+    {
+        if (log)
+            log->Printf ("Platform::%s LaunchProcess() failed: %s", __FUNCTION__, error.AsCString ());
+    }
+
     return process_sp;
 }
 
