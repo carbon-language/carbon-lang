@@ -1342,6 +1342,17 @@ TEST(APFloatTest, getZero) {
   }
 }
 
+TEST(APFloatTest, copySign) {
+  EXPECT_TRUE(APFloat(-42.0).bitwiseIsEqual(
+      APFloat::copySign(APFloat(42.0), APFloat(-1.0))));
+  EXPECT_TRUE(APFloat(42.0).bitwiseIsEqual(
+      APFloat::copySign(APFloat(-42.0), APFloat(1.0))));
+  EXPECT_TRUE(APFloat(-42.0).bitwiseIsEqual(
+      APFloat::copySign(APFloat(-42.0), APFloat(-1.0))));
+  EXPECT_TRUE(APFloat(42.0).bitwiseIsEqual(
+      APFloat::copySign(APFloat(42.0), APFloat(1.0))));
+}
+
 TEST(APFloatTest, convert) {
   bool losesInfo;
   APFloat test(APFloat::IEEEdouble, "1.0");
@@ -2671,4 +2682,13 @@ TEST(APFloatTest, divide) {
   }
 }
 
+TEST(APFloatTest, operatorOverloads) {
+  // This is mostly testing that these operator overloads compile.
+  APFloat One = APFloat(APFloat::IEEEsingle, "0x1p+0");
+  APFloat Two = APFloat(APFloat::IEEEsingle, "0x2p+0");
+  EXPECT_TRUE(Two.bitwiseIsEqual(One + One));
+  EXPECT_TRUE(One.bitwiseIsEqual(Two - One));
+  EXPECT_TRUE(Two.bitwiseIsEqual(One * Two));
+  EXPECT_TRUE(One.bitwiseIsEqual(Two / Two));
+}
 }

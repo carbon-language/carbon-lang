@@ -304,6 +304,38 @@ public:
   /// IEEE-754R 5.3.1: nextUp/nextDown.
   opStatus next(bool nextDown);
 
+  /// \brief Operator+ overload which provides the default
+  /// \c nmNearestTiesToEven rounding mode and *no* error checking.
+  APFloat operator+(const APFloat &RHS) const {
+    APFloat Result = *this;
+    Result.add(RHS, rmNearestTiesToEven);
+    return Result;
+  }
+
+  /// \brief Operator- overload which provides the default
+  /// \c nmNearestTiesToEven rounding mode and *no* error checking.
+  APFloat operator-(const APFloat &RHS) const {
+    APFloat Result = *this;
+    Result.subtract(RHS, rmNearestTiesToEven);
+    return Result;
+  }
+
+  /// \brief Operator* overload which provides the default
+  /// \c nmNearestTiesToEven rounding mode and *no* error checking.
+  APFloat operator*(const APFloat &RHS) const {
+    APFloat Result = *this;
+    Result.multiply(RHS, rmNearestTiesToEven);
+    return Result;
+  }
+
+  /// \brief Operator/ overload which provides the default
+  /// \c nmNearestTiesToEven rounding mode and *no* error checking.
+  APFloat operator/(const APFloat &RHS) const {
+    APFloat Result = *this;
+    Result.divide(RHS, rmNearestTiesToEven);
+    return Result;
+  }
+
   /// @}
 
   /// \name Sign operations.
@@ -312,6 +344,13 @@ public:
   void changeSign();
   void clearSign();
   void copySign(const APFloat &);
+
+  /// \brief A static helper to produce a copy of an APFloat value with its sign
+  /// copied from some other APFloat.
+  static APFloat copySign(APFloat Value, const APFloat &Sign) {
+    Value.copySign(Sign);
+    return std::move(Value);
+  }
 
   /// @}
 
