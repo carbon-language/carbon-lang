@@ -2537,6 +2537,21 @@ multiclass avx512_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
   }
 }
 
+multiclass avx512_binop_rm_vl<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                              AVX512VLVectorVTInfo VTInfo, OpndItins itins,
+                              Predicate prd, bit IsCommutable = 0> {
+  let Predicates = [prd] in
+    defm Z : avx512_binop_rm<opc, OpcodeStr, OpNode, VTInfo.info512, itins,
+                             IsCommutable>, EVEX_V512;
+
+  let Predicates = [prd, HasVLX] in {
+    defm Z256 : avx512_binop_rm<opc, OpcodeStr, OpNode, VTInfo.info256, itins,
+                             IsCommutable>, EVEX_V256;
+    defm Z128 : avx512_binop_rm<opc, OpcodeStr, OpNode, VTInfo.info128, itins,
+                             IsCommutable>, EVEX_V128;
+  }
+}
+
 multiclass avx512_binop_rm2<bits<8> opc, string OpcodeStr, ValueType DstVT,
                             ValueType SrcVT, RegisterClass KRC, RegisterClass RC,
                             PatFrag memop_frag, X86MemOperand x86memop,
@@ -2594,20 +2609,20 @@ multiclass avx512_binop_rm2<bits<8> opc, string OpcodeStr, ValueType DstVT,
   }
 }
 
-defm VPADDDZ : avx512_binop_rm<0xFE, "vpadd", add, v16i32_info,
-                   SSE_INTALU_ITINS_P, 1>, EVEX_V512, EVEX_CD8<32, CD8VF>;
+defm VPADDD : avx512_binop_rm_vl<0xFE, "vpadd", add, avx512vl_i32_info,
+                   SSE_INTALU_ITINS_P, HasAVX512, 1>, EVEX_CD8<32, CD8VF>;
 
-defm VPSUBDZ : avx512_binop_rm<0xFA, "vpsub", sub, v16i32_info,
-                   SSE_INTALU_ITINS_P, 0>, EVEX_V512, EVEX_CD8<32, CD8VF>;
+defm VPSUBD : avx512_binop_rm_vl<0xFA, "vpsub", sub, avx512vl_i32_info,
+                   SSE_INTALU_ITINS_P, HasAVX512, 0>, EVEX_CD8<32, CD8VF>;
 
-defm VPMULLDZ : avx512_binop_rm<0x40, "vpmull", mul, v16i32_info,
-                   SSE_INTALU_ITINS_P, 1>, T8PD, EVEX_V512, EVEX_CD8<32, CD8VF>;
+defm VPMULLD : avx512_binop_rm_vl<0x40, "vpmull", mul, avx512vl_i32_info,
+                   SSE_INTALU_ITINS_P, HasAVX512, 1>, T8PD, EVEX_CD8<32, CD8VF>;
 
-defm VPADDQZ : avx512_binop_rm<0xD4, "vpadd", add, v8i64_info,
-                   SSE_INTALU_ITINS_P, 1>, EVEX_CD8<64, CD8VF>, EVEX_V512, VEX_W;
+defm VPADDQ : avx512_binop_rm_vl<0xD4, "vpadd", add, avx512vl_i64_info,
+                   SSE_INTALU_ITINS_P, HasAVX512, 1>, EVEX_CD8<64, CD8VF>, VEX_W;
 
-defm VPSUBQZ : avx512_binop_rm<0xFB, "vpsub", sub, v8i64_info,
-                   SSE_INTALU_ITINS_P, 0>, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
+defm VPSUBQ : avx512_binop_rm_vl<0xFB, "vpsub", sub, avx512vl_i64_info,
+                   SSE_INTALU_ITINS_P, HasAVX512, 0>, VEX_W, EVEX_CD8<64, CD8VF>;
 
 defm VPMULDQZ : avx512_binop_rm2<0x28, "vpmuldq", v8i64, v16i32, VK8WM, VR512,
                    memopv8i64, i512mem, loadi64, i64mem, "{1to8}",
@@ -2628,33 +2643,33 @@ def : Pat<(v8i64 (int_x86_avx512_mask_pmul_dq_512 (v16i32 VR512:$src1),
            (v16i32 VR512:$src2), (bc_v8i64 (v16i32 immAllZerosV)), (i8 -1))),
           (VPMULDQZrr VR512:$src1, VR512:$src2)>;
 
-defm VPMAXUDZ : avx512_binop_rm<0x3F, "vpmaxu", X86umax, v16i32_info,
-                   SSE_INTALU_ITINS_P, 1>,
-                   T8PD, EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VPMAXUQZ : avx512_binop_rm<0x3F, "vpmaxu", X86umax, v8i64_info,
-                   SSE_INTALU_ITINS_P, 0>,
-                   T8PD, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
+defm VPMAXUD : avx512_binop_rm_vl<0x3F, "vpmaxu", X86umax, avx512vl_i32_info,
+                   SSE_INTALU_ITINS_P, HasAVX512, 1>,
+                   T8PD, EVEX_CD8<32, CD8VF>;
+defm VPMAXUQ : avx512_binop_rm_vl<0x3F, "vpmaxu", X86umax, avx512vl_i64_info,
+                   SSE_INTALU_ITINS_P, HasAVX512, 0>,
+                   T8PD, VEX_W, EVEX_CD8<64, CD8VF>;
 
-defm VPMAXSDZ : avx512_binop_rm<0x3D, "vpmaxs", X86smax, v16i32_info,
-                   SSE_INTALU_ITINS_P, 1>,
-                   T8PD, EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VPMAXSQZ : avx512_binop_rm<0x3D, "vpmaxs", X86smax, v8i64_info,
-                   SSE_INTALU_ITINS_P, 0>,
-                   T8PD, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
+defm VPMAXSD : avx512_binop_rm_vl<0x3D, "vpmaxs", X86smax, avx512vl_i32_info,
+                   SSE_INTALU_ITINS_P, HasAVX512, 1>,
+                   T8PD, EVEX_CD8<32, CD8VF>;
+defm VPMAXSQ : avx512_binop_rm_vl<0x3D, "vpmaxs", X86smax, avx512vl_i64_info,
+                   SSE_INTALU_ITINS_P, HasAVX512, 0>,
+                   T8PD, VEX_W, EVEX_CD8<64, CD8VF>;
 
-defm VPMINUDZ : avx512_binop_rm<0x3B, "vpminu", X86umin, v16i32_info,
-                   SSE_INTALU_ITINS_P, 1>,
-                   T8PD, EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VPMINUQZ : avx512_binop_rm<0x3B, "vpminu", X86umin, v8i64_info,
-                   SSE_INTALU_ITINS_P, 0>,
-                   T8PD, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
+defm VPMINUD : avx512_binop_rm_vl<0x3B, "vpminu", X86umin, avx512vl_i32_info,
+                   SSE_INTALU_ITINS_P, HasAVX512, 1>,
+                   T8PD, EVEX_CD8<32, CD8VF>;
+defm VPMINUQ : avx512_binop_rm_vl<0x3B, "vpminu", X86umin, avx512vl_i64_info,
+                   SSE_INTALU_ITINS_P, HasAVX512, 0>,
+                   T8PD, VEX_W, EVEX_CD8<64, CD8VF>;
 
-defm VPMINSDZ : avx512_binop_rm<0x39, "vpmins", X86smin, v16i32_info,
-                   SSE_INTALU_ITINS_P, 1>,
-                   T8PD, EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VPMINSQZ : avx512_binop_rm<0x39, "vpmins", X86smin, v8i64_info,
-                   SSE_INTALU_ITINS_P, 0>,
-                   T8PD, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
+defm VPMINSD : avx512_binop_rm_vl<0x39, "vpmins", X86smin, avx512vl_i32_info,
+                   SSE_INTALU_ITINS_P, HasAVX512, 1>,
+                   T8PD, EVEX_CD8<32, CD8VF>;
+defm VPMINSQ : avx512_binop_rm_vl<0x39, "vpmins", X86smin, avx512vl_i64_info,
+                   SSE_INTALU_ITINS_P, HasAVX512, 0>,
+                   T8PD, VEX_W, EVEX_CD8<64, CD8VF>;
 
 def : Pat <(v16i32 (int_x86_avx512_mask_pmaxs_d_512 (v16i32 VR512:$src1),
                     (v16i32 VR512:$src2), (v16i32 immAllZerosV), (i16 -1))),
@@ -2785,22 +2800,30 @@ def : Pat<(v8i64 (X86VPermilpi VR512:$src1, (i8 imm:$imm))),
 // AVX-512  Logical Instructions
 //===----------------------------------------------------------------------===//
 
-defm VPANDDZ : avx512_binop_rm<0xDB, "vpand", and, v16i32_info, SSE_BIT_ITINS_P, 1>,
-                      EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VPANDQZ : avx512_binop_rm<0xDB, "vpand", and, v8i64_info, SSE_BIT_ITINS_P, 1>,
-                      EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
-defm VPORDZ  : avx512_binop_rm<0xEB, "vpor", or, v16i32_info, SSE_BIT_ITINS_P, 1>,
-                      EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VPORQZ  : avx512_binop_rm<0xEB, "vpor", or, v8i64_info, SSE_BIT_ITINS_P, 1>,
-                      EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
-defm VPXORDZ : avx512_binop_rm<0xEF, "vpxor", xor, v16i32_info, SSE_BIT_ITINS_P, 1>,
-                      EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VPXORQZ : avx512_binop_rm<0xEF, "vpxor", xor, v8i64_info, SSE_BIT_ITINS_P, 1>,
-                      EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
-defm VPANDNDZ : avx512_binop_rm<0xDF, "vpandn", X86andnp, v16i32_info,
-                      SSE_BIT_ITINS_P, 0>, EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VPANDNQZ : avx512_binop_rm<0xDF, "vpandn", X86andnp, v8i64_info,
-                      SSE_BIT_ITINS_P, 0>, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
+defm VPANDD : avx512_binop_rm_vl<0xDB, "vpand", and, avx512vl_i32_info,
+                              SSE_BIT_ITINS_P, HasAVX512, 1>,
+                              EVEX_CD8<32, CD8VF>;
+defm VPANDQ : avx512_binop_rm_vl<0xDB, "vpand", and, avx512vl_i64_info,
+                              SSE_BIT_ITINS_P, HasAVX512, 1>,
+                              VEX_W, EVEX_CD8<64, CD8VF>;
+defm VPORD  : avx512_binop_rm_vl<0xEB, "vpor", or, avx512vl_i32_info,
+                              SSE_BIT_ITINS_P, HasAVX512, 1>,
+                              EVEX_CD8<32, CD8VF>;
+defm VPORQ  : avx512_binop_rm_vl<0xEB, "vpor", or, avx512vl_i64_info,
+                              SSE_BIT_ITINS_P, HasAVX512, 1>,
+                              VEX_W, EVEX_CD8<64, CD8VF>;
+defm VPXORD : avx512_binop_rm_vl<0xEF, "vpxor", xor, avx512vl_i32_info,
+                              SSE_BIT_ITINS_P, HasAVX512, 1>,
+                              EVEX_CD8<32, CD8VF>;
+defm VPXORQ : avx512_binop_rm_vl<0xEF, "vpxor", xor, avx512vl_i64_info,
+                              SSE_BIT_ITINS_P, HasAVX512, 1>,
+                              VEX_W, EVEX_CD8<64, CD8VF>;
+defm VPANDND : avx512_binop_rm_vl<0xDF, "vpandn", X86andnp, avx512vl_i32_info,
+                               SSE_BIT_ITINS_P, HasAVX512, 0>,
+                               EVEX_CD8<32, CD8VF>;
+defm VPANDNQ : avx512_binop_rm_vl<0xDF, "vpandn", X86andnp, avx512vl_i64_info,
+                               SSE_BIT_ITINS_P, HasAVX512, 0>,
+                               VEX_W, EVEX_CD8<64, CD8VF>;
 
 //===----------------------------------------------------------------------===//
 // AVX-512  FP arithmetic
