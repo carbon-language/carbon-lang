@@ -180,14 +180,11 @@ template <class ELFT>
 void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   ScopedTask task(getDefaultDomain(), "buildDynamicSymbolTable");
   for (const auto &sla : file.sharedLibrary()) {
-    if (!isDynSymEntryRequired(sla))
-      continue;
-    _dynamicSymbolTable->addSymbol(sla, ELF::SHN_UNDEF);
+    if (isDynSymEntryRequired(sla))
+      _dynamicSymbolTable->addSymbol(sla, ELF::SHN_UNDEF);
     if (isNeededTagRequired(sla))
       _soNeeded.insert(sla->loadName());
   }
-  for (const auto &sla : _layout.getCopiedDynAtoms())
-    _soNeeded.insert(sla->loadName());
   // Never mark the dynamic linker as DT_NEEDED
   _soNeeded.erase(sys::path::filename(_context.getInterpreter()));
   for (const auto &loadName : _soNeeded) {

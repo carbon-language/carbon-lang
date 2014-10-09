@@ -47,7 +47,6 @@ public:
   bool isRelaOutputFormat() const override { return false; }
   bool isDynamicRelocation(const DefinedAtom &,
                            const Reference &r) const override;
-  bool isCopyRelocation(const Reference &r) const override;
   bool isPLTRelocation(const DefinedAtom &, const Reference &r) const override;
 };
 

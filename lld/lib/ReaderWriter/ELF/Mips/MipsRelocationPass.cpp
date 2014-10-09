@@ -781,7 +781,7 @@ RelocationPass<ELFT>::getObjectEntry(const SharedLibraryAtom *a) {
   if (obj != _objectMap.end())
     return obj->second;
 
-  auto oa = new (_file._alloc) ObjectAtom(_file, a);
+  auto oa = new (_file._alloc) ObjectAtom(_file);
   oa->addReferenceELF_Mips(R_MIPS_COPY, 0, oa, 0);
   oa->_name = a->name();
   oa->_size = a->size();

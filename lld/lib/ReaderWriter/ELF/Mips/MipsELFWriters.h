@@ -69,6 +69,11 @@ public:
     return file;
   }
 
+  bool isNeededTagRequired(const SharedLibraryAtom *sla) const {
+    return _targetLayout.isReferencedByDefinedAtom(sla) ||
+           _targetLayout.isCopied(sla);
+  }
+
 private:
   MipsLinkingContext &_ctx;
   MipsTargetLayout<ELFT> &_targetLayout;

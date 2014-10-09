@@ -65,15 +65,6 @@ bool MipsLinkingContext::isDynamicRelocation(const DefinedAtom &,
   }
 }
 
-bool MipsLinkingContext::isCopyRelocation(const Reference &r) const {
-  if (r.kindNamespace() != Reference::KindNamespace::ELF)
-    return false;
-  assert(r.kindArch() == Reference::KindArch::Mips);
-  if (r.kindValue() == llvm::ELF::R_MIPS_COPY)
-    return true;
-  return false;
-}
-
 bool MipsLinkingContext::isPLTRelocation(const DefinedAtom &,
                                          const Reference &r) const {
   if (r.kindNamespace() != Reference::KindNamespace::ELF)

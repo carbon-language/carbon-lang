@@ -452,7 +452,7 @@ public:
     if (obj != _objectMap.end())
       return obj->second;
 
-    auto oa = new (_file._alloc) ObjectAtom(_file, a);
+    auto oa = new (_file._alloc) ObjectAtom(_file);
     // This needs to point to the atom that we just created.
     oa->addReferenceELF_AArch64(R_AARCH64_COPY, 0, oa, 0);
 

@@ -38,6 +38,10 @@ protected:
     return std::error_code();
   }
 
+  bool isNeededTagRequired(const SharedLibraryAtom *sla) const override {
+    return _writeHelper.isNeededTagRequired(sla);
+  }
+
   LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>) createDynamicTable();
 
   LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>) createDynamicSymbolTable();
