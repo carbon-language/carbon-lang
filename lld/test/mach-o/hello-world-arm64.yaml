@@ -1,4 +1,4 @@
-# RUN: lld -flavor darwin -arch arm64 -ios_version_min 7.0 %s -o %t  && \
+# RUN: lld -flavor darwin -arch arm64 %s -o %t
 # RUN: llvm-nm -m -n %t | FileCheck %s
 #
 # Test that arm64 hello-world can be linked into a mach-o executable

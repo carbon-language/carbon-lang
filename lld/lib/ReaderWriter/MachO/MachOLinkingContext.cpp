@@ -160,6 +160,26 @@ void MachOLinkingContext::configure(HeaderFileType type, Arch arch, OS os,
   _os = os;
   _osMinVersion = minOSVersion;
 
+  // If min OS not specified on command line, use reasonable defaults.
+  if (minOSVersion == 0) {
+    switch (_arch) {
+    case arch_x86_64:
+    case arch_x86:
+      parsePackedVersion("10.8", _osMinVersion);
+      _os = MachOLinkingContext::OS::macOSX;
+      break;
+    case arch_armv6:
+    case arch_armv7:
+    case arch_armv7s:
+    case arch_arm64:
+      parsePackedVersion("7.0", _osMinVersion);
+      _os = MachOLinkingContext::OS::iOS;
+      break;
+    default:
+      break;
+    }
+  }
+
   switch (_outputMachOType) {
   case llvm::MachO::MH_EXECUTE:
     // If targeting newer OS, use _main

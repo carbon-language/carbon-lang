@@ -1,8 +1,8 @@
-# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 %s -o %t  && \
+# RUN: lld -flavor darwin -arch x86_64  %s -o %t
 # RUN: llvm-nm -m -n %t | FileCheck %s
 #
-# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 %s -dead_strip \
-# RUN:  -o %t2 &&  llvm-nm -m -n %t2 | FileCheck %s
+# RUN: lld -flavor darwin -arch x86_64  %s -dead_strip -o %t2
+# RUN: llvm-nm -m -n %t2 | FileCheck %s
 #
 # Test that x86_64 hello-world can be linked into a mach-o executable
 #
