@@ -444,6 +444,9 @@ public:
         // to reflect it is running after this completes.
         m_request_thread_resume_function (m_tid);
 
+        // Now mark it is running.
+        find_it->second = false;
+
         return eventLoopResultContinue;
     }
 

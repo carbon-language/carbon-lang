@@ -611,6 +611,47 @@ TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeCallsCallbackWhenThreadIs
     ASSERT_EQ (NEW_THREAD_TID, resumed_tid);
 }
 
+TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeSkipsCallbackOnSecondResumeAttempt)
+{
+    // Initialize thread to be in stopped state.
+    SetupKnownStoppedThread (NEW_THREAD_TID);
+
+    // Request a resume.
+    lldb::tid_t resumed_tid = 0;
+    int resume_call_count = 0;
+
+    m_coordinator.RequestThreadResume (NEW_THREAD_TID,
+                                       [&](lldb::tid_t tid)
+                                       {
+                                           ++resume_call_count;
+                                           resumed_tid = tid;
+                                       },
+                                       GetErrorFunction ());
+    // Shouldn't be called yet.
+    ASSERT_EQ (0, resume_call_count);
+
+    // Process next event.  After that, the resume request call should have fired.
+    ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
+    ASSERT_EQ (1, resume_call_count);
+    ASSERT_EQ (NEW_THREAD_TID, resumed_tid);
+
+    // Make a second resume request.
+    const int initial_resume_call_count = resume_call_count;
+    m_coordinator.RequestThreadResume (NEW_THREAD_TID,
+                                       [&](lldb::tid_t tid)
+                                       {
+                                           ++resume_call_count;
+                                           resumed_tid = tid;
+                                       },
+                                       GetErrorFunction ());
+
+    // Process next event.  This should fail since the thread should already be running.
+    ASSERT_PROCESS_NEXT_EVENT_FAILS ();
+
+    // And the resume count should not have increased.
+    ASSERT_EQ (initial_resume_call_count, resume_call_count);
+}
+
 TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeSignalsErrorOnAlreadyRunningThread)
 {
     const lldb::tid_t TEST_TID = 1234;
