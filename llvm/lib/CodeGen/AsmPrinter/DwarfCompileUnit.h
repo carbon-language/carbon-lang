@@ -86,6 +86,9 @@ public:
   /// lexical scope.
   void addScopeRangeList(DIE &ScopeDIE,
                          const SmallVectorImpl<InsnRange> &Range);
+
+  void attachRangesOrLowHighPC(DIE &D,
+                               const SmallVectorImpl<InsnRange> &Ranges);
 };
 
 } // end llvm namespace

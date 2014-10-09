@@ -330,16 +330,6 @@ bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
   return !getLabelAfterInsn(Ranges.front().second);
 }
 
-void DwarfDebug::attachRangesOrLowHighPC(DwarfCompileUnit &TheCU, DIE &Die,
-                                    const SmallVectorImpl<InsnRange> &Ranges) {
-  assert(!Ranges.empty());
-  if (Ranges.size() == 1)
-    TheCU.attachLowHighPC(Die, getLabelBeforeInsn(Ranges.front().first),
-                          getLabelAfterInsn(Ranges.front().second));
-  else
-    TheCU.addScopeRangeList(Die, Ranges);
-}
-
 // Construct new DW_TAG_lexical_block for this scope and attach
 // DW_AT_low_pc/DW_AT_high_pc labels.
 std::unique_ptr<DIE>
@@ -352,7 +342,7 @@ DwarfDebug::constructLexicalScopeDIE(DwarfCompileUnit &TheCU,
   if (Scope->isAbstractScope())
     return ScopeDIE;
 
-  attachRangesOrLowHighPC(TheCU, *ScopeDIE, Scope->getRanges());
+  TheCU.attachRangesOrLowHighPC(*ScopeDIE, Scope->getRanges());
 
   return ScopeDIE;
 }
@@ -373,7 +363,7 @@ DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
   auto ScopeDIE = make_unique<DIE>(dwarf::DW_TAG_inlined_subroutine);
   TheCU.addDIEEntry(*ScopeDIE, dwarf::DW_AT_abstract_origin, *OriginDIE);
 
-  attachRangesOrLowHighPC(TheCU, *ScopeDIE, Scope->getRanges());
+  TheCU.attachRangesOrLowHighPC(*ScopeDIE, Scope->getRanges());
 
   // Add the call site information to the DIE.
   DILocation DL(Scope->getInlinedAt());

@@ -421,4 +421,14 @@ DwarfCompileUnit::addScopeRangeList(DIE &ScopeDIE,
   addRangeList(std::move(List));
 }
 
+void DwarfCompileUnit::attachRangesOrLowHighPC(
+    DIE &Die, const SmallVectorImpl<InsnRange> &Ranges) {
+  assert(!Ranges.empty());
+  if (Ranges.size() == 1)
+    attachLowHighPC(Die, DD->getLabelBeforeInsn(Ranges.front().first),
+                    DD->getLabelAfterInsn(Ranges.front().second));
+  else
+    addScopeRangeList(Die, Ranges);
+}
+
 } // end llvm namespace

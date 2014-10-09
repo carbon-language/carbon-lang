@@ -518,9 +518,6 @@ class DwarfDebug : public AsmPrinterHandler {
     LabelsAfterInsn.insert(std::make_pair(MI, nullptr));
   }
 
-  void attachRangesOrLowHighPC(DwarfCompileUnit &Unit, DIE &D,
-                               const SmallVectorImpl<InsnRange> &Ranges);
-
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
