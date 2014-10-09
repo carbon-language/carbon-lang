@@ -5,6 +5,7 @@
 
 // FIXME: printf is not intercepted on Windows yet.
 // XFAIL: win32
+// XFAIL: armv7l-unknown-linux-gnueabihf
 
 #include <stdio.h>
 int main() {
