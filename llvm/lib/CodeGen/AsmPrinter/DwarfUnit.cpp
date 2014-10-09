@@ -1625,69 +1625,6 @@ void DwarfUnit::constructContainingTypeDIEs() {
   }
 }
 
-/// constructVariableDIE - Construct a DIE for the given DbgVariable.
-std::unique_ptr<DIE> DwarfUnit::constructVariableDIE(DbgVariable &DV,
-                                                     bool Abstract) {
-  auto D = constructVariableDIEImpl(DV, Abstract);
-  DV.setDIE(*D);
-  return D;
-}
-
-std::unique_ptr<DIE> DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
-                                                         bool Abstract) {
-  // Define variable debug information entry.
-  auto VariableDie = make_unique<DIE>(DV.getTag());
-
-  if (Abstract) {
-    applyVariableAttributes(DV, *VariableDie);
-    return VariableDie;
-  }
-
-  // Add variable address.
-
-  unsigned Offset = DV.getDotDebugLocOffset();
-  if (Offset != ~0U) {
-    addLocationList(*VariableDie, dwarf::DW_AT_location, Offset);
-    return VariableDie;
-  }
-
-  // Check if variable is described by a DBG_VALUE instruction.
-  if (const MachineInstr *DVInsn = DV.getMInsn()) {
-    assert(DVInsn->getNumOperands() == 4);
-    if (DVInsn->getOperand(0).isReg()) {
-      const MachineOperand RegOp = DVInsn->getOperand(0);
-      // If the second operand is an immediate, this is an indirect value.
-      if (DVInsn->getOperand(1).isImm()) {
-        MachineLocation Location(RegOp.getReg(),
-                                 DVInsn->getOperand(1).getImm());
-        addVariableAddress(DV, *VariableDie, Location);
-      } else if (RegOp.getReg())
-        addVariableAddress(DV, *VariableDie, MachineLocation(RegOp.getReg()));
-    } else if (DVInsn->getOperand(0).isImm())
-      addConstantValue(*VariableDie, DVInsn->getOperand(0), DV.getType());
-    else if (DVInsn->getOperand(0).isFPImm())
-      addConstantFPValue(*VariableDie, DVInsn->getOperand(0));
-    else if (DVInsn->getOperand(0).isCImm())
-      addConstantValue(*VariableDie, DVInsn->getOperand(0).getCImm(),
-                       DV.getType());
-
-    return VariableDie;
-  }
-
-  // .. else use frame index.
-  int FI = DV.getFrameIndex();
-  if (FI != ~0) {
-    unsigned FrameReg = 0;
-    const TargetFrameLowering *TFI =
-        Asm->TM.getSubtargetImpl()->getFrameLowering();
-    int Offset = TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
-    MachineLocation Location(FrameReg, Offset);
-    addVariableAddress(DV, *VariableDie, Location);
-  }
-
-  return VariableDie;
-}
-
 /// constructMemberDIE - Construct member DIE from DIDerivedType.
 void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
   DIE &MemberDie = createAndAddDIE(DT.getTag(), Buffer);

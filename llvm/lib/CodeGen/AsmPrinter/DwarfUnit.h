@@ -408,10 +408,6 @@ public:
   /// vtables.
   void constructContainingTypeDIEs();
 
-  /// constructVariableDIE - Construct a DIE for the given DbgVariable.
-  std::unique_ptr<DIE> constructVariableDIE(DbgVariable &DV,
-                                            bool Abstract = false);
-
   /// constructSubprogramArguments - Construct function argument DIEs.
   void constructSubprogramArguments(DIE &Buffer, DITypeArray Args);
 
@@ -449,11 +445,6 @@ protected:
   virtual unsigned getOrCreateSourceID(StringRef File, StringRef Directory) = 0;
 
 private:
-  /// \brief Construct a DIE for the given DbgVariable without initializing the
-  /// DbgVariable's DIE reference.
-  std::unique_ptr<DIE> constructVariableDIEImpl(const DbgVariable &DV,
-                                                bool Abstract);
-
   /// constructTypeDIE - Construct basic type die from DIBasicType.
   void constructTypeDIE(DIE &Buffer, DIBasicType BTy);
 

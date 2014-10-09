@@ -33,6 +33,11 @@ class DwarfCompileUnit : public DwarfUnit {
   /// the need to search for it in applyStmtList.
   unsigned stmtListIndex;
 
+  /// \brief Construct a DIE for the given DbgVariable without initializing the
+  /// DbgVariable's DIE reference.
+  std::unique_ptr<DIE> constructVariableDIEImpl(const DbgVariable &DV,
+                                                bool Abstract);
+
 public:
   DwarfCompileUnit(unsigned UID, DICompileUnit Node, AsmPrinter *A,
                    DwarfDebug *DW, DwarfFile *DWU);
@@ -97,6 +102,10 @@ public:
   /// \brief Construct new DW_TAG_lexical_block for this scope and
   /// attach DW_AT_low_pc/DW_AT_high_pc labels.
   std::unique_ptr<DIE> constructLexicalScopeDIE(LexicalScope *Scope);
+
+  /// constructVariableDIE - Construct a DIE for the given DbgVariable.
+  std::unique_ptr<DIE> constructVariableDIE(DbgVariable &DV,
+                                            bool Abstract = false);
 };
 
 } // end llvm namespace
