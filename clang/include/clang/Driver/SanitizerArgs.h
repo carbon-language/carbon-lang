@@ -49,6 +49,7 @@ class SanitizerArgs {
 
   std::string BlacklistFile;
   int MsanTrackOrigins;
+  int AsanFieldPadding;
   bool AsanZeroBaseShadow;
   bool UbsanTrapOnError;
   bool AsanSharedRuntime;

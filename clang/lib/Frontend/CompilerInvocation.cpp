@@ -1628,6 +1628,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
       break;
     }
   }
+  // -fsanitize-address-field-padding=N has to be a LangOpt, parse it here.
+  Opts.Sanitize.SanitizeAddressFieldPadding =
+      getLastArgIntValue(Args, OPT_fsanitize_address_field_padding, 0, Diags);
 }
 
 static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,

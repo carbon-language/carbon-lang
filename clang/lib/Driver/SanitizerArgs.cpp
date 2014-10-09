@@ -25,6 +25,7 @@ void SanitizerArgs::clear() {
   Kind = 0;
   BlacklistFile = "";
   MsanTrackOrigins = 0;
+  AsanFieldPadding = 0;
   AsanZeroBaseShadow = false;
   UbsanTrapOnError = false;
   AsanSharedRuntime = false;
@@ -164,6 +165,15 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
         (TC.getTriple().getEnvironment() == llvm::Triple::Android);
     AsanZeroBaseShadow =
         (TC.getTriple().getEnvironment() == llvm::Triple::Android);
+    if (Arg *A =
+            Args.getLastArg(options::OPT_fsanitize_address_field_padding)) {
+        StringRef S = A->getValue();
+        // Legal values are 0 and 1, 2, but in future we may add more levels.
+        if (S.getAsInteger(0, AsanFieldPadding) || AsanFieldPadding < 0 ||
+            AsanFieldPadding > 2) {
+          D.Diag(diag::err_drv_invalid_value) << A->getAsString(Args) << S;
+        }
+    }
   }
 
   // Parse -link-cxx-sanitizer flag.
@@ -191,7 +201,9 @@ void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
   if (MsanTrackOrigins)
     CmdArgs.push_back(Args.MakeArgString("-fsanitize-memory-track-origins=" +
                                          llvm::utostr(MsanTrackOrigins)));
-
+  if (AsanFieldPadding)
+    CmdArgs.push_back(Args.MakeArgString("-fsanitize-address-field-padding=" +
+                                         llvm::utostr(AsanFieldPadding)));
   // Workaround for PR16386.
   if (needsMsanRt())
     CmdArgs.push_back(Args.MakeArgString("-fno-assume-sane-operator-new"));
