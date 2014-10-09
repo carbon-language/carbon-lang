@@ -60,13 +60,11 @@ std::string runCheckOnCode(StringRef Code,
   ArgCXX11.push_back("-std=c++11");
   ArgCXX11.insert(ArgCXX11.end(), ExtraArgs.begin(), ExtraArgs.end());
   ArgCXX11.push_back(Filename.str());
-  llvm::IntrusiveRefCntPtr<FileManager> files(
+  llvm::IntrusiveRefCntPtr<FileManager> Files(
       new FileManager(FileSystemOptions()));
   tooling::ToolInvocation Invocation(
-      ArgCXX11, new TestClangTidyAction(Check, Finder, Context), files.get());
-  SmallString<16> FileNameStorage;
-  StringRef FileNameRef = Filename.toNullTerminatedStringRef(FileNameStorage);
-  Invocation.mapVirtualFile(FileNameRef, Code);
+      ArgCXX11, new TestClangTidyAction(Check, Finder, Context), Files.get());
+  Invocation.mapVirtualFile(Filename.str(), Code);
   Invocation.setDiagnosticConsumer(&DiagConsumer);
   if (!Invocation.run())
     return "";
