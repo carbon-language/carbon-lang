@@ -29,6 +29,16 @@
 
 using namespace __tsan;  // NOLINT
 
+#if SANITIZER_FREEBSD
+#define __errno_location __error
+#define __libc_malloc __malloc
+#define __libc_realloc __realloc
+#define __libc_calloc __calloc
+#define __libc_free __free
+#define stdout __stdoutp
+#define stderr __stderrp
+#endif
+
 const int kSigCount = 65;
 
 struct my_siginfo_t {
@@ -62,7 +72,9 @@ extern "C" void *__libc_malloc(uptr size);
 extern "C" void *__libc_calloc(uptr size, uptr n);
 extern "C" void *__libc_realloc(void *ptr, uptr size);
 extern "C" void __libc_free(void *ptr);
+#if !SANITIZER_FREEBSD
 extern "C" int mallopt(int param, int value);
+#endif
 extern __sanitizer_FILE *stdout, *stderr;
 const int PTHREAD_MUTEX_RECURSIVE = 1;
 const int PTHREAD_MUTEX_RECURSIVE_NP = 1;
@@ -2252,8 +2264,10 @@ void InitializeInterceptors() {
   REAL(memcmp) = internal_memcmp;
 
   // Instruct libc malloc to consume less memory.
+#if !SANITIZER_FREEBSD
   mallopt(1, 0);  // M_MXFAST
   mallopt(-3, 32*1024);  // M_MMAP_THRESHOLD
+#endif
 
   InitializeCommonInterceptors();
 
