@@ -487,9 +487,16 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   case AMDGPUISD::DIV_SCALE: {
     return SelectDIV_SCALE(N);
   }
+  case ISD::CopyToReg: {
+    const SITargetLowering& Lowering =
+      *static_cast<const SITargetLowering*>(getTargetLowering());
+    Lowering.legalizeTargetIndependentNode(N, *CurDAG);
+    break;
+  }
   case ISD::ADDRSPACECAST:
     return SelectAddrSpaceCast(N);
   }
+
   return SelectCode(N);
 }
 
