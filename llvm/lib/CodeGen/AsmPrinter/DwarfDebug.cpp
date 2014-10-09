@@ -347,37 +347,6 @@ DwarfDebug::constructLexicalScopeDIE(DwarfCompileUnit &TheCU,
   return ScopeDIE;
 }
 
-// This scope represents inlined body of a function. Construct DIE to
-// represent this concrete inlined copy of the function.
-std::unique_ptr<DIE>
-DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
-                                     LexicalScope *Scope) {
-  assert(Scope->getScopeNode());
-  DIScope DS(Scope->getScopeNode());
-  DISubprogram InlinedSP = getDISubprogram(DS);
-  // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
-  // was inlined from another compile unit.
-  DIE *OriginDIE = AbstractSPDies[InlinedSP];
-  assert(OriginDIE && "Unable to find original DIE for an inlined subprogram.");
-
-  auto ScopeDIE = make_unique<DIE>(dwarf::DW_TAG_inlined_subroutine);
-  TheCU.addDIEEntry(*ScopeDIE, dwarf::DW_AT_abstract_origin, *OriginDIE);
-
-  TheCU.attachRangesOrLowHighPC(*ScopeDIE, Scope->getRanges());
-
-  // Add the call site information to the DIE.
-  DILocation DL(Scope->getInlinedAt());
-  TheCU.addUInt(*ScopeDIE, dwarf::DW_AT_call_file, None,
-                TheCU.getOrCreateSourceID(DL.getFilename(), DL.getDirectory()));
-  TheCU.addUInt(*ScopeDIE, dwarf::DW_AT_call_line, None, DL.getLineNumber());
-
-  // Add name to the name table, we do this here because we're guaranteed
-  // to have concrete versions of our DW_TAG_inlined_subprogram nodes.
-  addSubprogramNames(InlinedSP, *ScopeDIE);
-
-  return ScopeDIE;
-}
-
 static std::unique_ptr<DIE> constructVariableDIE(DwarfCompileUnit &TheCU,
                                                  DbgVariable &DV,
                                                  const LexicalScope &Scope,

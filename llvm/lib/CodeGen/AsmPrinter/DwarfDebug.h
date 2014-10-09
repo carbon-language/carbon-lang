@@ -661,6 +661,18 @@ public:
   /// going to be null.
   bool isLexicalScopeDIENull(LexicalScope *Scope);
 
+  /// \brief Return Label preceding the instruction.
+  MCSymbol *getLabelBeforeInsn(const MachineInstr *MI);
+
+  /// \brief Return Label immediately following the instruction.
+  MCSymbol *getLabelAfterInsn(const MachineInstr *MI);
+
+  // FIXME: Consider rolling ranges up into DwarfDebug since we use a single
+  // range_base anyway, so there's no need to keep them as separate per-CU range
+  // lists. (though one day we might end up with a range.dwo section, in which
+  // case it'd go to DwarfFile)
+  unsigned getNextRangeNumber() { return GlobalRangeCount++; }
+
   // FIXME: Sink these functions down into DwarfFile/Dwarf*Unit.
 
   /// \brief Construct new DW_TAG_lexical_block for this scope and
@@ -668,23 +680,14 @@ public:
   std::unique_ptr<DIE> constructLexicalScopeDIE(DwarfCompileUnit &TheCU,
                                                 LexicalScope *Scope);
 
-  /// \brief This scope represents inlined body of a function. Construct
-  /// DIE to represent this concrete inlined copy of the function.
-  std::unique_ptr<DIE> constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
-                                                LexicalScope *Scope);
-
   /// A helper function to create children of a Scope DIE.
   DIE *createScopeChildrenDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope,
                               SmallVectorImpl<std::unique_ptr<DIE>> &Children,
                               unsigned *ChildScopeCount = nullptr);
 
-  /// \brief Return Label preceding the instruction.
-  MCSymbol *getLabelBeforeInsn(const MachineInstr *MI);
-
-  /// \brief Return Label immediately following the instruction.
-  MCSymbol *getLabelAfterInsn(const MachineInstr *MI);
-
-  unsigned getNextRangeNumber() { return GlobalRangeCount++; }
+  DenseMap<const MDNode *, DIE *> &getAbstractSPDies() {
+    return AbstractSPDies;
+  }
 };
 } // End of namespace llvm
 

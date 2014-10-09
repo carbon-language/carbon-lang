@@ -348,7 +348,7 @@ void DwarfCompileUnit::constructScopeDIE(
   // the scope DIE is null.
   std::unique_ptr<DIE> ScopeDIE;
   if (Scope->getParent() && DS.isSubprogram()) {
-    ScopeDIE = DD->constructInlinedScopeDIE(*this, Scope);
+    ScopeDIE = constructInlinedScopeDIE(Scope);
     if (!ScopeDIE)
       return;
     // We create children when the scope DIE is not null.
@@ -429,6 +429,36 @@ void DwarfCompileUnit::attachRangesOrLowHighPC(
                     DD->getLabelAfterInsn(Ranges.front().second));
   else
     addScopeRangeList(Die, Ranges);
+}
+
+// This scope represents inlined body of a function. Construct DIE to
+// represent this concrete inlined copy of the function.
+std::unique_ptr<DIE>
+DwarfCompileUnit::constructInlinedScopeDIE(LexicalScope *Scope) {
+  assert(Scope->getScopeNode());
+  DIScope DS(Scope->getScopeNode());
+  DISubprogram InlinedSP = getDISubprogram(DS);
+  // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
+  // was inlined from another compile unit.
+  DIE *OriginDIE = DD->getAbstractSPDies()[InlinedSP];
+  assert(OriginDIE && "Unable to find original DIE for an inlined subprogram.");
+
+  auto ScopeDIE = make_unique<DIE>(dwarf::DW_TAG_inlined_subroutine);
+  addDIEEntry(*ScopeDIE, dwarf::DW_AT_abstract_origin, *OriginDIE);
+
+  attachRangesOrLowHighPC(*ScopeDIE, Scope->getRanges());
+
+  // Add the call site information to the DIE.
+  DILocation DL(Scope->getInlinedAt());
+  addUInt(*ScopeDIE, dwarf::DW_AT_call_file, None,
+               getOrCreateSourceID(DL.getFilename(), DL.getDirectory()));
+  addUInt(*ScopeDIE, dwarf::DW_AT_call_line, None, DL.getLineNumber());
+
+  // Add name to the name table, we do this here because we're guaranteed
+  // to have concrete versions of our DW_TAG_inlined_subprogram nodes.
+  DD->addSubprogramNames(InlinedSP, *ScopeDIE);
+
+  return ScopeDIE;
 }
 
 } // end llvm namespace

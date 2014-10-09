@@ -89,6 +89,10 @@ public:
 
   void attachRangesOrLowHighPC(DIE &D,
                                const SmallVectorImpl<InsnRange> &Ranges);
+
+  /// \brief This scope represents inlined body of a function. Construct
+  /// DIE to represent this concrete inlined copy of the function.
+  std::unique_ptr<DIE> constructInlinedScopeDIE(LexicalScope *Scope);
 };
 
 } // end llvm namespace
