@@ -599,14 +599,26 @@ void DwarfCompileUnit::constructSubprogramScopeDIE(LexicalScope *Scope) {
   // Collect lexical scope children first.
   // ObjectPointer might be a local (non-argument) local variable if it's a
   // block's synthetic this pointer.
-  if (DIE *BlockObjPtr =
-          DD->createAndAddScopeChildren(*this, Scope, ScopeDIE)) {
+  if (DIE *BlockObjPtr = createAndAddScopeChildren(Scope, ScopeDIE)) {
     assert(!ObjectPointer && "multiple object pointers can't be described");
     ObjectPointer = BlockObjPtr;
   }
 
   if (ObjectPointer)
     addDIEEntry(ScopeDIE, dwarf::DW_AT_object_pointer, *ObjectPointer);
+}
+
+DIE *DwarfCompileUnit::createAndAddScopeChildren(LexicalScope *Scope,
+                                                 DIE &ScopeDIE) {
+  // We create children when the scope DIE is not null.
+  SmallVector<std::unique_ptr<DIE>, 8> Children;
+  DIE *ObjectPointer = createScopeChildrenDIE(Scope, Children);
+
+  // Add children
+  for (auto &I : Children)
+    ScopeDIE.addChild(std::move(I));
+
+  return ObjectPointer;
 }
 
 } // end llvm namespace

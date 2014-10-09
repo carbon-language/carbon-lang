@@ -330,19 +330,6 @@ bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
   return !getLabelAfterInsn(Ranges.front().second);
 }
 
-DIE *DwarfDebug::createAndAddScopeChildren(DwarfCompileUnit &TheCU,
-                                           LexicalScope *Scope, DIE &ScopeDIE) {
-  // We create children when the scope DIE is not null.
-  SmallVector<std::unique_ptr<DIE>, 8> Children;
-  DIE *ObjectPointer = TheCU.createScopeChildrenDIE(Scope, Children);
-
-  // Add children
-  for (auto &I : Children)
-    ScopeDIE.addChild(std::move(I));
-
-  return ObjectPointer;
-}
-
 void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
                                                      LexicalScope *Scope) {
   assert(Scope && Scope->getScopeNode());
@@ -380,7 +367,7 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
 
   if (TheCU.getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly)
     SPCU.addUInt(*AbsDef, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
-  if (DIE *ObjectPointer = createAndAddScopeChildren(SPCU, Scope, *AbsDef))
+  if (DIE *ObjectPointer = SPCU.createAndAddScopeChildren(Scope, *AbsDef))
     SPCU.addDIEEntry(*AbsDef, dwarf::DW_AT_object_pointer, *ObjectPointer);
 }
 

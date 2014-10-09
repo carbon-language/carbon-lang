@@ -682,9 +682,6 @@ public:
   SmallVector<DbgVariable *, 8> &getCurrentFnArguments() {
     return CurrentFnArguments;
   }
-
-  DIE *createAndAddScopeChildren(DwarfCompileUnit &TheCU, LexicalScope *Scope,
-                                 DIE &ScopeDIE);
 };
 } // End of namespace llvm
 
