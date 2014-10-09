@@ -688,3 +688,11 @@ define i1 @PR20945(i32 %B) {
   %cmp = icmp ne i32 %shr, -5
   ret i1 %cmp
 }
+
+; CHECK-LABEL: @PR21222
+; CHECK: icmp eq i32 %B, 6
+define i1 @PR21222(i32 %B) {
+  %shr = ashr i32 -93, %B
+  %cmp = icmp eq i32 %shr, -2
+  ret i1 %cmp
+}

@@ -1107,7 +1107,8 @@ Instruction *InstCombiner::FoldICmpCstShrCst(ICmpInst &I, Value *Op, Value *A,
   // Get the distance between the highest bit that's set.
   int Shift;
   if (IsNegative)
-    Shift = (-AP2).logBase2() - (-AP1).logBase2();
+    // Get the ones' complement of AP2 and AP1 when computing the distance.
+    Shift = (~AP2).logBase2() - (~AP1).logBase2();
   else
     Shift = AP2.logBase2() - AP1.logBase2();
 
