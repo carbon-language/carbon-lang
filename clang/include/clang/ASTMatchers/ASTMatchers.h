@@ -140,10 +140,7 @@ typedef internal::Matcher<NestedNameSpecifierLoc> NestedNameSpecifierLocMatcher;
 /// \endcode
 ///
 /// Usable as: Any Matcher
-inline internal::PolymorphicMatcherWithParam0<internal::TrueMatcher>
-anything() {
-  return internal::PolymorphicMatcherWithParam0<internal::TrueMatcher>();
-}
+inline internal::TrueMatcher anything() { return internal::TrueMatcher(); }
 
 /// \brief Matches declarations.
 ///

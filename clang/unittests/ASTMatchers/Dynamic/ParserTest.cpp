@@ -26,7 +26,10 @@ public:
   virtual ~MockSema() {}
 
   uint64_t expectMatcher(StringRef MatcherName) {
-    ast_matchers::internal::Matcher<Stmt> M = stmt();
+    // Optimizations on the matcher framework make simple matchers like
+    // 'stmt()' to be all the same matcher.
+    // Use a more complex expression to prevent that.
+    ast_matchers::internal::Matcher<Stmt> M = stmt(stmt(), stmt());
     ExpectedMatchers.insert(std::make_pair(MatcherName, M));
     return M.getID().second;
   }

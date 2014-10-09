@@ -270,6 +270,11 @@ public:
   constructVariadic(VariadicOperatorFunction Func,
                     std::vector<DynTypedMatcher> InnerMatchers);
 
+  /// \brief Get a "true" matcher for \p NodeKind.
+  ///
+  /// It only checks that the node is of the right kind.
+  static DynTypedMatcher trueMatcher(ast_type_traits::ASTNodeKind NodeKind);
+
   void setAllowBind(bool AB) { AllowBind = AB; }
 
   /// \brief Return a matcher that points to the same implementation, but
@@ -335,6 +340,14 @@ public:
   template <typename T> Matcher<T> unconditionalConvertTo() const;
 
 private:
+ DynTypedMatcher(ast_type_traits::ASTNodeKind SupportedKind,
+                 ast_type_traits::ASTNodeKind RestrictKind,
+                 IntrusiveRefCntPtr<DynMatcherInterface> Implementation)
+     : AllowBind(false),
+       SupportedKind(SupportedKind),
+       RestrictKind(RestrictKind),
+       Implementation(std::move(Implementation)) {}
+
   bool AllowBind;
   ast_type_traits::ASTNodeKind SupportedKind;
   /// \brief A potentially stricter node kind.
@@ -433,7 +446,10 @@ public:
   };
 
 private:
+  // For Matcher<T> <=> Matcher<U> conversions.
   template <typename U> friend class Matcher;
+  // For DynTypedMatcher::unconditionalConvertTo<T>.
+  friend class DynTypedMatcher;
 
   static DynTypedMatcher restrictMatcher(const DynTypedMatcher &Other) {
     return Other.dynCastTo(ast_type_traits::ASTNodeKind::getFromNodeKind<T>());
@@ -982,46 +998,16 @@ private:
 ///
 /// This is useful when a matcher syntactically requires a child matcher,
 /// but the context doesn't care. See for example: anything().
-///
-/// FIXME: Alternatively we could also create a IsAMatcher or something
-/// that checks that a dyn_cast is possible. This is purely needed for the
-/// difference between calling for example:
-///   record()
-/// and
-///   record(SomeMatcher)
-/// In the second case we need the correct type we were dyn_cast'ed to in order
-/// to get the right type for the inner matcher. In the first case we don't need
-/// that, but we use the type conversion anyway and insert a TrueMatcher.
-template <typename T>
-class TrueMatcher : public SingleNodeMatcherInterface<T>  {
-public:
-  bool matchesNode(const T &Node) const override {
-    return true;
+class TrueMatcher {
+ public:
+  typedef AllNodeBaseTypes ReturnTypes;
+
+  template <typename T>
+  operator Matcher<T>() const {
+    return DynTypedMatcher::trueMatcher(
+               ast_type_traits::ASTNodeKind::getFromNodeKind<T>())
+        .template unconditionalConvertTo<T>();
   }
-};
-
-/// \brief Matcher<T> that wraps an inner Matcher<T> and binds the matched node
-/// to an ID if the inner matcher matches on the node.
-template <typename T>
-class IdMatcher : public MatcherInterface<T> {
-public:
-  /// \brief Creates an IdMatcher that binds to 'ID' if 'InnerMatcher' matches
-  /// the node.
-  IdMatcher(StringRef ID, const Matcher<T> &InnerMatcher)
-      : ID(ID), InnerMatcher(InnerMatcher) {}
-
-  bool matches(const T &Node, ASTMatchFinder *Finder,
-               BoundNodesTreeBuilder *Builder) const override {
-    bool Result = InnerMatcher.matches(Node, Finder, Builder);
-    if (Result) {
-      Builder->setBinding(ID, ast_type_traits::DynTypedNode::create(Node));
-    }
-    return Result;
-  }
-
-private:
-  const std::string ID;
-  const Matcher<T> InnerMatcher;
 };
 
 /// \brief A Matcher that allows binding the node it matches to an id.
@@ -1040,9 +1026,9 @@ public:
   /// The returned matcher is equivalent to this matcher, but will
   /// bind the matched node on a match.
   Matcher<T> bind(StringRef ID) const {
-    // FIXME: Use DynTypedMatcher's IdMatcher instead. No need for a template
-    // version anymore.
-    return Matcher<T>(new IdMatcher<T>(ID, *this));
+    return DynTypedMatcher(*this)
+        .tryBind(ID)
+        ->template unconditionalConvertTo<T>();
   }
 
   /// \brief Same as Matcher<T>'s conversion operator, but enables binding on
@@ -1315,16 +1301,23 @@ bool AnyOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
 
 template <typename T>
 inline Matcher<T> DynTypedMatcher::unconditionalConvertTo() const {
-  // FIXME: Remove this extra indirection and connect directly to Matcher<T>().
-  return Matcher<T>(new VariadicOperatorMatcherInterface<T>(
-      AllOfVariadicOperator, llvm::makeArrayRef(*this)));
+  return Matcher<T>(*this);
 }
 
 /// \brief Creates a Matcher<T> that matches if all inner matchers match.
 template<typename T>
 BindableMatcher<T> makeAllOfComposite(
     ArrayRef<const Matcher<T> *> InnerMatchers) {
-  // FIXME: Optimize for the cases of size()==0 and size()==1
+  // For the size() == 0 case, we return a "true" matcher.
+  if (InnerMatchers.size() == 0) {
+    return BindableMatcher<T>(TrueMatcher());
+  }
+  // For the size() == 1 case, we simply return that one matcher.
+  // No need to wrap it in a variadic operation.
+  if (InnerMatchers.size() == 1) {
+    return BindableMatcher<T>(*InnerMatchers[0]);
+  }
+
   std::vector<DynTypedMatcher> DynMatchers;
   for (size_t i = 0, e = InnerMatchers.size(); i != e; ++i) {
     DynMatchers.push_back(*InnerMatchers[i]);

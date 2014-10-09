@@ -13,6 +13,7 @@
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchersInternal.h"
+#include "llvm/Support/ManagedStatic.h"
 
 namespace clang {
 namespace ast_matchers {
@@ -64,6 +65,25 @@ class IdDynMatcher : public DynMatcherInterface {
   const IntrusiveRefCntPtr<DynMatcherInterface> InnerMatcher;
 };
 
+/// \brief A matcher that always returns true.
+///
+/// We only ever need one instance of this matcher, so we create a global one
+/// and reuse it to reduce the overhead of the matcher and increase the chance
+/// of cache hits.
+struct TrueMatcherImpl {
+  TrueMatcherImpl() : Instance(new Impl) {}
+  const IntrusiveRefCntPtr<DynMatcherInterface> Instance;
+
+  class Impl : public DynMatcherInterface {
+   public:
+    bool dynMatches(const ast_type_traits::DynTypedNode &, ASTMatchFinder *,
+                    BoundNodesTreeBuilder *) const override {
+      return true;
+    }
+  };
+};
+static llvm::ManagedStatic<TrueMatcherImpl> TrueMatcherInstance;
+
 }  // namespace
 
 DynTypedMatcher DynTypedMatcher::constructVariadic(
@@ -81,6 +101,11 @@ DynTypedMatcher DynTypedMatcher::constructVariadic(
   }
   Result.Implementation = new VariadicMatcher(Func, std::move(InnerMatchers));
   return Result;
+}
+
+DynTypedMatcher DynTypedMatcher::trueMatcher(
+    ast_type_traits::ASTNodeKind NodeKind) {
+  return DynTypedMatcher(NodeKind, NodeKind, TrueMatcherInstance->Instance);
 }
 
 DynTypedMatcher DynTypedMatcher::dynCastTo(
