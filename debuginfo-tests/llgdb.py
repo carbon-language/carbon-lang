@@ -142,12 +142,14 @@ NOTE: There are several resons why this may happen:
             print frame.EvaluateExpression(' '.join(cmd[1:]))
 
         elif re.match('^q|(quit)$', cmd[0]):
+            lldb.SBDebugger_Terminate()
             sys.exit(0)
 
         else:
             print debugger.HandleCommand(' '.join(cmd))
 
-    except SystemExit, e: raise e
+    except SystemExit, e:
+        raise e
     except:
         print 'Could not handle the command "%s"' % ' '.join(cmd)
 
