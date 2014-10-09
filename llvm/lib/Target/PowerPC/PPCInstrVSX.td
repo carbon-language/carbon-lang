@@ -47,21 +47,21 @@ let Uses = [RM] in {
 
   // Load indexed instructions
   let mayLoad = 1, canFoldAsLoad = 1 in {
-    def LXSDX : XForm_1<31, 588,
+    def LXSDX : XX1Form<31, 588,
                         (outs vsfrc:$XT), (ins memrr:$src),
                         "lxsdx $XT, $src", IIC_LdStLFD,
                         [(set f64:$XT, (load xoaddr:$src))]>;
 
-    def LXVD2X : XForm_1<31, 844,
+    def LXVD2X : XX1Form<31, 844,
                          (outs vsrc:$XT), (ins memrr:$src),
                          "lxvd2x $XT, $src", IIC_LdStLFD,
                          [(set v2f64:$XT, (load xoaddr:$src))]>;
 
-    def LXVDSX : XForm_1<31, 332,
+    def LXVDSX : XX1Form<31, 332,
                          (outs vsrc:$XT), (ins memrr:$src),
                          "lxvdsx $XT, $src", IIC_LdStLFD, []>;
 
-    def LXVW4X : XForm_1<31, 780,
+    def LXVW4X : XX1Form<31, 780,
                          (outs vsrc:$XT), (ins memrr:$src),
                          "lxvw4x $XT, $src", IIC_LdStLFD, []>;
   }
