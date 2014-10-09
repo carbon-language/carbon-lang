@@ -81,6 +81,11 @@ public:
 
   void constructScopeDIE(LexicalScope *Scope,
                          SmallVectorImpl<std::unique_ptr<DIE>> &FinalChildren);
+
+  /// \brief A helper function to construct a RangeSpanList for a given
+  /// lexical scope.
+  void addScopeRangeList(DIE &ScopeDIE,
+                         const SmallVectorImpl<InsnRange> &Range);
 };
 
 } // end llvm namespace

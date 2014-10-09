@@ -395,4 +395,30 @@ void DwarfCompileUnit::addSectionDelta(DIE &Die, dwarf::Attribute Attribute,
                Value);
 }
 
+void
+DwarfCompileUnit::addScopeRangeList(DIE &ScopeDIE,
+                                    const SmallVectorImpl<InsnRange> &Range) {
+  // Emit offset in .debug_range as a relocatable label. emitDIE will handle
+  // emitting it appropriately.
+  MCSymbol *RangeSym =
+      Asm->GetTempSymbol("debug_ranges", DD->getNextRangeNumber());
+
+  auto *RangeSectionSym = DD->getRangeSectionSym();
+
+  // Under fission, ranges are specified by constant offsets relative to the
+  // CU's DW_AT_GNU_ranges_base.
+  if (DD->useSplitDwarf())
+    addSectionDelta(ScopeDIE, dwarf::DW_AT_ranges, RangeSym, RangeSectionSym);
+  else
+    addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges, RangeSym, RangeSectionSym);
+
+  RangeSpanList List(RangeSym);
+  for (const InsnRange &R : Range)
+    List.addRange(RangeSpan(DD->getLabelBeforeInsn(R.first),
+                            DD->getLabelAfterInsn(R.second)));
+
+  // Add the range list to the set of ranges to be emitted.
+  addRangeList(std::move(List));
+}
+
 } // end llvm namespace

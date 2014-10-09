@@ -349,11 +349,6 @@ class DwarfDebug : public AsmPrinterHandler {
   void ensureAbstractVariableIsCreatedIfScoped(const DIVariable &Var,
                                                const MDNode *Scope);
 
-  /// \brief A helper function to construct a RangeSpanList for a given
-  /// lexical scope.
-  void addScopeRangeList(DwarfCompileUnit &TheCU, DIE &ScopeDIE,
-                         const SmallVectorImpl<InsnRange> &Range);
-
   DIE *createAndAddScopeChildren(DwarfCompileUnit &TheCU, LexicalScope *Scope,
                                  DIE &ScopeDIE);
   /// \brief Construct a DIE for this abstract scope.
@@ -518,16 +513,10 @@ class DwarfDebug : public AsmPrinterHandler {
     LabelsBeforeInsn.insert(std::make_pair(MI, nullptr));
   }
 
-  /// \brief Return Label preceding the instruction.
-  MCSymbol *getLabelBeforeInsn(const MachineInstr *MI);
-
   /// \brief Ensure that a label will be emitted after MI.
   void requestLabelAfterInsn(const MachineInstr *MI) {
     LabelsAfterInsn.insert(std::make_pair(MI, nullptr));
   }
-
-  /// \brief Return Label immediately following the instruction.
-  MCSymbol *getLabelAfterInsn(const MachineInstr *MI);
 
   void attachRangesOrLowHighPC(DwarfCompileUnit &Unit, DIE &D,
                                const SmallVectorImpl<InsnRange> &Ranges);
@@ -601,6 +590,9 @@ public:
 
   /// Returns the section symbol for the .debug_str section.
   MCSymbol *getDebugStrSym() const { return DwarfStrSectionSym; }
+
+  /// Returns the section symbol for the .debug_ranges section.
+  MCSymbol *getRangeSectionSym() const { return DwarfDebugRangeSectionSym; }
 
   /// Returns the previous CU that was being updated
   const DwarfCompileUnit *getPrevCU() const { return PrevCU; }
@@ -688,6 +680,14 @@ public:
   DIE *createScopeChildrenDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope,
                               SmallVectorImpl<std::unique_ptr<DIE>> &Children,
                               unsigned *ChildScopeCount = nullptr);
+
+  /// \brief Return Label preceding the instruction.
+  MCSymbol *getLabelBeforeInsn(const MachineInstr *MI);
+
+  /// \brief Return Label immediately following the instruction.
+  MCSymbol *getLabelAfterInsn(const MachineInstr *MI);
+
+  unsigned getNextRangeNumber() { return GlobalRangeCount++; }
 };
 } // End of namespace llvm
 

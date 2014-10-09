@@ -330,31 +330,6 @@ bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
   return !getLabelAfterInsn(Ranges.front().second);
 }
 
-void DwarfDebug::addScopeRangeList(DwarfCompileUnit &TheCU, DIE &ScopeDIE,
-                                   const SmallVectorImpl<InsnRange> &Range) {
-  // Emit offset in .debug_range as a relocatable label. emitDIE will handle
-  // emitting it appropriately.
-  MCSymbol *RangeSym = Asm->GetTempSymbol("debug_ranges", GlobalRangeCount++);
-
-  // Under fission, ranges are specified by constant offsets relative to the
-  // CU's DW_AT_GNU_ranges_base.
-  if (useSplitDwarf())
-    TheCU.addSectionDelta(ScopeDIE, dwarf::DW_AT_ranges, RangeSym,
-                          DwarfDebugRangeSectionSym);
-  else
-    TheCU.addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges, RangeSym,
-                          DwarfDebugRangeSectionSym);
-
-  RangeSpanList List(RangeSym);
-  for (const InsnRange &R : Range) {
-    RangeSpan Span(getLabelBeforeInsn(R.first), getLabelAfterInsn(R.second));
-    List.addRange(std::move(Span));
-  }
-
-  // Add the range list to the set of ranges to be emitted.
-  TheCU.addRangeList(std::move(List));
-}
-
 void DwarfDebug::attachRangesOrLowHighPC(DwarfCompileUnit &TheCU, DIE &Die,
                                     const SmallVectorImpl<InsnRange> &Ranges) {
   assert(!Ranges.empty());
@@ -362,7 +337,7 @@ void DwarfDebug::attachRangesOrLowHighPC(DwarfCompileUnit &TheCU, DIE &Die,
     TheCU.attachLowHighPC(Die, getLabelBeforeInsn(Ranges.front().first),
                           getLabelAfterInsn(Ranges.front().second));
   else
-    addScopeRangeList(TheCU, Die, Ranges);
+    TheCU.addScopeRangeList(Die, Ranges);
 }
 
 // Construct new DW_TAG_lexical_block for this scope and attach
