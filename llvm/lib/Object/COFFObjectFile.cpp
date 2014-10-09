@@ -271,8 +271,7 @@ uint64_t COFFObjectFile::getSectionAddress(DataRefImpl Ref) const {
 }
 
 uint64_t COFFObjectFile::getSectionSize(DataRefImpl Ref) const {
-  const coff_section *Sec = toSec(Ref);
-  return Sec->SizeOfRawData;
+  return getSectionSize(toSec(Ref));
 }
 
 std::error_code COFFObjectFile::getSectionContents(DataRefImpl Ref,
@@ -866,6 +865,26 @@ std::error_code COFFObjectFile::getSectionName(const coff_section *Sec,
   return object_error::success;
 }
 
+uint64_t COFFObjectFile::getSectionSize(const coff_section *Sec) const {
+  // SizeOfRawData and VirtualSize change what they represent depending on
+  // whether or not we have an executable image.
+  //
+  // For object files, SizeOfRawData contains the size of section's data;
+  // VirtualSize is always zero.
+  //
+  // For executables, SizeOfRawData *must* be a multiple of FileAlignment; the
+  // actual section size is in VirtualSize.  It is possible for VirtualSize to
+  // be greater than SizeOfRawData; the contents past that point should be
+  // considered to be zero.
+  uint32_t SectionSize;
+  if (Sec->VirtualSize)
+    SectionSize = std::min(Sec->VirtualSize, Sec->SizeOfRawData);
+  else
+    SectionSize = Sec->SizeOfRawData;
+
+  return SectionSize;
+}
+
 std::error_code
 COFFObjectFile::getSectionContents(const coff_section *Sec,
                                    ArrayRef<uint8_t> &Res) const {
@@ -877,25 +896,11 @@ COFFObjectFile::getSectionContents(const coff_section *Sec,
   // within the file bounds. We don't need to make sure it doesn't cover other
   // data, as there's nothing that says that is not allowed.
   uintptr_t ConStart = uintptr_t(base()) + Sec->PointerToRawData;
-  // SizeOfRawData and VirtualSize change what they represent depending on
-  // whether or not we have an executable image.
-  //
-  // For object files, SizeOfRawData contains the size of section's data;
-  // VirtualSize is always zero.
-  //
-  // For executables, SizeOfRawData *must* be a multiple of FileAlignment; the
-  // actual section size is in VirtualSize.  It is possible for VirtualSize to
-  // be greater than SizeOfRawData; the contents past that point should be
-  // considered to be zero.
-  uint32_t DataSize;
-  if (Sec->VirtualSize)
-    DataSize = std::min(Sec->VirtualSize, Sec->SizeOfRawData);
-  else
-    DataSize = Sec->SizeOfRawData;
-  uintptr_t ConEnd = ConStart + DataSize;
+  uint32_t SectionSize = getSectionSize(Sec);
+  uintptr_t ConEnd = ConStart + SectionSize;
   if (ConEnd > uintptr_t(Data.getBufferEnd()))
     return object_error::parse_failed;
-  Res = makeArrayRef(reinterpret_cast<const uint8_t *>(ConStart), DataSize);
+  Res = makeArrayRef(reinterpret_cast<const uint8_t *>(ConStart), SectionSize);
   return object_error::success;
 }
 
