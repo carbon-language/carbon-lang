@@ -150,6 +150,7 @@ private:
 lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::LibcxxStdListSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
 SyntheticChildrenFrontEnd(*valobj_sp.get()),
 m_list_capping_size(0),
+m_loop_detected(0),
 m_node_address(),
 m_head(NULL),
 m_tail(NULL),
@@ -162,14 +163,15 @@ m_children()
 }
 
 bool
-lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::HasLoop()
+lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::HasLoop(size_t count)
 {
     if (g_use_loop_detect == false)
         return false;
     // don't bother checking for a loop if we won't actually need to jump nodes
     if (m_count < 2)
         return false;
-    auto steps_left = m_count;
+    auto steps_left = std::min(m_count,m_count);
+    auto steps_left_save = steps_left;
     ListEntry slow(m_head);
     ListEntry fast(m_head);
     while (steps_left-- > 0)
@@ -185,6 +187,7 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::HasLoop()
         if (slow == fast)
             return true;
     }
+    m_loop_detected = steps_left_save;
     return false;
 }
 
@@ -206,9 +209,7 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::CalculateNumChildren (
     }
     if (m_count != UINT32_MAX)
     {
-        if (!HasLoop())
-            return m_count;
-        return m_count = 0;
+        return m_count;
     }
     else
     {
@@ -220,8 +221,6 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::CalculateNumChildren (
             return 0;
         if (next_val == prev_val)
             return 1;
-        if (HasLoop())
-            return 0;
         uint64_t size = 2;
         ListEntry current(m_head);
         while (current.next() && current.next().value() != m_node_address)
@@ -248,6 +247,10 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::GetChildAtIndex (size_
     if (cached != m_children.end())
         return cached->second;
     
+    if (m_loop_detected <= idx)
+        if (HasLoop(idx))
+            return lldb::ValueObjectSP();
+        
     ListIterator current(m_head);
     ValueObjectSP current_sp(current.advance(idx));
     if (!current_sp)
@@ -273,6 +276,7 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::Update()
     m_head = m_tail = NULL;
     m_node_address = 0;
     m_count = UINT32_MAX;
+    m_loop_detected = false;
     Error err;
     ValueObjectSP backend_addr(m_backend.AddressOf(err));
     m_list_capping_size = 0;
