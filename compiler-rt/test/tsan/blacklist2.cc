@@ -22,7 +22,7 @@ void *Thread1(void *x) {
 
 void TouchGlobal() {
   // CHECK: Previous write of size 4
-  // CHECK: #0 TouchGlobal(){{.*}}blacklist2.cc:[[@LINE+1]]
+  // CHECK: #0 TouchGlobal{{.*}}blacklist2.cc:[[@LINE+1]]
   Global--;
 }
 
