@@ -333,6 +333,7 @@ void ASTStmtWriter::VisitPredefinedExpr(PredefinedExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getLocation(), Record);
   Record.push_back(E->getIdentType()); // FIXME: stable encoding
+  Writer.AddStmt(E->getFunctionName());
   Code = serialization::EXPR_PREDEFINED;
 }
 

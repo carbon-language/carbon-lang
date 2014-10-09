@@ -33,10 +33,9 @@ int baz() {
   ();
 
   ^{
-    // FIXME: This is obviously wrong.
-    static_assert(sizeof(__func__) == 1, "__baz_block_invoke");
-    static_assert(sizeof(__FUNCTION__) == 1, "__baz_block_invoke");
-    static_assert(sizeof(__PRETTY_FUNCTION__) == 1, "__baz_block_invoke");
+    static_assert(sizeof(__func__) == 27, "___Z3bazIiEiv_block_invoke");
+    static_assert(sizeof(__FUNCTION__) == 27, "___Z3bazIiEiv_block_invoke");
+    static_assert(sizeof(__PRETTY_FUNCTION__) == 27, "___Z3bazIiEiv_block_invoke");
   }
   ();
 
@@ -65,10 +64,9 @@ int main() {
   ();
 
   ^{
-    // FIXME: This is obviously wrong.
-    static_assert(sizeof(__func__) == 1, "__main_block_invoke");
-    static_assert(sizeof(__FUNCTION__) == 1, "__main_block_invoke");
-    static_assert(sizeof(__PRETTY_FUNCTION__) == 1, "__main_block_invoke");
+    static_assert(sizeof(__func__) == 20, "__main_block_invoke");
+    static_assert(sizeof(__FUNCTION__) == 20, "__main_block_invoke");
+    static_assert(sizeof(__PRETTY_FUNCTION__) == 20, "__main_block_invoke");
   }
   ();
 

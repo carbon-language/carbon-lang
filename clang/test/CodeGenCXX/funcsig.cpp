@@ -8,7 +8,7 @@ extern "C" int printf(const char *, ...);
 void freeFunc(int *, char) {
   printf("__FUNCSIG__ %s\n\n", __FUNCSIG__);
 }
-// CHECK: private unnamed_addr constant [{{.*}} x i8] c"void __cdecl freeFunc(int *, char)\00"
+// CHECK: @"\01??_C@_0CD@KLGMNNL@void?5__cdecl?5freeFunc?$CIint?5?$CK?0?5cha@" = linkonce_odr unnamed_addr constant [{{.*}} x i8] c"void __cdecl freeFunc(int *, char)\00"
 
 struct TopLevelClass {
   void topLevelMethod(int *, char);
@@ -16,7 +16,7 @@ struct TopLevelClass {
 void TopLevelClass::topLevelMethod(int *, char) {
   printf("__FUNCSIG__ %s\n\n", __FUNCSIG__);
 }
-// CHECK: private unnamed_addr constant [{{.*}} x i8] c"void __thiscall TopLevelClass::topLevelMethod(int *, char)\00"
+// CHECK: @"\01??_C@_0DL@OBHNMDP@void?5__thiscall?5TopLevelClass?3?3t@" = linkonce_odr unnamed_addr constant [{{.*}} x i8] c"void __thiscall TopLevelClass::topLevelMethod(int *, char)\00"
 
 namespace NS {
 struct NamespacedClass {
@@ -25,5 +25,5 @@ struct NamespacedClass {
 void NamespacedClass::namespacedMethod(int *, char) {
   printf("__FUNCSIG__ %s\n\n", __FUNCSIG__);
 }
-// CHECK: private unnamed_addr constant [{{.*}} x i8] c"void __thiscall NS::NamespacedClass::namespacedMethod(int *, char)\00"
+// CHECK: @"\01??_C@_0ED@PFDKIEBA@void?5__thiscall?5NS?3?3NamespacedCl@" = linkonce_odr unnamed_addr constant [{{.*}} x i8] c"void __thiscall NS::NamespacedClass::namespacedMethod(int *, char)\00"
 }

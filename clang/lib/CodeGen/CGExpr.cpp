@@ -24,6 +24,7 @@
 #include "clang/AST/Attr.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/ADT/Hashing.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
@@ -2069,86 +2070,18 @@ LValue CodeGenFunction::EmitObjCEncodeExprLValue(const ObjCEncodeExpr *E) {
                         E->getType());
 }
 
-static void ConvertUTF8ToWideString(unsigned CharByteWidth, StringRef Source,
-                                    SmallString<32>& Target) {
-  Target.resize(CharByteWidth * (Source.size() + 1));
-  char *ResultPtr = &Target[0];
-  const UTF8 *ErrorPtr;
-  bool success = ConvertUTF8toWide(CharByteWidth, Source, ResultPtr, ErrorPtr);
-  (void)success;
-  assert(success);
-  Target.resize(ResultPtr - &Target[0]);
-}
-
 LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
-  switch (E->getIdentType()) {
-  default:
-    return EmitUnsupportedLValue(E, "predefined expression");
+  auto SL = E->getFunctionName();
+  assert(SL != nullptr && "No StringLiteral name in PredefinedExpr");
+  StringRef FnName = CurFn->getName();
+  if (FnName.startswith("\01"))
+    FnName = FnName.substr(1);
+  StringRef NameItems[] = {
+      PredefinedExpr::getIdentTypeName(E->getIdentType()), FnName};
+  std::string GVName = llvm::join(NameItems, NameItems + 2, ".");
 
-  case PredefinedExpr::Func:
-  case PredefinedExpr::Function:
-  case PredefinedExpr::LFunction:
-  case PredefinedExpr::FuncDName:
-  case PredefinedExpr::FuncSig:
-  case PredefinedExpr::PrettyFunction: {
-    PredefinedExpr::IdentType IdentType = E->getIdentType();
-    std::string GVName;
-
-    // FIXME: We should use the string literal mangling for the Microsoft C++
-    // ABI so that strings get merged.
-    switch (IdentType) {
-    default: llvm_unreachable("Invalid type");
-    case PredefinedExpr::Func:           GVName = "__func__."; break;
-    case PredefinedExpr::Function:       GVName = "__FUNCTION__."; break;
-    case PredefinedExpr::FuncDName:      GVName = "__FUNCDNAME__."; break;
-    case PredefinedExpr::FuncSig:        GVName = "__FUNCSIG__."; break;
-    case PredefinedExpr::LFunction:      GVName = "L__FUNCTION__."; break;
-    case PredefinedExpr::PrettyFunction: GVName = "__PRETTY_FUNCTION__."; break;
-    }
-
-    StringRef FnName = CurFn->getName();
-    if (FnName.startswith("\01"))
-      FnName = FnName.substr(1);
-    GVName += FnName;
-
-    // If this is outside of a function use the top level decl.
-    const Decl *CurDecl = CurCodeDecl;
-    if (!CurDecl || isa<VarDecl>(CurDecl))
-      CurDecl = getContext().getTranslationUnitDecl();
-
-    const Type *ElemType = E->getType()->getArrayElementTypeNoTypeQual();
-    std::string FunctionName;
-    if (isa<BlockDecl>(CurDecl)) {
-      // Blocks use the mangled function name.
-      // FIXME: ComputeName should handle blocks.
-      FunctionName = FnName.str();
-    } else if (isa<CapturedDecl>(CurDecl)) {
-      // For a captured statement, the function name is its enclosing
-      // function name not the one compiler generated.
-      FunctionName = PredefinedExpr::ComputeName(IdentType, CurDecl);
-    } else {
-      FunctionName = PredefinedExpr::ComputeName(IdentType, CurDecl);
-      assert(cast<ConstantArrayType>(E->getType())->getSize() - 1 ==
-                 FunctionName.size() &&
-             "Computed __func__ length differs from type!");
-    }
-
-    llvm::Constant *C;
-    if (ElemType->isWideCharType()) {
-      SmallString<32> RawChars;
-      ConvertUTF8ToWideString(
-          getContext().getTypeSizeInChars(ElemType).getQuantity(), FunctionName,
-          RawChars);
-      StringLiteral *SL = StringLiteral::Create(
-          getContext(), RawChars, StringLiteral::Wide,
-          /*Pascal = */ false, E->getType(), E->getLocation());
-      C = CGM.GetAddrOfConstantStringFromLiteral(SL);
-    } else {
-      C = CGM.GetAddrOfConstantCString(FunctionName, GVName.c_str(), 1);
-    }
-    return MakeAddrLValue(C, E->getType());
-  }
-  }
+  auto C = CGM.GetAddrOfConstantStringFromLiteral(SL, GVName);
+  return MakeAddrLValue(C, E->getType());
 }
 
 /// Emit a type description suitable for use by a runtime sanitizer library. The

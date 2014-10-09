@@ -2021,7 +2021,9 @@ static unsigned getBaseIndex(const CXXRecordDecl *Derived,
 /// Extract the value of a character from a string literal.
 static APSInt extractStringLiteralCharacter(EvalInfo &Info, const Expr *Lit,
                                             uint64_t Index) {
-  // FIXME: Support PredefinedExpr, ObjCEncodeExpr, MakeStringConstant
+  // FIXME: Support ObjCEncodeExpr, MakeStringConstant
+  if (auto PE = dyn_cast<PredefinedExpr>(Lit))
+    Lit = PE->getFunctionName();
   const StringLiteral *S = cast<StringLiteral>(Lit);
   const ConstantArrayType *CAT =
       Info.Ctx.getAsConstantArrayType(S->getType());
@@ -2715,10 +2717,10 @@ static bool handleLValueToRValueConversion(EvalInfo &Info, const Expr *Conv,
         return false;
       CompleteObject LitObj(&Lit, Base->getType());
       return extractSubobject(Info, Conv, LitObj, LVal.Designator, RVal);
-    } else if (isa<StringLiteral>(Base)) {
+    } else if (isa<StringLiteral>(Base) || isa<PredefinedExpr>(Base)) {
       // We represent a string literal array as an lvalue pointing at the
       // corresponding expression, rather than building an array of chars.
-      // FIXME: Support PredefinedExpr, ObjCEncodeExpr, MakeStringConstant
+      // FIXME: Support ObjCEncodeExpr, MakeStringConstant
       APValue Str(Base, CharUnits::Zero(), APValue::NoLValuePath(), 0);
       CompleteObject StrObj(&Str, Base->getType());
       return extractSubobject(Info, Conv, StrObj, LVal.Designator, RVal);

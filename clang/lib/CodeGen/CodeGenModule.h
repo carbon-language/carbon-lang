@@ -785,7 +785,8 @@ public:
 
   /// Return a pointer to a constant array for the given string literal.
   llvm::GlobalVariable *
-  GetAddrOfConstantStringFromLiteral(const StringLiteral *S);
+  GetAddrOfConstantStringFromLiteral(const StringLiteral *S,
+                                     StringRef Name = ".str");
 
   /// Return a pointer to a constant array for the given ObjCEncodeExpr node.
   llvm::GlobalVariable *

@@ -42,6 +42,7 @@
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/SemaFixItUtils.h"
 #include "clang/Sema/Template.h"
+#include "llvm/Support/ConvertUTF.h"
 using namespace clang;
 using namespace sema;
 
@@ -2905,6 +2906,17 @@ ExprResult Sema::BuildDeclarationNameExpr(
   }
 }
 
+static void ConvertUTF8ToWideString(unsigned CharByteWidth, StringRef Source,
+                                    SmallString<32> &Target) {
+  Target.resize(CharByteWidth * (Source.size() + 1));
+  char *ResultPtr = &Target[0];
+  const UTF8 *ErrorPtr;
+  bool success = ConvertUTF8toWide(CharByteWidth, Source, ResultPtr, ErrorPtr);
+  (void)success;
+  assert(success);
+  Target.resize(ResultPtr - &Target[0]);
+}
+
 ExprResult Sema::BuildPredefinedExpr(SourceLocation Loc,
                                      PredefinedExpr::IdentType IT) {
   // Pick the current block, lambda, captured statement or function.
@@ -2924,22 +2936,35 @@ ExprResult Sema::BuildPredefinedExpr(SourceLocation Loc,
   }
 
   QualType ResTy;
+  StringLiteral *SL = nullptr;
   if (cast<DeclContext>(currentDecl)->isDependentContext())
     ResTy = Context.DependentTy;
   else {
     // Pre-defined identifiers are of type char[x], where x is the length of
     // the string.
-    unsigned Length = PredefinedExpr::ComputeName(IT, currentDecl).length();
+    auto Str = PredefinedExpr::ComputeName(IT, currentDecl);
+    unsigned Length = Str.length();
 
     llvm::APInt LengthI(32, Length + 1);
-    if (IT == PredefinedExpr::LFunction)
+    if (IT == PredefinedExpr::LFunction) {
       ResTy = Context.WideCharTy.withConst();
-    else
+      SmallString<32> RawChars;
+      ConvertUTF8ToWideString(Context.getTypeSizeInChars(ResTy).getQuantity(),
+                              Str, RawChars);
+      ResTy = Context.getConstantArrayType(ResTy, LengthI, ArrayType::Normal,
+                                           /*IndexTypeQuals*/ 0);
+      SL = StringLiteral::Create(Context, RawChars, StringLiteral::Wide,
+                                 /*Pascal*/ false, ResTy, Loc);
+    } else {
       ResTy = Context.CharTy.withConst();
-    ResTy = Context.getConstantArrayType(ResTy, LengthI, ArrayType::Normal, 0);
+      ResTy = Context.getConstantArrayType(ResTy, LengthI, ArrayType::Normal,
+                                           /*IndexTypeQuals*/ 0);
+      SL = StringLiteral::Create(Context, Str, StringLiteral::Ascii,
+                                 /*Pascal*/ false, ResTy, Loc);
+    }
   }
 
-  return new (Context) PredefinedExpr(Loc, ResTy, IT);
+  return new (Context) PredefinedExpr(Loc, ResTy, IT, SL);
 }
 
 ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc, tok::TokenKind Kind) {

@@ -1677,6 +1677,15 @@ public:
     return getSema().ActOnSEHFinallyBlock(Loc, Block);
   }
 
+  /// \brief Build a new predefined expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  ExprResult RebuildPredefinedExpr(SourceLocation Loc,
+                                   PredefinedExpr::IdentType IT) {
+    return getSema().BuildPredefinedExpr(Loc, IT);
+  }
+
   /// \brief Build a new expression that references a declaration.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -7016,7 +7025,11 @@ OMPClause *TreeTransform<Derived>::TransformOMPFlushClause(OMPFlushClause *C) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformPredefinedExpr(PredefinedExpr *E) {
-  return E;
+  if (!E->isTypeDependent())
+    return E;
+
+  return getDerived().RebuildPredefinedExpr(E->getLocation(),
+                                            E->getIdentType());
 }
 
 template<typename Derived>

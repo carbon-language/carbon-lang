@@ -448,6 +448,38 @@ SourceLocation DeclRefExpr::getLocEnd() const {
   return getNameInfo().getLocEnd();
 }
 
+PredefinedExpr::PredefinedExpr(SourceLocation L, QualType FNTy, IdentType IT,
+                               StringLiteral *SL)
+    : Expr(PredefinedExprClass, FNTy, VK_LValue, OK_Ordinary,
+           FNTy->isDependentType(), FNTy->isDependentType(),
+           FNTy->isInstantiationDependentType(),
+           /*ContainsUnexpandedParameterPack=*/false),
+      Loc(L), Type(IT), FnName(SL) {}
+
+StringLiteral *PredefinedExpr::getFunctionName() {
+  return cast<StringLiteral>(FnName);
+}
+
+StringRef PredefinedExpr::getIdentTypeName(PredefinedExpr::IdentType IT) {
+  switch (IT) {
+  case Func:
+    return "__func__";
+  case Function:
+    return "__FUNCTION__";
+  case FuncDName:
+    return "__FUNCDNAME__";
+  case LFunction:
+    return "L__FUNCTION__";
+  case PrettyFunction:
+    return "__PRETTY_FUNCTION__";
+  case FuncSig:
+    return "__FUNCSIG__";
+  case PrettyFunctionNoVirtual:
+    break;
+  }
+  llvm_unreachable("Unknown ident type for PredefinedExpr");
+}
+
 // FIXME: Maybe this should use DeclPrinter with a special "print predefined
 // expr" policy instead.
 std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
@@ -476,6 +508,22 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
         return ND->getIdentifier()->getName();
     }
     return "";
+  }
+  if (auto *BD = dyn_cast<BlockDecl>(CurrentDecl)) {
+    std::unique_ptr<MangleContext> MC;
+    MC.reset(Context.createMangleContext());
+    SmallString<256> Buffer;
+    llvm::raw_svector_ostream Out(Buffer);
+    auto DC = CurrentDecl->getDeclContext();
+    if (DC->isFileContext())
+      MC->mangleGlobalBlock(BD, /*ID*/ nullptr, Out);
+    else if (const auto *CD = dyn_cast<CXXConstructorDecl>(DC))
+      MC->mangleCtorBlock(CD, /*CT*/ Ctor_Complete, BD, Out);
+    else if (const auto *DD = dyn_cast<CXXDestructorDecl>(DC))
+      MC->mangleDtorBlock(DD, /*DT*/ Dtor_Complete, BD, Out);
+    else
+      MC->mangleBlock(DC, BD, Out);
+    return Out.str();
   }
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurrentDecl)) {
     if (IT != PrettyFunction && IT != PrettyFunctionNoVirtual && IT != FuncSig)
@@ -600,9 +648,8 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
     // type deduction and lambdas. For trailing return types resolve the
     // decltype expression. Otherwise print the real type when this is
     // not a constructor or destructor.
-    if ((isa<CXXMethodDecl>(FD) &&
-         cast<CXXMethodDecl>(FD)->getParent()->isLambda()) ||
-        (FT && FT->getReturnType()->getAs<AutoType>()))
+    if (isa<CXXMethodDecl>(FD) &&
+         cast<CXXMethodDecl>(FD)->getParent()->isLambda())
       Proto = "auto " + Proto;
     else if (FT && FT->getReturnType()->getAs<DecltypeType>())
       FT->getReturnType()
