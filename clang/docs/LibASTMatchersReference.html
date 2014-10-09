@@ -1020,6 +1020,17 @@ whileStmt()
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TemplateArgument.html">TemplateArgument</a>&gt;</td><td class="name" onclick="toggle('templateArgument0')"><a name="templateArgument0Anchor">templateArgument</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TemplateArgument.html">TemplateArgument</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="templateArgument0"><pre>Matches template arguments.
+
+Given
+  template &lt;typename T&gt; struct C {};
+  C&lt;int&gt; c;
+templateArgument()
+  matches 'int' in C&lt;int&gt;.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;</td><td class="name" onclick="toggle('typeLoc0')"><a name="typeLoc0Anchor">typeLoc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="typeLoc0"><pre>Matches TypeLocs in the clang AST.
 </pre></td></tr>
@@ -1562,6 +1573,17 @@ Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Charac
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ClassTemplateSpecializationDecl.html">ClassTemplateSpecializationDecl</a>&gt;</td><td class="name" onclick="toggle('templateArgumentCountIs0')"><a name="templateArgumentCountIs0Anchor">templateArgumentCountIs</a></td><td>unsigned N</td></tr>
+<tr><td colspan="4" class="doc" id="templateArgumentCountIs0"><pre>Matches if the number of template arguments equals N.
+
+Given
+  template&lt;typename T&gt; struct C {};
+  C&lt;int&gt; c;
+classTemplateSpecializationDecl(templateArgumentCountIs(1))
+  matches C&lt;int&gt;.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CompoundStmt.html">CompoundStmt</a>&gt;</td><td class="name" onclick="toggle('statementCountIs0')"><a name="statementCountIs0Anchor">statementCountIs</a></td><td>unsigned N</td></tr>
 <tr><td colspan="4" class="doc" id="statementCountIs0"><pre>Checks that a compound statement contains a specific number of
 child statements.
@@ -1635,6 +1657,19 @@ f.
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('isImplicit0')"><a name="isImplicit0Anchor">isImplicit</a></td><td></td></tr>
 <tr><td colspan="4" class="doc" id="isImplicit0"><pre>Matches a declaration that has been implicitly added
 by the compiler (eg. implicit defaultcopy constructors).
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('isInstantiated0')"><a name="isInstantiated0Anchor">isInstantiated</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isInstantiated0"><pre>Matches declarations that are template instantiations or are inside
+template instantiations.
+
+Given
+  template&lt;typename T&gt; void A(T t) { T i; }
+  A(0);
+  A(0U);
+functionDecl(isInstantiated())
+  matches 'A(int) {...};' and 'A(unsigned) {...}'.
 </pre></td></tr>
 
 
@@ -1955,6 +1990,22 @@ and reference to that variable declaration within a compound statement.
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Stmt.html">Stmt</a>&gt;</td><td class="name" onclick="toggle('isInTemplateInstantiation0')"><a name="isInTemplateInstantiation0Anchor">isInTemplateInstantiation</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isInTemplateInstantiation0"><pre>Matches statements inside of a template instantiation.
+
+Given
+  int j;
+  template&lt;typename T&gt; void A(T t) { T i; j += 42;}
+  A(0);
+  A(0U);
+declStmt(isInTemplateInstantiation())
+  matches 'int i;' and 'unsigned i'.
+unless(stmt(isInTemplateInstantiation()))
+  will NOT match j += 42; as it's shared between the template definition and
+  instantiation.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TagDecl.html">TagDecl</a>&gt;</td><td class="name" onclick="toggle('isDefinition0')"><a name="isDefinition0Anchor">isDefinition</a></td><td></td></tr>
 <tr><td colspan="4" class="doc" id="isDefinition0"><pre>Matches if a declaration has a body attached.
 
@@ -1967,6 +2018,46 @@ Example matches A, va, fa
   void fb();  Doesn't match, as it has no body.
 
 Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TagDecl.html">TagDecl</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1VarDecl.html">VarDecl</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1FunctionDecl.html">FunctionDecl</a>&gt;
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TemplateArgument.html">TemplateArgument</a>&gt;</td><td class="name" onclick="toggle('equalsIntegralValue0')"><a name="equalsIntegralValue0Anchor">equalsIntegralValue</a></td><td>std::string Value</td></tr>
+<tr><td colspan="4" class="doc" id="equalsIntegralValue0"><pre>Matches a TemplateArgument of integral type with a given value.
+
+Note that 'Value' is a string as the template argument's value is
+an arbitrary precision integer. 'Value' must be euqal to the canonical
+representation of that integral value in base 10.
+
+Given
+  template&lt;int T&gt; struct A {};
+  C&lt;42&gt; c;
+classTemplateSpecializationDecl(
+  hasAnyTemplateArgument(equalsIntegralValue("42")))
+  matches the implicit instantiation of C in C&lt;42&gt;.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TemplateArgument.html">TemplateArgument</a>&gt;</td><td class="name" onclick="toggle('isIntegral0')"><a name="isIntegral0Anchor">isIntegral</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isIntegral0"><pre>Matches a TemplateArgument that is an integral value.
+
+Given
+  template&lt;int T&gt; struct A {};
+  C&lt;42&gt; c;
+classTemplateSpecializationDecl(
+  hasAnyTemplateArgument(isIntegral()))
+  matches the implicit instantiation of C in C&lt;42&gt;
+  with isIntegral() matching 42.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TemplateSpecializationType.html">TemplateSpecializationType</a>&gt;</td><td class="name" onclick="toggle('templateArgumentCountIs1')"><a name="templateArgumentCountIs1Anchor">templateArgumentCountIs</a></td><td>unsigned N</td></tr>
+<tr><td colspan="4" class="doc" id="templateArgumentCountIs1"><pre>Matches if the number of template arguments equals N.
+
+Given
+  template&lt;typename T&gt; struct C {};
+  C&lt;int&gt; c;
+classTemplateSpecializationDecl(templateArgumentCountIs(1))
+  matches C&lt;int&gt;.
 </pre></td></tr>
 
 
@@ -3627,6 +3718,18 @@ classTemplateSpecializationDecl(hasAnyTemplateArgument(
     refersToDeclaration(fieldDecl(hasName("next"))))
   matches the specialization A&lt;&amp;B::next&gt; with fieldDecl(...) matching
     B::next
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TemplateArgument.html">TemplateArgument</a>&gt;</td><td class="name" onclick="toggle('refersToIntegralType0')"><a name="refersToIntegralType0Anchor">refersToIntegralType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="refersToIntegralType0"><pre>Matches a TemplateArgument that referes to an integral type.
+
+Given
+  template&lt;int T&gt; struct A {};
+  C&lt;42&gt; c;
+classTemplateSpecializationDecl(
+  hasAnyTemplateArgument(refersToIntegralType(asString("int"))))
+  matches the implicit instantiation of C in C&lt;42&gt;.
 </pre></td></tr>
 
 

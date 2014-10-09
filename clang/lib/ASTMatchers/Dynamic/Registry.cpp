@@ -93,7 +93,6 @@ RegistryMaps::RegistryMaps() {
   REGISTER_OVERLOADED_2(references);
   REGISTER_OVERLOADED_2(thisPointerType);
 
-  REGISTER_MATCHER(CUDAKernelCallExpr);
   REGISTER_MATCHER(accessSpecDecl);
   REGISTER_MATCHER(alignOfExpr);
   REGISTER_MATCHER(allOf);
@@ -102,8 +101,8 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(argumentCountIs);
   REGISTER_MATCHER(arraySubscriptExpr);
   REGISTER_MATCHER(arrayType);
-  REGISTER_MATCHER(asString);
   REGISTER_MATCHER(asmStmt);
+  REGISTER_MATCHER(asString);
   REGISTER_MATCHER(atomicType);
   REGISTER_MATCHER(autoType);
   REGISTER_MATCHER(binaryOperator);
@@ -112,7 +111,6 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(boolLiteral);
   REGISTER_MATCHER(breakStmt);
   REGISTER_MATCHER(builtinType);
-  REGISTER_MATCHER(cStyleCastExpr);
   REGISTER_MATCHER(callExpr);
   REGISTER_MATCHER(caseStmt);
   REGISTER_MATCHER(castExpr);
@@ -124,18 +122,20 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(compoundLiteralExpr);
   REGISTER_MATCHER(compoundStmt);
   REGISTER_MATCHER(conditionalOperator);
-  REGISTER_MATCHER(constCastExpr);
   REGISTER_MATCHER(constantArrayType);
+  REGISTER_MATCHER(constCastExpr);
   REGISTER_MATCHER(constructExpr);
   REGISTER_MATCHER(constructorDecl);
   REGISTER_MATCHER(containsDeclaration);
   REGISTER_MATCHER(continueStmt);
+  REGISTER_MATCHER(cStyleCastExpr);
   REGISTER_MATCHER(ctorInitializer);
+  REGISTER_MATCHER(CUDAKernelCallExpr);
   REGISTER_MATCHER(decl);
+  REGISTER_MATCHER(declaratorDecl);
   REGISTER_MATCHER(declCountIs);
   REGISTER_MATCHER(declRefExpr);
   REGISTER_MATCHER(declStmt);
-  REGISTER_MATCHER(declaratorDecl);
   REGISTER_MATCHER(defaultArgExpr);
   REGISTER_MATCHER(defaultStmt);
   REGISTER_MATCHER(deleteExpr);
@@ -148,6 +148,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(enumConstantDecl);
   REGISTER_MATCHER(enumDecl);
   REGISTER_MATCHER(equalsBoundNode);
+  REGISTER_MATCHER(equalsIntegralValue);
   REGISTER_MATCHER(explicitCastExpr);
   REGISTER_MATCHER(expr);
   REGISTER_MATCHER(exprWithCleanups);
@@ -161,10 +162,10 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(forRangeStmt);
   REGISTER_MATCHER(forStmt);
   REGISTER_MATCHER(friendDecl);
+  REGISTER_MATCHER(functionalCastExpr);
   REGISTER_MATCHER(functionDecl);
   REGISTER_MATCHER(functionTemplateDecl);
   REGISTER_MATCHER(functionType);
-  REGISTER_MATCHER(functionalCastExpr);
   REGISTER_MATCHER(gotoStmt);
   REGISTER_MATCHER(has);
   REGISTER_MATCHER(hasAncestor);
@@ -183,8 +184,8 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(hasCaseConstant);
   REGISTER_MATCHER(hasCondition);
   REGISTER_MATCHER(hasConditionVariableStatement);
-  REGISTER_MATCHER(hasDeclContext);
   REGISTER_MATCHER(hasDeclaration);
+  REGISTER_MATCHER(hasDeclContext);
   REGISTER_MATCHER(hasDeducedType);
   REGISTER_MATCHER(hasDescendant);
   REGISTER_MATCHER(hasDestinationType);
@@ -210,8 +211,8 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(hasParameter);
   REGISTER_MATCHER(hasParent);
   REGISTER_MATCHER(hasQualifier);
-  REGISTER_MATCHER(hasRHS);
   REGISTER_MATCHER(hasRangeInit);
+  REGISTER_MATCHER(hasRHS);
   REGISTER_MATCHER(hasSingleDecl);
   REGISTER_MATCHER(hasSize);
   REGISTER_MATCHER(hasSizeExpr);
@@ -243,6 +244,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(isImplicit);
   REGISTER_MATCHER(isInstantiated);
   REGISTER_MATCHER(isInteger);
+  REGISTER_MATCHER(isIntegral);
   REGISTER_MATCHER(isInTemplateInstantiation);
   REGISTER_MATCHER(isListInitialization);
   REGISTER_MATCHER(isOverride);
@@ -253,9 +255,9 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(isTemplateInstantiation);
   REGISTER_MATCHER(isVirtual);
   REGISTER_MATCHER(isWritten);
-  REGISTER_MATCHER(lValueReferenceType);
   REGISTER_MATCHER(labelStmt);
   REGISTER_MATCHER(lambdaExpr);
+  REGISTER_MATCHER(lValueReferenceType);
   REGISTER_MATCHER(matchesName);
   REGISTER_MATCHER(materializeTemporaryExpr);
   REGISTER_MATCHER(member);
@@ -264,8 +266,8 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(memberPointerType);
   REGISTER_MATCHER(methodDecl);
   REGISTER_MATCHER(namedDecl);
-  REGISTER_MATCHER(namesType);
   REGISTER_MATCHER(namespaceDecl);
+  REGISTER_MATCHER(namesType);
   REGISTER_MATCHER(nestedNameSpecifier);
   REGISTER_MATCHER(nestedNameSpecifierLoc);
   REGISTER_MATCHER(newExpr);
@@ -281,15 +283,16 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(pointee);
   REGISTER_MATCHER(pointerType);
   REGISTER_MATCHER(qualType);
-  REGISTER_MATCHER(rValueReferenceType);
   REGISTER_MATCHER(recordDecl);
   REGISTER_MATCHER(recordType);
   REGISTER_MATCHER(referenceType);
   REGISTER_MATCHER(refersToDeclaration);
+  REGISTER_MATCHER(refersToIntegralType);
   REGISTER_MATCHER(refersToType);
   REGISTER_MATCHER(reinterpretCastExpr);
-  REGISTER_MATCHER(returnStmt);
   REGISTER_MATCHER(returns);
+  REGISTER_MATCHER(returnStmt);
+  REGISTER_MATCHER(rValueReferenceType);
   REGISTER_MATCHER(sizeOfExpr);
   REGISTER_MATCHER(specifiesNamespace);
   REGISTER_MATCHER(specifiesType);
@@ -301,6 +304,8 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(substNonTypeTemplateParmExpr);
   REGISTER_MATCHER(switchCase);
   REGISTER_MATCHER(switchStmt);
+  REGISTER_MATCHER(templateArgument);
+  REGISTER_MATCHER(templateArgumentCountIs);
   REGISTER_MATCHER(templateSpecializationType);
   REGISTER_MATCHER(temporaryObjectExpr);
   REGISTER_MATCHER(thisExpr);
@@ -309,8 +314,8 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(to);
   REGISTER_MATCHER(tryStmt);
   REGISTER_MATCHER(type);
-  REGISTER_MATCHER(typeLoc);
   REGISTER_MATCHER(typedefType);
+  REGISTER_MATCHER(typeLoc);
   REGISTER_MATCHER(unaryExprOrTypeTraitExpr);
   REGISTER_MATCHER(unaryOperator);
   REGISTER_MATCHER(unaryTransformType);

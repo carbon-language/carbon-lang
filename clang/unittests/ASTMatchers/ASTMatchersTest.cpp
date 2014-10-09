@@ -1658,6 +1658,64 @@ TEST(Matcher, MatchesSpecificArgument) {
           1, refersToType(asString("int"))))));
 }
 
+TEST(TemplateArgument, Matches) {
+  EXPECT_TRUE(matches("template<typename T> struct C {}; C<int> c;",
+                      classTemplateSpecializationDecl(
+                          hasAnyTemplateArgument(templateArgument()))));
+  EXPECT_TRUE(matches(
+      "template<typename T> struct C {}; C<int> c;",
+      templateSpecializationType(hasAnyTemplateArgument(templateArgument()))));
+}
+
+TEST(TemplateArgumentCountIs, Matches) {
+  EXPECT_TRUE(
+      matches("template<typename T> struct C {}; C<int> c;",
+              classTemplateSpecializationDecl(templateArgumentCountIs(1))));
+  EXPECT_TRUE(
+      notMatches("template<typename T> struct C {}; C<int> c;",
+                 classTemplateSpecializationDecl(templateArgumentCountIs(2))));
+
+  EXPECT_TRUE(matches("template<typename T> struct C {}; C<int> c;",
+                      templateSpecializationType(templateArgumentCountIs(1))));
+  EXPECT_TRUE(
+      notMatches("template<typename T> struct C {}; C<int> c;",
+                 templateSpecializationType(templateArgumentCountIs(2))));
+}
+
+TEST(IsIntegral, Matches) {
+  EXPECT_TRUE(matches("template<int T> struct C {}; C<42> c;",
+                      classTemplateSpecializationDecl(
+                          hasAnyTemplateArgument(isIntegral()))));
+  EXPECT_TRUE(notMatches("template<typename T> struct C {}; C<int> c;",
+                         classTemplateSpecializationDecl(hasAnyTemplateArgument(
+                             templateArgument(isIntegral())))));
+}
+
+TEST(RefersToIntegralType, Matches) {
+  EXPECT_TRUE(matches("template<int T> struct C {}; C<42> c;",
+                      classTemplateSpecializationDecl(
+                          hasAnyTemplateArgument(refersToIntegralType(
+                              asString("int"))))));
+  EXPECT_TRUE(notMatches("template<unsigned T> struct C {}; C<42> c;",
+                         classTemplateSpecializationDecl(hasAnyTemplateArgument(
+                             refersToIntegralType(asString("int"))))));
+}
+
+TEST(EqualsIntegralValue, Matches) {
+  EXPECT_TRUE(matches("template<int T> struct C {}; C<42> c;",
+                      classTemplateSpecializationDecl(
+                          hasAnyTemplateArgument(equalsIntegralValue("42")))));
+  EXPECT_TRUE(matches("template<int T> struct C {}; C<-42> c;",
+                      classTemplateSpecializationDecl(
+                          hasAnyTemplateArgument(equalsIntegralValue("-42")))));
+  EXPECT_TRUE(matches("template<int T> struct C {}; C<-0042> c;",
+                      classTemplateSpecializationDecl(
+                          hasAnyTemplateArgument(equalsIntegralValue("-34")))));
+  EXPECT_TRUE(notMatches("template<int T> struct C {}; C<42> c;",
+                         classTemplateSpecializationDecl(hasAnyTemplateArgument(
+                             equalsIntegralValue("0042")))));
+}
+
 TEST(Matcher, MatchesAccessSpecDecls) {
   EXPECT_TRUE(matches("class C { public: int i; };", accessSpecDecl()));
   EXPECT_TRUE(

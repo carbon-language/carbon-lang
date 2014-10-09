@@ -274,6 +274,17 @@ const internal::VariadicDynCastAllOfMatcher<
 /// \endcode
 const internal::VariadicAllOfMatcher<CXXCtorInitializer> ctorInitializer;
 
+/// \brief Matches template arguments.
+///
+/// Given
+/// \code
+///   template <typename T> struct C {};
+///   C<int> c;
+/// \endcode
+/// templateArgument()
+///   matches 'int' in C<int>.
+const internal::VariadicAllOfMatcher<TemplateArgument> templateArgument;
+
 /// \brief Matches public C++ declarations.
 ///
 /// Given
@@ -452,6 +463,23 @@ AST_POLYMORPHIC_MATCHER_P2(
   return InnerMatcher.matches(List[N], Finder, Builder);
 }
 
+/// \brief Matches if the number of template arguments equals \p N.
+///
+/// Given
+/// \code
+///   template<typename T> struct C {};
+///   C<int> c;
+/// \endcode
+/// classTemplateSpecializationDecl(templateArgumentCountIs(1))
+///   matches C<int>.
+AST_POLYMORPHIC_MATCHER_P(
+    templateArgumentCountIs,
+    AST_POLYMORPHIC_SUPPORTED_TYPES_2(ClassTemplateSpecializationDecl,
+                                      TemplateSpecializationType),
+    unsigned, N) {
+  return internal::getTemplateSpecializationArgs(Node).size() == N;
+}
+
 /// \brief Matches a TemplateArgument that refers to a certain type.
 ///
 /// Given
@@ -506,6 +534,59 @@ AST_MATCHER_P(TemplateArgument, isExpr, internal::Matcher<Expr>, InnerMatcher) {
   if (Node.getKind() == TemplateArgument::Expression)
     return InnerMatcher.matches(*Node.getAsExpr(), Finder, Builder);
   return false;
+}
+
+/// \brief Matches a TemplateArgument that is an integral value.
+///
+/// Given
+/// \code
+///   template<int T> struct A {};
+///   C<42> c;
+/// \endcode
+/// classTemplateSpecializationDecl(
+///   hasAnyTemplateArgument(isIntegral()))
+///   matches the implicit instantiation of C in C<42>
+///   with isIntegral() matching 42.
+AST_MATCHER(TemplateArgument, isIntegral) {
+  return Node.getKind() == TemplateArgument::Integral;
+}
+
+/// \brief Matches a TemplateArgument that referes to an integral type.
+///
+/// Given
+/// \code
+///   template<int T> struct A {};
+///   C<42> c;
+/// \endcode
+/// classTemplateSpecializationDecl(
+///   hasAnyTemplateArgument(refersToIntegralType(asString("int"))))
+///   matches the implicit instantiation of C in C<42>.
+AST_MATCHER_P(TemplateArgument, refersToIntegralType,
+              internal::Matcher<QualType>, InnerMatcher) {
+  if (Node.getKind() != TemplateArgument::Integral)
+    return false;
+  return InnerMatcher.matches(Node.getIntegralType(), Finder, Builder);
+}
+
+/// \brief Matches a TemplateArgument of integral type with a given value.
+///
+/// Note that 'Value' is a string as the template argument's value is
+/// an arbitrary precision integer. 'Value' must be euqal to the canonical
+/// representation of that integral value in base 10.
+///
+/// Given
+/// \code
+///   template<int T> struct A {};
+///   C<42> c;
+/// \endcode
+/// classTemplateSpecializationDecl(
+///   hasAnyTemplateArgument(equalsIntegralValue("42")))
+///   matches the implicit instantiation of C in C<42>.
+AST_MATCHER_P(TemplateArgument, equalsIntegralValue,
+              std::string, Value) {
+  if (Node.getKind() != TemplateArgument::Integral)
+    return false;
+  return Node.getAsIntegral().toString(10) == Value;
 }
 
 /// \brief Matches C++ constructor declarations.
