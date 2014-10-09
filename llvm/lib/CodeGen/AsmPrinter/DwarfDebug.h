@@ -349,15 +349,9 @@ class DwarfDebug : public AsmPrinterHandler {
   void ensureAbstractVariableIsCreatedIfScoped(const DIVariable &Var,
                                                const MDNode *Scope);
 
-  DIE *createAndAddScopeChildren(DwarfCompileUnit &TheCU, LexicalScope *Scope,
-                                 DIE &ScopeDIE);
   /// \brief Construct a DIE for this abstract scope.
   void constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
                                            LexicalScope *Scope);
-  /// \brief Construct a DIE for this subprogram scope.
-  void constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
-                                   LexicalScope *Scope);
-
   /// \brief Emit initial Dwarf sections with a label at the start of each one.
   void emitSectionLabels();
 
@@ -680,6 +674,17 @@ public:
   }
 
   ScopeVariablesMap &getScopeVariables() { return ScopeVariables; }
+
+  SmallPtrSet<const MDNode *, 16> &getProcessedSPNodes() {
+    return ProcessedSPNodes;
+  }
+
+  SmallVector<DbgVariable *, 8> &getCurrentFnArguments() {
+    return CurrentFnArguments;
+  }
+
+  DIE *createAndAddScopeChildren(DwarfCompileUnit &TheCU, LexicalScope *Scope,
+                                 DIE &ScopeDIE);
 };
 } // End of namespace llvm
 

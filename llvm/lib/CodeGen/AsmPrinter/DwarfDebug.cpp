@@ -384,48 +384,6 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
     SPCU.addDIEEntry(*AbsDef, dwarf::DW_AT_object_pointer, *ObjectPointer);
 }
 
-void DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
-                                             LexicalScope *Scope) {
-  assert(Scope && Scope->getScopeNode());
-  assert(!Scope->getInlinedAt());
-  assert(!Scope->isAbstractScope());
-  DISubprogram Sub(Scope->getScopeNode());
-
-  assert(Sub.isSubprogram());
-
-  ProcessedSPNodes.insert(Sub);
-
-  DIE &ScopeDIE = TheCU.updateSubprogramScopeDIE(Sub);
-
-  // Collect arguments for current function.
-  assert(LScopes.isCurrentFunctionScope(Scope));
-  DIE *ObjectPointer = nullptr;
-  for (DbgVariable *ArgDV : CurrentFnArguments)
-    if (ArgDV)
-      ScopeDIE.addChild(
-          TheCU.constructVariableDIE(*ArgDV, *Scope, ObjectPointer));
-
-  // If this is a variadic function, add an unspecified parameter.
-  DITypeArray FnArgs = Sub.getType().getTypeArray();
-  // If we have a single element of null, it is a function that returns void.
-  // If we have more than one elements and the last one is null, it is a
-  // variadic function.
-  if (FnArgs.getNumElements() > 1 &&
-      !FnArgs.getElement(FnArgs.getNumElements() - 1))
-    ScopeDIE.addChild(make_unique<DIE>(dwarf::DW_TAG_unspecified_parameters));
-
-  // Collect lexical scope children first.
-  // ObjectPointer might be a local (non-argument) local variable if it's a
-  // block's synthetic this pointer.
-  if (DIE *BlockObjPtr = createAndAddScopeChildren(TheCU, Scope, ScopeDIE)) {
-    assert(!ObjectPointer && "multiple object pointers can't be described");
-    ObjectPointer = BlockObjPtr;
-  }
-
-  if (ObjectPointer)
-    TheCU.addDIEEntry(ScopeDIE, dwarf::DW_AT_object_pointer, *ObjectPointer);
-}
-
 void DwarfDebug::addGnuPubAttributes(DwarfUnit &U, DIE &D) const {
   if (!GenerateGnuPubSections)
     return;
@@ -1489,7 +1447,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     constructAbstractSubprogramScopeDIE(TheCU, AScope);
   }
 
-  constructSubprogramScopeDIE(TheCU, FnScope);
+  TheCU.constructSubprogramScopeDIE(FnScope);
 
   // Clear debug info
   // Ownership of DbgVariables is a bit subtle - ScopeVariables owns all the

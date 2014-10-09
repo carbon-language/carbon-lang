@@ -569,4 +569,44 @@ DIE *DwarfCompileUnit::createScopeChildrenDIE(
   return ObjectPointer;
 }
 
+void DwarfCompileUnit::constructSubprogramScopeDIE(LexicalScope *Scope) {
+  assert(Scope && Scope->getScopeNode());
+  assert(!Scope->getInlinedAt());
+  assert(!Scope->isAbstractScope());
+  DISubprogram Sub(Scope->getScopeNode());
+
+  assert(Sub.isSubprogram());
+
+  DD->getProcessedSPNodes().insert(Sub);
+
+  DIE &ScopeDIE = updateSubprogramScopeDIE(Sub);
+
+  // Collect arguments for current function.
+  DIE *ObjectPointer = nullptr;
+  for (DbgVariable *ArgDV : DD->getCurrentFnArguments())
+    if (ArgDV)
+      ScopeDIE.addChild(constructVariableDIE(*ArgDV, *Scope, ObjectPointer));
+
+  // If this is a variadic function, add an unspecified parameter.
+  DITypeArray FnArgs = Sub.getType().getTypeArray();
+  // If we have a single element of null, it is a function that returns void.
+  // If we have more than one elements and the last one is null, it is a
+  // variadic function.
+  if (FnArgs.getNumElements() > 1 &&
+      !FnArgs.getElement(FnArgs.getNumElements() - 1))
+    ScopeDIE.addChild(make_unique<DIE>(dwarf::DW_TAG_unspecified_parameters));
+
+  // Collect lexical scope children first.
+  // ObjectPointer might be a local (non-argument) local variable if it's a
+  // block's synthetic this pointer.
+  if (DIE *BlockObjPtr =
+          DD->createAndAddScopeChildren(*this, Scope, ScopeDIE)) {
+    assert(!ObjectPointer && "multiple object pointers can't be described");
+    ObjectPointer = BlockObjPtr;
+  }
+
+  if (ObjectPointer)
+    addDIEEntry(ScopeDIE, dwarf::DW_AT_object_pointer, *ObjectPointer);
+}
+
 } // end llvm namespace
