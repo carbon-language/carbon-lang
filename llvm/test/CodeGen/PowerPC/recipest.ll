@@ -197,11 +197,7 @@ define double @foo3(double %a) nounwind {
 ; CHECK-NEXT: fmul
 ; CHECK-NEXT: fmadd
 ; CHECK-NEXT: fmul
-; CHECK-NEXT: fre
-; CHECK-NEXT: fnmsub
-; CHECK-NEXT: fmadd
-; CHECK-NEXT: fnmsub
-; CHECK-NEXT: fmadd
+; CHECK-NEXT: fmul
 ; CHECK: blr
 
 ; CHECK-SAFE: @foo3
@@ -220,9 +216,7 @@ define float @goo3(float %a) nounwind {
 ; CHECK: fmuls
 ; CHECK-NEXT: fmadds
 ; CHECK-NEXT: fmuls
-; CHECK-NEXT: fres
-; CHECK-NEXT: fnmsubs
-; CHECK-NEXT: fmadds
+; CHECK-NEXT: fmuls
 ; CHECK: blr
 
 ; CHECK-SAFE: @goo3
@@ -236,7 +230,6 @@ define <4 x float> @hoo3(<4 x float> %a) nounwind {
 
 ; CHECK: @hoo3
 ; CHECK: vrsqrtefp
-; CHECK-DAG: vrefp
 ; CHECK-DAG: vcmpeqfp
 
 ; CHECK-SAFE: @hoo3

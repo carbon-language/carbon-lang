@@ -7088,26 +7088,25 @@ SDValue DAGCombiner::visitFREM(SDNode *N) {
 
 SDValue DAGCombiner::visitFSQRT(SDNode *N) {
   if (DAG.getTarget().Options.UnsafeFPMath) {
-    // Compute this as 1/(1/sqrt(X)): the reciprocal of the reciprocal sqrt.
+    // Compute this as X * (1/sqrt(X)) = X * (X ** -0.5)
     if (SDValue RV = BuildRsqrtEstimate(N->getOperand(0))) {
       AddToWorklist(RV.getNode());
-      RV = BuildReciprocalEstimate(RV);
-      if (RV.getNode()) {
-        // Unfortunately, RV is now NaN if the input was exactly 0.
-        // Select out this case and force the answer to 0.
-        EVT VT = RV.getValueType();
-      
-        SDValue Zero = DAG.getConstantFP(0.0, VT);
-        SDValue ZeroCmp =
-          DAG.getSetCC(SDLoc(N), TLI.getSetCCResultType(*DAG.getContext(), VT),
-                       N->getOperand(0), Zero, ISD::SETEQ);
-        AddToWorklist(ZeroCmp.getNode());
-        AddToWorklist(RV.getNode());
+      EVT VT = RV.getValueType();
+      RV = DAG.getNode(ISD::FMUL, SDLoc(N), VT, N->getOperand(0), RV);
+      AddToWorklist(RV.getNode());
 
-        RV = DAG.getNode(VT.isVector() ? ISD::VSELECT : ISD::SELECT,
-                         SDLoc(N), VT, ZeroCmp, Zero, RV);
-        return RV;
-      }
+      // Unfortunately, RV is now NaN if the input was exactly 0.
+      // Select out this case and force the answer to 0.
+      SDValue Zero = DAG.getConstantFP(0.0, VT);
+      SDValue ZeroCmp =
+        DAG.getSetCC(SDLoc(N), TLI.getSetCCResultType(*DAG.getContext(), VT),
+                     N->getOperand(0), Zero, ISD::SETEQ);
+      AddToWorklist(ZeroCmp.getNode());
+      AddToWorklist(RV.getNode());
+
+      RV = DAG.getNode(VT.isVector() ? ISD::VSELECT : ISD::SELECT,
+                       SDLoc(N), VT, ZeroCmp, Zero, RV);
+      return RV;
     }
   }
   return SDValue();
