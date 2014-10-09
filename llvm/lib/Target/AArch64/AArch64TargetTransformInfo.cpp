@@ -128,6 +128,10 @@ public:
 
   unsigned getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys) const override;
 
+  void getUnrollingPreferences(const Function *F, Loop *L,
+                               UnrollingPreferences &UP) const override;
+
+
   /// @}
 };
 
@@ -543,4 +547,10 @@ unsigned AArch64TTI::getMaxInterleaveFactor() const {
   if (ST->isCortexA57())
     return 4;
   return 2;
+}
+
+void AArch64TTI::getUnrollingPreferences(const Function *F, Loop *L,
+                                         UnrollingPreferences &UP) const {
+  // Disable partial & runtime unrolling on -Os.
+  UP.PartialOptSizeThreshold = 0;
 }
