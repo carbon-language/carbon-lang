@@ -102,7 +102,7 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
 
   if (EnablePBQP && Subtarget.isCortexA57() && OL != CodeGenOpt::None) {
     usingPBQP = true;
-    RegisterRegAlloc::setDefault(createAArch64A57PBQPRegAlloc);
+    RegisterRegAlloc::setDefault(createDefaultPBQPRegisterAllocator);
   }
 }
 

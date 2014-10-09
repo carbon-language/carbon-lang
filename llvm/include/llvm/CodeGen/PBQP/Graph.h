@@ -17,11 +17,12 @@
 
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
-#include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include <list>
 #include <map>
 #include <set>
 
+namespace llvm {
 namespace PBQP {
 
   class GraphBase {
@@ -195,7 +196,7 @@ namespace PBQP {
     EdgeEntry& getEdge(EdgeId EId) { return Edges[EId]; }
     const EdgeEntry& getEdge(EdgeId EId) const { return Edges[EId]; }
 
-    NodeId addConstructedNode(const NodeEntry &N) {
+    NodeId addConstructedNode(NodeEntry N) {
       NodeId NId = 0;
       if (!FreeNodeIds.empty()) {
         NId = FreeNodeIds.back();
@@ -208,7 +209,7 @@ namespace PBQP {
       return NId;
     }
 
-    EdgeId addConstructedEdge(const EdgeEntry &E) {
+    EdgeId addConstructedEdge(EdgeEntry E) {
       assert(findEdge(E.getN1Id(), E.getN2Id()) == invalidEdgeId() &&
              "Attempt to add duplicate edge.");
       EdgeId EId = 0;
@@ -237,6 +238,12 @@ namespace PBQP {
 
     class NodeItr {
     public:
+      typedef std::forward_iterator_tag iterator_category;
+      typedef NodeId value_type;
+      typedef int difference_type;
+      typedef NodeId* pointer;
+      typedef NodeId& reference;
+
       NodeItr(NodeId CurNId, const Graph &G)
         : CurNId(CurNId), EndNId(G.Nodes.size()), FreeNodeIds(G.FreeNodeIds) {
         this->CurNId = findNextInUse(CurNId); // Move to first in-use node id
@@ -251,7 +258,7 @@ namespace PBQP {
       NodeId findNextInUse(NodeId NId) const {
         while (NId < EndNId &&
                std::find(FreeNodeIds.begin(), FreeNodeIds.end(), NId) !=
-                 FreeNodeIds.end()) {
+               FreeNodeIds.end()) {
           ++NId;
         }
         return NId;
@@ -331,7 +338,10 @@ namespace PBQP {
     };
 
     /// @brief Construct an empty PBQP graph.
-    Graph() : Solver(nullptr) { }
+    Graph() : Solver(nullptr) {}
+
+    /// @brief Construct an empty PBQP graph with the given graph metadata.
+    Graph(GraphMetadata Metadata) : Metadata(Metadata), Solver(nullptr) {}
 
     /// @brief Get a reference to the graph metadata.
     GraphMetadata& getMetadata() { return Metadata; }
@@ -418,9 +428,7 @@ namespace PBQP {
     /// @brief Get a node's cost vector (const version).
     /// @param NId Node id.
     /// @return Node cost vector.
-    const Vector& getNodeCosts(NodeId NId) const {
-      return *getNode(NId).Costs;
-    }
+    const Vector& getNodeCosts(NodeId NId) const { return *getNode(NId).Costs; }
 
     NodeMetadata& getNodeMetadata(NodeId NId) {
       return getNode(NId).Metadata;
@@ -448,7 +456,9 @@ namespace PBQP {
     /// @brief Get an edge's cost matrix (const version).
     /// @param EId Edge id.
     /// @return Edge cost matrix.
-    const Matrix& getEdgeCosts(EdgeId EId) const { return *getEdge(EId).Costs; }
+    const Matrix& getEdgeCosts(EdgeId EId) const {
+      return *getEdge(EId).Costs;
+    }
 
     EdgeMetadata& getEdgeMetadata(EdgeId NId) {
       return getEdge(NId).Metadata;
@@ -507,7 +517,7 @@ namespace PBQP {
       NodeEntry &N = getNode(NId);
       // TODO: Can this be for-each'd?
       for (AdjEdgeItr AEItr = N.adjEdgesBegin(),
-                      AEEnd = N.adjEdgesEnd();
+             AEEnd = N.adjEdgesEnd();
            AEItr != AEEnd;) {
         EdgeId EId = *AEItr;
         ++AEItr;
@@ -588,7 +598,7 @@ namespace PBQP {
 
     /// @brief Dump a graph to an output stream.
     template <typename OStream>
-    void dump(OStream &OS) {
+    void dumpToStream(OStream &OS) {
       OS << nodeIds().size() << " " << edgeIds().size() << "\n";
 
       for (auto NId : nodeIds()) {
@@ -621,6 +631,11 @@ namespace PBQP {
       }
     }
 
+    /// @brief Dump this graph to dbgs().
+    void dump() {
+      dumpToStream(dbgs());
+    }
+
     /// @brief Print a representation of this graph in DOT format.
     /// @param OS Output stream to print on.
     template <typename OStream>
@@ -645,6 +660,7 @@ namespace PBQP {
     }
   };
 
-}
+}  // namespace PBQP
+}  // namespace llvm
 
 #endif // LLVM_CODEGEN_PBQP_GRAPH_HPP

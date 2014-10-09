@@ -18,6 +18,7 @@
 #include "Math.h"
 #include <map>
 
+namespace llvm {
 namespace PBQP {
 
   /// \brief Represents a solution to a PBQP problem.
@@ -87,6 +88,7 @@ namespace PBQP {
 
   };
 
-}
+} // namespace PBQP
+} // namespace llvm
 
 #endif // LLVM_CODEGEN_PBQP_SOLUTION_H

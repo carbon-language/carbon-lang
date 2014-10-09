@@ -18,6 +18,7 @@
 #include "Math.h"
 #include "Solution.h"
 
+namespace llvm {
 namespace PBQP {
 
   /// \brief Reduce a node of degree one.
@@ -186,6 +187,7 @@ namespace PBQP {
     return s;
   }
 
-}
+} // namespace PBQP
+} // namespace llvm
 
 #endif

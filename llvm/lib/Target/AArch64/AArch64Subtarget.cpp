@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64InstrInfo.h"
+#include "AArch64PBQPRegAlloc.h"
 #include "AArch64Subtarget.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineScheduler.h"
@@ -132,4 +133,9 @@ void AArch64Subtarget::overrideSchedPolicy(MachineSchedPolicy &Policy,
 
 bool AArch64Subtarget::enableEarlyIfConversion() const {
   return EnableEarlyIfConvert;
+}
+
+std::unique_ptr<PBQPRAConstraint>
+AArch64Subtarget::getCustomPBQPConstraints() const {
+  return llvm::make_unique<A57PBQPConstraints>();
 }

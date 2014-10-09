@@ -142,6 +142,8 @@ public:
                            unsigned NumRegionInstrs) const override;
 
   bool enableEarlyIfConversion() const override;
+
+  std::unique_ptr<PBQPRAConstraint> getCustomPBQPConstraints() const override;
 };
 } // End llvm namespace
 

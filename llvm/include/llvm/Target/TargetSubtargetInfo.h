@@ -14,6 +14,7 @@
 #ifndef LLVM_TARGET_TARGETSUBTARGETINFO_H
 #define LLVM_TARGET_TARGETSUBTARGETINFO_H
 
+#include "llvm/CodeGen/PBQPRAConstraint.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/CodeGen.h"
 
@@ -160,6 +161,13 @@ public:
 
   /// \brief Enable the use of the early if conversion pass.
   virtual bool enableEarlyIfConversion() const { return false; }
+
+  /// \brief Return PBQPConstraint(s) for the target.
+  ///
+  /// Override to provide custom PBQP constraints.
+  virtual std::unique_ptr<PBQPRAConstraint> getCustomPBQPConstraints() const {
+    return nullptr;
+  }
 };
 
 } // End llvm namespace

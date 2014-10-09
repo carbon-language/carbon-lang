@@ -22,6 +22,7 @@
 #include <set>
 #include <type_traits>
 
+namespace llvm {
 namespace PBQP {
 
 template <typename CostT,
@@ -104,6 +105,7 @@ private:
   MatrixCostPool matrixPool;
 };
 
-}
+} // namespace PBQP
+} // namespace llvm
 
 #endif

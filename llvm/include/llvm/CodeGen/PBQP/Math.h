@@ -14,6 +14,7 @@
 #include <cassert>
 #include <functional>
 
+namespace llvm {
 namespace PBQP {
 
 typedef float PBQPNum;
@@ -433,6 +434,7 @@ private:
   Metadata md;
 };
 
-}
+} // namespace PBQP
+} // namespace llvm
 
 #endif // LLVM_CODEGEN_PBQP_MATH_H

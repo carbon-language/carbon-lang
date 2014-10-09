@@ -26,9 +26,12 @@
 #include <limits>
 #include <vector>
 
+namespace llvm{
 namespace PBQP {
-
   namespace RegAlloc {
+
+    /// @brief Spill option index.
+    inline unsigned getSpillOptionIdx() { return 0; }
 
     /// \brief Metadata to speed allocatability test.
     ///
@@ -81,6 +84,8 @@ namespace PBQP {
 
     class NodeMetadata {
     public:
+      typedef std::vector<unsigned> OptionToRegMap;
+
       typedef enum { Unprocessed,
                      OptimallyReducible,
                      ConservativelyAllocatable,
@@ -88,6 +93,14 @@ namespace PBQP {
 
       NodeMetadata() : RS(Unprocessed), DeniedOpts(0), OptUnsafeEdges(nullptr){}
       ~NodeMetadata() { delete[] OptUnsafeEdges; }
+
+      void setVReg(unsigned VReg) { this->VReg = VReg; }
+      unsigned getVReg() const { return VReg; }
+
+      void setOptionRegs(OptionToRegMap OptionRegs) {
+        this->OptionRegs = std::move(OptionRegs);
+      }
+      const OptionToRegMap& getOptionRegs() const { return OptionRegs; }
 
       void setup(const Vector& Costs) {
         NumOpts = Costs.getLength() - 1;
@@ -124,6 +137,8 @@ namespace PBQP {
       unsigned NumOpts;
       unsigned DeniedOpts;
       unsigned* OptUnsafeEdges;
+      unsigned VReg;
+      OptionToRegMap OptionRegs;
     };
 
     class RegAllocSolverImpl {
@@ -144,7 +159,36 @@ namespace PBQP {
       typedef RegAlloc::NodeMetadata NodeMetadata;
 
       struct EdgeMetadata { };
-      struct GraphMetadata { };
+
+      class GraphMetadata {
+      public:
+        GraphMetadata(MachineFunction &MF,
+                      LiveIntervals &LIS,
+                      MachineBlockFrequencyInfo &MBFI)
+          : MF(MF), LIS(LIS), MBFI(MBFI) {}
+
+        MachineFunction &MF;
+        LiveIntervals &LIS;
+        MachineBlockFrequencyInfo &MBFI;
+
+        void setNodeIdForVReg(unsigned VReg, GraphBase::NodeId NId) {
+          VRegToNodeId[VReg] = NId;
+        }
+
+        GraphBase::NodeId getNodeIdForVReg(unsigned VReg) const {
+          auto VRegItr = VRegToNodeId.find(VReg);
+          if (VRegItr == VRegToNodeId.end())
+            return GraphBase::invalidNodeId();
+          return VRegItr->second;
+        }
+
+        void eraseNodeIdForVReg(unsigned VReg) {
+          VRegToNodeId.erase(VReg);
+        }
+
+      private:
+        DenseMap<unsigned, NodeId> VRegToNodeId;
+      };
 
       typedef PBQP::Graph<RegAllocSolverImpl> Graph;
 
@@ -345,16 +389,21 @@ namespace PBQP {
       NodeSet NotProvablyAllocatableNodes;
     };
 
-    typedef Graph<RegAllocSolverImpl> Graph;
+    class PBQPRAGraph : public PBQP::Graph<RegAllocSolverImpl> {
+    private:
+      typedef PBQP::Graph<RegAllocSolverImpl> BaseT;
+    public:
+      PBQPRAGraph(GraphMetadata Metadata) : BaseT(Metadata) {}
+    };
 
-    inline Solution solve(Graph& G) {
+    inline Solution solve(PBQPRAGraph& G) {
       if (G.empty())
         return Solution();
       RegAllocSolverImpl RegAllocSolver(G);
       return RegAllocSolver.solve();
     }
-
-  }
-}
+  } // namespace RegAlloc
+} // namespace PBQP
+} // namespace llvm
 
 #endif // LLVM_CODEGEN_PBQP_REGALLOCSOLVER_H
