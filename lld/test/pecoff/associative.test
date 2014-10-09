@@ -7,4 +7,4 @@
 # RUN: obj2yaml %t.exe | FileCheck %s
 
 CHECK: - Name: .CRT
-CHECK:   SectionData: '777777770000
+CHECK:   SectionData: '77777777'
