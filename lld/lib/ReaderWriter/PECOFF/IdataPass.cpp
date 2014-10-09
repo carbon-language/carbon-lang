@@ -135,6 +135,11 @@ std::vector<uint8_t> DelayImportDirectoryAtom::createContent() {
 void DelayImportDirectoryAtom::addRelocations(
     IdataContext &context, StringRef loadName,
     const std::vector<COFFSharedLibraryAtom *> &sharedAtoms) {
+  // "ModuleHandle" field
+  auto *hmodule = new (_alloc) DelayImportHModuleAtom(context);
+  addDir32NBReloc(this, hmodule, context.ctx.getMachineType(),
+                  offsetof(delay_import_directory_table_entry, ModuleHandle));
+
   // "NameTable" field
   std::vector<ImportTableEntryAtom *> nameTable =
       createImportTableAtoms(context, sharedAtoms, true, ".didat", _alloc);
@@ -143,11 +148,11 @@ void DelayImportDirectoryAtom::addRelocations(
       offsetof(delay_import_directory_table_entry, DelayImportNameTable));
 
   // "Name" field
-  auto *atom = new (_alloc)
+  auto *name = new (_alloc)
       COFFStringAtom(context.dummyFile, context.dummyFile.getNextOrdinal(),
                      ".didat", loadName);
-  context.file.addAtom(*atom);
-  addDir32NBReloc(this, atom, context.ctx.getMachineType(),
+  context.file.addAtom(*name);
+  addDir32NBReloc(this, name, context.ctx.getMachineType(),
                   offsetof(delay_import_directory_table_entry, Name));
   // TODO: emit other fields
 }

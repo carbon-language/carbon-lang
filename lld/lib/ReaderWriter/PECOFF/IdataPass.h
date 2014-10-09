@@ -161,6 +161,20 @@ private:
   }
 };
 
+class DelayImportHModuleAtom : public IdataAtom {
+public:
+  explicit DelayImportHModuleAtom(IdataContext &context)
+      : IdataAtom(context, createContent(context.ctx)) {}
+  StringRef customSectionName() const override { return ".data"; }
+  ContentPermissions permissions() const override { return permRW_; }
+  Alignment alignment() const override { return Alignment(3); }
+
+private:
+  std::vector<uint8_t> createContent(const PECOFFLinkingContext &ctx) const {
+    return std::vector<uint8_t>(ctx.is64Bit() ? 8 : 4, 0);
+  }
+};
+
 } // namespace idata
 
 class IdataPass : public lld::Pass {
