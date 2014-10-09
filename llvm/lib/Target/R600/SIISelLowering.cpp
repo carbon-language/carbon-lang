@@ -1920,6 +1920,30 @@ void SITargetLowering::adjustWritemask(MachineSDNode *&Node,
   }
 }
 
+/// \brief Legalize INSERT_SUBREG instructions with frame index operands.
+/// LLVM assumes that all INSERT_SUBREG inputs are registers.
+static void legalizeInsertSubreg(MachineSDNode *InsertSubreg,
+                                 SelectionDAG &DAG) {
+
+  assert(InsertSubreg->getMachineOpcode() == AMDGPU::INSERT_SUBREG);
+
+  SmallVector<SDValue, 8> Ops;
+  for (unsigned i = 0; i < 2; ++i) {
+    if (!isa<FrameIndexSDNode>(InsertSubreg->getOperand(i))) {
+      Ops.push_back(InsertSubreg->getOperand(i));
+      continue;
+    }
+
+    SDLoc DL(InsertSubreg);
+    Ops.push_back(SDValue(DAG.getMachineNode(AMDGPU::S_MOV_B32, DL,
+                                     InsertSubreg->getOperand(i).getValueType(),
+                                     InsertSubreg->getOperand(i)), 0));
+  }
+
+  DAG.UpdateNodeOperands(InsertSubreg, Ops[0], Ops[1],
+                         InsertSubreg->getOperand(2));
+}
+
 /// \brief Fold the instructions after selecting them.
 SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
                                           SelectionDAG &DAG) const {
@@ -1929,6 +1953,11 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
 
   if (TII->isMIMG(Node->getMachineOpcode()))
     adjustWritemask(Node, DAG);
+
+  if (Node->getMachineOpcode() == AMDGPU::INSERT_SUBREG) {
+    legalizeTargetIndependentNode(Node, DAG);
+    return Node;
+  }
 
   return legalizeOperands(Node, DAG);
 }
