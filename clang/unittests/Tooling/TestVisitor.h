@@ -231,4 +231,4 @@ protected:
 };
 }
 
-#endif /* LLVM_CLANG_TEST_VISITOR_H */
+#endif

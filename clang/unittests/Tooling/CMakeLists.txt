@@ -7,6 +7,10 @@ add_clang_unittest(ToolingTests
   CompilationDatabaseTest.cpp
   ToolingTest.cpp
   RecursiveASTVisitorTest.cpp
+  RecursiveASTVisitorTestCallVisitor.cpp
+  RecursiveASTVisitorTestDeclVisitor.cpp
+  RecursiveASTVisitorTestExprVisitor.cpp
+  RecursiveASTVisitorTestTypeLocVisitor.cpp
   RefactoringTest.cpp
   RewriterTest.cpp
   RefactoringCallbacksTest.cpp
