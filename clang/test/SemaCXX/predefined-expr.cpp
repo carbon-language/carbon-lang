@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++1y -fblocks -fsyntax-only -verify %s
+// RUN: %clang_cc1 -x c++ -std=c++1y -fblocks -fsyntax-only -triple %itanium_abi_triple -verify %s
 // PR16946
 // expected-no-diagnostics
 
