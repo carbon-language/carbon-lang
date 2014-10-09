@@ -352,7 +352,7 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
 
 static bool hasSinCosPiStret(const Triple &T) {
   // Only Darwin variants have _stret versions of combined trig functions.
-  if (!T.isMacOSX() && T.getOS() != Triple::IOS)
+  if (!T.isOSDarwin())
     return false;
 
   // The ABI is rather complicated on x86, so don't do anything special there.
@@ -362,7 +362,7 @@ static bool hasSinCosPiStret(const Triple &T) {
   if (T.isMacOSX() && T.isMacOSXVersionLT(10, 9))
     return false;
 
-  if (T.getOS() == Triple::IOS && T.isOSVersionLT(7, 0))
+  if (T.isiOS() && T.isOSVersionLT(7, 0))
     return false;
 
   return true;

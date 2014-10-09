@@ -395,8 +395,7 @@ unsigned ARMSubtarget::getMispredictionPenalty() const {
 }
 
 bool ARMSubtarget::hasSinCos() const {
-  return getTargetTriple().getOS() == Triple::IOS &&
-    !getTargetTriple().isOSVersionLT(7, 0);
+  return getTargetTriple().isiOS() && !getTargetTriple().isOSVersionLT(7, 0);
 }
 
 // This overrides the PostRAScheduler bit in the SchedModel for any CPU.
