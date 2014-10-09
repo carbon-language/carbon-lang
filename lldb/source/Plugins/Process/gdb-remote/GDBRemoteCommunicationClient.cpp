@@ -2971,6 +2971,11 @@ GDBRemoteCommunicationClient::GetThreadStopInfo (lldb::tid_t tid, StringExtracto
 uint8_t
 GDBRemoteCommunicationClient::SendGDBStoppointTypePacket (GDBStoppointType type, bool insert,  addr_t addr, uint32_t length)
 {
+    Log *log (GetLogIfAnyCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+    if (log)
+        log->Printf ("GDBRemoteCommunicationClient::%s() %s at addr = 0x%" PRIx64,
+                     __FUNCTION__, insert ? "add" : "remove", addr);
+
     // Check if the stub is known not to support this breakpoint type
     if (!SupportsGDBStoppointPacket(type))
         return UINT8_MAX;
