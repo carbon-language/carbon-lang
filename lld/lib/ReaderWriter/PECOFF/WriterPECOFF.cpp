@@ -1043,6 +1043,7 @@ void PECOFFWriter::build(const File &linkedFile) {
         .Case(".idata.d", DataDirectoryIndex::IMPORT_TABLE)
         .Case(".edata", DataDirectoryIndex::EXPORT_TABLE)
         .Case(".loadcfg", DataDirectoryIndex::LOAD_CONFIG_TABLE)
+        .Case(".didat.d", DataDirectoryIndex::DELAY_IMPORT_DESCRIPTOR)
         .Default(ignore);
     if (idx == ignore)
       continue;

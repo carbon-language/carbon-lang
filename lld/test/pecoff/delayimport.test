@@ -1,13 +1,36 @@
 # RUN: yaml2obj %p/Inputs/vars-main-x86.obj.yaml > %t-x86.obj
 # RUN: yaml2obj %p/Inputs/vars-main-x64.obj.yaml > %t-x64.obj
 #
-# RUN: not lld -flavor link /out:%t.exe /subsystem:console /entry:main \
-# RUN:   /delayload:vars.dll -- %t-x86.obj %p/Inputs/vars.lib 2>&1 \
-# RUN:   | FileCheck -check-prefix=X86 %s
+# RUN: lld -flavor link /out:%t1.exe /subsystem:console /entry:main \
+# RUN:   /delayload:vars.dll -- %t-x86.obj %p/Inputs/vars.lib
+# RUN: llvm-readobj -coff-imports %t1.exe | FileCheck -check-prefix=X86 %s
 #
-# RUN: not lld -flavor link /out:%t.exe /subsystem:console /entry:main \
-# RUN:   /machine:x64 /delayload:vars.dll -- %t-x64.obj %p/Inputs/vars.lib 2>&1 \
-# RUN:   | FileCheck -check-prefix=X64 %s
+# RUN: lld -flavor link /out:%t2.exe /subsystem:console /entry:main \
+# RUN:   /machine:x64 /delayload:vars64.dll -- %t-x64.obj %p/Inputs/vars64.lib
+# RUN: llvm-readobj -coff-imports %t2.exe | FileCheck -check-prefix=X64 %s
 
-X86: Undefined symbol: {{.*}} ___delayLoadHelper2@8
-X64: Undefined symbol: {{.*}} __delayLoadHelper2
+X86:      DelayImport {
+X86-NEXT:   Name: vars.dll
+X86-NEXT:   Attributes: 0x1
+X86-NEXT:   ModuleHandle: 0x0
+X86-NEXT:   ImportAddressTable: 0x0
+X86-NEXT:   ImportNameTable: 0x1000
+X86-NEXT:   BoundDelayImportTable: 0x0
+X86-NEXT:   UnloadDelayImportTable: 0x0
+X86-NEXT:   Symbol: _name_with_underscore (0)
+X86-NEXT:   Symbol: fn (1)
+X86-NEXT:   Symbol:  (1)
+X86-NEXT: }
+
+X64:      DelayImport {
+X64-NEXT:   Name: vars64.dll
+X64-NEXT:   Attributes: 0x1
+X64-NEXT:   ModuleHandle: 0x0
+X64-NEXT:   ImportAddressTable: 0x0
+X64-NEXT:   ImportNameTable: 0x1000
+X64-NEXT:   BoundDelayImportTable: 0x0
+X64-NEXT:   UnloadDelayImportTable: 0x0
+X64-NEXT:   Symbol: _name_with_underscore (0)
+X64-NEXT:   Symbol: fn (1)
+X64-NEXT:   Symbol:  (1)
+X64-NEXT: }

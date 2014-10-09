@@ -21,6 +21,9 @@
 #include <cstddef>
 #include <cstring>
 #include <map>
+#include <vector>
+
+using llvm::object::delay_import_directory_table_entry;
 
 namespace lld {
 namespace pecoff {
@@ -119,6 +122,36 @@ void ImportDirectoryAtom::addRelocations(
                   offsetof(ImportDirectoryTableEntry, NameRVA));
 }
 
+// Create the contents for the delay-import table.
+std::vector<uint8_t> DelayImportDirectoryAtom::createContent() {
+  std::vector<uint8_t> r(sizeof(delay_import_directory_table_entry), 0);
+  auto entry = reinterpret_cast<delay_import_directory_table_entry *>(&r[0]);
+  // link.exe seems to set 1 to Attributes field, so do we.
+  entry->Attributes = 1;
+  return r;
+}
+
+// Create the data referred by the delay-import table.
+void DelayImportDirectoryAtom::addRelocations(
+    IdataContext &context, StringRef loadName,
+    const std::vector<COFFSharedLibraryAtom *> &sharedAtoms) {
+  // "NameTable" field
+  std::vector<ImportTableEntryAtom *> nameTable =
+      createImportTableAtoms(context, sharedAtoms, true, ".didat", _alloc);
+  addDir32NBReloc(
+      this, nameTable[0], context.ctx.getMachineType(),
+      offsetof(delay_import_directory_table_entry, DelayImportNameTable));
+
+  // "Name" field
+  auto *atom = new (_alloc)
+      COFFStringAtom(context.dummyFile, context.dummyFile.getNextOrdinal(),
+                     ".didat", loadName);
+  context.file.addAtom(*atom);
+  addDir32NBReloc(this, atom, context.ctx.getMachineType(),
+                  offsetof(delay_import_directory_table_entry, Name));
+  // TODO: emit other fields
+}
+
 } // namespace idata
 
 void IdataPass::perform(std::unique_ptr<MutableFile> &file) {
@@ -128,15 +161,32 @@ void IdataPass::perform(std::unique_ptr<MutableFile> &file) {
   idata::IdataContext context(*file, _dummyFile, _ctx);
   std::map<StringRef, std::vector<COFFSharedLibraryAtom *>> sharedAtoms =
       groupByLoadName(*file);
+  bool hasImports = false;
+  bool hasDelayImports = false;
+
+  // Create the import table and terminate it with the null entry.
   for (auto i : sharedAtoms) {
     StringRef loadName = i.first;
+    if (_ctx.isDelayLoadDLL(loadName))
+      continue;
+    hasImports = true;
     std::vector<COFFSharedLibraryAtom *> &atoms = i.second;
     new (_alloc) idata::ImportDirectoryAtom(context, loadName, atoms);
   }
+  if (hasImports)
+    new (_alloc) idata::NullImportDirectoryAtom(context);
 
-  // All atoms, including those of tyep NullImportDirectoryAtom, are added to
-  // context.file in the IdataAtom's constructor.
-  new (_alloc) idata::NullImportDirectoryAtom(context);
+  // Create the delay import table and terminate it with the null entry.
+  for (auto i : sharedAtoms) {
+    StringRef loadName = i.first;
+    if (!_ctx.isDelayLoadDLL(loadName))
+      continue;
+    hasDelayImports = true;
+    std::vector<COFFSharedLibraryAtom *> &atoms = i.second;
+    new (_alloc) idata::DelayImportDirectoryAtom(context, loadName, atoms);
+  }
+  if (hasDelayImports)
+    new (_alloc) idata::DelayNullImportDirectoryAtom(context);
 
   replaceSharedLibraryAtoms(*file);
 }

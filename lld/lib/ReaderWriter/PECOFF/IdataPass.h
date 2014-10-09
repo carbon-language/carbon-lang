@@ -126,6 +126,41 @@ public:
   StringRef customSectionName() const override { return ".idata.d"; }
 };
 
+/// The class for the the delay-load import table.
+class DelayImportDirectoryAtom : public IdataAtom {
+public:
+  DelayImportDirectoryAtom(
+      IdataContext &context, StringRef loadName,
+      const std::vector<COFFSharedLibraryAtom *> &sharedAtoms)
+      : IdataAtom(context, createContent()) {
+    addRelocations(context, loadName, sharedAtoms);
+  }
+
+  StringRef customSectionName() const override { return ".didat.d"; }
+
+private:
+  std::vector<uint8_t> createContent();
+  void addRelocations(IdataContext &context, StringRef loadName,
+                      const std::vector<COFFSharedLibraryAtom *> &sharedAtoms);
+
+  mutable llvm::BumpPtrAllocator _alloc;
+};
+
+/// Terminator of the delay-load import table. The content of this atom is all
+/// zero.
+class DelayNullImportDirectoryAtom : public IdataAtom {
+public:
+  explicit DelayNullImportDirectoryAtom(IdataContext &context)
+      : IdataAtom(context, createContent()) {}
+  StringRef customSectionName() const override { return ".didat.d"; }
+
+private:
+  std::vector<uint8_t> createContent() const {
+    return std::vector<uint8_t>(
+        sizeof(llvm::object::delay_import_directory_table_entry), 0);
+  }
+};
+
 } // namespace idata
 
 class IdataPass : public lld::Pass {

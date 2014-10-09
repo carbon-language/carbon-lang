@@ -1227,8 +1227,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
     case OPT_delayload:
       ctx.addDelayLoadDLL(inputArg->getValue());
-      ctx.addInitialUndefinedSymbol(
-          ctx.is64Bit() ? "__delayLoadHelper2" : "___delayLoadHelper2@8");
       break;
 
     case OPT_stub: {
