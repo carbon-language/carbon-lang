@@ -181,6 +181,10 @@ DynamicLoaderPOSIXDYLD::DidAttach()
 void
 DynamicLoaderPOSIXDYLD::DidLaunch()
 {
+    Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
+    if (log)
+        log->Printf ("DynamicLoaderPOSIXDYLD::%s()", __FUNCTION__);
+
     ModuleSP executable;
     addr_t load_offset;
 
@@ -194,7 +198,11 @@ DynamicLoaderPOSIXDYLD::DidLaunch()
         ModuleList module_list;
         module_list.Append(executable);
         UpdateLoadedSections(executable, LLDB_INVALID_ADDRESS, load_offset);
+
+        if (log)
+            log->Printf ("DynamicLoaderPOSIXDYLD::%s about to call ProbeEntry()", __FUNCTION__);
         ProbeEntry();
+
         m_process->GetTarget().ModulesDidLoad(module_list);
     }
 }
@@ -247,13 +255,15 @@ DynamicLoaderPOSIXDYLD::ProbeEntry()
     }
 
     if (log)
-        if (log)
-            log->Printf ("DynamicLoaderPOSIXDYLD::%s pid %" PRIu64 " GetEntryPoint() returned address 0x%" PRIx64 ", setting entry breakpoint", __FUNCTION__, m_process ? m_process->GetID () : LLDB_INVALID_PROCESS_ID, entry);
+        log->Printf ("DynamicLoaderPOSIXDYLD::%s pid %" PRIu64 " GetEntryPoint() returned address 0x%" PRIx64 ", setting entry breakpoint", __FUNCTION__, m_process ? m_process->GetID () : LLDB_INVALID_PROCESS_ID, entry);
 
 
     Breakpoint *const entry_break = m_process->GetTarget().CreateBreakpoint(entry, true, false).get();
     entry_break->SetCallback(EntryBreakpointHit, this, true);
     entry_break->SetBreakpointKind("shared-library-event");
+
+    // Shoudn't hit this more than once.
+    entry_break->SetOneShot (true);
 }
 
 // The runtime linker has run and initialized the rendezvous structure once the
@@ -276,6 +286,31 @@ DynamicLoaderPOSIXDYLD::EntryBreakpointHit(void *baton,
     DynamicLoaderPOSIXDYLD *const dyld_instance = static_cast<DynamicLoaderPOSIXDYLD*>(baton);
     if (log)
         log->Printf ("DynamicLoaderPOSIXDYLD::%s called for pid %" PRIu64, __FUNCTION__, dyld_instance->m_process ? dyld_instance->m_process->GetID () : LLDB_INVALID_PROCESS_ID);
+
+    // Disable the breakpoint --- if a stop happens right after this, which we've seen on occasion, we don't
+    // want the breakpoint stepping thread-plan logic to show a breakpoint instruction at the disassembled
+    // entry point to the program.  Disabling it prevents it.  (One-shot is not enough - one-shot removal logic
+    // only happens after the breakpoint goes public, which wasn't happening in our scenario).
+    if (dyld_instance->m_process)
+    {
+        BreakpointSP breakpoint_sp = dyld_instance->m_process->GetTarget().GetBreakpointByID (break_id);
+        if (breakpoint_sp)
+        {
+            if (log)
+                log->Printf ("DynamicLoaderPOSIXDYLD::%s pid %" PRIu64 " disabling breakpoint id %" PRIu64, __FUNCTION__, dyld_instance->m_process->GetID (), break_id);
+            breakpoint_sp->SetEnabled (false);
+        }
+        else
+        {
+            if (log)
+                log->Printf ("DynamicLoaderPOSIXDYLD::%s pid %" PRIu64 " failed to find breakpoint for breakpoint id %" PRIu64, __FUNCTION__, dyld_instance->m_process->GetID (), break_id);
+        }
+    }
+    else
+    {
+        if (log)
+            log->Printf ("DynamicLoaderPOSIXDYLD::%s breakpoint id %" PRIu64 " no Process instance!  Cannot disable breakpoint", __FUNCTION__, break_id);
+    }
 
     dyld_instance->LoadAllCurrentModules();
     dyld_instance->SetRendezvousBreakpoint();
