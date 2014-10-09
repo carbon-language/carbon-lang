@@ -594,16 +594,6 @@ template <> bool IsCPSRDead<MachineInstr>(MachineInstr *MI) {
 }
 }
 
-/// FIXME: Works around a gcc miscompilation with -fstrict-aliasing.
-LLVM_ATTRIBUTE_NOINLINE
-static unsigned getNumJTEntries(const std::vector<MachineJumpTableEntry> &JT,
-                                unsigned JTI);
-static unsigned getNumJTEntries(const std::vector<MachineJumpTableEntry> &JT,
-                                unsigned JTI) {
-  assert(JTI < JT.size());
-  return JT[JTI].MBBs.size();
-}
-
 /// GetInstSize - Return the size of the specified MachineInstr.
 ///
 unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
@@ -676,7 +666,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     // bytes, we can use 16-bit entries instead. Then there won't be an
     // alignment issue.
     unsigned InstSize = (Opc == ARM::tBR_JTr || Opc == ARM::t2BR_JT) ? 2 : 4;
-    unsigned NumEntries = getNumJTEntries(JT, JTI);
+    unsigned NumEntries = JT[JTI].MBBs.size();
     if (Opc == ARM::t2TBB_JT && (NumEntries & 1))
       // Make sure the instruction that follows TBB is 2-byte aligned.
       // FIXME: Constant island pass should insert an "ALIGN" instruction
