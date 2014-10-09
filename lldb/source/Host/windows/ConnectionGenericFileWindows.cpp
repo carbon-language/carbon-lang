@@ -229,7 +229,7 @@ ConnectionGenericFile::Read(void *dst, size_t dst_len, uint32_t timeout_usec, ll
             // ERROR_OPERATION_ABORTED occurs when someone calls Disconnect() during a blocking read.
             // This triggers a call to CancelIoEx, which causes the operation to complete and the
             // result to be ERROR_OPERATION_ABORTED.
-            if (result_error == ERROR_HANDLE_EOF || result_error == ERROR_OPERATION_ABORTED)
+            if (result_error == ERROR_HANDLE_EOF || result_error == ERROR_OPERATION_ABORTED || result_error == ERROR_BROKEN_PIPE)
                 return_info.Set(bytes_read, eConnectionStatusEndOfFile, 0);
             else
                 return_info.Set(bytes_read, eConnectionStatusError, result_error);

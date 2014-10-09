@@ -100,11 +100,11 @@ public:
 
     /// Returns only the fractional portion of the TimeValue rounded down to the
     /// nearest millisecond (divide by one million).
-    /// @brief Retrieve the fractional part as milliseconds;
+    /// @brief Retrieve the milliseconds component;
     uint32_t
     milliseconds() const
     {
-        return nanoseconds() / NanoSecPerMilliSec;
+        return m_nano_seconds / NanoSecPerMilliSec;
     }
 
 protected:
