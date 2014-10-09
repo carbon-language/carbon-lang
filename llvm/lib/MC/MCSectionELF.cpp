@@ -19,8 +19,8 @@ using namespace llvm;
 
 MCSectionELF::~MCSectionELF() {} // anchor.
 
-// ShouldOmitSectionDirective - Decides whether a '.section' directive
-// should be printed before the section name
+// Decides whether a '.section' directive
+// should be printed before the section name.
 bool MCSectionELF::ShouldOmitSectionDirective(StringRef Name,
                                               const MCAsmInfo &MAI) const {
 
