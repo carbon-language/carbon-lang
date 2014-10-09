@@ -1466,13 +1466,15 @@ CommandInterpreter::PreprocessCommand (std::string &command)
                     options.SetTimeoutUsec(0);
                     
                     ExpressionResults expr_result = target->EvaluateExpression (expr_str.c_str(), 
-                                                                               exe_ctx.GetFramePtr(),
-                                                                               expr_result_valobj_sp,
-                                                                               options);
+                                                                                exe_ctx.GetFramePtr(),
+                                                                                expr_result_valobj_sp,
+                                                                                options);
                     
                     if (expr_result == eExpressionCompleted)
                     {
                         Scalar scalar;
+                        if (expr_result_valobj_sp)
+                            expr_result_valobj_sp = expr_result_valobj_sp->GetQualifiedRepresentationIfAvailable(expr_result_valobj_sp->GetDynamicValueType(), true);
                         if (expr_result_valobj_sp->ResolveValue (scalar))
                         {
                             command.erase (start_backtick, end_backtick - start_backtick + 1);
