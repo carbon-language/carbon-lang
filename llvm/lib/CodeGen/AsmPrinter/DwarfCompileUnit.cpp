@@ -451,7 +451,7 @@ DwarfCompileUnit::constructInlinedScopeDIE(LexicalScope *Scope) {
   // Add the call site information to the DIE.
   DILocation DL(Scope->getInlinedAt());
   addUInt(*ScopeDIE, dwarf::DW_AT_call_file, None,
-               getOrCreateSourceID(DL.getFilename(), DL.getDirectory()));
+          getOrCreateSourceID(DL.getFilename(), DL.getDirectory()));
   addUInt(*ScopeDIE, dwarf::DW_AT_call_line, None, DL.getLineNumber());
 
   // Add name to the name table, we do this here because we're guaranteed
