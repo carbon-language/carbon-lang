@@ -708,6 +708,10 @@ public:
     virtual bool
     IsSynthetic() { return false; }
     
+    lldb::ValueObjectSP
+    GetQualifiedRepresentationIfAvailable (lldb::DynamicValueType dynValue,
+                                           bool synthValue);
+    
     virtual lldb::ValueObjectSP
     CreateConstantValue (const ConstString &name);
 

@@ -3551,6 +3551,56 @@ ValueObject::CreateConstantValue (const ConstString &name)
     return valobj_sp;
 }
 
+ValueObjectSP
+ValueObject::GetQualifiedRepresentationIfAvailable (lldb::DynamicValueType dynValue,
+                                                    bool synthValue)
+{
+    ValueObjectSP result_sp(GetSP());
+    
+    switch (dynValue)
+    {
+        case lldb::eDynamicCanRunTarget:
+        case lldb::eDynamicDontRunTarget:
+        {
+            if (!result_sp->IsDynamic())
+            {
+                if (result_sp->GetDynamicValue(dynValue))
+                    result_sp = result_sp->GetDynamicValue(dynValue);
+            }
+        }
+            break;
+        case lldb::eNoDynamicValues:
+        default:
+        {
+            if (result_sp->IsDynamic())
+            {
+                if (result_sp->GetStaticValue())
+                    result_sp = result_sp->GetStaticValue();
+            }
+        }
+            break;
+    }
+    
+    if (synthValue)
+    {
+        if (!result_sp->IsSynthetic())
+        {
+            if (result_sp->GetSyntheticValue())
+                result_sp = result_sp->GetSyntheticValue();
+        }
+    }
+    else
+    {
+        if (result_sp->IsSynthetic())
+        {
+            if (result_sp->GetNonSyntheticValue())
+                result_sp = result_sp->GetNonSyntheticValue();
+        }
+    }
+    
+    return result_sp;
+}
+
 lldb::addr_t
 ValueObject::GetCPPVTableAddress (AddressType &address_type)
 {
