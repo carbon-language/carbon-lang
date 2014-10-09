@@ -330,8 +330,7 @@ bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
   return !getLabelAfterInsn(Ranges.front().second);
 }
 
-void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
-                                                     LexicalScope *Scope) {
+void DwarfDebug::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
   assert(Scope && Scope->getScopeNode());
   assert(Scope->isAbstractScope());
   assert(!Scope->getInlinedAt());
@@ -365,7 +364,7 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
                                  DIDescriptor());
   SPCU.applySubprogramAttributesToDefinition(SP, *AbsDef);
 
-  if (TheCU.getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly)
+  if (SPCU.getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly)
     SPCU.addUInt(*AbsDef, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
   if (DIE *ObjectPointer = SPCU.createAndAddScopeChildren(Scope, *AbsDef))
     SPCU.addDIEEntry(*AbsDef, dwarf::DW_AT_object_pointer, *ObjectPointer);
@@ -1431,7 +1430,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
         continue;
       ensureAbstractVariableIsCreated(DV, DV.getContext());
     }
-    constructAbstractSubprogramScopeDIE(TheCU, AScope);
+    constructAbstractSubprogramScopeDIE(AScope);
   }
 
   TheCU.constructSubprogramScopeDIE(FnScope);

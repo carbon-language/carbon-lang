@@ -350,8 +350,8 @@ class DwarfDebug : public AsmPrinterHandler {
                                                const MDNode *Scope);
 
   /// \brief Construct a DIE for this abstract scope.
-  void constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
-                                           LexicalScope *Scope);
+  void constructAbstractSubprogramScopeDIE(LexicalScope *Scope);
+
   /// \brief Emit initial Dwarf sections with a label at the start of each one.
   void emitSectionLabels();
 
