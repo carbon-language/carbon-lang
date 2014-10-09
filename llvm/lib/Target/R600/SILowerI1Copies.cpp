@@ -43,7 +43,7 @@ public:
   bool runOnMachineFunction(MachineFunction &MF) override;
 
   const char *getPassName() const override {
-    return "SI Lower il Copies";
+    return "SI Lower i1 Copies";
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -56,10 +56,10 @@ public:
 } // End anonymous namespace.
 
 INITIALIZE_PASS_BEGIN(SILowerI1Copies, DEBUG_TYPE,
-                      "SI Lower il Copies", false, false)
+                      "SI Lower i1 Copies", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
 INITIALIZE_PASS_END(SILowerI1Copies, DEBUG_TYPE,
-                    "SI Lower il Copies", false, false)
+                    "SI Lower i1 Copies", false, false)
 
 char SILowerI1Copies::ID = 0;
 
