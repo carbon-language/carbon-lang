@@ -353,7 +353,7 @@ void DwarfCompileUnit::constructScopeDIE(
     if (!ScopeDIE)
       return;
     // We create children when the scope DIE is not null.
-    DD->createScopeChildrenDIE(*this, Scope, Children);
+    createScopeChildrenDIE(Scope, Children);
   } else {
     // Early exit when we know the scope DIE is going to be null.
     if (DD->isLexicalScopeDIENull(Scope))
@@ -363,7 +363,7 @@ void DwarfCompileUnit::constructScopeDIE(
 
     // We create children here when we know the scope DIE is not going to be
     // null and the children will be added to the scope DIE.
-    DD->createScopeChildrenDIE(*this, Scope, Children, &ChildScopeCount);
+    createScopeChildrenDIE(Scope, Children, &ChildScopeCount);
 
     // There is no need to emit empty lexical block DIE.
     for (const auto &E : DD->findImportedEntitiesForScope(DS))
@@ -548,6 +548,25 @@ std::unique_ptr<DIE> DwarfCompileUnit::constructVariableDIE(
   if (DV.isObjectPointer())
     ObjectPointer = Var.get();
   return Var;
+}
+
+DIE *DwarfCompileUnit::createScopeChildrenDIE(
+    LexicalScope *Scope, SmallVectorImpl<std::unique_ptr<DIE>> &Children,
+    unsigned *ChildScopeCount) {
+  DIE *ObjectPointer = nullptr;
+
+  for (DbgVariable *DV : DD->getScopeVariables().lookup(Scope))
+    Children.push_back(constructVariableDIE(*DV, *Scope, ObjectPointer));
+
+  unsigned ChildCountWithoutScopes = Children.size();
+
+  for (LexicalScope *LS : Scope->getChildren())
+    constructScopeDIE(LS, Children);
+
+  if (ChildScopeCount)
+    *ChildScopeCount = Children.size() - ChildCountWithoutScopes;
+
+  return ObjectPointer;
 }
 
 } // end llvm namespace

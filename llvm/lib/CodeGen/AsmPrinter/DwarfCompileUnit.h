@@ -110,6 +110,11 @@ public:
   std::unique_ptr<DIE> constructVariableDIE(DbgVariable &DV,
                                             const LexicalScope &Scope,
                                             DIE *&ObjectPointer);
+
+  /// A helper function to create children of a Scope DIE.
+  DIE *createScopeChildrenDIE(LexicalScope *Scope,
+                              SmallVectorImpl<std::unique_ptr<DIE>> &Children,
+                              unsigned *ChildScopeCount = nullptr);
 };
 
 } // end llvm namespace

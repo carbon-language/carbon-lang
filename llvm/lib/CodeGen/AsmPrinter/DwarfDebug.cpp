@@ -330,31 +330,11 @@ bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
   return !getLabelAfterInsn(Ranges.front().second);
 }
 
-DIE *DwarfDebug::createScopeChildrenDIE(
-    DwarfCompileUnit &TheCU, LexicalScope *Scope,
-    SmallVectorImpl<std::unique_ptr<DIE>> &Children,
-    unsigned *ChildScopeCount) {
-  DIE *ObjectPointer = nullptr;
-
-  for (DbgVariable *DV : ScopeVariables.lookup(Scope))
-    Children.push_back(TheCU.constructVariableDIE(*DV, *Scope, ObjectPointer));
-
-  unsigned ChildCountWithoutScopes = Children.size();
-
-  for (LexicalScope *LS : Scope->getChildren())
-    TheCU.constructScopeDIE(LS, Children);
-
-  if (ChildScopeCount)
-    *ChildScopeCount = Children.size() - ChildCountWithoutScopes;
-
-  return ObjectPointer;
-}
-
 DIE *DwarfDebug::createAndAddScopeChildren(DwarfCompileUnit &TheCU,
                                            LexicalScope *Scope, DIE &ScopeDIE) {
   // We create children when the scope DIE is not null.
   SmallVector<std::unique_ptr<DIE>, 8> Children;
-  DIE *ObjectPointer = createScopeChildrenDIE(TheCU, Scope, Children);
+  DIE *ObjectPointer = TheCU.createScopeChildrenDIE(Scope, Children);
 
   // Add children
   for (auto &I : Children)
@@ -1483,6 +1463,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     assert(ScopeVariables.empty());
     assert(CurrentFnArguments.empty());
     assert(DbgValues.empty());
+    // FIXME: This wouldn't be true in LTO with a -g (with inlining) CU followed
+    // by a -gmlt CU. Add a test and remove this assertion.
     assert(AbstractVariables.empty());
     LabelsBeforeInsn.clear();
     LabelsAfterInsn.clear();

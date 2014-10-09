@@ -675,14 +675,11 @@ public:
 
   // FIXME: Sink these functions down into DwarfFile/Dwarf*Unit.
 
-  /// A helper function to create children of a Scope DIE.
-  DIE *createScopeChildrenDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope,
-                              SmallVectorImpl<std::unique_ptr<DIE>> &Children,
-                              unsigned *ChildScopeCount = nullptr);
-
   DenseMap<const MDNode *, DIE *> &getAbstractSPDies() {
     return AbstractSPDies;
   }
+
+  ScopeVariablesMap &getScopeVariables() { return ScopeVariables; }
 };
 } // End of namespace llvm
 
