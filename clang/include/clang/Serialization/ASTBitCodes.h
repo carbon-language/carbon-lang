@@ -1360,6 +1360,7 @@ namespace clang {
       STMT_OMP_ORDERED_DIRECTIVE,
       STMT_OMP_ATOMIC_DIRECTIVE,
       STMT_OMP_TARGET_DIRECTIVE,
+      STMT_OMP_TEAMS_DIRECTIVE,
 
       // ARC
       EXPR_OBJC_BRIDGED_CAST,     // ObjCBridgedCastExpr

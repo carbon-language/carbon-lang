@@ -93,6 +93,12 @@ bool isOpenMPWorksharingDirective(OpenMPDirectiveKind DKind);
 /// parallel', otherwise - false.
 bool isOpenMPParallelDirective(OpenMPDirectiveKind DKind);
 
+/// \brief Checks if the specified directive is a teams-kind directive.
+/// \param DKind Specified directive.
+/// \return true - the directive is a teams-like directive like 'omp teams',
+/// otherwise - false.
+bool isOpenMPTeamsDirective(OpenMPDirectiveKind DKind);
+
 /// \brief Checks if the specified directive is a simd directive.
 /// \param DKind Specified directive.
 /// \return true - the directive is a simd directive like 'omp simd',

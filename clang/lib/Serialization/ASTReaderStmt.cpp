@@ -2115,6 +2115,13 @@ void ASTStmtReader::VisitOMPTargetDirective(OMPTargetDirective *D) {
   VisitOMPExecutableDirective(D);
 }
 
+void ASTStmtReader::VisitOMPTeamsDirective(OMPTeamsDirective *D) {
+  VisitStmt(D);
+  // The NumClauses field was read in ReadStmtFromStream.
+  ++Idx;
+  VisitOMPExecutableDirective(D);
+}
+
 //===----------------------------------------------------------------------===//
 // ASTReader Implementation
 //===----------------------------------------------------------------------===//
@@ -2697,6 +2704,11 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case STMT_OMP_TARGET_DIRECTIVE:
       S = OMPTargetDirective::CreateEmpty(
+          Context, Record[ASTStmtReader::NumStmtFields], Empty);
+      break;
+
+    case STMT_OMP_TEAMS_DIRECTIVE:
+      S = OMPTeamsDirective::CreateEmpty(
           Context, Record[ASTStmtReader::NumStmtFields], Empty);
       break;
 
