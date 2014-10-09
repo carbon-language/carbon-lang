@@ -211,6 +211,104 @@ bool ObjCMigrateAction::BeginInvocation(CompilerInstance &CI) {
 }
 
 namespace {
+  // FIXME. This duplicates one in RewriteObjCFoundationAPI.cpp
+  bool subscriptOperatorNeedsParens(const Expr *FullExpr) {
+    const Expr* Expr = FullExpr->IgnoreImpCasts();
+    if (isa<ArraySubscriptExpr>(Expr) ||
+        isa<CallExpr>(Expr) ||
+        isa<DeclRefExpr>(Expr) ||
+        isa<CXXNamedCastExpr>(Expr) ||
+        isa<CXXConstructExpr>(Expr) ||
+        isa<CXXThisExpr>(Expr) ||
+        isa<CXXTypeidExpr>(Expr) ||
+        isa<CXXUnresolvedConstructExpr>(Expr) ||
+        isa<ObjCMessageExpr>(Expr) ||
+        isa<ObjCPropertyRefExpr>(Expr) ||
+        isa<ObjCProtocolExpr>(Expr) ||
+        isa<MemberExpr>(Expr) ||
+        isa<ObjCIvarRefExpr>(Expr) ||
+        isa<ParenExpr>(FullExpr) ||
+        isa<ParenListExpr>(Expr) ||
+        isa<SizeOfPackExpr>(Expr))
+      return false;
+    
+    return true;
+  }
+  
+  /// \brief - Rewrite message expression for Objective-C setter and getters into
+  /// property-dot syntax.
+  bool rewriteToPropertyDotSyntax(const ObjCMessageExpr *Msg,
+                                  Preprocessor &PP,
+                                  const NSAPI &NS, edit::Commit &commit,
+                                  const ParentMap *PMap) {
+    if (!Msg || Msg->isImplicit() ||
+        Msg->getReceiverKind() != ObjCMessageExpr::Instance)
+      return false;
+    const ObjCMethodDecl *Method = Msg->getMethodDecl();
+    if (!Method)
+      return false;
+    if (!Method->isPropertyAccessor())
+      return false;
+    
+    const ObjCInterfaceDecl *IFace =
+      NS.getASTContext().getObjContainingInterface(Method);
+    if (!IFace)
+      return false;
+    
+    const ObjCPropertyDecl *Prop = Method->findPropertyDecl();
+    if (!Prop)
+      return false;
+    
+    SourceRange MsgRange = Msg->getSourceRange();
+    const Expr *receiver = Msg->getInstanceReceiver();
+    bool NeedsParen = subscriptOperatorNeedsParens(receiver);
+    bool IsGetter = (Msg->getNumArgs() == 0);
+    if (IsGetter) {
+      // Find space location range between receiver expression and getter method.
+      SourceLocation BegLoc = receiver->getLocEnd();
+      BegLoc = PP.getLocForEndOfToken(BegLoc);
+      SourceLocation EndLoc = Msg->getSelectorLoc(0);
+      SourceRange SpaceRange(BegLoc, EndLoc);
+      std::string PropertyDotString;
+      // rewrite getter method expression into: receiver.property or
+      // (receiver).property
+      if (NeedsParen) {
+        commit.insertBefore(receiver->getLocStart(), "(");
+        PropertyDotString = ").";
+      }
+      else
+        PropertyDotString = ".";
+      PropertyDotString += Prop->getName();
+      commit.replace(SpaceRange, PropertyDotString);
+      
+      // remove '[' ']'
+      commit.replace(SourceRange(MsgRange.getBegin(), MsgRange.getBegin()), "");
+      commit.replace(SourceRange(MsgRange.getEnd(), MsgRange.getEnd()), "");
+    } else {
+      SourceRange ReceiverRange = receiver->getSourceRange();
+      if (NeedsParen)
+        commit.insertWrap("(", ReceiverRange, ")");
+      std::string PropertyDotString = ".";
+      PropertyDotString += Prop->getName();
+      PropertyDotString += " =";
+      const Expr*const* Args = Msg->getArgs();
+      const Expr *RHS = Args[0];
+      if (!RHS)
+        return false;
+      SourceLocation BegLoc = ReceiverRange.getEnd();
+      BegLoc = PP.getLocForEndOfToken(BegLoc);
+      SourceLocation EndLoc = RHS->getLocStart();
+      EndLoc = EndLoc.getLocWithOffset(-1);
+      SourceRange Range(BegLoc, EndLoc);
+      commit.replace(Range, PropertyDotString);
+      // remove '[' ']'
+      commit.replace(SourceRange(MsgRange.getBegin(), MsgRange.getBegin()), "");
+      commit.replace(SourceRange(MsgRange.getEnd(), MsgRange.getEnd()), "");
+    }
+    return true;
+  }
+  
+
 class ObjCMigrator : public RecursiveASTVisitor<ObjCMigrator> {
   ObjCMigrateASTConsumer &Consumer;
   ParentMap &PMap;
@@ -232,6 +330,13 @@ public:
     if (Consumer.ASTMigrateActions & FrontendOptions::ObjCMT_Subscripting) {
       edit::Commit commit(*Consumer.Editor);
       edit::rewriteToObjCSubscriptSyntax(E, *Consumer.NSAPIObj, commit);
+      Consumer.Editor->commit(commit);
+    }
+
+    if (Consumer.ASTMigrateActions & FrontendOptions::ObjCMT_Property) {
+      edit::Commit commit(*Consumer.Editor);
+      rewriteToPropertyDotSyntax(E, Consumer.PP, *Consumer.NSAPIObj,
+                                 commit, &PMap);
       Consumer.Editor->commit(commit);
     }
 
