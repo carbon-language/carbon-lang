@@ -61,7 +61,7 @@ public:
   }
 private:
   std::vector<std::unique_ptr<PBQPRAConstraint>> Constraints;
-  virtual void anchor();
+  virtual void anchor() override;
 };
 
 }

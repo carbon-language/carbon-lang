@@ -71,7 +71,7 @@ public:
   typedef typename UnitVector::iterator iterator;
   typedef llvm::iterator_range<typename UnitVector::iterator> iterator_range;
 
-  UnitType *getUnitForOffset(uint32_t Offset) const {
+  UnitType *getUnitForOffset(uint32_t Offset) const override {
     auto *CU = std::upper_bound(this->begin(), this->end(), Offset,
                                 UnitOffsetComparator());
     if (CU != this->end())
