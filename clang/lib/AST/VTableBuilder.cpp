@@ -3302,9 +3302,8 @@ findPathForVPtr(ASTContext &Context, const ASTRecordLayout &MostDerivedLayout,
     if (!B.isVirtual())
       NewOffset = Offset + Layout.getBaseClassOffset(Base);
     else {
-      if (VBasesSeen.count(Base))
+      if (!VBasesSeen.insert(Base))
         return false;
-      VBasesSeen.insert(Base);
       NewOffset = MostDerivedLayout.getVBaseClassOffset(Base);
     }
     FullPath.push_back(Base);

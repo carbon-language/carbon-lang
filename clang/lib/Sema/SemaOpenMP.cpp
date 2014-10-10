@@ -2483,8 +2483,7 @@ static bool CheckOpenMPIterationSpace(
   // that is the increment of the associated for-loop.
   // Exclude loop var from the list of variables with implicitly defined data
   // sharing attributes.
-  while (VarsWithImplicitDSA.count(Var) > 0)
-    VarsWithImplicitDSA.erase(Var);
+  VarsWithImplicitDSA.erase(Var);
 
   // OpenMP [2.14.1.1, Data-sharing Attribute Rules for Variables Referenced in
   // a Construct, C/C++].

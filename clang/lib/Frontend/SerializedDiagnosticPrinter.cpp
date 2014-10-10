@@ -472,11 +472,9 @@ void SDiagsWriter::EmitMetaBlock() {
 }
 
 unsigned SDiagsWriter::getEmitCategory(unsigned int category) {
-  if (State->Categories.count(category))
+  if (!State->Categories.insert(category).second)
     return category;
-  
-  State->Categories.insert(category);
-  
+
   // We use a local version of 'Record' so that we can be generating
   // another record when we lazily generate one for the category entry.
   RecordData Record;

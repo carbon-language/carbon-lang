@@ -232,8 +232,7 @@ llvm::Value *CGOpenMPRuntime::GetOpenMPThreadID(CodeGenFunction &CGF,
 
 void CGOpenMPRuntime::FunctionFinished(CodeGenFunction &CGF) {
   assert(CGF.CurFn && "No function in current CodeGenFunction.");
-  if (OpenMPLocThreadIDMap.count(CGF.CurFn))
-    OpenMPLocThreadIDMap.erase(CGF.CurFn);
+  OpenMPLocThreadIDMap.erase(CGF.CurFn);
 }
 
 llvm::Type *CGOpenMPRuntime::getIdentTyPointerTy() {
