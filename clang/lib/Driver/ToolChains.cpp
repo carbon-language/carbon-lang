@@ -456,20 +456,13 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
 
   Arg *OSXVersion = Args.getLastArg(options::OPT_mmacosx_version_min_EQ);
   Arg *iOSVersion = Args.getLastArg(options::OPT_miphoneos_version_min_EQ);
-  Arg *iOSSimVersion = Args.getLastArg(
-    options::OPT_mios_simulator_version_min_EQ);
 
-  if (OSXVersion && (iOSVersion || iOSSimVersion)) {
+  if (OSXVersion && iOSVersion) {
     getDriver().Diag(diag::err_drv_argument_not_allowed_with)
           << OSXVersion->getAsString(Args)
-          << (iOSVersion ? iOSVersion : iOSSimVersion)->getAsString(Args);
-    iOSVersion = iOSSimVersion = nullptr;
-  } else if (iOSVersion && iOSSimVersion) {
-    getDriver().Diag(diag::err_drv_argument_not_allowed_with)
-          << iOSVersion->getAsString(Args)
-          << iOSSimVersion->getAsString(Args);
-    iOSSimVersion = nullptr;
-  } else if (!OSXVersion && !iOSVersion && !iOSSimVersion) {
+          << iOSVersion->getAsString(Args);
+    iOSVersion = nullptr;
+  } else if (!OSXVersion && !iOSVersion) {
     // If no deployment target was specified on the command line, check for
     // environment defines.
     StringRef OSXTarget;
@@ -533,43 +526,30 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
     Platform = MacOS;
   else if (iOSVersion)
     Platform = IPhoneOS;
-  else if (iOSSimVersion)
-    Platform = IPhoneOSSimulator;
   else
     llvm_unreachable("Unable to infer Darwin variant");
-
-  // Reject invalid architecture combinations.
-  if (iOSSimVersion && (getTriple().getArch() != llvm::Triple::x86 &&
-                        getTriple().getArch() != llvm::Triple::x86_64)) {
-    getDriver().Diag(diag::err_drv_invalid_arch_for_deployment_target)
-      << getTriple().getArchName() << iOSSimVersion->getAsString(Args);
-  }
 
   // Set the tool chain target information.
   unsigned Major, Minor, Micro;
   bool HadExtra;
   if (Platform == MacOS) {
-    assert((!iOSVersion && !iOSSimVersion) && "Unknown target platform!");
+    assert(!iOSVersion && "Unknown target platform!");
     if (!Driver::GetReleaseVersion(OSXVersion->getValue(), Major, Minor,
                                    Micro, HadExtra) || HadExtra ||
         Major != 10 || Minor >= 100 || Micro >= 100)
       getDriver().Diag(diag::err_drv_invalid_version_number)
         << OSXVersion->getAsString(Args);
-  } else if (Platform == IPhoneOS || Platform == IPhoneOSSimulator) {
-    const Arg *Version = iOSVersion ? iOSVersion : iOSSimVersion;
-    assert(Version && "Unknown target platform!");
-    if (!Driver::GetReleaseVersion(Version->getValue(), Major, Minor,
+  } else if (Platform == IPhoneOS) {
+    assert(iOSVersion && "Unknown target platform!");
+    if (!Driver::GetReleaseVersion(iOSVersion->getValue(), Major, Minor,
                                    Micro, HadExtra) || HadExtra ||
         Major >= 10 || Minor >= 100 || Micro >= 100)
       getDriver().Diag(diag::err_drv_invalid_version_number)
-        << Version->getAsString(Args);
+        << iOSVersion->getAsString(Args);
   } else
     llvm_unreachable("unknown kind of Darwin platform");
 
-  // In GCC, the simulator historically was treated as being OS X in some
-  // contexts, like determining the link logic, despite generally being called
-  // with an iOS deployment target. For compatibility, we detect the
-  // simulator as iOS + x86, and treat it differently in a few contexts.
+  // Recognize iOS targets with an x86 architecture as the iOS simulator.
   if (iOSVersion && (getTriple().getArch() == llvm::Triple::x86 ||
                      getTriple().getArch() == llvm::Triple::x86_64))
     Platform = IPhoneOSSimulator;

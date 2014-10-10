@@ -1078,7 +1078,7 @@ def mglobal_merge : Flag<["-"], "mglobal-merge">, Group<m_Group>;
 def mhard_float : Flag<["-"], "mhard-float">, Group<m_Group>;
 def miphoneos_version_min_EQ : Joined<["-"], "miphoneos-version-min=">, Group<m_Group>;
 def mios_version_min_EQ : Joined<["-"], "mios-version-min=">, Alias<miphoneos_version_min_EQ>;
-def mios_simulator_version_min_EQ : Joined<["-"], "mios-simulator-version-min=">, Group<m_Group>;
+def mios_simulator_version_min_EQ : Joined<["-"], "mios-simulator-version-min=">, Alias<miphoneos_version_min_EQ>;
 def mkernel : Flag<["-"], "mkernel">, Group<m_Group>;
 def mlinker_version_EQ : Joined<["-"], "mlinker-version=">,
   Flags<[DriverOption]>;
