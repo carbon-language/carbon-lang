@@ -88,11 +88,8 @@ void VisitGlobalVariableForEmission(
     return;
 
   // Do we have a circular dependency?
-  if (Visiting.count(GV))
+  if (!Visiting.insert(GV).second)
     report_fatal_error("Circular dependency found in global variable set");
-
-  // Start visiting this global
-  Visiting.insert(GV);
 
   // Make sure we visit all dependents first
   DenseSet<const GlobalVariable *> Others;

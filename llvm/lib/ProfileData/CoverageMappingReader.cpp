@@ -410,9 +410,9 @@ std::error_code readCoverageMappingData(
       // function name.
       // This is useful to ignore the redundant records for the functions
       // with ODR linkage.
-      if (UniqueFunctionMappingData.count(MappingRecord.FunctionNamePtr))
+      if (!UniqueFunctionMappingData.insert(MappingRecord.FunctionNamePtr)
+               .second)
         continue;
-      UniqueFunctionMappingData.insert(MappingRecord.FunctionNamePtr);
       StringRef FunctionName;
       if (auto Err =
               ProfileNames.get(MappingRecord.FunctionNamePtr,
