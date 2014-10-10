@@ -618,7 +618,9 @@ static isl_map *getEqualAndLarger(isl_space *setDomain) {
 
 isl_set *MemoryAccess::getStride(__isl_take const isl_map *Schedule) const {
   isl_map *S = const_cast<isl_map *>(Schedule);
-  isl_map *AccessRelation = getAccessRelation();
+  isl_map *AccessRelation = getNewAccessRelation();
+  if (!AccessRelation)
+    AccessRelation = getAccessRelation();
   isl_space *Space = isl_space_range(isl_map_get_space(S));
   isl_map *NextScatt = getEqualAndLarger(Space);
 
