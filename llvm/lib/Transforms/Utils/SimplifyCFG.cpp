@@ -1010,6 +1010,8 @@ static bool isSafeToHoistInvoke(BasicBlock *BB1, BasicBlock *BB2,
   return true;
 }
 
+static bool passingValueIsAlwaysUndefined(Value *V, Instruction *I);
+
 /// HoistThenElseCodeToIf - Given a conditional branch that goes to BB1 and
 /// BB2, hoist any common code in the two blocks up into the branch block.  The
 /// caller of this function guarantees that BI's block dominates BB1 and BB2.
@@ -1093,6 +1095,12 @@ HoistTerminator:
       Value *BB2V = PN->getIncomingValueForBlock(BB2);
       if (BB1V == BB2V)
         continue;
+
+      // Check for passingValueIsAlwaysUndefined here because we would rather
+      // eliminate undefined control flow then converting it to a select.
+      if (passingValueIsAlwaysUndefined(BB1V, PN) ||
+          passingValueIsAlwaysUndefined(BB2V, PN))
+       return Changed;
 
       if (isa<ConstantExpr>(BB1V) && !isSafeToSpeculativelyExecute(BB1V, DL))
         return Changed;
@@ -1507,6 +1515,11 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB,
     // Skip PHIs which are trivial.
     if (ThenV == OrigV)
       continue;
+
+    // Don't convert to selects if we could remove undefined behavior instead.
+    if (passingValueIsAlwaysUndefined(OrigV, PN) ||
+        passingValueIsAlwaysUndefined(ThenV, PN))
+      return false;
 
     HaveRewritablePHIs = true;
     ConstantExpr *OrigCE = dyn_cast<ConstantExpr>(OrigV);
