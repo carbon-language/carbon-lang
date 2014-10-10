@@ -232,7 +232,11 @@ ScopedInterceptor::~ScopedInterceptor() {
 
 #define TSAN_INTERCEPTOR(ret, func, ...) INTERCEPTOR(ret, func, __VA_ARGS__)
 #define TSAN_INTERCEPT(func) INTERCEPT_FUNCTION(func)
-#define TSAN_INTERCEPT_VER(func, ver) INTERCEPT_FUNCTION_VER(func, ver)
+#if SANITIZER_FREEBSD
+# define TSAN_INTERCEPT_VER(func, ver) INTERCEPT_FUNCTION(func)
+#else
+# define TSAN_INTERCEPT_VER(func, ver) INTERCEPT_FUNCTION_VER(func, ver)
+#endif
 
 #define BLOCK_REAL(name) (BlockingCall(thr), REAL(name))
 
