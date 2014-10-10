@@ -5026,7 +5026,6 @@ get_demangled_name_without_arguments (const Mangled *obj)
     g_last_mangled = mangled;
 
     const char *mangled_name_cstr = mangled.GetCString();
-    const char *demangled_name_cstr = demangled.GetCString();
 
     if (demangled && mangled_name_cstr && mangled_name_cstr[0])
     {
