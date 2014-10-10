@@ -18,6 +18,7 @@
 // Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Core/StructuredData.h"
 
 namespace lldb_private {
 
@@ -140,6 +141,12 @@ public:
         return m_override_should_stop == eLazyBoolYes;
     }
     
+    StructuredData::ObjectSP
+    GetExtendedInfo ()
+    {
+        return m_extended_info;
+    }
+    
     static lldb::StopInfoSP
     CreateStopReasonWithBreakpointSiteID (Thread &thread, lldb::break_id_t break_id);
 
@@ -210,6 +217,8 @@ protected:
     std::string     m_description; // A textual description describing this stop.
     LazyBool        m_override_should_notify;
     LazyBool        m_override_should_stop;
+    
+    StructuredData::ObjectSP m_extended_info; // The extended info for this stop info
     
     // This determines whether the target has run since this stop info.
     // N.B. running to evaluate a user expression does not count. 

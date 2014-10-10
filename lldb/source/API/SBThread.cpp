@@ -195,6 +195,7 @@ SBThread::GetStopReasonDataCount ()
                 case eStopReasonExec:
                 case eStopReasonPlanComplete:
                 case eStopReasonThreadExiting:
+                case eStopReasonInstrumentation:
                     // There is no data for these stop reasons.
                     return 0;
 
@@ -255,6 +256,7 @@ SBThread::GetStopReasonDataAtIndex (uint32_t idx)
                 case eStopReasonExec:
                 case eStopReasonPlanComplete:
                 case eStopReasonThreadExiting:
+                case eStopReasonInstrumentation:
                     // There is no data for these stop reasons.
                     return 0;
 
@@ -304,6 +306,26 @@ SBThread::GetStopReasonDataAtIndex (uint32_t idx)
         }
     }
     return 0;
+}
+
+bool
+SBThread::GetStopReasonExtendedInfoAsJSON (lldb::SBStream &stream)
+{
+    Stream &strm = stream.ref();
+    
+    ExecutionContext exe_ctx (m_opaque_sp.get());
+    if (! exe_ctx.HasThreadScope())
+        return false;
+
+    
+    StopInfoSP stop_info = exe_ctx.GetThreadPtr()->GetStopInfo();
+    StructuredData::ObjectSP info = stop_info->GetExtendedInfo();
+    if (! info)
+        return false;
+
+    info->Dump(strm);
+    
+    return true;
 }
 
 size_t

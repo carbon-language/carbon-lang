@@ -535,7 +535,7 @@ public:
     DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx);
 
     bool
-    GetDescription (Stream &s, lldb::DescriptionLevel level, bool json_output);
+    GetDescription (Stream &s, lldb::DescriptionLevel level, bool print_json_thread, bool print_json_stopinfo);
 
     //------------------------------------------------------------------
     /// Default implementation for stepping into.

@@ -1431,7 +1431,8 @@ public:
         void
         OptionParsingStarting ()
         {
-            m_json = false;
+            m_json_thread = false;
+            m_json_stopinfo = false;
         }
 
         virtual
@@ -1448,10 +1449,14 @@ public:
             switch (short_option)
             {
                 case 'j':
-                    m_json = true;
+                    m_json_thread = true;
+                    break;
+                    
+                case 's':
+                    m_json_stopinfo = true;
                     break;
 
-                 default:
+                default:
                     return Error("invalid short option character '%c'", short_option);
 
             }
@@ -1464,7 +1469,8 @@ public:
             return g_option_table;
         }
 
-        bool m_json;
+        bool m_json_thread;
+        bool m_json_stopinfo;
 
         static OptionDefinition g_option_table[];
     };
@@ -1486,7 +1492,7 @@ public:
     HandleOneThread (Thread &thread, CommandReturnObject &result)
     {
         Stream &strm = result.GetOutputStream();
-        if (!thread.GetDescription (strm, eDescriptionLevelFull, m_options.m_json))
+        if (!thread.GetDescription (strm, eDescriptionLevelFull, m_options.m_json_thread, m_options.m_json_stopinfo))
         {
             result.AppendErrorWithFormat ("error displaying info for thread: \"%d\"\n", thread.GetIndexID());
             result.SetStatus (eReturnStatusFailed);
@@ -1503,6 +1509,7 @@ OptionDefinition
 CommandObjectThreadInfo::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "json",'j', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone, "Display the thread info in JSON format."},
+    { LLDB_OPT_SET_ALL, false, "stop-info",'s', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone, "Display the extended stop info in JSON format."},
 
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };

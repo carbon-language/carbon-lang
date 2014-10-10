@@ -28,7 +28,7 @@ int main (int argc, char const *argv[])
 
     printf("Hello world!\n"); // break line
 
-    pointer[0] = 'A'; // BOOM
+    pointer[0] = 'A'; // BOOM line
 
     return 0;
 }

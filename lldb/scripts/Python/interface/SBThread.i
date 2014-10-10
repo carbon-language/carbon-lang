@@ -110,6 +110,14 @@ public:
     ") GetStopReasonDataAtIndex;
     uint64_t
     GetStopReasonDataAtIndex(uint32_t idx);
+        
+    %feature("autodoc", "
+    Collects a thread's stop reason extended information dictionary and prints it
+    into the SBStream in a JSON format. The format of this JSON dictionary depends
+    on the stop reason and is currently used only for instrumentation plugins.
+    ") GetStopReasonExtendedInfoAsJSON;
+    bool
+    GetStopReasonExtendedInfoAsJSON (lldb::SBStream &stream);
 
     %feature("autodoc", "
     Pass only an (int)length and expect to get a Python string describing the

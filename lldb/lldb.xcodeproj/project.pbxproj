@@ -637,6 +637,9 @@
 		8CCB017E19BA28A80009FD44 /* ThreadCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CCB017A19BA283D0009FD44 /* ThreadCollection.cpp */; };
 		8CCB018219BA4E270009FD44 /* SBThreadCollection.h in Headers */ = {isa = PBXBuildFile; fileRef = 8CCB018119BA4E210009FD44 /* SBThreadCollection.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8CCB018319BA51BF0009FD44 /* SBThreadCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CCB017F19BA4DD00009FD44 /* SBThreadCollection.cpp */; };
+		8CF02AE919DCC01900B14BE0 /* InstrumentationRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CF02ADF19DCBF3B00B14BE0 /* InstrumentationRuntime.cpp */; };
+		8CF02AEA19DCC02100B14BE0 /* AddressSanitizerRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CF02AE519DCBF8400B14BE0 /* AddressSanitizerRuntime.cpp */; };
+		8CF02AEF19DD16B100B14BE0 /* InstrumentationRuntimeStopInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CF02AED19DD15CF00B14BE0 /* InstrumentationRuntimeStopInfo.cpp */; };
 		94094C6B163B6F840083A547 /* ValueObjectCast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94094C69163B6CD90083A547 /* ValueObjectCast.cpp */; };
 		940B02F619DC96E700AD0F52 /* SBExecutionContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940B02F519DC96E700AD0F52 /* SBExecutionContext.cpp */; };
 		94145431175E63B500284436 /* lldb-versioning.h in Headers */ = {isa = PBXBuildFile; fileRef = 94145430175D7FDE00284436 /* lldb-versioning.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -1965,6 +1968,12 @@
 		8CCB017F19BA4DD00009FD44 /* SBThreadCollection.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SBThreadCollection.cpp; path = source/API/SBThreadCollection.cpp; sourceTree = "<group>"; };
 		8CCB018119BA4E210009FD44 /* SBThreadCollection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBThreadCollection.h; path = include/lldb/API/SBThreadCollection.h; sourceTree = "<group>"; };
 		8CCB018419BA54930009FD44 /* SBThreadCollection.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBThreadCollection.i; sourceTree = "<group>"; };
+		8CF02ADF19DCBF3B00B14BE0 /* InstrumentationRuntime.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = InstrumentationRuntime.cpp; path = source/Target/InstrumentationRuntime.cpp; sourceTree = "<group>"; };
+		8CF02AE019DCBF3B00B14BE0 /* InstrumentationRuntime.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = InstrumentationRuntime.h; path = include/lldb/Target/InstrumentationRuntime.h; sourceTree = "<group>"; };
+		8CF02AE519DCBF8400B14BE0 /* AddressSanitizerRuntime.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AddressSanitizerRuntime.cpp; sourceTree = "<group>"; };
+		8CF02AE619DCBF8400B14BE0 /* AddressSanitizerRuntime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AddressSanitizerRuntime.h; sourceTree = "<group>"; };
+		8CF02AED19DD15CF00B14BE0 /* InstrumentationRuntimeStopInfo.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = InstrumentationRuntimeStopInfo.cpp; path = source/Target/InstrumentationRuntimeStopInfo.cpp; sourceTree = "<group>"; };
+		8CF02AEE19DD15CF00B14BE0 /* InstrumentationRuntimeStopInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = InstrumentationRuntimeStopInfo.h; path = include/lldb/Target/InstrumentationRuntimeStopInfo.h; sourceTree = "<group>"; };
 		94005E0313F438DF001EF42D /* python-wrapper.swig */ = {isa = PBXFileReference; lastKnownFileType = text; path = "python-wrapper.swig"; sourceTree = "<group>"; };
 		94005E0513F45A1B001EF42D /* embedded_interpreter.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = embedded_interpreter.py; path = source/Interpreter/embedded_interpreter.py; sourceTree = "<group>"; };
 		94031A9F13CF5B3D00DCFF3C /* PriorityPointerPair.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PriorityPointerPair.h; path = include/lldb/Utility/PriorityPointerPair.h; sourceTree = "<group>"; };
@@ -2423,6 +2432,7 @@
 		260C897110F57C5600BB2B04 /* Plugins */ = {
 			isa = PBXGroup;
 			children = (
+				8CF02ADD19DCBEC200B14BE0 /* InstrumentationRuntime */,
 				8C2D6A58197A1FB9006989C9 /* MemoryHistory */,
 				26DB3E051379E7AD0080DC73 /* ABI */,
 				260C897210F57C5600BB2B04 /* Disassembler */,
@@ -3746,6 +3756,10 @@
 		26BC7DEF10F1B80200F91463 /* Target */ = {
 			isa = PBXGroup;
 			children = (
+				8CF02AE019DCBF3B00B14BE0 /* InstrumentationRuntime.h */,
+				8CF02ADF19DCBF3B00B14BE0 /* InstrumentationRuntime.cpp */,
+				8CF02AEE19DD15CF00B14BE0 /* InstrumentationRuntimeStopInfo.h */,
+				8CF02AED19DD15CF00B14BE0 /* InstrumentationRuntimeStopInfo.cpp */,
 				3FDFD6C3199C396E009756A7 /* FileAction.h */,
 				3FDFDDBC199C3A06009756A7 /* FileAction.cpp */,
 				23EDE3311926843600F6A132 /* NativeRegisterContext.h */,
@@ -4262,6 +4276,23 @@
 				8C2D6A5B197A1FDC006989C9 /* MemoryHistoryASan.h */,
 			);
 			path = asan;
+			sourceTree = "<group>";
+		};
+		8CF02ADD19DCBEC200B14BE0 /* InstrumentationRuntime */ = {
+			isa = PBXGroup;
+			children = (
+				8CF02ADE19DCBEE600B14BE0 /* AddressSanitizer */,
+			);
+			path = InstrumentationRuntime;
+			sourceTree = "<group>";
+		};
+		8CF02ADE19DCBEE600B14BE0 /* AddressSanitizer */ = {
+			isa = PBXGroup;
+			children = (
+				8CF02AE519DCBF8400B14BE0 /* AddressSanitizerRuntime.cpp */,
+				8CF02AE619DCBF8400B14BE0 /* AddressSanitizerRuntime.h */,
+			);
+			path = AddressSanitizer;
 			sourceTree = "<group>";
 		};
 		9457596415349416005A9070 /* POSIX */ = {
@@ -4965,6 +4996,7 @@
 				2689000713353DB600698AC0 /* BreakpointSite.cpp in Sources */,
 				2689000913353DB600698AC0 /* BreakpointSiteList.cpp in Sources */,
 				26474CC918D0CB5B0073DEBA /* RegisterContextMemory.cpp in Sources */,
+				8CF02AEA19DCC02100B14BE0 /* AddressSanitizerRuntime.cpp in Sources */,
 				26474CB218D0CB180073DEBA /* RegisterContextLinux_i386.cpp in Sources */,
 				26474CCB18D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.cpp in Sources */,
 				2689000B13353DB600698AC0 /* Stoppoint.cpp in Sources */,
@@ -5002,6 +5034,7 @@
 				2689002813353DDE00698AC0 /* CommandObjectThread.cpp in Sources */,
 				2689002913353DDE00698AC0 /* CommandObjectVersion.cpp in Sources */,
 				2689002A13353E0400698AC0 /* Address.cpp in Sources */,
+				8CF02AE919DCC01900B14BE0 /* InstrumentationRuntime.cpp in Sources */,
 				2689002B13353E0400698AC0 /* AddressRange.cpp in Sources */,
 				236124A41986B4E2004EFC37 /* IOObject.cpp in Sources */,
 				2689002C13353E0400698AC0 /* AddressResolver.cpp in Sources */,
@@ -5223,6 +5256,7 @@
 				268900FA13353E6F00698AC0 /* ThreadList.cpp in Sources */,
 				268900FB13353E6F00698AC0 /* ThreadPlan.cpp in Sources */,
 				232CB619191E00CD00EF39FC /* NativeProcessProtocol.cpp in Sources */,
+				8CF02AEF19DD16B100B14BE0 /* InstrumentationRuntimeStopInfo.cpp in Sources */,
 				268900FC13353E6F00698AC0 /* ThreadPlanBase.cpp in Sources */,
 				268900FD13353E6F00698AC0 /* ThreadPlanCallFunction.cpp in Sources */,
 				268900FE13353E6F00698AC0 /* ThreadPlanCallUserExpression.cpp in Sources */,

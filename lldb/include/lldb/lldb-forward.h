@@ -104,6 +104,7 @@ class   FunctionInfo;
 class   InlineFunctionInfo;
 class   Instruction;
 class   InstructionList;
+class   InstrumentationRuntime;
 class   IOHandler;
 class   IOObject;
 class   IRExecutionUnit;
@@ -312,6 +313,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::FuncUnwinders> FuncUnwindersSP;
     typedef std::shared_ptr<lldb_private::InlineFunctionInfo> InlineFunctionInfoSP;
     typedef std::shared_ptr<lldb_private::Instruction> InstructionSP;
+    typedef std::shared_ptr<lldb_private::InstrumentationRuntime> InstrumentationRuntimeSP;
     typedef std::shared_ptr<lldb_private::IOHandler> IOHandlerSP;
     typedef std::shared_ptr<lldb_private::IOObject> IOObjectSP;
     typedef std::shared_ptr<lldb_private::JITLoader> JITLoaderSP;

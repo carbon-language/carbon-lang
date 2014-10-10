@@ -9,6 +9,8 @@ add_lldb_library(lldbTarget
   FileAction.cpp
   JITLoader.cpp
   JITLoaderList.cpp
+  InstrumentationRuntime.cpp
+  InstrumentationRuntimeStopInfo.cpp
   LanguageRuntime.cpp
   Memory.cpp
   MemoryHistory.cpp

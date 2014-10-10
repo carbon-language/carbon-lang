@@ -2086,6 +2086,7 @@ Thread::StopReasonAsCString (lldb::StopReason reason)
     case eStopReasonExec:          return "exec";
     case eStopReasonPlanComplete:  return "plan complete";
     case eStopReasonThreadExiting: return "thread exiting";
+    case eStopReasonInstrumentation: return "instrumentation break";
     }
 
 
@@ -2165,17 +2166,28 @@ Thread::GetStatus (Stream &strm, uint32_t start_frame, uint32_t num_frames, uint
 }
 
 bool
-Thread::GetDescription (Stream &strm, lldb::DescriptionLevel level, bool print_json)
+Thread::GetDescription (Stream &strm, lldb::DescriptionLevel level, bool print_json_thread, bool print_json_stopinfo)
 {
     DumpUsingSettingsFormat (strm, 0);
     strm.Printf("\n");
 
     StructuredData::ObjectSP thread_info = GetExtendedInfo();
-
-    if (thread_info && print_json)
+    StructuredData::ObjectSP stop_info = m_stop_info_sp->GetExtendedInfo();
+    
+    if (print_json_thread || print_json_stopinfo)
     {
-        thread_info->Dump (strm);
-        strm.Printf("\n");
+        if (thread_info && print_json_thread)
+        {
+            thread_info->Dump (strm);
+            strm.Printf("\n");
+        }
+        
+        if (stop_info && print_json_stopinfo)
+        {
+            stop_info->Dump (strm);
+            strm.Printf("\n");
+        }
+        
         return true;
     }
 

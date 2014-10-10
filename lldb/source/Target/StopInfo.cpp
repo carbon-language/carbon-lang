@@ -40,7 +40,8 @@ StopInfo::StopInfo (Thread &thread, uint64_t value) :
     m_resume_id (thread.GetProcess()->GetResumeID()),
     m_value (value),
     m_override_should_notify (eLazyBoolCalculate),
-    m_override_should_stop (eLazyBoolCalculate)
+    m_override_should_stop (eLazyBoolCalculate),
+    m_extended_info()
 {
 }
 

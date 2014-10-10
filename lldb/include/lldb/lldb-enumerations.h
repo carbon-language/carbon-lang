@@ -185,7 +185,8 @@ namespace lldb {
         eStopReasonException,
         eStopReasonExec,        // Program was re-exec'ed
         eStopReasonPlanComplete,
-        eStopReasonThreadExiting
+        eStopReasonThreadExiting,
+        eStopReasonInstrumentation
     } StopReason;
 
     //----------------------------------------------------------------------
@@ -387,6 +388,11 @@ namespace lldb {
         eLanguageTypeDylan           = 0x0020,   ///< Dylan.
         eNumLanguageTypes
     } LanguageType;
+    
+    typedef enum InstrumentationRuntimeType {
+        eInstrumentationRuntimeTypeAddressSanitizer = 0x0000,
+        eNumInstrumentationRuntimeTypes
+    } InstrumentationRuntimeType;
 
     typedef enum DynamicValueType
     {

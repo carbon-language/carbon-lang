@@ -2172,6 +2172,125 @@ PluginManager::GetMemoryHistoryCreateCallbackForPluginName (const ConstString &n
     return NULL;
 }
 
+#pragma mark InstrumentationRuntime
+
+struct InstrumentationRuntimeInstance
+{
+    InstrumentationRuntimeInstance() :
+    name(),
+    description(),
+    create_callback(NULL)
+    {
+    }
+    
+    ConstString name;
+    std::string description;
+    InstrumentationRuntimeCreateInstance create_callback;
+    InstrumentationRuntimeGetType get_type_callback;
+};
+
+typedef std::vector<InstrumentationRuntimeInstance> InstrumentationRuntimeInstances;
+
+static Mutex &
+GetInstrumentationRuntimeMutex ()
+{
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
+
+static InstrumentationRuntimeInstances &
+GetInstrumentationRuntimeInstances ()
+{
+    static InstrumentationRuntimeInstances g_instances;
+    return g_instances;
+}
+
+bool
+PluginManager::RegisterPlugin
+(
+ const ConstString &name,
+ const char *description,
+ InstrumentationRuntimeCreateInstance create_callback,
+ InstrumentationRuntimeGetType get_type_callback
+ )
+{
+    if (create_callback)
+    {
+        InstrumentationRuntimeInstance instance;
+        assert ((bool)name);
+        instance.name = name;
+        if (description && description[0])
+            instance.description = description;
+        instance.create_callback = create_callback;
+        instance.get_type_callback = get_type_callback;
+        Mutex::Locker locker (GetInstrumentationRuntimeMutex ());
+        GetInstrumentationRuntimeInstances ().push_back (instance);
+    }
+    return false;
+}
+
+bool
+PluginManager::UnregisterPlugin (InstrumentationRuntimeCreateInstance create_callback)
+{
+    if (create_callback)
+    {
+        Mutex::Locker locker (GetInstrumentationRuntimeMutex ());
+        InstrumentationRuntimeInstances &instances = GetInstrumentationRuntimeInstances ();
+        
+        InstrumentationRuntimeInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+InstrumentationRuntimeGetType
+PluginManager::GetInstrumentationRuntimeGetTypeCallbackAtIndex (uint32_t idx)
+{
+    Mutex::Locker locker (GetInstrumentationRuntimeMutex ());
+    InstrumentationRuntimeInstances &instances = GetInstrumentationRuntimeInstances ();
+    if (idx < instances.size())
+        return instances[idx].get_type_callback;
+    return NULL;
+}
+
+InstrumentationRuntimeCreateInstance
+PluginManager::GetInstrumentationRuntimeCreateCallbackAtIndex (uint32_t idx)
+{
+    Mutex::Locker locker (GetInstrumentationRuntimeMutex ());
+    InstrumentationRuntimeInstances &instances = GetInstrumentationRuntimeInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
+    return NULL;
+}
+
+
+InstrumentationRuntimeCreateInstance
+PluginManager::GetInstrumentationRuntimeCreateCallbackForPluginName (const ConstString &name)
+{
+    if (name)
+    {
+        Mutex::Locker locker (GetInstrumentationRuntimeMutex ());
+        InstrumentationRuntimeInstances &instances = GetInstrumentationRuntimeInstances ();
+        
+        InstrumentationRuntimeInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (name == pos->name)
+                return pos->create_callback;
+        }
+    }
+    return NULL;
+}
+
+#pragma mark PluginManager
+
 void
 PluginManager::DebuggerInitialize (Debugger &debugger)
 {

@@ -48,6 +48,7 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
 #include "lldb/Target/ThreadPlanBase.h"
+#include "lldb/Target/InstrumentationRuntime.h"
 #include "Plugins/Process/Utility/InferiorCallPOSIX.h"
 
 using namespace lldb;
@@ -843,6 +844,7 @@ Process::Finalize()
     m_memory_cache.Clear();
     m_allocated_memory_cache.Clear();
     m_language_runtimes.clear();
+    m_instrumentation_runtimes.clear();
     m_next_event_action_ap.reset();
 //#ifdef LLDB_CONFIGURATION_DEBUG
 //    StreamFile s(stdout, false);
@@ -5983,6 +5985,7 @@ Process::DidExec ()
     m_image_tokens.clear();
     m_allocated_memory_cache.Clear();
     m_language_runtimes.clear();
+    m_instrumentation_runtimes.clear();
     m_thread_list.DiscardThreadPlans();
     m_memory_cache.Clear(true);
     DoDidExec();
@@ -6033,13 +6036,24 @@ Process::ResolveIndirectFunction(const Address *address, Error &error)
 void
 Process::ModulesDidLoad (ModuleList &module_list)
 {
-  SystemRuntime *sys_runtime = GetSystemRuntime();
-  if (sys_runtime)
-  {
-    sys_runtime->ModulesDidLoad (module_list);
-  }
+    SystemRuntime *sys_runtime = GetSystemRuntime();
+    if (sys_runtime)
+    {
+        sys_runtime->ModulesDidLoad (module_list);
+    }
 
-  GetJITLoaders().ModulesDidLoad (module_list);
+    GetJITLoaders().ModulesDidLoad (module_list);
+    
+    // Give runtimes a chance to be created.
+    InstrumentationRuntime::ModulesDidLoad(module_list, this, m_instrumentation_runtimes);
+    
+    // Tell runtimes about new modules.
+    for (auto pos = m_instrumentation_runtimes.begin(); pos != m_instrumentation_runtimes.end(); ++pos)
+    {
+        InstrumentationRuntimeSP runtime = pos->second;
+        runtime->ModulesDidLoad(module_list);
+    }
+
 }
 
 ThreadCollectionSP

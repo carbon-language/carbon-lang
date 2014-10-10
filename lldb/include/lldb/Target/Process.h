@@ -52,6 +52,7 @@
 #include "lldb/Target/ThreadList.h"
 #include "lldb/Target/UnixSignals.h"
 #include "lldb/Utility/PseudoTerminal.h"
+#include "lldb/Target/InstrumentationRuntime.h"
 
 namespace lldb_private {
 
@@ -3082,6 +3083,7 @@ protected:
     AllocatedMemoryCache        m_allocated_memory_cache;
     bool                        m_should_detach;   /// Should we detach if the process object goes away with an explicit call to Kill or Detach?
     LanguageRuntimeCollection   m_language_runtimes;
+    InstrumentationRuntimeCollection m_instrumentation_runtimes;
     std::unique_ptr<NextEventAction> m_next_event_action_ap;
     std::vector<PreResumeCallbackAndBaton> m_pre_resume_actions;
     ProcessRunLock              m_public_run_lock;

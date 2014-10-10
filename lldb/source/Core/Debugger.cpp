@@ -3234,6 +3234,7 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
                                         case eStopReasonException:
                                         case eStopReasonExec:
                                         case eStopReasonThreadExiting:
+                                        case eStopReasonInstrumentation:
                                             if (!other_thread)
                                                 other_thread = thread;
                                             break;
