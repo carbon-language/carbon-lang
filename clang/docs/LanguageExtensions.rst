@@ -1626,7 +1626,7 @@ the corresponding C11 operations, are:
 * ``__c11_atomic_fetch_xor``
 
 The macros ``__ATOMIC_RELAXED``, ``__ATOMIC_CONSUME``, ``__ATOMIC_ACQUIRE``,
-``__ATOMIC_RELEASE``, ``__ATOMIC_ACQ_REL``, and ``_ATOMIC_SEQ_CST`` are
+``__ATOMIC_RELEASE``, ``__ATOMIC_ACQ_REL``, and ``__ATOMIC_SEQ_CST`` are
 provided, with values corresponding to the enumerators of C11's
 ``memory_order`` enumeration.
 
