@@ -444,6 +444,12 @@ protected:
   /// none currently exists, create a new ID and insert it in the line table.
   virtual unsigned getOrCreateSourceID(StringRef File, StringRef Directory) = 0;
 
+  /// resolve - Look in the DwarfDebug map for the MDNode that
+  /// corresponds to the reference.
+  template <typename T> T resolve(DIRef<T> Ref) const {
+    return DD->resolve(Ref);
+  }
+
 private:
   /// constructTypeDIE - Construct basic type die from DIBasicType.
   void constructTypeDIE(DIE &Buffer, DIBasicType BTy);
@@ -498,12 +504,6 @@ private:
   /// createDIEEntry - Creates a new DIEEntry to be a proxy for a debug
   /// information entry.
   DIEEntry *createDIEEntry(DIE &Entry);
-
-  /// resolve - Look in the DwarfDebug map for the MDNode that
-  /// corresponds to the reference.
-  template <typename T> T resolve(DIRef<T> Ref) const {
-    return DD->resolve(Ref);
-  }
 
   /// If this is a named finished type then include it in the list of types for
   /// the accelerator tables.

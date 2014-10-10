@@ -621,4 +621,33 @@ DIE *DwarfCompileUnit::createAndAddScopeChildren(LexicalScope *Scope,
   return ObjectPointer;
 }
 
+DIE &
+DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
+  DISubprogram SP(Scope->getScopeNode());
+
+  DIE *ContextDIE;
+
+  // Some of this is duplicated from DwarfUnit::getOrCreateSubprogramDIE, with
+  // the important distinction that the DIDescriptor is not associated with the
+  // DIE (since the DIDescriptor will be associated with the concrete DIE, if
+  // any). It could be refactored to some common utility function.
+  if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
+    ContextDIE = &getUnitDie();
+    getOrCreateSubprogramDIE(SPDecl);
+  } else
+    ContextDIE = getOrCreateContextDIE(resolve(SP.getContext()));
+
+  // Passing null as the associated DIDescriptor because the abstract definition
+  // shouldn't be found by lookup.
+  DIE &AbsDef =
+      createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, DIDescriptor());
+  applySubprogramAttributesToDefinition(SP, AbsDef);
+
+  if (getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly)
+    addUInt(AbsDef, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
+  if (DIE *ObjectPointer = createAndAddScopeChildren(Scope, AbsDef))
+    addDIEEntry(AbsDef, dwarf::DW_AT_object_pointer, *ObjectPointer);
+  return AbsDef;
+}
+
 } // end llvm namespace
