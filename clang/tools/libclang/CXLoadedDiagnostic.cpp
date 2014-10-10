@@ -485,12 +485,14 @@ LoadResult DiagLoader::readString(CXLoadedDiagnosticSetImpl &TopDiags,
 LoadResult DiagLoader::readLocation(CXLoadedDiagnosticSetImpl &TopDiags,
                                     RecordData &Record, unsigned &offset,
                                     CXLoadedDiagnostic::Location &Loc) {
-  if (Record.size() < offset + 3) {
+  if (Record.size() < offset + 4) {
     reportInvalidFile("Corrupted source location");
     return Failure;
   }
+  auto Fields = makeArrayRef(Record).slice(offset);
+  offset += 4;
   
-  unsigned fileID = Record[offset++];
+  unsigned fileID = Fields[0];
   if (fileID == 0) {
     // Sentinel value.
     Loc.file = nullptr;
@@ -506,9 +508,9 @@ LoadResult DiagLoader::readLocation(CXLoadedDiagnosticSetImpl &TopDiags,
     return Failure;
   }
   Loc.file = const_cast<FileEntry *>(FE);
-  Loc.line = Record[offset++];
-  Loc.column = Record[offset++];
-  Loc.offset = Record[offset++];
+  Loc.line = Fields[1];
+  Loc.column = Fields[2];
+  Loc.offset = Fields[3];
   return Success;
 }
 
