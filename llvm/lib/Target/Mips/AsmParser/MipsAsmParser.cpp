@@ -1117,6 +1117,25 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
     } // for
   }   // if load/store
 
+  // TODO: Handle this with the AsmOperandClass.PredicateMethod.
+  if (inMicroMipsMode()) {
+    MCOperand Opnd;
+    int Imm;
+
+    switch (Inst.getOpcode()) {
+      default:
+        break;
+      case Mips::ADDIUS5_MM:
+        Opnd = Inst.getOperand(2);
+        if (!Opnd.isImm())
+          return Error(IDLoc, "expected immediate operand kind");
+        Imm = Opnd.getImm();
+        if (Imm < -8 || Imm > 7)
+          return Error(IDLoc, "immediate operand value out of range");
+        break;
+    }
+  }
+
   if (needsExpansion(Inst))
     return expandInstruction(Inst, IDLoc, Instructions);
   else
