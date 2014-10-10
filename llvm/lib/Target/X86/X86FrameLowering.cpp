@@ -30,6 +30,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Debug.h"
+#include <cstdlib>
 
 using namespace llvm;
 
@@ -763,7 +764,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       // will restore SP to (BP - SEHFrameOffset)
       for (const CalleeSavedInfo &Info : MFI->getCalleeSavedInfo()) {
         int offset = MFI->getObjectOffset(Info.getFrameIdx());
-        SEHFrameOffset = std::max(SEHFrameOffset, abs(offset));
+        SEHFrameOffset = std::max(SEHFrameOffset, std::abs(offset));
       }
       SEHFrameOffset += SEHFrameOffset % 16; // ensure alignmant
 
@@ -1176,7 +1177,7 @@ bool X86FrameLowering::assignCalleeSavedSpillSlots(
 
     const TargetRegisterClass *RC = RegInfo->getMinimalPhysRegClass(Reg);
     // ensure alignment
-    SpillSlotOffset -= abs(SpillSlotOffset) % RC->getAlignment();
+    SpillSlotOffset -= std::abs(SpillSlotOffset) % RC->getAlignment();
     // spill into slot
     SpillSlotOffset -= RC->getSize();
     int SlotIndex =
