@@ -12,6 +12,7 @@
 #include "DWARFContext.h"
 #include "DWARFDebugAbbrev.h"
 #include "llvm/DebugInfo/DWARFFormValue.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Format.h"
@@ -72,6 +73,21 @@ void DWARFDebugInfoEntryMinimal::dump(raw_ostream &OS, DWARFUnit *u,
   }
 }
 
+static void dumpApplePropertyAttribute(raw_ostream &OS, uint64_t Val) {
+  OS << " (";
+  do {
+    uint64_t Bit = 1ULL << countTrailingZeros(Val);
+    if (const char *PropName = ApplePropertyString(Bit))
+      OS << PropName;
+    else
+      OS << format("DW_APPLE_PROPERTY_0x%" PRIx64, Bit);
+    if (!(Val ^= Bit))
+      break;
+    OS << ", ";
+  } while (true);
+  OS << ")";
+}
+
 void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
                                                DWARFUnit *u,
                                                uint32_t *offset_ptr,
@@ -130,6 +146,9 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
     if (const DWARFUnit *RefU = findUnitAndExtractFast(DIE, u, &Ref))
       if (const char *Ref = DIE.getName(RefU, DINameKind::LinkageName))
         OS << " \"" << Ref << '\"';
+  } else if (attr == DW_AT_APPLE_property_attribute) {
+    if (Optional<uint64_t> OptVal = formValue.getAsUnsignedConstant())
+      dumpApplePropertyAttribute(OS, *OptVal);
   }
 
   OS << ")\n";
