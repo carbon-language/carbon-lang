@@ -19,6 +19,8 @@
 # CHECK-EL: nop                     # encoding: [0x00,0x00,0x00,0x00]
 # CHECK-EL: jalrs16 $9              # encoding: [0xe9,0x45]
 # CHECK-EL: move    $zero, $zero    # encoding: [0x00,0x0c]
+# CHECK-EL: jr16    $9              # encoding: [0x89,0x45]
+# CHECK-EL: nop                     # encoding: [0x00,0x00,0x00,0x00]
 #------------------------------------------------------------------------------
 # Big endian
 #------------------------------------------------------------------------------
@@ -32,6 +34,8 @@
 # CHECK-EB: nop                     # encoding: [0x00,0x00,0x00,0x00]
 # CHECK-EB: jalrs16 $9              # encoding: [0x45,0xe9]
 # CHECK-EB: move    $zero, $zero    # encoding: [0x0c,0x00]
+# CHECK-EB: jr16    $9              # encoding: [0x45,0x89]
+# CHECK-EB: nop                     # encoding: [0x00,0x00,0x00,0x00]
 
     addius5 $7, -2
     mfhi    $9
@@ -41,3 +45,4 @@
     jalr    $9
     jraddiusp 20
     jalrs16 $9
+    jr16    $9

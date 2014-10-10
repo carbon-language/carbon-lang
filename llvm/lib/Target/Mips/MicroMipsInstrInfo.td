@@ -117,6 +117,15 @@ class JumpLinkRegMM16<string opstr, RegisterOperand RO> :
   let Defs = [RA];
 }
 
+// 16-bit Jump Reg
+class JumpRegMM16<string opstr, RegisterOperand RO> :
+  MicroMipsInst16<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"),
+           [], IIBranch, FrmR> {
+  let hasDelaySlot = 1;
+  let isBranch = 1;
+  let isIndirectBranch = 1;
+}
+
 // Base class for JRADDIUSP instruction.
 class JumpRAddiuStackMM16 :
   MicroMipsInst16<(outs), (ins uimm5_lsl2:$imm), "jraddiusp\t$imm",
@@ -173,6 +182,7 @@ def JALR16_MM : JumpLinkRegMM16<"jalr", GPR32Opnd>, JALR_FM_MM16<0x0e>;
 def JALRS16_MM : JumpLinkRegSMM16<"jalrs16", GPR32Opnd>, JALR_FM_MM16<0x0f>;
 def JRC16_MM : JumpRegCMM16<"jrc", GPR32Opnd>, JALR_FM_MM16<0x0d>;
 def JRADDIUSP : JumpRAddiuStackMM16, JRADDIUSP_FM_MM16<0x18>;
+def JR16_MM : JumpRegMM16<"jr16", GPR32Opnd>, JALR_FM_MM16<0x0c>;
 
 class WaitMM<string opstr> :
   InstSE<(outs), (ins uimm10:$code_), !strconcat(opstr, "\t$code_"), [],
