@@ -491,6 +491,22 @@ public:
   /// return true.
   bool getExactInverse(APFloat *inv) const;
 
+  /// \brief Returns the exponent of the internal representation of the APFloat.
+  ///
+  /// Because the radix of APFloat is 2, this is equivalent to floor(log2(x)).
+  friend APFloat logb(const APFloat &Arg) {
+    if (Arg.isZero() || Arg.isNaN())
+      return Arg;
+
+    if (Arg.isInfinity())
+      return APFloat::getInf(Arg.getSemantics());
+
+    APFloat Result(Arg.getSemantics(), std::abs(Arg.exponent));
+    if (Arg.exponent < 0)
+      Result.changeSign();
+    return Result;
+  }
+
 private:
 
   /// \name Simple Queries
@@ -617,6 +633,7 @@ private:
 /// This additional declaration is required in order to compile LLVM with IBM
 /// xlC compiler.
 hash_code hash_value(const APFloat &Arg);
+
 } // namespace llvm
 
 #endif // LLVM_ADT_APFLOAT_H
