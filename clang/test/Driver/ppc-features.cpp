@@ -95,6 +95,12 @@
 // RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-vsx -mvsx -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-VSX %s
 // CHECK-VSX: "-target-feature" "+vsx"
 
+// RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-power8-vector -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-NOP8VECTOR %s
+// CHECK-NOP8VECTOR: "-target-feature" "-power8-vector"
+
+// RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-power8-vector -mpower8-vector -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-P8VECTOR %s
+// CHECK-P8VECTOR: "-target-feature" "+power8-vector"
+
 // RUN: %clang -target powerpc64-unknown-linux-gnu %s -mno-crbits -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK-NOCRBITS %s
 // CHECK-NOCRBITS: "-target-feature" "-crbits"
 

@@ -1652,3 +1652,10 @@
 // RUN:   | FileCheck %s -check-prefix=CHECK_PPC_VSX_M64
 //
 // CHECK_PPC_VSX_M64: #define __VSX__
+//
+// RUN: %clang -mpower8-vector -E -dM %s -o - 2>&1 \
+// RUN:     -target powerpc64-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_PPC_POWER8_VECTOR_M64
+//
+// CHECK_PPC_POWER8_VECTOR_M64: #define __POWER8_VECTOR__
+//
