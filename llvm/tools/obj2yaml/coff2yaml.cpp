@@ -47,13 +47,13 @@ void COFFDumper::dumpSections(unsigned NumSections) {
   for (const auto &Section : Obj.sections()) {
     const object::coff_section *Sect = Obj.getCOFFSection(Section);
     COFFYAML::Section Sec;
-    Sec.Name = Sect->Name; // FIXME: check the null termination!
-    uint32_t Characteristics = Sect->Characteristics;
-    Sec.Header.Characteristics = Characteristics;
-    Sec.Alignment = 1 << (((Characteristics >> 20) & 0xf) - 1);
+    Section.getName(Sec.Name);
+    Sec.Header.Characteristics = Sect->Characteristics;
+    Sec.Alignment = Section.getAlignment();
 
     ArrayRef<uint8_t> sectionData;
-    Obj.getSectionContents(Sect, sectionData);
+    if (!Section.isBSS())
+      Obj.getSectionContents(Sect, sectionData);
     Sec.SectionData = yaml::BinaryRef(sectionData);
 
     std::vector<COFFYAML::Relocation> Relocations;
