@@ -249,13 +249,24 @@ AppleObjCTypeEncodingParser::BuildType (clang::ASTContext &ast_ctx, StringLexer&
     
     if (type.NextIf('^'))
     {
-        clang::QualType target_type = BuildType(ast_ctx, type, allow_unknownanytype);
-        if (target_type.isNull())
-            return clang::QualType();
-        else if (target_type == ast_ctx.UnknownAnyTy)
-            return ast_ctx.UnknownAnyTy;
+        if (!allow_unknownanytype && type.NextIf('?'))
+        {
+            // if we are not supporting the concept of unknownAny, but what is being created here is an unknownAny*, then
+            // we can just get away with a void*
+            // this is theoretically wrong (in the same sense as 'theoretically nothing exists') but is way better than outright failure
+            // in many practical cases
+            return ast_ctx.VoidPtrTy;
+        }
         else
-            return ast_ctx.getPointerType(target_type);
+        {
+            clang::QualType target_type = BuildType(ast_ctx, type, allow_unknownanytype);
+            if (target_type.isNull())
+                return clang::QualType();
+            else if (target_type == ast_ctx.UnknownAnyTy)
+                return ast_ctx.UnknownAnyTy;
+            else
+                return ast_ctx.getPointerType(target_type);
+        }
     }
     
     if (type.NextIf('?'))
