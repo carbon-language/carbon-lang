@@ -363,9 +363,10 @@ static bool printSymbolizedStackTrace(void **StackTrace, int Depth, FILE *FD) {
     }
   }
 
-  const char *args[] = {"llvm-symbolizer", nullptr};
+  const char *Args[] = {"llvm-symbolizer", "--functions=linkage", "--inlining",
+                        "--demangle", nullptr};
   int RunResult =
-      sys::ExecuteAndWait(LLVMSymbolizerPath, args, nullptr, Redirects.data());
+      sys::ExecuteAndWait(LLVMSymbolizerPath, Args, nullptr, Redirects.data());
   if (RunResult != 0)
     return false;
 
@@ -385,12 +386,16 @@ static bool printSymbolizedStackTrace(void **StackTrace, int Depth, FILE *FD) {
     // Read pairs of lines (function name and file/line info) until we
     // encounter empty line.
     for (;;) {
+      if (CurLine == Lines.end())
+        return false;
       StringRef FunctionName = *CurLine++;
       if (FunctionName.empty())
         break;
       fprintf(FD, "#%d %p ", frame_no++, StackTrace[i]);
       if (!FunctionName.startswith("??"))
         fprintf(FD, "%s ", FunctionName.str().c_str());
+      if (CurLine == Lines.end())
+        return false;
       StringRef FileLineInfo = *CurLine++;
       if (!FileLineInfo.startswith("??"))
         fprintf(FD, "%s", FileLineInfo.str().c_str());
