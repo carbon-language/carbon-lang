@@ -3242,8 +3242,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     if (Output.isFilename()) {
       CmdArgs.push_back("-coverage-file");
       SmallString<128> CoverageFilename;
-      Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o);
-      if (FinalOutput) {
+      if (Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o)) {
         CoverageFilename = FinalOutput->getValue();
       } else {
         CoverageFilename = llvm::sys::path::filename(Output.getBaseInput());

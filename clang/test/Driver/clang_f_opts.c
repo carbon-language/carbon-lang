@@ -78,10 +78,10 @@
 // RUN: %clang -### -S -fprofile-arcs -no-integrated-as %s -o foo/bar.o 2>&1 | FileCheck -check-prefix=CHECK-GCNO-LOCATION-REL-PATH %s
 // RUN: %clang -### -c -fprofile-arcs %s -o foo/bar.o 2>&1 | FileCheck -check-prefix=CHECK-GCNO-LOCATION-REL-PATH %s
 // RUN: %clang -### -c -fprofile-arcs -no-integrated-as %s -o foo/bar.o 2>&1 | FileCheck -check-prefix=CHECK-GCNO-LOCATION-REL-PATH %s
-// CHECK-GCNO-DEFAULT-LOCATION: "-coverage-file" "{{.*}}/clang_f_opts.c"
-// CHECK-GCNO-DEFAULT-LOCATION-NOT: "-coverage-file" "/tmp/{{.*}}/clang_f_opts.c"
-// CHECK-GCNO-LOCATION: "-coverage-file" "/foo/bar.o"
-// CHECK-GCNO-LOCATION-REL-PATH: "-coverage-file" "{{.*}}/foo/bar.o"
+// CHECK-GCNO-DEFAULT-LOCATION: "-coverage-file" "{{.*}}{{[/\\]}}clang_f_opts.c"
+// CHECK-GCNO-DEFAULT-LOCATION-NOT: "-coverage-file" "{{[/\\]}}tmp{{[/\\]}}{{.*}}{{[/\\]}}clang_f_opts.c"
+// CHECK-GCNO-LOCATION: "-coverage-file" "{{[/\\]}}foo{{[/\\]}}bar.o"
+// CHECK-GCNO-LOCATION-REL-PATH: "-coverage-file" "{{.*}}{{[/\\]}}foo{{[/\\]}}bar.o"
 
 // RUN: %clang -### -S -fvectorize %s 2>&1 | FileCheck -check-prefix=CHECK-VECTORIZE %s
 // RUN: %clang -### -S -fno-vectorize -fvectorize %s 2>&1 | FileCheck -check-prefix=CHECK-VECTORIZE %s
