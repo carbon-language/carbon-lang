@@ -649,6 +649,12 @@ private:
 hash_code hash_value(const APFloat &Arg);
 APFloat scalbn(APFloat X, int Exp);
 
+/// \brief Returns the absolute value of the argument.
+inline APFloat abs(APFloat X) {
+  X.clearSign();
+  return X;
+}
+
 /// Implements IEEE minNum semantics. Returns the smaller of the 2 arguments if
 /// both are not NaN. If either argument is a NaN, returns the other argument.
 LLVM_READONLY

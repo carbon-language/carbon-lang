@@ -2714,6 +2714,44 @@ TEST(APFloatTest, operatorOverloads) {
   EXPECT_TRUE(One.bitwiseIsEqual(Two / Two));
 }
 
+TEST(APFloatTest, abs) {
+  APFloat PInf = APFloat::getInf(APFloat::IEEEsingle, false);
+  APFloat MInf = APFloat::getInf(APFloat::IEEEsingle, true);
+  APFloat PZero = APFloat::getZero(APFloat::IEEEsingle, false);
+  APFloat MZero = APFloat::getZero(APFloat::IEEEsingle, true);
+  APFloat PQNaN = APFloat::getNaN(APFloat::IEEEsingle, false);
+  APFloat MQNaN = APFloat::getNaN(APFloat::IEEEsingle, true);
+  APFloat PSNaN = APFloat::getSNaN(APFloat::IEEEsingle, false);
+  APFloat MSNaN = APFloat::getSNaN(APFloat::IEEEsingle, true);
+  APFloat PNormalValue = APFloat(APFloat::IEEEsingle, "0x1p+0");
+  APFloat MNormalValue = APFloat(APFloat::IEEEsingle, "-0x1p+0");
+  APFloat PLargestValue = APFloat::getLargest(APFloat::IEEEsingle, false);
+  APFloat MLargestValue = APFloat::getLargest(APFloat::IEEEsingle, true);
+  APFloat PSmallestValue = APFloat::getSmallest(APFloat::IEEEsingle, false);
+  APFloat MSmallestValue = APFloat::getSmallest(APFloat::IEEEsingle, true);
+  APFloat PSmallestNormalized =
+    APFloat::getSmallestNormalized(APFloat::IEEEsingle, false);
+  APFloat MSmallestNormalized =
+    APFloat::getSmallestNormalized(APFloat::IEEEsingle, true);
+
+  EXPECT_TRUE(PInf.bitwiseIsEqual(abs(PInf)));
+  EXPECT_TRUE(PInf.bitwiseIsEqual(abs(MInf)));
+  EXPECT_TRUE(PZero.bitwiseIsEqual(abs(PZero)));
+  EXPECT_TRUE(PZero.bitwiseIsEqual(abs(MZero)));
+  EXPECT_TRUE(PQNaN.bitwiseIsEqual(abs(PQNaN)));
+  EXPECT_TRUE(PQNaN.bitwiseIsEqual(abs(MQNaN)));
+  EXPECT_TRUE(PSNaN.bitwiseIsEqual(abs(PSNaN)));
+  EXPECT_TRUE(PSNaN.bitwiseIsEqual(abs(MSNaN)));
+  EXPECT_TRUE(PNormalValue.bitwiseIsEqual(abs(PNormalValue)));
+  EXPECT_TRUE(PNormalValue.bitwiseIsEqual(abs(MNormalValue)));
+  EXPECT_TRUE(PLargestValue.bitwiseIsEqual(abs(PLargestValue)));
+  EXPECT_TRUE(PLargestValue.bitwiseIsEqual(abs(MLargestValue)));
+  EXPECT_TRUE(PSmallestValue.bitwiseIsEqual(abs(PSmallestValue)));
+  EXPECT_TRUE(PSmallestValue.bitwiseIsEqual(abs(MSmallestValue)));
+  EXPECT_TRUE(PSmallestNormalized.bitwiseIsEqual(abs(PSmallestNormalized)));
+  EXPECT_TRUE(PSmallestNormalized.bitwiseIsEqual(abs(MSmallestNormalized)));
+}
+
 TEST(APFloatTest, ilogb) {
   EXPECT_EQ(0, ilogb(APFloat(APFloat::IEEEsingle, "0x1p+0")));
   EXPECT_EQ(0, ilogb(APFloat(APFloat::IEEEsingle, "-0x1p+0")));
