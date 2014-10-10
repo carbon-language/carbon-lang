@@ -25,8 +25,7 @@
 using namespace clang;
 using namespace CodeGen;
 
-namespace clang {
-namespace CodeGen {
+namespace {
 /// \brief API for captured statement code generation in OpenMP constructs.
 class CGOpenMPRegionInfo : public CodeGenFunction::CGCapturedStmtInfo {
 public:
@@ -36,8 +35,6 @@ public:
         Directive(D) {
     assert(ThreadIDVar != nullptr && "No ThreadID in OpenMP region.");
   }
-
-  virtual ~CGOpenMPRegionInfo() override{};
 
   /// \brief Gets a variable or parameter for storing global thread id
   /// inside OpenMP construct.
@@ -51,10 +48,10 @@ public:
   }
 
   /// \brief Emit the captured statement body.
-  virtual void EmitBody(CodeGenFunction &CGF, Stmt *S) override;
+  void EmitBody(CodeGenFunction &CGF, Stmt *S) override;
 
   /// \brief Get the name of the capture helper.
-  virtual StringRef getHelperName() const override { return ".omp_outlined."; }
+  StringRef getHelperName() const override { return ".omp_outlined."; }
 
 private:
   /// \brief A variable or parameter storing global thread id for OpenMP
@@ -63,7 +60,7 @@ private:
   /// \brief OpenMP executable directive associated with the region.
   const OMPExecutableDirective &Directive;
 };
-}}
+} // namespace
 
 LValue CGOpenMPRegionInfo::getThreadIDVariableLValue(CodeGenFunction &CGF) {
   return CGF.MakeNaturalAlignAddrLValue(
