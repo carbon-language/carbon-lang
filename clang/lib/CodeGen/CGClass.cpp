@@ -796,13 +796,13 @@ namespace {
         addNextField(F);
     }
 
-    CharUnits getMemcpySize() const {
+    CharUnits getMemcpySize(uint64_t FirstByteOffset) const {
       unsigned LastFieldSize =
         LastField->isBitField() ?
           LastField->getBitWidthValue(CGF.getContext()) :
           CGF.getContext().getTypeSize(LastField->getType()); 
       uint64_t MemcpySizeBits =
-        LastFieldOffset + LastFieldSize - FirstFieldOffset +
+        LastFieldOffset + LastFieldSize - FirstByteOffset +
         CGF.getContext().getCharWidth() - 1;
       CharUnits MemcpySize =
         CGF.getContext().toCharUnitsFromBits(MemcpySizeBits);
@@ -818,19 +818,31 @@ namespace {
 
       CharUnits Alignment;
 
+      uint64_t FirstByteOffset;
       if (FirstField->isBitField()) {
         const CGRecordLayout &RL =
           CGF.getTypes().getCGRecordLayout(FirstField->getParent());
         const CGBitFieldInfo &BFInfo = RL.getBitFieldInfo(FirstField);
         Alignment = CharUnits::fromQuantity(BFInfo.StorageAlignment);
+        // FirstFieldOffset is not appropriate for bitfields,
+        // it won't tell us what the storage offset should be and thus might not
+        // be properly aligned.
+        //
+        // Instead calculate the storage offset using the offset of the field in
+        // the struct type.
+        const llvm::DataLayout &DL = CGF.CGM.getDataLayout();
+        FirstByteOffset =
+            DL.getStructLayout(RL.getLLVMType())
+                ->getElementOffsetInBits(RL.getLLVMFieldNo(FirstField));
       } else {
         Alignment = CGF.getContext().getDeclAlign(FirstField);
+        FirstByteOffset = FirstFieldOffset;
       }
 
-      assert((CGF.getContext().toCharUnitsFromBits(FirstFieldOffset) %
+      assert((CGF.getContext().toCharUnitsFromBits(FirstByteOffset) %
               Alignment) == 0 && "Bad field alignment.");
 
-      CharUnits MemcpySize = getMemcpySize();
+      CharUnits MemcpySize = getMemcpySize(FirstByteOffset);
       QualType RecordTy = CGF.getContext().getTypeDeclType(ClassDecl);
       llvm::Value *ThisPtr = CGF.LoadCXXThis();
       LValue DestLV = CGF.MakeNaturalAlignAddrLValue(ThisPtr, RecordTy);

@@ -67,6 +67,13 @@ struct BitfieldMember2 {
   NonPOD np;
 };
 
+struct BitfieldMember3 {
+  virtual void f();
+  int   : 8;
+  int x : 1;
+  int y;
+};
+
 struct InnerClassMember {
   struct {
     int a, b, c, d;
@@ -174,6 +181,7 @@ CALL_AO(PackedMembers)
 
 CALL_CC(PackedMembers)
 CALL_CC(BitfieldMember2)
+CALL_CC(BitfieldMember3)
 CALL_CC(ReferenceMember)
 CALL_CC(InnerClassMember)
 CALL_CC(BitfieldMember)
@@ -241,6 +249,11 @@ CALL_CC(Basic)
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 8{{.*}})
 // CHECK: call void @_ZN6NonPODC1ERKS_
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 8{{.*}})
+// CHECK: ret void
+
+// BitfieldMember3 copy-constructor:
+// CHECK-LABEL: define linkonce_odr void @_ZN15BitfieldMember3C2ERKS_(%struct.BitfieldMember3* %this, %struct.BitfieldMember3* dereferenceable({{[0-9]+}}))
+// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %3, i8* %4, i64 8, i32 8, i1 false)
 // CHECK: ret void
 
 // BitfieldMember2 copy-constructor:
