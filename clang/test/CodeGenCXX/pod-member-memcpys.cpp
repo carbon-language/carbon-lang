@@ -253,7 +253,7 @@ CALL_CC(Basic)
 
 // BitfieldMember3 copy-constructor:
 // CHECK-LABEL: define linkonce_odr void @_ZN15BitfieldMember3C2ERKS_(%struct.BitfieldMember3* %this, %struct.BitfieldMember3* dereferenceable({{[0-9]+}}))
-// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %3, i8* %4, i64 8, i32 8, i1 false)
+// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 8, i32 8, i1 false)
 // CHECK: ret void
 
 // BitfieldMember2 copy-constructor:
