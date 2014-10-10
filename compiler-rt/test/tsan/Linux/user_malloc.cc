@@ -1,7 +1,7 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
 #include <stdio.h>
 
-// defined by tsan.
+// Defined by tsan.
 extern "C" void *__interceptor_malloc(unsigned long size);
 extern "C" void __interceptor_free(void *p);
 

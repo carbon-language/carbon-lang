@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// defined by tsan.
+// Defined by tsan.
 extern "C" FILE *__interceptor_fopen(const char *file, const char *mode);
 extern "C" int __interceptor_fileno(FILE *f);
 
