@@ -91,6 +91,7 @@ protected:
   bool HasSPE;
   bool HasQPX;
   bool HasVSX;
+  bool HasPower8Vector;
   bool HasFCPSGN;
   bool HasFSQRT;
   bool HasFRE, HasFRES, HasFRSQRTE, HasFRSQRTES;
@@ -215,6 +216,7 @@ public:
   bool hasSPE() const { return HasSPE; }
   bool hasQPX() const { return HasQPX; }
   bool hasVSX() const { return HasVSX; }
+  bool hasPower8Vector() const { return HasPower8Vector; }
   bool hasMFOCRF() const { return HasMFOCRF; }
   bool hasISEL() const { return HasISEL; }
   bool hasPOPCNTD() const { return HasPOPCNTD; }

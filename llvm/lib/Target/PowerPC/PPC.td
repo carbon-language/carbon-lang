@@ -104,6 +104,10 @@ def FeatureQPX       : SubtargetFeature<"qpx","HasQPX", "true",
 def FeatureVSX       : SubtargetFeature<"vsx","HasVSX", "true",
                                         "Enable VSX instructions",
                                         [FeatureAltivec]>;
+def FeaturePower8Vector : SubtargetFeature<"power8-vector", "HasPower8Vector",
+                                           "true",
+                                           "Enable Power8 vector instructions",
+                                           [FeatureVSX, FeatureAltivec]>;
 
 def DeprecatedMFTB   : SubtargetFeature<"", "DeprecatedMFTB", "true",
                                         "Treat mftb as deprecated">;
@@ -116,7 +120,6 @@ def DeprecatedDST    : SubtargetFeature<"", "DeprecatedDST", "true",
 // CMPB         p6, p6x, p7        cmpb
 // DFP          p6, p6x, p7        decimal floating-point instructions
 // POPCNTB      p5 through p7      popcntb and related instructions
-// VSX          p7                 vector-scalar instruction set
 
 //===----------------------------------------------------------------------===//
 // ABI Selection                                                              //
