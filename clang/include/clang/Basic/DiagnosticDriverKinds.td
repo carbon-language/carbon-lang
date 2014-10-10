@@ -102,8 +102,6 @@ def err_drv_cc_print_options_failure : Error<
     "unable to open CC_PRINT_OPTIONS file: %0">;
 def err_drv_preamble_format : Error<
     "incorrect format for -preamble-bytes=N,END">;
-def err_drv_conflicting_deployment_targets : Error<
-  "conflicting deployment targets, both '%0' and '%1' are present in environment">;
 def err_drv_invalid_arch_for_deployment_target : Error<
   "invalid architecture '%0' for deployment target '%1'">;
 def err_drv_objc_gc_arr : Error<
