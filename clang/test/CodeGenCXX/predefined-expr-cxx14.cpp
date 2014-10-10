@@ -1,4 +1,9 @@
 // RUN: %clang_cc1 -std=c++14 %s -triple %itanium_abi_triple -fblocks -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -x c++ -std=c++14 -triple %itanium_abi_triple -fblocks -emit-pch -o %t %s
+// RUN: %clang_cc1 -x c++ -triple %itanium_abi_triple -std=c++14 -fblocks -include-pch %t %s -emit-llvm -o - | FileCheck %s
+
+#ifndef HEADER
+#define HEADER
 
 // CHECK-DAG: @__func__._ZN13ClassTemplateIiE21classTemplateFunctionERi = private unnamed_addr constant [22 x i8] c"classTemplateFunction\00"
 // CHECK-DAG: @__PRETTY_FUNCTION__._ZN13ClassTemplateIiE21classTemplateFunctionERi = private unnamed_addr constant [69 x i8] c"const auto &ClassTemplate<int>::classTemplateFunction(T &) [T = int]\00"
@@ -81,3 +86,5 @@ int main() {
   t.classTemplateFunction(a);
   return 0;
 }
+#endif
+

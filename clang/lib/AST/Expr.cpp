@@ -457,7 +457,7 @@ PredefinedExpr::PredefinedExpr(SourceLocation L, QualType FNTy, IdentType IT,
       Loc(L), Type(IT), FnName(SL) {}
 
 StringLiteral *PredefinedExpr::getFunctionName() {
-  return cast<StringLiteral>(FnName);
+  return cast_or_null<StringLiteral>(FnName);
 }
 
 StringRef PredefinedExpr::getIdentTypeName(PredefinedExpr::IdentType IT) {
