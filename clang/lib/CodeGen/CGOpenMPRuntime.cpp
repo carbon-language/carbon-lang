@@ -25,26 +25,17 @@ using namespace clang;
 using namespace CodeGen;
 
 void CGOpenMPRegionInfo::EmitBody(CodeGenFunction &CGF, Stmt *S) {
-  CodeGenFunction::OuterDeclMapTy OuterDeclMap;
-  CGF.EmitOMPFirstprivateClause(Directive, OuterDeclMap);
-  if (!OuterDeclMap.empty()) {
+  CodeGenFunction::OMPPrivateScope PrivateScope(CGF);
+  CGF.EmitOMPFirstprivateClause(Directive, PrivateScope);
+  if (PrivateScope.Privatize()) {
     // Emit implicit barrier to synchronize threads and avoid data races.
     auto Flags = static_cast<CGOpenMPRuntime::OpenMPLocationFlags>(
         CGOpenMPRuntime::OMP_IDENT_KMPC |
         CGOpenMPRuntime::OMP_IDENT_BARRIER_IMPL);
     CGF.CGM.getOpenMPRuntime().EmitOMPBarrierCall(CGF, Directive.getLocStart(),
                                                   Flags);
-    // Remap captured variables to use their private copies in the outlined
-    // function.
-    for (auto I : OuterDeclMap) {
-      CGF.LocalDeclMap[I.first] = I.second;
-    }
   }
   CGCapturedStmtInfo::EmitBody(CGF, S);
-  // Clear mappings of captured private variables.
-  for (auto I : OuterDeclMap) {
-    CGF.LocalDeclMap.erase(I.first);
-  }
 }
 
 CGOpenMPRuntime::CGOpenMPRuntime(CodeGenModule &CGM)
