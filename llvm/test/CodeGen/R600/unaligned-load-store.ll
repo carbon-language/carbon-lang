@@ -41,8 +41,8 @@ define void @load_lds_i64_align_4(i64 addrspace(1)* nocapture %out, i64 addrspac
   ret void
 }
 
-; SI-LABEL: {{^}}load_lds_i64_align_4_with_offset:
-; SI: DS_READ2_B32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]}}, 0x8, 0x9
+; SI-LABEL: {{^}}load_lds_i64_align_4_with_offset
+; SI: DS_READ2_B32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]}} offset0:8 offset1:9
 ; SI: S_ENDPGM
 define void @load_lds_i64_align_4_with_offset(i64 addrspace(1)* nocapture %out, i64 addrspace(3)* %in) #0 {
   %ptr = getelementptr i64 addrspace(3)* %in, i32 4
@@ -53,7 +53,7 @@ define void @load_lds_i64_align_4_with_offset(i64 addrspace(1)* nocapture %out, 
 
 ; SI-LABEL: {{^}}load_lds_i64_align_4_with_split_offset:
 ; The tests for the case where the lo offset is 8-bits, but the hi offset is 9-bits
-; SI: DS_READ2_B32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]}}, 0x0, 0x1
+; SI: DS_READ2_B32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]}} offset0:0 offset1:1
 ; SI: S_ENDPGM
 define void @load_lds_i64_align_4_with_split_offset(i64 addrspace(1)* nocapture %out, i64 addrspace(3)* %in) #0 {
   %ptr = bitcast i64 addrspace(3)* %in to i32 addrspace(3)*
@@ -79,8 +79,8 @@ define void @store_lds_i64_align_4(i64 addrspace(3)* %out, i64 %val) #0 {
   ret void
 }
 
-; SI-LABEL: {{^}}store_lds_i64_align_4_with_offset:
-; SI: DS_WRITE2_B32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, 0x8, 0x9
+; SI-LABEL: {{^}}store_lds_i64_align_4_with_offset
+; SI: DS_WRITE2_B32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}} offset0:8 offset1:9
 ; SI: S_ENDPGM
 define void @store_lds_i64_align_4_with_offset(i64 addrspace(3)* %out) #0 {
   %ptr = getelementptr i64 addrspace(3)* %out, i32 4
@@ -90,7 +90,7 @@ define void @store_lds_i64_align_4_with_offset(i64 addrspace(3)* %out) #0 {
 
 ; SI-LABEL: {{^}}store_lds_i64_align_4_with_split_offset:
 ; The tests for the case where the lo offset is 8-bits, but the hi offset is 9-bits
-; SI: DS_WRITE2_B32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]}}, 0x0, 0x1
+; SI: DS_WRITE2_B32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}} offset0:0 offset1:1
 ; SI: S_ENDPGM
 define void @store_lds_i64_align_4_with_split_offset(i64 addrspace(3)* %out) #0 {
   %ptr = bitcast i64 addrspace(3)* %out to i32 addrspace(3)*

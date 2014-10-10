@@ -1,5 +1,5 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
-; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -check-prefix=CI -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -strict-whitespace -check-prefix=CI -check-prefix=FUNC %s
 
 ; FUNC-LABEL: {{^}}lds_atomic_cmpxchg_ret_i32_offset:
 ; SI: S_LOAD_DWORD [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
@@ -7,7 +7,7 @@
 ; SI-DAG: V_MOV_B32_e32 [[VCMP:v[0-9]+]], 7
 ; SI-DAG: V_MOV_B32_e32 [[VPTR:v[0-9]+]], [[PTR]]
 ; SI-DAG: V_MOV_B32_e32 [[VSWAP:v[0-9]+]], [[SWAP]]
-; SI: DS_CMPST_RTN_B32 [[RESULT:v[0-9]+]], [[VPTR]], [[VCMP]], [[VSWAP]], 0x10, [M0]
+; SI: DS_CMPST_RTN_B32 [[RESULT:v[0-9]+]], [[VPTR]], [[VCMP]], [[VSWAP]] offset:16 [M0]
 ; SI: S_ENDPGM
 define void @lds_atomic_cmpxchg_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr, i32 %swap) nounwind {
   %gep = getelementptr i32 addrspace(3)* %ptr, i32 4
@@ -26,7 +26,7 @@ define void @lds_atomic_cmpxchg_ret_i32_offset(i32 addrspace(1)* %out, i32 addrs
 ; SI-DAG: V_MOV_B32_e32 [[VPTR:v[0-9]+]], [[PTR]]
 ; SI-DAG: V_MOV_B32_e32 v[[LOSWAPV:[0-9]+]], s[[LOSWAP]]
 ; SI-DAG: V_MOV_B32_e32 v[[HISWAPV:[0-9]+]], s[[HISWAP]]
-; SI: DS_CMPST_RTN_B64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[VPTR]], v{{\[}}[[LOVCMP]]:[[HIVCMP]]{{\]}}, v{{\[}}[[LOSWAPV]]:[[HISWAPV]]{{\]}}, 0x20, [M0]
+; SI: DS_CMPST_RTN_B64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[VPTR]], v{{\[}}[[LOVCMP]]:[[HIVCMP]]{{\]}}, v{{\[}}[[LOSWAPV]]:[[HISWAPV]]{{\]}} offset:32 [M0]
 ; SI: BUFFER_STORE_DWORDX2 [[RESULT]],
 ; SI: S_ENDPGM
 define void @lds_atomic_cmpxchg_ret_i64_offset(i64 addrspace(1)* %out, i64 addrspace(3)* %ptr, i64 %swap) nounwind {
@@ -37,9 +37,9 @@ define void @lds_atomic_cmpxchg_ret_i64_offset(i64 addrspace(1)* %out, i64 addrs
   ret void
 }
 
-; FUNC-LABEL: {{^}}lds_atomic_cmpxchg_ret_i32_bad_si_offset:
-; SI: DS_CMPST_RTN_B32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, 0x0
-; CI: DS_CMPST_RTN_B32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, 0x10
+; FUNC-LABEL: {{^}}lds_atomic_cmpxchg_ret_i32_bad_si_offset
+; SI: DS_CMPST_RTN_B32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
+; CI: DS_CMPST_RTN_B32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}} offset:16 [M0]
 ; SI: S_ENDPGM
 define void @lds_atomic_cmpxchg_ret_i32_bad_si_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr, i32 %swap, i32 %a, i32 %b) nounwind {
   %sub = sub i32 %a, %b
@@ -57,7 +57,7 @@ define void @lds_atomic_cmpxchg_ret_i32_bad_si_offset(i32 addrspace(1)* %out, i3
 ; SI-DAG: V_MOV_B32_e32 [[VCMP:v[0-9]+]], 7
 ; SI-DAG: V_MOV_B32_e32 [[VPTR:v[0-9]+]], [[PTR]]
 ; SI-DAG: V_MOV_B32_e32 [[VSWAP:v[0-9]+]], [[SWAP]]
-; SI: DS_CMPST_B32 [[VPTR]], [[VCMP]], [[VSWAP]], 0x10, [M0]
+; SI: DS_CMPST_B32 [[VPTR]], [[VCMP]], [[VSWAP]] offset:16 [M0]
 ; SI: S_ENDPGM
 define void @lds_atomic_cmpxchg_noret_i32_offset(i32 addrspace(3)* %ptr, i32 %swap) nounwind {
   %gep = getelementptr i32 addrspace(3)* %ptr, i32 4
@@ -75,7 +75,7 @@ define void @lds_atomic_cmpxchg_noret_i32_offset(i32 addrspace(3)* %ptr, i32 %sw
 ; SI-DAG: V_MOV_B32_e32 [[VPTR:v[0-9]+]], [[PTR]]
 ; SI-DAG: V_MOV_B32_e32 v[[LOSWAPV:[0-9]+]], s[[LOSWAP]]
 ; SI-DAG: V_MOV_B32_e32 v[[HISWAPV:[0-9]+]], s[[HISWAP]]
-; SI: DS_CMPST_B64 [[VPTR]], v{{\[}}[[LOVCMP]]:[[HIVCMP]]{{\]}}, v{{\[}}[[LOSWAPV]]:[[HISWAPV]]{{\]}}, 0x20, [M0]
+; SI: DS_CMPST_B64 [[VPTR]], v{{\[}}[[LOVCMP]]:[[HIVCMP]]{{\]}}, v{{\[}}[[LOSWAPV]]:[[HISWAPV]]{{\]}} offset:32 [M0]
 ; SI: S_ENDPGM
 define void @lds_atomic_cmpxchg_noret_i64_offset(i64 addrspace(3)* %ptr, i64 %swap) nounwind {
   %gep = getelementptr i64 addrspace(3)* %ptr, i32 4

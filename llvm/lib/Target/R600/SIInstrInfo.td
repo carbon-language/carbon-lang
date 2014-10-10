@@ -201,6 +201,15 @@ def addr64 : Operand<i1> {
 def mbuf_offset : Operand<i16> {
   let PrintMethod = "printMBUFOffset";
 }
+def ds_offset : Operand<i16> {
+  let PrintMethod = "printDSOffset";
+}
+def ds_offset0 : Operand<i8> {
+  let PrintMethod = "printDSOffset0";
+}
+def ds_offset1 : Operand<i8> {
+  let PrintMethod = "printDSOffset1";
+}
 def glc : Operand <i1> {
   let PrintMethod = "printGLC";
 }
@@ -926,8 +935,8 @@ class DS_1A <bits<8> op, dag outs, dag ins, string asm, list<dag> pat> :
 class DS_Load_Helper <bits<8> op, string asm, RegisterClass regClass> : DS_1A <
   op,
   (outs regClass:$vdst),
-  (ins i1imm:$gds, VReg_32:$addr, u16imm:$offset),
-  asm#" $vdst, $addr, $offset, [M0]",
+  (ins i1imm:$gds, VReg_32:$addr, ds_offset:$offset),
+  asm#" $vdst, $addr"#"$offset"#" [M0]",
   []> {
   let data0 = 0;
   let data1 = 0;
@@ -938,8 +947,8 @@ class DS_Load_Helper <bits<8> op, string asm, RegisterClass regClass> : DS_1A <
 class DS_Load2_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
   op,
   (outs regClass:$vdst),
-  (ins i1imm:$gds, VReg_32:$addr, u8imm:$offset0, u8imm:$offset1),
-  asm#" $vdst, $addr, $offset0, $offset1, [M0]",
+  (ins i1imm:$gds, VReg_32:$addr, ds_offset0:$offset0, ds_offset1:$offset1),
+  asm#" $vdst, $addr"#"$offset0"#"$offset1 [M0]",
   []> {
   let data0 = 0;
   let data1 = 0;
@@ -950,8 +959,8 @@ class DS_Load2_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
 class DS_Store_Helper <bits<8> op, string asm, RegisterClass regClass> : DS_1A <
   op,
   (outs),
-  (ins i1imm:$gds, VReg_32:$addr, regClass:$data0, u16imm:$offset),
-  asm#" $addr, $data0, $offset [M0]",
+  (ins i1imm:$gds, VReg_32:$addr, regClass:$data0, ds_offset:$offset),
+  asm#" $addr, $data0"#"$offset"#" [M0]",
   []> {
   let data1 = 0;
   let mayStore = 1;
@@ -963,8 +972,8 @@ class DS_Store2_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
   op,
   (outs),
   (ins i1imm:$gds, VReg_32:$addr, regClass:$data0, regClass:$data1,
-       u8imm:$offset0, u8imm:$offset1),
-  asm#" $addr, $data0, $data1, $offset0, $offset1 [M0]",
+       ds_offset0:$offset0, ds_offset1:$offset1),
+  asm#" $addr, $data0, $data1"#"$offset0"#"$offset1 [M0]",
   []> {
   let mayStore = 1;
   let mayLoad = 0;
@@ -975,8 +984,8 @@ class DS_Store2_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
 class DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc, string noRetOp = ""> : DS_1A <
   op,
   (outs rc:$vdst),
-  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, u16imm:$offset),
-  asm#" $vdst, $addr, $data0, $offset, [M0]", []>,
+  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, ds_offset:$offset),
+  asm#" $vdst, $addr, $data0"#"$offset"#" [M0]", []>,
   AtomicNoRet<noRetOp, 1> {
 
   let data1 = 0;
@@ -990,8 +999,8 @@ class DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc, string noRetOp = ""
 class DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc, string noRetOp = ""> : DS_1A <
   op,
   (outs rc:$vdst),
-  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, rc:$data1, u16imm:$offset),
-  asm#" $vdst, $addr, $data0, $data1, $offset, [M0]",
+  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, rc:$data1, ds_offset:$offset),
+  asm#" $vdst, $addr, $data0, $data1"#"$offset"#" [M0]",
   []>,
   AtomicNoRet<noRetOp, 1> {
   let mayStore = 1;
@@ -1004,8 +1013,8 @@ class DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc, string noRetOp = ""
 class DS_1A2D_NORET <bits<8> op, string asm, RegisterClass rc, string noRetOp = asm> : DS_1A <
   op,
   (outs),
-  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, rc:$data1, u16imm:$offset),
-  asm#" $addr, $data0, $data1, $offset, [M0]",
+  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, rc:$data1, ds_offset:$offset),
+  asm#" $addr, $data0, $data1"#"$offset"#" [M0]",
   []>,
   AtomicNoRet<noRetOp, 0> {
   let mayStore = 1;
@@ -1016,8 +1025,8 @@ class DS_1A2D_NORET <bits<8> op, string asm, RegisterClass rc, string noRetOp = 
 class DS_1A1D_NORET <bits<8> op, string asm, RegisterClass rc, string noRetOp = asm> : DS_1A <
   op,
   (outs),
-  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, u16imm:$offset),
-  asm#" $addr, $data0, $offset, [M0]",
+  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, ds_offset:$offset),
+  asm#" $addr, $data0"#"$offset"#" [M0]",
   []>,
   AtomicNoRet<noRetOp, 0> {
 

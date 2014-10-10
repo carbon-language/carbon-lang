@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -check-prefix=SI %s
+; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -strict-whitespace -check-prefix=SI %s
 
 @lds = addrspace(3) global [512 x float] zeroinitializer, align 4
 @lds.f64 = addrspace(3) global [512 x double] zeroinitializer, align 8
@@ -7,7 +7,7 @@
 ; SI-LABEL: @simple_write2_one_val_f32
 ; SI-DAG: BUFFER_LOAD_DWORD [[VAL:v[0-9]+]]
 ; SI-DAG: V_LSHLREV_B32_e32 [[VPTR:v[0-9]+]], 2, v{{[0-9]+}}
-; SI: DS_WRITE2_B32 [[VPTR]], [[VAL]], [[VAL]], 0x0, 0x8 [M0]
+; SI: DS_WRITE2_B32 [[VPTR]], [[VAL]], [[VAL]] offset0:0 offset1:8 [M0]
 ; SI: S_ENDPGM
 define void @simple_write2_one_val_f32(float addrspace(1)* %C, float addrspace(1)* %in) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -25,7 +25,7 @@ define void @simple_write2_one_val_f32(float addrspace(1)* %C, float addrspace(1
 ; SI-DAG: BUFFER_LOAD_DWORD [[VAL0:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; SI-DAG: BUFFER_LOAD_DWORD [[VAL1:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x4
 ; SI-DAG: V_LSHLREV_B32_e32 [[VPTR:v[0-9]+]], 2, v{{[0-9]+}}
-; SI: DS_WRITE2_B32 [[VPTR]], [[VAL0]], [[VAL1]], 0x0, 0x8 [M0]
+; SI: DS_WRITE2_B32 [[VPTR]], [[VAL0]], [[VAL1]] offset0:0 offset1:8 [M0]
 ; SI: S_ENDPGM
 define void @simple_write2_two_val_f32(float addrspace(1)* %C, float addrspace(1)* %in) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -43,8 +43,8 @@ define void @simple_write2_two_val_f32(float addrspace(1)* %C, float addrspace(1
 
 ; SI-LABEL: @simple_write2_two_val_f32_volatile_0
 ; SI-NOT: DS_WRITE2_B32
-; SI: DS_WRITE_B32 {{v[0-9]+}}, {{v[0-9]+}}, 0x0
-; SI: DS_WRITE_B32 {{v[0-9]+}}, {{v[0-9]+}}, 0x20
+; SI: DS_WRITE_B32 {{v[0-9]+}}, {{v[0-9]+}}
+; SI: DS_WRITE_B32 {{v[0-9]+}}, {{v[0-9]+}} offset:32
 ; SI: S_ENDPGM
 define void @simple_write2_two_val_f32_volatile_0(float addrspace(1)* %C, float addrspace(1)* %in0, float addrspace(1)* %in1) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -62,8 +62,8 @@ define void @simple_write2_two_val_f32_volatile_0(float addrspace(1)* %C, float 
 
 ; SI-LABEL: @simple_write2_two_val_f32_volatile_1
 ; SI-NOT: DS_WRITE2_B32
-; SI: DS_WRITE_B32 {{v[0-9]+}}, {{v[0-9]+}}, 0x0
-; SI: DS_WRITE_B32 {{v[0-9]+}}, {{v[0-9]+}}, 0x20
+; SI: DS_WRITE_B32 {{v[0-9]+}}, {{v[0-9]+}}
+; SI: DS_WRITE_B32 {{v[0-9]+}}, {{v[0-9]+}} offset:32
 ; SI: S_ENDPGM
 define void @simple_write2_two_val_f32_volatile_1(float addrspace(1)* %C, float addrspace(1)* %in0, float addrspace(1)* %in1) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -84,7 +84,7 @@ define void @simple_write2_two_val_f32_volatile_1(float addrspace(1)* %C, float 
 ; SI: BUFFER_LOAD_DWORDX2 v{{\[}}[[VAL0:[0-9]+]]:{{[0-9]+\]}}
 ; SI: BUFFER_LOAD_DWORDX2 v{{\[[0-9]+}}:[[VAL1:[0-9]+]]{{\]}}
 ; SI: V_LSHLREV_B32_e32 [[VPTR:v[0-9]+]], 2, v{{[0-9]+}}
-; SI: DS_WRITE2_B32 [[VPTR]], v[[VAL0]], v[[VAL1]], 0x0, 0x8 [M0]
+; SI: DS_WRITE2_B32 [[VPTR]], v[[VAL0]], v[[VAL1]] offset0:0 offset1:8 [M0]
 ; SI: S_ENDPGM
 define void @simple_write2_two_val_subreg2_mixed_f32(float addrspace(1)* %C, <2 x float> addrspace(1)* %in) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -105,7 +105,7 @@ define void @simple_write2_two_val_subreg2_mixed_f32(float addrspace(1)* %C, <2 
 ; SI-LABEL: @simple_write2_two_val_subreg2_f32
 ; SI-DAG: BUFFER_LOAD_DWORDX2 v{{\[}}[[VAL0:[0-9]+]]:[[VAL1:[0-9]+]]{{\]}}
 ; SI-DAG: V_LSHLREV_B32_e32 [[VPTR:v[0-9]+]], 2, v{{[0-9]+}}
-; SI: DS_WRITE2_B32 [[VPTR]], v[[VAL0]], v[[VAL1]], 0x0, 0x8 [M0]
+; SI: DS_WRITE2_B32 [[VPTR]], v[[VAL0]], v[[VAL1]] offset0:0 offset1:8 [M0]
 ; SI: S_ENDPGM
 define void @simple_write2_two_val_subreg2_f32(float addrspace(1)* %C, <2 x float> addrspace(1)* %in) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -124,7 +124,7 @@ define void @simple_write2_two_val_subreg2_f32(float addrspace(1)* %C, <2 x floa
 ; SI-LABEL: @simple_write2_two_val_subreg4_f32
 ; SI-DAG: BUFFER_LOAD_DWORDX4 v{{\[}}[[VAL0:[0-9]+]]:[[VAL1:[0-9]+]]{{\]}}
 ; SI-DAG: V_LSHLREV_B32_e32 [[VPTR:v[0-9]+]], 2, v{{[0-9]+}}
-; SI: DS_WRITE2_B32 [[VPTR]], v[[VAL0]], v[[VAL1]], 0x0, 0x8 [M0]
+; SI: DS_WRITE2_B32 [[VPTR]], v[[VAL0]], v[[VAL1]] offset0:0 offset1:8 [M0]
 ; SI: S_ENDPGM
 define void @simple_write2_two_val_subreg4_f32(float addrspace(1)* %C, <4 x float> addrspace(1)* %in) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -144,7 +144,7 @@ define void @simple_write2_two_val_subreg4_f32(float addrspace(1)* %C, <4 x floa
 ; SI-DAG: BUFFER_LOAD_DWORD [[VAL0:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; SI-DAG: BUFFER_LOAD_DWORD [[VAL1:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x4
 ; SI-DAG: V_LSHLREV_B32_e32 [[VPTR:v[0-9]+]], 2, v{{[0-9]+}}
-; SI: DS_WRITE2_B32 [[VPTR]], [[VAL0]], [[VAL1]], 0x0, 0xff [M0]
+; SI: DS_WRITE2_B32 [[VPTR]], [[VAL0]], [[VAL1]] offset0:0 offset1:255 [M0]
 ; SI: S_ENDPGM
 define void @simple_write2_two_val_max_offset_f32(float addrspace(1)* %C, float addrspace(1)* %in) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -161,8 +161,8 @@ define void @simple_write2_two_val_max_offset_f32(float addrspace(1)* %C, float 
 }
 
 ; SI-LABEL: @simple_write2_two_val_too_far_f32
-; SI: DS_WRITE_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x0
-; SI: DS_WRITE_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x404
+; SI: DS_WRITE_B32 v{{[0-9]+}}, v{{[0-9]+}}
+; SI: DS_WRITE_B32 v{{[0-9]+}}, v{{[0-9]+}} offset:1028
 ; SI: S_ENDPGM
 define void @simple_write2_two_val_too_far_f32(float addrspace(1)* %C, float addrspace(1)* %in0, float addrspace(1)* %in1) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -179,8 +179,8 @@ define void @simple_write2_two_val_too_far_f32(float addrspace(1)* %C, float add
 }
 
 ; SI-LABEL: @simple_write2_two_val_f32_x2
-; SI: DS_WRITE2_B32 [[BASEADDR:v[0-9]+]], [[VAL0:v[0-9]+]], [[VAL1:v[0-9]+]], 0x0, 0x8
-; SI-NEXT: DS_WRITE2_B32 [[BASEADDR]], [[VAL0]], [[VAL1]], 0xb, 0x1b
+; SI: DS_WRITE2_B32 [[BASEADDR:v[0-9]+]], [[VAL0:v[0-9]+]], [[VAL1:v[0-9]+]] offset0:0 offset1:8
+; SI-NEXT: DS_WRITE2_B32 [[BASEADDR]], [[VAL0]], [[VAL1]] offset0:11 offset1:27
 ; SI: S_ENDPGM
 define void @simple_write2_two_val_f32_x2(float addrspace(1)* %C, float addrspace(1)* %in0, float addrspace(1)* %in1) #0 {
   %tid.x = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -209,8 +209,8 @@ define void @simple_write2_two_val_f32_x2(float addrspace(1)* %C, float addrspac
 }
 
 ; SI-LABEL: @simple_write2_two_val_f32_x2_nonzero_base
-; SI: DS_WRITE2_B32 [[BASEADDR:v[0-9]+]], [[VAL0:v[0-9]+]], [[VAL1:v[0-9]+]], 0x3, 0x8
-; SI-NEXT: DS_WRITE2_B32 [[BASEADDR]], [[VAL0]], [[VAL1]], 0xb, 0x1b
+; SI: DS_WRITE2_B32 [[BASEADDR:v[0-9]+]], [[VAL0:v[0-9]+]], [[VAL1:v[0-9]+]] offset0:3 offset1:8
+; SI-NEXT: DS_WRITE2_B32 [[BASEADDR]], [[VAL0]], [[VAL1]] offset0:11 offset1:27
 ; SI: S_ENDPGM
 define void @simple_write2_two_val_f32_x2_nonzero_base(float addrspace(1)* %C, float addrspace(1)* %in0, float addrspace(1)* %in1) #0 {
   %tid.x = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -268,7 +268,7 @@ define void @write2_ptr_subreg_arg_two_val_f32(float addrspace(1)* %C, float add
 ; SI-LABEL: @simple_write2_one_val_f64
 ; SI: BUFFER_LOAD_DWORDX2 [[VAL:v\[[0-9]+:[0-9]+\]]],
 ; SI: V_LSHLREV_B32_e32 [[VPTR:v[0-9]+]], 3, v{{[0-9]+}}
-; SI: DS_WRITE2_B64 [[VPTR]], [[VAL]], [[VAL]], 0x0, 0x8 [M0]
+; SI: DS_WRITE2_B64 [[VPTR]], [[VAL]], [[VAL]] offset0:0 offset1:8 [M0]
 ; SI: S_ENDPGM
 define void @simple_write2_one_val_f64(double addrspace(1)* %C, double addrspace(1)* %in) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -285,8 +285,8 @@ define void @simple_write2_one_val_f64(double addrspace(1)* %C, double addrspace
 ; SI-LABEL: @misaligned_simple_write2_one_val_f64
 ; SI-DAG: BUFFER_LOAD_DWORDX2 v{{\[}}[[VAL0:[0-9]+]]:[[VAL1:[0-9]+]]{{\]}}
 ; SI-DAG: V_LSHLREV_B32_e32 [[VPTR:v[0-9]+]], 3, v{{[0-9]+}}
-; SI: DS_WRITE2_B32 [[VPTR]], v[[VAL0]], v[[VAL1]], 0x0, 0x1 [M0]
-; SI: DS_WRITE2_B32 [[VPTR]], v[[VAL0]], v[[VAL1]], 0xe, 0xf [M0]
+; SI: DS_WRITE2_B32 [[VPTR]], v[[VAL0]], v[[VAL1]] offset0:0 offset1:1 [M0]
+; SI: DS_WRITE2_B32 [[VPTR]], v[[VAL0]], v[[VAL1]] offset0:14 offset1:15 [M0]
 ; SI: S_ENDPGM
 define void @misaligned_simple_write2_one_val_f64(double addrspace(1)* %C, double addrspace(1)* %in, double addrspace(3)* %lds) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -304,7 +304,7 @@ define void @misaligned_simple_write2_one_val_f64(double addrspace(1)* %C, doubl
 ; SI-DAG: BUFFER_LOAD_DWORDX2 [[VAL0:v\[[0-9]+:[0-9]+\]]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; SI-DAG: BUFFER_LOAD_DWORDX2 [[VAL1:v\[[0-9]+:[0-9]+\]]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:0x8
 ; SI-DAG: V_LSHLREV_B32_e32 [[VPTR:v[0-9]+]], 3, v{{[0-9]+}}
-; SI: DS_WRITE2_B64 [[VPTR]], [[VAL0]], [[VAL1]], 0x0, 0x8 [M0]
+; SI: DS_WRITE2_B64 [[VPTR]], [[VAL0]], [[VAL1]] offset0:0 offset1:8 [M0]
 ; SI: S_ENDPGM
 define void @simple_write2_two_val_f64(double addrspace(1)* %C, double addrspace(1)* %in) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1

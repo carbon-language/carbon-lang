@@ -42,6 +42,16 @@ void AMDGPUInstPrinter::printU32ImmOperand(const MCInst *MI, unsigned OpNo,
   O << formatHex(MI->getOperand(OpNo).getImm() & 0xffffffff);
 }
 
+void AMDGPUInstPrinter::printU8ImmDecOperand(const MCInst *MI, unsigned OpNo,
+                                             raw_ostream &O) {
+  O << formatDec(MI->getOperand(OpNo).getImm() & 0xff);
+}
+
+void AMDGPUInstPrinter::printU16ImmDecOperand(const MCInst *MI, unsigned OpNo,
+                                              raw_ostream &O) {
+  O << formatDec(MI->getOperand(OpNo).getImm() & 0xffff);
+}
+
 void AMDGPUInstPrinter::printOffen(const MCInst *MI, unsigned OpNo,
                                    raw_ostream &O) {
   if (MI->getOperand(OpNo).getImm())
@@ -66,6 +76,27 @@ void AMDGPUInstPrinter::printMBUFOffset(const MCInst *MI, unsigned OpNo,
     O << " offset:";
     printU16ImmOperand(MI, OpNo, O);
   }
+}
+
+void AMDGPUInstPrinter::printDSOffset(const MCInst *MI, unsigned OpNo,
+                                      raw_ostream &O) {
+  uint16_t Imm = MI->getOperand(OpNo).getImm();
+  if (Imm != 0) {
+    O << " offset:";
+    printU16ImmDecOperand(MI, OpNo, O);
+  }
+}
+
+void AMDGPUInstPrinter::printDSOffset0(const MCInst *MI, unsigned OpNo,
+                                        raw_ostream &O) {
+  O << " offset0:";
+  printU8ImmDecOperand(MI, OpNo, O);
+}
+
+void AMDGPUInstPrinter::printDSOffset1(const MCInst *MI, unsigned OpNo,
+                                        raw_ostream &O) {
+  O << " offset1:";
+  printU8ImmDecOperand(MI, OpNo, O);
 }
 
 void AMDGPUInstPrinter::printGLC(const MCInst *MI, unsigned OpNo,

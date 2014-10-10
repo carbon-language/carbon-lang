@@ -30,9 +30,9 @@
 ; EG-CHECK: LDS_READ_RET {{[*]*}} OQAP, {{PV|T}}[[ADDRR:[0-9]*\.[XYZW]]]
 ; EG-CHECK-NOT: LDS_READ_RET {{[*]*}} OQAP, T[[ADDRR]]
 ; SI: V_ADD_I32_e32 [[SIPTR:v[0-9]+]], 16, v{{[0-9]+}}
-; SI: DS_READ_B32 {{v[0-9]+}}, [[SIPTR]], 0x0
-; CI: DS_READ_B32 {{v[0-9]+}}, [[ADDRR:v[0-9]+]], 0x10
-; CI: DS_READ_B32 {{v[0-9]+}}, [[ADDRR]], 0x0,
+; SI: DS_READ_B32 {{v[0-9]+}}, [[SIPTR]] [M0]
+; CI: DS_READ_B32 {{v[0-9]+}}, [[ADDRR:v[0-9]+]] offset:16 [M0]
+; CI: DS_READ_B32 {{v[0-9]+}}, [[ADDRR]] [M0]
 
 define void @local_memory_two_objects(i32 addrspace(1)* %out) {
 entry:

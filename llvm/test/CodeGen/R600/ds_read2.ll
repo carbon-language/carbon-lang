@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -check-prefix=SI %s
+; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -strict-whitespace -check-prefix=SI %s
 
 ; FIXME: We don't get cases where the address was an SGPR because we
 ; get a copy to the address register for each one.
@@ -7,7 +7,7 @@
  @lds.f64 = addrspace(3) global [512 x double] zeroinitializer, align 8
 
 ; SI-LABEL: @simple_read2_f32
-; SI: DS_READ2_B32 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, v{{[0-9]+}}, 0x0, 0x8
+; SI: DS_READ2_B32 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, v{{[0-9]+}} offset0:0 offset1:8
 ; SI: S_WAITCNT lgkmcnt(0)
 ; SI: V_ADD_F32_e32 [[RESULT:v[0-9]+]], v[[HI_VREG]], v[[LO_VREG]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]]
@@ -26,7 +26,7 @@ define void @simple_read2_f32(float addrspace(1)* %out) #0 {
 }
 
 ; SI-LABEL: @simple_read2_f32_max_offset
-; SI: DS_READ2_B32 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, v{{[0-9]+}}, 0x0, 0xff
+; SI: DS_READ2_B32 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, v{{[0-9]+}} offset0:0 offset1:255
 ; SI: S_WAITCNT lgkmcnt(0)
 ; SI: V_ADD_F32_e32 [[RESULT:v[0-9]+]], v[[HI_VREG]], v[[LO_VREG]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]]
@@ -46,8 +46,8 @@ define void @simple_read2_f32_max_offset(float addrspace(1)* %out) #0 {
 
 ; SI-LABEL: @simple_read2_f32_too_far
 ; SI-NOT DS_READ2_B32
-; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x0
-; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x404
+; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}}
+; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}} offset:1028
 ; SI: S_ENDPGM
 define void @simple_read2_f32_too_far(float addrspace(1)* %out) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -63,8 +63,8 @@ define void @simple_read2_f32_too_far(float addrspace(1)* %out) #0 {
 }
 
 ; SI-LABEL: @simple_read2_f32_x2
-; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR:v[0-9]+]], 0x0, 0x8
-; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR]], 0xb, 0x1b
+; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR:v[0-9]+]] offset0:0 offset1:8
+; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR]] offset0:11 offset1:27
 ; SI: S_ENDPGM
 define void @simple_read2_f32_x2(float addrspace(1)* %out) #0 {
   %tid.x = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -94,9 +94,9 @@ define void @simple_read2_f32_x2(float addrspace(1)* %out) #0 {
 
 ; Make sure there is an instruction between the two sets of reads.
 ; SI-LABEL: @simple_read2_f32_x2_barrier
-; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR:v[0-9]+]], 0x0, 0x8
+; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR:v[0-9]+]] offset0:0 offset1:8
 ; SI: S_BARRIER
-; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR]], 0xb, 0x1b
+; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR]] offset0:11 offset1:27
 ; SI: S_ENDPGM
 define void @simple_read2_f32_x2_barrier(float addrspace(1)* %out) #0 {
   %tid.x = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -130,8 +130,8 @@ define void @simple_read2_f32_x2_barrier(float addrspace(1)* %out) #0 {
 ; element results in only folding the inner pair.
 
 ; SI-LABEL: @simple_read2_f32_x2_nonzero_base
-; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR:v[0-9]+]], 0x2, 0x8
-; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR]], 0xb, 0x1b
+; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR:v[0-9]+]] offset0:2 offset1:8
+; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, [[BASEADDR]] offset0:11 offset1:27
 ; SI: S_ENDPGM
 define void @simple_read2_f32_x2_nonzero_base(float addrspace(1)* %out) #0 {
   %tid.x = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -242,8 +242,8 @@ define void @read2_ptr_is_subreg_f32(float addrspace(1)* %out) #0 {
 
 ; SI-LABEL: @simple_read2_f32_volatile_0
 ; SI-NOT DS_READ2_B32
-; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x0
-; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x20
+; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}}
+; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}} offset:32
 ; SI: S_ENDPGM
 define void @simple_read2_f32_volatile_0(float addrspace(1)* %out) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -260,8 +260,8 @@ define void @simple_read2_f32_volatile_0(float addrspace(1)* %out) #0 {
 
 ; SI-LABEL: @simple_read2_f32_volatile_1
 ; SI-NOT DS_READ2_B32
-; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x0
-; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x20
+; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}}
+; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}} offset:32
 ; SI: S_ENDPGM
 define void @simple_read2_f32_volatile_1(float addrspace(1)* %out) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -313,7 +313,7 @@ define void @misaligned_2_simple_read2_f32(float addrspace(1)* %out, float addrs
 
 ; SI-LABEL: @simple_read2_f64
 ; SI: V_LSHLREV_B32_e32 [[VPTR:v[0-9]+]], 3, {{v[0-9]+}}
-; SI: DS_READ2_B64 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, [[VPTR]], 0x0, 0x8
+; SI: DS_READ2_B64 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, [[VPTR]] offset0:0 offset1:8
 ; SI: V_ADD_F64 [[RESULT:v\[[0-9]+:[0-9]+\]]], v{{\[}}[[LO_VREG]]:{{[0-9]+\]}}, v{{\[[0-9]+}}:[[HI_VREG]]{{\]}}
 ; SI: BUFFER_STORE_DWORDX2 [[RESULT]]
 ; SI: S_ENDPGM
@@ -331,7 +331,7 @@ define void @simple_read2_f64(double addrspace(1)* %out) #0 {
 }
 
 ; SI-LABEL: @simple_read2_f64_max_offset
-; SI: DS_READ2_B64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}}, 0x0, 0xff
+; SI: DS_READ2_B64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}} offset0:0 offset1:255
 ; SI: S_ENDPGM
 define void @simple_read2_f64_max_offset(double addrspace(1)* %out) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -348,8 +348,8 @@ define void @simple_read2_f64_max_offset(double addrspace(1)* %out) #0 {
 
 ; SI-LABEL: @simple_read2_f64_too_far
 ; SI-NOT DS_READ2_B64
-; SI: DS_READ_B64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}}, 0x0
-; SI: DS_READ_B64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}}, 0x808
+; SI: DS_READ_B64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}}
+; SI: DS_READ_B64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}} offset:2056
 ; SI: S_ENDPGM
 define void @simple_read2_f64_too_far(double addrspace(1)* %out) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -366,8 +366,8 @@ define void @simple_read2_f64_too_far(double addrspace(1)* %out) #0 {
 
 ; Alignment only 4
 ; SI-LABEL: @misaligned_read2_f64
-; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}}, 0x0, 0x1
-; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}}, 0xe, 0xf
+; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}} offset0:0 offset1:1
+; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}} offset0:14 offset1:15
 ; SI: S_ENDPGM
 define void @misaligned_read2_f64(double addrspace(1)* %out, double addrspace(3)* %lds) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1

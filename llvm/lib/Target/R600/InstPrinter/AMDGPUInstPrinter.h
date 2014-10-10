@@ -34,11 +34,16 @@ public:
 private:
   void printU8ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printU16ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printU8ImmDecOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printU16ImmDecOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printU32ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printOffen(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printIdxen(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printAddr64(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printMBUFOffset(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printDSOffset(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printDSOffset0(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printDSOffset1(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printGLC(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printSLC(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printTFE(const MCInst *MI, unsigned OpNo, raw_ostream &O);
