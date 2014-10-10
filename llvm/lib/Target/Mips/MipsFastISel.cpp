@@ -578,8 +578,8 @@ bool MipsFastISel::SelectCmp(const Instruction *I) {
   if (RightReg == 0)
     return false;
   unsigned ResultReg = createResultReg(&Mips::GPR32RegClass);
-
-  switch (CI->getPredicate()) {
+  CmpInst::Predicate P = CI->getPredicate();
+  switch (P) {
   default:
     return false;
   case CmpInst::ICMP_EQ: {
@@ -632,6 +632,60 @@ bool MipsFastISel::SelectCmp(const Instruction *I) {
     unsigned TempReg = createResultReg(&Mips::GPR32RegClass);
     EmitInst(Mips::SLT, TempReg).addReg(RightReg).addReg(LeftReg);
     EmitInst(Mips::XORi, ResultReg).addReg(TempReg).addImm(1);
+    break;
+  }
+  case CmpInst::FCMP_OEQ:
+  case CmpInst::FCMP_UNE:
+  case CmpInst::FCMP_OLT:
+  case CmpInst::FCMP_OLE:
+  case CmpInst::FCMP_OGT:
+  case CmpInst::FCMP_OGE: {
+    if (UnsupportedFPMode)
+      return false;
+    bool IsFloat = Left->getType()->isFloatTy();
+    bool IsDouble = Left->getType()->isDoubleTy();
+    if (!IsFloat && !IsDouble)
+      return false;
+    unsigned Opc, CondMovOpc;
+    switch (P) {
+    case CmpInst::FCMP_OEQ:
+      Opc = IsFloat ? Mips::C_EQ_S : Mips::C_EQ_D32;
+      CondMovOpc = Mips::MOVT_I;
+      break;
+    case CmpInst::FCMP_UNE:
+      Opc = IsFloat ? Mips::C_EQ_S : Mips::C_EQ_D32;
+      CondMovOpc = Mips::MOVF_I;
+      break;
+    case CmpInst::FCMP_OLT:
+      Opc = IsFloat ? Mips::C_OLT_S : Mips::C_OLT_D32;
+      CondMovOpc = Mips::MOVT_I;
+      break;
+    case CmpInst::FCMP_OLE:
+      Opc = IsFloat ? Mips::C_OLE_S : Mips::C_OLE_D32;
+      CondMovOpc = Mips::MOVT_I;
+      break;
+    case CmpInst::FCMP_OGT:
+      Opc = IsFloat ? Mips::C_ULE_S : Mips::C_ULE_D32;
+      CondMovOpc = Mips::MOVF_I;
+      break;
+    case CmpInst::FCMP_OGE:
+      Opc = IsFloat ? Mips::C_ULT_S : Mips::C_ULT_D32;
+      CondMovOpc = Mips::MOVF_I;
+      break;
+    default:
+      break;
+    }
+    unsigned RegWithZero = createResultReg(&Mips::GPR32RegClass);
+    unsigned RegWithOne = createResultReg(&Mips::GPR32RegClass);
+    EmitInst(Mips::ADDiu, RegWithZero).addReg(Mips::ZERO).addImm(0);
+    EmitInst(Mips::ADDiu, RegWithOne).addReg(Mips::ZERO).addImm(1);
+    EmitInst(Opc).addReg(LeftReg).addReg(RightReg).addReg(
+        Mips::FCC0, RegState::ImplicitDefine);
+    MachineInstrBuilder MI = EmitInst(CondMovOpc, ResultReg)
+                                 .addReg(RegWithOne)
+                                 .addReg(Mips::FCC0)
+                                 .addReg(RegWithZero, RegState::Implicit);
+    MI->tieOperands(0, 3);
     break;
   }
   }
