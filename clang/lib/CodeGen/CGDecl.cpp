@@ -504,10 +504,12 @@ namespace {
       : Addr(addr), Size(size) {}
 
     void Emit(CodeGenFunction &CGF, Flags flags) override {
-      CGF.EmitLifetimeEnd(Size, Addr);
+      llvm::Value *castAddr = CGF.Builder.CreateBitCast(Addr, CGF.Int8PtrTy);
+      CGF.Builder.CreateCall2(CGF.CGM.getLLVMLifetimeEndFn(),
+                              Size, castAddr)
+        ->setDoesNotThrow();
     }
   };
-
 }
 
 /// EmitAutoVarWithLifetime - Does the setup required for an automatic
@@ -826,7 +828,8 @@ static bool shouldUseMemSetPlusStoresToInitialize(llvm::Constant *Init,
 }
 
 /// Should we use the LLVM lifetime intrinsics for the given local variable?
-static bool shouldUseLifetimeMarkers(CodeGenFunction &CGF, uint64_t Size) {
+static bool shouldUseLifetimeMarkers(CodeGenFunction &CGF, const VarDecl &D,
+                                     unsigned Size) {
   // For now, only in optimized builds.
   if (CGF.CGM.getCodeGenOpts().OptimizationLevel == 0)
     return false;
@@ -838,6 +841,7 @@ static bool shouldUseLifetimeMarkers(CodeGenFunction &CGF, uint64_t Size) {
   return Size > SizeThreshold;
 }
 
+
 /// EmitAutoVarDecl - Emit code and set up an entry in LocalDeclMap for a
 /// variable declaration with auto, register, or no storage class specifier.
 /// These turn into simple stack objects, or GlobalValues depending on target.
@@ -845,27 +849,6 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D) {
   AutoVarEmission emission = EmitAutoVarAlloca(D);
   EmitAutoVarInit(emission);
   EmitAutoVarCleanups(emission);
-}
-
-/// Emit a lifetime.begin marker if some criteria are satisfied.
-/// \return a pointer to the temporary size Value if a marker was emitted, null
-/// otherwise
-llvm::Value *CodeGenFunction::EmitLifetimeStart(uint64_t Size,
-                                                llvm::Value *Addr) {
-  if (!shouldUseLifetimeMarkers(*this, Size))
-    return nullptr;
-
-  llvm::Value *SizeV = llvm::ConstantInt::get(Int64Ty, Size);
-  llvm::Value *CastAddr = Builder.CreateBitCast(Addr, Int8PtrTy);
-  Builder.CreateCall2(CGM.getLLVMLifetimeStartFn(), SizeV, CastAddr)
-      ->setDoesNotThrow();
-  return SizeV;
-}
-
-void CodeGenFunction::EmitLifetimeEnd(llvm::Value *Size, llvm::Value *Addr) {
-  llvm::Value *CastAddr = Builder.CreateBitCast(Addr, Int8PtrTy);
-  Builder.CreateCall2(CGM.getLLVMLifetimeEndFn(), Size, CastAddr)
-      ->setDoesNotThrow();
 }
 
 /// EmitAutoVarAlloca - Emit the alloca and debug information for a
@@ -963,8 +946,13 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
       // Emit a lifetime intrinsic if meaningful.  There's no point
       // in doing this if we don't have a valid insertion point (?).
       uint64_t size = CGM.getDataLayout().getTypeAllocSize(LTy);
-      if (HaveInsertPoint() && EmitLifetimeStart(size, Alloc)) {
-        emission.SizeForLifetimeMarkers = llvm::ConstantInt::get(Int64Ty, size);
+      if (HaveInsertPoint() && shouldUseLifetimeMarkers(*this, D, size)) {
+        llvm::Value *sizeV = llvm::ConstantInt::get(Int64Ty, size);
+
+        emission.SizeForLifetimeMarkers = sizeV;
+        llvm::Value *castAddr = Builder.CreateBitCast(Alloc, Int8PtrTy);
+        Builder.CreateCall2(CGM.getLLVMLifetimeStartFn(), sizeV, castAddr)
+          ->setDoesNotThrow();
       } else {
         assert(!emission.useLifetimeMarkers());
       }
@@ -1404,32 +1392,6 @@ void CodeGenFunction::pushLifetimeExtendedDestroy(
   // end of the full-expression.
   pushCleanupAfterFullExpr<DestroyObject>(
       cleanupKind, addr, type, destroyer, useEHCleanupForArray);
-}
-
-void
-CodeGenFunction::pushLifetimeEndMarker(StorageDuration SD,
-                                       llvm::Value *ReferenceTemporary,
-                                       llvm::Value *SizeForLifeTimeMarkers) {
-  // SizeForLifeTimeMarkers is null in case no corresponding
-  // @llvm.lifetime.start was emitted: there is nothing to do then.
-  if (!SizeForLifeTimeMarkers)
-    return;
-
-  switch (SD) {
-  case SD_FullExpression:
-    pushFullExprCleanup<CallLifetimeEnd>(NormalAndEHCleanup, ReferenceTemporary,
-                                         SizeForLifeTimeMarkers);
-    return;
-  case SD_Automatic:
-    EHStack.pushCleanup<CallLifetimeEnd>(static_cast<CleanupKind>(EHCleanup),
-                                         ReferenceTemporary,
-                                         SizeForLifeTimeMarkers);
-    pushCleanupAfterFullExpr<CallLifetimeEnd>(
-        NormalAndEHCleanup, ReferenceTemporary, SizeForLifeTimeMarkers);
-    return;
-  default:
-    llvm_unreachable("unexpected storage duration for Lifetime markers");
-  }
 }
 
 /// emitDestroy - Immediately perform the destruction of the given

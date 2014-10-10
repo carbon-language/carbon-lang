@@ -174,10 +174,9 @@ void CodeGenFunction::EmitAnyExprToMem(const Expr *E,
   llvm_unreachable("bad evaluation kind");
 }
 
-static void pushTemporaryCleanup(CodeGenFunction &CGF,
-                                 const MaterializeTemporaryExpr *M,
-                                 const Expr *E, llvm::Value *ReferenceTemporary,
-                                 llvm::Value *SizeForLifeTimeMarkers) {
+static void
+pushTemporaryCleanup(CodeGenFunction &CGF, const MaterializeTemporaryExpr *M,
+                     const Expr *E, llvm::Value *ReferenceTemporary) {
   // Objective-C++ ARC:
   //   If we are binding a reference to a temporary that has ownership, we
   //   need to perform retain/release operations on the temporary.
@@ -244,10 +243,6 @@ static void pushTemporaryCleanup(CodeGenFunction &CGF,
     }
   }
 
-  // Call @llvm.lifetime.end marker for the temporary.
-  CGF.pushLifetimeEndMarker(M->getStorageDuration(), ReferenceTemporary,
-                            SizeForLifeTimeMarkers);
-
   CXXDestructorDecl *ReferenceTemporaryDtor = nullptr;
   if (const RecordType *RT =
           E->getType()->getBaseElementTypeUnsafe()->getAs<RecordType>()) {
@@ -302,18 +297,11 @@ static void pushTemporaryCleanup(CodeGenFunction &CGF,
 
 static llvm::Value *
 createReferenceTemporary(CodeGenFunction &CGF,
-                         const MaterializeTemporaryExpr *M, const Expr *Inner,
-                         llvm::Value *&SizeForLifeTimeMarkers) {
-  SizeForLifeTimeMarkers = nullptr;
+                         const MaterializeTemporaryExpr *M, const Expr *Inner) {
   switch (M->getStorageDuration()) {
   case SD_FullExpression:
-  case SD_Automatic: {
-    llvm::Value *RefTemp = CGF.CreateMemTemp(Inner->getType(), "ref.tmp");
-    uint64_t TempSize = CGF.CGM.getDataLayout().getTypeStoreSize(
-        CGF.ConvertTypeForMem(Inner->getType()));
-    SizeForLifeTimeMarkers = CGF.EmitLifetimeStart(TempSize, RefTemp);
-    return RefTemp;
-  }
+  case SD_Automatic:
+    return CGF.CreateMemTemp(Inner->getType(), "ref.tmp");
 
   case SD_Thread:
   case SD_Static:
@@ -334,8 +322,7 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
       M->getType().getObjCLifetime() != Qualifiers::OCL_None &&
       M->getType().getObjCLifetime() != Qualifiers::OCL_ExplicitNone) {
     // FIXME: Fold this into the general case below.
-    llvm::Value *ObjectSize;
-    llvm::Value *Object = createReferenceTemporary(*this, M, E, ObjectSize);
+    llvm::Value *Object = createReferenceTemporary(*this, M, E);
     LValue RefTempDst = MakeAddrLValue(Object, M->getType());
 
     if (auto *Var = dyn_cast<llvm::GlobalVariable>(Object)) {
@@ -347,7 +334,7 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
 
     EmitScalarInit(E, M->getExtendingDecl(), RefTempDst, false);
 
-    pushTemporaryCleanup(*this, M, E, Object, ObjectSize);
+    pushTemporaryCleanup(*this, M, E, Object);
     return RefTempDst;
   }
 
@@ -365,10 +352,8 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
     }
   }
 
-  // Create and initialize the reference temporary and get the temporary size
-  llvm::Value *ObjectSize;
-  llvm::Value *Object = createReferenceTemporary(*this, M, E, ObjectSize);
-
+  // Create and initialize the reference temporary.
+  llvm::Value *Object = createReferenceTemporary(*this, M, E);
   if (auto *Var = dyn_cast<llvm::GlobalVariable>(Object)) {
     // If the temporary is a global and has a constant initializer, we may
     // have already initialized it.
@@ -379,8 +364,7 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
   } else {
     EmitAnyExprToMem(E, Object, Qualifiers(), /*IsInit*/true);
   }
-
-  pushTemporaryCleanup(*this, M, E, Object, ObjectSize);
+  pushTemporaryCleanup(*this, M, E, Object);
 
   // Perform derived-to-base casts and/or field accesses, to get from the
   // temporary object we created (and, potentially, for which we extended

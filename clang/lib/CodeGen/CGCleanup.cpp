@@ -387,9 +387,14 @@ void CodeGenFunction::PopCleanupBlocks(EHScopeStack::stable_iterator Old) {
   }
 }
 
-/// Move our deferred cleanups onto the EH stack.
+/// Pops cleanup blocks until the given savepoint is reached, then add the
+/// cleanups from the given savepoint in the lifetime-extended cleanups stack.
 void
-CodeGenFunction::MoveDeferedCleanups(size_t OldLifetimeExtendedSize) {
+CodeGenFunction::PopCleanupBlocks(EHScopeStack::stable_iterator Old,
+                                  size_t OldLifetimeExtendedSize) {
+  PopCleanupBlocks(Old);
+
+  // Move our deferred cleanups onto the EH stack.
   for (size_t I = OldLifetimeExtendedSize,
               E = LifetimeExtendedCleanupStack.size(); I != E; /**/) {
     // Alignment should be guaranteed by the vptrs in the individual cleanups.
@@ -407,17 +412,6 @@ CodeGenFunction::MoveDeferedCleanups(size_t OldLifetimeExtendedSize) {
     I += Header.getSize();
   }
   LifetimeExtendedCleanupStack.resize(OldLifetimeExtendedSize);
-}
-
-/// Pops cleanup blocks until the given savepoint is reached, then add the
-/// cleanups from the given savepoint in the lifetime-extended cleanups stack.
-void
-CodeGenFunction::PopCleanupBlocks(EHScopeStack::stable_iterator Old,
-                                  size_t OldLifetimeExtendedSize) {
-  PopCleanupBlocks(Old);
-
-  // Move our deferred cleanups onto the EH stack.
-  MoveDeferedCleanups(OldLifetimeExtendedSize);
 }
 
 static llvm::BasicBlock *CreateNormalEntry(CodeGenFunction &CGF,

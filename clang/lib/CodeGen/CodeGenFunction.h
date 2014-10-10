@@ -445,23 +445,6 @@ public:
     new (Buffer + sizeof(Header)) T(a0, a1, a2, a3);
   }
 
-  /// \brief Queue a cleanup to be pushed after finishing the current
-  /// full-expression.
-  template <class T, class A0, class A1>
-  void pushCleanupAfterFullExpr(CleanupKind Kind, A0 a0, A1 a1) {
-    assert(!isInConditionalBranch() && "can't defer conditional cleanup");
-
-    LifetimeExtendedCleanupHeader Header = { sizeof(T), Kind };
-
-    size_t OldSize = LifetimeExtendedCleanupStack.size();
-    LifetimeExtendedCleanupStack.resize(
-        LifetimeExtendedCleanupStack.size() + sizeof(Header) + Header.Size);
-
-    char *Buffer = &LifetimeExtendedCleanupStack[OldSize];
-    new (Buffer) LifetimeExtendedCleanupHeader(Header);
-    new (Buffer + sizeof(Header)) T(a0, a1);
-  }
-
   /// Set up the last cleaup that was pushed as a conditional
   /// full-expression cleanup.
   void initFullExprCleanup();
@@ -613,10 +596,6 @@ public:
   /// the given position to the stack.
   void PopCleanupBlocks(EHScopeStack::stable_iterator OldCleanupStackSize,
                         size_t OldLifetimeExtendedStackSize);
-
-  /// \brief Moves deferred cleanups from lifetime-extended variables from
-  /// the given position on top of the stack
-  void MoveDeferedCleanups(size_t OldLifetimeExtendedSize);
 
   void ResolveBranchFixups(llvm::BasicBlock *Target);
 
@@ -1134,9 +1113,6 @@ public:
   void pushLifetimeExtendedDestroy(CleanupKind kind, llvm::Value *addr,
                                    QualType type, Destroyer *destroyer,
                                    bool useEHCleanupForArray);
-  void pushLifetimeEndMarker(StorageDuration SD,
-                             llvm::Value *ReferenceTemporary,
-                             llvm::Value *SizeForLifeTimeMarkers);
   void pushStackRestore(CleanupKind kind, llvm::Value *SPMem);
   void emitDestroy(llvm::Value *addr, QualType type, Destroyer *destroyer,
                    bool useEHCleanupForArray);
@@ -1739,9 +1715,6 @@ public:
 
   void EmitCXXTemporary(const CXXTemporary *Temporary, QualType TempType,
                         llvm::Value *Ptr);
-
-  llvm::Value *EmitLifetimeStart(uint64_t Size, llvm::Value *Addr);
-  void EmitLifetimeEnd(llvm::Value *Size, llvm::Value *Addr);
 
   llvm::Value *EmitCXXNewExpr(const CXXNewExpr *E);
   void EmitCXXDeleteExpr(const CXXDeleteExpr *E);

@@ -229,11 +229,6 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
       DI->EmitLocation(Builder, EndLoc);
   }
 
-  // Some top level lifetime extended variables may still need
-  // to have their cleanups called.
-  if (!LifetimeExtendedCleanupStack.empty())
-    MoveDeferedCleanups(0);
-
   // Pop any cleanups that might have been associated with the
   // parameters.  Do this in whatever block we're currently in; it's
   // important to do this before we enter the return block or return
