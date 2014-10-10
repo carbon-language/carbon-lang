@@ -65,16 +65,6 @@ public:
     FindProcesses (const lldb_private::ProcessInstanceInfoMatch &match_info,
                    lldb_private::ProcessInstanceInfoList &process_infos);
     
-    virtual lldb_private::Error
-    LaunchProcess (lldb_private::ProcessLaunchInfo &launch_info);
-
-    virtual lldb::ProcessSP
-    Attach (lldb_private::ProcessAttachInfo &attach_info,
-            lldb_private::Debugger &debugger,
-            lldb_private::Target *target,       // Can be NULL, if NULL create a new target, else use existing one
-            lldb_private::Listener &listener, 
-            lldb_private::Error &error);
-
     virtual bool
     ModuleIsExcludedForNonModuleSpecificSearches (lldb_private::Target &target, const lldb::ModuleSP &module_sp);
     

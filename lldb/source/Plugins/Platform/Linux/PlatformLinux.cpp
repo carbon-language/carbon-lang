@@ -21,16 +21,19 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Core/Error.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/State.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/HostInfo.h"
+#include "lldb/Interpreter/OptionValueProperties.h"
+#include "lldb/Interpreter/Property.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Process.h"
 
@@ -47,18 +50,30 @@ static uint32_t g_initialize_count = 0;
 /// Code to handle the PlatformLinux settings
 //------------------------------------------------------------------
 
-static PropertyDefinition
-g_properties[] =
+namespace
 {
-    { "use-llgs-for-local" , OptionValue::eTypeBoolean, true, false, NULL, NULL, "Control whether the platform uses llgs for local debug sessions." },
-    {  NULL        , OptionValue::eTypeInvalid, false, 0  , NULL, NULL, NULL  }
-};
+    enum
+    {
+        ePropertyUseLlgsForLocal = 0,
+    };
 
-enum {
-    ePropertyUseLlgsForLocal = 0,
-};
+    const PropertyDefinition*
+    GetStaticPropertyDefinitions ()
+    {
+        static PropertyDefinition
+        g_properties[] =
+        {
+            { "use-llgs-for-local" , OptionValue::eTypeBoolean, true, false, NULL, NULL, "Control whether the platform uses llgs for local debug sessions." },
+            {  NULL        , OptionValue::eTypeInvalid, false, 0  , NULL, NULL, NULL  }
+        };
 
+        // Allow environment variable to force using llgs-local.
+        if (getenv("PLATFORM_LINUX_FORCE_LLGS_LOCAL"))
+            g_properties[ePropertyUseLlgsForLocal].default_uint_value = true;
 
+        return g_properties;
+    }
+}
 
 class PlatformLinuxProperties : public Properties
 {
@@ -74,8 +89,8 @@ public:
     PlatformLinuxProperties() :
     Properties ()
     {
-        m_collection_sp.reset (new OptionValueProperties(GetSettingName()));
-        m_collection_sp->Initialize(g_properties);
+        m_collection_sp.reset (new OptionValueProperties(GetSettingName ()));
+        m_collection_sp->Initialize (GetStaticPropertyDefinitions ());
     }
 
     virtual
@@ -87,7 +102,7 @@ public:
     GetUseLlgsForLocal() const
     {
         const uint32_t idx = ePropertyUseLlgsForLocal;
-        return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+        return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, GetStaticPropertyDefinitions()[idx].default_uint_value != 0);
     }
 };
 
@@ -526,115 +541,249 @@ PlatformLinux::GetSoftwareBreakpointTrapOpcode (Target &target,
     return 0;
 }
 
-Error
-PlatformLinux::LaunchProcess (ProcessLaunchInfo &launch_info)
+int32_t
+PlatformLinux::GetResumeCountForLaunchInfo (ProcessLaunchInfo &launch_info)
 {
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
-    Error error;
-    
-    if (IsHost())
-    {
-        if (log)
-            log->Printf ("PlatformLinux::%s() launching process as host", __FUNCTION__);
+    int32_t resume_count = 0;
 
-        if (launch_info.GetFlags().Test (eLaunchFlagLaunchInShell))
-        {
-            const bool is_localhost = true;
-            const bool will_debug = launch_info.GetFlags().Test(eLaunchFlagDebug);
-            const bool first_arg_is_full_shell_command = false;
-            uint32_t num_resumes = GetResumeCountForLaunchInfo (launch_info);
-            if (!launch_info.ConvertArgumentsForLaunchingInShell (error,
-                                                                  is_localhost,
-                                                                  will_debug,
-                                                                  first_arg_is_full_shell_command,
-                                                                  num_resumes))
-                return error;
-        }
-        error = Platform::LaunchProcess (launch_info);
-    }
-    else
+    // Always resume past the initial stop when we use eLaunchFlagDebug
+    if (launch_info.GetFlags ().Test (eLaunchFlagDebug))
     {
-        if (m_remote_platform_sp)
-        {
-            if (log)
-                log->Printf ("PlatformLinux::%s() attempting to launch remote process", __FUNCTION__);
-            error = m_remote_platform_sp->LaunchProcess (launch_info);
-        }
-        else
-        {
-            if (log)
-                log->Printf ("PlatformLinux::%s() attempted to launch process but is not the host and no remote platform set", __FUNCTION__);
-            error.SetErrorString ("the platform is not currently connected");
-        }
+        // Resume past the stop for the final exec into the true inferior.
+        ++resume_count;
     }
-    return error;
+
+    // If we're not launching a shell, we're done.
+    const char *shell = launch_info.GetShell();
+    if (shell == NULL)
+        return resume_count;
+
+    // We're in a shell, so for sure we have to resume past the shell exec.
+    ++resume_count;
+
+    // Figure out what shell we're planning on using.
+    const char *shell_name = strrchr (shell, '/');
+    if (shell_name == NULL)
+        shell_name = shell;
+    else
+        shell_name++;
+
+    if (strcmp (shell_name, "csh") == 0
+             || strcmp (shell_name, "tcsh") == 0
+             || strcmp (shell_name, "zsh") == 0
+             || strcmp (shell_name, "sh") == 0)
+    {
+        // These shells seem to re-exec themselves.  Add another resume.
+        ++resume_count;
+    }
+
+    return resume_count;
 }
 
-// Linux processes can not be launched by spawning and attaching.
+bool
+PlatformLinux::UseLlgsForLocalDebugging ()
+{
+    PlatformLinuxPropertiesSP properties_sp = GetGlobalProperties ();
+    assert (properties_sp && "global properties shared pointer is null");
+    return properties_sp ? properties_sp->GetUseLlgsForLocal () : false;
+}
+
 bool
 PlatformLinux::CanDebugProcess ()
 {
-    // If we're the host, launch via normal host setup.
     if (IsHost ())
-        return false;
-
-    // If we're connected, we can debug.
-    return IsConnected ();
+    {
+        // The platform only does local debugging (i.e. uses llgs) when the setting indicates we do that.
+        // Otherwise, we'll use ProcessLinux/ProcessPOSIX to handle with ProcessMonitor.
+        return UseLlgsForLocalDebugging ();
+    }
+    else
+    {
+        // If we're connected, we can debug.
+        return IsConnected ();
+    }
 }
 
+// For local debugging, Linux will override the debug logic to use llgs-launch rather than
+// lldb-launch, llgs-attach.  This differs from current lldb-launch, debugserver-attach
+// approach on MacOSX.
 lldb::ProcessSP
-PlatformLinux::Attach(ProcessAttachInfo &attach_info,
-                      Debugger &debugger,
-                      Target *target,
-                      Listener &listener,
-                      Error &error)
+PlatformLinux::DebugProcess (ProcessLaunchInfo &launch_info,
+                        Debugger &debugger,
+                        Target *target,       // Can be NULL, if NULL create a new target, else use existing one
+                        Listener &listener,
+                        Error &error)
 {
-    lldb::ProcessSP process_sp;
-    if (IsHost())
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
+    if (log)
+        log->Printf ("PlatformLinux::%s entered (target %p)", __FUNCTION__, static_cast<void*>(target));
+
+    // If we're a remote host, use standard behavior from parent class.
+    if (!IsHost ())
+        return PlatformPOSIX::DebugProcess (launch_info, debugger, target, listener, error);
+
+    //
+    // For local debugging, we'll insist on having ProcessGDBRemote create the process.
+    //
+
+    ProcessSP process_sp;
+
+    // Ensure we're using llgs for local debugging.
+    if (!UseLlgsForLocalDebugging ())
     {
-        if (target == NULL)
-        {
-            TargetSP new_target_sp;
-            ArchSpec emptyArchSpec;
+        assert (false && "we're trying to debug a local process but platform.plugin.linux.use-llgs-for-local is false, should never get here");
+        error.SetErrorString ("attempted to start gdb-remote-based debugging for local process but platform.plugin.linux.use-llgs-for-local is false");
+        return process_sp;
+    }
 
-            error = debugger.GetTargetList().CreateTarget (debugger,
-                                                           NULL,
-                                                           emptyArchSpec,
-                                                           false,
-                                                           m_remote_platform_sp,
-                                                           new_target_sp);
-            target = new_target_sp.get();
+    // Make sure we stop at the entry point
+    launch_info.GetFlags ().Set (eLaunchFlagDebug);
+
+    // We always launch the process we are going to debug in a separate process
+    // group, since then we can handle ^C interrupts ourselves w/o having to worry
+    // about the target getting them as well.
+    launch_info.SetLaunchInSeparateProcessGroup(true);
+
+    // Ensure we have a target.
+    if (target == nullptr)
+    {
+        if (log)
+            log->Printf ("PlatformLinux::%s creating new target", __FUNCTION__);
+
+        TargetSP new_target_sp;
+        error = debugger.GetTargetList().CreateTarget (debugger,
+                                                       nullptr,
+                                                       nullptr,
+                                                       false,
+                                                       nullptr,
+                                                       new_target_sp);
+        if (error.Fail ())
+        {
+            if (log)
+                log->Printf ("PlatformLinux::%s failed to create new target: %s", __FUNCTION__, error.AsCString ());
+            return process_sp;
         }
-        else
-            error.Clear();
 
-        if (target && error.Success())
+        target = new_target_sp.get();
+        if (!target)
         {
-            debugger.GetTargetList().SetSelectedTarget(target);
-
-            process_sp = target->CreateProcess (listener,
-                                                attach_info.GetProcessPluginName(),
-                                                NULL);
-
-            if (process_sp)
-                error = process_sp->Attach (attach_info);
+            error.SetErrorString ("CreateTarget() returned nullptr");
+            if (log)
+                log->Printf ("PlatformLinux::%s failed: %s", __FUNCTION__, error.AsCString ());
+            return process_sp;
         }
     }
     else
     {
-        if (m_remote_platform_sp)
-            process_sp = m_remote_platform_sp->Attach (attach_info, debugger, target, listener, error);
-        else
-            error.SetErrorString ("the platform is not currently connected");
+        if (log)
+            log->Printf ("PlatformLinux::%s using provided target", __FUNCTION__);
     }
+
+    // Mark target as currently selected target.
+    debugger.GetTargetList().SetSelectedTarget(target);
+
+    // Now create the gdb-remote process.
+    if (log)
+        log->Printf ("PlatformLinux::%s having target create process with gdb-remote plugin", __FUNCTION__);
+    process_sp = target->CreateProcess (listener, "gdb-remote", nullptr);
+
+    if (!process_sp)
+    {
+        error.SetErrorString ("CreateProcess() failed for gdb-remote process");
+        if (log)
+            log->Printf ("PlatformLinux::%s failed: %s", __FUNCTION__, error.AsCString ());
+        return process_sp;
+    }
+    else
+    {
+        if (log)
+            log->Printf ("PlatformLinux::%s successfully created process", __FUNCTION__);
+    }
+
+    // Set the unix signals properly.
+    process_sp->SetUnixSignals (Host::GetUnixSignals ());
+
+    // Adjust launch for a hijacker.
+    ListenerSP listener_sp;
+    if (!launch_info.GetHijackListener ())
+    {
+        if (log)
+            log->Printf ("PlatformLinux::%s setting up hijacker", __FUNCTION__);
+
+        listener_sp.reset (new Listener("lldb.PlatformLinux.DebugProcess.hijack"));
+        launch_info.SetHijackListener (listener_sp);
+        process_sp->HijackProcessEvents (listener_sp.get ());
+    }
+
+    // Log file actions.
+    if (log)
+    {
+        log->Printf ("PlatformLinux::%s launching process with the following file actions:", __FUNCTION__);
+
+        StreamString stream;
+        size_t i = 0;
+        const FileAction *file_action;
+        while ((file_action = launch_info.GetFileActionAtIndex (i++)) != nullptr)
+        {
+            file_action->Dump (stream);
+            log->PutCString (stream.GetString().c_str ());
+            stream.Clear();
+        }
+    }
+
+    // Do the launch.
+    error = process_sp->Launch(launch_info);
+    if (error.Success ())
+    {
+        // Handle the hijacking of process events.
+        if (listener_sp)
+        {
+            const StateType state = process_sp->WaitForProcessToStop (NULL, NULL, false, listener_sp.get());
+            process_sp->RestoreProcessEvents();
+
+            if (state == eStateStopped)
+            {
+                if (log)
+                    log->Printf ("PlatformLinux::%s pid %" PRIu64 " state %s\n",
+                                 __FUNCTION__, process_sp->GetID (), StateAsCString (state));
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("PlatformLinux::%s pid %" PRIu64 " state is not stopped - %s\n",
+                                 __FUNCTION__, process_sp->GetID (), StateAsCString (state));
+            }
+        }
+
+        // Hook up process PTY if we have one (which we should for local debugging with llgs).
+        int pty_fd = launch_info.GetPTY().ReleaseMasterFileDescriptor();
+        if (pty_fd != lldb_utility::PseudoTerminal::invalid_fd)
+        {
+            process_sp->SetSTDIOFileDescriptor(pty_fd);
+            if (log)
+                log->Printf ("PlatformLinux::%s pid %" PRIu64 " hooked up STDIO pty to process", __FUNCTION__, process_sp->GetID ());
+        }
+        else
+        {
+            if (log)
+                log->Printf ("PlatformLinux::%s pid %" PRIu64 " not using process STDIO pty", __FUNCTION__, process_sp->GetID ());
+        }
+    }
+    else
+    {
+        if (log)
+            log->Printf ("PlatformLinux::%s process launch failed: %s", __FUNCTION__, error.AsCString ());
+        // FIXME figure out appropriate cleanup here.  Do we delete the target? Do we delete the process?  Does our caller do that?
+    }
+
     return process_sp;
 }
 
 void
 PlatformLinux::CalculateTrapHandlerSymbolNames ()
-{   
+{
     m_trap_handlers.push_back (ConstString ("_sigtramp"));
-}   
+}
 
 Error
 PlatformLinux::LaunchNativeProcess (

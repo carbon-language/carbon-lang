@@ -56,6 +56,9 @@ class FileAction
 
     const char *GetPath() const;
 
+    void
+    Dump (Stream &stream) const;
+
   protected:
     Action m_action;    // The action for this file
     int m_fd;           // An existing file descriptor

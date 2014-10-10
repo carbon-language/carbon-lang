@@ -13,6 +13,7 @@
 #include "lldb/Host/Windows/win32.h" // For O_NOCTTY
 #endif
 
+#include "lldb/Core/Stream.h"
 #include "lldb/Target/FileAction.h"
 
 using namespace lldb_private;
@@ -92,4 +93,25 @@ FileAction::Duplicate(int fd, int dup_fd)
         m_arg = dup_fd;
     }
     return m_fd >= 0;
+}
+
+void
+FileAction::Dump(Stream &stream) const
+{
+    stream.PutCString("file action: ");
+    switch (m_action)
+    {
+        case eFileActionClose:
+            stream.Printf("close fd %d", m_fd);
+            break;
+        case eFileActionDuplicate:
+            stream.Printf("duplicate fd %d to %d", m_fd, m_arg);
+            break;
+        case eFileActionNone:
+            stream.PutCString("no action");
+            break;
+        case eFileActionOpen:
+            stream.Printf("open fd %d with '%s', OFLAGS = 0x%x", m_fd, m_path.c_str(), m_arg);
+            break;
+    }
 }

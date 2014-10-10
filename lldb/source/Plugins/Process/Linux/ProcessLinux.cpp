@@ -20,6 +20,7 @@
 #include "lldb/Target/Target.h"
 
 #include "ProcessLinux.h"
+#include "Plugins/Platform/Linux/PlatformLinux.h"
 #include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 #include "Plugins/Process/Utility/InferiorCallPOSIX.h"
 #include "Plugins/Process/Utility/LinuxSignals.h"
@@ -227,6 +228,11 @@ ProcessLinux::CanDebug(Target &target, bool plugin_specified_by_name)
 
     /* If core file is specified then let elf-core plugin handle it */
     if (m_core_file)
+        return false;
+
+    // If we're using llgs for local debugging, we must not say that this process
+    // is used for debugging.
+    if (PlatformLinux::UseLlgsForLocalDebugging ())
         return false;
 
     return ProcessPOSIX::CanDebug(target, plugin_specified_by_name);

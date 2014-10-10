@@ -89,15 +89,18 @@ namespace lldb_private {
         GetSoftwareBreakpointTrapOpcode (Target &target, 
                                          BreakpointSite *bp_site) override;
 
-        lldb_private::Error
-        LaunchProcess (lldb_private::ProcessLaunchInfo &launch_info) override;
-
-        lldb::ProcessSP
-        Attach(ProcessAttachInfo &attach_info, Debugger &debugger,
-               Target *target, Listener &listener, Error &error) override;
+        int32_t
+        GetResumeCountForLaunchInfo (ProcessLaunchInfo &launch_info) override;
 
         bool
         CanDebugProcess () override;
+
+        lldb::ProcessSP
+        DebugProcess (ProcessLaunchInfo &launch_info,
+                      Debugger &debugger,
+                      Target *target,
+                      Listener &listener,
+                      Error &error) override;
 
         void
         CalculateTrapHandlerSymbolNames () override;
@@ -112,6 +115,9 @@ namespace lldb_private {
         AttachNativeProcess (lldb::pid_t pid,
                              lldb_private::NativeProcessProtocol::NativeDelegate &native_delegate,
                              NativeProcessProtocolSP &process_sp) override;
+
+        static bool
+        UseLlgsForLocalDebugging ();
 
     private:
         DISALLOW_COPY_AND_ASSIGN (PlatformLinux);
