@@ -345,9 +345,7 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
 
   // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
   // was inlined from another compile unit.
-  DwarfCompileUnit &SPCU = *SPMap[SP];
-
-  AbsDef = &SPCU.constructAbstractSubprogramScopeDIE(Scope);
+  AbsDef = &SPMap[SP]->constructAbstractSubprogramScopeDIE(Scope);
 }
 
 void DwarfDebug::addGnuPubAttributes(DwarfUnit &U, DIE &D) const {
@@ -515,24 +513,8 @@ void DwarfDebug::finishVariableDefinitions() {
 }
 
 void DwarfDebug::finishSubprogramDefinitions() {
-  const Module *M = MMI->getModule();
-
-  NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
-  for (MDNode *N : CU_Nodes->operands()) {
-    DICompileUnit TheCU(N);
-    // Construct subprogram DIE and add variables DIEs.
-    DwarfCompileUnit *SPCU =
-        static_cast<DwarfCompileUnit *>(CUMap.lookup(TheCU));
-    DIArray Subprograms = TheCU.getSubprograms();
-    for (unsigned i = 0, e = Subprograms.getNumElements(); i != e; ++i) {
-      DISubprogram SP(Subprograms.getElement(i));
-      // Perhaps the subprogram is in another CU (such as due to comdat
-      // folding, etc), in which case ignore it here.
-      if (SPMap[SP] != SPCU)
-        continue;
-      SPCU->finishSubprogramDefinition(SP);
-    }
-  }
+  for (const auto &P : SPMap)
+    P.second->finishSubprogramDefinition(DISubprogram(P.first));
 }
 
 

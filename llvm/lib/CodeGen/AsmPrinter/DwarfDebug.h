@@ -174,7 +174,7 @@ class DwarfDebug : public AsmPrinterHandler {
   MapVector<const MDNode *, DwarfCompileUnit *> CUMap;
 
   // Maps subprogram MDNode with its corresponding DwarfCompileUnit.
-  DenseMap<const MDNode *, DwarfCompileUnit *> SPMap;
+  MapVector<const MDNode *, DwarfCompileUnit *> SPMap;
 
   // Maps a CU DIE with its corresponding DwarfCompileUnit.
   DenseMap<const DIE *, DwarfCompileUnit *> CUDieMap;
