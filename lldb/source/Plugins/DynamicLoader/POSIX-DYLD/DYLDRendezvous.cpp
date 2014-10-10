@@ -203,7 +203,7 @@ DYLDRendezvous::UpdateSOEntries()
     // state and take a snapshot of the currently loaded images.
     if (m_current.state == eAdd || m_current.state == eDelete)
     {
-        assert(m_previous.state == eConsistent);
+        assert(m_previous.state == eConsistent || (m_previous.state == eAdd && m_current.state == eDelete));
         m_soentries.clear();
         m_added_soentries.clear();
         m_removed_soentries.clear();
