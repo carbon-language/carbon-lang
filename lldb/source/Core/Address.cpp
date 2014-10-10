@@ -465,6 +465,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
 
     case DumpStyleResolvedDescription:
     case DumpStyleResolvedDescriptionNoModule:
+    case DumpStyleResolvedDescriptionNoFunctionArguments:
         if (IsSectionOffset())
         {
             uint32_t pointer_size = 4;
@@ -550,7 +551,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
 #endif
                                     Address cstr_addr(*this);
                                     cstr_addr.SetOffset(cstr_addr.GetOffset() + pointer_size);
-                                    func_sc.DumpStopContext(s, exe_scope, so_addr, true, true, false);
+                                    func_sc.DumpStopContext(s, exe_scope, so_addr, true, true, false, true);
                                     if (ReadAddress (exe_scope, cstr_addr, pointer_size, so_addr))
                                     {
 #if VERBOSE_OUTPUT
@@ -633,7 +634,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                                     if (pointer_sc.function || pointer_sc.symbol)
                                     {
                                         s->PutCString(": ");
-                                        pointer_sc.DumpStopContext(s, exe_scope, so_addr, true, false, false);
+                                        pointer_sc.DumpStopContext(s, exe_scope, so_addr, true, false, false, true);
                                     }
                                 }
                             }
@@ -658,6 +659,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                         const bool show_module = (style == DumpStyleResolvedDescription);
                         const bool show_fullpaths = false; 
                         const bool show_inlined_frames = true;
+                        const bool show_function_arguments = (style != DumpStyleResolvedDescriptionNoFunctionArguments);
                         if (sc.function == NULL && sc.symbol != NULL)
                         {
                             // If we have just a symbol make sure it is in the right section
@@ -679,7 +681,8 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                                                 *this, 
                                                 show_fullpaths, 
                                                 show_module, 
-                                                show_inlined_frames);
+                                                show_inlined_frames,
+                                                show_function_arguments);
                         }
                         else
                         {

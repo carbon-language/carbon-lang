@@ -176,8 +176,11 @@ class AssertingInferiorTestCase(TestBase):
             # of the function and in the next function. We also can't back the PC up
             # because we don't know how much to back it up by on targets with opcodes
             # that have differing sizes
-            self.expect("disassemble -a %s" % frame.GetPC(),
-                substrs = ['->'])
+            pc_backup_offset = 1
+            if frame.GetFrameID() == 0:
+                pc_backup_offset = 0
+            self.expect("disassemble -a %s" % (frame.GetPC() - pc_backup_offset),
+                    substrs = ['<%s>:' % frame.GetFunctionName()])
 
     def check_expr_in_main(self, thread):
         depth = thread.GetNumFrames()

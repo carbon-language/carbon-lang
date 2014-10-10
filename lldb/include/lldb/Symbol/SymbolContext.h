@@ -168,7 +168,8 @@ public:
                      const Address &so_addr,
                      bool show_fullpaths,
                      bool show_module,
-                     bool show_inlined_frames) const;
+                     bool show_inlined_frames,
+                     bool show_function_arguments) const;
 
     //------------------------------------------------------------------
     /// Get the address range contained within a symbol context.

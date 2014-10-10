@@ -37,7 +37,8 @@ public:
     enum NamePreference
     {
         ePreferMangled,
-        ePreferDemangled
+        ePreferDemangled,
+        ePreferDemangledWithoutArguments
     };
 
     //----------------------------------------------------------------------

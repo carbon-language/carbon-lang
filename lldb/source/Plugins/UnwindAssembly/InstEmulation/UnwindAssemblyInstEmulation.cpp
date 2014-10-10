@@ -146,7 +146,8 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                         if (log && log->GetVerbose ())
                         {
                             StreamString strm;
-                            inst->Dump(&strm, inst_list.GetMaxOpcocdeByteSize (), show_address, show_bytes, NULL);
+                            const char *disassemble_format = "${frame.pc}: ";
+                            inst->Dump(&strm, inst_list.GetMaxOpcocdeByteSize (), show_address, show_bytes, NULL, NULL, NULL, disassemble_format);
                             log->PutCString (strm.GetData());
                         }
 

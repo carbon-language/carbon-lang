@@ -128,7 +128,8 @@ SymbolContext::DumpStopContext
     const Address &addr,
     bool show_fullpaths,
     bool show_module,
-    bool show_inlined_frames
+    bool show_inlined_frames,
+    bool show_function_arguments
 ) const
 {
     bool dumped_something = false;
@@ -146,7 +147,12 @@ SymbolContext::DumpStopContext
     {
         SymbolContext inline_parent_sc;
         Address inline_parent_addr;
-        if (function->GetMangled().GetName())
+        if (show_function_arguments == false && function->GetMangled().GetName(Mangled::ePreferDemangledWithoutArguments))
+        {
+            dumped_something = true;
+            function->GetMangled().GetName(Mangled::ePreferDemangledWithoutArguments).Dump(s);
+        }
+        else if (function->GetMangled().GetName())
         {
             dumped_something = true;
             function->GetMangled().GetName().Dump(s);
@@ -188,7 +194,7 @@ SymbolContext::DumpStopContext
             {
                 s->EOL();
                 s->Indent();
-                return inline_parent_sc.DumpStopContext (s, exe_scope, inline_parent_addr, show_fullpaths, show_module, show_inlined_frames);
+                return inline_parent_sc.DumpStopContext (s, exe_scope, inline_parent_addr, show_fullpaths, show_module, show_inlined_frames, show_function_arguments);
             }
         }
         else

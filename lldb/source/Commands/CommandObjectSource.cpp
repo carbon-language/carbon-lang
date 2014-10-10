@@ -689,12 +689,14 @@ protected:
                     bool show_fullpaths = true;
                     bool show_module = true;
                     bool show_inlined_frames = true;
+                    const bool show_function_arguments = true;
                     sc.DumpStopContext(&result.GetOutputStream(),
                                        m_exe_ctx.GetBestExecutionContextScope(),
                                        sc.line_entry.range.GetBaseAddress(),
                                        show_fullpaths,
                                        show_module,
-                                       show_inlined_frames);
+                                       show_inlined_frames,
+                                       show_function_arguments);
                     result.GetOutputStream().EOL();
 
                     if (m_options.num_lines == 0)

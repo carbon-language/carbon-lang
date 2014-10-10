@@ -832,11 +832,19 @@ const char *DisassemblerLLVMC::SymbolLookup (uint64_t value,
 
                 value_so_addr.Dump (&ss,
                                     target,
-                                    Address::DumpStyleResolvedDescriptionNoModule,
+                                    Address::DumpStyleResolvedDescriptionNoFunctionArguments,
                                     Address::DumpStyleSectionNameOffset);
 
                 if (!ss.GetString().empty())
                 {
+                    // If Address::Dump returned a multi-line description, most commonly seen when we
+                    // have multiple levels of inlined functions at an address, only show the first line.
+                    std::string &str(ss.GetString());
+                    size_t first_eol_char = str.find_first_of ("\r\n");
+                    if (first_eol_char != std::string::npos)
+                    {
+                        str.erase (first_eol_char);
+                    }
                     m_inst->AppendComment(ss.GetString());
                 }
             }

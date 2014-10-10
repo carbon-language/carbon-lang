@@ -150,8 +150,8 @@ class AbbreviationsTestCase(TestBase):
         # ARCH, if not specified, defaults to x86_64.
         if self.getArchitecture() in ["", 'x86_64', 'i386']:
             self.expect("dis -f",
-                        startstr = "a.out`sum(int, int)",
-                        substrs = [' mov',
+                        substrs = ['<sum(int, int)>:',
+                                   ' mov',
                                    ' addl ',
                                    'ret'])
 

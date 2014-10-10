@@ -46,6 +46,9 @@ public:
     size_t
     GetSize() const;
 
+    size_t
+    GetSizeOfLastLine () const;
+
     std::string &
     GetString();
 

@@ -13,6 +13,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
@@ -199,6 +200,11 @@ IRExecutionUnit::DisassembleFunction (Stream &stream,
 
     InstructionList &instruction_list = disassembler_sp->GetInstructionList();
     const uint32_t max_opcode_byte_size = instruction_list.GetMaxOpcocdeByteSize();
+    const char *disassemble_format = "${addr-file-or-load}: ";
+    if (exe_ctx.HasTargetScope())
+    {
+        disassemble_format = exe_ctx.GetTargetRef().GetDebugger().GetDisassemblyFormat();
+    }
 
     for (size_t instruction_index = 0, num_instructions = instruction_list.GetSize();
          instruction_index < num_instructions;
@@ -209,7 +215,10 @@ IRExecutionUnit::DisassembleFunction (Stream &stream,
                            max_opcode_byte_size,
                            true,
                            true,
-                           &exe_ctx);
+                           &exe_ctx,
+                           NULL,
+                           NULL,
+                           disassemble_format);
         stream.PutChar('\n');
     }
     // FIXME: The DisassemblerLLVMC has a reference cycle and won't go away if it has any active instructions.

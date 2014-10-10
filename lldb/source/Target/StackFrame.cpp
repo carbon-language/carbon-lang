@@ -1380,12 +1380,14 @@ StackFrame::Dump (Stream *strm, bool show_frame_index, bool show_fullpaths)
     GetSymbolContext(eSymbolContextEverything);
     const bool show_module = true;
     const bool show_inline = true;
+    const bool show_function_arguments = true;
     m_sc.DumpStopContext (strm, 
                           exe_ctx.GetBestExecutionContextScope(), 
                           GetFrameCodeAddress(), 
                           show_fullpaths, 
                           show_module, 
-                          show_inline);
+                          show_inline,
+                          show_function_arguments);
 }
 
 void

@@ -4986,9 +4986,11 @@ __cxa_demangle(const char* mangled_name, char* buf, size_t* n, int* status)
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Target/CPPLanguageRuntime.h"
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+
 
 using namespace lldb_private;
 
@@ -4998,6 +5000,58 @@ cstring_is_mangled (const char *s)
     if (s)
         return s[0] == '_' && s[1] == 'Z';
     return false;
+}
+
+static const ConstString &
+get_demangled_name_without_arguments (const Mangled *obj)
+{
+    // This pair is <mangled name, demangled name without function arguments>
+    static std::pair<ConstString, ConstString> g_most_recent_mangled_to_name_sans_args;
+
+    // Need to have the mangled & demangled names we're currently examining as statics
+    // so we can return a const ref to them at the end of the func if we don't have
+    // anything better.
+    static ConstString g_last_mangled;
+    static ConstString g_last_demangled;
+
+    ConstString mangled = obj->GetMangledName ();
+    ConstString demangled = obj->GetDemangledName ();
+
+    if (mangled && g_most_recent_mangled_to_name_sans_args.first == mangled)
+    {
+        return g_most_recent_mangled_to_name_sans_args.second;
+    }
+
+    g_last_demangled = demangled;
+    g_last_mangled = mangled;
+
+    const char *mangled_name_cstr = mangled.GetCString();
+    const char *demangled_name_cstr = demangled.GetCString();
+
+    if (demangled && mangled_name_cstr && mangled_name_cstr[0])
+    {
+        if (mangled_name_cstr[0] == '_' && mangled_name_cstr[1] == 'Z' &&
+            (mangled_name_cstr[2] != 'T' && // avoid virtual table, VTT structure, typeinfo structure, and typeinfo mangled_name
+            mangled_name_cstr[2] != 'G' && // avoid guard variables
+            mangled_name_cstr[2] != 'Z'))  // named local entities (if we eventually handle eSymbolTypeData, we will want this back)
+        {
+            CPPLanguageRuntime::MethodName cxx_method (demangled);
+            if (!cxx_method.GetBasename().empty() && !cxx_method.GetContext().empty())
+            {
+                std::string shortname = cxx_method.GetContext().str();
+                shortname += "::";
+                shortname += cxx_method.GetBasename().str();
+                ConstString result(shortname.c_str());
+                g_most_recent_mangled_to_name_sans_args.first = mangled;
+                g_most_recent_mangled_to_name_sans_args.second = result;
+                return g_most_recent_mangled_to_name_sans_args.second;
+            }
+        }
+    }
+
+    if (demangled)
+        return g_last_demangled;
+    return g_last_mangled;
 }
 
 #pragma mark Mangled
@@ -5215,6 +5269,14 @@ Mangled::NameMatches (const RegularExpression& regex) const
 const ConstString&
 Mangled::GetName (Mangled::NamePreference preference) const
 {
+    if (preference == ePreferDemangledWithoutArguments)
+    {
+        // Call the accessor to make sure we get a demangled name in case
+        // it hasn't been demangled yet...
+        GetDemangledName();
+
+        return get_demangled_name_without_arguments (this);
+    }
     if (preference == ePreferDemangled)
     {
         // Call the accessor to make sure we get a demangled name in case
