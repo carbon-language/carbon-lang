@@ -215,6 +215,10 @@ public:
     bool isCXXThisExprCaptured() const { return CXXThisFieldDecl != nullptr; }
     FieldDecl *getThisFieldDecl() const { return CXXThisFieldDecl; }
 
+    static bool classof(const CGCapturedStmtInfo *) {
+      return true;
+    }
+
     /// \brief Emit the captured statement body.
     virtual void EmitBody(CodeGenFunction &CGF, Stmt *S) {
       RegionCounter Cnt = CGF.getPGORegionCounter(S);

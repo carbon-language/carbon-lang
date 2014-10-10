@@ -138,17 +138,10 @@ void CodeGenFunction::EmitOMPFirstprivateClause(
 }
 
 void CodeGenFunction::EmitOMPParallelDirective(const OMPParallelDirective &S) {
-  const CapturedStmt *CS = cast<CapturedStmt>(S.getAssociatedStmt());
-  llvm::Value *CapturedStruct = GenerateCapturedStmtArgument(*CS);
-
-  llvm::Value *OutlinedFn;
-  {
-    CodeGenFunction CGF(CGM, true);
-    CGOpenMPRegionInfo CGInfo(S, *CS, *CS->getCapturedDecl()->param_begin());
-    CGF.CapturedStmtInfo = &CGInfo;
-    OutlinedFn = CGF.GenerateCapturedStmtFunction(*CS);
-  }
-
+  auto CS = cast<CapturedStmt>(S.getAssociatedStmt());
+  auto CapturedStruct = GenerateCapturedStmtArgument(*CS);
+  auto OutlinedFn = CGM.getOpenMPRuntime().EmitOpenMPOutlinedFunction(
+      S, *CS->getCapturedDecl()->param_begin());
   CGM.getOpenMPRuntime().EmitOMPParallelCall(*this, S.getLocStart(), OutlinedFn,
                                              CapturedStruct);
 }

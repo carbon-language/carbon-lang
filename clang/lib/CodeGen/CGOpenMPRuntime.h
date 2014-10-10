@@ -14,49 +14,29 @@
 #ifndef LLVM_CLANG_LIB_CODEGEN_CGOPENMPRUNTIME_H
 #define LLVM_CLANG_LIB_CODEGEN_CGOPENMPRUNTIME_H
 
-#include "CodeGenFunction.h"
-#include "clang/AST/StmtOpenMP.h"
-#include "clang/AST/Type.h"
+#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/Value.h"
+
+namespace llvm {
+class ArrayType;
+class Constant;
+class Function;
+class FunctionType;
+class StructType;
+class Type;
+class Value;
+} // namespace llvm
 
 namespace clang {
 
+class OMPExecutableDirective;
+class VarDecl;
+
 namespace CodeGen {
 
-/// \brief API for captured statement code generation in OpenMP constructs.
-class CGOpenMPRegionInfo : public CodeGenFunction::CGCapturedStmtInfo {
-public:
-  CGOpenMPRegionInfo(const OMPExecutableDirective &D, const CapturedStmt &S,
-                     const VarDecl *ThreadIDVar)
-      : CGCapturedStmtInfo(S, CR_OpenMP), ThreadIDVar(ThreadIDVar),
-        Directive(D) {}
-
-  virtual ~CGOpenMPRegionInfo() override{};
-
-  /// \brief Gets a variable or parameter for storing global thread id
-  /// inside OpenMP construct.
-  const VarDecl *getThreadIDVariable() const { return ThreadIDVar; }
-
-  static bool classof(const CGCapturedStmtInfo *Info) {
-    return Info->getKind() == CR_OpenMP;
-  }
-
-  /// \brief Emit the captured statement body.
-  virtual void EmitBody(CodeGenFunction &CGF, Stmt *S) override;
-
-  /// \brief Get the name of the capture helper.
-  virtual StringRef getHelperName() const override { return ".omp_outlined."; }
-
-private:
-  /// \brief A variable or parameter storing global thread id for OpenMP
-  /// constructs.
-  const VarDecl *ThreadIDVar;
-  /// \brief OpenMP executable directive associated with the region.
-  const OMPExecutableDirective &Directive;
-};
+class CodeGenFunction;
+class CodeGenModule;
 
 class CGOpenMPRuntime {
 public:
@@ -102,7 +82,7 @@ private:
   /// \brief Default const ident_t object used for initialization of all other
   /// ident_t objects.
   llvm::Constant *DefaultOpenMPPSource;
-  /// \brief Map of flags and corrsponding default locations.
+  /// \brief Map of flags and corresponding default locations.
   typedef llvm::DenseMap<unsigned, llvm::Value *> OpenMPDefaultLocMapTy;
   OpenMPDefaultLocMapTy OpenMPDefaultLocMap;
   llvm::Value *GetOrCreateDefaultOpenMPLocation(OpenMPLocationFlags Flags);
@@ -147,19 +127,22 @@ private:
     IdentField_PSource
   };
   llvm::StructType *IdentTy;
-  /// \brief Map for Sourcelocation and OpenMP runtime library debug locations.
+  /// \brief Map for SourceLocation and OpenMP runtime library debug locations.
   typedef llvm::DenseMap<unsigned, llvm::Value *> OpenMPDebugLocMapTy;
   OpenMPDebugLocMapTy OpenMPDebugLocMap;
   /// \brief The type for a microtask which gets passed to __kmpc_fork_call().
   /// Original representation is:
   /// typedef void (kmpc_micro)(kmp_int32 global_tid, kmp_int32 bound_tid,...);
   llvm::FunctionType *Kmpc_MicroTy;
-  /// \brief Map of local debug location and functions.
-  typedef llvm::DenseMap<llvm::Function *, llvm::Value *> OpenMPLocMapTy;
-  OpenMPLocMapTy OpenMPLocMap;
-  /// \brief Map of local ThreadID and functions.
-  typedef llvm::DenseMap<llvm::Function *, llvm::Value *> OpenMPThreadIDMapTy;
-  OpenMPThreadIDMapTy OpenMPThreadIDMap;
+  /// \brief Stores debug location and ThreadID for the function.
+  struct DebugLocThreadIdTy {
+    llvm::Value *DebugLoc;
+    llvm::Value *ThreadID;
+  };
+  /// \brief Map of local debug location, ThreadId and functions.
+  typedef llvm::DenseMap<llvm::Function *, DebugLocThreadIdTy>
+      OpenMPLocThreadIDMapTy;
+  OpenMPLocThreadIDMapTy OpenMPLocThreadIDMap;
   /// \brief Type kmp_critical_name, originally defined as typedef kmp_int32
   /// kmp_critical_name[8];
   llvm::ArrayType *KmpCriticalNameTy;
@@ -167,8 +150,6 @@ private:
   llvm::StringMap<llvm::Value *, llvm::BumpPtrAllocator> CriticalRegionVarNames;
 
   /// \brief Emits object of ident_t type with info for source location.
-  /// \param CGF Reference to current CodeGenFunction.
-  /// \param Loc Clang source location.
   /// \param Flags Flags for OpenMP location.
   ///
   llvm::Value *
@@ -187,8 +168,6 @@ private:
   llvm::Constant *CreateRuntimeFunction(OpenMPRTLFunction Function);
 
   /// \brief Gets thread id value for the current thread.
-  /// \param CGF Reference to current CodeGenFunction.
-  /// \param Loc Clang source location.
   ///
   llvm::Value *GetOpenMPThreadID(CodeGenFunction &CGF, SourceLocation Loc);
 
@@ -196,16 +175,25 @@ public:
   explicit CGOpenMPRuntime(CodeGenModule &CGM);
   virtual ~CGOpenMPRuntime() {}
 
+  /// \brief Emits outlined function for the specified OpenMP directive \a D
+  /// (required for parallel and task directives). This outlined function has
+  /// type void(*)(kmp_int32 /*ThreadID*/, kmp_int32 /*BoundID*/, struct
+  /// context_vars*).
+  /// \param D OpenMP directive.
+  /// \param ThreadIDVar Variable for thread id in the current OpenMP region.
+  ///
+  virtual llvm::Value *
+  EmitOpenMPOutlinedFunction(const OMPExecutableDirective &D,
+                             const VarDecl *ThreadIDVar);
+
   /// \brief Cleans up references to the objects in finished function.
-  /// \param CGF Reference to finished CodeGenFunction.
   ///
   void FunctionFinished(CodeGenFunction &CGF);
 
   /// \brief Emits code for parallel call of the \a OutlinedFn with variables
   /// captured in a record which address is stored in \a CapturedStruct.
-  /// \param CGF Reference to current CodeGenFunction.
-  /// \param Loc Clang source location.
-  /// \param OutlinedFn Outlined function to be run in parallel threads.
+  /// \param OutlinedFn Outlined function to be run in parallel threads. Type of
+  /// this function is void(*)(kmp_int32, kmp_int32, struct context_vars*).
   /// \param CapturedStruct A pointer to the record with the references to
   /// variables used in \a OutlinedFn function.
   ///
@@ -216,14 +204,14 @@ public:
   /// \brief Returns corresponding lock object for the specified critical region
   /// name. If the lock object does not exist it is created, otherwise the
   /// reference to the existing copy is returned.
+  /// \param CriticalName Name of the critical region.
+  ///
   llvm::Value *GetCriticalRegionLock(StringRef CriticalName);
 
   /// \brief Emits start of the critical region by calling void
   /// __kmpc_critical(ident_t *loc, kmp_int32 global_tid, kmp_critical_name
   /// * \a RegionLock)
-  /// \param CGF Reference to current CodeGenFunction.
   /// \param RegionLock The lock object for critical region.
-  /// \param Loc Location of the construct.
   virtual void EmitOMPCriticalRegionStart(CodeGenFunction &CGF,
                                           llvm::Value *RegionLock,
                                           SourceLocation Loc);
@@ -231,16 +219,12 @@ public:
   /// \brief Emits end of the critical region by calling void
   /// __kmpc_end_critical(ident_t *loc, kmp_int32 global_tid, kmp_critical_name
   /// * \a RegionLock)
-  /// \param CGF Reference to current CodeGenFunction.
   /// \param RegionLock The lock object for critical region.
-  /// \param Loc Location of the construct.
   virtual void EmitOMPCriticalRegionEnd(CodeGenFunction &CGF,
                                         llvm::Value *RegionLock,
                                         SourceLocation Loc);
 
   /// \brief Emits a barrier for OpenMP threads.
-  /// \param CGF Reference to current CodeGenFunction.
-  /// \param Loc Clang source location.
   /// \param Flags Flags for the barrier.
   ///
   virtual void EmitOMPBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,
