@@ -116,6 +116,57 @@ WinCodeViewLineTables::WinCodeViewLineTables(AsmPrinter *AP)
   Asm = AP;
 }
 
+void WinCodeViewLineTables::endModule() {
+  if (FnDebugInfo.empty())
+    return;
+
+  assert(Asm != nullptr);
+  Asm->OutStreamer.SwitchSection(
+      Asm->getObjFileLowering().getCOFFDebugSymbolsSection());
+  Asm->EmitInt32(COFF::DEBUG_SECTION_MAGIC);
+
+  // The COFF .debug$S section consists of several subsections, each starting
+  // with a 4-byte control code (e.g. 0xF1, 0xF2, etc) and then a 4-byte length
+  // of the payload followed by the payload itself.  The subsections are 4-byte
+  // aligned.
+
+  // Emit per-function debug information.  This code is extracted into a
+  // separate function for readability.
+  for (size_t I = 0, E = VisitedFunctions.size(); I != E; ++I)
+    emitDebugInfoForFunction(VisitedFunctions[I]);
+
+  // This subsection holds a file index to offset in string table table.
+  Asm->OutStreamer.AddComment("File index to string table offset subsection");
+  Asm->EmitInt32(COFF::DEBUG_INDEX_SUBSECTION);
+  size_t NumFilenames = FileNameRegistry.Infos.size();
+  Asm->EmitInt32(8 * NumFilenames);
+  for (size_t I = 0, E = FileNameRegistry.Filenames.size(); I != E; ++I) {
+    StringRef Filename = FileNameRegistry.Filenames[I];
+    // For each unique filename, just write its offset in the string table.
+    Asm->EmitInt32(FileNameRegistry.Infos[Filename].StartOffset);
+    // The function name offset is not followed by any additional data.
+    Asm->EmitInt32(0);
+  }
+
+  // This subsection holds the string table.
+  Asm->OutStreamer.AddComment("String table");
+  Asm->EmitInt32(COFF::DEBUG_STRING_TABLE_SUBSECTION);
+  Asm->EmitInt32(FileNameRegistry.LastOffset);
+  // The payload starts with a null character.
+  Asm->EmitInt8(0);
+
+  for (size_t I = 0, E = FileNameRegistry.Filenames.size(); I != E; ++I) {
+    // Just emit unique filenames one by one, separated by a null character.
+    Asm->OutStreamer.EmitBytes(FileNameRegistry.Filenames[I]);
+    Asm->EmitInt8(0);
+  }
+
+  // No more subsections. Fill with zeros to align the end of the section by 4.
+  Asm->OutStreamer.EmitFill((-FileNameRegistry.LastOffset) % 4, 0);
+
+  clear();
+}
+
 static void EmitLabelDiff(MCStreamer &Streamer,
                           const MCSymbol *From, const MCSymbol *To) {
   MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
@@ -154,9 +205,9 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   }
   FilenameSegmentLengths[LastSegmentEnd] = FI.Instrs.size() - LastSegmentEnd;
 
-  // Emit the control code of the subsection followed by the payload size.
+  // Emit a line table subsection, requred to do PC-to-file:line lookup.
   Asm->OutStreamer.AddComment(
-      "Linetable subsection for " + Twine(Fn->getName()));
+      "Line table subsection for " + Twine(Fn->getName()));
   Asm->EmitInt32(COFF::DEBUG_LINE_TABLE_SUBSECTION);
   MCSymbol *SubsectionBegin = Asm->MMI->getContext().CreateTempSymbol(),
            *SubsectionEnd = Asm->MMI->getContext().CreateTempSymbol();
@@ -212,55 +263,6 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   if (FileSegmentEnd)
     Asm->OutStreamer.EmitLabel(FileSegmentEnd);
   Asm->OutStreamer.EmitLabel(SubsectionEnd);
-}
-
-void WinCodeViewLineTables::endModule() {
-  if (FnDebugInfo.empty())
-    return;
-
-  assert(Asm != nullptr);
-  Asm->OutStreamer.SwitchSection(
-      Asm->getObjFileLowering().getCOFFDebugSymbolsSection());
-  Asm->EmitInt32(COFF::DEBUG_SECTION_MAGIC);
-
-  // The COFF .debug$S section consists of several subsections, each starting
-  // with a 4-byte control code (e.g. 0xF1, 0xF2, etc) and then a 4-byte length
-  // of the payload followed by the payload itself.  The subsections are 4-byte
-  // aligned.
-
-  for (size_t I = 0, E = VisitedFunctions.size(); I != E; ++I)
-    emitDebugInfoForFunction(VisitedFunctions[I]);
-
-  // This subsection holds a file index to offset in string table table.
-  Asm->OutStreamer.AddComment("File index to string table offset subsection");
-  Asm->EmitInt32(COFF::DEBUG_INDEX_SUBSECTION);
-  size_t NumFilenames = FileNameRegistry.Infos.size();
-  Asm->EmitInt32(8 * NumFilenames);
-  for (size_t I = 0, E = FileNameRegistry.Filenames.size(); I != E; ++I) {
-    StringRef Filename = FileNameRegistry.Filenames[I];
-    // For each unique filename, just write its offset in the string table.
-    Asm->EmitInt32(FileNameRegistry.Infos[Filename].StartOffset);
-    // The function name offset is not followed by any additional data.
-    Asm->EmitInt32(0);
-  }
-
-  // This subsection holds the string table.
-  Asm->OutStreamer.AddComment("String table");
-  Asm->EmitInt32(COFF::DEBUG_STRING_TABLE_SUBSECTION);
-  Asm->EmitInt32(FileNameRegistry.LastOffset);
-  // The payload starts with a null character.
-  Asm->EmitInt8(0);
-
-  for (size_t I = 0, E = FileNameRegistry.Filenames.size(); I != E; ++I) {
-    // Just emit unique filenames one by one, separated by a null character.
-    Asm->OutStreamer.EmitBytes(FileNameRegistry.Filenames[I]);
-    Asm->EmitInt8(0);
-  }
-
-  // No more subsections. Fill with zeros to align the end of the section by 4.
-  Asm->OutStreamer.EmitFill((-FileNameRegistry.LastOffset) % 4, 0);
-
-  clear();
 }
 
 void WinCodeViewLineTables::beginFunction(const MachineFunction *MF) {
