@@ -48,6 +48,6 @@ exit:
   ret void
 
 ; CHECK-LABEL: @test3
-; CHECK: Loop %loop: Unpredictable backedge-taken count.
-; CHECK: Loop %loop: Unpredictable max backedge-taken count.
+; CHECK: Loop %loop: backedge-taken count is ((-96 + (96 * %n)) /u 96)
+; CHECK: Loop %loop: max backedge-taken count is ((-96 + (96 * %n)) /u 96)
 }

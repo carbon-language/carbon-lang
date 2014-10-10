@@ -66,16 +66,13 @@ exit2:
 
 ; SCEV properly unrolls multi-exit loops.
 ;
-; SCEV cannot currently unroll this loop.
-; It should ideally detect a trip count of 5.
-; rdar:14038809 [SCEV]: Optimize trip count computation for multi-exit loops.
 ; CHECK-LABEL: @multiExit(
-; CHECKFIXME: getelementptr i32* %base, i32 10
-; CHECKFIXME-NEXT: load i32*
-; CHECKFIXME: br i1 false, label %l2.10, label %exit1
-; CHECKFIXME: l2.10:
-; CHECKFIXME-NOT: br
-; CHECKFIXME: ret i32
+; CHECK: getelementptr i32* %base, i32 10
+; CHECK-NEXT: load i32*
+; CHECK: br i1 false, label %l2.10, label %exit1
+; CHECK: l2.10:
+; CHECK-NOT: br
+; CHECK: ret i32
 define i32 @multiExit(i32* %base) nounwind {
 entry:
   br label %l1
