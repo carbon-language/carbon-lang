@@ -13,6 +13,4 @@ int f() {
 
 int main(int, char **argv) {
   return f();
-// Disabled on Darwin, see above.
-// CHECK-Linux-STACKTRACE: #1 {{.*}} in main{{.*}}missing_return.cpp:[[@LINE-2]]
 }
