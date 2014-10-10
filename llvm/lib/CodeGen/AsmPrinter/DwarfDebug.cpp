@@ -337,11 +337,11 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
 
   DISubprogram SP(Scope->getScopeNode());
 
-  ProcessedSPNodes.insert(SP);
-
   DIE *&AbsDef = AbstractSPDies[SP];
   if (AbsDef)
     return;
+
+  ProcessedSPNodes.insert(SP);
 
   // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
   // was inlined from another compile unit.
