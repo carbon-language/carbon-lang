@@ -170,7 +170,11 @@ def VGPR_512 : RegisterTuples<[sub0, sub1, sub2, sub3, sub4, sub5, sub6, sub7,
 //===----------------------------------------------------------------------===//
 
 // Special register classes for predicates and the M0 register
-def SCCReg : RegisterClass<"AMDGPU", [i32, i1], 32, (add SCC)>;
+def SCCReg : RegisterClass<"AMDGPU", [i32, i1], 32, (add SCC)> {
+  let CopyCost = -1; // Theoretically it is possible to read from SCC,
+                     // but it should never be necessary.
+}
+
 def VCCReg : RegisterClass<"AMDGPU", [i64, i1], 64, (add VCC)>;
 def EXECReg : RegisterClass<"AMDGPU", [i64, i1], 64, (add EXEC)>;
 def M0Reg : RegisterClass<"AMDGPU", [i32], 32, (add M0)>;
