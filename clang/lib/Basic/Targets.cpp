@@ -672,14 +672,14 @@ class PPCTargetInfo : public TargetInfo {
 
   // Target cpu features.
   bool HasVSX;
-  bool HasPower8Vector;
+  bool HasP8Vector;
 
 protected:
   std::string ABI;
 
 public:
   PPCTargetInfo(const llvm::Triple &Triple)
-    : TargetInfo(Triple), HasVSX(false), HasPower8Vector(false) {
+    : TargetInfo(Triple), HasVSX(false), HasP8Vector(false) {
     BigEndian = (Triple.getArch() != llvm::Triple::ppc64le);
     LongDoubleWidth = LongDoubleAlign = 128;
     LongDoubleFormat = &llvm::APFloat::PPCDoubleDouble;
@@ -936,7 +936,7 @@ bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
     }
 
     if (Feature == "power8-vector") {
-      HasPower8Vector = true;
+      HasP8Vector = true;
       continue;
     }
 
@@ -1090,7 +1090,7 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
 
   if (HasVSX)
     Builder.defineMacro("__VSX__");
-  if (HasPower8Vector)
+  if (HasP8Vector)
     Builder.defineMacro("__POWER8_VECTOR__");
 
   // FIXME: The following are not yet generated here by Clang, but are
