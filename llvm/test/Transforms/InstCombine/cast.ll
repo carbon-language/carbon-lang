@@ -1050,3 +1050,37 @@ define i8 @test85(i32 %a) {
 ; CHECK: [[SHR:%.*]] = lshr exact i32 [[ADD]], 23
 ; CHECK: [[CST:%.*]] = trunc i32 [[SHR]] to i8
 }
+
+; Overflow on a float to int or int to float conversion is undefined (PR21130).
+
+define i8 @overflow_fptosi() {
+  %i = fptosi double 1.56e+02 to i8
+  ret i8 %i
+; CHECK-LABEL: @overflow_fptosi(
+; CHECK-NEXT: ret i8 undef 
+}
+
+define i8 @overflow_fptoui() {
+  %i = fptoui double 2.56e+02 to i8
+  ret i8 %i
+; CHECK-LABEL: @overflow_fptoui(
+; CHECK-NEXT: ret i8 undef 
+}
+
+; The maximum float is approximately 2 ** 128 which is 3.4E38. 
+; The constant below is 4E38. Use a 130 bit integer to hold that
+; number; 129-bits for the value + 1 bit for the sign.
+define float @overflow_uitofp() {
+  %i = uitofp i130 400000000000000000000000000000000000000 to float
+  ret float %i
+; CHECK-LABEL: @overflow_uitofp(
+; CHECK-NEXT: ret float undef 
+}
+
+define float @overflow_sitofp() {
+  %i = sitofp i130 400000000000000000000000000000000000000 to float
+  ret float %i
+; CHECK-LABEL: @overflow_sitofp(
+; CHECK-NEXT: ret float undef 
+}
+
