@@ -142,8 +142,7 @@ private:
     RelI->getOffset(Offset);
     uint8_t *LocalAddress = Section.Address + Offset;
     unsigned NumBytes = 1 << Size;
-    int64_t Addend = 0;
-    memcpy(&Addend, LocalAddress, NumBytes);
+    uint64_t Addend = readBytesUnaligned(LocalAddress, NumBytes);
 
     ++RelI;
     MachO::any_relocation_info RE2 =
@@ -202,8 +201,7 @@ private:
     RelI->getOffset(Offset);
     uint8_t *LocalAddress = Section.Address + Offset;
     unsigned NumBytes = 1 << Size;
-    int64_t Addend = 0;
-    memcpy(&Addend, LocalAddress, NumBytes);
+    int64_t Addend = readBytesUnaligned(LocalAddress, NumBytes);
 
     unsigned SymbolBaseAddr = MachO->getScatteredRelocationValue(RE);
     section_iterator TargetSI = getSectionByAddress(*MachO, SymbolBaseAddr);
