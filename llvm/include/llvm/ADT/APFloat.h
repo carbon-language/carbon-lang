@@ -507,6 +507,9 @@ public:
     return Result;
   }
 
+  /// \brief Returns: X * 2^Exp for integral exponents.
+  friend APFloat scalbn(APFloat X, int Exp);
+
 private:
 
   /// \name Simple Queries
@@ -628,11 +631,12 @@ private:
   unsigned int sign : 1;
 };
 
-/// See friend declaration above.
+/// See friend declarations above.
 ///
-/// This additional declaration is required in order to compile LLVM with IBM
+/// These additional declarations are required in order to compile LLVM with IBM
 /// xlC compiler.
 hash_code hash_value(const APFloat &Arg);
+APFloat scalbn(APFloat X, int Exp);
 
 } // namespace llvm
 

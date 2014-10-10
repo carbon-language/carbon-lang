@@ -3906,3 +3906,20 @@ APFloat::makeZero(bool Negative) {
   exponent = semantics->minExponent-1;
   APInt::tcSet(significandParts(), 0, partCount());  
 }
+
+APFloat llvm::scalbn(APFloat X, int Exp) {
+  if (X.isInfinity() || X.isZero() || X.isNaN())
+    return std::move(X);
+
+  auto MaxExp = X.getSemantics().maxExponent;
+  auto MinExp = X.getSemantics().minExponent;
+  if (Exp > (MaxExp - X.exponent))
+    // Overflow saturates to infinity.
+    return APFloat::getInf(X.getSemantics(), X.isNegative());
+  if (Exp < (MinExp - X.exponent))
+    // Underflow saturates to zero.
+    return APFloat::getZero(X.getSemantics(), X.isNegative());
+
+  X.exponent += Exp;
+  return std::move(X);
+}

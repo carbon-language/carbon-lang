@@ -2742,4 +2742,47 @@ TEST(APFloatTest, logb) {
   EXPECT_TRUE(APFloat(APFloat::IEEEsingle, "-0x7Ep+0")
                   .bitwiseIsEqual(logb(MSmallestNormalized)));
 }
+
+TEST(APFloatTest, scalbn) {
+  EXPECT_TRUE(
+      APFloat(APFloat::IEEEsingle, "0x1p+0")
+          .bitwiseIsEqual(scalbn(APFloat(APFloat::IEEEsingle, "0x1p+0"), 0)));
+  EXPECT_TRUE(
+      APFloat(APFloat::IEEEsingle, "0x1p+42")
+          .bitwiseIsEqual(scalbn(APFloat(APFloat::IEEEsingle, "0x1p+0"), 42)));
+  EXPECT_TRUE(
+      APFloat(APFloat::IEEEsingle, "0x1p-42")
+          .bitwiseIsEqual(scalbn(APFloat(APFloat::IEEEsingle, "0x1p+0"), -42)));
+
+  APFloat PInf = APFloat::getInf(APFloat::IEEEsingle, false);
+  APFloat MInf = APFloat::getInf(APFloat::IEEEsingle, true);
+  APFloat PZero = APFloat::getZero(APFloat::IEEEsingle, false);
+  APFloat MZero = APFloat::getZero(APFloat::IEEEsingle, true);
+  APFloat QPNaN = APFloat::getNaN(APFloat::IEEEsingle, false);
+  APFloat QMNaN = APFloat::getNaN(APFloat::IEEEsingle, true);
+  APFloat SNaN = APFloat::getSNaN(APFloat::IEEEsingle, false);
+
+  EXPECT_TRUE(PInf.bitwiseIsEqual(scalbn(PInf, 0)));
+  EXPECT_TRUE(MInf.bitwiseIsEqual(scalbn(MInf, 0)));
+  EXPECT_TRUE(PZero.bitwiseIsEqual(scalbn(PZero, 0)));
+  EXPECT_TRUE(MZero.bitwiseIsEqual(scalbn(MZero, 0)));
+  EXPECT_TRUE(QPNaN.bitwiseIsEqual(scalbn(QPNaN, 0)));
+  EXPECT_TRUE(QMNaN.bitwiseIsEqual(scalbn(QMNaN, 0)));
+  EXPECT_TRUE(SNaN.bitwiseIsEqual(scalbn(SNaN, 0)));
+
+  EXPECT_TRUE(
+      PInf.bitwiseIsEqual(scalbn(APFloat(APFloat::IEEEsingle, "0x1p+0"), 128)));
+  EXPECT_TRUE(MInf.bitwiseIsEqual(
+      scalbn(APFloat(APFloat::IEEEsingle, "-0x1p+0"), 128)));
+  EXPECT_TRUE(
+      PInf.bitwiseIsEqual(scalbn(APFloat(APFloat::IEEEsingle, "0x1p+127"), 1)));
+  EXPECT_TRUE(PZero.bitwiseIsEqual(
+      scalbn(APFloat(APFloat::IEEEsingle, "0x1p+0"), -127)));
+  EXPECT_TRUE(MZero.bitwiseIsEqual(
+      scalbn(APFloat(APFloat::IEEEsingle, "-0x1p+0"), -127)));
+  EXPECT_TRUE(PZero.bitwiseIsEqual(
+      scalbn(APFloat(APFloat::IEEEsingle, "0x1p-126"), -1)));
+  EXPECT_TRUE(PZero.bitwiseIsEqual(
+      scalbn(APFloat(APFloat::IEEEsingle, "0x1p-126"), -1)));
+}
 }
