@@ -2692,55 +2692,33 @@ TEST(APFloatTest, operatorOverloads) {
   EXPECT_TRUE(One.bitwiseIsEqual(Two / Two));
 }
 
-TEST(APFloatTest, logb) {
-  EXPECT_TRUE(
-      APFloat(APFloat::IEEEsingle, "0x0p+0")
-          .bitwiseIsEqual(logb(APFloat(APFloat::IEEEsingle, "0x1p+0"))));
-  EXPECT_TRUE(
-      APFloat(APFloat::IEEEsingle, "0x0p+0")
-          .bitwiseIsEqual(logb(APFloat(APFloat::IEEEsingle, "-0x1p+0"))));
-  EXPECT_TRUE(
-      APFloat(APFloat::IEEEsingle, "0x2Ap+0")
-          .bitwiseIsEqual(logb(APFloat(APFloat::IEEEsingle, "0x1p+42"))));
-  EXPECT_TRUE(
-      APFloat(APFloat::IEEEsingle, "-0x2Ap+0")
-          .bitwiseIsEqual(logb(APFloat(APFloat::IEEEsingle, "0x1p-42"))));
+TEST(APFloatTest, ilogb) {
+  EXPECT_EQ(0, ilogb(APFloat(APFloat::IEEEsingle, "0x1p+0")));
+  EXPECT_EQ(0, ilogb(APFloat(APFloat::IEEEsingle, "-0x1p+0")));
+  EXPECT_EQ(42, ilogb(APFloat(APFloat::IEEEsingle, "0x1p+42")));
+  EXPECT_EQ(-42, ilogb(APFloat(APFloat::IEEEsingle, "0x1p-42")));
 
-  APFloat PInf = APFloat::getInf(APFloat::IEEEsingle, false);
-  APFloat MInf = APFloat::getInf(APFloat::IEEEsingle, true);
-  APFloat PZero = APFloat::getZero(APFloat::IEEEsingle, false);
-  APFloat MZero = APFloat::getZero(APFloat::IEEEsingle, true);
-  APFloat QNaN = APFloat::getNaN(APFloat::IEEEsingle, false);
-  APFloat SNaN = APFloat::getSNaN(APFloat::IEEEsingle, false);
+  EXPECT_EQ(APFloat::IEK_Inf,
+            ilogb(APFloat::getInf(APFloat::IEEEsingle, false)));
+  EXPECT_EQ(APFloat::IEK_Inf,
+            ilogb(APFloat::getInf(APFloat::IEEEsingle, true)));
+  EXPECT_EQ(APFloat::IEK_Zero,
+            ilogb(APFloat::getZero(APFloat::IEEEsingle, false)));
+  EXPECT_EQ(APFloat::IEK_Zero,
+            ilogb(APFloat::getZero(APFloat::IEEEsingle, true)));
+  EXPECT_EQ(APFloat::IEK_NaN,
+            ilogb(APFloat::getNaN(APFloat::IEEEsingle, false)));
+  EXPECT_EQ(APFloat::IEK_NaN,
+            ilogb(APFloat::getSNaN(APFloat::IEEEsingle, false)));
 
-  EXPECT_TRUE(PInf.bitwiseIsEqual(logb(PInf)));
-  EXPECT_TRUE(PInf.bitwiseIsEqual(logb(MInf)));
-  EXPECT_TRUE(PZero.bitwiseIsEqual(logb(PZero)));
-  EXPECT_TRUE(MZero.bitwiseIsEqual(logb(MZero)));
-  EXPECT_TRUE(QNaN.bitwiseIsEqual(logb(QNaN)));
-  EXPECT_TRUE(SNaN.bitwiseIsEqual(logb(SNaN)));
-
-  APFloat PLargestValue = APFloat::getLargest(APFloat::IEEEsingle, false);
-  APFloat MLargestValue = APFloat::getLargest(APFloat::IEEEsingle, true);
-  APFloat PSmallestValue = APFloat::getSmallest(APFloat::IEEEsingle, false);
-  APFloat MSmallestValue = APFloat::getSmallest(APFloat::IEEEsingle, true);
-  APFloat PSmallestNormalized =
-      APFloat::getSmallestNormalized(APFloat::IEEEsingle, false);
-  APFloat MSmallestNormalized =
-      APFloat::getSmallestNormalized(APFloat::IEEEsingle, true);
-
-  EXPECT_TRUE(
-      APFloat(APFloat::IEEEsingle, "0x7Fp+0").bitwiseIsEqual(logb(PLargestValue)));
-  EXPECT_TRUE(
-      APFloat(APFloat::IEEEsingle, "0x7Fp+0").bitwiseIsEqual(logb(MLargestValue)));
-  EXPECT_TRUE(
-      APFloat(APFloat::IEEEsingle, "-0x7Ep+0").bitwiseIsEqual(logb(PSmallestValue)));
-  EXPECT_TRUE(
-      APFloat(APFloat::IEEEsingle, "-0x7Ep+0").bitwiseIsEqual(logb(MSmallestValue)));
-  EXPECT_TRUE(APFloat(APFloat::IEEEsingle, "-0x7Ep+0")
-                  .bitwiseIsEqual(logb(PSmallestNormalized)));
-  EXPECT_TRUE(APFloat(APFloat::IEEEsingle, "-0x7Ep+0")
-                  .bitwiseIsEqual(logb(MSmallestNormalized)));
+  EXPECT_EQ(127, ilogb(APFloat::getLargest(APFloat::IEEEsingle, false)));
+  EXPECT_EQ(127, ilogb(APFloat::getLargest(APFloat::IEEEsingle, true)));
+  EXPECT_EQ(-126, ilogb(APFloat::getSmallest(APFloat::IEEEsingle, false)));
+  EXPECT_EQ(-126, ilogb(APFloat::getSmallest(APFloat::IEEEsingle, true)));
+  EXPECT_EQ(-126,
+            ilogb(APFloat::getSmallestNormalized(APFloat::IEEEsingle, false)));
+  EXPECT_EQ(-126,
+            ilogb(APFloat::getSmallestNormalized(APFloat::IEEEsingle, true)));
 }
 
 TEST(APFloatTest, scalbn) {

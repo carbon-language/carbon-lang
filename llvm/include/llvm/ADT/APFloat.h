@@ -491,20 +491,31 @@ public:
   /// return true.
   bool getExactInverse(APFloat *inv) const;
 
+  /// \brief Enumeration of \c ilogb error results.
+  enum IlogbErrorKinds {
+    IEK_Zero = INT_MIN+1,
+    IEK_NaN = INT_MIN,
+    IEK_Inf = INT_MAX
+  };
+
   /// \brief Returns the exponent of the internal representation of the APFloat.
   ///
   /// Because the radix of APFloat is 2, this is equivalent to floor(log2(x)).
-  friend APFloat logb(const APFloat &Arg) {
-    if (Arg.isZero() || Arg.isNaN())
-      return Arg;
-
+  /// For special APFloat values, this returns special error codes:
+  ///
+  ///   NaN -> \c IEK_NaN
+  ///   0   -> \c IEK_Zero
+  ///   Inf -> \c IEK_Inf
+  ///
+  friend int ilogb(const APFloat &Arg) {
+    if (Arg.isNaN())
+      return IEK_NaN;
+    if (Arg.isZero())
+      return IEK_Zero;
     if (Arg.isInfinity())
-      return APFloat::getInf(Arg.getSemantics());
+      return IEK_Inf;
 
-    APFloat Result(Arg.getSemantics(), std::abs(Arg.exponent));
-    if (Arg.exponent < 0)
-      Result.changeSign();
-    return Result;
+    return Arg.exponent;
   }
 
   /// \brief Returns: X * 2^Exp for integral exponents.
