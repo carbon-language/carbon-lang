@@ -3282,18 +3282,9 @@ bool FieldDecl::isAnonymousStructOrUnion() const {
   return false;
 }
 
-bool FieldDecl::isBitField() const {
-  if (getInClassInitStyle() == ICIS_NoInit &&
-      InitializerOrBitWidth.getPointer()) {
-    assert(getDeclContext() && "No parent context for FieldDecl");
-    return !getDeclContext()->isRecord() || !getParent()->isLambda();
-  }
-  return false;
-}
-
 unsigned FieldDecl::getBitWidthValue(const ASTContext &Ctx) const {
   assert(isBitField() && "not a bitfield");
-  Expr *BitWidth = static_cast<Expr *>(InitializerOrBitWidth.getPointer());
+  Expr *BitWidth = static_cast<Expr *>(InitStorage.getPointer());
   return BitWidth->EvaluateKnownConstInt(Ctx).getZExtValue();
 }
 
@@ -3317,34 +3308,28 @@ unsigned FieldDecl::getFieldIndex() const {
 }
 
 SourceRange FieldDecl::getSourceRange() const {
-  if (const Expr *E =
-          static_cast<const Expr *>(InitializerOrBitWidth.getPointer()))
-    return SourceRange(getInnerLocStart(), E->getLocEnd());
-  return DeclaratorDecl::getSourceRange();
-}
+  switch (InitStorage.getInt()) {
+  // All three of these cases store an optional Expr*.
+  case ISK_BitWidthOrNothing:
+  case ISK_InClassCopyInit:
+  case ISK_InClassListInit:
+    if (const Expr *E = static_cast<const Expr *>(InitStorage.getPointer()))
+      return SourceRange(getInnerLocStart(), E->getLocEnd());
+    // FALLTHROUGH
 
-void FieldDecl::setBitWidth(Expr *Width) {
-  assert(!InitializerOrBitWidth.getPointer() && !hasInClassInitializer() &&
-         "bit width, initializer or captured type already set");
-  InitializerOrBitWidth.setPointer(Width);
-}
-
-void FieldDecl::setInClassInitializer(Expr *Init) {
-  assert(!InitializerOrBitWidth.getPointer() && hasInClassInitializer() &&
-         "bit width, initializer or captured expr already set");
-  InitializerOrBitWidth.setPointer(Init);
-}
-
-bool FieldDecl::hasCapturedVLAType() const {
-  return getDeclContext()->isRecord() && getParent()->isLambda() &&
-         InitializerOrBitWidth.getPointer();
+  case ISK_CapturedVLAType:
+    return DeclaratorDecl::getSourceRange();
+  }
+  llvm_unreachable("bad init storage kind");
 }
 
 void FieldDecl::setCapturedVLAType(const VariableArrayType *VLAType) {
   assert(getParent()->isLambda() && "capturing type in non-lambda.");
-  assert(!InitializerOrBitWidth.getPointer() && !hasInClassInitializer() &&
+  assert(InitStorage.getInt() == ISK_BitWidthOrNothing &&
+         InitStorage.getPointer() == nullptr &&
          "bit width, initializer or captured type already set");
-  InitializerOrBitWidth.setPointer(const_cast<VariableArrayType *>(VLAType));
+  InitStorage.setPointerAndInt(const_cast<VariableArrayType *>(VLAType),
+                               ISK_CapturedVLAType);
 }
 
 //===----------------------------------------------------------------------===//
