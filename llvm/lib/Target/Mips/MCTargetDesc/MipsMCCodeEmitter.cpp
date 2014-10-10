@@ -364,6 +364,20 @@ getUImm5Lsl2Encoding(const MCInst &MI, unsigned OpNo,
 }
 
 unsigned MipsMCCodeEmitter::
+getSImm9AddiuspValue(const MCInst &MI, unsigned OpNo,
+                     SmallVectorImpl<MCFixup> &Fixups,
+                     const MCSubtargetInfo &STI) const {
+
+  const MCOperand &MO = MI.getOperand(OpNo);
+  if (MO.isImm()) {
+    unsigned Binary = (MO.getImm() >> 2) & 0x0000ffff;
+    return (((Binary & 0x8000) >> 7) | (Binary & 0x00ff));
+  }
+
+  return 0;
+}
+
+unsigned MipsMCCodeEmitter::
 getExprOpValue(const MCExpr *Expr,SmallVectorImpl<MCFixup> &Fixups,
                const MCSubtargetInfo &STI) const {
   int64_t Res;

@@ -10,6 +10,10 @@ def uimm5_lsl2 : Operand<OtherVT> {
   let EncoderMethod = "getUImm5Lsl2Encoding";
 }
 
+def simm9_addiusp : Operand<i32> {
+  let EncoderMethod = "getSImm9AddiuspValue";
+}
+
 def mem_mm_12 : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops GPR32, simm12);
@@ -93,6 +97,10 @@ class AddImmUS5<string opstr, RegisterOperand RO> :
   let isCommutable = 1;
 }
 
+class AddImmUSP<string opstr> :
+  MicroMipsInst16<(outs), (ins simm9_addiusp:$imm),
+                  !strconcat(opstr, "\t$imm"), [], NoItinerary, FrmI>;
+
 class MoveFromHILOMM<string opstr, RegisterOperand RO, Register UseReg> :
       MicroMipsInst16<(outs RO:$rd), (ins), !strconcat(opstr, "\t$rd"),
   [], II_MFHI_MFLO, FrmR> {
@@ -175,6 +183,7 @@ let isCall = 1, hasDelaySlot = 1, Defs = [RA] in {
 }
 
 def ADDIUS5_MM : AddImmUS5<"addius5", GPR32Opnd>, ADDIUS5_FM_MM16;
+def ADDIUSP_MM : AddImmUSP<"addiusp">, ADDIUSP_FM_MM16;
 def MFHI16_MM : MoveFromHILOMM<"mfhi", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x10>;
 def MFLO16_MM : MoveFromHILOMM<"mflo", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x12>;
 def MOVE16_MM : MoveMM16<"move", GPR32Opnd>, MOVE_FM_MM16<0x03>;

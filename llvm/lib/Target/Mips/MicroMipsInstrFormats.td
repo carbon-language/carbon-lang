@@ -53,6 +53,16 @@ class ADDIUS5_FM_MM16 {
   let Inst{0}     = 0;
 }
 
+class ADDIUSP_FM_MM16 {
+  bits<9> imm;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = 0x13;
+  let Inst{9-1}   = imm;
+  let Inst{0}     = 1;
+}
+
 class MOVE_FM_MM16<bits<6> funct> {
   bits<5> rs;
   bits<5> rd;

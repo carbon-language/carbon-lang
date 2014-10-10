@@ -10,6 +10,7 @@
 # Little endian
 #------------------------------------------------------------------------------
 # CHECK-EL: addius5 $7, -2          # encoding: [0xfc,0x4c]
+# CHECK-EL: addiusp -16             # encoding: [0xf9,0x4f]
 # CHECK-EL: mfhi    $9              # encoding: [0x09,0x46]
 # CHECK-EL: mflo    $9              # encoding: [0x49,0x46]
 # CHECK-EL: move    $25, $1         # encoding: [0x21,0x0f]
@@ -25,6 +26,7 @@
 # Big endian
 #------------------------------------------------------------------------------
 # CHECK-EB: addius5 $7, -2          # encoding: [0x4c,0xfc]
+# CHECK-EB: addiusp -16             # encoding: [0x4f,0xf9]
 # CHECK-EB: mfhi    $9              # encoding: [0x46,0x09]
 # CHECK-EB: mflo    $9              # encoding: [0x46,0x49]
 # CHECK-EB: move    $25, $1         # encoding: [0x0f,0x21]
@@ -38,6 +40,7 @@
 # CHECK-EB: nop                     # encoding: [0x00,0x00,0x00,0x00]
 
     addius5 $7, -2
+    addiusp -16
     mfhi    $9
     mflo    $9
     move    $25, $1
