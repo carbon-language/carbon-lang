@@ -238,7 +238,7 @@ void WinCodeViewLineTables::endModule() {
   Asm->EmitInt32(8 * NumFilenames);
   for (size_t I = 0, E = FileNameRegistry.Filenames.size(); I != E; ++I) {
     StringRef Filename = FileNameRegistry.Filenames[I];
-    // For each unique filename, just write it's offset in the string table.
+    // For each unique filename, just write its offset in the string table.
     Asm->EmitInt32(FileNameRegistry.Infos[Filename].StartOffset);
     // The function name offset is not followed by any additional data.
     Asm->EmitInt32(0);
