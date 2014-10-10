@@ -328,8 +328,7 @@ public:
     bool isAppdomainGlobal =
         getStorageClass() == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
         getSectionNumber() == COFF::IMAGE_SYM_ABSOLUTE;
-    bool isOrdinarySection =
-        getStorageClass() == COFF::IMAGE_SYM_CLASS_STATIC && getValue() == 0;
+    bool isOrdinarySection = getStorageClass() == COFF::IMAGE_SYM_CLASS_STATIC;
     return isAppdomainGlobal || isOrdinarySection;
   }
 
