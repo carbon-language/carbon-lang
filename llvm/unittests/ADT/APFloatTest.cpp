@@ -476,6 +476,28 @@ TEST(APFloatTest, FMA) {
   }
 }
 
+TEST(APFloatTest, MinNum) {
+  APFloat f1(1.0);
+  APFloat f2(2.0);
+  APFloat nan = APFloat::getNaN(APFloat::IEEEdouble);
+
+  EXPECT_EQ(1.0, minnum(f1, f2).convertToDouble());
+  EXPECT_EQ(1.0, minnum(f2, f1).convertToDouble());
+  EXPECT_EQ(1.0, minnum(f1, nan).convertToDouble());
+  EXPECT_EQ(1.0, minnum(nan, f1).convertToDouble());
+}
+
+TEST(APFloatTest, MaxNum) {
+  APFloat f1(1.0);
+  APFloat f2(2.0);
+  APFloat nan = APFloat::getNaN(APFloat::IEEEdouble);
+
+  EXPECT_EQ(2.0, maxnum(f1, f2).convertToDouble());
+  EXPECT_EQ(2.0, maxnum(f2, f1).convertToDouble());
+  EXPECT_EQ(1.0, maxnum(f1, nan).convertToDouble());
+  EXPECT_EQ(1.0, minnum(nan, f1).convertToDouble());
+}
+
 TEST(APFloatTest, Denormal) {
   APFloat::roundingMode rdmd = APFloat::rmNearestTiesToEven;
 

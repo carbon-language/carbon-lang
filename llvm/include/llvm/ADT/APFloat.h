@@ -649,6 +649,28 @@ private:
 hash_code hash_value(const APFloat &Arg);
 APFloat scalbn(APFloat X, int Exp);
 
+/// Implements IEEE minNum semantics. Returns the smaller of the 2 arguments if
+/// both are not NaN. If either argument is a NaN, returns the other argument.
+LLVM_READONLY
+inline APFloat minnum(const APFloat &A, const APFloat &B) {
+  if (A.isNaN())
+    return B;
+  if (B.isNaN())
+    return A;
+  return (B.compare(A) == APFloat::cmpLessThan) ? B : A;
+}
+
+/// Implements IEEE maxNum semantics. Returns the larger of the 2 arguments if
+/// both are not NaN. If either argument is a NaN, returns the other argument.
+LLVM_READONLY
+inline APFloat maxnum(const APFloat &A, const APFloat &B) {
+  if (A.isNaN())
+    return B;
+  if (B.isNaN())
+    return A;
+  return (A.compare(B) == APFloat::cmpLessThan) ? B : A;
+}
+
 } // namespace llvm
 
 #endif // LLVM_ADT_APFLOAT_H
