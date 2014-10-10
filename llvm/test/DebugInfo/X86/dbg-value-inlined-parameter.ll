@@ -9,18 +9,18 @@
 ; CHECK:   DW_AT_abstract_origin {{.*}} "foo"
 ; CHECK:   DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_abstract_origin {{.*}}{[[ABS_SP:.*]]}
+; CHECK:     DW_AT_abstract_origin {{.*}} "sp"
 ; CHECK:   DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
-; CHECK:     DW_AT_abstract_origin {{.*}}{[[ABS_NUMS:.*]]}
+; CHECK:     DW_AT_abstract_origin {{.*}} "nums"
 
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_name {{.*}} "foo"
-; CHECK: [[ABS_SP]]:   DW_TAG_formal_parameter
+; CHECK:   DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
 ; CHECK:     DW_AT_name {{.*}} "sp"
-; CHECK: [[ABS_NUMS]]:  DW_TAG_formal_parameter
+; CHECK:   DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
 ; CHECK:     DW_AT_name {{.*}} "nums"
 
@@ -34,9 +34,9 @@
 ;CHECK: DW_TAG_formal_parameter
 ;FIXME: Linux shouldn't drop this parameter either...
 ;CHECK-NOT: DW_TAG
-;DARWIN:   DW_AT_abstract_origin {{.*}}{[[ABS_SP]]}
+;DARWIN:   DW_AT_abstract_origin {{.*}} "sp"
 ;DARWIN: DW_TAG_formal_parameter
-;CHECK: DW_AT_abstract_origin {{.*}}{[[ABS_NUMS]]}
+;CHECK: DW_AT_abstract_origin {{.*}} "nums"
 ;CHECK-NOT: DW_TAG_formal_parameter
 
 %struct.S1 = type { float*, i32 }

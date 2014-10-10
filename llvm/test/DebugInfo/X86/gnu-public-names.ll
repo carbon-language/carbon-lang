@@ -52,7 +52,7 @@
 ; CHECK: [[C:0x[0-9a-f]+]]: DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_name {{.*}} "C"
 
-; CHECK: [[STATIC_MEM_DECL:0x[0-9a-f]+]]: DW_TAG_member
+; CHECK: DW_TAG_member
 ; CHECK-NEXT: DW_AT_name {{.*}} "static_member_variable"
 
 ; CHECK: DW_TAG_subprogram
@@ -67,7 +67,7 @@
 ; CHECK-NEXT: DW_AT_name {{.*}} "int"
 
 ; CHECK: [[STATIC_MEM_VAR:0x[0-9a-f]+]]: DW_TAG_variable
-; CHECK-NEXT: DW_AT_specification {{.*}} {[[STATIC_MEM_DECL]]}
+; CHECK-NEXT: DW_AT_specification {{.*}} "static_member_variable"
 
 ; CHECK: [[GLOB_VAR:0x[0-9a-f]+]]: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name {{.*}} "global_variable"
@@ -75,10 +75,10 @@
 ; CHECK: [[NS:0x[0-9a-f]+]]: DW_TAG_namespace
 ; CHECK-NEXT: DW_AT_name {{.*}} "ns"
 
-; CHECK: [[GLOB_NS_VAR_DECL:0x[0-9a-f]+]]: DW_TAG_variable
+; CHECK: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name {{.*}} "global_namespace_variable"
 
-; CHECK: [[D_VAR_DECL:0x[0-9a-f]+]]: DW_TAG_variable
+; CHECK: DW_TAG_variable
 ; CHECK-NEXT: DW_AT_name {{.*}} "d"
 
 ; CHECK: [[D:0x[0-9a-f]+]]: DW_TAG_structure_type
@@ -91,10 +91,10 @@
 ; CHECK: DW_AT_name {{.*}} "global_namespace_function"
 
 ; CHECK: [[GLOB_NS_VAR:0x[0-9a-f]+]]: DW_TAG_variable
-; CHECK-NEXT: DW_AT_specification {{.*}} {[[GLOB_NS_VAR_DECL]]}
+; CHECK-NEXT: DW_AT_specification {{.*}} "_ZN2ns25global_namespace_variableE"
 
 ; CHECK: [[D_VAR:0x[0-9a-f]+]]: DW_TAG_variable
-; CHECK-NEXT: DW_AT_specification {{.*}} {[[D_VAR_DECL]]}
+; CHECK-NEXT: DW_AT_specification {{.*}} "_ZN2ns1dE"
 
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
@@ -116,7 +116,7 @@
 ; CHECK: [[OUTER_ANON:.*]]:  DW_TAG_namespace
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK-NOT:     DW_AT_name
-; CHECK: [[OUTER_ANON_C_DECL:.*]]:     DW_TAG_variable
+; CHECK: DW_TAG_variable
 ; CHECK-NOT: DW_TAG
 ; CHECK:       DW_AT_name {{.*}} "c"
 ; CHECK-NOT: {{DW_TAG|NULL}}
@@ -131,7 +131,7 @@
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK: [[OUTER_ANON_C:.*]]: DW_TAG_variable
 ; CHECK-NOT: DW_TAG
-; CHECK-NEXT:   DW_AT_specification {{.*}} {[[OUTER_ANON_C_DECL]]}
+; CHECK-NEXT:   DW_AT_specification {{.*}} "_ZN5outer12_GLOBAL__N_11cE"
 
 ; CHECK: [[ANON:.*]]: DW_TAG_namespace
 ; CHECK-NOT:   DW_AT_name
@@ -139,13 +139,13 @@
 ; CHECK-NOT: DW_TAG
 ; CHECK:     DW_AT_name {{.*}} "inner"
 ; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK: [[ANON_INNER_B_DECL:.*]]:     DW_TAG_variable
+; CHECK:      DW_TAG_variable
 ; CHECK-NOT: DW_TAG
 ; CHECK:       DW_AT_name {{.*}} "b"
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:     NULL
 ; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK: [[ANON_I_DECL:.*]]:   DW_TAG_variable
+; CHECK:    DW_TAG_variable
 ; CHECK-NOT: DW_TAG
 ; CHECK:     DW_AT_name {{.*}} "i"
 ; CHECK-NOT: {{DW_TAG|NULL}}
@@ -153,10 +153,10 @@
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK: [[ANON_INNER_B:.*]]: DW_TAG_variable
 ; CHECK-NOT: DW_TAG
-; CHECK-NEXT:   DW_AT_specification {{.*}} {[[ANON_INNER_B_DECL]]}
+; CHECK-NEXT:   DW_AT_specification {{.*}} "_ZN12_GLOBAL__N_15inner1bE"
 ; CHECK: [[ANON_I:.*]]: DW_TAG_variable
 ; CHECK-NOT: DW_TAG
-; CHECK-NEXT:   DW_AT_specification {{.*}} {[[ANON_I_DECL]]}
+; CHECK-NEXT:   DW_AT_specification {{.*}} "_ZN12_GLOBAL__N_11iE"
 
 ; CHECK: [[MEM_FUNC:0x[0-9a-f]+]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG

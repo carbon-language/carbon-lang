@@ -18,7 +18,6 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace dwarf;
-typedef DILineInfoSpecifier::FunctionNameKind FunctionNameKind;
 
 // Small helper to extract a DIE pointed by a reference
 // attribute. It looks up the Unit containing the DIE and calls
@@ -129,8 +128,7 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
     uint32_t Ref = formValue.getAsReference(u).getValue();
     DWARFDebugInfoEntryMinimal DIE;
     if (const DWARFUnit *RefU = findUnitAndExtractFast(DIE, u, &Ref))
-      if (const char *Ref = DIE.getSubroutineName(RefU,
-                                                  FunctionNameKind::LinkageName))
+      if (const char *Ref = DIE.getName(RefU, DINameKind::LinkageName))
         OS << " \"" << Ref << '\"';
   }
 
@@ -331,11 +329,19 @@ bool DWARFDebugInfoEntryMinimal::addressRangeContainsAddress(
 
 const char *
 DWARFDebugInfoEntryMinimal::getSubroutineName(const DWARFUnit *U,
-                                              FunctionNameKind Kind) const {
-  if (!isSubroutineDIE() || Kind == FunctionNameKind::None)
+                                              DINameKind Kind) const {
+  if (!isSubroutineDIE())
+    return nullptr;
+  return getName(U, Kind);
+}
+
+const char *
+DWARFDebugInfoEntryMinimal::getName(const DWARFUnit *U,
+                                    DINameKind Kind) const {
+  if (Kind == DINameKind::None)
     return nullptr;
   // Try to get mangled name only if it was asked for.
-  if (Kind == FunctionNameKind::LinkageName) {
+  if (Kind == DINameKind::LinkageName) {
     if (const char *name =
             getAttributeValueAsString(U, DW_AT_MIPS_linkage_name, nullptr))
       return name;
@@ -351,7 +357,7 @@ DWARFDebugInfoEntryMinimal::getSubroutineName(const DWARFUnit *U,
   if (spec_ref != -1U) {
     DWARFDebugInfoEntryMinimal spec_die;
     if (const DWARFUnit *RefU = findUnitAndExtractFast(spec_die, U, &spec_ref)) {
-      if (const char *name = spec_die.getSubroutineName(RefU, Kind))
+      if (const char *name = spec_die.getName(RefU, Kind))
         return name;
     }
   }
@@ -362,7 +368,7 @@ DWARFDebugInfoEntryMinimal::getSubroutineName(const DWARFUnit *U,
     DWARFDebugInfoEntryMinimal abs_origin_die;
     if (const DWARFUnit *RefU = findUnitAndExtractFast(abs_origin_die, U,
                                                        &abs_origin_ref)) {
-      if (const char *name = abs_origin_die.getSubroutineName(RefU, Kind))
+      if (const char *name = abs_origin_die.getName(RefU, Kind))
         return name;
     }
   }

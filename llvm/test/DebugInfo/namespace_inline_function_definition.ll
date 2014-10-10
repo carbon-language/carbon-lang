@@ -19,7 +19,7 @@
 ; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_MIPS_linkage_name {{.*}} "_ZN2ns4funcEi"
 ; CHECK-NOT: DW_TAG
-; CHECK: [[ABS_PRM:0x.*]]:   DW_TAG_formal_parameter
+; CHECK:   DW_TAG_formal_parameter
 ; CHECK:   NULL
 ; CHECK-NOT: NULL
 ; CHECK:   DW_TAG_subprogram
@@ -27,7 +27,7 @@
 ; CHECK:     DW_AT_abstract_origin {{.*}} "_ZN2ns4funcEi"
 ; CHECK-NOT: DW_TAG
 ; CHECK:     DW_TAG_formal_parameter
-; CHECK:       DW_AT_abstract_origin {{.*}} {[[ABS_PRM]]}
+; CHECK:       DW_AT_abstract_origin {{.*}} "i"
 ; CHECK:     NULL
 ; CHECK:   NULL
 ; CHECK: NULL

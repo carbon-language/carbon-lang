@@ -27,7 +27,7 @@
 ; CHECK:     DW_TAG_inlined_subroutine
 ; CHECK:       DW_AT_abstract_origin {{.*}}[[ABS_FUNC:........]] "_Z4funci"
 ; CHECK:       DW_TAG_formal_parameter
-; CHECK:         DW_AT_abstract_origin {{.*}}[[ABS_VAR:........]])
+; CHECK:         DW_AT_abstract_origin {{.*}}[[ABS_VAR:........]] "x"
 
 ; Check the abstract definition is in the 'b.cpp' CU and doesn't contain any
 ; concrete information (address range or variable location)
@@ -50,7 +50,7 @@
 ; CHECK:   DW_AT_abstract_origin {{.*}} {0x[[ABS_FUNC]]} "_Z4funci"
 ; CHECK:   DW_TAG_formal_parameter
 ; CHECK:     DW_AT_location
-; CHECK:     DW_AT_abstract_origin {{.*}} {0x[[ABS_VAR]]}
+; CHECK:     DW_AT_abstract_origin {{.*}} {0x[[ABS_VAR]]} "x"
 
 
 @i = external global i32

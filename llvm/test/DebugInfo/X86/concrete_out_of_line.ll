@@ -53,7 +53,7 @@
 ; CHECK: DW_AT_abstract_origin {{.*}} "_ZN17nsAutoRefCntD1Ev"
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
-; CHECK: DW_AT_abstract_origin {{.*}} {[[D1_THIS_ABS]]}
+; CHECK: DW_AT_abstract_origin {{.*}} {[[D1_THIS_ABS]]} "this"
 ; CHECK: DW_TAG_inlined_subroutine
 ; CHECK-NEXT: DW_AT_abstract_origin {{.*}} "_ZN17nsAutoRefCntD2Ev"
 

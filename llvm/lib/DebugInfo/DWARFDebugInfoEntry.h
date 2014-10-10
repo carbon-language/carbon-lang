@@ -125,9 +125,12 @@ public:
   /// returns its mangled name (or short name, if mangled is missing).
   /// This name may be fetched from specification or abstract origin
   /// for this subprogram. Returns null if no name is found.
-  const char *
-  getSubroutineName(const DWARFUnit *U,
-                    DILineInfoSpecifier::FunctionNameKind Kind) const;
+  const char *getSubroutineName(const DWARFUnit *U, DINameKind Kind) const;
+
+  /// Return the DIE name resolving DW_AT_sepcification or
+  /// DW_AT_abstract_origin references if necessary.
+  /// Returns null if no name is found.
+  const char *getName(const DWARFUnit *U, DINameKind Kind) const;
 
   /// Retrieves values of DW_AT_call_file, DW_AT_call_line and
   /// DW_AT_call_column from DIE (or zeroes if they are missing).

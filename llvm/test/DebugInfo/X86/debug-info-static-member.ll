@@ -97,7 +97,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 ; PRESENT:      .debug_info contents:
 ; PRESENT:      DW_TAG_class_type
 ; PRESENT-NEXT: DW_AT_name {{.*}} "C"
-; PRESENT:      0x[[DECL_A:[0-9a-f]+]]: DW_TAG_member
+; PRESENT:      DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "a"
 ; PRESENT:      DW_AT_external
 ; PRESENT:      DW_AT_declaration
@@ -108,14 +108,14 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 ; PRESENT:      DW_AT_declaration
 ; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_private)
 ; PRESENT:      DW_AT_const_value {{.*}} (1)
-; PRESENT:      0x[[DECL_B:[0-9a-f]+]]: DW_TAG_member
+; PRESENT:      DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "b"
 ; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_protected)
 ; PRESENT:      DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "const_b"
 ; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_protected)
 ; PRESENT:      DW_AT_const_value [DW_FORM_udata] (1078523331)
-; PRESENT:      0x[[DECL_C:[0-9a-f]+]]: DW_TAG_member
+; PRESENT:      DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "c"
 ; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_public)
 ; PRESENT:      DW_TAG_member
@@ -131,15 +131,15 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 ; PRESENT:      NULL
 ; Definitions point back to their declarations, and have a location.
 ; PRESENT:      DW_TAG_variable
-; PRESENT-NEXT: DW_AT_specification {{.*}} {0x[[DECL_A]]}
+; PRESENT-NEXT: DW_AT_specification {{.*}} "a"
 ; PRESENT-NEXT: DW_AT_location
 ; PRESENT-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1aE"
 ; PRESENT:      DW_TAG_variable
-; PRESENT-NEXT: DW_AT_specification {{.*}} {0x[[DECL_B]]}
+; PRESENT-NEXT: DW_AT_specification {{.*}} "b"
 ; PRESENT-NEXT: DW_AT_location
 ; PRESENT-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1bE"
 ; PRESENT:      DW_TAG_variable
-; PRESENT-NEXT: DW_AT_specification {{.*}} {0x[[DECL_C]]}
+; PRESENT-NEXT: DW_AT_specification {{.*}} "c"
 ; PRESENT-NEXT: DW_AT_location
 ; PRESENT-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1cE"
 
@@ -147,7 +147,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 ; DARWINP:      .debug_info contents:
 ; DARWINP:      DW_TAG_class_type
 ; DARWINP-NEXT: DW_AT_name {{.*}} "C"
-; DARWINP:      0x[[DECL_A:[0-9a-f]+]]: DW_TAG_member
+; DARWINP:      DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "a"
 ; DARWINP:      DW_AT_external
 ; DARWINP:      DW_AT_declaration
@@ -158,14 +158,14 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 ; DARWINP:      DW_AT_declaration
 ; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_private)
 ; DARWINP:      DW_AT_const_value {{.*}} (1)
-; DARWINP:      0x[[DECL_B:[0-9a-f]+]]: DW_TAG_member
+; DARWINP:      DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "b"
 ; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_protected)
 ; DARWINP:      DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "const_b"
 ; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_protected)
 ; DARWINP:      DW_AT_const_value [DW_FORM_udata] (1078523331)
-; DARWINP:      0x[[DECL_C:[0-9a-f]+]]: DW_TAG_member
+; DARWINP:      DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "c"
 ; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_public)
 ; DARWINP:      DW_TAG_member
@@ -181,15 +181,15 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 ; DARWINP:      NULL
 ; Definitions point back to their declarations, and have a location.
 ; DARWINP:      DW_TAG_variable
-; DARWINP-NEXT: DW_AT_specification {{.*}} {0x[[DECL_A]]}
+; DARWINP-NEXT: DW_AT_specification {{.*}} "a"
 ; DARWINP-NEXT: DW_AT_location
 ; DARWINP-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1aE"
 ; DARWINP:      DW_TAG_variable
-; DARWINP-NEXT: DW_AT_specification {{.*}} {0x[[DECL_B]]}
+; DARWINP-NEXT: DW_AT_specification {{.*}} "b"
 ; DARWINP-NEXT: DW_AT_location
 ; DARWINP-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1bE"
 ; DARWINP:      DW_TAG_variable
-; DARWINP-NEXT: DW_AT_specification {{.*}} {0x[[DECL_C]]}
+; DARWINP-NEXT: DW_AT_specification {{.*}} "c"
 ; DARWINP-NEXT: DW_AT_location
 ; DARWINP-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1cE"
 

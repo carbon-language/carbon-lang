@@ -66,11 +66,15 @@ class DIInliningInfo {
   }
 };
 
+/// A DINameKind is passed to name search methods to specify a
+/// preference regarding the type of name resolution the caller wants.
+enum class DINameKind { None, ShortName, LinkageName };
+
 /// DILineInfoSpecifier - controls which fields of DILineInfo container
 /// should be filled with data.
 struct DILineInfoSpecifier {
   enum class FileLineInfoKind { None, Default, AbsoluteFilePath };
-  enum class FunctionNameKind { None, ShortName, LinkageName };
+  typedef DINameKind FunctionNameKind;
 
   FileLineInfoKind FLIKind;
   FunctionNameKind FNKind;
