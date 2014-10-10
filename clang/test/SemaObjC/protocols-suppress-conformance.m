@@ -13,7 +13,7 @@ __attribute__((objc_protocol_requires_explicit_implementation))
 // be adopted later by a subclass.
 @interface ClassA <Protocol>
 - (void) theBestOfTimes;
-@property (readonly) id theWorstOfTimes;
+@property (readonly) id theWorstOfTimes; // expected-note {{property declared here}}
 @end
 
 // This class subclasses ClassA (which also adopts 'Protocol').

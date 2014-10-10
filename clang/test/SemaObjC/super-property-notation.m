@@ -30,7 +30,7 @@ void f0() {
 
 // rdar://13349296
 __attribute__((objc_root_class)) @interface ClassBase 
-@property (nonatomic, retain) ClassBase * foo;
+@property (nonatomic, retain) ClassBase * foo; // expected-note {{property declared here}}
 @end
 
 @implementation ClassBase 

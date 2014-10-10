@@ -1584,6 +1584,7 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
       else {
         Diag(Prop->getLocation(), diag::warn_autosynthesis_property_in_superclass)
         << Prop->getIdentifier();
+        Diag(PropInSuperClass->getLocation(), diag::note_property_declare);
         Diag(IMPDecl->getLocation(), diag::note_while_in_implementation);
       }
       continue;

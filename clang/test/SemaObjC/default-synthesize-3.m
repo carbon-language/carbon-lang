@@ -44,7 +44,7 @@ __attribute ((objc_requires_property_definitions)) // expected-error {{'objc_req
 @interface NSObject @end
 @protocol Foo
 @property (readonly) char isFoo; // expected-note {{property declared here}}
-@property (readonly) char isNotFree;
+@property (readonly) char isNotFree;  // expected-note {{property declared here}}
 @end
 
 @interface Bar : NSObject <Foo>
@@ -90,9 +90,9 @@ __attribute ((objc_requires_property_definitions)) // expected-error {{'objc_req
 @end
 
 @interface B
-@property (readonly) id prop;
-@property (readonly) id prop1;
-@property (readonly) id prop2;
+@property (readonly) id prop;  // expected-note {{property declared here}}
+@property (readonly) id prop1;  // expected-note {{property declared here}}
+@property (readonly) id prop2;  // expected-note {{property declared here}}
 @end
 
 @interface B()

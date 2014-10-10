@@ -197,7 +197,8 @@ __attribute__((deprecated))
 @interface TestBase
 @property (nonatomic, strong) id object __attribute__((deprecated("deprecated"))); // expected-note {{'object' has been explicitly marked deprecated here}} \
 expected-note {{property 'object' is declared deprecated here}} \
-expected-note {{'setObject:' has been explicitly marked deprecated here}}
+expected-note {{'setObject:' has been explicitly marked deprecated here}} \
+expected-note {{property declared here}}
 @end
 
 @interface TestDerived : TestBase
