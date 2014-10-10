@@ -128,6 +128,16 @@ class JumpLinkRegSMM16<string opstr, RegisterOperand RO> :
   let Defs = [RA];
 }
 
+// 16-bit Jump Register Compact - No delay slot
+class JumpRegCMM16<string opstr, RegisterOperand RO> :
+  MicroMipsInst16<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"),
+                  [], IIBranch, FrmR> {
+  let isTerminator = 1;
+  let isBarrier = 1;
+  let isBranch = 1;
+  let isIndirectBranch = 1;
+}
+
 // MicroMIPS Jump and Link (Call) - Short Delay Slot
 let isCall = 1, hasDelaySlot = 1, Defs = [RA] in {
   class JumpLinkMM<string opstr, DAGOperand opnd> :
@@ -151,6 +161,7 @@ def MFLO16_MM : MoveFromHILOMM<"mflo", GPR32Opnd, AC0>, MFHILO_FM_MM16<0x12>;
 def MOVE16_MM : MoveMM16<"move", GPR32Opnd>, MOVE_FM_MM16<0x03>;
 def JALR16_MM : JumpLinkRegMM16<"jalr", GPR32Opnd>, JALR_FM_MM16<0x0e>;
 def JALRS16_MM : JumpLinkRegSMM16<"jalrs16", GPR32Opnd>, JALR_FM_MM16<0x0f>;
+def JRC16_MM : JumpRegCMM16<"jrc", GPR32Opnd>, JALR_FM_MM16<0x0d>;
 def JRADDIUSP : JumpRAddiuStackMM16, JRADDIUSP_FM_MM16<0x18>;
 
 class WaitMM<string opstr> :
