@@ -454,8 +454,10 @@ APInt APInt::XorSlowCase(const APInt& RHS) const {
   for (unsigned i = 0; i < numWords; ++i)
     val[i] = pVal[i] ^ RHS.pVal[i];
 
+  APInt Result(val, getBitWidth());
   // 0^0==1 so clear the high bits in case they got set.
-  return APInt(val, getBitWidth()).clearUnusedBits();
+  Result.clearUnusedBits();
+  return Result;
 }
 
 APInt APInt::operator*(const APInt& RHS) const {
@@ -473,7 +475,8 @@ APInt APInt::operator+(const APInt& RHS) const {
     return APInt(BitWidth, VAL + RHS.VAL);
   APInt Result(BitWidth, 0);
   add(Result.pVal, this->pVal, RHS.pVal, getNumWords());
-  return Result.clearUnusedBits();
+  Result.clearUnusedBits();
+  return Result;
 }
 
 APInt APInt::operator-(const APInt& RHS) const {
@@ -482,7 +485,8 @@ APInt APInt::operator-(const APInt& RHS) const {
     return APInt(BitWidth, VAL - RHS.VAL);
   APInt Result(BitWidth, 0);
   sub(Result.pVal, this->pVal, RHS.pVal, getNumWords());
-  return Result.clearUnusedBits();
+  Result.clearUnusedBits();
+  return Result;
 }
 
 bool APInt::EqualSlowCase(const APInt& RHS) const {
@@ -1114,7 +1118,9 @@ APInt APInt::ashr(unsigned shiftAmt) const {
   uint64_t fillValue = (isNegative() ? -1ULL : 0);
   for (unsigned i = breakWord+1; i < getNumWords(); ++i)
     val[i] = fillValue;
-  return APInt(val, BitWidth).clearUnusedBits();
+  APInt Result(val, BitWidth);
+  Result.clearUnusedBits();
+  return Result;
 }
 
 /// Logical right-shift this APInt by shiftAmt.
@@ -1151,7 +1157,9 @@ APInt APInt::lshr(unsigned shiftAmt) const {
   // If we are shifting less than a word, compute the shift with a simple carry
   if (shiftAmt < APINT_BITS_PER_WORD) {
     lshrNear(val, pVal, getNumWords(), shiftAmt);
-    return APInt(val, BitWidth).clearUnusedBits();
+    APInt Result(val, BitWidth);
+    Result.clearUnusedBits();
+    return Result;
   }
 
   // Compute some values needed by the remaining shift algorithms
@@ -1164,7 +1172,9 @@ APInt APInt::lshr(unsigned shiftAmt) const {
       val[i] = pVal[i+offset];
     for (unsigned i = getNumWords()-offset; i < getNumWords(); i++)
       val[i] = 0;
-    return APInt(val,BitWidth).clearUnusedBits();
+    APInt Result(val, BitWidth);
+    Result.clearUnusedBits();
+    return Result;
   }
 
   // Shift the low order words
@@ -1178,7 +1188,9 @@ APInt APInt::lshr(unsigned shiftAmt) const {
   // Remaining words are 0
   for (unsigned i = breakWord+1; i < getNumWords(); ++i)
     val[i] = 0;
-  return APInt(val, BitWidth).clearUnusedBits();
+  APInt Result(val, BitWidth);
+  Result.clearUnusedBits();
+  return Result;
 }
 
 /// Left-shift this APInt by shiftAmt.
@@ -1211,7 +1223,9 @@ APInt APInt::shlSlowCase(unsigned shiftAmt) const {
       val[i] = pVal[i] << shiftAmt | carry;
       carry = pVal[i] >> (APINT_BITS_PER_WORD - shiftAmt);
     }
-    return APInt(val, BitWidth).clearUnusedBits();
+    APInt Result(val, BitWidth);
+    Result.clearUnusedBits();
+    return Result;
   }
 
   // Compute some values needed by the remaining shift algorithms
@@ -1224,7 +1238,9 @@ APInt APInt::shlSlowCase(unsigned shiftAmt) const {
       val[i] = 0;
     for (unsigned i = offset; i < getNumWords(); i++)
       val[i] = pVal[i-offset];
-    return APInt(val,BitWidth).clearUnusedBits();
+    APInt Result(val, BitWidth);
+    Result.clearUnusedBits();
+    return Result;
   }
 
   // Copy whole words from this to Result.
@@ -1235,7 +1251,9 @@ APInt APInt::shlSlowCase(unsigned shiftAmt) const {
   val[offset] = pVal[0] << wordShift;
   for (i = 0; i < offset; ++i)
     val[i] = 0;
-  return APInt(val, BitWidth).clearUnusedBits();
+  APInt Result(val, BitWidth);
+  Result.clearUnusedBits();
+  return Result;
 }
 
 APInt APInt::rotl(const APInt &rotateAmt) const {
