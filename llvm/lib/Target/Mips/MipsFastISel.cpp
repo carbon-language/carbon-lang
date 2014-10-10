@@ -673,7 +673,7 @@ bool MipsFastISel::SelectCmp(const Instruction *I) {
       CondMovOpc = Mips::MOVF_I;
       break;
     default:
-      break;
+      llvm_unreachable("Only switching of a subset of CCs.");
     }
     unsigned RegWithZero = createResultReg(&Mips::GPR32RegClass);
     unsigned RegWithOne = createResultReg(&Mips::GPR32RegClass);
