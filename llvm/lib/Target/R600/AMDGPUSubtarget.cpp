@@ -79,7 +79,7 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef GPU, StringRef FS,
       FP64Denormals(false), FP32Denormals(false), CaymanISA(false),
       FlatAddressSpace(false), EnableIRStructurizer(true),
       EnablePromoteAlloca(false), EnableIfCvt(true),
-      WavefrontSize(0), CFALUBug(false), LocalMemorySize(0),
+      EnableLoadStoreOpt(false), WavefrontSize(0), CFALUBug(false), LocalMemorySize(0),
       DL(computeDataLayout(initializeSubtargetDependencies(GPU, FS))),
       FrameLowering(TargetFrameLowering::StackGrowsUp,
                     64 * 16, // Maximum stack alignment (long16)

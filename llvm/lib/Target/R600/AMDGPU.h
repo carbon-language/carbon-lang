@@ -40,6 +40,7 @@ FunctionPass *createSITypeRewriter();
 FunctionPass *createSIAnnotateControlFlowPass();
 FunctionPass *createSILowerI1CopiesPass();
 FunctionPass *createSIShrinkInstructionsPass();
+FunctionPass *createSILoadStoreOptimizerPass(TargetMachine &tm);
 FunctionPass *createSILowerControlFlowPass(TargetMachine &tm);
 FunctionPass *createSIFixSGPRCopiesPass(TargetMachine &tm);
 FunctionPass *createSIFixSGPRLiveRangesPass();
@@ -48,6 +49,9 @@ FunctionPass *createSIInsertWaits(TargetMachine &tm);
 
 void initializeSILowerI1CopiesPass(PassRegistry &);
 extern char &SILowerI1CopiesID;
+
+void initializeSILoadStoreOptimizerPass(PassRegistry &);
+extern char &SILoadStoreOptimizerID;
 
 // Passes common to R600 and SI
 FunctionPass *createAMDGPUPromoteAlloca(const AMDGPUSubtarget &ST);

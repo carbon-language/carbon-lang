@@ -81,6 +81,12 @@ def FeatureCFALUBug : SubtargetFeature<"cfalubug",
         "true",
         "GPU has CF_ALU bug">;
 
+// XXX - This should probably be removed once enabled by default
+def FeatureEnableLoadStoreOpt : SubtargetFeature <"load-store-opt",
+        "EnableLoadStoreOpt",
+        "true",
+        "Enable SI load/store optimizer pass">;
+
 def FeatureFlatAddressSpace : SubtargetFeature<"flat-address-space",
         "FlatAddressSpace",
         "true",

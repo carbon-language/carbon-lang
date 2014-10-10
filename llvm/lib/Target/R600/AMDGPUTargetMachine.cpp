@@ -148,6 +148,17 @@ bool AMDGPUPassConfig::addPreRegAlloc() {
     // SIFixSGPRCopies can generate a lot of duplicate instructions,
     // so we need to run MachineCSE afterwards.
     addPass(&MachineCSEID);
+
+    if (getOptLevel() > CodeGenOpt::None && ST.loadStoreOptEnabled()) {
+      // Don't do this with no optimizations since it throws away debug info by
+      // merging nonadjacent loads.
+
+      // This should be run after scheduling, but before register allocation. It
+      // also need extra copies to the address operand to be eliminated.
+      initializeSILoadStoreOptimizerPass(*PassRegistry::getPassRegistry());
+      insertPass(&MachineSchedulerID, &SILoadStoreOptimizerID);
+    }
+
     addPass(createSIShrinkInstructionsPass());
     addPass(createSIFixSGPRLiveRangesPass());
   }

@@ -44,6 +44,7 @@ add_llvm_target(R600CodeGen
   SIInsertWaits.cpp
   SIInstrInfo.cpp
   SIISelLowering.cpp
+  SILoadStoreOptimizer.cpp
   SILowerControlFlow.cpp
   SILowerI1Copies.cpp
   SIMachineFunctionInfo.cpp

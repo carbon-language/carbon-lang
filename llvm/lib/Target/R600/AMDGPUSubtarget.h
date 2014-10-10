@@ -60,6 +60,7 @@ private:
   bool EnableIRStructurizer;
   bool EnablePromoteAlloca;
   bool EnableIfCvt;
+  bool EnableLoadStoreOpt;
   unsigned WavefrontSize;
   bool CFALUBug;
   int LocalMemorySize;
@@ -178,6 +179,10 @@ public:
 
   bool isIfCvtEnabled() const {
     return EnableIfCvt;
+  }
+
+  bool loadStoreOptEnabled() const {
+    return EnableLoadStoreOpt;
   }
 
   unsigned getWavefrontSize() const {
