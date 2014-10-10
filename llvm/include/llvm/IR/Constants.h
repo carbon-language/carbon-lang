@@ -264,6 +264,9 @@ public:
   /// isNegative - Return true if the sign bit is set.
   bool isNegative() const { return Val.isNegative(); }
 
+  /// isInfinity - Return true if the value is infinity
+  bool isInfinity() const { return Val.isInfinity(); }
+
   /// isNaN - Return true if the value is a NaN.
   bool isNaN() const { return Val.isNaN(); }
 
