@@ -650,4 +650,22 @@ DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
   return AbsDef;
 }
 
+void DwarfCompileUnit::finishSubprogramDefinition(DISubprogram SP) {
+  DIE *D = getDIE(SP);
+  if (DIE *AbsSPDIE = DD->getAbstractSPDies().lookup(SP)) {
+    if (D)
+      // If this subprogram has an abstract definition, reference that
+      addDIEEntry(*D, dwarf::DW_AT_abstract_origin, *AbsSPDIE);
+  } else {
+    if (!D && getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly)
+      // Lazily construct the subprogram if we didn't see either concrete or
+      // inlined versions during codegen. (except in -gmlt ^ where we want
+      // to omit these entirely)
+      D = getOrCreateSubprogramDIE(SP);
+    if (D)
+      // And attach the attributes
+      applySubprogramAttributesToDefinition(SP, *D);
+  }
+}
+
 } // end llvm namespace

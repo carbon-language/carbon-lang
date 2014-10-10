@@ -530,21 +530,7 @@ void DwarfDebug::finishSubprogramDefinitions() {
       // folding, etc), in which case ignore it here.
       if (SPMap[SP] != SPCU)
         continue;
-      DIE *D = SPCU->getDIE(SP);
-      if (DIE *AbsSPDIE = AbstractSPDies.lookup(SP)) {
-        if (D)
-          // If this subprogram has an abstract definition, reference that
-          SPCU->addDIEEntry(*D, dwarf::DW_AT_abstract_origin, *AbsSPDIE);
-      } else {
-        if (!D && TheCU.getEmissionKind() != DIBuilder::LineTablesOnly)
-          // Lazily construct the subprogram if we didn't see either concrete or
-          // inlined versions during codegen. (except in -gmlt ^ where we want
-          // to omit these entirely)
-          D = SPCU->getOrCreateSubprogramDIE(SP);
-        if (D)
-          // And attach the attributes
-          SPCU->applySubprogramAttributesToDefinition(SP, *D);
-      }
+      SPCU->finishSubprogramDefinition(SP);
     }
   }
 }
