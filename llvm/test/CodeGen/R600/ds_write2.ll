@@ -162,7 +162,7 @@ define void @simple_write2_two_val_max_offset_f32(float addrspace(1)* %C, float 
 
 ; SI-LABEL: @simple_write2_two_val_too_far_f32
 ; SI: DS_WRITE_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x0
-; SI: DS_WRITE_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x400
+; SI: DS_WRITE_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x404
 ; SI: S_ENDPGM
 define void @simple_write2_two_val_too_far_f32(float addrspace(1)* %C, float addrspace(1)* %in0, float addrspace(1)* %in1) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -172,7 +172,7 @@ define void @simple_write2_two_val_too_far_f32(float addrspace(1)* %C, float add
   %val1 = load float addrspace(1)* %in1.gep, align 4
   %arrayidx0 = getelementptr inbounds [512 x float] addrspace(3)* @lds, i32 0, i32 %x.i
   store float %val0, float addrspace(3)* %arrayidx0, align 4
-  %add.x = add nsw i32 %x.i, 256
+  %add.x = add nsw i32 %x.i, 257
   %arrayidx1 = getelementptr inbounds [512 x float] addrspace(3)* @lds, i32 0, i32 %add.x
   store float %val1, float addrspace(3)* %arrayidx1, align 4
   ret void

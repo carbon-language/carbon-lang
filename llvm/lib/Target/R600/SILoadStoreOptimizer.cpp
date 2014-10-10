@@ -76,14 +76,12 @@ private:
   MachineBasicBlock::iterator mergeRead2Pair(
     MachineBasicBlock::iterator I,
     MachineBasicBlock::iterator Paired,
-    unsigned EltSize,
-    const MCInstrDesc &Read2InstDesc);
+    unsigned EltSize);
 
   MachineBasicBlock::iterator mergeWrite2Pair(
     MachineBasicBlock::iterator I,
     MachineBasicBlock::iterator Paired,
-    unsigned EltSize,
-    const MCInstrDesc &Write2InstDesc);
+    unsigned EltSize);
 
 public:
   static char ID;
@@ -144,12 +142,29 @@ FunctionPass *llvm::createSILoadStoreOptimizerPass(TargetMachine &TM) {
 
 bool SILoadStoreOptimizer::offsetsCanBeCombined(unsigned Offset0,
                                                 unsigned Offset1,
-                                                unsigned EltSize) {
+                                                unsigned Size) {
   // XXX - Would the same offset be OK? Is there any reason this would happen or
   // be useful?
-  return (Offset0 != Offset1) &&
-    isUInt<8>(Offset0 / EltSize) &&
-    isUInt<8>(Offset1 / EltSize);
+  if (Offset0 == Offset1)
+    return false;
+
+  // This won't be valid if the offset isn't aligned.
+  if ((Offset0 % Size != 0) || (Offset1 % Size != 0))
+    return false;
+
+  unsigned EltOffset0 = Offset0 / Size;
+  unsigned EltOffset1 = Offset1 / Size;
+
+  // Check if the new offsets fit in the reduced 8-bit range.
+  if (isUInt<8>(EltOffset0) && isUInt<8>(EltOffset1))
+    return true;
+
+  // If the offset in elements doesn't fit in 8-bits, we might be able to use
+  // the stride 64 versions.
+  if ((EltOffset0 % 64 != 0) || (EltOffset1 % 64) != 0)
+    return false;
+
+  return isUInt<8>(EltOffset0 / 64) && isUInt<8>(EltOffset1 / 64);
 }
 
 MachineBasicBlock::iterator
@@ -176,8 +191,8 @@ SILoadStoreOptimizer::findMatchingDSInst(MachineBasicBlock::iterator I,
       AddrReg0.getSubReg() == AddrReg1.getSubReg()) {
     int OffsetIdx = AMDGPU::getNamedOperandIdx(I->getOpcode(),
                                                AMDGPU::OpName::offset);
-    unsigned Offset0 = I->getOperand(OffsetIdx).getImm();
-    unsigned Offset1 = MBBI->getOperand(OffsetIdx).getImm();
+    unsigned Offset0 = I->getOperand(OffsetIdx).getImm() & 0xffff;
+    unsigned Offset1 = MBBI->getOperand(OffsetIdx).getImm() & 0xffff;
 
     // Check both offsets fit in the reduced range.
     if (offsetsCanBeCombined(Offset0, Offset1, EltSize))
@@ -201,8 +216,7 @@ void SILoadStoreOptimizer::updateRegDefsUses(unsigned SrcReg,
 MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
   MachineBasicBlock::iterator I,
   MachineBasicBlock::iterator Paired,
-  unsigned EltSize,
-  const MCInstrDesc &Read2InstDesc) {
+  unsigned EltSize) {
   MachineBasicBlock *MBB = I->getParent();
 
   // Be careful, since the addresses could be subregisters themselves in weird
@@ -213,9 +227,29 @@ MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
   unsigned DestReg1
     = TII->getNamedOperand(*Paired, AMDGPU::OpName::vdst)->getReg();
 
-  unsigned Offset0 = TII->getNamedOperand(*I, AMDGPU::OpName::offset)->getImm();
+  unsigned Offset0
+          = TII->getNamedOperand(*I, AMDGPU::OpName::offset)->getImm() & 0xffff;
   unsigned Offset1
-    = TII->getNamedOperand(*Paired, AMDGPU::OpName::offset)->getImm();
+    = TII->getNamedOperand(*Paired, AMDGPU::OpName::offset)->getImm() & 0xffff;
+
+  unsigned NewOffset0 = Offset0 / EltSize;
+  unsigned NewOffset1 = Offset1 / EltSize;
+  unsigned Opc = (EltSize == 4) ? AMDGPU::DS_READ2_B32 : AMDGPU::DS_READ2_B64;
+
+  // Prefer the st64 form if we can use it, even if we can fit the offset in the
+  // non st64 version. I'm not sure if there's any real reason to do this.
+  bool UseST64 = (NewOffset0 % 64 == 0) && (NewOffset1 % 64 == 0);
+  if (UseST64) {
+    NewOffset0 /= 64;
+    NewOffset1 /= 64;
+    Opc = (EltSize == 4) ? AMDGPU::DS_READ2ST64_B32 : AMDGPU::DS_READ2ST64_B64;
+  }
+
+  assert((isUInt<8>(NewOffset0) && isUInt<8>(NewOffset1)) &&
+         (NewOffset0 != NewOffset1) &&
+         "Computed offset doesn't fit");
+
+  const MCInstrDesc &Read2Desc = TII->get(Opc);
 
   const TargetRegisterClass *SuperRC
     = (EltSize == 4) ? &AMDGPU::VReg_64RegClass : &AMDGPU::VReg_128RegClass;
@@ -223,11 +257,11 @@ MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
 
   DebugLoc DL = I->getDebugLoc();
   MachineInstrBuilder Read2
-    = BuildMI(*MBB, I, DL, Read2InstDesc, DestReg)
+    = BuildMI(*MBB, I, DL, Read2Desc, DestReg)
     .addImm(0) // gds
     .addOperand(*AddrReg) // addr
-    .addImm(Offset0 / EltSize) // offset0
-    .addImm(Offset1 / EltSize) // offset1
+    .addImm(NewOffset0) // offset0
+    .addImm(NewOffset1) // offset1
     .addMemOperand(*I->memoperands_begin())
     .addMemOperand(*Paired->memoperands_begin());
 
@@ -255,8 +289,7 @@ MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
 MachineBasicBlock::iterator SILoadStoreOptimizer::mergeWrite2Pair(
   MachineBasicBlock::iterator I,
   MachineBasicBlock::iterator Paired,
-  unsigned EltSize,
-  const MCInstrDesc &Write2InstDesc) {
+  unsigned EltSize) {
   MachineBasicBlock *MBB = I->getParent();
 
   // Be sure to use .addOperand(), and not .addReg() with these. We want to be
@@ -266,19 +299,40 @@ MachineBasicBlock::iterator SILoadStoreOptimizer::mergeWrite2Pair(
   const MachineOperand *Data1
     = TII->getNamedOperand(*Paired, AMDGPU::OpName::data0);
 
-  unsigned Offset0 = TII->getNamedOperand(*I, AMDGPU::OpName::offset)->getImm();
-  unsigned Offset1
-    = TII->getNamedOperand(*Paired, AMDGPU::OpName::offset)->getImm();
 
+  unsigned Offset0
+    = TII->getNamedOperand(*I, AMDGPU::OpName::offset)->getImm() & 0xffff;
+  unsigned Offset1
+    = TII->getNamedOperand(*Paired, AMDGPU::OpName::offset)->getImm() & 0xffff;
+
+  unsigned NewOffset0 = Offset0 / EltSize;
+  unsigned NewOffset1 = Offset1 / EltSize;
+  unsigned Opc = (EltSize == 4) ? AMDGPU::DS_WRITE2_B32 : AMDGPU::DS_WRITE2_B64;
+
+  // Prefer the st64 form if we can use it, even if we can fit the offset in the
+  // non st64 version. I'm not sure if there's any real reason to do this.
+  bool UseST64 = (NewOffset0 % 64 == 0) && (NewOffset1 % 64 == 0);
+  if (UseST64) {
+    NewOffset0 /= 64;
+    NewOffset1 /= 64;
+    Opc = (EltSize == 4) ? AMDGPU::DS_WRITE2ST64_B32 : AMDGPU::DS_WRITE2ST64_B64;
+  }
+
+  assert((isUInt<8>(NewOffset0) && isUInt<8>(NewOffset1)) &&
+         (NewOffset0 != NewOffset1) &&
+         "Computed offset doesn't fit");
+
+  const MCInstrDesc &Write2Desc = TII->get(Opc);
   DebugLoc DL = I->getDebugLoc();
+
   MachineInstrBuilder Write2
-    = BuildMI(*MBB, I, DL, Write2InstDesc)
+    = BuildMI(*MBB, I, DL, Write2Desc)
     .addImm(0) // gds
     .addOperand(*Addr) // addr
     .addOperand(*Data0) // data0
     .addOperand(*Data1) // data1
-    .addImm(Offset0 / EltSize) // offset0
-    .addImm(Offset1 / EltSize) // offset1
+    .addImm(NewOffset0) // offset0
+    .addImm(NewOffset1) // offset1
     .addMemOperand(*I->memoperands_begin())
     .addMemOperand(*Paired->memoperands_begin());
 
@@ -300,11 +354,6 @@ MachineBasicBlock::iterator SILoadStoreOptimizer::mergeWrite2Pair(
 // the same base register. We rely on the scheduler to do the hard work of
 // clustering nearby loads, and assume these are all adjacent.
 bool SILoadStoreOptimizer::optimizeBlock(MachineBasicBlock &MBB) {
-  const MCInstrDesc &Read2B32Desc = TII->get(AMDGPU::DS_READ2_B32);
-  const MCInstrDesc &Read2B64Desc = TII->get(AMDGPU::DS_READ2_B64);
-  const MCInstrDesc &Write2B32Desc = TII->get(AMDGPU::DS_WRITE2_B32);
-  const MCInstrDesc &Write2B64Desc = TII->get(AMDGPU::DS_WRITE2_B64);
-
   bool Modified = false;
 
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E;) {
@@ -322,10 +371,7 @@ bool SILoadStoreOptimizer::optimizeBlock(MachineBasicBlock &MBB) {
       MachineBasicBlock::iterator Match = findMatchingDSInst(I, Size);
       if (Match != E) {
         Modified = true;
-
-        const MCInstrDesc &Read2Desc
-          = (Opc == AMDGPU::DS_READ_B64) ? Read2B64Desc : Read2B32Desc;
-        I = mergeRead2Pair(I, Match, Size, Read2Desc);
+        I = mergeRead2Pair(I, Match, Size);
       } else {
         ++I;
       }
@@ -336,11 +382,7 @@ bool SILoadStoreOptimizer::optimizeBlock(MachineBasicBlock &MBB) {
       MachineBasicBlock::iterator Match = findMatchingDSInst(I, Size);
       if (Match != E) {
         Modified = true;
-
-        const MCInstrDesc &Write2Desc
-          = (Opc == AMDGPU::DS_WRITE_B64) ? Write2B64Desc : Write2B32Desc;
-
-        I = mergeWrite2Pair(I, Match, Size, Write2Desc);
+        I = mergeWrite2Pair(I, Match, Size);
       } else {
         ++I;
       }

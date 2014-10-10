@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
+; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -check-prefix=SI %s
 
 ; Test that doing a shift of a pointer with a constant add will be
 ; folded into the constant offset addressing mode even if the add has
@@ -69,8 +69,7 @@ define void @load_shl_base_lds_max_offset(i8 addrspace(1)* %out, i8 addrspace(3)
 
 ; SI-LABEL: {{^}}load_shl_base_lds_2:
 ; SI: V_LSHLREV_B32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
-; SI-NEXT: DS_READ_B32 {{v[0-9]+}}, [[PTR]], 0x100, [M0]
-; SI-NEXT: DS_READ_B32 {{v[0-9]+}}, [[PTR]], 0x900, [M0]
+; SI-NEXT: DS_READ2ST64_B32 {{v\[[0-9]+:[0-9]+\]}}, [[PTR]], 0x1, 0x9, [M0]
 ; SI: S_ENDPGM
 define void @load_shl_base_lds_2(float addrspace(1)* %out) #0 {
   %tid.x = tail call i32 @llvm.r600.read.tidig.x() #1

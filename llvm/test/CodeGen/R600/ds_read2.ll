@@ -47,13 +47,13 @@ define void @simple_read2_f32_max_offset(float addrspace(1)* %out) #0 {
 ; SI-LABEL: @simple_read2_f32_too_far
 ; SI-NOT DS_READ2_B32
 ; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x0
-; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x400
+; SI: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x404
 ; SI: S_ENDPGM
 define void @simple_read2_f32_too_far(float addrspace(1)* %out) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %arrayidx0 = getelementptr inbounds [512 x float] addrspace(3)* @lds, i32 0, i32 %x.i
   %val0 = load float addrspace(3)* %arrayidx0, align 4
-  %add.x = add nsw i32 %x.i, 256
+  %add.x = add nsw i32 %x.i, 257
   %arrayidx1 = getelementptr inbounds [512 x float] addrspace(3)* @lds, i32 0, i32 %add.x
   %val1 = load float addrspace(3)* %arrayidx1, align 4
   %sum = fadd float %val0, %val1
@@ -349,13 +349,13 @@ define void @simple_read2_f64_max_offset(double addrspace(1)* %out) #0 {
 ; SI-LABEL: @simple_read2_f64_too_far
 ; SI-NOT DS_READ2_B64
 ; SI: DS_READ_B64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}}, 0x0
-; SI: DS_READ_B64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}}, 0x800
+; SI: DS_READ_B64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}}, 0x808
 ; SI: S_ENDPGM
 define void @simple_read2_f64_too_far(double addrspace(1)* %out) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %arrayidx0 = getelementptr inbounds [512 x double] addrspace(3)* @lds.f64, i32 0, i32 %x.i
   %val0 = load double addrspace(3)* %arrayidx0, align 8
-  %add.x = add nsw i32 %x.i, 256
+  %add.x = add nsw i32 %x.i, 257
   %arrayidx1 = getelementptr inbounds [512 x double] addrspace(3)* @lds.f64, i32 0, i32 %add.x
   %val1 = load double addrspace(3)* %arrayidx1, align 8
   %sum = fadd double %val0, %val1
