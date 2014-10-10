@@ -100,6 +100,16 @@ template class Pair<int, int>;
 template<typename T, typename U>
 struct SuperPair : Pair<int, int>, Pair<T, U> { };
 
+enum FxnTmplEnum {
+  FxnTmplEnum_A, FxnTmplEnum_B, FxnTmplEnum_C,
+};
+template <typename T, int I, FxnTmplEnum, int E>
+void foo(T Value) {}
+
+static const int FxnTmpl_Var = 7;
+template <>
+void foo<float, 9, FxnTmplEnum_B, FxnTmpl_Var + 7>(float Value);
+
 // RUN: c-index-test -test-load-source all -fno-delayed-template-parsing %s | FileCheck -check-prefix=CHECK-LOAD %s
 // CHECK-LOAD: index-templates.cpp:4:6: FunctionTemplate=f:4:6 Extent=[3:1 - 4:22]
 // CHECK-LOAD: index-templates.cpp:3:19: TemplateTypeParameter=T:3:19 (Definition) Extent=[3:10 - 3:20]
@@ -178,7 +188,7 @@ struct SuperPair : Pair<int, int>, Pair<T, U> { };
 // CHECK-LOAD: index-templates.cpp:100:31: TemplateTypeParameter=U:100:31 (Definition) Extent=[100:22 - 100:32]
 // CHECK-LOAD: index-templates.cpp:101:20: C++ base class specifier=Pair<int, int>:98:16 [access=public isVirtual=false] Extent=[101:20 - 101:34]
 // CHECK-LOAD: index-templates.cpp:101:36: C++ base class specifier=Pair<T, U>:76:8 [access=public isVirtual=false] Extent=[101:36 - 101:46]
-
+// CHECK-LOAD: index-templates.cpp:111:6: FunctionDecl=foo:111:6 [Specialization of foo:107:6] [Template arg 0: kind: 1, type: float] [Template arg 1: kind: 4, intval: 9] [Template arg 2: kind: 4, intval: 1] [Template arg 3: kind: 4, intval: 14] Extent=[110:1 - 111:64]
 
 // RUN: c-index-test -test-load-source-usrs all -fno-delayed-template-parsing %s | FileCheck -check-prefix=CHECK-USRS %s
 // CHECK-USRS: index-templates.cpp c:@FT@>3#T#Nt0.0#t>2#T#Nt1.0f#>t0.22S0_# Extent=[3:1 - 4:22]

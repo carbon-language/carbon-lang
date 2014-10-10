@@ -2943,6 +2943,124 @@ CINDEX_LINKAGE int clang_Cursor_getNumArguments(CXCursor C);
 CINDEX_LINKAGE CXCursor clang_Cursor_getArgument(CXCursor C, unsigned i);
 
 /**
+ * \brief Describes the kind of a template argument.
+ *
+ * See the definition of llvm::clang::TemplateArgument::ArgKind for full
+ * element descriptions.
+ */
+enum CXTemplateArgumentKind {
+  CXTemplateArgumentKind_Null,
+  CXTemplateArgumentKind_Type,
+  CXTemplateArgumentKind_Declaration,
+  CXTemplateArgumentKind_NullPtr,
+  CXTemplateArgumentKind_Integral,
+  CXTemplateArgumentKind_Template,
+  CXTemplateArgumentKind_TemplateExpansion,
+  CXTemplateArgumentKind_Expression,
+  CXTemplateArgumentKind_Pack,
+  /* Indicates an error case, preventing the kind from being deduced. */
+  CXTemplateArgumentKind_Invalid
+};
+
+/**
+ *\brief Returns the number of template args of a function decl representing a
+ * template specialization.
+ *
+ * If the argument cursor cannot be converted into a template function
+ * declaration, -1 is returned.
+ *
+ * For example, for the following declaration and specialization:
+ *   template <typename T, int kInt, bool kBool>
+ *   void foo() { ... }
+ *
+ *   template <>
+ *   void foo<float, -7, true>();
+ *
+ * The value 3 would be returned from this call.
+ */
+CINDEX_LINKAGE int clang_Cursor_getNumTemplateArguments(CXCursor C);
+
+/**
+ * \brief Retrieve the kind of the I'th template argument of the CXCursor C.
+ *
+ * If the argument CXCursor does not represent a FunctionDecl, an invalid
+ * template argument kind is returned.
+ *
+ * For example, for the following declaration and specialization:
+ *   template <typename T, int kInt, bool kBool>
+ *   void foo() { ... }
+ *
+ *   template <>
+ *   void foo<float, -7, true>();
+ *
+ * For I = 0, 1, and 2, Type, Integral, and Integral will be returned,
+ * respectively.
+ */
+CINDEX_LINKAGE enum CXTemplateArgumentKind clang_Cursor_getTemplateArgumentKind(
+    CXCursor C, unsigned I);
+
+/**
+ * \brief Retrieve a CXType representing the type of a TemplateArgument of a
+ *  function decl representing a template specialization.
+ *
+ * If the argument CXCursor does not represent a FunctionDecl whose I'th
+ * template argument has a kind of CXTemplateArgKind_Integral, an invalid type
+ * is returned.
+ *
+ * For example, for the following declaration and specialization:
+ *   template <typename T, int kInt, bool kBool>
+ *   void foo() { ... }
+ *
+ *   template <>
+ *   void foo<float, -7, true>();
+ *
+ * If called with I = 0, "float", will be returned.
+ * Invalid types will be returned for I == 1 or 2.
+ */
+CINDEX_LINKAGE CXType clang_Cursor_getTemplateArgumentType(CXCursor C,
+                                                           unsigned I);
+
+/**
+ * \brief Retrieve the value of an Integral TemplateArgument (of a function
+ *  decl representing a template specialization) as a signed long long.
+ *
+ * It is undefined to call this function on a CXCursor that does not represent a
+ * FunctionDecl or whose I'th template argument is not an integral value.
+ *
+ * For example, for the following declaration and specialization:
+ *   template <typename T, int kInt, bool kBool>
+ *   void foo() { ... }
+ *
+ *   template <>
+ *   void foo<float, -7, true>();
+ *
+ * If called with I = 1 or 2, -7 or true will be returned, respectively.
+ * For I == 0, this function's behavior is undefined.
+ */
+CINDEX_LINKAGE long long clang_Cursor_getTemplateArgumentValue(CXCursor C,
+                                                               unsigned I);
+
+/**
+ * \brief Retrieve the value of an Integral TemplateArgument (of a function
+ *  decl representing a template specialization) as an unsigned long long.
+ *
+ * It is undefined to call this function on a CXCursor that does not represent a
+ * FunctionDecl or whose I'th template argument is not an integral value.
+ *
+ * For example, for the following declaration and specialization:
+ *   template <typename T, int kInt, bool kBool>
+ *   void foo() { ... }
+ *
+ *   template <>
+ *   void foo<float, 2147483649, true>();
+ *
+ * If called with I = 1 or 2, 2147483649 or true will be returned, respectively.
+ * For I == 0, this function's behavior is undefined.
+ */
+CINDEX_LINKAGE unsigned long long clang_Cursor_getTemplateArgumentUnsignedValue(
+    CXCursor C, unsigned I);
+
+/**
  * \brief Determine whether two CXTypes represent the same type.
  *
  * \returns non-zero if the CXTypes represent the same type and

@@ -1074,6 +1074,140 @@ CXCursor clang_Cursor_getArgument(CXCursor C, unsigned i) {
   return clang_getNullCursor();
 }
 
+int clang_Cursor_getNumTemplateArguments(CXCursor C) {
+  if (clang_getCursorKind(C) != CXCursor_FunctionDecl) {
+    return -1;
+  }
+
+  const FunctionDecl *FD = llvm::dyn_cast_or_null<clang::FunctionDecl>(
+      getCursorDecl(C));
+  if (!FD) {
+    return -1;
+  }
+
+  const FunctionTemplateSpecializationInfo* SpecInfo =
+      FD->getTemplateSpecializationInfo();
+  if (!SpecInfo) {
+    return -1;
+  }
+
+  return SpecInfo->TemplateArguments->size();
+}
+
+enum CXGetTemplateArgumentStatus {
+  /** \brief The operation completed successfully */
+  CXGetTemplateArgumentStatus_Success = 0,
+
+  /** \brief The specified cursor did not represent a FunctionDecl. */
+  CXGetTemplateArgumentStatus_CursorNotFunctionDecl = -1,
+
+  /** \brief The specified cursor was not castable to a FunctionDecl. */
+  CXGetTemplateArgumentStatus_BadFunctionDeclCast = -2,
+
+  /** \brief A NULL FunctionTemplateSpecializationInfo was retrieved. */
+  CXGetTemplateArgumentStatus_NullTemplSpecInfo = -3,
+
+  /** \brief An invalid (OOB) argument index was specified */
+  CXGetTemplateArgumentStatus_InvalidIndex = -4
+};
+
+static int clang_Cursor_getTemplateArgument(
+    CXCursor C, unsigned I, TemplateArgument *TA) {
+  if (clang_getCursorKind(C) != CXCursor_FunctionDecl) {
+    return CXGetTemplateArgumentStatus_CursorNotFunctionDecl;
+  }
+
+  const FunctionDecl *FD = llvm::dyn_cast_or_null<clang::FunctionDecl>(
+      getCursorDecl(C));
+  if (!FD) {
+    return CXGetTemplateArgumentStatus_BadFunctionDeclCast;
+  }
+
+  const FunctionTemplateSpecializationInfo* SpecInfo =
+      FD->getTemplateSpecializationInfo();
+  if (!SpecInfo) {
+    return CXGetTemplateArgumentStatus_NullTemplSpecInfo;
+  }
+
+  if (I >= SpecInfo->TemplateArguments->size()) {
+    return CXGetTemplateArgumentStatus_InvalidIndex;
+  }
+
+  *TA = SpecInfo->TemplateArguments->get(I);
+  return 0;
+}
+
+enum CXTemplateArgumentKind clang_Cursor_getTemplateArgumentKind(CXCursor C,
+                                                                 unsigned I) {
+  TemplateArgument TA;
+  if (clang_Cursor_getTemplateArgument(C, I, &TA)) {
+    return CXTemplateArgumentKind_Invalid;
+  }
+
+  switch (TA.getKind()) {
+    case TemplateArgument::Null: return CXTemplateArgumentKind_Null;
+    case TemplateArgument::Type: return CXTemplateArgumentKind_Type;
+    case TemplateArgument::Declaration:
+      return CXTemplateArgumentKind_Declaration;
+    case TemplateArgument::NullPtr: return CXTemplateArgumentKind_NullPtr;
+    case TemplateArgument::Integral: return CXTemplateArgumentKind_Integral;
+    case TemplateArgument::Template: return CXTemplateArgumentKind_Template;
+    case TemplateArgument::TemplateExpansion:
+      return CXTemplateArgumentKind_TemplateExpansion;
+    case TemplateArgument::Expression: return CXTemplateArgumentKind_Expression;
+    case TemplateArgument::Pack: return CXTemplateArgumentKind_Pack;
+  }
+
+  return CXTemplateArgumentKind_Invalid;
+}
+
+CXType clang_Cursor_getTemplateArgumentType(CXCursor C, unsigned I) {
+  TemplateArgument TA;
+  if (clang_Cursor_getTemplateArgument(C, I, &TA) !=
+      CXGetTemplateArgumentStatus_Success) {
+    return cxtype::MakeCXType(QualType(), getCursorTU(C));
+  }
+
+  if (TA.getKind() != TemplateArgument::Type) {
+    return cxtype::MakeCXType(QualType(), getCursorTU(C));
+  }
+
+  return cxtype::MakeCXType(TA.getAsType(), getCursorTU(C));
+}
+
+long long clang_Cursor_getTemplateArgumentValue(CXCursor C, unsigned I) {
+  TemplateArgument TA;
+  if (clang_Cursor_getTemplateArgument(C, I, &TA) !=
+      CXGetTemplateArgumentStatus_Success) {
+    assert(0 && "Unable to retrieve TemplateArgument");
+    return 0;
+  }
+
+  if (TA.getKind() != TemplateArgument::Integral) {
+    assert(0 && "Passed template argument is not Integral");
+    return 0;
+  }
+
+  return TA.getAsIntegral().getSExtValue();
+}
+
+unsigned long long clang_Cursor_getTemplateArgumentUnsignedValue(CXCursor C,
+                                                                 unsigned I) {
+  TemplateArgument TA;
+  if (clang_Cursor_getTemplateArgument(C, I, &TA) !=
+      CXGetTemplateArgumentStatus_Success) {
+    assert(0 && "Unable to retrieve TemplateArgument");
+    return 0;
+  }
+
+  if (TA.getKind() != TemplateArgument::Integral) {
+    assert(0 && "Passed template argument is not Integral");
+    return 0;
+  }
+
+  return TA.getAsIntegral().getZExtValue();
+}
+
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//

@@ -1,6 +1,8 @@
+import ctypes
 import gc
 
 from clang.cindex import CursorKind
+from clang.cindex import TemplateArgumentKind
 from clang.cindex import TranslationUnit
 from clang.cindex import TypeKind
 from .util import get_cursor
@@ -243,6 +245,48 @@ def test_get_arguments():
     assert len(arguments) == 2
     assert arguments[0].spelling == "i"
     assert arguments[1].spelling == "j"
+
+kTemplateArgTest = """\
+        template <int kInt, typename T, bool kBool>
+        void foo();
+
+        template<>
+        void foo<-7, float, true>();
+    """
+
+def test_get_num_template_arguments():
+    tu = get_tu(kTemplateArgTest, lang='cpp')
+    foos = get_cursors(tu, 'foo')
+
+    assert foos[1].get_num_template_arguments() == 3
+
+def test_get_template_argument_kind():
+    tu = get_tu(kTemplateArgTest, lang='cpp')
+    foos = get_cursors(tu, 'foo')
+
+    assert foos[1].get_template_argument_kind(0) == TemplateArgumentKind.INTEGRAL
+    assert foos[1].get_template_argument_kind(1) == TemplateArgumentKind.TYPE
+    assert foos[1].get_template_argument_kind(2) == TemplateArgumentKind.INTEGRAL
+
+def test_get_template_argument_type():
+    tu = get_tu(kTemplateArgTest, lang='cpp')
+    foos = get_cursors(tu, 'foo')
+
+    assert foos[1].get_template_argument_type(1).kind == TypeKind.FLOAT
+
+def test_get_template_argument_value():
+    tu = get_tu(kTemplateArgTest, lang='cpp')
+    foos = get_cursors(tu, 'foo')
+
+    assert foos[1].get_template_argument_value(0) == -7
+    assert foos[1].get_template_argument_value(2) == True
+
+def test_get_template_argument_unsigned_value():
+    tu = get_tu(kTemplateArgTest, lang='cpp')
+    foos = get_cursors(tu, 'foo')
+
+    assert foos[1].get_template_argument_unsigned_value(0) == 2 ** 32 - 7
+    assert foos[1].get_template_argument_unsigned_value(2) == True
 
 def test_referenced():
     tu = get_tu('void foo(); void bar() { foo(); }')
