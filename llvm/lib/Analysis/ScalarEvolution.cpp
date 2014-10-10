@@ -59,6 +59,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -79,6 +80,7 @@
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -3662,6 +3664,31 @@ ScalarEvolution::GetMinTrailingZeros(const SCEV *S) {
   return 0;
 }
 
+/// GetRangeFromMetadata - Helper method to assign a range to V from
+/// metadata present in the IR.
+static Optional<ConstantRange> GetRangeFromMetadata(Value *V) {
+  if (Instruction *I = dyn_cast<Instruction>(V)) {
+    if (MDNode *MD = I->getMetadata(LLVMContext::MD_range)) {
+      ConstantRange TotalRange(
+          cast<IntegerType>(I->getType())->getBitWidth(), false);
+
+      unsigned NumRanges = MD->getNumOperands() / 2;
+      assert(NumRanges >= 1);
+
+      for (unsigned i = 0; i < NumRanges; ++i) {
+        ConstantInt *Lower = cast<ConstantInt>(MD->getOperand(2*i + 0));
+        ConstantInt *Upper = cast<ConstantInt>(MD->getOperand(2*i + 1));
+        ConstantRange Range(Lower->getValue(), Upper->getValue());
+        TotalRange = TotalRange.unionWith(Range);
+      }
+
+      return TotalRange;
+    }
+  }
+
+  return None;
+}
+
 /// getUnsignedRange - Determine the unsigned range for a particular SCEV.
 ///
 ConstantRange
@@ -3791,6 +3818,11 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
   }
 
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
+    // Check if the IR explicitly contains !range metadata.
+    Optional<ConstantRange> MDRange = GetRangeFromMetadata(U->getValue());
+    if (MDRange.hasValue())
+      ConservativeResult = ConservativeResult.intersectWith(MDRange.getValue());
+
     // For a SCEVUnknown, ask ValueTracking.
     APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
     computeKnownBits(U->getValue(), Zeros, Ones, DL, 0, AT, nullptr, DT);
@@ -3942,6 +3974,11 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
   }
 
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
+    // Check if the IR explicitly contains !range metadata.
+    Optional<ConstantRange> MDRange = GetRangeFromMetadata(U->getValue());
+    if (MDRange.hasValue())
+      ConservativeResult = ConservativeResult.intersectWith(MDRange.getValue());
+
     // For a SCEVUnknown, ask ValueTracking.
     if (!U->getValue()->getType()->isIntegerTy() && !DL)
       return setSignedRange(U, ConservativeResult);
@@ -6541,6 +6578,8 @@ ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
   // (interprocedural conditions notwithstanding).
   if (!L) return true;
 
+  if (isKnownPredicateWithRanges(Pred, LHS, RHS)) return true;
+
   BasicBlock *Latch = L->getLoopLatch();
   if (!Latch)
     return false;
@@ -6575,6 +6614,8 @@ ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
   // Interpret a null as meaning no loop, where there is obviously no guard
   // (interprocedural conditions notwithstanding).
   if (!L) return false;
+
+  if (isKnownPredicateWithRanges(Pred, LHS, RHS)) return true;
 
   // Starting at the loop predecessor, climb up the predecessor chain, as long
   // as there are predecessors that can be found that have unique successors
