@@ -113,12 +113,6 @@ public:
     
     void
     SetRunArguments (const Args &args);
-
-    bool
-    GetExprParserCompilerArguments (Args &args) const;
-
-    void
-    SetExprParserCompilerArguments (const Args &args);
     
     size_t
     GetEnvironmentAsArgs (Args &env) const;

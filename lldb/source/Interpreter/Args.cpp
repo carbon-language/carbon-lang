@@ -647,20 +647,6 @@ Args::ParseOptions (Options &options)
     }
     OptionParser::Prepare();
     int val;
-
-    // Before parsing arguments, insert quote char to the head of the string.
-    // So quoted arguments like "-l" won't be treated as option.
-    int argv_iter = 0;
-    for (auto args_iter = m_args.begin(); args_iter != m_args.end(); args_iter++, argv_iter++)
-    {
-        char quote_char = GetArgumentQuoteCharAtIndex(argv_iter);
-        if (quote_char != '\0')
-        {
-            *args_iter = std::string(1, quote_char) + *args_iter;
-            m_argv[argv_iter] = args_iter->c_str();
-        }
-    }
-
     while (1)
     {
         int long_options_index = -1;
@@ -710,23 +696,8 @@ Args::ParseOptions (Options &options)
             }
             else
             {
-                const char *value = OptionParser::GetOptionArgument();
-                if (value)
-                {
-                    // Remove leading quote char from option value
-                    argv_iter = 0;
-                    for (auto args_iter = m_args.begin(); args_iter != m_args.end(); args_iter++, argv_iter++)
-                    {
-                        if (*args_iter == value && GetArgumentQuoteCharAtIndex(argv_iter) != '\0')
-                        {
-                            *args_iter = args_iter->substr(1);
-                            value = args_iter->c_str();
-                            break;
-                        }
-                    }
-                }
                 error = options.SetOptionValue(long_options_index,
-                                               (def->option_has_arg == OptionParser::eNoArgument) ? nullptr : value);
+                                               (def->option_has_arg == OptionParser::eNoArgument) ? nullptr : OptionParser::GetOptionArgument());
             }
         }
         else
@@ -740,19 +711,6 @@ Args::ParseOptions (Options &options)
     // Update our ARGV now that get options has consumed all the options
     m_argv.erase(m_argv.begin(), m_argv.begin() + OptionParser::GetOptionIndex());
     UpdateArgsAfterOptionParsing ();
-
-    // Remove leading quote char from other arguments.
-    argv_iter = 0;
-    for (auto args_iter = m_args.begin(); args_iter != m_args.end(); args_iter++, argv_iter++)
-    {
-        char quote_char = GetArgumentQuoteCharAtIndex(argv_iter);
-        if (quote_char != '\0')
-        {
-            *args_iter = args_iter->substr(1);
-            m_argv[argv_iter] = args_iter->c_str();
-        }
-    }
-
     return error;
 }
 

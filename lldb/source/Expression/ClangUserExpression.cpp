@@ -527,9 +527,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     if (!exe_scope)
         exe_scope = exe_ctx.GetTargetPtr();
 
-    Args expr_parser_compiler_args;
-    target->GetExprParserCompilerArguments (expr_parser_compiler_args);
-    ClangExpressionParser parser(exe_scope, *this, expr_parser_compiler_args, generate_debug_info);
+    ClangExpressionParser parser(exe_scope, *this, generate_debug_info);
 
     unsigned num_errors = parser.Parse (error_stream);
 
