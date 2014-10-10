@@ -109,7 +109,7 @@ else()  # Not Android
     endif()
   endif()
 
-  if(CAN_TARGET_mips)
+  if(CAN_TARGET_mips OR CAN_TARGET_mipsel)
     set(ASAN_TEST_CONFIG_SUFFIX "32")
     set(ASAN_TEST_BITS "32")
     set(ASAN_TEST_TARGET_CFLAGS ${TARGET_32_BIT_CFLAGS})
