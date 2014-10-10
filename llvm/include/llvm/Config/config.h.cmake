@@ -188,6 +188,9 @@
 /* Define to 1 if you have the <limits.h> header file. */
 #cmakedefine HAVE_LIMITS_H ${HAVE_LIMITS_H}
 
+/* Define to 1 if you have the <link.h> header file. */
+#cmakedefine HAVE_LINK_H ${HAVE_LINK_H}
+
 /* Define if you can use -rdynamic. */
 #define HAVE_LINK_EXPORT_DYNAMIC 1
 
