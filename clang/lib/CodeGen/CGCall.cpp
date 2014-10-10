@@ -2728,6 +2728,24 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
   args.add(EmitAnyExprToTemp(E), type);
 }
 
+QualType CodeGenFunction::getVarArgType(const Expr *Arg) {
+  // System headers on Windows define NULL to 0 instead of 0LL on Win64. MSVC
+  // implicitly widens null pointer constants that are arguments to varargs
+  // functions to pointer-sized ints.
+  if (!getTarget().getTriple().isOSWindows())
+    return Arg->getType();
+
+  if (Arg->getType()->isIntegerType() &&
+      getContext().getTypeSize(Arg->getType()) <
+          getContext().getTargetInfo().getPointerWidth(0) &&
+      Arg->isNullPointerConstant(getContext(),
+                                 Expr::NPC_ValueDependentIsNotNull)) {
+    return getContext().getIntPtrType();
+  }
+
+  return Arg->getType();
+}
+
 // In ObjC ARC mode with no ObjC ARC exception safety, tell the ARC
 // optimizer it can aggressively ignore unwind edges.
 void
@@ -3022,6 +3040,11 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
           V = RV.getScalarVal();
         else
           V = Builder.CreateLoad(RV.getAggregateAddr());
+
+        // We might have to widen integers, but we should never truncate.
+        if (ArgInfo.getCoerceToType() != V->getType() &&
+            V->getType()->isIntegerTy())
+          V = Builder.CreateZExt(V, ArgInfo.getCoerceToType());
 
         // If the argument doesn't match, perform a bitcast to coerce it.  This
         // can happen due to trivial type mismatches.

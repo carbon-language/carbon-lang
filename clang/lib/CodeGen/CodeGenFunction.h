@@ -2752,7 +2752,7 @@ public:
 
     // If we still have any arguments, emit them using the type of the argument.
     for (; Arg != ArgEnd; ++Arg)
-      ArgTypes.push_back(Arg->getType());
+      ArgTypes.push_back(getVarArgType(*Arg));
 
     EmitCallArgs(Args, ArgTypes, ArgBeg, ArgEnd, CalleeDecl, ParamsToSkip,
                  ForceColumnInfo);
@@ -2765,6 +2765,8 @@ public:
                     unsigned ParamsToSkip = 0, bool ForceColumnInfo = false);
 
 private:
+  QualType getVarArgType(const Expr *Arg);
+
   const TargetCodeGenInfo &getTargetHooks() const {
     return CGM.getTargetCodeGenInfo();
   }
