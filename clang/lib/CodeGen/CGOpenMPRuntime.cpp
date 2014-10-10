@@ -25,6 +25,8 @@
 using namespace clang;
 using namespace CodeGen;
 
+namespace clang {
+namespace CodeGen {
 /// \brief API for captured statement code generation in OpenMP constructs.
 class CGOpenMPRegionInfo : public CodeGenFunction::CGCapturedStmtInfo {
 public:
@@ -61,6 +63,7 @@ private:
   /// \brief OpenMP executable directive associated with the region.
   const OMPExecutableDirective &Directive;
 };
+}}
 
 LValue CGOpenMPRegionInfo::getThreadIDVariableLValue(CodeGenFunction &CGF) {
   return CGF.MakeNaturalAlignAddrLValue(
