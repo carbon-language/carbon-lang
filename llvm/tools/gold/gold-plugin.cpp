@@ -485,6 +485,7 @@ static const char *getResolutionName(ld_plugin_symbol_resolution R) {
   case LDPR_PREVAILING_DEF_IRONLY_EXP:
     return "PREVAILING_DEF_IRONLY_EXP";
   }
+  llvm_unreachable("Unknown resolution");
 }
 
 static GlobalObject *makeInternalReplacement(GlobalObject *GO) {
