@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Object/Archive.h"
@@ -20,6 +21,7 @@
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/LineIterator.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -67,8 +69,10 @@ static void failIfError(std::error_code EC, Twine Context = "") {
 
 // llvm-ar/llvm-ranlib remaining positional arguments.
 static cl::list<std::string>
-RestOfArgs(cl::Positional, cl::OneOrMore,
-    cl::desc("[relpos] [count] <archive-file> [members]..."));
+    RestOfArgs(cl::Positional, cl::ZeroOrMore,
+               cl::desc("[relpos] [count] <archive-file> [members]..."));
+
+static cl::opt<bool> MRI("M", cl::desc(""));
 
 std::string Options;
 
@@ -173,10 +177,61 @@ static void getMembers() {
     Members = std::vector<std::string>(RestOfArgs);
 }
 
+namespace {
+enum class MRICommand { Create, Save, End, Invalid };
+}
+
+static ArchiveOperation parseMRIScript() {
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Buf = MemoryBuffer::getSTDIN();
+  failIfError(Buf.getError());
+  const MemoryBuffer &Ref = *Buf.get();
+  bool Saved = false;
+
+  for (line_iterator I(Ref, /*SkipBlanks*/ true, ';'), E; I != E; ++I) {
+    StringRef Line = *I;
+    StringRef CommandStr, Rest;
+    std::tie(CommandStr, Rest) = Line.split(' ');
+    auto Command = StringSwitch<MRICommand>(CommandStr.lower())
+                       .Case("create", MRICommand::Create)
+                       .Case("save", MRICommand::Save)
+                       .Case("end", MRICommand::End)
+                       .Default(MRICommand::Invalid);
+
+    switch (Command) {
+    case MRICommand::Create:
+      Create = true;
+      if (!ArchiveName.empty())
+        fail("Editing multiple archives not supported");
+      if (Saved)
+        fail("File already saved");
+      ArchiveName = Rest;
+      break;
+    case MRICommand::Save:
+      Saved = true;
+      break;
+    case MRICommand::End:
+      break;
+    case MRICommand::Invalid:
+      fail("Unknown command: " + CommandStr);
+    }
+  }
+
+  // Nothing to do if not saved.
+  if (!Saved)
+    exit(0);
+  return ReplaceOrInsert;
+}
+
 // parseCommandLine - Parse the command line options as presented and return the
 // operation specified. Process all modifiers and check to make sure that
 // constraints on modifier/operation pairs have not been violated.
 static ArchiveOperation parseCommandLine() {
+  if (MRI) {
+    if (!RestOfArgs.empty())
+      fail("Cannot mix -M and other options");
+    return parseMRIScript();
+  }
+
   getOptions();
 
   // Keep track of number of operations. We can only specify one
