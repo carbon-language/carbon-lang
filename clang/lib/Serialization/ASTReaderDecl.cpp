@@ -535,7 +535,7 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitTagDecl(TagDecl *TD) {
     TypedefNameForLinkage = Reader.GetIdentifierInfo(F, Record, Idx);
     break;
   case 3: // DeclaratorForAnonDecl
-    TD->NamedDeclOrQualifier = ReadDeclAs<NamedDecl>(Record, Idx);
+    NamedDeclForTagDecl = ReadDeclID(Record, Idx);
     break;
   default:
     llvm_unreachable("unexpected tag info kind");

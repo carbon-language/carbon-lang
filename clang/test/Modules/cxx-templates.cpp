@@ -144,6 +144,8 @@ MergeSpecializations<double>::explicitly_specialized_in_b spec_in_b_2;
 MergeSpecializations<bool>::explicitly_specialized_in_c spec_in_c_2;
 #endif
 
+MergeAnonUnionMember<> maum_main;
+
 using AliasTemplateMergingTest = WithAliasTemplate<int>::X<char>;
 
 int AnonymousDeclsMergingTest(WithAnonymousDecls<int> WAD, WithAnonymousDecls<char> WADC) {

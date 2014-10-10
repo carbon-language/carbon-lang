@@ -89,3 +89,11 @@ typedef PartiallyInstantiatePartialSpec<int*> PartiallyInstantiatePartialSpecHel
 void InstantiateWithAliasTemplate(WithAliasTemplate<int>::X<char>);
 inline int InstantiateWithAnonymousDeclsA(WithAnonymousDecls<int> x) { return (x.k ? x.a : x.b) + (x.k ? x.s.c : x.s.d) + x.e; }
 inline int InstantiateWithAnonymousDeclsB2(WithAnonymousDecls<char> x);
+
+
+template<typename T1 = int>
+struct MergeAnonUnionMember {
+  MergeAnonUnionMember() { (void)values.t1; }
+  union { int t1; } values;
+};
+inline MergeAnonUnionMember<> maum_a() { return {}; }
