@@ -322,6 +322,7 @@ static bool findModulesAndOffsets(void **StackTrace, int Depth,
 }
 #endif
 
+#if defined(HAVE_BACKTRACE) && defined(ENABLE_BACKTRACES)
 static bool printSymbolizedStackTrace(void **StackTrace, int Depth, FILE *FD) {
   // FIXME: Subtract necessary number from StackTrace entries to turn return addresses
   // into actual instruction addresses.
@@ -406,6 +407,7 @@ static bool printSymbolizedStackTrace(void **StackTrace, int Depth, FILE *FD) {
   }
   return true;
 }
+#endif
 
 // PrintStackTrace - In the case of a program crash or fault, print out a stack
 // trace so that the user has an indication of why and where we died.
