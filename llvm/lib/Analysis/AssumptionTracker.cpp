@@ -29,12 +29,14 @@ void AssumptionTracker::FunctionCallbackVH::deleted() {
 }
 
 void AssumptionTracker::forgetCachedAssumptions(Function *F) {
-  CachedAssumeCalls.erase(F);
+  auto I = CachedAssumeCalls.find_as(F);
+  if (I != CachedAssumeCalls.end())
+    CachedAssumeCalls.erase(I);
 }
 
 void AssumptionTracker::CallCallbackVH::deleted() {
   assert(F && "delete callback called on dummy handle");
-  FunctionCallsMap::iterator I = AT->CachedAssumeCalls.find(F);
+  FunctionCallsMap::iterator I = AT->CachedAssumeCalls.find_as(F);
   assert(I != AT->CachedAssumeCalls.end() &&
          "Function cleared from the map without removing the values?");
 
@@ -88,7 +90,7 @@ void AssumptionTracker::registerAssumption(CallInst *CI) {
   Function *F = CI->getParent()->getParent();
   assert(F && "Cannot register @llvm.assume call not in a function");
 
-  FunctionCallsMap::iterator I = CachedAssumeCalls.find(F);
+  FunctionCallsMap::iterator I = CachedAssumeCalls.find_as(F);
   if (I == CachedAssumeCalls.end()) {
     // If this function has not already been scanned, then don't do anything
     // here. This intrinsic will be found, if it still exists, if the list of

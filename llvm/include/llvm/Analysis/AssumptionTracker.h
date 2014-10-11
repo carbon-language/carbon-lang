@@ -99,7 +99,7 @@ public:
   typedef iterator_range<assumption_iterator> assumption_range;
 
   inline assumption_range assumptions(Function *F) {
-    FunctionCallsMap::iterator I = CachedAssumeCalls.find(F);
+    FunctionCallsMap::iterator I = CachedAssumeCalls.find_as(F);
     if (I == CachedAssumeCalls.end()) {
       I = scanFunction(F);
     }
