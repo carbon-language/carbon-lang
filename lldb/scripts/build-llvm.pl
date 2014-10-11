@@ -25,6 +25,7 @@ our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
 our $llvm_revision = "HEAD";
 our $clang_revision = "HEAD";
+our $compiler_rt_revision = "HEAD";
 
 our $SRCROOT = "$ENV{SRCROOT}";
 our @archs = split (/\s+/, $ENV{ARCHS});
@@ -53,7 +54,8 @@ else
 }
 our @llvm_repositories = (
     "$llvm_srcroot",
-    "$llvm_srcroot/tools/clang"
+    "$llvm_srcroot/tools/clang",
+    "$llvm_srcroot/projects/compiler-rt"
 );
 
 
@@ -68,6 +70,8 @@ else
     do_command ("cd '$SRCROOT' && svn co --quiet --revision $llvm_revision http://llvm.org/svn/llvm-project/llvm/trunk llvm", "checking out llvm from repository", 1);
     print "Checking out clang sources from revision $clang_revision...\n";
     do_command ("cd '$llvm_srcroot/tools' && svn co --quiet --revision $clang_revision http://llvm.org/svn/llvm-project/cfe/trunk clang", "checking out clang from repository", 1);
+    print "Checking out compiler-rt sources from revision $compiler_rt_revision...\n";
+    do_command ("cd '$llvm_srcroot/projects' && svn co --quiet --revision $compiler_rt_revision http://llvm.org/svn/llvm-project/compiler-rt/trunk compiler-rt", "checking out compiler-rt from repository", 1);
     print "Applying any local patches to LLVM/Clang...";
 
     my @llvm_patches = bsd_glob("$ENV{SRCROOT}/scripts/llvm.*.diff");
@@ -80,6 +84,12 @@ else
     foreach my $patch (@clang_patches)
     {
         do_command ("cd '$llvm_srcroot/tools/clang' && patch -p0 < $patch");
+    }
+
+    my @compiler_rt_patches = bsd_glob("$ENV{SRCROOT}/scripts/compiler-rt.*.diff");
+    foreach my $patch (@compiler_rt_patches)
+    {
+        do_command ("cd '$llvm_srcroot/projects/compiler-rt' && patch -p0 < $patch");
     }
 }
 
@@ -307,8 +317,8 @@ sub build_llvm
             {
                 $extra_make_flags = "UNIVERSAL=1 UNIVERSAL_ARCH=${arch} UNIVERSAL_SDK_PATH='$ENV{SDKROOT}' SDKROOT=";
             }
-            do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus clang-only VERBOSE=1 $llvm_config_href->{make_options} NO_RUNTIME_LIBS=1 PROJECT_NAME='llvm' $extra_make_flags", "making llvm and clang", 1);
-            do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus tools-only VERBOSE=1 $llvm_config_href->{make_options} NO_RUNTIME_LIBS=1 PROJECT_NAME='llvm' $extra_make_flags EDIS_VERSION=1", "making libedis", 1);
+            do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus clang-only VERBOSE=1 $llvm_config_href->{make_options} PROJECT_NAME='llvm' $extra_make_flags", "making llvm and clang", 1);
+            do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus tools-only VERBOSE=1 $llvm_config_href->{make_options} PROJECT_NAME='llvm' $extra_make_flags EDIS_VERSION=1", "making libedis", 1);
             # Combine all .o files from a bunch of static libraries from llvm
             # and clang into a single .a file.
             create_single_llvm_archive_for_arch ($llvm_dstroot_arch, 1);
