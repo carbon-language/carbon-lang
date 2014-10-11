@@ -584,23 +584,7 @@ ComplexPairTy ComplexExprEmitter::EmitComplexBinOpLibCall(StringRef LibCallName,
   llvm::FunctionType *FTy = CGF.CGM.getTypes().GetFunctionType(FuncInfo);
   llvm::Constant *Func = CGF.CGM.CreateRuntimeFunction(FTy, LibCallName);
 
-  llvm::Value *ArgVals[] = {Op.LHS.first, Op.LHS.second, Op.RHS.first,
-                            Op.RHS.second};
-  llvm::Value *Result = CGF.EmitRuntimeCall(Func, ArgVals);
-
-  llvm::Value *ResR, *ResI;
-  if (Result->getType()->isVectorTy()) {
-    ResR = CGF.Builder.CreateExtractElement(Result, CGF.Builder.getInt32(0));
-    ResI = CGF.Builder.CreateExtractElement(Result, CGF.Builder.getInt32(1));
-  } else {
-    assert(Result->getType()->isAggregateType() &&
-           "Only vector and aggregate libcall returns are supported!");
-    unsigned ResRIndices[] = {0};
-    ResR = CGF.Builder.CreateExtractValue(Result, ResRIndices);
-    unsigned ResIIndices[] = {1};
-    ResI = CGF.Builder.CreateExtractValue(Result, ResIIndices);
-  }
-  return ComplexPairTy(ResR, ResI);
+  return CGF.EmitCall(FuncInfo, Func, ReturnValueSlot(), Args).getComplexVal();
 }
 
 // See C11 Annex G.5.1 for the semantics of multiplicative operators on complex
