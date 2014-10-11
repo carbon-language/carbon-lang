@@ -1432,6 +1432,11 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
 
   if (Right.Type == TT_TrailingAnnotation &&
       (!Right.Next || Right.Next->isNot(tok::l_paren))) {
+    // Moving trailing annotations to the next line is fine for ObjC method
+    // declarations.
+    if (Line.First->Type == TT_ObjCMethodSpecifier)
+
+      return 10;
     // Generally, breaking before a trailing annotation is bad unless it is
     // function-like. It seems to be especially preferable to keep standard
     // annotations (i.e. "const", "final" and "override") on the same line.

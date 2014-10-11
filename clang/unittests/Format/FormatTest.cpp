@@ -6452,6 +6452,10 @@ TEST_F(FormatTest, FormatObjCMethodDeclarations) {
                "    evenLongerKeyword:(float)theInterval\n"
                "                error:(NSError **)theError {\n"
                "}");
+  verifyFormat("- (instancetype)initXxxxxx:(id<x>)x\n"
+               "                         y:(id<yyyyyyyyyyyyyyyyyyyy>)y\n"
+               "    NS_DESIGNATED_INITIALIZER;",
+               getLLVMStyleWithColumns(60));
 }
 
 TEST_F(FormatTest, FormatObjCMethodExpr) {
