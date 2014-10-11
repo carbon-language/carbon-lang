@@ -5517,8 +5517,7 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
     return 1;
 
   // Do not unroll loops with a relatively small trip count.
-  unsigned TC = SE->getSmallConstantTripCount(TheLoop,
-                                              TheLoop->getLoopLatch());
+  unsigned TC = SE->getSmallConstantTripCount(TheLoop);
   if (TC > 1 && TC < TinyTripCountUnrollThreshold)
     return 1;
 
