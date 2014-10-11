@@ -77,7 +77,9 @@ private:
                 unsigned Alignment = 0);
   bool EmitStore(MVT VT, unsigned SrcReg, Address &Addr,
                  unsigned Alignment = 0);
+  bool EmitCmp(unsigned DestReg, const CmpInst *CI);
   bool SelectLoad(const Instruction *I);
+  bool SelectBranch(const Instruction *I);
   bool SelectRet(const Instruction *I);
   bool SelectStore(const Instruction *I);
   bool SelectIntExt(const Instruction *I);
@@ -353,6 +355,38 @@ bool MipsFastISel::EmitIntZExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
   return true;
 }
 
+//
+// This can cause a redundant sltiu to be generated.
+// FIXME: try and eliminate this in a future patch.
+//
+bool MipsFastISel::SelectBranch(const Instruction *I) {
+  const BranchInst *BI = cast<BranchInst>(I);
+  MachineBasicBlock *BrBB = FuncInfo.MBB;
+  //
+  // TBB is the basic block for the case where the comparison is true.
+  // FBB is the basic block for the case where the comparison is false.
+  // if (cond) goto TBB
+  // goto FBB
+  // TBB:
+  //
+  MachineBasicBlock *TBB = FuncInfo.MBBMap[BI->getSuccessor(0)];
+  MachineBasicBlock *FBB = FuncInfo.MBBMap[BI->getSuccessor(1)];
+  BI->getCondition();
+  // For now, just try the simplest case where it's fed by a compare.
+  if (const CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
+    unsigned CondReg = createResultReg(&Mips::GPR32RegClass);
+    if (!EmitCmp(CondReg, CI))
+      return false;
+    BuildMI(*BrBB, FuncInfo.InsertPt, DbgLoc, TII.get(Mips::BGTZ))
+        .addReg(CondReg)
+        .addMBB(TBB);
+    fastEmitBranch(FBB, DbgLoc);
+    FuncInfo.MBB->addSuccessor(TBB);
+    return true;
+  }
+  return false;
+}
+
 bool MipsFastISel::SelectLoad(const Instruction *I) {
   // Atomic loads need special handling.
   if (cast<LoadInst>(I)->isAtomic())
@@ -560,25 +594,22 @@ bool MipsFastISel::SelectFPToI(const Instruction *I, bool IsSigned) {
   updateValueMap(I, DestReg);
   return true;
 }
-
 //
-// Because of how SelectCmp is called with fast-isel, you can
+// Because of how EmitCmp is called with fast-isel, you can
 // end up with redundant "andi" instructions after the sequences emitted below.
 // We should try and solve this issue in the future.
 //
-bool MipsFastISel::SelectCmp(const Instruction *I) {
-  const CmpInst *CI = cast<CmpInst>(I);
+bool MipsFastISel::EmitCmp(unsigned ResultReg, const CmpInst *CI) {
+  const Value *Left = CI->getOperand(0), *Right = CI->getOperand(1);
   bool IsUnsigned = CI->isUnsigned();
-  const Value *Left = I->getOperand(0), *Right = I->getOperand(1);
-
   unsigned LeftReg = getRegEnsuringSimpleIntegerWidening(Left, IsUnsigned);
   if (LeftReg == 0)
     return false;
   unsigned RightReg = getRegEnsuringSimpleIntegerWidening(Right, IsUnsigned);
   if (RightReg == 0)
     return false;
-  unsigned ResultReg = createResultReg(&Mips::GPR32RegClass);
   CmpInst::Predicate P = CI->getPredicate();
+
   switch (P) {
   default:
     return false;
@@ -689,6 +720,14 @@ bool MipsFastISel::SelectCmp(const Instruction *I) {
     break;
   }
   }
+  return true;
+}
+
+bool MipsFastISel::SelectCmp(const Instruction *I) {
+  const CmpInst *CI = cast<CmpInst>(I);
+  unsigned ResultReg = createResultReg(&Mips::GPR32RegClass);
+  if (!EmitCmp(ResultReg, CI))
+    return false;
   updateValueMap(I, ResultReg);
   return true;
 }
@@ -703,6 +742,8 @@ bool MipsFastISel::fastSelectInstruction(const Instruction *I) {
     return SelectLoad(I);
   case Instruction::Store:
     return SelectStore(I);
+  case Instruction::Br:
+    return SelectBranch(I);
   case Instruction::Ret:
     return SelectRet(I);
   case Instruction::Trunc:
