@@ -6780,15 +6780,27 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   QualType LHSTy = E->getLHS()->getType();
   QualType RHSTy = E->getRHS()->getType();
 
-  if (LHSTy->isAnyComplexType()) {
-    assert(RHSTy->isAnyComplexType() && "Invalid comparison");
+  if (LHSTy->isAnyComplexType() || RHSTy->isAnyComplexType()) {
     ComplexValue LHS, RHS;
-
-    bool LHSOK = EvaluateComplex(E->getLHS(), LHS, Info);
+    bool LHSOK;
+    if (E->getLHS()->getType()->isRealFloatingType()) {
+      LHSOK = EvaluateFloat(E->getLHS(), LHS.FloatReal, Info);
+      if (LHSOK) {
+        LHS.makeComplexFloat();
+        LHS.FloatImag = APFloat(LHS.FloatReal.getSemantics());
+      }
+    } else {
+      LHSOK = EvaluateComplex(E->getLHS(), LHS, Info);
+    }
     if (!LHSOK && !Info.keepEvaluatingAfterFailure())
       return false;
 
-    if (!EvaluateComplex(E->getRHS(), RHS, Info) || !LHSOK)
+    if (E->getRHS()->getType()->isRealFloatingType()) {
+      if (!EvaluateFloat(E->getRHS(), RHS.FloatReal, Info) || !LHSOK)
+        return false;
+      RHS.makeComplexFloat();
+      RHS.FloatImag = APFloat(RHS.FloatReal.getSemantics());
+    } else if (!EvaluateComplex(E->getRHS(), RHS, Info) || !LHSOK)
       return false;
 
     if (LHS.isComplexFloat()) {

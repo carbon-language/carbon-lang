@@ -3,6 +3,14 @@
 // Test the constant folding of builtin complex numbers.
 
 static_assert((0.0 + 0.0j) == (0.0 + 0.0j));
+static_assert((0.0 + 0.0j) != (0.0 + 0.0j)); // expected-error {{static_assert}}
+
+static_assert((0.0 + 0.0j) == 0.0);
+static_assert(0.0 == (0.0 + 0.0j));
+static_assert(0.0 == 0.0j);
+static_assert((0.0 + 1.0j) != 0.0);
+static_assert(1.0 != (0.0 + 0.0j));
+static_assert(0.0 != 1.0j);
 
 // Walk around the complex plane stepping between angular differences and
 // equality.

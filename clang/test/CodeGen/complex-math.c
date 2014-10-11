@@ -367,3 +367,54 @@ long double _Complex div_long_double_cc(long double _Complex a, long double _Com
   // X86: ret
   return a / b;
 }
+
+// Comparison operators don't rely on library calls or have interseting math
+// properties, but test that mixed types work correctly here.
+_Bool eq_float_cr(float _Complex a, float b) {
+  // X86-LABEL: @eq_float_cr(
+  // X86: fcmp oeq
+  // X86: fcmp oeq
+  // X86: and i1
+  // X86: ret
+  return a == b;
+}
+_Bool eq_float_rc(float a, float _Complex b) {
+  // X86-LABEL: @eq_float_rc(
+  // X86: fcmp oeq
+  // X86: fcmp oeq
+  // X86: and i1
+  // X86: ret
+  return a == b;
+}
+_Bool eq_float_cc(float _Complex a, float _Complex b) {
+  // X86-LABEL: @eq_float_cc(
+  // X86: fcmp oeq
+  // X86: fcmp oeq
+  // X86: and i1
+  // X86: ret
+  return a == b;
+}
+_Bool ne_float_cr(float _Complex a, float b) {
+  // X86-LABEL: @ne_float_cr(
+  // X86: fcmp une
+  // X86: fcmp une
+  // X86: or i1
+  // X86: ret
+  return a != b;
+}
+_Bool ne_float_rc(float a, float _Complex b) {
+  // X86-LABEL: @ne_float_rc(
+  // X86: fcmp une
+  // X86: fcmp une
+  // X86: or i1
+  // X86: ret
+  return a != b;
+}
+_Bool ne_float_cc(float _Complex a, float _Complex b) {
+  // X86-LABEL: @ne_float_cc(
+  // X86: fcmp une
+  // X86: fcmp une
+  // X86: or i1
+  // X86: ret
+  return a != b;
+}
