@@ -391,6 +391,9 @@ public:
 
     lldb::SBThreadCollection
     GetHistoryThreads (addr_t addr);
+             
+    bool
+    IsInstrumentationRuntimePresent(lldb::InstrumentationRuntimeType type);
 
     %pythoncode %{
         def __get_is_alive__(self):

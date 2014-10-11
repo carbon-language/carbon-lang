@@ -319,6 +319,9 @@ public:
     
     lldb::SBThreadCollection
     GetHistoryThreads (addr_t addr);
+    
+    bool
+    IsInstrumentationRuntimePresent(InstrumentationRuntimeType type);
 
 protected:
     friend class SBAddress;

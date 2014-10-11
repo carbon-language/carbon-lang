@@ -6071,3 +6071,16 @@ Process::GetHistoryThreads(lldb::addr_t addr)
     
     return threads;
 }
+
+InstrumentationRuntimeSP
+Process::GetInstrumentationRuntime(lldb::InstrumentationRuntimeType type)
+{
+    InstrumentationRuntimeCollection::iterator pos;
+    pos = m_instrumentation_runtimes.find (type);
+    if (pos == m_instrumentation_runtimes.end())
+    {
+        return InstrumentationRuntimeSP();
+    }
+    else
+        return (*pos).second;
+}

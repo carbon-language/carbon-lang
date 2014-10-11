@@ -1394,3 +1394,18 @@ SBProcess::GetHistoryThreads (addr_t addr)
     }
     return threads;
 }
+
+bool
+SBProcess::IsInstrumentationRuntimePresent(InstrumentationRuntimeType type)
+{
+    ProcessSP process_sp(GetSP());
+    if (! process_sp)
+        return false;
+    
+    InstrumentationRuntimeSP runtime_sp = process_sp->GetInstrumentationRuntime(type);
+    
+    if (! runtime_sp.get())
+        return false;
+    
+    return runtime_sp->IsActive();
+}

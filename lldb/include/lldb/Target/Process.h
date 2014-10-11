@@ -2928,6 +2928,9 @@ public:
     lldb::ThreadCollectionSP
     GetHistoryThreads(lldb::addr_t addr);
 
+    lldb::InstrumentationRuntimeSP
+    GetInstrumentationRuntime(lldb::InstrumentationRuntimeType type);
+
 protected:
 
     //------------------------------------------------------------------
