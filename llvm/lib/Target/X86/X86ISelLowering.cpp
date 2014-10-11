@@ -9017,7 +9017,8 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   // Try to use rotation instructions if available.
   if (Subtarget->hasSSSE3())
-    if (SDValue Rotate = lowerVectorShuffleAsByteRotate(DL, MVT::v8i16, V1, V2, Mask, DAG))
+    if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
+            DL, MVT::v8i16, V1, V2, Mask, DAG))
       return Rotate;
 
   if (NumV1Inputs + NumV2Inputs <= 4)
@@ -9151,8 +9152,8 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   // Try to use rotation instructions if available.
   if (Subtarget->hasSSSE3())
-    if (SDValue Rotate = lowerVectorShuffleAsByteRotate(DL, MVT::v16i8, V1, V2,
-                                                        OrigMask, DAG))
+    if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
+            DL, MVT::v16i8, V1, V2, OrigMask, DAG))
       return Rotate;
 
   // Try to use a zext lowering.
