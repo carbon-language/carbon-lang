@@ -7449,7 +7449,7 @@ static SDValue lowerVectorShuffleAsDecomposedShuffleBlend(SDLoc DL, MVT VT,
 /// \brief Try to lower a vector shuffle as a byte rotation.
 ///
 /// We have a generic PALIGNR instruction in x86 that will do an arbitrary
-/// byte-rotation of a the concatentation of two vectors. This routine will
+/// byte-rotation of the concatenation of two vectors. This routine will
 /// try to generically lower a vector shuffle through such an instruction. It
 /// does not check for the availability of PALIGNR-based lowerings, only the
 /// applicability of this strategy to the given mask. This matches shuffle
