@@ -3570,7 +3570,6 @@ ValueObject::GetQualifiedRepresentationIfAvailable (lldb::DynamicValueType dynVa
         }
             break;
         case lldb::eNoDynamicValues:
-        default:
         {
             if (result_sp->IsDynamic())
             {
