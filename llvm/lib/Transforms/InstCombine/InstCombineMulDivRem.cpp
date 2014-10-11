@@ -762,7 +762,8 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
           }
         }
 
-        if ((IsSigned && match(LHS, m_NSWShl(m_Value(X), m_APInt(C1)))) ||
+        if ((IsSigned && match(LHS, m_NSWShl(m_Value(X), m_APInt(C1))) &&
+             *C1 != C1->getBitWidth() - 1) ||
             (!IsSigned && match(LHS, m_NUWShl(m_Value(X), m_APInt(C1))))) {
           APInt Quotient(C1->getBitWidth(), /*Val=*/0ULL, IsSigned);
           APInt C1Shifted = APInt::getOneBitSet(

@@ -247,3 +247,20 @@ define i32 @test28(i32 %a) {
 ; CHECK-NEXT: %div = mul nuw i32 %a, 12
 ; CHECK-NEXT: ret i32 %div
 }
+
+define i32 @test29(i32 %a) {
+  %mul = shl nsw i32 %a, 31
+  %div = sdiv i32 %mul, -2147483648
+  ret i32 %div
+; CHECK-LABEL: @test29(
+; CHECK-NEXT: %[[and:.*]] = and i32 %a, 1
+; CHECK-NEXT: ret i32 %[[and]]
+}
+
+define i32 @test30(i32 %a) {
+  %mul = shl nuw i32 %a, 31
+  %div = udiv i32 %mul, -2147483648
+  ret i32 %div
+; CHECK-LABEL: @test30(
+; CHECK-NEXT: ret i32 %a
+}
