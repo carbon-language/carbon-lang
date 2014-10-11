@@ -2734,7 +2734,7 @@ FormatPromptRecurse
                                         int addr_width = 0;
                                         if (exe_ctx && target)
                                         {
-                                            target->GetArchitecture().GetAddressByteSize() * 2;
+                                            addr_width = target->GetArchitecture().GetAddressByteSize() * 2;
                                         }
                                         if (addr_width == 0)
                                             addr_width = 16;
