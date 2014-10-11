@@ -810,7 +810,7 @@ define double @test71(double *%p, i64 %i) {
 
 define double @test72(double *%p, i32 %i) {
 ; CHECK-LABEL: @test72(
-  %so = mul nsw i32 %i, 8
+  %so = shl nsw i32 %i, 3
   %o = sext i32 %so to i64
 ; CHECK-NEXT: sext i32 %i to i64
   %q = bitcast double* %p to i8*
@@ -825,7 +825,7 @@ define double @test72(double *%p, i32 %i) {
 
 define double @test73(double *%p, i128 %i) {
 ; CHECK-LABEL: @test73(
-  %lo = mul nsw i128 %i, 8
+  %lo = shl nsw i128 %i, 3
   %o = trunc i128 %lo to i64
 ; CHECK-NEXT: trunc i128 %i to i64
   %q = bitcast double* %p to i8*
@@ -937,7 +937,7 @@ define %s @test79(%s *%p, i64 %i, i32 %j) {
 
 define double @test80([100 x double]* %p, i32 %i) {
 ; CHECK-LABEL: @test80(
-  %tmp = mul nsw i32 %i, 8
+  %tmp = shl nsw i32 %i, 3
 ; CHECK-NEXT: sext i32 %i to i64
   %q = bitcast [100 x double]* %p to i8*
   %pp = getelementptr i8* %q, i32 %tmp
@@ -954,7 +954,7 @@ define double @test80_addrspacecast([100 x double] addrspace(1)* %p, i32 %i) {
 ; CHECK-NEXT: getelementptr [100 x double] addrspace(1)* %p
 ; CHECK-NEXT: load double addrspace(1)*
 ; CHECK-NEXT: ret double
-  %tmp = mul nsw i32 %i, 8
+  %tmp = shl nsw i32 %i, 3
   %q = addrspacecast [100 x double] addrspace(1)* %p to i8 addrspace(2)*
   %pp = getelementptr i8 addrspace(2)* %q, i32 %tmp
   %r = addrspacecast i8 addrspace(2)* %pp to double addrspace(1)*
@@ -968,7 +968,7 @@ define double @test80_addrspacecast_2([100 x double] addrspace(1)* %p, i32 %i) {
 ; CHECK-NEXT: addrspacecast double addrspace(1)*
 ; CHECK-NEXT: load double addrspace(3)*
 ; CHECK-NEXT: ret double
-  %tmp = mul nsw i32 %i, 8
+  %tmp = shl nsw i32 %i, 3
   %q = addrspacecast [100 x double] addrspace(1)* %p to i8 addrspace(2)*
   %pp = getelementptr i8 addrspace(2)* %q, i32 %tmp
   %r = addrspacecast i8 addrspace(2)* %pp to double addrspace(3)*
@@ -978,7 +978,7 @@ define double @test80_addrspacecast_2([100 x double] addrspace(1)* %p, i32 %i) {
 
 define double @test80_as1([100 x double] addrspace(1)* %p, i16 %i) {
 ; CHECK-LABEL: @test80_as1(
-  %tmp = mul nsw i16 %i, 8
+  %tmp = shl nsw i16 %i, 3
 ; CHECK-NEXT: sext i16 %i to i32
   %q = bitcast [100 x double] addrspace(1)* %p to i8 addrspace(1)*
   %pp = getelementptr i8 addrspace(1)* %q, i16 %tmp

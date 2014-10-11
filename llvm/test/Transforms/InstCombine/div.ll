@@ -217,7 +217,7 @@ define i32 @test25(i32 %a) {
   %div = sdiv i32 %shl, 2
   ret i32 %div
 ; CHECK-LABEL: @test25(
-; CHECK-NEXT: %div = shl nsw i32 %a, 1
+; CHECK-NEXT: %div = shl i32 %a, 1
 ; CHECK-NEXT: ret i32 %div
 }
 
@@ -226,7 +226,7 @@ define i32 @test26(i32 %a) {
   %div = sdiv i32 %mul, 3
   ret i32 %div
 ; CHECK-LABEL: @test26(
-; CHECK-NEXT: %div = shl nsw i32 %a, 2
+; CHECK-NEXT: %div = shl i32 %a, 2
 ; CHECK-NEXT: ret i32 %div
 }
 

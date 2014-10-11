@@ -219,7 +219,7 @@ define i16 @mul_add_to_mul_1(i16 %x) {
  %add2 = add nsw i16 %x, %mul1
  ret i16 %add2
 ; CHECK-LABEL: @mul_add_to_mul_1(
-; CHECK-NEXT: %add2 = mul nsw i16 %x, 9
+; CHECK-NEXT: %add2 = mul i16 %x, 9
 ; CHECK-NEXT: ret i16 %add2
 }
 
@@ -228,7 +228,7 @@ define i16 @mul_add_to_mul_2(i16 %x) {
  %add2 = add nsw i16 %mul1, %x
  ret i16 %add2
 ; CHECK-LABEL: @mul_add_to_mul_2(
-; CHECK-NEXT: %add2 = mul nsw i16 %x, 9
+; CHECK-NEXT: %add2 = mul i16 %x, 9
 ; CHECK-NEXT: ret i16 %add2
 }
 
@@ -248,7 +248,7 @@ define i16 @mul_add_to_mul_4(i16 %a) {
  %add = add nsw i16 %mul1, %mul2
  ret i16 %add
 ; CHECK-LABEL: @mul_add_to_mul_4(
-; CHECK-NEXT: %add = mul nsw i16 %a, 9
+; CHECK-NEXT: %add = mul i16 %a, 9
 ; CHECK-NEXT: ret i16 %add
 }
 

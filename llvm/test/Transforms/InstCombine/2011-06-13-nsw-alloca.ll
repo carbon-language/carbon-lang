@@ -15,7 +15,7 @@ define void @fu1(i32 %parm) nounwind ssp {
 
 ; <label>:4                                       ; preds = %0
   %5 = load i32* %1, align 4
-  %6 = mul nsw i32 %5, 8
+  %6 = shl nsw i32 %5, 3
 ; With "nsw", the alloca and its bitcast can be fused:
   %7 = add nsw i32 %6, 2048
 ;  CHECK: alloca double
