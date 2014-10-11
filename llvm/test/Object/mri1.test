@@ -4,3 +4,6 @@
 
 ; RUN: llvm-ar -M  < %t.mri
 ; RUN: llvm-ar t %t.a
+
+; line_iterator is incompatible to CRLF.
+; REQUIRES: shell
