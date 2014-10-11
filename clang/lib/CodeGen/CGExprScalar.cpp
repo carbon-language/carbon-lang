@@ -2865,6 +2865,7 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
       assert(CGF.getContext().hasSameUnqualifiedType(CETy,
                                                      CTy->getElementType()) &&
              "The element types must always match.");
+      (void)CTy;
     } else {
       RHS.first = Visit(E->getRHS());
       RHS.second = llvm::Constant::getNullValue(RHS.first->getType());
