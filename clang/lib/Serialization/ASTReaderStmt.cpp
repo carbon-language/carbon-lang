@@ -423,7 +423,7 @@ void ASTStmtReader::VisitPredefinedExpr(PredefinedExpr *E) {
   VisitExpr(E);
   E->setLocation(ReadSourceLocation(Record, Idx));
   E->Type = (PredefinedExpr::IdentType)Record[Idx++];
-  E->FnName = cast<StringLiteral>(Reader.ReadSubExpr());
+  E->FnName = cast_or_null<StringLiteral>(Reader.ReadSubExpr());
 }
 
 void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
