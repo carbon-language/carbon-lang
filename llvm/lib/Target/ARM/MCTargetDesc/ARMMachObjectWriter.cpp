@@ -428,7 +428,7 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
       // For external relocations, make sure to offset the fixup value to
       // compensate for the addend of the symbol address, if it was
       // undefined. This occurs with weak definitions, for example.
-      if (!SD->Symbol->isUndefined())
+      if (!SD->getSymbol().isUndefined())
         FixedValue -= Layout.getSymbolOffset(SD);
     } else {
       // The index is the section ordinal (1-based).

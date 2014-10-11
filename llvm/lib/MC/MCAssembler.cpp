@@ -334,11 +334,8 @@ MCSymbolData::MCSymbolData() : Symbol(nullptr) {}
 
 MCSymbolData::MCSymbolData(const MCSymbol &_Symbol, MCFragment *_Fragment,
                            uint64_t _Offset, MCAssembler *A)
-  : Symbol(&_Symbol), Fragment(_Fragment), Offset(_Offset),
-    IsExternal(false), IsPrivateExtern(false),
-    CommonSize(0), SymbolSize(nullptr), CommonAlign(0),
-    Flags(0), Index(0)
-{
+    : Symbol(&_Symbol), Fragment(_Fragment), Offset(_Offset),
+      SymbolSize(nullptr), CommonAlign(-1U), Flags(0), Index(0) {
   if (A)
     A->getSymbolList().push_back(this);
 }
@@ -1244,8 +1241,10 @@ void MCSymbolData::dump() const {
   raw_ostream &OS = llvm::errs();
 
   OS << "<MCSymbolData Symbol:" << getSymbol()
-     << " Fragment:" << getFragment() << " Offset:" << getOffset()
-     << " Flags:" << getFlags() << " Index:" << getIndex();
+     << " Fragment:" << getFragment();
+  if (!isCommon())
+    OS << " Offset:" << getOffset();
+  OS << " Flags:" << getFlags() << " Index:" << getIndex();
   if (isCommon())
     OS << " (common, size:" << getCommonSize()
        << " align: " << getCommonAlignment() << ")";

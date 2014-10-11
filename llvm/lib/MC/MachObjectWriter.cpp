@@ -41,7 +41,7 @@ void MachObjectWriter::reset() {
 bool MachObjectWriter::
 doesSymbolRequireExternRelocation(const MCSymbolData *SD) {
   // Undefined symbols are always extern.
-  if (SD->Symbol->isUndefined())
+  if (SD->getSymbol().isUndefined())
     return true;
 
   // References to weak definitions require external relocation entries; the

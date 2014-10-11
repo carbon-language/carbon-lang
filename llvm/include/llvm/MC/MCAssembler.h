@@ -11,6 +11,7 @@
 #define LLVM_MC_MCASSEMBLER_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/ilist.h"
@@ -684,34 +685,27 @@ public:
 
 // FIXME: Same concerns as with SectionData.
 class MCSymbolData : public ilist_node<MCSymbolData> {
-public:
   const MCSymbol *Symbol;
 
-  /// Fragment - The fragment this symbol's value is relative to, if any.
-  MCFragment *Fragment;
+  /// Fragment - The fragment this symbol's value is relative to, if any. Also
+  /// stores if this symbol is visible outside this translation unit (bit 0) or
+  /// if it is private extern (bit 1).
+  PointerIntPair<MCFragment *, 2> Fragment;
 
-  /// Offset - The offset to apply to the fragment address to form this symbol's
-  /// value.
-  uint64_t Offset;
+  union {
+    /// Offset - The offset to apply to the fragment address to form this
+    /// symbol's value.
+    uint64_t Offset;
 
-  /// IsExternal - True if this symbol is visible outside this translation
-  /// unit.
-  unsigned IsExternal : 1;
-
-  /// IsPrivateExtern - True if this symbol is private extern.
-  unsigned IsPrivateExtern : 1;
-
-  /// CommonSize - The size of the symbol, if it is 'common', or 0.
-  //
-  // FIXME: Pack this in with other fields? We could put it in offset, since a
-  // common symbol can never get a definition.
-  uint64_t CommonSize;
+    /// CommonSize - The size of the symbol, if it is 'common'.
+    uint64_t CommonSize;
+  };
 
   /// SymbolSize - An expression describing how to calculate the size of
   /// a symbol. If a symbol has no size this field will be NULL.
   const MCExpr *SymbolSize;
 
-  /// CommonAlign - The alignment of the symbol, if it is 'common'.
+  /// CommonAlign - The alignment of the symbol, if it is 'common', or -1.
   //
   // FIXME: Pack this in with other fields?
   unsigned CommonAlign;
@@ -734,30 +728,41 @@ public:
 
   const MCSymbol &getSymbol() const { return *Symbol; }
 
-  MCFragment *getFragment() const { return Fragment; }
-  void setFragment(MCFragment *Value) { Fragment = Value; }
+  MCFragment *getFragment() const { return Fragment.getPointer(); }
+  void setFragment(MCFragment *Value) { Fragment.setPointer(Value); }
 
-  uint64_t getOffset() const { return Offset; }
-  void setOffset(uint64_t Value) { Offset = Value; }
+  uint64_t getOffset() const {
+    assert(!isCommon());
+    return Offset;
+  }
+  void setOffset(uint64_t Value) {
+    assert(!isCommon());
+    Offset = Value;
+  }
 
   /// @}
   /// @name Symbol Attributes
   /// @{
 
-  bool isExternal() const { return IsExternal; }
-  void setExternal(bool Value) { IsExternal = Value; }
+  bool isExternal() const { return Fragment.getInt() & 1; }
+  void setExternal(bool Value) {
+    Fragment.setInt((Fragment.getInt() & ~1) | unsigned(Value));
+  }
 
-  bool isPrivateExtern() const { return IsPrivateExtern; }
-  void setPrivateExtern(bool Value) { IsPrivateExtern = Value; }
+  bool isPrivateExtern() const { return Fragment.getInt() & 2; }
+  void setPrivateExtern(bool Value) {
+    Fragment.setInt((Fragment.getInt() & ~2) | (unsigned(Value) << 1));
+  }
 
   /// isCommon - Is this a 'common' symbol.
-  bool isCommon() const { return CommonSize != 0; }
+  bool isCommon() const { return CommonAlign != -1U; }
 
   /// setCommon - Mark this symbol as being 'common'.
   ///
   /// \param Size - The size of the symbol.
   /// \param Align - The alignment of the symbol.
   void setCommon(uint64_t Size, unsigned Align) {
+    assert(getOffset() == 0);
     CommonSize = Size;
     CommonAlign = Align;
   }

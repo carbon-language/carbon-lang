@@ -418,9 +418,9 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
       coff_symbol->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
     } else {
       const MCSymbolData &BaseData = Assembler.getSymbolData(*Base);
-      if (BaseData.Fragment) {
+      if (BaseData.getFragment()) {
         COFFSection *Sec =
-            SectionMap[&BaseData.Fragment->getParent()->getSection()];
+            SectionMap[&BaseData.getFragment()->getParent()->getSection()];
 
         if (coff_symbol->Section && coff_symbol->Section != Sec)
           report_fatal_error("conflicting sections for symbol");
@@ -715,8 +715,8 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   // Turn relocations for temporary symbols into section relocations.
   if (coff_symbol->MCData->getSymbol().isTemporary() || CrossSection) {
     Reloc.Symb = coff_symbol->Section->Symbol;
-    FixedValue += Layout.getFragmentOffset(coff_symbol->MCData->Fragment)
-                + coff_symbol->MCData->getOffset();
+    FixedValue += Layout.getFragmentOffset(coff_symbol->MCData->getFragment()) +
+                  coff_symbol->MCData->getOffset();
   } else
     Reloc.Symb = coff_symbol;
 
