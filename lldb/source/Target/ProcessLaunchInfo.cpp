@@ -9,6 +9,7 @@
 
 #include "lldb/Host/Config.h"
 
+#include "lldb/Core/Log.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/Target.h"
@@ -262,13 +263,22 @@ ProcessLaunchInfo::SetDetachOnError (bool enable)
 void
 ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
 {
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+
     // If nothing for stdin or stdout or stderr was specified, then check the process for any default
     // settings that were set with "settings set"
     if (GetFileActionForFD(STDIN_FILENO) == NULL || GetFileActionForFD(STDOUT_FILENO) == NULL ||
         GetFileActionForFD(STDERR_FILENO) == NULL)
     {
+        if (log)
+            log->Printf ("ProcessLaunchInfo::%s at least one of stdin/stdout/stderr was not set, evaluating default handling",
+                         __FUNCTION__);
+
         if (m_flags.Test(eLaunchFlagDisableSTDIO))
         {
+            if (log)
+                log->Printf ("ProcessLaunchInfo::%s eLaunchFlagDisableSTDIO set, adding suppression action for stdin, stdout and stderr",
+                             __FUNCTION__);
             AppendSuppressFileAction (STDIN_FILENO , true, false);
             AppendSuppressFileAction (STDOUT_FILENO, false, true);
             AppendSuppressFileAction (STDERR_FILENO, false, true);
@@ -289,29 +299,63 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
                 err_path = target->GetStandardErrorPath();
             }
 
+            if (log)
+                log->Printf ("ProcessLaunchInfo::%s target stdin='%s', target stdout='%s', stderr='%s'",
+                             __FUNCTION__,
+                              in_path ?  in_path.GetPath().c_str () : "<null>",
+                             out_path ? out_path.GetPath().c_str () : "<null>",
+                             err_path ? err_path.GetPath().c_str () : "<null>");
+
             char path[PATH_MAX];
             if (in_path && in_path.GetPath(path, sizeof(path)))
+            {
                 AppendOpenFileAction(STDIN_FILENO, path, true, false);
+                if (log)
+                    log->Printf ("ProcessLaunchInfo::%s appended stdin open file action for %s",
+                                 __FUNCTION__,
+                                 in_path.GetPath().c_str ());
+            }
 
             if (out_path && out_path.GetPath(path, sizeof(path)))
+            {
                 AppendOpenFileAction(STDOUT_FILENO, path, false, true);
+                if (log)
+                    log->Printf ("ProcessLaunchInfo::%s appended stdout open file action for %s",
+                                 __FUNCTION__,
+                                 out_path.GetPath().c_str ());
+            }
 
             if (err_path && err_path.GetPath(path, sizeof(path)))
+            {
+                if (log)
+                    log->Printf ("ProcessLaunchInfo::%s appended stderr open file action for %s",
+                                 __FUNCTION__,
+                                 err_path.GetPath().c_str ());
                 AppendOpenFileAction(STDERR_FILENO, path, false, true);
+            }
 
-            if (default_to_use_pty && (!in_path || !out_path || !err_path)) {
-                if (m_pty->OpenFirstAvailableMaster(O_RDWR| O_NOCTTY, NULL, 0)) {
+            if (default_to_use_pty && (!in_path || !out_path || !err_path))
+            {
+                if (log)
+                    log->Printf ("ProcessLaunchInfo::%s default_to_use_pty is set, and at least one stdin/stderr/stdout is unset, so generating a pty to use for it",
+                                 __FUNCTION__);
+
+                if (m_pty->OpenFirstAvailableMaster(O_RDWR| O_NOCTTY, NULL, 0))
+                {
                     const char *slave_path = m_pty->GetSlaveName(NULL, 0);
 
-                    if (!in_path) {
+                    if (!in_path)
+                    {
                         AppendOpenFileAction(STDIN_FILENO, slave_path, true, false);
                     }
 
-                    if (!out_path) {
+                    if (!out_path)
+                    {
                         AppendOpenFileAction(STDOUT_FILENO, slave_path, false, true);
                     }
 
-                    if (!err_path) {
+                    if (!err_path)
+                    {
                         AppendOpenFileAction(STDERR_FILENO, slave_path, false, true);
                     }
                 }

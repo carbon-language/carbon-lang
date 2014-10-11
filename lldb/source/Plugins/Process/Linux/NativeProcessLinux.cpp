@@ -143,29 +143,6 @@ namespace
         return signals;
     }
 
-    const char *
-    GetFilePath(const lldb_private::FileAction *file_action, const char *default_path)
-    {
-        const char *pts_name = "/dev/pts/";
-        const char *path = NULL;
-
-        if (file_action)
-        {
-            if (file_action->GetAction() == FileAction::eFileActionOpen)
-            {
-                path = file_action->GetPath ();
-                // By default the stdio paths passed in will be pseudo-terminal
-                // (/dev/pts). If so, convert to using a different default path
-                // instead to redirect I/O to the debugger console. This should
-                //  also handle user overrides to /dev/null or a different file.
-                if (!path || ::strncmp (path, pts_name, ::strlen (pts_name)) == 0)
-                    path = default_path;
-            }
-        }
-
-        return path;
-    }
-
     Error
     ResolveProcessArchitecture (lldb::pid_t pid, Platform &platform, ArchSpec &arch)
     {
@@ -1159,9 +1136,9 @@ NativeProcessLinux::LaunchArgs::LaunchArgs(NativeProcessLinux *monitor,
                                        lldb_private::Module *module,
                                        char const **argv,
                                        char const **envp,
-                                       const char *stdin_path,
-                                       const char *stdout_path,
-                                       const char *stderr_path,
+                                       const std::string &stdin_path,
+                                       const std::string &stdout_path,
+                                       const std::string &stderr_path,
                                        const char *working_dir,
                                        const lldb_private::ProcessLaunchInfo &launch_info)
     : OperationArgs(monitor),
@@ -1216,18 +1193,39 @@ NativeProcessLinux::LaunchProcess (
     const lldb_private::FileAction *file_action;
 
     // Default of NULL will mean to use existing open file descriptors.
-    const char *stdin_path = NULL;
-    const char *stdout_path = NULL;
-    const char *stderr_path = NULL;
+    std::string stdin_path;
+    std::string stdout_path;
+    std::string stderr_path;
 
     file_action = launch_info.GetFileActionForFD (STDIN_FILENO);
-    stdin_path = GetFilePath (file_action, stdin_path);
+    if (file_action)
+        stdin_path = file_action->GetPath ();
 
     file_action = launch_info.GetFileActionForFD (STDOUT_FILENO);
-    stdout_path = GetFilePath (file_action, stdout_path);
+    if (file_action)
+        stdout_path = file_action->GetPath ();
 
     file_action = launch_info.GetFileActionForFD (STDERR_FILENO);
-    stderr_path = GetFilePath (file_action, stderr_path);
+    if (file_action)
+        stderr_path = file_action->GetPath ();
+
+    if (log)
+    {
+        if (!stdin_path.empty ())
+            log->Printf ("NativeProcessLinux::%s setting STDIN to '%s'", __FUNCTION__, stdin_path.c_str ());
+        else
+            log->Printf ("NativeProcessLinux::%s leaving STDIN as is", __FUNCTION__);
+
+        if (!stdout_path.empty ())
+            log->Printf ("NativeProcessLinux::%s setting STDOUT to '%s'", __FUNCTION__, stdout_path.c_str ());
+        else
+            log->Printf ("NativeProcessLinux::%s leaving STDOUT as is", __FUNCTION__);
+
+        if (!stderr_path.empty ())
+            log->Printf ("NativeProcessLinux::%s setting STDERR to '%s'", __FUNCTION__, stderr_path.c_str ());
+        else
+            log->Printf ("NativeProcessLinux::%s leaving STDERR as is", __FUNCTION__);
+    }
 
     // Create the NativeProcessLinux in launch mode.
     native_process_sp.reset (new NativeProcessLinux ());
@@ -1354,9 +1352,9 @@ NativeProcessLinux::LaunchInferior (
     Module *module,
     const char *argv[],
     const char *envp[],
-    const char *stdin_path,
-    const char *stdout_path,
-    const char *stderr_path,
+    const std::string &stdin_path,
+    const std::string &stdout_path,
+    const std::string &stderr_path,
     const char *working_dir,
     const lldb_private::ProcessLaunchInfo &launch_info,
     lldb_private::Error &error)
@@ -1536,9 +1534,6 @@ NativeProcessLinux::Launch(LaunchArgs *args)
 
     const char **argv = args->m_argv;
     const char **envp = args->m_envp;
-    const char *stdin_path = args->m_stdin_path;
-    const char *stdout_path = args->m_stdout_path;
-    const char *stderr_path = args->m_stderr_path;
     const char *working_dir = args->m_working_dir;
 
     lldb_utility::PseudoTerminal terminal;
@@ -1548,7 +1543,6 @@ NativeProcessLinux::Launch(LaunchArgs *args)
     NativeThreadProtocolSP thread_sp;
 
     lldb::ThreadSP inferior;
-    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
     // Propagate the environment if one is not supplied.
     if (envp == NULL || envp[0] == NULL)
@@ -1558,7 +1552,7 @@ NativeProcessLinux::Launch(LaunchArgs *args)
     {
         args->m_error.SetErrorToGenericError();
         args->m_error.SetErrorString("Process fork failed.");
-        goto FINISH;
+        return false;
     }
 
     // Recognized child exit status codes.
@@ -1575,64 +1569,35 @@ NativeProcessLinux::Launch(LaunchArgs *args)
     // Child process.
     if (pid == 0)
     {
-        if (log)
-            log->Printf ("NativeProcessLinux::%s inferior process preparing to fork", __FUNCTION__);
+        // FIXME consider opening a pipe between parent/child and have this forked child
+        // send log info to parent re: launch status, in place of the log lines removed here.
 
-        // Trace this process.
-        if (log)
-            log->Printf ("NativeProcessLinux::%s inferior process issuing PTRACE_TRACEME", __FUNCTION__);
-
+        // Start tracing this child that is about to exec.
         if (PTRACE(PTRACE_TRACEME, 0, NULL, NULL, 0) < 0)
-        {
-            if (log)
-                log->Printf ("NativeProcessLinux::%s inferior process PTRACE_TRACEME failed", __FUNCTION__);
             exit(ePtraceFailed);
-        }
 
         // Do not inherit setgid powers.
-        if (log)
-            log->Printf ("NativeProcessLinux::%s inferior process resetting gid", __FUNCTION__);
-
         if (setgid(getgid()) != 0)
-        {
-            if (log)
-                log->Printf ("NativeProcessLinux::%s inferior process setgid() failed", __FUNCTION__);
             exit(eSetGidFailed);
-        }
 
         // Attempt to have our own process group.
-        // TODO verify if we really want this.
-        if (log)
-            log->Printf ("NativeProcessLinux::%s inferior process resetting process group", __FUNCTION__);
-
         if (setpgid(0, 0) != 0)
         {
-            if (log)
-            {
-                const int error_code = errno;
-                log->Printf ("NativeProcessLinux::%s inferior setpgid() failed, errno=%d (%s), continuing with existing process group %" PRIu64,
-                        __FUNCTION__,
-                        error_code,
-                        strerror (error_code),
-                        static_cast<lldb::pid_t> (getpgid (0)));
-            }
+            // FIXME log that this failed. This is common.
             // Don't allow this to prevent an inferior exec.
         }
 
         // Dup file descriptors if needed.
-        //
-        // FIXME: If two or more of the paths are the same we needlessly open
-        // the same file multiple times.
-        if (stdin_path != NULL && stdin_path[0])
-            if (!DupDescriptor(stdin_path, STDIN_FILENO, O_RDONLY))
+        if (!args->m_stdin_path.empty ())
+            if (!DupDescriptor(args->m_stdin_path.c_str (), STDIN_FILENO, O_RDONLY))
                 exit(eDupStdinFailed);
 
-        if (stdout_path != NULL && stdout_path[0])
-            if (!DupDescriptor(stdout_path, STDOUT_FILENO, O_WRONLY | O_CREAT))
+        if (!args->m_stdout_path.empty ())
+            if (!DupDescriptor(args->m_stdout_path.c_str (), STDOUT_FILENO, O_WRONLY | O_CREAT))
                 exit(eDupStdoutFailed);
 
-        if (stderr_path != NULL && stderr_path[0])
-            if (!DupDescriptor(stderr_path, STDERR_FILENO, O_WRONLY | O_CREAT))
+        if (!args->m_stderr_path.empty ())
+            if (!DupDescriptor(args->m_stderr_path.c_str (), STDERR_FILENO, O_WRONLY | O_CREAT))
                 exit(eDupStderrFailed);
 
         // Change working directory
@@ -1646,33 +1611,35 @@ NativeProcessLinux::Launch(LaunchArgs *args)
             const int old_personality = personality (LLDB_PERSONALITY_GET_CURRENT_SETTINGS);
             if (old_personality == -1)
             {
-                if (log)
-                    log->Printf ("NativeProcessLinux::%s retrieval of Linux personality () failed: %s. Cannot disable ASLR.", __FUNCTION__, strerror (errno));
+                // Can't retrieve Linux personality.  Cannot disable ASLR.
             }
             else
             {
                 const int new_personality = personality (ADDR_NO_RANDOMIZE | old_personality);
                 if (new_personality == -1)
                 {
-                    if (log)
-                        log->Printf ("NativeProcessLinux::%s setting of Linux personality () to disable ASLR failed, ignoring: %s", __FUNCTION__, strerror (errno));
-
+                    // Disabling ASLR failed.
                 }
                 else
                 {
-                    if (log)
-                        log->Printf ("NativeProcessLinux::%s disabling ASLR: SUCCESS", __FUNCTION__);
-
+                    // Disabling ASLR succeeded.
                 }
             }
         }
 
-        // Execute.  We should never return.
+        // Execute.  We should never return...
         execve(argv[0],
                const_cast<char *const *>(argv),
                const_cast<char *const *>(envp));
+
+        // ...unless exec fails.  In which case we definitely need to end the child here.
         exit(eExecFailed);
     }
+
+    //
+    // This is the parent code here.
+    //
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
     // Wait for the child process to trap on its call to execve.
     ::pid_t wpid;
@@ -1688,7 +1655,7 @@ NativeProcessLinux::Launch(LaunchArgs *args)
         // FIXME this could really use a new state - eStateLaunchFailure.  For now, using eStateInvalid.
         monitor->SetState (StateType::eStateInvalid);
 
-        goto FINISH;
+        return false;
     }
     else if (WIFEXITED(status))
     {
@@ -1733,7 +1700,7 @@ NativeProcessLinux::Launch(LaunchArgs *args)
         // FIXME this could really use a new state - eStateLaunchFailure.  For now, using eStateInvalid.
         monitor->SetState (StateType::eStateInvalid);
 
-        goto FINISH;
+        return false;
     }
     assert(WIFSTOPPED(status) && (wpid == static_cast< ::pid_t> (pid)) &&
            "Could not sync with inferior process.");
@@ -1753,7 +1720,7 @@ NativeProcessLinux::Launch(LaunchArgs *args)
         // FIXME this could really use a new state - eStateLaunchFailure.  For now, using eStateInvalid.
         monitor->SetState (StateType::eStateInvalid);
 
-        goto FINISH;
+        return false;
     }
 
     // Release the master terminal descriptor and pass it off to the
@@ -1775,7 +1742,7 @@ NativeProcessLinux::Launch(LaunchArgs *args)
         // FIXME this could really use a new state - eStateLaunchFailure.  For now, using eStateInvalid.
         monitor->SetState (StateType::eStateInvalid);
 
-        goto FINISH;
+        return false;
     }
 
     if (log)
@@ -1789,7 +1756,6 @@ NativeProcessLinux::Launch(LaunchArgs *args)
     // Let our process instance know the thread has stopped.
     monitor->SetState (StateType::eStateStopped);
 
-FINISH:
     if (log)
     {
         if (args->m_error.Success ())
@@ -2239,8 +2205,6 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
     case (SIGTRAP | (PTRACE_EVENT_EXIT << 8)):
     {
         // The inferior process or one of its threads is about to exit.
-        // Maintain the process or thread in a state of "limbo" until we are
-        // explicitly commanded to detach, destroy, resume, etc.
         unsigned long data = 0;
         if (!GetEventMessage(pid, &data))
             data = -1;
@@ -2266,13 +2230,10 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
         if (is_main_thread)
         {
             SetExitStatus (convert_pid_status_to_exit_type (data), convert_pid_status_to_return_code (data), nullptr, true);
-            // Resume the thread so it completely exits.
-            Resume (pid, LLDB_INVALID_SIGNAL_NUMBER);
         }
-        else
-        {
-            // FIXME figure out the path where we plan to reap the metadata for the thread.
-        }
+
+        // Resume the thread so it completely exits.
+        Resume (pid, LLDB_INVALID_SIGNAL_NUMBER);
 
         break;
     }
@@ -3804,7 +3765,7 @@ NativeProcessLinux::GetOrCreateThread (lldb::tid_t thread_id, bool &created)
 Error
 NativeProcessLinux::FixupBreakpointPCAsNeeded (NativeThreadProtocolSP &thread_sp)
 {
-    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
 
     Error error;
 

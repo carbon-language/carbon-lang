@@ -483,6 +483,27 @@ GDBRemoteCommunicationServer::LaunchProcess ()
         return LaunchPlatformProcess ();
 }
 
+bool
+GDBRemoteCommunicationServer::ShouldRedirectInferiorOutputOverGdbRemote (const lldb_private::ProcessLaunchInfo &launch_info) const
+{
+    // Retrieve the file actions specified for stdout and stderr.
+    auto stdout_file_action = launch_info.GetFileActionForFD (STDOUT_FILENO);
+    auto stderr_file_action = launch_info.GetFileActionForFD (STDERR_FILENO);
+
+    // If neither stdout and stderr file actions are specified, we're not doing anything special, so
+    // assume we want to redirect stdout/stderr over gdb-remote $O messages.
+    if ((stdout_file_action == nullptr) && (stderr_file_action == nullptr))
+    {
+        // Send stdout/stderr over the gdb-remote protocol.
+        return true;
+    }
+
+    // Any other setting for either stdout or stderr implies we are either suppressing
+    // it (with /dev/null) or we've got it set to a PTY.  Either way, we don't want the
+    // output over gdb-remote.
+    return false;
+}
+
 lldb_private::Error
 GDBRemoteCommunicationServer::LaunchProcessForDebugging ()
 {
@@ -507,20 +528,34 @@ GDBRemoteCommunicationServer::LaunchProcessForDebugging ()
         return error;
     }
 
-    // Setup stdout/stderr mapping from inferior.
-    auto terminal_fd = m_debugged_process_sp->GetTerminalFileDescriptor ();
-    if (terminal_fd >= 0)
+    // Handle mirroring of inferior stdout/stderr over the gdb-remote protocol as needed.
+    // llgs local-process debugging may specify PTYs, which will eliminate the need to reflect inferior
+    // stdout/stderr over the gdb-remote protocol.
+    if (ShouldRedirectInferiorOutputOverGdbRemote (m_process_launch_info))
     {
         if (log)
-            log->Printf ("ProcessGDBRemoteCommunicationServer::%s setting inferior STDIO fd to %d", __FUNCTION__, terminal_fd);
-        error = SetSTDIOFileDescriptor (terminal_fd);
-        if (error.Fail ())
-            return error;
+            log->Printf ("GDBRemoteCommunicationServer::%s pid %" PRIu64 " setting up stdout/stderr redirection via $O gdb-remote commands", __FUNCTION__, m_debugged_process_sp->GetID ());
+
+        // Setup stdout/stderr mapping from inferior to $O
+        auto terminal_fd = m_debugged_process_sp->GetTerminalFileDescriptor ();
+        if (terminal_fd >= 0)
+        {
+            if (log)
+                log->Printf ("ProcessGDBRemoteCommunicationServer::%s setting inferior STDIO fd to %d", __FUNCTION__, terminal_fd);
+            error = SetSTDIOFileDescriptor (terminal_fd);
+            if (error.Fail ())
+                return error;
+        }
+        else
+        {
+            if (log)
+                log->Printf ("ProcessGDBRemoteCommunicationServer::%s ignoring inferior STDIO since terminal fd reported as %d", __FUNCTION__, terminal_fd);
+        }
     }
     else
     {
         if (log)
-            log->Printf ("ProcessGDBRemoteCommunicationServer::%s ignoring inferior STDIO since terminal fd reported as %d", __FUNCTION__, terminal_fd);
+            log->Printf ("GDBRemoteCommunicationServer::%s pid %" PRIu64 " skipping stdout/stderr redirection via $O: inferior will communicate over client-provided file descriptors", __FUNCTION__, m_debugged_process_sp->GetID ());
     }
 
     printf ("Launched '%s' as process %" PRIu64 "...\n", m_process_launch_info.GetArguments ().GetArgumentAtIndex (0), m_process_launch_info.GetProcessID ());
@@ -3757,7 +3792,7 @@ GDBRemoteCommunicationServer::Handle_z (StringExtractorGDBRemote &packet)
     }
 
     // Parse out software or hardware breakpoint requested.
-    packet.SetFilePos (strlen("Z"));
+    packet.SetFilePos (strlen("z"));
     if (packet.GetBytesLeft() < 1)
         return SendIllFormedResponse(packet, "Too short z packet, missing software/hardware specifier");
 
@@ -3797,7 +3832,7 @@ GDBRemoteCommunicationServer::Handle_z (StringExtractorGDBRemote &packet)
 
     if (want_breakpoint)
     {
-        // Try to set the breakpoint.
+        // Try to clear the breakpoint.
         const Error error = m_debugged_process_sp->RemoveBreakpoint (breakpoint_addr);
         if (error.Success ())
             return SendOKResponse ();

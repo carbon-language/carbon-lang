@@ -748,7 +748,11 @@ ProcessGDBRemote::WillLaunchOrAttach ()
 Error
 ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
 {
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     Error error;
+
+    if (log)
+        log->Printf ("ProcessGDBRemote::%s() entered", __FUNCTION__);
 
     uint32_t launch_flags = launch_info.GetFlags().Get();
     const char *stdin_path = NULL;
@@ -776,10 +780,21 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
             stderr_path = file_action->GetPath();
     }
 
+    if (log)
+    {
+        if (stdin_path || stdout_path || stderr_path)
+            log->Printf ("ProcessGDBRemote::%s provided with STDIO paths via launch_info: stdin=%s, stdout=%s, stdout=%s",
+                         __FUNCTION__,
+                         stdin_path ? stdin_path : "<null>",
+                         stdout_path ? stdout_path : "<null>",
+                         stderr_path ? stderr_path : "<null>");
+        else
+            log->Printf ("ProcessGDBRemote::%s no STDIO paths given via launch_info", __FUNCTION__);
+    }
+
     //  ::LogSetBitMask (GDBR_LOG_DEFAULT);
     //  ::LogSetOptions (LLDB_LOG_OPTION_THREADSAFE | LLDB_LOG_OPTION_PREPEND_TIMESTAMP | LLDB_LOG_OPTION_PREPEND_PROC_AND_THREAD);
     //  ::LogSetLogFile ("/dev/stdout");
-    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
 
     ObjectFile * object_file = exe_module->GetObjectFile();
     if (object_file)
@@ -816,6 +831,13 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
 
                 if (stderr_path == NULL)
                     stderr_path = slave_name;
+
+                if (log)
+                    log->Printf ("ProcessGDBRemote::%s adjusted STDIO paths for local platform (IsHost() is true) using slave: stdin=%s, stdout=%s, stdout=%s",
+                                 __FUNCTION__,
+                                 stdin_path ? stdin_path : "<null>",
+                                 stdout_path ? stdout_path : "<null>",
+                                 stderr_path ? stderr_path : "<null>");
             }
 
             // Set STDIN to /dev/null if we want STDIO disabled or if either
@@ -833,7 +855,14 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
             if (disable_stdio || (stderr_path == NULL && (stdin_path || stdout_path)))
                 stderr_path = "/dev/null";
 
-            if (stdin_path) 
+            if (log)
+                log->Printf ("ProcessGDBRemote::%s final STDIO paths after all adjustments: stdin=%s, stdout=%s, stdout=%s",
+                             __FUNCTION__,
+                             stdin_path ? stdin_path : "<null>",
+                             stdout_path ? stdout_path : "<null>",
+                             stderr_path ? stderr_path : "<null>");
+
+            if (stdin_path)
                 m_gdb_comm.SetSTDIN (stdin_path);
             if (stdout_path)
                 m_gdb_comm.SetSTDOUT (stdout_path);
@@ -1025,18 +1054,38 @@ ProcessGDBRemote::DidLaunchOrAttach (ArchSpec& process_arch)
         // prefer that over the Host information as it will be more specific
         // to our process.
 
-        if (m_gdb_comm.GetProcessArchitecture().IsValid())
-            process_arch = m_gdb_comm.GetProcessArchitecture();
+        const ArchSpec &remote_process_arch = m_gdb_comm.GetProcessArchitecture();
+        if (remote_process_arch.IsValid())
+        {
+            process_arch = remote_process_arch;
+            if (log)
+                log->Printf ("ProcessGDBRemote::%s gdb-remote had process architecture, using %s %s",
+                             __FUNCTION__,
+                             process_arch.GetArchitectureName () ? process_arch.GetArchitectureName () : "<null>",
+                             process_arch.GetTriple().getTriple ().c_str() ? process_arch.GetTriple().getTriple ().c_str() : "<null>");
+        }
         else
+        {
             process_arch = m_gdb_comm.GetHostArchitecture();
+            if (log)
+                log->Printf ("ProcessGDBRemote::%s gdb-remote did not have process architecture, using gdb-remote host architecture %s %s",
+                             __FUNCTION__,
+                             process_arch.GetArchitectureName () ? process_arch.GetArchitectureName () : "<null>",
+                             process_arch.GetTriple().getTriple ().c_str() ? process_arch.GetTriple().getTriple ().c_str() : "<null>");
+        }
 
         if (process_arch.IsValid())
         {
             ArchSpec &target_arch = GetTarget().GetArchitecture();
-
             if (target_arch.IsValid())
             {
-                // If the remote host is ARM and we have apple as the vendor, then 
+                if (log)
+                    log->Printf ("ProcessGDBRemote::%s analyzing target arch, currently %s %s",
+                                 __FUNCTION__,
+                                 target_arch.GetArchitectureName () ? target_arch.GetArchitectureName () : "<null>",
+                                 target_arch.GetTriple().getTriple ().c_str() ? target_arch.GetTriple().getTriple ().c_str() : "<null>");
+
+                // If the remote host is ARM and we have apple as the vendor, then
                 // ARM executables and shared libraries can have mixed ARM architectures.
                 // You can have an armv6 executable, and if the host is armv7, then the
                 // system will load the best possible architecture for all shared libraries
@@ -1047,6 +1096,11 @@ ProcessGDBRemote::DidLaunchOrAttach (ArchSpec& process_arch)
                     process_arch.GetTriple().getVendor() == llvm::Triple::Apple)
                 {
                     GetTarget().SetArchitecture (process_arch);
+                    if (log)
+                        log->Printf ("ProcessGDBRemote::%s remote process is ARM/Apple, setting target arch to %s %s",
+                                     __FUNCTION__,
+                                     process_arch.GetArchitectureName () ? process_arch.GetArchitectureName () : "<null>",
+                                     process_arch.GetTriple().getTriple ().c_str() ? process_arch.GetTriple().getTriple ().c_str() : "<null>");
                 }
                 else
                 {
@@ -1065,7 +1119,14 @@ ProcessGDBRemote::DidLaunchOrAttach (ArchSpec& process_arch)
                                 target_triple.setEnvironment (remote_triple.getEnvironment());
                         }
                     }
+
                 }
+
+                if (log)
+                    log->Printf ("ProcessGDBRemote::%s final target arch after adjustments for remote architecture: %s %s",
+                                 __FUNCTION__,
+                                 target_arch.GetArchitectureName () ? target_arch.GetArchitectureName () : "<null>",
+                                 target_arch.GetTriple().getTriple ().c_str() ? target_arch.GetTriple().getTriple ().c_str() : "<null>");
             }
             else
             {
@@ -1094,7 +1155,12 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
 Error
 ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid, const ProcessAttachInfo &attach_info)
 {
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     Error error;
+
+    if (log)
+        log->Printf ("ProcessGDBRemote::%s()", __FUNCTION__);
+
     // Clear out and clean up from any current state
     Clear();
     if (attach_pid != LLDB_INVALID_PROCESS_ID)
@@ -1117,13 +1183,14 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid, const Process
         if (error.Success())
         {
             m_gdb_comm.SetDetachOnError(attach_info.GetDetachOnError());
-            
+
             char packet[64];
             const int packet_len = ::snprintf (packet, sizeof(packet), "vAttach;%" PRIx64, attach_pid);
             SetID (attach_pid);            
             m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (packet, packet_len));
         }
     }
+
     return error;
 }
 

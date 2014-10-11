@@ -220,9 +220,9 @@ namespace lldb_private
                     lldb_private::Module *module,
                     char const **argv,
                     char const **envp,
-                    const char *stdin_path,
-                    const char *stdout_path,
-                    const char *stderr_path,
+                    const std::string &stdin_path,
+                    const std::string &stdout_path,
+                    const std::string &stderr_path,
                     const char *working_dir,
                     const lldb_private::ProcessLaunchInfo &launch_info);
 
@@ -231,9 +231,9 @@ namespace lldb_private
             lldb_private::Module *m_module; // The executable image to launch.
             char const **m_argv;            // Process arguments.
             char const **m_envp;            // Process environment.
-            const char *m_stdin_path;       // Redirect stdin or NULL.
-            const char *m_stdout_path;      // Redirect stdout or NULL.
-            const char *m_stderr_path;      // Redirect stderr or NULL.
+            const std::string &m_stdin_path;  // Redirect stdin if not empty.
+            const std::string &m_stdout_path; // Redirect stdout if not empty.
+            const std::string &m_stderr_path; // Redirect stderr if not empty.
             const char *m_working_dir;      // Working directory or NULL.
             const lldb_private::ProcessLaunchInfo &m_launch_info;
         };
@@ -260,9 +260,9 @@ namespace lldb_private
             Module *module,
             char const *argv[],
             char const *envp[],
-            const char *stdin_path,
-            const char *stdout_path,
-            const char *stderr_path,
+            const std::string &stdin_path,
+            const std::string &stdout_path,
+            const std::string &stderr_path,
             const char *working_dir,
             const lldb_private::ProcessLaunchInfo &launch_info,
             Error &error);

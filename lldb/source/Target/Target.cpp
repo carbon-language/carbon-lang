@@ -2375,6 +2375,13 @@ Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info)
     // Finalize the file actions, and if none were given, default to opening
     // up a pseudo terminal
     const bool default_to_use_pty = platform_sp ? platform_sp->IsHost() : false;
+    if (log)
+        log->Printf ("Target::%s have platform=%s, platform_sp->IsHost()=%s, default_to_use_pty=%s",
+                     __FUNCTION__,
+                     platform_sp ? "true" : "false",
+                     platform_sp ? (platform_sp->IsHost () ? "true" : "false") : "n/a",
+                     default_to_use_pty ? "true" : "false");
+
     launch_info.FinalizeFileActions (this, default_to_use_pty);
     
     if (state == eStateConnected)
