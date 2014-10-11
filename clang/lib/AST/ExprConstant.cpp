@@ -7874,24 +7874,49 @@ bool ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (E->isPtrMemOp() || E->isAssignmentOp() || E->getOpcode() == BO_Comma)
     return ExprEvaluatorBaseTy::VisitBinaryOperator(E);
 
-  bool LHSOK = Visit(E->getLHS());
+  // Track whether the LHS or RHS is real at the type system level. When this is
+  // the case we can simplify our evaluation strategy.
+  bool LHSReal = false, RHSReal = false;
+
+  bool LHSOK;
+  if (E->getLHS()->getType()->isRealFloatingType()) {
+    LHSReal = true;
+    APFloat &Real = Result.FloatReal;
+    LHSOK = EvaluateFloat(E->getLHS(), Real, Info);
+    if (LHSOK) {
+      Result.makeComplexFloat();
+      Result.FloatImag = APFloat(Real.getSemantics());
+    }
+  } else {
+    LHSOK = Visit(E->getLHS());
+  }
   if (!LHSOK && !Info.keepEvaluatingAfterFailure())
     return false;
 
   ComplexValue RHS;
-  if (!EvaluateComplex(E->getRHS(), RHS, Info) || !LHSOK)
+  if (E->getRHS()->getType()->isRealFloatingType()) {
+    RHSReal = true;
+    APFloat &Real = RHS.FloatReal;
+    if (!EvaluateFloat(E->getRHS(), Real, Info) || !LHSOK)
+      return false;
+    RHS.makeComplexFloat();
+    RHS.FloatImag = APFloat(Real.getSemantics());
+  } else if (!EvaluateComplex(E->getRHS(), RHS, Info) || !LHSOK)
     return false;
 
-  assert(Result.isComplexFloat() == RHS.isComplexFloat() &&
-         "Invalid operands to binary operator.");
+  assert(!(LHSReal && RHSReal) &&
+         "Cannot have both operands of a complex operation be real.");
   switch (E->getOpcode()) {
   default: return Error(E);
   case BO_Add:
     if (Result.isComplexFloat()) {
       Result.getComplexFloatReal().add(RHS.getComplexFloatReal(),
                                        APFloat::rmNearestTiesToEven);
-      Result.getComplexFloatImag().add(RHS.getComplexFloatImag(),
-                                       APFloat::rmNearestTiesToEven);
+      if (LHSReal)
+        Result.getComplexFloatImag() = RHS.getComplexFloatImag();
+      else if (!RHSReal)
+        Result.getComplexFloatImag().add(RHS.getComplexFloatImag(),
+                                         APFloat::rmNearestTiesToEven);
     } else {
       Result.getComplexIntReal() += RHS.getComplexIntReal();
       Result.getComplexIntImag() += RHS.getComplexIntImag();
@@ -7901,8 +7926,13 @@ bool ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     if (Result.isComplexFloat()) {
       Result.getComplexFloatReal().subtract(RHS.getComplexFloatReal(),
                                             APFloat::rmNearestTiesToEven);
-      Result.getComplexFloatImag().subtract(RHS.getComplexFloatImag(),
-                                            APFloat::rmNearestTiesToEven);
+      if (LHSReal) {
+        Result.getComplexFloatImag() = RHS.getComplexFloatImag();
+        Result.getComplexFloatImag().changeSign();
+      } else if (!RHSReal) {
+        Result.getComplexFloatImag().subtract(RHS.getComplexFloatImag(),
+                                              APFloat::rmNearestTiesToEven);
+      }
     } else {
       Result.getComplexIntReal() -= RHS.getComplexIntReal();
       Result.getComplexIntImag() -= RHS.getComplexIntImag();
@@ -7910,25 +7940,75 @@ bool ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     break;
   case BO_Mul:
     if (Result.isComplexFloat()) {
+      // This is an implementation of complex multiplication according to the
+      // constraints laid out in C11 Annex G. The implemantion uses the
+      // following naming scheme:
+      //   (a + ib) * (c + id)
       ComplexValue LHS = Result;
-      APFloat &LHS_r = LHS.getComplexFloatReal();
-      APFloat &LHS_i = LHS.getComplexFloatImag();
-      APFloat &RHS_r = RHS.getComplexFloatReal();
-      APFloat &RHS_i = RHS.getComplexFloatImag();
-
-      APFloat Tmp = LHS_r;
-      Tmp.multiply(RHS_r, APFloat::rmNearestTiesToEven);
-      Result.getComplexFloatReal() = Tmp;
-      Tmp = LHS_i;
-      Tmp.multiply(RHS_i, APFloat::rmNearestTiesToEven);
-      Result.getComplexFloatReal().subtract(Tmp, APFloat::rmNearestTiesToEven);
-
-      Tmp = LHS_r;
-      Tmp.multiply(RHS_i, APFloat::rmNearestTiesToEven);
-      Result.getComplexFloatImag() = Tmp;
-      Tmp = LHS_i;
-      Tmp.multiply(RHS_r, APFloat::rmNearestTiesToEven);
-      Result.getComplexFloatImag().add(Tmp, APFloat::rmNearestTiesToEven);
+      APFloat &A = LHS.getComplexFloatReal();
+      APFloat &B = LHS.getComplexFloatImag();
+      APFloat &C = RHS.getComplexFloatReal();
+      APFloat &D = RHS.getComplexFloatImag();
+      APFloat &ResR = Result.getComplexFloatReal();
+      APFloat &ResI = Result.getComplexFloatImag();
+      if (LHSReal) {
+        assert(!RHSReal && "Cannot have two real operands for a complex op!");
+        ResR = A * C;
+        ResI = A * D;
+      } else if (RHSReal) {
+        ResR = C * A;
+        ResI = C * B;
+      } else {
+        // In the fully general case, we need to handle NaNs and infinities
+        // robustly.
+        APFloat AC = A * C;
+        APFloat BD = B * D;
+        APFloat AD = A * D;
+        APFloat BC = B * C;
+        ResR = AC - BD;
+        ResI = AD + BC;
+        if (ResR.isNaN() && ResI.isNaN()) {
+          bool Recalc = false;
+          if (A.isInfinity() || B.isInfinity()) {
+            A = APFloat::copySign(
+                APFloat(A.getSemantics(), A.isInfinity() ? 1 : 0), A);
+            B = APFloat::copySign(
+                APFloat(B.getSemantics(), B.isInfinity() ? 1 : 0), B);
+            if (C.isNaN())
+              C = APFloat::copySign(APFloat(C.getSemantics()), C);
+            if (D.isNaN())
+              D = APFloat::copySign(APFloat(D.getSemantics()), D);
+            Recalc = true;
+          }
+          if (C.isInfinity() || D.isInfinity()) {
+            C = APFloat::copySign(
+                APFloat(C.getSemantics(), C.isInfinity() ? 1 : 0), C);
+            D = APFloat::copySign(
+                APFloat(D.getSemantics(), D.isInfinity() ? 1 : 0), D);
+            if (A.isNaN())
+              A = APFloat::copySign(APFloat(A.getSemantics()), A);
+            if (B.isNaN())
+              B = APFloat::copySign(APFloat(B.getSemantics()), B);
+            Recalc = true;
+          }
+          if (!Recalc && (AC.isInfinity() || BD.isInfinity() ||
+                          AD.isInfinity() || BC.isInfinity())) {
+            if (A.isNaN())
+              A = APFloat::copySign(APFloat(A.getSemantics()), A);
+            if (B.isNaN())
+              B = APFloat::copySign(APFloat(B.getSemantics()), B);
+            if (C.isNaN())
+              C = APFloat::copySign(APFloat(C.getSemantics()), C);
+            if (D.isNaN())
+              D = APFloat::copySign(APFloat(D.getSemantics()), D);
+            Recalc = true;
+          }
+          if (Recalc) {
+            ResR = APFloat::getInf(A.getSemantics()) * (A * C - B * D);
+            ResI = APFloat::getInf(A.getSemantics()) * (A * D + B * C);
+          }
+        }
+      }
     } else {
       ComplexValue LHS = Result;
       Result.getComplexIntReal() =
@@ -7941,33 +8021,57 @@ bool ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     break;
   case BO_Div:
     if (Result.isComplexFloat()) {
+      // This is an implementation of complex division according to the
+      // constraints laid out in C11 Annex G. The implemantion uses the
+      // following naming scheme:
+      //   (a + ib) / (c + id)
       ComplexValue LHS = Result;
-      APFloat &LHS_r = LHS.getComplexFloatReal();
-      APFloat &LHS_i = LHS.getComplexFloatImag();
-      APFloat &RHS_r = RHS.getComplexFloatReal();
-      APFloat &RHS_i = RHS.getComplexFloatImag();
-      APFloat &Res_r = Result.getComplexFloatReal();
-      APFloat &Res_i = Result.getComplexFloatImag();
-
-      APFloat Den = RHS_r;
-      Den.multiply(RHS_r, APFloat::rmNearestTiesToEven);
-      APFloat Tmp = RHS_i;
-      Tmp.multiply(RHS_i, APFloat::rmNearestTiesToEven);
-      Den.add(Tmp, APFloat::rmNearestTiesToEven);
-
-      Res_r = LHS_r;
-      Res_r.multiply(RHS_r, APFloat::rmNearestTiesToEven);
-      Tmp = LHS_i;
-      Tmp.multiply(RHS_i, APFloat::rmNearestTiesToEven);
-      Res_r.add(Tmp, APFloat::rmNearestTiesToEven);
-      Res_r.divide(Den, APFloat::rmNearestTiesToEven);
-
-      Res_i = LHS_i;
-      Res_i.multiply(RHS_r, APFloat::rmNearestTiesToEven);
-      Tmp = LHS_r;
-      Tmp.multiply(RHS_i, APFloat::rmNearestTiesToEven);
-      Res_i.subtract(Tmp, APFloat::rmNearestTiesToEven);
-      Res_i.divide(Den, APFloat::rmNearestTiesToEven);
+      APFloat &A = LHS.getComplexFloatReal();
+      APFloat &B = LHS.getComplexFloatImag();
+      APFloat &C = RHS.getComplexFloatReal();
+      APFloat &D = RHS.getComplexFloatImag();
+      APFloat &ResR = Result.getComplexFloatReal();
+      APFloat &ResI = Result.getComplexFloatImag();
+      if (RHSReal) {
+        ResR = A / C;
+        ResI = B / C;
+      } else {
+        if (LHSReal) {
+          // No real optimizations we can do here, stub out with zero.
+          B = APFloat::getZero(A.getSemantics());
+        }
+        int DenomLogB = 0;
+        APFloat MaxCD = maxnum(abs(C), abs(D));
+        if (MaxCD.isFinite()) {
+          DenomLogB = ilogb(MaxCD);
+          C = scalbn(C, -DenomLogB);
+          D = scalbn(D, -DenomLogB);
+        }
+        APFloat Denom = C * C + D * D;
+        ResR = scalbn((A * C + B * D) / Denom, -DenomLogB);
+        ResI = scalbn((B * C - A * D) / Denom, -DenomLogB);
+        if (ResR.isNaN() && ResI.isNaN()) {
+          if (Denom.isPosZero() && (!A.isNaN() || !B.isNaN())) {
+            ResR = APFloat::getInf(ResR.getSemantics(), C.isNegative()) * A;
+            ResI = APFloat::getInf(ResR.getSemantics(), C.isNegative()) * B;
+          } else if ((A.isInfinity() || B.isInfinity()) && C.isFinite() &&
+                     D.isFinite()) {
+            A = APFloat::copySign(
+                APFloat(A.getSemantics(), A.isInfinity() ? 1 : 0), A);
+            B = APFloat::copySign(
+                APFloat(B.getSemantics(), B.isInfinity() ? 1 : 0), B);
+            ResR = APFloat::getInf(ResR.getSemantics()) * (A * C + B * D);
+            ResI = APFloat::getInf(ResI.getSemantics()) * (B * C - A * D);
+          } else if (MaxCD.isInfinity() && A.isFinite() && B.isFinite()) {
+            C = APFloat::copySign(
+                APFloat(C.getSemantics(), C.isInfinity() ? 1 : 0), C);
+            D = APFloat::copySign(
+                APFloat(D.getSemantics(), D.isInfinity() ? 1 : 0), D);
+            ResR = APFloat::getZero(ResR.getSemantics()) * (A * C + B * D);
+            ResI = APFloat::getZero(ResI.getSemantics()) * (B * C - A * D);
+          }
+        }
+      }
     } else {
       if (RHS.getComplexIntReal() == 0 && RHS.getComplexIntImag() == 0)
         return Error(E, diag::note_expr_divide_by_zero);
