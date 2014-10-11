@@ -84,9 +84,12 @@ int main(int argc, char **argv) {
   case '1':
     // CHECK-1: runtime error: value -2.14748{{.*}} is outside the range of representable values of type 'int'
     return MinFloatRepresentableAsInt - 0x100;
-  case '2':
+  case '2': {
     // CHECK-2: runtime error: value -1 is outside the range of representable values of type 'unsigned int'
-    return (unsigned)-1.0;
+    volatile float f = -1.0;
+    volatile unsigned u = (unsigned)f;
+    return 0;
+  }
   case '3':
     // CHECK-3: runtime error: value 4.2949{{.*}} is outside the range of representable values of type 'unsigned int'
     return (unsigned)(MaxFloatRepresentableAsUInt + 0x100);
