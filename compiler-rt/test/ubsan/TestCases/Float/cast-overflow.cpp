@@ -9,7 +9,7 @@
 // RUN: %run %t 5 2>&1 | FileCheck %s --check-prefix=CHECK-5
 // RUN: %run %t 6 2>&1 | FileCheck %s --check-prefix=CHECK-6
 // FIXME: %run %t 7 2>&1 | FileCheck %s --check-prefix=CHECK-7
-// RUN: not %run %t 8 2>&1 | FileCheck %s --check-prefix=CHECK-8
+// FIXME: not %run %t 8 2>&1 | FileCheck %s --check-prefix=CHECK-8
 // RUN: not %run %t 9 2>&1 | FileCheck %s --check-prefix=CHECK-9
 
 // This test assumes float and double are IEEE-754 single- and double-precision.
