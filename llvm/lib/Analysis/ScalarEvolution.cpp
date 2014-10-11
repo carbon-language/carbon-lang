@@ -4367,6 +4367,14 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
 //                   Iteration Count Computation Code
 //
 
+unsigned ScalarEvolution::getSmallConstantTripCount(Loop *L) {
+  if (BasicBlock *ExitingBB = L->getExitingBlock())
+    return getSmallConstantTripCount(L, ExitingBB);
+
+  // No trip count information for multiple exits.
+  return 0;
+}
+
 /// getSmallConstantTripCount - Returns the maximum trip count of this loop as a
 /// normal unsigned value. Returns 0 if the trip count is unknown or not
 /// constant. Will also return 0 if the maximum trip count is very large (>=
@@ -4379,6 +4387,9 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
 /// prematurely via another branch.
 unsigned ScalarEvolution::getSmallConstantTripCount(Loop *L,
                                                     BasicBlock *ExitingBlock) {
+  assert(ExitingBlock && "Must pass a non-null exiting block!");
+  assert(L->isLoopExiting(ExitingBlock) &&
+         "Exiting block must actually branch out of the loop!");
   const SCEVConstant *ExitCount =
       dyn_cast<SCEVConstant>(getExitCount(L, ExitingBlock));
   if (!ExitCount)
@@ -4392,6 +4403,14 @@ unsigned ScalarEvolution::getSmallConstantTripCount(Loop *L,
 
   // In case of integer overflow, this returns 0, which is correct.
   return ((unsigned)ExitConst->getZExtValue()) + 1;
+}
+
+unsigned ScalarEvolution::getSmallConstantTripMultiple(Loop *L) {
+  if (BasicBlock *ExitingBB = L->getExitingBlock())
+    return getSmallConstantTripMultiple(L, ExitingBB);
+
+  // No trip multiple information for multiple exits.
+  return 0;
 }
 
 /// getSmallConstantTripMultiple - Returns the largest constant divisor of the
@@ -4409,6 +4428,9 @@ unsigned ScalarEvolution::getSmallConstantTripCount(Loop *L,
 unsigned
 ScalarEvolution::getSmallConstantTripMultiple(Loop *L,
                                               BasicBlock *ExitingBlock) {
+  assert(ExitingBlock && "Must pass a non-null exiting block!");
+  assert(L->isLoopExiting(ExitingBlock) &&
+         "Exiting block must actually branch out of the loop!");
   const SCEV *ExitCount = getExitCount(L, ExitingBlock);
   if (ExitCount == getCouldNotCompute())
     return 1;

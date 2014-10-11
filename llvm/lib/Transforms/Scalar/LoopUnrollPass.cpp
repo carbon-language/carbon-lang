@@ -382,13 +382,15 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Find trip count and trip multiple if count is not available
   unsigned TripCount = 0;
   unsigned TripMultiple = 1;
-  // Find "latch trip count". UnrollLoop assumes that control cannot exit
-  // via the loop latch on any iteration prior to TripCount. The loop may exit
-  // early via an earlier branch.
-  BasicBlock *LatchBlock = L->getLoopLatch();
-  if (LatchBlock) {
-    TripCount = SE->getSmallConstantTripCount(L, LatchBlock);
-    TripMultiple = SE->getSmallConstantTripMultiple(L, LatchBlock);
+  // If there are multiple exiting blocks but one of them is the latch, use the
+  // latch for the trip count estimation. Otherwise insist on a single exiting
+  // block for the trip count estimation.
+  BasicBlock *ExitingBlock = L->getLoopLatch();
+  if (!ExitingBlock || !L->isLoopExiting(ExitingBlock))
+    ExitingBlock = L->getExitingBlock();
+  if (ExitingBlock) {
+    TripCount = SE->getSmallConstantTripCount(L, ExitingBlock);
+    TripMultiple = SE->getSmallConstantTripMultiple(L, ExitingBlock);
   }
 
   // Select an initial unroll count.  This may be reduced later based

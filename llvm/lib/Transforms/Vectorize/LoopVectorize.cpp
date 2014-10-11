@@ -1360,8 +1360,7 @@ struct LoopVectorize : public FunctionPass {
 
     // Check the loop for a trip count threshold:
     // do not vectorize loops with a tiny trip count.
-    BasicBlock *Latch = L->getLoopLatch();
-    const unsigned TC = SE->getSmallConstantTripCount(L, Latch);
+    const unsigned TC = SE->getSmallConstantTripCount(L);
     if (TC > 0u && TC < TinyTripCountVectorThreshold) {
       DEBUG(dbgs() << "LV: Found a loop with a very small trip count. "
                    << "This loop is not worth vectorizing.");
@@ -5352,7 +5351,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
   }
 
   // Find the trip count.
-  unsigned TC = SE->getSmallConstantTripCount(TheLoop, TheLoop->getLoopLatch());
+  unsigned TC = SE->getSmallConstantTripCount(TheLoop);
   DEBUG(dbgs() << "LV: Found trip count: " << TC << '\n');
 
   unsigned WidestType = getWidestType();

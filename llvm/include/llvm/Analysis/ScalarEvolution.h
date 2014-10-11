@@ -742,6 +742,13 @@ namespace llvm {
     bool isLoopBackedgeGuardedByCond(const Loop *L, ICmpInst::Predicate Pred,
                                      const SCEV *LHS, const SCEV *RHS);
 
+    /// \brief Returns the maximum trip count of the loop if it is a single-exit
+    /// loop and we can compute a small maximum for that loop.
+    ///
+    /// Implemented in terms of the \c getSmallConstantTripCount overload with
+    /// the single exiting block passed to it. See that routine for details.
+    unsigned getSmallConstantTripCount(Loop *L);
+
     /// getSmallConstantTripCount - Returns the maximum trip count of this loop
     /// as a normal unsigned value. Returns 0 if the trip count is unknown or
     /// not constant. This "trip count" assumes that control exits via
@@ -750,6 +757,14 @@ namespace llvm {
     /// exits, it may not be the number times that the loop header executes if
     /// the loop exits prematurely via another branch.
     unsigned getSmallConstantTripCount(Loop *L, BasicBlock *ExitingBlock);
+
+    /// \brief Returns the largest constant divisor of the trip count of the
+    /// loop if it is a single-exit loop and we can compute a small maximum for
+    /// that loop.
+    ///
+    /// Implemented in terms of the \c getSmallConstantTripMultiple overload with
+    /// the single exiting block passed to it. See that routine for details.
+    unsigned getSmallConstantTripMultiple(Loop *L);
 
     /// getSmallConstantTripMultiple - Returns the largest constant divisor of
     /// the trip count of this loop as a normal unsigned value, if
