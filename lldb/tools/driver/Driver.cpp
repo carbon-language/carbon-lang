@@ -921,6 +921,9 @@ Driver::MainLoop ()
     // so we can then run the command interpreter using the file contents.
     const char *commands_data = commands_stream.GetData();
     const size_t commands_size = commands_stream.GetSize();
+
+    // The command file might have requested that we quit, this variable will track that.
+    bool quit_requested = false;
     if (commands_data && commands_size)
     {
         enum PIPES { READ, WRITE }; // Constants 0 and 1 for READ and WRITE
@@ -961,7 +964,18 @@ Driver::MainLoop ()
                     fds[READ] = -1; // The FILE * 'commands_file' now owns the read descriptor
                     // Hand ownership if the FILE * over to the debugger for "commands_file".
                     m_debugger.SetInputFileHandle (commands_file, true);
-                    m_debugger.RunCommandInterpreter(handle_events, spawn_thread);
+
+                    // Set the debugger into Sync mode when running the command file.  Otherwise command files
+                    // that run the target won't run in a sensible way.
+                    bool old_async = m_debugger.GetAsync();
+                    m_debugger.SetAsync(false);
+                    int num_errors;
+                    
+                    SBCommandInterpreterRunOptions options;
+                    options.SetStopOnError (true);
+                    
+                    m_debugger.RunCommandInterpreter(handle_events, spawn_thread, options, num_errors, quit_requested);
+                    m_debugger.SetAsync(old_async);
                 }
                 else
                 {
@@ -1015,8 +1029,12 @@ Driver::MainLoop ()
     // Now set the input file handle to STDIN and run the command
     // interpreter again in interactive mode and let the debugger
     // take ownership of stdin
-    m_debugger.SetInputFileHandle (stdin, true);
-    m_debugger.RunCommandInterpreter(handle_events, spawn_thread);
+
+    if (!quit_requested)
+    {
+        m_debugger.SetInputFileHandle (stdin, true);
+        m_debugger.RunCommandInterpreter(handle_events, spawn_thread);
+    }
     
     reset_stdin_termios();
     fclose (stdin);

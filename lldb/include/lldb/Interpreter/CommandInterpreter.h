@@ -28,12 +28,181 @@
 
 namespace lldb_private {
 
+class CommandInterpreterRunOptions
+{
+public:
+    //------------------------------------------------------------------
+    /// Construct a CommandInterpreterRunOptions object.
+    /// This class is used to control all the instances where we run multiple commands, e.g.
+    /// HandleCommands, HandleCommandsFromFile, RunCommandInterpreter.
+    /// The meanings of the options in this object are:
+    ///
+    /// @param[in] stop_on_continue
+    ///    If \b true execution will end on the first command that causes the process in the
+    ///    execution context to continue.  If \false, we won't check the execution status.
+    /// @param[in] stop_on_error 
+    ///    If \b true execution will end on the first command that causes an error.
+    /// @param[in] stop_on_crash
+    ///    If \b true when a command causes the target to run, and the end of the run is a
+    ///    signal or exception, stop executing the commands.
+    /// @param[in] echo_commands
+    ///    If \b true echo the command before executing it.  If \false, execute silently.
+    /// @param[in] print_results
+    ///    If \b true print the results of the command after executing it.  If \false, execute silently.
+    /// @param[in] add_to_history
+    ///    If \b true add the commands to the command history.  If \false, don't add them.
+    //------------------------------------------------------------------
+    CommandInterpreterRunOptions (LazyBool stop_on_continue,
+                                  LazyBool stop_on_error,
+                                  LazyBool stop_on_crash,
+                                  LazyBool echo_commands,
+                                  LazyBool print_results,
+                                  LazyBool add_to_history) :
+        m_stop_on_continue(stop_on_continue),
+        m_stop_on_error(stop_on_error),
+        m_stop_on_crash(stop_on_crash),
+        m_echo_commands(echo_commands),
+        m_print_results(print_results),
+        m_add_to_history(add_to_history)
+    {}
+
+    CommandInterpreterRunOptions () :
+        m_stop_on_continue(eLazyBoolCalculate),
+        m_stop_on_error(eLazyBoolCalculate),
+        m_stop_on_crash(eLazyBoolCalculate),
+        m_echo_commands(eLazyBoolCalculate),
+        m_print_results(eLazyBoolCalculate),
+        m_add_to_history(eLazyBoolCalculate)
+    {}
+
+    void
+    SetSilent (bool silent)
+    {
+        LazyBool value = silent ? eLazyBoolNo : eLazyBoolYes;
+
+        m_echo_commands = value;
+        m_print_results = value;
+        m_add_to_history = value;
+    }
+    // These return the default behaviors if the behavior is not eLazyBoolCalculate.
+    // But I've also left the ivars public since for different ways of running the
+    // interpreter you might want to force different defaults...  In that case, just grab
+    // the LazyBool ivars directly and do what you want with eLazyBoolCalculate.
+    bool
+    GetStopOnContinue () const
+    {
+        return DefaultToNo (m_stop_on_continue);
+    }
+
+    void
+    SetStopOnContinue (bool stop_on_continue)
+    {
+        m_stop_on_continue = stop_on_continue ? eLazyBoolYes : eLazyBoolNo;
+    }
+
+    bool
+    GetStopOnError () const
+    {
+        return DefaultToNo (m_stop_on_continue);
+    }
+
+    void
+    SetStopOnError (bool stop_on_error)
+    {
+        m_stop_on_error = stop_on_error ? eLazyBoolYes : eLazyBoolNo;
+    }
+
+    bool
+    GetStopOnCrash () const
+    {
+        return DefaultToNo (m_stop_on_crash);
+    }
+
+    void
+    SetStopOnCrash (bool stop_on_crash)
+    {
+        m_stop_on_crash = stop_on_crash ? eLazyBoolYes : eLazyBoolNo;
+    }
+
+    bool
+    GetEchoCommands () const
+    {
+        return DefaultToYes (m_echo_commands);
+    }
+
+    void
+    SetEchoCommands (bool echo_commands)
+    {
+        m_echo_commands = echo_commands ? eLazyBoolYes : eLazyBoolNo;
+    }
+
+    bool
+    GetPrintResults () const
+    {
+        return DefaultToYes (m_print_results);
+    }
+
+    void
+    SetPrintResults (bool print_results)
+    {
+        m_print_results = print_results ? eLazyBoolYes : eLazyBoolNo;
+    }
+
+    bool
+    GetAddToHistory () const
+    {
+        return DefaultToYes (m_add_to_history);
+    }
+
+    void
+    SetAddToHistory (bool add_to_history)
+    {
+        m_add_to_history = add_to_history ? eLazyBoolYes : eLazyBoolNo;
+    }
+
+    LazyBool m_stop_on_continue;
+    LazyBool m_stop_on_error;
+    LazyBool m_stop_on_crash;
+    LazyBool m_echo_commands;
+    LazyBool m_print_results;
+    LazyBool m_add_to_history;
+
+    private:
+    static bool
+    DefaultToYes (LazyBool flag)
+    {
+        switch (flag)
+        {
+            case eLazyBoolCalculate:
+            case eLazyBoolYes:
+                return true;
+            case eLazyBoolNo:
+                return false;
+        }
+    }
+
+    static bool
+    DefaultToNo (LazyBool flag)
+    {
+        switch (flag)
+        {
+            case eLazyBoolYes:
+                return true;
+            case eLazyBoolCalculate:
+            case eLazyBoolNo:
+                return false;
+        }
+    }
+};
+
 class CommandInterpreter :
     public Broadcaster,
     public Properties,
     public IOHandlerDelegate
 {
 public:
+
+
     typedef std::map<std::string, OptionArgVectorSP> OptionArgMap;
 
     enum
@@ -168,27 +337,17 @@ public:
     /// @param[in/out] context 
     ///    The execution context in which to run the commands.  Can be NULL in which case the default
     ///    context will be used.
-    /// @param[in] stop_on_continue 
-    ///    If \b true execution will end on the first command that causes the process in the
-    ///    execution context to continue.  If \false, we won't check the execution status.
-    /// @param[in] stop_on_error 
-    ///    If \b true execution will end on the first command that causes an error.
-    /// @param[in] echo_commands
-    ///    If \b true echo the command before executing it.  If \false, execute silently.
-    /// @param[in] print_results
-    ///    If \b true print the results of the command after executing it.  If \false, execute silently.
-    /// @param[out] result 
+    /// @param[in] options
+    ///    This object holds the options used to control when to stop, whether to execute commands,
+    ///    etc.
+    /// @param[out] result
     ///    This is marked as succeeding with no output if all commands execute safely,
     ///    and failed with some explanation if we aborted executing the commands at some point.
     //------------------------------------------------------------------
     void
     HandleCommands (const StringList &commands, 
-                    ExecutionContext *context, 
-                    bool stop_on_continue, 
-                    bool stop_on_error, 
-                    bool echo_commands,
-                    bool print_results,
-                    LazyBool add_to_history,
+                    ExecutionContext *context,
+                    CommandInterpreterRunOptions &options,
                     CommandReturnObject &result);
 
     //------------------------------------------------------------------
@@ -199,27 +358,17 @@ public:
     /// @param[in/out] context 
     ///    The execution context in which to run the commands.  Can be NULL in which case the default
     ///    context will be used.
-    /// @param[in] stop_on_continue 
-    ///    If \b true execution will end on the first command that causes the process in the
-    ///    execution context to continue.  If \false, we won't check the execution status.
-    /// @param[in] stop_on_error 
-    ///    If \b true execution will end on the first command that causes an error.
-    /// @param[in] echo_commands
-    ///    If \b true echo the command before executing it.  If \false, execute silently.
-    /// @param[in] print_results
-    ///    If \b true print the results of the command after executing it.  If \false, execute silently.
-    /// @param[out] result 
+    /// @param[in] options
+    ///    This object holds the options used to control when to stop, whether to execute commands,
+    ///    etc.
+    /// @param[out] result
     ///    This is marked as succeeding with no output if all commands execute safely,
     ///    and failed with some explanation if we aborted executing the commands at some point.
     //------------------------------------------------------------------
     void
     HandleCommandsFromFile (FileSpec &file, 
-                            ExecutionContext *context, 
-                            LazyBool stop_on_continue, 
-                            LazyBool stop_on_error,
-                            LazyBool echo_commands,
-                            LazyBool print_results,
-                            LazyBool add_to_history,
+                            ExecutionContext *context,
+                            CommandInterpreterRunOptions &options,
                             CommandReturnObject &result);
 
     CommandObject *
@@ -442,8 +591,8 @@ public:
 
     void
     RunCommandInterpreter (bool auto_handle_events,
-                           bool spawn_thread);
-
+                           bool spawn_thread,
+                           CommandInterpreterRunOptions &options);
     void
     GetLLDBCommandsFromIOHandler (const char *prompt,
                                   IOHandlerDelegate &delegate,
@@ -467,6 +616,18 @@ public:
 
     bool
     GetStopCmdSourceOnError () const;
+
+    uint32_t
+    GetNumErrors() const
+    {
+        return m_num_errors;
+    }
+
+    bool
+    GetQuitRequested () const
+    {
+        return m_quit_requested;
+    }
     
 protected:
     friend class Debugger;
@@ -522,6 +683,8 @@ private:
     ChildrenTruncatedWarningStatus m_truncation_warning;    // Whether we truncated children and whether the user has been told
     uint32_t m_command_source_depth;
     std::vector<uint32_t> m_command_source_flags;
+    uint32_t m_num_errors;
+    bool m_quit_requested;
     
 };
 

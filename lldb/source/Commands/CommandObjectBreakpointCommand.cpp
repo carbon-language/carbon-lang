@@ -307,17 +307,16 @@ one command per line.\n" );
                 result.SetImmediateOutputStream (output_stream);
                 result.SetImmediateErrorStream (error_stream);
         
-                bool stop_on_continue = true;
-                bool echo_commands    = false;
-                bool print_results    = true;
+                CommandInterpreterRunOptions options;
+                options.SetStopOnContinue(true);
+                options.SetStopOnError (data->stop_on_error);
+                options.SetEchoCommands (true);
+                options.SetPrintResults (true);
+                options.SetAddToHistory (false);
 
-                debugger.GetCommandInterpreter().HandleCommands (commands, 
+                debugger.GetCommandInterpreter().HandleCommands (commands,
                                                                  &exe_ctx,
-                                                                 stop_on_continue, 
-                                                                 data->stop_on_error, 
-                                                                 echo_commands, 
-                                                                 print_results,
-                                                                 eLazyBoolNo,
+                                                                 options,
                                                                  result);
                 result.GetImmediateOutputStream()->Flush();
                 result.GetImmediateErrorStream()->Flush();

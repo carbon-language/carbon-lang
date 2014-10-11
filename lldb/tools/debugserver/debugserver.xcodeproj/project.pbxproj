@@ -514,6 +514,7 @@
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "";
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 330.99.0;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
@@ -659,7 +660,7 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "source/debugserver-entitlements.plist";
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "source/debugserver-macosx-entitlements.plist";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 330.99.0;
@@ -726,7 +727,7 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "source/debugserver-entitlements.plist";
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "source/debugserver-macosx-entitlements.plist";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 330.99.0;
@@ -803,6 +804,7 @@
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "";
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 330.99.0;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
@@ -824,7 +826,7 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "source/debugserver-entitlements.plist";
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "source/debugserver-macosx-entitlements.plist";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 330.99.0;

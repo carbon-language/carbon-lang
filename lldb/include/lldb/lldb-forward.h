@@ -62,6 +62,7 @@ class   ClangPersistentVariables;
 class   ClangUserExpression;
 class   ClangUtilityFunction;
 class   CommandInterpreter;
+class   CommandInterpreterRunOptions;
 class   CommandObject;
 class   CommandReturnObject;
 class   Communication;

@@ -29,6 +29,100 @@
 using namespace lldb;
 using namespace lldb_private;
 
+SBCommandInterpreterRunOptions::SBCommandInterpreterRunOptions()
+{
+    m_opaque_up.reset(new CommandInterpreterRunOptions());
+}
+
+SBCommandInterpreterRunOptions::~SBCommandInterpreterRunOptions()
+{
+
+}
+
+bool
+SBCommandInterpreterRunOptions::GetStopOnContinue () const
+{
+    return m_opaque_up->GetStopOnContinue();
+}
+
+void
+SBCommandInterpreterRunOptions::SetStopOnContinue (bool stop_on_continue)
+{
+    m_opaque_up->SetStopOnContinue(stop_on_continue);
+}
+
+bool
+SBCommandInterpreterRunOptions::GetStopOnError () const
+{
+    return m_opaque_up->GetStopOnError();
+}
+
+void
+SBCommandInterpreterRunOptions::SetStopOnError (bool stop_on_error)
+{
+    m_opaque_up->SetStopOnError(stop_on_error);
+}
+
+bool
+SBCommandInterpreterRunOptions::GetStopOnCrash () const
+{
+    return m_opaque_up->GetStopOnCrash();
+}
+
+void
+SBCommandInterpreterRunOptions::SetStopOnCrash (bool stop_on_crash)
+{
+    m_opaque_up->SetStopOnCrash(stop_on_crash);
+}
+
+bool
+SBCommandInterpreterRunOptions::GetEchoCommands () const
+{
+    return m_opaque_up->GetEchoCommands();
+}
+
+void
+SBCommandInterpreterRunOptions::SetEchoCommands (bool echo_commands)
+{
+    m_opaque_up->SetEchoCommands(echo_commands);
+}
+
+bool
+SBCommandInterpreterRunOptions::GetPrintResults () const
+{
+    return m_opaque_up->GetPrintResults();
+}
+
+void
+SBCommandInterpreterRunOptions::SetPrintResults (bool print_results)
+{
+    m_opaque_up->SetPrintResults(print_results);
+}
+
+bool
+SBCommandInterpreterRunOptions::GetAddToHistory () const
+{
+    return m_opaque_up->GetAddToHistory();
+}
+
+void
+SBCommandInterpreterRunOptions::SetAddToHistory (bool add_to_history)
+{
+    m_opaque_up->SetAddToHistory(add_to_history);
+}
+
+lldb_private::CommandInterpreterRunOptions *
+SBCommandInterpreterRunOptions::get () const
+{
+    return m_opaque_up.get();
+}
+
+lldb_private::CommandInterpreterRunOptions &
+SBCommandInterpreterRunOptions::ref () const
+{
+    return *m_opaque_up.get();
+}
+
 class CommandPluginInterfaceImplementation : public CommandObjectParsed
 {
 public:

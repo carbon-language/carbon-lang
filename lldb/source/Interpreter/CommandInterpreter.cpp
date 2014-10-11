@@ -119,7 +119,10 @@ CommandInterpreter::CommandInterpreter
     m_comment_char ('#'),
     m_batch_command_mode (false),
     m_truncation_warning(eNoTruncation),
-    m_command_source_depth (0)
+    m_command_source_depth (0),
+    m_num_errors(0),
+    m_quit_requested(false)
+
 {
     debugger.SetScriptLanguage (script_language);
     SetEventName (eBroadcastBitThreadShouldExit, "thread-should-exit");
@@ -2421,13 +2424,14 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
     if (init_file.Exists())
     {
         const bool saved_batch = SetBatchCommandMode (true);
+        CommandInterpreterRunOptions options;
+        options.SetSilent (true);
+        options.SetStopOnError (false);
+        options.SetStopOnContinue (true);
+
         HandleCommandsFromFile (init_file,
                                 nullptr,           // Execution context
-                                eLazyBoolYes,   // Stop on continue
-                                eLazyBoolNo,    // Stop on error
-                                eLazyBoolNo,    // Don't echo commands
-                                eLazyBoolNo,    // Don't print command output
-                                eLazyBoolNo,    // Don't add the commands that are sourced into the history buffer
+                                options,
                                 result);
         SetBatchCommandMode (saved_batch);
     }
@@ -2457,12 +2461,8 @@ CommandInterpreter::GetPlatform (bool prefer_target_platform)
 
 void
 CommandInterpreter::HandleCommands (const StringList &commands, 
-                                    ExecutionContext *override_context, 
-                                    bool stop_on_continue,
-                                    bool stop_on_error,
-                                    bool echo_commands,
-                                    bool print_results,
-                                    LazyBool add_to_history,
+                                    ExecutionContext *override_context,
+                                    CommandInterpreterRunOptions &options,
                                     CommandReturnObject &result)
 {
     size_t num_lines = commands.GetSize();
@@ -2478,7 +2478,7 @@ CommandInterpreter::HandleCommands (const StringList &commands,
     if (override_context != nullptr)
         UpdateExecutionContext (override_context);
             
-    if (!stop_on_continue)
+    if (!options.GetStopOnContinue())
     {
         m_debugger.SetAsyncExecution (false);
     }
@@ -2489,7 +2489,7 @@ CommandInterpreter::HandleCommands (const StringList &commands,
         if (cmd[0] == '\0')
             continue;
             
-        if (echo_commands)
+        if (options.GetEchoCommands())
         {
             result.AppendMessageWithFormat ("%s %s\n", 
                                             m_debugger.GetPrompt(),
@@ -2502,16 +2502,16 @@ CommandInterpreter::HandleCommands (const StringList &commands,
         
         // We might call into a regex or alias command, in which case the add_to_history will get lost.  This
         // m_command_source_depth dingus is the way we turn off adding to the history in that case, so set it up here.
-        if (!add_to_history)
+        if (!options.GetAddToHistory())
             m_command_source_depth++;
-        bool success = HandleCommand(cmd, add_to_history, tmp_result,
+        bool success = HandleCommand(cmd, options.m_add_to_history, tmp_result,
                                      nullptr, /* override_context */
                                      true, /* repeat_on_empty_command */
                                      override_context != nullptr /* no_context_switching */);
-        if (!add_to_history)
+        if (!options.GetAddToHistory())
             m_command_source_depth--;
         
-        if (print_results)
+        if (options.GetPrintResults())
         {
             if (tmp_result.Succeeded())
               result.AppendMessageWithFormat("%s", tmp_result.GetOutputData());
@@ -2522,7 +2522,7 @@ CommandInterpreter::HandleCommands (const StringList &commands,
             const char *error_msg = tmp_result.GetErrorData();
             if (error_msg == nullptr || error_msg[0] == '\0')
                 error_msg = "<unknown error>.\n";
-            if (stop_on_error)
+            if (options.GetStopOnError())
             {
                 result.AppendErrorWithFormat("Aborting reading of commands after command #%" PRIu64 ": '%s' failed with %s",
                                                 (uint64_t)idx, cmd, error_msg);
@@ -2530,7 +2530,7 @@ CommandInterpreter::HandleCommands (const StringList &commands,
                 m_debugger.SetAsyncExecution (old_async_execution);
                 return;
             }
-            else if (print_results)
+            else if (options.GetPrintResults())
             {
                 result.AppendMessageWithFormat ("Command #%" PRIu64 " '%s' failed with %s",
                                                 (uint64_t)idx + 1,
@@ -2551,7 +2551,7 @@ CommandInterpreter::HandleCommands (const StringList &commands,
         if ((tmp_result.GetStatus() == eReturnStatusSuccessContinuingNoResult)
                 || (tmp_result.GetStatus() == eReturnStatusSuccessContinuingResult))
         {
-            if (stop_on_continue)
+            if (options.GetStopOnContinue())
             {
                 // If we caused the target to proceed, and we're going to stop in that case, set the
                 // status in our real result before returning.  This is an error if the continue was not the
@@ -2582,17 +2582,14 @@ enum {
     eHandleCommandFlagStopOnContinue = (1u << 0),
     eHandleCommandFlagStopOnError    = (1u << 1),
     eHandleCommandFlagEchoCommand    = (1u << 2),
-    eHandleCommandFlagPrintResult    = (1u << 3)
+    eHandleCommandFlagPrintResult    = (1u << 3),
+    eHandleCommandFlagStopOnCrash    = (1u << 4)
 };
 
 void
 CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file, 
                                             ExecutionContext *context, 
-                                            LazyBool stop_on_continue,
-                                            LazyBool stop_on_error,
-                                            LazyBool echo_command,
-                                            LazyBool print_result,
-                                            LazyBool add_to_history,
+                                            CommandInterpreterRunOptions &options,
                                             CommandReturnObject &result)
 {
     if (cmd_file.Exists())
@@ -2608,7 +2605,7 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
 
             uint32_t flags = 0;
 
-            if (stop_on_continue == eLazyBoolCalculate)
+            if (options.m_stop_on_continue == eLazyBoolCalculate)
             {
                 if (m_command_source_flags.empty())
                 {
@@ -2620,12 +2617,12 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
                     flags |= eHandleCommandFlagStopOnContinue;
                 }
             }
-            else if (stop_on_continue == eLazyBoolYes)
+            else if (options.m_stop_on_continue == eLazyBoolYes)
             {
                 flags |= eHandleCommandFlagStopOnContinue;
             }
 
-            if (stop_on_error == eLazyBoolCalculate)
+            if (options.m_stop_on_error == eLazyBoolCalculate)
             {
                 if (m_command_source_flags.empty())
                 {
@@ -2637,12 +2634,12 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
                     flags |= eHandleCommandFlagStopOnError;
                 }
             }
-            else if (stop_on_error == eLazyBoolYes)
+            else if (options.m_stop_on_error == eLazyBoolYes)
             {
                 flags |= eHandleCommandFlagStopOnError;
             }
 
-            if (echo_command == eLazyBoolCalculate)
+            if (options.m_echo_commands == eLazyBoolCalculate)
             {
                 if (m_command_source_flags.empty())
                 {
@@ -2654,12 +2651,12 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
                     flags |= eHandleCommandFlagEchoCommand;
                 }
             }
-            else if (echo_command == eLazyBoolYes)
+            else if (options.m_echo_commands == eLazyBoolYes)
             {
                 flags |= eHandleCommandFlagEchoCommand;
             }
 
-            if (print_result == eLazyBoolCalculate)
+            if (options.m_print_results == eLazyBoolCalculate)
             {
                 if (m_command_source_flags.empty())
                 {
@@ -2671,7 +2668,7 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
                     flags |= eHandleCommandFlagPrintResult;
                 }
             }
-            else if (print_result == eLazyBoolYes)
+            else if (options.m_print_results == eLazyBoolYes)
             {
                 flags |= eHandleCommandFlagPrintResult;
             }
@@ -3062,11 +3059,13 @@ CommandInterpreter::IOHandlerInputComplete (IOHandler &io_handler, std::string &
             break;
 
         case eReturnStatusFailed:
+            m_num_errors++;
             if (io_handler.GetFlags().Test(eHandleCommandFlagStopOnError))
                 io_handler.SetIsDone(true);
             break;
             
         case eReturnStatusQuit:
+            m_quit_requested = true;
             io_handler.SetIsDone(true);
             break;
     }
@@ -3149,19 +3148,36 @@ CommandInterpreter::IsActive ()
 
 void
 CommandInterpreter::RunCommandInterpreter(bool auto_handle_events,
-                                          bool spawn_thread)
+                                          bool spawn_thread,
+                                          CommandInterpreterRunOptions &options)
 {
     // Only get one line at a time
     const bool multiple_lines = false;
+    m_num_errors = 0;
+    m_quit_requested = false;
     
     // Always re-create the IOHandlerEditline in case the input
     // changed. The old instance might have had a non-interactive
     // input and now it does or vice versa.
+    uint32_t flags= 0;
+
+    if (options.m_stop_on_continue == eLazyBoolYes)
+        flags |= eHandleCommandFlagStopOnContinue;
+    if (options.m_stop_on_error == eLazyBoolYes)
+        flags |= eHandleCommandFlagStopOnError;
+    if (options.m_stop_on_crash == eLazyBoolYes)
+        flags |= eHandleCommandFlagStopOnCrash;
+    if (options.m_echo_commands != eLazyBoolNo)
+      flags |= eHandleCommandFlagEchoCommand;
+    if (options.m_print_results != eLazyBoolNo)
+        flags |= eHandleCommandFlagPrintResult;
+
+
     m_command_io_handler_sp.reset(new IOHandlerEditline (m_debugger,
                                                          m_debugger.GetInputFile(),
                                                          m_debugger.GetOutputFile(),
                                                          m_debugger.GetErrorFile(),
-                                                         eHandleCommandFlagEchoCommand | eHandleCommandFlagPrintResult,
+                                                         flags,
                                                          "lldb",
                                                          m_debugger.GetPrompt(),
                                                          multiple_lines,

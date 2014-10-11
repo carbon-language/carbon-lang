@@ -387,14 +387,15 @@ protected:
                 m_options.m_stop_on_continue.OptionWasSet())
             {
                 // Use user set settings
-                LazyBool print_command = m_options.m_silent_run.GetCurrentValue() ? eLazyBoolNo : eLazyBoolYes;
+                CommandInterpreterRunOptions options;
+                options.SetStopOnContinue(m_options.m_stop_on_continue.GetCurrentValue());
+                options.SetStopOnError (m_options.m_stop_on_error.GetCurrentValue());
+                options.SetEchoCommands (m_options.m_silent_run.GetCurrentValue());
+                options.SetPrintResults (m_options.m_silent_run.GetCurrentValue());
+
                 m_interpreter.HandleCommandsFromFile (cmd_file,
                                                       exe_ctx,
-                                                      m_options.m_stop_on_continue.GetCurrentValue() ? eLazyBoolYes : eLazyBoolNo, // Stop on continue
-                                                      m_options.m_stop_on_error.GetCurrentValue() ? eLazyBoolYes : eLazyBoolNo, // Stop on error
-                                                      print_command,        // Echo command
-                                                      print_command,        // Print command output
-                                                      eLazyBoolCalculate,   // Add to history
+                                                      options,
                                                       result);
                 
             }
@@ -402,13 +403,10 @@ protected:
             {
                 // No options were set, inherit any settings from nested "command source" commands,
                 // or set to sane default settings...
+                CommandInterpreterRunOptions options;
                 m_interpreter.HandleCommandsFromFile (cmd_file,
                                                       exe_ctx,
-                                                      eLazyBoolCalculate, // Stop on continue
-                                                      eLazyBoolCalculate, // Stop on error
-                                                      eLazyBoolCalculate, // Echo command
-                                                      eLazyBoolCalculate, // Print command output
-                                                      eLazyBoolCalculate, // Add to history
+                                                      options,
                                                       result);
                 
             }

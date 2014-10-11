@@ -15,6 +15,59 @@
 
 namespace lldb {
 
+class SBCommandInterpreterRunOptions
+{
+friend class SBDebugger;
+public:
+    SBCommandInterpreterRunOptions();
+    ~SBCommandInterpreterRunOptions();
+
+    bool
+    GetStopOnContinue () const;
+
+    void
+    SetStopOnContinue (bool);
+
+    bool
+    GetStopOnError () const;
+
+    void
+    SetStopOnError (bool);
+
+    bool
+    GetStopOnCrash () const;
+
+    void
+    SetStopOnCrash (bool);
+
+    bool
+    GetEchoCommands () const;
+
+    void
+    SetEchoCommands (bool);
+
+    bool
+    GetPrintResults () const;
+
+    void
+    SetPrintResults (bool);
+
+    bool
+    GetAddToHistory () const;
+
+    void
+    SetAddToHistory (bool);
+private:
+    lldb_private::CommandInterpreterRunOptions *
+    get () const;
+
+    lldb_private::CommandInterpreterRunOptions &
+    ref () const;
+
+    // This is set in the constructor and will always be valid.
+    mutable std::unique_ptr<lldb_private::CommandInterpreterRunOptions> m_opaque_up;
+};
+
 class SBCommandInterpreter
 {
 public:
