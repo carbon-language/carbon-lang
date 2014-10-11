@@ -42,6 +42,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginDynamicLoaderHexagon.a \
 	lldbPluginEmulateInstructionARM.a \
 	lldbPluginEmulateInstructionARM64.a \
+	lldbPluginInstrumentationRuntimeAddressSanitizer.a \
 	lldbPluginLanguageRuntimeCPlusPlusItaniumABI.a \
 	lldbPluginLanguageRuntimeObjCAppleObjCRuntime.a \
 	lldbPluginMemoryHistoryASan.a \
