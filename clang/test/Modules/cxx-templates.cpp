@@ -145,6 +145,9 @@ MergeSpecializations<bool>::explicitly_specialized_in_c spec_in_c_2;
 #endif
 
 MergeAnonUnionMember<> maum_main;
+typedef DontWalkPreviousDeclAfterMerging<int> dwpdam_typedef_2;
+dwpdam_typedef::type dwpdam_typedef_use;
+DontWalkPreviousDeclAfterMerging<int>::Inner::type dwpdam;
 
 using AliasTemplateMergingTest = WithAliasTemplate<int>::X<char>;
 

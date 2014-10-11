@@ -97,3 +97,5 @@ struct MergeAnonUnionMember {
   union { int t1; } values;
 };
 inline MergeAnonUnionMember<> maum_a() { return {}; }
+
+template<typename T> struct DontWalkPreviousDeclAfterMerging { struct Inner { typedef T type; }; };
