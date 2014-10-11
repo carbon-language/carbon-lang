@@ -42,3 +42,19 @@ define i32 @shift5(i32 %A, i32 %B) {
   %D = ashr i32 %C, %B
   ret i32 %D
 }
+
+; CHECK-LABEL: @div1(
+; CHECK: ret i32 0
+define i32 @div1(i32 %V) {
+  %A = udiv i32 %V, -2147483648
+  %B = udiv i32 %A, -2147483648
+  ret i32 %B
+}
+
+; CHECK-LABEL: @div2(
+; CHECK-NOT: ret i32 0
+define i32 @div2(i32 %V) {
+  %A = sdiv i32 %V, -1
+  %B = sdiv i32 %A, -2147483648
+  ret i32 %B
+}

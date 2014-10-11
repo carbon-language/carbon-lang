@@ -727,11 +727,10 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
       // (X / C1) / C2  -> X / (C1*C2)
       if (Instruction::BinaryOps(LHS->getOpcode()) == I.getOpcode())
         if (ConstantInt *LHSRHS = dyn_cast<ConstantInt>(LHS->getOperand(1))) {
-          if (MultiplyOverflows(RHS, LHSRHS,
-                                I.getOpcode() == Instruction::SDiv))
-            return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-          return BinaryOperator::Create(I.getOpcode(), LHS->getOperand(0),
-                                        ConstantExpr::getMul(RHS, LHSRHS));
+          if (!MultiplyOverflows(RHS, LHSRHS,
+                                 I.getOpcode() == Instruction::SDiv))
+            return BinaryOperator::Create(I.getOpcode(), LHS->getOperand(0),
+                                          ConstantExpr::getMul(RHS, LHSRHS));
         }
 
       Value *X;
