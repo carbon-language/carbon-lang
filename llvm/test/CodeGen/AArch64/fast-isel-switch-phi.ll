@@ -1,5 +1,4 @@
 ; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel -verify-machineinstrs < %s
-; REQUIRES: asserts
 
 ; Test that the Machine Instruction PHI node doesn't have more than one operand
 ; from the same predecessor.

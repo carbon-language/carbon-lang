@@ -1,5 +1,4 @@
 ;RUN: llc < %s -march=r600 -mcpu=cedar
-;REQUIRES: asserts
 
 ;This test ensures that R600 backend can handle ifcvt properly
 ;and do not generate ALU clauses with more than 128 instructions.

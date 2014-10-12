@@ -1,5 +1,4 @@
 ;RUN: llc < %s -march=r600 -mcpu=cayman
-;REQUIRES: asserts
 
 define void @main(<4 x float> inreg %reg0, <4 x float> inreg %reg1, <4 x float> inreg %reg2, <4 x float> inreg %reg3) #0 {
 main_body:

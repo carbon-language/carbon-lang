@@ -1,7 +1,6 @@
 ; RUN: llc -O0 -fast-isel-abort -verify-machineinstrs -mtriple=arm64-apple-darwin < %s | FileCheck %s
 ; RUN: llc %s -O0 -fast-isel-abort -mtriple=arm64-apple-darwin -print-machineinstrs=expand-isel-pseudos -o /dev/null 2> %t
 ; RUN: FileCheck %s < %t --check-prefix=CHECK-SSA
-; REQUIRES: asserts
 
 ; CHECK-SSA-LABEL: Machine code for function t1
 
