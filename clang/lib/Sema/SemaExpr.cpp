@@ -3021,6 +3021,34 @@ static Expr *BuildFloatingLiteral(Sema &S, NumericLiteralParser &Literal,
   return FloatingLiteral::Create(S.Context, Val, isExact, Ty, Loc);
 }
 
+bool Sema::CheckLoopHintExpr(Expr *E, SourceLocation Loc) {
+  assert(E && "Invalid expression");
+
+  if (E->isValueDependent())
+    return false;
+
+  QualType QT = E->getType();
+  if (!QT->isIntegerType() || QT->isBooleanType() || QT->isCharType()) {
+    Diag(E->getExprLoc(), diag::err_pragma_loop_invalid_argument_type) << QT;
+    return true;
+  }
+
+  llvm::APSInt ValueAPS;
+  ExprResult R = VerifyIntegerConstantExpression(E, &ValueAPS);
+
+  if (R.isInvalid())
+    return true;
+
+  bool ValueIsPositive = ValueAPS.isStrictlyPositive();
+  if (!ValueIsPositive || ValueAPS.getActiveBits() > 31) {
+    Diag(E->getExprLoc(), diag::err_pragma_loop_invalid_argument_value)
+        << ValueAPS.toString(10) << ValueIsPositive;
+    return true;
+  }
+
+  return false;
+}
+
 ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
   // Fast path for a single digit (which is quite common).  A single digit
   // cannot have a trigraph, escaped newline, radix prefix, or suffix.

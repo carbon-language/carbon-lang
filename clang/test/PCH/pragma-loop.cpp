@@ -16,6 +16,8 @@
 // CHECK: #pragma unroll
 // CHECK: #pragma unroll (32)
 // CHECK: #pragma nounroll
+// CHECK: #pragma clang loop interleave_count(I)
+// CHECK: #pragma clang loop vectorize_width(V)
 
 #ifndef HEADER
 #define HEADER
@@ -81,6 +83,15 @@ public:
       i++;
     }
   }
+
+  template <int V, int I>
+  inline void run7(int *List, int Length) {
+#pragma clang loop vectorize_width(V)
+#pragma clang loop interleave_count(I)
+    for (int i = 0; i < Length; i++) {
+      List[i] = i;
+    }
+  }
 };
 #else
 
@@ -95,6 +106,7 @@ void test() {
   pt.run4(List, 100);
   pt.run5(List, 100);
   pt.run6(List, 100);
+  pt.run7<2, 4>(List, 100);
 }
 
 #endif

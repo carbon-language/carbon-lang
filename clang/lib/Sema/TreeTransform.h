@@ -327,6 +327,27 @@ public:
   /// \returns the transformed OpenMP clause.
   OMPClause *TransformOMPClause(OMPClause *S);
 
+  /// \brief Transform the given attribute.
+  ///
+  /// By default, this routine transforms a statement by delegating to the
+  /// appropriate TransformXXXAttr function to transform a specific kind
+  /// of attribute. Subclasses may override this function to transform
+  /// attributed statements using some other mechanism.
+  ///
+  /// \returns the transformed attribute
+  const Attr *TransformAttr(const Attr *S);
+
+/// \brief Transform the specified attribute.
+///
+/// Subclasses should override the transformation of attributes with a pragma
+/// spelling to transform expressions stored within the attribute.
+///
+/// \returns the transformed attribute.
+#define ATTR(X)
+#define PRAGMA_SPELLING_ATTR(X)                                                \
+  const X##Attr *Transform##X##Attr(const X##Attr *R) { return R; }
+#include "clang/Basic/AttrList.inc"
+
   /// \brief Transform the given expression.
   ///
   /// By default, this routine transforms an expression by delegating to the
@@ -5543,19 +5564,43 @@ TreeTransform<Derived>::TransformLabelStmt(LabelStmt *S) {
                                        SubStmt.get());
 }
 
-template<typename Derived>
-StmtResult
-TreeTransform<Derived>::TransformAttributedStmt(AttributedStmt *S) {
+template <typename Derived>
+const Attr *TreeTransform<Derived>::TransformAttr(const Attr *R) {
+  if (!R)
+    return R;
+
+  switch (R->getKind()) {
+// Transform attributes with a pragma spelling by calling TransformXXXAttr.
+#define ATTR(X)
+#define PRAGMA_SPELLING_ATTR(X)                                                \
+  case attr::X:                                                                \
+    return getDerived().Transform##X##Attr(cast<X##Attr>(R));
+#include "clang/Basic/AttrList.inc"
+  default:
+    return R;
+  }
+}
+
+template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformAttributedStmt(AttributedStmt *S) {
+  bool AttrsChanged = false;
+  SmallVector<const Attr *, 1> Attrs;
+
+  // Visit attributes and keep track if any are transformed.
+  for (const auto *I : S->getAttrs()) {
+    const Attr *R = getDerived().TransformAttr(I);
+    AttrsChanged |= (I != R);
+    Attrs.push_back(R);
+  }
+
   StmtResult SubStmt = getDerived().TransformStmt(S->getSubStmt());
   if (SubStmt.isInvalid())
     return StmtError();
 
-  // TODO: transform attributes
-  if (SubStmt.get() == S->getSubStmt() /* && attrs are the same */)
+  if (SubStmt.get() == S->getSubStmt() && !AttrsChanged)
     return S;
 
-  return getDerived().RebuildAttributedStmt(S->getAttrLoc(),
-                                            S->getAttrs(),
+  return getDerived().RebuildAttributedStmt(S->getAttrLoc(), Attrs,
                                             SubStmt.get());
 }
 

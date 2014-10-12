@@ -3,6 +3,79 @@
 // Note that this puts the expected lines before the directives to work around
 // limitations in the -verify mode.
 
+template <int V, int I>
+void test_nontype_template_param(int *List, int Length) {
+#pragma clang loop vectorize_width(V) interleave_count(I)
+  for (int i = 0; i < Length; i++) {
+    List[i] = i;
+  }
+
+#pragma clang loop vectorize_width(V + 4) interleave_count(I + 4)
+  for (int i = 0; i < Length; i++) {
+    List[i] = i;
+  }
+}
+
+template <int V>
+void test_nontype_template_vectorize(int *List, int Length) {
+  /* expected-error {{invalid value '-1'; must be positive}} */ #pragma clang loop vectorize_width(V)
+  for (int i = 0; i < Length; i++) {
+    List[i] = i;
+  }
+
+  /* expected-error {{invalid value '0'; must be positive}} */ #pragma clang loop vectorize_width(V / 2)
+  for (int i = 0; i < Length; i++) {
+    List[i] += i;
+  }
+}
+
+template <int I>
+void test_nontype_template_interleave(int *List, int Length) {
+  /* expected-error {{invalid value '-1'; must be positive}} */ #pragma clang loop interleave_count(I)
+  for (int i = 0; i < Length; i++) {
+    List[i] = i;
+  }
+
+  /* expected-error {{invalid value '0'; must be positive}} */ #pragma clang loop interleave_count(2 % I)
+  for (int i = 0; i < Length; i++) {
+    List[i] = i;
+  }
+}
+
+template <char V>
+void test_nontype_template_char(int *List, int Length) {
+  /* expected-error {{invalid argument of type 'char'; expected an integer type}} */ #pragma clang loop vectorize_width(V)
+  for (int i = 0; i < Length; i++) {
+    List[i] = i;
+  }
+}
+
+template <bool V>
+void test_nontype_template_bool(int *List, int Length) {
+  /* expected-error {{invalid argument of type 'bool'; expected an integer type}} */ #pragma clang loop vectorize_width(V)
+  for (int i = 0; i < Length; i++) {
+    List[i] = i;
+  }
+}
+
+template <int V, int I>
+void test_nontype_template_badarg(int *List, int Length) {
+  /* expected-error {{use of undeclared identifier 'Vec'}} */ #pragma clang loop vectorize_width(Vec) interleave_count(I)
+  /* expected-error {{use of undeclared identifier 'Int'}} */ #pragma clang loop vectorize_width(V) interleave_count(Int)
+  for (int i = 0; i < Length; i++) {
+    List[i] = i;
+  }
+}
+
+template <typename T>
+void test_type_template_vectorize(int *List, int Length) {
+  const T Value = -1;
+  /* expected-error {{invalid value '-1'; must be positive}} */ #pragma clang loop vectorize_width(Value)
+  for (int i = 0; i < Length; i++) {
+    List[i] = i;
+  }
+}
+
 void test(int *List, int Length) {
   int i = 0;
 
@@ -43,6 +116,8 @@ void test(int *List, int Length) {
     VList[j] = List[j];
   }
 
+  test_nontype_template_param<4, 8>(List, Length);
+
 /* expected-error {{expected '('}} */ #pragma clang loop vectorize
 /* expected-error {{expected '('}} */ #pragma clang loop interleave
 /* expected-error {{expected '('}} */ #pragma clang loop unroll
@@ -55,40 +130,56 @@ void test(int *List, int Length) {
 /* expected-error {{expected ')'}} */ #pragma clang loop interleave_count(4
 /* expected-error {{expected ')'}} */ #pragma clang loop unroll_count(4
 
-/* expected-error {{missing argument to '#pragma clang loop vectorize'}} */ #pragma clang loop vectorize()
-/* expected-error {{missing argument to '#pragma clang loop interleave_count'}} */ #pragma clang loop interleave_count()
-/* expected-error {{missing argument to '#pragma clang loop unroll'}} */ #pragma clang loop unroll()
+/* expected-error {{missing argument; expected 'enable' or 'disable'}} */ #pragma clang loop vectorize()
+/* expected-error {{missing argument; expected an integer value}} */ #pragma clang loop interleave_count()
+/* expected-error {{missing argument; expected 'enable' or 'disable'}} */ #pragma clang loop unroll()
 
-/* expected-error {{missing option}} */ #pragma clang loop
+/* expected-error {{missing option; expected vectorize, vectorize_width, interleave, interleave_count, unroll, or unroll_count}} */ #pragma clang loop
 /* expected-error {{invalid option 'badkeyword'}} */ #pragma clang loop badkeyword
 /* expected-error {{invalid option 'badkeyword'}} */ #pragma clang loop badkeyword(enable)
 /* expected-error {{invalid option 'badkeyword'}} */ #pragma clang loop vectorize(enable) badkeyword(4)
 /* expected-warning {{extra tokens at end of '#pragma clang loop'}} */ #pragma clang loop vectorize(enable) ,
-
   while (i-4 < Length) {
     List[i] = i;
   }
 
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop vectorize_width(0)
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop interleave_count(0)
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop unroll_count(0)
+/* expected-error {{invalid value '0'; must be positive}} */ #pragma clang loop vectorize_width(0)
+/* expected-error {{invalid value '0'; must be positive}} */ #pragma clang loop interleave_count(0)
+/* expected-error {{invalid value '0'; must be positive}} */ #pragma clang loop unroll_count(0)
+
+/* expected-error {{expression is not an integral constant expression}} expected-note {{division by zero}} */ #pragma clang loop vectorize_width(10 / 0)
+/* expected-error {{invalid value '0'; must be positive}} */ #pragma clang loop interleave_count(10 / 5 - 2)
   while (i-5 < Length) {
     List[i] = i;
   }
 
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop vectorize_width(3000000000)
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop interleave_count(3000000000)
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop unroll_count(3000000000)
+test_nontype_template_vectorize<4>(List, Length);
+/* expected-note {{in instantiation of function template specialization}} */ test_nontype_template_vectorize<-1>(List, Length);
+test_nontype_template_interleave<8>(List, Length);
+/* expected-note {{in instantiation of function template specialization}} */ test_nontype_template_interleave<-1>(List, Length);
+
+/* expected-note {{in instantiation of function template specialization}} */ test_nontype_template_char<'A'>(List, Length); // Loop hint arg cannot be a char.
+/* expected-note {{in instantiation of function template specialization}} */ test_nontype_template_bool<true>(List, Length);  // Or a bool.
+/* expected-note {{in instantiation of function template specialization}} */ test_type_template_vectorize<int>(List, Length); // Or a template type.
+
+/* expected-error {{value '3000000000' is too large}} */ #pragma clang loop vectorize_width(3000000000)
+/* expected-error {{value '3000000000' is too large}} */ #pragma clang loop interleave_count(3000000000)
+/* expected-error {{value '3000000000' is too large}} */ #pragma clang loop unroll_count(3000000000)
   while (i-6 < Length) {
     List[i] = i;
   }
 
-/* expected-error {{expected ')'}} */ #pragma clang loop vectorize_width(1 +) 1
+/* expected-warning {{extra tokens at end of '#pragma clang loop'}} */ #pragma clang loop vectorize_width(1 +) 1
 /* expected-warning {{extra tokens at end of '#pragma clang loop'}} */ #pragma clang loop vectorize_width(1) +1
+const int VV = 4;
+/* expected-error {{expected expression}} */ #pragma clang loop vectorize_width(VV +/ 2)
+/* expected-error {{use of undeclared identifier 'undefined'}} */ #pragma clang loop vectorize_width(VV+undefined)
+/* expected-error {{expected ')'}} */ #pragma clang loop vectorize_width(1+(^*/2 * ()
+/* expected-warning {{extra tokens at end of '#pragma clang loop' - ignored}} */ #pragma clang loop vectorize_width(1+(-0[0]))))))
 
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop vectorize_width(badvalue)
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop interleave_count(badvalue)
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop unroll_count(badvalue)
+/* expected-error {{use of undeclared identifier 'badvalue'}} */ #pragma clang loop vectorize_width(badvalue)
+/* expected-error {{use of undeclared identifier 'badvalue'}} */ #pragma clang loop interleave_count(badvalue)
+/* expected-error {{use of undeclared identifier 'badvalue'}} */ #pragma clang loop unroll_count(badvalue)
   while (i-6 < Length) {
     List[i] = i;
   }
@@ -102,12 +193,12 @@ void test(int *List, int Length) {
 
 // PR20069 - Loop pragma arguments that are not identifiers or numeric
 // constants crash FE.
-/* expected-error {{invalid argument; expected 'enable' or 'disable'}} */ #pragma clang loop vectorize(()
+/* expected-error {{expected ')'}} */ #pragma clang loop vectorize(()
 /* expected-error {{invalid argument; expected 'enable' or 'disable'}} */ #pragma clang loop interleave(*)
 /* expected-error {{invalid argument; expected 'full' or 'disable'}} */ #pragma clang loop unroll(=)
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop vectorize_width(^)
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop interleave_count(/)
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop unroll_count(==)
+/* expected-error {{type name requires a specifier or qualifier}} expected-error {{expected expression}} */ #pragma clang loop vectorize_width(^)
+/* expected-error {{expected expression}} expected-error {{expected expression}} */ #pragma clang loop interleave_count(/)
+/* expected-error {{expected expression}} expected-error {{expected expression}} */ #pragma clang loop unroll_count(==)
   while (i-8 < Length) {
     List[i] = i;
   }

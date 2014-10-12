@@ -767,6 +767,8 @@ namespace {
                           QualType ObjectType = QualType(),
                           NamedDecl *FirstQualifierInScope = nullptr);
 
+    const LoopHintAttr *TransformLoopHintAttr(const LoopHintAttr *LH);
+
     ExprResult TransformPredefinedExpr(PredefinedExpr *E);
     ExprResult TransformDeclRefExpr(DeclRefExpr *E);
     ExprResult TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E);
@@ -1125,6 +1127,24 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
   }
 
   return transformNonTypeTemplateParmRef(NTTP, E->getLocation(), Arg);
+}
+
+const LoopHintAttr *
+TemplateInstantiator::TransformLoopHintAttr(const LoopHintAttr *LH) {
+  Expr *TransformedExpr = getDerived().TransformExpr(LH->getValue()).get();
+
+  if (TransformedExpr == LH->getValue())
+    return LH;
+
+  // Generate error if there is a problem with the value.
+  if (getSema().CheckLoopHintExpr(TransformedExpr, LH->getLocation()))
+    return LH;
+
+  // Create new LoopHintValueAttr with integral expression in place of the
+  // non-type template parameter.
+  return LoopHintAttr::CreateImplicit(
+      getSema().Context, LH->getSemanticSpelling(), LH->getOption(),
+      LH->getState(), TransformedExpr, LH->getRange());
 }
 
 ExprResult TemplateInstantiator::transformNonTypeTemplateParmRef(

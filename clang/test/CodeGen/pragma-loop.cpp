@@ -28,11 +28,13 @@ void do_test(int *List, int Length) {
   } while (i < Length);
 }
 
+enum struct Tuner : short { Interleave = 4, Unroll = 8 };
+
 // Verify for loop is recognized after sequence of pragma clang loop directives.
 void for_test(int *List, int Length) {
 #pragma clang loop interleave(enable)
-#pragma clang loop interleave_count(4)
-#pragma clang loop unroll_count(8)
+#pragma clang loop interleave_count(static_cast<int>(Tuner::Interleave))
+#pragma clang loop unroll_count(static_cast<int>(Tuner::Unroll))
   for (int i = 0; i < Length; i++) {
     // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_3:.*]]
     List[i] = i * 2;
@@ -74,25 +76,71 @@ void for_define_test(int *List, int Length, int Value) {
   }
 }
 
+// Verify constant expressions are handled correctly.
+void for_contant_expression_test(int *List, int Length) {
+#pragma clang loop vectorize_width(1 + 4)
+  for (int i = 0; i < Length; i++) {
+    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_7:.*]]
+    List[i] = i;
+  }
+
+#pragma clang loop vectorize_width(3 + VECWIDTH)
+  for (int i = 0; i < Length; i++) {
+    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_8:.*]]
+    List[i] += i;
+  }
+}
+
 // Verify metadata is generated when template is used.
 template <typename A>
 void for_template_test(A *List, int Length, A Value) {
-
 #pragma clang loop vectorize_width(8) interleave_count(8) unroll_count(8)
   for (int i = 0; i < Length; i++) {
-    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_7:.*]]
+    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_9:.*]]
     List[i] = i * Value;
   }
 }
 
 // Verify define is resolved correctly when template is used.
-template <typename A>
+template <typename A, typename T>
 void for_template_define_test(A *List, int Length, A Value) {
-#pragma clang loop vectorize_width(VECWIDTH) interleave_count(INTCOUNT)
-#pragma clang loop unroll_count(UNROLLCOUNT)
+  const T VWidth = VECWIDTH;
+  const T ICount = INTCOUNT;
+  const T UCount = UNROLLCOUNT;
+#pragma clang loop vectorize_width(VWidth) interleave_count(ICount)
+#pragma clang loop unroll_count(UCount)
   for (int i = 0; i < Length; i++) {
-    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_8:.*]]
+    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_10:.*]]
     List[i] = i * Value;
+  }
+}
+
+// Verify templates and constant expressions are handled correctly.
+template <typename A, int V, int I, int U>
+void for_template_constant_expression_test(A *List, int Length) {
+#pragma clang loop vectorize_width(V) interleave_count(I) unroll_count(U)
+  for (int i = 0; i < Length; i++) {
+    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_11:.*]]
+    List[i] = i;
+  }
+
+#pragma clang loop vectorize_width(V * 2 + VECWIDTH) interleave_count(I * 2 + INTCOUNT) unroll_count(U * 2 + UNROLLCOUNT)
+  for (int i = 0; i < Length; i++) {
+    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_12:.*]]
+    List[i] += i;
+  }
+
+  const int Scale = 4;
+#pragma clang loop vectorize_width(Scale * V) interleave_count(Scale * I) unroll_count(Scale * U)
+  for (int i = 0; i < Length; i++) {
+    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_13:.*]]
+    List[i] += i;
+  }
+
+#pragma clang loop vectorize_width((Scale * V) + 2)
+  for (int i = 0; i < Length; i++) {
+    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_14:.*]]
+    List[i] += i;
   }
 }
 
@@ -105,7 +153,8 @@ void template_test(double *List, int Length) {
   double Value = 10;
 
   for_template_test<double>(List, Length, Value);
-  for_template_define_test<double>(List, Length, Value);
+  for_template_define_test<double, int>(List, Length, Value);
+  for_template_constant_expression_test<double, 2, 4, 8>(List, Length);
 }
 
 // CHECK: ![[LOOP_1]] = metadata !{metadata ![[LOOP_1]], metadata ![[UNROLL_FULL:.*]], metadata ![[WIDTH_4:.*]], metadata ![[INTERLEAVE_4:.*]], metadata ![[INTENABLE_1:.*]]}
@@ -124,6 +173,19 @@ void template_test(double *List, int Length) {
 // CHECK: ![[LOOP_5]] = metadata !{metadata ![[LOOP_5]], metadata ![[UNROLL_DISABLE:.*]], metadata ![[WIDTH_1:.*]]}
 // CHECK: ![[WIDTH_1]] = metadata !{metadata !"llvm.loop.vectorize.width", i32 1}
 // CHECK: ![[LOOP_6]] = metadata !{metadata ![[LOOP_6]], metadata ![[UNROLL_8:.*]], metadata ![[INTERLEAVE_2:.*]], metadata ![[WIDTH_2:.*]]}
-// CHECK: ![[LOOP_7]] = metadata !{metadata ![[LOOP_7]], metadata ![[UNROLL_8:.*]], metadata ![[INTERLEAVE_8:.*]], metadata ![[WIDTH_8:.*]]}
+// CHECK: ![[LOOP_7]] = metadata !{metadata ![[LOOP_7]], metadata ![[WIDTH_5:.*]]}
+// CHECK: ![[WIDTH_5]] = metadata !{metadata !"llvm.loop.vectorize.width", i32 5}
+// CHECK: ![[LOOP_8]] = metadata !{metadata ![[LOOP_8]], metadata ![[WIDTH_5:.*]]}
+// CHECK: ![[LOOP_9]] = metadata !{metadata ![[LOOP_9]], metadata ![[UNROLL_8:.*]], metadata ![[INTERLEAVE_8:.*]], metadata ![[WIDTH_8:.*]]}
 // CHECK: ![[INTERLEAVE_8]] = metadata !{metadata !"llvm.loop.interleave.count", i32 8}
-// CHECK: ![[LOOP_8]] = metadata !{metadata ![[LOOP_8]], metadata ![[UNROLL_8:.*]], metadata ![[INTERLEAVE_2:.*]], metadata ![[WIDTH_2:.*]]}
+// CHECK: ![[LOOP_10]] = metadata !{metadata ![[LOOP_10]], metadata ![[UNROLL_8:.*]], metadata ![[INTERLEAVE_2:.*]], metadata ![[WIDTH_2:.*]]}
+// CHECK: ![[LOOP_11]] = metadata !{metadata ![[LOOP_11]], metadata ![[UNROLL_8:.*]], metadata ![[INTERLEAVE_4:.*]], metadata ![[WIDTH_2:.*]]}
+// CHECK: ![[LOOP_12]] = metadata !{metadata ![[LOOP_12]], metadata ![[UNROLL_24:.*]], metadata ![[INTERLEAVE_10:.*]], metadata ![[WIDTH_6:.*]]}
+// CHECK: ![[UNROLL_24]] = metadata !{metadata !"llvm.loop.unroll.count", i32 24}
+// CHECK: ![[INTERLEAVE_10]] = metadata !{metadata !"llvm.loop.interleave.count", i32 10}
+// CHECK: ![[WIDTH_6]] = metadata !{metadata !"llvm.loop.vectorize.width", i32 6}
+// CHECK: ![[LOOP_13]] = metadata !{metadata ![[LOOP_13]], metadata ![[UNROLL_32:.*]], metadata ![[INTERLEAVE_16:.*]], metadata ![[WIDTH_8:.*]]}
+// CHECK: ![[UNROLL_32]] = metadata !{metadata !"llvm.loop.unroll.count", i32 32}
+// CHECK: ![[INTERLEAVE_16]] = metadata !{metadata !"llvm.loop.interleave.count", i32 16}
+// CHECK: ![[LOOP_14]] = metadata !{metadata ![[LOOP_14]], metadata ![[WIDTH_10:.*]]}
+// CHECK: ![[WIDTH_10]] = metadata !{metadata !"llvm.loop.vectorize.width", i32 10}

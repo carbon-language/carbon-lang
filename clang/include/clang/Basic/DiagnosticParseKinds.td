@@ -949,16 +949,15 @@ def err_omp_immediate_directive : Error<
 def err_omp_expected_identifier_for_critical : Error<
   "expected identifier specifying the name of the 'omp critical' directive">;
 
-// Pragma support.
-def err_pragma_invalid_keyword : Error<
-  "%select{invalid|missing}0 argument; expected '%select{enable|full}1' or 'disable'">;
-
 // Pragma loop support.
+def err_pragma_loop_missing_argument : Error<
+  "missing argument; expected %select{an integer value|"
+  "'%select{enable|full}1' or 'disable'}0">;
 def err_pragma_loop_invalid_option : Error<
   "%select{invalid|missing}0 option%select{ %1|}0; expected vectorize, "
   "vectorize_width, interleave, interleave_count, unroll, or unroll_count">;
-def err_pragma_loop_numeric_value : Error<
-  "invalid argument; expected a positive integer value">;
+def err_pragma_invalid_keyword : Error<
+  "invalid argument; expected '%select{enable|full}0' or 'disable'">;
 
 // Pragma unroll support.
 def warn_pragma_unroll_cuda_value_in_parens : Warning<

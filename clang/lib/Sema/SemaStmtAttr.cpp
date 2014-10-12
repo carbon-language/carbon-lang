@@ -88,21 +88,15 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
     Spelling = LoopHintAttr::Pragma_clang_loop;
   }
 
-  int ValueInt = 1;
   LoopHintAttr::LoopHintState State = LoopHintAttr::Default;
   if (PragmaNoUnroll) {
     State = LoopHintAttr::Disable;
   } else if (Option == LoopHintAttr::VectorizeWidth ||
              Option == LoopHintAttr::InterleaveCount ||
              Option == LoopHintAttr::UnrollCount) {
-    // FIXME: We should support template parameters for the loop hint value.
-    // See bug report #19610.
-    llvm::APSInt ValueAPS;
-    if (!ValueExpr || !ValueExpr->isIntegerConstantExpr(ValueAPS, S.Context) ||
-        (ValueInt = ValueAPS.getSExtValue()) < 1) {
-      S.Diag(A.getLoc(), diag::err_pragma_loop_invalid_value);
+    assert(ValueExpr && "Attribute must have a valid value expression.");
+    if (S.CheckLoopHintExpr(ValueExpr, St->getLocStart()))
       return nullptr;
-    }
   } else if (Option == LoopHintAttr::Vectorize ||
              Option == LoopHintAttr::Interleave ||
              Option == LoopHintAttr::Unroll) {
@@ -117,7 +111,7 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
   }
 
   return LoopHintAttr::CreateImplicit(S.Context, Spelling, Option, State,
-                                      ValueInt, A.getRange());
+                                      ValueExpr, A.getRange());
 }
 
 static void

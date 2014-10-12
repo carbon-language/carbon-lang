@@ -27,7 +27,7 @@ void test(int *List, int Length) {
   }
 
 /* expected-error {{expected ')'}} */ #pragma unroll(4
-/* expected-error {{missing argument to '#pragma unroll'}} */ #pragma unroll()
+/* expected-error {{missing argument; expected an integer value}} */ #pragma unroll()
 /* expected-warning {{extra tokens at end of '#pragma unroll'}} */ #pragma unroll 1 2
   while (i-6 < Length) {
     List[i] = i;
@@ -38,12 +38,12 @@ void test(int *List, int Length) {
     List[i] = i;
   }
 
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma unroll(()
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma unroll -
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma unroll(0)
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma unroll 0
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma unroll(3000000000)
-/* expected-error {{invalid argument; expected a positive integer value}} */ #pragma unroll 3000000000
+/* expected-error {{expected ')'}} */ #pragma unroll(()
+/* expected-error {{expected expression}} */ #pragma unroll -
+/* expected-error {{invalid value '0'; must be positive}} */ #pragma unroll(0)
+/* expected-error {{invalid value '0'; must be positive}} */ #pragma unroll 0
+/* expected-error {{value '3000000000' is too large}} */ #pragma unroll(3000000000)
+/* expected-error {{value '3000000000' is too large}} */ #pragma unroll 3000000000
   while (i-8 < Length) {
     List[i] = i;
   }

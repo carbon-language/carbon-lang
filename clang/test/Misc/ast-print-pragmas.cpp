@@ -38,3 +38,18 @@ void test(int *List, int Length) {
     i++;
   }
 }
+
+template <int V, int I>
+void test_nontype_template_param(int *List, int Length) {
+#pragma clang loop vectorize_width(V) interleave_count(I)
+  for (int i = 0; i < Length; i++) {
+    List[i] = i;
+  }
+}
+
+// CHECK: #pragma clang loop interleave_count(I)
+// CHECK: #pragma clang loop vectorize_width(V)
+
+void test_templates(int *List, int Length) {
+  test_nontype_template_param<2, 4>(List, Length);
+}
