@@ -2288,8 +2288,7 @@ void APInt::print(raw_ostream &OS, bool isSigned) const {
 
 // Assumed by lowHalf, highHalf, partMSB and partLSB.  A fairly safe
 // and unrestricting assumption.
-#define COMPILE_TIME_ASSERT(cond) extern int CTAssert[(cond) ? 1 : -1]
-COMPILE_TIME_ASSERT(integerPartWidth % 2 == 0);
+static_assert(integerPartWidth % 2 == 0, "Part width must be divisible by 2!");
 
 /* Some handy functions local to this file.  */
 namespace {

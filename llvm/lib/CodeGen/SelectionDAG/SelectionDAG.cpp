@@ -2737,7 +2737,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
     case ISD::FP_TO_UINT: {
       integerPart x[2];
       bool ignored;
-      assert(integerPartWidth >= 64);
+      static_assert(integerPartWidth >= 64, "APFloat parts too small!");
       // FIXME need to be more flexible about rounding mode.
       APFloat::opStatus s = V.convertToInteger(x, VT.getSizeInBits(),
                             Opcode==ISD::FP_TO_SINT,
