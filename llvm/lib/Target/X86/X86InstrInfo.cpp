@@ -3926,55 +3926,34 @@ optimizeLoadInstr(MachineInstr *MI, const MachineRegisterInfo *MRI,
   if (!DefMI->isSafeToMove(this, nullptr, SawStore))
     return nullptr;
 
-  // We try to commute MI if possible.
-  unsigned IdxEnd = (MI->isCommutable()) ? 2 : 1;
-  for (unsigned Idx = 0; Idx < IdxEnd; Idx++) {
-    // Collect information about virtual register operands of MI.
-    unsigned SrcOperandId = 0;
-    bool FoundSrcOperand = false;
-    for (unsigned i = 0, e = MI->getDesc().getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isReg())
-        continue;
-      unsigned Reg = MO.getReg();
-      if (Reg != FoldAsLoadDefReg)
-        continue;
-      // Do not fold if we have a subreg use or a def or multiple uses.
-      if (MO.getSubReg() || MO.isDef() || FoundSrcOperand)
-        return nullptr;
-
-      SrcOperandId = i;
-      FoundSrcOperand = true;
-    }
-    if (!FoundSrcOperand) return nullptr;
-
-    // Check whether we can fold the def into SrcOperandId.
-    SmallVector<unsigned, 8> Ops;
-    Ops.push_back(SrcOperandId);
-    MachineInstr *FoldMI = foldMemoryOperand(MI, Ops, DefMI);
-    if (FoldMI) {
-      FoldAsLoadDefReg = 0;
-      return FoldMI;
-    }
-
-    if (Idx == 1) {
-      // MI was changed but it didn't help, commute it back!
-      commuteInstruction(MI, false);
+  // Collect information about virtual register operands of MI.
+  unsigned SrcOperandId = 0;
+  bool FoundSrcOperand = false;
+  for (unsigned i = 0, e = MI->getDesc().getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (Reg != FoldAsLoadDefReg)
+      continue;
+    // Do not fold if we have a subreg use or a def or multiple uses.
+    if (MO.getSubReg() || MO.isDef() || FoundSrcOperand)
       return nullptr;
-    }
 
-    // Check whether we can commute MI and enable folding.
-    if (MI->isCommutable()) {
-      MachineInstr *NewMI = commuteInstruction(MI, false);
-      // Unable to commute.
-      if (!NewMI) return nullptr;
-      if (NewMI != MI) {
-        // New instruction. It doesn't need to be kept.
-        NewMI->eraseFromParent();
-        return nullptr;
-      }
-    }
+    SrcOperandId = i;
+    FoundSrcOperand = true;
   }
+  if (!FoundSrcOperand) return nullptr;
+
+  // Check whether we can fold the def into SrcOperandId.
+  SmallVector<unsigned, 8> Ops;
+  Ops.push_back(SrcOperandId);
+  MachineInstr *FoldMI = foldMemoryOperand(MI, Ops, DefMI);
+  if (FoldMI) {
+    FoldAsLoadDefReg = 0;
+    return FoldMI;
+  }
+
   return nullptr;
 }
 
@@ -4134,7 +4113,7 @@ MachineInstr*
 X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                     MachineInstr *MI, unsigned i,
                                     const SmallVectorImpl<MachineOperand> &MOs,
-                                    unsigned Size, unsigned Align) const {
+                                    unsigned Size, unsigned Align, bool AllowCommute) const {
   const DenseMap<unsigned,
                  std::pair<unsigned,unsigned> > *OpcodeTablePtr = nullptr;
   bool isCallRegIndirect = Subtarget.callRegIndirect();
@@ -4228,6 +4207,46 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
           NewMI->getOperand(0).setSubReg(X86::sub_32bit);
       }
       return NewMI;
+    }
+  }
+
+  // If the instruction and target operand are commutable, commute the instruction and try again.
+  if (AllowCommute) {
+    unsigned OriginalOpIdx = i, CommuteOpIdx1, CommuteOpIdx2;
+    if (findCommutedOpIndices(MI, CommuteOpIdx1, CommuteOpIdx2)) {
+      if ((CommuteOpIdx1 == OriginalOpIdx) || (CommuteOpIdx2 == OriginalOpIdx)) {
+        MachineInstr* CommutedMI = commuteInstruction(MI, false);
+        if (!CommutedMI) {
+          // Unable to commute.
+          return nullptr;
+        }
+        if (CommutedMI != MI) {
+          // New instruction. We can't fold from this.
+          CommutedMI->eraseFromParent();
+          return nullptr;
+        }
+
+        // Attempt to fold with the commuted version of the instruction.
+        unsigned CommuteOpIdx = (CommuteOpIdx1 == OriginalOpIdx ? CommuteOpIdx2 : CommuteOpIdx1);
+        NewMI = foldMemoryOperandImpl(MF, MI, CommuteOpIdx, MOs, Size, Align, /*AllowCommute=*/ false);
+        if (NewMI)
+          return NewMI;
+
+        // Folding failed again - undo the commute before returning.
+        MachineInstr* UncommutedMI = commuteInstruction(MI, false);
+        if (!UncommutedMI) {
+          // Unable to commute.
+          return nullptr;
+        }
+        if (UncommutedMI != MI) {
+          // New instruction. It doesn't need to be kept.
+          UncommutedMI->eraseFromParent();
+          return nullptr;
+        }
+
+        // Return here to prevent duplicate fuse failure report.
+        return nullptr;
+      }
     }
   }
 
@@ -4440,7 +4459,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
 
   SmallVector<MachineOperand,4> MOs;
   MOs.push_back(MachineOperand::CreateFI(FrameIndex));
-  return foldMemoryOperandImpl(MF, MI, Ops[0], MOs, Size, Alignment);
+  return foldMemoryOperandImpl(MF, MI, Ops[0], MOs, Size, Alignment, /*AllowCommute=*/ true);
 }
 
 static bool isPartialRegisterLoad(const MachineInstr &LoadMI,
@@ -4593,7 +4612,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     break;
   }
   }
-  return foldMemoryOperandImpl(MF, MI, Ops[0], MOs, 0, Alignment);
+  return foldMemoryOperandImpl(MF, MI, Ops[0], MOs, 0, Alignment, /*AllowCommute=*/ true);
 }
 
 
