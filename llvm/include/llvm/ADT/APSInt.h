@@ -269,19 +269,15 @@ public:
     else if (I2.getBitWidth() > I1.getBitWidth())
       return isSameValue(I1.extend(I2.getBitWidth()), I2);
 
-    // We have a signedness mismatch. Turn the signed value into an unsigned
-    // value.
-    if (I1.isSigned()) {
-      if (I1.isNegative())
-        return false;
+    assert(I1.isSigned() != I2.isSigned());
 
-      return APSInt(I1, true) == I2;
-    }
-
-    if (I2.isNegative())
+    // We have a signedness mismatch. Check for negative values and do an
+    // unsigned compare if signs match.
+    if ((I1.isSigned() && I1.isNegative()) ||
+        (!I1.isSigned() && I2.isNegative()))
       return false;
 
-    return I1 == APSInt(I2, true);
+    return I1.eq(I2);
   }
 
   /// Profile - Used to insert APSInt objects, or objects that contain APSInt
