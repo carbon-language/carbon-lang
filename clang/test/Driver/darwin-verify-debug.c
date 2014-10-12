@@ -1,6 +1,5 @@
 // Check that we verify debug output properly with multiple -arch options.
 //
-// REQUIRES: asserts
 // RUN: %clang -target x86_64-apple-darwin10 -ccc-print-phases \
 // RUN:   --verify-debug-info -arch i386 -arch x86_64 %s -g 2> %t
 // RUN: FileCheck -check-prefix=CHECK-MULTIARCH-ACTIONS < %t %s
