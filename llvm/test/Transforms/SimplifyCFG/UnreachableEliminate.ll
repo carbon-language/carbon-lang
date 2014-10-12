@@ -47,7 +47,7 @@ T:
 }
 
 ; PR9450
-define i32 @test4(i32 %v, i32 %w) {
+define i32 @test4(i32 %v) {
 ; CHECK: entry:
 ; CHECK-NEXT:  switch i32 %v, label %T [
 ; CHECK-NEXT:    i32 3, label %V
@@ -67,7 +67,7 @@ SWITCH:
 default:
         unreachable
 U:
-        ret i32 %w
+        ret i32 1
 T:
         ret i32 2
 }

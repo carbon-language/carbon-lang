@@ -76,16 +76,6 @@ STATISTIC(NumSinkCommons, "Number of common instructions sunk down to the end bl
 STATISTIC(NumSpeculations, "Number of speculative executed instructions");
 
 namespace {
-  // The first field contains the value that the switch produces when a certain
-  // case group is selected, and the second field is a vector containing the cases
-  // composing the case group.
-  typedef SmallVector<std::pair<Constant *, SmallVector<ConstantInt *, 4>>, 2>
-    SwitchCaseResultVectorTy;
-  // The first field contains the phi node that generates a result of the switch
-  // and the second field contains the value generated for a certain case in the switch
-  // for that PHI.
-  typedef SmallVector<std::pair<PHINode *, Constant *>, 4> SwitchCaseResultsTy;
-
   /// ValueEqualityComparisonCase - Represents a case of a switch.
   struct ValueEqualityComparisonCase {
     ConstantInt *Value;
@@ -3463,163 +3453,6 @@ GetCaseResults(SwitchInst *SI,
   return Res.size() > 0;
 }
 
-// MapCaseToResult - Helper function used to
-// add CaseVal to the list of cases that generate Result.
-static void MapCaseToResult(ConstantInt *CaseVal,
-    SwitchCaseResultVectorTy &UniqueResults,
-    Constant *Result) {
-  for (auto &I : UniqueResults) {
-    if (I.first == Result) {
-      I.second.push_back(CaseVal);
-      return;
-    }
-  }
-  UniqueResults.push_back(std::make_pair(Result,
-        SmallVector<ConstantInt*, 4>(1, CaseVal)));
-}
-
-// InitializeUniqueCases - Helper function that initializes a map containing
-// results for the PHI node of the common destination block for a switch
-// instruction. Returns false if multiple PHI nodes have been found or if
-// there is not a common destination block for the switch.
-static bool InitializeUniqueCases(
-    SwitchInst *SI, const DataLayout *DL, PHINode *&PHI,
-    BasicBlock *&CommonDest,
-    SwitchCaseResultVectorTy &UniqueResults,
-    Constant *&DefaultResult) {
-  for (auto &I : SI->cases()) {
-    ConstantInt *CaseVal = I.getCaseValue();
-
-    // Resulting value at phi nodes for this case value.
-    SwitchCaseResultsTy Results;
-    if (!GetCaseResults(SI, CaseVal, I.getCaseSuccessor(), &CommonDest, Results,
-                        DL))
-      return false;
-
-    // Only one value per case is permitted
-    if (Results.size() > 1)
-      return false;
-    MapCaseToResult(CaseVal, UniqueResults, Results.begin()->second);
-
-    // Check the PHI consistency.
-    if (!PHI)
-      PHI = Results[0].first;
-    else if (PHI != Results[0].first)
-      return false;
-  }
-  // Find the default result value.
-  SmallVector<std::pair<PHINode *, Constant *>, 1> DefaultResults;
-  BasicBlock *DefaultDest = SI->getDefaultDest();
-  GetCaseResults(SI, nullptr, SI->getDefaultDest(), &CommonDest, DefaultResults,
-                 DL);
-  // If the default value is not found abort unless the default destination
-  // is unreachable.
-  DefaultResult =
-      DefaultResults.size() == 1 ? DefaultResults.begin()->second : nullptr;
-  if ((!DefaultResult &&
-        !isa<UnreachableInst>(DefaultDest->getFirstNonPHIOrDbg())))
-    return false;
-
-  return true;
-}
-
-// ConvertTwoCaseSwitch - Helper function that checks if it is possible to
-// transform a switch with only two cases (or two cases + default)
-// that produces a result into a value select.
-// Example:
-// switch (a) {
-//   case 10:                %0 = icmp eq i32 %a, 10
-//     return 10;            %1 = select i1 %0, i32 10, i32 4
-//   case 20:        ---->   %2 = icmp eq i32 %a, 20
-//     return 2;             %3 = select i1 %2, i32 2, i32 %1
-//   default:
-//     return 4;
-// }
-static Value *
-ConvertTwoCaseSwitch(const SwitchCaseResultVectorTy &ResultVector,
-                     Constant *DefaultResult, Value *Condition,
-                     IRBuilder<> &Builder) {
-  assert(ResultVector.size() == 2 &&
-      "We should have exactly two unique results at this point");
-  // If we are selecting between only two cases transform into a simple
-  // select or a two-way select if default is possible.
-  if (ResultVector[0].second.size() == 1 &&
-      ResultVector[1].second.size() == 1) {
-    ConstantInt *const FirstCase = ResultVector[0].second[0];
-    ConstantInt *const SecondCase = ResultVector[1].second[0];
-
-    bool DefaultCanTrigger = DefaultResult;
-    Value *SelectValue = ResultVector[1].first;
-    if (DefaultCanTrigger) {
-      Value *const ValueCompare =
-          Builder.CreateICmpEQ(Condition, SecondCase, "switch.selectcmp");
-      SelectValue = Builder.CreateSelect(ValueCompare, ResultVector[1].first,
-                                         DefaultResult, "switch.select");
-    }
-    Value *const ValueCompare =
-        Builder.CreateICmpEQ(Condition, FirstCase, "switch.selectcmp");
-    return Builder.CreateSelect(ValueCompare, ResultVector[0].first, SelectValue,
-                                "switch.select");
-  }
-
-  return nullptr;
-}
-
-// RemoveSwitchAfterSelectConversion - Helper function to cleanup a switch
-// instruction that has been converted into a select, fixing up PHI nodes and
-// basic blocks.
-static void RemoveSwitchAfterSelectConversion(SwitchInst *SI, PHINode *PHI,
-                                              Value *SelectValue,
-                                              IRBuilder<> &Builder) {
-  BasicBlock *SelectBB = SI->getParent();
-  if (PHI->getBasicBlockIndex(SelectBB) >= 0)
-    PHI->removeIncomingValue(SelectBB);
-  PHI->addIncoming(SelectValue, SelectBB);
-
-  Builder.CreateBr(PHI->getParent());
-
-  // Remove the switch.
-  for (unsigned i = 0, e = SI->getNumSuccessors(); i < e; ++i) {
-    BasicBlock *Succ = SI->getSuccessor(i);
-
-    if (Succ == PHI->getParent())
-      continue;
-    Succ->removePredecessor(SelectBB);
-  }
-  SI->eraseFromParent();
-}
-
-/// SwitchToSelect - If the switch is only used to initialize one or more
-/// phi nodes in a common successor block with only two different
-/// constant values, replace the switch with select.
-static bool SwitchToSelect(SwitchInst *SI, IRBuilder<> &Builder,
-                           const DataLayout *DL, AssumptionTracker *AT) {
-  Value *const Cond = SI->getCondition();
-  PHINode *PHI = nullptr;
-  BasicBlock *CommonDest = nullptr;
-  Constant *DefaultResult;
-  SwitchCaseResultVectorTy UniqueResults;
-  // Collect all the cases that will deliver the same value from the switch.
-  if (!InitializeUniqueCases(SI, DL, PHI, CommonDest, UniqueResults,
-                             DefaultResult))
-    return false;
-  // Selects choose between maximum two values.
-  if (UniqueResults.size() != 2)
-    return false;
-  assert(PHI != nullptr && "PHI for value select not found");
-
-  Builder.SetInsertPoint(SI);
-  Value *SelectValue = ConvertTwoCaseSwitch(
-      UniqueResults,
-      DefaultResult, Cond, Builder);
-  if (SelectValue) {
-    RemoveSwitchAfterSelectConversion(SI, PHI, SelectValue, Builder);
-    return true;
-  }
-  // The switch couldn't be converted into a select.
-  return false;
-}
-
 namespace {
   /// SwitchLookupTable - This class represents a lookup table that can be used
   /// to replace a switch.
@@ -4116,9 +3949,6 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder) {
 
   // Remove unreachable cases.
   if (EliminateDeadSwitchCases(SI, DL, AT))
-    return SimplifyCFG(BB, TTI, BonusInstThreshold, DL, AT) | true;
-
-  if (SwitchToSelect(SI, Builder, DL, AT))
     return SimplifyCFG(BB, TTI, BonusInstThreshold, DL, AT) | true;
 
   if (ForwardSwitchConditionToPHI(SI))
