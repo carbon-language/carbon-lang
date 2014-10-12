@@ -1877,8 +1877,8 @@ static bool ParseLoopHintValue(Preprocessor &PP, Token &Tok, Token PragmaName,
   EOFTok.setLocation(Tok.getLocation());
   ValueList.push_back(EOFTok); // Terminates expression for parsing.
 
-  Token *TokenArray =
-      new (PP.getPreprocessorAllocator()) Token[ValueList.size()];
+  Token *TokenArray = (Token *)PP.getPreprocessorAllocator().Allocate(
+      ValueList.size() * sizeof(Token), llvm::alignOf<Token>());
   std::copy(ValueList.begin(), ValueList.end(), TokenArray);
   Info.Toks = TokenArray;
   Info.TokSize = ValueList.size();
