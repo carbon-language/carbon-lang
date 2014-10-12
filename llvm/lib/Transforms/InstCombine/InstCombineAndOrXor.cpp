@@ -930,6 +930,8 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
     case ICmpInst::ICMP_ULT:
       if (LHSCst == SubOne(RHSCst)) // (X != 13 & X u< 14) -> X < 13
         return Builder->CreateICmpULT(Val, LHSCst);
+      if (LHSCst->isNullValue())    // (X !=  0 & X u< 14) -> X-1 u< 13
+        return InsertRangeTest(Val, AddOne(LHSCst), RHSCst, false, true);
       break;                        // (X != 13 & X u< 15) -> no change
     case ICmpInst::ICMP_SLT:
       if (LHSCst == SubOne(RHSCst)) // (X != 13 & X s< 14) -> X < 13

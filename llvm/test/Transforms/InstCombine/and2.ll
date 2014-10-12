@@ -66,3 +66,14 @@ define i1 @test7(i32 %i, i1 %b) {
   %and2 = and i1 %and1, %cmp2
   ret i1 %and2
 }
+
+define i1 @test8(i32 %i) {
+; CHECK-LABEL: @test8(
+; CHECK-NEXT: [[DEC:%.*]] = add i32 %i, -1
+; CHECK-NEXT: [[CMP:%.*]] = icmp ult i32 [[DEC]], 13
+; CHECK-NEXT: ret i1 [[CMP]]
+  %cmp1 = icmp ne i32 %i, 0
+  %cmp2 = icmp ult i32 %i, 14
+  %cond = and i1 %cmp1, %cmp2
+  ret i1 %cond
+}
