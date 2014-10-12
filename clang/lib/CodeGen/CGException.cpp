@@ -610,8 +610,9 @@ void CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
       // existing compilers do, and it's not clear that the standard
       // personality routine is capable of doing this right.  See C++ DR 388:
       //   http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_active.html#388
-      QualType CaughtType = C->getCaughtType();
-      CaughtType = CaughtType.getNonReferenceType().getUnqualifiedType();
+      Qualifiers CaughtTypeQuals;
+      QualType CaughtType = CGM.getContext().getUnqualifiedArrayType(
+          C->getCaughtType().getNonReferenceType(), CaughtTypeQuals);
 
       llvm::Constant *TypeInfo = nullptr;
       if (CaughtType->isObjCObjectPointerType())
