@@ -27,6 +27,9 @@
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 #if HAVE_SIGNAL_H
 #include <signal.h>
 #endif

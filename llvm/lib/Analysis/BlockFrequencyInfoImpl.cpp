@@ -13,8 +13,8 @@
 
 #include "llvm/Analysis/BlockFrequencyInfoImpl.h"
 #include "llvm/ADT/SCCIterator.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include <deque>
 
 using namespace llvm;
 using namespace llvm::bfi_detail;
