@@ -128,6 +128,13 @@ public:
     operator bool() { return Current != End; }
   };
 
+  /// \brief Gets a single clause of the specified kind \a K associated with the
+  /// current directive iff there is only one clause of this kind (and assertion
+  /// is fired if there is more than one clause is associated with the
+  /// directive). Returns nullptr if no clause of kind \a K is associated with
+  /// the directive.
+  const OMPClause *getSingleClause(OpenMPClauseKind K) const;
+
   /// \brief Returns starting location of directive kind.
   SourceLocation getLocStart() const { return StartLoc; }
   /// \brief Returns ending location of directive.

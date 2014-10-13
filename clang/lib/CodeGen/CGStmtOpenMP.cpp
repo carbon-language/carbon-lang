@@ -24,6 +24,52 @@ using namespace CodeGen;
 //                              OpenMP Directive Emission
 //===----------------------------------------------------------------------===//
 
+/// \brief Emits code for OpenMP 'if' clause using specified \a CodeGen
+/// function. Here is the logic:
+/// if (Cond) {
+///   CodeGen(true);
+/// } else {
+///   CodeGen(false);
+/// }
+static void EmitOMPIfClause(CodeGenFunction &CGF, const Expr *Cond,
+                            const std::function<void(bool)> &CodeGen) {
+  CodeGenFunction::LexicalScope ConditionScope(CGF, Cond->getSourceRange());
+
+  // If the condition constant folds and can be elided, try to avoid emitting
+  // the condition and the dead arm of the if/else.
+  bool CondConstant;
+  if (CGF.ConstantFoldsToSimpleInteger(Cond, CondConstant)) {
+    CodeGen(CondConstant);
+    return;
+  }
+
+  // Otherwise, the condition did not fold, or we couldn't elide it.  Just
+  // emit the conditional branch.
+  auto ThenBlock = CGF.createBasicBlock(/*name*/ "omp_if.then");
+  auto ElseBlock = CGF.createBasicBlock(/*name*/ "omp_if.else");
+  auto ContBlock = CGF.createBasicBlock(/*name*/ "omp_if.end");
+  CGF.EmitBranchOnBoolExpr(Cond, ThenBlock, ElseBlock, /*TrueCount*/ 0);
+
+  // Emit the 'then' code.
+  CGF.EmitBlock(ThenBlock);
+  CodeGen(/*ThenBlock*/ true);
+  CGF.EmitBranch(ContBlock);
+  // Emit the 'else' code if present.
+  {
+    // There is no need to emit line number for unconditional branch.
+    SuppressDebugLocation SDL(CGF.Builder);
+    CGF.EmitBlock(ElseBlock);
+  }
+  CodeGen(/*ThenBlock*/ false);
+  {
+    // There is no need to emit line number for unconditional branch.
+    SuppressDebugLocation SDL(CGF.Builder);
+    CGF.EmitBranch(ContBlock);
+  }
+  // Emit the continuation block for code after the if.
+  CGF.EmitBlock(ContBlock, /*IsFinished*/ true);
+}
+
 void CodeGenFunction::EmitOMPAggregateAssign(LValue OriginalAddr,
                                              llvm::Value *PrivateAddr,
                                              const Expr *AssignExpr,
@@ -142,8 +188,20 @@ void CodeGenFunction::EmitOMPParallelDirective(const OMPParallelDirective &S) {
   auto CapturedStruct = GenerateCapturedStmtArgument(*CS);
   auto OutlinedFn = CGM.getOpenMPRuntime().EmitOpenMPOutlinedFunction(
       S, *CS->getCapturedDecl()->param_begin());
-  CGM.getOpenMPRuntime().EmitOMPParallelCall(*this, S.getLocStart(), OutlinedFn,
-                                             CapturedStruct);
+  if (auto C = S.getSingleClause(/*K*/ OMPC_if)) {
+    auto Cond = cast<OMPIfClause>(C)->getCondition();
+    EmitOMPIfClause(*this, Cond, [&](bool ThenBlock) {
+      if (ThenBlock)
+        CGM.getOpenMPRuntime().EmitOMPParallelCall(*this, S.getLocStart(),
+                                                   OutlinedFn, CapturedStruct);
+      else
+        CGM.getOpenMPRuntime().EmitOMPSerialCall(*this, S.getLocStart(),
+                                                 OutlinedFn, CapturedStruct);
+    });
+  } else {
+    CGM.getOpenMPRuntime().EmitOMPParallelCall(*this, S.getLocStart(),
+                                               OutlinedFn, CapturedStruct);
+  }
 }
 
 void CodeGenFunction::EmitOMPLoopBody(const OMPLoopDirective &S,

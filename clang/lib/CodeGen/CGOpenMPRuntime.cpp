@@ -16,6 +16,7 @@
 #include "clang/AST/StmtOpenMP.h"
 #include "clang/AST/Decl.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Value.h"
@@ -253,7 +254,7 @@ CGOpenMPRuntime::CreateRuntimeFunction(OpenMPRTLFunction Function) {
     llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty,
                                 getKmpc_MicroPointerTy()};
     llvm::FunctionType *FnTy =
-        llvm::FunctionType::get(CGM.VoidTy, TypeParams, true);
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg*/ true);
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_fork_call");
     break;
   }
@@ -261,7 +262,7 @@ CGOpenMPRuntime::CreateRuntimeFunction(OpenMPRTLFunction Function) {
     // Build kmp_int32 __kmpc_global_thread_num(ident_t *loc);
     llvm::Type *TypeParams[] = {getIdentTyPointerTy()};
     llvm::FunctionType *FnTy =
-        llvm::FunctionType::get(CGM.Int32Ty, TypeParams, false);
+        llvm::FunctionType::get(CGM.Int32Ty, TypeParams, /*isVarArg*/ false);
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_global_thread_num");
     break;
   }
@@ -295,6 +296,24 @@ CGOpenMPRuntime::CreateRuntimeFunction(OpenMPRTLFunction Function) {
     RTLFn = CGM.CreateRuntimeFunction(FnTy, /*Name*/ "__kmpc_barrier");
     break;
   }
+  case OMPRTL__kmpc_serialized_parallel: {
+    // Build void __kmpc_serialized_parallel(ident_t *loc, kmp_int32
+    // global_tid);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg*/ false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_serialized_parallel");
+    break;
+  }
+  case OMPRTL__kmpc_end_serialized_parallel: {
+    // Build void __kmpc_end_serialized_parallel(ident_t *loc, kmp_int32
+    // global_tid);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg*/ false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_end_serialized_parallel");
+    break;
+  }
   }
   return RTLFn;
 }
@@ -312,6 +331,56 @@ void CGOpenMPRuntime::EmitOMPParallelCall(CodeGenFunction &CGF,
       CGF.EmitCastToVoidPtr(CapturedStruct)};
   auto RTLFn = CreateRuntimeFunction(CGOpenMPRuntime::OMPRTL__kmpc_fork_call);
   CGF.EmitRuntimeCall(RTLFn, Args);
+}
+
+void CGOpenMPRuntime::EmitOMPSerialCall(CodeGenFunction &CGF,
+                                        SourceLocation Loc,
+                                        llvm::Value *OutlinedFn,
+                                        llvm::Value *CapturedStruct) {
+  auto ThreadID = GetOpenMPThreadID(CGF, Loc);
+  // Build calls:
+  // __kmpc_serialized_parallel(&Loc, GTid);
+  llvm::Value *SerArgs[] = {EmitOpenMPUpdateLocation(CGF, Loc), ThreadID};
+  auto RTLFn =
+      CreateRuntimeFunction(CGOpenMPRuntime::OMPRTL__kmpc_serialized_parallel);
+  CGF.EmitRuntimeCall(RTLFn, SerArgs);
+
+  // OutlinedFn(&GTid, &zero, CapturedStruct);
+  auto ThreadIDAddr = EmitThreadIDAddress(CGF, Loc);
+  auto Int32Ty =
+      CGF.getContext().getIntTypeForBitwidth(/*DestWidth*/ 32, /*Signed*/ true);
+  auto ZeroAddr = CGF.CreateMemTemp(Int32Ty, /*Name*/ ".zero.addr");
+  CGF.InitTempAlloca(ZeroAddr, CGF.Builder.getInt32(/*C*/ 0));
+  llvm::Value *OutlinedFnArgs[] = {ThreadIDAddr, ZeroAddr, CapturedStruct};
+  CGF.EmitCallOrInvoke(OutlinedFn, OutlinedFnArgs);
+
+  // __kmpc_end_serialized_parallel(&Loc, GTid);
+  llvm::Value *EndSerArgs[] = {EmitOpenMPUpdateLocation(CGF, Loc), ThreadID};
+  RTLFn = CreateRuntimeFunction(
+      CGOpenMPRuntime::OMPRTL__kmpc_end_serialized_parallel);
+  CGF.EmitRuntimeCall(RTLFn, EndSerArgs);
+}
+
+// If we’re inside an (outlined) parallel region, use the region info’s
+// thread-ID variable (it is passed in a first argument of the outlined function
+// as "kmp_int32 *gtid"). Otherwise, if we're not inside parallel region, but in
+// regular serial code region, get thread ID by calling kmp_int32
+// kmpc_global_thread_num(ident_t *loc), stash this thread ID in a temporary and
+// return the address of that temp.
+llvm::Value *CGOpenMPRuntime::EmitThreadIDAddress(CodeGenFunction &CGF,
+                                                  SourceLocation Loc) {
+  if (auto OMPRegionInfo =
+          dyn_cast_or_null<CGOpenMPRegionInfo>(CGF.CapturedStmtInfo))
+    return CGF.EmitLoadOfLValue(OMPRegionInfo->getThreadIDVariableLValue(CGF),
+                                SourceLocation()).getScalarVal();
+  auto ThreadID = GetOpenMPThreadID(CGF, Loc);
+  auto Int32Ty =
+      CGF.getContext().getIntTypeForBitwidth(/*DestWidth*/ 32, /*Signed*/ true);
+  auto ThreadIDTemp = CGF.CreateMemTemp(Int32Ty, /*Name*/ ".threadid_temp.");
+  CGF.EmitStoreOfScalar(ThreadID,
+                        CGF.MakeNaturalAlignAddrLValue(ThreadIDTemp, Int32Ty));
+
+  return ThreadIDTemp;
 }
 
 llvm::Value *CGOpenMPRuntime::GetCriticalRegionLock(StringRef CriticalName) {

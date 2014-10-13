@@ -74,7 +74,13 @@ public:
     // kmp_critical_name *crit);
     OMPRTL__kmpc_end_critical,
     // Call to void __kmpc_barrier(ident_t *loc, kmp_int32 global_tid);
-    OMPRTL__kmpc_barrier
+    OMPRTL__kmpc_barrier,
+    // Call to void __kmpc_serialized_parallel(ident_t *loc, kmp_int32
+    // global_tid);
+    OMPRTL__kmpc_serialized_parallel,
+    // Call to void __kmpc_end_serialized_parallel(ident_t *loc, kmp_int32
+    // global_tid);
+    OMPRTL__kmpc_end_serialized_parallel
   };
 
 private:
@@ -156,16 +162,21 @@ private:
   EmitOpenMPUpdateLocation(CodeGenFunction &CGF, SourceLocation Loc,
                            OpenMPLocationFlags Flags = OMP_IDENT_KMPC);
 
-  /// \brief Returns pointer to ident_t type;
+  /// \brief Returns pointer to ident_t type.
   llvm::Type *getIdentTyPointerTy();
 
-  /// \brief Returns pointer to kmpc_micro type;
+  /// \brief Returns pointer to kmpc_micro type.
   llvm::Type *getKmpc_MicroPointerTy();
 
   /// \brief Returns specified OpenMP runtime function.
   /// \param Function OpenMP runtime function.
   /// \return Specified function.
   llvm::Constant *CreateRuntimeFunction(OpenMPRTLFunction Function);
+
+  /// \brief Emits address of the word in a memory where current thread id is
+  /// stored.
+  virtual llvm::Value *EmitThreadIDAddress(CodeGenFunction &CGF,
+                                           SourceLocation Loc);
 
   /// \brief Gets thread id value for the current thread.
   ///
@@ -200,6 +211,16 @@ public:
   virtual void EmitOMPParallelCall(CodeGenFunction &CGF, SourceLocation Loc,
                                    llvm::Value *OutlinedFn,
                                    llvm::Value *CapturedStruct);
+
+  /// \brief Emits code for serial call of the \a OutlinedFn with variables
+  /// captured in a record which address is stored in \a CapturedStruct.
+  /// \param OutlinedFn Outlined function to be run in serial mode.
+  /// \param CapturedStruct A pointer to the record with the references to
+  /// variables used in \a OutlinedFn function.
+  ///
+  virtual void EmitOMPSerialCall(CodeGenFunction &CGF, SourceLocation Loc,
+                                 llvm::Value *OutlinedFn,
+                                 llvm::Value *CapturedStruct);
 
   /// \brief Returns corresponding lock object for the specified critical region
   /// name. If the lock object does not exist it is created, otherwise the
