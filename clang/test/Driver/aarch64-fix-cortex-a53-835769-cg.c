@@ -6,7 +6,7 @@
 // RUN: %clang -O3 -target aarch64-linux-eabi -mno-fix-cortex-a53-835769 %s -S -o- 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NO --check-prefix=CHECK %s
 
-#include <stdint.h>
+typedef long int64_t;
 
 int64_t f_load_madd_64(int64_t a, int64_t b, int64_t *c) {
     int64_t result = a+b*(*c);
