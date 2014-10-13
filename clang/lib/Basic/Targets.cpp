@@ -3899,7 +3899,7 @@ public:
       Features["neon"] = true;
     } else if (CPU == "swift" || CPU == "cortex-a7" ||
                CPU == "cortex-a12" || CPU == "cortex-a15" ||
-               CPU == "krait") {
+               CPU == "cortex-a17" || CPU == "krait") {
       Features["vfp4"] = true;
       Features["neon"] = true;
       Features["hwdiv"] = true;
@@ -4020,7 +4020,7 @@ public:
       .Cases("arm1136jf-s", "mpcorenovfp", "mpcore", "6K")
       .Cases("arm1156t2-s", "arm1156t2f-s", "6T2")
       .Cases("cortex-a5", "cortex-a7", "cortex-a8", "cortex-a9-mp", "7A")
-      .Cases("cortex-a9", "cortex-a12", "cortex-a15", "krait", "7A")
+      .Cases("cortex-a9", "cortex-a12", "cortex-a15", "cortex-a17", "krait", "7A")
       .Cases("cortex-r4", "cortex-r5", "7R")
       .Case("swift", "7S")
       .Case("cyclone", "8A")
@@ -4033,7 +4033,7 @@ public:
   static const char *getCPUProfile(StringRef Name) {
     return llvm::StringSwitch<const char*>(Name)
       .Cases("cortex-a5", "cortex-a7", "cortex-a8", "A")
-      .Cases("cortex-a9", "cortex-a12", "cortex-a15", "krait", "A")
+      .Cases("cortex-a9", "cortex-a12", "cortex-a15", "cortex-a17", "krait", "A")
       .Cases("cortex-a53", "cortex-a57", "A")
       .Cases("cortex-m3", "cortex-m4", "cortex-m0", "cortex-m7", "M")
       .Cases("cortex-r4", "cortex-r5", "R")
