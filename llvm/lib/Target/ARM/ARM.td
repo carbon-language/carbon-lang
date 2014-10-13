@@ -228,6 +228,15 @@ def ProcA15      : SubtargetFeature<"a15", "ARMProcFamily", "CortexA15",
                                     FeatureAvoidPartialCPSR,
                                     FeatureTrustZone, FeatureVirtualization]>;
 
+def ProcA17     : SubtargetFeature<"a17", "ARMProcFamily", "CortexA17",
+                                   "Cortex-A17 ARM processors",
+                                   [FeatureVMLxForwarding,
+                                    FeatureT2XtPk, FeatureVFP4,
+                                    FeatureHWDiv, FeatureHWDivARM,
+                                    FeatureAvoidPartialCPSR,
+                                    FeatureVirtualization,
+                                    FeatureTrustZone]>;
+
 def ProcA53     : SubtargetFeature<"a53", "ARMProcFamily", "CortexA53",
                                    "Cortex-A53 ARM processors",
                                    [FeatureHWDiv, FeatureHWDivARM,
@@ -365,6 +374,12 @@ def : ProcessorModel<"cortex-a15",   CortexA9Model,
                                     [ProcA15, HasV7Ops, FeatureNEON, FeatureDB,
                                      FeatureDSPThumb2, FeatureHasRAS,
                                      FeatureAClass]>;
+
+// FIXME: A17 has currently the same Schedule model as A9
+def : ProcessorModel<"cortex-a17",  CortexA9Model,
+                                    [ProcA17, HasV7Ops, FeatureNEON, FeatureDB,
+                                     FeatureDSPThumb2, FeatureMP,
+                                     FeatureHasRAS, FeatureAClass]>;
 
 // FIXME: krait has currently the same Schedule model as A9
 def : ProcessorModel<"krait",       CortexA9Model,
