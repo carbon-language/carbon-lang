@@ -39,7 +39,7 @@ D: Clang LLVM IR generation
 
 N: Chad Rosier
 E: mcrosier@codeaurora.org
-D: MS-inline asm, and the compiler driver
+D: Compiler driver
 
 N: Richard Smith
 E: richard@metafoo.co.uk
