@@ -6742,58 +6742,40 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectType *LHS,
   if (LHS->getNumProtocols() == 0)
     return true;
 
-  // Okay, we know the LHS has protocol qualifiers.  If the RHS doesn't, 
-  // more detailed analysis is required.
-  if (RHS->getNumProtocols() == 0) {
-    // OK, if LHS is a superclass of RHS *and*
-    // this superclass is assignment compatible with LHS.
-    // false otherwise.
-    bool IsSuperClass = 
-      LHS->getInterface()->isSuperClassOf(RHS->getInterface());
-    if (IsSuperClass) {
-      // OK if conversion of LHS to SuperClass results in narrowing of types
-      // ; i.e., SuperClass may implement at least one of the protocols
-      // in LHS's protocol list. Example, SuperObj<P1> = lhs<P1,P2> is ok.
-      // But not SuperObj<P1,P2,P3> = lhs<P1,P2>.
-      llvm::SmallPtrSet<ObjCProtocolDecl *, 8> SuperClassInheritedProtocols;
-      CollectInheritedProtocols(RHS->getInterface(), SuperClassInheritedProtocols);
-      // If super class has no protocols, it is not a match.
-      if (SuperClassInheritedProtocols.empty())
-        return false;
-      
-      for (const auto *LHSProto : LHS->quals()) {
-        bool SuperImplementsProtocol = false;        
-        for (auto *SuperClassProto : SuperClassInheritedProtocols) {
-          if (SuperClassProto->lookupProtocolNamed(LHSProto->getIdentifier())) {
-            SuperImplementsProtocol = true;
-            break;
-          }
-        }
-        if (!SuperImplementsProtocol)
-          return false;
-      }
-      return true;
-    }
-    return false;
-  }
-
-  for (const auto *LHSPI : LHS->quals()) {
-    bool RHSImplementsProtocol = false;
-
-    // If the RHS doesn't implement the protocol on the left, the types
-    // are incompatible.
-    for (auto *RHSPI : RHS->quals()) {
-      if (RHSPI->lookupProtocolNamed(LHSPI->getIdentifier())) {
-        RHSImplementsProtocol = true;
-        break;
-      }
-    }
-    // FIXME: For better diagnostics, consider passing back the protocol name.
-    if (!RHSImplementsProtocol)
+  // Okay, we know the LHS has protocol qualifiers. But RHS may or may not.
+  // More detailed analysis is required.
+  // OK, if LHS is same or a superclass of RHS *and*
+  // this LHS, or as RHS's super class is assignment compatible with LHS.
+  bool IsSuperClass =
+    LHS->getInterface()->isSuperClassOf(RHS->getInterface());
+  if (IsSuperClass) {
+    // OK if conversion of LHS to SuperClass results in narrowing of types
+    // ; i.e., SuperClass may implement at least one of the protocols
+    // in LHS's protocol list. Example, SuperObj<P1> = lhs<P1,P2> is ok.
+    // But not SuperObj<P1,P2,P3> = lhs<P1,P2>.
+    llvm::SmallPtrSet<ObjCProtocolDecl *, 8> SuperClassInheritedProtocols;
+    CollectInheritedProtocols(RHS->getInterface(), SuperClassInheritedProtocols);
+    // Also, if RHS has explicit quelifiers, include them for comparing with LHS's
+    // qualifiers.
+    for (auto *RHSPI : RHS->quals())
+      SuperClassInheritedProtocols.insert(RHSPI->getCanonicalDecl());
+    // If there is no protocols associated with RHS, it is not a match.
+    if (SuperClassInheritedProtocols.empty())
       return false;
+      
+    for (const auto *LHSProto : LHS->quals()) {
+      bool SuperImplementsProtocol = false;
+      for (auto *SuperClassProto : SuperClassInheritedProtocols)
+        if (SuperClassProto->lookupProtocolNamed(LHSProto->getIdentifier())) {
+          SuperImplementsProtocol = true;
+          break;
+        }
+      if (!SuperImplementsProtocol)
+        return false;
+    }
+    return true;
   }
-  // The RHS implements all protocols listed on the LHS.
-  return true;
+  return false;
 }
 
 bool ASTContext::areComparableObjCPointerTypes(QualType LHS, QualType RHS) {
