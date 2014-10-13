@@ -17,9 +17,13 @@
 ;     y();
 ;     z();
 ;   }
-; using CL v18.00.21005.1 32-/64-bit versions respectively.
+; using 32-/64-bit versions of CL v17.00.61030 and v18.00.21005.1 respectively.
+RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifunction-linetables.obj.coff-2012-i368 \
+RUN:   | FileCheck %s -check-prefix MFUN32
 RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifunction-linetables.obj.coff-2013-i368 \
 RUN:   | FileCheck %s -check-prefix MFUN32
+RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifunction-linetables.obj.coff-2012-x86_64 \
+RUN:   | FileCheck %s -check-prefix MFUN64
 RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifunction-linetables.obj.coff-2013-x86_64 \
 RUN:   | FileCheck %s -check-prefix MFUN64
 
@@ -207,9 +211,13 @@ MFUN64-NEXT: ]
 ;   #line 7 "one.c"
 ;     g();
 ;   }
-; using CL v18.00.21005.1 32-/64-bit versions respectively.
+; using 32-/64-bit versions of CL v17.00.61030 and v18.00.21005.1 respectively.
+RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifile-linetables.obj.coff-2012-i368 \
+RUN:   | FileCheck %s -check-prefix MFILE32
 RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifile-linetables.obj.coff-2013-i368 \
 RUN:   | FileCheck %s -check-prefix MFILE32
+RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifile-linetables.obj.coff-2012-x86_64 \
+RUN:   | FileCheck %s -check-prefix MFILE64
 RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifile-linetables.obj.coff-2013-x86_64 \
 RUN:   | FileCheck %s -check-prefix MFILE64
 
@@ -318,7 +326,7 @@ MFILE64-NEXT:   ]
 MFILE64-NEXT: ]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; The following object file was generated using the following command:
+; The following object files were generated using the following command:
 ;   C:\src> cl /Z7 /Gy /c test.cc
 ; with the following contents of C:\src\test.cc:
 ;   int f()
@@ -330,7 +338,9 @@ MFILE64-NEXT: ]
 ;   {
 ;     return 0;
 ;   }
-; using 32-version of CL v18.00.21005.1.
+; using 32-version of CL v17.00.61030 and v18.00.21005.1 respectively.
+RUN: llvm-readobj -s -codeview-linetables %p/Inputs/comdat-function-linetables.obj.coff-2012-i386 \
+RUN:   | FileCheck %s -check-prefix MCOMDAT
 RUN: llvm-readobj -s -codeview-linetables %p/Inputs/comdat-function-linetables.obj.coff-2013-i386 \
 RUN:   | FileCheck %s -check-prefix MCOMDAT
 
