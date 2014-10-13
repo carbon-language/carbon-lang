@@ -76,6 +76,104 @@ int rdar16153464(union rdar16153464_full_ctx_t inner)
   rdar16153464_check(0); // expected-warning{{nonnull}}
 }
 
+// Multiple attributes, the basic case
+void multipleAttributes_1(char *p, char *q) __attribute((nonnull(1))) __attribute((nonnull(2)));
+
+void testMultiple_1(void) {
+  char c;
+  multipleAttributes_1(&c, &c); // no-warning
+}
+
+void testMultiple_2(void) {
+  char c;
+  multipleAttributes_1(0, &c); // expected-warning{{nonnull}}
+}
+
+void testMultiple_3(void) {
+  char c;
+  multipleAttributes_1(&c, 0); // expected-warning{{nonnull}}
+}
+
+void testMultiple_4(void) {
+  multipleAttributes_1(0, 0);// expected-warning{{nonnull}}
+}
+
+// Multiple attributes, multiple prototypes
+void multipleAttributes_2(char *p, char *q) __attribute((nonnull(1)));
+void multipleAttributes_2(char *p, char *q) __attribute((nonnull(2)));
+
+void testMultiple_5(void) {
+  char c;
+  multipleAttributes_2(0, &c);// expected-warning{{nonnull}}
+}
+
+void testMultiple_6(void) {
+  char c;
+  multipleAttributes_2(&c, 0);// expected-warning{{nonnull}}
+}
+
+void testMultiple_7(void) {
+  multipleAttributes_2(0, 0);// expected-warning{{nonnull}}
+}
+
+// Multiple attributes, same index
+void multipleAttributes_3(char *p, char *q) __attribute((nonnull(1))) __attribute((nonnull(1)));
+
+void testMultiple_8(void) {
+  char c;
+  multipleAttributes_3(0, &c); // expected-warning{{nonnull}}
+}
+
+void testMultiple_9(void) {
+  char c;
+  multipleAttributes_3(&c, 0); // no-warning
+}
+
+// Multiple attributes, the middle argument is missing an attribute
+void multipleAttributes_4(char *p, char *q, char *r) __attribute((nonnull(1))) __attribute((nonnull(3)));
+
+void testMultiple_10(void) {
+  char c;
+  multipleAttributes_4(0, &c, &c); // expected-warning{{nonnull}}
+}
+
+void testMultiple_11(void) {
+  char c;
+  multipleAttributes_4(&c, 0, &c); // no-warning
+}
+
+void testMultiple_12(void) {
+  char c;
+  multipleAttributes_4(&c, &c, 0); // expected-warning{{nonnull}}
+}
+
+
+// Multiple attributes, when the last is without index
+void multipleAttributes_all_1(char *p, char *q) __attribute((nonnull(1))) __attribute((nonnull));
+
+void testMultiple_13(void) {
+  char c;
+  multipleAttributes_all_1(0, &c); // expected-warning{{nonnull}}
+}
+
+void testMultiple_14(void) {
+  char c;
+  multipleAttributes_all_1(&c, 0); // expected-warning{{nonnull}}
+}
+
+// Multiple attributes, when the first is without index
+void multipleAttributes_all_2(char *p, char *q) __attribute((nonnull)) __attribute((nonnull(2)));
+
+void testMultiple_15(void) {
+  char c;
+  multipleAttributes_all_2(0, &c); // expected-warning{{nonnull}}
+}
+
+void testMultiple_16(void) {
+  char c;
+  multipleAttributes_all_2(&c, 0); // expected-warning{{nonnull}}
+}
+
 void testVararg(int k, void *p) {
   extern void testVararg_check(int, ...) __attribute__((nonnull));
   void *n = 0;

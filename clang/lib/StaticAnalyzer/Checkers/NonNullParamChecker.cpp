@@ -49,16 +49,27 @@ void NonNullParamChecker::checkPreCall(const CallEvent &Call,
   if (!FD)
     return;
 
-  // FIXME: This is wrong; there can be multiple attributes with different sets
-  // of non-null parameter indices.
-  const NonNullAttr *Att = FD->getAttr<NonNullAttr>();
+  // Merge all non-null attributes
+  unsigned NumArgs = Call.getNumArgs();
+  llvm::SmallBitVector AttrNonNull(NumArgs);
+  for (const auto *NonNull : FD->specific_attrs<NonNullAttr>()) {
+    if (!NonNull->args_size()) {
+      AttrNonNull.set(0, NumArgs);
+      break;
+    }
+    for (unsigned Val : NonNull->args()) {
+      if (Val >= NumArgs)
+        continue;
+      AttrNonNull.set(Val);
+    }
+  }
 
   ProgramStateRef state = C.getState();
 
   CallEvent::param_type_iterator TyI = Call.param_type_begin(),
                                  TyE = Call.param_type_end();
 
-  for (unsigned idx = 0, count = Call.getNumArgs(); idx != count; ++idx){
+  for (unsigned idx = 0; idx < NumArgs; ++idx) {
 
     // Check if the parameter is a reference. We want to report when reference
     // to a null pointer is passed as a paramter.
@@ -68,7 +79,7 @@ void NonNullParamChecker::checkPreCall(const CallEvent &Call,
       TyI++;
     }
 
-    bool haveAttrNonNull = Att && Att->isNonNull(idx);
+    bool haveAttrNonNull = AttrNonNull[idx];
     if (!haveAttrNonNull) {
       // Check if the parameter is also marked 'nonnull'.
       ArrayRef<ParmVarDecl*> parms = Call.parameters();
