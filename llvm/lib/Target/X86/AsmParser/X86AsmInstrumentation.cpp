@@ -39,14 +39,14 @@ static cl::opt<bool> ClAsanInstrumentAssembly(
 const int64_t MinAllowedDisplacement = std::numeric_limits<int32_t>::min();
 const int64_t MaxAllowedDisplacement = std::numeric_limits<int32_t>::max();
 
-int64_t ApplyBounds(int64_t Displacement) {
+int64_t ApplyDisplacementBounds(int64_t Displacement) {
   return std::max(std::min(MaxAllowedDisplacement, Displacement),
                   MinAllowedDisplacement);
 }
 
-bool InBounds(int64_t Displacement) {
-  return Displacement >= MinAllowedDisplacement &&
-         Displacement <= MaxAllowedDisplacement;
+void CheckDisplacementBounds(int64_t Displacement) {
+  assert(Displacement >= MinAllowedDisplacement &&
+         Displacement <= MaxAllowedDisplacement);
 }
 
 bool IsStackReg(unsigned Reg) { return Reg == X86::RSP || Reg == X86::ESP; }
@@ -339,7 +339,7 @@ void X86AddressSanitizer::ComputeMemOperandAddress(X86Operand &Op,
 
   while (Residue != 0) {
     const MCConstantExpr *Disp =
-        MCConstantExpr::Create(ApplyBounds(Residue), Ctx);
+        MCConstantExpr::Create(ApplyDisplacementBounds(Residue), Ctx);
     std::unique_ptr<X86Operand> DispOp =
         X86Operand::CreateMem(0, Disp, Reg, 0, 1, SMLoc(), SMLoc());
     EmitLEA(*DispOp, VT, Reg, Out);
@@ -362,11 +362,11 @@ X86AddressSanitizer::AddDisplacement(X86Operand &Op, int64_t Displacement,
 
   int64_t OrigDisplacement =
       static_cast<const MCConstantExpr *>(Op.getMemDisp())->getValue();
-  assert(InBounds(OrigDisplacement));
+  CheckDisplacementBounds(OrigDisplacement);
   Displacement += OrigDisplacement;
 
-  int64_t NewDisplacement = ApplyBounds(Displacement);
-  assert(InBounds(NewDisplacement));
+  int64_t NewDisplacement = ApplyDisplacementBounds(Displacement);
+  CheckDisplacementBounds(NewDisplacement);
 
   *Residue = Displacement - NewDisplacement;
   const MCExpr *Disp = MCConstantExpr::Create(NewDisplacement, Ctx);
