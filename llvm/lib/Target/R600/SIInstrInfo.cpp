@@ -1211,26 +1211,28 @@ bool SIInstrInfo::canReadVGPR(const MachineInstr &MI, unsigned OpNo) const {
 
 void SIInstrInfo::legalizeOpWithMove(MachineInstr *MI, unsigned OpIdx) const {
   MachineBasicBlock::iterator I = MI;
+  MachineBasicBlock *MBB = MI->getParent();
   MachineOperand &MO = MI->getOperand(OpIdx);
-  MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
+  MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
   unsigned RCID = get(MI->getOpcode()).OpInfo[OpIdx].RegClass;
   const TargetRegisterClass *RC = RI.getRegClass(RCID);
   unsigned Opcode = AMDGPU::V_MOV_B32_e32;
-  if (MO.isReg()) {
+  if (MO.isReg())
     Opcode = AMDGPU::COPY;
-  } else if (RI.isSGPRClass(RC)) {
+  else if (RI.isSGPRClass(RC))
     Opcode = AMDGPU::S_MOV_B32;
-  }
+
 
   const TargetRegisterClass *VRC = RI.getEquivalentVGPRClass(RC);
-  if (RI.getCommonSubClass(&AMDGPU::VReg_64RegClass, VRC)) {
+  if (RI.getCommonSubClass(&AMDGPU::VReg_64RegClass, VRC))
     VRC = &AMDGPU::VReg_64RegClass;
-  } else {
+  else
     VRC = &AMDGPU::VReg_32RegClass;
-  }
+
   unsigned Reg = MRI.createVirtualRegister(VRC);
-  BuildMI(*MI->getParent(), I, MI->getParent()->findDebugLoc(I), get(Opcode),
-          Reg).addOperand(MO);
+  DebugLoc DL = MBB->findDebugLoc(I);
+  BuildMI(*MI->getParent(), I, DL, get(Opcode), Reg)
+    .addOperand(MO);
   MO.ChangeToRegister(Reg, false);
 }
 
