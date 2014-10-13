@@ -55,7 +55,7 @@ extern "C" {
   // Otherwise returns 0.
   int __asan_address_is_poisoned(void const volatile *addr);
 
-  // If at least on byte in [beg, beg+size) is poisoned, return the address
+  // If at least one byte in [beg, beg+size) is poisoned, return the address
   // of the first such byte. Otherwise return 0.
   void *__asan_region_is_poisoned(void *beg, size_t size);
 

@@ -105,7 +105,7 @@ extern "C" {
                                                  const void *end,
                                                  const void *old_mid,
                                                  const void *new_mid);
-  // Returns true if the contiguous container [beg, end) ir properly poisoned
+  // Returns true if the contiguous container [beg, end) is properly poisoned
   // (e.g. with __sanitizer_annotate_contiguous_container), i.e. if
   //  - [beg, mid) is addressable,
   //  - [mid, end) is unaddressable.
