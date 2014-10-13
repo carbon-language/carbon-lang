@@ -15,6 +15,10 @@
 #ifndef LLVM_SUPPORT_THREADING_H
 #define LLVM_SUPPORT_THREADING_H
 
+#if !defined(__MINGW__)
+#include <mutex>
+#endif
+
 namespace llvm {
   /// Returns true if LLVM is compiled with support for multi-threading, and
   /// false otherwise.
@@ -33,6 +37,20 @@ namespace llvm {
   /// the thread stack.
   void llvm_execute_on_thread(void (*UserFn)(void*), void *UserData,
                               unsigned RequestedStackSize = 0);
+
+template <void (*UserFn)(void)> void llvm_call_once() {
+
+#if !defined(__MINGW__)
+  static std::once_flag flag;
+  std::call_once(flag, UserFn);
+
+#else
+  struct InitOnceWrapper {
+    InitOnceWrapper() { UserFn(); }
+  };
+  static InitOnceWrapper InitOnceVar;
+#endif
+}
 }
 
 #endif
