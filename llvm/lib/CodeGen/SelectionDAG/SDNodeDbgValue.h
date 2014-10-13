@@ -81,44 +81,44 @@ public:
   }
 
   // Returns the kind.
-  DbgValueKind getKind() { return kind; }
+  DbgValueKind getKind() const { return kind; }
 
   // Returns the MDNode pointer for the variable.
-  MDNode *getVariable() { return Var; }
+  MDNode *getVariable() const { return Var; }
 
   // Returns the MDNode pointer for the expression.
-  MDNode *getExpression() { return Expr; }
+  MDNode *getExpression() const { return Expr; }
 
   // Returns the SDNode* for a register ref
-  SDNode *getSDNode() { assert (kind==SDNODE); return u.s.Node; }
+  SDNode *getSDNode() const { assert (kind==SDNODE); return u.s.Node; }
 
   // Returns the ResNo for a register ref
-  unsigned getResNo() { assert (kind==SDNODE); return u.s.ResNo; }
+  unsigned getResNo() const { assert (kind==SDNODE); return u.s.ResNo; }
 
   // Returns the Value* for a constant
-  const Value *getConst() { assert (kind==CONST); return u.Const; }
+  const Value *getConst() const { assert (kind==CONST); return u.Const; }
 
   // Returns the FrameIx for a stack object
-  unsigned getFrameIx() { assert (kind==FRAMEIX); return u.FrameIx; }
+  unsigned getFrameIx() const { assert (kind==FRAMEIX); return u.FrameIx; }
 
   // Returns whether this is an indirect value.
-  bool isIndirect() { return IsIndirect; }
+  bool isIndirect() const { return IsIndirect; }
 
   // Returns the offset.
-  uint64_t getOffset() { return Offset; }
+  uint64_t getOffset() const { return Offset; }
 
   // Returns the DebugLoc.
-  DebugLoc getDebugLoc() { return DL; }
+  DebugLoc getDebugLoc() const { return DL; }
 
   // Returns the SDNodeOrder.  This is the order of the preceding node in the
   // input.
-  unsigned getOrder() { return Order; }
+  unsigned getOrder() const { return Order; }
 
   // setIsInvalidated / isInvalidated - Setter / getter of the "Invalidated"
   // property. A SDDbgValue is invalid if the SDNode that produces the value is
   // deleted.
   void setIsInvalidated() { Invalid = true; }
-  bool isInvalidated() { return Invalid; }
+  bool isInvalidated() const { return Invalid; }
 };
 
 } // end llvm namespace
