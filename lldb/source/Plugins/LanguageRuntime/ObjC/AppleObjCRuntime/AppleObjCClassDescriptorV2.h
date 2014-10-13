@@ -31,10 +31,10 @@ private:
     // The constructor should only be invoked by the runtime as it builds its caches
     // or populates them.  A ClassDescriptorV2 should only ever exist in a cache.
     ClassDescriptorV2 (AppleObjCRuntimeV2 &runtime, ObjCLanguageRuntime::ObjCISA isa, const char *name) :
-    m_runtime (runtime),
-    m_objc_class_ptr (isa),
-    m_name (name),
-    m_ivars_storage()
+        m_runtime (runtime),
+        m_objc_class_ptr (isa),
+        m_name (name),
+        m_ivars_storage()
     {
     }
     
@@ -44,6 +44,9 @@ public:
     
     virtual ObjCLanguageRuntime::ClassDescriptorSP
     GetSuperclass ();
+    
+    virtual ObjCLanguageRuntime::ClassDescriptorSP
+    GetMetaclass () const;
     
     virtual bool
     IsValid ()
@@ -325,6 +328,12 @@ public:
         // tagged pointers can represent a class that has a superclass, but since that information is not
         // stored in the object itself, we would have to query the runtime to discover the hierarchy
         // for the time being, we skip this step in the interest of static discovery
+        return ObjCLanguageRuntime::ClassDescriptorSP();
+    }
+    
+    virtual ObjCLanguageRuntime::ClassDescriptorSP
+    GetMetaclass () const
+    {
         return ObjCLanguageRuntime::ClassDescriptorSP();
     }
     

@@ -375,15 +375,17 @@ ClassDescriptorV2::Describe (std::function <void (ObjCLanguageRuntime::ObjCISA)>
     
     if (class_method_func)
     {
-        ClassDescriptorV2 metaclass(m_runtime, objc_class->m_isa, NULL); // The metaclass is not in the cache
+        AppleObjCRuntime::ClassDescriptorSP metaclass(GetMetaclass());
         
         // We don't care about the metaclass's superclass, or its class methods.  Its instance methods are
         // our class methods.
         
-        metaclass.Describe(std::function <void (ObjCLanguageRuntime::ObjCISA)> (nullptr),
-                           class_method_func,
-                           std::function <bool (const char *, const char *)> (nullptr),
-                           std::function <bool (const char *, const char *, lldb::addr_t, uint64_t)> (nullptr));
+        if (metaclass) {
+            metaclass->Describe(std::function <void (ObjCLanguageRuntime::ObjCISA)> (nullptr),
+                                class_method_func,
+                                std::function <bool (const char *, const char *)> (nullptr),
+                                std::function <bool (const char *, const char *, lldb::addr_t, uint64_t)> (nullptr));
+        }
     }
     
     if (ivar_func)
@@ -447,6 +449,24 @@ ClassDescriptorV2::GetSuperclass ()
         return ObjCLanguageRuntime::ClassDescriptorSP();
     
     return m_runtime.ObjCLanguageRuntime::GetClassDescriptorFromISA(objc_class->m_superclass);
+}
+
+ObjCLanguageRuntime::ClassDescriptorSP
+ClassDescriptorV2::GetMetaclass () const
+{
+    lldb_private::Process *process = m_runtime.GetProcess();
+    
+    if (!process)
+        return ObjCLanguageRuntime::ClassDescriptorSP();
+    
+    std::unique_ptr<objc_class_t> objc_class;
+    
+    if (!Read_objc_class(process, objc_class))
+        return ObjCLanguageRuntime::ClassDescriptorSP();
+    
+    lldb::addr_t candidate_isa = m_runtime.GetPointerISA(objc_class->m_isa);
+    
+    return ObjCLanguageRuntime::ClassDescriptorSP(new ClassDescriptorV2(m_runtime, candidate_isa, nullptr));
 }
 
 uint64_t

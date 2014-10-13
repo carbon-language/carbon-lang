@@ -40,6 +40,9 @@ public:
         virtual ClassDescriptorSP
         GetSuperclass ();
         
+        virtual ClassDescriptorSP
+        GetMetaclass () const;
+        
         virtual bool
         IsValid ()
         {

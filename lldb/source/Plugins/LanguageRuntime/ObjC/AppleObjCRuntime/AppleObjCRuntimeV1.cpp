@@ -271,6 +271,12 @@ AppleObjCRuntimeV1::ClassDescriptorV1::GetSuperclass ()
     return ObjCLanguageRuntime::ClassDescriptorSP(new AppleObjCRuntimeV1::ClassDescriptorV1(m_parent_isa,process_sp));
 }
 
+AppleObjCRuntime::ClassDescriptorSP
+AppleObjCRuntimeV1::ClassDescriptorV1::GetMetaclass () const
+{
+    return ClassDescriptorSP();
+}
+
 bool
 AppleObjCRuntimeV1::ClassDescriptorV1::Describe (std::function <void (ObjCLanguageRuntime::ObjCISA)> const &superclass_func,
                                                  std::function <bool (const char *, const char *)> const &instance_method_func,

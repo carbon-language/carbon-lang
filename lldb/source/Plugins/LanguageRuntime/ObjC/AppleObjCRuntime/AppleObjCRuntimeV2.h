@@ -157,6 +157,8 @@ private:
         uint64_t                                                    m_objc_debug_isa_magic_mask;
         uint64_t                                                    m_objc_debug_isa_magic_value;
 
+        friend class AppleObjCRuntimeV2;
+        
         DISALLOW_COPY_AND_ASSIGN(NonPointerISACache);
     };
     
@@ -241,6 +243,9 @@ private:
     AppleObjCRuntimeV2 (Process *process,
                         const lldb::ModuleSP &objc_module_sp);
     
+    ObjCISA
+    GetPointerISA (ObjCISA isa);
+    
     bool
     IsTaggedPointer(lldb::addr_t ptr);
     
@@ -263,6 +268,8 @@ private:
     lldb::addr_t
     GetSharedCacheReadOnlyAddress();
     
+    friend class ClassDescriptorV2;
+
     std::unique_ptr<ClangFunction>            m_get_class_info_function;
     std::unique_ptr<ClangUtilityFunction>     m_get_class_info_code;
     lldb::addr_t                            m_get_class_info_args;

@@ -1925,3 +1925,14 @@ AppleObjCRuntimeV2::GetEncodingToType ()
         m_encoding_to_type_sp.reset(new AppleObjCTypeEncodingParser(*this));
     return m_encoding_to_type_sp;
 }
+
+lldb_private::AppleObjCRuntime::ObjCISA
+AppleObjCRuntimeV2::GetPointerISA (ObjCISA isa)
+{
+    ObjCISA ret = isa;
+    
+    if (m_non_pointer_isa_cache_ap)
+        m_non_pointer_isa_cache_ap->EvaluateNonPointerISA(isa, ret);
+    
+    return ret;
+}
