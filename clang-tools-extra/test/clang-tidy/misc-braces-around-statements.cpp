@@ -11,8 +11,17 @@ bool cond(const char *) {
 #define EMPTY_MACRO_FUN()
 
 void test() {
-  // CHECK-NOT: warning
-  // if
+  if (cond("if0") /*comment*/) do_something("same-line");
+  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: statement should be inside braces
+  // CHECK-FIXES:   if (cond("if0") /*comment*/) { do_something("same-line");
+  // CHECK-FIXES: }
+
+  if (cond("if0.1"))
+    do_something("single-line");
+  // CHECK-MESSAGES: :[[@LINE-2]]:21: warning: statement should be inside braces
+  // CHECK-FIXES: if (cond("if0.1")) {
+  // CHECK-FIXES: }
+
   if (cond("if1") /*comment*/)
     // some comment
     do_something("if1");
@@ -28,7 +37,6 @@ void test() {
   // CHECK-FIXES: if (cond("if3")) {
   // CHECK-FIXES: }
 
-  // if-else
   if (cond("if-else1"))
     do_something("if-else1");
   // CHECK-MESSAGES: :[[@LINE-2]]:24: warning: statement should be inside braces
@@ -44,8 +52,6 @@ void test() {
     do_something("if-else2 else");
   }
 
-  // CHECK-NOT: warning
-  // if-else if-else
   if (cond("if-else if-else1"))
     do_something("if");
   // CHECK-MESSAGES: :[[@LINE-2]]:32: warning: statement should be inside braces
@@ -65,7 +71,6 @@ void test() {
     do_something("else");
   }
 
-  // CHECK-NOT: warning
   for (;;)
     do_something("for");
   // CHECK-MESSAGES: :[[@LINE-2]]:11: warning: statement should be inside braces
@@ -80,7 +85,6 @@ void test() {
   // CHECK-FIXES: for (;;) {
   // CHECK-FIXES: }
 
-  // CHECK-NOT: warning
   int arr[4] = {1, 2, 3, 4};
   for (int a : arr)
     do_something("for-range");
@@ -96,7 +100,6 @@ void test() {
   // CHECK-FIXES: for (int a : arr) {
   // CHECK-FIXES: }
 
-  // CHECK-NOT: warning
   while (cond("while1"))
     do_something("while");
   // CHECK-MESSAGES: :[[@LINE-2]]:25: warning: statement should be inside braces
@@ -111,7 +114,6 @@ void test() {
   // CHECK-FIXES: while (false) {
   // CHECK-FIXES: }
 
-  // CHECK-NOT: warning
   do
     do_something("do1");
   while (cond("do1"));
@@ -129,7 +131,6 @@ void test() {
   // CHECK-FIXES: do {
   // CHECK-FIXES: } while (false);
 
-  // CHECK-NOT: warning
   if (cond("ifif1"))
     // comment
     if (cond("ifif2"))
@@ -159,7 +160,6 @@ void test() {
   // CHECK-FIXES: if (cond("ifif5")) {
   // CHECK-FIXES: }/* multi-line
 
-  // CHECK-NOT: warning
   if (1) while (2) if (3) for (;;) do ; while(false) /**/;/**/
   // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: statement should be inside braces
   // CHECK-MESSAGES: :[[@LINE-2]]:19: warning: statement should be inside braces
@@ -171,8 +171,4 @@ void test() {
   // CHECK-FIXES-NEXT: }
   // CHECK-FIXES-NEXT: }
   // CHECK-FIXES-NEXT: }
-
-  // CHECK-NOT: warning
-
-  // CHECK-MESSAGES: {{clang-tidy applied [0-9]+ of [0-9]+ suggested fixes.}}
 }
