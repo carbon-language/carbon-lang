@@ -74,7 +74,17 @@ struct ClassBlockConstr {
   }
 };
 
-int main() {
+template <class T>
+class FuncTemplate {
+  const char *Func;
+
+public:
+  FuncTemplate() : Func(__func__) {}
+  const char *getFunc() const { return Func; }
+};
+
+int
+main() {
   int a;
   ClassInTopLevelNamespace topLevelNamespace;
   ClassBlockConstr classBlockConstr;
@@ -85,6 +95,11 @@ int main() {
   ClassTemplate<int> t;
   t.classTemplateFunction(a);
   return 0;
+}
+#else
+void Foo() {
+  FuncTemplate<int> FTi;
+  (void)FTi.getFunc();
 }
 #endif
 
