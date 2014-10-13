@@ -66,7 +66,7 @@ int main() {
 // CHECK: call void {{.+}} @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{.+}} 1, void {{.+}}* [[CAP_FN6:@.+]] to void
 // CHECK: br label %[[OMP_END:.+]]
 // CHECK: [[OMP_ELSE]]
-// CHECK: call void @__kmpc_serialized_parallel(%{{.+}}* @{{.+}}, i32 %0)
+// CHECK: call void @__kmpc_serialized_parallel(%{{.+}}* @{{.+}}, i32 [[GTID]])
 // CHECK: store i32 [[GTID]], i32* [[GTID_ADDR:%.+]],
 // CHECK: call void [[CAP_FN6]](i32* [[GTID_ADDR]],
 // CHECK: call void @__kmpc_end_serialized_parallel(%{{.+}}* @{{.+}}, i32 [[GTID]])
@@ -102,7 +102,7 @@ int main() {
 // CHECK: call void {{.+}} @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{.+}} 1, void {{.+}}* [[CAP_FN3:@.+]] to void
 // CHECK: br label %[[OMP_END:.+]]
 // CHECK: [[OMP_ELSE]]
-// CHECK: call void @__kmpc_serialized_parallel(%{{.+}}* @{{.+}}, i32 %0)
+// CHECK: call void @__kmpc_serialized_parallel(%{{.+}}* @{{.+}}, i32 [[GTID]])
 // CHECK: store i32 [[GTID]], i32* [[GTID_ADDR:%.+]],
 // CHECK: call void [[CAP_FN3]](i32* [[GTID_ADDR]],
 // CHECK: call void @__kmpc_end_serialized_parallel(%{{.+}}* @{{.+}}, i32 [[GTID]])
