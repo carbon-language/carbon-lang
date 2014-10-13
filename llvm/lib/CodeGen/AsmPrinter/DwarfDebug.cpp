@@ -1365,6 +1365,9 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     return;
   }
 
+#ifndef NDEBUG
+  size_t NumAbstractScopes = LScopes.getAbstractScopesList().size();
+#endif
   // Construct abstract scopes.
   for (LexicalScope *AScope : LScopes.getAbstractScopesList()) {
     DISubprogram SP(AScope->getScopeNode());
@@ -1377,6 +1380,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
       if (!ProcessedVars.insert(DV))
         continue;
       ensureAbstractVariableIsCreated(DV, DV.getContext());
+      assert(LScopes.getAbstractScopesList().size() == NumAbstractScopes
+             && "ensureAbstractVariableIsCreated inserted abstract scopes");
     }
     constructAbstractSubprogramScopeDIE(AScope);
   }
