@@ -397,15 +397,27 @@ isl_id *MemoryAccess::getArrayId() const {
   return isl_map_get_tuple_id(AccessRelation, isl_dim_out);
 }
 
-isl_map *MemoryAccess::getAccessRelation() const {
+isl_pw_multi_aff *
+MemoryAccess::applyScheduleToAccessRelation(isl_union_map *USchedule) const {
+  isl_map *Schedule, *ScheduledAccRel;
+  isl_union_set *UDomain;
+
+  UDomain = isl_union_set_from_set(getStatement()->getDomain());
+  USchedule = isl_union_map_intersect_domain(USchedule, UDomain);
+  Schedule = isl_map_from_union_map(USchedule);
+  ScheduledAccRel = isl_map_apply_domain(getAccessRelation(), Schedule);
+  return isl_pw_multi_aff_from_map(ScheduledAccRel);
+}
+
+isl_map *MemoryAccess::getOriginalAccessRelation() const {
   return isl_map_copy(AccessRelation);
 }
 
-std::string MemoryAccess::getAccessRelationStr() const {
+std::string MemoryAccess::getOriginalAccessRelationStr() const {
   return stringFromIslObj(AccessRelation);
 }
 
-__isl_give isl_space *MemoryAccess::getAccessRelationSpace() const {
+__isl_give isl_space *MemoryAccess::getOriginalAccessRelationSpace() const {
   return isl_map_get_space(AccessRelation);
 }
 
@@ -444,7 +456,7 @@ isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
 // constraints is the set of constraints that needs to be assumed to ensure such
 // statement instances are never executed.
 void MemoryAccess::assumeNoOutOfBound(const IRAccess &Access) {
-  isl_space *Space = isl_space_range(getAccessRelationSpace());
+  isl_space *Space = isl_space_range(getOriginalAccessRelationSpace());
   isl_set *Outside = isl_set_empty(isl_space_copy(Space));
   for (int i = 1, Size = Access.Subscripts.size(); i < Size; ++i) {
     isl_local_space *LS = isl_local_space_from_space(isl_space_copy(Space));
@@ -565,7 +577,7 @@ void MemoryAccess::print(raw_ostream &OS) const {
     break;
   }
   OS << "[Reduction Type: " << getReductionType() << "]\n";
-  OS.indent(16) << getAccessRelationStr() << ";\n";
+  OS.indent(16) << getOriginalAccessRelationStr() << ";\n";
 }
 
 void MemoryAccess::dump() const { print(errs()); }
@@ -618,9 +630,7 @@ static isl_map *getEqualAndLarger(isl_space *setDomain) {
 
 isl_set *MemoryAccess::getStride(__isl_take const isl_map *Schedule) const {
   isl_map *S = const_cast<isl_map *>(Schedule);
-  isl_map *AccessRelation = getNewAccessRelation();
-  if (!AccessRelation)
-    AccessRelation = getAccessRelation();
+  isl_map *AccessRelation = getAccessRelation();
   isl_space *Space = isl_space_range(isl_map_get_space(S));
   isl_map *NextScatt = getEqualAndLarger(Space);
 

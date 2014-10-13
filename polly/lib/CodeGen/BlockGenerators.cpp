@@ -165,25 +165,15 @@ void BlockGenerator::copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
 }
 
 Value *BlockGenerator::getNewAccessOperand(const MemoryAccess &MA) {
-  isl_pw_multi_aff *PWSchedule, *PWAccRel;
-  isl_union_map *ScheduleU;
-  isl_map *Schedule, *AccRel;
+  isl_pw_multi_aff *PWAccRel;
+  isl_union_map *Schedule;
   isl_ast_expr *Expr;
 
   assert(ExprBuilder && Build &&
          "Cannot generate new value without IslExprBuilder!");
 
-  AccRel = MA.getNewAccessRelation();
-  assert(AccRel && "We generate new code only for new access relations!");
-
-  ScheduleU = isl_ast_build_get_schedule(Build);
-  ScheduleU = isl_union_map_intersect_domain(
-      ScheduleU, isl_union_set_from_set(MA.getStatement()->getDomain()));
-  Schedule = isl_map_from_union_map(ScheduleU);
-
-  PWSchedule = isl_pw_multi_aff_from_map(isl_map_reverse(Schedule));
-  PWAccRel = isl_pw_multi_aff_from_map(AccRel);
-  PWAccRel = isl_pw_multi_aff_pullback_pw_multi_aff(PWAccRel, PWSchedule);
+  Schedule = isl_ast_build_get_schedule(Build);
+  PWAccRel = MA.applyScheduleToAccessRelation(Schedule);
 
   Expr = isl_ast_build_access_from_pw_multi_aff(Build, PWAccRel);
   Expr = isl_ast_expr_address_of(Expr);
@@ -197,16 +187,14 @@ Value *BlockGenerator::generateLocationAccessed(const Instruction *Inst,
                                                 ValueMapT &GlobalMap,
                                                 LoopToScevMapT &LTS) {
   const MemoryAccess &MA = Statement.getAccessFor(Inst);
-  isl_map *NewAccRel = MA.getNewAccessRelation();
 
   Value *NewPointer;
-  if (NewAccRel)
+  if (MA.hasNewAccessRelation())
     NewPointer = getNewAccessOperand(MA);
   else
     NewPointer =
         getNewValue(Pointer, BBMap, GlobalMap, LTS, getLoopForInst(Inst));
 
-  isl_map_free(NewAccRel);
   return NewPointer;
 }
 
