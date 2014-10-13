@@ -38,12 +38,25 @@ namespace llvm {
   void llvm_execute_on_thread(void (*UserFn)(void*), void *UserData,
                               unsigned RequestedStackSize = 0);
 
+/// \brief Execute the function specified as a template parameter once.
+///
+/// Calls \p UserFn once ever. The call uniqueness is based on the address of
+/// the function passed in via the template arguement. This means no matter how
+/// many times you call llvm_call_once<foo>() in the same or different
+/// locations, foo will only be called once.
+///
+/// Typical usage:
+/// \code
+///   void foo() {...};
+///   ...
+///   llvm_call_once<foo>();
+/// \endcode
+///
+/// \param UserFn Function to call once.
 template <void (*UserFn)(void)> void llvm_call_once() {
-
 #if !defined(__MINGW__)
   static std::once_flag flag;
   std::call_once(flag, UserFn);
-
 #else
   struct InitOnceWrapper {
     InitOnceWrapper() { UserFn(); }
