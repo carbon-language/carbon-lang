@@ -914,7 +914,6 @@ Debugger::GetTopIOHandlerControlSequence(char ch)
 void
 Debugger::RunIOHandler (const IOHandlerSP& reader_sp)
 {
-    Mutex::Locker locker (m_input_reader_stack.GetMutex());
     PushIOHandler (reader_sp);
     
     IOHandlerSP top_reader_sp = reader_sp;
