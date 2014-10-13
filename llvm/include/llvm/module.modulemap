@@ -153,9 +153,6 @@ module LLVM_Utils {
     exclude header "Support/AIXDataTypesFix.h"
 
     // Exclude this; it's fundamentally non-modular.
-    exclude header "Support/Debug.h"
-
-    // Exclude this; it's fundamentally non-modular.
     exclude header "Support/PluginLoader.h"
 
     // Exclude this; it's a weirdly-factored part of llvm-gcov and conflicts
