@@ -2064,16 +2064,26 @@ APInt APInt::umul_ov(const APInt &RHS, bool &Overflow) const {
   return Res;
 }
 
-APInt APInt::sshl_ov(unsigned ShAmt, bool &Overflow) const {
-  Overflow = ShAmt >= getBitWidth();
+APInt APInt::sshl_ov(const APInt &ShAmt, bool &Overflow) const {
+  Overflow = ShAmt.uge(getBitWidth());
   if (Overflow)
-    ShAmt = getBitWidth()-1;
+    return APInt(BitWidth, 0);
 
   if (isNonNegative()) // Don't allow sign change.
-    Overflow = ShAmt >= countLeadingZeros();
+    Overflow = ShAmt.uge(countLeadingZeros());
   else
-    Overflow = ShAmt >= countLeadingOnes();
+    Overflow = ShAmt.uge(countLeadingOnes());
   
+  return *this << ShAmt;
+}
+
+APInt APInt::ushl_ov(const APInt &ShAmt, bool &Overflow) const {
+  Overflow = ShAmt.uge(getBitWidth());
+  if (Overflow)
+    return APInt(BitWidth, 0);
+
+  Overflow = ShAmt.ugt(countLeadingZeros());
+
   return *this << ShAmt;
 }
 

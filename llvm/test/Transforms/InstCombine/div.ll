@@ -132,11 +132,11 @@ define i32 @test15(i32 %a, i32 %b) nounwind {
 }
 
 define <2 x i64> @test16(<2 x i64> %x) nounwind {
-  %shr = lshr <2 x i64> %x, <i64 3, i64 5>
-  %div = udiv <2 x i64> %shr, <i64 4, i64 6>
+  %shr = lshr <2 x i64> %x, <i64 5, i64 5>
+  %div = udiv <2 x i64> %shr, <i64 6, i64 6>
   ret <2 x i64> %div
 ; CHECK-LABEL: @test16(
-; CHECK-NEXT: udiv <2 x i64> %x, <i64 32, i64 192>
+; CHECK-NEXT: udiv <2 x i64> %x, <i64 192, i64 192>
 ; CHECK-NEXT: ret <2 x i64>
 }
 
@@ -263,4 +263,14 @@ define i32 @test30(i32 %a) {
   ret i32 %div
 ; CHECK-LABEL: @test30(
 ; CHECK-NEXT: ret i32 %a
+}
+
+define <2 x i32> @test31(<2 x i32> %x) nounwind {
+  %shr = lshr <2 x i32> %x, <i32 31, i32 31>
+  %div = udiv <2 x i32> %shr, <i32 2147483647, i32 2147483647>
+  ret <2 x i32> %div
+; CHECK-LABEL: @test31(
+; CHECK-NEXT: %[[shr:.*]] = lshr <2 x i32> %x, <i32 31, i32 31>
+; CHECK-NEXT: udiv <2 x i32> %[[shr]], <i32 2147483647, i32 2147483647>
+; CHECK-NEXT: ret <2 x i32>
 }

@@ -965,11 +965,17 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
     return Common;
 
   // (x lshr C1) udiv C2 --> x udiv (C2 << C1)
-  if (Constant *C2 = dyn_cast<Constant>(Op1)) {
+  {
     Value *X;
-    Constant *C1;
-    if (match(Op0, m_LShr(m_Value(X), m_Constant(C1))))
-      return BinaryOperator::CreateUDiv(X, ConstantExpr::getShl(C2, C1));
+    const APInt *C1, *C2;
+    if (match(Op0, m_LShr(m_Value(X), m_APInt(C1))) &&
+        match(Op1, m_APInt(C2))) {
+      bool Overflow;
+      APInt C2ShlC1 = C2->ushl_ov(*C1, Overflow);
+      if (!Overflow)
+        return BinaryOperator::CreateUDiv(
+            X, ConstantInt::get(X->getType(), C2ShlC1));
+    }
   }
 
   // (zext A) udiv (zext B) --> zext (A udiv B)
