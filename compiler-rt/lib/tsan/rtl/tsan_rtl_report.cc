@@ -627,7 +627,9 @@ void ReportRace(ThreadState *thr) {
   ThreadRegistryLock l0(ctx->thread_registry);
 
   ReportType typ = ReportTypeRace;
-  if (thr->is_vptr_access)
+  if (thr->is_vptr_access && freed)
+    typ = ReportTypeVptrUseAfterFree;
+  else if (thr->is_vptr_access)
     typ = ReportTypeVptrRace;
   else if (freed)
     typ = ReportTypeUseAfterFree;

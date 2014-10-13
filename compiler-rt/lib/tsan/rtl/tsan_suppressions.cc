@@ -60,6 +60,8 @@ SuppressionType conv(ReportType typ) {
     return SuppressionRace;
   else if (typ == ReportTypeUseAfterFree)
     return SuppressionRace;
+  else if (typ == ReportTypeVptrUseAfterFree)
+    return SuppressionRace;
   else if (typ == ReportTypeThreadLeak)
     return SuppressionThread;
   else if (typ == ReportTypeMutexDestroyLocked)

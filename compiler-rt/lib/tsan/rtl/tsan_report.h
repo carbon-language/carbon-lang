@@ -22,6 +22,7 @@ enum ReportType {
   ReportTypeRace,
   ReportTypeVptrRace,
   ReportTypeUseAfterFree,
+  ReportTypeVptrUseAfterFree,
   ReportTypeThreadLeak,
   ReportTypeMutexDestroyLocked,
   ReportTypeMutexDoubleLock,

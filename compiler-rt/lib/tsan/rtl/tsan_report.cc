@@ -70,6 +70,8 @@ static const char *ReportTypeString(ReportType typ) {
     return "data race on vptr (ctor/dtor vs virtual call)";
   if (typ == ReportTypeUseAfterFree)
     return "heap-use-after-free";
+  if (typ == ReportTypeVptrUseAfterFree)
+    return "heap-use-after-free (virtual call vs free)";
   if (typ == ReportTypeThreadLeak)
     return "thread leak";
   if (typ == ReportTypeMutexDestroyLocked)
