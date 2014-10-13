@@ -404,7 +404,7 @@ public:
                                       MachineInstr* MI,
                                       unsigned OpNum,
                                       const SmallVectorImpl<MachineOperand> &MOs,
-                                      unsigned Size, unsigned Alignment, bool AllowCommute) const;
+                                      unsigned Size, unsigned Alignment) const;
 
   void
   getUnconditionalBranch(MCInst &Branch,

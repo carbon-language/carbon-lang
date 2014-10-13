@@ -3337,7 +3337,7 @@ bool X86FastISel::tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
   AM.getFullAddress(AddrOps);
 
   MachineInstr *Result =
-    XII.foldMemoryOperandImpl(*FuncInfo.MF, MI, OpNo, AddrOps, Size, Alignment, /*AllowCommute=*/ true);
+    XII.foldMemoryOperandImpl(*FuncInfo.MF, MI, OpNo, AddrOps, Size, Alignment);
   if (!Result)
     return false;
 
