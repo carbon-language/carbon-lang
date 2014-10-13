@@ -599,15 +599,10 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
       break;
     case tok::lessless: {
       // Determine whether overflow is about to happen.
-      unsigned ShAmt = static_cast<unsigned>(RHS.Val.getLimitedValue());
-      if (LHS.isUnsigned()) {
-        Overflow = ShAmt >= LHS.Val.getBitWidth();
-        if (Overflow)
-          ShAmt = LHS.Val.getBitWidth()-1;
-        Res = LHS.Val << ShAmt;
-      } else {
-        Res = llvm::APSInt(LHS.Val.sshl_ov(ShAmt, Overflow), false);
-      }
+      if (LHS.isUnsigned())
+        Res = LHS.Val.ushl_ov(RHS.Val, Overflow);
+      else
+        Res = llvm::APSInt(LHS.Val.sshl_ov(RHS.Val, Overflow), false);
       break;
     }
     case tok::greatergreater: {
