@@ -296,6 +296,16 @@ CGOpenMPRuntime::CreateRuntimeFunction(OpenMPRTLFunction Function) {
     RTLFn = CGM.CreateRuntimeFunction(FnTy, /*Name*/ "__kmpc_barrier");
     break;
   }
+  case OMPRTL__kmpc_push_num_threads: {
+    // Build void __kmpc_push_num_threads(ident_t *loc, kmp_int32 global_tid,
+    // kmp_int32 num_threads)
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty,
+                                CGM.Int32Ty};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg*/ false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_push_num_threads");
+    break;
+  }
   case OMPRTL__kmpc_serialized_parallel: {
     // Build void __kmpc_serialized_parallel(ident_t *loc, kmp_int32
     // global_tid);
@@ -428,6 +438,18 @@ void CGOpenMPRuntime::EmitOMPBarrierCall(CodeGenFunction &CGF,
   llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc, Flags),
                          GetOpenMPThreadID(CGF, Loc)};
   auto RTLFn = CreateRuntimeFunction(CGOpenMPRuntime::OMPRTL__kmpc_barrier);
+  CGF.EmitRuntimeCall(RTLFn, Args);
+}
+
+void CGOpenMPRuntime::EmitOMPNumThreadsClause(CodeGenFunction &CGF,
+                                              llvm::Value *NumThreads,
+                                              SourceLocation Loc) {
+  // Build call __kmpc_push_num_threads(&loc, global_tid, num_threads)
+  llvm::Value *Args[] = {
+      EmitOpenMPUpdateLocation(CGF, Loc), GetOpenMPThreadID(CGF, Loc),
+      CGF.Builder.CreateIntCast(NumThreads, CGF.Int32Ty, /*isSigned*/ true)};
+  llvm::Constant *RTLFn = CGF.CGM.getOpenMPRuntime().CreateRuntimeFunction(
+      CGOpenMPRuntime::OMPRTL__kmpc_push_num_threads);
   CGF.EmitRuntimeCall(RTLFn, Args);
 }
 

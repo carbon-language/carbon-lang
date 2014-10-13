@@ -183,6 +183,23 @@ void CodeGenFunction::EmitOMPFirstprivateClause(
   }
 }
 
+/// \brief Emits code for OpenMP parallel directive in the parallel region.
+static void EmitOMPParallelCall(CodeGenFunction &CGF,
+                                const OMPParallelDirective &S,
+                                llvm::Value *OutlinedFn,
+                                llvm::Value *CapturedStruct) {
+  if (auto C = S.getSingleClause(/*K*/ OMPC_num_threads)) {
+    CodeGenFunction::RunCleanupsScope NumThreadsScope(CGF);
+    auto NumThreadsClause = cast<OMPNumThreadsClause>(C);
+    auto NumThreads = CGF.EmitScalarExpr(NumThreadsClause->getNumThreads(),
+                                         /*IgnoreResultAssign*/ true);
+    CGF.CGM.getOpenMPRuntime().EmitOMPNumThreadsClause(
+        CGF, NumThreads, NumThreadsClause->getLocStart());
+  }
+  CGF.CGM.getOpenMPRuntime().EmitOMPParallelCall(CGF, S.getLocStart(),
+                                                 OutlinedFn, CapturedStruct);
+}
+
 void CodeGenFunction::EmitOMPParallelDirective(const OMPParallelDirective &S) {
   auto CS = cast<CapturedStmt>(S.getAssociatedStmt());
   auto CapturedStruct = GenerateCapturedStmtArgument(*CS);
@@ -192,16 +209,13 @@ void CodeGenFunction::EmitOMPParallelDirective(const OMPParallelDirective &S) {
     auto Cond = cast<OMPIfClause>(C)->getCondition();
     EmitOMPIfClause(*this, Cond, [&](bool ThenBlock) {
       if (ThenBlock)
-        CGM.getOpenMPRuntime().EmitOMPParallelCall(*this, S.getLocStart(),
-                                                   OutlinedFn, CapturedStruct);
+        EmitOMPParallelCall(*this, S, OutlinedFn, CapturedStruct);
       else
         CGM.getOpenMPRuntime().EmitOMPSerialCall(*this, S.getLocStart(),
                                                  OutlinedFn, CapturedStruct);
     });
-  } else {
-    CGM.getOpenMPRuntime().EmitOMPParallelCall(*this, S.getLocStart(),
-                                               OutlinedFn, CapturedStruct);
-  }
+  } else
+    EmitOMPParallelCall(*this, S, OutlinedFn, CapturedStruct);
 }
 
 void CodeGenFunction::EmitOMPLoopBody(const OMPLoopDirective &S,

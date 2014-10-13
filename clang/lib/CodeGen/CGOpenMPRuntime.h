@@ -80,7 +80,10 @@ public:
     OMPRTL__kmpc_serialized_parallel,
     // Call to void __kmpc_end_serialized_parallel(ident_t *loc, kmp_int32
     // global_tid);
-    OMPRTL__kmpc_end_serialized_parallel
+    OMPRTL__kmpc_end_serialized_parallel,
+    // Call to void __kmpc_push_num_threads(ident_t *loc, kmp_int32 global_tid,
+    // kmp_int32 num_threads);
+    OMPRTL__kmpc_push_num_threads
   };
 
 private:
@@ -250,6 +253,14 @@ public:
   ///
   virtual void EmitOMPBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,
                                   OpenMPLocationFlags Flags);
+
+  /// \brief Emits call to void __kmpc_push_num_threads(ident_t *loc, kmp_int32
+  /// global_tid, kmp_int32 num_threads) to generate code for 'num_threads'
+  /// clause.
+  /// \param NumThreads An integer value of threads.
+  virtual void EmitOMPNumThreadsClause(CodeGenFunction &CGF,
+                                       llvm::Value *NumThreads,
+                                       SourceLocation Loc);
 };
 } // namespace CodeGen
 } // namespace clang

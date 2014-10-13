@@ -3439,7 +3439,6 @@ OMPClause *Sema::ActOnOpenMPNumThreadsClause(Expr *NumThreads,
                                              SourceLocation EndLoc) {
   Expr *ValExpr = NumThreads;
   if (!NumThreads->isValueDependent() && !NumThreads->isTypeDependent() &&
-      !NumThreads->isInstantiationDependent() &&
       !NumThreads->containsUnexpandedParameterPack()) {
     SourceLocation NumThreadsLoc = NumThreads->getLocStart();
     ExprResult Val =
