@@ -1630,13 +1630,13 @@ To start out, we declare our new ``FileSizeParser`` class:
 
 .. code-block:: c++
 
-  struct FileSizeParser : public cl::basic_parser<unsigned> {
+  struct FileSizeParser : public cl::parser<unsigned> {
     // parse - Return true on error.
-    bool parse(cl::Option &O, const char *ArgName, const std::string &ArgValue,
+    bool parse(cl::Option &O, StringRef ArgName, const std::string &ArgValue,
                unsigned &Val);
   };
 
-Our new class inherits from the ``cl::basic_parser`` template class to fill in
+Our new class inherits from the ``cl::parser`` template class to fill in
 the default, boiler plate code for us.  We give it the data type that we parse
 into, the last argument to the ``parse`` method, so that clients of our custom
 parser know what object type to pass in to the parse method.  (Here we declare
@@ -1652,7 +1652,7 @@ implement ``parse`` as:
 
 .. code-block:: c++
 
-  bool FileSizeParser::parse(cl::Option &O, const char *ArgName,
+  bool FileSizeParser::parse(cl::Option &O, StringRef ArgName,
                              const std::string &Arg, unsigned &Val) {
     const char *ArgStart = Arg.c_str();
     char *End;
@@ -1698,7 +1698,7 @@ Which adds this to the output of our program:
   OPTIONS:
     -help                 - display available options (-help-hidden for more)
     ...
-   -max-file-size=<size> - Maximum file size to accept
+    -max-file-size=<size> - Maximum file size to accept
 
 And we can test that our parse works correctly now (the test program just prints
 out the max-file-size argument value):
