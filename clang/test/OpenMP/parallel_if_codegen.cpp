@@ -74,7 +74,7 @@ int main() {
 // CHECK: [[OMP_END]]
 #pragma omp parallel if (Arg)
   fn6();
-  // CHECK: = call i{{.+}} @{{.+}}tmain
+  // CHECK: = call {{.*}}i{{.+}} @{{.+}}tmain
   return tmain(Arg);
 }
 

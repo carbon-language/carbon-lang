@@ -53,8 +53,8 @@ int main() {
 // CHECK:       [[RES:%.+]] = sext i8 [[A_VAL]] to i32
 // CHECK:       call void @__kmpc_push_num_threads([[IDENT_T_TY]]* [[DEF_LOC_2]], i32 [[GTID]], i32 [[RES]])
 // CHECK:       call void {{.*}}* @__kmpc_fork_call(
-// CHECK:       invoke [[INT_TY:i[0-9]+]] [[TMAIN_CHAR_5:@.+]]()
-// CHECK:       invoke [[INT_TY]] [[TMAIN_S_1:@.+]]()
+// CHECK:       invoke{{.*}} [[INT_TY:i[0-9]+]] [[TMAIN_CHAR_5:@.+]]()
+// CHECK:       invoke{{.*}} [[INT_TY]] [[TMAIN_S_1:@.+]]()
 // CHECK:       call {{.*}} [[S_TY_DESTR:@.+]]([[S_TY]]* [[S_ADDR]])
 // CHECK:       ret [[INT_TY]]
 // CHECK:       }
