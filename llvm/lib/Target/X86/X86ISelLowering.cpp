@@ -7895,10 +7895,42 @@ static SDValue lowerVectorShuffleAsBroadcast(MVT VT, SDLoc DL, SDValue V,
                                             "a sorted mask where the broadcast "
                                             "comes from V1.");
 
-  // Check if this is a broadcast of a scalar. We special case lowering for
-  // scalars so that we can more effectively fold with loads.
+  // Go up the chain of (vector) values to try and find a scalar load that
+  // we can combine with the broadcast.
+  for (;;) {
+    switch (V.getOpcode()) {
+    case ISD::CONCAT_VECTORS: {
+      int OperandSize = Mask.size() / V.getNumOperands();
+      V = V.getOperand(BroadcastIdx / OperandSize);
+      BroadcastIdx %= OperandSize;
+      continue;
+    }
+
+    case ISD::INSERT_SUBVECTOR: {
+      SDValue VOuter = V.getOperand(0), VInner = V.getOperand(1);
+      auto ConstantIdx = dyn_cast<ConstantSDNode>(V.getOperand(2));
+      if (!ConstantIdx)
+        break;
+
+      int BeginIdx = (int)ConstantIdx->getZExtValue();
+      int EndIdx =
+          BeginIdx + (int)VInner.getValueType().getVectorNumElements();
+      if (BroadcastIdx >= BeginIdx && BroadcastIdx < EndIdx) {
+        BroadcastIdx -= BeginIdx;
+        V = VInner;
+      } else {
+        V = VOuter;
+      }
+      continue;
+    }
+    }
+    break;
+  }
+
+  // Check if this is a broadcast of a scalar. We special case lowering
+  // for scalars so that we can more effectively fold with loads.
   if (V.getOpcode() == ISD::BUILD_VECTOR ||
-        (V.getOpcode() == ISD::SCALAR_TO_VECTOR && BroadcastIdx == 0)) {
+      (V.getOpcode() == ISD::SCALAR_TO_VECTOR && BroadcastIdx == 0)) {
     V = V.getOperand(BroadcastIdx);
 
     // If the scalar isn't a load we can't broadcast from it in AVX1, only with

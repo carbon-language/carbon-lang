@@ -1579,3 +1579,29 @@ define <8 x i32> @shuffle_v8i32_6caa87e5(<8 x i32> %a, <8 x i32> %b) {
   %shuffle = shufflevector <8 x i32> %a, <8 x i32> %b, <8 x i32> <i32 6, i32 12, i32 10, i32 10, i32 8, i32 7, i32 14, i32 5>
   ret <8 x i32> %shuffle
 }
+
+define <8 x float> @splat_mem_v8f32_2(float* %p) {
+; ALL-LABEL: splat_mem_v8f32_2:
+; ALL:       # BB#0:
+; ALL-NEXT:    vbroadcastss (%rdi), %ymm0
+; ALL-NEXT:    retq
+  %1 = load float* %p
+  %2 = insertelement <4 x float> undef, float %1, i32 0
+  %3 = shufflevector <4 x float> %2, <4 x float> undef, <8 x i32> zeroinitializer
+  ret <8 x float> %3
+}
+
+define <8 x float> @splat_v8f32(<4 x float> %r) {
+; AVX1-LABEL: splat_v8f32:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: splat_v8f32:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vbroadcastss %xmm0, %ymm0
+; AVX2-NEXT:    retq
+  %1 = shufflevector <4 x float> %r, <4 x float> undef, <8 x i32> zeroinitializer
+  ret <8 x float> %1
+}

@@ -734,3 +734,29 @@ define <4 x i64> @splat_mem_v4i64(i64* %ptr) {
   %shuffle = shufflevector <4 x i64> %v, <4 x i64> undef, <4 x i32> <i32 0, i32 0, i32 0, i32 0>
   ret <4 x i64> %shuffle
 }
+
+define <4 x double> @splat_mem_v4f64_2(double* %p) {
+; ALL-LABEL: splat_mem_v4f64_2:
+; ALL:       # BB#0:
+; ALL-NEXT:    vbroadcastsd (%rdi), %ymm0
+; ALL-NEXT:    retq
+  %1 = load double* %p
+  %2 = insertelement <2 x double> undef, double %1, i32 0
+  %3 = shufflevector <2 x double> %2, <2 x double> undef, <4 x i32> zeroinitializer
+  ret <4 x double> %3
+}
+
+define <4 x double> @splat_v4f64(<2 x double> %r) {
+; AVX1-LABEL: splat_v4f64:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0,0]
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: splat_v4f64:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vbroadcastsd %xmm0, %ymm0
+; AVX2-NEXT:    retq
+  %1 = shufflevector <2 x double> %r, <2 x double> undef, <4 x i32> zeroinitializer
+  ret <4 x double> %1
+}
