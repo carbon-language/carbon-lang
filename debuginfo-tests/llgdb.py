@@ -84,7 +84,6 @@ for command in args.script:
 
     try:
         if re.match('^r|(run)$', cmd[0]):
-            import time, random; time.sleep(random.randint(0,10))
             error = lldb.SBError()
             launchinfo = lldb.SBLaunchInfo([])
             launchinfo.SetWorkingDirectory(os.getcwd())
@@ -95,10 +94,9 @@ for command in args.script:
                 print "State = %d" % state
                 print """
 ERROR: Could not launch process.
-NOTE: There are several resons why this may happen:
+NOTE: There are several reasons why this may happen:
   * Root needs to run "DevToolsSecurity --enable".
-  * We launched ("run") more than one process simultaneously.
-    (cf. rdar://problem/14929651)
+  * Older versions of lldb cannot launch more than one process simultaneously.
 """
                 sys.exit(1)
 
