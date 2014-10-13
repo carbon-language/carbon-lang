@@ -10,6 +10,6 @@
 CLANG_LEVEL := ../../..
 include $(CLANG_LEVEL)/../../Makefile.config
 
-PARALLEL_DIRS := clang-apply-replacements clang-modernize clang-query clang-tidy
+PARALLEL_DIRS := clang-apply-replacements clang-modernize clang-query clang-tidy clang-rename
 
 include $(CLANG_LEVEL)/Makefile

@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "USRFindingAction.h"
-#include "RenamingAction.h"
+#include "../USRFindingAction.h"
+#include "../RenamingAction.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/FileManager.h"

@@ -8,13 +8,9 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL := ../../..
-TOOLNAME = clang-rename
+LIBRARYNAME = clangRename
 include $(CLANG_LEVEL)/../../Makefile.config
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc option
-USEDLIBS = clangFrontend.a clangSerialization.a clangDriver.a \
-           clangTooling.a clangParse.a clangSema.a clangIndex.a \
-           clangStaticAnalyzerFrontend.a clangStaticAnalyzerCheckers.a \
-           clangStaticAnalyzerCore.a clangAnalysis.a clangRewriteFrontend.a \
-           clangRewrite.a clangEdit.a clangAST.a clangLex.a clangBasic.a
+
+DIRS = tool
 
 include $(CLANG_LEVEL)/Makefile
