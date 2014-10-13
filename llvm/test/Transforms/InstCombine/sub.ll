@@ -142,8 +142,9 @@ define i32 @test15(i32 %A, i32 %B) {
 	%D = srem i32 %B, %C
 	ret i32 %D
 ; CHECK-LABEL: @test15(
-; CHECK: %D = srem i32 %B, %A
-; CHECK: ret i32 %D
+; CHECK:      %[[sub:.*]] = sub i32 0, %A
+; CHECK-NEXT: %[[rem:.*]] = srem i32 %B, %[[sub]]
+; CHECK: ret i32 %[[rem]]
 }
 
 define i32 @test16(i32 %A) {

@@ -1324,15 +1324,15 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
   if (Instruction *Common = commonIRemTransforms(I))
     return Common;
 
-  if (Value *RHSNeg = dyn_castNegVal(Op1))
-    if (!isa<Constant>(RHSNeg) ||
-        (isa<ConstantInt>(RHSNeg) &&
-         cast<ConstantInt>(RHSNeg)->getValue().isStrictlyPositive())) {
-      // X % -Y -> X % Y
+  {
+    const APInt *Y;
+    // X % -Y -> X % Y
+    if (match(Op1, m_APInt(Y)) && Y->isNegative() && !Y->isMinSignedValue()) {
       Worklist.AddValue(I.getOperand(1));
-      I.setOperand(1, RHSNeg);
+      I.setOperand(1, ConstantInt::get(I.getType(), -*Y));
       return &I;
     }
+  }
 
   // If the sign bits of both operands are zero (i.e. we can prove they are
   // unsigned inputs), turn this into a urem.

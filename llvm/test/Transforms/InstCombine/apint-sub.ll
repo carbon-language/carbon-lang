@@ -95,12 +95,6 @@ define i1024 @test14(i1024 %A) {
 	ret i1024 %D
 }
 
-define i14 @test15(i14 %A, i14 %B) {
-	%C = sub i14 0, %A		; <i14> [#uses=1]
-	%D = srem i14 %B, %C		; <i14> [#uses=1]
-	ret i14 %D
-}
-
 define i51 @test16(i51 %A) {
 	%X = sdiv i51 %A, 1123		; <i51> [#uses=1]
 	%Y = sub i51 0, %X		; <i51> [#uses=1]
