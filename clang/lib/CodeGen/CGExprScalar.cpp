@@ -1388,9 +1388,9 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
       E->getType()->getPointeeCXXRecordDecl();
     assert(DerivedClassDecl && "DerivedToBase arg isn't a C++ object pointer!");
 
-    return CGF.GetAddressOfBaseClass(Visit(E), DerivedClassDecl,
-                                     CE->path_begin(), CE->path_end(),
-                                     ShouldNullCheckClassCastValue(CE));
+    return CGF.GetAddressOfBaseClass(
+        Visit(E), DerivedClassDecl, CE->path_begin(), CE->path_end(),
+        ShouldNullCheckClassCastValue(CE), CE->getExprLoc());
   }
   case CK_Dynamic: {
     Value *V = Visit(const_cast<Expr*>(E));

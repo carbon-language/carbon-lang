@@ -377,7 +377,7 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
           GetAddressOfBaseClass(Object, Adjustment.DerivedToBase.DerivedClass,
                                 Adjustment.DerivedToBase.BasePath->path_begin(),
                                 Adjustment.DerivedToBase.BasePath->path_end(),
-                                /*NullCheckValue=*/ false);
+                                /*NullCheckValue=*/ false, E->getExprLoc());
       break;
 
     case SubobjectAdjustment::FieldAdjustment: {
@@ -448,8 +448,8 @@ bool CodeGenFunction::sanitizePerformTypeCheck() const {
 }
 
 void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
-                                    llvm::Value *Address,
-                                    QualType Ty, CharUnits Alignment) {
+                                    llvm::Value *Address, QualType Ty,
+                                    CharUnits Alignment, bool SkipNullCheck) {
   if (!sanitizePerformTypeCheck())
     return;
 
@@ -464,13 +464,15 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
   llvm::Value *Cond = nullptr;
   llvm::BasicBlock *Done = nullptr;
 
-  if (SanOpts->Null || TCK == TCK_DowncastPointer) {
+  bool AllowNullPointers = TCK == TCK_DowncastPointer || TCK == TCK_Upcast ||
+                           TCK == TCK_UpcastToVirtualBase;
+  if ((SanOpts->Null || AllowNullPointers) && !SkipNullCheck) {
     // The glvalue must not be an empty glvalue.
     Cond = Builder.CreateICmpNE(
         Address, llvm::Constant::getNullValue(Address->getType()));
 
-    if (TCK == TCK_DowncastPointer) {
-      // When performing a pointer downcast, it's OK if the value is null.
+    if (AllowNullPointers) {
+      // When performing pointer casts, it's OK if the value is null.
       // Skip the remaining checks in that case.
       Done = createBasicBlock("null");
       llvm::BasicBlock *Rest = createBasicBlock("not.null");
@@ -536,7 +538,8 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
   CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
   if (SanOpts->Vptr &&
       (TCK == TCK_MemberAccess || TCK == TCK_MemberCall ||
-       TCK == TCK_DowncastPointer || TCK == TCK_DowncastReference) &&
+       TCK == TCK_DowncastPointer || TCK == TCK_DowncastReference ||
+       TCK == TCK_UpcastToVirtualBase) &&
       RD && RD->hasDefinition() && RD->isDynamicClass()) {
     // Compute a hash of the mangled name of the type.
     //
@@ -2874,10 +2877,9 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     llvm::Value *This = LV.getAddress();
 
     // Perform the derived-to-base conversion
-    llvm::Value *Base =
-      GetAddressOfBaseClass(This, DerivedClassDecl,
-                            E->path_begin(), E->path_end(),
-                            /*NullCheckValue=*/false);
+    llvm::Value *Base = GetAddressOfBaseClass(
+        This, DerivedClassDecl, E->path_begin(), E->path_end(),
+        /*NullCheckValue=*/false, E->getExprLoc());
 
     return MakeAddrLValue(Base, E->getType());
   }

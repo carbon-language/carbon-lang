@@ -1,11 +1,12 @@
 // RUN: %clangxx -fsanitize=alignment -g %s -O3 -o %t
-// RUN: %run %t l0 && %run %t s0 && %run %t r0 && %run %t m0 && %run %t f0 && %run %t n0
+// RUN: %run %t l0 && %run %t s0 && %run %t r0 && %run %t m0 && %run %t f0 && %run %t n0 && %run %t u0
 // RUN: %run %t l1 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD --strict-whitespace
 // RUN: %run %t s1 2>&1 | FileCheck %s --check-prefix=CHECK-STORE
 // RUN: %run %t r1 2>&1 | FileCheck %s --check-prefix=CHECK-REFERENCE
 // RUN: %run %t m1 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER
 // RUN: %run %t f1 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN
 // RUN: %run %t n1 2>&1 | FileCheck %s --check-prefix=CHECK-NEW
+// RUN: %run %t u1 2>&1 | FileCheck %s --check-prefix=CHECK-UPCAST
 // RUN: UBSAN_OPTIONS=print_stacktrace=1 %run %t l1 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD --check-prefix=CHECK-%os-STACK-LOAD
 
 // RUN: %clangxx -fsanitize=alignment -fno-sanitize-recover %s -O3 -o %t
@@ -20,12 +21,17 @@ struct S {
   int k;
 };
 
+struct T : S {
+  int t;
+};
+
 int main(int, char **argv) {
   char c[] __attribute__((aligned(8))) = { 0, 0, 0, 0, 1, 2, 3, 4, 5 };
 
   // Pointer value may be unspecified here, but behavior is not undefined.
   int *p = (int*)&c[4 + argv[1][1] - '0'];
   S *s = (S*)p;
+  T *t = (T*)p;
 
   void *wild = reinterpret_cast<void *>(0x123L);
 
@@ -80,6 +86,15 @@ int main(int, char **argv) {
     // CHECK-NEW-NEXT: {{^ 00 00 00 01 02 03 04  05}}
     // CHECK-NEW-NEXT: {{^             \^}}
     return (new (s) S)->k && 0;
+
+  case 'u': {
+    // CHECK-UPCAST: misaligned.cpp:[[@LINE+4]]:17: runtime error: upcast of misaligned address [[PTR:0x[0-9a-f]*]] for type 'T', which requires 4 byte alignment
+    // CHECK-UPCAST-NEXT: [[PTR]]: note: pointer points here
+    // CHECK-UPCAST-NEXT: {{^ 00 00 00 01 02 03 04  05}}
+    // CHECK-UPCAST-NEXT: {{^             \^}}
+    S *s2 = (S*)t;
+    return s2->f();
+  }
 
   case 'w':
     // CHECK-WILD: misaligned.cpp:[[@LINE+3]]:35: runtime error: member access within misaligned address 0x000000000123 for type 'S', which requires 4 byte alignment

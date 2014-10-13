@@ -1681,7 +1681,7 @@ public:
                                      const CXXRecordDecl *Derived,
                                      CastExpr::path_const_iterator PathBegin,
                                      CastExpr::path_const_iterator PathEnd,
-                                     bool NullCheckValue);
+                                     bool NullCheckValue, SourceLocation Loc);
 
   llvm::Value *GetAddressOfDerivedClass(llvm::Value *Value,
                                         const CXXRecordDecl *Derived,
@@ -1776,7 +1776,13 @@ public:
     TCK_DowncastPointer,
     /// Checking the operand of a static_cast to a derived reference type. Must
     /// be an object within its lifetime.
-    TCK_DowncastReference
+    TCK_DowncastReference,
+    /// Checking the operand of a cast to a base object. Must be suitably sized
+    /// and aligned.
+    TCK_Upcast,
+    /// Checking the operand of a cast to a virtual base object. Must be an
+    /// object within its lifetime.
+    TCK_UpcastToVirtualBase
   };
 
   /// \brief Whether any type-checking sanitizers are enabled. If \c false,
@@ -1786,7 +1792,8 @@ public:
   /// \brief Emit a check that \p V is the address of storage of the
   /// appropriate size and alignment for an object of type \p Type.
   void EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc, llvm::Value *V,
-                     QualType Type, CharUnits Alignment = CharUnits::Zero());
+                     QualType Type, CharUnits Alignment = CharUnits::Zero(),
+                     bool SkipNullCheck = false);
 
   /// \brief Emit a check that \p Base points into an array object, which
   /// we can access at index \p Index. \p Accessed should be \c false if we

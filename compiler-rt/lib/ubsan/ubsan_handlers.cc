@@ -30,10 +30,10 @@ static bool ignoreReport(SourceLocation SLoc, ReportOptions Opts) {
 }
 
 namespace __ubsan {
-  const char *TypeCheckKinds[] = {
+const char *TypeCheckKinds[] = {
     "load of", "store to", "reference binding to", "member access within",
-    "member call on", "constructor call on", "downcast of", "downcast of"
-  };
+    "member call on", "constructor call on", "downcast of", "downcast of",
+    "upcast of", "cast to virtual base of"};
 }
 
 static void handleTypeMismatchImpl(TypeMismatchData *Data, ValueHandle Pointer,

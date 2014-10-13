@@ -404,6 +404,40 @@ void indirect_function_call(void (*p)(int)) {
   p(42);
 }
 
+namespace UpcastPointerTest {
+struct S {};
+struct T : S { double d; };
+struct V : virtual S {};
+
+// CHECK-LABEL: upcast_pointer
+S* upcast_pointer(T* t) {
+  // Check for null pointer
+  // CHECK: %[[NONNULL:.*]] = icmp ne {{.*}}, null
+  // CHECK: br i1 %[[NONNULL]]
+
+  // Check alignment
+  // CHECK: %[[MISALIGN:.*]] = and i64 %{{.*}}, 7
+  // CHECK: icmp eq i64 %[[MISALIGN]], 0
+
+  // CHECK: call void @__ubsan_handle_type_mismatch
+  return t;
+}
+
+V getV();
+
+// CHECK-LABEL: upcast_to_vbase
+void upcast_to_vbase() {
+  // No need to check for null here, as we have a temporary here.
+
+  // CHECK-NOT: br i1
+
+  // CHECK: call i64 @llvm.objectsize
+  // CHECK: call void @__ubsan_handle_type_mismatch
+  // CHECK: call void @__ubsan_handle_dynamic_type_cache_miss
+  const S& s = getV();
+}
+}
+
 namespace CopyValueRepresentation {
   // CHECK-LABEL: define {{.*}} @_ZN23CopyValueRepresentation2S3aSERKS0_
   // CHECK-NOT: call {{.*}} @__ubsan_handle_load_invalid_value

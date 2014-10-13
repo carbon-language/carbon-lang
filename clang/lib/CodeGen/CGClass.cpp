@@ -134,12 +134,11 @@ ApplyNonVirtualAndVirtualOffset(CodeGenFunction &CGF, llvm::Value *ptr,
   return ptr;
 }
 
-llvm::Value *
-CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value, 
-                                       const CXXRecordDecl *Derived,
-                                       CastExpr::path_const_iterator PathBegin,
-                                       CastExpr::path_const_iterator PathEnd,
-                                       bool NullCheckValue) {
+llvm::Value *CodeGenFunction::GetAddressOfBaseClass(
+    llvm::Value *Value, const CXXRecordDecl *Derived,
+    CastExpr::path_const_iterator PathBegin,
+    CastExpr::path_const_iterator PathEnd, bool NullCheckValue,
+    SourceLocation Loc) {
   assert(PathBegin != PathEnd && "Base path should not be empty!");
 
   CastExpr::path_const_iterator Start = PathBegin;
@@ -176,9 +175,16 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
   llvm::Type *BasePtrTy = 
     ConvertType((PathEnd[-1])->getType())->getPointerTo();
 
+  QualType DerivedTy = getContext().getRecordType(Derived);
+  CharUnits DerivedAlign = getContext().getTypeAlignInChars(DerivedTy);
+
   // If the static offset is zero and we don't have a virtual step,
   // just do a bitcast; null checks are unnecessary.
   if (NonVirtualOffset.isZero() && !VBase) {
+    if (sanitizePerformTypeCheck()) {
+      EmitTypeCheck(TCK_Upcast, Loc, Value, DerivedTy, DerivedAlign,
+                    !NullCheckValue);
+    }
     return Builder.CreateBitCast(Value, BasePtrTy);
   }
 
@@ -195,6 +201,11 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
     llvm::Value *isNull = Builder.CreateIsNull(Value);
     Builder.CreateCondBr(isNull, endBB, notNullBB);
     EmitBlock(notNullBB);
+  }
+
+  if (sanitizePerformTypeCheck()) {
+    EmitTypeCheck(VBase ? TCK_UpcastToVirtualBase : TCK_Upcast, Loc, Value,
+                  DerivedTy, DerivedAlign, true);
   }
 
   // Compute the virtual offset.
