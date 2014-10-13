@@ -130,7 +130,7 @@ _Unwind_Backtrace(_Unwind_Trace_Fn callback, void *ref) {
     struct _Unwind_Context *context = (struct _Unwind_Context *)&cursor;
     size_t off;
     size_t len;
-    uint32_t* unwindInfo = (uint32_t *) frameInfo.unwind_info;
+    const uint32_t* unwindInfo = (uint32_t *) frameInfo.unwind_info;
     unwindInfo = decode_eht_entry(unwindInfo, &off, &len);
     if (unwindInfo == NULL) {
       return _URC_FAILURE;

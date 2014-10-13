@@ -638,7 +638,7 @@ struct EHABISectionIterator {
   }
 
   EHABISectionIterator(A& addressSpace, const UnwindInfoSections& sects, size_t i)
-      : _addressSpace(&addressSpace), _sects(&sects), _i(i) {}
+      : _i(i), _addressSpace(&addressSpace), _sects(&sects) {}
 
   _Self& operator++() { ++_i; return *this; }
   _Self& operator+=(size_t a) { _i += a; return *this; }
