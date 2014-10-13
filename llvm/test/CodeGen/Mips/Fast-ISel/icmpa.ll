@@ -45,6 +45,7 @@ entry:
 ; CHECK-DAG:  lw	$[[REG_C:[0-9]+]], 0($[[REG_C_GOT]])
 ; CHECK:  xor  $[[REG1:[0-9]+]], $[[REG_C]], $[[REG_D]]
 ; CHECK:  sltu  $[[REG2:[0-9]+]], $zero, $[[REG1]]
+; FIXME: This instruction is redundant. The sltu can only produce 0 and 1.
 ; CHECK:  andi  ${{[0-9]+}}, $[[REG2]], 1
 
   store i32 %conv, i32* @b1, align 4
@@ -64,6 +65,7 @@ entry:
 ; CHECK-DAG:  lw	$[[REG_UD:[0-9]+]], 0($[[REG_UD_GOT]])
 ; CHECK-DAG:  lw	$[[REG_UC:[0-9]+]], 0($[[REG_UC_GOT]])
 ; CHECK:  sltu  $[[REG1:[0-9]+]], $[[REG_UD]], $[[REG_UC]]
+; FIXME: This instruction is redundant. The sltu can only produce 0 and 1.
 ; CHECK:  andi  ${{[0-9]+}}, $[[REG1]], 1
 
   store i32 %conv, i32* @b1, align 4
@@ -83,6 +85,7 @@ entry:
 ; CHECK-DAG:  lw	$[[REG_UD:[0-9]+]], 0($[[REG_UD_GOT]])
 ; CHECK-DAG:  lw	$[[REG_UC:[0-9]+]], 0($[[REG_UC_GOT]])
 ; CHECK:  sltu  $[[REG1:[0-9]+]], $[[REG_UC]], $[[REG_UD]]
+; FIXME: This instruction is redundant. The sltu can only produce 0 and 1.
 ; CHECK:  andi  ${{[0-9]+}}, $[[REG1]], 1
   store i32 %conv, i32* @b1, align 4
   ret void
@@ -102,6 +105,7 @@ entry:
 ; CHECK-DAG:  lw	$[[REG_UC:[0-9]+]], 0($[[REG_UC_GOT]])
 ; CHECK:  sltu  $[[REG1:[0-9]+]], $[[REG_UC]], $[[REG_UD]]
 ; CHECK:  xori  $[[REG2:[0-9]+]], $[[REG1]], 1
+; FIXME: This instruction is redundant. The sltu can only produce 0 and 1.
 ; CHECK:  andi  ${{[0-9]+}}, $[[REG2]], 1
   store i32 %conv, i32* @b1, align 4
   ret void
@@ -121,6 +125,7 @@ entry:
 ; CHECK-DAG:  lw	$[[REG_UC:[0-9]+]], 0($[[REG_UC_GOT]])
 ; CHECK:  sltu  $[[REG1:[0-9]+]], $[[REG_UD]], $[[REG_UC]]
 ; CHECK:  xori  $[[REG2:[0-9]+]], $[[REG1]], 1
+; FIXME: This instruction is redundant. The sltu can only produce 0 and 1.
 ; CHECK:  andi  ${{[0-9]+}}, $[[REG2]], 1
   store i32 %conv, i32* @b1, align 4
   ret void
@@ -139,6 +144,7 @@ entry:
 ; CHECK-DAG:  lw	$[[REG_D:[0-9]+]], 0($[[REG_D_GOT]])
 ; CHECK-DAG:  lw	$[[REG_C:[0-9]+]], 0($[[REG_C_GOT]])
 ; CHECK:  slt  $[[REG1:[0-9]+]], $[[REG_D]], $[[REG_C]]
+; FIXME: This instruction is redundant. The slt can only produce 0 and 1.
 ; CHECK:  andi  ${{[0-9]+}}, $[[REG1]], 1
   store i32 %conv, i32* @b1, align 4
   ret void
@@ -157,6 +163,7 @@ entry:
 ; CHECK-DAG:  lw	$[[REG_D:[0-9]+]], 0($[[REG_D_GOT]])
 ; CHECK-DAG:  lw	$[[REG_C:[0-9]+]], 0($[[REG_C_GOT]])
 ; CHECK:  slt  $[[REG1:[0-9]+]], $[[REG_C]], $[[REG_D]]
+; FIXME: This instruction is redundant. The slt can only produce 0 and 1.
 ; CHECK:  andi  ${{[0-9]+}}, $[[REG1]], 1
   store i32 %conv, i32* @b1, align 4
   ret void
@@ -177,6 +184,7 @@ entry:
 ; CHECK-DAG:  lw	$[[REG_C:[0-9]+]], 0($[[REG_C_GOT]])
 ; CHECK:  slt  $[[REG1:[0-9]+]], $[[REG_C]], $[[REG_D]]
 ; CHECK:  xori  $[[REG2:[0-9]+]], $[[REG1]], 1
+; FIXME: This instruction is redundant. The slt can only produce 0 and 1.
 ; CHECK:  andi  ${{[0-9]+}}, $[[REG2]], 1
   ret void
 }
@@ -195,9 +203,8 @@ entry:
 ; CHECK-DAG:  lw	$[[REG_C:[0-9]+]], 0($[[REG_C_GOT]])
 ; CHECK:        slt     $[[REG1:[0-9]+]], $[[REG_D]], $[[REG_C]]
 ; CHECK:        xori    $[[REG2:[0-9]+]], $[[REG1]], 1
+; FIXME: This instruction is redundant. The slt can only produce 0 and 1.
 ; CHECK:        andi    ${{[0-9]+}}, $[[REG2]], 1
   store i32 %conv, i32* @b1, align 4
   ret void
 }
-
-
