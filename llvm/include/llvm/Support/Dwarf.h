@@ -21,22 +21,6 @@
 
 namespace llvm {
 
-//===----------------------------------------------------------------------===//
-// Debug info constants.
-
-enum : uint32_t {
-  LLVMDebugVersion = (12 << 16),    // Current version of debug information.
-  LLVMDebugVersion11 = (11 << 16),  // Constant for version 11.
-  LLVMDebugVersion10 = (10 << 16),  // Constant for version 10.
-  LLVMDebugVersion9 = (9 << 16),    // Constant for version 9.
-  LLVMDebugVersion8 = (8 << 16),    // Constant for version 8.
-  LLVMDebugVersion7 = (7 << 16),    // Constant for version 7.
-  LLVMDebugVersion6 = (6 << 16),    // Constant for version 6.
-  LLVMDebugVersion5 = (5 << 16),    // Constant for version 5.
-  LLVMDebugVersion4 = (4 << 16),    // Constant for version 4.
-  LLVMDebugVersionMask = 0xffff0000 // Mask for version number.
-};
-
 namespace dwarf {
 
 //===----------------------------------------------------------------------===//
