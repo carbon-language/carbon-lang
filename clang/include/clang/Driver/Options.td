@@ -1169,6 +1169,13 @@ def mno_long_calls : Flag<["-"], "mno-long-calls">, Group<m_arm_Features_Group>,
 def mgeneral_regs_only : Flag<["-"], "mgeneral-regs-only">, Group<m_aarch64_Features_Group>,
   HelpText<"Generate code which only uses the general purpose registers (AArch64 only)">;
 
+def mfix_cortex_a53_835769 : Flag<["-"], "mfix-cortex-a53-835769">,
+  Group<m_aarch64_Features_Group>,
+  HelpText<"Workaround Cortex-A53 erratum 835769 (AArch64 only)">;
+def mno_fix_cortex_a53_835769 : Flag<["-"], "mno-fix-cortex-a53-835769">,
+  Group<m_aarch64_Features_Group>,
+  HelpText<"Don't workaround Cortex-A53 erratum 835769 (AArch64 only)">;
+
 def mvsx : Flag<["-"], "mvsx">, Group<m_ppc_Features_Group>;
 def mno_vsx : Flag<["-"], "mno-vsx">, Group<m_ppc_Features_Group>;
 def mpower8_vector : Flag<["-"], "mpower8-vector">,
