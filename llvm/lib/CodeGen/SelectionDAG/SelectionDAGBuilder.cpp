@@ -2353,7 +2353,6 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec &CR,
 bool SelectionDAGBuilder::handleBTSplitSwitchCase(CaseRec& CR,
                                                   CaseRecVector& WorkList,
                                                   const Value* SV,
-                                                  MachineBasicBlock* Default,
                                                   MachineBasicBlock* SwitchBB) {
   // Get the MachineFunction which holds the current MBB.  This is used when
   // inserting any additional MBBs necessary to represent the switch.
@@ -2618,10 +2617,8 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
 }
 
 /// Clusterify - Transform simple list of Cases into list of CaseRange's
-size_t SelectionDAGBuilder::Clusterify(CaseVector& Cases,
-                                       const SwitchInst& SI) {
-  size_t numCmps = 0;
-
+void SelectionDAGBuilder::Clusterify(CaseVector& Cases,
+                                     const SwitchInst& SI) {
   BranchProbabilityInfo *BPI = FuncInfo.BPI;
   // Start with "simple" cases
   for (SwitchInst::ConstCaseIt i = SI.case_begin(), e = SI.case_end();
@@ -2659,13 +2656,15 @@ size_t SelectionDAGBuilder::Clusterify(CaseVector& Cases,
       }
     }
 
-  for (CaseItr I=Cases.begin(), E=Cases.end(); I!=E; ++I, ++numCmps) {
-    if (I->Low != I->High)
-      // A range counts double, since it requires two compares.
-      ++numCmps;
-  }
+  DEBUG({
+      size_t numCmps = 0;
+      for (auto &I : Cases)
+        // A range counts double, since it requires two compares.
+        numCmps += I.Low != I.High ? 2 : 1;
 
-  return numCmps;
+      dbgs() << "Clusterify finished. Total clusters: " << Cases.size()
+             << ". Total compares: " << numCmps << '\n';
+    });
 }
 
 void SelectionDAGBuilder::UpdateSplitBlock(MachineBasicBlock *First,
@@ -2707,10 +2706,7 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
   // representing each one, and sort the vector so that we can efficiently
   // create a binary search tree from them.
   CaseVector Cases;
-  size_t numCmps = Clusterify(Cases, SI);
-  DEBUG(dbgs() << "Clusterify finished. Total clusters: " << Cases.size()
-               << ". Total compares: " << numCmps << '\n');
-  (void)numCmps;
+  Clusterify(Cases, SI);
 
   // Get the Value to be switched on and default basic blocks, which will be
   // inserted into CaseBlock records, representing basic blocks in the binary
@@ -2744,7 +2740,7 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
 
     // Emit binary tree. We need to pick a pivot, and push left and right ranges
     // onto the worklist. Leafs are handled via handleSmallSwitchRange() call.
-    handleBTSplitSwitchCase(CR, WorkList, SV, Default, SwitchMBB);
+    handleBTSplitSwitchCase(CR, WorkList, SV, SwitchMBB);
   }
 }
 
