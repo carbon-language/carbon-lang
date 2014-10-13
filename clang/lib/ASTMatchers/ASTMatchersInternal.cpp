@@ -99,8 +99,8 @@ DynTypedMatcher DynTypedMatcher::constructVariadic(
   // The different operators might deal differently with a mismatch.
   // Make it the same as SupportedKind, since that is the broadest type we are
   // allowed to accept.
-  return DynTypedMatcher(InnerMatchers[0].SupportedKind,
-                         InnerMatchers[0].SupportedKind,
+  auto SupportedKind = InnerMatchers[0].SupportedKind;
+  return DynTypedMatcher(SupportedKind, SupportedKind,
                          new VariadicMatcher(Func, std::move(InnerMatchers)));
 }
 
