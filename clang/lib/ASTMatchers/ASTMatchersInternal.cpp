@@ -89,18 +89,19 @@ static llvm::ManagedStatic<TrueMatcherImpl> TrueMatcherInstance;
 DynTypedMatcher DynTypedMatcher::constructVariadic(
     VariadicOperatorFunction Func, std::vector<DynTypedMatcher> InnerMatchers) {
   assert(InnerMatchers.size() > 0 && "Array must not be empty.");
-  DynTypedMatcher Result = InnerMatchers[0];
-  // Use the least derived type as the restriction for the wrapper.
-  // This allows mismatches to be resolved on the inner matchers.
-  for (const DynTypedMatcher &M : InnerMatchers) {
-    assert(Result.SupportedKind.isSame(M.SupportedKind) &&
-           "SupportedKind must match!");
-    Result.RestrictKind =
-        ast_type_traits::ASTNodeKind::getMostDerivedCommonAncestor(
-            Result.RestrictKind, M.RestrictKind);
-  }
-  Result.Implementation = new VariadicMatcher(Func, std::move(InnerMatchers));
-  return Result;
+  assert(std::all_of(InnerMatchers.begin(), InnerMatchers.end(),
+                     [&InnerMatchers](const DynTypedMatcher &M) {
+           return InnerMatchers[0].SupportedKind.isSame(M.SupportedKind);
+         }) &&
+         "SupportedKind must match!");
+
+  // We must relax the restrict kind here.
+  // The different operators might deal differently with a mismatch.
+  // Make it the same as SupportedKind, since that is the broadest type we are
+  // allowed to accept.
+  return DynTypedMatcher(InnerMatchers[0].SupportedKind,
+                         InnerMatchers[0].SupportedKind,
+                         new VariadicMatcher(Func, std::move(InnerMatchers)));
 }
 
 DynTypedMatcher DynTypedMatcher::trueMatcher(

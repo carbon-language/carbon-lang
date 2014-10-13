@@ -380,6 +380,13 @@ TEST_F(RegistryTest, VariadicOp) {
 
   EXPECT_FALSE(matches("class Bar{ int Foo; };", D));
   EXPECT_TRUE(matches("class OtherBar{ int Foo; };", D));
+
+  D = constructMatcher(
+          "namedDecl", constructMatcher("hasName", std::string("Foo")),
+          constructMatcher("unless", constructMatcher("recordDecl")))
+          .getTypedMatcher<Decl>();
+  EXPECT_TRUE(matches("void Foo(){}", D));
+  EXPECT_TRUE(notMatches("struct Foo {};", D));
 }
 
 TEST_F(RegistryTest, Errors) {

@@ -591,6 +591,11 @@ TEST(DeclarationMatcher, MatchNot) {
   EXPECT_TRUE(matches("class X { class Z {}; };", ClassXHasNotClassY));
   EXPECT_TRUE(notMatches("class X { class Y {}; class Z {}; };",
                          ClassXHasNotClassY));
+
+  DeclarationMatcher NamedNotRecord =
+      namedDecl(hasName("Foo"), unless(recordDecl()));
+  EXPECT_TRUE(matches("void Foo(){}", NamedNotRecord));
+  EXPECT_TRUE(notMatches("struct Foo {};", NamedNotRecord));
 }
 
 TEST(DeclarationMatcher, HasDescendant) {
