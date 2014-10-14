@@ -135,7 +135,10 @@ void MangleContext::mangleName(const NamedDecl *D, raw_ostream &Out) {
   bool MCXX = shouldMangleCXXName(D);
   const TargetInfo &TI = Context.getTargetInfo();
   if (CC == SOF_OTHER || (MCXX && TI.getCXXABI() == TargetCXXABI::Microsoft)) {
-    mangleCXXName(D, Out);
+    if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D))
+      mangleObjCMethodName(OMD, Out);
+    else
+      mangleCXXName(D, Out);
     return;
   }
 
@@ -147,6 +150,8 @@ void MangleContext::mangleName(const NamedDecl *D, raw_ostream &Out) {
 
   if (!MCXX)
     Out << D->getIdentifier()->getName();
+  else if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D))
+    mangleObjCMethodName(OMD, Out);
   else
     mangleCXXName(D, Out);
 
