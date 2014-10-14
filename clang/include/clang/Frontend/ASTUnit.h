@@ -306,7 +306,6 @@ private:
   LangOptions ASTFileLangOpts;
 
   static void ConfigureDiags(IntrusiveRefCntPtr<DiagnosticsEngine> &Diags,
-                             const char **ArgBegin, const char **ArgEnd,
                              ASTUnit &AST, bool CaptureDiagnostics);
 
   void TranslateStoredDiagnostics(FileManager &FileMgr,

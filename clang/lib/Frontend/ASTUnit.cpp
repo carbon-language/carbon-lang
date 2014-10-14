@@ -643,7 +643,6 @@ ASTUnit::getBufferForFile(StringRef Filename, std::string *ErrorStr) {
 
 /// \brief Configure the diagnostics object for use with ASTUnit.
 void ASTUnit::ConfigureDiags(IntrusiveRefCntPtr<DiagnosticsEngine> &Diags,
-                             const char **ArgBegin, const char **ArgEnd,
                              ASTUnit &AST, bool CaptureDiagnostics) {
   if (!Diags.get()) {
     // No diagnostics engine was provided, so create our own diagnostics object
@@ -673,7 +672,7 @@ std::unique_ptr<ASTUnit> ASTUnit::LoadFromASTFile(
     llvm::CrashRecoveryContextReleaseRefCleanup<DiagnosticsEngine> >
     DiagCleanup(Diags.get());
 
-  ConfigureDiags(Diags, nullptr, nullptr, *AST, CaptureDiagnostics);
+  ConfigureDiags(Diags, *AST, CaptureDiagnostics);
 
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->CaptureDiagnostics = CaptureDiagnostics;
@@ -1702,7 +1701,7 @@ ASTUnit *ASTUnit::create(CompilerInvocation *CI,
                          bool UserFilesAreVolatile) {
   std::unique_ptr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
-  ConfigureDiags(Diags, nullptr, nullptr, *AST, CaptureDiagnostics);
+  ConfigureDiags(Diags, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
   AST->Invocation = CI;
   AST->FileSystemOpts = CI->getFileSystemOpts();
@@ -1890,7 +1889,7 @@ std::unique_ptr<ASTUnit> ASTUnit::LoadFromCompilerInvocation(
     bool IncludeBriefCommentsInCodeCompletion, bool UserFilesAreVolatile) {
   // Create the AST unit.
   std::unique_ptr<ASTUnit> AST(new ASTUnit(false));
-  ConfigureDiags(Diags, nullptr, nullptr, *AST, CaptureDiagnostics);
+  ConfigureDiags(Diags, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->CaptureDiagnostics = CaptureDiagnostics;
@@ -1968,7 +1967,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(
   // Create the AST unit.
   std::unique_ptr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
-  ConfigureDiags(Diags, ArgBegin, ArgEnd, *AST, CaptureDiagnostics);
+  ConfigureDiags(Diags, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
   AST->FileSystemOpts = CI->getFileSystemOpts();
   IntrusiveRefCntPtr<vfs::FileSystem> VFS =
