@@ -458,7 +458,7 @@ declare <4 x i32> @llvm.x86.sse2.psll.d(<4 x i32>, <4 x i32>) nounwind readnone
 
 
 define <2 x i64> @test_x86_sse2_psll_dq(<2 x i64> %a0) {
-  ; CHECK: vpslldq
+  ; CHECK: vpslldq {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
   %res = call <2 x i64> @llvm.x86.sse2.psll.dq(<2 x i64> %a0, i32 7) ; <<2 x i64>> [#uses=1]
   ret <2 x i64> %res
 }
@@ -466,7 +466,7 @@ declare <2 x i64> @llvm.x86.sse2.psll.dq(<2 x i64>, i32) nounwind readnone
 
 
 define <2 x i64> @test_x86_sse2_psll_dq_bs(<2 x i64> %a0) {
-  ; CHECK: vpslldq
+  ; CHECK: vpslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,zero,xmm0[0,1,2,3,4,5,6,7,8]
   %res = call <2 x i64> @llvm.x86.sse2.psll.dq.bs(<2 x i64> %a0, i32 7) ; <<2 x i64>> [#uses=1]
   ret <2 x i64> %res
 }
@@ -554,7 +554,7 @@ declare <4 x i32> @llvm.x86.sse2.psrl.d(<4 x i32>, <4 x i32>) nounwind readnone
 
 
 define <2 x i64> @test_x86_sse2_psrl_dq(<2 x i64> %a0) {
-  ; CHECK: vpsrldq
+  ; CHECK: vpsrldq {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
   %res = call <2 x i64> @llvm.x86.sse2.psrl.dq(<2 x i64> %a0, i32 7) ; <<2 x i64>> [#uses=1]
   ret <2 x i64> %res
 }
@@ -562,7 +562,7 @@ declare <2 x i64> @llvm.x86.sse2.psrl.dq(<2 x i64>, i32) nounwind readnone
 
 
 define <2 x i64> @test_x86_sse2_psrl_dq_bs(<2 x i64> %a0) {
-  ; CHECK: vpsrldq
+  ; CHECK: vpsrldq {{.*#+}} xmm0 = xmm0[7,8,9,10,11,12,13,14,15],zero,zero,zero,zero,zero,zero,zero
   %res = call <2 x i64> @llvm.x86.sse2.psrl.dq.bs(<2 x i64> %a0, i32 7) ; <<2 x i64>> [#uses=1]
   ret <2 x i64> %res
 }
