@@ -46,6 +46,7 @@ set(files
   tgmath.h
   tmmintrin.h
   varargs.h
+  vadefs.h
   wmmintrin.h
   __wmmintrin_aes.h
   __wmmintrin_pclmul.h
