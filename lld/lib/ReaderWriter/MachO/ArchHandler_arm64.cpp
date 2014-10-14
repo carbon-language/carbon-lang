@@ -74,6 +74,10 @@ public:
   const StubInfo &stubInfo() override { return _sStubInfo; }
 
   bool isCallSite(const Reference &) override;
+  bool isNonCallBranch(const Reference &) override {
+    return false;
+  }
+
   bool isPointer(const Reference &) override;
   bool isPairedReloc(const normalized::Relocation &) override;
 

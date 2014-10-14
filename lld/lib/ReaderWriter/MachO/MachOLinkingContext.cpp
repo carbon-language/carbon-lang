@@ -324,6 +324,21 @@ bool MachOLinkingContext::needsCompactUnwindPass() const {
   }
 }
 
+bool MachOLinkingContext::needsShimPass() const {
+  // Shim pass only used in final executables.
+  if (_outputMachOType == MH_OBJECT)
+    return false;
+  // Only 32-bit arm arches use Shim pass.
+  switch (_arch) {
+  case arch_armv6:
+  case arch_armv7:
+  case arch_armv7s:
+    return true;
+  default:
+    return false;
+  }
+}
+
 StringRef MachOLinkingContext::binderSymbolName() const {
   return archHandler().stubInfo().binderSymbolName;
 }
@@ -572,6 +587,8 @@ void MachOLinkingContext::addPasses(PassManager &pm) {
     mach_o::addCompactUnwindPass(pm, *this);
   if (needsGOTPass())
     mach_o::addGOTPass(pm, *this);
+  if (needsShimPass())
+    mach_o::addShimPass(pm, *this); // Shim pass must run after stubs pass.
 }
 
 Writer &MachOLinkingContext::writer() const {

@@ -9,6 +9,7 @@
 
 #include "MachONormalizedFile.h"
 #include "Atoms.h"
+#include "File.h"
 
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Reference.h"
@@ -49,6 +50,9 @@ public:
   virtual bool isGOTAccess(const Reference &, bool &canBypassGOT) {
     return false;
   }
+
+  /// Used by ShimPass to insert shims in branches that switch mode.
+  virtual bool isNonCallBranch(const Reference &) = 0;
 
   /// Used by GOTPass to update GOT References
   virtual void updateReferenceToGOT(const Reference *, bool targetIsNowGOT) {}
@@ -181,6 +185,12 @@ public:
 
   /// Only relevant for 32-bit arm archs.
   virtual bool isThumbFunction(const DefinedAtom &atom) { return false; }
+
+  /// Only relevant for 32-bit arm archs.
+  virtual const DefinedAtom *createShim(MachOFile &file, bool thumbToArm,
+                                        const DefinedAtom &) {
+    llvm_unreachable("shims only support on arm");
+  }
 
   struct ReferenceInfo {
     Reference::KindArch arch;

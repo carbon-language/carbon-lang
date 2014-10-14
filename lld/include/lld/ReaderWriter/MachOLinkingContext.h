@@ -230,6 +230,9 @@ public:
   /// Pass to transform __compact_unwind into __unwind_info should be run.
   bool needsCompactUnwindPass() const;
 
+  /// Pass to add shims switching between thumb and arm mode.
+  bool needsShimPass() const;
+
   /// Magic symbol name stubs will need to help lazy bind.
   StringRef binderSymbolName() const;
 

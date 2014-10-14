@@ -237,28 +237,28 @@ undefined-symbols:
 # CHECK:       - kind:            modeThumbCode
 # CHECK:         offset:          0
 # CHECK:         target:          _t1
-# CHECK:       - kind:            thumb_b22
+# CHECK:       - kind:            thumb_bl22
 # CHECK:         offset:          0
 # CHECK:         target:          _a1
-# CHECK:       - kind:            thumb_b22
+# CHECK:       - kind:            thumb_bl22
 # CHECK:         offset:          6
 # CHECK:         target:          _a2
-# CHECK:       - kind:            thumb_b22
+# CHECK:       - kind:            thumb_bl22
 # CHECK:         offset:          12
 # CHECK:         target:          _a2
-# CHECK:       - kind:            thumb_b22
+# CHECK:       - kind:            thumb_bl22
 # CHECK:         offset:          16
 # CHECK:         target:          _t1
-# CHECK:       - kind:            thumb_b22
+# CHECK:       - kind:            thumb_bl22
 # CHECK:         offset:          22
 # CHECK:         target:          _t1
-# CHECK:       - kind:            thumb_b22
+# CHECK:       - kind:            thumb_bl22
 # CHECK:         offset:          28
 # CHECK:         target:          _t2
-# CHECK:       - kind:            thumb_b22
+# CHECK:       - kind:            thumb_bl22
 # CHECK:         offset:          34
 # CHECK:         target:          _t2
-# CHECK:       - kind:            thumb_b22
+# CHECK:       - kind:            thumb_bl22
 # CHECK:         offset:          38
 # CHECK:         target:          _t3
 # CHECK:   - name:            _t2
@@ -277,16 +277,16 @@ undefined-symbols:
 # CHECK:   - name:            _a1
 # CHECK:     scope:           global
 # CHECK:     references:      
-# CHECK:       - kind:            arm_b24
+# CHECK:       - kind:            arm_bl24
 # CHECK:         offset:          0
 # CHECK:         target:          _a1
-# CHECK:       - kind:            arm_b24
+# CHECK:       - kind:            arm_bl24
 # CHECK:         offset:          4
 # CHECK:         target:          _a2
-# CHECK:       - kind:            arm_b24
+# CHECK:       - kind:            arm_bl24
 # CHECK:         offset:          8
 # CHECK:         target:          _t1
-# CHECK:       - kind:            arm_b24
+# CHECK:       - kind:            arm_bl24
 # CHECK:         offset:          12
 # CHECK:         target:          _t2
 # CHECK:   - name:            _a2

@@ -36,6 +36,7 @@ public:
   bool isCallSite(const Reference &) override;
   bool isPointer(const Reference &) override;
   bool isPairedReloc(const normalized::Relocation &) override;
+  bool isNonCallBranch(const Reference &) override;
 
   bool needsCompactUnwind() override {
     return false;
@@ -106,8 +107,13 @@ public:
   }
 
   bool isThumbFunction(const DefinedAtom &atom) override;
+  const DefinedAtom *createShim(MachOFile &file, bool thumbToArm,
+                                const DefinedAtom &) override;
 
 private:
+  friend class Thumb2ToArmShimAtom;
+  friend class ArmToThumbShimAtom;
+
   static const Registry::KindStrings _sKindStrings[];
   static const StubInfo              _sStubInfoArmPIC;
 
@@ -119,12 +125,14 @@ private:
     modeData,              /// Content starting at this offset is data.
 
     // Kinds found in mach-o .o files:
-    thumb_b22,             /// ex: bl _foo
+    thumb_bl22,            /// ex: bl _foo
+    thumb_b22,             /// ex: b _foo
     thumb_movw,            /// ex: movw	r1, :lower16:_foo
     thumb_movt,            /// ex: movt	r1, :lower16:_foo
     thumb_movw_funcRel,    /// ex: movw	r1, :lower16:(_foo-(L1+4))
     thumb_movt_funcRel,    /// ex: movt r1, :upper16:(_foo-(L1+4))
-    arm_b24,               /// ex: bl _foo
+    arm_bl24,              /// ex: bl _foo
+    arm_b24,               /// ex: b _foo
     arm_movw,              /// ex: movw	r1, :lower16:_foo
     arm_movt,              /// ex: movt	r1, :lower16:_foo
     arm_movw_funcRel,      /// ex: movw	r1, :lower16:(_foo-(L1+4))
@@ -154,6 +162,7 @@ private:
   static uint32_t setWordFromThumbMov(uint32_t instruction, uint16_t word);
   static uint32_t setWordFromArmMov(uint32_t instruction, uint16_t word);
   
+  StringRef stubName(const DefinedAtom &);
   bool useExternalRelocationTo(const Atom &target);
 
   void applyFixupFinal(const Reference &ref, uint8_t *location,
@@ -183,11 +192,13 @@ const Registry::KindStrings ArchHandler_arm::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(modeThumbCode),
   LLD_KIND_STRING_ENTRY(modeArmCode),
   LLD_KIND_STRING_ENTRY(modeData),
+  LLD_KIND_STRING_ENTRY(thumb_bl22),
   LLD_KIND_STRING_ENTRY(thumb_b22),
   LLD_KIND_STRING_ENTRY(thumb_movw),
   LLD_KIND_STRING_ENTRY(thumb_movt),
   LLD_KIND_STRING_ENTRY(thumb_movw_funcRel),
   LLD_KIND_STRING_ENTRY(thumb_movt_funcRel),
+  LLD_KIND_STRING_ENTRY(arm_bl24),
   LLD_KIND_STRING_ENTRY(arm_b24),
   LLD_KIND_STRING_ENTRY(arm_movw),
   LLD_KIND_STRING_ENTRY(arm_movt),
@@ -256,11 +267,29 @@ const ArchHandler::StubInfo &ArchHandler_arm::stubInfo() {
 }
 
 bool ArchHandler_arm::isCallSite(const Reference &ref) {
-  return (ref.kindValue() == thumb_b22) || (ref.kindValue() == arm_b24);
+  switch (ref.kindValue()) {
+  case thumb_b22:
+  case thumb_bl22:
+  case arm_b24:
+  case arm_bl24:
+    return true;
+  default:
+    return false;
+  }
 }
 
 bool ArchHandler_arm::isPointer(const Reference &ref) {
   return (ref.kindValue() == pointer32);
+}
+
+bool ArchHandler_arm::isNonCallBranch(const Reference &ref) {
+  switch (ref.kindValue()) {
+  case thumb_b22:
+  case arm_b24:
+    return true;
+  default:
+    return false;
+  }
 }
 
 bool ArchHandler_arm::isPairedReloc(const Relocation &reloc) {
@@ -273,6 +302,23 @@ bool ArchHandler_arm::isPairedReloc(const Relocation &reloc) {
   default:
     return false;
   }
+}
+
+/// Trace references from stub atom to lazy pointer to target and get its name.
+StringRef ArchHandler_arm::stubName(const DefinedAtom &stubAtom) {
+  assert(stubAtom.contentType() == DefinedAtom::typeStub);
+  for (const Reference *ref : stubAtom) {
+    if (const DefinedAtom* lp = dyn_cast<DefinedAtom>(ref->target())) {
+      if (lp->contentType() != DefinedAtom::typeLazyPointer)
+        continue;
+      for (const Reference *ref2 : *lp) {
+        if (ref2->kindValue() != lazyPointer)
+          continue;
+        return ref2->target()->name();
+      }
+    }
+  }
+  return "stub";
 }
 
 /// Extract displacement from an ARM b/bl/blx instruction.
@@ -352,7 +398,7 @@ uint32_t ArchHandler_arm::setDisplacementInThumbBranch(uint32_t instruction,
 	bool is_bl = ((instruction & 0xD000F800) == 0xD000F000);
 	bool is_blx = ((instruction & 0xD000F800) == 0xC000F000);
 	bool is_b = ((instruction & 0xD000F800) == 0x9000F000);
-  uint32_t newInstruction = (instruction & 0xF800D000);
+  uint32_t newInstruction = (instruction & 0xD000F800);
   if (is_bl || is_blx) {
     if (targetIsThumb) {
       newInstruction = 0xD000F000; // Use bl
@@ -363,7 +409,7 @@ uint32_t ArchHandler_arm::setDisplacementInThumbBranch(uint32_t instruction,
         displacement += 2;
     }
   } else if (is_b) {
-    assert(!targetIsThumb && "no pc-rel thumb branch instruction that "
+    assert(targetIsThumb && "no pc-rel thumb branch instruction that "
                              "switches to arm mode");
   }
   else {
@@ -461,7 +507,10 @@ std::error_code ArchHandler_arm::getReferenceInfo(
   switch (relocPattern(reloc)) {
   case ARM_THUMB_RELOC_BR22 | rPcRel | rExtern | rLength4:
     // ex: bl _foo (and _foo is undefined)
-    *kind = thumb_b22;
+    if ((instruction & 0xD000F800) == 0x9000F000)
+      *kind = thumb_b22;
+    else
+      *kind = thumb_bl22;
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
     // Instruction contains branch to addend.
@@ -470,13 +519,19 @@ std::error_code ArchHandler_arm::getReferenceInfo(
     return std::error_code();
   case ARM_THUMB_RELOC_BR22 | rPcRel | rLength4:
     // ex: bl _foo (and _foo is defined)
-    *kind = thumb_b22;
+    if ((instruction & 0xD000F800) == 0x9000F000)
+      *kind = thumb_b22;
+    else
+      *kind = thumb_bl22;
     displacement = getDisplacementFromThumbBranch(instruction, fixupAddress);
     targetAddress = fixupAddress + 4 + displacement;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
   case ARM_THUMB_RELOC_BR22 | rScattered | rPcRel | rLength4:
     // ex: bl _foo+4 (and _foo is defined)
-    *kind = thumb_b22;
+    if ((instruction & 0xD000F800) == 0x9000F000)
+      *kind = thumb_b22;
+    else
+      *kind = thumb_bl22;
     displacement = getDisplacementFromThumbBranch(instruction, fixupAddress);
     targetAddress = fixupAddress + 4 + displacement;
     if (E ec = atomFromAddress(0, reloc.value, target, addend))
@@ -487,7 +542,11 @@ std::error_code ArchHandler_arm::getReferenceInfo(
     return std::error_code();
   case ARM_RELOC_BR24 | rPcRel | rExtern | rLength4:
     // ex: bl _foo (and _foo is undefined)
-    *kind = arm_b24;
+    if (((instruction & 0x0F000000) == 0x0A000000)
+        && ((instruction & 0xF0000000) != 0xF0000000))
+      *kind = arm_b24;
+    else
+      *kind = arm_bl24;
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
     // Instruction contains branch to addend.
@@ -496,13 +555,21 @@ std::error_code ArchHandler_arm::getReferenceInfo(
     return std::error_code();
   case ARM_RELOC_BR24 | rPcRel | rLength4:
     // ex: bl _foo (and _foo is defined)
-    *kind = arm_b24;
+    if (((instruction & 0x0F000000) == 0x0A000000)
+        && ((instruction & 0xF0000000) != 0xF0000000))
+      *kind = arm_b24;
+    else
+      *kind = arm_bl24;
     displacement = getDisplacementFromArmBranch(instruction);
     targetAddress = fixupAddress + 8 + displacement;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
   case ARM_RELOC_BR24 | rScattered | rPcRel | rLength4:
     // ex: bl _foo+4 (and _foo is defined)
-    *kind = arm_b24;
+    if (((instruction & 0x0F000000) == 0x0A000000)
+        && ((instruction & 0xF0000000) != 0xF0000000))
+      *kind = arm_b24;
+    else
+      *kind = arm_bl24;
     displacement = getDisplacementFromArmBranch(instruction);
     targetAddress = fixupAddress + 8 + displacement;
     if (E ec = atomFromAddress(0, reloc.value, target, addend))
@@ -836,6 +903,7 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
   case modeData:
     break;
   case thumb_b22:
+  case thumb_bl22:
     assert(thumbMode);
     displacement = (targetAddress - (fixupAddress + 4)) + ref.addend();
     value32 = setDisplacementInThumbBranch(*loc32, fixupAddress, displacement,
@@ -867,7 +935,8 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
     write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
     break;
   case arm_b24:
-    assert(!thumbMode);
+  case arm_bl24:
+   assert(!thumbMode);
     displacement = (targetAddress - (fixupAddress + 8)) + ref.addend();
     value32 = setDisplacementInArmBranch(*loc32, displacement, targetIsThumb);
     write32(*loc32, _swap, value32);
@@ -903,7 +972,10 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
       write32(*loc32, _swap, targetAddress + ref.addend());
     break;
   case delta32:
-    write32(*loc32, _swap, targetAddress - fixupAddress + ref.addend());
+    if (targetIsThumb)
+      write32(*loc32, _swap, targetAddress - fixupAddress + ref.addend() + 1);
+    else
+      write32(*loc32, _swap, targetAddress - fixupAddress + ref.addend());
     break;
   case lazyPointer:
   case lazyImmediateLocation:
@@ -990,6 +1062,7 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
   case modeData:
     break;
   case thumb_b22:
+  case thumb_bl22:
     assert(thumbMode);
     if (useExternalReloc)
       displacement = (ref.addend() - (fixupAddress + 4));
@@ -1026,6 +1099,7 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
     write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
     break;
   case arm_b24:
+  case arm_bl24:
     assert(!thumbMode);
     if (useExternalReloc)
       displacement = (ref.addend() - (fixupAddress + 8));
@@ -1100,6 +1174,7 @@ void ArchHandler_arm::appendSectionRelocations(
     // Do nothing.
     break;
   case thumb_b22:
+  case thumb_bl22:
     if (useExternalReloc) {
       appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                   ARM_THUMB_RELOC_BR22 | rExtern    | rPcRel | rLength4);
@@ -1179,6 +1254,7 @@ void ArchHandler_arm::appendSectionRelocations(
                 ARM_RELOC_PAIR          | rScattered | rLenThmbHi);
     break;
   case arm_b24:
+  case arm_bl24:
     if (useExternalReloc) {
       appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                   ARM_RELOC_BR24 | rExtern    | rPcRel | rLength4);
@@ -1306,6 +1382,112 @@ bool ArchHandler_arm::isThumbFunction(const DefinedAtom &atom) {
   }
   return false;
 }
+
+
+class Thumb2ToArmShimAtom : public SimpleDefinedAtom {
+public:
+  Thumb2ToArmShimAtom(MachOFile &file, StringRef targetName,
+                      const DefinedAtom &target)
+      : SimpleDefinedAtom(file) {
+    addReference(Reference::KindNamespace::mach_o, Reference::KindArch::ARM,
+                 ArchHandler_arm::modeThumbCode, 0, this, 0);
+    addReference(Reference::KindNamespace::mach_o, Reference::KindArch::ARM,
+                 ArchHandler_arm::delta32, 8, &target, 0);
+    std::string name = std::string(targetName) + "$shim";
+    StringRef tmp(name);
+    _name = tmp.copy(file.allocator());
+  }
+
+  StringRef name() const override {
+    return _name;
+  }
+
+  ContentType contentType() const override {
+    return DefinedAtom::typeCode;
+  }
+
+  Alignment alignment() const override {
+    return Alignment(2);
+  }
+
+  uint64_t size() const override {
+    return 12;
+  }
+
+  ContentPermissions permissions() const override {
+    return DefinedAtom::permR_X;
+  }
+
+  ArrayRef<uint8_t> rawContent() const override {
+    static const uint8_t bytes[] =
+    { 0xDF, 0xF8, 0x04, 0xC0,       //  ldr ip, pc + 4
+      0xFF, 0x44,                   //  add ip, pc, ip
+      0x60, 0x47,                   //  ldr pc, [ip]
+      0x00, 0x00, 0x00, 0x00 };     //  .long target - this
+    assert(sizeof(bytes) == size());
+    return llvm::makeArrayRef(bytes, sizeof(bytes));
+  }
+private:
+  StringRef _name;
+};
+
+
+class ArmToThumbShimAtom : public SimpleDefinedAtom {
+public:
+  ArmToThumbShimAtom(MachOFile &file, StringRef targetName,
+                     const DefinedAtom &target)
+      : SimpleDefinedAtom(file) {
+    addReference(Reference::KindNamespace::mach_o, Reference::KindArch::ARM,
+                 ArchHandler_arm::delta32, 12, &target, 0);
+    std::string name = std::string(targetName) + "$shim";
+    StringRef tmp(name);
+    _name = tmp.copy(file.allocator());
+  }
+
+  StringRef name() const override {
+    return _name;
+  }
+
+  ContentType contentType() const override {
+    return DefinedAtom::typeCode;
+  }
+
+  Alignment alignment() const override {
+    return Alignment(2);
+  }
+
+  uint64_t size() const override {
+    return 16;
+  }
+
+  ContentPermissions permissions() const override {
+    return DefinedAtom::permR_X;
+  }
+
+  ArrayRef<uint8_t> rawContent() const override {
+    static const uint8_t bytes[] =
+    { 0x04, 0xC0, 0x9F, 0xE5,       //  ldr ip, pc + 4
+      0x0C, 0xC0, 0x8F, 0xE0,       //  add ip, pc, ip
+      0x1C, 0xFF, 0x2F, 0xE1,       //  ldr pc, [ip]
+      0x00, 0x00, 0x00, 0x00 };     //  .long target - this
+    assert(sizeof(bytes) == size());
+    return llvm::makeArrayRef(bytes, sizeof(bytes));
+  }
+private:
+  StringRef _name;
+};
+
+const DefinedAtom *ArchHandler_arm::createShim(MachOFile &file,
+                                               bool thumbToArm,
+                                               const DefinedAtom &target) {
+  bool isStub = (target.contentType() == DefinedAtom::typeStub);
+  StringRef targetName = isStub ? stubName(target) : target.name();
+  if (thumbToArm)
+    return new (file.allocator()) Thumb2ToArmShimAtom(file, targetName, target);
+  else
+    return new (file.allocator()) ArmToThumbShimAtom(file, targetName, target);
+}
+
 
 std::unique_ptr<mach_o::ArchHandler> ArchHandler::create_arm() {
   return std::unique_ptr<mach_o::ArchHandler>(new ArchHandler_arm());

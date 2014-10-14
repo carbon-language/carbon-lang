@@ -12,6 +12,7 @@ add_lld_library(lldMachO
   MachONormalizedFileFromAtoms.cpp
   MachONormalizedFileToAtoms.cpp
   MachONormalizedFileYAML.cpp
+  ShimPass.cpp
   StubsPass.cpp
   WriterMachO.cpp
   )

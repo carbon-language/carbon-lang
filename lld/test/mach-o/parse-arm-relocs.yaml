@@ -572,19 +572,19 @@ undefined-symbols:
 # CHECK:      references:
 # CHECK:        - kind:            modeThumbCode
 # CHECK:          offset:          0
-# CHECK:        - kind:            thumb_b22
+# CHECK:        - kind:            thumb_bl22
 # CHECK:          offset:          0
 # CHECK:          target:          _x
 # CHECK-NOT:      addend:
-# CHECK:        - kind:            thumb_b22
+# CHECK:        - kind:            thumb_bl22
 # CHECK:          offset:          4
 # CHECK:          target:          _x
 # CHECK:          addend:          4
-# CHECK:        - kind:            thumb_b22
+# CHECK:        - kind:            thumb_bl22
 # CHECK:          offset:          8
 # CHECK:          target:          _undef
 # CHECK-NOT:      addend:
-# CHECK:        - kind:            thumb_b22
+# CHECK:        - kind:            thumb_bl22
 # CHECK:          offset:          12
 # CHECK:          target:          _undef
 # CHECK:          addend:          4
@@ -660,19 +660,19 @@ undefined-symbols:
 # CHECK:    - name:            _foo_arm
 # CHECK:      references:
 # CHECK-NOT:    - kind:            modeThumbCode
-# CHECK:        - kind:            arm_b24
+# CHECK:        - kind:            arm_bl24
 # CHECK:          offset:          0
 # CHECK:          target:          _x
 # CHECK-NOT:      addend:
-# CHECK:        - kind:            arm_b24
+# CHECK:        - kind:            arm_bl24
 # CHECK:          offset:          4
 # CHECK:          target:          _x
 # CHECK:          addend:          4
-# CHECK:        - kind:            arm_b24
+# CHECK:        - kind:            arm_bl24
 # CHECK:          offset:          8
 # CHECK:          target:          _undef
 # CHECK-NOT:      addend:
-# CHECK:        - kind:            arm_b24
+# CHECK:        - kind:            arm_bl24
 # CHECK:          offset:          12
 # CHECK:          target:          _undef
 # CHECK:          addend:          4
@@ -739,11 +739,11 @@ undefined-symbols:
 #  bl    _undef
 #  bl    _undef+4
 #  movw	r1, :lower16:(_x-L1)
-# 	movt	r1, :upper16:(_x-L1)
+#  movt	r1, :upper16:(_x-L1)
 #  movw	r2, :lower16:(_x+8-L1)
-# 	movt	r2, :upper16:(_x+8-L1)
+#  movt	r2, :upper16:(_x+8-L1)
 #  movw	r1, :lower16:(_t1-L1)
-# 	movt	r1, :upper16:(_t1-L1)
+#  movt	r1, :upper16:(_t1-L1)
 #	add	r1, pc
 #L1:
 #	movw	r3, :lower16:_x
@@ -770,9 +770,9 @@ undefined-symbols:
 #  bl    _undef
 #  bl    _undef+4
 #  movw	r1, :lower16:(_x-L2)
-# 	movt	r1, :upper16:(_x-L2)
+#  movt	r1, :upper16:(_x-L2)
 #  movw	r2, :lower16:(_x+8-L2)
-# 	movt	r2, :upper16:(_x+8-L2)
+#  movt	r2, :upper16:(_x+8-L2)
 #	add	r1, pc
 #L2:
 #	movw	r3, :lower16:_x
