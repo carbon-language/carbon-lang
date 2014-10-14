@@ -34,17 +34,16 @@
 /* Override macros from vadefs.h with definitions that work with Clang. */
 #ifdef _crt_va_start
 #undef _crt_va_start
+#define _crt_va_start(ap, param) __builtin_va_start(ap, param)
 #endif
 #ifdef _crt_va_end
 #undef _crt_va_end
+#define _crt_va_end(ap)          __builtin_va_end(ap)
 #endif
 #ifdef _crt_va_arg
 #undef _crt_va_arg
-#endif
-
-#define _crt_va_start(ap, param) __builtin_va_start(ap, param)
-#define _crt_va_end(ap)          __builtin_va_end(ap)
 #define _crt_va_arg(ap, type)    __builtin_va_arg(ap, type)
+#endif
 
 #endif
 #endif
