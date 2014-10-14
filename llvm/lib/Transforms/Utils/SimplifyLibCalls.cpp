@@ -1230,6 +1230,30 @@ Value *LibCallSimplifier::optimizeExp2(CallInst *CI, IRBuilder<> &B) {
   return Ret;
 }
 
+Value *LibCallSimplifier::optimizeFabs(CallInst *CI, IRBuilder<> &B) {
+  Function *Callee = CI->getCalledFunction();
+
+  Value *Ret = nullptr;
+  if (Callee->getName() == "fabs" && TLI->has(LibFunc::fabsf)) {
+    Ret = optimizeUnaryDoubleFP(CI, B, false);
+  }
+
+  FunctionType *FT = Callee->getFunctionType();
+  // Make sure this has 1 argument of FP type which matches the result type.
+  if (FT->getNumParams() != 1 || FT->getReturnType() != FT->getParamType(0) ||
+      !FT->getParamType(0)->isFloatingPointTy())
+    return Ret;
+
+  Value *Op = CI->getArgOperand(0);
+  if (Instruction *I = dyn_cast<Instruction>(Op)) {
+    // Fold fabs(x * x) -> x * x; any squared FP value must already be positive.
+    if (I->getOpcode() == Instruction::FMul)
+      if (I->getOperand(0) == I->getOperand(1))
+        return Op;
+  }
+  return Ret;
+}
+
 static bool isTrigLibCall(CallInst *CI);
 static void insertSinCosCall(IRBuilder<> &B, Function *OrigCallee, Value *Arg,
                              bool UseFloat, Value *&Sin, Value *&Cos,
@@ -1893,6 +1917,8 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
       return optimizePow(CI, Builder);
     case Intrinsic::exp2:
       return optimizeExp2(CI, Builder);
+    case Intrinsic::fabs:
+      return optimizeFabs(CI, Builder);
     default:
       return nullptr;
     }
@@ -1965,6 +1991,10 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
     case LibFunc::exp2:
     case LibFunc::exp2f:
       return optimizeExp2(CI, Builder);
+    case LibFunc::fabsf:
+    case LibFunc::fabs:
+    case LibFunc::fabsl:
+      return optimizeFabs(CI, Builder);
     case LibFunc::ffs:
     case LibFunc::ffsl:
     case LibFunc::ffsll:
@@ -1999,7 +2029,6 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
     case LibFunc::fputc:
       return optimizeErrorReporting(CI, Builder, 1);
     case LibFunc::ceil:
-    case LibFunc::fabs:
     case LibFunc::floor:
     case LibFunc::rint:
     case LibFunc::round:
