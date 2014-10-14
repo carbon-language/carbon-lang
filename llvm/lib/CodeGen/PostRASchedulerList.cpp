@@ -41,7 +41,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
@@ -199,11 +198,10 @@ SchedulePostRATDList::SchedulePostRATDList(
     SmallVectorImpl<const TargetRegisterClass *> &CriticalPathRCs)
     : ScheduleDAGInstrs(MF, &MLI, /*IsPostRA=*/true), AA(AA), EndIndex(0) {
 
-  const TargetMachine &TM = MF.getTarget();
   const InstrItineraryData *InstrItins =
-      TM.getSubtargetImpl()->getInstrItineraryData();
+      MF.getSubtarget().getInstrItineraryData();
   HazardRec =
-      TM.getSubtargetImpl()->getInstrInfo()->CreateTargetPostRAHazardRecognizer(
+      MF.getSubtarget().getInstrInfo()->CreateTargetPostRAHazardRecognizer(
           InstrItins, this);
 
   assert((AntiDepMode == TargetSubtargetInfo::ANTIDEP_NONE ||

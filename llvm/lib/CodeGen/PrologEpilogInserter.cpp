@@ -738,12 +738,11 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
 
 void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
                               int &SPAdj) {
-  const TargetMachine &TM = Fn.getTarget();
-  assert(TM.getSubtargetImpl()->getRegisterInfo() &&
-         "TM::getRegisterInfo() must be implemented!");
+  assert(Fn.getSubtarget().getRegisterInfo() &&
+         "getRegisterInfo() must be implemented!");
   const TargetInstrInfo &TII = *Fn.getSubtarget().getInstrInfo();
-  const TargetRegisterInfo &TRI = *TM.getSubtargetImpl()->getRegisterInfo();
-  const TargetFrameLowering *TFI = TM.getSubtargetImpl()->getFrameLowering();
+  const TargetRegisterInfo &TRI = *Fn.getSubtarget().getRegisterInfo();
+  const TargetFrameLowering *TFI = Fn.getSubtarget().getFrameLowering();
   bool StackGrowsDown =
     TFI->getStackGrowthDirection() == TargetFrameLowering::StackGrowsDown;
   int FrameSetupOpcode   = TII.getCallFrameSetupOpcode();
