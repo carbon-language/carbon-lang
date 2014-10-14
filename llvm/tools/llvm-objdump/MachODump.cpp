@@ -2802,7 +2802,7 @@ static StringRef ordinalName(const object::MachOObjectFile *Obj, int Ordinal) {
       std::error_code EC = Obj->getLibraryShortNameByIndex(Ordinal-1, 
                                                            DylibName);
       if (EC)
-        return "<<ordinal too big>>";
+        return "<<bad library ordinal>>";
       return DylibName;
     }
   }

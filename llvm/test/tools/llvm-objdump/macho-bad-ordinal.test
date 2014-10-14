@@ -1,0 +1,6 @@
+# RUN: llvm-objdump -macho -bind -lazy-bind %p/Inputs/bad-ordinal.macho-x86_64 \
+# RUN:   | FileCheck %s 
+
+
+# CHECK: __DATA   __nl_symbol_ptr    0x100001000 pointer         0 <<bad library ordinal>> dyld_stub_binder
+# CHECK: __DATA   __la_symbol_ptr    0x100001010 <<bad library ordinal>> _printf
