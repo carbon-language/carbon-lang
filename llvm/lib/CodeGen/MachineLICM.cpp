@@ -62,7 +62,6 @@ STATISTIC(NumPostRAHoisted,
 
 namespace {
   class MachineLICM : public MachineFunctionPass {
-    const TargetMachine   *TM;
     const TargetInstrInfo *TII;
     const TargetLoweringBase *TLI;
     const TargetRegisterInfo *TRI;
@@ -322,13 +321,12 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
     return false;
 
   Changed = FirstInLoop = false;
-  TM = &MF.getTarget();
-  TII = TM->getSubtargetImpl()->getInstrInfo();
-  TLI = TM->getSubtargetImpl()->getTargetLowering();
-  TRI = TM->getSubtargetImpl()->getRegisterInfo();
+  TII = MF.getSubtarget().getInstrInfo();
+  TLI = MF.getSubtarget().getTargetLowering();
+  TRI = MF.getSubtarget().getRegisterInfo();
   MFI = MF.getFrameInfo();
   MRI = &MF.getRegInfo();
-  InstrItins = TM->getSubtargetImpl()->getInstrItineraryData();
+  InstrItins = MF.getSubtarget().getInstrItineraryData();
 
   PreRegAlloc = MRI->isSSA();
 
