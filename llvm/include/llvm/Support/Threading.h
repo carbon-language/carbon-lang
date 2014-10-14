@@ -52,7 +52,7 @@ namespace llvm {
 ///   llvm_call_once<foo>();
 /// \endcode
 ///
-/// \param UserFn Function to call once.
+/// \tparam UserFn Function to call once.
 template <void (*UserFn)(void)> void llvm_call_once() {
 #if !defined(__MINGW__)
   static std::once_flag flag;
