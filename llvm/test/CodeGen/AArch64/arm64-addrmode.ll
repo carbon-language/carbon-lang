@@ -37,9 +37,8 @@ define void @t3() {
 
 ; base + unsigned offset (> imm12 * size of type in bytes)
 ; CHECK: @t4
-; CHECK: add [[ADDREG:x[0-9]+]], x{{[0-9]+}}, #8, lsl #12
-; CHECK: ldr xzr, [
-; CHECK: [[ADDREG]]]
+; CHECK: orr w[[NUM:[0-9]+]], wzr, #0x8000
+; CHECK: ldr xzr, [x{{[0-9]+}}, x[[NUM]]]
 ; CHECK: ret
 define void @t4() {
   %incdec.ptr = getelementptr inbounds i64* @object, i64 4096
@@ -60,13 +59,123 @@ define void @t5(i64 %a) {
 ; base + reg + imm
 ; CHECK: @t6
 ; CHECK: add [[ADDREG:x[0-9]+]], x{{[0-9]+}}, x{{[0-9]+}}, lsl #3
-; CHECK-NEXT: add [[ADDREG]], [[ADDREG]], #8, lsl #12
-; CHECK: ldr xzr, [
-; CHECK: [[ADDREG]]]
+; CHECK-NEXT: orr w[[NUM:[0-9]+]], wzr, #0x8000
+; CHECK: ldr xzr, [x{{[0-9]+}}, x[[NUM]]]
 ; CHECK: ret
 define void @t6(i64 %a) {
   %tmp1 = getelementptr inbounds i64* @object, i64 %a
   %incdec.ptr = getelementptr inbounds i64* %tmp1, i64 4096
   %tmp = load volatile i64* %incdec.ptr, align 8
+  ret void
+}
+
+; Test base + wide immediate
+define void @t7(i64 %a) {
+; CHECK-LABEL: t7:
+; CHECK: orr w[[NUM:[0-9]+]], wzr, #0xffff
+; CHECK-NEXT: ldr xzr, [x0, x[[NUM]]]
+  %1 = add i64 %a, 65535   ;0xffff
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load volatile i64* %2, align 8
+  ret void
+}
+
+define void @t8(i64 %a) {
+; CHECK-LABEL: t8:
+; CHECK: movn [[REG:x[0-9]+]], #0x1235
+; CHECK-NEXT: ldr xzr, [x0, [[REG]]]
+  %1 = sub i64 %a, 4662   ;-4662 is 0xffffffffffffedca
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load volatile i64* %2, align 8
+  ret void
+}
+
+define void @t9(i64 %a) {
+; CHECK-LABEL: t9:
+; CHECK: movn [[REG:x[0-9]+]], #0x1235, lsl #16
+; CHECK-NEXT: ldr xzr, [x0, [[REG]]]
+  %1 = add i64 -305463297, %a   ;-305463297 is 0xffffffffedcaffff
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load volatile i64* %2, align 8
+  ret void
+}
+
+define void @t10(i64 %a) {
+; CHECK-LABEL: t10:
+; CHECK: movz [[REG:x[0-9]+]], #0x123, lsl #48
+; CHECK-NEXT: ldr xzr, [x0, [[REG]]]
+  %1 = add i64 %a, 81909218222800896   ;0x123000000000000
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load volatile i64* %2, align 8
+  ret void
+}
+
+define void @t11(i64 %a) {
+; CHECK-LABEL: t11:
+; CHECK: movz w[[NUM:[0-9]+]], #0x123, lsl #16
+; CHECK: movk w[[NUM:[0-9]+]], #0x4567
+; CHECK-NEXT: ldr xzr, [x0, x[[NUM]]]
+  %1 = add i64 %a, 19088743   ;0x1234567
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load volatile i64* %2, align 8
+  ret void
+}
+
+; Test some boundaries that should not use movz/movn/orr
+define void @t12(i64 %a) {
+; CHECK-LABEL: t12:
+; CHECK: add [[REG:x[0-9]+]], x0, #4095
+; CHECK-NEXT: ldr xzr, {{\[}}[[REG]]]
+  %1 = add i64 %a, 4095   ;0xfff
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load volatile i64* %2, align 8
+  ret void
+}
+
+define void @t13(i64 %a) {
+; CHECK-LABEL: t13:
+; CHECK: sub [[REG:x[0-9]+]], x0, #4095
+; CHECK-NEXT: ldr xzr, {{\[}}[[REG]]]
+  %1 = add i64 %a, -4095   ;-0xfff
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load volatile i64* %2, align 8
+  ret void
+}
+
+define void @t14(i64 %a) {
+; CHECK-LABEL: t14:
+; CHECK: add [[REG:x[0-9]+]], x0, #291, lsl #12
+; CHECK-NEXT: ldr xzr, {{\[}}[[REG]]]
+  %1 = add i64 %a, 1191936   ;0x123000
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load volatile i64* %2, align 8
+  ret void
+}
+
+define void @t15(i64 %a) {
+; CHECK-LABEL: t15:
+; CHECK: sub [[REG:x[0-9]+]], x0, #291, lsl #12
+; CHECK-NEXT: ldr xzr, {{\[}}[[REG]]]
+  %1 = add i64 %a, -1191936   ;0xFFFFFFFFFFEDD000
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load volatile i64* %2, align 8
+  ret void
+}
+
+define void @t16(i64 %a) {
+; CHECK-LABEL: t16:
+; CHECK: ldr xzr, [x0, #28672]
+  %1 = add i64 %a, 28672   ;0x7000
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load volatile i64* %2, align 8
+  ret void
+}
+
+define void @t17(i64 %a) {
+; CHECK-LABEL: t17:
+; CHECK: ldur xzr, [x0, #-256]
+  %1 = add i64 %a, -256   ;-0x100
+  %2 = inttoptr i64 %1 to i64*
+  %3 = load volatile i64* %2, align 8
   ret void
 }
