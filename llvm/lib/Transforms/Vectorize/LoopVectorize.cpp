@@ -889,7 +889,7 @@ public:
                              AssumptionTracker *AT, const Function *F,
                              const LoopVectorizeHints *Hints)
       : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI), DL(DL), TLI(TLI),
-        AT(AT), TheFunction(F), Hints(Hints) {
+        TheFunction(F), Hints(Hints) {
     CodeMetrics::collectEphemeralValues(L, AT, EphValues);
   }
 
@@ -977,8 +977,6 @@ private:
   const DataLayout *DL;
   /// Target Library Info.
   const TargetLibraryInfo *TLI;
-  /// Tracker for @llvm.assume.
-  AssumptionTracker *AT;
   const Function *TheFunction;
   // Loop Vectorize Hint.
   const LoopVectorizeHints *Hints;
