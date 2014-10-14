@@ -176,6 +176,25 @@ traits header to emulate it.
 .. _the libstdc++ manual:
   http://gcc.gnu.org/onlinedocs/gcc-4.7.3/libstdc++/manual/manual/status.html#status.iso.2011
 
+Other Languages
+---------------
+
+Any code written in the Go programming language is not subject to the
+formatting rules below. Instead, we adopt the formatting rules enforced by
+the `gofmt`_ tool.
+
+Go code should strive to be idiomatic. Two good sets of guidelines for what
+this means are `Effective Go`_ and `Go Code Review Comments`_.
+
+.. _gofmt:
+  https://golang.org/cmd/gofmt/
+
+.. _Effective Go:
+  https://golang.org/doc/effective_go.html
+
+.. _Go Code Review Comments:
+  https://code.google.com/p/go-wiki/wiki/CodeReviewComments
+
 Mechanical Source Issues
 ========================
 
