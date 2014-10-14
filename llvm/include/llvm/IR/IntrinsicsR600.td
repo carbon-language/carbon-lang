@@ -33,14 +33,10 @@ defm int_r600_read_tgid : R600ReadPreloadRegisterIntrinsic_xyz <
                                        "__builtin_r600_read_tgid">;
 defm int_r600_read_tidig : R600ReadPreloadRegisterIntrinsic_xyz <
                                        "__builtin_r600_read_tidig">;
+
 } // End TargetPrefix = "r600"
 
 let TargetPrefix = "AMDGPU" in {
-
-class AMDGPUReadPreloadRegisterIntrinsic<string name>
-  : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>,
-    GCCBuiltin<name>;
-
 def int_AMDGPU_div_scale : GCCBuiltin<"__builtin_amdgpu_div_scale">,
   // 1st parameter: Numerator
   // 2nd parameter: Denominator
@@ -75,8 +71,5 @@ def int_AMDGPU_rsq_clamped : GCCBuiltin<"__builtin_amdgpu_rsq_clamped">,
 
 def int_AMDGPU_ldexp : GCCBuiltin<"__builtin_amdgpu_ldexp">,
   Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, llvm_i32_ty], [IntrNoMem]>;
-
-def int_AMDGPU_read_workdim : AMDGPUReadPreloadRegisterIntrinsic <
-                                       "__builtin_amdgpu_read_workdim">;
 
 } // End TargetPrefix = "AMDGPU"
