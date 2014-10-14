@@ -68,7 +68,7 @@
 
 // RUN: %clang_cc1 -triple arm-nacl-gnueabi -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=ARM-NACL
-// ARM-NACL: target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S128"
+// ARM-NACL: target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n32-S128"
 
 // RUN: %clang_cc1 -triple mipsel-nacl -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=MIPS-NACL
@@ -132,7 +132,7 @@
 
 // RUN: %clang_cc1 -triple arm-unknown-gnueabi -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=ARM
-// ARM: target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
+// ARM: target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64"
 
 // RUN: %clang_cc1 -triple thumb-unknown -o - -emit-llvm -target-abi apcs-gnu \
 // RUN: %s | FileCheck %s -check-prefix=THUMB-GNU
