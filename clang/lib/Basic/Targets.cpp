@@ -3728,42 +3728,27 @@ class ARMTargetInfo : public TargetInfo {
 
     ZeroLengthBitfieldBoundary = 0;
 
-    if (IsThumb) {
-      // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
-      // so set preferred for small types to 32.
-      if (T.isOSBinFormatMachO()) {
-        DescriptionString = BigEndian ?
-                              "E-m:o-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
-                              "v128:64:128-a:0:32-n32-S64" :
-                              "e-m:o-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
-                              "v128:64:128-a:0:32-n32-S64";
-      } else if (T.isOSWindows()) {
-        // FIXME: this is invalid for WindowsCE
-        assert(!BigEndian && "Windows on ARM does not support big endian");
-        DescriptionString = "e"
-                            "-m:e"
-                            "-p:32:32"
-                            "-i1:8:32-i8:8:32-i16:16:32-i64:64"
-                            "-v128:64:128"
-                            "-a:0:32"
-                            "-n32"
-                            "-S64";
-      } else {
-        DescriptionString = BigEndian ?
-                              "E-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
-                              "v128:64:128-a:0:32-n32-S64" :
-                              "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
-                              "v128:64:128-a:0:32-n32-S64";
-      }
+    // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
+    // so set preferred for small types to 32.
+    if (T.isOSBinFormatMachO()) {
+      DescriptionString =
+          BigEndian ? "E-m:o-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64"
+                    : "e-m:o-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64";
+    } else if (T.isOSWindows()) {
+      // FIXME: this is invalid for WindowsCE
+      assert(!BigEndian && "Windows on ARM does not support big endian");
+      DescriptionString = "e"
+                          "-m:e"
+                          "-p:32:32"
+                          "-i64:64"
+                          "-v128:64:128"
+                          "-a:0:32"
+                          "-n32"
+                          "-S64";
     } else {
-      if (T.isOSBinFormatMachO())
-        DescriptionString =
-            BigEndian ? "E-m:o-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64"
-                      : "e-m:o-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64";
-      else
-        DescriptionString =
-            BigEndian ? "E-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64"
-                      : "e-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64";
+      DescriptionString =
+          BigEndian ? "E-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64"
+                    : "e-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64";
     }
 
     // FIXME: Enumerated types are variable width in straight AAPCS.
@@ -3794,31 +3779,16 @@ class ARMTargetInfo : public TargetInfo {
     /// gcc.
     ZeroLengthBitfieldBoundary = 32;
 
-    if (IsThumb) {
-      // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
-      // so set preferred for small types to 32.
-      if (T.isOSBinFormatMachO())
-        DescriptionString = BigEndian ?
-            "E-m:o-p:32:32-i1:8:32-i8:8:32-i16:16:32-f64:32:64"
-            "-v64:32:64-v128:32:128-a:0:32-n32-S32" :
-            "e-m:o-p:32:32-i1:8:32-i8:8:32-i16:16:32-f64:32:64"
-            "-v64:32:64-v128:32:128-a:0:32-n32-S32";
-      else
-        DescriptionString = BigEndian ?
-            "E-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-f64:32:64"
-            "-v64:32:64-v128:32:128-a:0:32-n32-S32" :
-            "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-f64:32:64"
-            "-v64:32:64-v128:32:128-a:0:32-n32-S32";
-    } else {
-      if (T.isOSBinFormatMachO())
-        DescriptionString = BigEndian ?
-            "E-m:o-p:32:32-f64:32:64-v64:32:64-v128:32:128-a:0:32-n32-S32" :
-            "e-m:o-p:32:32-f64:32:64-v64:32:64-v128:32:128-a:0:32-n32-S32";
-      else
-        DescriptionString = BigEndian ?
-            "E-m:e-p:32:32-f64:32:64-v64:32:64-v128:32:128-a:0:32-n32-S32" :
-            "e-m:e-p:32:32-f64:32:64-v64:32:64-v128:32:128-a:0:32-n32-S32";
-    }
+    if (T.isOSBinFormatMachO())
+      DescriptionString =
+          BigEndian
+              ? "E-m:o-p:32:32-f64:32:64-v64:32:64-v128:32:128-a:0:32-n32-S32"
+              : "e-m:o-p:32:32-f64:32:64-v64:32:64-v128:32:128-a:0:32-n32-S32";
+    else
+      DescriptionString =
+          BigEndian
+              ? "E-m:e-p:32:32-f64:32:64-v64:32:64-v128:32:128-a:0:32-n32-S32"
+              : "e-m:e-p:32:32-f64:32:64-v64:32:64-v128:32:128-a:0:32-n32-S32";
 
     // FIXME: Override "preferred align" for double and long long.
   }
