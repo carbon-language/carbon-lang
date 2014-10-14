@@ -2697,6 +2697,8 @@ defm VPMULLD : avx512_binop_rm_vl_d<0x40, "vpmull", mul,
                                    SSE_INTALU_ITINS_P, HasAVX512, 1>, T8PD;
 defm VPMULLW : avx512_binop_rm_vl_w<0xD5, "vpmull", mul,
                                    SSE_INTALU_ITINS_P, HasBWI, 1>;
+defm VPMULLQ : avx512_binop_rm_vl_q<0x40, "vpmull", mul,
+                                   SSE_INTALU_ITINS_P, HasDQI, 1>, T8PD;
 
 defm VPMULDQZ : avx512_binop_rm2<0x28, "vpmuldq", v8i64, v16i32, VK8WM, VR512,
                    memopv8i64, i512mem, loadi64, i64mem, "{1to8}",
