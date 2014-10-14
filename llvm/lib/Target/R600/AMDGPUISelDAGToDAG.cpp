@@ -787,6 +787,18 @@ bool AMDGPUDAGToDAGISel::SelectDS1Addr1Offset(SDValue Addr, SDValue &Base,
     }
   }
 
+  // If we have a constant address, prefer to put the constant into the
+  // offset. This can save moves to load the constant address since multiple
+  // operations can share the zero base address register, and enables merging
+  // into read2 / write2 instructions.
+  if (const ConstantSDNode *CAddr = dyn_cast<ConstantSDNode>(Addr)) {
+    if (isUInt<16>(CAddr->getZExtValue())) {
+      Base = CurDAG->getConstant(0, MVT::i32);
+      Offset = Addr;
+      return true;
+    }
+  }
+
   // default case
   Base = Addr;
   Offset = CurDAG->getTargetConstant(0, MVT::i16);

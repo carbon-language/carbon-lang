@@ -382,6 +382,30 @@ define void @misaligned_read2_f64(double addrspace(1)* %out, double addrspace(3)
   ret void
 }
 
+@foo = addrspace(3) global [4 x i32] zeroinitializer, align 4
+
+; SI-LABEL: @load_constant_adjacent_offsets
+; SI: V_MOV_B32_e32 [[ZERO:v[0-9]+]], 0{{$}}
+; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, [[ZERO]] offset0:0 offset1:1
+define void @load_constant_adjacent_offsets(i32 addrspace(1)* %out) {
+  %val0 = load i32 addrspace(3)* getelementptr inbounds ([4 x i32] addrspace(3)* @foo, i32 0, i32 0), align 4
+  %val1 = load i32 addrspace(3)* getelementptr inbounds ([4 x i32] addrspace(3)* @foo, i32 0, i32 1), align 4
+  %sum = add i32 %val0, %val1
+  store i32 %sum, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; SI-LABEL: @load_constant_disjoint_offsets
+; SI: V_MOV_B32_e32 [[ZERO:v[0-9]+]], 0{{$}}
+; SI: DS_READ2_B32 v{{\[[0-9]+:[0-9]+\]}}, [[ZERO]] offset0:0 offset1:2
+define void @load_constant_disjoint_offsets(i32 addrspace(1)* %out) {
+  %val0 = load i32 addrspace(3)* getelementptr inbounds ([4 x i32] addrspace(3)* @foo, i32 0, i32 0), align 4
+  %val1 = load i32 addrspace(3)* getelementptr inbounds ([4 x i32] addrspace(3)* @foo, i32 0, i32 2), align 4
+  %sum = add i32 %val0, %val1
+  store i32 %sum, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
 @sgemm.lA = internal unnamed_addr addrspace(3) global [264 x float] zeroinitializer, align 4
 @sgemm.lB = internal unnamed_addr addrspace(3) global [776 x float] zeroinitializer, align 4
 

@@ -320,6 +320,27 @@ define void @simple_write2_two_val_f64(double addrspace(1)* %C, double addrspace
   ret void
 }
 
+@foo = addrspace(3) global [4 x i32] zeroinitializer, align 4
+
+; SI-LABEL: @store_constant_adjacent_offsets
+; SI: V_MOV_B32_e32 [[ZERO:v[0-9]+]], 0{{$}}
+; SI: DS_WRITE2_B32 [[ZERO]], v{{[0-9]+}}, v{{[0-9]+}} offset0:0 offset1:1
+define void @store_constant_adjacent_offsets() {
+  store i32 123, i32 addrspace(3)* getelementptr inbounds ([4 x i32] addrspace(3)* @foo, i32 0, i32 0), align 4
+  store i32 123, i32 addrspace(3)* getelementptr inbounds ([4 x i32] addrspace(3)* @foo, i32 0, i32 1), align 4
+  ret void
+}
+
+; SI-LABEL: @store_constant_disjoint_offsets
+; SI-DAG: V_MOV_B32_e32 [[VAL:v[0-9]+]], 0x7b{{$}}
+; SI-DAG: V_MOV_B32_e32 [[ZERO:v[0-9]+]], 0{{$}}
+; SI: DS_WRITE2_B32 [[ZERO]], [[VAL]], [[VAL]] offset0:0 offset1:2
+define void @store_constant_disjoint_offsets() {
+  store i32 123, i32 addrspace(3)* getelementptr inbounds ([4 x i32] addrspace(3)* @foo, i32 0, i32 0), align 4
+  store i32 123, i32 addrspace(3)* getelementptr inbounds ([4 x i32] addrspace(3)* @foo, i32 0, i32 2), align 4
+  ret void
+}
+
 @sgemm.lA = internal unnamed_addr addrspace(3) global [264 x float] zeroinitializer, align 4
 @sgemm.lB = internal unnamed_addr addrspace(3) global [776 x float] zeroinitializer, align 4
 
