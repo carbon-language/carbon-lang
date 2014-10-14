@@ -51,7 +51,15 @@ static inline uhwptr *GetCanonicFrame(uptr bp,
   if (!IsValidFrame(bp, stack_top, stack_bottom)) return 0;
   uhwptr *bp_prev = (uhwptr *)bp;
   if (IsValidFrame((uptr)bp_prev[0], stack_top, stack_bottom)) return bp_prev;
-  return bp_prev - 1;
+  // The next frame pointer does not look right. This could be a GCC frame, step
+  // back by 1 word and try again.
+  if (IsValidFrame((uptr)bp_prev[-1], stack_top, stack_bottom))
+    return bp_prev - 1;
+  // Nope, this does not look right either. This means the frame after next does
+  // not have a valid frame pointer, but we can still extract the caller PC.
+  // Unfortunately, there is no way to decide between GCC and LLVM frame
+  // layouts. Assume LLVM.
+  return bp_prev;
 #else
   return (uhwptr*)bp;
 #endif
@@ -65,18 +73,19 @@ void StackTrace::FastUnwindStack(uptr pc, uptr bp,
   size = 1;
   if (stack_top < 4096) return;  // Sanity check for stack top.
   uhwptr *frame = GetCanonicFrame(bp, stack_top, stack_bottom);
-  uhwptr *prev_frame = 0;
+  // Lowest possible address that makes sense as the next frame pointer.
+  // Goes up as we walk the stack.
+  uptr bottom = stack_bottom;
   // Avoid infinite loop when frame == frame[0] by using frame > prev_frame.
-  while (frame > prev_frame &&
-         IsValidFrame((uptr)frame, stack_top, stack_bottom) &&
+  while (IsValidFrame((uptr)frame, stack_top, bottom) &&
          IsAligned((uptr)frame, sizeof(*frame)) &&
          size < max_depth) {
     uhwptr pc1 = frame[1];
     if (pc1 != pc) {
       trace[size++] = (uptr) pc1;
     }
-    prev_frame = frame;
-    frame = GetCanonicFrame((uptr)frame[0], stack_top, stack_bottom);
+    bottom = (uptr)frame;
+    frame = GetCanonicFrame((uptr)frame[0], stack_top, bottom);
   }
 }
 
