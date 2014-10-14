@@ -952,6 +952,7 @@ public:
                                     const MachineRegisterInfo *MRI) const {
     return false;
   }
+  virtual bool optimizeCondBranch(MachineInstr *MI) const { return false; }
 
   /// optimizeLoadInstr - Try to remove the load by folding it to a register
   /// operand at the use. We fold the load instructions if and only if the

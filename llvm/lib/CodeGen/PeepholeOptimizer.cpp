@@ -135,6 +135,7 @@ namespace {
     bool optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
                           SmallPtrSetImpl<MachineInstr*> &LocalMIs);
     bool optimizeSelect(MachineInstr *MI);
+    bool optimizeCondBranch(MachineInstr *MI);
     bool optimizeCopyOrBitcast(MachineInstr *MI);
     bool optimizeCoalescableCopy(MachineInstr *MI);
     bool optimizeUncoalescableCopy(MachineInstr *MI,
@@ -496,6 +497,12 @@ bool PeepholeOptimizer::optimizeSelect(MachineInstr *MI) {
   MI->eraseFromParent();
   ++NumSelects;
   return true;
+}
+
+/// \brief Check if a simpler conditional branch can be
+// generated
+bool PeepholeOptimizer::optimizeCondBranch(MachineInstr *MI) {
+  return TII->optimizeCondBranch(MI);
 }
 
 /// \brief Check if the registers defined by the pair (RegisterClass, SubReg)
@@ -1100,6 +1107,11 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &mf) {
           (MI->isSelect() && optimizeSelect(MI))) {
         // MI is deleted.
         LocalMIs.erase(MI);
+        Changed = true;
+        continue;
+      }
+
+      if (MI->isConditionalBranch() && optimizeCondBranch(MI)) {
         Changed = true;
         continue;
       }

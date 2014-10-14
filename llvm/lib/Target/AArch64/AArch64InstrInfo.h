@@ -165,6 +165,7 @@ public:
   bool optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
                             unsigned SrcReg2, int CmpMask, int CmpValue,
                             const MachineRegisterInfo *MRI) const override;
+  bool optimizeCondBranch(MachineInstr *MI) const;
   /// hasPattern - return true when there is potentially a faster code sequence
   /// for an instruction chain ending in <Root>. All potential patterns are
   /// listed
