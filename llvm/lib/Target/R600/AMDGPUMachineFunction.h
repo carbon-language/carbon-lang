@@ -30,6 +30,9 @@ public:
   /// Number of bytes in the LDS that are being used.
   unsigned LDSSize;
 
+  /// Start of implicit kernel args
+  unsigned ABIArgOffset;
+
   unsigned getShaderType() const {
     return ShaderType;
   }

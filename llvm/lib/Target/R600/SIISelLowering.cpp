@@ -519,11 +519,11 @@ SDValue SITargetLowering::LowerFormalArguments(
     if (VA.isMemLoc()) {
       VT = Ins[i].VT;
       EVT MemVT = Splits[i].VT;
+      const unsigned Offset = 36 + VA.getLocMemOffset();
       // The first 36 bytes of the input buffer contains information about
       // thread group and global sizes.
       SDValue Arg = LowerParameter(DAG, VT, MemVT,  DL, DAG.getRoot(),
-                                   36 + VA.getLocMemOffset(),
-                                   Ins[i].Flags.isSExt());
+                                   Offset, Ins[i].Flags.isSExt());
 
       const PointerType *ParamTy =
           dyn_cast<PointerType>(FType->getParamType(Ins[i].OrigArgIndex));
@@ -537,6 +537,7 @@ SDValue SITargetLowering::LowerFormalArguments(
       }
 
       InVals.push_back(Arg);
+      Info->ABIArgOffset = Offset + MemVT.getStoreSize();
       continue;
     }
     assert(VA.isRegLoc() && "Parameter must be in a register!");
@@ -927,6 +928,12 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::r600_read_local_size_z:
     return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
                           SI::KernelInputOffsets::LOCAL_SIZE_Z, false);
+
+  case Intrinsic::AMDGPU_read_workdim:
+    return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
+                          MF.getInfo<SIMachineFunctionInfo>()->ABIArgOffset,
+                          false);
+
   case Intrinsic::r600_read_tgid_x:
     return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
       TRI->getPreloadedValue(MF, SIRegisterInfo::TGID_X), VT);
