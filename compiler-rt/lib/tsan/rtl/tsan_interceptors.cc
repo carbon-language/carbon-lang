@@ -345,7 +345,7 @@ static AtExitContext *atexit_ctx;
 */
 
 // The sole reason tsan wraps atexit callbacks is to establish synchronization
-// between callback setup and callback execution. 
+// between callback setup and callback execution.
 struct AtExitCtx {
   void (*f)();
   void *arg;
