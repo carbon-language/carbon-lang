@@ -39,3 +39,11 @@ int LLVMWriteBitcodeToFD(LLVMModuleRef M, int FD, int ShouldClose,
 int LLVMWriteBitcodeToFileHandle(LLVMModuleRef M, int FileHandle) {
   return LLVMWriteBitcodeToFD(M, FileHandle, true, false);
 }
+
+LLVMMemoryBufferRef LLVMWriteBitcodeToMemoryBuffer(LLVMModuleRef M) {
+  std::string Data;
+  raw_string_ostream OS(Data);
+
+  WriteBitcodeToFile(unwrap(M), OS);
+  return wrap(MemoryBuffer::getMemBufferCopy(OS.str()).release());
+}

@@ -45,6 +45,9 @@ int LLVMWriteBitcodeToFD(LLVMModuleRef M, int FD, int ShouldClose,
     descriptor. Returns 0 on success. Closes the Handle. */
 int LLVMWriteBitcodeToFileHandle(LLVMModuleRef M, int Handle);
 
+/** Writes a module to a new memory buffer and returns it. */
+LLVMMemoryBufferRef LLVMWriteBitcodeToMemoryBuffer(LLVMModuleRef M);
+
 /**
  * @}
  */
