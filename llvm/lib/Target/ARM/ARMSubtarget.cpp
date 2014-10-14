@@ -123,10 +123,9 @@ static std::string computeDataLayout(ARMSubtarget &ST) {
   else
     Ret += "-v128:64:128";
 
-  // On thumb and APCS, only try to align aggregates to 32 bits (the default is
-  // 64 bits).
-  if (ST.isThumb() || ST.isAPCS_ABI())
-    Ret += "-a:0:32";
+  // Try to align aggregates to 32 bits (the default is 64 bits, which has no
+  // particular hardware support on 32-bit ARM).
+  Ret += "-a:0:32";
 
   // Integer registers are 32 bits.
   Ret += "-n32";
