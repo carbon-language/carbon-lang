@@ -150,6 +150,7 @@ private:
                           unsigned Alignment);
   bool foldXALUIntrinsic(AArch64CC::CondCode &CC, const Instruction *I,
                          const Value *Cond);
+  bool optimizeIntExtLoad(const Instruction *I, MVT RetVT, MVT SrcVT);
 
   // Emit helper routines.
   unsigned emitAddSub(bool UseAdd, MVT RetVT, const Value *LHS,
@@ -178,8 +179,8 @@ private:
   bool emitICmp(MVT RetVT, const Value *LHS, const Value *RHS, bool IsZExt);
   bool emitICmp_ri(MVT RetVT, unsigned LHSReg, bool LHSIsKill, uint64_t Imm);
   bool emitFCmp(MVT RetVT, const Value *LHS, const Value *RHS);
-  bool emitLoad(MVT VT, MVT ResultVT, unsigned &ResultReg, Address Addr,
-                bool WantZExt = true, MachineMemOperand *MMO = nullptr);
+  unsigned emitLoad(MVT VT, MVT ResultVT, Address Addr, bool WantZExt = true,
+                    MachineMemOperand *MMO = nullptr);
   bool emitStore(MVT VT, unsigned SrcReg, Address Addr,
                  MachineMemOperand *MMO = nullptr);
   unsigned emitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT, bool isZExt);
@@ -1631,12 +1632,11 @@ unsigned AArch64FastISel::emitAnd_ri(MVT RetVT, unsigned LHSReg, bool LHSIsKill,
   return emitLogicalOp_ri(ISD::AND, RetVT, LHSReg, LHSIsKill, Imm);
 }
 
-bool AArch64FastISel::emitLoad(MVT VT, MVT RetVT, unsigned &ResultReg,
-                               Address Addr, bool WantZExt,
-                               MachineMemOperand *MMO) {
+unsigned AArch64FastISel::emitLoad(MVT VT, MVT RetVT, Address Addr,
+                                   bool WantZExt, MachineMemOperand *MMO) {
   // Simplify this down to something we can handle.
   if (!simplifyAddress(Addr, VT))
-    return false;
+    return 0;
 
   unsigned ScaleFactor = getImplicitScaleFactor(VT);
   if (!ScaleFactor)
@@ -1740,13 +1740,20 @@ bool AArch64FastISel::emitLoad(MVT VT, MVT RetVT, unsigned &ResultReg,
   }
 
   // Create the base instruction, then add the operands.
-  ResultReg = createResultReg(RC);
+  unsigned ResultReg = createResultReg(RC);
   MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                                     TII.get(Opc), ResultReg);
   addLoadStoreOperands(Addr, MIB, MachineMemOperand::MOLoad, ScaleFactor, MMO);
 
+  // Loading an i1 requires special handling.
+  if (VT == MVT::i1) {
+    unsigned ANDReg = emitAnd_ri(MVT::i32, ResultReg, /*IsKill=*/true, 1);
+    assert(ANDReg && "Unexpected AND instruction emission failure.");
+    ResultReg = ANDReg;
+  }
+
   // For zero-extending loads to 64bit we emit a 32bit load and then convert
-  // the w-reg to an x-reg. In the end this is just an noop and will be removed.
+  // the 32bit reg to a 64bit reg.
   if (WantZExt && RetVT == MVT::i64 && VT <= MVT::i32) {
     unsigned Reg64 = createResultReg(&AArch64::GPR64RegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
@@ -1756,15 +1763,7 @@ bool AArch64FastISel::emitLoad(MVT VT, MVT RetVT, unsigned &ResultReg,
         .addImm(AArch64::sub_32);
     ResultReg = Reg64;
   }
-
-  // Loading an i1 requires special handling.
-  if (VT == MVT::i1) {
-    unsigned ANDReg = emitAnd_ri(IsRet64Bit ? MVT::i64 : MVT::i32, ResultReg,
-                                 /*IsKill=*/true, 1);
-    assert(ANDReg && "Unexpected AND instruction emission failure.");
-    ResultReg = ANDReg;
-  }
-  return true;
+  return ResultReg;
 }
 
 bool AArch64FastISel::selectAddSub(const Instruction *I) {
@@ -1836,23 +1835,81 @@ bool AArch64FastISel::selectLoad(const Instruction *I) {
   if (!computeAddress(I->getOperand(0), Addr, I->getType()))
     return false;
 
+  // Fold the following sign-/zero-extend into the load instruction.
   bool WantZExt = true;
   MVT RetVT = VT;
+  const Value *IntExtVal = nullptr;
   if (I->hasOneUse()) {
     if (const auto *ZE = dyn_cast<ZExtInst>(I->use_begin()->getUser())) {
-      if (!isTypeSupported(ZE->getType(), RetVT, /*IsVectorAllowed=*/false))
+      if (isTypeSupported(ZE->getType(), RetVT))
+        IntExtVal = ZE;
+      else
         RetVT = VT;
     } else if (const auto *SE = dyn_cast<SExtInst>(I->use_begin()->getUser())) {
-      if (!isTypeSupported(SE->getType(), RetVT, /*IsVectorAllowed=*/false))
+      if (isTypeSupported(SE->getType(), RetVT))
+        IntExtVal = SE;
+      else
         RetVT = VT;
       WantZExt = false;
     }
   }
 
-  unsigned ResultReg;
-  if (!emitLoad(VT, RetVT, ResultReg, Addr, WantZExt,
-                createMachineMemOperandFor(I)))
+  unsigned ResultReg =
+      emitLoad(VT, RetVT, Addr, WantZExt, createMachineMemOperandFor(I));
+  if (!ResultReg)
     return false;
+
+  // There are a few different cases we have to handle, because the load or the
+  // sign-/zero-extend might not be selected by FastISel if we fall-back to
+  // SelectionDAG. There is also an ordering issue when both instructions are in
+  // different basic blocks.
+  // 1.) The load instruction is selected by FastISel, but the integer extend
+  //     not. This usually happens when the integer extend is in a different
+  //     basic block and SelectionDAG took over for that basic block.
+  // 2.) The load instruction is selected before the integer extend. This only
+  //     happens when the integer extend is in a different basic block.
+  // 3.) The load instruction is selected by SelectionDAG and the integer extend
+  //     by FastISel. This happens if there are instructions between the load
+  //     and the integer extend that couldn't be selected by FastISel.
+  if (IntExtVal) {
+    // The integer extend hasn't been emitted yet. FastISel or SelectionDAG
+    // could select it. Emit a copy to subreg if necessary. FastISel will remove
+    // it when it selects the integer extend.
+    unsigned Reg = lookUpRegForValue(IntExtVal);
+    if (!Reg) {
+      if (RetVT == MVT::i64 && VT <= MVT::i32) {
+        if (WantZExt) {
+          // Delete the last emitted instruction from emitLoad (SUBREG_TO_REG).
+          std::prev(FuncInfo.InsertPt)->eraseFromParent();
+          ResultReg = std::prev(FuncInfo.InsertPt)->getOperand(0).getReg();
+        } else
+          ResultReg = fastEmitInst_extractsubreg(MVT::i32, ResultReg,
+                                                 /*IsKill=*/true,
+                                                 AArch64::sub_32);
+      }
+      updateValueMap(I, ResultReg);
+      return true;
+    }
+
+    // The integer extend has already been emitted - delete all the instructions
+    // that have been emitted by the integer extend lowering code and use the
+    // result from the load instruction directly.
+    while (Reg) {
+      auto *MI = MRI.getUniqueVRegDef(Reg);
+      if (!MI)
+        break;
+      Reg = 0;
+      for (auto &Opnd : MI->uses()) {
+        if (Opnd.isReg()) {
+          Reg = Opnd.getReg();
+          break;
+        }
+      }
+      MI->eraseFromParent();
+    }
+    updateValueMap(IntExtVal, ResultReg);
+    return true;
+  }
 
   updateValueMap(I, ResultReg);
   return true;
@@ -2104,13 +2161,12 @@ bool AArch64FastISel::emitCompareAndBranch(const BranchInst *BI) {
     return false;
   bool SrcIsKill = hasTrivialKill(LHS);
 
-  if (BW == 64 && !Is64Bit) {
+  if (BW == 64 && !Is64Bit)
     SrcReg = fastEmitInst_extractsubreg(MVT::i32, SrcReg, SrcIsKill,
                                         AArch64::sub_32);
-    SrcReg = constrainOperandRegClass(II, SrcReg,  II.getNumDefs());
-  }
 
   // Emit the combined compare and branch instruction.
+  SrcReg = constrainOperandRegClass(II, SrcReg,  II.getNumDefs());
   MachineInstrBuilder MIB =
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc))
           .addReg(SrcReg, getKillRegState(SrcIsKill));
@@ -2975,14 +3031,11 @@ bool AArch64FastISel::tryEmitSmallMemCpy(Address Dest, Address Src,
       }
     }
 
-    bool RV;
-    unsigned ResultReg;
-    RV = emitLoad(VT, VT, ResultReg, Src);
-    if (!RV)
+    unsigned ResultReg = emitLoad(VT, VT, Src);
+    if (!ResultReg)
       return false;
 
-    RV = emitStore(VT, ResultReg, Dest);
-    if (!RV)
+    if (!emitStore(VT, ResultReg, Dest))
       return false;
 
     int64_t Size = VT.getSizeInBits() / 8;
@@ -3986,6 +4039,107 @@ unsigned AArch64FastISel::emitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
   return fastEmitInst_rii(Opc, RC, SrcReg, /*TODO:IsKill=*/false, 0, Imm);
 }
 
+static bool isZExtLoad(const MachineInstr *LI) {
+  switch (LI->getOpcode()) {
+  default:
+    return false;
+  case AArch64::LDURBBi:
+  case AArch64::LDURHHi:
+  case AArch64::LDURWi:
+  case AArch64::LDRBBui:
+  case AArch64::LDRHHui:
+  case AArch64::LDRWui:
+  case AArch64::LDRBBroX:
+  case AArch64::LDRHHroX:
+  case AArch64::LDRWroX:
+  case AArch64::LDRBBroW:
+  case AArch64::LDRHHroW:
+  case AArch64::LDRWroW:
+    return true;
+  }
+}
+
+static bool isSExtLoad(const MachineInstr *LI) {
+  switch (LI->getOpcode()) {
+  default:
+    return false;
+  case AArch64::LDURSBWi:
+  case AArch64::LDURSHWi:
+  case AArch64::LDURSBXi:
+  case AArch64::LDURSHXi:
+  case AArch64::LDURSWi:
+  case AArch64::LDRSBWui:
+  case AArch64::LDRSHWui:
+  case AArch64::LDRSBXui:
+  case AArch64::LDRSHXui:
+  case AArch64::LDRSWui:
+  case AArch64::LDRSBWroX:
+  case AArch64::LDRSHWroX:
+  case AArch64::LDRSBXroX:
+  case AArch64::LDRSHXroX:
+  case AArch64::LDRSWroX:
+  case AArch64::LDRSBWroW:
+  case AArch64::LDRSHWroW:
+  case AArch64::LDRSBXroW:
+  case AArch64::LDRSHXroW:
+  case AArch64::LDRSWroW:
+    return true;
+  }
+}
+
+bool AArch64FastISel::optimizeIntExtLoad(const Instruction *I, MVT RetVT,
+                                         MVT SrcVT) {
+  const auto *LI = dyn_cast<LoadInst>(I->getOperand(0));
+  if (!LI || !LI->hasOneUse())
+    return false;
+
+  // Check if the load instruction has already been selected.
+  unsigned Reg = lookUpRegForValue(LI);
+  if (!Reg)
+    return false;
+
+  MachineInstr *MI = MRI.getUniqueVRegDef(Reg);
+  if (!MI)
+    return false;
+
+  // Check if the correct load instruction has been emitted - SelectionDAG might
+  // have emitted a zero-extending load, but we need a sign-extending load.
+  bool IsZExt = isa<ZExtInst>(I);
+  const auto *LoadMI = MI;
+  if (LoadMI->getOpcode() == TargetOpcode::COPY &&
+      LoadMI->getOperand(1).getSubReg() == AArch64::sub_32) {
+    unsigned LoadReg = MI->getOperand(1).getReg();
+    LoadMI = MRI.getUniqueVRegDef(LoadReg);
+    assert(LoadMI && "Expected valid instruction");
+  }
+  if (!(IsZExt && isZExtLoad(LoadMI)) && !(!IsZExt && isSExtLoad(LoadMI)))
+    return false;
+
+  // Nothing to be done.
+  if (RetVT != MVT::i64 || SrcVT > MVT::i32) {
+    updateValueMap(I, Reg);
+    return true;
+  }
+
+  if (IsZExt) {
+    unsigned Reg64 = createResultReg(&AArch64::GPR64RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(AArch64::SUBREG_TO_REG), Reg64)
+        .addImm(0)
+        .addReg(Reg, getKillRegState(true))
+        .addImm(AArch64::sub_32);
+    Reg = Reg64;
+  } else {
+    assert((MI->getOpcode() == TargetOpcode::COPY &&
+            MI->getOperand(1).getSubReg() == AArch64::sub_32) &&
+           "Expected copy instruction");
+    Reg = MI->getOperand(1).getReg();
+    MI->eraseFromParent();
+  }
+  updateValueMap(I, Reg);
+  return true;
+}
+
 bool AArch64FastISel::selectIntExt(const Instruction *I) {
   assert((isa<ZExtInst>(I) || isa<SExtInst>(I)) &&
          "Unexpected integer extend instruction.");
@@ -3997,19 +4151,16 @@ bool AArch64FastISel::selectIntExt(const Instruction *I) {
   if (!isTypeSupported(I->getOperand(0)->getType(), SrcVT))
     return false;
 
+  // Try to optimize already sign-/zero-extended values from load instructions.
+  if (optimizeIntExtLoad(I, RetVT, SrcVT))
+    return true;
+
   unsigned SrcReg = getRegForValue(I->getOperand(0));
   if (!SrcReg)
     return false;
   bool SrcIsKill = hasTrivialKill(I->getOperand(0));
 
-  // The load instruction selection code handles the sign-/zero-extension.
-  if (const auto *LI = dyn_cast<LoadInst>(I->getOperand(0))) {
-    if (LI->hasOneUse()) {
-      updateValueMap(I, SrcReg);
-      return true;
-    }
-  }
-
+  // Try to optimize already sign-/zero-extended values from function arguments.
   bool IsZExt = isa<ZExtInst>(I);
   if (const auto *Arg = dyn_cast<Argument>(I->getOperand(0))) {
     if ((IsZExt && Arg->hasZExtAttr()) || (!IsZExt && Arg->hasSExtAttr())) {
