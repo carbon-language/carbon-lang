@@ -102,11 +102,6 @@ static std::string computeDataLayout(ARMSubtarget &ST) {
   // Pointers are 32 bits and aligned to 32 bits.
   Ret += "-p:32:32";
 
-  // On thumb, i16,i18 and i1 have natural aligment requirements, but we try to
-  // align to 32.
-  if (ST.isThumb())
-    Ret += "-i1:8:32-i8:8:32-i16:16:32";
-
   // ABIs other than APCS have 64 bit integers with natural alignment.
   if (!ST.isAPCS_ABI())
     Ret += "-i64:64";
