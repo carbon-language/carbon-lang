@@ -190,10 +190,8 @@ bool SymbolTable::addByName(const Atom &newAtom) {
     useNew = true;
     break;
   case NCR_DupDef:
-    assert(existing->definition() == Atom::definitionRegular);
-    assert(newAtom.definition() == Atom::definitionRegular);
-    switch (mergeSelect(((DefinedAtom*)existing)->merge(),
-                        ((DefinedAtom*)&newAtom)->merge())) {
+    switch (mergeSelect(cast<DefinedAtom>(existing)->merge(),
+                        cast<DefinedAtom>(&newAtom)->merge())) {
     case MCR_First:
       useNew = false;
       break;
@@ -371,7 +369,7 @@ const Atom *SymbolTable::findByName(StringRef sym) {
 
 bool SymbolTable::isDefined(StringRef sym) {
   if (const Atom *atom = findByName(sym))
-    return atom->definition() != Atom::definitionUndefined;
+    return !isa<UndefinedAtom>(atom);
   return false;
 }
 
