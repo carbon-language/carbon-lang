@@ -105,11 +105,6 @@ typedef void (*sighandler_t)(int sig);
 
 #define errno (*__errno_location())
 
-// 16K loaded modules should be enough for everyone.
-static const uptr kMaxModules = 1 << 14;
-static LoadedModule *modules;
-static uptr nmodules;
-
 struct sigaction_t {
   union {
     sighandler_t sa_handler;
@@ -289,6 +284,7 @@ TSAN_INTERCEPTOR(int, nanosleep, void *req, void *rem) {
   return res;
 }
 
+/*
 class AtExitContext {
  public:
   AtExitContext()
@@ -346,6 +342,26 @@ class AtExitContext {
 };
 
 static AtExitContext *atexit_ctx;
+*/
+
+// The sole reason tsan wraps atexit callbacks is to establish synchronization
+// between callback setup and callback execution. 
+struct AtExitCtx {
+  void (*f)();
+  void *arg;
+};
+
+static void at_exit_wrapper(void *arg) {
+  ThreadState *thr = cur_thread();
+  uptr pc = 0;
+  Acquire(thr, pc, (uptr)arg);
+  AtExitCtx *ctx = (AtExitCtx*)arg;
+  ((void(*)(void *arg))ctx->f)(ctx->arg);
+  __libc_free(ctx);
+}
+
+static int setup_at_exit_wrapper(ThreadState *thr, uptr pc, void(*f)(),
+      void *arg, void *dso);
 
 TSAN_INTERCEPTOR(int, atexit, void (*f)()) {
   if (cur_thread()->in_symbolizer)
@@ -353,40 +369,51 @@ TSAN_INTERCEPTOR(int, atexit, void (*f)()) {
   // We want to setup the atexit callback even if we are in ignored lib
   // or after fork.
   SCOPED_INTERCEPTOR_RAW(atexit, f);
-  return atexit_ctx->atexit(thr, pc, false, (void(*)())f, 0, 0);
-}
-
-TSAN_INTERCEPTOR(int, on_exit, void(*f)(int, void*), void *arg) {
-  if (cur_thread()->in_symbolizer)
-    return 0;
-  SCOPED_TSAN_INTERCEPTOR(on_exit, f, arg);
-  return atexit_ctx->atexit(thr, pc, true, (void(*)())f, arg, 0);
-}
-
-bool IsSaticModule(void *dso) {
-  if (modules == 0)
-    return false;
-  for (uptr i = 0; i < nmodules; i++) {
-    if (modules[i].containsAddress((uptr)dso))
-      return true;
-  }
-  return false;
+  return setup_at_exit_wrapper(thr, pc, (void(*)())f, 0, 0);
 }
 
 TSAN_INTERCEPTOR(int, __cxa_atexit, void (*f)(void *a), void *arg, void *dso) {
   if (cur_thread()->in_symbolizer)
     return 0;
   SCOPED_TSAN_INTERCEPTOR(__cxa_atexit, f, arg, dso);
-  // If it's the main executable or a statically loaded library,
-  // we will call the callback.
-  if (dso == 0 || IsSaticModule(dso))
-    return atexit_ctx->atexit(thr, pc, false, (void(*)())f, arg, dso);
+  return setup_at_exit_wrapper(thr, pc, (void(*)())f, arg, dso);
+}
 
-  // Dynamically load module, don't know when to call the callback for it.
+static int setup_at_exit_wrapper(ThreadState *thr, uptr pc, void(*f)(),
+      void *arg, void *dso) {
+  AtExitCtx *ctx = (AtExitCtx*)__libc_malloc(sizeof(AtExitCtx));
+  ctx->f = f;
+  ctx->arg = arg;
+  Release(thr, pc, (uptr)ctx);
   // Memory allocation in __cxa_atexit will race with free during exit,
   // because we do not see synchronization around atexit callback list.
   ThreadIgnoreBegin(thr, pc);
-  int res = REAL(__cxa_atexit)(f, arg, dso);
+  int res = REAL(__cxa_atexit)(at_exit_wrapper, ctx, dso);
+  ThreadIgnoreEnd(thr, pc);
+  return res;
+}
+
+static void on_exit_wrapper(int status, void *arg) {
+  ThreadState *thr = cur_thread();
+  uptr pc = 0;
+  Acquire(thr, pc, (uptr)arg);
+  AtExitCtx *ctx = (AtExitCtx*)arg;
+  ((void(*)(int status, void *arg))ctx->f)(status, ctx->arg);
+  __libc_free(ctx);
+}
+
+TSAN_INTERCEPTOR(int, on_exit, void(*f)(int, void*), void *arg) {
+  if (cur_thread()->in_symbolizer)
+    return 0;
+  SCOPED_TSAN_INTERCEPTOR(on_exit, f, arg);
+  AtExitCtx *ctx = (AtExitCtx*)__libc_malloc(sizeof(AtExitCtx));
+  ctx->f = (void(*)())f;
+  ctx->arg = arg;
+  Release(thr, pc, (uptr)ctx);
+  // Memory allocation in __cxa_atexit will race with free during exit,
+  // because we do not see synchronization around atexit callback list.
+  ThreadIgnoreBegin(thr, pc);
+  int res = REAL(on_exit)(on_exit_wrapper, ctx);
   ThreadIgnoreEnd(thr, pc);
   return res;
 }
@@ -2244,8 +2271,6 @@ namespace __tsan {
 
 static void finalize(void *arg) {
   ThreadState *thr = cur_thread();
-  uptr pc = 0;
-  atexit_ctx->exit(thr, pc);
   int status = Finalize(thr);
   // Make sure the output is not lost.
   // Flushing all the streams here may freeze the process if a child thread is
@@ -2433,9 +2458,6 @@ void InitializeInterceptors() {
   // Need to setup it, because interceptors check that the function is resolved.
   // But atexit is emitted directly into the module, so can't be resolved.
   REAL(atexit) = (int(*)(void(*)()))unreachable;
-  atexit_ctx = new(internal_alloc(MBlockAtExit, sizeof(AtExitContext)))
-      AtExitContext();
-
   if (REAL(__cxa_atexit)(&finalize, 0, 0)) {
     Printf("ThreadSanitizer: failed to setup atexit callback\n");
     Die();
@@ -2447,11 +2469,6 @@ void InitializeInterceptors() {
   }
 
   FdInit();
-
-  // Remember list of loaded libraries for atexit interceptors.
-  modules = (LoadedModule*)MmapOrDie(sizeof(*modules)*kMaxModules,
-      "LoadedModule");
-  nmodules = GetListOfModules(modules, kMaxModules, 0);
 }
 
 void *internal_start_thread(void(*func)(void *arg), void *arg) {
