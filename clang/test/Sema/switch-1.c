@@ -20,3 +20,8 @@ int f(int i) {
   return (i, 65537) * 65537; // expected-warning {{overflow in expression; result is 131073 with type 'int'}} \
 			     // expected-warning {{expression result unused}}
 }
+
+// rdar://18405357
+unsigned long long l = 65536 * 65536; // expected-warning {{overflow in expression; result is 0 with type 'int'}}
+unsigned long long l2 = 65536 * (unsigned)65536;
+unsigned long long l3 = 65536 * 65536ULL;
