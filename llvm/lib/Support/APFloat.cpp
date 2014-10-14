@@ -954,7 +954,7 @@ APFloat::multiplySignificand(const APFloat &rhs, const APFloat *addend)
   // exponent accordingly.
   exponent += 1;
 
-  if (addend) {
+  if (addend && addend->isNonZero()) {
     // The intermediate result of the multiplication has "2 * precision" 
     // signicant bit; adjust the addend to be consistent with mul result.
     //
@@ -1800,7 +1800,7 @@ APFloat::fusedMultiplyAdd(const APFloat &multiplicand,
      extended-precision calculation.  */
   if (isFiniteNonZero() &&
       multiplicand.isFiniteNonZero() &&
-      addend.isFiniteNonZero()) {
+      addend.isFinite()) {
     lostFraction lost_fraction;
 
     lost_fraction = multiplySignificand(multiplicand, &addend);
