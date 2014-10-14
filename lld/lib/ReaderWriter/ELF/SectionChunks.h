@@ -272,7 +272,6 @@ uint64_t AtomSection<ELFT>::alignOffset(uint64_t offset,
 // the atom file offset is aligned appropriately as set by the Reader
 template <class ELFT>
 const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
-  Atom::Definition atomType = atom->definition();
   const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
 
   DefinedAtom::Alignment atomAlign = definedAtom->alignment();
@@ -282,49 +281,42 @@ const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
   // properly as the BSS symbols only occupy memory size and not file size
   uint64_t fOffset = alignOffset(this->fileSize(), atomAlign);
   uint64_t mOffset = alignOffset(this->memSize(), atomAlign);
-  switch (atomType) {
-  case Atom::definitionRegular:
-    switch(definedAtom->contentType()) {
-    case DefinedAtom::typeCode:
-    case DefinedAtom::typeConstant:
-    case DefinedAtom::typeData:
-    case DefinedAtom::typeDataFast:
-    case DefinedAtom::typeZeroFillFast:
-    case DefinedAtom::typeGOT:
-    case DefinedAtom::typeStub:
-    case DefinedAtom::typeResolver:
-    case DefinedAtom::typeThreadData:
-    case DefinedAtom::typeRONote:
-    case DefinedAtom::typeRWNote:
-      _atoms.push_back(new (_alloc) lld::AtomLayout(atom, fOffset, 0));
-      this->_fsize = fOffset + definedAtom->size();
-      this->_msize = mOffset + definedAtom->size();
-      DEBUG_WITH_TYPE("Section",
-                      llvm::dbgs() << "[" << this->name() << " " << this << "] "
-                                   << "Adding atom: " << atom->name() << "@"
-                                   << fOffset << "\n");
-      break;
-    case DefinedAtom::typeNoAlloc:
-      _atoms.push_back(new (_alloc) lld::AtomLayout(atom, fOffset, 0));
-      this->_fsize = fOffset + definedAtom->size();
-      DEBUG_WITH_TYPE("Section", llvm::dbgs() << "[" << this->name() << " "
-                                              << this << "] "
-                                              << "Adding atom: " << atom->name()
-                                              << "@" << fOffset << "\n");
-      break;
-    case DefinedAtom::typeThreadZeroFill:
-    case DefinedAtom::typeZeroFill:
-      _atoms.push_back(new (_alloc) lld::AtomLayout(atom, mOffset, 0));
-      this->_msize = mOffset + definedAtom->size();
-      break;
-    default:
-      llvm::dbgs() << definedAtom->contentType() << "\n";
-      llvm_unreachable("Uexpected content type.");
-    }
+  switch(definedAtom->contentType()) {
+  case DefinedAtom::typeCode:
+  case DefinedAtom::typeConstant:
+  case DefinedAtom::typeData:
+  case DefinedAtom::typeDataFast:
+  case DefinedAtom::typeZeroFillFast:
+  case DefinedAtom::typeGOT:
+  case DefinedAtom::typeStub:
+  case DefinedAtom::typeResolver:
+  case DefinedAtom::typeThreadData:
+  case DefinedAtom::typeRONote:
+  case DefinedAtom::typeRWNote:
+    _atoms.push_back(new (_alloc) lld::AtomLayout(atom, fOffset, 0));
+    this->_fsize = fOffset + definedAtom->size();
+    this->_msize = mOffset + definedAtom->size();
+    DEBUG_WITH_TYPE("Section",
+                    llvm::dbgs() << "[" << this->name() << " " << this << "] "
+                                 << "Adding atom: " << atom->name() << "@"
+                                 << fOffset << "\n");
+    break;
+  case DefinedAtom::typeNoAlloc:
+    _atoms.push_back(new (_alloc) lld::AtomLayout(atom, fOffset, 0));
+    this->_fsize = fOffset + definedAtom->size();
+    DEBUG_WITH_TYPE("Section", llvm::dbgs() << "[" << this->name() << " "
+                                            << this << "] "
+                                            << "Adding atom: " << atom->name()
+                                            << "@" << fOffset << "\n");
+    break;
+  case DefinedAtom::typeThreadZeroFill:
+  case DefinedAtom::typeZeroFill:
+    _atoms.push_back(new (_alloc) lld::AtomLayout(atom, mOffset, 0));
+    this->_msize = mOffset + definedAtom->size();
     break;
   default:
-    llvm_unreachable("Expecting only definedAtoms being passed here");
-    break;
+    llvm::dbgs() << definedAtom->contentType() << "\n";
+    llvm_unreachable("Uexpected content type.");
   }
   // Set the section alignment to the largest alignment
   // std::max doesn't support uint64_t
