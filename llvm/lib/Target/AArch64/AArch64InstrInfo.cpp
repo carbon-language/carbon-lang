@@ -2869,24 +2869,20 @@ bool AArch64InstrInfo::optimizeCondBranch(MachineInstr *MI) const {
   case AArch64::CBZW:
   case AArch64::CBZX:
     TargetBBInMI = 1;
-    CCInMI = 2;
     break;
   case AArch64::CBNZW:
   case AArch64::CBNZX:
     TargetBBInMI = 1;
-    CCInMI = 2;
     IsNegativeBranch = true;
     break;
   case AArch64::TBZW:
   case AArch64::TBZX:
     TargetBBInMI = 2;
-    CCInMI = 3;
     IsTestAndBranch = true;
     break;
   case AArch64::TBNZW:
   case AArch64::TBNZX:
     TargetBBInMI = 2;
-    CCInMI = 3;
     IsNegativeBranch = true;
     IsTestAndBranch = true;
     break;
@@ -2921,7 +2917,7 @@ bool AArch64InstrInfo::optimizeCondBranch(MachineInstr *MI) const {
     return false;
 
   AArch64CC::CondCode CC =
-      (AArch64CC::CondCode)DefMI->getOperand(CCInMI).getImm();
+      (AArch64CC::CondCode)DefMI->getOperand(3).getImm();
   bool CheckOnlyCCWrites = true;
   // Convert only when the condition code is not modified between
   // the CSINC and the branch. The CC may be used by other
