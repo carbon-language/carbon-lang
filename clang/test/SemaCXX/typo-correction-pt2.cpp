@@ -309,3 +309,13 @@ namespace testWantFunctionLikeCasts {
       return lon(8.0);  // expected-error {{use of undeclared identifier 'lon'; did you mean 'long'?}}
   }
 }
+
+namespace testCXXDeclarationSpecifierParsing {
+namespace test {
+  struct SomeSettings {};  // expected-note {{'test::SomeSettings' declared here}}
+}
+class Test {};
+int bar() {
+  Test::SomeSettings some_settings; // expected-error {{no type named 'SomeSettings' in 'testCXXDeclarationSpecifierParsing::Test'; did you mean 'test::SomeSettings'?}}
+}
+}
