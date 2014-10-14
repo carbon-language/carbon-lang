@@ -16,7 +16,8 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LLVM.h"
-#include "clang/Frontend/SerializedDiagnosticPrinter.h"
+#include "clang/Frontend/SerializedDiagnostics.h"
+#include "clang/Frontend/SerializedDiagnosticReader.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
@@ -183,475 +184,207 @@ void CXLoadedDiagnostic::decodeLocation(CXSourceLocation location,
 // Deserialize diagnostics.
 //===----------------------------------------------------------------------===//
 
-enum { MaxSupportedVersion = 2 };
-typedef SmallVector<uint64_t, 64> RecordData;
-enum LoadResult { Failure = 1, Success = 0 };
-enum StreamResult { Read_EndOfStream,
-                    Read_BlockBegin,
-                    Read_Failure,
-                    Read_Record,
-                    Read_BlockEnd };
-
 namespace {
-class DiagLoader {
+class DiagLoader : serialized_diags::SerializedDiagnosticReader {
   enum CXLoadDiag_Error *error;
   CXString *errorString;
-  
-  void reportBad(enum CXLoadDiag_Error code, llvm::StringRef err) {
+  std::unique_ptr<CXLoadedDiagnosticSetImpl> TopDiags;
+  SmallVector<std::unique_ptr<CXLoadedDiagnostic>, 8> CurrentDiags;
+
+  std::error_code reportBad(enum CXLoadDiag_Error code, llvm::StringRef err) {
     if (error)
       *error = code;
     if (errorString)
       *errorString = cxstring::createDup(err);
+    return serialized_diags::SDError::HandlerFailed;
   }
   
-  void reportInvalidFile(llvm::StringRef err) {
+  std::error_code reportInvalidFile(llvm::StringRef err) {
     return reportBad(CXLoadDiag_InvalidFile, err);
   }
 
-  LoadResult readMetaBlock(llvm::BitstreamCursor &Stream);
-  
-  LoadResult readDiagnosticBlock(llvm::BitstreamCursor &Stream,
-                                 CXDiagnosticSetImpl &Diags,
-                                 CXLoadedDiagnosticSetImpl &TopDiags);
+  std::error_code readRange(const serialized_diags::Location &SDStart,
+                            const serialized_diags::Location &SDEnd,
+                            CXSourceRange &SR);
 
-  StreamResult readToNextRecordOrBlock(llvm::BitstreamCursor &Stream,
-                                       llvm::StringRef errorContext,
-                                       unsigned &BlockOrRecordID,
-                                       bool atTopLevel = false);
-  
-  
-  LoadResult readString(CXLoadedDiagnosticSetImpl &TopDiags,
-                        Strings &strings, llvm::StringRef errorContext,
-                        RecordData &Record,
-                        StringRef Blob,
-                        bool allowEmptyString = false);
+  std::error_code readLocation(const serialized_diags::Location &SDLoc,
+                               CXLoadedDiagnostic::Location &LoadedLoc);
 
-  LoadResult readString(CXLoadedDiagnosticSetImpl &TopDiags,
-                        const char *&RetStr,
-                        llvm::StringRef errorContext,
-                        RecordData &Record,
-                        StringRef Blob,
-                        bool allowEmptyString = false);
+protected:
+  std::error_code visitStartOfDiagnostic() override;
+  std::error_code visitEndOfDiagnostic() override;
 
-  LoadResult readRange(CXLoadedDiagnosticSetImpl &TopDiags,
-                       RecordData &Record, unsigned RecStartIdx,
-                       CXSourceRange &SR);
-  
-  LoadResult readLocation(CXLoadedDiagnosticSetImpl &TopDiags,
-                          RecordData &Record, unsigned &offset,
-                          CXLoadedDiagnostic::Location &Loc);
-                       
+  std::error_code visitCategoryRecord(unsigned ID, StringRef Name) override;
+
+  std::error_code visitDiagFlagRecord(unsigned ID, StringRef Name) override;
+
+  std::error_code visitDiagnosticRecord(
+      unsigned Severity, const serialized_diags::Location &Location,
+      unsigned Category, unsigned Flag, StringRef Message) override;
+
+  std::error_code visitFilenameRecord(unsigned ID, unsigned Size,
+                                      unsigned Timestamp,
+                                      StringRef Name) override;
+
+  std::error_code visitFixitRecord(const serialized_diags::Location &Start,
+                                   const serialized_diags::Location &End,
+                                   StringRef CodeToInsert) override;
+
+  std::error_code
+  visitSourceRangeRecord(const serialized_diags::Location &Start,
+                         const serialized_diags::Location &End) override;
+
 public:
   DiagLoader(enum CXLoadDiag_Error *e, CXString *es)
-    : error(e), errorString(es) {
-      if (error)
-        *error = CXLoadDiag_None;
-      if (errorString)
-        *errorString = cxstring::createEmpty();
-    }
+      : SerializedDiagnosticReader(), error(e), errorString(es) {
+    if (error)
+      *error = CXLoadDiag_None;
+    if (errorString)
+      *errorString = cxstring::createEmpty();
+  }
 
   CXDiagnosticSet load(const char *file);
 };
 }
 
 CXDiagnosticSet DiagLoader::load(const char *file) {
-  // Open the diagnostics file.
-  std::string ErrStr;
-  FileSystemOptions FO;
-  FileManager FileMgr(FO);
+  TopDiags = llvm::make_unique<CXLoadedDiagnosticSetImpl>();
 
-  std::unique_ptr<llvm::MemoryBuffer> Buffer = FileMgr.getBufferForFile(file);
-  if (!Buffer) {
-    reportBad(CXLoadDiag_CannotLoad, ErrStr);
-    return nullptr;
-  }
-
-  llvm::BitstreamReader StreamFile;
-  StreamFile.init((const unsigned char *)Buffer->getBufferStart(),
-                  (const unsigned char *)Buffer->getBufferEnd());
-
-  llvm::BitstreamCursor Stream;
-  Stream.init(StreamFile);
-
-  // Sniff for the signature.
-  if (Stream.Read(8) != 'D' ||
-      Stream.Read(8) != 'I' ||
-      Stream.Read(8) != 'A' ||
-      Stream.Read(8) != 'G') {
-    reportBad(CXLoadDiag_InvalidFile,
-              "Bad header in diagnostics file");
-    return nullptr;
-  }
-
-  std::unique_ptr<CXLoadedDiagnosticSetImpl> Diags(
-      new CXLoadedDiagnosticSetImpl());
-
-  while (true) {
-    unsigned BlockID = 0;
-    StreamResult Res = readToNextRecordOrBlock(Stream, "Top-level", 
-                                               BlockID, true);
-    switch (Res) {
-      case Read_EndOfStream:
-        return (CXDiagnosticSet)Diags.release();
-      case Read_Failure:
-        return nullptr;
-      case Read_Record:
-        llvm_unreachable("Top-level does not have records");
-      case Read_BlockEnd:
-        continue;
-      case Read_BlockBegin:
-        break;
+  std::error_code EC = readDiagnostics(file);
+  if (EC) {
+    switch (EC.value()) {
+    case static_cast<int>(serialized_diags::SDError::HandlerFailed):
+      // We've already reported the problem.
+      break;
+    case static_cast<int>(serialized_diags::SDError::CouldNotLoad):
+      reportBad(CXLoadDiag_CannotLoad, EC.message());
+      break;
+    default:
+      reportInvalidFile(EC.message());
+      break;
     }
-    
-    switch (BlockID) {
-      case serialized_diags::BLOCK_META:
-        if (readMetaBlock(Stream))
-          return nullptr;
-        break;
-      case serialized_diags::BLOCK_DIAG:
-        if (readDiagnosticBlock(Stream, *Diags.get(), *Diags.get()))
-          return nullptr;
-        break;
-      default:
-        if (!Stream.SkipBlock()) {
-          reportInvalidFile("Malformed block at top-level of diagnostics file");
-          return nullptr;
-        }
-        break;
-    }
+    return 0;
   }
+
+  return (CXDiagnosticSet)TopDiags.release();
 }
 
-StreamResult DiagLoader::readToNextRecordOrBlock(llvm::BitstreamCursor &Stream,
-                                                 llvm::StringRef errorContext,
-                                                 unsigned &blockOrRecordID,
-                                                 bool atTopLevel) {
-  
-  blockOrRecordID = 0;
-
-  while (!Stream.AtEndOfStream()) {
-    unsigned Code = Stream.ReadCode();
-
-    // Handle the top-level specially.
-    if (atTopLevel) {
-      if (Code == llvm::bitc::ENTER_SUBBLOCK) {
-        unsigned BlockID = Stream.ReadSubBlockID();
-        if (BlockID == llvm::bitc::BLOCKINFO_BLOCK_ID) {
-          if (Stream.ReadBlockInfoBlock()) {
-            reportInvalidFile("Malformed BlockInfoBlock in diagnostics file");
-            return Read_Failure;
-          }
-          continue;
-        }
-        blockOrRecordID = BlockID;
-        return Read_BlockBegin;
-      }
-      reportInvalidFile("Only blocks can appear at the top of a "
-                        "diagnostic file");
-      return Read_Failure;
-    }
-    
-    switch ((llvm::bitc::FixedAbbrevIDs)Code) {
-      case llvm::bitc::ENTER_SUBBLOCK:
-        blockOrRecordID = Stream.ReadSubBlockID();
-        return Read_BlockBegin;
-      
-      case llvm::bitc::END_BLOCK:
-        if (Stream.ReadBlockEnd()) {
-          reportInvalidFile("Cannot read end of block");
-          return Read_Failure;
-        }
-        return Read_BlockEnd;
-        
-      case llvm::bitc::DEFINE_ABBREV:
-        Stream.ReadAbbrevRecord();
-        continue;
-        
-      case llvm::bitc::UNABBREV_RECORD:
-        reportInvalidFile("Diagnostics file should have no unabbreviated "
-                          "records");
-        return Read_Failure;
-      
-      default:
-        // We found a record.
-        blockOrRecordID = Code;
-        return Read_Record;
-    }
+std::error_code
+DiagLoader::readLocation(const serialized_diags::Location &SDLoc,
+                         CXLoadedDiagnostic::Location &LoadedLoc) {
+  unsigned FileID = SDLoc.FileID;
+  if (FileID == 0)
+    LoadedLoc.file = nullptr;
+  else {
+    LoadedLoc.file = const_cast<FileEntry *>(TopDiags->Files[FileID]);
+    if (!LoadedLoc.file)
+      return reportInvalidFile("Corrupted file entry in source location");
   }
-  
-  if (atTopLevel)
-    return Read_EndOfStream;
-  
-  reportInvalidFile(Twine("Premature end of diagnostics file within ").str() + 
-                    errorContext.str());
-  return Read_Failure;
+  LoadedLoc.line = SDLoc.Line;
+  LoadedLoc.column = SDLoc.Col;
+  LoadedLoc.offset = SDLoc.Offset;
+  return std::error_code();
 }
 
-LoadResult DiagLoader::readMetaBlock(llvm::BitstreamCursor &Stream) {
-  if (Stream.EnterSubBlock(clang::serialized_diags::BLOCK_META)) {
-    reportInvalidFile("Malformed metadata block");
-    return Failure;
-  }
-
-  bool versionChecked = false;
-  
-  while (true) {
-    unsigned blockOrCode = 0;
-    StreamResult Res = readToNextRecordOrBlock(Stream, "Metadata Block",
-                                               blockOrCode);
-    
-    switch(Res) {
-      case Read_EndOfStream:
-        llvm_unreachable("EndOfStream handled by readToNextRecordOrBlock");
-      case Read_Failure:
-        return Failure;
-      case Read_Record:
-        break;
-      case Read_BlockBegin:
-        if (Stream.SkipBlock()) {
-          reportInvalidFile("Malformed metadata block");
-          return Failure;
-        }
-      case Read_BlockEnd:
-        if (!versionChecked) {
-          reportInvalidFile("Diagnostics file does not contain version"
-                            " information");
-          return Failure;
-        }
-        return Success;
-    }
-    
-    RecordData Record;
-    unsigned recordID = Stream.readRecord(blockOrCode, Record);
-    
-    if (recordID == serialized_diags::RECORD_VERSION) {
-      if (Record.size() < 1) {
-        reportInvalidFile("malformed VERSION identifier in diagnostics file");
-        return Failure;
-      }
-      if (Record[0] > MaxSupportedVersion) {
-        reportInvalidFile("diagnostics file is a newer version than the one "
-                          "supported");
-        return Failure;
-      }
-      versionChecked = true;
-    }
-  }
-}
-
-LoadResult DiagLoader::readString(CXLoadedDiagnosticSetImpl &TopDiags,
-                                  const char *&RetStr,
-                                  llvm::StringRef errorContext,
-                                  RecordData &Record,
-                                  StringRef Blob,
-                                  bool allowEmptyString) {
-  
-  // Basic buffer overflow check.
-  if (Blob.size() > 65536) {
-    reportInvalidFile(std::string("Out-of-bounds string in ") +
-                      std::string(errorContext));
-    return Failure;
-  }
-
-  if (allowEmptyString && Record.size() >= 1 && Blob.size() == 0) {
-    RetStr = "";
-    return Success;
-  }
-  
-  if (Record.size() < 1 || Blob.size() == 0) {
-    reportInvalidFile(std::string("Corrupted ") + std::string(errorContext)
-                      + std::string(" entry"));
-    return Failure;
-  }
-  
-  RetStr = TopDiags.copyString(Blob);
-  return Success;
-}
-
-LoadResult DiagLoader::readString(CXLoadedDiagnosticSetImpl &TopDiags,
-                                  Strings &strings,
-                                  llvm::StringRef errorContext,
-                                  RecordData &Record,
-                                  StringRef Blob,
-                                  bool allowEmptyString) {
-  const char *RetStr;
-  if (readString(TopDiags, RetStr, errorContext, Record, Blob,
-                 allowEmptyString))
-    return Failure;
-  strings[Record[0]] = RetStr;
-  return Success;
-}
-
-LoadResult DiagLoader::readLocation(CXLoadedDiagnosticSetImpl &TopDiags,
-                                    RecordData &Record, unsigned &offset,
-                                    CXLoadedDiagnostic::Location &Loc) {
-  if (Record.size() < offset + 4) {
-    reportInvalidFile("Corrupted source location");
-    return Failure;
-  }
-  auto Fields = makeArrayRef(Record).slice(offset);
-  offset += 4;
-  
-  unsigned fileID = Fields[0];
-  if (fileID == 0) {
-    // Sentinel value.
-    Loc.file = nullptr;
-    Loc.line = 0;
-    Loc.column = 0;
-    Loc.offset = 0;
-    return Success;
-  }
-
-  const FileEntry *FE = TopDiags.Files[fileID];
-  if (!FE) {
-    reportInvalidFile("Corrupted file entry in source location");
-    return Failure;
-  }
-  Loc.file = const_cast<FileEntry *>(FE);
-  Loc.line = Fields[1];
-  Loc.column = Fields[2];
-  Loc.offset = Fields[3];
-  return Success;
-}
-
-LoadResult DiagLoader::readRange(CXLoadedDiagnosticSetImpl &TopDiags,
-                                 RecordData &Record,
-                                 unsigned int RecStartIdx,
-                                 CXSourceRange &SR) {
+std::error_code
+DiagLoader::readRange(const serialized_diags::Location &SDStart,
+                      const serialized_diags::Location &SDEnd,
+                      CXSourceRange &SR) {
   CXLoadedDiagnostic::Location *Start, *End;
-  Start = TopDiags.Alloc.Allocate<CXLoadedDiagnostic::Location>();
-  End = TopDiags.Alloc.Allocate<CXLoadedDiagnostic::Location>();
-  
-  if (readLocation(TopDiags, Record, RecStartIdx, *Start))
-    return Failure;
-  if (readLocation(TopDiags, Record, RecStartIdx, *End))
-    return Failure;
+  Start = TopDiags->Alloc.Allocate<CXLoadedDiagnostic::Location>();
+  End = TopDiags->Alloc.Allocate<CXLoadedDiagnostic::Location>();
+
+  std::error_code EC;
+  if ((EC = readLocation(SDStart, *Start)))
+    return EC;
+  if ((EC = readLocation(SDEnd, *End)))
+    return EC;
   
   CXSourceLocation startLoc = makeLocation(Start);
   CXSourceLocation endLoc = makeLocation(End);
   SR = clang_getRange(startLoc, endLoc);
-  return Success;  
+  return std::error_code();
 }
 
-LoadResult DiagLoader::readDiagnosticBlock(llvm::BitstreamCursor &Stream,
-                                           CXDiagnosticSetImpl &Diags,
-                                           CXLoadedDiagnosticSetImpl &TopDiags){
+std::error_code DiagLoader::visitStartOfDiagnostic() {
+  CurrentDiags.push_back(llvm::make_unique<CXLoadedDiagnostic>());
+  return std::error_code();
+}
 
-  if (Stream.EnterSubBlock(clang::serialized_diags::BLOCK_DIAG)) {
-    reportInvalidFile("malformed diagnostic block");
-    return Failure;
-  }
+std::error_code DiagLoader::visitEndOfDiagnostic() {
+  auto D = CurrentDiags.pop_back_val();
+  if (CurrentDiags.empty())
+    TopDiags->appendDiagnostic(std::move(D));
+  else
+    CurrentDiags.back()->getChildDiagnostics().appendDiagnostic(std::move(D));
+  return std::error_code();
+}
 
-  std::unique_ptr<CXLoadedDiagnostic> D(new CXLoadedDiagnostic());
-  RecordData Record;
-  
-  while (true) {
-    unsigned blockOrCode = 0;
-    StreamResult Res = readToNextRecordOrBlock(Stream, "Diagnostic Block",
-                                               blockOrCode);
-    switch (Res) {
-      case Read_EndOfStream:
-        llvm_unreachable("EndOfStream handled in readToNextRecordOrBlock");
-      case Read_Failure:
-        return Failure;
-      case Read_BlockBegin: {
-        // The only blocks we care about are subdiagnostics.
-        if (blockOrCode != serialized_diags::BLOCK_DIAG) {
-          if (!Stream.SkipBlock()) {
-            reportInvalidFile("Invalid subblock in Diagnostics block");
-            return Failure;
-          }
-        } else if (readDiagnosticBlock(Stream, D->getChildDiagnostics(),
-                                       TopDiags)) {
-          return Failure;
-        }
+std::error_code DiagLoader::visitCategoryRecord(unsigned ID, StringRef Name) {
+  // FIXME: Why do we care about long strings?
+  if (Name.size() > 65536)
+    return reportInvalidFile("Out-of-bounds string in category");
+  TopDiags->Categories[ID] = TopDiags->copyString(Name);
+  return std::error_code();
+}
 
-        continue;
-      }
-      case Read_BlockEnd:
-        Diags.appendDiagnostic(std::move(D));
-        return Success;
-      case Read_Record:
-        break;
-    }
-    
-    // Read the record.
-    Record.clear();
-    StringRef Blob;
-    unsigned recID = Stream.readRecord(blockOrCode, Record, &Blob);
-    
-    if (recID < serialized_diags::RECORD_FIRST ||
-        recID > serialized_diags::RECORD_LAST)
-      continue;
-    
-    switch ((serialized_diags::RecordIDs)recID) {  
-      case serialized_diags::RECORD_VERSION:
-        continue;
-      case serialized_diags::RECORD_CATEGORY:
-        if (readString(TopDiags, TopDiags.Categories, "category", Record,
-                       Blob, /* allowEmptyString */ true))
-          return Failure;
-        continue;
-      
-      case serialized_diags::RECORD_DIAG_FLAG:
-        if (readString(TopDiags, TopDiags.WarningFlags, "warning flag", Record,
-                       Blob))
-          return Failure;
-        continue;
-        
-      case serialized_diags::RECORD_FILENAME: {
-        if (readString(TopDiags, TopDiags.FileNames, "filename", Record,
-                       Blob))
-          return Failure;
+std::error_code DiagLoader::visitDiagFlagRecord(unsigned ID, StringRef Name) {
+  // FIXME: Why do we care about long strings?
+  if (Name.size() > 65536)
+    return reportInvalidFile("Out-of-bounds string in warning flag");
+  TopDiags->WarningFlags[ID] = TopDiags->copyString(Name);
+  return std::error_code();
+}
 
-        if (Record.size() < 3) {
-          reportInvalidFile("Invalid file entry");
-          return Failure;
-        }
-        
-        const FileEntry *FE =
-          TopDiags.FakeFiles.getVirtualFile(TopDiags.FileNames[Record[0]],
-                                            /* size */ Record[1],
-                                            /* time */ Record[2]);
-        
-        TopDiags.Files[Record[0]] = FE;
-        continue;
-      }
+std::error_code DiagLoader::visitFilenameRecord(unsigned ID, unsigned Size,
+                                                unsigned Timestamp,
+                                                StringRef Name) {
+  // FIXME: Why do we care about long strings?
+  if (Name.size() > 65536)
+    return reportInvalidFile("Out-of-bounds string in filename");
+  TopDiags->FileNames[ID] = TopDiags->copyString(Name);
+  TopDiags->Files[ID] =
+      TopDiags->FakeFiles.getVirtualFile(Name, Size, Timestamp);
+  return std::error_code();
+}
 
-      case serialized_diags::RECORD_SOURCE_RANGE: {
-        CXSourceRange SR;
-        if (readRange(TopDiags, Record, 0, SR))
-          return Failure;
-        D->Ranges.push_back(SR);
-        continue;
-      }
-      
-      case serialized_diags::RECORD_FIXIT: {
-        CXSourceRange SR;
-        if (readRange(TopDiags, Record, 0, SR))
-          return Failure;
-        const char *RetStr;
-        if (readString(TopDiags, RetStr, "FIXIT", Record, Blob,
-                       /* allowEmptyString */ true))
-          return Failure;
-        D->FixIts.push_back(std::make_pair(SR, RetStr));
-        continue;
-      }
-        
-      case serialized_diags::RECORD_DIAG: {
-        D->severity = Record[0];
-        unsigned offset = 1;
-        if (readLocation(TopDiags, Record, offset, D->DiagLoc))
-          return Failure;
-        D->category = Record[offset++];
-        unsigned diagFlag = Record[offset++];
-        D->DiagOption = diagFlag ? TopDiags.WarningFlags[diagFlag] : "";
-        D->CategoryText = D->category ? TopDiags.Categories[D->category] : "";
-        D->Spelling = TopDiags.copyString(Blob);
-        continue;
-      }
-    }
-  }
+std::error_code
+DiagLoader::visitSourceRangeRecord(const serialized_diags::Location &Start,
+                                   const serialized_diags::Location &End) {
+  CXSourceRange SR;
+  if (std::error_code EC = readRange(Start, End, SR))
+    return EC;
+  CurrentDiags.back()->Ranges.push_back(SR);
+  return std::error_code();
+}
+
+std::error_code
+DiagLoader::visitFixitRecord(const serialized_diags::Location &Start,
+                             const serialized_diags::Location &End,
+                             StringRef CodeToInsert) {
+  CXSourceRange SR;
+  if (std::error_code EC = readRange(Start, End, SR))
+    return EC;
+  // FIXME: Why do we care about long strings?
+  if (CodeToInsert.size() > 65536)
+    return reportInvalidFile("Out-of-bounds string in FIXIT");
+  CurrentDiags.back()->FixIts.push_back(
+      std::make_pair(SR, TopDiags->copyString(CodeToInsert)));
+  return std::error_code();
+}
+
+std::error_code DiagLoader::visitDiagnosticRecord(
+    unsigned Severity, const serialized_diags::Location &Location,
+    unsigned Category, unsigned Flag, StringRef Message) {
+  CXLoadedDiagnostic &D = *CurrentDiags.back();
+  D.severity = Severity;
+  if (std::error_code EC = readLocation(Location, D.DiagLoc))
+    return EC;
+  D.category = Category;
+  D.DiagOption = Flag ? TopDiags->WarningFlags[Flag] : "";
+  D.CategoryText = Category ? TopDiags->Categories[Category] : "";
+  D.Spelling = TopDiags->copyString(Message);
+  return std::error_code();
 }
 
 extern "C" {
