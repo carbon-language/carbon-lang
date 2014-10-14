@@ -215,6 +215,12 @@ void MangleContext::mangleBlock(const DeclContext *DC, const BlockDecl *BD,
   if (const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(DC)) {
     mangleObjCMethodName(Method, Stream);
   } else {
+    assert((isa<NamedDecl>(DC) || isa<BlockDecl>(DC)) &&
+           "expected a NamedDecl or BlockDecl");
+    if (isa<BlockDecl>(DC))
+      for (; DC && isa<BlockDecl>(DC); DC = DC->getParent())
+        (void) getBlockId(cast<BlockDecl>(DC), true);
+    assert(isa<NamedDecl>(DC) && "expected a NamedDecl");
     const NamedDecl *ND = cast<NamedDecl>(DC);
     if (!shouldMangleDeclName(ND) && ND->getIdentifier())
       Stream << ND->getIdentifier()->getName();
