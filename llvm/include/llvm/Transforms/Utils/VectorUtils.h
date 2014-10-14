@@ -99,7 +99,7 @@ getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI) {
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI)) {
     Intrinsic::ID ID = II->getIntrinsicID();
     if (isTriviallyVectorizable(ID) || ID == Intrinsic::lifetime_start ||
-        ID == Intrinsic::lifetime_end)
+        ID == Intrinsic::lifetime_end || ID == Intrinsic::assume)
       return ID;
     else
       return Intrinsic::not_intrinsic;
