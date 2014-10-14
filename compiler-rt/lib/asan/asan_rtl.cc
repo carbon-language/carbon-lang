@@ -67,7 +67,7 @@ static void AsanCheckFailed(const char *file, int line, const char *cond,
   Report("AddressSanitizer CHECK failed: %s:%d \"%s\" (0x%zx, 0x%zx)\n", file,
          line, cond, (uptr)v1, (uptr)v2);
   // FIXME: check for infinite recursion without a thread-local counter here.
-  PRINT_CURRENT_STACK();
+  PRINT_CURRENT_STACK_CHECK();
   Die();
 }
 

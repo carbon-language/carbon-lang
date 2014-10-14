@@ -39,6 +39,7 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
   f->external_symbolizer_path = 0;
   f->allow_addr2line = false;
   f->strip_path_prefix = "";
+  f->fast_unwind_on_check = false;
   f->fast_unwind_on_fatal = false;
   f->fast_unwind_on_malloc = true;
   f->handle_ioctl = false;
@@ -81,6 +82,9 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
       "unavailable.");
   ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix",
       "Strips this prefix from file paths in error reports.");
+  ParseFlag(str, &f->fast_unwind_on_check, "fast_unwind_on_check",
+      "If available, use the fast frame-pointer-based unwinder on "
+      "internal CHECK failures.");
   ParseFlag(str, &f->fast_unwind_on_fatal, "fast_unwind_on_fatal",
       "If available, use the fast frame-pointer-based unwinder on fatal "
       "errors.");

@@ -32,6 +32,7 @@ struct CommonFlags {
   const char *external_symbolizer_path;
   bool allow_addr2line;
   const char *strip_path_prefix;
+  bool fast_unwind_on_check;
   bool fast_unwind_on_fatal;
   bool fast_unwind_on_malloc;
   bool handle_ioctl;
