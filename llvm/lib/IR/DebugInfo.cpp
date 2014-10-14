@@ -568,34 +568,6 @@ bool DISubprogram::Verify() const {
   if (isLValueReference() && isRValueReference())
     return false;
 
-  // If a DISubprogram has an llvm::Function*, then scope chains from all
-  // instructions within the function should lead to this DISubprogram.
-  if (auto *F = getFunction()) {
-    LLVMContext &Ctxt = F->getContext();
-    for (auto &BB : *F) {
-      for (auto &I : BB) {
-        DebugLoc DL = I.getDebugLoc();
-        if (DL.isUnknown())
-          continue;
-
-        MDNode *Scope = nullptr;
-        MDNode *IA = nullptr;
-        // walk the inlined-at scopes
-        while (DL.getScopeAndInlinedAt(Scope, IA, F->getContext()), IA)
-          DL = DebugLoc::getFromDILocation(IA);
-        DL.getScopeAndInlinedAt(Scope, IA, Ctxt);
-        assert(!IA);
-        while (!DIDescriptor(Scope).isSubprogram()) {
-          DILexicalBlockFile D(Scope);
-          Scope = D.isLexicalBlockFile()
-                      ? D.getScope()
-                      : DebugLoc::getFromDILexicalBlock(Scope).getScope(Ctxt);
-        }
-        if (!DISubprogram(Scope).describes(F))
-          return false;
-      }
-    }
-  }
   return DbgNode->getNumOperands() == 9 && getNumHeaderFields() == 12;
 }
 
