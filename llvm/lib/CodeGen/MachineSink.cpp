@@ -29,7 +29,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
@@ -246,9 +245,8 @@ bool MachineSinking::runOnMachineFunction(MachineFunction &MF) {
 
   DEBUG(dbgs() << "******** Machine Sinking ********\n");
 
-  const TargetMachine &TM = MF.getTarget();
-  TII = TM.getSubtargetImpl()->getInstrInfo();
-  TRI = TM.getSubtargetImpl()->getRegisterInfo();
+  TII = MF.getSubtarget().getInstrInfo();
+  TRI = MF.getSubtarget().getRegisterInfo();
   MRI = &MF.getRegInfo();
   DT = &getAnalysis<MachineDominatorTree>();
   LI = &getAnalysis<MachineLoopInfo>();

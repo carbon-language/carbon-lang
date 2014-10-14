@@ -294,8 +294,8 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
 
   this->MF = &MF;
   TM = &MF.getTarget();
-  TII = TM->getSubtargetImpl()->getInstrInfo();
-  TRI = TM->getSubtargetImpl()->getRegisterInfo();
+  TII = MF.getSubtarget().getInstrInfo();
+  TRI = MF.getSubtarget().getRegisterInfo();
   MRI = &MF.getRegInfo();
 
   LiveVars = nullptr;
