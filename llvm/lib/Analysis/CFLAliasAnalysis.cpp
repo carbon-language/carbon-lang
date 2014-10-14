@@ -317,6 +317,17 @@ public:
     Output.push_back(Edge(Ptr, Val, EdgeType::Dereference, AttrNone));
   }
 
+  void visitVAArgInst(VAArgInst &Inst) {
+    // We can't fully model va_arg here. For *Ptr = Inst.getOperand(0), it does
+    // two things:
+    //  1. Loads a value from *((T*)*Ptr).
+    //  2. Increments (stores to) *Ptr by some target-specific amount.
+    // For now, we'll handle this like a landingpad instruction (by placing the
+    // result in its own group, and having that group alias externals).
+    auto *Val = &Inst;
+    Output.push_back(Edge(Val, Val, EdgeType::Assign, AttrAll));
+  }
+
   static bool isFunctionExternal(Function *Fn) {
     return Fn->isDeclaration() || !Fn->hasLocalLinkage();
   }
