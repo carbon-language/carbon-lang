@@ -15,9 +15,8 @@ define void @main() nounwind {
 entry:
 ; CHECK: main
 ; CHECK: mov x29, sp
-; CHECK: mov x[[REG:[0-9]+]], sp
-; CHECK-NEXT: orr x[[REG1:[0-9]+]], xzr, #0x8
-; CHECK-NEXT: add x0, x[[REG]], x[[REG1]]
+; CHECK: mov [[REG:x[0-9]+]], sp
+; CHECK-NEXT: add x0, [[REG]], #8
   %E = alloca %struct.S2Ty, align 4
   %B = getelementptr inbounds %struct.S2Ty* %E, i32 0, i32 1
   call void @takeS1(%struct.S1Ty* %B)

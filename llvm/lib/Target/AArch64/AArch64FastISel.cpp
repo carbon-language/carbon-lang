@@ -134,6 +134,7 @@ private:
   bool selectBitCast(const Instruction *I);
   bool selectFRem(const Instruction *I);
   bool selectSDiv(const Instruction *I);
+  bool selectGetElementPtr(const Instruction *I);
 
   // Utility helper routines.
   bool isTypeLegal(Type *Ty, MVT &VT);
@@ -4541,6 +4542,88 @@ bool AArch64FastISel::selectSDiv(const Instruction *I) {
   return true;
 }
 
+bool AArch64FastISel::selectGetElementPtr(const Instruction *I) {
+  unsigned N = getRegForValue(I->getOperand(0));
+  if (!N)
+    return false;
+  bool NIsKill = hasTrivialKill(I->getOperand(0));
+
+  // Keep a running tab of the total offset to coalesce multiple N = N + Offset
+  // into a single N = N + TotalOffset.
+  uint64_t TotalOffs = 0;
+  Type *Ty = I->getOperand(0)->getType();
+  MVT VT = TLI.getPointerTy();
+  for (auto OI = std::next(I->op_begin()), E = I->op_end(); OI != E; ++OI) {
+    const Value *Idx = *OI;
+    if (auto *StTy = dyn_cast<StructType>(Ty)) {
+      unsigned Field = cast<ConstantInt>(Idx)->getZExtValue();
+      // N = N + Offset
+      if (Field)
+        TotalOffs += DL.getStructLayout(StTy)->getElementOffset(Field);
+      Ty = StTy->getElementType(Field);
+    } else {
+      Ty = cast<SequentialType>(Ty)->getElementType();
+      // If this is a constant subscript, handle it quickly.
+      if (const auto *CI = dyn_cast<ConstantInt>(Idx)) {
+        if (CI->isZero())
+          continue;
+        // N = N + Offset
+        TotalOffs +=
+            DL.getTypeAllocSize(Ty) * cast<ConstantInt>(CI)->getSExtValue();
+        continue;
+      }
+      if (TotalOffs) {
+        N = emitAddSub_ri(/*UseAdd=*/true, VT, N, NIsKill, TotalOffs);
+        if (!N) {
+          unsigned C = fastEmit_i(VT, VT, ISD::Constant, TotalOffs);
+          if (!C)
+            return false;
+          N = emitAddSub_rr(/*UseAdd=*/true, VT, N, NIsKill, C, true);
+          if (!N)
+            return false;
+        }
+        NIsKill = true;
+        TotalOffs = 0;
+      }
+
+      // N = N + Idx * ElementSize;
+      uint64_t ElementSize = DL.getTypeAllocSize(Ty);
+      std::pair<unsigned, bool> Pair = getRegForGEPIndex(Idx);
+      unsigned IdxN = Pair.first;
+      bool IdxNIsKill = Pair.second;
+      if (!IdxN)
+        return false;
+
+      if (ElementSize != 1) {
+        unsigned C = fastEmit_i(VT, VT, ISD::Constant, ElementSize);
+        if (!C)
+          return false;
+        IdxN = emitMul_rr(VT, IdxN, IdxNIsKill, C, true);
+        if (!IdxN)
+          return false;
+        IdxNIsKill = true;
+      }
+      N = fastEmit_rr(VT, VT, ISD::ADD, N, NIsKill, IdxN, IdxNIsKill);
+      if (!N)
+        return false;
+    }
+  }
+  if (TotalOffs) {
+    N = emitAddSub_ri(/*UseAdd=*/true, VT, N, NIsKill, TotalOffs);
+    if (!N) {
+      unsigned C = fastEmit_i(VT, VT, ISD::Constant, TotalOffs);
+      if (!C)
+        return false;
+      N = emitAddSub_rr(/*UseAdd=*/true, VT, N, NIsKill, C, true);
+      if (!N)
+        return false;
+    }
+  }
+
+  updateValueMap(I, N);
+  return true;
+}
+
 bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
   switch (I->getOpcode()) {
   default:
@@ -4612,6 +4695,8 @@ bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
     return selectRet(I);
   case Instruction::FRem:
     return selectFRem(I);
+  case Instruction::GetElementPtr:
+    return selectGetElementPtr(I);
   }
 
   // fall-back to target-independent instruction selection.
