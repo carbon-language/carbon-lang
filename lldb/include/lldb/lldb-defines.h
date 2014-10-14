@@ -49,7 +49,11 @@
 // LLDB defines
 //----------------------------------------------------------------------
 #define LLDB_GENERIC_ERROR              UINT32_MAX
+#if defined(_WIN32)
+#define LLDB_DEFAULT_SHELL              "cmd.exe"
+#else
 #define LLDB_DEFAULT_SHELL              "/bin/sh"
+#endif
 
 //----------------------------------------------------------------------
 // Breakpoints

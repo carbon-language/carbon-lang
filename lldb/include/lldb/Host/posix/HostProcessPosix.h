@@ -34,6 +34,8 @@ class HostProcessPosix : public HostNativeProcessBase
 
     virtual lldb::pid_t GetProcessId() const;
     virtual bool IsRunning() const;
+
+    virtual HostThread StartMonitoring(HostProcess::MonitorCallback callback, void *callback_baton, bool monitor_signals);
 };
 }
 

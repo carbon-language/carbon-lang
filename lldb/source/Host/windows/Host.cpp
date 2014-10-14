@@ -96,14 +96,6 @@ namespace
     }
 }
 
-Error
-Host::LaunchProcess (ProcessLaunchInfo &launch_info)
-{
-    Error error;
-    assert(!"Not implemented yet!!!");
-    return error;
-}
-
 lldb::DataBufferSP
 Host::GetAuxvData(lldb_private::Process *process)
 {

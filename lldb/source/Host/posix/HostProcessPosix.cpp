@@ -1,4 +1,4 @@
-//===-- HostProcessWindows.cpp ----------------------------------*- C++ -*-===//
+//===-- HostProcessPosix.cpp ------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/Host/Host.h"
 #include "lldb/Host/posix/HostProcessPosix.h"
 #include "lldb/Host/FileSystem.h"
 
@@ -106,4 +107,10 @@ bool HostProcessPosix::IsRunning() const
     // Send this process the null signal.  If it succeeds the process is running.
     Error error = Signal(0);
     return error.Success();
+}
+
+HostThread
+HostProcessPosix::StartMonitoring(HostProcess::MonitorCallback callback, void *callback_baton, bool monitor_signals)
+{
+    return Host::StartMonitoringChildProcess(callback, callback_baton, m_process, monitor_signals);
 }

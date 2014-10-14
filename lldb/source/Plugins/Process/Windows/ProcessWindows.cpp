@@ -16,6 +16,8 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostProcess.h"
+#include "lldb/Host/windows/ProcessLauncherWindows.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/FileAction.h"
@@ -25,42 +27,6 @@
 
 using namespace lldb;
 using namespace lldb_private;
-
-namespace
-{
-HANDLE
-GetStdioHandle(ProcessLaunchInfo &launch_info, int fd)
-{
-    const FileAction *action = launch_info.GetFileActionForFD(fd);
-    if (action == nullptr)
-        return NULL;
-    SECURITY_ATTRIBUTES secattr = {0};
-    secattr.nLength = sizeof(SECURITY_ATTRIBUTES);
-    secattr.bInheritHandle = TRUE;
-
-    const char *path = action->GetPath();
-    DWORD access = 0;
-    DWORD share = FILE_SHARE_READ | FILE_SHARE_WRITE;
-    DWORD create = 0;
-    DWORD flags = 0;
-    if (fd == STDIN_FILENO)
-    {
-        access = GENERIC_READ;
-        create = OPEN_EXISTING;
-        flags = FILE_ATTRIBUTE_READONLY;
-    }
-    if (fd == STDOUT_FILENO || fd == STDERR_FILENO)
-    {
-        access = GENERIC_WRITE;
-        create = CREATE_ALWAYS;
-        if (fd == STDERR_FILENO)
-            flags = FILE_FLAG_WRITE_THROUGH;
-    }
-
-    HANDLE result = ::CreateFile(path, access, share, &secattr, create, flags, NULL);
-    return (result == INVALID_HANDLE_VALUE) ? NULL : result;
-}
-}
 
 //------------------------------------------------------------------------------
 // Static functions.
@@ -123,42 +89,10 @@ Error
 ProcessWindows::DoLaunch(Module *exe_module,
                          ProcessLaunchInfo &launch_info)
 {
-    std::string executable;
-    std::string commandLine;
-    std::vector<char> environment;
-    STARTUPINFO startupinfo = {0};
-    PROCESS_INFORMATION pi = {0};
-
-    HANDLE stdin_handle = GetStdioHandle(launch_info, STDIN_FILENO);
-    HANDLE stdout_handle = GetStdioHandle(launch_info, STDOUT_FILENO);
-    HANDLE stderr_handle = GetStdioHandle(launch_info, STDERR_FILENO);
-
-    startupinfo.cb = sizeof(startupinfo);
-    startupinfo.dwFlags |= STARTF_USESTDHANDLES;
-    startupinfo.hStdError = stderr_handle;
-    startupinfo.hStdInput = stdin_handle;
-    startupinfo.hStdOutput = stdout_handle;
-
-    executable = launch_info.GetExecutableFile().GetPath();
-    launch_info.GetArguments().GetQuotedCommandString(commandLine);
-    BOOL result = ::CreateProcessA(executable.c_str(), const_cast<char *>(commandLine.c_str()), NULL, NULL, TRUE,
-                                   CREATE_NEW_CONSOLE, NULL, launch_info.GetWorkingDirectory(), &startupinfo, &pi);
-    if (result)
-    {
-        ::CloseHandle(pi.hProcess);
-        ::CloseHandle(pi.hThread);
-    }
-
-    if (stdin_handle)
-        ::CloseHandle(stdin_handle);
-    if (stdout_handle)
-        ::CloseHandle(stdout_handle);
-    if (stderr_handle)
-        ::CloseHandle(stderr_handle);
-
     Error error;
-    if (!result)
-        error.SetErrorToErrno();
+    ProcessLauncherWindows launcher;
+    HostProcess process = launcher.LaunchProcess(launch_info, error);
+    launch_info.SetProcessID(process.GetProcessId());
     return error;
 }
 

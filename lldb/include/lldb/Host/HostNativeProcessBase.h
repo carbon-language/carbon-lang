@@ -11,18 +11,24 @@
 #define lldb_Host_HostNativeProcessBase_h_
 
 #include "lldb/Core/Error.h"
+#include "lldb/Host/HostProcess.h"
 #include "lldb/lldb-defines.h"
 #include "lldb/lldb-types.h"
 
 namespace lldb_private
 {
 
+class HostThread;
+
 class HostNativeProcessBase
 {
     DISALLOW_COPY_AND_ASSIGN(HostNativeProcessBase);
 
   public:
-    HostNativeProcessBase() {}
+    HostNativeProcessBase()
+        : m_process(LLDB_INVALID_PROCESS)
+    {
+    }
     explicit HostNativeProcessBase(lldb::process_t process)
         : m_process(process)
     {}
@@ -33,6 +39,8 @@ class HostNativeProcessBase
 
     virtual lldb::pid_t GetProcessId() const = 0;
     virtual bool IsRunning() const = 0;
+
+    virtual HostThread StartMonitoring(HostProcess::MonitorCallback callback, void *callback_baton, bool monitor_signals) = 0;
 
   protected:
     lldb::process_t m_process;

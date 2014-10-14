@@ -1138,7 +1138,7 @@ getXPCAuthorization (ProcessLaunchInfo &launch_info)
 #endif
 
 static Error
-LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t &pid)
+LaunchProcessXPC(const char *exe_path, ProcessLaunchInfo &launch_info, lldb::pid_t &pid)
 {
 #if !NO_XPC_SERVICES
     Error error = getXPCAuthorization(launch_info);
@@ -1347,9 +1347,9 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
         return error;
 #endif
     }
-    
-    ::pid_t pid = LLDB_INVALID_PROCESS_ID;
-    
+
+    lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
+
     if (ShouldLaunchUsingXPC(launch_info))
     {
         error = LaunchProcessXPC(exe_path, launch_info, pid);

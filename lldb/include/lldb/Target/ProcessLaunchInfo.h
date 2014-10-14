@@ -124,7 +124,7 @@ namespace lldb_private
         }
 
         bool
-        GetLaunchInSeparateProcessGroup ()
+        GetLaunchInSeparateProcessGroup() const
         {
             return m_flags.Test(lldb::eLaunchFlagLaunchInSeparateProcessGroup);
         }
@@ -148,15 +148,21 @@ namespace lldb_private
                                    bool monitor_signals);
 
         Host::MonitorChildProcessCallback
-        GetMonitorProcessCallback ()
+        GetMonitorProcessCallback() const
         {
             return m_monitor_callback;
         }
 
-        const void*
-        GetMonitorProcessBaton () const
+        void *
+        GetMonitorProcessBaton() const
         {
             return m_monitor_callback_baton;
+        }
+
+        bool
+        GetMonitorSignals() const
+        {
+            return m_monitor_signals;
         }
 
         // If the LaunchInfo has a monitor callback, then arrange to monitor the process.

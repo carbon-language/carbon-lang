@@ -32,10 +32,13 @@ namespace lldb_private
 {
 
 class HostNativeProcessBase;
+class HostThread;
 
 class HostProcess
 {
   public:
+    typedef bool (*MonitorCallback)(void *callback_baton, lldb::pid_t process, bool exited, int signal, int status);
+
     HostProcess();
     HostProcess(lldb::process_t process);
     ~HostProcess();
@@ -45,6 +48,8 @@ class HostProcess
 
     lldb::pid_t GetProcessId() const;
     bool IsRunning() const;
+
+    HostThread StartMonitoring(MonitorCallback callback, void *callback_baton, bool monitor_signals);
 
     HostNativeProcessBase &GetNativeProcess();
     const HostNativeProcessBase &GetNativeProcess() const;

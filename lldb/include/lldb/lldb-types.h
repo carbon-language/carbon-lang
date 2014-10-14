@@ -95,6 +95,7 @@ namespace lldb
     typedef bool                (*ExpressionCancelCallback) (ExpressionEvaluationPhase phase, void *baton);
 }
 
+#define LLDB_INVALID_PROCESS             ((lldb::process_t)-1)
 #define LLDB_INVALID_HOST_THREAD         ((lldb::thread_t)NULL)
 #define IS_VALID_LLDB_HOST_THREAD(t)     ((t) != LLDB_INVALID_HOST_THREAD)
 

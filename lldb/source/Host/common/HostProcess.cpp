@@ -9,6 +9,7 @@
 
 #include "lldb/Host/HostNativeProcess.h"
 #include "lldb/Host/HostProcess.h"
+#include "lldb/Host/HostThread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -45,6 +46,12 @@ lldb::pid_t HostProcess::GetProcessId() const
 bool HostProcess::IsRunning() const
 {
     return m_native_process->IsRunning();
+}
+
+HostThread
+HostProcess::StartMonitoring(HostProcess::MonitorCallback callback, void *callback_baton, bool monitor_signals)
+{
+    return m_native_process->StartMonitoring(callback, callback_baton, monitor_signals);
 }
 
 HostNativeProcessBase &HostProcess::GetNativeProcess()

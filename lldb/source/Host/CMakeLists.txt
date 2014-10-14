@@ -16,6 +16,7 @@ add_host_subdirectory(common
   common/HostThread.cpp
   common/IOObject.cpp
   common/Mutex.cpp
+  common/MonitoringProcessLauncher.cpp
   common/NativeBreakpoint.cpp
   common/NativeBreakpointList.cpp
   common/NativeProcessProtocol.cpp
@@ -48,6 +49,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     windows/HostThreadWindows.cpp
     windows/Mutex.cpp
     windows/PipeWindows.cpp
+    windows/ProcessLauncherWindows.cpp
     windows/ProcessRunLock.cpp
     windows/ThisThread.cpp
     windows/Windows.cpp
@@ -59,6 +61,7 @@ else()
     posix/HostProcessPosix.cpp
     posix/HostThreadPosix.cpp
     posix/PipePosix.cpp
+    posix/ProcessLauncherPosix.cpp
     )
 
   if (CMAKE_SYSTEM_NAME MATCHES "Darwin")

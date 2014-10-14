@@ -11,6 +11,7 @@
 #define lldb_Host_HostProcessWindows_h_
 
 #include "lldb/Host/HostNativeProcessBase.h"
+#include "lldb/lldb-types.h"
 
 namespace lldb_private
 {
@@ -30,7 +31,11 @@ class HostProcessWindows : public HostNativeProcessBase
     virtual lldb::pid_t GetProcessId() const;
     virtual bool IsRunning() const;
 
+    virtual HostThread StartMonitoring(HostProcess::MonitorCallback callback, void *callback_baton, bool monitor_signals);
+
   private:
+    static lldb::thread_result_t MonitorThread(void *thread_arg);
+
     void Close();
 };
 }
