@@ -267,7 +267,8 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
 
     // If nothing for stdin or stdout or stderr was specified, then check the process for any default
     // settings that were set with "settings set"
-    if (GetFileActionForFD(STDIN_FILENO) == NULL || GetFileActionForFD(STDOUT_FILENO) == NULL ||
+    if (GetFileActionForFD(STDIN_FILENO) == NULL ||
+        GetFileActionForFD(STDOUT_FILENO) == NULL ||
         GetFileActionForFD(STDERR_FILENO) == NULL)
     {
         if (log)
@@ -294,9 +295,14 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
             FileSpec err_path;
             if (target)
             {
-                in_path = target->GetStandardInputPath();
-                out_path = target->GetStandardOutputPath();
-                err_path = target->GetStandardErrorPath();
+                // Only override with the target settings if we don't already have
+                // an action for in, out or error
+                if (GetFileActionForFD(STDIN_FILENO) == NULL)
+                    in_path = target->GetStandardInputPath();
+                if (GetFileActionForFD(STDOUT_FILENO) == NULL)
+                    out_path = target->GetStandardOutputPath();
+                if (GetFileActionForFD(STDERR_FILENO) == NULL)
+                    err_path = target->GetStandardErrorPath();
             }
 
             if (log)
@@ -344,17 +350,23 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
                 {
                     const char *slave_path = m_pty->GetSlaveName(NULL, 0);
 
-                    if (!in_path)
+                    // Only use the slave tty if we don't have anything specified for
+                    // input and don't have an action for stdin
+                    if (!in_path && GetFileActionForFD(STDIN_FILENO) == NULL)
                     {
                         AppendOpenFileAction(STDIN_FILENO, slave_path, true, false);
                     }
 
-                    if (!out_path)
+                    // Only use the slave tty if we don't have anything specified for
+                    // output and don't have an action for stdout
+                    if (!out_path && GetFileActionForFD(STDOUT_FILENO) == NULL)
                     {
                         AppendOpenFileAction(STDOUT_FILENO, slave_path, false, true);
                     }
 
-                    if (!err_path)
+                    // Only use the slave tty if we don't have anything specified for
+                    // error and don't have an action for stderr
+                    if (!err_path && GetFileActionForFD(STDERR_FILENO) == NULL)
                     {
                         AppendOpenFileAction(STDERR_FILENO, slave_path, false, true);
                     }
