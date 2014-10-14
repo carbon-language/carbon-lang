@@ -11,7 +11,6 @@
 #define LLVM_CLANG_FRONTEND_SERIALIZEDDIAGNOSTICPRINTER_H
 
 #include "clang/Basic/LLVM.h"
-#include "clang/Frontend/SerializedDiagnostics.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 
 namespace llvm {
@@ -24,6 +23,41 @@ class DiagnosticsEngine;
 class DiagnosticOptions;
 
 namespace serialized_diags {
+  
+enum BlockIDs {
+  /// \brief A top-level block which represents any meta data associated
+  /// with the diagostics, including versioning of the format.
+  BLOCK_META = llvm::bitc::FIRST_APPLICATION_BLOCKID,
+
+  /// \brief The this block acts as a container for all the information
+  /// for a specific diagnostic.
+  BLOCK_DIAG
+};
+
+enum RecordIDs {
+  RECORD_VERSION = 1,
+  RECORD_DIAG,
+  RECORD_SOURCE_RANGE,
+  RECORD_DIAG_FLAG,
+  RECORD_CATEGORY,
+  RECORD_FILENAME,
+  RECORD_FIXIT,
+  RECORD_FIRST = RECORD_VERSION,
+  RECORD_LAST = RECORD_FIXIT
+};
+
+/// A stable version of DiagnosticIDs::Level.
+///
+/// Do not change the order of values in this enum, and please increment the
+/// serialized diagnostics version number when you add to it.
+enum Level {
+  Ignored = 0,
+  Note,
+  Warning,
+  Error,
+  Fatal,
+  Remark
+};
 
 /// \brief Returns a DiagnosticConsumer that serializes diagnostics to
 ///  a bitcode file.

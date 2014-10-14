@@ -1,7 +1,6 @@
 add_subdirectory(Rewrite)
 
 set(LLVM_LINK_COMPONENTS
-  BitReader
   Option
   Support
   )
@@ -32,7 +31,6 @@ add_clang_library(clangFrontend
   MultiplexConsumer.cpp
   PrintPreprocessedOutput.cpp
   SerializedDiagnosticPrinter.cpp
-  SerializedDiagnosticReader.cpp
   TextDiagnostic.cpp
   TextDiagnosticBuffer.cpp
   TextDiagnosticPrinter.cpp
