@@ -1312,14 +1312,8 @@ void DwarfDebug::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
 
 // Gather and emit post-function debug information.
 void DwarfDebug::endFunction(const MachineFunction *MF) {
-  // Every beginFunction(MF) call should be followed by an endFunction(MF) call,
-  // though the beginFunction may not be called at all.
-  // We should handle both cases.
-  if (!CurFn)
-    CurFn = MF;
-  else
-    assert(CurFn == MF);
-  assert(CurFn != nullptr);
+  assert(CurFn == MF &&
+      "endFunction should be called with the same function as beginFunction");
 
   if (!MMI->hasDebugInfo() || LScopes.empty() ||
       !FunctionDIs.count(MF->getFunction())) {
