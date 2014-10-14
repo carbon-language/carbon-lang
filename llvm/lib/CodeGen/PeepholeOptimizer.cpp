@@ -107,8 +107,9 @@ STATISTIC(NumRewrittenCopies, "Number of copies rewritten");
 
 namespace {
   class PeepholeOptimizer : public MachineFunctionPass {
-    const TargetMachine   *TM;
+    MachineFunction *MF;
     const TargetInstrInfo *TII;
+    const TargetRegisterInfo *TRI;
     MachineRegisterInfo   *MRI;
     MachineDominatorTree  *DT;  // Machine dominator tree
 
@@ -327,8 +328,7 @@ optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
   // Ensure DstReg can get a register class that actually supports
   // sub-registers. Don't change the class until we commit.
   const TargetRegisterClass *DstRC = MRI->getRegClass(DstReg);
-  DstRC = TM->getSubtargetImpl()->getRegisterInfo()->getSubClassWithSubReg(
-      DstRC, SubIdx);
+  DstRC = TRI->getSubClassWithSubReg(DstRC, SubIdx);
   if (!DstRC)
     return false;
 
@@ -338,8 +338,7 @@ optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
   // If UseSrcSubIdx is Set, SubIdx also applies to SrcReg, and only uses of
   // SrcReg:SubIdx should be replaced.
   bool UseSrcSubIdx =
-      TM->getSubtargetImpl()->getRegisterInfo()->getSubClassWithSubReg(
-          MRI->getRegClass(SrcReg), SubIdx) != nullptr;
+      TRI->getSubClassWithSubReg(MRI->getRegClass(SrcReg), SubIdx) != nullptr;
 
   // The source has other uses. See if we can replace the other uses with use of
   // the result of the extension.
@@ -548,7 +547,6 @@ bool PeepholeOptimizer::findNextSource(unsigned &Reg, unsigned &SubReg) {
   unsigned Src;
   unsigned SrcSubReg;
   bool ShouldRewrite = false;
-  const TargetRegisterInfo &TRI = *TM->getSubtargetImpl()->getRegisterInfo();
 
   // Follow the chain of copies until we reach the top of the use-def chain
   // or find a more suitable source.
@@ -571,7 +569,7 @@ bool PeepholeOptimizer::findNextSource(unsigned &Reg, unsigned &SubReg) {
     const TargetRegisterClass *SrcRC = MRI->getRegClass(Src);
 
     // If this source does not incur a cross register bank copy, use it.
-    ShouldRewrite = shareSameRegisterFile(TRI, DefRC, DefSubReg, SrcRC,
+    ShouldRewrite = shareSameRegisterFile(*TRI, DefRC, DefSubReg, SrcRC,
                                           SrcSubReg);
   } while (!ShouldRewrite);
 
@@ -1047,24 +1045,25 @@ bool PeepholeOptimizer::foldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
   return false;
 }
 
-bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
-  if (skipOptnoneFunction(*MF.getFunction()))
+bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &mf) {
+  if (skipOptnoneFunction(*mf.getFunction()))
     return false;
 
   DEBUG(dbgs() << "********** PEEPHOLE OPTIMIZER **********\n");
-  DEBUG(dbgs() << "********** Function: " << MF.getName() << '\n');
+  DEBUG(dbgs() << "********** Function: " << mf.getName() << '\n');
 
   if (DisablePeephole)
     return false;
 
-  TM  = &MF.getTarget();
-  TII = TM->getSubtargetImpl()->getInstrInfo();
-  MRI = &MF.getRegInfo();
+  MF = &mf;
+  TII = MF->getSubtarget().getInstrInfo();
+  TRI = MF->getSubtarget().getRegisterInfo();
+  MRI = &MF->getRegInfo();
   DT  = Aggressive ? &getAnalysis<MachineDominatorTree>() : nullptr;
 
   bool Changed = false;
 
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
+  for (MachineFunction::iterator I = MF->begin(), E = MF->end(); I != E; ++I) {
     MachineBasicBlock *MBB = &*I;
 
     bool SeenMoveImm = false;
