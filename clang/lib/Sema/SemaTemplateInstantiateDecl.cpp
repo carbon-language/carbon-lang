@@ -4293,25 +4293,26 @@ static bool isInstantiationOf(EnumDecl *Pattern,
 static bool isInstantiationOf(UsingShadowDecl *Pattern,
                               UsingShadowDecl *Instance,
                               ASTContext &C) {
-  return C.getInstantiatedFromUsingShadowDecl(Instance) == Pattern;
+  return declaresSameEntity(C.getInstantiatedFromUsingShadowDecl(Instance),
+                            Pattern);
 }
 
 static bool isInstantiationOf(UsingDecl *Pattern,
                               UsingDecl *Instance,
                               ASTContext &C) {
-  return C.getInstantiatedFromUsingDecl(Instance) == Pattern;
+  return declaresSameEntity(C.getInstantiatedFromUsingDecl(Instance), Pattern);
 }
 
 static bool isInstantiationOf(UnresolvedUsingValueDecl *Pattern,
                               UsingDecl *Instance,
                               ASTContext &C) {
-  return C.getInstantiatedFromUsingDecl(Instance) == Pattern;
+  return declaresSameEntity(C.getInstantiatedFromUsingDecl(Instance), Pattern);
 }
 
 static bool isInstantiationOf(UnresolvedUsingTypenameDecl *Pattern,
                               UsingDecl *Instance,
                               ASTContext &C) {
-  return C.getInstantiatedFromUsingDecl(Instance) == Pattern;
+  return declaresSameEntity(C.getInstantiatedFromUsingDecl(Instance), Pattern);
 }
 
 static bool isInstantiationOfStaticDataMember(VarDecl *Pattern,
@@ -4377,8 +4378,8 @@ static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
   if (FieldDecl *Field = dyn_cast<FieldDecl>(Other)) {
     if (!Field->getDeclName()) {
       // This is an unnamed field.
-      return Ctx.getInstantiatedFromUnnamedFieldDecl(Field) ==
-        cast<FieldDecl>(D);
+      return declaresSameEntity(Ctx.getInstantiatedFromUnnamedFieldDecl(Field),
+                                cast<FieldDecl>(D));
     }
   }
 
