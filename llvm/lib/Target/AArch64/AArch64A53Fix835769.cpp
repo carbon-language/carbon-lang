@@ -123,20 +123,20 @@ AArch64A53Fix835769::runOnMachineFunction(MachineFunction &F) {
 
 // Return the block that was fallen through to get to MBB, if any,
 // otherwise nullptr.
-static MachineBasicBlock *getBBFallenThrough(MachineBasicBlock &MBB,
+static MachineBasicBlock *getBBFallenThrough(MachineBasicBlock *MBB,
                                              const TargetInstrInfo *TII) {
   // Get the previous machine basic block in the function.
-  MachineFunction::iterator MBBI = MBB;
+  MachineFunction::iterator MBBI = *MBB;
 
   // Can't go off top of function.
-  if (MBBI == MBB.getParent()->begin())
+  if (MBBI == MBB->getParent()->begin())
     return nullptr;
 
   MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
   SmallVector<MachineOperand, 2> Cond;
 
   MachineBasicBlock *PrevBB = std::prev(MBBI);
-  for (MachineBasicBlock *S : MBB.predecessors())
+  for (MachineBasicBlock *S : MBB->predecessors())
     if (S == PrevBB && !TII->AnalyzeBranch(*PrevBB, TBB, FBB, Cond) &&
         !TBB && !FBB)
       return S;
@@ -144,13 +144,25 @@ static MachineBasicBlock *getBBFallenThrough(MachineBasicBlock &MBB,
   return nullptr;
 }
 
-static MachineInstr *getLastNonPseudo(MachineBasicBlock *MBB) {
-  for (auto I = MBB->rbegin(), E = MBB->rend(); I != E; ++I) {
-    if (!I->isPseudo())
-      return &*I;
+// Iterate through fallen through blocks trying to find a previous non-pseudo if
+// there is one, otherwise return nullptr. Only look for instructions in
+// previous blocks, not the current block, since we only use this to look at
+// previous blocks.
+static MachineInstr *getLastNonPseudo(MachineBasicBlock &MBB,
+                                      const TargetInstrInfo *TII) {
+  MachineBasicBlock *FMBB = &MBB;
+
+  // If there is no non-pseudo in the current block, loop back around and try
+  // the previous block (if there is one).
+  while ((FMBB = getBBFallenThrough(FMBB, TII))) {
+    for (auto I = FMBB->rbegin(), E = FMBB->rend(); I != E; ++I) {
+      if (!I->isPseudo())
+        return &*I;
+    }
   }
 
-  llvm_unreachable("Expected to find a non-pseudo instruction");
+  // There was no previous non-pseudo in the fallen through blocks
+  return nullptr;
 }
 
 static void insertNopBeforeInstruction(MachineBasicBlock &MBB, MachineInstr* MI,
@@ -158,12 +170,10 @@ static void insertNopBeforeInstruction(MachineBasicBlock &MBB, MachineInstr* MI,
   // If we are the first instruction of the block, put the NOP at the end of
   // the previous fallthrough block
   if (MI == &MBB.front()) {
-    MachineBasicBlock *PMBB = getBBFallenThrough(MBB, TII);
-    assert(PMBB && "Expected basic block");
-    MachineInstr *I = getLastNonPseudo(PMBB);
+    MachineInstr *I = getLastNonPseudo(MBB, TII);
     assert(I && "Expected instruction");
     DebugLoc DL = I->getDebugLoc();
-    BuildMI(PMBB, DL, TII->get(AArch64::HINT)).addImm(0);
+    BuildMI(I->getParent(), DL, TII->get(AArch64::HINT)).addImm(0);
   }
   else {
     DebugLoc DL = MI->getDebugLoc();
@@ -186,8 +196,9 @@ AArch64A53Fix835769::runOnBasicBlock(MachineBasicBlock &MBB) {
   unsigned Idx = 0;
   MachineInstr *PrevInstr = nullptr;
 
-  if (MachineBasicBlock *PMBB = getBBFallenThrough(MBB, TII))
-      PrevInstr = getLastNonPseudo(PMBB);
+  // Try and find the last non-pseudo instruction in any fallen through blocks,
+  // if there isn't one, then we use nullptr to represent that.
+  PrevInstr = getLastNonPseudo(MBB, TII);
 
   for (auto &MI : MBB) {
     MachineInstr *CurrInstr = &MI;
