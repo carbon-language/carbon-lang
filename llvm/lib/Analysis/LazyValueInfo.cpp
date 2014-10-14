@@ -954,6 +954,7 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
 
     // Try to intersect ranges of the BB and the constraint on the edge.
     LVILatticeVal InBlock = getBlockValue(Val, BBFrom);
+    mergeAssumeBlockValueConstantRange(Val, InBlock, BBFrom->getTerminator());
     mergeAssumeBlockValueConstantRange(Val, InBlock, CxtI);
     if (!InBlock.isConstantRange())
       return true;
@@ -971,6 +972,7 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
 
   // if we couldn't compute the value on the edge, use the value from the BB
   Result = getBlockValue(Val, BBFrom);
+  mergeAssumeBlockValueConstantRange(Val, Result, BBFrom->getTerminator());
   mergeAssumeBlockValueConstantRange(Val, Result, CxtI);
   return true;
 }
