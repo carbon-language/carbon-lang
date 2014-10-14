@@ -222,7 +222,7 @@ FUNCTIONS.ios.i386    := $(FUNCTIONS.ios) \
                          divsi3 udivsi3
 FUNCTIONS.ios.x86_64  := $(FUNCTIONS.ios.i386)
 FUNCTIONS.ios.x86_64h := $(FUNCTIONS.ios.x86_64)
-FUNCTIONS.ios.arm64   := dummy
+FUNCTIONS.ios.arm64   := mulsc3 muldc3 divsc3 divdc3
 
 FUNCTIONS.osx	:= mulosi4 mulodi4 muloti4
 
@@ -392,7 +392,7 @@ CCKEXT_ARMVFP_FUNCTIONS := $(CCKEXT_ARM_FUNCTIONS) \
 FUNCTIONS.cc_kext.armv7 := $(CCKEXT_ARMVFP_FUNCTIONS)
 FUNCTIONS.cc_kext.armv7k := $(CCKEXT_ARMVFP_FUNCTIONS)
 FUNCTIONS.cc_kext.armv7s := $(CCKEXT_ARMVFP_FUNCTIONS)
-FUNCTIONS.cc_kext.arm64 := dummy
+FUNCTIONS.cc_kext.arm64 := mulsc3 muldc3 divsc3 divdc3
 FUNCTIONS.cc_kext_ios5.armv7 := $(CCKEXT_ARMVFP_FUNCTIONS)
 FUNCTIONS.cc_kext_ios5.armv7k := $(CCKEXT_ARMVFP_FUNCTIONS)
 FUNCTIONS.cc_kext_ios5.armv7s := $(CCKEXT_ARMVFP_FUNCTIONS)
