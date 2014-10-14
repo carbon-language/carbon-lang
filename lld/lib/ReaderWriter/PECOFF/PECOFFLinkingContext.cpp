@@ -90,17 +90,15 @@ std::unique_ptr<File> PECOFFLinkingContext::createUndefinedSymbolFile() const {
 bool PECOFFLinkingContext::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &) {
   // Create a file for __ImageBase.
-  std::unique_ptr<SimpleFileNode> fileNode(
-      new SimpleFileNode("Implicit Files"));
-  std::unique_ptr<File> linkerGeneratedSymFile(
-      new pecoff::LinkerGeneratedSymbolFile(*this));
-  fileNode->appendInputFile(std::move(linkerGeneratedSymFile));
+  auto fileNode = llvm::make_unique<SimpleFileNode>("Implicit Files");
+  fileNode->appendInputFile(
+      llvm::make_unique<pecoff::LinkerGeneratedSymbolFile>(*this));
   getInputGraph().addInputElement(std::move(fileNode));
 
   // Create a file for _imp_ symbols.
-  std::unique_ptr<SimpleFileNode> impFileNode(new SimpleFileNode("imp"));
+  auto impFileNode = llvm::make_unique<SimpleFileNode>("imp");
   impFileNode->appendInputFile(
-      std::unique_ptr<File>(new pecoff::LocallyImportedSymbolFile(*this)));
+      llvm::make_unique<pecoff::LocallyImportedSymbolFile>(*this));
   getInputGraph().addInputElement(std::move(impFileNode));
 
   std::shared_ptr<pecoff::ResolvableSymbols> syms(
@@ -108,14 +106,14 @@ bool PECOFFLinkingContext::createImplicitFiles(
   getInputGraph().registerObserver([=](File *file) { syms->add(file); });
 
   // Create a file for dllexported symbols.
-  std::unique_ptr<SimpleFileNode> exportNode(new SimpleFileNode("<export>"));
-  auto *renameFile = new pecoff::ExportedSymbolRenameFile(*this, syms);
-  exportNode->appendInputFile(std::unique_ptr<File>(renameFile));
+  auto exportNode = llvm::make_unique<SimpleFileNode>("<export>");
+  exportNode->appendInputFile(
+      llvm::make_unique<pecoff::ExportedSymbolRenameFile>(*this, syms));
   getLibraryGroup()->addFile(std::move(exportNode));
 
   // Create a file for the entry point function.
   getEntryNode()->appendInputFile(
-      std::unique_ptr<File>(new pecoff::EntryPointFile(*this, syms)));
+      llvm::make_unique<pecoff::EntryPointFile>(*this, syms));
   return true;
 }
 

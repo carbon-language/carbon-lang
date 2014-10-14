@@ -19,8 +19,8 @@ namespace pecoff {
 static void addReloc(COFFBaseDefinedAtom *atom, const Atom *target,
                      size_t offsetInAtom, Reference::KindArch arch,
                      Reference::KindValue relType) {
-  auto *ref = new COFFReference(target, offsetInAtom, relType, arch);
-  atom->addReference(std::unique_ptr<COFFReference>(ref));
+  atom->addReference(llvm::make_unique<COFFReference>(
+      target, offsetInAtom, relType, arch));
 }
 
 void addDir32Reloc(COFFBaseDefinedAtom *atom, const Atom *target,

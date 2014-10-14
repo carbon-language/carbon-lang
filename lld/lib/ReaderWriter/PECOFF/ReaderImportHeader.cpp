@@ -343,7 +343,7 @@ private:
 
 void Registry::addSupportCOFFImportLibraries(PECOFFLinkingContext &ctx) {
   MachineTypes machine = ctx.getMachineType();
-  add(std::unique_ptr<Reader>(new COFFImportLibraryReader(machine)));
+  add(llvm::make_unique<COFFImportLibraryReader>(machine));
 }
 
 } // end namespace lld
