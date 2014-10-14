@@ -1737,4 +1737,4 @@ if ("LLDB_TESTSUITE_FORCE_FINISH" in os.environ):
     subprocess.Popen(["/bin/sh", "-c", "kill %s; exit 0" % (os.getpid())])
 
 # Exiting.
-exitTestSuite()
+exitTestSuite(failed)
