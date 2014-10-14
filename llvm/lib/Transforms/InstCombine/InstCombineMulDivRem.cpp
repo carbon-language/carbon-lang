@@ -36,14 +36,11 @@ static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC,
 
   // ((1 << A) >>u B) --> (1 << (A-B))
   // Because V cannot be zero, we know that B is less than A.
-  Value *A = nullptr, *B = nullptr, *PowerOf2 = nullptr;
-  if (match(V, m_LShr(m_OneUse(m_Shl(m_Value(PowerOf2), m_Value(A))),
-                      m_Value(B))) &&
-      // The "1" can be any value known to be a power of 2.
-      isKnownToBeAPowerOfTwo(PowerOf2, false, 0, IC.getAssumptionTracker(),
-                             CxtI, IC.getDominatorTree())) {
+  Value *A = nullptr, *B = nullptr, *One = nullptr;
+  if (match(V, m_LShr(m_OneUse(m_Shl(m_Value(One), m_Value(A))), m_Value(B))) &&
+      match(One, m_One())) {
     A = IC.Builder->CreateSub(A, B);
-    return IC.Builder->CreateShl(PowerOf2, A);
+    return IC.Builder->CreateShl(One, A);
   }
 
   // (PowerOfTwo >>u B) --> isExact since shifting out the result would make it

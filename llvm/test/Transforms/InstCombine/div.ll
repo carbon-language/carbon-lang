@@ -265,7 +265,7 @@ define i32 @test30(i32 %a) {
 ; CHECK-NEXT: ret i32 %a
 }
 
-define <2 x i32> @test31(<2 x i32> %x) nounwind {
+define <2 x i32> @test31(<2 x i32> %x) {
   %shr = lshr <2 x i32> %x, <i32 31, i32 31>
   %div = udiv <2 x i32> %shr, <i32 2147483647, i32 2147483647>
   ret <2 x i32> %div
@@ -273,4 +273,16 @@ define <2 x i32> @test31(<2 x i32> %x) nounwind {
 ; CHECK-NEXT: %[[shr:.*]] = lshr <2 x i32> %x, <i32 31, i32 31>
 ; CHECK-NEXT: udiv <2 x i32> %[[shr]], <i32 2147483647, i32 2147483647>
 ; CHECK-NEXT: ret <2 x i32>
+}
+
+define i32 @test32(i32 %a, i32 %b) {
+  %shl = shl i32 2, %b
+  %div = lshr i32 %shl, 2
+  %div2 = udiv i32 %a, %div
+  ret i32 %div2
+; CHECK-LABEL: @test32(
+; CHECK-NEXT: %[[shl:.*]] = shl i32 2, %b
+; CHECK-NEXT: %[[shr:.*]] = lshr i32 %[[shl]], 2
+; CHECK-NEXT: %[[div:.*]] = udiv i32 %a, %[[shr]]
+; CHECK-NEXT: ret i32
 }
