@@ -15,7 +15,11 @@
 
 #include "sanitizer_platform.h"
 #if SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_MAC
-
+#if SANITIZER_FREEBSD
+#define _WANT_RTENTRY
+#include <sys/param.h>
+#include <sys/socketvar.h>
+#endif
 #include <arpa/inet.h>
 #include <dirent.h>
 #include <errno.h>
@@ -553,7 +557,9 @@ namespace __sanitizer {
   unsigned IOCTL_PPPIOCSMAXCID = PPPIOCSMAXCID;
   unsigned IOCTL_PPPIOCSMRU = PPPIOCSMRU;
   unsigned IOCTL_PPPIOCSXASYNCMAP = PPPIOCSXASYNCMAP;
+  unsigned IOCTL_SIOCADDRT = SIOCADDRT;
   unsigned IOCTL_SIOCDARP = SIOCDARP;
+  unsigned IOCTL_SIOCDELRT = SIOCDELRT;
   unsigned IOCTL_SIOCDRARP = SIOCDRARP;
   unsigned IOCTL_SIOCGARP = SIOCGARP;
   unsigned IOCTL_SIOCGIFENCAP = SIOCGIFENCAP;
@@ -639,8 +645,6 @@ namespace __sanitizer {
 #if SANITIZER_LINUX || SANITIZER_FREEBSD
   unsigned IOCTL_MTIOCGET = MTIOCGET;
   unsigned IOCTL_MTIOCTOP = MTIOCTOP;
-  unsigned IOCTL_SIOCADDRT = SIOCADDRT;
-  unsigned IOCTL_SIOCDELRT = SIOCDELRT;
   unsigned IOCTL_SNDCTL_DSP_GETBLKSIZE = SNDCTL_DSP_GETBLKSIZE;
   unsigned IOCTL_SNDCTL_DSP_GETFMTS = SNDCTL_DSP_GETFMTS;
   unsigned IOCTL_SNDCTL_DSP_NONBLOCK = SNDCTL_DSP_NONBLOCK;
