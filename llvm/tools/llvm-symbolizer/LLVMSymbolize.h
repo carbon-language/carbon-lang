@@ -82,13 +82,10 @@ private:
   }
 
   // Owns module info objects.
-  typedef std::map<std::string, ModuleInfo *> ModuleMapTy;
-  ModuleMapTy Modules;
-  typedef std::map<std::string, BinaryPair> BinaryMapTy;
-  BinaryMapTy BinaryForPath;
-  typedef std::map<std::pair<MachOUniversalBinary *, std::string>, ObjectFile *>
-      ObjectFileForArchMapTy;
-  ObjectFileForArchMapTy ObjectFileForArch;
+  std::map<std::string, ModuleInfo *> Modules;
+  std::map<std::string, BinaryPair> BinaryForPath;
+  std::map<std::pair<MachOUniversalBinary *, std::string>, ObjectFile *>
+      ObjectFileForArch;
 
   Options Opts;
   static const char kBadString[];
@@ -122,9 +119,8 @@ private:
       return s1.Addr < s2.Addr;
     }
   };
-  typedef std::map<SymbolDesc, StringRef> SymbolMapTy;
-  SymbolMapTy Functions;
-  SymbolMapTy Objects;
+  std::map<SymbolDesc, StringRef> Functions;
+  std::map<SymbolDesc, StringRef> Objects;
 };
 
 } // namespace symbolize

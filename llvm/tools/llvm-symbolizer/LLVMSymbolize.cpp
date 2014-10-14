@@ -85,7 +85,7 @@ void ModuleInfo::addSymbol(const SymbolRef &Symbol) {
     SymbolName = SymbolName.drop_front();
   // FIXME: If a function has alias, there are two entries in symbol table
   // with same address size. Make sure we choose the correct one.
-  SymbolMapTy &M = SymbolType == SymbolRef::ST_Function ? Functions : Objects;
+  auto &M = SymbolType == SymbolRef::ST_Function ? Functions : Objects;
   SymbolDesc SD = { SymbolAddress, SymbolSize };
   M.insert(std::make_pair(SD, SymbolName));
 }
@@ -93,19 +93,20 @@ void ModuleInfo::addSymbol(const SymbolRef &Symbol) {
 bool ModuleInfo::getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
                                         std::string &Name, uint64_t &Addr,
                                         uint64_t &Size) const {
-  const SymbolMapTy &M = Type == SymbolRef::ST_Function ? Functions : Objects;
-  if (M.empty())
+  const auto &SymbolMap = Type == SymbolRef::ST_Function ? Functions : Objects;
+  if (SymbolMap.empty())
     return false;
   SymbolDesc SD = { Address, Address };
-  SymbolMapTy::const_iterator it = M.upper_bound(SD);
-  if (it == M.begin())
+  auto SymbolIterator = SymbolMap.upper_bound(SD);
+  if (SymbolIterator == SymbolMap.begin())
     return false;
-  --it;
-  if (it->first.Size != 0 && it->first.Addr + it->first.Size <= Address)
+  --SymbolIterator;
+  if (SymbolIterator->first.Size != 0 &&
+      SymbolIterator->first.Addr + SymbolIterator->first.Size <= Address)
     return false;
-  Name = it->second.str();
-  Addr = it->first.Addr;
-  Size = it->first.Size;
+  Name = SymbolIterator->second.str();
+  Addr = SymbolIterator->first.Addr;
+  Size = SymbolIterator->first.Size;
   return true;
 }
 
@@ -295,7 +296,7 @@ static bool getGNUDebuglinkContents(const Binary *Bin, std::string &DebugName,
 
 LLVMSymbolizer::BinaryPair
 LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
-  BinaryMapTy::iterator I = BinaryForPath.find(Path);
+  const auto &I = BinaryForPath.find(Path);
   if (I != BinaryForPath.end())
     return I->second;
   Binary *Bin = nullptr;
@@ -348,7 +349,7 @@ LLVMSymbolizer::getObjectFileFromBinary(Binary *Bin, const std::string &ArchName
     return nullptr;
   ObjectFile *Res = nullptr;
   if (MachOUniversalBinary *UB = dyn_cast<MachOUniversalBinary>(Bin)) {
-    ObjectFileForArchMapTy::iterator I = ObjectFileForArch.find(
+    const auto &I = ObjectFileForArch.find(
         std::make_pair(UB, ArchName));
     if (I != ObjectFileForArch.end())
       return I->second;
@@ -367,7 +368,7 @@ LLVMSymbolizer::getObjectFileFromBinary(Binary *Bin, const std::string &ArchName
 
 ModuleInfo *
 LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
-  ModuleMapTy::iterator I = Modules.find(ModuleName);
+  const auto &I = Modules.find(ModuleName);
   if (I != Modules.end())
     return I->second;
   std::string BinaryName = ModuleName;
