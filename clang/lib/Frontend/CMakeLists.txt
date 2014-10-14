@@ -31,6 +31,7 @@ add_clang_library(clangFrontend
   MultiplexConsumer.cpp
   PrintPreprocessedOutput.cpp
   SerializedDiagnosticPrinter.cpp
+  SerializedDiagnosticReader.cpp
   TextDiagnostic.cpp
   TextDiagnosticBuffer.cpp
   TextDiagnosticPrinter.cpp
