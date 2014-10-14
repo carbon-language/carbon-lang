@@ -323,7 +323,7 @@ bool HexagonPacketizerList::IsCallDependent(MachineInstr* MI,
 
   const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
   const HexagonRegisterInfo *QRI =
-      (const HexagonRegisterInfo *)TM.getSubtargetImpl()->getRegisterInfo();
+      (const HexagonRegisterInfo *)MF.getSubtarget().getRegisterInfo();
 
   // Check for lr dependence
   if (DepReg == QRI->getRARegister()) {
@@ -548,7 +548,7 @@ bool HexagonPacketizerList::CanPromoteToNewValueStore(
     return false;
 
   const HexagonRegisterInfo *QRI =
-      (const HexagonRegisterInfo *)TM.getSubtargetImpl()->getRegisterInfo();
+      (const HexagonRegisterInfo *)MF.getSubtarget().getRegisterInfo();
   const MCInstrDesc& MCID = PacketMI->getDesc();
   // first operand is always the result
 
@@ -722,7 +722,7 @@ bool HexagonPacketizerList::CanPromoteToNewValue(
 
   const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
   const HexagonRegisterInfo *QRI =
-      (const HexagonRegisterInfo *)TM.getSubtargetImpl()->getRegisterInfo();
+      (const HexagonRegisterInfo *)MF.getSubtarget().getRegisterInfo();
   if (!QRI->Subtarget.hasV4TOps() ||
       !QII->mayBeNewStore(MI))
     return false;
@@ -1004,7 +1004,7 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
 
   const unsigned FrameSize = MF.getFrameInfo()->getStackSize();
   const HexagonRegisterInfo *QRI =
-      (const HexagonRegisterInfo *)TM.getSubtargetImpl()->getRegisterInfo();
+      (const HexagonRegisterInfo *)MF.getSubtarget().getRegisterInfo();
   const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
 
   // Inline asm cannot go in the packet.
