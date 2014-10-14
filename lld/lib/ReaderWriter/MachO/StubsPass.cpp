@@ -230,7 +230,7 @@ public:
           continue;
         const Atom *target = ref->target();
         assert(target != nullptr);
-        if (target->definition() == Atom::definitionSharedLibrary) {
+        if (isa<SharedLibraryAtom>(target)) {
           // Calls to shared libraries go through stubs.
           replaceCalleeWithStub(target, ref);
           continue;

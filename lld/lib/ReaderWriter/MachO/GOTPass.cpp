@@ -125,7 +125,7 @@ private:
 
   bool shouldReplaceTargetWithGOTAtom(const Atom *target, bool canBypassGOT) {
     // Accesses to shared library symbols must go through GOT.
-    if (target->definition() == Atom::definitionSharedLibrary)
+    if (isa<SharedLibraryAtom>(target))
       return true;
     // Accesses to interposable symbols in same linkage unit must also go
     // through GOT.
