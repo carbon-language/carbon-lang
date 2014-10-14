@@ -895,6 +895,7 @@ CGDebugInfo::CreateRecordStaticField(const VarDecl *Var,
                                      const RecordDecl* RD) {
   // Create the descriptor for the static variable, with or without
   // constant initializers.
+  Var = Var->getCanonicalDecl();
   llvm::DIFile VUnit = getOrCreateFile(Var->getLocation());
   llvm::DIType VTy = getOrCreateType(Var->getType(), VUnit);
 
