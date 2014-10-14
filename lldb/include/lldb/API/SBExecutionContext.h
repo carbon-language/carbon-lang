@@ -20,6 +20,8 @@ namespace lldb {
     
 class SBExecutionContext
 {
+friend class SBCommandInterpreter;
+
 public:
     SBExecutionContext();
     

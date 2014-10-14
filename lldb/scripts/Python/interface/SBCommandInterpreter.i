@@ -182,6 +182,15 @@ public:
     lldb::ReturnStatus
     HandleCommand (const char *command_line, lldb::SBCommandReturnObject &result, bool add_to_history = false);
 
+    lldb::ReturnStatus
+    HandleCommand (const char *command_line, SBExecutionContext &exe_ctx, SBCommandReturnObject &result, bool add_to_history = false);
+
+    void
+    HandleCommandsFromFile (lldb::SBFileSpec &file,
+                            lldb::SBExecutionContext &override_context,
+                            lldb::SBCommandInterpreterRunOptions &options,
+                            lldb::SBCommandReturnObject result);
+
     int
     HandleCompletion (const char *current_line,
                       uint32_t cursor_pos,

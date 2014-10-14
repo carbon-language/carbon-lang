@@ -628,6 +628,12 @@ public:
     {
         return m_quit_requested;
     }
+
+    bool
+    GetStoppedForCrash () const
+    {
+        return m_stopped_for_crash;
+    }
     
 protected:
     friend class Debugger;
@@ -685,6 +691,7 @@ private:
     std::vector<uint32_t> m_command_source_flags;
     uint32_t m_num_errors;
     bool m_quit_requested;
+    bool m_stopped_for_crash;
     
 };
 

@@ -986,7 +986,8 @@ SBDebugger::RunCommandInterpreter (bool auto_handle_events,
                                    bool spawn_thread,
                                    SBCommandInterpreterRunOptions &options,
                                    int  &num_errors,
-                                   bool &quit_requested)
+                                   bool &quit_requested,
+                                   bool &stopped_for_crash)
 
 {
     if (m_opaque_sp)
@@ -995,6 +996,7 @@ SBDebugger::RunCommandInterpreter (bool auto_handle_events,
         interp.RunCommandInterpreter(auto_handle_events, spawn_thread, options.ref());
         num_errors = interp.GetNumErrors();
         quit_requested = interp.GetQuitRequested();
+        stopped_for_crash = interp.GetStoppedForCrash();
     }
 }
 

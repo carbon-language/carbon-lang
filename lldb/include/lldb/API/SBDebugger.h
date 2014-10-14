@@ -327,7 +327,8 @@ public:
                            bool spawn_thread,
                            SBCommandInterpreterRunOptions &options,
                            int  &num_errors,
-                           bool &quit_requested);
+                           bool &quit_requested,
+                           bool &stopped_for_crash);
 private:
 
     friend class SBCommandInterpreter;

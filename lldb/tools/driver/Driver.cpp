@@ -109,7 +109,10 @@ static OptionDefinition g_options[] =
     { LLDB_3_TO_5,       false, "one-line-before-file"         , 'O', required_argument, 0,  eArgTypeNone,
         "Tells the debugger to execute this one-line lldb command before any file provided on the command line has been loaded." },
     { LLDB_3_TO_5,       false, "source-quietly"          , 'Q', no_argument      , 0,  eArgTypeNone,
-        "Tells the debugger suppress output from commands provided in the -s, -S, -O and -o commands." },
+        "Tells the debugger to execute this one-line lldb command before any file provided on the command line has been loaded." },
+    { LLDB_3_TO_5,       false, "batch"          , 'b', no_argument      , 0,  eArgTypeNone,
+        "Tells the debugger to running the commands from -s, -S, -o & -O, and then quit.  However if any run command stopped due to a signal or crash, "
+        "the debugger will return to the interactive prompt at the place of the crash." },
     { LLDB_3_TO_5,       false, "editor"         , 'e', no_argument      , 0,  eArgTypeNone,
         "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
     { LLDB_3_TO_5,       false, "no-lldbinit"    , 'x', no_argument      , 0,  eArgTypeNone,
@@ -406,6 +409,7 @@ Driver::OptionData::OptionData () :
     m_process_name(),
     m_process_pid(LLDB_INVALID_PROCESS_ID),
     m_use_external_editor(false),
+    m_batch(false),
     m_seen_options()
 {
 }
@@ -429,6 +433,7 @@ Driver::OptionData::Clear ()
     m_use_external_editor = false;
     m_wait_for = false;
     m_process_name.erase();
+    m_batch = false;
     m_process_pid = LLDB_INVALID_PROCESS_ID;
 }
 
@@ -639,6 +644,10 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exiting)
 
                     case 'P':
                         m_option_data.m_print_python_path = true;
+                        break;
+
+                    case 'b':
+                        m_option_data.m_batch = true;
                         break;
 
                     case 'c':
@@ -924,6 +933,7 @@ Driver::MainLoop ()
 
     // The command file might have requested that we quit, this variable will track that.
     bool quit_requested = false;
+    bool stopped_for_crash = false;
     if (commands_data && commands_size)
     {
         enum PIPES { READ, WRITE }; // Constants 0 and 1 for READ and WRITE
@@ -973,8 +983,15 @@ Driver::MainLoop ()
                     
                     SBCommandInterpreterRunOptions options;
                     options.SetStopOnError (true);
-                    
-                    m_debugger.RunCommandInterpreter(handle_events, spawn_thread, options, num_errors, quit_requested);
+                    if (m_option_data.m_batch)
+                        options.SetStopOnCrash (true);
+
+                    m_debugger.RunCommandInterpreter(handle_events,
+                                                     spawn_thread,
+                                                     options,
+                                                     num_errors,
+                                                     quit_requested,
+                                                     stopped_for_crash);
                     m_debugger.SetAsync(old_async);
                 }
                 else
@@ -1030,7 +1047,13 @@ Driver::MainLoop ()
     // interpreter again in interactive mode and let the debugger
     // take ownership of stdin
 
-    if (!quit_requested)
+    bool go_interactive = true;
+    if (quit_requested)
+        go_interactive = false;
+    else if (m_option_data.m_batch && !stopped_for_crash)
+        go_interactive = false;
+
+    if (go_interactive)
     {
         m_debugger.SetInputFileHandle (stdin, true);
         m_debugger.RunCommandInterpreter(handle_events, spawn_thread);

@@ -18,6 +18,8 @@ namespace lldb {
 class SBCommandInterpreterRunOptions
 {
 friend class SBDebugger;
+friend class SBCommandInterpreter;
+
 public:
     SBCommandInterpreterRunOptions();
     ~SBCommandInterpreterRunOptions();
@@ -137,6 +139,15 @@ public:
 
     lldb::ReturnStatus
     HandleCommand (const char *command_line, lldb::SBCommandReturnObject &result, bool add_to_history = false);
+
+    lldb::ReturnStatus
+    HandleCommand (const char *command_line, SBExecutionContext &exe_ctx, SBCommandReturnObject &result, bool add_to_history = false);
+
+    void
+    HandleCommandsFromFile (lldb::SBFileSpec &file,
+                            lldb::SBExecutionContext &override_context,
+                            lldb::SBCommandInterpreterRunOptions &options,
+                            lldb::SBCommandReturnObject result);
 
     // The pointer based interface is not useful in SWIG, since the cursor & last_char arguments are string pointers INTO current_line
     // and you can't do that in a scripting language interface in general...

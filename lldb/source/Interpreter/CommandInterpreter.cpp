@@ -121,7 +121,8 @@ CommandInterpreter::CommandInterpreter
     m_truncation_warning(eNoTruncation),
     m_command_source_depth (0),
     m_num_errors(0),
-    m_quit_requested(false)
+    m_quit_requested(false),
+    m_stopped_for_crash(false)
 
 {
     debugger.SetScriptLanguage (script_language);
@@ -2568,6 +2569,42 @@ CommandInterpreter::HandleCommands (const StringList &commands,
                 return;
             }
         }
+
+        // Also check for "stop on crash here:
+        bool should_stop = false;
+        if (tmp_result.GetDidChangeProcessState() && options.GetStopOnCrash())
+        {
+            TargetSP target_sp (m_debugger.GetTargetList().GetSelectedTarget());
+            if (target_sp)
+            {
+                ProcessSP process_sp (target_sp->GetProcessSP());
+                if (process_sp)
+                {
+                    for (ThreadSP thread_sp : process_sp->GetThreadList().Threads())
+                    {
+                        StopReason reason = thread_sp->GetStopReason();
+                        if (reason == eStopReasonSignal || reason == eStopReasonException || reason == eStopReasonInstrumentation)
+                        {
+                            should_stop = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (should_stop)
+            {
+                if (idx != num_lines - 1)
+                    result.AppendErrorWithFormat("Aborting reading of commands after command #%" PRIu64 ": '%s' stopped with a signal or exception.\n",
+                                                 (uint64_t)idx + 1, cmd);
+                else
+                    result.AppendMessageWithFormat("Command #%" PRIu64 " '%s' stopped with a signal or exception.\n", (uint64_t)idx + 1, cmd);
+                    
+                result.SetStatus(tmp_result.GetStatus());
+                m_debugger.SetAsyncExecution (old_async_execution);
+
+                return;
+            }
+        }
         
     }
     
@@ -2639,6 +2676,19 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
                 flags |= eHandleCommandFlagStopOnError;
             }
 
+            if (options.GetStopOnCrash())
+            {
+                if (m_command_source_flags.empty())
+                {
+                    // Echo command by default
+                    flags |= eHandleCommandFlagStopOnCrash;
+                }
+                else if (m_command_source_flags.back() & eHandleCommandFlagStopOnCrash)
+                {
+                    flags |= eHandleCommandFlagStopOnCrash;
+                }
+            }
+
             if (options.m_echo_commands == eLazyBoolCalculate)
             {
                 if (m_command_source_flags.empty())
@@ -2694,7 +2744,7 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
                                                               *this));
             const bool old_async_execution = debugger.GetAsyncExecution();
             
-            // Set synchronous execution if we not stopping when we continue
+            // Set synchronous execution if we are not stopping on continue
             if ((flags & eHandleCommandFlagStopOnContinue) == 0)
                 debugger.SetAsyncExecution (false);
 
@@ -3069,6 +3119,50 @@ CommandInterpreter::IOHandlerInputComplete (IOHandler &io_handler, std::string &
             io_handler.SetIsDone(true);
             break;
     }
+
+    // Finally, if we're going to stop on crash, check that here:
+    if (!m_quit_requested
+        && result.GetDidChangeProcessState()
+        && io_handler.GetFlags().Test(eHandleCommandFlagStopOnCrash))
+    {
+        bool should_stop = false;
+        TargetSP target_sp (m_debugger.GetTargetList().GetSelectedTarget());
+        if (target_sp)
+        {
+            ProcessSP process_sp (target_sp->GetProcessSP());
+            if (process_sp)
+            {
+                for (ThreadSP thread_sp : process_sp->GetThreadList().Threads())
+                {
+                    StopReason reason = thread_sp->GetStopReason();
+                    if (reason == eStopReasonSignal || reason == eStopReasonException || reason == eStopReasonInstrumentation)
+                    {
+                        // If we are printing results, we ought to show the resaon why we are stopping here:
+                        if (io_handler.GetFlags().Test(eHandleCommandFlagPrintResult))
+                        {
+                            if (!result.GetImmediateOutputStream())
+                            {
+                                const uint32_t start_frame = 0;
+                                const uint32_t num_frames = 1;
+                                const uint32_t num_frames_with_source = 1;
+                                thread_sp->GetStatus (*io_handler.GetOutputStreamFile().get(),
+                                                      start_frame,
+                                                      num_frames,
+                                                      num_frames_with_source);
+                            }
+                        }
+                        should_stop = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (should_stop)
+        {
+            io_handler.SetIsDone(true);
+            m_stopped_for_crash = true;
+        }
+    }
 }
 
 bool
@@ -3155,6 +3249,7 @@ CommandInterpreter::RunCommandInterpreter(bool auto_handle_events,
     const bool multiple_lines = false;
     m_num_errors = 0;
     m_quit_requested = false;
+    m_stopped_for_crash = false;
     
     // Always re-create the IOHandlerEditline in case the input
     // changed. The old instance might have had a non-interactive

@@ -69,6 +69,12 @@ SBExecutionContext::operator = (const lldb::SBExecutionContext &rhs)
     return *this;
 }
 
+ExecutionContextRef *
+SBExecutionContext::get () const
+{
+    return m_exe_ctx_sp.get();
+}
+
 SBTarget
 SBExecutionContext::GetTarget () const
 {
