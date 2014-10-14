@@ -2510,7 +2510,7 @@ def : MnemonicAlias<"fldcww",   "fldcw",    "att">;
 def : MnemonicAlias<"fnstcww",  "fnstcw",   "att">;
 def : MnemonicAlias<"fnstsww",  "fnstsw",   "att">;
 def : MnemonicAlias<"fucomip",  "fucompi",  "att">;
-def : MnemonicAlias<"fwait",    "wait",     "att">;
+def : MnemonicAlias<"fwait",    "wait">;
 
 
 class CondCodeAlias<string Prefix,string Suffix, string OldCond, string NewCond,
