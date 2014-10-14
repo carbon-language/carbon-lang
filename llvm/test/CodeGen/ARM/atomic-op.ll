@@ -4,6 +4,8 @@
 ; RUN: llc < %s -mtriple=thumbv6-apple-ios -verify-machineinstrs -mcpu=cortex-m0 | FileCheck %s --check-prefix=CHECK-M0
 ; RUN: llc < %s -mtriple=thumbv7--none-eabi -thread-model single -verify-machineinstrs | FileCheck %s --check-prefix=CHECK-BAREMETAL
 
+target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64"
+
 define void @func(i32 %argc, i8** %argv) nounwind {
 entry:
 	%argc.addr = alloca i32		; <i32*> [#uses=1]

@@ -364,8 +364,6 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
     } else {
       NumBits = 8;
       Scale = 4;
-      assert((Offset & 3) == 0 &&
-             "Thumb add/sub sp, #imm immediate must be multiple of 4!");
     }
 
     unsigned PredReg;
@@ -380,7 +378,7 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
 
     // Common case: small offset, fits into instruction.
     unsigned Mask = (1 << NumBits) - 1;
-    if (((Offset / Scale) & ~Mask) == 0) {
+    if (Offset % Scale == 0 && ((Offset / Scale) & ~Mask) == 0) {
       // Replace the FrameIndex with sp / fp
       if (Opcode == ARM::tADDi3) {
         MI.setDesc(TII.get(Opcode));
