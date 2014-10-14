@@ -6,7 +6,6 @@
 // RUN: %clangxx_asan -O2 %s -o %t && %run %t | FileCheck %s
 // RUN: %clangxx_asan -O3 %s -o %t && %run %t | FileCheck %s
 // XFAIL: arm-linux-gnueabi
-// XFAIL: armv7l-unknown-linux-gnueabihf
 
 #include <stdio.h>
 #include <sched.h>

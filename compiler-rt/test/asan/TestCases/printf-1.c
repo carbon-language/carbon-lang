@@ -2,7 +2,6 @@
 // RUN: env ASAN_OPTIONS=check_printf=1 %run %t 2>&1 | FileCheck %s
 // RUN: env ASAN_OPTIONS=check_printf=0 %run %t 2>&1 | FileCheck %s
 // RUN: %run %t 2>&1 | FileCheck %s
-// XFAIL: armv7l-unknown-linux-gnueabihf
 
 #include <stdio.h>
 #if defined(_WIN32)

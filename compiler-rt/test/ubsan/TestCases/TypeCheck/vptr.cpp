@@ -25,7 +25,6 @@
 
 // FIXME: This test produces linker errors on Darwin.
 // XFAIL: darwin
-// XFAIL: armv7l-unknown-linux-gnueabihf
 
 extern "C" {
 const char *__ubsan_default_options() {
