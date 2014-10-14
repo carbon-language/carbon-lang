@@ -2317,13 +2317,13 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
                << "********** Function: " << mf.getName() << '\n');
 
   MF = &mf;
-  const TargetMachine &TM = MF->getTarget();
-  TRI = TM.getSubtargetImpl()->getRegisterInfo();
-  TII = TM.getSubtargetImpl()->getInstrInfo();
+  TRI = MF->getSubtarget().getRegisterInfo();
+  TII = MF->getSubtarget().getInstrInfo();
   RCI.runOnMachineFunction(mf);
 
   EnableLocalReassign = EnableLocalReassignment ||
-    TM.getSubtargetImpl()->enableRALocalReassignment(TM.getOptLevel());
+                        MF->getSubtarget().enableRALocalReassignment(
+                            MF->getTarget().getOptLevel());
 
   if (VerifyEnabled)
     MF->verify(this, "Before greedy register allocator");

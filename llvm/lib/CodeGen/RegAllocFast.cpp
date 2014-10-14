@@ -33,7 +33,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <algorithm>
 using namespace llvm;
@@ -54,7 +53,6 @@ namespace {
     RAFast() : MachineFunctionPass(ID), StackSlotForVirtReg(-1),
                isBulkSpilling(false) {}
   private:
-    const TargetMachine *TM;
     MachineFunction *MF;
     MachineRegisterInfo *MRI;
     const TargetRegisterInfo *TRI;
@@ -1078,9 +1076,8 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
                << "********** Function: " << Fn.getName() << '\n');
   MF = &Fn;
   MRI = &MF->getRegInfo();
-  TM = &Fn.getTarget();
-  TRI = TM->getSubtargetImpl()->getRegisterInfo();
-  TII = TM->getSubtargetImpl()->getInstrInfo();
+  TRI = MF->getSubtarget().getRegisterInfo();
+  TII = MF->getSubtarget().getInstrInfo();
   MRI->freezeReservedRegs(Fn);
   RegClassInfo.runOnMachineFunction(Fn);
   UsedInInstr.clear();

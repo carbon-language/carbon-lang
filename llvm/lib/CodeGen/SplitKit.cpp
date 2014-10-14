@@ -320,14 +320,8 @@ SplitEditor::SplitEditor(SplitAnalysis &sa, LiveIntervals &lis, VirtRegMap &vrm,
                          MachineDominatorTree &mdt,
                          MachineBlockFrequencyInfo &mbfi)
     : SA(sa), LIS(lis), VRM(vrm), MRI(vrm.getMachineFunction().getRegInfo()),
-      MDT(mdt), TII(*vrm.getMachineFunction()
-                         .getTarget()
-                         .getSubtargetImpl()
-                         ->getInstrInfo()),
-      TRI(*vrm.getMachineFunction()
-               .getTarget()
-               .getSubtargetImpl()
-               ->getRegisterInfo()),
+      MDT(mdt), TII(*vrm.getMachineFunction().getSubtarget().getInstrInfo()),
+      TRI(*vrm.getMachineFunction().getSubtarget().getRegisterInfo()),
       MBFI(mbfi), Edit(nullptr), OpenIdx(0), SpillMode(SM_Partition),
       RegAssign(Allocator) {}
 
