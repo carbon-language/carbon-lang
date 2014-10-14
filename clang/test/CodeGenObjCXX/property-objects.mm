@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -g -o - | FileCheck %s
 
 class S {
 public:
@@ -35,6 +35,11 @@ struct CGRect {
 // CHECK: call dereferenceable({{[0-9]+}}) %class.S* @_ZN1SaSERKS_
 // CHECK-NEXT: ret void
 
+// Don't attach debug locations to the prologue instructions. These were
+// leaking over from the previous function emission by accident.
+// CHECK: define internal void @"\01-[I setBounds:]"
+// CHECK-NOT: !dbg
+// CHECK: call void @llvm.dbg.declare
 - (void)setFrame:(CGRect)frameRect {}
 - (CGRect)frame {return bounds;}
 
