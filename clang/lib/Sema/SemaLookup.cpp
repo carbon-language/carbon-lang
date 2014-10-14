@@ -1175,21 +1175,8 @@ static Module *getDefiningModule(Decl *Entity) {
     if (FunctionDecl *Pattern = FD->getTemplateInstantiationPattern())
       Entity = Pattern;
   } else if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(Entity)) {
-    // If it's a class template specialization, find the template or partial
-    // specialization from which it was instantiated.
-    if (ClassTemplateSpecializationDecl *SpecRD =
-            dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
-      llvm::PointerUnion<ClassTemplateDecl*,
-                         ClassTemplatePartialSpecializationDecl*> From =
-          SpecRD->getInstantiatedFrom();
-      if (ClassTemplateDecl *FromTemplate = From.dyn_cast<ClassTemplateDecl*>())
-        Entity = FromTemplate->getTemplatedDecl();
-      else if (From)
-        Entity = From.get<ClassTemplatePartialSpecializationDecl*>();
-      // Otherwise, it's an explicit specialization.
-    } else if (MemberSpecializationInfo *MSInfo =
-                   RD->getMemberSpecializationInfo())
-      Entity = getInstantiatedFrom(RD, MSInfo);
+    if (CXXRecordDecl *Pattern = RD->getTemplateInstantiationPattern())
+      Entity = Pattern;
   } else if (EnumDecl *ED = dyn_cast<EnumDecl>(Entity)) {
     if (MemberSpecializationInfo *MSInfo = ED->getMemberSpecializationInfo())
       Entity = getInstantiatedFrom(ED, MSInfo);

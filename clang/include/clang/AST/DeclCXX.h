@@ -1377,6 +1377,15 @@ public:
   /// \brief Set the kind of specialization or template instantiation this is.
   void setTemplateSpecializationKind(TemplateSpecializationKind TSK);
 
+  /// \brief Retrieve the record declaration from which this record could be
+  /// instantiated. Returns null if this class is not a template instantiation.
+  const CXXRecordDecl *getTemplateInstantiationPattern() const;
+
+  CXXRecordDecl *getTemplateInstantiationPattern() {
+    return const_cast<CXXRecordDecl *>(const_cast<const CXXRecordDecl *>(this)
+                                           ->getTemplateInstantiationPattern());
+  }
+
   /// \brief Returns the destructor decl for this class.
   CXXDestructorDecl *getDestructor() const;
 
