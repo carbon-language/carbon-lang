@@ -809,6 +809,9 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
     case Intrinsic::r600_read_local_size_z:
       return LowerImplicitParameter(DAG, VT, DL, 8);
 
+    case Intrinsic::AMDGPU_read_workdim:
+      return LowerImplicitParameter(DAG, VT, DL, MFI->ABIArgOffset / 4);
+
     case Intrinsic::r600_read_tgid_x:
       return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
                                   AMDGPU::T1_X, VT);
@@ -1698,7 +1701,7 @@ SDValue R600TargetLowering::LowerFormalArguments(
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), ArgLocs,
                  *DAG.getContext());
   MachineFunction &MF = DAG.getMachineFunction();
-  unsigned ShaderType = MF.getInfo<R600MachineFunctionInfo>()->getShaderType();
+  R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
 
   SmallVector<ISD::InputArg, 8> LocalIns;
 
@@ -1716,7 +1719,7 @@ SDValue R600TargetLowering::LowerFormalArguments(
       MemVT = MemVT.getVectorElementType();
     }
 
-    if (ShaderType != ShaderType::COMPUTE) {
+    if (MFI->getShaderType() != ShaderType::COMPUTE) {
       unsigned Reg = MF.addLiveIn(VA.getLocReg(), &AMDGPU::R600_Reg128RegClass);
       SDValue Register = DAG.getCopyFromReg(Chain, DL, Reg, VT);
       InVals.push_back(Register);
@@ -1748,16 +1751,18 @@ SDValue R600TargetLowering::LowerFormalArguments(
 
     unsigned ValBase = ArgLocs[In.OrigArgIndex].getLocMemOffset();
     unsigned PartOffset = VA.getLocMemOffset();
+    unsigned Offset = 36 + VA.getLocMemOffset();
 
     MachinePointerInfo PtrInfo(UndefValue::get(PtrTy), PartOffset - ValBase);
     SDValue Arg = DAG.getLoad(ISD::UNINDEXED, Ext, VT, DL, Chain,
-                              DAG.getConstant(36 + PartOffset, MVT::i32),
+                              DAG.getConstant(Offset, MVT::i32),
                               DAG.getUNDEF(MVT::i32),
                               PtrInfo,
                               MemVT, false, true, true, 4);
 
     // 4 is the preferred alignment for the CONSTANT memory space.
     InVals.push_back(Arg);
+    MFI->ABIArgOffset = Offset + MemVT.getStoreSize();
   }
   return Chain;
 }

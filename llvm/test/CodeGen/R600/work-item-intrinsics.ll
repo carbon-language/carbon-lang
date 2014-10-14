@@ -128,6 +128,20 @@ entry:
   ret void
 }
 
+; FUNC-LABEL: @get_work_dim
+; EG: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
+; EG: MOV [[VAL]], KC0[2].Z
+
+; SI: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 0xb
+; SI: V_MOV_B32_e32 [[VVAL:v[0-9]+]], [[VAL]]
+; SI: BUFFER_STORE_DWORD [[VVAL]]
+define void @get_work_dim (i32 addrspace(1)* %out) {
+entry:
+  %0 = call i32 @llvm.r600.read.workdim() #0
+  store i32 %0, i32 addrspace(1)* %out
+  ret void
+}
+
 ; The tgid values are stored in sgprs offset by the number of user sgprs.
 ; Currently we always use exactly 2 user sgprs for the pointer to the
 ; kernel arguments, but this may change in the future.
@@ -208,5 +222,7 @@ declare i32 @llvm.r600.read.tgid.z() #0
 declare i32 @llvm.r600.read.tidig.x() #0
 declare i32 @llvm.r600.read.tidig.y() #0
 declare i32 @llvm.r600.read.tidig.z() #0
+
+declare i32 @llvm.r600.read.workdim() #0
 
 attributes #0 = { readnone }
