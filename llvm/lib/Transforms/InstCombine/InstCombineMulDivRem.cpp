@@ -304,40 +304,32 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   return Changed ? &I : nullptr;
 }
 
-//
-// Detect pattern:
-//
-// log2(Y*0.5)
-//
-// And check for corresponding fast math flags
-//
-
+/// Detect pattern log2(Y * 0.5) with corresponding fast math flags.
 static void detectLog2OfHalf(Value *&Op, Value *&Y, IntrinsicInst *&Log2) {
+  if (!Op->hasOneUse())
+    return;
 
-   if (!Op->hasOneUse())
-     return;
+  IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op);
+  if (!II)
+    return;
+  if (II->getIntrinsicID() != Intrinsic::log2 || !II->hasUnsafeAlgebra())
+    return;
+  Log2 = II;
 
-   IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op);
-   if (!II)
-     return;
-   if (II->getIntrinsicID() != Intrinsic::log2 || !II->hasUnsafeAlgebra())
-     return;
-   Log2 = II;
+  Value *OpLog2Of = II->getArgOperand(0);
+  if (!OpLog2Of->hasOneUse())
+    return;
 
-   Value *OpLog2Of = II->getArgOperand(0);
-   if (!OpLog2Of->hasOneUse())
-     return;
+  Instruction *I = dyn_cast<Instruction>(OpLog2Of);
+  if (!I)
+    return;
+  if (I->getOpcode() != Instruction::FMul || !I->hasUnsafeAlgebra())
+    return;
 
-   Instruction *I = dyn_cast<Instruction>(OpLog2Of);
-   if (!I)
-     return;
-   if (I->getOpcode() != Instruction::FMul || !I->hasUnsafeAlgebra())
-     return;
-
-   if (match(I->getOperand(0), m_SpecificFP(0.5)))
-     Y = I->getOperand(1);
-   else if (match(I->getOperand(1), m_SpecificFP(0.5)))
-     Y = I->getOperand(0);
+  if (match(I->getOperand(0), m_SpecificFP(0.5)))
+    Y = I->getOperand(1);
+  else if (match(I->getOperand(1), m_SpecificFP(0.5)))
+    Y = I->getOperand(0);
 }
 
 static bool isFiniteNonZeroFp(Constant *C) {
