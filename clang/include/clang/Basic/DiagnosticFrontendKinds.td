@@ -170,7 +170,9 @@ def warn_module_config_macro_undef : Warning<
 def note_module_def_undef_here : Note<
   "macro was %select{defined|#undef'd}0 here">;
 def remark_module_build : Remark<"building module '%0' as '%1'">,
-  InGroup<DiagGroup<"module-build">>;
+  InGroup<ModuleBuild>;
+def remark_module_build_done : Remark<"finished building module '%0'">,
+  InGroup<ModuleBuild>;
 
 def err_conflicting_module_names : Error<
   "conflicting module names specified: '-fmodule-name=%0' and "
