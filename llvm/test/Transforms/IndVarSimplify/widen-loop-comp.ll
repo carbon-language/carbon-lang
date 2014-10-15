@@ -67,7 +67,8 @@ for.end:
 define void @test2([8 x i8]* %a, i8* %b, i8 %limit) {
 entry:
   %conv = zext i8 %limit to i32
-  br i1 undef, label %for.cond1.preheader, label %for.cond1.preheader.us
+  %cmp23 = icmp eq i8 %limit, 0
+  br i1 %cmp23, label %for.cond1.preheader, label %for.cond1.preheader.us
 
 for.cond1.preheader.us:
   %storemerge5.us = phi i32 [ 0, %entry ], [ %inc14.us, %for.inc13.us ]

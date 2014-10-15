@@ -6782,44 +6782,6 @@ bool ScalarEvolution::isImpliedCond(ICmpInst::Predicate Pred,
                                    RHS, LHS, FoundLHS, FoundRHS);
   }
 
-  if (FoundPred == ICmpInst::ICMP_NE) {
-    // If we are predicated on something with range [a, b) known not
-    // equal to a, the range can be sharpened to [a + 1, b).  Use this
-    // fact.
-    auto CheckRange = [this, Pred, LHS, RHS](const SCEV *C, const SCEV *V) {
-      if (!isa<SCEVConstant>(C)) return false;
-
-      ConstantInt *CI = cast<SCEVConstant>(C)->getValue();
-      APInt Min = ICmpInst::isSigned(Pred) ?
-        getSignedRange(V).getSignedMin() : getUnsignedRange(V).getUnsignedMin();
-
-      if (Min!= CI->getValue()) return false; // nothing to sharpen
-      Min++;
-
-      // We know V >= Min, in the same signedness as in Pred.  We can
-      // use this to simplify slt and ult.  If the range had a single
-      // value, Min, we now know that FoundValue can never be true;
-      // and any answer is a correct answer.
-
-      switch (Pred) {
-        case ICmpInst::ICMP_SGT:
-        case ICmpInst::ICMP_UGT:
-          return isImpliedCondOperands(Pred, LHS, RHS, V, getConstant(Min));
-
-        default:
-          llvm_unreachable("don't call with predicates other than ICMP_SGT "
-                           "and ICMP_UGT");
-      }
-    };
-
-    if ((Pred == ICmpInst::ICMP_SGT) || (Pred == ICmpInst::ICMP_UGT)) {
-      // Inequality is reflexive -- check both the combinations.
-      if (CheckRange(FoundLHS, FoundRHS) || CheckRange(FoundRHS, FoundLHS)) {
-        return true;
-      }
-    }
-  }
-
   // Check whether the actual condition is beyond sufficient.
   if (FoundPred == ICmpInst::ICMP_EQ)
     if (ICmpInst::isTrueWhenEqual(Pred))
