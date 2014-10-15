@@ -22,8 +22,11 @@ namespace lldb_private
 class ThreadLauncher
 {
   public:
-    static HostThread LaunchThread(llvm::StringRef name, lldb::thread_func_t thread_function, lldb::thread_arg_t thread_arg,
-                                   Error *error_ptr);
+    static HostThread LaunchThread(llvm::StringRef name,
+                                   lldb::thread_func_t thread_function,
+                                   lldb::thread_arg_t thread_arg,
+                                   Error *error_ptr,
+                                   size_t min_stack_byte_size = 0); // Minimum stack size in bytes, set stack size to zero for default platform thread stack size
 
     struct HostThreadCreateInfo
     {

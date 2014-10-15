@@ -3484,7 +3484,13 @@ bool
 Debugger::StartEventHandlerThread()
 {
     if (!m_event_handler_thread.IsJoinable())
-        m_event_handler_thread = ThreadLauncher::LaunchThread("lldb.debugger.event-handler", EventHandlerThread, this, NULL);
+    {
+        m_event_handler_thread = ThreadLauncher::LaunchThread ("lldb.debugger.event-handler",
+                                                               EventHandlerThread,
+                                                               this,
+                                                               NULL,
+                                                               8*1024*1024); // Use larger 8MB stack for this thread
+    }
     return m_event_handler_thread.IsJoinable();
 }
 
@@ -3512,7 +3518,11 @@ bool
 Debugger::StartIOHandlerThread()
 {
     if (!m_io_handler_thread.IsJoinable())
-        m_io_handler_thread = ThreadLauncher::LaunchThread("lldb.debugger.io-handler", IOHandlerThread, this, NULL);
+        m_io_handler_thread = ThreadLauncher::LaunchThread ("lldb.debugger.io-handler",
+                                                            IOHandlerThread,
+                                                            this,
+                                                            NULL,
+                                                            8*1024*1024); // Use larger 8MB stack for this thread
     return m_io_handler_thread.IsJoinable();
 }
 
