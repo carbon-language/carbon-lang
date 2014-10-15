@@ -32,6 +32,9 @@ public:
   /// \brief Returns true if the checker should add a header guard to the file
   /// if it has none.
   virtual bool shouldSuggestToAddHeaderGuard(StringRef Filename);
+  /// \brief Returns a replacement for endif line with a comment mentioning
+  /// \p HeaderGuard. The replacement should start with "endif".
+  virtual std::string formatEndIf(StringRef HeaderGuard);
   /// \brief Get the canonical header guard for a file.
   virtual std::string getHeaderGuard(StringRef Filename,
                                      StringRef OldGuard = StringRef()) = 0;

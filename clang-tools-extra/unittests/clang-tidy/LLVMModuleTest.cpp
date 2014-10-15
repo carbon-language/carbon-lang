@@ -103,9 +103,19 @@ TEST(LLVMHeaderGuardCheckTest, FixHeaderGuards) {
                                 "#endif\n",
                                 "include/clang/bar.h", /*ExpectedWarnings=*/1));
 
+  // Fix incorrect #endif comments even if we shouldn't add new ones.
   EXPECT_EQ("#ifndef LLVM_ADT_FOO_H\n"
             "#define LLVM_ADT_FOO_H\n"
-            "#endif  // LLVM_ADT_FOO_H\n",
+            "#endif // LLVM_ADT_FOO_H\n",
+            runHeaderGuardCheck("#ifndef FOO\n"
+                                "#define FOO\n"
+                                "#endif // FOO\n",
+                                "include/llvm/ADT/foo.h",
+                                /*ExpectedWarnings=*/1));
+
+  EXPECT_EQ("#ifndef LLVM_ADT_FOO_H\n"
+            "#define LLVM_ADT_FOO_H\n"
+            "#endif // LLVM_ADT_FOO_H\n",
             runHeaderGuardCheckWithEndif("#ifndef FOO\n"
                                          "#define FOO\n"
                                          "#endif\n",
@@ -114,7 +124,7 @@ TEST(LLVMHeaderGuardCheckTest, FixHeaderGuards) {
 
   EXPECT_EQ("#ifndef LLVM_ADT_FOO_H\n"
             "#define LLVM_ADT_FOO_H\n"
-            "#endif  // LLVM_ADT_FOO_H\n",
+            "#endif // LLVM_ADT_FOO_H\n",
             runHeaderGuardCheckWithEndif("#ifndef LLVM_ADT_FOO_H\n"
                                          "#define LLVM_ADT_FOO_H\n"
                                          "#endif // LLVM_H\n",
@@ -141,7 +151,7 @@ TEST(LLVMHeaderGuardCheckTest, FixHeaderGuards) {
 
   EXPECT_EQ("#ifndef LLVM_ADT_FOO_H\n"
             "#define LLVM_ADT_FOO_H\n"
-            "#endif  // LLVM_ADT_FOO_H\n",
+            "#endif // LLVM_ADT_FOO_H\n",
             runHeaderGuardCheckWithEndif("#ifndef LLVM_ADT_FOO_H_\n"
                                          "#define LLVM_ADT_FOO_H_\n"
                                          "#endif // LLVM\n",

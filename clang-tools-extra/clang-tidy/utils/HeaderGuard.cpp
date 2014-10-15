@@ -150,15 +150,15 @@ public:
   bool wouldFixEndifComment(StringRef FileName, SourceLocation EndIf,
                             StringRef HeaderGuard,
                             size_t *EndIfLenPtr = nullptr) {
-    if (!Check->shouldSuggestEndifComment(FileName))
+    if (!EndIf.isValid())
       return false;
-
     const char *EndIfData = PP->getSourceManager().getCharacterData(EndIf);
     size_t EndIfLen = std::strcspn(EndIfData, "\r\n");
     if (EndIfLenPtr)
       *EndIfLenPtr = EndIfLen;
 
     StringRef EndIfStr(EndIfData, EndIfLen);
+    EndIfStr = EndIfStr.substr(EndIfStr.find_first_not_of("#endif \t"));
 
     // Give up if there's an escaped newline.
     size_t FindEscapedNewline = EndIfStr.find_last_not_of(' ');
@@ -166,8 +166,13 @@ public:
         EndIfStr[FindEscapedNewline] == '\\')
       return false;
 
-    return (EndIf.isValid() && !EndIfStr.endswith("// " + HeaderGuard.str()) &&
-            !EndIfStr.endswith("/* " + HeaderGuard.str() + " */"));
+    if (!Check->shouldSuggestEndifComment(FileName) &&
+        !(EndIfStr.startswith("//") ||
+          (EndIfStr.startswith("/*") && EndIfStr.endswith("*/"))))
+      return false;
+
+    return (EndIfStr != "// " + HeaderGuard.str()) &&
+           (EndIfStr != "/* " + HeaderGuard.str() + " */");
   }
 
   /// \brief Look for header guards that don't match the preferred style. Emit
@@ -207,11 +212,10 @@ public:
                          std::vector<FixItHint> &FixIts) {
     size_t EndIfLen;
     if (wouldFixEndifComment(FileName, EndIf, HeaderGuard, &EndIfLen)) {
-      std::string Correct = "endif  // " + HeaderGuard.str();
       FixIts.push_back(FixItHint::CreateReplacement(
           CharSourceRange::getCharRange(EndIf,
                                         EndIf.getLocWithOffset(EndIfLen)),
-          Correct));
+          Check->formatEndIf(HeaderGuard)));
     }
   }
 
@@ -261,7 +265,7 @@ public:
           << FixItHint::CreateInsertion(
                  SM.getLocForEndOfFile(FID),
                  Check->shouldSuggestEndifComment(FileName)
-                     ? "\n#endif  // " + CPPVar + "\n"
+                     ? "\n#" + Check->formatEndIf(CPPVar) + "\n"
                      : "\n#endif\n");
     }
   }
@@ -292,6 +296,10 @@ bool HeaderGuardCheck::shouldFixHeaderGuard(StringRef FileName) { return true; }
 
 bool HeaderGuardCheck::shouldSuggestToAddHeaderGuard(StringRef FileName) {
   return FileName.endswith(".h");
+}
+
+std::string HeaderGuardCheck::formatEndIf(StringRef HeaderGuard) {
+  return "endif // " + HeaderGuard.str();
 }
 
 } // namespace tidy
