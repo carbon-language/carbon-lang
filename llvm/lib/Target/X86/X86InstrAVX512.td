@@ -373,16 +373,16 @@ multiclass vinsert_for_size<int Opcode,
                           (INSERT_get_vinsert_imm VR512:$ins)))>;
 }
 
-multiclass vinsert_for_type<ValueType EltVT32, int Opcode32,
-                            ValueType EltVT64, int Opcode64> {
-  defm NAME # "32x4" : vinsert_for_size<Opcode32,
+multiclass vinsert_for_type<ValueType EltVT32, int Opcode128,
+                            ValueType EltVT64, int Opcode256> {
+  defm NAME # "32x4" : vinsert_for_size<Opcode128,
                                  X86VectorVTInfo< 4, EltVT32, VR128X>,
                                  X86VectorVTInfo<16, EltVT32, VR512>,
                                  X86VectorVTInfo< 2, EltVT64, VR128X>,
                                  X86VectorVTInfo< 8, EltVT64, VR512>,
                                  vinsert128_insert,
                                  INSERT_get_vinsert128_imm>;
-  defm NAME # "64x4" : vinsert_for_size<Opcode64,
+  defm NAME # "64x4" : vinsert_for_size<Opcode256,
                                  X86VectorVTInfo< 4, EltVT64, VR256X>,
                                  X86VectorVTInfo< 8, EltVT64, VR512>,
                                  X86VectorVTInfo< 8, EltVT32, VR256>,
