@@ -47,6 +47,11 @@ EnableNoAliasConversion("enable-noalias-to-md-conversion", cl::init(true),
   cl::Hidden,
   cl::desc("Convert noalias attributes to metadata during inlining."));
 
+static cl::opt<bool>
+PreserveAlignmentAssumptions("preserve-alignment-assumptions-during-inlining",
+  cl::init(true), cl::Hidden,
+  cl::desc("Convert align attributes to assumptions during inlining."));
+
 bool llvm::InlineFunction(CallInst *CI, InlineFunctionInfo &IFI,
                           bool InsertLifetime) {
   return InlineFunction(CallSite(CI), IFI, InsertLifetime);
@@ -616,6 +621,41 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
   }
 }
 
+/// If the inlined function has non-byval align arguments, then
+/// add @llvm.assume-based alignment assumptions to preserve this information.
+static void AddAlignmentAssumptions(CallSite CS, InlineFunctionInfo &IFI) {
+  if (!PreserveAlignmentAssumptions || !IFI.DL)
+    return;
+
+  // To avoid inserting redundant assumptions, we should check for assumptions
+  // already in the caller. To do this, we might need a DT of the caller.
+  DominatorTree DT;
+  bool DTCalculated = false;
+
+  const Function *CalledFunc = CS.getCalledFunction();
+  for (Function::const_arg_iterator I = CalledFunc->arg_begin(),
+       E = CalledFunc->arg_end(); I != E; ++I) {
+    unsigned Align = I->getType()->isPointerTy() ? I->getParamAlignment() : 0;
+    if (Align && !I->hasByValOrInAllocaAttr() && !I->hasNUses(0)) {
+      if (!DTCalculated) {
+        DT.recalculate(const_cast<Function&>(*CS.getInstruction()->getParent()
+                                               ->getParent()));
+        DTCalculated = true;
+      }
+
+      // If we can already prove the asserted alignment in the context of the
+      // caller, then don't bother inserting the assumption.
+      Value *Arg = CS.getArgument(I->getArgNo());
+      if (getKnownAlignment(Arg, IFI.DL, IFI.AT, CS.getInstruction(),
+                            &DT) >= Align)
+        continue;
+
+      IRBuilder<>(CS.getInstruction()).CreateAlignmentAssumption(*IFI.DL, Arg,
+                                                                 Align);
+    }
+  }
+}
+
 /// UpdateCallGraphAfterInlining - Once we have cloned code over from a callee
 /// into the caller, update the specified callgraph to reflect the changes we
 /// made.  Note that it's possible that not all code was copied over, so only
@@ -942,6 +982,11 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
 
       VMap[I] = ActualArg;
     }
+
+    // Add alignment assumptions if necessary. We do this before the inlined
+    // instructions are actually cloned into the caller so that we can easily
+    // check what will be known at the start of the inlined code.
+    AddAlignmentAssumptions(CS, IFI);
 
     // We want the inliner to prune the code as it copies.  We would LOVE to
     // have no dead or constant instructions leftover after inlining occurs
