@@ -198,10 +198,6 @@ else()
   option(COMPILER_RT_CAN_EXECUTE_TESTS "Can we execute instrumented tests" OFF)
 endif()
 
-# Check if compiler-rt is built with libc++.
-find_flag_in_string("${CMAKE_CXX_FLAGS}" "-stdlib=libc++"
-                    COMPILER_RT_USES_LIBCXX)
-
 option(COMPILER_RT_DEBUG "Build runtimes with full debug info" OFF)
 # COMPILER_RT_DEBUG_PYBOOL is used by lit.common.configured.in.
 pythonize_bool(COMPILER_RT_DEBUG)
@@ -296,14 +292,10 @@ if(APPLE)
     list(APPEND SANITIZER_COMMON_SUPPORTED_DARWIN_OS iossim)
   endif()
 
-  if(COMPILER_RT_USES_LIBCXX)
-    set(SANITIZER_MIN_OSX_VERSION 10.7)
-  else()
-    set(SANITIZER_MIN_OSX_VERSION 10.7)
-  endif()
+  set(SANITIZER_MIN_OSX_VERSION 10.7)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "") # We're setting the flag manually below.
   set(DARWIN_osx_CFLAGS -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION})
-  set(DARWIN_iossim_CFLAGS 
+  set(DARWIN_iossim_CFLAGS
     -mios-simulator-version-min=7.0 -isysroot ${IOSSIM_SDK_DIR})
   set(DARWIN_osx_LINKFLAGS)
   set(DARWIN_iossim_LINKFLAGS
