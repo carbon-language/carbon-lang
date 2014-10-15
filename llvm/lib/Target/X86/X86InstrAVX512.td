@@ -347,11 +347,10 @@ def : Pat<(v8f64 immAllZerosV), (AVX512_512_SET0)>;
 // AVX-512 - VECTOR INSERT
 //
 
-multiclass vinsert_for_size<int Opcode,
-                             X86VectorVTInfo From, X86VectorVTInfo To,
-                             X86VectorVTInfo AltFrom, X86VectorVTInfo AltTo,
-                             PatFrag vinsert_insert,
-                             SDNodeXForm INSERT_get_vinsert_imm> {
+multiclass vinsert_for_size_no_alt<int Opcode,
+                                   X86VectorVTInfo From, X86VectorVTInfo To,
+                                   PatFrag vinsert_insert,
+                                   SDNodeXForm INSERT_get_vinsert_imm> {
   let hasSideEffects = 0, ExeDomain = To.ExeDomain in {
     def rr : AVX512AIi8<Opcode, MRMSrcReg, (outs VR512:$dst),
                (ins VR512:$src1, From.RC:$src2, i8imm:$src3),
@@ -372,14 +371,24 @@ multiclass vinsert_for_size<int Opcode,
                []>,
              EVEX_4V, EVEX_V512, EVEX_CD8<From.EltSize, From.CD8TupleForm>;
   }
+}
 
+multiclass vinsert_for_size<int Opcode,
+                            X86VectorVTInfo From, X86VectorVTInfo To,
+                            X86VectorVTInfo AltFrom, X86VectorVTInfo AltTo,
+                            PatFrag vinsert_insert,
+                            SDNodeXForm INSERT_get_vinsert_imm> :
+  vinsert_for_size_no_alt<Opcode, From, To,
+                          vinsert_insert, INSERT_get_vinsert_imm> {
   // Codegen pattern with the alternative types, e.g. v2i64 -> v8i64 for
-  // vinserti32x4
-  def : Pat<(vinsert_insert:$ins
-               (AltTo.VT VR512:$src1), (AltFrom.VT From.RC:$src2), (iPTR imm)),
-            (AltTo.VT (!cast<Instruction>(NAME # From.EltSize # "x4rr")
-                          VR512:$src1, From.RC:$src2,
-                          (INSERT_get_vinsert_imm VR512:$ins)))>;
+  // vinserti32x4.  Only add this if 64x2 and friends are not supported
+  // natively via AVX512DQ.
+  let Predicates = [NoDQI] in
+    def : Pat<(vinsert_insert:$ins
+                 (AltTo.VT VR512:$src1), (AltFrom.VT From.RC:$src2), (iPTR imm)),
+              (AltTo.VT (!cast<Instruction>(NAME # From.EltSize # "x4rr")
+                            VR512:$src1, From.RC:$src2,
+                            (INSERT_get_vinsert_imm VR512:$ins)))>;
 }
 
 multiclass vinsert_for_type<ValueType EltVT32, int Opcode128,
@@ -391,6 +400,12 @@ multiclass vinsert_for_type<ValueType EltVT32, int Opcode128,
                                  X86VectorVTInfo< 8, EltVT64, VR512>,
                                  vinsert128_insert,
                                  INSERT_get_vinsert128_imm>;
+  let Predicates = [HasDQI] in
+    defm NAME # "64x2" : vinsert_for_size_no_alt<Opcode128,
+                                 X86VectorVTInfo< 2, EltVT64, VR128X>,
+                                 X86VectorVTInfo< 8, EltVT64, VR512>,
+                                 vinsert128_insert,
+                                 INSERT_get_vinsert128_imm>, VEX_W;
   defm NAME # "64x4" : vinsert_for_size<Opcode256,
                                  X86VectorVTInfo< 4, EltVT64, VR256X>,
                                  X86VectorVTInfo< 8, EltVT64, VR512>,
@@ -398,6 +413,12 @@ multiclass vinsert_for_type<ValueType EltVT32, int Opcode128,
                                  X86VectorVTInfo<16, EltVT32, VR512>,
                                  vinsert256_insert,
                                  INSERT_get_vinsert256_imm>, VEX_W;
+  let Predicates = [HasDQI] in
+    defm NAME # "32x8" : vinsert_for_size_no_alt<Opcode256,
+                                 X86VectorVTInfo< 8, EltVT32, VR256X>,
+                                 X86VectorVTInfo<16, EltVT32, VR512>,
+                                 vinsert256_insert,
+                                 INSERT_get_vinsert256_imm>;
 }
 
 defm VINSERTF : vinsert_for_type<f32, 0x18, f64, 0x1a>;
