@@ -2075,6 +2075,37 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
 
 Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   Value *Cond = SI.getCondition();
+  unsigned BitWidth = cast<IntegerType>(Cond->getType())->getBitWidth();
+  APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+  computeKnownBits(Cond, KnownZero, KnownOne);
+  unsigned LeadingKnownZeros = KnownZero.countLeadingOnes();
+  unsigned LeadingKnownOnes = KnownOne.countLeadingOnes();
+
+  // Compute the number of leading bits we can ignore.
+  for (auto &C : SI.cases()) {
+    LeadingKnownZeros = std::min(
+        LeadingKnownZeros, C.getCaseValue()->getValue().countLeadingZeros());
+    LeadingKnownOnes = std::min(
+        LeadingKnownOnes, C.getCaseValue()->getValue().countLeadingOnes());
+  }
+
+  unsigned NewWidth = BitWidth - std::max(LeadingKnownZeros, LeadingKnownOnes);
+
+  // Truncate the condition operand if the new type is equal to or larger than
+  // the largest legal integer type. We need to be conservative here since
+  // x86 generates redundant zero-extenstion instructions if the operand is
+  // truncated to i8 or i16.
+  if (BitWidth > NewWidth && NewWidth >= DL->getLargestLegalIntTypeSize()) {
+    IntegerType *Ty = IntegerType::get(SI.getContext(), NewWidth);
+    Builder->SetInsertPoint(&SI);
+    Value *NewCond = Builder->CreateTrunc(SI.getCondition(), Ty, "trunc");
+    SI.setCondition(NewCond);
+
+    for (auto &C : SI.cases())
+      static_cast<SwitchInst::CaseIt *>(&C)->setValue(
+          ConstantInt::get(Ty, C.getCaseValue()->getValue().getZExtValue()));
+  }
+
   if (Instruction *I = dyn_cast<Instruction>(Cond)) {
     if (I->getOpcode() == Instruction::Add)
       if (ConstantInt *AddRHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
