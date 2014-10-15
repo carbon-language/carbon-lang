@@ -2170,13 +2170,16 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
                          BitsFrom, ShiftVal);
     }
 
-    APInt KnownZero, KnownOne;
-    TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
-                                          !DCI.isBeforeLegalizeOps());
-    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-    if (TLO.ShrinkDemandedConstant(BitsFrom, Demanded) ||
-        TLI.SimplifyDemandedBits(BitsFrom, Demanded, KnownZero, KnownOne, TLO)) {
-      DCI.CommitTargetLoweringOpt(TLO);
+    if (BitsFrom.hasOneUse()) {
+      APInt KnownZero, KnownOne;
+      TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
+                                            !DCI.isBeforeLegalizeOps());
+      const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+      if (TLO.ShrinkDemandedConstant(BitsFrom, Demanded) ||
+          TLI.SimplifyDemandedBits(BitsFrom, Demanded,
+                                   KnownZero, KnownOne, TLO)) {
+        DCI.CommitTargetLoweringOpt(TLO);
+      }
     }
 
     break;

@@ -552,3 +552,25 @@ define void @bfe_u32_constant_fold_test_18(i32 addrspace(1)* %out) nounwind {
   store i32 %bfe_u32, i32 addrspace(1)* %out, align 4
   ret void
 }
+
+; Make sure that SimplifyDemandedBits doesn't cause the and to be
+; reduced to the bits demanded by the bfe.
+
+; XXX: The operand to v_bfe_u32 could also just directly be the load register.
+; FUNC-LABEL: {{^}}simplify_bfe_u32_multi_use_arg:
+; SI: BUFFER_LOAD_DWORD [[ARG:v[0-9]+]]
+; SI: V_AND_B32_e32 [[AND:v[0-9]+]], 63, [[ARG]]
+; SI: V_BFE_U32 [[BFE:v[0-9]+]], [[AND]], 2, 2
+; SI-DAG: BUFFER_STORE_DWORD [[AND]]
+; SI-DAG: BUFFER_STORE_DWORD [[BFE]]
+; SI: S_ENDPGM
+define void @simplify_bfe_u32_multi_use_arg(i32 addrspace(1)* %out0,
+                                            i32 addrspace(1)* %out1,
+                                            i32 addrspace(1)* %in) nounwind {
+  %src = load i32 addrspace(1)* %in, align 4
+  %and = and i32 %src, 63
+  %bfe_u32 = call i32 @llvm.AMDGPU.bfe.u32(i32 %and, i32 2, i32 2) nounwind readnone
+  store i32 %bfe_u32, i32 addrspace(1)* %out0, align 4
+  store i32 %and, i32 addrspace(1)* %out1, align 4
+  ret void
+}
