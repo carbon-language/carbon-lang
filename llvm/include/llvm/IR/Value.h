@@ -92,6 +92,19 @@ private:
   /// field is initialized to zero by the ctor.
   unsigned short SubclassData;
 
+protected:
+  /// \brief The number of operands in the subclass.
+  ///
+  /// This member is defined by this class, but not used for anything.
+  /// Subclasses can use it to store their number of operands, if they have
+  /// any.
+  ///
+  /// This is stored here to save space in User on 64-bit hosts.  Since most
+  /// instances of Value have operands, 32-bit hosts aren't significantly
+  /// affected.
+  unsigned NumOperands;
+
+private:
   template <typename UseT> // UseT == 'Use' or 'const Use'
   class use_iterator_impl
       : public std::iterator<std::forward_iterator_tag, UseT *, ptrdiff_t> {

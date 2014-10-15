@@ -45,7 +45,8 @@ static inline Type *checkType(Type *Ty) {
 
 Value::Value(Type *ty, unsigned scid)
     : VTy(checkType(ty)), UseList(nullptr), Name(nullptr), SubclassID(scid),
-      HasValueHandle(0), SubclassOptionalData(0), SubclassData(0) {
+      HasValueHandle(0), SubclassOptionalData(0), SubclassData(0),
+      NumOperands(0) {
   // FIXME: Why isn't this in the subclass gunk??
   // Note, we cannot call isa<CallInst> before the CallInst has been
   // constructed.

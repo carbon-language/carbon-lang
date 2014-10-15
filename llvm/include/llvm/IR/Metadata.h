@@ -126,9 +126,6 @@ class MDNode : public Value, public FoldingSetNode {
   /// \brief If the MDNode is uniqued cache the hash to speed up lookup.
   unsigned Hash;
 
-  /// \brief Number of co-allocated 'MDNodeOperand' items.
-  unsigned NumOperands;
-
   /// \brief Subclass data enums.
   enum {
     /// FunctionLocalBit - This bit is set if this MDNode is function local.

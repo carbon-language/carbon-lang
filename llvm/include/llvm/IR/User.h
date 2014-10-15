@@ -39,9 +39,6 @@ class User : public Value {
   friend struct HungoffOperandTraits;
   virtual void anchor();
 protected:
-  /// \brief The number of values used by this User.
-  unsigned NumOperands;
-
   /// \brief This is a pointer to the array of Uses for this User.
   ///
   /// For nodes of fixed arity (e.g. a binary operator) this array will live
@@ -52,7 +49,9 @@ protected:
 
   void *operator new(size_t s, unsigned Us);
   User(Type *ty, unsigned vty, Use *OpList, unsigned NumOps)
-    : Value(ty, vty), NumOperands(NumOps), OperandList(OpList) {}
+      : Value(ty, vty), OperandList(OpList) {
+    NumOperands = NumOps;
+  }
   Use *allocHungoffUses(unsigned) const;
   void dropHungoffUses() {
     Use::zap(OperandList, OperandList + NumOperands, true);
