@@ -1301,6 +1301,10 @@ public:
       LongDoubleWidth = LongDoubleAlign = 64;
       LongDoubleFormat = &llvm::APFloat::IEEEdouble;
       break;
+    case llvm::Triple::NetBSD:
+      IntMaxType = SignedLongLong;
+      Int64Type = SignedLongLong;
+      break;
     default:
       break;
     }
