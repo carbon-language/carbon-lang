@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=x86-64 -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck --check-prefix=KNL --check-prefix=CHECK %s
+; RUN: llc < %s -march=x86-64 -mtriple=x86_64-apple-darwin -mcpu=skx | FileCheck --check-prefix=SKX --check-prefix=CHECK %s
 
 ;CHECK-LABEL: test1:
 ;CHECK: vinsertps
@@ -186,7 +187,8 @@ define i16 @test16(i1 *%addr, i16 %a) {
 ;CHECK-LABEL: test17
 ;CHECK: kshiftlw
 ;CHECK: kshiftrw
-;CHECK: korw
+;KNL: korw
+;SKX: korb
 ;CHECK: ret
 define i8 @test17(i1 *%addr, i8 %a) {
   %x = load i1 * %addr, align 128
