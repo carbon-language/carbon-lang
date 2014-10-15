@@ -3267,8 +3267,6 @@ public:
                                const ObjCPropertyDecl  *ObjCProperty,
                                bool ObjCPropertyAccess);
 
-  void HandleDelayedAvailabilityCheck(sema::DelayedDiagnostic &DD, Decl *Ctx);
-
   bool makeUnavailableInSystemHeader(SourceLocation loc,
                                      StringRef message);
 
