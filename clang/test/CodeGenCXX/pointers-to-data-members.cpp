@@ -268,4 +268,13 @@ B b;
 // CHECK-GLOBAL: @_ZN7PR210891bE = global %"struct.PR21089::B" { %"struct.PR21089::A.base" <{ i8 0, [7 x i8] zeroinitializer, i64 -1, i8 0 }>, [7 x i8] zeroinitializer }, align 8
 }
 
+namespace PR21282 {
+union U {
+  int U::*x;
+  long y[2];
+};
+U u;
+// CHECK-GLOBAL: @_ZN7PR212821uE = global %"union.PR21282::U" { i64 -1, [8 x i8] zeroinitializer }, align 8
+}
+
 // CHECK-O3: attributes [[NUW]] = { nounwind readnone{{.*}} }

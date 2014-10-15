@@ -279,6 +279,8 @@ void CGRecordLowering::lower(bool NVBaseType) {
 void CGRecordLowering::lowerUnion() {
   CharUnits LayoutSize = Layout.getSize();
   llvm::Type *StorageType = nullptr;
+  bool SeenNamedMember = false;
+  bool InitializingMemberIsNonZero = false;
   // Compute zero-initializable status.
   if (!D->field_empty() && !isZeroInitializable(*D->field_begin()))
     IsZeroInitializable = IsZeroInitializableAsBase = false;
@@ -299,12 +301,25 @@ void CGRecordLowering::lowerUnion() {
     }
     Fields[Field->getCanonicalDecl()] = 0;
     llvm::Type *FieldType = getStorageType(Field);
+    // This union might not be zero initialized: it may contain a pointer to
+    // data member which might have some exotic initialization sequence.
+    // If this is the case, then we aught not to try and come up with a "better"
+    // type, it might not be very easy to come up with a Constant which
+    // correctly initializes it.
+    if (!SeenNamedMember && Field->getDeclName()) {
+      SeenNamedMember = true;
+      if (!isZeroInitializable(Field)) {
+        InitializingMemberIsNonZero = true;
+        StorageType = FieldType;
+      }
+    }
     // Conditionally update our storage type if we've got a new "better" one.
     if (!StorageType ||
         getAlignment(FieldType) >  getAlignment(StorageType) ||
         (getAlignment(FieldType) == getAlignment(StorageType) &&
         getSize(FieldType) > getSize(StorageType)))
-      StorageType = FieldType;
+      if (!InitializingMemberIsNonZero)
+        StorageType = FieldType;
   }
   // If we have no storage type just pad to the appropriate size and return.
   if (!StorageType)
