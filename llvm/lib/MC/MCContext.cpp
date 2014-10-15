@@ -119,11 +119,18 @@ MCSymbol *MCContext::getOrCreateSectionSymbol(const MCSectionELF &Section) {
     return Sym;
 
   StringRef Name = Section.getSectionName();
+
+  StringMapEntry<MCSymbol*> &Entry = Symbols.GetOrCreateValue(Name);
+  MCSymbol *OldSym = Entry.getValue();
+  if (OldSym && OldSym->isUndefined()) {
+    Sym = OldSym;
+    return OldSym;
+  }
+
   StringMapEntry<bool> *NameEntry = &UsedNames.GetOrCreateValue(Name);
   NameEntry->setValue(true);
   Sym = new (*this) MCSymbol(NameEntry->getKey(), /*isTemporary*/ false);
 
-  StringMapEntry<MCSymbol*> &Entry = Symbols.GetOrCreateValue(Name);
   if (!Entry.getValue())
     Entry.setValue(Sym);
 
