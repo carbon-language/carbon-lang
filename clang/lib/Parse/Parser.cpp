@@ -510,13 +510,6 @@ namespace {
   };
 }
 
-void Parser::LateTemplateParserCleanupCallback(void *P) {
-  // While this RAII helper doesn't bracket any actual work, the destructor will
-  // clean up annotations that were created during ActOnEndOfTranslationUnit
-  // when incremental processing is enabled.
-  DestroyTemplateIdAnnotationsRAIIObj CleanupRAII(((Parser *)P)->TemplateIds);
-}
-
 /// ParseTopLevelDecl - Parse one top-level declaration, return whatever the
 /// action tells us to.  This returns true if the EOF was encountered.
 bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
@@ -549,10 +542,7 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
   case tok::eof:
     // Late template parsing can begin.
     if (getLangOpts().DelayedTemplateParsing)
-      Actions.SetLateTemplateParser(LateTemplateParserCallback,
-                                    PP.isIncrementalProcessingEnabled() ?
-                                    LateTemplateParserCleanupCallback : nullptr,
-                                    this);
+      Actions.SetLateTemplateParser(LateTemplateParserCallback, this);
     if (!PP.isIncrementalProcessingEnabled())
       Actions.ActOnEndOfTranslationUnit();
     //else don't tell Sema that we ended parsing: more input might come.
