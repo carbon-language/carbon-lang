@@ -574,6 +574,33 @@ private:
   std::string Name;
 };
 
+/// \brief Matches named declarations with a specific name.
+///
+/// See \c hasName() in ASTMatchers.h for details.
+class HasNameMatcher : public SingleNodeMatcherInterface<NamedDecl> {
+ public:
+  explicit HasNameMatcher(StringRef Name);
+
+  bool matchesNode(const NamedDecl &Node) const override;
+
+ private:
+  /// \brief Unqualified match routine.
+  ///
+  /// It is much faster than the full match, but it only works for unqualified
+  /// matches.
+  bool matchesNodeUnqualified(const NamedDecl &Node) const;
+
+  /// \brief Full match routine
+  ///
+  /// It generates the fully qualified name of the declaration (which is
+  /// expensive) before trying to match.
+  /// It is slower but simple and works on all cases.
+  bool matchesNodeFull(const NamedDecl &Node) const;
+
+  const bool UseUnqualifiedMatch;
+  const std::string Name;
+};
+
 /// \brief Matches declarations for QualType and CallExpr.
 ///
 /// Type argument DeclMatcherT is required by PolymorphicMatcherWithParam1 but

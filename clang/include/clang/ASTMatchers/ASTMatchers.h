@@ -1591,16 +1591,8 @@ inline internal::Matcher<Stmt> sizeOfExpr(
 /// \code
 ///   namespace a { namespace b { class X; } }
 /// \endcode
-AST_MATCHER_P(NamedDecl, hasName, std::string, Name) {
-  assert(!Name.empty());
-  const std::string FullNameString = "::" + Node.getQualifiedNameAsString();
-  const StringRef FullName = FullNameString;
-  const StringRef Pattern = Name;
-  if (Pattern.startswith("::")) {
-    return FullName == Pattern;
-  } else {
-    return FullName.endswith(("::" + Pattern).str());
-  }
+inline internal::Matcher<NamedDecl> hasName(StringRef Name) {
+  return internal::Matcher<NamedDecl>(new internal::HasNameMatcher(Name));
 }
 
 /// \brief Matches NamedDecl nodes whose fully qualified names contain

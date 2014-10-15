@@ -13,6 +13,7 @@
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchersInternal.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/ManagedStatic.h"
 
 namespace clang {
@@ -219,6 +220,51 @@ bool AnyOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
     }
   }
   return false;
+}
+
+HasNameMatcher::HasNameMatcher(StringRef NameRef)
+    : UseUnqualifiedMatch(NameRef.find("::") == NameRef.npos), Name(NameRef) {
+  assert(!Name.empty());
+}
+
+bool HasNameMatcher::matchesNodeUnqualified(const NamedDecl &Node) const {
+  assert(UseUnqualifiedMatch);
+  if (Node.getIdentifier()) {
+    // Simple name.
+    return Name == Node.getName();
+  } else if (Node.getDeclName()) {
+    // Name needs to be constructed.
+    llvm::SmallString<128> NodeName;
+    llvm::raw_svector_ostream OS(NodeName);
+    Node.printName(OS);
+    return Name == OS.str();
+  } else {
+    return false;
+  }
+}
+
+bool HasNameMatcher::matchesNodeFull(const NamedDecl &Node) const {
+  llvm::SmallString<128> NodeName = StringRef("::");
+  llvm::raw_svector_ostream OS(NodeName);
+  Node.printQualifiedName(OS);
+  const StringRef FullName = OS.str();
+  const StringRef Pattern = Name;
+  if (Pattern.startswith("::")) {
+    return FullName == Pattern;
+  } else {
+    return FullName.endswith(("::" + Pattern).str());
+  }
+}
+
+bool HasNameMatcher::matchesNode(const NamedDecl &Node) const {
+  // FIXME: There is still room for improvement, but it would require copying a
+  // lot of the logic from NamedDecl::printQualifiedName(). The benchmarks do
+  // not show like that extra complexity is needed right now.
+  if (UseUnqualifiedMatch) {
+    assert(matchesNodeUnqualified(Node) == matchesNodeFull(Node));
+    return matchesNodeUnqualified(Node);
+  }
+  return matchesNodeFull(Node);
 }
 
 } // end namespace internal
