@@ -14,7 +14,7 @@ template<> int A<char>::a;
 // ALL: @_ZN1AIbE1aE = global i32 10
 template<> int A<bool>::a = 10;
 
-// ALL: @llvm.global_ctors = appending global [7 x { i32, void ()*, i8* }]
+// ALL: @llvm.global_ctors = appending global [8 x { i32, void ()*, i8* }]
 
 // ELF: [{ i32, void ()*, i8* } { i32 65535, void ()* @[[unordered1:[^,]*]], i8* bitcast (i32* @_ZN1AIsE1aE to i8*) },
 // MACHO: [{ i32, void ()*, i8* } { i32 65535, void ()* @[[unordered1:[^,]*]], i8* null },
@@ -33,6 +33,8 @@ template<> int A<bool>::a = 10;
 
 // ELF:  { i32, void ()*, i8* } { i32 65535, void ()* @[[unordered6:[^,]*]], i8* @_Z1xIcE },
 // MACHO:  { i32, void ()*, i8* } { i32 65535, void ()* @[[unordered6:[^,]*]], i8* null },
+
+// ALL:  { i32, void ()*, i8* } { i32 65535, void ()* @[[unordered7:[^,]*]], i8* null },
 
 // ALL:  { i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__sub_I_static_member_variable_explicit_specialization.cpp, i8* null }]
 
@@ -67,6 +69,13 @@ struct b {
 template<typename T> T b::i = foo();
 template int b::i<int>;
 }
+
+namespace {
+template<typename T> struct Internal { static int a; };
+template<typename T> int Internal<T>::a = foo();
+}
+int *use_internal_a = &Internal<int>::a;
+
 // ALL: define internal void @[[unordered1]]
 // ALL: call i32 @foo()
 // ALL: store {{.*}} @_ZN1AIsE1aE
@@ -95,6 +104,11 @@ template int b::i<int>;
 // ALL: define internal void @[[unordered6]]
 // ALL: call i32 @foo()
 // ALL: store {{.*}} @_Z1xIcE
+// ALL: ret
+
+// ALL: define internal void @[[unordered7]]
+// ALL: call i32 @foo()
+// ALL: store {{.*}} @_ZN12_GLOBAL__N_18InternalIiE1aE
 // ALL: ret
 
 // ALL: define internal void @_GLOBAL__sub_I_static_member_variable_explicit_specialization.cpp()
