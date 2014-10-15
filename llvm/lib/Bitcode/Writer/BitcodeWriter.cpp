@@ -710,15 +710,15 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
 static uint64_t GetOptimizationFlags(const Value *V) {
   uint64_t Flags = 0;
 
-  if (auto *OBO = dyn_cast<OverflowingBinaryOperator>(V)) {
+  if (const auto *OBO = dyn_cast<OverflowingBinaryOperator>(V)) {
     if (OBO->hasNoSignedWrap())
       Flags |= 1 << bitc::OBO_NO_SIGNED_WRAP;
     if (OBO->hasNoUnsignedWrap())
       Flags |= 1 << bitc::OBO_NO_UNSIGNED_WRAP;
-  } else if (auto *PEO = dyn_cast<PossiblyExactOperator>(V)) {
+  } else if (const auto *PEO = dyn_cast<PossiblyExactOperator>(V)) {
     if (PEO->isExact())
       Flags |= 1 << bitc::PEO_EXACT;
-  } else if (auto *FPMO = dyn_cast<const FPMathOperator>(V)) {
+  } else if (const auto *FPMO = dyn_cast<FPMathOperator>(V)) {
     if (FPMO->hasUnsafeAlgebra())
       Flags |= FastMathFlags::UnsafeAlgebra;
     if (FPMO->hasNoNaNs())
