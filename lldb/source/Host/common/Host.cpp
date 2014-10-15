@@ -14,22 +14,13 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#ifdef _WIN32
-#include "lldb/Host/windows/windows.h"
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
+#ifndef _WIN32
 #include <unistd.h>
 #include <dlfcn.h>
 #include <grp.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <sys/stat.h>
-#endif
-
-#if !defined (__GNU__) && !defined (_WIN32) && !defined (__ANDROID__)
-// Does not exist under GNU/HURD, or Windows, or Android
-#include <sys/sysctl.h>
 #endif
 
 #if defined (__APPLE__)
@@ -50,44 +41,26 @@
 #include <pthread_np.h>
 #endif
 
-#if defined(__linux__)
-#include "Plugins/Process/Linux/ProcFileReader.h"
-#endif
-
 // C++ includes
 #include <limits>
 
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Core/ArchSpec.h"
-#include "lldb/Core/ConstString.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
-#include "lldb/Core/StreamString.h"
-#include "lldb/Core/ThreadSafeSTLMap.h"
-#include "lldb/Host/Config.h"
-#include "lldb/Host/Endian.h"
 #include "lldb/Host/FileSpec.h"
-#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/HostProcess.h"
 #include "lldb/Host/MonitoringProcessLauncher.h"
-#include "lldb/Host/Mutex.h"
 #include "lldb/Host/ProcessLauncher.h"
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/lldb-private-forward.h"
 #include "lldb/Target/FileAction.h"
-#include "lldb/Target/Process.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
 #include "lldb/Target/TargetList.h"
 #include "lldb/Utility/CleanUp.h"
-
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Host.h"
-#include "llvm/Support/Path.h"
-#include "llvm/Support/raw_ostream.h"
 
 #if defined(_WIN32)
 #include "lldb/Host/windows/ProcessLauncherWindows.h"
