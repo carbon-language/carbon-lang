@@ -65,8 +65,6 @@ MonitoringProcessLauncher::LaunchProcess(const ProcessLaunchInfo &launch_info, E
     resolved_info.SetExecutableFile(exe_spec, false);
     assert(!resolved_info.GetFlags().Test(eLaunchFlagLaunchInTTY));
 
-    ::pid_t pid = LLDB_INVALID_PROCESS_ID;
-
     HostProcess process = m_delegate_launcher->LaunchProcess(resolved_info, error);
 
     if (process.GetProcessId() != LLDB_INVALID_PROCESS_ID)
