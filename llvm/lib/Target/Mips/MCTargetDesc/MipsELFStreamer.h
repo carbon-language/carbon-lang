@@ -52,7 +52,6 @@ public:
 
 MCELFStreamer *createMipsELFStreamer(MCContext &Context, MCAsmBackend &MAB,
                                      raw_ostream &OS, MCCodeEmitter *Emitter,
-                                     const MCSubtargetInfo &STI, bool RelaxAll,
-                                     bool NoExecStack);
+                                     const MCSubtargetInfo &STI, bool RelaxAll);
 } // namespace llvm.
 #endif

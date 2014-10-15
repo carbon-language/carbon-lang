@@ -61,7 +61,7 @@ void MCWinCOFFStreamer::EmitInstToData(const MCInst &Inst,
   DF->getContents().append(Code.begin(), Code.end());
 }
 
-void MCWinCOFFStreamer::InitSections() {
+void MCWinCOFFStreamer::InitSections(bool NoExecStack) {
   // FIXME: this is identical to the ELF one.
   // This emulates the same behavior of GNU as. This makes it easier
   // to compare the output as the major sections are in the same order.

@@ -1458,14 +1458,7 @@ void ELFObjectWriter::CreateIndexedSections(MCAssembler &Asm,
                                             RevGroupMapTy &RevGroupMap,
                                             SectionIndexMapTy &SectionIndexMap,
                                             const RelMapTy &RelMap) {
-  // Create the .note.GNU-stack section if needed.
   MCContext &Ctx = Asm.getContext();
-  if (Asm.getNoExecStack()) {
-    const MCSectionELF *GnuStackSection =
-      Ctx.getELFSection(".note.GNU-stack", ELF::SHT_PROGBITS, 0,
-                        SectionKind::getReadOnly());
-    Asm.getOrCreateSectionData(*GnuStackSection);
-  }
 
   // Build the groups
   for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();

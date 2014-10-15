@@ -208,19 +208,15 @@ public:
 // This is duplicated code. Refactor this.
 static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCContext &Ctx, MCAsmBackend &MAB,
-                                    raw_ostream &OS,
-                                    MCCodeEmitter *Emitter,
-                                    const MCSubtargetInfo &STI,
-                                    bool RelaxAll,
-                                    bool NoExecStack) {
+                                    raw_ostream &OS, MCCodeEmitter *Emitter,
+                                    const MCSubtargetInfo &STI, bool RelaxAll) {
   if (Triple(TT).isOSDarwin()) {
     MCStreamer *S = createMachOStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
     new PPCTargetMachOStreamer(*S);
     return S;
   }
 
-  MCStreamer *S =
-      createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll, NoExecStack);
+  MCStreamer *S = createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
   new PPCTargetELFStreamer(*S);
   return S;
 }

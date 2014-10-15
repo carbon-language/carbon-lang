@@ -125,10 +125,8 @@ static MCCodeGenInfo *createSparcV9MCCodeGenInfo(StringRef TT, Reloc::Model RM,
 static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCContext &Context, MCAsmBackend &MAB,
                                     raw_ostream &OS, MCCodeEmitter *Emitter,
-                                    const MCSubtargetInfo &STI, bool RelaxAll,
-                                    bool NoExecStack) {
-  MCStreamer *S =
-      createELFStreamer(Context, MAB, OS, Emitter, RelaxAll, NoExecStack);
+                                    const MCSubtargetInfo &STI, bool RelaxAll) {
+  MCStreamer *S = createELFStreamer(Context, MAB, OS, Emitter, RelaxAll);
   new SparcTargetELFStreamer(*S);
   return S;
 }

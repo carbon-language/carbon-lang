@@ -265,11 +265,8 @@ static MCCodeGenInfo *createARMMCCodeGenInfo(StringRef TT, Reloc::Model RM,
 // This is duplicated code. Refactor this.
 static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCContext &Ctx, MCAsmBackend &MAB,
-                                    raw_ostream &OS,
-                                    MCCodeEmitter *Emitter,
-                                    const MCSubtargetInfo &STI,
-                                    bool RelaxAll,
-                                    bool NoExecStack) {
+                                    raw_ostream &OS, MCCodeEmitter *Emitter,
+                                    const MCSubtargetInfo &STI, bool RelaxAll) {
   Triple TheTriple(TT);
 
   switch (TheTriple.getObjectFormat()) {
@@ -283,7 +280,7 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
     assert(TheTriple.isOSWindows() && "non-Windows ARM COFF is not supported");
     return createARMWinCOFFStreamer(Ctx, MAB, *Emitter, OS);
   case Triple::ELF:
-    return createARMELFStreamer(Ctx, MAB, OS, Emitter, false, NoExecStack,
+    return createARMELFStreamer(Ctx, MAB, OS, Emitter, false,
                                 TheTriple.getArch() == Triple::thumb);
   }
 }

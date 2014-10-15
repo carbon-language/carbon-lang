@@ -255,13 +255,11 @@ MCELFStreamer *createMipsNaClELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                                          raw_ostream &OS,
                                          MCCodeEmitter *Emitter,
                                          const MCSubtargetInfo &STI,
-                                         bool RelaxAll, bool NoExecStack) {
+                                         bool RelaxAll) {
   MipsNaClELFStreamer *S = new MipsNaClELFStreamer(Context, TAB, OS, Emitter,
                                                    STI);
   if (RelaxAll)
     S->getAssembler().setRelaxAll(true);
-  if (NoExecStack)
-    S->getAssembler().setNoExecStack(true);
 
   // Set bundle-alignment as required by the NaCl ABI for the target.
   S->EmitBundleAlignMode(MIPS_NACL_BUNDLE_ALIGN);

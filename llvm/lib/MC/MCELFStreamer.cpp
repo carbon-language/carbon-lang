@@ -15,6 +15,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
@@ -38,19 +39,23 @@ using namespace llvm;
 MCELFStreamer::~MCELFStreamer() {
 }
 
-void MCELFStreamer::InitSections() {
+void MCELFStreamer::InitSections(bool NoExecStack) {
   // This emulates the same behavior of GNU as. This makes it easier
   // to compare the output as the major sections are in the same order.
-  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
+  MCContext &Ctx = getContext();
+  SwitchSection(Ctx.getObjectFileInfo()->getTextSection());
   EmitCodeAlignment(4);
 
-  SwitchSection(getContext().getObjectFileInfo()->getDataSection());
+  SwitchSection(Ctx.getObjectFileInfo()->getDataSection());
   EmitCodeAlignment(4);
 
-  SwitchSection(getContext().getObjectFileInfo()->getBSSSection());
+  SwitchSection(Ctx.getObjectFileInfo()->getBSSSection());
   EmitCodeAlignment(4);
 
-  SwitchSection(getContext().getObjectFileInfo()->getTextSection());
+  SwitchSection(Ctx.getObjectFileInfo()->getTextSection());
+
+  if (NoExecStack)
+    SwitchSection(Ctx.getAsmInfo()->getNonexecutableStackSection(Ctx));
 }
 
 void MCELFStreamer::EmitLabel(MCSymbol *Symbol) {
@@ -543,12 +548,10 @@ void MCELFStreamer::FinishImpl() {
 
 MCStreamer *llvm::createELFStreamer(MCContext &Context, MCAsmBackend &MAB,
                                     raw_ostream &OS, MCCodeEmitter *CE,
-                                    bool RelaxAll, bool NoExecStack) {
+                                    bool RelaxAll) {
   MCELFStreamer *S = new MCELFStreamer(Context, MAB, OS, CE);
   if (RelaxAll)
     S->getAssembler().setRelaxAll(true);
-  if (NoExecStack)
-    S->getAssembler().setNoExecStack(true);
   return S;
 }
 

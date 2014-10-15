@@ -52,7 +52,7 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
-  void InitSections() override;
+  void InitSections(bool NoExecStack) override;
   void ChangeSection(const MCSection *Section,
                      const MCExpr *Subsection) override;
   void EmitLabel(MCSymbol *Symbol) override;
@@ -115,8 +115,7 @@ private:
 
 MCELFStreamer *createARMELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                                     raw_ostream &OS, MCCodeEmitter *Emitter,
-                                    bool RelaxAll, bool NoExecStack,
-                                    bool IsThumb);
+                                    bool RelaxAll, bool IsThumb);
 
 } // end namespace llvm
 

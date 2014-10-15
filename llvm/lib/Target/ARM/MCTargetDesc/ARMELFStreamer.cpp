@@ -1347,10 +1347,9 @@ MCStreamer *createARMNullStreamer(MCContext &Ctx) {
   return S;
 }
 
-  MCELFStreamer* createARMELFStreamer(MCContext &Context, MCAsmBackend &TAB,
-                                      raw_ostream &OS, MCCodeEmitter *Emitter,
-                                      bool RelaxAll, bool NoExecStack,
-                                      bool IsThumb) {
+MCELFStreamer *createARMELFStreamer(MCContext &Context, MCAsmBackend &TAB,
+                                    raw_ostream &OS, MCCodeEmitter *Emitter,
+                                    bool RelaxAll, bool IsThumb) {
     ARMELFStreamer *S = new ARMELFStreamer(Context, TAB, OS, Emitter, IsThumb);
     new ARMTargetELFStreamer(*S);
     // FIXME: This should eventually end up somewhere else where more
@@ -1360,8 +1359,6 @@ MCStreamer *createARMNullStreamer(MCContext &Ctx) {
 
     if (RelaxAll)
       S->getAssembler().setRelaxAll(true);
-    if (NoExecStack)
-      S->getAssembler().setNoExecStack(true);
     return S;
   }
 

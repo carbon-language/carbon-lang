@@ -351,11 +351,8 @@ static MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM,
 
 static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCContext &Ctx, MCAsmBackend &MAB,
-                                    raw_ostream &_OS,
-                                    MCCodeEmitter *_Emitter,
-                                    const MCSubtargetInfo &STI,
-                                    bool RelaxAll,
-                                    bool NoExecStack) {
+                                    raw_ostream &_OS, MCCodeEmitter *_Emitter,
+                                    const MCSubtargetInfo &STI, bool RelaxAll) {
   Triple TheTriple(TT);
 
   switch (TheTriple.getObjectFormat()) {
@@ -366,7 +363,7 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
     assert(TheTriple.isOSWindows() && "only Windows COFF is supported");
     return createX86WinCOFFStreamer(Ctx, MAB, _Emitter, _OS, RelaxAll);
   case Triple::ELF:
-    return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll, NoExecStack);
+    return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll);
   }
 }
 

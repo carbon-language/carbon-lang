@@ -607,7 +607,7 @@ const AsmToken &AsmParser::Lex() {
 bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
   // Create the initial section, if requested.
   if (!NoInitialTextSection)
-    Out.InitSections();
+    Out.InitSections(false);
 
   // Prime the lexer.
   Lex();
@@ -690,7 +690,7 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
 void AsmParser::checkForValidSection() {
   if (!ParsingInlineAsm && !getStreamer().getCurrentSection().first) {
     TokError("expected section directive before assembly directive");
-    Out.InitSections();
+    Out.InitSections(false);
   }
 }
 

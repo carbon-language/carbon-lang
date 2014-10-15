@@ -368,7 +368,7 @@ public:
   }
 
   /// Create the default sections and set the initial one.
-  virtual void InitSections();
+  virtual void InitSections(bool NoExecStack);
 
   /// AssignSection - Sets the symbol's section.
   ///
@@ -766,8 +766,8 @@ MCStreamer *createMachOStreamer(MCContext &Ctx, MCAsmBackend &TAB,
 /// createELFStreamer - Create a machine code streamer which will generate
 /// ELF format object files.
 MCStreamer *createELFStreamer(MCContext &Ctx, MCAsmBackend &TAB,
-                              raw_ostream &OS, MCCodeEmitter *CE, bool RelaxAll,
-                              bool NoExecStack);
+                              raw_ostream &OS, MCCodeEmitter *CE,
+                              bool RelaxAll);
 
 } // end namespace llvm
 

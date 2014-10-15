@@ -126,15 +126,14 @@ static MCInstPrinter *createAArch64MCInstPrinter(const Target &T,
 static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCContext &Ctx, MCAsmBackend &TAB,
                                     raw_ostream &OS, MCCodeEmitter *Emitter,
-                                    const MCSubtargetInfo &STI, bool RelaxAll,
-                                    bool NoExecStack) {
+                                    const MCSubtargetInfo &STI, bool RelaxAll) {
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin())
     return createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll,
                                /*LabelSections*/ true);
 
-  return createAArch64ELFStreamer(Ctx, TAB, OS, Emitter, RelaxAll, NoExecStack);
+  return createAArch64ELFStreamer(Ctx, TAB, OS, Emitter, RelaxAll);
 }
 
 // Force static initialization.

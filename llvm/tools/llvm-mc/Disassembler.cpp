@@ -185,7 +185,7 @@ int Disassembler::disassemble(const Target &T,
   }
 
   // Set up initial section manually here
-  Streamer.InitSections();
+  Streamer.InitSections(false);
 
   bool ErrorOccurred = false;
 

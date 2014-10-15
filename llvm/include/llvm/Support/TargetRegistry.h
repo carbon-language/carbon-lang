@@ -123,15 +123,10 @@ namespace llvm {
                                                   const MCRegisterInfo &MRI,
                                                   const MCSubtargetInfo &STI,
                                                   MCContext &Ctx);
-    typedef MCStreamer *(*MCObjectStreamerCtorTy)(const Target &T,
-                                                  StringRef TT,
-                                                  MCContext &Ctx,
-                                                  MCAsmBackend &TAB,
-                                                  raw_ostream &_OS,
-                                                  MCCodeEmitter *_Emitter,
-                                                  const MCSubtargetInfo &STI,
-                                                  bool RelaxAll,
-                                                  bool NoExecStack);
+    typedef MCStreamer *(*MCObjectStreamerCtorTy)(
+        const Target &T, StringRef TT, MCContext &Ctx, MCAsmBackend &TAB,
+        raw_ostream &_OS, MCCodeEmitter *_Emitter, const MCSubtargetInfo &STI,
+        bool RelaxAll);
     typedef MCStreamer *(*AsmStreamerCtorTy)(MCContext &Ctx,
                                              formatted_raw_ostream &OS,
                                              bool isVerboseAsm,
@@ -423,18 +418,15 @@ namespace llvm {
     /// \param _OS The stream object.
     /// \param _Emitter The target independent assembler object.Takes ownership.
     /// \param RelaxAll Relax all fixups?
-    /// \param NoExecStack Mark file as not needing a executable stack.
     MCStreamer *createMCObjectStreamer(StringRef TT, MCContext &Ctx,
-                                       MCAsmBackend &TAB,
-                                       raw_ostream &_OS,
+                                       MCAsmBackend &TAB, raw_ostream &_OS,
                                        MCCodeEmitter *_Emitter,
                                        const MCSubtargetInfo &STI,
-                                       bool RelaxAll,
-                                       bool NoExecStack) const {
+                                       bool RelaxAll) const {
       if (!MCObjectStreamerCtorFn)
         return nullptr;
       return MCObjectStreamerCtorFn(*this, TT, Ctx, TAB, _OS, _Emitter, STI,
-                                    RelaxAll, NoExecStack);
+                                    RelaxAll);
     }
 
     /// createAsmStreamer - Create a target specific MCStreamer.

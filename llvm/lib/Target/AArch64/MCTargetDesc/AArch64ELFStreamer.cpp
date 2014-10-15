@@ -149,12 +149,10 @@ private:
 namespace llvm {
 MCELFStreamer *createAArch64ELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                                         raw_ostream &OS, MCCodeEmitter *Emitter,
-                                        bool RelaxAll, bool NoExecStack) {
+                                        bool RelaxAll) {
   AArch64ELFStreamer *S = new AArch64ELFStreamer(Context, TAB, OS, Emitter);
   if (RelaxAll)
     S->getAssembler().setRelaxAll(true);
-  if (NoExecStack)
-    S->getAssembler().setNoExecStack(true);
   return S;
 }
 }
