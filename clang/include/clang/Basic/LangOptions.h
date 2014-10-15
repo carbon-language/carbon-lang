@@ -30,6 +30,10 @@ struct SanitizerOptions {
   /// aggressive, 2: more aggressive).
   unsigned SanitizeAddressFieldPadding : 2;
 
+  /// \brief Path to blacklist file specifying which objects
+  /// (files, functions, variables) should not be instrumented.
+  std::string BlacklistFile;
+
   /// \brief Cached set of sanitizer options with all sanitizers disabled.
   static const SanitizerOptions Disabled;
 };

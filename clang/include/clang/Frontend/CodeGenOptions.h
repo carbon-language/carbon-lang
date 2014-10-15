@@ -137,9 +137,6 @@ public:
   /// The thread model to use
   std::string ThreadModel;
 
-  /// Path to blacklist file for sanitizers.
-  std::string SanitizerBlacklistFile;
-
   /// If not an empty string, trap intrinsics are lowered to calls to this
   /// function instead of to trap instructions.
   std::string TrapFuncName;

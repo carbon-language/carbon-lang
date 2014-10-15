@@ -90,7 +90,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
       BlockObjectDispose(nullptr), BlockDescriptorType(nullptr),
       GenericBlockLiteralType(nullptr), LifetimeStartFn(nullptr),
       LifetimeEndFn(nullptr), SanitizerBL(llvm::SpecialCaseList::createOrDie(
-                                  CGO.SanitizerBlacklistFile)),
+                                  LangOpts.Sanitize.BlacklistFile)),
       SanitizerMD(new SanitizerMetadata(*this)) {
 
   // Initialize the type cache.
