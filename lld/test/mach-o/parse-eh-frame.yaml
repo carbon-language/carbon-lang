@@ -51,7 +51,8 @@ global-symbols:
 ...
 
 # CHECK: defined-atoms:
-# CHECK:   - type:            unwind-cfi
+# CHECK:   - ref-name:        [[CIE:L[0-9]+]]
+# CHECK:     type:            unwind-cfi
 # CHECK:     content:         [ 14, 00, 00, 00, 00, 00, 00, 00, 01, 7A, 52, 00,
 # CHECK:                        01, 78, 10, 01, 10, 0C, 07, 08, 90, 01, 00, 00 ]
 # CHECK:   - type:            unwind-cfi
@@ -60,6 +61,9 @@ global-symbols:
 # CHECK:                        00, 41, 0E, 10, 86, 02, 43, 0D, 06, 00, 00, 00,
 # CHECK:                        00, 00, 00, 00 ]
 # CHECK:     references:
+# CHECK:       - kind:            negDelta32
+# CHECK:         offset:          4
+# CHECK:         target:          [[CIE]]
 # CHECK:       - kind:            unwindFDEToFunction
 # CHECK:         offset:          8
 # CHECK:         target:          __Z3barv
@@ -69,6 +73,9 @@ global-symbols:
 # CHECK:                        00, 41, 0E, 10, 86, 02, 43, 0D, 06, 00, 00, 00,
 # CHECK:                        00, 00, 00, 00 ]
 # CHECK:     references:
+# CHECK:       - kind:            negDelta32
+# CHECK:         offset:          4
+# CHECK:         target:          [[CIE]]
 # CHECK:       - kind:            unwindFDEToFunction
 # CHECK:         offset:          8
 # CHECK:         target:          __Z3foov

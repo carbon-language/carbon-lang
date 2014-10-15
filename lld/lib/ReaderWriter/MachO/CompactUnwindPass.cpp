@@ -415,17 +415,14 @@ private:
           ArchHandler::isDwarfCIE(_swap, ehFrameAtom))
         continue;
 
-      auto functionRef = std::find_if(ehFrameAtom->begin(), ehFrameAtom->end(),
-                                      [&](const Reference *ref) {
-        return ref->kindNamespace() == Reference::KindNamespace::mach_o &&
-               ref->kindArch() == _archHandler.kindArch() &&
-               ref->kindValue() == _archHandler.unwindRefToFunctionKind();
-      });
-
-      if (functionRef != ehFrameAtom->end()) {
-        const Atom *functionAtom = functionRef->target();
-        dwarfFrames.insert(std::make_pair(functionAtom, ehFrameAtom));
-      }
+      DefinedAtom::reference_iterator ref = ehFrameAtom->begin();
+      for (; ref != ehFrameAtom->end(); ++ref)
+        if (ref->kindNamespace() == Reference::KindNamespace::mach_o &&
+            ref->kindArch() == _archHandler.kindArch() &&
+            ref->kindValue() == _archHandler.unwindRefToFunctionKind()) {
+          dwarfFrames.insert(std::make_pair(ref->target(), ehFrameAtom));
+          break;
+        }
     }
   }
 

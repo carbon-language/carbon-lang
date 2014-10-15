@@ -51,6 +51,10 @@ public:
     return invalid;
   }
 
+  Reference::KindValue unwindRefToCIEKind() override {
+    return negDelta32;
+  }
+
   Reference::KindValue unwindRefToFunctionKind() override{
     return delta32;
   }

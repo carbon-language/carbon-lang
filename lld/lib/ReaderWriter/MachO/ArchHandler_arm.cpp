@@ -48,6 +48,10 @@ public:
     return invalid;
   }
 
+  Reference::KindValue unwindRefToCIEKind() override {
+    return invalid;
+  }
+
   Reference::KindValue unwindRefToFunctionKind() override {
     return invalid;
   }

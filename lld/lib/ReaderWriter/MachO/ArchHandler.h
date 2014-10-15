@@ -74,6 +74,9 @@ public:
   /// actually be used.
   virtual uint32_t dwarfCompactUnwindType() = 0;
 
+  /// Reference from an __eh_frame FDE to the CIE it's based on.
+  virtual Reference::KindValue unwindRefToCIEKind() = 0;
+
   /// Reference from an __eh_frame FDE atom to the function it's
   /// describing. Usually pointer-sized and PC-relative, but differs in whether
   /// it needs to be in relocatable objects.

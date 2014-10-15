@@ -84,6 +84,10 @@ public:
     return imageOffsetGot;
   }
 
+  Reference::KindValue unwindRefToCIEKind() override {
+    return negDelta32;
+  }
+
   Reference::KindValue unwindRefToFunctionKind() override{
     return unwindFDEToFunction;
   }
@@ -167,7 +171,8 @@ private:
     delta32,               /// ex: .long _foo - .
     delta64Anon,           /// ex: .quad L1 - .
     delta32Anon,           /// ex: .long L1 - .
-    
+    negDelta32,            /// ex: .long . - _foo
+
     // Kinds introduced by Passes:
     ripRel32GotLoadNowLea, /// Target of GOT load is in linkage unit so 
                            ///  "movq  _foo@GOTPCREL(%rip), %rax" can be changed
@@ -218,6 +223,7 @@ const Registry::KindStrings ArchHandler_x86_64::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(pointer64), LLD_KIND_STRING_ENTRY(pointer64Anon),
   LLD_KIND_STRING_ENTRY(delta32), LLD_KIND_STRING_ENTRY(delta64),
   LLD_KIND_STRING_ENTRY(delta32Anon), LLD_KIND_STRING_ENTRY(delta64Anon),
+  LLD_KIND_STRING_ENTRY(negDelta32),
   LLD_KIND_STRING_ENTRY(imageOffset), LLD_KIND_STRING_ENTRY(imageOffsetGot),
   LLD_KIND_STRING_ENTRY(unwindFDEToFunction),
   LLD_KIND_STRING_ENTRY(unwindInfoToEhFrame),
@@ -507,6 +513,9 @@ void ArchHandler_x86_64::applyFixupFinal(
     location[-2] = 0x8D;
     write32(*loc32, _swap, (targetAddress - (fixupAddress + 4)) + ref.addend());
     return;
+  case negDelta32:
+    write32(*loc32, _swap, fixupAddress - targetAddress + ref.addend());
+    return;
   case lazyPointer:
   case lazyImmediateLocation:
     // do nothing
@@ -573,6 +582,9 @@ void ArchHandler_x86_64::applyFixupRelocatable(const Reference &ref,
     return;
   case delta64Anon:
     write64(*loc64, _swap, (targetAddress - fixupAddress) + ref.addend());
+    return;
+  case negDelta32:
+    write32(*loc32, _swap, fixupAddress - targetAddress + ref.addend());
     return;
   case ripRel32GotLoadNowLea:
     llvm_unreachable("ripRel32GotLoadNowLea implies GOT pass was run");
@@ -675,6 +687,7 @@ void ArchHandler_x86_64::appendSectionRelocations(
     return;
   case unwindFDEToFunction:
   case unwindInfoToEhFrame:
+  case negDelta32:
     return;
   case ripRel32GotLoadNowLea:
     llvm_unreachable("ripRel32GotLoadNowLea implies GOT pass was run");

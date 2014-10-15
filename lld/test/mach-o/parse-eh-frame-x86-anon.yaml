@@ -105,24 +105,24 @@ undefined-symbols:
 ...
 
 # CHECK: defined-atoms:   
-# FIXME:   - ref-name:        [[CIE:L[L0-9]+]]
+# CHECK:   - ref-name:        [[CIE:L[L0-9]+]]
 # CHECK:     type:            unwind-cfi
 # CHECK:     content:          
 # CHECK:   - type:            unwind-cfi
 # CHECK:     content:         
 # CHECK:     references:
-# FIXME:       - kind:            negDelta32
-# FIXME:         offset:          4
-# FIXME:         target:          [[CIE]]
+# CHECK:       - kind:            negDelta32
+# CHECK:         offset:          4
+# CHECK:         target:          [[CIE]]
 # CHECK:       - kind:            delta32
 # CHECK:         offset:          8
 # CHECK:         target:          __Z3foov
 # CHECK:   - type:            unwind-cfi
 # CHECK:     content:          
 # CHECK:     references:
-# FIXME:       - kind:            negDelta32
-# FIXME:         offset:          4
-# FIXME:         target:          [[CIE]]
+# CHECK:       - kind:            negDelta32
+# CHECK:         offset:          4
+# CHECK:         target:          [[CIE]]
 # CHECK:       - kind:            delta32
 # CHECK:         offset:          8
 # CHECK:         target:          __Z3barv

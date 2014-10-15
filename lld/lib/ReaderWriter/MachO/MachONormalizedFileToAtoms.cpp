@@ -660,15 +660,30 @@ std::error_code addEHFrameReferences(const NormalizedFile &normalizedFile,
 
     const uint8_t *frameData = atom->rawContent().data();
     uint32_t size = read32(swap, *(uint32_t *)frameData);
-    uint64_t rangeFieldInFDE = size == 0xffffffffU
-                                   ? 2 * sizeof(uint32_t) + sizeof(uint64_t)
-                                   : 2 * sizeof(uint32_t);
+    uint64_t cieFieldInFDE = size == 0xffffffffU
+                                   ? sizeof(uint32_t) + sizeof(uint64_t)
+                                   : sizeof(uint32_t);
+
+    // Linker needs to fixup a reference from the FDE to its parent CIE (a
+    // 32-bit byte offset backwards in the __eh_frame section).
+    uint32_t cieDelta = read32(swap, *(uint32_t *)(frameData + cieFieldInFDE));
+    uint64_t cieAddress = ehFrameSection->address + offset + cieFieldInFDE;
+    cieAddress -= cieDelta;
+
+    Reference::Addend addend;
+    const Atom *cie =
+        findAtomCoveringAddress(normalizedFile, file, cieAddress, &addend);
+    atom->addReference(cieFieldInFDE, handler.unwindRefToCIEKind(), cie,
+                       addend, handler.kindArch());
+
+    // Linker needs to fixup reference from the FDE to the function it's
+    // describing.
+    uint64_t rangeFieldInFDE = cieFieldInFDE + sizeof(uint32_t);
 
     int64_t functionFromFDE = readSPtr(is64, swap, frameData + rangeFieldInFDE);
     uint64_t rangeStart = ehFrameSection->address + offset + rangeFieldInFDE;
     rangeStart += functionFromFDE;
 
-    Reference::Addend addend;
     const Atom *func =
         findAtomCoveringAddress(normalizedFile, file, rangeStart, &addend);
     atom->addReference(rangeFieldInFDE, handler.unwindRefToFunctionKind(), func,
