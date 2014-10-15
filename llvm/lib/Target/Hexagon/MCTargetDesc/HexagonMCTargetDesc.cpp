@@ -74,6 +74,14 @@ static MCCodeGenInfo *createHexagonMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   X->InitMCCodeGenInfo(Reloc::Static, CM, OL);
   return X;
 }
+static MCInstPrinter *createHexagonMCInstPrinter(const Target &T,
+                                                 unsigned SyntaxVariant,
+                                                 const MCAsmInfo &MAI,
+                                                 const MCInstrInfo &MII,
+                                                 const MCRegisterInfo &MRI,
+                                                 const MCSubtargetInfo &STI) {
+    return new HexagonInstPrinter(MAI, MII, MRI);
+}
 
 // Force static initialization.
 extern "C" void LLVMInitializeHexagonTargetMC() {
@@ -99,4 +107,8 @@ extern "C" void LLVMInitializeHexagonTargetMC() {
   // Register the MC Code Emitter
   TargetRegistry::RegisterMCCodeEmitter(TheHexagonTarget,
                                         createHexagonMCCodeEmitter);
+
+  // Register the MC Inst Printer
+  TargetRegistry::RegisterMCInstPrinter(TheHexagonTarget,
+                                        createHexagonMCInstPrinter);
 }

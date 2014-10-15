@@ -29,6 +29,43 @@ using namespace llvm;
 #include "HexagonGenAsmWriter.inc"
 
 const char HexagonInstPrinter::PacketPadding = '\t';
+// Return the minimum value that a constant extendable operand can have
+// without being extended.
+static int getMinValue(uint64_t TSFlags) {
+  unsigned isSigned =
+      (TSFlags >> HexagonII::ExtentSignedPos) & HexagonII::ExtentSignedMask;
+  unsigned bits =
+      (TSFlags >> HexagonII::ExtentBitsPos) & HexagonII::ExtentBitsMask;
+
+  if (isSigned)
+    return -1U << (bits - 1);
+  else
+    return 0;
+}
+
+// Return the maximum value that a constant extendable operand can have
+// without being extended.
+static int getMaxValue(uint64_t TSFlags) {
+  unsigned isSigned =
+      (TSFlags >> HexagonII::ExtentSignedPos) & HexagonII::ExtentSignedMask;
+  unsigned bits =
+      (TSFlags >> HexagonII::ExtentBitsPos) & HexagonII::ExtentBitsMask;
+
+  if (isSigned)
+    return ~(-1U << (bits - 1));
+  else
+    return ~(-1U << bits);
+}
+
+// Return true if the instruction must be extended.
+static bool isExtended(uint64_t TSFlags) {
+  return (TSFlags >> HexagonII::ExtendedPos) & HexagonII::ExtendedMask;
+}
+
+// Return true if the instruction may be extended based on the operand value.
+static bool isExtendable(uint64_t TSFlags) {
+  return (TSFlags >> HexagonII::ExtendablePos) & HexagonII::ExtendableMask;
+}
 
 StringRef HexagonInstPrinter::getOpcodeName(unsigned Opcode) const {
   return MII.getName(Opcode);
@@ -116,9 +153,20 @@ void HexagonInstPrinter::printImmOperand(const MCInst *MI, unsigned OpNo,
 
 void HexagonInstPrinter::printExtOperand(const MCInst *MI, unsigned OpNo,
                                          raw_ostream &O) const {
-  const HexagonMCInst *HMCI = static_cast<const HexagonMCInst*>(MI);
-  if (HMCI->isConstExtended())
+  const MCOperand &MO = MI->getOperand(OpNo);
+  const MCInstrDesc &MII = getMII().get(MI->getOpcode());
+
+  assert((isExtendable(MII.TSFlags) || isExtended(MII.TSFlags)) &&
+         "Expecting an extendable operand");
+
+  if (MO.isExpr() || isExtended(MII.TSFlags)) {
     O << "#";
+  } else if (MO.isImm()) {
+    int ImmValue = MO.getImm();
+    if (ImmValue < getMinValue(MII.TSFlags) ||
+        ImmValue > getMaxValue(MII.TSFlags))
+      O << "#";
+  }
   printOperand(MI, OpNo, O);
 }
 
