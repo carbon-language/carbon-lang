@@ -2160,10 +2160,6 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
                                        WidthVal);
     }
 
-    APInt Demanded = APInt::getBitsSet(32,
-                                       OffsetVal,
-                                       OffsetVal + WidthVal);
-
     if ((OffsetVal + WidthVal) >= 32) {
       SDValue ShiftVal = DAG.getConstant(OffsetVal, MVT::i32);
       return DAG.getNode(Signed ? ISD::SRA : ISD::SRL, DL, MVT::i32,
@@ -2171,6 +2167,10 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
     }
 
     if (BitsFrom.hasOneUse()) {
+      APInt Demanded = APInt::getBitsSet(32,
+                                         OffsetVal,
+                                         OffsetVal + WidthVal);
+
       APInt KnownZero, KnownOne;
       TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
                                             !DCI.isBeforeLegalizeOps());
