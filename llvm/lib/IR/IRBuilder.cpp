@@ -172,3 +172,14 @@ CallInst *IRBuilderBase::CreateLifetimeEnd(Value *Ptr, ConstantInt *Size) {
   Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::lifetime_end);
   return createCallHelper(TheFn, Ops, this);
 }
+
+CallInst *IRBuilderBase::CreateAssumption(Value *Cond) {
+  assert(Cond->getType() == getInt1Ty() &&
+         "an assumption condition must be of type i1");
+
+  Value *Ops[] = { Cond };
+  Module *M = BB->getParent()->getParent();
+  Value *FnAssume = Intrinsic::getDeclaration(M, Intrinsic::assume);
+  return createCallHelper(FnAssume, Ops, this);
+}
+

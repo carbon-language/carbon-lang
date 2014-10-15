@@ -429,6 +429,10 @@ public:
   /// If the pointer isn't i8* it will be converted.
   CallInst *CreateLifetimeEnd(Value *Ptr, ConstantInt *Size = nullptr);
 
+  /// \brief Create an assume intrinsic call that allows the optimizer to
+  /// assume that the provided condition will be true.
+  CallInst *CreateAssumption(Value *Cond);
+
 private:
   Value *getCastedInt8PtrValue(Value *Ptr);
 };
@@ -1523,6 +1527,44 @@ public:
       V = CreateTrunc(V, ExtractedTy, Name + ".trunc");
     }
     return V;
+  }
+
+  /// \brief Create an assume intrinsic call that represents an alignment
+  /// assumption on the provided pointer.
+  ///
+  /// An optional offset can be provided, and if it is provided, the offset
+  /// must be subtracted from the provided pointer to get the pointer with the
+  /// specified alignment.
+  CallInst *CreateAlignmentAssumption(const DataLayout &DL, Value *PtrValue,
+                                      unsigned Alignment,
+                                      Value *OffsetValue = nullptr) {
+    assert(isa<PointerType>(PtrValue->getType()) &&
+           "trying to create an alignment assumption on a non-pointer?");
+
+    PointerType *PtrTy = cast<PointerType>(PtrValue->getType());
+    Type *IntPtrTy = getIntPtrTy(&DL, PtrTy->getAddressSpace());
+    Value *PtrIntValue = CreatePtrToInt(PtrValue, IntPtrTy, "ptrint");
+
+    Value *Mask = ConstantInt::get(IntPtrTy,
+      Alignment > 0 ? Alignment - 1 : 0);
+    if (OffsetValue) {
+      bool IsOffsetZero = false;
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(OffsetValue))
+        IsOffsetZero = CI->isZero();
+
+      if (!IsOffsetZero) {
+        if (OffsetValue->getType() != IntPtrTy)
+          OffsetValue = CreateIntCast(OffsetValue, IntPtrTy, /*isSigned*/ true,
+                                      "offsetcast");
+        PtrIntValue = CreateSub(PtrIntValue, OffsetValue, "offsetptr");
+      }
+    }
+
+    Value *Zero = ConstantInt::get(IntPtrTy, 0);
+    Value *MaskedPtr = CreateAnd(PtrIntValue, Mask, "maskedptr");
+    Value *InvCond = CreateICmpEQ(MaskedPtr, Zero, "maskcond");
+
+    return CreateAssumption(InvCond);
   }
 };
 
