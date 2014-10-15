@@ -30,6 +30,7 @@ clang_Cursor_isNull
 clang_Cursor_isObjCOptional
 clang_Cursor_isVariadic
 clang_Cursor_getModule
+clang_Cursor_getStorageClass
 clang_File_isEqual
 clang_Module_getASTFile
 clang_Module_getParent

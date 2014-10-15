@@ -6418,6 +6418,41 @@ static const Decl *maybeGetTemplateCursor(const Decl *D) {
   return D;
 }
 
+
+enum CX_StorageClass clang_Cursor_getStorageClass(CXCursor C) {
+  StorageClass sc = SC_None;
+  const Decl *D = getCursorDecl(C);
+  if (D) {
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+      sc = FD->getStorageClass();
+    } else if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+      sc = VD->getStorageClass();
+    } else {
+      return CX_SC_Invalid;
+    }
+  } else {
+    return CX_SC_Invalid;
+  }
+  switch (sc) {
+  case SC_None:
+    return CX_SC_None;
+  case SC_Extern:
+    return CX_SC_Extern;
+  case SC_Static:
+    return CX_SC_Static;
+  case SC_PrivateExtern:
+    return CX_SC_PrivateExtern;
+  case SC_OpenCLWorkGroupLocal:
+    return CX_SC_OpenCLWorkGroupLocal;
+  case SC_Auto:
+    return CX_SC_Auto;
+  case SC_Register:
+    return CX_SC_Register;
+  default:
+    return CX_SC_Invalid;
+  }
+}
+
 CXCursor clang_getCursorSemanticParent(CXCursor cursor) {
   if (clang_isDeclaration(cursor.kind)) {
     if (const Decl *D = getCursorDecl(cursor)) {

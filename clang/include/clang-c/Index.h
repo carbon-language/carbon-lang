@@ -32,7 +32,7 @@
  * compatible, thus CINDEX_VERSION_MAJOR is expected to remain stable.
  */
 #define CINDEX_VERSION_MAJOR 0
-#define CINDEX_VERSION_MINOR 28
+#define CINDEX_VERSION_MINOR 29
 
 #define CINDEX_VERSION_ENCODE(major, minor) ( \
       ((major) * 10000)                       \
@@ -3341,6 +3341,29 @@ enum CX_CXXAccessSpecifier {
  * access specifier, the specifier itself is returned.
  */
 CINDEX_LINKAGE enum CX_CXXAccessSpecifier clang_getCXXAccessSpecifier(CXCursor);
+
+/**
+ * \brief Represents the storage classes as declared in the source. CX_SC_Invalid
+ * was added for the clase that the passed cursor in not a declaration.
+ */
+enum CX_StorageClass {
+  CX_SC_Invalid,
+  CX_SC_None,
+  CX_SC_Extern,
+  CX_SC_Static,
+  CX_SC_PrivateExtern,
+  CX_SC_OpenCLWorkGroupLocal,
+  CX_SC_Auto,
+  CX_SC_Register
+};
+
+/**
+ * \brief Returns the storage class for a function or variable declaration.
+ *
+ * If the passed in Cursor is not a function or variable declaration,
+ * CX_SC_Invalid is returned else the storage class.
+ */
+CINDEX_LINKAGE enum CX_StorageClass clang_Cursor_getStorageClass(CXCursor);
 
 /**
  * \brief Determine the number of overloaded declarations referenced by a 
