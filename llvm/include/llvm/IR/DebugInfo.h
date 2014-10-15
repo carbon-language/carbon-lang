@@ -958,14 +958,6 @@ DISubprogram getDISubprogram(const MDNode *Scope);
 /// getDICompositeType - Find underlying composite type.
 DICompositeType getDICompositeType(DIType T);
 
-/// getOrInsertFnSpecificMDNode - Return a NameMDNode that is suitable
-/// to hold function specific information.
-NamedMDNode *getOrInsertFnSpecificMDNode(Module &M, DISubprogram SP);
-
-/// getFnSpecificMDNode - Return a NameMDNode, if available, that is
-/// suitable to hold function specific information.
-NamedMDNode *getFnSpecificMDNode(const Module &M, DISubprogram SP);
-
 /// createInlinedVariable - Create a new inlined variable based on current
 /// variable.
 /// @param DV            Current Variable.

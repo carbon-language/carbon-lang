@@ -73,13 +73,10 @@ void DIBuilder::finalize() {
   DIType(TempSubprograms).replaceAllUsesWith(SPs);
   for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
     DISubprogram SP(SPs.getElement(i));
-    SmallVector<Value *, 4> Variables;
-    if (NamedMDNode *NMD = getFnSpecificMDNode(M, SP)) {
-      for (unsigned ii = 0, ee = NMD->getNumOperands(); ii != ee; ++ii)
-        Variables.push_back(NMD->getOperand(ii));
-      NMD->eraseFromParent();
-    }
     if (MDNode *Temp = SP.getVariablesNodes()) {
+      SmallVector<Value *, 4> Variables;
+      for (Value *V : PreservedVariables.lookup(SP))
+        Variables.push_back(V);
       DIArray AV = getOrCreateArray(Variables);
       DIType(Temp).replaceAllUsesWith(AV);
     }
@@ -906,8 +903,8 @@ DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
     // to preserve variable info in such situation then stash it in a
     // named mdnode.
     DISubprogram Fn(getDISubprogram(Scope));
-    NamedMDNode *FnLocals = getOrInsertFnSpecificMDNode(M, Fn);
-    FnLocals->addOperand(Node);
+    assert(Fn && "Missing subprogram for local variable");
+    PreservedVariables[Fn].push_back(Node);
   }
   DIVariable RetVar(Node);
   assert(RetVar.isVariable() &&

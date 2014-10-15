@@ -936,47 +936,6 @@ unsigned DILocation::computeNewDiscriminator(LLVMContext &Ctx) {
   return ++Ctx.pImpl->DiscriminatorTable[Key];
 }
 
-/// fixupSubprogramName - Replace contains special characters used
-/// in a typical Objective-C names with '.' in a given string.
-static void fixupSubprogramName(DISubprogram Fn, SmallVectorImpl<char> &Out) {
-  StringRef FName =
-      Fn.getFunction() ? Fn.getFunction()->getName() : Fn.getName();
-  FName = Function::getRealLinkageName(FName);
-
-  StringRef Prefix("llvm.dbg.lv.");
-  Out.reserve(FName.size() + Prefix.size());
-  Out.append(Prefix.begin(), Prefix.end());
-
-  bool isObjCLike = false;
-  for (size_t i = 0, e = FName.size(); i < e; ++i) {
-    char C = FName[i];
-    if (C == '[')
-      isObjCLike = true;
-
-    if (isObjCLike && (C == '[' || C == ']' || C == ' ' || C == ':' ||
-                       C == '+' || C == '(' || C == ')'))
-      Out.push_back('.');
-    else
-      Out.push_back(C);
-  }
-}
-
-/// getFnSpecificMDNode - Return a NameMDNode, if available, that is
-/// suitable to hold function specific information.
-NamedMDNode *llvm::getFnSpecificMDNode(const Module &M, DISubprogram Fn) {
-  SmallString<32> Name;
-  fixupSubprogramName(Fn, Name);
-  return M.getNamedMetadata(Name.str());
-}
-
-/// getOrInsertFnSpecificMDNode - Return a NameMDNode that is suitable
-/// to hold function specific information.
-NamedMDNode *llvm::getOrInsertFnSpecificMDNode(Module &M, DISubprogram Fn) {
-  SmallString<32> Name;
-  fixupSubprogramName(Fn, Name);
-  return M.getOrInsertNamedMetadata(Name.str());
-}
-
 /// createInlinedVariable - Create a new inlined variable based on current
 /// variable.
 /// @param DV            Current Variable.

@@ -73,6 +73,9 @@ namespace llvm {
     SmallVector<Value *, 4> AllGVs;
     SmallVector<TrackingVH<MDNode>, 4> AllImportedModules;
 
+    /// Each subprogram's preserved local variables.
+    DenseMap<MDNode *, std::vector<TrackingVH<MDNode>>> PreservedVariables;
+
     // Private use for multiple types of template parameters.
     DITemplateValueParameter
     createTemplateValueParameter(unsigned Tag, DIDescriptor Scope,
