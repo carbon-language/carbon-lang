@@ -652,9 +652,9 @@ public:
   /// Set the visibility for the given LLVM GlobalValue.
   void setGlobalVisibility(llvm::GlobalValue *GV, const NamedDecl *D) const;
 
-  /// Set the TLS mode for the given LLVM GlobalVariable for the thread-local
+  /// Set the TLS mode for the given LLVM GlobalValue for the thread-local
   /// variable declaration D.
-  void setTLSMode(llvm::GlobalVariable *GV, const VarDecl &D) const;
+  void setTLSMode(llvm::GlobalValue *GV, const VarDecl &D) const;
 
   static llvm::GlobalValue::VisibilityTypes GetLLVMVisibility(Visibility V) {
     switch (V) {

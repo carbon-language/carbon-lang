@@ -3,12 +3,17 @@
 
 int g0;
 // CHECKBASIC: @g0 = common global i32 0
+__thread int TL_WITH_ALIAS;
+// CHECKBASIC-DAG: @TL_WITH_ALIAS = thread_local global i32 0, align 4
 static int bar1 = 42;
 // CHECKBASIC: @bar1 = internal global i32 42
 
 extern int g1;
 extern int g1 __attribute((alias("g0")));
 // CHECKBASIC-DAG: @g1 = alias i32* @g0
+
+extern __thread int __libc_errno __attribute__ ((alias ("TL_WITH_ALIAS")));
+// CHECKBASIC-DAG: @__libc_errno = thread_local alias i32* @TL_WITH_ALIAS
 
 void f0(void) { }
 extern void f1(void);

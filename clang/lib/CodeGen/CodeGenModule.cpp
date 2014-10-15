@@ -523,11 +523,10 @@ static llvm::GlobalVariable::ThreadLocalMode GetLLVMTLSModel(
   llvm_unreachable("Invalid TLS model!");
 }
 
-void CodeGenModule::setTLSMode(llvm::GlobalVariable *GV,
-                               const VarDecl &D) const {
+void CodeGenModule::setTLSMode(llvm::GlobalValue *GV, const VarDecl &D) const {
   assert(D.getTLSKind() && "setting TLS mode on non-TLS var!");
 
-  llvm::GlobalVariable::ThreadLocalMode TLM;
+  llvm::GlobalValue::ThreadLocalMode TLM;
   TLM = GetLLVMTLSModel(CodeGenOpts.getDefaultTLSModel());
 
   // Override the TLS model if it is explicitly specified.
@@ -1942,10 +1941,9 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   // has internal linkage; all accesses should just be calls to the
   // Itanium-specified entry point, which has the normal linkage of the
   // variable.
-  if (const auto *VD = dyn_cast<VarDecl>(D))
-    if (!VD->isStaticLocal() && VD->getTLSKind() == VarDecl::TLS_Dynamic &&
-        Context.getTargetInfo().getTriple().isMacOSX())
-      Linkage = llvm::GlobalValue::InternalLinkage;
+  if (!D->isStaticLocal() && D->getTLSKind() == VarDecl::TLS_Dynamic &&
+      Context.getTargetInfo().getTriple().isMacOSX())
+    Linkage = llvm::GlobalValue::InternalLinkage;
 
   GV->setLinkage(Linkage);
   if (D->hasAttr<DLLImportAttr>())
@@ -1958,6 +1956,12 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     GV->setConstant(false);
 
   setNonAliasAttributes(D, GV);
+
+  if (D->getTLSKind() && !GV->isThreadLocal()) {
+    if (D->getTLSKind() == VarDecl::TLS_Dynamic)
+      CXXThreadLocals.push_back(std::make_pair(D, GV));
+    setTLSMode(GV, *D);
+  }
 
   // Emit the initializer function if necessary.
   if (NeedsGlobalCtor || NeedsGlobalDtor)
@@ -2326,7 +2330,7 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
   else
     Aliasee = GetOrCreateLLVMGlobal(AA->getAliasee(),
                                     llvm::PointerType::getUnqual(DeclTy),
-                                    nullptr);
+                                    /*D=*/nullptr);
 
   // Create the new alias itself, but don't set a name yet.
   auto *GA = llvm::GlobalAlias::create(
@@ -2364,6 +2368,10 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
       D->isWeakImported()) {
     GA->setLinkage(llvm::Function::WeakAnyLinkage);
   }
+
+  if (const auto *VD = dyn_cast<VarDecl>(D))
+    if (VD->getTLSKind())
+      setTLSMode(GA, *VD);
 
   setAliasAttributes(D, GA);
 }
