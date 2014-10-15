@@ -1056,7 +1056,7 @@ sub RunBuildCommand {
     shift @$Args;
     unshift @$Args, $CXXAnalyzer;
   }
-  elsif ($Cmd eq "make" or $Cmd eq "gmake") {
+  elsif ($Cmd eq "make" or $Cmd eq "gmake" or $Cmd eq "mingw32-make") {
     AddIfNotPresent($Args, "CC=$CCAnalyzer");
     AddIfNotPresent($Args, "CXX=$CXXAnalyzer");
     if ($IgnoreErrors) {
