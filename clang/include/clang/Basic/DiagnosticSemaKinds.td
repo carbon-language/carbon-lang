@@ -2490,7 +2490,7 @@ def warn_non_literal_null_pointer : Warning<
     "expression which evaluates to zero treated as a null pointer constant of "
     "type %0">, InGroup<NonLiteralNullConversion>;
 def warn_impcast_null_pointer_to_integer : Warning<
-    "implicit conversion of NULL constant to %0">,
+    "implicit conversion of %select{NULL|nullptr}0 constant to %1">,
     InGroup<NullConversion>;
 def warn_impcast_floating_point_to_bool : Warning<
     "implicit conversion turns floating-point number into bool: %0 to %1">,

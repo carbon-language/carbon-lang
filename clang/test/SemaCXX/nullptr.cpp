@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -fsyntax-only -verify -std=c++11 -ffreestanding %s
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -fsyntax-only -verify -std=c++11 -ffreestanding -Wno-null-conversion %s
 #include <stdint.h>
 
 typedef decltype(nullptr) nullptr_t;

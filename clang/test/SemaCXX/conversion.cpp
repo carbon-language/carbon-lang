@@ -90,6 +90,18 @@ void test3() {
     ;
   do ;
   while(NULL_COND(true));
+
+#define NULL_WRAPPER NULL_COND(false)
+  if (NULL_WRAPPER)
+    ;
+  while (NULL_WRAPPER)
+    ;
+  for (; NULL_WRAPPER;)
+    ;
+  do
+    ;
+  while (NULL_WRAPPER);
+
   int *ip = NULL;
   int (*fp)() = NULL;
   struct foo {
@@ -135,5 +147,13 @@ namespace test5 {
 namespace test6 {
   decltype(nullptr) func() {
     return NULL;
+  }
+}
+
+namespace test7 {
+  bool fun() {
+    bool x = nullptr; // expected-warning {{implicit conversion of nullptr constant to 'bool'}}
+    if (nullptr) {} // expected-warning {{implicit conversion of nullptr constant to 'bool'}}
+    return nullptr; // expected-warning {{implicit conversion of nullptr constant to 'bool'}}
   }
 }

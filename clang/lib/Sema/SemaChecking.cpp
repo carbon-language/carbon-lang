@@ -6167,6 +6167,41 @@ void CheckImplicitArgumentConversions(Sema &S, CallExpr *TheCall,
   }
 }
 
+static void DiagnoseNullConversion(Sema &S, Expr *E, QualType T,
+                                   SourceLocation CC) {
+  if (S.Diags.isIgnored(diag::warn_impcast_null_pointer_to_integer,
+                        E->getExprLoc()))
+    return;
+
+  // Check for NULL (GNUNull) or nullptr (CXX11_nullptr).
+  const Expr::NullPointerConstantKind NullKind =
+      E->isNullPointerConstant(S.Context, Expr::NPC_ValueDependentIsNotNull);
+  if (NullKind != Expr::NPCK_GNUNull && NullKind != Expr::NPCK_CXX11_nullptr)
+    return;
+
+  // Return if target type is a safe conversion.
+  if (T->isAnyPointerType() || T->isBlockPointerType() ||
+      T->isMemberPointerType() || !T->isScalarType() || T->isNullPtrType())
+    return;
+
+  SourceLocation Loc = E->getSourceRange().getBegin();
+
+  // __null is usually wrapped in a macro.  Go up a macro if that is the case.
+  if (NullKind == Expr::NPCK_GNUNull) {
+    if (Loc.isMacroID())
+      Loc = S.SourceMgr.getImmediateExpansionRange(Loc).first;
+  }
+
+  // Only warn if the null and context location are in the same macro expansion.
+  if (S.SourceMgr.getFileID(Loc) != S.SourceMgr.getFileID(CC))
+    return;
+
+  S.Diag(Loc, diag::warn_impcast_null_pointer_to_integer)
+      << (NullKind == Expr::NPCK_CXX11_nullptr) << T << clang::SourceRange(CC)
+      << FixItHint::CreateReplacement(Loc,
+                                      S.getFixItZeroLiteralForType(T, Loc));
+}
+
 void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
                              SourceLocation CC, bool *ICContext = nullptr) {
   if (E->isTypeDependent() || E->isValueDependent()) return;
@@ -6309,19 +6344,7 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
     return;
   }
 
-  if ((E->isNullPointerConstant(S.Context, Expr::NPC_ValueDependentIsNotNull)
-           == Expr::NPCK_GNUNull) && !Target->isAnyPointerType()
-      && !Target->isBlockPointerType() && !Target->isMemberPointerType()
-      && Target->isScalarType() && !Target->isNullPtrType()) {
-    SourceLocation Loc = E->getSourceRange().getBegin();
-    if (Loc.isMacroID())
-      Loc = S.SourceMgr.getImmediateExpansionRange(Loc).first;
-    if (!Loc.isMacroID() || CC.isMacroID())
-      S.Diag(Loc, diag::warn_impcast_null_pointer_to_integer)
-          << T << clang::SourceRange(CC)
-          << FixItHint::CreateReplacement(Loc,
-                                          S.getFixItZeroLiteralForType(T, Loc));
-  }
+  DiagnoseNullConversion(S, E, T, CC);
 
   if (!Source->isIntegerType() || !Target->isIntegerType())
     return;
