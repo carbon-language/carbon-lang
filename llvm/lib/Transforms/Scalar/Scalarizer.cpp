@@ -181,7 +181,7 @@ char Scalarizer::ID = 0;
 } // end anonymous namespace
 
 INITIALIZE_PASS_WITH_OPTIONS(Scalarizer, "scalarizer",
-                             "Scalarize vector operations", false, false);
+                             "Scalarize vector operations", false, false)
 
 Scatterer::Scatterer(BasicBlock *bb, BasicBlock::iterator bbi, Value *v,
                      ValueVector *cachePtr)
@@ -243,8 +243,7 @@ bool Scalarizer::doInitialization(Module &M) {
   ParallelLoopAccessMDKind =
       M.getContext().getMDKindID("llvm.mem.parallel_loop_access");
   ScalarizeLoadStore =
-      M.getContext()
-          .template getOption<bool, Scalarizer, &Scalarizer::ScalarizeLoadStore>();
+      M.getContext().getOption<bool, Scalarizer, &Scalarizer::ScalarizeLoadStore>();
   return false;
 }
 
