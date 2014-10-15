@@ -12,4 +12,5 @@
 // CHECK-NEXT: .file
 // CHECK-NEXT: {{^$}}
 // CHECK-NEXT: .ident{{.*$}}
+// CHECK-NEXT: .section ".note.GNU-stack","",@progbits
 // CHECK-NOT: .
