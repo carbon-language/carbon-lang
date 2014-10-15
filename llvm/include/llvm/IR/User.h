@@ -26,9 +26,9 @@
 
 namespace llvm {
 
-/// OperandTraits - Compile-time customization of
-/// operand-related allocators and accessors
-/// for use of the User class
+/// \brief Compile-time customization of User operands.
+///
+/// Customizes operand-related allocators and accessors.
 template <class>
 struct OperandTraits;
 
@@ -39,11 +39,11 @@ class User : public Value {
   friend struct HungoffOperandTraits;
   virtual void anchor();
 protected:
-  /// NumOperands - The number of values used by this User.
-  ///
+  /// \brief The number of values used by this User.
   unsigned NumOperands;
 
-  /// OperandList - This is a pointer to the array of Uses for this User.
+  /// \brief This is a pointer to the array of Uses for this User.
+  ///
   /// For nodes of fixed arity (e.g. a binary operator) this array will live
   /// prefixed to some derived class instance.  For nodes of resizable variable
   /// arity (e.g. PHINodes, SwitchInst etc.), this memory will be dynamically
@@ -64,13 +64,13 @@ public:
   ~User() {
     Use::zap(OperandList, OperandList + NumOperands);
   }
-  /// operator delete - free memory allocated for User and Use objects
+  /// \brief Free memory allocated for User and Use objects.
   void operator delete(void *Usr);
-  /// placement delete - required by std, but never called.
+  /// \brief Placement delete - required by std, but never called.
   void operator delete(void*, unsigned) {
     llvm_unreachable("Constructor throws?");
   }
-  /// placement delete - required by std, but never called.
+  /// \brief Placement delete - required by std, but never called.
   void operator delete(void*, unsigned, bool) {
     llvm_unreachable("Constructor throws?");
   }
@@ -128,8 +128,7 @@ public:
     return const_op_range(op_begin(), op_end());
   }
 
-  /// Convenience iterator for directly iterating over the Values in the
-  /// OperandList
+  /// \brief Iterator for directly iterating over the operand Values.
   struct value_op_iterator
       : iterator_adaptor_base<value_op_iterator, op_iterator,
                               std::random_access_iterator_tag, Value *,
@@ -150,22 +149,23 @@ public:
     return iterator_range<value_op_iterator>(value_op_begin(), value_op_end());
   }
 
-  // dropAllReferences() - This function is in charge of "letting go" of all
-  // objects that this User refers to.  This allows one to
-  // 'delete' a whole class at a time, even though there may be circular
-  // references...  First all references are dropped, and all use counts go to
-  // zero.  Then everything is deleted for real.  Note that no operations are
-  // valid on an object that has "dropped all references", except operator
-  // delete.
-  //
+  /// \brief Drop all references to operands.
+  ///
+  /// This function is in charge of "letting go" of all objects that this User
+  /// refers to.  This allows one to 'delete' a whole class at a time, even
+  /// though there may be circular references...  First all references are
+  /// dropped, and all use counts go to zero.  Then everything is deleted for
+  /// real.  Note that no operations are valid on an object that has "dropped
+  /// all references", except operator delete.
   void dropAllReferences() {
     for (Use &U : operands())
       U.set(nullptr);
   }
 
-  /// replaceUsesOfWith - Replaces all references to the "From" definition with
-  /// references to the "To" definition.
+  /// \brief Replace uses of one Value with another.
   ///
+  /// Replaces all references to the "From" definition with references to the
+  /// "To" definition.
   void replaceUsesOfWith(Value *From, Value *To);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:

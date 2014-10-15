@@ -20,9 +20,6 @@ namespace llvm {
 
 void User::anchor() {}
 
-// replaceUsesOfWith - Replaces all references to the "From" definition with
-// references to the "To" definition.
-//
 void User::replaceUsesOfWith(Value *From, Value *To) {
   if (From == To) return;   // Duh what?
 

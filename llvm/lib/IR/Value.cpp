@@ -88,8 +88,6 @@ Value::~Value() {
   LeakDetector::removeGarbageObject(this);
 }
 
-/// hasNUses - Return true if this Value has exactly N users.
-///
 bool Value::hasNUses(unsigned N) const {
   const_use_iterator UI = use_begin(), E = use_end();
 
@@ -98,9 +96,6 @@ bool Value::hasNUses(unsigned N) const {
   return UI == E;
 }
 
-/// hasNUsesOrMore - Return true if this value has N users or more.  This is
-/// logically equivalent to getNumUses() >= N.
-///
 bool Value::hasNUsesOrMore(unsigned N) const {
   const_use_iterator UI = use_begin(), E = use_end();
 
@@ -110,8 +105,6 @@ bool Value::hasNUsesOrMore(unsigned N) const {
   return true;
 }
 
-/// isUsedInBasicBlock - Return true if this value is used in the specified
-/// basic block.
 bool Value::isUsedInBasicBlock(const BasicBlock *BB) const {
   // This can be computed either by scanning the instructions in BB, or by
   // scanning the use list of this Value. Both lists can be very long, but
@@ -133,10 +126,6 @@ bool Value::isUsedInBasicBlock(const BasicBlock *BB) const {
   return false;
 }
 
-
-/// getNumUses - This method computes the number of uses of this Value.  This
-/// is a linear time operation.  Use hasOneUse or hasNUses to check for specific
-/// values.
 unsigned Value::getNumUses() const {
   return (unsigned)std::distance(use_begin(), use_end());
 }
@@ -236,9 +225,6 @@ void Value::setName(const Twine &NewName) {
   Name = ST->createValueName(NameRef, this);
 }
 
-
-/// takeName - transfer the name from V to this value, setting V's name to
-/// empty.  It is an error to call V->takeName(V).
 void Value::takeName(Value *V) {
   assert(SubclassID != MDStringVal && "Cannot take the name of an MDString!");
 
@@ -473,8 +459,10 @@ Value *Value::stripInBoundsOffsets() {
   return stripPointerCastsAndOffsets<PSK_InBounds>(this);
 }
 
-/// isDereferenceablePointer - Test if this value is always a pointer to
-/// allocated and suitably aligned memory for a simple load or store.
+/// \brief Check if Value is always a dereferenceable pointer.
+///
+/// Test if V is always a pointer to allocated and suitably aligned memory for
+/// a simple load or store.
 static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
                                      SmallPtrSetImpl<const Value *> &Visited) {
   // Note that it is not safe to speculate into a malloc'd region because
@@ -572,8 +560,6 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
   return false;
 }
 
-/// isDereferenceablePointer - Test if this value is always a pointer to
-/// allocated and suitably aligned memory for a simple load or store.
 bool Value::isDereferenceablePointer(const DataLayout *DL) const {
   // When dereferenceability information is provided by a dereferenceable
   // attribute, we know exactly how many bytes are dereferenceable. If we can
@@ -600,10 +586,6 @@ bool Value::isDereferenceablePointer(const DataLayout *DL) const {
   return ::isDereferenceablePointer(this, DL, Visited);
 }
 
-/// DoPHITranslation - If this value is a PHI node with CurBB as its parent,
-/// return the value in the PHI node corresponding to PredBB.  If not, return
-/// ourself.  This is useful if you want to know the value something has in a
-/// predecessor block.
 Value *Value::DoPHITranslation(const BasicBlock *CurBB,
                                const BasicBlock *PredBB) {
   PHINode *PN = dyn_cast<PHINode>(this);
@@ -637,8 +619,6 @@ void Value::reverseUseList() {
 //                             ValueHandleBase Class
 //===----------------------------------------------------------------------===//
 
-/// AddToExistingUseList - Add this ValueHandle to the use list for VP, where
-/// List is known to point into the existing use list.
 void ValueHandleBase::AddToExistingUseList(ValueHandleBase **List) {
   assert(List && "Handle list is null?");
 
@@ -662,7 +642,6 @@ void ValueHandleBase::AddToExistingUseListAfter(ValueHandleBase *List) {
     Next->setPrevPtr(&Next);
 }
 
-/// AddToUseList - Add this ValueHandle to the use list for VP.
 void ValueHandleBase::AddToUseList() {
   assert(VP.getPointer() && "Null pointer doesn't have a use list!");
 
@@ -706,7 +685,6 @@ void ValueHandleBase::AddToUseList() {
   }
 }
 
-/// RemoveFromUseList - Remove this ValueHandle from its current use list.
 void ValueHandleBase::RemoveFromUseList() {
   assert(VP.getPointer() && VP.getPointer()->HasValueHandle &&
          "Pointer doesn't have a use list!");

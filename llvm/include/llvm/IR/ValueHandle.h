@@ -33,15 +33,16 @@ public:
   enum { NumLowBitsAvailable = 2 };
 };
 
-/// ValueHandleBase - This is the common base class of value handles.
+/// \brief This is the common base class of value handles.
+///
 /// ValueHandle's are smart pointers to Value's that have special behavior when
 /// the value is deleted or ReplaceAllUsesWith'd.  See the specific handles
 /// below for details.
-///
 class ValueHandleBase {
   friend class Value;
 protected:
-  /// HandleBaseKind - This indicates what sub class the handle actually is.
+  /// \brief This indicates what sub class the handle actually is.
+  ///
   /// This is to avoid having a vtable for the light-weight handle pointers. The
   /// fully general Callback version does have a vtable.
   enum HandleBaseKind {
@@ -122,26 +123,28 @@ private:
   HandleBaseKind getKind() const { return PrevPair.getInt(); }
   void setPrevPtr(ValueHandleBase **Ptr) { PrevPair.setPointer(Ptr); }
 
-  /// AddToExistingUseList - Add this ValueHandle to the use list for VP, where
+  /// \brief Add this ValueHandle to the use list for VP.
+  ///
   /// List is the address of either the head of the list or a Next node within
   /// the existing use list.
   void AddToExistingUseList(ValueHandleBase **List);
 
-  /// AddToExistingUseListAfter - Add this ValueHandle to the use list after
-  /// Node.
+  /// \brief Add this ValueHandle to the use list after Node.
   void AddToExistingUseListAfter(ValueHandleBase *Node);
 
-  /// AddToUseList - Add this ValueHandle to the use list for VP.
+  /// \brief Add this ValueHandle to the use list for VP.
   void AddToUseList();
-  /// RemoveFromUseList - Remove this ValueHandle from its current use list.
+  /// \brief Remove this ValueHandle from its current use list.
   void RemoveFromUseList();
 };
 
-/// WeakVH - This is a value handle that tries hard to point to a Value, even
-/// across RAUW operations, but will null itself out if the value is destroyed.
-/// this is useful for advisory sorts of information, but should not be used as
-/// the key of a map (since the map would have to rearrange itself when the
-/// pointer changes).
+/// \brief Value handle that is nullable, but tries to track the Value.
+///
+/// This is a value handle that tries hard to point to a Value, even across
+/// RAUW operations, but will null itself out if the value is destroyed.  this
+/// is useful for advisory sorts of information, but should not be used as the
+/// key of a map (since the map would have to rearrange itself when the pointer
+/// changes).
 class WeakVH : public ValueHandleBase {
 public:
   WeakVH() : ValueHandleBase(Weak) {}
@@ -170,14 +173,16 @@ template<> struct simplify_type<WeakVH> {
   }
 };
 
-/// AssertingVH - This is a Value Handle that points to a value and asserts out
-/// if the value is destroyed while the handle is still live.  This is very
-/// useful for catching dangling pointer bugs and other things which can be
-/// non-obvious.  One particularly useful place to use this is as the Key of a
-/// map.  Dangling pointer bugs often lead to really subtle bugs that only occur
-/// if another object happens to get allocated to the same address as the old
-/// one.  Using an AssertingVH ensures that an assert is triggered as soon as
-/// the bad delete occurs.
+/// \brief Value handle that asserts if the Value is deleted.
+///
+/// This is a Value Handle that points to a value and asserts out if the value
+/// is destroyed while the handle is still live.  This is very useful for
+/// catching dangling pointer bugs and other things which can be non-obvious.
+/// One particularly useful place to use this is as the Key of a map.  Dangling
+/// pointer bugs often lead to really subtle bugs that only occur if another
+/// object happens to get allocated to the same address as the old one.  Using
+/// an AssertingVH ensures that an assert is triggered as soon as the bad
+/// delete occurs.
 ///
 /// Note that an AssertingVH handle does *not* follow values across RAUW
 /// operations.  This means that RAUW's need to explicitly update the
@@ -272,8 +277,7 @@ struct isPodLike<AssertingVH<T> > {
 };
 
 
-/// TrackingVH - This is a value handle that tracks a Value (or Value subclass),
-/// even across RAUW operations.
+/// \brief Value handle that tracks a Value across RAUW.
 ///
 /// TrackingVH is designed for situations where a client needs to hold a handle
 /// to a Value (or subclass) across some operations which may move that value,
@@ -341,12 +345,14 @@ public:
   ValueTy &operator*() const { return *getValPtr(); }
 };
 
-/// CallbackVH - This is a value handle that allows subclasses to define
-/// callbacks that run when the underlying Value has RAUW called on it or is
-/// destroyed.  This class can be used as the key of a map, as long as the user
-/// takes it out of the map before calling setValPtr() (since the map has to
-/// rearrange itself when the pointer changes).  Unlike ValueHandleBase, this
-/// class has a vtable and a virtual destructor.
+/// \brief Value handle with callbacks on RAUW and destruction.
+///
+/// This is a value handle that allows subclasses to define callbacks that run
+/// when the underlying Value has RAUW called on it or is destroyed.  This
+/// class can be used as the key of a map, as long as the user takes it out of
+/// the map before calling setValPtr() (since the map has to rearrange itself
+/// when the pointer changes).  Unlike ValueHandleBase, this class has a vtable
+/// and a virtual destructor.
 class CallbackVH : public ValueHandleBase {
   virtual void anchor();
 protected:
@@ -367,16 +373,20 @@ public:
     return getValPtr();
   }
 
-  /// Called when this->getValPtr() is destroyed, inside ~Value(), so you may
-  /// call any non-virtual Value method on getValPtr(), but no subclass methods.
-  /// If WeakVH were implemented as a CallbackVH, it would use this method to
-  /// call setValPtr(NULL).  AssertingVH would use this method to cause an
-  /// assertion failure.
+  /// \brief Callback for Value destruction.
+  ///
+  /// Called when this->getValPtr() is destroyed, inside ~Value(), so you
+  /// may call any non-virtual Value method on getValPtr(), but no subclass
+  /// methods.  If WeakVH were implemented as a CallbackVH, it would use this
+  /// method to call setValPtr(NULL).  AssertingVH would use this method to
+  /// cause an assertion failure.
   ///
   /// All implementations must remove the reference from this object to the
   /// Value that's being destroyed.
   virtual void deleted() { setValPtr(nullptr); }
 
+  /// \brief Callback for Value RAUW.
+  ///
   /// Called when this->getValPtr()->replaceAllUsesWith(new_value) is called,
   /// _before_ any of the uses have actually been replaced.  If WeakVH were
   /// implemented as a CallbackVH, it would use this method to call
