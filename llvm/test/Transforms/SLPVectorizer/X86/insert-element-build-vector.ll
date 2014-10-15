@@ -35,6 +35,49 @@ define <4 x float> @simple_select(<4 x float> %a, <4 x float> %b, <4 x i32> %c) 
   ret <4 x float> %rd
 }
 
+declare void @llvm.assume(i1) nounwind
+
+; This entire tree is ephemeral, don't vectorize any of it.
+define <4 x float> @simple_select_eph(<4 x float> %a, <4 x float> %b, <4 x i32> %c) #0 {
+; CHECK-LABEL: @simple_select_eph(
+; CHECK-NOT: icmp ne <4 x i32>
+; CHECK-NOT: select <4 x i1>
+  %c0 = extractelement <4 x i32> %c, i32 0
+  %c1 = extractelement <4 x i32> %c, i32 1
+  %c2 = extractelement <4 x i32> %c, i32 2
+  %c3 = extractelement <4 x i32> %c, i32 3
+  %a0 = extractelement <4 x float> %a, i32 0
+  %a1 = extractelement <4 x float> %a, i32 1
+  %a2 = extractelement <4 x float> %a, i32 2
+  %a3 = extractelement <4 x float> %a, i32 3
+  %b0 = extractelement <4 x float> %b, i32 0
+  %b1 = extractelement <4 x float> %b, i32 1
+  %b2 = extractelement <4 x float> %b, i32 2
+  %b3 = extractelement <4 x float> %b, i32 3
+  %cmp0 = icmp ne i32 %c0, 0
+  %cmp1 = icmp ne i32 %c1, 0
+  %cmp2 = icmp ne i32 %c2, 0
+  %cmp3 = icmp ne i32 %c3, 0
+  %s0 = select i1 %cmp0, float %a0, float %b0
+  %s1 = select i1 %cmp1, float %a1, float %b1
+  %s2 = select i1 %cmp2, float %a2, float %b2
+  %s3 = select i1 %cmp3, float %a3, float %b3
+  %ra = insertelement <4 x float> undef, float %s0, i32 0
+  %rb = insertelement <4 x float> %ra, float %s1, i32 1
+  %rc = insertelement <4 x float> %rb, float %s2, i32 2
+  %rd = insertelement <4 x float> %rc, float %s3, i32 3
+  %q0 = extractelement <4 x float> %rd, i32 0
+  %q1 = extractelement <4 x float> %rd, i32 1
+  %q2 = extractelement <4 x float> %rd, i32 2
+  %q3 = extractelement <4 x float> %rd, i32 3
+  %q4 = fadd float %q0, %q1
+  %q5 = fadd float %q2, %q3
+  %q6 = fadd float %q4, %q5
+  %qi = fcmp olt float %q6, %q5
+  call void @llvm.assume(i1 %qi)
+  ret <4 x float> undef
+}
+
 ; Insert in an order different from the vector indices to make sure it
 ; doesn't matter
 define <4 x float> @simple_select_insert_out_of_order(<4 x float> %a, <4 x float> %b, <4 x i32> %c) #0 {

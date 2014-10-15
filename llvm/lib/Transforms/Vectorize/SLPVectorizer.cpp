@@ -21,6 +21,8 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/AssumptionTracker.h"
+#include "llvm/Analysis/CodeMetrics.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
@@ -396,10 +398,12 @@ public:
 
   BoUpSLP(Function *Func, ScalarEvolution *Se, const DataLayout *Dl,
           TargetTransformInfo *Tti, TargetLibraryInfo *TLi, AliasAnalysis *Aa,
-          LoopInfo *Li, DominatorTree *Dt)
+          LoopInfo *Li, DominatorTree *Dt, AssumptionTracker *AT)
       : NumLoadsWantToKeepOrder(0), NumLoadsWantToChangeOrder(0),
         F(Func), SE(Se), DL(Dl), TTI(Tti), TLI(TLi), AA(Aa), LI(Li), DT(Dt),
-        Builder(Se->getContext()) {}
+        Builder(Se->getContext()) {
+    CodeMetrics::collectEphemeralValues(F, AT, EphValues);
+  }
 
   /// \brief Vectorize the tree that starts with the elements in \p VL.
   /// Returns the vectorized root.
@@ -554,6 +558,9 @@ private:
   /// A list of values that need to extracted out of the tree.
   /// This list holds pairs of (Internal Scalar : External User).
   UserList ExternalUses;
+
+  /// Values used only by @llvm.assume calls.
+  SmallPtrSet<const Value *, 32> EphValues;
 
   /// Holds all of the instructions that we gathered.
   SetVector<Instruction *> GatherSeq;
@@ -987,6 +994,16 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
 
   // We now know that this is a vector of instructions of the same type from
   // the same block.
+
+  // Don't vectorize ephemeral values.
+  for (unsigned i = 0, e = VL.size(); i != e; ++i) {
+    if (EphValues.count(VL[i])) {
+      DEBUG(dbgs() << "SLP: The instruction (" << *VL[i] <<
+            ") is ephemeral.\n");
+      newTreeEntry(VL, false);
+      return;
+    }
+  }
 
   // Check if this is a duplicate of another entry.
   if (ScalarToTreeEntry.count(VL[0])) {
@@ -1708,6 +1725,12 @@ int BoUpSLP::getTreeCost() {
        I != E; ++I) {
     // We only add extract cost once for the same scalar.
     if (!ExtractCostCalculated.insert(I->Scalar))
+      continue;
+
+    // Uses by ephemeral values are free (because the ephemeral value will be
+    // removed prior to code generation, and so the extraction will be
+    // removed as well).
+    if (EphValues.count(I->User))
       continue;
 
     VectorType *VecTy = VectorType::get(I->Scalar->getType(), BundleWidth);
@@ -2810,6 +2833,7 @@ struct SLPVectorizer : public FunctionPass {
   AliasAnalysis *AA;
   LoopInfo *LI;
   DominatorTree *DT;
+  AssumptionTracker *AT;
 
   bool runOnFunction(Function &F) override {
     if (skipOptnoneFunction(F))
@@ -2823,6 +2847,7 @@ struct SLPVectorizer : public FunctionPass {
     AA = &getAnalysis<AliasAnalysis>();
     LI = &getAnalysis<LoopInfo>();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+    AT = &getAnalysis<AssumptionTracker>();
 
     StoreRefs.clear();
     bool Changed = false;
@@ -2845,7 +2870,7 @@ struct SLPVectorizer : public FunctionPass {
 
     // Use the bottom up slp vectorizer to construct chains that start with
     // store instructions.
-    BoUpSLP R(&F, SE, DL, TTI, TLI, AA, LI, DT);
+    BoUpSLP R(&F, SE, DL, TTI, TLI, AA, LI, DT, AT);
 
     // Scan the blocks in the function in post order.
     for (po_iterator<BasicBlock*> it = po_begin(&F.getEntryBlock()),
@@ -2872,6 +2897,7 @@ struct SLPVectorizer : public FunctionPass {
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     FunctionPass::getAnalysisUsage(AU);
+    AU.addRequired<AssumptionTracker>();
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<AliasAnalysis>();
     AU.addRequired<TargetTransformInfo>();
@@ -3746,6 +3772,7 @@ static const char lv_name[] = "SLP Vectorizer";
 INITIALIZE_PASS_BEGIN(SLPVectorizer, SV_NAME, lv_name, false, false)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_END(SLPVectorizer, SV_NAME, lv_name, false, false)
