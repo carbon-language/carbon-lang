@@ -29,6 +29,9 @@ static StringRef GetGlobalTypeString(const llvm::GlobalValue &G) {
   return "<unknown type>";
 }
 
+SanitizerBlacklist::SanitizerBlacklist(const std::string &BlacklistPath)
+    : SCL(llvm::SpecialCaseList::createOrDie(BlacklistPath)) {}
+
 bool SanitizerBlacklist::isIn(const llvm::Module &M,
                               StringRef Category) const {
   return SCL->inSection("src", M.getModuleIdentifier(), Category);

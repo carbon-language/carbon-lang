@@ -18,6 +18,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/SpecialCaseList.h"
 #include <memory>
+#include <string>
 
 namespace llvm {
 class GlobalVariable;
@@ -31,8 +32,7 @@ class SanitizerBlacklist {
   std::unique_ptr<llvm::SpecialCaseList> SCL;
 
 public:
-  SanitizerBlacklist(std::unique_ptr<llvm::SpecialCaseList> SCL)
-      : SCL(std::move(SCL)) {}
+  SanitizerBlacklist(const std::string &BlacklistPath);
   bool isIn(const llvm::Module &M,
             StringRef Category = StringRef()) const;
   bool isIn(const llvm::Function &F) const;

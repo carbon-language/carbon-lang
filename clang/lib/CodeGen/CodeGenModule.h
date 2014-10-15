@@ -475,8 +475,6 @@ class CodeGenModule : public CodeGenTypeCache {
 
   GlobalDecl initializedGlobalDecl;
 
-  SanitizerBlacklist SanitizerBL;
-
   std::unique_ptr<SanitizerMetadata> SanitizerMD;
 
   /// @}
@@ -1048,7 +1046,7 @@ public:
   void AddGlobalAnnotations(const ValueDecl *D, llvm::GlobalValue *GV);
 
   const SanitizerBlacklist &getSanitizerBlacklist() const {
-    return SanitizerBL;
+    return Context.getSanitizerBlacklist();
   }
 
   SanitizerMetadata *getSanitizerMetadata() {
