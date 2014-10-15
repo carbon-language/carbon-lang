@@ -6449,6 +6449,7 @@ enum CX_StorageClass clang_Cursor_getStorageClass(CXCursor C) {
   case SC_Register:
     return CX_SC_Register;
   }
+  llvm_unreachable("Unhandled storage class!");
 }
 
 CXCursor clang_getCursorSemanticParent(CXCursor cursor) {
