@@ -552,7 +552,7 @@ lldb_private::formatters::NSDateSummaryProvider (ValueObject& valobj, Stream& st
     // vendor decides to get creative
     time_t epoch = GetOSXEpoch();
     epoch = epoch + (time_t)date_value;
-    tm *tm_date = localtime(&epoch);
+    tm *tm_date = gmtime(&epoch);
     if (!tm_date)
         return false;
     std::string buffer(1024,0);
