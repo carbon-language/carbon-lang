@@ -2148,9 +2148,6 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
 
     if (ConstantSDNode *CVal = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
       if (Signed) {
-        // Avoid undefined left shift of a negative in the constant fold.
-        // TODO: I'm not sure what the behavior of the hardware is, this should
-        // probably follow that instead.
         return constantFoldBFE<int32_t>(DAG,
                                         CVal->getSExtValue(),
                                         OffsetVal,
