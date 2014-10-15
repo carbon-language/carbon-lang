@@ -4455,9 +4455,9 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
                         ++offset;
                     }
                     // Now skip all arguments
-                    for (int i=0; i<static_cast<int>(argc); ++i)
+                    for (uint32_t i = 0; i < argc; ++i)
                     {
-                        cstr = data.GetCStr(&offset);
+                        data.GetCStr(&offset);
                     }
                     
                     // Now iterate across all environment variables

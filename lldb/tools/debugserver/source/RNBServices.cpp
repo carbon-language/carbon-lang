@@ -194,7 +194,7 @@ ListApplications(std::string& plist, bool opt_runningApps, bool opt_debuggable)
 #else // #if defined (WITH_SPRINGBOARD) || defined (WITH_BKS)
     // When root, show all processes
     bool all_users = (our_uid == 0);
-    result = GetProcesses (plistMutableArray.get(), all_users);
+    GetProcesses (plistMutableArray.get(), all_users);
 #endif
     
     CFReleaser<CFDataRef> plistData (::CFPropertyListCreateXMLData (alloc, plistMutableArray.get()));

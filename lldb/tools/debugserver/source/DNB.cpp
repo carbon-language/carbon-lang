@@ -192,24 +192,20 @@ kqueue_thread (void *arg)
             bool exited = false;
             int signal = 0;
             int exit_status = 0;
-            const char *status_cstr = NULL;
             if (WIFSTOPPED(status))
             {
                 signal = WSTOPSIG(status);
-                status_cstr = "STOPPED";
                 DNBLogThreadedIf(LOG_PROCESS, "waitpid (%i) -> STOPPED (signal = %i)", child_pid, signal);
             }
             else if (WIFEXITED(status))
             {
                 exit_status = WEXITSTATUS(status);
-                status_cstr = "EXITED";
                 exited = true;
                 DNBLogThreadedIf(LOG_PROCESS, "waitpid (%i) -> EXITED (status = %i)", child_pid, exit_status);
             }
             else if (WIFSIGNALED(status))
             {
                 signal = WTERMSIG(status);
-                status_cstr = "SIGNALED";
                 if (child_pid == abs(pid))
                 {
                     DNBLogThreadedIf(LOG_PROCESS, "waitpid (%i) -> SIGNALED and EXITED (signal = %i)", child_pid, signal);

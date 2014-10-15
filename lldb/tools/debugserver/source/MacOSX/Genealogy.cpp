@@ -236,12 +236,10 @@ Genealogy::GetActivities(pid_t pid, const MachThreadList &thread_list, task_t ta
             nub_thread_t thread_id = iter->first;
             uint64_t activity_id = iter->second;
             ActivityList::const_iterator activity_search;
-            bool found_activity_for_this_thread = false;
             for (activity_search = activities.begin(); activity_search != activities.end(); ++activity_search)
             {
                 if (activity_search->activity_id == activity_id)
                 {
-                    found_activity_for_this_thread = true;
                     ThreadActivitySP thread_activity_sp (new ThreadActivity());
                     thread_activity_sp->current_activity = *activity_search;
     

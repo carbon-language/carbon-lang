@@ -309,9 +309,9 @@ static void get_threads_profile_data(DNBProfileDataScanType scanType, task_t tas
             threads_used_usec.push_back(used_usec);
         }
         
-        kr = mach_port_deallocate(mach_task_self(), threads[i]);
+        mach_port_deallocate(mach_task_self(), threads[i]);
     }
-    kr = mach_vm_deallocate(mach_task_self(), (mach_vm_address_t)(uintptr_t)threads, tcnt * sizeof(*threads));
+    mach_vm_deallocate(mach_task_self(), (mach_vm_address_t)(uintptr_t)threads, tcnt * sizeof(*threads));
 }
 
 #define RAW_HEXBASE     std::setfill('0') << std::hex << std::right
