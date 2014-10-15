@@ -105,7 +105,6 @@ ThreadPlanStepInRange::SetupAvoidNoDebug(LazyBool step_in_avoids_code_without_de
     else
         GetFlags().Clear (ThreadPlanShouldStopHere::eStepInAvoidNoDebug);
     
-    avoid_nodebug = true;
     switch (step_out_avoids_code_without_debug_info)
     {
         case eLazyBoolYes:
