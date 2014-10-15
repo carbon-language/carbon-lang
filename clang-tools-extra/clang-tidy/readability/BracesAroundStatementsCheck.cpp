@@ -16,6 +16,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
+namespace readability {
 namespace {
 
 tok::TokenKind getTokenKind(SourceLocation Loc, const SourceManager &SM,
@@ -251,5 +252,6 @@ BracesAroundStatementsCheck::checkStmt(const MatchFinder::MatchResult &Result,
        << FixItHint::CreateInsertion(EndLoc, ClosingInsertion);
 }
 
+} // namespace readability
 } // namespace tidy
 } // namespace clang

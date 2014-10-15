@@ -14,6 +14,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
+namespace readability {
 
 FunctionSizeCheck::FunctionSizeCheck(StringRef Name, ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context),
@@ -100,5 +101,6 @@ void FunctionSizeCheck::onEndOfTranslationUnit() {
   FunctionInfos.clear();
 }
 
+} // namespace readability
 } // namespace tidy
 } // namespace clang

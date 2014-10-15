@@ -7,13 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_FUNCTIONSIZE_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_FUNCTIONSIZE_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_READABILITY_FUNCTIONSIZE_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_READABILITY_FUNCTIONSIZE_H
 
 #include "../ClangTidy.h"
 
 namespace clang {
 namespace tidy {
+namespace readability {
 
 /// \brief Checks for large functions based on various metrics.
 class FunctionSizeCheck : public ClangTidyCheck {
@@ -40,7 +41,8 @@ private:
   llvm::DenseMap<const FunctionDecl *, FunctionInfo> FunctionInfos;
 };
 
+} // namespace readability
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_FUNCTIONSIZE_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_READABILITY_FUNCTIONSIZE_H

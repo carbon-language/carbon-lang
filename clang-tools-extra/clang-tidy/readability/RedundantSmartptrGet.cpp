@@ -15,6 +15,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
+namespace readability {
 
 namespace {
 internal::Matcher<Expr> callToGet(internal::Matcher<Decl> OnClass) {
@@ -117,5 +118,6 @@ void RedundantSmartptrGet::check(const MatchFinder::MatchResult &Result) {
       << FixItHint::CreateReplacement(GetCall->getSourceRange(), Replacement);
 }
 
+} // namespace readability
 } // namespace tidy
 } // namespace clang

@@ -7,13 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_REDUNDANT_SMARTPTR_GET_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_REDUNDANT_SMARTPTR_GET_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_READABILITY_REDUNDANTSMARTPTRGET_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_READABILITY_REDUNDANTSMARTPTRGET_H
 
 #include "../ClangTidy.h"
 
 namespace clang {
 namespace tidy {
+namespace readability {
 
 /// \brief Find and remove redundant calls to smart pointer's .get() method.
 ///
@@ -29,8 +30,9 @@ public:
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 
+} // namespace readability
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_REDUNDANT_SMARTPTR_GET_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_READABILITY_REDUNDANTSMARTPTRGET_H
 
