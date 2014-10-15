@@ -191,7 +191,7 @@ define i16 @test16(i1 *%addr, i16 %a) {
 define i8 @test17(i1 *%addr, i8 %a) {
   %x = load i1 * %addr, align 128
   %a1 = bitcast i8 %a to <8 x i1>
-  %x1 = insertelement <8 x i1> %a1, i1 %x, i32 10
+  %x1 = insertelement <8 x i1> %a1, i1 %x, i32 4
   %x2 = bitcast <8 x i1>%x1 to i8
   ret i8 %x2
 }
