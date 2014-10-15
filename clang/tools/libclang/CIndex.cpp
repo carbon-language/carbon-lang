@@ -2807,7 +2807,8 @@ enum CXErrorCode clang_createTranslationUnit2(CXIndex CIdx,
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
   FileSystemOptions FileSystemOpts;
 
-  IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
+  IntrusiveRefCntPtr<DiagnosticsEngine> Diags =
+      CompilerInstance::createDiagnostics(new DiagnosticOptions());
   std::unique_ptr<ASTUnit> AU = ASTUnit::LoadFromASTFile(
       ast_filename, Diags, FileSystemOpts, CXXIdx->getOnlyLocalDecls(), None,
       /*CaptureDiagnostics=*/true,

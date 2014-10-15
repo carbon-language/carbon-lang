@@ -642,20 +642,11 @@ ASTUnit::getBufferForFile(StringRef Filename, std::string *ErrorStr) {
 }
 
 /// \brief Configure the diagnostics object for use with ASTUnit.
-void ASTUnit::ConfigureDiags(IntrusiveRefCntPtr<DiagnosticsEngine> &Diags,
+void ASTUnit::ConfigureDiags(IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                              ASTUnit &AST, bool CaptureDiagnostics) {
-  if (!Diags.get()) {
-    // No diagnostics engine was provided, so create our own diagnostics object
-    // with the default options.
-    DiagnosticConsumer *Client = nullptr;
-    if (CaptureDiagnostics)
-      Client = new StoredDiagnosticConsumer(AST.StoredDiagnostics);
-    Diags = CompilerInstance::createDiagnostics(new DiagnosticOptions(),
-                                                Client,
-                                                /*ShouldOwnClient=*/true);
-  } else if (CaptureDiagnostics) {
+  assert(Diags.get() && "no DiagnosticsEngine was provided");
+  if (CaptureDiagnostics)
     Diags->setClient(new StoredDiagnosticConsumer(AST.StoredDiagnostics));
-  }
 }
 
 std::unique_ptr<ASTUnit> ASTUnit::LoadFromASTFile(
@@ -1928,11 +1919,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(
     bool AllowPCHWithCompilerErrors, bool SkipFunctionBodies,
     bool UserFilesAreVolatile, bool ForSerialization,
     std::unique_ptr<ASTUnit> *ErrAST) {
-  if (!Diags.get()) {
-    // No diagnostics engine was provided, so create our own diagnostics object
-    // with the default options.
-    Diags = CompilerInstance::createDiagnostics(new DiagnosticOptions());
-  }
+  assert(Diags.get() && "no DiagnosticsEngine was provided");
 
   SmallVector<StoredDiagnostic, 4> StoredDiagnostics;
   

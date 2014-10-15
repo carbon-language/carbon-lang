@@ -305,7 +305,7 @@ private:
   /// \brief The language options used when we load an AST file.
   LangOptions ASTFileLangOpts;
 
-  static void ConfigureDiags(IntrusiveRefCntPtr<DiagnosticsEngine> &Diags,
+  static void ConfigureDiags(IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                              ASTUnit &AST, bool CaptureDiagnostics);
 
   void TranslateStoredDiagnostics(FileManager &FileMgr,
