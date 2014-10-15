@@ -453,11 +453,13 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst,
     } else {
       DF = new MCDataFragment();
       insert(DF);
-      if (SD->getBundleLockState() == MCSectionData::BundleLockedAlignToEnd) {
-        // If this is a new fragment created for a bundle-locked group, and the
-        // group was marked as "align_to_end", set a flag in the fragment.
-        DF->setAlignToBundleEnd(true);
-      }
+    }
+    if (SD->getBundleLockState() == MCSectionData::BundleLockedAlignToEnd) {
+      // If this fragment is for a group marked "align_to_end", set a flag
+      // in the fragment. This can happen after the fragment has already been
+      // created if there are nested bundle_align groups and an inner one
+      // is the one marked align_to_end.
+      DF->setAlignToBundleEnd(true);
     }
 
     // We're now emitting an instruction in a bundle group, so this flag has
@@ -479,10 +481,11 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst,
 void MCELFStreamer::EmitBundleAlignMode(unsigned AlignPow2) {
   assert(AlignPow2 <= 30 && "Invalid bundle alignment");
   MCAssembler &Assembler = getAssembler();
-  if (Assembler.getBundleAlignSize() == 0 && AlignPow2 > 0)
-    Assembler.setBundleAlignSize(1 << AlignPow2);
+  if (AlignPow2 > 0 && (Assembler.getBundleAlignSize() == 0 ||
+                        Assembler.getBundleAlignSize() == 1U << AlignPow2))
+    Assembler.setBundleAlignSize(1U << AlignPow2);
   else
-    report_fatal_error(".bundle_align_mode should be only set once per file");
+    report_fatal_error(".bundle_align_mode cannot be changed once set");
 }
 
 void MCELFStreamer::EmitBundleLock(bool AlignToEnd) {
@@ -492,12 +495,12 @@ void MCELFStreamer::EmitBundleLock(bool AlignToEnd) {
   //
   if (!getAssembler().isBundlingEnabled())
     report_fatal_error(".bundle_lock forbidden when bundling is disabled");
-  else if (SD->isBundleLocked())
-    report_fatal_error("Nesting of .bundle_lock is forbidden");
+
+  if (!SD->isBundleLocked())
+    SD->setBundleGroupBeforeFirstInst(true);
 
   SD->setBundleLockState(AlignToEnd ? MCSectionData::BundleLockedAlignToEnd :
                                       MCSectionData::BundleLocked);
-  SD->setBundleGroupBeforeFirstInst(true);
 }
 
 void MCELFStreamer::EmitBundleUnlock() {
