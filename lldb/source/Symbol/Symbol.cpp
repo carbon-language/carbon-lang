@@ -626,7 +626,7 @@ Symbol::ResolveCallableAddress(Target &target) const
     
     Address func_so_addr;
     
-    bool is_indirect;
+    bool is_indirect = IsIndirect();
     if (GetType() == eSymbolTypeReExported)
     {
         Symbol *reexported_symbol = ResolveReExportedSymbol(target);
