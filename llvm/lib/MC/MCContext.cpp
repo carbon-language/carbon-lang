@@ -113,6 +113,23 @@ MCSymbol *MCContext::GetOrCreateSymbol(StringRef Name) {
   return Sym;
 }
 
+MCSymbol *MCContext::getOrCreateSectionSymbol(const MCSectionELF &Section) {
+  MCSymbol *&Sym = SectionSymbols[&Section];
+  if (Sym)
+    return Sym;
+
+  StringRef Name = Section.getSectionName();
+  StringMapEntry<bool> *NameEntry = &UsedNames.GetOrCreateValue(Name);
+  NameEntry->setValue(true);
+  Sym = new (*this) MCSymbol(NameEntry->getKey(), /*isTemporary*/ false);
+
+  StringMapEntry<MCSymbol*> &Entry = Symbols.GetOrCreateValue(Name);
+  if (!Entry.getValue())
+    Entry.setValue(Sym);
+
+  return Sym;
+}
+
 MCSymbol *MCContext::CreateSymbol(StringRef Name) {
   // Determine whether this is an assembler temporary or normal label, if used.
   bool isTemporary = false;
