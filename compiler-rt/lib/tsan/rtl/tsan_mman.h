@@ -26,9 +26,9 @@ void AllocatorPrintStats();
 
 // For user allocations.
 void *user_alloc(ThreadState *thr, uptr pc, uptr sz,
-                 uptr align = kDefaultAlignment);
+                 uptr align = kDefaultAlignment, bool signal = true);
 // Does not accept NULL.
-void user_free(ThreadState *thr, uptr pc, void *p);
+void user_free(ThreadState *thr, uptr pc, void *p, bool signal = true);
 void *user_realloc(ThreadState *thr, uptr pc, void *p, uptr sz);
 void *user_alloc_aligned(ThreadState *thr, uptr pc, uptr sz, uptr align);
 uptr user_alloc_usable_size(const void *p);

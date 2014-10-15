@@ -1,4 +1,4 @@
-// RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
+// RUN: %clangxx_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
 
 // Always enable asserts.
 #ifdef NDEBUG
@@ -37,7 +37,7 @@ int main() {
 
   // Restore the original set.
   assert(0 == sigprocmask(SIG_SETMASK, &old_set, NULL));
-  printf("DONE");
+  printf("DONE\n");
 }
 
 // CHECK: HANDLER
