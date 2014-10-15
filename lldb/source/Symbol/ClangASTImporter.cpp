@@ -86,7 +86,7 @@ ClangASTImporter::CopyDecl (clang::ASTContext *dst_ast,
 
             if (log)
             {
-                lldb::user_id_t user_id;
+                lldb::user_id_t user_id = LLDB_INVALID_UID;
                 ClangASTMetadata *metadata = GetDeclMetadata(decl);
                 if (metadata)
                     user_id = metadata->GetUserID();
