@@ -96,9 +96,10 @@ protected:
     unsigned : NumInlineContentCommentBits;
 
     unsigned RenderKind : 2;
-    unsigned CommandID : 8;
+    unsigned CommandID : CommandInfo::NumCommandIDBits;
   };
-  enum { NumInlineCommandCommentBits = NumInlineContentCommentBits + 10 };
+  enum { NumInlineCommandCommentBits = NumInlineContentCommentBits + 2 + 
+                                       CommandInfo::NumCommandIDBits };
 
   class HTMLTagCommentBitfields {
     friend class HTMLTagComment;
@@ -139,13 +140,14 @@ protected:
 
     unsigned : NumCommentBits;
 
-    unsigned CommandID : 8;
+    unsigned CommandID : CommandInfo::NumCommandIDBits;
 
     /// Describes the syntax that was used in a documentation command.
     /// Contains values from CommandMarkerKind enum.
     unsigned CommandMarker : 1;
   };
-  enum { NumBlockCommandCommentBits = NumCommentBits + 9 };
+  enum { NumBlockCommandCommentBits = NumCommentBits + 
+                                      CommandInfo::NumCommandIDBits + 1 };
 
   class ParamCommandCommentBitfields {
     friend class ParamCommandComment;

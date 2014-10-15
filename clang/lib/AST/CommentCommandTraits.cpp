@@ -89,6 +89,10 @@ CommandInfo *CommandTraits::createCommandInfoWithName(StringRef CommandName) {
   // Value-initialize (=zero-initialize in this case) a new CommandInfo.
   CommandInfo *Info = new (Allocator) CommandInfo();
   Info->Name = Name;
+  // We only have a limited number of bits to encode command IDs in the
+  // CommandInfo structure, so the ID numbers can potentially wrap around.
+  assert((NextID < (1 << CommandInfo::NumCommandIDBits))
+         && "Too many commands. We have limited bits for the command ID.");
   Info->ID = NextID++;
 
   RegisteredCommands.push_back(Info);

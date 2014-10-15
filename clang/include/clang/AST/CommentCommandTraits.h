@@ -40,7 +40,11 @@ struct CommandInfo {
   /// Name of the command that ends the verbatim block.
   const char *EndCommandName;
 
-  unsigned ID : 8;
+  /// DRY definition of the number of bits used for a command ID.
+  enum { NumCommandIDBits = 20 };
+
+  /// The ID of the command.
+  unsigned ID : NumCommandIDBits;
 
   /// Number of word-like arguments for a given block command, except for
   /// \\param and \\tparam commands -- these have special argument parsers.
