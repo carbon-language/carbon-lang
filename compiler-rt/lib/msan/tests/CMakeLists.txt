@@ -48,7 +48,7 @@ set(MSAN_UNITTEST_LINK_FLAGS
   -lstdc++
 )
 
-append_if(COMPILER_RT_HAS_LIBDL -ldl MSAN_UNITTEST_LINK_FLAGS)
+append_list_if(COMPILER_RT_HAS_LIBDL -ldl MSAN_UNITTEST_LINK_FLAGS)
 set(MSAN_LOADABLE_LINK_FLAGS
   -fsanitize=memory
   -shared

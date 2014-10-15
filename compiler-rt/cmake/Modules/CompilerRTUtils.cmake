@@ -26,7 +26,7 @@ macro(pythonize_bool var)
 endmacro()
 
 # Appends value to all lists in ARGN, if the condition is true.
-macro(append_if condition value)
+macro(append_list_if condition value)
   if(${condition})
     foreach(list ${ARGN})
       list(APPEND ${list} ${value})
@@ -44,6 +44,6 @@ macro(append_string_if condition value)
 endmacro()
 
 macro(append_no_rtti_flag list)
-  append_if(COMPILER_RT_HAS_FNO_RTTI_FLAG -fno-rtti ${list})
-  append_if(COMPILER_RT_HAS_GR_FLAG /GR- ${list})
+  append_list_if(COMPILER_RT_HAS_FNO_RTTI_FLAG -fno-rtti ${list})
+  append_list_if(COMPILER_RT_HAS_GR_FLAG /GR- ${list})
 endmacro()

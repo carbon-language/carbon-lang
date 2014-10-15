@@ -23,8 +23,8 @@ set(DD_HEADERS
 )
 
 set(DD_LINKLIBS)
-append_if(COMPILER_RT_HAS_LIBDL dl DD_LINKLIBS)
-append_if(COMPILER_RT_HAS_LIBPTHREAD pthread DD_LINKLIBS)
+append_list_if(COMPILER_RT_HAS_LIBDL dl DD_LINKLIBS)
+append_list_if(COMPILER_RT_HAS_LIBPTHREAD pthread DD_LINKLIBS)
 
 add_custom_target(dd)
 # Deadlock detector is currently supported on 64-bit Linux only.

@@ -5,12 +5,12 @@ include_directories(..)
 set(TSAN_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 # SANITIZER_COMMON_CFLAGS contains -fPIC, but it's performance-critical for
 # TSan runtime to be built with -fPIE to reduce the number of register spills.
-append_if(COMPILER_RT_HAS_FPIE_FLAG -fPIE TSAN_CFLAGS)
+append_list_if(COMPILER_RT_HAS_FPIE_FLAG -fPIE TSAN_CFLAGS)
 append_no_rtti_flag(TSAN_CFLAGS)
 
 set(TSAN_RTL_CFLAGS ${TSAN_CFLAGS})
-append_if(COMPILER_RT_HAS_WFRAME_LARGER_THAN_FLAG -Wframe-larger-than=512 TSAN_RTL_CFLAGS)
-append_if(COMPILER_RT_HAS_WGLOBAL_CONSTRUCTORS_FLAG -Wglobal-constructors TSAN_RTL_CFLAGS)
+append_list_if(COMPILER_RT_HAS_WFRAME_LARGER_THAN_FLAG -Wframe-larger-than=512 TSAN_RTL_CFLAGS)
+append_list_if(COMPILER_RT_HAS_WGLOBAL_CONSTRUCTORS_FLAG -Wglobal-constructors TSAN_RTL_CFLAGS)
 # FIXME: Add support for --sysroot=. compile flag:
 
 if("${CMAKE_BUILD_TYPE}" EQUAL "Release")

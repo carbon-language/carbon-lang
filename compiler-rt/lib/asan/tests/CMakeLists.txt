@@ -31,7 +31,7 @@ set(ASAN_UNITTEST_COMMON_CFLAGS
   -O2
   -Wno-format
   -Werror=sign-compare)
-append_if(COMPILER_RT_HAS_WNO_VARIADIC_MACROS_FLAG -Wno-variadic-macros ASAN_UNITTEST_COMMON_CFLAGS)
+append_list_if(COMPILER_RT_HAS_WNO_VARIADIC_MACROS_FLAG -Wno-variadic-macros ASAN_UNITTEST_COMMON_CFLAGS)
 
 # -gline-tables-only must be enough for ASan, so use it if possible.
 if(COMPILER_RT_TEST_COMPILER_ID MATCHES "Clang")
@@ -81,20 +81,20 @@ set(ASAN_DYNAMIC_UNITTEST_INSTRUMENTED_LINKFLAGS
 
 set(ASAN_UNITTEST_INSTRUMENTED_LIBS)
 # NDK r10 requires -latomic almost always.
-append_if(ANDROID atomic ASAN_UNITTEST_INSTRUMENTED_LIBS)
+append_list_if(ANDROID atomic ASAN_UNITTEST_INSTRUMENTED_LIBS)
 
 set(ASAN_UNITTEST_NOINST_LINKFLAGS ${ASAN_UNITTEST_COMMON_LINKFLAGS})
-append_if(COMPILER_RT_HAS_LIBM -lm ASAN_UNITTEST_NOINST_LINKFLAGS)
-append_if(COMPILER_RT_HAS_LIBDL -ldl ASAN_UNITTEST_NOINST_LINKFLAGS)
-append_if(COMPILER_RT_HAS_LIBPTHREAD -pthread ASAN_UNITTEST_NOINST_LINKFLAGS)
-append_if(COMPILER_RT_HAS_LIBPTHREAD -pthread
+append_list_if(COMPILER_RT_HAS_LIBM -lm ASAN_UNITTEST_NOINST_LINKFLAGS)
+append_list_if(COMPILER_RT_HAS_LIBDL -ldl ASAN_UNITTEST_NOINST_LINKFLAGS)
+append_list_if(COMPILER_RT_HAS_LIBPTHREAD -pthread ASAN_UNITTEST_NOINST_LINKFLAGS)
+append_list_if(COMPILER_RT_HAS_LIBPTHREAD -pthread
           ASAN_DYNAMIC_UNITTEST_INSTRUMENTED_LINKFLAGS)
 
 # TODO(eugenis): move all -l flags above to _LIBS?
 set(ASAN_UNITTEST_NOINST_LIBS)
-append_if(ANDROID log ASAN_UNITTEST_NOINST_LIBS)
+append_list_if(ANDROID log ASAN_UNITTEST_NOINST_LIBS)
 # NDK r10 requires -latomic almost always.
-append_if(ANDROID atomic ASAN_UNITTEST_NOINST_LIBS)
+append_list_if(ANDROID atomic ASAN_UNITTEST_NOINST_LIBS)
 
 # Compile source for the given architecture, using compiler
 # options in ${ARGN}, and add it to the object list.
