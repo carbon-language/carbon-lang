@@ -15,6 +15,7 @@ add_lldb_library(lldbDataFormatters
   LibStdcpp.cpp
   NSArray.cpp
   NSDictionary.cpp
+  NSIndexPath.cpp
   NSSet.cpp
   TypeCategory.cpp
   TypeCategoryMap.cpp
