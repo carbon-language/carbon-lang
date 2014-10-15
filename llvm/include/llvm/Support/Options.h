@@ -28,9 +28,9 @@
 /// example of reading the above option would be:
 ///
 /// ScalarizeLoadStore =
-///   M.getContext().template getOption<bool,
-///                                     Scalarizer,
-///                                     &Scalarizer::ScalarizeLoadStore>();
+///   M.getContext().getOption<bool,
+///                            Scalarizer,
+///                            &Scalarizer::ScalarizeLoadStore>();
 ///
 //===----------------------------------------------------------------------===//
 
