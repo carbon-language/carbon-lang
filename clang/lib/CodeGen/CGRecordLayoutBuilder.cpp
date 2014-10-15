@@ -285,7 +285,7 @@ void CGRecordLowering::lowerUnion() {
   // Iterate through the fields setting bitFieldInfo and the Fields array. Also
   // locate the "most appropriate" storage type.  The heuristic for finding the
   // storage type isn't necessary, the first (non-0-length-bitfield) field's
-  // type would work fine and be simpler but would be differen than what we've
+  // type would work fine and be simpler but would be different than what we've
   // been doing and cause lit tests to change.
   for (const auto *Field : D->fields()) {
     if (Field->isBitField()) {
