@@ -62,6 +62,8 @@ static bool isExtended(uint64_t TSFlags) {
   return (TSFlags >> HexagonII::ExtendedPos) & HexagonII::ExtendedMask;
 }
 
+// Currently just used in an assert statement
+static bool isExtendable(uint64_t TSFlags) LLVM_ATTRIBUTE_UNUSED;
 // Return true if the instruction may be extended based on the operand value.
 static bool isExtendable(uint64_t TSFlags) {
   return (TSFlags >> HexagonII::ExtendablePos) & HexagonII::ExtendableMask;
