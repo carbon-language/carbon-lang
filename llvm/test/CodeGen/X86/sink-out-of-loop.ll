@@ -5,7 +5,7 @@
 ; MOV32ri outside the loop.
 ; rdar://11980766
 define i32 @sink_succ(i32 %argc, i8** nocapture %argv) nounwind uwtable ssp {
-; CHECK: sink_succ
+; CHECK-LABEL: sink_succ
 ; CHECK: [[OUTER_LN1:LBB0_[0-9]+]]: ## %preheader
 ; CHECK: %exit
 ; CHECK-NOT: movl
@@ -51,4 +51,25 @@ for.body2:
 
 for.end20:
   ret i32 0
+}
+
+define i32 @sink_out_of_loop(i32 %n, i32* %output) {
+; CHECK-LABEL: sink_out_of_loop:
+entry:
+  br label %loop
+
+loop:
+  %i = phi i32 [ 0, %entry ], [ %i2, %loop ]
+  %j = mul i32 %i, %i
+  %addr = getelementptr i32* %output, i32 %i
+  store i32 %i, i32* %addr
+  %i2 = add i32 %i, 1
+  %exit_cond = icmp sge i32 %i2, %n
+  br i1 %exit_cond, label %exit, label %loop
+
+exit:
+; CHECK: BB#2
+; CHECK: imull %eax, %eax
+; CHECK: retq
+  ret i32 %j
 }
