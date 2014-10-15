@@ -78,13 +78,15 @@ static uptr GetKernelAreaSize() {
 
 uptr GetMaxVirtualAddress() {
 #if SANITIZER_WORDSIZE == 64
-# if defined(__powerpc64__)
+# if defined(__powerpc64__) && defined(__BIG_ENDIAN__)
   // On PowerPC64 we have two different address space layouts: 44- and 46-bit.
   // We somehow need to figure out which one we are using now and choose
   // one of 0x00000fffffffffffUL and 0x00003fffffffffffUL.
   // Note that with 'ulimit -s unlimited' the stack is moved away from the top
   // of the address space, so simply checking the stack address is not enough.
   return (1ULL << 44) - 1;  // 0x00000fffffffffffUL
+# elif defined(__powerpc64__) && defined(__LITTLE_ENDIAN__)
+  return (1ULL << 46) - 1;  // 0x00003fffffffffffUL
 # elif defined(__aarch64__)
   return (1ULL << 39) - 1;
 # else

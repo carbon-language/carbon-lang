@@ -437,8 +437,8 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   // especially given that the alloca may be from entirely different place
   // (e.g. use-after-scope, or different thread's stack).
   StackTrace alloca_stack;
-#ifdef __powerpc64__
-  // On PowerPC64, the address of a function actually points to a
+#if defined(__powerpc64__) and defined(__BIG_ENDIAN__)
+  // On PowerPC64 ELFv1, the address of a function actually points to a
   // three-doubleword data structure with the first field containing
   // the address of the function's code.
   access.frame_pc = *reinterpret_cast<uptr *>(access.frame_pc);
