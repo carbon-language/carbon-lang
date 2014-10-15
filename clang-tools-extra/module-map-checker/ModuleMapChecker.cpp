@@ -94,9 +94,8 @@ using namespace clang;
 using namespace clang::driver;
 using namespace clang::driver::options;
 using namespace clang::tooling;
-using namespace llvm;
-using namespace llvm::opt;
-using namespace llvm::sys;
+namespace cl = llvm::cl;
+namespace sys = llvm::sys;
 
 // Option for include paths.
 static cl::list<std::string>
@@ -212,7 +211,7 @@ ModuleMapChecker::ModuleMapChecker(StringRef ModuleMapPath,
       DumpModuleMap(DumpModuleMap), CommandLine(CommandLine),
       LangOpts(new LangOptions()), DiagIDs(new DiagnosticIDs()),
       DiagnosticOpts(new DiagnosticOptions()),
-      DC(errs(), DiagnosticOpts.get()),
+      DC(llvm::errs(), DiagnosticOpts.get()),
       Diagnostics(
           new DiagnosticsEngine(DiagIDs, DiagnosticOpts.get(), &DC, false)),
       TargetOpts(new ModuleMapTargetOptions()),
@@ -267,7 +266,7 @@ std::error_code ModuleMapChecker::doChecks() {
 
   // Dump module map if requested.
   if (DumpModuleMap) {
-    errs() << "\nDump of module map:\n\n";
+    llvm::errs() << "\nDump of module map:\n\n";
     ModMap->dump();
   }
 
@@ -285,7 +284,7 @@ bool ModuleMapChecker::loadModuleMap() {
 
   // return error if not found.
   if (!ModuleMapEntry) {
-    errs() << "error: File \"" << ModuleMapPath << "\" not found.\n";
+    llvm::errs() << "error: File \"" << ModuleMapPath << "\" not found.\n";
     return false;
   }
 
@@ -365,16 +364,16 @@ bool ModuleMapChecker::collectUmbrellaHeaders(StringRef UmbrellaDirName) {
     Directory = ".";
   // Walk the directory.
   std::error_code EC;
-  fs::file_status Status;
-  for (fs::directory_iterator I(Directory.str(), EC), E; I != E;
+  sys::fs::file_status Status;
+  for (sys::fs::directory_iterator I(Directory.str(), EC), E; I != E;
        I.increment(EC)) {
     if (EC)
       return false;
     std::string File(I->path());
     I->status(Status);
-    fs::file_type Type = Status.type();
+    sys::fs::file_type Type = Status.type();
     // If the file is a directory, ignore the name.
-    if (Type == fs::file_type::directory_file)
+    if (Type == sys::fs::file_type::directory_file)
       continue;
     // If the file does not have a common header extension, ignore it.
     if (!isHeader(File))
@@ -475,24 +474,24 @@ bool ModuleMapChecker::collectFileSystemHeaders(StringRef IncludePath) {
     Directory = ".";
   if (IncludePath.startswith("/") || IncludePath.startswith("\\") ||
       ((IncludePath.size() >= 2) && (IncludePath[1] == ':'))) {
-    errs() << "error: Include path \"" << IncludePath
-           << "\" is not relative to the module map file.\n";
+    llvm::errs() << "error: Include path \"" << IncludePath
+                 << "\" is not relative to the module map file.\n";
     return false;
   }
 
   // Recursively walk the directory tree.
   std::error_code EC;
-  fs::file_status Status;
+  sys::fs::file_status Status;
   int Count = 0;
-  for (fs::recursive_directory_iterator I(Directory.str(), EC), E; I != E;
+  for (sys::fs::recursive_directory_iterator I(Directory.str(), EC), E; I != E;
        I.increment(EC)) {
     if (EC)
       return false;
     std::string file(I->path());
     I->status(Status);
-    fs::file_type type = Status.type();
+    sys::fs::file_type type = Status.type();
     // If the file is a directory, ignore the name (but still recurses).
-    if (type == fs::file_type::directory_file)
+    if (type == sys::fs::file_type::directory_file)
       continue;
     // If the file does not have a common header extension, ignore it.
     if (!isHeader(file))
@@ -502,8 +501,8 @@ bool ModuleMapChecker::collectFileSystemHeaders(StringRef IncludePath) {
     Count++;
   }
   if (Count == 0) {
-    errs() << "warning: No headers found in include path: \"" << IncludePath
-           << "\"\n";
+    llvm::errs() << "warning: No headers found in include path: \""
+                 << IncludePath << "\"\n";
   }
   return true;
 }
@@ -526,8 +525,8 @@ void ModuleMapChecker::findUnaccountedForHeaders() {
     // Look for header in module map.
     if (ModuleMapHeadersSet.insert(*I)) {
       UnaccountedForHeaders.push_back(*I);
-      errs() << "warning: " << ModuleMapPath
-             << " does not account for file: " << *I << "\n";
+      llvm::errs() << "warning: " << ModuleMapPath
+                   << " does not account for file: " << *I << "\n";
     }
   }
 }

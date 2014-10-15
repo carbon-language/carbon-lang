@@ -27,8 +27,6 @@
 #include "llvm/Support/Path.h"
 #include "gtest/gtest.h"
 
-using namespace llvm;
-using namespace llvm::sys;
 using namespace clang;
 
 namespace {
@@ -142,7 +140,7 @@ protected:
       FileMgr.getVirtualFile(HeaderPath, 0, 0);
 
       // Add header's parent path to search path.
-      StringRef SearchPath = path::parent_path(HeaderPath);
+      StringRef SearchPath = llvm::sys::path::parent_path(HeaderPath);
       const DirectoryEntry *DE = FileMgr.getDirectory(SearchPath);
       DirectoryLookup DL(DE, SrcMgr::C_User, false);
       HeaderInfo.AddSearchPath(DL, IsSystemHeader);
@@ -160,7 +158,8 @@ protected:
   // the InclusionDirective callback.
   CharSourceRange InclusionDirectiveFilenameRange(const char* SourceText, 
       const char* HeaderPath, bool SystemHeader) {
-    std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(SourceText);
+    std::unique_ptr<llvm::MemoryBuffer> Buf =
+        llvm::MemoryBuffer::getMemBuffer(SourceText);
     SourceMgr.setMainFileID(SourceMgr.createFileID(std::move(Buf)));
 
     VoidModuleLoader ModLoader;
@@ -197,8 +196,8 @@ protected:
     LangOptions OpenCLLangOpts;
     OpenCLLangOpts.OpenCL = 1;
 
-    std::unique_ptr<MemoryBuffer> SourceBuf =
-        MemoryBuffer::getMemBuffer(SourceText, "test.cl");
+    std::unique_ptr<llvm::MemoryBuffer> SourceBuf =
+        llvm::MemoryBuffer::getMemBuffer(SourceText, "test.cl");
     SourceMgr.setMainFileID(SourceMgr.createFileID(std::move(SourceBuf)));
 
     VoidModuleLoader ModLoader;
