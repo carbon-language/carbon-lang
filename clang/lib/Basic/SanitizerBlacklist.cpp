@@ -11,13 +11,12 @@
 // sanitizers.
 //
 //===----------------------------------------------------------------------===//
-#include "SanitizerBlacklist.h"
+#include "clang/Basic/SanitizerBlacklist.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Module.h"
 
 using namespace clang;
-using namespace CodeGen;
 
 static StringRef GetGlobalTypeString(const llvm::GlobalValue &G) {
   // Types of GlobalVariables are always pointer types.

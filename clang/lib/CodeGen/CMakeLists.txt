@@ -61,7 +61,6 @@ add_clang_library(clangCodeGen
   ItaniumCXXABI.cpp
   MicrosoftCXXABI.cpp
   ModuleBuilder.cpp
-  SanitizerBlacklist.cpp
   SanitizerMetadata.cpp
   TargetInfo.cpp
 

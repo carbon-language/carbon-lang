@@ -11,8 +11,8 @@
 // sanitizers.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_LIB_CODEGEN_SANITIZERBLACKLIST_H
-#define LLVM_CLANG_LIB_CODEGEN_SANITIZERBLACKLIST_H
+#ifndef LLVM_CLANG_BASIC_SANITIZERBLACKLIST_H
+#define LLVM_CLANG_BASIC_SANITIZERBLACKLIST_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringRef.h"
@@ -26,7 +26,6 @@ class Module;
 }
 
 namespace clang {
-namespace CodeGen {
 
 class SanitizerBlacklist {
   std::unique_ptr<llvm::SpecialCaseList> SCL;
@@ -41,7 +40,7 @@ public:
             StringRef Category = StringRef()) const;
   bool isBlacklistedType(StringRef MangledTypeName) const;
 };
-}  // end namespace CodeGen
+
 }  // end namespace clang
 
 #endif
