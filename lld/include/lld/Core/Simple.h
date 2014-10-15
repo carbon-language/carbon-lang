@@ -168,6 +168,7 @@ public:
   void addReference(Reference::KindNamespace ns, Reference::KindArch arch,
                     Reference::KindValue kindValue, uint64_t off,
                     const Atom *target, Reference::Addend a) {
+    assert(target && "trying to create reference to nothing");
     _references.push_back(SimpleReference(ns, arch, kindValue, off, target, a));
   }
 

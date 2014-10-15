@@ -556,6 +556,14 @@ void Util::copySectionContent(NormalizedFile &file) {
     return pos->second;
   };
 
+  auto sectionAddrForAtom = [&] (const Atom &atom) -> uint64_t {
+    for (const SectionInfo *sectInfo : _sectionInfos)
+      for (const AtomInfo &atomInfo : sectInfo->atomsAndOffsets)
+        if (atomInfo.atom == &atom)
+          return sectInfo->address;
+    llvm_unreachable("atom not assigned to section");
+  };
+
   for (SectionInfo *si : _sectionInfos) {
     if (si->type == llvm::MachO::S_ZEROFILL)
       continue;
@@ -567,6 +575,7 @@ void Util::copySectionContent(NormalizedFile &file) {
       uint8_t *atomContent = reinterpret_cast<uint8_t*>
                                           (&sectionContent[ai.offsetInSection]);
       _archHandler.generateAtomContent(*ai.atom, r, addrForAtom,
+                                       sectionAddrForAtom,
                                        _context.baseAddress(), atomContent);
     }
   }

@@ -70,10 +70,20 @@ public:
   /// section.
   virtual Reference::KindValue imageOffsetKindIndirect() = 0;
 
+  /// Architecture specific compact unwind type that signals __eh_frame should
+  /// actually be used.
+  virtual uint32_t dwarfCompactUnwindType() = 0;
+
   /// Reference from an __eh_frame FDE atom to the function it's
   /// describing. Usually pointer-sized and PC-relative, but differs in whether
   /// it needs to be in relocatable objects.
   virtual Reference::KindValue unwindRefToFunctionKind() = 0;
+
+  /// Reference from an __unwind_info entry of dwarfCompactUnwindType to the
+  /// required __eh_frame entry. On current architectures, the low 24 bits
+  /// represent the offset of the function's FDE entry from the start of
+  /// __eh_frame.
+  virtual Reference::KindValue unwindRefToEhFrameKind() = 0;
 
   /// Used by normalizedFromAtoms() to know where to generated rebasing and 
   /// binding info in final executables.
@@ -148,6 +158,7 @@ public:
   /// Copy raw content then apply all fixup References on an Atom.
   virtual void generateAtomContent(const DefinedAtom &atom, bool relocatable,
                                    FindAddressForAtom findAddress,
+                                   FindAddressForAtom findSectionAddress,
                                    uint64_t imageBaseAddress,
                                    uint8_t *atomContentBuffer) = 0;
 
@@ -195,6 +206,9 @@ public:
                                         const DefinedAtom &) {
     llvm_unreachable("shims only support on arm");
   }
+
+  /// Does a given unwind-cfi atom represent a CIE (as opposed to an FDE).
+  static bool isDwarfCIE(bool swap, const DefinedAtom *atom);
 
   struct ReferenceInfo {
     Reference::KindArch arch;

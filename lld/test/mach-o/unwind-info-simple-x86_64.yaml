@@ -13,14 +13,17 @@
 # CHECK:   Personality functions: (count = 1)
 # CHECK:     personality[1]: 0x00001000
 # CHECK:   Top level indices: (count = 2)
-# CHECK:     [0]: function offset=0x00000f7e, 2nd level page offset=0x00000040, LSDA offset=0x00000038
-# CHECK:     [1]: function offset=0x00000f80, 2nd level page offset=0x00000000, LSDA offset=0x00000040
+# CHECK:     [0]: function offset=0x00000efb, 2nd level page offset=0x00000040, LSDA offset=0x00000038
+# CHECK:     [1]: function offset=0x00000f00, 2nd level page offset=0x00000000, LSDA offset=0x00000040
 # CHECK:   LSDA descriptors:
-# CHECK:     [0]: function offset=0x00000f7e, LSDA offset=0x00000f80
+# CHECK:     [0]: function offset=0x00000efb, LSDA offset=0x00000f00
 # CHECK:   Second level indices:
-# CHECK:     Second level index[0]: offset in section=0x00000040, base function offset=0x00000f7e
-# CHECK:       [0]: function offset=0x00000f7e, encoding=0x51000000
-# CHECK:       [1]: function offset=0x00000f7f, encoding=0x01000000
+# CHECK:     Second level index[0]: offset in section=0x00000040, base function offset=0x00000efb
+# CHECK:       [0]: function offset=0x00000efb, encoding=0x51000000
+# CHECK:       [1]: function offset=0x00000efc, encoding=0x01000000
+# CHECK:       [2]: function offset=0x00000efd, encoding=0x04000018
+# CHECK:       [3]: function offset=0x00000efe, encoding=0x04000040
+# CHECK:       [4]: function offset=0x00000eff, encoding=0x00000000
 
 --- !native
 path:            '<linker-internal>'
@@ -53,6 +56,40 @@ defined-atoms:
       - kind:            pointer64Anon
         offset:          0
         target:          _main
+  - type:            compact-unwind
+    content:         [ C1, 00, 00, 00, 00, 00, 00, 00, 01, 00, 00, 00,
+                       00, 00, 00, 04, 00, 00, 00, 00, 00, 00, 00, 00,
+                       00, 00, 00, 00, 00, 00, 00, 00 ]
+    references:
+      - kind:            pointer64Anon
+        offset:          0
+        target:          _needsDwarfButNoCompactUnwind
+
+# Generic x86_64 CIE:
+  - type:            unwind-cfi
+    content:         [ 14, 00, 00, 00, 00, 00, 00, 00, 01, 7A, 52, 00, 
+                       01, 78, 10, 01, 10, 0C, 07, 08, 90, 01, 00, 00 ]
+
+  - type:            unwind-cfi
+    content:         [ 24, 00, 00, 00, 1C, 00, 00, 00, C8, FE, FF, FF,
+                       FF, FF, FF, FF, 01, 00, 00, 00, 00, 00, 00, 00,
+                       00, 41, 0E, 10, 86, 02, 43, 0D, 06, 00, 00, 00,
+                       00, 00, 00, 00 ]
+    references:
+      - kind:            unwindFDEToFunction
+        offset:          8
+        target:          _needsDwarfButNoCompactUnwind
+
+  - type:            unwind-cfi
+    content:         [ 24, 00, 00, 00, 44, 00, 00, 00, C8, FE, FF, FF,
+                       FF, FF, FF, FF, 01, 00, 00, 00, 00, 00, 00, 00,
+                       00, 41, 0E, 10, 86, 02, 43, 0D, 06, 00, 00, 00,
+                       00, 00, 00, 00 ]
+    references:
+      - kind:            unwindFDEToFunction
+        offset:          8
+        target:          _needsDwarfSaysCompactUnwind
+
 
   - name:            __Z3barv
     scope:           global
@@ -64,6 +101,15 @@ defined-atoms:
       - kind:            branch32
         offset:          9
         target:          __Z3barv
+  - name:            _needsDwarfButNoCompactUnwind
+    scope:           global
+    content:         [ C3 ]
+  - name:            _needsDwarfSaysCompactUnwind
+    scope:           global
+    content:         [ C3 ]
+  - name:            _noUnwindData
+    scope:           global
+    content:         [ C3 ]
 
 shared-library-atoms:
   - name:            ___gxx_personality_v0

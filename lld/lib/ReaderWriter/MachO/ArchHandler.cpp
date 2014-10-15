@@ -142,6 +142,17 @@ int64_t ArchHandler::readS64(bool swap, const uint8_t *addr) {
   return read64(swap, *reinterpret_cast<const uint64_t*>(addr));
 }
 
+bool ArchHandler::isDwarfCIE(bool swap, const DefinedAtom *atom) {
+  assert(atom->contentType() == DefinedAtom::typeCFI);
+  uint32_t size = read32(swap, *(uint32_t *)atom->rawContent().data());
+
+  uint32_t idOffset = sizeof(uint32_t);
+  if (size == 0xffffffffU)
+    idOffset += sizeof(uint64_t);
+
+  return read32(swap, *(uint32_t *)(atom->rawContent().data() + idOffset)) == 0;
+}
+
 } // namespace mach_o
 } // namespace lld
 

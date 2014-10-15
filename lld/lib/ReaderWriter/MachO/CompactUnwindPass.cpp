@@ -39,9 +39,26 @@ struct CompactUnwindEntry {
   const Atom *rangeStart;
   const Atom *personalityFunction;
   const Atom *lsdaLocation;
+  const Atom *ehFrame;
 
   uint32_t rangeLength;
+
+  // There are 3 types of compact unwind entry, distinguished by the encoding
+  // value: 0 indicates a function with no unwind info;
+  // _archHandler.dwarfCompactUnwindType() indicates that the entry defers to
+  // __eh_frame, and that the ehFrame entry will be valid; any other value is a
+  // real compact unwind entry -- personalityFunction will be set and
+  // lsdaLocation may be.
   uint32_t encoding;
+
+  CompactUnwindEntry(const DefinedAtom *function)
+      : rangeStart(function), personalityFunction(nullptr),
+        lsdaLocation(nullptr), ehFrame(nullptr), rangeLength(function->size()),
+        encoding(0) {}
+
+  CompactUnwindEntry()
+      : rangeStart(nullptr), personalityFunction(nullptr),
+        lsdaLocation(nullptr), ehFrame(nullptr), rangeLength(0), encoding(0) {}
 };
 
 struct UnwindInfoPage {
@@ -212,10 +229,21 @@ public:
     uint32_t pagePos = curPageOffset + headerSize;
     for (auto &entry : page.entries) {
       addImageReference(pagePos, entry.rangeStart);
+
       write32(reinterpret_cast<int32_t *>(_contents.data() + pagePos)[1], _swap,
               entry.encoding);
+      if ((entry.encoding & 0x0f000000U) ==
+          _archHandler.dwarfCompactUnwindType())
+        addEhFrameReference(pagePos + sizeof(uint32_t), entry.ehFrame);
+
       pagePos += 2 * sizeof(uint32_t);
     }
+  }
+
+  void addEhFrameReference(uint32_t offset, const Atom *dest,
+                           Reference::Addend addend = 0) {
+    addReference(Reference::KindNamespace::mach_o, _archHandler.kindArch(),
+                 _archHandler.unwindRefToEhFrameKind(), offset, dest, addend);
   }
 
   void addImageReference(uint32_t offset, const Atom *dest,
@@ -253,14 +281,17 @@ private:
   void perform(std::unique_ptr<MutableFile> &mergedFile) override {
     DEBUG(llvm::dbgs() << "MachO Compact Unwind pass\n");
 
-    // First collect all __compact_unwind entries, addressable by the function
-    // it's referring to.
     std::map<const Atom *, CompactUnwindEntry> unwindLocs;
+    std::map<const Atom *, const Atom *> dwarfFrames;
     std::vector<const Atom *> personalities;
     uint32_t numLSDAs = 0;
 
+    // First collect all __compact_unwind and __eh_frame entries, addressable by
+    // the function referred to.
     collectCompactUnwindEntries(mergedFile, unwindLocs, personalities,
                                 numLSDAs);
+
+    collectDwarfFrameEntries(mergedFile, dwarfFrames);
 
     // FIXME: if there are more than 4 personality functions then we need to
     // defer to DWARF info for the ones we don't put in the list. They should
@@ -270,8 +301,8 @@ private:
     // Now sort the entries by final address and fixup the compact encoding to
     // its final form (i.e. set personality function bits & create DWARF
     // references where needed).
-    std::vector<CompactUnwindEntry> unwindInfos =
-        createUnwindInfoEntries(mergedFile, unwindLocs, personalities);
+    std::vector<CompactUnwindEntry> unwindInfos = createUnwindInfoEntries(
+        mergedFile, unwindLocs, personalities, dwarfFrames);
 
     // Finally, we can start creating pages based on these entries.
 
@@ -348,7 +379,7 @@ private:
   }
 
   CompactUnwindEntry extractCompactUnwindEntry(const DefinedAtom *atom) {
-    CompactUnwindEntry entry = {nullptr, nullptr, nullptr, 0, 0};
+    CompactUnwindEntry entry;
 
     for (const Reference *ref : *atom) {
       switch (ref->offsetInAtom()) {
@@ -376,6 +407,28 @@ private:
     return entry;
   }
 
+  void
+  collectDwarfFrameEntries(std::unique_ptr<MutableFile> &mergedFile,
+                           std::map<const Atom *, const Atom *> &dwarfFrames) {
+    for (const DefinedAtom *ehFrameAtom : mergedFile->defined()) {
+      if (ehFrameAtom->contentType() != DefinedAtom::typeCFI ||
+          ArchHandler::isDwarfCIE(_swap, ehFrameAtom))
+        continue;
+
+      auto functionRef = std::find_if(ehFrameAtom->begin(), ehFrameAtom->end(),
+                                      [&](const Reference *ref) {
+        return ref->kindNamespace() == Reference::KindNamespace::mach_o &&
+               ref->kindArch() == _archHandler.kindArch() &&
+               ref->kindValue() == _archHandler.unwindRefToFunctionKind();
+      });
+
+      if (functionRef != ehFrameAtom->end()) {
+        const Atom *functionAtom = functionRef->target();
+        dwarfFrames.insert(std::make_pair(functionAtom, ehFrameAtom));
+      }
+    }
+  }
+
   /// Every atom defined in __TEXT,__text needs an entry in the final
   /// __unwind_info section (in order). These comes from two sources:
   ///   + Input __compact_unwind sections where possible (after adding the
@@ -385,7 +438,8 @@ private:
   std::vector<CompactUnwindEntry> createUnwindInfoEntries(
       const std::unique_ptr<MutableFile> &mergedFile,
       const std::map<const Atom *, CompactUnwindEntry> &unwindLocs,
-      const std::vector<const Atom *> &personalities) {
+      const std::vector<const Atom *> &personalities,
+      const std::map<const Atom *, const Atom *> &dwarfFrames) {
     std::vector<CompactUnwindEntry> unwindInfos;
 
     DEBUG(llvm::dbgs() << "  Creating __unwind_info entries\n");
@@ -396,8 +450,8 @@ private:
       if (atom->contentType() != DefinedAtom::typeCode)
         continue;
 
-      unwindInfos.push_back(
-          finalizeUnwindInfoEntryForAtom(atom, unwindLocs, personalities));
+      unwindInfos.push_back(finalizeUnwindInfoEntryForAtom(
+          atom, unwindLocs, personalities, dwarfFrames));
 
       DEBUG(llvm::dbgs() << "    Entry for " << atom->name()
                          << ", final encoding="
@@ -411,20 +465,32 @@ private:
   CompactUnwindEntry finalizeUnwindInfoEntryForAtom(
       const DefinedAtom *function,
       const std::map<const Atom *, CompactUnwindEntry> &unwindLocs,
-      const std::vector<const Atom *> &personalities) {
+      const std::vector<const Atom *> &personalities,
+      const std::map<const Atom *, const Atom *> &dwarfFrames) {
     auto unwindLoc = unwindLocs.find(function);
 
-    // FIXME: we should synthesize a DWARF compact unwind entry before claiming
-    // there's no unwind if a __compact_unwind atom doesn't exist.
+    CompactUnwindEntry entry;
     if (unwindLoc == unwindLocs.end()) {
-      CompactUnwindEntry entry;
-      memset(&entry, 0, sizeof(CompactUnwindEntry));
+      // Default entry has correct encoding (0 => no unwind), but we need to
+      // synthesise the function.
       entry.rangeStart = function;
       entry.rangeLength = function->size();
-      return entry;
+    } else
+      entry = unwindLoc->second;
+
+
+    // If there's no __compact_unwind entry, or it explicitly says to use
+    // __eh_frame, we need to try and fill in the correct DWARF atom.
+    if (entry.encoding == _archHandler.dwarfCompactUnwindType() ||
+        entry.encoding == 0) {
+      auto dwarfFrame = dwarfFrames.find(function);
+      if (dwarfFrame != dwarfFrames.end()) {
+        entry.encoding = _archHandler.dwarfCompactUnwindType();
+        entry.ehFrame = dwarfFrame->second;
+      }
     }
 
-    CompactUnwindEntry entry = unwindLoc->second;
+
     auto personality = std::find(personalities.begin(), personalities.end(),
                                  entry.personalityFunction);
     uint32_t personalityIdx = personality == personalities.end()

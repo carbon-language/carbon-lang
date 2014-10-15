@@ -95,6 +95,15 @@ public:
     return invalid;
   }
 
+  Reference::KindValue unwindRefToEhFrameKind() override {
+    return invalid;
+  }
+
+  uint32_t dwarfCompactUnwindType() override {
+    // FIXME
+    return -1;
+  }
+
   std::error_code getReferenceInfo(const normalized::Relocation &reloc,
                                    const DefinedAtom *inAtom,
                                    uint32_t offsetInAtom,
@@ -122,6 +131,7 @@ public:
 
   void generateAtomContent(const DefinedAtom &atom, bool relocatable,
                            FindAddressForAtom findAddress,
+                           FindAddressForAtom findSectionAddress,
                            uint64_t imageBaseAddress,
                            uint8_t *atomContentBuffer) override;
 
@@ -457,11 +467,10 @@ std::error_code ArchHandler_arm64::getPairReferenceInfo(
   }
 }
 
-void ArchHandler_arm64::generateAtomContent(const DefinedAtom &atom,
-                                            bool relocatable,
-                                            FindAddressForAtom findAddress,
-                                            uint64_t imageBaseAddress,
-                                            uint8_t *atomContentBuffer) {
+void ArchHandler_arm64::generateAtomContent(
+    const DefinedAtom &atom, bool relocatable, FindAddressForAtom findAddress,
+    FindAddressForAtom findSectionAddress, uint64_t imageBaseAddress,
+    uint8_t *atomContentBuffer) {
   // Copy raw bytes.
   memcpy(atomContentBuffer, atom.rawContent().data(), atom.size());
   // Apply fix-ups.

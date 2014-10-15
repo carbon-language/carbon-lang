@@ -88,6 +88,13 @@ public:
     return unwindFDEToFunction;
   }
 
+  Reference::KindValue unwindRefToEhFrameKind() override {
+    return unwindInfoToEhFrame;
+  }
+
+  uint32_t dwarfCompactUnwindType() override {
+    return 0x04000000U;
+  }
 
   const StubInfo &stubInfo() override { return _sStubInfo; }
 
@@ -126,6 +133,7 @@ public:
 
   void generateAtomContent(const DefinedAtom &atom, bool relocatable,
                            FindAddressForAtom findAddress,
+                           FindAddressForAtom findSectionAddress,
                            uint64_t imageBase,
                            uint8_t *atomContentBuffer) override;
 
@@ -172,7 +180,8 @@ private:
                            /// final image (typically personality function).
     unwindFDEToFunction,   /// Nearly delta64, but cannot be rematerialized in
                            /// relocatable object (yay for implicit contracts!).
-
+    unwindInfoToEhFrame,   /// Fix low 24 bits of compact unwind encoding to
+                           /// refer to __eh_frame entry.
   };
 
   Reference::KindValue kindFromReloc(const normalized::Relocation &reloc);
@@ -181,7 +190,8 @@ private:
 
   void applyFixupFinal(const Reference &ref, uint8_t *location,
                        uint64_t fixupAddress, uint64_t targetAddress,
-                       uint64_t inAtomAddress, uint64_t imageBaseAddress);
+                       uint64_t inAtomAddress, uint64_t imageBaseAddress,
+                       FindAddressForAtom findSectionAddress);
 
   void applyFixupRelocatable(const Reference &ref, uint8_t *location,
                              uint64_t fixupAddress,
@@ -210,6 +220,7 @@ const Registry::KindStrings ArchHandler_x86_64::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(delta32Anon), LLD_KIND_STRING_ENTRY(delta64Anon),
   LLD_KIND_STRING_ENTRY(imageOffset), LLD_KIND_STRING_ENTRY(imageOffsetGot),
   LLD_KIND_STRING_ENTRY(unwindFDEToFunction),
+  LLD_KIND_STRING_ENTRY(unwindInfoToEhFrame),
   LLD_KIND_STRING_END
 };
 
@@ -424,11 +435,10 @@ ArchHandler_x86_64::getPairReferenceInfo(const normalized::Relocation &reloc1,
   }
 }
 
-void ArchHandler_x86_64::generateAtomContent(const DefinedAtom &atom,
-                                             bool relocatable,
-                                             FindAddressForAtom findAddress,
-                                             uint64_t imageBaseAddress,
-                                             uint8_t *atomContentBuffer) {
+void ArchHandler_x86_64::generateAtomContent(
+    const DefinedAtom &atom, bool relocatable, FindAddressForAtom findAddress,
+    FindAddressForAtom findSectionAddress, uint64_t imageBaseAddress,
+    uint8_t *atomContentBuffer) {
   // Copy raw bytes.
   memcpy(atomContentBuffer, atom.rawContent().data(), atom.size());
   // Apply fix-ups.
@@ -447,17 +457,15 @@ void ArchHandler_x86_64::generateAtomContent(const DefinedAtom &atom,
     } else {
       applyFixupFinal(*ref, &atomContentBuffer[offset],
                       fixupAddress, targetAddress,
-                      atomAddress, imageBaseAddress);
+                      atomAddress, imageBaseAddress, findSectionAddress);
     }
   }
 }
 
-void ArchHandler_x86_64::applyFixupFinal(const Reference &ref,
-                                         uint8_t *location,
-                                         uint64_t fixupAddress,
-                                         uint64_t targetAddress,
-                                         uint64_t inAtomAddress,
-                                         uint64_t imageBaseAddress) {
+void ArchHandler_x86_64::applyFixupFinal(
+    const Reference &ref, uint8_t *location, uint64_t fixupAddress,
+    uint64_t targetAddress, uint64_t inAtomAddress, uint64_t imageBaseAddress,
+    FindAddressForAtom findSectionAddress) {
   if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return;
   assert(ref.kindArch() == Reference::KindArch::x86_64);
@@ -507,6 +515,13 @@ void ArchHandler_x86_64::applyFixupFinal(const Reference &ref,
   case imageOffsetGot:
     write32(*loc32, _swap, (targetAddress - imageBaseAddress) + ref.addend());
     return;
+  case unwindInfoToEhFrame: {
+    uint64_t val = targetAddress - findSectionAddress(*ref.target()) + ref.addend();
+    assert(val < 0xffffffU && "offset in __eh_frame too large");
+    uint32_t encoding = read32(_swap, *loc32) & 0xff000000U;
+    write32(*loc32, _swap, encoding | val);
+    return;
+  }
   case invalid:
     // Fall into llvm_unreachable().
     break;
@@ -568,7 +583,8 @@ void ArchHandler_x86_64::applyFixupRelocatable(const Reference &ref,
     return;
   case imageOffset:
   case imageOffsetGot:
-    llvm_unreachable("image offset implies __unwind_info");
+  case unwindInfoToEhFrame:
+    llvm_unreachable("fixup implies __unwind_info");
     return;
   case unwindFDEToFunction:
     // Do nothing for now
@@ -658,6 +674,7 @@ void ArchHandler_x86_64::appendSectionRelocations(
                 X86_64_RELOC_UNSIGNED             | rLength8 );
     return;
   case unwindFDEToFunction:
+  case unwindInfoToEhFrame:
     return;
   case ripRel32GotLoadNowLea:
     llvm_unreachable("ripRel32GotLoadNowLea implies GOT pass was run");

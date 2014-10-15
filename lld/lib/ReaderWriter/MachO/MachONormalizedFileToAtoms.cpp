@@ -621,17 +621,6 @@ bool isDebugInfoSection(const Section &section) {
   return section.segmentName.equals("__DWARF");
 }
 
-static bool isCIE(bool swap, const DefinedAtom *atom) {
-  assert(atom->contentType() == DefinedAtom::typeCFI);
-  uint32_t size = read32(swap, *(uint32_t *)atom->rawContent().data());
-
-  uint32_t idOffset = sizeof(uint32_t);
-  if (size == 0xffffffffU)
-    idOffset += sizeof(uint64_t);
-
-  return read32(swap, *(uint32_t *)(atom->rawContent().data() + idOffset)) == 0;
-}
-
 static int64_t readSPtr(bool is64, bool swap, const uint8_t *addr) {
   if (is64)
     return read64(swap, *reinterpret_cast<const uint64_t *>(addr));
@@ -662,7 +651,7 @@ std::error_code addEHFrameReferences(const NormalizedFile &normalizedFile,
                          [&](MachODefinedAtom *atom, uint64_t offset) -> void {
     assert(atom->contentType() == DefinedAtom::typeCFI);
 
-    if (isCIE(swap, atom))
+    if (ArchHandler::isDwarfCIE(swap, atom))
       return;
 
     // Compiler wasn't lazy and actually told us what it meant.

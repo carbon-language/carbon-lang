@@ -55,6 +55,15 @@ public:
     return delta32;
   }
 
+  Reference::KindValue unwindRefToEhFrameKind() override {
+    return invalid;
+  }
+
+
+  uint32_t dwarfCompactUnwindType() override {
+    return 0x04000000U;
+  }
+
   std::error_code getReferenceInfo(const normalized::Relocation &reloc,
                                    const DefinedAtom *inAtom,
                                    uint32_t offsetInAtom,
@@ -78,6 +87,7 @@ public:
 
   void generateAtomContent(const DefinedAtom &atom, bool relocatable,
                            FindAddressForAtom findAddress,
+                           FindAddressForAtom findSectionAddress,
                            uint64_t imageBaseAddress,
                            uint8_t *atomContentBuffer) override;
 
@@ -386,6 +396,7 @@ ArchHandler_x86::getPairReferenceInfo(const normalized::Relocation &reloc1,
 void ArchHandler_x86::generateAtomContent(const DefinedAtom &atom,
                                           bool relocatable,
                                           FindAddressForAtom findAddress,
+                                          FindAddressForAtom findSectionAddress,
                                           uint64_t imageBaseAddress,
                                           uint8_t *atomContentBuffer) {
   // Copy raw bytes.
