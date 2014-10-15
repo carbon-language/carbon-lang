@@ -793,7 +793,10 @@ bool AMDGPUDAGToDAGISel::SelectDS1Addr1Offset(SDValue Addr, SDValue &Base,
   // into read2 / write2 instructions.
   if (const ConstantSDNode *CAddr = dyn_cast<ConstantSDNode>(Addr)) {
     if (isUInt<16>(CAddr->getZExtValue())) {
-      Base = CurDAG->getConstant(0, MVT::i32);
+      SDValue Zero = CurDAG->getTargetConstant(0, MVT::i32);
+      MachineSDNode *MovZero = CurDAG->getMachineNode(AMDGPU::V_MOV_B32_e32,
+                                 SDLoc(Addr), MVT::i32, Zero);
+      Base = SDValue(MovZero, 0);
       Offset = Addr;
       return true;
     }

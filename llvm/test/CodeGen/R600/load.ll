@@ -719,3 +719,21 @@ define void @load_i32_v2i32_local(<2 x i32> addrspace(1)* %out, i32 addrspace(3)
   store <2 x i32> %vec, <2 x i32> addrspace(1)* %out
   ret void
 }
+
+
+@lds = addrspace(3) global [512 x i32] zeroinitializer, align 4
+
+; On SI we need to make sure that the base offset is a register and not
+; an immediate.
+; FUNC-LABEL: {{^}}load_i32_local_const_ptr:
+; SI-CHECK: V_MOV_B32_e32 v[[ZERO:[0-9]+]], 0
+; SI-CHECK: DS_READ_B32 v0, v[[ZERO]] offset:4
+; R600-CHECK: LDS_READ_RET
+define void @load_i32_local_const_ptr(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
+entry:
+  %tmp0 = getelementptr [512 x i32] addrspace(3)* @lds, i32 0, i32 1
+  %tmp1 = load i32 addrspace(3)* %tmp0
+  %tmp2 = getelementptr i32 addrspace(1)* %out, i32 1
+  store i32 %tmp1, i32 addrspace(1)* %tmp2
+  ret void
+}
