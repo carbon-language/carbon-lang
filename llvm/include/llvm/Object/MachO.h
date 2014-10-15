@@ -380,6 +380,7 @@ public:
   ArrayRef<uint8_t> getDyldInfoWeakBindOpcodes() const;
   ArrayRef<uint8_t> getDyldInfoLazyBindOpcodes() const;
   ArrayRef<uint8_t> getDyldInfoExportsTrie() const;
+  ArrayRef<uint8_t> getUuid() const;
 
   StringRef getStringTableData() const;
   bool is64Bit() const;
@@ -417,6 +418,7 @@ private:
   const char *DysymtabLoadCmd;
   const char *DataInCodeLoadCmd;
   const char *DyldInfoLoadCmd;
+  const char *UuidLoadCmd;
   bool HasPageZeroSegment;
 };
 
