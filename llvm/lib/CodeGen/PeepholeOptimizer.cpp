@@ -107,7 +107,6 @@ STATISTIC(NumRewrittenCopies, "Number of copies rewritten");
 
 namespace {
   class PeepholeOptimizer : public MachineFunctionPass {
-    MachineFunction *MF;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     MachineRegisterInfo   *MRI;
@@ -1052,25 +1051,24 @@ bool PeepholeOptimizer::foldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
   return false;
 }
 
-bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &mf) {
-  if (skipOptnoneFunction(*mf.getFunction()))
+bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
+  if (skipOptnoneFunction(*MF.getFunction()))
     return false;
 
   DEBUG(dbgs() << "********** PEEPHOLE OPTIMIZER **********\n");
-  DEBUG(dbgs() << "********** Function: " << mf.getName() << '\n');
+  DEBUG(dbgs() << "********** Function: " << MF.getName() << '\n');
 
   if (DisablePeephole)
     return false;
 
-  MF = &mf;
-  TII = MF->getSubtarget().getInstrInfo();
-  TRI = MF->getSubtarget().getRegisterInfo();
-  MRI = &MF->getRegInfo();
+  TII = MF.getSubtarget().getInstrInfo();
+  TRI = MF.getSubtarget().getRegisterInfo();
+  MRI = &MF.getRegInfo();
   DT  = Aggressive ? &getAnalysis<MachineDominatorTree>() : nullptr;
 
   bool Changed = false;
 
-  for (MachineFunction::iterator I = MF->begin(), E = MF->end(); I != E; ++I) {
+  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock *MBB = &*I;
 
     bool SeenMoveImm = false;
