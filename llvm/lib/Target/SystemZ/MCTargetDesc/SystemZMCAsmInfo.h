@@ -19,9 +19,6 @@ class StringRef;
 class SystemZMCAsmInfo : public MCAsmInfoELF {
 public:
   explicit SystemZMCAsmInfo(StringRef TT);
-
-  // Override MCAsmInfo;
-  const MCSection *getNonexecutableStackSection(MCContext &Ctx) const override;
 };
 
 } // end namespace llvm

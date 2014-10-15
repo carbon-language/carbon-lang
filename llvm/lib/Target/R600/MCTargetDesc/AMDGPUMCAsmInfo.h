@@ -27,7 +27,6 @@ class StringRef;
 class AMDGPUMCAsmInfo : public MCAsmInfoELF {
 public:
   explicit AMDGPUMCAsmInfo(StringRef &TT);
-  const MCSection* getNonexecutableStackSection(MCContext &CTX) const override;
 };
 } // namespace llvm
 #endif

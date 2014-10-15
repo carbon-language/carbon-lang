@@ -39,8 +39,6 @@ namespace llvm {
     void anchor() override;
   public:
     explicit X86ELFMCAsmInfo(const Triple &Triple);
-    const MCSection *
-    getNonexecutableStackSection(MCContext &Ctx) const override;
   };
 
   class X86MCAsmInfoMicrosoft : public MCAsmInfoMicrosoft {

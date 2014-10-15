@@ -44,8 +44,3 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfoELF() {
   //===--- Dwarf Emission Directives -----------------------------------===//
   SupportsDebugInformation = true;
 }
-
-const MCSection*
-AMDGPUMCAsmInfo::getNonexecutableStackSection(MCContext &CTX) const {
-  return nullptr;
-}
