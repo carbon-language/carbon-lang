@@ -2860,7 +2860,6 @@ bool AArch64InstrInfo::optimizeCondBranch(MachineInstr *MI) const {
   bool IsNegativeBranch = false;
   bool IsTestAndBranch = false;
   unsigned TargetBBInMI = 0;
-  unsigned CCInMI = 0;
   switch (MI->getOpcode()) {
   default:
     llvm_unreachable("Unknown branch instruction?");
