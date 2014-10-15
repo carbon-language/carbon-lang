@@ -6448,8 +6448,6 @@ enum CX_StorageClass clang_Cursor_getStorageClass(CXCursor C) {
     return CX_SC_Auto;
   case SC_Register:
     return CX_SC_Register;
-  default:
-    return CX_SC_Invalid;
   }
 }
 
