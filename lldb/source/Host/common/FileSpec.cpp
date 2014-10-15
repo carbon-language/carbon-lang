@@ -167,10 +167,10 @@ FileSpec::Resolve (llvm::SmallVectorImpl<char> &path)
     llvm::sys::fs::make_absolute(path);
 }
 
-FileSpec::FileSpec()
-    : m_directory()
-    , m_filename()
-    , m_syntax(FileSystem::GetNativePathSyntax())
+FileSpec::FileSpec() : 
+    m_directory(), 
+    m_filename(), 
+    m_syntax(FileSystem::GetNativePathSyntax())
 {
 }
 
@@ -181,7 +181,8 @@ FileSpec::FileSpec()
 FileSpec::FileSpec(const char *pathname, bool resolve_path, PathSyntax syntax) :
     m_directory(),
     m_filename(),
-    m_is_resolved(false)
+    m_is_resolved(false),
+    m_syntax(syntax)
 {
     if (pathname && pathname[0])
         SetFile(pathname, resolve_path, syntax);
