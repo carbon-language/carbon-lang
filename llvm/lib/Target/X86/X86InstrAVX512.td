@@ -2,9 +2,10 @@
 // EltVT).  These are things like the register class for the writemask, etc.
 // The idea is to pass one of these as the template argument rather than the
 // individual arguments.
-class X86VectorVTInfo<int NumElts, ValueType EltVT, RegisterClass rc,
+class X86VectorVTInfo<int numelts, ValueType EltVT, RegisterClass rc,
                       string suffix = ""> {
   RegisterClass RC = rc;
+  int NumElts = numelts;
 
   // Corresponding mask register class.
   RegisterClass KRC = !cast<RegisterClass>("VK" # NumElts);
@@ -72,6 +73,11 @@ class X86VectorVTInfo<int NumElts, ValueType EltVT, RegisterClass rc,
 
   // The string to specify embedded broadcast in assembly.
   string BroadcastStr = "{1to" # NumElts # "}";
+
+  // 8-bit compressed displacement tuple/subvector format.  This is only
+  // defined for NumElts <= 8.
+  CD8VForm CD8TupleForm = !if (!eq (!srl(NumElts, 4), 0),
+                               !cast<CD8VForm>("CD8VT" # NumElts), ?);
 
   SubRegIndex SubRegIdx = !if (!eq (Size, 128), sub_xmm,
                           !if (!eq (Size, 256), sub_ymm, ?));
@@ -349,7 +355,8 @@ multiclass vinsert_for_size<int Opcode,
   let hasSideEffects = 0, ExeDomain = To.ExeDomain in {
     def rr : AVX512AIi8<Opcode, MRMSrcReg, (outs VR512:$dst),
                (ins VR512:$src1, From.RC:$src2, i8imm:$src3),
-               "vinsert" # From.EltTypeName # "x4\t{$src3, $src2, $src1, $dst|"
+               "vinsert" # From.EltTypeName # "x" # From.NumElts #
+                                                "\t{$src3, $src2, $src1, $dst|"
                                                    "$dst, $src1, $src2, $src3}",
                [(set To.RC:$dst, (vinsert_insert:$src3 (To.VT VR512:$src1),
                                                        (From.VT From.RC:$src2),
@@ -359,9 +366,11 @@ multiclass vinsert_for_size<int Opcode,
     let mayLoad = 1 in
     def rm : AVX512AIi8<Opcode, MRMSrcMem, (outs VR512:$dst),
                (ins VR512:$src1, From.MemOp:$src2, i8imm:$src3),
-               "vinsert" # From.EltTypeName # "x4\t{$src3, $src2, $src1, $dst|"
+               "vinsert" # From.EltTypeName # "x" # From.NumElts #
+                                                "\t{$src3, $src2, $src1, $dst|"
                                                    "$dst, $src1, $src2, $src3}",
-               []>, EVEX_4V, EVEX_V512, EVEX_CD8<From.EltSize, CD8VT4>;
+               []>,
+             EVEX_4V, EVEX_V512, EVEX_CD8<From.EltSize, From.CD8TupleForm>;
   }
 
   // Codegen pattern with the alternative types, e.g. v2i64 -> v8i64 for

@@ -101,6 +101,7 @@ def CD8VF  : CD8VForm<0>;  // v := VL
 def CD8VH  : CD8VForm<1>;  // v := VL/2
 def CD8VQ  : CD8VForm<2>;  // v := VL/4
 def CD8VO  : CD8VForm<3>;  // v := VL/8
+// The tuple (subvector) forms.
 def CD8VT1 : CD8VForm<4>;  // v := 1
 def CD8VT2 : CD8VForm<5>;  // v := 2
 def CD8VT4 : CD8VForm<6>;  // v := 4
