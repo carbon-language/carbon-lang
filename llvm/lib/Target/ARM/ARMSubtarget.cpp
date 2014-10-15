@@ -255,9 +255,8 @@ void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
       TargetABI = ARM_ABI_AAPCS;
       break;
     default:
-      if ((isTargetIOS() && isMClass()) ||
-          (TargetTriple.isOSBinFormatMachO() &&
-           TargetTriple.getOS() == Triple::UnknownOS))
+      if (TargetTriple.isOSBinFormatMachO() &&
+          TargetTriple.getOS() == Triple::UnknownOS)
         TargetABI = ARM_ABI_AAPCS;
       else
         TargetABI = ARM_ABI_APCS;
