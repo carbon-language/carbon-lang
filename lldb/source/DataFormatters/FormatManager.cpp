@@ -1394,6 +1394,8 @@ FormatManager::LoadObjCFormatters()
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSSetSyntheticFrontEndCreator, "NSOrderedSet synthetic children", ConstString("NSOrderedSet"), ScriptedSyntheticChildren::Flags());
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSSetSyntheticFrontEndCreator, "__NSOrderedSetI synthetic children", ConstString("__NSOrderedSetI"), ScriptedSyntheticChildren::Flags());
     AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSSetSyntheticFrontEndCreator, "__NSOrderedSetM synthetic children", ConstString("__NSOrderedSetM"), ScriptedSyntheticChildren::Flags());
+
+    AddCXXSynthetic(appkit_category_sp, lldb_private::formatters::NSIndexPathSyntheticFrontEndCreator, "NSIndexPath synthetic children", ConstString("NSIndexPath"), ScriptedSyntheticChildren::Flags());
     
     AddCXXSummary(corefoundation_category_sp,lldb_private::formatters::CFBagSummaryProvider, "CFBag summary provider", ConstString("CFBagRef"), appkit_flags);
     AddCXXSummary(corefoundation_category_sp,lldb_private::formatters::CFBagSummaryProvider, "CFBag summary provider", ConstString("__CFBag"), appkit_flags);

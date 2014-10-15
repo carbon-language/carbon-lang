@@ -474,6 +474,8 @@ namespace lldb_private {
         
         SyntheticChildrenFrontEnd* NSSetSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
         
+        SyntheticChildrenFrontEnd* NSIndexPathSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
+        
         class LibcxxVectorBoolSyntheticFrontEnd : public SyntheticChildrenFrontEnd
         {
         public:
