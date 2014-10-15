@@ -823,6 +823,23 @@ bool AMDGPUDAGToDAGISel::SelectDS64Bit4ByteAligned(SDValue Addr, SDValue &Base,
     }
   }
 
+  if (const ConstantSDNode *CAddr = dyn_cast<ConstantSDNode>(Addr)) {
+    unsigned DWordOffset0 = CAddr->getZExtValue() / 4;
+    unsigned DWordOffset1 = DWordOffset0 + 1;
+    assert(4 * DWordOffset0 == CAddr->getZExtValue());
+
+    if (isUInt<8>(DWordOffset0) && isUInt<8>(DWordOffset1)) {
+      SDValue Zero = CurDAG->getTargetConstant(0, MVT::i32);
+      MachineSDNode *MovZero
+        = CurDAG->getMachineNode(AMDGPU::V_MOV_B32_e32,
+                                 SDLoc(Addr), MVT::i32, Zero);
+      Base = SDValue(MovZero, 0);
+      Offset0 = CurDAG->getTargetConstant(DWordOffset0, MVT::i8);
+      Offset1 = CurDAG->getTargetConstant(DWordOffset1, MVT::i8);
+      return true;
+    }
+  }
+
   // default case
   Base = Addr;
   Offset0 = CurDAG->getTargetConstant(0, MVT::i8);
