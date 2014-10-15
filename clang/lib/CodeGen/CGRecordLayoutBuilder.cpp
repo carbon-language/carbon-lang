@@ -280,10 +280,6 @@ void CGRecordLowering::lowerUnion() {
   CharUnits LayoutSize = Layout.getSize();
   llvm::Type *StorageType = nullptr;
   bool SeenNamedMember = false;
-  bool InitializingMemberIsNonZero = false;
-  // Compute zero-initializable status.
-  if (!D->field_empty() && !isZeroInitializable(*D->field_begin()))
-    IsZeroInitializable = IsZeroInitializableAsBase = false;
   // Iterate through the fields setting bitFieldInfo and the Fields array. Also
   // locate the "most appropriate" storage type.  The heuristic for finding the
   // storage type isn't necessary, the first (non-0-length-bitfield) field's
@@ -301,6 +297,7 @@ void CGRecordLowering::lowerUnion() {
     }
     Fields[Field->getCanonicalDecl()] = 0;
     llvm::Type *FieldType = getStorageType(Field);
+    // Compute zero-initializable status.
     // This union might not be zero initialized: it may contain a pointer to
     // data member which might have some exotic initialization sequence.
     // If this is the case, then we aught not to try and come up with a "better"
@@ -309,17 +306,20 @@ void CGRecordLowering::lowerUnion() {
     if (!SeenNamedMember && Field->getDeclName()) {
       SeenNamedMember = true;
       if (!isZeroInitializable(Field)) {
-        InitializingMemberIsNonZero = true;
+        IsZeroInitializable = IsZeroInitializableAsBase = false;
         StorageType = FieldType;
       }
     }
+    // Because our union isn't zero initializable, we won't be getting a better
+    // storage type.
+    if (!IsZeroInitializable)
+      continue;
     // Conditionally update our storage type if we've got a new "better" one.
     if (!StorageType ||
         getAlignment(FieldType) >  getAlignment(StorageType) ||
         (getAlignment(FieldType) == getAlignment(StorageType) &&
         getSize(FieldType) > getSize(StorageType)))
-      if (!InitializingMemberIsNonZero)
-        StorageType = FieldType;
+      StorageType = FieldType;
   }
   // If we have no storage type just pad to the appropriate size and return.
   if (!StorageType)
