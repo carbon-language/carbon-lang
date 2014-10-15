@@ -284,66 +284,6 @@ TSAN_INTERCEPTOR(int, nanosleep, void *req, void *rem) {
   return res;
 }
 
-/*
-class AtExitContext {
- public:
-  AtExitContext()
-    : mtx_(MutexTypeAtExit, StatMtxAtExit)
-    , stack_(MBlockAtExit) {
-  }
-
-  typedef void(*atexit_cb_t)();
-
-  int atexit(ThreadState *thr, uptr pc, bool is_on_exit,
-             atexit_cb_t f, void *arg, void *dso) {
-    Lock l(&mtx_);
-    Release(thr, pc, (uptr)this);
-    atexit_t *a = stack_.PushBack();
-    a->cb = f;
-    a->arg = arg;
-    a->dso = dso;
-    a->is_on_exit = is_on_exit;
-    return 0;
-  }
-
-  void exit(ThreadState *thr, uptr pc) {
-    for (;;) {
-      atexit_t a = {};
-      {
-        Lock l(&mtx_);
-        if (stack_.Size() != 0) {
-          a = stack_[stack_.Size() - 1];
-          stack_.PopBack();
-          Acquire(thr, pc, (uptr)this);
-        }
-      }
-      if (a.cb == 0)
-        break;
-      VPrintf(2, "#%d: executing atexit func %p(%p) dso=%p\n",
-          thr->tid, a.cb, a.arg, a.dso);
-      if (a.is_on_exit)
-        ((void(*)(int status, void *arg))a.cb)(0, a.arg);
-      else
-        ((void(*)(void *arg, void *dso))a.cb)(a.arg, a.dso);
-    }
-  }
-
- private:
-  struct atexit_t {
-    atexit_cb_t cb;
-    void *arg;
-    void *dso;
-    bool is_on_exit;
-  };
-
-  static const int kMaxAtExit = 1024;
-  Mutex mtx_;
-  Vector<atexit_t> stack_;
-};
-
-static AtExitContext *atexit_ctx;
-*/
-
 // The sole reason tsan wraps atexit callbacks is to establish synchronization
 // between callback setup and callback execution.
 struct AtExitCtx {
