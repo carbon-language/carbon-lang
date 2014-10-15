@@ -188,6 +188,7 @@ private:
   unsigned emitAdd(MVT RetVT, const Value *LHS, const Value *RHS,
                    bool SetFlags = false, bool WantResult = true,
                    bool IsZExt = false);
+  unsigned emitAdd_ri_(MVT VT, unsigned Op0, bool Op0IsKill, int64_t Imm);
   unsigned emitSub(MVT RetVT, const Value *LHS, const Value *RHS,
                    bool SetFlags = false, bool WantResult = true,
                    bool IsZExt = false);
@@ -1002,20 +1003,10 @@ bool AArch64FastISel::simplifyAddress(Address &Addr, MVT VT) {
   // reg+offset into a register.
   if (ImmediateOffsetNeedsLowering) {
     unsigned ResultReg;
-    if (Addr.getReg()) {
+    if (Addr.getReg())
       // Try to fold the immediate into the add instruction.
-      if (Offset < 0)
-        ResultReg = emitAddSub_ri(/*UseAdd=*/false, MVT::i64, Addr.getReg(),
-                                  /*IsKill=*/false, -Offset);
-      else
-        ResultReg = emitAddSub_ri(/*UseAdd=*/true, MVT::i64, Addr.getReg(),
-                                  /*IsKill=*/false, Offset);
-      if (!ResultReg) {
-        unsigned ImmReg = fastEmit_i(MVT::i64, MVT::i64, ISD::Constant, Offset);
-        ResultReg = emitAddSub_rr(/*UseAdd=*/true, MVT::i64, Addr.getReg(),
-                                  /*IsKill=*/false, ImmReg, /*IsKill=*/true);
-      }
-    } else
+      ResultReg = emitAdd_ri_(MVT::i64, Addr.getReg(), /*IsKill=*/false, Offset);
+    else
       ResultReg = fastEmit_i(MVT::i64, MVT::i64, ISD::Constant, Offset);
 
     if (!ResultReg)
@@ -1440,6 +1431,30 @@ unsigned AArch64FastISel::emitAdd(MVT RetVT, const Value *LHS, const Value *RHS,
                                   bool SetFlags, bool WantResult, bool IsZExt) {
   return emitAddSub(/*UseAdd=*/true, RetVT, LHS, RHS, SetFlags, WantResult,
                     IsZExt);
+}
+
+/// \brief This method is a wrapper to simplify add emission.
+///
+/// First try to emit an add with an immediate operand using emitAddSub_ri. If
+/// that fails, then try to materialize the immediate into a register and use
+/// emitAddSub_rr instead.
+unsigned AArch64FastISel::emitAdd_ri_(MVT VT, unsigned Op0, bool Op0IsKill,
+                                      int64_t Imm) {
+  unsigned ResultReg;
+  if (Imm < 0)
+    ResultReg = emitAddSub_ri(false, VT, Op0, Op0IsKill, -Imm);
+  else
+    ResultReg = emitAddSub_ri(true, VT, Op0, Op0IsKill, Imm);
+
+  if (ResultReg)
+    return ResultReg;
+
+  unsigned CReg = fastEmit_i(VT, VT, ISD::Constant, Imm);
+  if (!CReg)
+    return 0;
+
+  ResultReg = emitAddSub_rr(true, VT, Op0, Op0IsKill, CReg, true);
+  return ResultReg;
 }
 
 unsigned AArch64FastISel::emitSub(MVT RetVT, const Value *LHS, const Value *RHS,
