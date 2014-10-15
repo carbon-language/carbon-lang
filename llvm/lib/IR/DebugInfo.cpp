@@ -185,8 +185,6 @@ bool DIDescriptor::isSubroutineType() const {
   return isCompositeType() && getTag() == dwarf::DW_TAG_subroutine_type;
 }
 
-/// isBasicType - Return true if the specified tag is legal for
-/// DIBasicType.
 bool DIDescriptor::isBasicType() const {
   if (!DbgNode)
     return false;
@@ -199,7 +197,6 @@ bool DIDescriptor::isBasicType() const {
   }
 }
 
-/// isDerivedType - Return true if the specified tag is legal for DIDerivedType.
 bool DIDescriptor::isDerivedType() const {
   if (!DbgNode)
     return false;
@@ -222,8 +219,6 @@ bool DIDescriptor::isDerivedType() const {
   }
 }
 
-/// isCompositeType - Return true if the specified tag is legal for
-/// DICompositeType.
 bool DIDescriptor::isCompositeType() const {
   if (!DbgNode)
     return false;
@@ -240,7 +235,6 @@ bool DIDescriptor::isCompositeType() const {
   }
 }
 
-/// isVariable - Return true if the specified tag is legal for DIVariable.
 bool DIDescriptor::isVariable() const {
   if (!DbgNode)
     return false;
@@ -253,26 +247,19 @@ bool DIDescriptor::isVariable() const {
   }
 }
 
-/// isType - Return true if the specified tag is legal for DIType.
 bool DIDescriptor::isType() const {
   return isBasicType() || isCompositeType() || isDerivedType();
 }
 
-/// isSubprogram - Return true if the specified tag is legal for
-/// DISubprogram.
 bool DIDescriptor::isSubprogram() const {
   return DbgNode && getTag() == dwarf::DW_TAG_subprogram;
 }
 
-/// isGlobalVariable - Return true if the specified tag is legal for
-/// DIGlobalVariable.
 bool DIDescriptor::isGlobalVariable() const {
   return DbgNode && (getTag() == dwarf::DW_TAG_variable ||
                      getTag() == dwarf::DW_TAG_constant);
 }
 
-/// isScope - Return true if the specified tag is one of the scope
-/// related tag.
 bool DIDescriptor::isScope() const {
   if (!DbgNode)
     return false;
@@ -289,43 +276,33 @@ bool DIDescriptor::isScope() const {
   return isType();
 }
 
-/// isTemplateTypeParameter - Return true if the specified tag is
-/// DW_TAG_template_type_parameter.
 bool DIDescriptor::isTemplateTypeParameter() const {
   return DbgNode && getTag() == dwarf::DW_TAG_template_type_parameter;
 }
 
-/// isTemplateValueParameter - Return true if the specified tag is
-/// DW_TAG_template_value_parameter.
 bool DIDescriptor::isTemplateValueParameter() const {
   return DbgNode && (getTag() == dwarf::DW_TAG_template_value_parameter ||
                      getTag() == dwarf::DW_TAG_GNU_template_template_param ||
                      getTag() == dwarf::DW_TAG_GNU_template_parameter_pack);
 }
 
-/// isCompileUnit - Return true if the specified tag is DW_TAG_compile_unit.
 bool DIDescriptor::isCompileUnit() const {
   return DbgNode && getTag() == dwarf::DW_TAG_compile_unit;
 }
 
-/// isFile - Return true if the specified tag is DW_TAG_file_type.
 bool DIDescriptor::isFile() const {
   return DbgNode && getTag() == dwarf::DW_TAG_file_type;
 }
 
-/// isNameSpace - Return true if the specified tag is DW_TAG_namespace.
 bool DIDescriptor::isNameSpace() const {
   return DbgNode && getTag() == dwarf::DW_TAG_namespace;
 }
 
-/// isLexicalBlockFile - Return true if the specified descriptor is a
-/// lexical block with an extra file.
 bool DIDescriptor::isLexicalBlockFile() const {
   return DbgNode && getTag() == dwarf::DW_TAG_lexical_block &&
          DbgNode->getNumOperands() == 3 && getNumHeaderFields() == 2;
 }
 
-/// isLexicalBlock - Return true if the specified tag is DW_TAG_lexical_block.
 bool DIDescriptor::isLexicalBlock() const {
   // FIXME: There are always exactly 4 header fields in DILexicalBlock, but
   // something relies on this returning true for DILexicalBlockFile.
@@ -334,30 +311,23 @@ bool DIDescriptor::isLexicalBlock() const {
          (getNumHeaderFields() == 2 || getNumHeaderFields() == 4);
 }
 
-/// isSubrange - Return true if the specified tag is DW_TAG_subrange_type.
 bool DIDescriptor::isSubrange() const {
   return DbgNode && getTag() == dwarf::DW_TAG_subrange_type;
 }
 
-/// isEnumerator - Return true if the specified tag is DW_TAG_enumerator.
 bool DIDescriptor::isEnumerator() const {
   return DbgNode && getTag() == dwarf::DW_TAG_enumerator;
 }
 
-/// isObjCProperty - Return true if the specified tag is DW_TAG_APPLE_property.
 bool DIDescriptor::isObjCProperty() const {
   return DbgNode && getTag() == dwarf::DW_TAG_APPLE_property;
 }
 
-/// \brief Return true if the specified tag is DW_TAG_imported_module or
-/// DW_TAG_imported_declaration.
 bool DIDescriptor::isImportedEntity() const {
   return DbgNode && (getTag() == dwarf::DW_TAG_imported_module ||
                      getTag() == dwarf::DW_TAG_imported_declaration);
 }
 
-/// \brief Return true if the specified tag is DW_TAG_imported_module or
-/// DW_TAG_imported_declaration.
 bool DIDescriptor::isExpression() const {
   return DbgNode && (getTag() == dwarf::DW_TAG_expression);
 }
@@ -366,8 +336,6 @@ bool DIDescriptor::isExpression() const {
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//
 
-/// replaceAllUsesWith - Replace all uses of the MDNode used by this
-/// type with the one in the passed descriptor.
 void DIDescriptor::replaceAllUsesWith(LLVMContext &VMContext, DIDescriptor D) {
 
   assert(DbgNode && "Trying to replace an unverified type!");
@@ -392,8 +360,6 @@ void DIDescriptor::replaceAllUsesWith(LLVMContext &VMContext, DIDescriptor D) {
   DbgNode = DN;
 }
 
-/// replaceAllUsesWith - Replace all uses of the MDNode used by this
-/// type with the one in D.
 void DIDescriptor::replaceAllUsesWith(MDNode *D) {
 
   assert(DbgNode && "Trying to replace an unverified type!");
@@ -405,7 +371,6 @@ void DIDescriptor::replaceAllUsesWith(MDNode *D) {
   MDNode::deleteTemporary(Node);
 }
 
-/// Verify - Verify that a compile unit is well formed.
 bool DICompileUnit::Verify() const {
   if (!isCompileUnit())
     return false;
@@ -418,7 +383,6 @@ bool DICompileUnit::Verify() const {
   return DbgNode->getNumOperands() == 7 && getNumHeaderFields() == 8;
 }
 
-/// Verify - Verify that an ObjC property is well formed.
 bool DIObjCProperty::Verify() const {
   if (!isObjCProperty())
     return false;
@@ -473,7 +437,6 @@ static bool fieldIsScopeRef(const MDNode *DbgNode, unsigned Elt) {
   return isScopeRef(Fld);
 }
 
-/// Verify - Verify that a type descriptor is well formed.
 bool DIType::Verify() const {
   if (!isType())
     return false;
@@ -513,7 +476,6 @@ bool DIBasicType::Verify() const {
          getNumHeaderFields() == 8;
 }
 
-/// Verify - Verify that a derived type descriptor is well formed.
 bool DIDerivedType::Verify() const {
   // Make sure DerivedFrom @ field 3 is TypeRef.
   if (!fieldIsTypeRef(DbgNode, 3))
@@ -528,7 +490,6 @@ bool DIDerivedType::Verify() const {
          getNumHeaderFields() <= 8;
 }
 
-/// Verify - Verify that a composite type descriptor is well formed.
 bool DICompositeType::Verify() const {
   if (!isCompositeType())
     return false;
@@ -550,7 +511,6 @@ bool DICompositeType::Verify() const {
   return DbgNode->getNumOperands() == 8 && getNumHeaderFields() == 8;
 }
 
-/// Verify - Verify that a subprogram descriptor is well formed.
 bool DISubprogram::Verify() const {
   if (!isSubprogram())
     return false;
@@ -599,7 +559,6 @@ bool DISubprogram::Verify() const {
   return DbgNode->getNumOperands() == 9 && getNumHeaderFields() == 12;
 }
 
-/// Verify - Verify that a global variable descriptor is well formed.
 bool DIGlobalVariable::Verify() const {
   if (!isGlobalVariable())
     return false;
@@ -619,7 +578,6 @@ bool DIGlobalVariable::Verify() const {
   return DbgNode->getNumOperands() == 6 && getNumHeaderFields() == 7;
 }
 
-/// Verify - Verify that a variable descriptor is well formed.
 bool DIVariable::Verify() const {
   if (!isVariable())
     return false;
@@ -644,7 +602,6 @@ bool DIVariable::Verify() const {
   return getInlinedAt() != nullptr && DbgNode->getNumOperands() == 5;
 }
 
-/// Verify - Verify that a variable descriptor is well formed.
 bool DIExpression::Verify() const {
   // Empty DIExpressions may be represented as a nullptr.
   if (!DbgNode)
@@ -653,7 +610,6 @@ bool DIExpression::Verify() const {
   return isExpression() && DbgNode->getNumOperands() == 1;
 }
 
-/// Verify - Verify that a location descriptor is well formed.
 bool DILocation::Verify() const {
   if (!DbgNode)
     return false;
@@ -661,64 +617,53 @@ bool DILocation::Verify() const {
   return DbgNode->getNumOperands() == 4;
 }
 
-/// Verify - Verify that a namespace descriptor is well formed.
 bool DINameSpace::Verify() const {
   if (!isNameSpace())
     return false;
   return DbgNode->getNumOperands() == 3 && getNumHeaderFields() == 3;
 }
 
-/// \brief Retrieve the MDNode for the directory/file pair.
 MDNode *DIFile::getFileNode() const { return getNodeField(DbgNode, 1); }
 
-/// \brief Verify that the file descriptor is well formed.
 bool DIFile::Verify() const {
   return isFile() && DbgNode->getNumOperands() == 2;
 }
 
-/// \brief Verify that the enumerator descriptor is well formed.
 bool DIEnumerator::Verify() const {
   return isEnumerator() && DbgNode->getNumOperands() == 1 &&
          getNumHeaderFields() == 3;
 }
 
-/// \brief Verify that the subrange descriptor is well formed.
 bool DISubrange::Verify() const {
   return isSubrange() && DbgNode->getNumOperands() == 1 &&
          getNumHeaderFields() == 3;
 }
 
-/// \brief Verify that the lexical block descriptor is well formed.
 bool DILexicalBlock::Verify() const {
   return isLexicalBlock() && DbgNode->getNumOperands() == 3 &&
          getNumHeaderFields() == 4;
 }
 
-/// \brief Verify that the file-scoped lexical block descriptor is well formed.
 bool DILexicalBlockFile::Verify() const {
   return isLexicalBlockFile() && DbgNode->getNumOperands() == 3 &&
          getNumHeaderFields() == 2;
 }
 
-/// \brief Verify that the template type parameter descriptor is well formed.
 bool DITemplateTypeParameter::Verify() const {
   return isTemplateTypeParameter() && DbgNode->getNumOperands() == 4 &&
          getNumHeaderFields() == 4;
 }
 
-/// \brief Verify that the template value parameter descriptor is well formed.
 bool DITemplateValueParameter::Verify() const {
   return isTemplateValueParameter() && DbgNode->getNumOperands() == 5 &&
          getNumHeaderFields() == 4;
 }
 
-/// \brief Verify that the imported module descriptor is well formed.
 bool DIImportedEntity::Verify() const {
   return isImportedEntity() && DbgNode->getNumOperands() == 3 &&
          getNumHeaderFields() == 3;
 }
 
-/// getObjCProperty - Return property node, if this ivar is associated with one.
 MDNode *DIDerivedType::getObjCProperty() const {
   return getNodeField(DbgNode, 4);
 }
@@ -742,7 +687,6 @@ static void VerifySubsetOf(const MDNode *LHS, const MDNode *RHS) {
 }
 #endif
 
-/// \brief Set the array of member DITypes.
 void DICompositeType::setArraysHelper(MDNode *Elements, MDNode *TParams) {
   TrackingVH<MDNode> N(*this);
   if (Elements) {
@@ -758,8 +702,6 @@ void DICompositeType::setArraysHelper(MDNode *Elements, MDNode *TParams) {
   DbgNode = N;
 }
 
-/// Generate a reference to this DIType. Uses the type identifier instead
-/// of the actual MDNode if possible, to help type uniquing.
 DIScopeRef DIScope::getRef() const {
   if (!isCompositeType())
     return DIScopeRef(*this);
@@ -769,15 +711,12 @@ DIScopeRef DIScope::getRef() const {
   return DIScopeRef(DTy.getIdentifier());
 }
 
-/// \brief Set the containing type.
 void DICompositeType::setContainingType(DICompositeType ContainingType) {
   TrackingVH<MDNode> N(*this);
   N->replaceOperandWith(5, ContainingType.getRef());
   DbgNode = N;
 }
 
-/// isInlinedFnArgument - Return true if this variable provides debugging
-/// information for an inlined function arguments.
 bool DIVariable::isInlinedFnArgument(const Function *CurFn) {
   assert(CurFn && "Invalid function");
   if (!getContext().isSubprogram())
@@ -787,8 +726,6 @@ bool DIVariable::isInlinedFnArgument(const Function *CurFn) {
   return !DISubprogram(getContext()).describes(CurFn);
 }
 
-/// describes - Return true if this subprogram provides debugging
-/// information for the function F.
 bool DISubprogram::describes(const Function *F) {
   assert(F && "Invalid function");
   if (F == getFunction())
@@ -813,8 +750,6 @@ Value *DITemplateValueParameter::getValue() const {
   return getField(DbgNode, 3);
 }
 
-// If the current node has a parent scope then return that,
-// else return an empty scope.
 DIScopeRef DIScope::getContext() const {
 
   if (isType())
@@ -836,7 +771,6 @@ DIScopeRef DIScope::getContext() const {
   return DIScopeRef(nullptr);
 }
 
-// If the scope node has a name, return that, else return an empty string.
 StringRef DIScope::getName() const {
   if (isType())
     return DIType(DbgNode).getName();
@@ -913,8 +847,6 @@ void DICompileUnit::replaceGlobalVariables(DIArray GlobalVariables) {
   const_cast<MDNode *>(DbgNode)->replaceOperandWith(5, GlobalVariables);
 }
 
-/// copyWithNewScope - Return a copy of this location, replacing the
-/// current scope with the given one.
 DILocation DILocation::copyWithNewScope(LLVMContext &Ctx,
                                         DILexicalBlockFile NewScope) {
   SmallVector<Value *, 10> Elts;
@@ -929,17 +861,11 @@ DILocation DILocation::copyWithNewScope(LLVMContext &Ctx,
   return DILocation(NewDIL);
 }
 
-/// computeNewDiscriminator - Generate a new discriminator value for this
-/// file and line location.
 unsigned DILocation::computeNewDiscriminator(LLVMContext &Ctx) {
   std::pair<const char *, unsigned> Key(getFilename().data(), getLineNumber());
   return ++Ctx.pImpl->DiscriminatorTable[Key];
 }
 
-/// createInlinedVariable - Create a new inlined variable based on current
-/// variable.
-/// @param DV            Current Variable.
-/// @param InlinedScope  Location at current variable is inlined.
 DIVariable llvm::createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
                                        LLVMContext &VMContext) {
   assert(DIVariable(DV).Verify() && "Expected a DIVariable");
@@ -957,7 +883,6 @@ DIVariable llvm::createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
   return Inlined;
 }
 
-/// cleanseInlinedVariable - Remove inlined scope from the variable.
 DIVariable llvm::cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext) {
   assert(DIVariable(DV).Verify() && "Expected a DIVariable");
   if (!DIVariable(DV).getInlinedAt())
@@ -973,7 +898,6 @@ DIVariable llvm::cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext) {
   return Cleansed;
 }
 
-/// getDISubprogram - Find subprogram that is enclosing this scope.
 DISubprogram llvm::getDISubprogram(const MDNode *Scope) {
   DIDescriptor D(Scope);
   if (D.isSubprogram())
@@ -988,7 +912,6 @@ DISubprogram llvm::getDISubprogram(const MDNode *Scope) {
   return DISubprogram();
 }
 
-/// getDICompositeType - Find underlying composite type.
 DICompositeType llvm::getDICompositeType(DIType T) {
   if (T.isCompositeType())
     return DICompositeType(T);
@@ -1005,7 +928,6 @@ DICompositeType llvm::getDICompositeType(DIType T) {
   return DICompositeType();
 }
 
-/// Update DITypeIdentifierMap by going through retained types of each CU.
 DITypeIdentifierMap
 llvm::generateDITypeIdentifierMap(const NamedMDNode *CU_Nodes) {
   DITypeIdentifierMap Map;
@@ -1054,7 +976,6 @@ void DebugInfoFinder::InitializeTypeMap(const Module &M) {
     }
 }
 
-/// processModule - Process entire module and collect debug info.
 void DebugInfoFinder::processModule(const Module &M) {
   InitializeTypeMap(M);
   if (NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu")) {
@@ -1093,7 +1014,6 @@ void DebugInfoFinder::processModule(const Module &M) {
   }
 }
 
-/// processLocation - Process DILocation.
 void DebugInfoFinder::processLocation(const Module &M, DILocation Loc) {
   if (!Loc)
     return;
@@ -1102,7 +1022,6 @@ void DebugInfoFinder::processLocation(const Module &M, DILocation Loc) {
   processLocation(M, Loc.getOrigLocation());
 }
 
-/// processType - Process DIType.
 void DebugInfoFinder::processType(DIType DT) {
   if (!addType(DT))
     return;
@@ -1158,7 +1077,6 @@ void DebugInfoFinder::processScope(DIScope Scope) {
   }
 }
 
-/// processSubprogram - Process DISubprogram.
 void DebugInfoFinder::processSubprogram(DISubprogram SP) {
   if (!addSubprogram(SP))
     return;
@@ -1179,7 +1097,6 @@ void DebugInfoFinder::processSubprogram(DISubprogram SP) {
   }
 }
 
-/// processDeclare - Process DbgDeclareInst.
 void DebugInfoFinder::processDeclare(const Module &M,
                                      const DbgDeclareInst *DDI) {
   MDNode *N = dyn_cast<MDNode>(DDI->getVariable());
@@ -1213,7 +1130,6 @@ void DebugInfoFinder::processValue(const Module &M, const DbgValueInst *DVI) {
   processType(DIVariable(N).getType().resolve(TypeIdentifierMap));
 }
 
-/// addType - Add type into Tys.
 bool DebugInfoFinder::addType(DIType DT) {
   if (!DT)
     return false;
@@ -1225,7 +1141,6 @@ bool DebugInfoFinder::addType(DIType DT) {
   return true;
 }
 
-/// addCompileUnit - Add compile unit into CUs.
 bool DebugInfoFinder::addCompileUnit(DICompileUnit CU) {
   if (!CU)
     return false;
@@ -1236,7 +1151,6 @@ bool DebugInfoFinder::addCompileUnit(DICompileUnit CU) {
   return true;
 }
 
-/// addGlobalVariable - Add global variable into GVs.
 bool DebugInfoFinder::addGlobalVariable(DIGlobalVariable DIG) {
   if (!DIG)
     return false;
@@ -1248,7 +1162,6 @@ bool DebugInfoFinder::addGlobalVariable(DIGlobalVariable DIG) {
   return true;
 }
 
-// addSubprogram - Add subprgoram into SPs.
 bool DebugInfoFinder::addSubprogram(DISubprogram SP) {
   if (!SP)
     return false;
@@ -1277,13 +1190,11 @@ bool DebugInfoFinder::addScope(DIScope Scope) {
 // DIDescriptor: dump routines for all descriptors.
 //===----------------------------------------------------------------------===//
 
-/// dump - Print descriptor to dbgs() with a newline.
 void DIDescriptor::dump() const {
   print(dbgs());
   dbgs() << '\n';
 }
 
-/// print - Print descriptor.
 void DIDescriptor::print(raw_ostream &OS) const {
   if (!DbgNode)
     return;
@@ -1537,7 +1448,6 @@ void DIVariable::printExtendedName(raw_ostream &OS) const {
   }
 }
 
-/// Specialize constructor to make sure it has the correct type.
 template <> DIRef<DIScope>::DIRef(const Value *V) : Val(V) {
   assert(isScopeRef(V) && "DIScopeRef should be a MDString or MDNode");
 }
@@ -1545,22 +1455,15 @@ template <> DIRef<DIType>::DIRef(const Value *V) : Val(V) {
   assert(isTypeRef(V) && "DITypeRef should be a MDString or MDNode");
 }
 
-/// Specialize getFieldAs to handle fields that are references to DIScopes.
 template <>
 DIScopeRef DIDescriptor::getFieldAs<DIScopeRef>(unsigned Elt) const {
   return DIScopeRef(getField(DbgNode, Elt));
 }
-/// Specialize getFieldAs to handle fields that are references to DITypes.
 template <> DITypeRef DIDescriptor::getFieldAs<DITypeRef>(unsigned Elt) const {
   return DITypeRef(getField(DbgNode, Elt));
 }
 
-/// Strip debug info in the module if it exists.
-/// To do this, we remove all calls to the debugger intrinsics and any named
-/// metadata for debugging. We also remove debug locations for instructions.
-/// Return true if module is modified.
 bool llvm::StripDebugInfo(Module &M) {
-
   bool Changed = false;
 
   // Remove all of the calls to the debugger intrinsics, and remove them from
@@ -1607,7 +1510,6 @@ bool llvm::StripDebugInfo(Module &M) {
   return Changed;
 }
 
-/// Return Debug Info Metadata Version by checking module flags.
 unsigned llvm::getDebugMetadataVersionFromModule(const Module &M) {
   Value *Val = M.getModuleFlag("Debug Info Version");
   if (!Val)
