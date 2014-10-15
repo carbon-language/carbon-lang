@@ -143,7 +143,7 @@ MDNode *DIVariable::getInlinedAt() const {
   return getNodeField(DbgNode, DIVariableInlinedAtIndex);
 }
 
-/// Return the size reported by the variable's type.
+/// \brief Return the size reported by the variable's type.
 unsigned DIVariable::getSizeInBits(const DITypeIdentifierMap &Map) {
   DIType Ty = getType().resolve(Map);
   // Follow derived types until we reach a type that
@@ -391,7 +391,8 @@ bool DIObjCProperty::Verify() const {
   return DbgNode->getNumOperands() == 3 && getNumHeaderFields() == 6;
 }
 
-/// Check if a field at position Elt of a MDNode is a MDNode.
+/// \brief Check if a field at position Elt of a MDNode is a MDNode.
+///
 /// We currently allow an empty string and an integer.
 /// But we don't allow a non-empty string in a MDNode field.
 static bool fieldIsMDNode(const MDNode *DbgNode, unsigned Elt) {
@@ -403,26 +404,26 @@ static bool fieldIsMDNode(const MDNode *DbgNode, unsigned Elt) {
   return true;
 }
 
-/// Check if a field at position Elt of a MDNode is a MDString.
+/// \brief Check if a field at position Elt of a MDNode is a MDString.
 static bool fieldIsMDString(const MDNode *DbgNode, unsigned Elt) {
   Value *Fld = getField(DbgNode, Elt);
   return !Fld || isa<MDString>(Fld);
 }
 
-/// Check if a value can be a reference to a type.
+/// \brief Check if a value can be a reference to a type.
 static bool isTypeRef(const Value *Val) {
   return !Val ||
          (isa<MDString>(Val) && !cast<MDString>(Val)->getString().empty()) ||
          (isa<MDNode>(Val) && DIType(cast<MDNode>(Val)).isType());
 }
 
-/// Check if a field at position Elt of a MDNode can be a reference to a type.
+/// \brief Check if referenced field might be a type.
 static bool fieldIsTypeRef(const MDNode *DbgNode, unsigned Elt) {
   Value *Fld = getField(DbgNode, Elt);
   return isTypeRef(Fld);
 }
 
-/// Check if a value can be a ScopeRef.
+/// \brief Check if a value can be a ScopeRef.
 static bool isScopeRef(const Value *Val) {
   return !Val ||
     (isa<MDString>(Val) && !cast<MDString>(Val)->getString().empty()) ||
@@ -431,7 +432,7 @@ static bool isScopeRef(const Value *Val) {
     isa<MDNode>(Val);
 }
 
-/// Check if a field at position Elt of a MDNode can be a ScopeRef.
+/// \brief Check if a field at position Elt of a MDNode can be a ScopeRef.
 static bool fieldIsScopeRef(const MDNode *DbgNode, unsigned Elt) {
   Value *Fld = getField(DbgNode, Elt);
   return isScopeRef(Fld);
@@ -470,7 +471,6 @@ bool DIType::Verify() const {
     return false;
 }
 
-/// Verify - Verify that a basic type descriptor is well formed.
 bool DIBasicType::Verify() const {
   return isBasicType() && DbgNode->getNumOperands() == 3 &&
          getNumHeaderFields() == 8;
