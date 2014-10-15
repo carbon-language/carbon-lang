@@ -2146,7 +2146,7 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
       return DAG.getZeroExtendInReg(BitsFrom, DL, SmallVT);
     }
 
-    if (ConstantSDNode *CVal = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
+    if (ConstantSDNode *CVal = dyn_cast<ConstantSDNode>(BitsFrom)) {
       if (Signed) {
         return constantFoldBFE<int32_t>(DAG,
                                         CVal->getSExtValue(),
