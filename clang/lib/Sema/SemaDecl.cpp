@@ -3723,10 +3723,12 @@ static bool InjectAnonymousStructOrUnionMembers(Sema &SemaRef, Scope *S,
         for (unsigned i = 0; i < Chaining.size(); i++)
           NamedChain[i] = Chaining[i];
 
-        IndirectFieldDecl* IndirectField =
-          IndirectFieldDecl::Create(SemaRef.Context, Owner, VD->getLocation(),
-                                    VD->getIdentifier(), VD->getType(),
-                                    NamedChain, Chaining.size());
+        IndirectFieldDecl *IndirectField = IndirectFieldDecl::Create(
+            SemaRef.Context, Owner, VD->getLocation(), VD->getIdentifier(),
+            VD->getType(), NamedChain, Chaining.size());
+
+        for (const auto *Attr : VD->attrs())
+          IndirectField->addAttr(Attr->clone(SemaRef.Context));
 
         IndirectField->setAccess(AS);
         IndirectField->setImplicit();

@@ -2958,9 +2958,12 @@ Decl *ASTNodeImporter::VisitIndirectFieldDecl(IndirectFieldDecl *D) {
   }
 
   IndirectFieldDecl *ToIndirectField = IndirectFieldDecl::Create(
-                                         Importer.getToContext(), DC,
-                                         Loc, Name.getAsIdentifierInfo(), T,
-                                         NamedChain, D->getChainingSize());
+      Importer.getToContext(), DC, Loc, Name.getAsIdentifierInfo(), T,
+      NamedChain, D->getChainingSize());
+
+  for (const auto *Attr : D->attrs())
+    ToIndirectField->addAttr(Attr->clone(Importer.getToContext()));
+
   ToIndirectField->setAccess(D->getAccess());
   ToIndirectField->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToIndirectField);

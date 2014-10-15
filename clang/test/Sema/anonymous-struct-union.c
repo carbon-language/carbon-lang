@@ -108,3 +108,13 @@ struct s {
   struct { int i; };
   int a[];
 };
+
+// PR20930
+struct s3 {
+  struct { int A __attribute__((deprecated)); }; // expected-note {{'A' has been explicitly marked deprecated here}}
+};
+
+void deprecated_anonymous_struct_member(void) {
+  struct s3 s;
+  s.A = 1; // expected-warning {{'A' is deprecated}}
+}
