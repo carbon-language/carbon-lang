@@ -16,8 +16,22 @@
 #include <tuple>
 #include <string>
 #include <cassert>
+#include <type_traits>
 
 #include "DefaultOnly.h"
+
+struct NoDefault {
+    NoDefault() = delete;
+    explicit NoDefault(int) { }
+};
+
+struct NoExceptDefault {
+    NoExceptDefault() noexcept = default;
+};
+
+struct ThrowingDefault {
+    ThrowingDefault() { }
+};
 
 int main()
 {
@@ -45,6 +59,20 @@ int main()
         assert(std::get<1>(t) == nullptr);
         assert(std::get<2>(t) == "");
         assert(std::get<3>(t) == DefaultOnly());
+    }
+    {
+        // See bug #21157.
+        static_assert(!std::is_default_constructible<std::tuple<NoDefault>>(), "");
+        static_assert(!std::is_default_constructible<std::tuple<DefaultOnly, NoDefault>>(), "");
+        static_assert(!std::is_default_constructible<std::tuple<NoDefault, DefaultOnly, NoDefault>>(), "");
+    }
+    {
+        static_assert(noexcept(std::tuple<NoExceptDefault>()), "");
+        static_assert(noexcept(std::tuple<NoExceptDefault, NoExceptDefault>()), "");
+
+        static_assert(!noexcept(std::tuple<ThrowingDefault, NoExceptDefault>()), "");
+        static_assert(!noexcept(std::tuple<NoExceptDefault, ThrowingDefault>()), "");
+        static_assert(!noexcept(std::tuple<ThrowingDefault, ThrowingDefault>()), "");
     }
 #ifndef _LIBCPP_HAS_NO_CONSTEXPR
     {

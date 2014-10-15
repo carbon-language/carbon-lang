@@ -376,19 +376,18 @@ template <class ..._Tp>
 _LIBCPP_INLINE_VISIBILITY
 void __swallow(_Tp&&...) _NOEXCEPT {}
 
-template <bool ...> struct __all;
+template <bool ..._B>
+struct __all
+    : is_same<__all<_B...>, __all<(_B, true)...>>
+{ };
 
-template <>
-struct __all<>
-{
-    static const bool value = true;
-};
+template <class _Tp>
+struct __all_default_constructible;
 
-template <bool _B0, bool ... _Bp>
-struct __all<_B0, _Bp...>
-{
-    static const bool value = _B0 && __all<_Bp...>::value;
-};
+template <class ..._Tp>
+struct __all_default_constructible<__tuple_types<_Tp...>>
+    : __all<is_default_constructible<_Tp>::value...>
+{ };
 
 // __tuple_impl
 
@@ -512,6 +511,9 @@ class _LIBCPP_TYPE_VIS_ONLY tuple
         typename tuple_element<_Jp, tuple<_Up...> >::type&& get(tuple<_Up...>&&) _NOEXCEPT;
 public:
 
+    template <bool _Dummy = true, class _Up = typename enable_if<
+        __all<(_Dummy && is_default_constructible<_Tp>::value)...>::value
+    >::type>
     _LIBCPP_INLINE_VISIBILITY
     _LIBCPP_CONSTEXPR tuple()
         _NOEXCEPT_(__all<is_nothrow_default_constructible<_Tp>::value...>::value) {}
@@ -547,6 +549,12 @@ public:
                                      sizeof...(_Up) < sizeof...(_Tp) ?
                                         sizeof...(_Up) :
                                         sizeof...(_Tp)>::type
+                         >::value &&
+                         __all_default_constructible<
+                            typename __make_tuple_types<tuple, sizeof...(_Tp),
+                                sizeof...(_Up) < sizeof...(_Tp) ?
+                                    sizeof...(_Up) :
+                                    sizeof...(_Tp)>::type
                          >::value,
                          bool
                       >::type = false
@@ -587,6 +595,12 @@ public:
                                      sizeof...(_Up) < sizeof...(_Tp) ?
                                         sizeof...(_Up) :
                                         sizeof...(_Tp)>::type
+                         >::value &&
+                         __all_default_constructible<
+                            typename __make_tuple_types<tuple, sizeof...(_Tp),
+                                sizeof...(_Up) < sizeof...(_Tp) ?
+                                    sizeof...(_Up) :
+                                    sizeof...(_Tp)>::type
                          >::value,
                          bool
                       >::type =false
@@ -620,6 +634,12 @@ public:
                                      sizeof...(_Up) < sizeof...(_Tp) ?
                                         sizeof...(_Up) :
                                         sizeof...(_Tp)>::type
+                         >::value &&
+                         __all_default_constructible<
+                            typename __make_tuple_types<tuple, sizeof...(_Tp),
+                                sizeof...(_Up) < sizeof...(_Tp) ?
+                                    sizeof...(_Up) :
+                                    sizeof...(_Tp)>::type
                          >::value
                       >::type
              >

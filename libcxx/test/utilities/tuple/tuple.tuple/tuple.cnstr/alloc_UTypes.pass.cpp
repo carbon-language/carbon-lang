@@ -22,6 +22,8 @@
 #include "../alloc_first.h"
 #include "../alloc_last.h"
 
+struct NoDefault { NoDefault() = delete; };
+
 int main()
 {
     {
@@ -67,5 +69,20 @@ int main()
         assert(std::get<0>(t) == 0);
         assert(std::get<1>(t) == MoveOnly());
         assert(std::get<2>(t) == MoveOnly());
+    }
+    {
+        // Make sure the _Up... constructor SFINAEs out when the types that
+        // are not explicitly initialized are not all default constructible.
+        // Otherwise, std::is_constructible would return true but instantiating
+        // the constructor would fail.
+        static_assert(!std::is_constructible<
+            std::tuple<MoveOnly, NoDefault>,
+            std::allocator_arg_t, A1<int>, MoveOnly
+        >::value, "");
+
+        static_assert(!std::is_constructible<
+            std::tuple<MoveOnly, MoveOnly, NoDefault>,
+            std::allocator_arg_t, A1<int>, MoveOnly, MoveOnly
+        >::value, "");
     }
 }
