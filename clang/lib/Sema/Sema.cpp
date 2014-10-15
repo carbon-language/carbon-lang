@@ -672,6 +672,9 @@ void Sema::ActOnEndOfTranslationUnit() {
     }
     PerformPendingInstantiations();
 
+    if (LateTemplateParserCleanup)
+      LateTemplateParserCleanup(OpaqueParser);
+
     CheckDelayedMemberExceptionSpecs();
   }
 
