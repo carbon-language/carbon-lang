@@ -934,7 +934,7 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
   for (const Region *R : ValidRegions)
     emitValidRemarks(F, R);
 
-  if (ReportLevel >= 1)
+  if (ReportLevel)
     printLocations(F);
 
   return false;
