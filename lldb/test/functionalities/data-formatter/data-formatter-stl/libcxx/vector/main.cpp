@@ -10,26 +10,26 @@ typedef std::vector<std::string> string_vect;
 int main()
 {
     int_vect numbers;
-    (numbers.push_back(1));  // Set break point at this line.
-    (numbers.push_back(12));
+    (numbers.push_back(1));  // break here
+    (numbers.push_back(12));  // break here
     (numbers.push_back(123));
     (numbers.push_back(1234));
-    (numbers.push_back(12345));
+    (numbers.push_back(12345)); // break here
     (numbers.push_back(123456));
     (numbers.push_back(1234567));
     
-    numbers.clear();
+    numbers.clear(); // break here
     
-    (numbers.push_back(7));
+    (numbers.push_back(7)); // break here
 
     string_vect strings;
     (strings.push_back(std::string("goofy")));
     (strings.push_back(std::string("is")));
     (strings.push_back(std::string("smart")));
     
-    (strings.push_back(std::string("!!!"))); // Set second break point at this line.
+    (strings.push_back(std::string("!!!"))); // break here
     
-    strings.clear(); 
+    strings.clear();  // break here
     
-    return 0;
+    return 0;  // break here
 }

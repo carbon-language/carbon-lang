@@ -29,16 +29,12 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
-        # Find the line number to break at.
-        self.line = line_number('main.cpp', '// Set break point at this line.')
-        self.line2 = line_number('main.cpp', '// Set second break point at this line.')
 
     def data_formatter_commands(self):
         """Test that that file and class static variables display correctly."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=-1)
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line2, num_expected_locations=-1)
+        lldbutil.run_break_set_by_source_regexp (self, regexp="break here")
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -63,7 +59,7 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
         self.expect("frame variable numbers",
             substrs = ['numbers = size=0'])
 
-        self.runCmd("n")
+        self.runCmd("continue")
         
         # first value added
         self.expect("frame variable numbers",
@@ -72,7 +68,7 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
                                '}'])
 
         # add some more data
-        self.runCmd("n");self.runCmd("n");self.runCmd("n");
+        self.runCmd("continue");
     
         self.expect("frame variable numbers",
                     substrs = ['numbers = size=4',
@@ -104,7 +100,7 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
         self.runCmd("type summary delete int_vect")
 
         # add some more data
-        self.runCmd("n");self.runCmd("n");self.runCmd("n");
+        self.runCmd("continue");
 
         self.expect("frame variable numbers",
                     substrs = ['numbers = size=7',
@@ -139,12 +135,12 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
                     substrs = ['1234']);
 
         # clear out the vector and see that we do the right thing once again
-        self.runCmd("n")
+        self.runCmd("continue")
 
         self.expect("frame variable numbers",
             substrs = ['numbers = size=0'])
 
-        self.runCmd("n")
+        self.runCmd("continue")
 
         # first value added
         self.expect("frame variable numbers",
@@ -153,8 +149,6 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
                                '}'])
 
         # check if we can display strings
-        self.runCmd("c")
-
         self.expect("frame variable strings",
             substrs = ['goofy',
                        'is',
@@ -179,7 +173,7 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
                                'is',
                                'smart'])
 
-        self.runCmd("n")
+        self.runCmd("continue")
 
         self.expect("frame variable strings",
                     substrs = ['vector has 4 items'])
@@ -190,7 +184,7 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
         self.expect("frame variable strings[1]",
                     substrs = ['is']);
 
-        self.runCmd("n")
+        self.runCmd("continue")
 
         self.expect("frame variable strings",
             substrs = ['vector has 0 items'])
