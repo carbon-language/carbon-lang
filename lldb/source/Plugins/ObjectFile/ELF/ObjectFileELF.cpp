@@ -291,7 +291,6 @@ subTypeFromElfHeader(const elf::ELFHeader& header)
         LLDB_INVALID_CPUTYPE;
 }
 
-//! brief kalimbaSectionType
 //! The kalimba toolchain identifies a code section as being
 //! one with the SHT_PROGBITS set in the section sh_type and the top
 //! bit in the 32-bit address field set.
@@ -300,16 +299,24 @@ kalimbaSectionType(
     const elf::ELFHeader& header,
     const elf::ELFSectionHeader& sect_hdr)
 {
-    if (
-        llvm::ELF::EM_CSR_KALIMBA != header.e_machine ||
-        llvm::ELF::SHT_PROGBITS != sect_hdr.sh_type)
+    if (llvm::ELF::EM_CSR_KALIMBA != header.e_machine)
     {
         return eSectionTypeOther;
     }
 
-    const lldb::addr_t KAL_CODE_BIT = 1 << 31;
-    return KAL_CODE_BIT & sect_hdr.sh_addr ?
-         eSectionTypeCode  : eSectionTypeData;
+    if (llvm::ELF::SHT_NOBITS == sect_hdr.sh_type)
+    {
+        return eSectionTypeZeroFill;
+    }
+
+    if (llvm::ELF::SHT_PROGBITS == sect_hdr.sh_type)
+    {
+        const lldb::addr_t KAL_CODE_BIT = 1 << 31;
+        return KAL_CODE_BIT & sect_hdr.sh_addr ?
+             eSectionTypeCode  : eSectionTypeData;
+    }
+
+    return eSectionTypeOther;
 }
 
 // Arbitrary constant used as UUID prefix for core files.
@@ -1626,7 +1633,7 @@ ObjectFileELF::CreateSections(SectionList &unified_section_list)
             }
 
             const uint32_t target_bytes_size =
-                eSectionTypeData == sect_type ? 
+                (eSectionTypeData == sect_type || eSectionTypeZeroFill == sect_type) ? 
                 m_arch_spec.GetDataByteSize() :
                     eSectionTypeCode == sect_type ?
                     m_arch_spec.GetCodeByteSize() : 1;
