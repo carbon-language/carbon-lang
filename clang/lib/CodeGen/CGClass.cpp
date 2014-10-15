@@ -580,9 +580,8 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(MemberInit->getInit());
     if (BaseElementTy.isPODType(CGF.getContext()) ||
         (CE && CE->getConstructor()->isTrivial())) {
-      // Find the source pointer. We know it's the last argument because
-      // we know we're in an implicit copy constructor.
-      unsigned SrcArgIndex = Args.size() - 1;
+      unsigned SrcArgIndex =
+          CGF.CGM.getCXXABI().getSrcArgforCopyCtor(Constructor, Args);
       llvm::Value *SrcPtr
         = CGF.Builder.CreateLoad(CGF.GetAddrOfLocalVar(Args[SrcArgIndex]));
       LValue ThisRHSLV = CGF.MakeNaturalAlignAddrLValue(SrcPtr, RecordTy);
