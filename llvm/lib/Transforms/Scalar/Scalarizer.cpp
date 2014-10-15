@@ -150,6 +150,16 @@ public:
   bool visitLoadInst(LoadInst &);
   bool visitStoreInst(StoreInst &);
 
+  static void registerOptions() {
+    // This is disabled by default because having separate loads and stores
+    // makes it more likely that the -combiner-alias-analysis limits will be
+    // reached.
+    OptionRegistry::registerOption<bool, Scalarizer,
+                                 &Scalarizer::ScalarizeLoadStore>(
+        "scalarize-load-store",
+        "Allow the scalarizer pass to scalarize loads and store", false);
+  }
+
 private:
   Scatterer scatter(Instruction *, Value *);
   void gather(Instruction *, const ValueVector &);
@@ -164,19 +174,14 @@ private:
   GatherList Gathered;
   unsigned ParallelLoopAccessMDKind;
   const DataLayout *DL;
+  bool ScalarizeLoadStore;
 };
 
 char Scalarizer::ID = 0;
 } // end anonymous namespace
 
-// This is disabled by default because having separate loads and stores makes
-// it more likely that the -combiner-alias-analysis limits will be reached.
-static cl::opt<bool> ScalarizeLoadStore
-  ("scalarize-load-store", cl::Hidden, cl::init(false),
-   cl::desc("Allow the scalarizer pass to scalarize loads and store"));
-
-INITIALIZE_PASS(Scalarizer, "scalarizer", "Scalarize vector operations",
-                false, false)
+INITIALIZE_PASS_WITH_OPTIONS(Scalarizer, "scalarizer",
+                             "Scalarize vector operations", false, false);
 
 Scatterer::Scatterer(BasicBlock *bb, BasicBlock::iterator bbi, Value *v,
                      ValueVector *cachePtr)
@@ -236,7 +241,10 @@ Value *Scatterer::operator[](unsigned I) {
 
 bool Scalarizer::doInitialization(Module &M) {
   ParallelLoopAccessMDKind =
-    M.getContext().getMDKindID("llvm.mem.parallel_loop_access");
+      M.getContext().getMDKindID("llvm.mem.parallel_loop_access");
+  ScalarizeLoadStore =
+      M.getContext()
+          .template getOption<bool, Scalarizer, &Scalarizer::ScalarizeLoadStore>();
   return false;
 }
 

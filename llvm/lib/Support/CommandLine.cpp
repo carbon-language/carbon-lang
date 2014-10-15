@@ -113,9 +113,15 @@ void Option::addArgument() {
 }
 
 void Option::removeArgument() {
-  assert(NextRegistered && "argument never registered");
-  assert(RegisteredOptionList == this && "argument is not the last registered");
-  RegisteredOptionList = NextRegistered;
+  if (RegisteredOptionList == this) {
+    RegisteredOptionList = NextRegistered;
+    MarkOptionsChanged();
+    return;
+  }
+  Option *O = RegisteredOptionList;
+  for (; O->NextRegistered != this; O = O->NextRegistered)
+    ;
+  O->NextRegistered = NextRegistered;
   MarkOptionsChanged();
 }
 
