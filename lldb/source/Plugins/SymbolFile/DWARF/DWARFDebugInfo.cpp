@@ -555,7 +555,8 @@ static dw_offset_t DumpCallback
         if (dumpInfo->die_offset == DW_INVALID_OFFSET)
         {
             // We are dumping everything
-            cu->Dump(s);
+            if (cu)
+                cu->Dump(s);
             return cu->GetFirstDIEOffset(); // Return true to parse all DIEs in this Compile Unit
         }
         else
@@ -568,7 +569,7 @@ static dw_offset_t DumpCallback
 
             // We are dumping only a single DIE possibly with it's children and
             // we must find it's compile unit before we can dump it properly
-            if (dumpInfo->die_offset < cu->GetFirstDIEOffset())
+            if (cu && dumpInfo->die_offset < cu->GetFirstDIEOffset())
             {
                 // Not found, maybe the DIE offset provided wasn't correct?
             //  *ostrm_ptr << "DIE at offset " << HEX32 << dumpInfo->die_offset << " was not found." << endl;
