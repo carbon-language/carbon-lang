@@ -132,7 +132,7 @@ public:
       *foundOffsetAtom = offsetInSect - atomPos->offset;
     return atomPos->atom;
   }
-  
+
   /// Searches this file for an UndefinedAtom named 'name'. Returns
   /// nullptr is no such atom found.
   const lld::Atom *findUndefAtom(StringRef name) {
@@ -150,6 +150,19 @@ public:
         vistor(offAndAtom.atom);
       }
     }
+  }
+
+  typedef std::function<void(MachODefinedAtom *atom, uint64_t offset)>
+      SectionAtomVisitor;
+
+  void eachAtomInSection(const Section &section, SectionAtomVisitor visitor) {
+    auto pos = _sectionAtoms.find(&section);
+    if (pos == _sectionAtoms.end())
+      return;
+    auto vec = pos->second;
+
+    for (auto &offAndAtom : vec)
+      visitor(offAndAtom.atom, offAndAtom.offset);
   }
 
   llvm::BumpPtrAllocator &allocator() { return _allocator; }

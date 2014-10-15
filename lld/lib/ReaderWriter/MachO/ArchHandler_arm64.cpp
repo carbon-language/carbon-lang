@@ -91,6 +91,10 @@ public:
     return invalid;
   }
 
+  Reference::KindValue unwindRefToFunctionKind() override {
+    return invalid;
+  }
+
   std::error_code getReferenceInfo(const normalized::Relocation &reloc,
                                    const DefinedAtom *inAtom,
                                    uint32_t offsetInAtom,

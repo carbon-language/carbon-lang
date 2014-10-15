@@ -70,6 +70,10 @@ public:
   /// section.
   virtual Reference::KindValue imageOffsetKindIndirect() = 0;
 
+  /// Reference from an __eh_frame FDE atom to the function it's
+  /// describing. Usually pointer-sized and PC-relative, but differs in whether
+  /// it needs to be in relocatable objects.
+  virtual Reference::KindValue unwindRefToFunctionKind() = 0;
 
   /// Used by normalizedFromAtoms() to know where to generated rebasing and 
   /// binding info in final executables.

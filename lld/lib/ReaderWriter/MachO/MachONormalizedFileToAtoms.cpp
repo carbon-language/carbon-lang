@@ -466,6 +466,22 @@ const Section* findSectionCoveringAddress(const NormalizedFile &normalizedFile,
   return nullptr;
 }
 
+const MachODefinedAtom *
+findAtomCoveringAddress(const NormalizedFile &normalizedFile, MachOFile &file,
+                        uint64_t addr, Reference::Addend *addend) {
+  const Section *sect = nullptr;
+  sect = findSectionCoveringAddress(normalizedFile, addr);
+  if (!sect)
+    return nullptr;
+
+  uint32_t offsetInTarget;
+  uint64_t offsetInSect = addr - sect->address;
+  auto atom =
+      file.findAtomCoveringAddress(*sect, offsetInSect, &offsetInTarget);
+  *addend = offsetInTarget;
+  return atom;
+}
+
 // Walks all relocations for a section in a normalized .o file and
 // creates corresponding lld::Reference objects.
 std::error_code convertRelocs(const Section &section,
@@ -605,6 +621,74 @@ bool isDebugInfoSection(const Section &section) {
   return section.segmentName.equals("__DWARF");
 }
 
+static bool isCIE(bool swap, const DefinedAtom *atom) {
+  assert(atom->contentType() == DefinedAtom::typeCFI);
+  uint32_t size = read32(swap, *(uint32_t *)atom->rawContent().data());
+
+  uint32_t idOffset = sizeof(uint32_t);
+  if (size == 0xffffffffU)
+    idOffset += sizeof(uint64_t);
+
+  return read32(swap, *(uint32_t *)(atom->rawContent().data() + idOffset)) == 0;
+}
+
+static int64_t readSPtr(bool is64, bool swap, const uint8_t *addr) {
+  if (is64)
+    return read64(swap, *reinterpret_cast<const uint64_t *>(addr));
+
+  int32_t res = read32(swap, *reinterpret_cast<const uint32_t *>(addr));
+  return res;
+}
+
+std::error_code addEHFrameReferences(const NormalizedFile &normalizedFile,
+                                     MachOFile &file,
+                                     mach_o::ArchHandler &handler) {
+  const bool swap = !MachOLinkingContext::isHostEndian(normalizedFile.arch);
+  const bool is64 = MachOLinkingContext::is64Bit(normalizedFile.arch);
+
+  const Section *ehFrameSection = nullptr;
+  for (auto &section : normalizedFile.sections)
+    if (section.segmentName == "__TEXT" &&
+        section.sectionName == "__eh_frame") {
+      ehFrameSection = &section;
+      break;
+    }
+
+  // No __eh_frame so nothing to do.
+  if (!ehFrameSection)
+    return std::error_code();
+
+  file.eachAtomInSection(*ehFrameSection,
+                         [&](MachODefinedAtom *atom, uint64_t offset) -> void {
+    assert(atom->contentType() == DefinedAtom::typeCFI);
+
+    if (isCIE(swap, atom))
+      return;
+
+    // Compiler wasn't lazy and actually told us what it meant.
+    if (atom->begin() != atom->end())
+      return;
+
+    const uint8_t *frameData = atom->rawContent().data();
+    uint32_t size = read32(swap, *(uint32_t *)frameData);
+    uint64_t rangeFieldInFDE = size == 0xffffffffU
+                                   ? 2 * sizeof(uint32_t) + sizeof(uint64_t)
+                                   : 2 * sizeof(uint32_t);
+
+    int64_t functionFromFDE = readSPtr(is64, swap, frameData + rangeFieldInFDE);
+    uint64_t rangeStart = ehFrameSection->address + offset + rangeFieldInFDE;
+    rangeStart += functionFromFDE;
+
+    Reference::Addend addend;
+    const Atom *func =
+        findAtomCoveringAddress(normalizedFile, file, rangeStart, &addend);
+    atom->addReference(rangeFieldInFDE, handler.unwindRefToFunctionKind(), func,
+                       addend, handler.kindArch());
+  });
+  return std::error_code();
+}
+
+
 /// Converts normalized mach-o file into an lld::File and lld::Atoms.
 ErrorOr<std::unique_ptr<lld::File>>
 normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
@@ -647,6 +731,13 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
   file->eachDefinedAtom([&](MachODefinedAtom* atom) -> void {
     handler->addAdditionalReferences(*atom);
   });
+
+  // Each __eh_frame section needs references to both __text (the function we're
+  // providing unwind info for) and itself (FDE -> CIE). These aren't
+  // represented in the relocations on some architectures, so we have to add
+  // them back in manually there.
+  if (std::error_code ec = addEHFrameReferences(normalizedFile, *file, *handler))
+    return ec;
 
   // Process mach-o data-in-code regions array. That information is encoded in
   // atoms as References at each transition point.

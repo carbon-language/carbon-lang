@@ -110,20 +110,20 @@ undefined-symbols:
 # CHECK:     content:          
 # CHECK:   - type:            unwind-cfi
 # CHECK:     content:         
-# FIXME:     references:      
+# CHECK:     references:
 # FIXME:       - kind:            negDelta32
 # FIXME:         offset:          4
 # FIXME:         target:          [[CIE]]
-# FIXME:       - kind:            delta32
-# FIXME:         offset:          8
-# FIXME:         target:          __Z3foov
+# CHECK:       - kind:            delta32
+# CHECK:         offset:          8
+# CHECK:         target:          __Z3foov
 # CHECK:   - type:            unwind-cfi
 # CHECK:     content:          
-# FIXME:     references:      
+# CHECK:     references:
 # FIXME:       - kind:            negDelta32
 # FIXME:         offset:          4
 # FIXME:         target:          [[CIE]]
-# FIXME:       - kind:            delta32
-# FIXME:         offset:          8
-# FIXME:         target:          __Z3barv
+# CHECK:       - kind:            delta32
+# CHECK:         offset:          8
+# CHECK:         target:          __Z3barv
 

@@ -84,6 +84,11 @@ public:
     return imageOffsetGot;
   }
 
+  Reference::KindValue unwindRefToFunctionKind() override{
+    return unwindFDEToFunction;
+  }
+
+
   const StubInfo &stubInfo() override { return _sStubInfo; }
 
   bool isNonCallBranch(const Reference &) override {
@@ -165,6 +170,8 @@ private:
     imageOffset,           /// Location contains offset of atom in final image
     imageOffsetGot,        /// Location contains offset of GOT entry for atom in
                            /// final image (typically personality function).
+    unwindFDEToFunction,   /// Nearly delta64, but cannot be rematerialized in
+                           /// relocatable object (yay for implicit contracts!).
 
   };
 
@@ -202,6 +209,7 @@ const Registry::KindStrings ArchHandler_x86_64::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(delta32), LLD_KIND_STRING_ENTRY(delta64),
   LLD_KIND_STRING_ENTRY(delta32Anon), LLD_KIND_STRING_ENTRY(delta64Anon),
   LLD_KIND_STRING_ENTRY(imageOffset), LLD_KIND_STRING_ENTRY(imageOffsetGot),
+  LLD_KIND_STRING_ENTRY(unwindFDEToFunction),
   LLD_KIND_STRING_END
 };
 
@@ -482,6 +490,7 @@ void ArchHandler_x86_64::applyFixupFinal(const Reference &ref,
     return;
   case delta64:
   case delta64Anon:
+  case unwindFDEToFunction:
     write64(*loc64, _swap, (targetAddress - fixupAddress) + ref.addend());
     return;
   case ripRel32GotLoadNowLea:
@@ -560,6 +569,9 @@ void ArchHandler_x86_64::applyFixupRelocatable(const Reference &ref,
   case imageOffset:
   case imageOffsetGot:
     llvm_unreachable("image offset implies __unwind_info");
+    return;
+  case unwindFDEToFunction:
+    // Do nothing for now
     return;
   case invalid:
     // Fall into llvm_unreachable().
@@ -644,6 +656,8 @@ void ArchHandler_x86_64::appendSectionRelocations(
                 X86_64_RELOC_SUBTRACTOR | rExtern | rLength8 );
     appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_UNSIGNED             | rLength8 );
+    return;
+  case unwindFDEToFunction:
     return;
   case ripRel32GotLoadNowLea:
     llvm_unreachable("ripRel32GotLoadNowLea implies GOT pass was run");
