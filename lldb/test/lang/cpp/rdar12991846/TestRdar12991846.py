@@ -26,7 +26,7 @@ class Rdar12991846TestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @unittest2.expectedFailure
+    @unittest2.expectedFailure("rdar://18684408")
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
     def test_expr1_with_dsym(self):
@@ -34,14 +34,14 @@ class Rdar12991846TestCase(TestBase):
         self.buildDsym()
         self.rdar12991846(expr=1)
 
-    @unittest2.expectedFailure
+    @unittest2.expectedFailure("rdar://18684408")
     @dwarf_test
     def test_expr1_with_dwarf(self):
         """Test that the expression parser returns proper Unicode strings."""
         self.buildDwarf()
         self.rdar12991846(expr=1)
 
-    @unittest2.expectedFailure
+    @unittest2.expectedFailure("rdar://18684408")
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
     def test_expr2_with_dsym(self):
@@ -49,14 +49,14 @@ class Rdar12991846TestCase(TestBase):
         self.buildDsym()
         self.rdar12991846(expr=2)
 
-    @unittest2.expectedFailure
+    @unittest2.expectedFailure("rdar://18684408")
     @dwarf_test
     def test_expr2_with_dwarf(self):
         """Test that the expression parser returns proper Unicode strings."""
         self.buildDwarf()
         self.rdar12991846(expr=2)
 
-    @unittest2.expectedFailure
+    @unittest2.expectedFailure("rdar://18684408")
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
     def test_expr3_with_dsym(self):
@@ -64,7 +64,7 @@ class Rdar12991846TestCase(TestBase):
         self.buildDsym()
         self.rdar12991846(expr=3)
 
-    @unittest2.expectedFailure
+    @unittest2.expectedFailure("rdar://18684408")
     @dwarf_test
     def test_expr3_with_dwarf(self):
         """Test that the expression parser returns proper Unicode strings."""
