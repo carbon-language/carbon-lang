@@ -4060,6 +4060,12 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
       "        ?: aaaaaaaaaaaaaaa);\n"
       "}",
       NoBinPacking);
+
+  verifyFormat("SomeFunction(aaaaaaaaaaaaaaaaa,\n"
+               "             // comment.\n"
+               "             ccccccccccccccccccccccccccccccccccccccc\n"
+               "                 ? aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+               "                 : bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb);");
 }
 
 TEST_F(FormatTest, BreaksConditionalExpressionsAfterOperator) {

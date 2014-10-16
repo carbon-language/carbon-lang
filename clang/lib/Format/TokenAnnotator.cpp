@@ -1174,6 +1174,9 @@ private:
   }
 
   void parseConditionalExpr() {
+    while (Current && Current->isTrailingComment()) {
+      next();
+    }
     FormatToken *Start = Current;
     parse(prec::LogicalOr);
     if (!Current || !Current->is(tok::question))
