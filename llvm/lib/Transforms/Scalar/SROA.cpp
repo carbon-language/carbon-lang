@@ -225,10 +225,12 @@ public:
   /// \brief Support for iterating over the slices.
   /// @{
   typedef SmallVectorImpl<Slice>::iterator iterator;
+  typedef iterator_range<iterator> range;
   iterator begin() { return Slices.begin(); }
   iterator end() { return Slices.end(); }
 
   typedef SmallVectorImpl<Slice>::const_iterator const_iterator;
+  typedef iterator_range<const_iterator> const_range;
   const_iterator begin() const { return Slices.begin(); }
   const_iterator end() const { return Slices.end(); }
   /// @}
@@ -1629,38 +1631,38 @@ static Value *convertValue(const DataLayout &DL, IRBuilderTy &IRB, Value *V,
 ///
 /// This function is called to test each entry in a partioning which is slated
 /// for a single slice.
-static bool isVectorPromotionViableForSlice(
-    const DataLayout &DL, AllocaSlices &S, uint64_t SliceBeginOffset,
-    uint64_t SliceEndOffset, VectorType *Ty, uint64_t ElementSize,
-    AllocaSlices::const_iterator I) {
+static bool
+isVectorPromotionViableForSlice(const DataLayout &DL, uint64_t SliceBeginOffset,
+                                uint64_t SliceEndOffset, VectorType *Ty,
+                                uint64_t ElementSize, const Slice &S) {
   // First validate the slice offsets.
   uint64_t BeginOffset =
-      std::max(I->beginOffset(), SliceBeginOffset) - SliceBeginOffset;
+      std::max(S.beginOffset(), SliceBeginOffset) - SliceBeginOffset;
   uint64_t BeginIndex = BeginOffset / ElementSize;
   if (BeginIndex * ElementSize != BeginOffset ||
       BeginIndex >= Ty->getNumElements())
     return false;
   uint64_t EndOffset =
-      std::min(I->endOffset(), SliceEndOffset) - SliceBeginOffset;
+      std::min(S.endOffset(), SliceEndOffset) - SliceBeginOffset;
   uint64_t EndIndex = EndOffset / ElementSize;
   if (EndIndex * ElementSize != EndOffset || EndIndex > Ty->getNumElements())
     return false;
 
   assert(EndIndex > BeginIndex && "Empty vector!");
   uint64_t NumElements = EndIndex - BeginIndex;
-  Type *SliceTy =
-      (NumElements == 1) ? Ty->getElementType()
-                         : VectorType::get(Ty->getElementType(), NumElements);
+  Type *SliceTy = (NumElements == 1)
+                      ? Ty->getElementType()
+                      : VectorType::get(Ty->getElementType(), NumElements);
 
   Type *SplitIntTy =
       Type::getIntNTy(Ty->getContext(), NumElements * ElementSize * 8);
 
-  Use *U = I->getUse();
+  Use *U = S.getUse();
 
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(U->getUser())) {
     if (MI->isVolatile())
       return false;
-    if (!I->isSplittable())
+    if (!S.isSplittable())
       return false; // Skip any unsplittable intrinsics.
   } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(U->getUser())) {
     if (II->getIntrinsicID() != Intrinsic::lifetime_start &&
@@ -1673,8 +1675,7 @@ static bool isVectorPromotionViableForSlice(
     if (LI->isVolatile())
       return false;
     Type *LTy = LI->getType();
-    if (SliceBeginOffset > I->beginOffset() ||
-        SliceEndOffset < I->endOffset()) {
+    if (SliceBeginOffset > S.beginOffset() || SliceEndOffset < S.endOffset()) {
       assert(LTy->isIntegerTy());
       LTy = SplitIntTy;
     }
@@ -1684,8 +1685,7 @@ static bool isVectorPromotionViableForSlice(
     if (SI->isVolatile())
       return false;
     Type *STy = SI->getValueOperand()->getType();
-    if (SliceBeginOffset > I->beginOffset() ||
-        SliceEndOffset < I->endOffset()) {
+    if (SliceBeginOffset > S.beginOffset() || SliceEndOffset < S.endOffset()) {
       assert(STy->isIntegerTy());
       STy = SplitIntTy;
     }
@@ -1708,10 +1708,9 @@ static bool isVectorPromotionViableForSlice(
 /// don't want to do the rewrites unless we are confident that the result will
 /// be promotable, so we have an early test here.
 static bool
-isVectorPromotionViable(const DataLayout &DL, Type *AllocaTy, AllocaSlices &S,
+isVectorPromotionViable(const DataLayout &DL, Type *AllocaTy,
                         uint64_t SliceBeginOffset, uint64_t SliceEndOffset,
-                        AllocaSlices::const_iterator I,
-                        AllocaSlices::const_iterator E,
+                        AllocaSlices::const_range Slices,
                         ArrayRef<AllocaSlices::iterator> SplitUses) {
   VectorType *Ty = dyn_cast<VectorType>(AllocaTy);
   if (!Ty)
@@ -1727,16 +1726,14 @@ isVectorPromotionViable(const DataLayout &DL, Type *AllocaTy, AllocaSlices &S,
          "vector size not a multiple of element size?");
   ElementSize /= 8;
 
-  for (; I != E; ++I)
-    if (!isVectorPromotionViableForSlice(DL, S, SliceBeginOffset,
-                                         SliceEndOffset, Ty, ElementSize, I))
+  for (const auto &S : Slices)
+    if (!isVectorPromotionViableForSlice(DL, SliceBeginOffset, SliceEndOffset,
+                                         Ty, ElementSize, S))
       return false;
 
-  for (ArrayRef<AllocaSlices::iterator>::const_iterator SUI = SplitUses.begin(),
-                                                        SUE = SplitUses.end();
-       SUI != SUE; ++SUI)
-    if (!isVectorPromotionViableForSlice(DL, S, SliceBeginOffset,
-                                         SliceEndOffset, Ty, ElementSize, *SUI))
+  for (const auto &SI : SplitUses)
+    if (!isVectorPromotionViableForSlice(DL, SliceBeginOffset, SliceEndOffset,
+                                         Ty, ElementSize, *SI))
       return false;
 
   return true;
@@ -1749,18 +1746,18 @@ isVectorPromotionViable(const DataLayout &DL, Type *AllocaTy, AllocaSlices &S,
 static bool isIntegerWideningViableForSlice(const DataLayout &DL,
                                             Type *AllocaTy,
                                             uint64_t AllocBeginOffset,
-                                            uint64_t Size, AllocaSlices &S,
-                                            AllocaSlices::const_iterator I,
+                                            uint64_t Size,
+                                            const Slice &S,
                                             bool &WholeAllocaOp) {
-  uint64_t RelBegin = I->beginOffset() - AllocBeginOffset;
-  uint64_t RelEnd = I->endOffset() - AllocBeginOffset;
+  uint64_t RelBegin = S.beginOffset() - AllocBeginOffset;
+  uint64_t RelEnd = S.endOffset() - AllocBeginOffset;
 
   // We can't reasonably handle cases where the load or store extends past
   // the end of the aloca's type and into its padding.
   if (RelEnd > Size)
     return false;
 
-  Use *U = I->getUse();
+  Use *U = S.getUse();
 
   if (LoadInst *LI = dyn_cast<LoadInst>(U->getUser())) {
     if (LI->isVolatile())
@@ -1794,7 +1791,7 @@ static bool isIntegerWideningViableForSlice(const DataLayout &DL,
   } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(U->getUser())) {
     if (MI->isVolatile() || !isa<Constant>(MI->getLength()))
       return false;
-    if (!I->isSplittable())
+    if (!S.isSplittable())
       return false; // Skip any unsplittable intrinsics.
   } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(U->getUser())) {
     if (II->getIntrinsicID() != Intrinsic::lifetime_start &&
@@ -1815,9 +1812,8 @@ static bool isIntegerWideningViableForSlice(const DataLayout &DL,
 /// promote the resulting alloca.
 static bool
 isIntegerWideningViable(const DataLayout &DL, Type *AllocaTy,
-                        uint64_t AllocBeginOffset, AllocaSlices &S,
-                        AllocaSlices::const_iterator I,
-                        AllocaSlices::const_iterator E,
+                        uint64_t AllocBeginOffset,
+                        AllocaSlices::const_range Slices,
                         ArrayRef<AllocaSlices::iterator> SplitUses) {
   uint64_t SizeInBits = DL.getTypeSizeInBits(AllocaTy);
   // Don't create integer types larger than the maximum bitwidth.
@@ -1843,18 +1839,17 @@ isIntegerWideningViable(const DataLayout &DL, Type *AllocaTy,
   // promote due to some other unsplittable entry (which we may make splittable
   // later). However, if there are only splittable uses, go ahead and assume
   // that we cover the alloca.
-  bool WholeAllocaOp = (I != E) ? false : DL.isLegalInteger(SizeInBits);
+  bool WholeAllocaOp =
+      Slices.begin() != Slices.end() ? false : DL.isLegalInteger(SizeInBits);
 
-  for (; I != E; ++I)
+  for (const auto &S : Slices)
     if (!isIntegerWideningViableForSlice(DL, AllocaTy, AllocBeginOffset, Size,
-                                         S, I, WholeAllocaOp))
+                                         S, WholeAllocaOp))
       return false;
 
-  for (ArrayRef<AllocaSlices::iterator>::const_iterator SUI = SplitUses.begin(),
-                                                        SUE = SplitUses.end();
-       SUI != SUE; ++SUI)
+  for (const auto &SI : SplitUses)
     if (!isIntegerWideningViableForSlice(DL, AllocaTy, AllocBeginOffset, Size,
-                                         S, *SUI, WholeAllocaOp))
+                                         *SI, WholeAllocaOp))
       return false;
 
   return WholeAllocaOp;
@@ -3147,12 +3142,14 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
     SliceTy = ArrayType::get(Type::getInt8Ty(*C), SliceSize);
   assert(DL->getTypeAllocSize(SliceTy) >= SliceSize);
 
-  bool IsVectorPromotable = isVectorPromotionViable(
-      *DL, SliceTy, S, BeginOffset, EndOffset, B, E, SplitUses);
+  bool IsVectorPromotable =
+      isVectorPromotionViable(*DL, SliceTy, BeginOffset, EndOffset,
+                              AllocaSlices::const_range(B, E), SplitUses);
 
   bool IsIntegerPromotable =
       !IsVectorPromotable &&
-      isIntegerWideningViable(*DL, SliceTy, BeginOffset, S, B, E, SplitUses);
+      isIntegerWideningViable(*DL, SliceTy, BeginOffset,
+                              AllocaSlices::const_range(B, E), SplitUses);
 
   // Check for the case where we're going to rewrite to a new alloca of the
   // exact same type as the original, and with the same access offsets. In that
