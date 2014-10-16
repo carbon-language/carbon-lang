@@ -172,9 +172,6 @@ OptionValueFileSpecList::SetValueFromCString (const char *value, VarSetOperation
             break;
     }
     return error;
-
-    m_value_was_set = true;
-    return Error();
 }
 
 lldb::OptionValueSP
