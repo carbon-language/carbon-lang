@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -std=c99 %s -emit-llvm -o - | \
-// RUN:    opt -std-compile-opts -disable-output
+// RUN:    opt -O3 -disable-output
 // PR580
 
 int X, Y;
