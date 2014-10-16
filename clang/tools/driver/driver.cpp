@@ -244,7 +244,7 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
 
   for (int Components = 2; Components; --Components) {
     auto I = std::find_if(std::begin(suffixes), std::end(suffixes),
-                          [&](const decltype(suffixes[0]) &suffix) {
+                          [&](decltype(suffixes[0]) &suffix) {
       return ProgNameRef.endswith(suffix.Suffix);
     });
 
