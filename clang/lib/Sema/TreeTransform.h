@@ -10510,9 +10510,16 @@ TreeTransform<Derived>::RebuildCXXPseudoDestructorExpr(Expr *Base,
 
   // The scope type is now known to be a valid nested name specifier
   // component. Tack it on to the end of the nested name specifier.
-  if (ScopeType)
-    SS.Extend(SemaRef.Context, SourceLocation(),
-              ScopeType->getTypeLoc(), CCLoc);
+  if (ScopeType) {
+    if (!ScopeType->getType()->getAs<TagType>()) {
+      getSema().Diag(ScopeType->getTypeLoc().getBeginLoc(),
+                     diag::err_expected_class_or_namespace)
+          << ScopeType->getType() << getSema().getLangOpts().CPlusPlus;
+      return ExprError();
+    }
+    SS.Extend(SemaRef.Context, SourceLocation(), ScopeType->getTypeLoc(),
+              CCLoc);
+  }
 
   SourceLocation TemplateKWLoc; // FIXME: retrieve it from caller.
   return getSema().BuildMemberReferenceExpr(Base, BaseType,
