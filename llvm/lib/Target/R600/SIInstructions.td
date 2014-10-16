@@ -1988,45 +1988,9 @@ defm : RsqPat<V_RSQ_F32_e32, f32>;
 // VOP2 Patterns
 //===----------------------------------------------------------------------===//
 
-class BinOp64Pat <SDNode node, Instruction inst> : Pat <
-  (node i64:$src0, i64:$src1),
-  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
-    (inst  (EXTRACT_SUBREG i64:$src0, sub0),
-                  (EXTRACT_SUBREG i64:$src1, sub0)), sub0),
-    (inst (EXTRACT_SUBREG i64:$src0, sub1),
-                  (EXTRACT_SUBREG i64:$src1, sub1)), sub1)
->;
-
-def : BinOp64Pat <and, V_AND_B32_e64>;
-def : BinOp64Pat <or, V_OR_B32_e64>;
-def : BinOp64Pat <xor, V_XOR_B32_e64>;
-
-class SextInReg <ValueType vt, int ShiftAmt> : Pat <
-  (sext_inreg i32:$src0, vt),
-  (V_ASHRREV_I32_e32 ShiftAmt, (V_LSHLREV_B32_e32 ShiftAmt, $src0))
->;
-
-def : SextInReg <i8, 24>;
-def : SextInReg <i16, 16>;
-
 def : Pat <
   (i32 (add (i32 (ctpop i32:$popcnt)), i32:$val)),
   (V_BCNT_U32_B32_e64 $popcnt, $val)
->;
-
-def : Pat <
-   (i32 (ctpop i32:$popcnt)),
-   (V_BCNT_U32_B32_e64 $popcnt, 0)
->;
-
-def : Pat <
-  (i64 (ctpop i64:$src)),
-  (INSERT_SUBREG
-    (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
-      (V_BCNT_U32_B32_e32 (EXTRACT_SUBREG $src, sub1),
-        (V_BCNT_U32_B32_e64 (EXTRACT_SUBREG $src, sub0), 0)),
-      sub0),
-    (V_MOV_B32_e32 0), sub1)
 >;
 
 def : Pat <
@@ -2598,11 +2562,6 @@ def : Pat <
 
 def : IMad24Pat<V_MAD_I32_I24>;
 def : UMad24Pat<V_MAD_U32_U24>;
-
-def : Pat <
-  (mul i32:$src0, i32:$src1),
-  (V_MUL_LO_I32 $src0, $src1)
->;
 
 def : Pat <
   (mulhu i32:$src0, i32:$src1),
