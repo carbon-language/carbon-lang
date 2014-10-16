@@ -235,28 +235,16 @@ public:
   const_iterator end() const { return Slices.end(); }
   /// @}
 
-  /// \brief Allow iterating the dead users for this alloca.
-  ///
-  /// These are instructions which will never actually use the alloca as they
-  /// are outside the allocated range. They are safe to replace with undef and
-  /// delete.
-  /// @{
-  typedef SmallVectorImpl<Instruction *>::const_iterator dead_user_iterator;
-  dead_user_iterator dead_user_begin() const { return DeadUsers.begin(); }
-  dead_user_iterator dead_user_end() const { return DeadUsers.end(); }
-  /// @}
+  /// \brief Access the dead users for this alloca.
+  ArrayRef<Instruction *> getDeadUsers() const { return DeadUsers; }
 
-  /// \brief Allow iterating the dead expressions referring to this alloca.
+  /// \brief Access the dead operands referring to this alloca.
   ///
   /// These are operands which have cannot actually be used to refer to the
   /// alloca as they are outside its range and the user doesn't correct for
   /// that. These mostly consist of PHI node inputs and the like which we just
   /// need to replace with undef.
-  /// @{
-  typedef SmallVectorImpl<Use *>::const_iterator dead_op_iterator;
-  dead_op_iterator dead_op_begin() const { return DeadOperands.begin(); }
-  dead_op_iterator dead_op_end() const { return DeadOperands.end(); }
-  /// @}
+  ArrayRef<Use *> getDeadOperands() const { return DeadOperands; }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   void print(raw_ostream &OS, const_iterator I, StringRef Indent = "  ") const;
@@ -3457,24 +3445,20 @@ bool SROA::runOnAlloca(AllocaInst &AI) {
     return Changed;
 
   // Delete all the dead users of this alloca before splitting and rewriting it.
-  for (AllocaSlices::dead_user_iterator DI = S.dead_user_begin(),
-                                        DE = S.dead_user_end();
-       DI != DE; ++DI) {
+  for (Instruction *DeadUser : S.getDeadUsers()) {
     // Free up everything used by this instruction.
-    for (Use &DeadOp : (*DI)->operands())
+    for (Use &DeadOp : DeadUser->operands())
       clobberUse(DeadOp);
 
     // Now replace the uses of this instruction.
-    (*DI)->replaceAllUsesWith(UndefValue::get((*DI)->getType()));
+    DeadUser->replaceAllUsesWith(UndefValue::get(DeadUser->getType()));
 
     // And mark it for deletion.
-    DeadInsts.insert(*DI);
+    DeadInsts.insert(DeadUser);
     Changed = true;
   }
-  for (AllocaSlices::dead_op_iterator DO = S.dead_op_begin(),
-                                      DE = S.dead_op_end();
-       DO != DE; ++DO) {
-    clobberUse(**DO);
+  for (Use *DeadOp : S.getDeadOperands()) {
+    clobberUse(*DeadOp);
     Changed = true;
   }
 
