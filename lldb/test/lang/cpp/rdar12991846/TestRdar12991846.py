@@ -29,17 +29,47 @@ class Rdar12991846TestCase(TestBase):
     @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
-    def test_with_dsym(self):
+    def test_expr1_with_dsym(self):
         """Test that the expression parser returns proper Unicode strings."""
         self.buildDsym()
-        self.rdar12991846()
+        self.rdar12991846(expr=1)
 
     @unittest2.expectedFailure
     @dwarf_test
-    def test_with_dwarf(self):
+    def test_expr1_with_dwarf(self):
         """Test that the expression parser returns proper Unicode strings."""
         self.buildDwarf()
-        self.rdar12991846()
+        self.rdar12991846(expr=1)
+
+    @unittest2.expectedFailure
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
+    def test_expr2_with_dsym(self):
+        """Test that the expression parser returns proper Unicode strings."""
+        self.buildDsym()
+        self.rdar12991846(expr=2)
+
+    @unittest2.expectedFailure
+    @dwarf_test
+    def test_expr2_with_dwarf(self):
+        """Test that the expression parser returns proper Unicode strings."""
+        self.buildDwarf()
+        self.rdar12991846(expr=2)
+
+    @unittest2.expectedFailure
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
+    def test_expr3_with_dsym(self):
+        """Test that the expression parser returns proper Unicode strings."""
+        self.buildDsym()
+        self.rdar12991846(expr=3)
+
+    @unittest2.expectedFailure
+    @dwarf_test
+    def test_expr3_with_dwarf(self):
+        """Test that the expression parser returns proper Unicode strings."""
+        self.buildDwarf()
+        self.rdar12991846(expr=3)
 
     def setUp(self):
         # Call super's setUp().
@@ -48,7 +78,7 @@ class Rdar12991846TestCase(TestBase):
         self.source = 'main.cpp'
         self.line = line_number(self.source, '// Set break point at this line.')
 
-    def rdar12991846(self):
+    def rdar12991846(self, expr=None):
         """Test that the expression parser returns proper Unicode strings."""
         if self.getArchitecture() in ['i386']:
             self.skipTest("Skipping because this test is known to crash on i386")
@@ -68,14 +98,11 @@ class Rdar12991846TestCase(TestBase):
         if not process:
             self.fail("SBTarget.Launch() failed")
 
-        self.expect('expression L"hello"',
-            substrs = ['hello'])
+        if expr == 1: self.expect('expression L"hello"', substrs = ['hello'])
 
-        self.expect('expression u"hello"',
-           substrs = ['hello'])
+        if expr == 2: self.expect('expression u"hello"', substrs = ['hello'])
 
-        self.expect('expression U"hello"',
-            substrs = ['hello'])
+        if expr == 3: self.expect('expression U"hello"', substrs = ['hello'])
 
 if __name__ == '__main__':
     import atexit
