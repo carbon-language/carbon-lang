@@ -232,15 +232,15 @@ bool HasNameMatcher::matchesNodeUnqualified(const NamedDecl &Node) const {
   if (Node.getIdentifier()) {
     // Simple name.
     return Name == Node.getName();
-  } else if (Node.getDeclName()) {
+  }
+  if (Node.getDeclName()) {
     // Name needs to be constructed.
     llvm::SmallString<128> NodeName;
     llvm::raw_svector_ostream OS(NodeName);
     Node.printName(OS);
     return Name == OS.str();
-  } else {
-    return false;
   }
+  return false;
 }
 
 bool HasNameMatcher::matchesNodeFull(const NamedDecl &Node) const {
@@ -249,11 +249,12 @@ bool HasNameMatcher::matchesNodeFull(const NamedDecl &Node) const {
   Node.printQualifiedName(OS);
   const StringRef FullName = OS.str();
   const StringRef Pattern = Name;
-  if (Pattern.startswith("::")) {
+
+  if (Pattern.startswith("::"))
     return FullName == Pattern;
-  } else {
-    return FullName.endswith(("::" + Pattern).str());
-  }
+
+  return FullName.endswith(Pattern) &&
+         FullName.drop_back(Pattern.size()).endswith("::");
 }
 
 bool HasNameMatcher::matchesNode(const NamedDecl &Node) const {
