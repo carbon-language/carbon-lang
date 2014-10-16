@@ -5092,7 +5092,6 @@ ObjectFileMachO::SetLoadAddress (Target &target,
                                  lldb::addr_t value,
                                  bool value_is_offset)
 {
-    bool changed = false;
     ModuleSP module_sp = GetModule();
     if (module_sp)
     {
@@ -5196,10 +5195,9 @@ ObjectFileMachO::SetLoadAddress (Target &target,
                 }
             }
         }
-        changed = num_loaded_sections > 0;
         return num_loaded_sections > 0;
     }
-    return changed;
+    return false;
 }
 
 bool
