@@ -26,8 +26,7 @@ NamespaceCommentCheck::NamespaceCommentCheck(StringRef Name,
                               "namespace( +([a-zA-Z0-9_]+))? *(\\*/)?$",
                               llvm::Regex::IgnoreCase),
       ShortNamespaceLines(Options.get("ShortNamespaceLines", 1u)),
-      SpacesBeforeComments(Options.get("SpacesBeforeComments",
-                                       Name.startswith("google") ? 2u : 1u)) {}
+      SpacesBeforeComments(Options.get("SpacesBeforeComments", 1u)) {}
 
 void NamespaceCommentCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
   Options.store(Opts, "ShortNamespaceLines", ShortNamespaceLines);

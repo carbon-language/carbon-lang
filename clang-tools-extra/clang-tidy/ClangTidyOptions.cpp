@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangTidyOptions.h"
+#include "ClangTidyModuleRegistry.h"
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Errc.h"
@@ -95,6 +96,19 @@ template <> struct MappingTraits<ClangTidyOptions> {
 
 namespace clang {
 namespace tidy {
+
+ClangTidyOptions ClangTidyOptions::getDefaults() {
+  ClangTidyOptions Options;
+  Options.Checks = "";
+  Options.HeaderFilterRegex = "";
+  Options.AnalyzeTemporaryDtors = false;
+  Options.User = llvm::None;
+  for (ClangTidyModuleRegistry::iterator I = ClangTidyModuleRegistry::begin(),
+                                         E = ClangTidyModuleRegistry::end();
+       I != E; ++I)
+    Options = Options.mergeWith(I->instantiate()->getModuleOptions());
+  return Options;
+}
 
 ClangTidyOptions
 ClangTidyOptions::mergeWith(const ClangTidyOptions &Other) const {

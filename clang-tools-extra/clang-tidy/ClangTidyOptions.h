@@ -49,15 +49,10 @@ struct ClangTidyOptions {
   /// \brief These options are used for all settings that haven't been
   /// overridden by the \c OptionsProvider.
   ///
-  /// Allow no checks and no headers by default.
-  static ClangTidyOptions getDefaults() {
-    ClangTidyOptions Options;
-    Options.Checks = "";
-    Options.HeaderFilterRegex = "";
-    Options.AnalyzeTemporaryDtors = false;
-    Options.User = llvm::None;
-    return Options;
-  }
+  /// Allow no checks and no headers by default. This method initializes
+  /// check-specific options by calling \c ClangTidyModule::getModuleOptions()
+  /// of each registered \c ClangTidyModule.
+  static ClangTidyOptions getDefaults();
 
   /// \brief Creates a new \c ClangTidyOptions instance combined from all fields
   /// of this instance overridden by the fields of \p Other that have a value.

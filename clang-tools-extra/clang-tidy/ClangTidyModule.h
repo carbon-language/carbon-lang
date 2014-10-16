@@ -87,6 +87,9 @@ public:
   /// \brief Implement this function in order to register all \c CheckFactories
   /// belonging to this module.
   virtual void addCheckFactories(ClangTidyCheckFactories &CheckFactories) = 0;
+
+  /// \brief Gets default options for checks defined in this module.
+  virtual ClangTidyOptions getModuleOptions();
 };
 
 } // end namespace tidy

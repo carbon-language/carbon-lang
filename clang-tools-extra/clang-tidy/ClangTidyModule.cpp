@@ -31,5 +31,9 @@ void ClangTidyCheckFactories::createChecks(
   }
 }
 
+ClangTidyOptions ClangTidyModule::getModuleOptions() {
+  return ClangTidyOptions();
+}
+
 } // namespace tidy
 } // namespace clang

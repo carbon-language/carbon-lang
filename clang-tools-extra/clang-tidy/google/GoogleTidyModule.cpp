@@ -21,6 +21,7 @@
 #include "TodoCommentCheck.h"
 #include "UnnamedNamespaceInHeaderCheck.h"
 #include "UsingNamespaceDirectiveCheck.h"
+#include "../readability/BracesAroundStatementsCheck.h"
 #include "../readability/NamespaceCommentCheck.h"
 
 using namespace clang::ast_matchers;
@@ -55,6 +56,18 @@ public:
         "google-readability-todo");
     CheckFactories.registerCheck<readability::NamespaceCommentCheck>(
         "google-readability-namespace-comments");
+    CheckFactories.registerCheck<readability::BracesAroundStatementsCheck>(
+        "google-readability-braces-around-statements");
+  }
+
+  ClangTidyOptions getModuleOptions() override {
+    ClangTidyOptions Options;
+    auto &Opts = Options.CheckOptions;
+    Opts["google-readability-braces-around-statements.ShortStatementLines"] =
+        "1";
+    Opts["google-readability-namespace-comments.ShortNamespaceLines"] = "1";
+    Opts["google-readability-namespace-comments.SpacesBeforeComments"] = "2";
+    return Options;
   }
 };
 
