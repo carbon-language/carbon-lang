@@ -27,8 +27,8 @@ typedef VerifyDiagnosticConsumer::Directive Directive;
 typedef VerifyDiagnosticConsumer::DirectiveList DirectiveList;
 typedef VerifyDiagnosticConsumer::ExpectedData ExpectedData;
 
-VerifyDiagnosticConsumer::VerifyDiagnosticConsumer(DiagnosticsEngine &_Diags)
-  : Diags(_Diags),
+VerifyDiagnosticConsumer::VerifyDiagnosticConsumer(DiagnosticsEngine &Diags_)
+  : Diags(Diags_),
     PrimaryClient(Diags.getClient()), OwnsPrimaryClient(Diags.ownsClient()),
     Buffer(new TextDiagnosticBuffer()), CurrentPreprocessor(nullptr),
     LangOpts(nullptr), SrcManager(nullptr), ActiveSourceFiles(0),
