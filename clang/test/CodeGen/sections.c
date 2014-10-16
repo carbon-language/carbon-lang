@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -fms-extensions -xc++ -o - < %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -triple i686-pc-win32 -fms-extensions -xc++ -o - < %s | FileCheck %s
 
 #ifdef __cplusplus
 extern "C" {
