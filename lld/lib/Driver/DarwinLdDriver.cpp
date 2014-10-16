@@ -85,9 +85,14 @@ static std::string canonicalizePath(StringRef path) {
 }
 
 static void addFile(StringRef path, std::unique_ptr<InputGraph> &inputGraph,
-                    bool forceLoad, MachOLinkingContext &ctx) {
-   inputGraph->addInputElement(std::unique_ptr<InputElement>(
-                                      new MachOFileNode(path, forceLoad, ctx)));
+                    MachOLinkingContext &ctx, bool loadWholeArchive,
+                    bool upwardDylib) {
+  auto node = llvm::make_unique<MachOFileNode>(path, ctx);
+  if (loadWholeArchive)
+    node->setLoadWholeArchive();
+  if (upwardDylib)
+    node->setUpwardDylib();
+  inputGraph->addInputElement(std::move(node));
 }
 
 // Export lists are one symbol per line.  Blank lines are ignored.
@@ -165,7 +170,7 @@ static std::error_code parseFileList(StringRef fileListPath,
     if (ctx.testingFileUsage()) {
       diagnostics << "Found filelist entry " << canonicalizePath(path) << '\n';
     }
-    addFile(path, inputGraph, forceLoad, ctx);
+    addFile(path, inputGraph, ctx, forceLoad, false);
     buffer = lineAndRest.second;
   }
   return std::error_code();
@@ -638,34 +643,44 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
 
   // Handle input files
   for (auto &arg : *parsedArgs) {
+    bool upward;
     ErrorOr<StringRef> resolvedPath = StringRef();
     switch (arg->getOption().getID()) {
     default:
       continue;
     case OPT_INPUT:
-      addFile(arg->getValue(), inputGraph, globalWholeArchive, ctx);
+      addFile(arg->getValue(), inputGraph, ctx, globalWholeArchive, false);
+      break;
+    case OPT_upward_library:
+      addFile(arg->getValue(), inputGraph, ctx, false, true);
       break;
     case OPT_l:
+    case OPT_upward_l:
+      upward = (arg->getOption().getID() == OPT_upward_l);
       resolvedPath = ctx.searchLibrary(arg->getValue());
       if (!resolvedPath) {
-        diagnostics << "Unable to find library -l" << arg->getValue() << "\n";
+        diagnostics << "Unable to find library for " << arg->getSpelling()
+                    << arg->getValue() << "\n";
         return false;
       } else if (ctx.testingFileUsage()) {
-       diagnostics << "Found library "
+        diagnostics << "Found " << (upward ? "upward " : " ") << "library "
                    << canonicalizePath(resolvedPath.get()) << '\n';
       }
-      addFile(resolvedPath.get(), inputGraph, globalWholeArchive, ctx);
+      addFile(resolvedPath.get(), inputGraph, ctx, globalWholeArchive, upward);
       break;
     case OPT_framework:
+    case OPT_upward_framework:
+      upward = (arg->getOption().getID() == OPT_upward_framework);
       resolvedPath = ctx.findPathForFramework(arg->getValue());
       if (!resolvedPath) {
-        diagnostics << "Unable to find -framework " << arg->getValue() << "\n";
+        diagnostics << "Unable to find framework for "
+                    << arg->getSpelling() << " " << arg->getValue() << "\n";
         return false;
       } else if (ctx.testingFileUsage()) {
-        diagnostics << "Found framework "
+        diagnostics << "Found " << (upward ? "upward " : " ") << "framework "
                     << canonicalizePath(resolvedPath.get()) << '\n';
       }
-      addFile(resolvedPath.get(), inputGraph, globalWholeArchive, ctx);
+      addFile(resolvedPath.get(), inputGraph, ctx, globalWholeArchive, upward);
       break;
     case OPT_filelist:
       if (std::error_code ec = parseFileList(arg->getValue(), inputGraph,

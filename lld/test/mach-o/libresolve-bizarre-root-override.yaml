@@ -14,4 +14,4 @@
 # CHECK: Library search paths:
 # CHECK:     /usr/lib
 # CHECK-NOT:     /usr/local/lib
-# CHECK: Unable to find library -lSystem
+# CHECK: Unable to find library for -lSystem

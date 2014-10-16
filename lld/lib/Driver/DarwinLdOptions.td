@@ -115,9 +115,18 @@ def syslibroot : Separate<["-"], "syslibroot">, MetaVarName<"<dir>">,
 def l : Joined<["-"], "l">,
      MetaVarName<"<libname>">,
      HelpText<"Base name of library searched for in -L directories">;
+def upward_l : Joined<["-"], "upward-l">,
+     MetaVarName<"<libname>">,
+     HelpText<"Base name of upward library searched for in -L directories">;
 def framework : Separate<["-"], "framework">,
      MetaVarName<"<name>">,
      HelpText<"Base name of framework searched for in -F directories">;
+def upward_framework : Separate<["-"], "upward_framework">,
+     MetaVarName<"<name>">,
+     HelpText<"Base name of upward framework searched for in -F directories">;
+def upward_library : Separate<["-"], "upward_library">,
+     MetaVarName<"<path>">,
+     HelpText<"path to upward dylib to link with">;
 def filelist : Separate<["-"], "filelist">,
      MetaVarName<"<path>">,
      HelpText<"file containing paths to input files">;

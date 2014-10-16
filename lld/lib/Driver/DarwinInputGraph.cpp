@@ -57,7 +57,8 @@ std::error_code MachOFileNode::parse(const LinkingContext &ctx,
   for (std::unique_ptr<File> &pf : parsedFiles) {
     // If a dylib was parsed, inform LinkingContext about it.
     if (SharedLibraryFile *shl = dyn_cast<SharedLibraryFile>(pf.get())) {
-      _context.registerDylib(reinterpret_cast<mach_o::MachODylibFile*>(shl));
+      _context.registerDylib(reinterpret_cast<mach_o::MachODylibFile*>(shl),
+                             _upwardDylib);
     }
     _files.push_back(std::move(pf));
   }

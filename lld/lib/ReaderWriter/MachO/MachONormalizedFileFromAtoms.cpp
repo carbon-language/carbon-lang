@@ -935,6 +935,8 @@ void Util::addDependentDylibs(const lld::File &atomFile,NormalizedFile &nFile) {
     DylibInfo &info = _dylibInfo[dep.path];
     if (info.hasWeak && !info.hasNonWeak)
       dep.kind = llvm::MachO::LC_LOAD_WEAK_DYLIB;
+    else if (_context.isUpwardDylib(dep.path))
+      dep.kind = llvm::MachO::LC_LOAD_UPWARD_DYLIB;
   }
 }
 

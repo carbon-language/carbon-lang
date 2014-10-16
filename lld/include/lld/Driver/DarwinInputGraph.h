@@ -25,8 +25,9 @@ namespace lld {
 /// \brief Represents a MachO File
 class MachOFileNode : public FileNode {
 public:
-  MachOFileNode(StringRef path, bool isWholeArchive, MachOLinkingContext &ctx)
-      : FileNode(path), _context(ctx), _isWholeArchive(isWholeArchive) {}
+  MachOFileNode(StringRef path, MachOLinkingContext &ctx)
+      : FileNode(path), _context(ctx), _isWholeArchive(false),
+        _upwardDylib(false) {}
 
   /// \brief Parse the input file to lld::File.
   std::error_code parse(const LinkingContext &ctx,
@@ -42,11 +43,20 @@ public:
     return *_files[_nextFileIndex++];
   }
 
+  void setLoadWholeArchive(bool value=true) {
+    _isWholeArchive = value;
+  }
+
+  void setUpwardDylib(bool value=true) {
+    _upwardDylib = value;
+  }
+
 private:
  void narrowFatBuffer(StringRef filePath);
 
   MachOLinkingContext &_context;
   bool _isWholeArchive;
+  bool _upwardDylib;
 };
 
 } // namespace lld

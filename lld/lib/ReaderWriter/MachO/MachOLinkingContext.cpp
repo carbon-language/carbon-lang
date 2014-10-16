@@ -598,7 +598,7 @@ Writer &MachOLinkingContext::writer() const {
 }
 
 MachODylibFile* MachOLinkingContext::loadIndirectDylib(StringRef path) {
-  std::unique_ptr<MachOFileNode> node(new MachOFileNode(path, false, *this));
+  std::unique_ptr<MachOFileNode> node(new MachOFileNode(path, *this));
   std::error_code ec = node->parse(*this, llvm::errs());
   if (ec)
     return nullptr;
@@ -668,14 +668,25 @@ bool MachOLinkingContext::createImplicitFiles(
 }
 
 
-void MachOLinkingContext::registerDylib(MachODylibFile *dylib) const {
+void MachOLinkingContext::registerDylib(MachODylibFile *dylib,
+                                        bool upward) const {
   _allDylibs.insert(dylib);
   _pathToDylibMap[dylib->installName()] = dylib;
   // If path is different than install name, register path too.
   if (!dylib->path().equals(dylib->installName()))
     _pathToDylibMap[dylib->path()] = dylib;
+  if (upward)
+    _upwardDylibs.insert(dylib);
 }
 
+
+bool MachOLinkingContext::isUpwardDylib(StringRef installName) const {
+  for (MachODylibFile *dylib : _upwardDylibs) {
+    if (dylib->installName().equals(installName))
+      return true;
+  }
+  return false;
+}
 
 ArchHandler &MachOLinkingContext::archHandler() const {
   if (!_archHandler)
