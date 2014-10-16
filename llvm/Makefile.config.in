@@ -202,6 +202,7 @@ DOT        := @DOT@
 DOXYGEN    := @DOXYGEN@
 GROFF      := @GROFF@
 GZIPBIN    := @GZIPBIN@
+GO         := @GO@
 OCAMLC     := @OCAMLC@
 OCAMLOPT   := @OCAMLOPT@
 OCAMLDEP   := @OCAMLDEP@

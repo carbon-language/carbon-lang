@@ -752,6 +752,7 @@ GROFF
 GZIPBIN
 PDFROFF
 ZIP
+GO
 OCAMLC
 OCAMLOPT
 OCAMLDEP
@@ -6865,6 +6866,46 @@ ZIP=$ac_cv_path_ZIP
 if test -n "$ZIP"; then
   { echo "$as_me:$LINENO: result: $ZIP" >&5
 echo "${ECHO_T}$ZIP" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+# Extract the first word of "go", so it can be a program name with args.
+set dummy go; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_path_GO+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $GO in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_GO="$GO" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_GO="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+GO=$ac_cv_path_GO
+if test -n "$GO"; then
+  { echo "$as_me:$LINENO: result: $GO" >&5
+echo "${ECHO_T}$GO" >&6; }
 else
   { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
@@ -18613,6 +18654,11 @@ if test "$BINDINGS_TO_BUILD" = auto ; then
   if test "x$OCAMLC" != x -a "x$OCAMLDEP" != x ; then
     BINDINGS_TO_BUILD="ocaml $BINDINGS_TO_BUILD"
   fi
+  if test "x$GO" != x ; then
+    if $GO run ${srcdir}/bindings/go/conftest.go ; then
+      BINDINGS_TO_BUILD="go $BINDINGS_TO_BUILD"
+    fi
+  fi
 fi
 BINDINGS_TO_BUILD=$BINDINGS_TO_BUILD
 
@@ -18649,6 +18695,21 @@ echo "$as_me: WARNING: --enable-bindings=ocaml specified, but ocamlopt not found
         # ocaml stdlib is outside our prefix; use libdir/ocaml
         OCAML_LIBDIR=${prefix}/lib/ocaml
 
+      fi
+    fi
+    ;;
+  go)
+    if test "x$GO" = x ; then
+      { echo "$as_me:$LINENO: WARNING: --enable-bindings=go specified, but go not found. Try configure GO=/path/to/go" >&5
+echo "$as_me: WARNING: --enable-bindings=go specified, but go not found. Try configure GO=/path/to/go" >&2;}
+      binding_prereqs_failed=1
+    else
+      if $GO run ${srcdir}/bindings/go/conftest.go ; then
+        :
+      else
+        { echo "$as_me:$LINENO: WARNING: --enable-bindings=go specified, but need at least Go 1.2. Try configure GO=/path/to/go" >&5
+echo "$as_me: WARNING: --enable-bindings=go specified, but need at least Go 1.2. Try configure GO=/path/to/go" >&2;}
+        binding_prereqs_failed=1
       fi
     fi
     ;;
@@ -19679,6 +19740,7 @@ GROFF!$GROFF$ac_delim
 GZIPBIN!$GZIPBIN$ac_delim
 PDFROFF!$PDFROFF$ac_delim
 ZIP!$ZIP$ac_delim
+GO!$GO$ac_delim
 OCAMLC!$OCAMLC$ac_delim
 OCAMLOPT!$OCAMLOPT$ac_delim
 OCAMLDEP!$OCAMLDEP$ac_delim
@@ -19724,7 +19786,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 96; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

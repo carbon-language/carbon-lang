@@ -1,0 +1,8 @@
+; RUN: cd %S/../../../bindings/go/llvm && \
+; RUN: env CGO_CPPFLAGS="$(llvm-config --cppflags)" \
+; RUN:     CGO_CXXFLAGS=-std=c++11 \
+; RUN:     CGO_LDFLAGS="$(llvm-config --ldflags --libs --system-libs \
+; RUN:                                $(../build.sh --print-components))" \
+; RUN:     %go test -tags byollvm .
+
+; REQUIRES: shell

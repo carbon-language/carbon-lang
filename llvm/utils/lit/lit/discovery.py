@@ -91,7 +91,7 @@ def getLocalConfig(ts, path_in_suite, litConfig, cache):
 
         # Otherwise, copy the current config and load the local configuration
         # file into it.
-        config = copy.copy(parent)
+        config = copy.deepcopy(parent)
         if litConfig.debug:
             litConfig.note('loading local config %r' % cfgpath)
         config.load_from_path(cfgpath, litConfig)

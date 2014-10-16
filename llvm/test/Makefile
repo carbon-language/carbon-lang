@@ -133,6 +133,9 @@ lit.site.cfg: FORCE
 	@$(ECHOPATH) s=@EXEEXT@=$(EXEEXT)=g >> lit.tmp
 	@$(ECHOPATH) s=@PYTHON_EXECUTABLE@=$(PYTHON)=g >> lit.tmp
 	@$(ECHOPATH) s=@OCAMLOPT@=$(OCAMLOPT) -cc $(subst *,'\\\"',*$(subst =,"\\=",$(CXX_FOR_OCAMLOPT))*) -cclib -L$(LibDir) -I $(LibDir)/ocaml=g >> lit.tmp
+	@$(ECHOPATH) s=@GO_EXECUTABLE@=$(GO)=g >> lit.tmp
+	@$(ECHOPATH) s!@HOST_CC@!$(CC)!g >> lit.tmp
+	@$(ECHOPATH) s!@HOST_CXX@!$(CXX)!g >> lit.tmp
 	@$(ECHOPATH) s=@ENABLE_SHARED@=$(ENABLE_SHARED)=g >> lit.tmp
 	@$(ECHOPATH) s=@ENABLE_ASSERTIONS@=$(ENABLE_ASSERTIONS)=g >> lit.tmp
 	@$(ECHOPATH) s=@TARGETS_TO_BUILD@=$(TARGETS_TO_BUILD)=g >> lit.tmp
