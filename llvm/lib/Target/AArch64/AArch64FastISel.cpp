@@ -4515,9 +4515,8 @@ bool AArch64FastISel::selectSDiv(const Instruction *I) {
     return true;
   }
 
-  unsigned Pow2MinusOne = (1 << Lg2) - 1;
-  unsigned AddReg = emitAddSub_ri(/*UseAdd=*/true, VT, Src0Reg,
-                                  /*IsKill=*/false, Pow2MinusOne);
+  int64_t Pow2MinusOne = (1ULL << Lg2) - 1;
+  unsigned AddReg = emitAdd_ri_(VT, Src0Reg, /*IsKill=*/false, Pow2MinusOne);
   if (!AddReg)
     return false;
 

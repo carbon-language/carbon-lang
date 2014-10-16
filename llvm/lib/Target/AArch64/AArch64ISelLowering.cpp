@@ -6822,7 +6822,7 @@ AArch64TargetLowering::BuildSDIVPow2(SDNode *N, const APInt &Divisor,
   SDValue N0 = N->getOperand(0);
   unsigned Lg2 = Divisor.countTrailingZeros();
   SDValue Zero = DAG.getConstant(0, VT);
-  SDValue Pow2MinusOne = DAG.getConstant((1 << Lg2) - 1, VT);
+  SDValue Pow2MinusOne = DAG.getConstant((1ULL << Lg2) - 1, VT);
 
   // Add (N0 < 0) ? Pow2 - 1 : 0;
   SDValue CCVal;
