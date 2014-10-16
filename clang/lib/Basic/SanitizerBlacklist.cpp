@@ -32,23 +32,27 @@ static StringRef GetGlobalTypeString(const llvm::GlobalValue &G) {
 SanitizerBlacklist::SanitizerBlacklist(const std::string &BlacklistPath)
     : SCL(llvm::SpecialCaseList::createOrDie(BlacklistPath)) {}
 
-bool SanitizerBlacklist::isIn(const llvm::Module &M,
-                              StringRef Category) const {
-  return SCL->inSection("src", M.getModuleIdentifier(), Category);
-}
-
 bool SanitizerBlacklist::isIn(const llvm::Function &F) const {
-  return isIn(*F.getParent()) ||
-         SCL->inSection("fun", F.getName(), "");
+  return isBlacklistedFile(F.getParent()->getModuleIdentifier()) ||
+         isBlacklistedFunction(F.getName());
 }
 
 bool SanitizerBlacklist::isIn(const llvm::GlobalVariable &G,
                               StringRef Category) const {
-  return isIn(*G.getParent(), Category) ||
+  return isBlacklistedFile(G.getParent()->getModuleIdentifier(), Category) ||
          SCL->inSection("global", G.getName(), Category) ||
          SCL->inSection("type", GetGlobalTypeString(G), Category);
 }
 
 bool SanitizerBlacklist::isBlacklistedType(StringRef MangledTypeName) const {
   return SCL->inSection("type", MangledTypeName);
+}
+
+bool SanitizerBlacklist::isBlacklistedFunction(StringRef FunctionName) const {
+  return SCL->inSection("fun", FunctionName);
+}
+
+bool SanitizerBlacklist::isBlacklistedFile(StringRef FileName,
+                                           StringRef Category) const {
+  return SCL->inSection("src", FileName, Category);
 }
