@@ -3621,9 +3621,8 @@ bool RecordDecl::mayInsertExtraPadding(bool EmitRemark) const {
   if (!Context.getLangOpts().Sanitize.Address ||
       !Context.getLangOpts().Sanitize.SanitizeAddressFieldPadding)
     return false;
-  auto &Blacklist = Context.getSanitizerBlacklist();
+  const auto &Blacklist = Context.getSanitizerBlacklist();
   const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(this);
-  StringRef Filename = Context.getSourceManager().getFilename(getLocation());
   // We may be able to relax some of these requirements.
   int ReasonToReject = -1;
   if (!CXXRD || CXXRD->isExternCContext())
@@ -3638,7 +3637,7 @@ bool RecordDecl::mayInsertExtraPadding(bool EmitRemark) const {
     ReasonToReject = 4;  // has trivial destructor.
   else if (CXXRD->isStandardLayout())
     ReasonToReject = 5;  // is standard layout.
-  else if (Blacklist.isBlacklistedFile(Filename, "field-padding"))
+  else if (Blacklist.isBlacklistedLocation(getLocation(), "field-padding"))
     ReasonToReject = 6;  // is in a blacklisted file.
   else if (Blacklist.isBlacklistedType(getQualifiedNameAsString(),
                                        "field-padding"))

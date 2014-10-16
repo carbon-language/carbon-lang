@@ -29,8 +29,9 @@ static StringRef GetGlobalTypeString(const llvm::GlobalValue &G) {
   return "<unknown type>";
 }
 
-SanitizerBlacklist::SanitizerBlacklist(const std::string &BlacklistPath)
-    : SCL(llvm::SpecialCaseList::createOrDie(BlacklistPath)) {}
+SanitizerBlacklist::SanitizerBlacklist(StringRef BlacklistPath,
+                                       SourceManager &SM)
+    : SCL(llvm::SpecialCaseList::createOrDie(BlacklistPath)), SM(SM) {}
 
 bool SanitizerBlacklist::isIn(const llvm::Function &F) const {
   return isBlacklistedFile(F.getParent()->getModuleIdentifier()) ||
@@ -57,3 +58,9 @@ bool SanitizerBlacklist::isBlacklistedFile(StringRef FileName,
                                            StringRef Category) const {
   return SCL->inSection("src", FileName, Category);
 }
+
+bool SanitizerBlacklist::isBlacklistedLocation(SourceLocation Loc,
+                                               StringRef Category) const {
+  return !Loc.isInvalid() && isBlacklistedFile(SM.getFilename(Loc), Category);
+}
+
