@@ -6104,6 +6104,8 @@ public:
   bool DeduceReturnType(FunctionDecl *FD, SourceLocation Loc,
                         bool Diagnose = true);
 
+  TypeLoc getReturnTypeLoc(FunctionDecl *FD) const;
+
   bool DeduceFunctionTypeFromReturnExpr(FunctionDecl *FD,
                                         SourceLocation ReturnLoc,
                                         Expr *&RetExpr, AutoType *AT);

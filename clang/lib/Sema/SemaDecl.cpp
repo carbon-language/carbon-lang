@@ -10414,8 +10414,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
         FD->setInvalidDecl();
       } else {
         // Substitute 'void' for the 'auto' in the type.
-        TypeLoc ResultType = FD->getTypeSourceInfo()->getTypeLoc().
-            IgnoreParens().castAs<FunctionProtoTypeLoc>().getReturnLoc();
+        TypeLoc ResultType = getReturnTypeLoc(FD);
         Context.adjustDeducedFunctionResultType(
             FD, SubstAutoType(ResultType.getType(), Context.VoidTy));
       }

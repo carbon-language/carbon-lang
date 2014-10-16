@@ -2,9 +2,19 @@
 // expected-no-diagnostics
 
 void deduce() {
-  auto lambda = [](int i) __attribute__ (( pcs("aapcs") )) {
+  auto single_int = [](int i) __attribute__ (( pcs("aapcs") )) {
     return i;
   };
-  lambda(42);
+  auto multiple_int = [](int i) __attribute__ (( pcs("aapcs") ))
+                                __attribute__ (( pcs("aapcs") )) {
+    return i;
+  };
+
+  auto single_void = []() __attribute__ (( pcs("aapcs") )) { };
+  auto multiple_void = []() __attribute__ (( pcs("aapcs") ))
+                            __attribute__ (( pcs("aapcs") )) { };
 }
+
+auto ( __attribute__ (( pcs("aapcs") )) single_attribute() ) { }
+auto ( ( __attribute__ (( pcs("aapcs") )) ( ( __attribute__ (( pcs("aapcs") )) multiple_attributes() ) ) ) ) { }
 

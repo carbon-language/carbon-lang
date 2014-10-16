@@ -2755,17 +2755,20 @@ bool LocalTypedefNameReferencer::VisitRecordType(const RecordType *RT) {
 }
 }
 
+TypeLoc Sema::getReturnTypeLoc(FunctionDecl *FD) const {
+  TypeLoc TL = FD->getTypeSourceInfo()->getTypeLoc();
+  while (auto ATL = TL.getAs<AttributedTypeLoc>())
+    TL = ATL.getModifiedLoc().IgnoreParens();
+  return TL.IgnoreParens().castAs<FunctionProtoTypeLoc>().getReturnLoc();
+}
+
 /// Deduce the return type for a function from a returned expression, per
 /// C++1y [dcl.spec.auto]p6.
 bool Sema::DeduceFunctionTypeFromReturnExpr(FunctionDecl *FD,
                                             SourceLocation ReturnLoc,
                                             Expr *&RetExpr,
                                             AutoType *AT) {
-  TypeLoc TL = FD->getTypeSourceInfo()->getTypeLoc();
-  if (auto ATL = TL.getAs<AttributedTypeLoc>())
-    TL = ATL.getModifiedLoc();
-  TypeLoc OrigResultType =
-      TL.IgnoreParens().castAs<FunctionProtoTypeLoc>().getReturnLoc();
+  TypeLoc OrigResultType = getReturnTypeLoc(FD);
   QualType Deduced;
 
   if (RetExpr && isa<InitListExpr>(RetExpr)) {
