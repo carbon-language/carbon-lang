@@ -2566,7 +2566,12 @@ static void PrintLoadCommands(const MachOObjectFile *Obj, uint32_t ncmds,
     } else if (Command.C.cmd == MachO::LC_MAIN) {
       MachO::entry_point_command Ep = Obj->getEntryPointCommand(Command);
       PrintEntryPointCommand(Ep);
-    } else if (Command.C.cmd == MachO::LC_LOAD_DYLIB) {
+    } else if (Command.C.cmd == MachO::LC_LOAD_DYLIB ||
+               Command.C.cmd == MachO::LC_ID_DYLIB ||
+               Command.C.cmd == MachO::LC_LOAD_WEAK_DYLIB ||
+               Command.C.cmd == MachO::LC_REEXPORT_DYLIB ||
+               Command.C.cmd == MachO::LC_LAZY_LOAD_DYLIB ||
+               Command.C.cmd == MachO::LC_LOAD_UPWARD_DYLIB) {
       MachO::dylib_command Dl = Obj->getDylibIDLoadCommand(Command);
       PrintDylibCommand(Dl, Command.Ptr);
     } else if (Command.C.cmd == MachO::LC_CODE_SIGNATURE ||
