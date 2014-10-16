@@ -1211,10 +1211,6 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             explicit_length++; // account for the fact that there is no NULL and we need to have one added
         return ReadAsciiBufferAndDumpToStream(location,process_sp,stream,explicit_length);
     }
-    
-    stream.Printf("class name = %s",class_name);
-    return true;
-    
 }
 
 bool
