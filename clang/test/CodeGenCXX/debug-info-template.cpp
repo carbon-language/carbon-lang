@@ -5,8 +5,8 @@
 // CHECK: [[RETAIN]] = metadata !{metadata !{{[0-9]]*}}, metadata [[FOO:![0-9]*]],
 
 
-// CHECK: [[TC:![0-9]*]] = {{.*}}, metadata [[TCARGS:![0-9]*]], metadata !"{{.*}}"} ; [ DW_TAG_structure_type ] [TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3>]
-// CHECK: [[TCARGS]] = metadata !{metadata [[TCARG1:![0-9]*]], metadata [[TCARG2:![0-9]*]], metadata [[TCARG3:![0-9]*]], metadata [[TCARG4:![0-9]*]], metadata [[TCARG5:![0-9]*]], metadata [[TCARG6:![0-9]*]], metadata [[TCARG7:![0-9]*]], metadata [[TCARG8:![0-9]*]]}
+// CHECK: [[TC:![0-9]*]] = {{.*}}, metadata [[TCARGS:![0-9]*]], metadata !"{{.*}}"} ; [ DW_TAG_structure_type ] [TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, 1, 2, 3>]
+// CHECK: [[TCARGS]] = metadata !{metadata [[TCARG1:![0-9]*]], metadata [[TCARG2:![0-9]*]], metadata [[TCARG3:![0-9]*]], metadata [[TCARG4:![0-9]*]], metadata [[TCARG5:![0-9]*]], metadata [[TCARG6:![0-9]*]], metadata [[TCARG7:![0-9]*]]}
 //
 // We seem to be missing file/line/col info on template value parameters -
 // metadata supports it but it's not populated. GCC doesn't emit it either,
@@ -17,6 +17,7 @@
 // CHECK: [[TCARG2]] = metadata !{metadata !"0x30\00\00{{.*}}", {{[^,]+}}, metadata [[UINT]], i32 2, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[TCARG3]] = metadata !{metadata !"0x30\00x\00{{.*}}", {{[^,]+}}, metadata [[INTPTR:![0-9]*]], i32* @glb, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[INTPTR]] = {{.*}}, metadata [[INT:![0-9]*]]} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
+// CECK: [[TCARG3]] = metadata !{metadata !"0x30\00x\00{{.*}}", {{[^,]+}}, metadata [[CINTPTR:![0-9]*]], i32* @glb, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[INT]] = {{.*}} ; [ DW_TAG_base_type ] [int]
 // CHECK: [[TCARG4]] = metadata !{metadata !"0x30\00a\00{{.*}}", {{[^,]+}}, metadata [[MEMINTPTR:![0-9]*]], i64 8, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[MEMINTPTR]] = {{.*}}, metadata !"_ZTS3foo"} ; [ DW_TAG_ptr_to_member_type ] {{.*}}[from int]
@@ -35,12 +36,11 @@
 // CHECK: [[FUNPTR]] = {{.*}}, metadata [[FUNTYPE:![0-9]*]]} ; [ DW_TAG_pointer_type ]
 // CHECK: [[FUNTYPE]] = {{.*}}, metadata [[FUNARGS:![0-9]*]], null, null, null} ; [ DW_TAG_subroutine_type ]
 // CHECK: [[FUNARGS]] = metadata !{null}
-// CHECK: [[TCARG7]] = metadata !{metadata !"0x4106\00tmpl\000\000", null, null, metadata !"tmpl_impl", null} ; [ DW_TAG_GNU_template_template_param ]
-// CHECK: [[TCARG8]] = metadata !{metadata !"0x4107\00Is\000\000", null, null, metadata [[TCARG8_VALS:![0-9]*]], null} ; [ DW_TAG_GNU_template_parameter_pack ]
-// CHECK: [[TCARG8_VALS]] = metadata !{metadata [[TCARG8_1:![0-9]*]], metadata [[TCARG8_2:![0-9]*]], metadata [[TCARG8_3:![0-9]*]]}
-// CHECK: [[TCARG8_1]] = metadata !{metadata !"0x30\00\00{{.*}}", {{[^,]+}}, metadata [[INT]], i32 1, {{.*}} ; [ DW_TAG_template_value_parameter ]
-// CHECK: [[TCARG8_2]] = metadata !{metadata !"0x30\00\00{{.*}}", {{[^,]+}}, metadata [[INT]], i32 2, {{.*}} ; [ DW_TAG_template_value_parameter ]
-// CHECK: [[TCARG8_3]] = metadata !{metadata !"0x30\00\00{{.*}}", {{[^,]+}}, metadata [[INT]], i32 3, {{.*}} ; [ DW_TAG_template_value_parameter ]
+// CHECK: [[TCARG7]] = metadata !{metadata !"0x4107\00Is\000\000", null, null, metadata [[TCARG7_VALS:![0-9]*]], null} ; [ DW_TAG_GNU_template_parameter_pack ]
+// CHECK: [[TCARG7_VALS]] = metadata !{metadata [[TCARG7_1:![0-9]*]], metadata [[TCARG7_2:![0-9]*]], metadata [[TCARG7_3:![0-9]*]]}
+// CHECK: [[TCARG7_1]] = metadata !{metadata !"0x30\00\00{{.*}}", {{[^,]+}}, metadata [[INT]], i32 1, {{.*}} ; [ DW_TAG_template_value_parameter ]
+// CHECK: [[TCARG7_2]] = metadata !{metadata !"0x30\00\00{{.*}}", {{[^,]+}}, metadata [[INT]], i32 2, {{.*}} ; [ DW_TAG_template_value_parameter ]
+// CHECK: [[TCARG7_3]] = metadata !{metadata !"0x30\00\00{{.*}}", {{[^,]+}}, metadata [[INT]], i32 3, {{.*}} ; [ DW_TAG_template_value_parameter ]
 //
 // We could just emit a declaration of 'foo' here, rather than the entire
 // definition (same goes for any time we emit a member (function or data)
@@ -50,12 +50,14 @@
 //
 
 
-// CHECK: metadata !{metadata !"0x13\00{{.*}}", metadata !{{[0-9]*}}, metadata !"_ZTS2TCIjLj2EXadL_Z3glbEEXadL_ZN3foo1eEEEXadL_ZNS0_1fEvEEXadL_Z4funcvEE9tmpl_implJLi1ELi2ELi3EEE", {{.*}}, metadata !"[[TCNESTED:.*]]"} ; [ DW_TAG_structure_type ] [nested]
-// CHECK: metadata [[TCNARGS:![0-9]*]], metadata !"[[TCNT:.*]]"} ; [ DW_TAG_structure_type ] [TC<int, -3, nullptr, nullptr, nullptr, nullptr, tmpl_impl>]
-// CHECK: [[TCNARGS]] = metadata !{metadata [[TCNARG1:![0-9]*]], metadata [[TCNARG2:![0-9]*]], metadata [[TCNARG3:![0-9]*]], metadata [[TCNARG4:![0-9]*]], metadata [[TCNARG5:![0-9]*]], metadata [[TCNARG6:![0-9]*]], metadata [[TCARG7:![0-9]*]], metadata [[TCNARG8:![0-9]*]]}
+// CHECK: metadata !{metadata !"0x13\00{{.*}}", metadata !{{[0-9]*}}, metadata !"_ZTS2TCIjLj2EXadL_Z3glbEEXadL_ZN3foo1eEEEXadL_ZNS0_1fEvEEXadL_Z4funcvEEJLi1ELi2ELi3EEE", {{.*}}, metadata !"[[TCNESTED:.*]]"} ; [ DW_TAG_structure_type ] [nested]
+// CHECK: metadata [[TCNARGS:![0-9]*]], metadata !"[[TCNT:.*]]"} ; [ DW_TAG_structure_type ] [TC<int, -3, nullptr, nullptr, nullptr, nullptr>]
+// CHECK: [[TCNARGS]] = metadata !{metadata [[TCNARG1:![0-9]*]], metadata [[TCNARG2:![0-9]*]], metadata [[TCNARG3:![0-9]*]], metadata [[TCNARG4:![0-9]*]], metadata [[TCNARG5:![0-9]*]], metadata [[TCNARG6:![0-9]*]], metadata [[TCNARG7:![0-9]*]]}
 // CHECK: [[TCNARG1]] = metadata !{metadata !"0x2f\00T\000\000", null, metadata [[INT]], null} ; [ DW_TAG_template_type_parameter ]
 // CHECK: [[TCNARG2]] = metadata !{metadata !"0x30\00\000\000", null, metadata [[INT]], i32 -3, null} ; [ DW_TAG_template_value_parameter ]
-// CHECK: [[TCNARG3]] = metadata !{metadata !"0x30\00x\000\000", null, metadata [[INTPTR]], i8 0, null} ; [ DW_TAG_template_value_parameter ]
+// CHECK: [[TCNARG3]] = metadata !{metadata !"0x30\00x\000\000", null, metadata [[CINTPTR:![0-9]*]], i8 0, null} ; [ DW_TAG_template_value_parameter ]
+// CHECK: [[CINTPTR]] = {{.*}}, metadata [[CINT:![0-9]*]]} ; [ DW_TAG_pointer_type ] {{.*}} [from ]
+// CHECK: [[CINT]] = {{.*}}, metadata [[INT]]} ; [ DW_TAG_const_type ] {{.*}} [from int]
 
 // The interesting null pointer: -1 for member data pointers (since they are
 // just an offset in an object, they can be zero and non-null for the first
@@ -70,23 +72,29 @@
 //
 // CHECK: [[TCNARG5]] = metadata !{metadata !"0x30\00b\000\000", null, metadata [[MEMFUNPTR]], i8 0, null} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[TCNARG6]] = metadata !{metadata !"0x30\00f\000\000", null, metadata [[FUNPTR]], i8 0, null} ; [ DW_TAG_template_value_parameter ]
-// CHECK: [[TCNARG8]] = metadata !{metadata !"0x4107\00Is\000\000", null, null, metadata [[EMPTY]], null} ; [ DW_TAG_GNU_template_parameter_pack ]
+// CHECK: [[TCNARG7]] = metadata !{metadata !"0x4107\00Is\000\000", null, null, metadata [[EMPTY]], null} ; [ DW_TAG_GNU_template_parameter_pack ]
+
+// CHECK: metadata [[NNARGS:![0-9]*]], metadata !"[[NNT:.*]]"} ; [ DW_TAG_structure_type ] [NN<tmpl_impl>]
+// CHECK: [[NNARGS]] = metadata !{metadata [[NNARG1:![0-9]*]]}
+// CHECK: [[NNARG1]] = metadata !{metadata !"0x4106\00tmpl\000\000", null, null, metadata !"tmpl_impl", null} ; [ DW_TAG_GNU_template_template_param ]
 
 // CHECK: metadata [[PTOARGS:![0-9]*]], metadata !"{{.*}}"} ; [ DW_TAG_structure_type ] [PaddingAtEndTemplate<&PaddedObj>]
 // CHECK: [[PTOARGS]] = metadata !{metadata [[PTOARG1:![0-9]*]]}
 // CHECK: [[PTOARG1]] = metadata !{metadata !"0x30\00\000\000", null, metadata [[CONST_PADDINGATEND_PTR:![0-9]*]], { i32, i8, [3 x i8] }* @PaddedObj, null} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[CONST_PADDINGATEND_PTR]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS12PaddingAtEnd]
 
-// CHECK: metadata !"[[TCNESTED]]", %"struct.TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3>::nested"* @tci, null} ; [ DW_TAG_variable ] [tci]
+// CHECK: metadata !"[[TCNESTED]]", %"struct.TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, 1, 2, 3>::nested"* @tci, null} ; [ DW_TAG_variable ] [tci]
 
 // CHECK: metadata !"[[TCNT]]", %struct.TC* @tcn, null} ; [ DW_TAG_variable ] [tcn]
+
+// CHECK: metadata !"[[NNT]]", %struct.NN* @nn, null} ; [ DW_TAG_variable ] [nn]
 struct foo {
   char pad[8]; // make the member pointer to 'e' a bit more interesting (nonzero)
   int e;
   void f();
 };
 
-template<typename T, T, int *x, int foo::*a, void (foo::*b)(), void (*f)(), template<typename> class tmpl, int ...Is>
+template<typename T, T, const int *x, int foo::*a, void (foo::*b)(), void (*f)(), int ...Is>
 struct TC {
   struct nested {
   };
@@ -95,12 +103,18 @@ struct TC {
 int glb;
 void func();
 
+TC<unsigned, 2, &glb, &foo::e, &foo::f, &func, 1, 2, 3>::nested tci;
+TC<int, -3, nullptr, nullptr, nullptr, nullptr> tcn;
+
 template<typename>
 struct tmpl_impl {
 };
 
-TC<unsigned, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3>::nested tci;
-TC<int, -3, nullptr, nullptr, nullptr, nullptr, tmpl_impl> tcn;
+template<template <typename> class tmpl>
+struct NN {
+};
+
+NN<tmpl_impl> nn;
 
 struct PaddingAtEnd {
   int i;
@@ -109,7 +123,7 @@ struct PaddingAtEnd {
 
 PaddingAtEnd PaddedObj = {};
 
-template <const PaddingAtEnd *>
+template <PaddingAtEnd *>
 struct PaddingAtEndTemplate {
 };
 
