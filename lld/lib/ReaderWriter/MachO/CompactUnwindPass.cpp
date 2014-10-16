@@ -411,18 +411,13 @@ private:
   collectDwarfFrameEntries(std::unique_ptr<MutableFile> &mergedFile,
                            std::map<const Atom *, const Atom *> &dwarfFrames) {
     for (const DefinedAtom *ehFrameAtom : mergedFile->defined()) {
-      if (ehFrameAtom->contentType() != DefinedAtom::typeCFI ||
-          ArchHandler::isDwarfCIE(_swap, ehFrameAtom))
+      if (ehFrameAtom->contentType() != DefinedAtom::typeCFI)
+        continue;
+      if (ArchHandler::isDwarfCIE(_swap, ehFrameAtom))
         continue;
 
-      DefinedAtom::reference_iterator ref = ehFrameAtom->begin();
-      for (; ref != ehFrameAtom->end(); ++ref)
-        if (ref->kindNamespace() == Reference::KindNamespace::mach_o &&
-            ref->kindArch() == _archHandler.kindArch() &&
-            ref->kindValue() == _archHandler.unwindRefToFunctionKind()) {
-          dwarfFrames.insert(std::make_pair(ref->target(), ehFrameAtom));
-          break;
-        }
+      if (const Atom *function = _archHandler.fdeTargetFunction(ehFrameAtom))
+        dwarfFrames[function] = ehFrameAtom;
     }
   }
 

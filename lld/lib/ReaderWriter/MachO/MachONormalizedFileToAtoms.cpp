@@ -677,7 +677,9 @@ std::error_code addEHFrameReferences(const NormalizedFile &normalizedFile,
                        addend, handler.kindArch());
 
     // Linker needs to fixup reference from the FDE to the function it's
-    // describing.
+    // describing. FIXME: there are actually different ways to do this, and the
+    // particular method used is specified in the CIE's augmentation fields
+    // (hopefully)
     uint64_t rangeFieldInFDE = cieFieldInFDE + sizeof(uint32_t);
 
     int64_t functionFromFDE = readSPtr(is64, swap, frameData + rangeFieldInFDE);

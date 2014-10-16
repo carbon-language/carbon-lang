@@ -153,6 +153,18 @@ bool ArchHandler::isDwarfCIE(bool swap, const DefinedAtom *atom) {
   return read32(swap, *(uint32_t *)(atom->rawContent().data() + idOffset)) == 0;
 }
 
+const Atom *ArchHandler::fdeTargetFunction(const DefinedAtom *fde) {
+  for (auto ref : *fde) {
+    if (ref->kindNamespace() == Reference::KindNamespace::mach_o &&
+        ref->kindValue() == unwindRefToFunctionKind()) {
+      assert(ref->kindArch() == kindArch() && "unexpected Reference arch");
+      return ref->target();
+    }
+  }
+
+  return nullptr;
+}
+
 } // namespace mach_o
 } // namespace lld
 

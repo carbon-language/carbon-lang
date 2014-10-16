@@ -88,6 +88,8 @@ public:
   /// __eh_frame.
   virtual Reference::KindValue unwindRefToEhFrameKind() = 0;
 
+  virtual const Atom *fdeTargetFunction(const DefinedAtom *fde);
+
   /// Used by normalizedFromAtoms() to know where to generated rebasing and 
   /// binding info in final executables.
   virtual bool isPointer(const Reference &) = 0;
