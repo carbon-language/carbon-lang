@@ -12,8 +12,7 @@ class CppValueCastTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    # rdar://problem/10808472 SBValue::Cast test case is failing (virtual inheritance)
-    @unittest2.expectedFailure
+    @unittest2.expectedFailure("rdar://problem/10808472 SBValue::Cast test case is failing (virtual inheritance)")
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     @dsym_test
@@ -23,8 +22,7 @@ class CppValueCastTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d_virtual)
         self.do_sbvalue_cast(self.exe_name)
 
-    # rdar://problem/10808472 SBValue::Cast test case is failing (virtual inheritance)
-    @unittest2.expectedFailure
+    @unittest2.expectedFailure("rdar://problem/10808472 SBValue::Cast test case is failing (virtual inheritance)")
     @python_api_test
     @dwarf_test
     def test_value_cast_with_dwarf_and_virtual_inheritance(self):

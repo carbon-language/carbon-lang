@@ -26,7 +26,7 @@ class HiddenIvarsTestCase(TestBase):
         self.buildDwarf()
         self.expr()
 
-    @unittest2.expectedFailure
+    @unittest2.expectedFailure("rdar://18683637")
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
     def test_frame_variable_with_dsym(self):
@@ -35,7 +35,7 @@ class HiddenIvarsTestCase(TestBase):
         self.buildDsym()
         self.frame_var()
 
-    @unittest2.expectedFailure
+    @unittest2.expectedFailure("rdar://18683637")
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
     def test_frame_variable_with_dwarf(self):
