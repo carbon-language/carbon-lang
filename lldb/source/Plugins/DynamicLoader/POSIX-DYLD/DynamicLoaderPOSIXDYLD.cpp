@@ -257,13 +257,15 @@ DynamicLoaderPOSIXDYLD::ProbeEntry()
     if (log)
         log->Printf ("DynamicLoaderPOSIXDYLD::%s pid %" PRIu64 " GetEntryPoint() returned address 0x%" PRIx64 ", setting entry breakpoint", __FUNCTION__, m_process ? m_process->GetID () : LLDB_INVALID_PROCESS_ID, entry);
 
+    if (m_process)
+    {
+        Breakpoint *const entry_break = m_process->GetTarget().CreateBreakpoint(entry, true, false).get();
+        entry_break->SetCallback(EntryBreakpointHit, this, true);
+        entry_break->SetBreakpointKind("shared-library-event");
 
-    Breakpoint *const entry_break = m_process->GetTarget().CreateBreakpoint(entry, true, false).get();
-    entry_break->SetCallback(EntryBreakpointHit, this, true);
-    entry_break->SetBreakpointKind("shared-library-event");
-
-    // Shoudn't hit this more than once.
-    entry_break->SetOneShot (true);
+        // Shoudn't hit this more than once.
+        entry_break->SetOneShot (true);
+    }
 }
 
 // The runtime linker has run and initialized the rendezvous structure once the
