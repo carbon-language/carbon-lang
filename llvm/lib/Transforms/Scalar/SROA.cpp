@@ -854,17 +854,12 @@ public:
   }
 
   void updateDebugInfo(Instruction *Inst) const override {
-    for (SmallVectorImpl<DbgDeclareInst *>::const_iterator I = DDIs.begin(),
-           E = DDIs.end(); I != E; ++I) {
-      DbgDeclareInst *DDI = *I;
+    for (DbgDeclareInst *DDI : DDIs)
       if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
         ConvertDebugDeclareToDebugValue(DDI, SI, DIB);
       else if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
         ConvertDebugDeclareToDebugValue(DDI, LI, DIB);
-    }
-    for (SmallVectorImpl<DbgValueInst *>::const_iterator I = DVIs.begin(),
-           E = DVIs.end(); I != E; ++I) {
-      DbgValueInst *DVI = *I;
+    for (DbgValueInst *DVI : DVIs) {
       Value *Arg = nullptr;
       if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
         // If an argument is zero extended then use argument directly. The ZExt
@@ -3184,12 +3179,10 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
                                EndOffset, IsVectorPromotable,
                                IsIntegerPromotable, PHIUsers, SelectUsers);
   bool Promotable = true;
-  for (ArrayRef<AllocaSlices::iterator>::const_iterator SUI = SplitUses.begin(),
-                                                        SUE = SplitUses.end();
-       SUI != SUE; ++SUI) {
+  for (auto & SplitUse : SplitUses) {
     DEBUG(dbgs() << "  rewriting split ");
-    DEBUG(S.printSlice(dbgs(), *SUI, ""));
-    Promotable &= Rewriter.visit(*SUI);
+    DEBUG(S.printSlice(dbgs(), SplitUse, ""));
+    Promotable &= Rewriter.visit(SplitUse);
     ++NumUses;
   }
   for (AllocaSlices::iterator I = B; I != E; ++I) {
@@ -3232,14 +3225,10 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
       // If we have either PHIs or Selects to speculate, add them to those
       // worklists and re-queue the new alloca so that we promote in on the
       // next iteration.
-      for (SmallPtrSetImpl<PHINode *>::iterator I = PHIUsers.begin(),
-                                                E = PHIUsers.end();
-           I != E; ++I)
-        SpeculatablePHIs.insert(*I);
-      for (SmallPtrSetImpl<SelectInst *>::iterator I = SelectUsers.begin(),
-                                                   E = SelectUsers.end();
-           I != E; ++I)
-        SpeculatableSelects.insert(*I);
+      for (PHINode *PHIUser : PHIUsers)
+        SpeculatablePHIs.insert(PHIUser);
+      for (SelectInst *SelectUser : SelectUsers)
+        SpeculatableSelects.insert(SelectUser);
       Worklist.insert(NewAI);
     }
   } else {
@@ -3277,11 +3266,9 @@ removeFinishedSplitUses(SmallVectorImpl<AllocaSlices::iterator> &SplitUses,
 
   // Recompute the max. While this is linear, so is remove_if.
   MaxSplitUseEndOffset = 0;
-  for (SmallVectorImpl<AllocaSlices::iterator>::iterator
-           SUI = SplitUses.begin(),
-           SUE = SplitUses.end();
-       SUI != SUE; ++SUI)
-    MaxSplitUseEndOffset = std::max((*SUI)->endOffset(), MaxSplitUseEndOffset);
+  for (AllocaSlices::iterator SplitUse : SplitUses)
+    MaxSplitUseEndOffset =
+        std::max(SplitUse->endOffset(), MaxSplitUseEndOffset);
 }
 
 /// \brief Walks the slices of an alloca and form partitions based on them,
