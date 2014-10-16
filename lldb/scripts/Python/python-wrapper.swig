@@ -91,7 +91,6 @@ ResolvePythonName(const char* name,
         pmodule = ResolvePythonName(piece.c_str(), main_dict);
         if (!pmodule)
             return NULL;
-        name = dot_pos+1;
         return ResolvePythonName(dot_pos+1,pmodule); // tail recursion.. should be optimized by the compiler
     }
 }
