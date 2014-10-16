@@ -233,10 +233,6 @@ main (int argc, char *argv[])
         exit(option_error);
     }
     
-    // Skip any options we consumed with getopt_long_only
-    argc -= optind;
-    argv += optind;
-
     // Execute any LLDB commands that we were asked to evaluate.
     for (const auto &lldb_command : lldb_commands)
     {
