@@ -685,7 +685,7 @@ Args::ParseOptions (Options &options)
             }
         }
         // Call the callback with the option
-        if (long_options_index >= 0)
+        if (long_options_index >= 0 && long_options[long_options_index].definition)
         {
             const OptionDefinition *def = long_options[long_options_index].definition;
             CommandInterpreter &interpreter = options.GetInterpreter();

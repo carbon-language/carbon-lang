@@ -2875,7 +2875,7 @@ DWARFExpression::Evaluate
                 if (cfa != LLDB_INVALID_ADDRESS)
                 {
                     stack.push_back(Scalar(cfa));
-                    stack.back().SetValueType (Value::eValueTypeHostAddress);
+                    stack.back().SetValueType (Value::eValueTypeLoadAddress);
                 }
                 else
                     if (error_ptr)
