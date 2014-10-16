@@ -312,11 +312,11 @@ ClangExpressionParser::Parse (Stream &stream)
             temp_source_path = "/tmp/expr.XXXXXX";
         }
 
-        if (mktemp(&temp_source_path[0]))
+        int temp_fd = ::mkstemp(&temp_source_path[0]);
+        
+        if (temp_fd != -1)
         {
-            lldb_private::File file (temp_source_path.c_str(),
-                                     File::eOpenOptionWrite | File::eOpenOptionCanCreateNewOnly,
-                                     lldb::eFilePermissionsFileDefault);
+            lldb_private::File file (temp_fd, true);
             const size_t expr_text_len = strlen(expr_text);
             size_t bytes_written = expr_text_len;
             if (file.Write(expr_text, bytes_written).Success())
