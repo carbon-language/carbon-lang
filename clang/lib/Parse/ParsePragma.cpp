@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "RAIIObjectsForParser.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/ParseDiagnostic.h"
@@ -539,20 +540,20 @@ bool Parser::HandlePragmaMSSection(StringRef PragmaName,
           << PragmaName;
       return false;
     }
-    Sema::PragmaSectionFlag Flag =
-      llvm::StringSwitch<Sema::PragmaSectionFlag>(
+    ASTContext::PragmaSectionFlag Flag =
+      llvm::StringSwitch<ASTContext::PragmaSectionFlag>(
       Tok.getIdentifierInfo()->getName())
-      .Case("read", Sema::PSF_Read)
-      .Case("write", Sema::PSF_Write)
-      .Case("execute", Sema::PSF_Execute)
-      .Case("shared", Sema::PSF_Invalid)
-      .Case("nopage", Sema::PSF_Invalid)
-      .Case("nocache", Sema::PSF_Invalid)
-      .Case("discard", Sema::PSF_Invalid)
-      .Case("remove", Sema::PSF_Invalid)
-      .Default(Sema::PSF_None);
-    if (Flag == Sema::PSF_None || Flag == Sema::PSF_Invalid) {
-      PP.Diag(PragmaLocation, Flag == Sema::PSF_None
+      .Case("read", ASTContext::PSF_Read)
+      .Case("write", ASTContext::PSF_Write)
+      .Case("execute", ASTContext::PSF_Execute)
+      .Case("shared", ASTContext::PSF_Invalid)
+      .Case("nopage", ASTContext::PSF_Invalid)
+      .Case("nocache", ASTContext::PSF_Invalid)
+      .Case("discard", ASTContext::PSF_Invalid)
+      .Case("remove", ASTContext::PSF_Invalid)
+      .Default(ASTContext::PSF_None);
+    if (Flag == ASTContext::PSF_None || Flag == ASTContext::PSF_Invalid) {
+      PP.Diag(PragmaLocation, Flag == ASTContext::PSF_None
                                   ? diag::warn_pragma_invalid_specific_action
                                   : diag::warn_pragma_unsupported_action)
           << PragmaName << Tok.getIdentifierInfo()->getName();

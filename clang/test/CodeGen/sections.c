@@ -31,6 +31,14 @@ int i;
 int TEST1;
 #pragma bss_seg(pop)
 int TEST2;
+
+#pragma section("read_flag_section", read)
+// Even though they are not declared const, these become constant since they are
+// in a read-only section.
+__declspec(allocate("read_flag_section")) int unreferenced = 0;
+extern __declspec(allocate("read_flag_section")) int referenced = 42;
+int *user() { return &referenced; }
+
 #ifdef __cplusplus
 }
 #endif
@@ -47,5 +55,7 @@ int TEST2;
 //CHECK: @i = global i32 0
 //CHECK: @TEST1 = global i32 0
 //CHECK: @TEST2 = global i32 0, section ".bss1"
+//CHECK: @unreferenced = constant i32 0, section "read_flag_section"
+//CHECK: @referenced = constant i32 42, section "read_flag_section"
 //CHECK: define void @g()
 //CHECK: define void @h() {{.*}} section ".my_code"

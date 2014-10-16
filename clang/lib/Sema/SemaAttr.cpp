@@ -363,15 +363,15 @@ void Sema::PragmaStack<ValueType>::Act(SourceLocation PragmaLocation,
 bool Sema::UnifySection(StringRef SectionName,
                         int SectionFlags,
                         DeclaratorDecl *Decl) {
-  auto Section = SectionInfos.find(SectionName);
-  if (Section == SectionInfos.end()) {
-    SectionInfos[SectionName] =
-        SectionInfo(Decl, SourceLocation(), SectionFlags);
+  auto Section = Context.SectionInfos.find(SectionName);
+  if (Section == Context.SectionInfos.end()) {
+    Context.SectionInfos[SectionName] =
+        ASTContext::SectionInfo(Decl, SourceLocation(), SectionFlags);
     return false;
   }
   // A pre-declared section takes precedence w/o diagnostic.
   if (Section->second.SectionFlags == SectionFlags ||
-      !(Section->second.SectionFlags & PSF_Implicit))
+      !(Section->second.SectionFlags & ASTContext::PSF_Implicit))
     return false;
   auto OtherDecl = Section->second.Decl;
   Diag(Decl->getLocation(), diag::err_section_conflict)
@@ -390,11 +390,11 @@ bool Sema::UnifySection(StringRef SectionName,
 bool Sema::UnifySection(StringRef SectionName,
                         int SectionFlags,
                         SourceLocation PragmaSectionLocation) {
-  auto Section = SectionInfos.find(SectionName);
-  if (Section != SectionInfos.end()) {
+  auto Section = Context.SectionInfos.find(SectionName);
+  if (Section != Context.SectionInfos.end()) {
     if (Section->second.SectionFlags == SectionFlags)
       return false;
-    if (!(Section->second.SectionFlags & PSF_Implicit)) {
+    if (!(Section->second.SectionFlags & ASTContext::PSF_Implicit)) {
       Diag(PragmaSectionLocation, diag::err_section_conflict)
           << "this" << "a prior #pragma section";
       Diag(Section->second.PragmaSectionLocation,
@@ -402,8 +402,8 @@ bool Sema::UnifySection(StringRef SectionName,
       return true;
     }
   }
-  SectionInfos[SectionName] =
-      SectionInfo(nullptr, PragmaSectionLocation, SectionFlags);
+  Context.SectionInfos[SectionName] =
+      ASTContext::SectionInfo(nullptr, PragmaSectionLocation, SectionFlags);
   return false;
 }
 

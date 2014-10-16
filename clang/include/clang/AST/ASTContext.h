@@ -2328,6 +2328,31 @@ private:
   std::unique_ptr<ParentMap> AllParents;
 
   std::unique_ptr<VTableContextBase> VTContext;
+
+public:
+  enum PragmaSectionFlag : unsigned {
+    PSF_None = 0,
+    PSF_Read = 0x1,
+    PSF_Write = 0x2,
+    PSF_Execute = 0x4,
+    PSF_Implicit = 0x8,
+    PSF_Invalid = 0x80000000U,
+  };
+
+  struct SectionInfo {
+    DeclaratorDecl *Decl;
+    SourceLocation PragmaSectionLocation;
+    int SectionFlags;
+    SectionInfo() {}
+    SectionInfo(DeclaratorDecl *Decl,
+                SourceLocation PragmaSectionLocation,
+                int SectionFlags)
+      : Decl(Decl),
+        PragmaSectionLocation(PragmaSectionLocation),
+        SectionFlags(SectionFlags) {}
+  };
+
+  llvm::StringMap<SectionInfo> SectionInfos;
 };
 
 /// \brief Utility function for constructing a nullary selector.
