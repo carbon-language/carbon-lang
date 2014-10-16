@@ -17,6 +17,8 @@
 // RUN:             | FileCheck --check-prefix=CHECK-WITH-G-DWARF2 %s
 // RUN: %clang -### -S %s -g0 -g -target x86_64-pc-freebsd10.0 2>&1 \
 // RUN:             | FileCheck --check-prefix=CHECK-WITH-G-DWARF2 %s
+// RUN: %clang -### -S %s -g0 -g -target i386-pc-solaris 2>&1 \
+// RUN:             | FileCheck --check-prefix=CHECK-WITH-G-DWARF2 %s
 
 // CHECK-WITHOUT-G-NOT: "-g"
 // CHECK-WITH-G: "-g"
