@@ -18,7 +18,7 @@ class SBBreakpointCallbackCase(TestBase):
           self.buildProgram('inferior.cpp', self.inferior)
           self.addTearDownHook(lambda: os.remove(self.inferior))
 
-    @unittest2.expectedFailure # llvm.org/pr16000: SBBreakpoint.SetCallback() does nothing
+    @unittest2.expectedFailure("llvm.org/pr16000: SBBreakpoint.SetCallback() does nothing")
     @skipIfi386
     @skipIfRemote
     @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11

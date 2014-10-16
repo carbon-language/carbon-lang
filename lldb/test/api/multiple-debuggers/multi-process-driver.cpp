@@ -17,17 +17,10 @@
 #include <stdlib.h>
 
 
-#ifdef __APPLE__
-#include <LLDB/LLDB.h>
-#include <LLDB/SBCommandInterpreter.h>
-#include <LLDB/SBCommandReturnObject.h>
-#include <LLDB/SBDebugger.h>
-#else
 #include "lldb/API/LLDB.h"
-#include <lldb/API/SBCommandInterpreter.h>
-#include <lldb/API/SBCommandReturnObject.h>
-#include <lldb/API/SBDebugger.h>
-#endif
+#include "lldb/API/SBCommandInterpreter.h"
+#include "lldb/API/SBCommandReturnObject.h"
+#include "lldb/API/SBDebugger.h"
 
 #include <chrono>
 #include <thread>

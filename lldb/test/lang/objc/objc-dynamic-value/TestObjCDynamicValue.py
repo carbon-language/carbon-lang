@@ -15,7 +15,7 @@ class ObjCDynamicValueTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     @dsym_test
-    @expectedFailureDarwin("llvm.org/pr20271")
+    @expectedFailureDarwin("llvm.org/pr20271 rdar://18684107")
     def test_get_dynamic_objc_vals_with_dsym(self):
         """Test fetching ObjC dynamic values."""
         if self.getArchitecture() == 'i386':
@@ -27,7 +27,7 @@ class ObjCDynamicValueTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     @dwarf_test
-    @expectedFailureDarwin("llvm.org/pr20271")
+    @expectedFailureDarwin("llvm.org/pr20271 rdar://18684107")
     def test_get_objc_dynamic_vals_with_dwarf(self):
         """Test fetching ObjC dynamic values."""
         if self.getArchitecture() == 'i386':
@@ -126,14 +126,15 @@ class ObjCDynamicValueTestCase(TestBase):
         # This test is not entirely related to the main thrust of this test case, but since we're here,
         # try stepping into setProperty, and make sure we get into the version in Source:
 
+        self.runCmd("log enable lldb step")
         thread.StepInto()
 
         threads = lldbutil.get_stopped_threads (process, lldb.eStopReasonPlanComplete)
         self.assertTrue (len(threads) == 1)
         line_entry = threads[0].GetFrameAtIndex(0).GetLineEntry()
 
-        self.assertTrue (line_entry.GetLine() == self.set_property_line)
-        self.assertTrue (line_entry.GetFileSpec().GetFilename() == self.source_name) 
+        self.assertEqual (line_entry.GetLine(), self.set_property_line)
+        self.assertEqual (line_entry.GetFileSpec().GetFilename(), self.source_name) 
 
         # Okay, back to the main business.  Continue to the handle_SourceBase and make sure we get the correct dynamic value.
 
