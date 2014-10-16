@@ -12,12 +12,12 @@ class BlocksTestCase(TestBase):
     lines = []
 
     @dsym_test
-    @unittest2.expectedFailure
+    @unittest2.expectedFailure("rdar://problem/10413887 - Call blocks in expressions")
     def test_expr_with_dsym(self):
         self.buildDsym()
         self.expr()
 
-    @unittest2.expectedFailure
+    @unittest2.expectedFailure("rdar://problem/10413887 - Call blocks in expressions")
     @dwarf_test
     def test_expr_with_dwarf(self):
         self.buildDwarf()
