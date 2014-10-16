@@ -161,9 +161,9 @@ private:
   }
 };
 
-class DelayImportHModuleAtom : public IdataAtom {
+class DelayImportAddressAtom : public IdataAtom {
 public:
-  explicit DelayImportHModuleAtom(IdataContext &context)
+  explicit DelayImportAddressAtom(IdataContext &context)
       : IdataAtom(context, createContent(context.ctx)) {}
   StringRef customSectionName() const override { return ".data"; }
   ContentPermissions permissions() const override { return permRW_; }
@@ -173,6 +173,19 @@ private:
   std::vector<uint8_t> createContent(const PECOFFLinkingContext &ctx) const {
     return std::vector<uint8_t>(ctx.is64Bit() ? 8 : 4, 0);
   }
+};
+
+// DelayLoaderAtom contains a wrapper function for __delayLoadHelper2.
+class DelayLoaderAtom : public IdataAtom {
+public:
+  DelayLoaderAtom(IdataContext &context, const Atom *impAtom,
+                  const Atom *descAtom, const Atom *delayLoadHelperAtom);
+  StringRef customSectionName() const override { return ".text"; }
+  ContentPermissions permissions() const override { return permR_X; }
+  Alignment alignment() const override { return Alignment(0); }
+
+private:
+  std::vector<uint8_t> createContent() const;
 };
 
 } // namespace idata

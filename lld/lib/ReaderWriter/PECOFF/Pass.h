@@ -22,6 +22,9 @@ void addDir32Reloc(COFFBaseDefinedAtom *atom, const Atom *target,
 void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target,
                      llvm::COFF::MachineTypes machine, size_t offsetInAtom);
 
+void addRel32Reloc(COFFBaseDefinedAtom *atom, const Atom *target,
+                   llvm::COFF::MachineTypes machine, size_t offsetInAtom);
+
 } // namespace pecoff
 } // namespace lld
 

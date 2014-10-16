@@ -13,7 +13,7 @@ X86:      DelayImport {
 X86-NEXT:   Name: vars.dll
 X86-NEXT:   Attributes: 0x1
 X86-NEXT:   ModuleHandle: 0x1000
-X86-NEXT:   ImportAddressTable: 0x0
+X86-NEXT:   ImportAddressTable: 0x1008
 X86-NEXT:   ImportNameTable: 0x2000
 X86-NEXT:   BoundDelayImportTable: 0x0
 X86-NEXT:   UnloadDelayImportTable: 0x0
@@ -26,7 +26,7 @@ X64:      DelayImport {
 X64-NEXT:   Name: vars64.dll
 X64-NEXT:   Attributes: 0x1
 X64-NEXT:   ModuleHandle: 0x1000
-X64-NEXT:   ImportAddressTable: 0x0
+X64-NEXT:   ImportAddressTable: 0x1008
 X64-NEXT:   ImportNameTable: 0x2000
 X64-NEXT:   BoundDelayImportTable: 0x0
 X64-NEXT:   UnloadDelayImportTable: 0x0

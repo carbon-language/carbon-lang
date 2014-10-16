@@ -262,6 +262,10 @@ public:
   std::vector<ExportDesc> &getDllExports() { return _dllExports; }
   const std::vector<ExportDesc> &getDllExports() const { return _dllExports; }
 
+  StringRef getDelayLoadHelperName() const {
+    return is64Bit() ? "__delayLoadHelper2" : "___delayLoadHelper2@8";
+  }
+
   StringRef allocate(StringRef ref) const {
     _allocMutex.lock();
     char *x = _allocator.Allocate<char>(ref.size() + 1);

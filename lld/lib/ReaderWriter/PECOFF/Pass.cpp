@@ -55,5 +55,21 @@ void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target,
   }
 }
 
+void addRel32Reloc(COFFBaseDefinedAtom *atom, const Atom *target,
+                   llvm::COFF::MachineTypes machine, size_t offsetInAtom) {
+  switch (machine) {
+  case llvm::COFF::IMAGE_FILE_MACHINE_I386:
+    addReloc(atom, target, offsetInAtom, Reference::KindArch::x86,
+             llvm::COFF::IMAGE_REL_I386_REL32);
+    return;
+  case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
+    addReloc(atom, target, offsetInAtom, Reference::KindArch::x86_64,
+             llvm::COFF::IMAGE_REL_AMD64_REL32);
+    return;
+  default:
+    llvm_unreachable("unsupported machine type");
+  }
+}
+
 } // end namespace pecoff
 } // end namespace lld

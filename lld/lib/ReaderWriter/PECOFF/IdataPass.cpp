@@ -131,30 +131,101 @@ std::vector<uint8_t> DelayImportDirectoryAtom::createContent() {
   return r;
 }
 
+// Find "___delayLoadHelper2@8" (or "__delayLoadHelper2" on x64).
+// This is not efficient but should be OK for now.
+static const Atom *
+findDelayLoadHelper(MutableFile &file, const PECOFFLinkingContext &ctx) {
+  StringRef sym = ctx.getDelayLoadHelperName();
+  for (const DefinedAtom *atom : file.defined())
+    if (atom->name() == sym)
+      return atom;
+  std::string msg = (sym + " was not found").str();
+  llvm_unreachable(msg.c_str());
+}
+
 // Create the data referred by the delay-import table.
 void DelayImportDirectoryAtom::addRelocations(
     IdataContext &context, StringRef loadName,
     const std::vector<COFFSharedLibraryAtom *> &sharedAtoms) {
-  // "ModuleHandle" field
-  auto *hmodule = new (_alloc) DelayImportHModuleAtom(context);
+  // "ModuleHandle" field. This points to an array of pointer-size data
+  // in ".data" section. Initially the array is initialized with zero.
+  // The delay-load import helper will set DLL base address at runtime.
+  auto *hmodule = new (_alloc) DelayImportAddressAtom(context);
   addDir32NBReloc(this, hmodule, context.ctx.getMachineType(),
                   offsetof(delay_import_directory_table_entry, ModuleHandle));
 
-  // "NameTable" field
+  // "NameTable" field. The data structure of this field is the same
+  // as (non-delay) import table's Import Lookup Table. Contains
+  // imported function names. This is a parallel array of AddressTable
+  // field.
   std::vector<ImportTableEntryAtom *> nameTable =
-      createImportTableAtoms(context, sharedAtoms, true, ".didat", _alloc);
+      createImportTableAtoms(context, sharedAtoms, false, ".didat", _alloc);
   addDir32NBReloc(
       this, nameTable[0], context.ctx.getMachineType(),
       offsetof(delay_import_directory_table_entry, DelayImportNameTable));
 
-  // "Name" field
+  // "Name" field. This points to the NUL-terminated DLL name string.
   auto *name = new (_alloc)
       COFFStringAtom(context.dummyFile, context.dummyFile.getNextOrdinal(),
                      ".didat", loadName);
   context.file.addAtom(*name);
   addDir32NBReloc(this, name, context.ctx.getMachineType(),
                   offsetof(delay_import_directory_table_entry, Name));
-  // TODO: emit other fields
+
+  // "AddressTable" field. This points to an array of pointers, which
+  // in turn pointing to delay-load functions.
+  std::vector<DelayImportAddressAtom *> addrTable;
+  for (int i = 0, e = sharedAtoms.size() + 1; i < e; ++i)
+    addrTable.push_back(new (_alloc) DelayImportAddressAtom(context));
+  for (int i = 0, e = sharedAtoms.size(); i < e; ++i)
+    sharedAtoms[i]->setImportTableEntry(addrTable[i]);
+  addDir32NBReloc(
+      this, addrTable[0], context.ctx.getMachineType(),
+      offsetof(delay_import_directory_table_entry, DelayImportAddressTable));
+
+  const Atom *delayLoadHelper = findDelayLoadHelper(context.file, context.ctx);
+  for (int i = 0, e = sharedAtoms.size(); i < e; ++i) {
+    const DefinedAtom *loader = new (_alloc) DelayLoaderAtom(
+        context, addrTable[i], this, delayLoadHelper);
+    addDir32Reloc(addrTable[i], loader, context.ctx.getMachineType(), 0);
+  }
+}
+
+DelayLoaderAtom::DelayLoaderAtom(IdataContext &context, const Atom *impAtom,
+                                 const Atom *descAtom, const Atom *delayLoadHelperAtom)
+    : IdataAtom(context, createContent()) {
+  MachineTypes machine = context.ctx.getMachineType();
+  addDir32Reloc(this, impAtom, machine, 3);
+  addDir32Reloc(this, descAtom, machine, 8);
+  addRel32Reloc(this, delayLoadHelperAtom, machine, 13);
+}
+
+// DelayLoaderAtom contains a wrapper function for __delayLoadHelper2.
+//
+// __delayLoadHelper2 takes two pointers: a pointer to the delay-load
+// table descripter and a pointer to _imp_ symbol for the function
+// to be resolved.
+//
+// __delayLoadHelper2 looks at the table descriptor to know the DLL
+// name, calls dlopen()-like function to load it, resolves all
+// imported symbols, and then writes the resolved addresses to the
+// import address table. It returns a pointer to the resolved
+// function.
+//
+// __delayLoadHelper2 is defined in delayimp.lib.
+std::vector<uint8_t> DelayLoaderAtom::createContent() const {
+  // NB: x86 only for now. ECX and EDX are caller-save.
+  static const uint8_t array[] = {
+    0x51,              // push  ecx
+    0x52,              // push  edx
+    0x68, 0, 0, 0, 0,  // push  offset ___imp__<FUNCNAME>
+    0x68, 0, 0, 0, 0,  // push  offset ___DELAY_IMPORT_DESCRIPTOR_<DLLNAME>_dll
+    0xE8, 0, 0, 0, 0,  // call  ___delayLoadHelper2@8
+    0x5A,              // pop   edx
+    0x59,              // pop   ecx
+    0xFF, 0xE0,        // jmp   eax
+  };
+  return std::vector<uint8_t>(array, array + sizeof(array));
 }
 
 } // namespace idata
