@@ -1860,7 +1860,7 @@ Thread::ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return
         
         // FIXME: ValueObject::Cast doesn't currently work correctly, at least not for scalars.
         // Turn that back on when that works.
-        if (0 && sc.function != NULL)
+        if (/* DISABLES CODE */ (0) && sc.function != NULL)
         {
             Type *function_type = sc.function->GetType();
             if (function_type)
