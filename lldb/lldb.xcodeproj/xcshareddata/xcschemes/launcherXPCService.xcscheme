@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "0500"
+   LastUpgradeVersion = "0600"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -42,6 +42,15 @@
       <PathRunnable
          FilePath = "/Users/moi/Library/Developer/Xcode/DerivedData/Xcode-ezhudafllefyhcfivqaeslnymjsj/Build/Products/Debug/LLDB.framework/XPCServices/com.apple.lldb.launcherXPCService.xpc/Contents/MacOS/com.apple.lldb.launcherXPCService">
       </PathRunnable>
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "EDC6D49814E5C19B001B75F8"
+            BuildableName = "com.apple.lldb.launcherXPCService.xpc"
+            BlueprintName = "launcherXPCService"
+            ReferencedContainer = "container:lldb.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
       <AdditionalOptions>
       </AdditionalOptions>
    </LaunchAction>
