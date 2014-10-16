@@ -3263,6 +3263,11 @@ public:
   /// commandline option.
   bool isMsStruct(const ASTContext &C) const;
 
+  /// \brief Whether we are allowed to insert extra padding between fields.
+  /// These padding are added to help AddressSanitizer detect
+  /// intra-object-overflow bugs.
+  bool mayInsertExtraPadding(bool EmitRemark = false) const;
+
 private:
   /// \brief Deserialize just the fields.
   void LoadFieldsFromExternalStorage() const;

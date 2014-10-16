@@ -29,6 +29,7 @@
 #include "clang/Basic/Module.h"
 #include "clang/Basic/Specifiers.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 
@@ -3613,6 +3614,49 @@ void RecordDecl::LoadFieldsFromExternalStorage() const {
 
   std::tie(FirstDecl, LastDecl) = BuildDeclChain(Decls,
                                                  /*FieldsAlreadyLoaded=*/false);
+}
+
+bool RecordDecl::mayInsertExtraPadding(bool EmitRemark) const {
+  ASTContext &Context = getASTContext();
+  if (!Context.getLangOpts().Sanitize.Address ||
+      !Context.getLangOpts().Sanitize.SanitizeAddressFieldPadding)
+    return false;
+  auto &Blacklist = Context.getSanitizerBlacklist();
+  const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(this);
+  StringRef Filename = Context.getSourceManager().getFilename(getLocation());
+  // We may be able to relax some of these requirements.
+  int ReasonToReject = -1;
+  if (!CXXRD || CXXRD->isExternCContext())
+    ReasonToReject = 0;  // is not C++.
+  else if (CXXRD->hasAttr<PackedAttr>())
+    ReasonToReject = 1;  // is packed.
+  else if (CXXRD->isUnion())
+    ReasonToReject = 2;  // is a union.
+  else if (CXXRD->isTriviallyCopyable())
+    ReasonToReject = 3;  // is trivially copyable.
+  else if (CXXRD->hasTrivialDestructor())
+    ReasonToReject = 4;  // has trivial destructor.
+  else if (CXXRD->isStandardLayout())
+    ReasonToReject = 5;  // is standard layout.
+  else if (Blacklist.isBlacklistedFile(Filename, "field-padding"))
+    ReasonToReject = 6;  // is in a blacklisted file.
+  else if (Blacklist.isBlacklistedType(getQualifiedNameAsString(),
+                                       "field-padding"))
+    ReasonToReject = 7;  // is blacklisted.
+
+  if (EmitRemark) {
+    if (ReasonToReject >= 0)
+      Context.getDiagnostics().Report(
+          getLocation(),
+          diag::remark_sanitize_address_insert_extra_padding_rejected)
+          << getQualifiedNameAsString() << ReasonToReject;
+    else
+      Context.getDiagnostics().Report(
+          getLocation(),
+          diag::remark_sanitize_address_insert_extra_padding_accepted)
+          << getQualifiedNameAsString();
+  }
+  return ReasonToReject < 0;
 }
 
 //===----------------------------------------------------------------------===//

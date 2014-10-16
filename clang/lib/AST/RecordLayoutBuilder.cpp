@@ -652,7 +652,7 @@ protected:
   void Layout(const ObjCInterfaceDecl *D);
 
   void LayoutFields(const RecordDecl *D);
-  void LayoutField(const FieldDecl *D);
+  void LayoutField(const FieldDecl *D, bool InsertExtraPadding);
   void LayoutWideBitField(uint64_t FieldSize, uint64_t TypeSize,
                           bool FieldPacked, const FieldDecl *D);
   void LayoutBitField(const FieldDecl *D);
@@ -1331,7 +1331,7 @@ void RecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D) {
   // Layout each ivar sequentially.
   for (const ObjCIvarDecl *IVD = D->all_declared_ivar_begin(); IVD;
        IVD = IVD->getNextIvar())
-    LayoutField(IVD);
+    LayoutField(IVD, false);
 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
@@ -1341,8 +1341,9 @@ void RecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D) {
 void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   // Layout each field, for now, just sequentially, respecting alignment.  In
   // the future, this will need to be tweakable by targets.
+  bool InsertExtraPadding = D->mayInsertExtraPadding(/*EmitRemark=*/true);
   for (const auto *Field : D->fields())
-    LayoutField(Field);
+    LayoutField(Field, InsertExtraPadding);
 }
 
 void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
@@ -1645,7 +1646,8 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
                   Context.toCharUnitsFromBits(UnpackedFieldAlign));
 }
 
-void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {  
+void RecordLayoutBuilder::LayoutField(const FieldDecl *D,
+                                      bool InsertExtraPadding) {
   if (D->isBitField()) {
     LayoutBitField(D);
     return;
@@ -1748,6 +1750,15 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
     CheckFieldPadding(Context.toBits(FieldOffset), UnpaddedFieldOffset, 
                       Context.toBits(UnpackedFieldOffset),
                       Context.toBits(UnpackedFieldAlign), FieldPacked, D);
+
+  if (InsertExtraPadding && !FieldSize.isZero()) {
+    CharUnits ASanAlignment = CharUnits::fromQuantity(8);
+    CharUnits ExtraSizeForAsan = ASanAlignment;
+    if (FieldSize % ASanAlignment)
+      ExtraSizeForAsan +=
+          ASanAlignment - CharUnits::fromQuantity(FieldSize % ASanAlignment);
+    FieldSize += ExtraSizeForAsan;
+  }
 
   // Reserve space for this field.
   uint64_t FieldSizeInBits = Context.toBits(FieldSize);

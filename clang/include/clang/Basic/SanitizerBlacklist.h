@@ -35,7 +35,8 @@ public:
   bool isIn(const llvm::Function &F) const;
   bool isIn(const llvm::GlobalVariable &G,
             StringRef Category = StringRef()) const;
-  bool isBlacklistedType(StringRef MangledTypeName) const;
+  bool isBlacklistedType(StringRef MangledTypeName,
+                         StringRef Category = StringRef()) const;
   bool isBlacklistedFunction(StringRef FunctionName) const;
   bool isBlacklistedFile(StringRef FileName,
                          StringRef Category = StringRef()) const;
