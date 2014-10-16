@@ -7417,7 +7417,7 @@ SymbolFileDWARF::ParseVariableDIE
                                     const uint8_t *data_pointer = form_value.BlockData();
                                     if (data_pointer)
                                     {
-                                        data_length = form_value.Unsigned();
+                                        form_value.Unsigned();
                                     }
                                     else if (DWARFFormValue::IsDataForm(form_value.Form()))
                                     {
