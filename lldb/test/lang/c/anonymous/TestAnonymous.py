@@ -30,7 +30,6 @@ class AnonymousTestCase(TestBase):
         self.buildDsym()
         self.expr_parent()
 
-    @unittest2.expectedFailure # llvm.org/pr15591 
     @dsym_test
     def test_expr_null(self):
         self.buildDsym()
@@ -66,7 +65,6 @@ class AnonymousTestCase(TestBase):
         self.buildDwarf()
         self.expr_parent()
 
-    @unittest2.expectedFailure # llvm.org/pr15591 
     @dwarf_test
     def test_expr_null(self):
         self.buildDwarf()
@@ -151,8 +149,7 @@ class AnonymousTestCase(TestBase):
         # This should fail because pz is 0, but it succeeds on OS/X.
         # This fails on Linux with an upstream error "Couldn't dematerialize struct", as does "p *n" with "int *n = 0".
         # Note that this can also trigger llvm.org/pr15036 when run interactively at the lldb command prompt.
-        self.expect("expression *(type_z *)pz",
-            substrs = ["Cannot access memory at address 0x0"], error = True)
+        self.expect("expression *(type_z *)pz", error = True)
 
     def child_by_name(self):
         exe = os.path.join (os.getcwd(), "a.out")
