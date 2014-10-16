@@ -14,6 +14,8 @@ int main()
         NSMutableDictionary *mutable_dictionary = [NSMutableDictionary dictionaryWithCapacity:1];
         [mutable_dictionary addEntriesFromDictionary:immutable_dictionary];
 
+        NSNumber *one = @1;
+
         NSLog(@"Stop here"); // Set breakpoint 0 here.
     }
 }

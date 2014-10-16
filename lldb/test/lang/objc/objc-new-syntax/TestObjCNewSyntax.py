@@ -15,14 +15,12 @@ class ObjCNewSyntaxTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @dsym_test
-    @unittest2.expectedFailure
     def test_expr_with_dsym(self):
         self.buildDsym()
         self.expr()
 
     @dwarf_test
     @skipIfLinux
-    @unittest2.expectedFailure
     def test_expr_with_dwarf(self):
         self.buildDwarf()
         self.expr()
@@ -93,34 +91,32 @@ class ObjCNewSyntaxTestCase(TestBase):
             substrs = ["NSArray", "foo", "bar"])
 
         self.expect("expr --object-description -- @{ @\"key\" : @\"object\" }", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["NSDictionary", "key", "object"])
+            substrs = ["key", "object"])
 
         self.expect("expr --object-description -- @'a'", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["NSNumber", str(ord('a'))])
+            substrs = [str(ord('a'))])
 
         self.expect("expr --object-description -- @1", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["NSNumber", "1"])
+            substrs = ["1"])
 
         self.expect("expr --object-description -- @1l", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["NSNumber", "1"])
+            substrs = ["1"])
 
         self.expect("expr --object-description -- @1ul", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["NSNumber", "1"])
+            substrs = ["1"])
 
         self.expect("expr --object-description -- @1ll", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["NSNumber", "1"])
+            substrs = ["1"])
 
         self.expect("expr --object-description -- @1ull", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["NSNumber", "1"])
+            substrs = ["1"])
 
-        self.expect("expr --object-description -- @123.45", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["NSNumber", "123.45"])
-        self.expect("expr --object-description -- @123.45f", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr -- @123.45", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSNumber", "123.45"])
 
         self.expect("expr --object-description -- @( 1 + 3 )", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["NSNumber", "4"])
-        self.expect("expr --object-description -- @(\"Hello world\" + 6)", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["4"])
+        self.expect("expr -- @((char*)\"Hello world\" + 6)", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSString", "world"])
 
             
