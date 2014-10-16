@@ -20,7 +20,6 @@ class PoVerbosityTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
-    @expectedFailureDarwin(16374063)
     def test_with_dsym(self):
         """Test that the po command acts correctly."""
         self.buildDsym()
@@ -28,7 +27,6 @@ class PoVerbosityTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin due to ObjC test case")
     @dwarf_test
-    @expectedFailureDarwin(16374063)
     def test_with_dwarf(self):
         """Test that the po command acts correctly."""
         self.buildDwarf()
@@ -59,16 +57,16 @@ class PoVerbosityTestCase(TestBase):
         self.expect("expr -O -- foo",matching=False,
             substrs = ['(id) $'])
 
-        self.expect("expr -O -- 5",matching=False,
+        self.expect("expr -O -- 22",matching=False,
             substrs = ['(int) $'])
-        self.expect("expr -O -- 5",
-            substrs = ['5'])
+        self.expect("expr -O -- 22",
+            substrs = ['22'])
 
-        self.expect("expr -O -vfull -- 5",
-            substrs = ['(int) $', ' = 5'])
+        self.expect("expr -O -vfull -- 22",
+            substrs = ['(int) $', ' = 22'])
 
-        self.expect("expr -O -v -- 5",
-            substrs = ['(int) $', ' = 5'])
+        self.expect("expr -O -v -- 22",
+            substrs = ['(int) $', ' = 22'])
 
 
 if __name__ == '__main__':
