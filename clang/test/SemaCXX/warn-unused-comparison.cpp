@@ -83,6 +83,8 @@ void test() {
 #define EQ(x,y) (x) == (y)
   EQ(x, 5);
 #undef EQ
+
+  (void)sizeof(1 < 2, true); // No warning; unevaluated context.
 }
 
 namespace PR10291 {

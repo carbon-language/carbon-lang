@@ -94,3 +94,50 @@ void Bar() {
 };
 
 }
+
+namespace PR18571 {
+// Unevaluated contexts should not trigger unused result warnings.
+template <typename T>
+auto foo(T) -> decltype(f(), bool()) { // Should not warn.
+  return true;
+}
+
+void g() {
+  foo(1);
+}
+}
+
+namespace std {
+class type_info { };
+}
+
+namespace {
+// The typeid expression operand is evaluated only when the expression type is
+// a glvalue of polymorphic class type.
+
+struct B {
+  virtual void f() {}
+};
+
+struct D : B {
+  void f() override {}
+};
+
+struct C {};
+
+void g() {
+  // The typeid expression operand is evaluated only when the expression type is
+  // a glvalue of polymorphic class type; otherwise the expression operand is not
+  // evaluated and should not trigger a diagnostic.
+  D d;
+  C c;
+  (void)typeid(f(), c); // Should not warn.
+  (void)typeid(f(), d); // expected-warning {{ignoring return value}}
+
+  // The sizeof expression operand is never evaluated.
+  (void)sizeof(f(), c); // Should not warn.
+
+   // The noexcept expression operand is never evaluated.
+  (void)noexcept(f(), false); // Should not warn.
+}
+}
