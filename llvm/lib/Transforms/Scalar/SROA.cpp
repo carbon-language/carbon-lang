@@ -334,7 +334,7 @@ class AllocaSlices::SliceBuilder : public PtrUseVisitor<SliceBuilder> {
   typedef PtrUseVisitor<SliceBuilder> Base;
 
   const uint64_t AllocSize;
-  AllocaSlices &S;
+  AllocaSlices &AS;
 
   SmallDenseMap<Instruction *, unsigned> MemTransferSliceMap;
   SmallDenseMap<Instruction *, uint64_t> PHIOrSelectSizes;
@@ -343,14 +343,14 @@ class AllocaSlices::SliceBuilder : public PtrUseVisitor<SliceBuilder> {
   SmallPtrSet<Instruction *, 4> VisitedDeadInsts;
 
 public:
-  SliceBuilder(const DataLayout &DL, AllocaInst &AI, AllocaSlices &S)
+  SliceBuilder(const DataLayout &DL, AllocaInst &AI, AllocaSlices &AS)
       : PtrUseVisitor<SliceBuilder>(DL),
-        AllocSize(DL.getTypeAllocSize(AI.getAllocatedType())), S(S) {}
+        AllocSize(DL.getTypeAllocSize(AI.getAllocatedType())), AS(AS) {}
 
 private:
   void markAsDead(Instruction &I) {
     if (VisitedDeadInsts.insert(&I))
-      S.DeadUsers.push_back(&I);
+      AS.DeadUsers.push_back(&I);
   }
 
   void insertUse(Instruction &I, const APInt &Offset, uint64_t Size,
@@ -361,7 +361,7 @@ private:
       DEBUG(dbgs() << "WARNING: Ignoring " << Size << " byte use @" << Offset
                    << " which has zero size or starts outside of the "
                    << AllocSize << " byte alloca:\n"
-                   << "    alloca: " << S.AI << "\n"
+                   << "    alloca: " << AS.AI << "\n"
                    << "       use: " << I << "\n");
       return markAsDead(I);
     }
@@ -379,12 +379,12 @@ private:
     if (Size > AllocSize - BeginOffset) {
       DEBUG(dbgs() << "WARNING: Clamping a " << Size << " byte use @" << Offset
                    << " to remain within the " << AllocSize << " byte alloca:\n"
-                   << "    alloca: " << S.AI << "\n"
+                   << "    alloca: " << AS.AI << "\n"
                    << "       use: " << I << "\n");
       EndOffset = AllocSize;
     }
 
-    S.Slices.push_back(Slice(BeginOffset, EndOffset, U, IsSplittable));
+    AS.Slices.push_back(Slice(BeginOffset, EndOffset, U, IsSplittable));
   }
 
   void visitBitCastInst(BitCastInst &BC) {
@@ -485,7 +485,7 @@ private:
       DEBUG(dbgs() << "WARNING: Ignoring " << Size << " byte store @" << Offset
                    << " which extends past the end of the " << AllocSize
                    << " byte alloca:\n"
-                   << "    alloca: " << S.AI << "\n"
+                   << "    alloca: " << AS.AI << "\n"
                    << "       use: " << SI << "\n");
       return markAsDead(SI);
     }
@@ -535,7 +535,7 @@ private:
     if (Offset.uge(AllocSize)) {
       SmallDenseMap<Instruction *, unsigned>::iterator MTPI = MemTransferSliceMap.find(&II);
       if (MTPI != MemTransferSliceMap.end())
-        S.Slices[MTPI->second].kill();
+        AS.Slices[MTPI->second].kill();
       return markAsDead(II);
     }
 
@@ -558,10 +558,10 @@ private:
     bool Inserted;
     SmallDenseMap<Instruction *, unsigned>::iterator MTPI;
     std::tie(MTPI, Inserted) =
-        MemTransferSliceMap.insert(std::make_pair(&II, S.Slices.size()));
+        MemTransferSliceMap.insert(std::make_pair(&II, AS.Slices.size()));
     unsigned PrevIdx = MTPI->second;
     if (!Inserted) {
-      Slice &PrevP = S.Slices[PrevIdx];
+      Slice &PrevP = AS.Slices[PrevIdx];
 
       // Check if the begin offsets match and this is a non-volatile transfer.
       // In that case, we can completely elide the transfer.
@@ -579,7 +579,7 @@ private:
     insertUse(II, Offset, Size, /*IsSplittable=*/Inserted && Length);
 
     // Check that we ended up with a valid index in the map.
-    assert(S.Slices[PrevIdx].getUse()->getUser() == &II &&
+    assert(AS.Slices[PrevIdx].getUse()->getUser() == &II &&
            "Map index doesn't point back to a slice with this user.");
   }
 
@@ -667,7 +667,7 @@ private:
       else
         // Otherwise the operand to the PHI/select is dead, and we can replace
         // it with undef.
-        S.DeadOperands.push_back(U);
+        AS.DeadOperands.push_back(U);
 
       return;
     }
@@ -690,7 +690,7 @@ private:
     // FIXME: This should instead be escaped in the event we're instrumenting
     // for address sanitization.
     if (Offset.uge(AllocSize)) {
-      S.DeadOperands.push_back(U);
+      AS.DeadOperands.push_back(U);
       return;
     }
 
@@ -970,11 +970,11 @@ private:
   friend class PHIOrSelectSpeculator;
   friend class AllocaSliceRewriter;
 
-  bool rewritePartition(AllocaInst &AI, AllocaSlices &S,
+  bool rewritePartition(AllocaInst &AI, AllocaSlices &AS,
                         AllocaSlices::iterator B, AllocaSlices::iterator E,
                         int64_t BeginOffset, int64_t EndOffset,
                         ArrayRef<AllocaSlices::iterator> SplitUses);
-  bool splitAlloca(AllocaInst &AI, AllocaSlices &S);
+  bool splitAlloca(AllocaInst &AI, AllocaSlices &AS);
   bool runOnAlloca(AllocaInst &AI);
   void clobberUse(Use &U);
   void deleteDeadInstructions(SmallPtrSetImpl<AllocaInst *> &DeletedAllocas);
@@ -1981,7 +1981,7 @@ class AllocaSliceRewriter : public InstVisitor<AllocaSliceRewriter, bool> {
   typedef llvm::InstVisitor<AllocaSliceRewriter, bool> Base;
 
   const DataLayout &DL;
-  AllocaSlices &S;
+  AllocaSlices &AS;
   SROA &Pass;
   AllocaInst &OldAI, &NewAI;
   const uint64_t NewAllocaBeginOffset, NewAllocaEndOffset;
@@ -2028,14 +2028,14 @@ class AllocaSliceRewriter : public InstVisitor<AllocaSliceRewriter, bool> {
   IRBuilderTy IRB;
 
 public:
-  AllocaSliceRewriter(const DataLayout &DL, AllocaSlices &S, SROA &Pass,
+  AllocaSliceRewriter(const DataLayout &DL, AllocaSlices &AS, SROA &Pass,
                       AllocaInst &OldAI, AllocaInst &NewAI,
                       uint64_t NewAllocaBeginOffset,
                       uint64_t NewAllocaEndOffset, bool IsVectorPromotable,
                       bool IsIntegerPromotable,
                       SmallPtrSetImpl<PHINode *> &PHIUsers,
                       SmallPtrSetImpl<SelectInst *> &SelectUsers)
-      : DL(DL), S(S), Pass(Pass), OldAI(OldAI), NewAI(NewAI),
+      : DL(DL), AS(AS), Pass(Pass), OldAI(OldAI), NewAI(NewAI),
         NewAllocaBeginOffset(NewAllocaBeginOffset),
         NewAllocaEndOffset(NewAllocaEndOffset),
         NewAllocaTy(NewAI.getAllocatedType()),
@@ -3099,7 +3099,7 @@ static Type *getTypePartition(const DataLayout &DL, Type *Ty,
 /// appropriate new offsets. It also evaluates how successful the rewrite was
 /// at enabling promotion and if it was successful queues the alloca to be
 /// promoted.
-bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
+bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
                             AllocaSlices::iterator B, AllocaSlices::iterator E,
                             int64_t BeginOffset, int64_t EndOffset,
                             ArrayRef<AllocaSlices::iterator> SplitUses) {
@@ -3158,8 +3158,9 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
     // the alloca's alignment unconstrained.
     if (Alignment <= DL->getABITypeAlignment(SliceTy))
       Alignment = 0;
-    NewAI = new AllocaInst(SliceTy, nullptr, Alignment,
-                           AI.getName() + ".sroa." + Twine(B - S.begin()), &AI);
+    NewAI =
+        new AllocaInst(SliceTy, nullptr, Alignment,
+                       AI.getName() + ".sroa." + Twine(B - AS.begin()), &AI);
     ++NumNewAllocas;
   }
 
@@ -3175,19 +3176,19 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
   SmallPtrSet<PHINode *, 8> PHIUsers;
   SmallPtrSet<SelectInst *, 8> SelectUsers;
 
-  AllocaSliceRewriter Rewriter(*DL, S, *this, AI, *NewAI, BeginOffset,
+  AllocaSliceRewriter Rewriter(*DL, AS, *this, AI, *NewAI, BeginOffset,
                                EndOffset, IsVectorPromotable,
                                IsIntegerPromotable, PHIUsers, SelectUsers);
   bool Promotable = true;
   for (auto & SplitUse : SplitUses) {
     DEBUG(dbgs() << "  rewriting split ");
-    DEBUG(S.printSlice(dbgs(), SplitUse, ""));
+    DEBUG(AS.printSlice(dbgs(), SplitUse, ""));
     Promotable &= Rewriter.visit(SplitUse);
     ++NumUses;
   }
   for (AllocaSlices::iterator I = B; I != E; ++I) {
     DEBUG(dbgs() << "  rewriting ");
-    DEBUG(S.printSlice(dbgs(), I, ""));
+    DEBUG(AS.printSlice(dbgs(), I, ""));
     Promotable &= Rewriter.visit(I);
     ++NumUses;
   }
@@ -3273,8 +3274,8 @@ removeFinishedSplitUses(SmallVectorImpl<AllocaSlices::iterator> &SplitUses,
 
 /// \brief Walks the slices of an alloca and form partitions based on them,
 /// rewriting each of their uses.
-bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &S) {
-  if (S.begin() == S.end())
+bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &AS) {
+  if (AS.begin() == AS.end())
     return false;
 
   unsigned NumPartitions = 0;
@@ -3282,9 +3283,10 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &S) {
   SmallVector<AllocaSlices::iterator, 4> SplitUses;
   uint64_t MaxSplitUseEndOffset = 0;
 
-  uint64_t BeginOffset = S.begin()->beginOffset();
+  uint64_t BeginOffset = AS.begin()->beginOffset();
 
-  for (AllocaSlices::iterator SI = S.begin(), SJ = std::next(SI), SE = S.end();
+  for (AllocaSlices::iterator SI = AS.begin(), SJ = std::next(SI),
+                              SE = AS.end();
        SI != SE; SI = SJ) {
     uint64_t MaxEndOffset = SI->endOffset();
 
@@ -3322,8 +3324,8 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &S) {
     // we'll have to rewrite uses and erase old split uses.
     if (BeginOffset < MaxEndOffset) {
       // Rewrite a sequence of overlapping slices.
-      Changed |=
-          rewritePartition(AI, S, SI, SJ, BeginOffset, MaxEndOffset, SplitUses);
+      Changed |= rewritePartition(AI, AS, SI, SJ, BeginOffset, MaxEndOffset,
+                                  SplitUses);
       ++NumPartitions;
 
       removeFinishedSplitUses(SplitUses, MaxSplitUseEndOffset, MaxEndOffset);
@@ -3362,8 +3364,8 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &S) {
     uint64_t PostSplitEndOffset =
         SJ == SE ? MaxSplitUseEndOffset : SJ->beginOffset();
 
-    Changed |= rewritePartition(AI, S, SJ, SJ, MaxEndOffset, PostSplitEndOffset,
-                                SplitUses);
+    Changed |= rewritePartition(AI, AS, SJ, SJ, MaxEndOffset,
+                                PostSplitEndOffset, SplitUses);
     ++NumPartitions;
 
     if (SJ == SE)
@@ -3426,13 +3428,13 @@ bool SROA::runOnAlloca(AllocaInst &AI) {
   Changed |= AggRewriter.rewrite(AI);
 
   // Build the slices using a recursive instruction-visiting builder.
-  AllocaSlices S(*DL, AI);
-  DEBUG(S.print(dbgs()));
-  if (S.isEscaped())
+  AllocaSlices AS(*DL, AI);
+  DEBUG(AS.print(dbgs()));
+  if (AS.isEscaped())
     return Changed;
 
   // Delete all the dead users of this alloca before splitting and rewriting it.
-  for (Instruction *DeadUser : S.getDeadUsers()) {
+  for (Instruction *DeadUser : AS.getDeadUsers()) {
     // Free up everything used by this instruction.
     for (Use &DeadOp : DeadUser->operands())
       clobberUse(DeadOp);
@@ -3444,16 +3446,16 @@ bool SROA::runOnAlloca(AllocaInst &AI) {
     DeadInsts.insert(DeadUser);
     Changed = true;
   }
-  for (Use *DeadOp : S.getDeadOperands()) {
+  for (Use *DeadOp : AS.getDeadOperands()) {
     clobberUse(*DeadOp);
     Changed = true;
   }
 
   // No slices to split. Leave the dead alloca for a later pass to clean up.
-  if (S.begin() == S.end())
+  if (AS.begin() == AS.end())
     return Changed;
 
-  Changed |= splitAlloca(AI, S);
+  Changed |= splitAlloca(AI, AS);
 
   DEBUG(dbgs() << "  Speculating PHIs\n");
   while (!SpeculatablePHIs.empty())
