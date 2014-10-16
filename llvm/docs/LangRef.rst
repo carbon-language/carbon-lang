@@ -2395,7 +2395,7 @@ allowed to assume that the '``undef``' operand could be the same as
       %C = xor %B, %B
 
       %D = undef
-      %E = icmp lt %D, 4
+      %E = icmp slt %D, 4
       %F = icmp gte %D, 4
 
     Safe:
