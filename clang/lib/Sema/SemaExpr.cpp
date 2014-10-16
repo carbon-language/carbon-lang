@@ -11301,19 +11301,14 @@ void Sema::PopExpressionEvaluationContext() {
         //   evaluate [...] a lambda-expression.
         D = diag::err_lambda_in_constant_expression;
       }
-      for (unsigned I = 0, N = Rec.Lambdas.size(); I != N; ++I)
-        Diag(Rec.Lambdas[I]->getLocStart(), D);
+      for (const auto *L : Rec.Lambdas)
+        Diag(L->getLocStart(), D);
     } else {
       // Mark the capture expressions odr-used. This was deferred
       // during lambda expression creation.
-      for (unsigned I = 0, N = Rec.Lambdas.size(); I != N; ++I) {
-        LambdaExpr *Lambda = Rec.Lambdas[I];
-        for (LambdaExpr::capture_init_iterator 
-                  C = Lambda->capture_init_begin(),
-               CEnd = Lambda->capture_init_end();
-             C != CEnd; ++C) {
-          MarkDeclarationsReferencedInExpr(*C);
-        }
+      for (auto *Lambda : Rec.Lambdas) {
+        for (auto *C : Lambda->capture_inits())
+          MarkDeclarationsReferencedInExpr(C);
       }
     }
   }
