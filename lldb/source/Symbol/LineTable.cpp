@@ -562,7 +562,6 @@ LineTable::LinkLineTable (const FileRangeMap &file_range_map)
             // Append the sequence since we just terminated the previous one
             line_table_ap->InsertSequence (&sequence);
             sequence.Clear();
-            prev_entry_was_linked = false;
         }
         
         // Now link the current entry
