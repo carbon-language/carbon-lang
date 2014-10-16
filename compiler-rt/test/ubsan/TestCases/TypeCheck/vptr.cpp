@@ -25,6 +25,7 @@
 
 // FIXME: This test produces linker errors on Darwin.
 // XFAIL: darwin
+// REQUIRES: stable-runtime
 
 extern "C" {
 const char *__ubsan_default_options() {
