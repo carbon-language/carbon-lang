@@ -2535,10 +2535,10 @@ Process::WriteMemory (addr_t addr, const void *buf, size_t size, Error &error)
             });
             
             if (bytes_written < size)
-                bytes_written += WriteMemoryPrivate (addr + bytes_written,
-                                                     ubuf + bytes_written,
-                                                     size - bytes_written,
-                                                     error);
+                WriteMemoryPrivate (addr + bytes_written,
+                                    ubuf + bytes_written,
+                                    size - bytes_written,
+                                    error);
         }
     }
     else
