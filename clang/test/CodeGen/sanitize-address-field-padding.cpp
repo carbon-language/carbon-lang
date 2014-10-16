@@ -121,20 +121,20 @@ ExternCStruct extern_C_struct;
 
 // CTOR
 // CHECK-LABEL: define linkonce_odr void @_ZN9Positive1C1Ev
-// CHECK: call void @__asan_poison_intra_object_redzone({{.*}}, i64 12)
-// CHECK: call void @__asan_poison_intra_object_redzone({{.*}}, i64 15)
-// CHECK: call void @__asan_poison_intra_object_redzone({{.*}}, i64 12)
-// CHECK: call void @__asan_poison_intra_object_redzone({{.*}}, i64 12)
-// CHECK: call void @__asan_poison_intra_object_redzone({{.*}}, i64 8)
+// CHECK: call void @__asan_poison_intra_object_redzone({{.*}}12)
+// CHECK: call void @__asan_poison_intra_object_redzone({{.*}}15)
+// CHECK: call void @__asan_poison_intra_object_redzone({{.*}}12)
+// CHECK: call void @__asan_poison_intra_object_redzone({{.*}}12)
+// CHECK: call void @__asan_poison_intra_object_redzone({{.*}}8)
 // CHECK-NOT: __asan_poison_intra_object_redzone
 // CHECK: ret void
 // DTOR
 // CHECK-LABEL: define linkonce_odr void @_ZN9Positive1D1Ev
-// CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}, i64 12)
-// CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}, i64 15)
-// CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}, i64 12)
-// CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}, i64 12)
-// CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}, i64 8)
+// CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}12)
+// CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}15)
+// CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}12)
+// CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}12)
+// CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}8)
 // CHECK-NOT: __asan_unpoison_intra_object_redzone
 // CHECK: ret void
 //
