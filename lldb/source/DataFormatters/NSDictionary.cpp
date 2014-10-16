@@ -47,18 +47,12 @@ GetLLDBNSPairType (TargetSP target_sp)
 
             clang::DeclContext::lookup_const_result result = ast->getTranslationUnitDecl()->lookup(myName);
 
-            for (clang::NamedDecl *named_decl : result)
+            if (!result.empty())
             {
+                clang::NamedDecl *named_decl = result[0];
                 if (const clang::CXXRecordDecl *record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(named_decl))
-                {
                     clang_type.SetClangType(ast, clang::QualType(record_decl->getTypeForDecl(), 0));
-                    break;
-                }
-                else
-                {
-                    // somebody else (the user?) has defined a type with the magic name already - fail!!!
-                    return clang_type;
-                }
+                return clang_type;
             }
 
             if (!clang_type)
