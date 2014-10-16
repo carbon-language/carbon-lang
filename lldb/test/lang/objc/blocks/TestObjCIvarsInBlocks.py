@@ -15,6 +15,7 @@ class TestObjCIvarsInBlocks(TestBase):
     @expectedFailurei386
     @python_api_test
     @dsym_test
+    @unittest2.skip("rdar://18682916")
     def test_with_dsym_and_python_api(self):
         """Test printing the ivars of the self when captured in blocks"""
         self.buildDsym()
@@ -25,6 +26,7 @@ class TestObjCIvarsInBlocks(TestBase):
     # This test requires the 2.0 runtime, so it will fail on i386.
     @expectedFailurei386
     @dwarf_test
+    @unittest2.skip("rdar://18682916")
     def test_with_dwarf_and_python_api(self):
         """Test printing the ivars of the self when captured in blocks"""
         self.buildDwarf()
