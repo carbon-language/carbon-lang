@@ -556,8 +556,14 @@ static dw_offset_t DumpCallback
         {
             // We are dumping everything
             if (cu)
+            {
                 cu->Dump(s);
-            return cu->GetFirstDIEOffset(); // Return true to parse all DIEs in this Compile Unit
+                return cu->GetFirstDIEOffset(); // Return true to parse all DIEs in this Compile Unit
+            }
+            else
+            {
+                return DW_INVALID_OFFSET;
+            }
         }
         else
         {
@@ -578,7 +584,7 @@ static dw_offset_t DumpCallback
             else
             {
                 // See if the DIE is in this compile unit?
-                if (dumpInfo->die_offset < cu->GetNextCompileUnitOffset())
+                if (cu && dumpInfo->die_offset < cu->GetNextCompileUnitOffset())
                 {
                     // This DIE is in this compile unit!
                     if (s->GetVerbose())
@@ -591,7 +597,14 @@ static dw_offset_t DumpCallback
                 else
                 {
                     // Skip to the next compile unit as the DIE isn't in the current one!
-                    return cu->GetNextCompileUnitOffset();
+                    if (cu)
+                    {
+                        return cu->GetNextCompileUnitOffset();
+                    }
+                    else
+                    {
+                        return DW_INVALID_OFFSET;
+                    }
                 }
             }
         }
