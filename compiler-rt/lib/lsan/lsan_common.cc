@@ -451,8 +451,11 @@ void DoLeakCheck() {
     PrintMatchedSuppressions();
   if (unsuppressed_count > 0) {
     param.leak_report.PrintSummary();
-    if (flags()->exitcode)
+    if (flags()->exitcode) {
+      if (common_flags()->coverage)
+        __sanitizer_cov_dump();
       internal__exit(flags()->exitcode);
+    }
   }
 }
 
