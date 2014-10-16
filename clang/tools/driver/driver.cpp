@@ -243,24 +243,20 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
   StringRef Prefix;
 
   for (int Components = 2; Components; --Components) {
-    bool FoundMatch = false;
-    size_t i;
+    auto I = std::find_if(std::begin(suffixes), std::end(suffixes),
+                          [&](const decltype(suffixes[0]) &suffix) {
+      return ProgNameRef.endswith(suffix.Suffix);
+    });
 
-    for (i = 0; i < llvm::array_lengthof(suffixes); ++i) {
-      if (ProgNameRef.endswith(suffixes[i].Suffix)) {
-        FoundMatch = true;
-        SmallVectorImpl<const char *>::iterator it = ArgVector.begin();
+    if (I != std::end(suffixes)) {
+      if (I->ModeFlag) {
+        auto it = ArgVector.begin();
         if (it != ArgVector.end())
           ++it;
-        if (suffixes[i].ModeFlag)
-          ArgVector.insert(it, suffixes[i].ModeFlag);
-        break;
+        ArgVector.insert(it, I->ModeFlag);
       }
-    }
-
-    if (FoundMatch) {
       StringRef::size_type LastComponent = ProgNameRef.rfind('-',
-        ProgNameRef.size() - strlen(suffixes[i].Suffix));
+        ProgNameRef.size() - strlen(I->Suffix));
       if (LastComponent != StringRef::npos)
         Prefix = ProgNameRef.slice(0, LastComponent);
       break;
@@ -277,13 +273,13 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
 
   std::string IgnoredError;
   if (llvm::TargetRegistry::lookupTarget(Prefix, IgnoredError)) {
-    SmallVectorImpl<const char *>::iterator it = ArgVector.begin();
+    auto it = ArgVector.begin();
     if (it != ArgVector.end())
       ++it;
     const char* Strings[] =
       { GetStableCStr(SavedStrings, std::string("-target")),
         GetStableCStr(SavedStrings, Prefix) };
-    ArgVector.insert(it, Strings, Strings + llvm::array_lengthof(Strings));
+    ArgVector.insert(it, std::begin(Strings), std::end(Strings));
   }
 }
 
