@@ -59,9 +59,6 @@ private:
   SDValue LowerFP_TO_UINT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) const;
 
-  SDValue ExpandSIGN_EXTEND_INREG(SDValue Op,
-                                  unsigned BitsDiff,
-                                  SelectionDAG &DAG) const;
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
 
   SDValue performStoreCombine(SDNode *N, DAGCombinerInfo &DCI) const;

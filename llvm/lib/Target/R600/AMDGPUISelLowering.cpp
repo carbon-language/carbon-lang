@@ -1918,18 +1918,6 @@ SDValue AMDGPUTargetLowering::LowerFP_TO_UINT(SDValue Op,
   return SDValue();
 }
 
-SDValue AMDGPUTargetLowering::ExpandSIGN_EXTEND_INREG(SDValue Op,
-                                                      unsigned BitsDiff,
-                                                      SelectionDAG &DAG) const {
-  MVT VT = Op.getSimpleValueType();
-  SDLoc DL(Op);
-  SDValue Shift = DAG.getConstant(BitsDiff, VT);
-  // Shift left by 'Shift' bits.
-  SDValue Shl = DAG.getNode(ISD::SHL, DL, VT, Op.getOperand(0), Shift);
-  // Signed shift Right by 'Shift' bits.
-  return DAG.getNode(ISD::SRA, DL, VT, Shl, Shift);
-}
-
 SDValue AMDGPUTargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
                                                      SelectionDAG &DAG) const {
   EVT ExtraVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
