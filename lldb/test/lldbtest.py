@@ -997,11 +997,7 @@ class Base(unittest2.TestCase):
                 print >> sbuf, "Adding tearDown hook:", getsource_if_available(hook)
             self.hooks.append(hook)
 
-    def tearDown(self):
-        """Fixture for unittest test case teardown."""
-        #import traceback
-        #traceback.print_stack()
-
+    def deletePexpectChild(self):
         # This is for the case of directly spawning 'lldb' and interacting with it
         # using pexpect.
         if self.child and self.child.isalive():
@@ -1021,6 +1017,14 @@ class Base(unittest2.TestCase):
 
             # Give it one final blow to make sure the child is terminated.
             self.child.close()
+
+
+    def tearDown(self):
+        """Fixture for unittest test case teardown."""
+        #import traceback
+        #traceback.print_stack()
+
+        self.deletePexpectChild()
 
         # Check and run any hook functions.
         for hook in reversed(self.hooks):
