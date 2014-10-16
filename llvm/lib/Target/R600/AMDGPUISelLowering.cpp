@@ -2377,11 +2377,7 @@ void AMDGPUTargetLowering::computeKnownBitsForTargetNode(
     unsigned BitWidth = 32;
     uint32_t Width = CWidth->getZExtValue() & 0x1f;
 
-    // FIXME: This could do a lot more. If offset is 0, should be the same as
-    // sign_extend_inreg implementation, but that involves duplicating it.
-    if (Opc == AMDGPUISD::BFE_I32)
-      KnownOne = APInt::getHighBitsSet(BitWidth, BitWidth - Width);
-    else
+    if (Opc == AMDGPUISD::BFE_U32)
       KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - Width);
 
     break;

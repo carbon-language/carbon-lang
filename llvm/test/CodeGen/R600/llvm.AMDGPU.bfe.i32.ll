@@ -424,3 +424,18 @@ define void @bfe_sext_in_reg_i24(i32 addrspace(1)* %out, i32 addrspace(1)* %in) 
   store i32 %ashr, i32 addrspace(1)* %out, align 4
   ret void
 }
+
+; FUNC-LABEL: @simplify_demanded_bfe_sdiv
+; SI: BUFFER_LOAD_DWORD [[LOAD:v[0-9]+]]
+; SI: V_BFE_I32 [[BFE:v[0-9]+]], [[LOAD]], 1, 16
+; SI: V_LSHRREV_B32_e32 [[TMP0:v[0-9]+]], 31, [[BFE]]
+; SI: V_ADD_I32_e32 [[TMP1:v[0-9]+]], [[TMP0]], [[BFE]]
+; SI: V_ASHRREV_I32_e32 [[TMP2:v[0-9]+]], 1, [[TMP1]]
+; SI: BUFFER_STORE_DWORD [[TMP2]]
+define void @simplify_demanded_bfe_sdiv(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
+  %src = load i32 addrspace(1)* %in, align 4
+  %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %src, i32 1, i32 16) nounwind readnone
+  %div = sdiv i32 %bfe, 2
+  store i32 %div, i32 addrspace(1)* %out, align 4
+  ret void
+}
