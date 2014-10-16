@@ -43,6 +43,14 @@ TEST(NamespaceCommentCheckTest, CheckExistingComments) {
             "} // anonymous namespace",
             runCheckOnCode<NamespaceCommentCheck>("namespace {\n"
                                                   "} // anonymous namespace"));
+  EXPECT_EQ("namespace {\n"
+            "} // Anonymous namespace.",
+            runCheckOnCode<NamespaceCommentCheck>("namespace {\n"
+                                                  "} // Anonymous namespace."));
+  EXPECT_EQ("namespace q {\n"
+            "} // namespace q",
+            runCheckOnCode<NamespaceCommentCheck>("namespace q {\n"
+                                                  "} // anonymous namespace q"));
   EXPECT_EQ(
       "namespace My_NameSpace123 {\n"
       "} // namespace My_NameSpace123",

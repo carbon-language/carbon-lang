@@ -23,7 +23,7 @@ NamespaceCommentCheck::NamespaceCommentCheck(StringRef Name,
                                              ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context),
       NamespaceCommentPattern("^/[/*] *(end (of )?)? *(anonymous|unnamed)? *"
-                              "namespace( +([a-zA-Z0-9_]+))? *(\\*/)?$",
+                              "namespace( +([a-zA-Z0-9_]+))?\\.? *(\\*/)?$",
                               llvm::Regex::IgnoreCase),
       ShortNamespaceLines(Options.get("ShortNamespaceLines", 1u)),
       SpacesBeforeComments(Options.get("SpacesBeforeComments", 1u)) {}
@@ -85,13 +85,15 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
   // Try to find existing namespace closing comment on the same line.
   if (Tok.is(tok::comment) && NextTokenIsOnSameLine) {
     StringRef Comment(Sources.getCharacterData(Loc), Tok.getLength());
-    SmallVector<StringRef, 6> Groups;
+    SmallVector<StringRef, 7> Groups;
     if (NamespaceCommentPattern.match(Comment, &Groups)) {
-      StringRef NamespaceNameInComment = Groups.size() >= 6 ? Groups[5] : "";
+      StringRef NamespaceNameInComment = Groups.size() > 5 ? Groups[5] : "";
+      StringRef Anonymous = Groups.size() > 3 ? Groups[3] : "";
 
       // Check if the namespace in the comment is the same.
       if ((ND->isAnonymousNamespace() && NamespaceNameInComment.empty()) ||
-          ND->getNameAsString() == NamespaceNameInComment) {
+          (ND->getNameAsString() == NamespaceNameInComment &&
+           Anonymous.empty())) {
         // FIXME: Maybe we need a strict mode, where we always fix namespace
         // comments with different format.
         return;
