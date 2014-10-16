@@ -249,12 +249,7 @@ bool TailCallElim::markTails(Function &F, bool &AllCallsAreTailCalls) {
     return false;
   AllCallsAreTailCalls = true;
 
-  // The local stack holds all alloca instructions and all byval arguments.
   AllocaDerivedValueTracker Tracker;
-  for (Argument &Arg : F.args()) {
-    if (Arg.hasByValAttr())
-      Tracker.walk(&Arg);
-  }
   for (auto &BB : F) {
     for (auto &I : BB)
       if (AllocaInst *AI = dyn_cast<AllocaInst>(&I))
@@ -310,9 +305,8 @@ bool TailCallElim::markTails(Function &F, bool &AllCallsAreTailCalls) {
         for (auto &Arg : CI->arg_operands()) {
           if (isa<Constant>(Arg.getUser()))
             continue;
-          if (Argument *A = dyn_cast<Argument>(Arg.getUser()))
-            if (!A->hasByValAttr())
-              continue;
+          if (isa<Argument>(Arg.getUser()))
+            continue;
           SafeToTail = false;
           break;
         }

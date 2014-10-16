@@ -27,10 +27,11 @@ define internal void @qux(i32* byval %x) {
   tail call void @ext(i32* null)
   ret void
 }
+
 define void @frob(i32* %x) {
 ; CHECK-LABEL: define void @frob(
 ; CHECK: alloca i32
-; CHECK: {{^ *}}call void @ext(
+; CHECK: {{^ *}}tail call void @ext(
 ; CHECK: tail call void @ext(i32* null)
 ; CHECK: ret void
   tail call void @qux(i32* byval %x)
