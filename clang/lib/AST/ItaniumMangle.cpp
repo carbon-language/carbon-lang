@@ -3403,7 +3403,7 @@ void CXXNameMangler::mangleTemplateArg(TemplateArgument A) {
     // and pointer-to-function expressions are represented as a declaration not
     // an expression. We compensate for it here to produce the correct mangling.
     ValueDecl *D = A.getAsDecl();
-    bool compensateMangling = !A.isDeclForReferenceParam();
+    bool compensateMangling = !A.getTypeForDecl()->isReferenceType();
     if (compensateMangling) {
       Out << 'X';
       mangleOperatorName(OO_Amp, 1);

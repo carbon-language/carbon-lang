@@ -76,7 +76,7 @@ private:
 
   struct DA {
     unsigned Kind;
-    bool ForRefParam;
+    void *QT;
     ValueDecl *D;
   };
   struct I {
@@ -132,11 +132,11 @@ public:
   /// \brief Construct a template argument that refers to a
   /// declaration, which is either an external declaration or a
   /// template declaration.
-  TemplateArgument(ValueDecl *D, bool ForRefParam) {
+  TemplateArgument(ValueDecl *D, QualType QT) {
     assert(D && "Expected decl");
     DeclArg.Kind = Declaration;
+    DeclArg.QT = QT.getAsOpaquePtr();
     DeclArg.D = D;
-    DeclArg.ForRefParam = ForRefParam;
   }
 
   /// \brief Construct an integral constant template argument. The memory to
@@ -249,11 +249,9 @@ public:
     return DeclArg.D;
   }
 
-  /// \brief Retrieve whether a declaration is binding to a
-  /// reference parameter in a declaration non-type template argument.
-  bool isDeclForReferenceParam() const {
+  QualType getTypeForDecl() const {
     assert(getKind() == Declaration && "Unexpected kind");
-    return DeclArg.ForRefParam;
+    return QualType::getFromOpaquePtr(DeclArg.QT);
   }
 
   /// \brief Retrieve the type for null non-type template argument.

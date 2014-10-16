@@ -7705,8 +7705,7 @@ ASTReader::ReadTemplateArgument(ModuleFile &F,
     return TemplateArgument(readType(F, Record, Idx));
   case TemplateArgument::Declaration: {
     ValueDecl *D = ReadDeclAs<ValueDecl>(F, Record, Idx);
-    bool ForReferenceParam = Record[Idx++];
-    return TemplateArgument(D, ForReferenceParam);
+    return TemplateArgument(D, readType(F, Record, Idx));
   }
   case TemplateArgument::NullPtr:
     return TemplateArgument(readType(F, Record, Idx), /*isNullPtr*/true);

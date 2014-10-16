@@ -1139,7 +1139,7 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
       else
         mangle(FD, "$1?");
     } else {
-      mangle(ND, TA.isDeclForReferenceParam() ? "$E?" : "$1?");
+      mangle(ND, TA.getTypeForDecl()->isReferenceType() ? "$E?" : "$1?");
     }
     break;
   }

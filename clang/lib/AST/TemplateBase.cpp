@@ -294,8 +294,7 @@ bool TemplateArgument::structurallyEquals(const TemplateArgument &Other) const {
     return TypeOrValue.V == Other.TypeOrValue.V;
 
   case Declaration:
-    return getAsDecl() == Other.getAsDecl() && 
-           isDeclForReferenceParam() && Other.isDeclForReferenceParam();
+    return getAsDecl() == Other.getAsDecl();
 
   case Integral:
     return getIntegralType() == Other.getIntegralType() &&
