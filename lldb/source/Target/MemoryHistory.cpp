@@ -21,7 +21,9 @@ MemoryHistory::FindPlugin (const ProcessSP process)
     
     for (uint32_t idx = 0; (create_callback = PluginManager::GetMemoryHistoryCreateCallbackAtIndex(idx)) != NULL; ++idx)
     {
-        return create_callback(process);
+        MemoryHistorySP memory_history_sp (create_callback (process));
+        if (memory_history_sp.get())
+            return memory_history_sp;
     }
     
     return MemoryHistorySP();
