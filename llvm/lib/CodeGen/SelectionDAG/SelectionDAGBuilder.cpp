@@ -5435,35 +5435,11 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
 }
 
-void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
-                                      bool isTailCall,
-                                      MachineBasicBlock *LandingPad) {
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
-  FunctionType *FTy = cast<FunctionType>(PT->getElementType());
-  Type *RetTy = FTy->getReturnType();
+std::pair<SDValue, SDValue>
+SelectionDAGBuilder::lowerInvokable(TargetLowering::CallLoweringInfo &CLI,
+                                    MachineBasicBlock *LandingPad) {
   MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
   MCSymbol *BeginLabel = nullptr;
-
-  TargetLowering::ArgListTy Args;
-  TargetLowering::ArgListEntry Entry;
-  Args.reserve(CS.arg_size());
-
-  for (ImmutableCallSite::arg_iterator i = CS.arg_begin(), e = CS.arg_end();
-       i != e; ++i) {
-    const Value *V = *i;
-
-    // Skip empty types
-    if (V->getType()->isEmptyTy())
-      continue;
-
-    SDValue ArgNode = getValue(V);
-    Entry.Node = ArgNode; Entry.Ty = V->getType();
-
-    // Skip the first return-type Attribute to get to params.
-    Entry.setAttributes(&CS, i - CS.arg_begin() + 1);
-    Args.push_back(Entry);
-  }
 
   if (LandingPad) {
     // Insert a label before the invoke call to mark the try range.  This can be
@@ -5485,24 +5461,17 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
     // this call might not return.
     (void)getRoot();
     DAG.setRoot(DAG.getEHLabel(getCurSDLoc(), getControlRoot(), BeginLabel));
+
+    CLI.setChain(getRoot());
   }
 
-  // Check if target-independent constraints permit a tail call here.
-  // Target-dependent constraints are checked within TLI.LowerCallTo.
-  if (isTailCall && !isInTailCallPosition(CS, DAG.getTarget()))
-    isTailCall = false;
+  const TargetLowering *TLI = TM.getSubtargetImpl()->getTargetLowering();
+  std::pair<SDValue, SDValue> Result = TLI->LowerCallTo(CLI);
 
-  TargetLowering::CallLoweringInfo CLI(DAG);
-  CLI.setDebugLoc(getCurSDLoc()).setChain(getRoot())
-    .setCallee(RetTy, FTy, Callee, std::move(Args), CS).setTailCall(isTailCall);
-
-  std::pair<SDValue,SDValue> Result = TLI.LowerCallTo(CLI);
-  assert((isTailCall || Result.second.getNode()) &&
+  assert((CLI.IsTailCall || Result.second.getNode()) &&
          "Non-null chain expected with non-tail call!");
   assert((Result.second.getNode() || !Result.first.getNode()) &&
          "Null value expected with tail call!");
-  if (Result.first.getNode())
-    setValue(CS.getInstruction(), Result.first);
 
   if (!Result.second.getNode()) {
     // As a special case, a null chain means that a tail call has been emitted
@@ -5525,6 +5494,50 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
     // Inform MachineModuleInfo of range.
     MMI.addInvoke(LandingPad, BeginLabel, EndLabel);
   }
+
+  return Result;
+}
+
+void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
+                                      bool isTailCall,
+                                      MachineBasicBlock *LandingPad) {
+  PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
+  FunctionType *FTy = cast<FunctionType>(PT->getElementType());
+  Type *RetTy = FTy->getReturnType();
+
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  Args.reserve(CS.arg_size());
+
+  for (ImmutableCallSite::arg_iterator i = CS.arg_begin(), e = CS.arg_end();
+       i != e; ++i) {
+    const Value *V = *i;
+
+    // Skip empty types
+    if (V->getType()->isEmptyTy())
+      continue;
+
+    SDValue ArgNode = getValue(V);
+    Entry.Node = ArgNode; Entry.Ty = V->getType();
+
+    // Skip the first return-type Attribute to get to params.
+    Entry.setAttributes(&CS, i - CS.arg_begin() + 1);
+    Args.push_back(Entry);
+  }
+
+  // Check if target-independent constraints permit a tail call here.
+  // Target-dependent constraints are checked within TLI->LowerCallTo.
+  if (isTailCall && !isInTailCallPosition(CS, DAG.getTarget()))
+    isTailCall = false;
+
+  TargetLowering::CallLoweringInfo CLI(DAG);
+  CLI.setDebugLoc(getCurSDLoc()).setChain(getRoot())
+    .setCallee(RetTy, FTy, Callee, std::move(Args), CS)
+    .setTailCall(isTailCall);
+  std::pair<SDValue,SDValue> Result = lowerInvokable(CLI, LandingPad);
+
+  if (Result.first.getNode())
+    setValue(CS.getInstruction(), Result.first);
 }
 
 /// IsOnlyUsedInZeroEqualityComparison - Return true if it only matters that the
@@ -6801,8 +6814,7 @@ SelectionDAGBuilder::LowerCallOperands(const CallInst &CI, unsigned ArgIdx,
     .setCallee(CI.getCallingConv(), retTy, Callee, std::move(Args), NumArgs)
     .setDiscardResult(!CI.use_empty());
 
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  return TLI.LowerCallTo(CLI);
+  return lowerInvokable(CLI, nullptr);
 }
 
 /// \brief Add a stack map intrinsic call's live variable operands to a stackmap
@@ -6932,10 +6944,7 @@ void SelectionDAGBuilder::visitPatchpoint(const CallInst &CI) {
   std::pair<SDValue, SDValue> Result =
     LowerCallOperands(CI, NumMetaOpers, NumCallArgs, Callee, isAnyRegCC);
 
-  // Set the root to the target-lowered call chain.
   SDValue Chain = Result.second;
-  DAG.setRoot(Chain);
-
   SDNode *CallEnd = Chain.getNode();
   if (hasDef && (CallEnd->getOpcode() == ISD::CopyFromReg))
     CallEnd = CallEnd->getOperand(0).getNode();
