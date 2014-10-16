@@ -34,6 +34,9 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_SUPPORT_OPTIONS_H
+#define LLVM_SUPPORT_OPTIONS_H
+
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/CommandLine.h"
 
@@ -113,3 +116,5 @@ public:
 };
 
 } // namespace llvm
+
+#endif
