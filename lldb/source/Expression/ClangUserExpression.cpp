@@ -1070,7 +1070,7 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                                              user_expression_sp,
                                                              expr_result);
 
-            if (options.GetResultIsInternal() && process)
+            if (options.GetResultIsInternal() && expr_result && process)
             {
                 process->GetTarget().GetPersistentVariables().RemovePersistentVariable (expr_result);
             }
