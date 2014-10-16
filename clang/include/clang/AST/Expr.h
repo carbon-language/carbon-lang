@@ -125,8 +125,7 @@ public:
   QualType getType() const { return TR; }
   void setType(QualType t) {
     // In C++, the type of an expression is always adjusted so that it
-    // will not have reference type an expression will never have
-    // reference type (C++ [expr]p6). Use
+    // will not have reference type (C++ [expr]p6). Use
     // QualType::getNonReferenceType() to retrieve the non-reference
     // type. Additionally, inspect Expr::isLvalue to determine whether
     // an expression that is adjusted in this manner should be
