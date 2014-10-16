@@ -1,4 +1,4 @@
-; RUN: opt < %s -std-compile-opts | llc > %t
+; RUN: opt < %s -O3 | llc > %t
 ; RUN: grep 2147027116 %t | count 3
 ; RUN: grep 2147228864 %t | count 3
 ; RUN: grep 2146502828 %t | count 3

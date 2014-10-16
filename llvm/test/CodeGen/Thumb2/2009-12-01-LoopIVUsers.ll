@@ -1,4 +1,4 @@
-; RUN: opt < %s -std-compile-opts | \
+; RUN: opt < %s -O3 | \
 ; RUN:   llc -mtriple=thumbv7-apple-darwin10 -mattr=+neon | FileCheck %s
 
 define void @fred(i32 %three_by_three, i8* %in, double %dt1, i32 %x_size, i32 %y_size, i8* %bp) nounwind {

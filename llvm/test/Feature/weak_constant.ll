@@ -1,4 +1,4 @@
-; RUN: opt < %s -std-compile-opts -S > %t
+; RUN: opt < %s -O3 -S > %t
 ; RUN:   grep undef %t | count 1
 ; RUN:   grep 5 %t | count 1
 ; RUN:   grep 7 %t | count 1

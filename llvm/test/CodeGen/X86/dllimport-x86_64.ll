@@ -4,7 +4,7 @@
 ; RUN: llc -mtriple x86_64-pc-mingw32 -O0 < %s | FileCheck %s -check-prefix=FAST
 ; PR6275
 ;
-; RUN: opt -mtriple x86_64-pc-win32 -std-compile-opts -S < %s | FileCheck %s -check-prefix=OPT
+; RUN: opt -mtriple x86_64-pc-win32 -O3 -S < %s | FileCheck %s -check-prefix=OPT
 
 @Var1 = external dllimport global i32
 @Var2 = available_externally dllimport unnamed_addr constant i32 1

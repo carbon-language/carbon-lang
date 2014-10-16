@@ -62,27 +62,14 @@ OPTIONS
  available.  The order in which the options occur on the command line are the
  order in which they are executed (within pass constraints).
 
-.. option:: -std-compile-opts
-
- This is short hand for a standard list of *compile time optimization* passes.
- It might be useful for other front end compilers as well.  To discover the
- full set of options available, use the following command:
-
- .. code-block:: sh
-
-     llvm-as < /dev/null | opt -std-compile-opts -disable-output -debug-pass=Arguments
-
 .. option:: -disable-inlining
 
- This option is only meaningful when :option:`-std-compile-opts` is given.  It
- simply removes the inlining pass from the standard list.
+ This option simply removes the inlining pass from the standard list.
 
 .. option:: -disable-opt
 
- This option is only meaningful when :option:`-std-compile-opts` is given.  It
- disables most, but not all, of the :option:`-std-compile-opts`.  The ones that
- remain are :option:`-verify`, :option:`-lower-setjmp`, and
- :option:`-funcresolve`.
+ This option is only meaningful when :option:`-std-link-opts` is given.  It
+ disables most passes.
 
 .. option:: -strip-debug
 
@@ -95,9 +82,7 @@ OPTIONS
  This option causes opt to add a verify pass after every pass otherwise
  specified on the command line (including :option:`-verify`).  This is useful
  for cases where it is suspected that a pass is creating an invalid module but
- it is not clear which pass is doing it.  The combination of
- :option:`-std-compile-opts` and :option:`-verify-each` can quickly track down
- this kind of problem.
+ it is not clear which pass is doing it.
 
 .. option:: -stats
 

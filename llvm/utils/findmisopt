@@ -74,8 +74,8 @@ echo "Unoptimized program: $prog"
 echo "  Optimized program: $optprog"
 
 # Define the list of optimizations to run. This comprises the same set of 
-# optimizations that opt -std-compile-opts and gccld run, in the same order.
-opt_switches=`llvm-as < /dev/null -o - | opt -std-compile-opts -disable-output -debug-pass=Arguments 2>&1 | sed 's/Pass Arguments: //'`
+# optimizations that opt -O3 runs, in the same order.
+opt_switches=`llvm-as < /dev/null -o - | opt -O3 -disable-output -debug-pass=Arguments 2>&1 | sed 's/Pass Arguments: //'`
 all_switches="$opt_switches"
 echo "Passes : $all_switches"
 

@@ -63,10 +63,6 @@ static cl::list<const PassInfo*, bool, PassNameParser>
 PassList(cl::desc("Passes available:"), cl::ZeroOrMore);
 
 static cl::opt<bool>
-StandardCompileOpts("std-compile-opts",
-                   cl::desc("Include the standard compile time optimizations"));
-
-static cl::opt<bool>
 StandardLinkOpts("std-link-opts",
                  cl::desc("Include the standard link time optimizations"));
 
@@ -170,12 +166,6 @@ int main(int argc, char **argv) {
   if (D.addSources(InputFilenames)) return 1;
 
   AddToDriver PM(D);
-  if (StandardCompileOpts) {
-    PassManagerBuilder Builder;
-    Builder.OptLevel = 3;
-    Builder.Inliner = createFunctionInliningPass();
-    Builder.populateModulePassManager(PM);
-  }
 
   if (StandardLinkOpts) {
     PassManagerBuilder Builder;

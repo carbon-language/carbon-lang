@@ -89,7 +89,7 @@ Then run:
 
 .. code-block:: bash
 
-   opt -std-compile-opts -debug-pass=Arguments foo.bc -disable-output
+   opt -O3 -debug-pass=Arguments foo.bc -disable-output
 
 This command should do two things: it should print out a list of passes, and
 then it should crash in the same way as clang.  If it doesn't crash, please

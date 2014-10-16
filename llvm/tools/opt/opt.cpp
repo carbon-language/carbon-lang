@@ -109,10 +109,6 @@ DisableOptimizations("disable-opt",
                      cl::desc("Do not run any optimization passes"));
 
 static cl::opt<bool>
-StandardCompileOpts("std-compile-opts",
-                   cl::desc("Include the standard compile time optimizations"));
-
-static cl::opt<bool>
 StandardLinkOpts("std-link-opts",
                  cl::desc("Include the standard link time optimizations"));
 
@@ -231,26 +227,6 @@ static void AddOptimizationPasses(PassManagerBase &MPM,FunctionPassManager &FPM,
 
   Builder.populateFunctionPassManager(FPM);
   Builder.populateModulePassManager(MPM);
-}
-
-static void AddStandardCompilePasses(PassManagerBase &PM) {
-  PM.add(createVerifierPass());                  // Verify that input is correct
-
-  // If the -strip-debug command line option was specified, do it.
-  if (StripDebug)
-    addPass(PM, createStripSymbolsPass(true));
-
-  // Verify debug info only after it's (possibly) stripped.
-  PM.add(createDebugInfoVerifierPass());
-
-  if (DisableOptimizations) return;
-
-  // -std-compile-opts adds the same module passes as -O3.
-  PassManagerBuilder Builder;
-  if (!DisableInline)
-    Builder.Inliner = createFunctionInliningPass();
-  Builder.OptLevel = 3;
-  Builder.populateModulePassManager(PM);
 }
 
 static void AddStandardLinkPasses(PassManagerBase &PM) {
@@ -479,21 +455,12 @@ int main(int argc, char **argv) {
     NoOutput = true;
   }
 
-  // If the -strip-debug command line option was specified, add it.  If
-  // -std-compile-opts was also specified, it will handle StripDebug.
-  if (StripDebug && !StandardCompileOpts)
+  // If the -strip-debug command line option was specified, add it.
+  if (StripDebug)
     addPass(Passes, createStripSymbolsPass(true));
 
   // Create a new optimization pass for each one specified on the command line
   for (unsigned i = 0; i < PassList.size(); ++i) {
-    // Check to see if -std-compile-opts was specified before this option.  If
-    // so, handle it.
-    if (StandardCompileOpts &&
-        StandardCompileOpts.getPosition() < PassList.getPosition(i)) {
-      AddStandardCompilePasses(Passes);
-      StandardCompileOpts = false;
-    }
-
     if (StandardLinkOpts &&
         StandardLinkOpts.getPosition() < PassList.getPosition(i)) {
       AddStandardLinkPasses(Passes);
@@ -564,12 +531,6 @@ int main(int argc, char **argv) {
 
     if (PrintEachXForm)
       Passes.add(createPrintModulePass(errs()));
-  }
-
-  // If -std-compile-opts was specified at the end of the pass list, add them.
-  if (StandardCompileOpts) {
-    AddStandardCompilePasses(Passes);
-    StandardCompileOpts = false;
   }
 
   if (StandardLinkOpts) {
