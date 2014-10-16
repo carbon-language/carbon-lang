@@ -136,7 +136,7 @@ get_args(xpc_object_t message, const char **path, const char ***argsOut, const c
     {
         return 1;
     }
-    if (path && *path && argsOut && *argsOut)
+    if (path && argsOut && *argsOut)
     {
         *path = (*argsOut)[0];
     }
