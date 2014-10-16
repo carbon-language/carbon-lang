@@ -13168,13 +13168,12 @@ bool Sema::checkThisInStaticMemberFunctionAttributes(CXXMethodDecl *Method) {
   return false;
 }
 
-void
-Sema::checkExceptionSpecification(ExceptionSpecificationType EST,
-                                  ArrayRef<ParsedType> DynamicExceptions,
-                                  ArrayRef<SourceRange> DynamicExceptionRanges,
-                                  Expr *NoexceptExpr,
-                                  SmallVectorImpl<QualType> &Exceptions,
-                                  FunctionProtoType::ExceptionSpecInfo &ESI) {
+void Sema::checkExceptionSpecification(
+    bool IsTopLevel, ExceptionSpecificationType EST,
+    ArrayRef<ParsedType> DynamicExceptions,
+    ArrayRef<SourceRange> DynamicExceptionRanges, Expr *NoexceptExpr,
+    SmallVectorImpl<QualType> &Exceptions,
+    FunctionProtoType::ExceptionSpecInfo &ESI) {
   Exceptions.clear();
   ESI.Type = EST;
   if (EST == EST_Dynamic) {
@@ -13183,13 +13182,15 @@ Sema::checkExceptionSpecification(ExceptionSpecificationType EST,
       // FIXME: Preserve type source info.
       QualType ET = GetTypeFromParser(DynamicExceptions[ei]);
 
-      SmallVector<UnexpandedParameterPack, 2> Unexpanded;
-      collectUnexpandedParameterPacks(ET, Unexpanded);
-      if (!Unexpanded.empty()) {
-        DiagnoseUnexpandedParameterPacks(DynamicExceptionRanges[ei].getBegin(),
-                                         UPPC_ExceptionType,
-                                         Unexpanded);
-        continue;
+      if (IsTopLevel) {
+        SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+        collectUnexpandedParameterPacks(ET, Unexpanded);
+        if (!Unexpanded.empty()) {
+          DiagnoseUnexpandedParameterPacks(
+              DynamicExceptionRanges[ei].getBegin(), UPPC_ExceptionType,
+              Unexpanded);
+          continue;
+        }
       }
 
       // Check that the type is valid for an exception spec, and
@@ -13208,7 +13209,8 @@ Sema::checkExceptionSpecification(ExceptionSpecificationType EST,
               NoexceptExpr->getType()->getCanonicalTypeUnqualified() ==
               Context.BoolTy) &&
              "Parser should have made sure that the expression is boolean");
-      if (NoexceptExpr && DiagnoseUnexpandedParameterPack(NoexceptExpr)) {
+      if (IsTopLevel && NoexceptExpr &&
+          DiagnoseUnexpandedParameterPack(NoexceptExpr)) {
         ESI.Type = EST_BasicNoexcept;
         return;
       }

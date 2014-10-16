@@ -943,6 +943,9 @@ DEF_TRAVERSE_TYPE(FunctionProtoType, {
   for (const auto &E : T->exceptions()) {
     TRY_TO(TraverseType(E));
   }
+
+  if (Expr *NE = T->getNoexceptExpr())
+    TRY_TO(TraverseStmt(NE));
 })
 
 DEF_TRAVERSE_TYPE(UnresolvedUsingType, {})
@@ -1151,6 +1154,9 @@ DEF_TRAVERSE_TYPELOC(FunctionProtoType, {
   for (const auto &E : T->exceptions()) {
     TRY_TO(TraverseType(E));
   }
+
+  if (Expr *NE = T->getNoexceptExpr())
+    TRY_TO(TraverseStmt(NE));
 })
 
 DEF_TRAVERSE_TYPELOC(UnresolvedUsingType, {})
@@ -2147,21 +2153,29 @@ bool RecursiveASTVisitor<Derived>::TraverseLambdaExpr(LambdaExpr *S) {
     TRY_TO(TraverseLambdaCapture(S, C));
   }
 
-  if (S->hasExplicitParameters() || S->hasExplicitResultType()) {
-    TypeLoc TL = S->getCallOperator()->getTypeSourceInfo()->getTypeLoc();
-    if (S->hasExplicitParameters() && S->hasExplicitResultType()) {
-      // Visit the whole type.
-      TRY_TO(TraverseTypeLoc(TL));
-    } else if (FunctionProtoTypeLoc Proto = TL.getAs<FunctionProtoTypeLoc>()) {
-      if (S->hasExplicitParameters()) {
-        // Visit parameters.
-        for (unsigned I = 0, N = Proto.getNumParams(); I != N; ++I) {
-          TRY_TO(TraverseDecl(Proto.getParam(I)));
-        }
-      } else {
-        TRY_TO(TraverseTypeLoc(Proto.getReturnLoc()));
+  TypeLoc TL = S->getCallOperator()->getTypeSourceInfo()->getTypeLoc();
+  FunctionProtoTypeLoc Proto = TL.castAs<FunctionProtoTypeLoc>();
+
+  if (S->hasExplicitParameters() && S->hasExplicitResultType()) {
+    // Visit the whole type.
+    TRY_TO(TraverseTypeLoc(TL));
+  } else {
+    if (S->hasExplicitParameters()) {
+      // Visit parameters.
+      for (unsigned I = 0, N = Proto.getNumParams(); I != N; ++I) {
+        TRY_TO(TraverseDecl(Proto.getParam(I)));
       }
+    } else if (S->hasExplicitResultType()) {
+      TRY_TO(TraverseTypeLoc(Proto.getReturnLoc()));
     }
+
+    auto *T = Proto.getTypePtr();
+    for (const auto &E : T->exceptions()) {
+      TRY_TO(TraverseType(E));
+    }
+
+    if (Expr *NE = T->getNoexceptExpr())
+      TRY_TO(TraverseStmt(NE));
   }
 
   TRY_TO(TraverseLambdaBody(S));
