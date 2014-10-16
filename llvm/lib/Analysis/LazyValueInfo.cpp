@@ -692,6 +692,9 @@ bool LazyValueInfoCache::solveBlockValuePHINode(LVILatticeVal &BBLV,
     BasicBlock *PhiBB = PN->getIncomingBlock(i);
     Value *PhiVal = PN->getIncomingValue(i);
     LVILatticeVal EdgeResult;
+    // Note that we can provide PN as the context value to getEdgeValue, even
+    // though the results will be cached, because PN is the value being used as
+    // the cache key in the caller.
     EdgesMissing |= !getEdgeValue(PhiVal, PhiBB, BB, EdgeResult, PN);
     if (EdgesMissing)
       continue;
@@ -955,6 +958,8 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
     // Try to intersect ranges of the BB and the constraint on the edge.
     LVILatticeVal InBlock = getBlockValue(Val, BBFrom);
     mergeAssumeBlockValueConstantRange(Val, InBlock, BBFrom->getTerminator());
+    // See note on the use of the CxtI with mergeAssumeBlockValueConstantRange,
+    // and caching, below.
     mergeAssumeBlockValueConstantRange(Val, InBlock, CxtI);
     if (!InBlock.isConstantRange())
       return true;
@@ -973,6 +978,14 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
   // if we couldn't compute the value on the edge, use the value from the BB
   Result = getBlockValue(Val, BBFrom);
   mergeAssumeBlockValueConstantRange(Val, Result, BBFrom->getTerminator());
+  // We can use the context instruction (generically the ultimate instruction
+  // the calling pass is trying to simplify) here, even though the result of
+  // this function is generally cached when called from the solve* functions
+  // (and that cached result might be used with queries using a different
+  // context instruction), because when this function is called from the solve*
+  // functions, the context instruction is not provided. When called from
+  // LazyValueInfoCache::getValueOnEdge, the context instruction is provided,
+  // but then the result is not cached.
   mergeAssumeBlockValueConstantRange(Val, Result, CxtI);
   return true;
 }
