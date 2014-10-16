@@ -48,10 +48,12 @@ int main()
 
 // Verify that even when a static member declaration is created lazily when
 // creating the definition, the declaration line is that of the canonical
-// declaration, not the definition.
+// declaration, not the definition. Also, since we look at the canonical
+// definition, we should also correctly emit the constant value (42) into the
+// debug info.
 struct V {
   virtual ~V(); // cause the definition of 'V' to be omitted by no-standalone-debug optimization
   static const int const_va = 42;
 };
-// CHECK: ; [ DW_TAG_member ] [const_va] [line [[@LINE-2]],
+// CHECK: i32 42} ; [ DW_TAG_member ] [const_va] [line [[@LINE-2]],
 const int V::const_va;
