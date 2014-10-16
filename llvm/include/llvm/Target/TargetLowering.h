@@ -964,29 +964,54 @@ public:
   /// It is called by AtomicExpandPass before expanding an
   ///   AtomicRMW/AtomicCmpXchg/AtomicStore/AtomicLoad.
   /// RMW and CmpXchg set both IsStore and IsLoad to true.
-  /// Backends with !getInsertFencesForAtomic() should keep a no-op here.
   /// This function should either return a nullptr, or a pointer to an IR-level
   ///   Instruction*. Even complex fence sequences can be represented by a
   ///   single Instruction* through an intrinsic to be lowered later.
+  /// Backends with !getInsertFencesForAtomic() should keep a no-op here.
+  /// Backends should override this method to produce target-specific intrinsic
+  ///   for their fences.
+  /// FIXME: Please note that the default implementation here in terms of
+  ///   IR-level fences exists for historical/compatibility reasons and is
+  ///   *unsound* ! Fences cannot, in general, be used to restore sequential
+  ///   consistency. For example, consider the following example:
+  /// atomic<int> x = y = 0;
+  /// int r1, r2, r3, r4;
+  /// Thread 0:
+  ///   x.store(1);
+  /// Thread 1:
+  ///   y.store(1);
+  /// Thread 2:
+  ///   r1 = x.load();
+  ///   r2 = y.load();
+  /// Thread 3:
+  ///   r3 = y.load();
+  ///   r4 = x.load();
+  ///  r1 = r3 = 1 and r2 = r4 = 0 is impossible as long as the accesses are all
+  ///  seq_cst. But if they are lowered to monotonic accesses, no amount of
+  ///  IR-level fences can prevent it.
+  /// @{
   virtual Instruction* emitLeadingFence(IRBuilder<> &Builder, AtomicOrdering Ord,
           bool IsStore, bool IsLoad) const {
-    assert(!getInsertFencesForAtomic());
-    return nullptr;
+    if (!getInsertFencesForAtomic())
+      return nullptr;
+
+    if (isAtLeastRelease(Ord) && IsStore)
+      return Builder.CreateFence(Ord);
+    else
+      return nullptr;
   }
 
-  /// Inserts in the IR a target-specific intrinsic specifying a fence.
-  /// It is called by AtomicExpandPass after expanding an
-  ///   AtomicRMW/AtomicCmpXchg/AtomicStore/AtomicLoad.
-  /// RMW and CmpXchg set both IsStore and IsLoad to true.
-  /// Backends with !getInsertFencesForAtomic() should keep a no-op here.
-  /// This function should either return a nullptr, or a pointer to an IR-level
-  ///   Instruction*. Even complex fence sequences can be represented by a
-  ///   single Instruction* through an intrinsic to be lowered later.
   virtual Instruction* emitTrailingFence(IRBuilder<> &Builder, AtomicOrdering Ord,
           bool IsStore, bool IsLoad) const {
-    assert(!getInsertFencesForAtomic());
-    return nullptr;
+    if (!getInsertFencesForAtomic())
+      return nullptr;
+
+    if (isAtLeastAcquire(Ord))
+      return Builder.CreateFence(Ord);
+    else
+      return nullptr;
   }
+  /// @}
 
   /// Returns true if the given (atomic) store should be expanded by the
   /// IR-level AtomicExpand pass into an "atomic xchg" which ignores its input.

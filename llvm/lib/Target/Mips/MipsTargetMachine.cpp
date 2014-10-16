@@ -178,6 +178,7 @@ TargetPassConfig *MipsTargetMachine::createPassConfig(PassManagerBase &PM) {
 
 void MipsPassConfig::addIRPasses() {
   TargetPassConfig::addIRPasses();
+  addPass(createAtomicExpandPass(&getMipsTargetMachine()));
   if (getMipsSubtarget().os16())
     addPass(createMipsOs16(getMipsTargetMachine()));
   if (getMipsSubtarget().inMips16HardFloat())

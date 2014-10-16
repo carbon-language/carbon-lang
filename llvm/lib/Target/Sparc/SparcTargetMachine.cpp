@@ -47,6 +47,7 @@ public:
     return getTM<SparcTargetMachine>();
   }
 
+  void addIRPasses() override;
   bool addInstSelector() override;
   bool addPreEmitPass() override;
 };
@@ -54,6 +55,12 @@ public:
 
 TargetPassConfig *SparcTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new SparcPassConfig(this, PM);
+}
+
+void SparcPassConfig::addIRPasses() {
+  addPass(createAtomicExpandPass(&getSparcTargetMachine()));
+
+  TargetPassConfig::addIRPasses();
 }
 
 bool SparcPassConfig::addInstSelector() {

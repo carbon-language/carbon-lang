@@ -22,11 +22,10 @@ entry:
 ; CHECK-LABEL: atomicloadstore
 
 ; CHECK: ldw r[[R0:[0-9]+]], dp[pool]
-; CHECK-NEXT: #MEMBARRIER
-  %0 = load atomic i32* bitcast (i64* @pool to i32*) acquire, align 4
-
 ; CHECK-NEXT: ldaw r[[R1:[0-9]+]], dp[pool]
+; CHECK-NEXT: #MEMBARRIER
 ; CHECK-NEXT: ldc r[[R2:[0-9]+]], 0
+  %0 = load atomic i32* bitcast (i64* @pool to i32*) acquire, align 4
 
 ; CHECK-NEXT: ld16s r3, r[[R1]][r[[R2]]]
 ; CHECK-NEXT: #MEMBARRIER

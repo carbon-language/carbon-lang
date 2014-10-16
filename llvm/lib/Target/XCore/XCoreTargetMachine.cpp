@@ -41,6 +41,7 @@ public:
     return getTM<XCoreTargetMachine>();
   }
 
+  void addIRPasses() override;
   bool addPreISel() override;
   bool addInstSelector() override;
   bool addPreEmitPass() override;
@@ -49,6 +50,12 @@ public:
 
 TargetPassConfig *XCoreTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new XCorePassConfig(this, PM);
+}
+
+void XCorePassConfig::addIRPasses() {
+  addPass(createAtomicExpandPass(&getXCoreTargetMachine()));
+
+  TargetPassConfig::addIRPasses();
 }
 
 bool XCorePassConfig::addPreISel() {

@@ -3604,30 +3604,6 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
   DAG.setRoot(StoreNode);
 }
 
-static SDValue InsertFenceForAtomic(SDValue Chain, AtomicOrdering Order,
-                                    SynchronizationScope Scope,
-                                    bool Before, SDLoc dl,
-                                    SelectionDAG &DAG,
-                                    const TargetLowering &TLI) {
-  // Fence, if necessary
-  if (Before) {
-    if (Order == AcquireRelease || Order == SequentiallyConsistent)
-      Order = Release;
-    else if (Order == Acquire || Order == Monotonic || Order == Unordered)
-      return Chain;
-  } else {
-    if (Order == AcquireRelease)
-      Order = Acquire;
-    else if (Order == Release || Order == Monotonic || Order == Unordered)
-      return Chain;
-  }
-  SDValue Ops[3];
-  Ops[0] = Chain;
-  Ops[1] = DAG.getConstant(Order, TLI.getPointerTy());
-  Ops[2] = DAG.getConstant(Scope, TLI.getPointerTy());
-  return DAG.getNode(ISD::ATOMIC_FENCE, dl, MVT::Other, Ops);
-}
-
 void SelectionDAGBuilder::visitAtomicCmpXchg(const AtomicCmpXchgInst &I) {
   SDLoc dl = getCurSDLoc();
   AtomicOrdering SuccessOrder = I.getSuccessOrdering();
@@ -3636,26 +3612,15 @@ void SelectionDAGBuilder::visitAtomicCmpXchg(const AtomicCmpXchgInst &I) {
 
   SDValue InChain = getRoot();
 
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  if (TLI.getInsertFencesForAtomic())
-    InChain =
-        InsertFenceForAtomic(InChain, SuccessOrder, Scope, true, dl, DAG, TLI);
-
   MVT MemVT = getValue(I.getCompareOperand()).getSimpleValueType();
   SDVTList VTs = DAG.getVTList(MemVT, MVT::i1, MVT::Other);
   SDValue L = DAG.getAtomicCmpSwap(
       ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS, dl, MemVT, VTs, InChain,
       getValue(I.getPointerOperand()), getValue(I.getCompareOperand()),
       getValue(I.getNewValOperand()), MachinePointerInfo(I.getPointerOperand()),
-      0 /* Alignment */,
-      TLI.getInsertFencesForAtomic() ? Monotonic : SuccessOrder,
-      TLI.getInsertFencesForAtomic() ? Monotonic : FailureOrder, Scope);
+      /*Alignment=*/ 0, SuccessOrder, FailureOrder, Scope);
 
   SDValue OutChain = L.getValue(2);
-
-  if (TLI.getInsertFencesForAtomic())
-    OutChain = InsertFenceForAtomic(OutChain, SuccessOrder, Scope, false, dl,
-                                    DAG, TLI);
 
   setValue(&I, L);
   DAG.setRoot(OutChain);
@@ -3683,21 +3648,16 @@ void SelectionDAGBuilder::visitAtomicRMW(const AtomicRMWInst &I) {
 
   SDValue InChain = getRoot();
 
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  if (TLI.getInsertFencesForAtomic())
-    InChain = InsertFenceForAtomic(InChain, Order, Scope, true, dl, DAG, TLI);
-
-  SDValue L = DAG.getAtomic(
-      NT, dl, getValue(I.getValOperand()).getSimpleValueType(), InChain,
-      getValue(I.getPointerOperand()), getValue(I.getValOperand()),
-      I.getPointerOperand(), 0 /* Alignment */,
-      TLI.getInsertFencesForAtomic() ? Monotonic : Order, Scope);
+  SDValue L =
+    DAG.getAtomic(NT, dl,
+                  getValue(I.getValOperand()).getSimpleValueType(),
+                  InChain,
+                  getValue(I.getPointerOperand()),
+                  getValue(I.getValOperand()),
+                  I.getPointerOperand(),
+                  /* Alignment=*/ 0, Order, Scope);
 
   SDValue OutChain = L.getValue(1);
-
-  if (TLI.getInsertFencesForAtomic())
-    OutChain =
-        InsertFenceForAtomic(OutChain, Order, Scope, false, dl, DAG, TLI);
 
   setValue(&I, L);
   DAG.setRoot(OutChain);
@@ -3736,15 +3696,12 @@ void SelectionDAGBuilder::visitAtomicLoad(const LoadInst &I) {
                                               DAG.getEVTAlignment(VT));
 
   InChain = TLI.prepareVolatileOrAtomicLoad(InChain, dl, DAG);
-  SDValue L = DAG.getAtomic(
-      ISD::ATOMIC_LOAD, dl, VT, VT, InChain, getValue(I.getPointerOperand()),
-      MMO, TLI.getInsertFencesForAtomic() ? Monotonic : Order, Scope);
+  SDValue L =
+      DAG.getAtomic(ISD::ATOMIC_LOAD, dl, VT, VT, InChain,
+                    getValue(I.getPointerOperand()), MMO,
+                    Order, Scope);
 
   SDValue OutChain = L.getValue(1);
-
-  if (TLI.getInsertFencesForAtomic())
-    OutChain = InsertFenceForAtomic(OutChain, Order, Scope, false, dl,
-                                    DAG, TLI);
 
   setValue(&I, L);
   DAG.setRoot(OutChain);
@@ -3764,17 +3721,13 @@ void SelectionDAGBuilder::visitAtomicStore(const StoreInst &I) {
   if (I.getAlignment() < VT.getSizeInBits() / 8)
     report_fatal_error("Cannot generate unaligned atomic store");
 
-  if (TLI.getInsertFencesForAtomic())
-    InChain = InsertFenceForAtomic(InChain, Order, Scope, true, dl, DAG, TLI);
-
-  SDValue OutChain = DAG.getAtomic(
-      ISD::ATOMIC_STORE, dl, VT, InChain, getValue(I.getPointerOperand()),
-      getValue(I.getValueOperand()), I.getPointerOperand(), I.getAlignment(),
-      TLI.getInsertFencesForAtomic() ? Monotonic : Order, Scope);
-
-  if (TLI.getInsertFencesForAtomic())
-    OutChain =
-        InsertFenceForAtomic(OutChain, Order, Scope, false, dl, DAG, TLI);
+  SDValue OutChain =
+    DAG.getAtomic(ISD::ATOMIC_STORE, dl, VT,
+                  InChain,
+                  getValue(I.getPointerOperand()),
+                  getValue(I.getValueOperand()),
+                  I.getPointerOperand(), I.getAlignment(),
+                  Order, Scope);
 
   DAG.setRoot(OutChain);
 }
