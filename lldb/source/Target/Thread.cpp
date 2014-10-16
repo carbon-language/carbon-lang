@@ -1690,7 +1690,7 @@ Thread::DumpThreadPlans (Stream *s,
                          bool include_internal,
                          bool ignore_boring_threads) const
 {
-    uint32_t stack_size = m_plan_stack.size();
+    uint32_t stack_size;
 
     if (ignore_boring_threads)
     {
