@@ -62,7 +62,8 @@
         dclo      $s2,$a2              # CHECK: dclo $18, $6   # encoding: [0x70,0xd2,0x90,0x25]
         dclz      $s0,$25              # CHECK: dclz $16, $25  # encoding: [0x73,0x30,0x80,0x24]
         deret
-        di        $s8
+        di        $s8                  # CHECK: di  $fp        # encoding: [0x41,0x7e,0x60,0x00]
+        di                             # CHECK: di             # encoding: [0x41,0x60,0x60,0x00]
         ddiv      $zero,$k0,$s3
         ddivu     $zero,$s0,$s1
         div       $zero,$25,$11
@@ -109,7 +110,8 @@
         dsubu     $15,$11,5025         # CHECK: daddiu $15, $11, -5025 # encoding: [0x65,0x6f,0xec,0x5f]
         dsubu     $14,-4586            # CHECK: daddiu $14, $14, 4586  # encoding: [0x65,0xce,0x11,0xea]
         ehb                            # CHECK: ehb # encoding:  [0x00,0x00,0x00,0xc0]
-        ei        $14
+        ei        $14                  # CHECK: ei  $14       # encoding: [0x41,0x6e,0x60,0x20]
+        ei                             # CHECK: ei            # encoding: [0x41,0x60,0x60,0x20]
         eret
         floor.l.d $f26,$f7
         floor.l.s $f12,$f5

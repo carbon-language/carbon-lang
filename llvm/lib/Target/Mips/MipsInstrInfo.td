@@ -1489,8 +1489,8 @@ def : MipsInstAlias<"syscall", (SYSCALL 0), 1>;
     
 def : MipsInstAlias<"break", (BREAK 0, 0), 1>;
 def : MipsInstAlias<"break $imm", (BREAK uimm10:$imm, 0), 1>;
-def : MipsInstAlias<"ei", (EI ZERO), 1>;
-def : MipsInstAlias<"di", (DI ZERO), 1>;
+def : MipsInstAlias<"ei", (EI ZERO), 1>, ISA_MIPS32R2;
+def : MipsInstAlias<"di", (DI ZERO), 1>, ISA_MIPS32R2;
 
 def : MipsInstAlias<"teq $rs, $rt",
                     (TEQ GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>, ISA_MIPS2;

@@ -46,13 +46,15 @@
         cvt.w.d   $f20,$f14
         cvt.w.s   $f20,$f24
         deret
-        di        $s8
+        di        $s8                  # CHECK: di  $fp       # encoding: [0x41,0x7e,0x60,0x00]
+        di                             # CHECK: di            # encoding: [0x41,0x60,0x60,0x00]
         div       $zero,$25,$11
         div.d     $f29,$f20,$f27
         div.s     $f4,$f5,$f15
         divu      $zero,$25,$15
         ehb                            # CHECK: ehb # encoding:  [0x00,0x00,0x00,0xc0]
-        ei        $14
+        ei        $14                  # CHECK: ei  $14       # encoding: [0x41,0x6e,0x60,0x20]
+        ei                             # CHECK: ei            # encoding: [0x41,0x60,0x60,0x20]
         eret
         floor.w.d $f14,$f11
         floor.w.s $f8,$f9
