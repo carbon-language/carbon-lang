@@ -5,5 +5,5 @@ __constant char * __constant y = "hello world";
 
 // CHECK: unnamed_addr addrspace(3) constant
 // CHECK-NOT: addrspace(3) unnamed_addr constant
-// CHECK: @x = addrspace(3) global i8 addrspace(3)*
-// CHECK: @y = addrspace(3) global i8 addrspace(3)*
+// CHECK: @x = addrspace(3) constant i8 addrspace(3)*
+// CHECK: @y = addrspace(3) constant i8 addrspace(3)*

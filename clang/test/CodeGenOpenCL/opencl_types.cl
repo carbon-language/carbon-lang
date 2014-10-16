@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - -O0 | FileCheck %s
 
 constant sampler_t glb_smp = 7;
-// CHECK: global i32 7
+// CHECK: constant i32 7
 
 void fnc1(image1d_t img) {}
 // CHECK: @fnc1(%opencl.image1d_t*
