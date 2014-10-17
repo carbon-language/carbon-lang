@@ -1,4 +1,4 @@
-; RUN: opt < %s -tailcallelim -inline -instcombine -dse -S | FileCheck %s
+; RUN: opt < %s -basicaa -tailcallelim -inline -instcombine -dse -S | FileCheck %s
 ; PR7272
 
 ; Calls that capture byval parameters cannot be marked as tail calls. Other
@@ -30,8 +30,10 @@ define internal void @qux(i32* byval %x) {
 
 define void @frob(i32* %x) {
 ; CHECK-LABEL: define void @frob(
-; CHECK: alloca i32
-; CHECK: {{^ *}}tail call void @ext(
+; CHECK: %[[POS:.*]] = alloca i32
+; CHECK: %[[VAL:.*]] = load i32* %x
+; CHECK: store i32 %[[VAL]], i32* %[[POS]]
+; CHECK: {{^ *}}call void @ext(i32* %[[POS]]
 ; CHECK: tail call void @ext(i32* null)
 ; CHECK: ret void
   tail call void @qux(i32* byval %x)
