@@ -151,6 +151,10 @@ public:
   /// \brief Return true if this instruction has any modifiers.
   ///  e.g. src[012]_mod, omod, clamp.
   bool hasModifiers(unsigned Opcode) const;
+
+  bool hasModifiersSet(const MachineInstr &MI,
+                       unsigned OpName) const;
+
   bool verifyInstruction(const MachineInstr *MI,
                          StringRef &ErrInfo) const override;
 
@@ -231,6 +235,11 @@ public:
   /// \brief Returns the operand named \p Op.  If \p MI does not have an
   /// operand named \c Op, this function returns nullptr.
   MachineOperand *getNamedOperand(MachineInstr &MI, unsigned OperandName) const;
+
+  const MachineOperand *getNamedOperand(const MachineInstr &MI,
+                                        unsigned OpName) const {
+    return getNamedOperand(const_cast<MachineInstr &>(MI), OpName);
+  }
 };
 
 namespace AMDGPU {

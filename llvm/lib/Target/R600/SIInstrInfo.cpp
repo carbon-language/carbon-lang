@@ -779,6 +779,12 @@ bool SIInstrInfo::findCommutedOpIndices(MachineInstr *MI,
   if (!MI->getOperand(Src1Idx).isReg())
     return false;
 
+  // If any source modifiers are set, the generic instruction commuting won't
+  // understand how to copy the source modifiers.
+  if (hasModifiersSet(*MI, AMDGPU::OpName::src0_modifiers) ||
+      hasModifiersSet(*MI, AMDGPU::OpName::src1_modifiers))
+    return false;
+
   SrcOpIdx1 = Src0Idx;
   SrcOpIdx2 = Src1Idx;
   return true;
@@ -980,6 +986,12 @@ bool SIInstrInfo::hasModifiers(unsigned Opcode) const {
 
   return AMDGPU::getNamedOperandIdx(Opcode,
                                     AMDGPU::OpName::src0_modifiers) != -1;
+}
+
+bool SIInstrInfo::hasModifiersSet(const MachineInstr &MI,
+                                  unsigned OpName) const {
+  const MachineOperand *Mods = getNamedOperand(MI, OpName);
+  return Mods && Mods->getImm();
 }
 
 bool SIInstrInfo::usesConstantBus(const MachineRegisterInfo &MRI,
@@ -2300,7 +2312,7 @@ void SIInstrInfo::reserveIndirectRegisters(BitVector &Reserved,
 }
 
 MachineOperand *SIInstrInfo::getNamedOperand(MachineInstr &MI,
-                                                   unsigned OperandName) const {
+                                             unsigned OperandName) const {
   int Idx = AMDGPU::getNamedOperandIdx(MI.getOpcode(), OperandName);
   if (Idx == -1)
     return nullptr;
