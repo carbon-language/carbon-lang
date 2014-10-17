@@ -46,7 +46,7 @@ contb:
 
 define i8 @f2() {
 entry:
-; CHECK: Cannot invoke an intrinsinc other than donothing
+; CHECK: Cannot invoke an intrinsinc other than donothing or patchpoint
   invoke void @llvm.trap()
   to label %cont unwind label %lpad
 
