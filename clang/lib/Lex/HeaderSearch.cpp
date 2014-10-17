@@ -575,15 +575,9 @@ const FileEntry *HeaderSearch::LookupFile(
     // that they describe. These cannot be loaded lazily upon encountering a
     // header file, as there is no other known mapping from a header file to its
     // module map file.
-    for (llvm::SetVector<std::string>::iterator
-             I = HSOpts->ModuleMapFiles.begin(),
-             E = HSOpts->ModuleMapFiles.end();
-         I != E; ++I) {
-      const FileEntry *File = FileMgr.getFile(*I);
-      if (!File)
-        continue;
-      loadModuleMapFile(File, /*IsSystem=*/false);
-    }
+    for (const auto &Filename : HSOpts->ModuleMapFiles)
+      if (const FileEntry *File = FileMgr.getFile(Filename))
+        loadModuleMapFile(File, /*IsSystem=*/false);
     HSOpts->ModuleMapFiles.clear();
   }
 
