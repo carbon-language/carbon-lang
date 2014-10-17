@@ -23,7 +23,6 @@
 
 namespace llvm {
 class GlobalVariable;
-class Function;
 }
 
 namespace clang {
@@ -34,7 +33,6 @@ class SanitizerBlacklist {
 
 public:
   SanitizerBlacklist(StringRef BlacklistPath, SourceManager &SM);
-  bool isIn(const llvm::Function &F) const;
   bool isIn(const llvm::GlobalVariable &G,
             StringRef Category = StringRef()) const;
   bool isBlacklistedType(StringRef MangledTypeName,

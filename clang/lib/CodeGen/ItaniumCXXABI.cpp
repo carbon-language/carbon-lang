@@ -1912,6 +1912,7 @@ void ItaniumCXXABI::EmitThreadLocalInitFuncs(
     llvm::FunctionType *FTy =
         llvm::FunctionType::get(CGM.VoidTy, /*isVarArg=*/false);
     InitFunc = CGM.CreateGlobalInitOrDestructFunction(FTy, "__tls_init",
+                                                      SourceLocation(),
                                                       /*TLS=*/true);
     llvm::GlobalVariable *Guard = new llvm::GlobalVariable(
         CGM.getModule(), CGM.Int8Ty, /*isConstant=*/false,

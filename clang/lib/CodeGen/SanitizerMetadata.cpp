@@ -25,8 +25,8 @@ void SanitizerMetadata::reportGlobalToASan(llvm::GlobalVariable *GV,
                                            bool IsDynInit, bool IsBlacklisted) {
   if (!CGM.getLangOpts().Sanitize.Address)
     return;
-  IsDynInit &= !CGM.getSanitizerBlacklist().isIn(*GV, "init");
-  IsBlacklisted |= CGM.getSanitizerBlacklist().isIn(*GV);
+  IsDynInit &= !CGM.getContext().getSanitizerBlacklist().isIn(*GV, "init");
+  IsBlacklisted |= CGM.getContext().getSanitizerBlacklist().isIn(*GV);
 
   llvm::Value *LocDescr = nullptr;
   llvm::Value *GlobalName = nullptr;

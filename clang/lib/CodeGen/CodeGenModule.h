@@ -686,9 +686,10 @@ public:
   CreateOrReplaceCXXRuntimeVariable(StringRef Name, llvm::Type *Ty,
                                     llvm::GlobalValue::LinkageTypes Linkage);
 
-  llvm::Function *CreateGlobalInitOrDestructFunction(llvm::FunctionType *ty,
-                                                     const Twine &name,
-                                                     bool TLS = false);
+  llvm::Function *
+  CreateGlobalInitOrDestructFunction(llvm::FunctionType *ty, const Twine &name,
+                                     SourceLocation Loc = SourceLocation(),
+                                     bool TLS = false);
 
   /// Return the address space of the underlying global variable for D, as
   /// determined by its declaration. Normally this is the same as the address
@@ -1045,9 +1046,7 @@ public:
   /// annotations are emitted during finalization of the LLVM code.
   void AddGlobalAnnotations(const ValueDecl *D, llvm::GlobalValue *GV);
 
-  const SanitizerBlacklist &getSanitizerBlacklist() const {
-    return Context.getSanitizerBlacklist();
-  }
+  bool isInSanitizerBlacklist(llvm::Function *Fn, SourceLocation Loc) const;
 
   SanitizerMetadata *getSanitizerMetadata() {
     return SanitizerMD.get();

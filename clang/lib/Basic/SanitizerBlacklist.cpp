@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Basic/SanitizerBlacklist.h"
-#include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Module.h"
 
@@ -32,11 +31,6 @@ static StringRef GetGlobalTypeString(const llvm::GlobalValue &G) {
 SanitizerBlacklist::SanitizerBlacklist(StringRef BlacklistPath,
                                        SourceManager &SM)
     : SCL(llvm::SpecialCaseList::createOrDie(BlacklistPath)), SM(SM) {}
-
-bool SanitizerBlacklist::isIn(const llvm::Function &F) const {
-  return isBlacklistedFile(F.getParent()->getModuleIdentifier()) ||
-         isBlacklistedFunction(F.getName());
-}
 
 bool SanitizerBlacklist::isIn(const llvm::GlobalVariable &G,
                               StringRef Category) const {

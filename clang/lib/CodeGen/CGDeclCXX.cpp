@@ -167,7 +167,8 @@ llvm::Constant *CodeGenFunction::createAtExitStub(const VarDecl &VD,
     llvm::raw_svector_ostream Out(FnName);
     CGM.getCXXABI().getMangleContext().mangleDynamicAtExitDestructor(&VD, Out);
   }
-  llvm::Function *fn = CGM.CreateGlobalInitOrDestructFunction(ty, FnName.str());
+  llvm::Function *fn = CGM.CreateGlobalInitOrDestructFunction(ty, FnName.str(),
+                                                              VD.getLocation());
 
   CodeGenFunction CGF(CGM);
 
@@ -219,9 +220,8 @@ void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,
   CGM.getCXXABI().EmitGuardedInit(*this, D, DeclPtr, PerformInit);
 }
 
-llvm::Function *
-CodeGenModule::CreateGlobalInitOrDestructFunction(llvm::FunctionType *FTy,
-                                                  const Twine &Name, bool TLS) {
+llvm::Function *CodeGenModule::CreateGlobalInitOrDestructFunction(
+    llvm::FunctionType *FTy, const Twine &Name, SourceLocation Loc, bool TLS) {
   llvm::Function *Fn =
     llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
                            Name, &getModule());
@@ -236,7 +236,7 @@ CodeGenModule::CreateGlobalInitOrDestructFunction(llvm::FunctionType *FTy,
   if (!getLangOpts().Exceptions)
     Fn->setDoesNotThrow();
 
-  if (!getSanitizerBlacklist().isIn(*Fn)) {
+  if (!isInSanitizerBlacklist(Fn, Loc)) {
     if (getLangOpts().Sanitize.Address)
       Fn->addFnAttr(llvm::Attribute::SanitizeAddress);
     if (getLangOpts().Sanitize.Thread)
@@ -286,7 +286,8 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
   }
 
   // Create a variable initialization function.
-  llvm::Function *Fn = CreateGlobalInitOrDestructFunction(FTy, FnName.str());
+  llvm::Function *Fn =
+      CreateGlobalInitOrDestructFunction(FTy, FnName.str(), D->getLocation());
 
   auto *ISA = D->getAttr<InitSegAttr>();
   CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D, Addr,
@@ -552,8 +553,8 @@ llvm::Function *CodeGenFunction::generateDestroyHelper(
   const CGFunctionInfo &FI = CGM.getTypes().arrangeFreeFunctionDeclaration(
       getContext().VoidTy, args, FunctionType::ExtInfo(), /*variadic=*/false);
   llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI);
-  llvm::Function *fn =
-      CGM.CreateGlobalInitOrDestructFunction(FTy, "__cxx_global_array_dtor");
+  llvm::Function *fn = CGM.CreateGlobalInitOrDestructFunction(
+      FTy, "__cxx_global_array_dtor", VD->getLocation());
 
   StartFunction(VD, getContext().VoidTy, fn, FI, args);
 

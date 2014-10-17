@@ -552,7 +552,8 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
                                                      Out);
 
     // Blacklist based on the mangled type.
-    if (!CGM.getSanitizerBlacklist().isBlacklistedType(Out.str())) {
+    if (!CGM.getContext().getSanitizerBlacklist().isBlacklistedType(
+            Out.str())) {
       llvm::hash_code TypeHash = hash_value(Out.str());
 
       // Load the vptr, and compute hash_16_bytes(TypeHash, vptr).

@@ -1796,9 +1796,9 @@ void MicrosoftCXXABI::EmitThreadLocalInitFuncs(
   if (!NonComdatInits.empty()) {
     llvm::FunctionType *FTy =
         llvm::FunctionType::get(CGM.VoidTy, /*isVarArg=*/false);
-    llvm::Function *InitFunc =
-        CGM.CreateGlobalInitOrDestructFunction(FTy, "__tls_init",
-                                               /*TLS=*/true);
+    llvm::Function *InitFunc = CGM.CreateGlobalInitOrDestructFunction(
+        FTy, "__tls_init", SourceLocation(),
+        /*TLS=*/true);
     CodeGenFunction(CGM).GenerateCXXGlobalInitFunc(InitFunc, NonComdatInits);
 
     AddToXDU(InitFunc);

@@ -579,7 +579,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
   CurFnInfo = &FnInfo;
   assert(CurFn->isDeclaration() && "Function already has body?");
 
-  if (CGM.getSanitizerBlacklist().isIn(*Fn))
+  if (CGM.isInSanitizerBlacklist(Fn, Loc))
     SanOpts = &SanitizerOptions::Disabled;
 
   // Pass inline keyword to optimizer if it appears explicitly on any
