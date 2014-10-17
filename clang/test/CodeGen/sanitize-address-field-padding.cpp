@@ -120,7 +120,7 @@ class ExternCStruct {
 ExternCStruct extern_C_struct;
 
 // CTOR
-// CHECK-LABEL: define linkonce_odr void {{.*}}Positive1
+// CHECK-LABEL: define {{.*}}void {{.*}}Positive1
 // CHECK: call void @__asan_poison_intra_object_redzone({{.*}}12)
 // CHECK: call void @__asan_poison_intra_object_redzone({{.*}}15)
 // CHECK: call void @__asan_poison_intra_object_redzone({{.*}}12)
