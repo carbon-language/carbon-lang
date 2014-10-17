@@ -356,6 +356,63 @@ define void @test31(<2 x i64>* %a, <2 x i64> %b) {
 ; CHECK: blr
 }
 
+define <4 x float> @test32(<4 x float>* %a) {
+  %v = load <4 x float>* %a, align 16
+  ret <4 x float> %v
+
+; CHECK-LABEL: @test32
+; CHECK: lxvw4x 34, 0, 3
+; CHECK: blr
+}
+
+define void @test33(<4 x float>* %a, <4 x float> %b) {
+  store <4 x float> %b, <4 x float>* %a, align 16
+  ret void
+
+; CHECK-LABEL: @test33
+; CHECK: stxvw4x 34, 0, 3
+; CHECK: blr
+}
+
+define <4 x float> @test32u(<4 x float>* %a) {
+  %v = load <4 x float>* %a, align 8
+  ret <4 x float> %v
+
+; CHECK-LABEL: @test32u
+; CHECK-DAG: lvsl
+; CHECK-DAG: lvx
+; CHECK-DAG: lvx
+; CHECK: vperm 2,
+; CHECK: blr
+}
+
+define void @test33u(<4 x float>* %a, <4 x float> %b) {
+  store <4 x float> %b, <4 x float>* %a, align 8
+  ret void
+
+; CHECK-LABEL: @test33u
+; CHECK: stxvw4x 34, 0, 3
+; CHECK: blr
+}
+
+define <4 x i32> @test34(<4 x i32>* %a) {
+  %v = load <4 x i32>* %a, align 16
+  ret <4 x i32> %v
+
+; CHECK-LABEL: @test34
+; CHECK: lxvw4x 34, 0, 3
+; CHECK: blr
+}
+
+define void @test35(<4 x i32>* %a, <4 x i32> %b) {
+  store <4 x i32> %b, <4 x i32>* %a, align 16
+  ret void
+
+; CHECK-LABEL: @test35
+; CHECK: stxvw4x 34, 0, 3
+; CHECK: blr
+}
+
 define <2 x double> @test40(<2 x i64> %a) {
   %v = uitofp <2 x i64> %a to <2 x double>
   ret <2 x double> %v

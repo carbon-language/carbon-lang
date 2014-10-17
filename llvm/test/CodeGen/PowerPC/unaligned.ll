@@ -92,10 +92,14 @@ entry:
 ; CHECK-DAG: stdx
 ; CHECK: stdx
 
+; For VSX on P7, unaligned loads and stores are preferable to aligned
+; stack slots, but lvsl/vperm is better still.  (On P8 lxvw4x is preferable.)
+; Using unaligned stxvw4x is preferable on both machines.
 ; CHECK-VSX: @foo6
-; CHECK-VSX-DAG: ld
-; CHECK-VSX-DAG: ld
-; CHECK-VSX-DAG: stdx
-; CHECK-VSX: stdx
+; CHECK-VSX-DAG: lvsl
+; CHECK-VSX-DAG: lvx
+; CHECK-VSX-DAG: lvx
+; CHECK-VSX: vperm
+; CHECK-VSX: stxvw4x
 }
 

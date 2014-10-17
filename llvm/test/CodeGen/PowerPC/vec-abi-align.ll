@@ -1,4 +1,5 @@
-; RUN: llc -mtriple=powerpc64-unknown-linux-gnu -mcpu=pwr7 < %s | FileCheck %s
+; RUN: llc -mtriple=powerpc64-unknown-linux-gnu -mcpu=pwr7 -mattr=-vsx < %s | FileCheck %s
+; RUN: llc -mtriple=powerpc64-unknown-linux-gnu -mcpu=pwr7 -mattr=+vsx < %s | FileCheck -check-prefix=CHECK-VSX %s
 target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128-v128:128:128-n32:64"
 target triple = "powerpc64-unknown-linux-gnu"
 
@@ -16,6 +17,10 @@ entry:
 ; CHECK-LABEL: @test1
 ; CHECK: stvx 2,
 ; CHECK: blr
+
+; CHECK-VSX-LABEL: @test1
+; CHECK-VSX: stxvw4x 34,
+; CHECK-VSX: blr
 }
 
 ; Function Attrs: nounwind
@@ -35,6 +40,13 @@ entry:
 ; CHECK: addi [[REGB:[0-9]+]], 1, 112
 ; CHECK: lvx 2, [[REGB]], [[REG16]]
 ; CHECK: blr
+
+; CHECK-VSX-LABEL: @test2
+; CHECK-VSX: ld {{[0-9]+}}, 112(1)
+; CHECK-VSX: li [[REG16:[0-9]+]], 16
+; CHECK-VSX: addi [[REGB:[0-9]+]], 1, 112
+; CHECK-VSX: lxvw4x {{[0-9]+}}, [[REGB]], [[REG16]]
+; CHECK-VSX: blr
 }
 
 ; Function Attrs: nounwind
@@ -54,6 +66,13 @@ entry:
 ; CHECK: addi [[REGB:[0-9]+]], 1, 128
 ; CHECK: lvx 2, [[REGB]], [[REG16]]
 ; CHECK: blr
+
+; CHECK-VSX-LABEL: @test3
+; CHECK-VSX: ld {{[0-9]+}}, 128(1)
+; CHECK-VSX: li [[REG16:[0-9]+]], 16
+; CHECK-VSX: addi [[REGB:[0-9]+]], 1, 128
+; CHECK-VSX: lxvw4x {{[0-9]+}}, [[REGB]], [[REG16]]
+; CHECK-VSX: blr
 }
 
 attributes #0 = { nounwind }

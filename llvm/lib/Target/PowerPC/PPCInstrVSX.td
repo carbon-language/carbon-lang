@@ -63,7 +63,8 @@ let Uses = [RM] in {
 
     def LXVW4X : XX1Form<31, 780,
                          (outs vsrc:$XT), (ins memrr:$src),
-                         "lxvw4x $XT, $src", IIC_LdStLFD, []>;
+                         "lxvw4x $XT, $src", IIC_LdStLFD,
+                         [(set v4i32:$XT, (load xoaddr:$src))]>;
   }
 
   // Store indexed instructions
@@ -80,7 +81,8 @@ let Uses = [RM] in {
 
     def STXVW4X : XX1Form<31, 908,
                          (outs), (ins vsrc:$XT, memrr:$dst),
-                         "stxvw4x $XT, $dst", IIC_LdStSTFD, []>;
+                         "stxvw4x $XT, $dst", IIC_LdStSTFD,
+                         [(store v4i32:$XT, xoaddr:$dst)]>;
   }
 
   // Add/Mul Instructions
@@ -810,6 +812,13 @@ def : Pat<(sext_inreg v2i64:$C, v2i32),
           (XVCVDPSXDS (XVCVSXWDP (XXSLDWI $C, $C, 1)))>;
 def : Pat<(v2f64 (sint_to_fp (sext_inreg v2i64:$C, v2i32))),
           (XVCVSXWDP (XXSLDWI $C, $C, 1))>;
+
+// Loads.
+def : Pat<(v4i32 (load xoaddr:$src)), (LXVW4X xoaddr:$src)>;
+
+// Stores.
+def : Pat<(store v4i32:$rS, xoaddr:$dst),
+          (STXVW4X $rS, xoaddr:$dst)>;
 
 } // AddedComplexity
 } // HasVSX

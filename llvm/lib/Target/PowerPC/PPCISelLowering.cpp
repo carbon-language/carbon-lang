@@ -8312,6 +8312,8 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
     unsigned ABIAlignment = getDataLayout()->getABITypeAlignment(Ty);
     if (ISD::isNON_EXTLoad(N) && VT.isVector() &&
         TM.getSubtarget<PPCSubtarget>().hasAltivec() &&
+        // P8 and later hardware should just use LOAD.
+        !TM.getSubtarget<PPCSubtarget>().hasP8Vector() &&
         (VT == MVT::v16i8 || VT == MVT::v8i16 ||
          VT == MVT::v4i32 || VT == MVT::v4f32) &&
         LD->getAlignment() < ABIAlignment) {
@@ -9204,7 +9206,8 @@ bool PPCTargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
 
   if (VT.getSimpleVT().isVector()) {
     if (Subtarget.hasVSX()) {
-      if (VT != MVT::v2f64 && VT != MVT::v2i64)
+      if (VT != MVT::v2f64 && VT != MVT::v2i64 &&
+          VT != MVT::v4f32 && VT != MVT::v4i32)
         return false;
     } else {
       return false;
