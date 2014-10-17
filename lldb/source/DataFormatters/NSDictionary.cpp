@@ -36,37 +36,21 @@ GetLLDBNSPairType (TargetSP target_sp)
 
     if (target_ast_context)
     {
-        clang::ASTContext *ast = target_ast_context->getASTContext();
+        ConstString g___lldb_autogen_nspair("__lldb_autogen_nspair");
 
-        if (ast)
+        clang_type = target_ast_context->GetTypeForIdentifier<clang::CXXRecordDecl>(g___lldb_autogen_nspair);
+        
+        if (!clang_type)
         {
-            const char* type_name = "__lldb_autogen_nspair";
+            clang_type = target_ast_context->CreateRecordType(NULL, lldb::eAccessPublic, g___lldb_autogen_nspair.GetCString(), clang::TTK_Struct, lldb::eLanguageTypeC);
             
-            clang::IdentifierInfo &myIdent = ast->Idents.get(type_name);
-            clang::DeclarationName myName = ast->DeclarationNames.getIdentifier(&myIdent);
-
-            clang::DeclContext::lookup_const_result result = ast->getTranslationUnitDecl()->lookup(myName);
-
-            if (!result.empty())
+            if (clang_type)
             {
-                clang::NamedDecl *named_decl = result[0];
-                if (const clang::CXXRecordDecl *record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(named_decl))
-                    clang_type.SetClangType(ast, clang::QualType(record_decl->getTypeForDecl(), 0));
-                return clang_type;
-            }
-
-            if (!clang_type)
-            {
-                clang_type = target_ast_context->CreateRecordType(NULL, lldb::eAccessPublic, type_name, clang::TTK_Struct, lldb::eLanguageTypeC);
-                
-                if (clang_type)
-                {
-                    clang_type.StartTagDeclarationDefinition();
-                    ClangASTType id_clang_type = target_ast_context->GetBasicType (eBasicTypeObjCID);
-                    clang_type.AddFieldToRecordType("key", id_clang_type, lldb::eAccessPublic, 0);
-                    clang_type.AddFieldToRecordType("value", id_clang_type, lldb::eAccessPublic, 0);
-                    clang_type.CompleteTagDeclarationDefinition();
-                }
+                clang_type.StartTagDeclarationDefinition();
+                ClangASTType id_clang_type = target_ast_context->GetBasicType (eBasicTypeObjCID);
+                clang_type.AddFieldToRecordType("key", id_clang_type, lldb::eAccessPublic, 0);
+                clang_type.AddFieldToRecordType("value", id_clang_type, lldb::eAccessPublic, 0);
+                clang_type.CompleteTagDeclarationDefinition();
             }
         }
     }
