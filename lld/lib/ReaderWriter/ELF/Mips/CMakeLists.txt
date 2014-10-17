@@ -6,6 +6,6 @@ add_lld_library(lldMipsELFTarget
   MipsTargetHandler.cpp
   )
 
-target_link_libraries(lldMipsELFTarget
+target_link_libraries(lldMipsELFTarget ${cmake_2_8_12_INTERFACE}
   lldCore
   )

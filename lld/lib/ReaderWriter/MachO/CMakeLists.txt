@@ -17,7 +17,7 @@ add_lld_library(lldMachO
   WriterMachO.cpp
   )
 
-target_link_libraries(lldMachO
+target_link_libraries(lldMachO ${cmake_2_8_12_INTERFACE}
   lldReaderWriter
   lldPasses
   )

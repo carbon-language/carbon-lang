@@ -5,7 +5,7 @@ add_lld_library(lldELF
   Writer.cpp
   )
 
-target_link_libraries(lldELF
+target_link_libraries(lldELF ${cmake_2_8_12_INTERFACE}
   lldHexagonELFTarget
   lldMipsELFTarget
   lldPPCELFTarget

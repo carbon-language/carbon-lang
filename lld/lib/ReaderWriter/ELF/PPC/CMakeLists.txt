@@ -3,6 +3,6 @@ add_lld_library(lldPPCELFTarget
   PPCTargetHandler.cpp
   )
 
-target_link_libraries(lldPPCELFTarget
+target_link_libraries(lldPPCELFTarget ${cmake_2_8_12_INTERFACE}
   lldCore
   )

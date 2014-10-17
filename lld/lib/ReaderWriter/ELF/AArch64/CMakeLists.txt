@@ -5,6 +5,6 @@ add_lld_library(lldAArch64ELFTarget
   AArch64RelocationPass.cpp
   )
 
-target_link_libraries(lldAArch64ELFTarget
+target_link_libraries(lldAArch64ELFTarget ${cmake_2_8_12_INTERFACE}
   lldCore
   )

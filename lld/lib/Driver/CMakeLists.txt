@@ -25,7 +25,7 @@ add_lld_library(lldDriver
 
 add_dependencies(lldDriver DriverOptionsTableGen)
 
-target_link_libraries(lldDriver
+target_link_libraries(lldDriver ${cmake_2_8_12_INTERFACE}
   lldConfig
   lldPasses
   lldMachO

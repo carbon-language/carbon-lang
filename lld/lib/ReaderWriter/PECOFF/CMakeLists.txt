@@ -11,7 +11,7 @@ add_lld_library(lldPECOFF
   WriterPECOFF.cpp
   )
 
-target_link_libraries(lldPECOFF
+target_link_libraries(lldPECOFF ${cmake_2_8_12_INTERFACE}
   lldReaderWriter
   lldDriver
   )

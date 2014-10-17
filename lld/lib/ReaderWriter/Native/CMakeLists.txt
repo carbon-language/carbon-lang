@@ -3,6 +3,6 @@ add_lld_library(lldNative
   WriterNative.cpp
   )
 
-target_link_libraries(lldNative
+target_link_libraries(lldNative ${cmake_2_8_12_INTERFACE}
   lldReaderWriter
   )

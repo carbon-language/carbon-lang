@@ -4,4 +4,6 @@ add_lld_library(lldPasses
   RoundTripYAMLPass.cpp
   )
 
-target_link_libraries(lldPasses lldReaderWriter)
+target_link_libraries(lldPasses ${cmake_2_8_12_INTERFACE}
+  lldReaderWriter
+  )
