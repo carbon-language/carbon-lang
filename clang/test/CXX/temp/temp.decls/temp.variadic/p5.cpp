@@ -422,3 +422,17 @@ namespace PR16303 {
   B<1,2>::C<4,5,6> c1; // expected-note{{in instantiation of}}
   B<1,2,3,4>::C<4,5,6> c2; // expected-note{{in instantiation of}}
 }
+
+namespace PR21289 {
+  template<int> using T = int;
+  template<typename> struct S { static const int value = 0; };
+  template<typename> const int vt = 0; // expected-warning {{extension}}
+  int f(...);
+  template<int ...Ns> void g() {
+    f(T<Ns>()...);
+    f(S<T<Ns>>::value...);
+    f(vt<T<Ns>>...);
+  }
+  template void g<>();
+  template void g<1, 2, 3>();
+}

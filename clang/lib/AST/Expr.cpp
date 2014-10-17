@@ -221,11 +221,11 @@ static void computeDeclRefDependence(const ASTContext &Ctx, NamedDecl *D,
   // (TD) C++ [temp.dep.expr]p3:
   //   An id-expression is type-dependent if it contains:
   //
-  // and 
+  // and
   //
   // (VD) C++ [temp.dep.constexpr]p2:
   //  An identifier is value-dependent if it is:
-  
+
   //  (TD)  - an identifier that was declared with dependent type
   //  (VD)  - a name declared with a dependent type,
   if (T->isDependentType()) {
@@ -309,29 +309,11 @@ void DeclRefExpr::computeDependence(const ASTContext &Ctx) {
   bool InstantiationDependent = false;
   computeDeclRefDependence(Ctx, getDecl(), getType(), TypeDependent,
                            ValueDependent, InstantiationDependent);
-  
-  // (TD) C++ [temp.dep.expr]p3:
-  //   An id-expression is type-dependent if it contains:
-  //
-  // and 
-  //
-  // (VD) C++ [temp.dep.constexpr]p2:
-  //  An identifier is value-dependent if it is:
-  if (!TypeDependent && !ValueDependent &&
-      hasExplicitTemplateArgs() && 
-      TemplateSpecializationType::anyDependentTemplateArguments(
-                                                            getTemplateArgs(), 
-                                                       getNumTemplateArgs(),
-                                                      InstantiationDependent)) {
-    TypeDependent = true;
-    ValueDependent = true;
-    InstantiationDependent = true;
-  }
-  
-  ExprBits.TypeDependent = TypeDependent;
-  ExprBits.ValueDependent = ValueDependent;
-  ExprBits.InstantiationDependent = InstantiationDependent;
-  
+
+  ExprBits.TypeDependent |= TypeDependent;
+  ExprBits.ValueDependent |= ValueDependent;
+  ExprBits.InstantiationDependent |= InstantiationDependent;
+
   // Is the declaration a parameter pack?
   if (getDecl()->isParameterPack())
     ExprBits.ContainsUnexpandedParameterPack = true;
@@ -348,8 +330,14 @@ DeclRefExpr::DeclRefExpr(const ASTContext &Ctx,
   : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false, false),
     D(D), Loc(NameInfo.getLoc()), DNLoc(NameInfo.getInfo()) {
   DeclRefExprBits.HasQualifier = QualifierLoc ? 1 : 0;
-  if (QualifierLoc)
+  if (QualifierLoc) {
     getInternalQualifierLoc() = QualifierLoc;
+    auto *NNS = QualifierLoc.getNestedNameSpecifier();
+    if (NNS->isInstantiationDependent())
+      ExprBits.InstantiationDependent = true;
+    if (NNS->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+  }
   DeclRefExprBits.HasFoundDecl = FoundD ? 1 : 0;
   if (FoundD)
     getInternalFoundDecl() = FoundD;
@@ -364,8 +352,9 @@ DeclRefExpr::DeclRefExpr(const ASTContext &Ctx,
                                                Dependent,
                                                InstantiationDependent,
                                                ContainsUnexpandedParameterPack);
-    if (InstantiationDependent)
-      setInstantiationDependent(true);
+    assert(!Dependent && "built a DeclRefExpr with dependent template args");
+    ExprBits.InstantiationDependent |= InstantiationDependent;
+    ExprBits.ContainsUnexpandedParameterPack |= ContainsUnexpandedParameterPack;
   } else if (TemplateKWLoc.isValid()) {
     getTemplateKWAndArgsInfo()->initializeFrom(TemplateKWLoc);
   }

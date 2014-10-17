@@ -1569,12 +1569,12 @@ class CXXScalarValueInitExpr : public Expr {
 public:
   /// \brief Create an explicitly-written scalar-value initialization
   /// expression.
-  CXXScalarValueInitExpr(QualType Type,
-                         TypeSourceInfo *TypeInfo,
-                         SourceLocation rParenLoc ) :
-    Expr(CXXScalarValueInitExprClass, Type, VK_RValue, OK_Ordinary,
-         false, false, Type->isInstantiationDependentType(), false),
-    RParenLoc(rParenLoc), TypeInfo(TypeInfo) {}
+  CXXScalarValueInitExpr(QualType Type, TypeSourceInfo *TypeInfo,
+                         SourceLocation rParenLoc)
+      : Expr(CXXScalarValueInitExprClass, Type, VK_RValue, OK_Ordinary,
+             false, false, Type->isInstantiationDependentType(),
+             Type->containsUnexpandedParameterPack()),
+        RParenLoc(rParenLoc), TypeInfo(TypeInfo) {}
 
   explicit CXXScalarValueInitExpr(EmptyShell Shell)
     : Expr(CXXScalarValueInitExprClass, Shell) { }
