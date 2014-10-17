@@ -1,8 +1,7 @@
-// RUN: %clang_cc1 -emit-llvm -triple i686-pc-win32 -fms-extensions -xc++ -o - < %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -triple i686-pc-win32 -fms-extensions -o - %s | FileCheck %s
 
-#ifdef __cplusplus
 extern "C" {
-#endif
+
 #pragma const_seg(".my_const")
 #pragma bss_seg(".my_bss")
 int D = 1;
@@ -39,9 +38,7 @@ __declspec(allocate("read_flag_section")) int unreferenced = 0;
 extern __declspec(allocate("read_flag_section")) int referenced = 42;
 int *user() { return &referenced; }
 
-#ifdef __cplusplus
 }
-#endif
 
 //CHECK: @D = global i32 1
 //CHECK: @a = global i32 1, section ".data"
