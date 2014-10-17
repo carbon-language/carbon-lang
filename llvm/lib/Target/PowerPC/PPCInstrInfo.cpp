@@ -1730,9 +1730,9 @@ protected:
 
         // For virtual registers, verify that the addend source register
         // is live here (as should have been assured above).
-        if (TargetRegisterInfo::isVirtualRegister(AddendSrcReg))
-          assert(LIS->getInterval(AddendSrcReg).liveAt(FMAIdx) &&
-                 "Addend source register is not available!");
+        assert((!TargetRegisterInfo::isVirtualRegister(AddendSrcReg) ||
+                LIS->getInterval(AddendSrcReg).liveAt(FMAIdx)) &&
+               "Addend source register is not live!");
 
         // Transform: (O2 * O3) + O1 -> (O2 * O1) + O3.
 
