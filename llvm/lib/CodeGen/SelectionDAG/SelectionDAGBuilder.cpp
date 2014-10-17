@@ -5396,7 +5396,13 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       if (!LifetimeObject)
         continue;
 
-      int FI = FuncInfo.StaticAllocaMap[LifetimeObject];
+      // First check that the Alloca is static, otherwise it won't have a
+      // valid frame index.
+      auto SI = FuncInfo.StaticAllocaMap.find(LifetimeObject);
+      if (SI == FuncInfo.StaticAllocaMap.end())
+        return nullptr;
+
+      int FI = SI->second;
 
       SDValue Ops[2];
       Ops[0] = getRoot();
