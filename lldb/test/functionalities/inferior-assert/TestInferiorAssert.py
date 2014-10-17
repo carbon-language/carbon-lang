@@ -16,7 +16,7 @@ class AssertingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_asserting()
 
-    @expectedFailurei386 # llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly'
+    @expectedFailurei386("llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly")
     @expectedFailureDarwin("rdar://15367233")
     def test_inferior_asserting_dwarf(self):
         """Test that lldb reliably catches the inferior asserting (command)."""
@@ -34,9 +34,9 @@ class AssertingInferiorTestCase(TestBase):
         self.buildDwarf()
         self.inferior_asserting_registers()
 
-    @expectedFailurei386 # llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly
-    @expectedFailureFreeBSD('llvm.org/pr18533') # PC in __assert frame is outside of function
-    @expectedFailureLinux('') # PC in __GI___assert_fail frame is just after the function (this is a no-return so there is no epilogue afterwards)
+    @expectedFailurei386("llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly")
+    @expectedFailureFreeBSD('llvm.org/pr18533 - PC in __assert frame is outside of function')
+    @expectedFailureLinux("PC in __GI___assert_fail frame is just after the function (this is a no-return so there is no epilogue afterwards)")
     def test_inferior_asserting_disassemble(self):
         """Test that lldb reliably disassembles frames after asserting (command)."""
         self.buildDefault()
@@ -55,7 +55,7 @@ class AssertingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_asserting_expr()
 
-    @expectedFailurei386 # llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly
+    @expectedFailurei386('llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly')
     @unittest2.expectedFailure("rdar://15367233")
     def test_inferior_asserting_expr(self):
         """Test that the lldb expression interpreter can read from the inferior after asserting (command)."""
@@ -69,7 +69,7 @@ class AssertingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_asserting_step()
 
-    @expectedFailurei386 # llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly
+    @expectedFailurei386("llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly")
     @expectedFailureDarwin("rdar://15367233")
     def test_inferior_asserting_step(self):
         """Test that lldb functions correctly after stepping through a call to assert()."""

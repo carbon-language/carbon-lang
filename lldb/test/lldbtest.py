@@ -450,51 +450,52 @@ def expectedFailure(expected_fn, bugnumber=None):
             if expected_fn(self):
                 raise case._UnexpectedSuccess(sys.exc_info(), bugnumber)
         return wrapper
-    if callable(bugnumber):
-        return expectedFailure_impl(bugnumber)
-    else:
-        return expectedFailure_impl
+    if bugnumber: 
+        if callable(bugnumber):
+            return expectedFailure_impl(bugnumber)
+        else:
+            return expectedFailure_impl
 
 def expectedFailureCompiler(compiler, compiler_version=None, bugnumber=None):
     if compiler_version is None:
         compiler_version=['=', None]
     def fn(self):
         return compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version)
-    return expectedFailure(fn, bugnumber)
+    if bugnumber: return expectedFailure(fn, bugnumber)
 
 def expectedFailureClang(bugnumber=None):
-    return expectedFailureCompiler('clang', None, bugnumber)
+    if bugnumber: return expectedFailureCompiler('clang', None, bugnumber)
 
 def expectedFailureGcc(bugnumber=None, compiler_version=None):
-    return expectedFailureCompiler('gcc', compiler_version, bugnumber)
+    if bugnumber: return expectedFailureCompiler('gcc', compiler_version, bugnumber)
 
 def expectedFailureIcc(bugnumber=None):
-    return expectedFailureCompiler('icc', None, bugnumber)
+    if bugnumber: return expectedFailureCompiler('icc', None, bugnumber)
 
 def expectedFailureArch(arch, bugnumber=None):
     def fn(self):
         return arch in self.getArchitecture()
-    return expectedFailure(fn, bugnumber)
+    if bugnumber: return expectedFailure(fn, bugnumber)
 
 def expectedFailurei386(bugnumber=None):
-    return expectedFailureArch('i386', bugnumber)
+    if bugnumber: return expectedFailureArch('i386', bugnumber)
 
 def expectedFailurex86_64(bugnumber=None):
-    return expectedFailureArch('x86_64', bugnumber)
+    if bugnumber: return expectedFailureArch('x86_64', bugnumber)
 
 def expectedFailureOS(os, bugnumber=None, compilers=None):
     def fn(self):
         return os in sys.platform and self.expectedCompiler(compilers)
-    return expectedFailure(fn, bugnumber)
+    if bugnumber: return expectedFailure(fn, bugnumber)
 
 def expectedFailureDarwin(bugnumber=None, compilers=None):
-    return expectedFailureOS('darwin', bugnumber, compilers)
+    if bugnumber: return expectedFailureOS('darwin', bugnumber, compilers)
 
 def expectedFailureFreeBSD(bugnumber=None, compilers=None):
-    return expectedFailureOS('freebsd', bugnumber, compilers)
+    if bugnumber: return expectedFailureOS('freebsd', bugnumber, compilers)
 
 def expectedFailureLinux(bugnumber=None, compilers=None):
-    return expectedFailureOS('linux', bugnumber, compilers)
+    if bugnumber: return expectedFailureOS('linux', bugnumber, compilers)
 
 def skipIfRemote(func):
     """Decorate the item to skip tests if testing remotely."""
