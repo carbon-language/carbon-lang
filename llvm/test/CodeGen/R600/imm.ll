@@ -104,7 +104,7 @@ define void @store_literal_imm_f32(float addrspace(1)* %out) {
 
 ; CHECK-LABEL: {{^}}add_inline_imm_0.0_f32
 ; CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]]
-; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], [[VAL]], 0.0{{$}}
+; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], 0.0, [[VAL]]{{$}}
 ; CHECK-NEXT: BUFFER_STORE_DWORD [[REG]]
 define void @add_inline_imm_0.0_f32(float addrspace(1)* %out, float %x) {
   %y = fadd float %x, 0.0
@@ -114,7 +114,7 @@ define void @add_inline_imm_0.0_f32(float addrspace(1)* %out, float %x) {
 
 ; CHECK-LABEL: {{^}}add_inline_imm_0.5_f32
 ; CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]]
-; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], [[VAL]], 0.5{{$}}
+; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], 0.5, [[VAL]]{{$}}
 ; CHECK-NEXT: BUFFER_STORE_DWORD [[REG]]
 define void @add_inline_imm_0.5_f32(float addrspace(1)* %out, float %x) {
   %y = fadd float %x, 0.5
@@ -124,7 +124,7 @@ define void @add_inline_imm_0.5_f32(float addrspace(1)* %out, float %x) {
 
 ; CHECK-LABEL: {{^}}add_inline_imm_neg_0.5_f32
 ; CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]]
-; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], [[VAL]], -0.5{{$}}
+; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], -0.5, [[VAL]]{{$}}
 ; CHECK-NEXT: BUFFER_STORE_DWORD [[REG]]
 define void @add_inline_imm_neg_0.5_f32(float addrspace(1)* %out, float %x) {
   %y = fadd float %x, -0.5
@@ -134,7 +134,7 @@ define void @add_inline_imm_neg_0.5_f32(float addrspace(1)* %out, float %x) {
 
 ; CHECK-LABEL: {{^}}add_inline_imm_1.0_f32
 ; CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]]
-; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], [[VAL]], 1.0{{$}}
+; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], 1.0, [[VAL]]{{$}}
 ; CHECK-NEXT: BUFFER_STORE_DWORD [[REG]]
 define void @add_inline_imm_1.0_f32(float addrspace(1)* %out, float %x) {
   %y = fadd float %x, 1.0
@@ -144,7 +144,7 @@ define void @add_inline_imm_1.0_f32(float addrspace(1)* %out, float %x) {
 
 ; CHECK-LABEL: {{^}}add_inline_imm_neg_1.0_f32
 ; CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]]
-; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], [[VAL]], -1.0{{$}}
+; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], -1.0, [[VAL]]{{$}}
 ; CHECK-NEXT: BUFFER_STORE_DWORD [[REG]]
 define void @add_inline_imm_neg_1.0_f32(float addrspace(1)* %out, float %x) {
   %y = fadd float %x, -1.0
@@ -154,7 +154,7 @@ define void @add_inline_imm_neg_1.0_f32(float addrspace(1)* %out, float %x) {
 
 ; CHECK-LABEL: {{^}}add_inline_imm_2.0_f32
 ; CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]]
-; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], [[VAL]], 2.0{{$}}
+; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], 2.0, [[VAL]]{{$}}
 ; CHECK-NEXT: BUFFER_STORE_DWORD [[REG]]
 define void @add_inline_imm_2.0_f32(float addrspace(1)* %out, float %x) {
   %y = fadd float %x, 2.0
@@ -164,7 +164,7 @@ define void @add_inline_imm_2.0_f32(float addrspace(1)* %out, float %x) {
 
 ; CHECK-LABEL: {{^}}add_inline_imm_neg_2.0_f32
 ; CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]]
-; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], [[VAL]], -2.0{{$}}
+; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], -2.0, [[VAL]]{{$}}
 ; CHECK-NEXT: BUFFER_STORE_DWORD [[REG]]
 define void @add_inline_imm_neg_2.0_f32(float addrspace(1)* %out, float %x) {
   %y = fadd float %x, -2.0
@@ -174,7 +174,7 @@ define void @add_inline_imm_neg_2.0_f32(float addrspace(1)* %out, float %x) {
 
 ; CHECK-LABEL: {{^}}add_inline_imm_4.0_f32
 ; CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]]
-; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], [[VAL]], 4.0{{$}}
+; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], 4.0, [[VAL]]{{$}}
 ; CHECK-NEXT: BUFFER_STORE_DWORD [[REG]]
 define void @add_inline_imm_4.0_f32(float addrspace(1)* %out, float %x) {
   %y = fadd float %x, 4.0
@@ -184,10 +184,32 @@ define void @add_inline_imm_4.0_f32(float addrspace(1)* %out, float %x) {
 
 ; CHECK-LABEL: {{^}}add_inline_imm_neg_4.0_f32
 ; CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]]
-; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], [[VAL]], -4.0{{$}}
+; CHECK: V_ADD_F32_e64 [[REG:v[0-9]+]], -4.0, [[VAL]]{{$}}
 ; CHECK-NEXT: BUFFER_STORE_DWORD [[REG]]
 define void @add_inline_imm_neg_4.0_f32(float addrspace(1)* %out, float %x) {
   %y = fadd float %x, -4.0
+  store float %y, float addrspace(1)* %out
+  ret void
+}
+
+; CHECK-LABEL: @commute_add_inline_imm_0.5_f32
+; CHECK: BUFFER_LOAD_DWORD [[VAL:v[0-9]+]]
+; CHECK: V_ADD_F32_e32 [[REG:v[0-9]+]], 0.5, [[VAL]]
+; CHECK-NEXT: BUFFER_STORE_DWORD [[REG]]
+define void @commute_add_inline_imm_0.5_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
+  %x = load float addrspace(1)* %in
+  %y = fadd float %x, 0.5
+  store float %y, float addrspace(1)* %out
+  ret void
+}
+
+; CHECK-LABEL: @commute_add_literal_f32
+; CHECK: BUFFER_LOAD_DWORD [[VAL:v[0-9]+]]
+; CHECK: V_ADD_F32_e32 [[REG:v[0-9]+]], 0x44800000, [[VAL]]
+; CHECK-NEXT: BUFFER_STORE_DWORD [[REG]]
+define void @commute_add_literal_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
+  %x = load float addrspace(1)* %in
+  %y = fadd float %x, 1024.0
   store float %y, float addrspace(1)* %out
   ret void
 }

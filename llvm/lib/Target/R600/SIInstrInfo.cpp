@@ -712,8 +712,8 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
     return nullptr;
 
   if (!Src1.isReg()) {
-    // XXX: Commute instructions with FPImm operands
-    if (NewMI || !Src1.isImm() ||
+    // Allow commuting instructions with Imm or FPImm operands.
+    if (NewMI || (!Src1.isImm() && !Src1.isFPImm()) ||
        (!isVOP2(MI->getOpcode()) && !isVOP3(MI->getOpcode()))) {
       return nullptr;
     }
@@ -733,7 +733,13 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
 
     unsigned Reg = Src0.getReg();
     unsigned SubReg = Src0.getSubReg();
-    Src0.ChangeToImmediate(Src1.getImm());
+    if (Src1.isImm())
+      Src0.ChangeToImmediate(Src1.getImm());
+    else if (Src1.isFPImm())
+      Src0.ChangeToFPImmediate(Src1.getFPImm());
+    else
+      llvm_unreachable("Should only have immediates");
+
     Src1.ChangeToRegister(Reg, false);
     Src1.setSubReg(SubReg);
   } else {
