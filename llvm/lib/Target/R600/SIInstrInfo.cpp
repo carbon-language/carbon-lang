@@ -705,7 +705,7 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
 
   MachineOperand &Src1 = MI->getOperand(Src1Idx);
 
-  // Make sure it s legal to commute operands for VOP2.
+  // Make sure it's legal to commute operands for VOP2.
   if (isVOP2(MI->getOpcode()) &&
       (!isOperandLegal(MI, Src0Idx, &Src1) ||
        !isOperandLegal(MI, Src1Idx, &Src0)))
