@@ -198,88 +198,93 @@ extern int cc1_main(ArrayRef<const char *> Argv, const char *Argv0,
 extern int cc1as_main(ArrayRef<const char *> Argv, const char *Argv0,
                       void *MainAddr);
 
-static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
-                          std::set<std::string> &SavedStrings,
-                          Driver &TheDriver)
-{
-  // Try to infer frontend type and default target from the program name.
+struct DriverSuffix {
+  const char *Suffix;
+  const char *ModeFlag;
+};
 
-  // suffixes[] contains the list of known driver suffixes.
-  // Suffixes are compared against the program name in order.
-  // If there is a match, the frontend type is updated as necessary (CPP/C++).
-  // If there is no match, a second round is done after stripping the last
-  // hyphen and everything following it. This allows using something like
-  // "clang++-2.9".
-
-  // If there is a match in either the first or second round,
-  // the function tries to identify a target as prefix. E.g.
-  // "x86_64-linux-clang" as interpreted as suffix "clang" with
-  // target prefix "x86_64-linux". If such a target prefix is found,
-  // is gets added via -target as implicit first argument.
-  static const struct {
-    const char *Suffix;
-    const char *ModeFlag;
-  } suffixes [] = {
-    { "clang",     nullptr },
-    { "clang++",   "--driver-mode=g++" },
-    { "clang-c++", "--driver-mode=g++" },
-    { "clang-cc",  nullptr },
-    { "clang-cpp", "--driver-mode=cpp" },
-    { "clang-g++", "--driver-mode=g++" },
-    { "clang-gcc", nullptr },
-    { "clang-cl",  "--driver-mode=cl"  },
-    { "cc",        nullptr },
-    { "cpp",       "--driver-mode=cpp" },
-    { "cl" ,       "--driver-mode=cl"  },
-    { "++",        "--driver-mode=g++" },
+static const DriverSuffix *FindDriverSuffix(StringRef ProgName) {
+  // A list of known driver suffixes. Suffixes are compared against the
+  // program name in order. If there is a match, the frontend type if updated as
+  // necessary by applying the ModeFlag.
+  static const DriverSuffix DriverSuffixes[] = {
+      {"clang", nullptr},
+      {"clang++", "--driver-mode=g++"},
+      {"clang-c++", "--driver-mode=g++"},
+      {"clang-cc", nullptr},
+      {"clang-cpp", "--driver-mode=cpp"},
+      {"clang-g++", "--driver-mode=g++"},
+      {"clang-gcc", nullptr},
+      {"clang-cl", "--driver-mode=cl"},
+      {"cc", nullptr},
+      {"cpp", "--driver-mode=cpp"},
+      {"cl", "--driver-mode=cl"},
+      {"++", "--driver-mode=g++"},
   };
-  std::string ProgName(llvm::sys::path::stem(ArgVector[0]));
+
+  for (size_t i = 0; i < llvm::array_lengthof(DriverSuffixes); ++i)
+    if (ProgName.endswith(DriverSuffixes[i].Suffix))
+      return &DriverSuffixes[i];
+  return nullptr;
+}
+
+static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
+                          std::set<std::string> &SavedStrings) {
+  // Try to infer frontend type and default target from the program name by
+  // comparing it against DriverSuffixes in order.
+
+  // If there is a match, the function tries to identify a target as prefix.
+  // E.g. "x86_64-linux-clang" as interpreted as suffix "clang" with target
+  // prefix "x86_64-linux". If such a target prefix is found, is gets added via
+  // -target as implicit first argument.
+
+  std::string ProgName =llvm::sys::path::stem(ArgVector[0]);
 #ifdef LLVM_ON_WIN32
   // Transform to lowercase for case insensitive file systems.
-  std::transform(ProgName.begin(), ProgName.end(), ProgName.begin(),
-                 toLowercase);
+  ProgName = StringRef(ProgName).lower();
 #endif
-  StringRef ProgNameRef(ProgName);
-  StringRef Prefix;
 
-  for (int Components = 2; Components; --Components) {
-    auto I = std::find_if(std::begin(suffixes), std::end(suffixes),
-                          [&](decltype(suffixes[0]) &suffix) {
-      return ProgNameRef.endswith(suffix.Suffix);
-    });
+  StringRef ProgNameRef = ProgName;
+  const DriverSuffix *DS = FindDriverSuffix(ProgNameRef);
 
-    if (I != std::end(suffixes)) {
-      if (I->ModeFlag) {
-        auto it = ArgVector.begin();
-        if (it != ArgVector.end())
-          ++it;
-        ArgVector.insert(it, I->ModeFlag);
-      }
-      StringRef::size_type LastComponent = ProgNameRef.rfind('-',
-        ProgNameRef.size() - strlen(I->Suffix));
-      if (LastComponent != StringRef::npos)
-        Prefix = ProgNameRef.slice(0, LastComponent);
-      break;
-    }
-
-    StringRef::size_type LastComponent = ProgNameRef.rfind('-');
-    if (LastComponent == StringRef::npos)
-      break;
-    ProgNameRef = ProgNameRef.slice(0, LastComponent);
+  if (!DS) {
+    // Try again after stripping any trailing version number:
+    // clang++3.5 -> clang++
+    ProgNameRef = ProgNameRef.rtrim("0123456789.");
+    DS = FindDriverSuffix(ProgNameRef);
   }
 
-  if (Prefix.empty())
-    return;
+  if (!DS) {
+    // Try again after stripping trailing -component.
+    // clang++-tot -> clang++
+    ProgNameRef = ProgNameRef.slice(0, ProgNameRef.rfind('-'));
+    DS = FindDriverSuffix(ProgNameRef);
+  }
 
-  std::string IgnoredError;
-  if (llvm::TargetRegistry::lookupTarget(Prefix, IgnoredError)) {
-    auto it = ArgVector.begin();
-    if (it != ArgVector.end())
-      ++it;
-    const char* Strings[] =
-      { GetStableCStr(SavedStrings, std::string("-target")),
-        GetStableCStr(SavedStrings, Prefix) };
-    ArgVector.insert(it, std::begin(Strings), std::end(Strings));
+  if (DS) {
+    if (const char *Flag = DS->ModeFlag) {
+      // Add Flag to the arguments.
+      auto it = ArgVector.begin();
+      if (it != ArgVector.end())
+        ++it;
+      ArgVector.insert(it, Flag);
+    }
+
+    StringRef::size_type LastComponent = ProgNameRef.rfind(
+        '-', ProgNameRef.size() - strlen(DS->Suffix));
+    if (LastComponent == StringRef::npos)
+      return;
+
+    // Infer target from the prefix.
+    StringRef Prefix = ProgNameRef.slice(0, LastComponent);
+    std::string IgnoredError;
+    if (llvm::TargetRegistry::lookupTarget(Prefix, IgnoredError)) {
+      auto it = ArgVector.begin();
+      if (it != ArgVector.end())
+        ++it;
+      const char *arr[] = { "-target", GetStableCStr(SavedStrings, Prefix) };
+      ArgVector.insert(it, std::begin(arr), std::end(arr));
+    }
   }
 }
 
@@ -446,7 +451,7 @@ int main(int argc_, const char **argv_) {
   SetInstallDir(argv, TheDriver);
 
   llvm::InitializeAllTargets();
-  ParseProgName(argv, SavedStrings, TheDriver);
+  ParseProgName(argv, SavedStrings);
 
   SetBackdoorDriverOutputsFromEnvVars(TheDriver);
 
