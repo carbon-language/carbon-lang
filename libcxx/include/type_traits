@@ -218,6 +218,9 @@ template <class _If, class _Then>
 template <bool _Bp, class _If, class _Then> using conditional_t = typename conditional<_Bp, _If, _Then>::type;
 #endif
 
+template <bool, class _Tp> struct _LIBCPP_TYPE_VIS_ONLY __lazy_enable_if {};
+template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY __lazy_enable_if<true, _Tp> {typedef typename _Tp::type type;};
+
 template <bool, class _Tp = void> struct _LIBCPP_TYPE_VIS_ONLY enable_if {};
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY enable_if<true, _Tp> {typedef _Tp type;};
 
@@ -1208,42 +1211,45 @@ template <class _A1, class _A2 = void, class _A3 = void,
           bool = __numeric_type<_A1>::value &&
                  __numeric_type<_A2>::value &&
                  __numeric_type<_A3>::value>
-class __promote
+class __promote_imp
 {
+public:
     static const bool value = false;
 };
 
 template <class _A1, class _A2, class _A3>
-class __promote<_A1, _A2, _A3, true>
+class __promote_imp<_A1, _A2, _A3, true>
 {
 private:
-    typedef typename __promote<_A1>::type __type1;
-    typedef typename __promote<_A2>::type __type2;
-    typedef typename __promote<_A3>::type __type3;
+    typedef typename __promote_imp<_A1>::type __type1;
+    typedef typename __promote_imp<_A2>::type __type2;
+    typedef typename __promote_imp<_A3>::type __type3;
 public:
     typedef decltype(__type1() + __type2() + __type3()) type;
     static const bool value = true;
 };
 
 template <class _A1, class _A2>
-class __promote<_A1, _A2, void, true>
+class __promote_imp<_A1, _A2, void, true>
 {
 private:
-    typedef typename __promote<_A1>::type __type1;
-    typedef typename __promote<_A2>::type __type2;
+    typedef typename __promote_imp<_A1>::type __type1;
+    typedef typename __promote_imp<_A2>::type __type2;
 public:
     typedef decltype(__type1() + __type2()) type;
     static const bool value = true;
 };
 
 template <class _A1>
-class __promote<_A1, void, void, true>
+class __promote_imp<_A1, void, void, true>
 {
 public:
     typedef typename __numeric_type<_A1>::type type;
     static const bool value = true;
-    static const bool __does_not_throw = _NOEXCEPT_OR_FALSE(static_cast<type>(declval<_A1>()));
 };
+
+template <class _A1, class _A2 = void, class _A3 = void>
+class __promote : public __promote_imp<_A1, _A2, _A3> {};
 
 #ifdef _LIBCPP_STORE_AS_OPTIMIZATION
 
