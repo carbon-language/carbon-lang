@@ -1270,83 +1270,6 @@ CodeGenModule::getMemberPointerConstant(const UnaryOperator *uo) {
   return getCXXABI().EmitMemberDataPointer(type, chars);
 }
 
-static void
-FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
-                             SmallVectorImpl<llvm::Constant *> &Elements,
-                             uint64_t StartOffset) {
-  assert(StartOffset % CGM.getContext().getCharWidth() == 0 && 
-         "StartOffset not byte aligned!");
-
-  if (CGM.getTypes().isZeroInitializable(T))
-    return;
-
-  if (const ConstantArrayType *CAT = 
-        CGM.getContext().getAsConstantArrayType(T)) {
-    QualType ElementTy = CAT->getElementType();
-    uint64_t ElementSize = CGM.getContext().getTypeSize(ElementTy);
-    
-    for (uint64_t I = 0, E = CAT->getSize().getZExtValue(); I != E; ++I) {
-      FillInNullDataMemberPointers(CGM, ElementTy, Elements,
-                                   StartOffset + I * ElementSize);
-    }
-  } else if (const RecordType *RT = T->getAs<RecordType>()) {
-    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-    const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
-
-    // Go through all bases and fill in any null pointer to data members.
-    for (const auto &I : RD->bases()) {
-      if (I.isVirtual()) {
-        // Ignore virtual bases.
-        continue;
-      }
-      
-      const CXXRecordDecl *BaseDecl = 
-      cast<CXXRecordDecl>(I.getType()->getAs<RecordType>()->getDecl());
-      
-      // Ignore empty bases.
-      if (BaseDecl->isEmpty())
-        continue;
-      
-      // Ignore bases that don't have any pointer to data members.
-      if (CGM.getTypes().isZeroInitializable(BaseDecl))
-        continue;
-
-      uint64_t BaseOffset =
-        CGM.getContext().toBits(Layout.getBaseClassOffset(BaseDecl));
-      FillInNullDataMemberPointers(CGM, I.getType(),
-                                   Elements, StartOffset + BaseOffset);
-    }
-    
-    // Visit all fields.
-    unsigned FieldNo = 0;
-    for (RecordDecl::field_iterator I = RD->field_begin(),
-         E = RD->field_end(); I != E; ++I, ++FieldNo) {
-      QualType FieldType = I->getType();
-      
-      if (CGM.getTypes().isZeroInitializable(FieldType))
-        continue;
-
-      uint64_t FieldOffset = StartOffset + Layout.getFieldOffset(FieldNo);
-      FillInNullDataMemberPointers(CGM, FieldType, Elements, FieldOffset);
-    }
-  } else {
-    assert(T->isMemberPointerType() && "Should only see member pointers here!");
-    assert(!T->getAs<MemberPointerType>()->getPointeeType()->isFunctionType() &&
-           "Should only see pointers to data members here!");
-  
-    CharUnits StartIndex = CGM.getContext().toCharUnitsFromBits(StartOffset);
-    CharUnits EndIndex = StartIndex + CGM.getContext().getTypeSizeInChars(T);
-
-    // FIXME: hardcodes Itanium member pointer representation!
-    llvm::Constant *NegativeOne =
-      llvm::ConstantInt::get(CGM.Int8Ty, -1ULL, /*isSigned*/true);
-
-    // Fill in the null data member pointer.
-    for (CharUnits I = StartIndex; I != EndIndex; ++I)
-      Elements[I.getQuantity()] = NegativeOne;
-  }
-}
-
 static llvm::Constant *EmitNullConstantForBase(CodeGenModule &CGM,
                                                llvm::Type *baseType,
                                                const CXXRecordDecl *base);
@@ -1435,32 +1358,8 @@ static llvm::Constant *EmitNullConstantForBase(CodeGenModule &CGM,
   if (baseLayout.isZeroInitializableAsBase())
     return llvm::Constant::getNullValue(baseType);
 
-  // If the base type is a struct, we can just use its null constant.
-  if (isa<llvm::StructType>(baseType)) {
-    return EmitNullConstant(CGM, base, /*complete*/ false);
-  }
-
-  // Otherwise, some bases are represented as arrays of i8 if the size
-  // of the base is smaller than its corresponding LLVM type.  Figure
-  // out how many elements this base array has.
-  llvm::ArrayType *baseArrayType = cast<llvm::ArrayType>(baseType);
-  unsigned numBaseElements = baseArrayType->getNumElements();
-
-  // Fill in null data member pointers.
-  SmallVector<llvm::Constant *, 16> baseElements(numBaseElements);
-  FillInNullDataMemberPointers(CGM, CGM.getContext().getTypeDeclType(base),
-                               baseElements, 0);
-
-  // Now go through all other elements and zero them out.
-  if (numBaseElements) {
-    llvm::Constant *i8_zero = llvm::Constant::getNullValue(CGM.Int8Ty);
-    for (unsigned i = 0; i != numBaseElements; ++i) {
-      if (!baseElements[i])
-        baseElements[i] = i8_zero;
-    }
-  }
-      
-  return llvm::ConstantArray::get(baseArrayType, baseElements);
+  // Otherwise, we can just use its null constant.
+  return EmitNullConstant(CGM, base, /*asCompleteObject=*/false);
 }
 
 llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
@@ -1491,9 +1390,7 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
   assert(T->isMemberPointerType() && "Should only see member pointers here!");
   assert(!T->getAs<MemberPointerType>()->getPointeeType()->isFunctionType() &&
          "Should only see pointers to data members here!");
-  
-  // Itanium C++ ABI 2.3:
-  //   A NULL pointer is represented as -1.
+
   return getCXXABI().EmitNullMemberPointer(T->castAs<MemberPointerType>());
 }
 
