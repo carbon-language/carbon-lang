@@ -718,18 +718,29 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
       return nullptr;
     }
 
-    // XXX: Commute VOP3 instructions with abs and neg set .
-    const MachineOperand *Src0Mods = getNamedOperand(*MI,
-                                          AMDGPU::OpName::src0_modifiers);
-    const MachineOperand *Src1Mods = getNamedOperand(*MI,
-                                          AMDGPU::OpName::src1_modifiers);
-    const MachineOperand *Src2Mods = getNamedOperand(*MI,
-                                          AMDGPU::OpName::src2_modifiers);
-
-    if ((Src0Mods && Src0Mods->getImm()) ||
-        (Src1Mods && Src1Mods->getImm()) ||
-        (Src2Mods && Src2Mods->getImm()))
+    // TODO: Is there any reason to commute with src2 modifiers?
+    // TODO: Should be able to commute with output modifiers just fine.
+    if (hasModifiersSet(*MI, AMDGPU::OpName::src2_modifiers))
       return nullptr;
+
+    // Be sure to copy the source modifiers to the right place.
+    if (MachineOperand *Src0Mods
+          = getNamedOperand(*MI, AMDGPU::OpName::src0_modifiers)) {
+      MachineOperand *Src1Mods
+        = getNamedOperand(*MI, AMDGPU::OpName::src1_modifiers);
+
+      int Src0ModsVal = Src0Mods->getImm();
+      if (!Src1Mods && Src0ModsVal != 0)
+        return nullptr;
+
+      // XXX - This assert might be a lie. It might be useful to have a neg
+      // modifier with 0.0.
+      int Src1ModsVal = Src1Mods->getImm();
+      assert((Src1ModsVal == 0) && "Not expecting modifiers with immediates");
+
+      Src1Mods->setImm(Src0ModsVal);
+      Src0Mods->setImm(Src1ModsVal);
+    }
 
     unsigned Reg = Src0.getReg();
     unsigned SubReg = Src0.getSubReg();
