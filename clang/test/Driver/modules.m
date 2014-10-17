@@ -36,5 +36,5 @@
 
 // RUN: %clang -fmodules -fmodule-map-file=foo.map -fmodule-map-file=bar.map -### %s 2>&1 | FileCheck -check-prefix=CHECK-MODULE-MAP-FILES %s
 // CHECK-MODULE-MAP-FILES: "-fmodules"
-// CHECK-MODULE-MAP-FILES: "-fmodule-map-file=" "foo.map"
-// CHECK-MODULE-MAP-FILES: "-fmodule-map-file=" "bar.map"
+// CHECK-MODULE-MAP-FILES: "-fmodule-map-file=foo.map"
+// CHECK-MODULE-MAP-FILES: "-fmodule-map-file=bar.map"
