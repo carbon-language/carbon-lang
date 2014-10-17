@@ -92,19 +92,10 @@ void MCELFStreamer::ChangeSection(const MCSection *Section,
   MCSectionData *CurSection = getCurrentSectionData();
   if (CurSection && CurSection->isBundleLocked())
     report_fatal_error("Unterminated .bundle_lock when changing a section");
-
-  MCAssembler &Asm = getAssembler();
-  auto *SectionELF = static_cast<const MCSectionELF *>(Section);
-  const MCSymbol *Grp = SectionELF->getGroup();
+  const MCSymbol *Grp = static_cast<const MCSectionELF *>(Section)->getGroup();
   if (Grp)
-    Asm.getOrCreateSymbolData(*Grp);
-
+    getAssembler().getOrCreateSymbolData(*Grp);
   this->MCObjectStreamer::ChangeSection(Section, Subsection);
-  MCSymbol *SectionSymbol = getContext().getOrCreateSectionSymbol(*SectionELF);
-  if (SectionSymbol->isUndefined()) {
-    EmitLabel(SectionSymbol);
-    MCELF::SetType(Asm.getSymbolData(*SectionSymbol), ELF::STT_SECTION);
-  }
 }
 
 void MCELFStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {

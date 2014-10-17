@@ -676,8 +676,7 @@ void ELFDumper<ELFT>::printRelocation(const Elf_Shdr *Sec,
     DictScope Group(W, "Relocation");
     W.printHex("Offset", Rel.r_offset);
     W.printNumber("Type", RelocName, (int)Rel.getType(Obj->isMips64EL()));
-    W.printNumber("Symbol", SymbolName.size() > 0 ? SymbolName : "-",
-                  Rel.getSymbol(Obj->isMips64EL()));
+    W.printString("Symbol", SymbolName.size() > 0 ? SymbolName : "-");
     W.printHex("Addend", Rel.r_addend);
   } else {
     raw_ostream& OS = W.startLine();

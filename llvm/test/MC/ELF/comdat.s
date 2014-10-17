@@ -41,7 +41,7 @@
 // CHECK-NEXT:     Offset: 0x54
 // CHECK-NEXT:     Size: 12
 // CHECK-NEXT:     Link: 13
-// CHECK-NEXT:     Info: 10
+// CHECK-NEXT:     Info: 13
 // CHECK-NEXT:     AddressAlignment: 4
 // CHECK-NEXT:     EntrySize: 4
 // CHECK-NEXT:   }
