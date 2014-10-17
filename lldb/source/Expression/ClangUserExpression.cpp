@@ -627,7 +627,7 @@ GetObjectPointer (lldb::StackFrameSP frame_sp,
                                                             var_sp,
                                                             err);
 
-    if (!err.Success())
+    if (!err.Success() || !valobj_sp.get())
         return LLDB_INVALID_ADDRESS;
 
     lldb::addr_t ret = valobj_sp->GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
