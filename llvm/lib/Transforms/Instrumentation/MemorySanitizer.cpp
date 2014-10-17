@@ -2329,7 +2329,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         assert(A->getType()->isPointerTy() &&
                "ByVal argument is not a pointer!");
         Size = MS.DL->getTypeAllocSize(A->getType()->getPointerElementType());
-        unsigned Alignment = CS.getParamAlignment(i + 1);
+        unsigned ParamAlignment = CS.getParamAlignment(i + 1);
+        unsigned Alignment = std::min(ParamAlignment, kShadowTLSAlignment);
         Store = IRB.CreateMemCpy(ArgShadowBase,
                                  getShadowPtr(A, Type::getInt8Ty(*MS.C), IRB),
                                  Size, Alignment);
