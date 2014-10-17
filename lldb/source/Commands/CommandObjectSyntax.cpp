@@ -69,12 +69,18 @@ CommandObjectSyntax::DoExecute (Args& command, CommandReturnObject &result)
         {
             std::string sub_command = command.GetArgumentAtIndex (i);
             if (!cmd_obj->IsMultiwordObject())
+            {
                 all_okay = false;
+                break;
+            }
             else
             {
                 cmd_obj = cmd_obj->GetSubcommandObject(sub_command.c_str());
                 if (!cmd_obj)
+                {
                     all_okay = false;
+                    break;
+                }
             }
         }
         
