@@ -636,17 +636,6 @@ protected:
       HasOwnVFPtr(false),
       FirstNearlyEmptyVBase(nullptr) {}
 
-  /// Reset this RecordLayoutBuilder to a fresh state, using the given
-  /// alignment as the initial alignment.  This is used for the
-  /// correct layout of vb-table pointers in MSVC.
-  void resetWithTargetAlignment(CharUnits TargetAlignment) {
-    const ASTContext &Context = this->Context;
-    EmptySubobjectMap *EmptySubobjects = this->EmptySubobjects;
-    this->~RecordLayoutBuilder();
-    new (this) RecordLayoutBuilder(Context, EmptySubobjects);
-    Alignment = UnpackedAlignment = TargetAlignment;
-  }
-
   void Layout(const RecordDecl *D);
   void Layout(const CXXRecordDecl *D);
   void Layout(const ObjCInterfaceDecl *D);
