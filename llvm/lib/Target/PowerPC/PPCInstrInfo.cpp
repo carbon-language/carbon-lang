@@ -1622,6 +1622,7 @@ protected:
       bool Changed = false;
 
       MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+      const TargetRegisterInfo *TRI = &TII->getRegisterInfo();
       for (MachineBasicBlock::iterator I = MBB.begin(), IE = MBB.end();
            I != IE; ++I) {
         MachineInstr *MI = I;
@@ -1687,16 +1688,26 @@ protected:
         // In theory, there could be other uses of the addend copy before this
         // fma.  We could deal with this, but that would require additional
         // logic below and I suspect it will not occur in any relevant
-        // situations.
-        bool OtherUsers = false;
+        // situations.  Additionally, check whether the copy source is killed
+        // prior to the fma.  In order to replace the addend here with the
+        // source of the copy, it must still be live here.  We can't use
+        // interval testing for a physical register, so as long as we're
+        // walking the MIs we may as well test liveness here.
+        bool OtherUsers = false, KillsAddendSrc = false;
         for (auto J = std::prev(I), JE = MachineBasicBlock::iterator(AddendMI);
-             J != JE; --J)
+             J != JE; --J) {
           if (J->readsVirtualRegister(AddendMI->getOperand(0).getReg())) {
             OtherUsers = true;
             break;
           }
+          if (J->modifiesRegister(AddendSrcReg, TRI) ||
+              J->killsRegister(AddendSrcReg, TRI)) {
+            KillsAddendSrc = true;
+            break;
+          }
+        }
 
-        if (OtherUsers)
+        if (OtherUsers || KillsAddendSrc)
           continue;
 
         // Find one of the product operands that is killed by this instruction.
@@ -1717,10 +1728,11 @@ protected:
         if (!KilledProdOp)
           continue;
 
-        // In order to replace the addend here with the source of the copy,
-        // it must still be live here.
-        if (!LIS->getInterval(AddendMI->getOperand(1).getReg()).liveAt(FMAIdx))
-          continue;
+        // For virtual registers, verify that the addend source register
+        // is live here (as should have been assured above).
+        if (TargetRegisterInfo::isVirtualRegister(AddendSrcReg))
+          assert(LIS->getInterval(AddendSrcReg).liveAt(FMAIdx) &&
+                 "Addend source register is not available!");
 
         // Transform: (O2 * O3) + O1 -> (O2 * O1) + O3.
 
