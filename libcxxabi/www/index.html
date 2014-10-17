@@ -96,6 +96,16 @@
     linux you may need -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++</code></li>
   <li><code>make</code></li>
   </ul>
+  <p> By default CMake uses <code>llvm-config</code> to locate the required
+      LLVM sources. If CMake cannot find <code>llvm-config</code> then you must
+      configure CMake using either of the following options.
+  </p>
+  <ul>
+  <li><code>-DLLVM_CONFIG=path/to/llvm-config</code></li>
+  <li><code>-DLLVM_PATH=path/to/llvm-source-root</code></li>
+  </ul>
+
+  </p>
 
   <p>To run the tests:</p>
   <ul>

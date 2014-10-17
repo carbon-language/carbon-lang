@@ -46,7 +46,9 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/share/llvm/cmake")
     set(LLVM_LIT_PATH "${LLVM_PATH}/utils/lit/lit.py")
   else()
-    message(FATAL_ERROR "llvm-config not found and LLVM_MAIN_SRC_DIR not defined")
+    message(FATAL_ERROR "llvm-config not found and LLVM_MAIN_SRC_DIR not defined. "
+                        "Reconfigure with -DLLVM_CONFIG=path/to/llvm-config "
+                        "or -DLLVM_PATH=path/to/llvm-source-root.")
   endif()
 
   if(EXISTS ${LLVM_CMAKE_PATH})
