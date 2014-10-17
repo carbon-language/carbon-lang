@@ -791,17 +791,11 @@ namespace {
     ExprResult TransformFunctionParmPackExpr(FunctionParmPackExpr *E);
 
     QualType TransformFunctionProtoType(TypeLocBuilder &TLB,
-                                        FunctionProtoTypeLoc TL) {
-      // Call the base version; it will forward to our overridden version below.
-      return inherited::TransformFunctionProtoType(TLB, TL);
-    }
-
-    template<typename Fn>
+                                        FunctionProtoTypeLoc TL);
     QualType TransformFunctionProtoType(TypeLocBuilder &TLB,
                                         FunctionProtoTypeLoc TL,
                                         CXXRecordDecl *ThisContext,
-                                        unsigned ThisTypeQuals,
-                                        Fn TransformExceptionSpec);
+                                        unsigned ThisTypeQuals);
 
     ParmVarDecl *TransformFunctionTypeParam(ParmVarDecl *OldParm,
                                             int indexAdjustment,
@@ -1333,16 +1327,21 @@ ExprResult TemplateInstantiator::TransformCXXDefaultArgExpr(
                                         E->getParam());
 }
 
-template<typename Fn>
+QualType TemplateInstantiator::TransformFunctionProtoType(TypeLocBuilder &TLB,
+                                                      FunctionProtoTypeLoc TL) {
+  // We need a local instantiation scope for this function prototype.
+  LocalInstantiationScope Scope(SemaRef, /*CombineWithOuterScope=*/true);
+  return inherited::TransformFunctionProtoType(TLB, TL);
+}
+
 QualType TemplateInstantiator::TransformFunctionProtoType(TypeLocBuilder &TLB,
                                  FunctionProtoTypeLoc TL,
                                  CXXRecordDecl *ThisContext,
-                                 unsigned ThisTypeQuals,
-                                 Fn TransformExceptionSpec) {
+                                 unsigned ThisTypeQuals) {
   // We need a local instantiation scope for this function prototype.
   LocalInstantiationScope Scope(SemaRef, /*CombineWithOuterScope=*/true);
-  return inherited::TransformFunctionProtoType(
-      TLB, TL, ThisContext, ThisTypeQuals, TransformExceptionSpec);
+  return inherited::TransformFunctionProtoType(TLB, TL, ThisContext, 
+                                               ThisTypeQuals);  
 }
 
 ParmVarDecl *
@@ -1577,8 +1576,7 @@ static bool NeedsInstantiationAsFunctionType(TypeSourceInfo *T) {
 
 /// A form of SubstType intended specifically for instantiating the
 /// type of a FunctionDecl.  Its purpose is solely to force the
-/// instantiation of default-argument expressions and to avoid
-/// instantiating an exception-specification.
+/// instantiation of default-argument expressions.
 TypeSourceInfo *Sema::SubstFunctionDeclType(TypeSourceInfo *T,
                                 const MultiLevelTemplateArgumentList &Args,
                                 SourceLocation Loc,
@@ -1601,17 +1599,9 @@ TypeSourceInfo *Sema::SubstFunctionDeclType(TypeSourceInfo *T,
 
   QualType Result;
 
-  if (FunctionProtoTypeLoc Proto =
-          TL.IgnoreParens().getAs<FunctionProtoTypeLoc>()) {
-    // Instantiate the type, other than its exception specification. The
-    // exception specification is instantiated in InitFunctionInstantiation
-    // once we've built the FunctionDecl.
-    // FIXME: Set the exception specification to EST_Uninstantiated here,
-    // instead of rebuilding the function type again later.
-    Result = Instantiator.TransformFunctionProtoType(
-        TLB, Proto, ThisContext, ThisTypeQuals,
-        [](FunctionProtoType::ExceptionSpecInfo &ESI,
-           bool &Changed) { return false; });
+  if (FunctionProtoTypeLoc Proto = TL.getAs<FunctionProtoTypeLoc>()) {
+    Result = Instantiator.TransformFunctionProtoType(TLB, Proto, ThisContext,
+                                                     ThisTypeQuals);
   } else {
     Result = Instantiator.TransformType(TLB, TL);
   }
@@ -1619,26 +1609,6 @@ TypeSourceInfo *Sema::SubstFunctionDeclType(TypeSourceInfo *T,
     return nullptr;
 
   return TLB.getTypeSourceInfo(Context, Result);
-}
-
-void Sema::SubstExceptionSpec(FunctionDecl *New, const FunctionProtoType *Proto,
-                              const MultiLevelTemplateArgumentList &Args) {
-  FunctionProtoType::ExceptionSpecInfo ESI =
-      Proto->getExtProtoInfo().ExceptionSpec;
-  assert(ESI.Type != EST_Uninstantiated);
-
-  TemplateInstantiator Instantiator(*this, Args, New->getLocation(),
-                                    New->getDeclName());
-
-  SmallVector<QualType, 4> ExceptionStorage;
-  bool Changed = false;
-  if (Instantiator.TransformExceptionSpec(
-          New->getTypeSourceInfo()->getTypeLoc().getLocEnd(), ESI,
-          ExceptionStorage, Changed))
-    // On error, recover by dropping the exception specification.
-    ESI.Type = EST_None;
-
-  UpdateExceptionSpec(New, ESI);
 }
 
 ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm, 

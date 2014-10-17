@@ -3056,7 +3056,7 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
 /// Introduce the instantiated function parameters into the local
 /// instantiation scope, and set the parameter names to those used
 /// in the template.
-static bool addInstantiatedParametersToScope(Sema &S, FunctionDecl *Function,
+static void addInstantiatedParametersToScope(Sema &S, FunctionDecl *Function,
                                              const FunctionDecl *PatternDecl,
                                              LocalInstantiationScope &Scope,
                            const MultiLevelTemplateArgumentList &TemplateArgs) {
@@ -3067,22 +3067,15 @@ static bool addInstantiatedParametersToScope(Sema &S, FunctionDecl *Function,
       // Simple case: not a parameter pack.
       assert(FParamIdx < Function->getNumParams());
       ParmVarDecl *FunctionParam = Function->getParamDecl(FParamIdx);
-      FunctionParam->setDeclName(PatternParam->getDeclName());
       // If the parameter's type is not dependent, update it to match the type
       // in the pattern. They can differ in top-level cv-qualifiers, and we want
       // the pattern's type here. If the type is dependent, they can't differ,
-      // per core issue 1668. Substitute into the type from the pattern, in case
-      // it's instantiation-dependent.
+      // per core issue 1668.
       // FIXME: Updating the type to work around this is at best fragile.
-      if (!PatternDecl->getType()->isDependentType()) {
-        QualType T = S.SubstType(PatternParam->getType(), TemplateArgs,
-                                 FunctionParam->getLocation(),
-                                 FunctionParam->getDeclName());
-        if (T.isNull())
-          return true;
-        FunctionParam->setType(T);
-      }
+      if (!PatternDecl->getType()->isDependentType())
+        FunctionParam->setType(PatternParam->getType());
 
+      FunctionParam->setDeclName(PatternParam->getDeclName());
       Scope.InstantiatedLocal(PatternParam, FunctionParam);
       ++FParamIdx;
       continue;
@@ -3094,27 +3087,136 @@ static bool addInstantiatedParametersToScope(Sema &S, FunctionDecl *Function,
       = S.getNumArgumentsInExpansion(PatternParam->getType(), TemplateArgs);
     assert(NumArgumentsInExpansion &&
            "should only be called when all template arguments are known");
-    QualType PatternType =
-        PatternParam->getType()->castAs<PackExpansionType>()->getPattern();
     for (unsigned Arg = 0; Arg < *NumArgumentsInExpansion; ++Arg) {
       ParmVarDecl *FunctionParam = Function->getParamDecl(FParamIdx);
-      FunctionParam->setDeclName(PatternParam->getDeclName());
-      if (!PatternDecl->getType()->isDependentType()) {
-        Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(S, Arg);
-        QualType T = S.SubstType(PatternType, TemplateArgs,
-                                 FunctionParam->getLocation(),
-                                 FunctionParam->getDeclName());
-        if (T.isNull())
-          return true;
-        FunctionParam->setType(T);
-      }
+      if (!PatternDecl->getType()->isDependentType())
+        FunctionParam->setType(PatternParam->getType());
 
+      FunctionParam->setDeclName(PatternParam->getDeclName());
       Scope.InstantiatedLocalPackArg(PatternParam, FunctionParam);
       ++FParamIdx;
     }
   }
+}
 
-  return false;
+static void InstantiateExceptionSpec(Sema &SemaRef, FunctionDecl *New,
+                                     const FunctionProtoType *Proto,
+                           const MultiLevelTemplateArgumentList &TemplateArgs) {
+  assert(Proto->getExceptionSpecType() != EST_Uninstantiated);
+
+  // C++11 [expr.prim.general]p3:
+  //   If a declaration declares a member function or member function 
+  //   template of a class X, the expression this is a prvalue of type 
+  //   "pointer to cv-qualifier-seq X" between the optional cv-qualifer-seq
+  //   and the end of the function-definition, member-declarator, or 
+  //   declarator.    
+  CXXRecordDecl *ThisContext = nullptr;
+  unsigned ThisTypeQuals = 0;
+  if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(New)) {
+    ThisContext = Method->getParent();
+    ThisTypeQuals = Method->getTypeQualifiers();
+  }
+  Sema::CXXThisScopeRAII ThisScope(SemaRef, ThisContext, ThisTypeQuals,
+                                   SemaRef.getLangOpts().CPlusPlus11);
+
+  // The function has an exception specification or a "noreturn"
+  // attribute. Substitute into each of the exception types.
+  SmallVector<QualType, 4> Exceptions;
+  for (unsigned I = 0, N = Proto->getNumExceptions(); I != N; ++I) {
+    // FIXME: Poor location information!
+    if (const PackExpansionType *PackExpansion
+          = Proto->getExceptionType(I)->getAs<PackExpansionType>()) {
+      // We have a pack expansion. Instantiate it.
+      SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+      SemaRef.collectUnexpandedParameterPacks(PackExpansion->getPattern(),
+                                              Unexpanded);
+      assert(!Unexpanded.empty() &&
+             "Pack expansion without parameter packs?");
+
+      bool Expand = false;
+      bool RetainExpansion = false;
+      Optional<unsigned> NumExpansions = PackExpansion->getNumExpansions();
+      if (SemaRef.CheckParameterPacksForExpansion(New->getLocation(),
+                                                  SourceRange(),
+                                                  Unexpanded,
+                                                  TemplateArgs,
+                                                  Expand,
+                                                  RetainExpansion,
+                                                  NumExpansions))
+        break;
+
+      if (!Expand) {
+        // We can't expand this pack expansion into separate arguments yet;
+        // just substitute into the pattern and create a new pack expansion
+        // type.
+        Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(SemaRef, -1);
+        QualType T = SemaRef.SubstType(PackExpansion->getPattern(),
+                                       TemplateArgs,
+                                     New->getLocation(), New->getDeclName());
+        if (T.isNull())
+          break;
+
+        T = SemaRef.Context.getPackExpansionType(T, NumExpansions);
+        Exceptions.push_back(T);
+        continue;
+      }
+
+      // Substitute into the pack expansion pattern for each template
+      bool Invalid = false;
+      for (unsigned ArgIdx = 0; ArgIdx != *NumExpansions; ++ArgIdx) {
+        Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(SemaRef, ArgIdx);
+
+        QualType T = SemaRef.SubstType(PackExpansion->getPattern(),
+                                       TemplateArgs,
+                                     New->getLocation(), New->getDeclName());
+        if (T.isNull()) {
+          Invalid = true;
+          break;
+        }
+
+        Exceptions.push_back(T);
+      }
+
+      if (Invalid)
+        break;
+
+      continue;
+    }
+
+    QualType T
+      = SemaRef.SubstType(Proto->getExceptionType(I), TemplateArgs,
+                          New->getLocation(), New->getDeclName());
+    if (T.isNull() ||
+        SemaRef.CheckSpecifiedExceptionType(T, New->getLocation()))
+      continue;
+
+    Exceptions.push_back(T);
+  }
+  Expr *NoexceptExpr = nullptr;
+  if (Expr *OldNoexceptExpr = Proto->getNoexceptExpr()) {
+    EnterExpressionEvaluationContext Unevaluated(SemaRef,
+                                                 Sema::ConstantEvaluated);
+    ExprResult E = SemaRef.SubstExpr(OldNoexceptExpr, TemplateArgs);
+    if (E.isUsable())
+      E = SemaRef.CheckBooleanCondition(E.get(), E.get()->getLocStart());
+
+    if (E.isUsable()) {
+      NoexceptExpr = E.get();
+      if (!NoexceptExpr->isTypeDependent() &&
+          !NoexceptExpr->isValueDependent())
+        NoexceptExpr
+          = SemaRef.VerifyIntegerConstantExpression(NoexceptExpr,
+              nullptr, diag::err_noexcept_needs_constant_expression,
+              /*AllowFold*/ false).get();
+    }
+  }
+
+  FunctionProtoType::ExceptionSpecInfo ESI;
+  ESI.Type = Proto->getExceptionSpecType();
+  ESI.Exceptions = Exceptions;
+  ESI.NoexceptExpr = NoexceptExpr;
+
+  SemaRef.UpdateExceptionSpec(New, ESI);
 }
 
 void Sema::InstantiateExceptionSpec(SourceLocation PointOfInstantiation,
@@ -3141,14 +3243,11 @@ void Sema::InstantiateExceptionSpec(SourceLocation PointOfInstantiation,
     getTemplateInstantiationArgs(Decl, nullptr, /*RelativeToPrimary*/true);
 
   FunctionDecl *Template = Proto->getExceptionSpecTemplate();
-  if (addInstantiatedParametersToScope(*this, Decl, Template, Scope,
-                                       TemplateArgs)) {
-    UpdateExceptionSpec(Decl, EST_None);
-    return;
-  }
+  addInstantiatedParametersToScope(*this, Decl, Template, Scope, TemplateArgs);
 
-  SubstExceptionSpec(Decl, Template->getType()->castAs<FunctionProtoType>(),
-                     TemplateArgs);
+  ::InstantiateExceptionSpec(*this, Decl,
+                             Template->getType()->castAs<FunctionProtoType>(),
+                             TemplateArgs);
 }
 
 /// \brief Initializes the common fields of an instantiation function
@@ -3217,7 +3316,7 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
       New->setType(SemaRef.Context.getFunctionType(
           NewProto->getReturnType(), NewProto->getParamTypes(), EPI));
     } else {
-      SemaRef.SubstExceptionSpec(New, Proto, TemplateArgs);
+      ::InstantiateExceptionSpec(SemaRef, New, Proto, TemplateArgs);
     }
   }
 
@@ -3407,9 +3506,8 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
     MultiLevelTemplateArgumentList TemplateArgs =
       getTemplateInstantiationArgs(Function, nullptr, false, PatternDecl);
 
-    if (addInstantiatedParametersToScope(*this, Function, PatternDecl, Scope,
-                                         TemplateArgs))
-      return;
+    addInstantiatedParametersToScope(*this, Function, PatternDecl, Scope,
+                                     TemplateArgs);
 
     // If this is a constructor, instantiate the member initializers.
     if (const CXXConstructorDecl *Ctor =

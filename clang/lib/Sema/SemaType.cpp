@@ -2989,8 +2989,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
           NoexceptExpr = FTI.NoexceptExpr;
         }
 
-        S.checkExceptionSpecification(D.isFunctionDeclarationContext(),
-                                      FTI.getExceptionSpecType(),
+        S.checkExceptionSpecification(FTI.getExceptionSpecType(),
                                       DynamicExceptions,
                                       DynamicExceptionRanges,
                                       NoexceptExpr,

@@ -1624,9 +1624,9 @@ FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> params,
     QualType *exnSlot = argSlot + NumParams;
     unsigned I = 0;
     for (QualType ExceptionType : epi.ExceptionSpec.Exceptions) {
-      // Note that a dependent exception specification does *not* make
-      // a type dependent; it's not even part of the C++ type system.
-      if (ExceptionType->isInstantiationDependentType())
+      if (ExceptionType->isDependentType())
+        setDependent();
+      else if (ExceptionType->isInstantiationDependentType())
         setInstantiationDependent();
 
       if (ExceptionType->containsUnexpandedParameterPack())
@@ -1640,12 +1640,11 @@ FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> params,
     *noexSlot = epi.ExceptionSpec.NoexceptExpr;
 
     if (epi.ExceptionSpec.NoexceptExpr) {
-      if (epi.ExceptionSpec.NoexceptExpr->isValueDependent() ||
-          epi.ExceptionSpec.NoexceptExpr->isInstantiationDependent())
+      if (epi.ExceptionSpec.NoexceptExpr->isValueDependent() 
+          || epi.ExceptionSpec.NoexceptExpr->isTypeDependent())
+        setDependent();
+      else if (epi.ExceptionSpec.NoexceptExpr->isInstantiationDependent())
         setInstantiationDependent();
-
-      if (epi.ExceptionSpec.NoexceptExpr->containsUnexpandedParameterPack())
-        setContainsUnexpandedParameterPack();
     }
   } else if (getExceptionSpecType() == EST_Uninstantiated) {
     // Store the function decl from which we will resolve our
@@ -1669,18 +1668,6 @@ FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> params,
     for (unsigned i = 0; i != NumParams; ++i)
       consumedParams[i] = epi.ConsumedParameters[i];
   }
-}
-
-bool FunctionProtoType::hasDependentExceptionSpec() const {
-  if (Expr *NE = getNoexceptExpr())
-    return NE->isValueDependent();
-  for (QualType ET : exceptions())
-    // A pack expansion with a non-dependent pattern is still dependent,
-    // because we don't know whether the pattern is in the exception spec
-    // or not (that depends on whether the pack has 0 expansions).
-    if (ET->isDependentType() || ET->getAs<PackExpansionType>())
-      return true;
-  return false;
 }
 
 FunctionProtoType::NoexceptResult

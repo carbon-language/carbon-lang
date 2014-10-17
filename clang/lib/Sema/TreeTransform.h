@@ -563,17 +563,10 @@ public:
   QualType Transform##CLASS##Type(TypeLocBuilder &TLB, CLASS##TypeLoc T);
 #include "clang/AST/TypeLocNodes.def"
 
-  template<typename Fn>
   QualType TransformFunctionProtoType(TypeLocBuilder &TLB,
                                       FunctionProtoTypeLoc TL,
                                       CXXRecordDecl *ThisContext,
-                                      unsigned ThisTypeQuals,
-                                      Fn TransformExceptionSpec);
-
-  bool TransformExceptionSpec(SourceLocation Loc,
-                              FunctionProtoType::ExceptionSpecInfo &ESI,
-                              SmallVectorImpl<QualType> &Exceptions,
-                              bool &Changed);
+                                      unsigned ThisTypeQuals);
 
   StmtResult TransformSEHHandler(Stmt *Handler);
 
@@ -4557,19 +4550,15 @@ template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
                                                    FunctionProtoTypeLoc TL) {
-  SmallVector<QualType, 4> ExceptionStorage;
-  return getDerived().TransformFunctionProtoType(
-      TLB, TL, nullptr, 0,
-      [&](FunctionProtoType::ExceptionSpecInfo &ESI, bool &Changed) {
-        return TransformExceptionSpec(TL.getBeginLoc(), ESI, ExceptionStorage,
-                                      Changed);
-      });
+  return getDerived().TransformFunctionProtoType(TLB, TL, nullptr, 0);
 }
 
-template<typename Derived> template<typename Fn>
-QualType TreeTransform<Derived>::TransformFunctionProtoType(
-    TypeLocBuilder &TLB, FunctionProtoTypeLoc TL, CXXRecordDecl *ThisContext,
-    unsigned ThisTypeQuals, Fn TransformExceptionSpec) {
+template<typename Derived>
+QualType
+TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
+                                                   FunctionProtoTypeLoc TL,
+                                                   CXXRecordDecl *ThisContext,
+                                                   unsigned ThisTypeQuals) {
   // Transform the parameters and return type.
   //
   // We are required to instantiate the params and return type in source order.
@@ -4614,21 +4603,15 @@ QualType TreeTransform<Derived>::TransformFunctionProtoType(
       return QualType();
   }
 
-  FunctionProtoType::ExtProtoInfo EPI = T->getExtProtoInfo();
-
-  bool EPIChanged = false;
-  if (TransformExceptionSpec(EPI.ExceptionSpec, EPIChanged))
-    return QualType();
-
-  // FIXME: Need to transform ConsumedParameters for variadic template
-  // expansion.
+  // FIXME: Need to transform the exception-specification too.
 
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() || ResultType != T->getReturnType() ||
       T->getNumParams() != ParamTypes.size() ||
       !std::equal(T->param_type_begin(), T->param_type_end(),
-                  ParamTypes.begin()) || EPIChanged) {
-    Result = getDerived().RebuildFunctionProtoType(ResultType, ParamTypes, EPI);
+                  ParamTypes.begin())) {
+    Result = getDerived().RebuildFunctionProtoType(ResultType, ParamTypes,
+                                                   T->getExtProtoInfo());
     if (Result.isNull())
       return QualType();
   }
@@ -4642,107 +4625,6 @@ QualType TreeTransform<Derived>::TransformFunctionProtoType(
     NewTL.setParam(i, ParamDecls[i]);
 
   return Result;
-}
-
-template<typename Derived>
-bool TreeTransform<Derived>::TransformExceptionSpec(
-    SourceLocation Loc, FunctionProtoType::ExceptionSpecInfo &ESI,
-    SmallVectorImpl<QualType> &Exceptions, bool &Changed) {
-  assert(ESI.Type != EST_Uninstantiated && ESI.Type != EST_Unevaluated);
-
-  // Instantiate a dynamic noexcept expression, if any.
-  if (ESI.Type == EST_ComputedNoexcept) {
-    EnterExpressionEvaluationContext Unevaluated(getSema(),
-                                                 Sema::ConstantEvaluated);
-    ExprResult NoexceptExpr = getDerived().TransformExpr(ESI.NoexceptExpr);
-    if (NoexceptExpr.isInvalid())
-      return true;
-
-    NoexceptExpr = getSema().CheckBooleanCondition(
-        NoexceptExpr.get(), NoexceptExpr.get()->getLocStart());
-    if (NoexceptExpr.isInvalid())
-      return true;
-
-    if (!NoexceptExpr.get()->isValueDependent()) {
-      NoexceptExpr = getSema().VerifyIntegerConstantExpression(
-          NoexceptExpr.get(), nullptr,
-          diag::err_noexcept_needs_constant_expression,
-          /*AllowFold*/false);
-      if (NoexceptExpr.isInvalid())
-        return true;
-    }
-
-    if (ESI.NoexceptExpr != NoexceptExpr.get())
-      Changed = true;
-    ESI.NoexceptExpr = NoexceptExpr.get();
-  }
-
-  if (ESI.Type != EST_Dynamic)
-    return false;
-
-  // Instantiate a dynamic exception specification's type.
-  for (QualType T : ESI.Exceptions) {
-    if (const PackExpansionType *PackExpansion =
-            T->getAs<PackExpansionType>()) {
-      Changed = true;
-
-      // We have a pack expansion. Instantiate it.
-      SmallVector<UnexpandedParameterPack, 2> Unexpanded;
-      SemaRef.collectUnexpandedParameterPacks(PackExpansion->getPattern(),
-                                              Unexpanded);
-      assert(!Unexpanded.empty() && "Pack expansion without parameter packs?");
-
-      // Determine whether the set of unexpanded parameter packs can and
-      // should
-      // be expanded.
-      bool Expand = false;
-      bool RetainExpansion = false;
-      Optional<unsigned> NumExpansions = PackExpansion->getNumExpansions();
-      // FIXME: Track the location of the ellipsis (and track source location
-      // information for the types in the exception specification in general).
-      if (getDerived().TryExpandParameterPacks(
-              Loc, SourceRange(), Unexpanded, Expand,
-              RetainExpansion, NumExpansions))
-        return true;
-
-      if (!Expand) {
-        // We can't expand this pack expansion into separate arguments yet;
-        // just substitute into the pattern and create a new pack expansion
-        // type.
-        Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), -1);
-        QualType U = getDerived().TransformType(PackExpansion->getPattern());
-        if (U.isNull())
-          return true;
-
-        U = SemaRef.Context.getPackExpansionType(U, NumExpansions);
-        Exceptions.push_back(U);
-        continue;
-      }
-
-      // Substitute into the pack expansion pattern for each slice of the
-      // pack.
-      for (unsigned ArgIdx = 0; ArgIdx != *NumExpansions; ++ArgIdx) {
-        Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), ArgIdx);
-
-        QualType U = getDerived().TransformType(PackExpansion->getPattern());
-        if (U.isNull() || SemaRef.CheckSpecifiedExceptionType(U, Loc))
-          return true;
-
-        Exceptions.push_back(U);
-      }
-    } else {
-      QualType U = getDerived().TransformType(T);
-      if (U.isNull() || SemaRef.CheckSpecifiedExceptionType(U, Loc))
-        return true;
-      if (T != U)
-        Changed = true;
-
-      Exceptions.push_back(U);
-    }
-  }
-
-  ESI.Exceptions = Exceptions;
-  return false;
 }
 
 template<typename Derived>
@@ -9123,13 +9005,9 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
     // transformed parameters.
 
     TypeLocBuilder NewCallOpTLBuilder;
-    SmallVector<QualType, 4> ExceptionStorage;
-    QualType NewCallOpType = TransformFunctionProtoType(
-        NewCallOpTLBuilder, OldCallOpFPTL, nullptr, 0,
-        [&](FunctionProtoType::ExceptionSpecInfo &ESI, bool &Changed) {
-          return TransformExceptionSpec(OldCallOpFPTL.getBeginLoc(), ESI,
-                                        ExceptionStorage, Changed);
-        });
+    QualType NewCallOpType = TransformFunctionProtoType(NewCallOpTLBuilder, 
+                                                        OldCallOpFPTL, 
+                                                        nullptr, 0);
     NewCallOpTSI = NewCallOpTLBuilder.getTypeSourceInfo(getSema().Context,
                                                         NewCallOpType);
   }
