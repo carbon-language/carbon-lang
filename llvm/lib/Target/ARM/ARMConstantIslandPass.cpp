@@ -1309,7 +1309,12 @@ void ARMConstantIslands::createNewWater(unsigned CPUserIndex,
   // Back past any possible branches (allow for a conditional and a maximally
   // long unconditional).
   if (BaseInsertOffset + 8 >= UserBBI.postOffset()) {
-    BaseInsertOffset = UserBBI.postOffset() - UPad - 8;
+    // Ensure BaseInsertOffset is larger than the offset of the instruction
+    // following UserMI so that the loop which searches for the split point
+    // iterates at least once.
+    BaseInsertOffset =
+        std::max(UserBBI.postOffset() - UPad - 8,
+                 UserOffset + TII->GetInstSizeInBytes(UserMI) + 1);
     DEBUG(dbgs() << format("Move inside block: %#x\n", BaseInsertOffset));
   }
   unsigned EndInsertOffset = BaseInsertOffset + 4 + UPad +
