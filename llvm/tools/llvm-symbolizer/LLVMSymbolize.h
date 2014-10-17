@@ -39,13 +39,14 @@ public:
     bool PrintInlining : 1;
     bool Demangle : 1;
     std::string DefaultArch;
+    std::vector<std::string> DsymHints;
     Options(bool UseSymbolTable = true,
             FunctionNameKind PrintFunctions = FunctionNameKind::LinkageName,
             bool PrintInlining = true, bool Demangle = true,
             std::string DefaultArch = "")
-        : UseSymbolTable(UseSymbolTable), PrintFunctions(PrintFunctions),
-          PrintInlining(PrintInlining), Demangle(Demangle),
-          DefaultArch(DefaultArch) {}
+        : UseSymbolTable(UseSymbolTable),
+          PrintFunctions(PrintFunctions), PrintInlining(PrintInlining),
+          Demangle(Demangle), DefaultArch(DefaultArch) {}
   };
 
   LLVMSymbolizer(const Options &Opts = Options()) : Opts(Opts) {}
@@ -62,11 +63,15 @@ public:
   void flush();
   static std::string DemangleName(const std::string &Name);
 private:
-  typedef std::pair<Binary*, Binary*> BinaryPair;
+  typedef std::pair<ObjectFile*, ObjectFile*> ObjectPair;
 
   ModuleInfo *getOrCreateModuleInfo(const std::string &ModuleName);
-  /// \brief Returns pair of pointers to binary and debug binary.
-  BinaryPair getOrCreateBinary(const std::string &Path);
+  ObjectFile *lookUpDsymFile(const std::string &Path, const MachOObjectFile *ExeObj,
+                             const std::string &ArchName);
+
+  /// \brief Returns pair of pointers to object and debug object.
+  ObjectPair getOrCreateObjects(const std::string &Path,
+                                const std::string &ArchName);
   /// \brief Returns a parsed object file for a given architecture in a
   /// universal binary (or the binary itself if it is an object file).
   ObjectFile *getObjectFileFromBinary(Binary *Bin, const std::string &ArchName);
@@ -83,9 +88,10 @@ private:
 
   // Owns module info objects.
   std::map<std::string, ModuleInfo *> Modules;
-  std::map<std::string, BinaryPair> BinaryForPath;
   std::map<std::pair<MachOUniversalBinary *, std::string>, ObjectFile *>
       ObjectFileForArch;
+  std::map<std::pair<std::string, std::string>, ObjectPair>
+      ObjectPairForPathArch;
 
   Options Opts;
   static const char kBadString[];
