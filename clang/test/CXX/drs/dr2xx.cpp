@@ -467,7 +467,7 @@ namespace dr243 { // dr243: yes
   A a2 = b; // expected-error {{ambiguous}}
 }
 
-namespace dr244 { // dr244: 3.5
+namespace dr244 { // dr244: partial
   struct B {}; struct D : B {}; // expected-note {{here}}
 
   D D_object;
@@ -484,6 +484,28 @@ namespace dr244 { // dr244: 3.5
     B_ptr->B_alias::~B_alias();
     B_ptr->dr244::~B(); // expected-error {{refers to a member in namespace}}
     B_ptr->dr244::~B_alias(); // expected-error {{refers to a member in namespace}}
+  }
+
+  namespace N {
+    template<typename T> struct E {};
+    typedef E<int> F;
+  }
+  void g(N::F f) {
+    typedef N::F G;
+    f.~G();
+    f.G::~E();
+    f.G::~F(); // expected-error {{expected the class name after '~' to name a destructor}}
+    f.G::~G();
+    // This is technically ill-formed; E is looked up in 'N::' and names the
+    // class template, not the injected-class-name of the class. But that's
+    // probably a bug in the standard.
+    f.N::F::~E();
+    // This is valid; we look up the second F in the same scope in which we
+    // found the first one, that is, 'N::'.
+    f.N::F::~F(); // FIXME: expected-error {{expected the class name after '~' to name a destructor}}
+    // This is technically ill-formed; G is looked up in 'N::' and is not found;
+    // as above, this is probably a bug in the standard.
+    f.N::F::~G();
   }
 }
 
