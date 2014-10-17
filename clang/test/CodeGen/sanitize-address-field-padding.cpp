@@ -16,7 +16,7 @@
 // CHECK: -fsanitize-address-field-padding ignored for Negative4 because it is trivially copyable
 // CHECK: -fsanitize-address-field-padding ignored for Negative5 because it is packed
 // CHECK: -fsanitize-address-field-padding ignored for SomeNamespace::BlacklistedByName because it is blacklisted
-// CHECK:  -fsanitize-address-field-padding ignored for ExternCStruct because it is not C++
+// CHECK: -fsanitize-address-field-padding ignored for ExternCStruct because it is not C++
 //
 // FILE_BLACKLIST: -fsanitize-address-field-padding ignored for Positive1 because it is in a blacklisted file
 // FILE_BLACKLIST-NOT: __asan_poison_intra_object_redzone
@@ -120,7 +120,7 @@ class ExternCStruct {
 ExternCStruct extern_C_struct;
 
 // CTOR
-// CHECK-LABEL: define linkonce_odr void @_ZN9Positive1C1Ev
+// CHECK-LABEL: define linkonce_odr void {{.*}}Positive1
 // CHECK: call void @__asan_poison_intra_object_redzone({{.*}}12)
 // CHECK: call void @__asan_poison_intra_object_redzone({{.*}}15)
 // CHECK: call void @__asan_poison_intra_object_redzone({{.*}}12)
@@ -128,8 +128,8 @@ ExternCStruct extern_C_struct;
 // CHECK: call void @__asan_poison_intra_object_redzone({{.*}}8)
 // CHECK-NOT: __asan_poison_intra_object_redzone
 // CHECK: ret void
+//
 // DTOR
-// CHECK-LABEL: define linkonce_odr void @_ZN9Positive1D1Ev
 // CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}12)
 // CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}15)
 // CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}12)
@@ -137,16 +137,3 @@ ExternCStruct extern_C_struct;
 // CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}8)
 // CHECK-NOT: __asan_unpoison_intra_object_redzone
 // CHECK: ret void
-//
-// CHECK-LABEL: define linkonce_odr void @_ZN9Negative1C1Ev
-// CHECK-NOT: call void @__asan_poison_intra_object_redzone
-// CHECK: ret void
-//
-// CHECK-LABEL: define linkonce_odr void @_ZN9Negative2C1Ev
-// CHECK-NOT: call void @__asan_poison_intra_object_redzone
-// CHECK: ret void
-//
-// CHECK-LABEL: define linkonce_odr void @_ZN9Negative4C1Ev
-// CHECK-NOT: call void @__asan_poison_intra_object_redzone
-// CHECK: ret void
-
