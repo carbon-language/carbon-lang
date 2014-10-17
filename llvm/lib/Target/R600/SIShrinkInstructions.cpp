@@ -130,7 +130,7 @@ static void foldImmediates(MachineInstr &MI, const SIInstrInfo *TII,
 
   // Only one literal constant is allowed per instruction, so if src0 is a
   // literal constant then we can't do any folding.
-  if (Src0->isImm() && TII->isLiteralConstant(*Src0))
+  if ((Src0->isImm() || Src0->isFPImm()) && TII->isLiteralConstant(*Src0))
     return;
 
 
