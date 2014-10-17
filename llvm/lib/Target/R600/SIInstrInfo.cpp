@@ -694,21 +694,26 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
                                            AMDGPU::OpName::src0);
   assert(Src0Idx != -1 && "Should always have src0 operand");
 
-  if (!MI->getOperand(Src0Idx).isReg())
+  MachineOperand &Src0 = MI->getOperand(Src0Idx);
+  if (!Src0.isReg())
     return nullptr;
 
   int Src1Idx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
                                            AMDGPU::OpName::src1);
-
-  // Make sure it s legal to commute operands for VOP2.
-  if ((Src1Idx != -1) && isVOP2(MI->getOpcode()) &&
-      (!isOperandLegal(MI, Src0Idx, &MI->getOperand(Src1Idx)) ||
-       !isOperandLegal(MI, Src1Idx, &MI->getOperand(Src0Idx))))
+  if (Src1Idx == -1)
     return nullptr;
 
-  if (Src1Idx != -1 && !MI->getOperand(Src1Idx).isReg()) {
+  MachineOperand &Src1 = MI->getOperand(Src1Idx);
+
+  // Make sure it s legal to commute operands for VOP2.
+  if (isVOP2(MI->getOpcode()) &&
+      (!isOperandLegal(MI, Src0Idx, &Src1) ||
+       !isOperandLegal(MI, Src1Idx, &Src0)))
+    return nullptr;
+
+  if (!Src1.isReg()) {
     // XXX: Commute instructions with FPImm operands
-    if (NewMI || !MI->getOperand(Src1Idx).isImm() ||
+    if (NewMI || !Src1.isImm() ||
        (!isVOP2(MI->getOpcode()) && !isVOP3(MI->getOpcode()))) {
       return nullptr;
     }
@@ -726,11 +731,11 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
         (Src2Mods && Src2Mods->getImm()))
       return nullptr;
 
-    unsigned Reg = MI->getOperand(Src0Idx).getReg();
-    unsigned SubReg = MI->getOperand(Src0Idx).getSubReg();
-    MI->getOperand(Src0Idx).ChangeToImmediate(MI->getOperand(Src1Idx).getImm());
-    MI->getOperand(Src1Idx).ChangeToRegister(Reg, false);
-    MI->getOperand(Src1Idx).setSubReg(SubReg);
+    unsigned Reg = Src0.getReg();
+    unsigned SubReg = Src0.getSubReg();
+    Src0.ChangeToImmediate(Src1.getImm());
+    Src1.ChangeToRegister(Reg, false);
+    Src1.setSubReg(SubReg);
   } else {
     MI = TargetInstrInfo::commuteInstruction(MI, NewMI);
   }
