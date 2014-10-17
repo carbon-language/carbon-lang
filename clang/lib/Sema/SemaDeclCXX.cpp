@@ -2216,19 +2216,20 @@ namespace {
     // nodes.  These Decls may have been initialized in the prior initializer.
     llvm::SmallVector<ValueDecl*, 4> DeclsToRemove;
     // If non-null, add a note to the warning pointing back to the constructor.
-    const CXXConstructorDecl *Constructor = nullptr;
+    const CXXConstructorDecl *Constructor;
     // Variables to hold state when processing an initializer list.  When
     // InitList is true, special case initialization of FieldDecls matching
     // InitListFieldDecl.
-    bool InitList = false;
-    FieldDecl *InitListFieldDecl = nullptr;
+    bool InitList;
+    FieldDecl *InitListFieldDecl;
     llvm::SmallVector<unsigned, 4> InitFieldIndex;
 
   public:
     typedef EvaluatedExprVisitor<UninitializedFieldVisitor> Inherited;
     UninitializedFieldVisitor(Sema &S,
                               llvm::SmallPtrSetImpl<ValueDecl*> &Decls)
-      : Inherited(S.Context), S(S), Decls(Decls) { }
+      : Inherited(S.Context), S(S), Decls(Decls), Constructor(nullptr),
+        InitList(false), InitListFieldDecl(nullptr) {}
 
     // Returns true if the use of ME is not an uninitialized use.
     bool IsInitListMemberExprInitialized(MemberExpr *ME,
