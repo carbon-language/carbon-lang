@@ -651,8 +651,8 @@ function(configure_lit_site_cfg input output)
   set(HOST_OS ${CMAKE_SYSTEM_NAME})
   set(HOST_ARCH ${CMAKE_SYSTEM_PROCESSOR})
 
-  set(HOST_CC "${CMAKE_C_COMPILER}")
-  set(HOST_CXX "${CMAKE_CXX_COMPILER}")
+  set(HOST_CC "${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
+  set(HOST_CXX "${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_ARG1}")
 
   configure_file(${input} ${output} @ONLY)
 endfunction()
