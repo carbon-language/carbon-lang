@@ -6,10 +6,6 @@
 # RUN: FileCheck %s < %t1
 
         .set noat
-        bc1tl 4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
-        bc1tl $fcc1,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
-        bc1fl 4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
-        bc1fl $fcc1,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
         bc2f  4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
         bc2f  $fcc0,4           # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction
         bc2t  4                 # CHECK: :[[@LINE]]:{{[0-9]+}}: error: unknown instruction

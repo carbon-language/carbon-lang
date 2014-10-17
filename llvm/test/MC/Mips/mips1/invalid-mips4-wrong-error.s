@@ -6,6 +6,8 @@
 # RUN: FileCheck %s < %t1
 
 	.set noat
+        bc1fl     $fcc7,27          # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        bc1tl     $fcc7,27          # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
         ld        $sp,-28645($s1)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
         ldc1      $f11,16391($s0)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
         ldc2      $8,-21181($at)    # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction

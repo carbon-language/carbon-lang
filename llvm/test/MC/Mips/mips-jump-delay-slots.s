@@ -47,6 +47,24 @@
         # CHECK: nop
         beqz $11,1332
 
+        # CHECK: bc1fl 1332
+        # CHECK-NOT: nop
+        bc1fl 1332
+        # CHECK: bc1fl 1332
+        # CHECK-NOT: nop
+        bc1fl $fcc0, 1332
+        # CHECK: bc1fl $fcc3, 1332
+        # CHECK-NOT: nop
+        bc1fl $fcc3, 1332
+        # CHECK: bc1tl 1332
+        # CHECK-NOT: nop
+        bc1tl 1332
+        # CHECK: bc1tl 1332
+        # CHECK-NOT: nop
+        bc1tl $fcc0, 1332
+        # CHECK: bc1tl $fcc3, 1332
+        # CHECK-NOT: nop
+        bc1tl $fcc3, 1332
         # CHECK: beql $9, $6, 1332
         # CHECK-NOT: nop
         beql $9,$6,1332

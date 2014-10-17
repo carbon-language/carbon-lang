@@ -243,14 +243,14 @@ class SWXC1_FT<string opstr, RegisterOperand DRC,
 }
 
 class BC1F_FT<string opstr, DAGOperand opnd, InstrItinClass Itin,
-              SDPatternOperator Op = null_frag>  :
+              SDPatternOperator Op = null_frag, bit DelaySlot = 1> :
   InstSE<(outs), (ins FCCRegsOpnd:$fcc, opnd:$offset),
          !strconcat(opstr, "\t$fcc, $offset"),
          [(MipsFPBrcond Op, FCCRegsOpnd:$fcc, bb:$offset)], Itin,
          FrmFI, opstr> {
   let isBranch = 1;
   let isTerminator = 1;
-  let hasDelaySlot = 1;
+  let hasDelaySlot = DelaySlot;
   let Defs = [AT];
 }
 
@@ -562,8 +562,12 @@ def MIPS_BRANCH_T  : PatLeaf<(i32 1)>;
 
 def BC1F : MMRel, BC1F_FT<"bc1f", brtarget, IIBranch, MIPS_BRANCH_F>,
            BC1F_FM<0, 0>, ISA_MIPS1_NOT_32R6_64R6;
+def BC1FL : MMRel, BC1F_FT<"bc1fl", brtarget, IIBranch, MIPS_BRANCH_F, 0>,
+            BC1F_FM<1, 0>, ISA_MIPS2_NOT_32R6_64R6;
 def BC1T : MMRel, BC1F_FT<"bc1t", brtarget, IIBranch, MIPS_BRANCH_T>,
            BC1F_FM<0, 1>, ISA_MIPS1_NOT_32R6_64R6;
+def BC1TL : MMRel, BC1F_FT<"bc1tl", brtarget, IIBranch, MIPS_BRANCH_T, 0>,
+            BC1F_FM<1, 1>, ISA_MIPS2_NOT_32R6_64R6;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Flag Conditions
@@ -629,8 +633,12 @@ def ExtractElementF64_64 : ExtractElementF64Base<FGR64Opnd>,
 //===----------------------------------------------------------------------===//
 def : MipsInstAlias<"bc1t $offset", (BC1T FCC0, brtarget:$offset)>,
       ISA_MIPS1_NOT_32R6_64R6;
+def : MipsInstAlias<"bc1tl $offset", (BC1TL FCC0, brtarget:$offset)>,
+      ISA_MIPS2_NOT_32R6_64R6;
 def : MipsInstAlias<"bc1f $offset", (BC1F FCC0, brtarget:$offset)>,
       ISA_MIPS1_NOT_32R6_64R6;
+def : MipsInstAlias<"bc1fl $offset", (BC1FL FCC0, brtarget:$offset)>,
+      ISA_MIPS2_NOT_32R6_64R6;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Patterns
