@@ -394,6 +394,7 @@ def atomic_or_global : global_binary_atomic_op<atomic_load_or>;
 def atomic_sub_global : global_binary_atomic_op<atomic_load_sub>;
 def atomic_umax_global : global_binary_atomic_op<atomic_load_umax>;
 def atomic_umin_global : global_binary_atomic_op<atomic_load_umin>;
+def atomic_xor_global : global_binary_atomic_op<atomic_load_xor>;
 
 //===----------------------------------------------------------------------===//
 // Misc Pattern Fragments
