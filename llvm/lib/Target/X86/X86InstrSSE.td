@@ -3939,6 +3939,14 @@ def MOVNTI_64mr : RI<0xC3, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                   PS, Requires<[HasSSE2]>;
 } // SchedRW = [WriteStore]
 
+let Predicates = [HasAVX, NoVLX] in {
+  def : Pat<(alignednontemporalstore (v4i32 VR128:$src), addr:$dst),
+            (VMOVNTPSmr addr:$dst, VR128:$src)>;
+}
+
+def : Pat<(alignednontemporalstore (v4i32 VR128:$src), addr:$dst),
+          (MOVNTPSmr addr:$dst, VR128:$src)>;
+
 } // AddedComplexity
 
 //===----------------------------------------------------------------------===//
