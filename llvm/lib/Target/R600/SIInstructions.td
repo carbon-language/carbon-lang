@@ -1509,16 +1509,12 @@ defm V_CUBETC_F32 : VOP3Inst <vop3<0x146>, "V_CUBETC_F32",
 defm V_CUBEMA_F32 : VOP3Inst <vop3<0x147>, "V_CUBEMA_F32",
   VOP_F32_F32_F32_F32
 >;
-
-let neverHasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
 defm V_BFE_U32 : VOP3Inst <vop3<0x148>, "V_BFE_U32",
   VOP_I32_I32_I32_I32, AMDGPUbfe_u32
 >;
 defm V_BFE_I32 : VOP3Inst <vop3<0x149>, "V_BFE_I32",
   VOP_I32_I32_I32_I32, AMDGPUbfe_i32
 >;
-}
-
 defm V_BFI_B32 : VOP3Inst <vop3<0x14a>, "V_BFI_B32",
   VOP_I32_I32_I32_I32, AMDGPUbfi
 >;
