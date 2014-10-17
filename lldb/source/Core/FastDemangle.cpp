@@ -1010,6 +1010,7 @@ private:
         // This makes substitution et al ... interesting.
         return false;
 
+#if 0 // TODO
         if (*m_read_ptr == 'Y')
             ++m_read_ptr;
 
@@ -1071,6 +1072,7 @@ private:
             ReorderRange (EndRange (qualifier_start_cookie), insert_cookie);
         }
         return true;
+#endif // TODO 
     }
 
     // <array-type> ::= A <positive dimension number> _ <element type>
@@ -1091,6 +1093,7 @@ private:
 
         return false;
 
+#if 0 // TODO
         if (*m_read_ptr == '_')
         {
             ++m_read_ptr;
@@ -1137,6 +1140,7 @@ private:
             Write(']');
             return true;
         }
+#endif // TODO
     }
 
     // <pointer-to-member-type> ::= M <class type> <member type>
@@ -1721,11 +1725,13 @@ private:
         //TODO: grammar for all of this seems unclear...
         return false;
 
+#if 0  // TODO
         if (*m_read_ptr == 'g' && *(m_read_ptr + 1) == 's')
         {
             m_read_ptr += 2;
             WriteNamespaceSeparator();
         }
+#endif // TODO
     }
 
     // <expression> ::= <unary operator-name> <expression>
@@ -2063,7 +2069,7 @@ private:
     ParseName(bool parse_function_params = false,
                    bool parse_discriminator = false)
     {
-        NameState name_state = { parse_function_params };
+        NameState name_state = { parse_function_params, false, false, {0, 0}};
         int name_start_cookie = GetStartCookie();
 
         switch (*m_read_ptr)
