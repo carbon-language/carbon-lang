@@ -1335,6 +1335,14 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
     LayoutField(Field, InsertExtraPadding);
 }
 
+// Rounds the specified size to have it a multiple of the char size.
+static uint64_t
+roundUpSizeToCharAlignment(uint64_t Size,
+                           const ASTContext &Context) {
+  uint64_t CharAlignment = Context.getTargetInfo().getCharAlign();
+  return llvm::RoundUpToAlignment(Size, CharAlignment);
+}
+
 void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
                                              uint64_t TypeSize,
                                              bool FieldPacked,
@@ -1372,7 +1380,9 @@ void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
   uint64_t UnpaddedFieldOffset = getDataSizeInBits() - UnfilledBitsInLastUnit;
 
   if (IsUnion) {
-    setDataSize(std::max(getDataSizeInBits(), FieldSize));
+    uint64_t RoundedFieldSize = roundUpSizeToCharAlignment(FieldSize,
+                                                           Context);
+    setDataSize(std::max(getDataSizeInBits(), RoundedFieldSize));
     FieldOffset = 0;
   } else {
     // The bitfield is allocated starting at the next offset aligned 
@@ -1597,9 +1607,9 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
 
   // For unions, this is just a max operation, as usual.
   if (IsUnion) {
-    // FIXME: I think FieldSize should be TypeSize here.
-    setDataSize(std::max(getDataSizeInBits(), FieldSize));
-
+    uint64_t RoundedFieldSize = roundUpSizeToCharAlignment(FieldSize,
+                                                           Context);
+    setDataSize(std::max(getDataSizeInBits(), RoundedFieldSize));
   // For non-zero-width bitfields in ms_struct structs, allocate a new
   // storage unit if necessary.
   } else if (IsMsStruct && FieldSize) {
