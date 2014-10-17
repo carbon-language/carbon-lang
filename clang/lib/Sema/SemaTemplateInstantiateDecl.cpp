@@ -36,14 +36,24 @@ static bool isDeclWithinFunction(const Decl *D) {
   return false;
 }
 
-bool TemplateDeclInstantiator::SubstQualifier(const DeclaratorDecl *OldDecl,
-                                              DeclaratorDecl *NewDecl) {
+template<typename DeclT>
+static bool SubstQualifier(Sema &SemaRef, const DeclT *OldDecl, DeclT *NewDecl,
+                           const MultiLevelTemplateArgumentList &TemplateArgs) {
   if (!OldDecl->getQualifierLoc())
     return false;
 
+  assert((NewDecl->getFriendObjectKind() ||
+          !OldDecl->getLexicalDeclContext()->isDependentContext()) &&
+         "non-friend with qualified name defined in dependent context");
+  Sema::ContextRAII SavedContext(
+      SemaRef,
+      const_cast<DeclContext *>(NewDecl->getFriendObjectKind()
+                                    ? NewDecl->getLexicalDeclContext()
+                                    : OldDecl->getLexicalDeclContext()));
+
   NestedNameSpecifierLoc NewQualifierLoc
-    = SemaRef.SubstNestedNameSpecifierLoc(OldDecl->getQualifierLoc(),
-                                          TemplateArgs);
+      = SemaRef.SubstNestedNameSpecifierLoc(OldDecl->getQualifierLoc(),
+                                            TemplateArgs);
 
   if (!NewQualifierLoc)
     return true;
@@ -52,20 +62,14 @@ bool TemplateDeclInstantiator::SubstQualifier(const DeclaratorDecl *OldDecl,
   return false;
 }
 
+bool TemplateDeclInstantiator::SubstQualifier(const DeclaratorDecl *OldDecl,
+                                              DeclaratorDecl *NewDecl) {
+  return ::SubstQualifier(SemaRef, OldDecl, NewDecl, TemplateArgs);
+}
+
 bool TemplateDeclInstantiator::SubstQualifier(const TagDecl *OldDecl,
                                               TagDecl *NewDecl) {
-  if (!OldDecl->getQualifierLoc())
-    return false;
-
-  NestedNameSpecifierLoc NewQualifierLoc
-  = SemaRef.SubstNestedNameSpecifierLoc(OldDecl->getQualifierLoc(),
-                                        TemplateArgs);
-
-  if (!NewQualifierLoc)
-    return true;
-
-  NewDecl->setQualifierInfo(NewQualifierLoc);
-  return false;
+  return ::SubstQualifier(SemaRef, OldDecl, NewDecl, TemplateArgs);
 }
 
 // Include attribute instantiation code.
@@ -3497,14 +3501,20 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (PatternDecl->isDefaulted())
     SetDeclDefaulted(Function, PatternDecl->getLocation());
   else {
+    MultiLevelTemplateArgumentList TemplateArgs =
+      getTemplateInstantiationArgs(Function, nullptr, false, PatternDecl);
+
+    // Substitute into the qualifier; we can get a substitution failure here
+    // through evil use of alias templates.
+    // FIXME: Is CurContext correct for this? Should we go to the (instantiation
+    // of the) lexical context of the pattern?
+    SubstQualifier(*this, PatternDecl, Function, TemplateArgs);
+
     ActOnStartOfFunctionDef(nullptr, Function);
 
     // Enter the scope of this instantiation. We don't use
     // PushDeclContext because we don't have a scope.
     Sema::ContextRAII savedContext(*this, Function);
-
-    MultiLevelTemplateArgumentList TemplateArgs =
-      getTemplateInstantiationArgs(Function, nullptr, false, PatternDecl);
 
     addInstantiatedParametersToScope(*this, Function, PatternDecl, Scope,
                                      TemplateArgs);
