@@ -9873,12 +9873,14 @@ EmulateInstructionARM::EmulateSTREX (const uint32_t opcode, const ARMEncoding en
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + t, 0))
                 return false;
         }
+#if 0 // unreachable because if true
         else
         {
             // R[d] = 1;
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + t, 1))
                 return false;
         }
+#endif // unreachable because if true
     }
     return true;
 }
