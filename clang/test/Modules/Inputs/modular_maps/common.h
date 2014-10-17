@@ -1,4 +1,4 @@
 #ifndef COMMON_H
 #define COMMON_H
-const int c = 2;
+const int x = 2;
 #endif

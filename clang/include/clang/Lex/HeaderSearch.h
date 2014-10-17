@@ -231,7 +231,11 @@ class HeaderSearch {
   
   /// \brief Describes whether a given directory has a module map in it.
   llvm::DenseMap<const DirectoryEntry *, bool> DirectoryHasModuleMap;
-  
+
+  /// \brief Set of module map files we've already loaded, and a flag indicating
+  /// whether they were valid or not.
+  llvm::DenseMap<const FileEntry *, bool> LoadedModuleMaps;
+
   /// \brief Uniqued set of framework names, which is used to track which 
   /// headers were included as framework headers.
   llvm::StringSet<llvm::BumpPtrAllocator> FrameworkNames;
