@@ -160,6 +160,8 @@ namespace lld {
 /// other than error_code.
 class dynamic_error_category : public std::error_category {
 public:
+  ~dynamic_error_category() LLVM_NOEXCEPT {}
+
   const char *name() const LLVM_NOEXCEPT override {
     return "lld.dynamic_error";
   }
