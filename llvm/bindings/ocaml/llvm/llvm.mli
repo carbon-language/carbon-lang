@@ -1699,6 +1699,11 @@ val instr_opcode : llvalue -> Opcode.t
     instruction [i]. *)
 val icmp_predicate : llvalue -> Icmp.t option
 
+(** [inst_clone i] returns a copy of instruction [i],
+    The instruction has no parent, and no name.
+    See the method [llvm::Instruction::clone]. *)
+val instr_clone : llvalue -> llvalue
+
 
 (** {7 Operations on call sites} *)
 

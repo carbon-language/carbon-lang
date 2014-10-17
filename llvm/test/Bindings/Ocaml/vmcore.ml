@@ -842,6 +842,24 @@ let test_instructions () =
     insist ("One<-Two<-" = fold_right_instrs rf bb "");
     
     dispose_module m
+  end;
+
+  group "clone instr";
+  begin
+    (* CHECK: %clone = add i32 %0, 2
+     *)
+    let fty = function_type void_type [| i32_type |] in
+    let fn = define_function "BuilderParent" fty m in
+    let bb = entry_block fn in
+    let b = builder_at_end context bb in
+    let p = param fn 0 in
+    let sum = build_add p p "sum" b in
+    let y = const_int i32_type 2 in
+    let clone = instr_clone sum in
+    set_operand clone 0 p;
+    set_operand clone 1 y;
+    insert_into_builder clone "clone" b;
+    ignore (build_ret_void b)
   end
 
 

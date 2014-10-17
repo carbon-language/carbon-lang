@@ -1358,6 +1358,13 @@ CAMLprim value llvm_instr_icmp_predicate(LLVMValueRef Val) {
   CAMLreturn(Val_int(0));
 }
 
+/* llvalue -> llvalue */
+CAMLprim LLVMValueRef llvm_instr_clone(LLVMValueRef Inst) {
+  if (!LLVMIsAInstruction(Inst))
+      failwith("Not an instruction");
+  return LLVMInstructionClone(Inst);
+}
+
 
 /*--... Operations on call sites ...........................................--*/
 
