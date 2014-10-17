@@ -11,8 +11,7 @@ class RvalueReferencesTestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
     
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    #rdar://problem/11479676
-    @expectedFailureClang
+    @expectedFailureClang("rdar://problem/11479676")
     @dsym_test
     def test_with_dsym_and_run_command(self):
         """Test that rvalues are supported in the C++ expression parser"""
@@ -20,9 +19,9 @@ class RvalueReferencesTestCase(TestBase):
         self.static_method_commands()
 
     #rdar://problem/11479676
-    @expectedFailureClang # pr16762: Expression evaluation of an rvalue-reference does not show the correct type.
-    @expectedFailureGcc # GCC (4.7) does not emit correct DWARF tags for rvalue-references
-    @expectedFailureIcc # ICC (13.1, 14-beta) do not emit DW_TAG_rvalue_reference_type.
+    @expectedFailureClang("rdar://problem/11479676 pr16762: Expression evaluation of an rvalue-reference does not show the correct type.")
+    @expectedFailureGcc("GCC (4.7) does not emit correct DWARF tags for rvalue-references")
+    @expectedFailureIcc("ICC (13.1, 14-beta) do not emit DW_TAG_rvalue_reference_type.")
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that rvalues are supported in the C++ expression parser"""

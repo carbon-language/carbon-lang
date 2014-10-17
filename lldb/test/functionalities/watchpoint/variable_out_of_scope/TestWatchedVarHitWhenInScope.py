@@ -21,14 +21,14 @@ class WatchedVariableHitWhenInScopeTestCase(TestBase):
     #
 
     @dsym_test
-    @unittest2.expectedFailure
+    @unittest2.expectedFailure("rdar://problem/18685649")
     def test_watched_var_should_only_hit_when_in_scope_with_dsym(self):
         """Test that a variable watchpoint should only hit when in scope."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.watched_var()
 
-    @unittest2.expectedFailure
+    @unittest2.expectedFailure("rdar://problem/18685649")
     @dwarf_test
     def test_watched_var_should_only_hit_when_in_scope_with_dwarf(self):
         """Test that a variable watchpoint should only hit when in scope."""

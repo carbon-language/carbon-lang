@@ -76,8 +76,7 @@ class SharedLibTestCase(TestBase):
         self.expect("expression --show-types -- *my_foo_ptr", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["(foo)", "(sub_foo)", "other_element = 3"])
 
-    @unittest2.expectedFailure
-    # rdar://problem/10381325
+    @unittest2.expectedFailure("rdar://problem/10381325")
     def frame_var(self):
         """Test that types work when defined in a shared library and forward-declared in the main executable"""
 	self.common_setup()
