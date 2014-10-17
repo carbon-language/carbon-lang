@@ -5370,9 +5370,12 @@ ClangASTType::AddObjCClassProperty (const char *property_name,
                     if (getter && metadata)
                         ClangASTContext::SetMetadata(m_ast, getter, *metadata);
                     
-                    getter->setMethodParams(*m_ast, llvm::ArrayRef<clang::ParmVarDecl*>(), llvm::ArrayRef<clang::SourceLocation>());
+                    if (getter)
+                    {
+                        getter->setMethodParams(*m_ast, llvm::ArrayRef<clang::ParmVarDecl*>(), llvm::ArrayRef<clang::SourceLocation>());
                     
-                    class_interface_decl->addDecl(getter);
+                        class_interface_decl->addDecl(getter);
+                    }
                 }
                 
                 if (!setter_sel.isNull() && !class_interface_decl->lookupInstanceMethod(setter_sel))
@@ -5417,9 +5420,12 @@ ClangASTType::AddObjCClassProperty (const char *property_name,
                                                                   clang::SC_Auto,
                                                                   nullptr));
                     
-                    setter->setMethodParams(*m_ast, llvm::ArrayRef<clang::ParmVarDecl*>(params), llvm::ArrayRef<clang::SourceLocation>());
+                    if (setter)
+                    {
+                        setter->setMethodParams(*m_ast, llvm::ArrayRef<clang::ParmVarDecl*>(params), llvm::ArrayRef<clang::SourceLocation>());
                     
-                    class_interface_decl->addDecl(setter);
+                        class_interface_decl->addDecl(setter);
+                    }
                 }
                 
                 return true;
