@@ -61,6 +61,27 @@ void FlushUnneededASanShadowMemory(uptr p, uptr size) {
     FlushUnneededShadowMemory(shadow_beg, shadow_end - shadow_beg);
 }
 
+void AsanPoisonOrUnpoisonIntraObjectRedzone(uptr ptr, uptr size, bool poison) {
+  uptr end = ptr + size;
+  if (common_flags()->verbosity) {
+    Printf("__asan_%spoison_intra_object_redzone [%p,%p) %zd\n",
+           poison ? "" : "un", ptr, end, size);
+    if (common_flags()->verbosity >= 2)
+      PRINT_CURRENT_STACK();
+  }
+  CHECK(size);
+  CHECK_LE(size, 4096);
+  CHECK(IsAligned(end, SHADOW_GRANULARITY));
+  if (!IsAligned(ptr, SHADOW_GRANULARITY)) {
+    *(u8 *)MemToShadow(ptr) =
+        poison ? static_cast<u8>(ptr % SHADOW_GRANULARITY) : 0;
+    ptr |= SHADOW_GRANULARITY - 1;
+    ptr++;
+  }
+  for (; ptr < end; ptr += SHADOW_GRANULARITY)
+    *(u8*)MemToShadow(ptr) = poison ? kAsanIntraObjectRedzone : 0;
+}
+
 }  // namespace __asan
 
 // ---------------------- Interface ---------------- {{{1
@@ -375,6 +396,17 @@ int __sanitizer_verify_contiguous_container(const void *beg_p,
       return 0;
   return 1;
 }
+
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+void __asan_poison_intra_object_redzone(uptr ptr, uptr size) {
+  AsanPoisonOrUnpoisonIntraObjectRedzone(ptr, size, true);
+}
+
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+void __asan_unpoison_intra_object_redzone(uptr ptr, uptr size) {
+  AsanPoisonOrUnpoisonIntraObjectRedzone(ptr, size, false);
+}
+
 // --- Implementation of LSan-specific functions --- {{{1
 namespace __lsan {
 bool WordIsPoisoned(uptr addr) {

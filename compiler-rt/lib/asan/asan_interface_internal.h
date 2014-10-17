@@ -173,6 +173,10 @@ extern "C" {
   void __asan_poison_cxx_array_cookie(uptr p);
   SANITIZER_INTERFACE_ATTRIBUTE
   uptr __asan_load_cxx_array_cookie(uptr *p);
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __asan_poison_intra_object_redzone(uptr p, uptr size);
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __asan_unpoison_intra_object_redzone(uptr p, uptr size);
 }  // extern "C"
 
 #endif  // ASAN_INTERFACE_INTERNAL_H

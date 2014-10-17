@@ -135,6 +135,7 @@ const int kAsanStackUseAfterScopeMagic = 0xf8;
 const int kAsanGlobalRedzoneMagic = 0xf9;
 const int kAsanInternalHeapMagic = 0xfe;
 const int kAsanArrayCookieMagic = 0xac;
+const int kAsanIntraObjectRedzone = 0xbb;
 
 static const uptr kCurrentStackFrameMagic = 0x41B58AB3;
 static const uptr kRetiredStackFrameMagic = 0x45E0360E;
