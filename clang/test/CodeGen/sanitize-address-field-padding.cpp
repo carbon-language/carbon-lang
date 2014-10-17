@@ -39,6 +39,23 @@ Positive1 positive1;
 // Positive1 with extra paddings
 // CHECK: type { i32, [12 x i8], i8, [15 x i8], i32, [12 x i8], [6 x i16], [12 x i8], i64, [8 x i8] }
 
+struct VirtualBase {
+  int foo;
+};
+
+class ClassWithVirtualBase : public virtual VirtualBase {
+ public:
+  ClassWithVirtualBase() {}
+  ~ClassWithVirtualBase() {}
+  int make_it_non_standard_layout;
+ private:
+  char x[7];
+  char y[9];
+};
+
+ClassWithVirtualBase class_with_virtual_base;
+
+
 class Negative1 {
  public:
   Negative1() {}
@@ -137,3 +154,12 @@ ExternCStruct extern_C_struct;
 // CHECK: call void @__asan_unpoison_intra_object_redzone({{.*}}8)
 // CHECK-NOT: __asan_unpoison_intra_object_redzone
 // CHECK: ret void
+//
+//
+// CHECK-LABEL: define linkonce_odr void @_ZN20ClassWithVirtualBaseC1Ev
+// CHECK: call void @__asan_poison_intra_object_redzone({{.*}} 12)
+// CHECK: call void @__asan_poison_intra_object_redzone({{.*}} 9)
+// CHECK: call void @__asan_poison_intra_object_redzone({{.*}} 15)
+// CHECK-NOT: __asan_poison_intra_object_redzone
+// CHECK: ret void
+//

@@ -750,9 +750,7 @@ void CodeGenFunction::EmitAsanPrologueOrEpilogue(bool Prologue) {
 
   llvm::Value *ThisPtr = LoadCXXThis();
   ThisPtr = Builder.CreatePtrToInt(ThisPtr, IntPtrTy);
-  QualType RecordTy = Context.getTypeDeclType(ClassDecl);
-  uint64_t TypeSize = Context.getTypeSizeInChars(RecordTy).getQuantity();
-
+  uint64_t TypeSize = Info.getNonVirtualSize().getQuantity();
   // For each field check if it has sufficient padding,
   // if so (un)poison it with a call.
   for (size_t i = 0; i < SSV.size(); i++) {
