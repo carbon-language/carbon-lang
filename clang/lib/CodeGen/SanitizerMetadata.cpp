@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 #include "SanitizerMetadata.h"
 #include "CodeGenModule.h"
+#include "clang/AST/Type.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Constants.h"
 
@@ -22,11 +23,12 @@ SanitizerMetadata::SanitizerMetadata(CodeGenModule &CGM) : CGM(CGM) {}
 
 void SanitizerMetadata::reportGlobalToASan(llvm::GlobalVariable *GV,
                                            SourceLocation Loc, StringRef Name,
-                                           bool IsDynInit, bool IsBlacklisted) {
+                                           QualType Ty, bool IsDynInit,
+                                           bool IsBlacklisted) {
   if (!CGM.getLangOpts().Sanitize.Address)
     return;
-  IsDynInit &= !CGM.getContext().getSanitizerBlacklist().isIn(*GV, "init");
-  IsBlacklisted |= CGM.getContext().getSanitizerBlacklist().isIn(*GV);
+  IsDynInit &= !CGM.isInSanitizerBlacklist(GV, Loc, Ty, "init");
+  IsBlacklisted |= CGM.isInSanitizerBlacklist(GV, Loc, Ty);
 
   llvm::Value *LocDescr = nullptr;
   llvm::Value *GlobalName = nullptr;
@@ -57,14 +59,14 @@ void SanitizerMetadata::reportGlobalToASan(llvm::GlobalVariable *GV,
   std::string QualName;
   llvm::raw_string_ostream OS(QualName);
   D.printQualifiedName(OS);
-  reportGlobalToASan(GV, D.getLocation(), OS.str(), IsDynInit);
+  reportGlobalToASan(GV, D.getLocation(), OS.str(), D.getType(), IsDynInit);
 }
 
 void SanitizerMetadata::disableSanitizerForGlobal(llvm::GlobalVariable *GV) {
   // For now, just make sure the global is not modified by the ASan
   // instrumentation.
   if (CGM.getLangOpts().Sanitize.Address)
-    reportGlobalToASan(GV, SourceLocation(), "", false, true);
+    reportGlobalToASan(GV, SourceLocation(), "", QualType(), false, true);
 }
 
 void SanitizerMetadata::disableSanitizerForInstruction(llvm::Instruction *I) {

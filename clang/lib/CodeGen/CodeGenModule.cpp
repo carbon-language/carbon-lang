@@ -1186,6 +1186,34 @@ bool CodeGenModule::isInSanitizerBlacklist(llvm::Function *Fn,
   return false;
 }
 
+bool CodeGenModule::isInSanitizerBlacklist(llvm::GlobalVariable *GV,
+                                           SourceLocation Loc, QualType Ty,
+                                           StringRef Category) const {
+  // For now globals can be blacklisted only in ASan.
+  if (!LangOpts.Sanitize.Address)
+    return false;
+  const auto &SanitizerBL = getContext().getSanitizerBlacklist();
+  if (SanitizerBL.isBlacklistedGlobal(GV->getName(), Category))
+    return true;
+  if (SanitizerBL.isBlacklistedLocation(Loc, Category))
+    return true;
+  // Check global type.
+  if (!Ty.isNull()) {
+    // Drill down the array types: if global variable of a fixed type is
+    // blacklisted, we also don't instrument arrays of them.
+    while (auto AT = dyn_cast<ArrayType>(Ty.getTypePtr()))
+      Ty = AT->getElementType();
+    Ty = Ty.getCanonicalType().getUnqualifiedType();
+    // We allow to blacklist only record types (classes, structs etc.)
+    if (Ty->isRecordType()) {
+      std::string TypeStr = Ty.getAsString(getContext().getPrintingPolicy());
+      if (SanitizerBL.isBlacklistedType(TypeStr, Category))
+        return true;
+    }
+  }
+  return false;
+}
+
 bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
   // Never defer when EmitAllDecls is specified.
   if (LangOpts.EmitAllDecls)
@@ -2800,7 +2828,8 @@ CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S,
   if (Entry)
     *Entry = GV;
 
-  SanitizerMD->reportGlobalToASan(GV, S->getStrTokenLoc(0), "<string literal>");
+  SanitizerMD->reportGlobalToASan(GV, S->getStrTokenLoc(0), "<string literal>",
+                                  QualType());
   return GV;
 }
 

@@ -21,10 +21,6 @@
 #include "llvm/Support/SpecialCaseList.h"
 #include <memory>
 
-namespace llvm {
-class GlobalVariable;
-}
-
 namespace clang {
 
 class SanitizerBlacklist {
@@ -33,8 +29,8 @@ class SanitizerBlacklist {
 
 public:
   SanitizerBlacklist(StringRef BlacklistPath, SourceManager &SM);
-  bool isIn(const llvm::GlobalVariable &G,
-            StringRef Category = StringRef()) const;
+  bool isBlacklistedGlobal(StringRef GlobalName,
+                           StringRef Category = StringRef()) const;
   bool isBlacklistedType(StringRef MangledTypeName,
                          StringRef Category = StringRef()) const;
   bool isBlacklistedFunction(StringRef FunctionName) const;

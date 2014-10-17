@@ -1048,6 +1048,10 @@ public:
 
   bool isInSanitizerBlacklist(llvm::Function *Fn, SourceLocation Loc) const;
 
+  bool isInSanitizerBlacklist(llvm::GlobalVariable *GV, SourceLocation Loc,
+                              QualType Ty,
+                              StringRef Category = StringRef()) const;
+
   SanitizerMetadata *getSanitizerMetadata() {
     return SanitizerMD.get();
   }
