@@ -187,17 +187,28 @@ void DelayImportDirectoryAtom::addRelocations(
   for (int i = 0, e = sharedAtoms.size(); i < e; ++i) {
     const DefinedAtom *loader = new (_alloc) DelayLoaderAtom(
         context, addrTable[i], this, delayLoadHelper);
-    addDir32Reloc(addrTable[i], loader, context.ctx.getMachineType(), 0);
+    addDir64Reloc(addrTable[i], loader, context.ctx.getMachineType(), 0);
   }
 }
 
 DelayLoaderAtom::DelayLoaderAtom(IdataContext &context, const Atom *impAtom,
                                  const Atom *descAtom, const Atom *delayLoadHelperAtom)
-    : IdataAtom(context, createContent()) {
+    : IdataAtom(context, createContent(context.ctx.getMachineType())) {
   MachineTypes machine = context.ctx.getMachineType();
-  addDir32Reloc(this, impAtom, machine, 3);
-  addDir32Reloc(this, descAtom, machine, 8);
-  addRel32Reloc(this, delayLoadHelperAtom, machine, 13);
+  switch (machine) {
+  case llvm::COFF::IMAGE_FILE_MACHINE_I386:
+    addDir32Reloc(this, impAtom, machine, 3);
+    addDir32Reloc(this, descAtom, machine, 8);
+    addRel32Reloc(this, delayLoadHelperAtom, machine, 13);
+    break;
+  case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
+    addRel32Reloc(this, impAtom, machine, 36);
+    addRel32Reloc(this, descAtom, machine, 43);
+    addRel32Reloc(this, delayLoadHelperAtom, machine, 48);
+    break;
+  default:
+    llvm::report_fatal_error("unsupported machine type");
+  }
 }
 
 // DelayLoaderAtom contains a wrapper function for __delayLoadHelper2.
@@ -213,9 +224,9 @@ DelayLoaderAtom::DelayLoaderAtom(IdataContext &context, const Atom *impAtom,
 // function.
 //
 // __delayLoadHelper2 is defined in delayimp.lib.
-std::vector<uint8_t> DelayLoaderAtom::createContent() const {
-  // NB: x86 only for now. ECX and EDX are caller-save.
-  static const uint8_t array[] = {
+std::vector<uint8_t>
+DelayLoaderAtom::createContent(MachineTypes machine) const {
+  static const uint8_t x86[] = {
     0x51,              // push  ecx
     0x52,              // push  edx
     0x68, 0, 0, 0, 0,  // push  offset ___imp__<FUNCNAME>
@@ -225,7 +236,38 @@ std::vector<uint8_t> DelayLoaderAtom::createContent() const {
     0x59,              // pop   ecx
     0xFF, 0xE0,        // jmp   eax
   };
-  return std::vector<uint8_t>(array, array + sizeof(array));
+  static const uint8_t x64[] = {
+    0x51,                               // push    rcx
+    0x52,                               // push    rdx
+    0x41, 0x50,                         // push    r8
+    0x41, 0x51,                         // push    r9
+    0x48, 0x83, 0xEC, 0x48,             // sub     rsp, 48h
+    0x66, 0x0F, 0x7F, 0x04, 0x24,       // movdqa  xmmword ptr [rsp], xmm0
+    0x66, 0x0F, 0x7F, 0x4C, 0x24, 0x10, // movdqa  xmmword ptr [rsp+10h], xmm1
+    0x66, 0x0F, 0x7F, 0x54, 0x24, 0x20, // movdqa  xmmword ptr [rsp+20h], xmm2
+    0x66, 0x0F, 0x7F, 0x5C, 0x24, 0x30, // movdqa  xmmword ptr [rsp+30h], xmm3
+    0x48, 0x8D, 0x15, 0, 0, 0, 0,       // lea     rdx, [__imp_<FUNCNAME>]
+    0x48, 0x8D, 0x0D, 0, 0, 0, 0,       // lea     rcx, [___DELAY_IMPORT_...]
+    0xE8, 0, 0, 0, 0,                   // call    __delayLoadHelper2
+    0x66, 0x0F, 0x6F, 0x04, 0x24,       // movdqa  xmm0, xmmword ptr [rsp]
+    0x66, 0x0F, 0x6F, 0x4C, 0x24, 0x10, // movdqa  xmm1, xmmword ptr [rsp+10h]
+    0x66, 0x0F, 0x6F, 0x54, 0x24, 0x20, // movdqa  xmm2, xmmword ptr [rsp+20h]
+    0x66, 0x0F, 0x6F, 0x5C, 0x24, 0x30, // movdqa  xmm3, xmmword ptr [rsp+30h]
+    0x48, 0x83, 0xC4, 0x48,             // add     rsp, 48h
+    0x41, 0x59,                         // pop     r9
+    0x41, 0x58,                         // pop     r8
+    0x5A,                               // pop     rdx
+    0x59,                               // pop     rcx
+    0xFF, 0xE0,                         // jmp     rax
+  };
+  switch (machine) {
+  case llvm::COFF::IMAGE_FILE_MACHINE_I386:
+    return std::vector<uint8_t>(x86, x86 + sizeof(x86));
+  case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
+    return std::vector<uint8_t>(x64, x64 + sizeof(x64));
+  default:
+    llvm::report_fatal_error("unsupported machine type");
+  }
 }
 
 } // namespace idata

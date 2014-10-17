@@ -23,6 +23,22 @@ static void addReloc(COFFBaseDefinedAtom *atom, const Atom *target,
       target, offsetInAtom, relType, arch));
 }
 
+void addDir64Reloc(COFFBaseDefinedAtom *atom, const Atom *target,
+                   llvm::COFF::MachineTypes machine, size_t offsetInAtom) {
+  switch (machine) {
+  case llvm::COFF::IMAGE_FILE_MACHINE_I386:
+    addReloc(atom, target, offsetInAtom, Reference::KindArch::x86,
+             llvm::COFF::IMAGE_REL_I386_DIR32);
+    return;
+  case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
+    addReloc(atom, target, offsetInAtom, Reference::KindArch::x86_64,
+             llvm::COFF::IMAGE_REL_AMD64_ADDR64);
+    return;
+  default:
+    llvm_unreachable("unsupported machine type");
+  }
+}
+
 void addDir32Reloc(COFFBaseDefinedAtom *atom, const Atom *target,
                    llvm::COFF::MachineTypes machine, size_t offsetInAtom) {
   switch (machine) {

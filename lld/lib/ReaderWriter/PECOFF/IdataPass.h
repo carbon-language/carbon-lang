@@ -185,7 +185,7 @@ public:
   Alignment alignment() const override { return Alignment(0); }
 
 private:
-  std::vector<uint8_t> createContent() const;
+  std::vector<uint8_t> createContent(MachineTypes machine) const;
 };
 
 } // namespace idata
