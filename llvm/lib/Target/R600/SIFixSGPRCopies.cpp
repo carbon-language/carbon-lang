@@ -243,7 +243,7 @@ bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
         // we must move it to the VALU, because the SGPR operands will
         // all end up being assigned the same register, which means
         // there is a potential for a conflict if different threads take
-	// different control flow paths.
+        // different control flow paths.
         //
         // For Example:
         //
@@ -305,8 +305,7 @@ bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
             !hasVGPROperands(MI, TRI))
           continue;
 
-        DEBUG(dbgs() << "Fixing REG_SEQUENCE:\n");
-        DEBUG(MI.print(dbgs()));
+        DEBUG(dbgs() << "Fixing REG_SEQUENCE: " << MI);
 
         TII->moveToVALU(MI);
         break;
@@ -318,8 +317,7 @@ bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
         Src1RC = MRI.getRegClass(MI.getOperand(2).getReg());
         if (TRI->isSGPRClass(DstRC) &&
             (TRI->hasVGPRs(Src0RC) || TRI->hasVGPRs(Src1RC))) {
-          DEBUG(dbgs() << " Fixing INSERT_SUBREG:\n");
-          DEBUG(MI.print(dbgs()));
+          DEBUG(dbgs() << " Fixing INSERT_SUBREG: " << MI);
           TII->moveToVALU(MI);
         }
         break;
