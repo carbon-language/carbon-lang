@@ -4558,7 +4558,7 @@ SDValue AArch64TargetLowering::ReconstructShuffle(SDValue Op,
     SDValue SourceVec = V.getOperand(0);
     auto Source = std::find(Sources.begin(), Sources.end(), SourceVec);
     if (Source == Sources.end())
-      Sources.push_back(ShuffleSourceInfo(SourceVec));
+      Source = Sources.insert(Sources.end(), ShuffleSourceInfo(SourceVec));
 
     // Update the minimum and maximum lane number seen.
     unsigned EltNo = cast<ConstantSDNode>(V.getOperand(1))->getZExtValue();
@@ -4597,8 +4597,8 @@ SDValue AArch64TargetLowering::ReconstructShuffle(SDValue Op,
     // This stage of the search produces a source with the same element type as
     // the original, but with a total width matching the BUILD_VECTOR output.
     EVT EltVT = SrcVT.getVectorElementType();
-    EVT DestVT = EVT::getVectorVT(*DAG.getContext(), EltVT,
-                                  VT.getSizeInBits() / EltVT.getSizeInBits());
+    unsigned NumSrcElts = VT.getSizeInBits() / EltVT.getSizeInBits();
+    EVT DestVT = EVT::getVectorVT(*DAG.getContext(), EltVT, NumSrcElts);
 
     if (SrcVT.getSizeInBits() < VT.getSizeInBits()) {
       assert(2 * SrcVT.getSizeInBits() == VT.getSizeInBits());
@@ -4612,18 +4612,18 @@ SDValue AArch64TargetLowering::ReconstructShuffle(SDValue Op,
 
     assert(SrcVT.getSizeInBits() == 2 * VT.getSizeInBits());
 
-    if (Src.MaxElt - Src.MinElt >= NumElts) {
+    if (Src.MaxElt - Src.MinElt >= NumSrcElts) {
       // Span too large for a VEXT to cope
       return SDValue();
     }
 
-    if (Src.MinElt >= NumElts) {
+    if (Src.MinElt >= NumSrcElts) {
       // The extraction can just take the second half
       Src.ShuffleVec =
           DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, DestVT, Src.ShuffleVec,
-                      DAG.getIntPtrConstant(NumElts));
-      Src.WindowBase = -NumElts;
-    } else if (Src.MaxElt < NumElts) {
+                      DAG.getIntPtrConstant(NumSrcElts));
+      Src.WindowBase = -NumSrcElts;
+    } else if (Src.MaxElt < NumSrcElts) {
       // The extraction can just take the first half
       Src.ShuffleVec = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, DestVT,
                                    Src.ShuffleVec, DAG.getIntPtrConstant(0));
@@ -4633,7 +4633,7 @@ SDValue AArch64TargetLowering::ReconstructShuffle(SDValue Op,
                                      Src.ShuffleVec, DAG.getIntPtrConstant(0));
       SDValue VEXTSrc2 =
           DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, DestVT, Src.ShuffleVec,
-                      DAG.getIntPtrConstant(NumElts));
+                      DAG.getIntPtrConstant(NumSrcElts));
       unsigned Imm = Src.MinElt * getExtFactor(VEXTSrc1);
 
       Src.ShuffleVec = DAG.getNode(AArch64ISD::EXT, dl, DestVT, VEXTSrc1,
