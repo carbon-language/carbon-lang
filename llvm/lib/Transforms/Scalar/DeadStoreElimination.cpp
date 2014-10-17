@@ -356,15 +356,8 @@ static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
     // If we don't know the sizes of either access, then we can't do a
     // comparison.
     if (Later.Size == AliasAnalysis::UnknownSize ||
-        Earlier.Size == AliasAnalysis::UnknownSize) {
-      // If we have no DataLayout information around, then the size of the store
-      // is inferrable from the pointee type.  If they are the same type, then
-      // we know that the store is safe.
-      if (DL == nullptr && Later.Ptr->getType() == Earlier.Ptr->getType())
-        return OverwriteComplete;
-
+        Earlier.Size == AliasAnalysis::UnknownSize)
       return OverwriteUnknown;
-    }
 
     // Make sure that the Later size is >= the Earlier size.
     if (Later.Size >= Earlier.Size)

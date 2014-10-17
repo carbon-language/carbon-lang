@@ -1,4 +1,5 @@
 ; RUN: opt -S -dse < %s | FileCheck %s
+target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 ; If there are two stores to the same location, DSE should be able to remove
 ; the first store if the two stores are separated by no more than 98

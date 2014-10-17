@@ -1,4 +1,5 @@
 ; RUN: opt < %s -tbaa -basicaa -dse -S | FileCheck %s
+target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 ; DSE should make use of TBAA.
 
