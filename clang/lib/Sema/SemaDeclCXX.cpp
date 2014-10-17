@@ -2217,7 +2217,7 @@ namespace {
     llvm::SmallVector<ValueDecl*, 4> DeclsToRemove;
     // If non-null, add a note to the warning pointing back to the constructor.
     const CXXConstructorDecl *Constructor = nullptr;
-    // Varaibles to hold state when processing an initializer list.  When
+    // Variables to hold state when processing an initializer list.  When
     // InitList is true, special case initialization of FieldDecls matching
     // InitListFieldDecl.
     bool InitList = false;
