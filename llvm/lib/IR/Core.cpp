@@ -1888,6 +1888,12 @@ LLVMOpcode LLVMGetInstructionOpcode(LLVMValueRef Inst) {
   return (LLVMOpcode)0;
 }
 
+LLVMValueRef LLVMInstructionClone(LLVMValueRef Inst) {
+  if (Instruction *C = dyn_cast<Instruction>(unwrap(Inst)))
+    return wrap(C->clone());
+  return nullptr;
+}
+
 /*--.. Call and invoke instructions ........................................--*/
 
 unsigned LLVMGetInstructionCallConv(LLVMValueRef Instr) {
