@@ -37,8 +37,8 @@ entry:
 
 ; SMRD load with a 64-bit offset
 ; CHECK-LABEL: {{^}}smrd3:
-; CHECK-DAG: S_MOV_B32 s[[SLO:[0-9]+]], 0
 ; CHECK-DAG: S_MOV_B32 s[[SHI:[0-9]+]], 4
+; CHECK-DAG: S_MOV_B32 s[[SLO:[0-9]+]], 0 ;
 ; FIXME: We don't need to copy these values to VGPRs
 ; CHECK-DAG: V_MOV_B32_e32 v[[VLO:[0-9]+]], s[[SLO]]
 ; CHECK-DAG: V_MOV_B32_e32 v[[VHI:[0-9]+]], s[[SHI]]

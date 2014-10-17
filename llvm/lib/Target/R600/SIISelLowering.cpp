@@ -623,36 +623,6 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MI->eraseFromParent();
     break;
   }
-  case AMDGPU::SI_BUFFER_RSRC: {
-    unsigned SuperReg = MI->getOperand(0).getReg();
-    unsigned Args[4];
-    for (unsigned i = 0, e = 4; i < e; ++i) {
-      MachineOperand &Arg = MI->getOperand(i + 1);
-
-      if (Arg.isReg()) {
-        Args[i] = Arg.getReg();
-        continue;
-      }
-
-      assert(Arg.isImm());
-      unsigned Reg = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
-      BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::S_MOV_B32), Reg)
-              .addImm(Arg.getImm());
-      Args[i] = Reg;
-    }
-    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::REG_SEQUENCE),
-            SuperReg)
-            .addReg(Args[0])
-            .addImm(AMDGPU::sub0)
-            .addReg(Args[1])
-            .addImm(AMDGPU::sub1)
-            .addReg(Args[2])
-            .addImm(AMDGPU::sub2)
-            .addReg(Args[3])
-            .addImm(AMDGPU::sub3);
-    MI->eraseFromParent();
-    break;
-  }
   case AMDGPU::V_SUB_F64: {
     unsigned DestReg = MI->getOperand(0).getReg();
     BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::V_ADD_F64), DestReg)

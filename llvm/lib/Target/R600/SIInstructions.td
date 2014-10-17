@@ -1794,12 +1794,6 @@ def SI_ADDR64_RSRC : InstSI <
   "", []
 >;
 
-def SI_BUFFER_RSRC : InstSI <
-  (outs SReg_128:$srsrc),
-  (ins SReg_32:$ptr_lo, SReg_32:$ptr_hi, SSrc_32:$data_lo, SSrc_32:$data_hi),
-  "", []
->;
-
 def V_SUB_F64 : InstSI <
   (outs VReg_64:$dst),
   (ins VReg_64:$src0, VReg_64:$src1),

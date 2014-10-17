@@ -944,21 +944,38 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc,
   return SelectMUBUFAddr64(Addr, SRsrc, VAddr, Offset);
 }
 
+static SDValue buildSMovImm32(SelectionDAG *DAG, SDLoc DL, uint64_t Val) {
+  SDValue K = DAG->getTargetConstant(Val, MVT::i32);
+  return SDValue(DAG->getMachineNode(AMDGPU::S_MOV_B32, DL, MVT::i32, K), 0);
+}
+
 static SDValue buildRSRC(SelectionDAG *DAG, SDLoc DL, SDValue Ptr,
                          uint32_t RsrcDword1, uint64_t RsrcDword2And3) {
 
   SDValue PtrLo = DAG->getTargetExtractSubreg(AMDGPU::sub0, DL, MVT::i32, Ptr);
   SDValue PtrHi = DAG->getTargetExtractSubreg(AMDGPU::sub1, DL, MVT::i32, Ptr);
-  if (RsrcDword1)
+  if (RsrcDword1) {
     PtrHi = SDValue(DAG->getMachineNode(AMDGPU::S_OR_B32, DL, MVT::i32, PtrHi,
                                     DAG->getConstant(RsrcDword1, MVT::i32)), 0);
+  }
 
-  SDValue DataLo = DAG->getTargetConstant(
-      RsrcDword2And3 & APInt::getAllOnesValue(32).getZExtValue(), MVT::i32);
-  SDValue DataHi = DAG->getTargetConstant(RsrcDword2And3 >> 32, MVT::i32);
+  SDValue DataLo = buildSMovImm32(DAG, DL,
+                                  RsrcDword2And3 & UINT64_C(0xFFFFFFFF));
+  SDValue DataHi = buildSMovImm32(DAG, DL, RsrcDword2And3 >> 32);
 
-  const SDValue Ops[] = { PtrLo, PtrHi, DataLo, DataHi };
-  return SDValue(DAG->getMachineNode(AMDGPU::SI_BUFFER_RSRC, DL,
+  const SDValue Ops[] = {
+    DAG->getTargetConstant(AMDGPU::SReg_128RegClassID, MVT::i32),
+    PtrLo,
+    DAG->getTargetConstant(AMDGPU::sub0, MVT::i32),
+    PtrHi,
+    DAG->getTargetConstant(AMDGPU::sub1, MVT::i32),
+    DataLo,
+    DAG->getTargetConstant(AMDGPU::sub2, MVT::i32),
+    DataHi,
+    DAG->getTargetConstant(AMDGPU::sub3, MVT::i32)
+  };
+
+  return SDValue(DAG->getMachineNode(AMDGPU::REG_SEQUENCE, DL,
                                      MVT::v4i32, Ops), 0);
 }
 
