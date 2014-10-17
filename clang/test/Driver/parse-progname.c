@@ -30,11 +30,13 @@
 // RUN: ln -fs %clang %T/cl.exe
 // RUN: ln -fs %clang %T/clang-cl3.5
 // RUN: ln -fs %clang %T/clang-cl-3.5
-// RUN: %T/clang-cl         -### %s 2>&1 | FileCheck -check-prefix=CLMODE %s
-// RUN: %T/cl               -### %s 2>&1 | FileCheck -check-prefix=CLMODE %s
-// RUN: %T/cl.exe           -### %s 2>&1 | FileCheck -check-prefix=CLMODE %s
-// RUN: %T/clang-cl3.5      -### %s 2>&1 | FileCheck -check-prefix=CLMODE %s
-// RUN: %T/clang-cl-3.5     -### %s 2>&1 | FileCheck -check-prefix=CLMODE %s
+// Note: use -- in front of the filename so it's not mistaken for an option on
+// filesystems that use slashes for dir separators.
+// RUN: %T/clang-cl         -### -- %s 2>&1 | FileCheck -check-prefix=CLMODE %s
+// RUN: %T/cl               -### -- %s 2>&1 | FileCheck -check-prefix=CLMODE %s
+// RUN: %T/cl.exe           -### -- %s 2>&1 | FileCheck -check-prefix=CLMODE %s
+// RUN: %T/clang-cl3.5      -### -- %s 2>&1 | FileCheck -check-prefix=CLMODE %s
+// RUN: %T/clang-cl-3.5     -### -- %s 2>&1 | FileCheck -check-prefix=CLMODE %s
 // CLMODE: "-fdiagnostics-format" "msvc"
 
 
