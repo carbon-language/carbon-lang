@@ -1,4 +1,5 @@
-; RUN: llc -mcpu=pwr7 -O1 -code-model=medium <%s | FileCheck %s
+; RUN: llc -mcpu=pwr7 -O1 -code-model=medium -mattr=-vsx < %s | FileCheck %s
+; RUN: llc -mcpu=pwr7 -O1 -code-model=medium -mattr=+vsx < %s | FileCheck -check-prefix=CHECK-VSX %s
 
 ; Test peephole optimization for medium code model (32-bit TOC offsets)
 ; for loading a value from the constant pool (TOC-relative).
@@ -16,3 +17,10 @@ entry:
 ; CHECK-LABEL: test_double_const:
 ; CHECK: addis [[REG1:[0-9]+]], 2, [[VAR]]@toc@ha
 ; CHECK: lfd {{[0-9]+}}, [[VAR]]@toc@l([[REG1]])
+
+; CHECK-VSX: [[VAR:[a-z0-9A-Z_.]+]]:
+; CHECK-VSX: .quad 4562098671269285104
+; CHECK-VSX-LABEL: test_double_const:
+; CHECK-VSX: addis [[REG1:[0-9]+]], 2, [[VAR]]@toc@ha
+; CHECK-VSX: addi [[REG1]], {{[0-9]+}}, [[VAR]]@toc@l
+; CHECK-VSX: lxsdx {{[0-9]+}}, 0, [[REG1]]

@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=ppc32 | grep fnabs
+; RUN: llc < %s -mattr=-vsx -march=ppc32 | grep fnabs
+; RUN: llc < %s -mattr=+vsx -march=ppc32 | grep xsnabsdp
 
 declare double @fabs(double)
 
