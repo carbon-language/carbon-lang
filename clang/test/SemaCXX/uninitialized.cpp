@@ -1111,4 +1111,112 @@ namespace init_list {
   D d1 = { num, num };
   D d2 = { num, d2.a };
   D d3 = { d3.b, num };  // expected-warning{{uninitialized}}
-};
+
+  // Same as above in member initializer form.
+  struct Awrapper {
+    A a1{1,2};
+    A a2{a2.i1 + 2};  // expected-warning{{uninitialized}}
+    A a3 = {a3.i1 + 2};  // expected-warning{{uninitialized}}
+    A a4 = A{a4.i2 + 2};  // expected-warning{{uninitialized}}
+    Awrapper() {}  // expected-note 3{{in this constructor}}
+    Awrapper(int) :
+      a1{1,2},
+      a2{a2.i1 + 2},  // expected-warning{{uninitialized}}
+      a3{a3.i1 + 2},  // expected-warning{{uninitialized}}
+      a4{a4.i2 + 2}  // expected-warning{{uninitialized}}
+    {}
+  };
+
+  struct Bwrapper {
+    B b1 = { {}, {} };
+    B b2 = { {}, b2.a1 };
+    B b3 = { b3.a1 };  // expected-warning{{uninitialized}}
+    B b4 = { {}, b4.a2} ;  // expected-warning{{uninitialized}}
+    B b5 = { b5.a2 };  // expected-warning{{uninitialized}}
+
+    B b6 = { {b6.a1.i1} };  // expected-warning{{uninitialized}}
+    B b7 = { {0, b7.a1.i1} };
+    B b8 = { {}, {b8.a1.i1} };
+    B b9 = { {}, {0, b9.a1.i1} };
+
+    B b10 = { {b10.a1.i2} };  // expected-warning{{uninitialized}}
+    B b11 = { {0, b11.a1.i2} };  // expected-warning{{uninitialized}}
+    B b12 = { {}, {b12.a1.i2} };
+    B b13 = { {}, {0, b13.a1.i2} };
+
+    B b14 = { {b14.a2.i1} };  // expected-warning{{uninitialized}}
+    B b15 = { {0, b15.a2.i1} };  // expected-warning{{uninitialized}}
+    B b16 = { {}, {b16.a2.i1} };  // expected-warning{{uninitialized}}
+    B b17 = { {}, {0, b17.a2.i1} };
+
+    B b18 = { {b18.a2.i2} };  // expected-warning{{uninitialized}}
+    B b19 = { {0, b19.a2.i2} };  // expected-warning{{uninitialized}}
+    B b20 = { {}, {b20.a2.i2} };  // expected-warning{{uninitialized}}
+    B b21 = { {}, {0, b21.a2.i2} };  // expected-warning{{uninitialized}}
+
+    B b22 = { {b18.a2.i2 + 5} };
+    Bwrapper() {}  // expected-note 13{{in this constructor}}
+    Bwrapper(int) :
+      b1{ {}, {} },
+      b2{ {}, b2.a1 },
+      b3{ b3.a1 },  // expected-warning{{uninitialized}}
+      b4{ {}, b4.a2}, // expected-warning{{uninitialized}}
+      b5{ b5.a2 },  // expected-warning{{uninitialized}}
+
+      b6{ {b6.a1.i1} },  // expected-warning{{uninitialized}}
+      b7{ {0, b7.a1.i1} },
+      b8{ {}, {b8.a1.i1} },
+      b9{ {}, {0, b9.a1.i1} },
+
+      b10{ {b10.a1.i2} },  // expected-warning{{uninitialized}}
+      b11{ {0, b11.a1.i2} },  // expected-warning{{uninitialized}}
+      b12{ {}, {b12.a1.i2} },
+      b13{ {}, {0, b13.a1.i2} },
+
+      b14{ {b14.a2.i1} },  // expected-warning{{uninitialized}}
+      b15{ {0, b15.a2.i1} },  // expected-warning{{uninitialized}}
+      b16{ {}, {b16.a2.i1} },  // expected-warning{{uninitialized}}
+      b17{ {}, {0, b17.a2.i1} },
+
+      b18{ {b18.a2.i2} },  // expected-warning{{uninitialized}}
+      b19{ {0, b19.a2.i2} },  // expected-warning{{uninitialized}}
+      b20{ {}, {b20.a2.i2} },  // expected-warning{{uninitialized}}
+      b21{ {}, {0, b21.a2.i2} },  // expected-warning{{uninitialized}}
+
+      b22{ {b18.a2.i2 + 5} }
+    {}
+  };
+
+  struct Cwrapper {
+    C c1 = { 0, num, 0 };
+    C c2 = { 1, num, c2.b };
+    C c3 = { c3.b, num };  // expected-warning{{uninitialized}}
+    C c4 = { 0, c4.b, 0 };  // expected-warning{{uninitialized}}
+    C c5 = { 0, c5.c, 0 };
+    C c6 = { c6.b, num, 0 };  // expected-warning{{uninitialized}}
+    C c7 = { 0, c7.a, 0 };
+
+    Cwrapper() {} // expected-note 3{{in this constructor}}
+    Cwrapper(int) :
+      c1{ 0, num, 0 },
+      c2{ 1, num, c2.b },
+      c3{ c3.b, num },  // expected-warning{{uninitialized}}
+      c4{ 0, c4.b, 0 },  // expected-warning{{uninitialized}}
+      c5{ 0, c5.c, 0 },
+      c6{ c6.b, num, 0 },  // expected-warning{{uninitialized}}
+      c7{ 0, c7.a, 0 }
+    {}
+  };
+
+  struct Dwrapper {
+    D d1 = { num, num };
+    D d2 = { num, d2.a };
+    D d3 = { d3.b, num }; // expected-warning{{uninitialized}}
+    Dwrapper() {}  // expected-note{{in this constructor}}
+    Dwrapper(int) :
+      d1{ num, num },
+      d2{ num, d2.a },
+      d3{ d3.b, num } // expected-warning{{uninitialized}}
+    {}
+  };
+}

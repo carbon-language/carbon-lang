@@ -2216,12 +2216,60 @@ namespace {
     // nodes.  These Decls may have been initialized in the prior initializer.
     llvm::SmallVector<ValueDecl*, 4> DeclsToRemove;
     // If non-null, add a note to the warning pointing back to the constructor.
-    const CXXConstructorDecl *Constructor;
+    const CXXConstructorDecl *Constructor = nullptr;
+    // Varaibles to hold state when processing an initializer list.  When
+    // InitList is true, special case initialization of FieldDecls matching
+    // InitListFieldDecl.
+    bool InitList = false;
+    FieldDecl *InitListFieldDecl = nullptr;
+    llvm::SmallVector<unsigned, 4> InitFieldIndex;
+
   public:
     typedef EvaluatedExprVisitor<UninitializedFieldVisitor> Inherited;
     UninitializedFieldVisitor(Sema &S,
                               llvm::SmallPtrSetImpl<ValueDecl*> &Decls)
       : Inherited(S.Context), S(S), Decls(Decls) { }
+
+    // Returns true if the use of ME is not an uninitialized use.
+    bool IsInitListMemberExprInitialized(MemberExpr *ME,
+                                         bool CheckReferenceOnly) {
+      llvm::SmallVector<FieldDecl*, 4> Fields;
+      bool ReferenceField = false;
+      while (ME) {
+        FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl());
+        if (!FD)
+          return false;
+        Fields.push_back(FD);
+        if (FD->getType()->isReferenceType())
+          ReferenceField = true;
+        ME = dyn_cast<MemberExpr>(ME->getBase()->IgnoreParenImpCasts());
+      }
+
+      // Binding a reference to an unintialized field is not an
+      // uninitialized use.
+      if (CheckReferenceOnly && !ReferenceField)
+        return true;
+
+      llvm::SmallVector<unsigned, 4> UsedFieldIndex;
+      // Discard the first field since it is the field decl that is being
+      // initialized.
+      for (auto I = Fields.rbegin() + 1, E = Fields.rend(); I != E; ++I) {
+        UsedFieldIndex.push_back((*I)->getFieldIndex());
+      }
+
+      for (auto UsedIter = UsedFieldIndex.begin(),
+                UsedEnd = UsedFieldIndex.end(),
+                OrigIter = InitFieldIndex.begin(),
+                OrigEnd = InitFieldIndex.end();
+           UsedIter != UsedEnd && OrigIter != OrigEnd; ++UsedIter, ++OrigIter) {
+        if (*UsedIter < *OrigIter)
+          return true;
+        if (*UsedIter > *OrigIter)
+          break;
+      }
+
+      return false;
+    }
 
     void HandleMemberExpr(MemberExpr *ME, bool CheckReferenceOnly,
                           bool AddressOf) {
@@ -2235,20 +2283,19 @@ namespace {
       bool AllPODFields = FieldME->getType().isPODType(S.Context);
 
       Expr *Base = ME;
-      while (isa<MemberExpr>(Base)) {
-        ME = cast<MemberExpr>(Base);
+      while (MemberExpr *SubME = dyn_cast<MemberExpr>(Base)) {
 
-        if (isa<VarDecl>(ME->getMemberDecl()))
+        if (isa<VarDecl>(SubME->getMemberDecl()))
           return;
 
-        if (FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl()))
+        if (FieldDecl *FD = dyn_cast<FieldDecl>(SubME->getMemberDecl()))
           if (!FD->isAnonymousStructOrUnion())
-            FieldME = ME;
+            FieldME = SubME;
 
         if (!FieldME->getType().isPODType(S.Context))
           AllPODFields = false;
 
-        Base = ME->getBase()->IgnoreParenImpCasts();
+        Base = SubME->getBase()->IgnoreParenImpCasts();
       }
 
       if (!isa<CXXThisExpr>(Base))
@@ -2264,9 +2311,16 @@ namespace {
 
       const bool IsReference = FoundVD->getType()->isReferenceType();
 
-      // Prevent double warnings on use of unbounded references.
-      if (CheckReferenceOnly && !IsReference)
-        return;
+      if (InitList && !AddressOf && FoundVD == InitListFieldDecl) {
+        // Special checking for initializer lists.
+        if (IsInitListMemberExprInitialized(ME, CheckReferenceOnly)) {
+          return;
+        }
+      } else {
+        // Prevent double warnings on use of unbounded references.
+        if (CheckReferenceOnly && !IsReference)
+          return;
+      }
 
       unsigned diag = IsReference
           ? diag::warn_reference_field_is_uninit
@@ -2326,16 +2380,40 @@ namespace {
       Visit(E);
     }
 
+    void CheckInitListExpr(InitListExpr *ILE) {
+      InitFieldIndex.push_back(0);
+      for (auto Child : ILE->children()) {
+        if (InitListExpr *SubList = dyn_cast<InitListExpr>(Child)) {
+          CheckInitListExpr(SubList);
+        } else {
+          Visit(Child);
+        }
+        ++InitFieldIndex.back();
+      }
+      InitFieldIndex.pop_back();
+    }
+
     void CheckInitializer(Expr *E, const CXXConstructorDecl *FieldConstructor,
                           FieldDecl *Field) {
       // Remove Decls that may have been initialized in the previous
       // initializer.
       for (ValueDecl* VD : DeclsToRemove)
         Decls.erase(VD);
-
       DeclsToRemove.clear();
+
       Constructor = FieldConstructor;
-      Visit(E);
+      InitListExpr *ILE = dyn_cast<InitListExpr>(E);
+
+      if (ILE && Field) {
+        InitList = true;
+        InitListFieldDecl = Field;
+        InitFieldIndex.clear();
+        CheckInitListExpr(ILE);
+      } else {
+        InitList = false;
+        Visit(E);
+      }
+
       if (Field)
         Decls.erase(Field);
     }
