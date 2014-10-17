@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 %s -O1 -emit-llvm -triple x86_64-unknown-unknown -o - | FileCheck %s --check-prefix=X86
 // RUN: %clang_cc1 %s -O1 -emit-llvm -triple x86_64-pc-win64 -o - | FileCheck %s --check-prefix=X86
 // RUN: %clang_cc1 %s -O1 -emit-llvm -triple i686-unknown-unknown -o - | FileCheck %s --check-prefix=X86
+// RUN: %clang_cc1 %s -O1 -emit-llvm -triple powerpc-unknown-unknown -o - | FileCheck %s --check-prefix=PPC
 
 float _Complex add_float_rr(float a, float b) {
   // X86-LABEL: @add_float_rr(
@@ -335,6 +336,10 @@ long double _Complex mul_long_double_cc(long double _Complex a, long double _Com
   // X86-NOT: fmul
   // X86: call {{.*}} @__mulxc3(
   // X86: ret
+  // PPC-LABEL: @mul_long_double_cc(
+  // PPC-NOT: fmul
+  // PPC: call {{.*}} @__multc3(
+  // PPC: ret
   return a * b;
 }
 
@@ -358,6 +363,10 @@ long double _Complex div_long_double_rc(long double a, long double _Complex b) {
   // X86-NOT: fdiv
   // X86: call {{.*}} @__divxc3(
   // X86: ret
+  // PPC-LABEL: @div_long_double_rc(
+  // PPC-NOT: fdiv
+  // PPC: call {{.*}} @__divtc3(
+  // PPC: ret
   return a / b;
 }
 long double _Complex div_long_double_cc(long double _Complex a, long double _Complex b) {
@@ -365,6 +374,10 @@ long double _Complex div_long_double_cc(long double _Complex a, long double _Com
   // X86-NOT: fdiv
   // X86: call {{.*}} @__divxc3(
   // X86: ret
+  // PPC-LABEL: @div_long_double_cc(
+  // PPC-NOT: fdiv
+  // PPC: call {{.*}} @__divtc3(
+  // PPC: ret
   return a / b;
 }
 

@@ -615,6 +615,8 @@ ComplexPairTy ComplexExprEmitter::EmitBinMul(const BinOpInfo &Op) {
         return EmitComplexBinOpLibCall("__mulsc3", Op);
       case llvm::Type::DoubleTyID:
         return EmitComplexBinOpLibCall("__muldc3", Op);
+      case llvm::Type::PPC_FP128TyID:
+        return EmitComplexBinOpLibCall("__multc3", Op);
       case llvm::Type::X86_FP80TyID:
         return EmitComplexBinOpLibCall("__mulxc3", Op);
       }
@@ -674,6 +676,8 @@ ComplexPairTy ComplexExprEmitter::EmitBinDiv(const BinOpInfo &Op) {
         return EmitComplexBinOpLibCall("__divsc3", LibCallOp);
       case llvm::Type::DoubleTyID:
         return EmitComplexBinOpLibCall("__divdc3", LibCallOp);
+      case llvm::Type::PPC_FP128TyID:
+        return EmitComplexBinOpLibCall("__divtc3", LibCallOp);
       case llvm::Type::X86_FP80TyID:
         return EmitComplexBinOpLibCall("__divxc3", LibCallOp);
       }
