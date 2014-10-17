@@ -387,6 +387,7 @@ class global_binary_atomic_op<SDNode atomic_op> : PatFrag<
 >;
 
 def atomic_add_global : global_binary_atomic_op<atomic_load_add>;
+def atomic_sub_global : global_binary_atomic_op<atomic_load_sub>;
 
 //===----------------------------------------------------------------------===//
 // Misc Pattern Fragments
