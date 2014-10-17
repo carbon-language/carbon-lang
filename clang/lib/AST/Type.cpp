@@ -378,9 +378,10 @@ bool Type::isInterfaceType() const {
   return false;
 }
 bool Type::isStructureOrClassType() const {
-  if (const RecordType *RT = getAs<RecordType>())
-    return RT->getDecl()->isStruct() || RT->getDecl()->isClass() ||
-      RT->getDecl()->isInterface();
+  if (const RecordType *RT = getAs<RecordType>()) {
+    RecordDecl *RD = RT->getDecl();
+    return RD->isStruct() || RD->isClass() || RD->isInterface();
+  }
   return false;
 }
 bool Type::isVoidPointerType() const {
