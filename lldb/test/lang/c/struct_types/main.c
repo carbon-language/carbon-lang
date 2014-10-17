@@ -12,13 +12,16 @@ int main (int argc, char const *argv[])
         int x;
         int y;
         char padding[0];
-    }; //% self.expect("frame variable pt.padding[0]", DATA_TYPES_DISPLAYED_CORRECTLY, substrs = ["pt.padding[0] = "]); self.expect("frame variable pt.padding[1]", DATA_TYPES_DISPLAYED_CORRECTLY, substrs = ["pt.padding[1] = "]); self.expect("expression -- (pt.padding[0])", DATA_TYPES_DISPLAYED_CORRECTLY, substrs = ["(char)", " = "]); self.expect("image lookup -t point_tag", DATA_TYPES_DISPLAYED_CORRECTLY, substrs = ['padding[]']) # Once rdar://problem/12566646 is fixed, this should display correctly
+    }; //% self.expect("frame variable pt.padding[0]", DATA_TYPES_DISPLAYED_CORRECTLY, substrs = ["pt.padding[0] = "])
+       //% self.expect("frame variable pt.padding[1]", DATA_TYPES_DISPLAYED_CORRECTLY, substrs = ["pt.padding[1] = "])
+       //% self.expect("expression -- (pt.padding[0])", DATA_TYPES_DISPLAYED_CORRECTLY, substrs = ["(char)", " = "])
+       //% self.expect("image lookup -t point_tag", DATA_TYPES_DISPLAYED_CORRECTLY, substrs = ['padding[]']) # Once rdar://problem/12566646 is fixed, this should display correctly
 
     struct rect_tag {
         struct point_tag bottom_left;
         struct point_tag top_right;
     };
-    struct point_tag pt = { 2, 3, {} }; //% self.
+    struct point_tag pt = { 2, 3, {} };
     struct rect_tag rect = {{1, 2, {}}, {3, 4, {}}};
     return 0; //% self.expect("expression -- &pt == (struct point_tag*)0", substrs = ['false'])
 }

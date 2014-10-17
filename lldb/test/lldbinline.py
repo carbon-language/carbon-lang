@@ -21,25 +21,39 @@ class CommandParser:
 
     def parse_one_command(self, line):
         parts = line.split('//%')
-        if len(parts) != 2:
-            return None
-        else:
-            return parts[1].strip() # take off trailing whitespace
+
+        command = None
+        new_breakpoint = True
+
+        if len(parts) == 2:
+            command = parts[1].strip() # take off whitespace
+            new_breakpoint = parts[0].strip() != ""
+
+        return (command, new_breakpoint)
 
     def parse_source_files(self, source_files):
         for source_file in source_files:
             file_handle = open(source_file)
             lines = file_handle.readlines()
             line_number = 0
+            current_breakpoint = None # non-NULL means we're looking through whitespace to find additional commands
             for line in lines:
                 line_number = line_number + 1 # 1-based, so we do this first
-                command = self.parse_one_command(line)
+                (command, new_breakpoint) = self.parse_one_command(line)
+
+                if new_breakpoint:
+                    current_breakpoint = None
+
                 if command != None:
-                    breakpoint = {}
-                    breakpoint['file_name'] = source_file
-                    breakpoint['line_number'] = line_number
-                    breakpoint['command'] = command
-                    self.breakpoints.append(breakpoint)
+                    if current_breakpoint == None:
+                        current_breakpoint = {}
+                        current_breakpoint['file_name'] = source_file
+                        current_breakpoint['line_number'] = line_number
+                        current_breakpoint['command'] = command
+                        self.breakpoints.append(current_breakpoint)
+                    else:
+                        current_breakpoint['command'] = current_breakpoint['command'] + "\n" + command
+        print self.breakpoints
 
     def set_breakpoints(self, target):
         for breakpoint in self.breakpoints:
