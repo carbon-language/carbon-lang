@@ -126,7 +126,6 @@ class ObjCDynamicValueTestCase(TestBase):
         # This test is not entirely related to the main thrust of this test case, but since we're here,
         # try stepping into setProperty, and make sure we get into the version in Source:
 
-        self.runCmd("log enable lldb step")
         thread.StepInto()
 
         threads = lldbutil.get_stopped_threads (process, lldb.eStopReasonPlanComplete)
