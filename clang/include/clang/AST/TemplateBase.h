@@ -249,7 +249,7 @@ public:
     return DeclArg.D;
   }
 
-  QualType getTypeForDecl() const {
+  QualType getParamTypeForDecl() const {
     assert(getKind() == Declaration && "Unexpected kind");
     return QualType::getFromOpaquePtr(DeclArg.QT);
   }

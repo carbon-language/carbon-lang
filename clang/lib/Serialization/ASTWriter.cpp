@@ -5372,7 +5372,7 @@ void ASTWriter::AddTemplateArgument(const TemplateArgument &Arg,
     break;
   case TemplateArgument::Declaration:
     AddDeclRef(Arg.getAsDecl(), Record);
-    AddTypeRef(Arg.getTypeForDecl(), Record);
+    AddTypeRef(Arg.getParamTypeForDecl(), Record);
     break;
   case TemplateArgument::NullPtr:
     AddTypeRef(Arg.getNullPtrType(), Record);

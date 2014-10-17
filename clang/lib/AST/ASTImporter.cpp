@@ -2094,7 +2094,7 @@ ASTNodeImporter::ImportTemplateArgument(const TemplateArgument &From) {
   case TemplateArgument::Declaration: {
     ValueDecl *FromD = From.getAsDecl();
     if (ValueDecl *To = cast_or_null<ValueDecl>(Importer.Import(FromD)))
-      return TemplateArgument(To, From.getTypeForDecl());
+      return TemplateArgument(To, From.getParamTypeForDecl());
     return TemplateArgument();
   }
 

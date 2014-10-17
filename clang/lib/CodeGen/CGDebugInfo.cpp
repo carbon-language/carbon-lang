@@ -1255,32 +1255,29 @@ CollectTemplateParams(const TemplateParameterList *TPList,
     } break;
     case TemplateArgument::Declaration: {
       const ValueDecl *D = TA.getAsDecl();
-      bool InstanceMember = D->isCXXInstanceMember();
-      QualType T = TA.getTypeForDecl();
+      QualType T = TA.getParamTypeForDecl();
       llvm::DIType TTy = getOrCreateType(T, Unit);
       llvm::Value *V = nullptr;
       // Variable pointer template parameters have a value that is the address
       // of the variable.
-      if (const VarDecl *VD = dyn_cast<VarDecl>(D))
+      if (const auto *VD = dyn_cast<VarDecl>(D))
         V = CGM.GetAddrOfGlobalVar(VD);
       // Member function pointers have special support for building them, though
       // this is currently unsupported in LLVM CodeGen.
-      if (InstanceMember) {
-        if (const CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(D))
+      else if (const auto *method = dyn_cast<CXXMethodDecl>(D))
           V = CGM.getCXXABI().EmitMemberPointer(method);
-      } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+      else if (const auto *FD = dyn_cast<FunctionDecl>(D))
         V = CGM.GetAddrOfFunction(FD);
       // Member data pointers have special handling too to compute the fixed
       // offset within the object.
-      if (isa<FieldDecl>(D) || isa<IndirectFieldDecl>(D)) {
+      else if (const auto *MPT = dyn_cast<MemberPointerType>(T.getTypePtr())) {
         // These five lines (& possibly the above member function pointer
         // handling) might be able to be refactored to use similar code in
         // CodeGenModule::getMemberPointerConstant
         uint64_t fieldOffset = CGM.getContext().getFieldOffset(D);
         CharUnits chars =
             CGM.getContext().toCharUnitsFromBits((int64_t) fieldOffset);
-        V = CGM.getCXXABI().EmitMemberDataPointer(
-            cast<MemberPointerType>(T.getTypePtr()), chars);
+        V = CGM.getCXXABI().EmitMemberDataPointer(MPT, chars);
       }
       llvm::DITemplateValueParameter TVP =
           DBuilder.createTemplateValueParameter(TheCU, Name, TTy,

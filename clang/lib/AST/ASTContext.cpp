@@ -4099,7 +4099,7 @@ ASTContext::getCanonicalTemplateArgument(const TemplateArgument &Arg) const {
 
     case TemplateArgument::Declaration: {
       ValueDecl *D = cast<ValueDecl>(Arg.getAsDecl()->getCanonicalDecl());
-      return TemplateArgument(D, Arg.getTypeForDecl());
+      return TemplateArgument(D, Arg.getParamTypeForDecl());
     }
 
     case TemplateArgument::NullPtr:
