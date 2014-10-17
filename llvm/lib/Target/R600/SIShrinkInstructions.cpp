@@ -153,10 +153,9 @@ static void foldImmediates(MachineInstr &MI, const SIInstrInfo *TII,
         Src0->ChangeToImmediate(MovSrc.getImm());
         ConstantFolded = true;
       } else if (MovSrc.isFPImm()) {
-        const APFloat &APF = MovSrc.getFPImm()->getValueAPF();
-        if (&APF.getSemantics() == &APFloat::IEEEsingle) {
-          MRI.removeRegOperandFromUseList(Src0);
-          Src0->ChangeToImmediate(APF.bitcastToAPInt().getZExtValue());
+        const ConstantFP *CFP = MovSrc.getFPImm();
+        if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEsingle) {
+          Src0->ChangeToFPImmediate(CFP);
           ConstantFolded = true;
         }
       }
