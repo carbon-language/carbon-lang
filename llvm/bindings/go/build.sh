@@ -26,7 +26,7 @@ support \
 target \
 "
 
-if [ "$1" == "--print-components" ] ; then
+if [ "$1" = "--print-components" ] ; then
   echo $llvm_components
   exit 0
 fi
