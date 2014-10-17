@@ -128,6 +128,8 @@ MipsSETargetLowering::MipsSETargetLowering(const MipsTargetMachine &TM,
   if (Subtarget.isGP64bit()) {
     setOperationAction(ISD::MULHS,            MVT::i64, Custom);
     setOperationAction(ISD::MULHU,            MVT::i64, Custom);
+    setOperationAction(ISD::SDIVREM,          MVT::i64, Custom);
+    setOperationAction(ISD::UDIVREM,          MVT::i64, Custom);
   }
 
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::i64, Custom);
@@ -135,8 +137,6 @@ MipsSETargetLowering::MipsSETargetLowering(const MipsTargetMachine &TM,
 
   setOperationAction(ISD::SDIVREM, MVT::i32, Custom);
   setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
-  setOperationAction(ISD::SDIVREM, MVT::i64, Custom);
-  setOperationAction(ISD::UDIVREM, MVT::i64, Custom);
   setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Custom);
   setOperationAction(ISD::LOAD,               MVT::i32, Custom);
   setOperationAction(ISD::STORE,              MVT::i32, Custom);
