@@ -137,7 +137,7 @@ public:
     _contents.resize(_commonEncodingsOffset +
                      commonEncodings.size() * sizeof(uint32_t));
     int32_t *commonEncodingsArea =
-        (int32_t *)&_contents[_commonEncodingsOffset];
+        reinterpret_cast<int32_t *>(_contents.data() + _commonEncodingsOffset);
 
     for (uint32_t encoding : commonEncodings)
       write32(*commonEncodingsArea++, _swap, encoding);
