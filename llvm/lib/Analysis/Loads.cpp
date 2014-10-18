@@ -62,10 +62,10 @@ static bool AreEquivalentAddressValues(const Value *A, const Value *B) {
 /// This uses the pointee type to determine how many bytes need to be safe to
 /// load from the pointer.
 bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
-                                       unsigned Align, const DataLayout *TD) {
+                                       unsigned Align, const DataLayout *DL) {
   int64_t ByteOffset = 0;
   Value *Base = V;
-  Base = GetPointerBaseWithConstantOffset(V, ByteOffset, TD);
+  Base = GetPointerBaseWithConstantOffset(V, ByteOffset, DL);
 
   if (ByteOffset < 0) // out of bounds
     return false;
@@ -86,17 +86,17 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
   }
 
   if (BaseType && BaseType->isSized()) {
-    if (TD && BaseAlign == 0)
-      BaseAlign = TD->getPrefTypeAlignment(BaseType);
+    if (DL && BaseAlign == 0)
+      BaseAlign = DL->getPrefTypeAlignment(BaseType);
 
     if (Align <= BaseAlign) {
-      if (!TD)
+      if (!DL)
         return true; // Loading directly from an alloca or global is OK.
 
       // Check if the load is within the bounds of the underlying object.
       PointerType *AddrTy = cast<PointerType>(V->getType());
-      uint64_t LoadSize = TD->getTypeStoreSize(AddrTy->getElementType());
-      if (ByteOffset + LoadSize <= TD->getTypeAllocSize(BaseType) &&
+      uint64_t LoadSize = DL->getTypeStoreSize(AddrTy->getElementType());
+      if (ByteOffset + LoadSize <= DL->getTypeAllocSize(BaseType) &&
           (Align == 0 || (ByteOffset % Align) == 0))
         return true;
     }
