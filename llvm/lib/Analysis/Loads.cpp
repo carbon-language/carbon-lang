@@ -22,13 +22,16 @@
 #include "llvm/IR/Operator.h"
 using namespace llvm;
 
-/// AreEquivalentAddressValues - Test if A and B will obviously have the same
-/// value. This includes recognizing that %t0 and %t1 will have the same
+/// \brief Test if A and B will obviously have the same value.
+///
+/// This includes recognizing that %t0 and %t1 will have the same
 /// value in code like this:
+/// \code
 ///   %t0 = getelementptr \@a, 0, 3
 ///   store i32 0, i32* %t0
 ///   %t1 = getelementptr \@a, 0, 3
 ///   %t2 = load i32* %t1
+/// \endcode
 ///
 static bool AreEquivalentAddressValues(const Value *A, const Value *B) {
   // Test if the values are trivially equivalent.
@@ -119,23 +122,25 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
   return false;
 }
 
-/// FindAvailableLoadedValue - Scan the ScanBB block backwards (starting at the
-/// instruction before ScanFrom) checking to see if we have the value at the
+/// \brief Scan the ScanBB block backwards to see if we have the value at the
 /// memory address *Ptr locally available within a small number of instructions.
-/// If the value is available, return it.
 ///
-/// If not, return the iterator for the last validated instruction that the 
-/// value would be live through.  If we scanned the entire block and didn't find
-/// something that invalidates *Ptr or provides it, ScanFrom would be left at
-/// begin() and this returns null.  ScanFrom could also be left 
+/// The scan starts from \c ScanFrom. \c MaxInstsToScan specifies the maximum
+/// instructions to scan in the block. If it is set to \c 0, it will scan the whole
+/// block.
 ///
-/// MaxInstsToScan specifies the maximum instructions to scan in the block.  If
-/// it is set to 0, it will scan the whole block. You can also optionally
-/// specify an alias analysis implementation, which makes this more precise.
+/// If the value is available, this function returns it. If not, it returns the
+/// iterator for the last validated instruction that the value would be live
+/// through. If we scanned the entire block and didn't find something that
+/// invalidates \c *Ptr or provides it, \c ScanFrom is left at the last
+/// instruction processed and this returns null.
 ///
-/// If AATags is non-null and a load or store is found, the AA tags from the
-/// load or store are recorded there.  If there are no AA tags or if no access
-/// is found, it is left unmodified.
+/// You can also optionally specify an alias analysis implementation, which
+/// makes this more precise.
+///
+/// If \c AATags is non-null and a load or store is found, the AA tags from the
+/// load or store are recorded there. If there are no AA tags or if no access is
+/// found, it is left unmodified.
 Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
                                       BasicBlock::iterator &ScanFrom,
                                       unsigned MaxInstsToScan,
