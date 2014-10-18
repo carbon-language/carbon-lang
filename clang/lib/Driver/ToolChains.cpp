@@ -1348,174 +1348,116 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
     "s390x-suse-linux", "s390x-redhat-linux"
   };
 
+  using std::begin;
+  using std::end;
+
   switch (TargetTriple.getArch()) {
   case llvm::Triple::aarch64:
-    LibDirs.append(AArch64LibDirs,
-                   AArch64LibDirs + llvm::array_lengthof(AArch64LibDirs));
-    TripleAliases.append(AArch64Triples,
-                         AArch64Triples + llvm::array_lengthof(AArch64Triples));
-    BiarchLibDirs.append(AArch64LibDirs,
-                         AArch64LibDirs + llvm::array_lengthof(AArch64LibDirs));
-    BiarchTripleAliases.append(
-        AArch64Triples, AArch64Triples + llvm::array_lengthof(AArch64Triples));
+    LibDirs.append(begin(AArch64LibDirs), end(AArch64LibDirs));
+    TripleAliases.append(begin(AArch64Triples), end(AArch64Triples));
+    BiarchLibDirs.append(begin(AArch64LibDirs), end(AArch64LibDirs));
+    BiarchTripleAliases.append(begin(AArch64Triples), end(AArch64Triples));
     break;
   case llvm::Triple::aarch64_be:
-    LibDirs.append(AArch64beLibDirs,
-                   AArch64beLibDirs + llvm::array_lengthof(AArch64beLibDirs));
-    TripleAliases.append(AArch64beTriples,
-                         AArch64beTriples + llvm::array_lengthof(AArch64beTriples));
-    BiarchLibDirs.append(AArch64beLibDirs,
-                         AArch64beLibDirs + llvm::array_lengthof(AArch64beLibDirs));
-    BiarchTripleAliases.append(
-        AArch64beTriples, AArch64beTriples + llvm::array_lengthof(AArch64beTriples));
+    LibDirs.append(begin(AArch64beLibDirs), end(AArch64beLibDirs));
+    TripleAliases.append(begin(AArch64beTriples), end(AArch64beTriples));
+    BiarchLibDirs.append(begin(AArch64beLibDirs), end(AArch64beLibDirs));
+    BiarchTripleAliases.append(begin(AArch64beTriples), end(AArch64beTriples));
     break;
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
-    LibDirs.append(ARMLibDirs, ARMLibDirs + llvm::array_lengthof(ARMLibDirs));
+    LibDirs.append(begin(ARMLibDirs), end(ARMLibDirs));
     if (TargetTriple.getEnvironment() == llvm::Triple::GNUEABIHF) {
-      TripleAliases.append(ARMHFTriples,
-                           ARMHFTriples + llvm::array_lengthof(ARMHFTriples));
+      TripleAliases.append(begin(ARMHFTriples), end(ARMHFTriples));
     } else {
-      TripleAliases.append(ARMTriples,
-                           ARMTriples + llvm::array_lengthof(ARMTriples));
+      TripleAliases.append(begin(ARMTriples), end(ARMTriples));
     }
     break;
   case llvm::Triple::armeb:
   case llvm::Triple::thumbeb:
-    LibDirs.append(ARMebLibDirs, ARMebLibDirs + llvm::array_lengthof(ARMebLibDirs));
+    LibDirs.append(begin(ARMebLibDirs), end(ARMebLibDirs));
     if (TargetTriple.getEnvironment() == llvm::Triple::GNUEABIHF) {
-      TripleAliases.append(ARMebHFTriples,
-                           ARMebHFTriples + llvm::array_lengthof(ARMebHFTriples));
+      TripleAliases.append(begin(ARMebHFTriples), end(ARMebHFTriples));
     } else {
-      TripleAliases.append(ARMebTriples,
-                           ARMebTriples + llvm::array_lengthof(ARMebTriples));
+      TripleAliases.append(begin(ARMebTriples), end(ARMebTriples));
     }
     break;
   case llvm::Triple::x86_64:
-    LibDirs.append(X86_64LibDirs,
-                   X86_64LibDirs + llvm::array_lengthof(X86_64LibDirs));
-    TripleAliases.append(X86_64Triples,
-                         X86_64Triples + llvm::array_lengthof(X86_64Triples));
-    // x32 is always available when x86_64 is available, so adding it as secondary
-    // arch with x86_64 triples
+    LibDirs.append(begin(X86_64LibDirs), end(X86_64LibDirs));
+    TripleAliases.append(begin(X86_64Triples), end(X86_64Triples));
+    // x32 is always available when x86_64 is available, so adding it as
+    // secondary arch with x86_64 triples
     if (TargetTriple.getEnvironment() == llvm::Triple::GNUX32) {
-      BiarchLibDirs.append(X32LibDirs,
-                           X32LibDirs + llvm::array_lengthof(X32LibDirs));
-      BiarchTripleAliases.append(X86_64Triples,
-                                 X86_64Triples + llvm::array_lengthof(X86_64Triples));
+      BiarchLibDirs.append(begin(X32LibDirs), end(X32LibDirs));
+      BiarchTripleAliases.append(begin(X86_64Triples), end(X86_64Triples));
     } else {
-      BiarchLibDirs.append(X86LibDirs,
-                           X86LibDirs + llvm::array_lengthof(X86LibDirs));
-      BiarchTripleAliases.append(X86Triples,
-                                 X86Triples + llvm::array_lengthof(X86Triples));
+      BiarchLibDirs.append(begin(X86LibDirs), end(X86LibDirs));
+      BiarchTripleAliases.append(begin(X86Triples), end(X86Triples));
     }
     break;
   case llvm::Triple::x86:
-    LibDirs.append(X86LibDirs, X86LibDirs + llvm::array_lengthof(X86LibDirs));
-    TripleAliases.append(X86Triples,
-                         X86Triples + llvm::array_lengthof(X86Triples));
-    BiarchLibDirs.append(X86_64LibDirs,
-                         X86_64LibDirs + llvm::array_lengthof(X86_64LibDirs));
-    BiarchTripleAliases.append(
-        X86_64Triples, X86_64Triples + llvm::array_lengthof(X86_64Triples));
+    LibDirs.append(begin(X86LibDirs), end(X86LibDirs));
+    TripleAliases.append(begin(X86Triples), end(X86Triples));
+    BiarchLibDirs.append(begin(X86_64LibDirs), end(X86_64LibDirs));
+    BiarchTripleAliases.append(begin(X86_64Triples), end(X86_64Triples));
     break;
   case llvm::Triple::mips:
-    LibDirs.append(MIPSLibDirs,
-                   MIPSLibDirs + llvm::array_lengthof(MIPSLibDirs));
-    TripleAliases.append(MIPSTriples,
-                         MIPSTriples + llvm::array_lengthof(MIPSTriples));
-    BiarchLibDirs.append(MIPS64LibDirs,
-                         MIPS64LibDirs + llvm::array_lengthof(MIPS64LibDirs));
-    BiarchTripleAliases.append(
-        MIPS64Triples, MIPS64Triples + llvm::array_lengthof(MIPS64Triples));
+    LibDirs.append(begin(MIPSLibDirs), end(MIPSLibDirs));
+    TripleAliases.append(begin(MIPSTriples), end(MIPSTriples));
+    BiarchLibDirs.append(begin(MIPS64LibDirs), end(MIPS64LibDirs));
+    BiarchTripleAliases.append(begin(MIPS64Triples), end(MIPS64Triples));
     break;
   case llvm::Triple::mipsel:
-    LibDirs.append(MIPSELLibDirs,
-                   MIPSELLibDirs + llvm::array_lengthof(MIPSELLibDirs));
-    TripleAliases.append(MIPSELTriples,
-                         MIPSELTriples + llvm::array_lengthof(MIPSELTriples));
-    TripleAliases.append(MIPSTriples,
-                         MIPSTriples + llvm::array_lengthof(MIPSTriples));
-    BiarchLibDirs.append(
-        MIPS64ELLibDirs,
-        MIPS64ELLibDirs + llvm::array_lengthof(MIPS64ELLibDirs));
-    BiarchTripleAliases.append(
-        MIPS64ELTriples,
-        MIPS64ELTriples + llvm::array_lengthof(MIPS64ELTriples));
+    LibDirs.append(begin(MIPSELLibDirs), end(MIPSELLibDirs));
+    TripleAliases.append(begin(MIPSELTriples), end(MIPSELTriples));
+    TripleAliases.append(begin(MIPSTriples), end(MIPSTriples));
+    BiarchLibDirs.append(begin(MIPS64ELLibDirs), end(MIPS64ELLibDirs));
+    BiarchTripleAliases.append(begin(MIPS64ELTriples), end(MIPS64ELTriples));
     break;
   case llvm::Triple::mips64:
-    LibDirs.append(MIPS64LibDirs,
-                   MIPS64LibDirs + llvm::array_lengthof(MIPS64LibDirs));
-    TripleAliases.append(MIPS64Triples,
-                         MIPS64Triples + llvm::array_lengthof(MIPS64Triples));
-    BiarchLibDirs.append(MIPSLibDirs,
-                         MIPSLibDirs + llvm::array_lengthof(MIPSLibDirs));
-    BiarchTripleAliases.append(MIPSTriples,
-                               MIPSTriples + llvm::array_lengthof(MIPSTriples));
+    LibDirs.append(begin(MIPS64LibDirs), end(MIPS64LibDirs));
+    TripleAliases.append(begin(MIPS64Triples), end(MIPS64Triples));
+    BiarchLibDirs.append(begin(MIPSLibDirs), end(MIPSLibDirs));
+    BiarchTripleAliases.append(begin(MIPSTriples), end(MIPSTriples));
     break;
   case llvm::Triple::mips64el:
-    LibDirs.append(MIPS64ELLibDirs,
-                   MIPS64ELLibDirs + llvm::array_lengthof(MIPS64ELLibDirs));
-    TripleAliases.append(
-        MIPS64ELTriples,
-        MIPS64ELTriples + llvm::array_lengthof(MIPS64ELTriples));
-    BiarchLibDirs.append(MIPSELLibDirs,
-                         MIPSELLibDirs + llvm::array_lengthof(MIPSELLibDirs));
-    BiarchTripleAliases.append(
-        MIPSELTriples, MIPSELTriples + llvm::array_lengthof(MIPSELTriples));
-    BiarchTripleAliases.append(
-        MIPSTriples, MIPSTriples + llvm::array_lengthof(MIPSTriples));
+    LibDirs.append(begin(MIPS64ELLibDirs), end(MIPS64ELLibDirs));
+    TripleAliases.append(begin(MIPS64ELTriples), end(MIPS64ELTriples));
+    BiarchLibDirs.append(begin(MIPSELLibDirs), end(MIPSELLibDirs));
+    BiarchTripleAliases.append(begin(MIPSELTriples), end(MIPSELTriples));
+    BiarchTripleAliases.append(begin(MIPSTriples), end(MIPSTriples));
     break;
   case llvm::Triple::ppc:
-    LibDirs.append(PPCLibDirs, PPCLibDirs + llvm::array_lengthof(PPCLibDirs));
-    TripleAliases.append(PPCTriples,
-                         PPCTriples + llvm::array_lengthof(PPCTriples));
-    BiarchLibDirs.append(PPC64LibDirs,
-                         PPC64LibDirs + llvm::array_lengthof(PPC64LibDirs));
-    BiarchTripleAliases.append(
-        PPC64Triples, PPC64Triples + llvm::array_lengthof(PPC64Triples));
+    LibDirs.append(begin(PPCLibDirs), end(PPCLibDirs));
+    TripleAliases.append(begin(PPCTriples), end(PPCTriples));
+    BiarchLibDirs.append(begin(PPC64LibDirs), end(PPC64LibDirs));
+    BiarchTripleAliases.append(begin(PPC64Triples), end(PPC64Triples));
     break;
   case llvm::Triple::ppc64:
-    LibDirs.append(PPC64LibDirs,
-                   PPC64LibDirs + llvm::array_lengthof(PPC64LibDirs));
-    TripleAliases.append(PPC64Triples,
-                         PPC64Triples + llvm::array_lengthof(PPC64Triples));
-    BiarchLibDirs.append(PPCLibDirs,
-                         PPCLibDirs + llvm::array_lengthof(PPCLibDirs));
-    BiarchTripleAliases.append(PPCTriples,
-                               PPCTriples + llvm::array_lengthof(PPCTriples));
+    LibDirs.append(begin(PPC64LibDirs), end(PPC64LibDirs));
+    TripleAliases.append(begin(PPC64Triples), end(PPC64Triples));
+    BiarchLibDirs.append(begin(PPCLibDirs), end(PPCLibDirs));
+    BiarchTripleAliases.append(begin(PPCTriples), end(PPCTriples));
     break;
   case llvm::Triple::ppc64le:
-    LibDirs.append(PPC64LELibDirs,
-                   PPC64LELibDirs + llvm::array_lengthof(PPC64LELibDirs));
-    TripleAliases.append(PPC64LETriples,
-                         PPC64LETriples + llvm::array_lengthof(PPC64LETriples));
+    LibDirs.append(begin(PPC64LELibDirs), end(PPC64LELibDirs));
+    TripleAliases.append(begin(PPC64LETriples), end(PPC64LETriples));
     break;
   case llvm::Triple::sparc:
-    LibDirs.append(SPARCv8LibDirs,
-                   SPARCv8LibDirs + llvm::array_lengthof(SPARCv8LibDirs));
-    TripleAliases.append(SPARCv8Triples,
-                         SPARCv8Triples + llvm::array_lengthof(SPARCv8Triples));
-    BiarchLibDirs.append(SPARCv9LibDirs,
-                         SPARCv9LibDirs + llvm::array_lengthof(SPARCv9LibDirs));
-    BiarchTripleAliases.append(
-        SPARCv9Triples, SPARCv9Triples + llvm::array_lengthof(SPARCv9Triples));
+    LibDirs.append(begin(SPARCv8LibDirs), end(SPARCv8LibDirs));
+    TripleAliases.append(begin(SPARCv8Triples), end(SPARCv8Triples));
+    BiarchLibDirs.append(begin(SPARCv9LibDirs), end(SPARCv9LibDirs));
+    BiarchTripleAliases.append(begin(SPARCv9Triples), end(SPARCv9Triples));
     break;
   case llvm::Triple::sparcv9:
-    LibDirs.append(SPARCv9LibDirs,
-                   SPARCv9LibDirs + llvm::array_lengthof(SPARCv9LibDirs));
-    TripleAliases.append(SPARCv9Triples,
-                         SPARCv9Triples + llvm::array_lengthof(SPARCv9Triples));
-    BiarchLibDirs.append(SPARCv8LibDirs,
-                         SPARCv8LibDirs + llvm::array_lengthof(SPARCv8LibDirs));
-    BiarchTripleAliases.append(
-        SPARCv8Triples, SPARCv8Triples + llvm::array_lengthof(SPARCv8Triples));
+    LibDirs.append(begin(SPARCv9LibDirs), end(SPARCv9LibDirs));
+    TripleAliases.append(begin(SPARCv9Triples), end(SPARCv9Triples));
+    BiarchLibDirs.append(begin(SPARCv8LibDirs), end(SPARCv8LibDirs));
+    BiarchTripleAliases.append(begin(SPARCv8Triples), end(SPARCv8Triples));
     break;
   case llvm::Triple::systemz:
-    LibDirs.append(SystemZLibDirs,
-                   SystemZLibDirs + llvm::array_lengthof(SystemZLibDirs));
-    TripleAliases.append(SystemZTriples,
-                         SystemZTriples + llvm::array_lengthof(SystemZTriples));
+    LibDirs.append(begin(SystemZLibDirs), end(SystemZLibDirs));
+    TripleAliases.append(begin(SystemZTriples), end(SystemZTriples));
     break;
 
   default:
