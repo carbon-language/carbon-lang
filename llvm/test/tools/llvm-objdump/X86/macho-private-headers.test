@@ -1,6 +1,8 @@
 // RUN: llvm-objdump -p %p/Inputs/hello.obj.macho-x86_64 | FileCheck %s
 // RUN: llvm-objdump -p %p/Inputs/hello.exe.macho-x86_64 \
 // RUN:     | FileCheck %s -check-prefix=EXE
+// RUN: llvm-objdump -p %p/Inputs/dylibLoadKinds.macho-x86_64 \
+// RUN:     | FileCheck %s -check-prefix=LOAD
 
 CHECK: Mach header
 CHECK:       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
@@ -337,3 +339,34 @@ EXE:       cmd LC_DYLIB_CODE_SIGN_DRS
 EXE:   cmdsize 16
 EXE:   dataoff 8296
 EXE:  datasize 64
+
+
+LOAD: Load command 10
+LOAD:           cmd LC_LOAD_DYLIB
+LOAD:       cmdsize 48
+LOAD:          name /usr/lib/foo1.dylib (offset 24)
+LOAD:    time stamp 2 Wed Dec 31 16:00:02 1969
+LOAD:       current version 0.0.0
+LOAD: compatibility version 0.0.0
+LOAD: Load command 11
+LOAD:           cmd LC_LOAD_WEAK_DYLIB
+LOAD:       cmdsize 48
+LOAD:          name /usr/lib/foo2.dylib (offset 24)
+LOAD:    time stamp 2 Wed Dec 31 16:00:02 1969
+LOAD:       current version 0.0.0
+LOAD: compatibility version 0.0.0
+LOAD: Load command 12
+LOAD:           cmd LC_REEXPORT_DYLIB
+LOAD:       cmdsize 48
+LOAD:          name /usr/lib/foo3.dylib (offset 24)
+LOAD:    time stamp 2 Wed Dec 31 16:00:02 1969
+LOAD:       current version 0.0.0
+LOAD: compatibility version 0.0.0
+LOAD: Load command 13
+LOAD:           cmd LC_LAZY_LOAD_DYLIB
+LOAD:       cmdsize 48
+LOAD:          name /usr/lib/foo4.dylib (offset 24)
+LOAD:    time stamp 2 Wed Dec 31 16:00:02 1969
+LOAD:       current version 0.0.0
+LOAD: compatibility version 0.0.0
+
