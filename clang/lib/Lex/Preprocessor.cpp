@@ -384,6 +384,15 @@ bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
   }
 
   Position += CompleteColumn - 1;
+
+  // If pointing inside the preamble, adjust the position at the beginning of
+  // the file after the preamble.
+  if (SkipMainFilePreamble.first &&
+      SourceMgr.getFileEntryForID(SourceMgr.getMainFileID()) == File) {
+    if (Position - Buffer->getBufferStart() < SkipMainFilePreamble.first)
+      Position = Buffer->getBufferStart() + SkipMainFilePreamble.first;
+  }
+
   if (Position > Buffer->getBufferEnd())
     Position = Buffer->getBufferEnd();
 
