@@ -1974,20 +1974,20 @@ void MachOBindEntry::moveNext() {
                                              SegmentOffset) << "\n");
       return;
      case MachO::BIND_OPCODE_DO_BIND_ADD_ADDR_ULEB:
-      AdvanceAmount = readULEB128();
+      AdvanceAmount = readULEB128() + PointerSize;
       RemainingLoopCount = 0;
       if (TableKind == Kind::Lazy)
         Malformed = true;
       DEBUG_WITH_TYPE(
           "mach-o-bind",
-          llvm::dbgs() << "BIND_OPCODE_DO_BIND_IMM_TIMES: "
+          llvm::dbgs() << "BIND_OPCODE_DO_BIND_ADD_ADDR_ULEB: "
                        << format("SegmentOffset=0x%06X", SegmentOffset)
                        << ", AdvanceAmount=" << AdvanceAmount
                        << ", RemainingLoopCount=" << RemainingLoopCount
                        << "\n");
       return;
     case MachO::BIND_OPCODE_DO_BIND_ADD_ADDR_IMM_SCALED:
-      AdvanceAmount = ImmValue * PointerSize;
+      AdvanceAmount = ImmValue * PointerSize + PointerSize;
       RemainingLoopCount = 0;
       if (TableKind == Kind::Lazy)
         Malformed = true;
