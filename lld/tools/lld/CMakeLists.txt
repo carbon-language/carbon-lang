@@ -13,10 +13,12 @@ install(TARGETS lld
 # supported by the operating system, create a copy instead.
 if(UNIX)
   set(command create_symlink)
+  # Make relative symlink
+  set(src "lld${CMAKE_EXECUTABLE_SUFFIX}")
 else()
   set(command copy)
+  set(src "${LLVM_RUNTIME_OUTPUT_INTDIR}/lld${CMAKE_EXECUTABLE_SUFFIX}")
 endif()
-set(src "${LLVM_RUNTIME_OUTPUT_INTDIR}/lld${CMAKE_EXECUTABLE_SUFFIX}")
 set(dst "${LLVM_RUNTIME_OUTPUT_INTDIR}/lld-link${CMAKE_EXECUTABLE_SUFFIX}")
 add_custom_command(TARGET lld POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E ${command} ${src} ${dst})
