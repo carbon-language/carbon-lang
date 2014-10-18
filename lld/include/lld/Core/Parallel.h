@@ -13,7 +13,6 @@
 #include "lld/Core/Instrumentation.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/range.h"
-
 #include "llvm/Support/MathExtras.h"
 
 #ifdef _MSC_VER

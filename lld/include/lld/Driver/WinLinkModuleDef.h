@@ -19,7 +19,6 @@
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/Allocator.h"
-
 #include <vector>
 
 namespace lld {

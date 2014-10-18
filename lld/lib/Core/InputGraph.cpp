@@ -8,9 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Core/InputGraph.h"
-
 #include "lld/Core/Resolver.h"
-
 #include <memory>
 
 using namespace lld;

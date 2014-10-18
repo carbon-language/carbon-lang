@@ -17,14 +17,12 @@
 #include "ArchHandler.h"
 #include "File.h"
 #include "MachOPasses.h"
-
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/Simple.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
-
 #include "llvm/ADT/DenseMap.h"
 
 

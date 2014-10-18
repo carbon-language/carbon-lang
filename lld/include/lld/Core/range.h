@@ -18,9 +18,8 @@
 #define LLD_CORE_RANGE_H
 
 #include "llvm/Support/Compiler.h"
-
-#include <cassert>
 #include <array>
+#include <cassert>
 #include <iterator>
 #include <string>
 #include <type_traits>

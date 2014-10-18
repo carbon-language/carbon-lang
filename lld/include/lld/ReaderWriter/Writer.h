@@ -11,7 +11,6 @@
 #define LLD_READER_WRITER_WRITER_H
 
 #include "lld/Core/LLVM.h"
-
 #include <memory>
 #include <vector>
 

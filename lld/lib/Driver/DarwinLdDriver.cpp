@@ -29,9 +29,8 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
-
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 
 using namespace lld;

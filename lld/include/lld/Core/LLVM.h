@@ -19,7 +19,6 @@
 // clients.
 #include "llvm/ADT/Hashing.h"
 #include "llvm/Support/Casting.h"
-
 #include <utility>
 
 namespace llvm {

@@ -8,11 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Core/Error.h"
-
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mutex.h"
-
 #include <string>
 #include <vector>
 

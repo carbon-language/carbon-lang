@@ -13,7 +13,6 @@
 #include "lld/Core/LinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
-
 #include "llvm/Support/ErrorHandling.h"
 
 namespace lld {

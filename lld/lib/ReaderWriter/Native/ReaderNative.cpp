@@ -8,13 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "NativeFileFormat.h"
-
 #include "lld/Core/Atom.h"
 #include "lld/Core/Error.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Simple.h"
 #include "lld/ReaderWriter/Reader.h"
-
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Debug.h"
@@ -22,7 +20,6 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
-
 #include <memory>
 #include <vector>
 

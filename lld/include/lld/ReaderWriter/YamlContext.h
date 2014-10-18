@@ -11,7 +11,6 @@
 #define LLD_READER_WRITER_YAML_CONTEXT_H
 
 #include "lld/Core/LLVM.h"
-
 #include <functional>
 #include <memory>
 #include <vector>

@@ -13,9 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
-
 #include "lld/Core/Parallel.h"
-
 #include <array>
 #include <random>
 

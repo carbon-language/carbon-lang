@@ -7,11 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <memory>
-
 #include "gtest/gtest.h"
 #include "lld/Driver/WinLinkModuleDef.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include <memory>
 
 using namespace llvm;
 using namespace lld;

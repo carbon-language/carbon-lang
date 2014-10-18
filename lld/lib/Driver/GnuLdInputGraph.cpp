@@ -9,7 +9,6 @@
 
 #include "lld/Driver/GnuLdInputGraph.h"
 #include "lld/ReaderWriter/LinkerScript.h"
-
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 

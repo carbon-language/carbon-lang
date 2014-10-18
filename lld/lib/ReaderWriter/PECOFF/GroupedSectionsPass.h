@@ -31,7 +31,6 @@
 
 #include "Atoms.h"
 #include "lld/Core/Pass.h"
-
 #include <algorithm>
 
 namespace lld {

@@ -13,10 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "DriverTest.h"
-
-#include "llvm/Support/MachO.h"
-
 #include "lld/ReaderWriter/MachOLinkingContext.h"
+#include "llvm/Support/MachO.h"
 
 using namespace llvm;
 using namespace lld;

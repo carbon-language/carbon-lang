@@ -19,12 +19,10 @@
 #define LLD_READER_WRITER_PE_COFF_LOAD_CONFIG_PASS_H
 
 #include "Atoms.h"
-
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/Simple.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
-
 #include <map>
 
 namespace lld {

@@ -8,19 +8,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/ReaderWriter/MachOLinkingContext.h"
-
 #include "ArchHandler.h"
 #include "File.h"
 #include "MachONormalizedFile.h"
 #include "MachOPasses.h"
-
 #include "lld/Core/PassManager.h"
 #include "lld/Driver/DarwinInputGraph.h"
-#include "lld/ReaderWriter/Reader.h"
-#include "lld/ReaderWriter/Writer.h"
 #include "lld/Passes/LayoutPass.h"
 #include "lld/Passes/RoundTripYAMLPass.h"
-
+#include "lld/ReaderWriter/Reader.h"
+#include "lld/ReaderWriter/Writer.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Config/config.h"
@@ -28,7 +25,6 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/Path.h"
-
 #include <algorithm>
 
 #if HAVE_CXXABI_H

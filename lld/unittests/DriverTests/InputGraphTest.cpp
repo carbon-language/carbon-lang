@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
-
 #include "lld/Core/InputGraph.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/Simple.h"

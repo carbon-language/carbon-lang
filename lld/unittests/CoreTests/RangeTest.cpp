@@ -13,11 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
-
 #include "lld/Core/range.h"
-
-#include <assert.h>
 #include <array>
+#include <assert.h>
 #include <deque>
 #include <forward_list>
 #include <iterator>

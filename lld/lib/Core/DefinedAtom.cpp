@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ErrorHandling.h"
-
 #include "lld/Core/DefinedAtom.h"
 
 

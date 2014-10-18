@@ -21,17 +21,14 @@
 ///                    +-------+
 
 #include "MachONormalizedFile.h"
-
 #include "ArchHandler.h"
 #include "Atoms.h"
 #include "File.h"
 #include "MachONormalizedFileBinaryUtils.h"
-
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
-
-#include "llvm/Support/MachO.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/MachO.h"
 
 using namespace llvm::MachO;
 using namespace lld::mach_o::normalized;

@@ -14,7 +14,6 @@
 #include "lld/Core/Simple.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/COFF.h"
-
 #include <vector>
 
 namespace lld {

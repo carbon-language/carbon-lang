@@ -12,7 +12,6 @@
 
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Pass.h"
-
 #include <memory>
 #include <vector>
 

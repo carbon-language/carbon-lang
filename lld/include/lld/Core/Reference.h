@@ -11,7 +11,6 @@
 #define LLD_CORE_REFERENCES_H
 
 #include "lld/Core/LLVM.h"
-
 #include "llvm/ADT/StringSwitch.h"
 
 namespace lld {

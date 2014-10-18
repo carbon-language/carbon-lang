@@ -9,7 +9,6 @@
 
 #include "Atoms.h"
 #include "Pass.h"
-
 #include "lld/Core/File.h"
 #include "llvm/Support/COFF.h"
 

@@ -16,9 +16,7 @@
 
 #include "lld/Driver/Driver.h"
 #include "lld/Config/Version.h"
-
 #include "lld/Core/LLVM.h"
-
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"

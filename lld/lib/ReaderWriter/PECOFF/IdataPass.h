@@ -20,13 +20,11 @@
 #define LLD_READER_WRITER_PE_COFF_IDATA_PASS_H
 
 #include "Atoms.h"
-
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/Simple.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "llvm/Support/COFF.h"
-
 #include <algorithm>
 #include <map>
 

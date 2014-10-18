@@ -7,14 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <algorithm>
-#include <set>
-
 #include "lld/Passes/LayoutPass.h"
 #include "lld/Core/Instrumentation.h"
-
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
+#include <algorithm>
+#include <set>
 
 using namespace lld;
 

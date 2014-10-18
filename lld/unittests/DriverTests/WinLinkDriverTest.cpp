@@ -13,11 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "DriverTest.h"
-
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/COFF.h"
-
 #include <set>
 #include <vector>
 

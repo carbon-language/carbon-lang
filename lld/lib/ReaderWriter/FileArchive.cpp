@@ -9,7 +9,6 @@
 
 #include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/LLVM.h"
-
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/Archive.h"
@@ -17,7 +16,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
-
 #include <memory>
 #include <set>
 #include <unordered_map>

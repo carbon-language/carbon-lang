@@ -13,14 +13,11 @@
 #include "lld/Core/Error.h"
 #include "lld/Core/InputGraph.h"
 #include "lld/Core/LLVM.h"
-#include "lld/Core/range.h"
 #include "lld/Core/Reference.h"
-
+#include "lld/Core/range.h"
 #include "lld/ReaderWriter/Reader.h"
-
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
-
 #include <string>
 #include <vector>
 

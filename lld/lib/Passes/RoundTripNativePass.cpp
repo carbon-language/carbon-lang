@@ -11,10 +11,8 @@
 #include "lld/Core/Simple.h"
 #include "lld/Passes/RoundTripNativePass.h"
 #include "lld/ReaderWriter/Writer.h"
-
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
-
 #include <memory>
 
 using namespace lld;

@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "DriverTest.h"
-
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 
 using namespace llvm;

@@ -11,7 +11,6 @@
 #define LLD_CORE_ARCHIVE_LIBRARY_FILE_H
 
 #include "lld/Core/File.h"
-
 #include <set>
 
 namespace lld {

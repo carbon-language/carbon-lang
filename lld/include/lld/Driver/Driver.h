@@ -19,10 +19,8 @@
 
 #include "lld/Core/InputGraph.h"
 #include "lld/Core/LLVM.h"
-
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/raw_ostream.h"
-
 #include <memory>
 #include <set>
 #include <vector>

@@ -19,7 +19,6 @@
 
 #include "lld/Core/InputGraph.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
-
 #include <map>
 
 namespace lld {

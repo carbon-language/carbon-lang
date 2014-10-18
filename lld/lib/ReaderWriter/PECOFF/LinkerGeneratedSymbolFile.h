@@ -8,12 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "Atoms.h"
-
 #include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/Simple.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "llvm/Support/Allocator.h"
-
 #include <mutex>
 
 using llvm::COFF::WindowsSubsystem;

@@ -13,7 +13,6 @@
 #include "lld/Core/File.h"
 #include "lld/Core/LinkingContext.h"
 #include "lld/Core/Pass.h"
-
 #include <vector>
 
 namespace lld {

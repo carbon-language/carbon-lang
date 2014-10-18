@@ -14,7 +14,6 @@
 #include "lld/Core/Reference.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/YAMLTraits.h"
-
 #include <functional>
 #include <memory>
 #include <vector>

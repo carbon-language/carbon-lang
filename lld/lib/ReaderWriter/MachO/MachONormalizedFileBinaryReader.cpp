@@ -22,10 +22,8 @@
 ///                  +------------+
 
 #include "MachONormalizedFile.h"
-
 #include "ArchHandler.h"
 #include "MachONormalizedFileBinaryUtils.h"
-
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/SharedLibraryFile.h"

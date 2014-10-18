@@ -16,7 +16,6 @@
 
 #include "lld/Core/LLVM.h"
 #include "lld/Driver/Driver.h"
-
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"

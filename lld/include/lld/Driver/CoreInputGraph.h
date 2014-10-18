@@ -21,7 +21,6 @@
 #include "lld/ReaderWriter/CoreLinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "llvm/Support/Errc.h"
-
 #include <map>
 #include <memory>
 

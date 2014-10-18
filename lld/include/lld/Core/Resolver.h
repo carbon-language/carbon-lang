@@ -13,10 +13,8 @@
 #include "lld/Core/File.h"
 #include "lld/Core/SharedLibraryFile.h"
 #include "lld/Core/SymbolTable.h"
-
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
-
 #include <set>
 #include <vector>
 

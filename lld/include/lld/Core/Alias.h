@@ -18,7 +18,6 @@
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Simple.h"
 #include "llvm/ADT/Optional.h"
-
 #include <string>
 
 namespace lld {

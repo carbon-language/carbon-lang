@@ -13,7 +13,6 @@
 #include "IdataPass.h"
 #include "LinkerGeneratedSymbolFile.h"
 #include "LoadConfigPass.h"
-
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Simple.h"
 #include "lld/Passes/LayoutPass.h"
@@ -25,7 +24,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Path.h"
-
 #include <bitset>
 #include <climits>
 #include <set>

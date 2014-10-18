@@ -15,15 +15,13 @@
 
 #include "ArchHandler.h"
 #include "File.h"
-#include "MachOPasses.h"
 #include "MachONormalizedFileBinaryUtils.h"
-
+#include "MachOPasses.h"
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/Simple.h"
-
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"

@@ -21,13 +21,11 @@
 
 #include "Atoms.h"
 #include "WriterImportLibrary.h"
-
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/ReaderWriter/AtomLayout.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "lld/ReaderWriter/Writer.h"
-
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/COFF.h"
@@ -37,7 +35,6 @@
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/Format.h"
-
 #include <algorithm>
 #include <cstdlib>
 #include <map>

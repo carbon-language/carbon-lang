@@ -17,13 +17,12 @@
 #define LLD_CORE_INPUT_GRAPH_H
 
 #include "lld/Core/File.h"
-#include "llvm/Option/ArgList.h"
-
+#include "lld/Core/range.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Option/ArgList.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
-
 #include <functional>
 #include <memory>
 #include <stack>
