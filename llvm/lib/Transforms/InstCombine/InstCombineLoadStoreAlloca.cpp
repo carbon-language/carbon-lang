@@ -319,6 +319,8 @@ static Instruction *combineLoadToOperationType(InstCombiner &IC, LoadInst &LI) {
 
   Value *Ptr = LI.getPointerOperand();
   unsigned AS = LI.getPointerAddressSpace();
+  AAMDNodes AAInfo;
+  LI.getAAMetadata(AAInfo);
 
   // Fold away bit casts of the loaded value by loading the desired type.
   if (LI.hasOneUse())
@@ -326,6 +328,7 @@ static Instruction *combineLoadToOperationType(InstCombiner &IC, LoadInst &LI) {
       LoadInst *NewLoad = IC.Builder->CreateAlignedLoad(
           IC.Builder->CreateBitCast(Ptr, BC->getDestTy()->getPointerTo(AS)),
           LI.getAlignment(), LI.getName());
+      NewLoad->setAAMetadata(AAInfo);
       BC->replaceAllUsesWith(NewLoad);
       IC.EraseInstFromFunction(*BC);
       return &LI;
