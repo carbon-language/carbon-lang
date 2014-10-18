@@ -53,10 +53,14 @@ static bool AreEquivalentAddressValues(const Value *A, const Value *B) {
   return false;
 }
 
-/// isSafeToLoadUnconditionally - Return true if we know that executing a load
-/// from this value cannot trap.  If it is not obviously safe to load from the
-/// specified pointer, we do a quick local scan of the basic block containing
-/// ScanFrom, to determine if the address is already accessed.
+/// \brief Check if executing a load of this pointer value cannot trap.
+///
+/// If it is not obviously safe to load from the specified pointer, we do
+/// a quick local scan of the basic block containing \c ScanFrom, to determine
+/// if the address is already accessed.
+///
+/// This uses the pointee type to determine how many bytes need to be safe to
+/// load from the pointer.
 bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
                                        unsigned Align, const DataLayout *TD) {
   int64_t ByteOffset = 0;
