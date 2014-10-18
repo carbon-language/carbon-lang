@@ -139,9 +139,9 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
 Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
                                       BasicBlock::iterator &ScanFrom,
                                       unsigned MaxInstsToScan,
-                                      AliasAnalysis *AA,
-                                      AAMDNodes *AATags) {
-  if (MaxInstsToScan == 0) MaxInstsToScan = ~0U;
+                                      AliasAnalysis *AA, AAMDNodes *AATags) {
+  if (MaxInstsToScan == 0)
+    MaxInstsToScan = ~0U;
 
   // If we're using alias analysis to disambiguate get the size of *Ptr.
   uint64_t AccessSize = 0;
@@ -149,7 +149,7 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
     Type *AccessTy = cast<PointerType>(Ptr->getType())->getElementType();
     AccessSize = AA->getTypeStoreSize(AccessTy);
   }
-  
+
   while (ScanFrom != ScanBB->begin()) {
     // We must ignore debug info directives when counting (otherwise they
     // would affect codegen).
@@ -159,29 +159,32 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
 
     // Restore ScanFrom to expected value in case next test succeeds
     ScanFrom++;
-   
+
     // Don't scan huge blocks.
-    if (MaxInstsToScan-- == 0) return nullptr;
-    
+    if (MaxInstsToScan-- == 0)
+      return nullptr;
+
     --ScanFrom;
     // If this is a load of Ptr, the loaded value is available.
     // (This is true even if the load is volatile or atomic, although
     // those cases are unlikely.)
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
       if (AreEquivalentAddressValues(LI->getOperand(0), Ptr)) {
-        if (AATags) LI->getAAMetadata(*AATags);
+        if (AATags)
+          LI->getAAMetadata(*AATags);
         return LI;
       }
-    
+
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       // If this is a store through Ptr, the value is available!
       // (This is true even if the store is volatile or atomic, although
       // those cases are unlikely.)
       if (AreEquivalentAddressValues(SI->getOperand(1), Ptr)) {
-        if (AATags) SI->getAAMetadata(*AATags);
+        if (AATags)
+          SI->getAAMetadata(*AATags);
         return SI->getOperand(0);
       }
-      
+
       // If Ptr is an alloca and this is a store to a different alloca, ignore
       // the store.  This is a trivial form of alias analysis that is important
       // for reg2mem'd code.
@@ -189,18 +192,18 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
           (isa<AllocaInst>(SI->getOperand(1)) ||
            isa<GlobalVariable>(SI->getOperand(1))))
         continue;
-      
+
       // If we have alias analysis and it says the store won't modify the loaded
       // value, ignore the store.
       if (AA &&
           (AA->getModRefInfo(SI, Ptr, AccessSize) & AliasAnalysis::Mod) == 0)
         continue;
-      
+
       // Otherwise the store that may or may not alias the pointer, bail out.
       ++ScanFrom;
       return nullptr;
     }
-    
+
     // If this is some other instruction that may clobber Ptr, bail out.
     if (Inst->mayWriteToMemory()) {
       // If alias analysis claims that it really won't modify the load,
@@ -208,13 +211,13 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
       if (AA &&
           (AA->getModRefInfo(Inst, Ptr, AccessSize) & AliasAnalysis::Mod) == 0)
         continue;
-      
+
       // May modify the pointer, bail out.
       ++ScanFrom;
       return nullptr;
     }
   }
-  
+
   // Got to the start of the block, we didn't find it, but are done for this
   // block.
   return nullptr;
