@@ -52,6 +52,7 @@
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <limits>
 #include <memory>
+#include <queue>
 #include <set>
 #include <sstream>
 #include <vector>
@@ -163,30 +164,128 @@ public:
 
 /// @brief Add interference edges between overlapping vregs.
 class Interference : public PBQPRAConstraint {
+private:
+
+  // Holds (Interval, CurrentSegmentID, and NodeId). The first two are required
+  // for the fast interference graph construction algorithm. The last is there
+  // to save us from looking up node ids via the VRegToNode map in the graph
+  // metadata.
+  typedef std::tuple<LiveInterval*, size_t, PBQP::GraphBase::NodeId>
+    IntervalInfo;
+
+  static SlotIndex getStartPoint(const IntervalInfo &I) {
+    return std::get<0>(I)->segments[std::get<1>(I)].start;
+  }
+
+  static SlotIndex getEndPoint(const IntervalInfo &I) {
+    return std::get<0>(I)->segments[std::get<1>(I)].end;
+  }
+
+  static PBQP::GraphBase::NodeId getNodeId(const IntervalInfo &I) {
+    return std::get<2>(I);
+  }
+
+  static bool lowestStartPoint(const IntervalInfo &I1,
+                               const IntervalInfo &I2) {
+    // Condition reversed because priority queue has the *highest* element at
+    // the front, rather than the lowest.
+    return getStartPoint(I1) > getStartPoint(I2);
+  }
+
+  static bool lowestEndPoint(const IntervalInfo &I1,
+                             const IntervalInfo &I2) {
+    SlotIndex E1 = getEndPoint(I1);
+    SlotIndex E2 = getEndPoint(I2);
+
+    if (E1 < E2)
+      return true;
+
+    if (E1 > E2)
+      return false;
+
+    // If two intervals end at the same point, we need a way to break the tie or
+    // the set will assume they're actually equal and refuse to insert a
+    // "duplicate". Just compare the vregs - fast and guaranteed unique.
+    return std::get<0>(I1)->reg < std::get<0>(I2)->reg;
+  }
+
+  static bool isAtLastSegment(const IntervalInfo &I) {
+    return std::get<1>(I) == std::get<0>(I)->size() - 1;
+  }
+
+  static IntervalInfo nextSegment(const IntervalInfo &I) {
+    return std::make_tuple(std::get<0>(I), std::get<1>(I) + 1, std::get<2>(I));
+  }
+
 public:
 
   void apply(PBQPRAGraph &G) override {
+    // The following is loosely based on the linear scan algorithm introduced in
+    // "Linear Scan Register Allocation" by Poletto and Sarkar. This version
+    // isn't linear, because the size of the active set isn't bound by the
+    // number of registers, but rather the size of the largest clique in the
+    // graph. Still, we expect this to be better than N^2.
     LiveIntervals &LIS = G.getMetadata().LIS;
     const TargetRegisterInfo &TRI =
       *G.getMetadata().MF.getTarget().getSubtargetImpl()->getRegisterInfo();
 
-    for (auto NItr = G.nodeIds().begin(), NEnd = G.nodeIds().end();
-         NItr != NEnd; ++NItr) {
-      auto NId = *NItr;
-      unsigned NVReg = G.getNodeMetadata(NId).getVReg();
-      LiveInterval &NLI = LIS.getInterval(NVReg);
+    typedef std::set<IntervalInfo, decltype(&lowestEndPoint)> IntervalSet;
+    typedef std::priority_queue<IntervalInfo, std::vector<IntervalInfo>,
+                                decltype(&lowestStartPoint)> IntervalQueue;
+    IntervalSet Active(lowestEndPoint);
+    IntervalQueue Inactive(lowestStartPoint);
 
-      for (auto MItr = std::next(NItr); MItr != NEnd; ++MItr) {
-        auto MId = *MItr;
-        unsigned MVReg = G.getNodeMetadata(MId).getVReg();
-        LiveInterval &MLI = LIS.getInterval(MVReg);
+    // Start by building the inactive set.
+    for (auto NId : G.nodeIds()) {
+      unsigned VReg = G.getNodeMetadata(NId).getVReg();
+      LiveInterval &LI = LIS.getInterval(VReg);
+      assert(!LI.empty() && "PBQP graph contains node for empty interval");
+      Inactive.push(std::make_tuple(&LI, 0, NId));
+    }
 
-        if (NLI.overlaps(MLI)) {
-          const auto &NOpts = G.getNodeMetadata(NId).getOptionRegs();
-          const auto &MOpts = G.getNodeMetadata(MId).getOptionRegs();
-          G.addEdge(NId, MId, createInterferenceMatrix(TRI, NOpts, MOpts));
-        }
+    while (!Inactive.empty()) {
+      // Tentatively grab the "next" interval - this choice may be overriden
+      // below.
+      IntervalInfo Cur = Inactive.top();
+
+      // Retire any active intervals that end before Cur starts.
+      IntervalSet::iterator RetireItr = Active.begin();
+      while (RetireItr != Active.end() &&
+             (getEndPoint(*RetireItr) <= getStartPoint(Cur))) {
+        // If this interval has subsequent segments, add the next one to the
+        // inactive list.
+        if (!isAtLastSegment(*RetireItr))
+          Inactive.push(nextSegment(*RetireItr));
+
+        ++RetireItr;
       }
+      Active.erase(Active.begin(), RetireItr);
+
+      // One of the newly retired segments may actually start before the
+      // Cur segment, so re-grab the front of the inactive list.
+      Cur = Inactive.top();
+      Inactive.pop();
+
+      // At this point we know that Cur overlaps all active intervals. Add the
+      // interference edges.
+      PBQP::GraphBase::NodeId NId = getNodeId(Cur);
+      for (const auto &A : Active) {
+        PBQP::GraphBase::NodeId MId = getNodeId(A);
+
+        // Check that we haven't already added this edge
+        // FIXME: findEdge is expensive in the worst case (O(max_clique(G))).
+        //        It might be better to replace this with a local bit-matrix.
+        if (G.findEdge(NId, MId) != PBQP::GraphBase::invalidEdgeId())
+          continue;
+
+        // This is a new edge - add it to the graph.
+        const auto &NOpts = G.getNodeMetadata(NId).getOptionRegs();
+        const auto &MOpts = G.getNodeMetadata(MId).getOptionRegs();
+        G.addEdge(NId, MId, createInterferenceMatrix(TRI, NOpts, MOpts));
+      }
+
+      // Finally, add Cur to the Active set.
+      Active.insert(Cur);
     }
   }
 
