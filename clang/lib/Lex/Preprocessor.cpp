@@ -384,21 +384,20 @@ bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
   }
 
   Position += CompleteColumn - 1;
+  if (Position > Buffer->getBufferEnd())
+    Position = Buffer->getBufferEnd();
 
-  // Insert '\0' at the code-completion point.
-  if (Position < Buffer->getBufferEnd()) {
-    CodeCompletionFile = File;
-    CodeCompletionOffset = Position - Buffer->getBufferStart();
+  CodeCompletionFile = File;
+  CodeCompletionOffset = Position - Buffer->getBufferStart();
 
-    std::unique_ptr<MemoryBuffer> NewBuffer =
-        MemoryBuffer::getNewUninitMemBuffer(Buffer->getBufferSize() + 1,
-                                            Buffer->getBufferIdentifier());
-    char *NewBuf = const_cast<char*>(NewBuffer->getBufferStart());
-    char *NewPos = std::copy(Buffer->getBufferStart(), Position, NewBuf);
-    *NewPos = '\0';
-    std::copy(Position, Buffer->getBufferEnd(), NewPos+1);
-    SourceMgr.overrideFileContents(File, std::move(NewBuffer));
-  }
+  std::unique_ptr<MemoryBuffer> NewBuffer =
+      MemoryBuffer::getNewUninitMemBuffer(Buffer->getBufferSize() + 1,
+                                          Buffer->getBufferIdentifier());
+  char *NewBuf = const_cast<char*>(NewBuffer->getBufferStart());
+  char *NewPos = std::copy(Buffer->getBufferStart(), Position, NewBuf);
+  *NewPos = '\0';
+  std::copy(Position, Buffer->getBufferEnd(), NewPos+1);
+  SourceMgr.overrideFileContents(File, std::move(NewBuffer));
 
   return false;
 }
