@@ -1690,36 +1690,113 @@ isVectorPromotionViableForSlice(const DataLayout &DL, uint64_t SliceBeginOffset,
 /// SSA value. We only can ensure this for a limited set of operations, and we
 /// don't want to do the rewrites unless we are confident that the result will
 /// be promotable, so we have an early test here.
-static bool
+static VectorType *
 isVectorPromotionViable(const DataLayout &DL, Type *AllocaTy,
                         uint64_t SliceBeginOffset, uint64_t SliceEndOffset,
                         AllocaSlices::const_range Slices,
                         ArrayRef<AllocaSlices::iterator> SplitUses) {
-  VectorType *Ty = dyn_cast<VectorType>(AllocaTy);
-  if (!Ty)
-    return false;
-
-  uint64_t ElementSize = DL.getTypeSizeInBits(Ty->getScalarType());
-
-  // While the definition of LLVM vectors is bitpacked, we don't support sizes
-  // that aren't byte sized.
-  if (ElementSize % 8)
-    return false;
-  assert((DL.getTypeSizeInBits(Ty) % 8) == 0 &&
-         "vector size not a multiple of element size?");
-  ElementSize /= 8;
-
+  // Collect the candidate types for vector-based promotion. Also track whether
+  // we have different element types.
+  SmallVector<VectorType *, 4> CandidateTys;
+  Type *CommonEltTy = nullptr;
+  bool HaveCommonEltTy = true;
+  auto CheckCandidateType = [&](Type *Ty) {
+    if (auto *VTy = dyn_cast<VectorType>(Ty)) {
+      CandidateTys.push_back(VTy);
+      if (!CommonEltTy)
+        CommonEltTy = VTy->getElementType();
+      else if (CommonEltTy != VTy->getElementType())
+        HaveCommonEltTy = false;
+    }
+  };
+  CheckCandidateType(AllocaTy);
+  // Consider any loads or stores that are the exact size of the slice.
   for (const auto &S : Slices)
-    if (!isVectorPromotionViableForSlice(DL, SliceBeginOffset, SliceEndOffset,
-                                         Ty, ElementSize, S))
-      return false;
+    if (S.beginOffset() == SliceBeginOffset &&
+        S.endOffset() == SliceEndOffset) {
+      if (auto *LI = dyn_cast<LoadInst>(S.getUse()->getUser()))
+        CheckCandidateType(LI->getType());
+      else if (auto *SI = dyn_cast<StoreInst>(S.getUse()->getUser()))
+        CheckCandidateType(SI->getValueOperand()->getType());
+    }
 
-  for (const auto &SI : SplitUses)
-    if (!isVectorPromotionViableForSlice(DL, SliceBeginOffset, SliceEndOffset,
-                                         Ty, ElementSize, *SI))
-      return false;
+  // If we didn't find a vector type, nothing to do here.
+  if (CandidateTys.empty())
+    return nullptr;
 
-  return true;
+  // Remove non-integer vector types if we had multiple common element types.
+  // FIXME: It'd be nice to replace them with integer vector types, but we can't
+  // do that until all the backends are known to produce good code for all
+  // integer vector types.
+  if (!HaveCommonEltTy) {
+    CandidateTys.erase(std::remove_if(CandidateTys.begin(), CandidateTys.end(),
+                                      [](VectorType *VTy) {
+                         return !VTy->getElementType()->isIntegerTy();
+                       }),
+                       CandidateTys.end());
+
+    // If there were no integer vector types, give up.
+    if (CandidateTys.empty())
+      return nullptr;
+
+    // Rank the remaining candidate vector types. This is easy because we know
+    // they're all integer vectors. We sort by ascending number of elements.
+    auto RankVectorTypes = [&DL](VectorType *RHSTy, VectorType *LHSTy) {
+      assert(DL.getTypeSizeInBits(RHSTy) == DL.getTypeSizeInBits(LHSTy) &&
+             "Cannot have vector types of different sizes!");
+      assert(RHSTy->getElementType()->isIntegerTy() &&
+             "All non-integer types eliminated!");
+      assert(LHSTy->getElementType()->isIntegerTy() &&
+             "All non-integer types eliminated!");
+      return RHSTy->getNumElements() < LHSTy->getNumElements();
+    };
+    std::sort(CandidateTys.begin(), CandidateTys.end(), RankVectorTypes);
+    CandidateTys.erase(
+        std::unique(CandidateTys.begin(), CandidateTys.end(), RankVectorTypes),
+        CandidateTys.end());
+  } else {
+// The only way to have the same element type in every vector type is to
+// have the same vector type. Check that and remove all but one.
+#ifndef NDEBUG
+    for (VectorType *VTy : CandidateTys) {
+      assert(VTy->getElementType() == CommonEltTy &&
+             "Unaccounted for element type!");
+      assert(VTy == CandidateTys[0] &&
+             "Different vector types with the same element type!");
+    }
+#endif
+    CandidateTys.resize(1);
+  }
+
+  // Try each vector type, and return the one which works.
+  auto CheckVectorTypeForPromotion = [&](VectorType *VTy) {
+    uint64_t ElementSize = DL.getTypeSizeInBits(VTy->getElementType());
+
+    // While the definition of LLVM vectors is bitpacked, we don't support sizes
+    // that aren't byte sized.
+    if (ElementSize % 8)
+      return false;
+    assert((DL.getTypeSizeInBits(VTy) % 8) == 0 &&
+           "vector size not a multiple of element size?");
+    ElementSize /= 8;
+
+    for (const auto &S : Slices)
+      if (!isVectorPromotionViableForSlice(DL, SliceBeginOffset, SliceEndOffset,
+                                           VTy, ElementSize, S))
+        return false;
+
+    for (const auto &SI : SplitUses)
+      if (!isVectorPromotionViableForSlice(DL, SliceBeginOffset, SliceEndOffset,
+                                           VTy, ElementSize, *SI))
+        return false;
+
+    return true;
+  };
+  for (VectorType *VTy : CandidateTys)
+    if (CheckVectorTypeForPromotion(VTy))
+      return VTy;
+
+  return nullptr;
 }
 
 /// \brief Test whether a slice of an alloca is valid for integer widening.
@@ -1745,7 +1822,10 @@ static bool isIntegerWideningViableForSlice(const DataLayout &DL,
   if (LoadInst *LI = dyn_cast<LoadInst>(U->getUser())) {
     if (LI->isVolatile())
       return false;
-    if (RelBegin == 0 && RelEnd == Size)
+    // Note that we don't count vector loads or stores as whole-alloca
+    // operations which enable integer widening because we would prefer to use
+    // vector widening instead.
+    if (!isa<VectorType>(LI->getType()) && RelBegin == 0 && RelEnd == Size)
       WholeAllocaOp = true;
     if (IntegerType *ITy = dyn_cast<IntegerType>(LI->getType())) {
       if (ITy->getBitWidth() < DL.getTypeStoreSizeInBits(ITy))
@@ -1760,7 +1840,10 @@ static bool isIntegerWideningViableForSlice(const DataLayout &DL,
     Type *ValueTy = SI->getValueOperand()->getType();
     if (SI->isVolatile())
       return false;
-    if (RelBegin == 0 && RelEnd == Size)
+    // Note that we don't count vector loads or stores as whole-alloca
+    // operations which enable integer widening because we would prefer to use
+    // vector widening instead.
+    if (!isa<VectorType>(ValueTy) && RelBegin == 0 && RelEnd == Size)
       WholeAllocaOp = true;
     if (IntegerType *ITy = dyn_cast<IntegerType>(ValueTy)) {
       if (ITy->getBitWidth() < DL.getTypeStoreSizeInBits(ITy))
@@ -1987,6 +2070,12 @@ class AllocaSliceRewriter : public InstVisitor<AllocaSliceRewriter, bool> {
   const uint64_t NewAllocaBeginOffset, NewAllocaEndOffset;
   Type *NewAllocaTy;
 
+  // This is a convenience and flag variable that will be null unless the new
+  // alloca's integer operations should be widened to this integer type due to
+  // passing isIntegerWideningViable above. If it is non-null, the desired
+  // integer type will be stored here for easy access during rewriting.
+  IntegerType *IntTy;
+
   // If we are rewriting an alloca partition which can be written as pure
   // vector operations, we stash extra information here. When VecTy is
   // non-null, we have some strict guarantees about the rewritten alloca:
@@ -1999,12 +2088,6 @@ class AllocaSliceRewriter : public InstVisitor<AllocaSliceRewriter, bool> {
   VectorType *VecTy;
   Type *ElementTy;
   uint64_t ElementSize;
-
-  // This is a convenience and flag variable that will be null unless the new
-  // alloca's integer operations should be widened to this integer type due to
-  // passing isIntegerWideningViable above. If it is non-null, the desired
-  // integer type will be stored here for easy access during rewriting.
-  IntegerType *IntTy;
 
   // The original offset of the slice currently being rewritten relative to
   // the original alloca.
@@ -2031,22 +2114,22 @@ public:
   AllocaSliceRewriter(const DataLayout &DL, AllocaSlices &AS, SROA &Pass,
                       AllocaInst &OldAI, AllocaInst &NewAI,
                       uint64_t NewAllocaBeginOffset,
-                      uint64_t NewAllocaEndOffset, bool IsVectorPromotable,
-                      bool IsIntegerPromotable,
+                      uint64_t NewAllocaEndOffset, bool IsIntegerPromotable,
+                      VectorType *PromotableVecTy,
                       SmallPtrSetImpl<PHINode *> &PHIUsers,
                       SmallPtrSetImpl<SelectInst *> &SelectUsers)
       : DL(DL), AS(AS), Pass(Pass), OldAI(OldAI), NewAI(NewAI),
         NewAllocaBeginOffset(NewAllocaBeginOffset),
         NewAllocaEndOffset(NewAllocaEndOffset),
         NewAllocaTy(NewAI.getAllocatedType()),
-        VecTy(IsVectorPromotable ? cast<VectorType>(NewAllocaTy) : nullptr),
-        ElementTy(VecTy ? VecTy->getElementType() : nullptr),
-        ElementSize(VecTy ? DL.getTypeSizeInBits(ElementTy) / 8 : 0),
         IntTy(IsIntegerPromotable
                   ? Type::getIntNTy(
                         NewAI.getContext(),
                         DL.getTypeSizeInBits(NewAI.getAllocatedType()))
                   : nullptr),
+        VecTy(PromotableVecTy),
+        ElementTy(VecTy ? VecTy->getElementType() : nullptr),
+        ElementSize(VecTy ? DL.getTypeSizeInBits(ElementTy) / 8 : 0),
         BeginOffset(), EndOffset(), IsSplittable(), IsSplit(), OldUse(),
         OldPtr(), PHIUsers(PHIUsers), SelectUsers(SelectUsers),
         IRB(NewAI.getContext(), ConstantFolder()) {
@@ -2055,8 +2138,7 @@ public:
              "Only multiple-of-8 sized vector elements are viable");
       ++NumVectorized;
     }
-    assert((!IsVectorPromotable && !IsIntegerPromotable) ||
-           IsVectorPromotable != IsIntegerPromotable);
+    assert((!IntTy && !VecTy) || (IntTy && !VecTy) || (!IntTy && VecTy));
   }
 
   bool visit(AllocaSlices::const_iterator I) {
@@ -3125,14 +3207,16 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
     SliceTy = ArrayType::get(Type::getInt8Ty(*C), SliceSize);
   assert(DL->getTypeAllocSize(SliceTy) >= SliceSize);
 
-  bool IsVectorPromotable =
-      isVectorPromotionViable(*DL, SliceTy, BeginOffset, EndOffset,
-                              AllocaSlices::const_range(B, E), SplitUses);
+  bool IsIntegerPromotable = isIntegerWideningViable(
+      *DL, SliceTy, BeginOffset, AllocaSlices::const_range(B, E), SplitUses);
 
-  bool IsIntegerPromotable =
-      !IsVectorPromotable &&
-      isIntegerWideningViable(*DL, SliceTy, BeginOffset,
-                              AllocaSlices::const_range(B, E), SplitUses);
+  VectorType *VecTy =
+      IsIntegerPromotable
+          ? nullptr
+          : isVectorPromotionViable(*DL, SliceTy, BeginOffset, EndOffset,
+                                    AllocaSlices::const_range(B, E), SplitUses);
+  if (VecTy)
+    SliceTy = VecTy;
 
   // Check for the case where we're going to rewrite to a new alloca of the
   // exact same type as the original, and with the same access offsets. In that
@@ -3177,8 +3261,8 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
   SmallPtrSet<SelectInst *, 8> SelectUsers;
 
   AllocaSliceRewriter Rewriter(*DL, AS, *this, AI, *NewAI, BeginOffset,
-                               EndOffset, IsVectorPromotable,
-                               IsIntegerPromotable, PHIUsers, SelectUsers);
+                               EndOffset, IsIntegerPromotable, VecTy, PHIUsers,
+                               SelectUsers);
   bool Promotable = true;
   for (auto & SplitUse : SplitUses) {
     DEBUG(dbgs() << "  rewriting split ");

@@ -468,3 +468,139 @@ entry:
 ; CHECK: %[[insert:.*]] = or i32 %{{.*}}, %[[trunc]]
 ; CHECK: ret i32 %[[insert]]
 }
+
+define i32 @test7(<2 x i32> %x, <2 x i32> %y) {
+; Test that we can promote to vectors when the alloca doesn't mention any vector types.
+; CHECK-LABEL: @test7(
+entry:
+	%a = alloca [2 x i64]
+  %a.cast = bitcast [2 x i64]* %a to [2 x <2 x i32>]*
+; CHECK-NOT: alloca
+
+  %a.x = getelementptr inbounds [2 x <2 x i32>]* %a.cast, i64 0, i64 0
+  store <2 x i32> %x, <2 x i32>* %a.x
+  %a.y = getelementptr inbounds [2 x <2 x i32>]* %a.cast, i64 0, i64 1
+  store <2 x i32> %y, <2 x i32>* %a.y
+; CHECK-NOT: store
+
+  %a.tmp1 = getelementptr inbounds [2 x <2 x i32>]* %a.cast, i64 0, i64 0, i64 1
+  %tmp1 = load i32* %a.tmp1
+  %a.tmp2 = getelementptr inbounds [2 x <2 x i32>]* %a.cast, i64 0, i64 1, i64 1
+  %tmp2 = load i32* %a.tmp2
+  %a.tmp3 = getelementptr inbounds [2 x <2 x i32>]* %a.cast, i64 0, i64 1, i64 0
+  %tmp3 = load i32* %a.tmp3
+; CHECK-NOT: load
+; CHECK:      extractelement <2 x i32> %x, i32 1
+; CHECK-NEXT: extractelement <2 x i32> %y, i32 1
+; CHECK-NEXT: extractelement <2 x i32> %y, i32 0
+
+  %tmp4 = add i32 %tmp1, %tmp2
+  %tmp5 = add i32 %tmp3, %tmp4
+  ret i32 %tmp5
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: ret
+}
+
+define i32 @test8(<2 x i32> %x) {
+; Ensure that we can promote an alloca that doesn't mention a vector type based
+; on a single store with a vector type.
+; CHECK-LABEL: @test8(
+entry:
+	%a = alloca i64
+  %a.vec = bitcast i64* %a to <2 x i32>*
+  %a.i32 = bitcast i64* %a to i32*
+; CHECK-NOT: alloca
+
+  store <2 x i32> %x, <2 x i32>* %a.vec
+; CHECK-NOT: store
+
+  %tmp1 = load i32* %a.i32
+  %a.tmp2 = getelementptr inbounds i32* %a.i32, i64 1
+  %tmp2 = load i32* %a.tmp2
+; CHECK-NOT: load
+; CHECK:      extractelement <2 x i32> %x, i32 0
+; CHECK-NEXT: extractelement <2 x i32> %x, i32 1
+
+  %tmp4 = add i32 %tmp1, %tmp2
+  ret i32 %tmp4
+; CHECK-NEXT: add
+; CHECK-NEXT: ret
+}
+
+define <2 x i32> @test9(i32 %x, i32 %y) {
+; Ensure that we can promote an alloca that doesn't mention a vector type based
+; on a single load with a vector type.
+; CHECK-LABEL: @test9(
+entry:
+	%a = alloca i64
+  %a.vec = bitcast i64* %a to <2 x i32>*
+  %a.i32 = bitcast i64* %a to i32*
+; CHECK-NOT: alloca
+
+  store i32 %x, i32* %a.i32
+  %a.tmp2 = getelementptr inbounds i32* %a.i32, i64 1
+  store i32 %y, i32* %a.tmp2
+; CHECK-NOT: store
+; CHECK:      %[[V1:.*]] = insertelement <2 x i32> undef, i32 %x, i32 0
+; CHECK-NEXT: %[[V2:.*]] = insertelement <2 x i32> %[[V1]], i32 %y, i32 1
+
+  %result = load <2 x i32>* %a.vec
+; CHECK-NOT:  load
+
+  ret <2 x i32> %result
+; CHECK-NEXT: ret <2 x i32> %[[V2]]
+}
+
+define <2 x i32> @test10(<4 x i16> %x, i32 %y) {
+; If there are multiple different vector types used, we should select the one
+; with the widest elements.
+; CHECK-LABEL: @test10(
+entry:
+	%a = alloca i64
+  %a.vec1 = bitcast i64* %a to <2 x i32>*
+  %a.vec2 = bitcast i64* %a to <4 x i16>*
+  %a.i32 = bitcast i64* %a to i32*
+; CHECK-NOT: alloca
+
+  store <4 x i16> %x, <4 x i16>* %a.vec2
+  %a.tmp2 = getelementptr inbounds i32* %a.i32, i64 1
+  store i32 %y, i32* %a.tmp2
+; CHECK-NOT: store
+; CHECK:      %[[V1:.*]] = bitcast <4 x i16> %x to <2 x i32>
+; CHECK-NEXT: %[[V2:.*]] = insertelement <2 x i32> %[[V1]], i32 %y, i32 1
+
+  %result = load <2 x i32>* %a.vec1
+; CHECK-NOT:  load
+
+  ret <2 x i32> %result
+; CHECK-NEXT: ret <2 x i32> %[[V2]]
+}
+
+define <2 x float> @test11(<4 x i16> %x, i32 %y) {
+; If there are multiple different element types for different vector types,
+; pick the integer types. This isn't really important, but seems like the best
+; heuristic for making a deterministic decision.
+; CHECK-LABEL: @test11(
+entry:
+	%a = alloca i64
+  %a.vec1 = bitcast i64* %a to <2 x float>*
+  %a.vec2 = bitcast i64* %a to <4 x i16>*
+  %a.i32 = bitcast i64* %a to i32*
+; CHECK-NOT: alloca
+
+  store <4 x i16> %x, <4 x i16>* %a.vec2
+  %a.tmp2 = getelementptr inbounds i32* %a.i32, i64 1
+  store i32 %y, i32* %a.tmp2
+; CHECK-NOT: store
+; CHECK:      %[[V1:.*]] = bitcast i32 %y to <2 x i16>
+; CHECK-NEXT: %[[V2:.*]] = shufflevector <2 x i16> %[[V1]], <2 x i16> undef, <4 x i32> <i32 undef, i32 undef, i32 0, i32 1>
+; CHECK-NEXT: %[[V3:.*]] = select <4 x i1> <i1 false, i1 false, i1 true, i1 true>, <4 x i16> %[[V2]], <4 x i16> %x
+; CHECK-NEXT: %[[V4:.*]] = bitcast <4 x i16> %[[V3]] to <2 x float>
+
+  %result = load <2 x float>* %a.vec1
+; CHECK-NOT:  load
+
+  ret <2 x float> %result
+; CHECK-NEXT: ret <2 x float> %[[V4]]
+}
