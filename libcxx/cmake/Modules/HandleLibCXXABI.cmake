@@ -27,13 +27,20 @@ macro(setup_abi_lib abipathvar abidefines abilibs abifiles abidirs)
   # each run of find_library.
   set(LIBCXX_CXX_ABI_LIBRARIES "")
   foreach(alib ${abilibs})
-    unset(_Res CACHE)
-    find_library(_Res ${alib})
-    if (${_Res} STREQUAL "_Res-NOTFOUND")
-      message(FATAL_ERROR "Failed to find ABI library: ${alib}")
+    # cxxabi is a cmake target and not a library.
+    # Handle this special case explicitly.
+    # Otherwise use find_library to locate the correct binary.
+    if (alib STREQUAL "cxxabi")
+      list(APPEND LIBCXX_CXX_ABI_LIBRARIES cxxabi)
     else()
-      message(STATUS "Adding ABI library: ${_Res}")
-      list(APPEND LIBCXX_CXX_ABI_LIBRARIES ${_Res})
+      unset(_Res CACHE)
+      find_library(_Res ${alib})
+      if (${_Res} STREQUAL "_Res-NOTFOUND")
+        message(FATAL_ERROR "Failed to find ABI library: ${alib}")
+      else()
+        message(STATUS "Adding ABI library: ${_Res}")
+        list(APPEND LIBCXX_CXX_ABI_LIBRARIES ${_Res})
+      endif()
     endif()
   endforeach()
 
