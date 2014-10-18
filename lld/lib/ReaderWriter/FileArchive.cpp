@@ -134,7 +134,9 @@ private:
       return ec;
     llvm::MemoryBufferRef mb = mbOrErr.get();
     if (_logLoading)
-      llvm::outs() << mb.getBufferIdentifier() << "\n";
+      llvm::outs() << _archive->getFileName() << "(" << mb.getBufferIdentifier()
+                   << ")"
+                   << "\n";
 
     std::unique_ptr<MemoryBuffer> buf(MemoryBuffer::getMemBuffer(
         mb.getBuffer(), mb.getBufferIdentifier(), false));
