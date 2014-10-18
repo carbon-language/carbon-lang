@@ -35,15 +35,16 @@ using namespace llvm;
 ///
 static bool AreEquivalentAddressValues(const Value *A, const Value *B) {
   // Test if the values are trivially equivalent.
-  if (A == B) return true;
+  if (A == B)
+    return true;
 
   // Test if the values come from identical arithmetic instructions.
   // Use isIdenticalToWhenDefined instead of isIdenticalTo because
   // this function is only used when one address use dominates the
   // other, which means that they'll always either have the same
   // value or one of them will have an undefined value.
-  if (isa<BinaryOperator>(A) || isa<CastInst>(A) ||
-      isa<PHINode>(A) || isa<GetElementPtrInst>(A))
+  if (isa<BinaryOperator>(A) || isa<CastInst>(A) || isa<PHINode>(A) ||
+      isa<GetElementPtrInst>(A))
     if (const Instruction *BI = dyn_cast<Instruction>(B))
       if (cast<Instruction>(A)->isIdenticalToWhenDefined(BI))
         return true;
@@ -114,9 +115,11 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
       return false;
 
     if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
-      if (AreEquivalentAddressValues(LI->getOperand(0), V)) return true;
+      if (AreEquivalentAddressValues(LI->getOperand(0), V))
+        return true;
     } else if (StoreInst *SI = dyn_cast<StoreInst>(BBI)) {
-      if (AreEquivalentAddressValues(SI->getOperand(1), V)) return true;
+      if (AreEquivalentAddressValues(SI->getOperand(1), V))
+        return true;
     }
   }
   return false;
