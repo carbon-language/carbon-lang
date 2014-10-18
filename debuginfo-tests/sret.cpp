@@ -1,5 +1,5 @@
-// RUN: %clangxx --target=%itanium_abi_host_triple -O0 -g %s -c -o %t.o
-// RUN: %clangxx --target=%itanium_abi_host_triple %t.o -o %t.out
+// RUN: %clangxx %target_itanium_abi_host_triple -O0 -g %s -c -o %t.o
+// RUN: %clangxx %target_itanium_abi_host_triple %t.o -o %t.out
 // RUN: %test_debuginfo %s %t.out 
 // Radar 8775834
 // DEBUGGER: break 62
