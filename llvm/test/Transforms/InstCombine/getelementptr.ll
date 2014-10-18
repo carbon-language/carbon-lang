@@ -703,7 +703,7 @@ define void @test39(%struct.ham* %arg, i8 %arg1) nounwind {
 
 ; CHECK-LABEL: @test39(
 ; CHECK: getelementptr inbounds %struct.ham* %arg, i64 0, i32 2
-; CHECK: getelementptr inbounds i8* %tmp3, i64 -8
+; CHECK: getelementptr inbounds i8* %{{.+}}, i64 -8
 }
 
 define i1 @pr16483([1 x i8]* %a, [1 x i8]* %b) {

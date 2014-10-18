@@ -90,7 +90,8 @@ entry:
 define void @bitcast_alias_scalar(float* noalias %source, float* noalias %dest) nounwind {
 entry:
 ; CHECK-LABEL: @bitcast_alias_scalar
-; CHECK: bitcast float %tmp to i32
+; CHECK: bitcast float* %source to i32*
+; CHECK: load i32*
 ; CHECK-NOT: fptoui
 ; CHECK-NOT: uitofp
 ; CHECK: bitcast i32 %call to float
@@ -104,7 +105,8 @@ entry:
 define void @bitcast_alias_vector(<2 x float>* noalias %source, <2 x float>* noalias %dest) nounwind {
 entry:
 ; CHECK-LABEL: @bitcast_alias_vector
-; CHECK: bitcast <2 x float> %tmp to <2 x i32>
+; CHECK: bitcast <2 x float>* %source to <2 x i32>*
+; CHECK: load <2 x i32>*
 ; CHECK-NOT: fptoui
 ; CHECK-NOT: uitofp
 ; CHECK: bitcast <2 x i32> %call to <2 x float>
@@ -118,7 +120,8 @@ entry:
 define void @bitcast_alias_vector_scalar_same_size(<2 x float>* noalias %source, <2 x float>* noalias %dest) nounwind {
 entry:
 ; CHECK-LABEL: @bitcast_alias_vector_scalar_same_size
-; CHECK: bitcast <2 x float> %tmp to i64
+; CHECK: bitcast <2 x float>* %source to i64*
+; CHECK: load i64*
 ; CHECK: %call = call i64 @func_i64
 ; CHECK: bitcast i64 %call to <2 x float>
   %tmp = load <2 x float>* %source, align 8
@@ -130,7 +133,8 @@ entry:
 define void @bitcast_alias_scalar_vector_same_size(i64* noalias %source, i64* noalias %dest) nounwind {
 entry:
 ; CHECK-LABEL: @bitcast_alias_scalar_vector_same_size
-; CHECK: bitcast i64 %tmp to <2 x float>
+; CHECK: bitcast i64* %source to <2 x float>*
+; CHECK: load <2 x float>*
 ; CHECK: call <2 x float> @func_v2f32
 ; CHECK: bitcast <2 x float> %call to i64
   %tmp = load i64* %source, align 8
@@ -142,7 +146,8 @@ entry:
 define void @bitcast_alias_vector_ptrs_same_size(<2 x i64*>* noalias %source, <2 x i64*>* noalias %dest) nounwind {
 entry:
 ; CHECK-LABEL: @bitcast_alias_vector_ptrs_same_size
-; CHECK: bitcast <2 x i64*> %tmp to <2 x i32*>
+; CHECK: bitcast <2 x i64*>* %source to <2 x i32*>*
+; CHECK: load <2 x i32*>*
 ; CHECK: call <2 x i32*> @func_v2i32p
 ; CHECK: bitcast <2 x i32*> %call to <2 x i64*>
   %tmp = load <2 x i64*>* %source, align 8

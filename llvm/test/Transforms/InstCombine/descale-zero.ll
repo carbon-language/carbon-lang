@@ -5,8 +5,7 @@ target triple = "x86_64-apple-macosx10.10.0"
 
 define internal i8* @descale_zero() {
 entry:
-; CHECK: load i16** inttoptr (i64 48 to i16**), align 16
-; CHECK-NEXT: bitcast i16*
+; CHECK: load i8** inttoptr (i64 48 to i8**), align 16
 ; CHECK-NEXT: ret i8*
   %i16_ptr = load i16** inttoptr (i64 48 to i16**), align 16
   %num = load i64* inttoptr (i64 64 to i64*), align 64

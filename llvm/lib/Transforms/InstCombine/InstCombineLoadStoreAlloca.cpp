@@ -291,75 +291,57 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
   return visitAllocSite(AI);
 }
 
+/// \brief Combine loads to match the type of value their uses after looking
+/// through intervening bitcasts.
+///
+/// The core idea here is that if the result of a load is used in an operation,
+/// we should load the type most conducive to that operation. For example, when
+/// loading an integer and converting that immediately to a pointer, we should
+/// instead directly load a pointer.
+///
+/// However, this routine must never change the width of a load or the number of
+/// loads as that would introduce a semantic change. This combine is expected to
+/// be a semantic no-op which just allows loads to more closely model the types
+/// of their consuming operations.
+///
+/// Currently, we also refuse to change the precise type used for an atomic load
+/// or a volatile load. This is debatable, and might be reasonable to change
+/// later. However, it is risky in case some backend or other part of LLVM is
+/// relying on the exact type loaded to select appropriate atomic operations.
+static Instruction *combineLoadToOperationType(InstCombiner &IC, LoadInst &LI) {
+  // FIXME: We could probably with some care handle both volatile and atomic
+  // loads here but it isn't clear that this is important.
+  if (!LI.isSimple())
+    return nullptr;
 
-/// InstCombineLoadCast - Fold 'load (cast P)' -> cast (load P)' when possible.
-static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
-                                        const DataLayout *DL) {
-  User *CI = cast<User>(LI.getOperand(0));
-  Value *CastOp = CI->getOperand(0);
+  if (LI.use_empty())
+    return nullptr;
 
-  PointerType *DestTy = cast<PointerType>(CI->getType());
-  Type *DestPTy = DestTy->getElementType();
-  if (PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {
+  Value *Ptr = LI.getPointerOperand();
+  unsigned AS = LI.getPointerAddressSpace();
 
-    // If the address spaces don't match, don't eliminate the cast.
-    if (DestTy->getAddressSpace() != SrcTy->getAddressSpace())
-      return nullptr;
-
-    Type *SrcPTy = SrcTy->getElementType();
-
-    if (DestPTy->isIntegerTy() || DestPTy->isPointerTy() ||
-         DestPTy->isVectorTy()) {
-      // If the source is an array, the code below will not succeed.  Check to
-      // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
-      // constants.
-      if (ArrayType *ASrcTy = dyn_cast<ArrayType>(SrcPTy))
-        if (Constant *CSrc = dyn_cast<Constant>(CastOp))
-          if (ASrcTy->getNumElements() != 0) {
-            Type *IdxTy = DL
-                        ? DL->getIntPtrType(SrcTy)
-                        : Type::getInt64Ty(SrcTy->getContext());
-            Value *Idx = Constant::getNullValue(IdxTy);
-            Value *Idxs[2] = { Idx, Idx };
-            CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs);
-            SrcTy = cast<PointerType>(CastOp->getType());
-            SrcPTy = SrcTy->getElementType();
-          }
-
-      if (IC.getDataLayout() &&
-          (SrcPTy->isIntegerTy() || SrcPTy->isPointerTy() ||
-            SrcPTy->isVectorTy()) &&
-          // Do not allow turning this into a load of an integer, which is then
-          // casted to a pointer, this pessimizes pointer analysis a lot.
-          (SrcPTy->isPtrOrPtrVectorTy() ==
-           LI.getType()->isPtrOrPtrVectorTy()) &&
-          IC.getDataLayout()->getTypeSizeInBits(SrcPTy) ==
-               IC.getDataLayout()->getTypeSizeInBits(DestPTy)) {
-
-        // Okay, we are casting from one integer or pointer type to another of
-        // the same size.  Instead of casting the pointer before the load, cast
-        // the result of the loaded value.
-        LoadInst *NewLoad =
-          IC.Builder->CreateLoad(CastOp, LI.isVolatile(), CI->getName());
-        NewLoad->setAlignment(LI.getAlignment());
-        NewLoad->setAtomic(LI.getOrdering(), LI.getSynchScope());
-        // Now cast the result of the load.
-        PointerType *OldTy = dyn_cast<PointerType>(NewLoad->getType());
-        PointerType *NewTy = dyn_cast<PointerType>(LI.getType());
-        if (OldTy && NewTy &&
-            OldTy->getAddressSpace() != NewTy->getAddressSpace()) {
-          return new AddrSpaceCastInst(NewLoad, LI.getType());
-        }
-
-        return new BitCastInst(NewLoad, LI.getType());
-      }
+  // Fold away bit casts of the loaded value by loading the desired type.
+  if (LI.hasOneUse())
+    if (auto *BC = dyn_cast<BitCastInst>(LI.user_back())) {
+      LoadInst *NewLoad = IC.Builder->CreateAlignedLoad(
+          IC.Builder->CreateBitCast(Ptr, BC->getDestTy()->getPointerTo(AS)),
+          LI.getAlignment(), LI.getName());
+      BC->replaceAllUsesWith(NewLoad);
+      IC.EraseInstFromFunction(*BC);
+      return &LI;
     }
-  }
+
+  // FIXME: We should also canonicalize loads of vectors when their elements are
+  // cast to other types.
   return nullptr;
 }
 
 Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
+
+  // Try to canonicalize the loaded type.
+  if (Instruction *Res = combineLoadToOperationType(*this, LI))
+    return Res;
 
   // Attempt to improve the alignment.
   if (DL) {
@@ -375,11 +357,6 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     else if (LoadAlign == 0)
       LI.setAlignment(EffectiveLoadAlign);
   }
-
-  // load (cast X) --> cast (load X) iff safe.
-  if (isa<CastInst>(Op))
-    if (Instruction *Res = InstCombineLoadCast(*this, LI, DL))
-      return Res;
 
   // None of the following transforms are legal for volatile/atomic loads.
   // FIXME: Some of it is okay for atomic loads; needs refactoring.
@@ -418,12 +395,6 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
                   Constant::getNullValue(Op->getType()), &LI);
     return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
   }
-
-  // Instcombine load (constantexpr_cast global) -> cast (load global)
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op))
-    if (CE->isCast())
-      if (Instruction *Res = InstCombineLoadCast(*this, LI, DL))
-        return Res;
 
   if (Op->hasOneUse()) {
     // Change select and PHI nodes to select values instead of addresses: this
