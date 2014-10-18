@@ -17,13 +17,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64RelocationPass.h"
-
-#include "lld/Core/Simple.h"
-
-#include "llvm/ADT/DenseMap.h"
-
-#include "Atoms.h"
 #include "AArch64LinkingContext.h"
+#include "Atoms.h"
+#include "lld/Core/Simple.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Debug.h"
 
 using namespace lld;

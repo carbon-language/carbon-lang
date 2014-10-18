@@ -14,10 +14,8 @@
 #include "Layout.h"
 #include "SectionChunks.h"
 #include "Writer.h"
-
 #include "lld/Core/range.h"
 #include "lld/ReaderWriter/Writer.h"
-
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/ELF.h"

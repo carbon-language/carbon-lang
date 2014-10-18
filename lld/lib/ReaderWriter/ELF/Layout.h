@@ -12,7 +12,6 @@
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/ReaderWriter/AtomLayout.h"
-
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/Allocator.h"

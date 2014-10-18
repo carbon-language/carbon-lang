@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/ReaderWriter/Writer.h"
-
 #include "DynamicLibraryWriter.h"
 #include "ExecutableWriter.h"
 

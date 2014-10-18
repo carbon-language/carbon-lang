@@ -11,7 +11,6 @@
 #define LLD_READER_WRITER_ELF_HEADER_CHUNKS_H
 
 #include "SegmentChunks.h"
-
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"

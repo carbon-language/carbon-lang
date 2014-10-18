@@ -11,11 +11,11 @@
 #define HEXAGON_TARGET_HANDLER_H
 
 #include "DefaultTargetHandler.h"
+#include "HexagonELFReader.h"
 #include "HexagonExecutableAtoms.h"
 #include "HexagonRelocationHandler.h"
 #include "HexagonSectionChunks.h"
 #include "TargetLayout.h"
-#include "HexagonELFReader.h"
 
 namespace lld {
 namespace elf {

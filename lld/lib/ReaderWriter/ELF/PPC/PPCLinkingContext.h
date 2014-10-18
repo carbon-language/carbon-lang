@@ -11,9 +11,7 @@
 #define LLD_READER_WRITER_ELF_PPC_PPC_LINKING_CONTEXT_H
 
 #include "PPCTargetHandler.h"
-
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
 

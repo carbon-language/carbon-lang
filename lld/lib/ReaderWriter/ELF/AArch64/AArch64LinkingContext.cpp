@@ -8,15 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64LinkingContext.h"
-
+#include "AArch64RelocationPass.h"
+#include "Atoms.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Instrumentation.h"
-
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringSwitch.h"
-
-#include "Atoms.h"
-#include "AArch64RelocationPass.h"
 
 using namespace lld;
 using namespace lld::elf;

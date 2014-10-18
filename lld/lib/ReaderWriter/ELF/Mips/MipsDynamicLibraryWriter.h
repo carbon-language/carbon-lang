@@ -17,6 +17,7 @@
 namespace lld {
 namespace elf {
 
+template <typename ELFT> class MipsDynamicSymbolTable;
 template <typename ELFT> class MipsTargetLayout;
 
 template <class ELFT>

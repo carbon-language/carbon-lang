@@ -9,9 +9,9 @@
 #ifndef HEXAGON_DYNAMIC_LIBRARY_WRITER_H
 #define HEXAGON_DYNAMIC_LIBRARY_WRITER_H
 
+#include "DynamicLibraryWriter.h"
 #include "HexagonExecutableAtoms.h"
 #include "HexagonLinkingContext.h"
-#include "DynamicLibraryWriter.h"
 
 namespace lld {
 namespace elf {

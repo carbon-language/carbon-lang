@@ -10,7 +10,6 @@
 #include "MipsTargetHandler.h"
 #include "MipsLinkingContext.h"
 #include "MipsRelocationHandler.h"
-
 #include "lld/ReaderWriter/RelocationHelperFunctions.h"
 
 using namespace lld;

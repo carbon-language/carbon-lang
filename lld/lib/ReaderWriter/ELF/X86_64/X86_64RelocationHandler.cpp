@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "X86_64TargetHandler.h"
 #include "X86_64LinkingContext.h"
+#include "X86_64TargetHandler.h"
 
 using namespace lld;
 using namespace elf;

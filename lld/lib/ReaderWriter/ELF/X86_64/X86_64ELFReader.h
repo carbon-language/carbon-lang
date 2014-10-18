@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/ELFReader.h -----------------------------------===//
+//===- lib/ReaderWriter/ELF/X86_64/X86_64ELFReader.h ----------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,52 +7,47 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_READER_H
-#define LLD_READER_WRITER_ELF_READER_H
+#ifndef LLD_READER_WRITER_X86_64_X86_64_ELF_READER_H
+#define LLD_READER_WRITER_X86_64_X86_64_ELF_READER_H
 
-#include "CreateELF.h"
-#include "DynamicFile.h"
-#include "ELFFile.h"
-#include "lld/ReaderWriter/Reader.h"
+#include "ELFReader.h"
+#include "X86_64ELFFile.h"
 
 namespace lld {
 namespace elf {
 
-struct DynamicFileCreateELFTraits {
+struct X86_64DynamicFileCreateELFTraits {
   typedef llvm::ErrorOr<std::unique_ptr<lld::SharedLibraryFile>> result_type;
 
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
                             bool useUndefines) {
-    return lld::elf::DynamicFile<ELFT>::create(std::move(mb), useUndefines);
+    return lld::elf::X86_64DynamicFile<ELFT>::create(std::move(mb),
+                                                     useUndefines);
   }
 };
 
-struct ELFFileCreateELFTraits {
+struct X86_64ELFFileCreateELFTraits {
   typedef llvm::ErrorOr<std::unique_ptr<lld::File>> result_type;
 
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
                             bool atomizeStrings) {
-    return lld::elf::ELFFile<ELFT>::create(std::move(mb), atomizeStrings);
+    return lld::elf::X86_64ELFFile<ELFT>::create(std::move(mb), atomizeStrings);
   }
 };
 
-class ELFObjectReader : public Reader {
+class X86_64ELFObjectReader : public ELFObjectReader {
 public:
-  ELFObjectReader(bool atomizeStrings) : _atomizeStrings(atomizeStrings) {}
-
-  bool canParse(file_magic magic, StringRef,
-                const MemoryBuffer &) const override {
-    return (magic == llvm::sys::fs::file_magic::elf_relocatable);
-  }
+  X86_64ELFObjectReader(bool atomizeStrings)
+      : ELFObjectReader(atomizeStrings) {}
 
   std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
             std::vector<std::unique_ptr<File>> &result) const override {
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f = createELF<ELFFileCreateELFTraits>(
+    auto f = createELF<X86_64ELFFileCreateELFTraits>(
         llvm::object::getElfArchType(mb->getBuffer()), maxAlignment,
         std::move(mb), _atomizeStrings);
     if (std::error_code ec = f.getError())
@@ -60,26 +55,18 @@ public:
     result.push_back(std::move(*f));
     return std::error_code();
   }
-
-protected:
-  bool _atomizeStrings;
 };
 
-class ELFDSOReader : public Reader {
+class X86_64ELFDSOReader : public ELFDSOReader {
 public:
-  ELFDSOReader(bool useUndefines) : _useUndefines(useUndefines) {}
-
-  bool canParse(file_magic magic, StringRef,
-                const MemoryBuffer &) const override {
-    return (magic == llvm::sys::fs::file_magic::elf_shared_object);
-  }
+  X86_64ELFDSOReader(bool useUndefines) : ELFDSOReader(useUndefines) {}
 
   std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
             std::vector<std::unique_ptr<File>> &result) const override {
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
-    auto f = createELF<DynamicFileCreateELFTraits>(
+    auto f = createELF<X86_64DynamicFileCreateELFTraits>(
         llvm::object::getElfArchType(mb->getBuffer()), maxAlignment,
         std::move(mb), _useUndefines);
     if (std::error_code ec = f.getError())
@@ -87,12 +74,9 @@ public:
     result.push_back(std::move(*f));
     return std::error_code();
   }
-
-protected:
-  bool _useUndefines;
 };
 
 } // namespace elf
 } // namespace lld
 
-#endif // LLD_READER_WRITER_ELF_READER_H
+#endif // LLD_READER_WRITER_ELF_X86_64_X86_64_READER_H

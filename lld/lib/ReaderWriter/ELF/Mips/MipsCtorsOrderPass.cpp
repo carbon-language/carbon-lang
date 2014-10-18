@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsCtorsOrderPass.h"
-
 #include <algorithm>
 #include <climits>
 

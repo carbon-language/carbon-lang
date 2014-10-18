@@ -17,15 +17,12 @@
 #define LLD_READER_WRITER_ELF_TARGET_HANDLER_H
 
 #include "Layout.h"
-
 #include "lld/Core/LLVM.h"
 #include "lld/Core/LinkingContext.h"
 #include "lld/Core/STDExtras.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-
 #include "llvm/ADT/Hashing.h"
 #include "llvm/Support/FileOutputBuffer.h"
-
 #include <memory>
 #include <vector>
 

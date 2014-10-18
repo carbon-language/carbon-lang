@@ -9,8 +9,8 @@
 #ifndef AARCH64_EXECUTABLE_WRITER_H
 #define AARCH64_EXECUTABLE_WRITER_H
 
-#include "ExecutableWriter.h"
 #include "AArch64LinkingContext.h"
+#include "ExecutableWriter.h"
 
 namespace lld {
 namespace elf {

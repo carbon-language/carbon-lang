@@ -11,13 +11,11 @@
 #define LLD_READER_WRITER_ELF_DEFAULT_TARGET_HANDLER_H
 
 #include "DefaultLayout.h"
-#include "TargetHandler.h"
-#include "ELFReader.h"
 #include "DynamicLibraryWriter.h"
+#include "ELFReader.h"
 #include "ExecutableWriter.h"
-
+#include "TargetHandler.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/ELF.h"
 

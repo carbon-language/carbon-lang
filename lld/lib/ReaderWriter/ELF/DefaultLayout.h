@@ -16,10 +16,8 @@
 #include "Layout.h"
 #include "SectionChunks.h"
 #include "SegmentChunks.h"
-
 #include "lld/Core/Instrumentation.h"
 #include "lld/Core/STDExtras.h"
-
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -31,7 +29,6 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/Format.h"
-
 #include <map>
 #include <memory>
 #include <tuple>

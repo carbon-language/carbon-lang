@@ -9,8 +9,8 @@
 
 #include "HexagonExecutableWriter.h"
 #include "HexagonDynamicLibraryWriter.h"
-#include "HexagonTargetHandler.h"
 #include "HexagonLinkingContext.h"
+#include "HexagonTargetHandler.h"
 
 using namespace lld;
 using namespace elf;

@@ -10,12 +10,10 @@
 #include "Atoms.h"
 #include "HexagonLinkingContext.h"
 #include "HexagonTargetHandler.h"
-
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Simple.h"
-
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringSwitch.h"

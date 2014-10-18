@@ -15,7 +15,6 @@
 #include "MipsRelocationHandler.h"
 #include "MipsSectionChunks.h"
 #include "TargetLayout.h"
-
 #include "llvm/ADT/DenseSet.h"
 
 namespace lld {

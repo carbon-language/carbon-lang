@@ -8,19 +8,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-
 #include "ArrayOrderPass.h"
 #include "ELFFile.h"
 #include "TargetHandler.h"
 #include "Targets.h"
-
 #include "lld/Core/Instrumentation.h"
 #include "lld/Passes/LayoutPass.h"
 #include "lld/Passes/RoundTripYAMLPass.h"
-
 #include "llvm/ADT/Triple.h"
-#include "llvm/Support/Errc.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 

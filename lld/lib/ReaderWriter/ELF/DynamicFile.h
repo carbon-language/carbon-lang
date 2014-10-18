@@ -11,13 +11,10 @@
 #define LLD_READER_WRITER_ELF_DYNAMIC_FILE_H
 
 #include "Atoms.h"
-
 #include "lld/Core/SharedLibraryFile.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/Path.h"
-
 #include <unordered_map>
 
 namespace lld {

@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "Atoms.h"
-#include "AArch64ExecutableWriter.h"
 #include "AArch64DynamicLibraryWriter.h"
-#include "AArch64TargetHandler.h"
+#include "AArch64ExecutableWriter.h"
 #include "AArch64LinkingContext.h"
+#include "AArch64TargetHandler.h"
 
 using namespace lld;
 using namespace elf;

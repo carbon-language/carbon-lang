@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "ELFFile.h"
+#include "MipsDynamicLibraryWriter.h"
+#include "MipsExecutableWriter.h"
 #include "MipsLinkingContext.h"
 #include "MipsTargetHandler.h"
-#include "MipsExecutableWriter.h"
-#include "MipsDynamicLibraryWriter.h"
 
 using namespace lld;
 using namespace elf;

@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "ArrayOrderPass.h"
-
 #include <algorithm>
 #include <limits>
 

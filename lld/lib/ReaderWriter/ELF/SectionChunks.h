@@ -14,11 +14,9 @@
 #include "Layout.h"
 #include "TargetHandler.h"
 #include "Writer.h"
-
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/Parallel.h"
 #include "lld/Core/range.h"
-
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
@@ -29,7 +27,6 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
-
 #include <memory>
 
 namespace lld {

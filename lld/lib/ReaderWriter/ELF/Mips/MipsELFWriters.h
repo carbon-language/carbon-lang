@@ -10,10 +10,13 @@
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_ELF_WRITERS_H
 
 #include "MipsLinkingContext.h"
+
 #include "OutputELFWriter.h"
 
 namespace lld {
 namespace elf {
+
+template <class ELFT> class MipsRuntimeFile;
 
 template <class ELFT> class MipsTargetLayout;
 

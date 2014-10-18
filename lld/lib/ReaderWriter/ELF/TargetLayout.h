@@ -11,7 +11,6 @@
 #define LLD_READER_WRITER_ELF_TARGET_LAYOUT_H
 
 #include "DefaultLayout.h"
-
 #include "lld/Core/LLVM.h"
 
 namespace lld {

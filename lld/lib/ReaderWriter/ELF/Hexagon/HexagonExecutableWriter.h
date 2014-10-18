@@ -9,10 +9,10 @@
 #ifndef HEXAGON_EXECUTABLE_WRITER_H
 #define HEXAGON_EXECUTABLE_WRITER_H
 
+#include "ExecutableWriter.h"
+#include "HexagonELFWriters.h"
 #include "HexagonExecutableAtoms.h"
 #include "HexagonLinkingContext.h"
-#include "HexagonELFWriters.h"
-#include "ExecutableWriter.h"
 
 namespace lld {
 namespace elf {

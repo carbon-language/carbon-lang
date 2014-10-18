@@ -11,9 +11,7 @@
 #define LLD_READER_WRITER_ELF_X86_TARGETINFO_H
 
 #include "X86TargetHandler.h"
-
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
 

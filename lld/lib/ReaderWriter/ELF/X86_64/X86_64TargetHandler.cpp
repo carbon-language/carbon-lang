@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "Atoms.h"
-#include "X86_64ExecutableWriter.h"
 #include "X86_64DynamicLibraryWriter.h"
-#include "X86_64TargetHandler.h"
+#include "X86_64ExecutableWriter.h"
 #include "X86_64LinkingContext.h"
+#include "X86_64TargetHandler.h"
 
 using namespace lld;
 using namespace elf;

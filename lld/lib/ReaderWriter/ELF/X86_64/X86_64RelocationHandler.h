@@ -28,8 +28,6 @@ public:
                                   const lld::AtomLayout &,
                                   const Reference &) const override;
 
-  static const Registry::KindStrings kindStrings[];
-
 private:
   // Cached size of the TLS segment.
   mutable uint64_t _tlsSize;

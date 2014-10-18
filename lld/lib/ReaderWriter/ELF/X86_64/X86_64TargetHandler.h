@@ -11,10 +11,10 @@
 #define LLD_READER_WRITER_ELF_X86_64_X86_64_TARGET_HANDLER_H
 
 #include "DefaultTargetHandler.h"
-#include "ELFFile.h"
-#include "X86_64RelocationHandler.h"
 #include "TargetLayout.h"
-
+#include "X86_64ELFFile.h"
+#include "X86_64ELFReader.h"
+#include "X86_64RelocationHandler.h"
 #include "lld/Core/Simple.h"
 
 namespace lld {
@@ -41,6 +41,14 @@ public:
 
   const X86_64TargetRelocationHandler &getRelocationHandler() const override {
     return *(_x86_64RelocationHandler.get());
+  }
+
+  std::unique_ptr<Reader> getObjReader(bool atomizeStrings) override {
+    return std::unique_ptr<Reader>(new X86_64ELFObjectReader(atomizeStrings));
+  }
+
+  std::unique_ptr<Reader> getDSOReader(bool useShlibUndefines) override {
+    return std::unique_ptr<Reader>(new X86_64ELFDSOReader(useShlibUndefines));
   }
 
   std::unique_ptr<Writer> getWriter() override;

@@ -9,9 +9,8 @@
 
 #include "HexagonTargetHandler.h"
 #include "HexagonLinkingContext.h"
-#include "HexagonRelocationHandler.h"
 #include "HexagonRelocationFunctions.h"
-
+#include "HexagonRelocationHandler.h"
 
 using namespace lld;
 using namespace elf;

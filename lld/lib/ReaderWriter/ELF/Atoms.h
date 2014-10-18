@@ -11,13 +11,10 @@
 #define LLD_READER_WRITER_ELF_ATOMS_H
 
 #include "TargetHandler.h"
-
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Simple.h"
-
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringSwitch.h"
-
 #include <memory>
 #include <vector>
 

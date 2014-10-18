@@ -20,13 +20,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86_64RelocationPass.h"
-
-#include "lld/Core/Simple.h"
-
-#include "llvm/ADT/DenseMap.h"
-
 #include "Atoms.h"
 #include "X86_64LinkingContext.h"
+#include "lld/Core/Simple.h"
+#include "llvm/ADT/DenseMap.h"
 
 using namespace lld;
 using namespace lld::elf;
