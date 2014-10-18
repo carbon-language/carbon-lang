@@ -35,9 +35,9 @@ int main()
     unary_counting_predicate<bool(*)(int), int> cp(is5);
     assert(!cp(6));
     assert(cp.count() == 1);
-	assert(call_pred(cp));
+    assert(call_pred(cp));
     assert(cp.count() == 1);
-	assert(call_pred(std::ref(cp)));
+    assert(call_pred(std::ref(cp)));
     assert(cp.count() == 2);
-	}
+    }
 }

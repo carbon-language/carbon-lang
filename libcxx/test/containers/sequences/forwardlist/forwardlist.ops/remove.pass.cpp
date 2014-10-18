@@ -18,14 +18,14 @@
 #include "min_allocator.h"
 
 struct S {
-	S(int i) : i_(new int(i)) {}
-	S(const S &rhs) : i_(new int(*rhs.i_)) {}
-	S& operator = (const S &rhs) { *i_ = *rhs.i_; return *this; }
-	~S () { delete i_; i_ = NULL; }
-	bool operator == (const S &rhs) const { return *i_ == *rhs.i_; }
-	int get () const { return *i_; }
-	int *i_;
-	};
+    S(int i) : i_(new int(i)) {}
+    S(const S &rhs) : i_(new int(*rhs.i_)) {}
+    S& operator = (const S &rhs) { *i_ = *rhs.i_; return *this; }
+    ~S () { delete i_; i_ = NULL; }
+    bool operator == (const S &rhs) const { return *i_ == *rhs.i_; }
+    int get () const { return *i_; }
+    int *i_;
+    };
 
 
 int main()
@@ -98,10 +98,10 @@ int main()
     c.remove(c.front());
     C::const_iterator it = c.begin();
     for(int *ip = std::begin(t2); ip != std::end(t2); ++ip, ++it) {
-	    assert ( it != c.end());
+        assert ( it != c.end());
         assert ( *ip == it->get());
-	    }
-	assert ( it == c.end ());
+        }
+    assert ( it == c.end ());
     }
 #if __cplusplus >= 201103L
     {

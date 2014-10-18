@@ -1430,7 +1430,7 @@ forward_list<_Tp, _Alloc>::remove(const value_type& __v)
             iterator __j = _VSTD::next(__i, 2);
             for (; __j != __e && *__j == __v; ++__j)
                 ;
-			__deleted_nodes.splice_after(__deleted_nodes.before_begin(), *this, __i, __j);
+            __deleted_nodes.splice_after(__deleted_nodes.before_begin(), *this, __i, __j);
             if (__j == __e)
                 break;
             __i = __j;

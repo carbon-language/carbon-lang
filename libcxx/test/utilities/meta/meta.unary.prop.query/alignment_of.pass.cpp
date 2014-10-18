@@ -39,7 +39,7 @@ int main()
     test_alignment_of<int, 4>();
     test_alignment_of<double, 8>();
 #if (defined(__ppc__) && !defined(__ppc64__))
-    test_alignment_of<bool, 4>();	// 32-bit PPC has four byte bool
+    test_alignment_of<bool, 4>();   // 32-bit PPC has four byte bool
 #else
     test_alignment_of<bool, 1>();
 #endif

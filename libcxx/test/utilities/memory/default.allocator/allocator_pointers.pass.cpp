@@ -103,13 +103,13 @@ struct Foo { int x; };
 
 int main()
 {
-	test_pointer<std::allocator<char>> ();
-	test_pointer<std::allocator<int>> ();
-	test_pointer<std::allocator<Foo>> ();	
+    test_pointer<std::allocator<char>> ();
+    test_pointer<std::allocator<int>> ();
+    test_pointer<std::allocator<Foo>> ();   
 
-	test_void_pointer<std::allocator<char>> ();
-	test_void_pointer<std::allocator<int>> ();
-	test_void_pointer<std::allocator<Foo>> ();	
+    test_void_pointer<std::allocator<char>> ();
+    test_void_pointer<std::allocator<int>> ();
+    test_void_pointer<std::allocator<Foo>> ();  
 }
 #else
 int main() {}
