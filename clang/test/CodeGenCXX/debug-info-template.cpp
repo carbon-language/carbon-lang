@@ -97,7 +97,9 @@ struct foo {
   void f();
 };
 
-template<typename T, T, const int *x, int foo::*a, void (foo::*b)(), void (*f)(), int ...Is>
+typedef int foo::*foo_mem;
+
+template<typename T, T, const int *x, foo_mem a, void (foo::*b)(), void (*f)(), int ...Is>
 struct TC {
   struct nested {
   };

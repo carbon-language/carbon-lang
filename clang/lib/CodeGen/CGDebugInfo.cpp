@@ -1255,7 +1255,7 @@ CollectTemplateParams(const TemplateParameterList *TPList,
     } break;
     case TemplateArgument::Declaration: {
       const ValueDecl *D = TA.getAsDecl();
-      QualType T = TA.getParamTypeForDecl();
+      QualType T = TA.getParamTypeForDecl().getDesugaredType(CGM.getContext());
       llvm::DIType TTy = getOrCreateType(T, Unit);
       llvm::Value *V = nullptr;
       // Variable pointer template parameters have a value that is the address
