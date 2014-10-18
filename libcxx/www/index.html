@@ -437,6 +437,36 @@ End of search list.
   </p>
 
   <!--=====================================================================-->
+  <h2 id="local-abi">Using a local ABI library</h2>
+  <!--=====================================================================-->
+  <p>
+    <strong>Note: This is not recommended in almost all cases.</strong><br>
+    Generally these instructions should only be used when you can't install
+    your ABI library.
+  </p>
+  <p>
+    Normally you must link libc++ against a ABI shared library that the
+    linker can find.  If you want to build and test libc++ against an ABI
+    library not in the linker's path you need to set
+    <code>-DCMAKE_LIBRARY_PATH=/path/to/abi/lib</code> when configuring CMake.
+  </p>
+  <p>
+    An example build using libc++abi would look like:
+    <ul>
+    <li><code>CC=clang CXX=clang++ cmake
+              -DLIBCXX_CXX_ABI=libc++abi
+              -DLIBCXX_LIBCXXABI_INCLUDE_PATHS="/path/to/libcxxabi/include"
+              -DCMAKE_LIBRARY_PATH="/path/to/libcxxabi-build/lib"
+              path/to/libcxx</code></li>
+    <li><code>make</code></li>
+    </ul>
+  </p>
+  <p>
+    When testing libc++ LIT will automatically link against the proper ABI
+    library.
+  </p>
+
+  <!--=====================================================================-->
   <h2>Design Documents</h2>
   <!--=====================================================================-->
 
