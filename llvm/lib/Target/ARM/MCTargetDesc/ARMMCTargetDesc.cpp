@@ -217,31 +217,14 @@ static MCAsmInfo *createARMMCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
   Triple TheTriple(TT);
 
   MCAsmInfo *MAI;
-  switch (TheTriple.getOS()) {
-  case llvm::Triple::Darwin:
-  case llvm::Triple::IOS:
-  case llvm::Triple::MacOSX:
+  if (TheTriple.isOSDarwin() || TheTriple.isOSBinFormatMachO())
     MAI = new ARMMCAsmInfoDarwin(TT);
-    break;
-  case llvm::Triple::Win32:
-    switch (TheTriple.getEnvironment()) {
-    case llvm::Triple::Itanium:
-      MAI = new ARMCOFFMCAsmInfoGNU();
-      break;
-    case llvm::Triple::MSVC:
-      MAI = new ARMCOFFMCAsmInfoMicrosoft();
-      break;
-    default:
-      llvm_unreachable("invalid environment");
-    }
-    break;
-  default:
-    if (TheTriple.isOSBinFormatMachO())
-      MAI = new ARMMCAsmInfoDarwin(TT);
-    else
-      MAI = new ARMELFMCAsmInfo(TT);
-    break;
-  }
+  else if (TheTriple.isWindowsItaniumEnvironment())
+    MAI = new ARMCOFFMCAsmInfoGNU();
+  else if (TheTriple.isWindowsMSVCEnvironment())
+    MAI = new ARMCOFFMCAsmInfoMicrosoft();
+  else
+    MAI = new ARMELFMCAsmInfo(TT);
 
   unsigned Reg = MRI.getDwarfRegNum(ARM::SP, true);
   MAI->addInitialFrameState(MCCFIInstruction::createDefCfa(nullptr, Reg, 0));
