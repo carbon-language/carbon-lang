@@ -201,9 +201,6 @@ protected:
                                                   StringRef sectionName,
                                                   ArrayRef<uint8_t> contents);
 
-  /// Return the default reloc addend for references.
-  virtual int64_t defaultRelocAddend(const Reference &) const;
-
   /// Returns the symbol's content size. The nextSymbol should be null if the
   /// symbol is the last one in the section.
   virtual uint64_t symbolContentSize(const Elf_Shdr *section,
@@ -796,11 +793,6 @@ void ELFFile<ELFT>::createRelocationReferences(const Elf_Sym &symbol,
   }
 }
 
-template <class ELFT>
-int64_t ELFFile<ELFT>::defaultRelocAddend(const Reference &) const {
-  return 0;
-}
-
 template <class ELFT> void ELFFile<ELFT>::updateReferences() {
   for (auto &ri : _references) {
     if (ri->kindNamespace() == lld::Reference::KindNamespace::ELF) {
@@ -817,7 +809,7 @@ template <class ELFT> void ELFFile<ELFT>::updateReferences() {
       // If the target atom is mergeable string atom, the atom might have been
       // merged with other atom having the same contents. Try to find the
       // merged one if that's the case.
-      uint64_t addend = ri->addend() + defaultRelocAddend(*ri);
+      uint64_t addend = ri->addend();
       const MergeSectionKey ms(shdr, addend);
       auto msec = _mergedSectionMap.find(ms);
       if (msec != _mergedSectionMap.end()) {
