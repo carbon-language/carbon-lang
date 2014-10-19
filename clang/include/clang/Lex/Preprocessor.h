@@ -254,7 +254,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// of bytes will place the lexer at the start of a line.
   ///
   /// This is used when loading a precompiled preamble.
-  std::pair<unsigned, bool> SkipMainFilePreamble;
+  std::pair<int, bool> SkipMainFilePreamble;
 
   /// \brief The current top of the stack that we're lexing from if
   /// not expanding a macro and we are lexing directly from source code.
