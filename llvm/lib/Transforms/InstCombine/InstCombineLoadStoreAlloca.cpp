@@ -15,6 +15,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Loads.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -291,6 +292,62 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
   return visitAllocSite(AI);
 }
 
+/// \brief Helper to combine a load to a new type.
+///
+/// This just does the work of combining a load to a new type. It handles
+/// metadata, etc., and returns the new instruction. The \c NewTy should be the
+/// loaded *value* type. This will convert it to a pointer, cast the operand to
+/// that pointer type, load it, etc.
+///
+/// Note that this will create all of the instructions with whatever insert
+/// point the \c InstCombiner currently is using.
+static LoadInst *combineLoadToNewType(InstCombiner &IC, LoadInst &LI, Type *NewTy) {
+  Value *Ptr = LI.getPointerOperand();
+  unsigned AS = LI.getPointerAddressSpace();
+  SmallVector<std::pair<unsigned, MDNode *>, 8> MD;
+  LI.getAllMetadata(MD);
+
+  LoadInst *NewLoad = IC.Builder->CreateAlignedLoad(
+      IC.Builder->CreateBitCast(Ptr, NewTy->getPointerTo(AS)),
+      LI.getAlignment(), LI.getName());
+  for (const auto &MDPair : MD) {
+    unsigned ID = MDPair.first;
+    MDNode *N = MDPair.second;
+    // Note, essentially every kind of metadata should be preserved here! This
+    // routine is supposed to clone a load instruction changing *only its type*.
+    // The only metadata it makes sense to drop is metadata which is invalidated
+    // when the pointer type changes. This should essentially never be the case
+    // in LLVM, but we explicitly switch over only known metadata to be
+    // conservatively correct. If you are adding metadata to LLVM which pertains
+    // to loads, you almost certainly want to add it here.
+    switch (ID) {
+    case LLVMContext::MD_dbg:
+    case LLVMContext::MD_tbaa:
+    case LLVMContext::MD_prof:
+    case LLVMContext::MD_fpmath:
+    case LLVMContext::MD_tbaa_struct:
+    case LLVMContext::MD_invariant_load:
+    case LLVMContext::MD_alias_scope:
+    case LLVMContext::MD_noalias:
+      // All of these directly apply.
+      NewLoad->setMetadata(ID, N);
+      break;
+
+    case LLVMContext::MD_range:
+      // FIXME: It would be nice to propagate this in some way, but the type
+      // conversions make it hard.
+      break;
+    }
+  }
+  // FIXME: These metadata nodes should really have enumerators and be handled
+  // above.
+  if (MDNode *N = LI.getMetadata("nontemporal"))
+    NewLoad->setMetadata("nontemporal", N);
+  if (MDNode *N = LI.getMetadata("llvm.mem.parallel_loop_access"))
+    NewLoad->setMetadata("llvm.mem.parallel_loop_access", N);
+  return NewLoad;
+}
+
 /// \brief Combine loads to match the type of value their uses after looking
 /// through intervening bitcasts.
 ///
@@ -317,18 +374,11 @@ static Instruction *combineLoadToOperationType(InstCombiner &IC, LoadInst &LI) {
   if (LI.use_empty())
     return nullptr;
 
-  Value *Ptr = LI.getPointerOperand();
-  unsigned AS = LI.getPointerAddressSpace();
-  AAMDNodes AAInfo;
-  LI.getAAMetadata(AAInfo);
 
   // Fold away bit casts of the loaded value by loading the desired type.
   if (LI.hasOneUse())
     if (auto *BC = dyn_cast<BitCastInst>(LI.user_back())) {
-      LoadInst *NewLoad = IC.Builder->CreateAlignedLoad(
-          IC.Builder->CreateBitCast(Ptr, BC->getDestTy()->getPointerTo(AS)),
-          LI.getAlignment(), LI.getName());
-      NewLoad->setAAMetadata(AAInfo);
+      LoadInst *NewLoad = combineLoadToNewType(IC, LI, BC->getDestTy());
       BC->replaceAllUsesWith(NewLoad);
       IC.EraseInstFromFunction(*BC);
       return &LI;
