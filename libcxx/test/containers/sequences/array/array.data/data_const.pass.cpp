@@ -30,5 +30,6 @@ int main()
         typedef std::array<T, 0> C;
         const C c = {};
         const T* p = c.data();
+        (void)p; // to placate scan-build
     }
 }

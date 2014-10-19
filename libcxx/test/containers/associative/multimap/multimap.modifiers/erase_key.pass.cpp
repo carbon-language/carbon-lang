@@ -71,6 +71,7 @@ int main()
         assert(next(m.begin(), 5)->second == 2);
 
         i = m.erase(3);
+        assert(i == 3);
         assert(m.size() == 3);
         assert(next(m.begin(), 0)->first == 1);
         assert(next(m.begin(), 0)->second == 1);
@@ -135,6 +136,7 @@ int main()
         assert(next(m.begin(), 5)->second == 2);
 
         i = m.erase(3);
+        assert(i == 3);
         assert(m.size() == 3);
         assert(next(m.begin(), 0)->first == 1);
         assert(next(m.begin(), 0)->second == 1);
