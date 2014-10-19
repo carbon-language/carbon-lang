@@ -1,5 +1,4 @@
 ; RUN: llc < %s -mattr=-vsx -march=ppc32 | grep fctiwz | count 1
-; RUN: llc < %s -mattr=+vsx -march=ppc32 | grep xscvdpsxws | count 1
 
 
 define i16 @foo(float %a) {

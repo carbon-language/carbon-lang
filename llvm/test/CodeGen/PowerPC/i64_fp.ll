@@ -17,10 +17,6 @@
 ; RUN:   not grep fcfid
 ; RUN: llc < %s -mattr=-vsx -march=ppc32 -mcpu=g4 | \
 ; RUN:   not grep fctidz
-; RUN: llc < %s -mattr=+vsx -march=ppc32 -mattr=+64bit | \
-; RUN:   grep xscvdpsxds
-; RUN: llc < %s -mattr=+vsx -march=ppc32 -mattr=+64bit | \
-; RUN:   grep xscvsxddp
 
 define double @X(double %Y) {
         %A = fptosi double %Y to i64            ; <i64> [#uses=1]

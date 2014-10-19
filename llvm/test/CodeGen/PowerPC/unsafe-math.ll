@@ -1,9 +1,6 @@
 ; RUN: llc < %s -mattr=-vsx -march=ppc32 | grep fmul | count 2
 ; RUN: llc < %s -mattr=-vsx -march=ppc32 -enable-unsafe-fp-math | \
 ; RUN:   grep fmul | count 1
-; RUN: llc < %s -mattr=+vsx -march=ppc32 | grep xsmuldp | count 2
-; RUN: llc < %s -mattr=+vsx -march=ppc32 -enable-unsafe-fp-math | \
-; RUN:   grep xsmuldp | count 1
 
 define double @foo(double %X) nounwind {
         %tmp1 = fmul double %X, 1.23

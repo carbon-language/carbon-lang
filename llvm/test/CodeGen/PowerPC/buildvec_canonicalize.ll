@@ -1,5 +1,4 @@
 ; RUN: llc < %s -mattr=-vsx -march=ppc32 -mattr=+altivec --enable-unsafe-fp-math | FileCheck %s
-; RUN: llc < %s -mattr=+vsx -march=ppc32 -mattr=+altivec --enable-unsafe-fp-math | FileCheck -check-prefix=CHECK-VSX %s
 
 define void @VXOR(<4 x float>* %P1, <4 x i32>* %P2, <4 x float>* %P3) {
         %tmp = load <4 x float>* %P3            ; <<4 x float>> [#uses=1]
@@ -15,9 +14,6 @@ define void @VXOR(<4 x float>* %P1, <4 x i32>* %P2, <4 x float>* %P3) {
 ; CHECK: @VXOR
 ; CHECK: vsplti
 ; CHECK: vxor
-; CHECK-VSX: @VXOR
-; CHECK-VSX: vxor
-; CHECK-VSX: xvmulsp
 
 define void @VSPLTI(<4 x i32>* %P2, <8 x i16>* %P3) {
         store <4 x i32> bitcast (<16 x i8> < i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1 > to <4 x i32>), <4 x i32>* %P2
@@ -26,5 +22,3 @@ define void @VSPLTI(<4 x i32>* %P2, <8 x i16>* %P3) {
 }
 ; CHECK: @VSPLTI
 ; CHECK: vsplti
-; CHECK-VSX: @VSPLTI
-; CHECK-VSX: vsplti

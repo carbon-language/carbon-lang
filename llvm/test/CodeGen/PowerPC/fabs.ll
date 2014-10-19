@@ -1,5 +1,4 @@
 ; RUN: llc < %s -mattr=-vsx -march=ppc32 -mtriple=powerpc-apple-darwin | grep "fabs f1, f1"
-; RUN: llc < %s -mattr=+vsx -march=ppc32 -mtriple=powerpc-apple-darwin | grep "xsabsdp f1, f1"
 
 define double @fabs(double %f) {
 entry:
