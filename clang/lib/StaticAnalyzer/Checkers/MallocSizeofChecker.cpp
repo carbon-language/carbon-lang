@@ -137,6 +137,10 @@ public:
 // Determine if the pointee and sizeof types are compatible.  Here
 // we ignore constness of pointer types.
 static bool typesCompatible(ASTContext &C, QualType A, QualType B) {
+  // sizeof(void*) is compatible with any other pointer.
+  if (B->isVoidPointerType() && A->getAs<PointerType>())
+    return true;
+
   while (true) {
     A = A.getCanonicalType();
     B = B.getCanonicalType();
