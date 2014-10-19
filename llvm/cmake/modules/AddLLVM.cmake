@@ -141,15 +141,18 @@ function(add_llvm_symbol_exports target_name export_file)
 endfunction(add_llvm_symbol_exports)
 
 function(add_dead_strip target_name)
-  if(NOT LLVM_NO_DEAD_STRIP)
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    # ld64's implementation of -dead_strip breaks tools that use plugins.
+    if(NOT LLVM_NO_DEAD_STRIP)
       set_property(TARGET ${target_name} APPEND_STRING PROPERTY
                    LINK_FLAGS " -Wl,-dead_strip")
-    elseif(NOT WIN32)
-      # Object files are compiled with -ffunction-data-sections.
-      set_property(TARGET ${target_name} APPEND_STRING PROPERTY
-                   LINK_FLAGS " -Wl,--gc-sections")
     endif()
+  elseif(NOT WIN32)
+    # Object files are compiled with -ffunction-data-sections.
+    # On ELF --gc-sections handles --export-dynamic correctly, so we can always
+    # use it.
+    set_property(TARGET ${target_name} APPEND_STRING PROPERTY
+                 LINK_FLAGS " -Wl,--gc-sections")
   endif()
 endfunction(add_dead_strip)
 
