@@ -1,9 +1,9 @@
 // RUN: %clang_cc1 %s -emit-llvm -O1 -o - -triple=i686-apple-darwin9 -std=c++11 | FileCheck %s
 
-// CHECK-DAG: @_ZN7PR180978constant1aE = global {{.*}} { i16 1, i8 6, i8 undef }, align 4
-// CHECK-DAG: @_ZN7PR180978constant1bE = global {{.*}} { i16 2, i8 6, i8 undef }, align 4
-// CHECK-DAG: @_ZN7PR180978constant1cE = global {{.*}} { i16 3, i8 6, i8 undef }, align 4
-// CHECK-DAG: @_ZN7PR180978constant1yE = global {{.*}} { {{.*}} { i16 4, i8 6, i8 undef }, i32 5 }, align 4
+// CHECK-DAG: @_ZN7PR180978constant1aE = global { i16, i8 } { i16 1, i8 6 }, align 4
+// CHECK-DAG: @_ZN7PR180978constant1bE = global { i16, i8 } { i16 2, i8 6 }, align 4
+// CHECK-DAG: @_ZN7PR180978constant1cE = global { i16, i8 } { i16 3, i8 6 }, align 4
+// CHECK-DAG: @_ZN7PR180978constant1yE = global { { i16, i8 }, i32 } { { i16, i8 } { i16 4, i8 6 }, i32 5 }, align 4
 
 struct A {
   _Atomic(int) i;

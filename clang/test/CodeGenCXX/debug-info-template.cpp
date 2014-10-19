@@ -83,7 +83,7 @@
 
 // CHECK: metadata [[PTOARGS:![0-9]*]], metadata !"{{.*}}"} ; [ DW_TAG_structure_type ] [PaddingAtEndTemplate<&PaddedObj>]
 // CHECK: [[PTOARGS]] = metadata !{metadata [[PTOARG1:![0-9]*]]}
-// CHECK: [[PTOARG1]] = metadata !{metadata !"0x30\00\000\000", null, metadata [[CONST_PADDINGATEND_PTR:![0-9]*]], { i32, i8, [3 x i8] }* @PaddedObj, null} ; [ DW_TAG_template_value_parameter ]
+// CHECK: [[PTOARG1]] = metadata !{metadata !"0x30\00\000\000", null, metadata [[CONST_PADDINGATEND_PTR:![0-9]*]], %struct.PaddingAtEnd* @PaddedObj, null} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[CONST_PADDINGATEND_PTR]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS12PaddingAtEnd]
 
 // CHECK: metadata !"[[TCNESTED]]", %"struct.TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, 1, 2, 3>::nested"* @tci, null} ; [ DW_TAG_variable ] [tci]

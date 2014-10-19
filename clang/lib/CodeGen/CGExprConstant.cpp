@@ -104,16 +104,7 @@ AppendBytes(CharUnits FieldOffsetInChars, llvm::Constant *InitCst) {
 
   // Round up the field offset to the alignment of the field type.
   CharUnits AlignedNextFieldOffsetInChars =
-    NextFieldOffsetInChars.RoundUpToAlignment(FieldAlignment);
-
-  if (AlignedNextFieldOffsetInChars > FieldOffsetInChars) {
-    assert(!Packed && "Alignment is wrong even with a packed struct!");
-
-    // Convert the struct to a packed struct.
-    ConvertStructToPacked();
-
-    AlignedNextFieldOffsetInChars = NextFieldOffsetInChars;
-  }
+      NextFieldOffsetInChars.RoundUpToAlignment(FieldAlignment);
 
   if (AlignedNextFieldOffsetInChars < FieldOffsetInChars) {
     // We need to append padding.
@@ -122,6 +113,24 @@ AppendBytes(CharUnits FieldOffsetInChars, llvm::Constant *InitCst) {
     assert(NextFieldOffsetInChars == FieldOffsetInChars &&
            "Did not add enough padding!");
 
+    AlignedNextFieldOffsetInChars =
+        NextFieldOffsetInChars.RoundUpToAlignment(FieldAlignment);
+  }
+
+  if (AlignedNextFieldOffsetInChars > FieldOffsetInChars) {
+    assert(!Packed && "Alignment is wrong even with a packed struct!");
+
+    // Convert the struct to a packed struct.
+    ConvertStructToPacked();
+
+    // After we pack the struct, we may need to insert padding.
+    if (NextFieldOffsetInChars < FieldOffsetInChars) {
+      // We need to append padding.
+      AppendPadding(FieldOffsetInChars - NextFieldOffsetInChars);
+
+      assert(NextFieldOffsetInChars == FieldOffsetInChars &&
+             "Did not add enough padding!");
+    }
     AlignedNextFieldOffsetInChars = NextFieldOffsetInChars;
   }
 
@@ -486,10 +495,14 @@ llvm::Constant *ConstStructBuilder::Finalize(QualType Ty) {
     // No tail padding is necessary.
   } else {
     // Append tail padding if necessary.
-    AppendTailPadding(LayoutSizeInChars);
-
     CharUnits LLVMSizeInChars =
-      NextFieldOffsetInChars.RoundUpToAlignment(LLVMStructAlignment);
+        NextFieldOffsetInChars.RoundUpToAlignment(LLVMStructAlignment);
+
+    if (LLVMSizeInChars != LayoutSizeInChars)
+      AppendTailPadding(LayoutSizeInChars);
+
+    LLVMSizeInChars =
+        NextFieldOffsetInChars.RoundUpToAlignment(LLVMStructAlignment);
 
     // Check if we need to convert the struct to a packed struct.
     if (NextFieldOffsetInChars <= LayoutSizeInChars &&
@@ -501,7 +514,10 @@ llvm::Constant *ConstStructBuilder::Finalize(QualType Ty) {
              "Converting to packed did not help!");
     }
 
-    assert(LayoutSizeInChars == NextFieldOffsetInChars &&
+    LLVMSizeInChars =
+        NextFieldOffsetInChars.RoundUpToAlignment(LLVMStructAlignment);
+
+    assert(LayoutSizeInChars == LLVMSizeInChars &&
            "Tail padding mismatch!");
   }
 

@@ -159,3 +159,25 @@ void g29() {
   static int b[1] = { "asdf" }; // expected-warning {{incompatible pointer to integer conversion initializing 'int' with an expression of type 'char [5]'}}
   static int c[1] = { L"a" };
 }
+
+// PR21300
+void g30() {
+#pragma pack(1)
+  static struct {
+    int : 1;
+    int x;
+  } a = {};
+  // CHECK: @g30.a = internal global %struct.anon.1 <{ i8 undef, i32 0 }>, align 1
+#pragma pack()
+}
+
+void g31() {
+#pragma pack(4)
+  static struct {
+    short a;
+    long x;
+    short z;
+  } a = {23122, -12312731, -312};
+#pragma pack()
+  // CHECK: @g31.a = internal global %struct.anon.2 { i16 23122, i32 -12312731, i16 -312 }, align 4
+}
