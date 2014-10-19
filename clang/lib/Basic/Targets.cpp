@@ -3589,7 +3589,7 @@ public:
     MaxVectorAlign = 256;
     // The 64-bit iOS simulator uses the builtin bool type for Objective-C.
     llvm::Triple T = llvm::Triple(Triple);
-    if (T.getOS() == llvm::Triple::IOS)
+    if (T.isiOS())
       UseSignedCharForObjCBool = false;
     DescriptionString = "e-m:o-i64:64-f80:128-n8:16:32:64-S128";
   }
