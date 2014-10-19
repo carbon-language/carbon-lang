@@ -790,6 +790,17 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
     return;
   }
 
+  // A weak GlobalAlias is totally unknown. A non-weak GlobalAlias has
+  // the bits of its aliasee.
+  if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V)) {
+    if (GA->mayBeOverridden()) {
+      KnownZero.clearAllBits(); KnownOne.clearAllBits();
+    } else {
+      computeKnownBits(GA->getAliasee(), KnownZero, KnownOne, TD, Depth+1, Q);
+    }
+    return;
+  }
+
   // The address of an aligned GlobalValue has trailing zeros.
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     unsigned Align = GV->getAlignment();
@@ -813,16 +824,6 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
     else
       KnownZero.clearAllBits();
     KnownOne.clearAllBits();
-    return;
-  }
-  // A weak GlobalAlias is totally unknown. A non-weak GlobalAlias has
-  // the bits of its aliasee.
-  if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V)) {
-    if (GA->mayBeOverridden()) {
-      KnownZero.clearAllBits(); KnownOne.clearAllBits();
-    } else {
-      computeKnownBits(GA->getAliasee(), KnownZero, KnownOne, TD, Depth+1, Q);
-    }
     return;
   }
 
