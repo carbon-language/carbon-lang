@@ -106,22 +106,21 @@ AppendBytes(CharUnits FieldOffsetInChars, llvm::Constant *InitCst) {
   CharUnits AlignedNextFieldOffsetInChars =
     NextFieldOffsetInChars.RoundUpToAlignment(FieldAlignment);
 
+  if (AlignedNextFieldOffsetInChars > FieldOffsetInChars) {
+    assert(!Packed && "Alignment is wrong even with a packed struct!");
+
+    // Convert the struct to a packed struct.
+    ConvertStructToPacked();
+
+    AlignedNextFieldOffsetInChars = NextFieldOffsetInChars;
+  }
+
   if (AlignedNextFieldOffsetInChars < FieldOffsetInChars) {
     // We need to append padding.
     AppendPadding(FieldOffsetInChars - NextFieldOffsetInChars);
 
     assert(NextFieldOffsetInChars == FieldOffsetInChars &&
            "Did not add enough padding!");
-
-    AlignedNextFieldOffsetInChars =
-      NextFieldOffsetInChars.RoundUpToAlignment(FieldAlignment);
-  }
-
-  if (AlignedNextFieldOffsetInChars > FieldOffsetInChars) {
-    assert(!Packed && "Alignment is wrong even with a packed struct!");
-
-    // Convert the struct to a packed struct.
-    ConvertStructToPacked();
 
     AlignedNextFieldOffsetInChars = NextFieldOffsetInChars;
   }
