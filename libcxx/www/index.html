@@ -448,7 +448,8 @@ End of search list.
     Normally you must link libc++ against a ABI shared library that the
     linker can find.  If you want to build and test libc++ against an ABI
     library not in the linker's path you need to set
-    <code>-DCMAKE_LIBRARY_PATH=/path/to/abi/lib</code> when configuring CMake.
+    <code>-DLIBCXX_CXX_ABI_LIBRARY_PATH=/path/to/abi/lib</code> when
+    configuring CMake.
   </p>
   <p>
     An example build using libc++abi would look like:
@@ -456,7 +457,7 @@ End of search list.
     <li><code>CC=clang CXX=clang++ cmake
               -DLIBCXX_CXX_ABI=libc++abi
               -DLIBCXX_LIBCXXABI_INCLUDE_PATHS="/path/to/libcxxabi/include"
-              -DCMAKE_LIBRARY_PATH="/path/to/libcxxabi-build/lib"
+              -DLIBCXX_CXX_ABI_LIBRARY_PATH="/path/to/libcxxabi-build/lib"
               path/to/libcxx</code></li>
     <li><code>make</code></li>
     </ul>

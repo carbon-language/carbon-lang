@@ -7,7 +7,7 @@ config.python_executable     = "@PYTHON_EXECUTABLE@"
 config.enable_shared         = @LIBCXX_ENABLE_SHARED@
 config.cxx_abi               = "@LIBCXX_CXX_ABI_LIBNAME@"
 config.llvm_use_sanitizer    = "@LLVM_USE_SANITIZER@"
-config.library_paths         = "@CMAKE_LIBRARY_PATH@"
+config.abi_library_path      = "@LIBCXX_CXX_ABI_LIBRARY_PATH@"
 
 # Let the main config do the real work.
 lit_config.load_config(config, "@LIBCXX_SOURCE_DIR@/test/lit.cfg")

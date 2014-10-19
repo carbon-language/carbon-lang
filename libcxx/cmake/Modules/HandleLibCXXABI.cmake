@@ -8,41 +8,21 @@
 #
 # Parameters:
 #   abidefines: A list of defines needed to compile libc++ with the ABI library
-#   abilibs   : A list of libraries to link against
+#   abilib    : The ABI library to link against.
 #   abifiles  : A list of files (which may be relative paths) to copy into the
 #               libc++ build tree for the build.  These files will also be
 #               installed alongside the libc++ headers.
 #   abidirs   : A list of relative paths to create under an include directory
 #               in the libc++ build directory.
 #
-macro(setup_abi_lib abipathvar abidefines abilibs abifiles abidirs)
+macro(setup_abi_lib abipathvar abidefines abilib abifiles abidirs)
   list(APPEND LIBCXX_CXX_FEATURE_FLAGS ${abidefines})
   set(${abipathvar} "${${abipathvar}}"
     CACHE PATH
     "Paths to C++ ABI header directories separated by ';'." FORCE
     )
 
-  # To allow for libraries installed along non-default paths we use find_library
-  # to locate the ABI libraries we want. Making sure to clean the cache before
-  # each run of find_library.
-  set(LIBCXX_CXX_ABI_LIBRARIES "")
-  foreach(alib ${abilibs})
-    # cxxabi is a cmake target and not a library.
-    # Handle this special case explicitly.
-    # Otherwise use find_library to locate the correct binary.
-    if (alib STREQUAL "cxxabi")
-      list(APPEND LIBCXX_CXX_ABI_LIBRARIES cxxabi)
-    else()
-      unset(_Res CACHE)
-      find_library(_Res ${alib})
-      if (${_Res} STREQUAL "_Res-NOTFOUND")
-        message(FATAL_ERROR "Failed to find ABI library: ${alib}")
-      else()
-        message(STATUS "Adding ABI library: ${_Res}")
-        list(APPEND LIBCXX_CXX_ABI_LIBRARIES ${_Res})
-      endif()
-    endif()
-  endforeach()
+  set(LIBCXX_CXX_ABI_LIBRARY ${abilib})
 
   set(LIBCXX_ABILIB_FILES ${abifiles})
 

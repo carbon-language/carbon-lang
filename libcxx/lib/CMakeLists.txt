@@ -36,13 +36,17 @@ if (DEFINED LIBCXX_CXX_ABI_DEPS)
 endif()
 
 # Generate library list.
-set(libraries ${LIBCXX_CXX_ABI_LIBRARIES})
+set(libraries ${LIBCXX_CXX_ABI_LIBRARY})
 append_if(libraries LIBCXX_HAS_PTHREAD_LIB pthread)
 append_if(libraries LIBCXX_HAS_C_LIB c)
 append_if(libraries LIBCXX_HAS_M_LIB m)
 append_if(libraries LIBCXX_HAS_RT_LIB rt)
 append_if(libraries LIBCXX_HAS_GCC_S_LIB gcc_s)
 
+#if LIBCXX_CXX_ABI_LIBRARY_PATH is defined we want to add it to the search path.
+if (DEFINED LIBCXX_CXX_ABI_LIBRARY_PATH)
+  target_link_libraries(cxx "-L${LIBCXX_CXX_ABI_LIBRARY_PATH}")
+endif()
 target_link_libraries(cxx ${libraries})
 
 # Setup flags.
