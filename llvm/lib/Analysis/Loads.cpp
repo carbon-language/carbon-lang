@@ -73,11 +73,6 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
   Type *BaseType = nullptr;
   unsigned BaseAlign = 0;
   if (const AllocaInst *AI = dyn_cast<AllocaInst>(Base)) {
-    // Loading directly from an alloca is trivially safe. We can't even look
-    // through pointer casts here though, as that might change the size loaded.
-    if (AI == V)
-      return true;
-
     // An alloca is safe to load from as load as it is suitably aligned.
     BaseType = AI->getAllocatedType();
     BaseAlign = AI->getAlignment();
@@ -86,12 +81,6 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
     // overridden. Their size may change or they may be weak and require a test
     // to determine if they were in fact provided.
     if (!GV->mayBeOverridden()) {
-      // Loading directly from the non-overridden global is trivially safe. We
-      // can't even look through pointer casts here though, as that might change
-      // the size loaded.
-      if (GV == V)
-        return true;
-
       BaseType = GV->getType()->getElementType();
       BaseAlign = GV->getAlignment();
     }

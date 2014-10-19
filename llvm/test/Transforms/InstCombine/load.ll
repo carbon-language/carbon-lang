@@ -2,6 +2,7 @@
 
 ; This test makes sure that these instructions are properly eliminated.
 
+target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 @X = constant i32 42		; <i32*> [#uses=2]
 @X2 = constant i32 47		; <i32*> [#uses=1]

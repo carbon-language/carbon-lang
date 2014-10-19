@@ -1236,3 +1236,41 @@ define i32 @test75(i32 %x) {
 ; CHECK-NEXT: [[SEL:%[a-z0-9]+]] = select i1 [[CMP]], i32 68, i32 %x
 ; CHECK-NEXT: ret i32 [[SEL]]
 }
+
+@under_aligned = external global i32, align 1
+
+define i32 @test76(i1 %flag, i32* %x) {
+; The load here must not be speculated around the select. One side of the
+; select is trivially dereferencable but may have a lower alignment than the
+; load does.
+; CHECK-LABEL: @test76(
+; CHECK: store i32 0, i32* %x
+; CHECK: %[[P:.*]] = select i1 %flag, i32* @under_aligned, i32* %x
+; CHECK: load i32* %[[P]]
+
+  store i32 0, i32* %x
+  %p = select i1 %flag, i32* @under_aligned, i32* %x
+  %v = load i32* %p
+  ret i32 %v
+}
+
+declare void @scribble_on_memory(i32*)
+
+define i32 @test77(i1 %flag, i32* %x) {
+; The load here must not be speculated around the select. One side of the
+; select is trivially dereferencable but may have a lower alignment than the
+; load does.
+; CHECK-LABEL: @test77(
+; CHECK: %[[A:.*]] = alloca i32, align 1
+; CHECK: call void @scribble_on_memory(i32* %[[A]])
+; CHECK: store i32 0, i32* %x
+; CHECK: %[[P:.*]] = select i1 %flag, i32* %[[A]], i32* %x
+; CHECK: load i32* %[[P]]
+
+  %under_aligned = alloca i32, align 1
+  call void @scribble_on_memory(i32* %under_aligned)
+  store i32 0, i32* %x
+  %p = select i1 %flag, i32* %under_aligned, i32* %x
+  %v = load i32* %p
+  ret i32 %v
+}

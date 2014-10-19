@@ -63,6 +63,7 @@
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Function.h"
@@ -86,6 +87,7 @@ STATISTIC(NumAccumAdded, "Number of accumulators introduced");
 namespace {
   struct TailCallElim : public FunctionPass {
     const TargetTransformInfo *TTI;
+    const DataLayout *DL;
 
     static char ID; // Pass identification, replacement for typeid
     TailCallElim() : FunctionPass(ID) {
@@ -156,6 +158,8 @@ static bool CanTRE(Function &F) {
 bool TailCallElim::runOnFunction(Function &F) {
   if (skipOptnoneFunction(F))
     return false;
+
+  DL = F.getParent()->getDataLayout();
 
   bool AllCallsAreTailCalls = false;
   bool Modified = markTails(F, AllCallsAreTailCalls);
@@ -450,7 +454,7 @@ bool TailCallElim::CanMoveAboveCall(Instruction *I, CallInst *CI) {
       // being loaded from.
       if (CI->mayWriteToMemory() ||
           !isSafeToLoadUnconditionally(L->getPointerOperand(), L,
-                                       L->getAlignment()))
+                                       L->getAlignment(), DL))
         return false;
     }
   }
