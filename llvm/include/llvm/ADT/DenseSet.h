@@ -110,6 +110,21 @@ public:
   const_iterator end() const { return ConstIterator(TheMap.end()); }
 
   iterator find(const ValueT &V) { return Iterator(TheMap.find(V)); }
+
+  /// Alternative version of find() which allows a different, and possibly less
+  /// expensive, key type.
+  /// The DenseMapInfo is responsible for supplying methods
+  /// getHashValue(LookupKeyT) and isEqual(LookupKeyT, KeyT) for each key type
+  /// used.
+  template <class LookupKeyT>
+  iterator find_as(const LookupKeyT &Val) {
+    return Iterator(TheMap.find_as(Val));
+  }
+  template <class LookupKeyT>
+  const_iterator find_as(const LookupKeyT &Val) const {
+    return ConstIterator(TheMap.find_as(Val));
+  }
+
   void erase(Iterator I) { return TheMap.erase(I.I); }
   void erase(ConstIterator CI) { return TheMap.erase(CI.I); }
 
