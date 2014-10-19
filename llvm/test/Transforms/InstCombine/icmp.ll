@@ -1418,3 +1418,64 @@ define i1 @icmp_and_or_lshr_cst(i32 %x) {
   %ret = icmp ne i32 %and, 0
   ret i1 %ret
 }
+
+; CHECK-LABEL: @shl_ap1_zero_ap2_non_zero_2
+; CHECK-NEXT: %cmp = icmp ugt i32 %a, 29
+; CHECK-NEXT: ret i1 %cmp
+define i1 @shl_ap1_zero_ap2_non_zero_2(i32 %a) {
+ %shl = shl i32 4, %a
+ %cmp = icmp eq i32 %shl, 0
+ ret i1 %cmp
+}
+
+; CHECK-LABEL: @shl_ap1_zero_ap2_non_zero_4
+; CHECK-NEXT: %cmp = icmp ugt i32 %a, 30
+; CHECK-NEXT: ret i1 %cmp
+define i1 @shl_ap1_zero_ap2_non_zero_4(i32 %a) {
+ %shl = shl i32 -2, %a
+ %cmp = icmp eq i32 %shl, 0
+ ret i1 %cmp
+}
+
+; CHECK-LABEL: @shl_ap1_non_zero_ap2_non_zero_both_positive
+; CHECK-NEXT: %cmp = icmp eq i32 %a, 0
+; CHECK-NEXT: ret i1 %cmp
+define i1 @shl_ap1_non_zero_ap2_non_zero_both_positive(i32 %a) {
+ %shl = shl i32 50, %a
+ %cmp = icmp eq i32 %shl, 50
+ ret i1 %cmp
+}
+
+; CHECK-LABEL: @shl_ap1_non_zero_ap2_non_zero_both_negative
+; CHECK-NEXT: %cmp = icmp eq i32 %a, 0
+; CHECK-NEXT: ret i1 %cmp
+define i1 @shl_ap1_non_zero_ap2_non_zero_both_negative(i32 %a) {
+ %shl = shl i32 -50, %a
+ %cmp = icmp eq i32 %shl, -50
+ ret i1 %cmp
+}
+
+; CHECK-LABEL: @shl_ap1_non_zero_ap2_non_zero_ap1_1
+; CHECK-NEXT: ret i1 false
+define i1 @shl_ap1_non_zero_ap2_non_zero_ap1_1(i32 %a) {
+ %shl = shl i32 50, %a
+ %cmp = icmp eq i32 %shl, 25
+ ret i1 %cmp
+}
+
+; CHECK-LABEL: @shl_ap1_non_zero_ap2_non_zero_ap1_2
+; CHECK-NEXT: %cmp = icmp eq i32 %a, 1
+; CHECK-NEXT: ret i1 %cmp
+define i1 @shl_ap1_non_zero_ap2_non_zero_ap1_2(i32 %a) {
+ %shl = shl i32 25, %a
+ %cmp = icmp eq i32 %shl, 50
+ ret i1 %cmp
+}
+
+; CHECK-LABEL: @shl_ap1_non_zero_ap2_non_zero_ap1_3
+; CHECK-NEXT: ret i1 false
+define i1 @shl_ap1_non_zero_ap2_non_zero_ap1_3(i32 %a) {
+ %shl = shl i32 26, %a
+ %cmp = icmp eq i32 %shl, 50
+ ret i1 %cmp
+}
