@@ -1621,6 +1621,15 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       return BinaryOperator::CreateNeg(Y);
   }
 
+  // (sub (or A, B) (xor A, B)) --> (and A, B)
+  {
+    Value *A = nullptr, *B = nullptr;
+    if (match(Op1, m_Xor(m_Value(A), m_Value(B))) &&
+        (match(Op0, m_Or(m_Specific(A), m_Specific(B))) ||
+         match(Op0, m_Or(m_Specific(B), m_Specific(A)))))
+      return BinaryOperator::CreateAnd(A, B);
+  }
+
   if (Op1->hasOneUse()) {
     Value *X = nullptr, *Y = nullptr, *Z = nullptr;
     Constant *C = nullptr;

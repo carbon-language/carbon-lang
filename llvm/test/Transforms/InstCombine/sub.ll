@@ -530,3 +530,13 @@ define i32 @test44(i32 %x) {
 ; CHECK-NEXT: [[ADD:%.*]] = add nsw i32 %x, -32768
 ; CHECK: ret i32 [[ADD]]
 }
+
+define i32 @test45(i32 %x, i32 %y) {
+  %or = or i32 %x, %y
+  %xor = xor i32 %x, %y
+  %sub = sub i32 %or, %xor
+  ret i32 %sub
+; CHECK-LABEL: @test45(
+; CHECK-NEXT: %sub = and i32 %x, %y
+; CHECK: ret i32 %sub
+}
