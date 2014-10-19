@@ -89,7 +89,17 @@ float _Complex mul_float_rc(float a, float _Complex b) {
 }
 float _Complex mul_float_cc(float _Complex a, float _Complex b) {
   // X86-LABEL: @mul_float_cc(
-  // X86-NOT: fmul
+  // X86: %[[AC:[^ ]+]] = fmul
+  // X86: %[[BD:[^ ]+]] = fmul
+  // X86: %[[AD:[^ ]+]] = fmul
+  // X86: %[[BC:[^ ]+]] = fmul
+  // X86: %[[RR:[^ ]+]] = fsub float %[[AC]], %[[BD]]
+  // X86: %[[RI:[^ ]+]] = fadd float
+  // X86-DAG: %[[AD]]
+  // X86-DAG: ,
+  // X86-DAG: %[[BC]]
+  // X86: fcmp uno float %[[RR]]
+  // X86: fcmp uno float %[[RI]]
   // X86: call {{.*}} @__mulsc3(
   // X86: ret
   return a * b;
@@ -211,7 +221,17 @@ double _Complex mul_double_rc(double a, double _Complex b) {
 }
 double _Complex mul_double_cc(double _Complex a, double _Complex b) {
   // X86-LABEL: @mul_double_cc(
-  // X86-NOT: fmul
+  // X86: %[[AC:[^ ]+]] = fmul
+  // X86: %[[BD:[^ ]+]] = fmul
+  // X86: %[[AD:[^ ]+]] = fmul
+  // X86: %[[BC:[^ ]+]] = fmul
+  // X86: %[[RR:[^ ]+]] = fsub double %[[AC]], %[[BD]]
+  // X86: %[[RI:[^ ]+]] = fadd double
+  // X86-DAG: %[[AD]]
+  // X86-DAG: ,
+  // X86-DAG: %[[BC]]
+  // X86: fcmp uno double %[[RR]]
+  // X86: fcmp uno double %[[RI]]
   // X86: call {{.*}} @__muldc3(
   // X86: ret
   return a * b;
@@ -333,11 +353,31 @@ long double _Complex mul_long_double_rc(long double a, long double _Complex b) {
 }
 long double _Complex mul_long_double_cc(long double _Complex a, long double _Complex b) {
   // X86-LABEL: @mul_long_double_cc(
-  // X86-NOT: fmul
+  // X86: %[[AC:[^ ]+]] = fmul
+  // X86: %[[BD:[^ ]+]] = fmul
+  // X86: %[[AD:[^ ]+]] = fmul
+  // X86: %[[BC:[^ ]+]] = fmul
+  // X86: %[[RR:[^ ]+]] = fsub x86_fp80 %[[AC]], %[[BD]]
+  // X86: %[[RI:[^ ]+]] = fadd x86_fp80
+  // X86-DAG: %[[AD]]
+  // X86-DAG: ,
+  // X86-DAG: %[[BC]]
+  // X86: fcmp uno x86_fp80 %[[RR]]
+  // X86: fcmp uno x86_fp80 %[[RI]]
   // X86: call {{.*}} @__mulxc3(
   // X86: ret
   // PPC-LABEL: @mul_long_double_cc(
-  // PPC-NOT: fmul
+  // PPC: %[[AC:[^ ]+]] = fmul
+  // PPC: %[[BD:[^ ]+]] = fmul
+  // PPC: %[[AD:[^ ]+]] = fmul
+  // PPC: %[[BC:[^ ]+]] = fmul
+  // PPC: %[[RR:[^ ]+]] = fsub ppc_fp128 %[[AC]], %[[BD]]
+  // PPC: %[[RI:[^ ]+]] = fadd ppc_fp128
+  // PPC-DAG: %[[AD]]
+  // PPC-DAG: ,
+  // PPC-DAG: %[[BC]]
+  // PPC: fcmp uno ppc_fp128 %[[RR]]
+  // PPC: fcmp uno ppc_fp128 %[[RI]]
   // PPC: call {{.*}} @__multc3(
   // PPC: ret
   return a * b;

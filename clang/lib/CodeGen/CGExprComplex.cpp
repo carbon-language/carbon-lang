@@ -15,9 +15,13 @@
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/MDBuilder.h"
+#include "llvm/IR/Metadata.h"
 #include <algorithm>
 using namespace clang;
 using namespace CodeGen;
@@ -587,11 +591,31 @@ ComplexPairTy ComplexExprEmitter::EmitComplexBinOpLibCall(StringRef LibCallName,
   return CGF.EmitCall(FuncInfo, Func, ReturnValueSlot(), Args).getComplexVal();
 }
 
+/// \brief Lookup the libcall name for a given floating point type complex
+/// multiply.
+static StringRef getComplexMultiplyLibCallName(llvm::Type *Ty) {
+  switch (Ty->getTypeID()) {
+  default:
+    llvm_unreachable("Unsupported floating point type!");
+  case llvm::Type::HalfTyID:
+    return "__mulhc3";
+  case llvm::Type::FloatTyID:
+    return "__mulsc3";
+  case llvm::Type::DoubleTyID:
+    return "__muldc3";
+  case llvm::Type::PPC_FP128TyID:
+    return "__multc3";
+  case llvm::Type::X86_FP80TyID:
+    return "__mulxc3";
+  }
+}
+
 // See C11 Annex G.5.1 for the semantics of multiplicative operators on complex
 // typed values.
 ComplexPairTy ComplexExprEmitter::EmitBinMul(const BinOpInfo &Op) {
   using llvm::Value;
   Value *ResR, *ResI;
+  llvm::MDBuilder MDHelper(CGF.getLLVMContext());
 
   if (Op.LHS.first->getType()->isFloatingPointTy()) {
     // The general formulation is:
@@ -603,23 +627,65 @@ ComplexPairTy ComplexExprEmitter::EmitBinMul(const BinOpInfo &Op) {
     // still more of this within the type system.
 
     if (Op.LHS.second && Op.RHS.second) {
-      // If both operands are complex, delegate to a libcall which works to
-      // prevent underflow and overflow.
-      StringRef LibCallName;
-      switch (Op.LHS.first->getType()->getTypeID()) {
-      default:
-        llvm_unreachable("Unsupported floating point type!");
-      case llvm::Type::HalfTyID:
-        return EmitComplexBinOpLibCall("__mulhc3", Op);
-      case llvm::Type::FloatTyID:
-        return EmitComplexBinOpLibCall("__mulsc3", Op);
-      case llvm::Type::DoubleTyID:
-        return EmitComplexBinOpLibCall("__muldc3", Op);
-      case llvm::Type::PPC_FP128TyID:
-        return EmitComplexBinOpLibCall("__multc3", Op);
-      case llvm::Type::X86_FP80TyID:
-        return EmitComplexBinOpLibCall("__mulxc3", Op);
-      }
+      // If both operands are complex, emit the core math directly, and then
+      // test for NaNs. If we find NaNs in the result, we delegate to a libcall
+      // to carefully re-compute the correct infinity representation if
+      // possible. The expectation is that the presence of NaNs here is
+      // *extremely* rare, and so the cost of the libcall is almost irrelevant.
+      // This is good, because the libcall re-computes the core multiplication
+      // exactly the same as we do here and re-tests for NaNs in order to be
+      // a generic complex*complex libcall.
+
+      // First compute the four products.
+      Value *AC = Builder.CreateFMul(Op.LHS.first, Op.RHS.first, "mul_ac");
+      Value *BD = Builder.CreateFMul(Op.LHS.second, Op.RHS.second, "mul_bd");
+      Value *AD = Builder.CreateFMul(Op.LHS.first, Op.RHS.second, "mul_ad");
+      Value *BC = Builder.CreateFMul(Op.LHS.second, Op.RHS.first, "mul_bc");
+
+      // The real part is the difference of the first two, the imaginary part is
+      // the sum of the second.
+      ResR = Builder.CreateFSub(AC, BD, "mul_r");
+      ResI = Builder.CreateFAdd(AD, BC, "mul_i");
+
+      // Emit the test for the real part becoming NaN and create a branch to
+      // handle it. We test for NaN by comparing the number to itself.
+      Value *IsRNaN = Builder.CreateFCmpUNO(ResR, ResR, "isnan_cmp");
+      llvm::BasicBlock *ContBB = CGF.createBasicBlock("complex_mul_cont");
+      llvm::BasicBlock *INaNBB = CGF.createBasicBlock("complex_mul_imag_nan");
+      llvm::Instruction *Branch = Builder.CreateCondBr(IsRNaN, INaNBB, ContBB);
+      llvm::BasicBlock *OrigBB = Branch->getParent();
+
+      // Give hint that we very much don't expect to see NaNs.
+      // Value chosen to match UR_NONTAKEN_WEIGHT, see BranchProbabilityInfo.cpp
+      llvm::MDNode *BrWeight = MDHelper.createBranchWeights(1, (1U << 20) - 1);
+      Branch->setMetadata(llvm::LLVMContext::MD_prof, BrWeight);
+
+      // Now test the imaginary part and create its branch.
+      CGF.EmitBlock(INaNBB);
+      Value *IsINaN = Builder.CreateFCmpUNO(ResI, ResI, "isnan_cmp");
+      llvm::BasicBlock *LibCallBB = CGF.createBasicBlock("complex_mul_libcall");
+      Branch = Builder.CreateCondBr(IsINaN, LibCallBB, ContBB);
+      Branch->setMetadata(llvm::LLVMContext::MD_prof, BrWeight);
+
+      // Now emit the libcall on this slowest of the slow paths.
+      CGF.EmitBlock(LibCallBB);
+      Value *LibCallR, *LibCallI;
+      std::tie(LibCallR, LibCallI) = EmitComplexBinOpLibCall(
+          getComplexMultiplyLibCallName(Op.LHS.first->getType()), Op);
+      Builder.CreateBr(ContBB);
+
+      // Finally continue execution by phi-ing together the different
+      // computation paths.
+      CGF.EmitBlock(ContBB);
+      llvm::PHINode *RealPHI = Builder.CreatePHI(ResR->getType(), 3, "real_mul_phi");
+      RealPHI->addIncoming(ResR, OrigBB);
+      RealPHI->addIncoming(ResR, INaNBB);
+      RealPHI->addIncoming(LibCallR, LibCallBB);
+      llvm::PHINode *ImagPHI = Builder.CreatePHI(ResI->getType(), 3, "imag_mul_phi");
+      ImagPHI->addIncoming(ResI, OrigBB);
+      ImagPHI->addIncoming(ResI, INaNBB);
+      ImagPHI->addIncoming(LibCallI, LibCallBB);
+      return ComplexPairTy(RealPHI, ImagPHI);
     }
     assert((Op.LHS.second || Op.RHS.second) &&
            "At least one operand must be complex!");
