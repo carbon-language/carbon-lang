@@ -73,26 +73,39 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
   Type *BaseType = nullptr;
   unsigned BaseAlign = 0;
   if (const AllocaInst *AI = dyn_cast<AllocaInst>(Base)) {
+    // Loading directly from an alloca is trivially safe. We can't even look
+    // through pointer casts here though, as that might change the size loaded.
+    if (AI == V)
+      return true;
+
     // An alloca is safe to load from as load as it is suitably aligned.
     BaseType = AI->getAllocatedType();
     BaseAlign = AI->getAlignment();
   } else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Base)) {
-    // Global variables are safe to load from but their size cannot be
-    // guaranteed if they are overridden.
+    // Global variables are not necessarily safe to load from if they are
+    // overridden. Their size may change or they may be weak and require a test
+    // to determine if they were in fact provided.
     if (!GV->mayBeOverridden()) {
+      // Loading directly from the non-overridden global is trivially safe. We
+      // can't even look through pointer casts here though, as that might change
+      // the size loaded.
+      if (GV == V)
+        return true;
+
       BaseType = GV->getType()->getElementType();
       BaseAlign = GV->getAlignment();
     }
   }
 
-  if (BaseType && BaseType->isSized()) {
-    if (DL && BaseAlign == 0)
+  // If we found a base allocated type from either an alloca or global variable,
+  // try to see if we are definitively within the allocated region. We need to
+  // know the size of the base type and the loaded type to do anything in this
+  // case, so only try this when we have the DataLayout available.
+  if (BaseType && BaseType->isSized() && DL) {
+    if (BaseAlign == 0)
       BaseAlign = DL->getPrefTypeAlignment(BaseType);
 
     if (Align <= BaseAlign) {
-      if (!DL)
-        return true; // Loading directly from an alloca or global is OK.
-
       // Check if the load is within the bounds of the underlying object.
       PointerType *AddrTy = cast<PointerType>(V->getType());
       uint64_t LoadSize = DL->getTypeStoreSize(AddrTy->getElementType());
