@@ -597,7 +597,8 @@ inline uint64_t PowerOf2Floor(uint64_t A) {
 ///   RoundUpToAlignment(~0LL, 8) = 0
 /// \endcode
 inline uint64_t RoundUpToAlignment(uint64_t Value, uint64_t Align) {
-  return ((Value + Align - 1) / Align) * Align;
+  assert(isPowerOf2_64(Align) && "Alignment must be power of 2!");
+  return (Value + Align - 1) & ~uint64_t(Align - 1);
 }
 
 /// Returns the offset to the next integer (mod 2**64) that is greater than

@@ -369,7 +369,7 @@ public:
   /// x86_fp80, depending on alignment.
   uint64_t getTypeAllocSize(Type *Ty) const {
     // Round up to the next alignment boundary.
-    return RoundUpAlignment(getTypeStoreSize(Ty), getABITypeAlignment(Ty));
+    return RoundUpToAlignment(getTypeStoreSize(Ty), getABITypeAlignment(Ty));
   }
 
   /// getTypeAllocSizeInBits - Return the offset in bits between successive
@@ -438,16 +438,6 @@ public:
   /// specified global, returned in log form.  This includes an explicitly
   /// requested alignment (if the global has one).
   unsigned getPreferredAlignmentLog(const GlobalVariable *GV) const;
-
-  /// RoundUpAlignment - Round the specified value up to the next alignment
-  /// boundary specified by Alignment.  For example, 7 rounded up to an
-  /// alignment boundary of 4 is 8.  8 rounded up to the alignment boundary of 4
-  /// is 8 because it is already aligned.
-  template <typename UIntTy>
-  static UIntTy RoundUpAlignment(UIntTy Val, unsigned Alignment) {
-    assert((Alignment & (Alignment-1)) == 0 && "Alignment must be power of 2!");
-    return (Val + (Alignment-1)) & ~UIntTy(Alignment-1);
-  }
 };
 
 inline DataLayout *unwrap(LLVMTargetDataRef P) {

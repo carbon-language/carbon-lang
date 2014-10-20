@@ -55,7 +55,7 @@ StructLayout::StructLayout(StructType *ST, const DataLayout &DL) {
 
     // Add padding if necessary to align the data element properly.
     if ((StructSize & (TyAlign-1)) != 0)
-      StructSize = DataLayout::RoundUpAlignment(StructSize, TyAlign);
+      StructSize = RoundUpToAlignment(StructSize, TyAlign);
 
     // Keep track of maximum alignment constraint.
     StructAlignment = std::max(TyAlign, StructAlignment);
@@ -70,7 +70,7 @@ StructLayout::StructLayout(StructType *ST, const DataLayout &DL) {
   // Add padding to the end of the struct so that it could be put in an array
   // and all array elements would be aligned correctly.
   if ((StructSize & (StructAlignment-1)) != 0)
-    StructSize = DataLayout::RoundUpAlignment(StructSize, StructAlignment);
+    StructSize = RoundUpToAlignment(StructSize, StructAlignment);
 }
 
 
