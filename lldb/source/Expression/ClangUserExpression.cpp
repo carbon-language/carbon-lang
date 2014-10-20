@@ -620,7 +620,6 @@ GetObjectPointer (lldb::StackFrameSP frame_sp,
     valobj_sp = frame_sp->GetValueForVariableExpressionPath(object_name.AsCString(),
                                                             lldb::eNoDynamicValues,
                                                             StackFrame::eExpressionPathOptionCheckPtrVsMember |
-                                                            StackFrame::eExpressionPathOptionsAllowDirectIVarAccess |
                                                             StackFrame::eExpressionPathOptionsNoFragileObjcIvar |
                                                             StackFrame::eExpressionPathOptionsNoSyntheticChildren |
                                                             StackFrame::eExpressionPathOptionsNoSyntheticArrayRange,
