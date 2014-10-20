@@ -6,5 +6,6 @@ RUN: lld -flavor gnu -target x86_64 %p/Inputs/undefcpp.o --noinhibit-exec 2>&1 |
 RUN: lld -flavor gnu -target x86_64 %p/Inputs/undefcpp.o --noinhibit-exec --no-demangle 2>&1 | FileCheck -check-prefix=NODEMANGLE %s
 RUN: lld -flavor gnu -target x86_64 %p/Inputs/undefcpp.o --noinhibit-exec --demangle 2>&1 | FileCheck -check-prefix=DEMANGLE %s
 
+XFAIL: freebsd
 #DEMANGLE: undefcpp.o: foo(char const*)
 #NODEMANGLE: undefcpp.o: _Z3fooPKc
