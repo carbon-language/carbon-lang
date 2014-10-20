@@ -119,3 +119,34 @@ define <16 x i8> @test13(<2 x i64> %x) {
   %tmp = load <16 x i8>* bitcast ([4 x i32]* @GLOBAL to <16 x i8>*)
   ret <16 x i8> %tmp
 }
+
+define i8 @test14(i8 %x, i32 %y) {
+; This test must not have the store of %x forwarded to the load -- there is an
+; intervening store if %y. However, the intervening store occurs with a different
+; type and size and to a different pointer value. This is ensuring that none of
+; those confuse the analysis into thinking that the second store does not alias
+; the first.
+; CHECK-LABEL: @test14(
+; CHECK:         %[[R:.*]] = load i8*
+; CHECK-NEXT:    ret i8 %[[R]]
+  %a = alloca i32
+  %a.i8 = bitcast i32* %a to i8*
+  store i8 %x, i8* %a.i8
+  store i32 %y, i32* %a
+  %r = load i8* %a.i8
+  ret i8 %r
+}
+
+@test15_global = external global i32
+
+define i8 @test15(i8 %x, i32 %y) {
+; Same test as @test14 essentially, but using a global instead of an alloca.
+; CHECK-LABEL: @test15(
+; CHECK:         %[[R:.*]] = load i8*
+; CHECK-NEXT:    ret i8 %[[R]]
+  %g.i8 = bitcast i32* @test15_global to i8*
+  store i8 %x, i8* %g.i8
+  store i32 %y, i32* @test15_global
+  %r = load i8* %g.i8
+  ret i8 %r
+}

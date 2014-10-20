@@ -220,11 +220,12 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
         return SI->getOperand(0);
       }
 
-      // If Ptr is an alloca and this is a store to a different alloca, ignore
-      // the store.  This is a trivial form of alias analysis that is important
-      // for reg2mem'd code.
+      // If both StrippedPtr and StorePtr reach all the way to an alloca or
+      // global and they are different, ignore the store. This is a trivial form
+      // of alias analysis that is important for reg2mem'd code.
       if ((isa<AllocaInst>(StrippedPtr) || isa<GlobalVariable>(StrippedPtr)) &&
-          (isa<AllocaInst>(StorePtr) || isa<GlobalVariable>(StorePtr)))
+          (isa<AllocaInst>(StorePtr) || isa<GlobalVariable>(StorePtr)) &&
+          StrippedPtr != StorePtr)
         continue;
 
       // If we have alias analysis and it says the store won't modify the loaded
