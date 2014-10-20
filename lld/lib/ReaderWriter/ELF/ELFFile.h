@@ -182,9 +182,9 @@ protected:
 
   /// \brief Update the reference if the access corresponds to a merge string
   /// section.
-  void updateReferenceForMergeStringAccess(ELFReference<ELFT> *ref,
-                                           const Elf_Sym *symbol,
-                                           const Elf_Shdr *shdr);
+  virtual void updateReferenceForMergeStringAccess(ELFReference<ELFT> *ref,
+                                                   const Elf_Sym *symbol,
+                                                   const Elf_Shdr *shdr);
 
   /// \brief Return true if the symbol is corresponding to an architecture
   /// specific section. We will let the TargetHandler handle such atoms.
