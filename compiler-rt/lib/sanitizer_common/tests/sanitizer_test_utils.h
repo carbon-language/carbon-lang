@@ -95,13 +95,13 @@ static inline uint32_t my_rand() {
 
 // Set availability of platform-specific functions.
 
-#if !defined(__APPLE__) && !defined(ANDROID) && !defined(__ANDROID__) && !defined(_WIN32)
+#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_WIN32)
 # define SANITIZER_TEST_HAS_POSIX_MEMALIGN 1
 #else
 # define SANITIZER_TEST_HAS_POSIX_MEMALIGN 0
 #endif
 
-#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(ANDROID) && \
+#if !defined(__APPLE__) && !defined(__FreeBSD__) && \
     !defined(__ANDROID__) && !defined(_WIN32)
 # define SANITIZER_TEST_HAS_MEMALIGN 1
 # define SANITIZER_TEST_HAS_PVALLOC 1

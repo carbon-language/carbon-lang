@@ -49,7 +49,7 @@
 # define SANITIZER_WINDOWS 0
 #endif
 
-#if defined(__ANDROID__) || defined(ANDROID)
+#if defined(__ANDROID__)
 # define SANITIZER_ANDROID 1
 #else
 # define SANITIZER_ANDROID 0

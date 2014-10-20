@@ -117,7 +117,7 @@ TEST(AddressSanitizer, CallocReturnsZeroMem) {
 }
 
 // No valloc on Windows or Android.
-#if !defined(_WIN32) && !defined(ANDROID) && !defined(__ANDROID__)
+#if !defined(_WIN32) && !defined(__ANDROID__)
 TEST(AddressSanitizer, VallocTest) {
   void *a = valloc(100);
   EXPECT_EQ(0U, (uintptr_t)a % kPageSize);
@@ -769,7 +769,7 @@ char* MallocAndMemsetString(size_t size) {
   return MallocAndMemsetString(size, 'z');
 }
 
-#if defined(__linux__) && !defined(ANDROID) && !defined(__ANDROID__)
+#if defined(__linux__) && !defined(__ANDROID__)
 #define READ_TEST(READ_N_BYTES)                                          \
   char *x = new char[10];                                                \
   int fd = open("/proc/self/stat", O_RDONLY);                            \
@@ -792,7 +792,7 @@ TEST(AddressSanitizer, pread64) {
 TEST(AddressSanitizer, read) {
   READ_TEST(read(fd, x, 15));
 }
-#endif  // defined(__linux__) && !defined(ANDROID) && !defined(__ANDROID__)
+#endif  // defined(__linux__) && !defined(__ANDROID__)
 
 // This test case fails
 // Clang optimizes memcpy/memset calls which lead to unaligned access
@@ -1153,7 +1153,7 @@ TEST(AddressSanitizer, AttributeNoSanitizeAddressTest) {
 //   https://code.google.com/p/address-sanitizer/issues/detail?id=131
 // Windows support is tracked here:
 //   https://code.google.com/p/address-sanitizer/issues/detail?id=309
-#if !defined(ANDROID) && !defined(__ANDROID__) && \
+#if !defined(__ANDROID__) && \
     !defined(__APPLE__) && \
     !defined(_WIN32)
 static string MismatchStr(const string &str) {
