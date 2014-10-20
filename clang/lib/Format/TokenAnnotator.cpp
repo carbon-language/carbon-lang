@@ -1698,6 +1698,10 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
     return true;
   if (Tok.Previous->Type == TT_TemplateCloser && Tok.is(tok::l_paren))
     return Style.SpaceBeforeParens == FormatStyle::SBPO_Always;
+  if (Tok.Type == TT_TemplateOpener && Tok.Previous->is(tok::r_paren) &&
+      Tok.Previous->MatchingParen &&
+      Tok.Previous->MatchingParen->Type == TT_OverloadedOperatorLParen)
+    return false;
   if (Tok.is(tok::less) && Tok.Previous->isNot(tok::l_paren) &&
       Line.First->is(tok::hash))
     return true;
