@@ -2900,19 +2900,16 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       }
 
       // Continuous range maps we may be updating in our module.
-      ContinuousRangeMap<uint32_t, int, 2>::Builder SLocRemap(F.SLocRemap);
-      ContinuousRangeMap<uint32_t, int, 2>::Builder 
-        IdentifierRemap(F.IdentifierRemap);
-      ContinuousRangeMap<uint32_t, int, 2>::Builder
-        MacroRemap(F.MacroRemap);
-      ContinuousRangeMap<uint32_t, int, 2>::Builder
-        PreprocessedEntityRemap(F.PreprocessedEntityRemap);
-      ContinuousRangeMap<uint32_t, int, 2>::Builder 
-        SubmoduleRemap(F.SubmoduleRemap);
-      ContinuousRangeMap<uint32_t, int, 2>::Builder 
-        SelectorRemap(F.SelectorRemap);
-      ContinuousRangeMap<uint32_t, int, 2>::Builder DeclRemap(F.DeclRemap);
-      ContinuousRangeMap<uint32_t, int, 2>::Builder TypeRemap(F.TypeRemap);
+      typedef ContinuousRangeMap<uint32_t, int, 2>::Builder
+          RemapBuilder;
+      RemapBuilder SLocRemap(F.SLocRemap);
+      RemapBuilder IdentifierRemap(F.IdentifierRemap);
+      RemapBuilder MacroRemap(F.MacroRemap);
+      RemapBuilder PreprocessedEntityRemap(F.PreprocessedEntityRemap);
+      RemapBuilder SubmoduleRemap(F.SubmoduleRemap);
+      RemapBuilder SelectorRemap(F.SelectorRemap);
+      RemapBuilder DeclRemap(F.DeclRemap);
+      RemapBuilder TypeRemap(F.TypeRemap);
 
       while(Data < DataEnd) {
         using namespace llvm::support;
@@ -2942,26 +2939,23 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
         uint32_t TypeIndexOffset =
             endian::readNext<uint32_t, little, unaligned>(Data);
 
-        // Source location offset is mapped to OM->SLocEntryBaseOffset.
-        SLocRemap.insert(std::make_pair(SLocOffset,
-          static_cast<int>(OM->SLocEntryBaseOffset - SLocOffset)));
-        IdentifierRemap.insert(
-          std::make_pair(IdentifierIDOffset, 
-                         OM->BaseIdentifierID - IdentifierIDOffset));
-        MacroRemap.insert(std::make_pair(MacroIDOffset,
-                                         OM->BaseMacroID - MacroIDOffset));
-        PreprocessedEntityRemap.insert(
-          std::make_pair(PreprocessedEntityIDOffset, 
-            OM->BasePreprocessedEntityID - PreprocessedEntityIDOffset));
-        SubmoduleRemap.insert(std::make_pair(SubmoduleIDOffset, 
-                                      OM->BaseSubmoduleID - SubmoduleIDOffset));
-        SelectorRemap.insert(std::make_pair(SelectorIDOffset, 
-                               OM->BaseSelectorID - SelectorIDOffset));
-        DeclRemap.insert(std::make_pair(DeclIDOffset, 
-                                        OM->BaseDeclID - DeclIDOffset));
-        
-        TypeRemap.insert(std::make_pair(TypeIndexOffset, 
-                                    OM->BaseTypeIndex - TypeIndexOffset));
+        uint32_t None = std::numeric_limits<uint32_t>::max();
+
+        auto mapOffset = [&](uint32_t Offset, uint32_t BaseOffset,
+                             RemapBuilder &Remap) {
+          if (Offset != None)
+            Remap.insert(std::make_pair(Offset,
+                                        static_cast<int>(BaseOffset - Offset)));
+        };
+        mapOffset(SLocOffset, OM->SLocEntryBaseOffset, SLocRemap);
+        mapOffset(IdentifierIDOffset, OM->BaseIdentifierID, IdentifierRemap);
+        mapOffset(MacroIDOffset, OM->BaseMacroID, MacroRemap);
+        mapOffset(PreprocessedEntityIDOffset, OM->BasePreprocessedEntityID,
+                  PreprocessedEntityRemap);
+        mapOffset(SubmoduleIDOffset, OM->BaseSubmoduleID, SubmoduleRemap);
+        mapOffset(SelectorIDOffset, OM->BaseSelectorID, SelectorRemap);
+        mapOffset(DeclIDOffset, OM->BaseDeclID, DeclRemap);
+        mapOffset(TypeIndexOffset, OM->BaseTypeIndex, TypeRemap);
 
         // Global -> local mappings.
         F.GlobalToLocalDeclIDs[OM] = DeclIDOffset;

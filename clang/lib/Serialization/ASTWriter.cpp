@@ -4455,25 +4455,36 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
     SmallString<2048> Buffer;
     {
       llvm::raw_svector_ostream Out(Buffer);
-      for (ModuleManager::ModuleConstIterator M = Chain->ModuleMgr.begin(),
-                                           MEnd = Chain->ModuleMgr.end();
-           M != MEnd; ++M) {
+      for (ModuleFile *M : Chain->ModuleMgr) {
         using namespace llvm::support;
         endian::Writer<little> LE(Out);
-        StringRef FileName = (*M)->FileName;
+        StringRef FileName = M->FileName;
         LE.write<uint16_t>(FileName.size());
         Out.write(FileName.data(), FileName.size());
 
+        // Note: if a base ID was uint max, it would not be possible to load
+        // another module after it or have more than one entity inside it.
+        uint32_t None = std::numeric_limits<uint32_t>::max();
+
+        auto writeBaseIDOrNone = [&](uint32_t BaseID, bool ShouldWrite) {
+          assert(BaseID < std::numeric_limits<uint32_t>::max() && "base id too high");
+          if (ShouldWrite)
+            LE.write<uint32_t>(BaseID);
+          else
+            LE.write<uint32_t>(None);
+        };
+
         // These values should be unique within a chain, since they will be read
         // as keys into ContinuousRangeMaps.
-        LE.write<uint32_t>((*M)->SLocEntryBaseOffset);
-        LE.write<uint32_t>((*M)->BaseIdentifierID);
-        LE.write<uint32_t>((*M)->BaseMacroID);
-        LE.write<uint32_t>((*M)->BasePreprocessedEntityID);
-        LE.write<uint32_t>((*M)->BaseSubmoduleID);
-        LE.write<uint32_t>((*M)->BaseSelectorID);
-        LE.write<uint32_t>((*M)->BaseDeclID);
-        LE.write<uint32_t>((*M)->BaseTypeIndex);
+        writeBaseIDOrNone(M->SLocEntryBaseOffset, M->LocalNumSLocEntries);
+        writeBaseIDOrNone(M->BaseIdentifierID, M->LocalNumIdentifiers);
+        writeBaseIDOrNone(M->BaseMacroID, M->LocalNumMacros);
+        writeBaseIDOrNone(M->BasePreprocessedEntityID,
+                          M->NumPreprocessedEntities);
+        writeBaseIDOrNone(M->BaseSubmoduleID, M->LocalNumSubmodules);
+        writeBaseIDOrNone(M->BaseSelectorID, M->LocalNumSelectors);
+        writeBaseIDOrNone(M->BaseDeclID, M->LocalNumDecls);
+        writeBaseIDOrNone(M->BaseTypeIndex, M->LocalNumTypes);
       }
     }
     Record.clear();
