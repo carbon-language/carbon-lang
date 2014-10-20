@@ -5157,7 +5157,7 @@ Syntax:
 
 ::
 
-      <result> = load [volatile] <ty>* <pointer>[, align <alignment>][, !nontemporal !<index>][, !invariant.load !<index>]
+      <result> = load [volatile] <ty>* <pointer>[, align <alignment>][, !nontemporal !<index>][, !invariant.load !<index>][, !nonnull !<index>]
       <result> = load atomic [volatile] <ty>* <pointer> [singlethread] <ordering>, align <alignment>
       !<index> = !{ i32 1 }
 
@@ -5212,6 +5212,14 @@ instruction tells the optimizer and code generator that this load
 address points to memory which does not change value during program
 execution. The optimizer may then move this load around, for example, by
 hoisting it out of loops using loop invariant code motion.
+
+The optional ``!nonnull`` metadata must reference a single
+metadata name ``<index>`` corresponding to a metadata node with no
+entries. The existence of the ``!nonnull`` metadata on the
+instruction tells the optimizer that the value loaded is known to
+never be null.  This is analogous to the ''nonnull'' attribute
+on parameters and return values.  This metadata can only be applied 
+to loads of a pointer type.  
 
 Semantics:
 """"""""""

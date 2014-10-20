@@ -949,6 +949,29 @@ define i1 @returns_nonnull_as_deref() {
 ; CHECK: ret
 }
 
+define i1 @nonnull_load(i32** %addr) {
+  %ptr = load i32** %addr, !nonnull !{}
+  %cmp = icmp eq i32* %ptr, null
+  ret i1 %cmp
+; CHECK-LABEL: @nonnull_load
+; CHECK: ret i1 false
+}
+
+define i1 @nonnull_load_as_outer(i32* addrspace(1)* %addr) {
+  %ptr = load i32* addrspace(1)* %addr, !nonnull !{}
+  %cmp = icmp eq i32* %ptr, null
+  ret i1 %cmp
+; CHECK-LABEL: @nonnull_load_as_outer
+; CHECK: ret i1 false
+}
+define i1 @nonnull_load_as_inner(i32 addrspace(1)** %addr) {
+  %ptr = load i32 addrspace(1)** %addr, !nonnull !{}
+  %cmp = icmp eq i32 addrspace(1)* %ptr, null
+  ret i1 %cmp
+; CHECK-LABEL: @nonnull_load_as_inner
+; CHECK: ret i1 false
+}
+
 ; If a bit is known to be zero for A and known to be one for B,
 ; then A and B cannot be equal.
 define i1 @icmp_eq_const(i32 %a) nounwind {

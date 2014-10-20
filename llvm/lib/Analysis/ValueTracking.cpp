@@ -2622,6 +2622,10 @@ bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
     return !GV->hasExternalWeakLinkage();
 
+  // A Load tagged w/nonnull metadata is never null. 
+  if (const LoadInst *LI = dyn_cast<LoadInst>(V))
+    return LI->getMetadata("nonnull");
+
   if (ImmutableCallSite CS = V)
     if (CS.isReturnNonNull())
       return true;
