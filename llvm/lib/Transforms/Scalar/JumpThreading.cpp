@@ -1035,10 +1035,13 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
            "Didn't find entry for predecessor!");
 
     // If we have an available predecessor but it requires casting, insert the
-    // cast in the predecessor and use the cast.
-    Value *PredV = I->second;
+    // cast in the predecessor and use the cast. Note that we have to update the
+    // AvailablePreds vector as we go so that all of the PHI entries for this
+    // predecessor use the same bitcast.
+    Value *&PredV = I->second;
     if (PredV->getType() != LI->getType())
-      PredV = CastInst::Create(CastInst::BitCast, PredV, LI->getType(), "", P);
+      PredV = CastInst::Create(CastInst::BitCast, PredV, LI->getType(), "",
+                               P->getTerminator());
 
     PN->addIncoming(PredV, I->first);
   }

@@ -75,6 +75,37 @@ bb3:		; preds = %bb1
 	ret i32 %res.0
 }
 
+define i32 @test3(i8** %x, i1 %f) {
+; Correctly thread loads of different (but compatible) types, placing bitcasts
+; as necessary in the predecessors. This is especially tricky because the same
+; predecessor ends up with two entries in the PHI node and they must share
+; a single cast.
+; CHECK-LABEL: @test3(
+entry:
+  %0 = bitcast i8** %x to i32**
+  %1 = load i32** %0, align 8
+  br i1 %f, label %if.end57, label %if.then56
+; CHECK: %[[LOAD:.*]] = load i32**
+; CHECK: %[[CAST:.*]] = bitcast i32* %[[LOAD]] to i8*
+
+if.then56:
+  br label %if.end57
+
+if.end57:
+  %2 = load i8** %x, align 8
+  %tobool59 = icmp eq i8* %2, null
+  br i1 %tobool59, label %return, label %if.then60
+; CHECK: %[[PHI:.*]] = phi i8* [ %[[CAST]], %[[PRED:[^ ]+]] ], [ %[[CAST]], %[[PRED]] ]
+; CHECK-NEXT: %[[CMP:.*]] = icmp eq i8* %[[PHI]], null
+; CHECK-NEXT: br i1 %[[CMP]]
+
+if.then60:
+  ret i32 42
+
+return:
+  ret i32 13
+}
+
 !0 = metadata !{metadata !3, metadata !3, i64 0}
 !1 = metadata !{metadata !"omnipotent char", metadata !2}
 !2 = metadata !{metadata !"Simple C/C++ TBAA", null}
