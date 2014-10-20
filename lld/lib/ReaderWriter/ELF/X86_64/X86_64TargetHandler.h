@@ -19,7 +19,6 @@
 
 namespace lld {
 namespace elf {
-typedef llvm::object::ELFType<llvm::support::little, 2, true> X86_64ELFType;
 class X86_64LinkingContext;
 
 template <class ELFT> class X86_64TargetLayout : public TargetLayout<ELFT> {

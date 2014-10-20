@@ -22,7 +22,7 @@ public:
   PPCELFFile(StringRef name) : ELFFile<ELFT>(name) {}
 
   PPCELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
-             TargetHandlerBase *handler, error_code &ec)
+             TargetHandlerBase *handler, std::error_code &ec)
       : ELFFile<ELFT>(std::move(mb), atomizeStrings, handler, ec) {}
 };
 

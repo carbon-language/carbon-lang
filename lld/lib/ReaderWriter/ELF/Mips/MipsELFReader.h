@@ -15,6 +15,8 @@
 namespace lld {
 namespace elf {
 
+typedef llvm::object::ELFType<llvm::support::little, 2, false> Mips32ElELFType;
+
 struct MipsELFFileCreateTraits {
   typedef llvm::ErrorOr<std::unique_ptr<lld::File>> result_type;
 
@@ -28,6 +30,17 @@ struct MipsELFFileCreateTraits {
 class MipsELFObjectReader : public ELFObjectReader {
 public:
   MipsELFObjectReader(bool atomizeStrings) : ELFObjectReader(atomizeStrings) {}
+
+  bool canParse(file_magic magic, StringRef ext,
+                const MemoryBuffer &buf) const override {
+    const uint8_t *data =
+        reinterpret_cast<const uint8_t *>(buf.getBuffer().data());
+    const llvm::object::Elf_Ehdr_Impl<Mips32ElELFType> *elfHeader =
+        reinterpret_cast<const llvm::object::Elf_Ehdr_Impl<Mips32ElELFType> *>(
+            data);
+    return ELFObjectReader::canParse(magic, ext, buf) &&
+           elfHeader->e_machine == llvm::ELF::EM_MIPS;
+  }
 
   std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,

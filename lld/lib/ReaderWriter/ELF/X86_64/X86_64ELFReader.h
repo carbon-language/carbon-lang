@@ -16,6 +16,8 @@
 namespace lld {
 namespace elf {
 
+typedef llvm::object::ELFType<llvm::support::little, 2, true> X86_64ELFType;
+
 struct X86_64DynamicFileCreateELFTraits {
   typedef llvm::ErrorOr<std::unique_ptr<lld::SharedLibraryFile>> result_type;
 
@@ -42,6 +44,17 @@ public:
   X86_64ELFObjectReader(bool atomizeStrings)
       : ELFObjectReader(atomizeStrings) {}
 
+  bool canParse(file_magic magic, StringRef ext,
+                const MemoryBuffer &buf) const override {
+    const uint8_t *data =
+        reinterpret_cast<const uint8_t *>(buf.getBuffer().data());
+    const llvm::object::Elf_Ehdr_Impl<X86_64ELFType> *elfHeader =
+        reinterpret_cast<const llvm::object::Elf_Ehdr_Impl<X86_64ELFType> *>(
+            data);
+    return ELFObjectReader::canParse(magic, ext, buf) &&
+           elfHeader->e_machine == llvm::ELF::EM_X86_64;
+  }
+
   std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
             std::vector<std::unique_ptr<File>> &result) const override {
@@ -60,6 +73,17 @@ public:
 class X86_64ELFDSOReader : public ELFDSOReader {
 public:
   X86_64ELFDSOReader(bool useUndefines) : ELFDSOReader(useUndefines) {}
+
+  bool canParse(file_magic magic, StringRef ext,
+                const MemoryBuffer &buf) const override {
+    const uint8_t *data =
+        reinterpret_cast<const uint8_t *>(buf.getBuffer().data());
+    const llvm::object::Elf_Ehdr_Impl<X86_64ELFType> *elfHeader =
+        reinterpret_cast<const llvm::object::Elf_Ehdr_Impl<X86_64ELFType> *>(
+            data);
+    return ELFDSOReader::canParse(magic, ext, buf) &&
+           elfHeader->e_machine == llvm::ELF::EM_X86_64;
+  }
 
   std::error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
