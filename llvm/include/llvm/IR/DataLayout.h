@@ -99,7 +99,7 @@ struct PointerAlignElem {
 class DataLayout {
 private:
   /// Defaults to false.
-  bool LittleEndian;
+  bool BigEndian;
 
   unsigned StackNaturalAlign;
 
@@ -180,7 +180,7 @@ public:
 
   DataLayout &operator=(const DataLayout &DL) {
     clear();
-    LittleEndian = DL.isLittleEndian();
+    BigEndian = DL.isBigEndian();
     StackNaturalAlign = DL.StackNaturalAlign;
     ManglingMode = DL.ManglingMode;
     LegalIntWidths = DL.LegalIntWidths;
@@ -198,8 +198,8 @@ public:
   void reset(StringRef LayoutDescription);
 
   /// Layout endianness...
-  bool isLittleEndian() const { return LittleEndian; }
-  bool isBigEndian() const { return !LittleEndian; }
+  bool isLittleEndian() const { return !BigEndian; }
+  bool isBigEndian() const { return BigEndian; }
 
   /// \brief Returns the string representation of the DataLayout.
   ///
