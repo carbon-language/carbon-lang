@@ -136,6 +136,19 @@ will be automatically mapped to an import of the module ``std.io``. Even with sp
 
   The automatic mapping of ``#include`` to ``import`` also solves an implementation problem: importing a module with a definition of some entity (say, a ``struct Point``) and then parsing a header containing another definition of ``struct Point`` would cause a redefinition error, even if it is the same ``struct Point``. By mapping ``#include`` to ``import``, the compiler can guarantee that it always sees just the already-parsed definition from the module.
 
+While building a module, ``#include_next`` is also supported, with one caveat.
+The usual behavior of ``#include_next`` is to search for the specified filename
+in the list of include paths, starting from the path *after* the one
+in which the current file was found.
+Because files listed in module maps are not found through include paths, a
+different strategy is used for ``#include_next`` directives in such files: the
+list of include paths is searched for the specified header name, to find the
+first include path that would refer to the current file. ``#include_next`` is
+interpreted as if the current file had been found in that path.
+If this search finds a file named by a module map, the ``#include_next``
+directive is translated into an import, just like for a ``#include``
+directive.``
+
 Module maps
 -----------
 The crucial link between modules and headers is described by a *module map*, which describes how a collection of existing headers maps on to the (logical) structure of a module. For example, one could imagine a module ``std`` covering the C standard library. Each of the C standard library headers (``<stdio.h>``, ``<stdlib.h>``, ``<math.h>``, etc.) would contribute to the ``std`` module, by placing their respective APIs into the corresponding submodule (``std.io``, ``std.lib``, ``std.math``, etc.). Having a list of the headers that are part of the ``std`` module allows the compiler to build the ``std`` module as a standalone entity, and having the mapping from header names to (sub)modules allows the automatic translation of ``#include`` directives to module imports.

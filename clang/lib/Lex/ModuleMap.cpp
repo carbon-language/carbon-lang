@@ -1749,12 +1749,14 @@ void ModuleMapParser::parseHeaderDecl(MMToken::TokenKind LeadingToken,
         Role = ModuleMap::PrivateHeader;
       else
         assert(LeadingToken == MMToken::HeaderKeyword);
-        
-      Map.addHeader(ActiveModule, File, Role);
-      
-      // If there is a builtin counterpart to this file, add it now.
+
+      // If there is a builtin counterpart to this file, add it now, before
+      // the "real" header, so we build the built-in one first when building
+      // the module.
       if (BuiltinFile)
         Map.addHeader(ActiveModule, BuiltinFile, Role);
+
+      Map.addHeader(ActiveModule, File, Role);
     }
   } else if (LeadingToken != MMToken::ExcludeKeyword) {
     // Ignore excluded header files. They're optional anyway.

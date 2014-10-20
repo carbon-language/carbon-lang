@@ -534,6 +534,7 @@ const FileEntry *Preprocessor::LookupFile(
     StringRef Filename,
     bool isAngled,
     const DirectoryLookup *FromDir,
+    const FileEntry *FromFile,
     const DirectoryLookup *&CurDir,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
@@ -543,7 +544,7 @@ const FileEntry *Preprocessor::LookupFile(
   // stack, record the parent #includes.
   SmallVector<std::pair<const FileEntry *, const DirectoryEntry *>, 16>
       Includers;
-  if (!FromDir) {
+  if (!FromDir && !FromFile) {
     FileID FID = getCurrentFileLexer()->getFileID();
     const FileEntry *FileEnt = SourceMgr.getFileEntryForID(FID);
 
@@ -575,8 +576,30 @@ const FileEntry *Preprocessor::LookupFile(
     }
   }
 
-  // Do a standard file entry lookup.
   CurDir = CurDirLookup;
+
+  if (FromFile) {
+    // We're supposed to start looking from after a particular file. Search
+    // the include path until we find that file or run out of files.
+    const DirectoryLookup *TmpCurDir = CurDir;
+    const DirectoryLookup *TmpFromDir = nullptr;
+    while (const FileEntry *FE = HeaderInfo.LookupFile(
+               Filename, FilenameLoc, isAngled, TmpFromDir, TmpCurDir,
+               Includers, SearchPath, RelativePath, SuggestedModule,
+               SkipCache)) {
+      // Keep looking as if this file did a #include_next.
+      TmpFromDir = TmpCurDir;
+      ++TmpFromDir;
+      if (FE == FromFile) {
+        // Found it.
+        FromDir = TmpFromDir;
+        CurDir = TmpCurDir;
+        break;
+      }
+    }
+  }
+
+  // Do a standard file entry lookup.
   const FileEntry *FE = HeaderInfo.LookupFile(
       Filename, FilenameLoc, isAngled, FromDir, CurDir, Includers, SearchPath,
       RelativePath, SuggestedModule, SkipCache);
@@ -1353,6 +1376,7 @@ static void EnterAnnotationToken(Preprocessor &PP,
 void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc, 
                                           Token &IncludeTok,
                                           const DirectoryLookup *LookupFrom,
+                                          const FileEntry *LookupFromFile,
                                           bool isImport) {
 
   Token FilenameTok;
@@ -1450,8 +1474,8 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   }
   const FileEntry *File = LookupFile(
       FilenameLoc, LangOpts.MSVCCompat ? NormalizedPath.c_str() : Filename,
-      isAngled, LookupFrom, CurDir, Callbacks ? &SearchPath : nullptr,
-      Callbacks ? &RelativePath : nullptr,
+      isAngled, LookupFrom, LookupFromFile, CurDir,
+      Callbacks ? &SearchPath : nullptr, Callbacks ? &RelativePath : nullptr,
       HeaderInfo.getHeaderSearchOpts().ModuleMaps ? &SuggestedModule : nullptr);
 
   if (Callbacks) {
@@ -1465,14 +1489,13 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
           HeaderInfo.AddSearchPath(DL, isAngled);
           
           // Try the lookup again, skipping the cache.
-          File = LookupFile(FilenameLoc,
-                            LangOpts.MSVCCompat ? NormalizedPath.c_str()
-                                                : Filename,
-                            isAngled, LookupFrom, CurDir, nullptr, nullptr,
-                            HeaderInfo.getHeaderSearchOpts().ModuleMaps
-                                      ? &SuggestedModule
-                                      : nullptr,
-                            /*SkipCache*/ true);
+          File = LookupFile(
+              FilenameLoc,
+              LangOpts.MSVCCompat ? NormalizedPath.c_str() : Filename, isAngled,
+              LookupFrom, LookupFromFile, CurDir, nullptr, nullptr,
+              HeaderInfo.getHeaderSearchOpts().ModuleMaps ? &SuggestedModule
+                                                          : nullptr,
+              /*SkipCache*/ true);
         }
       }
     }
@@ -1494,8 +1517,10 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
       // provide the user with a possible fixit.
       if (isAngled) {
         File = LookupFile(
-            FilenameLoc, LangOpts.MSVCCompat ? NormalizedPath.c_str() : Filename,
-            false, LookupFrom, CurDir, Callbacks ? &SearchPath : nullptr,
+            FilenameLoc,
+            LangOpts.MSVCCompat ? NormalizedPath.c_str() : Filename, false,
+            LookupFrom, LookupFromFile, CurDir,
+            Callbacks ? &SearchPath : nullptr,
             Callbacks ? &RelativePath : nullptr,
             HeaderInfo.getHeaderSearchOpts().ModuleMaps ? &SuggestedModule
                                                         : nullptr);
@@ -1692,9 +1717,16 @@ void Preprocessor::HandleIncludeNextDirective(SourceLocation HashLoc,
   // the current found directory.  If we can't do this, issue a
   // diagnostic.
   const DirectoryLookup *Lookup = CurDirLookup;
+  const FileEntry *LookupFromFile = nullptr;
   if (isInPrimaryFile()) {
     Lookup = nullptr;
     Diag(IncludeNextTok, diag::pp_include_next_in_primary);
+  } else if (CurSubmodule) {
+    // Start looking up in the directory *after* the one in which the current
+    // file would be found, if any.
+    assert(CurPPLexer && "#include_next directive in macro?");
+    LookupFromFile = CurPPLexer->getFileEntry();
+    Lookup = nullptr;
   } else if (!Lookup) {
     Diag(IncludeNextTok, diag::pp_include_next_absolute_path);
   } else {
@@ -1702,7 +1734,8 @@ void Preprocessor::HandleIncludeNextDirective(SourceLocation HashLoc,
     ++Lookup;
   }
 
-  return HandleIncludeDirective(HashLoc, IncludeNextTok, Lookup);
+  return HandleIncludeDirective(HashLoc, IncludeNextTok, Lookup,
+                                LookupFromFile);
 }
 
 /// HandleMicrosoftImportDirective - Implements \#import for Microsoft Mode
@@ -1728,7 +1761,7 @@ void Preprocessor::HandleImportDirective(SourceLocation HashLoc,
       return HandleMicrosoftImportDirective(ImportTok);
     Diag(ImportTok, diag::ext_pp_import_directive);
   }
-  return HandleIncludeDirective(HashLoc, ImportTok, nullptr, true);
+  return HandleIncludeDirective(HashLoc, ImportTok, nullptr, nullptr, true);
 }
 
 /// HandleIncludeMacrosDirective - The -imacros command line option turns into a
@@ -1749,7 +1782,7 @@ void Preprocessor::HandleIncludeMacrosDirective(SourceLocation HashLoc,
 
   // Treat this as a normal #include for checking purposes.  If this is
   // successful, it will push a new lexer onto the include stack.
-  HandleIncludeDirective(HashLoc, IncludeMacrosTok, nullptr, false);
+  HandleIncludeDirective(HashLoc, IncludeMacrosTok);
 
   Token TmpTok;
   do {

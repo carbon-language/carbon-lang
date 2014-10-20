@@ -1053,7 +1053,8 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
 /// Returns true if successful.
 static bool EvaluateHasIncludeCommon(Token &Tok,
                                      IdentifierInfo *II, Preprocessor &PP,
-                                     const DirectoryLookup *LookupFrom) {
+                                     const DirectoryLookup *LookupFrom,
+                                     const FileEntry *LookupFromFile) {
   // Save the location of the current token.  If a '(' is later found, use
   // that location.  If not, use the end of this location instead.
   SourceLocation LParenLoc = Tok.getLocation();
@@ -1148,8 +1149,8 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
   // Search include directories.
   const DirectoryLookup *CurDir;
   const FileEntry *File =
-      PP.LookupFile(FilenameLoc, Filename, isAngled, LookupFrom, CurDir,
-                    nullptr, nullptr, nullptr);
+      PP.LookupFile(FilenameLoc, Filename, isAngled, LookupFrom, LookupFromFile,
+                    CurDir, nullptr, nullptr, nullptr);
 
   // Get the result value.  A result of true means the file exists.
   return File != nullptr;
@@ -1159,7 +1160,7 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
 /// Returns true if successful.
 static bool EvaluateHasInclude(Token &Tok, IdentifierInfo *II,
                                Preprocessor &PP) {
-  return EvaluateHasIncludeCommon(Tok, II, PP, nullptr);
+  return EvaluateHasIncludeCommon(Tok, II, PP, nullptr, nullptr);
 }
 
 /// EvaluateHasIncludeNext - Process '__has_include_next("path")' expression.
@@ -1169,10 +1170,19 @@ static bool EvaluateHasIncludeNext(Token &Tok,
   // __has_include_next is like __has_include, except that we start
   // searching after the current found directory.  If we can't do this,
   // issue a diagnostic.
+  // FIXME: Factor out duplication wiht
+  // Preprocessor::HandleIncludeNextDirective.
   const DirectoryLookup *Lookup = PP.GetCurDirLookup();
+  const FileEntry *LookupFromFile = nullptr;
   if (PP.isInPrimaryFile()) {
     Lookup = nullptr;
     PP.Diag(Tok, diag::pp_include_next_in_primary);
+  } else if (PP.getCurrentSubmodule()) {
+    // Start looking up in the directory *after* the one in which the current
+    // file would be found, if any.
+    assert(PP.getCurrentLexer() && "#include_next directive in macro?");
+    LookupFromFile = PP.getCurrentLexer()->getFileEntry();
+    Lookup = nullptr;
   } else if (!Lookup) {
     PP.Diag(Tok, diag::pp_include_next_absolute_path);
   } else {
@@ -1180,7 +1190,7 @@ static bool EvaluateHasIncludeNext(Token &Tok,
     ++Lookup;
   }
 
-  return EvaluateHasIncludeCommon(Tok, II, PP, Lookup);
+  return EvaluateHasIncludeCommon(Tok, II, PP, Lookup, LookupFromFile);
 }
 
 /// \brief Process __building_module(identifier) expression.
