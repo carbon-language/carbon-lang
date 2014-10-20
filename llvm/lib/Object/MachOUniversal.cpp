@@ -67,7 +67,7 @@ MachOUniversalBinary::ObjectForArch::ObjectForArch(
   }
 }
 
-ErrorOr<std::unique_ptr<ObjectFile>>
+ErrorOr<std::unique_ptr<MachOObjectFile>>
 MachOUniversalBinary::ObjectForArch::getAsObjectFile() const {
   if (Parent) {
     StringRef ParentData = Parent->getData();
@@ -139,7 +139,7 @@ static bool getCTMForArch(Triple::ArchType Arch, MachO::CPUType &CTM) {
   }
 }
 
-ErrorOr<std::unique_ptr<ObjectFile>>
+ErrorOr<std::unique_ptr<MachOObjectFile>>
 MachOUniversalBinary::getObjectForArch(Triple::ArchType Arch) const {
   MachO::CPUType CTM;
   if (!getCTMForArch(Arch, CTM))
