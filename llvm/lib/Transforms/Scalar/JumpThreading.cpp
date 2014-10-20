@@ -901,6 +901,9 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
     // If the returned value is the load itself, replace with an undef. This can
     // only happen in dead loops.
     if (AvailableVal == LI) AvailableVal = UndefValue::get(LI->getType());
+    if (AvailableVal->getType() != LI->getType())
+      AvailableVal = CastInst::Create(CastInst::BitCast, AvailableVal,
+                                      LI->getType(), "", LI);
     LI->replaceAllUsesWith(AvailableVal);
     LI->eraseFromParent();
     return true;
@@ -1031,7 +1034,13 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
     assert(I != AvailablePreds.end() && I->first == P &&
            "Didn't find entry for predecessor!");
 
-    PN->addIncoming(I->second, I->first);
+    // If we have an available predecessor but it requires casting, insert the
+    // cast in the predecessor and use the cast.
+    Value *PredV = I->second;
+    if (PredV->getType() != LI->getType())
+      PredV = CastInst::Create(CastInst::BitCast, PredV, LI->getType(), "", P);
+
+    PN->addIncoming(PredV, I->first);
   }
 
   //cerr << "PRE: " << *LI << *PN << "\n";

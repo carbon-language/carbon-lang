@@ -420,7 +420,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   // separated by a few arithmetic operations.
   BasicBlock::iterator BBI = &LI;
   if (Value *AvailableVal = FindAvailableLoadedValue(Op, LI.getParent(), BBI,6))
-    return ReplaceInstUsesWith(LI, AvailableVal);
+    return ReplaceInstUsesWith(
+        LI, Builder->CreateBitCast(AvailableVal, LI.getType()));
 
   // load(gep null, ...) -> unreachable
   if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op)) {
