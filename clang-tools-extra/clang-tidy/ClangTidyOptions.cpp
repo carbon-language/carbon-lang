@@ -139,10 +139,19 @@ FileOptionsProvider::FileOptionsProvider(
     const ClangTidyOptions &OverrideOptions)
     : DefaultOptionsProvider(GlobalOptions, DefaultOptions),
       OverrideOptions(OverrideOptions) {
+  ConfigHandlers.emplace_back(".clang-tidy", parseConfiguration);
   CachedOptions[""] = DefaultOptions.mergeWith(OverrideOptions);
 }
 
-static const char ConfigFileName[] = ".clang-tidy";
+FileOptionsProvider::FileOptionsProvider(
+    const ClangTidyGlobalOptions &GlobalOptions,
+    const ClangTidyOptions &DefaultOptions,
+    const ClangTidyOptions &OverrideOptions,
+    const FileOptionsProvider::ConfigFileHandlers &ConfigHandlers)
+    : DefaultOptionsProvider(GlobalOptions, DefaultOptions),
+      OverrideOptions(OverrideOptions), ConfigHandlers(ConfigHandlers) {
+  CachedOptions[""] = DefaultOptions.mergeWith(OverrideOptions);
+}
 
 // FIXME: This method has some common logic with clang::format::getStyle().
 // Consider pulling out common bits to a findParentFileWithName function or
@@ -164,7 +173,7 @@ const ClangTidyOptions &FileOptionsProvider::getOptions(StringRef FileName) {
   StringRef Path = llvm::sys::path::parent_path(FileName);
   for (StringRef CurrentPath = Path;;
        CurrentPath = llvm::sys::path::parent_path(CurrentPath)) {
-    llvm::ErrorOr<ClangTidyOptions> Result = std::error_code();
+    llvm::Optional<ClangTidyOptions> Result;
 
     auto Iter = CachedOptions.find(CurrentPath);
     if (Iter != CachedOptions.end())
@@ -183,49 +192,57 @@ const ClangTidyOptions &FileOptionsProvider::getOptions(StringRef FileName) {
       }
       return CachedOptions.GetOrCreateValue(Path, *Result).getValue();
     }
-    if (Result.getError() != llvm::errc::no_such_file_or_directory) {
-      llvm::errs() << "Error reading " << ConfigFileName << " from " << Path
-                   << ": " << Result.getError().message() << "\n";
-    }
   }
 }
 
-llvm::ErrorOr<ClangTidyOptions>
+llvm::Optional<ClangTidyOptions>
 FileOptionsProvider::TryReadConfigFile(StringRef Directory) {
   assert(!Directory.empty());
 
-  if (!llvm::sys::fs::is_directory(Directory))
-    return make_error_code(llvm::errc::not_a_directory);
+  if (!llvm::sys::fs::is_directory(Directory)) {
+    llvm::errs() << "Error reading configuration from " << Directory
+                 << ": directory doesn't exist.\n";
+    return llvm::None;
+  }
 
-  SmallString<128> ConfigFile(Directory);
-  llvm::sys::path::append(ConfigFile, ".clang-tidy");
-  DEBUG(llvm::dbgs() << "Trying " << ConfigFile << "...\n");
+  for (const ConfigFileHandler &ConfigHandler : ConfigHandlers) {
+    SmallString<128> ConfigFile(Directory);
+    llvm::sys::path::append(ConfigFile, ConfigHandler.first);
+    DEBUG(llvm::dbgs() << "Trying " << ConfigFile << "...\n");
 
-  bool IsFile = false;
-  // Ignore errors from is_regular_file: we only need to know if we can read
-  // the file or not.
-  llvm::sys::fs::is_regular_file(Twine(ConfigFile), IsFile);
+    bool IsFile = false;
+    // Ignore errors from is_regular_file: we only need to know if we can read
+    // the file or not.
+    llvm::sys::fs::is_regular_file(Twine(ConfigFile), IsFile);
+    if (!IsFile)
+      continue;
 
-  if (!IsFile)
-    return make_error_code(llvm::errc::no_such_file_or_directory);
+    llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Text =
+        llvm::MemoryBuffer::getFile(ConfigFile.c_str());
+    if (std::error_code EC = Text.getError()) {
+      llvm::errs() << "Can't read " << ConfigFile << ": " << EC.message()
+                   << "\n";
+      continue;
+    }
 
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Text =
-      llvm::MemoryBuffer::getFile(ConfigFile.c_str());
-  if (std::error_code EC = Text.getError())
-    return EC;
-  // Skip empty files, e.g. files opened for writing via shell output
-  // redirection.
-  if ((*Text)->getBuffer().empty())
-    return make_error_code(llvm::errc::no_such_file_or_directory);
-  llvm::ErrorOr<ClangTidyOptions> ParsedOptions =
-      parseConfiguration((*Text)->getBuffer());
-  if (ParsedOptions) {
+    // Skip empty files, e.g. files opened for writing via shell output
+    // redirection.
+    if ((*Text)->getBuffer().empty())
+      continue;
+    llvm::ErrorOr<ClangTidyOptions> ParsedOptions =
+        ConfigHandler.second((*Text)->getBuffer());
+    if (!ParsedOptions) {
+      llvm::errs() << "Error parsing " << ConfigFile << ": "
+                   << ParsedOptions.getError().message() << "\n";
+      continue;
+    }
+
     ClangTidyOptions Defaults = DefaultOptionsProvider::getOptions(Directory);
     // Only use checks from the config file.
     Defaults.Checks = None;
     return Defaults.mergeWith(*ParsedOptions).mergeWith(OverrideOptions);
   }
-  return ParsedOptions.getError();
+  return llvm::None;
 }
 
 /// \brief Parses -line-filter option and stores it to the \c Options.

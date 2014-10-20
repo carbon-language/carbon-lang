@@ -14,6 +14,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorOr.h"
+#include <functional>
 #include <map>
 #include <string>
 #include <system_error>
@@ -114,32 +115,85 @@ private:
 };
 
 /// \brief Implementation of the \c ClangTidyOptionsProvider interface, which
-/// tries to find a .clang-tidy file in the closest parent directory of each
-/// file.
+/// tries to find a configuration file in the closest parent directory of each
+/// source file.
+///
+/// By default, files named ".clang-tidy" will be considered, and the
+/// \c clang::tidy::parseConfiguration function will be used for parsing, but a
+/// custom set of configuration file names and parsing functions can be
+/// specified using the appropriate constructor.
 class FileOptionsProvider : public DefaultOptionsProvider {
 public:
+  // \brief A pair of configuration file base name and a function parsing
+  // configuration from text in the corresponding format.
+  typedef std::pair<std::string, std::function<llvm::ErrorOr<ClangTidyOptions>(
+                                     llvm::StringRef)>> ConfigFileHandler;
+
+  /// \brief Configuration file handlers listed in the order of priority.
+  ///
+  /// Custom configuration file formats can be supported by constructing the
+  /// list of handlers and passing it to the appropriate \c FileOptionsProvider
+  /// constructor. E.g. initialization of a \c FileOptionsProvider with support
+  /// of a custom configuration file format for files named ".my-tidy-config"
+  /// could look similar to this:
+  /// \code
+  /// FileOptionsProvider::ConfigFileHandlers ConfigHandlers;
+  /// ConfigHandlers.emplace_back(".my-tidy-config", parseMyConfigFormat);
+  /// ConfigHandlers.emplace_back(".clang-tidy", parseConfiguration);
+  /// return llvm::make_unique<FileOptionsProvider>(
+  ///     GlobalOptions, DefaultOptions, OverrideOptions, ConfigHandlers);
+  /// \endcode
+  ///
+  /// With the order of handlers shown above, the ".my-tidy-config" file would
+  /// take precedence over ".clang-tidy" if both reside in the same directory.
+  typedef std::vector<ConfigFileHandler> ConfigFileHandlers;
+
   /// \brief Initializes the \c FileOptionsProvider instance.
   ///
   /// \param GlobalOptions are just stored and returned to the caller of
   /// \c getGlobalOptions.
   ///
   /// \param DefaultOptions are used for all settings not specified in a
-  /// .clang-tidy file.
+  /// configuration file.
   ///
   /// If any of the \param OverrideOptions fields are set, they will override
   /// whatever options are read from the configuration file.
   FileOptionsProvider(const ClangTidyGlobalOptions &GlobalOptions,
                       const ClangTidyOptions &DefaultOptions,
                       const ClangTidyOptions &OverrideOptions);
+
+  /// \brief Initializes the \c FileOptionsProvider instance with a custom set
+  /// of configuration file handlers.
+  ///
+  /// \param GlobalOptions are just stored and returned to the caller of
+  /// \c getGlobalOptions.
+  ///
+  /// \param DefaultOptions are used for all settings not specified in a
+  /// configuration file.
+  ///
+  /// If any of the \param OverrideOptions fields are set, they will override
+  /// whatever options are read from the configuration file.
+  ///
+  /// \param ConfigHandlers specifies a custom set of configuration file
+  /// handlers. Each handler is a pair of configuration file name and a function
+  /// that can parse configuration from this file type. The configuration files
+  /// in each directory are searched for in the order of appearance in
+  /// \p ConfigHandlers.
+  FileOptionsProvider(const ClangTidyGlobalOptions &GlobalOptions,
+                      const ClangTidyOptions &DefaultOptions,
+                      const ClangTidyOptions &OverrideOptions,
+                      const ConfigFileHandlers &ConfigHandlers);
+
   const ClangTidyOptions &getOptions(llvm::StringRef FileName) override;
 
 private:
-  /// \brief Try to read configuration file from \p Directory. If \p Directory
-  /// is empty, use the default value.
-  llvm::ErrorOr<ClangTidyOptions> TryReadConfigFile(llvm::StringRef Directory);
+  /// \brief Try to read configuration files from \p Directory using registered
+  /// \c ConfigHandlers.
+  llvm::Optional<ClangTidyOptions> TryReadConfigFile(llvm::StringRef Directory);
 
   llvm::StringMap<ClangTidyOptions> CachedOptions;
   ClangTidyOptions OverrideOptions;
+  ConfigFileHandlers ConfigHandlers;
 };
 
 /// \brief Parses LineFilter from JSON and stores it to the \p Options.
