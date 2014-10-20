@@ -145,9 +145,7 @@ public:
   typedef PBQP::Matrix RawMatrix;
   typedef PBQP::Vector Vector;
   typedef RAMatrix     Matrix;
-  typedef PBQP::PoolCostAllocator<
-    Vector, PBQP::VectorComparator,
-    Matrix, PBQP::MatrixComparator> CostAllocator;
+  typedef PBQP::PoolCostAllocator<Vector, Matrix> CostAllocator;
 
   typedef GraphBase::NodeId NodeId;
   typedef GraphBase::EdgeId EdgeId;

@@ -18,17 +18,20 @@
 #ifndef LLVM_CODEGEN_PBQP_COSTALLOCATOR_H
 #define LLVM_CODEGEN_PBQP_COSTALLOCATOR_H
 
+#include "llvm/ADT/DenseSet.h"
 #include <memory>
-#include <set>
 #include <type_traits>
 
 namespace llvm {
 namespace PBQP {
 
-template <typename CostT,
-          typename CostKeyTComparator>
+template <typename CostT>
 class CostPool {
 public:
+  typedef std::shared_ptr<CostT> PoolRef;
+
+private:
+
   class PoolEntry : public std::enable_shared_from_this<PoolEntry> {
   public:
     template <typename CostKeyT>
@@ -42,27 +45,49 @@ public:
     CostT cost;
   };
 
-  typedef std::shared_ptr<CostT> PoolRef;
-
-private:
-  class EntryComparator {
+  class PoolEntryDSInfo {
   public:
+    static inline PoolEntry* getEmptyKey() { return nullptr; }
+
+    static inline PoolEntry* getTombstoneKey() {
+      return reinterpret_cast<PoolEntry*>(static_cast<uintptr_t>(1));
+    }
+
     template <typename CostKeyT>
-    typename std::enable_if<
-               !std::is_same<PoolEntry*,
-                             typename std::remove_const<CostKeyT>::type>::value,
-               bool>::type
-    operator()(const PoolEntry* a, const CostKeyT &b) {
-      return compare(a->getCost(), b);
+    static unsigned getHashValue(const CostKeyT &C) {
+      return hash_value(C);
     }
-    bool operator()(const PoolEntry* a, const PoolEntry* b) {
-      return compare(a->getCost(), b->getCost());
+
+    static unsigned getHashValue(PoolEntry *P) {
+      return getHashValue(P->getCost());
     }
-  private:
-    CostKeyTComparator compare;
+
+    static unsigned getHashValue(const PoolEntry *P) {
+      return getHashValue(P->getCost());
+    }
+
+    template <typename CostKeyT1, typename CostKeyT2>
+    static
+    bool isEqual(const CostKeyT1 &C1, const CostKeyT2 &C2) {
+      return C1 == C2;
+    }
+
+    template <typename CostKeyT>
+    static bool isEqual(const CostKeyT &C, PoolEntry *P) {
+      if (P == getEmptyKey() || P == getTombstoneKey())
+        return false;
+      return isEqual(C, P->getCost());
+    }
+
+    static bool isEqual(PoolEntry *P1, PoolEntry *P2) {
+      if (P1 == getEmptyKey() || P1 == getTombstoneKey())
+        return P1 == P2;
+      return isEqual(P1->getCost(), P2);
+    }
+
   };
 
-  typedef std::set<PoolEntry*, EntryComparator> EntrySet;
+  typedef DenseSet<PoolEntry*, PoolEntryDSInfo> EntrySet;
 
   EntrySet entrySet;
 
@@ -70,25 +95,22 @@ private:
 
 public:
   template <typename CostKeyT> PoolRef getCost(CostKeyT costKey) {
-    typename EntrySet::iterator itr =
-      std::lower_bound(entrySet.begin(), entrySet.end(), costKey,
-                       EntryComparator());
+    typename EntrySet::iterator itr = entrySet.find_as(costKey);
 
-    if (itr != entrySet.end() && costKey == (*itr)->getCost())
+    if (itr != entrySet.end())
       return PoolRef((*itr)->shared_from_this(), &(*itr)->getCost());
 
     auto p = std::make_shared<PoolEntry>(*this, std::move(costKey));
-    entrySet.insert(itr, p.get());
+    entrySet.insert(p.get());
     return PoolRef(std::move(p), &p->getCost());
   }
 };
 
-template <typename VectorT, typename VectorTComparator,
-          typename MatrixT, typename MatrixTComparator>
+template <typename VectorT, typename MatrixT>
 class PoolCostAllocator {
 private:
-  typedef CostPool<VectorT, VectorTComparator> VectorCostPool;
-  typedef CostPool<MatrixT, MatrixTComparator> MatrixCostPool;
+  typedef CostPool<VectorT> VectorCostPool;
+  typedef CostPool<MatrixT> MatrixCostPool;
 public:
   typedef VectorT Vector;
   typedef MatrixT Matrix;
