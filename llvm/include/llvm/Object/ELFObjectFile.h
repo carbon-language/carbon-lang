@@ -934,7 +934,7 @@ inline std::error_code getELFRelocationAddend(const RelocationRef R,
 }
 
 inline std::pair<symbol_iterator, symbol_iterator>
-getELFDynamicSymbolIterators(SymbolicFile *Obj) {
+getELFDynamicSymbolIterators(const SymbolicFile *Obj) {
   return cast<ELFObjectFileBase>(Obj)->getELFDynamicSymbolIterators();
 }
 
