@@ -7809,50 +7809,6 @@ static void addSanitizerRTWindows(const ToolChain &TC, const ArgList &Args,
   CmdArgs.push_back(Args.MakeArgString(LibSanitizer));
 }
 
-// Try to find Exe from a Visual Studio distribution.  This first tries to find
-// an installed copy of Visual Studio and, failing that, looks in the PATH,
-// making sure that whatever executable that's found is not a same-named exe
-// from clang itself to prevent clang from falling back to itself.
-static std::string FindVisualStudioExecutable(const ToolChain &TC,
-                                              const char *Exe,
-                                              const char *ClangProgramPath) {
-  // Since a particular Visual Studio executable is tied to a set of system
-  // includes and libraries, first try to use the same location that we use for
-  // the include paths to ensure that a consistent build environment is located.
-  const toolchains::Windows &WTC = static_cast<const toolchains::Windows &>(TC);
-  std::string visualStudioDir;
-  if (WTC.getVisualStudioDir(visualStudioDir)) {
-    SmallString<128> VSDir(visualStudioDir);
-    llvm::sys::path::append(VSDir, "VC\\bin");
-    llvm::sys::path::append(VSDir, Exe);
-    if (llvm::sys::fs::can_execute(VSDir.c_str()))
-      return VSDir.str();
-  }
-
-  // If it could not be found, we're already probably broken, but try to
-  // fallback to PATH anyway.
-  llvm::Optional<std::string> OptPath = llvm::sys::Process::GetEnv("PATH");
-  if (!OptPath.hasValue())
-    return Exe;
-
-  const char EnvPathSeparatorStr[] = {llvm::sys::EnvPathSeparator, '\0'};
-  SmallVector<StringRef, 8> PathSegments;
-  llvm::SplitString(OptPath.getValue(), PathSegments, EnvPathSeparatorStr);
-
-  for (StringRef PathSegment : PathSegments) {
-    if (PathSegment.empty())
-      continue;
-
-    SmallString<128> FilePath(PathSegment);
-    llvm::sys::path::append(FilePath, Exe);
-    if (llvm::sys::fs::can_execute(FilePath.c_str()) &&
-        !llvm::sys::fs::equivalent(FilePath.c_str(), ClangProgramPath))
-      return FilePath.str();
-  }
-
-  return Exe;
-}
-
 void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                       const InputInfo &Output,
                                       const InputInfoList &Inputs,
@@ -7938,11 +7894,8 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
     A.renderAsInput(Args, CmdArgs);
   }
 
-  // It's not sufficient to just use link from the program PATH, because other
-  // environments like GnuWin32 install their own link.exe which may come first.
-  llvm::SmallString<128> linkPath(FindVisualStudioExecutable(
-      getToolChain(), "link.exe", C.getDriver().getClangProgramPath()));
-  const char *Exec = Args.MakeArgString(linkPath);
+  const char *Exec =
+    Args.MakeArgString(getToolChain().GetProgramPath("link.exe"));
   C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
 }
 
@@ -7952,6 +7905,35 @@ void visualstudio::Compile::ConstructJob(Compilation &C, const JobAction &JA,
                                          const ArgList &Args,
                                          const char *LinkingOutput) const {
   C.addCommand(GetCommand(C, JA, Output, Inputs, Args, LinkingOutput));
+}
+
+// Try to find FallbackName on PATH that is not identical to ClangProgramPath.
+// If one cannot be found, return FallbackName.
+// We do this special search to prevent clang-cl from falling back onto itself
+// if it's available as cl.exe on the path.
+static std::string FindFallback(const char *FallbackName,
+                                const char *ClangProgramPath) {
+  llvm::Optional<std::string> OptPath = llvm::sys::Process::GetEnv("PATH");
+  if (!OptPath.hasValue())
+    return FallbackName;
+
+  const char EnvPathSeparatorStr[] = {llvm::sys::EnvPathSeparator, '\0'};
+  SmallVector<StringRef, 8> PathSegments;
+  llvm::SplitString(OptPath.getValue(), PathSegments, EnvPathSeparatorStr);
+
+  for (size_t i = 0, e = PathSegments.size(); i != e; ++i) {
+    StringRef PathSegment = PathSegments[i];
+    if (PathSegment.empty())
+      continue;
+
+    SmallString<128> FilePath(PathSegment);
+    llvm::sys::path::append(FilePath, FallbackName);
+    if (llvm::sys::fs::can_execute(Twine(FilePath)) &&
+        !llvm::sys::fs::equivalent(Twine(FilePath), ClangProgramPath))
+      return FilePath.str();
+  }
+
+  return FallbackName;
 }
 
 std::unique_ptr<Command> visualstudio::Compile::GetCommand(
@@ -8035,8 +8017,7 @@ std::unique_ptr<Command> visualstudio::Compile::GetCommand(
   CmdArgs.push_back(Fo);
 
   const Driver &D = getToolChain().getDriver();
-  std::string Exec = FindVisualStudioExecutable(getToolChain(), "cl.exe",
-                                                D.getClangProgramPath());
+  std::string Exec = FindFallback("cl.exe", D.getClangProgramPath());
   return llvm::make_unique<Command>(JA, *this, Args.MakeArgString(Exec),
                                     CmdArgs);
 }
