@@ -3191,7 +3191,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
     assert(RD->isAnonymousStructOrUnion() && "unnamed non-anonymous struct or union?");
     GV = CollectAnonRecordDecls(RD, Unit, LineNo, LinkageName, Var, DContext);
   } else {
-      GV = DBuilder.createGlobalVariable(
+    GV = DBuilder.createGlobalVariable(
         DContext, DeclName, LinkageName, Unit, LineNo, getOrCreateType(T, Unit),
         Var->hasInternalLinkage(), Var,
         getOrCreateStaticDataMemberDeclarationOrNull(D));
