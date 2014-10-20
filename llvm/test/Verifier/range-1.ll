@@ -48,7 +48,7 @@ entry:
   ret i8 %y
 }
 !5 = metadata !{i32 0, i8 0}
-; CHECK: Range types must match load type!
+; CHECK: Range types must match instruction type!
 ; CHECK:  %y = load
 
 define i8 @f7(i8* %x) {
@@ -57,7 +57,7 @@ entry:
   ret i8 %y
 }
 !6 = metadata !{i8 0, i32 0}
-; CHECK: Range types must match load type!
+; CHECK: Range types must match instruction type!
 ; CHECK:  %y = load
 
 define i8 @f8(i8* %x) {
@@ -66,7 +66,7 @@ entry:
   ret i8 %y
 }
 !7 = metadata !{i32 0, i32 0}
-; CHECK: Range types must match load type!
+; CHECK: Range types must match instruction type!
 ; CHECK:  %y = load
 
 define i8 @f9(i8* %x) {
@@ -140,3 +140,12 @@ entry:
 }
 !17 = metadata !{i8 1, i8 3, i8 4, i8 5, i8 6, i8 1}
 ; CHECK: Intervals are contiguous
+
+define i8 @f18() {
+entry:
+  %y = call i8 undef(), !range !18
+  ret i8 %y
+}
+!18 = metadata !{}
+; CHECK: It should have at least one range!
+; CHECK-NEXT: metadata

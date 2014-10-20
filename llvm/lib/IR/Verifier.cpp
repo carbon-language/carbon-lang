@@ -269,6 +269,8 @@ private:
                        SmallVectorImpl<const MDNode *> &Requirements);
   void visitFunction(const Function &F);
   void visitBasicBlock(BasicBlock &BB);
+  void visitRangeMetadata(Instruction& I, MDNode* Range, Type* Ty);
+
 
   // InstVisitor overrides...
   using InstVisitor<Verifier>::visit;
@@ -1885,6 +1887,55 @@ static bool isContiguous(const ConstantRange &A, const ConstantRange &B) {
   return A.getUpper() == B.getLower() || A.getLower() == B.getUpper();
 }
 
+void Verifier::visitRangeMetadata(Instruction& I,
+                                  MDNode* Range, Type* Ty) {
+  assert(Range &&
+         Range == I.getMetadata(LLVMContext::MD_range) &&
+         "precondition violation");
+
+  unsigned NumOperands = Range->getNumOperands();
+  Assert1(NumOperands % 2 == 0, "Unfinished range!", Range);
+  unsigned NumRanges = NumOperands / 2;
+  Assert1(NumRanges >= 1, "It should have at least one range!", Range);
+  
+  ConstantRange LastRange(1); // Dummy initial value
+  for (unsigned i = 0; i < NumRanges; ++i) {
+    ConstantInt *Low = dyn_cast<ConstantInt>(Range->getOperand(2*i));
+    Assert1(Low, "The lower limit must be an integer!", Low);
+    ConstantInt *High = dyn_cast<ConstantInt>(Range->getOperand(2*i + 1));
+    Assert1(High, "The upper limit must be an integer!", High);
+    Assert1(High->getType() == Low->getType() &&
+            High->getType() == Ty, "Range types must match instruction type!",
+            &I);
+    
+    APInt HighV = High->getValue();
+    APInt LowV = Low->getValue();
+    ConstantRange CurRange(LowV, HighV);
+    Assert1(!CurRange.isEmptySet() && !CurRange.isFullSet(),
+            "Range must not be empty!", Range);
+    if (i != 0) {
+      Assert1(CurRange.intersectWith(LastRange).isEmptySet(),
+              "Intervals are overlapping", Range);
+      Assert1(LowV.sgt(LastRange.getLower()), "Intervals are not in order",
+              Range);
+      Assert1(!isContiguous(CurRange, LastRange), "Intervals are contiguous",
+              Range);
+    }
+    LastRange = ConstantRange(LowV, HighV);
+  }
+  if (NumRanges > 2) {
+    APInt FirstLow =
+      dyn_cast<ConstantInt>(Range->getOperand(0))->getValue();
+    APInt FirstHigh =
+      dyn_cast<ConstantInt>(Range->getOperand(1))->getValue();
+    ConstantRange FirstRange(FirstLow, FirstHigh);
+    Assert1(FirstRange.intersectWith(LastRange).isEmptySet(),
+            "Intervals are overlapping", Range);
+    Assert1(!isContiguous(FirstRange, LastRange), "Intervals are contiguous",
+            Range);
+  }
+}
+
 void Verifier::visitLoadInst(LoadInst &LI) {
   PointerType *PTy = dyn_cast<PointerType>(LI.getOperand(0)->getType());
   Assert1(PTy, "Load operand must be a pointer.", &LI);
@@ -1910,52 +1961,6 @@ void Verifier::visitLoadInst(LoadInst &LI) {
   } else {
     Assert1(LI.getSynchScope() == CrossThread,
             "Non-atomic load cannot have SynchronizationScope specified", &LI);
-  }
-
-  if (MDNode *Range = LI.getMetadata(LLVMContext::MD_range)) {
-    unsigned NumOperands = Range->getNumOperands();
-    Assert1(NumOperands % 2 == 0, "Unfinished range!", Range);
-    unsigned NumRanges = NumOperands / 2;
-    Assert1(NumRanges >= 1, "It should have at least one range!", Range);
-
-    ConstantRange LastRange(1); // Dummy initial value
-    for (unsigned i = 0; i < NumRanges; ++i) {
-      ConstantInt *Low = dyn_cast<ConstantInt>(Range->getOperand(2*i));
-      Assert1(Low, "The lower limit must be an integer!", Low);
-      ConstantInt *High = dyn_cast<ConstantInt>(Range->getOperand(2*i + 1));
-      Assert1(High, "The upper limit must be an integer!", High);
-      Assert1(High->getType() == Low->getType() &&
-              High->getType() == ElTy, "Range types must match load type!",
-              &LI);
-
-      APInt HighV = High->getValue();
-      APInt LowV = Low->getValue();
-      ConstantRange CurRange(LowV, HighV);
-      Assert1(!CurRange.isEmptySet() && !CurRange.isFullSet(),
-              "Range must not be empty!", Range);
-      if (i != 0) {
-        Assert1(CurRange.intersectWith(LastRange).isEmptySet(),
-                "Intervals are overlapping", Range);
-        Assert1(LowV.sgt(LastRange.getLower()), "Intervals are not in order",
-                Range);
-        Assert1(!isContiguous(CurRange, LastRange), "Intervals are contiguous",
-                Range);
-      }
-      LastRange = ConstantRange(LowV, HighV);
-    }
-    if (NumRanges > 2) {
-      APInt FirstLow =
-        dyn_cast<ConstantInt>(Range->getOperand(0))->getValue();
-      APInt FirstHigh =
-        dyn_cast<ConstantInt>(Range->getOperand(1))->getValue();
-      ConstantRange FirstRange(FirstLow, FirstHigh);
-      Assert1(FirstRange.intersectWith(LastRange).isEmptySet(),
-              "Intervals are overlapping", Range);
-      Assert1(!isContiguous(FirstRange, LastRange), "Intervals are contiguous",
-              Range);
-    }
-
-
   }
 
   visitInstruction(LI);
@@ -2276,9 +2281,11 @@ void Verifier::visitInstruction(Instruction &I) {
     }
   }
 
-  MDNode *MD = I.getMetadata(LLVMContext::MD_range);
-  Assert1(!MD || isa<LoadInst>(I) || isa<CallInst>(I) || isa<InvokeInst>(I),
-          "Ranges are only for loads, calls and invokes!", &I);
+  if (MDNode *Range = I.getMetadata(LLVMContext::MD_range)) {
+    Assert1(isa<LoadInst>(I) || isa<CallInst>(I) || isa<InvokeInst>(I),
+            "Ranges are only for loads, calls and invokes!", &I);
+    visitRangeMetadata(I, Range, I.getType());
+  }
 
   InstsInThisBlock.insert(&I);
 }
