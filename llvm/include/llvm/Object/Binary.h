@@ -140,6 +140,7 @@ public:
   OwningBinary<T> &operator=(OwningBinary<T> &&Other);
 
   std::unique_ptr<T> &getBinary();
+  const std::unique_ptr<T> &getBinary() const;
   std::unique_ptr<MemoryBuffer> &getBuffer();
 };
 
@@ -162,6 +163,11 @@ OwningBinary<T> &OwningBinary<T>::operator=(OwningBinary &&Other) {
 }
 
 template <typename T> std::unique_ptr<T> &OwningBinary<T>::getBinary() {
+  return Bin;
+}
+
+template <typename T>
+const std::unique_ptr<T> &OwningBinary<T>::getBinary() const {
   return Bin;
 }
 
