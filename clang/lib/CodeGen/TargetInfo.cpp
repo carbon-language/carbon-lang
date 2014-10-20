@@ -2295,7 +2295,7 @@ GetX86_64ByValArgumentPair(llvm::Type *Lo, llvm::Type *Hi,
   // the second element at offset 8.  Check for this:
   unsigned LoSize = (unsigned)TD.getTypeAllocSize(Lo);
   unsigned HiAlign = TD.getABITypeAlignment(Hi);
-  unsigned HiStart = llvm::DataLayout::RoundUpAlignment(LoSize, HiAlign);
+  unsigned HiStart = llvm::RoundUpToAlignment(LoSize, HiAlign);
   assert(HiStart != 0 && HiStart <= 8 && "Invalid x86-64 argument pair!");
 
   // To handle this, we have to increase the size of the low part so that the
