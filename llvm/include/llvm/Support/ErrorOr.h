@@ -173,7 +173,7 @@ public:
   }
 
   reference get() { return *getStorage(); }
-  const_reference get() const { return const_cast<ErrorOr<T> >(this)->get(); }
+  const_reference get() const { return const_cast<ErrorOr<T> *>(this)->get(); }
 
   std::error_code getError() const {
     return HasError ? *getErrorStorage() : std::error_code();
