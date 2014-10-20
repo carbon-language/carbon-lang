@@ -413,6 +413,11 @@ private:
       } else if (Contexts.size() == 1 &&
                  !Line.First->isOneOf(tok::kw_enum, tok::kw_case)) {
         Tok->Type = TT_InheritanceColon;
+      } else if (Tok->Previous->is(tok::identifier) && Tok->Next &&
+                 Tok->Next->isOneOf(tok::r_paren, tok::comma)) {
+        // This handles a special macro in ObjC code where selectors including
+        // the colon are passed as macro arguments.
+        Tok->Type = TT_ObjCMethodExpr;
       } else if (Contexts.back().ContextKind == tok::l_paren) {
         Tok->Type = TT_InlineASMColon;
       }
