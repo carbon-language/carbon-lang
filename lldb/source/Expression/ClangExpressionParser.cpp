@@ -301,18 +301,19 @@ ClangExpressionParser::Parse (Stream &stream)
     {
         std::string temp_source_path;
 
+        int temp_fd = -1;
+        llvm::SmallString<PATH_MAX> result_path;
         FileSpec tmpdir_file_spec;
         if (HostInfo::GetLLDBPath(lldb::ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
         {
-            tmpdir_file_spec.AppendPathComponent("expr.XXXXXX");
+            tmpdir_file_spec.AppendPathComponent("lldb-%%%%%%.expr");
             temp_source_path = std::move(tmpdir_file_spec.GetPath());
+            llvm::sys::fs::createUniqueFile(temp_source_path, temp_fd, result_path);
         }
         else
         {
-            temp_source_path = "/tmp/expr.XXXXXX";
+            llvm::sys::fs::createTemporaryFile("lldb", "expr", temp_fd, result_path);
         }
-
-        int temp_fd = ::mkstemp(&temp_source_path[0]);
         
         if (temp_fd != -1)
         {
@@ -325,7 +326,7 @@ ClangExpressionParser::Parse (Stream &stream)
                 {
                     file.Close();
                     SourceMgr.setMainFileID(SourceMgr.createFileID(
-                        m_file_manager->getFile(temp_source_path),
+                        m_file_manager->getFile(result_path),
                         SourceLocation(), SrcMgr::C_User));
                     created_main_file = true;
                 }
