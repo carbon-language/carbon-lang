@@ -33,3 +33,22 @@ define i32 @test3() {
     %tmp1 = load i32* %tmp
     ret i32 %tmp1
 }
+
+; Here, the adds get optimized out because they are dead, but the calculation
+; of the address of stack_a is dead but not optimized out. When the address
+; calculation gets expanded to two instructions, we need to avoid reading a
+; dead register.
+; No CHECK lines (just test for crashes), as we hope this will be optimised
+; better in future.
+define i32 @test4() {
+entry:
+  %stack_a = alloca i8, align 1
+  %stack_b = alloca [256 x i32*], align 4
+  %int = ptrtoint i8* %stack_a to i32
+  %add = add i32 %int, 1
+  br label %block2
+
+block2:
+  %add2 = add i32 %add, 1
+  ret i32 0
+}
