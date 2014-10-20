@@ -1217,6 +1217,11 @@ struct DeclaratorChunk {
     /// If this is an invalid location, there is no volatile-qualifier.
     unsigned VolatileQualifierLoc;
 
+    /// \brief The location of the restrict-qualifier, if any.
+    ///
+    /// If this is an invalid location, there is no restrict-qualifier.
+    unsigned RestrictQualifierLoc;
+
     /// \brief The location of the 'mutable' qualifer in a lambda-declarator, if
     /// any.
     unsigned MutableLoc;
@@ -1292,14 +1297,19 @@ struct DeclaratorChunk {
       return SourceLocation::getFromRawEncoding(RefQualifierLoc);
     }
 
-    /// \brief Retrieve the location of the ref-qualifier, if any.
+    /// \brief Retrieve the location of the 'const' qualifier, if any.
     SourceLocation getConstQualifierLoc() const {
       return SourceLocation::getFromRawEncoding(ConstQualifierLoc);
     }
 
-    /// \brief Retrieve the location of the ref-qualifier, if any.
+    /// \brief Retrieve the location of the 'volatile' qualifier, if any.
     SourceLocation getVolatileQualifierLoc() const {
       return SourceLocation::getFromRawEncoding(VolatileQualifierLoc);
+    }
+
+    /// \brief Retrieve the location of the 'restrict' qualifier, if any.
+    SourceLocation getRestrictQualifierLoc() const {
+      return SourceLocation::getFromRawEncoding(RestrictQualifierLoc);
     }
 
     /// \brief Retrieve the location of the 'mutable' qualifier, if any.
@@ -1446,6 +1456,7 @@ struct DeclaratorChunk {
                                      SourceLocation RefQualifierLoc,
                                      SourceLocation ConstQualifierLoc,
                                      SourceLocation VolatileQualifierLoc,
+                                     SourceLocation RestrictQualifierLoc,
                                      SourceLocation MutableLoc,
                                      ExceptionSpecificationType ESpecType,
                                      SourceLocation ESpecLoc,
