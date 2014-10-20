@@ -46,11 +46,11 @@ class ArrayRef;
 
 /// Enum used to categorize the alignment types stored by LayoutAlignElem
 enum AlignTypeEnum {
-  INVALID_ALIGN = 0,                 ///< An invalid alignment
-  INTEGER_ALIGN = 'i',               ///< Integer type alignment
-  VECTOR_ALIGN = 'v',                ///< Vector type alignment
-  FLOAT_ALIGN = 'f',                 ///< Floating point type alignment
-  AGGREGATE_ALIGN = 'a'              ///< Aggregate alignment
+  INVALID_ALIGN = 0,
+  INTEGER_ALIGN = 'i',
+  VECTOR_ALIGN = 'v',
+  FLOAT_ALIGN = 'f',
+  AGGREGATE_ALIGN = 'a'
 };
 
 /// \brief Layout alignment element.
@@ -61,10 +61,11 @@ enum AlignTypeEnum {
 /// \note The unusual order of elements in the structure attempts to reduce
 /// padding and make the structure slightly more cache friendly.
 struct LayoutAlignElem {
-  unsigned AlignType    : 8;  ///< Alignment type (AlignTypeEnum)
-  unsigned TypeBitWidth : 24; ///< Type bit width
-  unsigned ABIAlign     : 16; ///< ABI alignment for this type/bitw
-  unsigned PrefAlign    : 16; ///< Pref. alignment for this type/bitw
+  /// \brief Alignment type from \c AlignTypeEnum
+  unsigned AlignType : 8;
+  unsigned TypeBitWidth : 24;
+  unsigned ABIAlign : 16;
+  unsigned PrefAlign : 16;
 
   static LayoutAlignElem get(AlignTypeEnum align_type, unsigned abi_align,
                              unsigned pref_align, uint32_t bit_width);
@@ -78,14 +79,14 @@ struct LayoutAlignElem {
 /// \note The unusual order of elements in the structure attempts to reduce
 /// padding and make the structure slightly more cache friendly.
 struct PointerAlignElem {
-  unsigned            ABIAlign;       ///< ABI alignment for this type/bitw
-  unsigned            PrefAlign;      ///< Pref. alignment for this type/bitw
-  uint32_t            TypeByteWidth;  ///< Type byte width
-  uint32_t            AddressSpace;   ///< Address space for the pointer type
+  unsigned ABIAlign;
+  unsigned PrefAlign;
+  uint32_t TypeByteWidth;
+  uint32_t AddressSpace;
 
   /// Initializer
   static PointerAlignElem get(uint32_t AddressSpace, unsigned ABIAlign,
-                             unsigned PrefAlign, uint32_t TypeByteWidth);
+                              unsigned PrefAlign, uint32_t TypeByteWidth);
   bool operator==(const PointerAlignElem &rhs) const;
 };
 
@@ -98,17 +99,11 @@ struct PointerAlignElem {
 class DataLayout {
 private:
   /// Defaults to false.
-  bool          LittleEndian;
+  bool LittleEndian;
 
-  unsigned      StackNaturalAlign;
+  unsigned StackNaturalAlign;
 
-  enum ManglingModeT {
-    MM_None,
-    MM_ELF,
-    MM_MachO,
-    MM_WINCOFF,
-    MM_Mips
-  };
+  enum ManglingModeT { MM_None, MM_ELF, MM_MachO, MM_WINCOFF, MM_Mips };
   ManglingModeT ManglingMode;
 
   SmallVector<unsigned char, 8> LegalIntWidths;
@@ -157,8 +152,8 @@ private:
 
   /// \brief Valid pointer predicate.
   ///
-  /// Predicate that tests a PointerAlignElem reference returned by get() against
-  /// InvalidPointerElem.
+  /// Predicate that tests a PointerAlignElem reference returned by get()
+  /// against \c InvalidPointerElem.
   bool validPointer(const PointerAlignElem &align) const {
     return &align != &InvalidPointerElem;
   }
@@ -197,7 +192,7 @@ public:
   bool operator==(const DataLayout &Other) const;
   bool operator!=(const DataLayout &Other) const { return !(*this == Other); }
 
-  ~DataLayout();  // Not virtual, do not subclass this class
+  ~DataLayout(); // Not virtual, do not subclass this class
 
   /// Parse a data layout string (with fallback to default values).
   void reset(StringRef LayoutDescription);
@@ -226,9 +221,7 @@ public:
     return false;
   }
 
-  bool isIllegalInteger(unsigned Width) const {
-    return !isLegalInteger(Width);
-  }
+  bool isIllegalInteger(unsigned Width) const { return !isLegalInteger(Width); }
 
   /// Returns true if the given alignment exceeds the natural stack alignment.
   bool exceedsNaturalStackAlignment(unsigned Align) const {
@@ -239,9 +232,7 @@ public:
     return ManglingMode == MM_WINCOFF;
   }
 
-  bool hasLinkerPrivateGlobalPrefix() const {
-    return ManglingMode == MM_MachO;
-  }
+  bool hasLinkerPrivateGlobalPrefix() const { return ManglingMode == MM_MachO; }
 
   const char *getLinkerPrivateGlobalPrefix() const {
     if (ManglingMode == MM_MachO)
@@ -352,7 +343,7 @@ public:
   ///
   /// For example, returns 5 for i36 and 10 for x86_fp80.
   uint64_t getTypeStoreSize(Type *Ty) const {
-    return (getTypeSizeInBits(Ty)+7)/8;
+    return (getTypeSizeInBits(Ty) + 7) / 8;
   }
 
   /// \brief Returns the maximum number of bits that may be overwritten by
@@ -360,7 +351,7 @@ public:
   ///
   /// For example, returns 40 for i36 and 80 for x86_fp80.
   uint64_t getTypeStoreSizeInBits(Type *Ty) const {
-    return 8*getTypeStoreSize(Ty);
+    return 8 * getTypeStoreSize(Ty);
   }
 
   /// \brief Returns the offset in bytes between successive objects of the
@@ -379,7 +370,7 @@ public:
   /// This is the amount that alloca reserves for this type. For example,
   /// returns 96 or 128 for x86_fp80, depending on alignment.
   uint64_t getTypeAllocSizeInBits(Type *Ty) const {
-    return 8*getTypeAllocSize(Ty);
+    return 8 * getTypeAllocSize(Ty);
   }
 
   /// \brief Returns the minimum ABI-required alignment for the specified type.
@@ -434,7 +425,7 @@ public:
   const StructLayout *getStructLayout(StructType *Ty) const;
 
   /// \brief Returns the preferred alignment of the specified global.
-  /// 
+  ///
   /// This includes an explicitly requested alignment (if the global has one).
   unsigned getPreferredAlignment(const GlobalVariable *GV) const;
 
@@ -446,11 +437,11 @@ public:
 };
 
 inline DataLayout *unwrap(LLVMTargetDataRef P) {
-   return reinterpret_cast<DataLayout*>(P);
+  return reinterpret_cast<DataLayout *>(P);
 }
 
 inline LLVMTargetDataRef wrap(const DataLayout *P) {
-   return reinterpret_cast<LLVMTargetDataRef>(const_cast<DataLayout*>(P));
+  return reinterpret_cast<LLVMTargetDataRef>(const_cast<DataLayout *>(P));
 }
 
 class DataLayoutPass : public ImmutablePass {
@@ -475,20 +466,13 @@ class StructLayout {
   uint64_t StructSize;
   unsigned StructAlignment;
   unsigned NumElements;
-  uint64_t MemberOffsets[1];  // variable sized array!
+  uint64_t MemberOffsets[1]; // variable sized array!
 public:
+  uint64_t getSizeInBytes() const { return StructSize; }
 
-  uint64_t getSizeInBytes() const {
-    return StructSize;
-  }
+  uint64_t getSizeInBits() const { return 8 * StructSize; }
 
-  uint64_t getSizeInBits() const {
-    return 8*StructSize;
-  }
-
-  unsigned getAlignment() const {
-    return StructAlignment;
-  }
+  unsigned getAlignment() const { return StructAlignment; }
 
   /// \brief Given a valid byte offset into the structure, returns the structure
   /// index that contains it.
@@ -500,14 +484,13 @@ public:
   }
 
   uint64_t getElementOffsetInBits(unsigned Idx) const {
-    return getElementOffset(Idx)*8;
+    return getElementOffset(Idx) * 8;
   }
 
 private:
-  friend class DataLayout;   // Only DataLayout can create this class
+  friend class DataLayout; // Only DataLayout can create this class
   StructLayout(StructType *ST, const DataLayout &DL);
 };
-
 
 // The implementation of this method is provided inline as it is particularly
 // well suited to constant folding when called on a specific Type subclass.
@@ -538,7 +521,7 @@ inline uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
   case Type::PPC_FP128TyID:
   case Type::FP128TyID:
     return 128;
-    // In memory objects this is always aligned to a higher boundary, but
+  // In memory objects this is always aligned to a higher boundary, but
   // only 80 bits contain information.
   case Type::X86_FP80TyID:
     return 80;
