@@ -507,68 +507,67 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   SmallVector<std::pair<int, const Command *>, 4> FailingCommands;
   C.ExecuteJob(C.getJobs(), FailingCommands);
 
-  // If the command succeeded, we are done.
-  if (FailingCommands.empty()) {
-    Diag(clang::diag::note_drv_command_failed_diag_msg)
-      << "\n********************\n\n"
-      "PLEASE ATTACH THE FOLLOWING FILES TO THE BUG REPORT:\n"
-      "Preprocessed source(s) and associated run script(s) are located at:";
-    const ArgStringList &Files = C.getTempFiles();
-    for (ArgStringList::const_iterator it = Files.begin(), ie = Files.end();
-         it != ie; ++it) {
-      Diag(clang::diag::note_drv_command_failed_diag_msg) << *it;
-      std::string Script = StringRef(*it).rsplit('.').first;
-      // In some cases (modules) we'll dump extra data to help with reproducing
-      // the crash into a directory next to the output.
-      SmallString<128> VFS;
-      if (llvm::sys::fs::exists(Script + ".cache")) {
-        Diag(clang::diag::note_drv_command_failed_diag_msg)
-            << Script + ".cache";
-        VFS = llvm::sys::path::filename(Script + ".cache");
-        llvm::sys::path::append(VFS, "vfs", "vfs.yaml");
-      }
-
-      std::error_code EC;
-      Script += ".sh";
-      llvm::raw_fd_ostream ScriptOS(Script, EC, llvm::sys::fs::F_Excl);
-      if (EC) {
-        Diag(clang::diag::note_drv_command_failed_diag_msg)
-            << "Error generating run script: " + Script + " " + EC.message();
-      } else {
-        // Replace the original filename with the preprocessed one.
-        size_t I, E;
-        I = Cmd.find("-main-file-name ");
-        assert (I != std::string::npos && "Expected to find -main-file-name");
-        I += 16;
-        E = Cmd.find(" ", I);
-        assert (E != std::string::npos && "-main-file-name missing argument?");
-        StringRef OldFilename = StringRef(Cmd).slice(I, E);
-        StringRef NewFilename = llvm::sys::path::filename(*it);
-        I = StringRef(Cmd).rfind(OldFilename);
-        E = I + OldFilename.size();
-        if (E + 1 < Cmd.size() && Cmd[E] == '"')
-          ++E;  // Replace a trailing quote if present.
-        I = Cmd.rfind(" ", I) + 1;
-        Cmd.replace(I, E - I, NewFilename.data(), NewFilename.size());
-        if (!VFS.empty()) {
-          // Add the VFS overlay to the reproduction script.
-          I += NewFilename.size();
-          Cmd.insert(I, std::string(" -ivfsoverlay ") + VFS.c_str());
-        }
-        ScriptOS << Cmd;
-        Diag(clang::diag::note_drv_command_failed_diag_msg) << Script;
-      }
-    }
-    Diag(clang::diag::note_drv_command_failed_diag_msg)
-      << "\n\n********************";
-  } else {
-    // Failure, remove preprocessed files.
+  // If any of the preprocessing commands failed, clean up and exit.
+  if (!FailingCommands.empty()) {
     if (!C.getArgs().hasArg(options::OPT_save_temps))
       C.CleanupFileList(C.getTempFiles(), true);
 
     Diag(clang::diag::note_drv_command_failed_diag_msg)
       << "Error generating preprocessed source(s).";
+    return;
   }
+
+  Diag(clang::diag::note_drv_command_failed_diag_msg)
+      << "\n********************\n\n"
+         "PLEASE ATTACH THE FOLLOWING FILES TO THE BUG REPORT:\n"
+         "Preprocessed source(s) and associated run script(s) are located at:";
+  const ArgStringList &Files = C.getTempFiles();
+  for (ArgStringList::const_iterator it = Files.begin(), ie = Files.end();
+       it != ie; ++it) {
+    Diag(clang::diag::note_drv_command_failed_diag_msg) << *it;
+    std::string Script = StringRef(*it).rsplit('.').first;
+    // In some cases (modules) we'll dump extra data to help with reproducing
+    // the crash into a directory next to the output.
+    SmallString<128> VFS;
+    if (llvm::sys::fs::exists(Script + ".cache")) {
+      Diag(clang::diag::note_drv_command_failed_diag_msg) << Script + ".cache";
+      VFS = llvm::sys::path::filename(Script + ".cache");
+      llvm::sys::path::append(VFS, "vfs", "vfs.yaml");
+    }
+
+    std::error_code EC;
+    Script += ".sh";
+    llvm::raw_fd_ostream ScriptOS(Script, EC, llvm::sys::fs::F_Excl);
+    if (EC) {
+      Diag(clang::diag::note_drv_command_failed_diag_msg)
+          << "Error generating run script: " + Script + " " + EC.message();
+    } else {
+      // Replace the original filename with the preprocessed one.
+      size_t I, E;
+      I = Cmd.find("-main-file-name ");
+      assert(I != std::string::npos && "Expected to find -main-file-name");
+      I += 16;
+      E = Cmd.find(" ", I);
+      assert(E != std::string::npos && "-main-file-name missing argument?");
+      StringRef OldFilename = StringRef(Cmd).slice(I, E);
+      StringRef NewFilename = llvm::sys::path::filename(*it);
+      I = StringRef(Cmd).rfind(OldFilename);
+      E = I + OldFilename.size();
+      if (E + 1 < Cmd.size() && Cmd[E] == '"')
+        ++E; // Replace a trailing quote if present.
+      I = Cmd.rfind(" ", I) + 1;
+      Cmd.replace(I, E - I, NewFilename.data(), NewFilename.size());
+      if (!VFS.empty()) {
+        // Add the VFS overlay to the reproduction script.
+        I += NewFilename.size();
+        Cmd.insert(I, std::string(" -ivfsoverlay ") + VFS.c_str());
+      }
+      ScriptOS << Cmd;
+      Diag(clang::diag::note_drv_command_failed_diag_msg) << Script;
+    }
+  }
+  Diag(clang::diag::note_drv_command_failed_diag_msg)
+      << "\n\n********************";
 }
 
 void Driver::setUpResponseFiles(Compilation &C, Job &J) {
