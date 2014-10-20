@@ -1,7 +1,8 @@
+; RUN: opt < %s -instcombine -S | FileCheck %s
 ; This test makes sure that these instructions are properly eliminated.
 ; PR1822
 
-; RUN: opt < %s -instcombine -S | FileCheck %s
+target datalayout = "e-p:64:64-p1:16:16-p2:32:32:32-p3:64:64:64"
 
 define i32 @test1(i32 %A, i32 %B) {
         %C = select i1 false, i32 %A, i32 %B            
@@ -916,9 +917,9 @@ define i32 @select_icmp_eq_and_4096_0_or_4096(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: @select_icmp_eq_0_and_1_or_1(
-; CHECK-NEXT: [[AND:%[a-z0-9]+]] = and i64 %x, 1
-; CHECK-NEXT: [[ZEXT:%[a-z0-9]+]] = trunc i64 [[AND]] to i32
-; CHECK-NEXT: [[OR:%[a-z0-9]+]] = or i32 [[XOR]], %y
+; CHECK-NEXT: [[TRUNC:%.+]] = trunc i64 %x to i32
+; CHECK-NEXT: [[AND:%.+]] = and i32 [[TRUNC]], 1
+; CHECK-NEXT: [[OR:%.+]] = or i32 [[XOR]], %y
 ; CHECK-NEXT: ret i32 [[OR]]
 define i32 @select_icmp_eq_0_and_1_or_1(i64 %x, i32 %y) {
   %and = and i64 %x, 1
@@ -957,11 +958,11 @@ define i32 @select_icmp_ne_0_and_32_or_4096(i32 %x, i32 %y) {
 }
 
 ; CHECK-LABEL: @select_icmp_ne_0_and_1073741824_or_8(
-; CHECK-NEXT: [[LSHR:%[a-z0-9]+]] = lshr i32 %x, 27
-; CHECK-NEXT: [[AND:%[a-z0-9]+]] = and i32 [[LSHR]], 8
-; CHECK-NEXT: [[TRUNC:%[a-z0-9]+]] = trunc i32 [[AND]] to i8
-; CHECK-NEXT: [[XOR:%[a-z0-9]+]] = xor i8 [[TRUNC]], 8
-; CHECK-NEXT: [[OR:%[a-z0-9]+]] = or i8 [[XOR]], %y
+; CHECK-NEXT: [[LSHR:%.+]] = lshr i32 %x, 27
+; CHECK-NEXT: [[TRUNC:%.+]] = trunc i32 [[LSHR]] to i8
+; CHECK-NEXT: [[AND:%.+]] = and i8 [[TRUNC]], 8
+; CHECK-NEXT: [[XOR:%.+]] = xor i8 [[AND]], 8
+; CHECK-NEXT: [[OR:%.+]] = or i8 [[XOR]], %y
 ; CHECK-NEXT: ret i8 [[OR]]
 define i8 @select_icmp_ne_0_and_1073741824_or_8(i32 %x, i8 %y) {
   %and = and i32 %x, 1073741824
@@ -1108,10 +1109,11 @@ define i32 @test65(i64 %x) {
   ret i32 %3
 
 ; CHECK-LABEL: @test65(
-; CHECK: and i64 %x, 16
-; CHECK: trunc i64 %1 to i32
-; CHECK: lshr exact i32 %2, 3
-; CHECK: xor i32 %3, 42
+; CHECK: %[[TRUNC:.*]] = trunc i64 %x to i32
+; CHECK: %[[LSHR:.*]] = lshr i32 %[[TRUNC]], 3
+; CHECK: %[[AND:.*]] = and i32 %[[LSHR]], 2
+; CHECK: %[[XOR:.*]] = xor i32 %[[AND]], 42
+; CHECK: ret i32 %[[XOR]]
 }
 
 define i32 @test66(i64 %x) {
