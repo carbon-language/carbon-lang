@@ -1035,11 +1035,7 @@ static int PrecedenceArrowAndPeriod = prec::PointerToMember + 2;
 /// operator precedence.
 class ExpressionParser {
 public:
-  ExpressionParser(AnnotatedLine &Line) : Current(Line.First) {
-    // Skip leading "}", e.g. in "} else if (...) {".
-    if (Current->is(tok::r_brace))
-      next();
-  }
+  ExpressionParser(AnnotatedLine &Line) : Current(Line.First) {}
 
   /// \brief Parse expressions with the given operatore precedence.
   void parse(int Precedence = 0) {
@@ -1086,7 +1082,7 @@ public:
 
       // At the end of the line or when an operator with higher precedence is
       // found, insert fake parenthesis and return.
-      if (!Current || Current->closesScope() ||
+      if (!Current || (Current->closesScope() && Current->MatchingParen) ||
           (CurrentPrecedence != -1 && CurrentPrecedence < Precedence)) {
         if (LatestOperator) {
           LatestOperator->LastOperator = true;
